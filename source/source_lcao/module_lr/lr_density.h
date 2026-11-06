@@ -22,8 +22,8 @@ namespace LR
         const std::vector<int>& nvirt_;
         const int nao_;
         int nk_;
-        const std::vector<BlockCyclicDistributionInformation>& pX_;
-        const BlockCyclicDistributionInformation& pc_;
+        const std::vector<BlockCyclicDistribution>& pX_;
+        const BlockCyclicDistribution& pc_;
         const Parallel_Orbitals& pmat_;
         const bool openshell_;
         std::vector<std::string> spintype_;
@@ -45,8 +45,8 @@ namespace LR
             const std::vector<int>& nocc,
             const std::vector<int>& nvirt,
             const int& nao,
-            const std::vector<BlockCyclicDistributionInformation>& pX,
-            const BlockCyclicDistributionInformation& pc,
+            const std::vector<BlockCyclicDistribution>& pX,
+            const BlockCyclicDistribution& pc,
             const Parallel_Orbitals& pmat,
             const bool openshell, const int output_precision, const std::string& output_directory);
 

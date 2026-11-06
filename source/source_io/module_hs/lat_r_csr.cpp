@@ -1,5 +1,5 @@
 #include "lat_r_csr.h"
-#include "source_base/block_cyclic_distribution_information.h"
+#include "source_base/block_cyclic_distribution.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
@@ -23,7 +23,7 @@ inline void write_data(std::ofstream& ofs, const std::complex<double>& data, con
 template<typename T>
 void ModuleIO::save_lat_r(std::ofstream& ofs,
     const SparseRBlock<T>& XR,
-    const BlockCyclicDistributionInformation& layout,
+    const BlockCyclicDistribution& layout,
     const SparseWriteOptions& options)
 {
     const int nlocal = layout.nrglb();
@@ -124,10 +124,10 @@ void ModuleIO::save_lat_r(std::ofstream& ofs,
 
 template void ModuleIO::save_lat_r<double>(std::ofstream& ofs,
     const SparseRBlock<double>& XR,
-    const BlockCyclicDistributionInformation& layout,
+    const BlockCyclicDistribution& layout,
     const SparseWriteOptions& options);
 
 template void ModuleIO::save_lat_r<std::complex<double>>(std::ofstream& ofs,
     const SparseRBlock<std::complex<double>>& XR,
-    const BlockCyclicDistributionInformation& layout,
+    const BlockCyclicDistribution& layout,
     const SparseWriteOptions& options);

@@ -16,7 +16,7 @@ void ModuleESolver::ESolver_LR<T, TR>::set_parallel_orbitals_band(Parallel_Orbit
     pmat.set_wfc_and_mo_layouts(this->nbasis, nbands_in);
     // The KS helper rejects empty band columns. LR windows may legitimately
     // have fewer blocks than the inherited KS process grid has columns.
-    BlockCyclicDistributionInformation bands;
+    BlockCyclicDistribution bands;
     const int block_size = pmat.para_2d().nb();
     LR_Util::setup_2d_division(bands, block_size, this->nbasis, nbands_in, pmat.para_2d().ictxt());
     pmat.nbands = nbands_in;
@@ -47,7 +47,7 @@ void ModuleESolver::ESolver_LR<T, TR>::setup_eigenvectors_X()
     const int block_size = this->paraC_.nb();
     for (int is = 0;is < nspin;++is)
     {
-        BlockCyclicDistributionInformation px;
+        BlockCyclicDistribution px;
         LR_Util::setup_2d_division(px, block_size, this->nvirt[is], this->nocc[is]
 #ifdef __MPI
             , this->paraC_.ictxt()
@@ -79,7 +79,7 @@ void ModuleESolver::ESolver_LR<T, TR>::set_X_initial_guess()
         const int& no = this->nocc[is];
         const int& nv = this->nvirt[is];
         const int& np = this->npairs[is];
-        const BlockCyclicDistributionInformation& px = this->paraX_[is];
+        const BlockCyclicDistribution& px = this->paraX_[is];
 
         // if (E_{lumo}-E_{homo-1} < E_{lumo+1}-E{homo}), mode = 0, else 1(smaller first)
         bool ix_mode = false;   //default
@@ -219,7 +219,7 @@ void ModuleESolver::ESolver_LR<T, TR>::fill_z_window_(const int* desc_src)
     this->paraX_z_.clear();
     for (int is = 0; is < this->nspin; ++is)
     {
-        BlockCyclicDistributionInformation px;
+        BlockCyclicDistribution px;
         LR_Util::setup_2d_division(px, block_size, this->nvirt_z_[is], this->nocc[is]
 #ifdef __MPI
             , this->paraC_z_.ictxt()

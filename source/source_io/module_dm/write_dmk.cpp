@@ -65,7 +65,7 @@ template <typename T>
 bool ModuleIO::read_dmk(const int nspin,
         const int nk,
         const K_Vectors &kv,
-        const BlockCyclicDistributionInformation& pv,
+        const BlockCyclicDistribution& pv,
         const std::string& dmk_dir,
         std::vector<std::vector<T>>& dmk,
         std::ofstream &ofs_running)
@@ -154,7 +154,7 @@ bool ModuleIO::read_dmk(const int nspin,
 #ifdef __MPI
         // seperate dmk data to each processor with 2D block distribution
         dmk.resize(nspin * nk, std::vector<T>(pv.nrloc() * pv.ncloc()));
-        BlockCyclicDistributionInformation pv_glb;
+        BlockCyclicDistribution pv_glb;
         pv_glb.set(nlocal, nlocal, nlocal, pv.ictxt());
         for (int ik = 0; ik < nspin * nk; ik++)
         {
@@ -185,13 +185,25 @@ void ModuleIO::write_dmk(const std::vector<std::vector<T>>& dmk,
         const int precision,
         const std::vector<double>& efs,
         const UnitCell* ucell,
-        const BlockCyclicDistributionInformation& pv,
+        const BlockCyclicDistribution& pv,
         const std::string& dmk_dir,
         const int istep,
+        const int out_app_flag,
         std::ofstream& ofs_running)
 {
     ModuleBase::TITLE("ModuleIO", "write_dmk");
     ModuleBase::timer::start("ModuleIO", "write_dmk");
+
+    // Modes 0 and 1 reuse a fixed filename (mode 0 overwrites the previous
+    // snapshot, mode 1 appends a new record); only mode 2 embeds the ionic
+    // step in the filename. The file body always records the real ionic step.
+    const int istep_file = (out_app_flag == 2) ? istep : -1;
+    // Each multi-step run (MD or relax) appends a new record to the fixed
+    // file, mirroring the open_sparse_file convention; single-point SCF
+    // passes istep = -1 and starts a fresh file. The first written step
+    // (istep == 0) truncates so a fresh run drops records left by a previous
+    // run; only later steps (istep > 0) append.
+    const bool append_on_restart = (out_app_flag == 1) && (istep > 0);
 
     int my_rank = 0;
 #ifdef __MPI
@@ -210,7 +222,7 @@ void ModuleIO::write_dmk(const std::vector<std::vector<T>>& dmk,
         ModuleBase::WARNING_QUIT("ModuleIO::write_dmk", "The size of dmk is not consistent with nspin and nk.");
     }
 
-    BlockCyclicDistributionInformation pv_glb;
+    BlockCyclicDistribution pv_glb;
 
     for (int ispin = 0; ispin < nspin; ispin++)
     {
@@ -239,9 +251,15 @@ void ModuleIO::write_dmk(const std::vector<std::vector<T>>& dmk,
             if (my_rank == 0)
             {
                 std::string fn = dmk_dir
-                    + dmk_gen_fname(gamma_only, ispin, nspin, ik, istep);
+                    + dmk_gen_fname(gamma_only, ispin, nspin, ik, istep_file);
 
-                std::ofstream ofs(fn.c_str());
+                std::ofstream ofs;
+                std::ios_base::openmode mode = std::ios::out;
+                if (append_on_restart)
+                {
+                    mode |= std::ios::app;
+                }
+                ofs.open(fn.c_str(), mode);
 
                 ofs << " --- Ionic Step " << istep+1 << " ---" << std::endl;
 
@@ -315,6 +333,10 @@ void ModuleIO::write_dmk(const std::vector<std::vector<T>>& dmk,
                         }
                     }
                 }
+                // Terminate the matrix body with a newline so that the next
+                // appended record (out_app_flag == 1) starts on a fresh line
+                // instead of being glued to the last value of this step.
+                ofs << std::endl;
                 ofs.close();
             } // rank0
         }     // ik
@@ -326,7 +348,7 @@ void ModuleIO::write_dmk(const std::vector<std::vector<T>>& dmk,
 template bool ModuleIO::read_dmk<double>(const int nspin,
         const int nk,
         const K_Vectors &kv,
-        const BlockCyclicDistributionInformation& pv,
+        const BlockCyclicDistribution& pv,
         const std::string& dmk_dir,
         std::vector<std::vector<double>>& dmk,
         std::ofstream &ofs);
@@ -334,7 +356,7 @@ template bool ModuleIO::read_dmk<double>(const int nspin,
 template bool ModuleIO::read_dmk<std::complex<double>>(const int nspin,
         const int nk,
         const K_Vectors &kv,
-        const BlockCyclicDistributionInformation& pv,
+        const BlockCyclicDistribution& pv,
         const std::string& dmk_dir,
         std::vector<std::vector<std::complex<double>>>& dmk,
         std::ofstream &ofs);
@@ -344,9 +366,10 @@ template void ModuleIO::write_dmk<double>(const std::vector<std::vector<double>>
         const int precision,
         const std::vector<double>& efs,
         const UnitCell* ucell,
-        const BlockCyclicDistributionInformation& pv,
+        const BlockCyclicDistribution& pv,
         const std::string& dmk_dir,
         const int istep,
+        const int out_app_flag,
         std::ofstream& ofs_running);
 
 template void ModuleIO::write_dmk<std::complex<double>>(const std::vector<std::vector<std::complex<double>>>& dmk,
@@ -354,8 +377,9 @@ template void ModuleIO::write_dmk<std::complex<double>>(const std::vector<std::v
         const int precision,
         const std::vector<double>& efs,
         const UnitCell* ucell,
-        const BlockCyclicDistributionInformation& pv,
+        const BlockCyclicDistribution& pv,
         const std::string& dmk_dir,
         const int istep,
+        const int out_app_flag,
         std::ofstream& ofs_running);
 

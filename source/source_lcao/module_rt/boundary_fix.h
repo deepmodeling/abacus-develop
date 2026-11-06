@@ -14,7 +14,7 @@
 #include <vector>
 
 class BasisFlattenedIndexing;
-class BlockCyclicDistributionInformation;
+class BlockCyclicDistribution;
 
 namespace module_rt{
 
@@ -37,7 +37,7 @@ void reset_matrix_boundary(const UnitCell& ucell,
                            const std::vector<ModuleBase::Vector3<double>>& kvec_d,
                            const ModuleBase::Vector3<double>& cart_At_last,
                            const BasisFlattenedIndexing& basis,
-                           const BlockCyclicDistributionInformation& layout,
+                           const BlockCyclicDistribution& layout,
                            ct::Tensor& hk_last,
                            ct::Tensor& sk_last,
                            psi::Psi<std::complex<double>>* psi_last);

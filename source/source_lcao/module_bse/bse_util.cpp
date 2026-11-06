@@ -7,7 +7,7 @@ namespace BSE_Util
 template <>
 container::Tensor cal_dm_trans_onebase_pblas(
     const psi::Psi<double>& c,
-    const BlockCyclicDistributionInformation& pc,
+    const BlockCyclicDistribution& pc,
     const int& ik,
     const int& naos,
     const int& imo1, // imo1 → imo2, for excitation imo1[0,nocc), imo2[nocc,nocc+nvirt)
@@ -23,6 +23,8 @@ container::Tensor cal_dm_trans_onebase_pblas(
     assert(pmat.para_2d().ncglb() == naos);
     c.fix_k(ik);
     const int one = 1;
+    const int ncol = matrix_dist.ncloc();
+    const int nrow = matrix_dist.nrloc();
 
     container::Tensor dm_trans(DAT::DT_DOUBLE, DEV::CpuDevice,
         { pmat.para_2d().ncloc(), pmat.para_2d().nrloc() }); // row is "inside"(memory contiguity) for pblas
@@ -45,7 +47,7 @@ container::Tensor cal_dm_trans_onebase_pblas(
 template <>
 container::Tensor cal_dm_trans_onebase_pblas(
     const psi::Psi<std::complex<double>>& c,
-    const BlockCyclicDistributionInformation& pc,
+    const BlockCyclicDistribution& pc,
     const int& ik,
     const int& naos,
     const int& imo1, // imo1 → imo2, for excitation imo1[0,nocc), imo2[nocc,nocc+nvirt)
@@ -61,6 +63,9 @@ container::Tensor cal_dm_trans_onebase_pblas(
     assert(pmat.para_2d().ncglb() == naos);
     c.fix_k(ik);
     const int one = 1;
+    const int ncol = matrix_dist.ncloc();
+    const int nrow = matrix_dist.nrloc();
+    const std::size_t nloc = matrix_dist.size();
 
     container::Tensor dm_trans(DAT::DT_COMPLEX_DOUBLE, DEV::CpuDevice,
         { pmat.para_2d().ncloc(), pmat.para_2d().nrloc() }); // row is "inside"(memory contiguity) for pblas

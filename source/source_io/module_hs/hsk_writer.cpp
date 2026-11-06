@@ -14,7 +14,7 @@ void ModuleIO::write_hsk(
         hamilt::Hamilt<T>* p_hamilt,
         const Parallel_Orbitals &pv,
         const bool gamma_only,
-        const bool out_app_flag,
+        const int out_app_flag,
         const int istep,
         const int out_type,
         const int precision,
@@ -40,6 +40,10 @@ void ModuleIO::write_hsk(
     {
         p_hamilt->updateHk(ik);
         const bool binary = (out_type == 2);
+        // save_mat takes a Boolean append flag: only mode 1 appends, and only
+        // from the second ionic step onward (istep > 0); modes 0 and 2 overwrite
+        // their per-step files.
+        const bool append_mat = (out_app_flag == 1) && (istep > 0);
 
         hamilt::MatrixBlock<T> h_mat;
         hamilt::MatrixBlock<T> s_mat;
@@ -56,7 +60,7 @@ void ModuleIO::write_hsk(
                 binary,
                 precision,
                 1,
-                out_app_flag,
+                append_mat,
                 h_fn,
                 pv.para_2d(),
                 drank,
@@ -83,7 +87,7 @@ void ModuleIO::write_hsk(
                 binary,
                 precision,
                 1,
-                out_app_flag,
+                append_mat,
                 s_fn,
                 pv.para_2d(),
                 drank,
@@ -96,11 +100,11 @@ template void ModuleIO::write_hsk<double>(
     const std::string&, const int, const int, const int,
     const std::vector<int>&, const std::vector<int>&,
     hamilt::Hamilt<double>*, const Parallel_Orbitals&,
-    const bool, const bool, const int, const int, const int,
+    const bool, const int, const int, const int, const int,
     const int, const std::string&, const int, std::ofstream&);
 template void ModuleIO::write_hsk<std::complex<double>>(
     const std::string&, const int, const int, const int,
     const std::vector<int>&, const std::vector<int>&,
     hamilt::Hamilt<std::complex<double>>*, const Parallel_Orbitals&,
-    const bool, const bool, const int, const int, const int,
+    const bool, const int, const int, const int, const int,
     const int, const std::string&, const int, std::ofstream&);

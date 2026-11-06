@@ -1,6 +1,6 @@
 #include "upsi.h"
 
-#include "source_base/block_cyclic_distribution_information.h"
+#include "source_base/block_cyclic_distribution.h"
 #include "source_base/module_container/ATen/kernels/blas.h"
 #include "source_base/module_external/scalapack_connector.h"
 #include "source_base/timer.h"
@@ -12,8 +12,8 @@
 namespace module_rt
 {
 #ifdef __MPI
-void upsi(const BlockCyclicDistributionInformation& matrix_layout,
-          const BlockCyclicDistributionInformation& wfc_layout,
+void upsi(const BlockCyclicDistribution& matrix_layout,
+          const BlockCyclicDistribution& wfc_layout,
           const int nband,
           const int nlocal,
           const std::complex<double>* U_operator,
@@ -90,8 +90,8 @@ void upsi(const BlockCyclicDistributionInformation& matrix_layout,
     }
 }
 
-void upsi_tensor(const BlockCyclicDistributionInformation& matrix_layout,
-                 const BlockCyclicDistributionInformation& wfc_layout,
+void upsi_tensor(const BlockCyclicDistribution& matrix_layout,
+                 const BlockCyclicDistribution& wfc_layout,
                  const int nband,
                  const int nlocal,
                  const ct::Tensor& U_operator,

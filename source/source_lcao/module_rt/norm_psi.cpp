@@ -1,6 +1,6 @@
 #include "norm_psi.h"
 
-#include "source_base/block_cyclic_distribution_information.h"
+#include "source_base/block_cyclic_distribution.h"
 #include "source_base/global_function.h" // ModuleBase::GlobalFunc::ZEROS
 #include "source_base/module_container/ATen/kernels/blas.h"
 #include "source_base/module_external/blas_connector.h"
@@ -28,9 +28,9 @@ inline int globalIndex(int localindex, int nblk, int nprocs, int myproc)
     return gIndex;
 }
 
-void norm_psi(const BlockCyclicDistributionInformation& matrix_layout,
-              const BlockCyclicDistributionInformation& wfc_layout,
-              const BlockCyclicDistributionInformation& mo_repr_layout,
+void norm_psi(const BlockCyclicDistribution& matrix_layout,
+              const BlockCyclicDistribution& wfc_layout,
+              const BlockCyclicDistribution& mo_repr_layout,
               const int nband,
               const int nlocal,
               const std::complex<double>* Stmp,
@@ -235,9 +235,9 @@ void norm_psi(const BlockCyclicDistributionInformation& matrix_layout,
     delete[] mo_ovlp;
 }
 
-void norm_psi_tensor(const BlockCyclicDistributionInformation& matrix_layout,
-                     const BlockCyclicDistributionInformation& wfc_layout,
-                     const BlockCyclicDistributionInformation& mo_repr_layout,
+void norm_psi_tensor(const BlockCyclicDistribution& matrix_layout,
+                     const BlockCyclicDistribution& wfc_layout,
+                     const BlockCyclicDistribution& mo_repr_layout,
                      const int nband,
                      const int nlocal,
                      const ct::Tensor& Stmp,

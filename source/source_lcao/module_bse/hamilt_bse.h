@@ -9,7 +9,7 @@
 #include "hamilt_bse_solver.h"
 #include "molecular_lri.h"
 
-#include "source_base/block_cyclic_distribution_information.h"
+#include "source_base/block_cyclic_distribution.h"
 #include "source_base/timer.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_cell/unitcell.h"
@@ -33,7 +33,7 @@ public:
     std::vector<T> VA_local, WA_local;
     std::vector<T> VB_local, WB_local;
     int ndim = 0; // dimension of BSE matrix
-    BlockCyclicDistributionInformation pA;
+    BlockCyclicDistribution pA;
     /// @brief constructor for BSE_Matrix
     HamiltBSE(const int& nspin,
               const int& naos,
@@ -48,8 +48,8 @@ public:
               MolecularLRI<T>& mo_lri_in,
               std::weak_ptr<LR::PotHxcLR> pot_in,
               const K_Vectors& kv_in,
-              const std::vector<BlockCyclicDistributionInformation>& pX_in,
-              const BlockCyclicDistributionInformation& pc_in,
+              const std::vector<BlockCyclicDistribution>& pX_in,
+              const BlockCyclicDistribution& pc_in,
               const Parallel_Orbitals& pmat_in,
               const std::vector<std::string>& spin_types_in,
               const std::string& tda,
@@ -78,7 +78,7 @@ public:
     void cal_V_by_grid(bool is_A);
     void grid_calculation(hamilt::HContainer<T>& VR) const;
     
-    inline void write_AB_matrix(const std::string& file, const int& prec, const T* ptr, const BlockCyclicDistributionInformation& pM)
+    inline void write_AB_matrix(const std::string& file, const int& prec, const T* ptr, const BlockCyclicDistribution& pM)
     {
         std::ofstream ofs(file);
         if (!ofs.is_open()){
@@ -91,7 +91,7 @@ public:
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "finish writing " + file);
     }
 
-    inline void read_AB_matrix(const std::string& file, T* ptr, const BlockCyclicDistributionInformation& pM)
+    inline void read_AB_matrix(const std::string& file, T* ptr, const BlockCyclicDistribution& pM)
     {
         std::ifstream ifs(file);
         if (!ifs.is_open()){
@@ -119,8 +119,8 @@ private:
     std::weak_ptr<LR::PotHxcLR> pot;
     const K_Vectors& kv;
     int nk = 1;
-    const std::vector<BlockCyclicDistributionInformation>& pX; // for tda, also pY for full
-    const BlockCyclicDistributionInformation& pc;
+    const std::vector<BlockCyclicDistribution>& pX; // for tda, also pY for full
+    const BlockCyclicDistribution& pc;
     const Parallel_Orbitals& pmat;
     const std::vector<std::string>& spin_types; // singlet, triplet, and rpa, ipa(independent particle approx)
     const bool bse_ri_hartree;

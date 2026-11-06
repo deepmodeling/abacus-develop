@@ -1,5 +1,5 @@
 #include "propagator.h"
-#include "source_base/block_cyclic_distribution_information.h"
+#include "source_base/block_cyclic_distribution.h"
 #include "source_base/global_function.h"
 #include "source_base/module_container/ATen/kernels/blas.h"
 #include "source_base/module_container/ATen/kernels/lapack.h"

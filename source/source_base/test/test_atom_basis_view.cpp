@@ -1,6 +1,6 @@
 #include "source_base/atom_basis_view.h"
 #include "source_base/basis_flattened_indexing.h"
-#include "source_base/block_cyclic_distribution_information.h"
+#include "source_base/block_cyclic_distribution.h"
 
 #include "gtest/gtest.h"
 
@@ -45,7 +45,7 @@ TEST(AtomBasisViewTest, DeriveSerialRowsAndCols)
 {
     const std::vector<int> atom_types = {1, 0};
     const BasisFlattenedIndexing basis(test_hierarchy(), atom_types, 1);
-    BlockCyclicDistributionInformation layout;
+    BlockCyclicDistribution layout;
     layout.set_serial(6, 6);
 
     const AtomBasisView first_rows = AtomBasisView::rows(basis, layout, 0);
@@ -64,7 +64,7 @@ TEST(AtomBasisViewTest, RejectLayoutSizeMismatch)
 {
     const std::vector<int> atom_types = {0};
     const BasisFlattenedIndexing basis(test_hierarchy(), atom_types, 1);
-    BlockCyclicDistributionInformation layout;
+    BlockCyclicDistribution layout;
     layout.set_serial(6, 6);
 
     EXPECT_THROW(AtomBasisView::rows(basis, layout, 0), std::invalid_argument);
@@ -75,7 +75,7 @@ TEST(AtomBasisViewTest, RejectAtomOutOfRange)
 {
     const std::vector<int> atom_types = {0};
     const BasisFlattenedIndexing basis(test_hierarchy(), atom_types, 1);
-    BlockCyclicDistributionInformation layout;
+    BlockCyclicDistribution layout;
     layout.set_serial(5, 5);
 
     EXPECT_THROW(AtomBasisView::rows(basis, layout, 1), std::out_of_range);

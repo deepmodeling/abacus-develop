@@ -376,10 +376,10 @@ void HSolverLCAO<T>::parakSolve_cusolver(HSMatrix<T>& hs,
     const int nks = psi.get_nk();  // total number of k points
     const int nbands = this->ParaV->get_nbands();
     // Set the parallel storage scheme for the matrix and psi
-    BlockCyclicDistributionInformation mat_para_global;    // store the info about how the origin matrix is distributed in parallel
-    BlockCyclicDistributionInformation mat_para_local;     // store the info about how the matrix is distributed after collected from all processes
-    BlockCyclicDistributionInformation psi_para_global;    // store the info about how the psi is distributed in parallel
-    BlockCyclicDistributionInformation psi_para_local;     // store the info about how the psi is distributed before distributing to all processes
+    BlockCyclicDistribution mat_para_global;    // store the info about how the origin matrix is distributed in parallel
+    BlockCyclicDistribution mat_para_local;     // store the info about how the matrix is distributed after collected from all processes
+    BlockCyclicDistribution psi_para_global;    // store the info about how the psi is distributed in parallel
+    BlockCyclicDistribution psi_para_local;     // store the info about how the psi is distributed before distributing to all processes
 
     MPI_Comm self_comm;  // the communicator that only contains the current process itself
     MPI_Comm_split(MPI_COMM_WORLD, world_rank, 0, &self_comm);

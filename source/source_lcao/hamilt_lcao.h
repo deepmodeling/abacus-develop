@@ -33,7 +33,7 @@ struct Exx_Info;
 struct Input_para;
 
 class BasisFlattenedIndexing;
-class BlockCyclicDistributionInformation;
+class BlockCyclicDistribution;
 
 namespace hamilt
 {
@@ -59,7 +59,7 @@ class HamiltLCAO : public Hamilt<TK>
                const Grid_Driver& grid_d,
                const Parallel_Orbitals* paraV,
                const BasisFlattenedIndexing& basis,
-               const BlockCyclicDistributionInformation& layout,
+               const BlockCyclicDistribution& layout,
                elecstate::Potential* pot_in,
                const K_Vectors& kv_in,
                const TwoCenterBundle& two_center_bundle,
@@ -81,7 +81,7 @@ class HamiltLCAO : public Hamilt<TK>
                const Grid_Driver& grid_d,
                const Parallel_Orbitals* paraV,
                const BasisFlattenedIndexing& basis,
-               const BlockCyclicDistributionInformation& layout,
+               const BlockCyclicDistribution& layout,
                const K_Vectors& kv_in,
                const TwoCenterIntegrator& intor_overlap_orb,
                const std::vector<double>& orb_cutoff);
@@ -131,7 +131,7 @@ class HamiltLCAO : public Hamilt<TK>
         return basis_;
     }
 
-    const BlockCyclicDistributionInformation& layout() const
+    const BlockCyclicDistribution& layout() const
     {
         return layout_;
     }
@@ -175,7 +175,7 @@ class HamiltLCAO : public Hamilt<TK>
   private:
 
     const BasisFlattenedIndexing& basis_;
-    const BlockCyclicDistributionInformation& layout_;
+    const BlockCyclicDistribution& layout_;
 
     const K_Vectors* kv = nullptr;
 

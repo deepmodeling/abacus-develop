@@ -39,7 +39,7 @@ template<typename Tdata, typename Tmatrix>
 auto RI_2D_Comm::split_m2D_ktoR(const UnitCell& ucell,
                                 const K_Vectors & kv,
                                 const std::vector<const Tmatrix*>&mks_2D,
-                                const BlockCyclicDistributionInformation & pv,
+                                const BlockCyclicDistribution & pv,
                                 const int nspin,
                                 const bool spgsym)
 -> std::vector<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>>
@@ -58,7 +58,7 @@ auto RI_2D_Comm::split_m2D_ktoR(const UnitCell& ucell,
 template<typename Tdata, typename Tmatrix>
 auto RI_2D_Comm::split_m2D_ktoR_gamma(const UnitCell& ucell,
                                         const std::vector<const Tmatrix*>& mks_2D,
-                                        const BlockCyclicDistributionInformation& pv,
+                                        const BlockCyclicDistribution& pv,
                                         const int nspin)
 -> std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>
 {
@@ -86,7 +86,7 @@ auto RI_2D_Comm::split_m2D_ktoR_gamma(const UnitCell& ucell,
     {
         using Tdata_m = typename Tmatrix::value_type;
         RI::Tensor<Tdata_m> mk_2D
-            = RI_Util::Vector_to_Tensor<Tdata_m>(*mks_2D[is_k], pv.get_col_size(), pv.get_row_size());
+            = RI_Util::Vector_to_Tensor<Tdata_m>(*mks_2D[is_k], pv.ncloc(), pv.nrloc());
         const Tdata_m frac = RI::Global_Func::convert<Tdata_m>(SPIN_multiple);
         RI::Tensor<Tdata> mR_2D = RI::Global_Func::convert<Tdata>(mk_2D * frac);
 
@@ -152,7 +152,7 @@ template<typename Tdata, typename Tmatrix>
 auto RI_2D_Comm::split_m2D_ktoR_k(const UnitCell& ucell,
                                         const K_Vectors& kv,
                                         const std::vector<const Tmatrix*>& mks_2D,
-                                        const BlockCyclicDistributionInformation& pv,
+                                        const BlockCyclicDistribution& pv,
                                         const int nspin,
                                         const bool spgsym)
 -> std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>
@@ -192,7 +192,7 @@ auto RI_2D_Comm::split_m2D_ktoR_k(const UnitCell& ucell,
                     using Tdata_m = typename Tmatrix::value_type;
                     if (!spgsym)
                     {
-                        RI::Tensor<Tdata_m> mk_2D = RI_Util::Vector_to_Tensor<Tdata_m>(*mks_2D[ik], pv.get_col_size(), pv.get_row_size());
+                        RI::Tensor<Tdata_m> mk_2D = RI_Util::Vector_to_Tensor<Tdata_m>(*mks_2D[ik], pv.ncloc(), pv.nrloc());
                         const Tdata_m frac = SPIN_multiple
                             * RI::Global_Func::convert<Tdata_m>(std::exp(
                                 -ModuleBase::TWO_PI * ModuleBase::IMAG_UNIT * (kv.kvec_c[ik] * (RI_Util::array3_to_Vector3(cell) * ucell.latvec))));
@@ -205,7 +205,8 @@ auto RI_2D_Comm::split_m2D_ktoR_k(const UnitCell& ucell,
                     { // traverse kstar, ik means ik_ibz
                         for (auto& isym_kvd : kv.kstars[ik % ik_list.size()])
                         {
-                            RI::Tensor<Tdata_m> mk_2D = RI_Util::Vector_to_Tensor<Tdata_m>(*mks_2D[ik_full + is_k * kv.get_nkstot_nospin()], pv.get_col_size(), pv.get_row_size());
+                            RI::Tensor<Tdata_m> mk_2D = RI_Util::Vector_to_Tensor<Tdata_m>(
+                                *mks_2D[ik_full + is_k * kv.get_nkstot_nospin()], pv.ncloc(), pv.nrloc());
                             const Tdata_m frac = SPIN_multiple
                                 * RI::Global_Func::convert<Tdata_m>(std::exp(
                                     -ModuleBase::TWO_PI * ModuleBase::IMAG_UNIT * ((isym_kvd.second * ucell.G) * (RI_Util::array3_to_Vector3(cell) * ucell.latvec))));

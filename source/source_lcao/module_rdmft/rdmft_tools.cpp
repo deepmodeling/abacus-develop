@@ -49,7 +49,7 @@ void HkPsi<double>(const Parallel_Orbitals* ParaV,
 
 template <>
 void cal_bra_op_ket<double>(const Parallel_Orbitals* ParaV, 
-                            const BlockCyclicDistributionInformation& para_Eij_in,
+                            const BlockCyclicDistribution& para_Eij_in,
                             const double& wfc, 
                             const double& H_wfc, 
                             std::vector<double>& Dmn)

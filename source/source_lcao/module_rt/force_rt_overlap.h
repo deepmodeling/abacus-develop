@@ -7,7 +7,7 @@
 #include "source_lcao/module_rt/td_info.h"
 
 class BasisFlattenedIndexing;
-class BlockCyclicDistributionInformation;
+class BlockCyclicDistribution;
 
 template <typename T>
 void cal_foverlap_rt(ModuleBase::matrix& foverlap,
@@ -15,7 +15,7 @@ void cal_foverlap_rt(ModuleBase::matrix& foverlap,
                      hamilt::Hamilt<T>* p_hamilt,
                      const K_Vectors& kv,
                      const BasisFlattenedIndexing& basis,
-                     const BlockCyclicDistributionInformation& layout,
+                     const BlockCyclicDistribution& layout,
                      UnitCell& ucell,
                      TD_info& td_state);
 

@@ -11,7 +11,7 @@
 #include <map>
 
 class BasisFlattenedIndexing;
-class BlockCyclicDistributionInformation;
+class BlockCyclicDistribution;
 
 // Class to store TDDFT infos, mainly for periodic system.
 class TD_info
@@ -19,7 +19,7 @@ class TD_info
   public:
     TD_info(const UnitCell* ucell_in,
             const BasisFlattenedIndexing& basis,
-            const BlockCyclicDistributionInformation& layout,
+            const BlockCyclicDistribution& layout,
             const LCAO_Orbitals& orb,
             const elecstate::TDFieldManager& field_manager);
     ~TD_info();
@@ -40,7 +40,7 @@ class TD_info
     const elecstate::TDFieldManager& field() const { return field_manager_; }
 
     const BasisFlattenedIndexing& basis() const { return basis_; }
-    const BlockCyclicDistributionInformation& layout() const { return layout_; }
+    const BlockCyclicDistribution& layout() const { return layout_; }
 
     AtomBasisView row_basis(const int iat) const;
     AtomBasisView col_basis(const int iat) const;
@@ -93,7 +93,7 @@ class TD_info
 
   private:
     const BasisFlattenedIndexing& basis_;
-    const BlockCyclicDistributionInformation& layout_;
+    const BlockCyclicDistribution& layout_;
     const elecstate::TDFieldManager& field_manager_;
     /// @brief lattice vectors, used to calculate the extra phase for hybrid gauge
     ModuleBase::Vector3<double> a1, a2, a3;

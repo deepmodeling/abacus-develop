@@ -1,6 +1,7 @@
 #include "esolver_gets.h"
 
 #include "source_base/basis_flattened_indexing.h"
+#include "source_base/fs_compat.h"
 #include "source_base/timer.h"
 #include "source_basis/module_ao/elem_basis_idx_orb.h"
 #include "source_cell/module_neighbor/sltk_atom_arrange.h"
@@ -208,6 +209,7 @@ void ESolver_GetS::runner(BaseCell& basecell, const int istep)
     }
 
     const std::string fn = PARAM.globalv.global_out_dir + "sr_nao.csr";
+    const std::string global_matrix_dir = PARAM.globalv.global_matrix_dir;
 
     auto* hamilt_ptr = static_cast<hamilt::Hamilt<std::complex<double>>*>(this->p_hamilt);
     const bool binary = false;
@@ -221,7 +223,7 @@ void ESolver_GetS::runner(BaseCell& basecell, const int istep)
                         sparse_threshold,
                         precision,
                         PARAM.globalv.global_out_dir,
-                        PARAM.globalv.global_matrix_dir,
+                        global_matrix_dir,
                         PARAM.inp.calculation,
                         PARAM.inp.out_app_flag,
                         PARAM.inp.nspin,
@@ -229,6 +231,8 @@ void ESolver_GetS::runner(BaseCell& basecell, const int istep)
 
     if (this->inp_->out_mat_r[0])
     {
+        // Mode-2 MAT/ subdirectory is created lazily at write time.
+        ModuleBase::ensure_directory(global_matrix_dir);
         Position_op r_matrix;
         const bool cal_force = PARAM.inp.cal_force;
         const int nlocal = PARAM.globalv.nlocal;
@@ -238,7 +242,7 @@ void ESolver_GetS::runner(BaseCell& basecell, const int istep)
                         -1, // get_s has no ionic step; use -1 for no step suffix
                         this->inp_->out_mat_r[1],
                         PARAM.globalv.global_out_dir,
-                        PARAM.globalv.global_matrix_dir,
+                        global_matrix_dir,
                         PARAM.inp.calculation,
                         PARAM.inp.out_app_flag,
                         nlocal,
@@ -248,13 +252,15 @@ void ESolver_GetS::runner(BaseCell& basecell, const int istep)
 
     if (this->inp_->out_mat_ds[0])
     {
+        // Mode-2 MAT/ subdirectory is created lazily at write time.
+        ModuleBase::ensure_directory(global_matrix_dir);
         LCAO_HS_Arrays HS_Arrays; // store sparse arrays
         ModuleIO::MatROutputOptions mat_R_options;
         mat_R_options.binary = binary;
         mat_R_options.sparse_threshold = sparse_threshold;
         mat_R_options.precision = this->inp_->out_mat_ds[1];
         mat_R_options.global_out_dir = PARAM.globalv.global_out_dir;
-        mat_R_options.global_matrix_dir = PARAM.globalv.global_matrix_dir;
+        mat_R_options.global_matrix_dir = global_matrix_dir;
         mat_R_options.calculation = PARAM.inp.calculation;
         mat_R_options.out_app_flag = PARAM.inp.out_app_flag;
         mat_R_options.nspin = PARAM.inp.nspin;

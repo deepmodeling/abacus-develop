@@ -36,7 +36,9 @@ void RPA_LRI<T, Tdata>::out_velocity(const UnitCell& ucell,
     ModuleBase::TITLE("DFT_RPA_interface", "out_velocity");
     ModuleBase::timer::start("RPA_LRI", "out_velocity");
 
-    BlockCyclicDistributionInformation parac;
+    BlockCyclicDistribution parac;
+    const BlockCyclicDistribution& distribution = parav.para_2d();
+    const int block_size = distribution.nb();
     LR_Util::setup_2d_division(parac,
                                parav.para_2d().nb(),
                                this->runtime.nlocal,

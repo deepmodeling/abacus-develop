@@ -103,6 +103,7 @@ KSEigenvectorMpiLayout make_ks_eigenvector_mpi_layout(const MPI_Comm mpi_comm,
                                                       const int spinor_component)
 {
     KSEigenvectorMpiLayout layout;
+    const BlockCyclicDistribution& distribution = parav.para_2d();
     std::vector<int> block_lengths;
     std::vector<MPI_Aint> block_displacements;
     bool local_valid = nbands >= 0 && nbasis_wfc >= 0 && parav.ncol_bands >= 0

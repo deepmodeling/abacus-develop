@@ -1,6 +1,8 @@
 #include "gtest/gtest.h"
 #include "../parallel_orbitals.h"
 
+#include <vector>
+
 //--------------------------------------------------------------
 //      unit test of class "Parallel_Orbitals"
 //--------------------------------------------------------------
@@ -15,9 +17,10 @@
  * - get_indexes_col
  * - get_indexes_row(iat)
  * - get_indexes_col(iat)
- * 
+ *
  * the test framework follows the block-cyclic layout tests
 */
+
 class TestParaO : public testing::Test
 {
 protected:

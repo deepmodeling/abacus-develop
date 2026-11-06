@@ -15,7 +15,7 @@ addtest(
           # Shared ctor/dtor stubs for the cell/spepot/Plus_U link closures.
           dfpt_test_mocks.cpp
           # Shared cubic-cell / stru_lib fixture.
-          dfpt_stru_fixture.cpp)
+          dfpt_stru_tool.cpp)
 
 addtest(
   TARGET MODULE_DFPT_kq_basis_test
@@ -44,6 +44,7 @@ addtest(
           ../dfpt_kq_basis.cpp
           ../dfpt_stern.cpp
           ../dfpt_rho.cpp
+          ../dfpt_rho_mix.cpp
           ../../../source_estate/module_charge/chg_tools.cpp
           ../dfpt_phon.cpp
           ../dfpt_phon_asr.cpp
@@ -59,4 +60,4 @@ addtest(
           # Shared ctor/dtor stubs for the cell/spepot/charge/Plus_U closures.
           dfpt_test_mocks.cpp
           # Shared cubic-cell / stru_lib fixture.
-          dfpt_stru_fixture.cpp)
+          dfpt_stru_tool.cpp)

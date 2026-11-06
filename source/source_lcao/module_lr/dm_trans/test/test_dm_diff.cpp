@@ -132,14 +132,14 @@ TEST_F(DMDiffTest, DoubleParallel)
     {
         // c: nao*nbands in para2d, nbands*nao in psi  (row-para and constructed: nao)
         // X: nvirt*nocc in para2d, nocc*nvirt in psi (row-para and constructed: nvirt)
-        BlockCyclicDistributionInformation px;
+        BlockCyclicDistribution px;
         LR_Util::setup_2d_division(px, s.nb, s.nvirt, s.nocc);
         psi::Psi<double, base_device::DEVICE_CPU> X(s.nks, nstate, px.size(), {}, false);
-        BlockCyclicDistributionInformation pc;
+        BlockCyclicDistribution pc;
         const int nmo = s.nocc + s.nvirt;
         LR_Util::setup_2d_division(pc, s.nb, s.naos, nmo, px.ictxt());
         psi::Psi<double, base_device::DEVICE_CPU> c(s.nks, pc.ncloc(), pc.nrloc(), {}, true);
-        BlockCyclicDistributionInformation pmat;
+        BlockCyclicDistribution pmat;
         LR_Util::setup_2d_division(pmat, s.nb, s.naos, s.naos, px.ictxt());
 
         EXPECT_EQ(px.nrproc(), pc.nrproc());
@@ -204,14 +204,14 @@ TEST_F(DMDiffTest, ComplexParallel)
     {
         // c: nao*nbands in para2d, nbands*nao in psi  (row-para and constructed: nao)
         // X: nvirt*nocc in para2d, nocc*nvirt in psi (row-para and constructed: nvirt)
-        BlockCyclicDistributionInformation px;
+        BlockCyclicDistribution px;
         LR_Util::setup_2d_division(px, s.nb, s.nvirt, s.nocc);
         psi::Psi<std::complex<double>, base_device::DEVICE_CPU> X(s.nks, nstate, px.size(), {}, false);
-        BlockCyclicDistributionInformation pc;
+        BlockCyclicDistribution pc;
         const int nmo = s.nocc + s.nvirt;
         LR_Util::setup_2d_division(pc, s.nb, s.naos, nmo, px.ictxt());
         psi::Psi<std::complex<double>, base_device::DEVICE_CPU> c(s.nks, pc.ncloc(), pc.nrloc(), {}, true);
-        BlockCyclicDistributionInformation pmat;
+        BlockCyclicDistribution pmat;
         LR_Util::setup_2d_division(pmat, s.nb, s.naos, s.naos, px.ictxt());
 
         set_rand(X.get_pointer(), nstate * s.nks * px.size());        //set X and X_full

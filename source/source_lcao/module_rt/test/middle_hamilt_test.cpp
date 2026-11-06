@@ -1,6 +1,6 @@
 #include "source_lcao/module_rt/middle_hamilt.h"
 
-#include "source_base/block_cyclic_distribution_information.h"
+#include "source_base/block_cyclic_distribution.h"
 #include "source_base/global_variable.h" // GlobalV::ofs_running
 #include "tddft_test.h"
 
@@ -29,7 +29,7 @@ TEST(MiddleHamiltTest, testMiddleHamilt)
     int nband = 3;
     int nlocal = 4;
     bool print_matrix = false;
-    BlockCyclicDistributionInformation layout;
+    BlockCyclicDistribution layout;
     ASSERT_EQ(layout.set(nlocal, nlocal, 1, ictxt), 0);
 
     // Initialize data

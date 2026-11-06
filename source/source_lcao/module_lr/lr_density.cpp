@@ -42,8 +42,8 @@ LR_Density<T>::LR_Density(const UnitCell& ucell,
     const std::vector<int>& nocc,
     const std::vector<int>& nvirt,
     const int& nao,
-    const std::vector<BlockCyclicDistributionInformation>& pX,
-    const BlockCyclicDistributionInformation& pc,
+    const std::vector<BlockCyclicDistribution>& pX,
+    const BlockCyclicDistribution& pc,
     const Parallel_Orbitals& pmat,
     const bool openshell, const int output_precision, const std::string& output_directory) :
     ucell_(ucell), kv_(kv), gd_(gd), psi_ks_(psi_ks),
@@ -87,7 +87,7 @@ void LR_Density<T>::write_density_single_state(const double* const* const densit
 {
     const std::string data_desc = "LR-TDDFT electron-hole density difference (electrons/Bohr^3)";
     ModuleIO::write_vdata_palgrid(pgrid_, density[0], 0, 1, 0, filepath, 0.0, &ucell_,
-                                this->out_chg_precision_, 0, false, true, ofs_running, data_desc);
+                                this->out_chg_precision_, 0, false, true, false, ofs_running, data_desc);
 }
 
 template<typename T>

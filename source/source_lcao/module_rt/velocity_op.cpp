@@ -1,6 +1,6 @@
 #include "velocity_op.h"
 #include "source_base/atom_basis_view.h"
-#include "source_base/block_cyclic_distribution_information.h"
+#include "source_base/block_cyclic_distribution.h"
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
 #include "source_lcao/module_rt/snap_psb_half_tddft.h"
@@ -17,7 +17,7 @@ template <typename TR>
 Velocity_op<TR>::Velocity_op(const UnitCell* ucell_in,
                              const Grid_Driver* GridD_in,
                              const BasisFlattenedIndexing& basis,
-                             const BlockCyclicDistributionInformation& layout,
+                             const BlockCyclicDistribution& layout,
                              const LCAO_Orbitals& orb,
                              const TwoCenterIntegrator* intor)
     : ucell(ucell_in), layout_(layout), orb_(orb), intor_(intor)

@@ -2,7 +2,7 @@
 
 #include "source_base/atom_basis_view.h"
 #include "source_base/basis_flattened_indexing.h"
-#include "source_base/block_cyclic_distribution_information.h"
+#include "source_base/block_cyclic_distribution.h"
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
@@ -16,7 +16,7 @@ hamilt::EKinetic<hamilt::OperatorLCAO<TK, TR>>::EKinetic(
     const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
     hamilt::HContainer<TR>* hR_in,
     const BasisFlattenedIndexing& basis,
-    const BlockCyclicDistributionInformation& layout,
+    const BlockCyclicDistribution& layout,
     const UnitCell* ucell_in,
     const std::vector<double>& orb_cutoff,
     const Grid_Driver* GridD_in,

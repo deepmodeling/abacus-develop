@@ -48,8 +48,8 @@ inline bool gs_is_hybrid(const std::string& dft_functional)
             // HContainer<double>* hR_in,
             std::weak_ptr<Exx_LRI<T>> exx_lri_in,
             const K_Vectors& kv_in,
-            const BlockCyclicDistributionInformation& pX_in,
-            const BlockCyclicDistributionInformation& pc_in,
+            const BlockCyclicDistribution& pX_in,
+            const BlockCyclicDistribution& pc_in,
             const Parallel_Orbitals& pmat_in,
             const bool cal_force,
             const double& alpha,
@@ -117,8 +117,8 @@ inline bool gs_is_hybrid(const std::string& dft_functional)
         const UnitCell& ucell;
 
         ///parallel info
-        const BlockCyclicDistributionInformation& pc;
-        const BlockCyclicDistributionInformation& pX;
+        const BlockCyclicDistribution& pc;
+        const BlockCyclicDistribution& pX;
         const Parallel_Orbitals& pmat;
 
         /// number of basis functions per type in the aims benchmark (empty for the normal case)
@@ -138,12 +138,12 @@ inline bool gs_is_hybrid(const std::string& dft_functional)
             ModuleBase::TITLE("OperatorLREXX", "cal_coxt_cvx");
             const auto& c = this->psi_ks;
             // allocate local cvx
-            BlockCyclicDistributionInformation pcx;
+            BlockCyclicDistribution pcx;
             LR_Util::setup_2d_division(pcx, pX.nb(), naos, nocc, pX.ictxt());
             ct::Tensor cvx(ct::DataTypeToEnum<T>::value, DEV::CpuDevice, { pcx.ncloc(), pcx.nrloc() });
 
             // allocate local coxt
-            BlockCyclicDistributionInformation pcxt;
+            BlockCyclicDistribution pcxt;
             LR_Util::setup_2d_division(pcxt, pX.nb(), naos, nvirt, pX.ictxt());
             ct::Tensor coxt(ct::DataTypeToEnum<T>::value, DEV::CpuDevice, { pcxt.ncloc(), pcxt.nrloc() });
 

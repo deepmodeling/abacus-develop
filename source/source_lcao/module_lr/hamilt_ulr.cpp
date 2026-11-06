@@ -30,8 +30,8 @@ HamiltULR<T>::HamiltULR(const std::string& xc_kernel,
 #endif
     std::vector<std::shared_ptr<PotHxcLR>>& pot_in,
     const K_Vectors& kv_in,
-    const std::vector<BlockCyclicDistributionInformation>& pX_in,   ///< {up, down}
-    const BlockCyclicDistributionInformation& pc_in,
+    const std::vector<BlockCyclicDistribution>& pX_in,   ///< {up, down}
+    const BlockCyclicDistribution& pc_in,
     const Parallel_Orbitals& pmat_in) :nocc(nocc), nvirt(nvirt), pX(pX_in)
 {
     nk = kv_in.get_nks() / nspin;

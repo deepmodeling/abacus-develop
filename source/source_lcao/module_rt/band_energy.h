@@ -12,7 +12,7 @@
 
 #include <complex>
 
-class BlockCyclicDistributionInformation;
+class BlockCyclicDistribution;
 
 namespace module_rt
 {
@@ -31,9 +31,9 @@ using ModuleIO::EijOutputInfo;
  * @param[in] psi_k psi of this step
  * @param[out] ekb band energy
  */
-void compute_ekb(const BlockCyclicDistributionInformation& matrix_layout,
-                 const BlockCyclicDistributionInformation& wfc_layout,
-                 const BlockCyclicDistributionInformation& mo_repr_layout,
+void compute_ekb(const BlockCyclicDistribution& matrix_layout,
+                 const BlockCyclicDistribution& wfc_layout,
+                 const BlockCyclicDistribution& mo_repr_layout,
                  const int nband,
                  const int nlocal,
                  const std::complex<double>* Htmp,
@@ -42,9 +42,9 @@ void compute_ekb(const BlockCyclicDistributionInformation& matrix_layout,
                  std::ofstream& ofs_running,
                  const EijOutputInfo& output_info);
 
-void compute_ekb_tensor(const BlockCyclicDistributionInformation& matrix_layout,
-                        const BlockCyclicDistributionInformation& wfc_layout,
-                        const BlockCyclicDistributionInformation& mo_repr_layout,
+void compute_ekb_tensor(const BlockCyclicDistribution& matrix_layout,
+                        const BlockCyclicDistribution& wfc_layout,
+                        const BlockCyclicDistribution& mo_repr_layout,
                         const int nband,
                         const int nlocal,
                         const ct::Tensor& Htmp,

@@ -165,14 +165,14 @@ TEST_F(AXTest, DoubleParallel)
     {
         // c: nao*nbands in para2d, nbands*nao in psi  (row-para and constructed: nao)
         // X: nvirt*nocc in para2d, nocc*nvirt in psi (row-para and constructed: nvirt)
-        BlockCyclicDistributionInformation pV;
+        BlockCyclicDistribution pV;
         LR_Util::setup_2d_division(pV, s.nb, s.naos, s.naos);
         std::vector<container::Tensor> V(s.nks, container::Tensor(DAT::DT_DOUBLE, DEV::CpuDevice, { pV.ncloc(), pV.nrloc() }));
-        BlockCyclicDistributionInformation pc;
+        BlockCyclicDistribution pc;
         const int nmo = s.nocc + s.nvirt;
         LR_Util::setup_2d_division(pc, s.nb, s.naos, nmo, pV.ictxt());
         psi::Psi<double, base_device::DEVICE_CPU> c(s.nks, pc.ncloc(), pc.nrloc(), {}, true);
-        BlockCyclicDistributionInformation px;
+        BlockCyclicDistribution px;
         LR_Util::setup_2d_division(px, s.nb, s.nvirt, s.nocc, pV.ictxt());
 
         EXPECT_EQ(pV.nrproc(), pc.nrproc());
@@ -273,14 +273,14 @@ TEST_F(AXTest, ComplexParallel)
     {
         // c: nao*nbands in para2d, nbands*nao in psi  (row-para and constructed: nao)
         // X: nvirt*nocc in para2d, nocc*nvirt in psi (row-para and constructed: nvirt)
-        BlockCyclicDistributionInformation pV;
+        BlockCyclicDistribution pV;
         LR_Util::setup_2d_division(pV, s.nb, s.naos, s.naos);
         std::vector<container::Tensor> V(s.nks, container::Tensor(DAT::DT_COMPLEX_DOUBLE, DEV::CpuDevice, { pV.ncloc(), pV.nrloc() }));
-        BlockCyclicDistributionInformation pc;
+        BlockCyclicDistribution pc;
         const int nmo = s.nocc + s.nvirt;
         LR_Util::setup_2d_division(pc, s.nb, s.naos, nmo, pV.ictxt());
         psi::Psi<std::complex<double>, base_device::DEVICE_CPU> c(s.nks, pc.ncloc(), pc.nrloc(), {}, true);
-        BlockCyclicDistributionInformation px;
+        BlockCyclicDistribution px;
         LR_Util::setup_2d_division(px, s.nb, s.nvirt, s.nocc, pV.ictxt());
 
         psi::Psi<std::complex<double>, base_device::DEVICE_CPU> AX_pblas_loc(s.nks, nstate, px.size(), {}, false);

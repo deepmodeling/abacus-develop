@@ -1,11 +1,11 @@
 #include "source_base/atom_basis_view.h"
 
 #include "source_base/basis_flattened_indexing.h"
-#include "source_base/block_cyclic_distribution_information.h"
+#include "source_base/block_cyclic_distribution.h"
 
 #include <stdexcept>
 
-AtomBasisView::AtomBasisView(const BlockCyclicDistributionInformation* layout,
+AtomBasisView::AtomBasisView(const BlockCyclicDistribution* layout,
                              const int ibas0,
                              const int local0,
                              const int nloc,
@@ -15,7 +15,7 @@ AtomBasisView::AtomBasisView(const BlockCyclicDistributionInformation* layout,
 }
 
 AtomBasisView AtomBasisView::make(const BasisFlattenedIndexing& basis,
-                                  const BlockCyclicDistributionInformation& layout,
+                                  const BlockCyclicDistribution& layout,
                                   const int iat,
                                   const bool columns)
 {
@@ -63,14 +63,14 @@ int AtomBasisView::operator[](const std::size_t index) const
 }
 
 AtomBasisView AtomBasisView::rows(const BasisFlattenedIndexing& basis,
-                                  const BlockCyclicDistributionInformation& layout,
+                                  const BlockCyclicDistribution& layout,
                                   const int iat)
 {
     return make(basis, layout, iat, false);
 }
 
 AtomBasisView AtomBasisView::cols(const BasisFlattenedIndexing& basis,
-                                  const BlockCyclicDistributionInformation& layout,
+                                  const BlockCyclicDistribution& layout,
                                   const int iat)
 {
     return make(basis, layout, iat, true);

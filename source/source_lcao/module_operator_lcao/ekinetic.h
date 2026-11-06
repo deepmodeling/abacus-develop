@@ -9,7 +9,7 @@
 #include <vector>
 
 class BasisFlattenedIndexing;
-class BlockCyclicDistributionInformation;
+class BlockCyclicDistribution;
 
 namespace hamilt
 {
@@ -42,7 +42,7 @@ class EKinetic<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
                                       const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
                                       HContainer<TR>* hR_in,
                                       const BasisFlattenedIndexing& basis,
-                                      const BlockCyclicDistributionInformation& layout,
+                                      const BlockCyclicDistribution& layout,
                                       const UnitCell* ucell_in,
                                       const std::vector<double>& orb_cutoff,
                                       const Grid_Driver* GridD_in,
@@ -85,7 +85,7 @@ class EKinetic<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
     hamilt::HContainer<TR>* HR_fixed = nullptr;
 
     const BasisFlattenedIndexing& basis_;
-    const BlockCyclicDistributionInformation& layout_;
+    const BlockCyclicDistribution& layout_;
 
     const TwoCenterIntegrator* intor_ = nullptr;
 

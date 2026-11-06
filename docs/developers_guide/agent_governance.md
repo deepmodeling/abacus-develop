@@ -65,10 +65,6 @@ focused cleanup.
   the whole unit of work.
 - Do not use `#pragma once` in header files; use traditional
   `#ifndef`/`#define`/`#endif` include guards instead.
-- Do not implement per-element LCAO basis access with offset vectors. Derive
-  `AtomBasisView` from `BasisFlattenedIndexing` and
-  `BlockCyclicDistributionInformation`; do not reintroduce
-  `local_row_offsets`, `local_col_offsets`, or equivalent helpers.
 
 AI agents have additional workflow obligations:
 
@@ -88,7 +84,6 @@ decisions.
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | Basic text format | LF line endings | phase-one mechanical | hook + CI | medium | block | full changed text file | `.bat` and `.cmd` keep CRLF |
 | Header include guard | New `#pragma once` in a header | phase-one mechanical | hook + CI | high | block | added header lines (`.h`/`.hh`/`.hpp`/`.hxx`/`.cuh`) | Use `#ifndef`/`#define`/`#endif` guards; no exception allowed |
-| Atom basis offsets | Added `local_*_offsets` or equivalent per-element basis-offset helper | phase-one mechanical | hook + CI | high | block | added C/C++ lines | Use `AtomBasisView` derived from basis indexing and block-cyclic distribution; no exception allowed |
 | Language baseline | C++11 compatibility | build/toolchain | CI | high | block | build/static tooling | Actual compiler/toolchain result wins |
 | Global dependency budget | Net increase of `GlobalV`/`GlobalC`/`PARAM` references in code diff | phase-one mechanical + AI review | CI + AI review | high | block on net increase, warn on non-increasing added usage | added and removed code lines | Historical untouched usage and documentation mentions are not blocked; migration-neutral moves require reviewer rationale |
 | New default parameter | Header declaration adds a default argument | phase-one mechanical warning + AI review | CI + AI review | high | warn | header diff | High misuse risk; the single-line heuristic is not reliable enough to block, so AI and human review confirm |

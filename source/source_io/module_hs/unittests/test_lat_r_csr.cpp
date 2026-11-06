@@ -2,7 +2,7 @@
 #include "gmock/gmock.h"
 #include "source_io/module_hs/lat_r_csr.h"
 #include "source_base/global_variable.h"
-#include "source_base/block_cyclic_distribution_information.h"
+#include "source_base/block_cyclic_distribution.h"
 #include <complex>
 #include <cstdio>
 #include <fstream>
@@ -27,7 +27,7 @@ TEST(ModuleIOTest, SaveLatR)
     // Define input parameters
     const double sparse_threshold = 1e-8;
     const bool binary = false;
-    BlockCyclicDistributionInformation layout;
+    BlockCyclicDistribution layout;
     layout.set_serial(5, 5);
     std::map<size_t, std::map<size_t, double>> XR = {
         {0, {{1, 0.5}, {3, 0.3}}},
@@ -97,7 +97,7 @@ TEST(ModuleIOTest, SaveLatRComplexKeepsHighPrecision)
     GlobalV::DRANK = 0;
     std::ofstream ofs(filename);
 
-    BlockCyclicDistributionInformation layout;
+    BlockCyclicDistribution layout;
     layout.set_serial(5, 5);
     ModuleIO::SparseRBlock<std::complex<double>> XR = {
         {0, {{1, std::complex<double>(1.234567890123456, -2.345678901234567)}}}
@@ -125,7 +125,7 @@ TEST(ModuleIOTest, SaveLatRUsesConfiguredPrecision)
     GlobalV::DRANK = 0;
     std::ofstream ofs(filename);
 
-    BlockCyclicDistributionInformation layout;
+    BlockCyclicDistribution layout;
     layout.set_serial(5, 5);
     ModuleIO::SparseRBlock<std::complex<double>> XR = {
         {0, {{1, std::complex<double>(1.234567890123456, -2.5)}}}
@@ -151,7 +151,7 @@ void write_out_of_range_sparse_column(const char* filename)
 {
     GlobalV::DRANK = 0;
     std::ofstream ofs(filename);
-    BlockCyclicDistributionInformation layout;
+    BlockCyclicDistribution layout;
     layout.set_serial(5, 5);
     ModuleIO::SparseRBlock<double> XR;
     XR[0][5] = 1.0;

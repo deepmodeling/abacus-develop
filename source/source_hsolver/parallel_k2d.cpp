@@ -27,8 +27,8 @@ void Parallel_K2D<TK>::set_para_env(int nks,
                    &this->POOL_WORLD_K2D);
 #endif
     this->Pkpoints.reset(new Parallel_Kpoints());
-    this->P2D_global.reset(new BlockCyclicDistributionInformation());
-    this->P2D_pool.reset(new BlockCyclicDistributionInformation());
+    this->P2D_global.reset(new BlockCyclicDistribution());
+    this->P2D_pool.reset(new BlockCyclicDistribution());
     this->Pkpoints
         ->kinfo(nks, kpar, this->MY_POOL, this->RANK_IN_POOL, nproc, nspin);
     this->P2D_global->init(nw, nw, nb2d, MPI_COMM_WORLD, false);

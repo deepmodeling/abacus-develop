@@ -34,7 +34,8 @@ endif()
 addtest(
   TARGET MODULE_LCAO_tddft_middle_hamilt_test
   LIBS parameter base device tddft_test_lib
-  SOURCES middle_hamilt_test.cpp ../middle_hamilt.cpp)
+  SOURCES middle_hamilt_test.cpp ../middle_hamilt.cpp
+          ../../../source_basis/module_ao/parallel_orbitals.cpp)
 
 addtest(
   TARGET MODULE_LCAO_tddft_band_energy_test

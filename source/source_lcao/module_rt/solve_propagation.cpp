@@ -1,6 +1,6 @@
 #include "solve_propagation.h"
 
-#include "source_base/block_cyclic_distribution_information.h"
+#include "source_base/block_cyclic_distribution.h"
 #include "source_base/constants.h"
 #include "source_base/global_function.h"
 #include "source_base/module_external/blas_connector.h"
@@ -11,8 +11,8 @@
 namespace module_rt
 {
 #ifdef __MPI
-void solve_propagation(const BlockCyclicDistributionInformation& matrix_layout,
-                        const BlockCyclicDistributionInformation& wfc_layout,
+void solve_propagation(const BlockCyclicDistribution& matrix_layout,
+                        const BlockCyclicDistribution& wfc_layout,
                         const int nband,
                         const int nlocal,
                         const double dt,
@@ -79,8 +79,8 @@ void solve_propagation(const BlockCyclicDistributionInformation& matrix_layout,
     delete[] operator_B;
 }
 
-void solve_propagation(const BlockCyclicDistributionInformation& matrix_layout,
-                       const BlockCyclicDistributionInformation& wfc_layout,
+void solve_propagation(const BlockCyclicDistribution& matrix_layout,
+                       const BlockCyclicDistribution& wfc_layout,
                        const int nband,
                        const int nlocal,
                        const double dt,

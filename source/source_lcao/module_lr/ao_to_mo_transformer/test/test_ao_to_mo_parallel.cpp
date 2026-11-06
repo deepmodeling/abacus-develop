@@ -30,9 +30,9 @@ template <typename T> void check_empty_blocks(const int naos, const int nocc, co
 {
     // The virtual window is smaller than the KS block; its first band is
     // also inside a block rather than at a block boundary.
-    BlockCyclicDistributionInformation pao;
-    BlockCyclicDistributionInformation pc;
-    BlockCyclicDistributionInformation px;
+    BlockCyclicDistribution pao;
+    BlockCyclicDistribution pc;
+    BlockCyclicDistribution px;
     LR_Util::setup_2d_division(pao, block, naos, naos);
     LR_Util::setup_2d_division(pc, block, naos, nocc + nvirt, pao.ictxt());
     LR_Util::setup_2d_division(px, block, nvirt, nocc, pao.ictxt());

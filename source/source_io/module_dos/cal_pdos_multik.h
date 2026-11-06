@@ -26,6 +26,7 @@ namespace ModuleIO
             const double& dos_edelta_ev,
             const double& bcoeff,
             const int istep,
+            const int out_app_flag,
             const int nlocal,
             const int nspin,
             const std::string& global_out_dir);

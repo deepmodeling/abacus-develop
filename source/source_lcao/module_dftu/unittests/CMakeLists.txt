@@ -40,9 +40,9 @@ if(ENABLE_MPI)
     SOURCES
     test_dftu_nao_folding.cpp
     ../../../source_basis/module_ao/parallel_orbitals.cpp
-    # The test instantiates Parallel_Orbitals (a BlockCyclicDistributionInformation subclass) and links
+    # The test instantiates Parallel_Orbitals (a BlockCyclicDistribution subclass) and links
     # the MPI-built base library, so it must keep __MPI to match the layout of
-    # BlockCyclicDistributionInformation / Parallel_Orbitals across TUs (otherwise ODR/ABI mismatch).
+    # BlockCyclicDistribution / Parallel_Orbitals across TUs (otherwise ODR/ABI mismatch).
     KEEP_FEATURE_DEFINITIONS
     __MPI)
 
@@ -63,7 +63,7 @@ if(ENABLE_MPI)
     test_dftu_nao_fs_k.cpp
     ../../../source_basis/module_ao/parallel_orbitals.cpp
     # The test constructs Parallel_Orbitals normally and links the MPI-built
-    # base library, so it must keep __MPI to match the BlockCyclicDistributionInformation layout.
+    # base library, so it must keep __MPI to match the BlockCyclicDistribution layout.
     KEEP_FEATURE_DEFINITIONS
     __MPI)
 
@@ -73,8 +73,8 @@ if(ENABLE_MPI)
     SOURCES
     test_dftu_nao_fs_accum.cpp
     ../../../source_basis/module_ao/parallel_orbitals.cpp
-    # This test uses BlockCyclicDistributionInformation::set_serial which is a real implementation
-    # in block_cyclic_distribution_information.cpp; keep __MPI so the serial path links correctly.
+    # This test uses BlockCyclicDistribution::set_serial which is a real implementation
+    # in block_cyclic_distribution.cpp; keep __MPI so the serial path links correctly.
     KEEP_FEATURE_DEFINITIONS
     __MPI)
 
@@ -102,8 +102,8 @@ if(ENABLE_MPI)
         ../../../source_estate/module_dm/dmr_full.cpp
         ../../../source_pw/module_pwdft/dftu_base.cpp
         ../../../source_pw/module_pwdft/dftu_base_io.cpp
-        ../../../source_pw/module_pwdft/dftu_base_io_read.cpp
-        ../../../source_pw/module_pwdft/dftu_base_io_write.cpp
+        ../../../source_pw/module_pwdft/dftu_base_read.cpp
+        ../../../source_pw/module_pwdft/dftu_base_write.cpp
         ../../../source_pw/module_pwdft/yukawa_screening.cpp
         ../../../source_estate/occ_matrix.cpp
         ../../../source_estate/occ_mixer.cpp
@@ -156,8 +156,8 @@ if(ENABLE_MPI)
         ../../../source_estate/module_dm/dmr_full.cpp
         ../../../source_pw/module_pwdft/dftu_base.cpp
         ../../../source_pw/module_pwdft/dftu_base_io.cpp
-        ../../../source_pw/module_pwdft/dftu_base_io_read.cpp
-        ../../../source_pw/module_pwdft/dftu_base_io_write.cpp
+        ../../../source_pw/module_pwdft/dftu_base_read.cpp
+        ../../../source_pw/module_pwdft/dftu_base_write.cpp
         ../../../source_pw/module_pwdft/yukawa_screening.cpp
         ../../../source_estate/occ_matrix.cpp
         ../../../source_estate/occ_mixer.cpp

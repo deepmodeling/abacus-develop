@@ -1,6 +1,6 @@
 #include "boundary_fix.h"
 #include "source_base/basis_flattened_indexing.h"
-#include "source_base/block_cyclic_distribution_information.h"
+#include "source_base/block_cyclic_distribution.h"
 #include "source_base/constants.h"
 #include "source_base/libm/libm.h"
 #include "source_base/parallel_cell.h"
@@ -25,7 +25,7 @@ enum class BasisAxis
 };
 
 LocalBasisRange local_basis_range(const BasisFlattenedIndexing& basis,
-                                  const BlockCyclicDistributionInformation& layout,
+                                  const BlockCyclicDistribution& layout,
                                   const int iat,
                                   const BasisAxis axis)
 {
@@ -98,7 +98,7 @@ void reset_matrix_boundary(const UnitCell& ucell,
                            const std::vector<ModuleBase::Vector3<double>>& kvec_d,
                            const ModuleBase::Vector3<double>& cart_At_last,
                            const BasisFlattenedIndexing& basis,
-                           const BlockCyclicDistributionInformation& layout,
+                           const BlockCyclicDistribution& layout,
                            ct::Tensor& hk_last,
                            ct::Tensor& sk_last,
                            psi::Psi<std::complex<double>>* psi_last)
@@ -117,8 +117,8 @@ void reset_matrix_boundary(const UnitCell& ucell,
         static_cast<std::size_t>(hk_last.NumElements()) / static_cast<std::size_t>(nks);
     // Tensor-LAPACK keeps full H/S matrices on rank zero, while psi stays distributed.
     const bool gathered_matrices = len_hs != layout.size();
-    BlockCyclicDistributionInformation full_layout;
-    const BlockCyclicDistributionInformation* matrix_layout = &layout;
+    BlockCyclicDistribution full_layout;
+    const BlockCyclicDistribution* matrix_layout = &layout;
     bool update_matrices = true;
     if (gathered_matrices)
     {

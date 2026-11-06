@@ -9,7 +9,7 @@
 #include <vector>
 
 class BasisFlattenedIndexing;
-class BlockCyclicDistributionInformation;
+class BlockCyclicDistribution;
 
 namespace hamilt
 {
@@ -45,7 +45,7 @@ class Overlap<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
                                      hamilt::HContainer<TR>* hR_in,
                                      hamilt::HContainer<TR>* SR_in,
                                      const BasisFlattenedIndexing& basis,
-                                     const BlockCyclicDistributionInformation& layout,
+                                     const BlockCyclicDistribution& layout,
                                      const UnitCell* ucell_in,
                                      const std::vector<double>& orb_cutoff,
                                      const Grid_Driver* GridD_in,
@@ -81,7 +81,7 @@ class Overlap<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
     hamilt::HContainer<TR>* SR = nullptr;
 
     const BasisFlattenedIndexing& basis_;
-    const BlockCyclicDistributionInformation& layout_;
+    const BlockCyclicDistribution& layout_;
 
     const TwoCenterIntegrator* intor_ = nullptr;
 

@@ -67,7 +67,7 @@ TEST(LR_Util, MatSymDouble)
     std::vector<double> dref(n * n, 0.0);
     LR_Util::matsym(din.data(), n, dref.data());
 
-    BlockCyclicDistributionInformation pmat;
+    BlockCyclicDistribution pmat;
     LR_Util::setup_2d_division(pmat, 1, n, n);
     std::vector<double> din_local(pmat.size(), 0.0);
     for (int i = 0;i < pmat.nrloc();++i)
@@ -99,7 +99,7 @@ TEST(LR_Util, MatSymComplex)
     std::vector<std::complex<double>> dref(n * n, std::complex<double>(0.0, 0.0));
     LR_Util::matsym(din.data(), n, dref.data());
 
-    BlockCyclicDistributionInformation pmat;
+    BlockCyclicDistribution pmat;
     LR_Util::setup_2d_division(pmat, 1, n, n);
     std::vector<std::complex<double>> din_local(pmat.size(), std::complex<double>(0.0, 0.0));
     for (int i = 0;i < pmat.nrloc();++i)

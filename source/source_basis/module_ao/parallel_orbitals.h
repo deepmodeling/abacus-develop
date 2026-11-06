@@ -1,13 +1,13 @@
 #ifndef _PARALLEL_ORBITALS_H_
 #define _PARALLEL_ORBITALS_H_
-#include "source_base/block_cyclic_distribution_information.h"
+#include "source_base/block_cyclic_distribution.h"
 #include <fstream>
 #include <vector>
 
 /// This class packs the information of 2D-block-cyclic for LCAO code:
 /// parallel distribution of basis, wavefunction and matrix.
 ///
-/// R4 (single storage): this class must never add a copy of any BlockCyclicDistributionInformation
+/// R4 (single storage): this class must never add a copy of any BlockCyclicDistribution
 /// state field (nrow/ncol/nloc/nb/dim0/dim1/desc/blacs_ctxt).  The only
 /// authoritative copy lives in the para_2d_ member below; re-deriving the
 /// distribution from a duplicated field would silently desynchronize the
@@ -21,21 +21,21 @@ public:
     /// Access to the block-cyclic distribution information.  The non-const
     /// overload exists only for the two cases a const getter cannot serve:
     /// non-const mutation by setup_2d_division, and test-side descriptor writes.
-    BlockCyclicDistributionInformation& para_2d() { return para_2d_; }
+    BlockCyclicDistribution& para_2d() { return para_2d_; }
 
-    const BlockCyclicDistributionInformation& para_2d() const { return para_2d_; }
+    const BlockCyclicDistribution& para_2d() const { return para_2d_; }
 
     /// Block-cyclic distribution of the wavefunction (nbasis x nbands).  This is
     /// a distinct layout from the square Hamiltonian distribution, shared with
     /// the same process grid; it is a temporary adapter seam, not a duplicate of
     /// para_2d_.
-    const BlockCyclicDistributionInformation& wfc_layout() const { return wfc_layout_; }
+    const BlockCyclicDistribution& wfc_layout() const { return wfc_layout_; }
 
     /// Block-cyclic layout of the MO representation: S and H represented in the MOs
     /// defined by the DFT reference determinant, i.e. Psi^dagger * S * Psi and
     /// Psi^dagger * H * Psi.  The square global extent of this layout follows from
     /// the number nmo of MOs.  Shares the process grid of para_2d_.
-    const BlockCyclicDistributionInformation& mo_repr_layout() const { return mo_repr_layout_; }
+    const BlockCyclicDistribution& mo_repr_layout() const { return mo_repr_layout_; }
 
     /// local size of bands, used for 2d wavefunction
     /// must divided on dim1 because of elpa interface
@@ -121,17 +121,17 @@ public:
 private:
     /// Block-cyclic distribution of the Hamiltonian matrix.  Single source of
     /// truth for nrow/ncol/nloc/nb/dim0/dim1/desc/blacs_ctxt (R4).
-    BlockCyclicDistributionInformation para_2d_;
+    BlockCyclicDistribution para_2d_;
 
     /// Block-cyclic distribution of the wavefunction (nbasis x nbands), sharing
     /// the process grid of para_2d_.  Temporary adapter seam for runtime
     /// consumers; not a duplicate of the Hamiltonian distribution.
-    BlockCyclicDistributionInformation wfc_layout_;
+    BlockCyclicDistribution wfc_layout_;
 
     /// Block-cyclic layout of S and H represented in the MOs defined by the DFT
     /// reference determinant.  Its square global extent follows from the number nmo
     /// of MOs; it shares the process grid of para_2d_.
-    BlockCyclicDistributionInformation mo_repr_layout_;
+    BlockCyclicDistribution mo_repr_layout_;
 
 };
 #endif

@@ -27,12 +27,12 @@ namespace elecstate
     std::vector<std::vector<std::complex<double>>> restore_dm(const K_Vectors& kv,
         const std::vector<std::vector<std::complex<double>>>& dm_k_ibz,
         const ModuleSymmetry::Symmetry_rotation& symrot,
-        const BlockCyclicDistributionInformation& pv);
+        const BlockCyclicDistribution& pv);
     /// do nothing if gamma_only
     std::vector<std::vector<double>> restore_dm(const K_Vectors& kv,
         const std::vector<std::vector<double>>& dm_k_ibz,
         const ModuleSymmetry::Symmetry_rotation& symrot,
-        const BlockCyclicDistributionInformation& pv);
+        const BlockCyclicDistribution& pv);
 
 }
 
@@ -68,10 +68,12 @@ public:
 
     // Processes in ESolver_KS_LCAO
     /// @brief in init: Exx_LRI::init()
-    void init(const MPI_Comm &mpi_comm,
-              const UnitCell &ucell,
-              const K_Vectors &kv,
-              const LCAO_Orbitals& orb);
+    void init(
+        const MPI_Comm &mpi_comm,
+        const UnitCell &ucell,
+        const K_Vectors &kv,
+        const LCAO_Orbitals &orb,
+        const bool use_gpu);
 
     /// @brief: in cal_exx_ions: Exx_LRI::cal_exx_ions()
     void cal_exx_ions(const UnitCell& ucell, const bool write_cv = false);
@@ -90,14 +92,21 @@ public:
 
     // Processes in ESolver_KS_LCAO
     /// Initialize EXX symmetry before the first ionic step.
-    void exx_before_all_runners(const K_Vectors& kv, const UnitCell& ucell, const BlockCyclicDistributionInformation& pv);
+    void exx_before_all_runners(const K_Vectors& kv, const UnitCell& ucell, const BlockCyclicDistribution& pv);
 
     /// Discard old atom mappings, lattice returns and rotation caches before rebuilding.
-    void refresh_symmetry(const K_Vectors& kv, const UnitCell& ucell, const BlockCyclicDistributionInformation& pv);
+    void refresh_symmetry(const K_Vectors& kv, const UnitCell& ucell, const BlockCyclicDistribution& pv);
 
     /// @brief in beforescf: set xc type, opt_orb, do DM mixing
-    void exx_beforescf(const int istep, const K_Vectors& kv, const Charge_Mixing& chgmix, const UnitCell& ucell, const LCAO_Orbitals& orb,
-                       const BlockCyclicDistributionInformation& pv, const bool update_symmetry);
+    void exx_beforescf(
+        const int istep,
+        const K_Vectors &kv,
+        const Charge_Mixing &chgmix,
+        const UnitCell &ucell,
+        const LCAO_Orbitals &orb,
+        const BlockCyclicDistribution &pv,
+        const bool update_symmetry,
+        const bool use_gpu);
 
     /// @brief in eachiterinit:  do DM mixing and calculate Hexx when entering 2nd SCF
     void exx_eachiterinit(const int istep,

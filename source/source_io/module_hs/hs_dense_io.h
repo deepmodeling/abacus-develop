@@ -3,7 +3,7 @@
 
 #include <string>
 
-#include "source_base/block_cyclic_distribution_information.h"
+#include "source_base/block_cyclic_distribution.h"
 
 // mohan note: this file holds the dense square-matrix writer
 // (formerly save_mat in write_hs.h / write_hs.hpp).
@@ -33,7 +33,7 @@ void save_mat(const int istep,
               const bool tri,
               const bool app,
               const std::string& file_name,
-              const BlockCyclicDistributionInformation& pv,
+              const BlockCyclicDistribution& pv,
               const int drank,
               const std::string& ks_solver,
               const bool reduce = true);

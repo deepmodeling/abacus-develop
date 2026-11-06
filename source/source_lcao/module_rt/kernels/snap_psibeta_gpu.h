@@ -16,7 +16,7 @@
 #endif
 
 class BasisFlattenedIndexing;
-class BlockCyclicDistributionInformation;
+class BlockCyclicDistribution;
 
 namespace module_rt
 {
@@ -57,7 +57,7 @@ void snap_psibeta_atom_batch_gpu(
     const AdjacentAtomInfo& adjs,
     const UnitCell* ucell,
     const BasisFlattenedIndexing& basis,
-    const BlockCyclicDistributionInformation& layout,
+    const BlockCyclicDistribution& layout,
     const int npol,
     const int nlm_dim,
     std::vector<std::vector<std::unordered_map<int, std::vector<std::complex<double>>>>>& nlm_tot);

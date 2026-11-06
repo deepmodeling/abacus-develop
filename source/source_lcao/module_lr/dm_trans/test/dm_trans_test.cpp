@@ -127,7 +127,7 @@ TEST_F(DMTransTest, DoubleParallel)
     {
         // c: nao*nbands in para2d, nbands*nao in psi  (row-para and constructed: nao)
         // X: nvirt*nocc in para2d, nocc*nvirt in psi (row-para and constructed: nvirt)
-        BlockCyclicDistributionInformation px_vo, px_oo, px_vv;
+        BlockCyclicDistribution px_vo, px_oo, px_vv;
         LR_Util::setup_2d_division(px_vo, s.nb, s.nvirt, s.nocc);
         LR_Util::setup_2d_division(px_oo, s.nb, s.nocc, s.nocc, px_vo.ictxt());
         LR_Util::setup_2d_division(px_vv, s.nb, s.nvirt, s.nvirt, px_vo.ictxt());
@@ -139,12 +139,12 @@ TEST_F(DMTransTest, DoubleParallel)
         psi::Psi<double> X_vv(s.nks, nstate, px_vv.size(), px_vv.size(), false);
         set_rand(X_vv.get_pointer(), nstate * s.nks * px_vv.size());
 
-        BlockCyclicDistributionInformation pc;
+        BlockCyclicDistribution pc;
         LR_Util::setup_2d_division(pc, s.nb, s.naos, s.nocc + s.nvirt, px_vo.ictxt());
 
         std::vector<int> temp_2(s.nks, pc.nrloc());
         psi::Psi<double> c(s.nks, pc.ncloc(), pc.nrloc(), temp_2, true);
-        BlockCyclicDistributionInformation pmat;
+        BlockCyclicDistribution pmat;
         LR_Util::setup_2d_division(pmat, s.nb, s.naos, s.naos, px_vo.ictxt());
 
         EXPECT_EQ(px_vo.nrproc(), pc.nrproc());
@@ -157,7 +157,7 @@ TEST_F(DMTransTest, DoubleParallel)
         psi::Psi<double> X_full_oo(s.nks, nstate, s.nocc * s.nocc, s.nocc * s.nocc, false);        // allocate X_full
         psi::Psi<double> X_full_vv(s.nks, nstate, s.nvirt * s.nvirt, s.nvirt * s.nvirt, false);        // allocate X_full
 
-        auto gather = [&](const psi::Psi<double>& X, psi::Psi<double>& X_full, const BlockCyclicDistributionInformation& px, const int dim1, const int dim2)
+        auto gather = [&](const psi::Psi<double>& X, psi::Psi<double>& X_full, const BlockCyclicDistribution& px, const int dim1, const int dim2)
             {
                 X_full.zero_out();
                 for (int istate = 0;istate < nstate;++istate)
@@ -192,7 +192,7 @@ TEST_F(DMTransTest, DoubleParallel)
                 LR_Util::gather_2d_to_full(pc, c.get_pointer(), c_full.get_pointer(), false, s.naos, s.nocc + s.nvirt);
             }
 
-            auto test = [&](psi::Psi<double>& X, psi::Psi<double>& X_full, const BlockCyclicDistributionInformation& px, const LR_Util::MO_TYPE type)
+            auto test = [&](psi::Psi<double>& X, psi::Psi<double>& X_full, const BlockCyclicDistribution& px, const LR_Util::MO_TYPE type)
                 {
                     X.fix_b(istate);
                     X_full.fix_b(istate);
@@ -221,7 +221,7 @@ TEST_F(DMTransTest, ComplexParallel)
     {
         // c: nao*nbands in para2d, nbands*nao in psi  (row-para and constructed: nao)
         // X: nvirt*nocc in para2d, nocc*nvirt in psi (row-para and constructed: nvirt)
-        BlockCyclicDistributionInformation px_vo, px_oo, px_vv;
+        BlockCyclicDistribution px_vo, px_oo, px_vv;
         LR_Util::setup_2d_division(px_vo, s.nb, s.nvirt, s.nocc);
         LR_Util::setup_2d_division(px_oo, s.nb, s.nocc, s.nocc, px_vo.ictxt());
         LR_Util::setup_2d_division(px_vv, s.nb, s.nvirt, s.nvirt, px_vo.ictxt());
@@ -233,19 +233,19 @@ TEST_F(DMTransTest, ComplexParallel)
         psi::Psi<std::complex<double>> X_vv(s.nks, nstate, px_vv.size(), px_vv.size(), false);
         set_rand(X_vv.get_pointer(), nstate * s.nks * px_vv.size());
 
-        BlockCyclicDistributionInformation pc;
+        BlockCyclicDistribution pc;
         LR_Util::setup_2d_division(pc, s.nb, s.naos, s.nocc + s.nvirt, px_vo.ictxt());
 
         std::vector<int> temp(s.nks, pc.nrloc());
         psi::Psi<std::complex<double>> c(s.nks, pc.ncloc(), pc.nrloc(), temp, true);
-        BlockCyclicDistributionInformation pmat;
+        BlockCyclicDistribution pmat;
         LR_Util::setup_2d_division(pmat, s.nb, s.naos, s.naos, px_vo.ictxt());
 
         psi::Psi<std::complex<double>> X_full_vo(s.nks, nstate, s.nocc * s.nvirt, s.nocc * s.nvirt, false);        // allocate X_full
         psi::Psi<std::complex<double>> X_full_oo(s.nks, nstate, s.nocc * s.nocc, s.nocc * s.nvirt, false);        // allocate X_full
         psi::Psi<std::complex<double>> X_full_vv(s.nks, nstate, s.nvirt * s.nvirt, s.nocc * s.nvirt, false);        // allocate X_full
 
-        auto gather = [&](const psi::Psi<std::complex<double>>& X, psi::Psi<std::complex<double>>& X_full, const BlockCyclicDistributionInformation& px, const int dim1, const int dim2)
+        auto gather = [&](const psi::Psi<std::complex<double>>& X, psi::Psi<std::complex<double>>& X_full, const BlockCyclicDistribution& px, const int dim1, const int dim2)
             {
                 X_full.zero_out();
                 for (int istate = 0;istate < nstate;++istate)
@@ -279,7 +279,7 @@ TEST_F(DMTransTest, ComplexParallel)
                 LR_Util::gather_2d_to_full(pc, c.get_pointer(), c_full.get_pointer(), false, s.naos, s.nocc + s.nvirt);
             }
 
-            auto test = [&](psi::Psi<std::complex<double>>& X, psi::Psi<std::complex<double>>& X_full, const BlockCyclicDistributionInformation& px, const LR_Util::MO_TYPE type)
+            auto test = [&](psi::Psi<std::complex<double>>& X, psi::Psi<std::complex<double>>& X_full, const BlockCyclicDistribution& px, const LR_Util::MO_TYPE type)
                 {
                     X.fix_b(istate);
                     X_full.fix_b(istate);

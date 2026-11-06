@@ -1,7 +1,7 @@
 #ifndef GATHER_MAT_H
 #define GATHER_MAT_H
 
-#include "source_base/block_cyclic_distribution_information.h"
+#include "source_base/block_cyclic_distribution.h"
 #include "source_base/module_external/scalapack_connector.h" // Cpxgemr2d
 #include "source_hamilt/matrixblock.h"
 
@@ -68,7 +68,7 @@ template <typename T>
 void gatherPsi(const int myid,
                const int root_proc,
                T* psi_l,
-               const BlockCyclicDistributionInformation& wfc_layout,
+               const BlockCyclicDistribution& wfc_layout,
                module_rt::Matrix_g<T>& psi_g)
 {
     const int* desc_psi = wfc_layout.desc(); // Obtain the descriptor from the wavefunction layout
@@ -95,7 +95,7 @@ void gatherPsi(const int myid,
 }
 
 template <typename T>
-void distributePsi(const BlockCyclicDistributionInformation& wfc_layout, T* psi_l, const module_rt::Matrix_g<T>& psi_g)
+void distributePsi(const BlockCyclicDistribution& wfc_layout, T* psi_l, const module_rt::Matrix_g<T>& psi_g)
 {
     const int* desc_psi = wfc_layout.desc(); // Obtain the descriptor from the wavefunction layout
     int ctxt = desc_psi[1];                  // BLACS context

@@ -17,7 +17,7 @@
 #include <utility>
 #include <vector>
 
-static_assert(!std::is_convertible<const Parallel_Orbitals&, const BlockCyclicDistributionInformation&>::value,
+static_assert(!std::is_convertible<const Parallel_Orbitals&, const BlockCyclicDistribution&>::value,
               "Parallel_Orbitals must expose the distribution only through para_2d()");
 static_assert(!std::is_copy_constructible<Parallel_Orbitals>::value,
               "Parallel_Orbitals must not be copy constructible");
@@ -30,16 +30,16 @@ static_assert(!std::is_move_assignable<Parallel_Orbitals>::value,
 static_assert(std::is_default_constructible<Parallel_Orbitals>::value,
               "Parallel_Orbitals must be default constructible");
 
-static_assert(!std::is_copy_constructible<BlockCyclicDistributionInformation>::value,
-              "BlockCyclicDistributionInformation must not be copy constructible");
-static_assert(!std::is_copy_assignable<BlockCyclicDistributionInformation>::value,
-              "BlockCyclicDistributionInformation must not be copy assignable");
-static_assert(std::is_move_constructible<BlockCyclicDistributionInformation>::value,
-              "BlockCyclicDistributionInformation must be move constructible");
-static_assert(std::is_move_assignable<BlockCyclicDistributionInformation>::value,
-              "BlockCyclicDistributionInformation must be move assignable");
-static_assert(std::is_default_constructible<BlockCyclicDistributionInformation>::value,
-              "BlockCyclicDistributionInformation must be default constructible");
+static_assert(!std::is_copy_constructible<BlockCyclicDistribution>::value,
+              "BlockCyclicDistribution must not be copy constructible");
+static_assert(!std::is_copy_assignable<BlockCyclicDistribution>::value,
+              "BlockCyclicDistribution must not be copy assignable");
+static_assert(std::is_move_constructible<BlockCyclicDistribution>::value,
+              "BlockCyclicDistribution must be move constructible");
+static_assert(std::is_move_assignable<BlockCyclicDistribution>::value,
+              "BlockCyclicDistribution must be move assignable");
+static_assert(std::is_default_constructible<BlockCyclicDistribution>::value,
+              "BlockCyclicDistribution must be default constructible");
 
 class ParallelOrbitalsCompositionTest : public testing::Test
 {
@@ -141,7 +141,7 @@ TEST_F(ParallelOrbitalsCompositionTest, GetterEqualsPara2d)
 #else
     po.para_2d().set_serial(mg, ng);
 #endif
-    const BlockCyclicDistributionInformation& p2d = po.para_2d();
+    const BlockCyclicDistribution& p2d = po.para_2d();
     EXPECT_GT(p2d.nrloc(), 0);
     EXPECT_GT(p2d.ncloc(), 0);
     EXPECT_EQ(p2d.size(),
@@ -231,14 +231,14 @@ TEST_F(ParallelOrbitalsCompositionTest, DerivedLayerSyncsAfterSetSerial)
 
 TEST_F(ParallelOrbitalsCompositionTest, ValueSemanticsSmoke)
 {
-    BlockCyclicDistributionInformation source;
+    BlockCyclicDistribution source;
     source.set_serial(4, 4);
     EXPECT_EQ(source.nrloc(), 4);
 
-    BlockCyclicDistributionInformation moved(std::move(source));
+    BlockCyclicDistribution moved(std::move(source));
     EXPECT_EQ(moved.nrloc(), 4);
 
-    BlockCyclicDistributionInformation assigned;
+    BlockCyclicDistribution assigned;
     assigned = std::move(moved);
     EXPECT_EQ(assigned.nrloc(), 4);
 }

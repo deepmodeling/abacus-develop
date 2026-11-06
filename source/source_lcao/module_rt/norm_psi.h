@@ -11,7 +11,7 @@
 
 #include <complex>
 
-class BlockCyclicDistributionInformation;
+class BlockCyclicDistribution;
 
 namespace module_rt
 {
@@ -29,9 +29,9 @@ namespace module_rt
  * @param[in] print_matirx print internal matrix or not
  * @param[out] psi_k psi of this step after normalization
  */
-void norm_psi(const BlockCyclicDistributionInformation& matrix_layout,
-              const BlockCyclicDistributionInformation& wfc_layout,
-              const BlockCyclicDistributionInformation& mo_repr_layout,
+void norm_psi(const BlockCyclicDistribution& matrix_layout,
+              const BlockCyclicDistribution& wfc_layout,
+              const BlockCyclicDistribution& mo_repr_layout,
               const int nband,
               const int nlocal,
               const std::complex<double>* Stmp,
@@ -39,9 +39,9 @@ void norm_psi(const BlockCyclicDistributionInformation& matrix_layout,
               std::ofstream& ofs_running,
               const int print_matrix);
 
-void norm_psi_tensor(const BlockCyclicDistributionInformation& matrix_layout,
-                     const BlockCyclicDistributionInformation& wfc_layout,
-                     const BlockCyclicDistributionInformation& mo_repr_layout,
+void norm_psi_tensor(const BlockCyclicDistribution& matrix_layout,
+                     const BlockCyclicDistribution& wfc_layout,
+                     const BlockCyclicDistribution& mo_repr_layout,
                      const int nband,
                      const int nlocal,
                      const ct::Tensor& Stmp,

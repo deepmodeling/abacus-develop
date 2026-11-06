@@ -14,7 +14,7 @@
 #include <vector>
 
 class Grid_Driver;
-class BlockCyclicDistributionInformation;
+class BlockCyclicDistribution;
 
 /**
  * @brief Output the position-operator matrix <phi_mu | r_hat | phi_nu>
@@ -28,7 +28,7 @@ class PosOpWriter
   public:
     PosOpWriter(const PosOpBasis& basis,
                 const PosOpCalc& calc,
-                const BlockCyclicDistributionInformation& layout);
+                const BlockCyclicDistribution& layout);
 
     void out_lat_r(const UnitCell& ucell,
                    const Grid_Driver& gd,
@@ -37,7 +37,7 @@ class PosOpWriter
                    const std::string& global_out_dir,
                    const std::string& global_matrix_dir,
                    const std::string& calculation,
-                   bool out_app_flag,
+                   int out_app_flag,
                    int nlocal,
                    int npol,
                    double sparse_threshold,
@@ -47,7 +47,7 @@ class PosOpWriter
   private:
     const PosOpBasis& basis_;
     const PosOpCalc& calc_;
-    const BlockCyclicDistributionInformation& layout_;
+    const BlockCyclicDistribution& layout_;
 };
 
 #endif // POS_OP_WRITER_H

@@ -1,7 +1,7 @@
 #include "source_lcao/module_rt/boundary_fix.h"
 
 #include "source_base/basis_flattened_indexing.h"
-#include "source_base/block_cyclic_distribution_information.h"
+#include "source_base/block_cyclic_distribution.h"
 #include "source_base/parallel_common.h"
 #include "source_cell/unitcell.h"
 
@@ -40,7 +40,7 @@ TEST(BoundaryFixTest, ApplyAtomPhaseFromFlattenedIndexing)
 
     const std::vector<int> atom_types = {0, 0};
     const BasisFlattenedIndexing basis(single_orbital_hierarchy(), atom_types, 1);
-    BlockCyclicDistributionInformation layout;
+    BlockCyclicDistribution layout;
 #ifdef __MPI
     const int process_count = Parallel_Common::comm_size(MPI_COMM_WORLD);
     if (process_count == 1)
@@ -136,7 +136,7 @@ TEST(BoundaryFixTest, NoSavedStateIsNoOp)
 
     const std::vector<int> atom_types = {0};
     const BasisFlattenedIndexing basis(single_orbital_hierarchy(), atom_types, 1);
-    BlockCyclicDistributionInformation layout;
+    BlockCyclicDistribution layout;
     layout.set_serial(1, 1);
 
     ct::Tensor hamilt_last(ct::DataType::DT_COMPLEX_DOUBLE);

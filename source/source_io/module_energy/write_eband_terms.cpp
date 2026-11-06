@@ -1,16 +1,18 @@
 #include "write_eband_terms.h"
 
-#include "source_io/module_hs/vxc_op_mat.h"
+#include "source_io/module_hs/vxc_op_tools.h"
+#include "source_io/module_output/provenance_header.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_lcao/module_operator_lcao/ekinetic.h"
 #include "source_lcao/module_operator_lcao/nonlocal.h"
+#include "source_lcao/module_operator_lcao/veff_lcao.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 
+#include "source_base/constants.h"
 #include "source_psi/psi.h"
 #include "source_cell/unitcell.h"
 #include "source_cell/klist.h"
 #include "source_estate/module_pot/potential_new.h"
-#include "source_hamilt/module_xc/exx_info.h"
 #include "source_basis/module_nao/two_center_bundle.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_basis/module_ao/elem_basis_idx_orb.h"
@@ -20,16 +22,16 @@
 #include "source_hamilt/module_surchem/surchem.h"
 #include "source_basis/module_pw/pw_basis.h"
 
-#ifdef __EXX
-#include "source_lcao/module_operator_lcao/op_exx_lcao.h"
-#endif
+#include <string>
 
 namespace ModuleIO
 {
 template <typename TK, typename TR>
 void write_eband_terms(const int nspin,
+                       const int istep,
+                       const double etot,
+                       const int my_rank,
                        const int nbasis,
-                       const int drank,
                        const Parallel_Orbitals* pv,
                        const psi::Psi<TK>& psi,
                        const UnitCell& ucell,
@@ -56,10 +58,12 @@ void write_eband_terms(const int nspin,
         // 0. prepare
         const int& nbands = wg.nc;
         const int nspin0 = (nspin == 2) ? 2 : 1;
+        const double etot_eV = etot * ModuleBase::Ry_to_eV;
+        const std::string time_stamp = local_timestamp();
         double etxc = 0.0;
         double vtxc = 0.0;
 
-        BlockCyclicDistributionInformation p2d;
+        BlockCyclicDistribution p2d;
 
         set_para2d_MO(*pv, nbands, p2d);
 
@@ -69,6 +73,20 @@ void write_eband_terms(const int nspin,
             {
                 hR.fix_gamma();
             }
+        };
+
+        // Only rank 0 writes; the orbital energies above are reduced on all ranks.
+        auto write_term = [&](const std::vector<std::vector<double>>& e_orb,
+                              const std::string& out_name,
+                              const std::string& term_symbol)
+        {
+            if (my_rank != 0)
+            {
+                return;
+            }
+            const std::string header = build_eband_header(istep, etot_eV, term_symbol, time_stamp);
+            const std::string& out_dir = PARAM.globalv.global_out_dir;
+            write_orb_energy(kv, nspin0, nbands, e_orb, out_name, header, out_dir);
         };
 
         auto all_band_energy = [&wg](const int ik, const std::vector<double>& e_orb)->double
@@ -116,7 +134,7 @@ void write_eband_terms(const int nspin,
                     cVc(kinetic_k_ao.get_hk(), &psi(ik, 0, 0), nbasis, nbands, *pv, p2d), p2d));
             }
 
-            write_orb_energy(kv, nspin0, nbands, e_orb_kinetic, "kinetic", "", PARAM.globalv.global_out_dir);
+            write_term(e_orb_kinetic, "eband_kin.txt", "T");
         }
 
         // 2. pp: local
@@ -148,7 +166,7 @@ void write_eband_terms(const int nspin,
                 e_orb_pp_local.emplace_back(orbital_energy(ik, nbands,
                     cVc(v_pp_local_k_ao.get_hk(), &psi(ik, 0, 0), nbasis, nbands, *pv, p2d), p2d));
             }
-            write_orb_energy(kv, nspin0, nbands, e_orb_pp_local, "vpp_local", "", PARAM.globalv.global_out_dir);
+            write_term(e_orb_pp_local, "eband_vl.txt", "V_loc");
         }
 
         // 3. pp: nonlocal
@@ -168,7 +186,7 @@ void write_eband_terms(const int nspin,
                 e_orb_pp_nonlocal.emplace_back(orbital_energy(ik, nbands,
                     cVc(v_pp_nonlocal_k_ao.get_hk(), &psi(ik, 0, 0), nbasis, nbands, *pv, p2d), p2d));
             }
-            write_orb_energy(kv, nspin0, nbands, e_orb_pp_nonlocal, "vpp_nonlocal", "", PARAM.globalv.global_out_dir);
+            write_term(e_orb_pp_nonlocal, "eband_vnl.txt", "V_nonlocal");
         }
 
         // 4. hartree
@@ -201,48 +219,16 @@ void write_eband_terms(const int nspin,
                     cVc(v_hartree_k_ao.get_hk(), &psi(ik, 0, 0), nbasis, nbands, *pv, p2d), p2d));
             }
             for (auto& op : v_hartree_op) { delete op; }
-            write_orb_energy(kv, nspin0, nbands, e_orb_hartree, "vhartree", "", PARAM.globalv.global_out_dir);
+            write_term(e_orb_hartree, "eband_hart.txt", "V_H");
         }
-
-        // 5. xc (including exx)
-        if (!PARAM.inp.out_mat_xc)  // avoid duplicate output
-        {
-            bool cal_exx = exx_info.info_global.cal_exx;
-            write_Vxc<TK, TR>(nspin,
-                              nbasis,
-                              drank,
-                              pv,
-                              psi,
-                              ucell,
-                              sf,
-                              solvent,
-                              rho_basis,
-                              rhod_basis,
-                              vloc,
-                              chg,
-                              kv,
-                              orb_cutoff,
-                              wg,
-                              gd,
-                              PARAM.inp.dft_plus_u,
-                              PARAM.globalv.gamma_only_local,
-                              PARAM.globalv.global_out_dir,
-                              PARAM.inp.out_ndigits,
-                              PARAM.inp.ks_solver,
-                              cal_exx,
-                              exx_info
-#ifdef __EXX
-                              ,
-                              Hexxd,
-                              Hexxc
-#endif
-            );
-        }
+        // NOTE: the XC term (eband_vxc.txt etc.) is written by write_Vxc from
+        // ctrl_runner_lcao.cpp for both out_mat_xc and out_eband,
+        // so it is intentionally not handled here.
     }
 
 // Explicit template instantiations
 template void write_eband_terms<double, double>(
-    const int, const int, const int, const Parallel_Orbitals*, const psi::Psi<double>&,
+    const int, const int, const double, const int, const int, const Parallel_Orbitals*, const psi::Psi<double>&,
     const UnitCell&, Structure_Factor&, surchem&, const ModulePW::PW_Basis&, const ModulePW::PW_Basis&,
     const ModuleBase::matrix&, const Charge&, const K_Vectors&, const ModuleBase::matrix&, Grid_Driver&,
     const std::vector<double>&, const LCAO_Orbitals&, const TwoCenterBundle&, const Exx_Info&
@@ -253,7 +239,7 @@ template void write_eband_terms<double, double>(
 );
 
 template void write_eband_terms<std::complex<double>, double>(
-    const int, const int, const int, const Parallel_Orbitals*, const psi::Psi<std::complex<double>>&,
+    const int, const int, const double, const int, const int, const Parallel_Orbitals*, const psi::Psi<std::complex<double>>&,
     const UnitCell&, Structure_Factor&, surchem&, const ModulePW::PW_Basis&, const ModulePW::PW_Basis&,
     const ModuleBase::matrix&, const Charge&, const K_Vectors&, const ModuleBase::matrix&, Grid_Driver&,
     const std::vector<double>&, const LCAO_Orbitals&, const TwoCenterBundle&, const Exx_Info&
@@ -264,7 +250,7 @@ template void write_eband_terms<std::complex<double>, double>(
 );
 
 template void write_eband_terms<std::complex<double>, std::complex<double>>(
-    const int, const int, const int, const Parallel_Orbitals*, const psi::Psi<std::complex<double>>&,
+    const int, const int, const double, const int, const int, const Parallel_Orbitals*, const psi::Psi<std::complex<double>>&,
     const UnitCell&, Structure_Factor&, surchem&, const ModulePW::PW_Basis&, const ModulePW::PW_Basis&,
     const ModuleBase::matrix&, const Charge&, const K_Vectors&, const ModuleBase::matrix&, Grid_Driver&,
     const std::vector<double>&, const LCAO_Orbitals&, const TwoCenterBundle&, const Exx_Info&

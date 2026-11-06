@@ -375,7 +375,8 @@ namespace LR_Util
         {
             DMk_trans_pointer[ik] = &dm.get_dmk_vec()[ik];
         }
-        return RI_2D_Comm::split_m2D_ktoR<TK>(ucell, kv, DMk_trans_pointer, pmat, /*nspin=*/1)[0];
+        return RI_2D_Comm::split_m2D_ktoR<TK>(
+            ucell, kv, DMk_trans_pointer, pmat.para_2d(), /*nspin=*/1)[0];
     }
     // return SPIN_multiple*D[0] as implemented in split_m2D_ktoR
     // SPIN_multiple = map({ {1,0.5}, {2,1}, {4,1} }).at(nspin)
@@ -389,7 +390,8 @@ namespace LR_Util
         std::vector<const std::vector<TK>*> DMk_trans_pointer(nks);
         for (int iks = 0;iks < dm.get_DMK_nks();++iks)
             DMk_trans_pointer[iks] = &dm.get_dmk_vec()[iks];
-        return RI_2D_Comm::split_m2D_ktoR<TK>(ucell, kv, DMk_trans_pointer, pmat, nspin);
+        return RI_2D_Comm::split_m2D_ktoR<TK>(
+            ucell, kv, DMk_trans_pointer, pmat.para_2d(), nspin);
     }
 #endif
 }

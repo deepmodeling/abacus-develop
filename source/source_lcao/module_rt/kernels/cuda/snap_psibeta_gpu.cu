@@ -15,7 +15,7 @@
 #include "snap_psibeta_kernel.cuh"
 #include "source_base/atom_basis_view.h"
 #include "source_base/basis_flattened_indexing.h"
-#include "source_base/block_cyclic_distribution_information.h"
+#include "source_base/block_cyclic_distribution.h"
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"
 
@@ -120,7 +120,7 @@ void snap_psibeta_atom_batch_gpu(
     const AdjacentAtomInfo& adjs,
     const UnitCell* ucell,
     const BasisFlattenedIndexing& basis,
-    const BlockCyclicDistributionInformation& layout,
+    const BlockCyclicDistribution& layout,
     const int npol,
     const int nlm_dim,
     std::vector<std::vector<std::unordered_map<int, std::vector<std::complex<double>>>>>& nlm_tot)

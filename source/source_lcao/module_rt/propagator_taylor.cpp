@@ -6,7 +6,7 @@
 #include "source_io/module_parameter/parameter.h"
 #include "propagator.h"
 
-#include "source_base/block_cyclic_distribution_information.h"
+#include "source_base/block_cyclic_distribution.h"
 #include "source_base/global_function.h"
 
 #include <complex>

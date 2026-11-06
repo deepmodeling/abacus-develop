@@ -1,7 +1,7 @@
 #include "evolve_elec.h"
 
 #include "evolve_psi.h"
-#include "source_base/block_cyclic_distribution_information.h"
+#include "source_base/block_cyclic_distribution.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 
@@ -22,9 +22,9 @@ void Evolve_elec<Device>::solve_psi(const std::vector<EijOutputInfo>& eij_output
                                     const int nlocal,
                                     const int& nks,
                                     hamilt::Hamilt<std::complex<double>>* phm,
-                                    const BlockCyclicDistributionInformation& matrix_layout,
-                                    const BlockCyclicDistributionInformation& wfc_layout,
-                                    const BlockCyclicDistributionInformation& mo_repr_layout,
+                                    const BlockCyclicDistribution& matrix_layout,
+                                    const BlockCyclicDistribution& wfc_layout,
+                                    const BlockCyclicDistribution& mo_repr_layout,
                                     psi::Psi<std::complex<double>>* psi,
                                     psi::Psi<std::complex<double>>* psi_laststep,
                                     ct::Tensor& Hk_laststep,

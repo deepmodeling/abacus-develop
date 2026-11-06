@@ -1,6 +1,6 @@
 #include "band_energy.h"
 
-#include "source_base/block_cyclic_distribution_information.h"
+#include "source_base/block_cyclic_distribution.h"
 #include "source_base/global_function.h"
 #include "source_base/module_container/ATen/kernels/blas.h"
 #include "source_base/module_device/memory_op.h"
@@ -21,7 +21,7 @@ namespace module_rt
 #ifdef __MPI
 namespace
 {
-void gather_mo_hamilt(const BlockCyclicDistributionInformation& mo_repr_layout,
+void gather_mo_hamilt(const BlockCyclicDistribution& mo_repr_layout,
                                   const int nband,
                                   std::complex<double>* mo_hamilt,
                                   const EijOutputInfo& output_info,
@@ -50,9 +50,9 @@ inline int globalIndex(int localindex, int nblk, int nprocs, int myproc)
     return gIndex;
 }
 
-void compute_ekb(const BlockCyclicDistributionInformation& matrix_layout,
-                 const BlockCyclicDistributionInformation& wfc_layout,
-                 const BlockCyclicDistributionInformation& mo_repr_layout,
+void compute_ekb(const BlockCyclicDistribution& matrix_layout,
+                 const BlockCyclicDistribution& wfc_layout,
+                 const BlockCyclicDistribution& mo_repr_layout,
                  const int nband,
                  const int nlocal,
                  const std::complex<double>* Htmp,
@@ -126,9 +126,9 @@ void compute_ekb(const BlockCyclicDistributionInformation& matrix_layout,
     delete[] eii;
 }
 
-void compute_ekb_tensor(const BlockCyclicDistributionInformation& matrix_layout,
-                        const BlockCyclicDistributionInformation& wfc_layout,
-                        const BlockCyclicDistributionInformation& mo_repr_layout,
+void compute_ekb_tensor(const BlockCyclicDistribution& matrix_layout,
+                        const BlockCyclicDistribution& wfc_layout,
+                        const BlockCyclicDistribution& mo_repr_layout,
                         const int nband,
                         const int nlocal,
                         const ct::Tensor& Htmp,

@@ -130,7 +130,7 @@ Diag_CusolverMP_gvd<inputT>::Diag_CusolverMP_gvd(const MPI_Comm mpi_comm,
     // So, when we use cusolvermp, we must ensure that the number of processes is equal to the number of GPUs.
     // In a sense, the MPI usage strategy of ABACUS must be subject to the cusolvermp.
     // Use ROW_MAJOR to match BLACS grid initialization (order='R' in
-    // block_cyclic_distribution_information.cpp)
+    // block_cyclic_distribution.cpp)
     CHECK_CUSOLVER(cusolverMpCreateDeviceGrid(cusolverMpHandle,
                                                    &this->grid,
 #ifdef __USE_CAL

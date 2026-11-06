@@ -171,7 +171,7 @@ void RDMFT<TK, TR>::init(Parallel_Orbitals& ParaV_in,
             this->symrot_exx.cal_Ms(*kv, ucell->symm, ucell->atoms,
                     ucell->latvec, ucell->lmax,
                     ucell->nat, ucell->iat2it, ucell->iat2ia,
-                    *ParaV, nspin);
+                    ParaV->para_2d(), nspin);
         }
 
         if (this->exx_info_->info_ri.real_number)

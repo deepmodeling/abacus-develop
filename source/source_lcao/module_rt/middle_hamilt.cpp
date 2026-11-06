@@ -1,6 +1,6 @@
 #include "middle_hamilt.h"
 
-#include "source_base/block_cyclic_distribution_information.h"
+#include "source_base/block_cyclic_distribution.h"
 #include "source_base/global_variable.h"
 #include "source_base/module_container/ATen/kernels/blas.h"
 #include "source_base/module_device/memory_op.h" // memory operations
@@ -15,7 +15,7 @@ namespace module_rt
 {
 #ifdef __MPI
 
-void half_Hmatrix(const BlockCyclicDistributionInformation& layout,
+void half_Hmatrix(const BlockCyclicDistribution& layout,
                   const int nband,
                   const int nlocal,
                   std::complex<double>* Htmp,
@@ -76,7 +76,7 @@ void half_Hmatrix(const BlockCyclicDistributionInformation& layout,
     }
 }
 
-void half_Hmatrix_tensor(const BlockCyclicDistributionInformation& layout,
+void half_Hmatrix_tensor(const BlockCyclicDistribution& layout,
                          const int nband,
                          const int nlocal,
                          ct::Tensor& Htmp,

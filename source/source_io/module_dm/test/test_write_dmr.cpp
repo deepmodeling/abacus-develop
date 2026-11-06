@@ -65,12 +65,26 @@ void fill_matrix(hamilt::HContainer<double>& matrix, Parallel_Orbitals& pv, doub
     hamilt::AtomPair<double> pair(0, 0, 0, 0, 0, &pv, values);
     matrix.insert_pair(pair);
 }
+
+int count_frames(const std::string& content)
+{
+    const std::string tag = " --- Ionic Step ";
+    int count = 0;
+    std::string::size_type pos = 0;
+    while ((pos = content.find(tag, pos)) != std::string::npos)
+    {
+        ++count;
+        pos += tag.size();
+    }
+    return count;
+}
 } // namespace
 
 TEST(WriteDmr, GenFnameKeepsCurrentContract)
 {
     EXPECT_EQ(ModuleIO::dmr_gen_fname(1, 0, true, -1), "dmrs1_nao.csr");
-    EXPECT_EQ(ModuleIO::dmr_gen_fname(1, 1, false, 2), "dmrs2g3_nao.csr");
+    EXPECT_EQ(ModuleIO::dmr_gen_fname(1, 1, false, 2), "dmrs2_nao.csr");
+    EXPECT_EQ(ModuleIO::dmr_gen_fname(1, 1, true, 2), "dmrs2g3_nao.csr");
     EXPECT_EQ(ModuleIO::dmr_gen_fname(2, 0, true, 5), "dmrs1_nao.npz");
 }
 
@@ -87,7 +101,7 @@ TEST(WriteDmr, CsrHeaderKeepsCurrentFormat)
     double values[4] = {0.25, 0.0, 0.0, 0.75};
     fill_matrix(matrix, pv, values);
 
-    ModuleIO::write_dmr_csr(filename, &ucell, 4, &matrix, 0, 1, 2);
+    ModuleIO::write_dmr_csr(filename, &ucell, 4, &matrix, 0, 1, 2, false);
 
     const std::string output = read_file(filename);
     EXPECT_THAT(output, testing::HasSubstr(" --- Ionic Step 1 ---\n"));
@@ -96,6 +110,43 @@ TEST(WriteDmr, CsrHeaderKeepsCurrentFormat)
     EXPECT_THAT(output, testing::HasSubstr(" 2 # spin index\n"));
     EXPECT_THAT(output, testing::HasSubstr(" 2 # number of localized basis\n"));
     EXPECT_THAT(output, testing::HasSubstr(" 1 # number of Bravais lattice vector R\n"));
+
+    std::remove(filename.c_str());
+}
+
+TEST(WriteDmr, ModeOneFixedNameTruncatesOnRerun)
+{
+    // Mirror the controller policy for out_app_flag == 1: the DM(R)
+    // filename stays fixed for every step; write_dmr_csr truncates at
+    // istep <= 0 and appends otherwise. A 0 -> 1 -> 0 sequence (two steps
+    // of one run, then the first step of a rerun in the same directory)
+    // must therefore use one filename and drop the previous run's frames.
+    const bool numbered = false; // out_app_flag == 1
+    EXPECT_EQ(ModuleIO::dmr_gen_fname(1, 0, numbered, 0), "dmrs1_nao.csr");
+    EXPECT_EQ(ModuleIO::dmr_gen_fname(1, 0, numbered, 1), "dmrs1_nao.csr");
+
+    UnitCell ucell;
+    init_unitcell(ucell);
+    Parallel_Orbitals pv;
+    init_serial_orbitals(pv);
+    hamilt::HContainer<double> matrix(&pv);
+    double values[4] = {0.25, 0.0, 0.0, 0.75};
+    fill_matrix(matrix, pv, values);
+
+    std::string filename = testing::TempDir() + "/dmrs1_nao.csr";
+    std::remove(filename.c_str());
+
+    ModuleIO::write_dmr_csr(filename, &ucell, 4, &matrix, 0, 0, 1, true);
+    ModuleIO::write_dmr_csr(filename, &ucell, 4, &matrix, 1, 0, 1, true);
+    const std::string after_first_run = read_file(filename);
+    EXPECT_EQ(count_frames(after_first_run), 2);
+    EXPECT_THAT(after_first_run, testing::HasSubstr(" --- Ionic Step 2 ---\n"));
+
+    // First step of a rerun must truncate the accumulated frames.
+    ModuleIO::write_dmr_csr(filename, &ucell, 4, &matrix, 0, 0, 1, true);
+    const std::string after_rerun = read_file(filename);
+    EXPECT_EQ(count_frames(after_rerun), 1);
+    EXPECT_THAT(after_rerun, testing::HasSubstr(" --- Ionic Step 1 ---\n"));
 
     std::remove(filename.c_str());
 }

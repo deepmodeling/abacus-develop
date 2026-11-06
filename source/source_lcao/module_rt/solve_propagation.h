@@ -3,7 +3,7 @@
 
 #include <complex>
 
-class BlockCyclicDistributionInformation;
+class BlockCyclicDistribution;
 
 namespace module_rt
 {
@@ -21,8 +21,8 @@ namespace module_rt
 * @param[in] psi_k_laststep psi of last step
 * @param[out] psi_k psi of this step
 */
-void solve_propagation(const BlockCyclicDistributionInformation& matrix_layout,
-                        const BlockCyclicDistributionInformation& wfc_layout,
+void solve_propagation(const BlockCyclicDistribution& matrix_layout,
+                        const BlockCyclicDistribution& wfc_layout,
                         const int nband,
                         const int nlocal,
                         const double dt,
@@ -36,8 +36,8 @@ void solve_propagation(const BlockCyclicDistributionInformation& matrix_layout,
  *
  * @param[in] P_k moving spatial gauge matrix
  */
-void solve_propagation(const BlockCyclicDistributionInformation& matrix_layout,
-                       const BlockCyclicDistributionInformation& wfc_layout,
+void solve_propagation(const BlockCyclicDistribution& matrix_layout,
+                       const BlockCyclicDistribution& wfc_layout,
                        const int nband,
                        const int nlocal,
                        const double dt,

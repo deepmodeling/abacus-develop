@@ -1,7 +1,7 @@
 #include "hcontainer.h"
 #include "source_base/atom_basis_view.h"
 #include "source_base/basis_flattened_indexing.h"
-#include "source_base/block_cyclic_distribution_information.h"
+#include "source_base/block_cyclic_distribution.h"
 #include "source_base/memory_recorder.h"
 
 #include <utility>
@@ -204,7 +204,7 @@ HContainer<T>::HContainer(const Parallel_Orbitals* paraV_in, T* data_pointer, co
 
 template <typename T>
 HContainer<T>::HContainer(const BasisFlattenedIndexing& basis,
-                          const BlockCyclicDistributionInformation& layout)
+                          const BlockCyclicDistribution& layout)
 {
     this->gamma_only = false;
     this->current_R = -1;
@@ -242,7 +242,7 @@ HContainer<T>::HContainer(const BasisFlattenedIndexing& basis,
 
 template <typename T>
 HContainer<T>::HContainer(const BasisFlattenedIndexing& basis,
-                          const BlockCyclicDistributionInformation& layout,
+                          const BlockCyclicDistribution& layout,
                           T* data_pointer)
 {
     this->gamma_only = false;
@@ -259,7 +259,7 @@ HContainer<T>::HContainer(const BasisFlattenedIndexing& basis,
 
 template <typename T>
 HContainer<T>::HContainer(const BasisFlattenedIndexing& basis,
-                          const BlockCyclicDistributionInformation& layout,
+                          const BlockCyclicDistribution& layout,
                           T* data_pointer,
                           const std::vector<int>* ijr_info)
 {

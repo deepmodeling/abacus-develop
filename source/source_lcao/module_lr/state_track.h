@@ -1,11 +1,12 @@
 #ifndef ABACUS_LR_STATE_TRACK_H
 #define ABACUS_LR_STATE_TRACK_H
-#include "source_base/block_cyclic_distribution_information.h"
+#include "source_base/block_cyclic_distribution.h"
 #include "source_base/matrix3.h"
 #include <vector>
 #include <ostream>
 class UnitCell;
 class Parallel_Orbitals;
+class BlockCyclicDistribution;
 class TwoCenterIntegrator;
 namespace base_device
 {
@@ -46,9 +47,9 @@ struct RootInputs
     const std::vector<double>& cutoff;
     const TwoCenterIntegrator& integrator;
     const psi::Psi<T, base_device::DEVICE_CPU>& orbitals;
-    const BlockCyclicDistributionInformation& pc;
+    const BlockCyclicDistribution& pc;
     const Parallel_Orbitals& pmat;
-    const std::vector<BlockCyclicDistributionInformation>& px;
+    const std::vector<BlockCyclicDistribution>& px;
     const std::vector<int>& nocc;
     const std::vector<int>& nvirt;
     bool openshell;

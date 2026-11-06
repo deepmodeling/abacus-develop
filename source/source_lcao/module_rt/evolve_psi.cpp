@@ -15,7 +15,7 @@
 #include "source_io/module_parameter/parameter.h"
 #include "upsi.h"
 
-#include "source_base/block_cyclic_distribution_information.h"
+#include "source_base/block_cyclic_distribution.h"
 
 #include <complex>
 
@@ -23,9 +23,9 @@ namespace module_rt
 {
 void evolve_psi(const int nband,
                 const int nlocal,
-                const BlockCyclicDistributionInformation& matrix_layout,
-                const BlockCyclicDistributionInformation& wfc_layout,
-                const BlockCyclicDistributionInformation& mo_repr_layout,
+                const BlockCyclicDistribution& matrix_layout,
+                const BlockCyclicDistribution& wfc_layout,
+                const BlockCyclicDistribution& mo_repr_layout,
                 hamilt::Hamilt<std::complex<double>>* p_hamilt,
                 std::complex<double>* psi_k,
                 std::complex<double>* psi_k_laststep,
@@ -178,9 +178,9 @@ void evolve_psi(const int nband,
 template <typename Device>
 void evolve_psi_tensor(const int nband,
                        const int nlocal,
-                       const BlockCyclicDistributionInformation& matrix_layout,
-                       const BlockCyclicDistributionInformation& wfc_layout,
-                       const BlockCyclicDistributionInformation& mo_repr_layout,
+                       const BlockCyclicDistribution& matrix_layout,
+                       const BlockCyclicDistribution& wfc_layout,
+                       const BlockCyclicDistribution& mo_repr_layout,
                        hamilt::Hamilt<std::complex<double>>* p_hamilt,
                        ct::Tensor& psi_k,
                        ct::Tensor& psi_k_laststep,
@@ -391,9 +391,9 @@ void evolve_psi_tensor(const int nband,
 // Explicit instantiation of template functions
 template void evolve_psi_tensor<base_device::DEVICE_CPU>(const int nband,
                                                          const int nlocal,
-                                                         const BlockCyclicDistributionInformation& matrix_layout,
-                                                         const BlockCyclicDistributionInformation& wfc_layout,
-                                                         const BlockCyclicDistributionInformation& mo_repr_layout,
+                                                         const BlockCyclicDistribution& matrix_layout,
+                                                         const BlockCyclicDistribution& wfc_layout,
+                                                         const BlockCyclicDistribution& mo_repr_layout,
                                                          hamilt::Hamilt<std::complex<double>>* p_hamilt,
                                                          ct::Tensor& psi_k,
                                                          ct::Tensor& psi_k_laststep,
@@ -410,9 +410,9 @@ template void evolve_psi_tensor<base_device::DEVICE_CPU>(const int nband,
 #if ((defined __CUDA) /* || (defined __ROCM) */)
 template void evolve_psi_tensor<base_device::DEVICE_GPU>(const int nband,
                                                          const int nlocal,
-                                                         const BlockCyclicDistributionInformation& matrix_layout,
-                                                         const BlockCyclicDistributionInformation& wfc_layout,
-                                                         const BlockCyclicDistributionInformation& mo_repr_layout,
+                                                         const BlockCyclicDistribution& matrix_layout,
+                                                         const BlockCyclicDistribution& wfc_layout,
+                                                         const BlockCyclicDistribution& mo_repr_layout,
                                                          hamilt::Hamilt<std::complex<double>>* p_hamilt,
                                                          ct::Tensor& psi_k,
                                                          ct::Tensor& psi_k_laststep,

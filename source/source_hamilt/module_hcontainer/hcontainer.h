@@ -9,7 +9,7 @@
 #include <vector>
 
 class BasisFlattenedIndexing;
-class BlockCyclicDistributionInformation;
+class BlockCyclicDistribution;
 
 namespace hamilt
 {
@@ -181,14 +181,14 @@ class HContainer
     HContainer(const Parallel_Orbitals* paraV, T* data_pointer = nullptr, const std::vector<int>* ijr_info = nullptr);
 
     HContainer(const BasisFlattenedIndexing& basis,
-               const BlockCyclicDistributionInformation& layout);
+               const BlockCyclicDistribution& layout);
 
     HContainer(const BasisFlattenedIndexing& basis,
-               const BlockCyclicDistributionInformation& layout,
+               const BlockCyclicDistribution& layout,
                T* data_pointer);
 
     HContainer(const BasisFlattenedIndexing& basis,
-               const BlockCyclicDistributionInformation& layout,
+               const BlockCyclicDistribution& layout,
                T* data_pointer,
                const std::vector<int>* ijr_info);
 
@@ -542,7 +542,7 @@ class HContainer
     const Parallel_Orbitals* paraV = nullptr;
 
     const BasisFlattenedIndexing* basis_index = nullptr;
-    const BlockCyclicDistributionInformation* matrix_dist = nullptr;
+    const BlockCyclicDistribution* matrix_dist = nullptr;
 
     bool same_layout(const HContainer<T>& other) const;
     bool same_layout(const AtomPair<T>& atom_ij) const;
