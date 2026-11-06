@@ -33,6 +33,10 @@ class FileReader
 
     std::stringstream ss;
 
+  protected:
+    // Inspect the next line without consuming it; false at end of file.
+    bool peekLine(std::string& line);
+
   private:
     std::ifstream ifs;
 };
