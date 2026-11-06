@@ -188,9 +188,10 @@ TEST_F(OperatorExxNscfCellNearestTest, InfersPeriodFromCenteredCompleteRsSet)
 
 TEST_F(OperatorExxNscfCellNearestTest, WriteHexxsCsrRoundTripsThroughReader)
 {
-    // read_Hexxs_csr and write_Hexxs_csr must agree on the file layout; the
-    // reader parses the sparse-file format with the lattice block, so the
-    // writer has to emit that layout, not the bare save_sparse header.
+    // read_Hexxs_csr and write_Hexxs_csr must agree on the file layout. The
+    // reader accepts both the cell-aware layout (used here, so the file
+    // records its own geometry) and save_sparse's compact "STEP:" header; this
+    // round trip pins the cell-aware one.
     std::vector<std::map<int, std::map<hamilt::TAC, RI::Tensor<double>>>> Hexxd;
     ModuleIO::read_Hexxs_csr(prefix_, ucell_, 1, 2, Hexxd);
 
