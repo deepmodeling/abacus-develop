@@ -67,7 +67,7 @@ void StoHSolverPW<T, Device>::solve(const UnitCell& ucell,
             this->update_precondition(precondition, ik, this->wfc_basis->npwk[ik], pes->pot->get_vl_of_0());
             /// solve eigenvector and eigenvalue for H(k)
             double* p_eigenvalues = &(pes->ekb(ik, 0));
-            this->hamiltSolvePsiK(op, psi, precondition, p_eigenvalues, nks);
+            this->hamiltSolvePsiK(op, psi, precondition, p_eigenvalues, nks, log);
         }
 
 #ifdef __MPI
