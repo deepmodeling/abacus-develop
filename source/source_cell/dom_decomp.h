@@ -1,5 +1,5 @@
-#ifndef DOMAIN_DECOMPOSITION_H
-#define DOMAIN_DECOMPOSITION_H
+#ifndef DOM_DECOMP_H
+#define DOM_DECOMP_H
 
 #include "source_base/matrix3.h"
 #include "source_base/vector3.h"
@@ -145,4 +145,4 @@ private:
     bool ghost_layout_valid_ = false;
 };
 
-#endif // DOMAIN_DECOMPOSITION_H
+#endif // DOM_DECOMP_H

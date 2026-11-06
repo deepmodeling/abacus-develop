@@ -3,7 +3,7 @@
 #include "source_base/constants.h"
 #include "source_base/parallel_cell.h"
 #include "source_base/parallel_global.h"
-#include "source_cell/domain_decomposition.h"
+#include "source_cell/dom_decomp.h"
 #include "source_cell/unitcell.h"
 #include "source_cell/update_cell.h"
 #include "source_lcao/module_rt/boundary_fix.h"
