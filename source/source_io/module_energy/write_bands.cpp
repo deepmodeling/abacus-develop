@@ -37,13 +37,13 @@ std::string build_band_header(const int istep, const std::string& spin_tag)
 } // namespace
 
 void ModuleIO::write_bands(const Input_para& inp, const ModuleBase::matrix& ekb, const K_Vectors& kv,
-                           std::ofstream& ofs_running, const int istep)
+                           std::ofstream& ofs_running, const std::string& band_dir, const int istep)
 {
     // write band information to band.txt
     if (inp.out_band[0])
     {
         // Mode-2 BANDS/ subdirectory is created lazily at write time.
-        ModuleBase::ensure_directory(PARAM.globalv.global_band_dir);
+        ModuleBase::ensure_directory(band_dir);
         // Taoni fix out_band under bndpar on 2026-08-21
         const Parallel::ParaBandOutput band_output(ekb.nc, inp.nbands, Parallel::make_band_world());
         const ModuleBase::matrix global_ekb = band_output.gather_matrix(ekb);
@@ -51,7 +51,7 @@ void ModuleIO::write_bands(const Input_para& inp, const ModuleBase::matrix& ekb,
         for (int is = 0; is < nspin0; is++)
         {
             std::stringstream ss;
-            ss << PARAM.globalv.global_band_dir << "band";
+            ss << band_dir << "band";
 
             if (nspin0 == 1)
             {

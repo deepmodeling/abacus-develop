@@ -364,7 +364,7 @@ class BandOutputTest : public testing::TestWithParam<BandTopology>
         {
             SCOPED_TRACE(distributed ? "distributed" : "replicated");
             prepare(nspin, 3, distributed);
-            ModuleIO::write_bands(input_, ekb_, kv_, ofs_running, 0);
+            ModuleIO::write_bands(input_, ekb_, kv_, ofs_running, directory_, 0);
             if (nspin == 2)
             {
                 expect_output("bands1.txt", 0, 3, 0.0, 8, 1);
@@ -429,12 +429,12 @@ TEST_P(BandOutputTest, OverwriteAndAppend)
     prepare(1, 3, true);
     seed_file("band.txt", "stale output\n");
     Parallel::barrier(*world_);
-    ModuleIO::write_bands(input_, ekb_, kv_, ofs_running, 0);
+    ModuleIO::write_bands(input_, ekb_, kv_, ofs_running, directory_, 0);
     expect_output("band.txt", 0, 3, 0.0, 8, 1);
     expect_header("band.txt", 0, 0, 1);
     Parallel::barrier(*world_);
     parameters_->set_output(directory_, true);
-    ModuleIO::write_bands(input_, ekb_, kv_, ofs_running, 1);
+    ModuleIO::write_bands(input_, ekb_, kv_, ofs_running, directory_, 1);
     expect_output("band.txt", 0, 3, 0.0, 8, 2);
     expect_header("band.txt", 1, 0, 1);
 }
@@ -443,11 +443,11 @@ TEST_P(BandOutputTest, OutputDisabled)
 {
     prepare(1, 3, true);
     input_.out_band[0] = 0;
-    ModuleIO::write_bands(input_, ekb_, kv_, ofs_running, 0);
+    ModuleIO::write_bands(input_, ekb_, kv_, ofs_running, directory_, 0);
     expect_missing("band.txt");
     seed_file("band.txt", "keep this content\n");
     Parallel::barrier(*world_);
-    ModuleIO::write_bands(input_, ekb_, kv_, ofs_running, 0);
+    ModuleIO::write_bands(input_, ekb_, kv_, ofs_running, directory_, 0);
     if (world_->rank() == 0)
     {
         EXPECT_EQ(read_text("band.txt"), "keep this content\n");
@@ -478,7 +478,7 @@ TEST_P(BandOutputTest, EmptyBandShard)
     {
         EXPECT_EQ(ekb_.nc, 0);
     }
-    ModuleIO::write_bands(input_, ekb_, kv_, ofs_running, 0);
+    ModuleIO::write_bands(input_, ekb_, kv_, ofs_running, directory_, 0);
     expect_output("bands1.txt", 0, 1, 0.0, 8, 1);
     expect_output("bands2.txt", 1, 1, 0.0, 8, 1);
     expect_header("bands1.txt", 0, 0, 2);
@@ -492,7 +492,7 @@ TEST_P(BandOutputTest, RunningLogNamesSpinChannels)
                                  + std::to_string(world_->rank()) + ".log";
     std::ofstream log(log_name);
     EXPECT_TRUE(log.is_open());
-    ModuleIO::write_bands(input_, ekb_, kv_, log, 0);
+    ModuleIO::write_bands(input_, ekb_, kv_, log, directory_, 0);
     log.close();
 
     std::ifstream in(log_name);
