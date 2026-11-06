@@ -72,15 +72,19 @@ test -d OUT.autotest || exit 0
 #if any input parameters for this script, just generate reference file.
 #----------------------------------------------------------------------
 if test -z $1; then
-  $CATCH_SCRIPT result.out
+  "$CATCH_SCRIPT" result.out || exit 1
   check_out result.out
 elif [ $1 == "debug" ]; then
   # Single_job.sh debug copies validation_tools/ into the case directory;
   # use that copy so local edits to the collectors take effect.
-  ./validation_tools/catch_properties.sh result.out
+  ./validation_tools/catch_properties.sh result.out || exit 1
   check_out result.out
 else
-  $CATCH_SCRIPT result.ref
+  if ! "$CATCH_SCRIPT" result.ref.new; then
+    rm -f result.ref.new
+    exit 1
+  fi
+  mv result.ref.new result.ref
   rm -r OUT.autotest
   rm log.txt
 fi
