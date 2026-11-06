@@ -93,7 +93,11 @@ def read_band_from_eig_occ(src: str | Path | List[str]) \
     raw = [l.strip() for l in raw]
     raw = [l for l in raw if l] # remove empty lines
 
-    nframe = len([l for l in raw if l.endswith('# ionic step')])
+    # The per-ionic-step header is ``X     # Ionic_Step`` in the latest output,
+    # while older outputs wrote ``X     # ionic step``. Accept both spellings.
+    step_header_pat = r'\d+\s+#\s+ionic[ _]step$'
+    nframe = len([l for l in raw
+                  if re.match(step_header_pat, l, re.IGNORECASE)])
     ekb_leading_pat = r'spin=(\d)\s+k-point=(\d+)/(\d+)\s+Cartesian=\s*' \
                     + r'(-?\d(\.\d+)?(e-\d+)?)\s+' \
                     + r'(-?\d(\.\d+)?(e-\d+)?)\s+' \
