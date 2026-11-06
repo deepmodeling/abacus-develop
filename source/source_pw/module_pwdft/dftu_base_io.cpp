@@ -30,7 +30,7 @@ static void write_provenance_header(std::ostream& os, const int istep)
     std::strftime(time_buf, sizeof(time_buf), "%Y-%m-%d %H:%M:%S", &tm_local);
     os << "# ABACUS version: " << VERSION << "\n";
     os << "# Written at " << time_buf << "\n";
-    os << "# RELAX STEP " << istep + 1 << "\n\n";
+    os << "# Ionic_Step " << istep + 1 << "\n\n";
 }
 
 static void validate_output_configuration(const char* context,

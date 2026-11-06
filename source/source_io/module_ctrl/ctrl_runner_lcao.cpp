@@ -145,7 +145,9 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
                                       global_mat_dir,
                                       cal_exx,
                                       hybrid_alpha,
-                                      real_number
+                                      real_number,
+                                      istep,
+                                      inp.out_app_flag
 #ifdef __EXX
                                       ,
                                       hexxd_ptr,

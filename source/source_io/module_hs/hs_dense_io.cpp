@@ -161,7 +161,7 @@ void ModuleIO::save_mat(const int istep,
                 ModuleBase::WARNING_QUIT("ModuleIO::save_mat", "Cannot open matrix file: " + filename);
             }
             out_matrix << "#------------------------------------------------------------------------" << std::endl;
-            out_matrix << "# ionic step " << istep+1 << std::endl; // istep starts from 0
+            out_matrix << "# Ionic_Step " << istep+1 << std::endl; // istep starts from 0
             out_matrix << "# filename " << filename << std::endl;
             out_matrix << "# gamma only " << gamma_only << std::endl;
             out_matrix << "# rows " << dim << std::endl;

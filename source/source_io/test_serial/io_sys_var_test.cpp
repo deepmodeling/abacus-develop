@@ -80,6 +80,7 @@ TEST_F(InputTest, Item_test)
         EXPECT_EQ(sys.global_dos_dir, "OUT.test/");
         EXPECT_EQ(sys.global_dip_dir, "OUT.test/");
         EXPECT_EQ(sys.global_mat_dir, "OUT.test/");
+        EXPECT_EQ(sys.global_band_dir, "OUT.test/");
 
         TestParameters::set_globalv(readinput, input, sys);
 
@@ -236,6 +237,7 @@ TEST_F(InputTest, SetGlobalDirMode2)
     EXPECT_EQ(sys.global_dos_dir, "OUT.modetwo/DOS/");
     EXPECT_EQ(sys.global_dip_dir, "OUT.modetwo/DIP/");
     EXPECT_EQ(sys.global_mat_dir, "OUT.modetwo/MAT/");
+    EXPECT_EQ(sys.global_band_dir, "OUT.modetwo/BANDS/");
     // legacy aliases follow the unified directories
     EXPECT_EQ(sys.global_wfc_dir, sys.global_psi_dir);
     EXPECT_EQ(sys.global_matrix_dir, sys.global_mat_dir);

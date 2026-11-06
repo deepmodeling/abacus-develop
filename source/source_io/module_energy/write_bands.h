@@ -20,6 +20,8 @@ namespace ModuleIO
  * @param ekb eigenvalues of k points and bands
  * @param kv klist
  * @param ofs_running running log stream
+ * @param band_dir directory that receives the band output files; the caller
+ *                 resolves it from the output directory configuration
  * @param istep zero-based index of the current ionic step, printed one-based
  *              in the per-step provenance header
  */
@@ -27,6 +29,7 @@ void write_bands(const Input_para& inp,
     const ModuleBase::matrix& ekb,
     const K_Vectors& kv,
     std::ofstream& ofs_running,
+    const std::string& band_dir,
     const int istep);
 
 /**

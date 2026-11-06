@@ -242,7 +242,7 @@ TEST_F(ReadWfcNaoTest, ReadTextWithCommentHeader)
     {
         const std::string header = "# ABACUS version: test\n"
                                    "# Written at 2026-01-01 00:00:00\n"
-                                   "# IONIC STEP 1 (spin up)\n";
+                                   "# Ionic_Step 1 (spin up)\n";
         ModuleIO::wfc_nao_write2file(binary_test_dir + "wf_nao.txt",
                                      coefficients.data(),
                                      nlocal,

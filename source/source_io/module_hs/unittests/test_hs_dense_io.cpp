@@ -178,7 +178,7 @@ TEST(HsDenseIoSaveMat, TextHeaderContainsStepAndDimension)
                                filename, pv, 0, "genelpa", false);
     const std::string content = read_text_file(filename);
     // MPI text path writes header lines starting with '#'
-    EXPECT_NE(content.find("ionic step"), std::string::npos);
+    EXPECT_NE(content.find("Ionic_Step"), std::string::npos);
     EXPECT_NE(content.find("1"), std::string::npos); // istep+1 = 1
     EXPECT_NE(content.find("gamma only"), std::string::npos);
     EXPECT_NE(content.find("rows"), std::string::npos);
@@ -195,8 +195,8 @@ TEST(HsDenseIoSaveMat, TextHeaderStepTwo)
     ModuleIO::save_mat<double>(1, mat.data(), dim, false, 8, false, false,
                                filename, pv, 0, "genelpa", false);
     const std::string content = read_text_file(filename);
-    // istep=1 -> "ionic step 2"
-    EXPECT_NE(content.find("ionic step 2"), std::string::npos);
+    // istep=1 -> "Ionic_Step 2"
+    EXPECT_NE(content.find("Ionic_Step 2"), std::string::npos);
     std::remove(filename.c_str());
 }
 

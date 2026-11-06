@@ -126,7 +126,7 @@ bool ModuleIO::cal_dos(const int& is,  // index for spin
         {
             ofs_dos.open(fn.c_str());
         }
-        ofs_dos << istep+1 << "    # ionic step" << std::endl;
+        ofs_dos << istep+1 << "    # Ionic_Step" << std::endl;
     }
 
 #ifdef __MPI

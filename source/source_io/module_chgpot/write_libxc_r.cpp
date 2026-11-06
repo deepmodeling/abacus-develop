@@ -228,19 +228,146 @@ void ModuleIO::write_libxc_r(
 		} // end switch( func.info->family )
 	} // end for( xc_func_type &func : funcs )
 
+	/// Helper lambdas to generate channel suffixes for cube file names.
+	/// Spin channels (rho, vrho) use s1/s2 to denote real spin indices.
+	/// Scalar quantities (exc, amag) use an empty suffix.
+	/// Tensor quantities use explicit index tuples per the Libxc convention:
+	///   - sigma / vsigma / v2rho2 : (00), (01), (11) for nspin=2
+	///   - v2rhosigma              : (00_0), (00_1), (01_0), (01_1), (11_0), (11_1)
+	///   - v2sigma2                : (00_00), (00_01), (00_11), (01_01), (01_11), (11_11)
+	///   - v3rho3                  : (0_0_0), (0_0_1), (0_1_1), (1_1_1)
+	///   - v4rho4                  : (0_0_0_0), (0_0_0_1), (0_0_1_1), (0_1_1_1), (1_1_1_1)
+	auto make_spin_suffixes = [](int num_spin) -> std::vector<std::string>
+	{
+		std::vector<std::string> v;
+		for (int i = 0; i < num_spin; ++i)
+		{
+			v.push_back("s" + std::to_string(i + 1));
+		}
+		return v;
+	};
+	auto make_scalar_suffixes = []() -> std::vector<std::string>
+	{
+		return {""};
+	};
+	auto make_tensor3_suffixes = [](int num_spin) -> std::vector<std::string>
+	{
+		if (num_spin == 1) { return {"00"}; }
+		return {"00", "01", "11"};
+	};
+	auto make_v2rhosigma_suffixes = [](int num_spin) -> std::vector<std::string>
+	{
+		if (num_spin == 1) { return {"00_00"}; }
+		return {"00_0", "00_1", "01_0", "01_1", "11_0", "11_1"};
+	};
+	auto make_v2sigma2_suffixes = [](int num_spin) -> std::vector<std::string>
+	{
+		if (num_spin == 1) { return {"00_00"}; }
+		return {"00_00", "00_01", "00_11", "01_01", "01_11", "11_11"};
+	};
+	auto make_v3rho3_suffixes = [](int num_spin) -> std::vector<std::string>
+	{
+		if (num_spin == 1) { return {"0_0_0"}; }
+		return {"0_0_0", "0_0_1", "0_1_1", "1_1_1"};
+	};
+	auto make_v4rho4_suffixes = [](int num_spin) -> std::vector<std::string>
+	{
+		if (num_spin == 1) { return {"0_0_0_0"}; }
+		return {"0_0_0_0", "0_0_0_1", "0_0_1_1", "0_1_1_1", "1_1_1_1"};
+	};
+	// v3rho2sigma: rho triple (C(2+3-1,3)=4) x sigma pair (C(3+2-1,2)=6) = 24
+	// but Libxc uses 9 channels. Convention: (rho_aaa, rho_aab, rho_bbb) x sigma_pair
+	// with sigma_pair=(00,01,11) each → 3x3=9
+	auto make_v3rho2sigma_suffixes = [](int num_spin) -> std::vector<std::string>
+	{
+		if (num_spin == 1) { return {"0_0_0_00"}; }
+		return {
+			"0_0_0_00", "0_0_0_01", "0_0_0_11",
+			"0_0_1_00", "0_0_1_01", "0_0_1_11",
+			"0_1_1_00", "0_1_1_01", "0_1_1_11"
+		};
+	};
+	// v3rhosigma2: rho (C(2+1-1,1)=2) x sigma_triple (C(3+3-1,3)=10) = 20
+	// but Libxc uses 12 channels. Convention: rho_index x sigma_pair(00,01,11) x sigma_pair(00,01,11)
+	auto make_v3rhosigma2_suffixes = [](int num_spin) -> std::vector<std::string>
+	{
+		if (num_spin == 1) { return {"0_00_00"}; }
+		return {
+			"0_00_00", "0_00_01", "0_00_11", "0_01_01", "0_01_11", "0_11_11",
+			"1_00_00", "1_00_01", "1_00_11", "1_01_01", "1_01_11", "1_11_11"
+		};
+	};
+	// v3sigma3: sigma_triple (C(3+3-1,3)=10)
+	auto make_v3sigma3_suffixes = [](int num_spin) -> std::vector<std::string>
+	{
+		if (num_spin == 1) { return {"00_00_00"}; }
+		return {
+			"00_00_00", "00_00_01", "00_00_11", "00_01_01",
+			"00_01_11", "00_11_11", "01_01_01", "01_01_11",
+			"01_11_11", "11_11_11"
+		};
+	};
+	// v4rho3sigma: rho_quadruple (C(2+4-1,4)=5) x sigma (C(3+1-1,1)=3) → Libxc gives 12
+	auto make_v4rho3sigma_suffixes = [](int num_spin) -> std::vector<std::string>
+	{
+		if (num_spin == 1) { return {"0_0_0_0_00"}; }
+		return {
+			"0_0_0_0_00", "0_0_0_0_01", "0_0_0_0_11",
+			"0_0_0_1_00", "0_0_0_1_01", "0_0_0_1_11",
+			"0_0_1_1_00", "0_0_1_1_01", "0_0_1_1_11",
+			"1_1_1_1_00", "1_1_1_1_01", "1_1_1_1_11"
+		};
+	};
+	// v4rho2sigma2: rho_double (C(2+2-1,2)=3) x sigma_double (C(3+2-1,2)=6)
+	auto make_v4rho2sigma2_suffixes = [](int num_spin) -> std::vector<std::string>
+	{
+		if (num_spin == 1) { return {"0_0_00_00"}; }
+		return {
+			"0_0_00_00", "0_0_00_01", "0_0_00_11", "0_0_01_01", "0_0_01_11",
+			"0_1_00_00", "0_1_00_01", "0_1_00_11", "0_1_01_01", "0_1_01_11",
+			"1_1_00_00", "1_1_00_01", "1_1_00_11", "1_1_01_01", "1_1_01_11"
+		};
+	};
+	// v4rhosigma3: rho (2) x sigma_triple (10) → Libxc 20
+	auto make_v4rhosigma3_suffixes = [](int num_spin) -> std::vector<std::string>
+	{
+		if (num_spin == 1) { return {"0_00_00_00"}; }
+		return {
+			"0_00_00_00", "0_00_00_01", "0_00_00_11", "0_00_01_01", "0_00_01_11",
+			"0_00_11_11", "0_01_01_01", "0_01_01_11", "0_01_11_11", "0_11_11_11",
+			"1_00_00_00", "1_00_00_01", "1_00_00_11", "1_00_01_01", "1_00_01_11",
+			"1_00_11_11", "1_01_01_01", "1_01_01_11", "1_01_11_11", "1_11_11_11"
+		};
+	};
+	// v4sigma4: sigma_quadruple (C(3+4-1,4)=15)
+	auto make_v4sigma4_suffixes = [](int num_spin) -> std::vector<std::string>
+	{
+		if (num_spin == 1) { return {"00_00_00_00"}; }
+		return {
+			"00_00_00_00", "00_00_00_01", "00_00_00_11", "00_00_01_01",
+			"00_00_01_11", "00_00_11_11", "00_01_01_01", "00_01_01_11",
+			"00_01_11_11", "00_11_11_11", "01_01_01_01", "01_01_01_11",
+			"01_01_11_11", "01_11_11_11", "11_11_11_11"
+		};
+	};
+
 	auto write_data = [&pw_big, &pw_rhod, nspin](
 	const std::string data_name,
 	const std::vector<double> &data,
-	const int number_spin)
+	const std::vector<std::string> &channel_suffixes)
 {
+	const int number_spin = static_cast<int>(channel_suffixes.size());
 	for(int is=0; is<number_spin; ++is)
 	{
 		std::ofstream ofs;
 		if(GlobalV::MY_RANK==0)
 		{
+			const std::string suffix = channel_suffixes[is].empty()
+				? ""
+				: "_" + channel_suffixes[is];
 			const std::string file_name =
 					PARAM.globalv.global_out_dir + "xc_" + data_name +
-					"_s" + std::to_string(is+1) + ".cube";
+					suffix + ".cube";
 			ofs.open(file_name);
 
 			ofs.unsetf(std::ostream::fixed);
@@ -278,25 +405,25 @@ void ModuleIO::write_libxc_r(
 	}
 };
 
-	write_data( "rho", rho, nspin );
+	write_data( "rho", rho, make_spin_suffixes(nspin) );
 
 	if(1!=nspin && 2!=PARAM.inp.nspin)
 	{
-		write_data( "amag", amag, 1 );
+		write_data( "amag", amag, make_scalar_suffixes() );
 	}
 
 	if(is_gga)
 	{
-		write_data( "sigma", sigma, (1==nspin)?1:3 );
+		write_data( "sigma", sigma, make_tensor3_suffixes((1==nspin)?1:3) );
 	}
 
 	switch( order )
 	{
-		case 4:	write_data( "v4rho4", v4rho4, (1==nspin)?1:5 );
-		case 3:	write_data( "v3rho3", v3rho3, (1==nspin)?1:4 );
-		case 2:	write_data( "v2rho2", v2rho2, (1==nspin)?1:3 );
-		case 1:	write_data( "vrho"  , vrho  , nspin );
-		case 0:	write_data( "exc"   , exc   , 1 );
+		case 4:	write_data( "v4rho4", v4rho4, make_v4rho4_suffixes((1==nspin)?1:5) );
+		case 3:	write_data( "v3rho3", v3rho3, make_v3rho3_suffixes((1==nspin)?1:4) );
+		case 2:	write_data( "v2rho2", v2rho2, make_tensor3_suffixes((1==nspin)?1:3) );
+		case 1:	write_data( "vrho"  , vrho  , make_spin_suffixes(nspin) );
+		case 0:	write_data( "exc"   , exc   , make_scalar_suffixes() );
 			break;
 		default: throw std::domain_error(
 				"order =" + std::to_string(order) +
@@ -308,16 +435,16 @@ void ModuleIO::write_libxc_r(
 	{
 		switch( order )
 		{
-			case 4:	write_data( "v4rho3sigma" , v4rho3sigma , (1==nspin)?1:12 );
-				write_data( "v4rho2sigma2", v4rho2sigma2, (1==nspin)?1:15 );
-				write_data( "v4rhosigma3" , v4rhosigma3 , (1==nspin)?1:20 );
-				write_data( "v4sigma4"    , v4sigma4    , (1==nspin)?1:15 );
-			case 3:	write_data( "v3rho2sigma" , v3rho2sigma , (1==nspin)?1:9  );
-				write_data( "v3rhosigma2" , v3rhosigma2 , (1==nspin)?1:12 );
-				write_data( "v3sigma3"    , v3sigma3    , (1==nspin)?1:10 );
-			case 2:	write_data( "v2rhosigma"  , v2rhosigma  , (1==nspin)?1:6  );
-				write_data( "v2sigma2"    , v2sigma2    , (1==nspin)?1:6  );
-			case 1:	write_data( "vsigma"      , vsigma      , (1==nspin)?1:3  );
+			case 4:	write_data( "v4rho3sigma" , v4rho3sigma , make_v4rho3sigma_suffixes((1==nspin)?1:12) );
+				write_data( "v4rho2sigma2", v4rho2sigma2, make_v4rho2sigma2_suffixes((1==nspin)?1:15) );
+				write_data( "v4rhosigma3" , v4rhosigma3 , make_v4rhosigma3_suffixes((1==nspin)?1:20) );
+				write_data( "v4sigma4"    , v4sigma4    , make_v4sigma4_suffixes((1==nspin)?1:15) );
+			case 3:	write_data( "v3rho2sigma" , v3rho2sigma , make_v3rho2sigma_suffixes((1==nspin)?1:9)  );
+				write_data( "v3rhosigma2" , v3rhosigma2 , make_v3rhosigma2_suffixes((1==nspin)?1:12) );
+				write_data( "v3sigma3"    , v3sigma3    , make_v3sigma3_suffixes((1==nspin)?1:10) );
+			case 2:	write_data( "v2rhosigma"  , v2rhosigma  , make_v2rhosigma_suffixes((1==nspin)?1:6)  );
+				write_data( "v2sigma2"    , v2sigma2    , make_v2sigma2_suffixes((1==nspin)?1:6)  );
+			case 1:	write_data( "vsigma"      , vsigma      , make_tensor3_suffixes((1==nspin)?1:3)  );
 			case 0:	break;
 			default: throw std::domain_error(
 						"order =" + std::to_string(order) +

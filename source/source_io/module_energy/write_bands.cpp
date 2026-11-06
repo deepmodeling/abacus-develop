@@ -1,6 +1,7 @@
 #include "write_bands.h"
 
 #include "source_base/formatter.h"
+#include "source_base/fs_compat.h" // use ModuleBase::ensure_directory
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
 #include "source_base/module_parallel/para_band_output.h"
@@ -29,18 +30,20 @@ namespace
 std::string build_band_header(const int istep, const std::string& spin_tag)
 {
     const int istep_one_based = istep + 1;
-    const std::string step_line = FmtCore::format("# IONIC STEP %d%s\n", istep_one_based, spin_tag.c_str());
+    const std::string step_line = FmtCore::format("# Ionic_Step %d%s\n", istep_one_based, spin_tag.c_str());
     return ModuleIO::provenance_header(ModuleIO::local_timestamp()) + step_line;
 }
 
 } // namespace
 
 void ModuleIO::write_bands(const Input_para& inp, const ModuleBase::matrix& ekb, const K_Vectors& kv,
-                           std::ofstream& ofs_running, const int istep)
+                           std::ofstream& ofs_running, const std::string& band_dir, const int istep)
 {
     // write band information to band.txt
     if (inp.out_band[0])
     {
+        // Mode-2 BANDS/ subdirectory is created lazily at write time.
+        ModuleBase::ensure_directory(band_dir);
         // Taoni fix out_band under bndpar on 2026-08-21
         const Parallel::ParaBandOutput band_output(ekb.nc, inp.nbands, Parallel::make_band_world());
         const ModuleBase::matrix global_ekb = band_output.gather_matrix(ekb);
@@ -48,7 +51,7 @@ void ModuleIO::write_bands(const Input_para& inp, const ModuleBase::matrix& ekb,
         for (int is = 0; is < nspin0; is++)
         {
             std::stringstream ss;
-            ss << PARAM.globalv.global_out_dir << "band";
+            ss << band_dir << "band";
 
             if (nspin0 == 1)
             {
@@ -57,6 +60,11 @@ void ModuleIO::write_bands(const Input_para& inp, const ModuleBase::matrix& ekb,
             else if (nspin0 == 2)
             {
                 ss << "s" << is + 1;
+            }
+
+            if (inp.out_app_flag == 2)
+            {
+                ss << "g" << istep + 1;
             }
 
             ss << ".txt";

@@ -1,5 +1,5 @@
 #------------------------------------------------------------------------
-# ionic step 1
+# Ionic_Step 1
 # filename OUT.autotest/hks2_nao.txt
 # gamma only 1
 # rows 26
@@ -88,7 +88,7 @@ Row 25
 Row 26
  1.40881e+00
 #------------------------------------------------------------------------
-# ionic step 2
+# Ionic_Step 2
 # filename OUT.autotest/hks2_nao.txt
 # gamma only 1
 # rows 26

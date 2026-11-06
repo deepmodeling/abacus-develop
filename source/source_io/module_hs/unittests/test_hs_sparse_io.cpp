@@ -3,7 +3,7 @@
  * @brief Unit tests for hs_sparse_io.cpp (ModuleIO::save_sparse).
  *
  * The tests pin down the legacy CSR text/binary layout written by
- * save_sparse: header style ("STEP: n"), dimension lines, threshold
+ * save_sparse: header style ("Ionic_Step n"), dimension lines, threshold
  * filtering of values, and the native binary field order.
  * hs_sparse_io.cpp only reads GlobalV::DRANK, so the fixture sets it
  * directly; no PARAM state is involved.
@@ -42,7 +42,7 @@ TEST(HsSparseIo, SparseHeaderKeepsStepStyle)
 
     const std::string output = read_file(filename);
     // istep = 0 is the first ionic step, printed one-based as 1
-    EXPECT_TRUE(starts_with(output, "STEP: 1\n"));
+    EXPECT_TRUE(starts_with(output, "Ionic_Step 1\n"));
     EXPECT_THAT(output, testing::HasSubstr("Matrix Dimension of S(R): 2\n"));
     EXPECT_THAT(output, testing::HasSubstr("Matrix number of S(R): 1\n"));
     EXPECT_THAT(output, testing::HasSubstr("0 0 0 2\n"));
@@ -79,7 +79,7 @@ TEST(HsSparseIo, SparseTextCountsOnlyValuesAboveThreshold)
     const std::vector<std::string> lines = read_lines(filename);
     ASSERT_GE(lines.size(), 6);
     // istep = 2 is the third ionic step, printed one-based as 3
-    EXPECT_EQ(lines[0], "STEP: 3");
+    EXPECT_EQ(lines[0], "Ionic_Step 3");
     EXPECT_EQ(lines[1], "Matrix Dimension of S(R): 2");
     EXPECT_EQ(lines[2], "Matrix number of S(R): 1");
     EXPECT_EQ(lines[3], "0 0 0 2");

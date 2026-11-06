@@ -31,7 +31,7 @@ std::string eig_occ(int nspin)
 {
     const auto headers = source_headers(nspin);
     std::ostringstream out;
-    out << "1 # ionic step\n Electronic state energy (eV) and occupations\n Spin number " << nspin << '\n';
+    out << "1 # Ionic_Step\n Electronic state energy (eV) and occupations\n Spin number " << nspin << '\n';
     for (int iq = 0; iq < headers.size(); ++iq)
     {
         const auto& header = headers[iq];

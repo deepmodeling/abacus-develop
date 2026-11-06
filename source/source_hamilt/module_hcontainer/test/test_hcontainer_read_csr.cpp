@@ -112,7 +112,7 @@ TEST_F(ReadHContainerTest, ReadAndOutputHContainer)
     hamilt::Output_HContainer<double> output_SR(&SR, ofs_out, sparse_threshold, 8);
     // std::cout << SR.size_R_loop() << std::endl;
     // output_SR.write(-2, -1, 0);
-    ofs_out << "STEP: " << 0 << std::endl;
+    ofs_out << "Ionic_Step " << 0 << std::endl;
     ofs_out << "Matrix Dimension of S(R): " << paraV.para_2d().get_col_size() << std::endl;
     ofs_out << "Matrix number of S(R): " << SR.size_R_loop() << std::endl;
     output_SR.write();

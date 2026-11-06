@@ -19,7 +19,7 @@ namespace ModuleIO
  * are rejected for both formats rather than producing an empty matrix.
  * The cell-aware format is like:
  * ```
- *  --- Ionic Step 1 ---
+ *  --- Ionic_Step 1 ---
  *  # print density matrix in real space DM(R)
  *  26 # number of localized basis
  *  13 # number of Bravais lattice vector R

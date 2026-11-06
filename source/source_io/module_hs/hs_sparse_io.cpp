@@ -65,7 +65,7 @@ void write_sparse_header(std::ofstream& ofs,
     }
     else
     {
-        ofs << "STEP: " << step << std::endl;
+        ofs << "Ionic_Step " << step << std::endl;
         ofs << "Matrix Dimension of " + options.label + "(R): " << nlocal
             << std::endl;
         ofs << "Matrix number of " + options.label + "(R): "

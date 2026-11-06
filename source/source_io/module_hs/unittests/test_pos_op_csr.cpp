@@ -62,7 +62,7 @@ TEST(PosOpCsr, CsrAssembleTextAllowsZeroBlocks)
 
     const std::vector<std::string> lines = read_lines(output_filename);
     ASSERT_EQ(lines.size(), 3);
-    EXPECT_EQ(lines[0], "STEP: 9");
+    EXPECT_EQ(lines[0], "Ionic_Step 9");
     EXPECT_EQ(lines[1], "Matrix Dimension of r(R): 2");
     EXPECT_EQ(lines[2], "Matrix number of r(R): 0");
 
@@ -98,7 +98,7 @@ TEST(PosOpCsr, CsrAssembleTextKeepsSingleDirectionPayload)
 
     const std::vector<std::string> lines = read_lines(output_filename);
     ASSERT_EQ(lines.size(), 10);
-    EXPECT_EQ(lines[0], "STEP: 10");
+    EXPECT_EQ(lines[0], "Ionic_Step 10");
     EXPECT_EQ(lines[1], "Matrix Dimension of r(R): 2");
     EXPECT_EQ(lines[2], "Matrix number of r(R): 1");
     EXPECT_EQ(lines[3], "1 0 -1");

@@ -135,7 +135,7 @@ void Output_Mulliken<TK>::write_mulliken_nspin1(int istep,
 {
     os << std::setprecision(4);
     /// step info
-    os << " --- Ionic Step " << istep+1 << " ---" << std::endl;
+    os << " --- Ionic_Step " << istep+1 << " ---" << std::endl;
     os << " Total charge " << tot_chg[0] << std::endl;
     /// orbital decomposed mulliken populations
     FmtCore fmt_of_chg("%10.4f");
@@ -206,7 +206,7 @@ void Output_Mulliken<TK>::write_mulliken_nspin2(int istep,
 {
     os << std::setprecision(4);
     /// step info
-    os << " --- Ionic Step " << istep+1 << " ---" << std::endl;
+    os << " --- Ionic_Step " << istep+1 << " ---" << std::endl;
     os << " Total charge " << tot_chg[0] + tot_chg[1] << std::endl;
     os << " Total charge of spin1 " << tot_chg[0] << std::endl;
     os << " Total charge of spin2 " << tot_chg[1] << std::endl;
@@ -299,7 +299,7 @@ void Output_Mulliken<TK>::write_mulliken_nspin4(int istep,
 {
     os << std::setprecision(4);
     /// step info
-    os << " --- Ionic Step " << istep+1 << " ---" << std::endl;
+    os << " --- Ionic_Step " << istep+1 << " ---" << std::endl;
     os << " Total charge " << tot_chg[0] << std::endl;
     /// orbital decomposed mulliken populations
     FmtCore fmt_of_chg("%10.4f");
