@@ -325,7 +325,7 @@ if(USE_KML)
 elseif(MKLROOT OR MKL_ROOT)
   find_package(MKL REQUIRED)
 elseif(NOT USE_SW)
-  find_package(Lapack REQUIRED)
+  find_package(LAPACK REQUIRED)
   # ScaLAPACK is a distributed-memory library and is only needed for the
   # MPI build. A serial build (e.g. the native Windows serial version)
   # must not require it.

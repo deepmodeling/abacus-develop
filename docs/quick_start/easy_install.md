@@ -157,7 +157,6 @@ Here, 'build' is the path for building ABACUS; and '-D' is used for setting up s
 
 - Requirements: Unless indicated, CMake will try to find under default paths.
   - `MKLROOT`: If environment variable `MKLROOT` exists, `cmake` will take MKL as a preference, i.e. not using `LAPACK`, `ScaLAPACK` and `FFTW`. To disable MKL, unset environment variable `MKLROOT`, or pass `-DMKLROOT=OFF` to `cmake`.
-  - `LAPACK_DIR`: Path to OpenBLAS library `libopenblas.so`(including BLAS and LAPACK)
   - `SCALAPACK_DIR`: Path to ScaLAPACK library `libscalapack.so`
   - `FFTW3_DIR`: Path to FFTW3.
   - `LIBRI_DIR`: (Optional) Path to LibRI.
