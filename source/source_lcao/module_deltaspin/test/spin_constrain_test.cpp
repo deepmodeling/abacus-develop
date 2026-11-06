@@ -157,8 +157,8 @@ TYPED_TEST(SpinConstrainTest, SetSolverParameters)
 TYPED_TEST(SpinConstrainTest, SetParaV)
 {
     Parallel_Orbitals paraV;
+    // A default-constructed distribution has no local elements (nloc == 0).
     // warning 1
-    paraV.nloc = 0;
     testing::internal::CaptureStdout();
     EXPECT_EXIT(this->sc.set_ParaV(&paraV), ::testing::ExitedWithCode(1), "");
     std::string output = testing::internal::GetCapturedStdout();
@@ -167,9 +167,9 @@ TYPED_TEST(SpinConstrainTest, SetParaV)
     int nrow = 4;
     int ncol = 4;
     std::ofstream ofs("test.log");
-    paraV.set_serial(nrow, ncol);
+    paraV.para_2d().set_serial(nrow, ncol);
     this->sc.set_ParaV(&paraV);
-    EXPECT_EQ(this->sc.ParaV->nloc, nrow * ncol);
+    EXPECT_EQ(this->sc.ParaV->para_2d().get_local_size(), nrow * ncol);
     remove("test.log");
 }
 

@@ -159,7 +159,7 @@ void sparse_format::cal_STN_R_for_T(const UnitCell& ucell,
                     for (int ii = 0; ii < atom1->nw * PARAM.globalv.npol; ii++)
                     {
                         const int iw1_all = start + ii;
-                        const int mu = pv.global2local_row(iw1_all);
+                        const int mu = pv.para_2d().global2local_row(iw1_all);
 
                         if (mu < 0)
                         {
@@ -169,7 +169,7 @@ void sparse_format::cal_STN_R_for_T(const UnitCell& ucell,
                         for (int jj = 0; jj < atom2->nw * PARAM.globalv.npol; jj++)
                         {
                             int iw2_all = start2 + jj;
-                            const int nu = pv.global2local_col(iw2_all);
+                            const int nu = pv.para_2d().global2local_col(iw2_all);
 
                             if (nu < 0)
                             {

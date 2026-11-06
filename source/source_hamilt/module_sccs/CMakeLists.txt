@@ -1,4 +1,5 @@
-add_library(sccs OBJECT
+add_library(
+  sccs OBJECT
   sccs_diag.cpp
   sccs_cavity.cpp
   sccs_cav_deriv.cpp
@@ -11,7 +12,8 @@ add_library(sccs OBJECT
   sccs_coul_2d.cpp
   sccs_moments.cpp
   sccs_pw_coulomb.cpp
-  sccs_response.cpp)
+  sccs_response.cpp
+  sccs_sa.cpp)
 
 if(ENABLE_COVERAGE)
   add_coverage(sccs)

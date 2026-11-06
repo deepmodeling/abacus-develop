@@ -1,5 +1,4 @@
 #include <algorithm>
-#include <cmath>
 #include "diago_dav_subspace.h"
 
 #include "diago_iter_assist.h"
@@ -16,8 +15,12 @@
 
 #include "source_hsolver/kernels/hegvd_op.h"
 #include "source_hsolver/diag_hs_para.h"
-#include "source_hsolver/kernels/bpcg_kernel_op.h" // normalize_op, precondition_op, apply_eigenvalues_op
+#include "source_hsolver/kernels/bpcg_kernel_op.h" // precondition_op
 
+#include <cmath>
+#include <iomanip>
+#include <limits>
+#include <sstream>
 #include <vector>
 
 #ifdef __MPI
@@ -123,7 +126,8 @@ int Diago_DavSubspace<T, Device>::diag_once(const HSOperator<T, Device>& op,
                                             T* psi_in,
                                             const int psi_in_dmax,
                                             Real* eigenvalue_in_hsolver,
-                                            const std::vector<double>& ethr_band)
+                                            const std::vector<double>& ethr_band,
+                                            const int ik)
 {
     ModuleBase::timer::start("Diago_DavSubspace", "diag_once");
     const int matrix_ld = std::max(this->dim, 1);
@@ -187,37 +191,42 @@ int Diago_DavSubspace<T, Device>::diag_once(const HSOperator<T, Device>& op,
                        this->spsi,
                        this->vcc,
                        unconv.data(),
-                       &eigenvalue_iter);
+                       &eigenvalue_iter,
+                       ethr_band,
+                       ik);
 
-        this->cal_elem(this->dim,
-                       nbase,
-                       this->notconv,
-                       this->psi_in_iter,
-                       this->spsi,
-                       this->hpsi,
-                       this->hcc,
-                       this->scc);
-
-        this->diag_zhegvx(nbase, this->n_band, this->hcc, this->scc, this->nbase_x, &eigenvalue_iter, this->vcc);
-
-        // check convergence and update eigenvalues
-        ModuleBase::timer::start("Diago_DavSubspace", "check_update");
-
-        this->notconv = 0;
-        for (int m = 0; m < this->n_band; m++)
+        if (this->notconv > 0)
         {
-            convflag[m] = (std::abs(eigenvalue_iter[m] - eigenvalue_in_hsolver[m]) < ethr_band[m]);
+            this->cal_elem(this->dim,
+                           nbase,
+                           this->notconv,
+                           this->psi_in_iter,
+                           this->spsi,
+                           this->hpsi,
+                           this->hcc,
+                           this->scc);
 
-            if (!convflag[m])
+            this->diag_zhegvx(nbase, this->n_band, this->hcc, this->scc, this->nbase_x, &eigenvalue_iter, this->vcc);
+
+            // check convergence and update eigenvalues
+            ModuleBase::timer::start("Diago_DavSubspace", "check_update");
+
+            this->notconv = 0;
+            for (int m = 0; m < this->n_band; m++)
             {
-                unconv[this->notconv] = m;
-                this->notconv++;
+                convflag[m] = (std::abs(eigenvalue_iter[m] - eigenvalue_in_hsolver[m]) < ethr_band[m]);
+
+                if (!convflag[m])
+                {
+                    unconv[this->notconv] = m;
+                    this->notconv++;
+                }
+
+                eigenvalue_in_hsolver[m] = eigenvalue_iter[m];
             }
 
-            eigenvalue_in_hsolver[m] = eigenvalue_iter[m];
+            ModuleBase::timer::end("Diago_DavSubspace", "check_update");
         }
-
-        ModuleBase::timer::end("Diago_DavSubspace", "check_update");
 
         if ((this->notconv == 0) || (nbase + this->notconv + 1 > this->nbase_x) || (dav_iter == this->iter_nmax))
         {
@@ -288,24 +297,28 @@ template <typename T, typename Device>
 void Diago_DavSubspace<T, Device>::cal_grad(const HSOperator<T, Device>& op,
                                             const int& dim,
                                             const int& nbase,
-                                            const int& notconv,
+                                            int& notconv,
                                             T* psi_iter,
                                             T* hpsi,
                                             T* spsi,
                                             T* vcc,
-                                            const int* unconv,
-                                            std::vector<Real>* eigenvalue_iter)
+                                            int* unconv,
+                                            const std::vector<Real>* eigenvalue_iter,
+                                            const std::vector<double>& ethr_band,
+                                            const int ik)
 {
     ModuleBase::timer::start("Diago_DavSubspace", "cal_grad");
     const int matrix_ld = std::max(this->dim, 1);
 
-    for (size_t i = 0; i < notconv; i++)
+    // Keep the full Ritz solution intact for output and restart, including when
+    // every residual vanishes and there is no subsequent reduced solve.
+    T* active_vcc = nullptr;
+    resmem_complex_op()(active_vcc, this->nbase_x * notconv);
+    std::vector<Real> active_eigenvalues(this->nbase_x, 0);
+    for (int i = 0; i < notconv; ++i)
     {
-        if (unconv[i] != i)
-        {
-            syncmem_complex_op()(vcc + i * this->nbase_x, vcc + unconv[i] * this->nbase_x, nbase);
-            (*eigenvalue_iter)[i] = (*eigenvalue_iter)[unconv[i]];
-        }
+        syncmem_complex_op()(active_vcc + i * this->nbase_x, vcc + unconv[i] * this->nbase_x, nbase);
+        active_eigenvalues[i] = (*eigenvalue_iter)[unconv[i]];
     }
 
     if (notconv > 1){
@@ -323,7 +336,7 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HSOperator<T, Device>& op,
                          this->one,
                          hpsi,
                          matrix_ld,
-                         vcc,
+                         active_vcc,
                          this->nbase_x,
                          this->zero,
                          psi_iter + (nbase) * this->dim,
@@ -342,7 +355,7 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HSOperator<T, Device>& op,
                          this->one,     // alpha
                          hpsi,          // A dim * nbase
                          matrix_ld,     // LDA: if(N) max(1,m)
-                         vcc,           // X nbase
+                         active_vcc,           // X nbase
                          1,             // incx
                          this->zero,    // beta
                          psi_iter + (nbase) * this->dim,  // Y dim
@@ -352,15 +365,16 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HSOperator<T, Device>& op,
 
 
     // Eigenvalues operation section
-    Real* e_temp_hd = eigenvalue_iter->data();
+    Real* e_temp_hd = active_eigenvalues.data();
     if (this->device == base_device::GpuDevice)
     {
-        syncmem_var_h2d_op()(this->d_eigenvalue, eigenvalue_iter->data(), this->nbase_x);
+        syncmem_var_h2d_op()(this->d_eigenvalue, active_eigenvalues.data(), this->nbase_x);
         e_temp_hd = this->d_eigenvalue;
     }
 
-    // vcc = - vcc * eigenvalue
-    ModuleBase::matrix_mul_vector_op<T, Device>()(nbase, notconv, vcc, this->nbase_x, e_temp_hd, -1.0, vcc, this->nbase_x);
+    // active_vcc = - active_vcc * eigenvalue
+    ModuleBase::matrix_mul_vector_op<T, Device>()(
+        nbase, notconv, active_vcc, this->nbase_x, e_temp_hd, -1.0, active_vcc, this->nbase_x);
 
     if (notconv > 1){
 
@@ -377,7 +391,7 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HSOperator<T, Device>& op,
          this->one,
          spsi,
          matrix_ld,
-         vcc,
+         active_vcc,
          this->nbase_x,
          this->one,
          psi_iter + nbase * this->dim,
@@ -395,7 +409,7 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HSOperator<T, Device>& op,
          this->one,     // alpha
          spsi,          // A dim * nbase
          matrix_ld,     // LDA: if(N) max(1,m)
-         vcc,           // X nbase
+         active_vcc,           // X nbase
          1,             // incx
          this->one,    // beta
          psi_iter + nbase * this->dim,  // Y dim
@@ -403,10 +417,83 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HSOperator<T, Device>& op,
         );
     }
 
+    delmem_complex_op()(active_vcc);
+
+    // Deflation is only a safeguard for numerically tiny residuals. A loose
+    // energy-change tolerance (e.g. for unoccupied bands) must not skip an
+    // ordinary Davidson expansion. Account for the arithmetic precision while
+    // never increasing the requested band tolerance.
+    const auto residual_threshold = [&](const int band)
+    {
+        const Real energy_scale = std::max(Real(1), std::abs((*eigenvalue_iter)[band]));
+        const double tiny_norm = std::max(1.0e-12, double(std::numeric_limits<Real>::epsilon() * energy_scale));
+        return std::min(ethr_band[band], tiny_norm);
+    };
+
+    const auto breakdown = [&](const int band, const Real residual, const Real direction,
+                               const char* reason)
+    {
+        std::ostringstream message;
+        message << std::setprecision(std::numeric_limits<Real>::max_digits10)
+                << "Diago_DavSubspace::cal_grad: " << reason
+                << "; band=" << band + 1 << ", k-point=";
+        if (ik >= 0)
+        {
+            message << ik + 1 << " (1-based, pool-local k index)";
+        }
+        else
+        {
+            message << "n/a (operator without single-k context)";
+        }
+        message << ", eigenvalue=" << (*eigenvalue_iter)[band]
+                << ", residual_norm=" << residual
+                << ", residual_threshold=" << residual_threshold(band)
+                << ", band_threshold=" << ethr_band[band]
+                << ", direction_norm=" << direction
+                << ", direction_min=" << std::numeric_limits<Real>::min()
+                << ". The correction cannot be normalized safely.";
+        ModuleBase::WARNING_QUIT("Diago_DavSubspace::cal_grad", message.str());
+    };
+
+    // The Ritz vectors are S-normalized. Check the unpreconditioned residual
+    // before deciding that a correction is unnecessary.
+    std::vector<Real> residual_norm(notconv, 0);
+    int active = 0;
+    for (int i = 0; i < notconv; ++i)
+    {
+        T* residual = psi_iter + (nbase + i) * dim;
+        const Real norm = std::sqrt(ModuleBase::dot_real_op<T, Device>()(
+            dim, residual, residual, this->diag_comm.nproc > 1));
+        const int band = unconv[i];
+        if (!std::isfinite(norm))
+        {
+            breakdown(band, norm, std::numeric_limits<Real>::quiet_NaN(), "nonfinite eigen-residual");
+        }
+        if (norm <= residual_threshold(band))
+        {
+            continue;
+        }
+        if (active != i)
+        {
+            syncmem_complex_op()(psi_iter + (nbase + active) * dim, residual, dim);
+        }
+        residual_norm[active] = norm;
+        active_eigenvalues[active] = (*eigenvalue_iter)[band];
+        unconv[active] = band;
+        ++active;
+    }
+    notconv = active;
+    if (notconv == 0)
+    {
+        ModuleBase::timer::end("Diago_DavSubspace", "cal_grad");
+        return;
+    }
+
     // Precondition section
 #if defined(__CUDA) || defined(__ROCM)
     if (this->device == base_device::GpuDevice)
     {
+        syncmem_var_h2d_op()(this->d_eigenvalue, active_eigenvalues.data(), notconv);
         precondition_op<T, Device>()(this->dim,
                                     psi_iter,
                                     nbase,
@@ -422,128 +509,27 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HSOperator<T, Device>& op,
                                     nbase,
                                     notconv,
                                     this->precondition.data(),
-                                    (*eigenvalue_iter).data());
+                                    active_eigenvalues.data());
     }
 
-    // Normalize section
-#if defined(__CUDA) || defined(__ROCM)
-    if (this->device == base_device::GpuDevice)
+    // Measure and validate before division. The same typed operations serve CPU
+    // and GPU, and each norm includes all basis partitions in the pool.
+    for (int i = 0; i < notconv; ++i)
     {
-        Real* psi_norm = nullptr;
-        resmem_real_op()(psi_norm, notconv);
-        setmem_real_op()(psi_norm, 0.0, notconv);
-
-        normalize_op<T, Device>()(this->dim,
-                                psi_iter,
-                                nbase,
-                                notconv,
-                                psi_norm);
-
-        // Check for zero norms (GPU path: copy norms from device to host)
-        Real* psi_norm_host = nullptr;
-        resmem_real_h_op()(psi_norm_host, notconv);
-        syncmem_var_d2h_op()(psi_norm_host, psi_norm, notconv);
-        std::vector<int> valid_indices;
-        for (int i = 0; i < notconv; i++)
+        T* direction = psi_iter + (nbase + i) * dim;
+        const Real norm = std::sqrt(ModuleBase::dot_real_op<T, Device>()(
+            dim, direction, direction, this->diag_comm.nproc > 1));
+        if (!std::isfinite(norm) || norm < std::numeric_limits<Real>::min())
         {
-            const bool finite = std::isfinite(psi_norm_host[i]);
-            if (!finite || psi_norm_host[i] <= 1.0e-12)
-            {
-                std::cout << "Diago_DavSubspace::cal_grad: norm of new direction for band " << i
-                          << (finite ? " is too small" : " is not finite")
-                          << ", treating as converged." << std::endl;
-                continue;
-            }
-            valid_indices.push_back(i);
+            breakdown(unconv[i], residual_norm[i], norm, "unusable preconditioned direction");
         }
-        if (valid_indices.empty())
-        {
-            this->notconv = 0;
-        }
-        else if (static_cast<int>(valid_indices.size()) < notconv)
-        {
-            for (int k = 0; k < static_cast<int>(valid_indices.size()); ++k)
-            {
-                const int src = valid_indices[k];
-                if (src != k)
-                {
-                    syncmem_complex_op()(psi_iter + (nbase + k) * this->dim,
-                                         psi_iter + (nbase + src) * this->dim,
-                                         this->dim);
-                }
-            }
-            this->notconv = static_cast<int>(valid_indices.size());
-        }
-        delmem_real_h_op()(psi_norm_host);
-        delmem_real_op()(psi_norm);
-    }
-    else
-#endif
-    {
-        Real* psi_norm = nullptr;
-        resmem_real_h_op()(psi_norm, notconv);
-        setmem_real_h_op()(psi_norm, 0.0, notconv);
-
-        normalize_op<T, Device>()(this->dim,
-                                psi_iter,
-                                nbase,
-                                notconv,
-                                psi_norm);
-
-        // Check for zero norms (CPU path)
-        std::vector<int> valid_indices;
-        for (int i = 0; i < notconv; i++)
-        {
-            const bool finite = std::isfinite(psi_norm[i]);
-            if (!finite)
-            {
-                ModuleBase::WARNING("Diago_DavSubspace::cal_grad",
-                                    "Non-finite norm for new direction of band "
-                                        + std::to_string(i)
-                                        + "; skipping the direction instead of "
-                                          "reporting a converged eigenpair.");
-                continue;
-            }
-            if (psi_norm[i] <= 1.0e-12)
-            {
-                ModuleBase::WARNING("Diago_DavSubspace::cal_grad",
-                                    "Near-zero norm for new direction of band "
-                                        + std::to_string(i)
-                                        + "; treating the direction as converged.");
-                continue;
-            }
-            valid_indices.push_back(i);
-        }
-        if (valid_indices.empty())
-        {
-            this->notconv = 0;
-        }
-        else if (static_cast<int>(valid_indices.size()) < notconv)
-        {
-            for (int k = 0; k < static_cast<int>(valid_indices.size()); ++k)
-            {
-                const int src = valid_indices[k];
-                if (src != k)
-                {
-                    syncmem_complex_op()(psi_iter + (nbase + k) * this->dim,
-                                         psi_iter + (nbase + src) * this->dim,
-                                         this->dim);
-                }
-            }
-            this->notconv = static_cast<int>(valid_indices.size());
-        }
-        delmem_real_h_op()(psi_norm);
+        ModuleBase::vector_div_constant_op<T, Device>()(dim, direction, direction, norm);
     }
 
     // update hpsi[:, nbase:nbase+notconv]
     // hpsi[:, nbase:nbase+notconv] = H * psi_iter[:, nbase:nbase+notconv]
-    // An all-rejected block leaves no new direction; asking the operator for
-    // zero vectors would build an invalid [0, -1] range.
-    if (this->notconv > 0)
-    {
-        op.hpsi(psi_iter + nbase * dim, hpsi + nbase * this->dim, this->dim, this->notconv);
-        op.spsi(psi_iter + nbase * dim, spsi + nbase * this->dim, this->dim, this->notconv);
-    }
+    op.hpsi(psi_iter + nbase * dim, hpsi + nbase * this->dim, this->dim, notconv);
+    op.spsi(psi_iter + nbase * dim, spsi + nbase * this->dim, this->dim, notconv);
 
     ModuleBase::timer::end("Diago_DavSubspace", "cal_grad");
     return;
@@ -898,6 +884,18 @@ int Diago_DavSubspace<T, Device>::diag(const HSOperator<T, Device>& op,
                                        const std::vector<double>& ethr_band,
                                        const bool& scf_type)
 {
+    return this->diag(op, psi_in, psi_in_dmax, eigenvalue_in_hsolver, ethr_band, scf_type, -1);
+}
+
+template <typename T, typename Device>
+int Diago_DavSubspace<T, Device>::diag(const HSOperator<T, Device>& op,
+                                       T* psi_in,
+                                       const int psi_in_dmax,
+                                       Real* eigenvalue_in_hsolver,
+                                       const std::vector<double>& ethr_band,
+                                       const bool& scf_type,
+                                       const int ik)
+{
     /// record the times of trying iterative diagonalization
     this->notconv = 0;
 
@@ -907,7 +905,7 @@ int Diago_DavSubspace<T, Device>::diag(const HSOperator<T, Device>& op,
     do
     {
 
-        sum_iter += this->diag_once(op, psi_in, psi_in_dmax, eigenvalue_in_hsolver, ethr_band);
+        sum_iter += this->diag_once(op, psi_in, psi_in_dmax, eigenvalue_in_hsolver, ethr_band, ik);
 
         ++ntry;
 

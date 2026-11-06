@@ -21,7 +21,7 @@ void DensityMatrix<double, double>::cal_dmr(const int ik_in)
     assert(this->dmr.size()==this->spin_mult && "DMR has not been initialized!");
 
     ModuleBase::timer::start("DensityMatrix", "cal_dmr");
-    const int ld_hk = this->pv->nrow;
+    const int ld_hk = this->pv->para_2d().get_row_size();
     for (int is = 1; is <= this->spin_mult; ++is)
     {
         const int ik_begin = this->_nk * (is - 1); // jump this->_nk for spin_down if nspin==2
@@ -57,7 +57,7 @@ void DensityMatrix<double, double>::cal_dmr(const int ik_in)
             // transpose DMK col=>row
             const TK* DMK_mat_ptr
                 = this->dmk[0 + ik_begin].data()
-                  + col_ap * this->pv->nrow + row_ap;
+                  + col_ap * this->pv->para_2d().get_row_size() + row_ap;
             // set DMR element
             TR* target_DMR_ptr = target_mat->get_pointer();
             for (int mu = 0; mu < row_size; ++mu)

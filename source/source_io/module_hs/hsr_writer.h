@@ -24,31 +24,33 @@ namespace ModuleIO
 {
 
 /// Generate filename for spin-dependent HR output.
+/// @param numbered whether the ionic step is embedded as a g{step} suffix (out_app_flag == 2)
 std::string hsr_gen_fname(const std::string& prefix,
                           const int ispin,
-                          const bool append,
+                          const bool numbered,
                           const int istep);
 
 /// Generate filename for spin-dependent HR output in the selected format.
 std::string hsr_gen_fname(const std::string& prefix,
                           const int ispin,
-                          const bool append,
+                          const bool numbered,
                           const int istep,
                           const int out_type);
 
 /// Generate filename for spin-independent SR output.
-std::string sr_gen_fname(const bool append, const int istep);
+std::string sr_gen_fname(const bool numbered, const int istep);
 
 /// Generate filename for spin-independent SR output in the selected format.
-std::string sr_gen_fname(const bool append, const int istep, const int out_type);
+std::string sr_gen_fname(const bool numbered, const int istep, const int out_type);
 
 /// Generate filename for derivative matrices (dH/dR, dS/dR).
 std::string dhr_gen_fname(const std::string& prefix,
                           const int ispin,
-                          const bool append,
+                          const bool numbered,
                           const int istep);
 
 /// Write a single HContainer to CSR file with header.
+/// @param append whether to append to an existing file; the first written step (istep <= 0) truncates
 /// @param efermi_eV the Fermi energy in eV for this spin channel
 /// @param has_efermi whether to append the Fermi energy to the spin-index line
 template <typename TR>
@@ -57,6 +59,7 @@ void write_hcontainer_csr(const std::string& fname,
                           const int precision,
                           hamilt::HContainer<TR>* mat_serial,
                           const int istep,
+                          const bool append,
                           const int ispin,
                           const int nspin,
                           const std::string& label,
@@ -72,6 +75,8 @@ void write_hcontainer_csr_binary(const std::string& fname,
                                  const bool append);
 
 /// Write H(R) and S(R) in CSR format, unified with write_dmr interface.
+/// @param out_app_flag output mode: 0 = fixed filename, overwritten; 1 = fixed filename, appended;
+///                     2 = per-step g{step} filename.
 template <typename TR>
 void write_hsr(const std::vector<hamilt::HContainer<TR>*>& hr_vec,
                const hamilt::HContainer<TR>* sr,
@@ -79,7 +84,7 @@ void write_hsr(const std::vector<hamilt::HContainer<TR>*>& hr_vec,
                const int out_type,
                const int precision,
                const Parallel_2D& paraV,
-               const bool append,
+               const int out_app_flag,
                const bool gamma_only,
                const int* iat2iwt,
                const int nat,

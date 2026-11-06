@@ -18,7 +18,7 @@ class AddValueTest : public ::testing::Test
 
     void SetUp() override
     {
-        paraV.set_serial(5, 5);
+        paraV.para_2d().set_serial(5, 5);
         paraV.set_atomic_trace(iat2iwt, 2, 5);
     }
 

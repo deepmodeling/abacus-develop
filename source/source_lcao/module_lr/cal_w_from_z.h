@@ -141,9 +141,9 @@ namespace LR
             {
                 const auto psi_ks_is = LR_Util::get_psi_spin(psi_ks, is, nk);
 #ifdef __MPI
-                dm_trans_2d = cal_dm_trans_pblas(x_ptr, px[is], psi_ks_is, pc, naos, nocc[is], nvirt[is], pmat);
+                dm_trans_2d = cal_dm_trans_pblas(x_ptr, px[is], psi_ks_is, pc, naos, nocc[is], nvirt[is], pmat.para_2d());
                 for (auto& t: dm_trans_2d)
-                    LR_Util::matsym(t.data<T>(), naos, pmat);
+                    LR_Util::matsym(t.data<T>(), naos, pmat.para_2d());
 #else
                 dm_trans_2d = cal_dm_trans_blas(x_ptr, psi_ks_is, nocc[is], nvirt[is]);
                 for (auto& t: dm_trans_2d)
@@ -158,9 +158,9 @@ namespace LR
             {
                 const auto psi_ks_is = LR_Util::get_psi_spin(psi_ks, is, nk);
 #ifdef __MPI
-                std::vector<ct::Tensor> z_2d = cal_dm_trans_pblas(z_ptr, px[is], psi_ks_is, pc, naos, nocc[is], nvirt[is], pmat);
+                std::vector<ct::Tensor> z_2d = cal_dm_trans_pblas(z_ptr, px[is], psi_ks_is, pc, naos, nocc[is], nvirt[is], pmat.para_2d());
                 for (auto& t: z_2d)
-                    LR_Util::matsym(t.data<T>(), naos, pmat);
+                    LR_Util::matsym(t.data<T>(), naos, pmat.para_2d());
 #else
                 std::vector<ct::Tensor> z_2d = cal_dm_trans_blas(z_ptr, psi_ks_is, nocc[is], nvirt[is]);
                 for (auto& t: z_2d)
@@ -168,7 +168,7 @@ namespace LR
 #endif
 
 #ifdef __MPI
-                dm_diff_2d = cal_dm_diff_pblas(x_ptr, px[is], psi_ks_is, pc, naos, nocc[is], nvirt[is], pmat);
+                dm_diff_2d = cal_dm_diff_pblas(x_ptr, px[is], psi_ks_is, pc, naos, nocc[is], nvirt[is], pmat.para_2d());
 #else
                 dm_diff_2d = cal_dm_diff_blas(x_ptr, psi_ks_is, naos, nocc[is], nvirt[is]);
 #endif
@@ -300,12 +300,12 @@ namespace LR
                 const T* const x_ptr = X + off_x[is];
                 const T* const z_ptr = Z + off_x[is];
 #ifdef __MPI
-                std::vector<ct::Tensor> z_2d = cal_dm_trans_pblas(z_ptr, px[is], psi_ks_is, pc, naos, nocc[is], nvirt[is], pmat);
+                std::vector<ct::Tensor> z_2d = cal_dm_trans_pblas(z_ptr, px[is], psi_ks_is, pc, naos, nocc[is], nvirt[is], pmat.para_2d());
                 for (auto& t: z_2d)
                 {
-                    LR_Util::matsym(t.data<T>(), naos, pmat);
+                    LR_Util::matsym(t.data<T>(), naos, pmat.para_2d());
                 }
-                dm_buf = cal_dm_diff_pblas(x_ptr, px[is], psi_ks_is, pc, naos, nocc[is], nvirt[is], pmat);
+                dm_buf = cal_dm_diff_pblas(x_ptr, px[is], psi_ks_is, pc, naos, nocc[is], nvirt[is], pmat.para_2d());
 #else
                 std::vector<ct::Tensor> z_2d = cal_dm_trans_blas(z_ptr, psi_ks_is, nocc[is], nvirt[is]);
                 for (auto& t: z_2d)

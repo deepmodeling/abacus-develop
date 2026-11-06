@@ -415,7 +415,7 @@ void output_mat_npz_impl(const UnitCell& ucell, std::string& zipname, const hami
 #ifdef __MPI
     hamilt::HContainer<T>* HR_serial;
     Parallel_Orbitals serialV;
-    serialV.set_serial(PARAM.globalv.nlocal, PARAM.globalv.nlocal);
+    serialV.para_2d().set_serial(PARAM.globalv.nlocal, PARAM.globalv.nlocal);
     serialV.set_atomic_trace(ucell.get_iat2iwt(), ucell.nat, PARAM.globalv.nlocal);
     if(GlobalV::MY_RANK == 0)
     {

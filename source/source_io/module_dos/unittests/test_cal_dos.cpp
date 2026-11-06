@@ -37,7 +37,7 @@ TEST_F(DosTest,Dos)
 	EXPECT_EQ(dosp.is,0);
 
     const int istep = 1;
-    const bool out_app_flag = false;
+    const int out_app_flag = 0;
     const int bndpar = 1;
 	ModuleIO::cal_dos(dosp.is,
 			dosp.fa,
@@ -124,7 +124,7 @@ TEST_F(DosTest,DosW1)
 	GlobalV::ofs_warning.open("warning1.log");
 
     const int istep = 1;
-    const bool out_app_flag = false;
+    const int out_app_flag = 0;
     const int bndpar = 1;
 	EXPECT_NO_THROW(ModuleIO::cal_dos(dosp.is,
 			dosp.fa,
@@ -171,7 +171,7 @@ TEST_F(DosTest,DosW2)
 	GlobalV::ofs_warning.open("warning2.log");
 
     const int istep = 1;
-    const bool out_app_flag = false;
+    const int out_app_flag = 0;
     const int bndpar = 1;
 	EXPECT_NO_THROW(ModuleIO::cal_dos(dosp.is,
 			dosp.fa,
@@ -205,6 +205,92 @@ TEST_F(DosTest,DosW2)
 #ifdef __MPI
 	}
 #endif
+}
+
+// ---------------------------------------------------------------------------
+// out_app_flag = 1: cal_dos appends successive records to the same file.
+// ---------------------------------------------------------------------------
+TEST_F(DosTest, Mode1Appends)
+{
+    const std::string fname = "doss1_mode1.txt";
+    DosPrepare dosp(0, fname, 0.005, 18, -6, 0.07,
+                    dos_test_data::nks, dos_test_data::nkstot, dos_test_data::nbands);
+    dosp.set_isk();
+    dosp.set_wk();
+    dosp.set_istate_info();
+
+    const int out_app_flag = 1;
+    const int bndpar = 1;
+
+    // First call: istep=0 -> "1 # ionic step".
+    ModuleIO::cal_dos(dosp.is, dosp.fa, dosp.de_ev, dosp.emax_ev, dosp.emin_ev,
+                      dosp.bcoeff, dosp.nks, dosp.nkstot, dosp.wk, dosp.isk,
+                      dosp.nbands, dosp.ekb, dosp.wg,
+                      /*istep=*/0, out_app_flag, bndpar);
+    // Second call: istep=1 -> "2 # ionic step", appended.
+    ModuleIO::cal_dos(dosp.is, dosp.fa, dosp.de_ev, dosp.emax_ev, dosp.emin_ev,
+                      dosp.bcoeff, dosp.nks, dosp.nkstot, dosp.wk, dosp.isk,
+                      dosp.nbands, dosp.ekb, dosp.wg,
+                      /*istep=*/1, out_app_flag, bndpar);
+
+#ifdef __MPI
+    if (GlobalV::MY_RANK == 0)
+#endif
+    {
+        std::ifstream ifs(fname);
+        std::string str((std::istreambuf_iterator<char>(ifs)),
+                        std::istreambuf_iterator<char>());
+        ifs.close();
+        // Two ionic step headers present.
+        EXPECT_THAT(str, testing::HasSubstr("1    # ionic step"));
+        EXPECT_THAT(str, testing::HasSubstr("2    # ionic step"));
+        remove(fname.c_str());
+    }
+}
+
+// ---------------------------------------------------------------------------
+// out_app_flag = 2: same overwrite behaviour as mode 0 (file is truncated each
+// call; naming is handled by the caller write_dos_* which adds g{N}).
+// ---------------------------------------------------------------------------
+TEST_F(DosTest, Mode2Overwrites)
+{
+    const std::string fname = "doss1_mode2.txt";
+    DosPrepare dosp(0, fname, 0.005, 18, -6, 0.07,
+                    dos_test_data::nks, dos_test_data::nkstot, dos_test_data::nbands);
+    dosp.set_isk();
+    dosp.set_wk();
+    dosp.set_istate_info();
+
+    const int out_app_flag = 2;
+    const int bndpar = 1;
+
+    // First call writes istep 1, second overwrites with istep 2.
+    ModuleIO::cal_dos(dosp.is, dosp.fa, dosp.de_ev, dosp.emax_ev, dosp.emin_ev,
+                      dosp.bcoeff, dosp.nks, dosp.nkstot, dosp.wk, dosp.isk,
+                      dosp.nbands, dosp.ekb, dosp.wg,
+                      /*istep=*/0, out_app_flag, bndpar);
+    ModuleIO::cal_dos(dosp.is, dosp.fa, dosp.de_ev, dosp.emax_ev, dosp.emin_ev,
+                      dosp.bcoeff, dosp.nks, dosp.nkstot, dosp.wk, dosp.isk,
+                      dosp.nbands, dosp.ekb, dosp.wg,
+                      /*istep=*/1, out_app_flag, bndpar);
+
+#ifdef __MPI
+    if (GlobalV::MY_RANK == 0)
+#endif
+    {
+        std::ifstream ifs(fname);
+        std::string str((std::istreambuf_iterator<char>(ifs)),
+                        std::istreambuf_iterator<char>());
+        ifs.close();
+        // Only the last ionic step header must be present.
+        EXPECT_THAT(str, testing::HasSubstr("2    # ionic step"));
+        // A simple count check: "1    # ionic step" must appear only inside
+        // the DOS grid lines as a value, not as a header. Check that the
+        // header for step 1 is absent by verifying it is NOT found as a
+        // standalone header line.
+        EXPECT_THAT(str, testing::Not(testing::HasSubstr("\n1    # ionic step")));
+        remove(fname.c_str());
+    }
 }
 
 #ifdef __MPI

@@ -76,7 +76,7 @@ class Position_op
                 const std::string& global_out_dir,
                 const std::string& global_matrix_dir,
                 const std::string& calculation,
-                const bool out_app_flag,
+                const int out_app_flag,
                 const int nlocal,
                 const int npol,
                 std::ofstream& ofs_running);

@@ -13,13 +13,13 @@ template<typename T, typename TR>
 void ModuleESolver::ESolver_LR<T, TR>::set_parallel_orbitals_band(Parallel_Orbitals& pmat, const int nbands_in)
 {
 #ifdef __MPI
-    const int leading_dimension = std::max(pmat.get_row_size(), 1);
+    const int leading_dimension = std::max(pmat.para_2d().get_row_size(), 1);
     pmat.set_desc_wfc_Eij(this->nbasis, nbands_in, leading_dimension);
     // The KS helper rejects empty band columns. LR windows may legitimately
     // have fewer blocks than the inherited KS process grid has columns.
     Parallel_2D bands;
-    const int block_size = pmat.get_block_size();
-    LR_Util::setup_2d_division(bands, block_size, this->nbasis, nbands_in, pmat.blacs_ctxt);
+    const int block_size = pmat.para_2d().get_block_size();
+    LR_Util::setup_2d_division(bands, block_size, this->nbasis, nbands_in, pmat.get_blacs_ctxt());
     pmat.nbands = nbands_in;
     pmat.nrow_bands = bands.get_row_size();
     pmat.ncol_bands = bands.get_col_size();
@@ -168,7 +168,7 @@ void ModuleESolver::ESolver_LR<T, TR>::read_ks_wfc()
 
     if (this->inp_->cal_force)
     {    // allocate psi_ks_all and eig_ks_all to read all the bands
-        this->psi_ks_all_own_.reset(new psi::Psi<T>(this->kv.get_nks(), paraMat_all_.ncol_bands, paraMat_all_.get_row_size(), this->kv.ngk, true));
+        this->psi_ks_all_own_.reset(new psi::Psi<T>(this->kv.get_nks(), paraMat_all_.ncol_bands, paraMat_all_.para_2d().get_row_size(), this->kv.ngk, true));
         this->psi_ks_all_ = this->psi_ks_all_own_.get();
         this->eig_ks_all.create(this->kv.get_nks(), this->inp_->nbands);
         this->wg_ks_all.create(this->kv.get_nks(), this->inp_->nbands);
@@ -215,7 +215,7 @@ void ModuleESolver::ESolver_LR<T, TR>::fill_z_window_(const int* desc_src)
     const int block_size = this->paraC_.get_block_size();
     LR_Util::setup_2d_division(this->paraC_z_, block_size, this->nbasis, this->nbands_z_
 #ifdef __MPI
-        , this->paraMat_.blacs_ctxt
+        , this->paraMat_.get_blacs_ctxt()
 #endif
     );
     this->paraX_z_.clear();

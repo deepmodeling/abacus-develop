@@ -1,5 +1,5 @@
 #include "md_func.h"
-#include "source_cell/domain_decomposition.h"
+#include "source_cell/dom_decomp.h"
 
 #include "source_base/global_variable.h"
 #include "source_base/parallel_cell.h"
@@ -312,6 +312,7 @@ void init_vel(MDCell& mdcell,
 
 void force_virial(ModuleESolver::ESolver* p_esolver,
                   const int& istep,
+                  const bool& positions_updated,
                   MDCell& mdcell,
                   DomainDecomposition& decomp,
                   double& potential,
@@ -343,8 +344,9 @@ void force_virial(ModuleESolver::ESolver* p_esolver,
         {
             backing_velocities[static_cast<std::size_t>(it)] = ucell.atoms[it].vel;
         }
-        // Step zero evaluates the initial coordinates before the first MD drift.
-        const bool positions_updated = istep > 0;
+        // The caller reports whether positions drifted in this run; the
+        // initial force evaluation (also of a restarted run) passes false so
+        // the charge-extrapolation history only advances after an MD drift.
         mdcell.sync_backing_unitcell(positions_updated);
         for (int it = 0; it < ucell.ntype; ++it)
         {

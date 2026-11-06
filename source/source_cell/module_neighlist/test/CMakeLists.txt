@@ -5,68 +5,36 @@ abacus_disable_feature_definitions(__EXX)
 # Split tests: create one test target per test source to keep failures isolated.
 
 addtest(
-  TARGET
-  MODULE_CELL_NEIGHBOR_neighbor_search
-  LIBS
-  parameter
-  base
-  device
-  cell
-  neighbor
-  symmetry
-  SOURCES
-  test_neighbor_search.cpp
-  ../neighbor_search.cpp
-  ../../domain_decomposition.cpp
-  ../bin_manager.cpp
-  ../page_allocator.cpp)
+  TARGET MODULE_CELL_NEIGHBOR_neighbor_search
+  LIBS parameter base device cell neighbor symmetry
+  SOURCES test_neighbor_search.cpp ../neighbor_search.cpp
+          ../../dom_core.cpp
+          ../../dom_ghost.cpp
+          ../../dom_migrate.cpp
+          ../../dom_force.cpp
+          ../bin_manager.cpp
+          ../page_allocator.cpp)
 
 addtest(
-  TARGET
-  MODULE_CELL_NEIGHBOR_bin_manager
-  LIBS
-  parameter
-  base
-  device
-  SOURCES
-  test_bin_manager.cpp
-  ../bin_manager.cpp
-  ../page_allocator.cpp)
+  TARGET MODULE_CELL_NEIGHBOR_bin_manager
+  LIBS parameter base device
+  SOURCES test_bin_manager.cpp ../bin_manager.cpp ../page_allocator.cpp)
 
 addtest(
-  TARGET
-  MODULE_CELL_NEIGHBOR_allocator_and_list
-  LIBS
-  parameter
-  base
-  device
-  SOURCES
-  test_neighbor_list.cpp
-  ../neighbor_list.cpp
-  ../page_allocator.cpp)
+  TARGET MODULE_CELL_NEIGHBOR_allocator_and_list
+  LIBS parameter base device
+  SOURCES test_neighbor_list.cpp ../neighbor_list.cpp ../page_allocator.cpp)
 
 addtest(
-  TARGET
-  MODULE_CELL_NEIGHBOR_page_allocator
-  LIBS
-  parameter
-  base
-  device
-  SOURCES
-  test_page_allocator.cpp
-  ../page_allocator.cpp)
+  TARGET MODULE_CELL_NEIGHBOR_page_allocator
+  LIBS parameter base device
+  SOURCES test_page_allocator.cpp ../page_allocator.cpp)
 
 if(USE_CUDA AND ENABLE_GPU_NEIGHBOR_LIST)
   addtest(
-    TARGET
-    MODULE_CELL_NEIGHBOR_gpu_neighbor_list
-    LIBS
-    parameter
-    base
-    device
-    SOURCES
-    test_gpu_neighbor_list.cpp
-    ../gpu_neighbor_list.cpp)
+    TARGET MODULE_CELL_NEIGHBOR_gpu_neighbor_list
+    LIBS parameter base device
+    SOURCES test_gpu_neighbor_list.cpp ../gpu_neighbor_list.cpp)
   target_compile_definitions(MODULE_CELL_NEIGHBOR_gpu_neighbor_list
                              PRIVATE __CUDA)
 endif()
@@ -77,7 +45,10 @@ if(ENABLE_MPI)
     test_mdcell_migrate_mpi.cpp
     test_domain_decomposition.cpp
     ../../mdcell.cpp
-    ../../domain_decomposition.cpp
+    ../../dom_core.cpp
+    ../../dom_ghost.cpp
+    ../../dom_migrate.cpp
+    ../../dom_force.cpp
     ../neighbor_search.cpp
     ../bin_manager.cpp
     ../page_allocator.cpp)
@@ -121,7 +92,11 @@ if(ENABLE_MPI)
     ../../mdcell_reader.cpp
     ../../mdcell.cpp
     ../../print_cell.cpp
-    ../../domain_decomposition.cpp
+    ../../stru_frame_io.cpp
+    ../../dom_core.cpp
+    ../../dom_ghost.cpp
+    ../../dom_migrate.cpp
+    ../../dom_force.cpp
     ../neighbor_search.cpp
     ../bin_manager.cpp
     ../page_allocator.cpp)

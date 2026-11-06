@@ -217,7 +217,7 @@ TEST(RootOverlap, CrossGeometryAOOverlapIsOrderedAndNonsymmetric)
     const std::vector<int> offsets{0, 1};
     cell.set_iat2iwt_for_test(offsets, 1);
     Parallel_Orbitals distribution;
-    distribution.set_serial(2, 2);
+    distribution.para_2d().set_serial(2, 2);
     distribution.set_atomic_trace(cell.get_iat2iwt(), cell.nat, 2);
     TwoCenterIntegrator integrator;
     const std::vector<ModuleBase::Vector3<double>> old_positions{{0.0, 0.0, 0.0}, {1.1, 0.0, 0.0}};
