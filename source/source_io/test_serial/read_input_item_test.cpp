@@ -2625,7 +2625,8 @@ TEST_F(InputTest, Item_test2)
         EXPECT_EQ(TestParameters::input(param).mdp.md_nstep, 50);
     }
     { // md_thermo_freq
-        auto it = find_label("md_thermo_freq", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it
+            = find_label("md_thermo_freq", readinput.input_lists);
         it->second.str_values = {"100"};
         it->second.read_value(it->second, param);
         EXPECT_EQ(TestParameters::input(param).mdp.md_thermo_freq, 100);
