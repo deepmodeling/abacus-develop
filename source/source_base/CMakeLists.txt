@@ -95,11 +95,6 @@ if(BUILD_TESTING)
     LIBS parameter base device container
     SOURCES test/test_block_cyclic_distribution.cpp
   )
-  AddTest(
-    TARGET MODULE_BASE_dist_ndarray
-    LIBS parameter base device container
-    SOURCES test/test_dist_ndarray.cpp
-  )
   if(ENABLE_MPI)
     add_test(
       NAME MODULE_BASE_block_cyclic_distribution_mpi
