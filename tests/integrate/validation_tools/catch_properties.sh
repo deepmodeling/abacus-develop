@@ -26,7 +26,7 @@ source "$PROPS_SCRIPT_DIR/props_deepks.sh"
 # trailing totaltimeref entry. Add a new category by dropping a
 # props_<cat>.sh next to the others and calling run_<cat>_props here.
 run_lr_force_props
-run_basic_props
+run_basic_props || exit 1
 
 #-------------------------------
 # matrix collectors: out_dm1 (props_mat.sh)
