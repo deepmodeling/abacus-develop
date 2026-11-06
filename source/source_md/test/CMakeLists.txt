@@ -55,7 +55,10 @@ list(
   ../../source_cell/module_neighlist/neighbor_search.cpp
   ../../source_cell/module_neighlist/bin_manager.cpp
   ../../source_cell/module_neighlist/page_allocator.cpp
-  ../../source_cell/domain_decomposition.cpp
+  ../../source_cell/dom_core.cpp
+  ../../source_cell/dom_ghost.cpp
+  ../../source_cell/dom_migrate.cpp
+  ../../source_cell/dom_force.cpp
   ../../source_cell/mdcell.cpp
   ../../source_base/output.cpp
   ../../source_io/module_output/output_log.cpp

@@ -5,7 +5,7 @@
 #include "source_base/vector3.h"
 #include "source_cell/mdcell.h"
 
-#include "source_cell/domain_decomposition.h"
+#include "source_cell/dom_decomp.h"
 
 #include <cctype>
 #include <cstdint>
