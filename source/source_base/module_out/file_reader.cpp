@@ -47,6 +47,16 @@ void FileReader::readLine()
     }
 }
 
+bool FileReader::peekLine(std::string& line)
+{
+    const std::streampos position = ifs.tellg();
+    if (position == std::streampos(-1)) { return false; }
+    const bool found = static_cast<bool>(std::getline(ifs, line));
+    ifs.clear();
+    ifs.seekg(position);
+    return found;
+}
+
 void FileReader::read_ucell()
 {
     if (ifs.eof())

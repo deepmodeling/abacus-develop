@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <numeric>
+#include <fstream>
 #include <unistd.h>
 
 namespace
@@ -63,12 +64,15 @@ void module_charge::write_density_restart(Charge& charge,
     }
 }
 
-bool module_charge::read_rhog(const std::string& filename,
-                              const ModulePW::PW_Basis* pw_rhod,
-                              const int nspin,
-                              std::complex<double>** rhog,
-                              const Parallel::ParaWorld& pw_world,
-                              std::ostream* os_warning)
+namespace
+{
+bool read_rhog_impl(const std::string& filename,
+                    const ModulePW::PW_Basis* pw_rhod,
+                    const int nspin,
+                    std::complex<double>** rhog,
+                    const Parallel::ParaWorld& pw_world,
+                    std::ostream* os_warning,
+                    const bool require_same_spin)
 {
     if (pw_rhod == nullptr)
     {
@@ -139,6 +143,12 @@ bool module_charge::read_rhog(const std::string& filename,
         {
             warn(os_warning, pw_world, "module_charge::read_rhog", "some planewaves in file are missing");
         }
+        if ((nspin_in != 1 && nspin_in != 2 && nspin_in != 4) || nspin_in > nspin
+            || (require_same_spin && nspin_in != nspin))
+        {
+            warn(os_warning, pw_world, "module_charge::read_rhog", "unsupported spin channel count in restart");
+            error = true;
+        }
         if (nspin_in < nspin)
         {
             warn(os_warning, pw_world, "module_charge::read_rhog", "some spin channels in file are missing");
@@ -149,7 +159,10 @@ bool module_charge::read_rhog(const std::string& filename,
 
     if (error)
     {
-        warn(os_warning, pw_world, "module_charge::read_rhog", "gamma_only read from file is inconsistent with INPUT");
+        if (gamma_only_in != pw_rhod->gamma_only)
+        {
+            warn(os_warning, pw_world, "module_charge::read_rhog", "gamma_only read from file is inconsistent with INPUT");
+        }
         return false;
     }
 
@@ -230,7 +243,8 @@ bool module_charge::read_rhog(const std::string& filename,
             {
                 int fftixyz = iz + nz * fftixy;
                 int ig = fftixyz2ig[fftixyz];
-                rhog[is][ig] = rhog_in[i];
+                // An owned FFT stick can contain modes outside the current PW cutoff.
+                if (ig >= 0 && ig < pw_rhod->npw) { rhog[is][ig] = rhog_in[i]; }
             }
         }
 
@@ -248,6 +262,59 @@ bool module_charge::read_rhog(const std::string& filename,
     if (pw_world.rank() == 0)
     {
         ifs.close();
+    }
+    return true;
+}
+
+} // namespace
+
+bool module_charge::read_rhog(const std::string& filename,
+                              const ModulePW::PW_Basis* pw_rhod,
+                              const int nspin,
+                              std::complex<double>** rhog,
+                              const Parallel::ParaWorld& pw_world,
+                              std::ostream* os_warning)
+{
+    return read_rhog_impl(filename, pw_rhod, nspin, rhog, pw_world, os_warning, false);
+}
+
+bool module_charge::has_complete_charge_cubes(const std::string& directory, const int nspin,
+                                             const Parallel::ParaWorld& world)
+{
+    bool complete = nspin == 1 || nspin == 2 || nspin == 4;
+    if (world.rank() == 0)
+    {
+        for (int is = 0; is < nspin && complete; ++is)
+        {
+            const std::string name = nspin == 1 ? "chg.cube" : "chgs" + std::to_string(is + 1) + ".cube";
+            const std::string filename = directory + name;
+            complete = std::ifstream(filename).good();
+        }
+    }
+    Parallel::bcast_bool(complete, world);
+    return complete;
+}
+
+bool module_charge::read_rho_from_binary(const std::string& filename,
+                                      const ModulePW::PW_Basis& rhopw,
+                                      const int nspin,
+                                      std::complex<double>** rhog,
+                                      double** rho,
+                                      const Parallel::ParaWorld& pw_world,
+                                      std::ostream& log)
+{
+    if (rho == nullptr) { return false; }
+    const bool loaded = read_rhog_impl(filename, &rhopw, nspin, rhog, pw_world, &log, true);
+    if (!loaded) { return false; }
+    for (int is = 0; is < nspin; ++is)
+    {
+        rhopw.recip2real(rhog[is], rho[is]);
+    }
+    if (pw_world.rank() == 0)
+    {
+        const std::string message = " Read electron density from binary file and perform inverse FFT: " + filename;
+        log << message << std::endl;
+        std::cout << message << std::endl;
     }
     return true;
 }

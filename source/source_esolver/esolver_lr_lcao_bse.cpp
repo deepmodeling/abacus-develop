@@ -518,7 +518,7 @@ void ESolver_BSE<T, TR>::after_all_runners(BaseCell& basecell)
                 for (int is = 0; is < this->X.size(); ++is)
                 {
                     LR::LR_Spectrum<T> spectrum(this->nspin, this->nbasis, this->nocc, this->nvirt, *this->pw_rho, *this->psi_ks,
-                                                *this->ucell_, this->kv, this->gd(), this->orb_cutoff_, this->tcb(),
+                                                *this->ucell_, this->kv, this->kv.wk, this->gd(), this->orb_cutoff_, this->tcb(),
                                                 this->paraX_, this->paraC_, this->paraMat_,
                                                 &this->tda_ene[is * this->nstates], this->eig_ks.c,
                                                 this->X[is].template data<T>(), this->nstates, false/*openshell*/,
@@ -549,7 +549,7 @@ void ESolver_BSE<T, TR>::after_all_runners(BaseCell& basecell)
                 for (int is = 0;is < this->full_X.size();++is)
                 {
                     LR::LR_Spectrum<T> spectrum(this->nspin, this->nbasis, this->nocc, this->nvirt, *this->pw_rho, *this->psi_ks,
-                                                *this->ucell_, this->kv, this->gd(), this->orb_cutoff_, this->tcb(),
+                                                *this->ucell_, this->kv, this->kv.wk, this->gd(), this->orb_cutoff_, this->tcb(),
                                                 this->paraX_, this->paraC_, this->paraMat_,
                                                 &this->full_ene[is * this->nstates], this->eig_ks.c,
                                                 this->full_X[is].template data<T>(), this->nstates, false/*openshell*/,
