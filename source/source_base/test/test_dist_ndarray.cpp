@@ -22,78 +22,75 @@ static_assert(std::is_nothrow_move_assignable<DistNDArray<double>>::value,
 namespace
 {
 std::shared_ptr<BlockCyclicDistribution> make_serial_distribution(
-    const int global_rows,
-    const int global_cols)
+    const int nrglb,
+    const int ncglb)
 {
     std::shared_ptr<BlockCyclicDistribution> distribution
         = std::make_shared<BlockCyclicDistribution>();
-    distribution->set_serial(global_rows, global_cols);
+    distribution->set_serial(nrglb, ncglb);
     return distribution;
 }
 
-void check_linearization(const int global_rows,
-                         const int global_cols,
+void check_linearization(const int nrglb,
+                         const int ncglb,
                          const StorageMajorOrder major_order)
 {
     std::shared_ptr<BlockCyclicDistribution> distribution
-        = make_serial_distribution(global_rows, global_cols);
-    const int local_extent
-        = major_order == StorageMajorOrder::ColumnMajor ? global_rows : global_cols;
-    const int ld = local_extent > 1 ? local_extent : 1;
+        = make_serial_distribution(nrglb, ncglb);
+    const int nloc
+        = major_order == StorageMajorOrder::ColumnMajor ? nrglb : ncglb;
+    const int ld = nloc > 1 ? nloc : 1;
 
     DistNDArray<double> array(distribution, major_order, ld);
 
     EXPECT_EQ(array.distribution().get(), distribution.get());
     EXPECT_EQ(array.major_order(), major_order);
     EXPECT_EQ(array.ld(), ld);
-    EXPECT_EQ(array.nrloc(), global_rows);
-    EXPECT_EQ(array.ncloc(), global_cols);
-    EXPECT_EQ(array.local_block().data(), array.data());
+    EXPECT_EQ(array.nrloc(), nrglb);
+    EXPECT_EQ(array.ncloc(), ncglb);
 
     const std::size_t ld_size = static_cast<std::size_t>(array.ld());
 
-    for (int local_row = 0; local_row < global_rows; ++local_row)
+    for (int i = 0; i < nrglb; ++i)
     {
-        for (int local_col = 0; local_col < global_cols; ++local_col)
+        for (int j = 0; j < ncglb; ++j)
         {
-            const double element_value = static_cast<double>(local_row * global_cols + local_col);
-            array.at_local(local_row, local_col) = element_value;
+            const double value = static_cast<double>(i * ncglb + j);
+            array.at_local(i, j) = value;
         }
     }
 
-    for (int local_row = 0; local_row < global_rows; ++local_row)
+    for (int i = 0; i < nrglb; ++i)
     {
-        for (int local_col = 0; local_col < global_cols; ++local_col)
+        for (int j = 0; j < ncglb; ++j)
         {
-            std::size_t expected_flat_index = 0;
+            std::size_t iflat = 0;
             if (major_order == StorageMajorOrder::ColumnMajor)
             {
-                expected_flat_index = static_cast<std::size_t>(local_col) * ld_size
-                    + static_cast<std::size_t>(local_row);
+                iflat = static_cast<std::size_t>(j) * ld_size
+                    + static_cast<std::size_t>(i);
             }
             else
             {
-                expected_flat_index = static_cast<std::size_t>(local_row) * ld_size
-                    + static_cast<std::size_t>(local_col);
+                iflat = static_cast<std::size_t>(i) * ld_size
+                    + static_cast<std::size_t>(j);
             }
 
-            const double* const expected_address = array.data() + expected_flat_index;
-            EXPECT_EQ(&array.at_local(local_row, local_col), expected_address);
+            const double* const expected_address = array.data() + iflat;
+            EXPECT_EQ(&array.at_local(i, j), expected_address);
 
-            const double element_value = static_cast<double>(local_row * global_cols + local_col);
-            EXPECT_EQ(array.at_local(local_row, local_col), element_value);
+            const double value = static_cast<double>(i * ncglb + j);
+            EXPECT_EQ(array.at_local(i, j), value);
 
-            const int mapped_local_row = distribution->irloc(local_row);
-            const int mapped_local_col = distribution->icloc(local_col);
-            ASSERT_NE(mapped_local_row, -1);
-            ASSERT_NE(mapped_local_col, -1);
-            EXPECT_EQ(&array.at_global(local_row, local_col),
-                      &array.at_local(mapped_local_row, mapped_local_col));
-            EXPECT_EQ(array.at_global(local_row, local_col),
-                      array.at_local(mapped_local_row, mapped_local_col));
+            const int il = distribution->irloc(i);
+            const int jl = distribution->icloc(j);
+            ASSERT_NE(il, -1);
+            ASSERT_NE(jl, -1);
+            EXPECT_EQ(&array.at_global(i, j), &array.at_local(il, jl));
+            EXPECT_EQ(array.at_global(i, j), array.at_local(il, jl));
 
-            const bool expected_owner = distribution->in_this_processor(local_row, local_col);
-            EXPECT_EQ(array.owns_global_index(local_row, local_col), expected_owner);
+            const bool owned = distribution->in_this_processor(i, j);
+            EXPECT_EQ(array.owns_global_index(i, j), owned);
         }
     }
 }
@@ -101,28 +98,28 @@ void check_linearization(const int global_rows,
 
 TEST(DistNDArrayTest, ColumnMajorLinearization)
 {
-    const int global_rows = 8;
-    const int global_cols = 6;
-    check_linearization(global_rows, global_cols, StorageMajorOrder::ColumnMajor);
+    const int nrglb = 8;
+    const int ncglb = 6;
+    check_linearization(nrglb, ncglb, StorageMajorOrder::ColumnMajor);
 }
 
 TEST(DistNDArrayTest, RowMajorLinearization)
 {
-    const int global_rows = 2;
-    const int global_cols = 3;
-    check_linearization(global_rows, global_cols, StorageMajorOrder::RowMajor);
+    const int nrglb = 2;
+    const int ncglb = 3;
+    check_linearization(nrglb, ncglb, StorageMajorOrder::RowMajor);
 }
 
 TEST(DistNDArrayTest, AtGlobalAssertsOutsideGlobalBounds)
 {
-    const int global_rows = 4;
-    const int global_cols = 3;
+    const int nrglb = 4;
+    const int ncglb = 3;
     std::shared_ptr<BlockCyclicDistribution> distribution
-        = make_serial_distribution(global_rows, global_cols);
-    const int ld = global_rows > 1 ? global_rows : 1;
+        = make_serial_distribution(nrglb, ncglb);
+    const int ld = nrglb > 1 ? nrglb : 1;
     DistNDArray<double> array(distribution, StorageMajorOrder::ColumnMajor, ld);
 
-    EXPECT_DEATH(array.at_global(global_rows, 0), "");
+    EXPECT_DEATH(array.at_global(nrglb, 0), "");
 }
 
 int main(int argc, char** argv)

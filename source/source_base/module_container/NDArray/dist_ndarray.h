@@ -37,10 +37,10 @@ class DistNDArray
         assert(nrloc >= 0);
         assert(ncloc >= 0);
 
-        const int local_extent
+        const int nloc
             = major_order_ == StorageMajorOrder::ColumnMajor ? nrloc : ncloc;
-        const int minimum_ld = local_extent > 1 ? local_extent : 1;
-        assert(ld_ == minimum_ld);
+        const int min_ld = nloc > 1 ? nloc : 1;
+        assert(ld_ == min_ld);
 
 #ifdef __MPI
         if (!distribution_->is_serial())
@@ -92,97 +92,98 @@ class DistNDArray
         return *this;
     }
 
-    T& at_local(const int local_row, const int local_col)
+    T& at_local(const int i, const int j)
     {
-        assert(local_row >= 0);
-        assert(local_row < distribution_->nrloc());
-        assert(local_col >= 0);
-        assert(local_col < distribution_->ncloc());
+        assert(i >= 0);
+        assert(i < distribution_->nrloc());
+        assert(j >= 0);
+        assert(j < distribution_->ncloc());
 
-        std::ptrdiff_t flat_index = 0;
+        std::ptrdiff_t iflat = 0;
         if (major_order_ == StorageMajorOrder::ColumnMajor)
         {
-            flat_index = static_cast<std::ptrdiff_t>(local_col) * ld_ + local_row;
+            iflat = static_cast<std::ptrdiff_t>(j) * ld_ + i;
         }
         else
         {
-            flat_index = static_cast<std::ptrdiff_t>(local_row) * ld_ + local_col;
+            iflat = static_cast<std::ptrdiff_t>(i) * ld_ + j;
         }
 
-        assert(flat_index >= 0);
-        const std::size_t storage_index = static_cast<std::size_t>(flat_index);
-        assert(storage_index < local_block_.size());
-        return local_block_.data()[storage_index];
+        assert(iflat >= 0);
+        const std::size_t istore = static_cast<std::size_t>(iflat);
+        assert(istore < local_block_.size());
+        return local_block_.data()[istore];
     }
 
-    const T& at_local(const int local_row, const int local_col) const
+    const T& at_local(const int i, const int j) const
     {
-        assert(local_row >= 0);
-        assert(local_row < distribution_->nrloc());
-        assert(local_col >= 0);
-        assert(local_col < distribution_->ncloc());
+        assert(i >= 0);
+        assert(i < distribution_->nrloc());
+        assert(j >= 0);
+        assert(j < distribution_->ncloc());
 
-        std::ptrdiff_t flat_index = 0;
+        std::ptrdiff_t iflat = 0;
         if (major_order_ == StorageMajorOrder::ColumnMajor)
         {
-            flat_index = static_cast<std::ptrdiff_t>(local_col) * ld_ + local_row;
+            iflat = static_cast<std::ptrdiff_t>(j) * ld_ + i;
         }
         else
         {
-            flat_index = static_cast<std::ptrdiff_t>(local_row) * ld_ + local_col;
+            iflat = static_cast<std::ptrdiff_t>(i) * ld_ + j;
         }
 
-        assert(flat_index >= 0);
-        const std::size_t storage_index = static_cast<std::size_t>(flat_index);
-        assert(storage_index < local_block_.size());
-        return local_block_.data()[storage_index];
+        assert(iflat >= 0);
+        const std::size_t istore = static_cast<std::size_t>(iflat);
+        assert(istore < local_block_.size());
+        return local_block_.data()[istore];
     }
 
-    T& at_global(const int global_row, const int global_col)
+    T& at_global(const int i, const int j)
     {
-        assert(global_row >= 0);
-        assert(global_row < distribution_->nrglb());
-        assert(global_col >= 0);
-        assert(global_col < distribution_->ncglb());
+        assert(i >= 0);
+        assert(i < distribution_->nrglb());
+        assert(j >= 0);
+        assert(j < distribution_->ncglb());
 
-        const bool owned = distribution_->in_this_processor(global_row, global_col);
+        const bool owned = distribution_->in_this_processor(i, j);
         assert(owned);
 
-        const int local_row = distribution_->irloc(global_row);
-        const int local_col = distribution_->icloc(global_col);
-        assert(local_row != -1);
-        assert(local_col != -1);
-        return at_local(local_row, local_col);
+        const int il = distribution_->irloc(i);
+        const int jl = distribution_->icloc(j);
+        assert(il != -1);
+        assert(jl != -1);
+        return at_local(il, jl);
     }
 
-    const T& at_global(const int global_row, const int global_col) const
+    const T& at_global(const int i, const int j) const
     {
-        assert(global_row >= 0);
-        assert(global_row < distribution_->nrglb());
-        assert(global_col >= 0);
-        assert(global_col < distribution_->ncglb());
+        assert(i >= 0);
+        assert(i < distribution_->nrglb());
+        assert(j >= 0);
+        assert(j < distribution_->ncglb());
 
-        const bool owned = distribution_->in_this_processor(global_row, global_col);
+        const bool owned = distribution_->in_this_processor(i, j);
         assert(owned);
 
-        const int local_row = distribution_->irloc(global_row);
-        const int local_col = distribution_->icloc(global_col);
-        assert(local_row != -1);
-        assert(local_col != -1);
-        return at_local(local_row, local_col);
+        const int il = distribution_->irloc(i);
+        const int jl = distribution_->icloc(j);
+        assert(il != -1);
+        assert(jl != -1);
+        return at_local(il, jl);
     }
 
-    bool owns_global_index(const int global_row, const int global_col) const
+    bool owns_global_index(const int i, const int j) const
     {
-        assert(global_row >= 0);
-        assert(global_row < distribution_->nrglb());
-        assert(global_col >= 0);
-        assert(global_col < distribution_->ncglb());
+        assert(i >= 0);
+        assert(i < distribution_->nrglb());
+        assert(j >= 0);
+        assert(j < distribution_->ncglb());
 
-        return distribution_->in_this_processor(global_row, global_col);
+        return distribution_->in_this_processor(i, j);
     }
 
-    /// Returns the local block beginning. Its leading dimension is ld().
+    /// Returns the beginning of contiguous storage. Use major_order() and
+    /// ld() for raw indexing, or at_local() for logical indexing.
     T* data()
     {
         return local_block_.data();
@@ -196,16 +197,6 @@ class DistNDArray
     const std::shared_ptr<const BlockCyclicDistribution>& distribution() const
     {
         return distribution_;
-    }
-
-    NDArray<T>& local_block()
-    {
-        return local_block_;
-    }
-
-    const NDArray<T>& local_block() const
-    {
-        return local_block_;
     }
 
     StorageMajorOrder major_order() const

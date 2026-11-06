@@ -119,14 +119,14 @@ TEST(BlockCyclicDistributionTest, SerialMovePreservesValues)
 TEST(BlockCyclicDistributionTest, MpiInitializationAndIndexMaps)
 {
     BlockCyclicDistribution distribution;
-    const int global_rows = 30;
-    const int global_cols = 35;
+    const int nrglb = 30;
+    const int ncglb = 35;
     const int block_size = 2;
-    const int is_degenerate = distribution.init(global_rows, global_cols, block_size, MPI_COMM_WORLD, false);
+    const int is_degenerate = distribution.init(nrglb, ncglb, block_size, MPI_COMM_WORLD, false);
     EXPECT_EQ(is_degenerate, 0);
 
-    EXPECT_EQ(distribution.nrglb(), global_rows);
-    EXPECT_EQ(distribution.ncglb(), global_cols);
+    EXPECT_EQ(distribution.nrglb(), nrglb);
+    EXPECT_EQ(distribution.ncglb(), ncglb);
     EXPECT_EQ(distribution.size(),
               static_cast<std::size_t>(distribution.nrloc())
                   * distribution.ncloc());
@@ -137,35 +137,35 @@ TEST(BlockCyclicDistributionTest, MpiInitializationAndIndexMaps)
     ASSERT_NE(descriptor, nullptr);
     EXPECT_EQ(descriptor[DESC_DTYPE], 1);
     EXPECT_EQ(descriptor[DESC_ICTXT], distribution.ictxt());
-    EXPECT_EQ(descriptor[DESC_M], global_rows);
-    EXPECT_EQ(descriptor[DESC_N], global_cols);
+    EXPECT_EQ(descriptor[DESC_M], nrglb);
+    EXPECT_EQ(descriptor[DESC_N], ncglb);
     EXPECT_EQ(descriptor[DESC_MB], block_size);
     EXPECT_EQ(descriptor[DESC_NB], block_size);
     EXPECT_EQ(descriptor[DESC_RSRC], 0);
     EXPECT_EQ(descriptor[DESC_CSRC], 0);
     EXPECT_EQ(descriptor[DESC_LLD],
               std::max(distribution.nrloc(), 1));
-    for (int iat = 0; iat < global_rows; ++iat)
+    for (int i = 0; i < nrglb; ++i)
     {
-        const int local_row = distribution.irloc(iat);
-        if (local_row != -1)
+        const int il = distribution.irloc(i);
+        if (il != -1)
         {
-            EXPECT_EQ(distribution.irglb(local_row), iat);
+            EXPECT_EQ(distribution.irglb(il), i);
         }
     }
-    for (int iat = 0; iat < global_cols; ++iat)
+    for (int j = 0; j < ncglb; ++j)
     {
-        const int local_col = distribution.icloc(iat);
-        if (local_col != -1)
+        const int jl = distribution.icloc(j);
+        if (jl != -1)
         {
-            EXPECT_EQ(distribution.icglb(local_col), iat);
+            EXPECT_EQ(distribution.icglb(jl), j);
         }
     }
 
-    int rank = 0;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    int irank = 0;
+    MPI_Comm_rank(MPI_COMM_WORLD, &irank);
     EXPECT_EQ(distribution.in_this_processor(1, 1),
-              distribution.owner_processor(1, 1) == rank);
+              distribution.owner_processor(1, 1) == irank);
     EXPECT_TRUE(distribution.blacs_in_this_processor(distribution.irproc(),
                                               distribution.icproc()));
 }
