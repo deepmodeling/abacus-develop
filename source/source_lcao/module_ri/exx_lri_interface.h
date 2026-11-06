@@ -117,7 +117,7 @@ public:
                           const K_Vectors& kv,
                           const Parallel_Orbitals& pv,
                           const int& iter,
-                          const elecstate::TDFieldManager* field);
+                          const elecstate::ElecState& elec);
 
     /// @brief in hamilt2rho: calculate Hexx and Eexx
     void exx_hamilt2rho(elecstate::ElecState& elec, const Parallel_Orbitals& pv, const int iter);

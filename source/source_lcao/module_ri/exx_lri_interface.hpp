@@ -294,7 +294,7 @@ void Exx_LRI_Interface<T, Tdata>::exx_eachiterinit(const int istep,
                                                    const K_Vectors& kv,
                                                    const Parallel_Orbitals& pv,
                                                    const int& iter,
-    const elecstate::TDFieldManager* field)
+                                                   const elecstate::ElecState& elec)
 {
     ModuleBase::TITLE("Exx_LRI_Interface","exx_eachiterinit");
     if (this->info_global.cal_exx)
@@ -326,6 +326,7 @@ void Exx_LRI_Interface<T, Tdata>::exx_eachiterinit(const int istep,
                 this->mix_common_density_.set_mixing(this->p_chgmix_->get_mixing());
             }
 
+            const elecstate::TDFieldManager* field = elec.pot->td_field_manager();
             const RI_2D_Comm::HybridDensityTime density_time = RI_2D_Comm::hybrid_density_time(istep, iter);
             const bool use_left_density = density_time == RI_2D_Comm::HybridDensityTime::Left;
             const module_dm::DensityMatrix<T, double>& source_density = use_left_density ? *this->dm_last_step : dm;
