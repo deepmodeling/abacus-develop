@@ -12,13 +12,13 @@ namespace LR
     template<>
     void ao_to_mo_pblas(
         const std::vector<container::Tensor>& mat_ao,
-        const BlockCyclicDistributionInformation& pmat_ao,
+        const BlockCyclicDistribution& pmat_ao,
         const psi::Psi<double>& coeff,
-        const BlockCyclicDistributionInformation& pcoeff,
+        const BlockCyclicDistribution& pcoeff,
         const int& naos,
         const int& nocc,
         const int& nvirt,
-        const BlockCyclicDistributionInformation& pmat_mo,
+        const BlockCyclicDistribution& pmat_mo,
         double* mat_mo,
         const bool add_on,
         const LR_Util::MO_TYPE type,
@@ -41,7 +41,7 @@ namespace LR
         const int imo2 = imo2_set + 1;
         const int i1 = 1;
 
-        BlockCyclicDistributionInformation pVc;        // for intermediate Vc
+        BlockCyclicDistribution pVc;        // for intermediate Vc
         LR_Util::setup_2d_division(pVc, pmat_ao.nb(), naos, nmo1, pmat_ao.ictxt());
         for (int isk = 0;isk < nks;++isk)
         {
@@ -75,13 +75,13 @@ namespace LR
     template<>
     void ao_to_mo_pblas(
         const std::vector<container::Tensor>& mat_ao,
-        const BlockCyclicDistributionInformation& pmat_ao,
+        const BlockCyclicDistribution& pmat_ao,
         const psi::Psi<std::complex<double>>& coeff,
-        const BlockCyclicDistributionInformation& pcoeff,
+        const BlockCyclicDistribution& pcoeff,
         const int& naos,
         const int& nocc,
         const int& nvirt,
-        const BlockCyclicDistributionInformation& pmat_mo,
+        const BlockCyclicDistribution& pmat_mo,
         std::complex<double>* const mat_mo,
         const bool add_on,
         const LR_Util::MO_TYPE type,
@@ -104,7 +104,7 @@ namespace LR
         const int imo2 = imo2_set + 1;
         const int i1 = 1;
 
-        BlockCyclicDistributionInformation pVc;        // for intermediate Vc
+        BlockCyclicDistribution pVc;        // for intermediate Vc
         LR_Util::setup_2d_division(pVc, pmat_ao.nb(), naos, nmo1, pmat_ao.ictxt());
         for (int isk = 0;isk < nks;++isk)
         {

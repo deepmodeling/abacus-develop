@@ -8,7 +8,7 @@
 #include "source_psi/psi.h"
 #include "source_base/matrix.h"
 
-#include "source_base/block_cyclic_distribution_information.h"
+#include "source_base/block_cyclic_distribution.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_cell/unitcell.h"
 #include "source_basis/module_ao/orb_read.h"
@@ -49,7 +49,7 @@ class RDMFT
     
     const Parallel_Orbitals* ParaV = nullptr;
 
-    BlockCyclicDistributionInformation para_Eij;
+    BlockCyclicDistribution para_Eij;
 
     //! obain Ewald and this->pelec->pot
     elecstate::ElecState* pelec = nullptr;

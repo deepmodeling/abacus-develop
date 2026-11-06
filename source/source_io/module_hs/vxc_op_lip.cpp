@@ -155,7 +155,7 @@ void write_Vxc_LIP(int nspin,
     std::vector<std::vector<FPTYPE>> e_orb_locxc; // orbital energy (local XC)
     std::vector<std::vector<FPTYPE>> e_orb_tot;   // orbital energy (total)
     std::vector<std::vector<FPTYPE>> e_orb_exx;   // orbital energy (EXX)
-    BlockCyclicDistributionInformation p2d_serial;
+    BlockCyclicDistribution p2d_serial;
     p2d_serial.set_serial(nbands, nbands);
 
     for (int ik = 0; ik < kv.get_nks(); ++ik)

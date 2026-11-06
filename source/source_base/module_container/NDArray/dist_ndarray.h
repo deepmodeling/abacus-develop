@@ -1,20 +1,13 @@
-#ifndef ABACUS_SOURCE_SOURCE_BASE_MODULE_CONTAINER_NDARRAY_DISTRIBUTED_NDARRAY_H
-#define ABACUS_SOURCE_SOURCE_BASE_MODULE_CONTAINER_NDARRAY_DISTRIBUTED_NDARRAY_H
+#ifndef ABACUS_SOURCE_SOURCE_BASE_MODULE_CONTAINER_NDARRAY_DIST_NDARRAY_H
+#define ABACUS_SOURCE_SOURCE_BASE_MODULE_CONTAINER_NDARRAY_DIST_NDARRAY_H
 
-#include "source_base/block_cyclic_distribution_information.h"
+#include "source_base/block_cyclic_distribution.h"
 #include "source_base/ndarray.h"
 
 #include <cassert>
 #include <cstddef>
 #include <memory>
 #include <utility>
-
-namespace distributed_ndarray_detail
-{
-constexpr int DESCRIPTOR_BLACS_CONTEXT_INDEX = 1;
-constexpr int DESCRIPTOR_LEADING_DIM_INDEX = 8;
-constexpr int DESCRIPTOR_ENTRY_COUNT = 9;
-} // namespace distributed_ndarray_detail
 
 enum class StorageMajorOrder
 {
@@ -26,12 +19,12 @@ enum class StorageMajorOrder
 /// shared because multiple matrices commonly use the same layout. The unbound
 /// host-side container is NDArray<T>; this type always requires a distribution.
 template <typename T, typename Tdata = double>
-class DistributedNDArray
+class DistNDArray
 {
   public:
-    DistributedNDArray(std::shared_ptr<const BlockCyclicDistributionInformation> distribution,
-                       StorageMajorOrder major_order,
-                       int ld)
+    DistNDArray(std::shared_ptr<const BlockCyclicDistribution> distribution,
+                StorageMajorOrder major_order,
+                int ld)
         : distribution_(distribution),
           local_block_(1, 1),
           major_order_(major_order),
@@ -54,10 +47,9 @@ class DistributedNDArray
         {
             const int* const descriptor = distribution_->desc();
             assert(descriptor != nullptr);
-            const int descriptor_ld
-                = descriptor[distributed_ndarray_detail::DESCRIPTOR_LEADING_DIM_INDEX];
-            const int expected_descriptor_ld = nrloc > 1 ? nrloc : 1;
-            assert(descriptor_ld == expected_descriptor_ld);
+            const int desc_ld = descriptor[DESC_LLD];
+            const int lld = nrloc > 1 ? nrloc : 1;
+            assert(desc_ld == lld);
         }
 #endif
 
@@ -75,12 +67,12 @@ class DistributedNDArray
         local_block_ = std::move(local_block);
     }
 
-    ~DistributedNDArray() = default;
+    ~DistNDArray() = default;
 
-    DistributedNDArray(const DistributedNDArray&) = delete;
-    DistributedNDArray& operator=(const DistributedNDArray&) = delete;
+    DistNDArray(const DistNDArray&) = delete;
+    DistNDArray& operator=(const DistNDArray&) = delete;
 
-    DistributedNDArray(DistributedNDArray&& other) noexcept
+    DistNDArray(DistNDArray&& other) noexcept
         : distribution_(std::move(other.distribution_)),
           local_block_(std::move(other.local_block_)),
           major_order_(other.major_order_),
@@ -88,7 +80,7 @@ class DistributedNDArray
     {
     }
 
-    DistributedNDArray& operator=(DistributedNDArray&& other) noexcept
+    DistNDArray& operator=(DistNDArray&& other) noexcept
     {
         if (this != &other)
         {
@@ -201,7 +193,7 @@ class DistributedNDArray
         return local_block_.data();
     }
 
-    const std::shared_ptr<const BlockCyclicDistributionInformation>& distribution() const
+    const std::shared_ptr<const BlockCyclicDistribution>& distribution() const
     {
         return distribution_;
     }
@@ -237,10 +229,11 @@ class DistributedNDArray
     }
 
   private:
-    std::shared_ptr<const BlockCyclicDistributionInformation> distribution_;
+    std::shared_ptr<const BlockCyclicDistribution> distribution_;
     NDArray<T> local_block_;
     StorageMajorOrder major_order_;
     int ld_ = 0;
+    static constexpr int DESC_LLD = 8;
 };
 
-#endif // ABACUS_SOURCE_SOURCE_BASE_MODULE_CONTAINER_NDARRAY_DISTRIBUTED_NDARRAY_H
+#endif // ABACUS_SOURCE_SOURCE_BASE_MODULE_CONTAINER_NDARRAY_DIST_NDARRAY_H

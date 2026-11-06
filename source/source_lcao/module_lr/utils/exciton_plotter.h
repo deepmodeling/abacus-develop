@@ -135,8 +135,8 @@ class ExcitonPlotter
                    const std::vector<double>& orb_cutoff_in,
                    const Parallel_Grid& Pgrid_in,
                    const ModulePW::PW_Basis& rho_basis_in,
-                   const std::vector<BlockCyclicDistributionInformation>& pX_in,
-                   const BlockCyclicDistributionInformation& pc_in,
+                   const std::vector<BlockCyclicDistribution>& pX_in,
+                   const BlockCyclicDistribution& pc_in,
                    const Parallel_Orbitals& pmat_in,
                    const std::string& output_dir_in,
                    const double* eig,
@@ -249,7 +249,7 @@ class ExcitonPlotter
     const ModulePW::PW_Basis& rho_basis;    ///< plane-wave basis for density grid
     const std::string output_dir_;          ///< output directory for density files
 
-    const BlockCyclicDistributionInformation& pc;               ///< KS-orbital distribution reserved for MPI plotting
+    const BlockCyclicDistribution& pc;               ///< KS-orbital distribution reserved for MPI plotting
     const Parallel_Orbitals& pmat;       ///< parallel distribution for AO matrices
     const LCAO_Orbitals* orb_ = nullptr; ///< orbital data for single-point evaluation
     OrbitalEvaluator orb_eval_;          ///< single-point NAO evaluator (initialized if orb_ != nullptr)

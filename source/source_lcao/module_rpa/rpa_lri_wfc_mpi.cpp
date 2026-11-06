@@ -121,7 +121,7 @@ int pack_ks_eigenvector_chunk(const Parallel_Orbitals& parav,
                               const int requested_count)
 {
     int packed = 0;
-    const BlockCyclicDistributionInformation& distribution = parav.para_2d();
+    const BlockCyclicDistribution& distribution = parav.para_2d();
     while (cursor.band_local < parav.ncol_bands && packed < requested_count)
     {
         while (cursor.row_local < psi.get_nbasis() && packed < requested_count)
@@ -161,7 +161,7 @@ void write_ks_eigenvector_v1_mpi(const MPI_Comm mpi_comm,
     }
     try
     {
-        const BlockCyclicDistributionInformation& distribution = parav.para_2d();
+        const BlockCyclicDistribution& distribution = parav.para_2d();
         int mpi_rank = 0;
         collective_mpi_check(mpi_comm,
                              MPI_Comm_rank(mpi_comm, &mpi_rank),

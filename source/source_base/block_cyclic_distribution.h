@@ -1,5 +1,5 @@
-#ifndef ABACUS_SOURCE_SOURCE_BASE_BLOCK_CYCLIC_DISTRIBUTION_INFORMATION_H
-#define ABACUS_SOURCE_SOURCE_BASE_BLOCK_CYCLIC_DISTRIBUTION_INFORMATION_H
+#ifndef ABACUS_SOURCE_SOURCE_BASE_BLOCK_CYCLIC_DISTRIBUTION_H
+#define ABACUS_SOURCE_SOURCE_BASE_BLOCK_CYCLIC_DISTRIBUTION_H
 
 #include <array>
 #include <cstddef>
@@ -14,16 +14,16 @@
 //    global/local index maps, and owner queries.
 // 2. Own or borrow the BLACS context and maintain the ScaLAPACK descriptor.
 // It does not own physical matrices, atom ownership, or trace information.
-class BlockCyclicDistributionInformation
+class BlockCyclicDistribution
 {
   public:
-    BlockCyclicDistributionInformation() = default;
-    ~BlockCyclicDistributionInformation();
+    BlockCyclicDistribution() = default;
+    ~BlockCyclicDistribution();
 
-    BlockCyclicDistributionInformation(const BlockCyclicDistributionInformation&) = delete;
-    BlockCyclicDistributionInformation& operator=(const BlockCyclicDistributionInformation&) = delete;
-    BlockCyclicDistributionInformation(BlockCyclicDistributionInformation&& rhs) noexcept;
-    BlockCyclicDistributionInformation& operator=(BlockCyclicDistributionInformation&& rhs) noexcept;
+    BlockCyclicDistribution(const BlockCyclicDistribution&) = delete;
+    BlockCyclicDistribution& operator=(const BlockCyclicDistribution&) = delete;
+    BlockCyclicDistribution(BlockCyclicDistribution&& rhs) noexcept;
+    BlockCyclicDistribution& operator=(BlockCyclicDistribution&& rhs) noexcept;
 
     int nrloc() const
     {
@@ -144,11 +144,11 @@ class BlockCyclicDistributionInformation
 #endif
 
   private:
-    static constexpr int DESCRIPTOR_ENTRY_COUNT = 9;
-    static constexpr int DESCRIPTOR_BLACS_CONTEXT_INDEX = 1;
-    static constexpr int DESCRIPTOR_GLOBAL_ROWS_INDEX = 2;
-    static constexpr int DESCRIPTOR_GLOBAL_COLS_INDEX = 3;
-    static constexpr int DESCRIPTOR_LEADING_DIM_INDEX = 8;
+    static constexpr int DESC_SIZE = 9;
+    static constexpr int DESC_ICTXT = 1;
+    static constexpr int DESC_M = 2;
+    static constexpr int DESC_N = 3;
+    static constexpr int DESC_LLD = 8;
     static constexpr int UNOWNED_BLACS_CONTEXT = -1;
     static constexpr int BLACS_WHAT_SYSTEM_CONTEXT = 10;
 
@@ -161,7 +161,7 @@ class BlockCyclicDistributionInformation
 
 #ifdef __MPI
     int ictxt_ = UNOWNED_BLACS_CONTEXT;
-    std::array<int, DESCRIPTOR_ENTRY_COUNT> desc_ = {};
+    std::array<int, DESC_SIZE> desc_ = {};
 #endif
 
     std::vector<int> irglb2loc_;

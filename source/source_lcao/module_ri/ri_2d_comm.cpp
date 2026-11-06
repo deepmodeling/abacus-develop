@@ -12,7 +12,7 @@
 #include <stdexcept>
 
 // judge[is] = {s0, s1}
-auto RI_2D_Comm::get_2D_judge(const UnitCell& ucell, const BlockCyclicDistributionInformation& pv)
+auto RI_2D_Comm::get_2D_judge(const UnitCell& ucell, const BlockCyclicDistribution& pv)
 -> std::vector<std::tuple<std::set<TA>, std::set<TA>>>
 {
     ModuleBase::TITLE("RI_2D_Comm","get_2D_judge");

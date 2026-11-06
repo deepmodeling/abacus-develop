@@ -7,7 +7,7 @@ namespace BSE_Util
 template <>
 container::Tensor cal_dm_trans_onebase_pblas(
     const psi::Psi<double>& c,
-    const BlockCyclicDistributionInformation& pc,
+    const BlockCyclicDistribution& pc,
     const int& ik,
     const int& naos,
     const int& imo1, // imo1 → imo2, for excitation imo1[0,nocc), imo2[nocc,nocc+nvirt)
@@ -16,7 +16,7 @@ container::Tensor cal_dm_trans_onebase_pblas(
     const double& factor)
 {
     ModuleBase::TITLE("BSE_Util", "cal_dm_trans_onebase_pblas(double)");
-    const BlockCyclicDistributionInformation& matrix_dist = pmat.para_2d();
+    const BlockCyclicDistribution& matrix_dist = pmat.para_2d();
     assert(pc.comm() == matrix_dist.comm());
     assert(pc.ictxt() == matrix_dist.ictxt());
     assert(matrix_dist.size() > 0);
@@ -48,7 +48,7 @@ container::Tensor cal_dm_trans_onebase_pblas(
 template <>
 container::Tensor cal_dm_trans_onebase_pblas(
     const psi::Psi<std::complex<double>>& c,
-    const BlockCyclicDistributionInformation& pc,
+    const BlockCyclicDistribution& pc,
     const int& ik,
     const int& naos,
     const int& imo1, // imo1 → imo2, for excitation imo1[0,nocc), imo2[nocc,nocc+nvirt)
@@ -57,7 +57,7 @@ container::Tensor cal_dm_trans_onebase_pblas(
     const std::complex<double>& factor)
 {
     ModuleBase::TITLE("BSE_Util", "cal_dm_trans_onebase_pblas(complex)");
-    const BlockCyclicDistributionInformation& matrix_dist = pmat.para_2d();
+    const BlockCyclicDistribution& matrix_dist = pmat.para_2d();
     assert(pc.comm() == matrix_dist.comm());
     assert(pc.ictxt() == matrix_dist.ictxt());
     assert(matrix_dist.size() > 0);

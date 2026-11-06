@@ -291,10 +291,10 @@ void HSolverLCAO<T>::parakSolve(HSMatrix<T>& hs,
         {
             int source = k2d.get_pKpoints()->get_startpro_pool(ipool);
             MPI_Bcast(&(pes->ekb(ik_kpar[ipool], 0)), nbands, MPI_DOUBLE, source, MPI_COMM_WORLD);
-            constexpr int DESCRIPTOR_ENTRY_COUNT = 9;
-            int desc_pool[DESCRIPTOR_ENTRY_COUNT];
+            constexpr int DESC_SIZE = 9;
+            int desc_pool[DESC_SIZE];
             const int* const pool_descriptor = k2d.get_p2D_pool()->desc();
-            std::copy(pool_descriptor, pool_descriptor + DESCRIPTOR_ENTRY_COUNT, desc_pool);
+            std::copy(pool_descriptor, pool_descriptor + DESC_SIZE, desc_pool);
             if (k2d.get_my_pool() != ipool)
             {
                 desc_pool[1] = -1;
@@ -376,10 +376,10 @@ void HSolverLCAO<T>::parakSolve_cusolver(HSMatrix<T>& hs,
     const int nks = psi.get_nk();  // total number of k points
     const int nbands = this->ParaV->get_nbands();
     // Set the parallel storage scheme for the matrix and psi
-    BlockCyclicDistributionInformation mat_para_global;    // store the info about how the origin matrix is distributed in parallel
-    BlockCyclicDistributionInformation mat_para_local;     // store the info about how the matrix is distributed after collected from all processes
-    BlockCyclicDistributionInformation psi_para_global;    // store the info about how the psi is distributed in parallel
-    BlockCyclicDistributionInformation psi_para_local;     // store the info about how the psi is distributed before distributing to all processes
+    BlockCyclicDistribution mat_para_global;    // store the info about how the origin matrix is distributed in parallel
+    BlockCyclicDistribution mat_para_local;     // store the info about how the matrix is distributed after collected from all processes
+    BlockCyclicDistribution psi_para_global;    // store the info about how the psi is distributed in parallel
+    BlockCyclicDistribution psi_para_local;     // store the info about how the psi is distributed before distributing to all processes
 
     MPI_Comm self_comm;  // the communicator that only contains the current process itself
     MPI_Comm_split(MPI_COMM_WORLD, world_rank, 0, &self_comm);
@@ -393,8 +393,8 @@ void HSolverLCAO<T>::parakSolve_cusolver(HSMatrix<T>& hs,
 
     std::vector<T> hk_mat; // temporary storage for H(k) matrix collected from all processes
     std::vector<T> sk_mat; // temporary storage for S(k) matrix collected from all processes
-    constexpr int DESCRIPTOR_ENTRY_COUNT = 9;
-    constexpr int DESCRIPTOR_BLACS_CONTEXT_INDEX = 1;
+    constexpr int DESC_SIZE = 9;
+    constexpr int DESC_ICTXT = 1;
     // In each iteration, we process total_active_ranks k-points.
     for(int ik_start = 0; ik_start < nks; ik_start += total_active_ranks)
     {
@@ -413,14 +413,14 @@ void HSolverLCAO<T>::parakSolve_cusolver(HSMatrix<T>& hs,
             }
             ModuleBase::MatrixBlock<T> hk_2D, sk_2D;
             hs.hs_at_k(ik, hk_2D, sk_2D);
-            int desc_tmp[DESCRIPTOR_ENTRY_COUNT];
+            int desc_tmp[DESC_SIZE];
             T* hk_local_ptr = hk_mat.data();
             T* sk_local_ptr = sk_mat.data();
             const int* const local_descriptor = mat_para_local.desc();
-            std::copy(local_descriptor, local_descriptor + DESCRIPTOR_ENTRY_COUNT, desc_tmp);
+            std::copy(local_descriptor, local_descriptor + DESC_SIZE, desc_tmp);
             if( !is_active)
             {
-                desc_tmp[DESCRIPTOR_BLACS_CONTEXT_INDEX] = -1;
+                desc_tmp[DESC_ICTXT] = -1;
             }
 
             Cpxgemr2d(nrow, ncol, hk_2D.p, 1, 1,
@@ -453,10 +453,10 @@ void HSolverLCAO<T>::parakSolve_cusolver(HSMatrix<T>& hs,
         {
             int root = active_ranks[ik % total_active_ranks];
             MPI_Bcast(&(pes->ekb(ik, 0)), nbands, MPI_DOUBLE, root, MPI_COMM_WORLD);
-            int desc_pool[DESCRIPTOR_ENTRY_COUNT];
+            int desc_pool[DESC_SIZE];
             const int* const psi_local_descriptor = psi_para_local.desc();
             std::copy(psi_local_descriptor,
-                      psi_local_descriptor + DESCRIPTOR_ENTRY_COUNT,
+                      psi_local_descriptor + DESC_SIZE,
                       desc_pool);
             T* psi_local_ptr = nullptr;
             if (world_rank != root)

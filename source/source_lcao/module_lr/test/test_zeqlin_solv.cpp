@@ -73,7 +73,7 @@ namespace
     }
 
     template <typename T>
-    std::vector<T> to_local(const std::vector<T>& full, const BlockCyclicDistributionInformation& pv)
+    std::vector<T> to_local(const std::vector<T>& full, const BlockCyclicDistribution& pv)
     {
         const int nrow = pv.nrglb();
         std::vector<T> loc(pv.size());
@@ -99,16 +99,16 @@ namespace
 
     /// solve the distributed system with `solver` and compare with LAPACK on `a_ref`
     template <typename T>
-    void check_against_lapack(void (*solver)(T*, T*, const BlockCyclicDistributionInformation&, const BlockCyclicDistributionInformation&),
+    void check_against_lapack(void (*solver)(T*, T*, const BlockCyclicDistribution&, const BlockCyclicDistribution&),
         const std::vector<T>& a_in, const std::vector<T>& a_ref, const int n, const int nrhs, const int nb)
     {
         const std::vector<T> b = rhs_matrix<T>(n, nrhs);
         std::vector<T> x_ref(b.size());
         LR_Util::lapack_linear_solver(a_ref.data(), x_ref.data(), b.data(), n, nrhs);
 
-        BlockCyclicDistributionInformation pa;
+        BlockCyclicDistribution pa;
         LR_Util::setup_2d_division(pa, nb, n, n);
-        BlockCyclicDistributionInformation pb;
+        BlockCyclicDistribution pb;
         LR_Util::setup_2d_division(pb, nb, n, nrhs, pa.ictxt());
         std::vector<T> a_loc = to_local(a_in, pa);
         std::vector<T> x_loc = to_local(b, pb);
@@ -134,9 +134,9 @@ namespace
             a[i * n + i] = T(1);
         }
         a[failing_index * n + failing_index] = T(pivot);
-        BlockCyclicDistributionInformation pa;
+        BlockCyclicDistribution pa;
         LR_Util::setup_2d_division(pa, nb, n, n);
-        BlockCyclicDistributionInformation pb;
+        BlockCyclicDistribution pb;
         LR_Util::setup_2d_division(pb, nb, n, 1, pa.ictxt());
         std::vector<T> a_loc = to_local(a, pa);
         const std::vector<T> rhs = rhs_matrix<T>(n, 1);
@@ -251,9 +251,9 @@ TEST_F(ZeqLinearSolverTest, ScalapackCholRejectsIndefinite)
     const int n = 20;
     const int nb = 3;
     const std::vector<double> a = hermitian_matrix<double>(n, -(n + 1.0));   // negative definite
-    BlockCyclicDistributionInformation pa;
+    BlockCyclicDistribution pa;
     LR_Util::setup_2d_division(pa, nb, n, n);
-    BlockCyclicDistributionInformation pb;
+    BlockCyclicDistribution pb;
     LR_Util::setup_2d_division(pb, nb, n, 1, pa.ictxt());
     std::vector<double> a_loc = to_local(a, pa);
     std::vector<double> b_loc = to_local(rhs_matrix<double>(n, 1), pb);
@@ -334,7 +334,7 @@ struct SingularZResponse
     int nk = 1;
     std::vector<int> nocc;
     std::vector<int> nvirt;
-    std::vector<BlockCyclicDistributionInformation> pX;
+    std::vector<BlockCyclicDistribution> pX;
 
     SingularZResponse() : nocc(1, 2), nvirt(1, 2), pX(1)
     {

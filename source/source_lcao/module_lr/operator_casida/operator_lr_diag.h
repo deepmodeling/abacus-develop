@@ -12,7 +12,7 @@ namespace LR
     class OperatorLRDiag : public hamilt::Operator<T, Device>
     {
     public:
-        OperatorLRDiag(const double* eig_ks, const BlockCyclicDistributionInformation& pX_in, const int& nk_in, const int& nocc_in, const int& nvirt_in,
+        OperatorLRDiag(const double* eig_ks, const BlockCyclicDistribution& pX_in, const int& nk_in, const int& nocc_in, const int& nvirt_in,
             const bool add_on)
             : pX(pX_in), nk(nk_in), nocc(nocc_in), nvirt(nvirt_in), add_on_(add_on)
         {   // calculate the difference of eigenvalues
@@ -60,7 +60,7 @@ namespace LR
             ModuleBase::timer::end("OperatorLRDiag", "act");
         }
     private:
-        const BlockCyclicDistributionInformation& pX;
+        const BlockCyclicDistribution& pX;
         ModuleBase::matrix eig_ks_diff;
         const int nk = 1;
         const int nocc = 1;

@@ -2,7 +2,7 @@
 #undef NDEBUG
 #endif
 
-#include "source_base/module_container/NDArray/distributed_ndarray.h"
+#include "source_base/module_container/NDArray/dist_ndarray.h"
 
 #include "gtest/gtest.h"
 
@@ -10,23 +10,23 @@
 #include <memory>
 #include <type_traits>
 
-static_assert(!std::is_copy_constructible<DistributedNDArray<double>>::value,
-              "DistributedNDArray must not be copy constructible");
-static_assert(!std::is_copy_assignable<DistributedNDArray<double>>::value,
-              "DistributedNDArray must not be copy assignable");
-static_assert(std::is_nothrow_move_constructible<DistributedNDArray<double>>::value,
-              "DistributedNDArray move construction must be noexcept");
-static_assert(std::is_nothrow_move_assignable<DistributedNDArray<double>>::value,
-              "DistributedNDArray move assignment must be noexcept");
+static_assert(!std::is_copy_constructible<DistNDArray<double>>::value,
+              "DistNDArray must not be copy constructible");
+static_assert(!std::is_copy_assignable<DistNDArray<double>>::value,
+              "DistNDArray must not be copy assignable");
+static_assert(std::is_nothrow_move_constructible<DistNDArray<double>>::value,
+              "DistNDArray move construction must be noexcept");
+static_assert(std::is_nothrow_move_assignable<DistNDArray<double>>::value,
+              "DistNDArray move assignment must be noexcept");
 
 namespace
 {
-std::shared_ptr<BlockCyclicDistributionInformation> make_serial_distribution(
+std::shared_ptr<BlockCyclicDistribution> make_serial_distribution(
     const int global_rows,
     const int global_cols)
 {
-    std::shared_ptr<BlockCyclicDistributionInformation> distribution
-        = std::make_shared<BlockCyclicDistributionInformation>();
+    std::shared_ptr<BlockCyclicDistribution> distribution
+        = std::make_shared<BlockCyclicDistribution>();
     distribution->set_serial(global_rows, global_cols);
     return distribution;
 }
@@ -35,13 +35,13 @@ void check_linearization(const int global_rows,
                          const int global_cols,
                          const StorageMajorOrder major_order)
 {
-    std::shared_ptr<BlockCyclicDistributionInformation> distribution
+    std::shared_ptr<BlockCyclicDistribution> distribution
         = make_serial_distribution(global_rows, global_cols);
     const int local_extent
         = major_order == StorageMajorOrder::ColumnMajor ? global_rows : global_cols;
     const int ld = local_extent > 1 ? local_extent : 1;
 
-    DistributedNDArray<double> array(distribution, major_order, ld);
+    DistNDArray<double> array(distribution, major_order, ld);
 
     EXPECT_EQ(array.distribution().get(), distribution.get());
     EXPECT_EQ(array.major_order(), major_order);
@@ -99,28 +99,28 @@ void check_linearization(const int global_rows,
 }
 } // namespace
 
-TEST(DistributedNDArrayTest, ColumnMajorLinearization)
+TEST(DistNDArrayTest, ColumnMajorLinearization)
 {
     const int global_rows = 8;
     const int global_cols = 6;
     check_linearization(global_rows, global_cols, StorageMajorOrder::ColumnMajor);
 }
 
-TEST(DistributedNDArrayTest, RowMajorLinearization)
+TEST(DistNDArrayTest, RowMajorLinearization)
 {
     const int global_rows = 2;
     const int global_cols = 3;
     check_linearization(global_rows, global_cols, StorageMajorOrder::RowMajor);
 }
 
-TEST(DistributedNDArrayTest, AtGlobalAssertsOutsideGlobalBounds)
+TEST(DistNDArrayTest, AtGlobalAssertsOutsideGlobalBounds)
 {
     const int global_rows = 4;
     const int global_cols = 3;
-    std::shared_ptr<BlockCyclicDistributionInformation> distribution
+    std::shared_ptr<BlockCyclicDistribution> distribution
         = make_serial_distribution(global_rows, global_cols);
     const int ld = global_rows > 1 ? global_rows : 1;
-    DistributedNDArray<double> array(distribution, StorageMajorOrder::ColumnMajor, ld);
+    DistNDArray<double> array(distribution, StorageMajorOrder::ColumnMajor, ld);
 
     EXPECT_DEATH(array.at_global(global_rows, 0), "");
 }

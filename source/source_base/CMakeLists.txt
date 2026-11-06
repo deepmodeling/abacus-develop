@@ -54,7 +54,7 @@ add_library(
   parallel_grid.cpp
   sph_bessel_tf.cpp
   cubic_spline.cpp
-  block_cyclic_distribution_information.cpp
+  block_cyclic_distribution.cpp
   module_out/binstream.cpp
   module_out/filename.cpp
   module_out/sparse_matrix.cpp
@@ -91,22 +91,22 @@ endif()
 if(BUILD_TESTING)
   # TODO: classify the serial and parrallel tests
   AddTest(
-    TARGET MODULE_BASE_block_cyclic_distribution_information
+    TARGET MODULE_BASE_block_cyclic_distribution
     LIBS parameter base device container
-    SOURCES test/test_block_cyclic_distribution_information.cpp
+    SOURCES test/test_block_cyclic_distribution.cpp
   )
   AddTest(
-    TARGET MODULE_BASE_distributed_ndarray
+    TARGET MODULE_BASE_dist_ndarray
     LIBS parameter base device container
-    SOURCES test/test_distributed_ndarray.cpp
+    SOURCES test/test_dist_ndarray.cpp
   )
   if(ENABLE_MPI)
     add_test(
-      NAME MODULE_BASE_block_cyclic_distribution_information_mpi
+      NAME MODULE_BASE_block_cyclic_distribution_mpi
       COMMAND
         ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 4
         ${MPIEXEC_PREFLAGS}
-        $<TARGET_FILE:MODULE_BASE_block_cyclic_distribution_information>
+        $<TARGET_FILE:MODULE_BASE_block_cyclic_distribution>
         ${MPIEXEC_POSTFLAGS}
     )
     add_subdirectory(test)

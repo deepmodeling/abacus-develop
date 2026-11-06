@@ -1,4 +1,4 @@
-#include "source_base/block_cyclic_distribution_information.h"
+#include "source_base/block_cyclic_distribution.h"
 #include "source_base/parallel_common.h"
 
 #include "gtest/gtest.h"
@@ -9,39 +9,39 @@
 #include <utility>
 #include <vector>
 
-static_assert(std::is_default_constructible<BlockCyclicDistributionInformation>::value,
-              "BlockCyclicDistributionInformation must be default constructible");
-static_assert(!std::is_copy_constructible<BlockCyclicDistributionInformation>::value,
-              "BlockCyclicDistributionInformation must not be copy constructible");
-static_assert(!std::is_copy_assignable<BlockCyclicDistributionInformation>::value,
-              "BlockCyclicDistributionInformation must not be copy assignable");
-static_assert(std::is_move_constructible<BlockCyclicDistributionInformation>::value,
-              "BlockCyclicDistributionInformation must be move constructible");
-static_assert(std::is_move_assignable<BlockCyclicDistributionInformation>::value,
-              "BlockCyclicDistributionInformation must be move assignable");
-static_assert(std::is_nothrow_move_constructible<BlockCyclicDistributionInformation>::value,
-              "BlockCyclicDistributionInformation move construction must be noexcept");
-static_assert(std::is_nothrow_move_assignable<BlockCyclicDistributionInformation>::value,
-              "BlockCyclicDistributionInformation move assignment must be noexcept");
+static_assert(std::is_default_constructible<BlockCyclicDistribution>::value,
+              "BlockCyclicDistribution must be default constructible");
+static_assert(!std::is_copy_constructible<BlockCyclicDistribution>::value,
+              "BlockCyclicDistribution must not be copy constructible");
+static_assert(!std::is_copy_assignable<BlockCyclicDistribution>::value,
+              "BlockCyclicDistribution must not be copy assignable");
+static_assert(std::is_move_constructible<BlockCyclicDistribution>::value,
+              "BlockCyclicDistribution must be move constructible");
+static_assert(std::is_move_assignable<BlockCyclicDistribution>::value,
+              "BlockCyclicDistribution must be move assignable");
+static_assert(std::is_nothrow_move_constructible<BlockCyclicDistribution>::value,
+              "BlockCyclicDistribution move construction must be noexcept");
+static_assert(std::is_nothrow_move_assignable<BlockCyclicDistribution>::value,
+              "BlockCyclicDistribution move assignment must be noexcept");
 
 namespace
 {
-constexpr int DESCRIPTOR_ENTRY_COUNT = 9;
-constexpr int DESCRIPTOR_MATRIX_TYPE_INDEX = 0;
-constexpr int DESCRIPTOR_BLACS_CONTEXT_INDEX = 1;
-constexpr int DESCRIPTOR_GLOBAL_ROWS_INDEX = 2;
-constexpr int DESCRIPTOR_GLOBAL_COLS_INDEX = 3;
-constexpr int DESCRIPTOR_BLOCK_ROWS_INDEX = 4;
-constexpr int DESCRIPTOR_BLOCK_COLS_INDEX = 5;
-constexpr int DESCRIPTOR_PROCESS_ROWS_INDEX = 6;
-constexpr int DESCRIPTOR_PROCESS_COLS_INDEX = 7;
-constexpr int DESCRIPTOR_LEADING_DIM_INDEX = 8;
+constexpr int DESC_SIZE = 9;
+constexpr int DESC_DTYPE = 0;
+constexpr int DESC_ICTXT = 1;
+constexpr int DESC_M = 2;
+constexpr int DESC_N = 3;
+constexpr int DESC_MB = 4;
+constexpr int DESC_NB = 5;
+constexpr int DESC_RSRC = 6;
+constexpr int DESC_CSRC = 7;
+constexpr int DESC_LLD = 8;
 constexpr int UNOWNED_BLACS_CONTEXT = -1;
 } // namespace
 
-TEST(BlockCyclicDistributionInformationTest, DefaultConstruction)
+TEST(BlockCyclicDistributionTest, DefaultConstruction)
 {
-    BlockCyclicDistributionInformation distribution;
+    BlockCyclicDistribution distribution;
 
     EXPECT_EQ(distribution.nrloc(), 0);
     EXPECT_EQ(distribution.ncloc(), 0);
@@ -55,16 +55,16 @@ TEST(BlockCyclicDistributionInformationTest, DefaultConstruction)
 #ifdef __MPI
     EXPECT_EQ(distribution.ictxt(), UNOWNED_BLACS_CONTEXT);
     const int* const descriptor = distribution.desc();
-    for (int i = 0; i < DESCRIPTOR_ENTRY_COUNT; ++i)
+    for (int i = 0; i < DESC_SIZE; ++i)
     {
         EXPECT_EQ(descriptor[i], 0);
     }
 #endif
 }
 
-TEST(BlockCyclicDistributionInformationTest, SerialInitializationAndIndexMaps)
+TEST(BlockCyclicDistributionTest, SerialInitializationAndIndexMaps)
 {
-    BlockCyclicDistributionInformation distribution;
+    BlockCyclicDistribution distribution;
     distribution.set_serial(7, 5);
 
     EXPECT_TRUE(distribution.is_serial());
@@ -97,18 +97,18 @@ TEST(BlockCyclicDistributionInformationTest, SerialInitializationAndIndexMaps)
     EXPECT_FALSE(distribution.blacs_in_this_processor(3, 2));
 }
 
-TEST(BlockCyclicDistributionInformationTest, SerialMovePreservesValues)
+TEST(BlockCyclicDistributionTest, SerialMovePreservesValues)
 {
-    BlockCyclicDistributionInformation source;
+    BlockCyclicDistribution source;
     source.set_serial(4, 6);
 
-    BlockCyclicDistributionInformation moved(std::move(source));
+    BlockCyclicDistribution moved(std::move(source));
     EXPECT_EQ(moved.nrloc(), 4);
     EXPECT_EQ(moved.ncloc(), 6);
     EXPECT_EQ(moved.size(), 24);
     EXPECT_TRUE(moved.is_serial());
 
-    BlockCyclicDistributionInformation assigned;
+    BlockCyclicDistribution assigned;
     assigned = std::move(moved);
     EXPECT_EQ(assigned.nrloc(), 4);
     EXPECT_EQ(assigned.ncloc(), 6);
@@ -116,9 +116,9 @@ TEST(BlockCyclicDistributionInformationTest, SerialMovePreservesValues)
 }
 
 #ifdef __MPI
-TEST(BlockCyclicDistributionInformationTest, MpiInitializationAndIndexMaps)
+TEST(BlockCyclicDistributionTest, MpiInitializationAndIndexMaps)
 {
-    BlockCyclicDistributionInformation distribution;
+    BlockCyclicDistribution distribution;
     const int global_rows = 30;
     const int global_cols = 35;
     const int block_size = 2;
@@ -135,15 +135,15 @@ TEST(BlockCyclicDistributionInformationTest, MpiInitializationAndIndexMaps)
 
     const int* const descriptor = distribution.desc();
     ASSERT_NE(descriptor, nullptr);
-    EXPECT_EQ(descriptor[DESCRIPTOR_MATRIX_TYPE_INDEX], 1);
-    EXPECT_EQ(descriptor[DESCRIPTOR_BLACS_CONTEXT_INDEX], distribution.ictxt());
-    EXPECT_EQ(descriptor[DESCRIPTOR_GLOBAL_ROWS_INDEX], global_rows);
-    EXPECT_EQ(descriptor[DESCRIPTOR_GLOBAL_COLS_INDEX], global_cols);
-    EXPECT_EQ(descriptor[DESCRIPTOR_BLOCK_ROWS_INDEX], block_size);
-    EXPECT_EQ(descriptor[DESCRIPTOR_BLOCK_COLS_INDEX], block_size);
-    EXPECT_EQ(descriptor[DESCRIPTOR_PROCESS_ROWS_INDEX], 0);
-    EXPECT_EQ(descriptor[DESCRIPTOR_PROCESS_COLS_INDEX], 0);
-    EXPECT_EQ(descriptor[DESCRIPTOR_LEADING_DIM_INDEX],
+    EXPECT_EQ(descriptor[DESC_DTYPE], 1);
+    EXPECT_EQ(descriptor[DESC_ICTXT], distribution.ictxt());
+    EXPECT_EQ(descriptor[DESC_M], global_rows);
+    EXPECT_EQ(descriptor[DESC_N], global_cols);
+    EXPECT_EQ(descriptor[DESC_MB], block_size);
+    EXPECT_EQ(descriptor[DESC_NB], block_size);
+    EXPECT_EQ(descriptor[DESC_RSRC], 0);
+    EXPECT_EQ(descriptor[DESC_CSRC], 0);
+    EXPECT_EQ(descriptor[DESC_LLD],
               std::max(distribution.nrloc(), 1));
     for (int iat = 0; iat < global_rows; ++iat)
     {
@@ -170,63 +170,63 @@ TEST(BlockCyclicDistributionInformationTest, MpiInitializationAndIndexMaps)
                                               distribution.icproc()));
 }
 
-TEST(BlockCyclicDistributionInformationTest, MpiMoveTransfersBlacsOwnershipOnce)
+TEST(BlockCyclicDistributionTest, MpiMoveTransfersBlacsOwnershipOnce)
 {
-    BlockCyclicDistributionInformation source;
+    BlockCyclicDistribution source;
     source.init(12, 10, 2, MPI_COMM_WORLD, false);
     const int source_context = source.ictxt();
     ASSERT_GE(source_context, 0);
 
-    BlockCyclicDistributionInformation moved(std::move(source));
+    BlockCyclicDistribution moved(std::move(source));
     EXPECT_EQ(moved.ictxt(), source_context);
     EXPECT_EQ(source.ictxt(), UNOWNED_BLACS_CONTEXT);
 }
 
-TEST(BlockCyclicDistributionInformationTest, BindDescriptorBorrowsBlacsContext)
+TEST(BlockCyclicDistributionTest, BindDescriptorBorrowsBlacsContext)
 {
-    BlockCyclicDistributionInformation owner;
+    BlockCyclicDistribution owner;
     owner.init(12, 10, 2, MPI_COMM_WORLD, false);
     const int owner_context = owner.ictxt();
     ASSERT_GE(owner_context, 0);
 
-    BlockCyclicDistributionInformation borrower;
+    BlockCyclicDistribution borrower;
     borrower.bind_descriptor(8, 8, 2, owner_context);
     EXPECT_EQ(borrower.ictxt(), owner_context);
 
-    BlockCyclicDistributionInformation moved_borrower(std::move(borrower));
+    BlockCyclicDistribution moved_borrower(std::move(borrower));
     EXPECT_EQ(moved_borrower.ictxt(), owner_context);
     EXPECT_EQ(borrower.ictxt(), UNOWNED_BLACS_CONTEXT);
     EXPECT_GE(owner.ictxt(), 0);
 }
 
-TEST(BlockCyclicDistributionInformationTest, SharedBorrowedContextSupportsMultipleLayouts)
+TEST(BlockCyclicDistributionTest, SharedBorrowedContextSupportsMultipleLayouts)
 {
-    BlockCyclicDistributionInformation owner;
+    BlockCyclicDistribution owner;
     owner.init(30, 35, 2, MPI_COMM_WORLD, false);
     const int owner_context = owner.ictxt();
     ASSERT_GE(owner_context, 0);
 
-    BlockCyclicDistributionInformation first_borrower;
+    BlockCyclicDistribution first_borrower;
     const int first_degenerate = first_borrower.bind_descriptor(30, 35, 2, owner_context);
     EXPECT_EQ(first_degenerate, 0);
 
-    BlockCyclicDistributionInformation second_borrower;
+    BlockCyclicDistribution second_borrower;
     const int second_degenerate = second_borrower.bind_descriptor(49, 94, 3, owner_context);
     EXPECT_EQ(second_degenerate, 0);
 
     EXPECT_EQ(first_borrower.ictxt(), owner_context);
     EXPECT_EQ(second_borrower.ictxt(), owner_context);
-    EXPECT_EQ(first_borrower.desc()[DESCRIPTOR_BLACS_CONTEXT_INDEX], owner_context);
-    EXPECT_EQ(second_borrower.desc()[DESCRIPTOR_BLACS_CONTEXT_INDEX], owner_context);
+    EXPECT_EQ(first_borrower.desc()[DESC_ICTXT], owner_context);
+    EXPECT_EQ(second_borrower.desc()[DESC_ICTXT], owner_context);
 
-    BlockCyclicDistributionInformation independent_owner;
+    BlockCyclicDistribution independent_owner;
     independent_owner.init(57, 57, 2, MPI_COMM_WORLD, false);
     EXPECT_NE(independent_owner.ictxt(), owner_context);
 }
 
-TEST(BlockCyclicDistributionInformationTest, RebindingOwnedContextKeepsGridAlive)
+TEST(BlockCyclicDistributionTest, RebindingOwnedContextKeepsGridAlive)
 {
-    BlockCyclicDistributionInformation distribution;
+    BlockCyclicDistribution distribution;
     distribution.init(30, 35, 2, MPI_COMM_WORLD, false);
     const int original_context = distribution.ictxt();
     ASSERT_GE(original_context, 0);
@@ -236,12 +236,12 @@ TEST(BlockCyclicDistributionInformationTest, RebindingOwnedContextKeepsGridAlive
 
     const int* const descriptor = distribution.desc();
     EXPECT_EQ(distribution.ictxt(), original_context);
-    EXPECT_EQ(descriptor[DESCRIPTOR_MATRIX_TYPE_INDEX], 1);
-    EXPECT_EQ(descriptor[DESCRIPTOR_BLACS_CONTEXT_INDEX], original_context);
-    EXPECT_EQ(descriptor[DESCRIPTOR_GLOBAL_ROWS_INDEX], 30);
-    EXPECT_EQ(descriptor[DESCRIPTOR_GLOBAL_COLS_INDEX], 35);
-    EXPECT_EQ(descriptor[DESCRIPTOR_BLOCK_ROWS_INDEX], 1);
-    EXPECT_EQ(descriptor[DESCRIPTOR_BLOCK_COLS_INDEX], 1);
+    EXPECT_EQ(descriptor[DESC_DTYPE], 1);
+    EXPECT_EQ(descriptor[DESC_ICTXT], original_context);
+    EXPECT_EQ(descriptor[DESC_M], 30);
+    EXPECT_EQ(descriptor[DESC_N], 35);
+    EXPECT_EQ(descriptor[DESC_MB], 1);
+    EXPECT_EQ(descriptor[DESC_NB], 1);
     EXPECT_EQ(distribution.nb(), 1);
     EXPECT_EQ(distribution.size(),
               static_cast<std::size_t>(distribution.nrloc())
@@ -250,14 +250,14 @@ TEST(BlockCyclicDistributionInformationTest, RebindingOwnedContextKeepsGridAlive
               Parallel_Common::comm_size(MPI_COMM_WORLD));
 }
 
-TEST(BlockCyclicDistributionInformationTest, SerialInitializationClearsBorrowedContext)
+TEST(BlockCyclicDistributionTest, SerialInitializationClearsBorrowedContext)
 {
-    BlockCyclicDistributionInformation owner;
+    BlockCyclicDistribution owner;
     owner.init(30, 35, 1, MPI_COMM_WORLD, false);
     const int owner_context = owner.ictxt();
     ASSERT_GE(owner_context, 0);
 
-    BlockCyclicDistributionInformation borrower;
+    BlockCyclicDistribution borrower;
     const int is_degenerate = borrower.bind_descriptor(30, 35, 1, owner_context);
     EXPECT_EQ(is_degenerate, 0);
     EXPECT_EQ(borrower.ictxt(), owner_context);

@@ -36,8 +36,8 @@ namespace LR
 #endif
             std::weak_ptr<PotLRBase> pot_hxc_gs,
             const K_Vectors& kv,
-            const std::vector<BlockCyclicDistributionInformation>& pX,
-            const BlockCyclicDistributionInformation& pc,
+            const std::vector<BlockCyclicDistribution>& pX,
+            const BlockCyclicDistribution& pc,
             const Parallel_Orbitals& pmat,
             const std::string& spin_type,
             const std::string& in_dir,
@@ -127,8 +127,8 @@ namespace LR
 #endif
             std::weak_ptr<PotLRBase> pot_hxc_gs,
             const K_Vectors& kv,
-            const std::vector<BlockCyclicDistributionInformation>& pX,
-            const BlockCyclicDistributionInformation& pc,
+            const std::vector<BlockCyclicDistribution>& pX,
+            const BlockCyclicDistribution& pc,
             const Parallel_Orbitals& pmat,
             const std::string& dft_functional,
             const int nk,
@@ -204,7 +204,7 @@ namespace LR
 
     private:
         const int naos_ = 1;
-        const BlockCyclicDistributionInformation& pc_;
+        const BlockCyclicDistribution& pc_;
         const Parallel_Orbitals& pmat_;
         const psi::Psi<T>& psi_ks_;
         std::vector<psi::Psi<T>> psi_ks_spin_;

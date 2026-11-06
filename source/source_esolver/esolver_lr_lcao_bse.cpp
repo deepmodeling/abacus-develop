@@ -771,7 +771,7 @@ void ESolver_BSE<T, TR>::allocate_eigen_infos()
 
     for (int is = 0; is < this->nspin; ++is)
     {
-        BlockCyclicDistributionInformation px;
+        BlockCyclicDistribution px;
         LR_Util::setup_2d_division(px, /*nb2d=*/1, this->nvirt[is], this->nocc[is]
 #ifdef __MPI
             , this->paraC_.ictxt()

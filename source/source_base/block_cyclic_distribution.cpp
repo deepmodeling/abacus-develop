@@ -1,4 +1,4 @@
-#include "source_base/block_cyclic_distribution_information.h"
+#include "source_base/block_cyclic_distribution.h"
 
 #include "source_base/module_external/blacs_connector.h"
 #include "source_base/module_external/scalapack_connector.h"
@@ -10,21 +10,21 @@
 #include <numeric>
 #include <utility>
 
-BlockCyclicDistributionInformation::~BlockCyclicDistributionInformation()
+BlockCyclicDistribution::~BlockCyclicDistribution()
 {
 #ifdef __MPI
     release_grid();
 #endif
 }
 
-BlockCyclicDistributionInformation::BlockCyclicDistributionInformation(
-    BlockCyclicDistributionInformation&& rhs) noexcept
+BlockCyclicDistribution::BlockCyclicDistribution(
+    BlockCyclicDistribution&& rhs) noexcept
 {
     *this = std::move(rhs);
 }
 
-BlockCyclicDistributionInformation& BlockCyclicDistributionInformation::operator=(
-    BlockCyclicDistributionInformation&& rhs) noexcept
+BlockCyclicDistribution& BlockCyclicDistribution::operator=(
+    BlockCyclicDistribution&& rhs) noexcept
 {
     if (this != &rhs)
     {
@@ -55,12 +55,12 @@ BlockCyclicDistributionInformation& BlockCyclicDistributionInformation::operator
     return *this;
 }
 
-bool BlockCyclicDistributionInformation::in_this_processor(const int irglb, const int icglb) const
+bool BlockCyclicDistribution::in_this_processor(const int irglb, const int icglb) const
 {
     return irloc(irglb) != -1 && icloc(icglb) != -1;
 }
 
-int BlockCyclicDistributionInformation::owner_processor(const int irglb, const int icglb) const
+int BlockCyclicDistribution::owner_processor(const int irglb, const int icglb) const
 {
     assert(irglb >= 0 && irglb < nrglb() && icglb >= 0 && icglb < ncglb());
     if (is_serial_)
@@ -72,30 +72,30 @@ int BlockCyclicDistributionInformation::owner_processor(const int irglb, const i
     return irproc * ncproc_ + icproc;
 }
 
-int BlockCyclicDistributionInformation::nrglb() const
+int BlockCyclicDistribution::nrglb() const
 {
     if (!is_serial_)
     {
 #ifdef __MPI
-        return desc_[DESCRIPTOR_GLOBAL_ROWS_INDEX];
+        return desc_[DESC_M];
 #endif
     }
     return nrloc_;
 }
 
-int BlockCyclicDistributionInformation::ncglb() const
+int BlockCyclicDistribution::ncglb() const
 {
     if (!is_serial_)
     {
 #ifdef __MPI
-        return desc_[DESCRIPTOR_GLOBAL_COLS_INDEX];
+        return desc_[DESC_N];
 #endif
     }
     return ncloc_;
 }
 
 #ifdef __MPI
-MPI_Comm BlockCyclicDistributionInformation::comm() const
+MPI_Comm BlockCyclicDistribution::comm() const
 {
     // it is an error to call blacs_get with an invalid BLACS context
     if (ictxt_ < 0)
@@ -111,7 +111,7 @@ MPI_Comm BlockCyclicDistributionInformation::comm() const
     return Cblacs2sys_handle(sys_ctxt);
 }
 
-void BlockCyclicDistributionInformation::init_grid(const MPI_Comm comm, const bool swap_grid)
+void BlockCyclicDistribution::init_grid(const MPI_Comm comm, const bool swap_grid)
 {
     // determine the number of rows and columns of the process grid
     // by factorizing n = p * q such that p, q are closest and p <= q
@@ -134,7 +134,7 @@ void BlockCyclicDistributionInformation::init_grid(const MPI_Comm comm, const bo
     Cblacs_gridinfo(ictxt_, &nrproc_, &ncproc_, &irproc_, &icproc_);
 }
 
-void BlockCyclicDistributionInformation::release_grid()
+void BlockCyclicDistribution::release_grid()
 {
     if (owns_ictxt_ && ictxt_ >= 0)
     {
@@ -144,7 +144,7 @@ void BlockCyclicDistributionInformation::release_grid()
     }
 }
 
-void BlockCyclicDistributionInformation::init_dist(const int nrglb,
+void BlockCyclicDistribution::init_dist(const int nrglb,
                                                    const int ncglb,
                                                    const int nb)
 {
@@ -193,7 +193,7 @@ void BlockCyclicDistributionInformation::init_dist(const int nrglb,
     }
 }
 
-int BlockCyclicDistributionInformation::bind_descriptor(const int nrglb,
+int BlockCyclicDistribution::bind_descriptor(const int nrglb,
                                                         const int ncglb,
                                                         const int nb,
                                                         const int ictxt)
@@ -214,7 +214,7 @@ int BlockCyclicDistributionInformation::bind_descriptor(const int nrglb,
     return nrloc_ == 0 || ncloc_ == 0;
 }
 
-int BlockCyclicDistributionInformation::init(const int nrglb,
+int BlockCyclicDistribution::init(const int nrglb,
                                              const int ncglb,
                                              const int nb,
                                              const MPI_Comm comm,
@@ -227,7 +227,7 @@ int BlockCyclicDistributionInformation::init(const int nrglb,
     return nrloc_ == 0 || ncloc_ == 0;
 }
 
-int BlockCyclicDistributionInformation::set(const int nrglb,
+int BlockCyclicDistribution::set(const int nrglb,
                                             const int ncglb,
                                             const int nb,
                                             const int ictxt)
@@ -236,7 +236,7 @@ int BlockCyclicDistributionInformation::set(const int nrglb,
 }
 #endif
 
-void BlockCyclicDistributionInformation::set_serial(const int nrglb, const int ncglb)
+void BlockCyclicDistribution::set_serial(const int nrglb, const int ncglb)
 {
     assert(nrglb > 0 && ncglb > 0);
 

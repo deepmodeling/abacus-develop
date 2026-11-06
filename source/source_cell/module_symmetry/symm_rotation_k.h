@@ -1,7 +1,7 @@
 #ifndef SYMM_ROTATION_K_H
 #define SYMM_ROTATION_K_H
 #include "irred_sec.h"
-#include "source_base/block_cyclic_distribution_information.h"
+#include "source_base/block_cyclic_distribution.h"
 #include "source_base/complexmatrix.h"
 #include "source_cell/module_symmetry/symm_rot_spin.h"
 
@@ -74,27 +74,27 @@ namespace ModuleSymmetry
         void cal_Ms(const K_Vectors& kv, const Symmetry& symm, const Atom* atoms,
             const ModuleBase::Matrix3& latvec, const int lmax,
             const int nat, const std::vector<int>& iat2it, const std::vector<int>& iat2ia,
-            const BlockCyclicDistributionInformation& pv, const int nspin);
+            const BlockCyclicDistribution& pv, const int nspin);
 
         /// Use calculated M matrix to recover D(k) from D(k_ibz): D(k) = M(R, k)^\dagger D(k_ibz) M(R, k)
         /// the link "ik_ibz-isym-ik" can be found in kstars: k_bz = gmat[isym](k)
         std::vector<std::vector<std::complex<double>>>restore_dm(const K_Vectors& kv,
             const std::vector<std::vector<std::complex<double>>>& dm_k_ibz,
-            const BlockCyclicDistributionInformation& pv)const;
+            const BlockCyclicDistribution& pv)const;
         std::vector<std::vector<double>>restore_dm(const K_Vectors& kv,
             const std::vector<std::vector<double>>& dm_k_ibz,
-            const BlockCyclicDistributionInformation& pv)const;
+            const BlockCyclicDistribution& pv)const;
         std::vector<std::complex<double>> rot_matrix_ao(const std::vector<std::complex<double>>& DMkibz,
-            const int ik_ibz, const int kstar_size, const int isym, const BlockCyclicDistributionInformation& pv, const bool TRS_conj = false) const;
+            const int ik_ibz, const int kstar_size, const int isym, const BlockCyclicDistribution& pv, const bool TRS_conj = false) const;
 
         /// (nspin=4) build the 2*nao spin operator Sigma_y = I_nao (x) sigma_y in 2d-block layout.
-        std::vector<std::complex<double>> set_sigma_y_2d(const BlockCyclicDistributionInformation& pv) const;
+        std::vector<std::complex<double>> set_sigma_y_2d(const BlockCyclicDistribution& pv) const;
 
         /// (nspin=4) time-reversal on the spin density matrix: D(k) = sigma_y D^*(-k) sigma_y,
         /// realized distribution-safely as scale * Sigma_y * conj(X) * Sigma_y (X is the already
         /// space-group-rotated D(-k) stored in the transposed 2d-block convention).
         std::vector<std::complex<double>> trs_spin_rotate(const std::vector<std::complex<double>>& X,
-            const std::vector<std::complex<double>>& sigma_y, const BlockCyclicDistributionInformation& pv, const double scale) const;
+            const std::vector<std::complex<double>>& sigma_y, const BlockCyclicDistribution& pv, const double scale) const;
 
         /// calculate Wigner D matrix
         double wigner_d(const double beta, const int l, const int m1, const int m2) const;
@@ -114,15 +114,15 @@ namespace ModuleSymmetry
         /// set a block matrix onto a 2d-parallelized matrix(col-maj), at the position (starti, startj)
         /// if trans=true, the block matrix is transposed before setting
         void set_block_to_mat2d(const int starti, const int startj, const ModuleBase::ComplexMatrix& block,
-            std::vector<std::complex<double>>& obj_mat, const BlockCyclicDistributionInformation& pv, const bool trans = false) const;
+            std::vector<std::complex<double>>& obj_mat, const BlockCyclicDistribution& pv, const bool trans = false) const;
         void set_block_to_mat2d(const int starti, const int startj, const ModuleBase::ComplexMatrix& block,
-            std::vector<double>& obj_mat, const BlockCyclicDistributionInformation& pv, const bool trans = false) const;
+            std::vector<double>& obj_mat, const BlockCyclicDistribution& pv, const bool trans = false) const;
 
         /// 2d-block parallized rotation matrix in AO-representation, denoted as M.
         /// finally we will use D(k)=M(R, k)^\dagger*D(Rk)*M(R, k) to recover D(k) from D(Rk).
         std::vector<std::complex<double>> contruct_2d_rot_mat_ao(const Symmetry& symm, const Atom* atoms,
             const int nat, const std::vector<int>& iat2it, const std::vector<int>& iat2ia,
-            const TCdouble& kvec_d_ibz, int isym, const BlockCyclicDistributionInformation& pv,
+            const TCdouble& kvec_d_ibz, int isym, const BlockCyclicDistribution& pv,
             const SpinRotation::Su2& spin_U /*= SpinRotation::Su2{ 1.0, 0.0, 0.0, 1.0 }*/) const;
 
         std::vector<std::vector<ModuleBase::ComplexMatrix>>& get_rotmat_Slm() { return this->rotmat_Slm_; }

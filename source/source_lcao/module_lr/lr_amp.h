@@ -129,7 +129,7 @@ void follow_root(const T* Xall, const int n, const int nstates, const int initia
 
 template <typename T>
 ct::Tensor pad_amplitudes(const std::vector<ct::Tensor>& X, const bool openshell,
-    const std::vector<BlockCyclicDistributionInformation>& px, const std::vector<BlockCyclicDistributionInformation>& px_z,
+    const std::vector<BlockCyclicDistribution>& px, const std::vector<BlockCyclicDistribution>& px_z,
     const std::vector<int>& nocc, const std::vector<int>& nvirt,
     const int nk, const int nloc, const int nloc_z,
     const int ispin, const int istate_begin, const int nst)
@@ -147,8 +147,8 @@ ct::Tensor pad_amplitudes(const std::vector<ct::Tensor>& X, const bool openshell
     int zoff_ch = 0;                 // channel offsets inside one state's block
     for (const int is : chan)
     {
-        const BlockCyclicDistributionInformation& pxs = px[is];
-        const BlockCyclicDistributionInformation& pxz = px_z[is];
+        const BlockCyclicDistribution& pxs = px[is];
+        const BlockCyclicDistribution& pxz = px_z[is];
         for (int ist = 0;ist < nst;++ist)
         {
             const T* const src = X[ix].template data<T>()

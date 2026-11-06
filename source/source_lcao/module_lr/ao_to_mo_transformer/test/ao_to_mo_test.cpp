@@ -133,15 +133,15 @@ TEST_F(AO2MOTest, DoubleParallel)
     {
         // c: nao*nbands in para2d, nbands*nao in psi  (row-para and constructed: nao)
         // X: nvirt*nocc in para2d, nocc*nvirt in psi (row-para and constructed: nvirt)
-        BlockCyclicDistributionInformation pV;
+        BlockCyclicDistribution pV;
         LR_Util::setup_2d_division(pV, s.nb, s.naos, s.naos);
         std::vector<container::Tensor> V(s.nks, container::Tensor(DAT::DT_DOUBLE, DEV::CpuDevice, { pV.ncloc(), pV.nrloc() }));
-        BlockCyclicDistributionInformation pc;
+        BlockCyclicDistribution pc;
         LR_Util::setup_2d_division(pc, s.nb, s.naos, s.nocc + s.nvirt, pV.ictxt());
 
         std::vector<int> ngk_temp(s.nks, pc.nrloc());
         psi::Psi<double> c(s.nks, pc.ncloc(), pc.nrloc(), ngk_temp, true);
-        BlockCyclicDistributionInformation pvo, poo, pvv;
+        BlockCyclicDistribution pvo, poo, pvv;
         LR_Util::setup_2d_division(pvo, s.nb, s.nvirt, s.nocc, pV.ictxt());
         LR_Util::setup_2d_division(poo, s.nb, s.nocc, s.nocc, pV.ictxt());
         LR_Util::setup_2d_division(pvv, s.nb, s.nvirt, s.nvirt, pV.ictxt());
@@ -210,15 +210,15 @@ TEST_F(AO2MOTest, ComplexParallel)
     {
         // c: nao*nbands in para2d, nbands*nao in psi  (row-para and constructed: nao)
         // X: nvirt*nocc in para2d, nocc*nvirt in psi (row-para and constructed: nvirt)
-        BlockCyclicDistributionInformation pV;
+        BlockCyclicDistribution pV;
         LR_Util::setup_2d_division(pV, s.nb, s.naos, s.naos);
         std::vector<container::Tensor> V(s.nks, container::Tensor(DAT::DT_COMPLEX_DOUBLE, DEV::CpuDevice, { pV.ncloc(), pV.nrloc() }));
-        BlockCyclicDistributionInformation pc;
+        BlockCyclicDistribution pc;
         LR_Util::setup_2d_division(pc, s.nb, s.naos, s.nocc + s.nvirt, pV.ictxt());
 
         std::vector<int> ngk_temp_1(s.nks, pc.nrloc());
         psi::Psi<std::complex<double>> c(s.nks, pc.ncloc(), pc.nrloc(), ngk_temp_1, true);
-        BlockCyclicDistributionInformation pvo, poo, pvv;
+        BlockCyclicDistribution pvo, poo, pvv;
         LR_Util::setup_2d_division(pvo, s.nb, s.nvirt, s.nocc, pV.ictxt());
         LR_Util::setup_2d_division(poo, s.nb, s.nocc, s.nocc, pV.ictxt());
         LR_Util::setup_2d_division(pvv, s.nb, s.nvirt, s.nvirt, pV.ictxt());

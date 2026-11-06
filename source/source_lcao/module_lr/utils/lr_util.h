@@ -7,7 +7,7 @@
 #include <utility>
 #include "source_base/matrix.h"
 #include "source_base/complexmatrix.h"
-#include "source_base/block_cyclic_distribution_information.h"
+#include "source_base/block_cyclic_distribution.h"
 #include "source_psi/psi.h"
 #include <ATen/core/tensor.h>
 #include <ATen/ops/linalg_op.h>
@@ -148,23 +148,23 @@ namespace LR_Util
     void matsym(T* inout, const int n);
 #ifdef __MPI
     template<typename T>
-    void matsym(const T* in, const int n, const BlockCyclicDistributionInformation& pmat, T* out);
+    void matsym(const T* in, const int n, const BlockCyclicDistribution& pmat, T* out);
     template<typename T>
-    void matsym(T* inout, const int n, const BlockCyclicDistributionInformation& pmat);
+    void matsym(T* inout, const int n, const BlockCyclicDistribution& pmat);
     template<typename T>
-    void mattrans(const T* in, const int n, const BlockCyclicDistributionInformation& pmat, T* out);
+    void mattrans(const T* in, const int n, const BlockCyclicDistribution& pmat, T* out);
     template<typename T>
-    void mattrans(T* inout, const int n, const BlockCyclicDistributionInformation& pmat);
+    void mattrans(T* inout, const int n, const BlockCyclicDistribution& pmat);
 
     // calculate (A-A^T)/2 (in-place version)
     template<typename T>
-    void matantisym(T* inout, const int n, const BlockCyclicDistributionInformation& pmat);
+    void matantisym(T* inout, const int n, const BlockCyclicDistribution& pmat);
 #endif
     template<typename T>
-    bool is_hermitian(const T* mat, const BlockCyclicDistributionInformation& pmat, const double threshold, const int my_rank);
+    bool is_hermitian(const T* mat, const BlockCyclicDistribution& pmat, const double threshold, const int my_rank);
 
     template<typename T>
-    bool is_symmetric(const T* mat, const BlockCyclicDistributionInformation& pmat, const double threshold, const int my_rank);
+    bool is_symmetric(const T* mat, const BlockCyclicDistribution& pmat, const double threshold, const int my_rank);
 
     ///===================Psi wrapper=================
     /// psi(nk=1, nbands=nb, nk * nbasis) -> psi(nb, nk, nbasis) without memory copy
@@ -176,17 +176,17 @@ namespace LR_Util
 
     ///=================2D-block Parallel===============
     // pack the process to setup 2d divion reusing blacs_ctxt of a new 2d-matrix
-    void setup_2d_division(BlockCyclicDistributionInformation& pv, int nb, int gr, int gc);
+    void setup_2d_division(BlockCyclicDistribution& pv, int nb, int gr, int gc);
 
     /// @brief assign global X to 2d-matrix, its col is band(excition state), and row is { spin, k-point, occ, virt }
     /// @attention pX is 2d-blocked as {occ, virt}, this assignment is used to calculate transition density matrix c_b X_{bj} c_j
     template <typename T>
     void global2local_X(T* local_X, const T* global_X, const int nband, const int nk,
-        const std::vector<int>& nocc, const std::vector<int>& nvirt, const std::vector<BlockCyclicDistributionInformation>& pX,
+        const std::vector<int>& nocc, const std::vector<int>& nvirt, const std::vector<BlockCyclicDistribution>& pX,
         const bool openshell);
 #ifdef __MPI
     // pack the process to setup 2d divion reusing blacs_ctxt of an existing 2d-matrix
-    void setup_2d_division(BlockCyclicDistributionInformation& pv, int nb, int gr, int gc, const int& blacs_ctxt_in);
+    void setup_2d_division(BlockCyclicDistribution& pv, int nb, int gr, int gc, const int& blacs_ctxt_in);
 
     /// @brief Struct to get MPI_traits for different data types
     template <typename T>
@@ -209,19 +209,19 @@ namespace LR_Util
     template <typename T>
     void pA2pX(T* X_pX, const T* X_pA, const int nband, const int nk,
         const std::vector<int>& nocc, const std::vector<int>& nvirt,
-        const std::vector<BlockCyclicDistributionInformation>& pX, const BlockCyclicDistributionInformation& pA,
+        const std::vector<BlockCyclicDistribution>& pX, const BlockCyclicDistribution& pA,
         const int row_offset, const int col_offset, const bool openshell,
         const int my_rank, const int nproc);
 
     /// @brief  gather 2d matrix to full matrix
     /// the defination of row and col is consistent with setup_2d_division
     template <typename T>
-    void gather_2d_to_full(const BlockCyclicDistributionInformation& pv, const T* submat, T* fullmat,
+    void gather_2d_to_full(const BlockCyclicDistribution& pv, const T* submat, T* fullmat,
         const bool row_major, const std::size_t global_nrow, const std::size_t global_ncol);
 
     /// @brief  scatter full matrix to 2d block-cyclic distributed matrix
     template <typename T>
-    void scatter_full_to_2d(const BlockCyclicDistributionInformation& pv, const T* fullmat, T* submat, const bool col_first = false);
+    void scatter_full_to_2d(const BlockCyclicDistribution& pv, const T* fullmat, T* submat, const bool col_first = false);
 #endif
 
     ///=================diago-lapack====================

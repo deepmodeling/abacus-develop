@@ -52,7 +52,7 @@ inline MPI_Datatype mpi_type_blockhead()
 template <typename T>
 void MolecularLRI<T>::transform_k_2dlocal(std::vector<T>& m_2d,
     const std::map<int, std::map<int, RI::Tensor<T>>>& m_lri,
-    const BlockCyclicDistributionInformation& pm_2d, const double factor)
+    const BlockCyclicDistribution& pm_2d, const double factor)
 {
     ModuleBase::TITLE("MolecularLRI", "transform_k_2dlocal");
     ModuleBase::timer::start("MolecularLRI", "transform_k_2dlocal");
