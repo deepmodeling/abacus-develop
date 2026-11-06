@@ -271,11 +271,15 @@ void Exx_LRI_Interface<T, Tdata>::exx_beforescf(
             { this->mix_DMk_2D.set_nks(kv.get_nks()); }
 
         if (this->info_global.separate_loop)
-            { this->mix_DMk_2D.set_mixing_plain(this->info_global.mixing_beta_for_loop1);
-              this->mix_common_density_.set_mixing_plain(this->info_global.mixing_beta_for_loop1); }
+        {
+            this->mix_DMk_2D.set_mixing_plain(this->info_global.mixing_beta_for_loop1);
+            this->mix_common_density_.set_mixing_plain(this->info_global.mixing_beta_for_loop1);
+        }
         else
-            { this->mix_DMk_2D.set_mixing(chgmix.get_mixing());
-              this->mix_common_density_.set_mixing(chgmix.get_mixing()); }
+        {
+            this->mix_DMk_2D.set_mixing(chgmix.get_mixing());
+            this->mix_common_density_.set_mixing(chgmix.get_mixing());
+        }
 
         // remember chgmix so exx_eachiterinit can re-borrow its mixing pointer after
         // mixing_restart's init_mixing() has reallocated it (else use-after-free -> SIGSEGV)

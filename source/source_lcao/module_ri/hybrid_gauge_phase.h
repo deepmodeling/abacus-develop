@@ -82,7 +82,9 @@ inline std::vector<std::vector<std::complex<double>>> flatten_hybrid_density(
                     throw std::invalid_argument("Empty RI density block in common-frame mixing");
                 }
                 const std::size_t size = tensor.shape.get_shape_all();
-                flat[is].insert(flat[is].end(), tensor.ptr(), tensor.ptr() + size);
+                const std::complex<double>* block_begin = tensor.ptr();
+                const std::complex<double>* block_end = block_begin + size;
+                flat[is].insert(flat[is].end(), block_begin, block_end);
             }
         }
     }
@@ -125,7 +127,9 @@ inline void assign_flat_hybrid_density(
                 const std::size_t size = block.second.shape.get_shape_all();
                 // Avoid writing through a shallow copy into accepted-state storage.
                 block.second = block.second.copy();
-                std::copy(flat[is]->begin() + offset, flat[is]->begin() + offset + size, block.second.ptr());
+                const std::vector<std::complex<double>>::const_iterator block_begin = flat[is]->begin() + offset;
+                const std::vector<std::complex<double>>::const_iterator block_end = block_begin + size;
+                std::copy(block_begin, block_end, block.second.ptr());
                 offset += size;
             }
         }
