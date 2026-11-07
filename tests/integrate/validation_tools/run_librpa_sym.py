@@ -105,6 +105,18 @@ def check_output(case, mesh, symmetry, nspin, wfc_nspin=None,
             "nspin": nspin, "nspin_wfc": wfc_nspin, "nk_full": full, "nk_scf": nk, "nq": nq}
 
 
+def mesh_variants(input_text):
+    """Mesh variants for a producer case, honoring its dimensionality.
+
+    The strict-2D Coulomb path (exx_ewald_dimension 2) requires a single kz
+    layer, so its symmetry variants must stay in-plane; the generic 3D
+    variants would trip the nkz = 1 guard in Ewald_Vq::init.
+    """
+    if re.search(r"(?m)^exx_ewald_dimension\s+2\b", input_text):
+        return ((1, 3, 1), (2, 2, 1))
+    return ((1, 1, 3), (2, 2, 2))
+
+
 def run(args, root):
     source = args.cases.resolve()
     work = root / "08_RI"
@@ -119,8 +131,12 @@ def run(args, root):
                ABACUS_MPIEXEC_PREFLAGS=" ".join(args.mpi_preflag),
                ABACUS_MPIEXEC_POSTFLAGS=" ".join(args.mpi_postflag))
     cases = (source / "CASES_LIBRPA_PRODUCER.txt").read_text().split()
-    for name, nspin in zip(cases[:2], (1, 2)):
-        for mesh in ((1, 1, 3), (2, 2, 2)):
+    for name in cases:
+        input_text = (source / name / "INPUT").read_text()
+        meshes = mesh_variants(input_text)
+        nspin_match = re.search(r"(?m)^nspin\s+(\d+)", input_text)
+        nspin = int(nspin_match.group(1)) if nspin_match else 1
+        for mesh in meshes:
             for symmetry in (-1, 0, 1):
                 case = work / "{}_{}_s{}".format(name, "".join(map(str, mesh)), symmetry)
                 shutil.copytree(source / name, case, ignore=ignore_outputs)
@@ -197,7 +213,7 @@ def run(args, root):
     results.append(magnetic_result)
     print(json.dumps(magnetic_result), flush=True)
     (root / "summary.json").write_text(json.dumps(results, indent=2) + "\n")
-    print("Symmetry producer checks: PASS (12 baseline runs and two SOC runs)")
+    print("Symmetry producer checks: PASS ({} baseline runs and two SOC runs)".format(len(results) - 2))
 
 
 def main():

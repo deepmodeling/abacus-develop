@@ -11,6 +11,7 @@
 #include "source_cell/klist.h"
 
 #include <array>
+#include <functional>
 #include <vector>
 
 namespace Singular_Value
@@ -38,6 +39,11 @@ double cal_massidda(const UnitCell& ucell,
                   const double& start_lambda,
                   const int& niter,
                   const double& eps);
+double cal_massidda_2d(const UnitCell& ucell,
+                       const std::array<int, 3>& nmp,
+                       const double& eta,
+                       const int& niter,
+                       const double& eps);
 
 double solve_chi(const ModuleBase::Matrix3& G,
                  const std::vector<ModuleBase::Vector3<double>>& kvec_c,
@@ -75,6 +81,7 @@ double fq_massidda(const double& tpiba,
                  const int& qdiv,
                  const double& lambda,
                  const int& lmax);
+double fq_massidda_2d(const UnitCell& ucell, const std::array<int, 3>& nmp, const double& eta);
 }; // namespace Singular_Value
 
 #endif

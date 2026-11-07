@@ -1,4 +1,5 @@
 #include "rpa_lri_detail.h"
+#include "source_base/parallel_common.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
 
 #include <algorithm>

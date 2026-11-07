@@ -6,13 +6,19 @@
 #ifndef GAUSSIAN_ABFS_H
 #define GAUSSIAN_ABFS_H
 
+#include "conv_coulomb_pot_k.h"
+#include "ewald_gaussian_cutoff.h"
 #include "source_basis/module_ao/orb_atomic_lm.h"
+#include "source_basis/module_ao/orb_gaunt_table.h"
 //#include "source_basis/module_pw/pw_basis_k.h"
 #include "source_cell/klist.h"
 
 #include <RI/global/Tensor.h>
 #include <array>
+#include <cmath>
+#include <functional>
 #include <map>
+#include <stdexcept>
 #include <vector>
 
 class Gaussian_Abfs
@@ -36,11 +42,21 @@ class Gaussian_Abfs
   C^{LM}_{lm,l'm'}： Gaunt coefficient
 */
   public:
+    static double radial_cutoff(const double lambda, const int angular_momentum, const int ewald_dimension)
+    {
+        return EwaldGaussianCutoff::real_space_radius(lambda, angular_momentum, ewald_dimension);
+    }
+
+    /// Set the Ewald dimension before Gauss() builds the radial tables; the
+    /// Ewald_Vq stage constructs those tables before init() is called.
+    void set_ewald_dimension(const int ewald_dimension) { this->ewald_dimension = ewald_dimension; }
+
     void init(const UnitCell& ucell,
               const int& Lmax,
               const std::vector<ModuleBase::Vector3<double>>& kvec_c,
               const ModuleBase::Matrix3& G,
-              const double& lambda);
+              const double& lambda,
+              const int& ewald_dimension);
 
     RI::Tensor<std::complex<double>> get_Vq(const int& lp_max,
                                             const int& lq_max, // Maximum L for which to calculate interaction.
@@ -48,6 +64,12 @@ class Gaussian_Abfs
                                             const double& chi, // Singularity corrected value at q=0.
                                             const ModuleBase::Vector3<double>& tau,
                                             const ModuleBase::realArray& gaunt);
+    RI::Tensor<std::complex<double>> get_Vq_2d(const int& lp_max,
+                                               const int& lq_max,
+                                               const size_t& ik,
+                                               const double& chi2d,
+                                               const ModuleBase::Vector3<double>& tau,
+                                               const ModuleBase::realArray& gaunt);
 
     std::array<RI::Tensor<std::complex<double>>, 3> get_dVq(
         const int& lp_max,
@@ -71,6 +93,13 @@ Calculate the lattice sum over a Gaussian:
         const bool& exclude_Gamma, // The R==0. can be excluded by this flag.
         const int& lmax,           // Maximum angular momentum the sum is needed for.
         const ModuleBase::Vector3<double>& tau);
+    std::vector<std::complex<double>> get_lattice_sum_2d(const double& tpiba,
+                                                         const size_t& ik,
+                                                         const double& power,
+                                                         const double& exponent,
+                                                         const bool& exclude_Gamma,
+                                                         const int& lmax,
+                                                         const ModuleBase::Vector3<double>& tau);
 
     std::vector<std::array<std::complex<double>, 3>> get_d_lattice_sum(
         const double& tpiba,
@@ -90,9 +119,14 @@ Calculate the lattice sum over a Gaussian:
     double tpiba;
     double lat0;
     double omega;
+    double area_parallel_bohr2;
+    double lz_bohr;
+    int ewald_dimension = 3;
     std::vector<ModuleBase::Vector3<double>> kvec_c;
     std::vector<std::vector<ModuleBase::Vector3<double>>> qGvecs;
+    std::vector<ModuleBase::Vector3<double>> gvecs_direct;
     std::vector<int> n_cells;
+    std::vector<std::array<int, 2>> n_supercells_2d;
     std::vector<std::vector<bool>> check_gamma;
     std::vector<ModuleBase::matrix> ylm;
     template <typename Tresult>
@@ -114,6 +148,20 @@ Calculate the lattice sum over a Gaussian:
                       const ModuleBase::Vector3<double>& tau,
                       const ModuleBase::realArray& gaunt,
                       const T_func_DPcal_lattice_sum<Tin>& func_DPcal_lattice_sum);
+    RI::Tensor<std::complex<double>> DPcal_Vq_2d(const int& lp_max,
+                                                 const int& lq_max,
+                                                 const size_t& ik,
+                                                 const double& chi2d,
+                                                 const ModuleBase::Vector3<double>& tau,
+                                                 const ModuleBase::realArray& gaunt);
+    std::complex<double> K_LM_2d(const int& L,
+                                 const int& M,
+                                 const double& power,
+                                 const ModuleBase::Vector3<double>& q_parallel_cart,
+                                 const double& tau_z,
+                                 const double& beta) const;
+    double I2_2d(const double& q_parallel_abs, const double& tau_z, const double& beta) const;
+    double C_reg_2d(const double& tau_z, const double& beta) const;
 
     template <typename Tresult>
     std::vector<Tresult> DPcal_lattice_sum(const double& tpiba,

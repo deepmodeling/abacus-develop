@@ -16,32 +16,34 @@ namespace Element_Basis_Index
 {
   //private:
 
-    struct NM
-    {
-        public:
-        std::size_t N;
-        std::size_t M;
-    };
+	struct NM
+	{
+		public:
+		std::size_t N;
+		std::size_t M;
+	};
 
-    class Index_TL: public std::vector<std::vector<std::size_t>>
-    {
-        public:
-        std::size_t N;
-        std::size_t M;
-    };
+	class Index_TL: public std::vector<std::vector<std::size_t>>
+	{
+		public:
+		std::size_t N;
+		std::size_t M;
+	};
 
-    class Index_T: public std::vector<Index_TL>
-    {
-        public:
-        std::size_t count_size;
-    };
+	class Index_T: public std::vector<Index_TL>
+	{
+		public:
+		std::size_t count_size;
+	};
 
   //public:
 
-    typedef std::vector<std::vector<NM>> Range; 						// range[T][L]
-    typedef std::vector<Index_T> IndexLNM;								// index[T][L][N][M]
+	typedef std::vector<std::vector<NM>> Range; 						// range[T][L]
+	typedef std::vector<Index_T> IndexLNM;								// index[T][L][N][M]
+	typedef std::vector<std::vector<std::size_t>> IndexPermutation;		// old_to_new[T][old_index]
 
-    extern IndexLNM construct_index( const Range &range );
+	extern IndexLNM construct_index( const Range &range );
+	extern IndexLNM construct_index( const Range &range, const IndexPermutation &old_to_new );
 }
 
 }

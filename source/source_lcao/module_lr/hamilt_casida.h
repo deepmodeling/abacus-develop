@@ -77,7 +77,7 @@ namespace LR
                                                 const_cast<K_Vectors*>(&kv_in),
                                                 nspin, in_dir, out_dir, use_fine_kgrid);
                         // though C and V are real, here still use <T> to multiply with psi
-                        Cs_read = LRI_CV_Tools::read_Cs_ao_all<T>(in_dir);
+                        Cs_read = LRI_CV_Tools::read_Cs_ao_all<T>(in_dir, 0.0);
                         Vs_read = LR_IO::read_coulomb_mat_general_k<T,T>(in_dir, Cs_read, kRlist);
                     }
                     else if (ri_hartree_benchmark == "abacus")
@@ -90,7 +90,7 @@ namespace LR
                         LR_IO::RI_kRlist kRlist (ucell_in,
                                                 const_cast<K_Vectors*>(&kv_in),
                                                 nspin, in_dir, out_dir, use_fine_kgrid);
-                        Cs_read = LRI_CV_Tools::read_Cs_ao_all<T>(in_dir);
+                        Cs_read = LRI_CV_Tools::read_Cs_ao_all<T>(in_dir, 0.0);
                         Vs_read = LR_IO::read_coulomb_mat_k<T,T>(in_dir, Cs_read, kRlist);
                     }
                     if (!std::set<std::string>({ "rpa", "hf"}).count(xc_kernel)) {

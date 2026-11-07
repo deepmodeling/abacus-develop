@@ -109,6 +109,36 @@ void bcast_char(char* object, const int n)
 }
 
 #ifdef __MPI
+void bcast_int(int* object, const int n, const MPI_Comm mpi_comm, const int root)
+{
+    MPI_Bcast(object, n, MPI_INT, root, mpi_comm);
+}
+
+void bcast_double(double* object, const int n, const MPI_Comm mpi_comm, const int root)
+{
+    MPI_Bcast(object, n, MPI_DOUBLE, root, mpi_comm);
+}
+
+int my_rank(const MPI_Comm mpi_comm)
+{
+    int rank = 0;
+    MPI_Comm_rank(mpi_comm, &rank);
+    return rank;
+}
+
+int nproc(const MPI_Comm mpi_comm)
+{
+    int size = 1;
+    MPI_Comm_size(mpi_comm, &size);
+    return size;
+}
+
+void barrier(const MPI_Comm mpi_comm)
+{
+    MPI_Barrier(mpi_comm);
+}
+
+// bcast single on an explicit communicator, from the communicator's rank 0
 void bcast_mpi_offset(MPI_Offset& object, const MPI_Comm& comm)
 {
     MPI_Bcast(&object, 1, MPI_OFFSET, 0, comm);
