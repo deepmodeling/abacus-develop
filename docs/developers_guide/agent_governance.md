@@ -97,6 +97,7 @@ decisions.
 | Heterogeneous test evidence | CUDA/ROCM/kernel change has test evidence or reason | phase-one mechanical warning + AI review | CI + AI review | high | warn | changed paths and PR body | Sufficiency is human-reviewed |
 | Test existence | Source change has test evidence or reason | phase-one mechanical warning + AI review | CI + AI review | high | warn | PR body and changed paths | Sufficiency is human-reviewed |
 | Test sufficiency | Tests cover important behavior | AI review + human confirmation | AI + human review | medium | human confirmation | semantic review | Not mechanically blocked |
+| Integration test driver | Integration test uses an Autotest case, not a standalone `add_test()` script | AI review + human confirmation | AI + human review | medium | human confirmation | `tests/**/CMakeLists.txt` and new scripts under `tests/` | Standalone drivers need a stated reason Autotest cannot express the check; see Integration Test Drivers |
 | INPUT behavior linkage | Parameter metadata/default/type/parser behavior updates YAML and docs | phase-one mechanical + AI review | CI + AI review | high | warn | behavior-field diff plus docs/PR body | Comment-only parameter-file changes are not blocked |
 | Documentation sync | Behavior/interface docs updated | phase-one mechanical warning + AI review | CI + AI review | medium | warn | changed paths and PR body | Major behavior changes escalate to reviewers |
 | PR metadata completeness | Issue, tests, behavior, INPUT, core impact, exceptions | phase-one mechanical | CI or GitHub bot | medium | warn | PR template fields | Not run by local hook |
@@ -178,6 +179,24 @@ MPI-linked builds or runs should be treated as sandbox artifacts first, not as
 project regressions. Do not relax existing integration tests or reference files
 just to make a failure pass. Update references only when the intended behavior
 changed and the PR explains why the new reference is correct.
+
+## Integration Test Drivers
+
+Use Autotest cases with `INPUT`, `STRU`, `KPT` (when needed) and `result.ref`,
+listed in `CASES_*.txt` and run by `Autotest.sh` through the suite's CTest entry.
+Autotest helpers are unaffected.
+
+Standalone `add_test()` drivers that launch ABACUS require a check Autotest
+cannot express (e.g., nonzero exits or per-rank stderr) and a PR rationale.
+Keep Autotest-compatible checks in cases. Drivers must:
+
+- Live in `tests/integrate/validation_tools/` with descriptive names
+  (e.g., `check_<feature>.py`); reserve `test_*.py` for tool unit tests.
+- Use dedicated fixtures; never rewrite another case's `INPUT` at run time.
+- Use `find_program` plus `if()` for optional interpreters; never `REQUIRED`.
+- For MPI, forward `MPIEXEC_NUMPROC_FLAG`, `MPIEXEC_PREFLAGS` and
+  `MPIEXEC_POSTFLAGS`; set CTest `PROCESSORS` to the launched rank count.
+- Set `OMP_NUM_THREADS=1`, use temporary scratch space and a CTest `TIMEOUT`.
 
 ## CLI Verification
 
