@@ -498,13 +498,21 @@ void ESolver_KS::after_scf(UnitCell& ucell, const int istep, const bool conv_eso
     ESolver_FP::after_scf(ucell, istep, conv_esolver);
 
     // 3) write eigenvalues and occupations to eig_occ.txt
-    ModuleIO::write_eig_file(this->pelec->ekb,
-                             this->pelec->wg,
-                             this->kv,
-                             this->inp_->nbands,
-                             this->inp_->nspin,
-                             PARAM.globalv.global_out_dir,
-                             istep);
+    // Follow out_freq_ion so the snapshot rhythm matches the other per-step
+    // outputs; a non-positive frequency keeps the historical every-step write.
+    const int out_freq_ion = this->inp_->out_freq_ion;
+    const bool write_eig_occ = (out_freq_ion <= 0) || (istep % out_freq_ion == 0);
+    if (write_eig_occ)
+    {
+        ModuleIO::write_eig_file(this->pelec->ekb,
+                                 this->pelec->wg,
+                                 this->kv,
+                                 this->inp_->nbands,
+                                 this->inp_->nspin,
+                                 PARAM.globalv.global_out_dir,
+                                 istep,
+                                 this->inp_->out_app_flag);
+    }
 
     // 4) write band information to band.txt
     const std::string global_band_dir = PARAM.globalv.global_band_dir;

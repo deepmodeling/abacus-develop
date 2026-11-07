@@ -101,8 +101,8 @@ TEST_F(IstateInfoTest, OutIstateInfoS1)
     }
 
     // A new calculation truncates stale output, then later ionic steps append.
-    ModuleIO::write_eig_file(ekb, wg, *kv, nbands, nspin, out_dir, 0);
-    ModuleIO::write_eig_file(ekb, wg, *kv, nbands, nspin, out_dir, 1);
+    ModuleIO::write_eig_file(ekb, wg, *kv, nbands, nspin, out_dir, 0, 1);
+    ModuleIO::write_eig_file(ekb, wg, *kv, nbands, nspin, out_dir, 1, 1);
 
     // check the output files
     std::ifstream ifs;
@@ -117,6 +117,25 @@ TEST_F(IstateInfoTest, OutIstateInfoS1)
     ifs.close();
 
     remove("eig_occ.txt");
+
+    // Mode 0: every write truncates the fixed file, so only the last frame remains.
+    ModuleIO::write_eig_file(ekb, wg, *kv, nbands, nspin, out_dir, 0, 0);
+    ModuleIO::write_eig_file(ekb, wg, *kv, nbands, nspin, out_dir, 1, 0);
+    ifs.open("eig_occ.txt");
+    std::string mode0((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
+    EXPECT_THAT(mode0, testing::HasSubstr("2     # Ionic_Step"));
+    EXPECT_THAT(mode0, testing::Not(testing::HasSubstr("1     # Ionic_Step")));
+    ifs.close();
+    remove("eig_occ.txt");
+
+    // Mode 2: one g{step} file per written step.
+    ModuleIO::write_eig_file(ekb, wg, *kv, nbands, nspin, out_dir, 1, 2);
+    ifs.open("eig_occg2.txt");
+    ASSERT_TRUE(ifs.is_open());
+    std::string mode2((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
+    EXPECT_THAT(mode2, testing::HasSubstr("2     # Ionic_Step"));
+    ifs.close();
+    remove("eig_occg2.txt");
 }
 
 #ifdef __MPI
