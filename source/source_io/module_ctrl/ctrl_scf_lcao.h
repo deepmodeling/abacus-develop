@@ -38,7 +38,7 @@ void ctrl_scf_lcao(UnitCell& ucell,
                    const ModulePW::PW_Basis_K* pw_wfc,   // for berryphase
                    const ModulePW::PW_Basis* pw_rho,     // for berryphase
                    const ModulePW::PW_Basis_Big* pw_big, // for Wannier90
-                   const Structure_Factor& sf,           // for Wannier90
+                   Structure_Factor& sf,           // for Wannier90
                    const ModulePW::PW_Basis* pw_rhod,    // dense charge grid (for dH veff pots)
                    const ModuleBase::matrix& vloc,       // local pseudopotential (for dH veff pots)
                    surchem& solvent,                     // solvent model (for dH veff pots)

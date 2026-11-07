@@ -25,9 +25,11 @@ namespace ModuleIO
 
 /// @brief Write the band-decomposed energy of each Hamiltonian term
 /// (kinetic, local/nonlocal pp, Hartree) in KS orbital representation.
-/// The XC term is handled by write_Vxc in ctrl_runner_lcao.cpp instead.
+/// The XC term is handled by write_Vxc from ctrl_scf_lcao.cpp instead.
 /// @param nspin Number of spin components (1, 2 or 4)
 /// @param istep Zero-based ionic step index; written one-based in the header
+/// @param out_app_flag Output mode: 0 overwrites, 1 appends, 2 writes one
+///        numbered eband_*g{step}.txt file per written step
 /// @param etot Total energy of the current frame in Ry
 /// @param my_rank World rank; only rank 0 writes the files
 /// @tparam TK K-point data type (double or std::complex<double>)
@@ -35,6 +37,7 @@ namespace ModuleIO
 template <typename TK, typename TR>
 void write_eband_terms(const int nspin,
                        const int istep,
+                       const int out_app_flag,
                        const double etot,
                        const int my_rank,
                        const int nbasis,

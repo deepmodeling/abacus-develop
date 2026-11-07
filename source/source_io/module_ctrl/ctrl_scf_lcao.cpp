@@ -24,6 +24,8 @@
 #include "../module_wannier/to_w90_lcao.h"                   // use toW90_LCAO
 #include "../module_wannier/to_w90_lcao_pw.h"             // use toW90_LCAO_IN_PW
 #include "../module_hs/hs_dense_io.h"                           // use ModuleIO::save_mat()
+#include "../module_hs/vxc_op_mat.h"                            // use ModuleIO::write_Vxc()
+#include "../module_energy/write_eband_terms.h"                 // use ModuleIO::write_eband_terms()
 #include "../module_hs/hsk_writer.h"                            // use ModuleIO::write_hsk()
 #include "../module_dm/write_dmk.h"                           // use ModuleIO::write_dmk()
 #include "../module_dm/write_dmr.h"                           // use ModuleIO::write_dmr()
@@ -86,7 +88,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                              const ModulePW::PW_Basis_K* pw_wfc,   // for berryphase
                              const ModulePW::PW_Basis* pw_rho,     // for berryphase
                              const ModulePW::PW_Basis_Big* pw_big, // for Wannier90
-                             const Structure_Factor& sf,           // for Wannier90
+                             Structure_Factor& sf,           // for Wannier90
                              const ModulePW::PW_Basis* pw_rhod,    // dense charge grid (for dH veff pots)
                              const ModuleBase::matrix& vloc,       // local pseudopotential (for dH veff pots)
                              surchem& solvent,                     // solvent model (for dH veff pots)
@@ -596,6 +598,85 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     }
 
     //------------------------------------------------------------------
+    //! 8b) Output exchange-correlation potential and band-decomposed energies
+    //------------------------------------------------------------------
+    // Both run on the out_freq_ion rhythm: the MO-basis matrices only when
+    // out_mat_xc is on, the eband_vxc* files for either switch.
+    if (inp.out_mat_xc || inp.out_eband)
+    {
+        const Charge& chg = *pelec->charge;
+        if (inp.out_mat_xc)
+        {
+            // Mode-2 MAT/ subdirectory is created lazily at write time.
+            ModuleBase::ensure_directory(global_mat_dir);
+        }
+        const bool cal_exx = exx_info.info_global.cal_exx;
+        const double etot_xc = pelec->f_en.etot;
+#ifdef __EXX
+        auto* hexxd_ptr = exx_nao.exd ? &exx_nao.exd->get_Hexxs() : nullptr;
+        auto* hexxc_ptr = exx_nao.exc ? &exx_nao.exc->get_Hexxs() : nullptr;
+#endif
+        ModuleIO::write_Vxc<TK, TR>(nspin,
+                                    istep,
+                                    etot_xc,
+                                    PARAM.globalv.nlocal,
+                                    GlobalV::DRANK,
+                                    &pv,
+                                    *psi,
+                                    ucell,
+                                    sf,
+                                    solvent,
+                                    *pw_rho,
+                                    *pw_rhod,
+                                    vloc,
+                                    chg,
+                                    kv,
+                                    orb.cutoffs(),
+                                    pelec->wg,
+                                    gd,
+                                    inp.dft_plus_u,
+                                    gamma_only,
+                                    inp.out_mat_xc,
+                                    out_app_flag,
+                                    global_mat_dir,
+                                    global_out_dir,
+                                    inp.out_ndigits,
+                                    inp.ks_solver,
+                                    cal_exx,
+                                    exx_info
+#ifdef __EXX
+                                    ,
+                                    hexxd_ptr,
+                                    hexxc_ptr
+#endif
+        );
+        if (inp.out_eband)
+        {
+            const double etot = pelec->f_en.etot;
+            ModuleIO::write_eband_terms<TK, TR>(nspin,
+                                                istep,
+                                                out_app_flag,
+                                                etot,
+                                                GlobalV::MY_RANK,
+                                                PARAM.globalv.nlocal,
+                                                &pv,
+                                                *psi,
+                                                ucell,
+                                                sf,
+                                                solvent,
+                                                *pw_rho,
+                                                *pw_rhod,
+                                                vloc,
+                                                chg,
+                                                kv,
+                                                pelec->wg,
+                                                gd,
+                                                orb.cutoffs(),
+                                                two_center_bundle);
+        }
+    }
+
+    //------------------------------------------------------------------
     //! 9) Output expectation of angular momentum operator
     //------------------------------------------------------------------
     if (inp.out_mat_l[0])
@@ -852,7 +933,7 @@ template void ModuleIO::ctrl_scf_lcao<double, double>(
     const ModulePW::PW_Basis_K* pw_wfc,         // for berryphase
     const ModulePW::PW_Basis* pw_rho,           // for berryphase
     const ModulePW::PW_Basis_Big* pw_big,       // for Wannier90
-    const Structure_Factor& sf,                 // for Wannier90
+    Structure_Factor& sf,                 // for Wannier90
     const ModulePW::PW_Basis* pw_rhod,          // dense charge grid (for dH veff pots)
     const ModuleBase::matrix& vloc,             // local pseudopotential (for dH veff pots)
     surchem& solvent,                           // solvent model (for dH veff pots)
@@ -882,7 +963,7 @@ template void ModuleIO::ctrl_scf_lcao<std::complex<double>, double>(
     const ModulePW::PW_Basis_K* pw_wfc,                       // for berryphase
     const ModulePW::PW_Basis* pw_rho,                         // for berryphase
     const ModulePW::PW_Basis_Big* pw_big,                     // for Wannier90
-    const Structure_Factor& sf,                               // for Wannier90
+    Structure_Factor& sf,                               // for Wannier90
     const ModulePW::PW_Basis* pw_rhod,                        // dense charge grid (for dH veff pots)
     const ModuleBase::matrix& vloc,                           // local pseudopotential (for dH veff pots)
     surchem& solvent,                                         // solvent model (for dH veff pots)
@@ -911,7 +992,7 @@ template void ModuleIO::ctrl_scf_lcao<std::complex<double>, std::complex<double>
     const ModulePW::PW_Basis_K* pw_wfc,                                     // for berryphase
     const ModulePW::PW_Basis* pw_rho,                                       // for berryphase
     const ModulePW::PW_Basis_Big* pw_big,                                   // for Wannier90
-    const Structure_Factor& sf,                                             // for Wannier90
+    Structure_Factor& sf,                                             // for Wannier90
     const ModulePW::PW_Basis* pw_rhod,                                      // dense charge grid (for dH veff pots)
     const ModuleBase::matrix& vloc,                                         // local pseudopotential (for dH veff pots)
     surchem& solvent,                                                       // solvent model (for dH veff pots)

@@ -150,15 +150,21 @@ void write_Vxc(const int nspin,
     {
         const double etot_eV = etot * ModuleBase::Ry_to_eV;
         const std::string time_stamp = local_timestamp();
+        // Mode 1 appends the frames written after the first ionic step; modes
+        // 0 and 2 truncate (mode 2 writes a separate g{step} file).
+        const bool append = (out_app_flag == 1) && (istep > 0);
         const std::string header_tot = build_eband_header(istep, etot_eV, "V_xc", time_stamp);
-        write_orb_energy(kv, nspin0, nbands, e_orb_tot, "eband_vxc.txt", header_tot, global_out_dir);
+        const std::string name_tot = eband_filename("eband_vxc", istep, out_app_flag);
+        write_orb_energy(kv, nspin0, nbands, e_orb_tot, name_tot, header_tot, global_out_dir, append);
 #ifdef __EXX
         if (cal_exx)
         {
             const std::string header_loc = build_eband_header(istep, etot_eV, "V_xc_local", time_stamp);
             const std::string header_exx = build_eband_header(istep, etot_eV, "V_EXX", time_stamp);
-            write_orb_energy(kv, nspin0, nbands, e_orb_locxc, "eband_vxc_local.txt", header_loc, global_out_dir);
-            write_orb_energy(kv, nspin0, nbands, e_orb_exx, "eband_vxc_exx.txt", header_exx, global_out_dir);
+            const std::string name_loc = eband_filename("eband_vxc_local", istep, out_app_flag);
+            const std::string name_exx = eband_filename("eband_vxc_exx", istep, out_app_flag);
+            write_orb_energy(kv, nspin0, nbands, e_orb_locxc, name_loc, header_loc, global_out_dir, append);
+            write_orb_energy(kv, nspin0, nbands, e_orb_exx, name_exx, header_exx, global_out_dir, append);
         }
 #endif
     }

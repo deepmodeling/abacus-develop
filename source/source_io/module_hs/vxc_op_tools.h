@@ -94,6 +94,15 @@ void write_orb_energy(const K_Vectors& kv,
                       const std::string& global_out_dir,
                       const bool app = false);
 
+/// @brief Compose the name of a band-decomposed energy file.
+/// @param stem Base name without extension, e.g. "eband_vxc"
+/// @param istep Zero-based ionic step index; mode 2 prints it one-based
+/// @param out_app_flag Output mode: 2 appends g{step} to the stem
+/// @return File name such as "eband_vxc.txt" or "eband_vxcg5.txt"
+std::string eband_filename(const std::string& stem,
+                           const int istep,
+                           const int out_app_flag);
+
 /// @brief Build the five comment lines preceding band-decomposed energy data.
 /// @param istep Zero-based ionic step index, printed one-based.
 /// @param etot_eV Total energy of the written frame in eV.
