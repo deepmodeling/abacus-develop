@@ -56,7 +56,7 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
         ModuleBase::ensure_directory(global_dos_dir);
         ModuleIO::Cal_ldos<TK>::cal_ldos_lcao(pelec->eferm, chr, dmat, kv,
           pelec->ekb, pelec->wg, psi[0], pgrid, pv, gd, ucell,
-          inp.stm_bias, inp.nspin, global_dos_dir,
+          inp.stm_bias, inp.nspin, istep, global_dos_dir,
           PARAM.globalv.two_fermi, inp.out_ldos[1], ofs_running);
     }
 

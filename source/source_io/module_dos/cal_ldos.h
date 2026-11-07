@@ -36,6 +36,7 @@ class Cal_ldos
 		const UnitCell& ucell,
 		const std::vector<double>& stm_bias,
 		const int nspin,
+		const int istep,
 		const std::string& global_out_dir,
 		const bool two_fermi,
 		const int out_ldos_precision,
