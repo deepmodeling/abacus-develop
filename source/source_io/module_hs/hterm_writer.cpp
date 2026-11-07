@@ -113,58 +113,50 @@ static void gather_and_write(const std::string& prefix,
     }
 }
 
-static void write_hk_common(hamilt::HContainer<double>& hR,
-                            const std::string& prefix,
-                            const UnitCell& ucell,
-                            const Parallel_Orbitals& pv,
-                            const K_Vectors& kv,
-                            const int nspin,
-                            const int istep,
-                            const bool append,
-                            const int* iat2iwt,
-                            const int nat,
-                            const int nlocal,
-                            const int precision,
-                            const bool gamma_only,
-                            const std::string& global_out_dir,
-                            const int out_app_flag,
-                            const std::string& ks_solver,
-                            const int drank)
+static void write_hk_at_k(hamilt::HContainer<double>& hR,
+                          const std::string& prefix,
+                          const Parallel_Orbitals& pv,
+                          const K_Vectors& kv,
+                          const int nspin_name,
+                          const int istep,
+                          const bool append,
+                          const int ik,
+                          const int nlocal,
+                          const int precision,
+                          const bool gamma_only,
+                          const std::string& global_out_dir,
+                          const int out_app_flag,
+                          const std::string& ks_solver,
+                          const int drank)
 {
-    const int nspin_k = (nspin == 2 ? 2 : 1);
-    const int nks = kv.get_nks() / nspin_k;
+    const ModuleBase::Vector3<double>& kvec_d = kv.kvec_d[ik];
 
-    for (int ik = 0; ik < nks; ++ik)
-    {
-        const ModuleBase::Vector3<double>& kvec_d = kv.kvec_d[ik];
+    std::vector<std::complex<double>> hk_global(nlocal * nlocal, 0);
+    hamilt::folding_HR(hR, hk_global.data(), kvec_d, nlocal, 0);
 
-        std::vector<std::complex<double>> hk_global(nlocal * nlocal, 0);
-        hamilt::folding_HR(hR, hk_global.data(), kvec_d, nlocal, 0);
-
-        const int out_label = 1;
-        std::string fname = ModuleIO::filename_output(global_out_dir,
-                                                      prefix,
-                                                      "nao",
-                                                      ik,
-                                                      kv.ik2iktot,
-                                                      nspin,
-                                                      kv.get_nkstot(),
-                                                      out_label,
-                                                      out_app_flag,
-                                                      gamma_only,
-                                                      istep);
-        ModuleIO::save_mat(istep,
-                           hk_global.data(),
-                           nlocal,
-                           false,
-                           precision,
-                           false,
-                           append,
-                           fname,
-                           pv.para_2d(),
-                           drank,
-                           ks_solver);
-    }
+    const int out_label = 1;
+    std::string fname = ModuleIO::filename_output(global_out_dir,
+                                                  prefix,
+                                                  "nao",
+                                                  ik,
+                                                  kv.ik2iktot,
+                                                  nspin_name,
+                                                  kv.get_nkstot(),
+                                                  out_label,
+                                                  out_app_flag,
+                                                  gamma_only,
+                                                  istep);
+    ModuleIO::save_mat(istep,
+                       hk_global.data(),
+                       nlocal,
+                       false,
+                       precision,
+                       false,
+                       append,
+                       fname,
+                       pv.para_2d(),
+                       drank,
+                       ks_solver);
 }
 
 // Descriptor for one Hamiltonian term: the H(k)/H(R) filename prefixes and the
@@ -179,6 +171,10 @@ struct HTermSpec
     // Fills hR_tmp for spin channel ispin. setup_veff_hcontainer has already
     // been run when use_veff_layout is true; the builder adds the term values.
     std::function<void(hamilt::HContainer<double>&, int)> build;
+    // Whether the term differs between the two spin channels when nspin == 2.
+    // Spin-independent terms are built and written once and carry no spin
+    // suffix in the filename, matching the S(k) convention.
+    bool spin_dependent;
 };
 
 // Shared skeleton for the five non-EXX terms: loop over spin channels, build
@@ -202,16 +198,32 @@ static void write_h_term(WriteHParams& params, const HTermSpec& spec)
     const std::string& global_out_dir = params.global_out_dir;
     const int out_app_flag = params.out_app_flag;
 
-    const int nspin_out = (nspin == 2 ? 2 : 1);
+    const int nspin_out = (spec.spin_dependent && nspin == 2) ? 2 : 1;
+    // Spin-independent terms pass nspin_name = 1 so that filename_output does
+    // not append a meaningless spin block; spin-dependent terms keep the real
+    // nspin so that the two channels land in s1 and s2 files.
+    const int nspin_name = spec.spin_dependent ? nspin : 1;
+    const int nks = kv.get_nks();
 
     for (int ispin = 0; ispin < nspin_out; ispin++)
     {
         hamilt::HContainer<double> hR_tmp(const_cast<Parallel_Orbitals*>(&pv));
         spec.build(hR_tmp, ispin);
 
-        write_hk_common(hR_tmp, spec.k_prefix, ucell, pv, kv, nspin, istep, append, iat2iwt, nat,
-                        nlocal, params.precision, gamma_only, global_out_dir, out_app_flag,
-                        params.ks_solver, params.drank);
+        // Enumerate the local k points owned by this spin channel, exactly as
+        // write_hsk does, so that filename_output derives the correct spin and
+        // k index from ik2iktot.
+        for (int ik = 0; ik < nks; ++ik)
+        {
+            const int kspin = kv.isk[ik];
+            if (kspin != ispin)
+            {
+                continue;
+            }
+            write_hk_at_k(hR_tmp, spec.k_prefix, pv, kv, nspin_name, istep, append, ik, nlocal,
+                          params.precision, gamma_only, global_out_dir, out_app_flag,
+                          params.ks_solver, params.drank);
+        }
 
         if (also_hR)
         {
@@ -239,6 +251,7 @@ void write_h_vnl(WriteHParams& params)
     spec.r_prefix = "vnl";
     spec.r_label = "V^NL";
     spec.term_name = "nonlocal";
+    spec.spin_dependent = false;
     spec.build = [&](hamilt::HContainer<double>& hR_tmp, int /*ispin*/) {
         hamilt::Nonlocal<hamilt::OperatorLCAO<double, double>>
             tmp_nonlocal(nullptr, kv.kvec_d, &hR_tmp, &ucell, orb_cutoff, &gd,
@@ -265,6 +278,7 @@ void write_h_vl(WriteHParams& params)
     spec.r_prefix = "vl";
     spec.r_label = "V^L";
     spec.term_name = "local";
+    spec.spin_dependent = false;
     spec.build = [&](hamilt::HContainer<double>& hR_tmp, int /*ispin*/) {
         setup_veff_hcontainer(hR_tmp, ucell, gd, pv, orb_cutoff);
         // All ranks must enter cal_gint_vl so the Alltoall inside
@@ -295,6 +309,9 @@ void write_h_vh(WriteHParams& params)
     spec.r_prefix = "vh";
     spec.r_label = "V^H";
     spec.term_name = "hartree";
+    // The Hartree potential depends only on the total density, so both spin
+    // rows of v_h are identical.
+    spec.spin_dependent = false;
     spec.build = [&](hamilt::HContainer<double>& hR_tmp, int ispin) {
         setup_veff_hcontainer(hR_tmp, ucell, gd, pv, orb_cutoff);
         // All ranks must enter cal_gint_vl so the Alltoall inside
@@ -339,6 +356,7 @@ void write_h_vxc(WriteHParams& params)
     spec.r_prefix = "vxc";
     spec.r_label = "V^XC";
     spec.term_name = "xc";
+    spec.spin_dependent = true;
     spec.build = [&](hamilt::HContainer<double>& hR_tmp, int ispin) {
         setup_veff_hcontainer(hR_tmp, ucell, gd, pv, orb_cutoff);
         // All ranks must enter cal_gint_vl so the Alltoall inside
@@ -380,6 +398,7 @@ static void write_h_exx_impl(const UnitCell& ucell,
 {
     const auto& Hexxs = ex->get_Hexxs(); // vector over spin of map<iat, map<(jat,R), Tensor>>
     const int nspin_out = (nspin == 2 ? 2 : 1);
+    const int nks = kv.get_nks();
     const double alpha = exx_info.info_global.hybrid_alpha;
 
     for (int ispin = 0; ispin < nspin_out; ispin++)
@@ -390,9 +409,16 @@ static void write_h_exx_impl(const UnitCell& ucell,
         hamilt::reallocate_hcontainer(Hexxs, &hR_tmp);
         RI_2D_Comm::add_HexxR(ispin, alpha, Hexxs, pv, npol, hR_tmp, nullptr);
 
-        write_hk_common(hR_tmp, "vexxk", ucell, pv, kv, nspin, istep, append, iat2iwt, nat,
-                        nlocal, precision, gamma_only, global_out_dir, out_app_flag, ks_solver,
-                        drank);
+        for (int ik = 0; ik < nks; ++ik)
+        {
+            const int kspin = kv.isk[ik];
+            if (kspin != ispin)
+            {
+                continue;
+            }
+            write_hk_at_k(hR_tmp, "vexxk", pv, kv, nspin, istep, append, ik, nlocal, precision,
+                          gamma_only, global_out_dir, out_app_flag, ks_solver, drank);
+        }
 
         if (also_hR)
         {

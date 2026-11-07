@@ -553,6 +553,9 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                                                                     two_center_bundle.kinetic_orb.get());
 
         const int nspin_k = (nspin == 2 ? 2 : 1);
+        // T(k) is spin-independent, so its filename carries no spin suffix
+        // (same convention as S(k)); only the k index appears in the name.
+        const int nspin_kinetic_name = 1;
         for (int ik = 0; ik < kv.get_nks() / nspin_k; ++ik)
         {
             ekinetic->init(ik);
@@ -564,7 +567,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                                                          "nao",
                                                          ik,
                                                          kv.ik2iktot,
-                                                         inp.nspin,
+                                                         nspin_kinetic_name,
                                                          kv.get_nkstot(),
                                                          out_label,
                                                          out_app_flag,
