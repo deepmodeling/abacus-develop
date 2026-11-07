@@ -19,6 +19,7 @@
 #endif
 
 #include <cstdio>
+#include <cmath>
 #include <fstream>
 #include <sstream>
 #include <string>
@@ -530,6 +531,7 @@ TEST_F(DFTUBaseTest, AppendSnapshotNAPlaceholderAndReady)
     const std::string content2 = ss2.str();
     EXPECT_NE(content2.find("Fe Atom 1 L 2"), std::string::npos);
     EXPECT_EQ(content2.find("N/A"), std::string::npos);
+    EXPECT_EQ(content2.find("# eigenvalues"), std::string::npos);
 
     // Clean up so subsequent tests checking "file not written" are not
     // fooled by leftovers.  std::remove is Rule 17 compliant.
@@ -911,6 +913,89 @@ TEST_F(DFTUBaseTest, CompactWriterReaderCollinearRoundtrip)
     EXPECT_NEAR(parsed_mag, expected_mag, 1e-7);
     EXPECT_NEAR(parsed_nelec[0], expected_nelec[0], 1e-7);
     EXPECT_NEAR(parsed_nelec[1], expected_nelec[1], 1e-7);
+}
+
+TEST_F(DFTUBaseTest, LatestOccMatIncludesSortedCollinearEigenvalues)
+{
+    Plus_U_Base dftu;
+    init_dftu(dftu, false);
+    for (int spin = 0; spin < 2; ++spin)
+    {
+        for (int m = 0; m < 5; ++m)
+        {
+            dftu.occmat().set(0, 2, spin, m, m, spin == 0 ? 0.8 : 0.2);
+        }
+    }
+    dftu.occmat().set(0, 2, 0, 0, 1, 0.1);
+    dftu.occmat().set(0, 2, 0, 1, 0, 0.1);
+
+    const DFTU_BASE::OccmatOutputCfg cfg = {0, 1, 5, true, 1};
+    const DFTU_BASE::OccmatStepInfo step = {0, 2, 1e-6, 1e-7};
+    const std::string filename = testing::TempDir() + "occ_mat.txt";
+    DFTU_BASE::write_latest_occmat(dftu, ucell, testing::TempDir(), step, cfg,
+                                   DFTU_BASE::SOC_LAYOUT_PAULI);
+
+    std::ifstream input(filename.c_str());
+    ASSERT_TRUE(input.is_open());
+    std::string line;
+    int eigenvalue_lines = 0;
+    while (std::getline(input, line))
+    {
+        if (line.find("# eigenvalues atom 1 L 2 spin ") != 0)
+        {
+            continue;
+        }
+        ++eigenvalue_lines;
+        ASSERT_LE(eigenvalue_lines, 2);
+        std::istringstream values(line.substr(line.find(':') + 1));
+        const double expected[2][5] = {{0.7, 0.8, 0.8, 0.8, 0.9},
+                                       {0.2, 0.2, 0.2, 0.2, 0.2}};
+        double value = 0.0;
+        for (int m = 0; m < 5; ++m)
+        {
+            ASSERT_TRUE(values >> value);
+            EXPECT_NEAR(value, expected[eigenvalue_lines - 1][m], 1e-8);
+        }
+        EXPECT_FALSE(values >> value);
+    }
+    EXPECT_EQ(eigenvalue_lines, 2);
+
+    OccupationMatrix restored;
+    const std::vector<int> l_channel = {2};
+    restored.init(ucell, l_channel, 2, 1);
+    DFTU_BASE::read_occup_m(ucell, restored, l_channel, filename, 2, 1,
+                            DFTU_BASE::SOC_LAYOUT_PAULI);
+    EXPECT_NEAR(restored.get(0, 2, 0, 0, 1), 0.1, 1e-8);
+    std::remove(filename.c_str());
+}
+
+TEST_F(DFTUBaseTest, SocEigenvaluesIncludeImaginarySpinCoupling)
+{
+    Plus_U_Base dftu;
+    init_dftu_for_spin(dftu, false, 4, 2, DFTU_BASE::SOC_LAYOUT_PAULI);
+    const int block_size = 25;
+    for (int m = 0; m < 5; ++m)
+    {
+        const int index = m * 5 + m;
+        dftu.occmat().mat(0, 2, 0).c[index] = 1.0;
+        dftu.occmat().mat(0, 2, 0).c[2 * block_size + index] = 0.6;
+        dftu.occmat().mat(0, 2, 0).c[3 * block_size + index] = 0.6;
+    }
+    std::ostringstream output;
+    DFTU_BASE::write_occup_eigenvalues(dftu, ucell, output,
+                                       DFTU_BASE::SOC_LAYOUT_PAULI);
+    const std::string line = output.str();
+    ASSERT_EQ(line.find("# eigenvalues atom 1 L 2 spinor:"), 0);
+    std::istringstream values(line.substr(line.find(':') + 1));
+    const double low = 0.5 - std::sqrt(0.18);
+    const double high = 0.5 + std::sqrt(0.18);
+    double value = 0.0;
+    for (int i = 0; i < 10; ++i)
+    {
+        ASSERT_TRUE(values >> value);
+        EXPECT_NEAR(value, i < 5 ? low : high, 1e-8);
+    }
+    EXPECT_FALSE(values >> value);
 }
 
 TEST_F(DFTUBaseTest, CompactWriterReaderSocPauliRoundtrip)

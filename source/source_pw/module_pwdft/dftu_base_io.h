@@ -149,6 +149,12 @@ void write_occup_m(const Plus_U_Base& dftu,
                    std::ostream& ofs,
                    OccmatSocLayout soc_layout);
 
+/// Append sorted occupation eigenvalues as restart-safe comment lines.
+void write_occup_eigenvalues(const Plus_U_Base& dftu,
+                             const UnitCell& ucell,
+                             std::ostream& ofs,
+                             OccmatSocLayout soc_layout);
+
 } // namespace DFTU_BASE
 
 #endif
