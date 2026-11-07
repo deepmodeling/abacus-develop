@@ -122,13 +122,13 @@ int pack_ks_eigenvector_chunk(const Parallel_Orbitals& parav,
                               const int requested_count)
 {
     int packed = 0;
-    const Parallel_2D& distribution = parav.para_2d();
+    const BlockCyclicDistribution& distribution = parav.para_2d();
     while (cursor.band_local < parav.ncol_bands && packed < requested_count)
     {
         while (cursor.row_local < psi.get_nbasis() && packed < requested_count)
         {
             const int ir_local = cursor.row_local++;
-            const int iw_global = distribution.local2global_row(ir_local);
+            const int iw_global = distribution.irglb(ir_local);
             if (is_soc && iw_global % 2 != spinor_component)
             {
                 continue;
@@ -162,7 +162,7 @@ void write_ks_eigenvector_v1_mpi(const MPI_Comm mpi_comm,
     }
     try
     {
-        const Parallel_2D& distribution = parav.para_2d();
+        const BlockCyclicDistribution& distribution = parav.para_2d();
         int mpi_rank = 0;
         collective_mpi_check(mpi_comm,
                              MPI_Comm_rank(mpi_comm, &mpi_rank),
@@ -173,7 +173,8 @@ void write_ks_eigenvector_v1_mpi(const MPI_Comm mpi_comm,
         bool dimensions_valid = nks_tot >= 0 && nbands >= 0 && nbasis_wfc >= 0 && nspins > 0
                                 && (nspin_abacus == 1 || nspin_abacus == 2 || nspin_abacus == 4)
                                 && nspins == (nspin_abacus == 2 ? 2 : 1) && (!is_soc || nbasis_wfc % 2 == 0)
-                                && psi.get_nbasis() == distribution.get_row_size() && psi.get_nbands() == parav.ncol_bands
+                                && psi.get_nbasis() == distribution.nrloc()
+                                && psi.get_nbands() == parav.ncol_bands
                                 && parav.get_wfc_global_nbasis() == nbasis_wfc
                                 && parav.get_wfc_global_nbands() == nbands;
         if (dimensions_valid)

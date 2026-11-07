@@ -59,7 +59,7 @@ class TransferTest : public ::testing::Test
         int global_col = test_size * test_nw;
         std::ofstream ofs_running;
         paraV = new Parallel_Orbitals();
-        paraV->para_2d().init(global_row, global_col, nb, MPI_COMM_WORLD);
+        paraV->para_2d().init(global_row, global_col, nb, MPI_COMM_WORLD, false);
         paraV->set_atomic_trace(ucell.get_iat2iwt(), test_size, global_row);
     }
 #else

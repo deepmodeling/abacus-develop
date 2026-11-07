@@ -301,7 +301,7 @@ void ModuleIO::write_hsr(const std::vector<hamilt::HContainer<TR>*>& hr_vec,
                           const UnitCell* ucell,
                           const int out_type,
                           const int precision,
-                          const Parallel_2D& paraV,
+                          const BlockCyclicDistribution& paraV,
                           const int out_app_flag,
                           const bool gamma_only,
                           const int* iat2iwt,
@@ -407,12 +407,12 @@ template void ModuleIO::write_hcontainer_csr_binary<std::complex<double>>(
 template void ModuleIO::write_hsr<double>(
     const std::vector<hamilt::HContainer<double>*>&,
     const hamilt::HContainer<double>*,
-    const UnitCell*, const int, const int, const Parallel_2D&,
+    const UnitCell*, const int, const int, const BlockCyclicDistribution&,
     const int, const bool, const int*, const int, const int,
     const std::string&, const elecstate::Efermi&, std::ofstream&);
 template void ModuleIO::write_hsr<std::complex<double>>(
     const std::vector<hamilt::HContainer<std::complex<double>>*>&,
     const hamilt::HContainer<std::complex<double>>*,
-    const UnitCell*, const int, const int, const Parallel_2D&,
+    const UnitCell*, const int, const int, const BlockCyclicDistribution&,
     const int, const bool, const int*, const int, const int,
     const std::string&, const elecstate::Efermi&, std::ofstream&);

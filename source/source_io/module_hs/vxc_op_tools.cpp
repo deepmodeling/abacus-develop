@@ -11,10 +11,10 @@
 namespace ModuleIO
 {
 
-void set_para2d_MO(const Parallel_Orbitals& pv, const int nbands, Parallel_2D& p2d)
+void set_para2d_MO(const Parallel_Orbitals& pv, const int nbands, BlockCyclicDistribution& p2d)
 {
 #ifdef __MPI
-    p2d.set(nbands, nbands, pv.para_2d().get_block_size(), pv.get_blacs_ctxt());
+    p2d.set(nbands, nbands, pv.para_2d().nb(), pv.para_2d().ictxt());
 #else
     p2d.set_serial(nbands, nbands);
 #endif
@@ -26,7 +26,7 @@ std::vector<T> cVc(const T* V,
                    const int nbasis,
                    const int nbands,
                    const Parallel_Orbitals& pv,
-                   const Parallel_2D& p2d)
+                   const BlockCyclicDistribution& p2d)
 {
     std::vector<T> Vc(pv.nloc_wfc, 0.0);
     char transa = 'N';
@@ -37,20 +37,20 @@ std::vector<T> cVc(const T* V,
     const int i1 = 1;
     ScalapackConnector::gemm(transa, transb,
         nbasis, nbands, nbasis,
-        alpha, V, i1, i1, pv.para_2d().get_desc(),
+        alpha, V, i1, i1, pv.para_2d().desc(),
         c, i1, i1, pv.desc_wfc,
         beta, Vc.data(), i1, i1, pv.desc_wfc);
 #else
     container::BlasConnector::gemm(transa, transb, nbasis, nbands, nbasis, alpha, V, nbasis, c, nbasis, beta, Vc.data(), nbasis);
 #endif
-    std::vector<T> cVc_result(p2d.nloc, 0.0);
+    std::vector<T> cVc_result(p2d.size(), 0.0);
     transa = (std::is_same<T, double>::value ? 'T' : 'C');
 #ifdef __MPI
     ScalapackConnector::gemm(transa, transb,
         nbands, nbands, nbasis,
         alpha, c, i1, i1, pv.desc_wfc,
         Vc.data(), i1, i1, pv.desc_wfc,
-        beta, cVc_result.data(), i1, i1, p2d.desc);
+        beta, cVc_result.data(), i1, i1, p2d.desc());
 #else
     container::BlasConnector::gemm(transa, transb, nbands, nbands, nbasis, alpha, c, nbasis, Vc.data(), nbasis, beta, cVc_result.data(), nbasis);
 #endif
@@ -60,17 +60,17 @@ std::vector<T> cVc(const T* V,
 template <typename T>
 double all_band_energy(const int ik,
                        const std::vector<T>& mat_mo,
-                       const Parallel_2D& p2d,
+                       const BlockCyclicDistribution& p2d,
                        const ModuleBase::matrix& wg)
 {
     double e = 0.0;
-    for (int i = 0; i < p2d.get_row_size(); ++i)
+    for (int i = 0; i < p2d.nrloc(); ++i)
     {
-        for (int j = 0; j < p2d.get_col_size(); ++j)
+        for (int j = 0; j < p2d.ncloc(); ++j)
         {
-            if (p2d.local2global_row(i) == p2d.local2global_col(j))
+            if (p2d.irglb(i) == p2d.icglb(j))
             {
-                e += get_real(mat_mo[j * p2d.get_row_size() + i]) * wg(ik, p2d.local2global_row(i));
+                e += get_real(mat_mo[j * p2d.nrloc() + i]) * wg(ik, p2d.irglb(i));
             }
         }
     }
@@ -82,7 +82,7 @@ template <typename T>
 std::vector<double> orbital_energy(const int ik,
                                    const int nbands,
                                    const std::vector<T>& mat_mo,
-                                   const Parallel_2D& p2d)
+                                   const BlockCyclicDistribution& p2d)
 {
 #ifdef __DEBUG
     assert(nbands >= 0);
@@ -92,7 +92,7 @@ std::vector<double> orbital_energy(const int ik,
     {
         if (p2d.in_this_processor(i, i))
         {
-            const int index = p2d.global2local_col(i) * p2d.get_row_size() + p2d.global2local_row(i);
+            const int index = p2d.icloc(i) * p2d.nrloc() + p2d.irloc(i);
             e[i] = get_real(mat_mo[index]);
         }
     }
@@ -150,13 +150,13 @@ std::string build_eband_header(const int istep,
 }
 
 // Explicit template instantiations
-template std::vector<double> cVc<double>(const double*, const double*, const int, const int, const Parallel_Orbitals&, const Parallel_2D&);
-template std::vector<std::complex<double>> cVc<std::complex<double>>(const std::complex<double>*, const std::complex<double>*, const int, const int, const Parallel_Orbitals&, const Parallel_2D&);
+template std::vector<double> cVc<double>(const double*, const double*, const int, const int, const Parallel_Orbitals&, const BlockCyclicDistribution&);
+template std::vector<std::complex<double>> cVc<std::complex<double>>(const std::complex<double>*, const std::complex<double>*, const int, const int, const Parallel_Orbitals&, const BlockCyclicDistribution&);
 
-template double all_band_energy<double>(const int, const std::vector<double>&, const Parallel_2D&, const ModuleBase::matrix&);
-template double all_band_energy<std::complex<double>>(const int, const std::vector<std::complex<double>>&, const Parallel_2D&, const ModuleBase::matrix&);
+template double all_band_energy<double>(const int, const std::vector<double>&, const BlockCyclicDistribution&, const ModuleBase::matrix&);
+template double all_band_energy<std::complex<double>>(const int, const std::vector<std::complex<double>>&, const BlockCyclicDistribution&, const ModuleBase::matrix&);
 
-template std::vector<double> orbital_energy<double>(const int, const int, const std::vector<double>&, const Parallel_2D&);
-template std::vector<double> orbital_energy<std::complex<double>>(const int, const int, const std::vector<std::complex<double>>&, const Parallel_2D&);
+template std::vector<double> orbital_energy<double>(const int, const int, const std::vector<double>&, const BlockCyclicDistribution&);
+template std::vector<double> orbital_energy<std::complex<double>>(const int, const int, const std::vector<std::complex<double>>&, const BlockCyclicDistribution&);
 
 } // namespace ModuleIO

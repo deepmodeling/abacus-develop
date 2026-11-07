@@ -92,7 +92,7 @@ template<typename T, typename Tdata>
 void Exx_LRI_Interface<T, Tdata>::exx_before_all_runners(
     const K_Vectors& kv,
     const UnitCell& ucell,
-    const Parallel_2D& pv)
+    const BlockCyclicDistribution& pv)
 {
     ModuleBase::TITLE("Exx_LRI_Interface","exx_before_all_runners");
     this->refresh_symmetry(kv, ucell, pv);
@@ -100,7 +100,7 @@ void Exx_LRI_Interface<T, Tdata>::exx_before_all_runners(
 
 template<typename T, typename Tdata>
 void Exx_LRI_Interface<T, Tdata>::refresh_symmetry(
-    const K_Vectors& kv, const UnitCell& ucell, const Parallel_2D& pv)
+    const K_Vectors& kv, const UnitCell& ucell, const BlockCyclicDistribution& pv)
 {
     ModuleBase::TITLE("Exx_LRI_Interface", "refresh_symmetry");
     this->symrot_.reset_symmetry();
@@ -126,7 +126,7 @@ void Exx_LRI_Interface<T, Tdata>::exx_beforescf(
     const Charge_Mixing &chgmix,
     const UnitCell &ucell,
     const LCAO_Orbitals &orb,
-    const Parallel_2D &pv,
+    const BlockCyclicDistribution &pv,
     const bool update_symmetry,
     const bool use_gpu)
 {
@@ -322,7 +322,7 @@ void Exx_LRI_Interface<T, Tdata>::exx_iter_finish(const K_Vectors& kv,
 
             GlobalC::restart.save_disk("Hexx",
                                        ik,
-                                       this->pv.get_local_size(),
+                                       this->pv.size(),
                                        Hexxk_save.get_hk());
         }*/
         ////////// for Add_Hexx_Type:R

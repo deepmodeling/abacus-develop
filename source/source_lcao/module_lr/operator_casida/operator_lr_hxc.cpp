@@ -44,9 +44,9 @@ namespace LR
         // ========================= end grid calculation ===========================
 
         // V(R)->V(k) 
-        std::vector<ct::Tensor> v_hxc_2d(nk, LR_Util::newTensor<T>({ pmat.para_2d().get_col_size(), pmat.para_2d().get_row_size() }));
+        std::vector<ct::Tensor> v_hxc_2d(nk, LR_Util::newTensor<T>({ pmat.para_2d().ncloc(), pmat.para_2d().nrloc() }));
         for (auto& v : v_hxc_2d) v.zero();
-        int nrow = ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver) ? this->pmat.para_2d().get_row_size() : this->pmat.para_2d().get_col_size();
+        int nrow = ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver) ? this->pmat.para_2d().nrloc() : this->pmat.para_2d().ncloc();
         for (int ik = 0;ik < nk;++ik) { folding_HR(*this->hR, v_hxc_2d[ik].data<T>(), this->kv.kvec_d[ik], nrow, 1); }  // V(R) -> V(k)
         // LR_Util::print_HR(*this->hR, this->ucell.nat, "4.VR");
         // if (this->first_print)

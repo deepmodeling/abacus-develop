@@ -6,14 +6,14 @@
  * format. When built with __MPI (the project default), save_mat uses MPI
  * collectives and MPI_Barrier. This test provides a main() that calls
  * MPI_Init first so the MPI path is safe on a single rank. Header-only
- * tests use a default-constructed/serial Parallel_2D and do not check
+ * tests use a default-constructed/serial BlockCyclicDistribution and do not check
  * values; the binary upper-triangle tests distribute a known matrix over
  * a real Parallel_Orbitals and verify the gathered payload.
  */
 #include <gtest/gtest.h>
 
 #include "source_io/module_hs/hs_dense_io.h"
-#include "source_base/parallel_2d.h"
+#include "source_base/block_cyclic_distribution.h"
 #include "source_base/parallel_comm.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
 
@@ -64,11 +64,11 @@ int read_binary_dim(const std::string& filename)
 }
 
 /**
- * @brief Create a serial Parallel_2D that owns all rows/cols on rank 0.
+ * @brief Create a serial BlockCyclicDistribution that owns all rows/cols on rank 0.
  */
-Parallel_2D make_serial_pv(int dim)
+BlockCyclicDistribution make_serial_pv(int dim)
 {
-    Parallel_2D pv;
+    BlockCyclicDistribution pv;
     pv.set_serial(dim, dim);
     return pv;
 }
@@ -79,7 +79,7 @@ Parallel_2D make_serial_pv(int dim)
 void initialize_distribution(Parallel_Orbitals& pv, const int dim)
 {
 #ifdef __MPI
-    ASSERT_EQ(pv.para_2d().init(dim, dim, 1, DIAG_WORLD), 0);
+    ASSERT_EQ(pv.para_2d().init(dim, dim, 1, DIAG_WORLD, false), 0);
 #else
     pv.para_2d().set_serial(dim, dim);
 #endif
@@ -93,20 +93,20 @@ std::vector<T> distribute_matrix(const Parallel_Orbitals& pv,
                                  const std::vector<T>& global,
                                  const int dim)
 {
-    std::vector<T> local(pv.para_2d().get_local_size(), T());
+    std::vector<T> local(pv.para_2d().size(), T());
     for (int i = 0; i < dim; ++i)
     {
-        const int ir = pv.para_2d().global2local_row(i);
+        const int ir = pv.para_2d().irloc(i);
         if (ir < 0)
         {
             continue;
         }
         for (int j = 0; j < dim; ++j)
         {
-            const int ic = pv.para_2d().global2local_col(j);
+            const int ic = pv.para_2d().icloc(j);
             if (ic >= 0)
             {
-                local[ir * pv.para_2d().get_col_size() + ic] = global[i * dim + j];
+                local[ir * pv.para_2d().ncloc() + ic] = global[i * dim + j];
             }
         }
     }
@@ -173,7 +173,7 @@ TEST(HsDenseIoSaveMat, TextHeaderContainsStepAndDimension)
     const std::string filename = "test_save_mat_text_header.dat";
     const int dim = 3;
     const std::vector<double> mat(dim * dim, 0.0);
-    const Parallel_2D pv = make_serial_pv(dim);
+    const BlockCyclicDistribution pv = make_serial_pv(dim);
     ModuleIO::save_mat<double>(0, mat.data(), dim, false, 8, false, false,
                                filename, pv, 0, "genelpa", false);
     const std::string content = read_text_file(filename);
@@ -191,7 +191,7 @@ TEST(HsDenseIoSaveMat, TextHeaderStepTwo)
     const std::string filename = "test_save_mat_text_header_step2.dat";
     const int dim = 2;
     const std::vector<double> mat(dim * dim, 0.0);
-    const Parallel_2D pv = make_serial_pv(dim);
+    const BlockCyclicDistribution pv = make_serial_pv(dim);
     ModuleIO::save_mat<double>(1, mat.data(), dim, false, 8, false, false,
                                filename, pv, 0, "genelpa", false);
     const std::string content = read_text_file(filename);
@@ -205,7 +205,7 @@ TEST(HsDenseIoSaveMat, TextHeaderGammaOnlyDouble)
     const std::string filename = "test_save_mat_text_gamma.dat";
     const int dim = 2;
     const std::vector<double> mat(dim * dim, 0.0);
-    const Parallel_2D pv = make_serial_pv(dim);
+    const BlockCyclicDistribution pv = make_serial_pv(dim);
     ModuleIO::save_mat<double>(0, mat.data(), dim, false, 8, false, false,
                                filename, pv, 0, "genelpa", false);
     const std::string content = read_text_file(filename);
@@ -219,7 +219,7 @@ TEST(HsDenseIoSaveMat, TextHeaderGammaOnlyComplex)
     const std::string filename = "test_save_mat_text_gamma_complex.dat";
     const int dim = 2;
     const std::vector<std::complex<double>> mat(dim * dim);
-    const Parallel_2D pv = make_serial_pv(dim);
+    const BlockCyclicDistribution pv = make_serial_pv(dim);
     ModuleIO::save_mat<std::complex<double>>(0, mat.data(), dim, false, 8,
                                false, false, filename, pv, 0, "genelpa", false);
     const std::string content = read_text_file(filename);
@@ -237,7 +237,7 @@ TEST(HsDenseIoSaveMat, BinaryDimHeaderDouble)
     const std::string filename = "test_save_mat_bin_dim_double.dat";
     const int dim = 4;
     const std::vector<double> mat(dim * dim, 0.0);
-    const Parallel_2D pv = make_serial_pv(dim);
+    const BlockCyclicDistribution pv = make_serial_pv(dim);
     ModuleIO::save_mat<double>(0, mat.data(), dim, true, 8, false, false,
                                filename, pv, 0, "genelpa", false);
     const int dim_out = read_binary_dim(filename);
@@ -250,7 +250,7 @@ TEST(HsDenseIoSaveMat, BinaryDimHeaderComplex)
     const std::string filename = "test_save_mat_bin_dim_complex.dat";
     const int dim = 3;
     const std::vector<std::complex<double>> mat(dim * dim);
-    const Parallel_2D pv = make_serial_pv(dim);
+    const BlockCyclicDistribution pv = make_serial_pv(dim);
     ModuleIO::save_mat<std::complex<double>>(0, mat.data(), dim, true, 8,
                                false, false, filename, pv, 0, "genelpa", false);
     const int dim_out = read_binary_dim(filename);
@@ -424,7 +424,7 @@ TEST(HsDenseIoSaveMat, TextPrecisionFollowsArgument)
     const int dim = 2;
     std::vector<double> mat(dim * dim, 0.0);
     mat[0] = 1.23456789;
-    const Parallel_2D pv = make_serial_pv(dim);
+    const BlockCyclicDistribution pv = make_serial_pv(dim);
     ModuleIO::save_mat(0, mat.data(), dim, false, 5, false, false,
                        filename, pv, 0, "genelpa", false);
     const std::string content = read_text_file(filename);
