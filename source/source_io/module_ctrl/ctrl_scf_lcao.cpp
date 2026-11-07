@@ -189,6 +189,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
         // Mode-2 MAT/ subdirectory is created lazily at write time.
         ModuleBase::ensure_directory(global_mat_dir);
         const int precision = inp.out_dmr[1];
+
         ModuleIO::write_dmr(dm->get_dmr_vec(), &ucell, precision, pv.para_2d(), out_app_flag,
             ucell.get_iat2iwt(), ucell.nat, global_mat_dir, istep, ofs_running);
     }
@@ -547,6 +548,8 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
             = new hamilt::EKinetic<hamilt::OperatorLCAO<TK, TR>>(&hsk,
                                                                     kv.kvec_d,
                                                                     &hR,
+                                                                    p_hamilt->basis(),
+                                                                    p_hamilt->layout(),
                                                                     &ucell,
                                                                     orb.cutoffs(),
                                                                     &gd,
@@ -739,7 +742,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
         const ModuleRI::RpaLriRuntime rpa_runtime = {
             inp,
             global_out_dir,
-            nlocal,
+            pv.para_2d().nrglb(),
             GlobalV::MY_RANK,
             GlobalV::NPROC,
             GlobalV::ofs_running};
@@ -810,6 +813,8 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                 kv.kvec_d,
                 nullptr,  // hR_in: not needed for SR_async calculation
                 nullptr,  // SR_in: not needed for SR_async calculation
+                p_hamilt->basis(),
+                p_hamilt->layout(),
                 &ucell,
                 orb.cutoffs(),
                 &gd,

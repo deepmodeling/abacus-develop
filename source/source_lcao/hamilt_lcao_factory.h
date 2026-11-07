@@ -16,6 +16,9 @@
 #include <string>
 #include <vector>
 
+class BasisFlattenedIndexing;
+class BlockCyclicDistribution;
+
 namespace hamilt
 {
 
@@ -49,6 +52,8 @@ template <typename TK, typename TR>
 LcaoOpsBundle<TK, TR> build_gamma_ops(const UnitCell& ucell,
                                       const Grid_Driver& grid_d,
                                       const Parallel_Orbitals* paraV,
+                                      const BasisFlattenedIndexing& basis,
+                                      const BlockCyclicDistribution& layout,
                                       elecstate::Potential* pot_in,
                                       const TwoCenterBundle& two_center_bundle,
                                       const LCAO_Orbitals& orb,
@@ -78,6 +83,8 @@ template <typename TK, typename TR>
 LcaoOpsBundle<TK, TR> build_multik_ops(const UnitCell& ucell,
                                        const Grid_Driver& grid_d,
                                        const Parallel_Orbitals* paraV,
+                                       const BasisFlattenedIndexing& basis,
+                                       const BlockCyclicDistribution& layout,
                                        elecstate::Potential* pot_in,
                                        const TwoCenterBundle& two_center_bundle,
                                        const LCAO_Orbitals& orb,

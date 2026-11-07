@@ -1,8 +1,8 @@
 #include "parallel_orbitals.h"
 
-#include "source_base/module_external/blacs_connector.h"
-#include "source_base/module_external/scalapack_connector.h"
 #include "source_base/global_function.h"
+
+#include <algorithm>
 
 Parallel_Orbitals::Parallel_Orbitals()
 {
@@ -11,7 +11,6 @@ Parallel_Orbitals::Parallel_Orbitals()
     this->ncol_bands = 0;
     this->nrow_bands=0;
     this->nloc_wfc=0;
-    this->nloc_Eij=0;
     this->lastband_in_proc=0;
     this->lastband_number=0;
     this->nbands = 0;
@@ -206,33 +205,33 @@ std::vector<int> Parallel_Orbitals::get_indexes_col(int iat) const
 }
 
 #ifdef __MPI
-void Parallel_Orbitals::set_desc_wfc_Eij(const int& nbasis, const int& nbands, const int& lld)
+void Parallel_Orbitals::set_wfc_and_mo_layouts(const int& nbasis, const int& nmo)
 {
-    ModuleBase::TITLE("BlockCyclicDistribution", "set_desc_wfc_Eij");
+    ModuleBase::TITLE("BlockCyclicDistribution", "set_wfc_and_mo_layouts");
 #ifdef __DEBUG
-    assert(nbasis > 0 && nbands > 0 && lld > 0);
+    assert(nbasis > 0 && nmo > 0);
     assert(this->para_2d_.nb() > 0 && this->para_2d_.nrproc() > 0
            && this->para_2d_.ncproc() > 0);
 #endif
-    int ISRC = 0;
-    int info = 0;
     const int block_size = this->para_2d_.nb();
     const int blacs_context = this->para_2d_.ictxt();
-    descinit_(desc_wfc, &nbasis, &nbands, &block_size, &block_size, &ISRC, &ISRC, &blacs_context, &lld, &info);
-    descinit_(desc_wfc1, &nbands, &nbasis, &block_size, &block_size, &ISRC, &ISRC, &blacs_context, &lld, &info);
-    descinit_(desc_Eij, &nbands, &nbands, &block_size, &block_size, &ISRC, &ISRC, &blacs_context, &lld, &info);
+
+    this->wfc_layout_.set(nbasis, nmo, block_size, blacs_context);
+    this->mo_repr_layout_.set(nmo, nmo, block_size, blacs_context);
+
+    std::copy(this->wfc_layout_.desc(), this->wfc_layout_.desc() + 9, this->desc_wfc);
 }
-int Parallel_Orbitals::set_nloc_wfc_Eij(
-    const int& N_A,
+int Parallel_Orbitals::set_wfc_and_mo_sizes(
+    const int& nmo,
     std::ofstream& ofs_running,
     std::ofstream& ofs_warning)
 {
-    ModuleBase::TITLE("Parallel_Orbitals", "set_nloc_wfc_Eij");
+    ModuleBase::TITLE("Parallel_Orbitals", "set_wfc_and_mo_sizes");
     // for wavefuncton , calculate nbands_loc
-    this->nbands = N_A;
+    this->nbands = nmo;
     int end_id = 0;
-    int block = N_A / this->para_2d_.nb();
-    if (block * this->para_2d_.nb() < N_A)
+    int block = nmo / this->para_2d_.nb();
+    if (block * this->para_2d_.nb() < nmo)
     {
         block++;
     }
@@ -247,7 +246,7 @@ int Parallel_Orbitals::set_nloc_wfc_Eij(
         }
         else
         {
-            ModuleBase::WARNING_QUIT("Parallel_Orbitals::set_nloc_wfc_Eij",
+            ModuleBase::WARNING_QUIT("Parallel_Orbitals::set_wfc_and_mo_sizes",
                 "The number of columns of the 2D process grid exceeds the number of bands. "
                 "Try launching the calculation with fewer MPI processes."
             );
@@ -269,7 +268,7 @@ int Parallel_Orbitals::set_nloc_wfc_Eij(
     if (this->para_2d_.icproc() == end_id)
     {
         this->ncol_bands = (col_b_bands - 1) * this->para_2d_.nb()
-                           + (N_A - (block - 1) * this->para_2d_.nb());
+                           + (nmo - (block - 1) * this->para_2d_.nb());
     }
     else
     {
@@ -277,8 +276,6 @@ int Parallel_Orbitals::set_nloc_wfc_Eij(
     }
     this->nrow_bands = this->para_2d_.nrloc();
     this->nloc_wfc = this->ncol_bands * this->para_2d_.nrloc();
-
-    this->nloc_Eij = this->ncol_bands * this->ncol_bands;
 
     return 0;
 }

@@ -1,5 +1,6 @@
 #ifndef TD_INFO_H
 #define TD_INFO_H
+#include "source_base/atom_basis_view.h"
 #include "source_base/timer.h"
 #include "source_basis/module_nao/two_center_integrator.h"
 #include "source_estate/module_pot/td_field_manager.h"
@@ -8,12 +9,17 @@
 #include "source_lcao/module_ri/abfs_vector3_order.h"
 
 #include <map>
+
+class BasisFlattenedIndexing;
+class BlockCyclicDistribution;
+
 // Class to store TDDFT infos, mainly for periodic system.
 class TD_info
 {
   public:
     TD_info(const UnitCell* ucell_in,
-            const Parallel_Orbitals& pv,
+            const BasisFlattenedIndexing& basis,
+            const BlockCyclicDistribution& layout,
             const LCAO_Orbitals& orb,
             const elecstate::TDFieldManager& field_manager);
     ~TD_info();
@@ -33,6 +39,12 @@ class TD_info
     /** @brief Read the solver-owned field state without copying or publishing it. */
     const elecstate::TDFieldManager& field() const { return field_manager_; }
 
+    const BasisFlattenedIndexing& basis() const { return basis_; }
+    const BlockCyclicDistribution& layout() const { return layout_; }
+
+    AtomBasisView row_basis(const int iat) const;
+    AtomBasisView col_basis(const int iat) const;
+
     /** @brief Read the current endpoint directly from the shared field manager. */
     const ModuleBase::Vector3<double>& endpoint_A() const;
 
@@ -40,7 +52,7 @@ class TD_info
     void update_field();
 
     // allocate memory for current term.
-    void initialize_current_term(const hamilt::HContainer<std::complex<double>>* HR, const Parallel_Orbitals* paraV);
+    void initialize_current_term(const hamilt::HContainer<std::complex<double>>* HR);
 
     hamilt::HContainer<std::complex<double>>* get_current_term_pointer(const int& i) const
     {
@@ -55,8 +67,7 @@ class TD_info
         return this->phase_hybrid;
     }
 
-    void calculate_grad_overlap(const Parallel_Orbitals& paraV,
-                                const UnitCell& ucell,
+    void calculate_grad_overlap(const UnitCell& ucell,
                                 const Grid_Driver& GridD,
                                 const std::vector<double>& orb_cutoff,
                                 const TwoCenterIntegrator* intor);
@@ -81,6 +92,8 @@ class TD_info
     Position_op r_calculator;
 
   private:
+    const BasisFlattenedIndexing& basis_;
+    const BlockCyclicDistribution& layout_;
     const elecstate::TDFieldManager& field_manager_;
     /// @brief lattice vectors, used to calculate the extra phase for hybrid gauge
     ModuleBase::Vector3<double> a1, a2, a3;

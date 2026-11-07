@@ -32,6 +32,9 @@ struct Exx_Info;
 // Input_para forward declaration, full definition in input_parameter.h
 struct Input_para;
 
+class BasisFlattenedIndexing;
+class BlockCyclicDistribution;
+
 namespace hamilt
 {
 
@@ -55,6 +58,8 @@ class HamiltLCAO : public Hamilt<TK>
     HamiltLCAO(const UnitCell& ucell,
                const Grid_Driver& grid_d,
                const Parallel_Orbitals* paraV,
+               const BasisFlattenedIndexing& basis,
+               const BlockCyclicDistribution& layout,
                elecstate::Potential* pot_in,
                const K_Vectors& kv_in,
                const TwoCenterBundle& two_center_bundle,
@@ -75,6 +80,8 @@ class HamiltLCAO : public Hamilt<TK>
     HamiltLCAO(const UnitCell& ucell,
                const Grid_Driver& grid_d,
                const Parallel_Orbitals* paraV,
+               const BasisFlattenedIndexing& basis,
+               const BlockCyclicDistribution& layout,
                const K_Vectors& kv_in,
                const TwoCenterIntegrator& intor_overlap_orb,
                const std::vector<double>& orb_cutoff);
@@ -119,6 +126,16 @@ class HamiltLCAO : public Hamilt<TK>
         return this->sR.get();
     }
 
+    const BasisFlattenedIndexing& basis() const
+    {
+        return basis_;
+    }
+
+    const BlockCyclicDistribution& layout() const
+    {
+        return layout_;
+    }
+
 #ifdef __MLALGO
     /// get V_delta_R pointer of *this->V_delta_R, which is a HContainer<TR> and contains V_delta(R)
     HContainer<TR>*& get_V_delta_R()
@@ -156,6 +173,9 @@ class HamiltLCAO : public Hamilt<TK>
     void matrix(MatrixBlock<TK>& hk_in, MatrixBlock<TK>& sk_in) override;
 
   private:
+
+    const BasisFlattenedIndexing& basis_;
+    const BlockCyclicDistribution& layout_;
 
     const K_Vectors* kv = nullptr;
 

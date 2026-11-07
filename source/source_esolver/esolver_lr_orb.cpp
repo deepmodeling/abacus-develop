@@ -15,8 +15,7 @@ template<typename T, typename TR>
 void ModuleESolver::ESolver_LR<T, TR>::set_parallel_orbitals_band(Parallel_Orbitals& pmat, const int nbands_in)
 {
 #ifdef __MPI
-    const int ld = std::max(pmat.para_2d().nrloc(), 1);
-    pmat.set_desc_wfc_Eij(this->nbasis, nbands_in, ld);
+    pmat.set_wfc_and_mo_layouts(this->nbasis, nbands_in);
     // The KS helper rejects empty band columns. LR windows may legitimately
     // have fewer blocks than the inherited KS process grid has columns.
     BlockCyclicDistribution bands;
@@ -26,7 +25,6 @@ void ModuleESolver::ESolver_LR<T, TR>::set_parallel_orbitals_band(Parallel_Orbit
     pmat.nrow_bands = bands.nrloc();
     pmat.ncol_bands = bands.ncloc();
     pmat.nloc_wfc = bands.size();
-    pmat.nloc_Eij = pmat.ncol_bands * pmat.ncol_bands;
     // Skipped for the aims benchmark: with `aims_nbasis` the per-atom orbital counts behind
     // `iat2iwt` do not match `nbasis`, so the atomic trace would be wrong. The guard came from
     // d4fe3fe84 ("Support different basis number from aims"), and was silently undone by

@@ -70,8 +70,8 @@ protected:
 #ifdef __MPI
         std::ofstream ofs_running, ofs_warning;
         para.para_2d().init(nlocal, nlocal, 1, MPI_COMM_WORLD, false);
-        para.set_nloc_wfc_Eij(nbands, ofs_running, ofs_warning);
-        para.set_desc_wfc_Eij(nlocal, nbands, para.para_2d().nrloc());
+        para.set_wfc_and_mo_sizes(nbands, ofs_running, ofs_warning);
+        para.set_wfc_and_mo_layouts(nlocal, nbands);
 #else
         para.para_2d().set_serial(nlocal, nlocal);
         para.nrow_bands = nlocal;
@@ -96,8 +96,8 @@ TEST_F(ReadWfcNaoTest,ReadWfcNao)
       MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
       std::ofstream ofs_running, ofs_warning;
       ParaV.para_2d().init(nlocal, nlocal, 1, MPI_COMM_WORLD, false);
-      ParaV.set_nloc_wfc_Eij(nbands, ofs_running, ofs_warning);
-      ParaV.set_desc_wfc_Eij(nlocal, nbands, ParaV.para_2d().nrloc());
+      ParaV.set_wfc_and_mo_sizes(nbands, ofs_running, ofs_warning);
+      ParaV.set_wfc_and_mo_layouts(nlocal, nbands);
 #else
       ParaV.para_2d().set_serial(nlocal, nlocal);
       ParaV.nrow_bands = nlocal;
@@ -142,8 +142,8 @@ TEST_F(ReadWfcNaoTest, ReadWfcNaoPart)
     MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
     std::ofstream ofs_running, ofs_warning;
     ParaV.para_2d().init(nlocal, nlocal, 1, MPI_COMM_WORLD, false);
-    ParaV.set_nloc_wfc_Eij(nbands, ofs_running, ofs_warning); 
-    ParaV.set_desc_wfc_Eij(nlocal, nbands, ParaV.para_2d().nrloc());
+    ParaV.set_wfc_and_mo_sizes(nbands, ofs_running, ofs_warning);
+    ParaV.set_wfc_and_mo_layouts(nlocal, nbands);
 #else
     ParaV.para_2d().set_serial(nlocal, nlocal);
     ParaV.nrow_bands = nlocal;

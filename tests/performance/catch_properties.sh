@@ -8,7 +8,7 @@ sum_file(){
 		colume=`echo ${#value_line[@]}`
 		for (( col=0 ; col<$colume ; col++ ));do
 			value=`echo ${value_line[$col]}`
-			sum=`awk 'BEGIN {x='$sum';y='$value';printf "%.6f\n",x+sqrt(y*y)}'` 
+			sum=`awk 'BEGIN {x='$sum';y='$value';printf "%.6f\n",x+sqrt(y*y)}'`
 		done
 	done
 	echo $sum
@@ -39,7 +39,7 @@ has_r=`grep -En '(^|[[:space:]])out_r($|[[:space:]])' INPUT | awk '{print $2}'`
 out_descriptor=`grep out_descriptor INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 #echo $running_path
 base=`grep -En '(^|[[:space:]])basis_type($|[[:space:]])' INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
-if [ $base == "pw" ]; then word="plane_wave_line" 
+if [ $base == "pw" ]; then word="plane_wave_line"
 else
 word="lcao_line"
 fi

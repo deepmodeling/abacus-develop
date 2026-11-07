@@ -163,6 +163,8 @@ void ESolver_DoubleXC<TK, TR>::before_scf(UnitCell& ucell, const int istep)
         this->p_hamilt_base = new hamilt::HamiltLCAO<TK, TR>(ucell,
                                                              this->gd,
                                                              &this->pv,
+                                                             *(this->basis_index_),
+                                                             this->pv.para_2d(),
                                                              this->pelec_base->pot,
                                                              this->kv,
                                                              this->two_center_bundle_,
@@ -437,6 +439,7 @@ void ESolver_DoubleXC<TK, TR>::cal_force(BaseCell& basecell, ModuleBase::matrix&
                        this->inp_->test_stress,
                        this->gd,
                        this->pv,
+                       *(this->basis_index_),
                        this->pelec_base,
                        this->dmat_base, // mohan add 2025-11-03
                        this->psi,

@@ -43,8 +43,10 @@ TEST_F(OverlapBlockTest, AddsToExistingRealBlock)
     const ModuleBase::Vector3<double> displacement(0.3, -0.2, 0.1);
     std::vector<double> values(4, 2.0);
     // The existing operator fixture mocks each two-center integral as one.
-    hamilt::cal_overlap_block(cell, integrator, 0, 0, distribution, displacement, values.data());
-    hamilt::cal_overlap_block(cell, integrator, 0, 0, distribution, displacement, values.data());
+    const std::vector<int> row_offsets = distribution.get_indexes_row(0);
+    const std::vector<int> col_offsets = distribution.get_indexes_col(0);
+    hamilt::cal_overlap_block(cell, integrator, 0, 0, row_offsets, col_offsets, displacement, values.data());
+    hamilt::cal_overlap_block(cell, integrator, 0, 0, row_offsets, col_offsets, displacement, values.data());
     for (double value: values)
     {
         EXPECT_DOUBLE_EQ(value, 4.0);
@@ -57,7 +59,9 @@ TEST_F(OverlapBlockTest, PreservesComplexSpinOffDiagonalEntries)
     const ModuleBase::Vector3<double> displacement(-0.3, 0.2, -0.1);
     const std::complex<double> initial(2.0, 3.0);
     std::vector<std::complex<double>> values(16, initial);
-    hamilt::cal_overlap_block(cell, integrator, 0, 0, distribution, displacement, values.data());
+    const std::vector<int> row_offsets = distribution.get_indexes_row(0);
+    const std::vector<int> col_offsets = distribution.get_indexes_col(0);
+    hamilt::cal_overlap_block(cell, integrator, 0, 0, row_offsets, col_offsets, displacement, values.data());
     for (int row = 0; row < 4; ++row)
     {
         for (int col = 0; col < 4; ++col)

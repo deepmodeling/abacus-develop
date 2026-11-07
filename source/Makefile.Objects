@@ -153,6 +153,8 @@ OBJS_BASE=assoc_laguerre.o\
     complexarray.o\
     complexmatrix.o\
     clebsch_gordan_coeff.o\
+    basis_flattened_indexing.o\
+    atom_basis_view.o\
     element_basis_index.o\
     inverse_matrix.o\
     gather_math_lib_info.o\

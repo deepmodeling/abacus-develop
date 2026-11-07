@@ -108,6 +108,29 @@ addtest(
   LIBS base device
   SOURCES rad_interp_test.cpp ../radial_interpolation.cpp)
 
+addtest(
+  TARGET MODULE_LCAO_tddft_boundary_fix_test
+  LIBS parameter
+       base
+       device
+       cell
+       domain_decomposition
+       neighbor
+       neighbor_search
+       symmetry
+       psi
+  SOURCES test_boundary_fix.cpp ../boundary_fix.cpp)
+
+abacus_copy_test_files(test_boundary_fix_parallel.sh)
+find_program(BASH bash)
+if(ENABLE_MPI)
+  add_test(
+    NAME MODULE_LCAO_tddft_boundary_fix_test_parallel
+    COMMAND ${BASH} test_boundary_fix_parallel.sh
+            "$<TARGET_FILE:MODULE_LCAO_tddft_boundary_fix_test>"
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+endif()
+
 if(USE_CUDA)
   addtest(
     TARGET MODULE_LCAO_tddft_rad_interp_cuda_test

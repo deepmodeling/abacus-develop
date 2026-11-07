@@ -7,10 +7,12 @@
 #define MIDDLE_HAMILT_H
 
 #include "source_base/module_container/ATen/core/tensor.h" // ct::Tensor
-#include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_lcao/module_rt/kernels/cublasmp_context.h"
 
 #include <complex>
+#include <fstream>
+
+class BlockCyclicDistribution;
 
 namespace module_rt
 {
@@ -18,7 +20,7 @@ namespace module_rt
 /**
  *  @brief compute H(t+dt/2)
  *
- * @param[in] pv information of parallel
+ * @param[in] layout block-cyclic matrix layout
  * @param[in] nband number of bands
  * @param[in] nlocal number of orbitals
  * @param[in] Htmp H(t+dt)
@@ -26,7 +28,7 @@ namespace module_rt
  * @param[in] print_matirx print internal matrix or not
  * @param[out] Htmp H(t+dt/2)
  */
-void half_Hmatrix(const Parallel_Orbitals* pv,
+void half_Hmatrix(const BlockCyclicDistribution& layout,
                   const int nband,
                   const int nlocal,
                   std::complex<double>* Htmp,
@@ -36,7 +38,7 @@ void half_Hmatrix(const Parallel_Orbitals* pv,
                   std::ofstream& ofs_running,
                   const int print_matrix);
 
-void half_Hmatrix_tensor(const Parallel_Orbitals* pv,
+void half_Hmatrix_tensor(const BlockCyclicDistribution& layout,
                          const int nband,
                          const int nlocal,
                          ct::Tensor& Htmp,
@@ -48,8 +50,7 @@ void half_Hmatrix_tensor(const Parallel_Orbitals* pv,
                          CublasMpResources& cublas_res);
 
 template <typename Device>
-void half_Hmatrix_tensor_lapack(const Parallel_Orbitals* pv,
-                                const int nband,
+void half_Hmatrix_tensor_lapack(const int nband,
                                 const int nlocal,
                                 ct::Tensor& Htmp,
                                 ct::Tensor& Stmp,

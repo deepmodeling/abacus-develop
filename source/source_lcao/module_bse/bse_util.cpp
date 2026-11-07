@@ -16,19 +16,16 @@ container::Tensor cal_dm_trans_onebase_pblas(
     const double& factor)
 {
     ModuleBase::TITLE("BSE_Util", "cal_dm_trans_onebase_pblas(double)");
-    const BlockCyclicDistribution& matrix_dist = pmat.para_2d();
-    assert(pc.comm() == matrix_dist.comm());
-    assert(pc.ictxt() == matrix_dist.ictxt());
-    assert(matrix_dist.size() > 0);
-    assert(matrix_dist.nrglb() == naos);
-    assert(matrix_dist.ncglb() == naos);
+    assert(pc.comm() == pmat.para_2d().comm());
+    assert(pc.ictxt() == pmat.para_2d().ictxt());
+    assert(pmat.para_2d().size() > 0);
+    assert(pmat.para_2d().nrglb() == naos);
+    assert(pmat.para_2d().ncglb() == naos);
     c.fix_k(ik);
     const int one = 1;
-    const int ncol = matrix_dist.ncloc();
-    const int nrow = matrix_dist.nrloc();
 
     container::Tensor dm_trans(DAT::DT_DOUBLE, DEV::CpuDevice,
-        { ncol, nrow }); // row is "inside"(memory contiguity) for pblas
+        { pmat.para_2d().ncloc(), pmat.para_2d().nrloc() }); // row is "inside"(memory contiguity) for pblas
 
     char transa = 'N', transb = 'T';
     const double beta = 0;
@@ -40,7 +37,7 @@ container::Tensor cal_dm_trans_onebase_pblas(
     ScalapackConnector::gemm(transa, transb, naos, naos, one,
         factor, c.get_pointer(), one, imo1_, pc.desc(),
         c.get_pointer(), one, imo2_, pc.desc(),
-        beta, dm_trans.data<double>(), one, one, matrix_dist.desc());
+        beta, dm_trans.data<double>(), one, one, pmat.para_2d().desc());
 
     return dm_trans;
 }
@@ -57,21 +54,17 @@ container::Tensor cal_dm_trans_onebase_pblas(
     const std::complex<double>& factor)
 {
     ModuleBase::TITLE("BSE_Util", "cal_dm_trans_onebase_pblas(complex)");
-    const BlockCyclicDistribution& matrix_dist = pmat.para_2d();
-    assert(pc.comm() == matrix_dist.comm());
-    assert(pc.ictxt() == matrix_dist.ictxt());
-    assert(matrix_dist.size() > 0);
-    assert(matrix_dist.nrglb() == naos);
-    assert(matrix_dist.ncglb() == naos);
+    assert(pc.comm() == pmat.para_2d().comm());
+    assert(pc.ictxt() == pmat.para_2d().ictxt());
+    assert(pmat.para_2d().size() > 0);
+    assert(pmat.para_2d().nrglb() == naos);
+    assert(pmat.para_2d().ncglb() == naos);
     c.fix_k(ik);
     const int one = 1;
-    const int ncol = matrix_dist.ncloc();
-    const int nrow = matrix_dist.nrloc();
-    const std::size_t nloc = matrix_dist.size();
 
     container::Tensor dm_trans(DAT::DT_COMPLEX_DOUBLE, DEV::CpuDevice,
-        { ncol, nrow }); // row is "inside"(memory contiguity) for pblas
-    std::vector<std::complex<double>> dm_trans_tmp(nloc);
+        { pmat.para_2d().ncloc(), pmat.para_2d().nrloc() }); // row is "inside"(memory contiguity) for pblas
+    std::vector<std::complex<double>> dm_trans_tmp(pmat.para_2d().size());
     char transa = 'N', transb = 'C';
     const std::complex<double> alpha(1.0, 0.0);
     const std::complex<double> beta(0.0, 0.0);
@@ -85,12 +78,12 @@ container::Tensor cal_dm_trans_onebase_pblas(
     ScalapackConnector::gemm(transa, transb, naos, naos, one,
             factor, c.get_pointer(), one, imo2_, pc.desc(),
             c.get_pointer(), one, imo1_, pc.desc(),
-            beta, dm_trans_tmp.data(), one, one, matrix_dist.desc());
+            beta, dm_trans_tmp.data(), one, one, pmat.para_2d().desc());
 
     ScalapackConnector::tranu(naos, naos, alpha,
-            dm_trans_tmp.data(), one, one, matrix_dist.desc(),
+            dm_trans_tmp.data(), one, one, pmat.para_2d().desc(),
             beta,
-            dm_trans.data<std::complex<double>>(), one, one, matrix_dist.desc());
+            dm_trans.data<std::complex<double>>(), one, one, pmat.para_2d().desc());
 
     return dm_trans;
 }

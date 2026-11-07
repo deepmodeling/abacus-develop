@@ -5,12 +5,14 @@
 
 #include <fstream>
 
+class BlockCyclicDistribution;
+
 namespace ModuleIO
 {
     template <typename T>
     void save_lat_r(std::ofstream& ofs,
         const SparseRBlock<T>& XR,
-        const Parallel_Orbitals& pv,
+        const BlockCyclicDistribution& layout,
         const SparseWriteOptions& options);
 }
 

@@ -1,7 +1,7 @@
 #include "source_lcao/module_rt/middle_hamilt.h"
 
+#include "source_base/block_cyclic_distribution.h"
 #include "source_base/global_variable.h" // GlobalV::ofs_running
-#include "source_basis/module_ao/parallel_orbitals.h"
 #include "tddft_test.h"
 
 #include <gtest/gtest.h>
@@ -29,9 +29,8 @@ TEST(MiddleHamiltTest, testMiddleHamilt)
     int nband = 3;
     int nlocal = 4;
     bool print_matrix = false;
-    Parallel_Orbitals* pv;
-    pv = new Parallel_Orbitals();
-    ASSERT_EQ(pv->para_2d().set(nlocal, nlocal, 1, ictxt), 0);
+    BlockCyclicDistribution layout;
+    ASSERT_EQ(layout.set(nlocal, nlocal, 1, ictxt), 0);
 
     // Initialize data
     Htmp = new std::complex<double>[nlocal * nlocal];
@@ -59,7 +58,7 @@ TEST(MiddleHamiltTest, testMiddleHamilt)
     }
 
     // Call the function
-    module_rt::half_Hmatrix(pv, nband, nlocal, Htmp, Stmp, Hlaststep, Slaststep, GlobalV::ofs_running, print_matrix);
+    module_rt::half_Hmatrix(layout, nband, nlocal, Htmp, Stmp, Hlaststep, Slaststep, GlobalV::ofs_running, print_matrix);
 
     // Check the results
     EXPECT_NEAR(Htmp[0].real(), 1.0, doublethreshold);

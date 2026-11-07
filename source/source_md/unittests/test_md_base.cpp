@@ -1,20 +1,21 @@
 #include "source_md/md_base.h"
 #include "source_md/md_func.h"
+#include "source_base/basis_flattened_indexing.h"
+#include "source_base/block_cyclic_distribution.h"
 #include "source_base/constants.h"
 #include "source_base/parallel_cell.h"
 #include "source_base/parallel_global.h"
+#include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_cell/dom_decomp.h"
 #include "source_cell/unitcell.h"
 #include "source_cell/update_cell.h"
 #include "source_lcao/module_rt/boundary_fix.h"
-#include "source_lcao/module_rt/td_folding.h"
 
 #include <gtest/gtest.h>
 
 #include <array>
 #include <complex>
 #include <fstream>
-#include <map>
 #include <vector>
 
 namespace
@@ -175,53 +176,64 @@ protected:
         return Complex(real, imaginary);
     }
 
-    std::vector<Complex> fold_hybrid(const Parallel_Orbitals& orbitals,
+    BasisFlattenedIndexing boundary_basis() const
+    {
+        ModuleBase::Element_Basis_Index::Range range(1);
+        range[0].resize(1);
+        range[0][0].N = 1;
+        range[0][0].M = 1;
+        const ModuleBase::Element_Basis_Index::IndexLNM hierarchy =
+            ModuleBase::Element_Basis_Index::construct_index(range);
+        const std::vector<int> atom_types(backing.nat, 0);
+        return BasisFlattenedIndexing(hierarchy, atom_types, 1);
+    }
+
+    Complex hybrid_value(const BasisFlattenedIndexing& basis,
+                         const int irglb,
+                         const int icglb,
+                         const ModuleBase::Vector3<double>& kpoint,
+                         const ModuleBase::Vector3<double>& vector_potential,
+                         const bool wrapped) const
+    {
+        const int row_atom = basis.atom_of(irglb);
+        const int column_atom = basis.atom_of(icglb);
+        ModuleBase::Vector3<int> translation(column_atom - row_atom,
+                                             row_atom - column_atom,
+                                             0);
+        if (wrapped)
+        {
+            translation +=
+                backing_types[0].boundary_shift[row_atom]
+                - backing_types[0].boundary_shift[column_atom];
+        }
+        const ModuleBase::Vector3<double> direct(
+            translation.x, translation.y, translation.z);
+        const ModuleBase::Vector3<double> cartesian =
+            direct * backing.latvec * backing.lat0;
+        const double angle = ModuleBase::TWO_PI * (kpoint * direct)
+                             + vector_potential * cartesian;
+        const Complex phase(std::cos(angle), std::sin(angle));
+        return matrix_value(row_atom, column_atom) * phase;
+    }
+
+    std::vector<Complex> fold_hybrid(const BasisFlattenedIndexing& basis,
+                                     const BlockCyclicDistribution& layout,
                                      const ModuleBase::Vector3<double>& kpoint,
                                      const ModuleBase::Vector3<double>& vector_potential,
                                      const bool wrapped) const
     {
-        hamilt::HContainer<Complex> real_space(&orbitals);
-        for (int row = 0; row < 4; ++row)
+        std::vector<Complex> folded(layout.size(), Complex(0.0, 0.0));
+        const int rows = layout.nrloc();
+        for (int irloc = 0; irloc < rows; ++irloc)
         {
-            if (orbitals.get_nrow_atom(row) == 0)
+            const int irglb = layout.irglb(irloc);
+            for (int icloc = 0; icloc < layout.ncloc(); ++icloc)
             {
-                continue;
-            }
-            for (int column = 0; column < 4; ++column)
-            {
-                if (orbitals.get_ncol_atom(column) == 0)
-                {
-                    continue;
-                }
-                const int translation_x = column - row;
-                const int translation_y = row - column;
-                ModuleBase::Vector3<int> translation(translation_x, translation_y, 0);
-                if (wrapped)
-                {
-                    translation += backing_types[0].boundary_shift[row] - backing_types[0].boundary_shift[column];
-                }
-                hamilt::AtomPair<Complex> pair(row, column, translation, &orbitals);
-                real_space.insert_pair(pair);
+                const int icglb = layout.icglb(icloc);
+                folded[icloc * rows + irloc] =
+                    hybrid_value(basis, irglb, icglb, kpoint, vector_potential, wrapped);
             }
         }
-        real_space.allocate(nullptr, true);
-        std::map<ModuleBase::Vector3<int>, Complex> phases;
-        for (int index = 0; index < real_space.size_atom_pairs(); ++index)
-        {
-            hamilt::AtomPair<Complex>& pair = real_space.get_atom_pair(index);
-            const ModuleBase::Vector3<int> translation = pair.get_R_index(0);
-            const int row = pair.get_atom_i();
-            const int column = pair.get_atom_j();
-            pair.get_pointer(0)[0] = matrix_value(row, column);
-            const ModuleBase::Vector3<double> direct(translation.x, translation.y, translation.z);
-            const ModuleBase::Vector3<double> cartesian = direct * backing.latvec * backing.lat0;
-            const double angle = vector_potential * cartesian;
-            const Complex exponent(0.0, angle);
-            phases[translation] = std::exp(exponent);
-        }
-        std::vector<Complex> folded(orbitals.para_2d().size(), Complex(0.0, 0.0));
-        const int rows = orbitals.para_2d().nrloc();
-        module_rt::folding_HR_td(real_space, folded.data(), kpoint, vector_potential, phases, rows, 1);
         return folded;
     }
 
@@ -233,7 +245,7 @@ protected:
         const int init_result = orbitals.para_2d().init(basis_size, basis_size, 1, cell.communicator(), false);
         ASSERT_EQ(init_result, 0);
         std::ofstream log;
-        const int band_result = orbitals.set_nloc_wfc_Eij(band_count, log, log);
+        const int band_result = orbitals.set_wfc_and_mo_sizes(band_count, log, log);
         ASSERT_EQ(band_result, 0);
         orbitals.set_atomic_trace(backing.get_iat2iwt(), backing.nat, basis_size);
         Parallel_Orbitals full;
@@ -251,6 +263,7 @@ protected:
         // A nonorthogonal cell and lat0 != 1 catch missing Cartesian/unit conversions.
         backing.latvec = ModuleBase::Matrix3(1.0, 0.2, 0.1, 0.0, 1.0, 0.3, 0.0, 0.0, 1.0);
         backing.lat0 = 3.0;
+        const BasisFlattenedIndexing basis = boundary_basis();
         const ModuleBase::Vector3<double> saved_A(0.07, -0.11, 0.05);
         const ModuleBase::Vector3<double> next_A(-0.13, 0.17, 0.09);
         std::vector<std::vector<Complex>> before(4);
@@ -258,9 +271,12 @@ protected:
         for (int kpoint = 0; kpoint < 4; ++kpoint)
         {
             points[kpoint].set(kx_values[kpoint], 0.0, 0.0);
-            before[kpoint] = fold_hybrid(matrix_layout, points[kpoint], saved_A, false);
-            expected[kpoint] = fold_hybrid(matrix_layout, points[kpoint], saved_A, true);
-            const std::vector<Complex> wrong_time = fold_hybrid(matrix_layout, points[kpoint], next_A, true);
+            before[kpoint] =
+                fold_hybrid(basis, matrix_layout.para_2d(), points[kpoint], saved_A, false);
+            expected[kpoint] =
+                fold_hybrid(basis, matrix_layout.para_2d(), points[kpoint], saved_A, true);
+            const std::vector<Complex> wrong_time =
+                fold_hybrid(basis, matrix_layout.para_2d(), points[kpoint], next_A, true);
             double field_time_difference = 0.0;
             for (int element = 0; element < matrix_size; ++element)
             {
@@ -269,7 +285,7 @@ protected:
                 s.data<Complex>()[offset] = 0.1 * before[kpoint][element];
                 field_time_difference += std::abs(expected[kpoint][element] - wrong_time[element]);
             }
-            EXPECT_GT(field_time_difference, 0.01);
+            EXPECT_GT(domain.sum(field_time_difference), 0.01);
             coefficients.fix_k(kpoint);
             const double coefficient_real = 1.0 + kpoint;
             const double coefficient_imaginary = 0.5 - kpoint;
@@ -280,8 +296,48 @@ protected:
             }
         }
         coefficients.fix_k(0);
-        module_rt::reset_matrix_boundary(backing, points, 4, saved_A,
-                                         &orbitals, h, s, &coefficients, matrix_size);
+        for (int iat = 0; iat < basis.nat(); ++iat)
+        {
+            const BasisRange atom_range = basis.range(iat);
+            int row_begin = -1;
+            int row_count = 0;
+            int column_begin = -1;
+            int column_count = 0;
+            for (std::size_t ibas = atom_range.ibas0; ibas < atom_range.ibas1; ++ibas)
+            {
+                const int row = matrix_layout.para_2d().irloc(static_cast<int>(ibas));
+                if (row >= 0)
+                {
+                    if (row_begin < 0)
+                    {
+                        row_begin = row;
+                    }
+                    ++row_count;
+                }
+                const int column = matrix_layout.para_2d().icloc(static_cast<int>(ibas));
+                if (column >= 0)
+                {
+                    if (column_begin < 0)
+                    {
+                        column_begin = column;
+                    }
+                    ++column_count;
+                }
+            }
+            SCOPED_TRACE(testing::Message() << "rank " << domain.rank() << ", atom " << iat);
+            EXPECT_EQ(row_begin, matrix_layout.atom_begin_row[iat]);
+            EXPECT_EQ(row_count, matrix_layout.get_nrow_atom(iat));
+            EXPECT_EQ(column_begin, matrix_layout.atom_begin_col[iat]);
+            EXPECT_EQ(column_count, matrix_layout.get_ncol_atom(iat));
+        }
+        module_rt::reset_matrix_boundary(backing,
+                                         points,
+                                         saved_A,
+                                         basis,
+                                         orbitals.para_2d(),
+                                         h,
+                                         s,
+                                         &coefficients);
         EXPECT_EQ(coefficients.get_current_k(), 0);
         for (int kpoint = 0; kpoint < 4; ++kpoint)
         {
@@ -289,11 +345,23 @@ protected:
             {
                 const int offset = kpoint * matrix_size + element;
                 const bool corrected = !gathered || domain.rank() == 0;
-                const Complex target = corrected ? expected[kpoint][element] : before[kpoint][element];
-                const double h_error = std::abs(h.data<Complex>()[offset] - target);
-                const double s_error = std::abs(s.data<Complex>()[offset] - 0.1 * target);
-                EXPECT_LT(h_error, 1.0e-12);
-                EXPECT_LT(s_error, 1.0e-12);
+                const int matrix_rows = matrix_layout.para_2d().nrloc();
+                const int local_row = element % matrix_rows;
+                const int local_column = element / matrix_rows;
+                const int global_row = matrix_layout.para_2d().irglb(local_row);
+                const int global_column = matrix_layout.para_2d().icglb(local_column);
+                const Complex expected_value = hybrid_value(
+                    basis, global_row, global_column, points[kpoint], saved_A, true);
+                const Complex expected_target = corrected ? expected_value : before[kpoint][element];
+                SCOPED_TRACE(testing::Message()
+                             << "rank " << domain.rank() << ", kpoint " << kpoint
+                             << ", global row " << global_row << ", global column "
+                             << global_column
+                             << ", actual " << h.data<Complex>()[offset]
+                             << ", expected " << expected_target);
+                EXPECT_LT(std::abs(h.data<Complex>()[offset] - expected_target), 1.0e-12);
+                EXPECT_LT(std::abs(s.data<Complex>()[offset] - 0.1 * expected_target),
+                          1.0e-12);
             }
             coefficients.fix_k(kpoint);
             const double coefficient_real = 1.0 + kpoint;
@@ -304,6 +372,9 @@ protected:
                 for (int row = 0; row < orbitals.para_2d().nrloc(); ++row)
                 {
                     const int global_row = orbitals.para_2d().irglb(row);
+                    SCOPED_TRACE(testing::Message()
+                                 << "rank " << domain.rank() << ", kpoint " << kpoint
+                                 << ", band " << column << ", global row " << global_row);
                     const ModuleBase::Vector3<int>& shift = backing_types[0].boundary_shift[global_row];
                     const ModuleBase::Vector3<double> direct(shift.x, shift.y, shift.z);
                     const ModuleBase::Vector3<double> cartesian = direct * backing.latvec * backing.lat0;
@@ -327,7 +398,7 @@ protected:
         const int init_result = orbitals.para_2d().init(basis_size, basis_size, block_size, cell.communicator(), false);
         ASSERT_EQ(init_result, 0);
         std::ofstream log;
-        const int band_result = orbitals.set_nloc_wfc_Eij(band_count, log, log);
+        const int band_result = orbitals.set_wfc_and_mo_sizes(band_count, log, log);
         ASSERT_EQ(band_result, 0);
         orbitals.set_atomic_trace(backing.get_iat2iwt(), backing.nat, basis_size);
         std::vector<ModuleBase::Vector3<double>> points(4);
@@ -366,8 +437,15 @@ protected:
         }
         coefficients.fix_k(0);
         const ModuleBase::Vector3<double> no_vector_potential;
-        module_rt::reset_matrix_boundary(backing, points, 4, no_vector_potential,
-                                         &orbitals, h, s, &coefficients, matrix_size);
+        const BasisFlattenedIndexing basis = boundary_basis();
+        module_rt::reset_matrix_boundary(backing,
+                                         points,
+                                         no_vector_potential,
+                                         basis,
+                                         orbitals.para_2d(),
+                                         h,
+                                         s,
+                                         &coefficients);
         // Per-k coefficient access must not mutate a shared Psi cursor.
         EXPECT_EQ(coefficients.get_current_k(), 0);
         for (int kpoint = 0; kpoint < 4; ++kpoint)

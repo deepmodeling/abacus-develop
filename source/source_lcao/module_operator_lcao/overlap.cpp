@@ -1,6 +1,9 @@
 #include "overlap.h"
 #include "ovlp_block.h"
 
+#include "source_base/atom_basis_view.h"
+#include "source_base/basis_flattened_indexing.h"
+#include "source_base/block_cyclic_distribution.h"
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
@@ -16,6 +19,21 @@
 
 namespace
 {
+
+/// @brief Materialize the atom-local basis entries of a lazy view.
+/// @details `cal_overlap_block` still takes offset vectors because one caller only
+/// holds a Parallel_Orbitals; the vector interface is removed together with that
+/// caller in the Parallel_Orbitals output-boundary batch.
+std::vector<int> collect_atom_entries(const AtomBasisView& view)
+{
+    std::vector<int> entries;
+    entries.reserve(view.nloc());
+    for (int k = 0; k < view.nloc(); ++k)
+    {
+        entries.push_back(view[k]);
+    }
+    return entries;
+}
 
 /// @brief Populate an HContainer with atom pairs based on neighbor search
 /// @details Searches for adjacent atoms within orbital cutoff distance and inserts
@@ -99,11 +117,18 @@ Overlap<OperatorLCAO<TK, TR>>::Overlap(HS_Matrix_K<TK>* hsk_in,
                                                              const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
                                                              HContainer<TR>* hR_in,
                                                              HContainer<TR>* SR_in,
+                                                             const BasisFlattenedIndexing& basis,
+                                                             const BlockCyclicDistribution& layout,
                                                              const UnitCell* ucell_in,
                                                              const std::vector<double>& orb_cutoff,
                                                              const Grid_Driver* GridD_in,
                                                              const TwoCenterIntegrator* intor)
-    : OperatorLCAO<TK, TR>(hsk_in, kvec_d_in, hR_in), orb_cutoff_(orb_cutoff), intor_(intor), gridD(GridD_in)
+    : OperatorLCAO<TK, TR>(hsk_in, kvec_d_in, hR_in),
+      orb_cutoff_(orb_cutoff),
+      basis_(basis),
+      layout_(layout),
+      intor_(intor),
+      gridD(GridD_in)
 {
     this->cal_type = calculation_type::lcao_overlap;
     this->ucell = ucell_in;
@@ -148,7 +173,10 @@ void Overlap<OperatorLCAO<TK, TR>>::calculate_SR()
         AtomPair<TR>& tmp = this->SR->get_atom_pair(iap);
         const int iat1 = tmp.get_atom_i();
         const int iat2 = tmp.get_atom_j();
-        const Parallel_Orbitals* paraV = tmp.get_paraV();
+        const AtomBasisView rows = AtomBasisView::rows(basis_, layout_, iat1);
+        const AtomBasisView cols = AtomBasisView::cols(basis_, layout_, iat2);
+        const std::vector<int> row_offsets = collect_atom_entries(rows);
+        const std::vector<int> col_offsets = collect_atom_entries(cols);
 
         for (int iR = 0; iR < tmp.get_R_size(); ++iR)
         {
@@ -156,7 +184,14 @@ void Overlap<OperatorLCAO<TK, TR>>::calculate_SR()
             auto dtau = ucell->cal_dtau(iat1, iat2, R_index);
             TR* data_pointer = tmp.get_pointer(iR);
             const auto displacement = dtau * this->ucell->lat0;
-            cal_overlap_block(*this->ucell, *this->intor_, iat1, iat2, *paraV, displacement, data_pointer);
+            cal_overlap_block(*this->ucell,
+                              *this->intor_,
+                              iat1,
+                              iat2,
+                              row_offsets,
+                              col_offsets,
+                              displacement,
+                              data_pointer);
         }
     }
     // if TK == double, then SR should be fixed to gamma case
@@ -300,7 +335,10 @@ HContainer<TR>* Overlap<OperatorLCAO<TK, TR>>::calculate_SR_async(const UnitCell
         AtomPair<TR>& atom_pair = SR_async->get_atom_pair(iap);
         const int iat1 = atom_pair.get_atom_i();
         const int iat2 = atom_pair.get_atom_j();
-        const Parallel_Orbitals* paraV_local = atom_pair.get_paraV();
+        const AtomBasisView rows = AtomBasisView::rows(basis_, layout_, iat1);
+        const AtomBasisView cols = AtomBasisView::cols(basis_, layout_, iat2);
+        const std::vector<int> row_offsets = collect_atom_entries(rows);
+        const std::vector<int> col_offsets = collect_atom_entries(cols);
 
         // Get atom type and index for velocity lookup
         int T1 = 0;
@@ -321,7 +359,14 @@ HContainer<TR>* Overlap<OperatorLCAO<TK, TR>>::calculate_SR_async(const UnitCell
 
             TR* data_pointer = atom_pair.get_pointer(iR);
             const auto displacement = dtau * this->ucell->lat0;
-            cal_overlap_block(*this->ucell, *this->intor_, iat1, iat2, *paraV_local, displacement, data_pointer);
+            cal_overlap_block(*this->ucell,
+                              *this->intor_,
+                              iat1,
+                              iat2,
+                              row_offsets,
+                              col_offsets,
+                              displacement,
+                              data_pointer);
         }
     }
 

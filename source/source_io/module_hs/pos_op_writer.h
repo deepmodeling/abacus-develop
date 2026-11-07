@@ -14,7 +14,7 @@
 #include <vector>
 
 class Grid_Driver;
-class Parallel_Orbitals;
+class BlockCyclicDistribution;
 
 /**
  * @brief Output the position-operator matrix <phi_mu | r_hat | phi_nu>
@@ -26,7 +26,9 @@ class Parallel_Orbitals;
 class PosOpWriter
 {
   public:
-    PosOpWriter(const PosOpBasis& basis, const PosOpCalc& calc, const Parallel_Orbitals& pv);
+    PosOpWriter(const PosOpBasis& basis,
+                const PosOpCalc& calc,
+                const BlockCyclicDistribution& layout);
 
     void out_lat_r(const UnitCell& ucell,
                    const Grid_Driver& gd,
@@ -45,7 +47,7 @@ class PosOpWriter
   private:
     const PosOpBasis& basis_;
     const PosOpCalc& calc_;
-    const Parallel_Orbitals& pv_;
+    const BlockCyclicDistribution& layout_;
 };
 
 #endif // POS_OP_WRITER_H

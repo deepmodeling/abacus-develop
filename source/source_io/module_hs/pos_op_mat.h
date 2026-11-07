@@ -8,7 +8,7 @@
 #include <vector>
 
 class UnitCell;
-class Parallel_Orbitals;
+class BlockCyclicDistribution;
 class LCAO_Orbitals;
 class Grid_Driver;
 class PosOpBasis;
@@ -29,12 +29,12 @@ class Position_op
     bool binary = false;
 
     void init(const UnitCell& ucell,
-              const Parallel_Orbitals& pv,
+              const BlockCyclicDistribution& layout,
               const LCAO_Orbitals& orb,
               const bool cal_force,
               const int nlocal);
     void init_nonlocal(const UnitCell& ucell,
-                       const Parallel_Orbitals& pv,
+                       const BlockCyclicDistribution& layout,
                        const LCAO_Orbitals& orb,
                        const bool cal_force,
                        const int nlocal);
