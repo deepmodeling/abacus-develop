@@ -27,6 +27,7 @@ class Get_pchg_lcao
                      const Parallel_Grid& pgrid,
                      const Grid_Driver& grid_driver,
                      const std::vector<int>& out_pchg,
+                     const int istep,
                      const std::string& global_out_dir,
                      std::ofstream& ofs_running);
 
@@ -38,6 +39,7 @@ class Get_pchg_lcao
                  const K_Vectors& kv,
                  const std::vector<int>& out_pchg,
                  bool if_separate_k,
+                 const int istep,
                  const std::string& global_out_dir,
                  std::ofstream& ofs_running);
 

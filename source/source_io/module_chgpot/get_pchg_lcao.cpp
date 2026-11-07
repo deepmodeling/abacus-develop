@@ -23,6 +23,7 @@ void Get_pchg_lcao::begin_gamma(const UnitCell& ucell,
                                 const Parallel_Grid& pgrid,
                                 const Grid_Driver& grid_driver,
                                 const std::vector<int>& out_pchg,
+                                const int istep,
                                 const std::string& global_out_dir,
                                 std::ofstream& ofs_running)
 {
@@ -80,7 +81,7 @@ void Get_pchg_lcao::begin_gamma(const UnitCell& ucell,
 
             const std::string desc_pchg = ModuleIO::make_data_desc("partial charge", "partial magnetization m", is, nspin_);
 
-            ModuleIO::write_vdata_palgrid(pgrid, rho[is].data(), is, nspin_, 0, ssc.str(), 0.0, &ucell, precision, 0, false, false, false, ofs_running, desc_pchg);
+            ModuleIO::write_vdata_palgrid(pgrid, rho[is].data(), is, nspin_, istep, ssc.str(), 0.0, &ucell, precision, 0, false, false, false, ofs_running, desc_pchg);
         }
     }
 }
@@ -93,6 +94,7 @@ void Get_pchg_lcao::begin_k(const ModulePW::PW_Basis& rho_pw,
                             const K_Vectors& kv,
                             const std::vector<int>& out_pchg,
                             const bool if_separate_k,
+                            const int istep,
                             const std::string& global_out_dir,
                             std::ofstream& ofs_running)
 {
@@ -172,7 +174,7 @@ void Get_pchg_lcao::begin_k(const ModulePW::PW_Basis& rho_pw,
 
                     const std::string desc_pchg = ModuleIO::make_data_desc("partial charge", "partial magnetization m", is, nspin_);
 
-                    ModuleIO::write_vdata_palgrid(pgrid, rho[is].data(), is, nspin_, 0, ssc.str(), 0.0, &ucell, precision, 0, false, false, false, ofs_running, desc_pchg);
+                    ModuleIO::write_vdata_palgrid(pgrid, rho[is].data(), is, nspin_, istep, ssc.str(), 0.0, &ucell, precision, 0, false, false, false, ofs_running, desc_pchg);
                 }
             }
         }
@@ -212,7 +214,7 @@ void Get_pchg_lcao::begin_k(const ModulePW::PW_Basis& rho_pw,
 
                 const std::string desc_pchg = ModuleIO::make_data_desc("partial charge", "partial magnetization m", is, nspin_);
 
-                ModuleIO::write_vdata_palgrid(pgrid, rho[is].data(), is, nspin_, 0, ssc.str(), 0.0, &ucell, precision, 0, false, false, false, ofs_running, desc_pchg);
+                ModuleIO::write_vdata_palgrid(pgrid, rho[is].data(), is, nspin_, istep, ssc.str(), 0.0, &ucell, precision, 0, false, false, false, ofs_running, desc_pchg);
             }
         }
     }
