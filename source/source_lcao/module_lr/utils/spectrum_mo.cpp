@@ -1,5 +1,6 @@
 #include "spectrum_mo.h"
 #include "source_base/basis_flattened_indexing.h"
+#include "source_base/block_cyclic_distribution.h"
 #include "source_base/tool_title.h"
 #include "source_base/parallel_device.h"
 #include "source_basis/module_ao/elem_basis_idx_orb.h"

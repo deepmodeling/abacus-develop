@@ -1,6 +1,5 @@
 #ifndef ABACUS_LR_SPECTRUM_MO_H
 #define ABACUS_LR_SPECTRUM_MO_H
-#include "source_base/block_cyclic_distribution.h"
 #include <complex>
 #include <string>
 #include <vector>
@@ -9,6 +8,7 @@ class UnitCell;
 class Grid_Driver;
 class TwoCenterBundle;
 class Parallel_Orbitals;
+class BlockCyclicDistribution;
 class K_Vectors;
 namespace LR_Util
 {

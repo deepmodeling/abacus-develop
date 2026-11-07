@@ -46,13 +46,7 @@ void write_eband_terms(const int nspin,
                        Grid_Driver& gd,
                        const std::vector<double>& orb_cutoff,
                        const LCAO_Orbitals& orb,
-                       const TwoCenterBundle& two_center_bundle,
-                       const Exx_Info& exx_info
-#ifdef __EXX
-                       ,
-                       std::vector<std::map<int, std::map<hamilt::TAC, RI::Tensor<double>>>>* Hexxd,
-                       std::vector<std::map<int, std::map<hamilt::TAC, RI::Tensor<std::complex<double>>>>>* Hexxc
-#endif
+                       const TwoCenterBundle& two_center_bundle
 )
     {
         // 0. prepare
@@ -231,33 +225,21 @@ template void write_eband_terms<double, double>(
     const int, const int, const double, const int, const int, const Parallel_Orbitals*, const psi::Psi<double>&,
     const UnitCell&, Structure_Factor&, surchem&, const ModulePW::PW_Basis&, const ModulePW::PW_Basis&,
     const ModuleBase::matrix&, const Charge&, const K_Vectors&, const ModuleBase::matrix&, Grid_Driver&,
-    const std::vector<double>&, const LCAO_Orbitals&, const TwoCenterBundle&, const Exx_Info&
-#ifdef __EXX
-    , std::vector<std::map<int, std::map<hamilt::TAC, RI::Tensor<double>>>>*,
-    std::vector<std::map<int, std::map<hamilt::TAC, RI::Tensor<std::complex<double>>>>>*
-#endif
+    const std::vector<double>&, const LCAO_Orbitals&, const TwoCenterBundle&
 );
 
 template void write_eband_terms<std::complex<double>, double>(
     const int, const int, const double, const int, const int, const Parallel_Orbitals*, const psi::Psi<std::complex<double>>&,
     const UnitCell&, Structure_Factor&, surchem&, const ModulePW::PW_Basis&, const ModulePW::PW_Basis&,
     const ModuleBase::matrix&, const Charge&, const K_Vectors&, const ModuleBase::matrix&, Grid_Driver&,
-    const std::vector<double>&, const LCAO_Orbitals&, const TwoCenterBundle&, const Exx_Info&
-#ifdef __EXX
-    , std::vector<std::map<int, std::map<hamilt::TAC, RI::Tensor<double>>>>*,
-    std::vector<std::map<int, std::map<hamilt::TAC, RI::Tensor<std::complex<double>>>>>*
-#endif
+    const std::vector<double>&, const LCAO_Orbitals&, const TwoCenterBundle&
 );
 
 template void write_eband_terms<std::complex<double>, std::complex<double>>(
     const int, const int, const double, const int, const int, const Parallel_Orbitals*, const psi::Psi<std::complex<double>>&,
     const UnitCell&, Structure_Factor&, surchem&, const ModulePW::PW_Basis&, const ModulePW::PW_Basis&,
     const ModuleBase::matrix&, const Charge&, const K_Vectors&, const ModuleBase::matrix&, Grid_Driver&,
-    const std::vector<double>&, const LCAO_Orbitals&, const TwoCenterBundle&, const Exx_Info&
-#ifdef __EXX
-    , std::vector<std::map<int, std::map<hamilt::TAC, RI::Tensor<double>>>>*,
-    std::vector<std::map<int, std::map<hamilt::TAC, RI::Tensor<std::complex<double>>>>>*
-#endif
+    const std::vector<double>&, const LCAO_Orbitals&, const TwoCenterBundle&
 );
 
 } // namespace ModuleIO

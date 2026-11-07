@@ -1,7 +1,6 @@
 #ifndef ABACUS_SOURCE_LCAO_MODULE_LR_HAMILT_ULR_H
 #define ABACUS_SOURCE_LCAO_MODULE_LR_HAMILT_ULR_H
 
-#include "source_base/block_cyclic_distribution.h"
 #include "source_psi/psi.h"
 #include "source_hamilt/operator.h"
 #include <functional>

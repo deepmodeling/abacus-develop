@@ -181,13 +181,7 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
                                             gd,
                                             orb.cutoffs(),
                                             orb,
-                                            two_center_bundle,
-                                            exx_info
-#ifdef __EXX
-                                            ,
-                                            exx_nao.exd ? &exx_nao.exd->get_Hexxs() : nullptr,
-                                            exx_nao.exc ? &exx_nao.exc->get_Hexxs() : nullptr
-#endif
+                                            two_center_bundle
        );
     }
 

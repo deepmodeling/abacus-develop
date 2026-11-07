@@ -6,12 +6,6 @@
 
 #include <vector>
 
-#ifdef __EXX
-#include "source_lcao/module_operator_lcao/op_exx_lcao.h"
-#include <complex>
-#include <map>
-#endif
-
 class Grid_Driver;
 class Parallel_Orbitals;
 class UnitCell;
@@ -21,7 +15,6 @@ class Charge;
 class K_Vectors;
 class TwoCenterBundle;
 class LCAO_Orbitals;
-struct Exx_Info;
 
 namespace ModulePW
 {
@@ -60,13 +53,7 @@ void write_eband_terms(const int nspin,
                        Grid_Driver& gd,
                        const std::vector<double>& orb_cutoff,
                        const LCAO_Orbitals& orb,
-                       const TwoCenterBundle& two_center_bundle,
-                       const Exx_Info& exx_info
-#ifdef __EXX
-                       ,
-                       std::vector<std::map<int, std::map<hamilt::TAC, RI::Tensor<double>>>>* Hexxd,
-                       std::vector<std::map<int, std::map<hamilt::TAC, RI::Tensor<std::complex<double>>>>>* Hexxc
-#endif
+                       const TwoCenterBundle& two_center_bundle
 );
 
 } // namespace ModuleIO

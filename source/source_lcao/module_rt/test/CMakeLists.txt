@@ -119,7 +119,7 @@ addtest(
        neighbor_search
        symmetry
        psi
-  SOURCES boundary_fix_test.cpp ../boundary_fix.cpp)
+  SOURCES test_boundary_fix.cpp ../boundary_fix.cpp)
 
 abacus_copy_test_files(test_boundary_fix_parallel.sh)
 find_program(BASH bash)

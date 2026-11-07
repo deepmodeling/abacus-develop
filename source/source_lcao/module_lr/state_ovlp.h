@@ -1,6 +1,5 @@
 #ifndef ABACUS_LR_STATE_OVERLAP_H
 #define ABACUS_LR_STATE_OVERLAP_H
-#include "source_base/block_cyclic_distribution.h"
 #include "source_base/vector3.h"
 #include <vector>
 
@@ -12,6 +11,7 @@ class Matrix3;
 }
 class UnitCell;
 class Parallel_Orbitals;
+class BlockCyclicDistribution;
 class TwoCenterIntegrator;
 namespace LR
 {
