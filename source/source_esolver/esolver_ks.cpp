@@ -501,8 +501,8 @@ void ESolver_KS::after_scf(UnitCell& ucell, const int istep, const bool conv_eso
     // Follow out_freq_ion so the snapshot rhythm matches the other per-step
     // outputs; a non-positive frequency keeps the historical every-step write.
     const int out_freq_ion = this->inp_->out_freq_ion;
-    const bool write_eig_occ = (out_freq_ion <= 0) || (istep % out_freq_ion == 0);
-    if (write_eig_occ)
+    const bool write_step_outputs = (out_freq_ion <= 0) || (istep % out_freq_ion == 0);
+    if (write_step_outputs)
     {
         ModuleIO::write_eig_file(this->pelec->ekb,
                                  this->pelec->wg,
@@ -515,8 +515,12 @@ void ESolver_KS::after_scf(UnitCell& ucell, const int istep, const bool conv_eso
     }
 
     // 4) write band information to band.txt
-    const std::string global_band_dir = PARAM.globalv.global_band_dir;
-    ModuleIO::write_bands(*this->inp_, this->pelec->ekb, this->kv, GlobalV::ofs_running, global_band_dir, istep);
+    // Same out_freq_ion rhythm as eig_occ.txt.
+    if (write_step_outputs)
+    {
+        const std::string global_band_dir = PARAM.globalv.global_band_dir;
+        ModuleIO::write_bands(*this->inp_, this->pelec->ekb, this->kv, GlobalV::ofs_running, global_band_dir, istep);
+    }
 
 }
 
