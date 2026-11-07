@@ -21,11 +21,29 @@ void csrFileReader<T>::parseFile()
         ModuleBase::WARNING_QUIT("csrFileReader::parseFile", "File is not open");
     }
 
-    std::string tmp_string;
-
-    // Read the step
+    // Read the step. Accept the current "Ionic_Step N" spelling as well as the
+    // historical " --- Ionic_Step N ---" and " --- Ionic Step N ---" forms so
+    // files written by older versions remain readable.
     readLine();
-    ss >> tmp_string >> tmp_string >> tmp_string >> step;
+    step = 0;
+    std::string token;
+    while (ss >> token)
+    {
+        if (token == "Ionic_Step")
+        {
+            ss >> step;
+            break;
+        }
+        if (token == "Ionic")
+        {
+            std::string word;
+            if ((ss >> word) && word == "Step")
+            {
+                ss >> step;
+            }
+            break;
+        }
+    }
 
     //std::cout << " step is " << step << std::endl; 
     // Read the title

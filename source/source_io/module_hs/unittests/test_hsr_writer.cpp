@@ -173,7 +173,7 @@ TEST(HsrWriterIo, HContainerCsrHeaderKeepsCurrentFormat)
     ModuleIO::write_hcontainer_csr(filename, &ucell, 5, &matrix, 0, false, 0, 1, "H", "", efermi_eV, true);
 
     const std::string output = read_file(filename);
-    EXPECT_THAT(output, testing::HasSubstr(" --- Ionic_Step 1 ---\n"));
+    EXPECT_THAT(output, testing::HasSubstr("Ionic_Step 1\n"));
     EXPECT_THAT(output, testing::HasSubstr(" # print H matrix in real space H(R)\n"));
     EXPECT_THAT(output, testing::HasSubstr(" 1 # number of spin directions\n"));
     EXPECT_THAT(output, testing::HasSubstr(" 1 # spin index, E_Fermi = 5.4321 eV\n"));
@@ -254,9 +254,9 @@ TEST(HsrWriterIo, HContainerCsrAppendKeepsCurrentStepSections)
     ModuleIO::write_hcontainer_csr(filename, &ucell, 4, &matrix, 1, true, 0, 1, "S", "", ignored_efermi, false);
 
     const std::string output = read_file(filename);
-    EXPECT_EQ(count_substr(output, " --- Ionic_Step "), 2);
-    EXPECT_THAT(output, testing::HasSubstr(" --- Ionic_Step 1 ---\n"));
-    EXPECT_THAT(output, testing::HasSubstr(" --- Ionic_Step 2 ---\n"));
+    EXPECT_EQ(count_substr(output, "Ionic_Step "), 2);
+    EXPECT_THAT(output, testing::HasSubstr("Ionic_Step 1\n"));
+    EXPECT_THAT(output, testing::HasSubstr("Ionic_Step 2\n"));
     EXPECT_EQ(count_substr(output, " # print S matrix in real space S(R)\n"), 2);
     // S(R) files must not contain a Fermi energy annotation
     EXPECT_THAT(output, testing::Not(testing::HasSubstr("E_Fermi")));

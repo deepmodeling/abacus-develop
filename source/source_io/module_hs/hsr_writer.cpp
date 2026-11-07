@@ -107,7 +107,7 @@ void ModuleIO::write_hcontainer_csr(const std::string& fname,
                                  "Cannot open HContainer CSR file: " + fname);
     }
 
-    ofs << " --- Ionic_Step " << istep + 1 << " ---" << std::endl;
+    ofs << "Ionic_Step " << istep + 1 << std::endl;
     ofs << " # print " << label << " matrix in real space " << label << "(R)" << std::endl;
     ofs << " " << nspin << " # number of spin directions" << std::endl;
     ofs << " " << ispin + 1 << " # spin index";

@@ -261,7 +261,7 @@ void ModuleIO::write_dmk(const std::vector<std::vector<T>>& dmk,
                 }
                 ofs.open(fn.c_str(), mode);
 
-                ofs << " --- Ionic_Step " << istep+1 << " ---" << std::endl;
+                ofs << "Ionic_Step " << istep+1 << std::endl;
 
                 if (!ofs)
                 {

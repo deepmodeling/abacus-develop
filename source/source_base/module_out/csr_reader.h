@@ -14,7 +14,7 @@ namespace ModuleIO
  * @details This class is used to read CSR file
  * the default format is like:
  * ```
- *  --- Ionic_Step 1 ---
+ * Ionic_Step 1
  *  # print density matrix in real space DM(R)
  *  26 # number of localized basis
  *  13 # number of Bravais lattice vector R
