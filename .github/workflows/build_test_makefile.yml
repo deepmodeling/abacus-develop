@@ -17,17 +17,34 @@ jobs:
           build_args: "CXX=mpiicpx ELPA_LIB_DIR=/usr/local/lib ELPA_INCLUDE_DIR=/usr/local/include CEREAL_DIR=/usr/include/cereal OPENMP=ON"
           name: "Build with Makefile & Intel compilers"
     name: ${{ matrix.name }}
-    container: ghcr.io/deepmodeling/abacus-${{ matrix.tag }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7.0.1
-      - name: Build
-        # TODO: Remove nlohmann-json installation here since Dockerfile will have installed it.
+      # A job-level container is pulled before steps run, so cleanup must happen
+      # on the hosted runner before starting the large Intel toolchain image.
+      - name: Free disk space before pulling the build image
         run: |
-          apt update && apt install -y nlohmann-json3-dev
-          export I_MPI_CXX=icpx
-          chmod a+x generate_build_info.sh
-          cd source
-          mkdir build && cd build
-          make -f ../Makefile -j2 ${{ matrix.build_args }}
-
+          df -h /
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
+          docker image prune --all --force
+          df -h /
+      - name: Build
+        env:
+          BUILD_IMAGE: ghcr.io/deepmodeling/abacus-${{ matrix.tag }}
+          BUILD_ARGS: ${{ matrix.build_args }}
+        # Keep the same image and build command as the container job.
+        run: |
+          docker run --rm \
+            --volume "$GITHUB_WORKSPACE:/workspace" \
+            --workdir /workspace \
+            --env BUILD_ARGS \
+            --env I_MPI_CXX=icpx \
+            --entrypoint /bin/bash \
+            "$BUILD_IMAGE" -e -c '
+              git config --global --add safe.directory /workspace
+              apt update && apt install -y nlohmann-json3-dev
+              chmod a+x generate_build_info.sh
+              cd source
+              mkdir -p build && cd build
+              make -f ../Makefile -j2 $BUILD_ARGS
+            '

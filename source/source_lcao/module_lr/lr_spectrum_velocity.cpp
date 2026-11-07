@@ -1,4 +1,5 @@
 #include "lr_spectrum.h"
+#include "utils/spectrum_weights.h"
 #include "source_base/global_variable.h"
 #include "source_lcao/module_lr/dm_trans/dm_trans.h"
 #include "source_lcao/module_lr/utils/lr_util_hcontainer.h"
@@ -161,7 +162,6 @@ namespace LR
                     const int goffset_v_ds = (is * 3 + id) * nk * nbands * nbands;
                     for (int ik = 0; ik < nk; ++ik)
                     {
-                        const double wk = this->kv.wk[ik] * nk; // k-point weight, normalized as sum = nk
                         const std::size_t loffset_X = loffset_X_bs + ik * pX[is].size();
                         const int goffset_v = goffset_v_ds + ik * nbands * nbands;
                         for (int io = 0; io < pX[is].ncloc(); ++io)    // nocc_local
@@ -172,29 +172,10 @@ namespace LR
                                 int iv_g = pX[is].irglb(iv);
                                 const std::size_t X_index = loffset_X + io * pX[is].nrloc() + iv;
                                 const int v_index = goffset_v + (iv_g+nocc[is]) * nbands + io_g;
-                                if (use_ks_gap)
-                                {
-                                    td += this->vmo_ptr[v_index] * X[X_index] / eig_ks_diff[X_index - loffset_X_b] * wk;
-                                    if (this->is_full)
-                                    {
-                                        // THE HERMITIAN CONJUGATE OF VMO HAS BEEN VERIFIED
-                                        // const int v_index2 = goffset_v + io_g * nbands + iv_g + nocc[is];
-                                        // if (std::abs(vmo_ptr[v_index2] - std::conj(this->vmo_ptr[v_index])) > 1e-5){
-                                        //     std::cout<<"io:"<<io_g<<" iv:"<<iv_g<<" v:"<<vmo_ptr[v_index]
-                                        //         <<" v^T:" << vmo_ptr[v_index2]<<std::endl;
-                                        //     }
-                                        // <ik|v|ak>X_{aik}/(Ea-Ei) + <ak|v|ik>Y_{aik}/(Ei-Ea)
-                                        td -= std::conj(this->vmo_ptr[v_index]) * Y[X_index] / eig_ks_diff[X_index - loffset_X_b] * wk;
-                                    }
-                                }
-                                else
-                                {
-                                    td += this->vmo_ptr[v_index] * X[X_index] * wk;
-                                    if (this->is_full)
-                                    {
-                                        td += std::conj(this->vmo_ptr[v_index]) * Y[X_index] * wk;
-                                    }
-                                }
+                                const T deexcitation = this->is_full ? Y[X_index] : T(0);
+                                const double gap = use_ks_gap ? eig_ks_diff[X_index - loffset_X_b] : 1.0;
+                                td += LR_Util::weighted_velocity_transition(this->vmo_ptr[v_index], X[X_index],
+                                    deexcitation, gap, use_ks_gap, this->spatial_weights, is, ik, nk);
                             }
                         }
                     }

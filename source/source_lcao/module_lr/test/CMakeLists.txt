@@ -161,3 +161,8 @@ if(ENABLE_MPI)
     PROPERTIES PROCESSORS 4 TIMEOUT 60 ENVIRONMENT
                "OMP_NUM_THREADS=1;MKL_NUM_THREADS=1;OPENBLAS_NUM_THREADS=1")
 endif()
+
+AddTest(
+  TARGET MODULE_LR_spectrum_weights
+  SOURCES test_spectrum_weights.cpp
+)

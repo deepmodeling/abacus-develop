@@ -530,7 +530,7 @@ TEST_F(MdBoundaryTest, InitialForceEvaluationDoesNotAdvancePositionUpdateState)
     integrator.first_half(log);
     const bool positions_updated = true;
     MD_func::force_virial(&solver, 1, positions_updated, cell, decomposition,
-                          integrator.potential, false, integrator.virial, false);
+                          integrator.potential, false, integrator.virial);
     ASSERT_EQ(solver.observed_position_updates.size(), 2u);
     EXPECT_TRUE(solver.observed_position_updates[1]);
 }

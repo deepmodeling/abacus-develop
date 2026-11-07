@@ -116,7 +116,8 @@ struct lapack_geqrf_inplace<T, DEVICE_CPU> {
         const int m,
         const int n,
         T *A,
-        const int lda)
+        const int lda,
+        T* rdiag)
     {
         // Tensor or vector?
         // 1. tau for storing the Householder reflectors
@@ -145,6 +146,15 @@ struct lapack_geqrf_inplace<T, DEVICE_CPU> {
         lapackConnector::geqrf(m, n, A, lda, tau.data<T>(), work.data<T>(), lwork, info);
         if (info != 0) {
             throw std::runtime_error("geqrf failed with info = " + std::to_string(info));
+        }
+
+        // Capture the diagonal of R before orgqr overwrites A with Q.
+        if (rdiag != nullptr)
+        {
+            for (int j = 0; j < k; ++j)
+            {
+                rdiag[j] = A[j * lda + j];
+            }
         }
 
         // 4. use orgqr to compute Q
