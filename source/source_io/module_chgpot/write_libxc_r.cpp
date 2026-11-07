@@ -31,7 +31,10 @@ void ModuleIO::write_libxc_r(
 	const double tpiba,
 	const Charge &chr,
 	const ModulePW::PW_Basis_Big &pw_big,
-	const ModulePW::PW_Basis &pw_rhod)
+	const ModulePW::PW_Basis &pw_rhod,
+	const std::string &out_dir,
+	const int istep,
+	const int out_app_flag)
 {
 	ModuleBase::TITLE("ModuleIO","write_libxc_r");
 	ModuleBase::timer::start("ModuleIO","write_libxc_r");
@@ -351,7 +354,7 @@ void ModuleIO::write_libxc_r(
 		};
 	};
 
-	auto write_data = [&pw_big, &pw_rhod, nspin](
+	auto write_data = [&pw_big, &pw_rhod, nspin, &out_dir, istep, out_app_flag](
 	const std::string data_name,
 	const std::vector<double> &data,
 	const std::vector<std::string> &channel_suffixes)
@@ -365,10 +368,21 @@ void ModuleIO::write_libxc_r(
 			const std::string suffix = channel_suffixes[is].empty()
 				? ""
 				: "_" + channel_suffixes[is];
-			const std::string file_name =
-					PARAM.globalv.global_out_dir + "xc_" + data_name +
-					suffix + ".cube";
-			ofs.open(file_name);
+			std::string file_name = out_dir + "xc_" + data_name + suffix;
+			// Modes 0 and 1 reuse the fixed name (mode 1 appends complete
+			// frames after the first step); only mode 2 numbers the files.
+			if (out_app_flag == 2)
+			{
+				file_name += "g" + std::to_string(istep + 1);
+			}
+			file_name += ".cube";
+			std::ios_base::openmode open_mode = std::ios::out;
+			const bool append_frame = (out_app_flag == 1) && (istep > 0);
+			if (append_frame)
+			{
+				open_mode |= std::ios::app;
+			}
+			ofs.open(file_name, open_mode);
 
 			ofs.unsetf(std::ostream::fixed);
 			ofs << std::setprecision(PARAM.inp.out_xc_r[1]);

@@ -10,6 +10,7 @@
 
 #include <vector>
 #include <fstream>
+#include <string>
 
 class Charge;
 
@@ -29,7 +30,10 @@ namespace ModuleIO
         const double tpiba,
         const Charge &chr,
         const ModulePW::PW_Basis_Big &pw_big,
-        const ModulePW::PW_Basis &pw_rhod);
+        const ModulePW::PW_Basis &pw_rhod,
+        const std::string &out_dir, // directory that receives the xc_*.cube files
+        const int istep, // zero-based ionic step; printed one-based in mode 2
+        const int out_app_flag); // 0 overwrite, 1 append, 2 numbered files
 
   #ifdef __MPI
     extern void write_cube_core(

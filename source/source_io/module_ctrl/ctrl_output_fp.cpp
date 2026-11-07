@@ -269,6 +269,8 @@ void ctrl_output_fp(UnitCell& ucell,
     // 7) write xc(r)
     if (inp.out_xc_r[0] >= 0 && should_output)
     {
+        // Mode-2 CHG/ subdirectory is created lazily at write time.
+        ModuleBase::ensure_directory(global_chg_dir);
         ModuleIO::write_libxc_r(inp.out_xc_r[0],
                                 XC_Functional::get_func_id(),
                                 pw_rhod->nrxx, // number of real-space grid
@@ -276,7 +278,10 @@ void ctrl_output_fp(UnitCell& ucell,
                                 ucell.tpiba,
                                 chr,
                                 *pw_big,
-                                *pw_rhod);
+                                *pw_rhod,
+                                global_chg_dir,
+                                istep,
+                                out_app_flag);
     }
 #endif
 
