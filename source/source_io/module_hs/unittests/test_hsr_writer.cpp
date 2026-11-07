@@ -438,7 +438,7 @@ TEST(HsrWriterIo, HContainerBinaryMpiGatherWritesCompleteFiles)
     serial_pv.para_2d().set_serial(2, 2);
     serial_pv.set_atomic_trace(iat2iwt, 1, 2);
     Parallel_Orbitals parallel_pv;
-    ASSERT_EQ(parallel_pv.para_2d().init(2, 2, 1, MPI_COMM_WORLD), 0);
+    ASSERT_EQ(parallel_pv.para_2d().init(2, 2, 1, MPI_COMM_WORLD, false), 0);
     parallel_pv.set_atomic_trace(iat2iwt, 1, 2);
 
     hamilt::HContainer<double> hr_serial(ucell, &serial_pv);

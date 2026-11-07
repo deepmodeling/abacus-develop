@@ -117,8 +117,8 @@ namespace LR
             {
                 for (int ik = 0;ik < nk;++ik)
                 {
-                    std::vector<std::complex<double>> vk(pmat.para_2d().get_local_size(), 0.0);
-                    hamilt::folding_HR(*vR.get_current_term_pointer(i), vk.data(), kv.kvec_d[ik], pmat.para_2d().get_row_size(), 1);
+                    std::vector<std::complex<double>> vk(pmat.para_2d().size(), 0.0);
+                    hamilt::folding_HR(*vR.get_current_term_pointer(i), vk.data(), kv.kvec_d[ik], pmat.para_2d().nrloc(), 1);
                     trans_dipole[i] += std::inner_product(vk.begin(), vk.end(), DM_trans.get_dmk_ptr(is * nk + ik), std::complex<double>(0., 0.)) * fac;
                 }
             }   // end for spin_x, only matter in open-shell system
@@ -139,7 +139,7 @@ namespace LR
             ModuleBase::WARNING_QUIT("LR_Spectrum", "velocity_mo is null. Please pass a valid pointer.");
         }
         const int nbands = this->nocc[0] + this->nvirt[0];
-        assert(nbands == this->pc.get_global_col_size());
+        assert(nbands == this->pc.ncglb());
         const bool use_ks_gap = (method == DipoleEnergyType::KS_GAP);
         
         std::vector<std::complex<double>> trans_dipole_buf(3 * nstate, 0.0); // $= \sum_{aik} i (<ik|v|ak>X_{aik}/(Ea-Ei) + <ak|v|ik>Y_{aik}/(Ei-Ea))$
@@ -158,19 +158,19 @@ namespace LR
                 std::complex<double> td = 0.0; // short name of transition dipole
                 for (int is = 0; is < this->nspin_x; ++is)
                 {
-                    const std::size_t loffset_X_bs = loffset_X_b + is * nk * pX[0].get_local_size();
+                    const std::size_t loffset_X_bs = loffset_X_b + is * nk * pX[0].size();
                     const int goffset_v_ds = (is * 3 + id) * nk * nbands * nbands;
                     for (int ik = 0; ik < nk; ++ik)
                     {
-                        const std::size_t loffset_X = loffset_X_bs + ik * pX[is].get_local_size();
+                        const std::size_t loffset_X = loffset_X_bs + ik * pX[is].size();
                         const int goffset_v = goffset_v_ds + ik * nbands * nbands;
-                        for (int io = 0; io < pX[is].get_col_size(); ++io)    // nocc_local
+                        for (int io = 0; io < pX[is].ncloc(); ++io)    // nocc_local
                         {
-                            int io_g = pX[is].local2global_col(io);
-                            for (int iv = 0; iv < pX[is].get_row_size(); ++iv)    // nvirt_local
+                            int io_g = pX[is].icglb(io);
+                            for (int iv = 0; iv < pX[is].nrloc(); ++iv)    // nvirt_local
                             {
-                                int iv_g = pX[is].local2global_row(iv);
-                                const std::size_t X_index = loffset_X + io * pX[is].get_row_size() + iv;
+                                int iv_g = pX[is].irglb(iv);
+                                const std::size_t X_index = loffset_X + io * pX[is].nrloc() + iv;
                                 const int v_index = goffset_v + (iv_g+nocc[is]) * nbands + io_g;
                                 const T deexcitation = this->is_full ? Y[X_index] : T(0);
                                 const double gap = use_ks_gap ? eig_ks_diff[X_index - loffset_X_b] : 1.0;
@@ -210,7 +210,7 @@ namespace LR
         ModuleBase::timer::end("LR_Spectrum", "test_transition_dipoles_velocity_omega");
     }
 
-    inline void cal_eig_ks_diff(double* const eig_ks_diff, const double* const eig_ks, const Parallel_2D& px, const int nk, const int nocc, const int nvirt)
+    inline void cal_eig_ks_diff(double* const eig_ks_diff, const double* const eig_ks, const BlockCyclicDistribution& px, const int nk, const int nocc, const int nvirt)
     {
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static)
@@ -218,13 +218,13 @@ namespace LR
         for (int ik = 0;ik < nk;++ik)
         {
             const int start_k = ik * (nocc + nvirt);
-            for (int io = 0;io < px.get_col_size();++io)    //nocc_local
+            for (int io = 0;io < px.ncloc();++io)    //nocc_local
             {
-                for (int iv = 0;iv < px.get_row_size();++iv)    //nvirt_local
+                for (int iv = 0;iv < px.nrloc();++iv)    //nvirt_local
                 {
-                    int io_g = px.local2global_col(io);
-                    int iv_g = px.local2global_row(iv);
-                    eig_ks_diff[ik * px.get_local_size() + io * px.get_row_size() + iv] = (eig_ks[start_k + nocc + iv_g] - eig_ks[start_k + io_g]) / ModuleBase::e2;  // Ry to Hartree
+                    int io_g = px.icglb(io);
+                    int iv_g = px.irglb(iv);
+                    eig_ks_diff[ik * px.size() + io * px.nrloc() + iv] = (eig_ks[start_k + nocc + iv_g] - eig_ks[start_k + io_g]) / ModuleBase::e2;  // Ry to Hartree
                 }
             }
         }
@@ -244,7 +244,7 @@ namespace LR
         {
             const int nbands = nocc[is] + nvirt[is];
             const double* eig_spin = eig_ks + is * nk * nbands;
-            cal_eig_ks_diff(eig_ks_diff.data() + is * nk * pX[0].get_local_size(), eig_spin, pX[is], nk, nocc[is], nvirt[is]);
+            cal_eig_ks_diff(eig_ks_diff.data() + is * nk * pX[0].size(), eig_spin, pX[is], nk, nocc[is], nvirt[is]);
         }
 
         //  X/(ec-ev)

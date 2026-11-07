@@ -21,12 +21,12 @@ std::vector<ModuleBase::matrix> evaluate_open_shell_force(
     const int ist_begin_ = label_begin;
     const int ist_end_ = label_begin + nst;
     const std::vector<int>& nvirt_g = inputs.nvirt;
-    const std::vector<Parallel_2D>& paraX_g = inputs.px;
+    const std::vector<BlockCyclicDistribution>& paraX_g = inputs.px;
     const int nloc_g = inputs.nloc;
 
 
-    const std::vector<int> ld_x = { static_cast<int>(inputs.nk * paraX_g[0].get_local_size()),
-                                    static_cast<int>(inputs.nk * paraX_g[1].get_local_size()) };
+    const std::vector<int> ld_x = { static_cast<int>(inputs.nk * paraX_g[0].size()),
+                                    static_cast<int>(inputs.nk * paraX_g[1].size()) };
     const std::vector<int> off_x = { 0, ld_x[0] };
     std::vector<psi::Psi<T>> c_spin;
     for (int is: {0, 1})

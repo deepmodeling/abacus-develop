@@ -268,7 +268,7 @@ bool ModuleIO::read_wfc_nao(
     {
         // I don't know why, but in orther places, the init of psi is using ParaV.ncol for gamma_only case
         // It seems that the diagonalization of double case need a full matrix of psi.
-        nbands_local = ParaV.para_2d().get_col_size();
+        nbands_local = ParaV.para_2d().ncloc();
     }
     psid.resize(nk, nbands_local, nlocal_local);
     if (gamma_only)
@@ -581,19 +581,19 @@ bool ModuleIO::read_wfc_nao(
 
         psid.fix_k(ik);
 #ifdef __MPI
-        Parallel_2D pv_glb;
-        pv_glb.set(nlocal, nbands, std::max(nlocal, nbands), ParaV.get_blacs_ctxt());
+        BlockCyclicDistribution pv_glb;
+        pv_glb.set(nlocal, nbands, std::max(nlocal, nbands), ParaV.para_2d().ictxt());
         Cpxgemr2d(nlocal,
                   nbands,
                   ctot.data(),
                   1,
                   1,
-                  pv_glb.desc,
+                  const_cast<int*>(pv_glb.desc()),
                   psid.get_pointer(),
                   1,
                   1,
                   const_cast<int*>(ParaV.desc_wfc),
-                  pv_glb.blacs_ctxt);
+                  pv_glb.ictxt());
         Parallel_Common::bcast_double(&ekb(ik, 0), nbands);
         Parallel_Common::bcast_double(&wg(ik, 0), nbands);
 #else
