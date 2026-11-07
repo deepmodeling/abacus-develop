@@ -48,7 +48,7 @@ TYPED_TEST(OutputMullikenTest, nspin1)
     auto out_s_k = ModuleIO::Output_Sk<TypeParam>(nullptr, &this->paraV, 1, 1);
     auto out_dm_k = ModuleIO::Output_DMK<TypeParam>(nullptr, &this->paraV, 1, 1);
     auto mulp = ModuleIO::Output_Mulliken<TypeParam>(&(out_s_k), &(out_dm_k), &(this->paraV), &(cell_index), {0}, 1);
-    mulp.write(0, "./");
+    mulp.write(0, 0, "./");
     std::vector<double> tot_chg = mulp.get_tot_chg();
     EXPECT_NEAR(tot_chg[0], 4.0, 1e-5);
     std::ifstream ifs("./mulliken.txt");
@@ -56,6 +56,49 @@ TYPED_TEST(OutputMullikenTest, nspin1)
     EXPECT_THAT(str, testing::HasSubstr(" Total charge 4"));
     EXPECT_THAT(str, testing::HasSubstr("total charge    on atom 1     4.0000"));
     remove("./mulliken.txt");
+}
+
+TYPED_TEST(OutputMullikenTest, AppendModes)
+{
+    this->nrow = 13;
+    this->ncol = 13;
+    this->paraV.para_2d().init(this->nrow, this->ncol, 1, MPI_COMM_WORLD, 0);
+    auto cell_index = CellIndex(this->atomLabels, this->atomCounts, this->lnchiCounts, 1);
+    auto out_s_k = ModuleIO::Output_Sk<TypeParam>(nullptr, &this->paraV, 1, 1);
+    auto out_dm_k = ModuleIO::Output_DMK<TypeParam>(nullptr, &this->paraV, 1, 1);
+    auto mulp = ModuleIO::Output_Mulliken<TypeParam>(&(out_s_k), &(out_dm_k), &(this->paraV), &(cell_index), {0}, 1);
+
+    const std::string dir = testing::TempDir();
+    const std::string fixed = dir + "mulliken.txt";
+
+    // Mode 0: every write truncates the fixed file, so only the last frame remains.
+    mulp.write(0, 0, dir);
+    mulp.write(2, 0, dir);
+    std::ifstream ifs0(fixed);
+    std::string text0((std::istreambuf_iterator<char>(ifs0)), std::istreambuf_iterator<char>());
+    EXPECT_THAT(text0, testing::HasSubstr(" --- Ionic_Step 3 ---"));
+    EXPECT_THAT(text0, testing::Not(testing::HasSubstr(" --- Ionic_Step 1 ---")));
+    remove(fixed.c_str());
+
+    // Mode 1: the first frame truncates and the later frame appends.
+    mulp.write(0, 1, dir);
+    mulp.write(2, 1, dir);
+    std::ifstream ifs1(fixed);
+    std::string text1((std::istreambuf_iterator<char>(ifs1)), std::istreambuf_iterator<char>());
+    EXPECT_THAT(text1, testing::HasSubstr(" --- Ionic_Step 1 ---"));
+    EXPECT_THAT(text1, testing::HasSubstr(" --- Ionic_Step 3 ---"));
+    remove(fixed.c_str());
+
+    // Mode 2: one g{step} file per written step, no fixed-name file.
+    mulp.write(2, 2, dir);
+    const std::string numbered = dir + "mullikeng3.txt";
+    std::ifstream ifs2(numbered);
+    ASSERT_TRUE(ifs2.is_open()) << "missing " << numbered;
+    std::string text2((std::istreambuf_iterator<char>(ifs2)), std::istreambuf_iterator<char>());
+    EXPECT_THAT(text2, testing::HasSubstr(" --- Ionic_Step 3 ---"));
+    std::ifstream ifs_fixed(fixed);
+    EXPECT_FALSE(ifs_fixed.is_open());
+    remove(numbered.c_str());
 }
 
 TYPED_TEST(OutputMullikenTest, nspin2)
@@ -67,7 +110,7 @@ TYPED_TEST(OutputMullikenTest, nspin2)
     auto out_s_k = ModuleIO::Output_Sk<TypeParam>(nullptr, &this->paraV, 2, 1);
     auto out_dm_k = ModuleIO::Output_DMK<TypeParam>(nullptr, &this->paraV, 2, 1);
     auto mulp = ModuleIO::Output_Mulliken<TypeParam>(&(out_s_k), &(out_dm_k), &(this->paraV), &(cell_index), {0, 1}, 2);
-    mulp.write(0, "./");
+    mulp.write(0, 0, "./");
     std::vector<double> tot_chg = mulp.get_tot_chg();
     EXPECT_NEAR(tot_chg[0], 3.0, 1e-5);
     EXPECT_NEAR(tot_chg[1], 1.0, 1e-5);
@@ -91,7 +134,7 @@ TYPED_TEST(OutputMullikenTest, nspin4)
     auto out_dm_k = ModuleIO::Output_DMK<std::complex<double>>(nullptr, &this->paraV, 4, 1);
     auto mulp
         = ModuleIO::Output_Mulliken<std::complex<double>>(&(out_s_k), &(out_dm_k), &(this->paraV), &(cell_index), {0}, 4);
-    mulp.write(0, "./");
+    mulp.write(0, 0, "./");
     std::vector<double> tot_chg = mulp.get_tot_chg();
     EXPECT_NEAR(tot_chg[0], 4.0, 1e-5);
     EXPECT_NEAR(tot_chg[1], 0.0, 1e-5);

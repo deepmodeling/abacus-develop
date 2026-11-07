@@ -91,21 +91,31 @@ Output_Mulliken<TK>::Output_Mulliken(Output_Sk<TK>* output_sk,
 }
 
 template <typename TK>
-void Output_Mulliken<TK>::write(int istep, std::string out_dir)
+void Output_Mulliken<TK>::write(int istep, int out_app_flag, std::string out_dir)
 {
     std::vector<double> tot_chg = this->get_tot_chg();
     std::vector<std::vector<double>> atom_chg = this->get_atom_chg();
     std::map<std::vector<int>, double> orb_chg = this->get_orb_chg();
     std::stringstream as;
-    as << out_dir << "mulliken.txt";
-    std::ofstream os;
-    if (istep == 0)
+    as << out_dir << "mulliken";
+    // Modes 0 and 1 reuse the fixed filename (mode 0 overwrites, mode 1 appends
+    // each written step); only mode 2 embeds the one-based step number.
+    if (out_app_flag == 2)
     {
-        os.open(as.str(), std::ios::out);
+        as << "g" << istep + 1;
     }
-    else
+    as << ".txt";
+    std::ios_base::openmode mode = std::ios::out;
+    const bool append_step = (out_app_flag == 1) && (istep > 0);
+    if (append_step)
     {
-        os.open(as.str(), std::ios::app);
+        mode |= std::ios::app;
+    }
+    std::ofstream os;
+    os.open(as.str(), mode);
+    if (!os.is_open())
+    {
+        ModuleBase::WARNING_QUIT("Output_Mulliken::write", "Cannot open file: " + as.str());
     }
     if (this->nspin_ == 1)
     {

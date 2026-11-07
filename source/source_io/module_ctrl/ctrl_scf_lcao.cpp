@@ -630,6 +630,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                           ucell,
                           gd,
                           istep,
+                          out_app_flag,
                           true);
     }
 
