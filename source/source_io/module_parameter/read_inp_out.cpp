@@ -417,7 +417,9 @@ Note: values 2 and 3 are no longer supported. Setting out_dos to 2 or 3 will rai
 * 0: no output
 * 1: output the partial charge density for given bias (controlled by stm_bias) in cube file format, which can be used to plot scanning tunneling spectroscopys to mimick STM images using the Python script plot.py.
 * 2: output LDOS along a line in real space (controlled by ldos_line). Parameters used to control DOS output are also valid for LDOS.
-* 3: output both two LDOS modes above.)";
+* 3: output both two LDOS modes above.
+
+The LDOS is evaluated once after all ionic steps finish; the cube header records the final one-based ionic step as "Ionic_Step N".)";
         item.default_value = "0";
         item.unit = "";
         item.read_value = [](const Input_Item& item, Parameter& para) {
@@ -472,7 +474,7 @@ Note: values 2 and 3 are no longer supported. Setting out_dos to 2 or 3 will rai
         item.annotation = "output projected band structure";
         item.category = "Output information";
         item.type = "Boolean";
-        item.description = "Whether to output the projected band structure. For more information, refer to the band.md";
+        item.description = "Whether to output the projected band structure. For more information, refer to the band.md. The files pbands{spin}.xml (out_app_flag = 0 and 1) or pbands{spin}g{step}.xml (out_app_flag = 2) describe the final ionic step only, because the projection is evaluated once after all ionic steps have finished.";
         item.default_value = "False";
         item.unit = "";
         read_sync_bool(input.out_proj_band);
@@ -836,7 +838,7 @@ For binary output, each file uses the same basename as text output with a .dat s
         item.annotation = "output Hamiltonian derivatives dH/dR matrices";
         item.category = "Output information";
         item.type = "Integer";
-        item.description = "Whether to print files containing the derivatives of the Hamiltonian matrix. The format will be the same as the Hamiltonian matrix and overlap matrix as mentioned in out_hsr. The name of the files will be dhrxs1_nao.csr, dhrys1_nao.csr, dhrzs1_nao.csr and so on. Also controled by out_freq_ion and out_app_flag."
+        item.description = "Whether to print files containing the Hamiltonian derivatives dH/dR. Only the k-space matrices are currently written, to MAT/ as dhk[xyz]_iat{I}[s{spin}][g{step}]_nao.txt: one file per differentiated atom I and Cartesian direction (multi-k runs add an _ik{ki} suffix), with the s{spin} suffix when nspin = 2 and the g{step} suffix only when out_app_flag = 2. Also controlled by out_freq_ion and out_app_flag."
                           "\n\nFormat: <enable> [precision] [iat1 iat2 ...]. The first value (0/1) enables/disables output. The second optional value sets the output precision (default: 8). Starting from the third value, 1-based atom indices can be listed to restrict output to derivatives with respect to those specific atoms only; if no atom indices are given, all atoms are written."
                           "\n\n[NOTE] In the 3.10-LTS version, the file name is data-dHRx-sparse_SPIN0.csr and so on.";
         item.default_value = "0 8";
@@ -1425,12 +1427,14 @@ For binary output, each file uses the same basename as text output with a .dat s
         item.annotation = "if >=0, output the derivatives of exchange correlation in realspace, second parameter controls the precision";
         item.category = "Output information";
         item.type = R"(Integer \[Integer\](optional))";
-        item.description = R"(The first integer controls whether to output the exchange-correlation (in Bohr^-3) on real space grids using Libxc to folder OUT.${suffix}:
+        item.description = R"(The first integer controls whether to output the exchange-correlation (in Bohr^-3) on real space grids using Libxc:
 * 0: rho, amag, sigma, exc
 * 1: vrho, vsigma
 * 2: v2rho2, v2rhosigma, v2sigma2
 * 3: v3rho3, v3rho2sigma, v3rhosigma2, v3sigma3
 * 4: v4rho4, v4rho3sigma, v4rho2sigma2, v4rhosigma3, v4sigma4 The meaning of the files is presented in Libxc
+
+The files are written to OUT.${suffix}/CHG/ when out_app_flag = 2 and to OUT.${suffix}/ otherwise, as xc_<quantity>[_s{spin}][g{step}].cube. Each file is a standard Gaussian cube file whose header carries the one-based ionic step as "Ionic_Step N"; with out_app_flag = 2 the g{step} suffix selects one file per written step, and with out_app_flag = 1 every written step appends one complete cube frame while the first written step truncates the file.
 
 The second integer controls the precision of the charge density output, if not given, will use 3 as default.
 
