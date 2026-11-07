@@ -20,9 +20,19 @@ orbital_dir          ../../../tests/PP_ORB
 nspin                2
 gamma_only           0
 
+# Output layout convention (applies to every out_ parameter below):
+#   out_app_flag=2: per-step files are routed into SUB/ directories with a g{step} suffix
+#                   (MAT/ CHG/ POT/ PSI/ DOS/ BANDS/ ELF/ STRUC/); final-snapshot outputs
+#                   (ldos, vxcrs, pbands) keep only the latest frame and drop g{step}.
+#   out_app_flag=0: fixed filenames in OUT.${suffix}/, truncated on every write (no SUB/, no g{step}).
+#   out_app_flag=1: fixed filenames in OUT.${suffix}/, frames appended and separated by '# Ionic_Step N'.
+#   Files that stay in OUT.${suffix}/ even in mode 2: eband_*.txt, eig_occg{step}.txt,
+#                   mullikeng{step}.txt, pbands{spin}g{last}.xml, nao.txt, logs/info/restart files.
+#   The 'SUB/' prefixes below describe mode 2; in mode 0/1 the same content lands in OUT.${suffix}/.
+
 out_element_info     1    # OUT.{element_label}/ (pseudopotential + orbital files)
 
-out_stru             1    # mode0: STRU_NOW; mode1: STRU_NOW + STRU (appended); mode2: STRU_NOW + STRUC/STRU{step}
+out_stru             1    # mode0: STRU_NOW + STRU_FINAL; mode1: STRU_NOW + STRU_FINAL + STRU (appended); mode2: STRUC/STRU_NOW + STRUC/STRU_FINAL + STRUC/STRU{step}
 
 out_chg              1    # CHG/chgs{spin}g{step}.cube
 out_pot              1    # POT/pots{spin}g{step}.cube
@@ -32,17 +42,17 @@ out_dos              1    # DOS/doss{spin}g{step}.txt, pdoss{spin}g{step}.txt
 out_ldos             1    # DOS/ldos_{bias}ev.cube (final snapshot; header records the final step)
 out_band             1    # BANDS/bands{spin}g{step}.txt (nspin=2 → bands1*, bands2*)
 
-out_elf              1
+out_elf              1    # ELF/elfs{spin}g{step}.cube, ELF/elftotg{step}.cube (mode 0/1: elfs{spin}.cube, elftot.cube in OUT.${suffix})
 out_mul              1    # mulliken.txt (mode 0/1), mullikeng{step}.txt (mode 2)
 
 out_dmk              1    # MAT/dmk{ki}s{spin}g{step}_nao.txt (多 k); dms{spin}g{step}_nao.txt (gamma-only)
 out_dmr              1    # MAT/dmrs{spin}g{step}_nao.csr
 out_hsk              1    # MAT/hk{ki}s{spin}g{step}_nao.txt, sk{ki}g{step}_nao.txt
 out_hsr              1    # MAT/hrs{spin}g{step}_nao.csr, srg{step}_nao.csr
-out_mat_ds           1    # MAT/dsxrs{spin}g{step}_nao.csr, dsyr..., dsrz...
+out_mat_ds           1    # MAT/dsrxs{spin}g{step}_nao.csr, dsrys{spin}g{step}_nao.csr, dsrzs{spin}g{step}_nao.csr
 out_mat_l            1    # MAT/lxg{step}_nao.txt, lyg{step}_nao.txt, lzg{step}_nao.txt
 out_mat_r            1    # MAT/rrg{step}_nao.txt (single file, x/y/z components; mode 0/1 → rr_nao.txt in OUT.${suffix})
-out_mat_t            1    # MAT/trs{spin}g{step}_nao.csr
+out_mat_t            1    # MAT/trg{step}_nao.csr (spin-independent)
 out_mat_tk           1    # MAT/tk{ki}g{step}_nao.txt (T(k), spin-independent)
 
 out_mat_h_t          1    # MAT/tk{ki}g{step}_nao.txt (legacy alias of out_mat_tk)
@@ -64,13 +74,10 @@ out_proj_band        1    # pbands{spin}.xml (mode 0/1), pbands{spin}g{last}.xml
 #out_mat_vhk
 #out_mat_vxck
 
-
-
-
 out_eband            1    # eband_kin/vl/vnl/hart/vxc*.txt per written ionic step (g{step} in mode 2)
 out_mat_xc           1    # MAT/vxcmok{ki}s{spin}g{step}_nao.txt (KS-orbital repr.)
 out_mat_xc2          1    # MAT/vxcrs{spin}_nao.csr (NAO repr., final snapshot)
 out_xc_r             1    # CHG/xc_rho_s{spin}.cube, xc_vrho_s{spin}.cube, xc_exc.cube, xc_sigma_*.cube, xc_vsigma_*.cube; full cube header, (g{step} in mode 2)
 
 out_freq_ion         2
-out_app_flag         1
+out_app_flag         0
