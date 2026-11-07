@@ -1376,7 +1376,7 @@ For binary output, each file uses the same basename as text output with a .dat s
         item.annotation = "output exchange-correlation matrix in NAO representation";
         item.category = "Output information";
         item.type = R"(Boolean \[Integer\](optional))";
-        item.description = "Whether to print the exchange-correlation matrices in numerical orbital representation: in CSR format in the directory OUT.${suffix}. The name of the files will be vxcrs1_nao.csr and so on, with a g{step} suffix when out_app_flag is 2."
+        item.description = "Whether to print the exchange-correlation matrices in numerical orbital representation: in CSR format in the directory OUT.${suffix}. The name of the files will be vxcrs1_nao.csr and so on, with a one-based spin index. The matrix is a final-step snapshot, so no g{step} suffix is added."
                           "\n\n[NOTE] In the 3.10-LTS version, the file name is Vxc_R_spin$s and so on.";
         item.default_value = "False 8";
         item.unit = "Ry";
