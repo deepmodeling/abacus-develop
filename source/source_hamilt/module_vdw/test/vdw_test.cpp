@@ -264,6 +264,18 @@ TEST_F(vdwd2Test, WrongVdwType)
     std::string output = testing::internal::GetCapturedStdout();
 }
 
+TEST_F(vdwd2Test, Rvv10HasNoPairwiseTerm)
+{
+    input.vdw_method = "rvv10";
+#ifdef __LIBVDWXC
+    EXPECT_TRUE(vdw::make_vdw(ucell, input) == nullptr);
+#else
+    testing::internal::CaptureStdout();
+    EXPECT_EXIT(vdw::make_vdw(ucell, input);, ::testing::ExitedWithCode(1), "");
+    std::string output = testing::internal::GetCapturedStdout();
+#endif
+}
+
 TEST_F(vdwd2Test, D2ReadFile)
 {
     input.vdw_C6_file = "c6.txt";

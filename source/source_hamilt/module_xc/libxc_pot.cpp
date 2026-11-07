@@ -9,6 +9,9 @@
 #ifdef __EXX
 #include "source_hamilt/module_xc/exx_info.h"
 #endif
+#ifdef __LIBVDWXC
+#include "source_hamilt/module_vdw/nonlocal_xc.h"
+#endif
 
 #include <xc.h>
 
@@ -449,6 +452,13 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc( 
 
     etxc *= omega / chr->rhopw->nxyz;
     vtxc *= omega / chr->rhopw->nxyz;
+#ifdef __LIBVDWXC
+    const XCFunctionalParameters& xc_parameters = XC_Functional::get_runtime_parameters();
+    // with one spin channel, gdr[0] is the gradient of the total density that add_rvv10 would recompute
+    const bool share_gradient = is_gga && nspin == 1 && !use_lca;
+    const std::vector<ModuleBase::Vector3<double>>* total_gradient = share_gradient ? &gdr[0] : nullptr;
+    vdw::add_rvv10(xc_parameters, *chr, total_gradient, etxc, vtxc, v);
+#endif
 
     XC_Functional_Libxc::finish_func(funcs);
 
@@ -768,6 +778,13 @@ std::tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional_Li
 
     etxc *= omega / chr->rhopw->nxyz;
     vtxc *= omega / chr->rhopw->nxyz;
+#ifdef __LIBVDWXC
+    const XCFunctionalParameters& xc_parameters = XC_Functional::get_runtime_parameters();
+    // as in v_xc_libxc; every meta-GGA has a gradient, so nspin alone decides whether gdr[0] is the total density
+    const bool share_gradient = nspin == 1;
+    const std::vector<ModuleBase::Vector3<double>>* total_gradient = share_gradient ? &gdr[0] : nullptr;
+    vdw::add_rvv10(xc_parameters, *chr, total_gradient, etxc, vtxc, v);
+#endif
 
     XC_Functional_Libxc::finish_func(funcs);
 

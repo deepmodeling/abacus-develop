@@ -99,6 +99,24 @@ vdw_d4_model d4    # or d4s for the smooth D4S model
 
 If `vdw_d4_xc` is set to `default`, ABACUS will infer the functional name from `dft_functional` or pseudopotential metadata and pass it to the DFT-D4 library. The `vdw_d4_model` keyword selects the dispersion model inside the DFT-D4 library; the default is `d4`, while `d4s` enables the smooth D4S model.
 
+## Build with libvdwxc support
+
+`vdw_method rvv10` evaluates the rVV10 nonlocal correlation with the external [libvdwxc](https://gitlab.com/libvdwxc/libvdwxc) library. Until a tagged libvdwxc release contains the rVV10 interface, build the branch of [libvdwxc merge request !32](https://gitlab.com/libvdwxc/libvdwxc/-/merge_requests/32) (tested at commit `da2d55f`) with libvdwxc's CMake build, which installs the package that ABACUS looks up, and against the FFTW that ABACUS uses. For an MPI build of ABACUS, configure libvdwxc with MPI, which needs FFTW with its MPI library:
+
+```bash
+cmake -S libvdwxc -B build-libvdwxc -DBUILD_SHARED_LIBS=ON -DVDWXC_ENABLE_MPI=ON -DCMAKE_INSTALL_PREFIX=/path/to/libvdwxc
+cmake --build build-libvdwxc && cmake --install build-libvdwxc
+```
+
+Then pass `-DENABLE_LIBXC=ON -DENABLE_LIBVDWXC=ON` to CMake for ABACUS and add `/path/to/libvdwxc` to `CMAKE_PREFIX_PATH`. CMake also checks for `vdwxc_get_local_grid`; with it, ABACUS asks libvdwxc for the grid slab of each process instead of assuming the FFTW-MPI default distribution. ABACUS hands each k-point pool's density to libvdwxc's distributed interface, so the nonlocal convolution and its memory are shared by the processes of the pool; libvdwxc keeps about 25 doubles (200 bytes) per grid point of a process's slab, and the adapter 5 more, so the memory per process falls as the pool grows. libvdwxc's MPI build plans its FFTs with FFTW-MPI, so an MPI build of ABACUS with libvdwxc must use FFTW3 rather than the FFTW interface of MKL or KML; CMake stops otherwise. The legacy Makefile does not build this feature.
+
+In the input file:
+
+```text
+vdw_method rvv10
+dft_functional scan   # b follows dft_functional unless vdw_rvv10_b is set: 15.7 for scan or MGGA_X_SCAN+MGGA_C_SCAN, 11.95 for MGGA_X_R2SCAN+MGGA_C_R2SCAN, else 6.3
+```
+
 ## Build with JSON support
 
 ABACUS uses [nlohmann-json](https://github.com/nlohmann/json) for optional JSON output. To build ABACUS with JSON support, pass `-DENABLE_JSON=ON` to CMake.

@@ -9,6 +9,9 @@
 #include "source_estate/param_update.h"
 #include "source_hamilt/module_ewald/h_ewald_pw.h"
 #include "source_hamilt/module_vdw/vdw.h"
+#ifdef __LIBVDWXC
+#include "source_hamilt/module_vdw/nonlocal_xc.h"
+#endif
 #include "source_io/module_output/output_log.h"
 #include "source_io/module_output/print_info.h"
 #include "source_estate/module_charge/chg_rhog_io.h"
@@ -60,6 +63,9 @@ void ESolver_FP::before_all_runners(BaseCell& basecell, const Input_para& inp)
     xc_parameters.exx_erfc_alpha = inp.exx_erfc_alpha;
     xc_parameters.xc_exch_ext = inp.xc_exch_ext;
     xc_parameters.xc_corr_ext = inp.xc_corr_ext;
+    xc_parameters.rvv10 = vdw::is_rvv10(inp.vdw_method);
+    xc_parameters.rvv10_b = inp.vdw_rvv10_b;
+    xc_parameters.rvv10_c = inp.vdw_rvv10_c;
     XC_Functional::set_runtime_parameters(xc_parameters);
 
     ModuleBase::TITLE("ESolver_FP", "before_all_runners");
@@ -310,6 +316,10 @@ void ESolver_FP::after_all_runners(BaseCell& basecell)
     GlobalV::ofs_running << " !FINAL_ETOT_IS " << this->pelec->f_en.etot * ModuleBase::Ry_to_eV << " eV" << std::endl;
     GlobalV::ofs_running << " --------------------------------------------\n\n" << std::endl;
 
+#ifdef __LIBVDWXC
+    // the libvdwxc FFT plans must be destroyed before MPI_Finalize
+    vdw::finalize_rvv10();
+#endif
 }
 
 } // namespace ModuleESolver

@@ -3,6 +3,7 @@
 #include "source_base/tool_title.h"
 #include "source_base/constants.h"
 #include <cmath>
+#include <utility>
 
 #ifdef __LIBXC
 #include "libxc_abacus.h"
@@ -54,11 +55,8 @@ void XC_Functional::ScopedType::restore() noexcept
     XC_Functional::use_libxc = use_libxc_;
     XC_Functional::hybrid_alpha = hybrid_alpha_;
     XC_Functional::hse_omega = hse_omega_;
-    XC_Functional::runtime_parameters.xc_temperature = runtime_parameters_.xc_temperature;
-    XC_Functional::runtime_parameters.exx_fock_alpha.swap(runtime_parameters_.exx_fock_alpha);
-    XC_Functional::runtime_parameters.exx_erfc_alpha.swap(runtime_parameters_.exx_erfc_alpha);
-    XC_Functional::runtime_parameters.xc_exch_ext.swap(runtime_parameters_.xc_exch_ext);
-    XC_Functional::runtime_parameters.xc_corr_ext.swap(runtime_parameters_.xc_corr_ext);
+    // the whole struct, so that a new parameter cannot be forgotten here; its members move without allocating
+    std::swap(XC_Functional::runtime_parameters, runtime_parameters_);
     XC_Functional::scaling_factor_xc.swap(scaling_factor_xc_);
 }
 

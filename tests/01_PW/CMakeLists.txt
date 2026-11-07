@@ -12,3 +12,11 @@ else()
     COMMAND ${BASH} ../integrate/Autotest.sh -a ${ABACUS_BIN_PATH} -n 4 -j auto
     WORKING_DIRECTORY ${ABACUS_TEST_DIR}/01_PW)
 endif()
+
+if(ENABLE_LIBVDWXC)
+  add_test(
+    NAME 01_PW_libvdwxc
+    COMMAND ${BASH} ../integrate/Autotest.sh -a ${ABACUS_BIN_PATH} -n 4 -j auto
+            -f CASES_LIBVDWXC.txt
+    WORKING_DIRECTORY ${ABACUS_TEST_DIR}/01_PW)
+endif()
