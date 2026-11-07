@@ -486,52 +486,7 @@ void Output_Mulliken<TK>::collect_MW(ModuleBase::matrix& MecMulP, const ModuleBa
     }
     else if (this->nspin_ == 4)
     {
-        for (size_t i = 0; i < nw; ++i)
-        {
-            const int index = i % 2;
-            if (!index)
-            {
-                const int j = i / 2;
-                const int k1 = 2 * j;
-                const int k2 = 2 * j + 1;
-                if (this->ParaV_->para_2d().in_this_processor(k1, k1))
-                {
-                    const int ir = this->ParaV_->para_2d().irloc(k1);
-                    const int ic = this->ParaV_->para_2d().icloc(k1);
-                    MecMulP(0, j) += mud(ic, ir).real();
-                    MecMulP(3, j) += mud(ic, ir).real();
-                }
-                // WARNING (pre-existing, predates #7664, since 3.7.0 commit a339356): this M_y sign
-                // is suspect. mud is DM.S with the same conj-first DM convention as dm_from_psi, so the
-                // bare Im formula here likely yields -m_y. It must NOT be used as an oracle for the DM
-                // convention (it is probably why #7664's DM m_y flip went unnoticed). Fix + unit test
-                // should be a separate PR after verifying against a case with nonzero in-plane moment.
-                if (this->ParaV_->para_2d().in_this_processor(k1, k2))
-                {
-                    const int ir = this->ParaV_->para_2d().irloc(k1);
-                    const int ic = this->ParaV_->para_2d().icloc(k2);
-                    // note that mud is column major
-                    MecMulP(1, j) += mud(ic, ir).real();
-                    // M_y = i(M_{up,down} - M_{down,up}) = -(M_{up,down} - M_{down,up}).imag()
-                    MecMulP(2, j) -= mud(ic, ir).imag();
-                }
-                if (this->ParaV_->para_2d().in_this_processor(k2, k1))
-                {
-                    const int ir = this->ParaV_->para_2d().irloc(k2);
-                    const int ic = this->ParaV_->para_2d().icloc(k1);
-                    MecMulP(1, j) += mud(ic, ir).real();
-                    // M_y = i(M_{up,down} - M_{down,up}) = -(M_{up,down} - M_{down,up}).imag()
-                    MecMulP(2, j) += mud(ic, ir).imag();
-                }
-                if (this->ParaV_->para_2d().in_this_processor(k2, k2))
-                {
-                    const int ir = this->ParaV_->para_2d().irloc(k2);
-                    const int ic = this->ParaV_->para_2d().icloc(k2);
-                    MecMulP(0, j) += mud(ic, ir).real();
-                    MecMulP(3, j) -= mud(ic, ir).real();
-                }
-            }
-        }
+        collect_MW_nspin4(MecMulP, mud, nw, this->ParaV_);
     }
 }
 
