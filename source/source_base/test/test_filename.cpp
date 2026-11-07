@@ -123,4 +123,37 @@ TEST_F(FilenameOutputTest, NoncollinearSpin4)
     EXPECT_EQ(fn, "OUT.test/wfk1s4g1_pw.dat");
 }
 
+// ---------------------------------------------------------------------------
+// The MO-basis Vxc matrix (property "vxcmo") and the NAO-basis one
+// (property "vxck") must never resolve to the same filename.
+// ---------------------------------------------------------------------------
+TEST_F(FilenameOutputTest, VxcMoDoesNotCollideWithVxck)
+{
+    const std::string fn_mo = filename_output(
+        dir, "vxcmo", "nao", ik_local, ik2iktot, nspin, nkstot,
+        /*out_type=*/1, /*out_app_flag=*/0, /*gamma_only=*/false,
+        /*istep=*/1, /*iter=*/-1);
+    const std::string fn_nao = filename_output(
+        dir, "vxck", "nao", ik_local, ik2iktot, nspin, nkstot,
+        /*out_type=*/1, /*out_app_flag=*/0, /*gamma_only=*/false,
+        /*istep=*/1, /*iter=*/-1);
+
+    EXPECT_EQ(fn_mo, "OUT.test/vxcmok1s1_nao.txt");
+    EXPECT_EQ(fn_nao, "OUT.test/vxck1s1_nao.txt");
+    EXPECT_NE(fn_mo, fn_nao);
+}
+
+// ---------------------------------------------------------------------------
+// In mode 2 the MO-basis Vxc matrix carries the g{N} suffix like any other
+// per-step matrix.
+// ---------------------------------------------------------------------------
+TEST_F(FilenameOutputTest, VxcMoMode2EmbedsStep)
+{
+    const std::string fn = filename_output(
+        dir, "vxcmo", "nao", ik_local, ik2iktot, nspin, nkstot,
+        /*out_type=*/1, /*out_app_flag=*/2, /*gamma_only=*/false,
+        /*istep=*/1, /*iter=*/-1);
+    EXPECT_EQ(fn, "OUT.test/vxcmok1s1g2_nao.txt");
+}
+
 #endif // TEST_FILENAME_CPP

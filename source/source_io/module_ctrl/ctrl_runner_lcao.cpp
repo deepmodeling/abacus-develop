@@ -65,7 +65,7 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
 
     // 3) print out exchange-correlation potential: the band-decomposed orbital
     //    energies (eband_vxc.txt etc.) are produced for either switch, while
-    //    the full MO-basis matrices (vxc_nao.txt etc.) are only for out_mat_xc.
+    //    the full MO-basis matrices (vxcmok*_nao.txt etc.) are only for out_mat_xc.
     const bool out_vxc_orb = inp.out_mat_xc || inp.out_eband;
     if (out_vxc_orb)
     {
@@ -103,6 +103,7 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
                                     inp.dft_plus_u,
                                     PARAM.globalv.gamma_only_local,
                                     inp.out_mat_xc,
+                                    inp.out_app_flag,
                                     global_mat_dir,
                                     PARAM.globalv.global_out_dir,
                                     inp.out_ndigits,

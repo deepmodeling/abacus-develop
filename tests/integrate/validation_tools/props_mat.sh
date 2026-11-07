@@ -232,11 +232,11 @@ run_mat_props() {
   #--------------------------------
   if ! test -z "$has_xc" && [ "$has_xc" == 1 ]; then
     if ! test -z "$gamma_only" && [ $gamma_only == 1 ]; then
-      xcref=vxc_nao.txt.ref
-      xccal=OUT.autotest/vxc_nao.txt
+      xcref=vxcmo_nao.txt.ref
+      xccal=OUT.autotest/vxcmo_nao.txt
     else
-      xcref=vxck2_nao.txt.ref
-      xccal=OUT.autotest/vxck2_nao.txt
+      xcref=vxcmok2_nao.txt.ref
+      xccal=OUT.autotest/vxcmok2_nao.txt
     fi
     oeref=eband_vxc.ref
     oecal=OUT.autotest/eband_vxc.txt

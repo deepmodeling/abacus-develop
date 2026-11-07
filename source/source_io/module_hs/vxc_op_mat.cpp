@@ -31,6 +31,7 @@ void write_Vxc(const int nspin,
                const bool dft_plus_u,
                const bool gamma_only,
                const bool out_mat,
+               const int out_app_flag,
                const std::string& mat_dir,
                const std::string& global_out_dir,
                const int out_ndigits,
@@ -122,13 +123,13 @@ void write_Vxc(const int nspin,
         // write the full MO-basis matrix only when requested
         if (out_mat)
         {
-            const int istep = -1;
             const int out_label = 1; // 1 means .txt while 2 means .dat
-            const int out_app_flag = 0;
-            const bool append_vxc = (out_app_flag == 1);
+            // This MO-basis matrix is a single-snapshot output, so the file is
+            // always truncated. Only mode 2 adds the g{istep+1} suffix.
+            const bool append_vxc = false;
             std::string vxc_file = ModuleIO::filename_output(
                     mat_dir,
-                    "vxc", "nao", ik, kv.ik2iktot, nspin, kv.get_nkstot(),
+                    "vxcmo", "nao", ik, kv.ik2iktot, nspin, kv.get_nkstot(),
                     out_label, out_app_flag, gamma_only, istep);
 
             ModuleIO::save_mat(istep,
@@ -168,7 +169,7 @@ template void write_Vxc<double, double>(
     const int, const int, const double, const int, const int, const Parallel_Orbitals*, const psi::Psi<double>&,
     const UnitCell&, Structure_Factor&, surchem&, const ModulePW::PW_Basis&, const ModulePW::PW_Basis&,
     const ModuleBase::matrix&, const Charge&, const K_Vectors&, const std::vector<double>&,
-    const ModuleBase::matrix&, Grid_Driver&, const bool, const bool, const bool, const std::string&,
+    const ModuleBase::matrix&, Grid_Driver&, const bool, const bool, const bool, const int, const std::string&,
     const std::string&, const int, const std::string&, bool, const Exx_Info&
 #ifdef __EXX
     , std::vector<std::map<int, std::map<hamilt::TAC, RI::Tensor<double>>>>*,
@@ -180,7 +181,7 @@ template void write_Vxc<std::complex<double>, double>(
     const int, const int, const double, const int, const int, const Parallel_Orbitals*, const psi::Psi<std::complex<double>>&,
     const UnitCell&, Structure_Factor&, surchem&, const ModulePW::PW_Basis&, const ModulePW::PW_Basis&,
     const ModuleBase::matrix&, const Charge&, const K_Vectors&, const std::vector<double>&,
-    const ModuleBase::matrix&, Grid_Driver&, const bool, const bool, const bool, const std::string&,
+    const ModuleBase::matrix&, Grid_Driver&, const bool, const bool, const bool, const int, const std::string&,
     const std::string&, const int, const std::string&, bool, const Exx_Info&
 #ifdef __EXX
     , std::vector<std::map<int, std::map<hamilt::TAC, RI::Tensor<double>>>>*,
@@ -192,7 +193,7 @@ template void write_Vxc<std::complex<double>, std::complex<double>>(
     const int, const int, const double, const int, const int, const Parallel_Orbitals*, const psi::Psi<std::complex<double>>&,
     const UnitCell&, Structure_Factor&, surchem&, const ModulePW::PW_Basis&, const ModulePW::PW_Basis&,
     const ModuleBase::matrix&, const Charge&, const K_Vectors&, const std::vector<double>&,
-    const ModuleBase::matrix&, Grid_Driver&, const bool, const bool, const bool, const std::string&,
+    const ModuleBase::matrix&, Grid_Driver&, const bool, const bool, const bool, const int, const std::string&,
     const std::string&, const int, const std::string&, bool, const Exx_Info&
 #ifdef __EXX
     , std::vector<std::map<int, std::map<hamilt::TAC, RI::Tensor<double>>>>*,
