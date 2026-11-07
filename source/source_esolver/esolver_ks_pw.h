@@ -52,6 +52,10 @@ class ESolver_KS_PW : public ESolver_KS
     /** @brief Let RT-TDDFT bind its endpoint field before wavefunction initialization uses H; ordinary DFT does nothing. */
     virtual void prepare_init_hamilt(const UnitCell& ucell);
 
+    // Last ionic step executed; used by after_all_runners outputs that are
+    // written once after all runners have finished.
+    int istep_ = 0;
+
     // Electronic wave function psi
     Setup_Psi_pw stp;
 
