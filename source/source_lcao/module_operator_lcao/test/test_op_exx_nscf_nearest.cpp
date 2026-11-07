@@ -127,7 +127,7 @@ class OperatorExxNscfCellNearestTest : public ::testing::Test
 
         paraV_ = new Parallel_Orbitals();
 #ifdef __MPI
-        paraV_->para_2d().init(2, 2, 1, MPI_COMM_WORLD);
+        paraV_->para_2d().init(2, 2, 1, MPI_COMM_WORLD, false);
         paraV_->set_atomic_trace(ucell_.get_iat2iwt(), ucell_.nat, 2);
 #endif
 
