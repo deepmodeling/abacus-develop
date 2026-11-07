@@ -27,7 +27,7 @@
 template <typename T, typename Tdata>
 void RPA_LRI<T, Tdata>::out_eigen_vector_legacy(const Parallel_Orbitals& parav, const psi::Psi<T>& psi)
 {
-    const Parallel_2D& distribution = parav.para_2d();
+    const BlockCyclicDistribution& distribution = parav.para_2d();
     const int nks_tot = this->runtime.input.nspin == 2 ? p_kv->get_nks() / 2 : p_kv->get_nks();
     const int npsin_tmp = this->runtime.input.nspin == 2 ? 2 : 1;
     const int nbands = parav.get_wfc_global_nbands();
@@ -36,8 +36,8 @@ void RPA_LRI<T, Tdata>::out_eigen_vector_legacy(const Parallel_Orbitals& parav, 
     // Preserve the legacy text writer when reader-v1 output is disabled.
 #ifdef __MPI
     const MPI_Comm mpi_comm = distribution.comm();
-    const int mpi_rank = distribution.get_coord_row() * distribution.get_dim1() + distribution.get_coord_col();
-    const int mpi_size = distribution.get_dim0() * distribution.get_dim1();
+    const int mpi_rank = distribution.irproc() * distribution.ncproc() + distribution.icproc();
+    const int mpi_size = distribution.nrproc() * distribution.ncproc();
     const auto check_mpi = [mpi_comm](const int local_error, const std::string& context) {
         int any_failed = local_error == MPI_SUCCESS ? 0 : 1;
         Parallel_Reduce::reduce_max(mpi_comm, any_failed);
@@ -87,13 +87,13 @@ void RPA_LRI<T, Tdata>::out_eigen_vector_legacy(const Parallel_Orbitals& parav, 
     std::vector<int> send_counts(mpi_size, 0);
     for (int ib = 0; ib < nbands; ++ib)
     {
-        if (distribution.global2local_col(ib) < 0)
+        if (distribution.icloc(ib) < 0)
         {
             continue;
         }
         for (int ir = 0; ir < psi.get_nbasis(); ++ir)
         {
-            send_counts[output_basis_owner[distribution.local2global_row(ir)]] += npsin_tmp;
+            send_counts[output_basis_owner[distribution.irglb(ir)]] += npsin_tmp;
         }
     }
     std::vector<int> send_displacements(mpi_size, 0);
@@ -120,14 +120,14 @@ void RPA_LRI<T, Tdata>::out_eigen_vector_legacy(const Parallel_Orbitals& parav, 
     std::vector<int> send_positions = send_displacements;
     for (int ib = 0; ib < nbands; ++ib)
     {
-        const int ib_local = distribution.global2local_col(ib);
+        const int ib_local = distribution.icloc(ib);
         if (ib_local < 0)
         {
             continue;
         }
         for (int ir = 0; ir < psi.get_nbasis(); ++ir)
         {
-            const int iw = distribution.local2global_row(ir);
+            const int iw = distribution.irglb(ir);
             const int destination = output_basis_owner[iw];
             for (int is = 0; is < npsin_tmp; ++is)
             {

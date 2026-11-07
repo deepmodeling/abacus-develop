@@ -48,8 +48,8 @@ inline bool gs_is_hybrid(const std::string& dft_functional)
             // HContainer<double>* hR_in,
             std::weak_ptr<Exx_LRI<T>> exx_lri_in,
             const K_Vectors& kv_in,
-            const Parallel_2D& pX_in,
-            const Parallel_2D& pc_in,
+            const BlockCyclicDistribution& pX_in,
+            const BlockCyclicDistribution& pc_in,
             const Parallel_Orbitals& pmat_in,
             const bool cal_force,
             const double& alpha,
@@ -117,8 +117,8 @@ inline bool gs_is_hybrid(const std::string& dft_functional)
         const UnitCell& ucell;
 
         ///parallel info
-        const Parallel_2D& pc;
-        const Parallel_2D& pX;
+        const BlockCyclicDistribution& pc;
+        const BlockCyclicDistribution& pX;
         const Parallel_Orbitals& pmat;
 
         /// number of basis functions per type in the aims benchmark (empty for the normal case)
@@ -138,14 +138,14 @@ inline bool gs_is_hybrid(const std::string& dft_functional)
             ModuleBase::TITLE("OperatorLREXX", "cal_coxt_cvx");
             const auto& c = this->psi_ks;
             // allocate local cvx
-            Parallel_2D pcx;
-            LR_Util::setup_2d_division(pcx, pX.get_block_size(), naos, nocc, pX.blacs_ctxt);
-            ct::Tensor cvx(ct::DataTypeToEnum<T>::value, DEV::CpuDevice, { pcx.get_col_size(), pcx.get_row_size() });
+            BlockCyclicDistribution pcx;
+            LR_Util::setup_2d_division(pcx, pX.nb(), naos, nocc, pX.ictxt());
+            ct::Tensor cvx(ct::DataTypeToEnum<T>::value, DEV::CpuDevice, { pcx.ncloc(), pcx.nrloc() });
 
             // allocate local coxt
-            Parallel_2D pcxt;
-            LR_Util::setup_2d_division(pcxt, pX.get_block_size(), naos, nvirt, pX.blacs_ctxt);
-            ct::Tensor coxt(ct::DataTypeToEnum<T>::value, DEV::CpuDevice, { pcxt.get_col_size(), pcxt.get_row_size() });
+            BlockCyclicDistribution pcxt;
+            LR_Util::setup_2d_division(pcxt, pX.nb(), naos, nvirt, pX.ictxt());
+            ct::Tensor coxt(ct::DataTypeToEnum<T>::value, DEV::CpuDevice, { pcxt.ncloc(), pcxt.nrloc() });
 
             // calculate global coxt_full, cvx_full
             cvx_full.zero_out();
@@ -153,7 +153,7 @@ inline bool gs_is_hybrid(const std::string& dft_functional)
             for (int ik = 0;ik < nk;++ik)
             {
                 c.fix_k(ik);
-                const int start = ik * pX.get_local_size();
+                const int start = ik * pX.size();
                 CvX(c.get_pointer(), pc, x_istate + start, pX, naos, nocc, nvirt, cvx.data<T>(), pcx);
                 LR_Util::gather_2d_to_full(pcx, cvx.data<T>(), &cvx_full(ik, 0, 0), false, naos, nocc);
                 CoXT(c.get_pointer(), pc, x_istate + start, pX, naos, nocc, nvirt, coxt.data<T>(), pcxt);

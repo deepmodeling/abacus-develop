@@ -388,12 +388,12 @@ void TDEkinetic<OperatorLCAO<TK, TR>>::contributeHk(int ik)
         // folding inside HR to HK
         if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
         {
-            const int nrow = paraV->para_2d().get_row_size();
+            const int nrow = paraV->para_2d().nrloc();
             hamilt::folding_HR(*this->hR_tmp, this->hsk->get_hk(), this->kvec_d[ik], nrow, 1);
         }
         else
         {
-            const int ncol = paraV->para_2d().get_col_size();
+            const int ncol = paraV->para_2d().ncloc();
             hamilt::folding_HR(*this->hR_tmp, this->hsk->get_hk(), this->kvec_d[ik], ncol, 0);
         }
 

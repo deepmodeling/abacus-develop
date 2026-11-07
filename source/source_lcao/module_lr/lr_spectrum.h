@@ -19,7 +19,7 @@ namespace LR
             const ModulePW::PW_Basis& rho_basis, psi::Psi<T>& psi_ks_in,
             const UnitCell& ucell, const K_Vectors& kv_in, const std::vector<double>& spatial_weights_in, const Grid_Driver& gd, const std::vector<double>& orb_cutoff,
             const TwoCenterBundle& two_center_bundle_,
-            const std::vector<Parallel_2D>& pX_in, const Parallel_2D& pc_in, const Parallel_Orbitals& pmat_in,
+            const std::vector<BlockCyclicDistribution>& pX_in, const BlockCyclicDistribution& pc_in, const Parallel_Orbitals& pmat_in,
             const double* omega, const double* eig_ks, const T* X, const int& nstate, const bool& openshell,
             const std::string& gauge, const int my_rank, const std::string& out_dir) :
             my_rank(my_rank), nspin_x(openshell ? 2 : 1), naos(naos), nocc(nocc), nvirt(nvirt),
@@ -28,7 +28,7 @@ namespace LR
             orb_cutoff_(orb_cutoff), two_center_bundle_(two_center_bundle_),
             pX(pX_in), pc(pc_in), pmat(pmat_in),
             omega(omega), eig_ks(eig_ks), X(X), nstate(nstate), gauge(gauge), out_dir(out_dir),
-            ldim(nk* (nspin_x == 2 ? pX_in[0].get_local_size() + pX_in[1].get_local_size() : pX_in[0].get_local_size())),
+            ldim(nk* (nspin_x == 2 ? pX_in[0].size() + pX_in[1].size() : pX_in[0].size())),
             gdim(nk* std::inner_product(nocc.begin(), nocc.end(), nvirt.begin(), 0))
         {
             for (int is = 0;is < nspin_global;++is) { psi_ks_vec.emplace_back(LR_Util::get_psi_spin(psi_ks_in, is, nk)); }
@@ -95,8 +95,8 @@ namespace LR
         /// Pure spatial weights, with no spin degeneracy; same spin/k ordering as kv.
         const std::vector<double> spatial_weights;
         std::vector<psi::Psi<T>> psi_ks_vec;
-        const std::vector<Parallel_2D>& pX;
-        const Parallel_2D& pc;
+        const std::vector<BlockCyclicDistribution>& pX;
+        const BlockCyclicDistribution& pc;
         const Parallel_Orbitals& pmat;
         const ModulePW::PW_Basis& rho_basis;
         const Grid_Driver& gd_;

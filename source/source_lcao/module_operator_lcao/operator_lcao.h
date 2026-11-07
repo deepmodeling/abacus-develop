@@ -59,22 +59,22 @@ class OperatorLCAO : public Operator<TK> {
         this->get_hs_pointers();
 #ifdef __MPI
         hk_in = MatrixBlock<TK>{hmatrix_k,
-                               (size_t)this->hsk->get_pv()->para_2d().get_row_size(),
-                               (size_t)this->hsk->get_pv()->para_2d().get_col_size(),
-                               this->hsk->get_pv()->para_2d().get_desc()};
+                               (size_t)this->hsk->get_pv()->para_2d().nrloc(),
+                               (size_t)this->hsk->get_pv()->para_2d().ncloc(),
+                               this->hsk->get_pv()->para_2d().desc()};
         sk_in = MatrixBlock<TK>{smatrix_k,
-                               (size_t)this->hsk->get_pv()->para_2d().get_row_size(),
-                               (size_t)this->hsk->get_pv()->para_2d().get_col_size(),
-                               this->hsk->get_pv()->para_2d().get_desc()};
+                               (size_t)this->hsk->get_pv()->para_2d().nrloc(),
+                               (size_t)this->hsk->get_pv()->para_2d().ncloc(),
+                               this->hsk->get_pv()->para_2d().desc()};
 #else
         hk_in = MatrixBlock<TK>{hmatrix_k, 
-                                (size_t)this->hsk->get_pv()->para_2d().get_row_size(),
-                                (size_t)this->hsk->get_pv()->para_2d().get_col_size(),
+                                (size_t)this->hsk->get_pv()->para_2d().nrloc(),
+                                (size_t)this->hsk->get_pv()->para_2d().ncloc(),
                                 nullptr};
         
         sk_in = MatrixBlock<TK>{smatrix_k, 
-                                (size_t)this->hsk->get_pv()->para_2d().get_row_size(),
-                                (size_t)this->hsk->get_pv()->para_2d().get_col_size(),
+                                (size_t)this->hsk->get_pv()->para_2d().nrloc(),
+                                (size_t)this->hsk->get_pv()->para_2d().ncloc(),
                                 nullptr};
 #endif
     }

@@ -202,12 +202,12 @@ void Overlap<OperatorLCAO<double, double>>::contributeHk(int ik)
     this->hsk->set_zero_sk();
     if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
     {
-        const int nrow = this->SR->get_atom_pair(0).get_paraV()->para_2d().get_row_size();
+        const int nrow = this->SR->get_atom_pair(0).get_paraV()->para_2d().nrloc();
         folding_HR(*this->SR, this->hsk->get_sk(), this->kvec_d[ik], nrow, 1);
     }
     else
     {
-        const int ncol = this->SR->get_atom_pair(0).get_paraV()->para_2d().get_col_size();
+        const int ncol = this->SR->get_atom_pair(0).get_paraV()->para_2d().ncloc();
         folding_HR(*this->SR, this->hsk->get_sk(), this->kvec_d[ik], ncol, 0);
     }
     
@@ -226,7 +226,7 @@ void Overlap<OperatorLCAO<TK, TR>>::contributeHk(int ik)
     this->hsk->set_zero_sk();
     if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
     {
-        const int nrow = this->SR->get_atom_pair(0).get_paraV()->para_2d().get_row_size();
+        const int nrow = this->SR->get_atom_pair(0).get_paraV()->para_2d().nrloc();
         if(this->td_info_ != nullptr && this->td_info_->field().gauge() == 2)
         {
             module_rt::folding_HR_td(*this->SR, this->hsk->get_sk(), this->kvec_d[ik], this->td_info_->endpoint_A(), this->td_info_->get_phase_hybrid(), nrow, 1);
@@ -238,7 +238,7 @@ void Overlap<OperatorLCAO<TK, TR>>::contributeHk(int ik)
     }
     else
     {
-        const int ncol = this->SR->get_atom_pair(0).get_paraV()->para_2d().get_col_size();
+        const int ncol = this->SR->get_atom_pair(0).get_paraV()->para_2d().ncloc();
         if(this->td_info_ != nullptr && this->td_info_->field().gauge() == 2)
         {
             module_rt::folding_HR_td(*this->SR, this->hsk->get_sk(), this->kvec_d[ik], this->td_info_->endpoint_A(), this->td_info_->get_phase_hybrid(), ncol, 0);
