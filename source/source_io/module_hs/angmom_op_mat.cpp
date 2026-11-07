@@ -423,7 +423,22 @@ void ModuleIO::Angmom_op::calculate(
             mode |= std::ios::app;
         }
         ofout.open(fn, mode);
-        ofout << title;
+        if (!ofout.is_open())
+        {
+            ModuleBase::WARNING_QUIT("Angmom_op::calculate", "Cannot open matrix file: " + fn);
+        }
+        // The column header belongs to the file, not to each frame: in append
+        // mode only the frame marker is repeated.
+        if (!append_step)
+        {
+            ofout << title;
+        }
+        // Ionic steps are reported one-based in output files; negative istep
+        // means the final SCF snapshot, where no ionic step exists.
+        if (istep >= 0)
+        {
+            ofout << "# Ionic_Step " << istep + 1 << "\n";
+        }
         this->kernel(&ofout, ucell, d, precision);
         ofout.close();
         *ofs_ << " Write L(R) (" << d << " component) matrix in NAO basis to file: " << fn << std::endl;
