@@ -76,8 +76,8 @@ TYPED_TEST(OutputMullikenTest, AppendModes)
     mulp.write(2, 0, dir);
     std::ifstream ifs0(fixed);
     std::string text0((std::istreambuf_iterator<char>(ifs0)), std::istreambuf_iterator<char>());
-    EXPECT_THAT(text0, testing::HasSubstr(" --- Ionic_Step 3 ---"));
-    EXPECT_THAT(text0, testing::Not(testing::HasSubstr(" --- Ionic_Step 1 ---")));
+    EXPECT_THAT(text0, testing::HasSubstr("# Ionic_Step 3"));
+    EXPECT_THAT(text0, testing::Not(testing::HasSubstr("# Ionic_Step 1")));
     remove(fixed.c_str());
 
     // Mode 1: the first frame truncates and the later frame appends.
@@ -85,8 +85,8 @@ TYPED_TEST(OutputMullikenTest, AppendModes)
     mulp.write(2, 1, dir);
     std::ifstream ifs1(fixed);
     std::string text1((std::istreambuf_iterator<char>(ifs1)), std::istreambuf_iterator<char>());
-    EXPECT_THAT(text1, testing::HasSubstr(" --- Ionic_Step 1 ---"));
-    EXPECT_THAT(text1, testing::HasSubstr(" --- Ionic_Step 3 ---"));
+    EXPECT_THAT(text1, testing::HasSubstr("# Ionic_Step 1"));
+    EXPECT_THAT(text1, testing::HasSubstr("# Ionic_Step 3"));
     remove(fixed.c_str());
 
     // Mode 2: one g{step} file per written step, no fixed-name file.
@@ -95,7 +95,7 @@ TYPED_TEST(OutputMullikenTest, AppendModes)
     std::ifstream ifs2(numbered);
     ASSERT_TRUE(ifs2.is_open()) << "missing " << numbered;
     std::string text2((std::istreambuf_iterator<char>(ifs2)), std::istreambuf_iterator<char>());
-    EXPECT_THAT(text2, testing::HasSubstr(" --- Ionic_Step 3 ---"));
+    EXPECT_THAT(text2, testing::HasSubstr("# Ionic_Step 3"));
     std::ifstream ifs_fixed(fixed);
     EXPECT_FALSE(ifs_fixed.is_open());
     remove(numbered.c_str());

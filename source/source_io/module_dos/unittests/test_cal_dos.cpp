@@ -222,12 +222,12 @@ TEST_F(DosTest, Mode1Appends)
     const int out_app_flag = 1;
     const int bndpar = 1;
 
-    // First call: istep=0 -> "1 # Ionic_Step".
+    // First call: istep=0 -> "# Ionic_Step 1".
     ModuleIO::cal_dos(dosp.is, dosp.fa, dosp.de_ev, dosp.emax_ev, dosp.emin_ev,
                       dosp.bcoeff, dosp.nks, dosp.nkstot, dosp.wk, dosp.isk,
                       dosp.nbands, dosp.ekb, dosp.wg,
                       /*istep=*/0, out_app_flag, bndpar);
-    // Second call: istep=1 -> "2 # Ionic_Step", appended.
+    // Second call: istep=1 -> "# Ionic_Step 2", appended.
     ModuleIO::cal_dos(dosp.is, dosp.fa, dosp.de_ev, dosp.emax_ev, dosp.emin_ev,
                       dosp.bcoeff, dosp.nks, dosp.nkstot, dosp.wk, dosp.isk,
                       dosp.nbands, dosp.ekb, dosp.wg,
@@ -242,8 +242,8 @@ TEST_F(DosTest, Mode1Appends)
                         std::istreambuf_iterator<char>());
         ifs.close();
         // Two Ionic_Step headers present.
-        EXPECT_THAT(str, testing::HasSubstr("1    # Ionic_Step"));
-        EXPECT_THAT(str, testing::HasSubstr("2    # Ionic_Step"));
+        EXPECT_THAT(str, testing::HasSubstr("# Ionic_Step 1"));
+        EXPECT_THAT(str, testing::HasSubstr("# Ionic_Step 2"));
         remove(fname.c_str());
     }
 }
@@ -283,12 +283,12 @@ TEST_F(DosTest, Mode2Overwrites)
                         std::istreambuf_iterator<char>());
         ifs.close();
         // Only the last Ionic_Step header must be present.
-        EXPECT_THAT(str, testing::HasSubstr("2    # Ionic_Step"));
-        // A simple count check: "1    # Ionic_Step" must appear only inside
+        EXPECT_THAT(str, testing::HasSubstr("# Ionic_Step 2"));
+        // A simple count check: "# Ionic_Step 1" must appear only inside
         // the DOS grid lines as a value, not as a header. Check that the
         // header for step 1 is absent by verifying it is NOT found as a
         // standalone header line.
-        EXPECT_THAT(str, testing::Not(testing::HasSubstr("\n1    # Ionic_Step")));
+        EXPECT_THAT(str, testing::Not(testing::HasSubstr("\n# Ionic_Step 1")));
         remove(fname.c_str());
     }
 }
