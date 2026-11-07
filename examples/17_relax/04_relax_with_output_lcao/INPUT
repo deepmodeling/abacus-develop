@@ -52,12 +52,12 @@ out_mat_h_vh         1    # MAT/vhk{ki}g{step}_nao.txt (spin-independent)
 out_mat_h_vxc        1    # MAT/vxck{ki}s{spin}g{step}_nao.txt (spin-dependent)
 
 out_proj_band        1    # pbands{spin}.xml (mode 0/1), pbands{spin}g{step}.xml (mode 2)
-#out_mat_dh          1    # HAS BUGS!!! MAT/dhrxs{spin}g{step}_nao.csr, dhrys..., dhrzs...
-#out_mat_dh_t         1
-#out_mat_dh_vl        1
-#out_mat_dh_vnl       1
-#out_mat_dh_vxc       1
-#out_mat_dh_vh        1
+#out_mat_dh          1    # HAS BUGS!!! (multi-rank runs may hang) MAT/dhk[xyz]_iat{I}[s{spin}][g{step}]_nao.txt
+#out_mat_dh_t        1    # MAT/dtk[xyz]_iat{I}[s{spin}][g{step}]_nao.txt
+#out_mat_dh_vl       1    # MAT/dvlk[xyz]_iat{I}[s{spin}][g{step}]_nao.txt
+#out_mat_dh_vnl      1    # MAT/dvnlk[xyz]_iat{I}[s{spin}][g{step}]_nao.txt
+#out_mat_dh_vxc      1    # MAT/dvxck[xyz]_iat{I}[s{spin}][g{step}]_nao.txt
+#out_mat_dh_vh       1    # MAT/dvhk[xyz]_iat{I}[s{spin}][g{step}]_nao.txt
 
 #out_mat_vnlk
 #out_mat_vlk

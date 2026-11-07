@@ -49,6 +49,16 @@ std::string dhr_gen_fname(const std::string& prefix,
                           const bool numbered,
                           const int istep);
 
+/// Generate filename for the k-space derivative matrices (dH(k), dT(k), ...).
+/// A spin suffix is added only for nspin == 2 so the two spin channels do not
+/// overwrite each other; a single spin channel keeps the bare name.
+/// @param numbered whether the ionic step is embedded as a g{step} suffix (out_app_flag == 2)
+std::string dhk_gen_fname(const std::string& prefix,
+                          const int ispin,
+                          const int nspin,
+                          const bool numbered,
+                          const int istep);
+
 /// Write a single HContainer to CSR file with header.
 /// @param append whether to append to an existing file; the first written step (istep <= 0) truncates
 /// @param efermi_eV the Fermi energy in eV for this spin channel

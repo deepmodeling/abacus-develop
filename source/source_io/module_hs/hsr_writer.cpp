@@ -74,6 +74,25 @@ std::string ModuleIO::dhr_gen_fname(const std::string& prefix,
     return fname;
 }
 
+std::string ModuleIO::dhk_gen_fname(const std::string& prefix,
+                                     const int ispin,
+                                     const int nspin,
+                                     const bool numbered,
+                                     const int istep)
+{
+    std::string fname = prefix;
+    if (nspin == 2)
+    {
+        fname += "s" + std::to_string(ispin + 1);
+    }
+    if (numbered && istep >= 0)
+    {
+        fname += "g" + std::to_string(istep + 1);
+    }
+    fname += "_nao.txt";
+    return fname;
+}
+
 template <typename TR>
 void ModuleIO::write_hcontainer_csr(const std::string& fname,
                                      const UnitCell* ucell,

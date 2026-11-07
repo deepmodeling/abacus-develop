@@ -145,6 +145,31 @@ TEST(HsrWriterFname, DhrNegativeStepSuppressesStep)
 }
 
 // ---------------------------------------------------------------------------
+// dhk_gen_fname: dH(k) filename, spin suffix only for nspin == 2
+// ---------------------------------------------------------------------------
+
+TEST(HsrWriterFname, DhkSingleSpinKeepsBareName)
+{
+    // nspin=1: no spin suffix, no step suffix in modes 0/1
+    const std::string fname = ModuleIO::dhk_gen_fname("dhkx_iat1", 0, 1, false, 3);
+    expect_fname_eq("dhkx_iat1_nao.txt", fname);
+}
+
+TEST(HsrWriterFname, DhkSpinPolarizedAddsSpinSuffix)
+{
+    // nspin=2: one file per spin channel
+    const std::string fname = ModuleIO::dhk_gen_fname("dhkx_iat1", 1, 2, false, 3);
+    expect_fname_eq("dhkx_iat1s2_nao.txt", fname);
+}
+
+TEST(HsrWriterFname, DhkNumberedWithStep)
+{
+    // out_app_flag == 2: one file per ionic step
+    const std::string fname = ModuleIO::dhk_gen_fname("dhkz_iat2", 1, 2, true, 4);
+    expect_fname_eq("dhkz_iat2s2g5_nao.txt", fname);
+}
+
+// ---------------------------------------------------------------------------
 // write_hcontainer_csr: CSR text format layout
 // ---------------------------------------------------------------------------
 
