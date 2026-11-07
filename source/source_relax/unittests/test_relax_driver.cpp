@@ -6,6 +6,7 @@
 #include "source_relax/relax_driver.h"
 #include "source_relax/relax_stru_io.h"
 #include "source_relax/socket_driver.h"
+#include "source_io/module_parameter/parameter.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -106,8 +107,22 @@ void write_stru(UnitCell&,
 }
 } // namespace relax_stru_io
 
-void Socket_Driver::socket_driver(ModuleESolver::ESolver*, UnitCell&, const Input_para&, std::ofstream&)
+class TestParameters
 {
+  public:
+    static Input_para& input(Parameter& parameters) { return parameters.input; }
+};
+
+namespace
+{
+int socket_frame_count = 0;
+}
+
+bool Socket_Driver::socket_driver(ModuleESolver::ESolver* solver, UnitCell& cell,
+                                  Parameter&, const Input_para&, const System_para&, std::ofstream&)
+{
+    for (int step = 0; step < socket_frame_count; ++step) { solver->runner(cell, step); }
+    return socket_frame_count > 0;
 }
 
 namespace
@@ -180,6 +195,7 @@ class RelaxDriverTest : public ::testing::Test
     void SetUp() override
     {
         log_file_ = testing::TempDir() + "running.log";
+        socket_frame_count = 0;
     }
 
     static void make_cell(UnitCell& ucell)
@@ -213,7 +229,8 @@ class RelaxDriverTest : public ::testing::Test
 
 TEST_F(RelaxDriverTest, RelaxNmaxZeroDoesNotRunESolver)
 {
-    Input_para inp;
+    Parameter parameters;
+    Input_para& inp = TestParameters::input(parameters);
     inp.calculation = "relax";
     inp.relax_method = "lbfgs";
     inp.relax_nmax = 0;
@@ -225,7 +242,7 @@ TEST_F(RelaxDriverTest, RelaxNmaxZeroDoesNotRunESolver)
     std::ofstream ofs(log_file_);
     Relax_Driver driver;
     testing::internal::CaptureStdout();
-    driver.relax_driver(&esolver, ucell, inp, ofs);
+    driver.relax_driver(&esolver, ucell, parameters, ofs);
     const std::string output = testing::internal::GetCapturedStdout();
     ofs.close();
 
@@ -236,7 +253,8 @@ TEST_F(RelaxDriverTest, RelaxNmaxZeroDoesNotRunESolver)
 
 TEST_F(RelaxDriverTest, FirstStepConvergesOnNonSimultaneousPath)
 {
-    Input_para inp;
+    Parameter parameters;
+    Input_para& inp = TestParameters::input(parameters);
     inp.calculation = "relax";
     inp.relax_method = "lbfgs";
     inp.relax_nmax = 3;
@@ -251,7 +269,7 @@ TEST_F(RelaxDriverTest, FirstStepConvergesOnNonSimultaneousPath)
     std::ofstream ofs(log_file_);
     Relax_Driver driver;
     testing::internal::CaptureStdout();
-    driver.relax_driver(&esolver, ucell, inp, ofs);
+    driver.relax_driver(&esolver, ucell, parameters, ofs);
     const std::string output = testing::internal::GetCapturedStdout();
     ofs.close();
 
@@ -263,7 +281,8 @@ TEST_F(RelaxDriverTest, FirstStepConvergesOnNonSimultaneousPath)
 
 TEST_F(RelaxDriverTest, FirstStepConvergesOnSimultaneousPath)
 {
-    Input_para inp;
+    Parameter parameters;
+    Input_para& inp = TestParameters::input(parameters);
     inp.calculation = "relax";
     inp.relax_method = "cg";
     inp.relax_nmax = 3;
@@ -278,7 +297,7 @@ TEST_F(RelaxDriverTest, FirstStepConvergesOnSimultaneousPath)
     std::ofstream ofs(log_file_);
     Relax_Driver driver;
     testing::internal::CaptureStdout();
-    driver.relax_driver(&esolver, ucell, inp, ofs);
+    driver.relax_driver(&esolver, ucell, parameters, ofs);
     const std::string output = testing::internal::GetCapturedStdout();
     ofs.close();
 
@@ -290,7 +309,8 @@ TEST_F(RelaxDriverTest, FirstStepConvergesOnSimultaneousPath)
 
 TEST_F(RelaxDriverTest, MaxStepsMovesFinalNonSimultaneousGeometry)
 {
-    Input_para inp;
+    Parameter parameters;
+    Input_para& inp = TestParameters::input(parameters);
     inp.calculation = "relax";
     inp.relax_method = "lbfgs";
     inp.relax_nmax = 1;
@@ -305,7 +325,7 @@ TEST_F(RelaxDriverTest, MaxStepsMovesFinalNonSimultaneousGeometry)
     DriverTestESolver esolver(1.0);
     std::ofstream ofs(log_file_);
     Relax_Driver driver;
-    driver.relax_driver(&esolver, ucell, inp, ofs);
+    driver.relax_driver(&esolver, ucell, parameters, ofs);
     ofs.close();
 
     EXPECT_EQ(esolver.runner_count, 1);
@@ -316,7 +336,8 @@ TEST_F(RelaxDriverTest, MaxStepsMovesFinalNonSimultaneousGeometry)
 
 TEST_F(RelaxDriverTest, MaxStepsStopsOnSimultaneousPath)
 {
-    Input_para inp;
+    Parameter parameters;
+    Input_para& inp = TestParameters::input(parameters);
     inp.calculation = "relax";
     inp.relax_method = "cg";
     inp.relax_nmax = 1;
@@ -330,7 +351,7 @@ TEST_F(RelaxDriverTest, MaxStepsStopsOnSimultaneousPath)
     DriverTestESolver esolver(1.0);
     std::ofstream ofs(log_file_);
     Relax_Driver driver;
-    driver.relax_driver(&esolver, ucell, inp, ofs);
+    driver.relax_driver(&esolver, ucell, parameters, ofs);
     ofs.close();
 
     EXPECT_EQ(esolver.runner_count, 1);
@@ -343,7 +364,8 @@ TEST_F(RelaxDriverTest, MaxStepsAfterAllUsesEvaluatedCellRelaxGeometry)
 {
     unitcell::allow_cell_change = true;
 
-    Input_para inp;
+    Parameter parameters;
+    Input_para& inp = TestParameters::input(parameters);
     inp.calculation = "cell-relax";
     inp.relax_method = "cg";
     inp.relax_nmax = 1;
@@ -362,7 +384,7 @@ TEST_F(RelaxDriverTest, MaxStepsAfterAllUsesEvaluatedCellRelaxGeometry)
     esolver.set_stress(1.0);
     std::ofstream ofs(log_file_);
     Relax_Driver driver;
-    driver.relax_driver(&esolver, ucell, inp, ofs);
+    driver.relax_driver(&esolver, ucell, parameters, ofs);
     ofs.close();
 
     unitcell::allow_cell_change = false;
@@ -377,7 +399,8 @@ TEST_F(RelaxDriverTest, MaxStepsAfterAllUsesEvaluatedCellRelaxGeometry)
 
 TEST_F(RelaxDriverTest, FinalAllowedStepConvergesAndCallsAfterAllOnce)
 {
-    Input_para inp;
+    Parameter parameters;
+    Input_para& inp = TestParameters::input(parameters);
     inp.calculation = "relax";
     inp.relax_method = "lbfgs";
     inp.relax_nmax = 1;
@@ -391,7 +414,7 @@ TEST_F(RelaxDriverTest, FinalAllowedStepConvergesAndCallsAfterAllOnce)
     DriverTestESolver esolver(1.0e-4);
     std::ofstream ofs(log_file_);
     Relax_Driver driver;
-    driver.relax_driver(&esolver, ucell, inp, ofs);
+    driver.relax_driver(&esolver, ucell, parameters, ofs);
     ofs.close();
 
     EXPECT_EQ(esolver.runner_count, 1);
@@ -409,7 +432,8 @@ TEST_F(RelaxDriverTest, ExitStopsBeforeNonSimultaneousRelaxStep)
         exit_file << "stop_ion true\n";
     }
 
-    Input_para inp;
+    Parameter parameters;
+    Input_para& inp = TestParameters::input(parameters);
     inp.calculation = "relax";
     inp.relax_method = "lbfgs";
     inp.relax_nmax = 3;
@@ -423,7 +447,7 @@ TEST_F(RelaxDriverTest, ExitStopsBeforeNonSimultaneousRelaxStep)
     DriverTestESolver esolver(1.0);
     std::ofstream ofs(log_file_);
     Relax_Driver driver;
-    driver.relax_driver(&esolver, ucell, inp, ofs);
+    driver.relax_driver(&esolver, ucell, parameters, ofs);
     ofs.close();
 
     ASSERT_EQ(::chdir(old_cwd), 0);
@@ -444,7 +468,8 @@ TEST_F(RelaxDriverTest, ExitStopsBeforeSimultaneousRelaxStep)
         exit_file << "stop_ion true\n";
     }
 
-    Input_para inp;
+    Parameter parameters;
+    Input_para& inp = TestParameters::input(parameters);
     inp.calculation = "relax";
     inp.relax_method = "cg";
     inp.relax_nmax = 3;
@@ -458,7 +483,7 @@ TEST_F(RelaxDriverTest, ExitStopsBeforeSimultaneousRelaxStep)
     DriverTestESolver esolver(1.0);
     std::ofstream ofs(log_file_);
     Relax_Driver driver;
-    driver.relax_driver(&esolver, ucell, inp, ofs);
+    driver.relax_driver(&esolver, ucell, parameters, ofs);
     ofs.close();
 
     ASSERT_EQ(::chdir(old_cwd), 0);
@@ -469,3 +494,32 @@ TEST_F(RelaxDriverTest, ExitStopsBeforeSimultaneousRelaxStep)
 }
 
 } // namespace
+
+TEST_F(RelaxDriverTest, SocketWithoutCompletedFrameSkipsFinalization)
+{
+    Parameter parameters;
+    TestParameters::input(parameters).socket_driver = true;
+    UnitCell cell;
+    make_cell(cell);
+    DriverTestESolver solver(0.0);
+    std::ofstream output(log_file_);
+    Relax_Driver driver;
+    driver.relax_driver(&solver, cell, parameters, output);
+    EXPECT_EQ(solver.runner_count, 0);
+    EXPECT_EQ(solver.after_all_count, 0);
+}
+
+TEST_F(RelaxDriverTest, SocketCompletedFramesFinalizeOnce)
+{
+    Parameter parameters;
+    TestParameters::input(parameters).socket_driver = true;
+    socket_frame_count = 2;
+    UnitCell cell;
+    make_cell(cell);
+    DriverTestESolver solver(0.0);
+    std::ofstream output(log_file_);
+    Relax_Driver driver;
+    driver.relax_driver(&solver, cell, parameters, output);
+    EXPECT_EQ(solver.runner_count, 2);
+    EXPECT_EQ(solver.after_all_count, 1);
+}

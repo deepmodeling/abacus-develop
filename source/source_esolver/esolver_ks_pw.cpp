@@ -18,6 +18,7 @@
 
 #include "source_estate/module_charge/chg_routine.h"  // use charge mixing, mohan add 20251006
 #include "source_estate/setup_estate_pw.h"            // mohan add 20251005
+#include "source_hamilt/module_xc/xc_functional.h"
 #include "source_hamilt/module_xc/general_exx_info.h" // for General_Exx_Info type used via general_exx_info_
 #include "source_io/module_ctrl/ctrl_output_pw.h"     // mohan add 20250927
 #include "source_pw/module_pwdft/dftu_base.h"
@@ -157,6 +158,16 @@ void ESolver_KS_PW<T, Device>::before_all_runners(BaseCell& basecell, const Inpu
 
     //! Initialize exx pw
     this->exx_helper->init(ucell, inp, this->pelec->wg, this->general_exx_info_);
+}
+
+template <typename T, typename Device>
+bool ESolver_KS_PW<T, Device>::apply_electronic_control(Parameter& parameters, const elecstate::ElectronicControl& control)
+{
+    const int functional_type = XC_Functional::get_func_type();
+    validate_electronic_step_exx(functional_type, this->general_exx_info_.cal_exx);
+    if (!ESolver_FP::apply_electronic_control(parameters, control)) { return false; }
+    this->exx_helper->begin_electronic_step();
+    return true;
 }
 
 template <typename T, typename Device>

@@ -15,6 +15,8 @@ const double *ElecState::getRho(int spin) const
 
 void ElecState::init_nelec_spin() { return; }
 
+void ElecState::init_nelec_spin(int, double, double) {}
+
 void ElecState::init_ks(
     Charge *chg_in, // pointer for class Charge
     const K_Vectors *klist_in,

@@ -1,0 +1,44 @@
+#ifndef ABACUS_SOCKET_CONSTANT_POTENTIAL_H
+#define ABACUS_SOCKET_CONSTANT_POTENTIAL_H
+
+#include "source_estate/electronic_control.h"
+#include <string>
+
+class Parameter;
+class UnitCell;
+struct Input_para;
+struct System_para;
+namespace ModuleESolver { class ESolver; }
+
+namespace SocketCP
+{
+struct Configuration
+{
+    bool enabled = false;
+    elecstate::PotentialWindow window;
+};
+
+struct Observables
+{
+    double fermi_eV = 0.0;
+    double nelect = 0.0;
+    bool has_workfunction = false;
+    double reference_eV = 0.0;
+    double workfunction_eV = 0.0;
+};
+
+// Apply one external electron-number request and evaluate the current geometry.
+void run_electronic_step(ModuleESolver::ESolver& solver, UnitCell& cell,
+                         Parameter& parameters, const Input_para& input, const System_para& system,
+                         const elecstate::ElectronicControl& control, int functional_type, int istep);
+
+Configuration parse_init(const std::string& parameters);
+elecstate::ElectronicControl make_control(const Configuration& config, double nelect, int flags);
+// Called on every rank while evaluating POSDATA; the solver may use collectives.
+Observables collect_observables(const Configuration& config, const ModuleESolver::ESolver& solver,
+                               const UnitCell& cell, const Parameter& parameters);
+// Serializes only the completed frame, without calling the solver or MPI.
+std::string serialize_observables(const Observables& result);
+}
+
+#endif

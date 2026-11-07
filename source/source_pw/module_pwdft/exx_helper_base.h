@@ -8,11 +8,16 @@ class UnitCell;
 struct Input_para;
 struct General_Exx_Info;
 
+void validate_electronic_step_exx(int functional_type, bool cal_exx);
+
 class Exx_HelperBase
 {
   public:
     Exx_HelperBase() = default;
     virtual ~Exx_HelperBase() = default;
+
+    // Explicit boundary for an externally controlled electron-number request.
+    virtual void begin_electronic_step() = 0;
 
     virtual void init(const UnitCell& ucell, const Input_para& inp, const ModuleBase::matrix& wg, const General_Exx_Info& exx_info) = 0;
 
@@ -35,7 +40,7 @@ class Exx_HelperBase
     ///       value (false = not converged, rerun SCF) and the caller
     ///       (ESolver_KS_PW) sets ESolver_KS::scf_rerun_ to trigger the
     ///       restart at iter=1 in ESolver_KS::runner.
-    virtual bool exx_after_converge(int iter, bool ene_conv) = 0;
+    virtual bool exx_after_converge(int iter, bool ene_conv, const Input_para& inp) = 0;
 
     virtual double cal_exx_energy(void* psi) = 0;
 
