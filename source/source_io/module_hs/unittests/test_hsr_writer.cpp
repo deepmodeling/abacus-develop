@@ -150,6 +150,13 @@ TEST(HsrWriterFname, DhrNegativeStepSuppressesStep)
 
 TEST(HsrWriterIo, HContainerCsrHeaderKeepsCurrentFormat)
 {
+    // File I/O is not MPI-collective; run it on rank 0 only to avoid two
+    // ranks racing on the same file when the test binary is launched with
+    // mpirun.
+    if (GlobalV::MY_RANK != 0)
+    {
+        return;
+    }
     const std::string filename = "write_hs_r_header_h.csr";
     std::remove(filename.c_str());
 
@@ -187,6 +194,10 @@ TEST(HsrWriterIo, HContainerCsrHeaderKeepsCurrentFormat)
 
 TEST(HsrWriterIo, GammaFoldedHeaderKeepsCsrReadable)
 {
+    if (GlobalV::MY_RANK != 0)
+    {
+        return;
+    }
     const std::string filename = "write_hs_r_gamma_folded.csr";
     const std::string representation_note
         = "gamma-only folded matrix; stored R-space contributions are summed into R = (0, 0, 0)";
@@ -222,6 +233,10 @@ TEST(HsrWriterIo, GammaFoldedHeaderKeepsCsrReadable)
 
 TEST(HsrWriterIo, HContainerCsrAppendKeepsCurrentStepSections)
 {
+    if (GlobalV::MY_RANK != 0)
+    {
+        return;
+    }
     const std::string filename = "write_hs_r_append_s.csr";
     std::remove(filename.c_str());
 
@@ -251,6 +266,10 @@ TEST(HsrWriterIo, HContainerCsrAppendKeepsCurrentStepSections)
 
 TEST(HsrWriterIo, HContainerCsrHeaderCarriesPerChannelFermi)
 {
+    if (GlobalV::MY_RANK != 0)
+    {
+        return;
+    }
     UnitCell ucell;
     init_unitcell(ucell);
     Parallel_Orbitals pv;
@@ -284,6 +303,10 @@ TEST(HsrWriterIo, HContainerCsrHeaderCarriesPerChannelFermi)
 
 TEST(HsrWriterIo, HContainerBinaryWritesSortedAndEmptyRBlocks)
 {
+    if (GlobalV::MY_RANK != 0)
+    {
+        return;
+    }
     const std::string filename = "write_hs_r_native_binary_real.dat";
     std::remove(filename.c_str());
 
@@ -326,6 +349,10 @@ TEST(HsrWriterIo, HContainerBinaryWritesSortedAndEmptyRBlocks)
 
 TEST(HsrWriterIo, HContainerBinaryWritesComplexValuesAsDoublePairs)
 {
+    if (GlobalV::MY_RANK != 0)
+    {
+        return;
+    }
     const std::string filename = "write_hs_r_native_binary_complex.dat";
     std::remove(filename.c_str());
 
@@ -371,6 +398,10 @@ TEST(HsrWriterIo, HContainerBinaryWritesComplexValuesAsDoublePairs)
 
 TEST(HsrWriterIo, HContainerBinaryAppendsAndCanOverwrite)
 {
+    if (GlobalV::MY_RANK != 0)
+    {
+        return;
+    }
     const std::string filename = "write_hs_r_native_binary_append.dat";
     std::remove(filename.c_str());
 
@@ -550,24 +581,31 @@ TEST(HsrWriterIo, WriteHsrTextCsrCarriesPerSpinFermiFromEfermi)
     hr_vec.push_back(&hr_dw);
 
     std::ofstream ofs_running_null; // not opened; test does not inspect the running log
+    // write_hsr is MPI-collective (it calls gatherParallels), so every rank
+    // must enter it. Only rank 0 actually writes the files, so the subsequent
+    // read-back and assertions are guarded to rank 0 to avoid a race where a
+    // non-zero rank removes the file before rank 0 can inspect it.
     ModuleIO::write_hsr(
         hr_vec, &sr, &ucell, 1, 8, pv.para_2d(), 1, true, iat2iwt_ptr, 1, 0, "./", eferm,
         ofs_running_null);
 
-    const std::string output_up = read_file(hr_up_filename);
-    const std::string output_dw = read_file(hr_dw_filename);
+    if (GlobalV::MY_RANK == 0)
+    {
+        const std::string output_up = read_file(hr_up_filename);
+        const std::string output_dw = read_file(hr_dw_filename);
 
-    // write_hsr multiplies each spin's Fermi by Ry_to_eV and passes has_efermi=true
-    std::ostringstream expected_up;
-    expected_up << " 1 # spin index, E_Fermi = " << std::setprecision(6) << ef_up_eV << " eV\n";
-    std::ostringstream expected_dw;
-    expected_dw << " 2 # spin index, E_Fermi = " << std::setprecision(6) << ef_dw_eV << " eV\n";
-    EXPECT_THAT(output_up, testing::HasSubstr(expected_up.str()));
-    EXPECT_THAT(output_dw, testing::HasSubstr(expected_dw.str()));
+        // write_hsr multiplies each spin's Fermi by Ry_to_eV and passes has_efermi=true
+        std::ostringstream expected_up;
+        expected_up << " 1 # spin index, E_Fermi = " << std::setprecision(6) << ef_up_eV << " eV\n";
+        std::ostringstream expected_dw;
+        expected_dw << " 2 # spin index, E_Fermi = " << std::setprecision(6) << ef_dw_eV << " eV\n";
+        EXPECT_THAT(output_up, testing::HasSubstr(expected_up.str()));
+        EXPECT_THAT(output_dw, testing::HasSubstr(expected_dw.str()));
 
-    std::remove(hr_up_filename.c_str());
-    std::remove(hr_dw_filename.c_str());
-    std::remove(sr_filename.c_str());
+        std::remove(hr_up_filename.c_str());
+        std::remove(hr_dw_filename.c_str());
+        std::remove(sr_filename.c_str());
+    }
 }
 
 int main(int argc, char** argv)
