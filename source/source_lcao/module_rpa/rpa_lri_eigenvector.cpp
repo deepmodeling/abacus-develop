@@ -34,7 +34,7 @@ void RPA_LRI<T, Tdata>::out_eigen_vector_legacy(const Parallel_Orbitals& parav, 
     const std::size_t values_per_iw = static_cast<std::size_t>(nbands) * npsin_tmp;
     // Preserve the legacy text writer when reader-v1 output is disabled.
 #ifdef __MPI
-    const MPI_Comm mpi_comm = parav.comm();
+    const MPI_Comm mpi_comm = distribution.comm();
     const int mpi_rank
         = parav.para_2d().irproc() * parav.para_2d().ncproc() + parav.para_2d().icproc();
     const int mpi_size = parav.para_2d().nrproc() * parav.para_2d().ncproc();

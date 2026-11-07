@@ -17,14 +17,14 @@ namespace LR
     public:
         LR_Spectrum(const int& nspin_global, const int& naos, const std::vector<int>& nocc, const std::vector<int>& nvirt,
             const ModulePW::PW_Basis& rho_basis, psi::Psi<T>& psi_ks_in,
-            const UnitCell& ucell, const K_Vectors& kv_in, const Grid_Driver& gd, const std::vector<double>& orb_cutoff,
+            const UnitCell& ucell, const K_Vectors& kv_in, const std::vector<double>& spatial_weights_in, const Grid_Driver& gd, const std::vector<double>& orb_cutoff,
             const TwoCenterBundle& two_center_bundle_,
             const std::vector<BlockCyclicDistribution>& pX_in, const BlockCyclicDistribution& pc_in, const Parallel_Orbitals& pmat_in,
             const double* omega, const double* eig_ks, const T* X, const int& nstate, const bool& openshell,
             const std::string& gauge, const int my_rank, const std::string& out_dir) :
             my_rank(my_rank), nspin_x(openshell ? 2 : 1), naos(naos), nocc(nocc), nvirt(nvirt),
             nk(nspin_global == 2 ? kv_in.get_nks() / 2 : kv_in.get_nks()),
-            rho_basis(rho_basis), ucell(ucell), kv(kv_in), gd_(gd),
+            rho_basis(rho_basis), ucell(ucell), kv(kv_in), spatial_weights(spatial_weights_in), gd_(gd),
             orb_cutoff_(orb_cutoff), two_center_bundle_(two_center_bundle_),
             pX(pX_in), pc(pc_in), pmat(pmat_in),
             omega(omega), eig_ks(eig_ks), X(X), nstate(nstate), gauge(gauge), out_dir(out_dir),
@@ -92,6 +92,8 @@ namespace LR
         T* Y = nullptr; ///< the deexcitation part of amplitudes
         bool is_full = false;
         const K_Vectors& kv;
+        /// Pure spatial weights, with no spin degeneracy; same spin/k ordering as kv.
+        const std::vector<double> spatial_weights;
         std::vector<psi::Psi<T>> psi_ks_vec;
         const std::vector<BlockCyclicDistribution>& pX;
         const BlockCyclicDistribution& pc;

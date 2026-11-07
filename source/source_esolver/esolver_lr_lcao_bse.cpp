@@ -83,7 +83,7 @@ void ESolver_BSE<T, TR>::before_all_runners(BaseCell& basecell, const Input_para
         this->reset_dim_spin2();
     }
 
-    LR_Util::setup_2d_division(this->paraC_, this->paraMat_.nb(), this->nbasis, this->nbands
+    LR_Util::setup_2d_division(this->paraC_, this->paraMat_.para_2d().nb(), this->nbasis, this->nbands
 #ifdef __MPI
             , this->paraMat_.para_2d().ictxt()
 #endif
@@ -516,7 +516,7 @@ void ESolver_BSE<T, TR>::after_all_runners(BaseCell& basecell)
                 for (int is = 0; is < this->X.size(); ++is)
                 {
                     LR::LR_Spectrum<T> spectrum(this->nspin, this->nbasis, this->nocc, this->nvirt, *this->pw_rho, *this->psi_ks,
-                                                *this->ucell_, this->kv, this->gd(), this->orb_cutoff_, this->tcb(),
+                                                *this->ucell_, this->kv, this->kv.wk, this->gd(), this->orb_cutoff_, this->tcb(),
                                                 this->paraX_, this->paraC_, this->paraMat_,
                                                 &this->tda_ene[is * this->nstates], this->eig_ks.c,
                                                 this->X[is].template data<T>(), this->nstates, false/*openshell*/,
@@ -547,7 +547,7 @@ void ESolver_BSE<T, TR>::after_all_runners(BaseCell& basecell)
                 for (int is = 0;is < this->full_X.size();++is)
                 {
                     LR::LR_Spectrum<T> spectrum(this->nspin, this->nbasis, this->nocc, this->nvirt, *this->pw_rho, *this->psi_ks,
-                                                *this->ucell_, this->kv, this->gd(), this->orb_cutoff_, this->tcb(),
+                                                *this->ucell_, this->kv, this->kv.wk, this->gd(), this->orb_cutoff_, this->tcb(),
                                                 this->paraX_, this->paraC_, this->paraMat_,
                                                 &this->full_ene[is * this->nstates], this->eig_ks.c,
                                                 this->full_X[is].template data<T>(), this->nstates, false/*openshell*/,

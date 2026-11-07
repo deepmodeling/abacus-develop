@@ -20,7 +20,7 @@ auto RI_2D_Comm::get_2D_judge(const UnitCell& ucell, const BlockCyclicDistributi
     const std::map<int,int> nspin_b = {{1,1}, {2,1}, {4,2}};
 
     std::vector<std::set<TA>> iat0_list(nspin_b.at(PARAM.inp.nspin));
-    for (int iwt0_2D = 0; iwt0_2D < pv.get_row_size(); ++iwt0_2D)
+    for (int iwt0_2D = 0; iwt0_2D < pv.nrloc(); ++iwt0_2D)
     {
         const int iwt0 = pv.irglb(iwt0_2D);
         int iat0=0;int iw0_b=0;int is0_b=0;
@@ -29,7 +29,7 @@ auto RI_2D_Comm::get_2D_judge(const UnitCell& ucell, const BlockCyclicDistributi
     }
 
     std::vector<std::set<TA>> iat1_list(nspin_b.at(PARAM.inp.nspin));
-    for (int iwt1_2D = 0; iwt1_2D < pv.get_col_size(); ++iwt1_2D)
+    for (int iwt1_2D = 0; iwt1_2D < pv.ncloc(); ++iwt1_2D)
     {
         const int iwt1 = pv.icglb(iwt1_2D);
         int iat1=0;int iw1_b=0;int is1_b=0;

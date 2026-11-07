@@ -6,6 +6,12 @@
 
 #include <vector>
 
+#ifdef __EXX
+#include "source_lcao/module_operator_lcao/op_exx_lcao.h"
+#include <complex>
+#include <map>
+#endif
+
 class Grid_Driver;
 class Parallel_Orbitals;
 class UnitCell;

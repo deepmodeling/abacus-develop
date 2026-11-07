@@ -149,16 +149,16 @@ TEST_F(SymmetryRotationTest, GetReturnLattice)
 TEST_F(SymmetryRotationTest, SetBlockToMat2d)
 {
     std::vector<std::complex<double>> obj_mat(pv.size());
-    for (int j = 0;j < pv.get_col_size();++j)
-        for (int i = 0;i < pv.get_row_size();++i)
-            obj_mat[j * pv.get_row_size() + i] = std::complex<double>(static_cast<double>(pv.irglb(i)), static_cast<double>(pv.icglb(j)));
+    for (int j = 0;j < pv.ncloc();++j)
+        for (int i = 0;i < pv.nrloc();++i)
+            obj_mat[j * pv.nrloc() + i] = std::complex<double>(static_cast<double>(pv.irglb(i)), static_cast<double>(pv.icglb(j)));
     ModuleBase::ComplexMatrix block(2, 2);
     block(0, 0) = 0; block(0, 1) = -1; block(1, 0) = -2; block(1, 1) = -3;
     symrot.set_block_to_mat2d(2, 3, block, obj_mat, pv);
     for (int i = 2;i < 4;++i)
         for (int j = 3;j < 5;++j)
         {
-            int local_index = pv.icloc(j) * pv.get_row_size() + pv.irloc(i);
+            int local_index = pv.icloc(j) * pv.nrloc() + pv.irloc(i);
             if (pv.in_this_processor(i, j))
             {
                 EXPECT_NEAR(obj_mat[local_index].real(), block(j - 3, i - 2).real(), DOUBLETHRESHOLD);
@@ -183,7 +183,7 @@ TEST_F(SymmetryRotationTest, SetSigmaY2d)
         for (int gj = 0; gj < nl; ++gj)
         {
             if (!pv2.in_this_processor(gi, gj)) { continue; }
-            const int idx = pv2.icloc(gj) * pv2.get_row_size() + pv2.irloc(gi);
+            const int idx = pv2.icloc(gj) * pv2.nrloc() + pv2.irloc(gi);
             std::complex<double> expect(0.0, 0.0);
             if (gi / 2 == gj / 2) // same orbital
             {
@@ -210,7 +210,7 @@ TEST_F(SymmetryRotationTest, TrsSpinRotate)
     for (int gi = 0; gi < nl; ++gi)
         for (int gj = 0; gj < nl; ++gj)
             if (pv2.in_this_processor(gi, gj))
-                X[pv2.icloc(gj) * pv2.get_row_size() + pv2.irloc(gi)] = val(gi, gj);
+                X[pv2.icloc(gj) * pv2.nrloc() + pv2.irloc(gi)] = val(gi, gj);
 
     const double scale = 0.5;
     std::vector<std::complex<double>> out = symrot.trs_spin_rotate(X, sy, pv2, scale);
@@ -225,7 +225,7 @@ TEST_F(SymmetryRotationTest, TrsSpinRotate)
             for (int a = 0; a < 2; ++a)
                 for (int b = 0; b < 2; ++b)
                 {
-                    const int idx = pv2.icloc(2 * jo + b) * pv2.get_row_size() + pv2.irloc(2 * io + a);
+                    const int idx = pv2.icloc(2 * jo + b) * pv2.nrloc() + pv2.irloc(2 * io + a);
                     B[a][b] = std::conj(X[idx]);
                 }
             for (int a = 0; a < 2; ++a)
@@ -236,7 +236,7 @@ TEST_F(SymmetryRotationTest, TrsSpinRotate)
                         for (int q = 0; q < 2; ++q)
                             s += SY[a][p] * B[p][q] * SY[q][b];
                     s *= scale;
-                    const int idx = pv2.icloc(2 * jo + b) * pv2.get_row_size() + pv2.irloc(2 * io + a);
+                    const int idx = pv2.icloc(2 * jo + b) * pv2.nrloc() + pv2.irloc(2 * io + a);
                     EXPECT_NEAR(out[idx].real(), s.real(), DOUBLETHRESHOLD);
                     EXPECT_NEAR(out[idx].imag(), s.imag(), DOUBLETHRESHOLD);
                 }
