@@ -38,6 +38,8 @@ void alltoallv_data(const double* sendbuf,
                     const int* recvcounts,
                     const int* rdispls,
                     const MPI_Comm& comm);
+/// every process contributes count values; recvbuf holds them in rank order
+void allgather_data(const int* sendbuf, int count, int* recvbuf, const MPI_Comm& comm);
 
 #if defined(__NCCL_PARALLEL_DEVICE)
 void nccl_bcast_data(double* object, const int& n, MPI_Comm& comm, int root = 0);

@@ -361,6 +361,11 @@ void alltoallv_data(const double* sendbuf,
     MPI_Alltoallv(sendbuf, sendcounts, sdispls, MPI_DOUBLE, recvbuf, recvcounts, rdispls, MPI_DOUBLE, comm);
 }
 
+void allgather_data(const int* sendbuf, int count, int* recvbuf, const MPI_Comm& comm)
+{
+    MPI_Allgather(sendbuf, count, MPI_INT, recvbuf, count, MPI_INT, comm);
+}
+
 #ifndef __CUDA_MPI
 template <typename T>
 struct object_cpu_point<T, base_device::DEVICE_GPU>

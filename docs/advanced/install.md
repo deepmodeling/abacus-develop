@@ -108,7 +108,7 @@ cmake -S libvdwxc -B build-libvdwxc -DBUILD_SHARED_LIBS=ON -DVDWXC_ENABLE_MPI=ON
 cmake --build build-libvdwxc && cmake --install build-libvdwxc
 ```
 
-Then pass `-DENABLE_LIBXC=ON -DENABLE_LIBVDWXC=ON` to CMake for ABACUS and add `/path/to/libvdwxc` to `CMAKE_PREFIX_PATH`. ABACUS hands each k-point pool's density to libvdwxc's distributed interface, so the nonlocal convolution and its memory are shared by the processes of the pool; libvdwxc keeps about 25 doubles (200 bytes) per grid point of a process's slab, and the adapter 5 more, so the memory per process falls as the pool grows. libvdwxc's MPI build plans its FFTs with FFTW-MPI, so an MPI build of ABACUS with libvdwxc must use FFTW3 rather than the FFTW interface of MKL or KML; CMake stops otherwise. The legacy Makefile does not build this feature.
+Then pass `-DENABLE_LIBXC=ON -DENABLE_LIBVDWXC=ON` to CMake for ABACUS and add `/path/to/libvdwxc` to `CMAKE_PREFIX_PATH`. CMake also checks for `vdwxc_get_local_grid`; with it, ABACUS asks libvdwxc for the grid slab of each process instead of assuming the FFTW-MPI default distribution. ABACUS hands each k-point pool's density to libvdwxc's distributed interface, so the nonlocal convolution and its memory are shared by the processes of the pool; libvdwxc keeps about 25 doubles (200 bytes) per grid point of a process's slab, and the adapter 5 more, so the memory per process falls as the pool grows. libvdwxc's MPI build plans its FFTs with FFTW-MPI, so an MPI build of ABACUS with libvdwxc must use FFTW3 rather than the FFTW interface of MKL or KML; CMake stops otherwise. The legacy Makefile does not build this feature.
 
 In the input file:
 

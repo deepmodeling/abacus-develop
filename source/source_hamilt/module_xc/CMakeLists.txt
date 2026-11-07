@@ -34,6 +34,8 @@ if(ENABLE_LIBVDWXC)
   target_sources(xc_ PRIVATE ../module_vdw/nonlocal_xc.cpp
                              ../module_vdw/rvv10_workspace.cpp)
   target_link_libraries(xc_ PUBLIC libvdwxc::vdwxc)
+  target_compile_definitions(
+    xc_ PRIVATE $<$<BOOL:${LIBVDWXC_HAS_LOCAL_GRID}>:__LIBVDWXC_LOCAL_GRID>)
 endif()
 
 if(BUILD_TESTING)

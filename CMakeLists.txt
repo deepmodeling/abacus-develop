@@ -665,6 +665,17 @@ if(ENABLE_LIBVDWXC)
         "ENABLE_LIBVDWXC with ENABLE_MPI requires ABACUS built with FFTW3, not with the FFTW interface of MKL or KML"
     )
   endif()
+  # vdwxc_get_local_grid reports the grid slab of each process; without it the adapter assumes the FFTW-MPI
+  # default blocks (see source_hamilt/module_vdw/rvv10_workspace.h).
+  include(CheckCXXSourceCompiles)
+  set(CMAKE_REQUIRED_LIBRARIES libvdwxc::vdwxc)
+  check_cxx_source_compiles(
+    "#include <complex.h>
+#include <complex>
+#include <vdwxc.h>
+int main() { int shape[3]; int offset[3]; vdwxc_get_local_grid(nullptr, shape, offset); return 0; }"
+    LIBVDWXC_HAS_LOCAL_GRID)
+  unset(CMAKE_REQUIRED_LIBRARIES)
 endif()
 
 if(DEFINED DeePMD_DIR)

@@ -24,7 +24,7 @@ namespace vdw
 {
 namespace
 {
-
+#ifndef __LIBVDWXC_LOCAL_GRID
 /// z planes [begin, end) of the libvdwxc slab of process rank: FFTW-MPI blocks of ceil(nz / nproc) planes.
 void libvdwxc_slab(const int nz, const int nproc, const int rank, int& begin, int& end)
 {
@@ -34,6 +34,7 @@ void libvdwxc_slab(const int nz, const int nproc, const int rank, int& begin, in
     const int block_end = begin + block;
     end = std::min(block_end, nz);
 }
+#endif
 
 /// The instance of the run. It is created with new and deleted in release() (not a static object): a static
 /// object would be destroyed after MPI_Finalize, too late for the FFTW-MPI plans that the destructor frees.
@@ -97,15 +98,70 @@ void Rvv10Workspace::rebuild(const ModulePW::PW_Basis& pw)
     nproc_ = pw.poolnproc;
     // the cell must be known before the FFT plans are made
     this->set_cell(pw);
+    bool distributed = false;
 #ifdef __MPI
     comm_ = pw.pool_world;
-    if (pw.poolnproc > 1)
+    distributed = pw.poolnproc > 1;
+    if (distributed)
     {
         vdwxc_init_mpi(data_, comm_);
-        return;
     }
 #endif
-    vdwxc_init_serial(data_);
+    if (!distributed)
+    {
+        vdwxc_init_serial(data_);
+    }
+    this->query_slabs(pw);
+}
+
+void Rvv10Workspace::query_slabs(const ModulePW::PW_Basis& pw)
+{
+    const int nproc = pw.poolnproc;
+    int slab[2] = {0, pw.nz}; // first z plane and end of the slab of this process
+#ifdef __LIBVDWXC_LOCAL_GRID
+    int shape[3] = {0, 0, 0};
+    int offset[3] = {0, 0, 0};
+    vdwxc_get_local_grid(data_, shape, offset);
+    // the first libvdwxc axis is z (see set_cell), and whole z planes are exchanged
+    if (offset[1] != 0 || offset[2] != 0 || shape[1] != pw.nx || shape[2] != pw.ny)
+    {
+        ModuleBase::WARNING_QUIT("Rvv10Workspace::query_slabs", "libvdwxc distributes the x or y axis of the grid");
+    }
+    slab[0] = offset[0];
+    slab[1] = offset[0] + shape[0];
+#else
+    libvdwxc_slab(pw.nz, nproc, pw.poolrank, slab[0], slab[1]);
+#endif
+    std::vector<int> slabs(slab, slab + 2);
+#ifdef __MPI
+    if (nproc > 1)
+    {
+        slabs.resize(2 * nproc);
+        Parallel_Common::allgather_data(slab, 2, slabs.data(), comm_);
+    }
+#endif
+    // the slabs must follow each other in rank order and cover the z axis; an empty slab, wherever libvdwxc
+    // places it, is put at the end of the previous one
+    slab_bound_.assign(nproc + 1, 0);
+    int covered = 0;
+    for (int ip = 0; ip < nproc; ++ip)
+    {
+        const int begin = slabs[2 * ip];
+        const int end = slabs[2 * ip + 1];
+        if (end > begin)
+        {
+            if (begin != covered)
+            {
+                ModuleBase::WARNING_QUIT("Rvv10Workspace::query_slabs", "the libvdwxc slabs are not in rank order");
+            }
+            covered = end;
+        }
+        slab_bound_[ip + 1] = covered;
+    }
+    if (covered != pw.nz)
+    {
+        ModuleBase::WARNING_QUIT("Rvv10Workspace::query_slabs", "the libvdwxc slabs do not cover the z axis");
+    }
 }
 
 void Rvv10Workspace::prepare(const ModulePW::PW_Basis& pw, const XCFunctionalParameters& parameters)
@@ -118,8 +174,8 @@ void Rvv10Workspace::prepare(const ModulePW::PW_Basis& pw, const XCFunctionalPar
     {
         this->rebuild(pw);
     }
-    // the libvdwxc slabs depend only on nz and the processes, but the ABACUS planes also on the basis, so
-    // the exchange is planned on every call (counts and resizes only)
+    // the libvdwxc slabs are fixed with the grid and the pool, but the ABACUS planes depend also on the basis,
+    // so the exchange is planned on every call (counts and resizes only)
     this->plan_exchange(pw);
     if (vdwxc_set_rvv10_parameters(data_, parameters.rvv10_b, parameters.rvv10_c) != 0)
     {
@@ -130,9 +186,8 @@ void Rvv10Workspace::prepare(const ModulePW::PW_Basis& pw, const XCFunctionalPar
 void Rvv10Workspace::plan_exchange(const ModulePW::PW_Basis& pw)
 {
     const int nproc = pw.poolnproc;
-    int slab_start = 0;
-    int slab_end = 0;
-    libvdwxc_slab(pw.nz, nproc, pw.poolrank, slab_start, slab_end);
+    const int slab_start = slab_bound_[pw.poolrank];
+    const int slab_end = slab_bound_[pw.poolrank + 1];
     const int plane_end = pw.startz_current + pw.nplane;
     send_count_.assign(nproc, 0);
     send_offset_.assign(nproc, 0);
@@ -141,11 +196,8 @@ void Rvv10Workspace::plan_exchange(const ModulePW::PW_Basis& pw)
     for (int ip = 0; nproc > 1 && ip < nproc; ++ip)
     {
         // ABACUS planes of this process that lie in the slab of ip
-        int begin = 0;
-        int end = 0;
-        libvdwxc_slab(pw.nz, nproc, ip, begin, end);
-        int low = std::max(pw.startz_current, begin);
-        int high = std::min(plane_end, end);
+        int low = std::max(pw.startz_current, slab_bound_[ip]);
+        int high = std::min(plane_end, slab_bound_[ip + 1]);
         if (high > low)
         {
             send_count_[ip] = (high - low) * pw.nxy;

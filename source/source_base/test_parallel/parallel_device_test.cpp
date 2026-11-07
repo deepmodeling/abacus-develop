@@ -174,5 +174,22 @@ TEST(ParallelDevice, AlltoallvExchangesUnevenBlocks)
     }
 }
 
+TEST(ParallelDevice, AllgatherKeepsRankOrder)
+{
+    const ModuleBase::CommunicationDomain domain = ModuleBase::world_comm_domain();
+    MPI_Comm communicator = domain.communicator();
+    const int rank = domain.rank();
+    MPICommGroup world_group(communicator);
+    const int size = world_group.gsize;
+    const int sent[2] = {10 * rank, 10 * rank + 1};
+    std::vector<int> received(2 * size, -1);
+    Parallel_Common::allgather_data(sent, 2, received.data(), communicator);
+    for (int peer = 0; peer < size; ++peer)
+    {
+        EXPECT_EQ(received[2 * peer], 10 * peer);
+        EXPECT_EQ(received[2 * peer + 1], 10 * peer + 1);
+    }
+}
+
 } // namespace
 #endif

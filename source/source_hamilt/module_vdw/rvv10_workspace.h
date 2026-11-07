@@ -23,10 +23,11 @@ const int rvv10_stress_components = 9;
  * @brief The libvdwxc object of a run: one FFT grid and pool, kept between calls, rebuilt when either changes.
  *
  * libvdwxc gets the lattice vectors in the cyclic order (a3, a1, a2), so that the first axis of its grid is the
- * z axis that ABACUS distributes. It splits that axis into blocks of ceil(nz/P) planes, the FFTW-MPI default;
- * vdwxc_init_mpi does not report the local slab, so the same rule is applied here. The slab of a process is
- * stored as [z][x][y], the transpose of the ABACUS layout [x][y][z], and whole z planes are moved between the
- * two distributions by all-to-all exchanges.
+ * z axis that ABACUS distributes. libvdwxc splits that axis into slabs. When it provides vdwxc_get_local_grid
+ * (__LIBVDWXC_LOCAL_GRID, set by CMake), every process asks for its slab and the slabs are gathered over the
+ * pool and checked once per grid; otherwise the FFTW-MPI default blocks of ceil(nz/P) planes are assumed. The
+ * slab of a process is stored as [z][x][y], the transpose of the ABACUS layout [x][y][z], and whole z planes
+ * are moved between the two distributions by all-to-all exchanges.
  *
  * The single instance is created on first use and released by release(), which vdw::finalize_rvv10 calls at
  * the end of the run; it must happen before MPI_Finalize, because the FFTW-MPI plans are destroyed with it.
@@ -68,6 +69,7 @@ class Rvv10Workspace
     bool same_grid(const ModulePW::PW_Basis& pw) const;
     void set_cell(const ModulePW::PW_Basis& pw);
     void rebuild(const ModulePW::PW_Basis& pw);
+    void query_slabs(const ModulePW::PW_Basis& pw);
     void prepare(const ModulePW::PW_Basis& pw, const XCFunctionalParameters& parameters);
     void plan_exchange(const ModulePW::PW_Basis& pw);
     void to_libvdwxc(const ModulePW::PW_Basis& pw, const std::vector<double>& field, std::vector<double>& slab);
@@ -82,6 +84,8 @@ class Rvv10Workspace
 #ifdef __MPI
     MPI_Comm comm_ = MPI_COMM_NULL;
 #endif
+    // the libvdwxc slab of process ip is the z planes [slab_bound_[ip], slab_bound_[ip + 1])
+    std::vector<int> slab_bound_;
     // planes moved to (send) and from (recv) each process, in doubles
     std::vector<int> send_count_;
     std::vector<int> send_offset_;
