@@ -10,9 +10,11 @@
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_hamilt/module_xc/libxc_abacus.h"
 #include "source_estate/module_charge/charge.h"
+#include "source_cell/unitcell.h"
 #include "source_basis/module_pw/pw_basis_big.h"
 #include "source_io/module_output/cube_io.h"
 #include "source_base/global_variable.h"
+#include "source_base/tool_quit.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
@@ -30,6 +32,7 @@ void ModuleIO::write_libxc_r(
 	const double &omega, // volume of cell
 	const double tpiba,
 	const Charge &chr,
+	const UnitCell &ucell,
 	const ModulePW::PW_Basis_Big &pw_big,
 	const ModulePW::PW_Basis &pw_rhod,
 	const std::string &out_dir,
@@ -354,7 +357,7 @@ void ModuleIO::write_libxc_r(
 		};
 	};
 
-	auto write_data = [&pw_big, &pw_rhod, nspin, &out_dir, istep, out_app_flag](
+	auto write_data = [&pw_big, &pw_rhod, nspin, &out_dir, &ucell, istep, out_app_flag](
 	const std::string data_name,
 	const std::vector<double> &data,
 	const std::vector<std::string> &channel_suffixes)
@@ -383,10 +386,19 @@ void ModuleIO::write_libxc_r(
 				open_mode |= std::ios::app;
 			}
 			ofs.open(file_name, open_mode);
+			if (!ofs.is_open())
+			{
+				ModuleBase::WARNING_QUIT("write_libxc_r", "Cannot open file: " + file_name);
+			}
 
-			ofs.unsetf(std::ostream::fixed);
-			ofs << std::setprecision(PARAM.inp.out_xc_r[1]);
-			ofs << std::scientific;
+			// Each file holds a single channel, so the header declares one spin
+			// direction; the first comment line carries the one-based ionic step.
+			std::vector<std::string> comment(2);
+			comment[0] = "Ionic_Step " + std::to_string(istep + 1)
+				+ "  Cubefile created from ABACUS. Inner loop is z, followed by y and x";
+			comment[1] = "1 # number of spin directions";
+			ModuleIO::write_cube_header_for_cell(ofs, ucell, pw_rhod.nx, pw_rhod.ny, pw_rhod.nz,
+				comment, PARAM.inp.out_xc_r[1]);
 		}
 
 	  #ifdef __MPI

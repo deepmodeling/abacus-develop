@@ -277,6 +277,7 @@ void ctrl_output_fp(UnitCell& ucell,
                                 ucell.omega,   // volume of cell
                                 ucell.tpiba,
                                 chr,
+                                ucell,
                                 *pw_big,
                                 *pw_rhod,
                                 global_chg_dir,

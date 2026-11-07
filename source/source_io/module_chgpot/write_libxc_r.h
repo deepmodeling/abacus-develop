@@ -13,6 +13,7 @@
 #include <string>
 
 class Charge;
+class UnitCell;
 
 namespace ModulePW
 {
@@ -29,6 +30,7 @@ namespace ModuleIO
         const double &omega, // volume of cell
         const double tpiba,
         const Charge &chr,
+        const UnitCell &ucell, // cell used for the cube header (grid geometry and atoms)
         const ModulePW::PW_Basis_Big &pw_big,
         const ModulePW::PW_Basis &pw_rhod,
         const std::string &out_dir, // directory that receives the xc_*.cube files
