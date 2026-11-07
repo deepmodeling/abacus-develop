@@ -45,7 +45,7 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
     // 1) write projected band structure
     if (inp.out_proj_band)
     {
-        ModuleIO::write_proj_band_lcao(psi, pv, pelec, kv, ucell, p_hamilt);
+        ModuleIO::write_proj_band_lcao(psi, pv, pelec, kv, ucell, p_hamilt, istep, inp.out_app_flag);
     }
 
 	// 2) out ldos

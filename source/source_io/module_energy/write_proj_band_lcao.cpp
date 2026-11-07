@@ -16,7 +16,9 @@ void ModuleIO::write_proj_band_lcao(
     const elecstate::ElecState* pelec,
     const K_Vectors& kv,
     const UnitCell &ucell,
-    hamilt::Hamilt<double>* p_ham)
+    hamilt::Hamilt<double>* p_ham,
+    const int istep,
+    const int out_app_flag)
 {
     ModuleBase::TITLE("ModuleIO", "write_proj_band_lcao");
     ModuleBase::timer::start("ModuleIO", "write_proj_band_lcao");
@@ -108,11 +110,20 @@ void ModuleIO::write_proj_band_lcao(
         if (GlobalV::MY_RANK == 0)
         {
             std::stringstream ps2;
-            ps2 << PARAM.globalv.global_out_dir << "pbands" << is + 1 << ".xml";
+            ps2 << PARAM.globalv.global_out_dir << "pbands" << is + 1;
+            // XML documents cannot be appended, so mode 1 keeps the fixed name
+            // and overwrites; only mode 2 writes one numbered file per step.
+            if (out_app_flag == 2)
+            {
+                ps2 << "g" << istep + 1;
+            }
+            ps2 << ".xml";
             GlobalV::ofs_running << " Output projected bands are in file: " << ps2.str() << std::endl;
             std::ofstream out(ps2.str().c_str());
 
             out << "<pband>" << std::endl;
+            // XML comment keeps the frame annotation invisible to XML parsers.
+            out << "<!-- Ionic_Step " << istep + 1 << " -->" << std::endl;
             out << "<nspin>" << PARAM.inp.nspin << "</nspin>" << std::endl;
             if (PARAM.inp.nspin == 4) 
 			{
@@ -189,7 +200,9 @@ void ModuleIO::write_proj_band_lcao(
     const elecstate::ElecState* pelec,
     const K_Vectors& kv,
     const UnitCell& ucell,
-    hamilt::Hamilt<std::complex<double>>* p_ham)
+    hamilt::Hamilt<std::complex<double>>* p_ham,
+    const int istep,
+    const int out_app_flag)
 {
     ModuleBase::TITLE("ModuleIO", "write_proj_band_lcao");
     ModuleBase::timer::start("ModuleIO", "write_proj_band_lcao");
@@ -313,11 +326,20 @@ void ModuleIO::write_proj_band_lcao(
         if (GlobalV::MY_RANK == 0)
         {
             std::stringstream ps2;
-            ps2 << PARAM.globalv.global_out_dir << "pbands" << is + 1 << ".xml";
+            ps2 << PARAM.globalv.global_out_dir << "pbands" << is + 1;
+            // XML documents cannot be appended, so mode 1 keeps the fixed name
+            // and overwrites; only mode 2 writes one numbered file per step.
+            if (out_app_flag == 2)
+            {
+                ps2 << "g" << istep + 1;
+            }
+            ps2 << ".xml";
             GlobalV::ofs_running << " Output projected bands in file: " << ps2.str() << std::endl;
             std::ofstream out(ps2.str().c_str());
 
             out << "<pband>" << std::endl;
+            // XML comment keeps the frame annotation invisible to XML parsers.
+            out << "<!-- Ionic_Step " << istep + 1 << " -->" << std::endl;
             out << "<nspin>" << PARAM.inp.nspin << "</nspin>" << std::endl;
             if (PARAM.inp.nspin == 4)
             {
