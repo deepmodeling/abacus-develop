@@ -39,3 +39,18 @@ addtest(
 target_compile_options(MODULE_RI_invmat_ri PRIVATE -ffunction-sections
                                                    -fdata-sections)
 target_link_options(MODULE_RI_invmat_ri PRIVATE -Wl,--gc-sections)
+
+addtest(
+  TARGET MODULE_RI_hybrid_gauge_phase_test
+  LIBS parameter base device
+  SOURCES test_hybrid_gauge_phase.cpp ../mix_dmk_2d.cpp)
+
+addtest(
+  TARGET MODULE_RI_hybrid_image_domain_test
+  LIBS parameter base device
+  SOURCES test_hybrid_image_domain.cpp ../mix_dmk_2d.cpp)
+
+addtest(
+  TARGET MODULE_RI_exx_info_test
+  LIBS parameter base device
+  SOURCES test_exx_info.cpp ../../../source_hamilt/module_xc/exx_info.cpp)
