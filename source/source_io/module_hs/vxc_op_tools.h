@@ -1,7 +1,7 @@
 #ifndef VXC_OP_TOOLS_H
 #define VXC_OP_TOOLS_H
 
-#include "source_base/block_cyclic_distribution.h"
+#include "source_base/parallel_blkcyc.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_base/module_container/base/third_party/blas.h"
 #include "source_base/parallel_reduce.h"

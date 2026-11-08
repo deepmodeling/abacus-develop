@@ -1,7 +1,7 @@
 #include "evolve_elec.h"
 
 #include "evolve_psi.h"
-#include "source_base/block_cyclic_distribution.h"
+#include "source_base/parallel_blkcyc.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 

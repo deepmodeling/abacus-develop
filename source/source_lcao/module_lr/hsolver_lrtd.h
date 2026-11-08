@@ -1,6 +1,6 @@
 #ifndef ABACUS_LR_HSOLVER_LRTD_H
 #define ABACUS_LR_HSOLVER_LRTD_H
-#include "source_base/block_cyclic_distribution.h"
+#include "source_base/parallel_blkcyc.h"
 #include "source_base/macros.h"
 #include <complex>
 #include <string>

@@ -1,7 +1,7 @@
 #ifndef WRITE_DMK_H
 #define WRITE_DMK_H
 
-#include "source_base/block_cyclic_distribution.h"
+#include "source_base/parallel_blkcyc.h"
 #include "source_cell/unitcell.h"
 #include "source_cell/klist.h"
 

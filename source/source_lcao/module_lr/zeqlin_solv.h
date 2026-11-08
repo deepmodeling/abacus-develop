@@ -1,6 +1,6 @@
 #ifndef ABACUS_SOURCE_LCAO_MODULE_LR_ZEQLIN_SOLV_H
 #define ABACUS_SOURCE_LCAO_MODULE_LR_ZEQLIN_SOLV_H
-#include "source_base/block_cyclic_distribution.h"
+#include "source_base/parallel_blkcyc.h"
 
 namespace LR
 {

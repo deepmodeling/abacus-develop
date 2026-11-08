@@ -7,7 +7,7 @@
 #include "source_lcao/module_lr/utils/mo_type.h"
 #include <vector>
 #ifdef __MPI
-#include "source_base/block_cyclic_distribution.h"
+#include "source_base/parallel_blkcyc.h"
 #endif
 namespace LR
 {

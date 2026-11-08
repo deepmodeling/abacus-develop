@@ -4,7 +4,7 @@
 #include "grad_degen.h"
 #include "source_psi/psi.h"
 #include "lr_amp.h"
-#include "source_base/block_cyclic_distribution.h"
+#include "source_base/parallel_blkcyc.h"
 #include "source_cell/unitcell.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include <algorithm>

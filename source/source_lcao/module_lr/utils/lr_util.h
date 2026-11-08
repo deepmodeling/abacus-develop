@@ -7,7 +7,7 @@
 #include <utility>
 #include "source_base/matrix.h"
 #include "source_base/complexmatrix.h"
-#include "source_base/block_cyclic_distribution.h"
+#include "source_base/parallel_blkcyc.h"
 #include "source_psi/psi.h"
 #include <ATen/core/tensor.h>
 #include <ATen/ops/linalg_op.h>

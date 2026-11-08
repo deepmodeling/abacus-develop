@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 
-#include "source_base/block_cyclic_distribution.h"
+#include "source_base/parallel_blkcyc.h"
 
 namespace BSE
 {

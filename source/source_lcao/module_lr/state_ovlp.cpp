@@ -6,7 +6,7 @@
 #include <stdexcept>
 #include <type_traits>
 #include <algorithm>
-#include "source_base/block_cyclic_distribution.h"
+#include "source_base/parallel_blkcyc.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_cell/unitcell.h"
 #include "source_lcao/module_operator_lcao/ovlp_block.h"

@@ -9,7 +9,7 @@
 #include "hamilt_bse_solver.h"
 #include "molecular_lri.h"
 
-#include "source_base/block_cyclic_distribution.h"
+#include "source_base/parallel_blkcyc.h"
 #include "source_base/timer.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_cell/unitcell.h"

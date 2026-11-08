@@ -1,7 +1,7 @@
 #include "source_lcao/module_rt/boundary_fix.h"
 
 #include "source_base/basis_flattened_indexing.h"
-#include "source_base/block_cyclic_distribution.h"
+#include "source_base/parallel_blkcyc.h"
 #include "source_base/parallel_common.h"
 #include "source_cell/unitcell.h"
 

@@ -8,7 +8,7 @@
 #include "source_base/global_variable.h"
 #include "source_base/module_external/blas_connector.h"
 #include "source_base/module_external/scalapack_connector.h"
-#include "source_base/block_cyclic_distribution.h"
+#include "source_base/parallel_blkcyc.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include <RI/global/Tensor.h>
 #include <array>

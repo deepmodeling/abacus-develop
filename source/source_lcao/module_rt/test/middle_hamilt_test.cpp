@@ -1,6 +1,6 @@
 #include "source_lcao/module_rt/middle_hamilt.h"
 
-#include "source_base/block_cyclic_distribution.h"
+#include "source_base/parallel_blkcyc.h"
 #include "source_base/global_variable.h" // GlobalV::ofs_running
 #include "tddft_test.h"
 

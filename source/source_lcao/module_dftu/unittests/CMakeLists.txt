@@ -74,7 +74,7 @@ if(ENABLE_MPI)
     test_dftu_nao_fs_accum.cpp
     ../../../source_basis/module_ao/parallel_orbitals.cpp
     # This test uses BlockCyclicDistribution::set_serial which is a real implementation
-    # in block_cyclic_distribution.cpp; keep __MPI so the serial path links correctly.
+    # in parallel_blkcyc.cpp; keep __MPI so the serial path links correctly.
     KEEP_FEATURE_DEFINITIONS
     __MPI)
 

@@ -1,7 +1,7 @@
 #include "source_md/md_base.h"
 #include "source_md/md_func.h"
 #include "source_base/basis_flattened_indexing.h"
-#include "source_base/block_cyclic_distribution.h"
+#include "source_base/parallel_blkcyc.h"
 #include "source_base/constants.h"
 #include "source_base/parallel_cell.h"
 #include "source_base/parallel_global.h"

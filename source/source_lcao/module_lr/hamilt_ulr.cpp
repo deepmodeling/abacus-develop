@@ -1,6 +1,6 @@
 #include "hamilt_ulr.h"
 #include "dm_trans/dm_trans.h"
-#include "source_base/block_cyclic_distribution.h"
+#include "source_base/parallel_blkcyc.h"
 #include "source_hamilt/hamilt.h"
 #include "source_estate/module_dm/density_matrix.h"
 #include "source_lcao/module_lr/operator_casida/operator_lr_diag.h"

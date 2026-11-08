@@ -3,7 +3,7 @@
 
 #include <string>
 
-#include "source_base/block_cyclic_distribution.h"
+#include "source_base/parallel_blkcyc.h"
 
 // mohan note: this file holds the dense square-matrix writer
 // (formerly save_mat in write_hs.h / write_hs.hpp).

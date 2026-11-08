@@ -1,6 +1,6 @@
 #include "boundary_fix.h"
 #include "source_base/basis_flattened_indexing.h"
-#include "source_base/block_cyclic_distribution.h"
+#include "source_base/parallel_blkcyc.h"
 #include "source_base/constants.h"
 #include "source_base/libm/libm.h"
 #include "source_base/parallel_cell.h"

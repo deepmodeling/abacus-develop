@@ -15,7 +15,7 @@
 #include "snap_psibeta_kernel.cuh"
 #include "source_base/atom_basis_view.h"
 #include "source_base/basis_flattened_indexing.h"
-#include "source_base/block_cyclic_distribution.h"
+#include "source_base/parallel_blkcyc.h"
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"
 

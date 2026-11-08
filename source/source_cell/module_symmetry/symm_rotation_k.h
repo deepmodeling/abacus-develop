@@ -1,7 +1,7 @@
 #ifndef SYMM_ROTATION_K_H
 #define SYMM_ROTATION_K_H
 #include "irred_sec.h"
-#include "source_base/block_cyclic_distribution.h"
+#include "source_base/parallel_blkcyc.h"
 #include "source_base/complexmatrix.h"
 #include "source_cell/module_symmetry/symm_rot_spin.h"
 

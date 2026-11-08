@@ -5,7 +5,7 @@
 #include "source_base/memory_recorder.h"
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
-#include "source_base/block_cyclic_distribution.h"
+#include "source_base/parallel_blkcyc.h"
 #include "source_base/module_external/scalapack_connector.h"
 #include "source_base/global_variable.h"
 #include "source_base/global_function.h"

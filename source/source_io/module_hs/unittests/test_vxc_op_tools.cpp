@@ -17,7 +17,7 @@
 #include <gtest/gtest.h>
 
 #include "source_io/module_hs/vxc_op_tools.h"
-#include "source_base/block_cyclic_distribution.h"
+#include "source_base/parallel_blkcyc.h"
 #include "source_base/parallel_comm.h"
 #include "source_base/matrix.h"
 

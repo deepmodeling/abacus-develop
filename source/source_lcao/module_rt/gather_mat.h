@@ -1,7 +1,7 @@
 #ifndef GATHER_MAT_H
 #define GATHER_MAT_H
 
-#include "source_base/block_cyclic_distribution.h"
+#include "source_base/parallel_blkcyc.h"
 #include "source_base/module_external/scalapack_connector.h" // Cpxgemr2d
 #include "source_hamilt/matrixblock.h"
 
