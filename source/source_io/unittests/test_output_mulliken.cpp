@@ -224,7 +224,7 @@ TEST(OutputMullikenSpinTest, Nspin4MyFollowsPauliConvention)
         const int nw = 2;
         Parallel_Orbitals pv;
         pv.para_2d().set_serial(nw, nw);
-        ModuleBase::ComplexMatrix mud(pv.para_2d().ncol, pv.para_2d().nrow, true);
+        ModuleBase::ComplexMatrix mud(pv.para_2d().ncloc(), pv.para_2d().nrloc(), true);
         for (int ir = 0; ir < nw; ++ir)
         {
             for (int ic = 0; ic < nw; ++ic)

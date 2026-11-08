@@ -4,11 +4,13 @@
 #include "source_base/module_parallel/para_world.h"
 #include "source_base/module_parallel/para_tag.h"
 #include "source_base/module_parallel/para_bridge.h"
+#include "source_base/module_parallel/para_mpi_func.h"
 #ifdef __MPI
 #include "source_basis/module_pw/test/test_tool.h"
 #include "mpi.h"
 #endif
 #include <array>
+#include <cmath>
 #include <complex>
 #include <cstring>
 #include <fstream>
@@ -462,6 +464,212 @@ TEST_F(ReadRhogTest, ReadRhogNspin2To4SpecialPath)
     }
 
     std::remove(tmpfile.c_str());
+}
+
+TEST_F(ReadRhogTest, RestartDensityTransformsEverySpin)
+{
+    setup_pw_basis();
+    const std::string filename = testing::TempDir() + "lr_density_fft_test.restart";
+    const std::vector<std::array<int, 3>> miller = {{{0, 0, 0}}};
+    const std::vector<std::vector<std::complex<double>>> values = {{{0.25, 0.0}}, {{0.75, 0.0}}};
+    write_binary_by_hand(filename, 0, 2, miller, values);
+    Parallel::barrier(pw_world);
+    fill_rhog(2);
+    std::vector<double> up(rhopw.nrxx, -1.0);
+    std::vector<double> down(rhopw.nrxx, -1.0);
+    double* density[] = {up.data(), down.data()};
+    std::ostringstream log;
+    const bool loaded = module_charge::read_rho_from_binary(filename, rhopw, 2, rhog.data(), density, pw_world, log);
+    EXPECT_TRUE(loaded);
+    for (int ir = 0; ir < rhopw.nrxx; ++ir)
+    {
+        EXPECT_NEAR(up[ir], 0.25, 1e-12);
+        EXPECT_NEAR(down[ir], 0.75, 1e-12);
+    }
+    if (pw_world.rank() == 0)
+    {
+        EXPECT_NE(log.str().find(filename), std::string::npos);
+        std::remove(filename.c_str());
+    }
+}
+
+TEST_F(ReadRhogTest, MissingRestartPreservesRealDensity)
+{
+    setup_pw_basis();
+    fill_rhog(1);
+    const std::string filename = testing::TempDir() + "lr_density_absent_test.restart";
+    if (pw_world.rank() == 0) { std::remove(filename.c_str()); }
+    Parallel::barrier(pw_world);
+    std::vector<double> density(rhopw.nrxx, 0.125);
+    double* channels[] = {density.data()};
+    std::ostringstream log;
+    const bool loaded = module_charge::read_rho_from_binary(filename, rhopw, 1, rhog.data(), channels, pw_world, log);
+    EXPECT_FALSE(loaded);
+    for (double value : density) { EXPECT_DOUBLE_EQ(value, 0.125); }
+}
+
+
+TEST_F(ReadRhogTest, RestartRejectsExcessSpinChannelsBeforeWriting)
+{
+    setup_pw_basis();
+    const std::string filename = testing::TempDir() + "lr_density_spin_mismatch.restart";
+    const std::vector<std::array<int, 3>> miller = {{{0, 0, 0}}};
+    const std::vector<std::vector<std::complex<double>>> values = {{{0.25, 0.0}}, {{0.75, 0.0}}};
+    write_binary_by_hand(filename, 0, 2, miller, values);
+    Parallel::barrier(pw_world);
+    fill_rhog(1); // Exactly one pointer, as allocated by an nspin=1 calculation.
+    const auto original = rhog_data;
+    std::vector<double> density(rhopw.nrxx, 0.125);
+    double* channels[] = {density.data()};
+    std::ostringstream log;
+    EXPECT_FALSE(module_charge::read_rho_from_binary(filename, rhopw, 1, rhog.data(), channels, pw_world, log));
+    EXPECT_EQ(rhog_data, original);
+    for (double value : density) { EXPECT_DOUBLE_EQ(value, 0.125); }
+    Parallel::barrier(pw_world);
+    if (pw_world.rank() == 0) { std::remove(filename.c_str()); }
+}
+
+TEST_F(ReadRhogTest, RestartRejectsMissingSpinChannelsBeforeWriting)
+{
+    setup_pw_basis();
+    const std::string filename = testing::TempDir() + "lr_density_missing_spin.restart";
+    const std::vector<std::array<int, 3>> miller = {{{0, 0, 0}}};
+    const std::vector<std::vector<std::complex<double>>> values = {{{0.25, 0.0}}};
+    write_binary_by_hand(filename, 0, 1, miller, values);
+    Parallel::barrier(pw_world);
+    fill_rhog(2);
+    const auto original = rhog_data;
+    std::vector<double> up(rhopw.nrxx, 0.125);
+    std::vector<double> down(rhopw.nrxx, 0.375);
+    double* channels[] = {up.data(), down.data()};
+    std::ostringstream log;
+    EXPECT_FALSE(module_charge::read_rho_from_binary(filename, rhopw, 2, rhog.data(), channels, pw_world, log));
+    EXPECT_EQ(rhog_data, original);
+    for (double value : up) { EXPECT_DOUBLE_EQ(value, 0.125); }
+    for (double value : down) { EXPECT_DOUBLE_EQ(value, 0.375); }
+    Parallel::barrier(pw_world);
+    if (pw_world.rank() == 0) { std::remove(filename.c_str()); }
+}
+
+TEST_F(ReadRhogTest, RestartSkipsModesOutsideSmallerCutoffOnOwnedStick)
+{
+#ifdef __MPI
+    rhopw.initmpi(pw_world.size(), pw_world.rank(), pw_world.comm());
+#endif
+    rhopw.initgrids(6.5, latvec(), 8, 8, 8);
+    rhopw.initparameters(false, 8.0); // Several sticks for MPI; (0,0,4) lies outside cutoff.
+    rhopw.setuptransform();
+    rhopw.collect_local_pw();
+    ASSERT_GT(rhopw.npwtot, 1);
+    const std::string filename = testing::TempDir() + "lr_density_smaller_cutoff.restart";
+    const std::vector<std::array<int, 3>> miller = {{{0, 0, 0}}, {{0, 0, 1}}, {{0, 0, -1}}, {{0, 0, 4}}};
+    const std::vector<std::vector<std::complex<double>>> values = {{{0.25, 0.0}, {0.1, 0.05}, {0.1, -0.05}, {9.0, 2.0}}};
+    write_binary_by_hand(filename, 0, 1, miller, values);
+    Parallel::barrier(pw_world);
+    // Guard both ends: the former ig=-1 write is visible even without ASan.
+    const std::complex<double> sentinel(77.0, 88.0);
+    std::vector<std::complex<double>> guarded(rhopw.npw + 2, sentinel);
+    std::complex<double>* reciprocal[] = {guarded.data() + 1};
+    std::vector<double> density(rhopw.nrxx, -1.0);
+    double* channels[] = {density.data()};
+    std::ostringstream log;
+    EXPECT_TRUE(module_charge::read_rho_from_binary(filename, rhopw, 1, reciprocal, channels, pw_world, log));
+    EXPECT_EQ(guarded.front(), sentinel);
+    EXPECT_EQ(guarded.back(), sentinel);
+    const double two_pi = 2.0 * std::acos(-1.0);
+    for (int ir = 0; ir < rhopw.nrxx; ++ir)
+    {
+        const int iz = ir % rhopw.nplane + rhopw.startz_current;
+        const double phase = two_pi * iz / rhopw.nz;
+        const double expected = 0.25 + 0.2 * std::cos(phase) - 0.1 * std::sin(phase);
+        EXPECT_NEAR(density[ir], expected, 1e-12);
+    }
+    Parallel::barrier(pw_world);
+    if (pw_world.rank() == 0) { std::remove(filename.c_str()); }
+}
+
+
+TEST_F(ReadRhogTest, CompleteCubeSetTakesPrecedenceOverRestart)
+{
+    const std::string directory = testing::TempDir() + "lr_cube_priority_";
+    const std::string restart = directory + "ABACUS-CHARGE-DENSITY.restart";
+    const std::string cube = directory + "chg.cube";
+    const std::string up_cube = directory + "chgs1.cube";
+    const std::string down_cube = directory + "chgs2.cube";
+    const std::vector<std::array<int, 3>> miller = {{{0, 0, 0}}};
+    const std::vector<std::vector<std::complex<double>>> values = {{{0.25, 0.0}}, {{0.75, 0.0}}};
+    write_binary_by_hand(restart, 0, 2, miller, values);
+    if (pw_world.rank() == 0)
+    {
+        std::ofstream(cube) << "cube fixture";
+        std::ofstream(up_cube) << "cube fixture";
+        std::ofstream(down_cube) << "cube fixture";
+    }
+    Parallel::barrier(pw_world);
+    EXPECT_TRUE(module_charge::has_complete_charge_cubes(directory, 1, pw_world));
+    EXPECT_TRUE(module_charge::has_complete_charge_cubes(directory, 2, pw_world));
+    Parallel::barrier(pw_world);
+    if (pw_world.rank() == 0)
+    {
+        std::remove(cube.c_str());
+        std::remove(up_cube.c_str());
+        std::remove(down_cube.c_str());
+        std::remove(restart.c_str());
+    }
+}
+
+TEST_F(ReadRhogTest, PartialCubeSetUsesRestartForEverySpin)
+{
+    setup_pw_basis();
+    const std::string directory = testing::TempDir() + "lr_cube_partial_";
+    const std::string restart = directory + "ABACUS-CHARGE-DENSITY.restart";
+    const std::string up_cube = directory + "chgs1.cube";
+    const std::string down_cube = directory + "chgs2.cube";
+    const std::vector<std::array<int, 3>> miller = {{{0, 0, 0}}};
+    const std::vector<std::vector<std::complex<double>>> values = {{{0.25, 0.0}}, {{0.75, 0.0}}};
+    write_binary_by_hand(restart, 0, 2, miller, values);
+    if (pw_world.rank() == 0)
+    {
+        std::ofstream(up_cube) << "cube fixture";
+        std::remove(down_cube.c_str());
+    }
+    Parallel::barrier(pw_world);
+    EXPECT_FALSE(module_charge::has_complete_charge_cubes(directory, 2, pw_world));
+    fill_rhog(2);
+    std::vector<double> up(rhopw.nrxx, -1.0);
+    std::vector<double> down(rhopw.nrxx, -1.0);
+    double* density[] = {up.data(), down.data()};
+    std::ostringstream log;
+    EXPECT_TRUE(module_charge::read_rho_from_binary(restart, rhopw, 2, rhog.data(), density, pw_world, log));
+    for (double value : up) { EXPECT_NEAR(value, 0.25, 1e-12); }
+    for (double value : down) { EXPECT_NEAR(value, 0.75, 1e-12); }
+    Parallel::barrier(pw_world);
+    if (pw_world.rank() == 0)
+    {
+        std::remove(up_cube.c_str());
+        std::remove(restart.c_str());
+    }
+}
+
+TEST_F(ReadRhogTest, NeitherDensitySourceIsAvailable)
+{
+    setup_pw_basis();
+    const std::string directory = testing::TempDir() + "lr_cube_neither_";
+    const std::string restart = directory + "ABACUS-CHARGE-DENSITY.restart";
+    const std::string cube = directory + "chg.cube";
+    if (pw_world.rank() == 0)
+    {
+        std::remove(cube.c_str());
+        std::remove(restart.c_str());
+    }
+    Parallel::barrier(pw_world);
+    EXPECT_FALSE(module_charge::has_complete_charge_cubes(directory, 1, pw_world));
+    fill_rhog(1);
+    std::vector<double> rho(rhopw.nrxx, 0.125);
+    double* density[] = {rho.data()};
+    std::ostringstream log;
+    EXPECT_FALSE(module_charge::read_rho_from_binary(restart, rhopw, 1, rhog.data(), density, pw_world, log));
+    for (double value : rho) { EXPECT_DOUBLE_EQ(value, 0.125); }
 }
 
 int main(int argc, char** argv)

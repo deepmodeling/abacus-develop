@@ -38,17 +38,17 @@ Magnetism::~Magnetism() { }
  *     - the serial version without MPI
  */
 
-void init_pv(int nlocal, Parallel_2D& pv)
+void init_pv(int nlocal, BlockCyclicDistribution& pv)
 {
 #ifdef __MPI
-        pv.init(nlocal, nlocal, 1, MPI_COMM_WORLD);
+        pv.init(nlocal, nlocal, 1, MPI_COMM_WORLD, false);
 #else
         pv.set_serial(nlocal, nlocal);
 #endif             
 }
 
 template <typename T>
-void gen_dmk(std::vector<std::vector<T>>& dmk, std::vector<double>& efs,  int nspin, int nk, int nlocal, Parallel_2D& pv)
+void gen_dmk(std::vector<std::vector<T>>& dmk, std::vector<double>& efs,  int nspin, int nk, int nlocal, BlockCyclicDistribution& pv)
 {
     int myrank = 0;
 #ifdef __MPI
@@ -67,9 +67,9 @@ void gen_dmk(std::vector<std::vector<T>>& dmk, std::vector<double>& efs,  int ns
         }
     }
 #ifdef __MPI
-    Parallel_2D pv_global;
-    pv_global.init(nlocal, nlocal, nlocal, MPI_COMM_WORLD);
-    dmk.resize(nspin * nk, std::vector<T>(pv.get_local_size(), 0.0));
+    BlockCyclicDistribution pv_global;
+    pv_global.init(nlocal, nlocal, nlocal, MPI_COMM_WORLD, false);
+    dmk.resize(nspin * nk, std::vector<T>(pv.size(), 0.0));
     for (int i = 0; i < nspin * nk; i++)
     {
         Cpxgemr2d(nlocal,
@@ -77,12 +77,12 @@ void gen_dmk(std::vector<std::vector<T>>& dmk, std::vector<double>& efs,  int ns
                   dmk_global[i].data(),
                   1,
                   1,
-                  pv_global.desc,
+                  const_cast<int*>(pv_global.desc()),
                   dmk[i].data(),
                   1,
                   1,
-                  pv.desc,
-                  pv.blacs_ctxt);
+                  const_cast<int*>(pv.desc()),
+                  pv.ictxt());
     }
 #else
     dmk = dmk_global;
@@ -135,7 +135,7 @@ TEST(DMKTest,WriteDMK) {
     int nlocal = 20;
     std::vector<std::vector<double>> dmk;
     std::vector<std::vector<std::complex<double>>> dmk_multik;
-    Parallel_2D pv;
+    BlockCyclicDistribution pv;
     std::vector<double> efs;
     init_pv(nlocal, pv);
 
@@ -248,7 +248,7 @@ TEST(DMKTest, Mode0FixedNameOverwrite) {
     int nlocal = 20;
     std::vector<std::vector<double>> dmk;
     std::vector<double> efs;
-    Parallel_2D pv;
+    BlockCyclicDistribution pv;
     init_pv(nlocal, pv);
     gen_dmk(dmk, efs, nspin, nk, nlocal, pv);
 
@@ -311,7 +311,7 @@ TEST(DMKTest, Mode1FixedNameAppend) {
     int nlocal = 20;
     std::vector<std::vector<double>> dmk;
     std::vector<double> efs;
-    Parallel_2D pv;
+    BlockCyclicDistribution pv;
     init_pv(nlocal, pv);
     gen_dmk(dmk, efs, nspin, nk, nlocal, pv);
 
@@ -372,7 +372,7 @@ TEST(DMKTest, Mode2PerStepFile) {
     int nlocal = 20;
     std::vector<std::vector<double>> dmk;
     std::vector<double> efs;
-    Parallel_2D pv;
+    BlockCyclicDistribution pv;
     init_pv(nlocal, pv);
     gen_dmk(dmk, efs, nspin, nk, nlocal, pv);
 
@@ -416,7 +416,7 @@ TEST(DMKTest, ReadDMK) {
     int nlocal = 26;
     std::vector<std::vector<double>> dmk;
     std::vector<std::vector<std::complex<double>>> dmk_multik;
-    Parallel_2D pv;
+    BlockCyclicDistribution pv;
     std::vector<double> efs;
 
     init_pv(nlocal, pv);
@@ -437,8 +437,8 @@ TEST(DMKTest, ReadDMK) {
     EXPECT_TRUE(ModuleIO::read_dmk(1, 1, kv, pv, "./support/", dmk_multik, ofs_running));
     EXPECT_EQ(dmk.size(), 1);
     EXPECT_EQ(dmk_multik.size(), 1);
-    EXPECT_EQ(dmk[0].size(), pv.get_local_size());
-    EXPECT_EQ(dmk_multik[0].size(), pv.get_local_size());
+    EXPECT_EQ(dmk[0].size(), pv.size());
+    EXPECT_EQ(dmk_multik[0].size(), pv.size());
     if (GlobalV::MY_RANK == 0)
     {
         EXPECT_NEAR(dmk[0][0], 3.904e-01, 1e-6);

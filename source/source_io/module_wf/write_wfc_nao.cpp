@@ -5,7 +5,7 @@
 #include "source_base/memory_recorder.h"
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
-#include "source_base/parallel_2d.h"
+#include "source_base/block_cyclic_distribution.h"
 #include "source_base/module_external/scalapack_connector.h"
 #include "source_base/global_variable.h"
 #include "source_base/global_function.h"
@@ -306,7 +306,7 @@ void write_wfc_nao(const int out_type,
 
     bool gamma_only = (std::is_same<T, double>::value);
     bool writeBinary = (out_type == 2);
-    Parallel_2D pv_glb;
+    BlockCyclicDistribution pv_glb;
     int blk_glb = std::max(nlocal, nbands);
     std::vector<T> ctot(myid == 0 ? nbands * nlocal : 0);
     ModuleBase::Memory::record("ModuleIO::write_wfc_nao::glb", sizeof(T) * nlocal * nbands);
@@ -315,7 +315,7 @@ void write_wfc_nao(const int out_type,
     {
         psi.fix_k(ik);
 #ifdef __MPI
-        pv_glb.set(nlocal, nbands, blk_glb, pv.get_blacs_ctxt());
+        pv_glb.set(nlocal, nbands, blk_glb, pv.para_2d().ictxt());
         Cpxgemr2d(nlocal,
                   nbands,
                   psi.get_pointer(),
@@ -325,8 +325,8 @@ void write_wfc_nao(const int out_type,
                   ctot.data(),
                   1,
                   1,
-                  pv_glb.desc,
-                  pv_glb.blacs_ctxt);
+                  const_cast<int*>(pv_glb.desc()),
+                  pv_glb.ictxt());
 #else
         for (int ib = 0; ib < nbands; ib++)
         {

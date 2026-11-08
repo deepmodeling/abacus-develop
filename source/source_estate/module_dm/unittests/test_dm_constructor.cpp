@@ -79,7 +79,7 @@ class DMTest : public testing::Test
         int global_col = test_size * test_nw;
         std::ofstream ofs_running;
         paraV = new Parallel_Orbitals();
-        paraV->para_2d().init(global_row, global_col, nb, MPI_COMM_WORLD);
+        paraV->para_2d().init(global_row, global_col, nb, MPI_COMM_WORLD, false);
         paraV->set_atomic_trace(ucell.get_iat2iwt(), test_size, global_row);
     }
 #else
@@ -92,14 +92,14 @@ class DMTest : public testing::Test
 TEST_F(DMTest, DMConstructor_GammaOnly)
 {
     // construct DM
-    std::cout << "dim0: " << paraV->para_2d().get_dim0() << "    dim1:" << paraV->para_2d().get_dim1() << std::endl;
-    std::cout << "nrow: " << paraV->para_2d().get_row_size() << "    ncol:" << paraV->para_2d().get_col_size() << std::endl;
+    std::cout << "dim0: " << paraV->para_2d().nrproc() << "    dim1:" << paraV->para_2d().ncproc() << std::endl;
+    std::cout << "nrow: " << paraV->para_2d().nrloc() << "    ncol:" << paraV->para_2d().ncloc() << std::endl;
     int nspin = 2;
     module_dm::DensityMatrix<double, double> DM(paraV, nspin);
     // compare
     EXPECT_EQ(DM.get_dmk_size(), nspin);
-    EXPECT_EQ(DM.get_dmk_nrow(), paraV->para_2d().get_row_size());
-    EXPECT_EQ(DM.get_dmk_ncol(), paraV->para_2d().get_col_size());
+    EXPECT_EQ(DM.get_dmk_nrow(), paraV->para_2d().nrloc());
+    EXPECT_EQ(DM.get_dmk_ncol(), paraV->para_2d().ncloc());
 }
 
 TEST_F(DMTest, DMConstructor_nspin1)
@@ -112,23 +112,23 @@ TEST_F(DMTest, DMConstructor_nspin1)
     kv->kvec_d.resize(nks);
     kv->kvec_d[1].x = 0.5;
     // construct DM
-    std::cout << "dim0: " << paraV->para_2d().get_dim0() << "    dim1:" << paraV->para_2d().get_dim1() << std::endl;
-    std::cout << "nrow: " << paraV->para_2d().get_row_size() << "    ncol:" << paraV->para_2d().get_col_size() << std::endl;
+    std::cout << "dim0: " << paraV->para_2d().nrproc() << "    dim1:" << paraV->para_2d().ncproc() << std::endl;
+    std::cout << "nrow: " << paraV->para_2d().nrloc() << "    ncol:" << paraV->para_2d().ncloc() << std::endl;
     int nspin = 1;
     module_dm::DensityMatrix<double, double> DM(paraV, nspin, kv->kvec_d, nks);
     // compare
     EXPECT_EQ(DM.get_dmk_nks(), kv->get_nks());
-    EXPECT_EQ(DM.get_dmk_nrow(), paraV->para_2d().get_row_size());
-    EXPECT_EQ(DM.get_dmk_ncol(), paraV->para_2d().get_col_size());
+    EXPECT_EQ(DM.get_dmk_nrow(), paraV->para_2d().nrloc());
+    EXPECT_EQ(DM.get_dmk_ncol(), paraV->para_2d().ncloc());
 
     // set elements of DMK
     for (int is = 1; is <= nspin; is++)
     {
         for (int ik = 0; ik < kv->get_nks() / nspin; ik++)
         {
-            for (int i = 0; i < paraV->para_2d().get_row_size(); i++)
+            for (int i = 0; i < paraV->para_2d().nrloc(); i++)
             {
-                for (int j = 0; j < paraV->para_2d().get_col_size(); j++)
+                for (int j = 0; j < paraV->para_2d().ncloc(); j++)
                 {
                     DM.set_dmk(is, ik, i, j, is + ik * i + j);
                 }
@@ -140,9 +140,9 @@ TEST_F(DMTest, DMConstructor_nspin1)
     {
         for (int ik = 0; ik < kv->get_nks() / nspin; ik++)
         {
-            for (int i = 0; i < paraV->para_2d().get_row_size(); i++)
+            for (int i = 0; i < paraV->para_2d().nrloc(); i++)
             {
-                for (int j = 0; j < paraV->para_2d().get_col_size(); j++)
+                for (int j = 0; j < paraV->para_2d().ncloc(); j++)
                 {
                     EXPECT_EQ(DM.get_dmk(is, ik, i, j), is + ik * i + j);
                 }
@@ -156,12 +156,12 @@ TEST_F(DMTest, DMConstructor_nspin1)
         for (int ik = 0; ik < kv->get_nks() / nspin; ik++)
         {
             double* ptr = DM.get_dmk_ptr(ik + ik_begin);
-            for (int i = 0; i < paraV->para_2d().get_row_size(); i++)
+            for (int i = 0; i < paraV->para_2d().nrloc(); i++)
             {
-                for (int j = 0; j < paraV->para_2d().get_col_size(); j++)
+                for (int j = 0; j < paraV->para_2d().ncloc(); j++)
                 {
                     // std::cout << ptr[i*paraV->ncol+j] << " ";
-                    EXPECT_EQ(ptr[i * paraV->para_2d().get_col_size() + j], is + ik * i + j);
+                    EXPECT_EQ(ptr[i * paraV->para_2d().ncloc() + j], is + ik * i + j);
                 }
             }
         }
@@ -182,22 +182,22 @@ TEST_F(DMTest, DMConstructor_nspin2)
     kv->kvec_d[1].x = 0.5;
     kv->kvec_d[3].x = 0.5;
     // construct DM
-    std::cout << "dim0: " << paraV->para_2d().get_dim0() << "    dim1:" << paraV->para_2d().get_dim1() << std::endl;
-    std::cout << "nrow: " << paraV->para_2d().get_row_size() << "    ncol:" << paraV->para_2d().get_col_size() << std::endl;
+    std::cout << "dim0: " << paraV->para_2d().nrproc() << "    dim1:" << paraV->para_2d().ncproc() << std::endl;
+    std::cout << "nrow: " << paraV->para_2d().nrloc() << "    ncol:" << paraV->para_2d().ncloc() << std::endl;
     module_dm::DensityMatrix<double, double> DM(paraV, nspin, kv->kvec_d, kv->get_nks() / nspin);
     // compare
     EXPECT_EQ(DM.get_dmk_nks(), kv->get_nks());
-    EXPECT_EQ(DM.get_dmk_nrow(), paraV->para_2d().get_row_size());
-    EXPECT_EQ(DM.get_dmk_ncol(), paraV->para_2d().get_col_size());
+    EXPECT_EQ(DM.get_dmk_nrow(), paraV->para_2d().nrloc());
+    EXPECT_EQ(DM.get_dmk_ncol(), paraV->para_2d().ncloc());
 
     // set elements of DMK
     for (int is = 1; is <= nspin; is++)
     {
         for (int ik = 0; ik < kv->get_nks() / nspin; ik++)
         {
-            for (int i = 0; i < paraV->para_2d().get_row_size(); i++)
+            for (int i = 0; i < paraV->para_2d().nrloc(); i++)
             {
-                for (int j = 0; j < paraV->para_2d().get_col_size(); j++)
+                for (int j = 0; j < paraV->para_2d().ncloc(); j++)
                 {
                     DM.set_dmk(is, ik, i, j, ik * i + j);
                 }
@@ -207,9 +207,9 @@ TEST_F(DMTest, DMConstructor_nspin2)
     // compare
     for (int ik = 0; ik < kv->get_nks() / nspin; ik++)
     {
-        for (int i = 0; i < paraV->para_2d().get_row_size(); i++)
+        for (int i = 0; i < paraV->para_2d().nrloc(); i++)
         {
-            for (int j = 0; j < paraV->para_2d().get_col_size(); j++)
+            for (int j = 0; j < paraV->para_2d().ncloc(); j++)
             {
                 EXPECT_EQ(DM.get_dmk(1, ik, i, j), ik * i + j);
                 EXPECT_EQ(DM.get_dmk(1, ik, i, j), DM.get_dmk(2, ik, i, j));
@@ -223,12 +223,12 @@ TEST_F(DMTest, DMConstructor_nspin2)
         for (int ik = 0; ik < kv->get_nks() / nspin; ik++)
         {
             double* ptr = DM.get_dmk_ptr(ik + ik_begin);
-            for (int i = 0; i < paraV->para_2d().get_row_size(); i++)
+            for (int i = 0; i < paraV->para_2d().nrloc(); i++)
             {
-                for (int j = 0; j < paraV->para_2d().get_col_size(); j++)
+                for (int j = 0; j < paraV->para_2d().ncloc(); j++)
                 {
                     // std::cout << ptr[i*paraV->ncol+j] << " ";
-                    EXPECT_EQ(ptr[i * paraV->para_2d().get_col_size() + j], ik * i + j);
+                    EXPECT_EQ(ptr[i * paraV->para_2d().ncloc() + j], ik * i + j);
                 }
             }
         }

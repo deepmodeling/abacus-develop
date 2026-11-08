@@ -31,7 +31,7 @@ TEST(UpsiTest, testUpsi3)
     pv = new Parallel_Orbitals();
     ASSERT_EQ(pv->para_2d().set(nlocal, nlocal, 1, ictxt), 0);
     pv->ncol_bands = nband;
-    pv->set_desc_wfc_Eij(nlocal, nband, pv->para_2d().get_row_size());
+    pv->set_desc_wfc_Eij(nlocal, nband, pv->para_2d().nrloc());
 
     // Initialize data
     U_operator = new std::complex<double>[nlocal * nlocal];

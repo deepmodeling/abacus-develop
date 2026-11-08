@@ -56,8 +56,8 @@ void ESolver_BSE<T, TR>::before_all_runners(BaseCell& basecell, const Input_para
     this->set_dimension();
     //  setup 2d-block distribution for AO-matrix and KS wfc
     LR_Util::setup_2d_division(this->paraMat_.para_2d(), 1, this->nbasis, this->nbasis);
-    const int nrow = this->paraMat_.para_2d().get_row_size();
-    const int block_size = this->paraMat_.para_2d().get_block_size();
+    const int nrow = this->paraMat_.para_2d().nrloc();
+    const int block_size = this->paraMat_.para_2d().nb();
 #ifdef __MPI
     this->paraMat_.set_desc_wfc_Eij(this->nbasis, this->nbands, nrow);
     int err = this->paraMat_.set_nloc_wfc_Eij(this->nbands, GlobalV::ofs_running, GlobalV::ofs_warning);
@@ -87,7 +87,7 @@ void ESolver_BSE<T, TR>::before_all_runners(BaseCell& basecell, const Input_para
 
     LR_Util::setup_2d_division(this->paraC_, block_size, this->nbasis, this->nbands
 #ifdef __MPI
-            , this->paraMat_.para_2d().blacs_ctxt
+            , this->paraMat_.para_2d().ictxt()
 #endif
         );
 
@@ -518,7 +518,7 @@ void ESolver_BSE<T, TR>::after_all_runners(BaseCell& basecell)
                 for (int is = 0; is < this->X.size(); ++is)
                 {
                     LR::LR_Spectrum<T> spectrum(this->nspin, this->nbasis, this->nocc, this->nvirt, *this->pw_rho, *this->psi_ks,
-                                                *this->ucell_, this->kv, this->gd(), this->orb_cutoff_, this->tcb(),
+                                                *this->ucell_, this->kv, this->kv.wk, this->gd(), this->orb_cutoff_, this->tcb(),
                                                 this->paraX_, this->paraC_, this->paraMat_,
                                                 &this->tda_ene[is * this->nstates], this->eig_ks.c,
                                                 this->X[is].template data<T>(), this->nstates, false/*openshell*/,
@@ -549,7 +549,7 @@ void ESolver_BSE<T, TR>::after_all_runners(BaseCell& basecell)
                 for (int is = 0;is < this->full_X.size();++is)
                 {
                     LR::LR_Spectrum<T> spectrum(this->nspin, this->nbasis, this->nocc, this->nvirt, *this->pw_rho, *this->psi_ks,
-                                                *this->ucell_, this->kv, this->gd(), this->orb_cutoff_, this->tcb(),
+                                                *this->ucell_, this->kv, this->kv.wk, this->gd(), this->orb_cutoff_, this->tcb(),
                                                 this->paraX_, this->paraC_, this->paraMat_,
                                                 &this->full_ene[is * this->nstates], this->eig_ks.c,
                                                 this->full_X[is].template data<T>(), this->nstates, false/*openshell*/,
@@ -610,13 +610,13 @@ void ESolver_BSE<T, TR>::ipa_solver()
     {
         int sorted_index = indices[istate];
         int ik = sorted_index / (this->nocc[0] * this->nvirt[0]);
-        int loffset_X = (istate * this->nk + ik) * this->paraX_[0].get_local_size();
+        int loffset_X = (istate * this->nk + ik) * this->paraX_[0].size();
         int i = (sorted_index / this->nvirt[0]) % this->nocc[0];
         int a = sorted_index % this->nvirt[0];
-        int col_loc = this->paraX_[0].global2local_col(i);
-        int row_loc = this->paraX_[0].global2local_row(a);
+        int col_loc = this->paraX_[0].icloc(i);
+        int row_loc = this->paraX_[0].irloc(a);
         if (col_loc == -1 || row_loc == -1) continue;
-        this->X[0].template data<T>()[loffset_X + col_loc * this->paraX_[0].get_row_size() + row_loc] = 1.0;
+        this->X[0].template data<T>()[loffset_X + col_loc * this->paraX_[0].nrloc() + row_loc] = 1.0;
     }
     ModuleBase::timer::end("ESolver_BSE", "ipa_solver");
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "IPA solver");
@@ -771,17 +771,17 @@ void ESolver_BSE<T, TR>::allocate_eigen_infos()
 
     for (int is = 0; is < this->nspin; ++is)
     {
-        Parallel_2D px;
+        BlockCyclicDistribution px;
         LR_Util::setup_2d_division(px, /*nb2d=*/1, this->nvirt[is], this->nocc[is]
 #ifdef __MPI
-            , this->paraC_.blacs_ctxt
+            , this->paraC_.ictxt()
 #endif
         );
         this->paraX_.emplace_back(std::move(px));
     }
     this->nloc_per_state = this->nk
-                           * (this->openshell ? this->paraX_[0].get_local_size() + this->paraX_[1].get_local_size()
-                                              : this->paraX_[0].get_local_size());
+                           * (this->openshell ? this->paraX_[0].size() + this->paraX_[1].size()
+                                              : this->paraX_[0].size());
 
     int n_spin_types = this->inp_->bse_spin_types.size();
     if (this->inp_->bse_tda == "both" || this->inp_->bse_tda == "tda") {

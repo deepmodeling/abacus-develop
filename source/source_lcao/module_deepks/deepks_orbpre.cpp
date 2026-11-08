@@ -197,11 +197,11 @@ void DeePKS_domain::cal_orbital_precalc(const std::vector<TH>& dm_hl,
 
                         if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
                         {
-                            dm_pair.add_from_matrix(dm_hl[ik].c, pv.para_2d().get_row_size(), *kphase_ptr, 1);
+                            dm_pair.add_from_matrix(dm_hl[ik].c, pv.para_2d().nrloc(), *kphase_ptr, 1);
                         }
                         else
                         {
-                            dm_pair.add_from_matrix(dm_hl[ik].c, pv.para_2d().get_col_size(), *kphase_ptr, 0);
+                            dm_pair.add_from_matrix(dm_hl[ik].c, pv.para_2d().ncloc(), *kphase_ptr, 0);
                         }
                     } // ik
 

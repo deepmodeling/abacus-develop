@@ -74,18 +74,18 @@ void init_basis_lcao(Parallel_Orbitals& pv,
     // storage form of H and S matrices on each processor
     // is determined in 'divide_HS_2d' subroutine
 
-    int try_nb = pv.para_2d().init(nlocal, nlocal, nb2d, DIAG_WORLD);
+    int try_nb = pv.para_2d().init(nlocal, nlocal, nb2d, DIAG_WORLD, false);
     try_nb += pv.set_nloc_wfc_Eij(PARAM.inp.nbands, GlobalV::ofs_running, GlobalV::ofs_warning);
     if (try_nb != 0)
     {
         // fall back to the minimum size, 1 or 2 (nspin=4)
         const int min_size = (PARAM.inp.nspin == 4) ? 2 : 1;
-        pv.para_2d().set(nlocal, nlocal, min_size, pv.get_blacs_ctxt());
+        pv.para_2d().set(nlocal, nlocal, min_size, pv.para_2d().ictxt());
         try_nb = pv.set_nloc_wfc_Eij(PARAM.inp.nbands, GlobalV::ofs_running, GlobalV::ofs_warning);
     }
 
     // init blacs context for genelpa
-    pv.set_desc_wfc_Eij(nlocal, PARAM.inp.nbands, pv.para_2d().get_row_size());
+    pv.set_desc_wfc_Eij(nlocal, PARAM.inp.nbands, pv.para_2d().nrloc());
 
 #else
     pv.para_2d().set_serial(nlocal, nlocal);

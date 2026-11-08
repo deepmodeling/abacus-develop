@@ -23,8 +23,8 @@ void cal_foverlap_rt(ModuleBase::matrix& foverlap,
     // get dS/dR_{x,y,z}
     std::vector<hamilt::HContainer<double>*> dsxr = td_info->get_grad_overlap();
     // allocate matrix
-    const long nloc = pv.para_2d().get_local_size();
-    const int nrow = pv.para_2d().get_row_size();
+    const long nloc = pv.para_2d().size();
+    const int nrow = pv.para_2d().nrloc();
     std::vector<std::complex<double>> Htmp(nloc);
     std::vector<std::complex<double>> Sinv(nloc);
     std::vector<std::complex<double>> dsxk(nloc);
@@ -63,7 +63,7 @@ void cal_foverlap_rt(ModuleBase::matrix& foverlap,
         const std::complex<double> mone_complex = {-1.0, 0.0};
         const std::complex<double> zero_complex = {0.0, 0.0};
 
-        ScalapackConnector::getrf(nlocal, nlocal, Sinv.data(), one_int, one_int, pv.para_2d().get_desc(), ipiv.data(), &info);
+        ScalapackConnector::getrf(nlocal, nlocal, Sinv.data(), one_int, one_int, pv.para_2d().desc(), ipiv.data(), &info);
 
         int lwork = -1;
         int liwork = -1;
@@ -78,7 +78,7 @@ void cal_foverlap_rt(ModuleBase::matrix& foverlap,
                                   Sinv.data(),
                                   one_int,
                                   one_int,
-                                  pv.para_2d().get_desc(),
+                                  pv.para_2d().desc(),
                                   ipiv.data(),
                                   work.data(),
                                   &lwork,
@@ -95,7 +95,7 @@ void cal_foverlap_rt(ModuleBase::matrix& foverlap,
                                   Sinv.data(),
                                   one_int,
                                   one_int,
-                                  pv.para_2d().get_desc(),
+                                  pv.para_2d().desc(),
                                   ipiv.data(),
                                   work.data(),
                                   &lwork,
@@ -116,16 +116,16 @@ void cal_foverlap_rt(ModuleBase::matrix& foverlap,
                                  tmp_dmk,
                                  one_int,
                                  one_int,
-                                 pv.para_2d().get_desc(),
+                                 pv.para_2d().desc(),
                                  Htmp.data(),
                                  one_int,
                                  one_int,
-                                 pv.para_2d().get_desc(),
+                                 pv.para_2d().desc(),
                                  zero_complex,
                                  tmp1.data(),
                                  one_int,
                                  one_int,
-                                 pv.para_2d().get_desc());
+                                 pv.para_2d().desc());
 
         ScalapackConnector::gemm(N_char,
                                  N_char,
@@ -136,16 +136,16 @@ void cal_foverlap_rt(ModuleBase::matrix& foverlap,
                                  tmp1.data(),
                                  one_int,
                                  one_int,
-                                 pv.para_2d().get_desc(),
+                                 pv.para_2d().desc(),
                                  Sinv.data(),
                                  one_int,
                                  one_int,
-                                 pv.para_2d().get_desc(),
+                                 pv.para_2d().desc(),
                                  zero_complex,
                                  tmp2.data(),
                                  one_int,
                                  one_int,
-                                 pv.para_2d().get_desc());
+                                 pv.para_2d().desc());
         for (int dir = 0; dir < 3; dir++)
         {
             ModuleBase::GlobalFunc::ZEROS(dsxk.data(), nloc);
@@ -171,16 +171,16 @@ void cal_foverlap_rt(ModuleBase::matrix& foverlap,
                                      tmp2.data(),
                                      one_int,
                                      one_int,
-                                     pv.para_2d().get_desc(),
+                                     pv.para_2d().desc(),
                                      dsxk.data(),
                                      one_int,
                                      one_int,
-                                     pv.para_2d().get_desc(),
+                                     pv.para_2d().desc(),
                                      one_complex,
                                      tmp_out[dir].data(),
                                      one_int,
                                      one_int,
-                                     pv.para_2d().get_desc());
+                                     pv.para_2d().desc());
 
             ScalapackConnector::gemm(T_char,
                                      N_char,
@@ -191,16 +191,16 @@ void cal_foverlap_rt(ModuleBase::matrix& foverlap,
                                      tmp_dmk,
                                      one_int,
                                      one_int,
-                                     pv.para_2d().get_desc(),
+                                     pv.para_2d().desc(),
                                      pdsxk.data(),
                                      one_int,
                                      one_int,
-                                     pv.para_2d().get_desc(),
+                                     pv.para_2d().desc(),
                                      one_complex,
                                      tmp3.data(),
                                      one_int,
                                      one_int,
-                                     pv.para_2d().get_desc());
+                                     pv.para_2d().desc());
 
             ScalapackConnector::geadd(N_char,
                                       nlocal,
@@ -209,12 +209,12 @@ void cal_foverlap_rt(ModuleBase::matrix& foverlap,
                                       tmp3.data(),
                                       one_int,
                                       one_int,
-                                      pv.para_2d().get_desc(),
+                                      pv.para_2d().desc(),
                                       one_complex,
                                       tmp_out[dir].data(),
                                       one_int,
                                       one_int,
-                                      pv.para_2d().get_desc());
+                                      pv.para_2d().desc());
         }
     }
     // std::string filename = "process_debug_" + std::to_string(GlobalV::MY_RANK) + ".txt";
@@ -245,7 +245,7 @@ void cal_foverlap_rt(ModuleBase::matrix& foverlap,
         double* force_tmp1 = &foverlap(iat, 0);
         int row0 = pv.atom_begin_row[iat];
         int col0 = pv.atom_begin_col[iat];
-        const int row_size = pv.para_2d().get_row_size();
+        const int row_size = pv.para_2d().nrloc();
         std::vector<std::complex<double>*> p_diag = {tmp_out[0].data(), tmp_out[1].data(), tmp_out[2].data()};
         for (int mu = 0; mu < pv.get_nrow_atom(iat); ++mu)
         {

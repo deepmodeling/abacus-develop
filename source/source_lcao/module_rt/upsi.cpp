@@ -29,7 +29,7 @@ void upsi(const Parallel_Orbitals* pv,
                              U_operator,
                              1,
                              1,
-                             pv->para_2d().get_desc(),
+                             pv->para_2d().desc(),
                              psi_k_laststep,
                              1,
                              1,
@@ -46,8 +46,8 @@ void upsi(const Parallel_Orbitals* pv,
         ofs_running << " psi_k:" << std::endl;
         for (int i = 0; i < pv->ncol_bands; i++)
         {
-            const int in = i * pv->para_2d().get_col_size();
-            for (int j = 0; j < pv->para_2d().get_col_size(); j++)
+            const int in = i * pv->para_2d().ncloc();
+            for (int j = 0; j < pv->para_2d().ncloc(); j++)
             {
                 double aa = psi_k[in + j].real();
                 double bb = psi_k[in + j].imag();
@@ -67,8 +67,8 @@ void upsi(const Parallel_Orbitals* pv,
         ofs_running << " psi_k_laststep:" << std::endl;
         for (int i = 0; i < pv->ncol_bands; i++)
         {
-            const int in = i * pv->para_2d().get_col_size();
-            for (int j = 0; j < pv->para_2d().get_col_size(); j++)
+            const int in = i * pv->para_2d().ncloc();
+            for (int j = 0; j < pv->para_2d().ncloc(); j++)
             {
                 double aa = psi_k_laststep[in + j].real();
                 double bb = psi_k_laststep[in + j].imag();
@@ -116,11 +116,11 @@ void upsi_tensor(const Parallel_Orbitals* pv,
     void* d_Psi_k = static_cast<void*>(psi_k.data<std::complex<double>>());
 
     // 3. Create matrix descriptor for U operator (N x N)
-    int64_t m_u = pv->para_2d().get_desc()[2];
-    int64_t n_u = pv->para_2d().get_desc()[3];
-    int64_t mb_u = pv->para_2d().get_desc()[4];
-    int64_t nb_u = pv->para_2d().get_desc()[5];
-    int64_t lld_u = pv->para_2d().get_desc()[8];
+    int64_t m_u = pv->para_2d().desc()[2];
+    int64_t n_u = pv->para_2d().desc()[3];
+    int64_t mb_u = pv->para_2d().desc()[4];
+    int64_t nb_u = pv->para_2d().desc()[5];
+    int64_t lld_u = pv->para_2d().desc()[8];
 
     cublasMpMatrixDescriptor_t desc_U;
     cublasMpMatrixDescriptorCreate(m_u, n_u, mb_u, nb_u, 0, 0, lld_u, CUDA_C_64F, cublas_res.cublasmp_grid, &desc_U);

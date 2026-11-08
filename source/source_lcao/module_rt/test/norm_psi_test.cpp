@@ -32,7 +32,7 @@ TEST(NormPsiTest, testNormPsi)
     ASSERT_EQ(pv->para_2d().set(nlocal, nlocal, 1, ictxt), 0);
     pv->nloc_wfc = nlocal * nband;
     pv->ncol_bands = nband;
-    pv->set_desc_wfc_Eij(nlocal, nband, pv->para_2d().get_row_size());
+    pv->set_desc_wfc_Eij(nlocal, nband, pv->para_2d().nrloc());
 
     // Initialize data
     Stmp = new std::complex<double>[nlocal * nlocal];
@@ -107,7 +107,7 @@ TEST(NormPsiTest, EndpointMetricDiffersFromPropagationMetric)
     ASSERT_EQ(pv.para_2d().set(nlocal, nlocal, 1, ictxt), 0);
     pv.nloc_wfc = 2;
     pv.ncol_bands = 1;
-    pv.set_desc_wfc_Eij(nlocal, nband, pv.para_2d().get_row_size());
+    pv.set_desc_wfc_Eij(nlocal, nband, pv.para_2d().nrloc());
     std::complex<double> endpoint[4] = {2.0, {0.0, -0.4}, {0.0, 0.4}, 1.0};
     std::complex<double> midpoint[4] = {1.5, {0.0, -0.2}, {0.0, 0.2}, 1.0};
     std::complex<double> right[2] = {1.0, {0.0, 0.5}};

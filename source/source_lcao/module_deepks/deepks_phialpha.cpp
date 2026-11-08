@@ -296,8 +296,8 @@ void DeePKS_domain::check_phialpha(const bool& cal_deri,
                     ofs_x << "iw : " << iw1_all << std::endl;
                     ofs_y << "iw : " << iw1_all << std::endl;
                     ofs_z << "iw : " << iw1_all << std::endl;
-                    const int iw1_local = pv->para_2d().global2local_row(iw1_all);
-                    const int iw2_local = pv->para_2d().global2local_col(iw1_all);
+                    const int iw1_local = pv->para_2d().irloc(iw1_all);
+                    const int iw2_local = pv->para_2d().icloc(iw1_all);
                     if (iw1_local < 0 && iw2_local < 0)
                         continue;
 
