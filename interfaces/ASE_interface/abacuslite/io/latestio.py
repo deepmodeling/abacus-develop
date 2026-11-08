@@ -25,6 +25,64 @@ from abacuslite.io.legacyio import (
     find_final_info_with_iter_header
 )
 
+
+def find_eig_occ_files(directory: Path) -> List[Path]:
+    '''Discover eigenvalue/occupation files in the output directory.
+
+    ABACUS writes eigenvalue data in three layouts depending on
+    ``out_app_flag``:
+
+    - mode 0/1: a single ``eig_occ.txt`` holding all frames;
+    - mode 2:   one ``eig_occg{N}.txt`` per written ionic step.
+
+    Parameters
+    ----------
+    directory : Path
+        The ``OUT.${suffix}`` directory to search.
+
+    Returns
+    -------
+    list of Path
+        Sorted list of eigenvalue files.  Empty when none are found.
+    '''
+    single = directory / 'eig_occ.txt'
+    if single.exists():
+        return [single]
+    numbered = sorted(directory.glob('eig_occg*.txt'),
+                      key=lambda p: int(re.search(r'g(\d+)\.txt$', p.name).group(1)))
+    return numbered
+
+
+def read_band_from_eig_occ_files(files: List[Path]) -> List[Dict[str, np.ndarray]]:
+    '''Read eigenvalue/occupation data from one or more eig_occ files.
+
+    When multiple numbered files are given (mode 2), each file contributes
+    one frame.  When a single file is given (mode 0/1), the frames are
+    parsed from its internal ``# Ionic_Step`` markers.
+
+    Parameters
+    ----------
+    files : list of Path
+        Files returned by :func:`find_eig_occ_files`.
+
+    Returns
+    -------
+    list of dict
+        A list of dictionaries containing the k-points and band energies.
+        Each dictionary has keys 'k', 'e', and 'occ'.
+    '''
+    if not files:
+        return []
+    if len(files) == 1:
+        return read_band_from_eig_occ(files[0])
+
+    # Mode 2: concatenate the per-step files and parse them together.
+    raw: List[str] = []
+    for fn in files:
+        with open(fn) as f:
+            raw.extend(f.readlines())
+    return read_band_from_eig_occ(raw)
+
 def read_esolver_type_from_running_log(src: str | Path | List[str]) \
     -> str:
     '''
@@ -446,7 +504,14 @@ def read_abacus_out(fileobj,
         read_traj_from_md_dump(fileobj.parent / 'MD_dump')
 
     # read the eigenvalues (nframe, nk, nbnd)
-    elecstate = read_band_from_eig_occ(fileobj.parent / 'eig_occ.txt')
+    eig_files = find_eig_occ_files(fileobj.parent)
+    elecstate = read_band_from_eig_occ_files(eig_files)
+
+    # When out_freq_ion > 1 the eigenvalue file may hold fewer frames than
+    # the trajectory.  Reuse the last available eigenvalue frame for the
+    # steps that were not written, so the length check below still passes.
+    if 0 < len(elecstate) < len(trajectory):
+        elecstate = elecstate + [elecstate[-1]] * (len(trajectory) - len(elecstate))
 
     # read the atomic forces (nframe, nat, 3)
     forces = read_forces_from_running_log(abacus_lines)
@@ -557,7 +622,8 @@ class TestLatestIO(unittest.TestCase):
             (Path(tmpdir) / 'eig_occ.txt').write_text('')
             with patch(__name__ + '.read_esolver_type_from_running_log', return_value='ksdft'), \
                  patch(__name__ + '.read_traj_from_running_log', return_value=[frame]), \
-                 patch(__name__ + '.read_band_from_eig_occ', return_value=elecstate), \
+                 patch(__name__ + '.find_eig_occ_files', return_value=[Path(tmpdir) / 'eig_occ.txt']), \
+                 patch(__name__ + '.read_band_from_eig_occ_files', return_value=elecstate), \
                  patch(__name__ + '.read_forces_from_running_log', return_value=[]), \
                  patch(__name__ + '.read_stress_from_running_log', return_value=[]), \
                  patch(__name__ + '.read_kpoints_from_running_log', return_value=kpoints), \
@@ -609,6 +675,51 @@ class TestLatestIO(unittest.TestCase):
             self.assertEqual(es['e'].shape, (1, 1, 35)) # ispin, ik, nbnd
             self.assertIn('occ', es)
             self.assertEqual(es['occ'].shape, (1, 1, 35)) # ispin, ik, nbnd
+
+    def test_find_eig_occ_files(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp = Path(tmpdir)
+            # no files
+            self.assertEqual(find_eig_occ_files(tmp), [])
+            # single file (mode 0/1)
+            (tmp / 'eig_occ.txt').write_text('')
+            self.assertEqual(find_eig_occ_files(tmp), [tmp / 'eig_occ.txt'])
+            # numbered files (mode 2) take precedence when single is absent
+            (tmp / 'eig_occ.txt').unlink()
+            (tmp / 'eig_occg2.txt').write_text('')
+            (tmp / 'eig_occg1.txt').write_text('')
+            (tmp / 'eig_occg3.txt').write_text('')
+            self.assertEqual(find_eig_occ_files(tmp),
+                             [tmp / 'eig_occg1.txt',
+                              tmp / 'eig_occg2.txt',
+                              tmp / 'eig_occg3.txt'])
+
+    def test_read_band_from_eig_occ_files(self):
+        fn = self.testfiles / 'nspin4-gamma-eigocc'
+        # single file path
+        elecstate = read_band_from_eig_occ_files([fn])
+        self.assertEqual(len(elecstate), 2)
+        # empty list
+        self.assertEqual(read_band_from_eig_occ_files([]), [])
+        # multiple files: split the single fixture into two step files
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp = Path(tmpdir)
+            with open(fn) as f:
+                lines = f.readlines()
+            # find the frame boundary
+            step_idx = [i for i, l in enumerate(lines) if '# Ionic_Step' in l]
+            self.assertEqual(len(step_idx), 2)
+            file1 = tmp / 'eig_occg1.txt'
+            file2 = tmp / 'eig_occg2.txt'
+            with open(file1, 'w') as f:
+                f.writelines(lines[:step_idx[1]])
+            with open(file2, 'w') as f:
+                f.writelines(lines[step_idx[1]:])
+            elecstate = read_band_from_eig_occ_files([file1, file2])
+            self.assertEqual(len(elecstate), 2)
 
     def test_read_traj_from_running_log(self):
         traj = read_traj_from_running_log(self.testfiles / 'lcao-symm0-nspin2-multik-cellrelax')
