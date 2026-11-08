@@ -193,6 +193,47 @@ TEST(HsSparseIo, SparseBinaryCountsOnlyValuesAboveThreshold)
     std::remove(filename.c_str());
 }
 
+// A final-snapshot writer such as write_Vxc_R passes out_app_flag = 0 so a
+// rerun truncates the previous output even when the only write happens at
+// istep > 0.  This test pins that behaviour: seeding a file with stale
+// content and then calling save_sparse with out_app_flag = 0 and istep = 2
+// must leave a single frame, not an appended duplicate.
+TEST(HsSparseIo, SparseTextOutAppFlagZeroTruncatesSeededFile)
+{
+    const std::string filename = "write_hs_r_seeded_s.csr";
+    // Seed a stale frame from a "previous run".
+    {
+        std::ofstream ofs(filename.c_str());
+        ofs << "Ionic_Step 1\nstale content\n";
+    }
+
+    Parallel_Orbitals pv;
+    init_serial_orbitals(pv);
+    const Abfs::Vector3_Order<int> r_vector(0, 0, 0);
+    std::set<Abfs::Vector3_Order<int>> all_R_coor;
+    all_R_coor.insert(r_vector);
+    std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> sparse_matrix;
+    sparse_matrix[r_vector][0][1] = 0.5;
+    sparse_matrix[r_vector][1][1] = 1.5;
+
+    ModuleIO::SparseWriteOptions options;
+    options.filename = filename;
+    options.label = "S";
+    options.threshold = 1e-10;
+    options.binary = false;
+    options.istep = 2;
+    options.out_app_flag = 0;   // final-snapshot writer truncates
+    options.reduce = false;
+    ModuleIO::save_sparse(sparse_matrix, all_R_coor, pv, options);
+
+    const std::string output = read_file(filename);
+    // istep = 2 is the third ionic step, printed one-based as 3
+    EXPECT_TRUE(starts_with(output, "Ionic_Step 3\n"));
+    EXPECT_EQ(output.find("stale content"), std::string::npos);
+
+    std::remove(filename.c_str());
+}
+
 int main(int argc, char** argv)
 {
 #ifdef __MPI
