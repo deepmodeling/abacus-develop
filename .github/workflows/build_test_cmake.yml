@@ -65,7 +65,18 @@ jobs:
           sudo apt update && sudo apt install -y gfortran ninja-build pkg-config xz-utils
           cd toolchain
           ./install_abacus_toolchain_new.sh --with-dftd4=install --dry-run ${{matrix.external_toolchain_args}}
-          ./scripts/stage4/install_stage4.sh
+          # Stage 4 downloads external release artifacts. Retry transient
+          # network failures instead of failing the whole build matrix.
+          for attempt in 1 2 3; do
+            if timeout 15m ./scripts/stage4/install_stage4.sh; then
+              break
+            fi
+            if [ "${attempt}" = "3" ]; then
+              exit 1
+            fi
+            echo "stage4 installation failed (attempt ${attempt}); retrying..."
+            sleep 15
+          done
           cd ..
 
       - name: Build
