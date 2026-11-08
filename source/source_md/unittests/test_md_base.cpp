@@ -1,11 +1,11 @@
-#include "source_md/md_base.h"
-#include "source_md/md_func.h"
 #include "source_base/constants.h"
 #include "source_base/parallel_cell.h"
 #include "source_base/parallel_global.h"
 #include "source_cell/dom_decomp.h"
 #include "source_cell/unitcell.h"
 #include "source_cell/update_cell.h"
+#include "source_md/md_base.h"
+#include "source_md/md_func.h"
 
 #include <gtest/gtest.h>
 
@@ -17,26 +17,26 @@ namespace
 {
 class PositionStateSolver : public ModuleESolver::ESolver
 {
-public:
+  public:
     std::vector<bool> observed_position_updates;
     std::vector<int> observed_steps;
 
-    void before_all_runners(BaseCell&, const Input_para&) override {}
-    void after_all_runners(BaseCell&) override {}
-    void runner(BaseCell& base, const int istep) override
+    void before_all_runners(BaseCell &, const Input_para &) override {}
+    void after_all_runners(BaseCell &) override {}
+    void runner(BaseCell &base, const int istep) override
     {
-        const UnitCell& cell = static_cast<const UnitCell&>(base);
+        const UnitCell &cell = static_cast<const UnitCell &>(base);
         observed_position_updates.push_back(cell.ionic_position_updated);
         observed_steps.push_back(istep);
     }
     double cal_energy() override { return 0.0; }
-    void cal_force(BaseCell&, ModuleBase::matrix& force) override { force.zero_out(); }
-    void cal_stress(BaseCell&, ModuleBase::matrix& stress) override { stress.zero_out(); }
+    void cal_force(BaseCell &, ModuleBase::matrix &force) override { force.zero_out(); }
+    void cal_stress(BaseCell &, ModuleBase::matrix &stress) override { stress.zero_out(); }
 };
 
 class MdBoundaryTest : public testing::Test
 {
-protected:
+  protected:
     ModuleBase::CommunicationDomain domain;
     ModuleBase::Matrix3 lattice;
     std::array<Atom, 1> backing_types;
@@ -52,7 +52,7 @@ protected:
         lattice.e11 = 1.0;
         lattice.e22 = 1.0;
         lattice.e33 = 1.0;
-        for (Atom* type : {backing_types.data(), reference_types.data()})
+        for (Atom *type : {backing_types.data(), reference_types.data()})
         {
             type->na = 4;
             type->nw = 1;
@@ -96,10 +96,25 @@ protected:
         const std::vector<std::string> labels(1, "X");
         const std::vector<double> masses(1, 1.0);
         const std::vector<std::int64_t> counts(1, 4);
-        cell.initialize_from_owned_atoms(lattice, inverse, 1.0, 1.0, 4, owned,
-                                         labels, masses, counts, 0.0, domain);
+        cell.initialize_from_owned_atoms(
+            lattice,
+            inverse,
+            1.0,
+            1.0,
+            4,
+            owned,
+            labels,
+            masses,
+            counts,
+            0.0,
+            domain);
         cell.set_backing_unitcell(backing);
-        decomposition.init(domain, lattice, 1.0, 0.0, 0.0);
+        decomposition.init(
+            domain,
+            lattice,
+            1.0,
+            0.0,
+            0.0);
         cell.set_neighbor_cutoff(0.05);
         parameters.md_dt = ModuleBase::AU_to_FS;
         parameters.md_tfirst = -1.0;
@@ -123,10 +138,10 @@ protected:
         return ModuleBase::Vector3<double>(-1.0e-21, -2.0e-21, -3.0e-21);
     }
 
-    void expect_local_state(const LocalAtom& atom)
+    void expect_local_state(const LocalAtom &atom)
     {
         const int index = atom.type_index;
-        const Atom& reference = reference_types[0];
+        const Atom &reference = reference_types[0];
         SCOPED_TRACE(index);
         for (int axis = 0; axis < 3; ++axis)
         {
@@ -138,8 +153,8 @@ protected:
 
     void expect_backing_state(const bool positions_updated)
     {
-        const Atom& actual = backing_types[0];
-        const Atom& reference = reference_types[0];
+        const Atom &actual = backing_types[0];
+        const Atom &reference = reference_types[0];
         EXPECT_EQ(backing.ionic_position_updated, positions_updated);
         for (int index = 0; index < 4; ++index)
         {
@@ -153,13 +168,17 @@ protected:
             }
         }
     }
-
 };
 
 TEST_F(MdBoundaryTest, MatchesLegacyWrappingThroughMigrationAndRepeatedSync)
 {
     const int rank = domain.rank();
-    MD_base integrator(parameters, false, true, rank, cell);
+    MD_base integrator(
+        parameters,
+        false,
+        true,
+        rank,
+        cell);
     std::ofstream log;
     for (int step = 0; step < 2; ++step)
     {
@@ -178,13 +197,13 @@ TEST_F(MdBoundaryTest, MatchesLegacyWrappingThroughMigrationAndRepeatedSync)
             reference_types[0].dis[index] = displacement;
         }
         unitcell::periodic_boundary_adjustment(reference_types.data(), lattice, 1);
-        for (LocalAtom& atom : cell.owned_atoms())
+        for (LocalAtom &atom : cell.owned_atoms())
         {
             const int index = atom.type_index;
             atom.vel = velocity_for(index, step);
         }
         integrator.first_half(log);
-        for (const LocalAtom& atom : cell.owned_atoms())
+        for (const LocalAtom &atom : cell.owned_atoms())
         {
             expect_local_state(atom);
         }
@@ -194,7 +213,7 @@ TEST_F(MdBoundaryTest, MatchesLegacyWrappingThroughMigrationAndRepeatedSync)
         expect_backing_state(true);
         decomposition.migrate_owned_atoms(cell);
         int migrated = 0;
-        for (const LocalAtom& atom : cell.owned_atoms())
+        for (const LocalAtom &atom : cell.owned_atoms())
         {
             expect_local_state(atom);
             const int owner = decomposition.owner_rank_from_frac(atom.frac);
@@ -209,7 +228,7 @@ TEST_F(MdBoundaryTest, MatchesLegacyWrappingThroughMigrationAndRepeatedSync)
         {
             EXPECT_GT(global_migrated, 0);
         }
-        for (const LocalAtom& ghost : cell.ghost_atoms())
+        for (const LocalAtom &ghost : cell.ghost_atoms())
         {
             expect_local_state(ghost);
         }
@@ -235,7 +254,12 @@ TEST_F(MdBoundaryTest, MatchesLegacyWrappingThroughMigrationAndRepeatedSync)
 TEST_F(MdBoundaryTest, InitialForceEvaluationDoesNotAdvancePositionUpdateState)
 {
     const int rank = domain.rank();
-    MD_base integrator(parameters, false, true, rank, cell);
+    MD_base integrator(
+        parameters,
+        false,
+        true,
+        rank,
+        cell);
     PositionStateSolver solver;
     const std::string readin_directory;
     backing.ionic_position_updated = false;
@@ -246,7 +270,7 @@ TEST_F(MdBoundaryTest, InitialForceEvaluationDoesNotAdvancePositionUpdateState)
     EXPECT_TRUE(backing.ionic_position_updated);
 
     backing.ionic_position_updated = false;
-    for (LocalAtom& atom : cell.owned_atoms())
+    for (LocalAtom &atom : cell.owned_atoms())
     {
         const int index = atom.type_index;
         atom.vel = velocity_for(index, 0);
@@ -254,8 +278,15 @@ TEST_F(MdBoundaryTest, InitialForceEvaluationDoesNotAdvancePositionUpdateState)
     std::ofstream log;
     integrator.first_half(log);
     const bool positions_updated = true;
-    MD_func::force_virial(&solver, 1, positions_updated, cell, decomposition,
-                          integrator.potential, false, integrator.virial);
+    MD_func::force_virial(
+        &solver,
+        1,
+        positions_updated,
+        cell,
+        decomposition,
+        integrator.potential,
+        false,
+        integrator.virial);
     ASSERT_EQ(solver.observed_position_updates.size(), 2u);
     EXPECT_TRUE(solver.observed_position_updates[1]);
 }
@@ -263,7 +294,12 @@ TEST_F(MdBoundaryTest, InitialForceEvaluationDoesNotAdvancePositionUpdateState)
 TEST_F(MdBoundaryTest, RestartedSetupDoesNotAdvancePositionUpdateState)
 {
     const int rank = domain.rank();
-    MD_base integrator(parameters, false, true, rank, cell);
+    MD_base integrator(
+        parameters,
+        false,
+        true,
+        rank,
+        cell);
     PositionStateSolver solver;
     const std::string readin_directory;
     // Simulate a restarted run: the global step (step_ + step_rst_) is already
@@ -298,12 +334,17 @@ TEST_F(MdBoundaryTest, InitialSyncPreservesPositionUpdateState)
 }
 } // namespace
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
     int process_count = 1;
     int thread_count = 1;
     int rank = 0;
-    Parallel_Global::read_pal_param(argc, argv, process_count, thread_count, rank);
+    Parallel_Global::read_pal_param(
+        argc,
+        argv,
+        process_count,
+        thread_count,
+        rank);
     POOL_WORLD = MPI_COMM_NULL;
     KP_WORLD = MPI_COMM_NULL;
     INT_BGROUP = MPI_COMM_NULL;
