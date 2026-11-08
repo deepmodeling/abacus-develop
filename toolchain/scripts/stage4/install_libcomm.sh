@@ -107,11 +107,11 @@ case "$with_libcomm" in
 esac
 if [ "$with_libcomm" != "__DONTUSE__" ]; then
   if [ "$with_libcomm" != "__SYSTEM__" ]; then
-    cat <<EOF >"${BUILDDIR}/setup_libcomm"
+    cat << EOF > "${BUILDDIR}/setup_libcomm"
 prepend_path CPATH "${pkg_install_dir}/include"
 EOF
   fi
-  cat <<EOF >>"${BUILDDIR}/setup_libcomm"
+  cat << EOF >> "${BUILDDIR}/setup_libcomm"
 export LIBCOMM_ROOT="${pkg_install_dir}"
 EOF
   filter_setup "${BUILDDIR}/setup_libcomm" $SETUPFILE

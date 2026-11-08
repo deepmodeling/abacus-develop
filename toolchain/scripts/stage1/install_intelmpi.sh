@@ -122,7 +122,7 @@ if [ "${with_intelmpi}" != "__DONTUSE__" ]; then
   echo "MPICXX    is ${MPICXX}"
   echo "MPICC     is ${MPICC}"
   echo "MPIFC     is ${MPIFC}"
-  cat <<EOF >"${BUILDDIR}/setup_intelmpi"
+  cat << EOF > "${BUILDDIR}/setup_intelmpi"
 export I_MPI_CXX="${I_MPI_CXX}"
 export I_MPI_CC="${I_MPI_CC}"
 export I_MPI_FC="${I_MPI_FC}"

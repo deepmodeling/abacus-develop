@@ -65,9 +65,9 @@ case "$with_fftw" in
       [ "${MPI_MODE}" != "no" ] && FFTW_FLAGS="--enable-mpi ${FFTW_FLAGS}"
       if [ "${TARGET_CPU}" = "native" ]; then
         if [ -f /proc/cpuinfo ]; then
-          grep '\bavx\b' /proc/cpuinfo 1>/dev/null && FFTW_FLAGS="${FFTW_FLAGS} --enable-avx"
-          grep '\bavx2\b' /proc/cpuinfo 1>/dev/null && FFTW_FLAGS="${FFTW_FLAGS} --enable-avx2"
-          grep '\bavx512f\b' /proc/cpuinfo 1>/dev/null && FFTW_FLAGS="${FFTW_FLAGS} --enable-avx512"
+          grep '\bavx\b' /proc/cpuinfo 1> /dev/null && FFTW_FLAGS="${FFTW_FLAGS} --enable-avx"
+          grep '\bavx2\b' /proc/cpuinfo 1> /dev/null && FFTW_FLAGS="${FFTW_FLAGS} --enable-avx2"
+          grep '\bavx512f\b' /proc/cpuinfo 1> /dev/null && FFTW_FLAGS="${FFTW_FLAGS} --enable-avx512"
         fi
       fi
       # ABACUS need float version and double version fftw at the same time
@@ -77,19 +77,19 @@ case "$with_fftw" in
         --libdir="${pkg_install_dir}/lib" \
         --enable-float \
         ${FFTW_FLAGS} \
-        >configure.log 2>&1 || tail -n ${LOG_LINES} configure.log
-      make -j $(get_nprocs) >make.log 2>&1 || tail -n ${LOG_LINES} make.log
-      make install >install.log 2>&1 || tail -n ${LOG_LINES} install.log
+        > configure.log 2>&1 || tail -n ${LOG_LINES} configure.log
+      make -j $(get_nprocs) > make.log 2>&1 || tail -n ${LOG_LINES} make.log
+      make install > install.log 2>&1 || tail -n ${LOG_LINES} install.log
       # install double version fftw
       echo "clean"
-      make distclean >/dev/null 2>&1 || true
+      make distclean > /dev/null 2>&1 || true
       echo "install double version fftw"
       ./configure --prefix="${pkg_install_dir}" \
         --libdir="${pkg_install_dir}/lib" \
         ${FFTW_FLAGS} \
-        >configure.log 2>&1 || tail -n ${LOG_LINES} configure.log
-      make -j $(get_nprocs) >make.log 2>&1 || tail -n ${LOG_LINES} make.log
-      make install >install.log 2>&1 || tail -n ${LOG_LINES} install.log
+        > configure.log 2>&1 || tail -n ${LOG_LINES} configure.log
+      make -j $(get_nprocs) > make.log 2>&1 || tail -n ${LOG_LINES} make.log
+      make install > install.log 2>&1 || tail -n ${LOG_LINES} install.log
       cd ..
       write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage3/$(basename ${SCRIPT_NAME})"
     fi
@@ -123,7 +123,7 @@ if [ "$with_fftw" != "__DONTUSE__" ]; then
   [ "$MPI_MODE" != "no" ] && FFTW_LIBS="IF_MPI(-lfftw3_mpi|)"
   FFTW_LIBS+="-lfftw3 -lfftw3_omp"
   if [ "$with_fftw" != "__SYSTEM__" ]; then
-    cat <<EOF >"${BUILDDIR}/setup_fftw"
+    cat << EOF > "${BUILDDIR}/setup_fftw"
 prepend_path LD_LIBRARY_PATH "${pkg_install_dir}/lib"
 prepend_path LD_RUN_PATH "${pkg_install_dir}/lib"
 prepend_path LIBRARY_PATH "${pkg_install_dir}/lib"
@@ -132,7 +132,7 @@ prepend_path CMAKE_PREFIX_PATH "${pkg_install_dir}"
 EOF
   fi
   # we may also want to cover FFT_SG
-  cat <<EOF >>"${BUILDDIR}/setup_fftw"
+  cat << EOF >> "${BUILDDIR}/setup_fftw"
 export FFTW3_INCLUDES="${FFTW_CFLAGS}"
 export FFTW3_LIBS="${FFTW_LIBS}"
 export FFTW_CFLAGS="${FFTW_CFLAGS}"
@@ -149,7 +149,7 @@ cd "${ROOTDIR}"
 # ----------------------------------------------------------------------
 # Suppress reporting of known leaks
 # ----------------------------------------------------------------------
-cat <<EOF >>${INSTALLDIR}/valgrind.supp
+cat << EOF >> ${INSTALLDIR}/valgrind.supp
 {
    <BuggyFFTW3>
    Memcheck:Addr32

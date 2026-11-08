@@ -84,7 +84,7 @@ run_abacus() {
     lastword=$(tail -1 result.log | awk '{print $1}')
   fi
   if [[ $lastword != "SEE" ]]; then
-    OMP_NUM_THREADS=$2 /usr/bin/time -v mpirun -n $1 $abacus 1>result.log 2>time.log
+    OMP_NUM_THREADS=$2 /usr/bin/time -v mpirun -n $1 $abacus 1> result.log 2> time.log
   else
     printf "**result.log is normal end, skip this job** "
   fi
@@ -136,21 +136,21 @@ fi
 #Begin to RUN
 test -e allcase || echo "Please specify tests in file 'allcase'."
 test -e allcase || exit 1
-which $abacus >/dev/null || echo "Error: ABACUS executable not found. Please check ABACUS installation or \$PATH."
-which $abacus >/dev/null || usage
-which $abacus >/dev/null || exit 1
+which $abacus > /dev/null || echo "Error: ABACUS executable not found. Please check ABACUS installation or \$PATH."
+which $abacus > /dev/null || usage
+which $abacus > /dev/null || exit 1
 
 test -f sumall.dat && mv sumall.dat sumall.old.dat
-cat version >>sumall.dat
-date >>sumall.dat
-cat /proc/version >>sumall.dat
-cat /proc/cpuinfo | grep "model name" | tail -1 | cut -d ':' -f 2 >>sumall.dat
-echo "ABACUS path: $(which $abacus)" >>sumall.dat
-echo "Number of Cores: $ncpu" >>sumall.dat
-echo "Accuracy for energy: 1e-$ca" >>sumall.dat
-echo >>sumall.dat
-echo "!!!all data will be summarized in file sumall.dat" >>sumall.dat
-echo "" >>sumall.dat
+cat version >> sumall.dat
+date >> sumall.dat
+cat /proc/version >> sumall.dat
+cat /proc/cpuinfo | grep "model name" | tail -1 | cut -d ':' -f 2 >> sumall.dat
+echo "ABACUS path: $(which $abacus)" >> sumall.dat
+echo "Number of Cores: $ncpu" >> sumall.dat
+echo "Accuracy for energy: 1e-$ca" >> sumall.dat
+echo >> sumall.dat
+echo "!!!all data will be summarized in file sumall.dat" >> sumall.dat
+echo "" >> sumall.dat
 cat sumall.dat
 
 failed=0
@@ -168,9 +168,9 @@ if [[ $DoAllExampleRun != 0 ]]; then
 
   #sum the critical timing information
   python3 sumdat.py -i allcase -o sum.dat
-  echo "##AllExampleRun" >>sumall.dat
-  cat sum.dat >>sumall.dat
-  echo "" >>sumall.dat
+  echo "##AllExampleRun" >> sumall.dat
+  cat sum.dat >> sumall.dat
+  echo "" >> sumall.dat
   echo !!!all data are summarized in sum.dat
   echo
 fi
@@ -188,7 +188,7 @@ if [[ $DoNCpuTest != 0 ]]; then
 
     for i in $NCpuList; do
       if [[ $i -lt $cpucore ]]; then
-        echo ${case}_${i}cpu >>allcase.ncpu
+        echo ${case}_${i}cpu >> allcase.ncpu
         test -d ${case}_${i}cpu || mkdir ${case}_${i}cpu
         cp ${case}/INPUT ${case}/STRU ${case}/KPT ${case}/result.ref ${case}_${i}cpu
 
@@ -196,7 +196,7 @@ if [[ $DoNCpuTest != 0 ]]; then
       fi
     done
 
-    echo $case >>allcase.ncpu
+    echo $case >> allcase.ncpu
     if [[ ! -f $case/result.log ]]; then
       run_abacus $ncpu $thread ${case}
     fi
@@ -204,9 +204,9 @@ if [[ $DoNCpuTest != 0 ]]; then
 
   #sum the critical timing information
   bash sumdat.sh allcase.ncpu sum.dat.ncpu
-  echo "##NCpuTest" >>sumall.dat
-  cat sum.dat.ncpu >>sumall.dat
-  echo "" >>sumall.dat
+  echo "##NCpuTest" >> sumall.dat
+  cat sum.dat.ncpu >> sumall.dat
+  echo "" >> sumall.dat
   echo "!!!all data are summarized in sum.dat.ncpu"
   echo
 fi
@@ -222,17 +222,17 @@ if [[ $DoKParTest != 0 ]]; then
       continue
     fi
 
-    echo $case >>allcase.kpar
+    echo $case >> allcase.kpar
     if [[ ! -f $case/result.log ]]; then
       run_abacus $ncpu $thread ${case}
     fi
 
     for i in $KParList; do
       if [[ $i -le $maxkpar ]]; then
-        echo ${case}_${i}kpar >>allcase.kpar
+        echo ${case}_${i}kpar >> allcase.kpar
         test -d ${case}_${i}kpar || mkdir ${case}_${i}kpar
         cp ${case}/INPUT ${case}/STRU ${case}/KPT ${case}/result.ref ${case}_${i}kpar
-        echo "kpar $i" >>${case}_${i}kpar/INPUT
+        echo "kpar $i" >> ${case}_${i}kpar/INPUT
 
         run_abacus $ncpu $thread ${case}_${i}kpar
       fi
@@ -240,9 +240,9 @@ if [[ $DoKParTest != 0 ]]; then
   done
   #sum the critical timing information
   bash sumdat.sh allcase.kpar sum.dat.kpar
-  echo "##KParTest" >>sumall.dat
-  cat sum.dat.kpar >>sumall.dat
-  echo "" >>sumall.dat
+  echo "##KParTest" >> sumall.dat
+  cat sum.dat.kpar >> sumall.dat
+  echo "" >> sumall.dat
   echo "!!!all data are summarized in sum.dat.kpar"
   echo
 fi
@@ -258,17 +258,17 @@ if [[ $DoBxyzTest != 0 ]]; then
       continue
     fi
 
-    echo $case >>allcase.bxyz
+    echo $case >> allcase.bxyz
     if [[ ! -f $case/result.log ]]; then
       run_abacus $ncpu $thread ${case}
     fi
 
     for i in $BxyzList; do
       if [[ $i != 2 ]]; then
-        echo ${case}_${i}bxyz >>allcase.bxyz
+        echo ${case}_${i}bxyz >> allcase.bxyz
         test -d ${case}_${i}bxyz || mkdir ${case}_${i}bxyz
         cp ${case}/INPUT ${case}/STRU ${case}/KPT ${case}/result.ref ${case}_${i}bxyz
-        printf " bx $i \n by $i \n bz $i" >>${case}_${i}bxyz/INPUT
+        printf " bx $i \n by $i \n bz $i" >> ${case}_${i}bxyz/INPUT
 
         run_abacus $ncpu $thread ${case}_${i}bxyz
       fi
@@ -276,9 +276,9 @@ if [[ $DoBxyzTest != 0 ]]; then
   done
   #sum the critical timing information
   bash sumdat.sh allcase.bxyz sum.dat.bxyz
-  echo "##BxyzTest" >>sumall.dat
-  cat sum.dat.bxyz >>sumall.dat
-  echo "" >>sumall.dat
+  echo "##BxyzTest" >> sumall.dat
+  cat sum.dat.bxyz >> sumall.dat
+  echo "" >> sumall.dat
   echo "!!!all data are summarized in sum.dat.bxyz"
   echo
 fi

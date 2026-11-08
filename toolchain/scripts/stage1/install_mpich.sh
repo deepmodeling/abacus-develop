@@ -73,9 +73,9 @@ case "${with_mpich}" in
         FFLAGS="${FCFLAGS} ${compat_flag}" \
         FCFLAGS="${FCFLAGS} ${compat_flag}" \
         --with-device=${MPICH_DEVICE} \
-        >configure.log 2>&1 || tail -n ${LOG_LINES} configure.log
-      make -j $(get_nprocs) >make.log 2>&1 || tail -n ${LOG_LINES} make.log
-      make install >install.log 2>&1 || tail -n ${LOG_LINES} install.log
+        > configure.log 2>&1 || tail -n ${LOG_LINES} configure.log
+      make -j $(get_nprocs) > make.log 2>&1 || tail -n ${LOG_LINES} make.log
+      make install > install.log 2>&1 || tail -n ${LOG_LINES} install.log
       cd ..
       write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage1/$(basename ${SCRIPT_NAME})"
     fi
@@ -103,7 +103,7 @@ case "${with_mpich}" in
     fi
     check_command mpiexec "mpich" && MPIRUN="$(command -v mpiexec)"
     check_command mpicc "mpich" && MPICC="$(command -v mpicc)" || exit 1
-    if [ $(command -v mpic++ >/dev/null 2>&1) ]; then
+    if [ $(command -v mpic++ > /dev/null 2>&1) ]; then
       check_command mpic++ "mpich" && MPICXX="$(command -v mpic++)" || exit 1
     else
       check_command mpicxx "mpich" && MPICXX="$(command -v mpicxx)" || exit 1
@@ -143,7 +143,7 @@ if [ "${with_mpich}" != "__DONTUSE__" ]; then
     mpi_bin="mpiexec"
   fi
   MPICH_LIBS="-lmpifort -lmpicxx -lmpi"
-  cat <<EOF >"${BUILDDIR}/setup_mpich"
+  cat << EOF > "${BUILDDIR}/setup_mpich"
 export MPI_MODE="${MPI_MODE}"
 export MPIRUN="${MPIRUN}"
 export MPICC="${MPICC}"
@@ -163,7 +163,7 @@ export CP_LDFLAGS="\${CP_LDFLAGS} IF_MPI(${MPICH_LDFLAGS}|)"
 export CP_LIBS="\${CP_LIBS} IF_MPI(${MPICH_LIBS}|)"
 EOF
   if [ "${with_mpich}" != "__SYSTEM__" ]; then
-    cat <<EOF >>"${BUILDDIR}/setup_mpich"
+    cat << EOF >> "${BUILDDIR}/setup_mpich"
 prepend_path PATH "${pkg_install_dir}/bin"
 prepend_path LD_LIBRARY_PATH "${pkg_install_dir}/lib"
 prepend_path LD_RUN_PATH "${pkg_install_dir}/lib"
@@ -175,7 +175,7 @@ EOF
 fi
 
 # Update leak suppression file
-cat <<EOF >>${INSTALLDIR}/lsan.supp
+cat << EOF >> ${INSTALLDIR}/lsan.supp
 # MPICH 3.3.2 with GCC 10.3.0
 leak:MPIR_Find_local_and_external
 leak:MPIU_Find_local_and_external
