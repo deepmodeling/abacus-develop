@@ -448,6 +448,8 @@ struct Input_para
     bool dfpt_out_dyn = false;                ///< write the raw (pre-ASR, pre-LO-TO) dynamical matrix in QE dyn format
     double dfpt_conv_thr = 1.0e-8;            ///< convergence threshold of the DFPT first-order density
     int dfpt_max_iter = 100;                  ///< max iterations of the DFPT first-order density mixing
+    double dfpt_lin_conv_thr = -1.0;          ///< Sternheimer linear-solver threshold; <=0 inherits dfpt_conv_thr
+    int dfpt_lin_max_iter = 0;                ///< Sternheimer linear-solver iteration cap; <=0 inherits dfpt_max_iter
     double dfpt_mix_beta = 0.4;               ///< mixing coefficient of the DFPT first-order density
     std::string dfpt_asr = "no";              ///< acoustic sum rule on the Gamma dynamical matrix: no | simple | crystal
     std::string dfpt_mix_type = "v_sc_broyden"; ///< mixing scheme: rho_plain | rho_kerker | rho_broyden | v_sc_plain | v_sc_broyden

@@ -175,6 +175,39 @@ void ReadInput::item_dfpt()
         this->add_item(item);
     }
     {
+        Input_Item item("dfpt_lin_conv_thr");
+        item.annotation = "convergence threshold of the inner Sternheimer linear solve";
+        item.category = category;
+        item.type = "Real";
+        item.description = "Dedicated convergence threshold of the projected CG solve of the "
+                           "Sternheimer equation inside every DFPT response iteration. "
+                           "Non-positive values (the default) inherit dfpt_conv_thr, which "
+                           "reproduces the historical single-knob behavior. Decouple them when "
+                           "a hard response needs a loose inner solve to keep the outer mixing "
+                           "stable (e.g. flat semicore bands make the shifted operator "
+                           "near-singular and a very deep inner solve amplifies the response "
+                           "beyond what the outer mixing can damp).";
+        item.default_value = "-1.0 (inherit dfpt_conv_thr)";
+        read_sync_double(input.dfpt_lin_conv_thr);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("dfpt_lin_max_iter");
+        item.annotation = "iteration cap of the inner Sternheimer linear solve";
+        item.category = category;
+        item.type = "Integer";
+        item.description = "Dedicated iteration cap of the projected CG solve of the "
+                           "Sternheimer equation inside every DFPT response iteration. "
+                           "Non-positive values (the default) inherit dfpt_max_iter, which "
+                           "reproduces the historical single-knob behavior. Lower it to "
+                           "truncate the CG before it drives into near-singular directions of "
+                           "a flat-band system; raise it for otherwise unconverged inner "
+                           "solves without enlarging the outer mixing budget.";
+        item.default_value = "0 (inherit dfpt_max_iter)";
+        read_sync_int(input.dfpt_lin_max_iter);
+        this->add_item(item);
+    }
+    {
         Input_Item item("dfpt_mix_beta");
         item.annotation = "mixing coefficient of the DFPT first-order density";
         item.category = category;

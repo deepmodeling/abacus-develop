@@ -268,8 +268,8 @@ double DFPT_PW::Impl::solve_displacement(int q_idx, int iat, int idir)
     rho_.reset_mixing(q_idx);
     data_.set_drho_g(q_idx, 0, std::vector<std::complex<double>>(npw, std::complex<double>(0.0, 0.0)));
 
-    const int lin_max = data_.get_max_iter();
-    const double lin_thr = data_.get_conv_thr();
+    const int lin_max = data_.get_lin_max_iter();
+    const double lin_thr = data_.get_lin_conv_thr();
 
     bool converged = false;
     double residual = 0.0;
