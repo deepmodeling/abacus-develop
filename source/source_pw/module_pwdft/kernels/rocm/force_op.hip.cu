@@ -1,6 +1,7 @@
 #include "source_pw/module_pwdft/kernels/force_op.h"
 
 #include <complex>
+#include <cstddef>
 
 #include <thrust/complex.h>
 #include <hip/hip_runtime.h>
@@ -610,19 +611,13 @@ __global__ void saveVkbValues_(
     int ipol,
     int npwx)
 {
-    int index = blockIdx.x * blockDim.x + threadIdx.x; // global index
-    int n_total_gcar_zeros = gcar_zero_ptrs[ipol * npwx];
-    const int* gcar_zero_ptr = gcar_zero_ptrs + ipol * npwx + 1; // skip the first element
-    int ikb = index / n_total_gcar_zeros;              // index of nkb
-    int icount = index % n_total_gcar_zeros;           // index of n_total_gcar_zeros
-    
-    // check if the index is valid
-    if(ikb < nkb )
-    {
-        int ig = gcar_zero_ptr[icount]; // get ig from gcar_zero_ptrs
-        // use the flat index to get the saved position, pay attention to the relationship between ikb and npw,
-        vkb_save_ptr[index] = vkb_ptr[ikb * npw + ig];    // save the value
-    }
+    const size_t index = size_t(blockIdx.x) * blockDim.x + threadIdx.x;
+    const int zero_count = gcar_zero_ptrs[size_t(ipol) * npwx];
+    if (index >= size_t(nkb) * zero_count) { return; }
+    const int* zero_indices = gcar_zero_ptrs + size_t(ipol) * npwx + 1;
+    const size_t projector = index / zero_count;
+    const int row = zero_indices[index % zero_count];
+    vkb_save_ptr[index] = vkb_ptr[projector * npw + row];
 }
 
 template <typename FPTYPE>
@@ -637,7 +632,10 @@ void saveVkbValues(
     int npwx 
     )
 {
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(saveVkbValues_<FPTYPE>), dim3(nkb*gcar_zero_count), dim3(THREADS_PER_BLOCK), 0, 0,
+    const size_t count = size_t(nkb) * gcar_zero_count;
+    if (count == 0) { return; }
+    const size_t blocks = (count + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(saveVkbValues_<FPTYPE>), dim3(blocks), dim3(THREADS_PER_BLOCK), 0, 0,
         gcar_zero_ptrs, 
         reinterpret_cast<const thrust::complex<FPTYPE>*>(vkb_ptr), 
         reinterpret_cast<thrust::complex<FPTYPE>*>(vkb_save_ptr), 
@@ -659,19 +657,13 @@ __global__ void revertVkbValues_(
     int npwx,
     const thrust::complex<FPTYPE> coeff)
 {
-    int index = blockIdx.x * blockDim.x + threadIdx.x; // global index
-    int n_total_gcar_zeros = gcar_zero_ptrs[ipol * npwx];
-    const int* gcar_zero_ptr = gcar_zero_ptrs + ipol * npwx + 1; // skip the first element
-    int ikb = index / n_total_gcar_zeros;              // index of nkb
-    int icount = index % n_total_gcar_zeros;           // index of n_total_gcar_zeros
-    
-    // check if the index is valid
-    if(ikb < nkb)
-    {
-        int ig = gcar_zero_ptr[icount]; // get ig from gcar_zero_ptrs
-        // use the flat index to get the saved position, pay attention to the relationship between ikb and npw,
-        vkb_ptr[ikb * npw + ig] = vkb_save_ptr[index] * coeff;    // revert the values
-    }
+    const size_t index = size_t(blockIdx.x) * blockDim.x + threadIdx.x;
+    const int zero_count = gcar_zero_ptrs[size_t(ipol) * npwx];
+    if (index >= size_t(nkb) * zero_count) { return; }
+    const int* zero_indices = gcar_zero_ptrs + size_t(ipol) * npwx + 1;
+    const size_t projector = index / zero_count;
+    const int row = zero_indices[index % zero_count];
+    vkb_ptr[projector * npw + row] = vkb_save_ptr[index] * coeff;
 }
 
 template <typename FPTYPE>
@@ -686,7 +678,10 @@ void revertVkbValues(
     int npwx,
     const std::complex<FPTYPE> coeff)
 {
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(revertVkbValues_<FPTYPE>), dim3(nkb*gcar_zero_count), dim3(THREADS_PER_BLOCK), 0, 0,
+    const size_t count = size_t(nkb) * gcar_zero_count;
+    if (count == 0) { return; }
+    const size_t blocks = (count + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(revertVkbValues_<FPTYPE>), dim3(blocks), dim3(THREADS_PER_BLOCK), 0, 0,
         gcar_zero_ptrs, 
         reinterpret_cast<thrust::complex<FPTYPE>*>(vkb_ptr), 
         reinterpret_cast<const thrust::complex<FPTYPE>*>(vkb_save_ptr), 
