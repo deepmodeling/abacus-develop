@@ -33,3 +33,7 @@ if(LR_FORCE_TEST_PYTHON)
             ${CMAKE_CURRENT_SOURCE_DIR}/validation_tools -p test_props_basic.py)
   set_tests_properties(md_force_collector PROPERTIES TIMEOUT 30)
 endif()
+
+if(ENABLE_MPI AND ENABLE_LCAO)
+  add_subdirectory(md_rt_boundary)
+endif()
