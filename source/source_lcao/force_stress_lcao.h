@@ -30,7 +30,7 @@ struct VdwResult;
 }
 
 class TwoCenterBundle;
-class BasisFlattenedIndexing;
+class BasisFlattenedIndexing; // Defined in source/source_base/basis_flattened_indexing.h
 
 // INPUT scalars that steer the force/stress kernels. Bundling them into one
 // aggregate keeps getForceStress and its helpers from each re-reading the

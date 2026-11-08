@@ -11,7 +11,7 @@ class UnitCell;
 class Grid_Driver;
 class K_Vectors;
 class Parallel_Orbitals;
-class BlockCyclicDistribution;
+class BlockCyclicDistribution; // Defined in source/source_base/parallel_blkcyc.h
 namespace ModuleBase
 {
 class matrix;

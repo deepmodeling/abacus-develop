@@ -6,8 +6,8 @@
 #include "source_lcao/allocate_dm.h"
 #include "source_lcao/module_rt/td_info.h"
 
-class BasisFlattenedIndexing;
-class BlockCyclicDistribution;
+class BasisFlattenedIndexing; // Defined in source/source_base/basis_flattened_indexing.h
+class BlockCyclicDistribution; // Defined in source/source_base/parallel_blkcyc.h
 
 template <typename T>
 void cal_foverlap_rt(ModuleBase::matrix& foverlap,

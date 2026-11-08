@@ -36,7 +36,7 @@ template <typename TR> class Exx_LRI;
 #include <iomanip>
 #include <memory>
 
-class BasisFlattenedIndexing;
+class BasisFlattenedIndexing; // Defined in source/source_base/basis_flattened_indexing.h
 
 //! Reduced Density Matrix Functional Theory (RDMFT)
 namespace rdmft

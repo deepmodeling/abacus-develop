@@ -14,7 +14,7 @@
 #include <vector>
 
 class Grid_Driver;
-class BlockCyclicDistribution;
+class BlockCyclicDistribution; // Defined in source/source_base/parallel_blkcyc.h
 
 /**
  * @brief Output the position-operator matrix <phi_mu | r_hat | phi_nu>

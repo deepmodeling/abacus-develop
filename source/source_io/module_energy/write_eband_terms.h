@@ -14,7 +14,7 @@ class surchem;
 class Charge;
 class K_Vectors;
 class TwoCenterBundle;
-class LCAO_Orbitals;
+class LCAO_Orbitals; // Defined in source/source_basis/module_ao/orb_read.h
 
 namespace ModulePW
 {

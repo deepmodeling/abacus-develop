@@ -11,7 +11,7 @@ class Matrix3;
 }
 class UnitCell;
 class Parallel_Orbitals;
-class BlockCyclicDistribution;
+class BlockCyclicDistribution; // Defined in source/source_base/parallel_blkcyc.h
 class TwoCenterIntegrator;
 namespace LR
 {

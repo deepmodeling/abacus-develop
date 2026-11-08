@@ -14,7 +14,7 @@
 #include "source_base/vector3.h"
 #include "source_io/module_hs/pos_op_mat.h"
 
-class BlockCyclicDistribution;
+class BlockCyclicDistribution; // Defined in source/source_base/parallel_blkcyc.h
 
 // Cartesian velocity-operator terms for RT-TDDFT currents.
 template <typename TR>

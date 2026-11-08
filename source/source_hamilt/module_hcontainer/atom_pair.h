@@ -11,7 +11,7 @@
 #include <tuple>
 #include <cassert>
 
-class AtomBasisView;
+class AtomBasisView; // Defined in source/source_base/atom_basis_view.h
 
 namespace hamilt
 {

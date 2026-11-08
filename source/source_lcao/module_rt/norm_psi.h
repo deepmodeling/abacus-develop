@@ -11,7 +11,7 @@
 
 #include <complex>
 
-class BlockCyclicDistribution;
+class BlockCyclicDistribution; // Defined in source/source_base/parallel_blkcyc.h
 
 namespace module_rt
 {

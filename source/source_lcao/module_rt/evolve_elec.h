@@ -13,7 +13,7 @@
 #include "source_lcao/module_rt/td_moving_gauge.h"
 #include "source_psi/psi.h"
 
-class BlockCyclicDistribution;
+class BlockCyclicDistribution; // Defined in source/source_base/parallel_blkcyc.h
 
 namespace ModuleESolver
 {

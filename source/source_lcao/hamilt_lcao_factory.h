@@ -16,8 +16,8 @@
 #include <string>
 #include <vector>
 
-class BasisFlattenedIndexing;
-class BlockCyclicDistribution;
+class BasisFlattenedIndexing; // Defined in source/source_base/basis_flattened_indexing.h
+class BlockCyclicDistribution; // Defined in source/source_base/parallel_blkcyc.h
 
 namespace hamilt
 {

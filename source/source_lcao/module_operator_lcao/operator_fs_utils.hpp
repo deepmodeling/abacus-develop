@@ -9,7 +9,7 @@
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_hamilt/module_hcontainer/hcontainer.h"
 
-class BlockCyclicDistribution;
+class BlockCyclicDistribution; // Defined in source/source_base/parallel_blkcyc.h
 
 namespace OperatorForceStress {
 

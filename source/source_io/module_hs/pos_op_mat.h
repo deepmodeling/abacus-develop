@@ -8,7 +8,7 @@
 #include <vector>
 
 class UnitCell;
-class BlockCyclicDistribution;
+class BlockCyclicDistribution; // Defined in source/source_base/parallel_blkcyc.h
 class LCAO_Orbitals;
 class Grid_Driver;
 class PosOpBasis;

@@ -8,7 +8,7 @@
 
 #include <memory>
 
-class BasisFlattenedIndexing;
+class BasisFlattenedIndexing; // Defined in source/source_base/basis_flattened_indexing.h
 
 namespace ModuleESolver
 {

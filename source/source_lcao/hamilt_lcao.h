@@ -32,8 +32,8 @@ struct Exx_Info;
 // Input_para forward declaration, full definition in input_parameter.h
 struct Input_para;
 
-class BasisFlattenedIndexing;
-class BlockCyclicDistribution;
+class BasisFlattenedIndexing; // Defined in source/source_base/basis_flattened_indexing.h
+class BlockCyclicDistribution; // Defined in source/source_base/parallel_blkcyc.h
 
 namespace hamilt
 {

@@ -11,7 +11,7 @@
 namespace ModuleIO
 {
 
-class OutputMullikenNspin4Test;
+class OutputMullikenNspin4Test; // Defined in source/source_io/unittests/test_output_mulliken.cpp
 
 template <typename TK>
 class Output_Sk;
