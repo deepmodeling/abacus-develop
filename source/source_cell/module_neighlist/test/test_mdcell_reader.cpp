@@ -175,7 +175,16 @@ TEST_P(MDCellReaderUnitsTest, ConvertsWrapsAndReplicates)
     if (units == "Cartesian_angstrom") scale = lat0 * ModuleBase::BOHR_TO_A;
     {
         std::ofstream ofs(stru_file.c_str());
-        ASSERT_TRUE(ofs.good());
+        const int local_open_failure = ofs.good() ? 0 : 1;
+        const int open_failures = comm.sum(local_open_failure);
+        EXPECT_EQ(open_failures, 0) << "Failed to open a temporary STRU on one or more ranks";
+        // All ranks must leave together before entering the reader's collectives.
+        if (open_failures != 0)
+        {
+            ofs.close();
+            if (local_open_failure == 0) std::remove(stru_file.c_str());
+            return;
+        }
         ofs << std::setprecision(17);
         ofs << "ATOMIC_SPECIES\nHe 4.0026 auto auto\n\nLATTICE_CONSTANT\n" << lat0;
         ofs << "\n\nLATTICE_VECTORS\n4 0 0\n1 3 0\n0.5 0.75 2\n\nATOMIC_POSITIONS\n";
@@ -200,8 +209,11 @@ TEST_P(MDCellReaderUnitsTest, ConvertsWrapsAndReplicates)
         MDCell cell = MDCellReader::read_stru(stru_file, replica, 0.0, comm, decomp);
         const int expected_count = 4 * replica[0] * replica[1] * replica[2];
         EXPECT_EQ(cell.nat(), expected_count);
-        ASSERT_EQ(cell.type_atom_counts().size(), 1U);
-        EXPECT_EQ(cell.type_atom_counts()[0], expected_count);
+        EXPECT_EQ(cell.type_atom_counts().size(), 1U);
+        if (cell.type_atom_counts().size() == 1U)
+        {
+            EXPECT_EQ(cell.type_atom_counts()[0], expected_count);
+        }
         EXPECT_DOUBLE_EQ(cell.lat0(), lat0);
         const double expected_volume = 24.0 * lat0 * lat0 * lat0 * expected_count / 4;
         EXPECT_NEAR(cell.omega(), expected_volume, tolerance);
@@ -218,8 +230,10 @@ TEST_P(MDCellReaderUnitsTest, ConvertsWrapsAndReplicates)
         std::vector<int> owners(expected_count, 0);
         for (const LocalAtom& atom : cell.owned_atoms())
         {
-            ASSERT_GE(atom.type_index, 0);
-            ASSERT_LT(atom.type_index, expected_count);
+            EXPECT_GE(atom.type_index, 0);
+            EXPECT_LT(atom.type_index, expected_count);
+            // Report invalid IDs without indexing owners or skipping the reduction.
+            if (atom.type_index < 0 || atom.type_index >= expected_count) continue;
             const int id = static_cast<int>(atom.type_index);
             ++owners[id];
             const int ia = id % 4;
