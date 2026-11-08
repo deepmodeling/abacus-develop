@@ -1,6 +1,4 @@
 // MD wrapping, migration and repeated sync must preserve the saved RT state.
-#include "source_md/md_base.h"
-#include "source_md/md_func.h"
 #include "source_base/constants.h"
 #include "source_base/parallel_cell.h"
 #include "source_base/parallel_global.h"
@@ -9,6 +7,8 @@
 #include "source_cell/update_cell.h"
 #include "source_lcao/module_rt/boundary_fix.h"
 #include "source_lcao/module_rt/td_folding.h"
+#include "source_md/md_base.h"
+#include "source_md/md_func.h"
 
 #include <gtest/gtest.h>
 
@@ -22,7 +22,7 @@ namespace
 {
 class MdRtBoundaryIntegration : public testing::Test
 {
-protected:
+  protected:
     ModuleBase::CommunicationDomain domain;
     ModuleBase::Matrix3 lattice;
     std::array<Atom, 1> backing_types;
@@ -38,7 +38,7 @@ protected:
         lattice.e11 = 1.0;
         lattice.e22 = 1.0;
         lattice.e33 = 1.0;
-        for (Atom* type : {backing_types.data(), reference_types.data()})
+        for (Atom *type : {backing_types.data(), reference_types.data()})
         {
             type->na = 4;
             type->nw = 1;
@@ -82,10 +82,25 @@ protected:
         const std::vector<std::string> labels(1, "X");
         const std::vector<double> masses(1, 1.0);
         const std::vector<std::int64_t> counts(1, 4);
-        cell.initialize_from_owned_atoms(lattice, inverse, 1.0, 1.0, 4, owned,
-                                         labels, masses, counts, 0.0, domain);
+        cell.initialize_from_owned_atoms(
+            lattice,
+            inverse,
+            1.0,
+            1.0,
+            4,
+            owned,
+            labels,
+            masses,
+            counts,
+            0.0,
+            domain);
         cell.set_backing_unitcell(backing);
-        decomposition.init(domain, lattice, 1.0, 0.0, 0.0);
+        decomposition.init(
+            domain,
+            lattice,
+            1.0,
+            0.0,
+            0.0);
         cell.set_neighbor_cutoff(0.05);
         parameters.md_dt = ModuleBase::AU_to_FS;
         parameters.md_tfirst = -1.0;
@@ -109,10 +124,10 @@ protected:
         return ModuleBase::Vector3<double>(-1.0e-21, -2.0e-21, -3.0e-21);
     }
 
-    void expect_local_state(const LocalAtom& atom)
+    void expect_local_state(const LocalAtom &atom)
     {
         const int index = atom.type_index;
-        const Atom& reference = reference_types[0];
+        const Atom &reference = reference_types[0];
         SCOPED_TRACE(index);
         for (int axis = 0; axis < 3; ++axis)
         {
@@ -124,8 +139,8 @@ protected:
 
     void expect_backing_state(const bool positions_updated)
     {
-        const Atom& actual = backing_types[0];
-        const Atom& reference = reference_types[0];
+        const Atom &actual = backing_types[0];
+        const Atom &reference = reference_types[0];
         EXPECT_EQ(backing.ionic_position_updated, positions_updated);
         for (int index = 0; index < 4; ++index)
         {
@@ -143,7 +158,10 @@ protected:
 
     Complex phase_for(int index, int kpoint) const
     {
-        const std::array<double, 4> kx_values = {{0.0, 0.25, -0.25, 0.375}};
+        const std::array<double, 4> kx_values = {{0.0,
+            0.25,
+            -0.25,
+            0.375}};
         const double kx = kx_values[kpoint];
         const double argument = -ModuleBase::TWO_PI * kx * reference_types[0].boundary_shift[index].x;
         const Complex exponent(0.0, argument);
@@ -157,10 +175,11 @@ protected:
         return Complex(real, imaginary);
     }
 
-    std::vector<Complex> fold_hybrid(const Parallel_Orbitals& orbitals,
-                                     const ModuleBase::Vector3<double>& kpoint,
-                                     const ModuleBase::Vector3<double>& vector_potential,
-                                     const bool wrapped) const
+    std::vector<Complex> fold_hybrid(
+        const Parallel_Orbitals &orbitals,
+        const ModuleBase::Vector3<double> &kpoint,
+        const ModuleBase::Vector3<double> &vector_potential,
+        const bool wrapped) const
     {
         hamilt::HContainer<Complex> real_space(&orbitals);
         for (int row = 0; row < 4; ++row)
@@ -182,7 +201,11 @@ protected:
                 {
                     translation += backing_types[0].boundary_shift[row] - backing_types[0].boundary_shift[column];
                 }
-                hamilt::AtomPair<Complex> pair(row, column, translation, &orbitals);
+                hamilt::AtomPair<Complex> pair(
+                    row,
+                    column,
+                    translation,
+                    &orbitals);
                 real_space.insert_pair(pair);
             }
         }
@@ -190,7 +213,7 @@ protected:
         std::map<ModuleBase::Vector3<int>, Complex> phases;
         for (int index = 0; index < real_space.size_atom_pairs(); ++index)
         {
-            hamilt::AtomPair<Complex>& pair = real_space.get_atom_pair(index);
+            hamilt::AtomPair<Complex> &pair = real_space.get_atom_pair(index);
             const ModuleBase::Vector3<int> translation = pair.get_R_index(0);
             const int row = pair.get_atom_i();
             const int column = pair.get_atom_j();
@@ -203,7 +226,14 @@ protected:
         }
         std::vector<Complex> folded(orbitals.para_2d().size(), Complex(0.0, 0.0));
         const int rows = orbitals.para_2d().nrloc();
-        module_rt::folding_HR_td(real_space, folded.data(), kpoint, vector_potential, phases, rows, 1);
+        module_rt::folding_HR_td(
+            real_space,
+            folded.data(),
+            kpoint,
+            vector_potential,
+            phases,
+            rows,
+            1);
         return folded;
     }
 
@@ -212,7 +242,12 @@ protected:
         const int basis_size = 4;
         const int band_count = 2;
         Parallel_Orbitals orbitals;
-        const int init_result = orbitals.para_2d().init(basis_size, basis_size, 1, cell.communicator(), false);
+        const int init_result = orbitals.para_2d().init(
+            basis_size,
+            basis_size,
+            1,
+            cell.communicator(),
+            false);
         ASSERT_EQ(init_result, 0);
         std::ofstream log;
         const int band_result = orbitals.set_nloc_wfc_Eij(band_count, log, log);
@@ -221,17 +256,34 @@ protected:
         Parallel_Orbitals full;
         full.para_2d().set_serial(basis_size, basis_size);
         full.set_atomic_trace(backing.get_iat2iwt(), backing.nat, basis_size);
-        const Parallel_Orbitals& matrix_layout = gathered ? full : orbitals;
+        const Parallel_Orbitals &matrix_layout = gathered ? full : orbitals;
         const int matrix_size = matrix_layout.para_2d().size();
         const ct::TensorShape shape({4, matrix_size});
         ct::Tensor h(ct::DataType::DT_COMPLEX_DOUBLE, shape);
         ct::Tensor s(ct::DataType::DT_COMPLEX_DOUBLE, shape);
         const std::vector<int> plane_wave_counts;
-        psi::Psi<Complex> coefficients(4, orbitals.ncol_bands, orbitals.para_2d().nrloc(), plane_wave_counts, true);
-        const std::array<double, 4> kx_values = {{0.0, 0.25, -0.25, 0.375}};
+        psi::Psi<Complex> coefficients(
+            4,
+            orbitals.ncol_bands,
+            orbitals.para_2d().nrloc(),
+            plane_wave_counts,
+            true);
+        const std::array<double, 4> kx_values = {{0.0,
+            0.25,
+            -0.25,
+            0.375}};
         std::vector<ModuleBase::Vector3<double>> points(4);
         // A nonorthogonal cell and lat0 != 1 catch missing Cartesian/unit conversions.
-        backing.latvec = ModuleBase::Matrix3(1.0, 0.2, 0.1, 0.0, 1.0, 0.3, 0.0, 0.0, 1.0);
+        backing.latvec = ModuleBase::Matrix3(
+            1.0,
+            0.2,
+            0.1,
+            0.0,
+            1.0,
+            0.3,
+            0.0,
+            0.0,
+            1.0);
         backing.lat0 = 3.0;
         const ModuleBase::Vector3<double> saved_A(0.07, -0.11, 0.05);
         const ModuleBase::Vector3<double> next_A(-0.13, 0.17, 0.09);
@@ -240,9 +292,21 @@ protected:
         for (int kpoint = 0; kpoint < 4; ++kpoint)
         {
             points[kpoint].set(kx_values[kpoint], 0.0, 0.0);
-            before[kpoint] = fold_hybrid(matrix_layout, points[kpoint], saved_A, false);
-            expected[kpoint] = fold_hybrid(matrix_layout, points[kpoint], saved_A, true);
-            const std::vector<Complex> wrong_time = fold_hybrid(matrix_layout, points[kpoint], next_A, true);
+            before[kpoint] = fold_hybrid(
+                matrix_layout,
+                points[kpoint],
+                saved_A,
+                false);
+            expected[kpoint] = fold_hybrid(
+                matrix_layout,
+                points[kpoint],
+                saved_A,
+                true);
+            const std::vector<Complex> wrong_time = fold_hybrid(
+                matrix_layout,
+                points[kpoint],
+                next_A,
+                true);
             double field_time_difference = 0.0;
             for (int element = 0; element < matrix_size; ++element)
             {
@@ -262,8 +326,16 @@ protected:
             }
         }
         coefficients.fix_k(0);
-        module_rt::reset_matrix_boundary(backing, points, 4, saved_A,
-                                         &orbitals, h, s, &coefficients, matrix_size);
+        module_rt::reset_matrix_boundary(
+            backing,
+            points,
+            4,
+            saved_A,
+            &orbitals,
+            h,
+            s,
+            &coefficients,
+            matrix_size);
         EXPECT_EQ(coefficients.get_current_k(), 0);
         for (int kpoint = 0; kpoint < 4; ++kpoint)
         {
@@ -286,7 +358,7 @@ protected:
                 for (int row = 0; row < orbitals.para_2d().nrloc(); ++row)
                 {
                     const int global_row = orbitals.para_2d().irglb(row);
-                    const ModuleBase::Vector3<int>& shift = backing_types[0].boundary_shift[global_row];
+                    const ModuleBase::Vector3<int> &shift = backing_types[0].boundary_shift[global_row];
                     const ModuleBase::Vector3<double> direct(shift.x, shift.y, shift.z);
                     const ModuleBase::Vector3<double> cartesian = direct * backing.latvec * backing.lat0;
                     const double angle = ModuleBase::TWO_PI * (points[kpoint] * direct) + saved_A * cartesian;
@@ -306,7 +378,12 @@ protected:
         const int band_count = 2;
         Parallel_Orbitals orbitals;
         const int block_size = 1;
-        const int init_result = orbitals.para_2d().init(basis_size, basis_size, block_size, cell.communicator(), false);
+        const int init_result = orbitals.para_2d().init(
+            basis_size,
+            basis_size,
+            block_size,
+            cell.communicator(),
+            false);
         ASSERT_EQ(init_result, 0);
         std::ofstream log;
         const int band_result = orbitals.set_nloc_wfc_Eij(band_count, log, log);
@@ -323,7 +400,12 @@ protected:
         ct::Tensor h(ct::DataType::DT_COMPLEX_DOUBLE, shape);
         ct::Tensor s(ct::DataType::DT_COMPLEX_DOUBLE, shape);
         const std::vector<int> plane_wave_counts;
-        psi::Psi<Complex> coefficients(4, orbitals.ncol_bands, orbitals.para_2d().nrloc(), plane_wave_counts, true);
+        psi::Psi<Complex> coefficients(
+            4,
+            orbitals.ncol_bands,
+            orbitals.para_2d().nrloc(),
+            plane_wave_counts,
+            true);
         for (int kpoint = 0; kpoint < 4; ++kpoint)
         {
             for (int column = 0; column < columns; ++column)
@@ -348,8 +430,16 @@ protected:
         }
         coefficients.fix_k(0);
         const ModuleBase::Vector3<double> no_vector_potential;
-        module_rt::reset_matrix_boundary(backing, points, 4, no_vector_potential,
-                                         &orbitals, h, s, &coefficients, matrix_size);
+        module_rt::reset_matrix_boundary(
+            backing,
+            points,
+            4,
+            no_vector_potential,
+            &orbitals,
+            h,
+            s,
+            &coefficients,
+            matrix_size);
         // Per-k coefficient access must not mutate a shared Psi cursor.
         EXPECT_EQ(coefficients.get_current_k(), 0);
         for (int kpoint = 0; kpoint < 4; ++kpoint)
@@ -396,7 +486,12 @@ protected:
 TEST_F(MdRtBoundaryIntegration, MatchesLegacyWrappingThroughMigrationAndRepeatedSync)
 {
     const int rank = domain.rank();
-    MD_base integrator(parameters, false, true, rank, cell);
+    MD_base integrator(
+        parameters,
+        false,
+        true,
+        rank,
+        cell);
     std::ofstream log;
     for (int step = 0; step < 2; ++step)
     {
@@ -415,13 +510,13 @@ TEST_F(MdRtBoundaryIntegration, MatchesLegacyWrappingThroughMigrationAndRepeated
             reference_types[0].dis[index] = displacement;
         }
         unitcell::periodic_boundary_adjustment(reference_types.data(), lattice, 1);
-        for (LocalAtom& atom : cell.owned_atoms())
+        for (LocalAtom &atom : cell.owned_atoms())
         {
             const int index = atom.type_index;
             atom.vel = velocity_for(index, step);
         }
         integrator.first_half(log);
-        for (const LocalAtom& atom : cell.owned_atoms())
+        for (const LocalAtom &atom : cell.owned_atoms())
         {
             expect_local_state(atom);
         }
@@ -431,7 +526,7 @@ TEST_F(MdRtBoundaryIntegration, MatchesLegacyWrappingThroughMigrationAndRepeated
         expect_backing_state(true);
         decomposition.migrate_owned_atoms(cell);
         int migrated = 0;
-        for (const LocalAtom& atom : cell.owned_atoms())
+        for (const LocalAtom &atom : cell.owned_atoms())
         {
             expect_local_state(atom);
             const int owner = decomposition.owner_rank_from_frac(atom.frac);
@@ -446,7 +541,7 @@ TEST_F(MdRtBoundaryIntegration, MatchesLegacyWrappingThroughMigrationAndRepeated
         {
             EXPECT_GT(global_migrated, 0);
         }
-        for (const LocalAtom& ghost : cell.ghost_atoms())
+        for (const LocalAtom &ghost : cell.ghost_atoms())
         {
             expect_local_state(ghost);
         }
@@ -474,8 +569,13 @@ TEST_F(MdRtBoundaryIntegration, MatchesLegacyWrappingThroughMigrationAndRepeated
 TEST_F(MdRtBoundaryIntegration, HybridBoundaryMatchesFreshFoldingAtSavedFieldTime)
 {
     const int rank = domain.rank();
-    MD_base integrator(parameters, false, true, rank, cell);
-    for (LocalAtom& atom : cell.owned_atoms())
+    MD_base integrator(
+        parameters,
+        false,
+        true,
+        rank,
+        cell);
+    for (LocalAtom &atom : cell.owned_atoms())
     {
         const int index = atom.type_index;
         atom.vel = velocity_for(index, 0);
@@ -491,12 +591,17 @@ TEST_F(MdRtBoundaryIntegration, HybridBoundaryMatchesFreshFoldingAtSavedFieldTim
 
 } // namespace
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
     int process_count = 1;
     int thread_count = 1;
     int rank = 0;
-    Parallel_Global::read_pal_param(argc, argv, process_count, thread_count, rank);
+    Parallel_Global::read_pal_param(
+        argc,
+        argv,
+        process_count,
+        thread_count,
+        rank);
     POOL_WORLD = MPI_COMM_NULL;
     KP_WORLD = MPI_COMM_NULL;
     INT_BGROUP = MPI_COMM_NULL;

@@ -16,19 +16,10 @@ if(ENABLE_MPI)
   addtest(
     TARGET MODULE_MD_base_mpi
     KEEP_FEATURE_DEFINITIONS __MPI
-    LIBS parameter psi device container
-    SOURCES test_md_base.cpp
-            ../md_base.cpp
-            ../../source_lcao/module_rt/boundary_fix.cpp
-            ../../source_lcao/module_rt/td_folding.cpp
-            ../../source_hamilt/module_hcontainer/base_matrix.cpp
-            ../../source_hamilt/module_hcontainer/atom_pair.cpp
-            ../../source_hamilt/module_hcontainer/hcontainer.cpp
-            ../../source_basis/module_ao/parallel_orbitals.cpp
-            ../../source_base/block_cyclic_distribution.cpp
+    LIBS parameter psi device
+    SOURCES test_md_base.cpp ../md_base.cpp
             ../../source_base/parallel_common.cpp
-            ../../source_cell/magnetism.cpp
-            ${md_test_depend_files})
+            ../../source_cell/magnetism.cpp ${md_test_depend_files})
   add_test(
     NAME MODULE_MD_base_mpi_np4
     COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 4 ${MPIEXEC_PREFLAGS}
