@@ -389,7 +389,7 @@ class BandOutputTest : public testing::TestWithParam<BandTopology>
 TEST_P(BandOutputTest, DirectSingleSpin)
 {
     prepare(1, 3, false);
-    ModuleIO::nscf_bands(0, directory_ + "direct.txt", 3, 0.0, 8, ekb_, kv_, "");
+    ModuleIO::nscf_bands(0, directory_ + "direct.txt", 3, 0.0, 8, ekb_, kv_, "", 0);
     expect_output("direct.txt", 0, 3, 0.0, 8, 1);
     if (world_->rank() == 0)
     {
@@ -402,8 +402,8 @@ TEST_P(BandOutputTest, DirectSingleSpin)
 TEST_P(BandOutputTest, DirectBothSpins)
 {
     prepare(2, 3, false);
-    ModuleIO::nscf_bands(0, directory_ + "up.txt", 3, 0.0, 8, ekb_, kv_, "");
-    ModuleIO::nscf_bands(1, directory_ + "down.txt", 3, 0.0, 8, ekb_, kv_, "");
+    ModuleIO::nscf_bands(0, directory_ + "up.txt", 3, 0.0, 8, ekb_, kv_, "", 0);
+    ModuleIO::nscf_bands(1, directory_ + "down.txt", 3, 0.0, 8, ekb_, kv_, "", 0);
     expect_output("up.txt", 0, 3, 0.0, 8, 1);
     expect_output("down.txt", 1, 3, 0.0, 8, 1);
 }
@@ -413,7 +413,7 @@ TEST_P(BandOutputTest, PrecisionAndFermiShift)
     prepare(1, 3, false);
     for (const int precision : {4, 8})
     {
-        ModuleIO::nscf_bands(0, directory_ + "direct.txt", 3, 0.25, precision, ekb_, kv_, "");
+        ModuleIO::nscf_bands(0, directory_ + "direct.txt", 3, 0.25, precision, ekb_, kv_, "", 0);
         expect_output("direct.txt", 0, 3, 0.25, precision, 1);
         if (world_->rank() == 0 && precision == 4)
         {
@@ -434,6 +434,7 @@ TEST_P(BandOutputTest, OverwriteAndAppend)
     expect_header("band.txt", 0, 0, 1);
     Parallel::barrier(*world_);
     parameters_->set_output(directory_, true);
+    input_.out_app_flag = 1;
     ModuleIO::write_bands(input_, ekb_, kv_, ofs_running, directory_, 1);
     expect_output("band.txt", 0, 3, 0.0, 8, 2);
     expect_header("band.txt", 1, 0, 1);

@@ -44,6 +44,7 @@ void write_bands(const Input_para& inp,
  * @param kv klist
  * @param header provenance header written once in front of the k-point block;
  *               pass an empty string to omit it
+ * @param out_app_flag output append mode: 0 = truncate, 1 = append
  */
 void nscf_bands(const int& is,
                const std::string &eig_file,
@@ -52,7 +53,8 @@ void nscf_bands(const int& is,
                const int& precision,
                const ModuleBase::matrix& ekb,
                const K_Vectors& kv,
-               const std::string& header);
+               const std::string& header,
+               const int out_app_flag);
 }
 
 #endif
