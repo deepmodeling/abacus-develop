@@ -124,6 +124,7 @@ void K_Vectors::set(const UnitCell& ucell,
         std::ofstream ofkpt(skpt.str().c_str()); // clear kpoints
         ofkpt << skpt2 << skpt1;
         ofkpt.close();
+        ofs << " Write K-point information to file: " << skpt.str() << std::endl;
     }
 
     int deg = (nspin_in == 1) ? 2 : 1;

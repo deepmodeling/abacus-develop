@@ -10,6 +10,7 @@
 #include "source_io/module_json/output_info.h"
 #include "source_io/module_output/output_log.h"
 #include "source_io/module_output/print_info.h"
+#include "source_io/module_output/write_notice.h"
 #include "source_io/module_parameter/parameter.h"
 
 void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver,
@@ -268,6 +269,10 @@ void Relax_Driver::stru_out(const int istep,
                                   my_rank_,
                                   inp.cal_force,
                                   false);
+        if (my_rank_ == 0)
+        {
+            ModuleIO::write_notice(GlobalV::ofs_running, "Structure at current step", now_file);
+        }
     }
 
     // Numbered files per out_freq_ion: only meaningful for relaxation calculations
@@ -291,6 +296,10 @@ void Relax_Driver::stru_out(const int istep,
                                   my_rank_,
                                   inp.cal_force,
                                   append_stru);
+        if (my_rank_ == 0)
+        {
+            ModuleIO::write_notice(GlobalV::ofs_running, "Structure at current step", step_file);
+        }
     }
 }
 
@@ -352,6 +361,10 @@ void Relax_Driver::final_out(const int istep,
                                   my_rank_,
                                   write_force,
                                   false);
+        if (my_rank_ == 0)
+        {
+            ModuleIO::write_notice(ofs_running, "Final structure", final_file);
+        }
     }
 
     if (stop_reason == RelaxStopReason::MaxSteps)

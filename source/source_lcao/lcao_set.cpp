@@ -72,6 +72,12 @@ void LCAO_domain::set_pot(
     //! 1) init local pseudopotentials
     locpp.init_vloc(ucell, &pw_rho);
     locpp.print_vloc(ucell, &pw_rho, inp.out_element_info, PARAM.globalv.global_out_dir);
+    if (inp.out_element_info && GlobalV::MY_RANK == 0)
+    {
+        GlobalV::ofs_running << " Write element information to directory: "
+                             << PARAM.globalv.global_out_dir
+                             << " (" << ucell.ntype << " element type(s))" << std::endl;
+    }
 
     //! 2) init potentials
     if (pelec->pot == nullptr)
