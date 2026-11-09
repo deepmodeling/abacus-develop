@@ -144,6 +144,47 @@ TEST(DhsSparseWriter, SocWritesAllDirections)
     remove_derivative_files("s");
 }
 
+TEST(DhsSparseWriter, OverlapDerivativeWritesSingleSpinChannel)
+{
+    remove_derivative_files("s");
+    remove_derivative_files("h");
+    init_sparse_output_globals();
+
+    Parallel_Orbitals pv;
+    init_serial_orbitals(pv);
+    LCAO_HS_Arrays arrays;
+    const Abfs::Vector3_Order<int> r_vector(0, 0, 0);
+    arrays.all_R_coor.insert(r_vector);
+    arrays.dHRx_sparse[0][r_vector][0][0] = 1.0;
+
+    // dS/dR is spin-independent, so nspin = 2 must still write one spin file
+    // instead of adding an all-zero spin-2 matrix.
+    ModuleIO::save_dH_sparse(4, pv, arrays, 1e-10, false, "s", 8, "./", "scf", false, 2, 2, ofs_running);
+
+    std::ifstream spin1_file("dsrxs1_nao.csr");
+    EXPECT_TRUE(spin1_file.is_open());
+    spin1_file.close();
+    std::ifstream spin2_file("dsrxs2_nao.csr");
+    EXPECT_FALSE(spin2_file.is_open());
+    spin2_file.close();
+
+    const std::vector<std::string> lines = read_lines("dsrxs1_nao.csr");
+    ASSERT_GE(lines.size(), 5);
+    EXPECT_EQ(lines[0], "Ionic_Step 5");
+    EXPECT_EQ(lines[3], "0 0 0 1");
+    EXPECT_THAT(lines[4], testing::HasSubstr("1.00000000e+00"));
+
+    // dH/dR stays spin-dependent and still writes both spin channels.
+    arrays.dHRx_sparse[1][r_vector][1][1] = -2.0;
+    ModuleIO::save_dH_sparse(4, pv, arrays, 1e-10, false, "h", 8, "./", "scf", false, 2, 2, ofs_running);
+    std::ifstream h_spin2_file("dhrxs2_nao.csr");
+    EXPECT_TRUE(h_spin2_file.is_open());
+    h_spin2_file.close();
+
+    remove_derivative_files("s");
+    remove_derivative_files("h");
+}
+
 TEST(DhsSparseWriter, AppendModeReusesFixedFilename)
 {
     remove_derivative_files("s");

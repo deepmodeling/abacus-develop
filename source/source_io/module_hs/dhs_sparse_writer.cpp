@@ -70,10 +70,17 @@ void ModuleIO::save_dH_sparse(const int& istep,
     // value, printed one-based per governance rule 22.
     const int header_step = std::max(istep, 0) + 1;
 
+    // The overlap derivative dS/dR is spin-independent: cal_dS fills only the
+    // spin-0 channel, so a second spin file would be an all-zero matrix.
+    // Only the Hamiltonian derivative dH/dR is spin-dependent.
+    const bool spin_dependent = (fileflag == "h");
     int spin_loop = 1;
-    if (nspin == 2) {
+    if (spin_dependent && nspin == 2)
+    {
         spin_loop = 2;
     }
+    // A spin-independent quantity has no spin channel to label in the log.
+    const int log_nspin = spin_dependent ? nspin : 1;
 
     for (auto& comp: comps)
     {
@@ -119,7 +126,7 @@ void ModuleIO::save_dH_sparse(const int& istep,
 
     for (auto& comp: comps)
     {
-        for (int ispin = 0; ispin < 2; ++ispin)
+        for (int ispin = 0; ispin < spin_loop; ++ispin)
         {
             if (include_step)
             {
@@ -160,7 +167,7 @@ void ModuleIO::save_dH_sparse(const int& istep,
                 // Announce every written file, including appended multi-step
                 // records and binary output, so the running log tracks each write.
                 const char* matrix_name = (fileflag == "s") ? "dS/dR" : "dH/dR";
-                const std::string spin_tag = ModuleIO::make_spin_tag(ispin, nspin);
+                const std::string spin_tag = ModuleIO::make_spin_tag(ispin, log_nspin);
                 ofs_running << " Write " << matrix_name << " (" << comp.axis << " component)" << spin_tag
                             << " matrix in NAO basis to file: " << comp.fname[ispin].str() << std::endl;
 
