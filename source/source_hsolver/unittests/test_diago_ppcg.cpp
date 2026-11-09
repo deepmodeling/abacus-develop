@@ -134,17 +134,21 @@ class DiagoPPCGMatrixTest : public ::testing::Test
         }
     }
 
-    void check_eigenvalues(double diag_threshold, int max_iterations, int block_size,
-                           int ritz_interval, double tolerance)
+    double solve(hsolver::DiagoPPCG<T, base_device::DEVICE_CPU>& solver)
     {
-        std::vector<Real> eval(nband, 0.0);
-        hsolver::DiagoPPCG<T, base_device::DEVICE_CPU> solver(
-            diag_threshold, max_iterations, block_size, ritz_interval);
+        eval.assign(nband, 0.0);
         const auto h_op = [this](T* in, T* out, int leading_dimension, int columns) {
             dense_h_multiply(H_mat.data(), n_dim, in, out, leading_dimension, columns);
         };
-        const double iterations = solver.diag(
-            h_op, nullptr, ld, nband, n_dim, psi.data(), eval.data(), ethr, prec.data());
+        return solver.diag(h_op, nullptr, ld, nband, n_dim, psi.data(), eval.data(), ethr, prec.data());
+    }
+
+    void check_eigenvalues(double diag_threshold, int max_iterations, int block_size,
+                           int ritz_interval, double tolerance)
+    {
+        hsolver::DiagoPPCG<T, base_device::DEVICE_CPU> solver(
+            diag_threshold, max_iterations, block_size, ritz_interval);
+        const double iterations = solve(solver);
         for (int i = 0; i < nband; ++i)
         {
             EXPECT_NEAR(eval[i], exact[i], tolerance) << "eigenvalue " << i;
@@ -153,12 +157,45 @@ class DiagoPPCGMatrixTest : public ::testing::Test
         EXPECT_LE(iterations, iteration_budget);
     }
 
+    // Recompute operator images independently of the solver's cached vectors.
+    void check_eigenvectors(double residual_tolerance, double orthogonality_tolerance)
+    {
+        const int image_size = ld * nband;
+        std::vector<T> hpsi(image_size);
+        dense_h_multiply(H_mat.data(), n_dim, psi.data(), hpsi.data(), ld, nband);
+        for (int band = 0; band < nband; ++band)
+        {
+            Real residual_squared = 0;
+            for (int row = 0; row < n_dim; ++row)
+            {
+                const int offset = row + band * ld;
+                const T residual = hpsi[offset] - eval[band] * psi[offset];
+                residual_squared += std::norm(residual);
+            }
+            const Real residual_norm = std::sqrt(residual_squared);
+            EXPECT_TRUE(std::isfinite(residual_norm));
+            EXPECT_LT(residual_norm, residual_tolerance) << "band " << band;
+            for (int other = 0; other < nband; ++other)
+            {
+                T overlap = 0;
+                for (int row = 0; row < n_dim; ++row)
+                {
+                    overlap += std::conj(psi[row + other * ld]) * psi[row + band * ld];
+                }
+                const T expected_overlap = (other == band) ? T(1) : T(0);
+                const Real overlap_error = std::abs(overlap - expected_overlap);
+                EXPECT_LT(overlap_error, orthogonality_tolerance) << "bands " << other << ", " << band;
+            }
+        }
+    }
+
     int n_dim;
     int nband;
     int ld;
     std::vector<T> H_mat;
     std::vector<Real> prec;
     std::vector<Real> exact;
+    std::vector<Real> eval;
     std::vector<double> ethr;
     std::vector<T> psi;
 };
@@ -452,26 +489,7 @@ class DiagoPPCGTridiagTest : public DiagoPPCGMatrixTest
 
 TEST_F(DiagoPPCGTridiagTest, BlockSubspace)
 {
-    std::vector<T> psi_run = psi;
-    std::vector<Real> eval(nband, 0.0);
-
-    hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(
-        /* diag_thr = */ 1e-12,
-        /* max_iter = */ 100,
-        /* sbsize   = */ 4,
-        /* rr_step  = */ 4);
-
-    auto h_op = [this](T* in, T* out, int ld_in, int ncol) {
-        dense_h_multiply(H_mat.data(), n_dim, in, out, ld_in, ncol);
-    };
-
-    double avg_iter = solver.diag(h_op, nullptr, ld, nband, n_dim, psi_run.data(), eval.data(), ethr, prec.data());
-
-    for (int i = 0; i < nband; ++i)
-    {
-        EXPECT_NEAR(eval[i], exact[i], 1e-8) << "Tridiag BLOCK: eigenvalue[" << i << "] mismatch";
-    }
-    EXPECT_LE(avg_iter, double(100)) << "Tridiag BLOCK: too many iterations";
+    check_eigenvalues(1e-12, 100, 4, 4, 1e-8);
 }
 
 TEST_F(DiagoPPCGTridiagTest, ReportsIterationLimit)
@@ -1027,71 +1045,27 @@ TEST_F(DiagoPPCGTridiagTest, ResidualTraceWritesCsv)
 // =============================================================================
 // Test fixture: diagonal matrix (simplest possible Hamiltonian)
 // =============================================================================
-class DiagoPPCGDiagonalTest : public ::testing::Test
+class DiagoPPCGDiagonalTest : public DiagoPPCGMatrixTest
 {
   protected:
     void SetUp() override
     {
-        n_dim = 5;
-        nband = 3;
-        ld = n_dim;
-
-        // Build diagonal H: H[i,i] = i+1
-        H_mat.assign(n_dim * n_dim, T(0));
-        for (int i = 0; i < n_dim; ++i)
-        {
-            H_mat[i + i * n_dim] = T(Real(i + 1), 0);
-        }
-
-        // Preconditioner — diagonal of H
+        initialize(5, 3, 42, 1e-10);
+        const int matrix_size = n_dim * n_dim;
+        H_mat.assign(matrix_size, T(0));
         prec.resize(n_dim);
         for (int i = 0; i < n_dim; ++i)
         {
             prec[i] = Real(i + 1);
+            H_mat[i + i * n_dim] = prec[i];
         }
-
-        // Lowest 3 eigenvalues: 1, 2, 3
         exact = {1.0, 2.0, 3.0};
-
-        // Convergence thresholds
-        ethr.assign(nband, 1e-10);
-
-        // Random initial guess (fixed seed)
-        initialize_vectors(psi, n_dim, nband, ld, 42);
     }
-
-    int n_dim;
-    int nband;
-    int ld;
-    std::vector<T> H_mat;
-    std::vector<Real> prec;
-    std::vector<Real> exact;
-    std::vector<double> ethr;
-    std::vector<T> psi;
 };
 
 TEST_F(DiagoPPCGDiagonalTest, BlockSubspace)
 {
-    std::vector<T> psi_run = psi;
-    std::vector<Real> eval(nband, 0.0);
-
-    hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(
-        /* diag_thr = */ 1e-12,
-        /* max_iter = */ 50,
-        /* sbsize   = */ 3,
-        /* rr_step  = */ 3);
-
-    auto h_op = [this](T* in, T* out, int ld_in, int ncol) {
-        dense_h_multiply(H_mat.data(), n_dim, in, out, ld_in, ncol);
-    };
-
-    double avg_iter = solver.diag(h_op, nullptr, ld, nband, n_dim, psi_run.data(), eval.data(), ethr, prec.data());
-
-    for (int i = 0; i < nband; ++i)
-    {
-        EXPECT_NEAR(eval[i], exact[i], 1e-8) << "Diagonal BLOCK: eigenvalue[" << i << "] mismatch";
-    }
-    EXPECT_LE(avg_iter, double(50)) << "Diagonal BLOCK: too many iterations";
+    check_eigenvalues(1e-12, 50, 3, 3, 1e-8);
 }
 
 TEST(DiagoPPCGRootSelectionTest, StartupCorrectionKeepsLowestRoots)
@@ -1796,81 +1770,18 @@ TEST_F(DiagoPPCGDiagonalTest, HandlesSubblockSizeAboveBandCount)
     }
 }
 
-TEST(DiagoPPCGLeadingDimensionTest, BlockSubspaceWithPadding)
+TEST_F(DiagoPPCGDiagonalTest, BlockSubspaceWithPadding)
 {
-    const int n_dim = 5;
-    const int nband = 3;
-    const int ld = 8;
-
-    std::vector<T> H_mat(n_dim * n_dim, T(0));
-    for (int i = 0; i < n_dim; ++i)
+    ld = 8;
+    initialize_vectors(psi, n_dim, nband, ld, 7);
+    for (int band = 0; band < nband; ++band)
     {
-        H_mat[i + i * n_dim] = T(Real(i + 1), 0);
-    }
-
-    std::vector<Real> prec(n_dim);
-    for (int i = 0; i < n_dim; ++i)
-    {
-        prec[i] = Real(i + 1);
-    }
-
-    std::vector<T> psi(ld * nband, T(17.0, -3.0));
-    std::mt19937 rng(7);
-    std::uniform_real_distribution<Real> dist(-1.0, 1.0);
-    for (int j = 0; j < nband; ++j)
-    {
-        for (int i = 0; i < n_dim; ++i)
+        for (int row = n_dim; row < ld; ++row)
         {
-            psi[i + j * ld] = T(dist(rng), 0.0);
+            psi[row + band * ld] = T(17.0, -3.0);
         }
     }
-
-    for (int j = 0; j < nband; ++j)
-    {
-        for (int k = 0; k < j; ++k)
-        {
-            T dot = 0;
-            for (int i = 0; i < n_dim; ++i)
-            {
-                dot += std::conj(psi[i + k * ld]) * psi[i + j * ld];
-            }
-            for (int i = 0; i < n_dim; ++i)
-            {
-                psi[i + j * ld] -= dot * psi[i + k * ld];
-            }
-        }
-        Real nrm = 0;
-        for (int i = 0; i < n_dim; ++i)
-        {
-            nrm += std::norm(psi[i + j * ld]);
-        }
-        nrm = std::sqrt(nrm);
-        for (int i = 0; i < n_dim; ++i)
-        {
-            psi[i + j * ld] /= nrm;
-        }
-    }
-
-    std::vector<Real> eval(nband, 0.0);
-    std::vector<double> ethr(nband, 1e-10);
-    hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(
-        /* diag_thr = */ 1e-12,
-        /* max_iter = */ 80,
-        /* sbsize   = */ 2,
-        /* rr_step  = */ 3);
-
-    auto h_op = [&H_mat, n_dim](T* in, T* out, int ld_in, int ncol) {
-        dense_h_multiply(H_mat.data(), n_dim, in, out, ld_in, ncol);
-    };
-
-    double avg_iter = solver.diag(h_op, nullptr, ld, nband, n_dim, psi.data(), eval.data(), ethr, prec.data());
-
-    const Real exact[] = {1.0, 2.0, 3.0};
-    for (int i = 0; i < nband; ++i)
-    {
-        EXPECT_NEAR(eval[i], exact[i], 1e-8) << "Padded ld BLOCK: eigenvalue[" << i << "] mismatch";
-    }
-    EXPECT_LE(avg_iter, double(80)) << "Padded ld BLOCK: too many iterations";
+    check_eigenvalues(1e-12, 80, 2, 3, 1e-8);
 }
 
 // =============================================================================
@@ -2291,78 +2202,12 @@ TEST_F(DiagoPPCGMatrixTest, SingleBand)
 //   1. ||Hψ_i - ε_i ψ_i|| < tol   for each band
 //   2. |ψ_i^H ψ_j - δ_ij| < tol    for all i,j
 // =============================================================================
-class DiagoPPCGEigenvectorTest : public DiagoPPCGMatrixTest
+TEST_F(DiagoPPCGMatrixTest, EigenvectorQuality)
 {
-  protected:
-    void SetUp() override
-    {
-        initialize(10, 3, 888, 1e-08);
-        set_laplacian(1.0);
-    }
-};
-
-TEST_F(DiagoPPCGEigenvectorTest, BlockSubspace)
-{
-    std::vector<T> psi_run = psi;
-    std::vector<Real> eval(nband, 0.0);
-
-    hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(
-        /* diag_thr = */ 1e-12,
-        /* max_iter = */ 100,
-        /* sbsize   = */ 3,
-        /* rr_step  = */ 3);
-
-    auto h_op = [this](T* in, T* out, int ld_in, int ncol) {
-        dense_h_multiply(H_mat.data(), n_dim, in, out, ld_in, ncol);
-    };
-
-    double avg_iter = solver.diag(h_op, nullptr, ld, nband, n_dim, psi_run.data(), eval.data(), ethr, prec.data());
-
-    // --- Eigenvalue check ---
-    for (int i = 0; i < nband; ++i)
-    {
-        EXPECT_NEAR(eval[i], exact[i], 1e-8) << "Eigenvec BLOCK: eigenvalue[" << i << "] mismatch";
-    }
-
-    // Independently check the returned eigenvectors using a fresh H application.
-    std::vector<T> hpsi(n_dim);
-    std::vector<T> res(n_dim);
-    for (int i = 0; i < nband; ++i)
-    {
-        const T* psi_column = psi_run.data() + i * ld;
-        dense_h_multiply(H_mat.data(), n_dim, psi_column, hpsi.data(), n_dim, 1);
-        for (int j = 0; j < n_dim; ++j)
-        {
-            res[j] = hpsi[j] - eval[i] * psi_run[j + i * ld];
-        }
-        Real res_nrm = column_norm(res.data(), n_dim);
-        EXPECT_LT(res_nrm, 1e-4) << "Eigenvec BLOCK: residual[" << i << "] too large: " << res_nrm;
-    }
-
-    // --- Orthogonality check: |ψ_i^H ψ_j - δ_ij| < 1e-8 ---
-    for (int i = 0; i < nband; ++i)
-    {
-        for (int j = 0; j < nband; ++j)
-        {
-            T dot = 0;
-            for (int k = 0; k < n_dim; ++k)
-            {
-                dot += std::conj(psi_run[k + i * ld]) * psi_run[k + j * ld];
-            }
-            if (i == j)
-            {
-                EXPECT_NEAR(std::abs(dot), 1.0, 1e-8)
-                    << "Eigenvec BLOCK: ψ[" << i << "] not normalized, |dot|=" << std::abs(dot);
-            }
-            else
-            {
-                EXPECT_LT(std::abs(dot), 1e-8)
-                    << "Eigenvec BLOCK: ψ[" << i << "] not orthogonal to ψ[" << j << "], |dot|=" << std::abs(dot);
-            }
-        }
-    }
-
-    EXPECT_LE(avg_iter, double(100)) << "Eigenvec BLOCK: too many iterations";
+    initialize(10, 3, 888, 1e-8);
+    set_laplacian(1.0);
+    check_eigenvalues(1e-12, 100, 3, 3, 1e-8);
+    check_eigenvectors(1e-4, 1e-8);
 }
 
 // =============================================================================
@@ -2464,59 +2309,23 @@ TEST_F(DiagoPPCGMatrixTest, GappedSpectrum)
 // preconditioner that differs from the exact diagonal. The test checks that
 // the solver still converges and returns a small independently computed residual.
 // =============================================================================
-class DiagoPPCGBadPrecTest : public DiagoPPCGMatrixTest
+TEST_F(DiagoPPCGMatrixTest, NonuniformPreconditioner)
 {
-  protected:
-    void SetUp() override
+    initialize(10, 3, 707, 1e-10);
+    set_laplacian(1.0);
+    for (int i = 0; i < n_dim; ++i)
     {
-        initialize(10, 3, 707, 1e-10);
-        set_laplacian(1.0);
-        for (int i = 0; i < n_dim; ++i)
-        {
-            prec[i] = 0.6 + 0.1 * Real(i);
-        }
+        prec[i] = 0.6 + 0.1 * Real(i);
     }
-};
-
-TEST_F(DiagoPPCGBadPrecTest, BlockSubspace)
-{
-    std::vector<T> psi_run = psi;
-    std::vector<Real> eval(nband, 0.0);
-
-    hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(
-        /* diag_thr = */ 1e-12,
-        /* max_iter = */ 200,
-        /* sbsize   = */ 4,
-        /* rr_step  = */ 4);
-
-    auto h_op = [this](T* in, T* out, int ld_in, int ncol) {
-        dense_h_multiply(H_mat.data(), n_dim, in, out, ld_in, ncol);
-    };
-
-    double avg_iter = solver.diag(h_op, nullptr, ld, nband, n_dim, psi_run.data(), eval.data(), ethr, prec.data());
-
+    hsolver::DiagoPPCG<T, base_device::DEVICE_CPU> solver(1e-12, 200, 4, 4);
+    const double iterations = solve(solver);
+    EXPECT_TRUE(solver.converged());
+    EXPECT_LE(iterations, 200.0);
     for (int i = 0; i < nband; ++i)
     {
-        EXPECT_NEAR(eval[i], exact[i], 1e-8) << "BadPrec BLOCK: eigenvalue[" << i << "] mismatch";
+        EXPECT_NEAR(eval[i], exact[i], 1e-8) << "band " << i;
     }
-    EXPECT_TRUE(solver.converged()) << "BadPrec BLOCK: solver did not converge";
-    EXPECT_LE(avg_iter, double(200)) << "BadPrec BLOCK: too many iterations";
-
-    for (int j = 0; j < nband; ++j)
-    {
-        std::vector<T> hpsi(n_dim, T(0));
-        const T* psi_column = psi_run.data() + j * ld;
-        dense_h_multiply(H_mat.data(), n_dim, psi_column, hpsi.data(), n_dim, 1);
-        Real residual_squared = 0;
-        for (int i = 0; i < n_dim; ++i)
-        {
-            const T residual = hpsi[i] - T(eval[j]) * psi_run[i + j * ld];
-            residual_squared += std::norm(residual);
-        }
-        const Real residual = std::sqrt(residual_squared);
-        EXPECT_TRUE(std::isfinite(residual));
-        EXPECT_LT(residual, 1e-8) << "BadPrec BLOCK: residual[" << j << "] too large";
-    }
+    check_eigenvectors(1e-8, 1e-8);
 }
 
 // =============================================================================
