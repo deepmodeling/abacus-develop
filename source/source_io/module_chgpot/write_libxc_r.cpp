@@ -311,15 +311,15 @@ void ModuleIO::write_libxc_r(
 			"01_11_11", "11_11_11"
 		};
 	};
-	// v4rho3sigma: rho_quad (C(2+4-1,4)=5) x sigma (3) -> Libxc 12
+	// v4rho3sigma: rho_triple (C(2+3-1,3)=4) x sigma (3) -> Libxc 12
 	auto make_v4rho3sigma_suffixes = [](int num_spin) -> std::vector<std::string>
 	{
-		if (num_spin == 1) { return {"0000_00"}; }
+		if (num_spin == 1) { return {"000_00"}; }
 		return {
-			"0000_00", "0000_01", "0000_11",
-			"0001_00", "0001_01", "0001_11",
-			"0011_00", "0011_01", "0011_11",
-			"1111_00", "1111_01", "1111_11"
+			"000_00", "000_01", "000_11",
+			"001_00", "001_01", "001_11",
+			"011_00", "011_01", "011_11",
+			"111_00", "111_01", "111_11"
 		};
 	};
 	// v4rho2sigma2: rho_pair (3) x sigma_pair (6) -> Libxc 18
