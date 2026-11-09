@@ -142,13 +142,13 @@ run_mat_props() {
     if ! test -z "$gamma_only" && [ $gamma_only == 1 ]; then
       # ========== Γ-point (single k-point) calculation ==========
       if ! test -z "$nspin" && [ $nspin == 2 ]; then
-        # nspin=2 (spin-polarized): compare hks1 + hks2 Hamiltonian + sk overlap matrix
-        h1ref=hks1_nao.txt.ref
-        h1cal=OUT.autotest/hks1_nao.txt
-        h2ref=hks2_nao.txt.ref
-        h2cal=OUT.autotest/hks2_nao.txt
-        sref=sk_nao.txt.ref
-        scal=OUT.autotest/sk_nao.txt
+        # nspin=2 (spin-polarized): compare hs1 + hs2 Hamiltonian + ss1 overlap matrix
+        h1ref=hs1_nao.txt.ref
+        h1cal=OUT.autotest/hs1_nao.txt
+        h2ref=hs2_nao.txt.ref
+        h2cal=OUT.autotest/hs2_nao.txt
+        sref=ss1_nao.txt.ref
+        scal=OUT.autotest/ss1_nao.txt
         # Compare Hamiltonian matrix for spin 1
         python3 $COMPARE_SCRIPT $h1ref $h1cal 6
         echo "CompareH1_pass $?" >>$props_result_file
@@ -162,11 +162,11 @@ run_mat_props() {
         # nspin=4 : do nothing, only matching condition without any operation
         true
       else
-        # nspin=1 (non-spin-polarized, default case): compare single hk + sk matrix set
-        href=hk_nao.txt.ref
-        hcal=OUT.autotest/hk_nao.txt
-        sref=sk_nao.txt.ref
-        scal=OUT.autotest/sk_nao.txt
+        # nspin=1 (non-spin-polarized, default case): compare single h + s matrix set
+        href=h_nao.txt.ref
+        hcal=OUT.autotest/h_nao.txt
+        sref=s_nao.txt.ref
+        scal=OUT.autotest/s_nao.txt
         # Compare Hamiltonian matrix
         python3 $COMPARE_SCRIPT $href $hcal 6
         echo "CompareH_pass $?" >>$props_result_file
@@ -214,9 +214,9 @@ run_mat_props() {
     HSK_BINARY_COMPARE="$PROPS_TOOLS_DIR/compare_hsk_binary.py"
     if ! test -z "$gamma_only" && [ $gamma_only == 1 ]; then
       HSK_TEXT_REFERENCE_DIR="../scf_out_hk"
-      python3 $HSK_BINARY_COMPARE OUT.autotest/hk_nao.dat "$HSK_TEXT_REFERENCE_DIR/hk_nao.txt.ref" real 3
+      python3 $HSK_BINARY_COMPARE OUT.autotest/hk_nao.dat "$HSK_TEXT_REFERENCE_DIR/h_nao.txt.ref" real 3
       echo "CompareH_pass $?" >>$props_result_file
-      python3 $HSK_BINARY_COMPARE OUT.autotest/sk_nao.dat "$HSK_TEXT_REFERENCE_DIR/sk_nao.txt.ref" real 3
+      python3 $HSK_BINARY_COMPARE OUT.autotest/sk_nao.dat "$HSK_TEXT_REFERENCE_DIR/s_nao.txt.ref" real 3
       echo "CompareS_pass $?" >>$props_result_file
     else
       HSK_TEXT_REFERENCE_DIR="../scf_out_hsk"
