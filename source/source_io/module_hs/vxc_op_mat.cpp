@@ -123,9 +123,10 @@ void write_Vxc(const int nspin,
         if (out_mat)
         {
             const int out_label = 1; // 1 means .txt while 2 means .dat
-            // This MO-basis matrix is a single-snapshot output, so the file is
-            // always truncated. Only mode 2 adds the g{istep+1} suffix.
-            const bool append_vxc = false;
+            // Mode 1 appends the frames written after the first ionic step;
+            // mode 0 truncates to the latest snapshot and mode 2 writes a
+            // separate g{istep+1} file for each step.
+            const bool append_vxc = (out_app_flag == 1) && (istep > 0);
             std::string vxc_file = ModuleIO::filename_output(
                     mat_dir,
                     "vxcmo", "nao", ik, kv.ik2iktot, nspin, kv.get_nkstot(),
