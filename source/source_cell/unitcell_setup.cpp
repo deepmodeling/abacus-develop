@@ -74,7 +74,7 @@ void UnitCell::setup_cell(const std::string& fn, std::ofstream& log, const doubl
             log << " |                                                                    |" << std::endl;
             log << " |                        #Setup Unitcell#                            |" << std::endl;
             log << " | From the input file and the structure file we know the number of   |" << std::endl;
-            log << " | different elments in this unitcell, then we list the detail        |" << std::endl;
+            log << " | different elements in this unitcell, then we list the detail       |" << std::endl;
             log << " | information for each element, especially the zeta and polar atomic |" << std::endl;
             log << " | orbital number for each element. The total atom number is counted. |" << std::endl;
             log << " | We calculate the nearest atom distance for each atom and show the  |" << std::endl;

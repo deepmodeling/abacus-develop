@@ -61,8 +61,8 @@ void ModuleIO::write_hsk(
     ofs_running << " | atomic orbitals at each k-point.                                   |" << std::endl;
     ofs_running << " |                                            "
         "                        |" << std::endl;
-    ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-        ">>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
+    ofs_running << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
+        "<<<<<<<<<<<<<<<<<<<<<<<<<" << std::endl;
     ofs_running << "\n WRITE H(k) OR S(k)" << std::endl;
 
     // text mode: align with write_dmk filename convention so that hk and dmk

@@ -25,13 +25,13 @@ void ModuleIO::prepare_dos(std::ofstream& ofs_running,
 {
     ofs_running << "\n >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
     ofs_running << " |                                                                    |" << std::endl;
-    ofs_running << " |               #Calcualte Density of States (DOS)#                  |" << std::endl;                 
+    ofs_running << " |               #Calculate Density of States (DOS)#                  |" << std::endl;
     ofs_running << " | DOS stands for Density of States. It represents the number of      |" << std::endl;
     ofs_running << " | available electronic states per unit energy range.                 |" << std::endl;
     ofs_running << " | By analyzing the DOS, we can gain insights into how electrons are  |" << std::endl;
     ofs_running << " | distributed among different energy levels within the material.     |" << std::endl;
     ofs_running << " |                                                                    |" << std::endl;
-    ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
+    ofs_running << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << std::endl;
 
     ofs_running << std::setprecision(6);
 
@@ -44,9 +44,9 @@ void ModuleIO::prepare_dos(std::ofstream& ofs_running,
     }
     else
     {
-        ModuleBase::GlobalFunc::OUT(ofs_running, "Spin up, Fermi energy (Ry)",
+        ModuleBase::GlobalFunc::OUT(ofs_running, "Spin up, Fermi energy (eV)",
         energy_fermi.ef_up * ModuleBase::Ry_to_eV);
-        ModuleBase::GlobalFunc::OUT(ofs_running, "Spin dw, Fermi energy (Ry)",
+        ModuleBase::GlobalFunc::OUT(ofs_running, "Spin dw, Fermi energy (eV)",
         energy_fermi.ef_dw * ModuleBase::Ry_to_eV);
     }
 

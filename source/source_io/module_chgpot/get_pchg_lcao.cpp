@@ -79,7 +79,7 @@ void Get_pchg_lcao::begin_gamma(const UnitCell& ucell,
             std::stringstream ssc;
             ssc << global_out_dir << "pchgi" << ib + 1 << "s" << is + 1 << ".cube";
 
-            const std::string desc_pchg = ModuleIO::make_data_desc("partial charge", "partial magnetization m", is, nspin_);
+            const std::string desc_pchg = ModuleIO::make_data_desc("Partial charge", "Partial magnetization m", is, nspin_);
 
             ModuleIO::write_vdata_palgrid(pgrid, rho[is].data(), is, nspin_, istep, ssc.str(), 0.0, &ucell, precision, 0, false, false, false, ofs_running, desc_pchg);
         }
@@ -172,7 +172,7 @@ void Get_pchg_lcao::begin_k(const ModulePW::PW_Basis& rho_pw,
                     std::stringstream ssc;
                     ssc << global_out_dir << "pchgi" << ib + 1 << "s" << is + 1 << "k" << ik + 1 << ".cube";
 
-                    const std::string desc_pchg = ModuleIO::make_data_desc("partial charge", "partial magnetization m", is, nspin_);
+                    const std::string desc_pchg = ModuleIO::make_data_desc("Partial charge", "Partial magnetization m", is, nspin_);
 
                     ModuleIO::write_vdata_palgrid(pgrid, rho[is].data(), is, nspin_, istep, ssc.str(), 0.0, &ucell, precision, 0, false, false, false, ofs_running, desc_pchg);
                 }
@@ -212,7 +212,7 @@ void Get_pchg_lcao::begin_k(const ModulePW::PW_Basis& rho_pw,
                 std::stringstream ssc;
                 ssc << global_out_dir << "pchgi" << ib + 1 << "s" << is + 1 << ".cube";
 
-                const std::string desc_pchg = ModuleIO::make_data_desc("partial charge", "partial magnetization m", is, nspin_);
+                const std::string desc_pchg = ModuleIO::make_data_desc("Partial charge", "Partial magnetization m", is, nspin_);
 
                 ModuleIO::write_vdata_palgrid(pgrid, rho[is].data(), is, nspin_, istep, ssc.str(), 0.0, &ucell, precision, 0, false, false, false, ofs_running, desc_pchg);
             }
@@ -262,7 +262,7 @@ void Get_pchg_lcao::prepare_get_pchg(std::ofstream& ofs_running)
     ofs_running << " |  state i. The |psi(i,r)|^2 is printed out using numerical atomic   |" << std::endl;
     ofs_running << " |  orbitals as basis set.                                            |" << std::endl;
     ofs_running << " |                                                                    |" << std::endl;
-    ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
+    ofs_running << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << std::endl;
 
     ofs_running << "\n\n";
 

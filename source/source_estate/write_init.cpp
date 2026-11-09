@@ -110,7 +110,7 @@ void ModuleIO::write_chg_init(const UnitCell& ucell,
                     }
                 }
 
-                const std::string desc_chg = ModuleIO::make_data_desc("charge density", "magnetization density m", is, nspin);
+                const std::string desc_chg = ModuleIO::make_data_desc("Charge density", "Magnetization density m", is, nspin);
 
                 ModuleIO::write_vdata_palgrid(para_grid,
                                               chr.rho[is],
@@ -167,7 +167,7 @@ void ModuleIO::write_pot_init(const UnitCell& ucell,
             {
                 std::string filename = gen_ini_filename("pot", out_dir, nspin, is, istep, include_geom_step);
 
-                const std::string desc_pot = ModuleIO::make_data_desc("effective potential", "effective magnetic field b", is, nspin);
+                const std::string desc_pot = ModuleIO::make_data_desc("Effective potential", "Effective magnetic field b", is, nspin);
 
                 ModuleIO::write_vdata_palgrid(para_grid,
                                               pelec->pot->get_eff_v(is),
