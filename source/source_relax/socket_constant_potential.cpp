@@ -37,10 +37,26 @@ double number(const std::map<std::string, std::string>& tokens, const std::strin
 
 namespace SocketCP
 {
-void run_electronic_step(ModuleESolver::ESolver& solver, UnitCell& cell,
-                         Parameter& parameters, const Input_para& inp, const System_para& system,
-                         const elecstate::ElectronicControl& control, int functional_type, int istep)
+ScopedElectronicStep::ScopedElectronicStep(UnitCell& cell, elecstate::ElectronicStep* step) : cell_(cell)
 {
+    if (cell_.electronic_step != nullptr)
+    { throw std::runtime_error("an electronic step is already bound to this cell"); }
+    cell_.electronic_step = step;
+}
+
+ScopedElectronicStep::~ScopedElectronicStep()
+{
+    cell_.electronic_step = nullptr;
+}
+
+void run_electronic_step(ModuleESolver::ESolver& solver, UnitCell& cell,
+                         const Input_para& inp, const System_para& system,
+                         int functional_type, int istep)
+{
+    if (cell.electronic_step == nullptr || cell.electronic_step->parameters == nullptr
+        || cell.electronic_step->request_applied || cell.electronic_step->result_ready)
+    { throw std::runtime_error("electron control requires a fresh bound electronic step"); }
+    const elecstate::ElectronicControl& control = cell.electronic_step->control;
     if (inp.assume_isolated == "makov-payne")
     {
         throw std::runtime_error(
@@ -94,11 +110,9 @@ void run_electronic_step(ModuleESolver::ESolver& solver, UnitCell& cell,
         && (std::abs(control.nelect - std::round(control.nelect)) > 1.0e-8
             || (two_fermi && (std::abs(up-std::round(up)) > 1.0e-8 || std::abs(down-std::round(down)) > 1.0e-8))))
     { throw std::runtime_error("fractional electron populations require a smearing occupation method"); }
-    if (!solver.apply_electronic_control(parameters, control))
-    {
-        throw std::runtime_error("selected ESolver does not support constant-potential electron control");
-    }
     solver.runner(cell, istep);
+    if (!cell.electronic_step->request_applied)
+    { throw std::runtime_error("selected ESolver did not apply the constant-potential electron request"); }
 }
 
 Configuration parse_init(const std::string& parameters)
@@ -158,13 +172,12 @@ elecstate::ElectronicControl make_control(const Configuration& config, double ne
     return control;
 }
 
-Observables collect_observables(const Configuration& config, const ModuleESolver::ESolver& solver,
-                               const UnitCell& cell, const Parameter& parameters)
+Observables collect_observables(const Configuration& config, const elecstate::ElectronicStep& step)
 {
     if (!config.enabled) { throw std::runtime_error("electronic observables require constant-potential INIT"); }
-    elecstate::ElectronicObservables physical;
-    if (!solver.electronic_observables(cell, parameters, config.window, physical))
-    { throw std::runtime_error("ESolver cannot provide constant-potential electronic observables"); }
+    if (!step.request_applied || !step.result_ready)
+    { throw std::runtime_error("ESolver did not complete this frame's electronic observables"); }
+    const elecstate::ElectronicObservables& physical = step.result;
     Observables result;
     result.fermi_eV = physical.fermi_ry * ModuleBase::Ry_to_eV;
     result.nelect = physical.nelect;

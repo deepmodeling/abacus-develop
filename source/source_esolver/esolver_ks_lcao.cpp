@@ -163,17 +163,6 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(BaseCell& basecell, const Input
 }
 
 template <typename TK, typename TR>
-bool ESolver_KS_LCAO<TK, TR>::apply_electronic_control(Parameter& parameters, const elecstate::ElectronicControl& control)
-{
-    if (!ESolver_FP::apply_electronic_control(parameters, control)) { return false; }
-#ifdef __EXX
-    if (this->exx_nao.exd) { this->exx_nao.exd->begin_electronic_step(); }
-    if (this->exx_nao.exc) { this->exx_nao.exc->begin_electronic_step(); }
-#endif
-    return true;
-}
-
-template <typename TK, typename TR>
 void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
 {
     this->before_scf(ucell, istep, istep);
@@ -184,6 +173,15 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep, const
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "before_scf");
     ModuleBase::timer::start("ESolver_KS_LCAO", "before_scf");
+
+    if (ucell.electronic_step != nullptr)
+    {
+        elecstate::prepare_electronic_step(this->pelec, *ucell.electronic_step, *this->inp_);
+#ifdef __EXX
+        if (this->exx_nao.exd) { this->exx_nao.exd->begin_electronic_step(); }
+        if (this->exx_nao.exc) { this->exx_nao.exc->begin_electronic_step(); }
+#endif
+    }
 
     // Record the ionic step (not output_step) for provenance headers written in after_all_runners.
     this->istep_ = istep;
@@ -412,6 +410,12 @@ void ESolver_KS_LCAO<TK, TR>::cal_force(BaseCell& basecell, ModuleBase::matrix& 
     this->RA.delete_grid();
 
     this->have_force = true;
+
+    if (ucell.electronic_step != nullptr)
+    {
+        elecstate::complete_electronic_step(ucell, this->pelec, this->pw_rhod, this->solvent,
+                                           *this->inp_, this->conv_esolver, *ucell.electronic_step);
+    }
 
     ModuleBase::timer::end("ESolver_KS_LCAO", "cal_force");
 }

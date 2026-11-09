@@ -228,7 +228,9 @@ class FakeESolver : public ModuleESolver::ESolver
 
     void runner(BaseCell& cell, const int step) override
     {
-        position_ = dynamic_cast<UnitCell&>(cell).atoms[0].tau[0].x;
+        UnitCell& ucell = dynamic_cast<UnitCell&>(cell);
+        electronic_context_seen = ucell.electronic_step != nullptr;
+        position_ = ucell.atoms[0].tau[0].x;
         this->conv_esolver = converged_ && step == 0;
     }
 
@@ -255,71 +257,69 @@ class FakeESolver : public ModuleESolver::ESolver
         stress(2, 2) = 2.0;
     }
 
+    bool electronic_context_seen = false;
+
   private:
     double position_ = 0.0;
     bool converged_;
 };
 
-class ElectronicObservablesSolver : public FakeESolver
+enum class ElectronicFailure
 {
-  public:
-    ElectronicObservablesSolver() : FakeESolver(true) {}
-
-    bool electronic_observables(const UnitCell&, const Parameter&,
-                               const elecstate::PotentialWindow& window,
-                               elecstate::ElectronicObservables& result) const override
-    {
-        ++collection_count;
-        last_window = window;
-        result = physical;
-        return supported;
-    }
-
-    elecstate::ElectronicObservables physical;
-    bool supported = true;
-    mutable int collection_count = 0;
-    mutable elecstate::PotentialWindow last_window;
+    None,
+    SecondFrame,
+    IgnoreRequest,
+    MissingResult
 };
 
 class ControlledESolver : public FakeESolver
 {
   public:
-    ControlledESolver() : FakeESolver(true) {}
-
-    bool apply_electronic_control(Parameter&, const elecstate::ElectronicControl& control) override
-    {
-        nelect = control.nelect;
-        ++control_count;
-        return true;
-    }
+    explicit ControlledESolver(const ElectronicFailure failure) : FakeESolver(true), failure_(failure) {}
 
     void runner(BaseCell& cell, const int step) override
     {
-        if (control_count != runner_count + 1)
+        UnitCell& ucell = dynamic_cast<UnitCell&>(cell);
+        if (ucell.electronic_step == nullptr || ucell.electronic_step->request_applied
+            || ucell.electronic_step->result_ready)
         {
-            throw std::runtime_error("each runner needs one electron control update");
+            throw std::runtime_error("each runner needs one fresh electronic request");
+        }
+        if (failure_ != ElectronicFailure::IgnoreRequest)
+        {
+            nelect = ucell.electronic_step->control.nelect;
+            ucell.electronic_step->request_applied = true;
+            ++control_count;
         }
         FakeESolver::runner(cell, step);
         ++runner_count;
-        conv_esolver = true;
+        conv_esolver = failure_ != ElectronicFailure::SecondFrame || step == 0;
     }
 
     double cal_energy() override { return FakeESolver::cal_energy() + nelect; }
 
-    bool electronic_observables(const UnitCell&, const Parameter&,
-                               const elecstate::PotentialWindow&,
-                               elecstate::ElectronicObservables& result) const override
+    void cal_force(BaseCell& cell, ModuleBase::matrix& force) override
     {
+        FakeESolver::cal_force(cell, force);
+        elecstate::ElectronicStep* electronic = dynamic_cast<UnitCell&>(cell).electronic_step;
+        if (!electronic || !electronic->request_applied || electronic->result_ready || !conv_esolver)
+        {
+            throw std::runtime_error("electronic result requires one converged request");
+        }
+        if (failure_ == ElectronicFailure::MissingResult) { return; }
+        electronic->result.nelect = nelect;
+        electronic->result.fermi_ry = -0.125;
+        electronic->result_ready = true;
         ++collection_count;
-        result.nelect = nelect;
-        result.fermi_ry = -0.125;
-        return true;
     }
 
     double nelect = 0.0;
     int control_count = 0;
     int runner_count = 0;
-    mutable int collection_count = 0;
+    int collection_count = 0;
+
+  private:
+    ElectronicFailure failure_;
 };
 
 struct DriverResult
@@ -550,15 +550,20 @@ DriverResult run_driver_frame(const bool converged,
         std::ofstream running("/dev/null");
         Socket_Driver driver;
         driver.socket_driver(&solver, cell, input, running);
+        if (solver.electronic_context_seen || cell.electronic_step != nullptr)
+        {
+            throw std::runtime_error("ordinary evaluation acquired electronic request state");
+        }
     }, [&](const int fd) {
         send_fixed_cell_frame(fd);
         peer_action(fd);
     });
 }
 
-DriverResult run_constant_potential_session(const std::function<void(int)>& peer_action)
+DriverResult run_constant_potential_session(const std::function<void(int)>& peer_action,
+                                            const ElectronicFailure failure)
 {
-    return run_driver_session([]() {
+    return run_driver_session([&]() {
         UnitCell cell;
         initialize_one_atom_cell(cell);
         Parameter parameters;
@@ -573,10 +578,14 @@ DriverResult run_constant_potential_session(const std::function<void(int)>& peer
         input.nspin = 1;
         input.nbands = 8;
         input.smearing_method = "gaussian";
-        ControlledESolver solver;
+        ControlledESolver solver(failure);
         std::ofstream running("/dev/null");
         Socket_Driver driver;
         driver.socket_driver(&solver, cell, parameters, parameters.inp, parameters.globalv, running);
+        if (cell.electronic_step != nullptr)
+        {
+            throw std::runtime_error("completed electronic request remained bound to the cell");
+        }
         std::cout << "CP calls: " << solver.control_count << " controls, "
                   << solver.runner_count << " runners, " << solver.collection_count
                   << " collections\n";
@@ -595,6 +604,50 @@ DriverResult run_constant_potential_session(const std::function<void(int)>& peer
 }
 } // namespace
 
+TEST(SocketElectronicFrameTest, BindingIsScopedAndRejectsNestedRequests)
+{
+    UnitCell cell;
+    elecstate::ElectronicStep first;
+    elecstate::ElectronicStep second;
+    EXPECT_EQ(nullptr, cell.electronic_step);
+    {
+        SocketCP::ScopedElectronicStep binding(cell, &first);
+        EXPECT_EQ(&first, cell.electronic_step);
+        EXPECT_THROW(SocketCP::ScopedElectronicStep nested(cell, &second), std::runtime_error);
+        EXPECT_EQ(&first, cell.electronic_step);
+    }
+    EXPECT_EQ(nullptr, cell.electronic_step);
+    try
+    {
+        SocketCP::ScopedElectronicStep binding(cell, &second);
+        throw std::runtime_error("evaluation failed");
+    }
+    catch (const std::runtime_error&)
+    {
+        EXPECT_EQ(nullptr, cell.electronic_step);
+    }
+}
+
+TEST(SocketElectronicFrameTest, SeparateCellsDoNotShareRequestState)
+{
+    UnitCell first_cell;
+    UnitCell second_cell;
+    elecstate::ElectronicStep first;
+    elecstate::ElectronicStep second;
+    first.control.nelect = 8.25;
+    second.control.nelect = 7.75;
+    SocketCP::ScopedElectronicStep first_binding(first_cell, &first);
+    {
+        SocketCP::ScopedElectronicStep second_binding(second_cell, &second);
+        first_cell.electronic_step->request_applied = true;
+        EXPECT_FALSE(second_cell.electronic_step->request_applied);
+        EXPECT_DOUBLE_EQ(8.25, first_cell.electronic_step->control.nelect);
+        EXPECT_DOUBLE_EQ(7.75, second_cell.electronic_step->control.nelect);
+    }
+    EXPECT_EQ(nullptr, second_cell.electronic_step);
+    EXPECT_EQ(&first, first_cell.electronic_step);
+}
+
 TEST(SocketDriverTest, RejectedElectronicStepLeavesSolverUntouched)
 {
     UnitCell cell;
@@ -610,14 +663,16 @@ TEST(SocketDriverTest, RejectedElectronicStepLeavesSolverUntouched)
     input.nspin = 1;
     input.nbands = 8;
     input.smearing_method = "gaussian";
-    ControlledESolver solver;
-    elecstate::ElectronicControl request;
-    request.nelect = 8.25;
+    ControlledESolver solver(ElectronicFailure::None);
+    elecstate::ElectronicStep request;
+    request.parameters = &parameters;
+    request.control.nelect = 8.25;
+    SocketCP::ScopedElectronicStep binding(cell, &request);
 
     input.assume_isolated = "makov-payne";
     try
     {
-        SocketCP::run_electronic_step(solver, cell, parameters, input, system, request, 2, 0);
+        SocketCP::run_electronic_step(solver, cell, input, system, 2, 0);
         FAIL() << "Makov-Payne request reached the solver";
     }
     catch (const std::runtime_error& error)
@@ -626,30 +681,35 @@ TEST(SocketDriverTest, RejectedElectronicStepLeavesSolverUntouched)
     }
     input.assume_isolated = "none";
     input.nbands = 4;
-    EXPECT_THROW(SocketCP::run_electronic_step(solver, cell, parameters, input, system, request, 2, 0), std::runtime_error);
+    EXPECT_THROW(SocketCP::run_electronic_step(solver, cell, input, system, 2, 0), std::runtime_error);
     input.nbands = 8;
     input.smearing_method = "fixed";
-    EXPECT_THROW(SocketCP::run_electronic_step(solver, cell, parameters, input, system, request, 2, 0), std::runtime_error);
+    EXPECT_THROW(SocketCP::run_electronic_step(solver, cell, input, system, 2, 0), std::runtime_error);
     input.smearing_method = "gaussian";
     system.use_uspp = true;
-    EXPECT_THROW(SocketCP::run_electronic_step(solver, cell, parameters, input, system, request, 2, 0), std::runtime_error);
+    EXPECT_THROW(SocketCP::run_electronic_step(solver, cell, input, system, 2, 0), std::runtime_error);
     system.use_uspp = false;
     system.two_fermi = true;
-    EXPECT_THROW(SocketCP::run_electronic_step(solver, cell, parameters, input, system, request, 2, 0), std::runtime_error);
+    EXPECT_THROW(SocketCP::run_electronic_step(solver, cell, input, system, 2, 0), std::runtime_error);
     system.two_fermi = false;
-    EXPECT_THROW(SocketCP::run_electronic_step(solver, cell, parameters, input, system, request, 0, 0), std::runtime_error);
+    EXPECT_THROW(SocketCP::run_electronic_step(solver, cell, input, system, 0, 0), std::runtime_error);
     EXPECT_EQ(0, solver.control_count);
     EXPECT_EQ(0, solver.runner_count);
     EXPECT_DOUBLE_EQ(0.0, solver.nelect);
+    EXPECT_FALSE(request.request_applied);
+    EXPECT_FALSE(request.result_ready);
+    EXPECT_DOUBLE_EQ(0.0, parameters.inp.nelec);
 
     input.smearing_method = "gaussian";
-    SocketCP::run_electronic_step(solver, cell, parameters, input, system, request, 2, 0);
+    SocketCP::run_electronic_step(solver, cell, input, system, 2, 0);
     EXPECT_EQ(1, solver.control_count);
     EXPECT_EQ(1, solver.runner_count);
     EXPECT_DOUBLE_EQ(8.25, solver.nelect);
 
-    FakeESolver unsupported(true);
-    EXPECT_THROW(SocketCP::run_electronic_step(unsupported, cell, parameters, input, system, request, 2, 0), std::runtime_error);
+    EXPECT_TRUE(request.request_applied);
+    EXPECT_FALSE(request.result_ready);
+    EXPECT_THROW(SocketCP::run_electronic_step(solver, cell, input, system, 2, 1), std::runtime_error);
+    EXPECT_EQ(1, solver.runner_count);
 }
 
 TEST(SocketDriverTest, ConstantPotentialFramesApplyChargeBeforeEvaluation)
@@ -687,7 +747,7 @@ TEST(SocketDriverTest, ConstantPotentialFramesApplyChargeBeforeEvaluation)
         EXPECT_EQ("READY", read_header_or_close(fd));
         send_header(fd, "EXIT");
         EXPECT_EQ("", read_header_or_close(fd));
-    });
+    }, ElectronicFailure::None);
     EXPECT_EQ(0, result.exit_code);
     EXPECT_THAT(result.diagnostic, testing::HasSubstr("CP calls: 2 controls, 2 runners, 2 collections"));
 }
@@ -697,74 +757,116 @@ TEST(SocketDriverTest, ConstantPotentialPositionRequiresFreshCharge)
     const DriverResult result = run_constant_potential_session([](const int fd) {
         send_header(fd, "POSDATA");
         EXPECT_EQ("", read_header_or_close(fd));
-    });
+    }, ElectronicFailure::None);
     EXPECT_NE(0, result.exit_code);
     EXPECT_THAT(result.diagnostic, testing::HasSubstr("constant-potential POSDATA requires one fresh CHGDATA"));
 }
 
+TEST(SocketDriverTest, FailedElectronicFrameCannotReturnPreviousFeedback)
+{
+    const DriverResult result = run_constant_potential_session([](const int fd) {
+        const std::int32_t flags = 0;
+        const double first_nelect = 8.25;
+        const double second_nelect = 7.75;
+        send_header(fd, "CHGDATA");
+        send_value(fd, first_nelect);
+        send_value(fd, flags);
+        send_positions(fd, 0.0);
+        send_header(fd, "GETFORCE");
+        const ForceResponse first = read_force_response(fd);
+        EXPECT_EQ("FORCEREADY", first.header);
+        EXPECT_THAT(first.extra, testing::HasSubstr("\"nelect\":8.25"));
+        send_header(fd, "CHGDATA");
+        send_value(fd, second_nelect);
+        send_value(fd, flags);
+        send_positions(fd, 0.125);
+        EXPECT_EQ("", read_header_or_close(fd));
+    }, ElectronicFailure::SecondFrame);
+    EXPECT_NE(0, result.exit_code);
+    EXPECT_THAT(result.diagnostic, testing::HasSubstr("SCF did not converge"));
+}
+
+TEST(SocketDriverTest, ConvergedSolverMustApplyRequestAndCompleteFeedback)
+{
+    const ElectronicFailure failures[] = {ElectronicFailure::IgnoreRequest, ElectronicFailure::MissingResult};
+    for (const ElectronicFailure failure : failures)
+    {
+        const DriverResult result = run_constant_potential_session([](const int fd) {
+            const double nelect = 8.25;
+            const std::int32_t flags = 0;
+            send_header(fd, "CHGDATA");
+            send_value(fd, nelect);
+            send_value(fd, flags);
+            send_positions(fd, 0.0);
+            EXPECT_EQ("", read_header_or_close(fd));
+        }, failure);
+        EXPECT_NE(0, result.exit_code);
+        const char* diagnostic = "did not complete this frame's electronic observables";
+        if (failure == ElectronicFailure::IgnoreRequest)
+        {
+            diagnostic = "did not apply the constant-potential electron request";
+        }
+        EXPECT_THAT(result.diagnostic, testing::HasSubstr(diagnostic));
+    }
+}
+
 TEST(SocketElectronicFrameTest, CollectionConvertsPhysicalUnitsAndKeepsZeroFermi)
 {
-    UnitCell cell;
-    Parameter parameters;
-    ElectronicObservablesSolver solver;
-    solver.physical.nelect = 8.125;
-    solver.physical.fermi_ry = 0.0;
-    solver.physical.reference_ry = 0.25;
+    elecstate::ElectronicStep step;
+    step.request_applied = true;
+    step.result_ready = true;
+    step.result.nelect = 8.125;
+    step.result.fermi_ry = 0.0;
+    step.result.reference_ry = 0.25;
     const auto config = SocketCP::parse_init("NELECT:8,neutral_electrons:8,"
                                             "potential_average_axis:y,potential_average_min_A:2,potential_average_max_A:3");
-    const auto values = SocketCP::collect_observables(config, solver, cell, parameters);
+    step.window = config.window;
+    const auto values = SocketCP::collect_observables(config, step);
     EXPECT_DOUBLE_EQ(0.0, values.fermi_eV);
     EXPECT_DOUBLE_EQ(8.125, values.nelect);
     EXPECT_TRUE(values.has_workfunction);
     EXPECT_DOUBLE_EQ(0.25 * ModuleBase::Ry_to_eV, values.reference_eV);
     EXPECT_DOUBLE_EQ(values.reference_eV, values.workfunction_eV);
-    EXPECT_EQ(1, solver.last_window.axis);
-    EXPECT_DOUBLE_EQ(2.0, solver.last_window.minimum_A);
-    EXPECT_DOUBLE_EQ(3.0, solver.last_window.maximum_A);
-    EXPECT_EQ(1, solver.collection_count);
 }
 
 TEST(SocketElectronicFrameTest, CollectionRejectsMissingOrInvalidPhysicalObservables)
 {
-    UnitCell cell;
-    Parameter parameters;
-    ElectronicObservablesSolver solver;
+    elecstate::ElectronicStep step;
     const auto config = SocketCP::parse_init("NELECT:8,neutral_electrons:8");
-    EXPECT_THROW(SocketCP::collect_observables(SocketCP::Configuration(), solver, cell, parameters),
-                 std::runtime_error);
-    EXPECT_EQ(0, solver.collection_count);
-    solver.supported = false;
-    EXPECT_THROW(SocketCP::collect_observables(config, solver, cell, parameters), std::runtime_error);
-    solver.supported = true;
-    solver.physical.nelect = 0.0;
-    EXPECT_THROW(SocketCP::collect_observables(config, solver, cell, parameters), std::runtime_error);
-    solver.physical.nelect = 8.0;
-    solver.physical.fermi_ry = std::numeric_limits<double>::quiet_NaN();
-    EXPECT_THROW(SocketCP::collect_observables(config, solver, cell, parameters), std::runtime_error);
+    const SocketCP::Configuration ordinary;
+    EXPECT_THROW(SocketCP::collect_observables(ordinary, step), std::runtime_error);
+    EXPECT_THROW(SocketCP::collect_observables(config, step), std::runtime_error);
+    step.result_ready = true;
+    EXPECT_THROW(SocketCP::collect_observables(config, step), std::runtime_error);
+    step.request_applied = true;
+    step.result.nelect = 0.0;
+    EXPECT_THROW(SocketCP::collect_observables(config, step), std::runtime_error);
+    step.result.nelect = 8.0;
+    step.result.fermi_ry = std::numeric_limits<double>::quiet_NaN();
+    EXPECT_THROW(SocketCP::collect_observables(config, step), std::runtime_error);
 }
 
 TEST(SocketElectronicFrameTest, SerializationUsesPublishedSnapshotWithoutCollectingAgain)
 {
-    UnitCell cell;
-    Parameter parameters;
-    ElectronicObservablesSolver solver;
-    solver.physical.nelect = 8.125;
-    solver.physical.fermi_ry = -0.125;
+    elecstate::ElectronicStep step;
+    step.request_applied = true;
+    step.result_ready = true;
+    step.result.nelect = 8.125;
+    step.result.fermi_ry = -0.125;
     const auto config = SocketCP::parse_init("NELECT:8,neutral_electrons:8");
     SocketUtils::ComputedFrame frame;
     frame.valid = true;
     frame.forces_present = true;
-    frame.electronic = SocketCP::collect_observables(config, solver, cell, parameters);
+    frame.electronic = SocketCP::collect_observables(config, step);
     frame.electronic_present = true;
-    solver.physical.nelect = 9.0;
-    solver.supported = false;
+    step.result.nelect = 9.0;
+    step.result_ready = false;
     const std::string first = SocketUtils::properties_extra(frame);
     const std::string second = SocketUtils::properties_extra(frame);
     EXPECT_EQ(first, second);
     EXPECT_THAT(first, testing::HasSubstr("\"nelect\":8.125"));
     EXPECT_THAT(first, testing::HasSubstr("\"present\":[\"energy\",\"forces\"]"));
     EXPECT_THAT(first, testing::Not(testing::HasSubstr("workfunction_eV")));
-    EXPECT_EQ(1, solver.collection_count);
 }
 
 TEST(SocketDriverTest, NonconvergedFrameIsPublishedWithMetadata)

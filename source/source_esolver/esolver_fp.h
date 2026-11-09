@@ -41,10 +41,6 @@ class ESolver_FP : public ESolver
 
     virtual void after_all_runners(BaseCell& basecell) override;
 
-    bool apply_electronic_control(Parameter& parameters, const elecstate::ElectronicControl& control) override;
-    bool electronic_observables(const UnitCell& ucell, const Parameter& parameters,
-                               const elecstate::PotentialWindow& window, elecstate::ElectronicObservables& result) const override;
-
   protected:
     virtual void before_scf(UnitCell& ucell, const int istep);
 

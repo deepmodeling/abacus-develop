@@ -121,6 +121,8 @@ if(ENABLE_MPI)
     SOURCES test_elecstate.cpp
             ../elecstate.cpp
             ../elecstate_tools.cpp
+            ../param_update.cpp
+            ../electronic_occupations.cpp
             ../occupy.cpp
             ../../source_psi/psi.cpp
             ../../source_base/module_fft/fft_bundle.cpp

@@ -4,7 +4,6 @@
 #include "source_estate/electronic_control.h"
 #include <string>
 
-class Parameter;
 class UnitCell;
 struct Input_para;
 struct System_para;
@@ -27,16 +26,28 @@ struct Observables
     double workfunction_eV = 0.0;
 };
 
+// Borrow one rank-local request through the existing cell argument for this evaluation.
+class ScopedElectronicStep
+{
+  public:
+    ScopedElectronicStep(UnitCell& cell, elecstate::ElectronicStep* step);
+    ~ScopedElectronicStep();
+    ScopedElectronicStep(const ScopedElectronicStep&) = delete;
+    ScopedElectronicStep& operator=(const ScopedElectronicStep&) = delete;
+
+  private:
+    UnitCell& cell_;
+};
+
 // Apply one external electron-number request and evaluate the current geometry.
 void run_electronic_step(ModuleESolver::ESolver& solver, UnitCell& cell,
-                         Parameter& parameters, const Input_para& input, const System_para& system,
-                         const elecstate::ElectronicControl& control, int functional_type, int istep);
+                         const Input_para& input, const System_para& system,
+                         int functional_type, int istep);
 
 Configuration parse_init(const std::string& parameters);
 elecstate::ElectronicControl make_control(const Configuration& config, double nelect, int flags);
-// Called on every rank while evaluating POSDATA; the solver may use collectives.
-Observables collect_observables(const Configuration& config, const ModuleESolver::ESolver& solver,
-                               const UnitCell& cell, const Parameter& parameters);
+// Converts only the physical result completed after this frame's force calculation.
+Observables collect_observables(const Configuration& config, const elecstate::ElectronicStep& step);
 // Serializes only the completed frame, without calling the solver or MPI.
 std::string serialize_observables(const Observables& result);
 }

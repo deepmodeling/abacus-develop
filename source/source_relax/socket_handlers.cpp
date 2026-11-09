@@ -5,6 +5,7 @@
 #include "source_esolver/esolver.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_io/module_parameter/input_parameter.h"
+#include "source_io/module_parameter/system_parameter.h"
 #include "source_relax/socket_frame.h"
 #ifdef __JSON
 #include "source_io/module_json/output_info.h"
@@ -384,8 +385,8 @@ void run_esolver_for_positions(DriverContext& context, const std::vector<double>
         {
             context.charge_pending = false;
             const int functional_type = XC_Functional::get_func_type();
-            SocketCP::run_electronic_step(*context.esolver, *context.ucell, *context.parameters,
-                                          *context.inp, *context.system, context.pending_control,
+            SocketCP::run_electronic_step(*context.esolver, *context.ucell,
+                                          *context.inp, *context.system,
                                           functional_type, context.istep);
         }
         else
@@ -516,6 +517,17 @@ void handle_posdata(IpiSocket& socket, DriverContext& context, std::ofstream& of
     PosdataPayload payload = read_posdata(socket, context);
     bcast_posdata(payload);
     check_posdata_geometry(context, payload);
+    elecstate::ElectronicStep step;
+    elecstate::ElectronicStep* active_step = nullptr;
+    if (context.cp.enabled)
+    {
+        step.parameters = context.parameters;
+        step.control = context.pending_control;
+        step.window = context.cp.window;
+        step.two_fermi = context.system->two_fermi;
+        active_step = &step;
+    }
+    const SocketCP::ScopedElectronicStep binding(*context.ucell, active_step);
 #ifdef __JSON
     // Each POSDATA frame is one electronic-structure output step.
     Json::init_output_array_obj();
@@ -546,8 +558,7 @@ void handle_posdata(IpiSocket& socket, DriverContext& context, std::ofstream& of
     {
         try
         {
-            computed.electronic = SocketCP::collect_observables(context.cp, *context.esolver,
-                                                                *context.ucell, *context.parameters);
+            computed.electronic = SocketCP::collect_observables(context.cp, step);
         }
         catch (const std::exception& exc)
         {

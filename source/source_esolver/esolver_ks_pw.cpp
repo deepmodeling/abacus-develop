@@ -2,6 +2,7 @@
 #include "source_pw/module_pwdft/pw_hybrid_nscf.h"
 
 #include "source_estate/elecstate_pw.h"
+#include "source_estate/elecstate_tools.h"
 #include "source_estate/module_charge/chg_symm.h"
 #include "source_hamilt/hamilt_hs_adapter.h"
 #include "source_hsolver/diago_iter_assist.h"
@@ -161,20 +162,18 @@ void ESolver_KS_PW<T, Device>::before_all_runners(BaseCell& basecell, const Inpu
 }
 
 template <typename T, typename Device>
-bool ESolver_KS_PW<T, Device>::apply_electronic_control(Parameter& parameters, const elecstate::ElectronicControl& control)
-{
-    const int functional_type = XC_Functional::get_func_type();
-    validate_electronic_step_exx(functional_type, this->general_exx_info_.cal_exx);
-    if (!ESolver_FP::apply_electronic_control(parameters, control)) { return false; }
-    this->exx_helper->begin_electronic_step();
-    return true;
-}
-
-template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
 {
     ModuleBase::TITLE("ESolver_KS_PW", "before_scf");
     ModuleBase::timer::start("ESolver_KS_PW", "before_scf");
+
+    if (ucell.electronic_step != nullptr)
+    {
+        const int functional_type = XC_Functional::get_func_type();
+        validate_electronic_step_exx(functional_type, this->general_exx_info_.cal_exx);
+        elecstate::prepare_electronic_step(this->pelec, *ucell.electronic_step, *this->inp_);
+        this->exx_helper->begin_electronic_step();
+    }
 
     ESolver_KS::before_scf(ucell, istep);
 
@@ -521,6 +520,12 @@ void ESolver_KS_PW<T, Device>::cal_force(BaseCell& basecell, ModuleBase::matrix&
                  &this->kv,
                  this->pw_wfc,
                  this->stp.template get_psi_d<T, Device>());
+
+    if (ucell.electronic_step != nullptr)
+    {
+        elecstate::complete_electronic_step(ucell, this->pelec, this->pw_rhod, this->solvent,
+                                           *this->inp_, this->conv_esolver, *ucell.electronic_step);
+    }
 }
 
 template <typename T, typename Device>

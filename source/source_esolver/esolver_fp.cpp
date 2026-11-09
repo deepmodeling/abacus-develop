@@ -1,10 +1,4 @@
 #include "esolver_fp.h"
-#include "source_estate/electronic_control.h"
-#include "source_estate/electronic_occupations.h"
-#include "source_estate/elecstate_tools.h"
-#include "source_estate/module_pot/electrostatic_potential.h"
-
-#include <stdexcept>
 
 #include "source_basis/module_pw/pw_basis_big.h" // use PW_Basis_Big
 #include "source_base/tool_quit.h"
@@ -30,34 +24,6 @@
 #include "source_base/module_parallel/para_bridge.h"
 namespace ModuleESolver
 {
-bool ESolver_FP::apply_electronic_control(Parameter& parameters, const elecstate::ElectronicControl& control)
-{
-    if (!pelec || !pelec->charge || !pelec->pot)
-    { throw std::runtime_error("electronic state is not initialized for electron control"); }
-    elecstate::ParamUpdater::update_electron_count(control.nelect, parameters);
-    elecstate::update_electron_count(*pelec, control.nelect, parameters.inp.nspin,
-                                   parameters.inp.nupdown, parameters.globalv.two_fermi);
-    return true;
-}
-
-bool ESolver_FP::electronic_observables(const UnitCell& ucell, const Parameter& parameters,
-                                       const elecstate::PotentialWindow& window,
-                                       elecstate::ElectronicObservables& result) const
-{
-    if (!this->conv_esolver || !pelec || !pelec->charge || !pelec->pot)
-    { throw std::runtime_error("electronic observables require a converged SCF state"); }
-    const int npool = parameters.inp.kpar * parameters.inp.bndpar;
-    result.nelect = elecstate::checked_occupation_electron_count(pelec->wg, parameters.inp.nelec,
-                                                               npool, pw_rhod->poolnproc);
-    result.fermi_ry = elecstate::electronic_chemical_potential(pelec->eferm, parameters.globalv.two_fermi);
-    if (window.axis >= 0)
-    {
-        result.reference_ry = elecstate::electrostatic_reference(ucell, *pw_rhod, *pelec->charge,
-                                                                *pelec->pot, solvent, parameters.inp, window);
-    }
-    return true;
-}
-
 
 ESolver_FP::ESolver_FP()
 {

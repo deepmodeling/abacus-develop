@@ -3,8 +3,20 @@
 #include "elecstate.h"
 #include "source_base/matrix.h"
 
+class UnitCell;
+class surchem;
+struct Input_para;
+
 namespace elecstate
 {
+struct ElectronicStep;
+
+void prepare_electronic_step(ElecState* state, ElectronicStep& step, const Input_para& input);
+// Call after nuclear forces: constructing the reference updates electric-field state.
+void complete_electronic_step(const UnitCell& cell, ElecState* state, ModulePW::PW_Basis* basis,
+                              const surchem& solvent, const Input_para& input,
+                              bool converged, ElectronicStep& step);
+
 void update_electron_count(ElecState& state, double nelect, int nspin, double nupdown, bool two_fermi);
 double electronic_chemical_potential(const Efermi& fermi, bool two_fermi);
 
