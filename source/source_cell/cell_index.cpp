@@ -259,4 +259,3 @@ void CellIndex::cal_orbitalCounts()
         this->orbitalCounts[it] = orbitalCount;
     }
 }
-

@@ -654,6 +654,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
             // always 1.  The property is always "t"; filename_output inserts
             // the k-point index for multi-k runs and omits it for gamma_only.
             const std::string t_property = "t";
+            const int t_out_type = binary ? 2 : 1;
             std::string t_fn = ModuleIO::filename_output(global_mat_dir,
                                                          t_property,
                                                          "nao",
@@ -661,7 +662,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                                                          kv.ik2iktot,
                                                          nspin_kinetic_name,
                                                          kv.get_nkstot(),
-                                                         binary ? 2 : 1,
+                                                         t_out_type,
                                                          out_app_flag,
                                                          gamma_only,
                                                          istep);

@@ -1,15 +1,15 @@
 Ionic_Step 1
  1 # number of spin directions
  1 # spin index
- 8 # total k points 
- 8 # total k points after symmetrized (if open) 
- 2 # k-point index 
- -0.5 0.5 0.5 # k point coordinate (Cartesian) 
- 0.5 0 0 # k point coordinate (direct) 
+ 8 # total k points
+ 8 # total k points after symmetrized (if open)
+ 2 # k-point index
+ -0.5 0.5 0.5 # k point coordinate (Cartesian)
+ 0.5 0 0 # k point coordinate (direct)
  0.25 # weight of this k point
  0.0 # Fermi energy in Ry (not applicable to S(k))
- 8 # number of localized basis 
- 8 8 # size of this matrix 
+ 8 # number of localized basis
+ 8 8 # size of this matrix
 
  user_defined_lattice
  5.39761

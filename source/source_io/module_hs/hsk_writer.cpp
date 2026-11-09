@@ -127,8 +127,9 @@ void ModuleIO::write_hsk(
         // full "hk"/"sk" property since filename_output handles its own
         // suffix scheme.
         const std::string h_property = binary ? "hk" : "h";
+        const bool hk_spin_suffix = (nspin == 2);
         const std::string h_fn = make_fname(h_property, ik, ibz_ik, ispin,
-                nspin == 2);
+                hk_spin_suffix);
 
         if (binary)
         {
