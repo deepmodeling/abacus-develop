@@ -146,9 +146,17 @@ TEST(DhsSparseWriter, SocWritesAllDirections)
 
 TEST(DhsSparseWriter, OverlapDerivativeWritesSingleSpinChannel)
 {
-    remove_derivative_files("s");
-    remove_derivative_files("h");
     init_sparse_output_globals();
+
+    // Keep every artifact inside the per-test temporary directory instead of
+    // the working directory (AGENTS rule 17).
+    const std::string out_dir = testing::TempDir();
+    const std::string x_file = out_dir + "dsrx_nao.csr";
+    const std::string legacy_x_file = out_dir + "dsrxs1_nao.csr";
+    const std::string h_spin2_file = out_dir + "dhrxs2_nao.csr";
+    std::remove(x_file.c_str());
+    std::remove(legacy_x_file.c_str());
+    std::remove(h_spin2_file.c_str());
 
     Parallel_Orbitals pv;
     init_serial_orbitals(pv);
@@ -161,16 +169,16 @@ TEST(DhsSparseWriter, OverlapDerivativeWritesSingleSpinChannel)
 
     // dS/dR is spin-independent, so nspin = 2 must write a single file whose
     // name carries no spin index.
-    ModuleIO::save_dH_sparse(4, pv, &ucell, arrays, 1e-10, false, "s", 8, "./", "scf", false, 2, 2, ofs_running);
+    ModuleIO::save_dH_sparse(4, pv, &ucell, arrays, 1e-10, false, "s", 8, out_dir, "scf", false, 2, 2, ofs_running);
 
-    std::ifstream spin_file("dsrx_nao.csr");
+    std::ifstream spin_file(x_file.c_str());
     EXPECT_TRUE(spin_file.is_open());
     spin_file.close();
-    std::ifstream legacy_spin1_file("dsrxs1_nao.csr");
+    std::ifstream legacy_spin1_file(legacy_x_file.c_str());
     EXPECT_FALSE(legacy_spin1_file.is_open());
     legacy_spin1_file.close();
 
-    const std::string output = read_file("dsrx_nao.csr");
+    const std::string output = read_file(x_file);
     EXPECT_THAT(output, testing::HasSubstr("Ionic_Step 5  # ABACUS version:"));
     // The header reports a single spin direction even though nspin = 2.
     EXPECT_THAT(output, testing::HasSubstr(" 1 # number of spin directions\n"));
@@ -178,13 +186,14 @@ TEST(DhsSparseWriter, OverlapDerivativeWritesSingleSpinChannel)
 
     // dH/dR stays spin-dependent and still writes both spin channels.
     arrays.dHRx_sparse[1][r_vector][1][1] = -2.0;
-    ModuleIO::save_dH_sparse(4, pv, &ucell, arrays, 1e-10, false, "h", 8, "./", "scf", false, 2, 2, ofs_running);
-    std::ifstream h_spin2_file("dhrxs2_nao.csr");
-    EXPECT_TRUE(h_spin2_file.is_open());
-    h_spin2_file.close();
+    ModuleIO::save_dH_sparse(4, pv, &ucell, arrays, 1e-10, false, "h", 8, out_dir, "scf", false, 2, 2, ofs_running);
+    std::ifstream h_spin2_stream(h_spin2_file.c_str());
+    EXPECT_TRUE(h_spin2_stream.is_open());
+    h_spin2_stream.close();
 
-    remove_derivative_files("s");
-    remove_derivative_files("h");
+    std::remove(x_file.c_str());
+    std::remove(legacy_x_file.c_str());
+    std::remove(h_spin2_file.c_str());
 }
 
 TEST(DhsSparseWriter, AppendModeReusesFixedFilename)
