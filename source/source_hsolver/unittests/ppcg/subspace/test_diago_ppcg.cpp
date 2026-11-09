@@ -6,7 +6,6 @@
 #include <stdexcept>
 
 using ppcg_test::DiagoPPCGMatrixTest;
-using ppcg_test::PPCG_PI;
 using ppcg_test::Real;
 using ppcg_test::T;
 using ppcg_test::dense_h_multiply;

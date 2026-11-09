@@ -77,8 +77,8 @@ inline void initialize_vectors(std::vector<T>& psi, int n_dim, int nband, int ld
     }
 }
 
-// Shared storage and checks for analytical matrix cases. Regression tests below
-// keep their own deliberately constructed vectors and operator callbacks.
+// Shared storage and independent checks for analytical matrix cases. Numerical
+// regressions supply their own deliberately constructed vectors and callbacks.
 class DiagoPPCGMatrixTest : public ::testing::Test
 {
   protected:
