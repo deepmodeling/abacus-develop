@@ -13,7 +13,7 @@
 #include "source_lcao/module_rt/td_moving_gauge.h"
 #include "source_psi/psi.h"
 
-class BlockCyclicDistribution; // Defined in source/source_base/parallel_blkcyc.h
+class Parallel_Blkcyclic; // Defined in source/source_base/parallel_blkcyc.h
 
 namespace ModuleESolver
 {
@@ -157,9 +157,9 @@ class Evolve_elec
                           const int nlocal,
                           const int& nks,
                           hamilt::Hamilt<std::complex<double>>* phm,
-                          const BlockCyclicDistribution& matrix_layout,
-                          const BlockCyclicDistribution& wfc_layout,
-                          const BlockCyclicDistribution& mo_repr_layout,
+                          const Parallel_Blkcyclic& matrix_layout,
+                          const Parallel_Blkcyclic& wfc_layout,
+                          const Parallel_Blkcyclic& mo_repr_layout,
                           psi::Psi<std::complex<double>>* psi,
                           psi::Psi<std::complex<double>>* psi_laststep,
                           ct::Tensor& Hk_laststep,

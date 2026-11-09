@@ -73,12 +73,12 @@ void project_local_references(const RootInputs<T>& inputs, const RootBasis<T>& o
     const std::vector<int> spins = inputs.openshell ? std::vector<int>{0, 1} : std::vector<int>{0};
     for (const int spin : spins)
     {
-        const BlockCyclicDistribution& px = inputs.px[spin];
+        const Parallel_Blkcyclic& px = inputs.px[spin];
         const int no = inputs.nocc[spin];
         const int nv = inputs.nvirt[spin];
         const int local_count = px.size();
-        BlockCyclicDistribution pi;
-        BlockCyclicDistribution pv;
+        Parallel_Blkcyclic pi;
+        Parallel_Blkcyclic pv;
 #ifdef __MPI
         const int block_size = px.nb();
         pi.set(no, no, block_size, px.ictxt());

@@ -33,7 +33,7 @@ void save_mat(const int istep,
               const bool tri,
               const bool app,
               const std::string& file_name,
-              const BlockCyclicDistribution& pv,
+              const Parallel_Blkcyclic& pv,
               const int drank,
               const std::string& ks_solver,
               const bool reduce = true);

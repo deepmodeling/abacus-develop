@@ -52,7 +52,7 @@ class RDMFT
     
     const Parallel_Orbitals* ParaV = nullptr;
 
-    BlockCyclicDistribution para_Eij;
+    Parallel_Blkcyclic para_Eij;
 
     //! obain Ewald and this->pelec->pot
     elecstate::ElecState* pelec = nullptr;

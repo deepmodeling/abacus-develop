@@ -21,7 +21,7 @@ std::vector<std::complex<double>> cal_velocity_mo(const UnitCell& ucell,
                                                 const Grid_Driver& gd,
                                                 const TwoCenterBundle& two_center_bundle,
                                                 const Parallel_Orbitals& pmat,/*nbasis×nbasis*/
-                                                const BlockCyclicDistribution& pc,/*nbasis×nbands*/
+                                                const Parallel_Blkcyclic& pc,/*nbasis×nbands*/
                                                 const K_Vectors& kv,
                                                 const psi::Psi<T>& psi_ks,
                                                 const int nk,
@@ -59,7 +59,7 @@ std::vector<std::complex<double>> cal_velocity_mo(const UnitCell& ucell,
     assert(psi_ks.get_nk() == nks);
     int KS_num = nocc[0] + nvirt[0];
     std::vector<std::complex<double>> velocity_mo(nspin_tmp * 3 * nk * KS_num * KS_num, 0.0);
-    BlockCyclicDistribution pmo;
+    Parallel_Blkcyclic pmo;
     LR_Util::setup_2d_division(pmo, pmat.para_2d().nb(), KS_num, KS_num
 #ifdef __MPI
         , pc.ictxt()
@@ -138,6 +138,6 @@ std::vector<std::complex<double>> cal_velocity_mo(const UnitCell& ucell,
     return velocity_mo;
 }
 
-template std::vector<std::complex<double>> cal_velocity_mo<double>(const UnitCell&, const Grid_Driver&, const TwoCenterBundle&, const Parallel_Orbitals&, const BlockCyclicDistribution&, const K_Vectors&, const psi::Psi<double>&, const int, const int, const int, const std::vector<int>, const std::vector<int>);
-template std::vector<std::complex<double>> cal_velocity_mo<std::complex<double>>(const UnitCell&, const Grid_Driver&, const TwoCenterBundle&, const Parallel_Orbitals&, const BlockCyclicDistribution&, const K_Vectors&, const psi::Psi<std::complex<double>>&, const int, const int, const int, const std::vector<int>, const std::vector<int>);
+template std::vector<std::complex<double>> cal_velocity_mo<double>(const UnitCell&, const Grid_Driver&, const TwoCenterBundle&, const Parallel_Orbitals&, const Parallel_Blkcyclic&, const K_Vectors&, const psi::Psi<double>&, const int, const int, const int, const std::vector<int>, const std::vector<int>);
+template std::vector<std::complex<double>> cal_velocity_mo<std::complex<double>>(const UnitCell&, const Grid_Driver&, const TwoCenterBundle&, const Parallel_Orbitals&, const Parallel_Blkcyclic&, const K_Vectors&, const psi::Psi<std::complex<double>>&, const int, const int, const int, const std::vector<int>, const std::vector<int>);
 }

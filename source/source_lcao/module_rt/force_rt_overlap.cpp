@@ -13,7 +13,7 @@ void cal_foverlap_rt(ModuleBase::matrix& foverlap,
                      hamilt::Hamilt<std::complex<double>>* p_hamilt,
                      const K_Vectors& kv,
                      const BasisFlattenedIndexing& basis,
-                     const BlockCyclicDistribution& layout,
+                     const Parallel_Blkcyclic& layout,
                      UnitCell& ucell,
                      TD_info& td_state)
 {
@@ -263,7 +263,7 @@ void cal_foverlap_rt(ModuleBase::matrix& foverlap,
                      hamilt::Hamilt<double>* p_hamilt,
                      const K_Vectors& kv,
                      const BasisFlattenedIndexing& basis,
-                     const BlockCyclicDistribution& layout,
+                     const Parallel_Blkcyclic& layout,
                      UnitCell& ucell,
                      TD_info& td_state)
 {

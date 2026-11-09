@@ -12,8 +12,8 @@
 namespace module_rt
 {
 #ifdef __MPI
-void upsi(const BlockCyclicDistribution& matrix_layout,
-          const BlockCyclicDistribution& wfc_layout,
+void upsi(const Parallel_Blkcyclic& matrix_layout,
+          const Parallel_Blkcyclic& wfc_layout,
           const int nband,
           const int nlocal,
           const std::complex<double>* U_operator,
@@ -90,8 +90,8 @@ void upsi(const BlockCyclicDistribution& matrix_layout,
     }
 }
 
-void upsi_tensor(const BlockCyclicDistribution& matrix_layout,
-                 const BlockCyclicDistribution& wfc_layout,
+void upsi_tensor(const Parallel_Blkcyclic& matrix_layout,
+                 const Parallel_Blkcyclic& wfc_layout,
                  const int nband,
                  const int nlocal,
                  const ct::Tensor& U_operator,

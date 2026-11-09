@@ -74,7 +74,7 @@ void HkPsi<double>(const Parallel_Orbitals* ParaV, const double& HK, const doubl
 
 //! implement matrix multiplication of sum_mu conj(wfc(ik, m ,mu)) * op_wfc(ik, n, mu)
 template <typename TK>
-void cal_bra_op_ket(const Parallel_Orbitals* ParaV, const BlockCyclicDistribution& para_Eij_in, const TK& wfc, const TK& H_wfc, std::vector<TK>& Dmn)
+void cal_bra_op_ket(const Parallel_Orbitals* ParaV, const Parallel_Blkcyclic& para_Eij_in, const TK& wfc, const TK& H_wfc, std::vector<TK>& Dmn)
 {
     const int one_int = 1;
     const std::complex<double> one_complex = {1.0, 0.0};
@@ -96,13 +96,13 @@ void cal_bra_op_ket(const Parallel_Orbitals* ParaV, const BlockCyclicDistributio
 
 
 template <>
-void cal_bra_op_ket<double>(const Parallel_Orbitals* ParaV, const BlockCyclicDistribution& para_Eij_in,
+void cal_bra_op_ket<double>(const Parallel_Orbitals* ParaV, const Parallel_Blkcyclic& para_Eij_in,
                                 const double& wfc, const double& H_wfc, std::vector<double>& Dmn);
 
 
 //! for Dmn that conforms to the 2d-block rule, get its diagonal elements
 template <typename TK>
-void _diagonal_in_serial(const BlockCyclicDistribution& para_Eij_in, const std::vector<TK>& Dmn, double* wfcHwfc)
+void _diagonal_in_serial(const Parallel_Blkcyclic& para_Eij_in, const std::vector<TK>& Dmn, double* wfcHwfc)
 {
     const int nrow_bands = para_Eij_in.nrloc();
     const int ncol_bands = para_Eij_in.ncloc();

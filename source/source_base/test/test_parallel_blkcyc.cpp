@@ -9,20 +9,20 @@
 #include <utility>
 #include <vector>
 
-static_assert(std::is_default_constructible<BlockCyclicDistribution>::value,
-              "BlockCyclicDistribution must be default constructible");
-static_assert(!std::is_copy_constructible<BlockCyclicDistribution>::value,
-              "BlockCyclicDistribution must not be copy constructible");
-static_assert(!std::is_copy_assignable<BlockCyclicDistribution>::value,
-              "BlockCyclicDistribution must not be copy assignable");
-static_assert(std::is_move_constructible<BlockCyclicDistribution>::value,
-              "BlockCyclicDistribution must be move constructible");
-static_assert(std::is_move_assignable<BlockCyclicDistribution>::value,
-              "BlockCyclicDistribution must be move assignable");
-static_assert(std::is_nothrow_move_constructible<BlockCyclicDistribution>::value,
-              "BlockCyclicDistribution move construction must be noexcept");
-static_assert(std::is_nothrow_move_assignable<BlockCyclicDistribution>::value,
-              "BlockCyclicDistribution move assignment must be noexcept");
+static_assert(std::is_default_constructible<Parallel_Blkcyclic>::value,
+              "Parallel_Blkcyclic must be default constructible");
+static_assert(!std::is_copy_constructible<Parallel_Blkcyclic>::value,
+              "Parallel_Blkcyclic must not be copy constructible");
+static_assert(!std::is_copy_assignable<Parallel_Blkcyclic>::value,
+              "Parallel_Blkcyclic must not be copy assignable");
+static_assert(std::is_move_constructible<Parallel_Blkcyclic>::value,
+              "Parallel_Blkcyclic must be move constructible");
+static_assert(std::is_move_assignable<Parallel_Blkcyclic>::value,
+              "Parallel_Blkcyclic must be move assignable");
+static_assert(std::is_nothrow_move_constructible<Parallel_Blkcyclic>::value,
+              "Parallel_Blkcyclic move construction must be noexcept");
+static_assert(std::is_nothrow_move_assignable<Parallel_Blkcyclic>::value,
+              "Parallel_Blkcyclic move assignment must be noexcept");
 
 namespace
 {
@@ -39,9 +39,9 @@ constexpr int DESC_LLD = 8;
 constexpr int UNOWNED_BLACS_CONTEXT = -1;
 } // namespace
 
-TEST(BlockCyclicDistributionTest, DefaultConstruction)
+TEST(Parallel_BlkcyclicTest, DefaultConstruction)
 {
-    BlockCyclicDistribution distribution;
+    Parallel_Blkcyclic distribution;
 
     EXPECT_EQ(distribution.nrloc(), 0);
     EXPECT_EQ(distribution.ncloc(), 0);
@@ -62,9 +62,9 @@ TEST(BlockCyclicDistributionTest, DefaultConstruction)
 #endif
 }
 
-TEST(BlockCyclicDistributionTest, SerialInitializationAndIndexMaps)
+TEST(Parallel_BlkcyclicTest, SerialInitializationAndIndexMaps)
 {
-    BlockCyclicDistribution distribution;
+    Parallel_Blkcyclic distribution;
     distribution.set_serial(7, 5);
 
     EXPECT_TRUE(distribution.is_serial());
@@ -97,18 +97,18 @@ TEST(BlockCyclicDistributionTest, SerialInitializationAndIndexMaps)
     EXPECT_FALSE(distribution.blacs_in_this_processor(3, 2));
 }
 
-TEST(BlockCyclicDistributionTest, SerialMovePreservesValues)
+TEST(Parallel_BlkcyclicTest, SerialMovePreservesValues)
 {
-    BlockCyclicDistribution source;
+    Parallel_Blkcyclic source;
     source.set_serial(4, 6);
 
-    BlockCyclicDistribution moved(std::move(source));
+    Parallel_Blkcyclic moved(std::move(source));
     EXPECT_EQ(moved.nrloc(), 4);
     EXPECT_EQ(moved.ncloc(), 6);
     EXPECT_EQ(moved.size(), 24);
     EXPECT_TRUE(moved.is_serial());
 
-    BlockCyclicDistribution assigned;
+    Parallel_Blkcyclic assigned;
     assigned = std::move(moved);
     EXPECT_EQ(assigned.nrloc(), 4);
     EXPECT_EQ(assigned.ncloc(), 6);
@@ -116,9 +116,9 @@ TEST(BlockCyclicDistributionTest, SerialMovePreservesValues)
 }
 
 #ifdef __MPI
-TEST(BlockCyclicDistributionTest, MpiInitializationAndIndexMaps)
+TEST(Parallel_BlkcyclicTest, MpiInitializationAndIndexMaps)
 {
-    BlockCyclicDistribution distribution;
+    Parallel_Blkcyclic distribution;
     const int nrglb = 30;
     const int ncglb = 35;
     const int block_size = 2;
@@ -170,47 +170,47 @@ TEST(BlockCyclicDistributionTest, MpiInitializationAndIndexMaps)
                                               distribution.icproc()));
 }
 
-TEST(BlockCyclicDistributionTest, MpiMoveTransfersBlacsOwnershipOnce)
+TEST(Parallel_BlkcyclicTest, MpiMoveTransfersBlacsOwnershipOnce)
 {
-    BlockCyclicDistribution source;
+    Parallel_Blkcyclic source;
     source.init(12, 10, 2, MPI_COMM_WORLD, false);
     const int source_context = source.ictxt();
     ASSERT_GE(source_context, 0);
 
-    BlockCyclicDistribution moved(std::move(source));
+    Parallel_Blkcyclic moved(std::move(source));
     EXPECT_EQ(moved.ictxt(), source_context);
     EXPECT_EQ(source.ictxt(), UNOWNED_BLACS_CONTEXT);
 }
 
-TEST(BlockCyclicDistributionTest, BindDescriptorBorrowsBlacsContext)
+TEST(Parallel_BlkcyclicTest, BindDescriptorBorrowsBlacsContext)
 {
-    BlockCyclicDistribution owner;
+    Parallel_Blkcyclic owner;
     owner.init(12, 10, 2, MPI_COMM_WORLD, false);
     const int owner_context = owner.ictxt();
     ASSERT_GE(owner_context, 0);
 
-    BlockCyclicDistribution borrower;
+    Parallel_Blkcyclic borrower;
     borrower.bind_descriptor(8, 8, 2, owner_context);
     EXPECT_EQ(borrower.ictxt(), owner_context);
 
-    BlockCyclicDistribution moved_borrower(std::move(borrower));
+    Parallel_Blkcyclic moved_borrower(std::move(borrower));
     EXPECT_EQ(moved_borrower.ictxt(), owner_context);
     EXPECT_EQ(borrower.ictxt(), UNOWNED_BLACS_CONTEXT);
     EXPECT_GE(owner.ictxt(), 0);
 }
 
-TEST(BlockCyclicDistributionTest, SharedBorrowedContextSupportsMultipleLayouts)
+TEST(Parallel_BlkcyclicTest, SharedBorrowedContextSupportsMultipleLayouts)
 {
-    BlockCyclicDistribution owner;
+    Parallel_Blkcyclic owner;
     owner.init(30, 35, 2, MPI_COMM_WORLD, false);
     const int owner_context = owner.ictxt();
     ASSERT_GE(owner_context, 0);
 
-    BlockCyclicDistribution first_borrower;
+    Parallel_Blkcyclic first_borrower;
     const int first_degenerate = first_borrower.bind_descriptor(30, 35, 2, owner_context);
     EXPECT_EQ(first_degenerate, 0);
 
-    BlockCyclicDistribution second_borrower;
+    Parallel_Blkcyclic second_borrower;
     const int second_degenerate = second_borrower.bind_descriptor(49, 94, 3, owner_context);
     EXPECT_EQ(second_degenerate, 0);
 
@@ -219,14 +219,14 @@ TEST(BlockCyclicDistributionTest, SharedBorrowedContextSupportsMultipleLayouts)
     EXPECT_EQ(first_borrower.desc()[DESC_ICTXT], owner_context);
     EXPECT_EQ(second_borrower.desc()[DESC_ICTXT], owner_context);
 
-    BlockCyclicDistribution independent_owner;
+    Parallel_Blkcyclic independent_owner;
     independent_owner.init(57, 57, 2, MPI_COMM_WORLD, false);
     EXPECT_NE(independent_owner.ictxt(), owner_context);
 }
 
-TEST(BlockCyclicDistributionTest, RebindingOwnedContextKeepsGridAlive)
+TEST(Parallel_BlkcyclicTest, RebindingOwnedContextKeepsGridAlive)
 {
-    BlockCyclicDistribution distribution;
+    Parallel_Blkcyclic distribution;
     distribution.init(30, 35, 2, MPI_COMM_WORLD, false);
     const int original_context = distribution.ictxt();
     ASSERT_GE(original_context, 0);
@@ -250,14 +250,14 @@ TEST(BlockCyclicDistributionTest, RebindingOwnedContextKeepsGridAlive)
               Parallel_Common::comm_size(MPI_COMM_WORLD));
 }
 
-TEST(BlockCyclicDistributionTest, SerialInitializationClearsBorrowedContext)
+TEST(Parallel_BlkcyclicTest, SerialInitializationClearsBorrowedContext)
 {
-    BlockCyclicDistribution owner;
+    Parallel_Blkcyclic owner;
     owner.init(30, 35, 1, MPI_COMM_WORLD, false);
     const int owner_context = owner.ictxt();
     ASSERT_GE(owner_context, 0);
 
-    BlockCyclicDistribution borrower;
+    Parallel_Blkcyclic borrower;
     const int is_degenerate = borrower.bind_descriptor(30, 35, 1, owner_context);
     EXPECT_EQ(is_degenerate, 0);
     EXPECT_EQ(borrower.ictxt(), owner_context);

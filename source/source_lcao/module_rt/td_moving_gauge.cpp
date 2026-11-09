@@ -30,7 +30,7 @@ enum class BasisAxis
 };
 
 LocalBasisBlock local_basis_block(const BasisFlattenedIndexing& basis,
-                                  const BlockCyclicDistribution& layout,
+                                  const Parallel_Blkcyclic& layout,
                                   const int iat,
                                   const BasisAxis axis)
 {
@@ -62,7 +62,7 @@ template <typename T_sR>
 void TD_MovingGauge::init_DR(const hamilt::HContainer<T_sR>* sR_template,
                              const UnitCell* ucell,
                              const BasisFlattenedIndexing& basis,
-                             const BlockCyclicDistribution& layout,
+                             const Parallel_Blkcyclic& layout,
                              TwoCenterIntegrator* intor)
 {
     nat_ = ucell->nat;
@@ -110,7 +110,7 @@ template <typename T_sR>
 void TD_MovingGauge::update_DR(const hamilt::HContainer<T_sR>* sR_template,
                                const UnitCell* ucell,
                                const BasisFlattenedIndexing& basis,
-                               const BlockCyclicDistribution& layout,
+                               const Parallel_Blkcyclic& layout,
                                TwoCenterIntegrator* intor)
 {
     this->fill_DR(sR_template, ucell, basis, layout, intor);
@@ -120,7 +120,7 @@ template <typename T_sR>
 void TD_MovingGauge::fill_DR(const hamilt::HContainer<T_sR>* sR_template,
                              const UnitCell* ucell,
                              const BasisFlattenedIndexing& basis,
-                             const BlockCyclicDistribution& layout,
+                             const Parallel_Blkcyclic& layout,
                              TwoCenterIntegrator* intor)
 {
     const int npol = basis.npol();
@@ -250,26 +250,26 @@ void TD_MovingGauge::get_P_k(const UnitCell* ucell,
 template void TD_MovingGauge::init_DR<double>(const hamilt::HContainer<double>* sR_template,
                                               const UnitCell* ucell,
                                               const BasisFlattenedIndexing& basis,
-                                              const BlockCyclicDistribution& layout,
+                                              const Parallel_Blkcyclic& layout,
                                               TwoCenterIntegrator* intor);
 
 template void TD_MovingGauge::init_DR<std::complex<double>>(const hamilt::HContainer<std::complex<double>>* sR_template,
                                                             const UnitCell* ucell,
                                                             const BasisFlattenedIndexing& basis,
-                                                            const BlockCyclicDistribution& layout,
+                                                            const Parallel_Blkcyclic& layout,
                                                             TwoCenterIntegrator* intor);
 
 template void TD_MovingGauge::update_DR<double>(const hamilt::HContainer<double>* sR_template,
                                                 const UnitCell* ucell,
                                                 const BasisFlattenedIndexing& basis,
-                                                const BlockCyclicDistribution& layout,
+                                                const Parallel_Blkcyclic& layout,
                                                 TwoCenterIntegrator* intor);
 
 template void TD_MovingGauge::update_DR<std::complex<double>>(
     const hamilt::HContainer<std::complex<double>>* sR_template,
     const UnitCell* ucell,
     const BasisFlattenedIndexing& basis,
-    const BlockCyclicDistribution& layout,
+    const Parallel_Blkcyclic& layout,
     TwoCenterIntegrator* intor);
 
 template void TD_MovingGauge::get_D_k<std::complex<double>>(int iat,

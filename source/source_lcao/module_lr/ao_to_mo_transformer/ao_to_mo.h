@@ -36,13 +36,13 @@ namespace LR
     template<typename T>
     void ao_to_mo_pblas(
         const std::vector<container::Tensor>& mat_ao,
-        const BlockCyclicDistribution& pmat_ao,
+        const Parallel_Blkcyclic& pmat_ao,
         const psi::Psi<T>& coeff,
-        const BlockCyclicDistribution& pcoeff,
+        const Parallel_Blkcyclic& pcoeff,
         const int& naos,
         const int& nocc,
         const int& nvirt,
-        const BlockCyclicDistribution& pmat_mo,
+        const Parallel_Blkcyclic& pmat_mo,
         T* const mat_mo,
         const bool add_on,
         const LR_Util::MO_TYPE type,

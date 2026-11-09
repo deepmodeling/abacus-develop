@@ -11,8 +11,8 @@
 namespace module_rt
 {
 #ifdef __MPI
-void solve_propagation(const BlockCyclicDistribution& matrix_layout,
-                        const BlockCyclicDistribution& wfc_layout,
+void solve_propagation(const Parallel_Blkcyclic& matrix_layout,
+                        const Parallel_Blkcyclic& wfc_layout,
                         const int nband,
                         const int nlocal,
                         const double dt,
@@ -79,8 +79,8 @@ void solve_propagation(const BlockCyclicDistribution& matrix_layout,
     delete[] operator_B;
 }
 
-void solve_propagation(const BlockCyclicDistribution& matrix_layout,
-                       const BlockCyclicDistribution& wfc_layout,
+void solve_propagation(const Parallel_Blkcyclic& matrix_layout,
+                       const Parallel_Blkcyclic& wfc_layout,
                        const int nband,
                        const int nlocal,
                        const double dt,

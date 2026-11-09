@@ -23,7 +23,7 @@ std::vector<T> overlap_block(const std::vector<T>& full, int bands, int start, i
     return block;
 }
 
-void setup(BlockCyclicDistribution& target, int rows, int cols, const BlockCyclicDistribution& grid)
+void setup(Parallel_Blkcyclic& target, int rows, int cols, const Parallel_Blkcyclic& grid)
 {
 #ifdef __MPI
     const int block_size = grid.nb();
@@ -34,7 +34,7 @@ void setup(BlockCyclicDistribution& target, int rows, int cols, const BlockCycli
 }
 
 template <typename T>
-std::vector<T> scatter(const std::vector<T>& full, const BlockCyclicDistribution& layout)
+std::vector<T> scatter(const std::vector<T>& full, const Parallel_Blkcyclic& layout)
 {
     std::vector<T> local(layout.size(), T(0));
     const int columns = layout.ncglb();
@@ -108,7 +108,7 @@ std::vector<T> reference_projection(const std::vector<T>& previous,
 }
 
 template <typename T>
-std::vector<T> gather(const std::vector<T>& local, const BlockCyclicDistribution& layout)
+std::vector<T> gather(const std::vector<T>& local, const Parallel_Blkcyclic& layout)
 {
     const int columns = layout.ncglb();
     const int count = layout.nrglb() * columns;
@@ -131,14 +131,14 @@ template <typename T>
 std::vector<T> transform_for_test(const std::vector<T>& old, const std::vector<double>& ao,
     const std::vector<T>& current, int naos, int bands, int start, int count, int block_size)
 {
-    BlockCyclicDistribution pc;
+    Parallel_Blkcyclic pc;
 #ifdef __MPI
     pc.init(naos, bands, block_size, MPI_COMM_WORLD, false);
 #else
     pc.set_serial(naos, bands);
 #endif
-    BlockCyclicDistribution ps;
-    BlockCyclicDistribution po;
+    Parallel_Blkcyclic ps;
+    Parallel_Blkcyclic po;
     setup(ps, naos, naos, pc);
     setup(po, count, count, pc);
     std::vector<T> old_rows(old.size());
@@ -163,13 +163,13 @@ template <typename T>
 std::vector<T> project(const std::vector<T>& previous, const std::vector<T>& overlap, int no, int nv)
 {
     const int bands = no + nv;
-    BlockCyclicDistribution po;
+    Parallel_Blkcyclic po;
 #ifdef __MPI
     po.init(bands, bands, 1, MPI_COMM_WORLD, false);
 #else
     po.set_serial(bands, bands);
 #endif
-    BlockCyclicDistribution px;
+    Parallel_Blkcyclic px;
     setup(px, nv, no, po);
     std::vector<T> previous_rows(previous.size());
     for (int i = 0; i < no; ++i)
@@ -180,8 +180,8 @@ std::vector<T> project(const std::vector<T>& previous, const std::vector<T>& ove
         }
     }
     const auto local_previous = scatter(previous_rows, px);
-    BlockCyclicDistribution pi;
-    BlockCyclicDistribution pv;
+    Parallel_Blkcyclic pi;
+    Parallel_Blkcyclic pv;
     setup(pi, no, no, po);
     setup(pv, nv, nv, po);
     const auto occupied = overlap_block(overlap, bands, 0, no);
@@ -232,13 +232,13 @@ template <typename T>
 void check_projection(int no, int nv, T phase, int block_size)
 {
     const int bands = no + nv;
-    BlockCyclicDistribution po;
+    Parallel_Blkcyclic po;
 #ifdef __MPI
     po.init(bands, bands, block_size, MPI_COMM_WORLD, false);
 #else
     po.set_serial(bands, bands);
 #endif
-    BlockCyclicDistribution px;
+    Parallel_Blkcyclic px;
     setup(px, nv, no, po);
     std::vector<T> overlap(bands * bands);
     std::vector<T> previous(no * nv);
@@ -263,8 +263,8 @@ void check_projection(int no, int nv, T phase, int block_size)
         }
     }
     const auto local_previous = scatter(previous_rows, px);
-    BlockCyclicDistribution pi;
-    BlockCyclicDistribution pv;
+    Parallel_Blkcyclic pi;
+    Parallel_Blkcyclic pv;
     setup(pi, no, no, po);
     setup(pv, nv, nv, po);
     const auto occupied = overlap_block(overlap, bands, 0, no);

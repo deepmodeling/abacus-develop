@@ -14,7 +14,7 @@
 #include "source_base/vector3.h"
 #include "source_io/module_hs/pos_op_mat.h"
 
-class BlockCyclicDistribution; // Defined in source/source_base/parallel_blkcyc.h
+class Parallel_Blkcyclic; // Defined in source/source_base/parallel_blkcyc.h
 
 // Cartesian velocity-operator terms for RT-TDDFT currents.
 template <typename TR>
@@ -24,7 +24,7 @@ class Velocity_op
     Velocity_op(const UnitCell* ucell_in,
                const Grid_Driver* GridD_in,
                const BasisFlattenedIndexing& basis,
-               const BlockCyclicDistribution& layout,
+               const Parallel_Blkcyclic& layout,
                const LCAO_Orbitals& orb,
                const TwoCenterIntegrator* intor);
 
@@ -40,7 +40,7 @@ class Velocity_op
 
     std::unique_ptr<BasisFlattenedIndexing> basis_;
 
-    const BlockCyclicDistribution& layout_;
+    const Parallel_Blkcyclic& layout_;
 
     const LCAO_Orbitals& orb_;
 

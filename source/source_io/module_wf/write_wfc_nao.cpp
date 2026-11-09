@@ -306,7 +306,7 @@ void write_wfc_nao(const int out_type,
 
     bool gamma_only = (std::is_same<T, double>::value);
     bool writeBinary = (out_type == 2);
-    BlockCyclicDistribution pv_glb;
+    Parallel_Blkcyclic pv_glb;
     int blk_glb = std::max(nlocal, nbands);
     std::vector<T> ctot(myid == 0 ? nbands * nlocal : 0);
     ModuleBase::Memory::record("ModuleIO::write_wfc_nao::glb", sizeof(T) * nlocal * nbands);

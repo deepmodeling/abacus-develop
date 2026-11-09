@@ -29,14 +29,14 @@ TEST(StateTrack, ClosedShellTripletIgnoresDownSpinVirtualRotation)
     atoms->tau = {{0, 0, 0}, {2, 0, 0}, {4, 0, 0}};
     const std::vector<int> offsets{0, 1, 2};
     cell.set_iat2iwt_for_test(offsets, 1);
-    BlockCyclicDistribution pc;
+    Parallel_Blkcyclic pc;
 #ifdef __MPI
     pc.init(3, 3, 1, MPI_COMM_WORLD, false);
 #else
     pc.set_serial(3, 3);
 #endif
     Parallel_Orbitals pmat;
-    std::vector<BlockCyclicDistribution> px(2);
+    std::vector<Parallel_Blkcyclic> px(2);
 #ifdef __MPI
     pmat.para_2d().set(3, 3, 1, pc.ictxt());
     for (auto& block: px)

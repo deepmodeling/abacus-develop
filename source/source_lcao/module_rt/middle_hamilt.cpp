@@ -15,7 +15,7 @@ namespace module_rt
 {
 #ifdef __MPI
 
-void half_Hmatrix(const BlockCyclicDistribution& layout,
+void half_Hmatrix(const Parallel_Blkcyclic& layout,
                   const int nband,
                   const int nlocal,
                   std::complex<double>* Htmp,
@@ -76,7 +76,7 @@ void half_Hmatrix(const BlockCyclicDistribution& layout,
     }
 }
 
-void half_Hmatrix_tensor(const BlockCyclicDistribution& layout,
+void half_Hmatrix_tensor(const Parallel_Blkcyclic& layout,
                          const int nband,
                          const int nlocal,
                          ct::Tensor& Htmp,

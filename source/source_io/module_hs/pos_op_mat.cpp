@@ -14,7 +14,7 @@ Position_op::~Position_op()
 }
 
 void Position_op::init(const UnitCell& ucell,
-                       const BlockCyclicDistribution& layout,
+                       const Parallel_Blkcyclic& layout,
                        const LCAO_Orbitals& orb,
                        const bool cal_force,
                        const int nlocal)
@@ -27,7 +27,7 @@ void Position_op::init(const UnitCell& ucell,
 }
 
 void Position_op::init_nonlocal(const UnitCell& ucell,
-                                const BlockCyclicDistribution& layout,
+                                const Parallel_Blkcyclic& layout,
                                 const LCAO_Orbitals& orb,
                                 const bool cal_force,
                                 const int nlocal)

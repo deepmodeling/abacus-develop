@@ -21,7 +21,7 @@ void elpa_diag(MPI_Comm comm,
                std::complex<double>* s_local,
                double* ekb,
                std::complex<double>* wfc_2d,
-               BlockCyclicDistribution& para2d_local)
+               Parallel_Blkcyclic& para2d_local)
 {
     int DecomposedState = 0;
     ELPA_Solver es(false, comm, nband, para2d_local.nrloc(), para2d_local.ncloc(), para2d_local.desc());
@@ -35,7 +35,7 @@ void elpa_diag(MPI_Comm comm,
                double* s_local,
                double* ekb,
                double* wfc_2d,
-               BlockCyclicDistribution& para2d_local)
+               Parallel_Blkcyclic& para2d_local)
 {
     int DecomposedState = 0;
     ELPA_Solver es(true, comm, nband, para2d_local.nrloc(), para2d_local.ncloc(), para2d_local.desc());
@@ -49,7 +49,7 @@ void elpa_diag(MPI_Comm comm,
                std::complex<float>* s_local,
                float* ekb,
                std::complex<float>* wfc_2d,
-               BlockCyclicDistribution& para2d_local)
+               Parallel_Blkcyclic& para2d_local)
 {
     std::cout << "Error: ELPA do not support single precision. " << std::endl;
     exit(1);
@@ -61,7 +61,7 @@ void elpa_diag(MPI_Comm comm,
                float* s_local,
                float* ekb,
                float* wfc_2d,
-               BlockCyclicDistribution& para2d_local)
+               Parallel_Blkcyclic& para2d_local)
 {
     std::cout << "Error: ELPA do not support single precision. " << std::endl;
     exit(1);
@@ -84,8 +84,8 @@ void diago_hs_para(T* h,
 {
     int myrank = 0;
     MPI_Comm_rank(comm, &myrank);
-    BlockCyclicDistribution para2d_global;
-    BlockCyclicDistribution para2d_local;
+    Parallel_Blkcyclic para2d_global;
+    Parallel_Blkcyclic para2d_local;
     para2d_global.init(lda, lda, lda, comm, false);
 
     int max_nb = block_size;

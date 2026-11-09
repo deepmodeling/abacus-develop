@@ -13,7 +13,7 @@
 
 PosOpWriter::PosOpWriter(const PosOpBasis& basis,
                          const PosOpCalc& calc,
-                         const BlockCyclicDistribution& layout)
+                         const Parallel_Blkcyclic& layout)
     : basis_(basis), calc_(calc), layout_(layout)
 {
 }

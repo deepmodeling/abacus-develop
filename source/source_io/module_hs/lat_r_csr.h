@@ -5,14 +5,14 @@
 
 #include <fstream>
 
-class BlockCyclicDistribution; // Defined in source/source_base/parallel_blkcyc.h
+class Parallel_Blkcyclic; // Defined in source/source_base/parallel_blkcyc.h
 
 namespace ModuleIO
 {
     template <typename T>
     void save_lat_r(std::ofstream& ofs,
         const SparseRBlock<T>& XR,
-        const BlockCyclicDistribution& layout,
+        const Parallel_Blkcyclic& layout,
         const SparseWriteOptions& options);
 }
 

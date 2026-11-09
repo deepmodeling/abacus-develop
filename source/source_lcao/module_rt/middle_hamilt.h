@@ -12,7 +12,7 @@
 #include <complex>
 #include <fstream>
 
-class BlockCyclicDistribution; // Defined in source/source_base/parallel_blkcyc.h
+class Parallel_Blkcyclic; // Defined in source/source_base/parallel_blkcyc.h
 
 namespace module_rt
 {
@@ -28,7 +28,7 @@ namespace module_rt
  * @param[in] print_matirx print internal matrix or not
  * @param[out] Htmp H(t+dt/2)
  */
-void half_Hmatrix(const BlockCyclicDistribution& layout,
+void half_Hmatrix(const Parallel_Blkcyclic& layout,
                   const int nband,
                   const int nlocal,
                   std::complex<double>* Htmp,
@@ -38,7 +38,7 @@ void half_Hmatrix(const BlockCyclicDistribution& layout,
                   std::ofstream& ofs_running,
                   const int print_matrix);
 
-void half_Hmatrix_tensor(const BlockCyclicDistribution& layout,
+void half_Hmatrix_tensor(const Parallel_Blkcyclic& layout,
                          const int nband,
                          const int nlocal,
                          ct::Tensor& Htmp,

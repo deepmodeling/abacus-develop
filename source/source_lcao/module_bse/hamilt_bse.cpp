@@ -22,8 +22,8 @@ HamiltBSE<T>::HamiltBSE(const int& nspin,
                 MolecularLRI<T>& mo_lri_in,
                 std::weak_ptr<LR::PotHxcLR> pot_in,
                 const K_Vectors& kv_in,
-                const std::vector<BlockCyclicDistribution>& pX_in,// vector for spin, parallel as {nvirt, nocc}
-                const BlockCyclicDistribution& pc_in, //parallel as {nbasis, nbands}
+                const std::vector<Parallel_Blkcyclic>& pX_in,// vector for spin, parallel as {nvirt, nocc}
+                const Parallel_Blkcyclic& pc_in, //parallel as {nbasis, nbands}
                 const Parallel_Orbitals& pmat_in, //parallel as {nbasis, nbasis}
                 const std::vector<std::string>& spin_types_in, //can be singlet and triplet
                 const std::string& tda, // can be: "tda", "full", "both"
@@ -48,7 +48,7 @@ HamiltBSE<T>::HamiltBSE(const int& nspin,
 {
     ModuleBase::TITLE("BSE", "HamiltBSE");
     if (this->pX[0].size() == 0) {
-        std::cerr<< "Warning: BlockCyclicDistribution in RANK "+std::to_string(this->my_rank) +" has no local size, please use less mpi." << std::endl;
+        std::cerr<< "Warning: Parallel_Blkcyclic in RANK "+std::to_string(this->my_rank) +" has no local size, please use less mpi." << std::endl;
         std::cerr<< " [File:"<<__FILE__<< ", Function: " << __FUNCTION__ << ", Line: " << __LINE__ << "]" << std::endl;
     }
     assert(naos == pmat.para_2d().nrglb() && naos == pmat.para_2d().ncglb());
@@ -393,7 +393,7 @@ void HamiltBSE<double>::full_solver(const int& st_index, const int& nstates,
     ModuleBase::timer::start("HamiltBSE", "elpa_full_solver(double)");
 
     this->init_bse_matrix(true, st_index);
-    BlockCyclicDistribution pM;
+    Parallel_Blkcyclic pM;
     LR_Util::setup_2d_division(pM, this->pA.nb(), 2*this->ndim, 2*this->ndim
         #ifdef __MPI
                 , this->pA.ictxt()
@@ -442,7 +442,7 @@ void HamiltBSE<std::complex<double>>::full_solver(const int& st_index, const int
     ModuleBase::timer::start("HamiltBSE", "elpa_full_solver(complex)");
 
     this->init_bse_matrix(true, st_index);
-    BlockCyclicDistribution pM;
+    Parallel_Blkcyclic pM;
     LR_Util::setup_2d_division(pM, this->pA.nb(), 2*this->ndim, 2*this->ndim
         #ifdef __MPI
                 , this->pA.ictxt()
@@ -482,7 +482,7 @@ void HamiltBSE<T>::cal_V_by_grid(bool is_A)
     std::unique_ptr<hamilt::HContainer<T>> VR = std::unique_ptr<hamilt::HContainer<T>>(new hamilt::HContainer<T>(&this->pmat));
     LR_Util::initialize_HR<T, T>(*VR, this->ucell, this->gd, this->orb_cutoff);
 #ifdef __MPI
-    BlockCyclicDistribution pV_col; //{nvirt*nocc, 1}
+    Parallel_Blkcyclic pV_col; //{nvirt*nocc, 1}
     LR_Util::setup_2d_division(pV_col, this->pX[is].nb(), nvirt[is]*nocc[is], 1,
                                this->pX[is].ictxt());
     std::vector<T> V_col_local(this->nk * pV_col.size(), 0.0); // V_col(bjk2)

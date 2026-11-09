@@ -40,9 +40,9 @@ if(ENABLE_MPI)
     SOURCES
     test_dftu_nao_folding.cpp
     ../../../source_basis/module_ao/parallel_orbitals.cpp
-    # The test instantiates Parallel_Orbitals (a BlockCyclicDistribution subclass) and links
+    # The test instantiates Parallel_Orbitals (a Parallel_Blkcyclic subclass) and links
     # the MPI-built base library, so it must keep __MPI to match the layout of
-    # BlockCyclicDistribution / Parallel_Orbitals across TUs (otherwise ODR/ABI mismatch).
+    # Parallel_Blkcyclic / Parallel_Orbitals across TUs (otherwise ODR/ABI mismatch).
     KEEP_FEATURE_DEFINITIONS
     __MPI)
 
@@ -63,7 +63,7 @@ if(ENABLE_MPI)
     test_dftu_nao_fs_k.cpp
     ../../../source_basis/module_ao/parallel_orbitals.cpp
     # The test constructs Parallel_Orbitals normally and links the MPI-built
-    # base library, so it must keep __MPI to match the BlockCyclicDistribution layout.
+    # base library, so it must keep __MPI to match the Parallel_Blkcyclic layout.
     KEEP_FEATURE_DEFINITIONS
     __MPI)
 
@@ -73,7 +73,7 @@ if(ENABLE_MPI)
     SOURCES
     test_dftu_nao_fs_accum.cpp
     ../../../source_basis/module_ao/parallel_orbitals.cpp
-    # This test uses BlockCyclicDistribution::set_serial which is a real implementation
+    # This test uses Parallel_Blkcyclic::set_serial which is a real implementation
     # in parallel_blkcyc.cpp; keep __MPI so the serial path links correctly.
     KEEP_FEATURE_DEFINITIONS
     __MPI)

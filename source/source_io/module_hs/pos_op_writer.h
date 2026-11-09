@@ -14,7 +14,7 @@
 #include <vector>
 
 class Grid_Driver;
-class BlockCyclicDistribution; // Defined in source/source_base/parallel_blkcyc.h
+class Parallel_Blkcyclic; // Defined in source/source_base/parallel_blkcyc.h
 
 /**
  * @brief Output the position-operator matrix <phi_mu | r_hat | phi_nu>
@@ -28,7 +28,7 @@ class PosOpWriter
   public:
     PosOpWriter(const PosOpBasis& basis,
                 const PosOpCalc& calc,
-                const BlockCyclicDistribution& layout);
+                const Parallel_Blkcyclic& layout);
 
     void out_lat_r(const UnitCell& ucell,
                    const Grid_Driver& gd,
@@ -47,7 +47,7 @@ class PosOpWriter
   private:
     const PosOpBasis& basis_;
     const PosOpCalc& calc_;
-    const BlockCyclicDistribution& layout_;
+    const Parallel_Blkcyclic& layout_;
 };
 
 #endif // POS_OP_WRITER_H

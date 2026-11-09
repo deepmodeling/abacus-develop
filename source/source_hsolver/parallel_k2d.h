@@ -54,9 +54,9 @@ class Parallel_K2D {
     /// get pKpoints
     Parallel_Kpoints* get_pKpoints() const { return this->Pkpoints.get(); }
     /// get p2D_global
-    BlockCyclicDistribution* get_p2D_global() const { return this->P2D_global.get(); }
+    Parallel_Blkcyclic* get_p2D_global() const { return this->P2D_global.get(); }
     /// get p2D_pool
-    BlockCyclicDistribution* get_p2D_pool() const { return this->P2D_pool.get(); }
+    Parallel_Blkcyclic* get_p2D_pool() const { return this->P2D_pool.get(); }
 
     /**
      * the local Hk, Sk matrices in POOL_WORLD_K2D
@@ -85,8 +85,8 @@ class Parallel_K2D {
      * the pointer to Parallel_Kpoints
      */
     std::unique_ptr<Parallel_Kpoints> Pkpoints;
-    std::unique_ptr<BlockCyclicDistribution> P2D_global;
-    std::unique_ptr<BlockCyclicDistribution> P2D_pool;
+    std::unique_ptr<Parallel_Blkcyclic> P2D_global;
+    std::unique_ptr<Parallel_Blkcyclic> P2D_pool;
 };
 
 #endif

@@ -68,7 +68,7 @@ template <typename T>
 void gatherPsi(const int myid,
                const int root_proc,
                T* psi_l,
-               const BlockCyclicDistribution& wfc_layout,
+               const Parallel_Blkcyclic& wfc_layout,
                module_rt::Matrix_g<T>& psi_g)
 {
     const int* desc_psi = wfc_layout.desc(); // Obtain the descriptor from the wavefunction layout
@@ -95,7 +95,7 @@ void gatherPsi(const int myid,
 }
 
 template <typename T>
-void distributePsi(const BlockCyclicDistribution& wfc_layout, T* psi_l, const module_rt::Matrix_g<T>& psi_g)
+void distributePsi(const Parallel_Blkcyclic& wfc_layout, T* psi_l, const module_rt::Matrix_g<T>& psi_g)
 {
     const int* desc_psi = wfc_layout.desc(); // Obtain the descriptor from the wavefunction layout
     int ctxt = desc_psi[1];                  // BLACS context

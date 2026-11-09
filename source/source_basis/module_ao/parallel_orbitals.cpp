@@ -207,7 +207,7 @@ std::vector<int> Parallel_Orbitals::get_indexes_col(int iat) const
 #ifdef __MPI
 void Parallel_Orbitals::set_wfc_and_mo_layouts(const int& nbasis, const int& nmo)
 {
-    ModuleBase::TITLE("BlockCyclicDistribution", "set_wfc_and_mo_layouts");
+    ModuleBase::TITLE("Parallel_Blkcyclic", "set_wfc_and_mo_layouts");
 #ifdef __DEBUG
     assert(nbasis > 0 && nmo > 0);
     assert(this->para_2d_.nb() > 0 && this->para_2d_.nrproc() > 0

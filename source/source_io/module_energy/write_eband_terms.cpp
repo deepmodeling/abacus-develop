@@ -57,7 +57,7 @@ void write_eband_terms(const int nspin,
         double etxc = 0.0;
         double vtxc = 0.0;
 
-        BlockCyclicDistribution p2d;
+        Parallel_Blkcyclic p2d;
 
         set_para2d_MO(*pv, nbands, p2d);
 

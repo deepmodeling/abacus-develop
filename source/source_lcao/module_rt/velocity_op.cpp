@@ -17,7 +17,7 @@ template <typename TR>
 Velocity_op<TR>::Velocity_op(const UnitCell* ucell_in,
                              const Grid_Driver* GridD_in,
                              const BasisFlattenedIndexing& basis,
-                             const BlockCyclicDistribution& layout,
+                             const Parallel_Blkcyclic& layout,
                              const LCAO_Orbitals& orb,
                              const TwoCenterIntegrator* intor)
     : ucell(ucell_in), layout_(layout), orb_(orb), intor_(intor)

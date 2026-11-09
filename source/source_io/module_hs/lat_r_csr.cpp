@@ -23,7 +23,7 @@ inline void write_data(std::ofstream& ofs, const std::complex<double>& data, con
 template<typename T>
 void ModuleIO::save_lat_r(std::ofstream& ofs,
     const SparseRBlock<T>& XR,
-    const BlockCyclicDistribution& layout,
+    const Parallel_Blkcyclic& layout,
     const SparseWriteOptions& options)
 {
     const int nlocal = layout.nrglb();
@@ -124,10 +124,10 @@ void ModuleIO::save_lat_r(std::ofstream& ofs,
 
 template void ModuleIO::save_lat_r<double>(std::ofstream& ofs,
     const SparseRBlock<double>& XR,
-    const BlockCyclicDistribution& layout,
+    const Parallel_Blkcyclic& layout,
     const SparseWriteOptions& options);
 
 template void ModuleIO::save_lat_r<std::complex<double>>(std::ofstream& ofs,
     const SparseRBlock<std::complex<double>>& XR,
-    const BlockCyclicDistribution& layout,
+    const Parallel_Blkcyclic& layout,
     const SparseWriteOptions& options);

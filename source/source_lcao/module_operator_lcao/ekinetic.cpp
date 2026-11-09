@@ -16,7 +16,7 @@ hamilt::EKinetic<hamilt::OperatorLCAO<TK, TR>>::EKinetic(
     const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
     hamilt::HContainer<TR>* hR_in,
     const BasisFlattenedIndexing& basis,
-    const BlockCyclicDistribution& layout,
+    const Parallel_Blkcyclic& layout,
     const UnitCell* ucell_in,
     const std::vector<double>& orb_cutoff,
     const Grid_Driver* GridD_in,

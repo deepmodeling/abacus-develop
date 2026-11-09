@@ -204,7 +204,7 @@ HContainer<T>::HContainer(const Parallel_Orbitals* paraV_in, T* data_pointer, co
 
 template <typename T>
 HContainer<T>::HContainer(const BasisFlattenedIndexing& basis,
-                          const BlockCyclicDistribution& layout)
+                          const Parallel_Blkcyclic& layout)
 {
     this->gamma_only = false;
     this->current_R = -1;
@@ -242,7 +242,7 @@ HContainer<T>::HContainer(const BasisFlattenedIndexing& basis,
 
 template <typename T>
 HContainer<T>::HContainer(const BasisFlattenedIndexing& basis,
-                          const BlockCyclicDistribution& layout,
+                          const Parallel_Blkcyclic& layout,
                           T* data_pointer)
 {
     this->gamma_only = false;
@@ -259,7 +259,7 @@ HContainer<T>::HContainer(const BasisFlattenedIndexing& basis,
 
 template <typename T>
 HContainer<T>::HContainer(const BasisFlattenedIndexing& basis,
-                          const BlockCyclicDistribution& layout,
+                          const Parallel_Blkcyclic& layout,
                           T* data_pointer,
                           const std::vector<int>* ijr_info)
 {

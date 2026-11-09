@@ -34,11 +34,11 @@ namespace LR
     template <typename T>
     void CVCX_occ_pblas(
         const std::vector<container::Tensor>& V_istate,
-        const BlockCyclicDistribution& pmat,
+        const Parallel_Blkcyclic& pmat,
         const psi::Psi<T, base_device::DEVICE_CPU>& c,
-        const BlockCyclicDistribution& pc,
+        const Parallel_Blkcyclic& pc,
         const T* const X_istate,
-        const BlockCyclicDistribution& px,
+        const Parallel_Blkcyclic& px,
         const int& naos,
         const int& nocc,
         const int& nvirt,
@@ -72,11 +72,11 @@ namespace LR
     template <typename T>
     void CVCX_virt_pblas(
         const std::vector<container::Tensor>& V_istate,
-        const BlockCyclicDistribution& pmat,
+        const Parallel_Blkcyclic& pmat,
         const psi::Psi<T, base_device::DEVICE_CPU>& c,
-        const BlockCyclicDistribution& pc,
+        const Parallel_Blkcyclic& pc,
         const T* const X_istate,
-        const BlockCyclicDistribution& px,
+        const Parallel_Blkcyclic& px,
         const int& naos,
         const int& nocc,
         const int& nvirt,

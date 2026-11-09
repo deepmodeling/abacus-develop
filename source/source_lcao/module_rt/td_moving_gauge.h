@@ -10,7 +10,7 @@
 #include <vector>
 
 class BasisFlattenedIndexing; // Defined in source/source_base/basis_flattened_indexing.h
-class BlockCyclicDistribution; // Defined in source/source_base/parallel_blkcyc.h
+class Parallel_Blkcyclic; // Defined in source/source_base/parallel_blkcyc.h
 
 namespace module_rt
 {
@@ -28,7 +28,7 @@ class TD_MovingGauge
     void init_DR(const hamilt::HContainer<T_sR>* sR_template,
                  const UnitCell* ucell,
                  const BasisFlattenedIndexing& basis,
-                 const BlockCyclicDistribution& layout,
+                 const Parallel_Blkcyclic& layout,
                  TwoCenterIntegrator* intor);
 
     // Update the R-space matrix D_R (x, y, z)
@@ -36,7 +36,7 @@ class TD_MovingGauge
     void update_DR(const hamilt::HContainer<T_sR>* sR_template,
                    const UnitCell* ucell,
                    const BasisFlattenedIndexing& basis,
-                   const BlockCyclicDistribution& layout,
+                   const Parallel_Blkcyclic& layout,
                    TwoCenterIntegrator* intor);
 
     // Fourier transform D(R) to D(k)
@@ -65,7 +65,7 @@ class TD_MovingGauge
     void fill_DR(const hamilt::HContainer<T_sR>* sR_template,
                  const UnitCell* ucell,
                  const BasisFlattenedIndexing& basis,
-                 const BlockCyclicDistribution& layout,
+                 const Parallel_Blkcyclic& layout,
                  TwoCenterIntegrator* intor);
 
     int nat_ = 0;

@@ -4,7 +4,7 @@
 #include <cstddef>
 
 class BasisFlattenedIndexing; // Defined in source/source_base/basis_flattened_indexing.h
-class BlockCyclicDistribution; // Defined in source/source_base/parallel_blkcyc.h
+class Parallel_Blkcyclic; // Defined in source/source_base/parallel_blkcyc.h
 
 /**
  * @brief Atom-local basis entries derived from basis indexing and distribution.
@@ -16,10 +16,10 @@ class AtomBasisView
 {
   public:
     static AtomBasisView rows(const BasisFlattenedIndexing& basis,
-                              const BlockCyclicDistribution& layout,
+                              const Parallel_Blkcyclic& layout,
                               int iat);
     static AtomBasisView cols(const BasisFlattenedIndexing& basis,
-                              const BlockCyclicDistribution& layout,
+                              const Parallel_Blkcyclic& layout,
                               int iat);
 
     int nloc() const
@@ -43,18 +43,18 @@ class AtomBasisView
     int operator[](const std::size_t index) const;
 
   private:
-    AtomBasisView(const BlockCyclicDistribution* layout,
+    AtomBasisView(const Parallel_Blkcyclic* layout,
                   const int ibas0,
                   const int local0,
                   const int nloc,
                   const bool col_axis);
 
     static AtomBasisView make(const BasisFlattenedIndexing& basis,
-                              const BlockCyclicDistribution& layout,
+                              const Parallel_Blkcyclic& layout,
                               const int iat,
                               const bool columns);
 
-    const BlockCyclicDistribution* layout_ = nullptr;
+    const Parallel_Blkcyclic* layout_ = nullptr;
     int ibas0_ = 0;
     int local0_ = 0;
     int nloc_ = 0;

@@ -222,7 +222,7 @@ namespace LR
         ModuleBase::timer::end("LR_Spectrum", "test_transition_dipoles_velocity_omega");
     }
 
-    inline void cal_eig_ks_diff(double* const eig_ks_diff, const double* const eig_ks, const BlockCyclicDistribution& px, const int nk, const int nocc, const int nvirt)
+    inline void cal_eig_ks_diff(double* const eig_ks_diff, const double* const eig_ks, const Parallel_Blkcyclic& px, const int nk, const int nocc, const int nvirt)
     {
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static)

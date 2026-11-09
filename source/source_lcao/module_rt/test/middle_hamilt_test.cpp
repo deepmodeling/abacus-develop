@@ -29,7 +29,7 @@ TEST(MiddleHamiltTest, testMiddleHamilt)
     int nband = 3;
     int nlocal = 4;
     bool print_matrix = false;
-    BlockCyclicDistribution layout;
+    Parallel_Blkcyclic layout;
     ASSERT_EQ(layout.set(nlocal, nlocal, 1, ictxt), 0);
 
     // Initialize data

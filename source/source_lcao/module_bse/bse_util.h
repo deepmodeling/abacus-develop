@@ -75,7 +75,7 @@ using DAT_ENUM = container::DataTypeToEnum<T>;
 template<typename T>
 container::Tensor cal_dm_trans_onebase_pblas(
     const psi::Psi<T>& c,
-    const BlockCyclicDistribution& pc,
+    const Parallel_Blkcyclic& pc,
     const int& ik,
     const int& naos,
     const int& imo1, // imo1 → imo2, for excitation imo1[1,nocc], imo2[nocc+1,nocc+nvirt]

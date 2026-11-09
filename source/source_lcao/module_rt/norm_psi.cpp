@@ -28,9 +28,9 @@ inline int globalIndex(int localindex, int nblk, int nprocs, int myproc)
     return gIndex;
 }
 
-void norm_psi(const BlockCyclicDistribution& matrix_layout,
-              const BlockCyclicDistribution& wfc_layout,
-              const BlockCyclicDistribution& mo_repr_layout,
+void norm_psi(const Parallel_Blkcyclic& matrix_layout,
+              const Parallel_Blkcyclic& wfc_layout,
+              const Parallel_Blkcyclic& mo_repr_layout,
               const int nband,
               const int nlocal,
               const std::complex<double>* Stmp,
@@ -235,9 +235,9 @@ void norm_psi(const BlockCyclicDistribution& matrix_layout,
     delete[] mo_ovlp;
 }
 
-void norm_psi_tensor(const BlockCyclicDistribution& matrix_layout,
-                     const BlockCyclicDistribution& wfc_layout,
-                     const BlockCyclicDistribution& mo_repr_layout,
+void norm_psi_tensor(const Parallel_Blkcyclic& matrix_layout,
+                     const Parallel_Blkcyclic& wfc_layout,
+                     const Parallel_Blkcyclic& mo_repr_layout,
                      const int nband,
                      const int nlocal,
                      const ct::Tensor& Stmp,

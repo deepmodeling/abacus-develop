@@ -11,7 +11,7 @@ class UnitCell;
 class Grid_Driver;
 class K_Vectors;
 class Parallel_Orbitals;
-class BlockCyclicDistribution; // Defined in source/source_base/parallel_blkcyc.h
+class Parallel_Blkcyclic; // Defined in source/source_base/parallel_blkcyc.h
 namespace ModuleBase
 {
 class matrix;
@@ -49,8 +49,8 @@ namespace LR
 #endif
             std::vector<std::shared_ptr<PotHxcLR>>& pot_in,
             const K_Vectors& kv_in,
-            const std::vector<BlockCyclicDistribution>& pX_in,   ///< {up, down}
-            const BlockCyclicDistribution& pc_in,
+            const std::vector<Parallel_Blkcyclic>& pX_in,   ///< {up, down}
+            const Parallel_Blkcyclic& pc_in,
             const Parallel_Orbitals& pmat_in);
         ~HamiltULR();
         void hPsi(const T* const psi_in, T* const hpsi, const int ld_psi, const int& nband) const;
@@ -60,7 +60,7 @@ namespace LR
         const std::vector<int>& nocc;
         const std::vector<int>& nvirt;
 
-        const std::vector<BlockCyclicDistribution>& pX;
+        const std::vector<Parallel_Blkcyclic>& pX;
 
 
         int nk = 1;

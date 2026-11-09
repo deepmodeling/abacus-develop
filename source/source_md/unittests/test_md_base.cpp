@@ -217,7 +217,7 @@ protected:
     }
 
     std::vector<Complex> fold_hybrid(const BasisFlattenedIndexing& basis,
-                                     const BlockCyclicDistribution& layout,
+                                     const Parallel_Blkcyclic& layout,
                                      const ModuleBase::Vector3<double>& kpoint,
                                      const ModuleBase::Vector3<double>& vector_potential,
                                      const bool wrapped) const

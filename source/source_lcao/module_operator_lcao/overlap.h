@@ -9,7 +9,7 @@
 #include <vector>
 
 class BasisFlattenedIndexing; // Defined in source/source_base/basis_flattened_indexing.h
-class BlockCyclicDistribution; // Defined in source/source_base/parallel_blkcyc.h
+class Parallel_Blkcyclic; // Defined in source/source_base/parallel_blkcyc.h
 
 namespace hamilt
 {
@@ -45,7 +45,7 @@ class Overlap<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
                                      hamilt::HContainer<TR>* hR_in,
                                      hamilt::HContainer<TR>* SR_in,
                                      const BasisFlattenedIndexing& basis,
-                                     const BlockCyclicDistribution& layout,
+                                     const Parallel_Blkcyclic& layout,
                                      const UnitCell* ucell_in,
                                      const std::vector<double>& orb_cutoff,
                                      const Grid_Driver* GridD_in,
@@ -81,7 +81,7 @@ class Overlap<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
     hamilt::HContainer<TR>* SR = nullptr;
 
     const BasisFlattenedIndexing& basis_;
-    const BlockCyclicDistribution& layout_;
+    const Parallel_Blkcyclic& layout_;
 
     const TwoCenterIntegrator* intor_ = nullptr;
 

@@ -120,7 +120,7 @@ void snap_psibeta_atom_batch_gpu(
     const AdjacentAtomInfo& adjs,
     const UnitCell* ucell,
     const BasisFlattenedIndexing& basis,
-    const BlockCyclicDistribution& layout,
+    const Parallel_Blkcyclic& layout,
     const int npol,
     const int nlm_dim,
     std::vector<std::vector<std::unordered_map<int, std::vector<std::complex<double>>>>>& nlm_tot)

@@ -14,7 +14,7 @@ bool TD_info::evolve_once = false;
 
 TD_info::TD_info(const UnitCell* ucell_in,
                  const BasisFlattenedIndexing& basis,
-                 const BlockCyclicDistribution& layout,
+                 const Parallel_Blkcyclic& layout,
                  const LCAO_Orbitals& orb,
                  const elecstate::TDFieldManager& field_manager)
     : basis_(basis), layout_(layout), field_manager_(field_manager)

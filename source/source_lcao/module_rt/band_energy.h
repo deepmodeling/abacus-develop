@@ -12,7 +12,7 @@
 
 #include <complex>
 
-class BlockCyclicDistribution; // Defined in source/source_base/parallel_blkcyc.h
+class Parallel_Blkcyclic; // Defined in source/source_base/parallel_blkcyc.h
 
 namespace module_rt
 {
@@ -31,9 +31,9 @@ using ModuleIO::EijOutputInfo;
  * @param[in] psi_k psi of this step
  * @param[out] ekb band energy
  */
-void compute_ekb(const BlockCyclicDistribution& matrix_layout,
-                 const BlockCyclicDistribution& wfc_layout,
-                 const BlockCyclicDistribution& mo_repr_layout,
+void compute_ekb(const Parallel_Blkcyclic& matrix_layout,
+                 const Parallel_Blkcyclic& wfc_layout,
+                 const Parallel_Blkcyclic& mo_repr_layout,
                  const int nband,
                  const int nlocal,
                  const std::complex<double>* Htmp,
@@ -42,9 +42,9 @@ void compute_ekb(const BlockCyclicDistribution& matrix_layout,
                  std::ofstream& ofs_running,
                  const EijOutputInfo& output_info);
 
-void compute_ekb_tensor(const BlockCyclicDistribution& matrix_layout,
-                        const BlockCyclicDistribution& wfc_layout,
-                        const BlockCyclicDistribution& mo_repr_layout,
+void compute_ekb_tensor(const Parallel_Blkcyclic& matrix_layout,
+                        const Parallel_Blkcyclic& wfc_layout,
+                        const Parallel_Blkcyclic& mo_repr_layout,
                         const int nband,
                         const int nlocal,
                         const ct::Tensor& Htmp,

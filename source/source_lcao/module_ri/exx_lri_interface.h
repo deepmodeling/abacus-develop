@@ -27,12 +27,12 @@ namespace elecstate
     std::vector<std::vector<std::complex<double>>> restore_dm(const K_Vectors& kv,
         const std::vector<std::vector<std::complex<double>>>& dm_k_ibz,
         const ModuleSymmetry::Symmetry_rotation& symrot,
-        const BlockCyclicDistribution& pv);
+        const Parallel_Blkcyclic& pv);
     /// do nothing if gamma_only
     std::vector<std::vector<double>> restore_dm(const K_Vectors& kv,
         const std::vector<std::vector<double>>& dm_k_ibz,
         const ModuleSymmetry::Symmetry_rotation& symrot,
-        const BlockCyclicDistribution& pv);
+        const Parallel_Blkcyclic& pv);
 
 }
 
@@ -92,10 +92,10 @@ public:
 
     // Processes in ESolver_KS_LCAO
     /// Initialize EXX symmetry before the first ionic step.
-    void exx_before_all_runners(const K_Vectors& kv, const UnitCell& ucell, const BlockCyclicDistribution& pv);
+    void exx_before_all_runners(const K_Vectors& kv, const UnitCell& ucell, const Parallel_Blkcyclic& pv);
 
     /// Discard old atom mappings, lattice returns and rotation caches before rebuilding.
-    void refresh_symmetry(const K_Vectors& kv, const UnitCell& ucell, const BlockCyclicDistribution& pv);
+    void refresh_symmetry(const K_Vectors& kv, const UnitCell& ucell, const Parallel_Blkcyclic& pv);
 
     /// @brief in beforescf: set xc type, opt_orb, do DM mixing
     void exx_beforescf(
@@ -104,7 +104,7 @@ public:
         const Charge_Mixing &chgmix,
         const UnitCell &ucell,
         const LCAO_Orbitals &orb,
-        const BlockCyclicDistribution &pv,
+        const Parallel_Blkcyclic &pv,
         const bool update_symmetry,
         const bool use_gpu);
 

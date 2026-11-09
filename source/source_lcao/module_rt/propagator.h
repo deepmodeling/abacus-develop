@@ -12,7 +12,7 @@
 
 #include <complex>
 
-class BlockCyclicDistribution; // Defined in source/source_base/parallel_blkcyc.h
+class Parallel_Blkcyclic; // Defined in source/source_base/parallel_blkcyc.h
 
 namespace module_rt
 {
@@ -106,7 +106,7 @@ ct::Tensor create_identity_matrix(const int n, ct::DeviceType device = ct::Devic
 class Propagator
 {
   public:
-    Propagator(int ptype, const BlockCyclicDistribution& layout, const double& dt)
+    Propagator(int ptype, const Parallel_Blkcyclic& layout, const double& dt)
         : ptype(ptype), dt(dt / ModuleBase::AU_to_FS), layout_(layout)
     {
     }
@@ -146,7 +146,7 @@ class Propagator
   private:
     int ptype; // type of propagator
     double dt; // time step
-    const BlockCyclicDistribution& layout_; // non-owning block-cyclic layout
+    const Parallel_Blkcyclic& layout_; // non-owning block-cyclic layout
 
 #ifdef __MPI
 

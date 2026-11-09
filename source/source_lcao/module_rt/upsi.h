@@ -13,7 +13,7 @@
 #include <complex>
 #include <fstream>
 
-class BlockCyclicDistribution; // Defined in source/source_base/parallel_blkcyc.h
+class Parallel_Blkcyclic; // Defined in source/source_base/parallel_blkcyc.h
 
 namespace module_rt
 {
@@ -30,8 +30,8 @@ namespace module_rt
  * @param[in] print_matirx print internal matrix or not
  * @param[out] psi_k psi of this step
  */
-void upsi(const BlockCyclicDistribution& matrix_layout,
-          const BlockCyclicDistribution& wfc_layout,
+void upsi(const Parallel_Blkcyclic& matrix_layout,
+          const Parallel_Blkcyclic& wfc_layout,
           const int nband,
           const int nlocal,
           const std::complex<double>* U_operator,
@@ -40,8 +40,8 @@ void upsi(const BlockCyclicDistribution& matrix_layout,
           std::ofstream& ofs_running,
           const int print_matrix);
 
-void upsi_tensor(const BlockCyclicDistribution& matrix_layout,
-                 const BlockCyclicDistribution& wfc_layout,
+void upsi_tensor(const Parallel_Blkcyclic& matrix_layout,
+                 const Parallel_Blkcyclic& wfc_layout,
                  const int nband,
                  const int nlocal,
                  const ct::Tensor& U_operator,

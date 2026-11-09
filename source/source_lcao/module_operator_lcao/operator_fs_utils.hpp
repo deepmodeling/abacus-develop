@@ -9,7 +9,7 @@
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_hamilt/module_hcontainer/hcontainer.h"
 
-class BlockCyclicDistribution; // Defined in source/source_base/parallel_blkcyc.h
+class Parallel_Blkcyclic; // Defined in source/source_base/parallel_blkcyc.h
 
 namespace OperatorForceStress {
 
@@ -47,7 +47,7 @@ void cal_force_stress_2center(
     const Grid_Driver* gridD,
     const std::vector<double>& orb_cutoff,
     const BasisFlattenedIndexing& basis,
-    const BlockCyclicDistribution& layout,
+    const Parallel_Blkcyclic& layout,
     IntegralFunc& integral_calculator,
     ModuleBase::matrix& force,
     ModuleBase::matrix& stress)

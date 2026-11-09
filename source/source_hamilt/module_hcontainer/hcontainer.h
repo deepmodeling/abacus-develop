@@ -9,7 +9,7 @@
 #include <vector>
 
 class BasisFlattenedIndexing; // Defined in source/source_base/basis_flattened_indexing.h
-class BlockCyclicDistribution; // Defined in source/source_base/parallel_blkcyc.h
+class Parallel_Blkcyclic; // Defined in source/source_base/parallel_blkcyc.h
 
 namespace hamilt
 {
@@ -181,14 +181,14 @@ class HContainer
     HContainer(const Parallel_Orbitals* paraV, T* data_pointer = nullptr, const std::vector<int>* ijr_info = nullptr);
 
     HContainer(const BasisFlattenedIndexing& basis,
-               const BlockCyclicDistribution& layout);
+               const Parallel_Blkcyclic& layout);
 
     HContainer(const BasisFlattenedIndexing& basis,
-               const BlockCyclicDistribution& layout,
+               const Parallel_Blkcyclic& layout,
                T* data_pointer);
 
     HContainer(const BasisFlattenedIndexing& basis,
-               const BlockCyclicDistribution& layout,
+               const Parallel_Blkcyclic& layout,
                T* data_pointer,
                const std::vector<int>* ijr_info);
 
@@ -542,7 +542,7 @@ class HContainer
     const Parallel_Orbitals* paraV = nullptr;
 
     const BasisFlattenedIndexing* basis_index = nullptr;
-    const BlockCyclicDistribution* matrix_dist = nullptr;
+    const Parallel_Blkcyclic* matrix_dist = nullptr;
 
     bool same_layout(const HContainer<T>& other) const;
     bool same_layout(const AtomPair<T>& atom_ij) const;
