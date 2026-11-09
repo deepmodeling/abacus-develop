@@ -66,5 +66,11 @@ if(ENABLE_LCAO AND ENABLE_MPI)
             ../../source_cell/magnetism.cpp
             ../../source_base/parallel_common.cpp
             ${md_test_depend_files})
-  abacus_add_rt_test_variants(INTEGRATION_MD_RT_boundary "integration;md;rt")
+  # One executable, separate CTest entries for the RT unit and MD/RT contract.
+  abacus_add_rt_test_variants(
+    INTEGRATION_MD_RT_boundary INTEGRATION_MD_RT_boundary "integration;md;rt"
+    "*MdRtBoundaryTest.*")
+  abacus_add_rt_test_variants(
+    MODULE_LCAO_tddft_td_folding INTEGRATION_MD_RT_boundary "unit;rt"
+    "TdFoldingTest.*")
 endif()
