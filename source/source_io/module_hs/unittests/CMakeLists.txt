@@ -113,6 +113,7 @@ if(ENABLE_LCAO)
     TARGET MODULE_IO_hs_sparse_io_test
     LIBS parameter base device hcontainer
     SOURCES test_hs_sparse_io.cpp ../hs_sparse_io.cpp ../lat_r_csr.cpp
+            ../../../source_cell/ucell_io.cpp
             ../../../source_basis/module_ao/parallel_orbitals.cpp
             ../../../source_hamilt/module_hcontainer/test/tmp_mocks.cpp)
 

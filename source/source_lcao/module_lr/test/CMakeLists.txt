@@ -112,6 +112,7 @@ set(lr_dm_test_sources
     ../../spar_hsr.cpp
     ../../../source_io/module_hs/hs_sparse_io.cpp
     ../../../source_io/module_hs/lat_r_csr.cpp
+    ../../../source_cell/ucell_io.cpp
     ../../../source_estate/module_dm/density_matrix.cpp
     ../../../source_estate/module_dm/dmr_gamma.cpp
     ../../../source_estate/module_dm/dmr_init.cpp

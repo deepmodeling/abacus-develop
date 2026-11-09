@@ -1,6 +1,7 @@
 /**
  * @file test_hs_sparse_io.cpp
- * @brief Unit tests for hs_sparse_io.cpp (ModuleIO::save_sparse).
+ * @brief Unit tests for hs_sparse_io.cpp (ModuleIO::save_sparse, both the
+ *        compact layout and the csr_format text layout).
  *
  * The tests pin down the legacy CSR text/binary layout written by
  * save_sparse: header style ("Ionic_Step n"), dimension lines, threshold
@@ -230,6 +231,57 @@ TEST(HsSparseIo, SparseTextOutAppFlagZeroTruncatesSeededFile)
     // istep = 2 is the third ionic step, printed one-based as 3
     EXPECT_TRUE(starts_with(output, "Ionic_Step 3\n"));
     EXPECT_EQ(output.find("stale content"), std::string::npos);
+
+    std::remove(filename.c_str());
+}
+
+TEST(HsSparseIo, SparseCsrHeaderWritesCellAndBanner)
+{
+    const std::string filename = testing::TempDir() + "write_hs_r_csr_header_s.csr";
+    std::remove(filename.c_str());
+
+    Parallel_Orbitals pv;
+    init_serial_orbitals(pv);
+    const Abfs::Vector3_Order<int> r_vector(0, 0, 0);
+    std::set<Abfs::Vector3_Order<int>> all_R_coor;
+    all_R_coor.insert(r_vector);
+    std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> sparse_matrix;
+    sparse_matrix[r_vector][0][1] = 0.5;
+    sparse_matrix[r_vector][1][1] = 1.5;
+
+    UnitCell ucell;
+    init_unitcell(ucell);
+
+    ModuleIO::SparseWriteOptions options;
+    options.filename = filename;
+    options.label = "T";
+    options.threshold = 1e-10;
+    options.binary = false;
+    options.istep = 0;
+    options.reduce = false;
+    options.csr_format = true;
+    options.ucell = &ucell;
+    ModuleIO::save_sparse(sparse_matrix, all_R_coor, pv, options);
+
+    const std::vector<std::string> lines = read_lines(filename);
+    ASSERT_GE(lines.size(), 12);
+    // istep = 0 is the first ionic step, printed one-based as 1
+    EXPECT_EQ(lines[0], "Ionic_Step 1");
+    EXPECT_EQ(lines[1], " # print T matrix in real space T(R)");
+    EXPECT_EQ(lines[2], " 1 # number of spin directions");
+    EXPECT_EQ(lines[3], " 1 # spin index");
+    EXPECT_EQ(lines[4], " 2 # number of localized basis");
+    EXPECT_EQ(lines[5], " 1 # number of Bravais lattice vector R");
+    EXPECT_EQ(lines[6], "");
+
+    const std::string output = read_file(filename);
+    EXPECT_THAT(output, testing::HasSubstr("user_defined_lattice"));
+    EXPECT_THAT(output, testing::HasSubstr("Direct\n 0 0.25 0.5\n"));
+    EXPECT_THAT(output, testing::HasSubstr("CSR Format"));
+    EXPECT_THAT(output, testing::HasSubstr("0 0 0 2\n"));
+    EXPECT_THAT(output, testing::HasSubstr(" # CSR values"));
+    EXPECT_THAT(output, testing::HasSubstr(" # CSR column indices"));
+    EXPECT_THAT(output, testing::HasSubstr(" # CSR row pointers"));
 
     std::remove(filename.c_str());
 }

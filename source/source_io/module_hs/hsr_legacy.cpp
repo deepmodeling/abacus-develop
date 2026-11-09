@@ -199,6 +199,8 @@ void ModuleIO::output_TR(const int istep,
     sparse_options.reduce = true;
     sparse_options.calculation = options.calculation;
     sparse_options.out_app_flag = options.out_app_flag;
+    sparse_options.csr_format = true;
+    sparse_options.ucell = &ucell;
 
     ModuleIO::save_sparse(HS_Arrays.TR_sparse,
                           HS_Arrays.all_R_coor,

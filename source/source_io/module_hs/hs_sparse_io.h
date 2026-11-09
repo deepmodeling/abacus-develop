@@ -9,6 +9,8 @@
 #include <set>
 #include <string>
 
+class UnitCell;
+
 namespace ModuleIO
 {
 using RCoordinate = Abfs::Vector3_Order<int>;
@@ -32,6 +34,13 @@ struct SparseWriteOptions
     // Must be provided explicitly by the caller instead of reading PARAM.
     std::string calculation;
     int out_app_flag = 0;
+    // Text output style: self-describing header with cell information and
+    // annotated CSR blocks, matching the H(R)/S(R) CSR files. Binary output
+    // keeps the compact record layout regardless of this flag.
+    bool csr_format = false;
+    // Unit cell written into the self-describing text header; required when
+    // csr_format is true.
+    const UnitCell* ucell = nullptr;
 };
 
 template <typename Tdata>

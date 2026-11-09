@@ -4,6 +4,7 @@
 #include "source_base/global_function.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
+#include "source_cell/ucell_io.h"
 #include "lat_r_csr.h"
 
 #include <cmath>
@@ -95,6 +96,33 @@ void write_R_record(std::ofstream& ofs,
             << std::endl;
     }
 }
+
+void write_csr_style_header(std::ofstream& ofs,
+                            const ModuleIO::SparseWriteOptions& options,
+                            const int nlocal,
+                            const int output_R_number,
+                            const UnitCell* ucell)
+{
+    if (ucell == nullptr)
+    {
+        ModuleBase::WARNING_QUIT("ModuleIO::save_sparse_csr",
+                                 "UnitCell pointer must not be null for text output.");
+    }
+    // ionic step printed one-based per governance rule 22, consistent
+    // with the g{N} filename suffix (g1 holds the first ionic step)
+    const int step = std::max(options.istep, 0) + 1;
+    ofs << "Ionic_Step " << step << std::endl;
+    ofs << " # print " << options.label << " matrix in real space "
+        << options.label << "(R)" << std::endl;
+    ofs << " 1 # number of spin directions" << std::endl;
+    ofs << " 1 # spin index" << std::endl;
+    ofs << " " << nlocal << " # number of localized basis" << std::endl;
+    ofs << " " << output_R_number << " # number of Bravais lattice vector R" << std::endl;
+    ofs << std::endl;
+    ModuleIO::UcellIO::write_ucell(ofs, ucell);
+    ofs << std::endl;
+    ModuleIO::write_csr_banner(ofs);
+}
 } // namespace
 
 template <typename Tdata>
@@ -115,13 +143,22 @@ void ModuleIO::save_sparse(
     const std::vector<long long> nonzero_num
         = detail::count_nonzeros_by_R(smat, all_R_coor, options.threshold, options.reduce);
     const int output_R_number = count_output_R(nonzero_num);
+    const bool text_csr = options.csr_format && !options.binary;
     std::ofstream ofs;
     if (!options.reduce || GlobalV::DRANK == 0)
     {
         open_sparse_file(ofs, options);
-        write_sparse_header(ofs, options, nlocal, output_R_number);
+        if (text_csr)
+        {
+            write_csr_style_header(ofs, options, nlocal, output_R_number, options.ucell);
+        }
+        else
+        {
+            write_sparse_header(ofs, options, nlocal, output_R_number);
+        }
     }
 
+    const SparseRBlock<Tdata> empty_block;
     int count = 0;
     for (const auto& R_coor: all_R_coor)
     {
@@ -136,14 +173,14 @@ void ModuleIO::save_sparse(
             write_R_record(ofs, R_coor, nonzero_num[count], options.binary);
         }
 
-        if (smat.count(R_coor))
+        const SparseRBlock<Tdata>& block = (smat.count(R_coor) != 0) ? smat.at(R_coor) : empty_block;
+        if (text_csr)
         {
-            save_lat_r(ofs, smat.at(R_coor), pv, options);
+            save_lat_r_csr(ofs, block, pv, options);
         }
         else
         {
-            SparseRBlock<Tdata> empty_map;
-            save_lat_r(ofs, empty_map, pv, options);
+            save_lat_r(ofs, block, pv, options);
         }
         ++count;
     }
