@@ -18,24 +18,6 @@
 namespace hsolver {
 namespace {
 
-const int ppcg_openmp_work_threshold = 4096;
-const int ppcg_openmp_column_threshold = 16;
-const double ppcg_minimum_diagonalization_threshold = 1.0e-14;
-const double ppcg_preconditioner_threshold = 1.0e-12;
-const double ppcg_numerical_threshold = 1.0e-30;
-const double ppcg_scaling_threshold = 1.0e-15;
-const int ppcg_stagnation_restart_interval = 15;
-// Operator images are transformed with their vectors. Refresh their accumulated
-// roundoff independently of the user-selected Ritz diagonalization interval.
-const int ppcg_operator_refresh_interval = 16;
-// Relative cutoff for overlap eigenvalues in a local [X, W, P] subspace.
-// Directions below this level are numerically dependent; retaining them can
-// make the reduced generalized solve stagnate instead of improving a Ritz pair.
-const double ppcg_subspace_rank_threshold = 1.0e-8;
-
-// Diagonal shifts used by the small projected eigensolve fallback.
-const double ppcg_subspace_shifts[] = {0.0, 1.0e-10, 1.0e-8, 1.0e-6};
-
 // A whole-function timer also closes correctly on early return or exception.
 class PPCGFunctionTimer
 {
@@ -94,7 +76,8 @@ Real max_generalized_residual(
     Real max_res = 0;
     std::vector<double> nrm2_all(ncol, 0.0);
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static) if (n_dim * ncol > ppcg_openmp_work_threshold)
+    const int openmp_work_threshold = 4096;
+#pragma omp parallel for schedule(static) if (n_dim * ncol > openmp_work_threshold)
 #endif
     for (int j = 0; j < ncol; ++j)
     {
@@ -124,7 +107,8 @@ inline void set_zero(std::vector<T>& x)
 {
     const int n = int(x.size());
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static) if (n > ppcg_openmp_work_threshold)
+    const int openmp_work_threshold = 4096;
+#pragma omp parallel for schedule(static) if (n > openmp_work_threshold)
 #endif
     for (int i = 0; i < n; ++i)
     {
@@ -239,7 +223,8 @@ DiagoPPCG<T, Device>::DiagoPPCG(const Real& diag_thr,
 {
     sbsize_ = std::max(1, sbsize_);
     rr_step_ = std::max(1, rr_step_);
-    diag_thr_ = std::max(diag_thr_, Real(ppcg_minimum_diagonalization_threshold));
+    const Real minimum_diagonalization_threshold = Real(1.0e-14);
+    diag_thr_ = std::max(diag_thr_, minimum_diagonalization_threshold);
 }
 
 // =============================================================================
@@ -341,7 +326,8 @@ void DiagoPPCG<T, Device>::apply_s(const SPsiFunc& spsi_func,
     else
     {
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static) if (ld_psi_ * ncol > ppcg_openmp_work_threshold)
+        const int openmp_work_threshold = 4096;
+#pragma omp parallel for schedule(static) if (ld_psi_ * ncol > openmp_work_threshold)
 #endif
         for (int j = 0; j < ncol; ++j)
         {
@@ -424,7 +410,8 @@ void DiagoPPCG<T, Device>::copy_cols(const T* src,
     }
 
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static) if (ld_psi_ * ncols > ppcg_openmp_work_threshold)
+    const int openmp_work_threshold = 4096;
+#pragma omp parallel for schedule(static) if (ld_psi_ * ncols > openmp_work_threshold)
 #endif
     for (int j = 0; j < ncols; ++j)
     {
@@ -459,7 +446,8 @@ void DiagoPPCG<T, Device>::scatter_cols(
     }
 
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static) if (ld_psi_ * ncols > ppcg_openmp_work_threshold)
+    const int openmp_work_threshold = 4096;
+#pragma omp parallel for schedule(static) if (ld_psi_ * ncols > openmp_work_threshold)
 #endif
     for (int j = 0; j < ncols; ++j)
     {
@@ -673,8 +661,10 @@ void DiagoPPCG<T, Device>::divide_by_preconditioner(
     std::vector<T>& x) const
 {
     const int ncols = int(active_cols.size());
+    const Real minimum_preconditioner = Real(1.0e-12);
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static) if (n_dim_ * ncols > ppcg_openmp_work_threshold)
+    const int openmp_work_threshold = 4096;
+#pragma omp parallel for schedule(static) if (n_dim_ * ncols > openmp_work_threshold)
 #endif
     for (int j = 0; j < ncols; ++j)
     {
@@ -682,7 +672,7 @@ void DiagoPPCG<T, Device>::divide_by_preconditioner(
         for (int ig = 0; ig < n_dim_; ++ig)
         {
             x[idx(ig, c, ld_psi_)] /=
-                std::max(prec[ig], Real(ppcg_preconditioner_threshold));
+                std::max(prec[ig], minimum_preconditioner);
         }
     }
 }
@@ -713,7 +703,8 @@ void DiagoPPCG<T, Device>::lock_epairs(
     active_cols.reserve(n_band_);
     std::vector<double> nrm2_all(n_band_, 0.0);
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static) if (n_dim_ * n_band_ > ppcg_openmp_work_threshold)
+    const int openmp_work_threshold = 4096;
+#pragma omp parallel for schedule(static) if (n_dim_ * n_band_ > openmp_work_threshold)
 #endif
     for (int j = 0; j < n_band_; ++j)
     {
@@ -756,9 +747,12 @@ void DiagoPPCG<T, Device>::scale_to_unit_snorm(std::vector<T>& x,
                                                 std::vector<T>& hx,
                                                 const int ncols) const
 {
+    const Real squared_snorm_floor = Real(1.0e-30);
+    const Real minimum_snorm = Real(1.0e-15);
     std::vector<double> inverse_snorm(ncols, 0.0);
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static) if (n_dim_ * ncols > ppcg_openmp_work_threshold)
+    const int openmp_work_threshold = 4096;
+#pragma omp parallel for schedule(static) if (n_dim_ * ncols > openmp_work_threshold)
 #endif
     for (int j = 0; j < ncols; ++j)
     {
@@ -775,13 +769,13 @@ void DiagoPPCG<T, Device>::scale_to_unit_snorm(std::vector<T>& x,
     for (int j = 0; j < ncols; ++j)
     {
         const Real snorm = std::sqrt(std::max(
-            Real(inverse_snorm[j]), Real(ppcg_numerical_threshold)));
-        inverse_snorm[j] = snorm > Real(ppcg_scaling_threshold)
+            Real(inverse_snorm[j]), squared_snorm_floor));
+        inverse_snorm[j] = snorm > minimum_snorm
                              ? double(Real(1) / snorm)
                              : 1.0;
     }
 #ifdef _OPENMP
-#pragma omp parallel for collapse(2) schedule(static) if (n_dim_ * ncols > ppcg_openmp_work_threshold)
+#pragma omp parallel for collapse(2) schedule(static) if (n_dim_ * ncols > openmp_work_threshold)
 #endif
     for (int j = 0; j < ncols; ++j)
     {
@@ -1073,7 +1067,8 @@ void DiagoPPCG<T, Device>::build_small_subspace(
                           std::vector<T>& dst)
     {
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static) if (ld_psi_ * l > ppcg_openmp_work_threshold)
+        const int openmp_work_threshold = 4096;
+#pragma omp parallel for schedule(static) if (ld_psi_ * l > openmp_work_threshold)
 #endif
         for (int j = 0; j < l; ++j)
         {
@@ -1138,9 +1133,9 @@ int DiagoPPCG<T, Device>::solve_small_generalized(
 
         const Real largest_overlap_eigenvalue = std::max(overlap_eigenvalues.back(), Real(0));
         const Real precision_floor = Real(10) * std::numeric_limits<Real>::epsilon();
-        const Real relative_rank_threshold = std::max(
-            Real(ppcg_subspace_rank_threshold),
-            precision_floor);
+        // Discard numerically dependent directions in the local overlap spectrum.
+        const Real minimum_relative_overlap = Real(1.0e-8);
+        const Real relative_rank_threshold = std::max(minimum_relative_overlap, precision_floor);
         const Real overlap_cutoff = largest_overlap_eigenvalue
                                     * relative_rank_threshold;
         std::vector<int> retained_indices;
@@ -1260,10 +1255,7 @@ int DiagoPPCG<T, Device>::solve_small_generalized(
     // Try with increasing diagonal shifts; fall back to identity (no update)
     // if the subspace is too ill-conditioned.  sygvd modifies both matrices
     // in-place before it may fail.
-    const Real shifts[] = {Real(ppcg_subspace_shifts[0]),
-                           Real(ppcg_subspace_shifts[1]),
-                           Real(ppcg_subspace_shifts[2]),
-                           Real(ppcg_subspace_shifts[3])};
+    const Real shifts[] = {Real(0.0), Real(1.0e-10), Real(1.0e-8), Real(1.0e-6)};
     for (const Real shift : shifts)
     {
         subspace.k = k0;
@@ -1291,13 +1283,14 @@ int DiagoPPCG<T, Device>::solve_small_generalized(
         }
     }
     // All attempts failed — set eigenvectors to identity (no update).
+    const Real minimum_overlap = Real(1.0e-30);
     std::fill(subspace.k.begin(), subspace.k.end(), T(0));
     for (int i = 0; i < dim; ++i)
     {
         subspace.k[i + i * dim] = T(1);
         subspace.eval[i] = Real(std::real(k0[i + i * dim]))
                          / std::max(Real(std::real(m0[i + i * dim])),
-                                    Real(ppcg_numerical_threshold));
+                                    minimum_overlap);
     }
     return 0;
 }
@@ -1368,7 +1361,8 @@ void DiagoPPCG<T, Device>::project_candidate_complement(
     const int norm_count = int(norms.size());
     reduce_pool_values(norms.data(), norm_count);
     const Real precision_floor = Real(10) * std::numeric_limits<Real>::epsilon();
-    const Real rank_threshold = std::max(Real(ppcg_subspace_rank_threshold), precision_floor);
+    const Real minimum_retained_norm_ratio = Real(1.0e-8);
+    const Real rank_threshold = std::max(minimum_retained_norm_ratio, precision_floor);
     std::vector<int> retained;
     std::vector<int> refresh;
     for (int column = 0; column < count; ++column)
@@ -1507,7 +1501,8 @@ bool DiagoPPCG<T, Device>::recover_competing_ritz(
         throw std::runtime_error("PPCG: competing-direction overlap diagonalization failed.");
     }
     const Real precision_floor = Real(10) * std::numeric_limits<Real>::epsilon();
-    const Real rank_threshold = std::max(Real(ppcg_subspace_rank_threshold), precision_floor);
+    const Real minimum_relative_overlap = Real(1.0e-8);
+    const Real rank_threshold = std::max(minimum_relative_overlap, precision_floor);
     const Real cutoff = norms.back() * rank_threshold;
     int retained_count = 0;
     for (int column = 0; column < selected_count; ++column)
@@ -1599,7 +1594,8 @@ void DiagoPPCG<T, Device>::update_one_block(
     subspace.coeff_state.resize(dim * l);
     subspace.coeff_p.resize(dim * l);
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static) if (l * l > ppcg_openmp_work_threshold)
+    const int openmp_work_threshold = 4096;
+#pragma omp parallel for schedule(static) if (l * l > openmp_work_threshold)
 #endif
     for (int j = 0; j < l; ++j)
     {
@@ -1627,7 +1623,7 @@ void DiagoPPCG<T, Device>::update_one_block(
     {
         basis.resize(ld_psi_ * dim);
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static) if (ld_psi_ * l > ppcg_openmp_work_threshold)
+#pragma omp parallel for schedule(static) if (ld_psi_ * l > openmp_work_threshold)
 #endif
         for (int j = 0; j < l; ++j)
         {
@@ -1716,6 +1712,7 @@ bool DiagoPPCG<T, Device>::rayleigh_ritz(
     {
         // LAPACK may overwrite the projected matrices before failing.  Re-form
         // them on every rank so all ranks enter the same fallback path.
+        const Real minimum_overlap = Real(1.0e-30);
         gram(psi, hpsi_.data(), n_band_, n_band_, rr_hsub_, n_band_);
         gram(psi, spsi_.data(), n_band_, n_band_, rr_ssub_, n_band_);
         for (int ii = 0; ii < n_band_; ++ii)
@@ -1723,7 +1720,7 @@ bool DiagoPPCG<T, Device>::rayleigh_ritz(
             rr_eval_[ii] = Real(std::real(rr_hsub_[ii + ii * n_band_]))
                      / std::max(Real(
                                     std::real(rr_ssub_[ii + ii * n_band_])),
-                                Real(ppcg_numerical_threshold));
+                                minimum_overlap);
         }
     }
 
@@ -1835,7 +1832,8 @@ void DiagoPPCG<T, Device>::compute_eigenpair_residual(const Real* eigenvalue)
     const PPCGFunctionTimer timer("compute_eigenpair_residual");
     set_zero(w_);
 #ifdef _OPENMP
-#pragma omp parallel for collapse(2) schedule(static) if (n_dim_ * n_band_ > ppcg_openmp_work_threshold)
+    const int openmp_work_threshold = 4096;
+#pragma omp parallel for collapse(2) schedule(static) if (n_dim_ * n_band_ > openmp_work_threshold)
 #endif
     for (int j = 0; j < n_band_; ++j)
     {
@@ -2118,8 +2116,8 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
         }
         const Real min_eigenvalue = overlap_eigenvalues.front();
         const Real max_eigenvalue = overlap_eigenvalues.back();
-        const Real denominator = std::max(std::abs(min_eigenvalue),
-                                          Real(ppcg_numerical_threshold));
+        const Real minimum_overlap_magnitude = Real(1.0e-30);
+        const Real denominator = std::max(std::abs(min_eigenvalue), minimum_overlap_magnitude);
         const Real condition = std::abs(max_eigenvalue) / denominator;
         if (std::isnan(local_overlap_condition) || condition > local_overlap_condition)
         {
@@ -2275,7 +2273,8 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
         // Intermediate sweeps maintain S-orthonormality without diagonalizing
         // the full projected Hamiltonian.
         const bool scheduled_rr = (iter % rr_step_) == 0;
-        const bool refresh_operators = (iter % ppcg_operator_refresh_interval) == 0
+        const int operator_refresh_interval = 16;
+        const bool refresh_operators = (iter % operator_refresh_interval) == 0
                                        && !near_precision;
         if (refresh_operators)
         {
@@ -2339,6 +2338,7 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
         // consecutive rises avoids resetting on a transient bump, and a reset
         // falls back to a steepest-descent step to recover the low eigenpairs.
         {
+            const int stagnation_restart_interval = 15;
             const Real cur_res = max_residual_;
             if (cur_res < best_res)
             {
@@ -2349,7 +2349,7 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
             {
                 ++no_improve;
             }
-            if (no_improve >= ppcg_stagnation_restart_interval)
+            if (no_improve >= stagnation_restart_interval)
             {
                 std::fill(p_.begin(), p_.end(), T(0));
                 std::fill(sp_.begin(), sp_.end(), T(0));
