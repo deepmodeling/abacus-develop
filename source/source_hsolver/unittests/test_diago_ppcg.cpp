@@ -183,7 +183,8 @@ class DiagoPPCGMatrixTest : public ::testing::Test
                     overlap += std::conj(psi[row + other * ld]) * psi[row + band * ld];
                 }
                 const T expected_overlap = (other == band) ? T(1) : T(0);
-                const Real overlap_error = std::abs(overlap - expected_overlap);
+                const T difference = overlap - expected_overlap;
+                const Real overlap_error = std::abs(difference);
                 EXPECT_LT(overlap_error, orthogonality_tolerance) << "bands " << other << ", " << band;
             }
         }
@@ -215,6 +216,11 @@ struct PPCGLaplacianCase
     int ritz_interval;
     double eigenvalue_tolerance;
 };
+
+static void PrintTo(const PPCGLaplacianCase& config, std::ostream* out)
+{
+    *out << config.name;
+}
 
 class DiagoPPCGLaplacianTest : public DiagoPPCGMatrixTest,
                                public ::testing::WithParamInterface<PPCGLaplacianCase>
@@ -1107,47 +1113,61 @@ TEST_F(DiagoPPCGDiagonalTest, BlockSubspace)
     check_eigenvalues(1e-12, 50, 3, 3, 1e-8);
 }
 
-TEST(DiagoPPCGRootSelectionTest, StartupCorrectionKeepsLowestRoots)
+// Two explicit startup subspaces exercise the same low-root recovery check.
+class DiagoPPCGStartupCorrectionTest : public DiagoPPCGMatrixTest,
+                                     public ::testing::WithParamInterface<bool>
 {
-    const int n_dim = 8;
-    const int nband = 4;
-    const int ld = n_dim;
-    const Real inv_sqrt_two = Real(1) / std::sqrt(Real(2));
+};
 
-    std::vector<T> h_mat(n_dim * n_dim, T(0));
-    std::vector<Real> prec(n_dim);
+TEST_P(DiagoPPCGStartupCorrectionTest, KeepsLowestRoots)
+{
+    n_dim = 8;
+    nband = 4;
+    ld = n_dim;
+    const Real inv_sqrt_two = Real(1) / std::sqrt(Real(2));
+    const int matrix_size = n_dim * n_dim;
+    H_mat.assign(matrix_size, T(0));
+    prec.resize(n_dim);
     for (int i = 0; i < n_dim; ++i)
     {
         const Real diagonal = Real(i + 1);
-        h_mat[i + i * n_dim] = T(diagonal, 0);
+        H_mat[i + i * n_dim] = T(diagonal, 0);
         prec[i] = diagonal;
     }
 
-    // The first two columns contain the missing third and fourth roots.  The
-    // last two are exact high-energy eigenvectors and would otherwise lock
-    // before their lower replacements can enter the active subspace.
-    std::vector<T> psi(ld * nband, T(0));
+    const int vector_size = ld * nband;
+    psi.assign(vector_size, T(0));
     psi[0] = T(inv_sqrt_two, 0);
     psi[2] = T(inv_sqrt_two, 0);
     psi[1 + ld] = T(inv_sqrt_two, 0);
     psi[3 + ld] = T(inv_sqrt_two, 0);
-    psi[6 + 2 * ld] = T(1, 0);
-    psi[7 + 3 * ld] = T(1, 0);
+    const bool all_vectors_active = GetParam();
+    if (all_vectors_active)
+    {
+        // Every initial vector has a nonzero residual. Independent two-column
+        // blocks would nevertheless retain roots 1, 2, 5, and 6, discarding the
+        // third and fourth roots before a global comparison is possible.
+        psi[4 + 2 * ld] = T(inv_sqrt_two, 0);
+        psi[6 + 2 * ld] = T(inv_sqrt_two, 0);
+        psi[5 + 3 * ld] = T(inv_sqrt_two, 0);
+        psi[7 + 3 * ld] = T(inv_sqrt_two, 0);
+    }
+    else
+    {
+        // The first two columns contain the missing third and fourth roots. The
+        // last two are exact high-energy eigenvectors and would otherwise lock
+        // before their lower replacements can enter the active subspace.
+        psi[6 + 2 * ld] = T(1, 0);
+        psi[7 + 3 * ld] = T(1, 0);
+    }
 
-    std::vector<Real> eval(nband, Real(0));
-    std::vector<double> ethr(nband, 1e-12);
-    hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(
+    ethr.assign(nband, 1e-12);
+    hsolver::DiagoPPCG<T, base_device::DEVICE_CPU> solver(
         /* diag_thr = */ 1e-12,
         /* max_iter = */ 50,
         /* sbsize   = */ 2,
         /* rr_step  = */ 4);
-
-    auto h_op = [&h_mat, n_dim](T* in, T* out, int ld_in, int ncol) {
-        dense_h_multiply(h_mat.data(), n_dim, in, out, ld_in, ncol);
-    };
-
-    const double avg_iter = solver.diag(
-        h_op, nullptr, ld, nband, n_dim, psi.data(), eval.data(), ethr, prec.data());
+    const double avg_iter = solve(solver);
     for (int i = 0; i < nband; ++i)
     {
         EXPECT_NEAR(eval[i], Real(i + 1), 1e-10) << "root[" << i << "] mismatch";
@@ -1156,56 +1176,13 @@ TEST(DiagoPPCGRootSelectionTest, StartupCorrectionKeepsLowestRoots)
     EXPECT_LE(avg_iter, 50.0);
 }
 
-TEST(DiagoPPCGRootSelectionTest, StartupCorrectionKeepsLowestRootsWithoutInitialGap)
-{
-    const int n_dim = 8;
-    const int nband = 4;
-    const int ld = n_dim;
-    const Real inv_sqrt_two = Real(1) / std::sqrt(Real(2));
-
-    std::vector<T> h_mat(n_dim * n_dim, T(0));
-    std::vector<Real> prec(n_dim);
-    for (int i = 0; i < n_dim; ++i)
-    {
-        const Real diagonal = Real(i + 1);
-        h_mat[i + i * n_dim] = T(diagonal, 0);
-        prec[i] = diagonal;
-    }
-
-    // Every initial vector has a nonzero residual.  Independent two-column
-    // blocks would nevertheless retain roots 1, 2, 5, and 6, discarding the
-    // third and fourth roots before a global comparison is possible.
-    std::vector<T> psi(ld * nband, T(0));
-    psi[0] = T(inv_sqrt_two, 0);
-    psi[2] = T(inv_sqrt_two, 0);
-    psi[1 + ld] = T(inv_sqrt_two, 0);
-    psi[3 + ld] = T(inv_sqrt_two, 0);
-    psi[4 + 2 * ld] = T(inv_sqrt_two, 0);
-    psi[6 + 2 * ld] = T(inv_sqrt_two, 0);
-    psi[5 + 3 * ld] = T(inv_sqrt_two, 0);
-    psi[7 + 3 * ld] = T(inv_sqrt_two, 0);
-
-    std::vector<Real> eval(nband, Real(0));
-    std::vector<double> ethr(nband, 1e-12);
-    hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(
-        /* diag_thr = */ 1e-12,
-        /* max_iter = */ 50,
-        /* sbsize   = */ 2,
-        /* rr_step  = */ 4);
-
-    auto h_op = [&h_mat, n_dim](T* in, T* out, int ld_in, int ncol) {
-        dense_h_multiply(h_mat.data(), n_dim, in, out, ld_in, ncol);
-    };
-
-    const double avg_iter = solver.diag(
-        h_op, nullptr, ld, nband, n_dim, psi.data(), eval.data(), ethr, prec.data());
-    for (int i = 0; i < nband; ++i)
-    {
-        EXPECT_NEAR(eval[i], Real(i + 1), 1e-10) << "root[" << i << "] mismatch";
-    }
-    EXPECT_TRUE(solver.converged());
-    EXPECT_LE(avg_iter, 50.0);
-}
+INSTANTIATE_TEST_SUITE_P(
+    StartupVectors,
+    DiagoPPCGStartupCorrectionTest,
+    ::testing::Bool(),
+    [](const ::testing::TestParamInfo<bool>& info) {
+        return info.param ? "AllVectorsActive" : "LockedHighRoots";
+    });
 
 TEST(DiagoPPCGRootSelectionTest, StartupCorrectionKeepsConvergedPrefixInactive)
 {
@@ -2061,6 +2038,11 @@ struct PPCGOverlapCase
     bool tridiagonal;
     double residual_threshold;
 };
+
+static void PrintTo(const PPCGOverlapCase& config, std::ostream* out)
+{
+    *out << config.name;
+}
 
 // H is the six-dimensional Laplacian. Diagonal S also exercises padded vectors;
 // tridiagonal S shares H's sine eigenvectors and has analytical eigenvalues.
