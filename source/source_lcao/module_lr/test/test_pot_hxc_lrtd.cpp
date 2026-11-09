@@ -315,3 +315,63 @@ TEST_F(PotHxcLRTest, ScopedGsTypeRestoresLibxcBackend)
     EXPECT_EQ(XC_Functional::get_func_id(), ids);
     EXPECT_EQ(XC_Functional::output_info(), description);
 }
+
+TEST_F(PotHxcLRTest, ScalarTripletMatchesPolarizedClosedShellResponse)
+{
+    Input_para input;
+    input.cal_force = true;
+    input.lr_target_spin = "triplet";
+    input.lr_init_xc_kernel = init;
+    for (const std::string functional : {"lda", "pbe", "hf"})
+    {
+        input.dft_functional = functional;
+        charge.nspin = 1;
+        up = 0.6;
+        const auto scalar = LR::prepare_lr_potentials(input, functional,
+            basis, cell, charge, grid, 1, false);
+        ASSERT_EQ(scalar.pot.size(), 1);
+        EXPECT_EQ(scalar.kernel->nspin(), 2);
+        const auto gs = LR::prepare_gs_potential(input, functional,
+            basis, cell, charge, grid, 1, false, scalar);
+        EXPECT_EQ(gs->xc_kernel_components().nspin(), 1);
+        EXPECT_NE(&gs->xc_kernel_components(), scalar.kernel.get());
+        charge.nspin = 2;
+        up = 0.3;
+        down = 0.3;
+        const auto polarized = LR::prepare_lr_potentials(input, functional,
+            basis, cell, charge, grid, 2, false);
+        EXPECT_EQ(scalar.kernel->v2rho2, polarized.kernel->v2rho2);
+        ModuleBase::matrix actual(1, 1);
+        ModuleBase::matrix expected(1, 1);
+        scalar.pot[0]->cal_v_eff(density, cell, actual);
+        polarized.pot[1]->cal_v_eff(density, cell, expected);
+        EXPECT_DOUBLE_EQ(actual(0, 0), expected(0, 0));
+        if (functional == "hf")
+        {
+            EXPECT_DOUBLE_EQ(actual(0, 0), 0.0);
+            continue;
+        }
+        // Equal spin densities do not imply f_uu = f_ud: the triplet XC response survives.
+        EXPECT_NE(actual(0, 0), 0.0);
+        LR::PotGradXCLR scalar_grad(*scalar.kernel, basis, cell, 1, 2, true);
+        LR::PotGradXCLR polarized_grad(*polarized.kernel, basis, cell, 1, 2, true);
+        actual.zero_out();
+        expected.zero_out();
+        scalar_grad.cal_v_eff(density, cell, actual);
+        polarized_grad.cal_v_eff(density, cell, expected);
+        EXPECT_DOUBLE_EQ(actual(0, 0), expected(0, 0));
+    }
+}
+
+TEST_F(PotHxcLRTest, ScalarTripletRequiresSpinResolvedKernelFiles)
+{
+    Input_para input;
+    input.lr_target_spin = "triplet";
+    input.lr_init_xc_kernel = {"file", "scalar"};
+    charge.nspin = 1;
+    EXPECT_THROW(LR::prepare_lr_potentials(input, "lda", basis, cell, charge, grid, 1, false),
+        std::invalid_argument);
+    input.lr_init_xc_kernel = {"file", "uu", "ud", "dd"};
+    const auto prepared = LR::prepare_lr_potentials(input, "lda", basis, cell, charge, grid, 1, false);
+    EXPECT_EQ(prepared.kernel->v2rho2.size(), 3);
+}

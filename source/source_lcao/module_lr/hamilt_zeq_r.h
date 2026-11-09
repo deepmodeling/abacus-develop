@@ -101,8 +101,9 @@ namespace LR
                 const auto& kernel = lr_potential->xc_kernel_components();
                 const auto& rho_basis = lr_potential->get_rho_basis();
                 const bool triplet = spin_type == "triplet";
+                const int kernel_nspin = kernel.nspin();
                 this->pot_grad = std::make_shared<PotGradXCLR>(kernel, rho_basis, ucell,
-                    lr_potential->nrxx, nspin, triplet);
+                    lr_potential->nrxx, kernel_nspin, triplet);
                 hamilt::Operator<T>* op_gxc = new OperatorLRHxc<T>(nspin, naos, nocc, nvirt, psi_ks,
                     *this->DM_trans, this->pot_grad, ucell, orb_cutoff, gd, kv, pX, pc, pmat,
                     { 0 }, T(-2.0), ATYPE::CC_vo, hamilt::calculation_type::lr_dmtrans_gxc);

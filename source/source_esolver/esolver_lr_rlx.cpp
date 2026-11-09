@@ -70,18 +70,13 @@ void ModuleESolver::ESolver_LR<T, TR>::setup_relax_target_()
                 "triplet are separate states with separate gradients. Pick one of them, or set "
                 "lr_unrestricted to run spin-unrestricted.");
         }
-        this->target_is_ = (spin == "triplet") ? 1 : 0;
-        if (this->target_is_ >= this->nspin)
-        {
-            ModuleBase::WARNING_QUIT("ESolver_LR",
-                "lr_target_spin=triplet requires nspin=2: the triplet channel is not built here.");
-        }
+        this->target_is_ = (spin == "triplet" && this->nspin == 2) ? 1 : 0;
     }
     this->force_gs_.create(this->ucell_->nat, 3);
     this->lr_force_.create(this->ucell_->nat, 3);
     this->target_state_ = this->inp_->lr_target_state; // seed; overlap takes over from step 2
     this->ofs_running_ << " Excited-state relaxation follows state " << this->inp_->lr_target_state
-        << " of the " << (this->openshell ? "updown" : (this->target_is_ == 1 ? "triplet" : "singlet"))
+        << " of the " << (this->openshell ? "updown" : this->inp_->lr_target_spin)
         << " channel, tracked by cross-geometry orbital and amplitude overlap." << std::endl;
 }
 

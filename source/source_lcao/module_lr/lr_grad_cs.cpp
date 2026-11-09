@@ -176,8 +176,9 @@ std::vector<ModuleBase::matrix> evaluate_closed_shell_force(
             // The density dependence of K[D^X]D^X belongs to the LR functional.
             const std::shared_ptr<PotHxcLR>& pot_lr = inputs.pot[ispin];
             const bool triplet = inputs.spin_types[ispin] == "triplet";
+            const int kernel_nspin = pot_lr->xc_kernel_components().nspin();
             PotGradXCLR pot_grad(pot_lr->xc_kernel_components(), pot_lr->get_rho_basis(),
-                inputs.ucell, pot_lr->nrxx, inputs.nspin, triplet);
+                inputs.ucell, pot_lr->nrxx, kernel_nspin, triplet);
             ModuleBase::matrix force_gxc_dmtrans = lr_force.cal_force_gxc_dmtrans(dm_trans_real, dm_gs, pot_grad);
             if (inputs.test_force)
                 ModuleIO::print_force(inputs.ofs, inputs.ucell, "GXC DMTRANS FORCE (eV/Angstrom)", force_gxc_dmtrans, false);

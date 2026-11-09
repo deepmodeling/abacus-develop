@@ -84,8 +84,29 @@ LR::KernelXC::KernelXC(const ModulePW::PW_Basis& rho_basis,
             ModuleIO::read_vdata_palgrid(pgrid, GlobalV::MY_RANK, GlobalV::ofs_running, file,
                 rho_for_fxc[is], ucell.nat);
         }
+        if (nspin == 2 && chg_gs.nspin == 1)
+        {
+            // Charge-file input follows the GS convention: one total-density file.
+            for (int ir = 0; ir < nrxx; ++ir)
+            {
+                rho_for_fxc[0][ir] *= 0.5;
+                rho_for_fxc[1][ir] = rho_for_fxc[0][ir];
+            }
+        }
         this->f_xc_libxc(nspin, ucell.omega, ucell.tpiba, rho_for_fxc, chg_gs.rho_core);
         LR_Util::_deallocate_2order_nested_ptr(rho_for_fxc, nspin);
+    }
+    else if (nspin == 2 && chg_gs.nspin == 1)
+    {
+        // A spin-unpolarized GS still has a triplet response. Evaluate the polarized
+        // kernel at rho_up = rho_down = rho/2; the scalar kernel cannot supply f_uu-f_ud.
+        std::vector<double> half_density(nrxx);
+        for (int ir = 0; ir < nrxx; ++ir)
+        {
+            half_density[ir] = 0.5 * chg_gs.rho[0][ir];
+        }
+        const double* spin_density[2] = {half_density.data(), half_density.data()};
+        this->f_xc_libxc(nspin, ucell.omega, ucell.tpiba, spin_density, chg_gs.rho_core);
     }
     else { this->f_xc_libxc(nspin, ucell.omega, ucell.tpiba, chg_gs.rho, chg_gs.rho_core); }
 #else 
