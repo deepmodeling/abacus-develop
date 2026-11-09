@@ -10,7 +10,6 @@
 #include "source_io/module_parameter/parameter.h"
 #include "source_relax/socket_constant_potential.h"
 #include "source_relax/socket_driver.h"
-#include "source_relax/socket_handlers.h"
 #include "source_relax/socket_utils.h"
 
 #include "gmock/gmock.h"
@@ -482,7 +481,14 @@ DriverResult run_driver_session(const std::function<void()>& driver_action,
         ::close(output_pipe[1]);
         ::setenv("ABACUS_SOCKET_ADDRESS", server.address().c_str(), 1);
 
+        // The socket peer stays outside MPI; each child owns its MPI runtime.
+#ifdef __MPI
+        MPI_Init(nullptr, nullptr);
+#endif
         driver_action();
+#ifdef __MPI
+        MPI_Finalize();
+#endif
         std::cout.flush();
         std::cerr.flush();
         ::_exit(0);
@@ -807,6 +813,14 @@ TEST(SocketDriverTest, ConvergedSolverMustApplyRequestAndCompleteFeedback)
             diagnostic = "did not apply the constant-potential electron request";
         }
         EXPECT_THAT(result.diagnostic, testing::HasSubstr(diagnostic));
+#ifdef __MPI
+        const char* fatal_stage = "ABACUS_SOCKET_MPI_FATAL stage=electronic_observables";
+        if (failure == ElectronicFailure::IgnoreRequest)
+        {
+            fatal_stage = "ABACUS_SOCKET_MPI_FATAL stage=runner";
+        }
+        EXPECT_THAT(result.diagnostic, testing::HasSubstr(fatal_stage));
+#endif
     }
 }
 
@@ -992,16 +1006,40 @@ TEST(SocketDriverTest, OrdinaryExitMayDiscardUnconsumedFrame)
 
 TEST(SocketDriverTest, ConstantPotentialExitRequiresCompletedRequest)
 {
-    SocketHandlers::DriverContext context;
-    std::ofstream running("/dev/null");
-    context.cp.enabled = true;
-    context.state = SocketUtils::DriverState::HasData;
-    EXPECT_THROW(SocketHandlers::handle_exit(context, running), std::runtime_error);
-    context.state = SocketUtils::DriverState::Ready;
-    context.charge_pending = true;
-    EXPECT_THROW(SocketHandlers::handle_exit(context, running), std::runtime_error);
-    context.charge_pending = false;
-    EXPECT_NO_THROW(SocketHandlers::handle_exit(context, running));
+    enum class ExitState { UnreadResult, PendingCharge, Ready };
+    const ExitState states[] = {ExitState::UnreadResult, ExitState::PendingCharge, ExitState::Ready};
+    for (const ExitState state : states)
+    {
+        const DriverResult result = run_constant_potential_session([&](const int fd) {
+            if (state != ExitState::Ready)
+            {
+                const double nelect = 8.25;
+                const std::int32_t flags = 0;
+                send_header(fd, "CHGDATA");
+                send_value(fd, nelect);
+                send_value(fd, flags);
+            }
+            const char* expected_status = "READY";
+            if (state == ExitState::UnreadResult)
+            {
+                send_positions(fd, 0.0);
+                expected_status = "HAVEDATA";
+            }
+            send_header(fd, "STATUS");
+            EXPECT_EQ(expected_status, read_header_or_close(fd));
+            send_header(fd, "EXIT");
+            EXPECT_EQ("", read_header_or_close(fd));
+        }, ElectronicFailure::None);
+        if (state == ExitState::Ready)
+        {
+            EXPECT_EQ(0, result.exit_code);
+        }
+        else
+        {
+            EXPECT_NE(0, result.exit_code);
+            EXPECT_THAT(result.diagnostic, testing::HasSubstr("EXIT with an unfinished request/result"));
+        }
+    }
 }
 
 TEST(SocketDriverTest, InvalidNextFrameCannotReturnPreviousResults)
@@ -1018,13 +1056,7 @@ TEST(SocketDriverTest, InvalidNextFrameCannotReturnPreviousResults)
 
 int main(int argc, char** argv)
 {
-#ifdef __MPI
-    MPI_Init(&argc, &argv);
-#endif
     testing::InitGoogleTest(&argc, argv);
     const int result = RUN_ALL_TESTS();
-#ifdef __MPI
-    MPI_Finalize();
-#endif
     return result;
 }
