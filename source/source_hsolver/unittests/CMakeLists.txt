@@ -117,7 +117,9 @@ endif()
 addtest(
   TARGET MODULE_HSOLVER_ppcg
   LIBS parameter base psi device container
-  SOURCES test_diago_ppcg.cpp ../diago_ppcg.cpp
+  SOURCES test_diago_ppcg.cpp
+          ppcg/subspace/test_diago_ppcg.cpp
+          ../diago_ppcg.cpp
           ../../source_basis/module_pw/test/test_tool.cpp)
 
 addtest(
