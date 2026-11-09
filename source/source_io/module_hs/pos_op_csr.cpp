@@ -1,6 +1,8 @@
 #include "pos_op_csr.h"
 
 #include "source_base/tool_quit.h"
+#include "source_cell/ucell_io.h"
+#include "source_io/module_hs/lat_r_csr.h"
 
 #include <fstream>
 
@@ -20,6 +22,8 @@ void assemble_csr(const std::string& output_filename,
                   const int output_R_number,
                   const bool binary,
                   const bool append,
+                  const std::string& axis,
+                  const UnitCell* ucell,
                   const std::string& context)
 {
     std::ios_base::openmode output_mode = std::ios::out;
@@ -48,9 +52,20 @@ void assemble_csr(const std::string& output_filename,
     }
     else
     {
+        if (ucell == nullptr)
+        {
+            ModuleBase::WARNING_QUIT(context, "UnitCell pointer must not be null for text r(R) output.");
+        }
         out_r << "Ionic_Step " << step << std::endl;
-        out_r << "Matrix Dimension of r(R): " << nlocal << std::endl;
-        out_r << "Matrix number of r(R): " << output_R_number << std::endl;
+        out_r << " # print r matrix in real space r(R) " << axis << "-component" << std::endl;
+        out_r << " 1 # number of spin directions" << std::endl;
+        out_r << " 1 # spin index" << std::endl;
+        out_r << " " << nlocal << " # number of localized basis" << std::endl;
+        out_r << " " << output_R_number << " # number of Bravais lattice vector R" << std::endl;
+        out_r << std::endl;
+        ModuleIO::UcellIO::write_ucell(out_r, ucell);
+        out_r << std::endl;
+        ModuleIO::write_csr_banner(out_r);
     }
 
     std::ifstream payload(payload_filename.c_str(), payload_mode);

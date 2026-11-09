@@ -26,6 +26,7 @@ addtest(
           ../../../source_base/global_file.cpp
           ../../../source_base/global_function.cpp
           ../../../source_base/memory_recorder.cpp
+          ../../../source_base/module_out/sparse_matrix.cpp
           ../../../source_base/timer.cpp)
 
 if(ENABLE_LCAO)
@@ -100,8 +101,13 @@ if(ENABLE_LCAO)
 
   addtest(
     TARGET MODULE_IO_pos_op_csr_test
-    LIBS parameter base device
-    SOURCES test_pos_op_csr.cpp ../pos_op_csr.cpp)
+    LIBS parameter base device hcontainer
+    SOURCES test_pos_op_csr.cpp
+            ../pos_op_csr.cpp
+            ../lat_r_csr.cpp
+            ../../../source_cell/ucell_io.cpp
+            ../../../source_basis/module_ao/parallel_orbitals.cpp
+            ../../../source_hamilt/module_hcontainer/test/tmp_mocks.cpp)
 
   addtest(
     TARGET MODULE_IO_hs_sparse_io_test

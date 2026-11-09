@@ -320,7 +320,9 @@ run_mat_props() {
   #-----------------------------------
   #echo $has_mat_r
   if ! test -z "$has_mat_r" && [ $has_mat_r == 1 ]; then
-    python3 $COMPARE_SCRIPT rr_nao.txt.ref OUT.autotest/rr_nao.txt 8
+    for axis in x y z; do
+      python3 $COMPARE_SCRIPT "rr${axis}_nao.csr.ref" "OUT.autotest/rr${axis}_nao.csr" 8 || return 1
+    done
     echo "ComparerR_pass $?" >>$props_result_file
   fi
 

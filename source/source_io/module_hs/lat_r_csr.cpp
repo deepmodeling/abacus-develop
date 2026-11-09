@@ -2,6 +2,7 @@
 #include "source_base/parallel_reduce.h"
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
+#include "source_base/module_out/sparse_matrix.h"
 
 #include <complex>
 #include <cstdio>
@@ -127,6 +128,87 @@ template void ModuleIO::save_lat_r<double>(std::ofstream& ofs,
     const SparseWriteOptions& options);
 
 template void ModuleIO::save_lat_r<std::complex<double>>(std::ofstream& ofs,
+    const SparseRBlock<std::complex<double>>& XR,
+    const Parallel_Orbitals& pv,
+    const SparseWriteOptions& options);
+
+void ModuleIO::write_csr_banner(std::ofstream& ofs)
+{
+    ofs << " #----------------------------------------------------------------------#" << std::endl;
+    ofs << " #                               CSR Format                             #" << std::endl;
+    ofs << " # The outer loop corresponds to the number of Bravais lattice vectors. #" << std::endl;
+    ofs << " # The first line contains the index of the Bravais lattice vector      #" << std::endl;
+    ofs << " # (Rx, Ry, Rz), followed by the number of non-zero elements.           #" << std::endl;
+    ofs << " # The subsequent lines consist of three blocks of data, which are      #" << std::endl;
+    ofs << " # values, column indices, row pointers.                                #" << std::endl;
+    ofs << " #----------------------------------------------------------------------#" << std::endl;
+    ofs << std::endl;
+}
+
+template <typename T>
+void ModuleIO::save_lat_r_csr(std::ofstream& ofs,
+    const SparseRBlock<T>& XR,
+    const Parallel_Orbitals& pv,
+    const SparseWriteOptions& options)
+{
+    const int nlocal = pv.para_2d().nrglb();
+    if (nlocal <= 0)
+    {
+        ModuleBase::WARNING_QUIT("ModuleIO::save_lat_r_csr",
+                                 "Parallel_Orbitals global row size must be positive.");
+    }
+
+    ModuleIO::SparseMatrix<T> sparse_matrix(nlocal, nlocal);
+    sparse_matrix.setSparseThreshold(options.threshold);
+
+    std::vector<T> line(nlocal);
+    for (int row = 0; row < nlocal; ++row)
+    {
+        ModuleBase::GlobalFunc::ZEROS(line.data(), nlocal);
+
+        if (!options.reduce || pv.para_2d().irloc(row) >= 0)
+        {
+            auto iter = XR.find(row);
+            if (iter != XR.end())
+            {
+                for (const auto& value: iter->second)
+                {
+                    if (value.first >= static_cast<size_t>(nlocal))
+                    {
+                        ModuleBase::WARNING_QUIT("ModuleIO::save_lat_r_csr",
+                                                 "Sparse column index out of range.");
+                    }
+                    line[value.first] = value.second;
+                }
+            }
+        }
+
+        if (options.reduce)
+        {
+            Parallel_Reduce::reduce_all(line.data(), nlocal);
+        }
+
+        if (!options.reduce || ofs.is_open())
+        {
+            for (int col = 0; col < nlocal; ++col)
+            {
+                sparse_matrix.insert(row, col, line[col]);
+            }
+        }
+    }
+
+    if (!options.reduce || ofs.is_open())
+    {
+        sparse_matrix.printToCSR(ofs, options.precision);
+    }
+}
+
+template void ModuleIO::save_lat_r_csr<double>(std::ofstream& ofs,
+    const SparseRBlock<double>& XR,
+    const Parallel_Orbitals& pv,
+    const SparseWriteOptions& options);
+
+template void ModuleIO::save_lat_r_csr<std::complex<double>>(std::ofstream& ofs,
     const SparseRBlock<std::complex<double>>& XR,
     const Parallel_Orbitals& pv,
     const SparseWriteOptions& options);

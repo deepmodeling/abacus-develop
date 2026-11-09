@@ -5,7 +5,6 @@
 #include "lat_r_csr.h"
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
-#include "source_base/module_out/sparse_matrix.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 #include "source_cell/ucell_io.h"
@@ -19,94 +18,6 @@
 
 namespace
 {
-/**
- * @brief Write the CSR-format description banner used by H(R)/S(R) output.
- * @param ofs Output text stream.
- */
-void write_csr_banner(std::ofstream& ofs)
-{
-    ofs << " #----------------------------------------------------------------------#" << std::endl;
-    ofs << " #                               CSR Format                             #" << std::endl;
-    ofs << " # The outer loop corresponds to the number of Bravais lattice vectors. #" << std::endl;
-    ofs << " # The first line contains the index of the Bravais lattice vector      #" << std::endl;
-    ofs << " # (Rx, Ry, Rz), followed by the number of non-zero elements.           #" << std::endl;
-    ofs << " # The subsequent lines consist of three blocks of data, which are      #" << std::endl;
-    ofs << " # values, column indices, row pointers.                                #" << std::endl;
-    ofs << " #----------------------------------------------------------------------#" << std::endl;
-    ofs << std::endl;
-}
-
-/**
- * @brief Write one R block in the same CSR text layout as H(R)/S(R) output.
- * @details The block is reduced across ranks exactly like save_lat_r, then
- *          printed through SparseMatrix so that values wrap every six entries
- *          and an empty block still carries its three CSR sections. Only the
- *          root rank opens the output stream, so `ofs.is_open()` selects the
- *          rank that owns the assembled matrix and performs the printing;
- *          every rank still participates in the collective reduction.
- * @param ofs Output text stream.
- * @param block Sparse block of the selected derivative component.
- * @param pv Parallel orbital distribution used for the MPI reduction.
- * @param options Sparse output options (threshold, precision, reduction).
- */
-template <typename T>
-void write_csr_block(std::ofstream& ofs,
-                     const ModuleIO::SparseRBlock<T>& block,
-                     const Parallel_Orbitals& pv,
-                     const ModuleIO::SparseWriteOptions& options)
-{
-    const int nlocal = pv.para_2d().nrglb();
-    if (nlocal <= 0)
-    {
-        ModuleBase::WARNING_QUIT("ModuleIO::save_dH_sparse",
-                                 "Parallel_Orbitals global row size must be positive.");
-    }
-
-    ModuleIO::SparseMatrix<T> sparse_matrix(nlocal, nlocal);
-    sparse_matrix.setSparseThreshold(options.threshold);
-
-    std::vector<T> line(nlocal);
-    for (int row = 0; row < nlocal; ++row)
-    {
-        ModuleBase::GlobalFunc::ZEROS(line.data(), nlocal);
-
-        if (!options.reduce || pv.para_2d().irloc(row) >= 0)
-        {
-            auto iter = block.find(row);
-            if (iter != block.end())
-            {
-                for (const auto& value: iter->second)
-                {
-                    if (value.first >= static_cast<size_t>(nlocal))
-                    {
-                        ModuleBase::WARNING_QUIT("ModuleIO::save_dH_sparse",
-                                                 "Sparse column index out of range.");
-                    }
-                    line[value.first] = value.second;
-                }
-            }
-        }
-
-        if (options.reduce)
-        {
-            Parallel_Reduce::reduce_all(line.data(), nlocal);
-        }
-
-        if (!options.reduce || ofs.is_open())
-        {
-            for (int col = 0; col < nlocal; ++col)
-            {
-                sparse_matrix.insert(row, col, line[col]);
-            }
-        }
-    }
-
-    if (!options.reduce || ofs.is_open())
-    {
-        sparse_matrix.printToCSR(ofs, options.precision);
-    }
-}
-
 /**
  * @brief Return the requested R block, or an empty block when it is absent.
  * @param matrix Sparse derivative matrix of one component and spin channel.
@@ -316,7 +227,7 @@ void ModuleIO::save_dH_sparse(const int& istep,
                     comp.ofs[ispin] << std::endl;
                     ModuleIO::UcellIO::write_ucell(comp.ofs[ispin], ucell);
                     comp.ofs[ispin] << std::endl;
-                    write_csr_banner(comp.ofs[ispin]);
+                    ModuleIO::write_csr_banner(comp.ofs[ispin]);
                 }
             }
         }
@@ -380,13 +291,13 @@ void ModuleIO::save_dH_sparse(const int& istep,
                 else if (nspin != 4)
                 {
                     const SparseRBlock<double>& block = block_or_empty(comp.sparse[ispin], R_coor);
-                    write_csr_block(comp.ofs[ispin], block, pv, lat_r_options);
+                    ModuleIO::save_lat_r_csr(comp.ofs[ispin], block, pv, lat_r_options);
                 }
                 else
                 {
                     const SparseRBlock<std::complex<double>>& block
                         = block_or_empty(*comp.soc_sparse, R_coor);
-                    write_csr_block(comp.ofs[ispin], block, pv, lat_r_options);
+                    ModuleIO::save_lat_r_csr(comp.ofs[ispin], block, pv, lat_r_options);
                 }
             }
         }
