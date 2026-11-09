@@ -1,8 +1,13 @@
 addtest(
   TARGET MODULE_IO_hsk_writer_test
-  LIBS parameter base device
+  LIBS parameter base device symmetry
   SOURCES test_hsk_writer.cpp ../hsk_writer.cpp ../hs_dense_io.cpp
-          ../../../source_basis/module_ao/parallel_orbitals.cpp)
+          ../../../source_basis/module_ao/parallel_orbitals.cpp
+          ../../../source_cell/klist.cpp
+          ../../../source_cell/klist_io.cpp
+          ../../../source_cell/reciprocal_grid.cpp
+          ../../../source_cell/parallel_kpoints.cpp
+          ../../../source_cell/ucell_io.cpp)
 
 add_test(
   NAME MODULE_IO_hsk_writer_test_parallel

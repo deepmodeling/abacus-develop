@@ -222,6 +222,11 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
         // Mode-2 MAT/ subdirectory is created lazily at write time.
         ModuleBase::ensure_directory(global_mat_dir);
         const int precision = inp.out_hsk[1];
+        std::vector<double> efermis(nspin == 2 ? 2 : 1);
+        for (int ispin = 0; ispin < efermis.size(); ispin++)
+        {
+            efermis[ispin] = pelec->eferm.get_efval(ispin);
+        }
         ModuleIO::write_hsk(global_mat_dir,
                             nspin,
                             kv.get_nks(),
@@ -230,6 +235,9 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                             kv.isk,
                             p_hamilt,
                             pv,
+                            kv,
+                            &(ucell),
+                            efermis,
                             gamma_only,
                             out_app_flag,
                             istep,

@@ -1,7 +1,25 @@
 #include "hsk_writer.h"
 #include "hs_dense_io.h"
+#include "source_base/module_external/scalapack_connector.h"
 #include "source_base/module_out/filename.h" // use filename_output function
+#include "source_base/parallel_common.h"
+#include "source_base/timer.h"
+#include "source_cell/ucell_io.h"
+#include "source_io/module_output/spin_tag.h"
+
 #include <complex>
+#include <cstdio>
+#include <fstream>
+#include <iomanip>
+#include <string>
+#include <vector>
+
+namespace
+{
+// Threshold below which a complex matrix element is flushed to zero in the
+// text output so that tiny numerical noise does not clutter the file.
+constexpr double k_hk_zero_thr = 1.0e-16;
+} // namespace
 
 template <typename T>
 void ModuleIO::write_hsk(
@@ -13,6 +31,9 @@ void ModuleIO::write_hsk(
         const std::vector<int> &isk,
         hamilt::Hamilt<T>* p_hamilt,
         const Parallel_Orbitals &pv,
+        const K_Vectors &kv,
+        const UnitCell* ucell,
+        const std::vector<double> &efs,
         const bool gamma_only,
         const int out_app_flag,
         const int istep,
@@ -23,6 +44,13 @@ void ModuleIO::write_hsk(
         const int drank,
         std::ofstream &ofs_running)
 {
+    ModuleBase::TITLE("ModuleIO", "write_hsk");
+    ModuleBase::timer::start("ModuleIO", "write_hsk");
+
+    // Binary output keeps the save_mat layout unchanged so callers that
+    // only consume .dat files (e.g. post-processing scripts) are not
+    // affected by the text-format alignment.
+    const bool binary = (out_type == 2);
 
     ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
         ">>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
@@ -36,63 +64,315 @@ void ModuleIO::write_hsk(
         ">>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
     ofs_running << "\n WRITE H(k) OR S(k)" << std::endl;
 
+    // text mode: align with write_dmk filename convention so that hk and dmk
+    // files share the same naming scheme (no .dat suffix).  Binary mode
+    // still uses filename_output which appends the .dat/.bin suffix.
+    auto make_fname = [&](const std::string& property, const int ik,
+                          const int ispin) -> std::string {
+        if (binary)
+        {
+            return ModuleIO::filename_output(global_out_dir, property, "nao",
+                    ik, ik2iktot, nspin, nkstot, out_type, out_app_flag,
+                    gamma_only, istep);
+        }
+
+        // Text path mirrors dmk_gen_fname so that hk1s1_nao.txt and
+        // dmk1s1_nao.txt stay side-by-side and easy to compare.
+        std::string fn = global_out_dir + property;
+        if (!gamma_only)
+        {
+            fn += "k" + std::to_string(ik + 1);
+        }
+        if (nspin == 2)
+        {
+            fn += "s" + std::to_string(ispin + 1);
+        }
+        if (out_app_flag == 2)
+        {
+            fn += "g" + std::to_string(istep + 1);
+        }
+        fn += "_nao.txt";
+        return fn;
+    };
+
+    // Each multi-step run (MD or relax) appends a new record to the fixed
+    // file, mirroring the open_sparse_file convention; single-point SCF
+    // passes istep = -1 and starts a fresh file. The first written step
+    // (istep == 0) truncates so a fresh run drops records left by a previous
+    // run; only later steps (istep > 0) append.
+    const bool append_on_restart = (out_app_flag == 1) && (istep > 0);
+
+    const BlockCyclicDistribution& pv_dist = pv.para_2d();
+    const int my_rank = drank;
+    BlockCyclicDistribution pv_glb;
+
     for (int ik = 0; ik < nks; ++ik)
     {
         p_hamilt->updateHk(ik);
-        const bool binary = (out_type == 2);
-        // save_mat takes a Boolean append flag: only mode 1 appends, and only
-        // from the second ionic step onward (istep > 0); modes 0 and 2 overwrite
-        // their per-step files.
-        const bool append_mat = (out_app_flag == 1) && (istep > 0);
 
         hamilt::MatrixBlock<T> h_mat;
         hamilt::MatrixBlock<T> s_mat;
-
         p_hamilt->matrix(h_mat, s_mat);
 
-        std::string h_fn = ModuleIO::filename_output(global_out_dir,
-                "hk","nao",ik,ik2iktot,nspin,nkstot,
-                out_type,out_app_flag,gamma_only,istep);
+        // ------------------------------------------------------------------
+        // H(k) — always written for every k-point
+        // ------------------------------------------------------------------
+        const int ispin = isk[ik];
+        const std::string h_fn = make_fname("hk", ik, ispin);
 
-        ModuleIO::save_mat(istep,
-                h_mat.p,
-                nlocal,
-                binary,
-                precision,
-                1,
-                append_mat,
-                h_fn,
-                pv.para_2d(),
-                drank,
-                ks_solver);
+        if (binary)
+        {
+            // save_mat takes a Boolean append flag; modes 0 and 2 overwrite.
+            const bool append_mat = append_on_restart;
+            ModuleIO::save_mat(istep,
+                    h_mat.p,
+                    nlocal,
+                    binary,
+                    precision,
+                    true, // triangular
+                    append_mat,
+                    h_fn,
+                    pv_dist,
+                    drank,
+                    ks_solver);
+        }
+        else // text mode
+        {
+            // Gather the distributed H(k) matrix to rank 0 so we can write
+            // the full matrix body without MPI-aware row-by-row logic.
+            std::vector<T> h_global(my_rank == 0 ? nlocal * nlocal : 0);
+#ifdef __MPI
+            pv_glb.set(nlocal, nlocal, nlocal, pv_dist.ictxt());
+            Cpxgemr2d(
+            nlocal, nlocal,
+            h_mat.p, 1, 1,
+            const_cast<int*>(pv_dist.desc()),
+            h_global.data(), 1, 1,
+            const_cast<int*>(pv_glb.desc()),
+            pv_glb.ictxt());
+#else
+            h_global.assign(h_mat.p, h_mat.p + nlocal * nlocal);
+#endif
 
-        // mohan note 2025-06-02
-        // for overlap matrix, the two spin channels yield the same matrix
-        // so we only need to print matrix from one spin channel.
+            if (my_rank == 0)
+            {
+                std::ios_base::openmode mode = std::ios::out;
+                if (append_on_restart)
+                {
+                    mode |= std::ios::app;
+                }
+                std::ofstream ofs(h_fn.c_str(), mode);
+                if (!ofs.is_open())
+                {
+                    ModuleBase::WARNING("ModuleIO::write_hsk",
+                            "Cannot open H(k) file < " + h_fn + " >.");
+                    continue;
+                }
+                const std::string spin_tag
+                    = ModuleIO::make_spin_tag(ispin, nspin);
+                ofs_running << " Write HK(k)" << spin_tag
+                    << " matrix in NAO basis to file: " << h_fn << std::endl;
+
+                // --- metadata block (mirrors write_dmk exactly) ---
+                ofs << "Ionic_Step " << istep + 1 << std::endl;
+                ofs << " " << nspin << " # number of spin directions" << std::endl;
+                ofs << " " << ispin + 1 << " # spin index" << std::endl;
+                ofs << " " << kv.get_nkstot_nospin() << " # total k points " << std::endl;
+                ofs << " " << kv.get_nkstot() << " # total k points after symmetrized (if open) " << std::endl;
+                ofs << " " << ik + 1 << " # k-point index " << std::endl;
+                ofs << " " << kv.kvec_c[ik].x << " " << kv.kvec_c[ik].y << " " << kv.kvec_c[ik].z
+                    << " # k point coordinate (Cartesian) " << std::endl;
+                ofs << " " << kv.kvec_d[ik].x << " " << kv.kvec_d[ik].y << " " << kv.kvec_d[ik].z
+                    << " # k point coordinate (direct) " << std::endl;
+                ofs << " " << kv.wk[ik] << " # weight of this k point" << std::endl;
+                ofs << " " << efs[ispin] << " # Fermi energy in Ry " << std::endl;
+                ofs << " " << nlocal << " # number of localized basis " << std::endl;
+                ofs << " " << nlocal << " " << nlocal << " # size of this matrix " << std::endl;
+                ofs << std::endl;
+
+                // --- UnitCell lattice block ---
+                if (ucell != nullptr)
+                {
+                    ModuleIO::UcellIO::write_ucell(ofs, ucell);
+                }
+                ofs << std::endl;
+
+                // --- matrix body: flat, 4 complex / 8 double per line ---
+                ofs << std::fixed;
+                ofs << std::scientific;
+                ofs << std::setprecision(precision);
+                ofs << std::right;
+                for (int i = 0; i < nlocal; ++i)
+                {
+                    const size_t ii = i * nlocal;
+                    for (int j = 0; j < nlocal; ++j)
+                    {
+                        if (std::is_same<T, double>::value)
+                        {
+                            if (j % 8 == 0)
+                            {
+                                ofs << "\n";
+                            }
+                            ofs << " " << h_global[ii + j];
+                        }
+                        else if (std::is_same<T, std::complex<double>>::value)
+                        {
+                            if (j % 4 == 0)
+                            {
+                                ofs << "\n";
+                            }
+
+                            double real_v = std::real(h_global[ii + j]);
+                            if (std::abs(real_v) < k_hk_zero_thr)
+                            {
+                                real_v = 0.0;
+                            }
+                            double imag_v = std::imag(h_global[ii + j]);
+                            if (std::abs(imag_v) < k_hk_zero_thr)
+                            {
+                                imag_v = 0.0;
+                            }
+
+                            ofs << " (" << real_v << "," << imag_v << ")";
+                        }
+                    }
+                }
+                // Terminate the matrix body with a newline so that the next
+                // appended record (out_app_flag == 1) starts on a fresh line.
+                ofs << std::endl;
+            } // rank0
+        } // text mode
+
+        // ------------------------------------------------------------------
+        // S(k) — skip spin-down channels because both spins share the same S
+        // ------------------------------------------------------------------
         const int current_spin = isk[ik];
-        if(current_spin == 1)
+        if (current_spin == 1)
         {
             continue;
         }
+        const std::string s_fn = make_fname("sk", ik, 0);
 
-        std::string s_fn = ModuleIO::filename_output(global_out_dir,
-                "sk","nao",ik,ik2iktot,nspin,nkstot,
-                out_type,out_app_flag,gamma_only,istep);
+        if (binary)
+        {
+            const bool append_mat = append_on_restart;
+            ofs_running << " The output filename is " << s_fn << std::endl;
+            ModuleIO::save_mat(istep,
+                    s_mat.p,
+                    nlocal,
+                    binary,
+                    precision,
+                    true,
+                    append_mat,
+                    s_fn,
+                    pv_dist,
+                    drank,
+                    ks_solver);
+        }
+        else // text mode
+        {
+            std::vector<T> s_global(my_rank == 0 ? nlocal * nlocal : 0);
+#ifdef __MPI
+            Cpxgemr2d(
+            nlocal, nlocal,
+            s_mat.p, 1, 1,
+            const_cast<int*>(pv_dist.desc()),
+            s_global.data(), 1, 1,
+            const_cast<int*>(pv_glb.desc()),
+            pv_glb.ictxt());
+#else
+            s_global.assign(s_mat.p, s_mat.p + nlocal * nlocal);
+#endif
 
-        ofs_running << " The output filename is " << s_fn << std::endl;
+            if (my_rank == 0)
+            {
+                std::ios_base::openmode mode = std::ios::out;
+                if (append_on_restart)
+                {
+                    mode |= std::ios::app;
+                }
+                std::ofstream ofs(s_fn.c_str(), mode);
+                if (!ofs.is_open())
+                {
+                    ModuleBase::WARNING("ModuleIO::write_hsk",
+                            "Cannot open S(k) file < " + s_fn + " >.");
+                    continue;
+                }
+                ofs_running << " Write SK(k)    matrix in NAO basis to file: "
+                    << s_fn << std::endl;
 
-        ModuleIO::save_mat(istep,
-                s_mat.p,
-                nlocal,
-                binary,
-                precision,
-                1,
-                append_mat,
-                s_fn,
-                pv.para_2d(),
-                drank,
-                ks_solver);
+                // --- metadata block ---
+                ofs << "Ionic_Step " << istep + 1 << std::endl;
+                ofs << " " << nspin << " # number of spin directions" << std::endl;
+                ofs << " 1 # spin index" << std::endl;
+                ofs << " " << kv.get_nkstot_nospin() << " # total k points " << std::endl;
+                ofs << " " << kv.get_nkstot() << " # total k points after symmetrized (if open) " << std::endl;
+                ofs << " " << ik + 1 << " # k-point index " << std::endl;
+                ofs << " " << kv.kvec_c[ik].x << " " << kv.kvec_c[ik].y << " " << kv.kvec_c[ik].z
+                    << " # k point coordinate (Cartesian) " << std::endl;
+                ofs << " " << kv.kvec_d[ik].x << " " << kv.kvec_d[ik].y << " " << kv.kvec_d[ik].z
+                    << " # k point coordinate (direct) " << std::endl;
+                ofs << " " << kv.wk[ik] << " # weight of this k point" << std::endl;
+                // S(k) has no Fermi-energy concept; write a zero placeholder
+                // and label it clearly so readers are not confused.
+                ofs << " 0.0 # Fermi energy in Ry (not applicable to S(k))" << std::endl;
+                ofs << " " << nlocal << " # number of localized basis " << std::endl;
+                ofs << " " << nlocal << " " << nlocal << " # size of this matrix " << std::endl;
+                ofs << std::endl;
+
+                // --- UnitCell lattice block ---
+                if (ucell != nullptr)
+                {
+                    ModuleIO::UcellIO::write_ucell(ofs, ucell);
+                }
+                ofs << std::endl;
+
+                // --- matrix body ---
+                ofs << std::fixed;
+                ofs << std::scientific;
+                ofs << std::setprecision(precision);
+                ofs << std::right;
+                for (int i = 0; i < nlocal; ++i)
+                {
+                    const size_t ii = i * nlocal;
+                    for (int j = 0; j < nlocal; ++j)
+                    {
+                        if (std::is_same<T, double>::value)
+                        {
+                            if (j % 8 == 0)
+                            {
+                                ofs << "\n";
+                            }
+                            ofs << " " << s_global[ii + j];
+                        }
+                        else if (std::is_same<T, std::complex<double>>::value)
+                        {
+                            if (j % 4 == 0)
+                            {
+                                ofs << "\n";
+                            }
+
+                            double real_v = std::real(s_global[ii + j]);
+                            if (std::abs(real_v) < k_hk_zero_thr)
+                            {
+                                real_v = 0.0;
+                            }
+                            double imag_v = std::imag(s_global[ii + j]);
+                            if (std::abs(imag_v) < k_hk_zero_thr)
+                            {
+                                imag_v = 0.0;
+                            }
+
+                            ofs << " (" << real_v << "," << imag_v << ")";
+                        }
+                    }
+                }
+                ofs << std::endl;
+            } // rank0
+        } // text mode
     } // end ik
+
+    ModuleBase::timer::end("ModuleIO", "write_hsk");
 }
 
 // Explicit instantiations
@@ -100,11 +380,13 @@ template void ModuleIO::write_hsk<double>(
     const std::string&, const int, const int, const int,
     const std::vector<int>&, const std::vector<int>&,
     hamilt::Hamilt<double>*, const Parallel_Orbitals&,
+    const K_Vectors&, const UnitCell*, const std::vector<double>&,
     const bool, const int, const int, const int, const int,
     const int, const std::string&, const int, std::ofstream&);
 template void ModuleIO::write_hsk<std::complex<double>>(
     const std::string&, const int, const int, const int,
     const std::vector<int>&, const std::vector<int>&,
     hamilt::Hamilt<std::complex<double>>*, const Parallel_Orbitals&,
+    const K_Vectors&, const UnitCell*, const std::vector<double>&,
     const bool, const int, const int, const int, const int,
     const int, const std::string&, const int, std::ofstream&);

@@ -218,6 +218,17 @@ std::string expected_filename(const std::string& property,
 }
 
 /**
+ * @brief Construct a minimal K_Vectors in place that satisfies the write_hsk
+ * text path requirements. Binary path callers never read these fields.
+ */
+void fill_dummy_kv(const int nkstot, K_Vectors& kv)
+{
+    kv.kvec_c.resize(nkstot);
+    kv.kvec_d.resize(nkstot);
+    kv.wk.assign(nkstot, 1.0);
+}
+
+/**
  * @brief Open the running-log stream on a per-rank file.
  */
 std::ofstream open_running_log()
@@ -279,7 +290,11 @@ TEST(WriteHsk, WritesHkAndSkForEveryKPoint)
     }
 
     std::ofstream ofs = open_running_log();
+    K_Vectors kv;
+    fill_dummy_kv(nkstot, kv);
+    const std::vector<double> efs = {0.0};
     ModuleIO::write_hsk("", nspin, nks, nkstot, ik2iktot, isk, &fake, pv,
+                        kv, nullptr, efs,
                         gamma_only, k_out_app, k_istep, k_out_type, 8, dim,
                         "cg", test_rank, ofs);
 
@@ -357,7 +372,11 @@ TEST(WriteHsk, SkipsOverlapForSpinDownChannel)
     }
 
     std::ofstream ofs = open_running_log();
+    K_Vectors kv;
+    fill_dummy_kv(nkstot, kv);
+    const std::vector<double> efs = {0.0, 0.0};
     ModuleIO::write_hsk("", nspin, nks, nkstot, ik2iktot, isk, &fake, pv,
+                        kv, nullptr, efs,
                         gamma_only, k_out_app, k_istep, k_out_type, 8, dim,
                         "cg", test_rank, ofs);
 
@@ -417,8 +436,12 @@ TEST(WriteHsk, WritesComplexKMatrix)
     remove_test_file(s_fn);
 
     std::ofstream ofs = open_running_log();
+    K_Vectors kv;
+    fill_dummy_kv(nkstot, kv);
+    const std::vector<double> efs = {0.0};
     ModuleIO::write_hsk<std::complex<double>>("", nspin, nks, nkstot,
                                               ik2iktot, isk, &fake, pv,
+                                              kv, nullptr, efs,
                                               gamma_only, k_out_app, k_istep,
                                               k_out_type, 8, dim, "cg",
                                               test_rank, ofs);
@@ -496,7 +519,11 @@ TEST(WriteHsk, Mode2OverwritesSameIstep)
     remove_test_file(s_fn);
 
     std::ofstream ofs = open_running_log();
+    K_Vectors kv;
+    fill_dummy_kv(nkstot, kv);
+    const std::vector<double> efs = {0.0};
     ModuleIO::write_hsk("", nspin, nks, nkstot, ik2iktot, isk, &fake, pv,
+                        kv, nullptr, efs,
                         gamma_only, out_app_flag, istep, out_type, precision, dim,
                         "cg", test_rank, ofs);
 
@@ -509,6 +536,7 @@ TEST(WriteHsk, Mode2OverwritesSameIstep)
 
     diag_world_barrier();
     ModuleIO::write_hsk("", nspin, nks, nkstot, ik2iktot, isk, &fake, pv,
+                        kv, nullptr, efs,
                         gamma_only, out_app_flag, istep, out_type, precision, dim,
                         "cg", test_rank, ofs);
 
