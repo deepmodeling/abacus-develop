@@ -1,5 +1,6 @@
 #include "write_dmr.h"
 #include "source_io/module_output/spin_tag.h"
+#include "source_io/module_output/write_notice.h"
 #include "source_io/module_output/provenance_header.h"
 
 #include "source_base/global_variable.h"
@@ -124,8 +125,7 @@ void write_dmr(const std::vector<hamilt::HContainer<double>*> dmr,
             const int out_type = 1;
             std::string fname = dmr_dir + dmr_gen_fname(out_type, ispin, numbered, istep);
             write_dmr_csr(fname, ucell, precision, &dm_serial, istep, ispin, nspin, append);
-            const std::string spin_tag = ModuleIO::make_spin_tag(ispin, nspin);
-            ofs_running << " Write DM(R)" << spin_tag << " matrix in NAO basis to file: " << fname << std::endl;
+            ModuleIO::write_matrix_notice(ofs_running, "DM(R)", ispin, nspin, fname);
         }
     }
 }

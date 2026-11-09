@@ -9,6 +9,7 @@
 #include "source_base/timer.h"
 #include "source_cell/ucell_io.h"
 #include "source_io/module_output/spin_tag.h"
+#include "source_io/module_output/write_notice.h"
 #include "source_io/module_output/provenance_header.h"
 
 #include <cmath>
@@ -200,9 +201,9 @@ void ModuleIO::save_dH_sparse(const int& istep,
 
                 // Announce every written file, including appended multi-step
                 // records and binary output, so the running log tracks each write.
-                const std::string spin_tag = ModuleIO::make_spin_tag(ispin, header_nspin);
-                ofs_running << " Write " << matrix_name << " (" << comp.axis << " component)" << spin_tag
-                            << " matrix in NAO basis to file: " << comp.fname[ispin].str() << std::endl;
+                const std::string property = matrix_name + " (" + comp.axis + " component)";
+                ModuleIO::write_matrix_notice(ofs_running, property, ispin, header_nspin,
+                                              comp.fname[ispin].str());
 
                 comp.ofs[ispin].open(comp.fname[ispin].str().c_str(), mode);
                 detail::check_output_file_open(comp.ofs[ispin], comp.fname[ispin].str(), "ModuleIO::save_dH_sparse");

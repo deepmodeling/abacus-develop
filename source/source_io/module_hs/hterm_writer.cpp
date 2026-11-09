@@ -1,5 +1,6 @@
 #include "hterm_writer.h"
 #include "source_io/module_output/spin_tag.h"
+#include "source_io/module_output/write_notice.h"
 
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
@@ -109,9 +110,8 @@ static void gather_and_write(const std::string& prefix,
 #endif
         if (ofs_running != nullptr)
         {
-            const std::string spin_tag = ModuleIO::make_spin_tag(ispin, nspin);
-            *ofs_running << " Write H(R) (" << term_name << " term)" << spin_tag << " matrix in NAO basis to file: " << fname
-                         << std::endl;
+            const std::string property = "H(R) (" + term_name + " term)";
+            ModuleIO::write_matrix_notice(*ofs_running, property, ispin, nspin, fname);
         }
     }
 }
@@ -212,6 +212,29 @@ static void write_hk_text(const std::string& fname,
     ofs << std::endl;
 }
 
+// Canonical running-log name of a Hamiltonian-term H(k) output prefix, so that
+// the notice matches the quantity name used by the other matrix writers.
+static std::string hk_property_name(const std::string& prefix)
+{
+    if (prefix == "vnlk")
+    {
+        return "Vnl(k)";
+    }
+    if (prefix == "vlk")
+    {
+        return "Vl(k)";
+    }
+    if (prefix == "vhk")
+    {
+        return "Vh(k)";
+    }
+    if (prefix == "vxck")
+    {
+        return "Vxc(k)";
+    }
+    return prefix;
+}
+
 // Fold one Hamiltonian term at k point ik and write it in the dmk-compatible
 // text layout. The HContainer passed in must already be complete (gathered to
 // a serial container) on the writing rank.
@@ -267,12 +290,10 @@ static void write_hk_at_k(const hamilt::HContainer<double>& hR,
 
     if (ofs_running != nullptr)
     {
-        // Only spin-dependent outputs carry a spin label; spin-independent
-        // terms (vhk / vlk / vnlk) are written once for both spin channels.
-        const bool spin_dependent = (nspin_name == nspin);
-        const std::string spin_tag = spin_dependent ? ModuleIO::make_spin_tag(ispin, nspin) : "";
-        *ofs_running << " Write " << prefix << spin_tag << " matrix in NAO basis to file: " << fname
-                     << std::endl;
+        // Spin-independent terms are written once with nspin_name == 1, which
+        // makes write_matrix_notice emit no spin label for them.
+        const std::string property = hk_property_name(prefix);
+        ModuleIO::write_matrix_notice(*ofs_running, property, ispin, nspin_name, fname);
     }
 }
 

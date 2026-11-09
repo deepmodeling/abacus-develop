@@ -7,6 +7,7 @@
 #include "source_lcao/spar_st.h"
 #include "dhs_sparse_writer.h"
 #include "hs_sparse_io.h"
+#include "source_io/module_output/write_notice.h"
 
 #include <complex>
 #include <fstream>
@@ -114,7 +115,7 @@ void ModuleIO::output_SR(Parallel_Orbitals& pv,
     ModuleBase::TITLE("ModuleIO", "output_SR");
     ModuleBase::timer::start("ModuleIO", "output_SR");
 
-    ofs_running << " Write S(R) matrix in NAO basis to file: " << SR_filename << std::endl;
+    ModuleIO::write_matrix_notice(ofs_running, "S(R)", SR_filename);
 
     LCAO_HS_Arrays HS_Arrays;
 
@@ -187,7 +188,7 @@ void ModuleIO::output_TR(const int istep,
     {
         sst << options.global_matrix_dir << TR_filename;
     }
-    ofs_running << " Write T(R) matrix in NAO basis to file: " << sst.str() << std::endl;
+    ModuleIO::write_matrix_notice(ofs_running, "T(R)", sst.str());
     sparse_format::cal_TR(ucell, pv, HS_Arrays, grid, two_center_bundle, orb, options.sparse_threshold);
     ModuleIO::SparseWriteOptions sparse_options;
     sparse_options.filename = sst.str();

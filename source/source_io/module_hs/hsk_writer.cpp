@@ -6,6 +6,7 @@
 #include "source_base/timer.h"
 #include "source_cell/ucell_io.h"
 #include "source_io/module_output/spin_tag.h"
+#include "source_io/module_output/write_notice.h"
 
 #include <complex>
 #include <cstdio>
@@ -187,10 +188,7 @@ void ModuleIO::write_hsk(
                             "Cannot open H(k) file < " + h_fn + " >.");
                     continue;
                 }
-                const std::string spin_tag
-                    = ModuleIO::make_spin_tag(ispin, nspin);
-                ofs_running << " Write HK(k)" << spin_tag
-                    << " matrix in NAO basis to file: " << h_fn << std::endl;
+                ModuleIO::write_matrix_notice(ofs_running, "H(k)", ispin, nspin, h_fn);
 
                 // --- metadata block (mirrors write_dmk exactly) ---
                 ofs << "Ionic_Step " << istep + 1 << std::endl;
@@ -319,8 +317,7 @@ void ModuleIO::write_hsk(
                             "Cannot open S(k) file < " + s_fn + " >.");
                     continue;
                 }
-                ofs_running << " Write SK(k)    matrix in NAO basis to file: "
-                    << s_fn << std::endl;
+                ModuleIO::write_matrix_notice(ofs_running, "S(k)", s_fn);
 
                 // --- metadata block ---
                 ofs << "Ionic_Step " << istep + 1 << std::endl;

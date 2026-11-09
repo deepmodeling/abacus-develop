@@ -14,6 +14,7 @@
 #include "source_cell/module_neighbor/sltk_atom_arrange.h"
 #include "source_io/module_hs/angmom_op_mat.h"
 #include "source_io/module_hs/hs_sparse_io.h"
+#include "source_io/module_output/write_notice.h"
 #include "source_base/parallel_common.h"
 #include "source_base/timer.h"
 /**
@@ -501,7 +502,8 @@ void ModuleIO::Angmom_op::calculate(
         options.ucell = &ucell;
 
         ModuleIO::save_sparse(matrix, all_R_coor, pv, options);
-        *ofs_ << " Write L(R) (" << d << " component) matrix in NAO basis to file: " << fn << std::endl;
+        const std::string property = std::string("L(R) (") + d + " component)";
+        ModuleIO::write_matrix_notice(*ofs_, property, fn);
     }
 
     ModuleBase::timer::end("Angmom_op", "calculate");

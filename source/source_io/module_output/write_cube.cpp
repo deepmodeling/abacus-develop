@@ -3,6 +3,7 @@
 #include "source_base/parallel_grid.h"
 #include "source_io/module_output/cube_io.h"
 #include "source_io/module_output/provenance_header.h"
+#include "source_io/module_output/write_notice.h"
 
 #include <vector>
 
@@ -182,7 +183,7 @@ void ModuleIO::write_vdata_palgrid(const Parallel_Grid& pgrid,
                    precision,
                    append);
 
-        ofs_running << " Write " << data_desc << " to file: " << fn << std::endl;
+        ModuleIO::write_notice(ofs_running, data_desc, fn);
 
         end = time(nullptr);
         ModuleBase::GlobalFunc::OUT_TIME("write_vdata_palgrid", start, end);

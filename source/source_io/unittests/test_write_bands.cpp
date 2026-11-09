@@ -572,8 +572,8 @@ TEST_P(BandOutputTest, RunningLogNamesSpinChannels)
     in.close();
     std::remove(log_name.c_str());
 
-    const std::string up_line = " Write eigenvalues (spin up  ) to file: " + directory_ + "bands1.txt";
-    const std::string down_line = " Write eigenvalues (spin down) to file: " + directory_ + "bands2.txt";
+    const std::string up_line = " Write Eigenvalues (spin up  ) to file: " + directory_ + "bands1.txt";
+    const std::string down_line = " Write Eigenvalues (spin down) to file: " + directory_ + "bands2.txt";
     EXPECT_NE(text.find(up_line), std::string::npos) << text;
     EXPECT_NE(text.find(down_line), std::string::npos) << text;
 }

@@ -7,6 +7,7 @@
 #include "source_base/timer.h"
 #include "source_cell/module_neighbor/sltk_atom_arrange.h"
 #include "source_io/module_output/write_orb_info.h"
+#include "source_io/module_output/write_notice.h"
 #include "source_lcao/hamilt_lcao.h"
 
 template<>
@@ -118,7 +119,7 @@ void ModuleIO::write_proj_band_lcao(
                 ps2 << "g" << istep + 1;
             }
             ps2 << ".xml";
-            GlobalV::ofs_running << " Output projected bands are in file: " << ps2.str() << std::endl;
+            ModuleIO::write_notice(GlobalV::ofs_running, "Projected bands", ps2.str());
             std::ofstream out(ps2.str().c_str());
 
             out << "<pband>" << std::endl;
@@ -334,7 +335,7 @@ void ModuleIO::write_proj_band_lcao(
                 ps2 << "g" << istep + 1;
             }
             ps2 << ".xml";
-            GlobalV::ofs_running << " Output projected bands in file: " << ps2.str() << std::endl;
+            ModuleIO::write_notice(GlobalV::ofs_running, "Projected bands", ps2.str());
             std::ofstream out(ps2.str().c_str());
 
             out << "<pband>" << std::endl;

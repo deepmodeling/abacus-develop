@@ -10,6 +10,7 @@
 #include "source_base/tool_title.h"
 #include "source_io/module_output/provenance_header.h"
 #include "source_io/module_output/spin_tag.h"
+#include "source_io/module_output/write_notice.h"
 #include "source_io/module_parameter/parameter.h" // mohan add 20250911
 
 #ifdef __MPI
@@ -70,8 +71,7 @@ void ModuleIO::write_bands(const Input_para& inp, const ModuleBase::matrix& ekb,
             ss << ".txt";
 
             const std::string eig_file = ss.str();
-            const std::string log_spin_tag = ModuleIO::make_spin_tag(is, nspin0);
-            ofs_running << " Write eigenvalues" << log_spin_tag << " to file: " << eig_file << std::endl;
+            ModuleIO::write_notice(ofs_running, "Eigenvalues", is, nspin0, eig_file);
 
             const std::string header_spin_tag = ModuleIO::make_compact_spin_tag(is, nspin0);
             const std::string header = build_band_header(istep, header_spin_tag);

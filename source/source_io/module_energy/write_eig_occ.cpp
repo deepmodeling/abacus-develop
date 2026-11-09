@@ -8,6 +8,7 @@
 #include "source_base/timer.h"
 #include "source_base/parallel_comm.h" // use POOL_WORLD
 #include "source_io/module_output/provenance_header.h"
+#include "source_io/module_output/write_notice.h"
 
 #ifdef __MPI
 #include <mpi.h> // use MPI_Barrier
@@ -232,7 +233,7 @@ void ModuleIO::write_eig_file(const ModuleBase::matrix &ekb,
     }
     filename += ".txt";
 
-    GlobalV::ofs_running << " Write eigenvalues and occupations to file: " << filename << std::endl;
+    ModuleIO::write_notice(GlobalV::ofs_running, "Eigenvalues and occupations", filename);
 
     const std::string time_stamp = ModuleIO::local_timestamp();
     const int istep_one_based = istep + 1;

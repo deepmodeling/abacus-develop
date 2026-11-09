@@ -5,6 +5,7 @@
 #include "source_base/timer.h"
 #include "source_io/module_hs/lat_r_csr.h"
 #include "source_io/module_hs/pos_op_csr.h"
+#include "source_io/module_output/write_notice.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 
 #include <cstdio>
@@ -260,7 +261,7 @@ void PosOpWriter::out_lat_r(const UnitCell& ucell,
                                            axis,
                                            &ucell,
                                            "PosOpWriter::out_lat_r");
-            ofs_running << " Write r(R) matrix in NAO basis to file: " << output_name << std::endl;
+            ModuleIO::write_matrix_notice(ofs_running, "r(R)", output_name);
 
             std::remove(payload_name.c_str());
         }

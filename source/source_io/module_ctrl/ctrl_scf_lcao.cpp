@@ -34,6 +34,7 @@
 #include "../module_dm/write_dmr.h"                           // use ModuleIO::write_dmr()
 #include "../module_dos/write_dos_lcao.h"                      // use ModuleIO::write_dos_lcao()
 #include "../module_wf/write_wfc_nao.h"                       // use ModuleIO::write_wfc_nao()
+#include "../module_output/write_notice.h"                     // use ModuleIO::write_notice()
 #include "source_lcao/module_deltaspin/lambda_loop_helper.h"   // print_Mi / print_Mag_Force free functions
 #include "source_lcao/module_deltaspin/spin_constrain.h"   // use spinconstrain::SpinConstrain<TK>
 #include "source_lcao/module_operator_lcao/ekinetic.h" // use hamilt::EKinetic
@@ -715,7 +716,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                 write_matrix_body_flat(ofs, t_global, nlocal, precision,
                     std::integral_constant<bool, std::is_same<TK, double>::value>());
 
-                ofs_running << " Write T(k) matrix in NAO basis to file: " << t_fn << std::endl;
+                ModuleIO::write_matrix_notice(ofs_running, "T(k)", t_fn);
             }
         }
 
