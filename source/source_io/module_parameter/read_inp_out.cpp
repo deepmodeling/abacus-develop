@@ -446,8 +446,9 @@ The LDOS is evaluated once after all ionic steps finish; the cube header records
         item.category = "Output information";
         item.type = R"(Boolean \[Integer\](optional))";
         item.description = R"(Whether to output the eigenvalues of the Hamiltonian matrix (in eV) into the running log during electronic iterations and into a file at the end of calculations. The former can be used with the 'out_freq_elec' parameter while the latter option allows the output precision to be set via a second parameter, with a default value of 8. The output file names are:
- * nspin = 1 or 4: eig.txt;
- * nspin = 2: eigs1.txt and eigs2.txt;
+ * nspin = 1 or 4: band.txt;
+ * nspin = 2: bands1.txt and bands2.txt;
+ * with out_app_flag = 2 the files are written to OUT.${suffix}/BANDS/ and carry a g{step} suffix (for example bands1g2.txt), while modes 0/1 reuse the fixed name (mode 0 truncates, mode 1 appends each written step);
  * For more information, refer to the band.md)";
         item.default_value = "False";
         item.unit = "";
@@ -1365,7 +1366,7 @@ For binary output, each file uses the same basename as text output with a .dat s
         item.annotation = "output exchange-correlation matrix in KS-orbital representation";
         item.category = "Output information";
         item.type = "Boolean";
-        item.description = "Write exchange-correlation matrices in the Kohn-Sham orbital basis and their diagonal expectation values. The diagonal energies are saved in OUT.${suffix}/eband_vxc.txt. When EXX is calculated, its local and EXX contributions are also saved as eband_vxc_local.txt and eband_vxc_exx.txt in the same directory. Each energy file begins with nk, nspin, and nbands, followed by nk*nspin*nbands rows of energies in Hartree and eV."
+        item.description = "Write exchange-correlation matrices in the Kohn-Sham orbital basis and their diagonal expectation values. The diagonal energies are saved in OUT.${suffix}/eband_vxc.txt. When out_app_flag = 2 the energy files carry a g{step} suffix (for example eband_vxcg2.txt) and the full matrices are written to OUT.${suffix}/MAT/, while modes 0/1 reuse the fixed names (mode 0 truncates, mode 1 appends one frame per written step). When EXX is calculated, its local and EXX contributions are also saved as eband_vxc_local.txt and eband_vxc_exx.txt in the same directory. The full MO-basis matrices are named vxcmok{ik}s{spin}_nao.txt, where ik is the one-based k-point index and spin is omitted for nspin = 1. Each energy file begins with nk, nspin, and nbands, followed by nk*nspin*nbands rows of energies in Hartree and eV."
                           "\n\n[NOTE] In the 3.10-LTS version, the file name is k-$k-Vxc and so on.";
         item.default_value = "False";
         item.unit = "Ry";
@@ -1434,7 +1435,7 @@ For binary output, each file uses the same basename as text output with a .dat s
 * 3: v3rho3, v3rho2sigma, v3rhosigma2, v3sigma3
 * 4: v4rho4, v4rho3sigma, v4rho2sigma2, v4rhosigma3, v4sigma4 The meaning of the files is presented in Libxc
 
-The files are written to OUT.${suffix}/CHG/ when out_app_flag = 2 and to OUT.${suffix}/ otherwise, as xc_<quantity>[_s{spin}][g{step}].cube. Each file is a standard Gaussian cube file whose header carries the one-based ionic step as "Ionic_Step N"; with out_app_flag = 2 the g{step} suffix selects one file per written step, and with out_app_flag = 1 every written step appends one complete cube frame while the first written step truncates the file.
+The files are written to OUT.${suffix}/CHG/ when out_app_flag = 2 and to OUT.${suffix}/ otherwise, as xc_<quantity>[_s{spin}][_{component}][g{step}].cube. Spin-resolved quantities carry s{spin}, while tensor quantities carry their Libxc component tuple, for example xc_v2rhosigma_0_00.cube. Each file is a standard Gaussian cube file whose header carries the one-based ionic step as "Ionic_Step N"; with out_app_flag = 2 the g{step} suffix selects one file per written step, and with out_app_flag = 1 every written step appends one complete cube frame while the first written step truncates the file.
 
 The second integer controls the precision of the charge density output, if not given, will use 3 as default.
 
@@ -1469,7 +1470,7 @@ The circle order of the charge density on real space grids is: x is the outer lo
         item.annotation = "output the band energy terms separately";
         item.category = "Output information";
         item.type = "Boolean";
-        item.description = "Whether to print the band-decomposed energy of each Hamiltonian term in the files eband_kin.txt, eband_vl.txt, eband_vnl.txt, eband_hart.txt and eband_vxc.txt under the output directory. Each file starts with comment lines giving the ABACUS version, the timestamp, the ionic step and total energy, the expectation-value formula, and the units. The terms include the kinetic, pseudopotential (local + nonlocal), Hartree and exchange-correlation (including exact exchange if calculated).";
+        item.description = "Whether to print the band-decomposed energy of each Hamiltonian term in the files eband_kin.txt, eband_vl.txt, eband_vnl.txt, eband_hart.txt and eband_vxc.txt under the output directory. With out_app_flag = 2 each written step gets its own file with a g{step} suffix (for example eband_king2.txt), while modes 0/1 reuse the fixed names (mode 0 truncates, mode 1 appends one frame per written step). Each file starts with comment lines giving the ABACUS version, the timestamp, the ionic step and total energy, the expectation-value formula, and the units. The terms include the kinetic, pseudopotential (local + nonlocal), Hartree and exchange-correlation (including exact exchange if calculated).";
         item.default_value = "False";
         item.unit = "";
         item.set_availability("basis_type==lcao");
@@ -1587,7 +1588,7 @@ The circle order of the charge density on real space grids is: x is the outer lo
 * 0: Write directly to the OUT directory under a fixed filename. Every write truncates the previous content, so only the most recently written step is kept on disk. out_freq_ion only controls how often a write happens; it does not change the number of fixed-name files (default, disk-friendly). Exception: MD structure frames are still written as numbered STRU{istep} files, so their count follows out_freq_ion.
 * 1: Reuse fixed filenames across steps: text outputs append new records, cube outputs accumulate one frame per written step
   In mode 1 the first output step of a fresh (non-restart) run truncates the fixed-name file so a rerun does not keep stale records from a previous run; later steps and restarted runs keep appending.
-* 2: Write to subdirectory (STRUC/ for structure files, PSI/, CHG/, POT/, ELF/, DOS/, DIP/, MAT/), output data files carry a g{step} suffix (structures use STRU{istep})
+* 2: Write to subdirectory (STRUC/ for structure files, PSI/, CHG/, POT/, ELF/, DOS/, DIP/, MAT/, BANDS/), output data files carry a g{step} suffix (structures use STRU{istep})
 For MD structure frames specifically, mode 0 keeps the numbered STRU{istep} files (STRU1 is the initial geometry) and writes no STRU_NOW, mode 1 writes one cumulative STRU file, and mode 2 writes the numbered files under STRUC/; see out_stru.
 The legacy Boolean spellings (true/false, yes/no, on/off, t/f, y/n, and the dotted forms) are still accepted: true maps to mode 1 and preserves the old append behavior; false maps to mode 0, which now overwrites a fixed file instead of the old g{step} per-step files, so use mode 2 to reproduce that old behavior.
 For more information, refer to the documentation of out_mat_r, out_hsr, out_mat_t, out_mat_dh, out_hsk, out_wfc_lcao, out_chg, out_pot, out_elf, out_dos, out_dipole, out_stru.)";

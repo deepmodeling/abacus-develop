@@ -23,7 +23,7 @@ gamma_only           0
 # Output layout convention (applies to every out_ parameter below):
 #   out_app_flag=2: per-step files are routed into SUB/ directories with a g{step} suffix
 #                   (MAT/ CHG/ POT/ PSI/ DOS/ BANDS/ ELF/ STRUC/); final-snapshot outputs
-#                   (ldos, vxcrs, pbands) keep only the latest frame and drop g{step}.
+#                   (ldos, vxcrs) keep only the latest frame and drop g{step}.
 #   out_app_flag=0: fixed filenames in OUT.${suffix}/, truncated on every write (no SUB/, no g{step}).
 #   out_app_flag=1: fixed filenames in OUT.${suffix}/, frames appended and separated by '# Ionic_Step N'.
 #   Files that stay in OUT.${suffix}/ even in mode 2: eband_*.txt, eig_occg{step}.txt,
