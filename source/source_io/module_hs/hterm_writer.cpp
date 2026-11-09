@@ -5,7 +5,6 @@
 #include "source_base/timer.h"
 #include "source_estate/module_pot/h_hartree_pw.h"
 #include "source_hamilt/module_xc/xc_functional.h"
-#include "source_io/module_hs/hs_dense_io.h"
 #include "source_io/module_hs/hsr_writer.h"
 #include "source_base/module_out/filename.h"
 #include "source_cell/ucell_io.h"
@@ -20,8 +19,12 @@
 #include "source_lcao/module_ri/ri_2d_comm.h"
 #endif
 
+#include <cmath>
 #include <complex>
+#include <fstream>
 #include <functional>
+#include <iomanip>
+#include <ios>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -113,11 +116,112 @@ static void gather_and_write(const std::string& prefix,
     }
 }
 
-static void write_hk_at_k(hamilt::HContainer<double>& hR,
-                          const std::string& prefix,
-                          const Parallel_Orbitals& pv,
+// Write one folded Hamiltonian-term matrix H(k) using the same text layout as
+// write_dmk / write_hsk: metadata block, UnitCell block, flat matrix body
+// (8 real or 4 complex values per line, no "Row N" markers).
+static void write_hk_text(const std::string& fname,
+                          const std::vector<std::complex<double>>& hk_global,
                           const K_Vectors& kv,
+                          const int ik,
+                          const int ibz_ik,
+                          const int nlocal,
+                          const int precision,
+                          const bool gamma_only,
+                          const int nspin,
+                          const int ispin,
+                          const int istep,
+                          const UnitCell& ucell,
+                          const std::string& term_name,
+                          const bool append)
+{
+    std::ios_base::openmode mode = std::ios::out;
+    if (append)
+    {
+        mode |= std::ios::app;
+    }
+    std::ofstream ofs(fname.c_str(), mode);
+    if (!ofs.is_open())
+    {
+        ModuleBase::WARNING("ModuleIO::write_h_term", "Cannot open file < " + fname + " >.");
+        return;
+    }
+
+    // metadata block, mirrors write_dmk / write_hsk
+    ofs << "Ionic_Step " << istep + 1 << std::endl;
+    ofs << " " << nspin << " # number of spin directions" << std::endl;
+    ofs << " " << ispin + 1 << " # spin index" << std::endl;
+    ofs << " " << kv.get_nkstot_nospin() << " # total k points " << std::endl;
+    ofs << " " << kv.get_nkstot() << " # total k points after symmetrized (if open) " << std::endl;
+    ofs << " " << ibz_ik + 1 << " # k-point index " << std::endl;
+    ofs << " " << kv.kvec_c[ik].x << " " << kv.kvec_c[ik].y << " " << kv.kvec_c[ik].z
+        << " # k point coordinate (Cartesian) " << std::endl;
+    ofs << " " << kv.kvec_d[ik].x << " " << kv.kvec_d[ik].y << " " << kv.kvec_d[ik].z
+        << " # k point coordinate (direct) " << std::endl;
+    ofs << " " << kv.wk[ik] << " # weight of this k point" << std::endl;
+    // A single Hamiltonian term has no Fermi-energy concept; keep a zero
+    // placeholder with an explicit label so the column stays parseable.
+    ofs << " 0.0 # Fermi energy in Ry (not applicable to " << term_name << ")" << std::endl;
+    ofs << " " << nlocal << " # number of localized basis " << std::endl;
+    ofs << " " << nlocal << " " << nlocal << " # size of this matrix " << std::endl;
+    ofs << std::endl;
+
+    // UnitCell lattice block
+    ModuleIO::UcellIO::write_ucell(ofs, &ucell);
+
+    // matrix body: flat, 8 real / 4 complex values per line
+    const double dm_thr = 1.0e-16;
+    ofs << std::fixed;
+    ofs << std::scientific;
+    ofs << std::setprecision(precision);
+    ofs << std::right;
+    for (int i = 0; i < nlocal; ++i)
+    {
+        const size_t ii = i * nlocal;
+        for (int j = 0; j < nlocal; ++j)
+        {
+            if (gamma_only)
+            {
+                if (j % 8 == 0)
+                {
+                    ofs << "\n";
+                }
+                ofs << " " << hk_global[ii + j].real();
+            }
+            else
+            {
+                if (j % 4 == 0)
+                {
+                    ofs << "\n";
+                }
+                double real_v = std::real(hk_global[ii + j]);
+                if (std::abs(real_v) < dm_thr)
+                {
+                    real_v = 0.0;
+                }
+                double imag_v = std::imag(hk_global[ii + j]);
+                if (std::abs(imag_v) < dm_thr)
+                {
+                    imag_v = 0.0;
+                }
+                ofs << " (" << real_v << "," << imag_v << ")";
+            }
+        }
+    }
+    // Terminate the body so that an appended record (out_app_flag == 1) starts
+    // on a fresh line instead of being glued to the last value.
+    ofs << std::endl;
+}
+
+// Fold one Hamiltonian term at k point ik and write it in the dmk-compatible
+// text layout. The HContainer passed in must already be complete (gathered to
+// a serial container) on the writing rank.
+static void write_hk_at_k(const hamilt::HContainer<double>& hR,
+                          const std::string& prefix,
+                          const K_Vectors& kv,
+                          const UnitCell& ucell,
+                          const int nspin,
                           const int nspin_name,
+                          const int ispin,
                           const int istep,
                           const bool append,
                           const int ik,
@@ -126,37 +230,50 @@ static void write_hk_at_k(hamilt::HContainer<double>& hR,
                           const bool gamma_only,
                           const std::string& global_out_dir,
                           const int out_app_flag,
-                          const std::string& ks_solver,
-                          const int drank)
+                          const std::string& term_name,
+                          const bool do_write,
+                          std::ofstream* ofs_running)
 {
-    const ModuleBase::Vector3<double>& kvec_d = kv.kvec_d[ik];
+    if (!do_write)
+    {
+        return;
+    }
+
+    // IBZ k-point index, matching write_dmk / write_hsk: after symmetry
+    // reduction both spin copies of the same IBZ point carry the same label,
+    // so subtract half of nkstot for the spin-down block.
+    const int half_k = (nspin == 2) ? kv.get_nkstot() / 2 : 0;
+    const int ik0 = kv.ik2iktot[ik];
+    const int ibz_ik = (nspin == 2 && ik0 >= half_k) ? (ik0 - half_k) : ik0;
 
     std::vector<std::complex<double>> hk_global(nlocal * nlocal, 0);
-    hamilt::folding_HR(hR, hk_global.data(), kvec_d, nlocal, 0);
+    hamilt::folding_HR(hR, hk_global.data(), kv.kvec_d[ik], nlocal, 0);
 
-    const int out_label = 1;
-    std::string fname = ModuleIO::filename_output(global_out_dir,
-                                                  prefix,
-                                                  "nao",
-                                                  ik,
-                                                  kv.ik2iktot,
-                                                  nspin_name,
-                                                  kv.get_nkstot(),
-                                                  out_label,
-                                                  out_app_flag,
-                                                  gamma_only,
-                                                  istep);
-    ModuleIO::save_mat(istep,
-                       hk_global.data(),
-                       nlocal,
-                       false,
-                       precision,
-                       false,
-                       append,
-                       fname,
-                       pv.para_2d(),
-                       drank,
-                       ks_solver);
+    const int out_label = 1; // text
+    const std::string fname = ModuleIO::filename_output(global_out_dir,
+                                                        prefix,
+                                                        "nao",
+                                                        ik,
+                                                        kv.ik2iktot,
+                                                        nspin_name,
+                                                        kv.get_nkstot(),
+                                                        out_label,
+                                                        out_app_flag,
+                                                        gamma_only,
+                                                        istep);
+
+    write_hk_text(fname, hk_global, kv, ik, ibz_ik, nlocal, precision, gamma_only,
+                  nspin, ispin, istep, ucell, term_name, append);
+
+    if (ofs_running != nullptr)
+    {
+        // Only spin-dependent outputs carry a spin label; spin-independent
+        // terms (vhk / vlk / vnlk) are written once for both spin channels.
+        const bool spin_dependent = (nspin_name == nspin);
+        const std::string spin_tag = spin_dependent ? ModuleIO::make_spin_tag(ispin, nspin) : "";
+        *ofs_running << " Write " << prefix << spin_tag << " matrix in NAO basis to file: " << fname
+                     << std::endl;
+    }
 }
 
 // Descriptor for one Hamiltonian term: the H(k)/H(R) filename prefixes and the
@@ -210,6 +327,22 @@ static void write_h_term(WriteHParams& params, const HTermSpec& spec)
         hamilt::HContainer<double> hR_tmp(const_cast<Parallel_Orbitals*>(&pv));
         spec.build(hR_tmp, ispin);
 
+#ifdef __MPI
+        // Gather the distributed HContainer onto the writing rank so that the
+        // folded H(k) is complete; folding the rank-local pieces directly
+        // would scatter the basis blocks into wrong matrix positions.
+        Parallel_Orbitals serialV;
+        serialV.para_2d().set_serial(nlocal, nlocal);
+        serialV.set_atomic_trace(iat2iwt, nat, nlocal);
+        hamilt::HContainer<double> hR_serial(&serialV);
+        hamilt::gatherParallels(hR_tmp, &hR_serial, 0);
+        const hamilt::HContainer<double>& hk_source = hR_serial;
+        const bool do_write = (GlobalV::MY_RANK == 0);
+#else
+        const hamilt::HContainer<double>& hk_source = hR_tmp;
+        const bool do_write = true;
+#endif
+
         // Enumerate the local k points owned by this spin channel, exactly as
         // write_hsk does, so that filename_output derives the correct spin and
         // k index from ik2iktot.
@@ -220,9 +353,9 @@ static void write_h_term(WriteHParams& params, const HTermSpec& spec)
             {
                 continue;
             }
-            write_hk_at_k(hR_tmp, spec.k_prefix, pv, kv, nspin_name, istep, append, ik, nlocal,
-                          params.precision, gamma_only, global_out_dir, out_app_flag,
-                          params.ks_solver, params.drank);
+            write_hk_at_k(hk_source, spec.k_prefix, kv, ucell, nspin, nspin_name, ispin, istep,
+                          append, ik, nlocal, params.precision, gamma_only, global_out_dir,
+                          out_app_flag, spec.term_name, do_write, params.ofs_running);
         }
 
         if (also_hR)
@@ -391,8 +524,6 @@ static void write_h_exx_impl(const UnitCell& ucell,
                              const std::string& global_matrix_dir,
                              const std::string& calculation,
                              const int out_app_flag,
-                             const std::string& ks_solver,
-                             const int drank,
                              const Exx_Info& exx_info,
                              std::ofstream* ofs_running)
 {
@@ -409,6 +540,21 @@ static void write_h_exx_impl(const UnitCell& ucell,
         hamilt::reallocate_hcontainer(Hexxs, &hR_tmp);
         RI_2D_Comm::add_HexxR(ispin, alpha, Hexxs, pv, npol, hR_tmp, nullptr);
 
+#ifdef __MPI
+        // Same as write_h_term: gather so that the folded H(k) is complete on
+        // the writing rank.
+        Parallel_Orbitals serialV;
+        serialV.para_2d().set_serial(nlocal, nlocal);
+        serialV.set_atomic_trace(iat2iwt, nat, nlocal);
+        hamilt::HContainer<double> hR_serial(&serialV);
+        hamilt::gatherParallels(hR_tmp, &hR_serial, 0);
+        const hamilt::HContainer<double>& hk_source = hR_serial;
+        const bool do_write = (GlobalV::MY_RANK == 0);
+#else
+        const hamilt::HContainer<double>& hk_source = hR_tmp;
+        const bool do_write = true;
+#endif
+
         for (int ik = 0; ik < nks; ++ik)
         {
             const int kspin = kv.isk[ik];
@@ -416,8 +562,9 @@ static void write_h_exx_impl(const UnitCell& ucell,
             {
                 continue;
             }
-            write_hk_at_k(hR_tmp, "vexxk", pv, kv, nspin, istep, append, ik, nlocal, precision,
-                          gamma_only, global_out_dir, out_app_flag, ks_solver, drank);
+            write_hk_at_k(hk_source, "vexxk", kv, ucell, nspin, nspin, ispin, istep, append, ik,
+                          nlocal, precision, gamma_only, global_out_dir, out_app_flag, "exx",
+                          do_write, ofs_running);
         }
 
         if (also_hR)
@@ -454,7 +601,7 @@ void write_h_exx(WriteHParams& params, const Exx_Info& exx_info)
             write_h_exx_impl(ucell, pv, params.exd, kv, nspin, istep, append, iat2iwt, nat, also_hR,
                              params.npol, params.nlocal, params.precision, params.gamma_only_local,
                              params.global_out_dir, params.global_matrix_dir,
-                             params.calculation, params.out_app_flag, params.ks_solver, params.drank, exx_info,
+                             params.calculation, params.out_app_flag, exx_info,
                              params.ofs_running);
         }
     }
@@ -465,7 +612,7 @@ void write_h_exx(WriteHParams& params, const Exx_Info& exx_info)
             write_h_exx_impl(ucell, pv, params.exc, kv, nspin, istep, append, iat2iwt, nat, also_hR,
                              params.npol, params.nlocal, params.precision, params.gamma_only_local,
                              params.global_out_dir, params.global_matrix_dir,
-                             params.calculation, params.out_app_flag, params.ks_solver, params.drank, exx_info,
+                             params.calculation, params.out_app_flag, exx_info,
                              params.ofs_running);
         }
     }
