@@ -46,7 +46,7 @@ TEST(DhsSparseWriter, TextCountsOnlyValuesAboveThreshold)
 
     const std::string output = read_file("dhrxs1_nao.csr");
     // istep = 5 is the sixth ionic step, printed one-based as 6
-    EXPECT_THAT(output, testing::HasSubstr("Ionic_Step 6\n"));
+    EXPECT_THAT(output, testing::HasSubstr("Ionic_Step 6  # ABACUS version:"));
     EXPECT_THAT(output, testing::HasSubstr(" # print dH/dR matrix in real space dHx(R)\n"));
     EXPECT_THAT(output, testing::HasSubstr(" 1 # number of spin directions\n"));
     EXPECT_THAT(output, testing::HasSubstr(" 1 # spin index\n"));
@@ -171,7 +171,7 @@ TEST(DhsSparseWriter, OverlapDerivativeWritesSingleSpinChannel)
     legacy_spin1_file.close();
 
     const std::string output = read_file("dsrx_nao.csr");
-    EXPECT_THAT(output, testing::HasSubstr("Ionic_Step 5\n"));
+    EXPECT_THAT(output, testing::HasSubstr("Ionic_Step 5  # ABACUS version:"));
     // The header reports a single spin direction even though nspin = 2.
     EXPECT_THAT(output, testing::HasSubstr(" 1 # number of spin directions\n"));
     EXPECT_THAT(output, testing::HasSubstr("0 0 0 1\n # CSR values\n 1.00000000e+00"));
@@ -221,7 +221,7 @@ TEST(DhsSparseWriter, AppendModeReusesFixedFilename)
     ModuleIO::save_dH_sparse(0, pv, &ucell, arrays, 1e-10, false, "s", 8, "./", "md", 2, 1, 2, ofs_running);
     const std::vector<std::string> mode2_lines = read_lines("dsrxg1_nao.csr");
     ASSERT_FALSE(mode2_lines.empty());
-    EXPECT_EQ(mode2_lines[0], "Ionic_Step 1");
+    EXPECT_EQ(mode2_lines[0].compare(0, 12, "Ionic_Step 1"), 0);
 
     remove_derivative_files("s");
     remove_derivative_files("s", 0);

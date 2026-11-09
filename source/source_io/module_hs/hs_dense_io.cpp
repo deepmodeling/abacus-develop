@@ -5,6 +5,7 @@
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"
 #include "source_base/global_function.h"
+#include "source_io/module_output/provenance_header.h"
 
 #include <complex>
 #include <cstdio>
@@ -160,8 +161,10 @@ void ModuleIO::save_mat(const int istep,
             {
                 ModuleBase::WARNING_QUIT("ModuleIO::save_mat", "Cannot open matrix file: " + filename);
             }
+            const std::string time_stamp = ModuleIO::local_timestamp();
+            const int istep_one_based = istep + 1;
             out_matrix << "#------------------------------------------------------------------------" << std::endl;
-            out_matrix << "# Ionic_Step " << istep+1 << std::endl; // istep starts from 0
+            out_matrix << ModuleIO::prov_step(istep_one_based, time_stamp);
             out_matrix << "# filename " << filename << std::endl;
             out_matrix << "# gamma only " << gamma_only << std::endl;
             out_matrix << "# rows " << dim << std::endl;

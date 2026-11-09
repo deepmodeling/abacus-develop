@@ -45,7 +45,7 @@ TEST(PosOpCsr, CsrAssembleTextAllowsZeroBlocks)
                                    "PosOpCsr");
 
     const std::string output = read_file(output_filename);
-    EXPECT_THAT(output, testing::HasSubstr("Ionic_Step 9\n"));
+    EXPECT_THAT(output, testing::HasSubstr("Ionic_Step 9  # ABACUS version:"));
     EXPECT_THAT(output, testing::HasSubstr(" # print r matrix in real space r(R) x-component\n"));
     EXPECT_THAT(output, testing::HasSubstr(" 1 # number of spin directions\n"));
     EXPECT_THAT(output, testing::HasSubstr(" 1 # spin index\n"));
@@ -91,7 +91,7 @@ TEST(PosOpCsr, CsrAssembleTextKeepsSingleDirectionPayload)
                                    "PosOpCsr");
 
     const std::string output = read_file(output_filename);
-    EXPECT_THAT(output, testing::HasSubstr("Ionic_Step 10\n"));
+    EXPECT_THAT(output, testing::HasSubstr("Ionic_Step 10  # ABACUS version:"));
     EXPECT_THAT(output, testing::HasSubstr(" # print r matrix in real space r(R) y-component\n"));
     EXPECT_THAT(output, testing::HasSubstr(" 1 # number of Bravais lattice vector R\n"));
     EXPECT_THAT(output, testing::HasSubstr("1 0 -1\n"));

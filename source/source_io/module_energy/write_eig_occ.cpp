@@ -7,6 +7,7 @@
 #include "source_base/global_variable.h"
 #include "source_base/timer.h"
 #include "source_base/parallel_comm.h" // use POOL_WORLD
+#include "source_io/module_output/provenance_header.h"
 
 #ifdef __MPI
 #include <mpi.h> // use MPI_Barrier
@@ -233,6 +234,9 @@ void ModuleIO::write_eig_file(const ModuleBase::matrix &ekb,
 
     GlobalV::ofs_running << " Write eigenvalues and occupations to file: " << filename << std::endl;
 
+    const std::string time_stamp = ModuleIO::local_timestamp();
+    const int istep_one_based = istep + 1;
+
     if (GlobalV::MY_RANK == 0)
     {
         std::ofstream ofs_eig0;
@@ -251,7 +255,7 @@ void ModuleIO::write_eig_file(const ModuleBase::matrix &ekb,
             ofs_eig0.open(filename.c_str());
         }
        
-        ofs_eig0 << istep+1 << "     # Ionic_Step" << std::endl;
+        ofs_eig0 << ModuleIO::prov_step(istep_one_based, time_stamp);
         ofs_eig0 << " Electronic state energy (eV) and occupations" << std::endl;
         ofs_eig0 << " Spin number " << nspin << std::endl;
         ofs_eig0.close();

@@ -9,6 +9,7 @@
 #include "source_base/timer.h"
 #include "source_cell/ucell_io.h"
 #include "source_io/module_output/spin_tag.h"
+#include "source_io/module_output/provenance_header.h"
 
 #include <cmath>
 #include <complex>
@@ -217,7 +218,9 @@ void ModuleIO::save_dH_sparse(const int& istep,
                     // Self-describing header matching the H(R)/S(R) CSR layout,
                     // so readers can recover the cell, basis size and R count
                     // without extra metadata.
-                    comp.ofs[ispin] << "Ionic_Step " << header_step << std::endl;
+                    const std::string time_stamp = ModuleIO::local_timestamp();
+                    comp.ofs[ispin] << "Ionic_Step " << header_step
+                                    << ModuleIO::prov_inline(time_stamp) << std::endl;
                     comp.ofs[ispin] << " # print " << matrix_name << " matrix in real space "
                                     << matrix_label << comp.axis << "(R)" << std::endl;
                     comp.ofs[ispin] << " " << header_nspin << " # number of spin directions" << std::endl;

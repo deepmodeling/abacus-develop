@@ -3,6 +3,7 @@
 #include "source_io/module_mulliken/output_sk.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/formatter.h"
+#include "source_io/module_output/provenance_header.h"
 #include "source_base/name_angular.h"
 #include "source_base/module_external/scalapack_connector.h"
 #include "source_base/tool_quit.h"
@@ -145,7 +146,9 @@ void Output_Mulliken<TK>::write_mulliken_nspin1(int istep,
 {
     os << std::setprecision(4);
     /// step info
-    os << "# Ionic_Step " << istep + 1 << std::endl;
+    const std::string time_stamp = ModuleIO::local_timestamp();
+    const int istep_one_based = istep + 1;
+    os << ModuleIO::prov_step(istep_one_based, time_stamp);
     os << " Total charge " << tot_chg[0] << std::endl;
     /// orbital decomposed mulliken populations
     FmtCore fmt_of_chg("%10.4f");
@@ -216,7 +219,9 @@ void Output_Mulliken<TK>::write_mulliken_nspin2(int istep,
 {
     os << std::setprecision(4);
     /// step info
-    os << "# Ionic_Step " << istep + 1 << std::endl;
+    const std::string time_stamp = ModuleIO::local_timestamp();
+    const int istep_one_based = istep + 1;
+    os << ModuleIO::prov_step(istep_one_based, time_stamp);
     os << " Total charge " << tot_chg[0] + tot_chg[1] << std::endl;
     os << " Total charge of spin1 " << tot_chg[0] << std::endl;
     os << " Total charge of spin2 " << tot_chg[1] << std::endl;
@@ -309,7 +314,9 @@ void Output_Mulliken<TK>::write_mulliken_nspin4(int istep,
 {
     os << std::setprecision(4);
     /// step info
-    os << "# Ionic_Step " << istep + 1 << std::endl;
+    const std::string time_stamp = ModuleIO::local_timestamp();
+    const int istep_one_based = istep + 1;
+    os << ModuleIO::prov_step(istep_one_based, time_stamp);
     os << " Total charge " << tot_chg[0] << std::endl;
     /// orbital decomposed mulliken populations
     FmtCore fmt_of_chg("%10.4f");

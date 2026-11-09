@@ -13,6 +13,7 @@
 #include "source_cell/unitcell.h"
 #include "source_basis/module_pw/pw_basis_big.h"
 #include "source_io/module_output/cube_io.h"
+#include "source_io/module_output/provenance_header.h"
 #include "source_base/global_variable.h"
 #include "source_base/tool_quit.h"
 #include "source_io/module_parameter/parameter.h"
@@ -364,6 +365,8 @@ void ModuleIO::write_libxc_r(
 	const std::vector<std::string> &channel_suffixes)
 {
 	const int number_spin = static_cast<int>(channel_suffixes.size());
+	const int istep_one_based = istep + 1;
+	const std::string time_stamp = ModuleIO::local_timestamp();
 	for(int is=0; is<number_spin; ++is)
 	{
 		std::ofstream ofs;
@@ -395,8 +398,9 @@ void ModuleIO::write_libxc_r(
 			// Each file holds a single channel, so the header declares one spin
 			// direction; the first comment line carries the one-based ionic step.
 			std::vector<std::string> comment(2);
-			comment[0] = "Ionic_Step " + std::to_string(istep + 1)
-				+ "  Cubefile created from ABACUS. Inner loop is z, followed by y and x";
+			comment[0] = "Ionic_Step " + std::to_string(istep_one_based)
+				+ "  Cubefile created from ABACUS. Inner loop is z, followed by y and x"
+				+ ModuleIO::prov_inline(time_stamp);
 			comment[1] = "1 # number of spin directions";
 			ModuleIO::write_cube_header_for_cell(ofs, ucell, pw_rhod.nx, pw_rhod.ny, pw_rhod.nz,
 				comment, PARAM.inp.out_xc_r[1]);

@@ -4,6 +4,7 @@
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
 #include "source_base/parallel_reduce.h"
+#include "source_io/module_output/provenance_header.h"
 
 #include <cmath>
 
@@ -117,6 +118,8 @@ bool ModuleIO::cal_dos(const int& is,  // index for spin
 
     if (GlobalV::MY_RANK == 0)
     {
+        const std::string time_stamp = ModuleIO::local_timestamp();
+        const int istep_one_based = istep + 1;
         const bool append_step = (out_app_flag == 1) && (istep > 0);
         if (append_step)
         {
@@ -126,7 +129,7 @@ bool ModuleIO::cal_dos(const int& is,  // index for spin
         {
             ofs_dos.open(fn.c_str());
         }
-        ofs_dos << "# Ionic_Step " << istep + 1 << std::endl;
+        ofs_dos << ModuleIO::prov_step(istep_one_based, time_stamp);
     }
 
 #ifdef __MPI

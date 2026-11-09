@@ -1,5 +1,6 @@
 #include "hsr_writer.h"
 #include "source_io/module_output/spin_tag.h"
+#include "source_io/module_output/provenance_header.h"
 
 #include "source_base/module_out/sparse_matrix.h"
 #include "source_base/tool_quit.h"
@@ -126,7 +127,8 @@ void ModuleIO::write_hcontainer_csr(const std::string& fname,
                                  "Cannot open HContainer CSR file: " + fname);
     }
 
-    ofs << "Ionic_Step " << istep + 1 << std::endl;
+    const std::string time_stamp = ModuleIO::local_timestamp();
+    ofs << "Ionic_Step " << istep + 1 << ModuleIO::prov_inline(time_stamp) << std::endl;
     ofs << " # print " << label << " matrix in real space " << label << "(R)" << std::endl;
     ofs << " " << nspin << " # number of spin directions" << std::endl;
     ofs << " " << ispin + 1 << " # spin index";

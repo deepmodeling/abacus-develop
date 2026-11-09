@@ -114,8 +114,10 @@ TEST_F(IstateInfoTest, OutIstateInfoS1)
     EXPECT_THAT(str, testing::HasSubstr("spin=1 k-point=1/10 Cartesian=0.0000000 0.0000000 0.0000000 (299 plane wave)"));
     EXPECT_THAT(str, testing::HasSubstr("1 2.040854700000000 0.000000000000000"));
     EXPECT_THAT(str, testing::Not(testing::HasSubstr("stale calculation")));
-    EXPECT_THAT(str, testing::HasSubstr("1     # Ionic_Step"));
-    EXPECT_THAT(str, testing::HasSubstr("2     # Ionic_Step"));
+    EXPECT_THAT(str, testing::HasSubstr("# ABACUS version:"));
+    EXPECT_THAT(str, testing::HasSubstr("# Written at "));
+    EXPECT_THAT(str, testing::HasSubstr("# Ionic_Step 1"));
+    EXPECT_THAT(str, testing::HasSubstr("# Ionic_Step 2"));
     ifs.close();
 
     remove(fixed_file.c_str());
@@ -125,8 +127,8 @@ TEST_F(IstateInfoTest, OutIstateInfoS1)
     ModuleIO::write_eig_file(ekb, wg, *kv, nbands, nspin, out_dir, 1, 0);
     ifs.open(fixed_file);
     std::string mode0((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
-    EXPECT_THAT(mode0, testing::HasSubstr("2     # Ionic_Step"));
-    EXPECT_THAT(mode0, testing::Not(testing::HasSubstr("1     # Ionic_Step")));
+    EXPECT_THAT(mode0, testing::HasSubstr("# Ionic_Step 2"));
+    EXPECT_THAT(mode0, testing::Not(testing::HasSubstr("# Ionic_Step 1")));
     ifs.close();
     remove(fixed_file.c_str());
 
@@ -135,7 +137,7 @@ TEST_F(IstateInfoTest, OutIstateInfoS1)
     ifs.open(step2_file);
     ASSERT_TRUE(ifs.is_open());
     std::string mode2((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
-    EXPECT_THAT(mode2, testing::HasSubstr("2     # Ionic_Step"));
+    EXPECT_THAT(mode2, testing::HasSubstr("# Ionic_Step 2"));
     ifs.close();
     remove(step2_file.c_str());
 }

@@ -104,7 +104,7 @@ TEST(WriteDmr, CsrHeaderKeepsCurrentFormat)
     ModuleIO::write_dmr_csr(filename, &ucell, 4, &matrix, 0, 1, 2, false);
 
     const std::string output = read_file(filename);
-    EXPECT_THAT(output, testing::HasSubstr("Ionic_Step 1\n"));
+    EXPECT_THAT(output, testing::HasSubstr("Ionic_Step 1  # ABACUS version:"));
     EXPECT_THAT(output, testing::HasSubstr(" # print density matrix in real space DM(R)\n"));
     EXPECT_THAT(output, testing::HasSubstr(" 2 # number of spin directions\n"));
     EXPECT_THAT(output, testing::HasSubstr(" 2 # spin index\n"));
@@ -140,13 +140,13 @@ TEST(WriteDmr, ModeOneFixedNameTruncatesOnRerun)
     ModuleIO::write_dmr_csr(filename, &ucell, 4, &matrix, 1, 0, 1, true);
     const std::string after_first_run = read_file(filename);
     EXPECT_EQ(count_frames(after_first_run), 2);
-    EXPECT_THAT(after_first_run, testing::HasSubstr("Ionic_Step 2\n"));
+    EXPECT_THAT(after_first_run, testing::HasSubstr("Ionic_Step 2  # ABACUS version:"));
 
     // First step of a rerun must truncate the accumulated frames.
     ModuleIO::write_dmr_csr(filename, &ucell, 4, &matrix, 0, 0, 1, true);
     const std::string after_rerun = read_file(filename);
     EXPECT_EQ(count_frames(after_rerun), 1);
-    EXPECT_THAT(after_rerun, testing::HasSubstr("Ionic_Step 1\n"));
+    EXPECT_THAT(after_rerun, testing::HasSubstr("Ionic_Step 1  # ABACUS version:"));
 
     std::remove(filename.c_str());
 }

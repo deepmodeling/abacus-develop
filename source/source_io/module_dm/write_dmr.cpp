@@ -1,5 +1,6 @@
 #include "write_dmr.h"
 #include "source_io/module_output/spin_tag.h"
+#include "source_io/module_output/provenance_header.h"
 
 #include "source_base/global_variable.h"
 #include "source_hamilt/module_hcontainer/hcontainer_funcs.h"
@@ -61,7 +62,8 @@ void write_dmr_csr(std::string& fname,
     }
 
 
-    ofs << "Ionic_Step " << istep+1 << std::endl;
+    const std::string time_stamp = ModuleIO::local_timestamp();
+    ofs << "Ionic_Step " << istep+1 << ModuleIO::prov_inline(time_stamp) << std::endl;
     ofs << " # print density matrix in real space DM(R)" << std::endl;
     ofs << " " << nspin << " # number of spin directions" << std::endl;
     ofs << " " << ispin+1 << " # spin index" << std::endl;

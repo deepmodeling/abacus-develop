@@ -1,6 +1,7 @@
 #include "write_pdos_text.h"
 
 #include "source_base/global_variable.h"
+#include "source_io/module_output/provenance_header.h"
 
 #include <cmath>
 #include <fstream>
@@ -32,6 +33,8 @@ void ModuleIO::write_pdos_text(
     // keep records from a previous run; only later steps (istep > 0) append.
     const int istep_file = (out_app_flag == 2) ? istep : -1;
     const bool append_step = (out_app_flag == 1) && (istep > 0);
+    const std::string time_stamp = ModuleIO::local_timestamp();
+    const int istep_one_based = istep + 1;
 
     for (int is = 0; is < nspin0; ++is)
     {
@@ -53,7 +56,7 @@ void ModuleIO::write_pdos_text(
         // iw2m stores m as 0..2l, mapping to physical m values:
         // 0->0, 1->+1, 2->-1, 3->+2, 4->-2, 5->+3, 6->-3
         // So columns are ordered: s, p(m=0,+1,-1), d(m=0,+1,-1,+2,-2), f(...)
-        ofs << "# Ionic_Step " << istep + 1 << std::endl;
+        ofs << ModuleIO::prov_step(istep_one_based, time_stamp);
         ofs << "# npoints: " << npoints << std::endl;
         ofs << "# energy(eV)  atom  species  pdos(1/eV), columns: s(m=0) p(m=0,+1,-1) d(m=0,+1,-1,+2,-2) f(m=0,+1,-1,+2,-2,+3,-3)" << std::endl;
 

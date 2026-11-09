@@ -71,7 +71,19 @@ TEST_F(DosTest,Dos)
 	EXPECT_THAT(str, testing::HasSubstr("2.849588"));
     std::istringstream rows(str);
     std::string line;
-    std::getline(rows, line); // ionic step
+    // Skip the per-frame provenance comments, then the ionic-step marker.
+    while (std::getline(rows, line))
+    {
+        if (line.find("# ABACUS version:") != std::string::npos)
+        {
+            continue;
+        }
+        if (line.find("# Written at ") != std::string::npos)
+        {
+            continue;
+        }
+        break;
+    }
     std::getline(rows, line); // declared grid size
     int declared_points = 0;
     std::istringstream(line) >> declared_points;

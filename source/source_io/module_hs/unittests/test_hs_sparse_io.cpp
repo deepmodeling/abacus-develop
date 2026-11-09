@@ -43,7 +43,7 @@ TEST(HsSparseIo, SparseHeaderKeepsStepStyle)
 
     const std::string output = read_file(filename);
     // istep = 0 is the first ionic step, printed one-based as 1
-    EXPECT_TRUE(starts_with(output, "Ionic_Step 1\n"));
+    EXPECT_TRUE(starts_with(output, "Ionic_Step 1  # ABACUS version:"));
     EXPECT_THAT(output, testing::HasSubstr("Matrix Dimension of S(R): 2\n"));
     EXPECT_THAT(output, testing::HasSubstr("Matrix number of S(R): 1\n"));
     EXPECT_THAT(output, testing::HasSubstr("0 0 0 2\n"));
@@ -80,7 +80,7 @@ TEST(HsSparseIo, SparseTextCountsOnlyValuesAboveThreshold)
     const std::vector<std::string> lines = read_lines(filename);
     ASSERT_GE(lines.size(), 6);
     // istep = 2 is the third ionic step, printed one-based as 3
-    EXPECT_EQ(lines[0], "Ionic_Step 3");
+    EXPECT_EQ(lines[0].compare(0, 12, "Ionic_Step 3"), 0);
     EXPECT_EQ(lines[1], "Matrix Dimension of S(R): 2");
     EXPECT_EQ(lines[2], "Matrix number of S(R): 1");
     EXPECT_EQ(lines[3], "0 0 0 2");
@@ -229,7 +229,7 @@ TEST(HsSparseIo, SparseTextOutAppFlagZeroTruncatesSeededFile)
 
     const std::string output = read_file(filename);
     // istep = 2 is the third ionic step, printed one-based as 3
-    EXPECT_TRUE(starts_with(output, "Ionic_Step 3\n"));
+    EXPECT_TRUE(starts_with(output, "Ionic_Step 3  # ABACUS version:"));
     EXPECT_EQ(output.find("stale content"), std::string::npos);
 
     std::remove(filename.c_str());
@@ -266,7 +266,7 @@ TEST(HsSparseIo, SparseCsrHeaderWritesCellAndBanner)
     const std::vector<std::string> lines = read_lines(filename);
     ASSERT_GE(lines.size(), 12);
     // istep = 0 is the first ionic step, printed one-based as 1
-    EXPECT_EQ(lines[0], "Ionic_Step 1");
+    EXPECT_EQ(lines[0].compare(0, 12, "Ionic_Step 1"), 0);
     EXPECT_EQ(lines[1], " # print T matrix in real space T(R)");
     EXPECT_EQ(lines[2], " 1 # number of spin directions");
     EXPECT_EQ(lines[3], " 1 # spin index");
@@ -320,7 +320,7 @@ TEST(HsSparseIo, SparseCsrWritesComplexValues)
     const std::vector<std::string> lines = read_lines(filename);
     ASSERT_GE(lines.size(), 6);
     // istep = 0 is the first ionic step, printed one-based as 1
-    EXPECT_EQ(lines[0], "Ionic_Step 1");
+    EXPECT_EQ(lines[0].compare(0, 12, "Ionic_Step 1"), 0);
     EXPECT_EQ(lines[1], " # print Lx matrix in real space Lx(R)");
     EXPECT_EQ(lines[2], " 1 # number of spin directions");
     EXPECT_EQ(lines[3], " 1 # spin index");

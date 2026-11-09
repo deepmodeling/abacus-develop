@@ -3,6 +3,7 @@
 #include "source_base/tool_quit.h"
 #include "source_cell/ucell_io.h"
 #include "source_io/module_hs/lat_r_csr.h"
+#include "source_io/module_output/provenance_header.h"
 
 #include <fstream>
 
@@ -56,7 +57,8 @@ void assemble_csr(const std::string& output_filename,
         {
             ModuleBase::WARNING_QUIT(context, "UnitCell pointer must not be null for text r(R) output.");
         }
-        out_r << "Ionic_Step " << step << std::endl;
+        const std::string time_stamp = ModuleIO::local_timestamp();
+        out_r << "Ionic_Step " << step << ModuleIO::prov_inline(time_stamp) << std::endl;
         out_r << " # print r matrix in real space r(R) " << axis << "-component" << std::endl;
         out_r << " 1 # number of spin directions" << std::endl;
         out_r << " 1 # spin index" << std::endl;

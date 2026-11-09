@@ -2,6 +2,7 @@
 #include "source_base/parallel_comm.h"
 #include "source_base/parallel_grid.h"
 #include "source_io/module_output/cube_io.h"
+#include "source_io/module_output/provenance_header.h"
 
 #include <vector>
 
@@ -44,6 +45,8 @@ void ModuleIO::write_vdata_palgrid(const Parallel_Grid& pgrid,
 
     start = time(nullptr);
     const bool is_primary_band_group = GlobalV::MY_BNDGROUP == 0;
+    const int istep_one_based = istep + 1;
+    const std::string time_stamp = ModuleIO::local_timestamp();
 
     // reduce
     std::vector<double> data_xyz_full(nxyz); // data to be written
@@ -75,7 +78,9 @@ void ModuleIO::write_vdata_palgrid(const Parallel_Grid& pgrid,
         ss << std::fixed;
         ss << std::setprecision(6);
 
-        ss << "Ionic_Step " << istep + 1 << "  Cubefile created from ABACUS. Inner loop is z, followed by y and x" << std::endl;
+        ss << "Ionic_Step " << istep_one_based
+           << "  Cubefile created from ABACUS. Inner loop is z, followed by y and x"
+           << ModuleIO::prov_inline(time_stamp) << std::endl;
 
         ss << nspin << " # number of spin directions ";
         if (out_fermi == 1)

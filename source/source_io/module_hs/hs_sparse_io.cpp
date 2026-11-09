@@ -1,5 +1,6 @@
 #include "hs_sparse_io.h"
 #include "hs_sparse_io_detail.h"
+#include "source_io/module_output/provenance_header.h"
 
 #include "source_base/global_function.h"
 #include "source_base/parallel_reduce.h"
@@ -66,7 +67,8 @@ void write_sparse_header(std::ofstream& ofs,
     }
     else
     {
-        ofs << "Ionic_Step " << step << std::endl;
+        const std::string time_stamp = ModuleIO::local_timestamp();
+        ofs << "Ionic_Step " << step << ModuleIO::prov_inline(time_stamp) << std::endl;
         ofs << "Matrix Dimension of " + options.label + "(R): " << nlocal
             << std::endl;
         ofs << "Matrix number of " + options.label + "(R): "
@@ -111,7 +113,8 @@ void write_csr_style_header(std::ofstream& ofs,
     // ionic step printed one-based per governance rule 22, consistent
     // with the g{N} filename suffix (g1 holds the first ionic step)
     const int step = std::max(options.istep, 0) + 1;
-    ofs << "Ionic_Step " << step << std::endl;
+    const std::string time_stamp = ModuleIO::local_timestamp();
+    ofs << "Ionic_Step " << step << ModuleIO::prov_inline(time_stamp) << std::endl;
     ofs << " # print " << options.label << " matrix in real space "
         << options.label << "(R)" << std::endl;
     ofs << " 1 # number of spin directions" << std::endl;
