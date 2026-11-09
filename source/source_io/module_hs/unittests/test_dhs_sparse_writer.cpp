@@ -131,9 +131,9 @@ TEST(DhsSparseWriter, SocWritesAllDirections)
 
     ModuleIO::save_dH_sparse(7, pv, arrays, 1e-10, false, "s", 8, "./", "scf", false, 4, 2, ofs_running);
 
-    const std::string x_output = read_file("dsrxs1_nao.csr");
-    const std::string y_output = read_file("dsrys1_nao.csr");
-    const std::string z_output = read_file("dsrzs1_nao.csr");
+    const std::string x_output = read_file("dsrx_nao.csr");
+    const std::string y_output = read_file("dsry_nao.csr");
+    const std::string z_output = read_file("dsrz_nao.csr");
     EXPECT_THAT(x_output, testing::HasSubstr("Matrix number of dHx(R): 1\n0 0 0 1\n"));
     EXPECT_THAT(y_output, testing::HasSubstr("Matrix number of dHy(R): 1\n0 0 0 1\n"));
     EXPECT_THAT(z_output, testing::HasSubstr("Matrix number of dHz(R): 1\n0 0 0 1\n"));
@@ -157,18 +157,18 @@ TEST(DhsSparseWriter, OverlapDerivativeWritesSingleSpinChannel)
     arrays.all_R_coor.insert(r_vector);
     arrays.dHRx_sparse[0][r_vector][0][0] = 1.0;
 
-    // dS/dR is spin-independent, so nspin = 2 must still write one spin file
-    // instead of adding an all-zero spin-2 matrix.
+    // dS/dR is spin-independent, so nspin = 2 must write a single file whose
+    // name carries no spin index.
     ModuleIO::save_dH_sparse(4, pv, arrays, 1e-10, false, "s", 8, "./", "scf", false, 2, 2, ofs_running);
 
-    std::ifstream spin1_file("dsrxs1_nao.csr");
-    EXPECT_TRUE(spin1_file.is_open());
-    spin1_file.close();
-    std::ifstream spin2_file("dsrxs2_nao.csr");
-    EXPECT_FALSE(spin2_file.is_open());
-    spin2_file.close();
+    std::ifstream spin_file("dsrx_nao.csr");
+    EXPECT_TRUE(spin_file.is_open());
+    spin_file.close();
+    std::ifstream legacy_spin1_file("dsrxs1_nao.csr");
+    EXPECT_FALSE(legacy_spin1_file.is_open());
+    legacy_spin1_file.close();
 
-    const std::vector<std::string> lines = read_lines("dsrxs1_nao.csr");
+    const std::vector<std::string> lines = read_lines("dsrx_nao.csr");
     ASSERT_GE(lines.size(), 5);
     EXPECT_EQ(lines[0], "Ionic_Step 5");
     EXPECT_EQ(lines[3], "0 0 0 1");
@@ -200,14 +200,14 @@ TEST(DhsSparseWriter, AppendModeReusesFixedFilename)
     // out_app_flag = 1 reuses the fixed filename without a g{N} suffix; the
     // first written ionic step (istep == 0) truncates it.
     ModuleIO::save_dH_sparse(0, pv, arrays, 1e-10, false, "s", 8, "./", "md", 1, 1, 2, ofs_running);
-    const std::string first_frame = read_file("dsrxs1_nao.csr");
+    const std::string first_frame = read_file("dsrx_nao.csr");
     ASSERT_FALSE(first_frame.empty());
     EXPECT_EQ(count_substr(first_frame, "Ionic_Step "), 1);
     EXPECT_EQ(count_substr(first_frame, "Ionic_Step 1"), 1);
 
     // The next ionic step appends a second frame to the same file.
     ModuleIO::save_dH_sparse(1, pv, arrays, 1e-10, false, "s", 8, "./", "md", 1, 1, 2, ofs_running);
-    const std::string two_frames = read_file("dsrxs1_nao.csr");
+    const std::string two_frames = read_file("dsrx_nao.csr");
     EXPECT_EQ(count_substr(two_frames, "Ionic_Step "), 2);
     EXPECT_EQ(count_substr(two_frames, "Ionic_Step 1"), 1);
     EXPECT_EQ(count_substr(two_frames, "Ionic_Step 2"), 1);
@@ -215,7 +215,7 @@ TEST(DhsSparseWriter, AppendModeReusesFixedFilename)
     // Mode 2 keeps one suffixed file per ionic step and never appends; mode 0
     // overwrites the fixed filename instead.
     ModuleIO::save_dH_sparse(0, pv, arrays, 1e-10, false, "s", 8, "./", "md", 2, 1, 2, ofs_running);
-    const std::vector<std::string> mode2_lines = read_lines("dsrxs1g1_nao.csr");
+    const std::vector<std::string> mode2_lines = read_lines("dsrxg1_nao.csr");
     ASSERT_FALSE(mode2_lines.empty());
     EXPECT_EQ(mode2_lines[0], "Ionic_Step 1");
 

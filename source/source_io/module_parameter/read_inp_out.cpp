@@ -1332,7 +1332,7 @@ For binary output, each file uses the same basename as text output with a .dat s
         item.annotation = "output of derivative of S(R) matrix";
         item.category = "Output information";
         item.type = R"(Boolean \[Integer\](optional))";
-        item.description = "Whether to print files containing the derivatives of the overlap matrix. The optional second parameter controls text output precision. The format will be the same as the overlap matrix as mentioned in out_mat_dh. The name of the files will be dsxrs1_nao.csr and so on. Also controled by out_freq_ion and out_app_flag. This feature can be used with calculation get_s."
+        item.description = "Whether to print files containing the derivatives of the overlap matrix. The optional second parameter controls text output precision. The format will be the same as the overlap matrix as mentioned in out_mat_dh. The name of the files will be dsrx_nao.csr, dsry_nao.csr and dsrz_nao.csr (a g{step} index is inserted when out_app_flag = 2); the output is spin-independent. Also controlled by out_freq_ion and out_app_flag. This feature can be used with calculation get_s."
                           "\n\n[NOTE] In the 3.10-LTS version, the file name is data-dSRx-sparse_SPIN0.csr and so on.";
         item.default_value = "False 8";
         item.unit = "Ry/Bohr";

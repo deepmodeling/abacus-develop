@@ -128,18 +128,20 @@ void ModuleIO::save_dH_sparse(const int& istep,
     {
         for (int ispin = 0; ispin < spin_loop; ++ispin)
         {
+            // dS/dR has no spin channel, so its name carries no spin suffix;
+            // dH/dR keeps the collinear spin index.
+            std::string spin_suffix;
+            if (spin_dependent)
+            {
+                spin_suffix = "s" + std::to_string(ispin + 1);
+            }
+            comp.fname[ispin] << global_matrix_dir
+                              << "d" << fileflag << "r" << comp.axis << spin_suffix;
             if (include_step)
             {
-                comp.fname[ispin] << global_matrix_dir
-                                  << "d" << fileflag << "r" << comp.axis
-                                  << "s" << (ispin + 1) << "g" << (istep + 1) << "_nao.csr";
+                comp.fname[ispin] << "g" << (istep + 1);
             }
-            else
-            {
-                comp.fname[ispin] << global_matrix_dir
-                                  << "d" << fileflag << "r" << comp.axis
-                                  << "s" << (ispin + 1) << "_nao.csr";
-            }
+            comp.fname[ispin] << "_nao.csr";
         }
     }
 
