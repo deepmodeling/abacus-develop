@@ -45,10 +45,11 @@ class TestParameters
         parameter_.sys.global_band_dir = band_directory_;
     }
 
-    void set_output(const std::string& directory, bool append)
+    void set_output(const std::string& directory, bool append,
+                    const std::string& band_directory)
     {
         parameter_.sys.global_out_dir = directory;
-        parameter_.sys.global_band_dir = directory;
+        parameter_.sys.global_band_dir = band_directory;
         parameter_.input.out_app_flag = append;
     }
 
@@ -142,7 +143,7 @@ class BandOutputTest : public testing::TestWithParam<BandTopology>
         Parallel::bcast_bool(ready, *world_, 0);
         ASSERT_TRUE(ready);
         parameters_.reset(new TestParameters(PARAM));
-        parameters_->set_output(directory_, false);
+        parameters_->set_output(directory_, false, directory_);
     }
 
     void TearDown() override
@@ -182,6 +183,18 @@ class BandOutputTest : public testing::TestWithParam<BandTopology>
         {
             std::remove((directory_ + name).c_str());
         }
+        // Mode-2 snapshots live in the lazily created BANDS/ subdirectory.
+        for (const std::string& name : {"bandg1.txt", "bandg2.txt", "bands1g1.txt", "bands1g2.txt",
+                                        "bands2g1.txt", "bands2g2.txt"})
+        {
+            std::remove((directory_ + "BANDS/" + name).c_str());
+        }
+        const std::string bands_directory = directory_ + "BANDS";
+#ifdef _WIN32
+        _rmdir(bands_directory.c_str());
+#else
+        rmdir(bands_directory.c_str());
+#endif
     }
 
     static double eigenvalue(int spin, int global_k, int global_band)
@@ -285,6 +298,24 @@ class BandOutputTest : public testing::TestWithParam<BandTopology>
             << comments[3 * block + 1];
         const std::string tag = (channels == 2) ? (spin == 0 ? " (spin up)" : " (spin down)") : "";
         EXPECT_EQ(comments[3 * block + 2], "# Ionic_Step " + std::to_string(block + 1) + tag);
+    }
+
+    /// Check the header of a mode-2 file, which holds exactly one k-point block
+    /// and therefore prints the ionic step independently of the block index.
+    void expect_single_block_header(const std::string& name, int step, int spin, int channels) const
+    {
+        if (world_->rank() != 0)
+        {
+            return;
+        }
+        SCOPED_TRACE(name);
+        const std::vector<std::string> comments = comment_lines(name);
+        ASSERT_EQ(comments.size(), static_cast<std::size_t>(3));
+        const std::string written = "# Written at ";
+        EXPECT_EQ(comments[0], "# ABACUS version: " + std::string(VERSION));
+        EXPECT_EQ(comments[1].compare(0, written.size(), written), 0) << comments[1];
+        const std::string tag = (channels == 2) ? (spin == 0 ? " (spin up)" : " (spin down)") : "";
+        EXPECT_EQ(comments[2], "# Ionic_Step " + std::to_string(step) + tag);
     }
 
     void expect_output(const std::string& name, int spin, int nbands,
@@ -433,11 +464,51 @@ TEST_P(BandOutputTest, OverwriteAndAppend)
     expect_output("band.txt", 0, 3, 0.0, 8, 1);
     expect_header("band.txt", 0, 0, 1);
     Parallel::barrier(*world_);
-    parameters_->set_output(directory_, true);
+    parameters_->set_output(directory_, true, directory_);
     input_.out_app_flag = 1;
     ModuleIO::write_bands(input_, ekb_, kv_, ofs_running, directory_, 1);
     expect_output("band.txt", 0, 3, 0.0, 8, 2);
     expect_header("band.txt", 1, 0, 1);
+}
+
+TEST_P(BandOutputTest, ModeTwoBandsDirectoryKeepsDistinctSnapshots)
+{
+    prepare(2, 3, true);
+    // The band directory is independent of global_out_dir and does not exist
+    // yet: mode 2 must create it lazily at write time.
+    const std::string band_dir = directory_ + "BANDS/";
+    parameters_->set_output(directory_, false, band_dir);
+    input_.out_app_flag = 2;
+
+    ModuleIO::write_bands(input_, ekb_, kv_, ofs_running, band_dir, 0);
+    expect_output("BANDS/bands1g1.txt", 0, 3, 0.0, 8, 1);
+    expect_output("BANDS/bands2g1.txt", 1, 3, 0.0, 8, 1);
+    expect_single_block_header("BANDS/bands1g1.txt", 1, 0, 2);
+    expect_single_block_header("BANDS/bands2g1.txt", 1, 1, 2);
+    // Paths resolve below directory_, so the fixed-name layout must stay empty.
+    expect_missing("bands1g1.txt");
+    expect_missing("BANDS/bands1.txt");
+    Parallel::barrier(*world_);
+
+    const std::string first_step_up = read_text("BANDS/bands1g1.txt");
+    // Change the spectrum so the second snapshot is distinguishable.
+    for (int irow = 0; irow < ekb_.nr; ++irow)
+    {
+        for (int icol = 0; icol < ekb_.nc; ++icol)
+        {
+            ekb_(irow, icol) += 5.0;
+        }
+    }
+    ModuleIO::write_bands(input_, ekb_, kv_, ofs_running, band_dir, 1);
+    expect_single_block_header("BANDS/bands1g2.txt", 2, 0, 2);
+    expect_single_block_header("BANDS/bands2g2.txt", 2, 1, 2);
+    Parallel::barrier(*world_);
+    if (world_->rank() == 0)
+    {
+        // Step 1 keeps its own payload; step 2 is written to a separate file.
+        EXPECT_EQ(read_text("BANDS/bands1g1.txt"), first_step_up);
+        EXPECT_NE(read_text("BANDS/bands1g2.txt"), first_step_up);
+    }
 }
 
 TEST_P(BandOutputTest, OutputDisabled)
