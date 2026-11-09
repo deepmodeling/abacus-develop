@@ -72,7 +72,8 @@ void ModuleIO::write_hsk(
     // not the global k-spin pair index (0..nkstot-1).  That way hk1s1_nao.txt
     // and hk1s2_nao.txt refer to the same IBZ k-point, matching dmk naming.
     auto make_fname = [&](const std::string& property, const int ik_global,
-                          const int ibz_ik, const int ispin) -> std::string {
+                          const int ibz_ik, const int ispin,
+                          const bool spin_suffix) -> std::string {
         if (binary)
         {
             return ModuleIO::filename_output(global_out_dir, property, "nao",
@@ -87,7 +88,7 @@ void ModuleIO::write_hsk(
         {
             fn += "k" + std::to_string(ibz_ik + 1);
         }
-        if (nspin == 2)
+        if (spin_suffix)
         {
             fn += "s" + std::to_string(ispin + 1);
         }
@@ -131,7 +132,8 @@ void ModuleIO::write_hsk(
         // full "hk"/"sk" property since filename_output handles its own
         // suffix scheme.
         const std::string h_property = binary ? "hk" : "h";
-        const std::string h_fn = make_fname(h_property, ik, ibz_ik, ispin);
+        const std::string h_fn = make_fname(h_property, ik, ibz_ik, ispin,
+                nspin == 2);
 
         if (binary)
         {
@@ -265,7 +267,8 @@ void ModuleIO::write_hsk(
             continue;
         }
         const std::string s_property = binary ? "sk" : "s";
-        const std::string s_fn = make_fname(s_property, ik, ibz_ik, 0);
+        // S(k) is spin-independent so we never append a spin suffix.
+        const std::string s_fn = make_fname(s_property, ik, ibz_ik, 0, false);
 
         if (binary)
         {

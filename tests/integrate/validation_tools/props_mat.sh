@@ -142,13 +142,14 @@ run_mat_props() {
     if ! test -z "$gamma_only" && [ $gamma_only == 1 ]; then
       # ========== Γ-point (single k-point) calculation ==========
       if ! test -z "$nspin" && [ $nspin == 2 ]; then
-        # nspin=2 (spin-polarized): compare hs1 + hs2 Hamiltonian + ss1 overlap matrix
+        # nspin=2 (spin-polarized): compare hs1 + hs2 Hamiltonian + s overlap matrix
         h1ref=hs1_nao.txt.ref
         h1cal=OUT.autotest/hs1_nao.txt
         h2ref=hs2_nao.txt.ref
         h2cal=OUT.autotest/hs2_nao.txt
-        sref=ss1_nao.txt.ref
-        scal=OUT.autotest/ss1_nao.txt
+        # S(k) is spin-independent so only one copy is written
+        sref=s_nao.txt.ref
+        scal=OUT.autotest/s_nao.txt
         # Compare Hamiltonian matrix for spin 1
         python3 $COMPARE_SCRIPT $h1ref $h1cal 6
         echo "CompareH1_pass $?" >>$props_result_file
