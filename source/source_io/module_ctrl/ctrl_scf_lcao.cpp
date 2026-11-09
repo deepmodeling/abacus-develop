@@ -26,7 +26,10 @@
 #include "../module_hs/hs_dense_io.h"                           // use ModuleIO::save_mat()
 #include "../module_hs/vxc_op_mat.h"                            // use ModuleIO::write_Vxc()
 #include "../module_energy/write_eband_terms.h"                 // use ModuleIO::write_eband_terms()
-#include "../module_hs/hsk_writer.h"                            // use ModuleIO::write_hsk()
+#include "source_io/module_hs/hsk_writer.h"                            // use ModuleIO::write_hsk()
+#include "source_base/module_external/scalapack_connector.h"            // use Cpxgemr2d<>()
+#include "source_hsolver/parallel_k2d.h"                                // use Parallel_2d
+#include "source_cell/ucell_io.h"                                       // use ModuleIO::UcellIO::write_ucell()
 #include "../module_dm/write_dmk.h"                           // use ModuleIO::write_dmk()
 #include "../module_dm/write_dmr.h"                           // use ModuleIO::write_dmr()
 #include "../module_dos/write_dos_lcao.h"                      // use ModuleIO::write_dos_lcao()
@@ -71,6 +74,65 @@ void setup_exx_h_params<double>(ModuleIO::WriteHParams& h_params, Exx_NAO<double
     }
 }
 #endif
+
+namespace
+{
+/// Write a square matrix body in flat dmk/write_hsk-compatible layout.
+/// Tag dispatch so the compiler only type-checks the branch that matches
+/// the actual matrix element type (double vs. std::complex<double>).
+template <typename T>
+void write_matrix_body_flat(std::ofstream& ofs,
+                            const std::vector<T>& mat,
+                            const int nlocal,
+                            const int precision,
+                            std::true_type /*is_double*/)
+{
+    ofs << std::fixed;
+    ofs << std::scientific;
+    ofs << std::setprecision(precision);
+    ofs << std::right;
+    for (int i = 0; i < nlocal; ++i)
+    {
+        const size_t ii = i * nlocal;
+        for (int j = 0; j < nlocal; ++j)
+        {
+            if (j % 8 == 0)
+            {
+                ofs << "\n";
+            }
+            ofs << " " << mat[ii + j];
+        }
+        ofs << std::endl;
+    }
+}
+
+template <typename T>
+void write_matrix_body_flat(std::ofstream& ofs,
+                            const std::vector<T>& mat,
+                            const int nlocal,
+                            const int precision,
+                            std::false_type /*is_complex*/)
+{
+    ofs << std::fixed;
+    ofs << std::scientific;
+    ofs << std::setprecision(precision);
+    ofs << std::right;
+    for (int i = 0; i < nlocal; ++i)
+    {
+        const size_t ii = i * nlocal;
+        for (int j = 0; j < nlocal; ++j)
+        {
+            if (j % 4 == 0)
+            {
+                ofs << "\n";
+            }
+            ofs << " (" << mat[ii + j].real()
+                << "," << mat[ii + j].imag() << ")";
+        }
+        ofs << std::endl;
+    }
+}
+} // namespace
 
 template <typename TK, typename TR>
 void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
@@ -566,38 +628,93 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
         // T(k) is spin-independent, so its filename carries no spin suffix
         // (same convention as S(k)); only the k index appears in the name.
         const int nspin_kinetic_name = 1;
+
+        const int drank = GlobalV::DRANK;
+        const int my_rank = GlobalV::MY_RANK;
+        const int nlocal = PARAM.globalv.nlocal;
+        const int precision = inp.out_mat_tk[1];
+        const bool binary = false; // tk text output, consistent with hk/sk
+        const bool append_mat = (out_app_flag == 1) && (istep > 0);
+
+        // Re-use the block-cyclic descriptor that save_mat uses so we
+        // can Cpxgemr2d the distributed kinetic matrix to rank 0.
+        const BlockCyclicDistribution& pv_dist = pv.para_2d();
+        BlockCyclicDistribution pv_glb;
+#ifdef __MPI
+        pv_glb.set(nlocal, nlocal, nlocal, pv_dist.ictxt());
+#endif
+
         for (int ik = 0; ik < kv.get_nks() / nspin_k; ++ik)
         {
             ekinetic->init(ik);
 
-            const int out_label = 1; // 1: .txt, 2: .dat
-
+            // Build filename: T(k) is spin-independent so the spin index is
+            // always 1.  gamma_only drops "k", multi-k keeps "k".
+            std::string t_property = gamma_only ? "t" : "tk";
             std::string t_fn = ModuleIO::filename_output(global_mat_dir,
-                                                         "tk",
+                                                         t_property,
                                                          "nao",
                                                          ik,
                                                          kv.ik2iktot,
                                                          nspin_kinetic_name,
                                                          kv.get_nkstot(),
-                                                         out_label,
+                                                         binary ? 2 : 1,
                                                          out_app_flag,
                                                          gamma_only,
                                                          istep);
 
-            ModuleIO::save_mat(istep,
-                               hsk.get_hk(),
-                               PARAM.globalv.nlocal,
-                               false, // bit
-                               inp.out_mat_tk[1],
-                               1, // true for upper triangle matrix
-                               (inp.out_app_flag == 1),
-                               t_fn,
-                               pv.para_2d(),
-                               GlobalV::DRANK,
-                               PARAM.inp.ks_solver);
+            // Gather the distributed T(k) matrix to rank 0 so we can write
+            // the full-matrix body without MPI-aware row-by-row logic.
+            std::vector<TK> t_global(my_rank == 0 ? nlocal * nlocal : 0);
+#ifdef __MPI
+            Cpxgemr2d<TK>(
+            nlocal, nlocal,
+            hsk.get_hk(), 1, 1,
+            const_cast<int*>(pv_dist.desc()),
+            t_global.data(), 1, 1,
+            const_cast<int*>(pv_glb.desc()),
+            pv_glb.ictxt());
+#else
+            t_global.assign(hsk.get_hk(), hsk.get_hk() + nlocal * nlocal);
+#endif
 
-            if (GlobalV::DRANK == 0)
+            if (my_rank == 0)
             {
+                std::ios_base::openmode mode = std::ios::out;
+                if (append_mat)
+                {
+                    mode |= std::ios::app;
+                }
+                std::ofstream ofs(t_fn.c_str(), mode);
+                if (!ofs.is_open())
+                {
+                    ofs_running << " WARNING: cannot open " << t_fn << std::endl;
+                    continue;
+                }
+
+                // --- metadata block, aligned with write_dmk / write_hsk ---
+                ofs << "Ionic_Step " << istep + 1 << std::endl;
+                ofs << " " << nspin << " # number of spin directions" << std::endl;
+                ofs << " 1 # spin index (T(k) is spin-independent)" << std::endl;
+                ofs << " " << kv.get_nkstot_nospin() << " # total k points" << std::endl;
+                ofs << " " << kv.get_nkstot() << " # total k points after symmetrized (if open)" << std::endl;
+                ofs << " " << ik + 1 << " # k-point index" << std::endl;
+                ofs << " " << kv.kvec_c[ik].x << " " << kv.kvec_c[ik].y << " " << kv.kvec_c[ik].z << " # k point coordinate (Cartesian)" << std::endl;
+                ofs << " " << kv.kvec_d[ik].x << " " << kv.kvec_d[ik].y << " " << kv.kvec_d[ik].z << " # k point coordinate (direct)" << std::endl;
+                ofs << " " << kv.wk[ik] << " # weight of this k point" << std::endl;
+                ofs << " 0.0 # Fermi energy in Ry (not applicable to T(k))" << std::endl;
+                ofs << " " << nlocal << " # number of localized basis" << std::endl;
+                ofs << " " << nlocal << " " << nlocal << " # size of this matrix" << std::endl;
+                ofs << std::endl;
+
+                // --- UnitCell lattice block ---
+                ModuleIO::UcellIO::write_ucell(ofs, &ucell);
+                ofs << std::endl;
+
+                // --- full matrix body, aligned with write_dmk / write_hsk ---
+                write_matrix_body_flat(ofs, t_global, nlocal, precision,
+                    std::integral_constant<bool, std::is_same<TK, double>::value>());
+
                 ofs_running << " Write T(k) matrix in NAO basis to file: " << t_fn << std::endl;
             }
         }
