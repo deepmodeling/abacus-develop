@@ -200,7 +200,7 @@ TEST(HsSparseIo, SparseBinaryCountsOnlyValuesAboveThreshold)
 // must leave a single frame, not an appended duplicate.
 TEST(HsSparseIo, SparseTextOutAppFlagZeroTruncatesSeededFile)
 {
-    const std::string filename = "write_hs_r_seeded_s.csr";
+    const std::string filename = testing::TempDir() + "write_hs_r_seeded_s.csr";
     // Seed a stale frame from a "previous run".
     {
         std::ofstream ofs(filename.c_str());
