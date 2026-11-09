@@ -26,25 +26,51 @@ from abacuslite.io.legacyio import (
 )
 
 
-def find_eig_occ_files(directory: Path) -> List[Path]:
+def find_eig_occ_files(directory: Path,
+                       running_log_lines: Optional[List[str]] = None) -> List[Path]:
     '''Discover eigenvalue/occupation files in the output directory.
 
     ABACUS writes eigenvalue data in three layouts depending on
     ``out_app_flag``:
 
-    - mode 0/1: a single ``eig_occ.txt`` holding all frames;
-    - mode 2:   one ``eig_occg{N}.txt`` per written ionic step.
+    - mode 0: one fixed ``eig_occ.txt`` holding only the latest written frame;
+    - mode 1: one fixed ``eig_occ.txt`` holding every written frame;
+    - mode 2: one ``eig_occg{N}.txt`` per written ionic step.
+
+    When ``running_log_lines`` is given, only the files announced by the
+    current run are returned, so stale files left in a reused output
+    directory by an earlier run are ignored.  If the log carries no such
+    announcement (older builds or hand-written fixtures), the filename
+    based discovery below is used instead.
 
     Parameters
     ----------
     directory : Path
         The ``OUT.${suffix}`` directory to search.
+    running_log_lines : list of str, optional
+        Lines of the running log of the current run.
 
     Returns
     -------
     list of Path
         Sorted list of eigenvalue files.  Empty when none are found.
     '''
+    if running_log_lines is not None:
+        announced: List[Path] = []
+        for line in running_log_lines:
+            match = re.search(r'Write\s+Eigenvalues and occupations to file:\s*(\S+)',
+                              line, re.IGNORECASE)
+            if match is None:
+                continue
+            candidate = directory / Path(match.group(1)).name
+            if candidate.exists() and candidate not in announced:
+                announced.append(candidate)
+        if announced:
+            def _step_number(path: Path) -> int:
+                match = re.search(r'g(\d+)\.txt$', path.name)
+                return int(match.group(1)) if match else 0
+            return sorted(announced, key=_step_number)
+
     single = directory / 'eig_occ.txt'
     if single.exists():
         return [single]
@@ -151,11 +177,15 @@ def read_band_from_eig_occ(src: str | Path | List[str]) \
     raw = [l.strip() for l in raw]
     raw = [l for l in raw if l] # remove empty lines
 
-    # The per-ionic-step header is ``X     # Ionic_Step`` in the latest output,
-    # while older outputs wrote ``X     # ionic step``. Accept both spellings.
-    step_header_pat = r'\d+\s+#\s+ionic[ _]step$'
-    nframe = len([l for l in raw
-                  if re.match(step_header_pat, l, re.IGNORECASE)])
+    # The current writer emits the one-based step after the marker
+    # ("# Ionic_Step N"), while older outputs wrote it before
+    # ("N     # Ionic_Step", and "N     # ionic step" before the keyword was
+    # unified).  All three spellings are accepted case-insensitively.
+    step_header_pat = r'^(?:\s*#\s*Ionic[ _]Step\s+(\d+)\s*' \
+                    + r'|\s*(\d+)\s*#\s*Ionic[ _]Step\s*)$'
+    step_matches = [re.match(step_header_pat, l, re.IGNORECASE) for l in raw]
+    steps = [int(m.group(1) or m.group(2)) for m in step_matches if m]
+    nframe = len(steps)
     ekb_leading_pat = r'spin=(\d)\s+k-point=(\d+)/(\d+)\s+Cartesian=\s*' \
                     + r'(-?\d(\.\d+)?(e-\d+)?)\s+' \
                     + r'(-?\d(\.\d+)?(e-\d+)?)\s+' \
@@ -198,8 +228,36 @@ def read_band_from_eig_occ(src: str | Path | List[str]) \
     ekb_raw = ekb_raw.reshape(nframe, nspin, nk, nb, 2)
     ekb, occ = ekb_raw[:, :, :, :, 0], ekb_raw[:, :, :, :, 1]
 
-    return [{'k': ki, 'e': eki, 'occ': occi}
-            for ki, eki, occi in zip(k, ekb, occ)]
+    return [{'step': si, 'k': ki, 'e': eki, 'occ': occi}
+            for si, ki, eki, occi in zip(steps, k, ekb, occ)]
+
+
+def align_eig_frames(elecstate: List[Dict[str, np.ndarray]],
+                     step_ids: List[int]) \
+        -> List[Optional[Dict[str, np.ndarray]]]:
+    '''Align written eigenvalue frames with the ionic steps of a trajectory.
+
+    ABACUS may write fewer eigenvalue frames than there are ionic steps, for
+    example when ``out_freq_ion > 1`` skips steps or when ``out_app_flag=0``
+    keeps only the final snapshot.  Frames are matched by their recorded
+    ``Ionic_Step`` ID; a step without a written frame yields ``None`` instead
+    of borrowing the spectrum of another step.
+
+    Parameters
+    ----------
+    elecstate : list of dict
+        Frames returned by :func:`read_band_from_eig_occ_files`.
+    step_ids : list of int
+        One-based ionic step of every trajectory frame, in order.
+
+    Returns
+    -------
+    list of dict or None
+        One entry per element of ``step_ids``; ``None`` where no eigenvalue
+        frame was written.
+    '''
+    by_step = {frame['step']: frame for frame in elecstate if 'step' in frame}
+    return [by_step.get(step) for step in step_ids]
 
 def read_traj_from_running_log(src: str | Path | List[str]) \
     -> List[Dict[str, np.ndarray|str]]:
@@ -503,15 +561,23 @@ def read_abacus_out(fileobj,
         if fileobj.name != 'running_md.log' else \
         read_traj_from_md_dump(fileobj.parent / 'MD_dump')
 
-    # read the eigenvalues (nframe, nk, nbnd)
-    eig_files = find_eig_occ_files(fileobj.parent)
+    # read the eigenvalues (nframe, nk, nbnd) written by the current run
+    eig_files = find_eig_occ_files(fileobj.parent, abacus_lines)
     elecstate = read_band_from_eig_occ_files(eig_files)
 
-    # When out_freq_ion > 1 the eigenvalue file may hold fewer frames than
-    # the trajectory.  Reuse the last available eigenvalue frame for the
-    # steps that were not written, so the length check below still passes.
-    if 0 < len(elecstate) < len(trajectory):
-        elecstate = elecstate + [elecstate[-1]] * (len(trajectory) - len(elecstate))
+    # Associate eigenvalue frames with ionic steps.  The running log carries
+    # one "#ION MOVE#" header per ionic step; if it is unavailable or does not
+    # match the trajectory, fall back to the one-based step order.  Steps
+    # without a written eigenvalue frame stay unavailable instead of reusing
+    # another step's spectrum.
+    iter_header = read_iter_header_from_running_log(abacus_lines)
+    step_ids: List[int] = []
+    for ion_move, _ in iter_header:
+        if ion_move not in step_ids:
+            step_ids.append(ion_move)
+    if len(step_ids) != len(trajectory):
+        step_ids = list(range(1, len(trajectory) + 1))
+    elecstate = align_eig_frames(elecstate, step_ids)
 
     # read the atomic forces (nframe, nat, 3)
     forces = read_forces_from_running_log(abacus_lines)
@@ -533,7 +599,7 @@ def read_abacus_out(fileobj,
     # only keep the energies of the final iteration for each ion step
     energies = find_final_info_with_iter_header(
         read_energies_from_running_log(abacus_lines)[1],
-        read_iter_header_from_running_log(abacus_lines)
+        iter_header
     )
     
     # read the magmom
@@ -575,15 +641,17 @@ def read_abacus_out(fileobj,
                                         forces=frs, stress=strs,
                                         magmoms=mag[ind], efermi=ener['E_Fermi'],
                                         ibzkpts=kvecd, dipole=None)
-        # import the eigenvalues and occupations kpoint-by-kpoint
+        # import the eigenvalues and occupations kpoint-by-kpoint; a step
+        # without a written eigenvalue frame keeps an empty k-point list
         calc.kpts = []
-        for ispn, (ekb, occ) in enumerate(zip(estat['e'], estat['occ'])): # loop over the spin
-            calc.kpts += [SinglePointKPoint(weight=wk[ik],
-                                            s=ispn,
-                                            k=kvecd[ik],
-                                            eps_n=ekb[ik,:],
-                                            f_n=occ[ik,:])
-                          for ik in range(len(kvecd))]
+        if estat is not None:
+            for ispn, (ekb, occ) in enumerate(zip(estat['e'], estat['occ'])): # loop over the spin
+                calc.kpts += [SinglePointKPoint(weight=wk[ik],
+                                                s=ispn,
+                                                k=kvecd[ik],
+                                                eps_n=ekb[ik,:],
+                                                f_n=occ[ik,:])
+                              for ik in range(len(kvecd))]
         # attach the calculator to the atoms
         atoms.calc = calc
         images.append(atoms)
@@ -668,6 +736,7 @@ class TestLatestIO(unittest.TestCase):
         elecstate = read_band_from_eig_occ(fn)
         # 2 frames, 1 spin channel (nspin 4), 1 kpoint, 35 bands
         self.assertEqual(len(elecstate), 2)
+        self.assertEqual([es['step'] for es in elecstate], [1, 2])
         for es in elecstate: # loop over frames
             self.assertIn('k', es)
             self.assertEqual(es['k'].shape, (1, 1, 3)) # ispin, ik, 3
@@ -675,6 +744,38 @@ class TestLatestIO(unittest.TestCase):
             self.assertEqual(es['e'].shape, (1, 1, 35)) # ispin, ik, nbnd
             self.assertIn('occ', es)
             self.assertEqual(es['occ'].shape, (1, 1, 35)) # ispin, ik, nbnd
+
+    def test_read_band_from_eig_occ_producer_header(self):
+        # A single snapshot from the current writer: the step follows the
+        # marker and two provenance lines precede it.
+        text = (
+            '# ABACUS version: 3.10.0\n'
+            '# Written at 2026-11-09 15:18:58\n'
+            '# Ionic_Step 3\n'
+            ' Electronic state energy (eV) and occupations\n'
+            ' Spin number 1\n'
+            ' spin=1 k-point=1/1 Cartesian=0.0000000 0.0000000 0.0000000 (7 plane wave)\n'
+            ' 1 -8.734940678442698 1.000000000000000\n'
+            ' 2 7.011672764486192 0.000000000000000\n'
+        )
+        elecstate = read_band_from_eig_occ(text.splitlines(keepends=True))
+        self.assertEqual(len(elecstate), 1)
+        self.assertEqual(elecstate[0]['step'], 3)
+        self.assertEqual(elecstate[0]['e'].shape, (1, 1, 2))
+
+    def test_read_band_from_eig_occ_legacy_headers(self):
+        # Older spellings put the step before the marker; the keyword may be
+        # lower case.  Both must still be parsed into the same frame layout.
+        body = (
+            ' spin=1 k-point=1/1 Cartesian=0.0000000 0.0000000 0.0000000 (7 plane wave)\n'
+            ' 1 -8.734940678442698 1.000000000000000\n'
+            ' 2 7.011672764486192 0.000000000000000\n'
+        )
+        for header in ['1     # Ionic_Step', '1     # ionic step']:
+            elecstate = read_band_from_eig_occ((header + '\n' + body).splitlines(keepends=True))
+            self.assertEqual(len(elecstate), 1)
+            self.assertEqual(elecstate[0]['step'], 1)
+            self.assertEqual(elecstate[0]['e'].shape, (1, 1, 2))
 
     def test_find_eig_occ_files(self):
         import tempfile
@@ -695,6 +796,39 @@ class TestLatestIO(unittest.TestCase):
                              [tmp / 'eig_occg1.txt',
                               tmp / 'eig_occg2.txt',
                               tmp / 'eig_occg3.txt'])
+
+    def test_find_eig_occ_files_prefers_current_run(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp = Path(tmpdir)
+            # A stale fixed file from an earlier run coexists with the files
+            # written by the current mode-2 run.
+            (tmp / 'eig_occ.txt').write_text('stale\n')
+            (tmp / 'eig_occg1.txt').write_text('')
+            (tmp / 'eig_occg2.txt').write_text('')
+            log = [
+                ' Write Eigenvalues and occupations to file: OUT.ABACUS/eig_occg1.txt\n',
+                ' Write Eigenvalues and occupations to file: OUT.ABACUS/eig_occg2.txt\n',
+            ]
+            self.assertEqual(find_eig_occ_files(tmp, log),
+                             [tmp / 'eig_occg1.txt', tmp / 'eig_occg2.txt'])
+            # Without a log announcement the legacy discovery still applies.
+            self.assertEqual(find_eig_occ_files(tmp), [tmp / 'eig_occ.txt'])
+
+    def test_align_eig_frames_keeps_steps_distinct(self):
+        frames = [
+            {'step': 1, 'k': None, 'e': None, 'occ': None},
+            {'step': 3, 'k': None, 'e': None, 'occ': None},
+        ]
+        aligned = align_eig_frames(frames, [1, 2, 3])
+        self.assertIs(aligned[0], frames[0])
+        self.assertIsNone(aligned[1])
+        self.assertIs(aligned[2], frames[1])
+        # mode 0 keeps only the final snapshot; earlier steps stay unavailable
+        final_only = align_eig_frames([{'step': 3, 'k': None, 'e': None, 'occ': None}],
+                                      [1, 2, 3])
+        self.assertEqual([f is None for f in final_only], [True, True, False])
 
     def test_read_band_from_eig_occ_files(self):
         fn = self.testfiles / 'nspin4-gamma-eigocc'
