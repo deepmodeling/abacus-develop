@@ -12,7 +12,7 @@ and
 
 ## out_hsk
 
-Use [out_hsk](../input_files/input-main.md#out_hsk) to print the upper triangular part of the Hamiltonian and overlap matrices for each k point into `OUT.${suffix}`. It is available for both gamma-only and multi-k calculations. The format value is:
+Use [out_hsk](../input_files/input-main.md#out_hsk) to print the Hamiltonian and overlap matrices for each k point into `OUT.${suffix}`. It is available for both gamma-only and multi-k calculations. The format value is:
 
 | Value | Format |
 | --- | --- |
@@ -27,21 +27,21 @@ The $H(k)$ and $S(k)$ matrices are stored with numerical atomic orbitals as basi
 
 As for information on the k points, one may look for the `SETUP K-POINTS` section in the running log.
 
-The output filenames depend on the k-point algorithm and `nspin`:
+The output filenames depend on the k-point algorithm and `nspin`. Text output (`out_hsk 1`) and native binary output (`out_hsk 2`) use different gamma-only names, because only the text writer omits the `k` marker when there is no k-point index to report:
 
-| Calculation mode | `nspin` | Hamiltonian files | Overlap files |
-| --- | --- | --- | --- |
-| `gamma_only = 1` | 1 | `hk_nao.txt` | `sk_nao.txt` |
-| `gamma_only = 1` | 2 | `hks1_nao.txt`, `hks2_nao.txt` | `sk_nao.txt` |
-| `gamma_only = 0` | 1 | `hk${k}_nao.txt` | `sk${k}_nao.txt` |
-| `gamma_only = 0` | 2 | `hk${k}s1_nao.txt`, `hk${k}s2_nao.txt` | `sk${k}_nao.txt` |
-| `gamma_only = 0` | 4 | `hk${k}s4_nao.txt` | `sk${k}_nao.txt` |
+| Calculation mode | `nspin` | Text H(k) | Text S(k) | Binary H(k) | Binary S(k) |
+| --- | --- | --- | --- | --- | --- |
+| `gamma_only = 1` | 1 | `h_nao.txt` | `s_nao.txt` | `hk_nao.dat` | `sk_nao.dat` |
+| `gamma_only = 1` | 2 | `hs1_nao.txt`, `hs2_nao.txt` | `s_nao.txt` | `hks1_nao.dat`, `hks2_nao.dat` | `sk_nao.dat` |
+| `gamma_only = 0` | 1 | `hk${k}_nao.txt` | `sk${k}_nao.txt` | `hk${k}_nao.dat` | `sk${k}_nao.dat` |
+| `gamma_only = 0` | 2 | `hk${k}s1_nao.txt`, `hk${k}s2_nao.txt` | `sk${k}_nao.txt` | `hk${k}s1_nao.dat`, `hk${k}s2_nao.dat` | `sk${k}_nao.dat` |
+| `gamma_only = 0` | 4 | `hk${k}_nao.txt` | `sk${k}_nao.txt` | `hk${k}s4_nao.dat` | `sk${k}_nao.dat` |
 
-Here `${k}` is the one-based k-point index. For `nspin = 2`, the overlap matrix is spin-independent, so only one overlap file is written for each physical k point. The gamma-only algorithm does not support `nspin = 4`; use the multi-k algorithm with an explicit Gamma-only `KPT` file for a noncollinear calculation at Gamma.
+Here `${k}` is the one-based k-point index. For `nspin = 2`, the overlap matrix is spin-independent, so only one overlap file is written for each physical k point. The gamma-only algorithm does not support `nspin = 4`; use the multi-k algorithm with an explicit Gamma-only `KPT` file for a noncollinear calculation at Gamma. In text output the spinor Hamiltonian is stored as one complex matrix, so no spin suffix is added; the binary format keeps the historical `s4` marker.
 
 Only when `out_app_flag` is 2 is `g${step}` inserted before `_nao`, where `${step}` is the one-based ionic-step index. For example, the first spin channel at the first k point and first ionic step is written to `hk1s1g1_nao.txt`. With `out_app_flag = 0` the fixed file is truncated and overwritten at every write, and with `out_app_flag = 1` it accumulates one record per written step.
 
-Each output block starts with a comment header containing the one-based ionic-step index, filename, `gamma only` flag, and matrix dimensions. It is followed by `Row 1`, `Row 2`, and so on. Each row contains the matrix elements from the diagonal through the upper triangle.
+With `out_hsk 1`, each ionic-step record is a self-describing text block. It starts with `Ionic_Step ${step}`, followed by the number of spin directions, the one-based spin index, the total number of k points, the one-based k-point index, the Cartesian and direct coordinates, the k-point weight, the Fermi energy in Ry, the number of localized basis functions, and the matrix dimension. A `user_defined_lattice` block with the lattice vectors and atomic positions follows. The matrix body then stores every element of the dense $N \times N$ matrix in row-major order: row by row from $i = 0$ to $N-1$, and within each row from $j = 0$ to $N-1$. Both triangles and the diagonal are written; the body is not restricted to the upper triangle. Four complex values or eight real values are written per line, and values with magnitude below $10^{-10}$ are flushed to zero.
 
 For multi-k calculations, the matrices are Hermitian and each matrix element is written as `(real,imag)`. For gamma-only calculations, the matrices are symmetric and the matrix elements are written as real numbers.
 
@@ -49,7 +49,7 @@ For multi-k calculations, the matrices are Hermitian and each matrix element is 
 
 ### Native Binary Format
 
-For `out_hsk 2`, the filenames in the table above use `.dat` instead of `.txt`. Each matrix record is written without padding or a self-describing header:
+For `out_hsk 2`, the binary filenames listed in the table above are used. Each matrix record is written without padding or a self-describing header:
 
 1. the matrix dimension as a native C++ `int`;
 2. the upper-triangular elements in row-major order, from `(0,0)` through `(0,N-1)`, then `(1,1)` through `(1,N-1)`, and so on;

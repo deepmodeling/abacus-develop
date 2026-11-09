@@ -176,77 +176,79 @@ void ModuleIO::write_hsk(
                 {
                     ModuleBase::WARNING("ModuleIO::write_hsk",
                             "Cannot open H(k) file < " + h_fn + " >.");
-                    continue;
                 }
-                ModuleIO::write_matrix_notice(ofs_running, "H(k)", ispin, nspin, h_fn);
-
-                // --- metadata block (mirrors write_dmk exactly) ---
-                ofs << "Ionic_Step " << istep + 1 << std::endl;
-                ofs << " " << nspin << " # number of spin directions" << std::endl;
-                ofs << " " << ispin + 1 << " # spin index" << std::endl;
-                ofs << " " << kv.get_nkstot_nospin() << " # total k points " << std::endl;
-                ofs << " " << kv.get_nkstot() << " # total k points after symmetrized (if open) " << std::endl;
-                ofs << " " << ibz_ik + 1 << " # k-point index " << std::endl;
-                ofs << " " << kv.kvec_c[ibz_ik].x << " " << kv.kvec_c[ibz_ik].y << " " << kv.kvec_c[ibz_ik].z
-                    << " # k point coordinate (Cartesian) " << std::endl;
-                ofs << " " << kv.kvec_d[ibz_ik].x << " " << kv.kvec_d[ibz_ik].y << " " << kv.kvec_d[ibz_ik].z
-                    << " # k point coordinate (direct) " << std::endl;
-                ofs << " " << kv.wk[ibz_ik] << " # weight of this k point" << std::endl;
-                ofs << " " << efs[ispin] << " # Fermi energy in Ry " << std::endl;
-                ofs << " " << nlocal << " # number of localized basis " << std::endl;
-                ofs << " " << nlocal << " " << nlocal << " # size of this matrix " << std::endl;
-                ofs << std::endl;
-
-                // --- UnitCell lattice block ---
-                if (ucell != nullptr)
+                else
                 {
-                    ModuleIO::UcellIO::write_ucell(ofs, ucell);
-                }
-                ofs << std::endl;
+                    ModuleIO::write_matrix_notice(ofs_running, "H(k)", ispin, nspin, h_fn);
 
-                // --- matrix body: flat, 4 complex / 8 double per line ---
-                ofs << std::fixed;
-                ofs << std::scientific;
-                ofs << std::setprecision(precision);
-                ofs << std::right;
-                for (int i = 0; i < nlocal; ++i)
-                {
-                    const size_t ii = i * nlocal;
-                    for (int j = 0; j < nlocal; ++j)
+                    // --- metadata block (mirrors write_dmk exactly) ---
+                    ofs << "Ionic_Step " << istep + 1 << std::endl;
+                    ofs << " " << nspin << " # number of spin directions" << std::endl;
+                    ofs << " " << ispin + 1 << " # spin index" << std::endl;
+                    ofs << " " << kv.get_nkstot_nospin() << " # total k points " << std::endl;
+                    ofs << " " << kv.get_nkstot() << " # total k points after symmetrized (if open) " << std::endl;
+                    ofs << " " << ibz_ik + 1 << " # k-point index " << std::endl;
+                    ofs << " " << kv.kvec_c[ibz_ik].x << " " << kv.kvec_c[ibz_ik].y << " " << kv.kvec_c[ibz_ik].z
+                        << " # k point coordinate (Cartesian) " << std::endl;
+                    ofs << " " << kv.kvec_d[ibz_ik].x << " " << kv.kvec_d[ibz_ik].y << " " << kv.kvec_d[ibz_ik].z
+                        << " # k point coordinate (direct) " << std::endl;
+                    ofs << " " << kv.wk[ibz_ik] << " # weight of this k point" << std::endl;
+                    ofs << " " << efs[ispin] << " # Fermi energy in Ry " << std::endl;
+                    ofs << " " << nlocal << " # number of localized basis " << std::endl;
+                    ofs << " " << nlocal << " " << nlocal << " # size of this matrix " << std::endl;
+                    ofs << std::endl;
+
+                    // --- UnitCell lattice block ---
+                    if (ucell != nullptr)
                     {
-                        if (std::is_same<T, double>::value)
-                        {
-                            if (j % 8 == 0)
-                            {
-                                ofs << "\n";
-                            }
-                            ofs << " " << h_global[ii + j];
-                        }
-                        else if (std::is_same<T, std::complex<double>>::value)
-                        {
-                            if (j % 4 == 0)
-                            {
-                                ofs << "\n";
-                            }
+                        ModuleIO::UcellIO::write_ucell(ofs, ucell);
+                    }
+                    ofs << std::endl;
 
-                            double real_v = std::real(h_global[ii + j]);
-                            if (std::abs(real_v) < k_hk_zero_thr)
+                    // --- matrix body: flat, 4 complex / 8 double per line ---
+                    ofs << std::fixed;
+                    ofs << std::scientific;
+                    ofs << std::setprecision(precision);
+                    ofs << std::right;
+                    for (int i = 0; i < nlocal; ++i)
+                    {
+                        const size_t ii = i * nlocal;
+                        for (int j = 0; j < nlocal; ++j)
+                        {
+                            if (std::is_same<T, double>::value)
                             {
-                                real_v = 0.0;
+                                if (j % 8 == 0)
+                                {
+                                    ofs << "\n";
+                                }
+                                ofs << " " << h_global[ii + j];
                             }
-                            double imag_v = std::imag(h_global[ii + j]);
-                            if (std::abs(imag_v) < k_hk_zero_thr)
+                            else if (std::is_same<T, std::complex<double>>::value)
                             {
-                                imag_v = 0.0;
-                            }
+                                if (j % 4 == 0)
+                                {
+                                    ofs << "\n";
+                                }
 
-                            ofs << " (" << real_v << "," << imag_v << ")";
+                                double real_v = std::real(h_global[ii + j]);
+                                if (std::abs(real_v) < k_hk_zero_thr)
+                                {
+                                    real_v = 0.0;
+                                }
+                                double imag_v = std::imag(h_global[ii + j]);
+                                if (std::abs(imag_v) < k_hk_zero_thr)
+                                {
+                                    imag_v = 0.0;
+                                }
+
+                                ofs << " (" << real_v << "," << imag_v << ")";
+                            }
                         }
                     }
+                    // Terminate the matrix body with a newline so that the next
+                    // appended record (out_app_flag == 1) starts on a fresh line.
+                    ofs << std::endl;
                 }
-                // Terminate the matrix body with a newline so that the next
-                // appended record (out_app_flag == 1) starts on a fresh line.
-                ofs << std::endl;
             } // rank0
         } // text mode
 

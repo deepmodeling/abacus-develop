@@ -651,8 +651,9 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
             ekinetic->init(ik);
 
             // Build filename: T(k) is spin-independent so the spin index is
-            // always 1.  gamma_only drops "k", multi-k keeps "k".
-            std::string t_property = gamma_only ? "t" : "tk";
+            // always 1.  The property is always "t"; filename_output inserts
+            // the k-point index for multi-k runs and omits it for gamma_only.
+            const std::string t_property = "t";
             std::string t_fn = ModuleIO::filename_output(global_mat_dir,
                                                          t_property,
                                                          "nao",

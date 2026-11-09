@@ -591,23 +591,24 @@ The LDOS is evaluated once after all ionic steps finish; the cube header records
         item.annotation = "output H(k) and S(k) matrices in reciprocal space";
         item.category = "Output information";
         item.type = R"(Integer \[Integer\](optional))";
-        item.description = R"(Output the upper triangular part of the Hamiltonian and overlap matrices in reciprocal space for each k-point into files in the directory OUT.${suffix}. The first integer selects the format:
+        item.description = R"(Output the Hamiltonian and overlap matrices in reciprocal space for each k-point into files in the directory OUT.${suffix}. The first integer selects the format:
 * 0: disabled;
 * 1: text output; the optional second integer controls precision and defaults to 8;
 * 2: binary output in the native ABACUS .dat format;
 * 3: NPZ output, which is not implemented for H(k)/S(k).
 
+Text output (format 1) writes one self-describing record per ionic step: an Ionic_Step header, the k-point and basis metadata, a user_defined_lattice block, and then the complete dense N x N matrix in row-major order (all rows and columns, including both triangles), with four complex values for multi-k/spinor or eight real values for gamma-only per line. Binary output (format 2) stores the matrix dimension as an int followed by the row-major upper triangle; gamma-only elements are doubles, multi-k and spinor elements are pairs of doubles containing the real and imaginary parts. Native integer representation and byte order are used by the binary format.
+
 The output is also controlled by out_freq_ion and out_app_flag. For more information, refer to hs_matrix.md.
-* Gamma-only, nspin = 1: hk_nao.txt for the Hamiltonian matrix and sk_nao.txt for the overlap matrix.
-* Gamma-only, nspin = 2: hks1_nao.txt and hks2_nao.txt for the two spin channels of the Hamiltonian matrix, and sk_nao.txt for the overlap matrix. Only one overlap matrix is written because it is identical for both spin channels.
+* Gamma-only, nspin = 1: text writes h_nao.txt and s_nao.txt; binary writes hk_nao.dat and sk_nao.dat.
+* Gamma-only, nspin = 2: text writes hs1_nao.txt and hs2_nao.txt for the two spin channels of the Hamiltonian matrix and s_nao.txt for the overlap matrix; binary writes hks1_nao.dat, hks2_nao.dat and sk_nao.dat. Only one overlap matrix is written because it is identical for both spin channels.
 * Gamma-only, nspin = 4: not available with the gamma-only algorithm.
-* Multi-k, nspin = 1: hk1_nao.txt for the Hamiltonian matrix and sk1_nao.txt for the overlap matrix at the first k-point.
-* Multi-k, nspin = 2: hk1s1_nao.txt and hk1s2_nao.txt for the two spin channels of the Hamiltonian matrix, and sk1_nao.txt for the overlap matrix at the first k-point. Only one overlap matrix is written because it is identical for both spin channels.
-* Multi-k, nspin = 4: hk1s4_nao.txt for the spinor Hamiltonian matrix and sk1_nao.txt for the spinor overlap matrix at the first k-point.
-For binary output, the same names use the .dat suffix. Each native binary record contains the matrix dimension as an int followed by the row-major upper triangle. Gamma-only elements are doubles; multi-k and spinor elements are pairs of doubles containing the real and imaginary parts. Native integer representation and byte order are used.
+* Multi-k, nspin = 1: text writes hk1_nao.txt and sk1_nao.txt for the first k-point; binary writes hk1_nao.dat and sk1_nao.dat.
+* Multi-k, nspin = 2: text writes hk1s1_nao.txt, hk1s2_nao.txt and sk1_nao.txt; binary writes the same names with the .dat suffix. Only one overlap matrix is written because it is identical for both spin channels.
+* Multi-k, nspin = 4: text writes one complex spinor matrix hk1_nao.txt and sk1_nao.txt; binary writes hk1s4_nao.dat and sk1_nao.dat.
 When out_app_flag is 0, the fixed file is truncated and overwritten at every write.
 When out_app_flag is 1, the first ionic step truncates the file and later steps append complete records.
-When out_app_flag is 2, g followed by the one-based ionic-step index is inserted before _nao, for example hk1s1g1_nao.txt.
+When out_app_flag is 2, g followed by the one-based ionic-step index is inserted before _nao, for example hk1s1g1_nao.txt or hg1_nao.txt.
 
 [NOTE] In the 3.10-LTS version, the file names are data-0-H and data-0-S, etc.)";
         item.default_value = "0 8";
@@ -750,7 +751,7 @@ For binary output, each file uses the same basename as text output with a .dat s
         item.annotation = "output kinetic matrix of electrons T(k)";
         item.category = "Output information";
         item.type = R"(Boolean \[Integer\](optional))";
-        item.description = "Whether to print the upper triangular part of the kinetic matrices for each k-point into OUT.${suffix}/tks1ki_nao.txt, where i is the index of k points. One may optionally provide a second parameter to specify the precision."
+        item.description = "Whether to print the kinetic-energy matrices T(k) for each k-point into OUT.${suffix}. Text output uses the same self-describing layout as out_hsk 1: an Ionic_Step header, the k-point and basis metadata, a user_defined_lattice block, and then the complete dense N x N matrix in row-major order, with four complex values for multi-k or eight real values for gamma-only per line. T(k) is spin-independent, so no spin suffix is used: gamma-only calculations write t_nao.txt, multi-k calculations write tk{k}_nao.txt, where {k} is the one-based k-point index, and out_app_flag = 2 inserts a g{step} index before _nao. The optional second parameter specifies the text precision."
                           "\n\n[NOTE] In the 3.10-LTS version, the file names are data-TR-sparse_SPIN0.csr, etc.";
         item.default_value = "False [8]";
         item.unit = "Ry";
