@@ -15,7 +15,7 @@ PW_Basis::PW_Basis()
 
 PW_Basis::PW_Basis(std::string device_, std::string precision_) : device(std::move(device_)), precision(std::move(precision_)) {
     classname="PW_Basis";
-    this->fft_bundle.setfft("cpu",this->precision);
+    this->fft_bundle.setfft(this->device,this->precision);
 }
 
 PW_Basis:: ~PW_Basis()
@@ -297,10 +297,12 @@ void PW_Basis::getfftixy2is(int * fftixy2is) const
 
 void PW_Basis::set_device(std::string device_) {
     this->device = std::move(device_);
+    this->fft_bundle.setfft(this->device, this->precision);
 }
 
 void PW_Basis::set_precision(std::string precision_) {
     this->precision = std::move(precision_);
+    this->fft_bundle.setfft(this->device, this->precision);
 }
 
 }
