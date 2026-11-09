@@ -5,6 +5,7 @@
 #include "source_base/parallel_reduce.h"
 #include "source_io/module_hs/hs_dense_io.h"
 #include "source_io/module_output/provenance_header.h"
+#include "source_io/module_output/write_notice.h"
 
 namespace ModuleIO
 {
@@ -37,7 +38,8 @@ void write_Vxc(const int nspin,
                const int out_ndigits,
                const std::string& ks_solver,
                bool cal_exx,
-               const Exx_Info& exx_info
+               const Exx_Info& exx_info,
+               std::ofstream& ofs_running
 #ifdef __EXX
                ,
                std::vector<std::map<int, std::map<hamilt::TAC, RI::Tensor<double>>>>* Hexxd,
@@ -143,6 +145,11 @@ void write_Vxc(const int nspin,
                                p2d,
                                drank,
                                ks_solver);
+
+            if (GlobalV::MY_RANK == 0)
+            {
+                ModuleIO::write_notice(ofs_running, "Vxc(MO)", is, nspin, vxc_file);
+            }
         }
     }
 
@@ -156,6 +163,9 @@ void write_Vxc(const int nspin,
         const std::string header_tot = build_eband_header(istep, etot_eV, "V_xc", time_stamp);
         const std::string name_tot = eband_filename("eband_vxc", istep, out_app_flag);
         write_orb_energy(kv, nspin0, nbands, e_orb_tot, name_tot, header_tot, global_out_dir, append);
+        ModuleIO::write_notice(ofs_running,
+                               "Band-decomposed V_xc energy",
+                               global_out_dir + name_tot);
 #ifdef __EXX
         if (cal_exx)
         {
@@ -165,6 +175,12 @@ void write_Vxc(const int nspin,
             const std::string name_exx = eband_filename("eband_vxc_exx", istep, out_app_flag);
             write_orb_energy(kv, nspin0, nbands, e_orb_locxc, name_loc, header_loc, global_out_dir, append);
             write_orb_energy(kv, nspin0, nbands, e_orb_exx, name_exx, header_exx, global_out_dir, append);
+            ModuleIO::write_notice(ofs_running,
+                                   "Band-decomposed V_xc_local energy",
+                                   global_out_dir + name_loc);
+            ModuleIO::write_notice(ofs_running,
+                                   "Band-decomposed V_EXX energy",
+                                   global_out_dir + name_exx);
         }
 #endif
     }
@@ -176,7 +192,7 @@ template void write_Vxc<double, double>(
     const UnitCell&, Structure_Factor&, surchem&, const ModulePW::PW_Basis&, const ModulePW::PW_Basis&,
     const ModuleBase::matrix&, const Charge&, const K_Vectors&, const std::vector<double>&,
     const ModuleBase::matrix&, Grid_Driver&, const bool, const bool, const bool, const int, const std::string&,
-    const std::string&, const int, const std::string&, bool, const Exx_Info&
+    const std::string&, const int, const std::string&, bool, const Exx_Info&, std::ofstream&
 #ifdef __EXX
     , std::vector<std::map<int, std::map<hamilt::TAC, RI::Tensor<double>>>>*,
     std::vector<std::map<int, std::map<hamilt::TAC, RI::Tensor<std::complex<double>>>>>*
@@ -188,7 +204,7 @@ template void write_Vxc<std::complex<double>, double>(
     const UnitCell&, Structure_Factor&, surchem&, const ModulePW::PW_Basis&, const ModulePW::PW_Basis&,
     const ModuleBase::matrix&, const Charge&, const K_Vectors&, const std::vector<double>&,
     const ModuleBase::matrix&, Grid_Driver&, const bool, const bool, const bool, const int, const std::string&,
-    const std::string&, const int, const std::string&, bool, const Exx_Info&
+    const std::string&, const int, const std::string&, bool, const Exx_Info&, std::ofstream&
 #ifdef __EXX
     , std::vector<std::map<int, std::map<hamilt::TAC, RI::Tensor<double>>>>*,
     std::vector<std::map<int, std::map<hamilt::TAC, RI::Tensor<std::complex<double>>>>>*
@@ -200,7 +216,7 @@ template void write_Vxc<std::complex<double>, std::complex<double>>(
     const UnitCell&, Structure_Factor&, surchem&, const ModulePW::PW_Basis&, const ModulePW::PW_Basis&,
     const ModuleBase::matrix&, const Charge&, const K_Vectors&, const std::vector<double>&,
     const ModuleBase::matrix&, Grid_Driver&, const bool, const bool, const bool, const int, const std::string&,
-    const std::string&, const int, const std::string&, bool, const Exx_Info&
+    const std::string&, const int, const std::string&, bool, const Exx_Info&, std::ofstream&
 #ifdef __EXX
     , std::vector<std::map<int, std::map<hamilt::TAC, RI::Tensor<double>>>>*,
     std::vector<std::map<int, std::map<hamilt::TAC, RI::Tensor<std::complex<double>>>>>*

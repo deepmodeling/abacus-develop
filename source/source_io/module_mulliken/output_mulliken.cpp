@@ -4,6 +4,7 @@
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/formatter.h"
 #include "source_io/module_output/provenance_header.h"
+#include "source_io/module_output/write_notice.h"
 #include "source_base/name_angular.h"
 #include "source_base/module_external/scalapack_connector.h"
 #include "source_base/tool_quit.h"
@@ -92,7 +93,7 @@ Output_Mulliken<TK>::Output_Mulliken(Output_Sk<TK>* output_sk,
 }
 
 template <typename TK>
-void Output_Mulliken<TK>::write(int istep, int out_app_flag, std::string out_dir)
+void Output_Mulliken<TK>::write(int istep, int out_app_flag, std::string out_dir, std::ofstream& ofs_running)
 {
     std::vector<double> tot_chg = this->get_tot_chg();
     std::vector<std::vector<double>> atom_chg = this->get_atom_chg();
@@ -135,6 +136,8 @@ void Output_Mulliken<TK>::write(int istep, int out_app_flag, std::string out_dir
         ModuleBase::WARNING_QUIT("Output_Mulliken::write", "nspin must be 1, 2 or 4");
     }
     os.close();
+
+    ModuleIO::write_notice(ofs_running, "Mulliken population", as.str());
 }
 
 template <typename TK>

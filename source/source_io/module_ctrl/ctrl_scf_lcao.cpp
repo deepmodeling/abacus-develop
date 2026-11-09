@@ -327,6 +327,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                                 kv.get_nkstot(),
                                 pv,
                                 nspin,
+                                ofs_running,
                                 istep);
     }
 
@@ -769,7 +770,8 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                                     inp.out_ndigits,
                                     inp.ks_solver,
                                     cal_exx,
-                                    exx_info
+                                    exx_info,
+                                    ofs_running
 #ifdef __EXX
                                     ,
                                     hexxd_ptr,
@@ -798,7 +800,8 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                                                 pelec->wg,
                                                 gd,
                                                 orb.cutoffs(),
-                                                two_center_bundle);
+                                                two_center_bundle,
+                                                ofs_running);
         }
     }
 

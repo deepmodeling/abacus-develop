@@ -6,6 +6,7 @@
 #include "source_psi/psi.h"     // use psi::Psi<T>
 #include "source_hamilt/hamilt.h" // use hamilt::Hamilt<T>
 #include "source_basis/module_ao/parallel_orbitals.h" // use Parallel_Orbitals
+#include <fstream>
 #include <string>
 
 namespace ModuleIO
@@ -28,7 +29,8 @@ namespace ModuleIO
             const int out_app_flag,
             const int nlocal,
             const int nspin,
-            const std::string& global_out_dir);
+            const std::string& global_out_dir,
+            std::ofstream& ofs_running);
 
 }
 

@@ -5,6 +5,7 @@
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_cell/cell_index.h"
 
+#include <fstream>
 #include <map>
 #include <vector>
 
@@ -52,7 +53,8 @@ class Output_Mulliken
     /// @param out_app_flag output mode: 0 overwrites, 1 appends, 2 writes one
     ///        numbered file per written step
     /// @param out_dir directory that receives mulliken.txt
-    void write(int istep, int out_app_flag, std::string out_dir);
+    /// @param ofs_running running log stream, open on the writing rank only
+    void write(int istep, int out_app_flag, std::string out_dir, std::ofstream& ofs_running);
     /// print atom mag to running log file
     void print_atom_mag(const std::vector<std::vector<double>>& atom_chg, std::ostream& os);
     /// get total charge

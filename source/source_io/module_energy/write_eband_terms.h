@@ -4,6 +4,7 @@
 #include "source_base/matrix.h"
 #include "source_psi/psi.h"
 
+#include <fstream>
 #include <vector>
 
 class Grid_Driver;
@@ -54,7 +55,8 @@ void write_eband_terms(const int nspin,
                        const ModuleBase::matrix& wg,
                        Grid_Driver& gd,
                        const std::vector<double>& orb_cutoff,
-                       const TwoCenterBundle& two_center_bundle
+                       const TwoCenterBundle& two_center_bundle,
+                       std::ofstream& ofs_running
 );
 
 } // namespace ModuleIO

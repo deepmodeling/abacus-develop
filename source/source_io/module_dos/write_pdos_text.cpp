@@ -2,6 +2,7 @@
 
 #include "source_base/global_variable.h"
 #include "source_io/module_output/provenance_header.h"
+#include "source_io/module_output/write_notice.h"
 
 #include <cmath>
 #include <fstream>
@@ -19,7 +20,8 @@ void ModuleIO::write_pdos_text(
         const double& dos_edelta_ev,
         const std::string& out_dir,
         const int istep,
-        const int out_app_flag)
+        const int out_app_flag,
+        std::ofstream& ofs_running)
 {
     ModuleBase::TITLE("ModuleIO", "write_pdos_text");
 
@@ -139,5 +141,7 @@ void ModuleIO::write_pdos_text(
         }
 
         ofs.close();
+
+        ModuleIO::write_notice(ofs_running, "PDOS", is, nspin, ss.str());
     }
 }

@@ -14,6 +14,7 @@
 #include "source_basis/module_pw/pw_basis_big.h"
 #include "source_io/module_output/cube_io.h"
 #include "source_io/module_output/provenance_header.h"
+#include "source_io/module_output/write_notice.h"
 #include "source_base/global_variable.h"
 #include "source_base/tool_quit.h"
 #include "source_io/module_parameter/parameter.h"
@@ -38,7 +39,8 @@ void ModuleIO::write_libxc_r(
 	const ModulePW::PW_Basis &pw_rhod,
 	const std::string &out_dir,
 	const int istep,
-	const int out_app_flag)
+	const int out_app_flag,
+	std::ofstream &ofs_running)
 {
 	ModuleBase::TITLE("ModuleIO","write_libxc_r");
 	ModuleBase::timer::start("ModuleIO","write_libxc_r");
@@ -359,7 +361,7 @@ void ModuleIO::write_libxc_r(
 		};
 	};
 
-	auto write_data = [&pw_big, &pw_rhod, nspin, &out_dir, &ucell, istep, out_app_flag](
+	auto write_data = [&pw_big, &pw_rhod, nspin, &out_dir, &ucell, istep, out_app_flag, &ofs_running](
 	const std::string data_name,
 	const std::vector<double> &data,
 	const std::vector<std::string> &channel_suffixes)
@@ -394,6 +396,8 @@ void ModuleIO::write_libxc_r(
 			{
 				ModuleBase::WARNING_QUIT("write_libxc_r", "Cannot open file: " + file_name);
 			}
+
+			ModuleIO::write_notice(ofs_running, "XC " + data_name, file_name);
 
 			// Each file holds a single channel, so the header declares one spin
 			// direction; the first comment line carries the one-based ionic step.

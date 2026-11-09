@@ -282,7 +282,8 @@ void ctrl_output_fp(UnitCell& ucell,
                                 *pw_rhod,
                                 global_chg_dir,
                                 istep,
-                                out_app_flag);
+                                out_app_flag,
+                                ofs_running);
     }
 #endif
 

@@ -2,6 +2,7 @@
 
 #include "source_io/module_hs/vxc_op_tools.h"
 #include "source_io/module_output/provenance_header.h"
+#include "source_io/module_output/write_notice.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_lcao/module_operator_lcao/ekinetic.h"
 #include "source_lcao/module_operator_lcao/nonlocal.h"
@@ -44,7 +45,8 @@ void write_eband_terms(const int nspin,
                        const ModuleBase::matrix& wg,
                        Grid_Driver& gd,
                        const std::vector<double>& orb_cutoff,
-                       const TwoCenterBundle& two_center_bundle
+                       const TwoCenterBundle& two_center_bundle,
+                       std::ofstream& ofs_running
 )
     {
         // 0. prepare
@@ -83,6 +85,9 @@ void write_eband_terms(const int nspin,
             // modes 0 and 2 truncate (mode 2 writes a separate g{step} file).
             const bool append = (out_app_flag == 1) && (istep > 0);
             write_orb_energy(kv, nspin0, nbands, e_orb, out_name, header, out_dir, append);
+            ModuleIO::write_notice(ofs_running,
+                                   "Band-decomposed " + term_symbol + " energy",
+                                   out_dir + out_name);
         };
 
         auto all_band_energy = [&wg](const int ik, const std::vector<double>& e_orb)->double
@@ -221,21 +226,21 @@ template void write_eband_terms<double, double>(
     const int, const int, const int, const double, const int, const int, const Parallel_Orbitals*, const psi::Psi<double>&,
     const UnitCell&, Structure_Factor&, surchem&, const ModulePW::PW_Basis&, const ModulePW::PW_Basis&,
     const ModuleBase::matrix&, const Charge&, const K_Vectors&, const ModuleBase::matrix&, Grid_Driver&,
-    const std::vector<double>&, const TwoCenterBundle&
+    const std::vector<double>&, const TwoCenterBundle&, std::ofstream&
 );
 
 template void write_eband_terms<std::complex<double>, double>(
     const int, const int, const int, const double, const int, const int, const Parallel_Orbitals*, const psi::Psi<std::complex<double>>&,
     const UnitCell&, Structure_Factor&, surchem&, const ModulePW::PW_Basis&, const ModulePW::PW_Basis&,
     const ModuleBase::matrix&, const Charge&, const K_Vectors&, const ModuleBase::matrix&, Grid_Driver&,
-    const std::vector<double>&, const TwoCenterBundle&
+    const std::vector<double>&, const TwoCenterBundle&, std::ofstream&
 );
 
 template void write_eband_terms<std::complex<double>, std::complex<double>>(
     const int, const int, const int, const double, const int, const int, const Parallel_Orbitals*, const psi::Psi<std::complex<double>>&,
     const UnitCell&, Structure_Factor&, surchem&, const ModulePW::PW_Basis&, const ModulePW::PW_Basis&,
     const ModuleBase::matrix&, const Charge&, const K_Vectors&, const ModuleBase::matrix&, Grid_Driver&,
-    const std::vector<double>&, const TwoCenterBundle&
+    const std::vector<double>&, const TwoCenterBundle&, std::ofstream&
 );
 
 } // namespace ModuleIO

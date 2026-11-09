@@ -180,6 +180,7 @@ class WriteWfcLcaoTest : public testing::Test
     std::vector<int> ik2iktot = {0,1};
     int nkstot = 2;
     int out_app_flag = 1;
+    std::ofstream ofs_running;
 
     void SetUp() override
     {
@@ -253,7 +254,7 @@ TEST_F(WriteWfcLcaoTest, WriteWfcLcao)
     psi::Psi<double> my_psi(psi_local_double.data(), nk, nbands_local, nbasis_local, nbasis_local, true);
 
 	ModuleIO::write_wfc_nao(out_type, out_app_flag, my_psi, ekb, wg, kvec_c, 
-			ik2iktot, nkstot, pv, nspin, istep);
+			ik2iktot, nkstot, pv, nspin, ofs_running, istep);
 
     // check the output file
     if (GlobalV::MY_RANK == 0)
@@ -296,7 +297,7 @@ TEST_F(WriteWfcLcaoTest, WriteWfcLcaoComplex)
     psi::Psi<std::complex<double>> my_psi(psi_local_complex.data(), nk, nbands_local, nbasis_local, true);
 
 	ModuleIO::write_wfc_nao(out_type, out_app_flag, my_psi, ekb, wg, kvec_c, 
-			ik2iktot, nkstot, pv, nspin, istep);
+			ik2iktot, nkstot, pv, nspin, ofs_running, istep);
 
     // check the output file
     if (GlobalV::MY_RANK == 0)
@@ -340,7 +341,7 @@ TEST_F(WriteWfcLcaoTest, WriteWfcLcaoTextHeader)
     psi::Psi<double> my_psi(psi_local_double.data(), nk, nbands_local, nbasis_local, nbasis_local, true);
 
     ModuleIO::write_wfc_nao(out_type, out_app_flag, my_psi, ekb, wg, kvec_c,
-            ik2iktot, nkstot, pv, nspin, istep);
+            ik2iktot, nkstot, pv, nspin, ofs_running, istep);
 
     if (GlobalV::MY_RANK == 0)
     {

@@ -11,6 +11,7 @@
 #include "source_io/module_hs/vxc_op_tools.h"
 
 #include <complex>
+#include <fstream>
 #include <map>
 #include <string>
 #include <vector>
@@ -69,7 +70,8 @@ void write_Vxc(const int nspin,
                const int out_ndigits,
                const std::string& ks_solver,
                bool cal_exx,
-               const Exx_Info& exx_info
+               const Exx_Info& exx_info,
+               std::ofstream& ofs_running
 #ifdef __EXX
                ,
                std::vector<std::map<int, std::map<hamilt::TAC, RI::Tensor<double>>>>* Hexxd,
