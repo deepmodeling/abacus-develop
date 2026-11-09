@@ -6,7 +6,6 @@
 #include "source_base/module_external/scalapack_connector.h"
 #include "source_base/timer.h"
 #include "source_cell/module_neighbor/sltk_atom_arrange.h"
-#include "source_io/module_output/write_orb_info.h"
 #include "source_io/module_output/write_notice.h"
 #include "source_lcao/hamilt_lcao.h"
 
@@ -188,7 +187,6 @@ void ModuleIO::write_proj_band_lcao(
             out.close();
         }
     } // is
-    ModuleIO::write_orb_info(&ucell);
 
     ModuleBase::timer::end("ModuleIO", "write_proj_band_lcao");
     return;
@@ -417,7 +415,6 @@ void ModuleIO::write_proj_band_lcao(
             out.close();
         }
     } // is
-    ModuleIO::write_orb_info(&ucell);
 
     ModuleBase::timer::end("ModuleIO", "write_proj_band_lcao");
     return;

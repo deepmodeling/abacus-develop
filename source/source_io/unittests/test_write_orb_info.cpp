@@ -48,7 +48,7 @@ TEST(OrbInfo,WriteOrbInfo)
     const int nbands = 6;
     unitcell::read_cell_pseudopots(pp_dir, ofs, *ucell, global_out_dir, dft_functional, lspinorb, pseudo_rcut, soc_lambda);
     unitcell::cal_nwfc(ofs,*ucell,ucell->atoms, nspin, nlocal, npol, basis_type, esolver_type, init_wfc, nbands);
-    ModuleIO::write_orb_info(ucell);
+    ModuleIO::write_orb_info(ucell, ofs);
     ofs.close();
     std::ifstream ifs("nao.txt");
     std::string str((std::istreambuf_iterator<char>(ifs)),std::istreambuf_iterator<char>());

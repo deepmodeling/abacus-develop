@@ -1,10 +1,11 @@
 #include "write_orb_info.h"
 
 #include "source_io/module_parameter/parameter.h"
+#include "source_io/module_output/write_notice.h"
 #include "source_base/name_angular.h"
 #include "source_cell/atom_spec.h"
 
-void ModuleIO::write_orb_info(const UnitCell* ucell)
+void ModuleIO::write_orb_info(const UnitCell* ucell, std::ofstream& ofs_running)
 {
     std::stringstream os;
     os << PARAM.globalv.global_out_dir << "nao.txt";
@@ -38,6 +39,8 @@ void ModuleIO::write_orb_info(const UnitCell* ucell)
     out << std::setw(5) << "#z" << std::setw(2) << "=" << std::setw(2) << "Zeta index of orbital" << std::endl;
     out << std::setw(5) << "#sym" << std::setw(2) << "=" << std::setw(2) << "Symmetry name of real orbital" << std::endl;
     out.close();
+
+    write_notice(ofs_running, "NAO orbital table", os.str());
 
     return;
 }

@@ -1,6 +1,5 @@
 #include "cell_index.h"
 
-#include "source_base/name_angular.h"
 #include "source_base/tool_quit.h"
 
 CellIndex::CellIndex(const std::vector<std::string>& atomLabels_in,
@@ -261,33 +260,3 @@ void CellIndex::cal_orbitalCounts()
     }
 }
 
-void CellIndex::write_orb_info(const std::string& out_dir) const
-{
-    std::stringstream os;
-    os << out_dir << "nao.txt";
-    std::ofstream out(os.str().c_str());
-    out << std::setw(5) << "#io" << std::setw(8) << "spec" << std::setw(5) << "l" << std::setw(5) << "m" << std::setw(5)
-        << "z" << std::setw(5) << "sym" << std::endl;
-
-    for (int iat = 0; iat < this->get_nat(); iat++)
-    {
-        for (int iw = 0; iw < this->get_nw(iat); ++iw)
-        {
-            const int L = this->iw2l(iat, iw);
-            const int Z = this->iw2z(iat, iw);
-            const int M = this->iw2m(iat, iw);
-            out << std::setw(5) << iat << std::setw(8) << this->get_atom_label(iat) << std::setw(5) << L << std::setw(5)
-                << M << std::setw(5) << Z + 1 << std::setw(15) << ModuleBase::Name_Angular[L][M] << std::endl;
-        }
-    }
-    out << std::endl << std::endl;
-    out << std::setw(5) << "#io" << std::setw(2) << "=" << std::setw(2) << "Orbital index in supercell" << std::endl;
-    out << std::setw(5) << "#spec" << std::setw(2) << "=" << std::setw(2) << "Atomic species label" << std::endl;
-    out << std::setw(5) << "#l" << std::setw(2) << "=" << std::setw(2) << "Angular mumentum quantum number"
-        << std::endl;
-    out << std::setw(5) << "#m" << std::setw(2) << "=" << std::setw(2) << "Magnetic quantum number" << std::endl;
-    out << std::setw(5) << "#z" << std::setw(2) << "=" << std::setw(2) << "Zeta index of orbital" << std::endl;
-    out << std::setw(5) << "#sym" << std::setw(2) << "=" << std::setw(2) << "Symmetry name of real orbital"
-        << std::endl;
-    out.close();
-}

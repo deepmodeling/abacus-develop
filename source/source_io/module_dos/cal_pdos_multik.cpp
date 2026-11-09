@@ -3,7 +3,6 @@
 #include "source_base/parallel_reduce.h"
 #include "source_base/module_external/blas_connector.h"
 #include "source_base/module_external/scalapack_connector.h"
-#include "source_io/module_output/write_orb_info.h"
 #include "source_io/module_output/write_notice.h"
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
@@ -192,7 +191,5 @@ void ModuleIO::cal_pdos(
     {
         write_pdos_text(ucell, pdos.data(), nspin, nlocal, npoints,
                         emin, dos_edelta_ev, global_out_dir, istep, out_app_flag, ofs_running);
-        ModuleIO::write_orb_info(&ucell);
-        ModuleIO::write_notice(ofs_running, "NAO orbital table", global_out_dir + "nao.txt");
     }
 }

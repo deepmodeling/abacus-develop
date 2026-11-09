@@ -444,8 +444,10 @@ void ESolver_KS::iter_finish(UnitCell& ucell, const int istep, int& iter, bool &
                                              writer_pool,
                                              pw_world,
                                              &GlobalV::ofs_warning);
-        // Announce the auto-backup once per converged electronic step.
-        if (conv_esolver && write_restart && writer_pool && GlobalV::MY_RANK == 0)
+        // Announce the auto-backup on the final electronic iteration, which is
+        // either convergence or the scf_nmax limit.
+        const bool final_iter = conv_esolver || iter == iter_limit;
+        if (final_iter && write_restart && writer_pool && GlobalV::MY_RANK == 0)
         {
             ModuleIO::write_notice(GlobalV::ofs_running,
                                    "Charge density restart file",

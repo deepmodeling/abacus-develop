@@ -30,6 +30,7 @@
 #include "source_io/module_ctrl/ctrl_runner_lcao.h"  // use ctrl_runner_lcao()
 #include "source_io/module_ctrl/ctrl_scf_lcao.h"     // use ctrl_scf_lcao()
 #include "source_io/module_output/print_info.h"
+#include "source_io/module_output/write_orb_info.h"
 #include "source_io/module_parameter/input_parameter.h"
 #include "source_io/module_restart/restart.h" // GlobalC::restart for load_exx_flag
 #include "source_lcao/lcao_set.h"             // mohan add 20251111
@@ -110,7 +111,15 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(BaseCell& basecell, const Input
                                  two_center_bundle_,
                                  orb_);
 
-    // 6) generate matrices for optimized auxiliary basis functions when requested
+    // 6) write the NAO orbital table once; it depends only on the basis set and
+    // is shared by the PDOS, projected-band and Mulliken population outputs.
+    const bool need_orb_info = inp.out_dos > 0 || inp.out_mul || inp.out_proj_band;
+    if (need_orb_info && GlobalV::MY_RANK == 0)
+    {
+        ModuleIO::write_orb_info(&ucell, GlobalV::ofs_running);
+    }
+
+    // 7) generate matrices for optimized auxiliary basis functions when requested
     if (inp.calculation == "gen_opt_abfs")
     {
 #ifdef __EXX
