@@ -2,6 +2,7 @@
 #include <cmath>
 #include <vector>
 #include <map>
+#include <set>
 #include <tuple>
 #include <complex>
 #include <fstream>
@@ -12,7 +13,7 @@
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_cell/module_neighbor/sltk_atom_arrange.h"
 #include "source_io/module_hs/angmom_op_mat.h"
-#include "source_base/formatter.h"
+#include "source_io/module_hs/hs_sparse_io.h"
 #include "source_base/parallel_common.h"
 #include "source_base/timer.h"
 /**
@@ -53,6 +54,160 @@ const double kInvSqrt2 = std::sqrt(2) * 0.5;
 ///        sparse threshold (1e-10) because this guards an analytical
 ///        zero (m at extremal value), not a numerical matrix element.
 constexpr double kCoeffZeroThreshold = 1e-12;
+
+/// @brief Elements with a magnitude below this value are omitted from the
+///        CSR output, matching the threshold used by the other sparse
+///        matrix writers.
+constexpr double kLMatrixThreshold = 1e-10;
+
+/**
+ * @brief Map a signed magnetic quantum number to its position inside one
+ *        angular-momentum block.
+ * @details ABACUS orders the real spherical harmonics as
+ *          0, +1, -1, +2, -2, ... (see Ylm::get_ylm_real and
+ *          TwoCenterIntegrator::snap), so the position is 0 for m = 0,
+ *          2m - 1 for m > 0 and -2m for m < 0.
+ * @param m Signed magnetic quantum number.
+ * @return Zero-based position inside the (2l+1)-dimensional block.
+ */
+int signed_m_to_position(const int m)
+{
+    if (m > 0)
+    {
+        return 2 * m - 1;
+    }
+    if (m < 0)
+    {
+        return -2 * m;
+    }
+    return 0;
+}
+
+/**
+ * @brief First local orbital index of every angular-momentum block of one atom.
+ * @details For each l the atom stores l_nchi[l] radial functions, each carrying
+ *          2l+1 real spherical harmonics. The returned vector holds the offset
+ *          of block l, so that the local orbital index of a given (l, iz, m) is
+ *          offset[l] + iz * (2l+1) + signed_m_to_position(m).
+ * @param atom Atom whose orbital layout is inspected.
+ * @return Offsets indexed by l, with atom.nwl + 1 entries.
+ */
+std::vector<int> orbital_block_offsets(const Atom& atom)
+{
+    std::vector<int> offsets(atom.nwl + 1, 0);
+    for (int l = 0; l < atom.nwl; ++l)
+    {
+        const int block_size = atom.l_nchi[l] * (2 * l + 1);
+        offsets[l + 1] = offsets[l] + block_size;
+    }
+    return offsets;
+}
+
+/**
+ * @brief Assemble one component of L(R) into a real sparse R matrix.
+ * @details The two-center integrals are evaluated on the fly for every
+ *          neighboring atom pair; the resulting matrix elements are stored
+ *          under the global NAO orbital indices of the two centers. Only
+ *          entries above kLMatrixThreshold are kept.
+ *
+ *          Since the NAO basis is real, L = -i r x grad gives matrix elements
+ *          that are purely imaginary, so only the imaginary part is recorded.
+ * @param calculator Two-center integrator.
+ * @param neighbor_searcher Neighbor list driver.
+ * @param matrix Output sparse matrix keyed by R coordinate; entries hold the
+ *        imaginary part of <phi_i|L|phi_j>.
+ * @param all_R_coor Output set of R coordinates encountered during the scan.
+ * @param ucell Unit cell.
+ * @param dir Angular-momentum component, 'x', 'y' or 'z'.
+ */
+void assemble_angular_momentum(
+    const std::unique_ptr<TwoCenterIntegrator>& calculator,
+    Grid_Driver& neighbor_searcher,
+    ModuleIO::SparseRMatrix<double>& matrix,
+    std::set<ModuleIO::RCoordinate>& all_R_coor,
+    const UnitCell& ucell,
+    const char dir)
+{
+    const bool valid_dir = (dir == 'x' || dir == 'y' || dir == 'z');
+    assert(valid_dir);
+
+    std::complex<double> val = 0;
+    ModuleBase::Vector3<double> taui;
+    ModuleBase::Vector3<double> dtau;
+    AdjacentAtomInfo adjinfo;
+    for (int it = 0; it < ucell.ntype; it++)
+    {
+        const Atom& atyp_i = ucell.atoms[it];
+        const std::vector<int> offsets_i = orbital_block_offsets(atyp_i);
+        for (int ia = 0; ia < atyp_i.na; ia++)
+        {
+            const int iat_i = ucell.itia2iat(it, ia);
+            taui = ucell.get_tau(iat_i);
+            neighbor_searcher.Find_atom(ucell, taui, it, ia, &adjinfo);
+            for (int ia_adj = 0; ia_adj < adjinfo.adj_num + 1; ia_adj++)
+            {
+                const int jt = adjinfo.ntype[ia_adj];
+                const int ja = adjinfo.natom[ia_adj];
+                const Atom& atyp_j = ucell.atoms[jt];
+                const ModuleBase::Vector3<int> iR = adjinfo.box[ia_adj];
+                const int iat_j = ucell.itia2iat(jt, ja);
+                dtau = ucell.cal_dtau(iat_i, iat_j, iR) * ucell.lat0;
+
+                const ModuleIO::RCoordinate R_coor(iR.x, iR.y, iR.z);
+                all_R_coor.insert(R_coor);
+                ModuleIO::SparseRBlock<double>& block = matrix[R_coor];
+
+                const std::vector<int> offsets_j = orbital_block_offsets(atyp_j);
+                for (int li = 0; li < atyp_i.nwl + 1; li++)
+                {
+                    const int block_size_i = 2 * li + 1;
+                    for (int iz = 0; iz < atyp_i.l_nchi[li]; iz++)
+                    {
+                        for (int mi = -li; mi <= li; mi++)
+                        {
+                            const int pos_i = signed_m_to_position(mi);
+                            const int iw_i = offsets_i[li] + iz * block_size_i + pos_i;
+                            const int row = ucell.itiaiw2iwt(it, ia, iw_i);
+                            for (int lj = 0; lj < atyp_j.nwl + 1; lj++)
+                            {
+                                const int block_size_j = 2 * lj + 1;
+                                for (int jz = 0; jz < atyp_j.l_nchi[lj]; jz++)
+                                {
+                                    for (int mj = -lj; mj <= lj; mj++)
+                                    {
+                                        if (dir == 'x')
+                                        {
+                                            val = ModuleIO::cal_LxijR(calculator,
+                                                it, ia, li, iz, mi, jt, ja, lj, jz, mj, dtau);
+                                        }
+                                        else if (dir == 'y')
+                                        {
+                                            val = ModuleIO::cal_LyijR(calculator,
+                                                it, ia, li, iz, mi, jt, ja, lj, jz, mj, dtau);
+                                        }
+                                        else
+                                        {
+                                            val = ModuleIO::cal_LzijR(calculator,
+                                                it, ia, li, iz, mi, jt, ja, lj, jz, mj, dtau);
+                                        }
+
+                                        if (std::fabs(val.imag()) > kLMatrixThreshold)
+                                        {
+                                            const int pos_j = signed_m_to_position(mj);
+                                            const int iw_j = offsets_j[lj] + jz * block_size_j + pos_j;
+                                            const int col = ucell.itiaiw2iwt(jt, ja, iw_j);
+                                            block[row][col] = val.imag();
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
 } // namespace
 
 std::complex<double> ModuleIO::cal_LzijR(
@@ -282,102 +437,11 @@ ModuleIO::Angmom_op::Angmom_op(
                          tatom);
 }
 
-void ModuleIO::Angmom_op::kernel(
-    std::ofstream* ofs,
-    const UnitCell& ucell,
-    const char dir,
-    const int precision)
-{
-    if (ofs == nullptr || !ofs->is_open())
-    {
-        return;
-    }
-    // an easy sanity check
-    assert(dir == 'x' || dir == 'y' || dir == 'z');
-
-    // it, ia, il, iz, im, iRx, iRy, iRz, jt, ja, jl, jz, jm
-    // the iRx, iRy, iRz are the indices of the supercell in which the two-center-integral
-    // it and jt are indexes of atomtypes,
-    // ia and ja are indexes of atoms within the atomtypes,
-    // il and jl are indexes of the angular momentum,
-    // iz and jz are indexes of the zeta functions
-    // im and jm are indexes of the magnetic quantum numbers.
-    std::string fmtstr = "%4d %4d %4d %4d %4d %4d %4d %4d %4d %4d %4d %4d %4d";
-    fmtstr += " %" + std::to_string(precision*2) + "." + std::to_string(precision) + "e";
-    fmtstr += " %" + std::to_string(precision*2) + "." + std::to_string(precision) + "e\n";
-    FmtCore fmt(fmtstr);
-
-    // placeholders
-    std::complex<double> val = 0;
-    ModuleBase::Vector3<double> taui; // the origin position
-    ModuleBase::Vector3<double> dtau; // the displacement
-    AdjacentAtomInfo adjinfo; // adjacent atom information carrier
-    for (int it = 0; it < ucell.ntype; it++)
-    {
-        const Atom& atyp_i = ucell.atoms[it];
-        for (int ia = 0; ia < atyp_i.na; ia++)
-        {
-            taui = ucell.get_tau(ucell.itia2iat(it, ia));
-            neighbor_searcher_->Find_atom(ucell, taui, it, ia, &adjinfo);
-            for (int ia_adj = 0; ia_adj < adjinfo.adj_num + 1; ia_adj++) // "+1" is to include itself
-            {
-                int jt = adjinfo.ntype[ia_adj]; // ityp
-                int ja = adjinfo.natom[ia_adj]; // iat with in atomtype
-                const Atom& atyp_j = ucell.atoms[jt];
-                const ModuleBase::Vector3<int> iR = adjinfo.box[ia_adj];
-                dtau = ucell.cal_dtau(ucell.itia2iat(it, ia), 
-                                      ucell.itia2iat(jt, ja), 
-                                      iR) * ucell.lat0; // convert to unit of Bohr
-
-                // nested loop: calculate the two-center-integral
-                for (int li = 0; li < atyp_i.nwl + 1; li++)
-                {
-                    for (int iz = 0; iz < atyp_i.l_nchi[li]; iz++)
-                    {
-                        for (int mi = -li; mi <= li; mi++)
-                        {
-                            for (int lj = 0; lj < atyp_j.nwl + 1; lj++)
-                            {
-                                for (int jz = 0; jz < atyp_j.l_nchi[lj]; jz++)
-                                {
-                                    for (int mj = -lj; mj <= lj; mj++)
-                                    {
-                                        if (dir == 'x')
-                                        {
-                                            val = cal_LxijR(calculator_, 
-                                                it, ia, li, iz, mi, jt, ja, lj, jz, mj, dtau);
-                                        }
-                                        else if (dir == 'y')
-                                        {
-                                            val = cal_LyijR(calculator_, 
-                                                it, ia, li, iz, mi, jt, ja, lj, jz, mj, dtau);
-                                        }
-                                        else if (dir == 'z')
-                                        {
-                                            val = cal_LzijR(calculator_, 
-                                                it, ia, li, iz, mi, jt, ja, lj, jz, mj, dtau);
-                                        }
-
-                                        *ofs << fmt.format(
-                                            it, ia, li, iz, mi,
-                                            iR.x, iR.y, iR.z,
-                                            jt, ja, lj, jz, mj,
-                                            val.real(), val.imag());
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
 void ModuleIO::Angmom_op::calculate(
     const std::string& prefix,
     const std::string& outdir,
     const UnitCell& ucell,
+    const Parallel_Orbitals& pv,
     const int precision,
     const int rank,
     const int istep,
@@ -386,62 +450,59 @@ void ModuleIO::Angmom_op::calculate(
     ModuleBase::TITLE("Angmom_op", "calculate");
     ModuleBase::timer::start("Angmom_op", "calculate");
 
+    // The CSR writer below covers the scalar (npol = 1) basis only. For
+    // nspin = 4 the orbital dimension is doubled by npol, so reject the
+    // request explicitly instead of writing a matrix with mismatched sizes.
+    const int npol = ucell.get_npol();
+    if (npol != 1)
+    {
+        ModuleBase::WARNING_QUIT("Angmom_op::calculate",
+                                 "out_mat_l is not supported for nspin = 4 (npol = 2).");
+    }
+
     if (rank != 0)
     {
         ModuleBase::timer::end("Angmom_op", "calculate");
         return;
     }
-    std::ofstream ofout;
-    const std::string dir = "xyz";
+
     /// @brief Filename suffix: modes 0 and 1 reuse the fixed name (mode 0
     ///        overwrites, mode 1 appends each written step); only mode 2
     ///        carries "g{istep+1}" (e.g., "g1") following the out_freq_ion
     ///        convention.
-    const std::string step_suffix = (istep >= 0 && out_app_flag == 2) ? "g" + std::to_string(istep + 1) : "";
-    const bool append_step = (out_app_flag == 1) && (istep > 0);
-    const std::string title = "# it ia il iz im iRx iRy iRz jt ja jl jz jm Re[<a|L|b>] Im[<a|L|b>]\n"
-                              "# it: atomtype index of the first atom\n"
-                              "# ia: atomic index of the first atom within the atomtype\n"
-                              "# il: angular momentum index of the first atom\n"
-                              "# iz: zeta function index of the first atom\n"
-                              "# im: magnetic quantum number of the first atom\n"
-                              "# iRx, iRy, iRz: the indices of the supercell\n"
-                              "# jt: atomtype index of the second atom\n"
-                              "# ja: atomic index of the second atom within the atomtype\n"
-                              "# jl: angular momentum index of the second atom\n"
-                              "# jz: zeta function index of the second atom\n"
-                              "# jm: magnetic quantum number of the second atom\n"
-                              "# Re[<a|L|b>], Im[<a|L|b>]: the real and imaginary parts "
-                              "of the value of the matrix element\n";
-    
+    const std::string step_suffix = (istep >= 0 && out_app_flag == 2)
+        ? "g" + std::to_string(istep + 1) : "";
+    const std::string dir = "xyz";
+
     for (char d : dir)
     {
-        std::string fn = outdir + "l" + d + step_suffix + "_nao.txt";
-        std::ios_base::openmode mode = std::ios::out;
-        if (append_step)
-        {
-            mode |= std::ios::app;
-        }
-        ofout.open(fn, mode);
-        if (!ofout.is_open())
-        {
-            ModuleBase::WARNING_QUIT("Angmom_op::calculate", "Cannot open matrix file: " + fn);
-        }
-        // The column header belongs to the file, not to each frame: in append
-        // mode only the frame marker is repeated.
-        if (!append_step)
-        {
-            ofout << title;
-        }
-        // Ionic steps are reported one-based in output files; negative istep
-        // means the final SCF snapshot, where no ionic step exists.
-        if (istep >= 0)
-        {
-            ofout << "# Ionic_Step " << istep + 1 << "\n";
-        }
-        this->kernel(&ofout, ucell, d, precision);
-        ofout.close();
+        ModuleIO::SparseRMatrix<double> matrix;
+        std::set<ModuleIO::RCoordinate> all_R_coor;
+        assemble_angular_momentum(this->calculator_,
+                                  *this->neighbor_searcher_,
+                                  matrix,
+                                  all_R_coor,
+                                  ucell,
+                                  d);
+
+        std::string fn = outdir + "l" + d + step_suffix + "_nao.csr";
+        ModuleIO::SparseWriteOptions options;
+        options.filename = fn;
+        options.label = std::string("L") + d;
+        options.threshold = kLMatrixThreshold;
+        options.binary = false;
+        options.precision = precision;
+        options.istep = istep;
+        // Rank 0 owns the fully assembled matrix, so no MPI reduction is
+        // needed and every rank-local entry is already global.
+        options.reduce = false;
+        options.out_app_flag = out_app_flag;
+        options.csr_format = true;
+        options.ucell = &ucell;
+
+        ModuleIO::save_sparse(matrix, all_R_coor, pv, options);
         *ofs_ << " Write L(R) (" << d << " component) matrix in NAO basis to file: " << fn << std::endl;
     }
+
     ModuleBase::timer::end("Angmom_op", "calculate");
 }

@@ -81,9 +81,14 @@ if(ENABLE_LCAO)
 
   addtest(
     TARGET MODULE_IO_angmom_op_mat_test
-    LIBS parameter base device neighbor
+    LIBS parameter base device neighbor hcontainer
     SOURCES test_angmom_op_mat.cpp
             ../angmom_op_mat.cpp
+            ../hs_sparse_io.cpp
+            ../lat_r_csr.cpp
+            ../../../source_cell/ucell_io.cpp
+            ../../../source_basis/module_ao/parallel_orbitals.cpp
+            ../../../source_hamilt/module_hcontainer/test/tmp_mocks.cpp
             ../../../source_basis/module_ao/orb_atomic_lm.cpp
             ../../../source_basis/module_ao/orb_atomic.cpp
             ../../../source_basis/module_nao/radial_set.cpp

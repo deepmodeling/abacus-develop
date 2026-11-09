@@ -286,6 +286,57 @@ TEST(HsSparseIo, SparseCsrHeaderWritesCellAndBanner)
     std::remove(filename.c_str());
 }
 
+TEST(HsSparseIo, SparseCsrWritesComplexValues)
+{
+    const std::string filename = testing::TempDir() + "write_hs_r_csr_complex_lx.csr";
+    std::remove(filename.c_str());
+
+    Parallel_Orbitals pv;
+    init_serial_orbitals(pv);
+    const Abfs::Vector3_Order<int> r_vector(0, 0, 0);
+    std::set<Abfs::Vector3_Order<int>> all_R_coor;
+    all_R_coor.insert(r_vector);
+    std::map<Abfs::Vector3_Order<int>,
+             std::map<size_t, std::map<size_t, std::complex<double>>>> sparse_matrix;
+    sparse_matrix[r_vector][0][0] = std::complex<double>(1.5, -2.5);
+    // below the threshold, must not appear in the CSR payload
+    sparse_matrix[r_vector][1][0] = std::complex<double>(1e-12, 0.0);
+
+    UnitCell ucell;
+    init_unitcell(ucell);
+
+    ModuleIO::SparseWriteOptions options;
+    options.filename = filename;
+    options.label = "Lx";
+    options.threshold = 1e-10;
+    options.binary = false;
+    options.precision = 8;
+    options.istep = 0;
+    options.reduce = false;
+    options.csr_format = true;
+    options.ucell = &ucell;
+    ModuleIO::save_sparse(sparse_matrix, all_R_coor, pv, options);
+
+    const std::vector<std::string> lines = read_lines(filename);
+    ASSERT_GE(lines.size(), 6);
+    // istep = 0 is the first ionic step, printed one-based as 1
+    EXPECT_EQ(lines[0], "Ionic_Step 1");
+    EXPECT_EQ(lines[1], " # print Lx matrix in real space Lx(R)");
+    EXPECT_EQ(lines[2], " 1 # number of spin directions");
+    EXPECT_EQ(lines[3], " 1 # spin index");
+    EXPECT_EQ(lines[4], " 2 # number of localized basis");
+    EXPECT_EQ(lines[5], " 1 # number of Bravais lattice vector R");
+
+    const std::string output = read_file(filename);
+    EXPECT_THAT(output, testing::HasSubstr("0 0 0 1\n"));
+    EXPECT_THAT(output, testing::HasSubstr(
+        " # CSR values\n (1.50000000e+00,-2.50000000e+00)\n"));
+    EXPECT_THAT(output, testing::HasSubstr(" # CSR column indices\n 0\n"));
+    EXPECT_THAT(output, testing::HasSubstr(" # CSR row pointers\n 0 1 1\n"));
+
+    std::remove(filename.c_str());
+}
+
 int main(int argc, char** argv)
 {
 #ifdef __MPI

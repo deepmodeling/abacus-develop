@@ -1407,7 +1407,7 @@ For binary output, each file uses the same basename as text output with a .dat s
         item.annotation = "output the expectation values of angular momentum operators";
         item.category = "Output information";
         item.type = R"(Boolean \[Integer\](optional))";
-        item.description = "Whether to print the expectation value of the angular momentum operator , , and in the basis of the localized atomic orbitals. The files are named lx_nao.txt, ly_nao.txt, and lz_nao.txt (or lxg{step+1}_nao.txt etc. when out_app_flag = 2). The second integer controls the precision of the output.";
+        item.description = "Whether to print the expectation value of the angular momentum operators Lx, Ly and Lz in the basis of the localized atomic orbitals. The three components are written as sparse matrices into lx_nao.csr, ly_nao.csr and lz_nao.csr (or lxg{step+1}_nao.csr etc. when out_app_flag = 2), using the same self-describing header and CSR layout as the H(R)/S(R) output, so the values are indexed by the global NAO orbital indices. Because the NAO basis functions are real, every matrix element is purely imaginary: the files store only the imaginary part of the matrix element, and its real part is identically zero. This output is not supported for nspin = 4. The second integer controls the precision of the output.";
         item.default_value = "False 8";
         item.unit = "";
         item.set_availability("basis_type==lcao");
