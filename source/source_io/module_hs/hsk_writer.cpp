@@ -67,12 +67,16 @@ void ModuleIO::write_hsk(
     // text mode: align with write_dmk filename convention so that hk and dmk
     // files share the same naming scheme (no .dat suffix).  Binary mode
     // still uses filename_output which appends the .dat/.bin suffix.
-    auto make_fname = [&](const std::string& property, const int ik,
-                          const int ispin) -> std::string {
+    //
+    // The filename's k index is the IBZ k-point index (0..nkstot_nospin-1),
+    // not the global k-spin pair index (0..nkstot-1).  That way hk1s1_nao.txt
+    // and hk1s2_nao.txt refer to the same IBZ k-point, matching dmk naming.
+    auto make_fname = [&](const std::string& property, const int ik_global,
+                          const int ibz_ik, const int ispin) -> std::string {
         if (binary)
         {
             return ModuleIO::filename_output(global_out_dir, property, "nao",
-                    ik, ik2iktot, nspin, nkstot, out_type, out_app_flag,
+                    ik_global, ik2iktot, nspin, nkstot, out_type, out_app_flag,
                     gamma_only, istep);
         }
 
@@ -81,7 +85,7 @@ void ModuleIO::write_hsk(
         std::string fn = global_out_dir + property;
         if (!gamma_only)
         {
-            fn += "k" + std::to_string(ik + 1);
+            fn += "k" + std::to_string(ibz_ik + 1);
         }
         if (nspin == 2)
         {
@@ -118,7 +122,16 @@ void ModuleIO::write_hsk(
         // H(k) — always written for every k-point
         // ------------------------------------------------------------------
         const int ispin = isk[ik];
-        const std::string h_fn = make_fname("hk", ik, ispin);
+        // IBZ k-point index: same IBZ k can appear under both spin channels.
+        // e.g. nspin=2, 3 k-points -> ik=0..5 with ispin(0..2)=0,
+        // ispin(3..5)=1, so ibz_ik for ik=3 is 0 (same IBZ k as ik=0).
+        const int ibz_ik = ik - ispin * kv.get_nkstot_nospin();
+        // Text path property is the letter before "k" so that make_fname
+        // produces hk1s1 and sk1 matching dmk1s1.  Binary path keeps the
+        // full "hk"/"sk" property since filename_output handles its own
+        // suffix scheme.
+        const std::string h_property = binary ? "hk" : "h";
+        const std::string h_fn = make_fname(h_property, ik, ibz_ik, ispin);
 
         if (binary)
         {
@@ -179,12 +192,12 @@ void ModuleIO::write_hsk(
                 ofs << " " << ispin + 1 << " # spin index" << std::endl;
                 ofs << " " << kv.get_nkstot_nospin() << " # total k points " << std::endl;
                 ofs << " " << kv.get_nkstot() << " # total k points after symmetrized (if open) " << std::endl;
-                ofs << " " << ik + 1 << " # k-point index " << std::endl;
-                ofs << " " << kv.kvec_c[ik].x << " " << kv.kvec_c[ik].y << " " << kv.kvec_c[ik].z
+                ofs << " " << ibz_ik + 1 << " # k-point index " << std::endl;
+                ofs << " " << kv.kvec_c[ibz_ik].x << " " << kv.kvec_c[ibz_ik].y << " " << kv.kvec_c[ibz_ik].z
                     << " # k point coordinate (Cartesian) " << std::endl;
-                ofs << " " << kv.kvec_d[ik].x << " " << kv.kvec_d[ik].y << " " << kv.kvec_d[ik].z
+                ofs << " " << kv.kvec_d[ibz_ik].x << " " << kv.kvec_d[ibz_ik].y << " " << kv.kvec_d[ibz_ik].z
                     << " # k point coordinate (direct) " << std::endl;
-                ofs << " " << kv.wk[ik] << " # weight of this k point" << std::endl;
+                ofs << " " << kv.wk[ibz_ik] << " # weight of this k point" << std::endl;
                 ofs << " " << efs[ispin] << " # Fermi energy in Ry " << std::endl;
                 ofs << " " << nlocal << " # number of localized basis " << std::endl;
                 ofs << " " << nlocal << " " << nlocal << " # size of this matrix " << std::endl;
@@ -251,7 +264,8 @@ void ModuleIO::write_hsk(
         {
             continue;
         }
-        const std::string s_fn = make_fname("sk", ik, 0);
+        const std::string s_property = binary ? "sk" : "s";
+        const std::string s_fn = make_fname(s_property, ik, ibz_ik, 0);
 
         if (binary)
         {
@@ -307,12 +321,12 @@ void ModuleIO::write_hsk(
                 ofs << " 1 # spin index" << std::endl;
                 ofs << " " << kv.get_nkstot_nospin() << " # total k points " << std::endl;
                 ofs << " " << kv.get_nkstot() << " # total k points after symmetrized (if open) " << std::endl;
-                ofs << " " << ik + 1 << " # k-point index " << std::endl;
-                ofs << " " << kv.kvec_c[ik].x << " " << kv.kvec_c[ik].y << " " << kv.kvec_c[ik].z
+                ofs << " " << ibz_ik + 1 << " # k-point index " << std::endl;
+                ofs << " " << kv.kvec_c[ibz_ik].x << " " << kv.kvec_c[ibz_ik].y << " " << kv.kvec_c[ibz_ik].z
                     << " # k point coordinate (Cartesian) " << std::endl;
-                ofs << " " << kv.kvec_d[ik].x << " " << kv.kvec_d[ik].y << " " << kv.kvec_d[ik].z
+                ofs << " " << kv.kvec_d[ibz_ik].x << " " << kv.kvec_d[ibz_ik].y << " " << kv.kvec_d[ibz_ik].z
                     << " # k point coordinate (direct) " << std::endl;
-                ofs << " " << kv.wk[ik] << " # weight of this k point" << std::endl;
+                ofs << " " << kv.wk[ibz_ik] << " # weight of this k point" << std::endl;
                 // S(k) has no Fermi-energy concept; write a zero placeholder
                 // and label it clearly so readers are not confused.
                 ofs << " 0.0 # Fermi energy in Ry (not applicable to S(k))" << std::endl;
