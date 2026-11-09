@@ -31,6 +31,14 @@
 namespace
 {
 /**
+ * @brief Rank of this process, captured in main() before GoogleTest runs.
+ *
+ * The file-I/O tests read and remove files shared by all ranks, so they only
+ * run the assertions on rank 0.
+ */
+int my_rank = 0;
+
+/**
  * @brief Helper: compare two filenames with a clear failure message.
  */
 void expect_fname_eq(const std::string& expected, const std::string& actual)
@@ -178,7 +186,7 @@ TEST(HsrWriterIo, HContainerCsrHeaderKeepsCurrentFormat)
     // File I/O is not MPI-collective; run it on rank 0 only to avoid two
     // ranks racing on the same file when the test binary is launched with
     // mpirun.
-    if (GlobalV::MY_RANK != 0)
+    if (my_rank != 0)
     {
         return;
     }
@@ -219,7 +227,7 @@ TEST(HsrWriterIo, HContainerCsrHeaderKeepsCurrentFormat)
 
 TEST(HsrWriterIo, GammaFoldedHeaderKeepsCsrReadable)
 {
-    if (GlobalV::MY_RANK != 0)
+    if (my_rank != 0)
     {
         return;
     }
@@ -258,7 +266,7 @@ TEST(HsrWriterIo, GammaFoldedHeaderKeepsCsrReadable)
 
 TEST(HsrWriterIo, HContainerCsrAppendKeepsCurrentStepSections)
 {
-    if (GlobalV::MY_RANK != 0)
+    if (my_rank != 0)
     {
         return;
     }
@@ -291,7 +299,7 @@ TEST(HsrWriterIo, HContainerCsrAppendKeepsCurrentStepSections)
 
 TEST(HsrWriterIo, HContainerCsrHeaderCarriesPerChannelFermi)
 {
-    if (GlobalV::MY_RANK != 0)
+    if (my_rank != 0)
     {
         return;
     }
@@ -328,7 +336,7 @@ TEST(HsrWriterIo, HContainerCsrHeaderCarriesPerChannelFermi)
 
 TEST(HsrWriterIo, HContainerBinaryWritesSortedAndEmptyRBlocks)
 {
-    if (GlobalV::MY_RANK != 0)
+    if (my_rank != 0)
     {
         return;
     }
@@ -374,7 +382,7 @@ TEST(HsrWriterIo, HContainerBinaryWritesSortedAndEmptyRBlocks)
 
 TEST(HsrWriterIo, HContainerBinaryWritesComplexValuesAsDoublePairs)
 {
-    if (GlobalV::MY_RANK != 0)
+    if (my_rank != 0)
     {
         return;
     }
@@ -423,7 +431,7 @@ TEST(HsrWriterIo, HContainerBinaryWritesComplexValuesAsDoublePairs)
 
 TEST(HsrWriterIo, HContainerBinaryAppendsAndCanOverwrite)
 {
-    if (GlobalV::MY_RANK != 0)
+    if (my_rank != 0)
     {
         return;
     }
@@ -614,7 +622,7 @@ TEST(HsrWriterIo, WriteHsrTextCsrCarriesPerSpinFermiFromEfermi)
         hr_vec, &sr, &ucell, 1, 8, pv.para_2d(), 1, true, iat2iwt_ptr, 1, 0, "./", eferm,
         ofs_running_null);
 
-    if (GlobalV::MY_RANK == 0)
+    if (my_rank == 0)
     {
         const std::string output_up = read_file(hr_up_filename);
         const std::string output_dw = read_file(hr_dw_filename);
@@ -638,7 +646,8 @@ int main(int argc, char** argv)
 #ifdef __MPI
     MPI_Init(&argc, &argv);
     MPI_Comm_size(MPI_COMM_WORLD, &GlobalV::NPROC);
-    MPI_Comm_rank(MPI_COMM_WORLD, &GlobalV::MY_RANK);
+    MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
+    GlobalV::MY_RANK = my_rank;
 #endif
 
     ::testing::InitGoogleTest(&argc, argv);
