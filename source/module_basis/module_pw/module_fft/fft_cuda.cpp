@@ -8,6 +8,18 @@
 
 namespace ModulePW
 {
+namespace
+{
+// Grids smaller than this are dominated by the extra kernel launches of the
+// pruned transform, so the regular cuFFT path is cheaper.
+constexpr int pruned_fft_min_grid_points = 1 << 20;
+// Keep one quarter of the x planes inactive before using the pruned plan.
+constexpr int pruned_fft_active_numerator = 3;
+constexpr int pruned_fft_active_denominator = 4;
+// Upper bound for the fused spinor workspace, in bytes.
+constexpr size_t spinor_workspace_bytes = 256ULL * 1024 * 1024;
+constexpr int max_spinor_batch = 16;
+} // namespace
 template <typename FPTYPE>
 void FFT_CUDA<FPTYPE>::initfft(int nx_in, 
                                int ny_in, 
@@ -159,8 +171,9 @@ bool FFT_CUDA<double>::use_pruned_gpu_fft() const
     // Small grids are dominated by the extra kernel launches. Sparse large
     // grids avoid the y-z transforms in the unoccupied middle x slabs.
     return this->xprime && !this->gamma_only && this->nproc == 1
-           && this->nx * this->ny * this->nz >= 1048576
-           && 4 * (this->lixy_index + 1 + this->nx - this->rixy_index) <= 3 * this->nx;
+           && this->nx * this->ny * this->nz >= pruned_fft_min_grid_points
+           && pruned_fft_active_denominator * (this->lixy_index + 1 + this->nx - this->rixy_index)
+                  <= pruned_fft_active_numerator * this->nx;
 }
 template <typename FPTYPE>
 void FFT_CUDA<FPTYPE>::init_gpu_pruned_plan() const
@@ -244,8 +257,10 @@ int FFT_CUDA<FPTYPE>::fused_veff_grid_size() const
 template <>
 int FFT_CUDA<double>::fused_veff_grid_size() const
 {
-    return this->nx == 200 && this->use_pruned_gpu_fft()
-               ? (this->lixy_index + 1 + this->nx - this->rixy_index) * this->ny * this->nz : 0;
+    return this->use_pruned_gpu_fft() && fused_fft(this->nx) != nullptr && fused_fft(this->ny) != nullptr
+                   && fused_fft(this->nz) != nullptr
+               ? (this->lixy_index + 1 + this->nx - this->rixy_index) * this->ny * this->nz
+               : 0;
 }
 template <typename FPTYPE>
 int FFT_CUDA<FPTYPE>::fused_veff_stick_size() const
@@ -255,9 +270,10 @@ int FFT_CUDA<FPTYPE>::fused_veff_stick_size() const
 template <>
 int FFT_CUDA<double>::fused_veff_stick_size() const
 {
-    return this->ny == 200 && this->nz == 200 && this->fused_veff_grid_size() > 0
-           && 2 * this->ns_index <= (this->lixy_index + 1 + this->nx - this->rixy_index) * this->ny
-               ? this->ns_index * this->nz : 0;
+    return this->fused_veff_grid_size() > 0
+                   && 2 * this->ns_index <= (this->lixy_index + 1 + this->nx - this->rixy_index) * this->ny
+               ? this->ns_index * this->nz
+               : 0;
 }
 template <typename FPTYPE>
 int FFT_CUDA<FPTYPE>::spinor_batch_size() const
@@ -271,7 +287,7 @@ int FFT_CUDA<double>::spinor_batch_size() const
     if (sticks == 0) { return 1; }
     const size_t bytes = 2 * sizeof(std::complex<double>)
                          * (size_t(sticks) + this->fused_veff_grid_size());
-    return std::max(1, std::min(16, int((256ULL * 1024 * 1024) / bytes)));
+    return std::max(1, std::min(max_spinor_batch, int(spinor_workspace_bytes / bytes)));
 }
 template <typename FPTYPE>
 std::complex<double>* FFT_CUDA<FPTYPE>::get_spinor_stick_data(int) const
@@ -291,7 +307,8 @@ std::complex<double>* FFT_CUDA<double>::get_spinor_stick_data(int bands) const
     return this->z_auxr_3d;
 }
 template <typename FPTYPE>
-void FFT_CUDA<FPTYPE>::transform_spinor_sticks(std::complex<double>*, std::complex<double>*, const int*, bool, int) const
+void FFT_CUDA<FPTYPE>::transform_spinor_sticks(std::complex<double>*, std::complex<double>*, const int*, bool, int)
+    const
 {
 }
 template <>
@@ -315,8 +332,17 @@ void FFT_CUDA<double>::transform_spinor_sticks(std::complex<double>* up, std::co
     for (int spin = 0; spin < 2; ++spin)
     {
         auto* sticks = workspace + spin * bands * stick_size;
-        ModulePW::transform_stick_slabs(sticks, slabs[spin], reverse, this->nx, this->ny, this->nz, this->lixy_index + 1,
-                                        this->rixy_index, inverse, bands, stick_size);
+        ModulePW::transform_stick_slabs(sticks,
+                                        slabs[spin],
+                                        reverse,
+                                        this->nx,
+                                        this->ny,
+                                        this->nz,
+                                        this->lixy_index + 1,
+                                        this->rixy_index,
+                                        inverse,
+                                        bands,
+                                        stick_size);
     }
     if (!inverse) { CHECK_CUFFT(cufftExecZ2Z(plan, data, data, CUFFT_FORWARD)); }
 }
@@ -353,7 +379,14 @@ void FFT_CUDA<double>::apply_spinor_potential(const double* potential, std::comp
     if (reverse != nullptr)
     {
         this->transform_spinor_sticks(up, down, reverse, true, bands);
-        ModulePW::fused_veff_x(this->nx, this->ny * this->nz, this->lixy_index + 1, this->rixy_index, potential, up, down, bands);
+        ModulePW::fused_veff_x(this->nx,
+                               this->ny * this->nz,
+                               this->lixy_index + 1,
+                               this->rixy_index,
+                               potential,
+                               up,
+                               down,
+                               bands);
         this->transform_spinor_sticks(up, down, reverse, false, bands);
         return;
     }

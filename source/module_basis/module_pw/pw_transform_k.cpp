@@ -30,7 +30,14 @@ void PW_Basis_K::spinor_to_slabs(const std::complex<double>* input, int ik, int 
         base_device::memory::set_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(
             nullptr, sticks, 0, 2 * bands * stick_size);
         const int* index = this->d_igl2isz_k + ik * this->npwk_max;
-        pack_spinor_sticks(this->npwk[ik], stride, index, input, sticks, sticks + bands * stick_size, bands, stick_size);
+        pack_spinor_sticks(this->npwk[ik],
+                           stride,
+                           index,
+                           input,
+                           sticks,
+                           sticks + bands * stick_size,
+                           bands,
+                           stick_size);
         this->fft_bundle.transform_spinor_sticks(up, down, this->d_fftixy2is, true, bands);
     }
 }
@@ -61,15 +68,29 @@ void PW_Basis_K::add_spinor_density(const std::complex<double>* input, double we
     this->add_spinor_density(input, &weight, 1, density, ik, stride, up, down);
 }
 
-void PW_Basis_K::add_spinor_density(const std::complex<double>* input, const double* weights, int bands, double* density,
-                                   int ik, int stride, std::complex<double>* up, std::complex<double>* down) const
+void PW_Basis_K::add_spinor_density(const std::complex<double>* input,
+                                    const double* weights,
+                                    int bands,
+                                    double* density,
+                                    int ik,
+                                    int stride,
+                                    std::complex<double>* up,
+                                    std::complex<double>* down) const
 {
     assert(ik >= 0 && ik < this->nks && stride >= this->npwk[ik]);
     assert(this->d_fftixy2is != nullptr && this->fft_bundle.fused_veff_stick_size() > 0);
     assert(bands >= 1 && bands <= std::min(4, this->fft_bundle.spinor_batch_size()));
     ModuleBase::timer::tick(this->classname, "spinor_density gpu");
     this->spinor_to_slabs(input, ik, stride, up, down, bands);
-    fused_density_x(this->nx, this->ny * this->nz, this->fft_bundle.lixy + 1, this->fft_bundle.rixy, weights, bands, density, up, down);
+    fused_density_x(this->nx,
+                    this->ny * this->nz,
+                    this->fft_bundle.lixy + 1,
+                    this->fft_bundle.rixy,
+                    weights,
+                    bands,
+                    density,
+                    up,
+                    down);
     ModuleBase::timer::tick(this->classname, "spinor_density gpu");
 }
 
@@ -85,7 +106,14 @@ void PW_Basis_K::add_spinor_potential(const std::complex<double>* input, const d
     {
         assert(this->d_fftixy2is != nullptr);
         this->spinor_to_slabs(input, ik, stride, up, down, bands);
-        fused_veff_x(this->nx, this->ny * this->nz, this->fft_bundle.lixy + 1, this->fft_bundle.rixy, potential, up, down, bands);
+        fused_veff_x(this->nx,
+                     this->ny * this->nz,
+                     this->fft_bundle.lixy + 1,
+                     this->fft_bundle.rixy,
+                     potential,
+                     up,
+                     down,
+                     bands);
         this->slabs_to_spinor(up, down, ik, stride, output, bands);
         ModuleBase::timer::tick(this->classname, "spinor_potential gpu");
         return;
@@ -471,7 +499,8 @@ void PW_Basis_K::real_to_recip(const base_device::DEVICE_GPU* ctx,
 
     // Only the plane-wave support is extracted from the transformed grid.
 #if defined(__CUDA)
-    this->fft_bundle.fft3D_forward_pw(const_cast<std::complex<double>*>(in), this->fft_bundle.get_auxr_3d_data<double>());
+    this->fft_bundle.fft3D_forward_pw(const_cast<std::complex<double>*>(in),
+                                      this->fft_bundle.get_auxr_3d_data<double>());
 #else
     this->fft_bundle.fft3D_forward(ctx,
                           const_cast<std::complex<double>*>(in),

@@ -43,7 +43,8 @@ Nonlocal<OperatorPW<T, Device>>::Nonlocal(const int* isk_in,
         if (this->ppcell->nkb == atoms.na * atoms.ncpp.nproj)
         {
             // HamiltPW recreates its operators before each ionic SCF cycle.
-            this->projector_fold = ProjectorFold::create(atoms.na, atoms.ncpp.nproj, atoms.taud.data(), atoms.tau.data(), *wfc_basis);
+            this->projector_fold
+                = ProjectorFold::create(atoms.na, atoms.ncpp.nproj, atoms.taud.data(), atoms.tau.data(), *wfc_basis);
         }
     }
 #endif

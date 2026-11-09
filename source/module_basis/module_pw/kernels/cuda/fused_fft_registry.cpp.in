@@ -10,7 +10,9 @@ namespace
 {
 const FusedFFT* select_fft(int length, const cudaDeviceProp& properties)
 {
-    const int sm = properties.major * 100 + properties.minor * 10;
+    constexpr int major_encoding = 100;
+    constexpr int minor_encoding = 10;
+    const int sm = properties.major * major_encoding + properties.minor * minor_encoding;
     switch (length)
     {
 @fused_cases@

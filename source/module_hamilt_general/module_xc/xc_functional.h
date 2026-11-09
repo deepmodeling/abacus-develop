@@ -77,8 +77,8 @@ class XC_Functional
 
 	static std::vector<int> func_id; // libxc id of functional
 	static int func_type; //0:none, 1:lda, 2:gga, 3:mgga, 4:hybrid lda/gga, 5:hybrid mgga
-	static int gga_grad; // treatment of gradients for noncollinear GGA (1: eigenchannels, 2: chain rule)
-	static bool use_libxc;
+    static int gga_grad;  // treatment of gradients for noncollinear GGA (1: eigenchannels, 2: chain rule)
+    static bool use_libxc;
 
 #if defined(__CUDA)
     static bool use_gpu_pbe(const ModulePW::PW_Basis& basis);

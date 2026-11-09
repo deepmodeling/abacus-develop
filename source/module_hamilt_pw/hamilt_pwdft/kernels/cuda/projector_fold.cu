@@ -364,8 +364,12 @@ struct ProjectorFold::Impl
         if (off_count != 0)
         {
             const size_t size = size_t(off_count) * fields;
-            gather_irregular_coefficients<<<(size + 255) / 256, 256>>>(device_view(coefficients), device_view(offsite.data),
-                coefficient_leading, off_count, fields, irregular_indices.data);
+            gather_irregular_coefficients<<<(size + 255) / 256, 256>>>(device_view(coefficients),
+                                                                       device_view(offsite.data),
+                                                                       coefficient_leading,
+                                                                       off_count,
+                                                                       fields,
+                                                                       irregular_indices.data);
             hsolver::gemm_op<Complex, GPU>()(nullptr, 'N', 'T', current->plane_waves, fields, off_count,
                 &one, irregular.data, current->plane_waves, offsite.data, fields, &one, output, output_leading);
         }

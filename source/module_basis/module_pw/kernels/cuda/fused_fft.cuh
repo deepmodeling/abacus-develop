@@ -13,6 +13,14 @@ namespace ModulePW
 {
 namespace
 {
+// cuFFTDx descriptors share a fixed register/shared-memory budget. These
+// limits bound the number of simultaneous transforms per block.
+constexpr int max_ffts_per_block = 16;
+constexpr int x_register_budget = 128;
+constexpr int y_register_budget = 256;
+constexpr int shared_memory_budget = 49152; // 48 KiB
+constexpr int max_elements_per_thread = 10;
+constexpr int single_field_threshold = 16;
 
 // The inverse transform expands occupied x-y sticks into complete y-z slabs.
 // The forward transform retains only the sticks required by the plane-wave basis.
@@ -337,13 +345,17 @@ struct FusedTransform
     // the largest legal count up to ten, retaining the library default only
     // when no smaller descriptor exists. Single-field stick transforms use
     // their own register budget.
-    static constexpr int elements = fft_elements_at_most<Default, SM, std::min(10, suggested)>();
-    static constexpr int single_elements = suggested > 16 && suggested % 2 == 0
-                                          && cufftdx::is_supported<Half, SM>::value ? suggested / 2 : suggested;
+    static constexpr int elements = fft_elements_at_most<Default, SM, std::min(max_elements_per_thread, suggested)>();
+    static constexpr int single_elements
+        = suggested > single_field_threshold&& suggested % 2 == 0 && cufftdx::is_supported<Half, SM>::value
+              ? suggested / 2
+              : suggested;
     using Base = decltype(Common() + cufftdx::ElementsPerThread<elements>());
     using Geometry = decltype(Base() + cufftdx::Direction<cufftdx::fft_direction::inverse>());
     static constexpr int stride = Geometry::stride;
-    static constexpr int batches = std::min({16, std::max(1, 128 / stride), 49152 / (Length * 16)});
+    static constexpr int batches = std::min({max_ffts_per_block,
+                                             std::max(1, x_register_budget / stride),
+                                             shared_memory_budget / (Length * max_ffts_per_block)});
     using Inverse = decltype(Base() + cufftdx::Direction<cufftdx::fft_direction::inverse>()
                             + cufftdx::FFTsPerBlock<batches>());
     using Forward = decltype(Base() + cufftdx::Direction<cufftdx::fft_direction::forward>()
@@ -352,7 +364,9 @@ struct FusedTransform
     using YBase = decltype(Common() + cufftdx::ElementsPerThread<single_elements>());
     using YGeometry = decltype(YBase() + cufftdx::Direction<cufftdx::fft_direction::inverse>());
     static constexpr int y_stride = YGeometry::stride;
-    static constexpr int y_batches = std::min({16, std::max(1, 256 / y_stride), 49152 / (Length * 16)});
+    static constexpr int y_batches = std::min({max_ffts_per_block,
+                                               std::max(1, y_register_budget / y_stride),
+                                               shared_memory_budget / (Length * max_ffts_per_block)});
     using YInverse = decltype(YBase() + cufftdx::Direction<cufftdx::fft_direction::inverse>()
                              + cufftdx::FFTsPerBlock<y_batches>());
     using YForward = decltype(YBase() + cufftdx::Direction<cufftdx::fft_direction::forward>()
@@ -477,8 +491,9 @@ struct ZTransferTransform
     using Base = decltype(typename Production::Common()
                          + cufftdx::ElementsPerThread<Production::single_elements>());
     using Geometry = decltype(Base() + cufftdx::Direction<cufftdx::fft_direction::inverse>());
-    static constexpr int batches = std::min({16, std::max(1, 256 / int(Geometry::stride)),
-                                             49152 / (Length * 16)});
+    static constexpr int batches = std::min({max_ffts_per_block,
+                                             std::max(1, y_register_budget / int(Geometry::stride)),
+                                             shared_memory_budget / (Length * max_ffts_per_block)});
     using Inverse = decltype(Base() + cufftdx::Direction<cufftdx::fft_direction::inverse>()
                             + cufftdx::FFTsPerBlock<batches>());
     using Forward = decltype(Base() + cufftdx::Direction<cufftdx::fft_direction::forward>()

@@ -225,7 +225,7 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 	
 	if(func_type == 0 || func_type == 1) { return; } // none or LDA functional
 
-	ModuleBase::timer::tick("XC_Functional", "gradcorr");
+    ModuleBase::timer::tick("XC_Functional", "gradcorr");
 #if defined(__CUDA)
     if (!is_stress && use_gpu_pbe(*rhopw))
     {
@@ -234,10 +234,10 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
         return;
     }
 #endif
-	ModuleBase::timer::tick("XC_Functional", "gradient_setup");
+    ModuleBase::timer::tick("XC_Functional", "gradient_setup");
 
-	bool igcc_is_lyp = false;
-	if( func_id[1] == XC_GGA_C_LYP) { igcc_is_lyp = true; }
+    bool igcc_is_lyp = false;
+    if( func_id[1] == XC_GGA_C_LYP) { igcc_is_lyp = true; }
 
 	int nspin0 = PARAM.inp.nspin;
 	if(PARAM.inp.nspin==4) { nspin0 =1; }
@@ -397,11 +397,11 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 
 	}
 
-	ModuleBase::timer::tick("XC_Functional", "gradient_setup");
-	ModuleBase::timer::tick("XC_Functional", "functional_eval");
+    ModuleBase::timer::tick("XC_Functional", "gradient_setup");
+    ModuleBase::timer::tick("XC_Functional", "functional_eval");
 
-	const double epsr = 1.0e-6;
-	const double epsg = 1.0e-10;
+    const double epsr = 1.0e-6;
+    const double epsg = 1.0e-10;
 
 	double vtxcgc = 0.0;
 	double etxcgc = 0.0;
@@ -704,14 +704,14 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 }
 #endif
 
-	ModuleBase::timer::tick("XC_Functional", "functional_eval");
-	ModuleBase::timer::tick("XC_Functional", "potential_assembly");
+ModuleBase::timer::tick("XC_Functional", "functional_eval");
+ModuleBase::timer::tick("XC_Functional", "potential_assembly");
 
-	//std::cout << "\n vtxcgc=" << vtxcgc;
-	//std::cout << "\n etxcgc=" << etxcgc << std::endl;
+// std::cout << "\n vtxcgc=" << vtxcgc;
+// std::cout << "\n etxcgc=" << etxcgc << std::endl;
 
-	if(!is_stress)
-	{
+if (!is_stress)
+{
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 1024)
 #endif
@@ -805,14 +805,16 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 				}
 			}
 		}
-	}
-	ModuleBase::timer::tick("XC_Functional", "potential_assembly");
+}
+ModuleBase::timer::tick("XC_Functional", "potential_assembly");
 
-	// deacllocate
-	delete[] rhotmp1;
-	delete[] rhogsum1;
-	delete[] gdr1;
-	if(!is_stress) { delete[] h1;
+// deacllocate
+delete[] rhotmp1;
+delete[] rhogsum1;
+delete[] gdr1;
+if (!is_stress)
+{
+    delete[] h1;
 }
 
 	if(PARAM.inp.nspin==2)
@@ -841,8 +843,8 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 		delete[] gdr2;
 	}
 
-	ModuleBase::timer::tick("XC_Functional", "gradcorr");
-	return;
+    ModuleBase::timer::tick("XC_Functional", "gradcorr");
+    return;
 }
 
 template <typename T, typename Device, typename Real>

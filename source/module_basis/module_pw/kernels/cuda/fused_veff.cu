@@ -9,6 +9,10 @@ namespace ModulePW
 {
 namespace
 {
+constexpr int threads_per_block = 256;
+// A smooth length supported by the fused registry proves that the optional
+// cuFFTDx images were built and are loadable on this device.
+constexpr int capability_probe_length = 16;
 
 void check_launch()
 {
@@ -59,40 +63,83 @@ __global__ void add_spinor(int npw, int stride, int plane, int left, int right, 
 
 bool fused_veff_supported()
 {
-    return fused_fft(16) != nullptr;
+    return fused_fft(capability_probe_length) != nullptr;
 }
 
 void pack_spinor_grid(int npw, int stride, int plane, int left, int right, const int* index,
                      const std::complex<double>* input, std::complex<double>* up, std::complex<double>* down)
 {
-    pack_spinor<true><<<(npw + 255) / 256, 256>>>(npw, stride, plane, left, right, index,
-        reinterpret_cast<const double2*>(input), reinterpret_cast<double2*>(up), reinterpret_cast<double2*>(down), 0);
+    pack_spinor<true><<<(npw + threads_per_block - 1) / threads_per_block, threads_per_block>>>(
+        npw,
+        stride,
+        plane,
+        left,
+        right,
+        index,
+        reinterpret_cast<const double2*>(input),
+        reinterpret_cast<double2*>(up),
+        reinterpret_cast<double2*>(down),
+        0);
     check_launch();
 }
 
 void add_spinor_grid(int npw, int stride, int plane, int left, int right, int nxyz, const int* index,
                     const std::complex<double>* up, const std::complex<double>* down, std::complex<double>* output)
 {
-    add_spinor<true><<<(npw + 255) / 256, 256>>>(npw, stride, plane, left, right, nxyz, index,
-        reinterpret_cast<const thrust::complex<double>*>(up), reinterpret_cast<const thrust::complex<double>*>(down),
-        reinterpret_cast<thrust::complex<double>*>(output), 0);
+    add_spinor<true><<<(npw + threads_per_block - 1) / threads_per_block, threads_per_block>>>(
+        npw,
+        stride,
+        plane,
+        left,
+        right,
+        nxyz,
+        index,
+        reinterpret_cast<const thrust::complex<double>*>(up),
+        reinterpret_cast<const thrust::complex<double>*>(down),
+        reinterpret_cast<thrust::complex<double>*>(output),
+        0);
     check_launch();
 }
 
 void pack_spinor_sticks(int npw, int stride, const int* index, const std::complex<double>* input,
                         std::complex<double>* up, std::complex<double>* down, int bands, int stick_size)
 {
-    pack_spinor<false><<<dim3((npw + 255) / 256, bands), 256>>>(npw, stride, 0, 0, 0, index,
-        reinterpret_cast<const double2*>(input), reinterpret_cast<double2*>(up), reinterpret_cast<double2*>(down), stick_size);
+    pack_spinor<false><<<dim3((npw + threads_per_block - 1) / threads_per_block, bands), threads_per_block>>>(
+        npw,
+        stride,
+        0,
+        0,
+        0,
+        index,
+        reinterpret_cast<const double2*>(input),
+        reinterpret_cast<double2*>(up),
+        reinterpret_cast<double2*>(down),
+        stick_size);
     check_launch();
 }
 
-void add_spinor_sticks(int npw, int stride, int nxyz, const int* index,
-                       const std::complex<double>* up, const std::complex<double>* down, std::complex<double>* output, int bands, int stick_size)
+void add_spinor_sticks(int npw,
+                       int stride,
+                       int nxyz,
+                       const int* index,
+                       const std::complex<double>* up,
+                       const std::complex<double>* down,
+                       std::complex<double>* output,
+                       int bands,
+                       int stick_size)
 {
-    add_spinor<false><<<dim3((npw + 255) / 256, bands), 256>>>(npw, stride, 0, 0, 0, nxyz, index,
-        reinterpret_cast<const thrust::complex<double>*>(up), reinterpret_cast<const thrust::complex<double>*>(down),
-        reinterpret_cast<thrust::complex<double>*>(output), stick_size);
+    add_spinor<false><<<dim3((npw + threads_per_block - 1) / threads_per_block, bands), threads_per_block>>>(
+        npw,
+        stride,
+        0,
+        0,
+        0,
+        nxyz,
+        index,
+        reinterpret_cast<const thrust::complex<double>*>(up),
+        reinterpret_cast<const thrust::complex<double>*>(down),
+        reinterpret_cast<thrust::complex<double>*>(output),
+        stick_size);
     check_launch();
 }
 

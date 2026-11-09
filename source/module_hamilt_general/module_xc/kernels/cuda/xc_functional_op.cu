@@ -9,6 +9,11 @@
 namespace hamilt {
 
 namespace {
+constexpr double pi34 = 0.62035049089940; // (3 / (4 * pi))^(1/3)
+constexpr double density_floor = 1e-10;
+constexpr double correlation_density_floor = 1e-6;
+constexpr double magnetization_floor = 1e-12;
+constexpr double zeta_clip = 1e-6;
 
 __global__ void density_gradient(int npw, int component, const int* index,
                                 const double* gcar, const thrust::complex<double>* rhog,
@@ -131,7 +136,7 @@ __global__ void spin_gradient(int size, int spin, int component, double scale,
     else
     {
         const double norm = magnetic_norm(size, ir, rho);
-        const double direction = norm > 1e-12 ? rho[spin * size + ir] / norm : 0.0;
+        const double direction = norm > magnetization_floor ? rho[spin * size + ir] / norm : 0.0;
         gradient[3 * ir + component] += value * direction;
         gradient[3 * (size + ir) + component] -= value * direction;
     }
@@ -143,9 +148,12 @@ __device__ void local_pbe_spin(int size, int ir, const double* rho, const double
     for (int spin = 0; spin < 4; ++spin) { potential[spin * size + ir] = 0.0; }
     const double density = rho[ir] + core[ir];
     const double absolute_density = fabs(density);
-    if (absolute_density <= 1e-10) { return; }
+    if (absolute_density <= density_floor)
+    {
+        return;
+    }
     const double zeta = fmin(norm / absolute_density, 1.0);
-    const double rs = 0.62035049089940 / pow(absolute_density, 1.0 / 3.0);
+    const double rs = pi34 / pow(absolute_density, 1.0 / 3.0);
     double exchange, correlation, exchange_up, exchange_down, correlation_up, correlation_down;
     xc_math::slater_spin(absolute_density, zeta, exchange, exchange_up, exchange_down);
     xc_math::pw_spin(rs, zeta, correlation, correlation_up, correlation_down);
@@ -155,7 +163,7 @@ __device__ void local_pbe_spin(int size, int ir, const double* rho, const double
     potential[ir] = 2.0 * (0.5 * (up + down));
     potential_energy = potential[ir] * rho[ir];
     const double spin_potential = 0.5 * (up - down);
-    if (norm > 1e-10)
+    if (norm > density_floor)
     {
         for (int spin = 1; spin < 4; ++spin)
         {
@@ -189,24 +197,24 @@ __global__ void pbe_spin(int size, const double* rho, const double* core, double
             total_gradient2 += sum * sum;
         }
         double sxup = 0.0, sxdw = 0.0, v1xup = 0.0, v1xdw = 0.0, v2xup = 0.0, v2xdw = 0.0;
-        if (total > 1e-10)
+        if (total > density_floor)
         {
-            if (up > 1e-10 && sqrt(fabs(gu2)) > 1e-10)
+            if (up > density_floor && sqrt(fabs(gu2)) > density_floor)
             {
                 xc_math::pbex(2.0 * up, 4.0 * gu2, 0, sxup, v1xup, v2xup);
             }
-            if (down > 1e-10 && sqrt(fabs(gd2)) > 1e-10)
+            if (down > density_floor && sqrt(fabs(gd2)) > density_floor)
             {
                 xc_math::pbex(2.0 * down, 4.0 * gd2, 0, sxdw, v1xdw, v2xdw);
             }
         }
         double sc = 0.0, v1cup = 0.0, v1cdw = 0.0, v2c = 0.0;
-        if (total > 1e-6)
+        if (total > correlation_density_floor)
         {
             double zeta = fabs((up - down) / total);
-            if (zeta - 1.0 <= 1e-10 && sqrt(fabs(total_gradient2)) > 1e-10)
+            if (zeta - 1.0 <= density_floor && sqrt(fabs(total_gradient2)) > density_floor)
             {
-                zeta = fmin(zeta, 1.0 - 1e-6);
+                zeta = fmin(zeta, 1.0 - zeta_clip);
                 xc_math::pbec_spin(total, zeta, total_gradient2, 1, sc, v1cup, v1cdw, v2c);
             }
         }
@@ -215,7 +223,7 @@ __global__ void pbe_spin(int size, const double* rho, const double* core, double
         potential[ir] += 0.5 * (vu + vd);
         for (int spin = 1; spin < 4; ++spin)
         {
-            const double direction = norm > 1e-12 ? rho[spin * size + ir] / norm : 0.0;
+            const double direction = norm > magnetization_floor ? rho[spin * size + ir] / norm : 0.0;
             potential[spin * size + ir] += 0.5 * (vu - vd) * direction;
         }
         // The same storage holds gradients before evaluation and fluxes afterwards.
@@ -249,7 +257,7 @@ __global__ void pack_spin_flux(int size, int spin, int component, const double* 
     if (spin != 0)
     {
         const double norm = magnetic_norm(size, ir, rho);
-        const double direction = norm > 1e-12 ? rho[spin * size + ir] / norm : 0.0;
+        const double direction = norm > magnetization_floor ? rho[spin * size + ir] / norm : 0.0;
         value = 0.5 * (up - down) * direction;
     }
     grid[ir] = thrust::complex<double>(value, 0.0);
@@ -273,7 +281,7 @@ __global__ void apply_spin_divergence(int size, int spin, double scale,
         else
         {
             const double norm = magnetic_norm(size, ir, rho);
-            const double direction = norm > 1e-12 ? rho[spin * size + ir] / norm : 0.0;
+            const double direction = norm > magnetization_floor ? rho[spin * size + ir] / norm : 0.0;
             magnetic_divergence[ir] += value * direction;
         }
     }
@@ -296,7 +304,7 @@ __global__ void finish_spin_potential(int size, const double* rho, const double*
         const double value = magnetic_divergence[ir];
         for (int spin = 1; spin < 4; ++spin)
         {
-            const double direction = norm > 1e-12 ? rho[spin * size + ir] / norm : 0.0;
+            const double direction = norm > magnetization_floor ? rho[spin * size + ir] / norm : 0.0;
             potential[spin * size + ir] -= value * direction;
         }
         potential_energy = value * norm;
@@ -355,21 +363,37 @@ void xc_pack_density_gpu(int size, const double* density, std::complex<double>* 
     cudaCheckOnDebug();
 }
 
-void xc_gather_density_gpu(int npw, int nxyz, const int* index, const std::complex<double>* grid, std::complex<double>* reciprocal)
+void xc_gather_density_gpu(int npw,
+                           int nxyz,
+                           const int* index,
+                           const std::complex<double>* grid,
+                           std::complex<double>* reciprocal)
 {
     gather_density<<<xc_reduction_size_gpu(npw), THREADS_PER_BLOCK>>>(
-        npw, nxyz, index, reinterpret_cast<const thrust::complex<double>*>(grid), reinterpret_cast<thrust::complex<double>*>(reciprocal));
+        npw,
+        nxyz,
+        index,
+        reinterpret_cast<const thrust::complex<double>*>(grid),
+        reinterpret_cast<thrust::complex<double>*>(reciprocal));
     cudaCheckOnDebug();
 }
 
 void xc_add_reciprocal_gpu(int npw, const std::complex<double>* source, std::complex<double>* destination)
 {
     add_reciprocal<<<xc_reduction_size_gpu(npw), THREADS_PER_BLOCK>>>(
-        npw, reinterpret_cast<const thrust::complex<double>*>(source), reinterpret_cast<thrust::complex<double>*>(destination));
+        npw,
+        reinterpret_cast<const thrust::complex<double>*>(source),
+        reinterpret_cast<thrust::complex<double>*>(destination));
     cudaCheckOnDebug();
 }
 
-void xc_spin_gradient_gpu(int size, int spin, int component, double scale, const std::complex<double>* grid, const double* rho, double* gradient)
+void xc_spin_gradient_gpu(int size,
+                          int spin,
+                          int component,
+                          double scale,
+                          const std::complex<double>* grid,
+                          const double* rho,
+                          double* gradient)
 {
     spin_gradient<<<xc_reduction_size_gpu(size), THREADS_PER_BLOCK>>>(
         size, spin, component, scale, reinterpret_cast<const thrust::complex<double>*>(grid), rho, gradient);
@@ -384,21 +408,44 @@ void xc_pbe_spin_gpu(int size, const double* rho, const double* core, double* gr
     cudaCheckOnDebug();
 }
 
-void xc_pack_spin_flux_gpu(int size, int spin, int component, const double* rho, const double* flux, std::complex<double>* grid)
+void xc_pack_spin_flux_gpu(int size,
+                           int spin,
+                           int component,
+                           const double* rho,
+                           const double* flux,
+                           std::complex<double>* grid)
 {
     pack_spin_flux<<<xc_reduction_size_gpu(size), THREADS_PER_BLOCK>>>(
         size, spin, component, rho, flux, reinterpret_cast<thrust::complex<double>*>(grid));
     cudaCheckOnDebug();
 }
 
-void xc_apply_spin_divergence_gpu(int size, int spin, double scale, const std::complex<double>* grid, const double* rho, double* potential, double* magnetic_divergence, double* sums)
+void xc_apply_spin_divergence_gpu(int size,
+                                  int spin,
+                                  double scale,
+                                  const std::complex<double>* grid,
+                                  const double* rho,
+                                  double* potential,
+                                  double* magnetic_divergence,
+                                  double* sums)
 {
     apply_spin_divergence<<<xc_reduction_size_gpu(size), THREADS_PER_BLOCK>>>(
-        size, spin, scale, reinterpret_cast<const thrust::complex<double>*>(grid), rho, potential, magnetic_divergence, sums);
+        size,
+        spin,
+        scale,
+        reinterpret_cast<const thrust::complex<double>*>(grid),
+        rho,
+        potential,
+        magnetic_divergence,
+        sums);
     cudaCheckOnDebug();
 }
 
-void xc_finish_spin_potential_gpu(int size, const double* rho, const double* magnetic_divergence, double* potential, double* sums)
+void xc_finish_spin_potential_gpu(int size,
+                                  const double* rho,
+                                  const double* magnetic_divergence,
+                                  double* potential,
+                                  double* sums)
 {
     finish_spin_potential<<<xc_reduction_size_gpu(size), THREADS_PER_BLOCK>>>(
         size, rho, magnetic_divergence, potential, sums);

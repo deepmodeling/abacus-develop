@@ -71,7 +71,13 @@ public:
   /// update the charge density and psi for PW base with new lambda
   void update_psi_charge(const ModuleBase::Vector3<double>* delta_lambda, bool pw_solve = true);
 
-  void calculate_delta_hcc(std::complex<double>* h_tmp, const std::complex<double>* becp_k, const ModuleBase::Vector3<double>* delta_lambda, const int nbands, const int nkb, const int* nh_iat, const int sign);
+  void calculate_delta_hcc(std::complex<double>* h_tmp,
+                           const std::complex<double>* becp_k,
+                           const ModuleBase::Vector3<double>* delta_lambda,
+                           const int nbands,
+                           const int nkb,
+                           const int* nh_iat,
+                           const int sign);
 
   /// lambda loop helper functions
   bool check_rms_stop(int outer_step, int i_step, double rms_error, double duration, double total_duration);

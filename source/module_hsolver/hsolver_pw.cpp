@@ -637,24 +637,25 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
         const int nbasis = psi.get_nbasis();
         // hpsi_func (X, HX, ld, nvec) -> HX = H(X), X and HX blockvectors of size ld x nvec
         const int ik = psi.get_current_k();
-        auto hpsi_func = [hm, ngk_vector, basis_observer, ik](T* psi_in, T* hpsi_out, const int ld_psi, const int nvec) {
-            ModuleBase::timer::tick("DavSubspace", "hpsi_func");
+        auto hpsi_func
+            = [hm, ngk_vector, basis_observer, ik](T* psi_in, T* hpsi_out, const int ld_psi, const int nvec) {
+                  ModuleBase::timer::tick("DavSubspace", "hpsi_func");
 
-            // Convert "pointer data stucture" to a psi::Psi object
-            auto psi_iter_wrapper = psi::Psi<T, Device>(psi_in, 1, nvec, ld_psi, ngk_vector);
+                  // Convert "pointer data stucture" to a psi::Psi object
+                  auto psi_iter_wrapper = psi::Psi<T, Device>(psi_in, 1, nvec, ld_psi, ngk_vector);
 
-            psi::Range bands_range(true, 0, 0, nvec - 1);
+                  psi::Range bands_range(true, 0, 0, nvec - 1);
 
-            using hpsi_info = typename hamilt::Operator<T, Device>::hpsi_info;
-            hpsi_info info(&psi_iter_wrapper, bands_range, hpsi_out);
-            hm->ops->hPsi(info);
-            if (basis_observer)
-            {
-                basis_observer->capture(ik, 0, nvec, false);
-            }
+                  using hpsi_info = typename hamilt::Operator<T, Device>::hpsi_info;
+                  hpsi_info info(&psi_iter_wrapper, bands_range, hpsi_out);
+                  hm->ops->hPsi(info);
+                  if (basis_observer)
+                  {
+                      basis_observer->capture(ik, 0, nvec, false);
+                  }
 
-            ModuleBase::timer::tick("DavSubspace", "hpsi_func");
-        };
+                  ModuleBase::timer::tick("DavSubspace", "hpsi_func");
+              };
         DiagoBPCG<T, Device> bpcg(pre_condition.data());
         bpcg.init_iter(nband, nbasis);
         bpcg.diag(hpsi_func, psi.get_pointer(), eigenvalue, this->ethr_band);
@@ -664,20 +665,21 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
     {
         // hpsi_func (X, HX, ld, nvec) -> HX = H(X), X and HX blockvectors of size ld x nvec
         const int ik = psi.get_current_k();
-        auto hpsi_func = [hm, ngk_vector, basis_observer, ik](T* psi_in, T* hpsi_out, const int ld_psi, const int nvec) {
-            ModuleBase::timer::tick("DavSubspace", "hpsi_func");
+        auto hpsi_func
+            = [hm, ngk_vector, basis_observer, ik](T* psi_in, T* hpsi_out, const int ld_psi, const int nvec) {
+                  ModuleBase::timer::tick("DavSubspace", "hpsi_func");
 
-            // Convert "pointer data stucture" to a psi::Psi object
-            auto psi_iter_wrapper = psi::Psi<T, Device>(psi_in, 1, nvec, ld_psi, ngk_vector);
+                  // Convert "pointer data stucture" to a psi::Psi object
+                  auto psi_iter_wrapper = psi::Psi<T, Device>(psi_in, 1, nvec, ld_psi, ngk_vector);
 
-            psi::Range bands_range(true, 0, 0, nvec - 1);
+                  psi::Range bands_range(true, 0, 0, nvec - 1);
 
-            using hpsi_info = typename hamilt::Operator<T, Device>::hpsi_info;
-            hpsi_info info(&psi_iter_wrapper, bands_range, hpsi_out);
-            hm->ops->hPsi(info);
+                  using hpsi_info = typename hamilt::Operator<T, Device>::hpsi_info;
+                  hpsi_info info(&psi_iter_wrapper, bands_range, hpsi_out);
+                  hm->ops->hPsi(info);
 
-            ModuleBase::timer::tick("DavSubspace", "hpsi_func");
-        };
+                  ModuleBase::timer::tick("DavSubspace", "hpsi_func");
+              };
         bool scf = this->calculation_type == "nscf" ? false : true;
 
         if (!davidson)
@@ -711,8 +713,16 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
                 basis_observer->rotate(ik, size, coefficients, leading, final);
             };
         }
-        const int ntry_return = davidson->diag(hpsi_func, psi.get_pointer(), psi.get_nbasis(), eigenvalue,
-                                               this->ethr_band, scf, initial_h, initial_s, initial_action, rotate_basis);
+        const int ntry_return = davidson->diag(hpsi_func,
+                                               psi.get_pointer(),
+                                               psi.get_nbasis(),
+                                               eigenvalue,
+                                               this->ethr_band,
+                                               scf,
+                                               initial_h,
+                                               initial_s,
+                                               initial_action,
+                                               rotate_basis);
         if (ntry_return != -1)
         {
             DiagoIterAssist<T, Device>::avg_iter += static_cast<double>(ntry_return);
@@ -750,20 +760,21 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
         /// wrap hpsi into lambda function, Matrix \times blockvector
         // hpsi_func (X, HX, ld, nvec) -> HX = H(X), X and HX blockvectors of size ld x nvec
         const int ik = psi.get_current_k();
-        auto hpsi_func = [hm, ngk_vector, basis_observer, ik](T* psi_in, T* hpsi_out, const int ld_psi, const int nvec) {
-            ModuleBase::timer::tick("David", "hpsi_func");
+        auto hpsi_func
+            = [hm, ngk_vector, basis_observer, ik](T* psi_in, T* hpsi_out, const int ld_psi, const int nvec) {
+                  ModuleBase::timer::tick("David", "hpsi_func");
 
-            // Convert pointer of psi_in to a psi::Psi object
-            auto psi_iter_wrapper = psi::Psi<T, Device>(psi_in, 1, nvec, ld_psi, ngk_vector);
+                  // Convert pointer of psi_in to a psi::Psi object
+                  auto psi_iter_wrapper = psi::Psi<T, Device>(psi_in, 1, nvec, ld_psi, ngk_vector);
 
-            psi::Range bands_range(true, 0, 0, nvec - 1);
+                  psi::Range bands_range(true, 0, 0, nvec - 1);
 
-            using hpsi_info = typename hamilt::Operator<T, Device>::hpsi_info;
-            hpsi_info info(&psi_iter_wrapper, bands_range, hpsi_out);
-            hm->ops->hPsi(info);
+                  using hpsi_info = typename hamilt::Operator<T, Device>::hpsi_info;
+                  hpsi_info info(&psi_iter_wrapper, bands_range, hpsi_out);
+                  hm->ops->hPsi(info);
 
-            ModuleBase::timer::tick("David", "hpsi_func");
-        };
+                  ModuleBase::timer::tick("David", "hpsi_func");
+              };
 
         /// wrap spsi into lambda function, Matrix \times blockvector
         /// spsi(X, SX, ld, nvec)

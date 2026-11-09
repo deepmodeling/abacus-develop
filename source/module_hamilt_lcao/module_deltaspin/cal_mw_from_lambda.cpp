@@ -425,7 +425,8 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(int 
                     memcpy(s_tmp.data(), s_k, sizeof(std::complex<double>) * nbands * nbands);
                     // update h_tmp by delta_lambda
                     const int sign = this->pelec->klist->isk[ik] == 0 ? 1 : -1;
-                    if (i_step != -1) this->calculate_delta_hcc(h_tmp.data(), becp_k, delta_lambda, nbands, nkb, nh_iat, sign);
+                    if (i_step != -1)
+                        this->calculate_delta_hcc(h_tmp.data(), becp_k, delta_lambda, nbands, nkb, nh_iat, sign);
 
                     hsolver::DiagoIterAssist<std::complex<double>>::diag_responce(h_tmp.data(),
                                                                                   s_tmp.data(),
@@ -486,7 +487,8 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(int 
                 }
                 std::complex<double>* hpsi_host = nullptr;
 #if defined(__CUDA)
-                if (initial_hs && PARAM.inp.ks_solver == "dav_subspace" && !PARAM.inp.use_paw && !PARAM.globalv.use_uspp)
+                if (initial_hs && PARAM.inp.ks_solver == "dav_subspace" && !PARAM.inp.use_paw
+                    && !PARAM.globalv.use_uspp)
                 {
                     const size_t count = size_t(nbands) * psi_t->get_nbasis() * nk;
                     if (count > this->hpsi_cache_capacity)
@@ -559,13 +561,15 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(int 
                     {
                         /// update H(k) for each k point
                         hamilt_t->updateHk(ik);
-                        typename hamilt::Operator<std::complex<double>, base_device::DEVICE_GPU>::Action projected_action;
+                        typename hamilt::Operator<std::complex<double>, base_device::DEVICE_GPU>::Action
+                            projected_action;
 #if defined(__CUDA)
                         size_t projection_count = 0;
                         if (nonlocal)
                         {
                             projection_count = size_t(nonlocal->get_ppcell()->nkb) * nbands * npol;
-                            projected_action = projected_nonlocal_action(nonlocal, this->nonlocal_projections[ik], nbands, npol);
+                            projected_action
+                                = projected_nonlocal_action(nonlocal, this->nonlocal_projections[ik], nbands, npol);
                         }
 #endif
                         const size_t offset = size_t(ik) * nbands * psi_t->get_nbasis();
@@ -578,7 +582,11 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(int 
                         {
                             this->nonlocal_projections[ik].resize(projection_count);
                             base_device::memory::synchronize_memory_op<Complex, base_device::DEVICE_CPU, GPU>()(
-                                cpu_ctx, ctx, this->nonlocal_projections[ik].data(), nonlocal->get_becp(), projection_count);
+                                cpu_ctx,
+                                ctx,
+                                this->nonlocal_projections[ik].data(),
+                                nonlocal->get_becp(),
+                                projection_count);
                         }
 #endif
                         base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_GPU, base_device::DEVICE_GPU>()(ctx, ctx, becp_k, onsite_p->get_becp(), size_becp);
@@ -593,14 +601,21 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(int 
                         response_projectors = this->fixed_overlap->projectors(ik);
                     }
 #endif
-                    base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_GPU, base_device::DEVICE_GPU>()(ctx, ctx, h_tmp, response_h, nbands * nbands);
+                    base_device::memory::synchronize_memory_op<std::complex<double>,
+                                                               base_device::DEVICE_GPU,
+                                                               base_device::DEVICE_GPU>()(ctx,
+                                                                                          ctx,
+                                                                                          h_tmp,
+                                                                                          response_h,
+                                                                                          nbands * nbands);
                     // update h_tmp by delta_lambda
                     const int sign = this->pelec->klist->isk[ik] == 0 ? 1 : -1;
 #if defined(__CUDA)
                     if (field) { field->add(h_tmp, response_projectors, sign); }
                     else
 #endif
-                    if (i_step != -1) this->calculate_delta_hcc(h_tmp, response_projectors, delta_lambda, nbands, nkb, nh_iat, sign);
+                        if (i_step != -1)
+                        this->calculate_delta_hcc(h_tmp, response_projectors, delta_lambda, nbands, nkb, nh_iat, sign);
 
 #if defined(__CUDA)
                     if (batch_response)
@@ -609,20 +624,34 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(int 
                     }
                     else if (this->fixed_overlap)
                     {
-                        this->fixed_overlap->diagonalize(h_tmp, response_projectors, becp_pointer, &this->pelec->ekb(ik, 0));
+                        this->fixed_overlap->diagonalize(h_tmp,
+                                                         response_projectors,
+                                                         becp_pointer,
+                                                         &this->pelec->ekb(ik, 0));
                     }
                     else
 #endif
                     {
-                        base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_GPU, base_device::DEVICE_GPU>()(
-                            ctx, ctx, s_tmp, s_k, nbands * nbands);
+                        base_device::memory::synchronize_memory_op<std::complex<double>,
+                                                                   base_device::DEVICE_GPU,
+                                                                   base_device::DEVICE_GPU>()(ctx,
+                                                                                              ctx,
+                                                                                              s_tmp,
+                                                                                              s_k,
+                                                                                              nbands * nbands);
                         hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_GPU>::diag_responce(
                             h_tmp, s_tmp, nbands, becp_k, becp_pointer, nkb * npol, &this->pelec->ekb(ik, 0));
                     }
 #if defined(__CUDA)
                     if (!batch_response) { moments->capture(ik, becp_pointer); }
 #else
-                    base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_CPU, base_device::DEVICE_GPU>()(cpu_ctx, ctx, &becp_tmp[ik * size_becp], becp_pointer, size_becp);
+                    base_device::memory::synchronize_memory_op<std::complex<double>,
+                                                               base_device::DEVICE_CPU,
+                                                               base_device::DEVICE_GPU>()(cpu_ctx,
+                                                                                          ctx,
+                                                                                          &becp_tmp[ik * size_becp],
+                                                                                          becp_pointer,
+                                                                                          size_becp);
 #endif
                 }
 
@@ -824,10 +853,13 @@ void spinconstrain::SpinConstrain<std::complex<double>>::update_psi_charge(const
                 ? find_nonlocal_operator(hamilt_t) : nullptr;
             const int projection_rows = nonlocal ? nonlocal->get_ppcell()->nkb * npol : 0;
             const size_t projection_count = size_t(projection_rows) * nbands;
-            const bool initial_projections_valid = projection_rows > 0
-                && this->nonlocal_projections.size() == size_t(nk)
-                && std::all_of(this->nonlocal_projections.begin(), this->nonlocal_projections.end(),
-                               [projection_count](const std::vector<Complex>& entry) { return entry.size() == projection_count; });
+            const bool initial_projections_valid
+                = projection_rows > 0 && this->nonlocal_projections.size() == size_t(nk)
+                  && std::all_of(this->nonlocal_projections.begin(),
+                                 this->nonlocal_projections.end(),
+                                 [projection_count](const std::vector<Complex>& entry) {
+                                     return entry.size() == projection_count;
+                                 });
             if (initial_projections_valid)
             {
                 projection_observer.reset(new NonlocalBasisObserver(nonlocal, nbands, npol,
@@ -884,8 +916,12 @@ void spinconstrain::SpinConstrain<std::complex<double>>::update_psi_charge(const
             {
                 std::complex<double>* h_tmp = nullptr;
                 std::complex<double>* s_tmp = nullptr;
-                base_device::memory::resize_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(ctx, h_tmp, nbands * nbands);
-                base_device::memory::resize_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(ctx, s_tmp, nbands * nbands);
+                base_device::memory::resize_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(ctx,
+                                                                                                       h_tmp,
+                                                                                                       nbands * nbands);
+                base_device::memory::resize_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(ctx,
+                                                                                                       s_tmp,
+                                                                                                       nbands * nbands);
                 for (int ik = 0; ik < nk; ++ik)
                 {
                     std::complex<double>* h_k = this->sub_h_save + ik * nbands * nbands;
@@ -894,8 +930,20 @@ void spinconstrain::SpinConstrain<std::complex<double>>::update_psi_charge(const
 
                     psi_t->fix_k(ik);
                     const int sign = this->pelec->klist->isk[ik] == 0 ? 1 : -1;
-                    base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_GPU, base_device::DEVICE_GPU>()(ctx, ctx, h_tmp, h_k, nbands * nbands);
-                    base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_GPU, base_device::DEVICE_GPU>()(ctx, ctx, s_tmp, s_k, nbands * nbands);
+                    base_device::memory::synchronize_memory_op<std::complex<double>,
+                                                               base_device::DEVICE_GPU,
+                                                               base_device::DEVICE_GPU>()(ctx,
+                                                                                          ctx,
+                                                                                          h_tmp,
+                                                                                          h_k,
+                                                                                          nbands * nbands);
+                    base_device::memory::synchronize_memory_op<std::complex<double>,
+                                                               base_device::DEVICE_GPU,
+                                                               base_device::DEVICE_GPU>()(ctx,
+                                                                                          ctx,
+                                                                                          s_tmp,
+                                                                                          s_k,
+                                                                                          nbands * nbands);
                     this->calculate_delta_hcc(h_tmp, becp_k, delta_lambda, nbands, nkb, nh_iat, sign);
                     hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_GPU>::diag_subspace_psi(h_tmp,
                                                                                     s_tmp,

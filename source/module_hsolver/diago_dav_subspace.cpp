@@ -325,7 +325,11 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
         {
             if (!use_selected_basis)
             {
-                syncmem_complex_op()(this->ctx, this->ctx, vcc + i * this->nbase_x, vcc + unconv[i] * this->nbase_x, nbase);
+                syncmem_complex_op()(this->ctx,
+                                     this->ctx,
+                                     vcc + i * this->nbase_x,
+                                     vcc + unconv[i] * this->nbase_x,
+                                     nbase);
             }
             (*eigenvalue_iter)[i] = (*eigenvalue_iter)[unconv[i]];
         }
