@@ -113,7 +113,8 @@ class TdFoldingTest : public testing::Test
                         const auto &r = translations[ir];
                         const double bloch_angle =
                             ModuleBase::TWO_PI * (kpoint.x * r.x + kpoint.y * r.y + kpoint.z * r.z);
-                        const Complex exponent(0.0, bloch_angle + field_angles[ir]);
+                        const double angle = bloch_angle + field_angles[ir];
+                        const Complex exponent(0.0, angle);
                         expected[element] += real_space_value<T>(row, column, ir) * std::exp(exponent);
                     }
                 }

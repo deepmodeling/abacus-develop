@@ -45,3 +45,26 @@ if(ENABLE_MPI)
                  PROCESSORS "${processor_count}" TIMEOUT 60)
   endforeach()
 endif()
+
+# Separate MD -> RT contract; the MD unit target above keeps no RT sources.
+# Register after MD support sources are available; the test lives with RT.
+if(ENABLE_LCAO AND ENABLE_MPI)
+  addtest(
+    TARGET INTEGRATION_MD_RT_boundary
+    KEEP_FEATURE_DEFINITIONS __MPI
+    LIBS parameter psi device container
+    SOURCES ../../source_lcao/module_rt/test/test_md_rt_boundary.cpp
+            ../../source_base/test/mpi_test_main.cpp
+            ../md_base.cpp
+            ../../source_lcao/module_rt/boundary_fix.cpp
+            ../../source_lcao/module_rt/td_folding.cpp
+            ../../source_hamilt/module_hcontainer/base_matrix.cpp
+            ../../source_hamilt/module_hcontainer/atom_pair.cpp
+            ../../source_hamilt/module_hcontainer/hcontainer.cpp
+            ../../source_basis/module_ao/parallel_orbitals.cpp
+            ../../source_base/block_cyclic_distribution.cpp
+            ../../source_cell/magnetism.cpp
+            ../../source_base/parallel_common.cpp
+            ${md_test_depend_files})
+  abacus_add_rt_test_variants(INTEGRATION_MD_RT_boundary "integration;md;rt")
+endif()

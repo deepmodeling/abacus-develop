@@ -143,12 +143,11 @@ addtest(
           ../../../source_hamilt/module_hcontainer/atom_pair.cpp
           ../../../source_hamilt/module_hcontainer/hcontainer.cpp)
 
-foreach(target IN ITEMS MODULE_LCAO_tddft_boundary_fix
-                        MODULE_LCAO_tddft_td_folding)
+function(abacus_add_rt_test_variants target labels)
   set_tests_properties(
     ${target}
     PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=1;MKL_NUM_THREADS=1;I_MPI_PIN=0"
-               LABELS "unit;rt" TIMEOUT 60)
+               LABELS "${labels}" TIMEOUT 60)
   foreach(rank_count IN ITEMS 1 4)
     foreach(thread_count IN ITEMS 1 4)
       if(rank_count EQUAL 1 AND thread_count EQUAL 1)
@@ -168,11 +167,14 @@ foreach(target IN ITEMS MODULE_LCAO_tddft_boundary_fix
           ENVIRONMENT
           "OMP_NUM_THREADS=${thread_count};MKL_NUM_THREADS=1;I_MPI_PIN=0"
           LABELS
-          "unit;rt"
+          "${labels}"
           PROCESSORS
           ${processor_count}
           TIMEOUT
           60)
     endforeach()
   endforeach()
-endforeach()
+endfunction()
+
+abacus_add_rt_test_variants(MODULE_LCAO_tddft_boundary_fix "unit;rt")
+abacus_add_rt_test_variants(MODULE_LCAO_tddft_td_folding "unit;rt")
