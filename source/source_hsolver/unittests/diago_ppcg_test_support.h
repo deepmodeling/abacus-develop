@@ -11,8 +11,6 @@
 
 namespace ppcg_test
 {
-static constexpr double PPCG_PI = 3.14159265358979323846;
-
 using T = std::complex<double>;
 using Real = double;
 
@@ -93,6 +91,7 @@ class DiagoPPCGMatrixTest : public ::testing::Test
 
     void set_laplacian(double scale)
     {
+        const double pi = 3.14159265358979323846;
         const int size = n_dim * n_dim;
         H_mat.assign(size, T(0));
         for (int i = 0; i < n_dim; ++i)
@@ -109,7 +108,7 @@ class DiagoPPCGMatrixTest : public ::testing::Test
         exact.resize(nband);
         for (int k = 0; k < nband; ++k)
         {
-            const double angle = Real(k + 1) * PPCG_PI / Real(n_dim + 1);
+            const double angle = Real(k + 1) * pi / Real(n_dim + 1);
             exact[k] = scale * (2.0 - 2.0 * std::cos(angle));
         }
     }

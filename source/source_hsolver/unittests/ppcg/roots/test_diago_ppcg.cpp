@@ -5,7 +5,6 @@
 #include <string>
 
 using ppcg_test::DiagoPPCGMatrixTest;
-using ppcg_test::PPCG_PI;
 using ppcg_test::Real;
 using ppcg_test::T;
 using ppcg_test::dense_h_multiply;
@@ -389,6 +388,7 @@ TEST(DiagoPPCGRootSelectionTest, LaterCorrectionKeepsLowestRootsAcrossBlocks)
 
 TEST(DiagoPPCGRootSelectionTest, LaterCorrectionsRecoverMultipleComplexGeneralizedRoots)
 {
+    const Real pi = 3.14159265358979323846;
     const int dimension = 6;
     const int bands = 3;
     const Real spectrum[] = {1.0, 2.0, 3.0, 4.0, 5.0, 100.0};
@@ -399,7 +399,7 @@ TEST(DiagoPPCGRootSelectionTest, LaterCorrectionsRecoverMultipleComplexGeneraliz
     {
         for (int row = 0; row < dimension; ++row)
         {
-            const Real angle = 2.0 * PPCG_PI * row * column / dimension;
+            const Real angle = 2.0 * pi * row * column / dimension;
             const T phase(std::cos(angle), std::sin(angle));
             unitary[row + column * dimension] = normalization * phase;
         }

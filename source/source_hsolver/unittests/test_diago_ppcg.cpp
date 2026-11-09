@@ -16,7 +16,6 @@
 #include <complex>
 
 using ppcg_test::DiagoPPCGMatrixTest;
-using ppcg_test::PPCG_PI;
 using ppcg_test::Real;
 using ppcg_test::T;
 using ppcg_test::dense_h_multiply;
@@ -57,22 +56,23 @@ TEST_P(DiagoPPCGLaplacianTest, MatchesAnalyticalEigenvalues)
                       config.ritz_interval, config.eigenvalue_tolerance);
 }
 
-static const PPCGLaplacianCase laplacian_cases[] = {
-    // name, dimension, bands, seed, band threshold, scale, diag threshold, budget, block, Ritz interval, tolerance
-    {"Tridiagonal10", 10, 3, 42, 1e-10, 1.0, 1e-12, 100, 4, 4, 1e-8},
-    {"SingleBand", 5, 1, 42, 1e-10, 1.0, 1e-12, 50, 1, 1, 1e-8},
-    {"AllBands", 3, 3, 101, 1e-10, 1.0, 1e-12, 100, 3, 3, 1e-8},
-    {"Laplacian15", 15, 4, 202, 1e-10, 1.0, 1e-12, 120, 4, 4, 1e-8},
-    {"Laplacian20", 20, 5, 789, 1e-10, 1.0, 1e-12, 150, 5, 5, 1e-8},
-    {"ScaledLaplacian", 8, 3, 808, 1e-8, 100.0, 1e-10, 120, 4, 4, 1e-6},
-    {"ManyBands", 12, 4, 909, 1e-10, 1.0, 1e-12, 150, 4, 4, 1e-8},
-    {"RitzEveryIteration", 8, 3, 111, 1e-10, 1.0, 1e-12, 100, 3, 1, 1e-8},
-    {"TightThreshold", 6, 2, 333, 1e-14, 1.0, 1e-14, 200, 3, 3, 1e-8}};
-
 INSTANTIATE_TEST_SUITE_P(
     Laplacians,
     DiagoPPCGLaplacianTest,
-    ::testing::ValuesIn(laplacian_cases),
+    ([] {
+        const PPCGLaplacianCase laplacian_cases[] = {
+            // name, dimension, bands, seed, band threshold, scale, diag threshold, budget, block, Ritz interval, tolerance
+            {"Tridiagonal10", 10, 3, 42, 1e-10, 1.0, 1e-12, 100, 4, 4, 1e-8},
+            {"SingleBand", 5, 1, 42, 1e-10, 1.0, 1e-12, 50, 1, 1, 1e-8},
+            {"AllBands", 3, 3, 101, 1e-10, 1.0, 1e-12, 100, 3, 3, 1e-8},
+            {"Laplacian15", 15, 4, 202, 1e-10, 1.0, 1e-12, 120, 4, 4, 1e-8},
+            {"Laplacian20", 20, 5, 789, 1e-10, 1.0, 1e-12, 150, 5, 5, 1e-8},
+            {"ScaledLaplacian", 8, 3, 808, 1e-8, 100.0, 1e-10, 120, 4, 4, 1e-6},
+            {"ManyBands", 12, 4, 909, 1e-10, 1.0, 1e-12, 150, 4, 4, 1e-8},
+            {"RitzEveryIteration", 8, 3, 111, 1e-10, 1.0, 1e-12, 100, 3, 1, 1e-8},
+            {"TightThreshold", 6, 2, 333, 1e-14, 1.0, 1e-14, 200, 3, 3, 1e-8}};
+        return ::testing::ValuesIn(laplacian_cases);
+    }()),
     [](const ::testing::TestParamInfo<PPCGLaplacianCase>& info) { return info.param.name; });
 
 // Test fixture: 2×2 matrix — smallest non-trivial case
@@ -252,9 +252,10 @@ class DiagoPPCGGeneralizedTest : public DiagoPPCGMatrixTest,
         }
         if (config.tridiagonal)
         {
+            const Real pi = 3.14159265358979323846;
             for (int k = 0; k < nband; ++k)
             {
-                const Real theta = Real(k + 1) * PPCG_PI / Real(n_dim + 1);
+                const Real theta = Real(k + 1) * pi / Real(n_dim + 1);
                 const Real cosine = std::cos(theta);
                 exact[k] = (2.0 - 2.0 * cosine) / (1.0 + 0.4 * cosine);
             }
@@ -393,15 +394,16 @@ TEST_P(DiagoPPCGGeneralizedTest, EigenpairsAndSOrthogonality)
     EXPECT_LE(iterations, iteration_budget);
 }
 
-static const PPCGOverlapCase generalized_overlap_cases[] = {
-    // name, seed, bands, leading dimension, iteration budget, tridiagonal, residual tolerance
-    {"Diagonal", 333, 3, 8, 100, false, 1e-6},
-    {"Tridiagonal", 444, 2, 6, 150, true, 1e-8}};
-
 INSTANTIATE_TEST_SUITE_P(
     OverlapOperators,
     DiagoPPCGGeneralizedTest,
-    ::testing::ValuesIn(generalized_overlap_cases),
+    ([] {
+        const PPCGOverlapCase generalized_overlap_cases[] = {
+            // name, seed, bands, leading dimension, iteration budget, tridiagonal, residual tolerance
+            {"Diagonal", 333, 3, 8, 100, false, 1e-6},
+            {"Tridiagonal", 444, 2, 6, 150, true, 1e-8}};
+        return ::testing::ValuesIn(generalized_overlap_cases);
+    }()),
     [](const ::testing::TestParamInfo<PPCGOverlapCase>& info) { return info.param.name; });
 
 // Test fixture: eigenvector quality — verify Hψ ≈ εψ and ψ^H ψ = I
@@ -422,6 +424,7 @@ TEST_F(DiagoPPCGMatrixTest, EigenvectorQuality)
 // Wider bandwidth (5 vs 3) tests the solver with more off-diagonal coupling.
 TEST_F(DiagoPPCGMatrixTest, SquaredLaplacian)
 {
+    const Real pi = 3.14159265358979323846;
     initialize(8, 4, 505, 1e-10);
     // H = T² where T is the tridiagonal Laplacian (2 on diag, -1 on off-diag).
     // The corners of T² have diag=5 (not 6) since (T²)[0,0] = 2² + (-1)² = 5.
@@ -456,7 +459,7 @@ TEST_F(DiagoPPCGMatrixTest, SquaredLaplacian)
     exact.resize(nband);
     for (int k = 0; k < nband; ++k)
     {
-        Real theta = Real(k + 1) * PPCG_PI / Real(2 * (n_dim + 1));
+        Real theta = Real(k + 1) * pi / Real(2 * (n_dim + 1));
         Real s = std::sin(theta);
         exact[k] = Real(16) * s * s * s * s;
     }
@@ -522,6 +525,7 @@ TEST_F(DiagoPPCGMatrixTest, ScalarMatrix)
 // Eigenvalues: λ_k = 2 - 2·cos(k·π/n), k=0,1,...,n-1
 TEST_F(DiagoPPCGMatrixTest, NeumannZeroEigenvalue)
 {
+    const Real pi = 3.14159265358979323846;
     initialize(8, 4, 222, 1e-10);
     H_mat.assign(n_dim * n_dim, T(0));
     for (int i = 0; i < n_dim; ++i)
@@ -543,7 +547,7 @@ TEST_F(DiagoPPCGMatrixTest, NeumannZeroEigenvalue)
     exact.resize(nband);
     for (int k = 0; k < nband; ++k)
     {
-        exact[k] = 2.0 - 2.0 * std::cos(Real(k) * PPCG_PI / Real(n_dim));
+        exact[k] = 2.0 - 2.0 * std::cos(Real(k) * pi / Real(n_dim));
     }
     check_eigenvalues(1e-12, 100, 4, 4, 1e-8);
 }

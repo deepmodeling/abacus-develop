@@ -232,6 +232,7 @@ class TestHSolverPW : public ::testing::Test
         saved_diag_thr = DiagoAssist::PW_DIAG_THR;
         saved_scf_iter = DiagoAssist::SCF_ITER;
         saved_need_subspace = DiagoAssist::need_subspace;
+        saved_avg_iter = DiagoAssist::avg_iter;
     }
 
     void TearDown() override
@@ -240,6 +241,7 @@ class TestHSolverPW : public ::testing::Test
         DiagoAssist::PW_DIAG_THR = saved_diag_thr;
         DiagoAssist::SCF_ITER = saved_scf_iter;
         DiagoAssist::need_subspace = saved_need_subspace;
+        DiagoAssist::avg_iter = saved_avg_iter;
     }
 
     // HSolverPW declares this fixture a friend, but a TEST_F body lives in a
@@ -374,6 +376,7 @@ class TestHSolverPW : public ::testing::Test
     double saved_diag_thr = 0.0;
     int saved_scf_iter = 0;
     bool saved_need_subspace = false;
+    double saved_avg_iter = 0.0;
 };
 
 // TEST_F(TestHSolverPW, solve) {

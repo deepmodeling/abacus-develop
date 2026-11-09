@@ -19,8 +19,6 @@
 #include <random>
 #include <vector>
 
-static constexpr float PPCG_PI = 3.14159265358979323846F;
-
 using T    = std::complex<float>;
 using Real = float;
 
@@ -142,6 +140,7 @@ TEST(DiagoPPCGFloatTest, DiagonalBlockSubspace)
 // -----------------------------------------------------------------------------
 TEST(DiagoPPCGFloatTest, TridiagonalBlockSubspace)
 {
+    const Real pi = 3.14159265358979323846F;
     const int n_dim = 10;
     const int nband = 3;
     const int ld = n_dim;
@@ -164,7 +163,7 @@ TEST(DiagoPPCGFloatTest, TridiagonalBlockSubspace)
     std::vector<Real> exact(nband);
     for (int k = 0; k < nband; ++k)
     {
-        exact[k] = 2.0f - 2.0f * std::cos(Real(k + 1) * PPCG_PI
+        exact[k] = 2.0f - 2.0f * std::cos(Real(k + 1) * pi
                                            / Real(n_dim + 1));
     }
     std::vector<double> ethr(nband, 1e-4);
