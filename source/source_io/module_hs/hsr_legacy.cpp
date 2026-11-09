@@ -39,7 +39,7 @@ void ModuleIO::output_dSR(const int& istep,
 
     // mohan update 2024-04-01
     const std::string fileflag_s = "s";
-    ModuleIO::save_dH_sparse(istep, pv, HS_Arrays, options.sparse_threshold, options.binary,
+    ModuleIO::save_dH_sparse(istep, pv, &ucell, HS_Arrays, options.sparse_threshold, options.binary,
                              fileflag_s, options.precision,
                              options.global_matrix_dir, options.calculation, options.out_app_flag,
                              options.nspin, nlocal, ofs_running);
@@ -85,7 +85,7 @@ void ModuleIO::output_dHR(const int& istep,
     }
     // mohan update 2024-04-01
     const std::string fileflag_h = "h";
-    ModuleIO::save_dH_sparse(istep, pv, HS_Arrays, options.sparse_threshold, options.binary,
+    ModuleIO::save_dH_sparse(istep, pv, &ucell, HS_Arrays, options.sparse_threshold, options.binary,
                              fileflag_h, options.precision,
                              options.global_matrix_dir, options.calculation, options.out_app_flag,
                              options.nspin, nlocal, ofs_running);

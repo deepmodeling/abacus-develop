@@ -118,6 +118,7 @@ if(ENABLE_LCAO)
             ../hs_sparse_io.cpp
             ../lat_r_csr.cpp
             ../../../source_basis/module_ao/parallel_orbitals.cpp
+            ../../../source_cell/ucell_io.cpp
             ../../../source_hamilt/module_hcontainer/test/tmp_mocks.cpp)
 
   addtest(
