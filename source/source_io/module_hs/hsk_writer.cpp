@@ -53,16 +53,6 @@ void ModuleIO::write_hsk(
     // affected by the text-format alignment.
     const bool binary = (out_type == 2);
 
-    ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-        ">>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
-    ofs_running << " |                                            "
-        "                        |" << std::endl;
-    ofs_running << " | Write Hamiltonian matrix H(k) or overlap matrix S(k) in numerical  |" << std::endl;
-    ofs_running << " | atomic orbitals at each k-point.                                   |" << std::endl;
-    ofs_running << " |                                            "
-        "                        |" << std::endl;
-    ofs_running << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
-        "<<<<<<<<<<<<<<<<<<<<<<<<<" << std::endl;
     ofs_running << "\n WRITE H(k) OR S(k)" << std::endl;
 
     // text mode: align with write_dmk filename convention so that hk and dmk
