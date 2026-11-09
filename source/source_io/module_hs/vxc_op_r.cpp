@@ -43,6 +43,7 @@ void write_Vxc_R(const int nspin,
 #endif
                  ,
                  const double sparse_thr,
+                 const int precision,
                  std::ofstream& ofs_running)
 {
     ModuleBase::TITLE("ModuleIO", "write_Vxc_R");
@@ -125,12 +126,19 @@ void write_Vxc_R(const int nspin,
         const std::string filename = "vxcrs" + std::to_string(is + 1) + "_nao.csr";
         ModuleIO::SparseWriteOptions options;
         options.filename = global_out_dir + filename;
-        options.label = "Vxc_R";
+        options.label = "Vxc";
         options.threshold = sparse_thr;
+        options.precision = precision;
         options.binary = false;
         options.istep = istep;
         options.out_app_flag = 0;
         options.reduce = true;
+        // Match the H(R)/S(R) CSR layout: self-describing header with the
+        // cell block and every R vector listed, including empty ones.
+        options.csr_format = true;
+        options.ucell = &ucell;
+        options.nspin = nspin;
+        options.ispin = is;
         ModuleIO::save_sparse(cal_HR_sparse(vxcs_R_ao[is], sparse_thr),
                               all_R_coor,
                               *pv,
@@ -150,7 +158,7 @@ template void write_Vxc_R<double, double>(
     , const std::vector<std::map<int, std::map<hamilt::TAC, RI::Tensor<double>>>>*,
     const std::vector<std::map<int, std::map<hamilt::TAC, RI::Tensor<std::complex<double>>>>>*
 #endif
-    , const double, std::ofstream&);
+    , const double, const int, std::ofstream&);
 
 template void write_Vxc_R<std::complex<double>, double>(
     const int, const Parallel_Orbitals*, const UnitCell&, Structure_Factor&, surchem&,
@@ -161,7 +169,7 @@ template void write_Vxc_R<std::complex<double>, double>(
     , const std::vector<std::map<int, std::map<hamilt::TAC, RI::Tensor<double>>>>*,
     const std::vector<std::map<int, std::map<hamilt::TAC, RI::Tensor<std::complex<double>>>>>*
 #endif
-    , const double, std::ofstream&);
+    , const double, const int, std::ofstream&);
 
 template void write_Vxc_R<std::complex<double>, std::complex<double>>(
     const int, const Parallel_Orbitals*, const UnitCell&, Structure_Factor&, surchem&,
@@ -172,6 +180,6 @@ template void write_Vxc_R<std::complex<double>, std::complex<double>>(
     , const std::vector<std::map<int, std::map<hamilt::TAC, RI::Tensor<double>>>>*,
     const std::vector<std::map<int, std::map<hamilt::TAC, RI::Tensor<std::complex<double>>>>>*
 #endif
-    , const double, std::ofstream&);
+    , const double, const int, std::ofstream&);
 
 } // namespace ModuleIO

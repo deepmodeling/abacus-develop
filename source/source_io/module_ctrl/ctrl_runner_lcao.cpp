@@ -97,6 +97,7 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
 #endif
                                       ,
                                       sparse_thr,
+                                      inp.out_mat_xc2[1],
                                       ofs_running
         );
     }

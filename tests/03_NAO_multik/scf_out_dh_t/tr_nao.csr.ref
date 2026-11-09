@@ -3,7 +3,7 @@ Ionic_Step 1
  1 # number of spin directions
  1 # spin index
  13 # number of localized basis
- 1 # number of Bravais lattice vector R
+ 27 # number of Bravais lattice vector R
 
  user_defined_lattice
  1.00033
@@ -24,7 +24,98 @@ Ionic_Step 1
  # values, column indices, row pointers.                                #
  #----------------------------------------------------------------------#
 
-0 0 0 21
+ -1 -1 -1 0
+ # CSR values
+
+ # CSR column indices
+
+ # CSR row pointers
+ 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+ -1 -1 0 0
+ # CSR values
+
+ # CSR column indices
+
+ # CSR row pointers
+ 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+ -1 -1 1 0
+ # CSR values
+
+ # CSR column indices
+
+ # CSR row pointers
+ 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+ -1 0 -1 0
+ # CSR values
+
+ # CSR column indices
+
+ # CSR row pointers
+ 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+ -1 0 0 0
+ # CSR values
+
+ # CSR column indices
+
+ # CSR row pointers
+ 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+ -1 0 1 0
+ # CSR values
+
+ # CSR column indices
+
+ # CSR row pointers
+ 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+ -1 1 -1 0
+ # CSR values
+
+ # CSR column indices
+
+ # CSR row pointers
+ 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+ -1 1 0 0
+ # CSR values
+
+ # CSR column indices
+
+ # CSR row pointers
+ 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+ -1 1 1 0
+ # CSR values
+
+ # CSR column indices
+
+ # CSR row pointers
+ 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+ 0 -1 -1 0
+ # CSR values
+
+ # CSR column indices
+
+ # CSR row pointers
+ 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+ 0 -1 0 0
+ # CSR values
+
+ # CSR column indices
+
+ # CSR row pointers
+ 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+ 0 -1 1 0
+ # CSR values
+
+ # CSR column indices
+
+ # CSR row pointers
+ 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+ 0 0 -1 0
+ # CSR values
+
+ # CSR column indices
+
+ # CSR row pointers
+ 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+ 0 0 0 21
  # CSR values
  8.82323765e-01 7.93788723e-01 7.93788723e-01 1.40432016e+00 2.64658925e+00 2.38348275e+00
  2.64658925e+00 2.38348275e+00 2.64658925e+00 2.38348275e+00 2.38348275e+00 3.82624607e+00
@@ -36,3 +127,94 @@ Ionic_Step 1
  # CSR row pointers
  0 2 4 6 8 10 12 14 16 17 18 19 20 21
 
+ 0 0 1 0
+ # CSR values
+
+ # CSR column indices
+
+ # CSR row pointers
+ 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+ 0 1 -1 0
+ # CSR values
+
+ # CSR column indices
+
+ # CSR row pointers
+ 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+ 0 1 0 0
+ # CSR values
+
+ # CSR column indices
+
+ # CSR row pointers
+ 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+ 0 1 1 0
+ # CSR values
+
+ # CSR column indices
+
+ # CSR row pointers
+ 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+ 1 -1 -1 0
+ # CSR values
+
+ # CSR column indices
+
+ # CSR row pointers
+ 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+ 1 -1 0 0
+ # CSR values
+
+ # CSR column indices
+
+ # CSR row pointers
+ 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+ 1 -1 1 0
+ # CSR values
+
+ # CSR column indices
+
+ # CSR row pointers
+ 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+ 1 0 -1 0
+ # CSR values
+
+ # CSR column indices
+
+ # CSR row pointers
+ 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+ 1 0 0 0
+ # CSR values
+
+ # CSR column indices
+
+ # CSR row pointers
+ 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+ 1 0 1 0
+ # CSR values
+
+ # CSR column indices
+
+ # CSR row pointers
+ 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+ 1 1 -1 0
+ # CSR values
+
+ # CSR column indices
+
+ # CSR row pointers
+ 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+ 1 1 0 0
+ # CSR values
+
+ # CSR column indices
+
+ # CSR row pointers
+ 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+ 1 1 1 0
+ # CSR values
+
+ # CSR column indices
+
+ # CSR row pointers
+ 0 0 0 0 0 0 0 0 0 0 0 0 0 0

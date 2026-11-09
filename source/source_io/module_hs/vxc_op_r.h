@@ -55,6 +55,7 @@ void write_Vxc_R(const int nspin,
 #endif
                  ,
                  const double sparse_thr,
+                 const int precision,
                  std::ofstream& ofs_running);
 
 } // namespace ModuleIO

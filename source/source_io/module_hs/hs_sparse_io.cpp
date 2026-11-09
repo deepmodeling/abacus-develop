@@ -79,7 +79,8 @@ void write_sparse_header(std::ofstream& ofs,
 void write_R_record(std::ofstream& ofs,
                     const ModuleIO::RCoordinate& R_coor,
                     const long long nonzero_count,
-                    const bool binary)
+                    const bool binary,
+                    const bool leading_space)
 {
     int dRx = R_coor.x;
     int dRy = R_coor.y;
@@ -94,9 +95,31 @@ void write_R_record(std::ofstream& ofs,
     }
     else
     {
+        if (leading_space)
+        {
+            ofs << " ";
+        }
         ofs << dRx << " " << dRy << " " << dRz << " " << nonzero_count
             << std::endl;
     }
+}
+
+/**
+ * @brief Write the four-line record used by the H(R)/S(R) writer for an R
+ *        block whose elements are all below the sparse threshold.
+ */
+void write_empty_csr_block(std::ofstream& ofs, const int nbasis)
+{
+    ofs << " # CSR values" << std::endl;
+    ofs << std::endl;
+    ofs << " # CSR column indices" << std::endl;
+    ofs << std::endl;
+    ofs << " # CSR row pointers" << std::endl;
+    for (int i = 0; i < nbasis + 1; ++i)
+    {
+        ofs << " 0";
+    }
+    ofs << std::endl;
 }
 
 void write_csr_style_header(std::ofstream& ofs,
@@ -117,8 +140,8 @@ void write_csr_style_header(std::ofstream& ofs,
     ofs << "Ionic_Step " << step << ModuleIO::prov_inline(time_stamp) << std::endl;
     ofs << " # print " << options.label << " matrix in real space "
         << options.label << "(R)" << std::endl;
-    ofs << " 1 # number of spin directions" << std::endl;
-    ofs << " 1 # spin index" << std::endl;
+    ofs << " " << options.nspin << " # number of spin directions" << std::endl;
+    ofs << " " << options.ispin + 1 << " # spin index" << std::endl;
     ofs << " " << nlocal << " # number of localized basis" << std::endl;
     ofs << " " << output_R_number << " # number of Bravais lattice vector R" << std::endl;
     ofs << std::endl;
@@ -145,8 +168,12 @@ void ModuleIO::save_sparse(
 
     const std::vector<long long> nonzero_num
         = detail::count_nonzeros_by_R(smat, all_R_coor, options.threshold, options.reduce);
-    const int output_R_number = count_output_R(nonzero_num);
     const bool text_csr = options.csr_format && !options.binary;
+    // The H(R)/S(R) CSR files list every R vector and write an all-zero block
+    // for empty ones, so the header count and the per-block records must cover
+    // the full R set. The compact legacy layout still skips empty blocks.
+    const int output_R_number = text_csr ? static_cast<int>(all_R_coor.size())
+                                         : count_output_R(nonzero_num);
     std::ofstream ofs;
     if (!options.reduce || GlobalV::DRANK == 0)
     {
@@ -165,7 +192,11 @@ void ModuleIO::save_sparse(
     int count = 0;
     for (const auto& R_coor: all_R_coor)
     {
-        if (nonzero_num[count] == 0)
+        const bool is_empty = (nonzero_num[count] == 0);
+        // The compact legacy layout skips empty R blocks entirely. The CSR
+        // text layout lists every R vector and writes a zero block for empty
+        // ones, matching the H(R)/S(R) writer.
+        if (!text_csr && is_empty)
         {
             count++;
             continue;
@@ -173,7 +204,17 @@ void ModuleIO::save_sparse(
 
         if (!options.reduce || GlobalV::DRANK == 0)
         {
-            write_R_record(ofs, R_coor, nonzero_num[count], options.binary);
+            write_R_record(ofs, R_coor, nonzero_num[count], options.binary, text_csr);
+            if (text_csr && is_empty)
+            {
+                write_empty_csr_block(ofs, nlocal);
+            }
+        }
+
+        if (text_csr && is_empty)
+        {
+            ++count;
+            continue;
         }
 
         const SparseRBlock<Tdata>& block = (smat.count(R_coor) != 0) ? smat.at(R_coor) : empty_block;

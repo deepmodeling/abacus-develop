@@ -286,6 +286,55 @@ TEST(HsSparseIo, SparseCsrHeaderWritesCellAndBanner)
     std::remove(filename.c_str());
 }
 
+TEST(HsSparseIo, SparseCsrWritesEmptyRBlocks)
+{
+    const std::string filename = testing::TempDir() + "write_hs_r_csr_empty_s.csr";
+    std::remove(filename.c_str());
+
+    Parallel_Orbitals pv;
+    init_serial_orbitals(pv);
+    const Abfs::Vector3_Order<int> filled_R(0, 0, 0);
+    const Abfs::Vector3_Order<int> empty_R(1, 0, 0);
+    std::set<Abfs::Vector3_Order<int>> all_R_coor;
+    all_R_coor.insert(filled_R);
+    all_R_coor.insert(empty_R);
+    std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> sparse_matrix;
+    sparse_matrix[filled_R][0][1] = 0.5;
+
+    UnitCell ucell;
+    init_unitcell(ucell);
+
+    ModuleIO::SparseWriteOptions options;
+    options.filename = filename;
+    options.label = "T";
+    options.threshold = 1e-10;
+    options.binary = false;
+    options.istep = 0;
+    options.reduce = false;
+    options.csr_format = true;
+    options.ucell = &ucell;
+    options.nspin = 2;
+    options.ispin = 1;
+    ModuleIO::save_sparse(sparse_matrix, all_R_coor, pv, options);
+
+    const std::vector<std::string> lines = read_lines(filename);
+    ASSERT_GE(lines.size(), 12);
+    EXPECT_EQ(lines[2], " 2 # number of spin directions");
+    EXPECT_EQ(lines[3], " 2 # spin index");
+    EXPECT_EQ(lines[4], " 2 # number of localized basis");
+    // Every R vector of the list is announced, including the empty one.
+    EXPECT_EQ(lines[5], " 2 # number of Bravais lattice vector R");
+
+    const std::string output = read_file(filename);
+    EXPECT_THAT(output, testing::HasSubstr(" 0 0 0 1\n # CSR values\n"));
+    // An R block without elements above the threshold is still written with
+    // the same four-line record as the H(R)/S(R) writer.
+    EXPECT_THAT(output, testing::HasSubstr(
+        " 1 0 0 0\n # CSR values\n\n # CSR column indices\n\n # CSR row pointers\n 0 0 0\n"));
+
+    std::remove(filename.c_str());
+}
+
 TEST(HsSparseIo, SparseCsrWritesComplexValues)
 {
     const std::string filename = testing::TempDir() + "write_hs_r_csr_complex_lx.csr";

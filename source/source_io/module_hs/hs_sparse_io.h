@@ -41,6 +41,10 @@ struct SparseWriteOptions
     // Unit cell written into the self-describing text header; required when
     // csr_format is true.
     const UnitCell* ucell = nullptr;
+    // Spin metadata written into the self-describing text header. Spin
+    // independent outputs keep the defaults (one spin direction, index 0).
+    int nspin = 1;
+    int ispin = 0;
 };
 
 template <typename Tdata>
