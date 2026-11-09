@@ -123,10 +123,14 @@ void ModuleIO::write_hsk(
         // H(k) — always written for every k-point
         // ------------------------------------------------------------------
         const int ispin = isk[ik];
-        // IBZ k-point index: same IBZ k can appear under both spin channels.
-        // e.g. nspin=2, 3 k-points -> ik=0..5 with ispin(0..2)=0,
-        // ispin(3..5)=1, so ibz_ik for ik=3 is 0 (same IBZ k as ik=0).
-        const int ibz_ik = ik - ispin * kv.get_nkstot_nospin();
+        // IBZ k-point index: after symmetry reduction nkstot has already
+        // been shrunk to IBZ size and then doubled for spin-polarised
+        // calculations, so IBZ_k_count = nkstot / nspin.  ispin == 0 owns
+        // ik in [0, IBZ_k_count), ispin == 1 owns [IBZ_k_count, nkstot),
+        // hence ibz_ik = ik - ispin * IBZ_k_count recovers the irreducible
+        // label that matches dmk/s1, dmk/s2, etc.
+        const int ibz_k_count = kv.get_nkstot() / nspin;
+        const int ibz_ik = ik - ispin * ibz_k_count;
         // Text path property is the letter before "k" so that make_fname
         // produces hk1s1 and sk1 matching dmk1s1.  Binary path keeps the
         // full "hk"/"sk" property since filename_output handles its own
