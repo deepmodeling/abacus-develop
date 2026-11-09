@@ -3,73 +3,110 @@
 #include "source_lcao/module_rt/td_folding.h"
 #include "source_md/md_base.h"
 
-#include <map>
-
 namespace
 {
 using rt_test::Complex;
 using rt_test::Vector;
 
-// Fold the same HR before/after MD wrapping, keeping the original saved-A oracle.
-std::vector<Complex> fold_matrix(
-    const UnitCell &cell,
-    const Parallel_Orbitals &layout,
-    const Vector &point,
-    const Vector &field,
-    bool wrapped)
+class MdRtBoundaryTest : public rt_test::BoundaryTest
 {
-    hamilt::HContainer<Complex> hr(&layout);
-    for (int i = 0; i < cell.nat; ++i)
+  protected:
+    std::vector<Complex> fold_hybrid(
+        const Parallel_Orbitals &orbitals,
+        const Vector &kpoint,
+        const Vector &vector_potential,
+        const bool wrapped) const
     {
-        for (int j = 0; j < cell.nat; ++j)
+        hamilt::HContainer<Complex> real_space(&orbitals);
+        for (int row = 0; row < 4; ++row)
         {
-            if (layout.get_nrow_atom(i) == 0 || layout.get_ncol_atom(j) == 0)
+            if (orbitals.get_nrow_atom(row) == 0)
             {
                 continue;
             }
-            const int rx = j - i;
-            const int ry = i - j;
-            ModuleBase::Vector3<int> r(rx, ry, 0);
-            if (wrapped)
+            for (int column = 0; column < 4; ++column)
             {
-                r += cell.atoms[0].boundary_shift[i] - cell.atoms[0].boundary_shift[j];
+                if (orbitals.get_ncol_atom(column) == 0)
+                {
+                    continue;
+                }
+                const int translation_x = column - row;
+                const int translation_y = row - column;
+                ModuleBase::Vector3<int> translation(translation_x, translation_y, 0);
+                if (wrapped)
+                {
+                    translation += types[0].boundary_shift[row] - types[0].boundary_shift[column];
+                }
+                hamilt::AtomPair<Complex> pair(
+                    row,
+                    column,
+                    translation,
+                    &orbitals);
+                real_space.insert_pair(pair);
             }
-            hamilt::AtomPair<Complex> pair(
-                i,
-                j,
-                r,
-                &layout);
-            hr.insert_pair(pair);
         }
+        real_space.allocate(nullptr, true);
+        std::map<ModuleBase::Vector3<int>, Complex> phases;
+        for (int index = 0; index < real_space.size_atom_pairs(); ++index)
+        {
+            hamilt::AtomPair<Complex> &pair = real_space.get_atom_pair(index);
+            const ModuleBase::Vector3<int> translation = pair.get_R_index(0);
+            const int row = pair.get_atom_i();
+            const int column = pair.get_atom_j();
+            pair.get_pointer(0)[0] = rt_test::matrix_value(row, column);
+            const Vector direct(translation.x, translation.y, translation.z);
+            const Vector cartesian = direct * cell.latvec * cell.lat0;
+            const double angle = vector_potential * cartesian;
+            const Complex exponent(0.0, angle);
+            phases[translation] = std::exp(exponent);
+        }
+        std::vector<Complex> folded(orbitals.para_2d().size(), Complex(0.0, 0.0));
+        const int rows = orbitals.para_2d().nrloc();
+        module_rt::folding_HR_td(
+            real_space,
+            folded.data(),
+            kpoint,
+            vector_potential,
+            phases,
+            rows,
+            1);
+        return folded;
     }
-    hr.allocate(nullptr, true);
-    std::map<ModuleBase::Vector3<int>, Complex> phases;
-    for (int index = 0; index < hr.size_atom_pairs(); ++index)
-    {
-        auto &pair = hr.get_atom_pair(index);
-        const auto r = pair.get_R_index(0);
-        const Vector direct(r.x, r.y, r.z);
-        const Vector cartesian = direct * cell.latvec * cell.lat0;
-        const double angle = field * cartesian;
-        const Complex exponent(0.0, angle);
-        phases[r] = std::exp(exponent);
-        pair.get_pointer(0)[0] = rt_test::matrix_value(pair.get_atom_i(), pair.get_atom_j());
-    }
-    std::vector<Complex> folded(layout.para_2d().size());
-    const int rows = layout.para_2d().nrloc();
-    module_rt::folding_HR_td(
-        hr,
-        folded.data(),
-        point,
-        field,
-        phases,
-        rows,
-        1);
-    return folded;
-}
 
-class MdRtBoundaryTest : public rt_test::BoundaryTest
-{
+    void expect_hybrid_fold_correction(const Vector &saved_A)
+    {
+        const auto &layout = matrix_layout();
+        const int matrix_size = layout.para_2d().size();
+        const Vector next_A(-0.13, 0.17, 0.09);
+        for (int k = 0; k < 4; ++k)
+        {
+            const auto before = fold_hybrid(
+                layout,
+                points[k],
+                saved_A,
+                false);
+            const auto after = fold_hybrid(
+                layout,
+                points[k],
+                saved_A,
+                true);
+            const auto wrong_time = fold_hybrid(
+                layout,
+                points[k],
+                next_A,
+                true);
+            double field_time_difference = 0.0;
+            for (int element = 0; element < matrix_size; ++element)
+            {
+                const int offset = k * matrix_size + element;
+                h.data<Complex>()[offset] = before[element];
+                expected[offset] = after[element];
+                field_time_difference += std::abs(after[element] - wrong_time[element]);
+            }
+            EXPECT_GT(field_time_difference, 0.01);
+        }
+        expect_correction(saved_A);
+    }
 };
 
 TEST_P(MdRtBoundaryTest, SavedStateSurvivesWrappingMigrationAndRepeatedSync)
@@ -163,6 +200,10 @@ TEST_P(MdRtBoundaryTest, SavedStateSurvivesWrappingMigrationAndRepeatedSync)
         }
         integrator.first_half(log);
         mdcell.sync_backing_unitcell(true);
+        if (step == 0)
+        {
+            ASSERT_NO_FATAL_FAILURE(expect_hybrid_fold_correction(saved_field));
+        }
         decomposition.migrate_owned_atoms(mdcell);
         for (int repeat = 0; repeat < 2; ++repeat)
         {
@@ -173,9 +214,8 @@ TEST_P(MdRtBoundaryTest, SavedStateSurvivesWrappingMigrationAndRepeatedSync)
             EXPECT_EQ(type.boundary_shift[1].x, crossing);
             EXPECT_EQ(type.boundary_shift[2].norm2(), 0);
             EXPECT_EQ(type.boundary_shift[3].norm2(), 0);
-            ASSERT_NO_FATAL_FAILURE(check_correction(no_field, rt_test::analytic_matrix));
-            ASSERT_NO_FATAL_FAILURE(check_correction(saved_field, fold_matrix));
         }
+        ASSERT_NO_FATAL_FAILURE(expect_phase_correction(no_field));
     }
 }
 
