@@ -502,11 +502,6 @@ void update_psi_charge_pw_gpu(ScState& state,
     int size_becp = nbands * nkb * npol;
     const int* nh_iat = &onsite_p->get_nh(0);
 
-    std::complex<double>* h_tmp = nullptr;
-    std::complex<double>* s_tmp = nullptr;
-    base_device::memory::resize_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(h_tmp, nbands * nbands);
-    base_device::memory::resize_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(s_tmp, nbands * nbands);
-
     assert(cache.allocated());
 
     const ModuleBase::Vector3<double>* lambda_for_hcc = delta_lambda;
@@ -515,8 +510,20 @@ void update_psi_charge_pw_gpu(ScState& state,
         lambda_for_hcc = state.get_sc_lambda().data();
     }
 
+    // Davidson diagonalizes the complete initial subspace itself. An invertible
+    // rotation before that solve leaves the span unchanged, so skip the explicit
+    // subspace update. Density-only updates and other solvers still need it.
+    const bool rotate_basis = !pw_solve || PARAM.inp.ks_solver != "dav_subspace";
+    std::complex<double>* h_tmp = nullptr;
+    std::complex<double>* s_tmp = nullptr;
+    if (rotate_basis)
+    {
+        base_device::memory::resize_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(h_tmp, nbands * nbands);
+        base_device::memory::resize_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(s_tmp, nbands * nbands);
+    }
+
     // STAGE 1: Subspace diagonalization for each k-point (GPU)
-    for (int ik = 0; ik < nk; ++ik)
+    for (int ik = 0; rotate_basis && ik < nk; ++ik)
     {
         std::complex<double>* h_k = cache.h_k(ik, nbands);
         std::complex<double>* s_k = cache.s_k(ik, nbands);
@@ -536,8 +543,11 @@ void update_psi_charge_pw_gpu(ScState& state,
                                                                                 &pelec->ekb(ik, 0));
     }
 
-    base_device::memory::delete_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(h_tmp);
-    base_device::memory::delete_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(s_tmp);
+    if (rotate_basis)
+    {
+        base_device::memory::delete_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(h_tmp);
+        base_device::memory::delete_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(s_tmp);
+    }
 
     // Free GPU memory for saved subspace data
     cache.release_gpu();
