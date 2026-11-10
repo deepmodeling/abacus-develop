@@ -21,6 +21,7 @@
 #include <iomanip>
 #include <limits>
 #include <sstream>
+#include <stdexcept>
 #include <type_traits>
 #include <vector>
 
@@ -190,6 +191,12 @@ int Diago_DavSubspace<T, Device>::diag_once(const HSOperator<T, Device>& op,
     this->cal_elem(this->dim, nbase, this->notconv, this->psi_in_iter, this->spsi, this->hpsi, this->hcc, this->scc);
 
     this->diag_zhegvx(nbase, this->notconv, this->hcc, this->scc, this->nbase_x, &eigenvalue_iter, this->vcc);
+    if (this->solver_failed_)
+    {
+        ModuleBase::timer::end("Diago_DavSubspace", "first");
+        ModuleBase::timer::end("Diago_DavSubspace", "diag_once");
+        return -1;
+    }
 
     for (size_t m = 0; m < this->n_band; m++)
     {
@@ -696,7 +703,16 @@ void Diago_DavSubspace<T, Device>::diag_zhegvx(const int& nbase,
         if (this->diag_comm.rank == 0)
         {
             syncmem_complex_op()(this->d_scc, scc, nbase * this->nbase_x);
-            ct::kernels::lapack_hegvd<T, ct_Device>()(nbase, this->nbase_x, this->hcc, this->d_scc, this->d_eigenvalue, this->vcc);
+            try
+            {
+                ct::kernels::lapack_hegvd<T, ct_Device>()(nbase, this->nbase_x, this->hcc, this->d_scc, this->d_eigenvalue, this->vcc);
+            }
+            catch (const std::exception&)
+            {
+                this->solver_failed_ = true;
+                ModuleBase::timer::end("Diago_DavSubspace", "diag_zhegvx");
+                return;
+            }
             syncmem_var_d2h_op()((*eigenvalue_iter).data(), this->d_eigenvalue, this->nbase_x);
         }
 #endif
@@ -918,6 +934,7 @@ int Diago_DavSubspace<T, Device>::diag(const HSOperator<T, Device>& op,
 {
     /// record the times of trying iterative diagonalization
     this->notconv = 0;
+    this->solver_failed_ = false;
 
     int sum_iter = 0;
     int ntry = 0;
@@ -925,7 +942,12 @@ int Diago_DavSubspace<T, Device>::diag(const HSOperator<T, Device>& op,
     do
     {
 
-        sum_iter += this->diag_once(op, psi_in, psi_in_dmax, eigenvalue_in_hsolver, ethr_band, ik);
+        const int iter_once = this->diag_once(op, psi_in, psi_in_dmax, eigenvalue_in_hsolver, ethr_band, ik);
+        if (iter_once < 0 || this->solver_failed_)
+        {
+            return -1;
+        }
+        sum_iter += iter_once;
 
         ++ntry;
 

@@ -87,6 +87,9 @@ class Diago_DavSubspace
     /// record for how many bands not have convergence eigenvalues
     int notconv = 0;
 
+    /// set when the projected eigensolver reports a numerical failure
+    bool solver_failed_ = false;
+
     T* psi_in_iter = nullptr;
 
     /// the product of H and psi in the reduced basis set

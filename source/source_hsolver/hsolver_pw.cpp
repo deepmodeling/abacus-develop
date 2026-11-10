@@ -346,17 +346,42 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(const HSOperator<T, Device>& op,
             davidson = this->davidson_cache_.get();
         }
 
-        DiagoIterAssist<T, Device>::avg_iter += static_cast<double>(
-            davidson->diag(op,
-                           psi.get_pointer(),
-                           psi.get_nbasis(),
-                           eigenvalue,
-                           this->ethr_band,
-                           scf,
-                           psi.get_current_k()));
+        int dav_result = davidson->diag(op,
+                                       psi.get_pointer(),
+                                       psi.get_nbasis(),
+                                       eigenvalue,
+                                       this->ethr_band,
+                                       scf,
+                                       psi.get_current_k());
         if (!this->reuse_davidson_)
         {
             this->davidson_cache_.reset();
+        }
+        if (dav_result == -1)
+        {
+            // A numerical failure invalidates the Davidson workspace. Release it
+            // before allocating CG state or changing the wavefunction basis.
+            this->davidson_cache_.reset();
+            std::cout << "error of Diago_DavSubspace::diag, recalculate by cg method " << std::endl;
+            DiagoCG<T, Device> cg(this->basis_type,
+                                  this->calculation_type,
+                                  this->need_subspace,
+                                  comm_info,
+                                  this->diag_thr,
+                                  this->diag_iter_max);
+            DiagoIterAssist<T, Device>::avg_iter += static_cast<double>(
+                cg.diag(op,
+                        psi.get_nbasis(),
+                        psi.get_nbands(),
+                        psi.get_current_ngk(),
+                        psi.get_pointer(),
+                        eigenvalue,
+                        this->ethr_band,
+                        pre_condition.data()));
+        }
+        else
+        {
+            DiagoIterAssist<T, Device>::avg_iter += static_cast<double>(dav_result);
         }
     }
     else if (this->method == "dav")
