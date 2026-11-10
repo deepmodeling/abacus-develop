@@ -21,6 +21,7 @@
 #include <iomanip>
 #include <limits>
 #include <sstream>
+#include <type_traits>
 #include <vector>
 
 #ifdef __MPI
@@ -559,43 +560,41 @@ void Diago_DavSubspace<T, Device>::cal_elem(const int& dim,
     }
 
     if (notconv > 1){
-#ifdef __DSP
-    ModuleBase::gemm_op_mt<T, Device>()
-#else
-    ModuleBase::gemm_op<T, Device>()
+    int columns_per_panel = notconv;
+#if defined(__CUDA)
+    if (this->device == base_device::GpuDevice
+        && std::is_same<T, std::complex<double>>::value && notconv >= 256)
+    {
+        columns_per_panel = 64;
+    }
 #endif
-        ('C',
-         'N',
-         nbase + notconv,
-         notconv,
-         this->dim,
-         this->one,
-         psi_iter,
-         matrix_ld,
-         &hpsi[nbase * this->dim],
-         matrix_ld,
-         this->zero,
-         &hcc[nbase * this->nbase_x],
-         this->nbase_x);
-
+    // The eigensolver reads the upper triangle. Each column panel includes
+    // every existing basis row and ends at its final diagonal entry, omitting
+    // the lower rows that cannot affect the projected eigenproblem.
+    for (int first = 0; first < notconv; first += columns_per_panel)
+    {
+        const int columns = std::min(columns_per_panel, notconv - first);
+        const int basis_offset = nbase + first;
+        const int rows = basis_offset + columns;
 #ifdef __DSP
-    ModuleBase::gemm_op_mt<T, Device>()
+        ModuleBase::gemm_op_mt<T, Device>()
 #else
-    ModuleBase::gemm_op<T, Device>()
+        ModuleBase::gemm_op<T, Device>()
 #endif
-        ('C',
-         'N',
-         nbase + notconv,
-         notconv,
-         this->dim,
-         this->one,
-         psi_iter,
-         matrix_ld,
-         spsi + nbase * this->dim,
-         matrix_ld,
-         this->zero,
-         &scc[nbase * this->nbase_x],
-         this->nbase_x);
+            ('C', 'N', rows, columns, this->dim,
+             this->one, psi_iter, matrix_ld,
+             hpsi + basis_offset * this->dim, matrix_ld,
+             this->zero, hcc + basis_offset * this->nbase_x, this->nbase_x);
+#ifdef __DSP
+        ModuleBase::gemm_op_mt<T, Device>()
+#else
+        ModuleBase::gemm_op<T, Device>()
+#endif
+            ('C', 'N', rows, columns, this->dim,
+             this->one, psi_iter, matrix_ld,
+             spsi + basis_offset * this->dim, matrix_ld,
+             this->zero, scc + basis_offset * this->nbase_x, this->nbase_x);
+    }
 
         } else {
 

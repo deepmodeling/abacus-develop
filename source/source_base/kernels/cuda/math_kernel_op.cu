@@ -340,6 +340,18 @@ void gemm_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(const ch
     }
     const auto alpha_value = make_cuDoubleComplex(alpha->real(), alpha->imag());
     const auto beta_value = make_cuDoubleComplex(beta->real(), beta->imag());
+    // Three real products reduce arithmetic for wide complex GEMMs. Narrow or
+    // small products retain the conventional complex accumulation order.
+    if (m >= 128 && k >= 64
+        && (n >= 128 || (transa == 'C' && transb == 'N' && n >= 64 && k >= 4096))
+        && (m >= 4096 || n >= 4096 || k >= 4096))
+    {
+        CHECK_CUBLAS(cublasZgemm3m(cublas_handle, cutransA, cutransB, m, n, k,
+                                   &alpha_value, reinterpret_cast<const cuDoubleComplex*>(a), lda,
+                                   reinterpret_cast<const cuDoubleComplex*>(b), ldb,
+                                   &beta_value, reinterpret_cast<cuDoubleComplex*>(c), ldc));
+        return;
+    }
     CHECK_CUBLAS(cublasZgemm(cublas_handle, cutransA, cutransB, m, n ,k, &alpha_value, (double2*)a , lda, (double2*)b, ldb, &beta_value, (double2*)c, ldc));
 }
 
