@@ -29,6 +29,17 @@ class FFT_CUDA : public FFT_BASE<FPTYPE>
         void initfft(int nx_in, 
                      int ny_in, 
                      int nz_in) override;
+
+        void initfft(int nx_in,
+                     int ny_in,
+                     int nz_in,
+                     int lixy_in,
+                     int rixy_in,
+                     int ns_in,
+                     int nplane_in,
+                     int nproc_in,
+                     bool gamma_only_in,
+                     bool xprime_in = true) override;
         
         /**
          * @brief Get the real space data
@@ -54,12 +65,34 @@ class FFT_CUDA : public FFT_BASE<FPTYPE>
          */
         void fft3D_backward(std::complex<FPTYPE>* in, 
                             std::complex<FPTYPE>* out) const override;
+
+        /// Transform only the retained x slabs when the plane-wave support is sparse.
+        void fft3D_forward_pw(std::complex<FPTYPE>* in,
+                              std::complex<FPTYPE>* out) const;
+        void fft3D_backward_pw(std::complex<FPTYPE>* in,
+                               std::complex<FPTYPE>* out) const;
+
+        int lixy() const { return this->lixy_index; }
+        int rixy() const { return this->rixy_index; }
     private:
-        cufftHandle c_handle = {};
-        cufftHandle z_handle = {};
+        mutable cufftHandle c_handle = {};
+        mutable cufftHandle z_handle = {};
+        mutable cufftHandle z_x_handle = {};
+        mutable cufftHandle z_yz_left_handle = {};
+        mutable cufftHandle z_yz_right_handle = {};
        
-        std::complex<float>* c_auxr_3d = nullptr;  // fft space
-        std::complex<double>* z_auxr_3d = nullptr; // fft space
+        mutable std::complex<float>* c_auxr_3d = nullptr;  // fft space
+        mutable std::complex<double>* z_auxr_3d = nullptr; // fft space
+        mutable int z_auxr_3d_capacity = 0;
+
+        int lixy_index = 0;
+        int rixy_index = 0;
+        int nproc = 1;
+        bool gamma_only = false;
+        bool xprime = true;
+
+        bool use_pruned_gpu_fft() const;
+        void init_gpu_pruned_plan() const;
 
 };
 

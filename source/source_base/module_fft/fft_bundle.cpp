@@ -344,4 +344,30 @@ std::complex<double>* FFT_Bundle::get_auxr_3d_data() const
 {
     return fft_double->get_auxr_3d_data();
 }
+
+void FFT_Bundle::fft3D_forward_pw(std::complex<double>* in, std::complex<double>* out) const
+{
+#if defined(__CUDA)
+    auto* cuda = dynamic_cast<FFT_CUDA<double>*>(fft_double.get());
+    if (cuda != nullptr)
+    {
+        cuda->fft3D_forward_pw(in, out);
+        return;
+    }
+#endif
+    fft_double->fft3D_forward(in, out);
+}
+
+void FFT_Bundle::fft3D_backward_pw(std::complex<double>* in, std::complex<double>* out) const
+{
+#if defined(__CUDA)
+    auto* cuda = dynamic_cast<FFT_CUDA<double>*>(fft_double.get());
+    if (cuda != nullptr)
+    {
+        cuda->fft3D_backward_pw(in, out);
+        return;
+    }
+#endif
+    fft_double->fft3D_backward(in, out);
+}
 } // namespace ModuleBase

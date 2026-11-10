@@ -201,6 +201,10 @@ class FFT_Bundle
     template <typename FPTYPE>
     void fft3D_backward(std::complex<FPTYPE>* in, std::complex<FPTYPE>* out) const;
 
+    /// Transform only the retained x slabs for sparse plane-wave supports.
+    void fft3D_forward_pw(std::complex<double>* in, std::complex<double>* out) const;
+    void fft3D_backward_pw(std::complex<double>* in, std::complex<double>* out) const;
+
     /// @brief the device this bundle was configured for, "cpu" or "gpu"
     std::string get_device() const { return device; }
     /// @brief the precision this bundle was configured for, "single" or "double"
