@@ -10,6 +10,8 @@ namespace
 {
 
 constexpr int block_size = 256;
+// Avoid dividing by a vanishing reciprocal-space |G|^2.
+constexpr double reciprocal_g_threshold = 1e-8;
 
 __global__ void pack_density(int size, int channels, const double* density, thrust::complex<double>* grid)
 {
@@ -34,7 +36,7 @@ __global__ void poisson_coefficients(int npw, const int* index, const double* gg
     if (ig < npw)
     {
         potential[ig] = thrust::complex<double>(0, 0);
-        if (gg[ig] >= 1e-8)
+        if (gg[ig] >= reciprocal_g_threshold)
         {
             const auto density = scale * grid[index[ig]];
             const double factor = numerator / (tpiba2 * gg[ig]);

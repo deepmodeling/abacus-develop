@@ -830,7 +830,8 @@ void Diago_DavSubspace<T, Device>::diag_zhegvx(const int& nbase,
             syncmem_complex_op()(this->d_scc, scc, nbase * this->nbase_x);
             try
             {
-                ct::kernels::lapack_hegvd<T, ct_Device>()(nbase, this->nbase_x, this->hcc, this->d_scc, this->d_eigenvalue, this->vcc);
+                ct::kernels::lapack_hegvd<T, ct_Device>()(nbase, this->nbase_x, this->hcc, this->d_scc,
+                                                          this->d_eigenvalue, this->vcc);
             }
             catch (const std::exception&)
             {
@@ -1049,7 +1050,8 @@ int Diago_DavSubspace<T, Device>::diag(const HSOperator<T, Device>& op,
     do
     {
 
-        const int iter_once = this->diag_once(op, psi_in, psi_in_dmax, eigenvalue_in_hsolver, ethr_band, ik, nullptr, nullptr);
+        const int iter_once =
+            this->diag_once(op, psi_in, psi_in_dmax, eigenvalue_in_hsolver, ethr_band, ik, nullptr, nullptr);
         if (iter_once < 0 || this->solver_failed_)
         {
             return -1;

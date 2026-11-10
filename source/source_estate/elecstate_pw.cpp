@@ -312,7 +312,8 @@ void ElecStatePW<T, Device>::rhoBandK(const psi::Psi<T, Device>& psi)
             this->basis->recip_to_real(this->ctx, &psi(ibnd, 0), this->wfcr, ik);
 
             // replaced by denghui at 20221110
-            elecstate_pw_op()(this->ctx, current_spin, this->basis->nrxx, this->charge->nrxx, w1, this->rho, this->wfcr);
+            elecstate_pw_op()(this->ctx, current_spin, this->basis->nrxx, this->charge->nrxx, w1, this->rho,
+                              this->wfcr);
 
             // kinetic energy density
             if (XC_Functional::get_func_type() == 3)

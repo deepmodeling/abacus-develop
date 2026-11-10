@@ -10,6 +10,17 @@
 #include <thrust/execution_policy.h>
 #include <thrust/inner_product.h>
 namespace ModuleBase {
+namespace
+{
+// Shape thresholds for the cuBLAS ZGEMM3M dispatch. These are empirical
+// crossover points, not physical constants.
+constexpr int zgemm3m_min_m = 128;
+constexpr int zgemm3m_min_k = 64;
+constexpr int zgemm3m_min_n = 128;
+constexpr int zgemm3m_tall_n = 64;
+constexpr int zgemm3m_tall_k = 4096;
+constexpr int zgemm3m_large_dim = 4096;
+} // namespace
 template <typename T>
 struct GetTypeThrust {
     using type = T;
@@ -314,7 +325,8 @@ void gemm_op<std::complex<float>, base_device::DEVICE_GPU>::operator()(const cha
     }
     else
     {
-        CHECK_CUBLAS(cublasCgemm(cublas_handle, cutransA, cutransB, m, n ,k, &alpha_value, (float2*)a , lda, (float2*)b, ldb, &beta_value, (float2*)c, ldc));
+        CHECK_CUBLAS(cublasCgemm(cublas_handle, cutransA, cutransB, m, n, k, &alpha_value, (float2*)a, lda,
+                                 (float2*)b, ldb, &beta_value, (float2*)c, ldc));
     }
 }
 
@@ -342,9 +354,10 @@ void gemm_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(const ch
     const auto beta_value = make_cuDoubleComplex(beta->real(), beta->imag());
     // Three real products reduce arithmetic for wide complex GEMMs. Narrow or
     // small products retain the conventional complex accumulation order.
-    if (m >= 128 && k >= 64
-        && (n >= 128 || (transa == 'C' && transb == 'N' && n >= 64 && k >= 4096))
-        && (m >= 4096 || n >= 4096 || k >= 4096))
+    if (m >= zgemm3m_min_m && k >= zgemm3m_min_k
+        && (n >= zgemm3m_min_n
+            || (transa == 'C' && transb == 'N' && n >= zgemm3m_tall_n && k >= zgemm3m_tall_k))
+        && (m >= zgemm3m_large_dim || n >= zgemm3m_large_dim || k >= zgemm3m_large_dim))
     {
         CHECK_CUBLAS(cublasZgemm3m(cublas_handle, cutransA, cutransB, m, n, k,
                                    &alpha_value, reinterpret_cast<const cuDoubleComplex*>(a), lda,
@@ -352,7 +365,8 @@ void gemm_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(const ch
                                    &beta_value, reinterpret_cast<cuDoubleComplex*>(c), ldc));
         return;
     }
-    CHECK_CUBLAS(cublasZgemm(cublas_handle, cutransA, cutransB, m, n ,k, &alpha_value, (double2*)a , lda, (double2*)b, ldb, &beta_value, (double2*)c, ldc));
+    CHECK_CUBLAS(cublasZgemm(cublas_handle, cutransA, cutransB, m, n, k, &alpha_value, (double2*)a, lda, (double2*)b,
+                             ldb, &beta_value, (double2*)c, ldc));
 }
 
 void gemm_strided_batched_gpu(char transa, char transb, int m, int n, int k,

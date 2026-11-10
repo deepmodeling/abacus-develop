@@ -105,7 +105,10 @@ void kerker_screen_real(const MixingConfig& cfg,
 
     /// consider a resize for mixing_angle
     const int spin_channels = (nspin == 4 && cfg.mixing_angle > 0) ? 2 : nspin;
-    const bool screen_magnetization = cfg.mixing_gg0_mag > 0.0001 && cfg.mixing_beta_mag > 0.1;
+    constexpr double magnetization_gg0_threshold = 0.0001;
+    constexpr double magnetization_beta_threshold = 0.1;
+    const bool screen_magnetization
+        = cfg.mixing_gg0_mag > magnetization_gg0_threshold && cfg.mixing_beta_mag > magnetization_beta_threshold;
     const int screened_channels = screen_magnetization ? spin_channels : 1;
 
     std::vector<std::complex<double>> drhog(rhopw->npw);

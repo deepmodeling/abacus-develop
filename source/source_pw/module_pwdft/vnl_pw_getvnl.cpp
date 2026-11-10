@@ -136,9 +136,8 @@ void pseudopot_cell_vnl::getvnl(Device* ctx,
                                             this->table_dq(),
                                             this->tab.getBound3()))
             {
-                ModuleBase::WARNING_QUIT(
-                    "check_vnl_index",
-                    "Shifted projector momentum exceeds the prepared radial table; prepare its range before evaluation.");
+                ModuleBase::WARNING_QUIT("check_vnl_index", "Shifted projector momentum exceeds the prepared radial "
+                                                            "table; prepare its range before evaluation.");
             }
         }
         else

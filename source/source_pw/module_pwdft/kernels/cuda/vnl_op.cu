@@ -17,6 +17,7 @@
 namespace hamilt {
 
 #if __CUDA || __UT_USE_CUDA
+constexpr double range_guard_factor = 8.0; // cover small host/device rounding differences
 __global__ void cal_gk_kernel(const int count,
                               const double* gcar,
                               const double* kvec,
@@ -66,7 +67,7 @@ __global__ void gk_range_kernel(const double* gk,
         const double z = gk[3 * i + 2];
         const double q = std::sqrt(x * x + y * y + z * z) * tpiba;
         const double index = q / dq;
-        const double guarded = index * (1.0 + 8.0 * DBL_EPSILON);
+        const double guarded = index * (1.0 + range_guard_factor * DBL_EPSILON);
         if (!std::isfinite(guarded) || guarded < 0.0 || std::floor(guarded) + 3.0 >= bound)
         {
             atomicOr(invalid, 1);

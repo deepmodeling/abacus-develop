@@ -289,7 +289,8 @@ void matrix::operator+=(const matrix & m)
 #ifdef _OPENMP
     // Large fields amortize parallel-region overhead; nested calls and small
     // matrices retain the serial path without creating an OpenMP region.
-    if (size >= 1048576 && !omp_in_parallel())
+    constexpr int min_parallel_size = 1 << 20;
+    if (size >= min_parallel_size && !omp_in_parallel())
     {
 #pragma omp parallel for schedule(static)
         for (int i = 0; i < size; ++i)

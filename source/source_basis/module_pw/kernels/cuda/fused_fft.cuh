@@ -22,6 +22,7 @@ constexpr int y_register_budget = 256;
 constexpr int shared_memory_budget = 49152; // 48 KiB
 constexpr int max_elements_per_thread = 10;
 constexpr int single_field_threshold = 16;
+constexpr int complex_alignment = 16;
 
 // The inverse transform expands occupied x-y sticks into complete y-z slabs.
 // The forward transform retains only the sticks required by the plane-wave basis.
@@ -36,7 +37,7 @@ __global__ void transform_y_sticks(cufftDoubleComplex* sticks, cufftDoubleComple
     const int cx = blockIdx.y;
     const int x = cx < left ? cx : cx + right - left;
     const int tid = threadIdx.y * blockDim.x + threadIdx.x;
-    extern __shared__ __align__(16) Complex shared[];
+    extern __shared__ __align__(complex_alignment) Complex shared[];
     Complex values[FFT::storage_size];
     for (int i = tid; i < ny * batches; i += blockDim.x * blockDim.y)
     {
@@ -144,7 +145,7 @@ __global__ void fused_spinor_potential(const cufftDoubleComplex* input_up, const
     constexpr int nx = cufftdx::size_of<FFTInverse>::value;
     const int line = spatial_block * FFTInverse::ffts_per_block + threadIdx.y;
     const int size = nx * plane;
-    extern __shared__ __align__(16) Complex shared[];
+    extern __shared__ __align__(complex_alignment) Complex shared[];
     Complex up[FFTInverse::storage_size], down[FFTInverse::storage_size];
     transfer_spinor_field<FFTInverse, true>(input_up, nullptr, up, shared, plane, left, right, spatial_block);
     FFTInverse().execute(up, shared);
@@ -181,7 +182,7 @@ __global__ void fused_spinor_density(const cufftDoubleComplex* input_up, const c
     using Complex = typename FFT::value_type;
     constexpr int nx = cufftdx::size_of<FFT>::value;
     const int size = nx * plane;
-    extern __shared__ __align__(16) Complex shared[];
+    extern __shared__ __align__(complex_alignment) Complex shared[];
     Complex up[FFT::storage_size], down[FFT::storage_size];
     transfer_spinor_field<FFT, true>(input_up, nullptr, up, shared, plane, left, right, blockIdx.x);
     FFT().execute(up, shared);
@@ -239,7 +240,7 @@ __global__ void accumulate_spinor_density(const cufftDoubleComplex* input_up,
     const int compact = (left + nx - right) * plane;
     const int line = blockIdx.x * batches + threadIdx.y;
     const int tid = threadIdx.y * blockDim.x + threadIdx.x;
-    extern __shared__ __align__(16) Complex shared[];
+    extern __shared__ __align__(complex_alignment) Complex shared[];
     auto* tile = reinterpret_cast<double*>(shared);
     double accumulated[4][FFT::elements_per_thread];
 
@@ -348,7 +349,7 @@ struct FusedTransform
     // their own register budget.
     static constexpr int elements = fft_elements_at_most<Default, SM, std::min(max_elements_per_thread, suggested)>();
     static constexpr int single_elements
-        = suggested > single_field_threshold&& suggested % 2 == 0 && cufftdx::is_supported<Half, SM>::value
+        = suggested > single_field_threshold && suggested % 2 == 0 && cufftdx::is_supported<Half, SM>::value
               ? suggested / 2
               : suggested;
     using Base = decltype(Common() + cufftdx::ElementsPerThread<elements>());
@@ -442,7 +443,7 @@ __global__ void transform_z_wave(const cufftDoubleComplex* input, cufftDoubleCom
     const int spin = blockIdx.y / bands, band = blockIdx.y % bands;
     const size_t wave_offset = size_t(2 * band + spin) * stride;
     const size_t field_offset = size_t(blockIdx.y) * sticks * length;
-    extern __shared__ __align__(16) Complex shared[];
+    extern __shared__ __align__(complex_alignment) Complex shared[];
     Complex values[FFT::storage_size];
     for (int i = 0; i < FFT::elements_per_thread; ++i)
     {
