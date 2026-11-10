@@ -11,6 +11,8 @@
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"
 
+#include <memory>
+
 void Charge_Mixing::mix_rho_recip(Charge* chr)
 {
     ModuleBase::TITLE("Charge_Mixing", "mix_rho_recip");
@@ -403,12 +405,12 @@ void Charge_Mixing::mix_rho(Charge* chr)
 
     // the charge before mixing.
     const int nrxx = chr->rhopw->nrxx;
-    std::vector<double> rho123(nspin * nrxx);
+    std::unique_ptr<double[]> rho123(new double[nspin * nrxx]);
     for (int is = 0; is < nspin; ++is)
     {
         if (is == 0 || is == 3 || !cfg_.domag_z)
         {
-            double* rho123_is = rho123.data() + is * nrxx;
+            double* rho123_is = rho123.get() + is * nrxx;
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 512)
 #endif
@@ -418,13 +420,13 @@ void Charge_Mixing::mix_rho(Charge* chr)
             }
         }
     }
-    std::vector<double> kin_r123;
+    std::unique_ptr<double[]> kin_r123;
     if (cfg_.mixing_tau)
     {
-        kin_r123.resize(nspin * nrxx);
+        kin_r123.reset(new double[nspin * nrxx]);
         for (int is = 0; is < nspin; ++is)
         {
-            double* kin_r123_is = kin_r123.data() + is * nrxx;
+            double* kin_r123_is = kin_r123.get() + is * nrxx;
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 512)
 #endif
@@ -451,7 +453,7 @@ void Charge_Mixing::mix_rho(Charge* chr)
     {
         if (is == 0 || is == 3 || !cfg_.domag_z)
         {
-            double* rho123_is = rho123.data() + is * nrxx;
+            double* rho123_is = rho123.get() + is * nrxx;
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 512)
 #endif
@@ -466,7 +468,7 @@ void Charge_Mixing::mix_rho(Charge* chr)
     {
         for (int is = 0; is < nspin; ++is)
         {
-            double* kin_r123_is = kin_r123.data() + is * nrxx;
+            double* kin_r123_is = kin_r123.get() + is * nrxx;
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 512)
 #endif
