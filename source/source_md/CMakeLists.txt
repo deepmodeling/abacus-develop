@@ -12,6 +12,7 @@ add_library(
 add_subdirectory(module_snap)
 add_subdirectory(module_lj)
 add_subdirectory(module_dp)
+add_subdirectory(module_nep)
 
 if(ENABLE_COVERAGE)
   add_coverage(md)

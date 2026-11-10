@@ -128,6 +128,18 @@ addtest(
           ../../source_cell/module_neighlist/neighbor_list.cpp
           ${depend_files})
 
+set(_md_nep_test_libs parameter psi device)
+if(DEFINED NEP_DIR AND NEP_FOUND)
+  list(APPEND _md_nep_test_libs NEP::nep)
+endif()
+
+addtest(
+  TARGET MODULE_MD_NEP_potential
+  LIBS ${_md_nep_test_libs}
+  SOURCES ../module_nep/test_nep_potential.cpp ../module_nep/nep_potential.cpp
+          ../../source_cell/module_neighlist/neighbor_list.cpp
+          ${depend_files})
+
 addtest(
   TARGET MODULE_MD_func
   LIBS parameter psi device
