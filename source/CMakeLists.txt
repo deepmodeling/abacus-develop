@@ -692,6 +692,7 @@ if(USE_CUDA)
     source_hsolver/kernels/cuda/bpcg_kernel_op.cu
     source_hsolver/module_linalg/kernels/cuda/linear_op.cu
     source_estate/kernels/cuda/elecstate_op.cu
+    source_estate/kernels/cuda/hartree_op.cu
     source_base/module_device/cuda/memory_op.cu
     source_pw/module_pwdft/kernels/cuda/force_op.cu
     source_pw/module_pwdft/kernels/cuda/stress_op.cu

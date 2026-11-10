@@ -348,7 +348,23 @@ void normalize_and_check(double** rho_in,
     std::vector<double> ne(spin_number_need);
     for (int is = 0; is < spin_number_need; is++)
     {
-        rhopw->recip2real(&rho_g3d(is, 0), rho_in[is]);
+        if (rhopw->gamma_only)
+        {
+            rhopw->recip2real(&rho_g3d(is, 0), rho_in[is]);
+        }
+        else
+        {
+            // The starting-charge diagnostics retain the full complex transform.
+            auto* density_grid = rhopw->fft_bundle.template get_auxr_data<double>();
+            rhopw->recip2real(&rho_g3d(is, 0), density_grid);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
+            for (int ir = 0; ir < rhopw->nrxx; ++ir)
+            {
+                rho_in[is][ir] = density_grid[ir].real();
+            }
+        }
 
         for (int ir = 0; ir < rhopw->nrxx; ++ir)
         {
