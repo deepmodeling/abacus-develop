@@ -1,17 +1,29 @@
 #ifndef _PARALLEL_ORBITALS_H_
 #define _PARALLEL_ORBITALS_H_
-#include "source_base/parallel_2d.h"
+#include "source_base/block_cyclic_distribution.h"
 #include <fstream>
 #include <vector>
 
 /// This class packs the information of 2D-block-cyclic for LCAO code:
 /// parallel distribution of basis, wavefunction and matrix.
-class Parallel_Orbitals : public Parallel_2D
+///
+/// R4 (single storage): this class must never add a copy of any BlockCyclicDistribution
+/// state field (nrow/ncol/nloc/nb/dim0/dim1/desc/blacs_ctxt).  The only
+/// authoritative copy lives in the para_2d_ member below; re-deriving the
+/// distribution from a duplicated field would silently desynchronize the
+/// LCAO band/atom layers that are computed from it.
+class Parallel_Orbitals
 {
 public:
     Parallel_Orbitals();
     ~Parallel_Orbitals();
 
+    /// Access to the block-cyclic distribution information.  The non-const
+    /// overload exists only for the two cases a const getter cannot serve:
+    /// non-const mutation by setup_2d_division, and test-side descriptor writes.
+    BlockCyclicDistribution& para_2d() { return para_2d_; }
+
+    const BlockCyclicDistribution& para_2d() const { return para_2d_; }
     /// local size of bands, used for 2d wavefunction
     /// must divided on dim1 because of elpa interface
     int ncol_bands;
@@ -66,8 +78,8 @@ public:
 
     /**
      * @brief dimension getters for 2D-block-cyclic division of Hamiltonian matrix
-     * get_col_size() : total number of columns of Hamiltonian matrix in this processor
-     * get_row_size() : total number of rows of Hamiltonian matrix in this processor
+     * ncloc() : total number of columns of Hamiltonian matrix in this processor
+     * nrloc() : total number of rows of Hamiltonian matrix in this processor
      * get_ncol_atom(iat) : number of columns of Hamiltonian matrix in atom iat
      * get_nrow_atom(iat) : number of rows of Hamiltonian matrix in atom iat
     */
@@ -98,6 +110,11 @@ public:
     std::vector<int> atom_begin_col;
 
     const int* iat2iwt_ = nullptr;
+
+private:
+    /// Block-cyclic distribution of the Hamiltonian matrix.  Single source of
+    /// truth for nrow/ncol/nloc/nb/dim0/dim1/desc/blacs_ctxt (R4).
+    BlockCyclicDistribution para_2d_;
 
 };
 #endif

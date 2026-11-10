@@ -21,18 +21,18 @@ void set_force
 {
     // use iw1_all and iw2_all to set Hloc
     // becareful! The ir and ic may < 0!!!!!!!!!!!!!!!!
-    const int ir = pv.global2local_row(iw1_all);
-    const int ic = pv.global2local_col(iw2_all);
-    const long index = ir * pv.ncol + ic;
+    const int ir = pv.para_2d().irloc(iw1_all);
+    const int ic = pv.para_2d().icloc(iw2_all);
+    const long index = ir * pv.para_2d().ncloc() + ic;
     
-    if( index >= pv.nloc)
+    if( index >= pv.para_2d().size())
     {
         std::cout << " iw1_all = " << iw1_all << std::endl;
         std::cout << " iw2_all = " << iw2_all << std::endl;
         std::cout << " ir = " << ir << std::endl;
         std::cout << " ic = " << ic << std::endl;
         std::cout << " index = " << index << std::endl;
-        std::cout << " pv.nloc = " << pv.nloc << std::endl;
+        std::cout << " pv.nloc = " << pv.para_2d().size() << std::endl;
         ModuleBase::WARNING_QUIT("LCAO_domain","set_force");
     }	 
 

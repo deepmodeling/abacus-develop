@@ -227,12 +227,13 @@ void RDMFT<TK, TR>::cal_V_XC(const UnitCell& ucell)
     {
         HR_exx_XC->set_zero();
 
-        std::vector< std::vector<TK> > DM_XC(nk_total, std::vector<TK>(ParaV->nloc));
+        const std::size_t nloc = ParaV->para_2d().size();
+        std::vector< std::vector<TK> > DM_XC(nk_total, std::vector<TK>(nloc));
         get_DM_XC(DM_XC);
         // get DM_XC of all k points
         if( exx_spacegroup_symmetry )
         {
-            DM_XC = symrot_exx.restore_dm(*this->kv, DM_XC, *ParaV); // class vector could be auto resize()
+            DM_XC = symrot_exx.restore_dm(*this->kv, DM_XC, ParaV->para_2d()); // class vector could be auto resize()
         }
         std::vector< const std::vector<TK>* > DM_XC_pointer(DM_XC.size());
         for(int ik=0; ik<DM_XC.size(); ++ik) { DM_XC_pointer[ik] = &DM_XC[ik];
@@ -243,17 +244,17 @@ void RDMFT<TK, TR>::cal_V_XC(const UnitCell& ucell)
             // transfer the DM_XC to appropriate format
             std::vector<std::map<int,std::map<std::pair<int,std::array<int,3>>,RI::Tensor<double>>>> 
                 Ds_XC_d = std::is_same<TK, double>::value //gamma_only_local
-                ? RI_2D_Comm::split_m2D_ktoR<double>(ucell,*kv, DM_XC_pointer, *ParaV, nspin)
-                : RI_2D_Comm::split_m2D_ktoR<double>(ucell,*kv, DM_XC_pointer, *ParaV, nspin, this->exx_spacegroup_symmetry);
+                ? RI_2D_Comm::split_m2D_ktoR<double>(ucell,*kv, DM_XC_pointer, ParaV->para_2d(), nspin)
+                : RI_2D_Comm::split_m2D_ktoR<double>(ucell,*kv, DM_XC_pointer, ParaV->para_2d(), nspin, this->exx_spacegroup_symmetry);
 
             // provide the Ds_XC to Vxc_fromRI(V_exx_XC)
             if (this->exx_spacegroup_symmetry && this->exx_info_->info_ri.exx_symmetry_realspace)
             {
-                Vxc_fromRI_d->cal_exx_elec(Ds_XC_d, ucell,*ParaV, &this->symrot_exx);
+                Vxc_fromRI_d->cal_exx_elec(Ds_XC_d, ucell, *ParaV, &this->symrot_exx);
             }
             else
             {
-                Vxc_fromRI_d->cal_exx_elec(Ds_XC_d, ucell,*ParaV);
+                Vxc_fromRI_d->cal_exx_elec(Ds_XC_d, ucell, *ParaV);
             }
 
             // when we doing V_exx_XC.contributeHk(ik), we get HK_XC constructed by the special DM_XC
@@ -273,17 +274,17 @@ void RDMFT<TK, TR>::cal_V_XC(const UnitCell& ucell)
             // transfer the DM_XC to appropriate format
             std::vector<std::map<int,std::map<std::pair<int,std::array<int,3>>,RI::Tensor<std::complex<double>>>>> 
                 Ds_XC_c = std::is_same<TK, double>::value //gamma_only_local
-                ? RI_2D_Comm::split_m2D_ktoR<std::complex<double>>(ucell,*kv, DM_XC_pointer, *ParaV, nspin)
-                : RI_2D_Comm::split_m2D_ktoR<std::complex<double>>(ucell,*kv, DM_XC_pointer, *ParaV, nspin, this->exx_spacegroup_symmetry);
+                ? RI_2D_Comm::split_m2D_ktoR<std::complex<double>>(ucell,*kv, DM_XC_pointer, ParaV->para_2d(), nspin)
+                : RI_2D_Comm::split_m2D_ktoR<std::complex<double>>(ucell,*kv, DM_XC_pointer, ParaV->para_2d(), nspin, this->exx_spacegroup_symmetry);
 
             // // provide the Ds_XC to Vxc_fromRI(V_exx_XC)
             if (this->exx_spacegroup_symmetry && this->exx_info_->info_ri.exx_symmetry_realspace)
             {
-                Vxc_fromRI_c->cal_exx_elec(Ds_XC_c, ucell,*ParaV, &this->symrot_exx);
+                Vxc_fromRI_c->cal_exx_elec(Ds_XC_c, ucell, *ParaV, &this->symrot_exx);
             }
             else
             {
-                Vxc_fromRI_c->cal_exx_elec(Ds_XC_c, ucell,*ParaV);
+                Vxc_fromRI_c->cal_exx_elec(Ds_XC_c, ucell, *ParaV);
             }
 
             // when we doing V_exx_XC.contributeHk(ik), we get HK_XC constructed by the special DM_XC

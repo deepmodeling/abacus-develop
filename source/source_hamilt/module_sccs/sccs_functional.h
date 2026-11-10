@@ -10,6 +10,8 @@ class PW_Basis;
 
 namespace ModuleSccs
 {
+class CoulombOperator;
+
 struct SccsConfig;
 struct SccsResponse;
 
@@ -22,14 +24,26 @@ struct FunctionalResult
     double volume = 0.0; // Bohr^3
     std::vector<double> reaction_potential; // dielectric minus vacuum, Hartree
     std::vector<double> electron_potential; // derivative of all three energy terms
+    std::vector<double> cavity_potential; // derivative w.r.t. cavity density, Hartree; full cavity only
 };
 
-// Collective over the PW pool.
+// Collective over the PW pool; without the solvent-aware filling.
 void eval_functional(const std::vector<double>& charge,
                       const SccsResponse& response,
                       const SccsConfig& config,
                       const ModulePW::PW_Basis& basis,
                       double tpiba,
+                      FunctionalResult& result);
+
+// Use the same operator for the dielectric response and vacuum subtraction.
+// probe_kernel is the one passed to solve_response for response.
+void eval_functional(const std::vector<double>& charge,
+                      const SccsResponse& response,
+                      const SccsConfig& config,
+                      const std::vector<double>& probe_kernel,
+                      const ModulePW::PW_Basis& basis,
+                      double tpiba,
+                      CoulombOperator& coulomb,
                       FunctionalResult& result);
 } // namespace ModuleSccs
 

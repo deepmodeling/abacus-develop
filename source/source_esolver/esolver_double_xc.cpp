@@ -73,7 +73,7 @@ void ESolver_DoubleXC<TK, TR>::before_all_runners(BaseCell& basecell, const Inpu
                 || this->inp_->ks_solver == "pexsi" || this->inp_->ks_solver == "cusolver"
                 || this->inp_->ks_solver == "cusolvermp")
             {
-                ncol = this->pv.ncol;
+                ncol = this->pv.para_2d().ncloc();
             }
         }
         else
@@ -85,7 +85,7 @@ void ESolver_DoubleXC<TK, TR>::before_all_runners(BaseCell& basecell, const Inpu
             ncol = this->inp_->nbands;
 #endif
         }
-        this->psi_base = new psi::Psi<TK>(nsk, ncol, this->pv.nrow, this->kv.ngk, true);
+        this->psi_base = new psi::Psi<TK>(nsk, ncol, this->pv.para_2d().nrloc(), this->kv.ngk, true);
     }
 
     // 6) initialize the density matrix

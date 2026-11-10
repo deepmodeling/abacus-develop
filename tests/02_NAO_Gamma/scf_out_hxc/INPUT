@@ -24,7 +24,7 @@ smearing_sigma    0.002
 
 out_mat_xc        1
 out_mat_xc2       1
-out_eband_terms   1
+out_eband   1
 
 #Parameters (5.Mixing)
 mixing_type       broyden

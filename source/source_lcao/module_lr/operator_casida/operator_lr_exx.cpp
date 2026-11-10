@@ -100,7 +100,7 @@ namespace LR
                         {
                             const int native_col = ucell.itiaiw2iwt(it2, ia2, nu);
                             const int col = benchmark_probe ? aims_nbasis[it2] : native_col;
-                            if (pmat.in_this_processor(row, col))
+                            if (pmat.para_2d().in_this_processor(row, col))
                             {
                                 h[static_cast<std::size_t>(col) * naos + row] += phase * block(mu, nu);
                             }
@@ -132,15 +132,15 @@ namespace LR
             const int result_size = static_cast<int>(result.size());
             Parallel_Reduce::reduce_all(result.data(), result_size);
             const bool transpose = occupied && std::is_same<T, std::complex<double>>::value;
-            const int start = ik * pX.get_local_size();
+            const int start = ik * pX.size();
             for (int io = 0; io < nocc; ++io)
             {
                 for (int iv = 0; iv < nright; ++iv)
                 {
                     if (pX.in_this_processor(iv, io))
                     {
-                        const int local = pX.global2local_col(io) * pX.get_row_size()
-                                        + pX.global2local_row(iv);
+                        const int local = pX.icloc(io) * pX.nrloc()
+                                        + pX.irloc(iv);
                         // The legacy complex CC_oo probe orders (io,iv), unlike
                         // CC_vo/CXC_o; preserve it even for nonsymmetric H(k).
                         const int index = transpose ? iv * nocc + io : io * nright + iv;
@@ -158,7 +158,8 @@ namespace LR
         ModuleBase::TITLE("OperatorLREXX", "cal_Hs");
         ModuleBase::timer::start("OperatorLREXX", "cal_Hs");
         // convert parallel info to LibRI interfaces
-        std::vector<std::tuple<std::set<int>, std::set<int>>> judge = RI_2D_Comm::get_2D_judge(ucell,this->pmat);
+        std::vector<std::tuple<std::set<int>, std::set<int>>> judge
+            = RI_2D_Comm::get_2D_judge(ucell, this->pmat.para_2d());
 
         // suppose Cs，Vs, have already been calculated in the ion-step of ground state
         // and DM_trans has been calculated in hPsi() outside.
@@ -171,7 +172,7 @@ namespace LR
         for (int ik = 0;ik < nk;++ik) { DMk_trans_pointer[ik] = &DMk_trans_vector[ik]; }
         // if multi-k, DM_trans(TR=double) -> Ds_trans(TR=T=complex<double>)
         auto Ds_trans =
-            RI_2D_Comm::split_m2D_ktoR<T>(ucell,this->kv, DMk_trans_pointer, this->pmat, 1);
+            RI_2D_Comm::split_m2D_ktoR<T>(ucell, this->kv, DMk_trans_pointer, this->pmat.para_2d(), 1);
         
         // 2. cal_Hs
         auto lri = this->exx_lri.lock();

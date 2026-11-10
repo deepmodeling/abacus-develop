@@ -4,7 +4,7 @@
 #include "source_psi/psi.h"
 #include <vector>
 #ifdef __MPI
-#include "source_base/parallel_2d.h"
+#include "source_base/block_cyclic_distribution.h"
 #endif
 namespace LR
 {
@@ -34,11 +34,11 @@ namespace LR
     template <typename T>
     void CVCX_occ_pblas(
         const std::vector<container::Tensor>& V_istate,
-        const Parallel_2D& pmat,
+        const BlockCyclicDistribution& pmat,
         const psi::Psi<T, base_device::DEVICE_CPU>& c,
-        const Parallel_2D& pc,
+        const BlockCyclicDistribution& pc,
         const T* const X_istate,
-        const Parallel_2D& px,
+        const BlockCyclicDistribution& px,
         const int& naos,
         const int& nocc,
         const int& nvirt,
@@ -72,11 +72,11 @@ namespace LR
     template <typename T>
     void CVCX_virt_pblas(
         const std::vector<container::Tensor>& V_istate,
-        const Parallel_2D& pmat,
+        const BlockCyclicDistribution& pmat,
         const psi::Psi<T, base_device::DEVICE_CPU>& c,
-        const Parallel_2D& pc,
+        const BlockCyclicDistribution& pc,
         const T* const X_istate,
-        const Parallel_2D& px,
+        const BlockCyclicDistribution& px,
         const int& naos,
         const int& nocc,
         const int& nvirt,

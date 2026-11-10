@@ -80,7 +80,7 @@ class DMTest : public testing::Test
         int global_col = test_size * test_nw;
         std::ofstream ofs_running;
         paraV = new Parallel_Orbitals();
-        paraV->init(global_row, global_col, nb, MPI_COMM_WORLD);
+        paraV->para_2d().init(global_row, global_col, nb, MPI_COMM_WORLD, false);
         paraV->set_atomic_trace(ucell.get_iat2iwt(), test_size, global_row);
     }
 #else
@@ -88,7 +88,7 @@ class DMTest : public testing::Test
     {
         const int n = test_size * test_nw;
         paraV = new Parallel_Orbitals();
-        paraV->set_serial(n, n);
+        paraV->para_2d().set_serial(n, n);
         paraV->set_atomic_trace(ucell.get_iat2iwt(), test_size, n);
     }
 #endif
@@ -104,12 +104,12 @@ TEST_F(DMTest, cal_dmr_full)
     // output dim and nrow, ncol
     if (my_rank == 0)
     {
-        std::cout << "my rank: " << my_rank << " dim0: " << paraV->dim0 << "    dim1:" << paraV->dim1 << std::endl;
-        std::cout << "my rank: " << my_rank << " nrow: " << paraV->nrow << "    ncol:" << paraV->ncol << std::endl;
+        std::cout << "my rank: " << my_rank << " dim0: " << paraV->para_2d().nrproc() << "    dim1:" << paraV->para_2d().ncproc() << std::endl;
+        std::cout << "my rank: " << my_rank << " nrow: " << paraV->para_2d().nrloc() << "    ncol:" << paraV->para_2d().ncloc() << std::endl;
     }
     else
     {
-        std::cout << "my rank: " << my_rank << " nrow: " << paraV->nrow << "    ncol:" << paraV->ncol << std::endl;
+        std::cout << "my rank: " << my_rank << " nrow: " << paraV->para_2d().nrloc() << "    ncol:" << paraV->para_2d().ncloc() << std::endl;
     }
     // initalize a kvectors, Gamma-only
     K_Vectors* kv = nullptr;
@@ -125,9 +125,9 @@ TEST_F(DMTest, cal_dmr_full)
     {
         for (int ik = 0; ik < kv->get_nks(); ik++)
         {
-            for (int i = 0; i < paraV->nrow; i++)
+            for (int i = 0; i < paraV->para_2d().nrloc(); i++)
             {
-                for (int j = 0; j < paraV->ncol; j++)
+                for (int j = 0; j < paraV->para_2d().ncloc(); j++)
                 {
                     DM.set_dmk(is, ik, i, j, std::complex<double>(0.77, 0.77));
                 }
@@ -168,12 +168,12 @@ TEST_F(DMTest, cal_DMR_blas_double)
     // output dim and nrow, ncol
     if (my_rank == 0)
     {
-        std::cout << "my rank: " << my_rank << " dim0: " << paraV->dim0 << "    dim1:" << paraV->dim1 << std::endl;
-        std::cout << "my rank: " << my_rank << " nrow: " << paraV->nrow << "    ncol:" << paraV->ncol << std::endl;
+        std::cout << "my rank: " << my_rank << " dim0: " << paraV->para_2d().nrproc() << "    dim1:" << paraV->para_2d().ncproc() << std::endl;
+        std::cout << "my rank: " << my_rank << " nrow: " << paraV->para_2d().nrloc() << "    ncol:" << paraV->para_2d().ncloc() << std::endl;
     }
     else
     {
-        std::cout << "my rank: " << my_rank << " nrow: " << paraV->nrow << "    ncol:" << paraV->ncol << std::endl;
+        std::cout << "my rank: " << my_rank << " nrow: " << paraV->para_2d().nrloc() << "    ncol:" << paraV->para_2d().ncloc() << std::endl;
     }
     // initalize a kvectors, Gamma-only
     K_Vectors* kv = nullptr;
@@ -189,9 +189,9 @@ TEST_F(DMTest, cal_DMR_blas_double)
     {
         for (int ik = 0; ik < kv->get_nks() / nspin; ik++)
         {
-            for (int i = 0; i < paraV->nrow; i++)
+            for (int i = 0; i < paraV->para_2d().nrloc(); i++)
             {
-                for (int j = 0; j < paraV->ncol; j++)
+                for (int j = 0; j < paraV->para_2d().ncloc(); j++)
                 {
                     DM.set_dmk(is, ik, i, j, 0.77);
                 }
@@ -239,12 +239,12 @@ TEST_F(DMTest, cal_DMR_blas_complex)
     // output dim and nrow, ncol
     if (my_rank == 0)
     {
-        std::cout << "my rank: " << my_rank << " dim0: " << paraV->dim0 << "    dim1:" << paraV->dim1 << std::endl;
-        std::cout << "my rank: " << my_rank << " nrow: " << paraV->nrow << "    ncol:" << paraV->ncol << std::endl;
+        std::cout << "my rank: " << my_rank << " dim0: " << paraV->para_2d().nrproc() << "    dim1:" << paraV->para_2d().ncproc() << std::endl;
+        std::cout << "my rank: " << my_rank << " nrow: " << paraV->para_2d().nrloc() << "    ncol:" << paraV->para_2d().ncloc() << std::endl;
     }
     else
     {
-        std::cout << "my rank: " << my_rank << " nrow: " << paraV->nrow << "    ncol:" << paraV->ncol << std::endl;
+        std::cout << "my rank: " << my_rank << " nrow: " << paraV->para_2d().nrloc() << "    ncol:" << paraV->para_2d().ncloc() << std::endl;
     }
     // initalize a kvectors
     K_Vectors* kv = nullptr;
@@ -262,9 +262,9 @@ TEST_F(DMTest, cal_DMR_blas_complex)
     {
         for (int ik = 0; ik < kv->get_nks() / nspin; ik++)
         {
-            for (int i = 0; i < paraV->nrow; i++)
+            for (int i = 0; i < paraV->para_2d().nrloc(); i++)
             {
-                for (int j = 0; j < paraV->ncol; j++)
+                for (int j = 0; j < paraV->para_2d().ncloc(); j++)
                 {
                     DM.set_dmk(is, ik, i, j, is * 0.77 * (ik + 1));
                 }
@@ -373,7 +373,7 @@ TEST_F(DMTest, cal_DMR_soc_pauli_branch)
     const int global_dim_soc = test_size * test_nw * npol;
 #ifdef __MPI
     Parallel_Orbitals* pv_soc = new Parallel_Orbitals();
-    pv_soc->init(global_dim_soc, global_dim_soc, 2, MPI_COMM_WORLD);
+    pv_soc->para_2d().init(global_dim_soc, global_dim_soc, 2, MPI_COMM_WORLD, false);
     // build the iat2iwt map for the doubled (spinor) orbital count
     std::vector<int> iat2iwt_soc(test_size);
     for (int iat = 0; iat < test_size; ++iat)
@@ -398,14 +398,14 @@ TEST_F(DMTest, cal_DMR_soc_pauli_branch)
     // Re(ud + du) would correctly be 2a instead of the asserted 0.
     const double a = 0.5;
     const double b = 0.25;
-    for (int i = 0; i < pv_soc->nrow; i++)
+    for (int i = 0; i < pv_soc->para_2d().nrloc(); i++)
     {
-        for (int j = 0; j < pv_soc->ncol; j++)
+        for (int j = 0; j < pv_soc->para_2d().ncloc(); j++)
         {
             // global spinor indices determine the spin parity; local indices
             // need not preserve parity under a 2D block-cyclic distribution
-            const bool same_spin = (pv_soc->local2global_row(i) % npol)
-                                   == (pv_soc->local2global_col(j) % npol);
+            const bool same_spin = (pv_soc->para_2d().irglb(i) % npol)
+                                   == (pv_soc->para_2d().icglb(j) % npol);
             const std::complex<double> dmk_value = same_spin
                                                        ? std::complex<double>(a, b)
                                                        : std::complex<double>(0.0, 0.0);

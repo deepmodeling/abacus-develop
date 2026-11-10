@@ -174,6 +174,9 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep, const
     ModuleBase::TITLE("ESolver_KS_LCAO", "before_scf");
     ModuleBase::timer::start("ESolver_KS_LCAO", "before_scf");
 
+    // Record the ionic step (not output_step) for provenance headers written in after_all_runners.
+    this->istep_ = istep;
+
     //! 1) call before_scf() of ESolver_KS.
     // The base preparation uses this index only for initial charge output.
     ESolver_KS::before_scf(ucell, output_step);
@@ -443,6 +446,7 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners(BaseCell& basecell)
 
     ModuleIO::ctrl_runner_lcao<TK, TR>(ucell,
                                        *this->inp_,
+                                       this->istep_,
                                        this->kv,
                                        this->pelec,
                                        this->dmat,
@@ -474,7 +478,9 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
     // call iter_init() of ESolver_KS
     ESolver_KS::iter_init(ucell, istep, iter);
 
-    module_charge::chgmixing_ks_lcao(iter, this->p_chgmix, *this->dftu_, this->dmat.dm->get_dmr_ptr(1)->get_nnr(), *this->inp_);
+    const int iter_limit = this->scf_iter_limit(istep);
+    const int nnr = this->dmat.dm->get_dmr_ptr(1)->get_nnr();
+    module_charge::chgmixing_ks_lcao(iter, iter_limit, this->p_chgmix, *this->dftu_, nnr, *this->inp_);
 
     if (iter == 1)
     {
@@ -670,9 +676,10 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
     const std::vector<std::vector<TK>>& dm_vec = this->dmat.dm->get_dmk_vec();
 
     // 1) calculate the local occupation number matrix and energy correction in DFT+U
+    const int iter_limit = this->scf_iter_limit(istep);
     const DFTU_BASE::OccmatOutputCfg occmat_cfg{this->inp_->out_freq_ion,
                                                 this->inp_->out_freq_elec,
-                                                this->inp_->scf_nmax,
+                                                iter_limit,
                                                 this->inp_->out_occ_mat,
                                                 this->inp_->dft_plus_u};
     // Read globalv values once into locals so the repeated DFT+U call sites
@@ -687,12 +694,8 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
                          this->kv,
                          this->p_chgmix->get_mixing_beta(),
                          hamilt_lcao,
-                         global_out_dir,
                          this->inp_->nspin,
-                         gamma_only_local,
-                         istep,
-                         iter,
-                         occmat_cfg);
+                         gamma_only_local);
 
     // mohan add 2025-11: push DFT+U energy from Plus_U_Base to ElecState.
     // Covers both dft_plus_u==1 (new method, energy accumulated by DFTU_onsite::contributeHR
@@ -751,7 +754,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
 
     // Mix the density matrix after a mixing restart when mixing_dmr is enabled,
     // except at convergence or the maximum iteration count.
-    if (iter != this->inp_->scf_nmax && !conv_esolver)
+    if (iter != iter_limit && !conv_esolver)
     {
         if (this->inp_->mixing_restart > 0 && this->p_chgmix->mixing_restart_count > 0 && this->inp_->mixing_dmr)
         {

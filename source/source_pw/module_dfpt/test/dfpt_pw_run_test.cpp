@@ -8,7 +8,7 @@
 #include "source_cell/pseudo.h"
 #include "source_cell/qlist.h"
 #include "source_cell/unitcell.h"
-#include "dfpt_stru_fixture.h"
+#include "dfpt_stru_tool.h"
 #include "source_base/global_variable.h"
 #include "source_base/parallel_global.h"
 #include "source_estate/module_charge/chg_mix.h"
@@ -33,16 +33,18 @@
  *     i.e. 3*nat entries for each q.
  */
 
-class DFPT_PWRunTest : public DFPTStruTestFixture
+class DFPT_PWRunTest : public ::testing::Test
 {
   protected:
+    UnitCell ucell;
     ModuleDFPT::DFPT_PW dfpt;
     std::ofstream ofs_running;
     std::string output;
 
     void SetUp() override
     {
-        construct_ucell(stru_lib[0]);
+        const dfpt_test::stru_ stru = dfpt_test::cubic_carbon_stru();
+        dfpt_test::construct_ucell(ucell, stru);
         ofs_running.open("tmp_dfpt_run");
         ModuleSymmetry::Symmetry symm;
         const int cal_symm_repr[2] = {0, 6};
@@ -55,7 +57,8 @@ class DFPT_PWRunTest : public DFPTStruTestFixture
     void TearDown() override
     {
         ofs_running.close();
-        ClearUcell();
+        delete[] ucell.atoms;
+        ucell.atoms = nullptr;
         remove("tmp_dfpt_run");
     }
 };
@@ -77,7 +80,7 @@ TEST_F(DFPT_PWRunTest, RunsPerIrrepLoopForAllQ)
               nullptr,
               1.0,
               15.0,
-              nullptr);
+              nullptr, 0);
     dfpt.run();
 
     // each of the 4 irreducible q points must expose 3*nat phonon modes
@@ -103,7 +106,7 @@ TEST_F(DFPT_PWRunTest, DielectricAndBornAreExposed)
               nullptr,
               1.0,
               15.0,
-              nullptr);
+              nullptr, 0);
     dfpt.run();
 
     // design-phase stubs return default-constructed matrices
@@ -150,7 +153,7 @@ TEST_F(DFPT_PWRunTest, DftuReservationWithProviderRejectsInit)
                       nullptr,
                       1.0,
                       15.0,
-                      &dftu);
+                      &dftu, 0);
         },
         ::testing::ExitedWithCode(1),
         "DFT\\+U with DFPT is not supported");

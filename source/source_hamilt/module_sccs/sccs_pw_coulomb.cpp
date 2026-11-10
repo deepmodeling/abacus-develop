@@ -10,11 +10,20 @@ PeriodicCoulombOperator::PeriodicCoulombOperator(const ModulePW::PW_Basis& basis
 {
 }
 
+bool PeriodicCoulombOperator::has_correction() const
+{
+    return false;
+}
+
 void PeriodicCoulombOperator::apply_potential(const std::vector<double>& charge, std::vector<double>& potential)
 {
     reciprocal_work_.resize(basis_.npw);
     basis_.real2recip(charge.data(), reciprocal_work_.data());
+    ++counts_.forward_calls;
     const double tpiba2 = tpiba_ * tpiba_;
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static)
+#endif
     for (int ig = 0; ig < basis_.npw; ++ig)
     {
         if (ig == basis_.ig_gge0 || basis_.gg[ig] == 0.0)
@@ -28,5 +37,6 @@ void PeriodicCoulombOperator::apply_potential(const std::vector<double>& charge,
     }
     potential.resize(basis_.nrxx);
     basis_.recip2real(reciprocal_work_.data(), potential.data());
+    ++counts_.inverse_calls;
 }
 } // namespace ModuleSccs

@@ -19,6 +19,7 @@ VPATH=./src_global:\
 ./source_cell/module_neighlist:\
 ./source_cell/module_symmetry:\
 ./source_cell:\
+./source_cell/kernels:\
 ./source_base:\
 ./source_base/kernels:\
 ./source_base/module_external:\
@@ -32,10 +33,13 @@ VPATH=./src_global:\
 ./source_base/module_out:\
 ./source_md:\
 ./source_md/module_plumed:\
+./source_md/module_snap:\
 ./source_basis/module_pw:\
 ./source_base/module_fft:\
 ./source_esolver:\
 ./source_hsolver:\
+./source_hsolver/module_linalg:\
+./source_hsolver/module_linalg/kernels:\
 ./source_hsolver/kernels:\
 ./source_hsolver/module_genelpa:\
 ./source_hsolver/module_pexsi:\
@@ -54,6 +58,7 @@ VPATH=./src_global:\
 ./source_hamilt/module_xc/kernels:\
 ./source_pw/module_proj:\
 ./source_pw/module_pwdft:\
+./source_pw/module_rt:\
 ./source_pw/module_ofdft:\
 ./source_pw/module_stodft:\
 ./source_pw/module_pwdft/kernels:\
@@ -195,7 +200,7 @@ OBJS_BASE=assoc_laguerre.o\
     device.o\
     device_helpers.o\
     output_device.o\
-    parallel_2d.o\
+    block_cyclic_distribution.o\
     binstream.o\
     filename.o\
     sparse_matrix.o\
@@ -234,6 +239,7 @@ OBJS_CELL=atom_pseudo.o\
     update_cell.o\
     bcast_cell.o\
     read_stru.o\
+    stru_frame_io.o\
     read_atom_species.o\
     sep.o\
     sep_cell.o\
@@ -243,7 +249,10 @@ OBJS_CELL=atom_pseudo.o\
     cal_ux.o\
     mdcell_reader.o\
     mdcell.o\
-    domain_decomposition.o\
+    dom_core.o\
+    dom_ghost.o\
+    dom_migrate.o\
+    dom_force.o\
     cif_io.o\
     ucell_io.o\
 
@@ -284,6 +293,12 @@ OBJS_ELECSTAT=elecstate.o\
     pcc_2d.o\
     pot_pcc.o\
     pot_sccs.o\
+    potential_sccs.o\
+    sccs_fixed_src.o\
+    sccs_output.o\
+    sccs_collect.o\
+    sccs_pcc_0d.o\
+    sccs_pcc_2d.o\
     elecstate_op.o\
     efield.o\
     gatefield.o\
@@ -334,6 +349,7 @@ OBJS_ESOLVER=esolver_factory.o\
     esolver_lj.o\
     esolver_dp.o\
     esolver_nep.o\
+    esolver_snap.o\
     esolver_of.o\
     esolver_of_tddft.o\
     esolver_of_interface.o\
@@ -378,7 +394,15 @@ OBJS_GINT=batch_biggrid.o\
 OBJS_HAMILT=hamilt_pw.o\
     pw_hybrid_nscf.o\
     pw_hybrid_source.o\
+    td_prop_pw.o\
+    td_hamilt_pw.o\
+    prop_cn_pw.o\
+    prop_etrs_pw.o\
     td_history_pw.o\
+    td_conserv_pw.o\
+    td_endpoint_pw.o\
+    td_vel_pw.o\
+    td_spin_pw.o\
     td_pw.o\
     hs_matrix_k.o\
     sto_hamilt_pw.o\
@@ -429,10 +453,12 @@ OBJS_DFPT=dfpt_hamilt_shift.o\
     dfpt_pert_nl.o\
     dfpt_pert_vkb.o\
     dfpt_phon.o\
+    dfpt_phon_asr.o\
     dfpt_phon_elec.o\
     dfpt_phon_ewald.o\
     dfpt_pw.o\
     dfpt_pw_data.o\
+    dfpt_pw_data_resp.o\
     dfpt_pw_init.o\
     dfpt_pw_q0.o\
     dfpt_pw_run.o\
@@ -440,7 +466,9 @@ OBJS_DFPT=dfpt_hamilt_shift.o\
     dfpt_q0.o\
     dfpt_q0_pos.o\
     dfpt_rho.o\
+    dfpt_rho_mix.o\
     dfpt_stern.o\
+    dfpt_write_dyn.o\
     dfpt_xc_analytic.o
 
 OBJS_HAMILT_LCAO=hamilt_lcao.o\
@@ -487,7 +515,12 @@ OBJS_HSOLVER=diago_cg.o\
     para_lin_tf.o\
     hsolver.o\
     hsolver_pw.o\
-    hsolver_pw_tddft.o\
+    cn_solver_pw.o\
+    td_orbital_ops.o\
+    orb_buffer.o\
+    exp_action.o\
+    exp_taylor.o\
+    exp_lanczos.o\
     orthonormal.o\
     orthonormal_small.o\
     hsolver_lcaopw.o\
@@ -534,6 +567,11 @@ OBJS_MD=fire.o\
     nhchain.o\
     plumed_interface.o\
     run_md.o\
+    module_snap/snap_calculator.o\
+    module_snap/snap_descriptor.o\
+    module_snap/snap_derivative.o\
+    module_snap/snap_model.o\
+    module_snap/snap_cg.o\
     verlet.o\
 
 OBJS_NEIGHBOR=sltk_atom.o\
@@ -631,12 +669,19 @@ OBJS_SURCHEM=surchem.o\
     sol_force.o\
 
 OBJS_SCCS=sccs_cavity.o\
+    sccs_cav_deriv.o\
+    sccs_diag.o\
     sccs_functional.o\
+    sccs_lowpass.o\
     sccs_parameters.o\
     sccs_ion_charge.o\
     sccs_ion_force.o\
+    sccs_coul_0d.o\
+    sccs_coul_2d.o\
+    sccs_moments.o\
     sccs_pw_coulomb.o\
-    sccs_response.o
+    sccs_response.o\
+    sccs_sa.o
 
 OBJS_SYMMETRY=symm_other.o\
     symm_rot_spin.o\
@@ -694,6 +739,9 @@ OBJS_IO=module_parameter/input_conv.o\
     module_dos/write_dos_pw.o\
     module_energy/write_bands.o\
     module_energy/td_eij_io.o\
+    module_energy/td_eij_pw.o\
+    module_ctrl/ctrl_output_td_pw.o\
+    module_output/td_conserv_io.o\
     module_dos/cal_dos.o\
     module_dos/cal_pdos_gamma.o\
     module_dos/cal_pdos_multik.o\
@@ -734,8 +782,9 @@ OBJS_IO=module_parameter/input_conv.o\
     module_current/td_current_io.o\
     module_current/td_current_io_comm.o\
     module_current/td_current_pw.o\
+    module_current/td_spin_pw_io.o\
     td_efield_io.o\
-    td_vector_pot_io.o\
+    td_vecpot_io.o\
     module_chgpot/write_libxc_r.o\
     module_chgpot/get_pchg_pw.o\
     module_output/output_log.o\
@@ -754,6 +803,7 @@ OBJS_IO=module_parameter/input_conv.o\
     parse_args.o\
     module_parameter/availability.o\
     module_parameter/availability_validator.o\
+    module_parameter/input_domain.o\
     module_parameter/read_input.o\
     module_parameter/read_inp_sys.o\
     module_parameter/read_inp_estruc.o\
@@ -766,6 +816,7 @@ OBJS_IO=module_parameter/input_conv.o\
     module_parameter/read_inp_deepks.o\
     module_parameter/read_inp_model.o\
     module_parameter/read_inp_sccs.o\
+    module_parameter/sccs_inp_check.o\
     module_parameter/read_inp_postproc.o\
     module_parameter/read_inp_exx_dftu.o\
     module_parameter/read_inp_dfpt.o\
@@ -859,6 +910,10 @@ OBJS_LCAO=evolve_elec.o\
       center2orb_orb22.o\
 
 OBJS_MODULE_RI=conv_coulomb_pot_k.o\
+      smooth_cut_coulomb.o\
+      invmat_ri.o\
+      lri_cv.o\
+      lri_cv_tools.o\
       exx_abfs_jle.o\
       module_restart/restart_exx_csr.o\
       exx_abfs_io.o\
@@ -969,8 +1024,8 @@ OBJS_SRCPW=h_ewald_pw.o\
     update_cell_pw.o\
     dftu_base.o\
     dftu_base_io.o\
-    dftu_base_io_read.o\
-    dftu_base_io_write.o\
+    dftu_base_read.o\
+    dftu_base_write.o\
     dftu_pw.o\
     dftu_pw_tools.o\
     yukawa_screening.o\

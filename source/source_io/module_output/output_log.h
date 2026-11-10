@@ -7,8 +7,6 @@
 #include "source_base/matrix.h"
 #include "source_cell/unitcell.h"
 
-class MDCell;
-
 namespace elecstate
 {
 struct Efermi;
@@ -66,12 +64,6 @@ void print_force(std::ofstream& ofs,
                  const std::string& name,
                  const ModuleBase::matrix& force,
                  bool ry = true);
-
-/// @brief output forces stored on locally owned atoms of an MDCell
-/// @param ofs the output stream on rank zero
-/// @param cell the MD cell
-/// @param name force term name
-void print_force(std::ofstream& ofs, const MDCell& cell, const std::string& name);
 
 /// @brief output stress components
 /// @param name stress term name

@@ -39,7 +39,6 @@ void make_dir_out(const std::string& suffix,
                   const bool& restart,
                   const bool out_alllog,
                   const std::string& global_out_dir,
-                  const std::string& global_stru_dir,
                   const std::string& global_matrix_dir,
                   const std::string& global_wfc_dir,
                   const std::string& global_mlkedf_descriptor_dir,
@@ -232,14 +231,13 @@ TEST_F(InputTest, ValidateRelaxMethodScalar)
         EXPECT_EQ(std::remove(output.c_str()), 0);
     }
     const std::string invalid_method_message
-        = "relax_method requires exactly one scalar option. "
-          "The parameter relax_method must be 'cg', 'cg_trad', 'bfgs', 'bfgs_trad', 'sd', 'cg_bfgs' or 'lbfgs'!";
+        = "Expected one String from {cg, cg_trad, bfgs, bfgs_trad, sd, cg_bfgs, lbfgs}.";
     for (const std::string invalid : {"", "none", "cg 1", "cg 2", "bfgs 1", "bfgs 2", "sd 1", "cg_trad 1", "cg 2 extra"})
     {
         expect_invalid_input("relax_invalid_INPUT", "relax_method " + invalid + "\n",
                              invalid_method_message);
     }
-    expect_invalid_input("relax_new_removed_INPUT", "relax_new 1\n", "THE PARAMETER NAME 'relax_new' IS INCORRECT");
+    expect_invalid_input("relax_new_removed_INPUT", "relax_new 1\n", "Unknown INPUT parameter 'relax_new'");
 }
 
 TEST_F(InputTest, ValidateNoncollinearSpin)
@@ -249,13 +247,13 @@ TEST_F(InputTest, ValidateNoncollinearSpin)
 
     expect_invalid_input("noncolin_missing_nspin_INPUT",
                          "noncolin 1\n",
-                         "nspin must be 4 when noncolin or lspinorb is enabled");
+                         "Requires nspin==4");
     expect_invalid_input("noncolin_invalid_nspin_INPUT",
                          "noncolin 1\nnspin 2\n",
-                         "nspin must be 4 when noncolin or lspinorb is enabled");
+                         "Requires nspin==4");
     expect_invalid_input("soc_missing_nspin_INPUT",
                          "lspinorb 1\n",
-                         "nspin must be 4 when noncolin or lspinorb is enabled");
+                         "Requires nspin==4");
 }
 
 TEST_F(InputTest, ValidateSdftStochasticBands)
@@ -362,10 +360,10 @@ TEST_F(InputTest, ValidateDeepksOutputFrequency)
 
     expect_invalid_input("deepks_freq_negative_INPUT",
                          "deepks_out_freq_elec -1\n",
-                         "deepks_out_freq_elec must not be negative");
+                         "Invalid INPUT parameter 'deepks_out_freq_elec': supplied '-1'. Expected one Integer satisfying value>=0.");
     expect_invalid_input("deepks_freq_missing_base_INPUT",
                          "deepks_out_freq_elec 2\n",
-                         "to use deepks_out_freq_elec, please set deepks_out_base");
+                         "Requires deepks_out_base!=none");
 
     Parameter enabled_param;
     testing::internal::CaptureStdout();
@@ -414,13 +412,58 @@ TEST_F(InputTest, Check)
         readinput.clear();
     }
 
-    ModuleIO::ReadInput::check_mode = true;
     Parameter param;
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(readinput.read_parameters(param, "./INPUT.ref"), ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(
+        {
+            ModuleIO::ReadInput::check_mode = true;
+            readinput.read_parameters(param, "./INPUT.ref");
+        },
+        ::testing::ExitedWithCode(0),
+        "");
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("INPUT parameters have been successfully checked!"));
     EXPECT_TRUE(std::remove("./INPUT.ref") == 0);
+}
+
+TEST_F(InputTest, OutAppFlagParsing)
+{
+    // numeric modes 0/1/2 are parsed as integers
+    {
+        Parameter param;
+        read_parameters("app_flag_numeric_INPUT", "basis_type lcao\nout_app_flag 2\n", param);
+        EXPECT_EQ(param.inp.out_app_flag, 2);
+    }
+    {
+        Parameter param;
+        read_parameters("app_flag_zero_INPUT", "basis_type lcao\nout_app_flag 0\n", param);
+        EXPECT_EQ(param.inp.out_app_flag, 0);
+    }
+    // the legacy Boolean spellings remain valid: true-like maps to mode 1,
+    // false-like maps to mode 0
+    const std::vector<std::pair<std::string, int>> spellings
+        = {{"true", 1},
+           {"TRUE", 1},
+           {"Yes", 1},
+           {"ON", 1},
+           {".true.", 1},
+           {"t", 1},
+           {"false", 0},
+           {"False", 0},
+           {"NO", 0},
+           {"off", 0},
+           {".false.", 0},
+           {"F", 0}};
+    for (const auto& spelling : spellings)
+    {
+        Parameter param;
+        read_parameters("app_flag_bool_INPUT", "basis_type lcao\nout_app_flag " + spelling.first + "\n", param);
+        EXPECT_EQ(param.inp.out_app_flag, spelling.second) << "spelling: " << spelling.first;
+    }
+    // values outside 0/1/2 are rejected
+    expect_invalid_input("app_flag_oob_INPUT",
+                         "basis_type lcao\nout_app_flag 3\n",
+                         "out_app_flag should be 0, 1, or 2");
 }
 
 TEST_F(InputTest, ExplicitNoccSurvivesUnresolvedElectronNumber)

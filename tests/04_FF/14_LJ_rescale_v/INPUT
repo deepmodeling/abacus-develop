@@ -1,6 +1,7 @@
 INPUT_PARAMETERS 
 #Parameters (General)
 suffix            autotest
+read_file_dir     ./
 
 calculation       md
 pseudo_dir        ../../PP_ORB

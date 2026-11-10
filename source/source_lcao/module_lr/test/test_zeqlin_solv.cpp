@@ -73,15 +73,15 @@ namespace
     }
 
     template <typename T>
-    std::vector<T> to_local(const std::vector<T>& full, const Parallel_2D& pv)
+    std::vector<T> to_local(const std::vector<T>& full, const BlockCyclicDistribution& pv)
     {
-        const int nrow = pv.get_global_row_size();
-        std::vector<T> loc(pv.get_local_size());
-        for (int lc = 0; lc < pv.get_col_size(); ++lc)
+        const int nrow = pv.nrglb();
+        std::vector<T> loc(pv.size());
+        for (int lc = 0; lc < pv.ncloc(); ++lc)
         {
-            for (int lr = 0; lr < pv.get_row_size(); ++lr)
+            for (int lr = 0; lr < pv.nrloc(); ++lr)
             {
-                loc[lc * pv.get_row_size() + lr] = full[pv.local2global_col(lc) * nrow + pv.local2global_row(lr)];
+                loc[lc * pv.nrloc() + lr] = full[pv.icglb(lc) * nrow + pv.irglb(lr)];
             }
         }
         return loc;
@@ -99,17 +99,17 @@ namespace
 
     /// solve the distributed system with `solver` and compare with LAPACK on `a_ref`
     template <typename T>
-    void check_against_lapack(void (*solver)(T*, T*, const Parallel_2D&, const Parallel_2D&),
+    void check_against_lapack(void (*solver)(T*, T*, const BlockCyclicDistribution&, const BlockCyclicDistribution&),
         const std::vector<T>& a_in, const std::vector<T>& a_ref, const int n, const int nrhs, const int nb)
     {
         const std::vector<T> b = rhs_matrix<T>(n, nrhs);
         std::vector<T> x_ref(b.size());
         LR_Util::lapack_linear_solver(a_ref.data(), x_ref.data(), b.data(), n, nrhs);
 
-        Parallel_2D pa;
+        BlockCyclicDistribution pa;
         LR_Util::setup_2d_division(pa, nb, n, n);
-        Parallel_2D pb;
-        LR_Util::setup_2d_division(pb, nb, n, nrhs, pa.blacs_ctxt);
+        BlockCyclicDistribution pb;
+        LR_Util::setup_2d_division(pb, nb, n, nrhs, pa.ictxt());
         std::vector<T> a_loc = to_local(a_in, pa);
         std::vector<T> x_loc = to_local(b, pb);
         solver(a_loc.data(), x_loc.data(), pa, pb);
@@ -134,10 +134,10 @@ namespace
             a[i * n + i] = T(1);
         }
         a[failing_index * n + failing_index] = T(pivot);
-        Parallel_2D pa;
+        BlockCyclicDistribution pa;
         LR_Util::setup_2d_division(pa, nb, n, n);
-        Parallel_2D pb;
-        LR_Util::setup_2d_division(pb, nb, n, 1, pa.blacs_ctxt);
+        BlockCyclicDistribution pb;
+        LR_Util::setup_2d_division(pb, nb, n, 1, pa.ictxt());
         std::vector<T> a_loc = to_local(a, pa);
         const std::vector<T> rhs = rhs_matrix<T>(n, 1);
         std::vector<T> b_loc = to_local(rhs, pb);
@@ -251,10 +251,10 @@ TEST_F(ZeqLinearSolverTest, ScalapackCholRejectsIndefinite)
     const int n = 20;
     const int nb = 3;
     const std::vector<double> a = hermitian_matrix<double>(n, -(n + 1.0));   // negative definite
-    Parallel_2D pa;
+    BlockCyclicDistribution pa;
     LR_Util::setup_2d_division(pa, nb, n, n);
-    Parallel_2D pb;
-    LR_Util::setup_2d_division(pb, nb, n, 1, pa.blacs_ctxt);
+    BlockCyclicDistribution pb;
+    LR_Util::setup_2d_division(pb, nb, n, 1, pa.ictxt());
     std::vector<double> a_loc = to_local(a, pa);
     std::vector<double> b_loc = to_local(rhs_matrix<double>(n, 1), pb);
     EXPECT_THROW(LR::scalapack_cholesky_linear_solver<double>(a_loc.data(), b_loc.data(), pa, pb),
@@ -334,11 +334,11 @@ struct SingularZResponse
     int nk = 1;
     std::vector<int> nocc;
     std::vector<int> nvirt;
-    std::vector<Parallel_2D> pX;
+    std::vector<BlockCyclicDistribution> pX;
 
     SingularZResponse() : nocc(1, 2), nvirt(1, 2), pX(1)
     {
-        pX[0].init(2, 2, 1, MPI_COMM_WORLD);
+        pX[0].init(2, 2, 1, MPI_COMM_WORLD, false);
     }
 
     std::vector<T> matrix()
@@ -355,7 +355,7 @@ template <typename T>
 void check_failed_lapack_preserves_z()
 {
     SingularZResponse<T> response;
-    const int ld = response.pX[0].get_local_size();
+    const int ld = response.pX[0].size();
     std::vector<T> rhs(ld, T(1));
     std::vector<T> z(ld, T(7));
     try

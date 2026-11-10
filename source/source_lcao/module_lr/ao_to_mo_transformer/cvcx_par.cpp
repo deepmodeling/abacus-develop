@@ -9,11 +9,11 @@ namespace LR
     template <>
     void CVCX_occ_pblas(
         const std::vector<container::Tensor>& V_istate,
-        const Parallel_2D& pmat,
+        const BlockCyclicDistribution& pmat,
         const psi::Psi<double, base_device::DEVICE_CPU>& c,
-        const Parallel_2D& pc,
+        const BlockCyclicDistribution& pc,
         const double* const X_istate,
-        const Parallel_2D& px,
+        const BlockCyclicDistribution& px,
         const int& naos,
         const int& nocc,
         const int& nvirt,
@@ -24,8 +24,8 @@ namespace LR
         ModuleBase::TITLE("hamilt_lrtd", "CVCX_occ_pblas");
         assert(pmat.comm() == pc.comm());
         assert(pmat.comm() == px.comm());
-        assert(pmat.blacs_ctxt == pc.blacs_ctxt);
-        assert(pmat.blacs_ctxt == px.blacs_ctxt);
+        assert(pmat.ictxt() == pc.ictxt());
+        assert(pmat.ictxt() == px.ictxt());
 
         // Empty local blocks still participate in every collective PBLAS call.
         double empty_block(0);
@@ -35,14 +35,14 @@ namespace LR
         const int nks = c.get_nk();
         assert(V_istate.size() == nks);
 
-        Parallel_2D pcv;
-        LR_Util::setup_2d_division(pcv, pmat.get_block_size(), nocc, naos, pmat.blacs_ctxt);
-        Parallel_2D pcx;
-        LR_Util::setup_2d_division(pcx, pmat.get_block_size(), naos, nvirt, pmat.blacs_ctxt);
+        BlockCyclicDistribution pcv;
+        LR_Util::setup_2d_division(pcv, pmat.nb(), nocc, naos, pmat.ictxt());
+        BlockCyclicDistribution pcx;
+        LR_Util::setup_2d_division(pcx, pmat.nb(), naos, nvirt, pmat.ictxt());
         for (int isk = 0;isk < nks;++isk)
         {
             c.fix_k(isk);
-            const int start = isk * px.get_local_size();
+            const int start = isk * px.size();
 
             const int i1 = 1;
             const int ivirt = nocc + 1;
@@ -52,7 +52,7 @@ namespace LR
             const double zero = 0.0;
 
             // c^TV[nocc*naos]
-            container::Tensor cv(DAT::DT_DOUBLE, DEV::CpuDevice, { pcv.get_col_size(), pcv.get_row_size() });
+            container::Tensor cv(DAT::DT_DOUBLE, DEV::CpuDevice, { pcv.ncloc(), pcv.nrloc() });
             ScalapackConnector::gemm(trans,
                 notrans,
                 nocc,
@@ -62,19 +62,19 @@ namespace LR
                 c.get_pointer(),
                 i1,
                 i1,
-                pc.desc,
+                pc.desc(),
                 V_istate[isk].data<double>(),
                 i1,
                 i1,
-                pmat.desc,
+                pmat.desc(),
                 zero,
                 cv.data<double>(),
                 i1,
                 i1,
-                pcv.desc);
+                pcv.desc());
 
             // cX^T[naos*nvirt]
-            container::Tensor cx(DAT::DT_DOUBLE, DEV::CpuDevice, { pcx.get_col_size(), pcx.get_row_size() });
+            container::Tensor cx(DAT::DT_DOUBLE, DEV::CpuDevice, { pcx.ncloc(), pcx.nrloc() });
             ScalapackConnector::gemm(notrans,
                 trans,
                 naos,
@@ -84,16 +84,16 @@ namespace LR
                 c.get_pointer(),
                 i1,
                 i1,
-                pc.desc,
+                pc.desc(),
                 X_istate_data + start,
                 i1,
                 i1,
-                px.desc,
+                px.desc(),
                 zero,
                 cx.data<double>(),
                 i1,
                 i1,
-                pcx.desc);
+                pcx.desc());
 
             //AX_istate=[cX^T]^T[c^TV]^T (nvirt major)
             const auto accumulation_beta_10 = add_on ? one : zero;
@@ -106,27 +106,27 @@ namespace LR
                 cx.data<double>(),
                 i1,
                 i1,
-                pcx.desc,
+                pcx.desc(),
                 cv.data<double>(),
                 i1,
                 i1,
-                pcv.desc,
+                pcv.desc(),
                 accumulation_beta_10,
                 AX_istate_data + start,
                 i1,
                 i1,
-                px.desc);
+                px.desc());
         }
     }
 
     template <>
     void CVCX_occ_pblas(
         const std::vector<container::Tensor>& V_istate,
-        const Parallel_2D& pmat,
+        const BlockCyclicDistribution& pmat,
         const psi::Psi<std::complex<double>, base_device::DEVICE_CPU>& c,
-        const Parallel_2D& pc,
+        const BlockCyclicDistribution& pc,
         const std::complex<double>* const X_istate,
-        const Parallel_2D& px,
+        const BlockCyclicDistribution& px,
         const int& naos,
         const int& nocc,
         const int& nvirt,
@@ -137,8 +137,8 @@ namespace LR
         ModuleBase::TITLE("hamilt_lrtd", "CVCX_occ_pblas");
         assert(pmat.comm() == pc.comm());
         assert(pmat.comm() == px.comm());
-        assert(pmat.blacs_ctxt == pc.blacs_ctxt);
-        assert(pmat.blacs_ctxt == px.blacs_ctxt);
+        assert(pmat.ictxt() == pc.ictxt());
+        assert(pmat.ictxt() == px.ictxt());
 
         // Empty local blocks still participate in every collective PBLAS call.
         std::complex<double> empty_block(0);
@@ -148,14 +148,14 @@ namespace LR
         int nks = c.get_nk();
         assert(V_istate.size() == nks);
 
-        Parallel_2D pcv;
-        LR_Util::setup_2d_division(pcv, pmat.get_block_size(), nocc, naos, pmat.blacs_ctxt);
-        Parallel_2D pcx;
-        LR_Util::setup_2d_division(pcx, pmat.get_block_size(), naos, nvirt, pmat.blacs_ctxt);
+        BlockCyclicDistribution pcv;
+        LR_Util::setup_2d_division(pcv, pmat.nb(), nocc, naos, pmat.ictxt());
+        BlockCyclicDistribution pcx;
+        LR_Util::setup_2d_division(pcx, pmat.nb(), naos, nvirt, pmat.ictxt());
         for (int isk = 0;isk < nks;++isk)
         {
             c.fix_k(isk);
-            const int start = isk * px.get_local_size();
+            const int start = isk * px.size();
 
             const int i1 = 1;
             const int ivirt = nocc + 1;
@@ -166,7 +166,7 @@ namespace LR
             const std::complex<double> zero(0.0, 0.0);
 
             // c^TV[nocc*naos]
-            container::Tensor cv(DAT::DT_COMPLEX_DOUBLE, DEV::CpuDevice, { pcv.get_col_size(), pcv.get_row_size() });
+            container::Tensor cv(DAT::DT_COMPLEX_DOUBLE, DEV::CpuDevice, { pcv.ncloc(), pcv.nrloc() });
             ScalapackConnector::gemm(dagger,
                 notrans,
                 nocc,
@@ -176,19 +176,19 @@ namespace LR
                 c.get_pointer(),
                 i1,
                 i1,
-                pc.desc,
+                pc.desc(),
                 V_istate[isk].data<std::complex<double>>(),
                 i1,
                 i1,
-                pmat.desc,
+                pmat.desc(),
                 zero,
                 cv.data<std::complex<double>>(),
                 i1,
                 i1,
-                pcv.desc);
+                pcv.desc());
 
             // cX^T[naos*nvirt]
-            container::Tensor cx(DAT::DT_COMPLEX_DOUBLE, DEV::CpuDevice, { pcx.get_col_size(), pcx.get_row_size() });
+            container::Tensor cx(DAT::DT_COMPLEX_DOUBLE, DEV::CpuDevice, { pcx.ncloc(), pcx.nrloc() });
             ScalapackConnector::gemm(notrans,
                 dagger,
                 naos,
@@ -198,16 +198,16 @@ namespace LR
                 c.get_pointer(),
                 i1,
                 i1,
-                pc.desc,
+                pc.desc(),
                 X_istate_data + start,
                 i1,
                 i1,
-                px.desc,
+                px.desc(),
                 zero,
                 cx.data<std::complex<double>>(),
                 i1,
                 i1,
-                pcx.desc);
+                pcx.desc());
 
             //AX_istate=[cX^T]^T[c^TV]^T (nvirt major)
             const auto accumulation_beta_7 = add_on ? one : zero;
@@ -220,27 +220,27 @@ namespace LR
                 cx.data<std::complex<double>>(),
                 i1,
                 i1,
-                pcx.desc,
+                pcx.desc(),
                 cv.data<std::complex<double>>(),
                 i1,
                 i1,
-                pcv.desc,
+                pcv.desc(),
                 accumulation_beta_7,
                 AX_istate_data + start,
                 i1,
                 i1,
-                px.desc);
+                px.desc());
         }
     }
 
     template <>
     void CVCX_virt_pblas(
         const std::vector<container::Tensor>& V_istate,
-        const Parallel_2D& pmat,
+        const BlockCyclicDistribution& pmat,
         const psi::Psi<double, base_device::DEVICE_CPU>& c,
-        const Parallel_2D& pc,
+        const BlockCyclicDistribution& pc,
         const double* const X_istate,
-        const Parallel_2D& px,
+        const BlockCyclicDistribution& px,
         const int& naos,
         const int& nocc,
         const int& nvirt,
@@ -251,8 +251,8 @@ namespace LR
         ModuleBase::TITLE("hamilt_lrtd", "CVCX_virt_pblas");
         assert(pmat.comm() == pc.comm());
         assert(pmat.comm() == px.comm());
-        assert(pmat.blacs_ctxt == pc.blacs_ctxt);
-        assert(pmat.blacs_ctxt == px.blacs_ctxt);
+        assert(pmat.ictxt() == pc.ictxt());
+        assert(pmat.ictxt() == px.ictxt());
 
         // Empty local blocks still participate in every collective PBLAS call.
         double empty_block(0);
@@ -262,14 +262,14 @@ namespace LR
         const int nks = c.get_nk();
         assert(V_istate.size() == nks);
 
-        Parallel_2D pcv;
-        LR_Util::setup_2d_division(pcv, pmat.get_block_size(), naos, nvirt, pmat.blacs_ctxt);
-        Parallel_2D pcx;
-        LR_Util::setup_2d_division(pcx, pmat.get_block_size(), nocc, naos, pmat.blacs_ctxt);
+        BlockCyclicDistribution pcv;
+        LR_Util::setup_2d_division(pcv, pmat.nb(), naos, nvirt, pmat.ictxt());
+        BlockCyclicDistribution pcx;
+        LR_Util::setup_2d_division(pcx, pmat.nb(), nocc, naos, pmat.ictxt());
         for (int isk = 0;isk < nks;++isk)
         {
             c.fix_k(isk);
-            const int start = isk * px.get_local_size();
+            const int start = isk * px.size();
 
             const int i1 = 1;
             const int ivirt = nocc + 1;
@@ -280,7 +280,7 @@ namespace LR
             const double zero = 0.0;
 
             // VC[naos*nvirt]
-            container::Tensor cv(DAT::DT_DOUBLE, DEV::CpuDevice, { pcv.get_col_size(), pcv.get_row_size() });
+            container::Tensor cv(DAT::DT_DOUBLE, DEV::CpuDevice, { pcv.ncloc(), pcv.nrloc() });
             ScalapackConnector::gemm(notrans,
                 notrans,
                 naos,
@@ -290,19 +290,19 @@ namespace LR
                 V_istate[isk].data<double>(),
                 i1,
                 i1,
-                pmat.desc,
+                pmat.desc(),
                 c.get_pointer(),
                 i1,
                 ivirt,
-                pc.desc,
+                pc.desc(),
                 zero,
                 cv.data<double>(),
                 i1,
                 i1,
-                pcv.desc);
+                pcv.desc());
 
             // X^TC^T[nocc*naos]
-            container::Tensor cx(DAT::DT_DOUBLE, DEV::CpuDevice, { pcx.get_col_size(), pcx.get_row_size() });
+            container::Tensor cx(DAT::DT_DOUBLE, DEV::CpuDevice, { pcx.ncloc(), pcx.nrloc() });
             ScalapackConnector::gemm(dagger,
                 dagger,
                 nocc,
@@ -312,16 +312,16 @@ namespace LR
                 X_istate_data + start,
                 i1,
                 i1,
-                px.desc,
+                px.desc(),
                 c.get_pointer(),
                 i1,
                 ivirt,
-                pc.desc,
+                pc.desc(),
                 zero,
                 cx.data<double>(),
                 i1,
                 i1,
-                pcx.desc);
+                pcx.desc());
 
             //AX_istate=[VC]^T[X^TC^T]^T (nvirt major)
             const auto accumulation_beta_4 = add_on ? one : zero;
@@ -334,27 +334,27 @@ namespace LR
                 cv.data<double>(),
                 i1,
                 i1,
-                pcv.desc,
+                pcv.desc(),
                 cx.data<double>(),
                 i1,
                 i1,
-                pcx.desc,
+                pcx.desc(),
                 accumulation_beta_4,
                 AX_istate_data + start,
                 i1,
                 i1,
-                px.desc);
+                px.desc());
         }
     }
 
     template <>
     void CVCX_virt_pblas(
         const std::vector<container::Tensor>& V_istate,
-        const Parallel_2D& pmat,
+        const BlockCyclicDistribution& pmat,
         const psi::Psi<std::complex<double>, base_device::DEVICE_CPU>& c,
-        const Parallel_2D& pc,
+        const BlockCyclicDistribution& pc,
         const std::complex<double>* const X_istate,
-        const Parallel_2D& px,
+        const BlockCyclicDistribution& px,
         const int& naos,
         const int& nocc,
         const int& nvirt,
@@ -365,8 +365,8 @@ namespace LR
         ModuleBase::TITLE("hamilt_lrtd", "CVCX_virt_pblas");
         assert(pmat.comm() == pc.comm());
         assert(pmat.comm() == px.comm());
-        assert(pmat.blacs_ctxt == pc.blacs_ctxt);
-        assert(pmat.blacs_ctxt == px.blacs_ctxt);
+        assert(pmat.ictxt() == pc.ictxt());
+        assert(pmat.ictxt() == px.ictxt());
 
         // Empty local blocks still participate in every collective PBLAS call.
         std::complex<double> empty_block(0);
@@ -376,14 +376,14 @@ namespace LR
         const int nks = c.get_nk();
         assert(V_istate.size() == nks);
 
-        Parallel_2D pcv;
-        LR_Util::setup_2d_division(pcv, pmat.get_block_size(), naos, nvirt, pmat.blacs_ctxt);
-        Parallel_2D pcx;
-        LR_Util::setup_2d_division(pcx, pmat.get_block_size(), nocc, naos, pmat.blacs_ctxt);
+        BlockCyclicDistribution pcv;
+        LR_Util::setup_2d_division(pcv, pmat.nb(), naos, nvirt, pmat.ictxt());
+        BlockCyclicDistribution pcx;
+        LR_Util::setup_2d_division(pcx, pmat.nb(), nocc, naos, pmat.ictxt());
         for (int isk = 0;isk < nks;++isk)
         {
             c.fix_k(isk);
-            const int start = isk * px.get_local_size();
+            const int start = isk * px.size();
 
             const int i1 = 1;
             const int ivirt = nocc + 1;
@@ -394,7 +394,7 @@ namespace LR
             const std::complex<double> zero(0.0, 0.0);
 
             // VC[naos*nvirt]
-            container::Tensor cv(DAT::DT_COMPLEX_DOUBLE, DEV::CpuDevice, { pcv.get_col_size(), pcv.get_row_size() });
+            container::Tensor cv(DAT::DT_COMPLEX_DOUBLE, DEV::CpuDevice, { pcv.ncloc(), pcv.nrloc() });
             ScalapackConnector::gemm(notrans,
                 notrans,
                 naos,
@@ -404,19 +404,19 @@ namespace LR
                 V_istate[isk].data<std::complex<double>>(),
                 i1,
                 i1,
-                pmat.desc,
+                pmat.desc(),
                 c.get_pointer(),
                 i1,
                 ivirt,
-                pc.desc,
+                pc.desc(),
                 zero,
                 cv.data<std::complex<double>>(),
                 i1,
                 i1,
-                pcv.desc);
+                pcv.desc());
 
             // X^TC^T[nocc*naos]
-            container::Tensor cx(DAT::DT_COMPLEX_DOUBLE, DEV::CpuDevice, { pcx.get_col_size(), pcx.get_row_size() });
+            container::Tensor cx(DAT::DT_COMPLEX_DOUBLE, DEV::CpuDevice, { pcx.ncloc(), pcx.nrloc() });
             ScalapackConnector::gemm(dagger,
                 dagger,
                 nocc,
@@ -426,16 +426,16 @@ namespace LR
                 X_istate_data + start,
                 i1,
                 i1,
-                px.desc,
+                px.desc(),
                 c.get_pointer(),
                 i1,
                 ivirt,
-                pc.desc,
+                pc.desc(),
                 zero,
                 cx.data<std::complex<double>>(),
                 i1,
                 i1,
-                pcx.desc);
+                pcx.desc());
 
             //AX_istate=[VC]^T[X^TC^T]^T (nvirt major)
             const auto accumulation_beta_1 = add_on ? one : zero;
@@ -448,16 +448,16 @@ namespace LR
                 cv.data<std::complex<double>>(),
                 i1,
                 i1,
-                pcv.desc,
+                pcv.desc(),
                 cx.data<std::complex<double>>(),
                 i1,
                 i1,
-                pcx.desc,
+                pcx.desc(),
                 accumulation_beta_1,
                 AX_istate_data + start,
                 i1,
                 i1,
-                px.desc);
+                px.desc());
         }
     }
 }

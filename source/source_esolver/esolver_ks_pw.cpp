@@ -20,6 +20,7 @@
 #include "source_estate/setup_estate_pw.h"            // mohan add 20251005
 #include "source_hamilt/module_xc/general_exx_info.h" // for General_Exx_Info type used via general_exx_info_
 #include "source_io/module_ctrl/ctrl_output_pw.h"     // mohan add 20250927
+#include "source_pw/module_pwdft/dftu_base.h"
 #include "source_pw/module_pwdft/dftu_base_io.h"      // append_ion_step_snapshot
 #include "source_lcao/module_deltaspin/spin_constrain.h"
 #include "source_pw/module_pwdft/deltaspin_pw.h"   // mohan add 20250309
@@ -101,6 +102,26 @@ void ESolver_KS_PW<T, Device>::before_all_runners(BaseCell& basecell, const Inpu
                                this->solvent,
                                inp);
 
+    if (inp.dft_plus_u)
+    {
+        const System_para& sys = PARAM.globalv;
+        this->dftu_->init_base(ucell,
+                               sys.npol,
+                               inp.nspin,
+                               inp.l_channel,
+                               inp.yukawa_potential,
+                               inp.yukawa_lambda,
+                               sys.global_readin_dir,
+                               sys.global_out_dir,
+                               inp.init_chg,
+                               inp.device,
+                               sys.hubbard_u,
+                               sys.uramping,
+                               inp.init_occ_mat,
+                               inp.mixing_dftu,
+                               DFTU_BASE::SOC_LAYOUT_PAULI);
+    }
+
     this->stp.before_runner(ucell, this->kv, this->sf, *this->pw_wfc, this->ppcell.lmaxkb, *this->inp_);
 
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT BASIS");
@@ -166,9 +187,14 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
     //! Allocate HamiltPW
     this->allocate_hamilt(ucell);
 
-    //! Setup potentials (local, non-local, sc, +U, DFT-1/2)
-    // note: init DFT+U is done here for pw basis for every scf iteration, however,
-    // init DFT+U is done in "before_all_runners" in LCAO basis. This should be refactored, mohan note 2025-11-06
+    //! Setup potentials (local, non-local, spin constraint, DFT-1/2)
+    psi::Psi<std::complex<double>, Device>* onsite_psi = nullptr;
+    const bool spinor_rt = this->inp_->esolver_type == "tddft" && this->inp_->nspin == 4;
+    if (this->inp_->onsite_radius > 0 && !spinor_rt)
+    {
+        this->stp.update_psi_d();
+        onsite_psi = this->stp.template get_psi_d<T, Device>();
+    }
     pw::setup_pot(istep,
                   ucell,
                   this->kv,
@@ -178,9 +204,9 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
                   this->chr,
                   this->locpp,
                   this->ppcell,
-                  *this->dftu_,
                   this->vsep_cell,
                   this->stp.template get_psi_t<T, Device>(),
+                  onsite_psi,
                   this->p_hamilt,
                   this->pw_wfc,
                   this->pw_rhod,
@@ -225,7 +251,8 @@ void ESolver_KS_PW<T, Device>::iter_init(UnitCell& ucell, const int istep, const
         mag_converged = sc.mag_converged();
     }
 
-    module_charge::chgmixing_ks_pw(iter, this->p_chgmix, *this->dftu_, mag_converged, *this->inp_);
+    const int iter_limit = this->scf_iter_limit(istep);
+    module_charge::chgmixing_ks_pw(iter, iter_limit, this->p_chgmix, *this->dftu_, mag_converged, *this->inp_);
 
     // mohan move harris functional here, 2012-06-05
     // use 'rho(in)' and 'v_h and v_xc'(in)
@@ -233,11 +260,6 @@ void ESolver_KS_PW<T, Device>::iter_init(UnitCell& ucell, const int istep, const
 
     // update local occupations for DFT+U
     // should before lambda loop in DeltaSpin
-    const DFTU_BASE::OccmatOutputCfg init_occmat_cfg{this->inp_->out_freq_ion,
-                                                     this->inp_->out_freq_elec,
-                                                     this->inp_->scf_nmax,
-                                                     this->inp_->out_occ_mat,
-                                                     this->inp_->dft_plus_u};
     DFTU_BASE::iter_init_dftu_pw(iter,
                                  istep,
                                  *this->dftu_,
@@ -245,8 +267,7 @@ void ESolver_KS_PW<T, Device>::iter_init(UnitCell& ucell, const int istep, const
                                  this->pelec->wg,
                                  ucell,
                                  this->p_chgmix,
-                                 PARAM.globalv.global_out_dir,
-                                 init_occmat_cfg,
+                                 this->inp_->dft_plus_u,
                                  this->kv.isk.data(),
                                  this->inp_->nspin,
                                  this->inp_->kpar);
@@ -371,12 +392,12 @@ void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int
 
     // overwrite occ_mat.txt with the latest occupation matrix and the
     // actual charge-density residual of this electronic step. At the very
-    // first step (istep 0, iter 1) the PW occupation matrix does not exist
-    // yet (iter_init_dftu_pw returns before calculating it), so skip it and
-    // keep the previous behavior where occ_mat.txt first appears at iter 2.
+    // first step (istep 0, iter 1) the PW occupation matrix exists only if
+    // it was loaded from file; otherwise it is first available at iter 2.
+    const int iter_limit = this->scf_iter_limit(istep);
     const DFTU_BASE::OccmatOutputCfg occmat_cfg{this->inp_->out_freq_ion,
                                                 this->inp_->out_freq_elec,
-                                                this->inp_->scf_nmax,
+                                                iter_limit,
                                                 this->inp_->out_occ_mat,
                                                 this->inp_->dft_plus_u};
     const DFTU_BASE::OccmatStepInfo occmat_step{istep,
@@ -386,8 +407,8 @@ void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int
     // Read globalv values once into locals so the repeated DFT+U call sites
     // below do not each re-enter the global dependency surface.
     const std::string& global_out_dir = PARAM.globalv.global_out_dir;
-    const bool latest_ready = (iter > 1 || istep > 0);
-    if (latest_ready)
+    const bool occmat_ready = (iter > 1 || istep > 0 || this->dftu_->is_occmat_ready());
+    if (occmat_ready)
     {
         DFTU_BASE::write_latest_occmat(*this->dftu_,
                                       ucell,
@@ -401,7 +422,6 @@ void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int
     // At istep 0 / iter 1 the PW occupation matrix does not exist yet,
     // unless it was loaded from dm_onsite_ini.txt or a previous
     // occ_mat.txt; snapshot an "N/A" placeholder in that case.
-    const bool occmat_ready = latest_ready || this->dftu_->is_occmat_ready();
     DFTU_BASE::append_ion_step_snapshot(*this->dftu_,
                                         ucell,
                                         global_out_dir,
@@ -412,7 +432,10 @@ void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int
                                         DFTU_BASE::SOC_LAYOUT_PAULI);
 
     // the output quantities
-    ModuleIO::ctrl_iter_pw(istep, iter, conv_esolver, this->stp, this->kv, this->pw_wfc, *this->inp_, GlobalV::ofs_running);
+    if (!this->defer_iter_output(istep))
+    {
+        ModuleIO::ctrl_iter_pw(istep, iter, conv_esolver, this->stp, this->kv, this->pw_wfc, *this->inp_, false, GlobalV::ofs_running);
+    }
 }
 
 template <typename T, typename Device>

@@ -84,6 +84,9 @@ void rescale_vel(const int& natom,
  *
  * @param p_esolver enrergy solver
  * @param istep current md step
+ * @param positions_updated whether ionic positions have drifted in this run;
+ *        the initial force evaluation of a run (including a restarted run)
+ *        passes false so the charge-extrapolation history is not advanced
  * @param mdcell MD cell information
  * @param potential potential energy
  * @param cal_stress whether calculate stress
@@ -91,12 +94,12 @@ void rescale_vel(const int& natom,
  */
 void force_virial(ModuleESolver::ESolver* p_esolver,
                   const int& istep,
+                  const bool& positions_updated,
                   MDCell& mdcell,
                   DomainDecomposition& decomp,
                   double& potential,
                   const bool& cal_stress,
-                  ModuleBase::matrix& virial,
-                  const bool& md_out_force);
+                  ModuleBase::matrix& virial);
 /**
  * @brief calculate the ionic kinetic energy
  *
@@ -148,6 +151,15 @@ void dump_info(const int& step,
                const MD_para& mdp,
                const bool cal_stress,
                const ModuleBase::matrix& virial);
+
+/// Explicit buffer budget for bounded dump collectives; one row is the minimum batch.
+void dump_info(const int& step,
+               const std::string& global_out_dir,
+               const MDCell& mdcell,
+               const MD_para& mdp,
+               const bool cal_stress,
+               const ModuleBase::matrix& virial,
+               const int max_batch_bytes);
 
 /**
  * @brief obtain the atomic mass and whether the freedom is fixed

@@ -13,8 +13,8 @@ struct GradientInputs
     const Grid_Driver& gd;
     const std::vector<double>& orb_cutoff;
     const Parallel_Orbitals& pmat;
-    const Parallel_2D& pc;
-    const std::vector<Parallel_2D>& px;
+    const BlockCyclicDistribution& pc;
+    const std::vector<BlockCyclicDistribution>& px;
     const psi::Psi<T>& psi_ks;
     const ModuleBase::matrix& eig_ks;
     const std::vector<int>& nocc;

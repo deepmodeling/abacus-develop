@@ -2,7 +2,11 @@ add_subdirectory(module_symmetry)
 add_subdirectory(module_neighbor)
 add_subdirectory(module_neighlist)
 
-add_library(domain_decomposition OBJECT domain_decomposition.cpp)
+add_library(domain_decomposition OBJECT
+  dom_core.cpp
+  dom_ghost.cpp
+  dom_migrate.cpp
+  dom_force.cpp)
 
 add_library(
   cell OBJECT
@@ -38,6 +42,7 @@ add_library(
   magnetism.cpp
   bcast_cell.cpp
   read_stru.cpp
+  stru_frame_io.cpp
   print_cell.cpp
   read_atom_species.cpp
   sep.cpp
@@ -49,10 +54,16 @@ add_library(
   cal_wfc.cpp
   cal_ux.cpp
   cif_io.cpp
+  soc.cpp
   ucell_io.cpp)
+
+# Kept out of `cell` because it needs the plane-wave basis (planewave), which
+# the cell-only unit tests do not link.
+add_library(structure_factor OBJECT stru_fac.cpp stru_fac_k.cpp)
 
 if(ENABLE_COVERAGE)
   add_coverage(cell)
+  add_coverage(structure_factor)
 endif()
 
 if(BUILD_TESTING)

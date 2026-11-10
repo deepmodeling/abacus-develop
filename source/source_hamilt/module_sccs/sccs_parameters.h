@@ -4,14 +4,24 @@
 #include "sccs_cavity.h"
 
 #include <string>
+#include <vector>
 
 namespace ModuleSccs
 {
+enum class Boundary { Periodic, Pcc0d, Pcc2d };
+
 enum class Preset { Custom, Vacuum, WaterNeutral, WaterCation, WaterAnion };
 
 struct SccsConfig
 {
     CavityParameters cavity;
+    Boundary boundary = Boundary::Periodic;
+    int pcc_2d_axis = 2;
+    double start_drho = 0.0; // SCF DRHO at which a delayed SCCS starts; zero starts immediately
+    int start_nmax = 30; // Latest electronic iteration of a delayed start
+    bool collect_report = false; // sccs_debug 2: PCC moments and Gauss-law check for the report
+    bool core_electrons = false;
+    std::vector<double> core_spreads = {0.5}; // Bohr: singleton skips Z == zv; per-atom list overrides; <= 0 disables
     double surface_tension = 0.0; // Hartree/Bohr^2
     double pressure = 0.0; // Hartree/Bohr^3
     double surface_regularization = 0.0;

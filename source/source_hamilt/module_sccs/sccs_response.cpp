@@ -1,6 +1,9 @@
 #include "sccs_response.h"
+#include "sccs_cav_deriv.h"
+#include "sccs_lowpass.h"
 #include "sccs_parameters.h"
 #include "sccs_pw_coulomb.h"
+#include "sccs_thread_sum.h"
 
 #include "source_base/constants.h"
 #include "source_base/parallel_reduce.h"
@@ -18,58 +21,29 @@ namespace ModuleSccs
 {
 namespace
 {
-void prepare_cavity(const std::vector<double>& density,
+// sqrt(eps) v = C_PCC(s), s = (q - f v)/sqrt(eps). The far-field
+// screening charge is int(s)/sqrt(eps_bulk) - int(q), including its physical sign.
+void finish_open_bc(const std::vector<double>& charge,
+                    const std::vector<double>& coefficient,
+                    const std::vector<double>& invsqrt,
                     const CavityParameters& cavity,
                     const ModulePW::PW_Basis& basis,
-                    double tpiba,
-                    SccsResponse& response,
-                    std::vector<double>& coefficient)
+                    SccsResponse& result)
 {
-    const std::size_t size = density.size();
-    response.solute.resize(size);
-    response.dsolute_drho.resize(size);
-    response.epsilon.resize(size);
-    response.depsilon_drho.resize(size);
-    response.grad_log_epsilon.resize(size);
-    for (std::size_t i = 0; i < size; ++i)
-    {
-        const CavityPoint point = evaluate_cavity(density[i], cavity);
-        response.solute[i] = point.solute;
-        response.dsolute_drho[i] = point.dsolute_drho;
-        response.epsilon[i] = point.epsilon;
-        response.depsilon_drho[i] = point.depsilon_drho;
-    }
-
-    std::vector<std::complex<double>> density_g(basis.npw);
-    basis.real2recip(density.data(), density_g.data());
-    std::vector<ModuleBase::Vector3<double>> gradient(size);
-    std::vector<double> laplacian(size);
-    // These XC helpers use G in units of tpiba and ABACUS's normalized FFT.
-    XC_Functional::grad_rho(density_g.data(), gradient.data(), &basis, tpiba);
-    XC_Functional::laplacian_rho(density_g.data(), laplacian.data(), &basis, tpiba);
-    const double density_ratio = cavity.density_max / cavity.density_min;
-    const double width = std::log(density_ratio);
-    const double log_bulk = std::log(cavity.epsilon_bulk);
-    coefficient.resize(size);
-    for (std::size_t i = 0; i < size; ++i)
-    {
-        double second_log = 0.0;
-        if (density[i] > cavity.density_min && density[i] < cavity.density_max)
-        {
-            const double local_ratio = cavity.density_max / density[i];
-            const double x = std::log(local_ratio) / width;
-            const double angle = ModuleBase::TWO_PI * x;
-            second_log = log_bulk * (1.0 - std::cos(angle) + ModuleBase::TWO_PI * std::sin(angle) / width)
-                         / (width * density[i] * density[i]);
-        }
-        const double first_log = response.depsilon_drho[i] / response.epsilon[i];
-        const ModuleBase::Vector3<double>& local_gradient = gradient[i];
-        const double gradient_square = local_gradient * local_gradient;
-        response.grad_log_epsilon[i] = local_gradient * first_log;
-        const double lap_log = first_log * laplacian[i] + second_log * gradient_square;
-        coefficient[i] = response.epsilon[i] * (0.5 * lap_log + 0.25 * first_log * first_log * gradient_square)
-                         / ModuleBase::FOUR_PI;
-    }
+    const std::size_t size = charge.size();
+    const std::vector<double>& potential = result.polarization.potential;
+    const auto add_point = [&](std::size_t i, std::array<double, 2>& sums) {
+        sums[0] += (charge[i] - coefficient[i] * potential[i]) * invsqrt[i];
+        sums[1] += charge[i];
+    };
+    const std::array<double, 2> sums = thread_sums<2>(size, add_point);
+    double source_sum = sums[0];
+    double solute_sum = sums[1];
+    Parallel_Reduce::reduce_pool(source_sum);
+    Parallel_Reduce::reduce_pool(solute_sum);
+    const double volume_element = basis.omega / basis.nxyz;
+    const double bulk_invsqrt = 1.0 / std::sqrt(cavity.epsilon_bulk);
+    result.far_field_polarization_charge = (source_sum * bulk_invsqrt - solute_sum) * volume_element;
 }
 
 // Pool-reduced norms, so every rank takes the same convergence decision. A
@@ -79,14 +53,21 @@ void residual_norms(const std::vector<double>& values,
                     double& rms,
                     double& maximum)
 {
-    double square = 0.0;
-    maximum = 0.0;
-    for (double value : values)
+    const auto add_square = [&values](std::size_t i, std::array<double, 1>& sum) {
+        sum[0] += values[i] * values[i];
+    };
+    double square = thread_sums<1>(values.size(), add_square)[0];
+    double largest = 0.0;
+    const long size = values.size();
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static) reduction(max : largest)
+#endif
+    for (long i = 0; i < size; ++i)
     {
-        square += value * value;
-        const double magnitude = std::abs(value);
-        maximum = std::max(maximum, magnitude);
+        const double magnitude = std::abs(values[i]);
+        largest = std::max(largest, magnitude);
     }
+    maximum = largest;
     Parallel_Reduce::reduce_pool(square);
     Parallel_Reduce::reduce_max_pool(basis.poolnproc, maximum);
     const double mean_square = square / basis.nxyz;
@@ -102,11 +83,10 @@ double grid_dot(const std::vector<double>& left,
                 const std::vector<double>& right,
                 const ModulePW::PW_Basis& basis)
 {
-    double value = 0.0;
-    for (std::size_t i = 0; i < left.size(); ++i)
-    {
-        value += left[i] * right[i];
-    }
+    const auto add_product = [&left, &right](std::size_t i, std::array<double, 1>& sum) {
+        sum[0] += left[i] * right[i];
+    };
+    double value = thread_sums<1>(left.size(), add_product)[0];
     Parallel_Reduce::reduce_pool(value);
     return value * basis.omega / basis.nxyz;
 }
@@ -114,17 +94,23 @@ double grid_dot(const std::vector<double>& left,
 // P r = eps^-1/2 G eps^-1/2 r; only FFT scratch survives an application.
 void apply_precond(const std::vector<double>& rhs,
                    const std::vector<double>& invsqrt,
-                   PeriodicCoulombOperator& coulomb,
+                   CoulombOperator& coulomb,
                    std::vector<double>& weighted,
                    std::vector<double>& value)
 {
     const std::size_t size = rhs.size();
     weighted.resize(size);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static)
+#endif
     for (std::size_t i = 0; i < size; ++i)
     {
         weighted[i] = rhs[i] * invsqrt[i];
     }
     coulomb.apply_potential(weighted, value);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static)
+#endif
     for (std::size_t i = 0; i < size; ++i)
     {
         value[i] *= invsqrt[i];
@@ -137,7 +123,7 @@ struct SqrtCgOperator
     const std::vector<double>& coefficient;
     const std::vector<double>& invsqrt;
     const ModulePW::PW_Basis& basis;
-    PeriodicCoulombOperator& coulomb;
+    CoulombOperator& coulomb;
 };
 
 // Potential and charge residual of the sqrt-CG, with preconditioner scratch.
@@ -161,11 +147,17 @@ void try_warm_start(const SqrtCgOperator& system,
     const std::vector<double>& coefficient = system.coefficient;
     std::vector<double>& z = state.preconditioned;
     std::vector<double> guess_residual(size);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static)
+#endif
     for (std::size_t i = 0; i < size; ++i)
     {
         guess_residual[i] = charge[i] - coefficient[i] * initial_potential[i];
     }
     apply_precond(guess_residual, system.invsqrt, system.coulomb, state.weighted, z);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static)
+#endif
     for (std::size_t i = 0; i < size; ++i)
     {
         guess_residual[i] = coefficient[i] * (initial_potential[i] - z[i]);
@@ -210,6 +202,9 @@ void iterate_sqrt_cg(const SqrtCgOperator& system,
         }
         const double beta = std::abs(old_rz) > 1e-30 ? rz / old_rz : 0.0;
         old_rz = rz;
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static)
+#endif
         for (std::size_t i = 0; i < size; ++i)
         {
             direction[i] = z[i] + beta * direction[i];
@@ -221,6 +216,9 @@ void iterate_sqrt_cg(const SqrtCgOperator& system,
             ModuleBase::WARNING_QUIT("ModuleSccs::solve_response", "SCCS sqrt-CG has invalid curvature");
         }
         const double alpha = rz / curvature;
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static)
+#endif
         for (std::size_t i = 0; i < size; ++i)
         {
             potential[i] += alpha * direction[i];
@@ -239,43 +237,101 @@ void iterate_sqrt_cg(const SqrtCgOperator& system,
     }
 }
 
-// Keep the unshifted solution for warm starts, then store the zero-mean
-// potential, its gradient and the cavity potential.
-void finish_response(const ModulePW::PW_Basis& basis,
+// Keep the unshifted solution for warm starts, fix the gauge of a periodic
+// cell and store the potential, its gradient and the boundary potentials.
+void finish_response(const SqrtCgOperator& system,
+                     const std::vector<double>& charge,
+                     const CavityParameters& cavity,
+                     const CavityDerivatives& derivatives,
                      double tpiba,
                      std::vector<double>& potential,
                      SccsResponse& response)
 {
-    PolarizationResult& polarization = response.polarization;
+    const ModulePW::PW_Basis& basis = system.basis;
+    const std::vector<double>& coefficient = system.coefficient;
+    const std::vector<double>& invsqrt = system.invsqrt;
+    const bool open_boundary = system.coulomb.has_correction();
     const std::size_t size = potential.size();
+    PolarizationResult& polarization = response.polarization;
     response.restart_potential = potential;
-    double mean = 0.0;
-    for (double value : potential)
+    // Preserve the physical gauge fixed by a boundary correction.
+    if (!open_boundary)
     {
-        mean += value;
+        const auto add_value = [&potential](std::size_t i, std::array<double, 1>& sum) {
+            sum[0] += potential[i];
+        };
+        double mean = thread_sums<1>(size, add_value)[0];
+        Parallel_Reduce::reduce_pool(mean);
+        mean /= basis.nxyz;
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static)
+#endif
+        for (std::size_t i = 0; i < size; ++i)
+        {
+            potential[i] -= mean;
+        }
     }
-    Parallel_Reduce::reduce_pool(mean);
-    mean /= basis.nxyz;
-    for (double& value : potential)
+    // The same condition under which make_cav_derivs keeps the filtered gradient.
+    const bool lowpass = open_boundary && uses_lowpass(cavity);
+    if (!lowpass)
     {
-        value -= mean;
+        std::vector<std::complex<double>> potential_g(basis.npw);
+        basis.real2recip(potential.data(), potential_g.data());
+        polarization.gradient.resize(size);
+        XC_Functional::grad_rho(potential_g.data(), polarization.gradient.data(), &basis, tpiba);
     }
-    std::vector<std::complex<double>> potential_g(basis.npw);
-    basis.real2recip(potential.data(), potential_g.data());
-    polarization.gradient.resize(size);
-    XC_Functional::grad_rho(potential_g.data(), polarization.gradient.data(), &basis, tpiba);
     polarization.potential.swap(potential);
-    // Continuum derivative, as in Environ: exact for the discrete energy only
-    // when |grad v|^2 is resolved by the FFT grid.
-    response.cavity_potential.resize(size);
-    for (std::size_t i = 0; i < size; ++i)
+    if (open_boundary)
     {
-        const ModuleBase::Vector3<double>& gradient = polarization.gradient[i];
-        const double gradient_square = gradient * gradient;
-        response.cavity_potential[i] = -response.depsilon_drho[i] * gradient_square / (8.0 * ModuleBase::PI);
+        finish_open_bc(charge, coefficient, invsqrt, cavity, basis, response);
+    }
+    if (lowpass)
+    {
+        lowpass_bnd_pot(charge, cavity, derivatives, basis, tpiba, response);
+    }
+    else
+    {
+        // Continuum derivative -(d eps/ds) |grad v|^2/(8 pi), as in Environ: exact
+        // for the discrete energy only when |grad v|^2 is resolved by the FFT grid.
+        const double log_bulk = std::log(cavity.epsilon_bulk);
+        response.boundary_potential.resize(size);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static)
+#endif
+        for (std::size_t i = 0; i < size; ++i)
+        {
+            const ModuleBase::Vector3<double>& gradient = polarization.gradient[i];
+            const double gradient_square = gradient * gradient;
+            response.boundary_potential[i]
+                = log_bulk * response.epsilon[i] * gradient_square / (8.0 * ModuleBase::PI);
+        }
     }
 }
 } // namespace
+
+void boundary_to_rho(const SccsResponse& response,
+                     const std::vector<double>& probe_kernel,
+                     const ModulePW::PW_Basis& basis,
+                     const std::vector<double>& boundary_potential,
+                     std::vector<double>& density_potential)
+{
+    // Environ calculator: sa_de_dboundary, then de_dboundary * dscaled.
+    if (response.solvent_aware.enabled())
+    {
+        density_potential = sa_adjoint(response.solvent_aware, probe_kernel, basis, boundary_potential);
+    }
+    else
+    {
+        density_potential = boundary_potential;
+    }
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static)
+#endif
+    for (std::size_t i = 0; i < density_potential.size(); ++i)
+    {
+        density_potential[i] *= response.dsolute_drho[i];
+    }
+}
 
 void solve_response(const std::vector<double>& density,
                     const std::vector<double>& charge,
@@ -286,21 +342,41 @@ void solve_response(const std::vector<double>& density,
                     double tpiba,
                     SccsResponse& result)
 {
+    PeriodicCoulombOperator coulomb(basis, tpiba);
+    const std::vector<double> no_probe;
+    solve_response(density, charge, cavity, no_probe, solver, initial_potential, basis, tpiba, coulomb, result);
+}
+
+void solve_response(const std::vector<double>& density,
+                    const std::vector<double>& charge,
+                    const CavityParameters& cavity,
+                    const std::vector<double>& probe_kernel,
+                    const PolarizationSolverParameters& solver,
+                    const std::vector<double>& initial_potential,
+                    const ModulePW::PW_Basis& basis,
+                    double tpiba,
+                    CoulombOperator& coulomb,
+                    SccsResponse& result)
+{
     // Determine start mode collectively, including ranks with no real-space points.
     double initial_count = initial_potential.size();
     Parallel_Reduce::reduce_pool(initial_count);
     const bool warm_start = initial_count != 0.0;
 
+    const bool open_boundary = coulomb.has_correction();
     SccsResponse candidate;
-    std::vector<double> coefficient;
-    prepare_cavity(density, cavity, basis, tpiba, candidate, coefficient);
+    CavityDerivatives derivatives;
+    make_cav_derivs(density, cavity, probe_kernel, basis, tpiba, open_boundary, candidate, derivatives);
+    const std::vector<double>& coefficient = derivatives.coefficient;
     const std::size_t size = density.size();
     std::vector<double> invsqrt(size);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static)
+#endif
     for (std::size_t i = 0; i < size; ++i)
     {
         invsqrt[i] = 1.0 / std::sqrt(candidate.epsilon[i]);
     }
-    PeriodicCoulombOperator coulomb(basis, tpiba);
     const SqrtCgOperator system = {coefficient, invsqrt, basis, coulomb};
     SqrtCgState state;
     state.residual = charge;
@@ -312,7 +388,10 @@ void solve_response(const std::vector<double>& density,
         try_warm_start(system, charge, initial_potential, state, polarization);
     }
     iterate_sqrt_cg(system, solver, state, polarization);
-    finish_response(basis, tpiba, state.potential, candidate);
+    std::vector<double>& potential = state.potential;
+    finish_response(system, charge, cavity, derivatives, tpiba, potential, candidate);
+    boundary_to_rho(candidate, probe_kernel, basis, candidate.boundary_potential,
+                    candidate.cavity_potential);
     result = std::move(candidate);
 }
 } // namespace ModuleSccs

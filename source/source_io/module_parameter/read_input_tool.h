@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -80,26 +81,31 @@
 
 #define sync_string(PARAMETER)                                                                                         \
     {                                                                                                                  \
+        item.domain.bind(AvailabilityValueKind::String, [](const Parameter& para) { return InputValue(para.PARAMETER); }); \
         item.get_final_value = [](Input_Item& item, const Parameter& para) { item.final_value << para.PARAMETER; };    \
         add_string_bcast(PARAMETER);                                                                                   \
     }
 #define sync_int(PARAMETER)                                                                                            \
     {                                                                                                                  \
+        item.domain.bind(AvailabilityValueKind::Integer, [](const Parameter& para) { return InputValue(para.PARAMETER); }); \
         item.get_final_value = [](Input_Item& item, const Parameter& para) { item.final_value << para.PARAMETER; };    \
         add_int_bcast(PARAMETER);                                                                                      \
     }
 #define sync_double(PARAMETER)                                                                                         \
     {                                                                                                                  \
+        item.domain.bind(AvailabilityValueKind::Real, [](const Parameter& para) { return InputValue(para.PARAMETER); }); \
         item.get_final_value = [](Input_Item& item, const Parameter& para) { item.final_value << para.PARAMETER; };    \
         add_double_bcast(PARAMETER);                                                                                   \
     }
 #define sync_bool(PARAMETER)                                                                                           \
     {                                                                                                                  \
+        item.domain.bind(AvailabilityValueKind::Boolean, [](const Parameter& para) { return InputValue(para.PARAMETER); }); \
         item.get_final_value = [](Input_Item& item, const Parameter& para) { item.final_value << para.PARAMETER; };    \
         add_bool_bcast(PARAMETER);                                                                                     \
     }
 #define sync_doublevec(PARAMETER, N, FILL)                                                                             \
     {                                                                                                                  \
+        item.domain.bind(AvailabilityValueKind::RealVector, [](const Parameter& para) { return InputValue(para.PARAMETER); }); \
         item.get_final_value = [](Input_Item& item, const Parameter& para) {                                           \
             for (int i = 0; i < N; i++)                                                                                \
             {                                                                                                          \
@@ -110,6 +116,7 @@
     }
 #define sync_intvec(PARAMETER, N, FILL)                                                                                \
     {                                                                                                                  \
+        item.domain.bind(AvailabilityValueKind::IntegerVector, [](const Parameter& para) { return InputValue(para.PARAMETER); }); \
         item.get_final_value = [](Input_Item& item, const Parameter& para) {                                           \
             for (int i = 0; i < N; i++)                                                                                \
             {                                                                                                          \
@@ -120,6 +127,7 @@
     }
 #define sync_stringvec(PARAMETER, N, FILL)                                                                             \
     {                                                                                                                  \
+        item.domain.bind(AvailabilityValueKind::StringVector, [](const Parameter& para) { return InputValue(para.PARAMETER); }); \
         item.get_final_value = [](Input_Item& item, const Parameter& para) {                                           \
             for (int i = 0; i < N; i++)                                                                                \
             {                                                                                                          \
@@ -131,21 +139,25 @@
 
 #define read_sync_string(PARAMETER)                                                                                    \
     {                                                                                                                  \
+        item.domain.scalar();                                                                                          \
         item.read_value = [](const Input_Item& item, Parameter& para) { para.PARAMETER = strvalue; };                  \
         sync_string(PARAMETER);                                                                                        \
     }
 #define read_sync_int(PARAMETER)                                                                                       \
     {                                                                                                                  \
+        item.domain.scalar(); \
         item.read_value = [](const Input_Item& item, Parameter& para) { para.PARAMETER = intvalue; };                  \
         sync_int(PARAMETER);                                                                                           \
     }
 #define read_sync_double(PARAMETER)                                                                                    \
     {                                                                                                                  \
+        item.domain.scalar(); \
         item.read_value = [](const Input_Item& item, Parameter& para) { para.PARAMETER = doublevalue; };               \
         sync_double(PARAMETER);                                                                                        \
     }
 #define read_sync_bool(PARAMETER)                                                                                      \
     {                                                                                                                  \
+        item.domain.scalar(); \
         item.read_value = [](const Input_Item& item, Parameter& para) { para.PARAMETER = boolvalue; };                 \
         sync_bool(PARAMETER);                                                                                          \
     }
@@ -230,3 +242,23 @@ void reset_vector(std::vector<T>& vec, int size, T default_value)
         vec.resize(size, default_value);
     }
 }
+
+namespace ModuleIO
+{
+/**
+ * @brief Check whether a k-point/band parallel layout satisfies the DSP vendor
+ * library constraint.
+ *
+ * On DSP hardware, the mtblas/C_PACK libraries require exactly one MPI process
+ * per k-point pool: the effective pool count (kpar for PW, kpar_lcao for LCAO,
+ * the other being 1) times bndpar must equal nproc exactly. Defined inline here
+ * so that both the __DSP input check and non-DSP unit tests can use it.
+ * See issue #8228.
+ */
+inline bool dsp_kpar_layout_valid(const int nproc, const int kpar, const int kpar_lcao, const int bndpar)
+{
+    const int kpar_eff = std::max(kpar, kpar_lcao);
+    const int expected_nproc = kpar_eff * bndpar;
+    return nproc == expected_nproc;
+}
+} // namespace ModuleIO

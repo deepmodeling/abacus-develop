@@ -36,8 +36,8 @@ namespace LR
 #endif
             std::weak_ptr<PotLRBase> pot_hxc_gs,
             const K_Vectors& kv,
-            const std::vector<Parallel_2D>& pX,
-            const Parallel_2D& pc,
+            const std::vector<BlockCyclicDistribution>& pX,
+            const BlockCyclicDistribution& pc,
             const Parallel_Orbitals& pmat,
             const std::string& spin_type,
             const std::string& in_dir,
@@ -74,9 +74,9 @@ namespace LR
                 {
                     const auto psi_ks_is = LR_Util::get_psi_spin(psi_ks, is, this->nk);
 #ifdef __MPI
-                    std::vector<ct::Tensor>  dm_trans_2d = cal_dm_trans_pblas(X, this->pX[is], psi_ks_is, pc, naos, nocc[is], nvirt[is], pmat);
+                    std::vector<ct::Tensor>  dm_trans_2d = cal_dm_trans_pblas(X, this->pX[is], psi_ks_is, pc, naos, nocc[is], nvirt[is], pmat.para_2d());
                     for (auto& t: dm_trans_2d)
-                        LR_Util::matsym(t.data<T>(), naos, pmat);
+                        LR_Util::matsym(t.data<T>(), naos, pmat.para_2d());
 #else
                     std::vector<ct::Tensor>  dm_trans_2d = cal_dm_trans_blas(X, psi_ks_is, nocc[is], nvirt[is]);
                     for (auto& t: dm_trans_2d)
@@ -127,8 +127,8 @@ namespace LR
 #endif
             std::weak_ptr<PotLRBase> pot_hxc_gs,
             const K_Vectors& kv,
-            const std::vector<Parallel_2D>& pX,
-            const Parallel_2D& pc,
+            const std::vector<BlockCyclicDistribution>& pX,
+            const BlockCyclicDistribution& pc,
             const Parallel_Orbitals& pmat,
             const std::string& dft_functional,
             const int nk,
@@ -184,10 +184,10 @@ namespace LR
             const auto psi_ks_is = LR_Util::get_psi_spin(this->psi_ks_, is, this->nk);
 #ifdef __MPI
             this->dm_buf_ = cal_dm_trans_pblas(X, this->pX[is], psi_ks_is, this->pc_,
-                this->naos_, this->nocc[is], this->nvirt[is], this->pmat_);
+                this->naos_, this->nocc[is], this->nvirt[is], this->pmat_.para_2d());
             for (auto& t: this->dm_buf_)
             {
-                LR_Util::matsym(t.template data<T>(), this->naos_, this->pmat_);
+                LR_Util::matsym(t.template data<T>(), this->naos_, this->pmat_.para_2d());
             }
 #else
             this->dm_buf_ = cal_dm_trans_blas(X, psi_ks_is, this->nocc[is], this->nvirt[is]);
@@ -204,7 +204,7 @@ namespace LR
 
     private:
         const int naos_ = 1;
-        const Parallel_2D& pc_;
+        const BlockCyclicDistribution& pc_;
         const Parallel_Orbitals& pmat_;
         const psi::Psi<T>& psi_ks_;
         std::vector<psi::Psi<T>> psi_ks_spin_;

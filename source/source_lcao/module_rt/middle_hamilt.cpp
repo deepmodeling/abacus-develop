@@ -29,10 +29,10 @@ void half_Hmatrix(const Parallel_Orbitals* pv,
         ofs_running << std::setprecision(10);
         ofs_running << std::endl;
         ofs_running << " H(t+dt) :" << std::endl;
-        for (int i = 0; i < pv->nrow; i++)
+        for (int i = 0; i < pv->para_2d().nrloc(); i++)
         {
-            const int in = i * pv->ncol;
-            for (int j = 0; j < pv->ncol; j++)
+            const int in = i * pv->para_2d().ncloc();
+            for (int j = 0; j < pv->para_2d().ncloc(); j++)
             {
                 ofs_running << Htmp[in + j].real() << "+" << Htmp[in + j].imag() << "i ";
             }
@@ -41,10 +41,10 @@ void half_Hmatrix(const Parallel_Orbitals* pv,
         ofs_running << std::endl;
         ofs_running << std::endl;
         ofs_running << " H(t):" << std::endl;
-        for (int i = 0; i < pv->nrow; i++)
+        for (int i = 0; i < pv->para_2d().nrloc(); i++)
         {
-            const int in = i * pv->ncol;
-            for (int j = 0; j < pv->ncol; j++)
+            const int in = i * pv->para_2d().ncloc();
+            for (int j = 0; j < pv->para_2d().ncloc(); j++)
             {
                 ofs_running << H_laststep[in + j].real() << "+" << H_laststep[in + j].imag() << "i ";
             }
@@ -55,17 +55,17 @@ void half_Hmatrix(const Parallel_Orbitals* pv,
 
     std::complex<double> alpha = {0.5, 0.0};
     std::complex<double> beta = {0.5, 0.0};
-    ScalapackConnector::geadd('N', nlocal, nlocal, alpha, H_laststep, 1, 1, pv->desc, beta, Htmp, 1, 1, pv->desc);
-    ScalapackConnector::geadd('N', nlocal, nlocal, alpha, S_laststep, 1, 1, pv->desc, beta, Stmp, 1, 1, pv->desc);
+    ScalapackConnector::geadd('N', nlocal, nlocal, alpha, H_laststep, 1, 1, pv->para_2d().desc(), beta, Htmp, 1, 1, pv->para_2d().desc());
+    ScalapackConnector::geadd('N', nlocal, nlocal, alpha, S_laststep, 1, 1, pv->para_2d().desc(), beta, Stmp, 1, 1, pv->para_2d().desc());
 
     if (print_matrix)
     {
         ofs_running << std::endl;
         ofs_running << " H (t+dt/2) :" << std::endl;
-        for (int i = 0; i < pv->nrow; i++)
+        for (int i = 0; i < pv->para_2d().nrloc(); i++)
         {
-            const int in = i * pv->ncol;
-            for (int j = 0; j < pv->ncol; j++)
+            const int in = i * pv->para_2d().ncloc();
+            for (int j = 0; j < pv->para_2d().ncloc(); j++)
             {
                 ofs_running << Htmp[in + j].real() << "+" << Htmp[in + j].imag() << "i ";
             }
@@ -104,13 +104,13 @@ void half_Hmatrix_tensor(const Parallel_Orbitals* pv,
     void* d_H_last = static_cast<void*>(const_cast<std::complex<double>*>(H_laststep.data<std::complex<double>>()));
     void* d_S_last = static_cast<void*>(const_cast<std::complex<double>*>(S_laststep.data<std::complex<double>>()));
 
-    int64_t m_global = pv->desc[2];
-    int64_t n_global = pv->desc[3];
-    int64_t mb = pv->desc[4];
-    int64_t nb = pv->desc[5];
-    int64_t rsrc = pv->desc[6];
-    int64_t csrc = pv->desc[7];
-    int64_t lld = pv->desc[8];
+    int64_t m_global = pv->para_2d().desc()[2];
+    int64_t n_global = pv->para_2d().desc()[3];
+    int64_t mb = pv->para_2d().desc()[4];
+    int64_t nb = pv->para_2d().desc()[5];
+    int64_t rsrc = pv->para_2d().desc()[6];
+    int64_t csrc = pv->para_2d().desc()[7];
+    int64_t lld = pv->para_2d().desc()[8];
 
     // 3. Create matrix descriptor
     cublasMpMatrixDescriptor_t desc_mat;

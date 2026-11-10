@@ -13,10 +13,10 @@ LATTICE_VECTORS
 0.5 0.5 0.0
 
 ATOMIC_POSITIONS
-Cartesian //Cartesian or Direct coordinate.
+Direct
 
-Si	// Element type	
-0.0	// magnetism
-2	// number of atoms
-0.00 0.00 0.00 0 0 0
-0.25 0.25 0.25 1 1 1
+Si
+0.0
+2
+0.9995 0.0 0.0 m 1 1 1 v 0.0 0.001 0.001
+0.2495 0.25 0.25 m 1 1 1 v 0.0 -0.001 -0.001

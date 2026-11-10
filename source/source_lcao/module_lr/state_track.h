@@ -4,8 +4,8 @@
 #include <vector>
 #include <ostream>
 class UnitCell;
-class Parallel_2D;
 class Parallel_Orbitals;
+class BlockCyclicDistribution;
 class TwoCenterIntegrator;
 namespace base_device
 {
@@ -46,9 +46,9 @@ struct RootInputs
     const std::vector<double>& cutoff;
     const TwoCenterIntegrator& integrator;
     const psi::Psi<T, base_device::DEVICE_CPU>& orbitals;
-    const Parallel_2D& pc;
+    const BlockCyclicDistribution& pc;
     const Parallel_Orbitals& pmat;
-    const std::vector<Parallel_2D>& px;
+    const std::vector<BlockCyclicDistribution>& px;
     const std::vector<int>& nocc;
     const std::vector<int>& nvirt;
     bool openshell;

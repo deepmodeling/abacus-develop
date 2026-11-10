@@ -460,8 +460,7 @@ TEST_F(HContainerTest, atompair_funcs)
         PO.atom_begin_row[i] = i*2; // nw = 2, value should be i*nw
         PO.atom_begin_col[i] = i*2;
     }
-    PO.nrow = 4;
-    PO.ncol = 4;
+    PO.para_2d().set_serial(4, 4);
     const int natom = 2;
     const int rx_shift = 1, ry_shift = 1, rz_shift = 1;
     hamilt::AtomPair<double> atom_ij(0, 0, &PO, nullptr);
@@ -644,10 +643,10 @@ TEST_F(HContainerTest, atompair_funcs)
     hamilt::AtomPair<double> atom_ij5(0, 1, rx_shift, ry_shift, rz_shift, &PO, &test_array[4]);
     hamilt::AtomPair<double> atom_ij6(1, 0, PO.atom_begin_row.data(), PO.atom_begin_col.data(), natom, &test_array[8]);
     hamilt::AtomPair<double> atom_ij7(1, 1, rx_shift, ry_shift, rz_shift, PO.atom_begin_row.data(), PO.atom_begin_col.data(), natom, &test_array[12]);
-    // get_matrix_value will use global2local_row and global2local_col in Parallel_Orbitals
+    // get_matrix_value will use irloc and icloc in Parallel_Orbitals
     // so we need to set them
     std::ofstream ofs("test_hcontainer.log");
-    PO.set_serial(4, 4);
+    PO.para_2d().set_serial(4, 4);
     // joint 4 2*2 BaseMatrix to whole 4*4 matrix
     // lambda function for check data
     // Note: these AtomPairs only contain R=(0,0,0), so r_index is always 0

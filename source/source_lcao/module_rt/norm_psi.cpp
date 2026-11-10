@@ -12,6 +12,7 @@
 
 #include <cassert>
 #include <complex>
+#include <cstddef>
 #include <iostream>
 
 namespace module_rt
@@ -34,13 +35,13 @@ void norm_psi(const Parallel_Orbitals* pv,
               std::ofstream& ofs_running,
               const int print_matrix)
 {
-    assert(pv->nloc_wfc > 0 && pv->nloc > 0);
+    assert(pv->nloc_wfc > 0 && pv->para_2d().size() > 0);
 
     std::complex<double>* tmp1 = new std::complex<double>[pv->nloc_wfc];
     ModuleBase::GlobalFunc::ZEROS(tmp1, pv->nloc_wfc);
 
-    std::complex<double>* Cij = new std::complex<double>[pv->nloc];
-    ModuleBase::GlobalFunc::ZEROS(Cij, pv->nloc);
+    std::complex<double>* Cij = new std::complex<double>[pv->para_2d().size()];
+    ModuleBase::GlobalFunc::ZEROS(Cij, pv->para_2d().size());
 
     ScalapackConnector::gemm('N',
                              'N',
@@ -51,7 +52,7 @@ void norm_psi(const Parallel_Orbitals* pv,
                              Stmp,
                              1,
                              1,
-                             pv->desc,
+                             pv->para_2d().desc(),
                              psi_k,
                              1,
                              1,
@@ -85,10 +86,10 @@ void norm_psi(const Parallel_Orbitals* pv,
     if (print_matrix)
     {
         ofs_running << "original Cij :" << std::endl;
-        for (int i = 0; i < pv->ncol; i++)
+        for (int i = 0; i < pv->para_2d().ncloc(); i++)
         {
-            const int in = i * pv->ncol;
-            for (int j = 0; j < pv->nrow; j++)
+            const int in = i * pv->para_2d().ncloc();
+            for (int j = 0; j < pv->para_2d().nrloc(); j++)
             {
                 double aa = Cij[in + j].real();
                 double bb = Cij[in + j].imag();
@@ -109,24 +110,24 @@ void norm_psi(const Parallel_Orbitals* pv,
 
     int naroc[2] = {0, 0}; // maximum number of row or column
 
-    for (int iprow = 0; iprow < pv->dim0; ++iprow)
+    for (int iprow = 0; iprow < pv->para_2d().nrproc(); ++iprow)
     {
-        for (int ipcol = 0; ipcol < pv->dim1; ++ipcol)
+        for (int ipcol = 0; ipcol < pv->para_2d().ncproc(); ++ipcol)
         {
-            if (pv->blacs_in_this_processor(iprow, ipcol))
+            if (pv->para_2d().blacs_in_this_processor(iprow, ipcol))
             {
-                naroc[0] = pv->nrow;
-                naroc[1] = pv->ncol;
+                naroc[0] = pv->para_2d().nrloc();
+                naroc[1] = pv->para_2d().ncloc();
                 for (int j = 0; j < naroc[1]; ++j)
                 {
-                    int igcol = globalIndex(j, pv->nb, pv->dim1, ipcol);
+                    int igcol = globalIndex(j, pv->para_2d().nb(), pv->para_2d().ncproc(), ipcol);
                     if (igcol >= nband)
                     {
                         continue;
                     }
                     for (int i = 0; i < naroc[0]; ++i)
                     {
-                        int igrow = globalIndex(i, pv->nb, pv->dim0, iprow);
+                        int igrow = globalIndex(i, pv->para_2d().nb(), pv->para_2d().nrproc(), iprow);
                         if (igrow >= nband)
                         {
                             continue;
@@ -170,10 +171,10 @@ void norm_psi(const Parallel_Orbitals* pv,
     if (print_matrix)
     {
         ofs_running << " Cij:" << std::endl;
-        for (int i = 0; i < pv->ncol; i++)
+        for (int i = 0; i < pv->para_2d().ncloc(); i++)
         {
-            const int in = i * pv->ncol;
-            for (int j = 0; j < pv->nrow; j++)
+            const int in = i * pv->para_2d().ncloc();
+            for (int j = 0; j < pv->para_2d().nrloc(); j++)
             {
                 ofs_running << Cij[in + j].real() << "+" << Cij[in + j].imag() << "i ";
             }
@@ -184,8 +185,8 @@ void norm_psi(const Parallel_Orbitals* pv,
         ofs_running << " psi_k:" << std::endl;
         for (int i = 0; i < pv->ncol_bands; i++)
         {
-            const int in = i * pv->ncol;
-            for (int j = 0; j < pv->ncol; j++)
+            const int in = i * pv->para_2d().ncloc();
+            for (int j = 0; j < pv->para_2d().ncloc(); j++)
             {
                 double aa = psi_k[in + j].real();
                 double bb = psi_k[in + j].imag();
@@ -205,8 +206,8 @@ void norm_psi(const Parallel_Orbitals* pv,
         ofs_running << " psi_k before normalization:" << std::endl;
         for (int i = 0; i < pv->ncol_bands; i++)
         {
-            const int in = i * pv->ncol;
-            for (int j = 0; j < pv->ncol; j++)
+            const int in = i * pv->para_2d().ncloc();
+            for (int j = 0; j < pv->para_2d().ncloc(); j++)
             {
                 double aa = tmp1[in + j].real();
                 double bb = tmp1[in + j].imag();
@@ -252,8 +253,10 @@ void norm_psi_tensor(const Parallel_Orbitals* pv,
     ct::Tensor Tmp1_gpu(ct::DataType::DT_COMPLEX_DOUBLE, ct::DeviceType::GpuDevice, ct::TensorShape({psi_elems}));
     void* d_Tmp1 = static_cast<void*>(Tmp1_gpu.data<std::complex<double>>());
 
-    int64_t cij_elems = pv->nloc;
-    ct::Tensor Cij_gpu(ct::DataType::DT_COMPLEX_DOUBLE, ct::DeviceType::GpuDevice, ct::TensorShape({cij_elems}));
+    const std::size_t cij_elems = pv->para_2d().size();
+    ct::Tensor Cij_gpu(ct::DataType::DT_COMPLEX_DOUBLE,
+                       ct::DeviceType::GpuDevice,
+                       ct::TensorShape({static_cast<int64_t>(cij_elems)}));
     void* d_Cij = static_cast<void*>(Cij_gpu.data<std::complex<double>>());
 
     cudaMemsetAsync(d_Cij, 0, cij_elems * sizeof(std::complex<double>), cublas_res.stream);
@@ -265,11 +268,11 @@ void norm_psi_tensor(const Parallel_Orbitals* pv,
 
     cublasMpMatrixDescriptorCreate(nlocal,
                                    nlocal,
-                                   pv->desc[4],
-                                   pv->desc[5],
+                                   pv->para_2d().desc()[4],
+                                   pv->para_2d().desc()[5],
                                    0,
                                    0,
-                                   pv->desc[8],
+                                   pv->para_2d().desc()[8],
                                    CUDA_C_64F,
                                    cublas_res.cublasmp_grid,
                                    &desc_S);
@@ -416,12 +419,12 @@ void norm_psi_tensor(const Parallel_Orbitals* pv,
     // Launch GPU In-place Normalization using the C++ wrapper
     module_rt::gpu::launch_normalize_cij_kernel(reinterpret_cast<cuDoubleComplex*>(d_Cij),
                                                 pv->desc_Eij[8],
-                                                pv->nloc,
+                                                pv->para_2d().size(),
                                                 pv->desc_Eij[4],
-                                                pv->dim0,
-                                                pv->dim1,
-                                                pv->get_coord_row(),
-                                                pv->get_coord_col(),
+                                                pv->para_2d().nrproc(),
+                                                pv->para_2d().ncproc(),
+                                                pv->para_2d().irproc(),
+                                                pv->para_2d().icproc(),
                                                 nband,
                                                 cublas_res.stream);
 

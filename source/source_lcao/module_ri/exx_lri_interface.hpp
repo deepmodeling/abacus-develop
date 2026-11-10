@@ -18,14 +18,23 @@
 #include <string>
 #include <sys/time.h>
 
-template<typename T, typename Tdata>
-void Exx_LRI_Interface<T, Tdata>::init(const MPI_Comm &mpi_comm,
-                                       const UnitCell &ucell,
-                                       const K_Vectors &kv,
-                                       const LCAO_Orbitals& orb)
+template <typename T, typename Tdata>
+void Exx_LRI_Interface<T, Tdata>::init(
+    const MPI_Comm &mpi_comm,
+    const UnitCell &ucell,
+    const K_Vectors &kv,
+    const LCAO_Orbitals &orb,
+    const bool use_gpu)
 {
     ModuleBase::TITLE("Exx_LRI_Interface","init");
-    this->exx_ptr->init(mpi_comm, ucell, kv, orb);
+    const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> abfs;
+    this->exx_ptr->init(
+        mpi_comm,
+        ucell,
+        kv,
+        orb,
+        abfs,
+        use_gpu);
     this->flag_finish.init = true;
 }
 
@@ -83,7 +92,7 @@ template<typename T, typename Tdata>
 void Exx_LRI_Interface<T, Tdata>::exx_before_all_runners(
     const K_Vectors& kv,
     const UnitCell& ucell,
-    const Parallel_2D& pv)
+    const BlockCyclicDistribution& pv)
 {
     ModuleBase::TITLE("Exx_LRI_Interface","exx_before_all_runners");
     this->refresh_symmetry(kv, ucell, pv);
@@ -91,7 +100,7 @@ void Exx_LRI_Interface<T, Tdata>::exx_before_all_runners(
 
 template<typename T, typename Tdata>
 void Exx_LRI_Interface<T, Tdata>::refresh_symmetry(
-    const K_Vectors& kv, const UnitCell& ucell, const Parallel_2D& pv)
+    const K_Vectors& kv, const UnitCell& ucell, const BlockCyclicDistribution& pv)
 {
     ModuleBase::TITLE("Exx_LRI_Interface", "refresh_symmetry");
     this->symrot_.reset_symmetry();
@@ -110,14 +119,16 @@ void Exx_LRI_Interface<T, Tdata>::refresh_symmetry(
     }
 }
 
-template<typename T, typename Tdata>
-void Exx_LRI_Interface<T, Tdata>::exx_beforescf(const int istep,
-                                                const K_Vectors& kv,
-                                                const Charge_Mixing& chgmix,
-                                                const UnitCell& ucell,
-                                                const LCAO_Orbitals& orb,
-                                                const Parallel_2D& pv,
-                                                const bool update_symmetry)
+template <typename T, typename Tdata>
+void Exx_LRI_Interface<T, Tdata>::exx_beforescf(
+    const int istep,
+    const K_Vectors &kv,
+    const Charge_Mixing &chgmix,
+    const UnitCell &ucell,
+    const LCAO_Orbitals &orb,
+    const BlockCyclicDistribution &pv,
+    const bool update_symmetry,
+    const bool use_gpu)
 {
     ModuleBase::TITLE("Exx_LRI_Interface","exx_beforescf");
 #ifdef __MPI
@@ -148,7 +159,11 @@ void Exx_LRI_Interface<T, Tdata>::exx_beforescf(const int istep,
             this->exx_ptr->get_info_ri().coulomb_param, ucell, &kv);
         if (coulomb_settings != this->exx_ptr->coulomb_settings)
         {
-            this->exx_ptr->refresh_coulomb(ucell, orb, coulomb_settings);
+            this->exx_ptr->refresh_coulomb(
+                ucell,
+                orb,
+                coulomb_settings,
+                use_gpu);
         }
 
         this->cal_exx_ions(ucell,PARAM.inp.out_ri_cv);
@@ -217,7 +232,7 @@ void Exx_LRI_Interface<T, Tdata>::exx_eachiterinit(const int istep,
             auto cal = [this, &ucell,&kv, &pv, &flag_restart](const module_dm::DensityMatrix<T, double>& dm_in)
             {
                 if (this->exx_spacegroup_symmetry)
-                    { this->mix_DMk_2D.mix(symrot_.restore_dm(kv, dm_in.get_dmk_vec(), pv), flag_restart); }
+                    { this->mix_DMk_2D.mix(symrot_.restore_dm(kv, dm_in.get_dmk_vec(), pv.para_2d()), flag_restart); }
                 else
                     { this->mix_DMk_2D.mix(dm_in.get_dmk_vec(), flag_restart); }
                 const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> Ds =
@@ -225,7 +240,7 @@ void Exx_LRI_Interface<T, Tdata>::exx_eachiterinit(const int istep,
                         ucell,
                         *this->exx_ptr->p_kv,
                         this->mix_DMk_2D.get_DMk_out(),
-                        pv,
+                        pv.para_2d(),
                         PARAM.inp.nspin,
                         this->exx_spacegroup_symmetry);
                 if(this->exx_spacegroup_symmetry && this->exx_ptr->info.exx_symmetry_realspace)
@@ -305,7 +320,7 @@ void Exx_LRI_Interface<T, Tdata>::exx_iter_finish(const K_Vectors& kv,
 
             GlobalC::restart.save_disk("Hexx",
                                        ik,
-                                       this->pv.get_local_size(),
+                                       this->pv.size(),
                                        Hexxk_save.get_hk());
         }*/
         ////////// for Add_Hexx_Type:R
@@ -433,7 +448,7 @@ bool Exx_LRI_Interface<T, Tdata>::exx_after_converge(
             const bool flag_restart = (this->two_level_step == 0 && PARAM.inp.init_wfc != "file") ? true : false;
 
             if(this->exx_spacegroup_symmetry)
-                { this->mix_DMk_2D.mix(symrot_.restore_dm(kv, dm.get_dmk_vec(), pv), flag_restart); }
+                { this->mix_DMk_2D.mix(symrot_.restore_dm(kv, dm.get_dmk_vec(), pv.para_2d()), flag_restart); }
             else
                 { this->mix_DMk_2D.mix(dm.get_dmk_vec(), flag_restart); }
             const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> Ds =
@@ -441,7 +456,7 @@ bool Exx_LRI_Interface<T, Tdata>::exx_after_converge(
                     ucell,
                     *this->exx_ptr->p_kv,
                     this->mix_DMk_2D.get_DMk_out(),
-                    pv,
+                    pv.para_2d(),
                     nspin,
                     this->exx_spacegroup_symmetry);
             if(this->exx_spacegroup_symmetry && this->exx_ptr->info.exx_symmetry_realspace)
