@@ -31,6 +31,7 @@
 #include "source_hsolver/kernels/fixed_overlap.h"
 #endif
 #include "deltaspin_pw_cache.h"
+#include "hpsi_transfer.h"
 #include "mi_tools.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_hsolver/diago_iter_assist.h"
@@ -661,13 +662,12 @@ void update_psi_charge_pw_gpu(ScState& state,
             const int npwx = onsite_p->get_npwx();
             const int action_bands = nbands;
             const int action_rows = cache.hpsi_rows;
+            spinconstrain::HPsiTransfer transfer(cache.hpsi_host, cache.hpsi_nk, action_bands, action_rows);
             typename hsolver::Diago_DavSubspace<std::complex<double>, base_device::DEVICE_GPU>::InitialHPsiFunc
                 initial_hpsi = [&](int ik, std::complex<double>* output, int output_leading) {
-                    base_device::memory::synchronize_memory_op<std::complex<double>,
-                                                               base_device::DEVICE_GPU,
-                                                               base_device::DEVICE_CPU>()(
-                        output, cache.hpsi_host + size_t(ik) * action_rows * action_bands,
-                        size_t(action_rows) * action_bands);
+                    transfer.restore(ik, output, output_leading);
+                    // Prepare the next projector block while the pinned upload
+                    // is in flight; the default stream orders the following GEMM.
                     onsite_p->tabulate_atomic(ik);
                     apply_constraint_action_gpu(state, pelec, cache.becp_k(ik, nbands * nkb * npol),
                                                 delta_lambda.data(), output, output_leading, npwx, ik,
