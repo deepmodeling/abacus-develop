@@ -37,6 +37,13 @@ class Diago_DavSubspace
 
     ~Diago_DavSubspace();
 
+    /// Refresh the preconditioner without reallocating the solver workspace.
+    void update_precondition(const std::vector<Real>& precondition_in);
+
+    /// True when a cached solver can serve a problem with this fixed layout.
+    bool layout_matches(const int& nband, const int& nbasis, const int& david_ndim,
+                        const int& method, const int& block_size) const;
+
     /// General operators (for example LR-TDDFT) need not have a single k point.
     int diag(const HSOperator<T, Device>& op,
              T* psi_in,
@@ -74,7 +81,7 @@ class Diago_DavSubspace
     const int nbase_x = 0;
 
     /// precondition for diag
-    const std::vector<Real>& precondition;
+    std::vector<Real> precondition;
     Real* d_precondition = nullptr;
 
     /// record for how many bands not have convergence eigenvalues

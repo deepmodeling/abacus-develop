@@ -5,15 +5,16 @@
 #include "source_basis/module_pw/pw_basis_k.h"
 #include "source_estate/elecstate.h"
 #include "source_hsolver/hs_operator.h"
+#include "source_hsolver/diago_dav_subspace.h"
 
 #include <iosfwd>
+#include <memory>
 #include <unordered_map>
 
 class TestHSolverPW; // unit-test fixture, see source_hsolver/unittests/
 
 namespace hsolver
 {
-
 template <typename T, typename Device = base_device::DEVICE_CPU>
 class HSolverPW
 {
@@ -81,6 +82,8 @@ class HSolverPW
 
     void output_iterInfo(std::ostream& log);
 
+    std::unique_ptr<Diago_DavSubspace<T, Device>> davidson_cache_;
+    bool reuse_davidson_ = false;
     ModulePW::PW_Basis_K* wfc_basis = nullptr;
 
     const std::string calculation_type;

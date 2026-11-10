@@ -102,6 +102,27 @@ Diago_DavSubspace<T, Device>::Diago_DavSubspace(const std::vector<Real>& precond
 }
 
 template <typename T, typename Device>
+void Diago_DavSubspace<T, Device>::update_precondition(const std::vector<Real>& precondition_in)
+{
+    assert(static_cast<int>(precondition_in.size()) >= this->dim);
+    this->precondition = precondition_in;
+#if defined(__CUDA) || defined(__ROCM)
+    if (this->device == base_device::GpuDevice)
+    {
+        syncmem_var_h2d_op()(this->d_precondition, this->precondition.data(), this->dim);
+    }
+#endif
+}
+
+template <typename T, typename Device>
+bool Diago_DavSubspace<T, Device>::layout_matches(const int& nband, const int& nbasis, const int& david_ndim,
+                                                  const int& method, const int& block_size) const
+{
+    return this->n_band == nband && this->dim == nbasis && this->nbase_x == nband * david_ndim
+           && this->diag_subspace == method && this->diago_subspace_bs == block_size;
+}
+
+template <typename T, typename Device>
 Diago_DavSubspace<T, Device>::~Diago_DavSubspace()
 {
     delmem_complex_op()(this->psi_in_iter);
