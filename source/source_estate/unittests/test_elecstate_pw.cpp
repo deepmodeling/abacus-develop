@@ -281,7 +281,7 @@ TEST_F(ElecStatePWTest, InitRhoDataDouble)
                                                                                                ppcell,
                                                                                                rhopw,
                                                                                                bigpw);
-    elecstate_pw_d->init_rho_data();
+    elecstate_pw_d->init_rho_data(PARAM.globalv.domag, PARAM.globalv.domag_z, chg->nspin);
     EXPECT_EQ(elecstate_pw_d->init_rho, true);
     EXPECT_EQ(elecstate_pw_d->rho, chg->rho);
     EXPECT_EQ(elecstate_pw_d->kin_r, chg->kin_r);
@@ -300,7 +300,7 @@ TEST_F(ElecStatePWTest, InitRhoDataSingle)
                                                                                               ppcell,
                                                                                               rhopw,
                                                                                               bigpw);
-    elecstate_pw_s->init_rho_data();
+    elecstate_pw_s->init_rho_data(PARAM.globalv.domag, PARAM.globalv.domag_z, chg->nspin);
     EXPECT_EQ(elecstate_pw_s->init_rho, true);
     EXPECT_NE(elecstate_pw_s->rho, nullptr);
     EXPECT_NE(elecstate_pw_s->kin_r, nullptr);
