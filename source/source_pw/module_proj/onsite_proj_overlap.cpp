@@ -108,6 +108,16 @@ void projectors::OnsiteProjector<T, Device>::overlap_td(int ik, int columns,
 }
 
 template <typename T, typename Device>
+std::complex<double>* projectors::OnsiteProjector<T, Device>::get_h_becp() const
+{
+    if (this->device == base_device::GpuDevice && this->becp != nullptr)
+    {
+        syncmem_complex_d2h_op()(this->h_becp, this->becp, this->size_becp);
+    }
+    return this->h_becp;
+}
+
+template <typename T, typename Device>
 void projectors::OnsiteProjector<T, Device>::overlap_impl(int columns,
                                                         const std::complex<double>* psi, int stride,
                                                         const ModuleBase::Vector3<double>& vector_potential)
@@ -131,6 +141,7 @@ void projectors::OnsiteProjector<T, Device>::overlap_impl(int columns,
 }
 
 template void projectors::OnsiteProjector<double, base_device::DEVICE_CPU>::invalidate_proj();
+template std::complex<double>* projectors::OnsiteProjector<double, base_device::DEVICE_CPU>::get_h_becp() const;
 template void projectors::OnsiteProjector<double, base_device::DEVICE_CPU>::overlap_td(
     int, int, const std::complex<double>*, int, const ModuleBase::Vector3<double>&);
 template
@@ -149,6 +160,7 @@ void projectors::OnsiteProjector<double, base_device::DEVICE_CPU>::cal_occupatio
 
 #if ((defined __CUDA) || (defined __ROCM))
 template void projectors::OnsiteProjector<double, base_device::DEVICE_GPU>::invalidate_proj();
+template std::complex<double>* projectors::OnsiteProjector<double, base_device::DEVICE_GPU>::get_h_becp() const;
 template void projectors::OnsiteProjector<double, base_device::DEVICE_GPU>::overlap_td(
     int, int, const std::complex<double>*, int, const ModuleBase::Vector3<double>&);
 template

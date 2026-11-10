@@ -87,7 +87,8 @@ namespace projectors
         void overlap_td(int ik, int columns, const std::complex<double>* psi, int stride,
                         const ModuleBase::Vector3<double>& vector_potential);
         std::complex<double>* get_becp() const { return becp; }
-        std::complex<double>* get_h_becp() const { return h_becp; }
+        /// Return the current overlaps in host memory, synchronizing GPU data on access.
+        std::complex<double>* get_h_becp() const;
         std::complex<double>* get_tab_atomic() const { return tab_atomic_; }
         int get_tot_nproj() const { return tot_nproj; }
         int get_npw() const { return npw_; }
