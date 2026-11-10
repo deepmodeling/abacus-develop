@@ -63,8 +63,6 @@ void mix_common_frame_density(const bool restart,
                               HybridDensityLayout& history_layout,
                               HybridGaugeComplexDensity& density);
 
-// The production transaction: transform first, validate topology before mixing,
-// then copy the mixed values back without changing shared source storage.
 void mix_hybrid_density(const ModuleBase::Matrix3& lattice,
                         const double lat0,
                         const ModuleBase::Vector3<double>& source_A,

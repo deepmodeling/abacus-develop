@@ -128,8 +128,7 @@ TEST(HybridGaugePhase, EqualPhysicalDensityAcrossTwoSourceFrames)
 
 TEST(HybridGaugePhase, ImageRelabelCommutesWithOrdinaryFrameConversion)
 {
-    // Algebraic oracle for the inspected conj-first DMK / RI transpose
-    // conventions. It does not enable transport of production snapshots.
+    // Check the conj-first DMK and RI transpose conventions.
     const ModuleBase::Matrix3 lattice(2.0, 0.5, 0.0,
                                      0.0, 3.0, 0.2,
                                      0.1, 0.0, 4.0);
