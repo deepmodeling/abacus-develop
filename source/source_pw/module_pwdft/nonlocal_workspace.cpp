@@ -132,7 +132,7 @@ void NonlocalWorkspace<T, Device>::apply(const UnitCell& cell, const pseudopot_c
 #if defined(__CUDA)
         if (projector_fold_)
         {
-            folded = projector_fold_->add(bands, pp.vkbnc,
+            folded = projector_fold_->add(bands, nbasis / npol,
                                           reinterpret_cast<const std::complex<double>*>(ps_),
                                           reinterpret_cast<std::complex<double>*>(hpsi));
         }
@@ -189,7 +189,7 @@ void NonlocalWorkspace<T, Device>::project_contract(const UnitCell& cell, const 
         }
         if (projector_fold_)
         {
-            folded = projector_fold_->project(bands, pp.vkbnc,
+            folded = projector_fold_->project(bands, nbasis / npol,
                                               reinterpret_cast<const std::complex<double>*>(psi),
                                               reinterpret_cast<std::complex<double>*>(becp_));
         }
