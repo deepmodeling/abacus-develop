@@ -50,13 +50,12 @@ __global__ void accumulate_moments(int bands, int nkb, int sign, const int* offs
                                    const double* weights, const thrust::complex<double>* becp,
                                    double* mi_xyz)
 {
-    const int index = blockIdx.x * blockDim.x + threadIdx.x;
-    if (index >= bands * gridDim.y)
+    const int band = blockIdx.x * blockDim.x + threadIdx.x;
+    if (band >= bands)
     {
         return;
     }
     const int atom = blockIdx.y;
-    const int band = index / gridDim.y;
     const double weight = weights[band];
     if (weight == 0.0)
     {
