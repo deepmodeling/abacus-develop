@@ -101,6 +101,18 @@ addtest(
   SOURCES ../module_lj/test_lj.cpp ${depend_files})
 
 addtest(
+  TARGET MODULE_MD_SNAP_potential
+  LIBS parameter psi device
+  SOURCES ../module_snap/test_snap_potential.cpp
+          ../module_snap/snap_potential.cpp
+          ../module_snap/snap_calculator.cpp
+          ../module_snap/snap_descriptor.cpp
+          ../module_snap/snap_derivative.cpp
+          ../module_snap/snap_model.cpp
+          ../module_snap/snap_cg.cpp
+          ${depend_files})
+
+addtest(
   TARGET MODULE_MD_func
   LIBS parameter psi device
   SOURCES md_func_test.cpp test_md_func.cpp ${depend_files})

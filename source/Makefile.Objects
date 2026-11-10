@@ -350,7 +350,6 @@ OBJS_ESOLVER=esolver_factory.o\
     esolver_potential.o\
     esolver_dp.o\
     esolver_nep.o\
-    esolver_snap.o\
     esolver_of.o\
     esolver_of_tddft.o\
     esolver_of_interface.o\
@@ -573,6 +572,7 @@ OBJS_MD=fire.o\
     module_snap/snap_derivative.o\
     module_snap/snap_model.o\
     module_snap/snap_cg.o\
+    module_snap/snap_potential.o\
     module_lj/lj.o\
     verlet.o\
 

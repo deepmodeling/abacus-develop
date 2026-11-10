@@ -24,7 +24,7 @@
 #endif
 #include "esolver_dp.h"
 #include "esolver_nep.h"
-#include "esolver_snap.h"
+#include "source_md/module_snap/snap_potential.h"
 #include "esolver_potential.h"
 #include "source_md/module_lj/lj.h"
 #include "esolver_of.h"
@@ -409,7 +409,10 @@ ESolver* init_esolver(const Input_para& inp)
     else if (esolver_type == "snap_pot")
     {
         const int rank = GlobalV::MY_RANK;
-        return new ESolver_SNAP(inp.mdp.pot_file, inp.mdp.snap_param_file, GlobalV::ofs_running, rank);
+        std::ofstream& running_log = GlobalV::ofs_running;
+        std::unique_ptr<ModuleMD::Potential> potential(
+            new ModuleMD::SnapPotential(inp.mdp.pot_file, inp.mdp.snap_param_file, running_log, rank));
+        return new ESolver_Potential(std::move(potential), running_log);
     }
     throw std::invalid_argument("esolver_type = " + std::string(esolver_type) + ". Wrong in " + std::string(__FILE__)
                                 + " line " + std::to_string(__LINE__));

@@ -6,6 +6,7 @@ target_sources(
     snap_derivative.cpp
     snap_model.cpp
     snap_cg.cpp
+    snap_potential.cpp
 )
 
 if(BUILD_TESTING)
