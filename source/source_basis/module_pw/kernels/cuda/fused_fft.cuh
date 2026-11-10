@@ -1,6 +1,7 @@
 #ifndef MODULEPW_FUSED_FFT_TEMPLATE_CUH
 #define MODULEPW_FUSED_FFT_TEMPLATE_CUH
 
+#include "source_basis/module_pw/kernels/cuda/fused_fft_check.cuh"
 #include "source_basis/module_pw/kernels/fused_veff.h"
 #include <base/macros/macros.h>
 #include <cuda_runtime.h>

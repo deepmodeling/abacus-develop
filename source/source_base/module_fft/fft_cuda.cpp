@@ -272,8 +272,8 @@ int FFT_CUDA<FPTYPE>::fused_veff_grid_size() const
 template <>
 int FFT_CUDA<double>::fused_veff_grid_size() const
 {
-    return this->use_pruned_gpu_fft() && fused_fft(this->nx) != nullptr && fused_fft(this->ny) != nullptr
-                   && fused_fft(this->nz) != nullptr
+    return this->use_pruned_gpu_fft() && ModulePW::fused_fft(this->nx) != nullptr && ModulePW::fused_fft(this->ny) != nullptr
+                   && ModulePW::fused_fft(this->nz) != nullptr
                ? (this->lixy_index + 1 + this->nx - this->rixy_index) * this->ny * this->nz
                : 0;
 }

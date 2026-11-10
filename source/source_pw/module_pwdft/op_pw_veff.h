@@ -69,8 +69,8 @@ class Veff<OperatorPW<T, Device>> : public OperatorPW<T, Device>
     int veff_col = 0;
     int veff_row = 0;
     const Real *veff = nullptr, *h_veff = nullptr, *d_veff = nullptr;
-    T *porter = nullptr;
-    T *porter1 = nullptr;
+    mutable T *porter = nullptr;
+    mutable T *porter1 = nullptr;
     mutable int porter_size = 0;
 #if defined(__CUFFTDX)
     bool fused_fft_enabled = false;
