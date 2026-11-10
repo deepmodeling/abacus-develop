@@ -95,10 +95,12 @@
 template <>
 void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
         int i_step,
-        const ModuleBase::Vector3<double>* delta_lambda)
+        const ModuleBase::Vector3<double>* delta_lambda,
+        std::ostream& ofs_running)
 {
     ModuleBase::TITLE("spinconstrain::SpinConstrain", "cal_mw_from_lambda");
     ModuleBase::timer::start("spinconstrain::SpinConstrain", "cal_mw_from_lambda");
+    const bool use_gpu = PARAM.inp.device == "gpu";
 #ifdef __MPI
     const hsolver::diag_comm_info diag_comm(POOL_WORLD, GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL);
 #else
@@ -119,7 +121,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
                                                              PARAM.globalv.nlocal,
                                                              PARAM.inp.nbands,
                                                              PARAM.inp.nelec,
-                                                             PARAM.inp.device == "gpu",
+                                                             use_gpu,
                                                              GlobalV::NPROC,
                                                              GlobalV::MY_RANK);
         if (this->state_.nspin_ == 2)
@@ -157,7 +159,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
             int nbands = 0;
             int npol = 0;
             const int* nh_iat = nullptr;
-            if (PARAM.inp.device == "cpu")
+            if (!use_gpu)
             {
                 // =============================================================
                 // PW PATH (CPU): Subspace diagonalization + Mi from becp
@@ -204,7 +206,10 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
                     memcpy(h_tmp.data(), h_k, sizeof(std::complex<double>) * nbands * nbands);
                     memcpy(s_tmp.data(), s_k, sizeof(std::complex<double>) * nbands * nbands);
                     // Apply DeltaSpin correction (skip for initialization step i_step=-1)
-                    if (i_step != -1) pw::calculate_delta_hcc(this->state_, this->pw_cache_, this->pelec, h_tmp.data(), becp_k, this->state_.get_sc_lambda().data(), nbands, nkb, nh_iat, ik, true);
+                    if (i_step != -1)
+                        pw::calculate_delta_hcc(this->state_, this->pw_cache_, this->pelec, h_tmp.data(), becp_k,
+                                                this->state_.get_sc_lambda().data(), nbands, nkb, nh_iat, ik, true,
+                                                use_gpu);
 
                     // Diagonalize in subspace, update becp (response wavefunctions)
                     hsolver::DiagoIterAssist<std::complex<double>>::diag_responce(h_tmp.data(),
@@ -255,7 +260,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
                     {
                         delete fixed_overlap;
                         fixed_overlap = nullptr;
-                        GlobalV::ofs_running << "Fixed-overlap cache unavailable; using generalized response solves.\n";
+                        ofs_running << "Fixed-overlap cache unavailable; using generalized response solves.\n";
                     }
                     this->pw_cache_.fixed_overlap = fixed_overlap;
                 }
@@ -338,7 +343,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
                     {
                         pw::calculate_delta_hcc(this->state_, this->pw_cache_, this->pelec, h_tmp,
                                                 response_projectors, this->state_.get_sc_lambda().data(),
-                                                nbands, nkb, nh_iat, ik, true);
+                                                nbands, nkb, nh_iat, ik, true, use_gpu);
                     }
 
 #if defined(__CUDA)
@@ -422,7 +427,8 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
  * which perform subspace diagonalization and optional full-space refinement.
  */
 template <>
-void spinconstrain::SpinConstrain<std::complex<double>>::update_psi_charge(const ModuleBase::Vector3<double>* delta_lambda, bool pw_solve, bool full_update)
+void spinconstrain::SpinConstrain<std::complex<double>>::update_psi_charge(
+    const ModuleBase::Vector3<double> *delta_lambda, bool pw_solve, bool full_update, std::ostream &ofs_running)
 {
     ModuleBase::TITLE("spinconstrain::SpinConstrain", "update_psi_charge");
     ModuleBase::timer::start("spinconstrain::SpinConstrain", "update_psi_charge");
@@ -445,16 +451,22 @@ void spinconstrain::SpinConstrain<std::complex<double>>::update_psi_charge(const
     else
 #endif
     {
-        if (PARAM.inp.device == "cpu")
+        const bool use_gpu = PARAM.inp.device == "gpu";
+        const std::string& ks_solver = PARAM.inp.ks_solver;
+        const int rank_in_pool = GlobalV::RANK_IN_POOL;
+        const int nproc_in_pool = GlobalV::NPROC_IN_POOL;
+        if (!use_gpu)
         {
             pw::update_psi_charge_pw_cpu(this->state_, this->pw_cache_, this->psi, this->p_hamilt,
-                                         this->pelec, this->pw_wfc_, delta_lambda, pw_solve, full_update);
+                                         this->pelec, this->pw_wfc_, delta_lambda, pw_solve, full_update,
+                                         ks_solver, rank_in_pool, nproc_in_pool, ofs_running);
         }
 #if ((defined __CUDA) || (defined __ROCM))
         else
         {
             pw::update_psi_charge_pw_gpu(this->state_, this->pw_cache_, this->psi, this->p_hamilt,
-                                         this->pelec, this->pw_wfc_, delta_lambda, pw_solve, full_update);
+                                         this->pelec, this->pw_wfc_, delta_lambda, pw_solve, full_update,
+                                         ks_solver, rank_in_pool, nproc_in_pool, ofs_running);
         }
 #endif
     }

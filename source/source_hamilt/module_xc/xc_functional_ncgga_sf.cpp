@@ -5,7 +5,6 @@
 #include "source_base/vector3.h"
 #include "source_basis/module_pw/pw_basis.h"
 #include "source_estate/module_charge/charge.h"
-#include "source_io/module_parameter/parameter.h"
 #include "ncgga_sf_gpu.h"
 #include "xc_functional.h"
 #include "xc_ncgga_radial.h"
@@ -22,7 +21,8 @@ namespace NCGGA_SF_Builtin
 std::tuple<double, double, ModuleBase::matrix> v_xc_ncgga_sf_builtin(const int& nrxx,
                                                                      const double& omega,
                                                                      const double tpiba,
-                                                                     const Charge* const chr)
+                                                                     const Charge* const chr,
+                                                                     const bool use_gpu)
 {
     ModuleBase::TITLE("XC_Functional", "v_xc_ncgga_sf_builtin");
     ModuleBase::timer::start("XC_Functional", "v_xc_ncgga_sf_builtin");
@@ -70,7 +70,7 @@ std::tuple<double, double, ModuleBase::matrix> v_xc_ncgga_sf_builtin(const int& 
     std::vector<ModuleBase::Vector3<double>> gpu_flux_up;
     std::vector<ModuleBase::Vector3<double>> gpu_flux_down;
 #if defined(__CUDA)
-    if (PARAM.inp.device == "gpu" && XC_Functional::get_func_type() == 2
+    if (use_gpu && XC_Functional::get_func_type() == 2
         && XC_Functional::get_func_id().size() >= 2
         && XC_Functional::get_func_id()[0] == XC_GGA_X_PBE
         && XC_Functional::get_func_id()[1] == XC_GGA_C_PBE)

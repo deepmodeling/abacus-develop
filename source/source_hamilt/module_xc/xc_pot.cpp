@@ -7,6 +7,7 @@
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 #include "xc_functional.h"
+#include "source_io/module_parameter/parameter.h"
 
 #include "xc_functional_ncgga_sf.h"
 
@@ -56,7 +57,8 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional::v_xc(
     // Evaluate the regularized mapped-density local-collinear graph.
     if (nspin == 4 && (domag || domag_z) && gga_grad == 2)
     {
-        return ModuleXC::NCGGA_SF_Builtin::v_xc_ncgga_sf_builtin(nrxx, ucell->omega, ucell->tpiba, chr);
+        return ModuleXC::NCGGA_SF_Builtin::v_xc_ncgga_sf_builtin(nrxx, ucell->omega, ucell->tpiba, chr,
+                                                                 PARAM.inp.device == "gpu");
     }
 
     ModuleBase::timer::start("XC_Functional", "v_xc");

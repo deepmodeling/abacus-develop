@@ -27,7 +27,8 @@
 /// @brief cal_mw_from_lambda stub (TK=double): no-op
 template <>
 void spinconstrain::SpinConstrain<double>::cal_mw_from_lambda(int i_step,
-        const ModuleBase::Vector3<double>* delta_lambda)
+        const ModuleBase::Vector3<double>* delta_lambda,
+        std::ostream& ofs_running)
 {
 }
 

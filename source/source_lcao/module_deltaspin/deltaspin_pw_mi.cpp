@@ -153,7 +153,8 @@ void calculate_delta_hcc(ScState& state,
                          const int nkb,
                          const int* nh_iat,
                          const int ik,
-                         const bool full_update)
+                         const bool full_update,
+                         const bool use_gpu)
 {
     ModuleBase::TITLE("spinconstrain::SpinConstrain", "calculate_delta_hcc");
     ModuleBase::timer::start("spinconstrain::SpinConstrain", "calculate_delta_hcc");
@@ -174,7 +175,7 @@ void calculate_delta_hcc(ScState& state,
     }
 
 #if defined(__CUDA)
-    if (PARAM.inp.device == "gpu")
+    if (use_gpu)
     {
         using Complex = std::complex<double>;
         const int rows = nkb * state.npol_;
@@ -426,7 +427,11 @@ void update_psi_charge_pw_cpu(ScState& state,
                               ModulePW::PW_Basis_K* pw_wfc,
                               const ModuleBase::Vector3<double>* delta_lambda,
                               bool pw_solve,
-                              bool full_update)
+                              bool full_update,
+                              const std::string& ks_solver,
+                              const int rank_in_pool,
+                              const int nproc_in_pool,
+                              std::ostream& ofs_running)
 {
     ModuleBase::TITLE("spinconstrain::SpinConstrain", "update_psi_charge_pw_cpu");
     ModuleBase::timer::start("spinconstrain::SpinConstrain", "update_psi_charge_pw_cpu");
@@ -470,7 +475,8 @@ void update_psi_charge_pw_cpu(ScState& state,
         memcpy(s_tmp.data(), s_k, sizeof(std::complex<double>) * nbands * nbands);
 
         // Apply DeltaSpin correction: H += becp^dagger * lambda * becp
-        calculate_delta_hcc(state, cache, pelec, h_tmp.data(), becp_k, lambda_for_hcc, nbands, nkb, nh_iat, ik, full_update);
+        calculate_delta_hcc(state, cache, pelec, h_tmp.data(), becp_k, lambda_for_hcc, nbands, nkb, nh_iat, ik,
+                            full_update, false);
 
         // Diagonalize in subspace to update wavefunction coefficients and eigenvalues
         hsolver::DiagoIterAssist<std::complex<double>>::diag_subspace_psi(h_tmp.data(),
@@ -494,7 +500,7 @@ void update_psi_charge_pw_cpu(ScState& state,
             pw_wfc,
             PARAM.inp.calculation,
             PARAM.inp.basis_type,
-            PARAM.inp.ks_solver,
+            ks_solver,
             PARAM.globalv.use_uspp,
             PARAM.inp.nspin,
             hsolver::DiagoIterAssist<std::complex<double>>::SCF_ITER,
@@ -513,9 +519,9 @@ void update_psi_charge_pw_cpu(ScState& state,
                              psi_t[0],
                              pelec,
                              pelec->ekb.c,
-                             GlobalV::RANK_IN_POOL,
-                             GlobalV::NPROC_IN_POOL,
-                             GlobalV::ofs_running,
+                             rank_in_pool,
+                             nproc_in_pool,
+                             ofs_running,
                              false);
     }
     else
@@ -544,7 +550,11 @@ void update_psi_charge_pw_gpu(ScState& state,
                               ModulePW::PW_Basis_K* pw_wfc,
                               const ModuleBase::Vector3<double>* delta_lambda,
                               bool pw_solve,
-                              bool full_update)
+                              bool full_update,
+                              const std::string& ks_solver,
+                              const int rank_in_pool,
+                              const int nproc_in_pool,
+                              std::ostream& ofs_running)
 {
     ModuleBase::TITLE("spinconstrain::SpinConstrain", "update_psi_charge_pw_gpu");
     ModuleBase::timer::start("spinconstrain::SpinConstrain", "update_psi_charge_pw_gpu");
@@ -571,7 +581,7 @@ void update_psi_charge_pw_gpu(ScState& state,
     // Davidson diagonalizes the complete initial subspace itself. An invertible
     // rotation before that solve leaves the span unchanged, so skip the explicit
     // subspace update. Density-only updates and other solvers still need it.
-    const bool rotate_basis = !pw_solve || PARAM.inp.ks_solver != "dav_subspace";
+    const bool rotate_basis = !pw_solve || ks_solver != "dav_subspace";
     std::complex<double>* h_tmp = nullptr;
     std::complex<double>* s_tmp = nullptr;
     if (rotate_basis)
@@ -592,7 +602,8 @@ void update_psi_charge_pw_gpu(ScState& state,
         base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_GPU, base_device::DEVICE_GPU>()(h_tmp, h_k, nbands * nbands);
         base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_GPU, base_device::DEVICE_GPU>()(s_tmp, s_k, nbands * nbands);
 
-        calculate_delta_hcc(state, cache, pelec, h_tmp, becp_k, lambda_for_hcc, nbands, nkb, nh_iat, ik, full_update);
+        calculate_delta_hcc(state, cache, pelec, h_tmp, becp_k, lambda_for_hcc, nbands, nkb, nh_iat, ik, full_update,
+                            true);
 
         hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_GPU>::diag_subspace_psi(h_tmp,
                                                                                 s_tmp,
@@ -630,7 +641,7 @@ void update_psi_charge_pw_gpu(ScState& state,
             pw_wfc,
             PARAM.inp.calculation,
             PARAM.inp.basis_type,
-            PARAM.inp.ks_solver,
+            ks_solver,
             PARAM.globalv.use_uspp,
             PARAM.inp.nspin,
             hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_GPU>::SCF_ITER,
@@ -700,9 +711,9 @@ void update_psi_charge_pw_gpu(ScState& state,
                                  psi_t[0],
                                  pelec,
                                  pelec->ekb.c,
-                                 GlobalV::RANK_IN_POOL,
-                                 GlobalV::NPROC_IN_POOL,
-                                 GlobalV::ofs_running,
+                                 rank_in_pool,
+                                 nproc_in_pool,
+                                 ofs_running,
                                  false,
                                  initial_hpsi,
                                  &observer);
@@ -713,9 +724,9 @@ void update_psi_charge_pw_gpu(ScState& state,
                                  psi_t[0],
                                  pelec,
                                  pelec->ekb.c,
-                                 GlobalV::RANK_IN_POOL,
-                                 GlobalV::NPROC_IN_POOL,
-                                 GlobalV::ofs_running,
+                                 rank_in_pool,
+                                 nproc_in_pool,
+                                 ofs_running,
                                  false);
         }
     }

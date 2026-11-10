@@ -69,7 +69,7 @@ double ElecStatePW<T, Device>::get_spin_constrain_energy()
 }
 
 template <typename T, typename Device>
-void ElecStatePW<T, Device>::init_rho_data()
+void ElecStatePW<T, Device>::init_rho_data(bool domag, bool domag_z, int nspin)
 {
     if (this->init_rho)
     {
@@ -120,7 +120,7 @@ void ElecStatePW<T, Device>::init_rho_data()
 #if defined(__CUFFTDX)
     this->fused_density = std::is_same<T, std::complex<double>>::value
                           && std::is_same<Device, base_device::DEVICE_GPU>::value
-                          && PARAM.inp.nspin == 4 && PARAM.globalv.domag
+                          && nspin == 4 && domag
                           && this->charge->nrxx == this->basis->nrxx
                           && this->basis->d_igl2isz_k != nullptr
                           && this->basis->fft_bundle.fused_veff_stick_size() > 0
@@ -142,9 +142,9 @@ void ElecStatePW<T, Device>::psiToRho(const psi::Psi<T, Device>& psi)
     ModuleBase::TITLE("ElecStatePW", "psiToRho");
     ModuleBase::timer::start("ElecStatePW", "psiToRho");
 
-    this->init_rho_data();
+    this->init_rho_data(PARAM.globalv.domag, PARAM.globalv.domag_z, this->charge->nspin);
 
-    for (int is = 0; is < PARAM.inp.nspin; is++)
+    for (int is = 0; is < this->charge->nspin; is++)
     {
         // denghui replaced at 20221110
         // ModuleBase::GlobalFunc::ZEROS(this->rho[is], this->charge->nrxx);
@@ -179,7 +179,7 @@ void ElecStatePW<T, Device>::psiToRho(const psi::Psi<T, Device>& psi)
     for (int ik = 0; ik < psi.get_nk(); ++ik)
     {
         psi.fix_k(ik);
-        this->updateRhoK(psi);
+        this->updateRhoK(psi, PARAM.globalv.domag, PARAM.globalv.domag_z, this->charge->nspin);
         if (sum_k_in_double)
         {
             accumulate_k(this->rho, this->charge->rho, ik == 0);
@@ -191,7 +191,7 @@ void ElecStatePW<T, Device>::psiToRho(const psi::Psi<T, Device>& psi)
     if ((!sum_k_in_double || psi.get_nk() == 0)
         && (PARAM.inp.device == "gpu" || PARAM.inp.precision == "single"))
     {
-        for (int ii = 0; ii < PARAM.inp.nspin; ii++)
+        for (int ii = 0; ii < this->charge->nspin; ii++)
         {
             castmem_var_d2h_op()(this->charge->rho[ii], this->rho[ii], this->charge->nrxx);
             if (XC_Functional::get_func_type() == 3)
@@ -207,9 +207,9 @@ void ElecStatePW<T, Device>::psiToRho(const psi::Psi<T, Device>& psi)
 }
 
 template <typename T, typename Device>
-void ElecStatePW<T, Device>::updateRhoK(const psi::Psi<T, Device>& psi)
+void ElecStatePW<T, Device>::updateRhoK(const psi::Psi<T, Device>& psi, bool domag, bool domag_z, int nspin)
 {
-    this->rhoBandK(psi);
+    this->rhoBandK(psi, domag, domag_z, nspin);
 }
 
 template <typename T, typename Device>
@@ -225,7 +225,7 @@ void ElecStatePW<T, Device>::parallelK()
 }
 
 template <typename T, typename Device>
-void ElecStatePW<T, Device>::rhoBandK(const psi::Psi<T, Device>& psi)
+void ElecStatePW<T, Device>::rhoBandK(const psi::Psi<T, Device>& psi, bool domag, bool domag_z, int nspin)
 {
     ModuleBase::TITLE("ElecStatePW", "rhoBandK");
 
@@ -238,7 +238,7 @@ void ElecStatePW<T, Device>::rhoBandK(const psi::Psi<T, Device>& psi)
     // if (PARAM.inp.nspin == 4)
     //     wfcr_another_spin.resize(this->charge->nrxx);
 
-    this->init_rho_data();
+    this->init_rho_data(domag, domag_z, nspin);
     int ik = psi.get_current_k();
     int npw = psi.get_current_ngk();
     int current_spin = 0;
@@ -289,8 +289,8 @@ void ElecStatePW<T, Device>::rhoBandK(const psi::Psi<T, Device>& psi)
 
             // replaced by denghui at 20221110
             elecstate_pw_op()(this->ctx,
-                              PARAM.globalv.domag,
-                              PARAM.globalv.domag_z,
+                              domag,
+                              domag_z,
                               this->basis->nrxx,
                               this->charge->nrxx,
                               w1,

@@ -21,7 +21,8 @@ namespace NCGGA_SF_Builtin
 std::tuple<double, double, ModuleBase::matrix> v_xc_ncgga_sf_builtin(const int& nrxx,
                                                                      const double& omega,
                                                                      const double tpiba,
-                                                                     const Charge* const chr);
+                                                                     const Charge* const chr,
+                                                                     const bool use_gpu);
 
 // Gradient-metric stress of the exact gga_grad=2 mapped-density LCA graph. The
 // returned lower triangle is the unnormalised real-grid sum; Stress_Func

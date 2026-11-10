@@ -198,7 +198,8 @@ public:
    * @param delta_lambda Change in lambda from previous step (for incremental H correction)
    */
   void cal_mw_from_lambda(int i_step,
-          const ModuleBase::Vector3<double>* delta_lambda = nullptr);
+          const ModuleBase::Vector3<double>* delta_lambda,
+          std::ostream& ofs_running);
 
   /**
    * @brief Calculate the spin constraint energy contribution: E_scon = -sum(lambda_i . Mi_i).
@@ -258,7 +259,8 @@ public:
    * @param pw_solve If true, run full PW solver for refinement; if false, just update weights
    * @param full_update If true, apply full lambda (not delta) to H correction
    */
-  void update_psi_charge(const ModuleBase::Vector3<double>* delta_lambda, bool pw_solve = true, bool full_update = false);
+  void update_psi_charge(const ModuleBase::Vector3<double> *delta_lambda, bool pw_solve, bool full_update,
+                         std::ostream &ofs_running);
 
   // The PW-basis update implementation (update_psi_charge_pw_cpu/gpu) and the
   // subspace Hamiltonian correction (calculate_delta_hcc) have been lifted to

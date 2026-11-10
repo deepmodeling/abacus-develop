@@ -7,6 +7,7 @@
 #include "source_base/tool_title.h"
 #include "source_estate/module_charge/chg_symm.h"
 #include "source_estate/elecstate_tools.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_hamilt/hamilt_hs_adapter.h"
 
 #include <algorithm>
@@ -120,7 +121,7 @@ void StoHSolverPW<T, Device>::solve(const UnitCell& ucell,
 
     //(5) calculate new charge density
     // calculate KS rho.
-    pes_pw->init_rho_data();
+    pes_pw->init_rho_data(PARAM.globalv.domag, PARAM.globalv.domag_z, pes_pw->charge->nspin);
     if (nbands > 0)
     {
         pes_pw->psiToRho(psi);
