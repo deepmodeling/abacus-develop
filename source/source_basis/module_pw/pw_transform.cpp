@@ -87,9 +87,9 @@ void real2recip_host_to_device(const PW_Basis& basis,
     }
     Complex* scratch = nullptr;
     base_device::memory::resize_memory_op<Complex, base_device::DEVICE_GPU>()(scratch, scratch_size);
-    auto* grid = basis.fft_bundle.template get_auxr_3d_data<Real>();
+    auto* grid = basis.fft3d_bundle.template get_auxr_3d_data<Real>();
     upload_fft_input(basis.nrxx, in, grid, scratch);
-    basis.fft_bundle.fft3D_forward(grid, grid);
+    basis.fft3d_bundle.fft3D_forward(grid, grid);
     if (add)
     {
         base_device::memory::synchronize_memory_op<Complex, base_device::DEVICE_GPU, base_device::DEVICE_CPU>()(
@@ -124,10 +124,10 @@ void recip2real_device_to_host(const PW_Basis& basis,
     base_device::memory::resize_memory_op<Complex, base_device::DEVICE_GPU>()(scratch, scratch_size);
     base_device::memory::synchronize_memory_op<Complex, base_device::DEVICE_GPU, base_device::DEVICE_CPU>()(
         scratch, in, basis.npw);
-    auto* grid = basis.fft_bundle.template get_auxr_3d_data<Real>();
+    auto* grid = basis.fft3d_bundle.template get_auxr_3d_data<Real>();
     base_device::memory::set_memory_op<Complex, base_device::DEVICE_GPU>()(grid, 0, basis.nxyz);
     set_3d_fft_box_op<Real, base_device::DEVICE_GPU>()(basis.npw, basis.ig2ixyz_gpu, scratch, grid);
-    basis.fft_bundle.fft3D_backward(grid, grid);
+    basis.fft3d_bundle.fft3D_backward(grid, grid);
     auto* result = reinterpret_cast<Output*>(scratch);
     if (add)
     {
@@ -143,7 +143,8 @@ void recip2real_device_to_host(const PW_Basis& basis,
 inline bool use_host_gpu_density_transform(const PW_Basis& basis)
 {
     return basis.get_device() == "gpu" && basis.poolnproc == 1 && !basis.gamma_only
-           && basis.ig2ixyz_gpu != nullptr;
+           && basis.ig2ixyz_gpu != nullptr
+           && basis.fft3d_bundle.template get_auxr_3d_data<double>() != nullptr;
 }
 
 template <typename Input, typename Real>

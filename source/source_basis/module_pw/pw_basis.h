@@ -253,6 +253,8 @@ public:
                      // Thus std::complex<double>[nmaxgr] is able to contain either reciprocal or real data
     // FFT ft;
     ModuleBase::FFT_Bundle fft_bundle;
+    /// Dedicated device FFT bundle for complete-grid density transforms on GPU.
+    ModuleBase::FFT_Bundle fft3d_bundle;
     //The position of pointer in and out can be equal(in-place transform) or different(out-of-place transform).
     
     template <typename FPTYPE>
