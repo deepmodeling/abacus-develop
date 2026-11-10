@@ -2,10 +2,98 @@
 #include "source_base/module_device/types.h"
 #include <thrust/complex.h>
 #include <base/macros/macros.h>
+#include "source_base/module_device/device_check.h"
 
 #define THREADS_PER_BLOCK 256
 
 namespace hamilt {
+
+__global__ void density_gradient_kernel(int npw, int component, const int* index,
+                                          const double* gcar, const thrust::complex<double>* rhog,
+                                          thrust::complex<double>* grid)
+{
+    const int ig = blockIdx.x * blockDim.x + threadIdx.x;
+    if (ig < npw)
+    {
+        grid[index[ig]] = thrust::complex<double>(0.0, 1.0) * rhog[ig] * gcar[3 * ig + component];
+    }
+}
+
+__global__ void extract_density_real_kernel(int size, int stride, int offset, double scale,
+                                            const thrust::complex<double>* grid, double* result)
+{
+    const int ir = blockIdx.x * blockDim.x + threadIdx.x;
+    if (ir < size)
+    {
+        result[stride * ir + offset] = grid[ir].real() * scale;
+    }
+}
+
+__global__ void pack_density_component_kernel(int size, int component, const double* vectors,
+                                              thrust::complex<double>* grid)
+{
+    const int ir = blockIdx.x * blockDim.x + threadIdx.x;
+    if (ir < size)
+    {
+        grid[ir] = thrust::complex<double>(vectors[3 * ir + component], 0.0);
+    }
+}
+
+__global__ void accumulate_density_divergence_kernel(int npw, int nxyz, int component,
+                                                     const int* index, const double* gcar,
+                                                     const thrust::complex<double>* grid,
+                                                     thrust::complex<double>* reciprocal)
+{
+    const int ig = blockIdx.x * blockDim.x + threadIdx.x;
+    if (ig < npw)
+    {
+        const auto coefficient = grid[index[ig]] / double(nxyz);
+        const auto term = thrust::complex<double>(0.0, 1.0) * coefficient * gcar[3 * ig + component];
+        if (component == 0)
+        {
+            reciprocal[ig] = term;
+        }
+        else
+        {
+            reciprocal[ig] += term;
+        }
+    }
+}
+
+void xc_gradient_coefficients_gpu(int npw, int component, const int* grid_index,
+                                 const double* gcar, const std::complex<double>* rhog,
+                                 std::complex<double>* grid)
+{
+    density_gradient_kernel<<<(npw + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK, THREADS_PER_BLOCK>>>(
+        npw, component, grid_index, gcar, reinterpret_cast<const thrust::complex<double>*>(rhog),
+        reinterpret_cast<thrust::complex<double>*>(grid));
+    CHECK_CUDA_SYNC();
+}
+
+void xc_extract_real_gpu(int size, int stride, int offset, double scale,
+                         const std::complex<double>* grid, double* result)
+{
+    extract_density_real_kernel<<<(size + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK, THREADS_PER_BLOCK>>>(
+        size, stride, offset, scale, reinterpret_cast<const thrust::complex<double>*>(grid), result);
+    CHECK_CUDA_SYNC();
+}
+
+void xc_pack_component_gpu(int size, int component, const double* vectors, std::complex<double>* grid)
+{
+    pack_density_component_kernel<<<(size + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK, THREADS_PER_BLOCK>>>(
+        size, component, vectors, reinterpret_cast<thrust::complex<double>*>(grid));
+    CHECK_CUDA_SYNC();
+}
+
+void xc_accumulate_divergence_gpu(int npw, int nxyz, int component,
+                                 const int* grid_index, const double* gcar,
+                                 const std::complex<double>* grid, std::complex<double>* reciprocal)
+{
+    accumulate_density_divergence_kernel<<<(npw + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK, THREADS_PER_BLOCK>>>(
+        npw, nxyz, component, grid_index, gcar, reinterpret_cast<const thrust::complex<double>*>(grid),
+        reinterpret_cast<thrust::complex<double>*>(reciprocal));
+    CHECK_CUDA_SYNC();
+}
 
 template <typename T>
 __global__ void xc_functional_grad_wfc(
