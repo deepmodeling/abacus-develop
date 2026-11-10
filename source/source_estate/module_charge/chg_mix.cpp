@@ -223,6 +223,7 @@ bool Charge_Mixing::if_scf_oscillate(const int iteration, const double drho,
                                      const int iternum_used, const double threshold)
 {
     ModuleBase::TITLE("Charge_Mixing", "if_scf_oscillate");
+    ModuleBase::timer::start("Charge_Mixing", "if_scf_oscillate");
 
     /// Fail fast when set_mixing was skipped: cfg_.scf_nmax is otherwise an
     /// indeterminate value, which would resize the history to zero and then
@@ -245,50 +246,38 @@ bool Charge_Mixing::if_scf_oscillate(const int iteration, const double drho,
     // add drho into history
     this->_drho_history[iteration - 1] = drho;
 
-    if(threshold >= 0) // close the function
+    bool oscillating = false;
+    if (threshold < 0 && iteration >= iternum_used + this->mixing_restart_last)
     {
-        return false;
-    }
-
-    // check if the history is long enough
-    if(iteration < iternum_used + this->mixing_restart_last)
-    {
-        return false;
-    }
-
-    // calculate the slope of the last iternum_used iterations' drho
-    double slope = 0.0;
-
-    // Least Squares Method
-    // this part is too short, so I do not design it as a free function in principle
-    double sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
-    for (int i = iteration - iternum_used; i < iteration; i++)
-    {
-        // A predictor does not enter mixing. Wait until the whole fitting
-        // window contains residuals from correctors in this trial.
-        if (std::isnan(this->_drho_history[i]))
+        // Fit the slope of log10(drho) over the last iternum_used iterations.
+        double sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
+        bool valid_window = true;
+        for (int i = iteration - iternum_used; i < iteration; i++)
         {
-            return false;
+            // A predictor does not enter mixing. Wait until the whole fitting
+            // window contains residuals from correctors in this trial.
+            if (std::isnan(this->_drho_history[i]))
+            {
+                valid_window = false;
+                break;
+            }
+            sumX += i;
+            sumY += std::log10(this->_drho_history[i]);
+            sumXY += i * std::log10(this->_drho_history[i]);
+            sumXX += i * i;
         }
-        sumX += i;
-        sumY += std::log10(this->_drho_history[i]);
-        sumXY += i * std::log10(this->_drho_history[i]);
-        sumXX += i * i;
+        if (valid_window)
+        {
+            double numerator = iternum_used * sumXY - sumX * sumY;
+            double denominator = iternum_used * sumXX - sumX * sumX;
+            if (denominator != 0)
+            {
+                oscillating = numerator / denominator > threshold;
+            }
+        }
     }
-    double numerator = iternum_used * sumXY - sumX * sumY;
-    double denominator = iternum_used * sumXX - sumX * sumX;
-    if (denominator == 0) {
-        return false;
-    }
-    slope =  numerator / denominator;
-
-    // if the slope is less than the threshold, return true
-    if(slope > threshold)
-    {
-        return true;
-    }
-
-    return false;
+    ModuleBase::timer::end("Charge_Mixing", "if_scf_oscillate");
+    return oscillating;
 }
 
 void Charge_Mixing::allocate_mixing_uom(int uom_size)

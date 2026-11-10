@@ -136,17 +136,18 @@ void Potential::allocate()
         this->vofk_smooth.create(nspin, nrxx_smooth);
         ModuleBase::Memory::record("Pot::vofk_smooth", sizeof(double) * nspin * nrxx_smooth);
     }
+    const int vofk_size = this->vofk_smooth.nr * this->vofk_smooth.nc;
     if (use_gpu_)
     {
         if (PARAM.globalv.has_float_data)
         {
             resmem_sd_op()(s_veff_smooth, nspin * nrxx_smooth);
-            resmem_sd_op()(s_vofk_smooth, nspin * nrxx_smooth);
+            resmem_sd_op()(s_vofk_smooth, vofk_size);
         }
         if (PARAM.globalv.has_double_data)
         {
             resmem_dd_op()(d_veff_smooth, nspin * nrxx_smooth);
-            resmem_dd_op()(d_vofk_smooth, nspin * nrxx_smooth);
+            resmem_dd_op()(d_vofk_smooth, vofk_size);
         }
     }
     else
@@ -154,7 +155,7 @@ void Potential::allocate()
         if (PARAM.globalv.has_float_data)
         {
             resmem_sh_op()(s_veff_smooth, nspin * nrxx_smooth, "POT::sveff_smooth");
-            resmem_sh_op()(s_vofk_smooth, nspin * nrxx_smooth, "POT::svofk_smooth");
+            resmem_sh_op()(s_vofk_smooth, vofk_size, "POT::svofk_smooth");
         }
         if (PARAM.globalv.has_double_data)
         {
