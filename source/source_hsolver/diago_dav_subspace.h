@@ -10,6 +10,7 @@
 #include "source_hsolver/diag_comm_info.h"
 #include "source_hsolver/hs_operator.h"
 
+#include <functional>
 #include <vector>
 
 namespace hsolver
@@ -37,6 +38,10 @@ class Diago_DavSubspace
 
     ~Diago_DavSubspace();
 
+    /// Supply Hamiltonian actions for the initial basis, avoiding a fresh
+    /// operator application. The callback receives (ik, output, leading).
+    using InitialHPsiFunc = std::function<void(int, T*, int)>;
+
     /// Refresh the preconditioner without reallocating the solver workspace.
     void update_precondition(const std::vector<Real>& precondition_in);
 
@@ -60,6 +65,17 @@ class Diago_DavSubspace
              const std::vector<double>& ethr_band,
              const bool& scf_type,
              const int ik);
+
+    /// Overload with cached initial Hamiltonian actions. A null callback keeps
+    /// the ordinary operator application.
+    int diag(const HSOperator<T, Device>& op,
+             T* psi_in,
+             const int psi_in_dmax,
+             Real* eigenvalue_in,
+             const std::vector<double>& ethr_band,
+             const bool& scf_type,
+             const int ik,
+             const InitialHPsiFunc* initial_hpsi);
 
   private:
     /// for MPI communication
@@ -169,7 +185,8 @@ class Diago_DavSubspace
                   const int psi_in_dmax,
                   Real* eigenvalue_in,
                   const std::vector<double>& ethr_band,
-                  const int ik);
+                  const int ik,
+                  const InitialHPsiFunc* initial_hpsi);
 
     bool test_exit_cond(const int& ntry, const int& notconv, const bool& scf);
 

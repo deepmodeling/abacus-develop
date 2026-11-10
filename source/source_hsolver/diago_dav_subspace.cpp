@@ -150,7 +150,8 @@ int Diago_DavSubspace<T, Device>::diag_once(const HSOperator<T, Device>& op,
                                             const int psi_in_dmax,
                                             Real* eigenvalue_in_hsolver,
                                             const std::vector<double>& ethr_band,
-                                            const int ik)
+                                            const int ik,
+                                            const InitialHPsiFunc* initial_hpsi)
 {
     ModuleBase::timer::start("Diago_DavSubspace", "diag_once");
     const int matrix_ld = std::max(this->dim, 1);
@@ -182,7 +183,14 @@ int Diago_DavSubspace<T, Device>::diag_once(const HSOperator<T, Device>& op,
     // compute h*psi_in_iter
     // NOTE: bands after the first n_band should yield zero
     // hpsi[:, 0:nbase_x] = H * psi_in_iter[:, 0:nbase_x]
-    op.hpsi(this->psi_in_iter, this->hpsi, this->dim, this->notconv);
+    if (initial_hpsi != nullptr)
+    {
+        (*initial_hpsi)(ik, this->hpsi, this->dim);
+    }
+    else
+    {
+        op.hpsi(this->psi_in_iter, this->hpsi, this->dim, this->notconv);
+    }
 
     // compute s*psi_in_iter
     // spsi[:, 0:nbase_x] = S * psi_in_iter[:, 0:nbase_x]
@@ -942,7 +950,7 @@ int Diago_DavSubspace<T, Device>::diag(const HSOperator<T, Device>& op,
     do
     {
 
-        const int iter_once = this->diag_once(op, psi_in, psi_in_dmax, eigenvalue_in_hsolver, ethr_band, ik);
+        const int iter_once = this->diag_once(op, psi_in, psi_in_dmax, eigenvalue_in_hsolver, ethr_band, ik, nullptr);
         if (iter_once < 0 || this->solver_failed_)
         {
             return -1;
@@ -959,6 +967,41 @@ int Diago_DavSubspace<T, Device>::diag(const HSOperator<T, Device>& op,
         std::cout << "\n Diago_DavSubspace::diag', too many bands are not converged! \n";
     }
 
+    return sum_iter;
+}
+
+template <typename T, typename Device>
+int Diago_DavSubspace<T, Device>::diag(const HSOperator<T, Device>& op,
+                                       T* psi_in,
+                                       const int psi_in_dmax,
+                                       Real* eigenvalue_in_hsolver,
+                                       const std::vector<double>& ethr_band,
+                                       const bool& scf_type,
+                                       const int ik,
+                                       const InitialHPsiFunc* initial_hpsi)
+{
+    this->notconv = 0;
+    this->solver_failed_ = false;
+
+    int sum_iter = 0;
+    int ntry = 0;
+    do
+    {
+        const int iter_once = this->diag_once(op, psi_in, psi_in_dmax, eigenvalue_in_hsolver,
+                                              ethr_band, ik, initial_hpsi);
+        if (iter_once < 0 || this->solver_failed_)
+        {
+            return -1;
+        }
+        sum_iter += iter_once;
+        ++ntry;
+    } while (this->test_exit_cond(ntry, this->notconv, scf_type));
+
+    if (notconv > std::max(5, this->n_band / 4))
+    {
+        std::cout << "\n notconv = " << this->notconv;
+        std::cout << "\n Diago_DavSubspace::diag', too many bands are not converged! \n";
+    }
     return sum_iter;
 }
 

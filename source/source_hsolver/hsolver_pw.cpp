@@ -233,6 +233,24 @@ void HSolverPW<T, Device>::solve(HSOperator<T, Device>& op,
 }
 
 template <typename T, typename Device>
+void HSolverPW<T, Device>::solve(HSOperator<T, Device>& op,
+                                 psi::Psi<T, Device>& psi,
+                                 elecstate::ElecState* pes,
+                                 double* out_eigenvalues,
+                                 const int rank_in_pool_in,
+                                 const int nproc_in_pool_in,
+                                 std::ostream& log,
+                                 const bool skip_charge,
+                                 const typename Diago_DavSubspace<T, Device>::InitialHPsiFunc& initial_hpsi)
+{
+    this->initial_hpsi_func_ = initial_hpsi;
+    this->has_initial_hpsi_ = true;
+    this->solve(op, psi, pes, out_eigenvalues, rank_in_pool_in, nproc_in_pool_in, log, skip_charge);
+    this->has_initial_hpsi_ = false;
+    this->initial_hpsi_func_ = {};
+}
+
+template <typename T, typename Device>
 void HSolverPW<T, Device>::hamiltSolvePsiK(const HSOperator<T, Device>& op,
                                            psi::Psi<T, Device>& psi,
                                            std::vector<Real>& pre_condition,
@@ -346,13 +364,16 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(const HSOperator<T, Device>& op,
             davidson = this->davidson_cache_.get();
         }
 
+        const typename Diago_DavSubspace<T, Device>::InitialHPsiFunc* initial_hpsi_ptr =
+            this->has_initial_hpsi_ ? &this->initial_hpsi_func_ : nullptr;
         int dav_result = davidson->diag(op,
                                        psi.get_pointer(),
                                        psi.get_nbasis(),
                                        eigenvalue,
                                        this->ethr_band,
                                        scf,
-                                       psi.get_current_k());
+                                       psi.get_current_k(),
+                                       initial_hpsi_ptr);
         if (!this->reuse_davidson_)
         {
             this->davidson_cache_.reset();

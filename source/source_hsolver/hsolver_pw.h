@@ -7,6 +7,7 @@
 #include "source_hsolver/hs_operator.h"
 #include "source_hsolver/diago_dav_subspace.h"
 
+#include <functional>
 #include <iosfwd>
 #include <memory>
 #include <unordered_map>
@@ -69,6 +70,17 @@ class HSolverPW
                std::ostream& log,
                const bool skip_charge);
 
+    /// Solve with cached initial Hamiltonian actions for the Davidson path.
+    void solve(HSOperator<T, Device>& op,
+               psi::Psi<T, Device>& psi,
+               elecstate::ElecState* pes,
+               double* out_eigenvalues,
+               const int rank_in_pool_in,
+               const int nproc_in_pool_in,
+               std::ostream& log,
+               const bool skip_charge,
+               const typename Diago_DavSubspace<T, Device>::InitialHPsiFunc& initial_hpsi);
+
   protected:
     // diago caller
     void hamiltSolvePsiK(const HSOperator<T, Device>& op,
@@ -84,6 +96,8 @@ class HSolverPW
 
     std::unique_ptr<Diago_DavSubspace<T, Device>> davidson_cache_;
     bool reuse_davidson_ = false;
+    typename Diago_DavSubspace<T, Device>::InitialHPsiFunc initial_hpsi_func_;
+    bool has_initial_hpsi_ = false;
     ModulePW::PW_Basis_K* wfc_basis = nullptr;
 
     const std::string calculation_type;
