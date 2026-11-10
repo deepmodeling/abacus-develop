@@ -64,7 +64,8 @@ list(
   ../../source_io/module_output/output_log.cpp
   ../../source_io/module_output/print_info.cpp
   ../../source_cell/cif_io.cpp
-  ../../source_esolver/esolver_lj.cpp
+  ../../source_esolver/esolver_potential.cpp
+  ../module_lj/lj.cpp
   ../../source_base/parallel_reduce.cpp
   ../../source_base/parallel_global.cpp
   ../../source_base/parallel_cell.cpp
@@ -93,6 +94,11 @@ addtest(
   SOURCES lj_pot_test.cpp
           ../../source_cell/module_neighlist/test/test_domain_decomposition.cpp
           ${depend_files})
+
+addtest(
+  TARGET MODULE_MD_LJ_potential
+  LIBS parameter psi device
+  SOURCES ../module_lj/test_lj.cpp ${depend_files})
 
 addtest(
   TARGET MODULE_MD_func

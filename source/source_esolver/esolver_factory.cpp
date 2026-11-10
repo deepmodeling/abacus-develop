@@ -25,7 +25,8 @@
 #include "esolver_dp.h"
 #include "esolver_nep.h"
 #include "esolver_snap.h"
-#include "esolver_lj.h"
+#include "esolver_potential.h"
+#include "source_md/module_lj/lj.h"
 #include "esolver_of.h"
 #include "esolver_of_tddft.h"
 
@@ -394,7 +395,8 @@ ESolver* init_esolver(const Input_para& inp)
     }
     else if (esolver_type == "lj_pot")
     {
-        return new ESolver_LJ();
+        std::unique_ptr<ModuleMD::Potential> potential(new ModuleMD::LJ());
+        return new ESolver_Potential(std::move(potential), GlobalV::ofs_running);
     }
     else if (esolver_type == "dp_pot")
     {

@@ -10,6 +10,7 @@ add_library(
   verlet.cpp)
 
 add_subdirectory(module_snap)
+add_subdirectory(module_lj)
 
 if(ENABLE_COVERAGE)
   add_coverage(md)

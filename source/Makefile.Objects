@@ -34,6 +34,7 @@ VPATH=./src_global:\
 ./source_md:\
 ./source_md/module_plumed:\
 ./source_md/module_snap:\
+./source_md/module_lj:\
 ./source_basis/module_pw:\
 ./source_base/module_fft:\
 ./source_esolver:\
@@ -346,7 +347,7 @@ OBJS_ESOLVER=esolver_factory.o\
     esolver_ks_pw_tddft.o\
     esolver_ks_lcaopw.o\
     esolver_sdft_pw.o\
-    esolver_lj.o\
+    esolver_potential.o\
     esolver_dp.o\
     esolver_nep.o\
     esolver_snap.o\
@@ -572,6 +573,7 @@ OBJS_MD=fire.o\
     module_snap/snap_derivative.o\
     module_snap/snap_model.o\
     module_snap/snap_cg.o\
+    module_lj/lj.o\
     verlet.o\
 
 OBJS_NEIGHBOR=sltk_atom.o\
