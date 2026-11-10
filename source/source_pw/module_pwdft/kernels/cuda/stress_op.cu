@@ -7,6 +7,7 @@
 
 #include <complex>
 #include <thrust/complex.h>
+#include <vector>
 #include "source_base/module_device/device_check.h"
 
 #include <cuda_runtime.h>
@@ -24,6 +25,95 @@ void warp_reduce(FPTYPE & val) {
     for (int offset = 16; offset > 0; offset >>= 1) {
         val += __shfl_down_sync(FULL_MASK, val, offset);
     }
+}
+
+__global__ void kinetic_stress_batched(int npw, int npwx, int npm, int npol,
+                                       const thrust::complex<double>* psi,
+                                       const double* gk, const double* kfac,
+                                       const double* wg, double* partial)
+{
+    const int ig = blockIdx.x * blockDim.x + threadIdx.x;
+    double density = 0.0;
+    if (ig < npw)
+    {
+        for (int ib = 0; ib < npm; ++ib)
+        {
+            const double weight = wg[ib];
+            if (weight == 0.0)
+            {
+                continue;
+            }
+            for (int spin = 0; spin < npol; ++spin)
+            {
+                const auto value = psi[(static_cast<size_t>(ib) * npol + spin) * npwx + ig];
+                density += weight * (value.real() * value.real() + value.imag() * value.imag());
+            }
+        }
+        density *= kfac[ig];
+    }
+    __shared__ double warp_sums[THREADS_PER_BLOCK / WARP_SIZE];
+    int component = 0;
+    for (int row = 0; row < 3; ++row)
+    {
+        for (int column = 0; column <= row; ++column)
+        {
+            double value = density * gk[row * npwx + ig] * gk[column * npwx + ig];
+            warp_reduce(value);
+            if (threadIdx.x % WARP_SIZE == 0)
+            {
+                warp_sums[threadIdx.x / WARP_SIZE] = value;
+            }
+            __syncthreads();
+            if (threadIdx.x < WARP_SIZE)
+            {
+                value = threadIdx.x < THREADS_PER_BLOCK / WARP_SIZE ? warp_sums[threadIdx.x] : 0.0;
+                warp_reduce(value);
+                if (threadIdx.x == 0)
+                {
+                    partial[6 * blockIdx.x + component] = value;
+                }
+            }
+            __syncthreads();
+            ++component;
+        }
+    }
+}
+
+void kinetic_stress_batched_gpu(int npw, int npwk_max, int npm, int nband_stride, int npol,
+                                const std::complex<double>* psi, const double* gk, const double* kfac,
+                                const double* wg, double* sums)
+{
+    for (int component = 0; component < 6; ++component)
+    {
+        sums[component] = 0.0;
+    }
+    if (npw == 0 || npm == 0)
+    {
+        return;
+    }
+    const int blocks = (npw + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
+    double* d_weights = nullptr;
+    double* d_partial = nullptr;
+    base_device::memory::resize_memory_op<double, base_device::DEVICE_GPU>()(d_weights, nband_stride);
+    base_device::memory::resize_memory_op<double, base_device::DEVICE_GPU>()(d_partial, 6 * blocks);
+    base_device::memory::synchronize_memory_op<double, base_device::DEVICE_GPU, base_device::DEVICE_CPU>()(
+        d_weights, wg, nband_stride);
+    kinetic_stress_batched<<<blocks, THREADS_PER_BLOCK>>>(
+        npw, npwk_max, npm, npol,
+        reinterpret_cast<const thrust::complex<double>*>(psi), gk, kfac, d_weights, d_partial);
+    CHECK_CUDA_SYNC();
+    std::vector<double> host_partial(6 * blocks);
+    base_device::memory::synchronize_memory_op<double, base_device::DEVICE_CPU, base_device::DEVICE_GPU>()(
+        host_partial.data(), d_partial, 6 * blocks);
+    for (int block = 0; block < blocks; ++block)
+    {
+        for (int component = 0; component < 6; ++component)
+        {
+            sums[component] += host_partial[6 * block + component];
+        }
+    }
+    base_device::memory::delete_memory_op<double, base_device::DEVICE_GPU>()(d_weights);
+    base_device::memory::delete_memory_op<double, base_device::DEVICE_GPU>()(d_partial);
 }
 template <typename T>
 __device__ static inline 

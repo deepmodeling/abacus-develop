@@ -1,6 +1,8 @@
 #include "fs_kin_tools.h"
 
 #include "source_base/parallel_reduce.h"
+
+#include <type_traits>
 namespace hamilt
 {
 template <typename FPTYPE, typename Device>
@@ -90,6 +92,27 @@ void FS_Kin_tools<FPTYPE, Device>::cal_stress_kin(const int& ik,
     const int npw = wfc_basis_->npwk[ik];
     const int npwk_max = wfc_basis_->npwk_max;
     const int npol = this->ucell_.get_npol();
+#if defined(__CUDA)
+    if (this->device == base_device::GpuDevice && occ && std::is_same<FPTYPE, double>::value)
+    {
+        double sums[6] = {};
+        hamilt::kinetic_stress_batched_gpu(npw, npwk_max, npm, this->nksbands_, npol,
+                                           reinterpret_cast<const std::complex<double>*>(psi),
+                                           reinterpret_cast<const double*>(d_gk),
+                                           reinterpret_cast<const double*>(d_kfac),
+                                           reinterpret_cast<const double*>(wg) + ik * this->nksbands_,
+                                           sums);
+        int component = 0;
+        for (int l = 0; l < 3; ++l)
+        {
+            for (int m = 0; m < l + 1; ++m)
+            {
+                s_kin[l * 3 + m] += sums[component++];
+            }
+        }
+        return;
+    }
+#endif
     for (int ib = 0; ib < npm; ib++)
     {
         const std::complex<FPTYPE>* ppsi = psi + ib * npwk_max * npol;
