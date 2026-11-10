@@ -122,6 +122,8 @@ class Onsite_Proj_tools
 
 
     std::complex<FPTYPE>* get_becp() const { return becp; }
+    /// Device projector matrix for the current k point (npwx x nproj).
+    std::complex<FPTYPE>* get_vkb() const { return ppcell_vkb; }
     std::complex<FPTYPE>* get_dbecp() const { return dbecp; }
 
   private:

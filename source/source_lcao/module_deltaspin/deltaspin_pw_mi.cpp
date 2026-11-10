@@ -363,6 +363,60 @@ void calculate_delta_hcc(ScState& state,
     ModuleBase::timer::end("spinconstrain::SpinConstrain", "calculate_delta_hcc");
 }
 
+#if defined(__CUDA)
+/// Add the DeltaSpin constraint action vkb * (delta_lambda * becp) to output.
+/// output is (npwx*npol, nbands) with the solver's leading dimension and
+/// becp is the cached projector coefficient matrix for the current k point.
+void apply_constraint_action_gpu(ScState& state,
+                                 elecstate::ElecState* pelec,
+                                 const std::complex<double>* becp,
+                                 const ModuleBase::Vector3<double>* delta_lambda,
+                                 std::complex<double>* output,
+                                 const int leading,
+                                 const int npwx,
+                                 const int ik,
+                                 const int nbands,
+                                 const int nkb,
+                                 const int* nh_iat)
+{
+    using Complex = std::complex<double>;
+    const int npol = state.npol_;
+    const int rows = nkb * npol;
+    const int atoms = static_cast<int>(state.get_mi().size());
+    std::vector<double> coefficients(3 * nkb, 0.0);
+    int offset = 0;
+    for (int iat = 0; iat < atoms; ++iat)
+    {
+        for (int ip = 0; ip < nh_iat[iat]; ++ip)
+        {
+            coefficients[3 * (offset + ip)] = delta_lambda[iat].x;
+            coefficients[3 * (offset + ip) + 1] = delta_lambda[iat].y;
+            coefficients[3 * (offset + ip) + 2] = delta_lambda[iat].z;
+        }
+        offset += nh_iat[iat];
+    }
+    const int sign = npol == 2 ? 1 : spin_sign_at(state, pelec, ik);
+    double* d_lambda = nullptr;
+    Complex* d_ps = nullptr;
+    base_device::memory::resize_memory_op<double, base_device::DEVICE_GPU>()(d_lambda, 3 * nkb);
+    base_device::memory::resize_memory_op<Complex, base_device::DEVICE_GPU>()(d_ps, rows * nbands);
+    base_device::memory::synchronize_memory_op<double, base_device::DEVICE_GPU, base_device::DEVICE_CPU>()(
+        d_lambda, coefficients.data(), coefficients.size());
+    hamilt::spin_constraint_projectors_gpu(nbands, npol, nkb, sign, d_lambda, becp, d_ps);
+    auto* onsite = projectors::OnsiteProjector<double, base_device::DEVICE_GPU>::get_instance();
+    const Complex* vkb = onsite->get_fs_tools()->get_vkb();
+    for (int spin = 0; spin < npol; ++spin)
+    {
+        ModuleBase::gemm_op<Complex, base_device::DEVICE_GPU>()(
+            'N', 'N', npwx, nbands, nkb,
+            &ModuleBase::ONE, vkb, npwx, d_ps + spin * nkb, rows,
+            &ModuleBase::ONE, output + spin * npwx, leading);
+    }
+    base_device::memory::delete_memory_op<double, base_device::DEVICE_GPU>()(d_lambda);
+    base_device::memory::delete_memory_op<Complex, base_device::DEVICE_GPU>()(d_ps);
+}
+#endif
+
 void update_psi_charge_pw_cpu(ScState& state,
                               SubspaceCache& cache,
                               void* psi,
@@ -557,6 +611,12 @@ void update_psi_charge_pw_gpu(ScState& state,
     // H/S/projector matrices and have no use for the orthonormal copies.
     delete static_cast<hsolver::FixedOverlapSubspace*>(cache.fixed_overlap);
     cache.fixed_overlap = nullptr;
+    if (cache.hpsi_host != nullptr)
+    {
+        CHECK_CUDA(cudaFreeHost(cache.hpsi_host));
+        cache.hpsi_host = nullptr;
+        cache.hpsi_rows = cache.hpsi_bands = cache.hpsi_nk = 0;
+    }
 #endif
 
     // Free GPU memory for saved subspace data
@@ -584,14 +644,56 @@ void update_psi_charge_pw_gpu(ScState& state,
             PARAM.inp.use_k_continuity);
 
         hamilt::HamiltHSOperator<std::complex<double>, base_device::DEVICE_GPU> op(hamilt_t, pw_wfc);
-        hsolver_pw_obj.solve(op,
-                             psi_t[0],
-                             pelec,
-                             pelec->ekb.c,
-                             GlobalV::RANK_IN_POOL,
-                             GlobalV::NPROC_IN_POOL,
-                             GlobalV::ofs_running,
-                             false);
+        bool use_action_cache = cache.hpsi_host != nullptr && cache.hpsi_nk == nk
+                                && cache.hpsi_bands == nbands;
+        if (use_action_cache)
+        {
+            const int leading = psi_t->get_current_ngk();
+            use_action_cache = cache.hpsi_rows == leading;
+        }
+        if (use_action_cache)
+        {
+            std::vector<ModuleBase::Vector3<double>> delta_lambda(nh_iat != nullptr ? state.get_nat() : 0);
+            for (int iat = 0; iat < state.get_nat(); ++iat)
+            {
+                delta_lambda[iat] = state.get_sc_lambda()[iat] - cache.lambda_in_sub()[iat];
+            }
+            const int npwx = onsite_p->get_npwx();
+            const int action_bands = nbands;
+            const int action_rows = cache.hpsi_rows;
+            typename hsolver::Diago_DavSubspace<std::complex<double>, base_device::DEVICE_GPU>::InitialHPsiFunc
+                initial_hpsi = [&](int ik, std::complex<double>* output, int output_leading) {
+                    base_device::memory::synchronize_memory_op<std::complex<double>,
+                                                               base_device::DEVICE_GPU,
+                                                               base_device::DEVICE_CPU>()(
+                        output, cache.hpsi_host + size_t(ik) * action_rows * action_bands,
+                        size_t(action_rows) * action_bands);
+                    onsite_p->tabulate_atomic(ik);
+                    apply_constraint_action_gpu(state, pelec, cache.becp_k(ik, nbands * nkb * npol),
+                                                delta_lambda.data(), output, output_leading, npwx, ik,
+                                                nbands, nkb, nh_iat);
+                };
+            hsolver_pw_obj.solve(op,
+                                 psi_t[0],
+                                 pelec,
+                                 pelec->ekb.c,
+                                 GlobalV::RANK_IN_POOL,
+                                 GlobalV::NPROC_IN_POOL,
+                                 GlobalV::ofs_running,
+                                 false,
+                                 initial_hpsi);
+        }
+        else
+        {
+            hsolver_pw_obj.solve(op,
+                                 psi_t[0],
+                                 pelec,
+                                 pelec->ekb.c,
+                                 GlobalV::RANK_IN_POOL,
+                                 GlobalV::NPROC_IN_POOL,
+                                 GlobalV::ofs_running,
+                                 false);
+        }
     }
     else
     {
