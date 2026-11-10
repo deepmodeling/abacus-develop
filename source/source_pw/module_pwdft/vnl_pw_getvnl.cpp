@@ -2,12 +2,14 @@
 #include "source_base/math_ylmreal.h"
 #include "source_base/module_device/device.h"
 #include "source_base/timer.h"
+#include "source_base/tool_quit.h"
 #include "source_pw/module_pwdft/kernels/vnl_op.h"
 #include "vnl_pw.h"
 
 #include <cmath>
 #include <cstdint>
 #include <limits>
+#include <type_traits>
 #include <vector>
 
 /**
@@ -47,6 +49,11 @@ void pseudopot_cell_vnl::getvnl(Device* ctx,
     const int ylm_count = (this->lmaxkb + 1) * (this->lmaxkb + 1);
     const int npw = this->wfcpw->npwk[ik];
 
+    bool device_gk = false;
+#if defined(__CUDA)
+    device_gk = this->use_gpu_ && std::is_same<FPTYPE, double>::value;
+#endif
+
     int* atom_nh = nullptr;
     int* atom_na = nullptr;
     int* atom_nb = nullptr;
@@ -74,26 +81,31 @@ void pseudopot_cell_vnl::getvnl(Device* ctx,
     resmem_var_op()(vkb_radial, radial_elements, "VNL::vkb_radial");
 
     const ModuleBase::Vector3<double> reduced_vector_potential = vector_potential / ucell.tpiba;
-    std::vector<ModuleBase::Vector3<double>> shifted_gk(npw);
+    std::vector<ModuleBase::Vector3<double>> shifted_gk;
+    if (!device_gk)
+    {
+        shifted_gk.resize(npw);
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static)
 #endif
-    for (int ig = 0; ig < npw; ++ig)
-    {
-        shifted_gk[ig] = this->wfcpw->getgpluskcar(ik, ig) + reduced_vector_potential;
-    }
+        for (int ig = 0; ig < npw; ++ig)
+        {
+            shifted_gk[ig] = this->wfcpw->getgpluskcar(ik, ig) + reduced_vector_potential;
+        }
 
-    // Validate the index in the kernel's precision before obtaining any radial values.
-    for (int ig = 0; ig < npw; ++ig)
-    {
-        const FPTYPE x = static_cast<FPTYPE>(shifted_gk[ig].x);
-        const FPTYPE y = static_cast<FPTYPE>(shifted_gk[ig].y);
-        const FPTYPE z = static_cast<FPTYPE>(shifted_gk[ig].z);
-        const FPTYPE q = std::sqrt(x * x + y * y + z * z) * static_cast<FPTYPE>(ucell.tpiba);
-        const FPTYPE index = q / static_cast<FPTYPE>(this->table_dq_);
-        // Also cover small host/device differences in the norm and division.
-        const double guarded_index = static_cast<double>(index) * (1.0 + 8.0 * std::numeric_limits<FPTYPE>::epsilon());
-        this->check_vnl_index(guarded_index, false);
+        // Validate the index in the kernel's precision before obtaining any radial values.
+        for (int ig = 0; ig < npw; ++ig)
+        {
+            const FPTYPE x = static_cast<FPTYPE>(shifted_gk[ig].x);
+            const FPTYPE y = static_cast<FPTYPE>(shifted_gk[ig].y);
+            const FPTYPE z = static_cast<FPTYPE>(shifted_gk[ig].z);
+            const FPTYPE q = std::sqrt(x * x + y * y + z * z) * static_cast<FPTYPE>(ucell.tpiba);
+            const FPTYPE index = q / static_cast<FPTYPE>(this->table_dq_);
+            // Also cover small host/device differences in the norm and division.
+            const double guarded_index
+                = static_cast<double>(index) * (1.0 + 8.0 * std::numeric_limits<FPTYPE>::epsilon());
+            this->check_vnl_index(guarded_index, false);
+        }
     }
 
     if (this->use_gpu_)
@@ -106,7 +118,34 @@ void pseudopot_cell_vnl::getvnl(Device* ctx,
         syncmem_int_op()(atom_na, host_atom_na.data(), ucell.ntype);
 
         resmem_var_op()(shifted_gk_data, momentum_elements);
-        castmem_var_h2d_op()(shifted_gk_data, reinterpret_cast<double*>(shifted_gk.data()), momentum_elements);
+#if defined(__CUDA)
+        if (device_gk)
+        {
+            const double* gcar = this->wfcpw->template get_gcar_data<double>() + 3 * ik * this->wfcpw->npwk_max;
+            const double* kvec = this->wfcpw->template get_kvec_c_data<double>() + 3 * ik;
+            hamilt::cal_gk_gpu(npw,
+                               gcar,
+                               kvec,
+                               reduced_vector_potential.x,
+                               reduced_vector_potential.y,
+                               reduced_vector_potential.z,
+                               reinterpret_cast<double*>(shifted_gk_data));
+            if (!hamilt::gk_range_valid_gpu(reinterpret_cast<const double*>(shifted_gk_data),
+                                            npw,
+                                            ucell.tpiba,
+                                            this->table_dq(),
+                                            this->tab.getBound3()))
+            {
+                ModuleBase::WARNING_QUIT(
+                    "check_vnl_index",
+                    "Shifted projector momentum exceeds the prepared radial table; prepare its range before evaluation.");
+            }
+        }
+        else
+#endif
+        {
+            castmem_var_h2d_op()(shifted_gk_data, reinterpret_cast<double*>(shifted_gk.data()), momentum_elements);
+        }
     }
     else
     {

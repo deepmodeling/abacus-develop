@@ -1,6 +1,9 @@
 #include "source_pw/module_pwdft/kernels/vnl_op.h"
+#include "source_base/module_device/memory_op.h"
 
 #include <cstdint>
+#include <cfloat>
+#include <cmath>
 #include "vnl_tools_cu.hpp"
 
 #include <complex>
@@ -12,6 +15,83 @@
 #define THREADS_PER_BLOCK 256
 
 namespace hamilt {
+
+#if __CUDA || __UT_USE_CUDA
+__global__ void cal_gk_kernel(const int count,
+                              const double* gcar,
+                              const double* kvec,
+                              const double shift_x,
+                              const double shift_y,
+                              const double shift_z,
+                              double* gk)
+{
+    const int i = blockIdx.x * blockDim.x + threadIdx.x;
+    if (i < count)
+    {
+        const int component = i % 3;
+        const double shift = component == 0 ? shift_x : (component == 1 ? shift_y : shift_z);
+        gk[i] = gcar[i] + kvec[component] + shift;
+    }
+}
+
+void cal_gk_gpu(int npw,
+                const double* gcar,
+                const double* kvec,
+                double shift_x,
+                double shift_y,
+                double shift_z,
+                double* gk)
+{
+    if (npw == 0)
+    {
+        return;
+    }
+    const int count = 3 * npw;
+    cal_gk_kernel<<<(count + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK, THREADS_PER_BLOCK>>>(
+        count, gcar, kvec, shift_x, shift_y, shift_z, gk);
+}
+
+__global__ void gk_range_kernel(const double* gk,
+                                const int npw,
+                                const double tpiba,
+                                const double dq,
+                                const double bound,
+                                int* invalid)
+{
+    const int i = blockIdx.x * blockDim.x + threadIdx.x;
+    if (i < npw)
+    {
+        const double x = gk[3 * i];
+        const double y = gk[3 * i + 1];
+        const double z = gk[3 * i + 2];
+        const double q = std::sqrt(x * x + y * y + z * z) * tpiba;
+        const double index = q / dq;
+        const double guarded = index * (1.0 + 8.0 * DBL_EPSILON);
+        if (!std::isfinite(guarded) || guarded < 0.0 || std::floor(guarded) + 3.0 >= bound)
+        {
+            atomicOr(invalid, 1);
+        }
+    }
+}
+
+bool gk_range_valid_gpu(const double* gk, int npw, double tpiba, double dq, double bound)
+{
+    if (npw == 0)
+    {
+        return true;
+    }
+    int* invalid = nullptr;
+    int host_invalid = 0;
+    base_device::memory::resize_memory_op<int, base_device::DEVICE_GPU>()(invalid, 1);
+    base_device::memory::set_memory_op<int, base_device::DEVICE_GPU>()(invalid, 0, 1);
+    gk_range_kernel<<<(npw + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK, THREADS_PER_BLOCK>>>(
+        gk, npw, tpiba, dq, bound, invalid);
+    base_device::memory::synchronize_memory_op<int, base_device::DEVICE_CPU, base_device::DEVICE_GPU>()(
+        &host_invalid, invalid, 1);
+    base_device::memory::delete_memory_op<int, base_device::DEVICE_GPU>()(invalid);
+    return host_invalid == 0;
+}
+#endif
 
 template<typename FPTYPE>
 __global__ void cal_vnl(
