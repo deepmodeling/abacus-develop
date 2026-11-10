@@ -26,6 +26,7 @@
 #include "source_base/kernels/math_kernel_op.h"
 #include "source_base/module_device/device.h"
 #include "source_pw/module_proj/onsite_proj.h"
+#include "source_pw/module_pwdft/kernels/onsite_op.h"
 #include "deltaspin_pw_cache.h"
 #include "mi_tools.h"
 #include "source_io/module_parameter/parameter.h"
@@ -144,6 +145,55 @@ void calculate_delta_hcc(ScState& state,
         }
         effective_lambda = actual_delta.data();
     }
+
+#if defined(__CUDA)
+    if (PARAM.inp.device == "gpu")
+    {
+        using Complex = std::complex<double>;
+        const int rows = nkb * state.npol_;
+        const int atoms = static_cast<int>(state.get_mi().size());
+        // Each band shares the same three constraint coefficients per projector.
+        std::vector<double> coefficients(3 * nkb, 0.0);
+        int offset = 0;
+        for (int iat = 0; iat < atoms; ++iat)
+        {
+            for (int ip = 0; ip < nh_iat[iat]; ++ip)
+            {
+                coefficients[3 * (offset + ip)] = effective_lambda[iat].x;
+                coefficients[3 * (offset + ip) + 1] = effective_lambda[iat].y;
+                coefficients[3 * (offset + ip) + 2] = effective_lambda[iat].z;
+            }
+            offset += nh_iat[iat];
+        }
+        const int sign = state.npol_ == 2 ? 1 : spin_sign_at(state, pelec, ik);
+        double* d_lambda = nullptr;
+        Complex* d_ps = nullptr;
+        base_device::memory::resize_memory_op<double, base_device::DEVICE_GPU>()(d_lambda, 3 * nkb);
+        base_device::memory::resize_memory_op<Complex, base_device::DEVICE_GPU>()(d_ps, rows * nbands);
+        base_device::memory::synchronize_memory_op<double, base_device::DEVICE_GPU, base_device::DEVICE_CPU>()(
+            d_lambda, coefficients.data(), coefficients.size());
+        hamilt::spin_constraint_projectors_gpu(nbands, state.npol_, nkb, sign, d_lambda, becp_k, d_ps);
+        char transa = 'C';
+        char transb = 'N';
+        ModuleBase::gemm_op<Complex, base_device::DEVICE_GPU>()(transa,
+                                                               transb,
+                                                               nbands,
+                                                               nbands,
+                                                               rows,
+                                                               &ModuleBase::ONE,
+                                                               becp_k,
+                                                               rows,
+                                                               d_ps,
+                                                               rows,
+                                                               &ModuleBase::ONE,
+                                                               h_tmp,
+                                                               nbands);
+        base_device::memory::delete_memory_op<double, base_device::DEVICE_GPU>()(d_lambda);
+        base_device::memory::delete_memory_op<Complex, base_device::DEVICE_GPU>()(d_ps);
+        ModuleBase::timer::end("spinconstrain::SpinConstrain", "calculate_delta_hcc");
+        return;
+    }
+#endif
 
     int sum = 0; // Running sum of projectors across atoms
     int size_ps = nkb * state.npol_ * nbands; // Total size of ps array
