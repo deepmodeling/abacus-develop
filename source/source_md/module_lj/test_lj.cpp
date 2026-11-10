@@ -1,13 +1,12 @@
 #include "source_md/module_lj/lj.h"
 #include "source_esolver/esolver_potential.h"
-#include "source_base/global_variable.h"
 #include "source_cell/dom_decomp.h"
-#include "source_io/module_parameter/parameter.h"
 #include "source_md/test/setcell.h"
 
 #include "gtest/gtest.h"
 
 #include <memory>
+#include <fstream>
 #include <utility>
 
 TEST(LJPotential, UnitCellEnergyForceAndStress)
@@ -16,8 +15,10 @@ TEST(LJPotential, UnitCellEnergyForceAndStress)
     Setcell::setupcell(cell);
     Input_para input;
     Setcell::parameters(input);
-    std::unique_ptr<ModuleMD::Potential> potential(new ModuleMD::LJ());
-    ModuleESolver::ESolver_Potential solver(std::move(potential), GlobalV::ofs_running);
+    const std::string output_dir = testing::TempDir();
+    std::ofstream running_log;
+    std::unique_ptr<ModuleMD::Potential> potential(new ModuleMD::LJ(output_dir, running_log));
+    ModuleESolver::ESolver_Potential solver(std::move(potential), running_log);
     solver.before_all_runners(cell, input);
     solver.runner(cell, 0);
 
@@ -37,8 +38,10 @@ TEST(LJPotential, MDCellWritesOwnedForces)
     MDCell cell = Setcell::setup_mdcell(unitcell);
     Input_para input;
     Setcell::parameters(input);
-    std::unique_ptr<ModuleMD::Potential> potential(new ModuleMD::LJ());
-    ModuleESolver::ESolver_Potential solver(std::move(potential), GlobalV::ofs_running);
+    const std::string output_dir = testing::TempDir();
+    std::ofstream running_log;
+    std::unique_ptr<ModuleMD::Potential> potential(new ModuleMD::LJ(output_dir, running_log));
+    ModuleESolver::ESolver_Potential solver(std::move(potential), running_log);
     solver.before_all_runners(cell, input);
     DomainDecomposition decomp;
     decomp.init(ModuleBase::world_comm_domain(), cell.latvec(), cell.lat0(), 0.0, 0.0);

@@ -4,6 +4,8 @@
 #include "source_md/potential.h"
 #include "source_base/vector3.h"
 
+#include <iosfwd>
+#include <string>
 #include <vector>
 
 namespace ModuleMD
@@ -12,7 +14,7 @@ namespace ModuleMD
 class LJ : public Potential
 {
   public:
-    LJ() {}
+    LJ(const std::string& output_dir, std::ofstream& running_log);
 
     void initialize(BaseCell& cell, const Input_para& inp) override;
     void compute(BaseCell& cell,
@@ -74,6 +76,8 @@ class LJ : public Potential
     }
 
   private:
+    std::string output_dir_;
+    std::ofstream& running_log_;
     double LJ_energy(const double& d, const int& i, const int& j) const;
 
     ModuleBase::Vector3<double> LJ_force(const ModuleBase::Vector3<double>& dr, const int& i, const int& j) const;

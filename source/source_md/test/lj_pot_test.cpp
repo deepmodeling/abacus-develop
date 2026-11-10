@@ -4,6 +4,8 @@
 #include "lj_test_solver.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_md/md_func.h"
+#include <fstream>
+#include <string>
 #define doublethreshold 1e-12
 
 /************************************************
@@ -24,6 +26,8 @@ class LJ_pot_test : public testing::Test
     int natom;
     UnitCell ucell;
     Input_para inp;
+    std::ofstream running_log;
+    std::string output_dir;
 
     void SetUp()
     {
@@ -33,6 +37,7 @@ class LJ_pot_test : public testing::Test
         stress.create(3, 3);
 
         Setcell::parameters(inp);
+        output_dir = testing::TempDir();
     }
 
     void TearDown()
@@ -170,7 +175,7 @@ TEST_F(LJ_pot_test, mdcell_stress_includes_external_pressure)
 
 TEST_F(LJ_pot_test, RcutSearchRadius)
 {
-    ModuleMD::LJ* p_esolver = new ModuleMD::LJ();
+    ModuleMD::LJ* p_esolver = new ModuleMD::LJ(output_dir, running_log);
     ucell.ntype = 2;
     std::vector<double> rcut = {3.0};
     p_esolver->rcut_search_radius_for_testing(ucell.ntype, rcut);
@@ -195,7 +200,7 @@ TEST_F(LJ_pot_test, RcutSearchRadius)
 
 TEST_F(LJ_pot_test, SetC6C12)
 {
-    ModuleMD::LJ* p_esolver = new ModuleMD::LJ();
+    ModuleMD::LJ* p_esolver = new ModuleMD::LJ(output_dir, running_log);
     ucell.ntype = 2;
 
     // no rule
@@ -268,7 +273,7 @@ TEST_F(LJ_pot_test, SetC6C12)
 
 TEST_F(LJ_pot_test, CalEnShift)
 {
-    ModuleMD::LJ* p_esolver = new ModuleMD::LJ();
+    ModuleMD::LJ* p_esolver = new ModuleMD::LJ(output_dir, running_log);
     ucell.ntype = 2;
 
     std::vector<double> rcut = {3.0};

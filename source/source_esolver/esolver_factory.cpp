@@ -395,8 +395,10 @@ ESolver* init_esolver(const Input_para& inp)
     }
     else if (esolver_type == "lj_pot")
     {
-        std::unique_ptr<ModuleMD::Potential> potential(new ModuleMD::LJ());
-        return new ESolver_Potential(std::move(potential), GlobalV::ofs_running);
+        std::ofstream& running_log = GlobalV::ofs_running;
+        std::unique_ptr<ModuleMD::Potential> potential(
+            new ModuleMD::LJ(PARAM.globalv.global_out_dir, running_log));
+        return new ESolver_Potential(std::move(potential), running_log);
     }
     else if (esolver_type == "dp_pot")
     {
