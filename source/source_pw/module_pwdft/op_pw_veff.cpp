@@ -2,6 +2,11 @@
 
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"
+#if defined(__CUFFTDX)
+#include "source_basis/module_pw/kernels/fused_veff.h"
+#endif
+#include <algorithm>
+#include <type_traits>
 
 namespace hamilt {
 
@@ -25,8 +30,14 @@ Veff<OperatorPW<T, Device>>::Veff(const int* isk_in,
     this->veff_row = veff_row;
     this->veff_col = veff_col;
     this->wfcpw = wfcpw_in;
+#if defined(__CUFFTDX)
+    this->fused_fft_enabled = std::is_same<T, std::complex<double>>::value
+                              && std::is_same<Device, base_device::DEVICE_GPU>::value
+                              && ModulePW::fused_veff_supported();
+#endif
     resmem_complex_op()(this->porter, this->wfcpw->nmaxgr, "Veff<PW>::porter");
     resmem_complex_op()(this->porter1, this->wfcpw->nmaxgr, "Veff<PW>::porter1");
+    this->porter_size = this->wfcpw->nmaxgr;
 
 }
 
@@ -55,6 +66,42 @@ void Veff<OperatorPW<T, Device>>::act(
     int max_npw = nbasis / npol;
     const int current_spin = this->isk[this->ik];
     const int psi_offset= max_npw * npol;
+    int fused_size = 0;
+#if defined(__CUFFTDX)
+    if (this->fused_fft_enabled && npol == 2 && this->veff != nullptr
+        && this->veff_row == 4 && this->veff_col == this->wfcpw->nxyz)
+    {
+        fused_size = this->wfcpw->fft_bundle.fused_veff_grid_size();
+    }
+    if (fused_size > 0 && this->wfcpw->fft_bundle.fused_veff_stick_size() > 0)
+    {
+        int batch_size = std::min(nbands / npol, this->wfcpw->fft_bundle.spinor_batch_size());
+        batch_size = std::max(1, batch_size);
+        const int size = batch_size * fused_size;
+        if (this->porter_size < size)
+        {
+            resmem_complex_op()(this->porter, size, "Veff<PW>::porter");
+            resmem_complex_op()(this->porter1, size, "Veff<PW>::porter1");
+            this->porter_size = size;
+        }
+        for (int ib = 0; ib < nbands;)
+        {
+            const int remaining = (nbands - ib) / npol;
+            const int bands = std::min(batch_size, remaining);
+            this->wfcpw->add_spinor_potential(reinterpret_cast<const std::complex<double>*>(tmpsi_in),
+                                              reinterpret_cast<const double*>(this->veff),
+                                              reinterpret_cast<std::complex<double>*>(tmhpsi),
+                                              this->ik, max_npw,
+                                              reinterpret_cast<std::complex<double>*>(this->porter),
+                                              reinterpret_cast<std::complex<double>*>(this->porter1), bands);
+            tmhpsi += bands * psi_offset;
+            tmpsi_in += bands * psi_offset;
+            ib += bands * npol;
+        }
+        ModuleBase::timer::end("Operator", "veff_pw");
+        return;
+    }
+#endif
 #ifdef __DSP
     if (npol == 1)
     {
@@ -142,8 +189,14 @@ hamilt::Veff<OperatorPW<T, Device>>::Veff(const Veff<OperatorPW<T_in, Device_in>
     this->veff_col = veff->get_veff_col();
     this->veff_row = veff->get_veff_row();
     this->wfcpw = veff->get_wfcpw();
+#if defined(__CUFFTDX)
+    this->fused_fft_enabled = std::is_same<T, std::complex<double>>::value
+                              && std::is_same<Device, base_device::DEVICE_GPU>::value
+                              && ModulePW::fused_veff_supported();
+#endif
     resmem_complex_op()(this->porter, this->wfcpw->nmaxgr);
     resmem_complex_op()(this->porter1, this->wfcpw->nmaxgr);
+    this->porter_size = this->wfcpw->nmaxgr;
     this->veff = veff->get_veff();
     if (this->isk == nullptr || this->veff == nullptr || this->wfcpw == nullptr) {
         ModuleBase::WARNING_QUIT("VeffPW", "Constuctor of Operator::VeffPW is failed, please check your code!");

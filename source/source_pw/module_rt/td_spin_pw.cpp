@@ -247,7 +247,7 @@ void TDSpinPW<Real, Device>::soc(const psi::Psi<Complex, Device>& psi,
         {
             pp.getvnl(context, cell, ik, a, beta);
         }
-        nonlocal_.project_contract(cell, pp, basis, 0, ncols, ld_psi, 2, npw, beta, psi.get_pointer());
+        nonlocal_.project_contract(cell, pp, basis, ik, 0, ncols, ld_psi, 2, npw, beta, psi.get_pointer());
         if (basis.poolrank != 0)
         {
             // B and DB already contain the full pool sum; count each k-point contribution only once.

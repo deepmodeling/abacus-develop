@@ -7,6 +7,10 @@
 
 #include <algorithm>
 #include <limits>
+#include <type_traits>
+#if defined(__CUDA)
+#include "source_pw/module_pwdft/kernels/projector_fold.h"
+#endif
 
 namespace hamilt
 {
@@ -38,6 +42,10 @@ NonlocalWorkspace<T, Device>::~NonlocalWorkspace()
 {
     Delete<T, Device>()(becp_);
     Delete<T, Device>()(ps_);
+#if defined(__CUDA)
+    delete projector_fold_;
+    projector_fold_ = nullptr;
+#endif
 }
 
 template <typename T, typename Device>
@@ -106,7 +114,7 @@ void NonlocalWorkspace<T, Device>::back_project(const T* vkb, T* hpsi, const int
 
 template <typename T, typename Device>
 void NonlocalWorkspace<T, Device>::apply(const UnitCell& cell, const pseudopot_cell_vnl& pp,
-                                       const ModulePW::PW_Basis_K& basis, const int spin,
+                                       const ModulePW::PW_Basis_K& basis, const int ik, const int spin,
                                        const int bands, const int nbasis, const int npol, const int npw,
                                        const bool is_first_node, const T* vkb, const T* psi, T* hpsi)
 {
@@ -117,10 +125,22 @@ void NonlocalWorkspace<T, Device>::apply(const UnitCell& cell, const pseudopot_c
         Zero<T, Device>()(hpsi, 0, count);
     }
     // Here bands counts spin-component columns, while nbasis includes all components of one orbital.
-    project_contract(cell, pp, basis, spin, bands, nbasis, npol, npw, vkb, psi);
+    project_contract(cell, pp, basis, ik, spin, bands, nbasis, npol, npw, vkb, psi);
     if (pp.nkb > 0 && bands > 0 && npw > 0)
     {
-        this->back_project(vkb, hpsi, npw, pp.vkbnc, nbasis / npol, pp.nkb, bands);
+        bool folded = false;
+#if defined(__CUDA)
+        if (projector_fold_)
+        {
+            folded = projector_fold_->add(bands, pp.vkbnc,
+                                          reinterpret_cast<const std::complex<double>*>(ps_),
+                                          reinterpret_cast<std::complex<double>*>(hpsi));
+        }
+#endif
+        if (!folded)
+        {
+            this->back_project(vkb, hpsi, npw, pp.vkbnc, nbasis / npol, pp.nkb, bands);
+        }
     }
     ModuleBase::timer::end("NonlocalWorkspace", "apply");
 }
@@ -128,7 +148,7 @@ void NonlocalWorkspace<T, Device>::apply(const UnitCell& cell, const pseudopot_c
 
 template <typename T, typename Device>
 void NonlocalWorkspace<T, Device>::project_contract(const UnitCell& cell, const pseudopot_cell_vnl& pp,
-                                                   const ModulePW::PW_Basis_K& basis, int spin,
+                                                   const ModulePW::PW_Basis_K& basis, int ik, int spin,
                                                    int bands, int nbasis, int npol, int npw,
                                                    const T* vkb, const T* psi)
 {
@@ -145,7 +165,39 @@ void NonlocalWorkspace<T, Device>::project_contract(const UnitCell& cell, const 
             Resize<T, Device>()(ps_, count, "Nonlocal::ps");
             ps_capacity_ = count;
         }
-        this->project(vkb, psi, npw, pp.vkbnc, nbasis / npol, pp.nkb, bands);
+        bool folded = false;
+#if defined(__CUDA)
+        if (!fold_attempted_)
+        {
+            fold_attempted_ = true;
+            if (std::is_same<T, std::complex<double>>::value
+                && std::is_same<Device, base_device::DEVICE_GPU>::value
+                && basis.poolnproc == 1 && cell.ntype == 1 && vkb != nullptr)
+            {
+                const auto& atoms = cell.atoms[0];
+                if (pp.nkb == atoms.na * atoms.ncpp.nh)
+                {
+                    projector_fold_ = ProjectorFold::create(atoms.na, atoms.ncpp.nh,
+                                                            atoms.taud.data(), atoms.tau.data(), basis).release();
+                }
+            }
+        }
+        if (projector_fold_ && fold_ik_ != ik)
+        {
+            projector_fold_->prepare(ik, reinterpret_cast<const std::complex<double>*>(vkb), pp.vkbnc);
+            fold_ik_ = ik;
+        }
+        if (projector_fold_)
+        {
+            folded = projector_fold_->project(bands, pp.vkbnc,
+                                              reinterpret_cast<const std::complex<double>*>(psi),
+                                              reinterpret_cast<std::complex<double>*>(becp_));
+        }
+#endif
+        if (!folded)
+        {
+            this->project(vkb, psi, npw, pp.vkbnc, nbasis / npol, pp.nkb, bands);
+        }
 #ifdef __MPI
         if (basis.poolnproc > 1)
         {

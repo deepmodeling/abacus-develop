@@ -205,6 +205,21 @@ class FFT_Bundle
     void fft3D_forward_pw(std::complex<double>* in, std::complex<double>* out) const;
     void fft3D_backward_pw(std::complex<double>* in, std::complex<double>* out) const;
 
+#if defined(__CUFFTDX)
+    int fused_veff_grid_size() const;
+    int fused_veff_stick_size() const;
+    int spinor_batch_size() const;
+    std::complex<double>* get_spinor_stick_data(int bands) const;
+    void transform_spinor_sticks(std::complex<double>* up, std::complex<double>* down,
+                                 const int* reverse, bool inverse, int bands = 1) const;
+    void transform_spinor_slabs(std::complex<double>* up, std::complex<double>* down,
+                                const int* reverse, bool inverse, int bands) const;
+    void apply_spinor_potential(const double* potential, std::complex<double>* up,
+                                std::complex<double>* down, const int* reverse = nullptr, int bands = 1) const;
+    int lixy() const;
+    int rixy() const;
+#endif
+
     /// @brief the device this bundle was configured for, "cpu" or "gpu"
     std::string get_device() const { return device; }
     /// @brief the precision this bundle was configured for, "single" or "double"

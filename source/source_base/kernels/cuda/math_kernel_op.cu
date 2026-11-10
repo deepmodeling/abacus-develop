@@ -343,6 +343,28 @@ void gemm_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(const ch
     CHECK_CUBLAS(cublasZgemm(cublas_handle, cutransA, cutransB, m, n ,k, &alpha_value, (double2*)a , lda, (double2*)b, ldb, &beta_value, (double2*)c, ldc));
 }
 
+void gemm_strided_batched_gpu(char transa, char transb, int m, int n, int k,
+                              const std::complex<double>& alpha, const std::complex<double>* a,
+                              int lda, long long stride_a, const std::complex<double>* b,
+                              int ldb, long long stride_b, const std::complex<double>& beta,
+                              std::complex<double>* c, int ldc, long long stride_c, int batches)
+{
+    if (cublas_handle == nullptr)
+    {
+        CHECK_CUBLAS(cublasCreate(&cublas_handle));
+    }
+    const auto alpha_value = make_cuDoubleComplex(alpha.real(), alpha.imag());
+    const auto beta_value = make_cuDoubleComplex(beta.real(), beta.imag());
+    CHECK_CUBLAS(cublasZgemmStridedBatched(cublas_handle,
+                                           judge_trans_op(true, transa, "gemm_strided_batched_gpu"),
+                                           judge_trans_op(true, transb, "gemm_strided_batched_gpu"),
+                                           m, n, k, &alpha_value,
+                                           reinterpret_cast<const cuDoubleComplex*>(a), lda, stride_a,
+                                           reinterpret_cast<const cuDoubleComplex*>(b), ldb, stride_b,
+                                           &beta_value, reinterpret_cast<cuDoubleComplex*>(c), ldc,
+                                           stride_c, batches));
+}
+
 template <>
 void matrixTranspose_op<double, base_device::DEVICE_GPU>::operator()(const int& row,
                                                                      const int& col,

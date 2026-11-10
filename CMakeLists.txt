@@ -44,6 +44,7 @@ cmake_dependent_option(
 option(USE_ROCM "Enable ROCm" OFF)
 option(USE_DSP "Enable DSP" OFF)
 option(USE_CUDA_ON_DCU "Enable CUDA on DCU" OFF)
+option(USE_CUFFTDX "Enable fused plane-wave potential transforms with cuFFTDx." OFF)
 option(USE_KML "Enable Kunpeng Math Library" OFF)
 option(USE_SW "Enable SW Architecture" OFF)
 
@@ -163,6 +164,17 @@ if(NOT DEFINED NVHPC_ROOT_DIR AND DEFINED ENV{NVHPC_ROOT})
   set(NVHPC_ROOT_DIR
       "$ENV{NVHPC_ROOT}"
       CACHE PATH "Path to NVIDIA HPC SDK root directory.")
+endif()
+
+if(USE_CUFFTDX)
+  if(NOT USE_CUDA)
+    message(FATAL_ERROR "USE_CUFFTDX requires USE_CUDA.")
+  endif()
+  find_package(mathdx REQUIRED CONFIG COMPONENTS cufftdx)
+  if(cufftdx_VERSION VERSION_LESS 1.6)
+    message(FATAL_ERROR "USE_CUFFTDX requires cuFFTDx 1.6 or newer.")
+  endif()
+  add_compile_definitions(__CUFFTDX)
 endif()
 
 # enable json support

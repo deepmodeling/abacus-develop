@@ -294,6 +294,16 @@ template <typename T, typename Device> struct gemm_op {
                   const T *beta, T *c, const int &ldc);
 };
 
+#if defined(__CUDA) || defined(__UT_USE_CUDA)
+/// Multiply batches of column-major complex-double matrices on the GPU.
+/// Strides count complex elements between batches; output batches are disjoint.
+void gemm_strided_batched_gpu(char transa, char transb, int m, int n, int k,
+                              const std::complex<double>& alpha, const std::complex<double>* a,
+                              int lda, long long stride_a, const std::complex<double>* b,
+                              int ldb, long long stride_b, const std::complex<double>& beta,
+                              std::complex<double>* c, int ldc, long long stride_c, int batches);
+#endif
+
 #ifdef __DSP
 // compute Y = alpha * op(A) * X + beta * Y on DSP Hardware
 template <typename T, typename Device> struct gemv_op_mt {
