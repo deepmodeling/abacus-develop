@@ -11,6 +11,7 @@
 #include "source_hsolver/diago_dav_subspace.h"
 #include "source_hsolver/diago_david.h"
 #include "source_hsolver/diago_iter_assist.h"
+#include "source_psi/kpoint_storage.h"
 #include "source_psi/psi.h"
 
 #include <algorithm>
@@ -104,6 +105,21 @@ void HSolverPW<T, Device>::solve(HSOperator<T, Device>& op,
     this->reuse_davidson_ = false;
 #endif
 
+    std::unique_ptr<psi::KPointStorage<T, Device>> kpoint_storage;
+#if defined(__CUDA)
+    if (std::is_same<Device, base_device::DEVICE_GPU>::value && !use_k_continuity)
+    {
+        size_t free_bytes = 0;
+        size_t total_bytes = 0;
+        cudaMemGetInfo(&free_bytes, &total_bytes);
+        const size_t psi_bytes = size_t(psi.get_nk()) * psi.get_nbands() * psi.get_nbasis() * sizeof(T);
+        const size_t dim = psi.get_nbasis();
+        const size_t davidson_bytes = 2 * size_t(psi.get_nbands()) * this->pw_diag_ndim * dim * sizeof(T);
+        const bool stage = psi_bytes + davidson_bytes > size_t(free_bytes * 0.9);
+        kpoint_storage.reset(new psi::KPointStorage<T, Device>(psi, this->wfc_basis->nks, stage));
+    }
+#endif
+
     // Loop over k points for solve Hamiltonian to charge density
     if (use_k_continuity) {
         // K-point continuity case
@@ -117,7 +133,8 @@ void HSolverPW<T, Device>::solve(HSOperator<T, Device>& op,
 
 
             // update psi pointer for each k point
-            psi.fix_k(ik);
+            if (kpoint_storage && kpoint_storage->active()) { kpoint_storage->load(ik); }
+            else { psi.fix_k(ik); }
 
             // If using k-point continuity and not first k-point, propagate from parent
             if (ik > 0 && count == 0 && k_parent.find(ik) != k_parent.end()) {
@@ -160,7 +177,8 @@ void HSolverPW<T, Device>::solve(HSOperator<T, Device>& op,
 
 
             // update psi pointer for each k point
-            psi.fix_k(ik);
+            if (kpoint_storage && kpoint_storage->active()) { kpoint_storage->load(ik); }
+            else { psi.fix_k(ik); }
 
             // template add precondition calculating here
             update_precondition(precondition, ik, this->wfc_basis->npwk[ik], Real(pes->pot->get_vl_of_0()));
@@ -178,6 +196,7 @@ void HSolverPW<T, Device>::solve(HSOperator<T, Device>& op,
 
             // solve eigenvector and eigenvalue for H(k)
             this->hamiltSolvePsiK(op, psi, precondition, eigenvalues.data() + ik * psi.get_nbands(), this->wfc_basis->nks);
+            if (kpoint_storage && kpoint_storage->active()) { kpoint_storage->store(ik); }
 
             // output iteration information and reset avg_iter
             if (skip_charge)
@@ -228,6 +247,7 @@ void HSolverPW<T, Device>::solve(HSOperator<T, Device>& op,
     }
 
     this->davidson_cache_.reset();
+    if (kpoint_storage) { kpoint_storage->restore(); }
     ModuleBase::timer::end("HSolverPW", "solve");
     return;
 }
