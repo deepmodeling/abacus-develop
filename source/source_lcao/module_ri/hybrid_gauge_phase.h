@@ -1,10 +1,6 @@
 #ifndef HYBRID_GAUGE_PHASE_H
 #define HYBRID_GAUGE_PHASE_H
 
-#include "source_base/vector3.h"
-#include "source_base/matrix3.h"
-#include "source_lcao/module_ri/mix_dmk_2d.h"
-
 #include <RI/global/Tensor.h>
 
 #include <array>
@@ -13,6 +9,17 @@
 #include <utility>
 #include <vector>
 #include <tuple>
+
+namespace ModuleBase
+{
+class Matrix3;
+
+template <typename T>
+class Vector3;
+}
+
+template <typename T>
+class Mix_DMk_2D;
 
 namespace RI_2D_Comm
 {

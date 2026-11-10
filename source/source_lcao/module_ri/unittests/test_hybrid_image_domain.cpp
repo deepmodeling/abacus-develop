@@ -1,5 +1,8 @@
 #include "source_lcao/module_ri/hybrid_image_domain.h"
 #include "source_lcao/module_ri/hybrid_gauge_phase.h"
+#include "source_base/matrix3.h"
+#include "source_base/vector3.h"
+#include "source_lcao/module_ri/mix_dmk_2d.h"
 #include <gtest/gtest.h>
 
 namespace

@@ -1,4 +1,6 @@
 #include "source_lcao/module_ri/hybrid_gauge_phase.h"
+#include "source_base/matrix3.h"
+#include "source_base/vector3.h"
 #include "source_lcao/module_ri/mix_dmk_2d.h"
 #include "source_base/module_mixing/pulay_mixing.h"
 #include "source_base/module_mixing/broyden_mixing.h"

@@ -1,4 +1,7 @@
 #include "hybrid_gauge_phase.h"
+#include "source_base/matrix3.h"
+#include "source_base/vector3.h"
+#include "source_lcao/module_ri/mix_dmk_2d.h"
 #include <algorithm>
 #include <cmath>
 #include <stdexcept>
