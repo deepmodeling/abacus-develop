@@ -151,7 +151,8 @@ int Diago_DavSubspace<T, Device>::diag_once(const HSOperator<T, Device>& op,
                                             Real* eigenvalue_in_hsolver,
                                             const std::vector<double>& ethr_band,
                                             const int ik,
-                                            const InitialHPsiFunc* initial_hpsi)
+                                            const InitialHPsiFunc* initial_hpsi,
+                                            const BasisObserver* basis_observer)
 {
     ModuleBase::timer::start("Diago_DavSubspace", "diag_once");
     const int matrix_ld = std::max(this->dim, 1);
@@ -190,6 +191,10 @@ int Diago_DavSubspace<T, Device>::diag_once(const HSOperator<T, Device>& op,
     else
     {
         op.hpsi(this->psi_in_iter, this->hpsi, this->dim, this->notconv);
+    }
+    if (basis_observer && basis_observer->capture)
+    {
+        basis_observer->capture(ik, 0, this->notconv, initial_hpsi != nullptr);
     }
 
     // compute s*psi_in_iter
@@ -295,7 +300,10 @@ int Diago_DavSubspace<T, Device>::diag_once(const HSOperator<T, Device>& op,
             if (!this->notconv || (dav_iter == this->iter_nmax))
             {
                 // overall convergence or last iteration: exit the iteration
-
+                if (basis_observer && basis_observer->rotate)
+                {
+                    basis_observer->rotate(ik, nbase, this->vcc, this->nbase_x, true);
+                }
                 ModuleBase::timer::end("Diago_DavSubspace", "last");
                 break;
             }
@@ -318,6 +326,10 @@ int Diago_DavSubspace<T, Device>::diag_once(const HSOperator<T, Device>& op,
                               this->hcc,
                               this->scc,
                               this->vcc);
+                if (basis_observer && basis_observer->rotate)
+                {
+                    basis_observer->rotate(ik, nbase, this->vcc, this->nbase_x, false);
+                }
 
                 ModuleBase::timer::end("Diago_DavSubspace", "last");
             }
@@ -950,7 +962,7 @@ int Diago_DavSubspace<T, Device>::diag(const HSOperator<T, Device>& op,
     do
     {
 
-        const int iter_once = this->diag_once(op, psi_in, psi_in_dmax, eigenvalue_in_hsolver, ethr_band, ik, nullptr);
+        const int iter_once = this->diag_once(op, psi_in, psi_in_dmax, eigenvalue_in_hsolver, ethr_band, ik, nullptr, nullptr);
         if (iter_once < 0 || this->solver_failed_)
         {
             return -1;
@@ -978,7 +990,8 @@ int Diago_DavSubspace<T, Device>::diag(const HSOperator<T, Device>& op,
                                        const std::vector<double>& ethr_band,
                                        const bool& scf_type,
                                        const int ik,
-                                       const InitialHPsiFunc* initial_hpsi)
+                                       const InitialHPsiFunc* initial_hpsi,
+                                       const BasisObserver* basis_observer)
 {
     this->notconv = 0;
     this->solver_failed_ = false;
@@ -988,7 +1001,7 @@ int Diago_DavSubspace<T, Device>::diag(const HSOperator<T, Device>& op,
     do
     {
         const int iter_once = this->diag_once(op, psi_in, psi_in_dmax, eigenvalue_in_hsolver,
-                                              ethr_band, ik, initial_hpsi);
+                                              ethr_band, ik, initial_hpsi, basis_observer);
         if (iter_once < 0 || this->solver_failed_)
         {
             return -1;

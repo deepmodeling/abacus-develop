@@ -673,6 +673,29 @@ void update_psi_charge_pw_gpu(ScState& state,
                                                 delta_lambda.data(), output, output_leading, npwx, ik,
                                                 nbands, nkb, nh_iat);
                 };
+            typename hsolver::Diago_DavSubspace<std::complex<double>,
+                                                base_device::DEVICE_GPU>::BasisObserver observer;
+            const int becp_rows = nkb * npol;
+            observer.rotate = [&](int observer_ik, int count, const std::complex<double>* coefficients,
+                                  int coefficient_leading, bool /*final*/) {
+                if (observer_ik < 0 || observer_ik >= nk || count <= 0)
+                {
+                    return;
+                }
+                std::complex<double>* becp = cache.becp_k(observer_ik, nbands * nkb * npol);
+                std::complex<double>* rotated = nullptr;
+                base_device::memory::resize_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(
+                    rotated, size_t(becp_rows) * nbands);
+                ModuleBase::gemm_op<std::complex<double>, base_device::DEVICE_GPU>()(
+                    'N', 'N', becp_rows, nbands, count,
+                    &ModuleBase::ONE, becp, becp_rows, coefficients, coefficient_leading,
+                    &ModuleBase::ZERO, rotated, becp_rows);
+                base_device::memory::synchronize_memory_op<std::complex<double>,
+                                                           base_device::DEVICE_GPU,
+                                                           base_device::DEVICE_GPU>()(
+                    becp, rotated, size_t(becp_rows) * nbands);
+                base_device::memory::delete_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(rotated);
+            };
             hsolver_pw_obj.solve(op,
                                  psi_t[0],
                                  pelec,
@@ -681,7 +704,8 @@ void update_psi_charge_pw_gpu(ScState& state,
                                  GlobalV::NPROC_IN_POOL,
                                  GlobalV::ofs_running,
                                  false,
-                                 initial_hpsi);
+                                 initial_hpsi,
+                                 &observer);
         }
         else
         {

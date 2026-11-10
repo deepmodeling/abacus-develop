@@ -42,6 +42,14 @@ class Diago_DavSubspace
     /// operator application. The callback receives (ik, output, leading).
     using InitialHPsiFunc = std::function<void(int, T*, int)>;
 
+    /// Follow Davidson basis changes so callers can transport cached overlaps.
+    struct BasisObserver
+    {
+        std::function<void(int, int, int, bool)> capture;
+        std::function<void(int, int, const T*, int, bool)> rotate;
+        std::function<void(int)> invalidate;
+    };
+
     /// Refresh the preconditioner without reallocating the solver workspace.
     void update_precondition(const std::vector<Real>& precondition_in);
 
@@ -75,7 +83,8 @@ class Diago_DavSubspace
              const std::vector<double>& ethr_band,
              const bool& scf_type,
              const int ik,
-             const InitialHPsiFunc* initial_hpsi);
+             const InitialHPsiFunc* initial_hpsi,
+             const BasisObserver* basis_observer);
 
   private:
     /// for MPI communication
@@ -186,7 +195,8 @@ class Diago_DavSubspace
                   Real* eigenvalue_in,
                   const std::vector<double>& ethr_band,
                   const int ik,
-                  const InitialHPsiFunc* initial_hpsi);
+                  const InitialHPsiFunc* initial_hpsi,
+                  const BasisObserver* basis_observer);
 
     bool test_exit_cond(const int& ntry, const int& notconv, const bool& scf);
 

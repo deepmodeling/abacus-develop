@@ -261,13 +261,16 @@ void HSolverPW<T, Device>::solve(HSOperator<T, Device>& op,
                                  const int nproc_in_pool_in,
                                  std::ostream& log,
                                  const bool skip_charge,
-                                 const typename Diago_DavSubspace<T, Device>::InitialHPsiFunc& initial_hpsi)
+                                 const typename Diago_DavSubspace<T, Device>::InitialHPsiFunc& initial_hpsi,
+                                 const typename Diago_DavSubspace<T, Device>::BasisObserver* basis_observer)
 {
     this->initial_hpsi_func_ = initial_hpsi;
     this->has_initial_hpsi_ = true;
+    this->basis_observer_ = basis_observer;
     this->solve(op, psi, pes, out_eigenvalues, rank_in_pool_in, nproc_in_pool_in, log, skip_charge);
     this->has_initial_hpsi_ = false;
     this->initial_hpsi_func_ = {};
+    this->basis_observer_ = nullptr;
 }
 
 template <typename T, typename Device>
@@ -393,7 +396,8 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(const HSOperator<T, Device>& op,
                                        this->ethr_band,
                                        scf,
                                        psi.get_current_k(),
-                                       initial_hpsi_ptr);
+                                       initial_hpsi_ptr,
+                                       this->basis_observer_);
         if (!this->reuse_davidson_)
         {
             this->davidson_cache_.reset();
@@ -402,6 +406,10 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(const HSOperator<T, Device>& op,
         {
             // A numerical failure invalidates the Davidson workspace. Release it
             // before allocating CG state or changing the wavefunction basis.
+            if (this->basis_observer_ && this->basis_observer_->invalidate)
+            {
+                this->basis_observer_->invalidate(psi.get_current_k());
+            }
             this->davidson_cache_.reset();
             std::cout << "error of Diago_DavSubspace::diag, recalculate by cg method " << std::endl;
             DiagoCG<T, Device> cg(this->basis_type,

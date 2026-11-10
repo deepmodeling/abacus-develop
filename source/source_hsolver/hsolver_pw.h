@@ -79,7 +79,8 @@ class HSolverPW
                const int nproc_in_pool_in,
                std::ostream& log,
                const bool skip_charge,
-               const typename Diago_DavSubspace<T, Device>::InitialHPsiFunc& initial_hpsi);
+               const typename Diago_DavSubspace<T, Device>::InitialHPsiFunc& initial_hpsi,
+               const typename Diago_DavSubspace<T, Device>::BasisObserver* basis_observer);
 
   protected:
     // diago caller
@@ -98,6 +99,7 @@ class HSolverPW
     bool reuse_davidson_ = false;
     typename Diago_DavSubspace<T, Device>::InitialHPsiFunc initial_hpsi_func_;
     bool has_initial_hpsi_ = false;
+    const typename Diago_DavSubspace<T, Device>::BasisObserver* basis_observer_ = nullptr;
     ModulePW::PW_Basis_K* wfc_basis = nullptr;
 
     const std::string calculation_type;
