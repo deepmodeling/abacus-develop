@@ -22,7 +22,7 @@
 #endif
 #include "source_base/module_external/blacs_connector.h"
 #endif
-#include "esolver_dp.h"
+#include "source_md/module_dp/dp.h"
 #include "esolver_nep.h"
 #include "source_md/module_snap/snap_potential.h"
 #include "esolver_potential.h"
@@ -400,7 +400,10 @@ ESolver* init_esolver(const Input_para& inp)
     }
     else if (esolver_type == "dp_pot")
     {
-        return new ESolver_DP(inp.mdp.pot_file);
+        std::ofstream& running_log = GlobalV::ofs_running;
+        std::unique_ptr<ModuleMD::Potential> potential(
+            new ModuleMD::DP(inp.mdp.pot_file, PARAM.globalv.global_out_dir, running_log));
+        return new ESolver_Potential(std::move(potential), running_log);
     }
     else if (esolver_type == "nep_pot")
     {

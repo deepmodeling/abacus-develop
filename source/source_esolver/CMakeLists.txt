@@ -9,7 +9,6 @@ list(
   esolver_ks_lcaopw.cpp
   esolver_sdft_pw.cpp
   esolver_potential.cpp
-  esolver_dp.cpp
   esolver_nep.cpp
   esolver_of.cpp
   esolver_of_tddft.cpp

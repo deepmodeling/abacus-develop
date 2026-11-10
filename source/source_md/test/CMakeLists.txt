@@ -112,6 +112,22 @@ addtest(
           ../module_snap/snap_cg.cpp
           ${depend_files})
 
+set(_md_dp_test_libs parameter psi device)
+if(DEFINED DeePMD_DIR)
+  if(DeePMDC_FOUND)
+    list(APPEND _md_dp_test_libs DeePMD::deepmd_c)
+  else()
+    list(APPEND _md_dp_test_libs DeePMD::deepmd_cc)
+  endif()
+endif()
+
+addtest(
+  TARGET MODULE_MD_DP_potential
+  LIBS ${_md_dp_test_libs}
+  SOURCES ../module_dp/test_dp.cpp ../module_dp/dp.cpp
+          ../../source_cell/module_neighlist/neighbor_list.cpp
+          ${depend_files})
+
 addtest(
   TARGET MODULE_MD_func
   LIBS parameter psi device
