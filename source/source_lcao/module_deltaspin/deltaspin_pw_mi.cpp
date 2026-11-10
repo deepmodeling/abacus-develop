@@ -96,18 +96,41 @@ void cal_mi_pw(ScState& state,
         const int nbands = psi_t->get_nbands();
         const int nks = psi_t->get_nk();
         const int npol = psi_t->get_npol();
+        const int atoms = static_cast<int>(state.get_mi().size());
+        const int* nh_iat = &onsite_p->get_nh(0);
+        std::vector<int> offsets(atoms + 1, 0);
+        for (int iat = 0; iat < atoms; ++iat)
+        {
+            offsets[iat + 1] = offsets[iat] + nh_iat[iat];
+        }
+        int* d_offsets = nullptr;
+        double* d_mi = nullptr;
+        double* d_weights = nullptr;
+        base_device::memory::resize_memory_op<int, base_device::DEVICE_GPU>()(d_offsets, atoms + 1);
+        base_device::memory::resize_memory_op<double, base_device::DEVICE_GPU>()(d_mi, 3 * atoms);
+        base_device::memory::resize_memory_op<double, base_device::DEVICE_GPU>()(d_weights, nbands);
+        base_device::memory::synchronize_memory_op<int, base_device::DEVICE_GPU, base_device::DEVICE_CPU>()(
+            d_offsets, offsets.data(), offsets.size());
+        base_device::memory::set_memory_op<double, base_device::DEVICE_GPU>()(d_mi, 0, 3 * atoms);
         for (int ik = 0; ik < nks; ik++)
         {
             psi_t->fix_k(ik);
             psi_pointer = psi_t->get_pointer();
             onsite_p->tabulate_atomic(ik);
             onsite_p->overlap_proj_psi(nbands * npol, psi_pointer);
-            const std::complex<double>* becp = onsite_p->get_h_becp();
-            int nkb = onsite_p->get_size_becp() / nbands / npol;
+            const std::complex<double>* becp = onsite_p->get_becp();
+            const int nkb = onsite_p->get_tot_nproj();
             const int spin_sign = (npol == 2) ? 1 : spin_sign_at(state, pelec, ik);
-            accumulate_Mi_from_becp(becp, nkb, nbands, npol, spin_sign,
-                &pelec->wg(ik, 0), &onsite_p->get_nh(0), state.get_mi());
+            base_device::memory::synchronize_memory_op<double, base_device::DEVICE_GPU, base_device::DEVICE_CPU>()(
+                d_weights, &pelec->wg(ik, 0), nbands);
+            hamilt::accumulate_projector_moments_gpu(nbands, npol, atoms, nkb, spin_sign,
+                                                     d_offsets, d_weights, becp, d_mi);
         }
+        base_device::memory::synchronize_memory_op<double, base_device::DEVICE_CPU, base_device::DEVICE_GPU>()(
+            &(state.get_mi()[0][0]), d_mi, 3 * atoms);
+        base_device::memory::delete_memory_op<int, base_device::DEVICE_GPU>()(d_offsets);
+        base_device::memory::delete_memory_op<double, base_device::DEVICE_GPU>()(d_mi);
+        base_device::memory::delete_memory_op<double, base_device::DEVICE_GPU>()(d_weights);
     }
 #endif
     // MPI reduction: sum Mi across all k-pool ranks
