@@ -99,6 +99,7 @@ class HSolverPW
     bool reuse_davidson_ = false;
     typename Diago_DavSubspace<T, Device>::InitialHPsiFunc initial_hpsi_func_;
     bool has_initial_hpsi_ = false;
+    bool host_backed_action_ = false;
     const typename Diago_DavSubspace<T, Device>::BasisObserver* basis_observer_ = nullptr;
     ModulePW::PW_Basis_K* wfc_basis = nullptr;
 

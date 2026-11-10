@@ -15,6 +15,8 @@
 #include "source_psi/psi.h"
 
 #include <algorithm>
+#include <cstdlib>
+#include <string>
 #include <type_traits>
 #include <ostream>
 #include <vector>
@@ -106,6 +108,7 @@ void HSolverPW<T, Device>::solve(HSOperator<T, Device>& op,
 #endif
 
     std::unique_ptr<psi::KPointStorage<T, Device>> kpoint_storage;
+    this->host_backed_action_ = false;
 #if defined(__CUDA)
     if (std::is_same<Device, base_device::DEVICE_GPU>::value && !use_k_continuity)
     {
@@ -116,6 +119,9 @@ void HSolverPW<T, Device>::solve(HSOperator<T, Device>& op,
         const size_t dim = psi.get_nbasis();
         const size_t davidson_bytes = 2 * size_t(psi.get_nbands()) * this->pw_diag_ndim * dim * sizeof(T);
         const bool stage = psi_bytes + davidson_bytes > size_t(free_bytes * 0.9);
+        const char* action_env = std::getenv("ABACUS_DAV_HOST_ACTION");
+        this->host_backed_action_ = std::is_same<T, std::complex<double>>::value
+                                    && (stage || (action_env != nullptr && std::string(action_env) == "1"));
         kpoint_storage.reset(new psi::KPointStorage<T, Device>(psi, this->wfc_basis->nks, stage));
     }
 #endif
@@ -355,7 +361,8 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(const HSOperator<T, Device>& op,
         {
             if (!this->davidson_cache_
                 || !this->davidson_cache_->layout_matches(nband, nbasis_layout, this->pw_diag_ndim,
-                                                          this->diag_subspace, this->nb2d))
+                                                          this->diag_subspace, this->nb2d,
+                                                          this->host_backed_action_))
             {
                 this->davidson_cache_.reset(new Diago_DavSubspace<T, Device>(pre_condition,
                                                                              nband,
@@ -365,7 +372,8 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(const HSOperator<T, Device>& op,
                                                                              this->diag_iter_max,
                                                                              comm_info,
                                                                              this->diag_subspace,
-                                                                             this->nb2d));
+                                                                             this->nb2d,
+                                                                             this->host_backed_action_));
             }
             else
             {
@@ -383,7 +391,8 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(const HSOperator<T, Device>& op,
                                                                          this->diag_iter_max,
                                                                          comm_info,
                                                                          this->diag_subspace,
-                                                                         this->nb2d));
+                                                                         this->nb2d,
+                                                                         this->host_backed_action_));
             davidson = this->davidson_cache_.get();
         }
 

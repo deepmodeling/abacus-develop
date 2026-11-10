@@ -36,6 +36,17 @@ class Diago_DavSubspace
                       const int diago_dav_method_in,
                       const int block_size_in);
 
+    Diago_DavSubspace(const std::vector<Real>& precondition_in,
+                      const int& nband_in,
+                      const int& nbasis_in,
+                      const int& david_ndim_in,
+                      const double& diag_thr_in,
+                      const int& diag_nmax_in,
+                      const diag_comm_info& diag_comm_in,
+                      const int diago_dav_method_in,
+                      const int block_size_in,
+                      const bool host_backed_action_in);
+
     ~Diago_DavSubspace();
 
     /// Supply Hamiltonian actions for the initial basis, avoiding a fresh
@@ -55,7 +66,7 @@ class Diago_DavSubspace
 
     /// True when a cached solver can serve a problem with this fixed layout.
     bool layout_matches(const int& nband, const int& nbasis, const int& david_ndim,
-                        const int& method, const int& block_size) const;
+                        const int& method, const int& block_size, const bool host_backed) const;
 
     /// General operators (for example LR-TDDFT) need not have a single k point.
     int diag(const HSOperator<T, Device>& op,
@@ -122,6 +133,15 @@ class Diago_DavSubspace
 
     /// the product of S and psi in the reduced basis set
     T* spsi = nullptr;
+
+    bool host_backed_action_ = false;
+    T* hpsi_panel_ = nullptr;
+    int action_panel_cols_ = 0;
+
+    T* hpsi_panel(const int first, const int count) const;
+    void hpsi_store(const int first, const int count, const T* source) const;
+    void hpsi_multiply(const int action_cols, const T* coefficients, const int coefficient_leading,
+                       const int columns, T* output, const bool accumulate) const;
 
     /// Hamiltonian on the reduced basis
     T* hcc = nullptr;

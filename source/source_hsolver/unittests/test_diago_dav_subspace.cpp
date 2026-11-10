@@ -73,6 +73,45 @@ class DiagonalOperator : public hsolver::HSOperator<T, TestDevice>
 };
 
 template <typename T>
+class DenseOperator : public hsolver::HSOperator<T, TestDevice>
+{
+  public:
+    using Real = typename GetTypeReal<T>::type;
+    DenseOperator(const int dim, const std::vector<Real>& h, const std::vector<Real>& s)
+        : dim_(dim), h_(h), s_(s) {}
+    void update_k(const int) override {}
+    void hpsi(const T* x, T* hx, const int ld, const int nvec) const override
+    {
+        std::vector<T> values(ld * nvec);
+        base_device::memory::synchronize_memory_op<T, base_device::DEVICE_CPU, TestDevice>()(
+            values.data(), x, values.size());
+        std::vector<T> out(values.size(), T(0));
+        for (int band = 0; band < nvec; ++band)
+            for (int i = 0; i < dim_; ++i)
+                for (int j = 0; j < dim_; ++j)
+                    out[band * ld + i] += T(h_[i * dim_ + j]) * values[band * ld + j];
+        base_device::memory::synchronize_memory_op<T, TestDevice, base_device::DEVICE_CPU>()(
+            hx, out.data(), out.size());
+    }
+    void spsi(const T* x, T* sx, const int ld, const int nvec) const override
+    {
+        std::vector<T> values(ld * nvec);
+        base_device::memory::synchronize_memory_op<T, base_device::DEVICE_CPU, TestDevice>()(
+            values.data(), x, values.size());
+        std::vector<T> out(values.size(), T(0));
+        for (int band = 0; band < nvec; ++band)
+            for (int i = 0; i < dim_; ++i)
+                for (int j = 0; j < dim_; ++j)
+                    out[band * ld + i] += T(s_[i * dim_ + j]) * values[band * ld + j];
+        base_device::memory::synchronize_memory_op<T, TestDevice, base_device::DEVICE_CPU>()(
+            sx, out.data(), out.size());
+    }
+  private:
+    int dim_;
+    std::vector<Real> h_, s_;
+};
+
+template <typename T>
 void solve_and_check(const int nbands,
                      const int dim,
                      const int ld,
@@ -284,6 +323,72 @@ TEST(DavSubspaceDeathTest, NonfiniteDirection)
 }
 #endif
 } // namespace
+
+#ifdef ABACUS_DAV_GPU_TEST
+TYPED_TEST(DavSubspaceTest, HostBackedDenseActionsMatchResident)
+{
+    if (!std::is_same<TypeParam, std::complex<double>>::value) { GTEST_SKIP(); }
+    if (test_nproc > 1) { GTEST_SKIP(); }
+    using Real = typename GetTypeReal<TypeParam>::type;
+    const int dim = 16, ld = 18, nbands = 5;
+    std::vector<Real> h(dim * dim, 0), a(dim * dim, 0), s(dim * dim, 0);
+    for (int i = 0; i < dim; ++i)
+        for (int j = 0; j < dim; ++j)
+        {
+            a[i * dim + j] = Real(0.07 * std::sin(0.31 * (i + 2) * (j + 3)));
+            h[i * dim + j] = Real(0.11 * std::cos(0.17 * (i + 1) * (j + 4)));
+        }
+    for (int i = 0; i < dim; ++i)
+        for (int j = 0; j < dim; ++j)
+        {
+            h[i * dim + j] = 0.5 * (h[i * dim + j] + h[j * dim + i]);
+            Real value = 0;
+            for (int k = 0; k < dim; ++k) value += a[k * dim + i] * a[k * dim + j];
+            s[i * dim + j] = value + (i == j ? Real(4) : Real(0));
+        }
+    std::vector<TypeParam> base(ld * nbands, TypeParam(0));
+    for (int band = 0; band < nbands; ++band)
+        for (int i = 0; i < dim; ++i)
+            base[band * ld + i] = TypeParam(std::sin(0.23 * (i + 1) * (band + 2)),
+                                            std::cos(0.19 * (i + 3) * (band + 1)));
+    auto run = [&](const bool host, std::vector<TypeParam>& psi, std::vector<Real>& eig) {
+        std::vector<Real> pre(dim, 1);
+        eig.assign(nbands, Real(0));
+        const std::vector<double> thr(nbands, 1e-10);
+        DenseOperator<TypeParam> op(dim, h, s);
+#ifdef __MPI
+        const hsolver::diag_comm_info comm(POOL_WORLD, test_rank, test_nproc);
+#else
+        const hsolver::diag_comm_info comm(test_rank, test_nproc);
+#endif
+        hsolver::Diago_DavSubspace<TypeParam, TestDevice> solver(pre, nbands, dim, 2, 1e-10, 50, comm, 0, 0, host);
+        TypeParam* device_psi = nullptr;
+        base_device::memory::resize_memory_op<TypeParam, TestDevice>()(device_psi, psi.size());
+        base_device::memory::synchronize_memory_op<TypeParam, TestDevice, base_device::DEVICE_CPU>()(
+            device_psi, psi.data(), psi.size());
+        solver.diag(op, device_psi, ld, eig.data(), thr, false, 6);
+        base_device::memory::synchronize_memory_op<TypeParam, base_device::DEVICE_CPU, TestDevice>()(
+            psi.data(), device_psi, psi.size());
+        base_device::memory::delete_memory_op<TypeParam, TestDevice>()(device_psi);
+    };
+    std::vector<TypeParam> resident = base, host = base;
+    std::vector<Real> er, eh;
+    run(false, resident, er);
+    run(true, host, eh);
+    for (int band = 0; band < nbands; ++band) EXPECT_NEAR(er[band], eh[band], 1e-8);
+    for (int band = 0; band < nbands; ++band)
+    {
+        std::complex<double> overlap(0, 0);
+        for (int i = 0; i < dim; ++i)
+            overlap += std::conj(std::complex<double>(resident[band * ld + i]))
+                       * std::complex<double>(host[band * ld + i]);
+        const auto phase = std::abs(overlap) > 0 ? overlap / std::abs(overlap) : std::complex<double>(1, 0);
+        for (int i = 0; i < dim; ++i)
+            EXPECT_NEAR(std::abs(std::complex<double>(resident[band * ld + i])
+                                 - phase * std::complex<double>(host[band * ld + i])), 0.0, 1e-8);
+    }
+}
+#endif
 
 int main(int argc, char** argv)
 {
