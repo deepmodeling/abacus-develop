@@ -923,6 +923,9 @@ OBJS_MODULE_RI=conv_coulomb_pot_k.o\
       matrix_orbs22.o\
       ri_2d_comm.o\
       mix_dmk_2d.o\
+      hybrid_gauge_phase.o\
+      hybrid_image_domain.o\
+      exx_lri_interface.o\
       symm_rotation.o\
       symm_rot_out.o\
       gaussian_abfs.o\

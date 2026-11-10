@@ -1,5 +1,3 @@
-#ifndef EXX_LRI_INTERFACE_HPP
-#define EXX_LRI_INTERFACE_HPP
 #include "exx_lri_interface.h"
 #include "hybrid_image_domain.h"
 #include "source_estate/module_pot/td_field_manager.h"
@@ -568,4 +566,7 @@ bool Exx_LRI_Interface<T, Tdata>::exx_after_converge(
     return true;
 }
 
-#endif
+template class Exx_LRI_Interface<double, double>;
+template class Exx_LRI_Interface<double, std::complex<double>>;
+template class Exx_LRI_Interface<std::complex<double>, double>;
+template class Exx_LRI_Interface<std::complex<double>, std::complex<double>>;
