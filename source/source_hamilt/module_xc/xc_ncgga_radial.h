@@ -12,8 +12,8 @@ struct NcggaRadialPoint
     // direction is represented by the zero vector because the scalar map has
     // a unique zero gradient and zero Hessian there.
     double value = 0.0;
-    std::array<double, 3> direction = {{0.0, 0.0, 0.0}};
-    std::array<double, 3> gradient = {{0.0, 0.0, 0.0}};
+    double direction[3] = {0.0, 0.0, 0.0};
+    double gradient[3] = {0.0, 0.0, 0.0};
     double transverse_hessian = 0.0;
     double radial_hessian = 0.0;
 
