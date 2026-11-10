@@ -14,6 +14,9 @@
 #include "source_pw/module_proj/onsite_proj.h"
 #include "spin_constrain.h"
 
+#if defined(__CUDA)
+#include "source_hsolver/kernels/fixed_overlap.h"
+#endif
 #ifdef __LCAO
 #include "source_estate/elecstate_lcao.h"
 #include "source_estate/module_dm/dm_from_psi.h"
@@ -239,6 +242,26 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
                     this->pw_cache_.allocate_gpu(nbands, nk, size_becp);
                     this->pw_cache_.lambda_in_sub() = this->state_.get_sc_lambda();
                 }
+                hsolver::FixedOverlapSubspace* fixed_overlap = nullptr;
+#if defined(__CUDA)
+                fixed_overlap = static_cast<hsolver::FixedOverlapSubspace*>(this->pw_cache_.fixed_overlap);
+                if (initial_hs && nkb > 0)
+                {
+                    delete fixed_overlap;
+                    fixed_overlap = new hsolver::FixedOverlapSubspace(nk, nbands, nkb * npol);
+                    if (!fixed_overlap->available())
+                    {
+                        delete fixed_overlap;
+                        fixed_overlap = nullptr;
+                        GlobalV::ofs_running << "Fixed-overlap cache unavailable; using generalized response solves.\n";
+                    }
+                    this->pw_cache_.fixed_overlap = fixed_overlap;
+                }
+                bool batch_response = false;
+                if (fixed_overlap && nk > 1) { batch_response = fixed_overlap->prepare_batch(); }
+#else
+                const bool batch_response = false;
+#endif
                 std::complex<double>* becp_pointer = nullptr;
                 base_device::memory::resize_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(becp_pointer, size_becp);
                 for (int ik = 0; ik < nk; ++ik)
@@ -259,20 +282,64 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
                             diag_comm);
                         base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_GPU, base_device::DEVICE_GPU>()(becp_k, onsite_p->get_becp(), size_becp);
                     }
-                    base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_GPU, base_device::DEVICE_GPU>()(h_tmp, h_k, nbands * nbands);
-                    base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_GPU, base_device::DEVICE_GPU>()(s_tmp, s_k, nbands * nbands);
-                    if (i_step != -1) pw::calculate_delta_hcc(this->state_, this->pw_cache_, this->pelec, h_tmp, becp_k, this->state_.get_sc_lambda().data(), nbands, nkb, nh_iat, ik, true);
+                    const std::complex<double>* response_h = h_k;
+                    const std::complex<double>* response_projectors = becp_k;
+#if defined(__CUDA)
+                    if (fixed_overlap)
+                    {
+                        if (initial_hs)
+                        {
+                            fixed_overlap->prepare(ik, h_k, s_k, becp_k);
+                        }
+                        response_h = fixed_overlap->hamiltonian(ik);
+                        response_projectors = fixed_overlap->projectors(ik);
+                    }
+#endif
+                    base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_GPU, base_device::DEVICE_GPU>()(h_tmp, response_h, nbands * nbands);
+                    if (i_step != -1)
+                    {
+                        pw::calculate_delta_hcc(this->state_, this->pw_cache_, this->pelec, h_tmp,
+                                                response_projectors, this->state_.get_sc_lambda().data(),
+                                                nbands, nkb, nh_iat, ik, true);
+                    }
 
-                    hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_GPU>::diag_responce(h_tmp,
-                                                                                  s_tmp,
-                                                                                  nbands,
-                                                                                  becp_k,
-                                                                                  becp_pointer,
-                                                                                  nkb * npol,
-                                                                                  &this->pelec->ekb(ik, 0));
+#if defined(__CUDA)
+                    if (batch_response)
+                    {
+                        fixed_overlap->capture_batch(ik, h_tmp);
+                    }
+                    else if (fixed_overlap)
+                    {
+                        fixed_overlap->diagonalize(h_tmp, response_projectors, becp_pointer,
+                                                   &this->pelec->ekb(ik, 0));
+                    }
+                    else
+#endif
+                    {
+                        base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_GPU, base_device::DEVICE_GPU>()(
+                            s_tmp, s_k, nbands * nbands);
+                        hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_GPU>::diag_responce(
+                            h_tmp, s_tmp, nbands, becp_k, becp_pointer, nkb * npol,
+                            &this->pelec->ekb(ik, 0));
+                    }
+#if defined(__CUDA)
+                    if (batch_response) { continue; }
+#endif
                     base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_CPU, base_device::DEVICE_GPU>()(&becp_tmp[ik * size_becp], becp_pointer, size_becp);
                 }
 
+#if defined(__CUDA)
+                if (batch_response)
+                {
+                    fixed_overlap->diagonalize_batch(&this->pelec->ekb(0, 0), this->pelec->ekb.nc);
+                    for (int ik = 0; ik < nk; ++ik)
+                    {
+                        fixed_overlap->rotate_batch(ik, becp_pointer);
+                        base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_CPU, base_device::DEVICE_GPU>()(
+                            &becp_tmp[ik * size_becp], becp_pointer, size_becp);
+                    }
+                }
+#endif
                 base_device::memory::delete_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(becp_pointer);
                 base_device::memory::delete_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(h_tmp);
                 base_device::memory::delete_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(s_tmp);

@@ -133,6 +133,10 @@ class SubspaceCache
     std::complex<double>* sub_s_save_ = nullptr; ///< Cached subspace overlap matrix for all k-points
     std::complex<double>* becp_save_ = nullptr;  ///< Cached becp coefficients for all k-points
     std::vector<ModuleBase::Vector3<double>> lambda_in_sub_; ///< Lambda when the cache was saved
+
+  public:
+    /// Optional fixed-overlap response cache; owned by the PW DeltaSpin path.
+    void* fixed_overlap = nullptr;
 };
 
 } // namespace pw

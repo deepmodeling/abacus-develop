@@ -689,6 +689,7 @@ if(USE_CUDA)
     source_pw/module_pwdft/kernels/cuda/onsite_op.cu
     source_basis/module_pw/kernels/cuda/pw_op.cu
     source_hsolver/kernels/cuda/hegvd_op.cu
+    source_hsolver/kernels/cuda/fixed_overlap.cu
     source_hsolver/kernels/cuda/bpcg_kernel_op.cu
     source_hsolver/module_linalg/kernels/cuda/linear_op.cu
     source_estate/kernels/cuda/elecstate_op.cu

@@ -27,6 +27,9 @@
 #include "source_base/module_device/device.h"
 #include "source_pw/module_proj/onsite_proj.h"
 #include "source_pw/module_pwdft/kernels/onsite_op.h"
+#if defined(__CUDA)
+#include "source_hsolver/kernels/fixed_overlap.h"
+#endif
 #include "deltaspin_pw_cache.h"
 #include "mi_tools.h"
 #include "source_io/module_parameter/parameter.h"
@@ -548,6 +551,13 @@ void update_psi_charge_pw_gpu(ScState& state,
         base_device::memory::delete_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(h_tmp);
         base_device::memory::delete_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(s_tmp);
     }
+
+#if defined(__CUDA)
+    // The response loop is complete; wavefunction updates use the original
+    // H/S/projector matrices and have no use for the orthonormal copies.
+    delete static_cast<hsolver::FixedOverlapSubspace*>(cache.fixed_overlap);
+    cache.fixed_overlap = nullptr;
+#endif
 
     // Free GPU memory for saved subspace data
     cache.release_gpu();
