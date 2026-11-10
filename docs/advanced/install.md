@@ -108,7 +108,7 @@ atom-list fixes in [LibRI #15](https://github.com/abacusmodeling/LibRI/pull/15)
 and the symmetry fixes in [LibRI #16](https://github.com/abacusmodeling/LibRI/pull/16),
 together with the DDLA 0.0.6 public API adaptation in
 [LibRI #19](https://github.com/abacusmodeling/LibRI/pull/19).
-The fixes in #15 and #16 are merged upstream; #19 is under review.
+All three pull requests are merged upstream.
 None of these changes are included in LibRI `v0.2.1.1`.
 The supported release will be specified here after it passes integration tests.
 ```
