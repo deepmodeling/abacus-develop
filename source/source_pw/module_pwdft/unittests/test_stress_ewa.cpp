@@ -471,6 +471,55 @@ TEST_F(StressEwaTest, EnergyStrainDerivativeInSixDirections)
     }
 }
 
+TEST_F(StressEwaTest, Bspline10CoarseGridEnergyStrainDerivative)
+{
+    // Match tests/03_NAO_multik/scf_bspline: As/Ga, 80 Ry charge cutoff,
+    // a 15^3 FFT grid and order-10 interpolation. Here the difference from
+    // direct atomic phases is large enough to catch a mismatched stress path.
+    const ModuleBase::Matrix3 lattice;
+    cell.lat0 = 5.3;
+    cell.nat = 2;
+    atoms[0].na = 1;
+    atoms[0].ncpp.zv = 15.0;
+    atoms[0].taud = {{0.25, 0.25, 0.25}};
+    atoms[1].ncpp.zv = 13.0;
+    atoms[1].taud = {{0.0, 0.0, 0.0}};
+    cell.set_iat2itia();
+    update_geometry(lattice);
+    basis.initgrids(cell.lat0, cell.latvec, 15, 15, 15);
+    basis.initparameters(false, 80.0);
+    basis.setuptransform();
+    basis.collect_local_pw();
+    ASSERT_EQ(basis.npwtot, 1791);
+    sf.set(&basis, 10);
+    sf.setup(&cell, grid, &basis, false);
+    const auto analytic = calculate(false);
+    const double volume = cell.omega;
+    for (int i = 0; i < 3; ++i)
+    {
+        for (int j = 0; j <= i; ++j)
+        {
+            for (const double h : {3.0e-5, 1.0e-5})
+            {
+                double energies[2] = {};
+                for (int side = 0; side < 2; ++side)
+                {
+                    const double step = side == 0 ? -h : h;
+                    const ModuleBase::Matrix3 deformed = strained_lattice(lattice, i, j, step);
+                    update_geometry(deformed);
+                    // With fixed fractional positions, grid and integer G
+                    // indices, reuse the same SF on both sides of the strain.
+                    std::ofstream unused;
+                    energies[side] = H_Ewald_pw::compute_ewald(cell, &basis, sf.strucFac, 0, unused);
+                }
+                const double finite_kbar = -(energies[1] - energies[0]) / (2 * h * volume) * to_kbar();
+                const double analytic_kbar = analytic(i, j) * to_kbar();
+                EXPECT_NEAR(finite_kbar, analytic_kbar, 1.0e-3) << "direction=" << i << j << " h=" << h;
+            }
+        }
+    }
+}
+
 TEST_F(StressEwaTest, RebuiltCellBasisAndSplineEnergyStrainDerivative)
 {
     const auto lattice = cell.latvec;
