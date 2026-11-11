@@ -923,7 +923,8 @@ TEST_F(DFTUBaseTest, LatestOccMatIncludesSortedCollinearEigenvalues)
     {
         for (int m = 0; m < 5; ++m)
         {
-            dftu.occmat().set(0, 2, spin, m, m, spin == 0 ? 0.8 : 0.2);
+            const double occupation = spin == 0 ? 0.8 : 0.2;
+            dftu.occmat().set(0, 2, spin, m, m, occupation);
         }
     }
     dftu.occmat().set(0, 2, 0, 0, 1, 0.1);
@@ -993,9 +994,109 @@ TEST_F(DFTUBaseTest, SocEigenvaluesIncludeImaginarySpinCoupling)
     for (int i = 0; i < 10; ++i)
     {
         ASSERT_TRUE(values >> value);
-        EXPECT_NEAR(value, i < 5 ? low : high, 1e-8);
+        const double expected = i < 5 ? low : high;
+        EXPECT_NEAR(value, expected, 1e-8);
     }
     EXPECT_FALSE(values >> value);
+}
+
+TEST_F(DFTUBaseTest, CollinearEigenvaluesStopAtJacobiCutoff)
+{
+    Plus_U_Base dftu;
+    init_dftu(dftu, false);
+    dftu.occmat().set(0, 2, 0, 0, 0, 0.5);
+    dftu.occmat().set(0, 2, 0, 1, 1, 0.5);
+    dftu.occmat().set(0, 2, 0, 0, 1, 1.0e-10);
+    dftu.occmat().set(0, 2, 0, 1, 0, 1.0e-10);
+
+    std::ostringstream output;
+    DFTU_BASE::write_occup_eigenvalues(dftu, ucell, output,
+                                       DFTU_BASE::SOC_LAYOUT_PAULI);
+    EXPECT_NE(output.str().find("# eigenvalues atom 1 L 2 spin 1:"), std::string::npos);
+}
+
+TEST_F(DFTUBaseTest, LcaoMethodOneSocUsesPauliBlocks)
+{
+    Plus_U_Base dftu;
+    init_dftu_for_spin(dftu, false, 4, 2, DFTU_BASE::SOC_LAYOUT_PAULI);
+    const int orbital_size = 5;
+    for (int m = 0; m < orbital_size; ++m)
+    {
+        dftu.occmat().mat(0, 2, 0).c[m * orbital_size + m] = 1.0;
+    }
+
+    const DFTU_BASE::OccmatSocLayout layout = DFTU_BASE::lcao_soc_layout(1);
+    EXPECT_EQ(layout, DFTU_BASE::SOC_LAYOUT_PAULI);
+    std::ostringstream output;
+    DFTU_BASE::write_occup_eigenvalues(dftu, ucell, output, layout);
+    const std::string line = output.str();
+    std::istringstream values(line.substr(line.find(':') + 1));
+    double value = 0.0;
+    double trace = 0.0;
+    for (int i = 0; i < 2 * orbital_size; ++i)
+    {
+        ASSERT_TRUE(values >> value);
+        EXPECT_NEAR(value, 0.5, 1e-8);
+        trace += value;
+    }
+    EXPECT_NEAR(trace, orbital_size, 1e-8);
+    EXPECT_FALSE(values >> value);
+
+    const DFTU_BASE::OccmatOutputCfg cfg = {0, 1, 5, true, 1};
+    const DFTU_BASE::OccmatStepInfo step = {0, 2, 1e-6, 1e-7};
+    const std::string out_dir = testing::TempDir();
+    const std::string filename = out_dir + "occ_mat.txt";
+    DFTU_BASE::write_latest_occmat(dftu, ucell, out_dir, step, cfg, layout);
+    OccupationMatrix restored;
+    const std::vector<int> l_channel = {2};
+    restored.init(ucell, l_channel, 4, 2);
+    DFTU_BASE::read_occup_m(ucell, restored, l_channel, filename, 4, 2, layout);
+    EXPECT_NEAR(restored.mat(0, 2, 0).c[0], 1.0, 1e-8);
+    std::remove(filename.c_str());
+}
+
+TEST_F(DFTUBaseTest, LcaoMethodTwoSocPreservesCrossOrbitalCoupling)
+{
+    Plus_U_Base dftu;
+    init_dftu_for_spin(dftu, false, 4, 2, DFTU_BASE::SOC_LAYOUT_SPIN_BASIS_REAL);
+    const int orbital_size = 5;
+    const int matrix_size = 2 * orbital_size;
+    for (int m = 0; m < matrix_size; ++m)
+    {
+        dftu.occmat().set(0, 2, 0, m, m, 0.5);
+    }
+    dftu.occmat().set(0, 2, 0, 0, orbital_size + 1, 0.2);
+    dftu.occmat().set(0, 2, 0, orbital_size + 1, 0, 0.2);
+
+    const DFTU_BASE::OccmatSocLayout layout = DFTU_BASE::lcao_soc_layout(2);
+    EXPECT_EQ(layout, DFTU_BASE::SOC_LAYOUT_SPIN_BASIS_REAL);
+    std::ostringstream output;
+    DFTU_BASE::write_occup_eigenvalues(dftu, ucell, output, layout);
+    const std::string line = output.str();
+    std::istringstream values(line.substr(line.find(':') + 1));
+    double value = 0.0;
+    for (int i = 0; i < matrix_size; ++i)
+    {
+        ASSERT_TRUE(values >> value);
+        const double expected = i == 0 ? 0.3 : (i == matrix_size - 1 ? 0.7 : 0.5);
+        EXPECT_NEAR(value, expected, 1e-8);
+    }
+    EXPECT_FALSE(values >> value);
+
+    const std::string filename = testing::TempDir() + "lcao_soc_cross_orbital.txt";
+    {
+        std::ofstream file(filename.c_str());
+        ASSERT_TRUE(file.is_open());
+        DFTU_BASE::write_occup_m(dftu, ucell, file, layout);
+    }
+    OccupationMatrix restored;
+    const std::vector<int> l_channel = {2};
+    restored.init(ucell, l_channel, 4, 2);
+    DFTU_BASE::read_occup_m(ucell, restored, l_channel, filename, 4, 2, layout);
+    EXPECT_NEAR(restored.get(0, 2, 0, 0, orbital_size + 1), 0.2, 1e-8);
+    EXPECT_NEAR(restored.get(0, 2, 0, orbital_size + 1, 0), 0.2, 1e-8);
+    EXPECT_NEAR(restored.get(0, 2, 0, 1, orbital_size), 0.0, 1e-8);
+    std::remove(filename.c_str());
 }
 
 TEST_F(DFTUBaseTest, CompactWriterReaderSocPauliRoundtrip)
@@ -1100,10 +1201,11 @@ TEST_F(DFTUBaseTest, CompactWriterReaderSocRealSpinBasisRoundtrip)
         {
             const double up_up = 0.1 + 0.01 * row + 0.001 * column;
             const double up_down = 0.2 + 0.01 * row + 0.001 * column;
+            const double down_up = 0.2 + 0.01 * column + 0.001 * row;
             const double down_down = 0.3 + 0.01 * row + 0.001 * column;
             source.occmat().set(0, 2, 0, row, column, up_up);
             source.occmat().set(0, 2, 0, row, column + orbital_size, up_down);
-            source.occmat().set(0, 2, 0, row + orbital_size, column, up_down);
+            source.occmat().set(0, 2, 0, row + orbital_size, column, down_up);
             source.occmat().set(0, 2, 0, row + orbital_size, column + orbital_size, down_down);
         }
     }

@@ -25,13 +25,14 @@ struct SocCompactBlocks
 
 namespace
 {
+constexpr double jacobi_tolerance = 1.0e-10;
 
 inline void jacobi_rotate(std::vector<std::vector<double>>& matrix,
                           const int p,
                           const int q,
                           const int size)
 {
-    if (std::abs(matrix[p][q]) <= 1.0e-10)
+    if (std::abs(matrix[p][q]) <= jacobi_tolerance)
     {
         return;
     }
@@ -85,7 +86,7 @@ inline std::vector<double> calculate_eigenvalues(std::vector<std::vector<double>
             }
         }
 
-        if (std::abs(matrix[p][q]) < 1.0e-10)
+        if (std::abs(matrix[p][q]) <= jacobi_tolerance)
         {
             for (int i = 0; i < size; ++i)
             {
@@ -113,9 +114,10 @@ inline std::vector<double> calculate_spinor_eigenvalues(const SocCompactBlocks& 
             spinor_matrix(row, column + orbital_size)
                 = std::complex<double>(blocks.up_down_real[index],
                                        blocks.up_down_imag[index]);
+            const int transposed_index = column * orbital_size + row;
             spinor_matrix(row + orbital_size, column)
-                = std::complex<double>(blocks.up_down_real[index],
-                                       -blocks.up_down_imag[index]);
+                = std::complex<double>(blocks.up_down_real[transposed_index],
+                                       -blocks.up_down_imag[transposed_index]);
             spinor_matrix(row + orbital_size, column + orbital_size)
                 = blocks.down_down[index];
         }
@@ -202,10 +204,9 @@ static SocCompactBlocks extract_soc_compact_blocks(const Plus_U_Base& dftu,
                 const int index = row * size + column;
                 const double up_up = occmat.get(iat, l, 0, row, column);
                 const double up_down = occmat.get(iat, l, 0, row, column + size);
-                const double down_up = occmat.get(iat, l, 0, row + size, column);
                 const double down_down = occmat.get(iat, l, 0, row + size, column + size);
                 blocks.up_up[index] = up_up;
-                blocks.up_down_real[index] = 0.5 * (up_down + down_up);
+                blocks.up_down_real[index] = up_down;
                 blocks.down_down[index] = down_down;
             }
         }

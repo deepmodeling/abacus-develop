@@ -721,12 +721,14 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
                                                 iter,
                                                 this->scf_thr,
                                                 this->drho};
+    const DFTU_BASE::OccmatSocLayout occmat_soc_layout
+        = DFTU_BASE::lcao_soc_layout(this->inp_->dft_plus_u);
     DFTU_BASE::write_latest_occmat(*this->dftu_,
                                    ucell,
                                    global_out_dir,
                                    occmat_step,
                                    occmat_cfg,
-                                   DFTU_BASE::SOC_LAYOUT_SPIN_BASIS_REAL);
+                                   occmat_soc_layout);
 
     // append the current SCF-iteration section to occ_matg{#}.txt
     // LCAO computes the occupation matrix in every electronic iteration, so
@@ -738,7 +740,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
                                         conv_esolver,
                                         true,
                                         occmat_cfg,
-                                        DFTU_BASE::SOC_LAYOUT_SPIN_BASIS_REAL);
+                                        occmat_soc_layout);
 
     const bool precision_switched = this->gint_precision_controller_.update_after_iteration(this->drho, this->scf_thr);
     this->gint_info_->set_exec_precision(this->gint_precision_controller_.current_precision());

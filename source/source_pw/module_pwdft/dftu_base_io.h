@@ -86,8 +86,8 @@ void append_ion_step_snapshot(const Plus_U_Base& dftu,
 /// @param soc_layout storage layout of the nspin == 4 occupation matrix;
 ///        the PW path stores 4 contiguous Pauli blocks (b0, b1, b2, b3) and
 ///        must reconstruct them from the (n_uu, Re(n_ud), Im(n_ud), n_dd)
-///        blocks written to the file; the LCAO path stores a real 2m x 2m
-///        spin-basis matrix and discards Im(n_ud).
+///        blocks written to the file; LCAO dft_plus_u=1 also uses Pauli
+///        blocks, while dft_plus_u=2 stores a real 2m x 2m spin-basis matrix.
 void read_occup_m(const UnitCell& ucell,
                   OccupationMatrix& occ,
                   const std::vector<int>& l_channel,
@@ -141,8 +141,8 @@ void write_latest_occmat(const Plus_U_Base& dftu,
 ///
 /// Writes the compact snapshot layout accepted by read_occup_m(). The output
 /// includes per-atom magnetism, electron counts and the full matrix blocks.
-/// soc_layout tells how the nspin == 4 storage is arranged (PW Pauli blocks
-/// or LCAO real spin-basis matrix).
+/// soc_layout tells how the nspin == 4 storage is arranged (PW and LCAO
+/// dft_plus_u=1 Pauli blocks, or LCAO dft_plus_u=2 real spin-basis matrix).
 /// Caller is responsible for opening/closing the stream.
 void write_occup_m(const Plus_U_Base& dftu,
                    const UnitCell& ucell,

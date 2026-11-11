@@ -315,9 +315,10 @@ static void read_occup_store_blocks(OccMatReadState& state,
             std::copy_n(blocks[1].begin() + block_offset,
                         size,
                         matrix.begin() + row * matrix_size + size);
-            std::copy_n(blocks[1].begin() + block_offset,
-                        size,
-                        matrix.begin() + (size + row) * matrix_size);
+            for (int column = 0; column < size; ++column)
+            {
+                matrix[(size + row) * matrix_size + column] = blocks[1][column * size + row];
+            }
             std::copy_n(blocks[3].begin() + block_offset,
                         size,
                         matrix.begin() + (size + row) * matrix_size + size);
