@@ -200,7 +200,7 @@ OBJS_BASE=assoc_laguerre.o\
     device.o\
     device_helpers.o\
     output_device.o\
-    parallel_2d.o\
+    block_cyclic_distribution.o\
     binstream.o\
     filename.o\
     sparse_matrix.o\
@@ -249,7 +249,10 @@ OBJS_CELL=atom_pseudo.o\
     cal_ux.o\
     mdcell_reader.o\
     mdcell.o\
-    domain_decomposition.o\
+    dom_core.o\
+    dom_ghost.o\
+    dom_migrate.o\
+    dom_force.o\
     cif_io.o\
     ucell_io.o\
 

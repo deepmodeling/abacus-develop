@@ -36,11 +36,11 @@ void HkPsi<double>(const Parallel_Orbitals* ParaV,
     const char C_char = 'C';
 
 #ifdef __MPI
-    const int nbasis = ParaV->para_2d().get_desc()[2];
+    const int nbasis = ParaV->para_2d().desc()[2];
     const int nbands = ParaV->desc_wfc[3];
 
     //because wfc(bands, basis'), H(basis, basis'), we do wfc*H^T(in the perspective of cpp, not in fortran). And get H_wfc(bands, basis) is correct.
-    ScalapackConnector::gemm( C_char, N_char, nbasis, nbands, nbasis, one_double, &HK, 1, 1, ParaV->para_2d().get_desc(),
+    ScalapackConnector::gemm( C_char, N_char, nbasis, nbands, nbasis, one_double, &HK, 1, 1, ParaV->para_2d().desc(),
         &wfc, 1, 1, ParaV->desc_wfc, zero_double, &H_wfc, 1, 1, ParaV->desc_wfc );
 #endif
 
@@ -49,7 +49,7 @@ void HkPsi<double>(const Parallel_Orbitals* ParaV,
 
 template <>
 void cal_bra_op_ket<double>(const Parallel_Orbitals* ParaV, 
-                            const Parallel_2D& para_Eij_in,
+                            const BlockCyclicDistribution& para_Eij_in,
                             const double& wfc, 
                             const double& H_wfc, 
                             std::vector<double>& Dmn)
@@ -60,15 +60,15 @@ void cal_bra_op_ket<double>(const Parallel_Orbitals* ParaV,
     const char N_char = 'N';
     const char T_char = 'T';
 
-    const int nrow_bands = para_Eij_in.get_row_size();
-    const int ncol_bands = para_Eij_in.get_col_size();
+    const int nrow_bands = para_Eij_in.nrloc();
+    const int ncol_bands = para_Eij_in.ncloc();
 
 #ifdef __MPI
-    const int nbasis = ParaV->para_2d().get_desc()[2];
+    const int nbasis = ParaV->para_2d().desc()[2];
     const int nbands = ParaV->desc_wfc[3];
 
     ScalapackConnector::gemm( T_char, N_char, nbands, nbands, nbasis, one_double, &wfc, 1, 1, ParaV->desc_wfc,
-            &H_wfc, 1, 1, ParaV->desc_wfc, zero_double, &Dmn[0], 1, 1, para_Eij_in.desc );
+            &H_wfc, 1, 1, ParaV->desc_wfc, zero_double, &Dmn[0], 1, 1, para_Eij_in.desc() );
 #endif
 }
 

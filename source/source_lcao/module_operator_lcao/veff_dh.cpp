@@ -248,10 +248,10 @@ void Veff<OperatorLCAO<TK, TR>>::cal_dH(std::array<std::vector<hamilt::HContaine
 
                 for (int iw1 = 0; iw1 < nw1; ++iw1)
                 {
-                    const int lr = paraV->para_2d().global2local_row(gr0 + iw1);
+                    const int lr = paraV->para_2d().irloc(gr0 + iw1);
                     for (int iw2 = 0; iw2 < nw2; ++iw2)
                     {
-                        const int lc = paraV->para_2d().global2local_col(gc0 + iw2);
+                        const int lc = paraV->para_2d().icloc(gc0 + iw2);
                         // this matrix element is owned iff both its row and col are local here
                         const bool owned = owns_block && dm_ptr && lr >= 0 && lc >= 0;
 

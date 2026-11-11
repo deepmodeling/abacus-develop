@@ -45,7 +45,7 @@ class EvolvePsiTest : public testing::Test
         ASSERT_EQ(pv.para_2d().set(nlocal, nlocal, 1, ictxt), 0);
         pv.nloc_wfc = 2;
         pv.nrow_bands = pv.ncol_bands = 1;
-        pv.set_desc_wfc_Eij(nlocal, nband, pv.para_2d().get_row_size());
+        pv.set_desc_wfc_Eij(nlocal, nband, pv.para_2d().nrloc());
     }
 
     void expect_endpoint_norm(const Complex* psi)

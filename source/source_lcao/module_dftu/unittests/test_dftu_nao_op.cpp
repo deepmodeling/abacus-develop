@@ -93,7 +93,7 @@ class DFTUTest : public ::testing::Test
         int global_col = test_size * test_nw;
         std::ofstream ofs_running;
         paraV = new Parallel_Orbitals();
-        paraV->para_2d().init(global_row, global_col, nb, MPI_COMM_WORLD);
+        paraV->para_2d().init(global_row, global_col, nb, MPI_COMM_WORLD, false);
         paraV->set_atomic_trace(ucell.get_iat2iwt(), test_size, global_row);
     }
 #else
@@ -124,9 +124,9 @@ TEST_F(DFTUTest, constructHRd2d)
     const double factor = 1.0 / test_nw / test_nw / test_size / test_size;
     module_dm::DensityMatrix<double, double> dm(paraV, 1);
     dm.init_dmr(*HR);
-    for (int i = 0; i < paraV->para_2d().get_row_size(); i++)
+    for (int i = 0; i < paraV->para_2d().nrloc(); i++)
     {
-        for (int j = 0; j < paraV->para_2d().get_col_size(); j++)
+        for (int j = 0; j < paraV->para_2d().ncloc(); j++)
         {
             dm.set_dmk(1, 0, i, j, factor);
         }
@@ -162,7 +162,7 @@ TEST_F(DFTUTest, constructHRd2d)
     }
     op.contributeHk(0);
     double* hk = hsk.get_hk();
-    for (int i = 0; i < paraV->para_2d().get_row_size() * paraV->para_2d().get_col_size(); ++i)
+    for (int i = 0; i < paraV->para_2d().nrloc() * paraV->para_2d().ncloc(); ++i)
     {
         EXPECT_NEAR(hk[i], -10.0 * test_size, 1e-10);
     }
@@ -181,9 +181,9 @@ TEST_F(DFTUTest, constructHRd2cd)
     dm.init_dmr(*HR);
     for (int is = 1; is <= 2; ++is)
     {
-        for (int i = 0; i < paraV->para_2d().get_row_size(); i++)
+        for (int i = 0; i < paraV->para_2d().nrloc(); i++)
         {
-            for (int j = 0; j < paraV->para_2d().get_col_size(); j++)
+            for (int j = 0; j < paraV->para_2d().ncloc(); j++)
             {
                 dm.set_dmk(is, 0, i, j, std::complex<double>(factor, 0.0));
             }
@@ -220,7 +220,7 @@ TEST_F(DFTUTest, constructHRd2cd)
     }
     op.contributeHk(0);
     std::complex<double>* hk = hsk.get_hk();
-    for (int i = 0; i < paraV->para_2d().get_row_size() * paraV->para_2d().get_col_size(); ++i)
+    for (int i = 0; i < paraV->para_2d().nrloc() * paraV->para_2d().ncloc(); ++i)
     {
         EXPECT_NEAR(hk[i].real(), -10.0 * test_size, 1e-10);
         EXPECT_NEAR(hk[i].imag(), 0.0, 1e-10);
