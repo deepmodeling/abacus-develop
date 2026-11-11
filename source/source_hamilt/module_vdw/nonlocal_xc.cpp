@@ -36,7 +36,9 @@ void total_density(const Charge& chr,
     const ModulePW::PW_Basis& pw = *chr.rhopw;
     const int nrxx = chr.nrxx;
     const int nspin0 = density_channels(chr);
-    rho.assign(chr.rho_core, chr.rho_core + nrxx);
+    const double* core_begin = chr.rho_core;
+    const double* core_end = core_begin + nrxx;
+    rho.assign(core_begin, core_end);
     for (int is = 0; is < nspin0; ++is)
     {
 #ifdef _OPENMP

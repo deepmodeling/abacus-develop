@@ -1,24 +1,24 @@
-#ifndef TEST_NONLOCAL_XC_H
-#define TEST_NONLOCAL_XC_H
+#ifndef NONLOCAL_XC_TEST_HELPERS_H
+#define NONLOCAL_XC_TEST_HELPERS_H
 
-// Fixture and helpers shared by test_nonlocal_xc.cpp and test_nonlocal_xc_paths.cpp; bodies in
-// test_nonlocal_xc_helpers.cpp.
+// Fixture and helpers shared by test_nonlocal_xc.cpp and test_rvv10_workspace.cpp; bodies in
+// nonlocal_xc_test_helpers.cpp.
 
-#include "../nonlocal_xc.h"
-#include "source_base/constants.h"
 #include "source_base/matrix.h"
-#include "source_base/matrix3.h"
-#include "source_base/parallel_device.h"
 #include "source_basis/module_pw/pw_basis.h"
-#include "source_cell/unitcell.h"
 #include "source_estate/module_charge/charge.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 
-#include <cmath>
 #include <complex>
 #include <gtest/gtest.h>
 #include <tuple>
 #include <vector>
+
+class UnitCell;
+namespace ModuleBase
+{
+class Matrix3;
+} // namespace ModuleBase
 
 namespace rvv10_test
 {
@@ -161,4 +161,4 @@ class NonlocalXCTest : public testing::Test
 };
 } // namespace rvv10_test
 
-#endif
+#endif // NONLOCAL_XC_TEST_HELPERS_H

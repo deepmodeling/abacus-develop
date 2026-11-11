@@ -132,17 +132,19 @@ void Rvv10Workspace::query_slabs(const ModulePW::PW_Basis& pw)
 #else
     libvdwxc_slab(pw.nz, nproc, pw.poolrank, slab[0], slab[1]);
 #endif
-    std::vector<int> slabs(slab, slab + 2);
+    std::vector<int> slabs = {slab[0], slab[1]};
 #ifdef __MPI
     if (nproc > 1)
     {
-        slabs.resize(2 * nproc);
+        const int slab_values = 2 * nproc;
+        slabs.resize(slab_values);
         Parallel_Common::allgather_data(slab, 2, slabs.data(), comm_);
     }
 #endif
     // the slabs must follow each other in rank order and cover the z axis; an empty slab, wherever libvdwxc
     // places it, is put at the end of the previous one
-    slab_bound_.assign(nproc + 1, 0);
+    const int bound_count = nproc + 1;
+    slab_bound_.assign(bound_count, 0);
     int covered = 0;
     for (int ip = 0; ip < nproc; ++ip)
     {
@@ -196,8 +198,10 @@ void Rvv10Workspace::plan_exchange(const ModulePW::PW_Basis& pw)
     for (int ip = 0; nproc > 1 && ip < nproc; ++ip)
     {
         // ABACUS planes of this process that lie in the slab of ip
-        int low = std::max(pw.startz_current, slab_bound_[ip]);
-        int high = std::min(plane_end, slab_bound_[ip + 1]);
+        const int slab_start_of_ip = slab_bound_[ip];
+        const int slab_end_of_ip = slab_bound_[ip + 1];
+        int low = std::max(pw.startz_current, slab_start_of_ip);
+        int high = std::min(plane_end, slab_end_of_ip);
         if (high > low)
         {
             send_count_[ip] = (high - low) * pw.nxy;
@@ -214,7 +218,8 @@ void Rvv10Workspace::plan_exchange(const ModulePW::PW_Basis& pw)
         }
     }
     // libvdwxc expects valid pointers also for an empty slab
-    const int slab_size = std::max(1, (slab_end - slab_start) * pw.nxy);
+    const int slab_points = (slab_end - slab_start) * pw.nxy;
+    const int slab_size = std::max(1, slab_points);
     // the transposed ABACUS planes are only needed for the exchange between processes
     const int planes_size = (nproc > 1) ? std::max(1, pw.nrxx) : 0;
     planes_.resize(planes_size);

@@ -16,9 +16,7 @@
 #include "source_hamilt/module_xc/exx_info.h"
 #endif
 #endif
-#ifdef __LIBVDWXC
 #include "source_hamilt/module_vdw/nonlocal_xc.h"
-#endif
 
 
 // [etxc, vtxc, v] = XC_Functional::v_xc(...)
@@ -61,12 +59,10 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional::v_xc(
     {
         std::tuple<double, double, ModuleBase::matrix> etxc_vtxc_v
             = ModuleXC::NCGGA_SF_Builtin::v_xc_ncgga_sf_builtin(nrxx, ucell->omega, ucell->tpiba, chr);
-#ifdef __LIBVDWXC
         double& etxc = std::get<0>(etxc_vtxc_v);
         double& vtxc = std::get<1>(etxc_vtxc_v);
         ModuleBase::matrix& v = std::get<2>(etxc_vtxc_v);
         vdw::add_rvv10(runtime_parameters, *chr, etxc, vtxc, v);
-#endif
         return etxc_vtxc_v;
     }
 
@@ -216,9 +212,7 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional::v_xc(
 #endif
     etxc *= ucell->omega / chr->rhopw->nxyz;
     vtxc *= ucell->omega / chr->rhopw->nxyz;
-#ifdef __LIBVDWXC
     vdw::add_rvv10(runtime_parameters, *chr, etxc, vtxc, v);
-#endif
 
     ModuleBase::timer::end("XC_Functional", "v_xc");
     return std::make_tuple(etxc, vtxc, std::move(v));

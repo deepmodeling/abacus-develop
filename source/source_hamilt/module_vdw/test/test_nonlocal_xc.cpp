@@ -1,8 +1,17 @@
-#include "test_nonlocal_xc.h"
+// rVV10 adapter (nonlocal_xc.cpp): libvdwxc called directly as the reference, the potential and the stress as
+// derivatives of the energy, and every XC evaluator that adds the term. main() of the test target is here.
+#include "nonlocal_xc_test_helpers.h"
 
+#include "../nonlocal_xc.h"
+#include "source_base/constants.h"
+#include "source_base/matrix3.h"
 #include "source_base/parallel_comm.h"
+#include "source_base/parallel_device.h"
 #include "source_base/parallel_global.h"
-#include "source_basis/module_pw/pw_basis_big.h"
+#include "source_cell/unitcell.h"
+#include "source_hamilt/module_xc/libxc_abacus.h"
+
+#include <cmath>
 
 // The reference calls libvdwxc directly. Include its C header after the C++ headers.
 #include <complex.h>
@@ -141,91 +150,143 @@ TEST_F(NonlocalXCTest, MatchesDirectLibvdwxc)
     }
 }
 
-TEST_F(NonlocalXCTest, DistributedGridMatchesCompleteGrid)
+TEST_F(NonlocalXCTest, PotentialIsTheDerivativeOfTheEnergy)
 {
-    expect_distributed_matches_complete(pw, serial);
-}
-
-TEST_F(NonlocalXCTest, BigGridDistributionMatchesCompleteGrid)
-{
-    // The density grid of a run is a PW_Basis_Big, which hands out whole blocks of bz planes: on two
-    // processes 8 + 4 against libvdwxc's 6 + 6, on four 4 + 4 + 4 + 0 against 3 + 3 + 3 + 3, so that a
-    // process may own no plane at all and one ABACUS block may span two libvdwxc slabs.
-    ModulePW::PW_Basis_Big big{"cpu", "double"};
-    big.setbxyz(1, 1, 4);
-    big.initmpi(test_size, test_rank, MPI_COMM_WORLD);
-    ModulePW::PW_Basis complete{"cpu", "double"};
-    complete.initmpi(1, 0, MPI_COMM_SELF);
-    const ModuleBase::Matrix3 lattice = oblique_lattice(1.0);
-    setup_grid(big, lattice, basis_cutoff, 5, 7, 12);
-    setup_grid(complete, lattice, basis_cutoff, 5, 7, 12);
-    ASSERT_EQ(big.nz, 12);
-    ASSERT_EQ(big.nplane % 4, 0);
-    if (test_size == 4)
+    const std::vector<double> valence = local_grid(pw, valence_density);
+    const std::vector<double> core = local_grid(pw, core_density);
+    const std::vector<double> direction = local_grid(pw, perturbation);
+    std::vector<double> plus = valence;
+    std::vector<double> minus = valence;
+    for (int ir = 0; ir < pw.nrxx; ++ir)
     {
-        EXPECT_EQ(big.numz[3], 0);
+        plus[ir] += finite_difference_step * direction[ir];
+        minus[ir] -= finite_difference_step * direction[ir];
     }
-    expect_distributed_matches_complete(big, complete);
-    // v_xc_libxc hands its gradient to add_rvv10 on every process of the pool, also on one without points
-    UnitCell ucell;
-    ucell.omega = big.omega;
-    ucell.tpiba = big.tpiba;
-    ucell.magnet.lsign_ = false;
-    const std::vector<std::vector<double>> unpolarized(1, local_grid(big, valence_density));
-    const ChargeOnGrid single(big, unpolarized, local_grid(big, core_density));
-    expect_vxc_adds_rvv10("GGA_X_RPW86+GGA_C_PBE", single.chr, ucell, false, 0, 0.0);
+    const VxcResult reference = rvv10_result(pw, {valence}, core);
+    const VxcResult result_plus = rvv10_result(pw, {plus}, core);
+    const VxcResult result_minus = rvv10_result(pw, {minus}, core);
+    const double energy_difference = std::get<0>(result_plus) - std::get<0>(result_minus);
+    const double finite_difference = energy_difference / (2.0 * finite_difference_step);
+
+    double contraction = 0.0;
+    for (int ir = 0; ir < pw.nrxx; ++ir)
+    {
+        contraction += std::get<2>(reference)(0, ir) * direction[ir];
+    }
+    Parallel_Common::reduce_data(&contraction, 1, pw.pool_world);
+    contraction *= pw.omega / pw.nxyz;
+    EXPECT_NEAR(finite_difference, contraction, finite_difference_tolerance);
 }
 
-TEST_F(NonlocalXCTest, LeftHandedCellGivesTheMirrorImageResult)
+TEST_F(NonlocalXCTest, StressIsTheStrainDerivativeOfTheEnergy)
 {
-    // A mirror image has the same result; libvdwxc's signed cell volume would flip the sign of the energy.
-    ModulePW::PW_Basis mirror{"cpu", "double"};
-    mirror.initmpi(1, 0, MPI_COMM_SELF);
-    const ModuleBase::Matrix3 mirrored = oblique_lattice(-1.0);
-    setup(mirror, mirrored, basis_cutoff);
-    ASSERT_LT(mirror.latvec.Det(), 0.0);
-    const std::vector<double> valence = local_grid(serial, valence_density);
-    const std::vector<double> core = local_grid(serial, core_density);
-    const VxcResult right_handed = rvv10_result(serial, {valence}, core);
-    const VxcResult left_handed = rvv10_result(mirror, {valence}, core);
-    expect_same_result(left_handed, right_handed, rounding_tolerance, rounding_tolerance);
-}
-
-TEST_F(NonlocalXCTest, WorkspaceFollowsGridCellAndProcessChanges)
-{
-    // The libvdwxc object is reused between calls; switching the process layout, the cell, the grid and
-    // back must reproduce the earlier results.
-    ModulePW::PW_Basis orthogonal{"cpu", "double"};
-    orthogonal.initmpi(1, 0, MPI_COMM_SELF);
-    const ModuleBase::Matrix3 rectangle(std::sqrt(0.75), 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 2.0);
-    setup(orthogonal, rectangle, basis_cutoff);
-    ModulePW::PW_Basis finer{"cpu", "double"};
-    finer.initmpi(1, 0, MPI_COMM_SELF);
+    // A strain keeps the grid and every G component of the density, so the stress is the exact derivative
+    // of the discrete energy: sigma_ab = -(1/omega) dE/d(eps_ab) at a fixed electron number.
+    ModulePW::PW_Basis box{"cpu", "double"};
+    box.initmpi(1, 0, MPI_COMM_SELF);
     const ModuleBase::Matrix3 lattice = oblique_lattice(1.0);
-    setup_grid(finer, lattice, basis_cutoff, 5, 7, 11);
-    const std::vector<double> valence_finer = local_grid(finer, valence_density);
-    const std::vector<double> core_finer = local_grid(finer, core_density);
-    const std::vector<double> valence = local_grid(serial, valence_density);
-    const std::vector<double> core = local_grid(serial, core_density);
-    const std::vector<double> valence_local = local_grid(pw, valence_density);
-    const std::vector<double> core_local = local_grid(pw, core_density);
-    const VxcResult first = rvv10_result(serial, {valence}, core);
-    const VxcResult repeated = rvv10_result(serial, {valence}, core);
-    const VxcResult distributed = rvv10_result(pw, {valence_local}, core_local);
-    const VxcResult other_cell = rvv10_result(orthogonal, {valence}, core);
-    const VxcResult other_grid = rvv10_result(finer, {valence_finer}, core_finer);
-    const VxcResult again = rvv10_result(serial, {valence}, core);
-    const VxcResult other_grid_again = rvv10_result(finer, {valence_finer}, core_finer);
-    expect_same_result(repeated, first, 0.0, 0.0);
-    expect_same_result(again, first, rounding_tolerance, rounding_tolerance);
-    expect_same_result(other_grid_again, other_grid, rounding_tolerance, rounding_tolerance);
-    EXPECT_NEAR(std::get<0>(distributed), std::get<0>(first), rounding_tolerance);
-    EXPECT_GT(std::abs(std::get<0>(other_cell) - std::get<0>(first)), 1.0e-8);
-    // the end of a run releases the libvdwxc object; a later evaluation builds it again
-    vdw::finalize_rvv10();
-    const VxcResult after_release = rvv10_result(serial, {valence}, core);
-    expect_same_result(after_release, first, 0.0, 0.0);
-    vdw::finalize_rvv10();
+    setup(box, lattice, largest_sphere_cutoff);
+    const std::vector<double> density = local_grid(box, valence_density);
+    const std::vector<double> no_core(box.nrxx, 0.0);
+    const VxcResult reference = rvv10_result(box, {density}, no_core);
+    const ModuleBase::matrix extra = rvv10_stress(box, {density}, no_core);
+    // the XC diagonal term that ABACUS adds from etxc and vtxc
+    const double diagonal = -(std::get<0>(reference) - std::get<1>(reference)) / box.omega;
+
+    const int components[4][2] = {{0, 0}, {2, 2}, {0, 1}, {1, 2}};
+    for (const int* ab: components)
+    {
+        const int a = ab[0];
+        const int b = ab[1];
+        double energy[2] = {0.0, 0.0};
+        for (int side = 0; side < 2; ++side)
+        {
+            const double h = (side == 0) ? strain_step : -strain_step;
+            ModulePW::PW_Basis strained{"cpu", "double"};
+            strained.initmpi(1, 0, MPI_COMM_SELF);
+            const ModuleBase::Matrix3 strained_cell = strained_lattice(lattice, a, b, h);
+            setup(strained, strained_cell, largest_sphere_cutoff);
+            // keep the electron number: the density scales with the inverse volume ratio
+            const double volume_ratio = strained.omega / box.omega;
+            std::vector<double> scaled = density;
+            for (double& value: scaled)
+            {
+                value /= volume_ratio;
+            }
+            const VxcResult strained_result = rvv10_result(strained, {scaled}, no_core);
+            energy[side] = std::get<0>(strained_result);
+        }
+        const double finite_difference = -(energy[0] - energy[1]) / (2.0 * strain_step * box.omega);
+        const double analytic = extra(a, b) + ((a == b) ? diagonal : 0.0);
+        const double tolerance = strain_tolerance * std::abs(analytic) + 1.0e-12;
+        SCOPED_TRACE(testing::Message() << "component " << a << b);
+        EXPECT_NEAR(analytic, finite_difference, tolerance);
+    }
+}
+
+TEST_F(NonlocalXCTest, VxcAddsRvv10ToEveryFunctionalPath)
+{
+    // v_xc and v_xc_meta with rVV10 equal the semilocal result plus add_rvv10, for native PBE (final
+    // return), a libxc GGA (v_xc_libxc), noncollinear PBE and libxc GGA with the default gga_grad 0
+    // (collinear-mapped branches of v_xc and v_xc_libxc) and with gga_grad 2 (NCGGA return, libxc local
+    // collinear map), and SCAN (v_xc_meta).
+    const std::vector<double> valence = local_grid(pw, valence_density);
+    const std::vector<double> core = local_grid(pw, core_density);
+    const std::vector<double> zeros(pw.nrxx);
+    std::vector<std::vector<double>> collinear(2, zeros);
+    std::vector<std::vector<double>> noncollinear(4, zeros);
+    for (int ir = 0; ir < pw.nrxx; ++ir)
+    {
+        collinear[0][ir] = 0.7 * valence[ir];
+        collinear[1][ir] = valence[ir] - collinear[0][ir];
+        noncollinear[0][ir] = valence[ir];
+        noncollinear[1][ir] = 0.1 * valence[ir];
+        noncollinear[2][ir] = -0.05 * valence[ir];
+        noncollinear[3][ir] = 0.2 * valence[ir];
+    }
+    UnitCell ucell;
+    ucell.omega = pw.omega;
+    ucell.tpiba = pw.tpiba;
+    ucell.magnet.lsign_ = false;
+    const ChargeOnGrid polarized(pw, collinear, core);
+    const ChargeOnGrid magnetized(pw, noncollinear, core);
+    expect_vxc_adds_rvv10("PBE", polarized.chr, ucell, false, 0, rounding_tolerance);
+    expect_vxc_adds_rvv10("GGA_X_RPW86+GGA_C_PBE", polarized.chr, ucell, false, 0, rounding_tolerance);
+    expect_vxc_adds_rvv10("PBE", magnetized.chr, ucell, true, 2, rounding_tolerance);
+    expect_vxc_adds_rvv10("PBE", magnetized.chr, ucell, true, 0, rounding_tolerance);
+    expect_vxc_adds_rvv10("GGA_X_RPW86+GGA_C_PBE", magnetized.chr, ucell, true, 0, rounding_tolerance);
+    expect_vxc_adds_rvv10("GGA_X_RPW86+GGA_C_PBE", magnetized.chr, ucell, true, 2, rounding_tolerance);
+    // with one spin channel, v_xc_libxc and v_xc_meta hand their density gradient to add_rvv10, so the
+    // results are identical to the last bit
+    const std::vector<std::vector<double>> unpolarized(1, valence);
+    const ChargeOnGrid single(pw, unpolarized, core);
+    expect_vxc_adds_rvv10("GGA_X_RPW86+GGA_C_PBE", single.chr, ucell, false, 0, 0.0);
+
+    XC_Functional::ScopedType scan("SCAN");
+    std::vector<double> kinetic = local_grid(pw, kinetic_density);
+    std::vector<double*> kinetic_rows(1, kinetic.data());
+    ChargeOnGrid charge(pw, unpolarized, core);
+    charge.chr.kin_r = kinetic_rows.data();
+    const std::vector<int> func_id = XC_Functional::get_func_id();
+    const int nspin = 1;
+    const double hybrid_alpha = 0.0;
+    const double hse_omega = 0.0;
+    VxcResult results[2];
+    for (int with_rvv10 = 0; with_rvv10 < 2; ++with_rvv10)
+    {
+        const bool rvv10 = with_rvv10 == 1;
+        RuntimeParameters parameters(rvv10);
+        const MetaResult meta = XC_Functional_Libxc::v_xc_meta(func_id,
+                                                               pw.nrxx,
+                                                               pw.omega,
+                                                               pw.tpiba,
+                                                               &charge.chr,
+                                                               nspin,
+                                                               hybrid_alpha,
+                                                               hse_omega);
+        results[with_rvv10] = VxcResult(std::get<0>(meta), std::get<1>(meta), std::get<2>(meta));
+    }
+    expect_rvv10_added(results[1], results[0], charge.chr, 0.0);
 }
 
 } // namespace rvv10_test

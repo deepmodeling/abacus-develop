@@ -356,9 +356,10 @@ Available options are:
             }
             else if (functional != "GGA_X_RPW86+GGA_C_PBE")
             {
-                ModuleBase::WARNING("ReadInput",
-                                    "vdw_rvv10_b is not set: the rPW86-PBE value 6.3 is used with dft_functional "
-                                        + para.input.dft_functional);
+                const std::string message
+                    = "vdw_rvv10_b is not set: the rPW86-PBE value 6.3 is used with dft_functional "
+                      + para.input.dft_functional;
+                ModuleBase::WARNING("ReadInput", message);
             }
         };
         read_sync_double(input.vdw_rvv10_b);

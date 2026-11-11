@@ -1,4 +1,12 @@
-#include "test_nonlocal_xc.h"
+#include "nonlocal_xc_test_helpers.h"
+
+#include "../nonlocal_xc.h"
+#include "source_base/constants.h"
+#include "source_base/matrix3.h"
+#include "source_base/parallel_device.h"
+#include "source_cell/unitcell.h"
+
+#include <cmath>
 
 namespace rvv10_test
 {

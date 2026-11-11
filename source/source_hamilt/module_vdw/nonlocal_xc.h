@@ -19,7 +19,10 @@ namespace vdw
 // nothing unless parameters.rvv10 is set. They use the total density of chr (valence plus core) and are
 // collective over the pool communicator of chr.rhopw. The libvdwxc object, its FFT plans and its buffers
 // are kept between calls (Rvv10Workspace) and released by finalize_rvv10.
+// Without libvdwxc the four functions are empty, so that the callers need no preprocessor branch;
+// vdw_method rvv10 then stops in make_vdw.
 
+#ifdef __LIBVDWXC
 /**
  * @brief Add the rVV10 energy and potential to the result of an XC evaluation.
  * @param parameters  rVV10 switch and the parameters b and C
@@ -57,6 +60,25 @@ void add_rvv10_stress(const XCFunctionalParameters& parameters, const Charge& ch
 
 /// Release the libvdwxc object of the run. Call before MPI_Finalize; a later evaluation builds it again.
 void finalize_rvv10();
+#else
+inline void add_rvv10(const XCFunctionalParameters&, const Charge&, double&, double&, ModuleBase::matrix&)
+{
+}
+inline void add_rvv10(const XCFunctionalParameters&,
+                      const Charge&,
+                      const std::vector<ModuleBase::Vector3<double>>*,
+                      double&,
+                      double&,
+                      ModuleBase::matrix&)
+{
+}
+inline void add_rvv10_stress(const XCFunctionalParameters&, const Charge&, ModuleBase::matrix&)
+{
+}
+inline void finalize_rvv10()
+{
+}
+#endif
 
 } // namespace vdw
 
