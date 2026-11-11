@@ -347,7 +347,8 @@ void write_occup_eigenvalues(const Plus_U_Base& dftu,
         for (int atom = 0; atom < ucell.atoms[type].na; ++atom)
         {
             const int iat = ucell.itia2iat(type, atom);
-            const int channels = nspin == 4 ? 1 : 2;
+            // nspin=1 maintains one matrix; nspin=4 packs both spinor components in one matrix.
+            const int channels = nspin == 2 ? 2 : 1;
             for (int spin = 0; spin < channels; ++spin)
             {
                 std::vector<double> values;
@@ -372,6 +373,10 @@ void write_occup_eigenvalues(const Plus_U_Base& dftu,
                 if (nspin == 4)
                 {
                     os << " spinor:";
+                }
+                else if (nspin == 1)
+                {
+                    os << " nonmagnetic:";
                 }
                 else
                 {

@@ -1015,6 +1015,43 @@ TEST_F(DFTUBaseTest, CollinearEigenvaluesStopAtJacobiCutoff)
     EXPECT_NE(output.str().find("# eigenvalues atom 1 L 2 spin 1:"), std::string::npos);
 }
 
+TEST_F(DFTUBaseTest, NonmagneticEigenvaluesUseOnlyMaintainedChannel)
+{
+    Plus_U_Base dftu;
+    init_dftu_for_spin(dftu, false, 1, 1, DFTU_BASE::SOC_LAYOUT_PAULI);
+    dftu.occmat().set(0, 2, 0, 0, 0, 0.6);
+    dftu.occmat().set(0, 2, 1, 0, 0, 0.1); // unused or stale channel
+
+    std::ostringstream output;
+    DFTU_BASE::write_occup_eigenvalues(dftu, ucell, output,
+                                       DFTU_BASE::SOC_LAYOUT_PAULI);
+    const std::string result = output.str();
+    EXPECT_EQ(result.find("spin 2"), std::string::npos);
+    EXPECT_EQ(result.find("spin 1"), std::string::npos);
+    EXPECT_NE(result.find("# eigenvalues atom 1 L 2 nonmagnetic: 0.00000000 0.00000000 0.00000000 0.00000000 0.60000000"),
+              std::string::npos);
+    EXPECT_EQ(result.find("\n# eigenvalues", 1), std::string::npos);
+}
+
+TEST_F(DFTUBaseTest, NonmagneticPwEigenvaluesKeepSpinSummedWeight)
+{
+    Plus_U_Base dftu;
+    init_dftu_for_spin(dftu, false, 1, 1, DFTU_BASE::SOC_LAYOUT_PAULI);
+    std::vector<std::complex<double>> projector_overlap(5, {0.0, 0.0});
+    projector_overlap[0] = {1.0, 0.0};
+    ModuleBase::matrix band_weight(1, 1);
+    band_weight(0, 0) = 2.0; // nspin=1 k-point weights include spin degeneracy
+    pw::accumulate_occ_scalar(dftu.occmat().mat(0, 2, 0).c,
+                              projector_overlap.data(), 1, 5, 0, 0, 5,
+                              band_weight, 0);
+
+    std::ostringstream output;
+    DFTU_BASE::write_occup_eigenvalues(dftu, ucell, output,
+                                       DFTU_BASE::SOC_LAYOUT_PAULI);
+    EXPECT_NE(output.str().find("nonmagnetic: 0.00000000 0.00000000 0.00000000 0.00000000 2.00000000"),
+              std::string::npos);
+}
+
 TEST_F(DFTUBaseTest, LcaoMethodOneSocUsesPauliBlocks)
 {
     Plus_U_Base dftu;
@@ -1061,12 +1098,13 @@ TEST_F(DFTUBaseTest, LcaoMethodTwoSocPreservesCrossOrbitalCoupling)
     init_dftu_for_spin(dftu, false, 4, 2, DFTU_BASE::SOC_LAYOUT_SPIN_BASIS_REAL);
     const int orbital_size = 5;
     const int matrix_size = 2 * orbital_size;
+    const int cross_spin_orbital = orbital_size + 1;
     for (int m = 0; m < matrix_size; ++m)
     {
         dftu.occmat().set(0, 2, 0, m, m, 0.5);
     }
-    dftu.occmat().set(0, 2, 0, 0, orbital_size + 1, 0.2);
-    dftu.occmat().set(0, 2, 0, orbital_size + 1, 0, 0.2);
+    dftu.occmat().set(0, 2, 0, 0, cross_spin_orbital, 0.2);
+    dftu.occmat().set(0, 2, 0, cross_spin_orbital, 0, 0.2);
 
     const DFTU_BASE::OccmatSocLayout layout = DFTU_BASE::lcao_soc_layout(2);
     EXPECT_EQ(layout, DFTU_BASE::SOC_LAYOUT_SPIN_BASIS_REAL);
@@ -1093,8 +1131,8 @@ TEST_F(DFTUBaseTest, LcaoMethodTwoSocPreservesCrossOrbitalCoupling)
     const std::vector<int> l_channel = {2};
     restored.init(ucell, l_channel, 4, 2);
     DFTU_BASE::read_occup_m(ucell, restored, l_channel, filename, 4, 2, layout);
-    EXPECT_NEAR(restored.get(0, 2, 0, 0, orbital_size + 1), 0.2, 1e-8);
-    EXPECT_NEAR(restored.get(0, 2, 0, orbital_size + 1, 0), 0.2, 1e-8);
+    EXPECT_NEAR(restored.get(0, 2, 0, 0, cross_spin_orbital), 0.2, 1e-8);
+    EXPECT_NEAR(restored.get(0, 2, 0, cross_spin_orbital, 0), 0.2, 1e-8);
     EXPECT_NEAR(restored.get(0, 2, 0, 1, orbital_size), 0.0, 1e-8);
     std::remove(filename.c_str());
 }
