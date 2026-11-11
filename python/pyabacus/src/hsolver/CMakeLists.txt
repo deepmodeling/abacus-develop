@@ -9,6 +9,7 @@ list(APPEND _diago
     ${HSOLVER_PATH}/kernels/dngvd_op.cpp
     ${HSOLVER_PATH}/kernels/math_kernel_op.cpp
     # dependency
+    ${ABACUS_SOURCE_DIR}/module_hamilt_general/operator.cpp
     ${BASE_PATH}/kernels/math_op.cpp
     ${BASE_PATH}/module_device/device.cpp
     ${BASE_PATH}/module_device/memory_op.cpp
