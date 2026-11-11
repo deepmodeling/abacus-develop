@@ -18,6 +18,8 @@
  * This class manages the main relaxation loop, including energy solving,
  * force/stress calculation, and structure optimization steps.
  */
+class Parameter;
+
 class Relax_Driver
 {
 
@@ -34,12 +36,12 @@ class Relax_Driver
      *
      * @param p_esolver Pointer to the energy solver.
      * @param ucell Reference to the unit cell to be relaxed.
-     * @param inp Input parameters for the calculation.
+     * @param parameters Runtime input and electronic parameters.
      * @param ofs_running Output stream for running log.
      */
     void relax_driver(ModuleESolver::ESolver* p_esolver,
                       UnitCell& ucell,
-                      const Input_para& inp,
+                      Parameter& parameters,
                       std::ofstream& ofs_running);
 
   private:

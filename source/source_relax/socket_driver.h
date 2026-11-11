@@ -4,7 +4,9 @@
 #include <iosfwd>
 
 class UnitCell;
+class Parameter;
 struct Input_para;
+struct System_para;
 
 namespace ModuleESolver
 {
@@ -17,7 +19,11 @@ class Socket_Driver
     Socket_Driver() = default;
     ~Socket_Driver() = default;
 
-    void socket_driver(ModuleESolver::ESolver* p_esolver,
+    bool socket_driver(ModuleESolver::ESolver* solver, UnitCell& cell,
+                       Parameter& parameters, const Input_para& input,
+                       const System_para& system, std::ofstream& log);
+
+    bool socket_driver(ModuleESolver::ESolver* p_esolver,
                        UnitCell& ucell,
                        const Input_para& inp,
                        std::ofstream& ofs_running);

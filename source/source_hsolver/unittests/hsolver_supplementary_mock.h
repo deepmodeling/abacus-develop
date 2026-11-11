@@ -2,9 +2,31 @@
 #define ABACUS_SOURCE_HSOLVER_TEST_HSOLVER_SUPPLEMENTARY_MOCK_H
 
 #include "source_estate/elecstate_pw.h"
+#include "source_estate/electronic_occupations.h"
+#include "source_estate/module_pot/electrostatic_potential.h"
+#include "source_estate/param_update.h"
+
+#include <stdexcept>
 
 namespace elecstate
 {
+
+// These eigensolver fixtures do not run the outer electronic-control workflow.
+void ParamUpdater::update_electron_count(double, Parameter&)
+{
+    throw std::logic_error("unexpected electronic-control update in eigensolver fixture");
+}
+
+double checked_occupation_electron_count(const ModuleBase::matrix&, double, int, int)
+{
+    throw std::logic_error("unexpected electronic-control feedback in eigensolver fixture");
+}
+
+double electrostatic_reference(const UnitCell&, ModulePW::PW_Basis&, const Charge&, const Potential&,
+                               const surchem&, const Input_para&, const PotentialWindow&)
+{
+    throw std::logic_error("unexpected electrostatic-reference evaluation in eigensolver fixture");
+}
 
 const double *ElecState::getRho(int spin) const
 {
@@ -14,6 +36,8 @@ const double *ElecState::getRho(int spin) const
 }
 
 void ElecState::init_nelec_spin() { return; }
+
+void ElecState::init_nelec_spin(int, double, double) {}
 
 void ElecState::init_ks(
     Charge *chg_in, // pointer for class Charge

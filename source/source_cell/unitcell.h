@@ -10,6 +10,11 @@
 #include "source_cell/basecell.h"
 #include "source_cell/nonlocal_info_base.h"
 
+namespace elecstate
+{
+struct ElectronicStep;
+}
+
 /**
  * @brief Provide the basic information about unitcell.
  */
@@ -126,6 +131,9 @@ class UnitCell : public BaseCell {
     /// deprecated and will be removed in the future
 
   public:
+
+    /// Non-owning, rank-local data bound by the caller only during one evaluation.
+    elecstate::ElectronicStep* electronic_step = nullptr;
 
     /// @name Lattice
     /// @{

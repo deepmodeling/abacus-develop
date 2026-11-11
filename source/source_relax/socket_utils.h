@@ -1,6 +1,7 @@
 #ifndef ABACUS_SOURCE_RELAX_SOCKET_UTILS_H
 #define ABACUS_SOURCE_RELAX_SOCKET_UTILS_H
 
+#include "source_relax/socket_constant_potential.h"
 #include "source_base/matrix.h"
 #include "source_relax/socket_frame.h"
 
@@ -35,6 +36,8 @@ struct ComputedFrame
     bool forces_present = false;
     bool stress_present = false;
     bool scf_converged = true;
+    bool electronic_present = false;
+    SocketCP::Observables electronic;
     double energy_hartree = 0.0;
     std::vector<double> forces_hartree_per_bohr;
     SocketFrame::Matrix9 virial_wire_hartree = {{0.0}};

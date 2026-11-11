@@ -2,6 +2,7 @@
 #include "source_pw/module_pwdft/pw_hybrid_nscf.h"
 
 #include "source_estate/elecstate_pw.h"
+#include "source_estate/elecstate_tools.h"
 #include "source_estate/module_charge/chg_symm.h"
 #include "source_hamilt/hamilt_hs_adapter.h"
 #include "source_hsolver/diago_iter_assist.h"
@@ -18,6 +19,7 @@
 
 #include "source_estate/module_charge/chg_routine.h"  // use charge mixing, mohan add 20251006
 #include "source_estate/setup_estate_pw.h"            // mohan add 20251005
+#include "source_hamilt/module_xc/xc_functional.h"
 #include "source_hamilt/module_xc/general_exx_info.h" // for General_Exx_Info type used via general_exx_info_
 #include "source_io/module_ctrl/ctrl_output_pw.h"     // mohan add 20250927
 #include "source_pw/module_pwdft/dftu_base.h"
@@ -164,6 +166,14 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
 {
     ModuleBase::TITLE("ESolver_KS_PW", "before_scf");
     ModuleBase::timer::start("ESolver_KS_PW", "before_scf");
+
+    if (ucell.electronic_step != nullptr)
+    {
+        const int functional_type = XC_Functional::get_func_type();
+        validate_electronic_step_exx(functional_type, this->general_exx_info_.cal_exx);
+        elecstate::prepare_electronic_step(this->pelec, *ucell.electronic_step, *this->inp_);
+        this->exx_helper->begin_electronic_step();
+    }
 
     ESolver_KS::before_scf(ucell, istep);
 
@@ -510,6 +520,12 @@ void ESolver_KS_PW<T, Device>::cal_force(BaseCell& basecell, ModuleBase::matrix&
                  &this->kv,
                  this->pw_wfc,
                  this->stp.template get_psi_d<T, Device>());
+
+    if (ucell.electronic_step != nullptr)
+    {
+        elecstate::complete_electronic_step(ucell, this->pelec, this->pw_rhod, this->solvent,
+                                           *this->inp_, this->conv_esolver, *ucell.electronic_step);
+    }
 }
 
 template <typename T, typename Device>

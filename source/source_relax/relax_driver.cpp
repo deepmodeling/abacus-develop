@@ -13,10 +13,12 @@
 #include "source_io/module_parameter/parameter.h"
 
 void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver,
-                                UnitCell& ucell,
-                                const Input_para& inp,
-                                std::ofstream& ofs_running)
+                               UnitCell& ucell,
+                               Parameter& parameters,
+                               std::ofstream& ofs_running)
 {
+    const Input_para& inp = parameters.inp;
+    const System_para& system = parameters.globalv;
     ModuleBase::TITLE("Relax_Driver", "relax_driver");
     ModuleBase::timer::start("Relax_Driver", "relax_driver");
 
@@ -29,8 +31,8 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver,
     if (inp.socket_driver)
     {
         Socket_Driver socket_driver;
-        socket_driver.socket_driver(p_esolver, ucell, inp, ofs_running);
-        p_esolver->after_all_runners(ucell);
+        const bool ran_frame = socket_driver.socket_driver(p_esolver, ucell, parameters, inp, system, ofs_running);
+        if (ran_frame) { p_esolver->after_all_runners(ucell); }
         ModuleBase::timer::end("Relax_Driver", "relax_driver");
         return;
     }

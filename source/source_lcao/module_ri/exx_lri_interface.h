@@ -108,6 +108,9 @@ public:
         const bool update_symmetry,
         const bool use_gpu);
 
+    // Only the explicit electronic-control entry point enables strict EXX convergence.
+    void begin_electronic_step() { strict_electronic_step_ = true; }
+
     /// @brief in eachiterinit:  do DM mixing and calculate Hexx when entering 2nd SCF
     void exx_eachiterinit(const int istep,
                           const UnitCell& ucell,
@@ -148,6 +151,7 @@ public:
     /// 0: the first outer loop. If restart, contributeHk will directly add Hexx to Hloc. else, do nothing.
     /// >0: not the first outer loop. contributeHk will do enerything normally.
     int two_level_step = 0;
+    bool strict_electronic_step_ = false;
     double etot_last_outer_loop = 0.0;
     module_dm::DensityMatrix<T, double>* dm_last_step;
 
