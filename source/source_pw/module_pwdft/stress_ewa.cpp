@@ -22,7 +22,9 @@ void Stress_Func<FPTYPE, Device>::stress_ewa(const UnitCell& ucell,
     ModuleBase::timer::start("Stress","stress_ewa");
 
     assert(struc_fac.nr == ucell.ntype);
-    assert(struc_fac.nc == rho_basis->npw);
+    // PW_Basis_Sup stores the matching smooth G vectors first; dense-only
+    // columns are allowed because this routine reads only rho_basis->npw.
+    assert(struc_fac.nc >= rho_basis->npw);
     const Parameter& parameters = PARAM;
 
     FPTYPE charge=0;

@@ -2,6 +2,7 @@
 #include "source_base/constants.h"
 #include "source_base/parallel_global.h"
 #include "source_base/parallel_reduce.h"
+#include "source_basis/module_pw/pw_basis_sup.h"
 #include "source_hamilt/module_ewald/h_ewald_pw.h"
 #include "source_io/module_parameter/parameter.h"
 
@@ -10,6 +11,10 @@
 #include <cmath>
 #include <limits>
 #include <vector>
+
+#ifdef NDEBUG
+#error "Ewald stress regression tests require assertions to be enabled."
+#endif
 
 // Parameter explicitly grants this test helper access; no access-control macros.
 class TestParameters
@@ -316,6 +321,55 @@ TEST_F(StressEwaTest, DirectSumChargesNormalizationAndFullTensor)
     const auto scaled = calculate(false);
     const double change = scaled(0, 0) - actual(0, 0);
     EXPECT_GT(std::abs(change) * to_kbar(), 1.0);
+}
+
+TEST_F(StressEwaTest, DenseStructureFactorUsesMatchingSmoothPrefix)
+{
+    ModulePW::PW_Basis_Sup dense;
+    dense.initmpi(process_count, process_rank, POOL_WORLD);
+    dense.initgrids(cell.lat0, cell.latvec, 48, 48, 48);
+    dense.initparameters(false, 160.0);
+    dense.setuptransform(&basis);
+    dense.collect_local_pw();
+    ASSERT_GT(dense.npw, basis.npw);
+    ASSERT_EQ(dense.ig_gge0, basis.ig_gge0);
+    for (int ig = 0; ig < basis.npw; ++ig)
+    {
+        for (int j = 0; j < 3; ++j)
+        {
+            ASSERT_DOUBLE_EQ(dense.gdirect[ig][j], basis.gdirect[ig][j]);
+        }
+    }
+
+    Structure_Factor dense_sf;
+    for (const int order : {0, 10})
+    {
+        dense_sf.set(&dense, order);
+        dense_sf.setup(&cell, grid, &dense, false);
+        ModuleBase::ComplexMatrix prefix(cell.ntype, basis.npw);
+        for (int it = 0; it < cell.ntype; ++it)
+        {
+            for (int ig = 0; ig < basis.npw; ++ig)
+            {
+                prefix(it, ig) = dense_sf.strucFac(it, ig);
+            }
+            // Dense-only G vectors must not enter the smooth-basis stress.
+            for (int ig = basis.npw; ig < dense.npw; ++ig)
+            {
+                dense_sf.strucFac(it, ig) = std::numeric_limits<double>::quiet_NaN();
+            }
+        }
+        ModuleBase::matrix expected(3, 3);
+        stress.stress_ewa(cell, expected, &basis, prefix, true);
+        ModuleBase::matrix actual(3, 3);
+        stress.stress_ewa(cell, actual, &basis, dense_sf.strucFac, true);
+        expect_tensor(actual, expected, 1.0e-8);
+        if (order == 0)
+        {
+            const auto direct = reference_stress(cell, basis, 1.0);
+            expect_tensor(actual, direct, 1.0e-8);
+        }
+    }
 }
 
 TEST_F(StressEwaTest, GammaWeightOnlyAppliesToPW)

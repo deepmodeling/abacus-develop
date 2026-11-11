@@ -13,6 +13,9 @@ addtest(
           ../../../source_cell/magnetism.cpp
           ../../../source_hamilt/module_ewald/h_ewald_pw.cpp
           ../../../source_hamilt/module_ewald/dnrm2.cpp)
+# Exercise the SF shape contract in the test and its copy of stress_ewa.cpp,
+# including when the surrounding ABACUS build defines NDEBUG.
+target_compile_options(MODULE_PW_stress_ewa PRIVATE -UNDEBUG)
 set_tests_properties(MODULE_PW_stress_ewa PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=1")
 add_test(
   NAME MODULE_PW_stress_ewa_mpi
