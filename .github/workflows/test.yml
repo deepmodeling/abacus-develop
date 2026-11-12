@@ -68,7 +68,7 @@ jobs:
           cmake --build build --target test ARGS="-V --timeout 1700" > ctest.log 2>&1
           status=$?
           if [ $status -ne 0 ]; then
-            grep -nE "Failed|FAILED|Exception|Timeout|\*\*\*|Errors while running CTest|test cases" ctest.log | head -n 120 | while IFS= read -r line; do
+            tail -n 200 ctest.log | while IFS= read -r line; do
               echo "::error::${line}"
             done
           fi
