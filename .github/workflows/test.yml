@@ -47,15 +47,18 @@ jobs:
 
       - name: Build
         run: |
-          set -o pipefail
-          cmake --build build -j8 2>&1 | tee /tmp/abacus-build.log
-          cmake --install build
-      - name: Report build errors
-        if: failure()
-        run: |
-          grep -m 40 -E "error:|undefined reference|fatal error|Error [0-9]|No rule to make" /tmp/abacus-build.log | while IFS= read -r line; do
-            echo "::error::${line}"
-          done
+          set +e
+          cmake --build build -j8 > build.log 2>&1
+          status=$?
+          if [ $status -ne 0 ]; then
+            tail -n 80 build.log | while IFS= read -r line; do
+              echo "::error::${line}"
+            done
+          else
+            cmake --install build
+            status=$?
+          fi
+          exit $status
       - name: Test
         env:
           GTEST_COLOR: 'yes'
