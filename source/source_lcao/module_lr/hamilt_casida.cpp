@@ -11,7 +11,7 @@ namespace LR
         const int no = this->nocc[0];
         const int nv = this->nvirt[0];
         const auto& px = this->pX[0];
-        const int ldim = nk * px.get_local_size();
+        const int ldim = nk * px.size();
         int npairs = no * nv;
         std::vector<T> Amat_full(this->nk * npairs * this->nk * npairs, 0.0);
         for (int ik = 0;ik < this->nk;++ik) {
@@ -25,11 +25,11 @@ namespace LR
                     const int storage_size = std::max(ldim, 1);
                     std::vector<T> X_bj(storage_size, T(0));
                     std::vector<T> A_aibj(storage_size, T(0));
-                    const int lj = px.global2local_col(j);
-                    const int lb = px.global2local_row(b);
+                    const int lj = px.icloc(j);
+                    const int lb = px.irloc(b);
                     if (px.in_this_processor(b, j))
                     {
-                        X_bj[ik * px.get_local_size() + lj * px.get_row_size() + lb] = this->one();
+                        X_bj[ik * px.size() + lj * px.nrloc() + lb] = this->one();
                     }
 
                     this->cal_dm_trans(0, X_bj.data());
@@ -42,7 +42,7 @@ namespace LR
                     // reduce ai for a fixed bj
 #ifdef __MPI
                     for (int ik_ai = 0;ik_ai < this->nk;++ik_ai) {
-                        LR_Util::gather_2d_to_full(px, &A_aibj.data()[ik_ai * px.get_local_size()],
+                        LR_Util::gather_2d_to_full(px, &A_aibj.data()[ik_ai * px.size()],
                             Amat_full.data() + kbj * this->nk * npairs /*col, bj*/ + ik_ai * npairs/*row, ai*/,
                             false, nv, no);
                     }

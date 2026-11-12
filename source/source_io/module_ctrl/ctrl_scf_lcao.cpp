@@ -37,6 +37,7 @@
 #include "source_lcao/module_deepks/lcao_deepks_iface.h"
 #endif
 #ifdef __EXX
+#include "source_io/module_restart/restart_exx_csr.h"
 #include "source_lcao/module_ri/exx_lri_interface.h" // use EXX codes
 #include "source_lcao/module_rpa/rpa_lri.h"          // use RPA code
 #endif
@@ -735,7 +736,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     //------------------------------------------------------------------
     if (inp.rpa)
     {
-        const int nlocal = pv.para_2d().get_global_row_size();
+        const int nlocal = pv.para_2d().nrglb();
         const ModuleRI::RpaLriRuntime rpa_runtime = {
             inp,
             global_out_dir,

@@ -42,8 +42,8 @@ LR_Density<T>::LR_Density(const UnitCell& ucell,
     const std::vector<int>& nocc,
     const std::vector<int>& nvirt,
     const int& nao,
-    const std::vector<Parallel_2D>& pX,
-    const Parallel_2D& pc,
+    const std::vector<BlockCyclicDistribution>& pX,
+    const BlockCyclicDistribution& pc,
     const Parallel_Orbitals& pmat,
     const bool openshell, const int output_precision, const std::string& output_directory) :
     ucell_(ucell), kv_(kv), gd_(gd), psi_ks_(psi_ks),
@@ -95,9 +95,9 @@ void LR_Density<T>::output_eh_density_all_states(const T* const X, const int isp
                                   std::ofstream& ofs_running)
 {
     ModuleBase::TITLE("LR_Density", "cal_eh_density_all_states");
-    const int up_size = this->pX_[0].get_local_size();
+    const int up_size = this->pX_[0].size();
     const int down_channel = openshell_ ? 1 : ispin;
-    const int down_size = this->pX_[down_channel].get_local_size();
+    const int down_size = this->pX_[down_channel].size();
     double** density;
     LR_Util::_allocate_2order_nested_ptr(density, 1, pgrid_.get_nrxx());
     for (int istate = 0;istate < nstate;++istate)

@@ -11,7 +11,7 @@
  * @brief ELPA parallel eigenvalue solver wrapper
  *
  * @note The BLACS context (desc[1]) is borrowed from the caller (typically
- *       Parallel_2D). This class does NOT take ownership. The context must
+ *       BlockCyclicDistribution). This class does NOT take ownership. The context must
  *       remain valid for the lifetime of this object.
  */
 class ELPA_Solver
@@ -19,7 +19,7 @@ class ELPA_Solver
   public:
     /**
      * @param desc ScaLAPACK descriptor array. desc[1] must contain a valid
-     *             BLACS context created by Parallel_2D::init() or Cblacs_gridinit().
+     *             BLACS context created by BlockCyclicDistribution::init() or Cblacs_gridinit().
      *             The context must remain valid for the lifetime of this object.
      *             This class does NOT take ownership of the BLACS context.
      */
