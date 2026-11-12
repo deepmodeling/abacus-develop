@@ -19,6 +19,25 @@
 
 namespace hsolver {
 
+#if defined(__CUDA)
+/// Multiply batches of column-major complex-double matrices on the GPU.
+/// Strides count complex elements between batches; output batches are disjoint.
+void gemm_strided_batched_gpu(char transa, char transb, int m, int n, int k,
+                              const std::complex<double>& alpha, const std::complex<double>* a,
+                              int lda, long long stride_a, const std::complex<double>* b,
+                              int ldb, long long stride_b, const std::complex<double>& beta,
+                              std::complex<double>* c, int ldc, long long stride_c, int batches);
+
+// Forms Hpsi[:, selected[j]] - eigenvalues[j] * psi[:, selected[j]].
+// All arrays reside on the device. Input and output columns are disjoint;
+// leading dimensions include padding, which is left unchanged.
+void selected_basis_residual_gpu(int rows, int columns, int leading,
+                                 const std::complex<double>* psi,
+                                 const std::complex<double>* hpsi,
+                                 const int* selected, const double* eigenvalues,
+                                 std::complex<double>* residual);
+#endif
+
 inline std::complex<double> set_real_tocomplex(const std::complex<double> &x) {
   return {x.real(), 0.0};
 }

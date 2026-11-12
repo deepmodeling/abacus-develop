@@ -633,6 +633,56 @@ TEST_F(TestModuleHsolverMathKernel, gemv_op_gpu)
     delete_memory_op()(gpu_ctx, Y_gemv_dev);
 }
 
+TEST_F(TestModuleHsolverMathKernel, complex_gemm_host_scalar_alignment_gpu)
+{
+    using Complex = std::complex<double>;
+    struct alignas(16) HostScalar
+    {
+        double padding;
+        Complex value;
+    };
+    // Standard complex scalars can have weaker alignment than CUDA complex
+    // scalars. A single-column product exercises the BLAS scalar-read path.
+    HostScalar alpha{0, Complex(1, 0)}, beta{0, Complex(0, 0)};
+    const int rows = 43168, columns = 1, inner = 594, right_leading = 616;
+    Complex *a = nullptr, *b = nullptr, *c = nullptr;
+    resize_memory_op()(gpu_ctx, a, std::size_t(rows) * inner);
+    resize_memory_op()(gpu_ctx, b, right_leading);
+    resize_memory_op()(gpu_ctx, c, rows);
+    base_device::memory::set_memory_op<Complex, base_device::DEVICE_GPU>()(
+        gpu_ctx, a, 0, std::size_t(rows) * inner);
+    base_device::memory::set_memory_op<Complex, base_device::DEVICE_GPU>()(gpu_ctx, b, 0, right_leading);
+    base_device::memory::set_memory_op<Complex, base_device::DEVICE_GPU>()(gpu_ctx, c, 0, rows);
+    const Complex left[] = {Complex(2, 1), Complex(-0.5, 0.75)};
+    const Complex right(3, -1);
+    synchronize_memory_op()(gpu_ctx, cpu_ctx, a, left, 2);
+    synchronize_memory_op()(gpu_ctx, cpu_ctx, b, &right, 1);
+    std::vector<Complex> actual(rows), expected(rows);
+    hsolver::createGpuBlasHandle();
+    for (int repetition = 0; repetition < 2; ++repetition)
+    {
+        if (repetition == 1)
+        {
+            alpha.value = Complex(2, -0.5);
+            beta.value = Complex(0.25, 0.75);
+        }
+        hsolver::gemm_op<Complex, base_device::DEVICE_GPU>()(
+            gpu_ctx, 'N', 'N', rows, columns, inner, &alpha.value, a, rows,
+            b, right_leading, &beta.value, c, rows);
+        synchronize_memory_op_gpu()(cpu_ctx, gpu_ctx, actual.data(), c, rows);
+        for (int row = 0; row < rows; ++row)
+        {
+            const Complex product = row < 2 ? left[row] * right : Complex(0, 0);
+            expected[row] = alpha.value * product + beta.value * expected[row];
+            EXPECT_LT(std::abs(actual[row] - expected[row]), 1e-12);
+        }
+    }
+    hsolver::destoryBLAShandle();
+    delete_memory_op()(gpu_ctx, a);
+    delete_memory_op()(gpu_ctx, b);
+    delete_memory_op()(gpu_ctx, c);
+}
+
 TEST_F(TestModuleHsolverMathKernel, matrixSetToAnother_op_gpu)
 {
     // const std::vector<std::complex<double> > expect_result = {

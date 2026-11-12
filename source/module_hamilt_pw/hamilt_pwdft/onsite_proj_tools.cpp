@@ -9,6 +9,10 @@
 #include "nonlocal_maths.hpp"
 
 #include <numeric>
+#include <type_traits>
+#if defined(__CUDA)
+#include "module_hamilt_pw/hamilt_pwdft/kernels/projector_fold.h"
+#endif
 
 namespace hamilt
 {
@@ -154,6 +158,15 @@ Onsite_Proj_tools<FPTYPE, Device>::Onsite_Proj_tools(
     }
     this->nproj = nproj;
     this->allocate_memory(wg, ekb, nproj, this->h_atom_nh);
+#if defined(__CUDA)
+    if (std::is_same<FPTYPE, double>::value && std::is_same<Device, base_device::DEVICE_GPU>::value
+        && GlobalV::NPROC_IN_POOL == 1 && this->ntype == 1 && this->nkb >= 256)
+    {
+        const auto& atoms = this->ucell_->atoms[0];
+        this->projector_fold = ProjectorFold::create(atoms.na, this->h_atom_nh[0],
+                                                     atoms.taud.data(), atoms.tau.data(), *this->wfc_basis_);
+    }
+#endif
     // what is this??? seems it is not on gpu
     this->ppcell_vkb = vkb_buf;
 }
@@ -275,30 +288,13 @@ void Onsite_Proj_tools<FPTYPE, Device>::delete_memory()
 // . the multiplication with sk should be within specific operator
 // because the atom selection task is operator-specific.
 template <typename FPTYPE, typename Device>
-void Onsite_Proj_tools<FPTYPE, Device>::cal_becp(int ik,
-                                                 int npm,
-                                                 std::complex<FPTYPE>* becp_in,
-                                                 const std::complex<FPTYPE>* ppsi_in)
+void Onsite_Proj_tools<FPTYPE, Device>::prepare_projectors(int ik)
 {
-    ModuleBase::TITLE("Onsite_Proj_tools", "cal_becp");
-    ModuleBase::timer::tick("Onsite_Proj_tools", "cal_becp");
-
-    const int npol = this->ucell_->get_npol();
-    const std::complex<FPTYPE>* ppsi = ppsi_in == nullptr ? &(this->psi_[0](ik, 0, 0)) : ppsi_in;
-    const int npw = this->wfc_basis_->npwk[ik];
-    if (becp_in == nullptr && this->becp == nullptr)
+    if (ik == this->current_ik)
     {
-        resmem_complex_op()(this->ctx, becp, this->nbands * npol * this->nkb);
+        return;
     }
-    std::complex<FPTYPE>* becp_tmp = becp_in == nullptr ? this->becp : becp_in;
-    const int size_becp_act = npm * npol * this->nkb;
-    if (ik != this->current_ik) // different ik, need to recalculate vkb
-    {
-        const int size_becp = this->nbands * npol * this->nkb;
-        if (this->becp == nullptr)
-        {
-            resmem_complex_op()(this->ctx, becp, size_becp);
-        }
+    const int npw = this->wfc_basis_->npwk[ik];
 
         // prepare math tools
         Nonlocal_maths<FPTYPE, Device> maths(*(this->nhtol), this->lprojmax, this->ucell_);
@@ -316,7 +312,6 @@ void Onsite_Proj_tools<FPTYPE, Device>::cal_becp(int ik,
         std::complex<FPTYPE>* d_sk = this->hd_sk;
         // prepare ylm，size: (lmax+1)^2 * this->max_npw
         const int lmax_ = this->lprojmax;
-        maths.cal_ylm(lmax_, npw, g_plus_k.data(), hd_ylm);
 
         // DEBUG: ONCE YOU CHECK ylm VALUES, YOU UNCOMMENT THE FOLLOW
         // std::vector<ModuleBase::Vector3<double>> qs(npw);
@@ -352,6 +347,7 @@ void Onsite_Proj_tools<FPTYPE, Device>::cal_becp(int ik,
             gk = d_g_plus_k;
             vq_tb = d_vq_tab;
         }
+        maths.cal_ylm(lmax_, npw, gk, hd_ylm);
 
         // int vkb_size = 0;
         for (int it = 0; it < this->ucell_->ntype; it++) // loop all elements
@@ -408,7 +404,52 @@ void Onsite_Proj_tools<FPTYPE, Device>::cal_becp(int ik,
             }
         }
         this->current_ik = ik;
+#if defined(__CUDA)
+    if (this->projector_fold)
+    {
+        this->projector_fold->prepare(ik, reinterpret_cast<const std::complex<double>*>(this->ppcell_vkb), npw);
     }
+#endif
+    this->current_ik = ik;
+}
+
+template <typename FPTYPE, typename Device>
+void Onsite_Proj_tools<FPTYPE, Device>::add_projectors(int ik, int columns, int leading,
+    const std::complex<FPTYPE>* coefficients, std::complex<FPTYPE>* output)
+{
+    this->prepare_projectors(ik);
+#if defined(__CUDA)
+    if (this->projector_fold && this->projector_fold->add(columns, leading,
+        reinterpret_cast<const std::complex<double>*>(coefficients), reinterpret_cast<std::complex<double>*>(output)))
+    {
+        return;
+    }
+#endif
+    const int npw = this->wfc_basis_->npwk[ik];
+    const std::complex<FPTYPE> one(1, 0);
+    gemm_op()(this->ctx, 'N', 'T', npw, columns, this->nkb, &one, this->ppcell_vkb,
+              npw, coefficients, columns, &one, output, leading);
+}
+
+template <typename FPTYPE, typename Device>
+void Onsite_Proj_tools<FPTYPE, Device>::cal_becp(int ik,
+                                                 int npm,
+                                                 std::complex<FPTYPE>* becp_in,
+                                                 const std::complex<FPTYPE>* ppsi_in)
+{
+    ModuleBase::TITLE("Onsite_Proj_tools", "cal_becp");
+    ModuleBase::timer::tick("Onsite_Proj_tools", "cal_becp");
+
+    const int npol = this->ucell_->get_npol();
+    const std::complex<FPTYPE>* ppsi = ppsi_in == nullptr ? &(this->psi_[0](ik, 0, 0)) : ppsi_in;
+    const int npw = this->wfc_basis_->npwk[ik];
+    if (becp_in == nullptr && this->becp == nullptr)
+    {
+        resmem_complex_op()(this->ctx, becp, this->nbands * npol * this->nkb);
+    }
+    std::complex<FPTYPE>* becp_tmp = becp_in == nullptr ? this->becp : becp_in;
+    const int size_becp_act = npm * npol * this->nkb;
+    this->prepare_projectors(ik);
     // DEBUG: ONCE YOU CHECK vkb VALUES, YOU UNCOMMENT THE FOLLOWING LINE
     // for(int i = 0; i < vkb_size; i++)
     // {
@@ -440,7 +481,7 @@ void Onsite_Proj_tools<FPTYPE, Device>::cal_becp(int ik,
               becp_tmp,
               this->nkb);
 
-    if (this->device == base_device::GpuDevice)
+    if (GlobalV::NPROC_IN_POOL > 1 && this->device == base_device::GpuDevice)
     {
         std::complex<FPTYPE>* h_becp = nullptr;
         resmem_complex_h_op()(this->cpu_ctx, h_becp, size_becp_act);
@@ -449,7 +490,7 @@ void Onsite_Proj_tools<FPTYPE, Device>::cal_becp(int ik,
         syncmem_complex_h2d_op()(this->ctx, this->cpu_ctx, becp_tmp, h_becp, size_becp_act);
         delmem_complex_h_op()(this->cpu_ctx, h_becp);
     }
-    else
+    else if (GlobalV::NPROC_IN_POOL > 1)
     {
         Parallel_Reduce::reduce_pool(becp_tmp, size_becp_act);
     }

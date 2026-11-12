@@ -5,6 +5,9 @@
 #include "module_base/module_container/base/third_party/blas.h"
 #include "module_base/timer.h"
 #include "module_base/tool_title.h"
+
+#include <memory>
+#include <type_traits>
 namespace Base_Mixing
 {
 template void Broyden_Mixing::tem_push_data(Mixing_Data& mdata,
@@ -30,7 +33,7 @@ void Broyden_Mixing::tem_push_data(Mixing_Data& mdata,
                                    const bool& need_calcoef)
 {
     const size_t length = mdata.length;
-    std::vector<FPTYPE> F_tmp(length);
+    std::unique_ptr<FPTYPE[]> F_tmp(new FPTYPE[length]);
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 4096 / sizeof(FPTYPE))
 #endif
@@ -41,13 +44,23 @@ void Broyden_Mixing::tem_push_data(Mixing_Data& mdata,
 
     // get screened F
     if (screen != nullptr)
-        screen(F_tmp.data());
+        screen(F_tmp.get());
 
     // container::Tensor data = data_in + mixing_beta * F;
-    std::vector<FPTYPE> data(length);
-    mix(data.data(), data_in, F_tmp.data());
+    std::unique_ptr<FPTYPE[]> data(new FPTYPE[length]);
+    // Arithmetic arrays require explicit zero initialization; complex arrays
+    // are zero initialized by their default constructors. The callback may
+    // leave some output elements unchanged.
+    if (std::is_arithmetic<FPTYPE>::value)
+    {
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static)
+#endif
+        for (size_t i = 0; i < length; ++i) { data[i] = FPTYPE{}; }
+    }
+    mix(data.get(), data_in, F_tmp.get());
 
-    mdata.push(data.data());
+    mdata.push(data.get());
 
     if (!need_calcoef)
         return;

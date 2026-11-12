@@ -76,30 +76,7 @@ void OnsiteProj<OperatorPW<T, Device>>::add_onsite_proj(T *hpsi_in, const int np
     ModuleBase::timer::tick("OnsiteProj", "add_onsite_proj");
 
     auto* onsite_p = projectors::OnsiteProjector<double, Device>::get_instance();
-    // apply the operator to the wavefunction
-    //std::cout << "use of tab_atomic at " << __FILE__ << ": " << __LINE__ << std::endl;
-    const std::complex<double>* tab_atomic = onsite_p->get_tab_atomic();
-    const int npw = onsite_p->get_npw();
-    const int npwx = onsite_p->get_npwx();
-    char transa = 'N';
-    char transb = 'T';
-    int npm = m;
-    gemm_op()(
-        this->ctx,
-        transa,
-        transb,
-        npw,
-        npm,
-        this->tnp,
-        &this->one,
-        tab_atomic,
-        npw,
-        this->ps,
-        npm,
-        &this->one,
-        hpsi_in,
-        npwx
-    );
+    onsite_p->get_fs_tools()->add_projectors(this->ik, m, onsite_p->get_npwx(), this->ps, hpsi_in);
     ModuleBase::timer::tick("OnsiteProj", "add_onsite_proj");
 }
 

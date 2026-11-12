@@ -15,6 +15,8 @@
 #include "module_hamilt_pw/hamilt_pwdft/kernels/vnl_op.h"
 
 
+#include <type_traits>
+
 pseudopot_cell_vnl::pseudopot_cell_vnl()
 {
 }
@@ -459,13 +461,23 @@ void pseudopot_cell_vnl::getvnl(Device* ctx,
     resmem_var_op()(ctx, ylm, x1 * npw, "VNL::ylm");
     resmem_var_op()(ctx, vkb1, nhm * npw, "VNL::vkb1");
 
-    ModuleBase::Vector3<double>* _gk = new ModuleBase::Vector3<double>[npw];
+    bool device_gk = false;
+#if defined(__CUDA)
+    device_gk = std::is_same<Device, base_device::DEVICE_GPU>::value && std::is_same<FPTYPE, double>::value
+                && PARAM.inp.device == "gpu";
+#endif
+    ModuleBase::Vector3<double>* _gk = nullptr;
+    if (!device_gk)
+    {
+        // Single precision retains addition in double before conversion.
+        _gk = new ModuleBase::Vector3<double>[npw];
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 4096 / sizeof(FPTYPE))
 #endif
-    for (int ig = 0; ig < npw; ig++)
-    {
-        _gk[ig] = this->wfcpw->getgpluskcar(ik, ig);
+        for (int ig = 0; ig < npw; ig++)
+        {
+            _gk[ig] = this->wfcpw->getgpluskcar(ik, ig);
+        }
     }
     if (PARAM.inp.device == "gpu")
     {
@@ -477,7 +489,19 @@ void pseudopot_cell_vnl::getvnl(Device* ctx,
         syncmem_int_op()(ctx, cpu_ctx, atom_na, h_atom_na, ucell.ntype);
 
         resmem_var_op()(ctx, gk, npw * 3);
-        castmem_var_h2d_op()(ctx, cpu_ctx, gk, reinterpret_cast<double*>(_gk), npw * 3);
+#if defined(__CUDA)
+        if (device_gk)
+        {
+            hamilt::cal_gk_gpu(npw,
+                               this->wfcpw->get_gcar_data<double>() + 3 * ik * this->wfcpw->npwk_max,
+                               this->wfcpw->get_kvec_c_data<double>() + 3 * ik,
+                               reinterpret_cast<double*>(gk));
+        }
+        else
+#endif
+        {
+            castmem_var_h2d_op()(ctx, cpu_ctx, gk, reinterpret_cast<double*>(_gk), npw * 3);
+        }
     }
     else
     {

@@ -12,6 +12,7 @@
 //  2. pz_spin, which calls pz_polarized
 
 #include "xc_functional.h"
+#include "xc_math.h"
 
 void XC_Functional::pw(const double &rs, const int &iflag, double &ec, double &vc)
 {
@@ -192,108 +193,7 @@ void XC_Functional::gl( const double &rs, double &ec, double &vc)
 void XC_Functional::pw_spin( const double &rs, const double &zeta, 
 		double &ec, double &vcup, double &vcdw)
 {
-	const double a = 0.0310910;
-    const double a1 = 0.213700;
-    const double b1 = 7.59570;
-    const double b2 = 3.58760;
-    const double b3 = 1.63820;
-    const double b4 = 0.492940;
-    //const double c0 = a;
-    //const double c1 = 0.0466440;
-    //const double c2 = 0.006640;
-    //const double c3 = 0.010430;
-    //const double d0 = 0.43350;
-    //const double d1 = 1.44080;
-	// polarized parameters
-    const double ap = 0.0155450;
-    const double a1p = 0.205480;
-    const double b1p = 14.11890;
-    const double b2p = 6.19770;
-    const double b3p = 3.36620;
-    const double b4p = 0.625170;
-    //const double c0p = ap;
-    //const double c1p = 0.0255990;
-    //const double c2p = 0.003190;
-    //const double c3p = 0.003840;
-    //const double d0p = 0.32870;
-    //const double d1p = 1.76970;
-	// antiferro
-    const double aa = 0.0168870;
-    const double a1a = 0.111250;
-    const double b1a = 10.3570;
-    const double b2a = 3.62310;
-    const double b3a = 0.880260;
-    const double b4a = 0.496710;
-    //const double c0a = aa;
-    //const double c1a = 0.0354750;
-    //const double c2a = 0.001880;
-    //const double c3a = 0.005210;
-    //const double d0a = 0.22400;
-    //const double d1a = 0.39690;
-
-	const double fz0 = 1.7099210;
-	double rs12, rs32, rs2, zeta2, zeta3, zeta4, fz, dfz;
-	double om, dom, olog, epwc, vpwc;
-    double omp, domp, ologp, epwcp, vpwcp;
-    double oma, doma, ologa, alpha, vpwca;
-
-	//     if(rs.lt.0.5d0) then
-    // high density formula (not implemented)
-    //
-    //     else if(rs.gt.100.d0) then
-    // low density formula  (not implemented)
-    //
-    //     else
-    // interpolation formula
-    zeta2 = zeta * zeta;
-    zeta3 = zeta2 * zeta;
-    zeta4 = zeta3 * zeta;
-    rs12 = sqrt(rs);
-    rs32 = rs * rs12;
-    rs2 = rs * rs;
-    // unpolarised
-    om = 2.0 * a * (b1 * rs12 + b2 * rs + b3 * rs32 + b4 * rs2);
-    dom = 2.0 * a * (0.50 * b1 * rs12 + b2 * rs + 1.50 * b3 * rs32
-                     + 2.0 * b4 * rs2);
-    olog = log(1.0 + 1.00 / om);
-    epwc = - 2.0 * a * (1.0 + a1 * rs) * olog;
-    vpwc = - 2.0 * a * (1.0 + 2.0 / 3.0 * a1 * rs) * olog - 2.0 /
-           3.0 * a * (1.0 + a1 * rs) * dom / (om * (om + 1.0));
-    // polarized
-    omp = 2.0 * ap * (b1p * rs12 + b2p * rs + b3p * rs32 + b4p * rs2);
-    domp = 2.0 * ap * (0.50 * b1p * rs12 + b2p * rs + 1.50 * b3p *
-                       rs32 + 2.0 * b4p * rs2);
-    ologp = log(1.0 + 1.00 / omp);
-    epwcp = - 2.0 * ap * (1.0 + a1p * rs) * ologp;
-    vpwcp = - 2.0 * ap * (1.0 + 2.0 / 3.0 * a1p * rs) * ologp -
-            2.0 / 3.0 * ap * (1.0 + a1p * rs) * domp / (omp * (omp + 1.0));
-    // antiferro
-    oma = 2.0 * aa * (b1a * rs12 + b2a * rs + b3a * rs32 + b4a * rs2);
-    doma = 2.0 * aa * (0.50 * b1a * rs12 + b2a * rs + 1.50 * b3a *
-                       rs32 + 2.0 * b4a * rs2);
-    ologa = log(1.0 + 1.00 / oma);
-    alpha = 2.0 * aa * (1.0 + a1a * rs) * ologa;
-    vpwca = + 2.0 * aa * (1.0 + 2.0 / 3.0 * a1a * rs) * ologa +
-            2.0 / 3.0 * aa * (1.0 + a1a * rs) * doma / (oma * (oma + 1.0));
-
-	fz = (pow((1.0 + zeta) , (4.0 / 3.0)) + pow((1.0 - zeta) , (4.0 /
-            3.0)) - 2.0) / (pow(2.0, (4.0 / 3.0)) - 2.0);
-    dfz = (pow((1.0 + zeta) , (1.0 / 3.0)) - pow((1.0 - zeta) , (1.0 /
-            3.0))) * 4.0 / (3.0 * (pow(2.0 , (4.0 / 3.0)) - 2.0));
-
-    ec = epwc + alpha * fz * (1.0 - zeta4) / fz0 + (epwcp - epwc)
-         * fz * zeta4;
-
-    vcup = vpwc + vpwca * fz * (1.0 - zeta4) / fz0 
-	+ (vpwcp - vpwc) * fz * zeta4 
-	+ (alpha / fz0 * (dfz * (1.0 - zeta4) - 4.0 * fz * zeta3) 
-	+ (epwcp - epwc) * (dfz * zeta4 + 4.0 * fz * zeta3)) * (1.0 - zeta);
-
-    vcdw = vpwc + vpwca * fz * (1.0 - zeta4) / fz0 
-	+ (vpwcp - vpwc) * fz * zeta4 
-	- (alpha / fz0 * (dfz * (1.0 - zeta4) - 4.0 * fz * zeta3) 
-	+ (epwcp - epwc) * (dfz * zeta4 + 4.0 * fz * zeta3)) * (1.0 + zeta);
-	return;
+    xc_math::pw_spin(rs, zeta, ec, vcup, vcdw);
 }
 
 // J.P. Perdew and Y. Wang, PRB 45, 13244 (1992)

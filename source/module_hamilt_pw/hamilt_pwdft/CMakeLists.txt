@@ -48,6 +48,10 @@ add_library(
     ${objects}
 )
 
+if(USE_CUDA)
+  target_sources(hamilt_pwdft PRIVATE kernels/cuda/projector_fold.cu)
+endif()
+
 if(ENABLE_COVERAGE)
   add_coverage(hamilt_pwdft)
 endif()

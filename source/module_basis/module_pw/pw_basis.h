@@ -105,6 +105,7 @@ public:
     int *ig2isz=nullptr; // map ig to (is, iz).
     int *istot2ixy=nullptr; // istot2ixy[is]: iy + ix * ny of is^th stick among all sticks.
     int *is2fftixy=nullptr, * d_is2fftixy = nullptr; // is2fftixy[is]: iy + ix * ny of is^th stick among sticks on current proc.
+    int* d_ig2fftbox = nullptr; // Device map from local plane waves to a complete complex FFT grid.
     int *fftixy2ip=nullptr; // fftixy2ip[iy + ix * fftny]: ip of proc which contains stick on (ix, iy). if no stick: -1
     int nst=0; //num. of sticks in current proc.
     int *nst_per=nullptr;// nst on each core
@@ -268,6 +269,24 @@ public:
                     const FPTYPE factor = 1.0) const; // in:(nz, ns)  ; out(nplane,nx*ny)
 
   protected:
+    template <typename FPTYPE>
+    void fft_forward() const;
+
+    template <typename FPTYPE>
+    void fft_backward() const;
+
+#if defined(__CUDA) || defined(__ROCM)
+    template <typename FPTYPE>
+    void fft3d_gpu(bool inverse) const;
+#endif
+#if defined(__CUDA)
+    template <typename Input, typename Real>
+    void real2recip_gpu(const Input* in, std::complex<Real>* out, bool add, Real factor) const;
+
+    template <typename Real, typename Output>
+    void recip2real_gpu(const std::complex<Real>* in, Output* out, bool add, Real factor) const;
+#endif
+
     //gather planes and scatter sticks of all processors
     template <typename T>
     void gatherp_scatters(std::complex<T>* in, std::complex<T>* out) const;

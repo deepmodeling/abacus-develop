@@ -329,7 +329,23 @@ void Charge::set_rho_core(const UnitCell& ucell,
 		this->rhog_core[ig] = vg[ig];
 	}
 
-    this->rhopw->recip2real(vg, this->rho_core);
+    if (this->rhopw->gamma_only)
+    {
+        this->rhopw->recip2real(vg, this->rho_core);
+    }
+    else
+    {
+        // The charge diagnostics require both components of the inverse transform.
+        auto* core_grid = this->rhopw->fft_bundle.get_auxr_data<double>();
+        this->rhopw->recip2real(vg, core_grid);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
+        for (int ir = 0; ir < this->rhopw->nrxx; ++ir)
+        {
+            this->rho_core[ir] = core_grid[ir].real();
+        }
+    }
 
     // test on the charge and computation of the core energy
     double rhoima = 0.0;

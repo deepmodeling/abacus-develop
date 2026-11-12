@@ -11,6 +11,26 @@
 
 namespace hamilt {
 
+__global__ void cal_gk(const int count, const double* gcar, const double* kvec, double* gk)
+{
+    const int i = blockIdx.x * blockDim.x + threadIdx.x;
+    if (i < count)
+    {
+        gk[i] = gcar[i] + kvec[i % 3];
+    }
+}
+
+void cal_gk_gpu(int npw, const double* gcar, const double* kvec, double* gk)
+{
+    if (npw == 0)
+    {
+        return;
+    }
+    const int count = 3 * npw;
+    cal_gk<<<(count + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK, THREADS_PER_BLOCK>>>(count, gcar, kvec, gk);
+    cudaCheckOnDebug();
+}
+
 template<typename FPTYPE>
 __global__ void cal_vnl(
     const int ntype,

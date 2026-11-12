@@ -37,13 +37,19 @@ class Diago_DavSubspace
 
     // See diago_david.h for information on the HPsiFunc function type
     using HPsiFunc = std::function<void(T*, T*, const int, const int)>;
+    using InitialHPsiFunc = std::function<void(T*, int)>;
+    using BasisRotationFunc = std::function<void(int, const T*, int, bool)>;
 
     int diag(const HPsiFunc& hpsi_func,
              T* psi_in,
              const int psi_in_dmax,
              Real* eigenvalue_in,
              const std::vector<double>& ethr_band,
-             const bool& scf_type);
+             const bool& scf_type,
+             const T* initial_h = nullptr,
+             const T* initial_s = nullptr,
+             const InitialHPsiFunc& initial_hpsi = {},
+             const BasisRotationFunc& rotate_basis = {});
 
   private:
     /// for MPI communication
@@ -88,6 +94,8 @@ class Diago_DavSubspace
     /// Eigenvectors on the reduced basis
     T* vcc = nullptr;
 
+    Real* d_eigenvalue = nullptr;
+    int* d_unconv = nullptr;
     /// device type of psi
     Device* ctx = {};
     base_device::DEVICE_CPU* cpu_ctx = {};
@@ -101,7 +109,8 @@ class Diago_DavSubspace
                   T* hphi,
                   T* vcc,
                   const int* unconv,
-                  std::vector<Real>* eigenvalue_iter);
+                  std::vector<Real>* eigenvalue_iter,
+                  bool basis_is_rotated);
 
     void cal_elem(const int& dim, int& nbase, const int& notconv, const T* psi_iter, const T* hphi, T* hcc, T* scc);
 
@@ -135,7 +144,11 @@ class Diago_DavSubspace
                   T* psi_in,
                   const int psi_in_dmax,
                   Real* eigenvalue_in,
-                  const std::vector<double>& ethr_band);
+                  const std::vector<double>& ethr_band,
+                  const T* initial_h,
+                  const T* initial_s,
+                  const InitialHPsiFunc& initial_hpsi,
+                  const BasisRotationFunc& rotate_basis);
 
     bool test_exit_cond(const int& ntry, const int& notconv, const bool& scf);
 

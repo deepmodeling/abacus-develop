@@ -110,6 +110,8 @@ class FFT_CPU : public FFT_BASE<FPTYPE>
         fftw_plan planxbac2 = NULL;
         fftw_plan planyfor  = NULL;
         fftw_plan planybac  = NULL;
+        fftw_plan planyfor2 = NULL;
+        fftw_plan planybac2 = NULL;
         fftw_plan planxr2c  = NULL;
         fftw_plan planxc2r  = NULL;
         fftw_plan planyr2c  = NULL;
@@ -123,6 +125,8 @@ class FFT_CPU : public FFT_BASE<FPTYPE>
         fftwf_plan planfxbac2= NULL;
         fftwf_plan planfyfor = NULL;
         fftwf_plan planfybac = NULL;
+        fftwf_plan planfyfor2= NULL;
+        fftwf_plan planfybac2= NULL;
         fftwf_plan planfxr2c = NULL;
         fftwf_plan planfxc2r = NULL;
         fftwf_plan planfyr2c = NULL;

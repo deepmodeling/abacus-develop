@@ -5,6 +5,28 @@
 #include <complex>
 
 namespace hamilt {
+#if defined(__CUDA)
+// Applies the scalar or Pauli constraint field to column-major projector
+// coefficients with shape (nkb * npol, bands). Lambda has shape (nkb, 3)
+// in projector-major order. The output is fully overwritten.
+void spin_constraint_projectors_gpu(int bands, int npol, int nkb, int sign,
+                                    const double* lambda, const std::complex<double>* becp,
+                                    std::complex<double>* ps);
+
+// Forms unweighted Cartesian moments with shape (bands, atoms, 3) from
+// column-major projections with shape (nkb * npol, bands). Offsets contains
+// atoms + 1 cumulative projector counts. Each atom's projector order is retained.
+void projector_band_moments_gpu(int bands, int npol, int atoms, int nkb, const int* offsets,
+                                const std::complex<double>* projections, double* moments);
+
+// Weights moments with shape (points, bands, atoms, 3) by occupations with
+// shape (points, bands), retaining point-then-band accumulation order.
+// Spin labels select +z for zero and -z otherwise when npol is one.
+void sum_projector_moments_gpu(int points, int bands, int atoms, int npol,
+                              const double* moments, const double* weights,
+                              const int* spins, double* output);
+#endif
+
 template <typename FPTYPE, typename Device> 
 struct onsite_ps_op {
   void operator() (

@@ -1,6 +1,12 @@
 #include "pw_basis_k.h"
+#if defined(__CUFFTDX)
+#include "kernels/fused_veff.h"
+#include <base/macros/macros.h>
+#include <cuda_runtime.h>
+#endif
 
 #include <utility>
+#include <vector>
 
 #include "module_base/constants.h"
 #include "module_base/memory.h"
@@ -36,6 +42,10 @@ PW_Basis_K::~PW_Basis_K()
         delmem_dd_op()(gpu_ctx, this->d_kvec_c);
         delmem_int_op()(gpu_ctx, this->ig2ixyz_k);
         delmem_int_op()(gpu_ctx, this->d_igl2isz_k);
+#if defined(__CUFFTDX)
+        delmem_int_op()(gpu_ctx, this->d_fftixy2is);
+        delmem_int_op()(gpu_ctx, this->d_isz2igl_k);
+#endif
     }
     else {
 #endif
@@ -173,6 +183,32 @@ void PW_Basis_K::setupIndGk()
 }
 
 /// 
+#if defined(__CUFFTDX)
+void PW_Basis_K::setup_spinor_wave_map()
+{
+    if (fused_fft(this->nz) == nullptr) { return; }
+    const size_t stick_size = size_t(this->nst) * this->nz;
+    const size_t count = size_t(this->nks) * stick_size;
+    const auto status = cudaMalloc(&this->d_isz2igl_k, count * sizeof(int));
+    if (status == cudaErrorMemoryAllocation)
+    {
+        cudaGetLastError();
+        this->d_isz2igl_k = nullptr;
+        return;
+    }
+    cudaErrcheck(status);
+    std::vector<int> wave_index(count, -1);
+    for (int ik = 0; ik < this->nks; ++ik)
+    {
+        for (int ig = 0; ig < this->npwk[ik]; ++ig)
+        {
+            wave_index[size_t(ik) * stick_size + this->igl2isz_k[ik * this->npwk_max + ig]] = ig;
+        }
+    }
+    syncmem_int_h2d_op()(gpu_ctx, cpu_ctx, this->d_isz2igl_k, wave_index.data(), count);
+}
+#endif
+
 /// distribute plane wave basis and real-space grids to different processors
 /// set up maps for fft and create arrays for MPI_Alltoall
 /// set up ffts
@@ -192,6 +228,23 @@ void PW_Basis_K::setuptransform()
         this->fft_bundle.initfft(this->nx,this->ny,this->nz,this->liy,this->riy,this->nst,this->nplane,this->poolnproc,this->gamma_only, this->xprime);
     }
     this->fft_bundle.setupFFT();
+#if defined(__CUFFTDX)
+    if (this->device == "gpu")
+    {
+        delmem_int_op()(gpu_ctx, this->d_fftixy2is);
+        this->d_fftixy2is = nullptr;
+        delmem_int_op()(gpu_ctx, this->d_isz2igl_k);
+        this->d_isz2igl_k = nullptr;
+        if (this->precision == "double" && this->fft_bundle.fused_veff_stick_size() > 0)
+        {
+            std::vector<int> reverse(this->nx * this->ny, -1);
+            for (int is = 0; is < this->nst; ++is) { reverse[this->is2fftixy[is]] = is; }
+            resmem_int_op()(gpu_ctx, this->d_fftixy2is, reverse.size());
+            syncmem_int_h2d_op()(gpu_ctx, cpu_ctx, this->d_fftixy2is, reverse.data(), reverse.size());
+            this->setup_spinor_wave_map();
+        }
+    }
+#endif
     ModuleBase::timer::tick(this->classname, "setuptransform");
 }
 

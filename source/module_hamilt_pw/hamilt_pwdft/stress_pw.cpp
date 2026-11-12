@@ -4,6 +4,7 @@
 #include "module_hamilt_general/module_vdw/vdw.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_io/output_log.h"
+#include <type_traits>
 
 template <typename FPTYPE, typename Device>
 void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
@@ -68,6 +69,13 @@ void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
     }
 
     // kinetic contribution
+#if defined(__CUDA)
+    if (std::is_same<Device, base_device::DEVICE_GPU>::value)
+    {
+        this->stress_kin_cuda(sigmakin, this->pelec->wg, p_symm, p_kv, wfc_basis, ucell, d_psi_in);
+    }
+    else
+#endif
     this->stress_kin(sigmakin, this->pelec->wg, p_symm, p_kv, wfc_basis, ucell, d_psi_in);
 
     // hartree contribution

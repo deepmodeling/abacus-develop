@@ -11,6 +11,7 @@
 #include "xc_functional.h"
 #include "module_base/timer.h"
 #include "module_basis/module_pw/pw_basis_k.h"
+#include "module_basis/module_pw/kernels/pw_op.h"
 #include "module_parameter/parameter.h"
 #include <ATen/core/tensor.h>
 #include <ATen/core/tensor_map.h>
@@ -19,6 +20,200 @@
 
 #ifdef USE_LIBXC
 #include "xc_functional_libxc.h"
+#endif
+
+#if defined(__CUDA)
+namespace {
+
+template <typename T>
+ct::Tensor copy_to_gpu(const T* source, int size)
+{
+    ct::Tensor result(ct::DataTypeToEnum<T>::value, ct::DeviceType::GpuDevice, {size});
+    base_device::memory::synchronize_memory_op<T, base_device::DEVICE_GPU, base_device::DEVICE_CPU>()(
+        nullptr, nullptr, result.data<T>(), source, size);
+    return result;
+}
+
+ct::Tensor density_grid_indices(const ModulePW::PW_Basis& basis)
+{
+    ct::Tensor indices(ct::DataType::DT_INT, ct::DeviceType::CpuDevice, {basis.npw});
+    auto* index = indices.data<int>();
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
+    for (int ig = 0; ig < basis.npw; ++ig)
+    {
+        const int iz = basis.ig2isz[ig] % basis.nz;
+        const int is = basis.ig2isz[ig] / basis.nz;
+        index[ig] = basis.is2fftixy[is] * basis.nz + iz;
+    }
+    return indices.to_device<ct::DEVICE_GPU>();
+}
+
+void density_gradient_gpu(const std::complex<double>* rhog, ModuleBase::Vector3<double>* gradient,
+                          const ModulePW::PW_Basis& basis, double scale)
+{
+    ModuleBase::timer::tick("XC_Functional", "grad_rho_gpu");
+    static_assert(sizeof(ModuleBase::Vector3<double>) == 3 * sizeof(double), "Vector3 must have contiguous components");
+    const base_device::DEVICE_GPU* gpu = nullptr;
+    const base_device::DEVICE_CPU* cpu = nullptr;
+    auto indices = density_grid_indices(basis);
+    auto reciprocal = copy_to_gpu(rhog, basis.npw);
+    auto gcar = copy_to_gpu(reinterpret_cast<const double*>(basis.gcar), 3 * basis.npw);
+    ct::Tensor result(ct::DataType::DT_DOUBLE, ct::DeviceType::GpuDevice, {basis.nrxx, 3});
+    auto* grid = basis.fft_bundle.get_auxr_3d_data<double>();
+    for (int component = 0; component < 3; ++component)
+    {
+        base_device::memory::set_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(gpu, grid, 0, basis.nxyz);
+        hamilt::xc_gradient_coefficients_gpu(basis.npw, component, indices.data<int>(), gcar.data<double>(),
+                                             reciprocal.data<std::complex<double>>(), grid);
+        basis.fft_bundle.fft3D_backward<double>(gpu, grid, grid);
+        hamilt::xc_extract_real_gpu(basis.nrxx, 3, component, scale, grid, result.data<double>());
+    }
+    base_device::memory::synchronize_memory_op<double, base_device::DEVICE_CPU, base_device::DEVICE_GPU>()(
+        cpu, gpu, reinterpret_cast<double*>(gradient), result.data<double>(), 3 * basis.nrxx);
+    ModuleBase::timer::tick("XC_Functional", "grad_rho_gpu");
+}
+
+void density_divergence_gpu(const ModuleBase::Vector3<double>* vectors, double* divergence,
+                            const ModulePW::PW_Basis& basis, double scale)
+{
+    ModuleBase::timer::tick("XC_Functional", "grad_dot_gpu");
+    static_assert(sizeof(ModuleBase::Vector3<double>) == 3 * sizeof(double), "Vector3 must have contiguous components");
+    const base_device::DEVICE_GPU* gpu = nullptr;
+    const base_device::DEVICE_CPU* cpu = nullptr;
+    auto indices = density_grid_indices(basis);
+    auto input = copy_to_gpu(reinterpret_cast<const double*>(vectors), 3 * basis.nrxx);
+    auto gcar = copy_to_gpu(reinterpret_cast<const double*>(basis.gcar), 3 * basis.npw);
+    ct::Tensor reciprocal(ct::DataType::DT_COMPLEX_DOUBLE, ct::DeviceType::GpuDevice, {basis.npw});
+    ct::Tensor result(ct::DataType::DT_DOUBLE, ct::DeviceType::GpuDevice, {basis.nrxx});
+    auto* grid = basis.fft_bundle.get_auxr_3d_data<double>();
+    for (int component = 0; component < 3; ++component)
+    {
+        hamilt::xc_pack_component_gpu(basis.nrxx, component, input.data<double>(), grid);
+        basis.fft_bundle.fft3D_forward<double>(gpu, grid, grid);
+        hamilt::xc_accumulate_divergence_gpu(basis.npw, basis.nxyz, component, indices.data<int>(),
+                                            gcar.data<double>(), grid, reciprocal.data<std::complex<double>>());
+    }
+    base_device::memory::set_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(gpu, grid, 0, basis.nxyz);
+    ModulePW::set_3d_fft_box_op<double, base_device::DEVICE_GPU>()(
+        gpu, basis.npw, indices.data<int>(), reciprocal.data<std::complex<double>>(), grid);
+    basis.fft_bundle.fft3D_backward<double>(gpu, grid, grid);
+    hamilt::xc_extract_real_gpu(basis.nrxx, 1, 0, scale, grid, result.data<double>());
+    base_device::memory::synchronize_memory_op<double, base_device::DEVICE_CPU, base_device::DEVICE_GPU>()(
+        cpu, gpu, divergence, result.data<double>(), basis.nrxx);
+    ModuleBase::timer::tick("XC_Functional", "grad_dot_gpu");
+}
+
+void noncollinear_pbe_gpu(double& etxc, double& vtxc, ModuleBase::matrix& v,
+                         const Charge& charge, const ModulePW::PW_Basis& basis, double scale, bool include_local)
+{
+    const char* timer_name = include_local ? "pbe_gpu" : "gradcorr_gpu";
+    ModuleBase::timer::tick("XC_Functional", timer_name);
+    using Complex = std::complex<double>;
+    const base_device::DEVICE_GPU* gpu = nullptr;
+    const base_device::DEVICE_CPU* cpu = nullptr;
+    const int size = basis.nrxx;
+    const int blocks = hamilt::xc_reduction_size_gpu(size);
+    auto indices = density_grid_indices(basis);
+    auto gcar = copy_to_gpu(reinterpret_cast<const double*>(basis.gcar), 3 * basis.npw);
+    auto core = copy_to_gpu(charge.rho_core, size);
+    ct::Tensor potential(ct::DataType::DT_DOUBLE, ct::DeviceType::GpuDevice, {4, size});
+    if (!include_local)
+    {
+        base_device::memory::synchronize_memory_op<double, base_device::DEVICE_GPU, base_device::DEVICE_CPU>()(
+            gpu, cpu, potential.data<double>(), v.c, 4 * size);
+    }
+    ct::Tensor rho(ct::DataType::DT_DOUBLE, ct::DeviceType::GpuDevice, {4, size});
+    ct::Tensor gradient_flux(ct::DataType::DT_DOUBLE, ct::DeviceType::GpuDevice, {2, size, 3});
+    ct::Tensor magnetic_divergence(ct::DataType::DT_DOUBLE, ct::DeviceType::GpuDevice, {size});
+    ct::Tensor sums(ct::DataType::DT_DOUBLE, ct::DeviceType::GpuDevice, {4, blocks});
+    ct::Tensor reciprocal(ct::DataType::DT_COMPLEX_DOUBLE, ct::DeviceType::GpuDevice, {basis.npw});
+    for (int spin = 0; spin < 4; ++spin)
+    {
+        base_device::memory::synchronize_memory_op<double, base_device::DEVICE_GPU, base_device::DEVICE_CPU>()(
+            gpu, cpu, rho.data<double>() + spin * size, charge.rho[spin], size);
+    }
+    auto* grid = basis.fft_bundle.get_auxr_3d_data<double>();
+    auto transform_density = [&](const double* density, Complex* coefficients)
+    {
+        hamilt::xc_pack_density_gpu(size, density, grid);
+        basis.fft_bundle.fft3D_forward<double>(gpu, grid, grid);
+        hamilt::xc_gather_density_gpu(basis.npw, basis.nxyz, indices.data<int>(), grid, coefficients);
+    };
+    transform_density(rho.data<double>(), reciprocal.data<Complex>());
+    base_device::memory::synchronize_memory_op<Complex, base_device::DEVICE_CPU, base_device::DEVICE_GPU>()(
+        cpu, gpu, charge.rhog[0], reciprocal.data<Complex>(), basis.npw);
+    {
+        ct::Tensor core_reciprocal(ct::DataType::DT_COMPLEX_DOUBLE, ct::DeviceType::GpuDevice, {basis.npw});
+        transform_density(core.data<double>(), core_reciprocal.data<Complex>());
+        base_device::memory::synchronize_memory_op<Complex, base_device::DEVICE_CPU, base_device::DEVICE_GPU>()(
+            cpu, gpu, charge.rhog_core, core_reciprocal.data<Complex>(), basis.npw);
+        hamilt::xc_add_reciprocal_gpu(basis.npw, core_reciprocal.data<Complex>(), reciprocal.data<Complex>());
+    }
+    // Charge and Cartesian magnetization gradients define the spin-channel gradients by the chain rule.
+    for (int spin = 0; spin < 4; ++spin)
+    {
+        if (spin != 0) { transform_density(rho.data<double>() + spin * size, reciprocal.data<Complex>()); }
+        for (int component = 0; component < 3; ++component)
+        {
+            base_device::memory::set_memory_op<Complex, base_device::DEVICE_GPU>()(gpu, grid, 0, basis.nxyz);
+            hamilt::xc_gradient_coefficients_gpu(basis.npw, component, indices.data<int>(), gcar.data<double>(),
+                                                 reciprocal.data<Complex>(), grid);
+            basis.fft_bundle.fft3D_backward<double>(gpu, grid, grid);
+            hamilt::xc_spin_gradient_gpu(size, spin, component, scale, grid, rho.data<double>(),
+                                        gradient_flux.data<double>());
+        }
+    }
+    hamilt::xc_pbe_spin_gpu(size, rho.data<double>(), core.data<double>(), gradient_flux.data<double>(),
+                           potential.data<double>(), sums.data<double>(), include_local);
+    // Each divergence is projected onto the same reciprocal basis as the density gradients.
+    for (int spin = 0; spin < 4; ++spin)
+    {
+        for (int component = 0; component < 3; ++component)
+        {
+            hamilt::xc_pack_spin_flux_gpu(size, spin, component, rho.data<double>(),
+                                         gradient_flux.data<double>(), grid);
+            basis.fft_bundle.fft3D_forward<double>(gpu, grid, grid);
+            hamilt::xc_accumulate_divergence_gpu(basis.npw, basis.nxyz, component, indices.data<int>(),
+                                                gcar.data<double>(), grid, reciprocal.data<Complex>());
+        }
+        base_device::memory::set_memory_op<Complex, base_device::DEVICE_GPU>()(gpu, grid, 0, basis.nxyz);
+        ModulePW::set_3d_fft_box_op<double, base_device::DEVICE_GPU>()(
+            gpu, basis.npw, indices.data<int>(), reciprocal.data<Complex>(), grid);
+        basis.fft_bundle.fft3D_backward<double>(gpu, grid, grid);
+        hamilt::xc_apply_spin_divergence_gpu(size, spin, scale, grid, rho.data<double>(), potential.data<double>(),
+                                            magnetic_divergence.data<double>(), sums.data<double>());
+    }
+    hamilt::xc_finish_spin_potential_gpu(size, rho.data<double>(), magnetic_divergence.data<double>(),
+                                        potential.data<double>(), sums.data<double>());
+    base_device::memory::synchronize_memory_op<double, base_device::DEVICE_CPU, base_device::DEVICE_GPU>()(
+        cpu, gpu, v.c, potential.data<double>(), 4 * size);
+    auto host_sums = sums.to_device<ct::DEVICE_CPU>();
+    const auto* partial = host_sums.data<double>();
+    for (int block = 0; block < blocks; ++block)
+    {
+        etxc += partial[block];
+        vtxc += partial[blocks + block] - partial[2 * blocks + block] - partial[3 * blocks + block];
+    }
+    ModuleBase::timer::tick("XC_Functional", timer_name);
+}
+
+} // namespace
+
+bool XC_Functional::use_gpu_pbe(const ModulePW::PW_Basis& basis)
+{
+    return !use_libxc && func_type == 2 && func_id.size() == 2
+           && func_id[0] == XC_GGA_X_PBE && func_id[1] == XC_GGA_C_PBE
+           && PARAM.inp.nspin == 4 && (PARAM.globalv.domag || PARAM.globalv.domag_z) && gga_grad == 2
+           && basis.d_is2fftixy != nullptr && basis.poolnproc == 1 && !basis.gamma_only;
+}
+
+void XC_Functional::v_xc_pbe_gpu(double& etxc, double& vtxc, ModuleBase::matrix& potential,
+                                const Charge& charge, const UnitCell& cell)
+{
+    noncollinear_pbe_gpu(etxc, vtxc, potential, charge, *charge.rhopw, cell.tpiba, true);
+}
 #endif
 
 // from gradcorr.f90
@@ -30,8 +225,19 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 	
 	if(func_type == 0 || func_type == 1) { return; } // none or LDA functional
 
-	bool igcc_is_lyp = false;
-	if( func_id[1] == XC_GGA_C_LYP) { igcc_is_lyp = true; }
+    ModuleBase::timer::tick("XC_Functional", "gradcorr");
+#if defined(__CUDA)
+    if (!is_stress && use_gpu_pbe(*rhopw))
+    {
+        noncollinear_pbe_gpu(etxc, vtxc, v, *chr, *rhopw, ucell->tpiba, false);
+        ModuleBase::timer::tick("XC_Functional", "gradcorr");
+        return;
+    }
+#endif
+    ModuleBase::timer::tick("XC_Functional", "gradient_setup");
+
+    bool igcc_is_lyp = false;
+    if( func_id[1] == XC_GGA_C_LYP) { igcc_is_lyp = true; }
 
 	int nspin0 = PARAM.inp.nspin;
 	if(PARAM.inp.nspin==4) { nspin0 =1; }
@@ -190,9 +396,12 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 		XC_Functional::grad_rho( rhogsum2 , gdr2, rhopw, ucell->tpiba);
 
 	}
-	
-	const double epsr = 1.0e-6;
-	const double epsg = 1.0e-10;
+
+    ModuleBase::timer::tick("XC_Functional", "gradient_setup");
+    ModuleBase::timer::tick("XC_Functional", "functional_eval");
+
+    const double epsr = 1.0e-6;
+    const double epsg = 1.0e-10;
 
 	double vtxcgc = 0.0;
 	double etxcgc = 0.0;
@@ -495,11 +704,14 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 }
 #endif
 
-	//std::cout << "\n vtxcgc=" << vtxcgc;
-	//std::cout << "\n etxcgc=" << etxcgc << std::endl;
+ModuleBase::timer::tick("XC_Functional", "functional_eval");
+ModuleBase::timer::tick("XC_Functional", "potential_assembly");
 
-	if(!is_stress)
-	{
+// std::cout << "\n vtxcgc=" << vtxcgc;
+// std::cout << "\n etxcgc=" << etxcgc << std::endl;
+
+if (!is_stress)
+{
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 1024)
 #endif
@@ -593,12 +805,16 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 				}
 			}
 		}
-	}
-	// deacllocate
-	delete[] rhotmp1;
-	delete[] rhogsum1;
-	delete[] gdr1;
-	if(!is_stress) { delete[] h1;
+}
+ModuleBase::timer::tick("XC_Functional", "potential_assembly");
+
+// deacllocate
+delete[] rhotmp1;
+delete[] rhogsum1;
+delete[] gdr1;
+if (!is_stress)
+{
+    delete[] h1;
 }
 
 	if(PARAM.inp.nspin==2)
@@ -627,7 +843,8 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 		delete[] gdr2;
 	}
 
-	return;
+    ModuleBase::timer::tick("XC_Functional", "gradcorr");
+    return;
 }
 
 template <typename T, typename Device, typename Real>
@@ -700,7 +917,15 @@ void XC_Functional::grad_rho(const std::complex<double>* rhog,
                              const ModulePW::PW_Basis* rho_basis,
                              const double tpiba)
 {
-	std::complex<double> *gdrtmp = new std::complex<double>[rho_basis->nmaxgr];
+#if defined(__CUDA)
+    // The device stick map identifies a GPU basis; distributed and Gamma-only grids retain their native transforms.
+    if (rho_basis->d_is2fftixy != nullptr && rho_basis->poolnproc == 1 && !rho_basis->gamma_only)
+    {
+        density_gradient_gpu(rhog, gdr, *rho_basis, tpiba);
+        return;
+    }
+#endif
+    std::complex<double>* gdrtmp = new std::complex<double>[rho_basis->nmaxgr];
 
 	// the formula is : rho(r)^prime = \int iG * rho(G)e^{iGr} dG
 	for(int i = 0 ; i < 3 ; ++i)
@@ -732,8 +957,15 @@ void XC_Functional::grad_rho(const std::complex<double>* rhog,
 
 void XC_Functional::grad_dot(const ModuleBase::Vector3<double>* h, double* dh, const ModulePW::PW_Basis* rho_basis, const double tpiba)
 {
-	std::complex<double> *aux = new std::complex<double>[rho_basis->nmaxgr];
-	std::complex<double> *gaux = new std::complex<double>[rho_basis->npw];
+#if defined(__CUDA)
+    if (rho_basis->d_is2fftixy != nullptr && rho_basis->poolnproc == 1 && !rho_basis->gamma_only)
+    {
+        density_divergence_gpu(h, dh, *rho_basis, tpiba);
+        return;
+    }
+#endif
+    std::complex<double>* aux = new std::complex<double>[rho_basis->nmaxgr];
+    std::complex<double>* gaux = new std::complex<double>[rho_basis->npw];
 
 	for(int i = 0 ; i < 3 ; ++i)
 	{

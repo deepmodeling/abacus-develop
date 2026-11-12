@@ -96,9 +96,11 @@ void FFT_Bundle::initfft(int nx_in,
             fft_double->initfft(nx_in,ny_in,nz_in);
         #elif defined(__CUDA)
             fft_float = make_unique<FFT_CUDA<float>>();
-            fft_float->initfft(nx_in,ny_in,nz_in);
+            fft_float->initfft(nx_in, ny_in, nz_in, lixy_in, rixy_in, ns_in,
+                               nplane_in, nproc_in, gamma_only_in, xprime_in);
             fft_double = make_unique<FFT_CUDA<double>>();
-            fft_double->initfft(nx_in,ny_in,nz_in);
+            fft_double->initfft(nx_in, ny_in, nz_in, lixy_in, rixy_in, ns_in,
+                                nplane_in, nproc_in, gamma_only_in, xprime_in);
         #endif
         // Host-memory interface: always provide a double CPU backend, and a
         // float one when float FFTs are enabled. Single precision still needs
@@ -216,6 +218,142 @@ FFT_Bundle::fft3D_backward(const base_device::DEVICE_GPU* ctx,
                                  std::complex<double>* in, 
                                  std::complex<double>* out) 
 const {fft_double->fft3D_backward(in, out);}
+
+#if defined(__CUFFTDX)
+int FFT_Bundle::fused_veff_grid_size() const
+{
+#if defined(__CUDA)
+    auto* cuda = dynamic_cast<FFT_CUDA<double>*>(fft_double.get());
+    if (cuda != nullptr)
+    {
+        return cuda->fused_veff_grid_size();
+    }
+#endif
+    return 0;
+}
+
+int FFT_Bundle::fused_veff_stick_size() const
+{
+#if defined(__CUDA)
+    auto* cuda = dynamic_cast<FFT_CUDA<double>*>(fft_double.get());
+    if (cuda != nullptr)
+    {
+        return cuda->fused_veff_stick_size();
+    }
+#endif
+    return 0;
+}
+
+int FFT_Bundle::spinor_batch_size() const
+{
+#if defined(__CUDA)
+    auto* cuda = dynamic_cast<FFT_CUDA<double>*>(fft_double.get());
+    if (cuda != nullptr)
+    {
+        return cuda->spinor_batch_size();
+    }
+#endif
+    return 1;
+}
+
+std::complex<double>* FFT_Bundle::get_spinor_stick_data(int bands) const
+{
+#if defined(__CUDA)
+    auto* cuda = dynamic_cast<FFT_CUDA<double>*>(fft_double.get());
+    if (cuda != nullptr)
+    {
+        return cuda->get_spinor_stick_data(bands);
+    }
+#endif
+    return nullptr;
+}
+
+void FFT_Bundle::transform_spinor_sticks(std::complex<double>* up, std::complex<double>* down,
+                                         const int* reverse, bool inverse, int bands) const
+{
+#if defined(__CUDA)
+    auto* cuda = dynamic_cast<FFT_CUDA<double>*>(fft_double.get());
+    if (cuda != nullptr)
+    {
+        cuda->transform_spinor_sticks(up, down, reverse, inverse, bands);
+    }
+#endif
+}
+
+void FFT_Bundle::transform_spinor_slabs(std::complex<double>* up, std::complex<double>* down,
+                                        const int* reverse, bool inverse, int bands) const
+{
+#if defined(__CUDA)
+    auto* cuda = dynamic_cast<FFT_CUDA<double>*>(fft_double.get());
+    if (cuda != nullptr)
+    {
+        cuda->transform_spinor_slabs(up, down, reverse, inverse, bands);
+    }
+#endif
+}
+
+void FFT_Bundle::apply_spinor_potential(const double* potential, std::complex<double>* up,
+                                        std::complex<double>* down, const int* reverse, int bands) const
+{
+#if defined(__CUDA)
+    auto* cuda = dynamic_cast<FFT_CUDA<double>*>(fft_double.get());
+    if (cuda != nullptr)
+    {
+        cuda->apply_spinor_potential(potential, up, down, reverse, bands);
+    }
+#endif
+}
+
+int FFT_Bundle::lixy() const
+{
+#if defined(__CUDA)
+    auto* cuda = dynamic_cast<FFT_CUDA<double>*>(fft_double.get());
+    if (cuda != nullptr)
+    {
+        return cuda->lixy();
+    }
+#endif
+    return 0;
+}
+
+int FFT_Bundle::rixy() const
+{
+#if defined(__CUDA)
+    auto* cuda = dynamic_cast<FFT_CUDA<double>*>(fft_double.get());
+    if (cuda != nullptr)
+    {
+        return cuda->rixy();
+    }
+#endif
+    return 0;
+}
+#endif
+
+void FFT_Bundle::fft3D_forward_pw(std::complex<double>* in, std::complex<double>* out) const
+{
+#if defined(__CUDA)
+    auto* cuda = dynamic_cast<FFT_CUDA<double>*>(fft_double.get());
+    if (cuda != nullptr)
+    {
+        cuda->fft3D_forward_pw(in, out);
+        return;
+    }
+#endif
+    fft_double->fft3D_forward(in, out);
+}
+
+void FFT_Bundle::fft3D_backward_pw(std::complex<double>* in, std::complex<double>* out) const
+{
+#if defined(__CUDA)
+    auto* cuda = dynamic_cast<FFT_CUDA<double>*>(fft_double.get());
+    if (cuda != nullptr)
+    {
+        cuda->fft3D_backward_pw(in, out);
+        return;
+    }
+#endif
+    fft_double->fft3D_backward(in, out);
+}
 
 // access the real space data
 template <> float* 

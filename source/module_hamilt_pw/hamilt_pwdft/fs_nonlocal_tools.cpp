@@ -163,6 +163,12 @@ void FS_Nonlocal_tools<FPTYPE, Device>::delete_memory()
 
 // cal_vkb
 template <typename FPTYPE, typename Device>
+void FS_Nonlocal_tools<FPTYPE, Device>::prepare_projectors(int ik)
+{
+    this->cal_vkb(ik, this->nbands);
+}
+
+template <typename FPTYPE, typename Device>
 void FS_Nonlocal_tools<FPTYPE, Device>::cal_vkb(const int& ik, const int& nbdall)
 {
     ModuleBase::TITLE("FS_Nonlocal_tools", "cal_vkb");
@@ -188,7 +194,6 @@ void FS_Nonlocal_tools<FPTYPE, Device>::cal_vkb(const int& ik, const int& nbdall
     std::complex<FPTYPE>* d_sk = this->hd_sk;
     // prepare ylm，size: (lmax+1)^2 * this->max_npw
     const int lmax_ = this->nlpp_->lmaxkb;
-    maths.cal_ylm(lmax_, npw, g_plus_k.data(), hd_ylm);
     if (this->device == base_device::GpuDevice)
     {
         syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, d_g_plus_k, g_plus_k.data(), g_plus_k.size());
@@ -196,6 +201,7 @@ void FS_Nonlocal_tools<FPTYPE, Device>::cal_vkb(const int& ik, const int& nbdall
         gk = d_g_plus_k;
         vq_tb = d_vq_tab;
     }
+    maths.cal_ylm(lmax_, npw, gk, hd_ylm);
     for (int it = 0; it < this->ucell_->ntype; it++) // loop all elements
     {
         int lenth_vq = this->ucell_->atoms[it].ncpp.nbeta * npw;

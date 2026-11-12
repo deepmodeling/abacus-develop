@@ -47,11 +47,28 @@ jobs:
 
       - name: Build
         run: |
-          cmake --build build -j8
-          cmake --install build
+          set +e
+          cmake --build build -j8 > build.log 2>&1
+          status=$?
+          if [ $status -ne 0 ]; then
+            grep -nE "error:|undefined reference|fatal error|collect2:|Error [0-9]|No such file|Killed" build.log | head -n 60 | while IFS= read -r line; do
+              echo "::error::${line}"
+            done
+          else
+            cmake --install build
+            status=$?
+          fi
+          exit $status
       - name: Test
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
-          cmake --build build --target test ARGS="-V --timeout 1700"
+          set +e
+          cmake --build build --target test ARGS="-V --timeout 1700" > ctest.log 2>&1
+          status=$?
+          if [ $status -ne 0 ]; then
+            message=$(grep -nE "The following tests FAILED|tests failed out of|Errors while running CTest|^[0-9 ]+ - .*\((Failed|Timeout|Exception|SEGFAULT|Subprocess aborted)\)" ctest.log | tail -n 60 | sed ':a;N;$!ba;s/\n/%0A/g')
+            echo "::error::${message}"
+          fi
+          exit $status
