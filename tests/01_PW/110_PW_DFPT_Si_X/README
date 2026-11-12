@@ -7,14 +7,19 @@ Bohr = 5.4300 Angstrom), ONCV PBE (Si_ONCV_PBE-1.0), 20/80 Ry,
 DFPT: single q = (0, 0.5, 0.5) direct (fcc X point), 6 displacement
 Sternheimer solves (v_sc_broyden default mixing), crystal ASR.
 
+Expected frequencies (cm^-1): ~133.44 (TA), ~407.6 (LA), ~459.8 (LO).
+Cross-validated against QE 6.8 (same pseudo, ecut, k-mesh): rms 0.17.
+
+Tolerance: Autotest.sh applies a dedicated 1e-4 threshold to the
+dfpt_freq_* / dfpt_loto_* keys (same-binary reruns reproduce the six
+printed decimals exactly; the margin only absorbs last-digit rounding
+across toolchains). The case-wide default (1e-7) applies unchanged to
+etot and force keys.
+
 Note: the DFPT esolver is currently a serial implementation; MPI domain
 decomposition is planned future work. Autotest.sh runs this case with a
 single MPI rank regardless of the suite -n setting.
 
-Expected frequencies (cm^-1): ~133.44 (TA), ~407.6 (LA), ~459.8 (LO).
-Cross-validated against QE 6.8 (same pseudo, ecut, k-mesh): rms 0.17.
-
-Tolerance: the per-case `threshold` file sets the comparison threshold
-to 1e-4 for this case. Same-binary reruns reproduce the frequencies
-exactly at the printed 6 decimals, so the margin only absorbs
-last-digit rounding across compilers/toolchains.
+Reference generation: cmake build with default options (ENABLE_LIBXC=ON);
+the result.ref frequencies were collected with the standard suite
+workflow (catch_properties.sh result.ref) after a full DFPT run.
