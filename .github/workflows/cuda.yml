@@ -44,7 +44,7 @@ jobs:
           bash Autotest.sh -n 2 -f CASES_GPU.txt > gpu-test.log 2>&1
           status=$?
           if [ $status -ne 0 ]; then
-            message=$(tail -n 120 gpu-test.log | sed ':a;N;$!ba;s/\n/%0A/g')
+            message=$(grep -nE "\[ERROR|test cases out of|failed\." gpu-test.log | tail -n 60 | sed ':a;N;$!ba;s/\n/%0A/g')
             echo "::error::${message}"
           fi
           exit $status
