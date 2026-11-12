@@ -245,7 +245,7 @@ void hamilt::Onsite_Proj_tools<FPTYPE, Device>::cal_becp(int ik,
 
     if (this->device == base_device::GpuDevice)
     {
-        if (GlobalV::NPROC_IN_POOL > 1)
+        if (this->wfc_basis_ != nullptr && this->wfc_basis_->poolnproc > 1)
         {
             if (host_becp == nullptr)
             {

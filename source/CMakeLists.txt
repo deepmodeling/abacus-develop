@@ -699,7 +699,6 @@ if(USE_CUDA)
     source_pw/module_pwdft/kernels/cuda/stress_op.cu
     source_cell/kernels/cuda/wf_op.cu
     source_pw/module_pwdft/kernels/cuda/vnl_op.cu
-    source_pw/module_pwdft/kernels/cuda/projector_fold.cu
     source_base/module_device/cuda_compat.cpp
     source_base/kernels/cuda/math_ylm_op.cu
     source_base/kernels/cuda/math_kernel_op.cu

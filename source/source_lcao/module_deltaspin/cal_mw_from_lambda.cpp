@@ -453,8 +453,8 @@ void spinconstrain::SpinConstrain<std::complex<double>>::update_psi_charge(
     {
         const bool use_gpu = PARAM.inp.device == "gpu";
         const std::string& ks_solver = PARAM.inp.ks_solver;
-        const int rank_in_pool = GlobalV::RANK_IN_POOL;
-        const int nproc_in_pool = GlobalV::NPROC_IN_POOL;
+        const int rank_in_pool = this->pw_wfc_->poolrank;
+        const int nproc_in_pool = this->pw_wfc_->poolnproc;
         if (!use_gpu)
         {
             pw::update_psi_charge_pw_cpu(this->state_, this->pw_cache_, this->psi, this->p_hamilt,
