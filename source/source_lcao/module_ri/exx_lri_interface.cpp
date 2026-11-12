@@ -1,6 +1,6 @@
-#ifndef EXX_LRI_INTERFACE_HPP
-#define EXX_LRI_INTERFACE_HPP
 #include "exx_lri_interface.h"
+#include "hybrid_image_domain.h"
+#include "source_estate/module_pot/td_field_manager.h"
 #include "source_cell/unitcell.h"
 #include "source_base/formatter.h"
 #include "source_base/parallel_common.h"
@@ -86,6 +86,97 @@ void Exx_LRI_Interface<T, Tdata>::cal_exx_stress(const double& omega, const doub
 
     this->exx_ptr->cal_exx_stress(omega, lat0);
     this->flag_finish.stress = true;
+}
+
+template<typename T, typename Tdata>
+void Exx_LRI_Interface<T, Tdata>::mix_common_density(
+    RI_2D_Comm::HybridGaugeComplexDensity& density,
+    const UnitCell& ucell,
+    const ModuleBase::Vector3<double>& source_A,
+    const bool restart)
+{
+    if (this->exx_ptr->get_info_ri().unfold_hybrid_images)
+    {
+        if (this->exx_spacegroup_symmetry)
+        {
+            throw std::invalid_argument("Unfolded hybrid RI requires a full k mesh without space-group reconstruction");
+        }
+        const K_Vectors& kv = *this->exx_ptr->p_kv;
+        const std::array<int, 3> physical_period{{kv.nmp[0], kv.nmp[1], kv.nmp[2]}};
+        const ModuleBase::Vector3<double>& k0 = kv.kvec_d.at(0);
+        const std::array<double, 3> mesh_origin{{k0.x, k0.y, k0.z}};
+        const std::array<double, 3> input_phase = RI_2D_Comm::hybrid_input_phase_per_cell(ucell.latvec, ucell.lat0, source_A);
+        RI_2D_Comm::unfold_hybrid_images(density, physical_period,
+                                        this->exx_ptr->hybrid_images_period(), mesh_origin, input_phase);
+        RI_2D_Comm::mix_common_frame_density(restart, this->mix_common_density_,
+                                            this->common_density_layout_, density);
+    }
+    else
+    {
+        RI_2D_Comm::mix_hybrid_density(ucell.latvec, ucell.lat0, source_A, restart,
+                                     this->mix_common_density_, this->common_density_layout_, density);
+    }
+}
+
+template<typename T, typename Tdata>
+void Exx_LRI_Interface<T, Tdata>::mix_common_density(
+    std::vector<std::map<TA, std::map<TAC, RI::Tensor<double>>>>& density,
+    const UnitCell& ucell,
+    const ModuleBase::Vector3<double>& source_A,
+    const bool restart)
+{
+    throw std::invalid_argument("sHG EXX density requires complex RI tensors (exx_real_number 0)");
+}
+
+template<typename T, typename Tdata>
+std::vector<std::map<typename Exx_LRI_Interface<T, Tdata>::TA,
+    std::map<typename Exx_LRI_Interface<T, Tdata>::TAC, RI::Tensor<Tdata>>>>
+Exx_LRI_Interface<T, Tdata>::prepare_exx_density(
+    const std::vector<std::vector<T>>& dmk,
+    const UnitCell& ucell,
+    const K_Vectors& kv,
+    const Parallel_Orbitals& pv,
+    const int nspin,
+    const bool restart,
+    const ModuleBase::Vector3<double>* source_A)
+{
+    std::vector<std::vector<T>> restored_storage;
+    const std::vector<std::vector<T>>* restored = &dmk;
+    if (this->exx_spacegroup_symmetry)
+    {
+        restored_storage = this->symrot_.restore_dm(kv, dmk, pv.para_2d());
+        restored = &restored_storage;
+    }
+    if (source_A == nullptr)
+    {
+        this->mix_DMk_2D.mix(*restored, restart);
+        std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> density = RI_2D_Comm::split_m2D_ktoR<Tdata>(
+            ucell, *this->exx_ptr->p_kv, this->mix_DMk_2D.get_DMk_out(), pv.para_2d(), nspin,
+            this->exx_spacegroup_symmetry);
+        if (this->exx_ptr->get_info_ri().unfold_hybrid_images)
+        {
+            if (this->exx_spacegroup_symmetry)
+            {
+                throw std::invalid_argument("Unfolded hybrid RI requires a full k mesh");
+            }
+            const std::array<int, 3> physical_period{{kv.nmp[0], kv.nmp[1], kv.nmp[2]}};
+            const ModuleBase::Vector3<double>& k0 = this->exx_ptr->p_kv->kvec_d.at(0);
+            const std::array<double, 3> mesh_origin{{k0.x, k0.y, k0.z}};
+            const std::array<double, 3> input_phase{{0.0, 0.0, 0.0}};
+            RI_2D_Comm::unfold_hybrid_images(density, physical_period,
+                                            this->exx_ptr->hybrid_images_period(), mesh_origin, input_phase);
+        }
+        return density;
+    }
+    std::vector<const std::vector<T>*> raw;
+    for (const std::vector<T>& block : *restored)
+    {
+        raw.push_back(&block);
+    }
+    std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> density = RI_2D_Comm::split_m2D_ktoR<Tdata>(
+        ucell, *this->exx_ptr->p_kv, raw, pv.para_2d(), nspin, this->exx_spacegroup_symmetry);
+    this->mix_common_density(density, ucell, *source_A, restart);
+    return density;
 }
 
 template<typename T, typename Tdata>
@@ -178,9 +269,15 @@ void Exx_LRI_Interface<T, Tdata>::exx_beforescf(
             { this->mix_DMk_2D.set_nks(kv.get_nks()); }
 
         if (this->info_global.separate_loop)
-            { this->mix_DMk_2D.set_mixing_plain(this->info_global.mixing_beta_for_loop1); }
+        {
+            this->mix_DMk_2D.set_mixing_plain(this->info_global.mixing_beta_for_loop1);
+            this->mix_common_density_.set_mixing_plain(this->info_global.mixing_beta_for_loop1);
+        }
         else
-            { this->mix_DMk_2D.set_mixing(chgmix.get_mixing()); }
+        {
+            this->mix_DMk_2D.set_mixing(chgmix.get_mixing());
+            this->mix_common_density_.set_mixing(chgmix.get_mixing());
+        }
 
         // remember chgmix so exx_eachiterinit can re-borrow its mixing pointer after
         // mixing_restart's init_mixing() has reallocated it (else use-after-free -> SIGSEGV)
@@ -198,7 +295,8 @@ void Exx_LRI_Interface<T, Tdata>::exx_eachiterinit(const int istep,
                                                    const module_dm::DensityMatrix<T, double>& dm,
                                                    const K_Vectors& kv,
                                                    const Parallel_Orbitals& pv,
-                                                   const int& iter)
+                                                   const int& iter,
+                                                   const elecstate::ElecState& elec)
 {
     ModuleBase::TITLE("Exx_LRI_Interface","exx_eachiterinit");
     if (this->info_global.cal_exx)
@@ -227,32 +325,25 @@ void Exx_LRI_Interface<T, Tdata>::exx_eachiterinit(const int istep,
                     { flag_restart = true; }   
                 this->last_borrowed_mixing_ = cur_mixing;
                 this->mix_DMk_2D.set_mixing(this->p_chgmix_->get_mixing());
+                this->mix_common_density_.set_mixing(this->p_chgmix_->get_mixing());
             }
 
-            auto cal = [this, &ucell,&kv, &pv, &flag_restart](const module_dm::DensityMatrix<T, double>& dm_in)
+            const elecstate::TDFieldManager* field = elec.pot->td_field_manager();
+            const RI_2D_Comm::HybridDensityTime density_time = RI_2D_Comm::hybrid_density_time(istep, iter);
+            const bool use_left_density = density_time == RI_2D_Comm::HybridDensityTime::Left;
+            const module_dm::DensityMatrix<T, double>& source_density = use_left_density ? *this->dm_last_step : dm;
+            const ModuleBase::Vector3<double>* source_A = nullptr;
+            if (field != nullptr && field->gauge() == 2)
             {
-                if (this->exx_spacegroup_symmetry)
-                    { this->mix_DMk_2D.mix(symrot_.restore_dm(kv, dm_in.get_dmk_vec(), pv.para_2d()), flag_restart); }
-                else
-                    { this->mix_DMk_2D.mix(dm_in.get_dmk_vec(), flag_restart); }
-                const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> Ds =
-                    RI_2D_Comm::split_m2D_ktoR<Tdata>(
-                        ucell,
-                        *this->exx_ptr->p_kv,
-                        this->mix_DMk_2D.get_DMk_out(),
-                        pv.para_2d(),
-                        PARAM.inp.nspin,
-                        this->exx_spacegroup_symmetry);
-                if(this->exx_spacegroup_symmetry && this->exx_ptr->info.exx_symmetry_realspace)
-                    { this->cal_exx_elec(Ds, ucell, pv, &this->symrot_); }
-                else
-                    { this->cal_exx_elec(Ds, ucell, pv); }
-            };
-
-            if(istep > 0 && flag_restart)
-                { cal(*this->dm_last_step); }
+                source_A = use_left_density ? &field->A_left_ha() : &field->A_right_ha();
+            }
+            const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> Ds =
+                this->prepare_exx_density(source_density.get_dmk_vec(), ucell, kv, pv,
+                                          PARAM.inp.nspin, flag_restart, source_A);
+            if (this->exx_spacegroup_symmetry && this->exx_ptr->info.exx_symmetry_realspace)
+                { this->cal_exx_elec(Ds, ucell, pv, &this->symrot_); }
             else
-                { cal(dm); }
+                { this->cal_exx_elec(Ds, ucell, pv); }
         }
     }
 }
@@ -356,7 +447,7 @@ void Exx_LRI_Interface<T, Tdata>::exx_iter_finish(const K_Vectors& kv,
             iter,
             istep,
             elec.f_en.etot,
-            scf_ene_thr);
+            scf_ene_thr, elec.pot->td_field_manager());
 
         // On the 0->1 transition, exx_after_converge switches the XC functional (PBE->hybrid), 
         // but v_eff was already set for this (converged) iteration under the OLD functional. 
@@ -386,7 +477,8 @@ bool Exx_LRI_Interface<T, Tdata>::exx_after_converge(
     int& iter,
     const int& istep,
     const double& etot,
-    const double& scf_ene_thr)
+    const double& scf_ene_thr,
+    const elecstate::TDFieldManager* field)
 {   // only called if (this->info_global.cal_exx)
     ModuleBase::TITLE("Exx_LRI_Interface","exx_after_converge");
     auto restart_reset = [this]()
@@ -447,18 +539,13 @@ bool Exx_LRI_Interface<T, Tdata>::exx_after_converge(
             // if init_wfc == "file", DM is calculated in the 1st iter of the 1st two-level step, so we mix it here
             const bool flag_restart = (this->two_level_step == 0 && PARAM.inp.init_wfc != "file") ? true : false;
 
-            if(this->exx_spacegroup_symmetry)
-                { this->mix_DMk_2D.mix(symrot_.restore_dm(kv, dm.get_dmk_vec(), pv.para_2d()), flag_restart); }
-            else
-                { this->mix_DMk_2D.mix(dm.get_dmk_vec(), flag_restart); }
+            const ModuleBase::Vector3<double>* source_A = nullptr;
+            if (field != nullptr && field->gauge() == 2)
+            {
+                source_A = &field->A_right_ha();
+            }
             const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> Ds =
-                RI_2D_Comm::split_m2D_ktoR<Tdata>(
-                    ucell,
-                    *this->exx_ptr->p_kv,
-                    this->mix_DMk_2D.get_DMk_out(),
-                    pv.para_2d(),
-                    nspin,
-                    this->exx_spacegroup_symmetry);
+                this->prepare_exx_density(dm.get_dmk_vec(), ucell, kv, pv, nspin, flag_restart, source_A);
             if(this->exx_spacegroup_symmetry && this->exx_ptr->info.exx_symmetry_realspace)
                 { this->cal_exx_elec(Ds, ucell, pv, &this->symrot_); }
             else
@@ -479,4 +566,7 @@ bool Exx_LRI_Interface<T, Tdata>::exx_after_converge(
     return true;
 }
 
-#endif
+template class Exx_LRI_Interface<double, double>;
+template class Exx_LRI_Interface<double, std::complex<double>>;
+template class Exx_LRI_Interface<std::complex<double>, double>;
+template class Exx_LRI_Interface<std::complex<double>, std::complex<double>>;

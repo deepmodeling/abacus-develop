@@ -147,6 +147,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
     {
         this->hRS2.resize(this->hR->get_nnr() * 2);
         this->hR->allocate(this->hRS2.data(), 0);
+        this->getHR_vector();
         memory_fold = 2;
     }
 
@@ -163,14 +164,33 @@ std::vector<HContainer<TR>*> HamiltLCAO<TK, TR>::getHR_vector()
 {
     if (this->nspin == 2)
     {
-        const int nnr = this->hRS2.size() / 2;
-        this->hr_spin_up_.reset(new HContainer<TR>(*this->hR, this->hRS2.data()));
-        this->hr_spin_dn_.reset(new HContainer<TR>(*this->hR, this->hRS2.data() + nnr));
+        this->synchronize_spin_storage();
+        const size_t nnr = this->hRS2.size() / 2;
+        TR* up_data = this->hRS2.data();
+        TR* down_data = up_data + nnr;
+        this->hr_spin_up_.reset(new HContainer<TR>(*this->hR, up_data));
+        this->hr_spin_dn_.reset(new HContainer<TR>(*this->hR, down_data));
         return {this->hr_spin_up_.get(), this->hr_spin_dn_.get()};
     }
     else
     {
         return {this->hR.get()};
+    }
+}
+
+template <typename TK, typename TR>
+void HamiltLCAO<TK, TR>::synchronize_spin_storage()
+{
+    if (this->nspin == 2 && this->hRS2.size() != 2 * this->hR->get_nnr())
+    {
+        // The active container has detached from hRS2 during operator assembly.
+        // The spin wrappers retain the old block layout for the inactive channel.
+        resize_spin_storage(*this->hR, *this->hr_spin_up_, this->hRS2, this->current_spin);
+        const size_t nnr = this->hRS2.size() / 2;
+        TR* up_data = this->hRS2.data();
+        TR* down_data = up_data + nnr;
+        this->hr_spin_up_.reset(new HContainer<TR>(*this->hR, up_data));
+        this->hr_spin_dn_.reset(new HContainer<TR>(*this->hR, down_data));
     }
 }
 
@@ -217,6 +237,7 @@ void HamiltLCAO<TK, TR>::updateHk(const int ik)
         this->getOperatorLCAO()->set_current_spin(this->kv->isk[ik]);
     }
     this->getOperator()->init(ik);
+    this->synchronize_spin_storage();
     ModuleBase::timer::end("HamiltLCAO", "updateHk");
 }
 
@@ -226,16 +247,12 @@ void HamiltLCAO<TK, TR>::refresh(bool yes)
     ModuleBase::TITLE("HamiltLCAO", "refresh");
     if(yes)
     {
+        this->synchronize_spin_storage();
         this->getOperatorLCAO()->set_hr_done(false);
         if (this->nspin == 2)
         {
             this->refresh_times = 1;
             this->current_spin = 0;
-            if (this->hR->get_nnr() != this->hRS2.size() / 2)
-            {
-                // operator has changed, resize hRS2
-                this->hRS2.resize(this->hR->get_nnr() * 2);
-            }
             this->hR->allocate(this->hRS2.data(), 0);
         }
     }
