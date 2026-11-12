@@ -110,31 +110,7 @@ jobs:
       - name: Test 11_PW_GPU
         run: |
           cd tests/11_PW_GPU
-          set +e
-          bash ../integrate/Autotest.sh -n 2 -j "$GPU_TEST_JOBS" -f CASES_GPU.txt > gpu-test.log 2>&1
-          status=$?
-          if [ $status -ne 0 ]; then
-            grep -nE "ERROR|WARNING|failed|FAILED|test cases" gpu-test.log | tail -n 100 | while IFS= read -r line; do
-              echo "::error::${line}"
-            done
-          fi
-          exit $status
-
-      - name: Diagnose 11_PW_GPU
-        if: failure()
-        run: |
-          if ! command -v compute-sanitizer >/dev/null; then
-            echo "compute-sanitizer is not available"
-            exit 0
-          fi
-          abacus_exe=$(command -v abacus || find "$GITHUB_WORKSPACE/build" -maxdepth 1 -type f -name 'abacus*' -executable | head -n 1)
-          cd tests/11_PW_GPU/scf_out_wf_spinor
-          rm -rf OUT.autotest
-          set +e
-          mpirun -np 2 compute-sanitizer --tool memcheck --target-processes all "$abacus_exe" > sanitizer.log 2>&1
-          message=$(grep -nE -A25 "Invalid|out-of-bounds|ERROR SUMMARY" sanitizer.log | head -n 80 | sed ':a;N;$!ba;s/\n/%0A/g')
-          echo "::error::${message}"
-          exit 0
+          bash ../integrate/Autotest.sh -n 2 -j "$GPU_TEST_JOBS" -f CASES_GPU.txt
 
       - name: Test 02_NAO_Gamma on GPU
         run: |
