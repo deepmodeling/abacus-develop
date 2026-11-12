@@ -337,12 +337,12 @@ std::complex<double>* FFT_Bundle::get_auxg_data() const
 template <>
 std::complex<float>* FFT_Bundle::get_auxr_3d_data() const
 {
-    return fft_float->get_auxr_3d_data();
+    return fft_float == nullptr ? nullptr : fft_float->get_auxr_3d_data();
 }
 template <>
 std::complex<double>* FFT_Bundle::get_auxr_3d_data() const
 {
-    return fft_double->get_auxr_3d_data();
+    return fft_double == nullptr ? nullptr : fft_double->get_auxr_3d_data();
 }
 
 void FFT_Bundle::fft3D_forward_pw(std::complex<double>* in, std::complex<double>* out) const
