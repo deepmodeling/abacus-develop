@@ -1,4 +1,5 @@
 #include "hcontainer.h"
+#include "hcontainer_funcs.h"
 #include "source_base/atom_basis_view.h"
 #include "source_base/basis_flattened_indexing.h"
 #include "source_base/parallel_blkcyc.h"
@@ -1208,6 +1209,43 @@ void HContainer<T>::insert_ijrs(const std::vector<int>* ijrs, const UnitCell& uc
         }
     }
 }
+
+template <typename T>
+void resize_spin_storage(HContainer<T>& current,
+                         const HContainer<T>& stored_layout,
+                         std::vector<T>& storage,
+                         const int current_spin)
+{
+    const size_t old_nnr = stored_layout.get_nnr();
+    const size_t new_nnr = current.get_nnr();
+    assert(storage.size() == 2 * old_nnr);
+    assert(current_spin == 0 || current_spin == 1);
+    std::vector<T> expanded(2 * new_nnr, T{});
+    for (int spin = 0; spin < 2; ++spin)
+    {
+        T* new_data = expanded.data() + spin * new_nnr;
+        HContainer<T> destination(current, new_data);
+        if (spin == current_spin)
+        {
+            destination.add_value_intersection(current);
+        }
+        else
+        {
+            T* old_data = storage.data() + spin * old_nnr;
+            HContainer<T> source(stored_layout, old_data);
+            destination.add_value_intersection(source);
+        }
+    }
+    storage.swap(expanded);
+    T* active_data = storage.data() + current_spin * new_nnr;
+    current.allocate(active_data, false);
+}
+
+template void resize_spin_storage(HContainer<double>&, const HContainer<double>&, std::vector<double>&, const int);
+template void resize_spin_storage(HContainer<std::complex<double>>&,
+                                  const HContainer<std::complex<double>>&,
+                                  std::vector<std::complex<double>>&,
+                                  const int);
 
 // T of HContainer can be double, float, or std::complex<double>
 template class HContainer<float>;

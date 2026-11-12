@@ -197,9 +197,12 @@ class HamiltLCAO : public Hamilt<TK>
     std::vector<TR> hRS2;
 
     /// Per-spin HContainer wrappers for nspin=2 (owned by this class).
-    /// Rebuilt by getHR_vector() whenever hRS2 is resized.
+    /// Preserve the layout of hRS2 until an operator's HR growth is synchronized.
     std::unique_ptr<HContainer<TR>> hr_spin_up_;
     std::unique_ptr<HContainer<TR>> hr_spin_dn_;
+
+    /// Keep both spin channels aligned with dynamically added H(R) blocks.
+    void synchronize_spin_storage();
 
     int refresh_times = 1;
 
