@@ -145,8 +145,8 @@ addtest(
   SOURCES test_dp_aparam.cpp ../module_dp/dp_aparam.cpp)
 
 set(_md_nep_test_libs parameter psi device)
-if(DEFINED NEP_DIR AND NEP_FOUND)
-  list(APPEND _md_nep_test_libs NEP::nep)
+if(ENABLE_NEP)
+  list(APPEND _md_nep_test_libs nep::nep_cpu)
 endif()
 
 addtest(
