@@ -2,15 +2,15 @@
 # External dependency interfaces
 # ==============================================================================
 #
-# This file is the only place where ABACUS target linkage is assembled. The
+# This file is the only place where AI4M target linkage is assembled. The
 # top-level CMakeLists.txt resolves options and packages but deliberately does
-# not construct or link ABACUS targets.
+# not construct or link AI4M targets.
 #
 # Link order is part of the build contract. Static linkers resolve archives
 # from left to right, so every consumer must precede the provider of its
 # unresolved symbols. Keep the final link closure ordered as follows:
 #
-#   1. ABACUS internal targets, from high-level consumers to lower-level
+#   1. AI4M internal targets, from high-level consumers to lower-level
 #      providers;
 #   2. optional external feature libraries used by those internal targets;
 #   3. numerical backends and their MPI, OpenMP, compiler-runtime, and system
@@ -19,7 +19,7 @@
 # Do not sort or globally deduplicate this closure. A package target must carry
 # its own transitive requirements in INTERFACE_LINK_LIBRARIES. Cyclic static
 # archives must be handled locally by the corresponding package target or
-# adapter rather than by wrapping the entire ABACUS link line in a linker group.
+# adapter rather than by wrapping the entire AI4M link line in a linker group.
 
 # This target intentionally carries compile usage requirements only. It must
 # not link an external library: internal object libraries and unit tests consume
@@ -462,7 +462,7 @@ define_property(
   DIRECTORY
   PROPERTY ABACUS_DISABLED_FEATURE_DEFINITIONS
   INHERITED
-  BRIEF_DOCS "ABACUS feature definitions disabled for targets in this directory"
+  BRIEF_DOCS "AI4M feature definitions disabled for targets in this directory"
   FULL_DOCS
     "Feature definitions disabled for targets created in this directory.")
 
@@ -471,7 +471,7 @@ define_property(
   PROPERTY ABACUS_LOCAL_FEATURE_DEFINITIONS
   INHERITED
   BRIEF_DOCS
-    "Additional ABACUS feature definitions for targets in this directory"
+    "Additional AI4M feature definitions for targets in this directory"
   FULL_DOCS
     "Additional feature definitions for targets created in this directory.")
 
@@ -551,8 +551,8 @@ endfunction()
 
 function(abacus_apply_build_options_to_dir dir)
   # FetchContent adds third-party projects as subdirectories of its caller.
-  # Keep the recursive application strictly within ABACUS's own source tree so
-  # exported third-party targets never acquire ABACUS compile requirements.
+  # Keep the recursive application strictly within AI4M's own source tree so
+  # exported third-party targets never acquire AI4M compile requirements.
   set(_abacus_source_root "${PROJECT_SOURCE_DIR}/source/")
   string(FIND "${dir}/" "${_abacus_source_root}" _abacus_source_pos)
   if(NOT _abacus_source_pos EQUAL 0)
@@ -583,18 +583,18 @@ endfunction()
 set(ABACUS_TEST_DIR "${PROJECT_SOURCE_DIR}/tests")
 include(${PROJECT_SOURCE_DIR}/cmake/Testing.cmake)
 
-add_executable(${ABACUS_BIN_NAME} source_main/main.cpp)
-set_target_properties(${ABACUS_BIN_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY
+add_executable(${AI4M_BIN_NAME} source_main/main.cpp)
+set_target_properties(${AI4M_BIN_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY
                                                     "${PROJECT_BINARY_DIR}")
-set(ABACUS_BIN_PATH ${PROJECT_BINARY_DIR}/${ABACUS_BIN_NAME})
+set(ABACUS_BIN_PATH ${PROJECT_BINARY_DIR}/${AI4M_BIN_NAME})
 
 if(USE_CUDA)
-  set_property(TARGET ${ABACUS_BIN_NAME} PROPERTY CUDA_ARCHITECTURES
+  set_property(TARGET ${AI4M_BIN_NAME} PROPERTY CUDA_ARCHITECTURES
                                                   ${CMAKE_CUDA_ARCHITECTURES})
 endif()
 
 if(ENABLE_COVERAGE)
-  add_coverage(${ABACUS_BIN_NAME})
+  add_coverage(${AI4M_BIN_NAME})
 endif()
 
 include(${PROJECT_SOURCE_DIR}/cmake/BuildInfo.cmake)
@@ -767,8 +767,8 @@ endif()
 # ==============================================================================
 
 target_link_libraries(
-  ${ABACUS_BIN_NAME}
-  PRIVATE # Internal ABACUS targets: consumers before providers.
+  ${AI4M_BIN_NAME}
+  PRIVATE # Internal AI4M targets: consumers before providers.
           driver
           esolver
           hsolver
@@ -809,12 +809,12 @@ target_link_libraries(
           base)
 
 if(ENABLE_ELPA)
-  target_link_libraries(${ABACUS_BIN_NAME} PRIVATE genelpa)
+  target_link_libraries(${AI4M_BIN_NAME} PRIVATE genelpa)
 endif()
 
 if(ENABLE_LCAO)
   target_link_libraries(
-    ${ABACUS_BIN_NAME}
+    ${AI4M_BIN_NAME}
     PRIVATE hamilt_lcao
             tddft
             dftu
@@ -825,41 +825,41 @@ if(ENABLE_LCAO)
             lr
             rdmft)
   if(ENABLE_LIBRI)
-    target_link_libraries(${ABACUS_BIN_NAME} PRIVATE bse)
+    target_link_libraries(${AI4M_BIN_NAME} PRIVATE bse)
   endif()
   if(ENABLE_PEXSI)
-    target_link_libraries(${ABACUS_BIN_NAME} PRIVATE pexsi)
+    target_link_libraries(${AI4M_BIN_NAME} PRIVATE pexsi)
   endif()
   if(USE_CUDA)
-    target_link_libraries(${ABACUS_BIN_NAME} PRIVATE diag_cusolver)
+    target_link_libraries(${AI4M_BIN_NAME} PRIVATE diag_cusolver)
   endif()
 endif()
 
 if(ENABLE_MLALGO)
-  target_link_libraries(${ABACUS_BIN_NAME} PRIVATE deepks hamilt_mlkedf)
+  target_link_libraries(${AI4M_BIN_NAME} PRIVATE deepks hamilt_mlkedf)
 endif()
 if(ENABLE_LIBRI)
-  target_link_libraries(${ABACUS_BIN_NAME} PRIVATE ri module_exx_symmetry)
+  target_link_libraries(${AI4M_BIN_NAME} PRIVATE ri module_exx_symmetry)
   if(ENABLE_LCAO)
-    target_link_libraries(${ABACUS_BIN_NAME} PRIVATE rpa librpa_io)
+    target_link_libraries(${AI4M_BIN_NAME} PRIVATE rpa librpa_io)
   endif()
 endif()
 if(ENABLE_JSON)
-  target_link_libraries(${ABACUS_BIN_NAME} PRIVATE json_output)
+  target_link_libraries(${AI4M_BIN_NAME} PRIVATE json_output)
 endif()
 
 # External closure: feature consumers precede numerical providers and runtimes.
-target_link_libraries(${ABACUS_BIN_NAME} PRIVATE abacus::link_libs)
+target_link_libraries(${AI4M_BIN_NAME} PRIVATE abacus::link_libs)
 
 # Torch includes some LAPACK routines, but with floating-point exceptions.
 if(ENABLE_MLALGO OR DEFINED Torch_DIR)
-  target_link_libraries(${ABACUS_BIN_NAME} PRIVATE ${TORCH_LIBRARIES})
+  target_link_libraries(${AI4M_BIN_NAME} PRIVATE ${TORCH_LIBRARIES})
 endif()
 
 # Apply feature definitions and common compile usage requirements only after all
 # source targets have been created.
 abacus_apply_build_options_to_dir("${CMAKE_CURRENT_SOURCE_DIR}")
-abacus_apply_build_options(${ABACUS_BIN_NAME})
+abacus_apply_build_options(${AI4M_BIN_NAME})
 
 # Register integration tests only after the final executable and its path are
 # available. Unit tests are added by source subdirectories through AddTest().
@@ -877,7 +877,7 @@ if(NOT WIN32)
     CODE "
     execute_process(
       COMMAND ${CMAKE_COMMAND} -E create_symlink
-        ${ABACUS_BIN_NAME}
+        ${AI4M_BIN_NAME}
         ${CMAKE_INSTALL_PREFIX}/bin/abacus
         WORKING_DIRECTORY ${CMAKE_INSTALL_PREFIX}/bin
       COMMAND_ERROR_IS_FATAL ANY)
