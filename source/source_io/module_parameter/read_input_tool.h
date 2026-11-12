@@ -245,20 +245,59 @@ void reset_vector(std::vector<T>& vec, int size, T default_value)
 
 namespace ModuleIO
 {
+
 /**
- * @brief Check whether a k-point/band parallel layout satisfies the DSP vendor
- * library constraint.
+ * @brief Whether the DSP kpar/bndpar layout constraint is applicable.
  *
- * On DSP hardware, the mtblas/C_PACK libraries require exactly one MPI process
- * per k-point pool: the effective pool count (kpar for PW, kpar_lcao for LCAO,
- * the other being 1) times bndpar must equal nproc exactly. Defined inline here
- * so that both the __DSP input check and non-DSP unit tests can use it.
- * See issue #8228.
+ * The mtblas/C_PACK libraries on DSP hardware are only invoked by
+ * electronic-structure eigensolvers. Machine-learning esolvers
+ * (esolver_type = dp / nep) never build a Hamiltonian, never construct
+ * k-point pools or band groups, and never call mtblas/C_PACK; the layout
+ * constraint must not abort them. See issue #8228.
  */
-inline bool dsp_kpar_layout_valid(const int nproc, const int kpar, const int kpar_lcao, const int bndpar)
+inline bool dsp_layout_check_needed(const std::string& esolver_type)
 {
-    const int kpar_eff = std::max(kpar, kpar_lcao);
-    const int expected_nproc = kpar_eff * bndpar;
-    return nproc == expected_nproc;
+    return !(esolver_type == "dp" || esolver_type == "nep");
 }
+
+/**
+ * @brief The k-point pool count actually consumed by the current basis.
+ *
+ * After ReadInput::reset_value, exactly one of (kpar, kpar_lcao) carries the
+ * user's value and the other is 1, depending on basis_type. Be explicit
+ * instead of relying on std::max so that the invariant is documented and
+ * future refactors cannot silently break it.
+ */
+inline int dsp_effective_kpar(const std::string& basis_type,
+                              const int kpar,
+                              const int kpar_lcao)
+{
+    return (basis_type == "lcao") ? kpar_lcao : kpar;
+}
+
+/**
+ * @brief Check whether a k-point/band parallel layout satisfies the DSP
+ *        vendor library constraint.
+ *
+ * On DSP hardware, the mtblas/C_PACK libraries require exactly one MPI
+ * process per k-point pool: the effective pool count (kpar for PW,
+ * kpar_lcao for LCAO) times bndpar must equal nproc exactly.
+ * Always returns true when esolver_type is dp or nep, because no
+ * eigensolver is run. See issue #8228.
+ */
+inline bool dsp_kpar_layout_valid(const int nproc,
+                                  const std::string& basis_type,
+                                  const int kpar,
+                                  const int kpar_lcao,
+                                  const int bndpar,
+                                  const std::string& esolver_type)
+{
+    if (!dsp_layout_check_needed(esolver_type))
+    {
+        return true;
+    }
+    const int kpar_eff = dsp_effective_kpar(basis_type, kpar, kpar_lcao);
+    return nproc == kpar_eff * bndpar;
+}
+
 } // namespace ModuleIO
