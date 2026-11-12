@@ -70,7 +70,7 @@ This interface enables running MD simulations with the NEP model. It requires th
 
 To build ABACUS:
 ```bash
-cmake -B build -DNEP_DIR=/path/to/nep_cpu
+cmake -B build -DENABLE_NEP=ON
 ```
 
 ## Build with LibRI support

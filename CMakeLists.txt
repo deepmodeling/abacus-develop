@@ -54,6 +54,7 @@ option(ENABLE_FLOAT_FFTW "Enable using single-precision FFTW library." OFF)
 option(ENABLE_LCAO "Enable LCAO algorithm" ON)
 option(ENABLE_DFTD4 "Enable DFT-D4 dispersion correction" OFF)
 option(ENABLE_PLUMED "Enable using the PLUMED enhanced-sampling library" OFF)
+option(ENABLE_NEP "Enable using NEP models" OFF)
 
 option(BUILD_TESTING "Build unittests" OFF)
 option(DEBUG_INFO "Print message to debug" OFF)
@@ -647,8 +648,8 @@ if(DEFINED DeePMD_DIR)
   find_package(DeePMD REQUIRED)
 endif()
 
-if(DEFINED NEP_DIR)
-  find_package(NEP REQUIRED)
+if(ENABLE_NEP)
+  find_package(NEP_CPU CONFIG REQUIRED)
 endif()
 
 if(DEFINED TensorFlow_DIR)

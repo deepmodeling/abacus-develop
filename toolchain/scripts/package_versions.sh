@@ -117,8 +117,8 @@ json_ver="3.12.0"
 json_sha256="42f6e95cad6ec532fd372391373363b62a14af6d771056dbfc86160e6dfff7aa"
 
 # NEP (Neural Evolution Potential) - CPU version
-nep_ver="629ec5d"
-nep_sha256="4d4d3c64211a2a39e5d5c795b77befbba987cc809786e0cd6abfa46d0f3bf8cb"
+nep_ver="9fc64e5"
+nep_sha256="4cf1e6c9e5d3de2c1424643957d9bf89682948cabeb77b7660948e39dc113db9"
 
 # =============================================================================
 # Package Variable Loading Function
