@@ -30,8 +30,8 @@ if(POLICY CMP0144) # https://cmake.org/cmake/help/git-stage/policy/CMP0144.html
 endif()
 
 project(
-  ABACUS
-  DESCRIPTION "ABACUS is an electronic structure package based on DFT."
+  AI4M
+  DESCRIPTION "AI4M is an electronic structure package based on DFT."
   HOMEPAGE_URL "https://github.com/deepmodeling/abacus-develop"
   LANGUAGES CXX)
 
@@ -135,7 +135,7 @@ if(DEFINED CACHE{ENABLE_RAPIDJSON})
   message(
     FATAL_ERROR
       "ENABLE_RAPIDJSON is no longer supported. "
-      "ABACUS now uses nlohmann-json as its JSON backend; "
+      "AI4M now uses nlohmann-json as its JSON backend; "
       "please use -DENABLE_JSON=ON instead.")
 endif()
 
@@ -204,47 +204,47 @@ if(COMMIT_INFO)
   endif()
 endif()
 
-# Determine the ABACUS executable name.
+# Determine the AI4M executable name.
 if(NOT ENABLE_LCAO)
-  set(_abacus_bin_level "pw")
+  set(_ai4m_bin_level "pw")
   # TODO: Not well-defined now.
 elseif(ENABLE_LIBRI AND ENABLE_MLALGO)
-  set(_abacus_bin_level "max")
+  set(_ai4m_bin_level "max")
 elseif(ENABLE_LIBRI)
-  set(_abacus_bin_level "std")
+  set(_ai4m_bin_level "std")
   # TODO: Not well-defined now.
 elseif(ENABLE_MLALGO)
-  set(_abacus_bin_level "ml")
+  set(_ai4m_bin_level "ml")
 else()
-  set(_abacus_bin_level "basic")
+  set(_ai4m_bin_level "basic")
 endif()
 
 if(ENABLE_MPI)
-  set(_abacus_bin_para "para")
+  set(_ai4m_bin_para "para")
 elseif(ENABLE_OPENMP)
-  set(_abacus_bin_para "omp")
+  set(_ai4m_bin_para "omp")
 else()
-  set(_abacus_bin_para "ser")
+  set(_ai4m_bin_para "ser")
 endif()
 
 if(USE_CUDA OR USE_ROCM)
-  set(_abacus_bin_device "gpu")
+  set(_ai4m_bin_device "gpu")
 elseif(USE_CUDA_ON_DCU)
-  set(_abacus_bin_device "dcu")
+  set(_ai4m_bin_device "dcu")
 elseif(USE_DSP)
-  set(_abacus_bin_device "dsp")
+  set(_ai4m_bin_device "dsp")
 elseif(USE_SW)
-  set(_abacus_bin_device "sw")
+  set(_ai4m_bin_device "sw")
 endif()
 
 # if(USE_KML)
-#  set(_abacus_bin_device "kp")
+#  set(_ai4m_bin_device "kp")
 # endif()
 
-if(_abacus_bin_device)
-  set(ABACUS_BIN_NAME "abacus_${_abacus_bin_level}_${_abacus_bin_device}")
+if(_ai4m_bin_device)
+  set(AI4M_BIN_NAME "ai4m_${_ai4m_bin_level}_${_ai4m_bin_device}")
 else()
-  set(ABACUS_BIN_NAME "abacus_${_abacus_bin_level}_${_abacus_bin_para}")
+  set(AI4M_BIN_NAME "ai4m_${_ai4m_bin_level}_${_ai4m_bin_para}")
 endif()
 
 # Use DSP hardware
@@ -408,14 +408,14 @@ check_language(CUDA)
 if(CMAKE_CUDA_COMPILER)
   if(NOT DEFINED USE_CUDA)
     message(
-      "CUDA components detected. \nWill build the CUDA version of ABACUS by default."
+      "CUDA components detected. \nWill build the CUDA version of AI4M by default."
     )
     set(USE_CUDA ON)
   else()
     if(NOT USE_CUDA)
       message(
         STATUS
-          "CUDA components detected, but USE_CUDA is set to OFF. NOT building CUDA version of ABACUS."
+          "CUDA components detected, but USE_CUDA is set to OFF. NOT building CUDA version of AI4M."
       )
     endif()
   endif()
