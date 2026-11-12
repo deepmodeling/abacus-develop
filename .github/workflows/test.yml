@@ -68,8 +68,7 @@ jobs:
           cmake --build build --target test ARGS="-V --timeout 1700" > ctest.log 2>&1
           status=$?
           if [ $status -ne 0 ]; then
-            tail -n 200 ctest.log | while IFS= read -r line; do
-              echo "::error::${line}"
-            done
+            message=$(tail -n 120 ctest.log | sed ':a;N;$!ba;s/\n/%0A/g')
+            echo "::error::${message}"
           fi
           exit $status

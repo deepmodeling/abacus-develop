@@ -44,8 +44,7 @@ jobs:
           bash Autotest.sh -n 2 -f CASES_GPU.txt > gpu-test.log 2>&1
           status=$?
           if [ $status -ne 0 ]; then
-            tail -n 200 gpu-test.log | while IFS= read -r line; do
-              echo "::error::${line}"
-            done
+            message=$(tail -n 120 gpu-test.log | sed ':a;N;$!ba;s/\n/%0A/g')
+            echo "::error::${message}"
           fi
           exit $status
