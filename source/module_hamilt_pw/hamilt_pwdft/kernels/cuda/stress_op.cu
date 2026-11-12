@@ -89,6 +89,10 @@ void kinetic_stress_gpu(int npw, int npwx, int nbands, int npol, double tpiba,
                         const double* gcar, const double* kvector, const double* weights,
                         const std::complex<double>* psi, double* partial)
 {
+    if (npw <= 0)
+    {
+        return;
+    }
     kinetic_stress<<<kinetic_stress_blocks_gpu(npw), THREADS_PER_BLOCK>>>(
         npw, npwx, nbands, npol, tpiba, erf_ecut, erf_height, erf_sigma, gcar, kvector, weights,
         reinterpret_cast<const thrust::complex<double>*>(psi), partial);
@@ -292,6 +296,10 @@ void cal_dbecp_noevc_nl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const ba
                                                                         std::complex<FPTYPE>* vkb2,
                                                                         std::complex<FPTYPE>* dbecp_noevc)
 {
+    if (nkb <= 0)
+    {
+        return;
+    }
     cal_dbecp_noevc_nl<FPTYPE><<<nkb, THREADS_PER_BLOCK>>>(
             ipol,
             jpol,
@@ -334,6 +342,10 @@ void cal_stress_nl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_de
                                                                    const std::complex<FPTYPE>* dbecp,
                                                                    FPTYPE* stress)
 {
+     if (nbands_occ <= 0 || ntype <= 0)
+     {
+         return;
+     }
      cal_stress_nl<FPTYPE><<<nbands_occ * ntype, THREADS_PER_BLOCK>>>(
              nondiagonal,
              ipol,
@@ -459,6 +471,10 @@ void cal_stress_nl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_de
                                                                    const std::complex<FPTYPE>* dbecp,
                                                                    FPTYPE* stress)
 {
+     if (nbands_occ <= 0 || ntype <= 0)
+     {
+         return;
+     }
      cal_stress_nl<FPTYPE><<<nbands_occ * ntype, THREADS_PER_BLOCK>>>(
              ipol,
              jpol,
@@ -960,6 +976,10 @@ void cal_force_npw_op<FPTYPE, base_device::DEVICE_GPU>::operator()(
     int t_num = (npw%t_size) ? (npw/t_size + 1) : (npw/t_size);
     dim3 npwgrid(((t_num%THREADS_PER_BLOCK) ? (t_num/THREADS_PER_BLOCK + 1) : (t_num/THREADS_PER_BLOCK)));
 
+    if (npw <= 0)
+    {
+        return;
+    }
     cal_force_npw <<< npwgrid, THREADS_PER_BLOCK >>> (
         reinterpret_cast<const thrust::complex<FPTYPE>*>(psiv),
         gv_x, gv_y, gv_z, rhocgigg_vec, force, pos_x, pos_y, pos_z,

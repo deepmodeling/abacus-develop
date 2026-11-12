@@ -147,6 +147,10 @@ void cal_vkb1_nl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_devi
                                                                  const FPTYPE* gcar,
                                                                  std::complex<FPTYPE>* vkb1)
 {
+    if (nkb <= 0)
+    {
+        return;
+    }
     cal_vkb1_nl<FPTYPE><<<nkb, THREADS_PER_BLOCK>>>(
             npwx,
             vkb_nc,
@@ -184,6 +188,10 @@ void cal_force_nl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_dev
                                                                   const std::complex<FPTYPE>* dbecp,
                                                                   FPTYPE* force)
 {
+    if (nbands_occ <= 0 || ntype <= 0)
+    {
+        return;
+    }
     cal_force_nl<FPTYPE><<<nbands_occ * ntype, THREADS_PER_BLOCK>>>(
             nondiagonal,
             ntype, spin,
@@ -302,6 +310,10 @@ void cal_force_nl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_dev
                     const std::complex<FPTYPE>* dbecp,
                     FPTYPE* force)
 {
+    if (nbands_occ <= 0 || ntype <= 0)
+    {
+        return;
+    }
     cal_force_nl<FPTYPE><<<nbands_occ * ntype, THREADS_PER_BLOCK>>>(
             ntype,
             deeq_2, deeq_3, deeq_4,
@@ -569,6 +581,10 @@ void cal_force_nl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_dev
                                                                   const std::complex<FPTYPE>* dbecp,
                                                                   FPTYPE* force)
 {
+    if (nbands_occ <= 0 || ntype <= 0)
+    {
+        return;
+    }
     cal_force_onsite<FPTYPE>
         <<<nbands_occ * ntype, THREADS_PER_BLOCK>>>(wg_nc,
                                                     ntype,
@@ -613,6 +629,10 @@ void cal_force_nl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_dev
     if (isk != nullptr && npol == 1)
     {
         spin_sign = (isk[ik] == 0) ? 1 : -1;
+    }
+    if (nbands_occ <= 0 || ntype <= 0)
+    {
+        return;
     }
     cal_force_onsite<FPTYPE>
         <<<nbands_occ * ntype, THREADS_PER_BLOCK>>>(wg_nc,
@@ -831,6 +851,10 @@ void cal_force_loc_op<FPTYPE, base_device::DEVICE_GPU>::operator()(
     const int vloc_nc,
     FPTYPE* forcelc)
 {
+    if (nat <= 0)
+    {
+        return;
+    }
     force_loc_kernel<FPTYPE>
         <<<nat, THREADS_PER_BLOCK>>>(nat,
                                      npw,
@@ -858,6 +882,10 @@ void cal_force_ew_op<FPTYPE, base_device::DEVICE_GPU>::operator()(
     const std::complex<FPTYPE>* aux,
     FPTYPE* forceion)
 {
+    if (nat <= 0)
+    {
+        return;
+    }
     force_ew_kernel<FPTYPE>
         <<<nat, THREADS_PER_BLOCK>>>(nat,
                                      npw,
