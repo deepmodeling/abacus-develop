@@ -32,14 +32,18 @@ void print_welcome_banner()
     const char* commit = "unknown";
 #endif
     std::cout << std::endl
-              << "                     ▄████▄ █████▄ ▄████▄ ▄█████ ██  ██ ▄█████ " << std::endl
-              << "                     ██▄▄██ ██▄▄██ ██▄▄██ ██     ██  ██ ▀▀▀▄▄▄ " << std::endl
-              << "                     ██  ██ ██▄▄█▀ ██  ██ ▀█████ ▀████▀ █████▀ " << std::endl
+              << "                          AA       IIIIII    44 44        MMM     MMM" << std::endl
+              << "                         AAAA        II     44  44       MMMM    MMMM" << std::endl
+              << "                        AA  AA       II    44   44      MM MM   MM MM" << std::endl
+              << "                       AA    AA      II   44    44     MM  MM  MM  MM" << std::endl
+              << "                      AAAAAAAAAA     II  444444444    MM   MM MM   MM" << std::endl
+              << "                     AA        AA    II         44   MM    MMMM    MM" << std::endl
+              << "                    AA          AA IIIIII       44  MM     MMM     MM" << std::endl
               << std::endl;
     std::cout << "                                                                                     " << std::endl
-              << "                                " << version << std::endl
+              << "                                      " << version << std::endl
               << std::endl
-              << "               Atomic-orbital Based Ab-initio Computation at UStc                    " << std::endl
+              << "               AI-driven Multi-architecture Microscopic Materials Modeling           " << std::endl
               << std::endl
               << "                     Website: http://abacus.ustc.edu.cn/                             " << std::endl
               << "               Documentation: https://abacus.deepmodeling.com/                       " << std::endl
