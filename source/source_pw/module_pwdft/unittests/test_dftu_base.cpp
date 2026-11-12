@@ -948,7 +948,11 @@ TEST_F(DFTUBaseTest, LatestOccMatIncludesSortedCollinearEigenvalues)
         }
         ++eigenvalue_lines;
         ASSERT_LE(eigenvalue_lines, 2);
-        std::istringstream values(line.substr(line.find(':') + 1));
+        const std::size_t separator = line.find(':');
+        ASSERT_NE(separator, std::string::npos);
+        const std::size_t values_start = separator + 1;
+        const std::string values_text = line.substr(values_start);
+        std::istringstream values(values_text);
         const double expected[2][5] = {{0.7, 0.8, 0.8, 0.8, 0.9},
                                        {0.2, 0.2, 0.2, 0.2, 0.2}};
         double value = 0.0;
@@ -987,7 +991,11 @@ TEST_F(DFTUBaseTest, SocEigenvaluesIncludeImaginarySpinCoupling)
                                        DFTU_BASE::SOC_LAYOUT_PAULI);
     const std::string line = output.str();
     ASSERT_EQ(line.find("# eigenvalues atom 1 L 2 spinor:"), 0);
-    std::istringstream values(line.substr(line.find(':') + 1));
+    const std::size_t separator = line.find(':');
+    ASSERT_NE(separator, std::string::npos);
+    const std::size_t values_start = separator + 1;
+    const std::string values_text = line.substr(values_start);
+    std::istringstream values(values_text);
     const double low = 0.5 - std::sqrt(0.18);
     const double high = 0.5 + std::sqrt(0.18);
     double value = 0.0;
@@ -1067,7 +1075,11 @@ TEST_F(DFTUBaseTest, LcaoMethodOneSocUsesPauliBlocks)
     std::ostringstream output;
     DFTU_BASE::write_occup_eigenvalues(dftu, ucell, output, layout);
     const std::string line = output.str();
-    std::istringstream values(line.substr(line.find(':') + 1));
+    const std::size_t separator = line.find(':');
+    ASSERT_NE(separator, std::string::npos);
+    const std::size_t values_start = separator + 1;
+    const std::string values_text = line.substr(values_start);
+    std::istringstream values(values_text);
     double value = 0.0;
     double trace = 0.0;
     for (int i = 0; i < 2 * orbital_size; ++i)
@@ -1111,7 +1123,11 @@ TEST_F(DFTUBaseTest, LcaoMethodTwoSocPreservesCrossOrbitalCoupling)
     std::ostringstream output;
     DFTU_BASE::write_occup_eigenvalues(dftu, ucell, output, layout);
     const std::string line = output.str();
-    std::istringstream values(line.substr(line.find(':') + 1));
+    const std::size_t separator = line.find(':');
+    ASSERT_NE(separator, std::string::npos);
+    const std::size_t values_start = separator + 1;
+    const std::string values_text = line.substr(values_start);
+    std::istringstream values(values_text);
     double value = 0.0;
     for (int i = 0; i < matrix_size; ++i)
     {
