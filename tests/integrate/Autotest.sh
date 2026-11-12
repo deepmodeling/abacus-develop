@@ -354,6 +354,13 @@ run_case() {
       elif grep -qE '^[[:space:]]*of_ml_gene_data[[:space:]]+1([[:space:]]|$)' INPUT; then
         # of_ml_gene_data supports single-rank only.
         "$mpi_launcher" "$mpi_np_flag" 1 "${mpi_preflags[@]}" "$abacus" "${mpi_postflags[@]}" >log.txt
+      elif grep -qE '^[[:space:]]*esolver_type[[:space:]]+dfpt([[:space:]]|$)' INPUT; then
+        # The DFPT esolver is currently a serial implementation; MPI
+        # domain decomposition is planned future work. Running more than
+        # one rank crashes in the response-solve FFT gather-scatter
+        # (MPI_Alltoallv with rank-inconsistent stick maps). Run
+        # single-rank like the of_ml_gene_data case above.
+        "$mpi_launcher" "$mpi_np_flag" 1 "${mpi_preflags[@]}" "$abacus" "${mpi_postflags[@]}" >log.txt
       else
         "$mpi_launcher" "$mpi_np_flag" $np "${mpi_preflags[@]}" "$abacus" "${mpi_postflags[@]}" >log.txt
       fi
