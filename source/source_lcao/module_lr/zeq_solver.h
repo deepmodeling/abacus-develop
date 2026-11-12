@@ -41,7 +41,7 @@ namespace LR
         for (int is = 0;is < nspin_x;++is)
         {
             const int npairs = hm.nocc[is] * hm.nvirt[is];
-            const int lsize = hm.pX[is].get_local_size();
+            const int lsize = hm.pX[is].size();
             for (int ik = 0;ik < hm.nk;++ik)
             {
                 LR_Util::gather_2d_to_full(hm.pX[is], local + loffset + ik * lsize,
@@ -62,7 +62,7 @@ namespace LR
         for (int is = 0;is < nspin_x;++is)
         {
             const int npairs = hm.nocc[is] * hm.nvirt[is];
-            const int lsize = hm.pX[is].get_local_size();
+            const int lsize = hm.pX[is].size();
             for (int ik = 0;ik < hm.nk;++ik)
             {
                 LR_Util::scatter_full_to_2d(hm.pX[is], full + goffset + ik * npairs,
@@ -92,7 +92,7 @@ namespace LR
         int ld_expect = 0;
         for (int is = 0; is < nspin_x; ++is)
         {
-            ld_expect += hm.nk * hm.pX[is].get_local_size();
+            ld_expect += hm.nk * hm.pX[is].size();
         }
         assert(ld == ld_expect);
 
@@ -154,12 +154,12 @@ namespace LR
     /// (one column in flight), instead of the O(n_global^2) of `hm.matrix()`.
     /// Collective: every rank walks every column, since `hPsi` and the gather communicate.
     template<typename T, typename THam>
-    std::vector<T> zvec_hessian_2d(THam& hm, const int nspin_x, const int ld, const Parallel_2D& ph)
+    std::vector<T> zvec_hessian_2d(THam& hm, const int nspin_x, const int ld, const BlockCyclicDistribution& ph)
     {
         ModuleBase::TITLE("Z_vector", "zvec_hessian_2d");
         ModuleBase::timer::start("Z_vector", "zvec_hessian_2d");
-        const int n_global = ph.get_global_row_size();
-        std::vector<T> h_loc(ph.get_local_size(), T(0));
+        const int n_global = ph.nrglb();
+        std::vector<T> h_loc(ph.size(), T(0));
         std::vector<T> e_full(n_global, T(0));
         std::vector<T> e_loc(ld, T(0));
         std::vector<T> he_loc(ld, T(0));
@@ -171,15 +171,15 @@ namespace LR
             e_full[gcol] = T(0);
             hm.hPsi(e_loc.data(), he_loc.data(), ld, 1);
             zvec_local_to_full(hm, nspin_x, he_loc.data(), he_full.data());
-            const int lcol = ph.global2local_col(gcol);
+            const int lcol = ph.icloc(gcol);
             if (lcol < 0)
             {
                 continue;
             }
-            T* const h_col = h_loc.data() + static_cast<std::size_t>(lcol) * ph.get_row_size();
-            for (int lrow = 0; lrow < ph.get_row_size(); ++lrow)
+            T* const h_col = h_loc.data() + static_cast<std::size_t>(lcol) * ph.nrloc();
+            for (int lrow = 0; lrow < ph.nrloc(); ++lrow)
             {
-                h_col[lrow] = he_full[ph.local2global_row(lrow)];
+                h_col[lrow] = he_full[ph.irglb(lrow)];
             }
         }
         ModuleBase::timer::end("Z_vector", "zvec_hessian_2d");
@@ -193,37 +193,37 @@ namespace LR
     template<typename T, typename THam>
     void solve_Z_2d(T* const Z, const T* const R, const int ld, const int nstates,
         THam& hm, const int nspin_x,
-        void (*linear_solver)(T*, T*, const Parallel_2D&, const Parallel_2D&))
+        void (*linear_solver)(T*, T*, const BlockCyclicDistribution&, const BlockCyclicDistribution&))
     {
         ModuleBase::TITLE("Z_vector", "solve_Z_2d");
         ModuleBase::timer::start("Z_vector", "solve_Z_2d");
         const int n_global = zvec_global_dim(hm, nspin_x);
-        const Parallel_2D& px0 = hm.pX[0];
+        const BlockCyclicDistribution& px0 = hm.pX[0];
         // Shrink the ScaLAPACK block for small systems so no rank is left empty.
-        const int nproc_dim = std::max(px0.get_dim0(), px0.get_dim1());
+        const int nproc_dim = std::max(px0.nrproc(), px0.ncproc());
         const int nb = std::max(1, std::min(32, n_global / nproc_dim));
-        Parallel_2D ph;
-        LR_Util::setup_2d_division(ph, nb, n_global, n_global, px0.blacs_ctxt);
-        Parallel_2D pz;
-        LR_Util::setup_2d_division(pz, nb, n_global, nstates, px0.blacs_ctxt);
+        BlockCyclicDistribution ph;
+        LR_Util::setup_2d_division(ph, nb, n_global, n_global, px0.ictxt());
+        BlockCyclicDistribution pz;
+        LR_Util::setup_2d_division(pz, nb, n_global, nstates, px0.ictxt());
 
         std::vector<T> h_loc = zvec_hessian_2d<T>(hm, nspin_x, ld, ph);
 
         // right-hand side: pX layout -> 2D block-cyclic on pz
-        std::vector<T> z_loc(pz.get_local_size(), T(0));
+        std::vector<T> z_loc(pz.size(), T(0));
         std::vector<T> r_full(n_global, T(0));
         for (int istate = 0; istate < nstates; ++istate)
         {
             zvec_local_to_full(hm, nspin_x, R + istate * ld, r_full.data());
-            const int lcol = pz.global2local_col(istate);
+            const int lcol = pz.icloc(istate);
             if (lcol < 0)
             {
                 continue;
             }
-            T* const z_col = z_loc.data() + static_cast<std::size_t>(lcol) * pz.get_row_size();
-            for (int lrow = 0; lrow < pz.get_row_size(); ++lrow)
+            T* const z_col = z_loc.data() + static_cast<std::size_t>(lcol) * pz.nrloc();
+            for (int lrow = 0; lrow < pz.nrloc(); ++lrow)
             {
-                z_col[lrow] = r_full[pz.local2global_row(lrow)];
+                z_col[lrow] = r_full[pz.irglb(lrow)];
             }
         }
 

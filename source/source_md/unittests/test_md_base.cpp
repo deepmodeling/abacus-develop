@@ -219,8 +219,8 @@ protected:
             const Complex exponent(0.0, angle);
             phases[translation] = std::exp(exponent);
         }
-        std::vector<Complex> folded(orbitals.para_2d().nloc, Complex(0.0, 0.0));
-        const int rows = orbitals.para_2d().get_row_size();
+        std::vector<Complex> folded(orbitals.para_2d().size(), Complex(0.0, 0.0));
+        const int rows = orbitals.para_2d().nrloc();
         module_rt::folding_HR_td(real_space, folded.data(), kpoint, vector_potential, phases, rows, 1);
         return folded;
     }
@@ -230,7 +230,7 @@ protected:
         const int basis_size = 4;
         const int band_count = 2;
         Parallel_Orbitals orbitals;
-        const int init_result = orbitals.para_2d().init(basis_size, basis_size, 1, cell.communicator());
+        const int init_result = orbitals.para_2d().init(basis_size, basis_size, 1, cell.communicator(), false);
         ASSERT_EQ(init_result, 0);
         std::ofstream log;
         const int band_result = orbitals.set_nloc_wfc_Eij(band_count, log, log);
@@ -240,12 +240,12 @@ protected:
         full.para_2d().set_serial(basis_size, basis_size);
         full.set_atomic_trace(backing.get_iat2iwt(), backing.nat, basis_size);
         const Parallel_Orbitals& matrix_layout = gathered ? full : orbitals;
-        const int matrix_size = matrix_layout.para_2d().nloc;
+        const int matrix_size = matrix_layout.para_2d().size();
         const ct::TensorShape shape({4, matrix_size});
         ct::Tensor h(ct::DataType::DT_COMPLEX_DOUBLE, shape);
         ct::Tensor s(ct::DataType::DT_COMPLEX_DOUBLE, shape);
         const std::vector<int> plane_wave_counts;
-        psi::Psi<Complex> coefficients(4, orbitals.ncol_bands, orbitals.para_2d().nrow, plane_wave_counts, true);
+        psi::Psi<Complex> coefficients(4, orbitals.ncol_bands, orbitals.para_2d().nrloc(), plane_wave_counts, true);
         const std::array<double, 4> kx_values = {{0.0, 0.25, -0.25, 0.375}};
         std::vector<ModuleBase::Vector3<double>> points(4);
         // A nonorthogonal cell and lat0 != 1 catch missing Cartesian/unit conversions.
@@ -274,7 +274,7 @@ protected:
             const double coefficient_real = 1.0 + kpoint;
             const double coefficient_imaginary = 0.5 - kpoint;
             const Complex initial(coefficient_real, coefficient_imaginary);
-            for (int element = 0; element < orbitals.para_2d().nrow * orbitals.ncol_bands; ++element)
+            for (int element = 0; element < orbitals.para_2d().nrloc() * orbitals.ncol_bands; ++element)
             {
                 coefficients.get_pointer()[element] = initial;
             }
@@ -301,16 +301,16 @@ protected:
             const Complex initial(coefficient_real, coefficient_imaginary);
             for (int column = 0; column < orbitals.ncol_bands; ++column)
             {
-                for (int row = 0; row < orbitals.para_2d().nrow; ++row)
+                for (int row = 0; row < orbitals.para_2d().nrloc(); ++row)
                 {
-                    const int global_row = orbitals.para_2d().local2global_row(row);
+                    const int global_row = orbitals.para_2d().irglb(row);
                     const ModuleBase::Vector3<int>& shift = backing_types[0].boundary_shift[global_row];
                     const ModuleBase::Vector3<double> direct(shift.x, shift.y, shift.z);
                     const ModuleBase::Vector3<double> cartesian = direct * backing.latvec * backing.lat0;
                     const double angle = ModuleBase::TWO_PI * (points[kpoint] * direct) + saved_A * cartesian;
                     const Complex exponent(0.0, angle);
                     const Complex target = initial * std::exp(exponent);
-                    const int element = column * orbitals.para_2d().nrow + row;
+                    const int element = column * orbitals.para_2d().nrloc() + row;
                     const double error = std::abs(coefficients.get_pointer()[element] - target);
                     EXPECT_LT(error, 1.0e-12);
                 }
@@ -324,7 +324,7 @@ protected:
         const int band_count = 2;
         Parallel_Orbitals orbitals;
         const int block_size = 1;
-        const int init_result = orbitals.para_2d().init(basis_size, basis_size, block_size, cell.communicator());
+        const int init_result = orbitals.para_2d().init(basis_size, basis_size, block_size, cell.communicator(), false);
         ASSERT_EQ(init_result, 0);
         std::ofstream log;
         const int band_result = orbitals.set_nloc_wfc_Eij(band_count, log, log);
@@ -334,22 +334,22 @@ protected:
         points[1].set(0.25, 0.0, 0.0);
         points[2].set(-0.25, 0.0, 0.0);
         points[3].set(0.375, 0.0, 0.0);
-        const int rows = gathered ? basis_size : orbitals.para_2d().get_row_size();
-        const int columns = gathered ? basis_size : orbitals.para_2d().get_col_size();
+        const int rows = gathered ? basis_size : orbitals.para_2d().nrloc();
+        const int columns = gathered ? basis_size : orbitals.para_2d().ncloc();
         const int matrix_size = rows * columns;
         const ct::TensorShape shape({4, matrix_size});
         ct::Tensor h(ct::DataType::DT_COMPLEX_DOUBLE, shape);
         ct::Tensor s(ct::DataType::DT_COMPLEX_DOUBLE, shape);
         const std::vector<int> plane_wave_counts;
-        psi::Psi<Complex> coefficients(4, orbitals.ncol_bands, orbitals.para_2d().nrow, plane_wave_counts, true);
+        psi::Psi<Complex> coefficients(4, orbitals.ncol_bands, orbitals.para_2d().nrloc(), plane_wave_counts, true);
         for (int kpoint = 0; kpoint < 4; ++kpoint)
         {
             for (int column = 0; column < columns; ++column)
             {
-                const int global_column = gathered ? column : orbitals.para_2d().local2global_col(column);
+                const int global_column = gathered ? column : orbitals.para_2d().icglb(column);
                 for (int row = 0; row < rows; ++row)
                 {
-                    const int global_row = gathered ? row : orbitals.para_2d().local2global_row(row);
+                    const int global_row = gathered ? row : orbitals.para_2d().irglb(row);
                     const int element = kpoint * matrix_size + column * rows + row;
                     h.data<Complex>()[element] = matrix_value(global_row, global_column);
                     s.data<Complex>()[element] = 0.1 * h.data<Complex>()[element];
@@ -359,7 +359,7 @@ protected:
             const double coefficient_real = 1.0 + kpoint;
             const double coefficient_imaginary = 0.5 - kpoint;
             const Complex initial(coefficient_real, coefficient_imaginary);
-            for (int element = 0; element < orbitals.para_2d().nrow * orbitals.ncol_bands; ++element)
+            for (int element = 0; element < orbitals.para_2d().nrloc() * orbitals.ncol_bands; ++element)
             {
                 coefficients.get_pointer()[element] = initial;
             }
@@ -374,10 +374,10 @@ protected:
         {
             for (int column = 0; column < columns; ++column)
             {
-                const int global_column = gathered ? column : orbitals.para_2d().local2global_col(column);
+                const int global_column = gathered ? column : orbitals.para_2d().icglb(column);
                 for (int row = 0; row < rows; ++row)
                 {
-                    const int global_row = gathered ? row : orbitals.para_2d().local2global_row(row);
+                    const int global_row = gathered ? row : orbitals.para_2d().irglb(row);
                     const int element = kpoint * matrix_size + column * rows + row;
                     Complex phase(1.0, 0.0);
                     if (!gathered || domain.rank() == 0)
@@ -398,11 +398,11 @@ protected:
             const Complex initial(coefficient_real, coefficient_imaginary);
             for (int column = 0; column < orbitals.ncol_bands; ++column)
             {
-                for (int row = 0; row < orbitals.para_2d().nrow; ++row)
+                for (int row = 0; row < orbitals.para_2d().nrloc(); ++row)
                 {
-                    const int global_row = orbitals.para_2d().local2global_row(row);
+                    const int global_row = orbitals.para_2d().irglb(row);
                     const Complex expected = initial * std::conj(phase_for(global_row, kpoint));
-                    const int element = column * orbitals.para_2d().nrow + row;
+                    const int element = column * orbitals.para_2d().nrloc() + row;
                     const double error = std::abs(coefficients.get_pointer()[element] - expected);
                     EXPECT_LT(error, 1.0e-12);
                 }
@@ -530,7 +530,7 @@ TEST_F(MdBoundaryTest, InitialForceEvaluationDoesNotAdvancePositionUpdateState)
     integrator.first_half(log);
     const bool positions_updated = true;
     MD_func::force_virial(&solver, 1, positions_updated, cell, decomposition,
-                          integrator.potential, false, integrator.virial, false);
+                          integrator.potential, false, integrator.virial);
     ASSERT_EQ(solver.observed_position_updates.size(), 2u);
     EXPECT_TRUE(solver.observed_position_updates[1]);
 }

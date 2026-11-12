@@ -22,8 +22,8 @@ HamiltBSE<T>::HamiltBSE(const int& nspin,
                 MolecularLRI<T>& mo_lri_in,
                 std::weak_ptr<LR::PotHxcLR> pot_in,
                 const K_Vectors& kv_in,
-                const std::vector<Parallel_2D>& pX_in,// vector for spin, parallel as {nvirt, nocc}
-                const Parallel_2D& pc_in, //parallel as {nbasis, nbands}
+                const std::vector<BlockCyclicDistribution>& pX_in,// vector for spin, parallel as {nvirt, nocc}
+                const BlockCyclicDistribution& pc_in, //parallel as {nbasis, nbands}
                 const Parallel_Orbitals& pmat_in, //parallel as {nbasis, nbasis}
                 const std::vector<std::string>& spin_types_in, //can be singlet and triplet
                 const std::string& tda, // can be: "tda", "full", "both"
@@ -47,12 +47,12 @@ HamiltBSE<T>::HamiltBSE(const int& nspin,
     ri_hartree_benchmark(ri_hartree_benchmark_in)
 {
     ModuleBase::TITLE("BSE", "HamiltBSE");
-    if (this->pX[0].get_local_size() == 0) {
-        std::cerr<< "Warning: Parallel_2D in RANK "+std::to_string(this->my_rank) +" has no local size, please use less mpi." << std::endl;
+    if (this->pX[0].size() == 0) {
+        std::cerr<< "Warning: BlockCyclicDistribution in RANK "+std::to_string(this->my_rank) +" has no local size, please use less mpi." << std::endl;
         std::cerr<< " [File:"<<__FILE__<< ", Function: " << __FUNCTION__ << ", Line: " << __LINE__ << "]" << std::endl;
     }
-    const Parallel_2D& matrix_dist = pmat.para_2d();
-    assert(naos == matrix_dist.get_global_row_size() && naos == matrix_dist.get_global_col_size());
+    const BlockCyclicDistribution& matrix_dist = pmat.para_2d();
+    assert(naos == matrix_dist.nrglb() && naos == matrix_dist.ncglb());
     this->nk = this->nspin == 2 ? this->kv.get_nks() / 2 : this->kv.get_nks();
     this->ndim = nk * nocc[0] * nvirt[0];
 
@@ -72,7 +72,7 @@ HamiltBSE<T>::HamiltBSE(const int& nspin,
     else throw std::runtime_error("ndim in HamiltBSE is zero or negative.");
     LR_Util::setup_2d_division(this->pA, nb2d, ndim, ndim
         #ifdef __MPI
-            , this->pX[0].blacs_ctxt
+            , this->pX[0].ictxt()
         #endif
         );
 
@@ -86,26 +86,26 @@ HamiltBSE<T>::HamiltBSE(const int& nspin,
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "HamiltBSE is ready to calculate");
 
     if (this->bse_continue >= 1) {
-        BSE_Util::print_mem_estimate("V matrix of A", this->pA.get_local_size(), sizeof(T));
-        this->VA_local.resize(this->pA.get_local_size(), 0.0);
+        BSE_Util::print_mem_estimate("V matrix of A", this->pA.size(), sizeof(T));
+        this->VA_local.resize(this->pA.size(), 0.0);
         this->read_AB_matrix(this->readin_dir + "A_V_matrix_"+std::to_string(this->my_rank)+".dat", this->VA_local.data(), this->pA);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "read_V_for_A");
     }
     if (this->bse_continue >= 2) {
-        BSE_Util::print_mem_estimate("W matrix of A", this->pA.get_local_size(), sizeof(T));
-        this->WA_local.resize(this->pA.get_local_size(), 0.0);
+        BSE_Util::print_mem_estimate("W matrix of A", this->pA.size(), sizeof(T));
+        this->WA_local.resize(this->pA.size(), 0.0);
         this->read_AB_matrix(this->readin_dir + "A_W_matrix_"+std::to_string(this->my_rank)+".dat", this->WA_local.data(), this->pA);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "read_W_for_A");
     }
     if (this->bse_continue >= 3) {
-        BSE_Util::print_mem_estimate("V matrix of B", this->pA.get_local_size(), sizeof(T));
-        this->VB_local.resize(this->pA.get_local_size(), 0.0);
+        BSE_Util::print_mem_estimate("V matrix of B", this->pA.size(), sizeof(T));
+        this->VB_local.resize(this->pA.size(), 0.0);
         this->read_AB_matrix(this->readin_dir + "B_V_matrix_"+std::to_string(this->my_rank)+".dat", this->VB_local.data(), this->pA);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "read_V_for_B");
     }
     if (this->bse_continue >= 4) {
-        BSE_Util::print_mem_estimate("W matrix of B", this->pA.get_local_size(), sizeof(T));
-        this->WB_local.resize(this->pA.get_local_size(), 0.0);
+        BSE_Util::print_mem_estimate("W matrix of B", this->pA.size(), sizeof(T));
+        this->WB_local.resize(this->pA.size(), 0.0);
         this->read_AB_matrix(this->readin_dir + "B_W_matrix_"+std::to_string(this->my_rank)+".dat", this->WB_local.data(), this->pA);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "read_W_for_B");
     }
@@ -150,8 +150,8 @@ void HamiltBSE<T>::cal_V_for_A(){
     ModuleBase::TITLE("HamiltBSE", "cal_V_for_A");
     ModuleBase::timer::start("HamiltBSE", "cal_V_for_A");
     std::cout<<"in cal_V_for_A"<<std::endl;
-    BSE_Util::print_mem_estimate("V matrix of A", this->pA.get_local_size(), sizeof(T));
-    this->VA_local.resize(this->pA.get_local_size(), 0.0);
+    BSE_Util::print_mem_estimate("V matrix of A", this->pA.size(), sizeof(T));
+    this->VA_local.resize(this->pA.size(), 0.0);
     if (this->ri_hartree_benchmark == "aims" || this->ri_hartree_benchmark == "abacus") {
         throw std::runtime_error("this BSE routine only supports aims-librpa/abacus-librpa benchmark");
     }
@@ -179,8 +179,8 @@ void HamiltBSE<T>::cal_V_for_B(){
     ModuleBase::TITLE("HamiltBSE", "cal_V_for_B");
     ModuleBase::timer::start("HamiltBSE", "cal_V_for_B");
     std::cout<<"in cal_V_for_B"<<std::endl;
-    BSE_Util::print_mem_estimate("V matrix of B", this->pA.get_local_size(), sizeof(T));
-    this->VB_local.resize(this->pA.get_local_size(), 0.0);
+    BSE_Util::print_mem_estimate("V matrix of B", this->pA.size(), sizeof(T));
+    this->VB_local.resize(this->pA.size(), 0.0);
     if (this->ri_hartree_benchmark == "aims" || this->ri_hartree_benchmark == "abacus") {
         throw std::runtime_error("this BSE routine only supports aims-librpa/abacus-librpa benchmark");
     }
@@ -208,8 +208,8 @@ void HamiltBSE<T>::cal_W_for_A(){
     ModuleBase::TITLE("HamiltBSE", "cal_W_for_A");
     ModuleBase::timer::start("HamiltBSE", "cal_W_for_A");
     std::cout<<"in cal_W_for_A"<<std::endl;
-    BSE_Util::print_mem_estimate("W matrix of A", this->pA.get_local_size(), sizeof(T));
-    this->WA_local.resize(this->pA.get_local_size(), 0.0);
+    BSE_Util::print_mem_estimate("W matrix of A", this->pA.size(), sizeof(T));
+    this->WA_local.resize(this->pA.size(), 0.0);
     this->mo_lri.cal_W_for_A(this->WA_local, this->pA);    
     if (this->out_bse_ab){
         this->write_AB_matrix(this->out_dir+"A_W_matrix_"+std::to_string(this->my_rank)+".dat", 6, this->WA_local.data(), this->pA);
@@ -227,8 +227,8 @@ void HamiltBSE<T>::cal_W_for_B(){
     ModuleBase::TITLE("HamiltBSE", "cal_W_for_B");
     ModuleBase::timer::start("HamiltBSE", "cal_W_for_B");
     std::cout<<"in cal_W_for_B"<<std::endl;
-    BSE_Util::print_mem_estimate("W matrix of B", this->pA.get_local_size(), sizeof(T));
-    this->WB_local.resize(this->pA.get_local_size(), 0.0);
+    BSE_Util::print_mem_estimate("W matrix of B", this->pA.size(), sizeof(T));
+    this->WB_local.resize(this->pA.size(), 0.0);
     this->mo_lri.cal_W_for_B(this->WB_local, this->pA);
     
     if (this->out_bse_ab){
@@ -260,12 +260,12 @@ void HamiltBSE<T>::init_bse_matrix(const bool is_full, const int & st_index){
         std::cout<<"| B(ai,jb) = α (ai|V|bj)  +  β (bi|W|aj)" << std::endl;
     }
 
-    BSE_Util::print_mem_estimate("BSE A matrix", this->pA.get_local_size(), sizeof(T));
-    this->BSE_A_local.assign(this->pA.get_local_size(), 0.0);
+    BSE_Util::print_mem_estimate("BSE A matrix", this->pA.size(), sizeof(T));
+    this->BSE_A_local.assign(this->pA.size(), 0.0);
     if (is_full)
     {
-        BSE_Util::print_mem_estimate("BSE B matrix", this->pA.get_local_size(), sizeof(T));
-        this->BSE_B_local.assign(this->pA.get_local_size(), 0.0);
+        BSE_Util::print_mem_estimate("BSE B matrix", this->pA.size(), sizeof(T));
+        this->BSE_B_local.assign(this->pA.size(), 0.0);
     }
     // 1) add diagonal GW energy term
 #ifdef _OPENMP
@@ -278,10 +278,10 @@ void HamiltBSE<T>::init_bse_matrix(const bool is_full, const int & st_index){
             for(int a = 0;a < nvirt[0];++a)
             {
                 int index = ik * nocc[0] * nvirt[0] + i * nvirt[0] + a;
-                int col_loc = this->pA.global2local_col(index);
-                int row_loc = this->pA.global2local_row(index);
+                int col_loc = this->pA.icloc(index);
+                int row_loc = this->pA.irloc(index);
                 if (col_loc == -1 || row_loc == -1) continue;
-                this->BSE_A_local[col_loc * this->pA.get_row_size() + row_loc]
+                this->BSE_A_local[col_loc * this->pA.nrloc() + row_loc]
                     = this->eig_gw(ik, nocc[0] + a) - this->eig_gw(ik, i);
             }
         }
@@ -367,7 +367,7 @@ void HamiltBSE<T>::tda_solver(const int & st_index, const int& nstates, double* 
 
     this->init_bse_matrix(false, st_index);
 
-    std::vector<T> X_tda(this->pA.get_local_size(), 0.0);
+    std::vector<T> X_tda(this->pA.size(), 0.0);
     std::vector<double> ev(nstates, 0.0);
 
     BSE::solve_tda(this->BSE_A_local,
@@ -394,10 +394,10 @@ void HamiltBSE<double>::full_solver(const int& st_index, const int& nstates,
     ModuleBase::timer::start("HamiltBSE", "elpa_full_solver(double)");
 
     this->init_bse_matrix(true, st_index);
-    Parallel_2D pM;
-    LR_Util::setup_2d_division(pM, this->pA.get_block_size(), 2*this->ndim, 2*this->ndim
+    BlockCyclicDistribution pM;
+    LR_Util::setup_2d_division(pM, this->pA.nb(), 2*this->ndim, 2*this->ndim
         #ifdef __MPI
-                , this->pA.blacs_ctxt
+                , this->pA.ictxt()
         #endif
             );
     const auto to_complex = [](const std::vector<double>& vin) {
@@ -405,7 +405,7 @@ void HamiltBSE<double>::full_solver(const int& st_index, const int& nstates,
     };
     std::vector<std::complex<double>> BSE_A_local_complex = to_complex(this->BSE_A_local);
     std::vector<std::complex<double>> BSE_B_local_complex = to_complex(this->BSE_B_local);
-    std::vector<std::complex<double>> local_v_full(pM.get_local_size(), 0.0);
+    std::vector<std::complex<double>> local_v_full(pM.size(), 0.0);
     std::vector<double> ev(2 * this->ndim, 0.0);
     BSE::solve_full(this->my_rank,
                     BSE_A_local_complex,
@@ -415,7 +415,7 @@ void HamiltBSE<double>::full_solver(const int& st_index, const int& nstates,
                     ev,
                     local_v_full);
 
-    std::vector<double> local_v_full_real(pM.get_local_size(), 0.0);
+    std::vector<double> local_v_full_real(pM.size(), 0.0);
     for (size_t i = 0; i < local_v_full.size(); ++i) {
         assert(std::abs(local_v_full[i].imag()) < 1e-10);
         local_v_full_real[i] = local_v_full[i].real();
@@ -443,14 +443,14 @@ void HamiltBSE<std::complex<double>>::full_solver(const int& st_index, const int
     ModuleBase::timer::start("HamiltBSE", "elpa_full_solver(complex)");
 
     this->init_bse_matrix(true, st_index);
-    Parallel_2D pM;
-    LR_Util::setup_2d_division(pM, this->pA.get_block_size(), 2*this->ndim, 2*this->ndim
+    BlockCyclicDistribution pM;
+    LR_Util::setup_2d_division(pM, this->pA.nb(), 2*this->ndim, 2*this->ndim
         #ifdef __MPI
-                , this->pA.blacs_ctxt
+                , this->pA.ictxt()
         #endif
             );
     
-    std::vector<std::complex<double>> local_v_full(pM.get_local_size(), 0.0);
+    std::vector<std::complex<double>> local_v_full(pM.size(), 0.0);
     std::vector<double> ev(2 * this->ndim, 0.0);
     ModuleBase::TITLE("HamiltBSE", "full_solver(complex)2");
     BSE::solve_full(this->my_rank,
@@ -483,9 +483,10 @@ void HamiltBSE<T>::cal_V_by_grid(bool is_A)
     std::unique_ptr<hamilt::HContainer<T>> VR = std::unique_ptr<hamilt::HContainer<T>>(new hamilt::HContainer<T>(&this->pmat));
     LR_Util::initialize_HR<T, T>(*VR, this->ucell, this->gd, this->orb_cutoff);
 #ifdef __MPI
-    Parallel_2D pV_col; //{nvirt*nocc, 1}
-    LR_Util::setup_2d_division(pV_col, this->pX[is].get_block_size(), nvirt[is]*nocc[is], 1, this->pX[is].blacs_ctxt);
-    std::vector<T> V_col_local(this->nk * pV_col.get_local_size(), 0.0); // V_col(bjk2)
+    BlockCyclicDistribution pV_col; //{nvirt*nocc, 1}
+    LR_Util::setup_2d_division(pV_col, this->pX[is].nb(), nvirt[is]*nocc[is], 1,
+                               this->pX[is].ictxt());
+    std::vector<T> V_col_local(this->nk * pV_col.size(), 0.0); // V_col(bjk2)
 #endif
 
     int imo1, imo2;
@@ -515,8 +516,8 @@ void HamiltBSE<T>::cal_V_by_grid(bool is_A)
                 this->grid_calculation(*VR);
 
                 // 5. V(R)→V(k) 
-                const int ncol = this->pmat.para_2d().get_col_size();
-                const int nrow = this->pmat.para_2d().get_row_size();
+                const int ncol = this->pmat.para_2d().ncloc();
+                const int nrow = this->pmat.para_2d().nrloc();
                 std::vector<ct::Tensor> v_k_2d(nk, LR_Util::newTensor<T>({ ncol, nrow }));
                 for (auto& v : v_k_2d) v.zero();
                 for (int ik1 = 0;ik1 < nk;++ik1) {
@@ -530,10 +531,10 @@ void HamiltBSE<T>::cal_V_by_grid(bool is_A)
 
                 for (int ik1 = 0; ik1 < this->nk; ++ik1) {
                     Cpxgemr2d(nvirt[is]*nocc[is], 1,
-                            V_col_local.data() + ik1 * pV_col.get_local_size(), 1, 1, pV_col.desc,
+                            V_col_local.data() + ik1 * pV_col.size(), 1, 1, pV_col.desc(),
                             this->VA_local.data(), 
-                            ik1 * nocc[is] * nvirt[is] + 1 , bjk + 1, this->pA.desc,
-                            this->pA.blacs_ctxt);
+                            ik1 * nocc[is] * nvirt[is] + 1 , bjk + 1, this->pA.desc(),
+                            this->pA.ictxt());
                 }
     #else
                 LR::ao_to_mo_blas(v_k_2d, psi_is, nocc[is], nvirt[is], this->VA_local.data()+bjk * this->ndim, false, LR_Util::MO_TYPE::VO, T(1.0));

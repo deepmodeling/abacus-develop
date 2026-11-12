@@ -2,10 +2,10 @@
 #include "md_func.h"
 #include "source_base/parallel_cell.h"
 #include "source_cell/unitcell.h"
+#include "source_io/module_output/print_info.h"
 #ifdef __MPI
 #include "mpi.h"
 #endif
-#include "source_io/module_output/print_info.h"
 #include <algorithm>
 #include <iomanip>
 
@@ -55,12 +55,15 @@ void MD_base::setup(ModuleESolver::ESolver* p_esolver, const std::string& global
         restart(global_readin_dir);
     }
 
-    // mohan add 2026-01-04
-    const int stress_step = 0;
-    const int force_step = 0;
-    const int istep_print = step_ + step_rst_ + 1;
-
-	ModuleIO::print_screen(stress_step, force_step, istep_print);
+    const int md_step = step_ + step_rst_;
+    const bool print_thermo = mdp.md_thermo_freq > 0 && md_step % mdp.md_thermo_freq == 0;
+    if (print_thermo)
+    {
+        const int stress_step = 0;
+        const int force_step = 0;
+        const int istep_print = md_step + 1;
+        ModuleIO::print_screen(stress_step, force_step, istep_print);
+    }
 
     // The electronic solver interprets the step index as the local step of
     // this run: istep == 0 enables its initialization branches (init_chg
@@ -69,7 +72,7 @@ void MD_base::setup(ModuleESolver::ESolver* p_esolver, const std::string& global
     // must not advance the charge-extrapolation history -- even on restart
     // (step_rst_ > 0), where the extrapolation state starts degenerate.
     const bool positions_updated = false;
-    MD_func::force_virial(p_esolver, step_, positions_updated, mdcell, decomp, potential, cal_stress, virial, mdp.md_out_force);
+    MD_func::force_virial(p_esolver, step_, positions_updated, mdcell, decomp, potential, cal_stress, virial);
     MD_func::compute_stress(mdcell, cal_stress, virial, stress);
     if (mdcell.has_backing_unitcell())
     {

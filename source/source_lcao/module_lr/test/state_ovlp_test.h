@@ -1,7 +1,7 @@
 #ifndef ABACUS_LR_STATE_OVLP_TEST_H
 #define ABACUS_LR_STATE_OVLP_TEST_H
 
-#include "source_base/parallel_2d.h"
+#include "source_base/block_cyclic_distribution.h"
 #include "source_base/parallel_reduce.h"
 #include "source_lcao/module_lr/state_ovlp.h"
 #include <gtest/gtest.h>
@@ -23,28 +23,28 @@ std::vector<T> overlap_block(const std::vector<T>& full, int bands, int start, i
     return block;
 }
 
-void setup(Parallel_2D& target, int rows, int cols, const Parallel_2D& grid)
+void setup(BlockCyclicDistribution& target, int rows, int cols, const BlockCyclicDistribution& grid)
 {
 #ifdef __MPI
-    const int block_size = grid.get_block_size();
-    target.set(rows, cols, block_size, grid.blacs_ctxt);
+    const int block_size = grid.nb();
+    target.set(rows, cols, block_size, grid.ictxt());
 #else
     target.set_serial(rows, cols);
 #endif
 }
 
 template <typename T>
-std::vector<T> scatter(const std::vector<T>& full, const Parallel_2D& layout)
+std::vector<T> scatter(const std::vector<T>& full, const BlockCyclicDistribution& layout)
 {
-    std::vector<T> local(layout.get_local_size(), T(0));
-    const int columns = layout.get_global_col_size();
-    for (int col = 0; col < layout.get_col_size(); ++col)
+    std::vector<T> local(layout.size(), T(0));
+    const int columns = layout.ncglb();
+    for (int col = 0; col < layout.ncloc(); ++col)
     {
-        const int global_col = layout.local2global_col(col);
-        for (int row = 0; row < layout.get_row_size(); ++row)
+        const int global_col = layout.icglb(col);
+        for (int row = 0; row < layout.nrloc(); ++row)
         {
-            const int global_row = layout.local2global_row(row);
-            local[col * layout.get_row_size() + row] = full[global_row * columns + global_col];
+            const int global_row = layout.irglb(row);
+            local[col * layout.nrloc() + row] = full[global_row * columns + global_col];
         }
     }
     return local;
@@ -108,19 +108,19 @@ std::vector<T> reference_projection(const std::vector<T>& previous,
 }
 
 template <typename T>
-std::vector<T> gather(const std::vector<T>& local, const Parallel_2D& layout)
+std::vector<T> gather(const std::vector<T>& local, const BlockCyclicDistribution& layout)
 {
-    const int columns = layout.get_global_col_size();
-    const int count = layout.get_global_row_size() * columns;
+    const int columns = layout.ncglb();
+    const int count = layout.nrglb() * columns;
     std::vector<T> result(count, T(0));
-    EXPECT_EQ(local.size(), layout.get_local_size());
-    for (int col = 0; col < layout.get_col_size(); ++col)
+    EXPECT_EQ(local.size(), layout.size());
+    for (int col = 0; col < layout.ncloc(); ++col)
     {
-        const int global_col = layout.local2global_col(col);
-        for (int row = 0; row < layout.get_row_size(); ++row)
+        const int global_col = layout.icglb(col);
+        for (int row = 0; row < layout.nrloc(); ++row)
         {
-            const int global_row = layout.local2global_row(row);
-            result[global_row * columns + global_col] = local[col * layout.get_row_size() + row];
+            const int global_row = layout.irglb(row);
+            result[global_row * columns + global_col] = local[col * layout.nrloc() + row];
         }
     }
     Parallel_Reduce::reduce_all(result.data(), count);
@@ -131,14 +131,14 @@ template <typename T>
 std::vector<T> transform_for_test(const std::vector<T>& old, const std::vector<double>& ao,
     const std::vector<T>& current, int naos, int bands, int start, int count, int block_size)
 {
-    Parallel_2D pc;
+    BlockCyclicDistribution pc;
 #ifdef __MPI
-    pc.init(naos, bands, block_size, MPI_COMM_WORLD);
+    pc.init(naos, bands, block_size, MPI_COMM_WORLD, false);
 #else
     pc.set_serial(naos, bands);
 #endif
-    Parallel_2D ps;
-    Parallel_2D po;
+    BlockCyclicDistribution ps;
+    BlockCyclicDistribution po;
     setup(ps, naos, naos, pc);
     setup(po, count, count, pc);
     std::vector<T> old_rows(old.size());
@@ -163,13 +163,13 @@ template <typename T>
 std::vector<T> project(const std::vector<T>& previous, const std::vector<T>& overlap, int no, int nv)
 {
     const int bands = no + nv;
-    Parallel_2D po;
+    BlockCyclicDistribution po;
 #ifdef __MPI
-    po.init(bands, bands, 1, MPI_COMM_WORLD);
+    po.init(bands, bands, 1, MPI_COMM_WORLD, false);
 #else
     po.set_serial(bands, bands);
 #endif
-    Parallel_2D px;
+    BlockCyclicDistribution px;
     setup(px, nv, no, po);
     std::vector<T> previous_rows(previous.size());
     for (int i = 0; i < no; ++i)
@@ -180,8 +180,8 @@ std::vector<T> project(const std::vector<T>& previous, const std::vector<T>& ove
         }
     }
     const auto local_previous = scatter(previous_rows, px);
-    Parallel_2D pi;
-    Parallel_2D pv;
+    BlockCyclicDistribution pi;
+    BlockCyclicDistribution pv;
     setup(pi, no, no, po);
     setup(pv, nv, nv, po);
     const auto occupied = overlap_block(overlap, bands, 0, no);
@@ -232,13 +232,13 @@ template <typename T>
 void check_projection(int no, int nv, T phase, int block_size)
 {
     const int bands = no + nv;
-    Parallel_2D po;
+    BlockCyclicDistribution po;
 #ifdef __MPI
-    po.init(bands, bands, block_size, MPI_COMM_WORLD);
+    po.init(bands, bands, block_size, MPI_COMM_WORLD, false);
 #else
     po.set_serial(bands, bands);
 #endif
-    Parallel_2D px;
+    BlockCyclicDistribution px;
     setup(px, nv, no, po);
     std::vector<T> overlap(bands * bands);
     std::vector<T> previous(no * nv);
@@ -263,8 +263,8 @@ void check_projection(int no, int nv, T phase, int block_size)
         }
     }
     const auto local_previous = scatter(previous_rows, px);
-    Parallel_2D pi;
-    Parallel_2D pv;
+    BlockCyclicDistribution pi;
+    BlockCyclicDistribution pv;
     setup(pi, no, no, po);
     setup(pv, nv, nv, po);
     const auto occupied = overlap_block(overlap, bands, 0, no);

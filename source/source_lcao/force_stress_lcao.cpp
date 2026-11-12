@@ -209,7 +209,8 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
     // }
 
     // EXX force/stress
-    LCAO_domain::cal_exx_fs(ucell, isforce, isstress, exx_info, exx_nao, parts, sparts);
+    const bool is_rt = td_info != nullptr;
+    LCAO_domain::cal_exx_fs(ucell, isforce, isstress, is_rt, exx_info, exx_nao, parts, sparts);
     //--------------------------------
     // begin calculate and output force
     //--------------------------------

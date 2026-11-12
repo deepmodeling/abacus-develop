@@ -242,6 +242,9 @@ void md_line(MDCell& mdcell,
     /// md cycle, mohan update 2026-01-04, change '<=' to '<'
     while ((mdrun->step_ + mdrun->step_rst_) < param_in.mdp.md_nstep && !mdrun->stop)
     {
+        const int md_step = mdrun->step_ + mdrun->step_rst_;
+        bool print_thermo = param_in.mdp.md_thermo_freq > 0
+                            && md_step % param_in.mdp.md_thermo_freq == 0;
 #ifdef __JSON
         // JSON output currently follows the UnitCell-backed electronic-structure path.
         // Start one output record before the solver appends SCF information for this MD step.
@@ -254,6 +257,11 @@ void md_line(MDCell& mdcell,
         if (mdrun->step_ == 0)
         {
             mdrun->setup(p_esolver, param_in.globalv.global_readin_dir, decomp);
+
+            // setup() may load step_rst_ from Restart_md.txt.
+            const int restart_step = mdrun->step_ + mdrun->step_rst_;
+            print_thermo = param_in.mdp.md_thermo_freq > 0
+                           && restart_step % param_in.mdp.md_thermo_freq == 0;
 
             if (param_in.mdp.plumed)
             {
@@ -286,8 +294,11 @@ void md_line(MDCell& mdcell,
             // mohan add 2026-01-04
             const int stress_step = 0;
             const int force_step = 0;
-            const int istep_print = mdrun->step_ + mdrun->step_rst_ + 1;
-            ModuleIO::print_screen(stress_step, force_step, istep_print);
+            const int istep_print = md_step + 1;
+            if (print_thermo)
+            {
+                ModuleIO::print_screen(stress_step, force_step, istep_print);
+            }
             mdrun->first_half(GlobalV::ofs_running);
 
             /// update force and virial due to the update of atom positions.
@@ -307,8 +318,7 @@ void md_line(MDCell& mdcell,
                                   decomp,
                                   mdrun->potential,
                                   param_in.inp.cal_stress,
-                                  mdrun->virial,
-                                  param_in.mdp.md_out_force);
+                                  mdrun->virial);
 
             if (plumed.active())
             {
@@ -329,7 +339,10 @@ void md_line(MDCell& mdcell,
                                                      mdrun->frozen_freedom_);
         }
 
-        mdrun->print_md(GlobalV::ofs_running, PARAM.inp.cal_stress);
+        if (print_thermo)
+        {
+            mdrun->print_md(GlobalV::ofs_running, param_in.inp.cal_stress);
+        }
         if (param_in.mdp.md_dumpfreq > 0
             && (mdrun->step_ + mdrun->step_rst_) % param_in.mdp.md_dumpfreq == 0)
         {

@@ -86,12 +86,7 @@ add_test(
   COMMAND mpirun -np 4 "$<TARGET_FILE:MODULE_BASE_para_gemm>"
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 
-addtest(
-  TARGET MODULE_BASE_parallel_2d_test
-  SOURCES parallel_2d_test.cpp ../parallel_2d.cpp
-  LIBS parameter)
-
-addtest(
+AddTest(
   TARGET MODULE_BASE_parallel_domain_grid
   SOURCES parallel_domain_grid_test.cpp ../test/mpi_test_main.cpp
   LIBS parameter MPI::MPI_CXX base device)
@@ -101,13 +96,7 @@ add_test(
   COMMAND mpirun -np 4 "$<TARGET_FILE:MODULE_BASE_parallel_domain_grid>"
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 
-abacus_copy_test_files(parallel_2d_test.sh)
 find_program(BASH bash)
-add_test(
-  NAME MODULE_BASE_parallel_2d_test_para
-  COMMAND ${BASH} parallel_2d_test.sh
-          "$<TARGET_FILE:MODULE_BASE_parallel_2d_test>"
-  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 
 # Select the same ScaLAPACK/BLACS provider as the main build.
 if(MKL_FOUND)
