@@ -57,7 +57,11 @@ __global__ void kinetic_stress_batched(int npw, int npwx, int npm, int npol,
     {
         for (int column = 0; column <= row; ++column)
         {
-            double value = density * gk[row * npwx + ig] * gk[column * npwx + ig];
+            double value = 0.0;
+            if (ig < npw)
+            {
+                value = density * gk[row * npwx + ig] * gk[column * npwx + ig];
+            }
             warp_reduce(value);
             if (threadIdx.x % WARP_SIZE == 0)
             {
