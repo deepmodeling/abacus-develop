@@ -51,7 +51,7 @@ jobs:
           cmake --build build -j8 > build.log 2>&1
           status=$?
           if [ $status -ne 0 ]; then
-            tail -n 80 build.log | while IFS= read -r line; do
+            grep -nE "error:|undefined reference|fatal error|collect2:|Error [0-9]|No such file|Killed" build.log | head -n 60 | while IFS= read -r line; do
               echo "::error::${line}"
             done
           else
