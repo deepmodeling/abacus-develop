@@ -30,9 +30,11 @@ run_lr_force_props
 run_basic_props || exit 1
 
 #---------------------------------------
-# dfpt collectors (props_dfpt.sh): phonon frequencies per q point
+# dfpt collectors (props_dfpt.sh): phonon frequencies per q point;
+# a DFPT case with no complete frequency block fails the collection
+# instead of passing on etot alone
 #---------------------------------------
-run_dfpt_props
+run_dfpt_props || exit 1
 
 #-------------------------------
 # matrix collectors: out_dm1 (props_mat.sh)
