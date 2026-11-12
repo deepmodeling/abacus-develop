@@ -6,10 +6,10 @@ repos:
       - id: mixed-line-ending
         args: [--fix=lf]
         exclude: '(\.bat|\.cmd)$'
-  - repo: https://github.com/pre-commit/mirrors-clang-format
-    rev: v23.1.3
-    hooks:
-      - id: clang-format
+#  - repo: https://github.com/pre-commit/mirrors-clang-format
+#    rev: v23.1.3
+#    hooks:
+#      - id: clang-format
   - repo: https://github.com/cheshirekow/cmake-format-precommit
     rev: v0.6.13
     hooks:
@@ -19,7 +19,7 @@ repos:
     rev: v3.14.1-1
     hooks:
       - id: shfmt
-        args: [--write, --language-dialect=bash, --indent=2, --case-indent]
+        args: [--write, --language-dialect=bash, --indent=2, --case-indent, --space-redirects]
   - repo: local
     hooks:
       - id: abacus-agent-governance

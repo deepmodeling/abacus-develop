@@ -172,9 +172,10 @@ if(USE_DSP)
     endif()
     list(APPEND _abacus_linalg_libs ${_abacus_cpack_library})
   else()
-    message(STATUS
-      "USE_DSP without MT_CPACK_DIR: C_PACK disabled, the serial generalized "
-      "eigensolver falls back to the configured LAPACK provider (zhegvx).")
+    message(
+      STATUS
+        "USE_DSP without MT_CPACK_DIR: C_PACK disabled, the serial generalized "
+        "eigensolver falls back to the configured LAPACK provider (zhegvx).")
   endif()
 endif()
 

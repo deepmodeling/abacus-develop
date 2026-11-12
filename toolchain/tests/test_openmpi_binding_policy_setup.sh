@@ -15,7 +15,7 @@ write_fake_openmpi_commands() {
   local version="$2"
 
   mkdir -p "$bindir"
-  cat >"${bindir}/mpiexec" <<EOF
+  cat > "${bindir}/mpiexec" << EOF
 #!/usr/bin/env bash
 if [[ "\$1" == "--version" ]]; then
   printf 'mpiexec (Open MPI) ${version}\n'
@@ -23,7 +23,7 @@ if [[ "\$1" == "--version" ]]; then
 fi
 exit 0
 EOF
-  cat >"${bindir}/mpicxx" <<'EOF'
+  cat > "${bindir}/mpicxx" << 'EOF'
 #!/usr/bin/env bash
 if [[ "$1" == "--showme:libs" ]]; then
   printf 'mpi\n'
@@ -41,9 +41,9 @@ run_openmpi_system_setup() {
   local version="$2"
 
   mkdir -p "${tmpdir}/install" "${tmpdir}/build"
-  : >"${tmpdir}/install/setup"
-  : >"${tmpdir}/install/toolchain.env"
-  cat >"${tmpdir}/install/toolchain.conf" <<'EOF'
+  : > "${tmpdir}/install/setup"
+  : > "${tmpdir}/install/toolchain.env"
+  cat > "${tmpdir}/install/toolchain.conf" << 'EOF'
 MPI_MODE="openmpi"
 with_openmpi="__SYSTEM__"
 PACK_RUN="__FALSE__"
@@ -57,7 +57,7 @@ EOF
     BUILDDIR="${tmpdir}/build" \
     SETUPFILE="${tmpdir}/install/setup" \
     bash "${TOOLCHAIN_DIR}/scripts/stage1/install_openmpi.sh" \
-    >"${tmpdir}/openmpi.log" 2>&1
+    > "${tmpdir}/openmpi.log" 2>&1
 }
 
 assert_setup_contains() {

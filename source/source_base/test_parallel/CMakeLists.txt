@@ -86,7 +86,7 @@ add_test(
   COMMAND mpirun -np 4 "$<TARGET_FILE:MODULE_BASE_para_gemm>"
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 
-AddTest(
+addtest(
   TARGET MODULE_BASE_parallel_domain_grid
   SOURCES parallel_domain_grid_test.cpp ../test/mpi_test_main.cpp
   LIBS parameter MPI::MPI_CXX base device)

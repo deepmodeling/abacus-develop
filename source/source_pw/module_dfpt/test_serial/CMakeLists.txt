@@ -144,10 +144,10 @@ if(ENABLE_LIBXC)
     SOURCES dfpt_xc_analytic_serial_test.cpp
             ../dfpt_xc_analytic.cpp
             ../dfpt_rho.cpp
-          ../dfpt_rho_mix.cpp
-          ../../../source_estate/module_charge/chg_tools.cpp
+            ../dfpt_rho_mix.cpp
+            ../../../source_estate/module_charge/chg_tools.cpp
             ../dfpt_pw_data.cpp
-          ../dfpt_pw_data_resp.cpp
+            ../dfpt_pw_data_resp.cpp
             ../dfpt_kq_basis.cpp
             ../../../source_cell/qlist.cpp
             ../../../source_cell/reciprocal_grid.cpp

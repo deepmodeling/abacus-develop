@@ -69,16 +69,16 @@ case "${with_gcc}" in
       cd gcc-${gcc_ver}
 
       # Check network connectivity before downloading prerequisites
-      if curl -s --connect-timeout 5 https://gcc.gnu.org >/dev/null 2>&1; then
+      if curl -s --connect-timeout 5 https://gcc.gnu.org > /dev/null 2>&1; then
         echo "Downloading prerequisites from official GCC site..."
         # Try official site first
-        if ./contrib/download_prerequisites >prereq.log 2>&1; then
+        if ./contrib/download_prerequisites > prereq.log 2>&1; then
           echo "Prerequisites downloaded successfully from official site"
         else
           echo "Official site failed, trying mirror site..."
           # Fallback to cp2k.org mirror
           sed -i 's|http://gcc.gnu.org/pub/gcc/infrastructure/|https://cp2k.org/static/downloads/|' ./contrib/download_prerequisites
-          ./contrib/download_prerequisites >prereq.log 2>&1 || tail -n ${LOG_LINES} prereq.log
+          ./contrib/download_prerequisites > prereq.log 2>&1 || tail -n ${LOG_LINES} prereq.log
         fi
       else
         echo "Network unavailable, skipping prerequisites download (offline mode)"
@@ -117,13 +117,13 @@ case "${with_gcc}" in
         --disable-multilib --disable-bootstrap \
         --enable-lto \
         --enable-plugins \
-        >configure.log 2>&1 || tail -n ${LOG_LINES} configure.log
+        > configure.log 2>&1 || tail -n ${LOG_LINES} configure.log
       make -j $(get_nprocs) \
         CFLAGS="${CFLAGS}" \
         CXXFLAGS="${CXXFLAGS}" \
         FCFLAGS="${FCFLAGS}" \
-        >make.log 2>&1 || tail -n ${LOG_LINES} make.log
-      make -j $(get_nprocs) install >install.log 2>&1 || tail -n ${LOG_LINES} install.log
+        > make.log 2>&1 || tail -n ${LOG_LINES} make.log
+      make -j $(get_nprocs) install > install.log 2>&1 || tail -n ${LOG_LINES} install.log
       # thread sanitizer
       if [ "${ENABLE_TSAN}" = "__TRUE__" ]; then
         # now the tricky bit... we need to recompile in particular
@@ -134,7 +134,7 @@ case "${with_gcc}" in
         # gcc, tested with 5.1.0 based on
         # https://gcc.gnu.org/bugzilla/show_bug.cgi?id=55374#c10
         cd x86_64*/libgfortran
-        make clean >clean.log 2>&1 || tail -n ${LOG_LINES} clean.log
+        make clean > clean.log 2>&1 || tail -n ${LOG_LINES} clean.log
         CFLAGS="${CFLAGS} -fsanitize=thread"
         CXXFLAGS="${CXXFLAGS} -fsanitize=thread"
         FCFLAGS="${FCFLAGS} -fsanitize=thread"
@@ -143,17 +143,17 @@ case "${with_gcc}" in
           CXXFLAGS="${CXXFLAGS}" \
           FCFLAGS="${FCFLAGS}" \
           LDFLAGS="-B$(pwd)/../libsanitizer/tsan/.libs/ -Wl,-rpath,$(pwd)/../libsanitizer/tsan/.libs/ -fsanitize=thread" \
-          >make.log 2>&1 || tail -n ${LOG_LINES} make.log
-        make install >install.log 2>&1 || tail -n ${LOG_LINES} install.log
+          > make.log 2>&1 || tail -n ${LOG_LINES} make.log
+        make install > install.log 2>&1 || tail -n ${LOG_LINES} install.log
         cd ../libgomp
-        make clean >clean.log 2>&1 || tail -n ${LOG_LINES} clean.log
+        make clean > clean.log 2>&1 || tail -n ${LOG_LINES} clean.log
         make -j $(get_nprocs) \
           CFLAGS="${CFLAGS}" \
           CXXFLAGS="${CXXFLAGS}" \
           FCFLAGS="${FCFLAGS}" \
           LDFLAGS="-B$(pwd)/../libsanitizer/tsan/.libs/ -Wl,-rpath,$(pwd)/../libsanitizer/tsan/.libs/ -fsanitize=thread" \
-          >make.log 2>&1 || tail -n ${LOG_LINES} make.log
-        make install >install.log 2>&1 || tail -n ${LOG_LINES} install.log
+          > make.log 2>&1 || tail -n ${LOG_LINES} make.log
+        make install > install.log 2>&1 || tail -n ${LOG_LINES} install.log
         cd ${GCCROOT}/obj/
       fi
       cd ../..
@@ -206,7 +206,7 @@ else
   TSANFLAGS=""
 fi
 if [ "${with_gcc}" != "__DONTUSE__" ]; then
-  cat <<EOF >"${BUILDDIR}/setup_gcc"
+  cat << EOF > "${BUILDDIR}/setup_gcc"
 export CC="${CC}"
 export CXX="${CXX}"
 export FC="${FC}"
@@ -214,7 +214,7 @@ export F90="${F90}"
 export F77="${F77}"
 EOF
   if [ "${with_gcc}" != "__SYSTEM__" ]; then
-    cat <<EOF >>"${BUILDDIR}/setup_gcc"
+    cat << EOF >> "${BUILDDIR}/setup_gcc"
 # needs full path for mpich/openmpi builds, triggers openblas bug
 prepend_path PATH "${pkg_install_dir}/bin"
 prepend_path LD_LIBRARY_PATH "${pkg_install_dir}/lib"
@@ -226,7 +226,7 @@ prepend_path LIBRARY_PATH "${pkg_install_dir}/lib64"
 prepend_path CPATH "${pkg_install_dir}/include"
 EOF
   fi
-  cat <<EOF >>"${BUILDDIR}/setup_gcc"
+  cat << EOF >> "${BUILDDIR}/setup_gcc"
 export GCC_CFLAGS="${GCC_CFLAGS}"
 export GCC_LDFLAGS="${GCC_LDFLAGS}"
 export TSANFLAGS="${TSANFLAGS}"
@@ -240,7 +240,7 @@ fi
 
 # this might need to be adjusted for the versions of the software
 # employed
-cat <<EOF >>${INSTALLDIR}/lsan.supp
+cat << EOF >> ${INSTALLDIR}/lsan.supp
 # known leak either related to mpi or scalapack  (e.g. showing randomly for Fist/regtest-7-2/UO2-2x2x2-genpot_units.inp)
 leak:__cp_fm_types_MOD_cp_fm_write_unformatted
 # leak related to mpi or scalapack  triggers sometimes for regtest-kp-2/cc2.inp
@@ -250,7 +250,7 @@ leak:blacs_gridmap_
 leak:__dbcsr_tensor_types_MOD___copy_dbcsr_tensor_types_Dbcsr_tas_dist_t
 leak:__dbcsr_tensor_types_MOD___copy_dbcsr_tensor_types_Dbcsr_tas_blk_size_t
 EOF
-cat <<EOF >>${INSTALLDIR}/tsan.supp
+cat << EOF >> ${INSTALLDIR}/tsan.supp
 # tsan bugs likely related to gcc
 # PR66756
 deadlock:_gfortran_st_open
@@ -262,7 +262,7 @@ race:__dbcsr_transformations_MOD_dbcsr_make_untransposed_blocks
 EOF
 
 # need to also link to the .supp file in setup file
-cat <<EOF >>${SETUPFILE}
+cat << EOF >> ${SETUPFILE}
 export LSAN_OPTIONS=suppressions=${INSTALLDIR}/lsan.supp
 export TSAN_OPTIONS=suppressions=${INSTALLDIR}/tsan.supp
 EOF

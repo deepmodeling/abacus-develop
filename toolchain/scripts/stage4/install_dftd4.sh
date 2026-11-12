@@ -49,8 +49,8 @@ case "${with_dftd4}" in
         -DCMAKE_INSTALL_LIBDIR=lib \
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_VERBOSE_MAKEFILE=ON \
-        .. >cmake.log 2>&1 || tail -n ${LOG_LINES} cmake.log
-      make install -j $(get_nprocs) >make.log 2>&1 || tail -n ${LOG_LINES} make.log
+        .. > cmake.log 2>&1 || tail -n ${LOG_LINES} cmake.log
+      make install -j $(get_nprocs) > make.log 2>&1 || tail -n ${LOG_LINES} make.log
       cd ..
       write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage4/$(basename ${SCRIPT_NAME})"
     fi
@@ -83,12 +83,12 @@ case "${with_dftd4}" in
 esac
 
 if [ "${with_dftd4}" != "__DONTUSE__" ]; then
-  cat <<EOF >"${BUILDDIR}/setup_dftd4"
+  cat << EOF > "${BUILDDIR}/setup_dftd4"
 export DFTD4_VER="${dftd4_ver}"
 export DFTD4_ROOT="${pkg_install_dir}"
 EOF
   if [ "${with_dftd4}" != "__SYSTEM__" ]; then
-    cat <<EOF >>"${BUILDDIR}/setup_dftd4"
+    cat << EOF >> "${BUILDDIR}/setup_dftd4"
 prepend_path PATH "${pkg_install_dir}/bin"
 prepend_path LD_LIBRARY_PATH "${pkg_install_dir}/lib"
 prepend_path LD_RUN_PATH "${pkg_install_dir}/lib"

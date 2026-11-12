@@ -97,9 +97,9 @@ case "${with_openmpi}" in
         --libdir="${pkg_install_dir}/lib" \
         --with-libevent=internal \
         ${EXTRA_CONFIGURE_FLAGS} \
-        >configure.log 2>&1 || tail -n ${LOG_LINES} configure.log
-      make -j $(get_nprocs) >make.log 2>&1 || tail -n ${LOG_LINES} make.log
-      make -j $(get_nprocs) install >install.log 2>&1 || tail -n ${LOG_LINES} install.log
+        > configure.log 2>&1 || tail -n ${LOG_LINES} configure.log
+      make -j $(get_nprocs) > make.log 2>&1 || tail -n ${LOG_LINES} make.log
+      make -j $(get_nprocs) install > install.log 2>&1 || tail -n ${LOG_LINES} install.log
       cd ..
       write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage1/$(basename ${SCRIPT_NAME})"
     fi
@@ -178,7 +178,7 @@ else
       OPENMPI_LIBS+=" -l${lib}"
       OPENMPI_LDFLAGS="${OPENMPI_LDFLAGS//-l${lib}/}"
     done
-    cat <<EOF >"${BUILDDIR}/setup_openmpi"
+    cat << EOF > "${BUILDDIR}/setup_openmpi"
 export MPI_MODE="${MPI_MODE}"
 export MPIRUN="${MPIRUN}"
 export MPICC="${MPICC}"
@@ -204,7 +204,7 @@ export CP_LDFLAGS="\${CP_LDFLAGS} IF_MPI(${OPENMPI_LDFLAGS}|)"
 export CP_LIBS="\${CP_LIBS} IF_MPI(${OPENMPI_LIBS}|)"
 EOF
     if [ "${with_openmpi}" != "__SYSTEM__" ]; then
-      cat <<EOF >>"${BUILDDIR}/setup_openmpi"
+      cat << EOF >> "${BUILDDIR}/setup_openmpi"
 prepend_path PATH "${pkg_install_dir}/bin"
 prepend_path LD_LIBRARY_PATH "${pkg_install_dir}/lib"
 prepend_path LD_RUN_PATH "${pkg_install_dir}/lib"
@@ -218,7 +218,7 @@ EOF
   # ----------------------------------------------------------------------
   # Suppress reporting of known leaks
   # ----------------------------------------------------------------------
-  cat <<EOF >>${INSTALLDIR}/valgrind.supp
+  cat << EOF >> ${INSTALLDIR}/valgrind.supp
 {
    <BuggyOpenMPI_1>
    Memcheck:Leak
@@ -265,7 +265,7 @@ EOF
    fun:ompi_comm_activate
 }
 EOF
-  cat <<EOF >>${INSTALLDIR}/lsan.supp
+  cat << EOF >> ${INSTALLDIR}/lsan.supp
 # leaks related to OpenMPI
 leak:query_2_0_0
 leak:ompi_init_f

@@ -66,12 +66,12 @@ record_compare_result() {
   use_abs=${6:-0}
 
   if [ ! -f "$ref_file" ] || [ ! -f "$cal_file" ]; then
-    echo "$result_key 1" >>"$result_file"
+    echo "$result_key 1" >> "$result_file"
     return
   fi
 
   python3 $COMPARE_SCRIPT "$ref_file" "$cal_file" "$accuracy" -abs "$use_abs"
-  echo "$result_key $?" >>"$result_file"
+  echo "$result_key $?" >> "$result_file"
 }
 
 # props_init RESULT_FILE
@@ -86,7 +86,7 @@ props_init() {
   # the command will ignore lines starting with #
   calculation=$(grep calculation INPUT | grep -v '^#' | awk '{print $2}' | sed s/[[:space:]]//g)
 
-  running_path=$(ls OUT.autotest/running_${calculation}*.log 2>/dev/null | head -1)
+  running_path=$(ls OUT.autotest/running_${calculation}*.log 2> /dev/null | head -1)
   if [ -z "$running_path" ]; then
     echo "Error: No running log file found for calculation=$calculation in OUT.autotest/"
     exit 1
@@ -164,5 +164,5 @@ props_init() {
 props_finalize() {
   props_result_file=$1
   ttot=$(grep $word_total_time $running_path | awk '{print $3}')
-  echo "totaltimeref $ttot" >>$props_result_file
+  echo "totaltimeref $ttot" >> $props_result_file
 }

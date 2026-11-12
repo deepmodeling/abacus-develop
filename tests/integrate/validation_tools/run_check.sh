@@ -48,9 +48,9 @@ exec_path=${exec_path//'${ABACUS_EXE}'/$ABACUS_EXE}
 exec_path=${exec_path//'$ABACUS_EXE'/$ABACUS_EXE}
 
 # command -v accepts both a path and a bare name looked up in PATH.
-command -v "$exec_path" >/dev/null || echo "Error! ABACUS path was wrong!!"
+command -v "$exec_path" > /dev/null || echo "Error! ABACUS path was wrong!!"
 
-command -v "$exec_path" >/dev/null || exit 0
+command -v "$exec_path" > /dev/null || exit 0
 
 CA=$(grep CHECKACCURACY $GENERAL_INFO_FILE | awk '{printf $2}')
 
@@ -62,7 +62,7 @@ echo "Test in $path_here"
 echo "Begin testing the example with $NP cores"
 
 #parallel test
-mpirun -np $NP "$exec_path" >log.txt
+mpirun -np $NP "$exec_path" > log.txt
 
 test -d OUT.autotest || echo "Some errors occured in ABACUS!"
 

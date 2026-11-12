@@ -277,8 +277,7 @@ if(ENABLE_GOOGLEBENCH)
     SOURCES perf_sphbes_test.cpp ../math_sphbes.cpp ../timer.cpp)
 endif()
 
-AddTest(
+addtest(
   TARGET MODULE_BASE_filename
   LIBS parameter base device
-  SOURCES test_filename.cpp
-)
+  SOURCES test_filename.cpp)
