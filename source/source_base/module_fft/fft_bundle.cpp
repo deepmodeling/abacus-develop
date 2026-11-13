@@ -103,9 +103,11 @@ void FFT_Bundle::initfft(int nx_in,
         fft_double->initfft(nx_in, ny_in, nz_in);
 #elif defined(__CUDA)
         fft_float = make_unique<FFT_CUDA<float>>();
-        fft_float->initfft(nx_in, ny_in, nz_in);
+        fft_float->initfft(nx_in, ny_in, nz_in, lixy_in, rixy_in, ns_in, nplane_in, nproc_in,
+                           gamma_only_in, xprime_in);
         fft_double = make_unique<FFT_CUDA<double>>();
-        fft_double->initfft(nx_in, ny_in, nz_in);
+        fft_double->initfft(nx_in, ny_in, nz_in, lixy_in, rixy_in, ns_in, nplane_in, nproc_in,
+                            gamma_only_in, xprime_in);
 #endif
     }else{
         ModuleBase::WARNING_QUIT("FFT_Bundle", "Please set the device to cpu or gpu or dsp");

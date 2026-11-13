@@ -379,6 +379,11 @@ int Diago_DavSubspace<T, Device>::diag_once(const HSOperator<T, Device>& op,
                            this->scc);
 
             this->diag_zhegvx(nbase, this->n_band, this->hcc, this->scc, this->nbase_x, &eigenvalue_iter, this->vcc);
+            if (this->solver_failed_)
+            {
+                ModuleBase::timer::end("Diago_DavSubspace", "diag_once");
+                return -1;
+            }
 
             // check convergence and update eigenvalues
             ModuleBase::timer::start("Diago_DavSubspace", "check_update");

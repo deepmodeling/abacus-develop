@@ -87,7 +87,7 @@ __device__ void gcx_pbe(double rhoup, double rhodw, double grhoup2, double grhod
     v2xdw = 2.0 * v2xdw;
 }
 
-__device__ void gcc_pbe(double rho, double zeta, double grho, double& sc,
+__device__ void gcc_pbe(double rho, double& zeta, double grho, double& sc,
                         double& v1cup, double& v1cdw, double& v2c)
 {
     sc = 0.0;
