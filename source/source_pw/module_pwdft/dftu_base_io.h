@@ -75,7 +75,7 @@ void append_ion_step_snapshot(const Plus_U_Base& dftu,
                               bool conv_esolver,
                               bool occmat_ready,
                               const OccmatOutputCfg& cfg,
-                              OccmatSocLayout soc_layout);
+                              const OccmatSocLayout& soc_layout);
 
 /// Read the local occupation number matrix from file (rank 0 only).
 ///
@@ -94,7 +94,7 @@ void read_occup_m(const UnitCell& ucell,
                   const std::string& fn,
                   int nspin,
                   int npol,
-                  OccmatSocLayout soc_layout);
+                  const OccmatSocLayout& soc_layout);
 
 /// Broadcast the local occupation number matrices from rank 0 to all ranks.
 ///
@@ -135,7 +135,7 @@ void write_latest_occmat(const Plus_U_Base& dftu,
                          const std::string& global_out_dir,
                          const OccmatStepInfo& step,
                          const OccmatOutputCfg& cfg,
-                         OccmatSocLayout soc_layout);
+                         const OccmatSocLayout& soc_layout);
 
 /// Write local occupation matrices to the given stream.
 ///
@@ -147,7 +147,7 @@ void write_latest_occmat(const Plus_U_Base& dftu,
 void write_occup_m(const Plus_U_Base& dftu,
                    const UnitCell& ucell,
                    std::ostream& ofs,
-                   OccmatSocLayout soc_layout);
+                   const OccmatSocLayout& soc_layout);
 
 /// Append sorted occupation eigenvalues as restart-safe comment lines.
 void write_occup_eigenvalues(const Plus_U_Base& dftu,

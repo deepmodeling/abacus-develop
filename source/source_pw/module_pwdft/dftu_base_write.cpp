@@ -169,7 +169,7 @@ inline std::vector<double> calculate_spinor_eigenvalues(const SocCompactBlocks& 
 static SocCompactBlocks extract_soc_compact_blocks(const Plus_U_Base& dftu,
                                                    const int iat,
                                                    const int l,
-                                                   const OccmatSocLayout layout)
+                                                   const OccmatSocLayout& layout)
 {
     const int size = 2 * l + 1;
     const int block_size = size * size;
@@ -264,7 +264,7 @@ static void write_soc_atom(const Plus_U_Base& dftu,
                            const int type,
                            const int iat,
                            const int l,
-                           const OccmatSocLayout layout)
+                           const OccmatSocLayout& layout)
 {
     const int size = 2 * l + 1;
     const SocCompactBlocks blocks = extract_soc_compact_blocks(dftu, iat, l, layout);
@@ -304,7 +304,7 @@ static void write_soc_atom(const Plus_U_Base& dftu,
 void write_occup_m(const Plus_U_Base& dftu,
                    const UnitCell& ucell,
                    std::ostream& os,
-                   const OccmatSocLayout soc_layout)
+                   const OccmatSocLayout& soc_layout)
 {
     ModuleBase::TITLE("DFTU_BASE", "write_occup_m");
     const int nspin = dftu.occmat().nspin();

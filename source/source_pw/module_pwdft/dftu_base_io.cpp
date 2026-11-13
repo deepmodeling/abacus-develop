@@ -190,7 +190,7 @@ static void write_snapshot_section(std::ostream& os,
                                    const UnitCell& ucell,
                                    const OccmatStepInfo& step,
                                    const bool occmat_ready,
-                                   const OccmatSocLayout soc_layout)
+                                   const OccmatSocLayout& soc_layout)
 {
     os << "# Electronic step " << step.iter << "\n";
     os << "# scf_thr " << std::scientific << std::setprecision(8) << step.scf_thr << "\n";
@@ -218,7 +218,7 @@ void append_ion_step_snapshot(const Plus_U_Base& dftu,
                               const bool conv_esolver,
                               const bool occmat_ready,
                               const OccmatOutputCfg& cfg,
-                              const OccmatSocLayout soc_layout)
+                              const OccmatSocLayout& soc_layout)
 {
     ModuleBase::TITLE("DFTU_BASE", "append_ion_step_snapshot");
 
@@ -274,7 +274,7 @@ void write_latest_occmat(const Plus_U_Base& dftu,
                          const std::string& global_out_dir,
                          const OccmatStepInfo& step,
                          const OccmatOutputCfg& cfg,
-                         const OccmatSocLayout soc_layout)
+                         const OccmatSocLayout& soc_layout)
 {
     ModuleBase::TITLE("DFTU_BASE", "write_latest_occmat");
 

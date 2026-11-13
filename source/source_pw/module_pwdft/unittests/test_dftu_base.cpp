@@ -96,7 +96,7 @@ class DFTUBaseTest : public testing::Test
                             const bool yukawa_potential,
                             const int nspin,
                             const int npol,
-                            const DFTU_BASE::OccmatSocLayout soc_layout)
+                            const DFTU_BASE::OccmatSocLayout& soc_layout)
     {
         const std::vector<int> l_channel = {2};
         const std::vector<double> hubbard_u = {0.0};
