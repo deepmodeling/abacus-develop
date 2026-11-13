@@ -54,7 +54,7 @@ run_dfpt_props() {
       val = $4
       # reject empty or nonnumeric frequency tokens (format drift)
       if (val !~ /^-?[0-9]+\.?[0-9]*([eE][-+]?[0-9]+)?$/) {
-        fail("nonnumeric frequency token '" val "' in " seq " mode " mi)
+        fail("nonnumeric frequency token [" val "] in " seq " mode " mi)
       }
       printf "dfpt_%s_q%s_m%s %s\n", block, block_qi, mi, val
       next
