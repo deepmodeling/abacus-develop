@@ -12,7 +12,7 @@ void save_HR(const hamilt::HContainer<TR>& hR, const std::string& filename,
 {
     const auto all_R = sparse_format::get_R_range(hR);
     ModuleIO::SparseRMatrix<TR> sparse_matrix;
-    sparse_format::cal_HContainer(pv, sparse_thr, hR, sparse_matrix);
+    sparse_format::cal_HContainer(sparse_thr, hR, sparse_matrix);
     ModuleIO::SparseWriteOptions options;
     options.filename = out_dir + filename;
     options.label = "EDM";

@@ -8,8 +8,7 @@ namespace sparse_format
 {
 //! calculate overlap matrix with lattice vector R
 template <typename TK>
-void cal_SR(const Parallel_Orbitals& pv,
-            std::set<Abfs::Vector3_Order<int>>& all_R_coor,
+void cal_SR(std::set<Abfs::Vector3_Order<int>>& all_R_coor,
             std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>>& SR_sparse,
             std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>>& SR_soc_sparse,
             const Grid_Driver& grid,

@@ -14,7 +14,7 @@ std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, T>>> cal_HR
     const double sparse_thr)
 {
     std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, T>>> target;
-    sparse_format::cal_HContainer<T>(*hR.get_paraV(), sparse_thr, hR, target);
+    sparse_format::cal_HContainer<T>(sparse_thr, hR, target);
     return target;
 }
 

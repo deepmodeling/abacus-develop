@@ -118,8 +118,7 @@ void ModuleIO::output_SR(Parallel_Orbitals& pv,
 
     LCAO_HS_Arrays HS_Arrays;
 
-    sparse_format::cal_SR(pv,
-                          HS_Arrays.all_R_coor,
+    sparse_format::cal_SR(HS_Arrays.all_R_coor,
                           HS_Arrays.SR_sparse,
                           HS_Arrays.SR_soc_sparse,
                           grid,

@@ -44,8 +44,7 @@ std::set<Abfs::Vector3_Order<int>> get_R_range(const hamilt::HContainer<T>& hR)
 };
 
 template <typename TI, typename TO = TI>
-void cal_HContainer(const Parallel_Orbitals& pv,
-                    const double& sparse_thr,
+void cal_HContainer(const double& sparse_thr,
                     const hamilt::HContainer<TI>& hR,
                     std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, TO>>>& target);
 

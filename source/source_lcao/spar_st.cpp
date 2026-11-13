@@ -10,7 +10,6 @@
 
 template <typename TK>
 void sparse_format::cal_SR(
-    const Parallel_Orbitals& pv,
     std::set<Abfs::Vector3_Order<int>>& all_R_coor,
     std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>>& SR_sparse,
     std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>>& SR_soc_sparse,
@@ -30,14 +29,14 @@ void sparse_format::cal_SR(
         hamilt::HamiltLCAO<TK, double>* p_ham_lcao
             = dynamic_cast<hamilt::HamiltLCAO<TK, double>*>(p_ham);
         const int cspin = 0;
-        sparse_format::cal_HContainer<double>(pv, sparse_thr, *(p_ham_lcao->getSR()), SR_sparse);
+        sparse_format::cal_HContainer<double>(sparse_thr, *(p_ham_lcao->getSR()), SR_sparse);
     }
     else if (nspin == 4)
     {
         hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>* p_ham_lcao
             = dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>*>(p_ham);
         const int cspin = 0;
-        sparse_format::cal_HContainer<std::complex<double>>(pv, sparse_thr, *(p_ham_lcao->getSR()), SR_soc_sparse);
+        sparse_format::cal_HContainer<std::complex<double>>(sparse_thr, *(p_ham_lcao->getSR()), SR_soc_sparse);
     }
 
     return;
@@ -209,7 +208,6 @@ void sparse_format::destroy_T_R_sparse(LCAO_HS_Arrays& HS_Arrays)
 }
 
 template void sparse_format::cal_SR<double>(
-    const Parallel_Orbitals& pv,
     std::set<Abfs::Vector3_Order<int>>& all_R_coor,
     std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>>& SR_sparse,
     std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>>& SR_soc_sparse,
@@ -217,7 +215,6 @@ template void sparse_format::cal_SR<double>(
     const double& sparse_thr,
     hamilt::Hamilt<double>* p_ham);
 template void sparse_format::cal_SR<std::complex<double>>(
-    const Parallel_Orbitals& pv,
     std::set<Abfs::Vector3_Order<int>>& all_R_coor,
     std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>>& SR_sparse,
     std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>>& SR_soc_sparse,

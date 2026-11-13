@@ -368,7 +368,6 @@ void TDEkinetic<OperatorLCAO<TK, TR>>::contributeHk(int ik)
     {
         ModuleBase::TITLE("TDEkinetic", "contributeHk");
         ModuleBase::timer::start("TDEkinetic", "contributeHk");
-        const Parallel_Orbitals* paraV = this->hsk->get_pv();
         // save HR data for output
         int spin_tot = PARAM.inp.nspin;
         if (!output_hR_done && TD_info::out_mat_R)
@@ -376,7 +375,7 @@ void TDEkinetic<OperatorLCAO<TK, TR>>::contributeHk(int ik)
             for (int spin_now = 0; spin_now < spin_tot; spin_now++)
             {
                 sparse_format::cal_HContainer<std::complex<double>>(
-                    *(paraV), 1e-10, *hR_tmp, this->td_info_->HR_sparse_td_vel[spin_now]);
+                    1e-10, *hR_tmp, this->td_info_->HR_sparse_td_vel[spin_now]);
             }
             output_hR_done = true;
         }

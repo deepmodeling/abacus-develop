@@ -68,34 +68,28 @@ void sparse_format::sync_all_R_coor(std::set<Abfs::Vector3_Order<int>>& all_R_co
 #endif // __MPI
 
 template <typename TI, typename TO>
-void sparse_format::cal_HContainer(const Parallel_Orbitals& pv,
-                                   const double& sparse_thr,
+void sparse_format::cal_HContainer(const double& sparse_thr,
                                    const hamilt::HContainer<TI>& hR,
                                    std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, TO>>>& target)
 {
     ModuleBase::TITLE("sparse_format", "cal_HContainer");
 
-    auto row_indexes = pv.get_indexes_row();
-    auto col_indexes = pv.get_indexes_col();
     for (int iap = 0; iap < hR.size_atom_pairs(); ++iap)
     {
-        int atom_i = hR.get_atom_pair(iap).get_atom_i();
-        int atom_j = hR.get_atom_pair(iap).get_atom_j();
-        int start_i = pv.atom_begin_row[atom_i];
-        int start_j = pv.atom_begin_col[atom_j];
-        int row_size = pv.get_nrow_atom(atom_i);
-        int col_size = pv.get_ncol_atom(atom_j);
-        for (int iR = 0; iR < hR.get_atom_pair(iap).get_R_size(); ++iR)
+        const auto& atom_pair = hR.get_atom_pair(iap);
+        const std::vector<int> row_indexes = hR.row_basis_offsets(atom_pair.get_atom_i());
+        const std::vector<int> col_indexes = hR.col_basis_offsets(atom_pair.get_atom_j());
+        for (int iR = 0; iR < atom_pair.get_R_size(); ++iR)
         {
-            auto& matrix = hR.get_atom_pair(iap).get_HR_values(iR);
-            const ModuleBase::Vector3<int> r_index = hR.get_atom_pair(iap).get_R_index(iR);
+            const auto& matrix = atom_pair.get_HR_values(iR);
+            const ModuleBase::Vector3<int> r_index = atom_pair.get_R_index(iR);
             Abfs::Vector3_Order<int> dR(r_index.x, r_index.y, r_index.z);
-            for (int i = 0; i < row_size; ++i)
+            for (size_t i = 0; i < row_indexes.size(); ++i)
             {
-                int mu = row_indexes[start_i + i];
-                for (int j = 0; j < col_size; ++j)
+                const int mu = row_indexes[i];
+                for (size_t j = 0; j < col_indexes.size(); ++j)
                 {
-                    int nu = col_indexes[start_j + j];
+                    const int nu = col_indexes[j];
                     // const auto& value_tmp = std::complex<double>(matrix.get_value(i, j), 0.0);
                     const TO value_tmp = static_cast<TO>(matrix.get_value(i, j));
                     if (std::abs(value_tmp) > sparse_thr)
@@ -256,19 +250,16 @@ void sparse_format::destroy_HS_R_sparse(LCAO_HS_Arrays& HS_Arrays)
 }
 
 template void sparse_format::cal_HContainer<double>(
-    const Parallel_Orbitals& pv,
     const double& sparse_thr,
     const hamilt::HContainer<double>& hR,
     std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>>& target);
 
 template void sparse_format::cal_HContainer<double, std::complex<double>>(
-    const Parallel_Orbitals& pv,
     const double& sparse_thr,
     const hamilt::HContainer<double>& hR,
     std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>>& target);
 
 template void sparse_format::cal_HContainer<std::complex<double>>(
-    const Parallel_Orbitals& pv,
     const double& sparse_thr,
     const hamilt::HContainer<std::complex<double>>& hR,
     std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>>& target);
