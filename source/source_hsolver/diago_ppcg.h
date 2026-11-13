@@ -164,7 +164,7 @@ private:
     // -------------------------------------------------------------------------
     // Internal helpers
     // -------------------------------------------------------------------------
-    static inline int idx(int row, int col, int ld)
+    static int idx(int row, int col, int ld)
     {
         return row + col * ld;
     }

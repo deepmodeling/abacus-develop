@@ -104,7 +104,7 @@ Real max_generalized_residual(
 }
 
 template <typename T>
-inline void set_zero(std::vector<T>& x)
+void set_zero(std::vector<T>& x)
 {
     const int n = int(x.size());
 #ifdef _OPENMP
@@ -148,7 +148,7 @@ struct HermitianLapack
 namespace hsolver {
 namespace {
 
-inline bool ppcg_contiguous_cols(const std::vector<int>& cols, int& first)
+bool ppcg_contiguous_cols(const std::vector<int>& cols, int& first)
 {
     if (cols.empty())
     {

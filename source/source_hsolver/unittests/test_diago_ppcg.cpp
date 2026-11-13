@@ -21,6 +21,67 @@ using ppcg_test::T;
 using ppcg_test::dense_h_multiply;
 using ppcg_test::initialize_vectors;
 
+namespace ppcg_test
+{
+
+void dense_h_multiply(const T* H_data, int n_dim, const T* in, T* out, int ld, int ncol)
+{
+    for (int j = 0; j < ncol; ++j)
+    {
+        for (int i = 0; i < n_dim; ++i)
+        {
+            T sum = 0;
+            for (int k = 0; k < n_dim; ++k)
+            {
+                sum += H_data[i + k * n_dim] * in[k + j * ld];
+            }
+            out[i + j * ld] = sum;
+        }
+    }
+}
+
+void initialize_vectors(std::vector<T>& psi, int n_dim, int nband, int ld, unsigned seed)
+{
+    std::mt19937 rng(seed);
+    std::uniform_real_distribution<Real> dist(-1.0, 1.0);
+    const int size = ld * nband;
+    psi.assign(size, T(0));
+    for (int j = 0; j < nband; ++j)
+    {
+        for (int i = 0; i < n_dim; ++i)
+        {
+            psi[i + j * ld] = T(dist(rng), 0.0);
+        }
+    }
+    for (int j = 0; j < nband; ++j)
+    {
+        for (int k = 0; k < j; ++k)
+        {
+            T dot = 0;
+            for (int i = 0; i < n_dim; ++i)
+            {
+                dot += std::conj(psi[i + k * ld]) * psi[i + j * ld];
+            }
+            for (int i = 0; i < n_dim; ++i)
+            {
+                psi[i + j * ld] -= dot * psi[i + k * ld];
+            }
+        }
+        Real norm_squared = 0;
+        for (int i = 0; i < n_dim; ++i)
+        {
+            norm_squared += std::norm(psi[i + j * ld]);
+        }
+        const Real norm = std::sqrt(norm_squared);
+        for (int i = 0; i < n_dim; ++i)
+        {
+            psi[i + j * ld] /= norm;
+        }
+    }
+}
+
+} // namespace ppcg_test
+
 // Like the CG test's preparation table, each row describes one complete solve.
 struct PPCGLaplacianCase
 {

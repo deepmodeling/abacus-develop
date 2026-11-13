@@ -7,6 +7,7 @@
 #include <cstdio>
 #include <fstream>
 #include <limits>
+#include <random>
 #include <sstream>
 #include <string>
 
