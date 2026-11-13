@@ -19,8 +19,7 @@ addtest(
   LIBS parameter
   SOURCES test_lat_r_csr.cpp
           ../lat_r_csr.cpp
-          ../../../source_basis/module_ao/parallel_orbitals.cpp
-          ../../../source_base/block_cyclic_distribution.cpp
+          ../../../source_base/parallel_blkcyc.cpp
           ../../../source_base/tool_title.cpp
           ../../../source_base/global_variable.cpp
           ../../../source_base/parallel_reduce.cpp
@@ -41,24 +40,26 @@ if(ENABLE_LCAO)
     SOURCES test_vxc_op_tools.cpp ../vxc_op_tools.cpp
             ../../../source_basis/module_ao/parallel_orbitals.cpp)
 
-  addtest(
-    TARGET MODULE_IO_hs_dense_io_test
-    LIBS parameter
-    SOURCES test_hs_dense_io.cpp
-            ../hs_dense_io.cpp
-            ../../../source_basis/module_ao/parallel_orbitals.cpp
-            ../../../source_base/global_variable.cpp
-            ../../../source_base/block_cyclic_distribution.cpp
-            ../../../source_base/parallel_reduce.cpp
-            ../../../source_base/parallel_common.cpp
-            ../../../source_base/parallel_global.cpp
-            ../../../source_base/parallel_comm.cpp
-            ../../../source_base/tool_quit.cpp
-            ../../../source_base/tool_title.cpp
-            ../../../source_base/global_file.cpp
-            ../../../source_base/global_function.cpp
-            ../../../source_base/memory_recorder.cpp
-            ../../../source_base/timer.cpp)
+AddTest(
+  TARGET MODULE_IO_hs_dense_io_test
+  LIBS parameter
+  SOURCES
+  test_hs_dense_io.cpp
+  ../hs_dense_io.cpp
+  ../../../source_basis/module_ao/parallel_orbitals.cpp
+  ../../../source_base/global_variable.cpp
+  ../../../source_base/parallel_blkcyc.cpp
+  ../../../source_base/parallel_reduce.cpp
+  ../../../source_base/parallel_common.cpp
+  ../../../source_base/parallel_global.cpp
+  ../../../source_base/parallel_comm.cpp
+  ../../../source_base/tool_quit.cpp
+  ../../../source_base/tool_title.cpp
+  ../../../source_base/global_file.cpp
+  ../../../source_base/global_function.cpp
+  ../../../source_base/memory_recorder.cpp
+  ../../../source_base/timer.cpp
+)
 
   add_test(
     NAME MODULE_IO_hs_dense_io_test_parallel

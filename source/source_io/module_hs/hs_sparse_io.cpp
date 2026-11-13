@@ -220,11 +220,11 @@ void ModuleIO::save_sparse(
         const SparseRBlock<Tdata>& block = (smat.count(R_coor) != 0) ? smat.at(R_coor) : empty_block;
         if (text_csr)
         {
-            save_lat_r_csr(ofs, block, pv, options);
+            save_lat_r_csr(ofs, block, pv.para_2d(), options);
         }
         else
         {
-            save_lat_r(ofs, block, pv, options);
+            save_lat_r(ofs, block, pv.para_2d(), options);
         }
         ++count;
     }

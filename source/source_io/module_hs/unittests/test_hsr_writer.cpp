@@ -529,7 +529,7 @@ TEST(HsrWriterIo, HContainerBinaryMpiGatherWritesCompleteFiles)
     eferm.ef = 0.4; // Ry; used only for the H(R) header
     std::ofstream ofs_running_null; // not opened; test does not inspect the running log
     ModuleIO::write_hsr(
-        hr_vec, &sr_parallel, &ucell, 2, 8, parallel_pv.para_2d(), 1, true, iat2iwt, 1, 0, "./", eferm,
+        hr_vec, &sr_parallel, &ucell, 2, 8, parallel_pv.para_2d(), true, true, iat2iwt, 1, 0, "./", eferm,
         ofs_running_null);
     MPI_Barrier(MPI_COMM_WORLD);
 
@@ -621,7 +621,7 @@ TEST(HsrWriterIo, WriteHsrTextCsrCarriesPerSpinFermiFromEfermi)
     // read-back and assertions are guarded to rank 0 to avoid a race where a
     // non-zero rank removes the file before rank 0 can inspect it.
     ModuleIO::write_hsr(
-        hr_vec, &sr, &ucell, 1, 8, pv.para_2d(), 1, true, iat2iwt_ptr, 1, 0, "./", eferm,
+        hr_vec, &sr, &ucell, 1, 8, pv.para_2d(), true, true, iat2iwt_ptr, 1, 0, "./", eferm,
         ofs_running_null);
 
     if (my_rank == 0)

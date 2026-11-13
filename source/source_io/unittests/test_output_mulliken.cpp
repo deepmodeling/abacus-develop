@@ -179,6 +179,22 @@ double pauli_expectation(const cd c[2], const int component)
 }
 } // namespace
 
+namespace ModuleIO
+{
+class OutputMullikenNspin4Test
+{
+  public:
+    static void collect(Output_Mulliken<std::complex<double>>& mulliken,
+                        ModuleBase::matrix& values,
+                        const ModuleBase::ComplexMatrix& mud,
+                        const int nw,
+                        const int isk)
+    {
+        mulliken.collect_MW(values, mud, nw, isk);
+    }
+};
+} // namespace ModuleIO
+
 // Regression test for the nspin=4 Mulliken M_y sign.
 // The stored DM is conj-first (DM_{ab} = conj(c_a) c_b, see dm_from_psi.h), so
 // the physical Pauli components of mud = DM*S^T (S = 1 here) are
@@ -240,6 +256,41 @@ TEST(OutputMullikenSpinTest, Nspin4MyFollowsPauliConvention)
         EXPECT_NEAR(MecMulP(3, 0), expected_mz, 1e-12)
             << "Mz wrong for direction (" << mhat[0] << "," << mhat[1] << "," << mhat[2] << ")";
     }
+}
+
+TEST(OutputMullikenSpinTest, Nspin4ProductionPathPreservesMySign)
+{
+    const int nspin = 4;
+    const int nw = 26;
+    const std::vector<std::string> atom_labels = {"Si"};
+    const std::vector<int> atom_counts = {1};
+    const std::vector<std::vector<int>> lnchi_counts = {{2, 2, 1}};
+
+    Parallel_Orbitals paraV;
+    ASSERT_EQ(paraV.para_2d().init(nw, nw, 1, MPI_COMM_WORLD, 0), 0);
+    CellIndex cell_index(atom_labels, atom_counts, lnchi_counts, nspin);
+    ModuleIO::Output_Sk<std::complex<double>> output_sk(nullptr, &paraV, nspin, 1);
+    ModuleIO::Output_DMK<std::complex<double>> output_dmk(nullptr, &paraV, nspin, 1);
+    ModuleIO::Output_Mulliken<std::complex<double>> mulliken(
+        &output_sk, &output_dmk, &paraV, &cell_index, {0}, nspin);
+
+    const double direction[3] = {0.0, 1.0, 0.0};
+    cd spinor[2];
+    spinor_from_direction(direction, spinor);
+
+    ModuleBase::ComplexMatrix mud(nw, nw, true);
+    mud(0, 0) = std::conj(spinor[0]) * spinor[0];
+    mud(1, 0) = std::conj(spinor[0]) * spinor[1];
+    mud(0, 1) = std::conj(spinor[1]) * spinor[0];
+    mud(1, 1) = std::conj(spinor[1]) * spinor[1];
+
+    ModuleBase::matrix values(nspin, nw / 2, true);
+    ModuleIO::OutputMullikenNspin4Test::collect(mulliken, values, mud, nw, 0);
+
+    EXPECT_NEAR(values(0, 0), 1.0, 1e-12);
+    EXPECT_NEAR(values(1, 0), 0.0, 1e-12);
+    EXPECT_NEAR(values(2, 0), 1.0, 1e-12);
+    EXPECT_NEAR(values(3, 0), 0.0, 1e-12);
 }
 
 #include "mpi.h"

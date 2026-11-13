@@ -444,7 +444,8 @@ void ReadInput::item_exx()
         item.category = "Exact Exchange (LCAO)";
         item.type = "String";
         item.description = R"(* True: Enforce LibRI to use double data type.
-* False: Enforce LibRI to use complex data type. Setting it to True can effectively improve the speed of self-consistent calculations with hybrid functionals.)";
+* False: Enforce LibRI to use complex data type. Setting it to True can effectively improve the speed of self-consistent calculations with hybrid functionals.
+* LCAO RT-TDDFT exact exchange with td_stype=2 requires exx_real_number=0 to represent the input density phase.)";
         item.default_value = "depends on the gamma_only option";
         item.unit = "";
         read_sync_string(input.exx_real_number);

@@ -285,23 +285,23 @@ void ModuleIO::save_dH_sparse(const int& istep,
                     }
                     if (nspin != 4)
                     {
-                        save_lat_r(comp.ofs[ispin], comp.sparse[ispin][R_coor], pv, lat_r_options);
+                        save_lat_r(comp.ofs[ispin], comp.sparse[ispin][R_coor], pv.para_2d(), lat_r_options);
                     }
                     else
                     {
-                        save_lat_r(comp.ofs[ispin], (*comp.soc_sparse)[R_coor], pv, lat_r_options);
+                        save_lat_r(comp.ofs[ispin], (*comp.soc_sparse)[R_coor], pv.para_2d(), lat_r_options);
                     }
                 }
                 else if (nspin != 4)
                 {
                     const SparseRBlock<double>& block = block_or_empty(comp.sparse[ispin], R_coor);
-                    ModuleIO::save_lat_r_csr(comp.ofs[ispin], block, pv, lat_r_options);
+                    ModuleIO::save_lat_r_csr(comp.ofs[ispin], block, pv.para_2d(), lat_r_options);
                 }
                 else
                 {
                     const SparseRBlock<std::complex<double>>& block
                         = block_or_empty(*comp.soc_sparse, R_coor);
-                    ModuleIO::save_lat_r_csr(comp.ofs[ispin], block, pv, lat_r_options);
+                    ModuleIO::save_lat_r_csr(comp.ofs[ispin], block, pv.para_2d(), lat_r_options);
                 }
             }
         }

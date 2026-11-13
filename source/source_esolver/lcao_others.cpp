@@ -141,6 +141,8 @@ void ESolver_KS_LCAO<TK, TR>::others(BaseCell& basecell, const int istep)
         this->p_hamilt = new hamilt::HamiltLCAO<TK, TR>(ucell,
                                                         this->gd,
                                                         &this->pv,
+                                                        *(this->basis_index_),
+                                                        this->pv.para_2d(),
                                                         this->pelec->pot,
                                                         this->kv,
                                                         two_center_bundle_,

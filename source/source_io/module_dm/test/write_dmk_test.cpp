@@ -38,7 +38,7 @@ Magnetism::~Magnetism() { }
  *     - the serial version without MPI
  */
 
-void init_pv(int nlocal, BlockCyclicDistribution& pv)
+void init_pv(int nlocal, Parallel_Blkcyclic& pv)
 {
 #ifdef __MPI
         pv.init(nlocal, nlocal, 1, MPI_COMM_WORLD, false);
@@ -48,7 +48,7 @@ void init_pv(int nlocal, BlockCyclicDistribution& pv)
 }
 
 template <typename T>
-void gen_dmk(std::vector<std::vector<T>>& dmk, std::vector<double>& efs,  int nspin, int nk, int nlocal, BlockCyclicDistribution& pv)
+void gen_dmk(std::vector<std::vector<T>>& dmk, std::vector<double>& efs,  int nspin, int nk, int nlocal, Parallel_Blkcyclic& pv)
 {
     int myrank = 0;
 #ifdef __MPI
@@ -67,7 +67,7 @@ void gen_dmk(std::vector<std::vector<T>>& dmk, std::vector<double>& efs,  int ns
         }
     }
 #ifdef __MPI
-    BlockCyclicDistribution pv_global;
+    Parallel_Blkcyclic pv_global;
     pv_global.init(nlocal, nlocal, nlocal, MPI_COMM_WORLD, false);
     dmk.resize(nspin * nk, std::vector<T>(pv.size(), 0.0));
     for (int i = 0; i < nspin * nk; i++)
@@ -135,7 +135,7 @@ TEST(DMKTest,WriteDMK) {
     int nlocal = 20;
     std::vector<std::vector<double>> dmk;
     std::vector<std::vector<std::complex<double>>> dmk_multik;
-    BlockCyclicDistribution pv;
+    Parallel_Blkcyclic pv;
     std::vector<double> efs;
     init_pv(nlocal, pv);
 
@@ -248,7 +248,7 @@ TEST(DMKTest, Mode0FixedNameOverwrite) {
     int nlocal = 20;
     std::vector<std::vector<double>> dmk;
     std::vector<double> efs;
-    BlockCyclicDistribution pv;
+    Parallel_Blkcyclic pv;
     init_pv(nlocal, pv);
     gen_dmk(dmk, efs, nspin, nk, nlocal, pv);
 
@@ -311,7 +311,7 @@ TEST(DMKTest, Mode1FixedNameAppend) {
     int nlocal = 20;
     std::vector<std::vector<double>> dmk;
     std::vector<double> efs;
-    BlockCyclicDistribution pv;
+    Parallel_Blkcyclic pv;
     init_pv(nlocal, pv);
     gen_dmk(dmk, efs, nspin, nk, nlocal, pv);
 
@@ -372,7 +372,7 @@ TEST(DMKTest, Mode2PerStepFile) {
     int nlocal = 20;
     std::vector<std::vector<double>> dmk;
     std::vector<double> efs;
-    BlockCyclicDistribution pv;
+    Parallel_Blkcyclic pv;
     init_pv(nlocal, pv);
     gen_dmk(dmk, efs, nspin, nk, nlocal, pv);
 
@@ -416,7 +416,7 @@ TEST(DMKTest, ReadDMK) {
     int nlocal = 26;
     std::vector<std::vector<double>> dmk;
     std::vector<std::vector<std::complex<double>>> dmk_multik;
-    BlockCyclicDistribution pv;
+    Parallel_Blkcyclic pv;
     std::vector<double> efs;
 
     init_pv(nlocal, pv);

@@ -16,6 +16,8 @@
 #include "source_estate/module_pot/potential_new.h"
 #include "source_basis/module_nao/two_center_bundle.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
+#include "source_basis/module_ao/elem_basis_idx_orb.h"
+#include "source_base/basis_flattened_indexing.h"
 #include "source_estate/module_charge/charge.h"
 #include "source_cell/stru_fac.h"
 #include "source_hamilt/module_surchem/surchem.h"
@@ -45,6 +47,7 @@ void write_eband_terms(const int nspin,
                        const ModuleBase::matrix& wg,
                        Grid_Driver& gd,
                        const std::vector<double>& orb_cutoff,
+                       const LCAO_Orbitals& orb,
                        const TwoCenterBundle& two_center_bundle,
                        std::ofstream& ofs_running
 )
@@ -57,7 +60,7 @@ void write_eband_terms(const int nspin,
         double etxc = 0.0;
         double vtxc = 0.0;
 
-        BlockCyclicDistribution p2d;
+        Parallel_Blkcyclic p2d;
 
         set_para2d_MO(*pv, nbands, p2d);
 
@@ -114,8 +117,14 @@ void write_eband_terms(const int nspin,
             hamilt::HContainer<TR> kinetic_R_ao(pv);
             if_gamma_fix(kinetic_R_ao);
 
+            const ModuleBase::Element_Basis_Index::Range basis_range =
+                ModuleBase::Element_Basis_Index::construct_range(orb);
+            const ModuleBase::Element_Basis_Index::IndexLNM basis_hierarchy =
+                ModuleBase::Element_Basis_Index::construct_index(basis_range);
+            const BasisFlattenedIndexing basis(basis_hierarchy, ucell.iat2it, ucell.get_npol());
+
             hamilt::EKinetic<hamilt::OperatorLCAO<TK, TR>> kinetic_op(&kinetic_k_ao, kv.kvec_d,
-                &kinetic_R_ao, &ucell, orb_cutoff, &gd, two_center_bundle.kinetic_orb.get());
+                &kinetic_R_ao, basis, pv->para_2d(), &ucell, orb_cutoff, &gd, two_center_bundle.kinetic_orb.get());
 
             kinetic_op.contributeHR();
 
@@ -226,21 +235,21 @@ template void write_eband_terms<double, double>(
     const int, const int, const int, const double, const int, const int, const Parallel_Orbitals*, const psi::Psi<double>&,
     const UnitCell&, Structure_Factor&, surchem&, const ModulePW::PW_Basis&, const ModulePW::PW_Basis&,
     const ModuleBase::matrix&, const Charge&, const K_Vectors&, const ModuleBase::matrix&, Grid_Driver&,
-    const std::vector<double>&, const TwoCenterBundle&, std::ofstream&
+    const std::vector<double>&, const LCAO_Orbitals&, const TwoCenterBundle&, std::ofstream&
 );
 
 template void write_eband_terms<std::complex<double>, double>(
     const int, const int, const int, const double, const int, const int, const Parallel_Orbitals*, const psi::Psi<std::complex<double>>&,
     const UnitCell&, Structure_Factor&, surchem&, const ModulePW::PW_Basis&, const ModulePW::PW_Basis&,
     const ModuleBase::matrix&, const Charge&, const K_Vectors&, const ModuleBase::matrix&, Grid_Driver&,
-    const std::vector<double>&, const TwoCenterBundle&, std::ofstream&
+    const std::vector<double>&, const LCAO_Orbitals&, const TwoCenterBundle&, std::ofstream&
 );
 
 template void write_eband_terms<std::complex<double>, std::complex<double>>(
     const int, const int, const int, const double, const int, const int, const Parallel_Orbitals*, const psi::Psi<std::complex<double>>&,
     const UnitCell&, Structure_Factor&, surchem&, const ModulePW::PW_Basis&, const ModulePW::PW_Basis&,
     const ModuleBase::matrix&, const Charge&, const K_Vectors&, const ModuleBase::matrix&, Grid_Driver&,
-    const std::vector<double>&, const TwoCenterBundle&, std::ofstream&
+    const std::vector<double>&, const LCAO_Orbitals&, const TwoCenterBundle&, std::ofstream&
 );
 
 } // namespace ModuleIO

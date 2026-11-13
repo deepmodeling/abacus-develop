@@ -12,6 +12,8 @@
 namespace ModuleIO
 {
 
+class OutputMullikenNspin4Test; // Defined in source/source_io/unittests/test_output_mulliken.cpp
+
 template <typename TK>
 class Output_Sk;
 
@@ -39,6 +41,8 @@ void collect_MW_nspin4(ModuleBase::matrix& MecMulP,
 template <typename TK>
 class Output_Mulliken
 {
+    friend class OutputMullikenNspin4Test;
+
   public:
     /// constructor of Output_Mulliken
     Output_Mulliken(Output_Sk<TK>* output_sk,
