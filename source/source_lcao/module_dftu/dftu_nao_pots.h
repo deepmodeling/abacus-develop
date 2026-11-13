@@ -7,7 +7,7 @@
 
 class Plus_U_Base;
 class UnitCell;
-class Parallel_Orbitals;
+class Parallel_Blkcyclic;
 
 namespace DFTU_LCAO {
 
@@ -100,20 +100,20 @@ double get_onsite_pot(const Plus_U_Base& dftu,
 /**
  * @brief Calculate onsite effective potential matrix in the local orbital basis.
  *
- * Fills pot_onsite (length pv->nloc) with the onsite potential elements
+ * Fills pot_onsite with the onsite potential elements
  * projected onto the local orbital indices.
  *
  * @param dftu        Plus_U state
  * @param ucell       unit cell
- * @param pv          parallel orbitals descriptor
+ * @param dist        block-cyclic matrix distribution
  * @param spin        spin channel
  * @param new_occ_mat if true use occ_mat, otherwise use occ_mat_save
- * @param pot_onsite  output buffer (length pv->nloc)
+ * @param pot_onsite  output buffer (length dist.size())
  */
 template <typename T>
 void cal_pot_onsite(const Plus_U_Base& dftu,
                     const UnitCell& ucell,
-                    const Parallel_Orbitals* pv,
+                    const Parallel_Blkcyclic& dist,
                     const int spin,
                     const bool new_occ_mat,
                     T* pot_onsite);
@@ -121,13 +121,13 @@ void cal_pot_onsite(const Plus_U_Base& dftu,
 // Explicit instantiations
 extern template void cal_pot_onsite<double>(const Plus_U_Base& dftu,
                                             const UnitCell& ucell,
-                                            const Parallel_Orbitals* pv,
+                                            const Parallel_Blkcyclic& dist,
                                             const int spin,
                                             const bool new_occ_mat,
                                             double* pot_onsite);
 extern template void cal_pot_onsite<std::complex<double>>(const Plus_U_Base& dftu,
                                                           const UnitCell& ucell,
-                                                          const Parallel_Orbitals* pv,
+                                                          const Parallel_Blkcyclic& dist,
                                                           const int spin,
                                                           const bool new_occ_mat,
                                                           std::complex<double>* pot_onsite);
@@ -142,14 +142,14 @@ extern template void cal_pot_onsite<std::complex<double>>(const Plus_U_Base& dft
 /// @tparam T           matrix element type (double or std::complex<double>)
 /// @param dftu         Plus_U state
 /// @param ucell        unit cell
-/// @param pv           parallel orbitals descriptor
+/// @param dist         block-cyclic matrix distribution
 /// @param spin         spin channel (isk[ik] from caller)
-/// @param pot_uterm    output buffer (length pv->nloc)
-/// @param sk           overlap matrix in k-space (length pv->nloc)
+/// @param pot_uterm    output buffer (length dist.size())
+/// @param sk           overlap matrix in k-space (length dist.size())
 template <typename T>
 void cal_pot_uterm(Plus_U_Base& dftu,
                    const UnitCell& ucell,
-                   const Parallel_Orbitals* pv,
+                   const Parallel_Blkcyclic& dist,
                    const int spin,
                    T* pot_uterm,
                    const T* sk);
@@ -157,13 +157,13 @@ void cal_pot_uterm(Plus_U_Base& dftu,
 // Explicit instantiations
 extern template void cal_pot_uterm<double>(Plus_U_Base& dftu,
                                            const UnitCell& ucell,
-                                           const Parallel_Orbitals* pv,
+                                           const Parallel_Blkcyclic& dist,
                                            const int spin,
                                            double* pot_uterm,
                                            const double* sk);
 extern template void cal_pot_uterm<std::complex<double>>(Plus_U_Base& dftu,
                                                          const UnitCell& ucell,
-                                                         const Parallel_Orbitals* pv,
+                                                         const Parallel_Blkcyclic& dist,
                                                          const int spin,
                                                          std::complex<double>* pot_uterm,
                                                          const std::complex<double>* sk);

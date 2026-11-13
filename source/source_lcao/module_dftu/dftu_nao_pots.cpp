@@ -1,11 +1,10 @@
 #include "source_pw/module_pwdft/dftu_base.h"
 #include "dftu_nao_pots.h"
 
-#include "source_base/global_function.h"
+#include "source_base/parallel_blkcyc.h"
 #include "source_base/module_external/scalapack_connector.h"
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
-#include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_cell/unitcell.h"
 
 #include <algorithm>
@@ -58,13 +57,13 @@ void DFTU_LCAO::cal_pot_onsite(const std::vector<double>& occ, const int m_size,
 template <typename T>
 void DFTU_LCAO::cal_pot_onsite(const Plus_U_Base& dftu,
                            const UnitCell& ucell,
-                           const Parallel_Orbitals* pv,
+                           const Parallel_Blkcyclic& dist,
                            const int spin,
                            const bool new_occ_mat,
                            T* pot_onsite)
 {
     ModuleBase::TITLE("DFTU_LCAO", "pot_onsite");
-    std::fill(pot_onsite, pot_onsite + pv->para_2d().size(), T(0));
+    std::fill(pot_onsite, pot_onsite + dist.size(), T(0));
 
     const int npol = dftu.occmat().npol();
 
@@ -88,7 +87,7 @@ void DFTU_LCAO::cal_pot_onsite(const Plus_U_Base& dftu,
                 {
                     for (int ipol1 = 0; ipol1 < npol; ipol1++)
                     {
-                        const int mu = pv->para_2d().irloc(dftu.occmat().corr_iwt(iat, L, m1, ipol1));
+                        const int mu = dist.irloc(dftu.occmat().corr_iwt(iat, L, m1, ipol1));
                         if (mu < 0)
                         {
                             continue;
@@ -98,8 +97,7 @@ void DFTU_LCAO::cal_pot_onsite(const Plus_U_Base& dftu,
                         {
                             for (int ipol2 = 0; ipol2 < npol; ipol2++)
                             {
-                                const int nu
-                                    = pv->para_2d().icloc(dftu.occmat().corr_iwt(iat, L, m2, ipol2));
+                                const int nu = dist.icloc(dftu.occmat().corr_iwt(iat, L, m2, ipol2));
                                 if (nu < 0)
                                 {
                                     continue;
@@ -108,7 +106,7 @@ void DFTU_LCAO::cal_pot_onsite(const Plus_U_Base& dftu,
                                 int m2_all = m2 + (2 * L + 1) * ipol2;
                                 double val = get_onsite_pot(dftu, it, iat, L, spin,
                                                             m1_all, m2_all, new_occ_mat);
-                                pot_onsite[nu * pv->para_2d().nrloc() + mu] = static_cast<T>(val);
+                                pot_onsite[nu * dist.nrloc() + mu] = static_cast<T>(val);
                             } // ipol2
                         } // m2
                     } // ipol1
@@ -123,13 +121,13 @@ void DFTU_LCAO::cal_pot_onsite(const Plus_U_Base& dftu,
 // Explicit instantiation
 template void DFTU_LCAO::cal_pot_onsite<double>(const Plus_U_Base& dftu,
                                                 const UnitCell& ucell,
-                                                const Parallel_Orbitals* pv,
+                                                const Parallel_Blkcyclic& dist,
                                                 const int spin,
                                                 const bool new_occ_mat,
                                                 double* pot_onsite);
 template void DFTU_LCAO::cal_pot_onsite<std::complex<double>>(const Plus_U_Base& dftu,
                                                               const UnitCell& ucell,
-                                                              const Parallel_Orbitals* pv,
+                                                              const Parallel_Blkcyclic& dist,
                                                               const int spin,
                                                               const bool new_occ_mat,
                                                               std::complex<double>* pot_onsite);
@@ -137,7 +135,7 @@ template void DFTU_LCAO::cal_pot_onsite<std::complex<double>>(const Plus_U_Base&
 template <typename T>
 void DFTU_LCAO::cal_pot_uterm(Plus_U_Base& dftu,
                               const UnitCell& ucell,
-                              const Parallel_Orbitals* pv,
+                              const Parallel_Blkcyclic& dist,
                               const int spin,
                               T* pot_uterm,
                               const T* sk)
@@ -145,8 +143,8 @@ void DFTU_LCAO::cal_pot_uterm(Plus_U_Base& dftu,
     ModuleBase::TITLE("DFTU_LCAO", "cal_pot_uterm");
     ModuleBase::timer::start("DFTU_LCAO", "cal_pot_uterm");
 
-    const int nlocal = pv->para_2d().nrglb();
-    std::fill(pot_uterm, pot_uterm + pv->para_2d().size(), T(0));
+    const int nrglb = dist.nrglb();
+    std::fill(pot_uterm, pot_uterm + dist.size(), T(0));
 
     //=============================================================
     //   PART2: call pblas to calculate effective potential matrix
@@ -158,30 +156,30 @@ void DFTU_LCAO::cal_pot_uterm(Plus_U_Base& dftu,
     const T one = static_cast<T>(1.0);
     const T zero = static_cast<T>(0.0);
 
-    std::vector<T> pot_onsite(pv->para_2d().size());
-    DFTU_LCAO::cal_pot_onsite(dftu, ucell, pv, spin, true, &pot_onsite[0]);
+    std::vector<T> pot_onsite(dist.size());
+    DFTU_LCAO::cal_pot_onsite(dftu, ucell, dist, spin, true, pot_onsite.data());
 
 #ifdef __MPI
     ScalapackConnector::gemm(transN, transN,
-            nlocal, nlocal, nlocal,
+            nrglb, nrglb, nrglb,
             half,
-            ModuleBase::GlobalFunc::VECTOR_TO_PTR(pot_onsite), one_int, one_int, pv->para_2d().desc(),
-            sk, one_int, one_int, pv->para_2d().desc(),
+            pot_onsite.data(), one_int, one_int, dist.desc(),
+            sk, one_int, one_int, dist.desc(),
             zero,
-            pot_uterm, one_int, one_int, pv->para_2d().desc());
+            pot_uterm, one_int, one_int, dist.desc());
 #endif
 
-    for (int irc = 0; irc < pv->para_2d().size(); irc++)
+    for (std::size_t irc = 0; irc < dist.size(); ++irc)
     {
         pot_onsite[irc] = pot_uterm[irc];
     }
 
 #ifdef __MPI
-    ScalapackConnector::tranu(nlocal, nlocal,
+    ScalapackConnector::tranu(nrglb, nrglb,
             one,
-            &pot_onsite[0], one_int, one_int, pv->para_2d().desc(),
+            pot_onsite.data(), one_int, one_int, dist.desc(),
             one,
-            pot_uterm, one_int, one_int, pv->para_2d().desc());
+            pot_uterm, one_int, one_int, dist.desc());
 #endif
 
     ModuleBase::timer::end("DFTU_LCAO", "cal_pot_uterm");
@@ -191,13 +189,13 @@ void DFTU_LCAO::cal_pot_uterm(Plus_U_Base& dftu,
 // Explicit instantiation
 template void DFTU_LCAO::cal_pot_uterm<double>(Plus_U_Base& dftu,
                                                const UnitCell& ucell,
-                                               const Parallel_Orbitals* pv,
+                                               const Parallel_Blkcyclic& dist,
                                                const int spin,
                                                double* pot_uterm,
                                                const double* sk);
 template void DFTU_LCAO::cal_pot_uterm<std::complex<double>>(Plus_U_Base& dftu,
                                                              const UnitCell& ucell,
-                                                             const Parallel_Orbitals* pv,
+                                                             const Parallel_Blkcyclic& dist,
                                                              const int spin,
                                                              std::complex<double>* pot_uterm,
                                                              const std::complex<double>* sk);
