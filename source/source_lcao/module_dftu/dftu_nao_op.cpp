@@ -281,7 +281,7 @@ void hamilt::DFTU_onsite<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
     }
     ModuleBase::timer::start("DFTU_onsite", "contributeHR");
 
-    const Parallel_Orbitals* pv = this->hR->get_atom_pair(0).get_paraV();
+    const Parallel_Orbitals* pv = this->hR->get_paraV();
     // nlm_tot is precomputed in the constructor (structure snapshot)
 
     if (this->should_restore_symmetric_dmr())

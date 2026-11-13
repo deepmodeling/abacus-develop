@@ -15,6 +15,9 @@ class AtomBasisView; // Defined in source/source_base/atom_basis_view.h
 
 namespace hamilt
 {
+template <typename T>
+class HContainer;
+
 
 /**
 Class: AtomPair
@@ -384,6 +387,9 @@ class AtomPair
     size_t get_memory_size() const;
 
   private:
+    template <typename U>
+    friend class HContainer;
+
     // it contains 3 index of cell, size of R_index is three times of values.
     std::vector<ModuleBase::Vector3<int>> R_index;
 

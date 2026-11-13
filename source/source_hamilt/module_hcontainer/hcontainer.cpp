@@ -338,7 +338,7 @@ bool HContainer<T>::same_layout(const AtomPair<T>& atom_pair) const
     const bool cols_match =
         atom_pair.get_begin_col() == cols.local0()
         && atom_pair.get_col_size() == cols.nloc();
-    return atom_pair.get_paraV() == nullptr && rows_match && cols_match;
+    return atom_pair.paraV == nullptr && rows_match && cols_match;
 }
 
 template <typename T>
