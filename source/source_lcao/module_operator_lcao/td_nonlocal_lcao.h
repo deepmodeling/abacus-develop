@@ -1,7 +1,6 @@
 #ifndef TDNONLOCAL_H
 #define TDNONLOCAL_H
 #include "source_basis/module_ao/orb_read.h"
-#include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_cell/unitcell.h"
 #include "source_lcao/module_operator_lcao/operator_lcao.h"
@@ -76,7 +75,7 @@ class TDNonlocal<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
      * @brief initialize HR_tmp
      * Allocate the memory for HR_tmp with the same size as HR
      */
-    void initialize_HR_tmp(const Parallel_Orbitals* paraV);
+    void initialize_HR_tmp();
     /// @brief init vector potential for td_nonlocal term
     void update_td();
     /**
@@ -92,7 +91,6 @@ class TDNonlocal<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
     void cal_HR_IJR(const int& iat1,
                     const int& iat2,
                     const int& T0,
-                    const Parallel_Orbitals* paraV,
                     const std::vector<std::unordered_map<int, std::vector<std::complex<double>>>>& nlm1_all,
                     const std::vector<std::unordered_map<int, std::vector<std::complex<double>>>>& nlm2_all,
                     std::complex<double>* data_pointer,

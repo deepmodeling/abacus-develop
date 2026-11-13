@@ -9,11 +9,11 @@ namespace LR
     template <>
     void CVCX_occ_pblas(
         const std::vector<container::Tensor>& V_istate,
-        const BlockCyclicDistribution& pmat,
+        const Parallel_Blkcyclic& pmat,
         const psi::Psi<double, base_device::DEVICE_CPU>& c,
-        const BlockCyclicDistribution& pc,
+        const Parallel_Blkcyclic& pc,
         const double* const X_istate,
-        const BlockCyclicDistribution& px,
+        const Parallel_Blkcyclic& px,
         const int& naos,
         const int& nocc,
         const int& nvirt,
@@ -35,9 +35,9 @@ namespace LR
         const int nks = c.get_nk();
         assert(V_istate.size() == nks);
 
-        BlockCyclicDistribution pcv;
+        Parallel_Blkcyclic pcv;
         LR_Util::setup_2d_division(pcv, pmat.nb(), nocc, naos, pmat.ictxt());
-        BlockCyclicDistribution pcx;
+        Parallel_Blkcyclic pcx;
         LR_Util::setup_2d_division(pcx, pmat.nb(), naos, nvirt, pmat.ictxt());
         for (int isk = 0;isk < nks;++isk)
         {
@@ -122,11 +122,11 @@ namespace LR
     template <>
     void CVCX_occ_pblas(
         const std::vector<container::Tensor>& V_istate,
-        const BlockCyclicDistribution& pmat,
+        const Parallel_Blkcyclic& pmat,
         const psi::Psi<std::complex<double>, base_device::DEVICE_CPU>& c,
-        const BlockCyclicDistribution& pc,
+        const Parallel_Blkcyclic& pc,
         const std::complex<double>* const X_istate,
-        const BlockCyclicDistribution& px,
+        const Parallel_Blkcyclic& px,
         const int& naos,
         const int& nocc,
         const int& nvirt,
@@ -148,9 +148,9 @@ namespace LR
         int nks = c.get_nk();
         assert(V_istate.size() == nks);
 
-        BlockCyclicDistribution pcv;
+        Parallel_Blkcyclic pcv;
         LR_Util::setup_2d_division(pcv, pmat.nb(), nocc, naos, pmat.ictxt());
-        BlockCyclicDistribution pcx;
+        Parallel_Blkcyclic pcx;
         LR_Util::setup_2d_division(pcx, pmat.nb(), naos, nvirt, pmat.ictxt());
         for (int isk = 0;isk < nks;++isk)
         {
@@ -236,11 +236,11 @@ namespace LR
     template <>
     void CVCX_virt_pblas(
         const std::vector<container::Tensor>& V_istate,
-        const BlockCyclicDistribution& pmat,
+        const Parallel_Blkcyclic& pmat,
         const psi::Psi<double, base_device::DEVICE_CPU>& c,
-        const BlockCyclicDistribution& pc,
+        const Parallel_Blkcyclic& pc,
         const double* const X_istate,
-        const BlockCyclicDistribution& px,
+        const Parallel_Blkcyclic& px,
         const int& naos,
         const int& nocc,
         const int& nvirt,
@@ -262,9 +262,9 @@ namespace LR
         const int nks = c.get_nk();
         assert(V_istate.size() == nks);
 
-        BlockCyclicDistribution pcv;
+        Parallel_Blkcyclic pcv;
         LR_Util::setup_2d_division(pcv, pmat.nb(), naos, nvirt, pmat.ictxt());
-        BlockCyclicDistribution pcx;
+        Parallel_Blkcyclic pcx;
         LR_Util::setup_2d_division(pcx, pmat.nb(), nocc, naos, pmat.ictxt());
         for (int isk = 0;isk < nks;++isk)
         {
@@ -350,11 +350,11 @@ namespace LR
     template <>
     void CVCX_virt_pblas(
         const std::vector<container::Tensor>& V_istate,
-        const BlockCyclicDistribution& pmat,
+        const Parallel_Blkcyclic& pmat,
         const psi::Psi<std::complex<double>, base_device::DEVICE_CPU>& c,
-        const BlockCyclicDistribution& pc,
+        const Parallel_Blkcyclic& pc,
         const std::complex<double>* const X_istate,
-        const BlockCyclicDistribution& px,
+        const Parallel_Blkcyclic& px,
         const int& naos,
         const int& nocc,
         const int& nvirt,
@@ -376,9 +376,9 @@ namespace LR
         const int nks = c.get_nk();
         assert(V_istate.size() == nks);
 
-        BlockCyclicDistribution pcv;
+        Parallel_Blkcyclic pcv;
         LR_Util::setup_2d_division(pcv, pmat.nb(), naos, nvirt, pmat.ictxt());
-        BlockCyclicDistribution pcx;
+        Parallel_Blkcyclic pcx;
         LR_Util::setup_2d_division(pcx, pmat.nb(), nocc, naos, pmat.ictxt());
         for (int isk = 0;isk < nks;++isk)
         {

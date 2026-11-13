@@ -156,6 +156,8 @@ OBJS_BASE=assoc_laguerre.o\
     complexarray.o\
     complexmatrix.o\
     clebsch_gordan_coeff.o\
+    basis_flattened_indexing.o\
+    atom_basis_view.o\
     element_basis_index.o\
     inverse_matrix.o\
     gather_math_lib_info.o\
@@ -203,7 +205,7 @@ OBJS_BASE=assoc_laguerre.o\
     device.o\
     device_helpers.o\
     output_device.o\
-    block_cyclic_distribution.o\
+    parallel_blkcyc.o\
     binstream.o\
     filename.o\
     sparse_matrix.o\

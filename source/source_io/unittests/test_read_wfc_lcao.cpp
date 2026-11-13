@@ -165,18 +165,18 @@ TEST(ReadWfcLcaoTest, Cpzgemr2dUseTest)
     // the other ranks get data
     MPI_Barrier(MPI_COMM_WORLD);
     std::vector<std::complex<double>> lowf_loc;
-    BlockCyclicDistribution para2d_test; // an alternative to ParaV. But to use paraV, the desc would be desc_wfc instead of desc in
-                             // BlockCyclicDistribution
+    Parallel_Blkcyclic para2d_test; // an alternative to ParaV. But to use paraV, the desc would be desc_wfc instead of desc in
+                             // Parallel_Blkcyclic
     // initialize a para2d, as if it is paraV.
     // BE CAREFUL! One must be careful about defining the dimension properly. Now the original
     // matrix is made column-memory-consecutive, thus the vectorized data must be cut by "the
     // number of rows", then by "the number of columns".
     // nbands is "the number of rows", nbasis is "the number of columns"
     para2d_test.init(nbands, nbasis, 4, MPI_COMM_WORLD, false);
-    BlockCyclicDistribution para2d_glb;
+    Parallel_Blkcyclic para2d_glb;
     para2d_glb.init(nbands, nbasis, std::max(nbands, nbasis), MPI_COMM_WORLD, false);
     lowf_loc.resize(para2d_test.nrloc() * para2d_test.ncloc()); // the nrow and ncol are automatically
-                                                          // calculated by BlockCyclicDistribution
+                                                          // calculated by Parallel_Blkcyclic
     // wait, what is the meaning of nrow here? The "nrow" again is just the number to cut
     // the vectorized data into a matrix. The "nrow" is the number of rows in the matrix but
     // remember the matrix is column-memory-consecutive.
@@ -249,12 +249,12 @@ TEST(ReadWfcLcaoTest, Cpzgemr2dUseTest)
     // the other ranks get data
     MPI_Barrier(MPI_COMM_WORLD);
     // initialize a para2d, as if it is paraV.
-    BlockCyclicDistribution para2d_test_prime;
+    Parallel_Blkcyclic para2d_test_prime;
     // note! this time the memory is first cut by "the number of columns",
     // then by "the number of rows". Therefore the "nbasis" is put the first.
     // This is how ScaLAPCK defines a matrix: the first number defines the leading dimension.
     para2d_test_prime.init(nbasis, nbands, 4, MPI_COMM_WORLD, false);
-    BlockCyclicDistribution para2d_glb_prime;
+    Parallel_Blkcyclic para2d_glb_prime;
     para2d_glb_prime.init(nbasis, nbands, std::max(nbands, nbasis), MPI_COMM_WORLD, false);
     lowf_loc.resize(para2d_test_prime.nrloc() * para2d_test_prime.ncloc());
     Cpxgemr2d(nbasis, nbands, lowf_glb.data(), 1, 1, const_cast<int*>(para2d_glb_prime.desc()), lowf_loc.data(), 1, 1,
@@ -391,9 +391,9 @@ TEST(ReadWfcLcaoTest, Cpdgemr2dUseTest)
     }
     MPI_Barrier(MPI_COMM_WORLD);
     std::vector<double> lowf_loc;
-    BlockCyclicDistribution para2d_test;
+    Parallel_Blkcyclic para2d_test;
     para2d_test.init(nbasis, nbands, 4, MPI_COMM_WORLD, false);
-    BlockCyclicDistribution para2d_glb;
+    Parallel_Blkcyclic para2d_glb;
     para2d_glb.init(nbasis, nbands, std::max(nbands, nbasis), MPI_COMM_WORLD, false);
     lowf_loc.resize(para2d_test.nrloc() * para2d_test.ncloc());
     Cpxgemr2d(nbasis, nbands, lowf_glb.data(), 1, 1, const_cast<int*>(para2d_glb.desc()), lowf_loc.data(), 1, 1,
@@ -417,9 +417,9 @@ TEST(ReadWfcLcaoTest, Cpdgemr2dUseTest)
         }
     }
     MPI_Barrier(MPI_COMM_WORLD);
-    BlockCyclicDistribution para2d_test_prime;
+    Parallel_Blkcyclic para2d_test_prime;
     para2d_test_prime.init(nbands, nbasis, 4, MPI_COMM_WORLD, false);
-    BlockCyclicDistribution para2d_glb_prime;
+    Parallel_Blkcyclic para2d_glb_prime;
     para2d_glb_prime.init(nbands, nbasis, std::max(nbands, nbasis), MPI_COMM_WORLD, false);
     lowf_loc.resize(para2d_test_prime.nrloc() * para2d_test_prime.ncloc());
     Cpxgemr2d(nbands, nbasis, lowf_glb.data(), 1, 1, const_cast<int*>(para2d_glb_prime.desc()), lowf_loc.data(), 1, 1,
@@ -454,7 +454,7 @@ TEST(ReadWfcLcaoTest, RestartFromFileParallel)
         }
         GTEST_SKIP();
     }
-    BlockCyclicDistribution para2d_test;
+    Parallel_Blkcyclic para2d_test;
     // this time the nbands and nbasis are given as priori, from reading of INPUT and of orb files.
     para2d_test.init(63, 3, 2, MPI_COMM_WORLD, false);
     // therefore it is a nrows x ncols matrix, where nr = 3, nc = 63

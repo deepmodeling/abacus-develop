@@ -39,7 +39,7 @@ template<typename Tdata, typename Tmatrix>
 auto RI_2D_Comm::split_m2D_ktoR(const UnitCell& ucell,
                                 const K_Vectors & kv,
                                 const std::vector<const Tmatrix*>&mks_2D,
-                                const BlockCyclicDistribution & pv,
+                                const Parallel_Blkcyclic & pv,
                                 const int nspin,
                                 const bool spgsym)
 -> std::vector<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>>
@@ -58,7 +58,7 @@ auto RI_2D_Comm::split_m2D_ktoR(const UnitCell& ucell,
 template<typename Tdata, typename Tmatrix>
 auto RI_2D_Comm::split_m2D_ktoR_gamma(const UnitCell& ucell,
                                         const std::vector<const Tmatrix*>& mks_2D,
-                                        const BlockCyclicDistribution& pv,
+                                        const Parallel_Blkcyclic& pv,
                                         const int nspin)
 -> std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>
 {
@@ -152,7 +152,7 @@ template<typename Tdata, typename Tmatrix>
 auto RI_2D_Comm::split_m2D_ktoR_k(const UnitCell& ucell,
                                         const K_Vectors& kv,
                                         const std::vector<const Tmatrix*>& mks_2D,
-                                        const BlockCyclicDistribution& pv,
+                                        const Parallel_Blkcyclic& pv,
                                         const int nspin,
                                         const bool spgsym)
 -> std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>

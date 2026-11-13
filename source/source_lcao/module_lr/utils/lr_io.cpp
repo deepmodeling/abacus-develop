@@ -317,7 +317,7 @@ void read_librpa_eigenvectors(psi::Psi<TK>& wfc_ks,
         wfc_ks.fix_k(iks);
 #ifdef __MPI
         MPI_Bcast(wfc_ks_global.get_pointer(), nbands * nbasis, LR_Util::MPIType<TK>::value(), 0, MPI_COMM_WORLD);
-        BlockCyclicDistribution pv_glb;
+        Parallel_Blkcyclic pv_glb;
         pv_glb.set(nbasis, nbands, std::max(nbasis, nbands), pmat.para_2d().ictxt());
         Cpxgemr2d(nbasis, nbands, wfc_ks_global.get_pointer(), 1, 1,
                     const_cast<int*>(pv_glb.desc()),
@@ -418,7 +418,7 @@ void read_librpa_eigenvectors_from_band_files(psi::Psi<TK>& wfc_ks,
         wfc_ks.fix_k(iks);
 #ifdef __MPI
         MPI_Bcast(wfc_ks_global.get_pointer(), nbands * nbasis, LR_Util::MPIType<TK>::value(), 0, MPI_COMM_WORLD);
-        BlockCyclicDistribution pv_glb;
+        Parallel_Blkcyclic pv_glb;
         pv_glb.set(nbasis, nbands, std::max(nbasis, nbands), pmat.para_2d().ictxt());
         Cpxgemr2d(nbasis, nbands, wfc_ks_global.get_pointer(), 1, 1,
                     const_cast<int*>(pv_glb.desc()),

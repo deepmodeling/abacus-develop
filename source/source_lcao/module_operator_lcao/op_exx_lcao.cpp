@@ -34,20 +34,17 @@ namespace hamilt
 template<>
 void OperatorEXX<OperatorLCAO<double, double>>::add_loaded_Hexx(const int ik)
 {
-    const int nloc = this->hR->get_paraV()->para_2d().size();
-    BlasConnector::axpy(nloc, 1.0, this->Hexxd_k_load[ik].data(), 1, this->hsk->get_hk(), 1);
+    BlasConnector::axpy(this->hR->get_paraV()->para_2d().size(), 1.0, this->Hexxd_k_load[ik].data(), 1, this->hsk->get_hk(), 1);
 }
 template<>
 void OperatorEXX<OperatorLCAO<std::complex<double>, double>>::add_loaded_Hexx(const int ik)
 {
-    const int nloc = this->hR->get_paraV()->para_2d().size();
-    BlasConnector::axpy(nloc, 1.0, this->Hexxc_k_load[ik].data(), 1, this->hsk->get_hk(), 1);
+    BlasConnector::axpy(this->hR->get_paraV()->para_2d().size(), 1.0, this->Hexxc_k_load[ik].data(), 1, this->hsk->get_hk(), 1);
 }
 template<>
 void OperatorEXX<OperatorLCAO<std::complex<double>, std::complex<double>>>::add_loaded_Hexx(const int ik)
 {
-    const int nloc = this->hR->get_paraV()->para_2d().size();
-    BlasConnector::axpy(nloc, 1.0, this->Hexxc_k_load[ik].data(), 1, this->hsk->get_hk(), 1);
+    BlasConnector::axpy(this->hR->get_paraV()->para_2d().size(), 1.0, this->Hexxc_k_load[ik].data(), 1, this->hsk->get_hk(), 1);
 }
 
 } // namespace hamilt
@@ -362,11 +359,10 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
                     this->Hexxd_k_load.resize(this->kv.get_nks());
                     for (int ik = 0; ik < this->kv.get_nks(); ik++)
                     {
-                        const int nloc = pv->para_2d().size();
-                        this->Hexxd_k_load[ik].resize(nloc, 0.0);
+                        this->Hexxd_k_load[ik].resize(pv->para_2d().size(), 0.0);
                         this->restart = GlobalC::restart.load_disk("Hexx",
                                                                    ik,
-                                                                   nloc,
+                                                                   pv->para_2d().size(),
                                                                    this->Hexxd_k_load[ik].data(),
                                                                    false);
                         if (!this->restart)
@@ -380,11 +376,10 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
                     this->Hexxc_k_load.resize(this->kv.get_nks());
                     for (int ik = 0; ik < this->kv.get_nks(); ik++)
                     {
-                        const int nloc = pv->para_2d().size();
-                        this->Hexxc_k_load[ik].resize(nloc, 0.0);
+                        this->Hexxc_k_load[ik].resize(pv->para_2d().size(), 0.0);
                         this->restart = GlobalC::restart.load_disk("Hexx",
                                                                    ik,
-                                                                   nloc,
+                                                                   pv->para_2d().size(),
                                                                    this->Hexxc_k_load[ik].data(),
                                                                    false);
                         if (!this->restart)

@@ -1,8 +1,11 @@
 #ifndef ABACUS_RT_BOUNDARY_TEST_H
 #define ABACUS_RT_BOUNDARY_TEST_H
 
+#include "source_base/basis_flattened_indexing.h"
 #include "source_base/constants.h"
+#include "source_base/element_basis_index.h"
 #include "source_base/parallel_cell.h"
+#include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_lcao/module_rt/boundary_fix.h"
 
 #include <algorithm>
@@ -72,7 +75,7 @@ class BoundaryTest : public testing::TestWithParam<bool>
             false);
         ASSERT_EQ(init_result, 0);
         std::ofstream log;
-        const int band_result = orbitals.set_nloc_wfc_Eij(2, log, log);
+        const int band_result = orbitals.set_wfc_and_mo_sizes(2, log, log);
         ASSERT_EQ(band_result, 0);
         orbitals.set_atomic_trace(cell.get_iat2iwt(), cell.nat, 4);
         full.para_2d().set_serial(4, 4);
@@ -97,6 +100,18 @@ class BoundaryTest : public testing::TestWithParam<bool>
         const double angle = -ModuleBase::TWO_PI * (points[k] * direct) - field * cartesian;
         const Complex exponent(0.0, angle);
         return std::exp(exponent);
+    }
+
+    BasisFlattenedIndexing make_basis() const
+    {
+        ModuleBase::Element_Basis_Index::Range range(1);
+        range[0].resize(1);
+        range[0][0].N = 1;
+        range[0][0].M = 1;
+        const ModuleBase::Element_Basis_Index::IndexLNM hierarchy =
+            ModuleBase::Element_Basis_Index::construct_index(range);
+        const std::vector<int> atom_types(cell.nat, 0);
+        return BasisFlattenedIndexing(hierarchy, atom_types, 1);
     }
 
     void expect_phase_correction(const Vector &saved_A)
@@ -151,16 +166,16 @@ class BoundaryTest : public testing::TestWithParam<bool>
             std::fill_n(coefficients.get_pointer(), psi_size, initial);
         }
         coefficients.fix_k(0);
+        const BasisFlattenedIndexing basis = make_basis();
         module_rt::reset_matrix_boundary(
             cell,
             points,
-            4,
             saved_A,
-            &orbitals,
+            basis,
+            orbitals.para_2d(),
             h,
             s,
-            &coefficients,
-            matrix_size);
+            &coefficients);
         EXPECT_EQ(coefficients.get_current_k(), 0);
         for (int k = 0; k < 4; ++k)
         {

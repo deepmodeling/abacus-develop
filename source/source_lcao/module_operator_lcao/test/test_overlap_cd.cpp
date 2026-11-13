@@ -1,4 +1,5 @@
 #include "../overlap.h"
+#include "test_operator_basis.h"
 
 #include "gtest/gtest.h"
 
@@ -17,6 +18,7 @@
 // modify test_size to test different size of unitcell
 int test_size = 10;
 int test_nw = 10;
+
 class OverlapTest : public ::testing::Test
 {
   protected:
@@ -101,8 +103,9 @@ TEST_F(OverlapTest, constructHRcd2cd)
     hamilt::HS_Matrix_K<std::complex<double>> hsk(paraV);
     hsk.set_zero_sk();
     Grid_Driver gd(0, 0);
+    const BasisFlattenedIndexing basis = operator_test::make_s_orbital_basis(ucell);
     hamilt::Overlap<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>
-        op(&hsk, kvec_d_in, nullptr, SR, &ucell, {1.0}, &gd, &intor_);
+        op(&hsk, kvec_d_in, nullptr, SR, basis, paraV->para_2d(), &ucell, {1.0}, &gd, &intor_);
     op.contributeHR();
     // check the value of SR
     for (int iap = 0; iap < SR->size_atom_pairs(); ++iap)
