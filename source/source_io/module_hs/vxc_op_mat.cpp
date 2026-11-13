@@ -4,6 +4,7 @@
 #include "source_base/module_out/filename.h"
 #include "source_base/parallel_reduce.h"
 #include "source_io/module_hs/hs_dense_io.h"
+#include "source_io/module_output/frame_append.h"
 #include "source_io/module_output/provenance_header.h"
 #include "source_io/module_output/write_notice.h"
 
@@ -128,7 +129,7 @@ void write_Vxc(const int nspin,
             // Mode 1 appends the frames written after the first ionic step;
             // mode 0 truncates to the latest snapshot and mode 2 writes a
             // separate g{istep+1} file for each step.
-            const bool append_vxc = (out_app_flag == 1) && (istep > 0);
+            const bool append_vxc = frame_appends(out_app_flag, istep);
             std::string vxc_file = ModuleIO::filename_output(
                     mat_dir,
                     "vxcmo", "nao", ik, kv.ik2iktot, nspin, kv.get_nkstot(),
@@ -159,7 +160,7 @@ void write_Vxc(const int nspin,
         const std::string time_stamp = local_timestamp();
         // Mode 1 appends the frames written after the first ionic step; modes
         // 0 and 2 truncate (mode 2 writes a separate g{step} file).
-        const bool append = (out_app_flag == 1) && (istep > 0);
+        const bool append = frame_appends(out_app_flag, istep);
         const std::string header_tot = build_eband_header(istep, etot_eV, "V_xc", time_stamp);
         const std::string name_tot = eband_filename("eband_vxc", istep, out_app_flag);
         write_orb_energy(kv, nspin0, nbands, e_orb_tot, name_tot, header_tot, global_out_dir, append);
