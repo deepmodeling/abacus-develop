@@ -291,6 +291,36 @@ TEST(Matrix2dLinalgTest, HostComplexSolve)
     expect_host_matrices_near(inverse, inverse_reference);
 }
 
+TEST(Matrix2dLinalgTest, SerialDistributionUsesLocalBackend)
+{
+    const std::shared_ptr<const Parallel_Blkcyclic> distribution
+        = make_frozen_distribution(2, 2);
+
+    Matrix2d<double> matrix(distribution);
+    matrix.at_local(0, 0) = 4.0;
+    matrix.at_local(0, 1) = 1.0;
+    matrix.at_local(1, 0) = 2.0;
+    matrix.at_local(1, 1) = 3.0;
+
+    Matrix2d<double> rhs(distribution);
+    rhs.at_local(0, 0) = 1.0;
+    rhs.at_local(0, 1) = 2.0;
+    rhs.at_local(1, 0) = 3.0;
+    rhs.at_local(1, 1) = 4.0;
+    const Matrix2d<double> expected = make_real_inverse_reference().matmul(rhs);
+
+    matrix2d_linalg::solve(matrix.view(), rhs.view());
+    expect_host_matrices_near(rhs, expected);
+
+    Matrix2d<double> inverse(distribution);
+    inverse.at_local(0, 0) = 4.0;
+    inverse.at_local(0, 1) = 1.0;
+    inverse.at_local(1, 0) = 2.0;
+    inverse.at_local(1, 1) = 3.0;
+    matrix2d_linalg::inv(inverse.view());
+    expect_host_matrices_near(inverse, make_real_inverse_reference());
+}
+
 TEST(Matrix2dLinalgTest, ExternalBufferViewDoesNotCopy)
 {
     std::vector<double> values = {4.0, 1.0, 2.0, 3.0};

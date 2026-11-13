@@ -12,7 +12,7 @@ namespace
 {
 void check_host_layout(const Matrix2dView<double>& matrix)
 {
-    if (matrix.is_distributed())
+    if (matrix.is_distributed() && !matrix.distribution()->is_serial())
     {
         throw std::invalid_argument("LAPACK requires a host matrix view");
     }
@@ -20,7 +20,7 @@ void check_host_layout(const Matrix2dView<double>& matrix)
 
 void check_host_layout(const Matrix2dView<std::complex<double>>& matrix)
 {
-    if (matrix.is_distributed())
+    if (matrix.is_distributed() && !matrix.distribution()->is_serial())
     {
         throw std::invalid_argument("LAPACK requires a host matrix view");
     }
@@ -182,7 +182,7 @@ void solve(Matrix2dView<double> matrix,
         }
     }
 
-    const char trans = 'T';
+    const char trans = matrix.is_distributed() ? 'N' : 'T';
     container::lapackConnector::getrs(
         /* trans= */ trans,
         /* n= */ n,
@@ -241,7 +241,7 @@ void solve(Matrix2dView<std::complex<double>> matrix,
         }
     }
 
-    const char trans = 'T';
+    const char trans = matrix.is_distributed() ? 'N' : 'T';
     container::lapackConnector::getrs(
         /* trans= */ trans,
         /* n= */ n,

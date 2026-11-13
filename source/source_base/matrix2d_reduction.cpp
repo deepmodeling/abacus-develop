@@ -275,8 +275,8 @@ std::vector<T> diagonal(const Matrix2d<T>& matrix)
             const int icglb = dist == nullptr ? icloc : dist->icglb(icloc);
             if (irglb == icglb && irglb < diagonal_size)
             {
-                local_entries.push_back(
-                    std::make_pair(irglb, matrix.at_local(irloc, icloc)));
+                const T value = matrix.at_local(irloc, icloc);
+                local_entries.push_back(std::pair<int, T>(irglb, value));
             }
         }
     }

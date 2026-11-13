@@ -234,23 +234,23 @@ void check_mpi_descriptor(Matrix2d<double>& matrix,
                           const int global_cols,
                           const int block_size)
 {
-    constexpr int kDescriptorMatrixTypeIndex = 0;
-    constexpr int kDescriptorBlacsContextIndex = 1;
-    constexpr int kDescriptorGlobalRowsIndex = 2;
-    constexpr int kDescriptorGlobalColsIndex = 3;
-    constexpr int kDescriptorBlockRowsIndex = 4;
-    constexpr int kDescriptorBlockColsIndex = 5;
-    constexpr int kDescriptorLeadingDimIndex = 8;
+    constexpr int DESCRIPTOR_MATRIX_TYPE_INDEX = 0;
+    constexpr int DESCRIPTOR_BLACS_CONTEXT_INDEX = 1;
+    constexpr int DESCRIPTOR_GLOBAL_ROWS_INDEX = 2;
+    constexpr int DESCRIPTOR_GLOBAL_COLS_INDEX = 3;
+    constexpr int DESCRIPTOR_BLOCK_ROWS_INDEX = 4;
+    constexpr int DESCRIPTOR_BLOCK_COLS_INDEX = 5;
+    constexpr int DESCRIPTOR_LEADING_DIM_INDEX = 8;
 
     const int* const descriptor = matrix.desc();
     ASSERT_NE(descriptor, nullptr);
-    EXPECT_EQ(descriptor[kDescriptorMatrixTypeIndex], 1);
-    EXPECT_EQ(descriptor[kDescriptorBlacsContextIndex], matrix.ictxt());
-    EXPECT_EQ(descriptor[kDescriptorGlobalRowsIndex], global_rows);
-    EXPECT_EQ(descriptor[kDescriptorGlobalColsIndex], global_cols);
-    EXPECT_EQ(descriptor[kDescriptorBlockRowsIndex], block_size);
-    EXPECT_EQ(descriptor[kDescriptorBlockColsIndex], block_size);
-    EXPECT_EQ(descriptor[kDescriptorLeadingDimIndex], matrix.lld());
+    EXPECT_EQ(descriptor[DESCRIPTOR_MATRIX_TYPE_INDEX], 1);
+    EXPECT_EQ(descriptor[DESCRIPTOR_BLACS_CONTEXT_INDEX], matrix.ictxt());
+    EXPECT_EQ(descriptor[DESCRIPTOR_GLOBAL_ROWS_INDEX], global_rows);
+    EXPECT_EQ(descriptor[DESCRIPTOR_GLOBAL_COLS_INDEX], global_cols);
+    EXPECT_EQ(descriptor[DESCRIPTOR_BLOCK_ROWS_INDEX], block_size);
+    EXPECT_EQ(descriptor[DESCRIPTOR_BLOCK_COLS_INDEX], block_size);
+    EXPECT_EQ(descriptor[DESCRIPTOR_LEADING_DIM_INDEX], matrix.lld());
     EXPECT_GE(matrix.ictxt(), 0);
     EXPECT_EQ(matrix.nrproc() * matrix.ncproc(),
               Parallel_Common::comm_size(MPI_COMM_WORLD));
@@ -840,6 +840,23 @@ void check_distributed_transpose(const int rows,
 }
 
 template <typename T>
+Matrix2d<T> make_transpose_without_source(const int rows,
+                                          const int cols,
+                                          const int grid_rows,
+                                          const int grid_cols,
+                                          const int block_size)
+{
+    Matrix2d<T> source(rows,
+                       cols,
+                       grid_rows,
+                       grid_cols,
+                       block_size,
+                       MPI_COMM_WORLD);
+    fill_global_values(source);
+    return source.transpose();
+}
+
+template <typename T>
 void check_distributed_matmul(const int left_rows,
                               const int shared_cols,
                               const int right_cols,
@@ -971,6 +988,26 @@ TEST(Matrix2dTest, TransposeAndDaggerDistributedMatchHost)
                                                           grids[grid_index].second,
                                                           3);
     }
+}
+
+TEST(Matrix2dTest, DistributedResultRetainsBlacsContext)
+{
+    const std::vector<std::pair<int, int>> grids = available_process_grids();
+    if (grids.empty())
+    {
+        return;
+    }
+
+    const int grid_rows = grids.front().first;
+    const int grid_cols = grids.front().second;
+    const Matrix2d<double> transposed
+        = make_transpose_without_source<double>(5, 3, grid_rows, grid_cols, 3);
+
+    ASSERT_TRUE(transposed.is_distributed());
+    ASSERT_NE(transposed.distribution(), nullptr);
+    EXPECT_NE(transposed.distribution()->comm(), MPI_COMM_NULL);
+    verify_global_matrix(transposed.gather(),
+                         make_host_transpose_reference<double>(5, 3));
 }
 
 TEST(Matrix2dTest, MatmulDistributedMatchesHost)

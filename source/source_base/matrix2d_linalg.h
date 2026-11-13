@@ -4,6 +4,7 @@
 #include "source_base/matrix2d_view.h"
 
 #include <complex>
+
 namespace matrix2d_linalg
 {
 void inv(Matrix2dView<double> matrix);

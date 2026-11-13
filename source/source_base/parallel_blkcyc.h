@@ -161,6 +161,9 @@ class Parallel_Blkcyclic
     make_frozen_distribution(int, int, int, int, int, MPI_Comm);
     friend std::shared_ptr<const Parallel_Blkcyclic>
     make_frozen_distribution(int, int, int, int);
+    friend std::shared_ptr<const Parallel_Blkcyclic>
+    make_frozen_distribution(
+        int, int, int, const std::shared_ptr<const Parallel_Blkcyclic>&);
 #endif
 
     static constexpr int DESC_SIZE = 9;
@@ -193,6 +196,7 @@ class Parallel_Blkcyclic
 
 #ifdef __MPI
     bool owns_ictxt_ = false;
+    std::shared_ptr<const Parallel_Blkcyclic> context_owner_;
 
     void init_grid(const MPI_Comm comm, const bool swap_grid);
     void init_grid(const MPI_Comm comm, const int nrproc, const int ncproc);
@@ -221,6 +225,12 @@ std::shared_ptr<const Parallel_Blkcyclic> make_frozen_distribution(
     int ncglb,
     int nb,
     int ictxt);
+
+std::shared_ptr<const Parallel_Blkcyclic> make_frozen_distribution(
+    int nrglb,
+    int ncglb,
+    int nb,
+    const std::shared_ptr<const Parallel_Blkcyclic>& owner);
 #endif
 
 std::shared_ptr<const Parallel_Blkcyclic> make_frozen_distribution(

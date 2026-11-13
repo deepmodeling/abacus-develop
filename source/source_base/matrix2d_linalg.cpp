@@ -12,6 +12,18 @@
 
 namespace
 {
+template <typename T>
+bool has_active_distribution(const Matrix2dView<T>& matrix)
+{
+    return matrix.is_distributed() && !matrix.distribution()->is_serial();
+}
+
+template <typename T>
+bool has_serial_distribution(const Matrix2dView<T>& matrix)
+{
+    return matrix.is_distributed() && matrix.distribution()->is_serial();
+}
+
 template <typename T, typename U>
 void check_same_shape(const Matrix2dView<T>& left,
                       const Matrix2dView<U>& right)
@@ -32,6 +44,17 @@ void check_compatible_layout(const Matrix2dView<T>& left,
             "matrix operations require matching host or distributed layouts");
     }
     if (!left.is_distributed())
+    {
+        return;
+    }
+    const bool left_is_serial = has_serial_distribution(left);
+    const bool right_is_serial = has_serial_distribution(right);
+    if (left_is_serial != right_is_serial)
+    {
+        throw std::invalid_argument(
+            "matrix operations require matching serial or parallel distributions");
+    }
+    if (left_is_serial)
     {
         return;
     }
@@ -122,24 +145,8 @@ void set_identity_impl(Matrix2dView<T> matrix)
     {
         throw std::invalid_argument("identity requires a square matrix");
     }
-    std::shared_ptr<const Parallel_Blkcyclic> dist
+    const std::shared_ptr<const Parallel_Blkcyclic> dist
         = matrix.distribution();
-#ifdef __MPI
-    if (matrix.is_distributed() && dist == nullptr)
-    {
-        if (matrix.desc() == nullptr)
-        {
-            throw std::invalid_argument(
-                "distributed identity requires a valid descriptor");
-        }
-        const int nb = matrix.desc()[4];
-        const int blacs_ctxt = matrix.desc()[1];
-        dist = make_frozen_distribution(matrix.nrglb(),
-                                        matrix.ncglb(),
-                                        nb,
-                                        blacs_ctxt);
-    }
-#endif
     for (int i = 0; i < matrix.nrloc(); ++i)
     {
         for (int j = 0; j < matrix.ncloc(); ++j)
@@ -182,6 +189,15 @@ void check_solve_views(const Matrix2dView<double>& matrix,
         throw std::invalid_argument(
             "linear solve requires matching host or distributed layouts");
     }
+    if (has_serial_distribution(matrix) != has_serial_distribution(rhs))
+    {
+        throw std::invalid_argument(
+            "linear solve requires matching serial or parallel distributions");
+    }
+    if (has_serial_distribution(matrix))
+    {
+        return;
+    }
     if (matrix.is_distributed()
         && (matrix.desc() == nullptr
             || rhs.desc() == nullptr
@@ -211,6 +227,15 @@ void check_solve_views(const Matrix2dView<std::complex<double>>& matrix,
         throw std::invalid_argument(
             "linear solve requires matching host or distributed layouts");
     }
+    if (has_serial_distribution(matrix) != has_serial_distribution(rhs))
+    {
+        throw std::invalid_argument(
+            "linear solve requires matching serial or parallel distributions");
+    }
+    if (has_serial_distribution(matrix))
+    {
+        return;
+    }
     if (matrix.is_distributed()
         && (matrix.desc() == nullptr
             || rhs.desc() == nullptr
@@ -231,7 +256,7 @@ namespace matrix2d_linalg
 void inv(Matrix2dView<double> matrix)
 {
     check_inverse_view(matrix);
-    if (matrix.is_distributed())
+    if (has_active_distribution(matrix))
     {
 #ifdef __MPI
         matrix2d_impl::scalapack::inv(matrix);
@@ -246,7 +271,7 @@ void inv(Matrix2dView<double> matrix)
 void inv(Matrix2dView<std::complex<double>> matrix)
 {
     check_inverse_view(matrix);
-    if (matrix.is_distributed())
+    if (has_active_distribution(matrix))
     {
 #ifdef __MPI
         matrix2d_impl::scalapack::inv(matrix);
@@ -262,7 +287,7 @@ void solve(Matrix2dView<double> matrix,
            Matrix2dView<double> rhs)
 {
     check_solve_views(matrix, rhs);
-    if (matrix.is_distributed())
+    if (has_active_distribution(matrix))
     {
 #ifdef __MPI
         matrix2d_impl::scalapack::solve(matrix, rhs);
@@ -278,7 +303,7 @@ void solve(Matrix2dView<std::complex<double>> matrix,
            Matrix2dView<std::complex<double>> rhs)
 {
     check_solve_views(matrix, rhs);
-    if (matrix.is_distributed())
+    if (has_active_distribution(matrix))
     {
 #ifdef __MPI
         matrix2d_impl::scalapack::solve(matrix, rhs);
@@ -295,7 +320,7 @@ void matmul(Matrix2dView<double> result,
             Matrix2dView<const double> right)
 {
     check_matmul_views(result, left, right);
-    if (result.is_distributed())
+    if (has_active_distribution(result))
     {
 #ifdef __MPI
         matrix2d_impl::scalapack::matmul(result, left, right);
@@ -312,7 +337,7 @@ void matmul(Matrix2dView<std::complex<double>> result,
             Matrix2dView<const std::complex<double>> right)
 {
     check_matmul_views(result, left, right);
-    if (result.is_distributed())
+    if (has_active_distribution(result))
     {
 #ifdef __MPI
         matrix2d_impl::scalapack::matmul(result, left, right);
