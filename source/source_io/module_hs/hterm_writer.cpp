@@ -34,10 +34,8 @@ namespace ModuleIO
 static void setup_veff_hcontainer(hamilt::HContainer<double>& hR,
                                   const UnitCell& ucell,
                                   const Grid_Driver& gd,
-                                  const Parallel_Orbitals& pv,
                                   const std::vector<double>& orb_cutoff)
 {
-    const Parallel_Orbitals* paraV = hR.get_paraV();
     for (int iat1 = 0; iat1 < ucell.nat; iat1++)
     {
         auto tau1 = ucell.get_tau(iat1);
@@ -52,15 +50,14 @@ static void setup_veff_hcontainer(hamilt::HContainer<double>& hR,
             const int T2 = adjs.ntype[ad];
             const int I2 = adjs.natom[ad];
             const int iat2 = ucell.itia2iat(T2, I2);
-            if (paraV->is_invalid_atom_pair(iat1, iat2))
+            if (!hR.owns_atom_pair(iat1, iat2))
             {
                 continue;
             }
             const ModuleBase::Vector3<int>& R_index = adjs.box[ad];
             if (ucell.cal_dtau(iat1, iat2, R_index).norm() * ucell.lat0 < orb_cutoff[T1] + orb_cutoff[T2])
             {
-                hamilt::AtomPair<double> tmp(iat1, iat2, R_index, paraV);
-                hR.insert_pair(tmp);
+                hR.insert_pair(iat1, iat2, R_index);
             }
         }
     }
@@ -254,7 +251,6 @@ void write_h_vl(WriteHParams& params)
 {
     const UnitCell& ucell = *params.ucell;
     const Grid_Driver& gd = *params.gd;
-    const Parallel_Orbitals& pv = *params.pv;
     const LCAO_Orbitals& orb = *params.orb;
     const elecstate::Potential* pot = params.pot;
     const std::vector<double>& orb_cutoff = orb.cutoffs();
@@ -268,7 +264,7 @@ void write_h_vl(WriteHParams& params)
     spec.r_label = "V^L";
     spec.term_name = "local";
     spec.build = [&](hamilt::HContainer<double>& hR_tmp, int /*ispin*/) {
-        setup_veff_hcontainer(hR_tmp, ucell, gd, pv, orb_cutoff);
+        setup_veff_hcontainer(hR_tmp, ucell, gd, orb_cutoff);
         // All ranks must enter cal_gint_vl so the Alltoall inside
         // hr_gint_to_hR stays matched. A grid-parallel rank with no local
         // real-space grid points (nrxx == 0) holds v_local == nullptr;
@@ -282,7 +278,6 @@ void write_h_vh(WriteHParams& params)
 {
     const UnitCell& ucell = *params.ucell;
     const Grid_Driver& gd = *params.gd;
-    const Parallel_Orbitals& pv = *params.pv;
     const LCAO_Orbitals& orb = *params.orb;
     const Charge* chg = params.chg;
     const ModulePW::PW_Basis* rho_basis = params.rho_basis;
@@ -298,7 +293,7 @@ void write_h_vh(WriteHParams& params)
     spec.r_label = "V^H";
     spec.term_name = "hartree";
     spec.build = [&](hamilt::HContainer<double>& hR_tmp, int ispin) {
-        setup_veff_hcontainer(hR_tmp, ucell, gd, pv, orb_cutoff);
+        setup_veff_hcontainer(hR_tmp, ucell, gd, orb_cutoff);
         // All ranks must enter cal_gint_vl so the Alltoall inside
         // hr_gint_to_hR stays matched. Under grid-parallel distribution a
         // rank may own no real-space grid points (nrxx == 0), leaving v_h an
@@ -315,7 +310,6 @@ void write_h_vxc(WriteHParams& params)
 {
     const UnitCell& ucell = *params.ucell;
     const Grid_Driver& gd = *params.gd;
-    const Parallel_Orbitals& pv = *params.pv;
     const LCAO_Orbitals& orb = *params.orb;
     const Charge* chg = params.chg;
     const int nrxx = params.nrxx;
@@ -342,7 +336,7 @@ void write_h_vxc(WriteHParams& params)
     spec.r_label = "V^XC";
     spec.term_name = "xc";
     spec.build = [&](hamilt::HContainer<double>& hR_tmp, int ispin) {
-        setup_veff_hcontainer(hR_tmp, ucell, gd, pv, orb_cutoff);
+        setup_veff_hcontainer(hR_tmp, ucell, gd, orb_cutoff);
         // All ranks must enter cal_gint_vl so the Alltoall inside
         // hr_gint_to_hR stays matched. A grid-parallel rank with no local
         // real-space grid points (nrxx == 0) holds an empty v_xc matrix; pass
