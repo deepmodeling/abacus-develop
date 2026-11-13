@@ -113,6 +113,100 @@ void bcast_mpi_offset(MPI_Offset& object, const MPI_Comm& comm)
 {
     MPI_Bcast(&object, 1, MPI_OFFSET, 0, comm);
 }
+
+void barrier(const MPI_Comm comm)
+{
+    MPI_Barrier(comm);
+}
+
+void gatherv_bytes(const void* send_buffer,
+                   const int send_count,
+                   void* receive_buffer,
+                   const int* receive_counts,
+                   const int* receive_displacements,
+                   const int root,
+                   const MPI_Comm comm)
+{
+    MPI_Gatherv(send_buffer,
+                send_count,
+                MPI_BYTE,
+                receive_buffer,
+                receive_counts,
+                receive_displacements,
+                MPI_BYTE,
+                root,
+                comm);
+}
+
+void allgatherv_bytes(const void* send_buffer,
+                      const int send_count,
+                      void* receive_buffer,
+                      const int* receive_counts,
+                      const int* receive_displacements,
+                      const MPI_Comm comm)
+{
+    MPI_Allgatherv(send_buffer,
+                   send_count,
+                   MPI_BYTE,
+                   receive_buffer,
+                   receive_counts,
+                   receive_displacements,
+                   MPI_BYTE,
+                   comm);
+}
+
+void scatterv_bytes(const void* send_buffer,
+                    const int* send_counts,
+                    const int* send_displacements,
+                    void* receive_buffer,
+                    const int receive_count,
+                    const int root,
+                    const MPI_Comm comm)
+{
+    MPI_Scatterv(send_buffer,
+                 send_counts,
+                 send_displacements,
+                 MPI_BYTE,
+                 receive_buffer,
+                 receive_count,
+                 MPI_BYTE,
+                 root,
+                 comm);
+}
+
+void allreduce_sum(int& value, const MPI_Comm comm)
+{
+    MPI_Allreduce(MPI_IN_PLACE, &value, 1, MPI_INT, MPI_SUM, comm);
+}
+
+void allreduce_sum(float& value, const MPI_Comm comm)
+{
+    MPI_Allreduce(MPI_IN_PLACE, &value, 1, MPI_FLOAT, MPI_SUM, comm);
+}
+
+void allreduce_sum(double& value, const MPI_Comm comm)
+{
+    MPI_Allreduce(MPI_IN_PLACE, &value, 1, MPI_DOUBLE, MPI_SUM, comm);
+}
+
+void allreduce_sum(std::complex<float>& value, const MPI_Comm comm)
+{
+    float values[2] = {value.real(), value.imag()};
+    MPI_Allreduce(MPI_IN_PLACE, values, 2, MPI_FLOAT, MPI_SUM, comm);
+    value = std::complex<float>(values[0], values[1]);
+}
+
+void allreduce_sum(std::complex<double>& value, const MPI_Comm comm)
+{
+    double values[2] = {value.real(), value.imag()};
+    MPI_Allreduce(MPI_IN_PLACE, values, 2, MPI_DOUBLE, MPI_SUM, comm);
+    value = std::complex<double>(values[0], values[1]);
+}
+
+void allreduce_max(double& value, const MPI_Comm comm)
+{
+    MPI_Allreduce(MPI_IN_PLACE, &value, 1, MPI_DOUBLE, MPI_MAX, comm);
+}
 #endif
 
 } // namespace Parallel_Common
