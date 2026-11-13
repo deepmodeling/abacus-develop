@@ -618,6 +618,22 @@ void update_psi_charge_pw_gpu(ScState& state,
         base_device::memory::delete_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(s_tmp);
     }
 
+#if defined(__CUDA)
+    // The response loop is complete; wavefunction updates use the original
+    // H/S/projector matrices and have no use for the orthonormal copies.
+    delete static_cast<hsolver::FixedOverlapSubspace*>(cache.fixed_overlap);
+    cache.fixed_overlap = nullptr;
+    if (cache.hpsi_host != nullptr)
+    {
+        CHECK_CUDA(cudaFreeHost(cache.hpsi_host));
+        cache.hpsi_host = nullptr;
+        cache.hpsi_rows = cache.hpsi_bands = cache.hpsi_nk = 0;
+    }
+#endif
+
+    // Free GPU memory for saved subspace data
+    cache.release_gpu();
+
     // STAGE 2: Full-space update (GPU)
     if (pw_solve)
     {
@@ -727,21 +743,6 @@ void update_psi_charge_pw_gpu(ScState& state,
         elecstate::calEBand(pelec->ekb, pelec->wg, pelec->f_en);
         reinterpret_cast<elecstate::ElecStatePW<std::complex<double>, base_device::DEVICE_GPU>*>(pelec)->psiToRho(*psi_t);
     }
-
-#if defined(__CUDA)
-    // The full solve has consumed the cached initial actions and rotated
-    // projectors; release the response cache only after both consumers finish.
-    delete static_cast<hsolver::FixedOverlapSubspace*>(cache.fixed_overlap);
-    cache.fixed_overlap = nullptr;
-    if (cache.hpsi_host != nullptr)
-    {
-        CHECK_CUDA(cudaFreeHost(cache.hpsi_host));
-        cache.hpsi_host = nullptr;
-        cache.hpsi_rows = cache.hpsi_bands = cache.hpsi_nk = 0;
-    }
-#endif
-    cache.release_gpu();
-
     ModuleBase::timer::end("spinconstrain::SpinConstrain", "update_psi_charge_pw_gpu");
 }
 #endif // __CUDA || __ROCM

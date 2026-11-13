@@ -288,40 +288,6 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
                             s_k,
                             diag_comm);
                         base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_GPU, base_device::DEVICE_GPU>()(becp_k, onsite_p->get_becp(), size_becp);
-#if defined(__CUDA)
-                        // Cache the initial Hamiltonian action H*psi. The wavefunction
-                        // basis is unchanged during the constraint loop, so this action
-                        // can seed the final Davidson solve after a low-rank update.
-                        const int action_rows = psi_t->get_current_ngk();
-                        const int action_bands = nbands;
-                        if (this->pw_cache_.hpsi_host == nullptr
-                            || this->pw_cache_.hpsi_rows != action_rows
-                            || this->pw_cache_.hpsi_bands != action_bands
-                            || this->pw_cache_.hpsi_nk != nk)
-                        {
-                            if (this->pw_cache_.hpsi_host != nullptr)
-                            {
-                                CHECK_CUDA(cudaFreeHost(this->pw_cache_.hpsi_host));
-                            }
-                            const size_t bytes = size_t(nk) * action_rows * action_bands
-                                                 * sizeof(std::complex<double>);
-                            CHECK_CUDA(cudaHostAlloc(reinterpret_cast<void**>(&this->pw_cache_.hpsi_host), bytes,
-                                                     cudaHostAllocDefault));
-                            this->pw_cache_.hpsi_rows = action_rows;
-                            this->pw_cache_.hpsi_bands = action_bands;
-                            this->pw_cache_.hpsi_nk = nk;
-                        }
-                        std::complex<double>* action_device = nullptr;
-                        base_device::memory::resize_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(
-                            action_device, size_t(action_rows) * action_bands);
-                        op.hpsi(psi_t->get_pointer(), action_device, action_rows, action_bands);
-                        base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_CPU,
-                                                                    base_device::DEVICE_GPU>()(
-                            this->pw_cache_.hpsi_host + size_t(ik) * action_rows * action_bands,
-                            action_device, size_t(action_rows) * action_bands);
-                        base_device::memory::delete_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(
-                            action_device);
-#endif
                     }
                     const std::complex<double>* response_h = h_k;
                     const std::complex<double>* response_projectors = becp_k;
