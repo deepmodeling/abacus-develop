@@ -1,34 +1,13 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
+#include "csr_test_helpers.h"
+
 #include "source_io/module_hs/pos_op_csr.h"
 
 #include <fstream>
 #include <string>
 #include <vector>
-
-namespace
-{
-std::vector<std::string> read_lines(const std::string& filename)
-{
-    std::ifstream ifs(filename.c_str());
-    std::vector<std::string> lines;
-    std::string line;
-    while (std::getline(ifs, line))
-    {
-        lines.push_back(line);
-    }
-    return lines;
-}
-
-template <typename T>
-T read_binary_value(std::ifstream& ifs)
-{
-    T value{};
-    ifs.read(reinterpret_cast<char*>(&value), sizeof(T));
-    return value;
-}
-} // namespace
 
 TEST(PosOpCsr, LatRNonemptySkipsEmptyBlocks)
 {
@@ -51,6 +30,9 @@ TEST(PosOpCsr, CsrAssembleTextAllowsZeroBlocks)
     std::ofstream payload(payload_filename.c_str());
     payload.close();
 
+    UnitCell ucell;
+    init_unitcell(ucell);
+
     ModuleIO::detail::assemble_csr(output_filename,
                                    payload_filename,
                                    9,
@@ -58,13 +40,20 @@ TEST(PosOpCsr, CsrAssembleTextAllowsZeroBlocks)
                                    0,
                                    false,
                                    false,
+                                   "x",
+                                   &ucell,
                                    "PosOpCsr");
 
-    const std::vector<std::string> lines = read_lines(output_filename);
-    ASSERT_EQ(lines.size(), 3);
-    EXPECT_EQ(lines[0], "STEP: 9");
-    EXPECT_EQ(lines[1], "Matrix Dimension of r(R): 2");
-    EXPECT_EQ(lines[2], "Matrix number of r(R): 0");
+    const std::string output = read_file(output_filename);
+    EXPECT_THAT(output, testing::HasSubstr("Ionic_Step 9  # ABACUS version:"));
+    EXPECT_THAT(output, testing::HasSubstr(" # print r matrix in real space r(R) x-component\n"));
+    EXPECT_THAT(output, testing::HasSubstr(" 1 # number of spin directions\n"));
+    EXPECT_THAT(output, testing::HasSubstr(" 1 # spin index\n"));
+    EXPECT_THAT(output, testing::HasSubstr(" 2 # number of localized basis\n"));
+    EXPECT_THAT(output, testing::HasSubstr(" 0 # number of Bravais lattice vector R\n"));
+    EXPECT_THAT(output, testing::HasSubstr("user_defined_lattice\n"));
+    EXPECT_THAT(output, testing::HasSubstr("Direct\n 0 0.25 0.5\n"));
+    EXPECT_THAT(output, testing::HasSubstr("CSR Format"));
 
     std::remove(payload_filename.c_str());
     std::remove(output_filename.c_str());
@@ -87,6 +76,9 @@ TEST(PosOpCsr, CsrAssembleTextKeepsSingleDirectionPayload)
     payload << "0\n";
     payload.close();
 
+    UnitCell ucell;
+    init_unitcell(ucell);
+
     ModuleIO::detail::assemble_csr(output_filename,
                                    payload_filename,
                                    10,
@@ -94,18 +86,16 @@ TEST(PosOpCsr, CsrAssembleTextKeepsSingleDirectionPayload)
                                    1,
                                    false,
                                    false,
+                                   "y",
+                                   &ucell,
                                    "PosOpCsr");
 
-    const std::vector<std::string> lines = read_lines(output_filename);
-    ASSERT_EQ(lines.size(), 10);
-    EXPECT_EQ(lines[0], "STEP: 10");
-    EXPECT_EQ(lines[1], "Matrix Dimension of r(R): 2");
-    EXPECT_EQ(lines[2], "Matrix number of r(R): 1");
-    EXPECT_EQ(lines[3], "1 0 -1");
-    EXPECT_EQ(lines[4], "1");
-    EXPECT_EQ(lines[5], " 4.00000000e+00");
-    EXPECT_EQ(lines[8], "0");
-    EXPECT_EQ(lines[9], "0");
+    const std::string output = read_file(output_filename);
+    EXPECT_THAT(output, testing::HasSubstr("Ionic_Step 10  # ABACUS version:"));
+    EXPECT_THAT(output, testing::HasSubstr(" # print r matrix in real space r(R) y-component\n"));
+    EXPECT_THAT(output, testing::HasSubstr(" 1 # number of Bravais lattice vector R\n"));
+    EXPECT_THAT(output, testing::HasSubstr("1 0 -1\n"));
+    EXPECT_THAT(output, testing::HasSubstr(" 4.00000000e+00\n"));
 
     std::remove(payload_filename.c_str());
     std::remove(output_filename.c_str());
@@ -148,6 +138,8 @@ TEST(PosOpCsr, CsrAssembleBinaryKeepsHeaderAndPayloadOrder)
                                    1,
                                    true,
                                    false,
+                                   "x",
+                                   nullptr,
                                    "PosOpCsr");
 
     std::ifstream ifs(output_filename, std::ios::binary);

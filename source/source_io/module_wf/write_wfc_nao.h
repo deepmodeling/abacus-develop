@@ -4,6 +4,7 @@
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_psi/psi.h"
 #include "source_base/vector3.h"
+#include <iosfwd>
 #include <string>
 #include <vector>
 
@@ -35,6 +36,7 @@ void write_wfc_nao(const int out_type,
             const int nkstot,
             const Parallel_Orbitals& pv,
             const int nspin,
+            std::ofstream& ofs_running,
             const int istep=-1) ;
 
 /**

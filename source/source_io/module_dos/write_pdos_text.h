@@ -4,6 +4,8 @@
 #include "source_base/matrix.h"
 #include "source_cell/unitcell.h"
 
+#include <iosfwd>
+
 namespace ModuleIO
 {
 
@@ -21,7 +23,8 @@ void write_pdos_text(
         const double& dos_edelta_ev,
         const std::string& out_dir,
         const int istep,
-        const int out_app_flag);
+        const int out_app_flag,
+        std::ofstream& ofs_running);
 
 }
 

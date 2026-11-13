@@ -7,6 +7,51 @@
 namespace ModuleIO
 {
 
+namespace
+{
+/**
+ * @brief Extract the ionic step from a frame header line held in `ss`.
+ * @details Accepts the current bare "Ionic_Step N" spelling, the legacy
+ * compact "STEP: N" label and the historical "--- Ionic Step N ---" /
+ * "--- Ionic_Step N ---" forms, so files written by older versions remain
+ * readable.
+ * @param ss stream positioned at the start of the header line
+ * @param step output ionic step index
+ * @return true when a recognized marker and step value were parsed
+ */
+bool parseStepMarker(std::stringstream& ss, int& step)
+{
+    std::string first;
+    if (!(ss >> first))
+    {
+        return false;
+    }
+    if (first == "STEP:" || first == "Ionic_Step")
+    {
+        return static_cast<bool>(ss >> step);
+    }
+    if (first != "---")
+    {
+        return false;
+    }
+    std::string ionic;
+    if (!(ss >> ionic))
+    {
+        return false;
+    }
+    if (ionic == "Ionic_Step")
+    {
+        return static_cast<bool>(ss >> step);
+    }
+    if (ionic == "Ionic")
+    {
+        std::string label;
+        return static_cast<bool>(ss >> label >> step) && label == "Step";
+    }
+    return false;
+}
+} // namespace
+
 // constructor
 template <typename T>
 csrFileReader<T>::csrFileReader(const std::string& filename) : FileReader(filename)
@@ -23,7 +68,22 @@ void csrFileReader<T>::parseFile()
     nextDataLine();
     const std::string line = ss.str();
     const std::size_t begin = line.find_first_not_of(" \t");
-    if (line.compare(begin, 5, "STEP:") == 0)
+    bool compact = begin != std::string::npos && line.compare(begin, 5, "STEP:") == 0;
+    if (!compact)
+    {
+        // The bare "Ionic_Step N" marker is shared by the compact and
+        // cell-aware headers; peek at the next physical line to tell them
+        // apart. Compact headers continue with "Matrix Dimension of ...",
+        // while cell-aware headers continue with a description comment.
+        std::string next;
+        if (peekLine(next))
+        {
+            const std::size_t nbegin = next.find_first_not_of(" \t");
+            compact = nbegin != std::string::npos
+                      && next.compare(nbegin, 19, "Matrix Dimension of") == 0;
+        }
+    }
+    if (compact)
     {
         parseCompactHeader();
     }
@@ -45,8 +105,7 @@ void csrFileReader<T>::parseCompactHeader()
     const auto invalid = []() {
         ModuleBase::WARNING_QUIT("csrFileReader::parseCompactHeader", "Malformed compact CSR file");
     };
-    std::string label;
-    if (!(ss >> label >> step) || label != "STEP:") { invalid(); }
+    if (!parseStepMarker(ss, step)) { invalid(); }
     const auto header_integer = [&](const std::string& prefix, int& value) {
         readLine();
         const std::string line = ss.str();
@@ -68,11 +127,7 @@ void csrFileReader<T>::parseCellHeader()
     const auto invalid = []() {
         ModuleBase::WARNING_QUIT("csrFileReader::parseCellHeader", "Malformed cell-aware CSR header");
     };
-    std::string marker;
-    std::string ionic;
-    std::string step_label;
-    if (!(ss >> marker >> ionic >> step_label >> step)
-        || marker != "---" || ionic != "Ionic" || step_label != "Step") { invalid(); }
+    if (!parseStepMarker(ss, step)) { invalid(); }
     readLine(); // matrix description
     readLine();
     int spins = 0;
@@ -189,11 +244,14 @@ void csrFileReader<T>::validateFrameEnd()
         }
         std::string marker;
         tokens >> marker;
-        if (marker == "STEP:") { return; }
+        if (marker == "STEP:" || marker == "Ionic_Step") { return; }
         std::string ionic;
-        std::string step_label;
-        if (marker == "---" && tokens >> ionic >> step_label
-            && ionic == "Ionic" && step_label == "Step") { return; }
+        if (marker == "---" && tokens >> ionic)
+        {
+            if (ionic == "Ionic_Step") { return; }
+            std::string step_label;
+            if (ionic == "Ionic" && tokens >> step_label && step_label == "Step") { return; }
+        }
         ModuleBase::WARNING_QUIT("csrFileReader::validateFrameEnd", "Unexpected data after CSR frame");
     }
 }

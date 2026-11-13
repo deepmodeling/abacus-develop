@@ -31,6 +31,14 @@
 namespace
 {
 /**
+ * @brief Rank of this process, captured in main() before GoogleTest runs.
+ *
+ * The file-I/O tests read and remove files shared by all ranks, so they only
+ * run the assertions on rank 0.
+ */
+int my_rank = 0;
+
+/**
  * @brief Helper: compare two filenames with a clear failure message.
  */
 void expect_fname_eq(const std::string& expected, const std::string& actual)
@@ -145,11 +153,43 @@ TEST(HsrWriterFname, DhrNegativeStepSuppressesStep)
 }
 
 // ---------------------------------------------------------------------------
+// dhk_gen_fname: dH(k) filename, spin suffix only for nspin == 2
+// ---------------------------------------------------------------------------
+
+TEST(HsrWriterFname, DhkSingleSpinKeepsBareName)
+{
+    // nspin=1: no spin suffix, no step suffix in modes 0/1
+    const std::string fname = ModuleIO::dhk_gen_fname("dhkx_iat1", 0, 1, false, 3);
+    expect_fname_eq("dhkx_iat1_nao.txt", fname);
+}
+
+TEST(HsrWriterFname, DhkSpinPolarizedAddsSpinSuffix)
+{
+    // nspin=2: one file per spin channel
+    const std::string fname = ModuleIO::dhk_gen_fname("dhkx_iat1", 1, 2, false, 3);
+    expect_fname_eq("dhkx_iat1s2_nao.txt", fname);
+}
+
+TEST(HsrWriterFname, DhkNumberedWithStep)
+{
+    // out_app_flag == 2: one file per ionic step
+    const std::string fname = ModuleIO::dhk_gen_fname("dhkz_iat2", 1, 2, true, 4);
+    expect_fname_eq("dhkz_iat2s2g5_nao.txt", fname);
+}
+
+// ---------------------------------------------------------------------------
 // write_hcontainer_csr: CSR text format layout
 // ---------------------------------------------------------------------------
 
 TEST(HsrWriterIo, HContainerCsrHeaderKeepsCurrentFormat)
 {
+    // File I/O is not MPI-collective; run it on rank 0 only to avoid two
+    // ranks racing on the same file when the test binary is launched with
+    // mpirun.
+    if (my_rank != 0)
+    {
+        return;
+    }
     const std::string filename = "write_hs_r_header_h.csr";
     std::remove(filename.c_str());
 
@@ -163,10 +203,12 @@ TEST(HsrWriterIo, HContainerCsrHeaderKeepsCurrentFormat)
 
     // label "H": header carries the Fermi energy of this spin channel
     const double efermi_eV = 5.4321;
-    ModuleIO::write_hcontainer_csr(filename, &ucell, 5, &matrix, 0, false, 0, 1, "H", "", efermi_eV, true);
+    const bool written = ModuleIO::write_hcontainer_csr(
+        filename, &ucell, 5, &matrix, 0, false, 0, 1, "H", "", efermi_eV, true);
+    EXPECT_TRUE(written);
 
     const std::string output = read_file(filename);
-    EXPECT_THAT(output, testing::HasSubstr(" --- Ionic Step 1 ---\n"));
+    EXPECT_THAT(output, testing::HasSubstr("Ionic_Step 1  # ABACUS version:"));
     EXPECT_THAT(output, testing::HasSubstr(" # print H matrix in real space H(R)\n"));
     EXPECT_THAT(output, testing::HasSubstr(" 1 # number of spin directions\n"));
     EXPECT_THAT(output, testing::HasSubstr(" 1 # spin index, E_Fermi = 5.4321 eV\n"));
@@ -187,6 +229,10 @@ TEST(HsrWriterIo, HContainerCsrHeaderKeepsCurrentFormat)
 
 TEST(HsrWriterIo, GammaFoldedHeaderKeepsCsrReadable)
 {
+    if (my_rank != 0)
+    {
+        return;
+    }
     const std::string filename = "write_hs_r_gamma_folded.csr";
     const std::string representation_note
         = "gamma-only folded matrix; stored R-space contributions are summed into R = (0, 0, 0)";
@@ -222,6 +268,10 @@ TEST(HsrWriterIo, GammaFoldedHeaderKeepsCsrReadable)
 
 TEST(HsrWriterIo, HContainerCsrAppendKeepsCurrentStepSections)
 {
+    if (my_rank != 0)
+    {
+        return;
+    }
     const std::string filename = "write_hs_r_append_s.csr";
     std::remove(filename.c_str());
 
@@ -239,9 +289,9 @@ TEST(HsrWriterIo, HContainerCsrAppendKeepsCurrentStepSections)
     ModuleIO::write_hcontainer_csr(filename, &ucell, 4, &matrix, 1, true, 0, 1, "S", "", ignored_efermi, false);
 
     const std::string output = read_file(filename);
-    EXPECT_EQ(count_substr(output, " --- Ionic Step "), 2);
-    EXPECT_THAT(output, testing::HasSubstr(" --- Ionic Step 1 ---\n"));
-    EXPECT_THAT(output, testing::HasSubstr(" --- Ionic Step 2 ---\n"));
+    EXPECT_EQ(count_substr(output, "Ionic_Step "), 2);
+    EXPECT_THAT(output, testing::HasSubstr("Ionic_Step 1  # ABACUS version:"));
+    EXPECT_THAT(output, testing::HasSubstr("Ionic_Step 2  # ABACUS version:"));
     EXPECT_EQ(count_substr(output, " # print S matrix in real space S(R)\n"), 2);
     // S(R) files must not contain a Fermi energy annotation
     EXPECT_THAT(output, testing::Not(testing::HasSubstr("E_Fermi")));
@@ -251,6 +301,10 @@ TEST(HsrWriterIo, HContainerCsrAppendKeepsCurrentStepSections)
 
 TEST(HsrWriterIo, HContainerCsrHeaderCarriesPerChannelFermi)
 {
+    if (my_rank != 0)
+    {
+        return;
+    }
     UnitCell ucell;
     init_unitcell(ucell);
     Parallel_Orbitals pv;
@@ -284,6 +338,10 @@ TEST(HsrWriterIo, HContainerCsrHeaderCarriesPerChannelFermi)
 
 TEST(HsrWriterIo, HContainerBinaryWritesSortedAndEmptyRBlocks)
 {
+    if (my_rank != 0)
+    {
+        return;
+    }
     const std::string filename = "write_hs_r_native_binary_real.dat";
     std::remove(filename.c_str());
 
@@ -326,6 +384,10 @@ TEST(HsrWriterIo, HContainerBinaryWritesSortedAndEmptyRBlocks)
 
 TEST(HsrWriterIo, HContainerBinaryWritesComplexValuesAsDoublePairs)
 {
+    if (my_rank != 0)
+    {
+        return;
+    }
     const std::string filename = "write_hs_r_native_binary_complex.dat";
     std::remove(filename.c_str());
 
@@ -371,6 +433,10 @@ TEST(HsrWriterIo, HContainerBinaryWritesComplexValuesAsDoublePairs)
 
 TEST(HsrWriterIo, HContainerBinaryAppendsAndCanOverwrite)
 {
+    if (my_rank != 0)
+    {
+        return;
+    }
     const std::string filename = "write_hs_r_native_binary_append.dat";
     std::remove(filename.c_str());
 
@@ -550,24 +616,31 @@ TEST(HsrWriterIo, WriteHsrTextCsrCarriesPerSpinFermiFromEfermi)
     hr_vec.push_back(&hr_dw);
 
     std::ofstream ofs_running_null; // not opened; test does not inspect the running log
+    // write_hsr is MPI-collective (it calls gatherParallels), so every rank
+    // must enter it. Only rank 0 actually writes the files, so the subsequent
+    // read-back and assertions are guarded to rank 0 to avoid a race where a
+    // non-zero rank removes the file before rank 0 can inspect it.
     ModuleIO::write_hsr(
         hr_vec, &sr, &ucell, 1, 8, pv.para_2d(), true, true, iat2iwt_ptr, 1, 0, "./", eferm,
         ofs_running_null);
 
-    const std::string output_up = read_file(hr_up_filename);
-    const std::string output_dw = read_file(hr_dw_filename);
+    if (my_rank == 0)
+    {
+        const std::string output_up = read_file(hr_up_filename);
+        const std::string output_dw = read_file(hr_dw_filename);
 
-    // write_hsr multiplies each spin's Fermi by Ry_to_eV and passes has_efermi=true
-    std::ostringstream expected_up;
-    expected_up << " 1 # spin index, E_Fermi = " << std::setprecision(6) << ef_up_eV << " eV\n";
-    std::ostringstream expected_dw;
-    expected_dw << " 2 # spin index, E_Fermi = " << std::setprecision(6) << ef_dw_eV << " eV\n";
-    EXPECT_THAT(output_up, testing::HasSubstr(expected_up.str()));
-    EXPECT_THAT(output_dw, testing::HasSubstr(expected_dw.str()));
+        // write_hsr multiplies each spin's Fermi by Ry_to_eV and passes has_efermi=true
+        std::ostringstream expected_up;
+        expected_up << " 1 # spin index, E_Fermi = " << std::setprecision(6) << ef_up_eV << " eV\n";
+        std::ostringstream expected_dw;
+        expected_dw << " 2 # spin index, E_Fermi = " << std::setprecision(6) << ef_dw_eV << " eV\n";
+        EXPECT_THAT(output_up, testing::HasSubstr(expected_up.str()));
+        EXPECT_THAT(output_dw, testing::HasSubstr(expected_dw.str()));
 
-    std::remove(hr_up_filename.c_str());
-    std::remove(hr_dw_filename.c_str());
-    std::remove(sr_filename.c_str());
+        std::remove(hr_up_filename.c_str());
+        std::remove(hr_dw_filename.c_str());
+        std::remove(sr_filename.c_str());
+    }
 }
 
 int main(int argc, char** argv)
@@ -575,7 +648,8 @@ int main(int argc, char** argv)
 #ifdef __MPI
     MPI_Init(&argc, &argv);
     MPI_Comm_size(MPI_COMM_WORLD, &GlobalV::NPROC);
-    MPI_Comm_rank(MPI_COMM_WORLD, &GlobalV::MY_RANK);
+    MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
+    GlobalV::MY_RANK = my_rank;
 #endif
 
     ::testing::InitGoogleTest(&argc, argv);

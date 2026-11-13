@@ -7,7 +7,10 @@
 
 namespace
 {
-class CsrFormats : public testing::TestWithParam<bool>
+// Header spellings covered by the parameter: 0 = legacy compact "STEP:",
+// 1 = current compact "Ionic_Step", 2 = legacy cell-aware
+// "--- Ionic Step ---", 3 = current cell-aware "Ionic_Step".
+class CsrFormats : public testing::TestWithParam<int>
 {
 protected:
     std::string path;
@@ -16,14 +19,26 @@ protected:
     void write(const std::string& blocks, const std::string& dimension, const std::string& count)
     {
         std::ofstream out(path);
-        if (GetParam())
+        const int format = GetParam();
+        if (format == 0)
         {
             out << "STEP: 7\nMatrix Dimension of Hexxs_0(R): " << dimension
                 << "\nMatrix number of Hexxs_0(R): " << count << '\n';
         }
-        else
+        else if (format == 1)
+        {
+            out << "Ionic_Step 7\nMatrix Dimension of Hexxs_0(R): " << dimension
+                << "\nMatrix number of Hexxs_0(R): " << count << '\n';
+        }
+        else if (format == 2)
         {
             out << " --- Ionic Step 7 ---\n # matrix\n1 # spins\n1 # spin\n"
+                << dimension << " # basis\n" << count << " # R blocks\n\n"
+                << "user_defined_lattice\n1\n1 0 0\n0 1 0\n0 0 1\nSi\n1\nDirect\n0 0 0\n";
+        }
+        else
+        {
+            out << "Ionic_Step 7\n # matrix\n1 # spins\n1 # spin\n"
                 << dimension << " # basis\n" << count << " # R blocks\n\n"
                 << "user_defined_lattice\n1\n1 0 0\n0 1 0\n0 0 1\nSi\n1\nDirect\n0 0 0\n";
         }
@@ -147,5 +162,35 @@ TEST_P(CsrFormats, RejectsDataAfterTrailingComment)
     write("0 0 0 1\n1\n0\n0 1 1\n# end\n\n9\n", "2", "1");
     EXPECT_EXIT({ModuleIO::csrFileReader<double> reader(path);}, testing::ExitedWithCode(1), "");
 }
-INSTANTIATE_TEST_SUITE_P(BothHeaders, CsrFormats, testing::Bool());
+TEST(CsrInlineProvenance, CompactHeaderWithInlineComment)
+{
+    const std::string path = testing::TempDir() + "/abacus_inline_provenance_compact.csr";
+    std::ofstream out(path);
+    out << "Ionic_Step 7  # ABACUS version: v3.11.0-beta12  # Written at 2026-11-09 14:32:59\n"
+        << "Matrix Dimension of Hexxs_0(R): 2\nMatrix number of Hexxs_0(R): 1\n"
+        << "0 0 0 1\n1\n0\n0 1 1\n";
+    out.close();
+    ModuleIO::csrFileReader<double> reader(path);
+    EXPECT_EQ(reader.getStep(), 7);
+    EXPECT_EQ(reader.getMatrixDimension(), 2);
+    EXPECT_DOUBLE_EQ(reader.getMatrix(0)(0, 0), 1.0);
+    std::remove(path.c_str());
+}
+
+TEST(CsrInlineProvenance, CellAwareHeaderWithInlineComment)
+{
+    const std::string path = testing::TempDir() + "/abacus_inline_provenance_cell.csr";
+    std::ofstream out(path);
+    out << "Ionic_Step 7  # ABACUS version: v3.11.0-beta12  # Written at 2026-11-09 14:32:59\n"
+        << " # matrix\n1 # spins\n1 # spin\n2 # basis\n1 # R blocks\n\n"
+        << "user_defined_lattice\n1\n1 0 0\n0 1 0\n0 0 1\nSi\n1\nDirect\n0 0 0\n"
+        << "0 0 0 1\n1\n0\n0 1 1\n";
+    out.close();
+    ModuleIO::csrFileReader<double> reader(path);
+    EXPECT_EQ(reader.getStep(), 7);
+    EXPECT_EQ(reader.getMatrixDimension(), 2);
+    EXPECT_DOUBLE_EQ(reader.getMatrix(0)(0, 0), 1.0);
+    std::remove(path.c_str());
+}
+INSTANTIATE_TEST_SUITE_P(AllHeaders, CsrFormats, testing::Values(0, 1, 2, 3));
 }

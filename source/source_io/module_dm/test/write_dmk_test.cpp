@@ -285,8 +285,8 @@ TEST(DMKTest, Mode0FixedNameOverwrite) {
                         std::istreambuf_iterator<char>());
         ifs.close();
         // The second write replaced the first record: only step 2 remains.
-        EXPECT_THAT(str, testing::HasSubstr(" --- Ionic Step 2 ---"));
-        EXPECT_THAT(str, testing::Not(testing::HasSubstr(" --- Ionic Step 1 ---")));
+        EXPECT_THAT(str, testing::HasSubstr("Ionic_Step 2"));
+        EXPECT_THAT(str, testing::Not(testing::HasSubstr("Ionic_Step 1")));
         // g-suffixed files must NOT exist.
         ifs.open("dms1g1_nao.txt");
         EXPECT_FALSE(ifs.good());
@@ -347,9 +347,9 @@ TEST(DMKTest, Mode1FixedNameAppend) {
         std::string str((std::istreambuf_iterator<char>(ifs)),
                         std::istreambuf_iterator<char>());
         ifs.close();
-        // Two "Ionic Step" headers present -> two appended records.
-        EXPECT_THAT(str, testing::HasSubstr(" --- Ionic Step 1 ---"));
-        EXPECT_THAT(str, testing::HasSubstr(" --- Ionic Step 2 ---"));
+        // Two "Ionic_Step" headers present -> two appended records.
+        EXPECT_THAT(str, testing::HasSubstr("Ionic_Step 1"));
+        EXPECT_THAT(str, testing::HasSubstr("Ionic_Step 2"));
         // g-suffixed file must NOT exist.
         ifs.open("dms1g1_nao.txt");
         EXPECT_FALSE(ifs.good());

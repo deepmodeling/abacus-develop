@@ -4,7 +4,9 @@
 #include "source_base/module_out/filename.h"
 #include "source_base/parallel_reduce.h"
 #include "source_io/module_hs/hs_dense_io.h"
+#include "source_io/module_output/frame_append.h"
 #include "source_io/module_output/provenance_header.h"
+#include "source_io/module_output/write_notice.h"
 
 namespace ModuleIO
 {
@@ -31,12 +33,14 @@ void write_Vxc(const int nspin,
                const bool dft_plus_u,
                const bool gamma_only,
                const bool out_mat,
+               const int out_app_flag,
                const std::string& mat_dir,
                const std::string& global_out_dir,
                const int out_ndigits,
                const std::string& ks_solver,
                bool cal_exx,
-               const Exx_Info& exx_info
+               const Exx_Info& exx_info,
+               std::ofstream& ofs_running
 #ifdef __EXX
                ,
                std::vector<std::map<int, std::map<hamilt::TAC, RI::Tensor<double>>>>* Hexxd,
@@ -121,13 +125,14 @@ void write_Vxc(const int nspin,
         // write the full MO-basis matrix only when requested
         if (out_mat)
         {
-            const int istep = -1;
             const int out_label = 1; // 1 means .txt while 2 means .dat
-            const int out_app_flag = 0;
-            const bool append_vxc = (out_app_flag == 1);
+            // Mode 1 appends the frames written after the first ionic step;
+            // mode 0 truncates to the latest snapshot and mode 2 writes a
+            // separate g{istep+1} file for each step.
+            const bool append_vxc = frame_appends(out_app_flag, istep);
             std::string vxc_file = ModuleIO::filename_output(
                     mat_dir,
-                    "vxc", "nao", ik, kv.ik2iktot, nspin, kv.get_nkstot(),
+                    "vxcmo", "nao", ik, kv.ik2iktot, nspin, kv.get_nkstot(),
                     out_label, out_app_flag, gamma_only, istep);
 
             ModuleIO::save_mat(istep,
@@ -141,6 +146,11 @@ void write_Vxc(const int nspin,
                                p2d,
                                drank,
                                ks_solver);
+
+            if (GlobalV::MY_RANK == 0)
+            {
+                ModuleIO::write_notice(ofs_running, "Vxc(MO)", is, nspin, vxc_file);
+            }
         }
     }
 
@@ -148,15 +158,30 @@ void write_Vxc(const int nspin,
     {
         const double etot_eV = etot * ModuleBase::Ry_to_eV;
         const std::string time_stamp = local_timestamp();
+        // Mode 1 appends the frames written after the first ionic step; modes
+        // 0 and 2 truncate (mode 2 writes a separate g{step} file).
+        const bool append = frame_appends(out_app_flag, istep);
         const std::string header_tot = build_eband_header(istep, etot_eV, "V_xc", time_stamp);
-        write_orb_energy(kv, nspin0, nbands, e_orb_tot, "eband_vxc.txt", header_tot, global_out_dir);
+        const std::string name_tot = eband_filename("eband_vxc", istep, out_app_flag);
+        write_orb_energy(kv, nspin0, nbands, e_orb_tot, name_tot, header_tot, global_out_dir, append);
+        const std::string property_tot = "Band-decomposed V_xc energy";
+        const std::string path_tot = global_out_dir + name_tot;
+        ModuleIO::write_notice(ofs_running, property_tot, path_tot);
 #ifdef __EXX
         if (cal_exx)
         {
             const std::string header_loc = build_eband_header(istep, etot_eV, "V_xc_local", time_stamp);
             const std::string header_exx = build_eband_header(istep, etot_eV, "V_EXX", time_stamp);
-            write_orb_energy(kv, nspin0, nbands, e_orb_locxc, "eband_vxc_local.txt", header_loc, global_out_dir);
-            write_orb_energy(kv, nspin0, nbands, e_orb_exx, "eband_vxc_exx.txt", header_exx, global_out_dir);
+            const std::string name_loc = eband_filename("eband_vxc_local", istep, out_app_flag);
+            const std::string name_exx = eband_filename("eband_vxc_exx", istep, out_app_flag);
+            write_orb_energy(kv, nspin0, nbands, e_orb_locxc, name_loc, header_loc, global_out_dir, append);
+            write_orb_energy(kv, nspin0, nbands, e_orb_exx, name_exx, header_exx, global_out_dir, append);
+            const std::string property_loc = "Band-decomposed V_xc_local energy";
+            const std::string property_exx = "Band-decomposed V_EXX energy";
+            const std::string path_loc = global_out_dir + name_loc;
+            const std::string path_exx = global_out_dir + name_exx;
+            ModuleIO::write_notice(ofs_running, property_loc, path_loc);
+            ModuleIO::write_notice(ofs_running, property_exx, path_exx);
         }
 #endif
     }
@@ -167,8 +192,8 @@ template void write_Vxc<double, double>(
     const int, const int, const double, const int, const int, const Parallel_Orbitals*, const psi::Psi<double>&,
     const UnitCell&, Structure_Factor&, surchem&, const ModulePW::PW_Basis&, const ModulePW::PW_Basis&,
     const ModuleBase::matrix&, const Charge&, const K_Vectors&, const std::vector<double>&,
-    const ModuleBase::matrix&, Grid_Driver&, const bool, const bool, const bool, const std::string&,
-    const std::string&, const int, const std::string&, bool, const Exx_Info&
+    const ModuleBase::matrix&, Grid_Driver&, const bool, const bool, const bool, const int, const std::string&,
+    const std::string&, const int, const std::string&, bool, const Exx_Info&, std::ofstream&
 #ifdef __EXX
     , std::vector<std::map<int, std::map<hamilt::TAC, RI::Tensor<double>>>>*,
     std::vector<std::map<int, std::map<hamilt::TAC, RI::Tensor<std::complex<double>>>>>*
@@ -179,8 +204,8 @@ template void write_Vxc<std::complex<double>, double>(
     const int, const int, const double, const int, const int, const Parallel_Orbitals*, const psi::Psi<std::complex<double>>&,
     const UnitCell&, Structure_Factor&, surchem&, const ModulePW::PW_Basis&, const ModulePW::PW_Basis&,
     const ModuleBase::matrix&, const Charge&, const K_Vectors&, const std::vector<double>&,
-    const ModuleBase::matrix&, Grid_Driver&, const bool, const bool, const bool, const std::string&,
-    const std::string&, const int, const std::string&, bool, const Exx_Info&
+    const ModuleBase::matrix&, Grid_Driver&, const bool, const bool, const bool, const int, const std::string&,
+    const std::string&, const int, const std::string&, bool, const Exx_Info&, std::ofstream&
 #ifdef __EXX
     , std::vector<std::map<int, std::map<hamilt::TAC, RI::Tensor<double>>>>*,
     std::vector<std::map<int, std::map<hamilt::TAC, RI::Tensor<std::complex<double>>>>>*
@@ -191,8 +216,8 @@ template void write_Vxc<std::complex<double>, std::complex<double>>(
     const int, const int, const double, const int, const int, const Parallel_Orbitals*, const psi::Psi<std::complex<double>>&,
     const UnitCell&, Structure_Factor&, surchem&, const ModulePW::PW_Basis&, const ModulePW::PW_Basis&,
     const ModuleBase::matrix&, const Charge&, const K_Vectors&, const std::vector<double>&,
-    const ModuleBase::matrix&, Grid_Driver&, const bool, const bool, const bool, const std::string&,
-    const std::string&, const int, const std::string&, bool, const Exx_Info&
+    const ModuleBase::matrix&, Grid_Driver&, const bool, const bool, const bool, const int, const std::string&,
+    const std::string&, const int, const std::string&, bool, const Exx_Info&, std::ofstream&
 #ifdef __EXX
     , std::vector<std::map<int, std::map<hamilt::TAC, RI::Tensor<double>>>>*,
     std::vector<std::map<int, std::map<hamilt::TAC, RI::Tensor<std::complex<double>>>>>*

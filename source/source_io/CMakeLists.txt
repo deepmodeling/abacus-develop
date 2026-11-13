@@ -42,6 +42,7 @@ list(
   module_efield/td_efield_io.cpp
   module_efield/td_vecpot_io.cpp
   module_chgpot/write_libxc_r.cpp
+  module_chgpot/libxc_r_suffix.cpp
   module_output/output_log.cpp
   module_output/td_conserv_io.cpp
   module_json/para_json.cpp

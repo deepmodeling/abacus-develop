@@ -7,6 +7,7 @@
 #include "source_lcao/spar_st.h"
 #include "dhs_sparse_writer.h"
 #include "hs_sparse_io.h"
+#include "source_io/module_output/write_notice.h"
 
 #include <complex>
 #include <fstream>
@@ -39,7 +40,7 @@ void ModuleIO::output_dSR(const int& istep,
 
     // mohan update 2024-04-01
     const std::string fileflag_s = "s";
-    ModuleIO::save_dH_sparse(istep, pv, HS_Arrays, options.sparse_threshold, options.binary,
+    ModuleIO::save_dH_sparse(istep, pv, &ucell, HS_Arrays, options.sparse_threshold, options.binary,
                              fileflag_s, options.precision,
                              options.global_matrix_dir, options.calculation, options.out_app_flag,
                              options.nspin, nlocal, ofs_running);
@@ -85,7 +86,7 @@ void ModuleIO::output_dHR(const int& istep,
     }
     // mohan update 2024-04-01
     const std::string fileflag_h = "h";
-    ModuleIO::save_dH_sparse(istep, pv, HS_Arrays, options.sparse_threshold, options.binary,
+    ModuleIO::save_dH_sparse(istep, pv, &ucell, HS_Arrays, options.sparse_threshold, options.binary,
                              fileflag_h, options.precision,
                              options.global_matrix_dir, options.calculation, options.out_app_flag,
                              options.nspin, nlocal, ofs_running);
@@ -114,7 +115,7 @@ void ModuleIO::output_SR(Parallel_Orbitals& pv,
     ModuleBase::TITLE("ModuleIO", "output_SR");
     ModuleBase::timer::start("ModuleIO", "output_SR");
 
-    ofs_running << " Write S(R) matrix in NAO basis to file: " << SR_filename << std::endl;
+    ModuleIO::write_matrix_notice(ofs_running, "S(R)", SR_filename);
 
     LCAO_HS_Arrays HS_Arrays;
 
@@ -187,7 +188,7 @@ void ModuleIO::output_TR(const int istep,
     {
         sst << options.global_matrix_dir << TR_filename;
     }
-    ofs_running << " Write T(R) matrix in NAO basis to file: " << sst.str() << std::endl;
+    ModuleIO::write_matrix_notice(ofs_running, "T(R)", sst.str());
     sparse_format::cal_TR(ucell, pv, HS_Arrays, grid, two_center_bundle, orb, options.sparse_threshold);
     ModuleIO::SparseWriteOptions sparse_options;
     sparse_options.filename = sst.str();
@@ -199,6 +200,8 @@ void ModuleIO::output_TR(const int istep,
     sparse_options.reduce = true;
     sparse_options.calculation = options.calculation;
     sparse_options.out_app_flag = options.out_app_flag;
+    sparse_options.csr_format = true;
+    sparse_options.ucell = &ucell;
 
     ModuleIO::save_sparse(HS_Arrays.TR_sparse,
                           HS_Arrays.all_R_coor,

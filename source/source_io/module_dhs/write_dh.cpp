@@ -6,6 +6,7 @@
 #include "source_io/module_hs/hs_dense_io.h"
 #include "source_io/module_hs/hsr_writer.h"
 #include "source_io/module_output/spin_tag.h"
+#include "source_io/module_output/write_notice.h"
 #include "source_cell/ucell_io.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_hamilt/module_hcontainer/hcontainer_funcs.h"
@@ -102,9 +103,8 @@ void write_dh_perI(WriteDHParams& params,
 #endif
                 if (params.ofs_running != nullptr)
                 {
-                    const std::string spin_tag = ModuleIO::make_spin_tag(ispin, nspin);
-                    *params.ofs_running << " Write dH/dR (" << term_name << " term)" << spin_tag
-                                        << " matrix in NAO basis to file: " << fr << std::endl;
+                    const std::string property = "dH/dR (" + term_name + " term)";
+                    ModuleIO::write_matrix_notice(*params.ofs_running, property, ispin, nspin, fr);
                 }
             }
             }
@@ -128,20 +128,21 @@ void write_dh_perI(WriteDHParams& params,
 #else
                 hamilt::folding_HR(*hR, hk.data(), params.kv->kvec_d[ik], nlocal, 0);
 #endif
-                std::string fk = mat_dir + kprefix + tag;
+                std::string fk = kprefix + tag;
                 if (nks > 1)
                 {
                     fk += "_ik" + std::to_string(params.kv->ik2iktot[ik]);
                 }
-                fk += "_nao.txt";
-                const bool append_fk = (out_app_flag == 1) && (params.istep > 0);
+                // Spin-polarized runs write one file per spin channel, and mode 2
+                // numbers the file per ionic step, matching the other MAT outputs.
+                fk = mat_dir + ModuleIO::dhk_gen_fname(fk, ispin, nspin, numbered, params.istep);
                 ModuleIO::save_mat(params.istep,
                                    hk.data(),
                                    nlocal,
                                    false,
                                    8,
                                    false,
-                                   append_fk,
+                                   append,
                                    fk,
                                    pv.para_2d(),
                                    GlobalV::DRANK,

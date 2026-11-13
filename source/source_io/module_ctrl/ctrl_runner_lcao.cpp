@@ -7,10 +7,7 @@
 
 #include "../module_energy/write_proj_band_lcao.h" // projcted band structure
 #include "../module_dos/cal_ldos.h" // cal LDOS
-#include "../module_energy/write_eband_terms.h"
-#include "source_io/module_hs/vxc_op_mat.h"
 #include "source_io/module_hs/vxc_op_r.h"
-#include "source_io/module_hs/vxc_op_tools.h"
 #ifdef __EXX
 #include "source_lcao/module_ri/exx_lri_interface.h"
 #endif
@@ -48,7 +45,7 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
     // 1) write projected band structure
     if (inp.out_proj_band)
     {
-        ModuleIO::write_proj_band_lcao(psi, pv, pelec, kv, ucell, p_hamilt);
+        ModuleIO::write_proj_band_lcao(psi, pv, pelec, kv, ucell, p_hamilt, istep, inp.out_app_flag);
     }
 
 	// 2) out ldos
@@ -59,62 +56,8 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
         ModuleBase::ensure_directory(global_dos_dir);
         ModuleIO::Cal_ldos<TK>::cal_ldos_lcao(pelec->eferm, chr, dmat, kv,
           pelec->ekb, pelec->wg, psi[0], pgrid, pv, gd, ucell,
-          inp.stm_bias, inp.nspin, global_dos_dir,
+          inp.stm_bias, inp.nspin, istep, global_dos_dir,
           PARAM.globalv.two_fermi, inp.out_ldos[1], ofs_running);
-    }
-
-    // 3) print out exchange-correlation potential: the band-decomposed orbital
-    //    energies (eband_vxc.txt etc.) are produced for either switch, while
-    //    the full MO-basis matrices (vxc_nao.txt etc.) are only for out_mat_xc.
-    const bool out_vxc_orb = inp.out_mat_xc || inp.out_eband;
-    if (out_vxc_orb)
-    {
-        const std::string global_mat_dir = PARAM.globalv.global_mat_dir;
-        // Only out_mat_xc writes matrices into MAT/ (out_eband files land in
-        // the output root); the mode-2 subdirectory is created lazily here.
-        if (inp.out_mat_xc)
-        {
-            ModuleBase::ensure_directory(global_mat_dir);
-        }
-        bool cal_exx = exx_info.info_global.cal_exx;
-        const double etot_xc = pelec->f_en.etot;
-#ifdef __EXX
-        auto* hexxd_ptr = exx_nao.exd ? &exx_nao.exd->get_Hexxs() : nullptr;
-        auto* hexxc_ptr = exx_nao.exc ? &exx_nao.exc->get_Hexxs() : nullptr;
-#endif
-        ModuleIO::write_Vxc<TK, TR>(inp.nspin,
-                                    istep,
-                                    etot_xc,
-                                    PARAM.globalv.nlocal,
-                                    GlobalV::DRANK,
-                                    &pv,
-                                    *psi,
-                                    ucell,
-                                    sf,
-                                    solvent,
-                                    *pw_rho,
-                                    *pw_rhod,
-                                    vloc,
-                                    chr,
-                                    kv,
-                                    orb.cutoffs(),
-                                    pelec->wg,
-                                    gd,
-                                    inp.dft_plus_u,
-                                    PARAM.globalv.gamma_only_local,
-                                    inp.out_mat_xc,
-                                    global_mat_dir,
-                                    PARAM.globalv.global_out_dir,
-                                    inp.out_ndigits,
-                                    inp.ks_solver,
-                                    cal_exx,
-                                    exx_info
-#ifdef __EXX
-                                    ,
-                                    hexxd_ptr,
-                                    hexxc_ptr
-#endif
-        );
     }
 
     if (inp.out_mat_xc2[0])
@@ -145,7 +88,8 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
                                       global_mat_dir,
                                       cal_exx,
                                       hybrid_alpha,
-                                      real_number
+                                      real_number,
+                                      istep
 #ifdef __EXX
                                       ,
                                       hexxd_ptr,
@@ -153,36 +97,9 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
 #endif
                                       ,
                                       sparse_thr,
+                                      inp.out_mat_xc2[1],
                                       ofs_running
         );
-    }
-
-
-    // write eband terms
-    if (inp.out_eband)
-    {
-        const double etot = pelec->f_en.etot;
-        ModuleIO::write_eband_terms<TK, TR>(inp.nspin,
-                                            istep,
-                                            etot,
-                                            GlobalV::MY_RANK,
-                                            PARAM.globalv.nlocal,
-                                            &pv,
-                                            *psi,
-                                            ucell,
-                                            sf,
-                                            solvent,
-                                            *pw_rho,
-                                            *pw_rhod,
-                                            vloc,
-                                            chr,
-                                            kv,
-                                            pelec->wg,
-                                            gd,
-                                            orb.cutoffs(),
-                                            orb,
-                                            two_center_bundle
-       );
     }
 
     ModuleBase::timer::end("ModuleIO", "ctrl_runner_lcao");

@@ -1,5 +1,5 @@
 #------------------------------------------------------------------------
-# ionic step 1
+# Ionic_Step 1
 # filename OUT.autotest/dhkx_iat1_ik1_nao.txt
 # gamma only 0
 # rows 13

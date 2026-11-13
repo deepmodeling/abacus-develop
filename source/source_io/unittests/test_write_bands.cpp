@@ -35,17 +35,21 @@ class TestParameters
     {
         append_ = parameter_.input.out_app_flag;
         directory_ = parameter_.sys.global_out_dir;
+        band_directory_ = parameter_.sys.global_band_dir;
     }
 
     ~TestParameters()
     {
         parameter_.input.out_app_flag = append_;
         parameter_.sys.global_out_dir = directory_;
+        parameter_.sys.global_band_dir = band_directory_;
     }
 
-    void set_output(const std::string& directory, bool append)
+    void set_output(const std::string& directory, bool append,
+                    const std::string& band_directory)
     {
         parameter_.sys.global_out_dir = directory;
+        parameter_.sys.global_band_dir = band_directory;
         parameter_.input.out_app_flag = append;
     }
 
@@ -53,6 +57,7 @@ class TestParameters
     Parameter& parameter_;
     bool append_ = false;
     std::string directory_;
+    std::string band_directory_;
 };
 
 namespace
@@ -138,7 +143,7 @@ class BandOutputTest : public testing::TestWithParam<BandTopology>
         Parallel::bcast_bool(ready, *world_, 0);
         ASSERT_TRUE(ready);
         parameters_.reset(new TestParameters(PARAM));
-        parameters_->set_output(directory_, false);
+        parameters_->set_output(directory_, false, directory_);
     }
 
     void TearDown() override
@@ -177,6 +182,23 @@ class BandOutputTest : public testing::TestWithParam<BandTopology>
         for (const std::string& name : {"direct.txt", "up.txt", "down.txt", "band.txt", "bands1.txt", "bands2.txt"})
         {
             std::remove((directory_ + name).c_str());
+        }
+        // Mode-2 snapshots live in the lazily created BANDS/ subdirectory.
+        // GLOBAL_BANDS/ is only touched if the writer falls back to the global
+        // band directory instead of the one passed in.
+        for (const std::string& subdirectory : {"BANDS/", "GLOBAL_BANDS/"})
+        {
+            for (const std::string& name : {"bandg1.txt", "bandg2.txt", "bands1g1.txt", "bands1g2.txt",
+                                            "bands2g1.txt", "bands2g2.txt"})
+            {
+                std::remove((directory_ + subdirectory + name).c_str());
+            }
+            const std::string sub_path = directory_ + subdirectory.substr(0, subdirectory.size() - 1);
+#ifdef _WIN32
+            _rmdir(sub_path.c_str());
+#else
+            rmdir(sub_path.c_str());
+#endif
         }
     }
 
@@ -280,7 +302,25 @@ class BandOutputTest : public testing::TestWithParam<BandTopology>
         EXPECT_EQ(comments[3 * block + 1].compare(0, written.size(), written), 0)
             << comments[3 * block + 1];
         const std::string tag = (channels == 2) ? (spin == 0 ? " (spin up)" : " (spin down)") : "";
-        EXPECT_EQ(comments[3 * block + 2], "# IONIC STEP " + std::to_string(block + 1) + tag);
+        EXPECT_EQ(comments[3 * block + 2], "# Ionic_Step " + std::to_string(block + 1) + tag);
+    }
+
+    /// Check the header of a mode-2 file, which holds exactly one k-point block
+    /// and therefore prints the ionic step independently of the block index.
+    void expect_single_block_header(const std::string& name, int step, int spin, int channels) const
+    {
+        if (world_->rank() != 0)
+        {
+            return;
+        }
+        SCOPED_TRACE(name);
+        const std::vector<std::string> comments = comment_lines(name);
+        ASSERT_EQ(comments.size(), static_cast<std::size_t>(3));
+        const std::string written = "# Written at ";
+        EXPECT_EQ(comments[0], "# ABACUS version: " + std::string(VERSION));
+        EXPECT_EQ(comments[1].compare(0, written.size(), written), 0) << comments[1];
+        const std::string tag = (channels == 2) ? (spin == 0 ? " (spin up)" : " (spin down)") : "";
+        EXPECT_EQ(comments[2], "# Ionic_Step " + std::to_string(step) + tag);
     }
 
     void expect_output(const std::string& name, int spin, int nbands,
@@ -336,6 +376,55 @@ class BandOutputTest : public testing::TestWithParam<BandTopology>
         return std::string(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>());
     }
 
+    /// Check that every numeric entry of `second` equals the matching entry of
+    /// `first` plus `shift_eV`, so an unchanged header cannot hide a wrong body.
+    void expect_shifted_values(const std::string& first, const std::string& second,
+                               const double shift_eV) const
+    {
+        if (world_->rank() != 0)
+        {
+            return;
+        }
+        SCOPED_TRACE(second);
+        std::ifstream first_file(directory_ + first);
+        std::ifstream second_file(directory_ + second);
+        ASSERT_TRUE(first_file.is_open());
+        ASSERT_TRUE(second_file.is_open());
+        std::string first_line;
+        std::string second_line;
+        int row = 0;
+        while (read_data_line(first_file, first_line))
+        {
+            ASSERT_TRUE(read_data_line(second_file, second_line)) << "Missing row " << row;
+            std::istringstream first_row(first_line);
+            std::istringstream second_row(second_line);
+            int first_index = 0;
+            int second_index = 0;
+            ASSERT_TRUE(static_cast<bool>(first_row >> first_index)) << first_line;
+            ASSERT_TRUE(static_cast<bool>(second_row >> second_index)) << second_line;
+            EXPECT_EQ(first_index, second_index);
+            // The first numeric column is the k-path distance, which does not
+            // depend on the eigenvalues; only the band energies shift.
+            double first_distance = 0.0;
+            double second_distance = 0.0;
+            ASSERT_TRUE(static_cast<bool>(first_row >> first_distance)) << first_line;
+            ASSERT_TRUE(static_cast<bool>(second_row >> second_distance)) << second_line;
+            EXPECT_NEAR(second_distance, first_distance, 1e-6) << "row " << row;
+            double first_value = 0.0;
+            double second_value = 0.0;
+            while (static_cast<bool>(first_row >> first_value))
+            {
+                ASSERT_TRUE(static_cast<bool>(second_row >> second_value)) << second_line;
+                EXPECT_NEAR(second_value - first_value, shift_eV, 1e-6) << "row " << row;
+            }
+            std::string extra;
+            EXPECT_FALSE(static_cast<bool>(second_row >> extra)) << second_line;
+            ++row;
+        }
+        EXPECT_GT(row, 0);
+        EXPECT_FALSE(read_data_line(second_file, second_line)) << second_line;
+    }
+
     void seed_file(const std::string& name, const std::string& content) const
     {
         if (world_->rank() == 0)
@@ -360,7 +449,7 @@ class BandOutputTest : public testing::TestWithParam<BandTopology>
         {
             SCOPED_TRACE(distributed ? "distributed" : "replicated");
             prepare(nspin, 3, distributed);
-            ModuleIO::write_bands(input_, ekb_, kv_, ofs_running, 0);
+            ModuleIO::write_bands(input_, ekb_, kv_, ofs_running, directory_, 0);
             if (nspin == 2)
             {
                 expect_output("bands1.txt", 0, 3, 0.0, 8, 1);
@@ -385,7 +474,7 @@ class BandOutputTest : public testing::TestWithParam<BandTopology>
 TEST_P(BandOutputTest, DirectSingleSpin)
 {
     prepare(1, 3, false);
-    ModuleIO::nscf_bands(0, directory_ + "direct.txt", 3, 0.0, 8, ekb_, kv_, "");
+    ModuleIO::nscf_bands(0, directory_ + "direct.txt", 3, 0.0, 8, ekb_, kv_, "", 0);
     expect_output("direct.txt", 0, 3, 0.0, 8, 1);
     if (world_->rank() == 0)
     {
@@ -398,8 +487,8 @@ TEST_P(BandOutputTest, DirectSingleSpin)
 TEST_P(BandOutputTest, DirectBothSpins)
 {
     prepare(2, 3, false);
-    ModuleIO::nscf_bands(0, directory_ + "up.txt", 3, 0.0, 8, ekb_, kv_, "");
-    ModuleIO::nscf_bands(1, directory_ + "down.txt", 3, 0.0, 8, ekb_, kv_, "");
+    ModuleIO::nscf_bands(0, directory_ + "up.txt", 3, 0.0, 8, ekb_, kv_, "", 0);
+    ModuleIO::nscf_bands(1, directory_ + "down.txt", 3, 0.0, 8, ekb_, kv_, "", 0);
     expect_output("up.txt", 0, 3, 0.0, 8, 1);
     expect_output("down.txt", 1, 3, 0.0, 8, 1);
 }
@@ -409,7 +498,7 @@ TEST_P(BandOutputTest, PrecisionAndFermiShift)
     prepare(1, 3, false);
     for (const int precision : {4, 8})
     {
-        ModuleIO::nscf_bands(0, directory_ + "direct.txt", 3, 0.25, precision, ekb_, kv_, "");
+        ModuleIO::nscf_bands(0, directory_ + "direct.txt", 3, 0.25, precision, ekb_, kv_, "", 0);
         expect_output("direct.txt", 0, 3, 0.25, precision, 1);
         if (world_->rank() == 0 && precision == 4)
         {
@@ -425,25 +514,70 @@ TEST_P(BandOutputTest, OverwriteAndAppend)
     prepare(1, 3, true);
     seed_file("band.txt", "stale output\n");
     Parallel::barrier(*world_);
-    ModuleIO::write_bands(input_, ekb_, kv_, ofs_running, 0);
+    ModuleIO::write_bands(input_, ekb_, kv_, ofs_running, directory_, 0);
     expect_output("band.txt", 0, 3, 0.0, 8, 1);
     expect_header("band.txt", 0, 0, 1);
     Parallel::barrier(*world_);
-    parameters_->set_output(directory_, true);
-    ModuleIO::write_bands(input_, ekb_, kv_, ofs_running, 1);
+    parameters_->set_output(directory_, true, directory_);
+    input_.out_app_flag = 1;
+    ModuleIO::write_bands(input_, ekb_, kv_, ofs_running, directory_, 1);
     expect_output("band.txt", 0, 3, 0.0, 8, 2);
     expect_header("band.txt", 1, 0, 1);
+}
+
+TEST_P(BandOutputTest, ModeTwoBandsDirectoryKeepsDistinctSnapshots)
+{
+    prepare(2, 3, true);
+    // The supplied band directory must differ from PARAM.globalv.global_band_dir,
+    // otherwise a regression to the global lookup would still pass.
+    const std::string band_dir = directory_ + "BANDS/";
+    parameters_->set_output(directory_, false, directory_ + "GLOBAL_BANDS/");
+    input_.out_app_flag = 2;
+
+    ModuleIO::write_bands(input_, ekb_, kv_, ofs_running, band_dir, 0);
+    expect_output("BANDS/bands1g1.txt", 0, 3, 0.0, 8, 1);
+    expect_output("BANDS/bands2g1.txt", 1, 3, 0.0, 8, 1);
+    expect_single_block_header("BANDS/bands1g1.txt", 1, 0, 2);
+    expect_single_block_header("BANDS/bands2g1.txt", 1, 1, 2);
+    // Paths resolve below directory_, so the fixed-name layout must stay empty.
+    expect_missing("bands1g1.txt");
+    expect_missing("BANDS/bands1.txt");
+    Parallel::barrier(*world_);
+
+    const std::string first_step_up = read_text("BANDS/bands1g1.txt");
+    // Change the spectrum so the second snapshot is distinguishable.
+    for (int irow = 0; irow < ekb_.nr; ++irow)
+    {
+        for (int icol = 0; icol < ekb_.nc; ++icol)
+        {
+            ekb_(irow, icol) += 5.0;
+        }
+    }
+    ModuleIO::write_bands(input_, ekb_, kv_, ofs_running, band_dir, 1);
+    expect_single_block_header("BANDS/bands1g2.txt", 2, 0, 2);
+    expect_single_block_header("BANDS/bands2g2.txt", 2, 1, 2);
+    Parallel::barrier(*world_);
+    if (world_->rank() == 0)
+    {
+        // Step 1 keeps its own payload; step 2 is written to a separate file.
+        EXPECT_EQ(read_text("BANDS/bands1g1.txt"), first_step_up);
+        EXPECT_NE(read_text("BANDS/bands1g2.txt"), first_step_up);
+    }
+    // The second snapshot must carry the shifted spectrum, not just a new header.
+    const double shift_eV = 5.0 * 13.605698;
+    expect_shifted_values("BANDS/bands1g1.txt", "BANDS/bands1g2.txt", shift_eV);
+    expect_shifted_values("BANDS/bands2g1.txt", "BANDS/bands2g2.txt", shift_eV);
 }
 
 TEST_P(BandOutputTest, OutputDisabled)
 {
     prepare(1, 3, true);
     input_.out_band[0] = 0;
-    ModuleIO::write_bands(input_, ekb_, kv_, ofs_running, 0);
+    ModuleIO::write_bands(input_, ekb_, kv_, ofs_running, directory_, 0);
     expect_missing("band.txt");
     seed_file("band.txt", "keep this content\n");
     Parallel::barrier(*world_);
-    ModuleIO::write_bands(input_, ekb_, kv_, ofs_running, 0);
+    ModuleIO::write_bands(input_, ekb_, kv_, ofs_running, directory_, 0);
     if (world_->rank() == 0)
     {
         EXPECT_EQ(read_text("band.txt"), "keep this content\n");
@@ -474,7 +608,7 @@ TEST_P(BandOutputTest, EmptyBandShard)
     {
         EXPECT_EQ(ekb_.nc, 0);
     }
-    ModuleIO::write_bands(input_, ekb_, kv_, ofs_running, 0);
+    ModuleIO::write_bands(input_, ekb_, kv_, ofs_running, directory_, 0);
     expect_output("bands1.txt", 0, 1, 0.0, 8, 1);
     expect_output("bands2.txt", 1, 1, 0.0, 8, 1);
     expect_header("bands1.txt", 0, 0, 2);
@@ -488,7 +622,7 @@ TEST_P(BandOutputTest, RunningLogNamesSpinChannels)
                                  + std::to_string(world_->rank()) + ".log";
     std::ofstream log(log_name);
     EXPECT_TRUE(log.is_open());
-    ModuleIO::write_bands(input_, ekb_, kv_, log, 0);
+    ModuleIO::write_bands(input_, ekb_, kv_, log, directory_, 0);
     log.close();
 
     std::ifstream in(log_name);
@@ -496,8 +630,8 @@ TEST_P(BandOutputTest, RunningLogNamesSpinChannels)
     in.close();
     std::remove(log_name.c_str());
 
-    const std::string up_line = " Write eigenvalues (spin up  ) to file: " + directory_ + "bands1.txt";
-    const std::string down_line = " Write eigenvalues (spin down) to file: " + directory_ + "bands2.txt";
+    const std::string up_line = " Write Eigenvalues (spin up  ) to file: " + directory_ + "bands1.txt";
+    const std::string down_line = " Write Eigenvalues (spin down) to file: " + directory_ + "bands2.txt";
     EXPECT_NE(text.find(up_line), std::string::npos) << text;
     EXPECT_NE(text.find(down_line), std::string::npos) << text;
 }

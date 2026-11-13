@@ -15,6 +15,13 @@ addtest(
 
 addtest(TARGET MODULE_IO_spin_tag SOURCES test_spin_tag.cpp)
 
+addtest(
+  TARGET MODULE_IO_libxc_r_suffix
+  SOURCES test_libxc_r_suffix.cpp
+          ../module_chgpot/libxc_r_suffix.cpp)
+
+addtest(TARGET MODULE_IO_frame_append SOURCES test_frame_append.cpp)
+
 addtest(TARGET MODULE_IO_provenance_header SOURCES test_provenance_header.cpp)
 
 if(NOT ENABLE_MPI)
@@ -320,6 +327,7 @@ if(ENABLE_LIBRI)
     LIBS parameter base device
     SOURCES test_restart_exx_csr.cpp ../module_restart/restart_exx_csr.cpp
             ../module_hs/hs_sparse_io.cpp ../module_hs/lat_r_csr.cpp
+            ../../source_cell/ucell_io.cpp
             ../../source_basis/module_ao/parallel_orbitals.cpp
             tmp_mocks.cpp)
 endif()

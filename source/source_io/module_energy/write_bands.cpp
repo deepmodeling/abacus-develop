@@ -1,6 +1,7 @@
 #include "write_bands.h"
 
 #include "source_base/formatter.h"
+#include "source_base/fs_compat.h" // use ModuleBase::ensure_directory
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
 #include "source_base/module_parallel/para_band_output.h"
@@ -9,6 +10,7 @@
 #include "source_base/tool_title.h"
 #include "source_io/module_output/provenance_header.h"
 #include "source_io/module_output/spin_tag.h"
+#include "source_io/module_output/write_notice.h"
 #include "source_io/module_parameter/parameter.h" // mohan add 20250911
 
 #ifdef __MPI
@@ -29,18 +31,20 @@ namespace
 std::string build_band_header(const int istep, const std::string& spin_tag)
 {
     const int istep_one_based = istep + 1;
-    const std::string step_line = FmtCore::format("# IONIC STEP %d%s\n", istep_one_based, spin_tag.c_str());
+    const std::string step_line = FmtCore::format("# Ionic_Step %d%s\n", istep_one_based, spin_tag.c_str());
     return ModuleIO::provenance_header(ModuleIO::local_timestamp()) + step_line;
 }
 
 } // namespace
 
 void ModuleIO::write_bands(const Input_para& inp, const ModuleBase::matrix& ekb, const K_Vectors& kv,
-                           std::ofstream& ofs_running, const int istep)
+                           std::ofstream& ofs_running, const std::string& band_dir, const int istep)
 {
     // write band information to band.txt
     if (inp.out_band[0])
     {
+        // Mode-2 BANDS/ subdirectory is created lazily at write time.
+        ModuleBase::ensure_directory(band_dir);
         // Taoni fix out_band under bndpar on 2026-08-21
         const Parallel::ParaBandOutput band_output(ekb.nc, inp.nbands, Parallel::make_band_world());
         const ModuleBase::matrix global_ekb = band_output.gather_matrix(ekb);
@@ -48,7 +52,7 @@ void ModuleIO::write_bands(const Input_para& inp, const ModuleBase::matrix& ekb,
         for (int is = 0; is < nspin0; is++)
         {
             std::stringstream ss;
-            ss << PARAM.globalv.global_out_dir << "band";
+            ss << band_dir << "band";
 
             if (nspin0 == 1)
             {
@@ -59,11 +63,15 @@ void ModuleIO::write_bands(const Input_para& inp, const ModuleBase::matrix& ekb,
                 ss << "s" << is + 1;
             }
 
+            if (inp.out_app_flag == 2)
+            {
+                ss << "g" << istep + 1;
+            }
+
             ss << ".txt";
 
             const std::string eig_file = ss.str();
-            const std::string log_spin_tag = ModuleIO::make_spin_tag(is, nspin0);
-            ofs_running << " Write eigenvalues" << log_spin_tag << " to file: " << eig_file << std::endl;
+            ModuleIO::write_notice(ofs_running, "Eigenvalues", is, nspin0, eig_file);
 
             const std::string header_spin_tag = ModuleIO::make_compact_spin_tag(is, nspin0);
             const std::string header = build_band_header(istep, header_spin_tag);
@@ -75,7 +83,8 @@ void ModuleIO::write_bands(const Input_para& inp, const ModuleBase::matrix& ekb,
                        inp.out_band[1], // precision
                        global_ekb,
                        kv,
-                       header);
+                       header,
+                       inp.out_app_flag);
         }
     }
 }
@@ -87,7 +96,8 @@ void ModuleIO::nscf_bands(const int& is,
                           const int& precision,
                           const ModuleBase::matrix& ekb,
                           const K_Vectors& kv,
-                          const std::string& header)
+                          const std::string& header,
+                          const int out_app_flag)
 {
     ModuleBase::TITLE("ModuleIO", "nscf_bands");
     ModuleBase::timer::start("ModuleIO", "nscf_bands");
@@ -114,7 +124,7 @@ void ModuleIO::nscf_bands(const int& is,
     const int band_group = Parallel::make_band_world().rank();
     if (GlobalV::MY_RANK == 0)
     {
-        if (PARAM.inp.out_app_flag == 1)
+        if (out_app_flag == 1)
         {
             // do nothing
         }
@@ -178,7 +188,7 @@ void ModuleIO::nscf_bands(const int& is,
 
     if (GlobalV::MY_RANK == 0)
     {
-        if (PARAM.inp.out_app_flag == 1)
+        if (out_app_flag == 1)
         {
             ofs.open(eig_file.c_str(), std::ios::app);
         }

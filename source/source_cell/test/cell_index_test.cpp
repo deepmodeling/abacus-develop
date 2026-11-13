@@ -2,7 +2,6 @@
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include <fstream>
 
 /************************************************
  *  unit test of class CellIndex
@@ -51,16 +50,4 @@ TEST_F(CellIndexTest, Index)
     EXPECT_EQ(1, cell_index.get_nchi(0, 0));
     EXPECT_EQ("C", cell_index.get_atom_label(0));
     EXPECT_EQ("H", cell_index.get_atom_label(1));
-}
-
-TEST_F(CellIndexTest, WriteOrbInfo)
-{
-    cell_index.write_orb_info("./");
-    std::ifstream ifs("./nao.txt");
-    std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
-    EXPECT_THAT(str, testing::HasSubstr("#io    spec    l    m    z  sym"));
-    EXPECT_THAT(str, testing::HasSubstr("0       C    2    4    1            dxy"));
-    EXPECT_THAT(str, testing::HasSubstr("1       H    2    4    1            dxy"));
-    EXPECT_THAT(str, testing::HasSubstr("2       H    2    4    1            dxy"));
-    remove("./nao.txt");
 }

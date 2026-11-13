@@ -6,7 +6,7 @@
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
 #include "source_lcao/hamilt_lcao.h"
-#include "source_io/module_output/write_orb_info.h"
+#include "source_io/module_output/write_notice.h"
 
 
 void ModuleIO::cal_pdos(
@@ -26,7 +26,8 @@ void ModuleIO::cal_pdos(
 		const int out_app_flag,
 		const int nlocal,
 		const int nspin,
-		const std::string& global_out_dir)
+		const std::string& global_out_dir,
+		std::ofstream& ofs_running)
 {
     ModuleBase::TITLE("ModuleIO", "cal_pdos_gamma");
 
@@ -149,7 +150,6 @@ void ModuleIO::cal_pdos(
     if (GlobalV::MY_RANK == 0)
     {
         write_pdos_text(ucell, pdos.data(), nspin, nlocal, npoints,
-                        emin, dos_edelta_ev, global_out_dir, istep, out_app_flag);
-        ModuleIO::write_orb_info(&ucell);
+                        emin, dos_edelta_ev, global_out_dir, istep, out_app_flag, ofs_running);
     }
 }

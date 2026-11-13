@@ -788,6 +788,7 @@ OBJS_IO=module_parameter/input_conv.o\
     td_efield_io.o\
     td_vecpot_io.o\
     module_chgpot/write_libxc_r.o\
+    module_chgpot/libxc_r_suffix.o\
     module_chgpot/get_pchg_pw.o\
     module_output/output_log.o\
     module_hs/output_mat_sparse.o\

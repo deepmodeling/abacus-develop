@@ -304,6 +304,7 @@ void ModuleIO::ctrl_runner_pw(UnitCell& ucell,
                               pseudopot_cell_vnl& ppcell,
                               surchem& solvent,
                               Parallel_Grid& para_grid,
+                              const int istep,
                               const Input_para& inp,
                               std::ofstream& ofs_running)
 {
@@ -330,6 +331,7 @@ void ModuleIO::ctrl_runner_pw(UnitCell& ucell,
                               inp.out_ldos,
                               inp.stm_bias,
                               inp.nspin,
+                              istep,
                               global_dos_dir,
                               PARAM.globalv.two_fermi,
                               inp.nbands,
@@ -498,6 +500,7 @@ template void ModuleIO::ctrl_runner_pw<std::complex<float>, base_device::DEVICE_
                                                                                      pseudopot_cell_vnl& ppcell,
                                                                                      surchem& solvent,
                                                                                      Parallel_Grid& para_grid,
+                                                                                     const int istep,
                                                                                      const Input_para& inp,
                                                                                      std::ofstream& ofs_running);
 
@@ -514,6 +517,7 @@ template void ModuleIO::ctrl_runner_pw<std::complex<double>, base_device::DEVICE
                                                                                       pseudopot_cell_vnl& ppcell,
                                                                                       surchem& solvent,
                                                                                       Parallel_Grid& para_grid,
+                                                                                      const int istep,
                                                                                       const Input_para& inp,
                                                                                       std::ofstream& ofs_running);
 
@@ -531,6 +535,7 @@ template void ModuleIO::ctrl_runner_pw<std::complex<float>, base_device::DEVICE_
                                                                                      pseudopot_cell_vnl& ppcell,
                                                                                      surchem& solvent,
                                                                                      Parallel_Grid& para_grid,
+                                                                                     const int istep,
                                                                                      const Input_para& inp,
                                                                                      std::ofstream& ofs_running);
 
@@ -547,6 +552,7 @@ template void ModuleIO::ctrl_runner_pw<std::complex<double>, base_device::DEVICE
                                                                                       pseudopot_cell_vnl& ppcell,
                                                                                       surchem& solvent,
                                                                                       Parallel_Grid& para_grid,
+                                                                                      const int istep,
                                                                                       const Input_para& inp,
                                                                                       std::ofstream& ofs_running);
 #endif

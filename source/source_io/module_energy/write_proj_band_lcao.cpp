@@ -6,7 +6,7 @@
 #include "source_base/module_external/scalapack_connector.h"
 #include "source_base/timer.h"
 #include "source_cell/module_neighbor/sltk_atom_arrange.h"
-#include "source_io/module_output/write_orb_info.h"
+#include "source_io/module_output/write_notice.h"
 #include "source_lcao/hamilt_lcao.h"
 
 template<>
@@ -16,7 +16,9 @@ void ModuleIO::write_proj_band_lcao(
     const elecstate::ElecState* pelec,
     const K_Vectors& kv,
     const UnitCell &ucell,
-    hamilt::Hamilt<double>* p_ham)
+    hamilt::Hamilt<double>* p_ham,
+    const int istep,
+    const int out_app_flag)
 {
     ModuleBase::TITLE("ModuleIO", "write_proj_band_lcao");
     ModuleBase::timer::start("ModuleIO", "write_proj_band_lcao");
@@ -108,11 +110,20 @@ void ModuleIO::write_proj_band_lcao(
         if (GlobalV::MY_RANK == 0)
         {
             std::stringstream ps2;
-            ps2 << PARAM.globalv.global_out_dir << "pbands" << is + 1 << ".xml";
-            GlobalV::ofs_running << " Output projected bands are in file: " << ps2.str() << std::endl;
+            ps2 << PARAM.globalv.global_out_dir << "pbands" << is + 1;
+            // XML documents cannot be appended, so mode 1 keeps the fixed name
+            // and overwrites; only mode 2 writes one numbered file per step.
+            if (out_app_flag == 2)
+            {
+                ps2 << "g" << istep + 1;
+            }
+            ps2 << ".xml";
+            ModuleIO::write_notice(GlobalV::ofs_running, "Projected bands", ps2.str());
             std::ofstream out(ps2.str().c_str());
 
             out << "<pband>" << std::endl;
+            // XML comment keeps the frame annotation invisible to XML parsers.
+            out << "<!-- Ionic_Step " << istep + 1 << " -->" << std::endl;
             out << "<nspin>" << PARAM.inp.nspin << "</nspin>" << std::endl;
             if (PARAM.inp.nspin == 4) 
 			{
@@ -176,7 +187,6 @@ void ModuleIO::write_proj_band_lcao(
             out.close();
         }
     } // is
-    ModuleIO::write_orb_info(&ucell);
 
     ModuleBase::timer::end("ModuleIO", "write_proj_band_lcao");
     return;
@@ -189,7 +199,9 @@ void ModuleIO::write_proj_band_lcao(
     const elecstate::ElecState* pelec,
     const K_Vectors& kv,
     const UnitCell& ucell,
-    hamilt::Hamilt<std::complex<double>>* p_ham)
+    hamilt::Hamilt<std::complex<double>>* p_ham,
+    const int istep,
+    const int out_app_flag)
 {
     ModuleBase::TITLE("ModuleIO", "write_proj_band_lcao");
     ModuleBase::timer::start("ModuleIO", "write_proj_band_lcao");
@@ -197,7 +209,7 @@ void ModuleIO::write_proj_band_lcao(
     GlobalV::ofs_running << "\n";
     GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
     GlobalV::ofs_running << " |                                                                    |" << std::endl;
-    GlobalV::ofs_running << " |       #Print out projected bands (psi in std::complex<double>)#         |" << std::endl;
+    GlobalV::ofs_running << " |     #Print out projected bands (psi in std::complex<double>)#      |" << std::endl;
     GlobalV::ofs_running << " |                                                                    |" << std::endl;
     GlobalV::ofs_running << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << std::endl;
     GlobalV::ofs_running << "\n";
@@ -313,11 +325,20 @@ void ModuleIO::write_proj_band_lcao(
         if (GlobalV::MY_RANK == 0)
         {
             std::stringstream ps2;
-            ps2 << PARAM.globalv.global_out_dir << "pbands" << is + 1 << ".xml";
-            GlobalV::ofs_running << " Output projected bands in file: " << ps2.str() << std::endl;
+            ps2 << PARAM.globalv.global_out_dir << "pbands" << is + 1;
+            // XML documents cannot be appended, so mode 1 keeps the fixed name
+            // and overwrites; only mode 2 writes one numbered file per step.
+            if (out_app_flag == 2)
+            {
+                ps2 << "g" << istep + 1;
+            }
+            ps2 << ".xml";
+            ModuleIO::write_notice(GlobalV::ofs_running, "Projected bands", ps2.str());
             std::ofstream out(ps2.str().c_str());
 
             out << "<pband>" << std::endl;
+            // XML comment keeps the frame annotation invisible to XML parsers.
+            out << "<!-- Ionic_Step " << istep + 1 << " -->" << std::endl;
             out << "<nspin>" << PARAM.inp.nspin << "</nspin>" << std::endl;
             if (PARAM.inp.nspin == 4)
             {
@@ -394,7 +415,6 @@ void ModuleIO::write_proj_band_lcao(
             out.close();
         }
     } // is
-    ModuleIO::write_orb_info(&ucell);
 
     ModuleBase::timer::end("ModuleIO", "write_proj_band_lcao");
     return;

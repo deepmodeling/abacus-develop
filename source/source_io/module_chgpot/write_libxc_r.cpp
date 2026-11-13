@@ -6,13 +6,18 @@
 #ifdef __LIBXC
 
 #include "write_libxc_r.h"
+#include "libxc_r_suffix.h"
 #include "source_base/parallel_comm.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_hamilt/module_xc/libxc_abacus.h"
 #include "source_estate/module_charge/charge.h"
+#include "source_cell/unitcell.h"
 #include "source_basis/module_pw/pw_basis_big.h"
 #include "source_io/module_output/cube_io.h"
+#include "source_io/module_output/provenance_header.h"
+#include "source_io/module_output/write_notice.h"
 #include "source_base/global_variable.h"
+#include "source_base/tool_quit.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
@@ -30,8 +35,13 @@ void ModuleIO::write_libxc_r(
 	const double &omega, // volume of cell
 	const double tpiba,
 	const Charge &chr,
+	const UnitCell &ucell,
 	const ModulePW::PW_Basis_Big &pw_big,
-	const ModulePW::PW_Basis &pw_rhod)
+	const ModulePW::PW_Basis &pw_rhod,
+	const std::string &out_dir,
+	const int istep,
+	const int out_app_flag,
+	std::ofstream &ofs_running)
 {
 	ModuleBase::TITLE("ModuleIO","write_libxc_r");
 	ModuleBase::timer::start("ModuleIO","write_libxc_r");
@@ -131,9 +141,9 @@ void ModuleIO::write_libxc_r(
 		switch( order )
 		{
 			case 4:		v4rho3sigma .resize( nrxx * ((1==nspin)?1:12) );
-					v4rho2sigma2.resize( nrxx * ((1==nspin)?1:15) );
-					v4rhosigma3 .resize( nrxx * ((1==nspin)?1:20) );
-					v4sigma4    .resize( nrxx * ((1==nspin)?1:15) );
+				v4rho2sigma2.resize( nrxx * ((1==nspin)?1:18) );
+				v4rhosigma3 .resize( nrxx * ((1==nspin)?1:20) );
+				v4sigma4    .resize( nrxx * ((1==nspin)?1:15) );
 			case 3:		v3rho2sigma .resize( nrxx * ((1==nspin)?1:9)  );
 					v3rhosigma2 .resize( nrxx * ((1==nspin)?1:12) );
 					v3sigma3    .resize( nrxx * ((1==nspin)?1:10) );
@@ -228,24 +238,53 @@ void ModuleIO::write_libxc_r(
 		} // end switch( func.info->family )
 	} // end for( xc_func_type &func : funcs )
 
-	auto write_data = [&pw_big, &pw_rhod, nspin](
+	auto write_data = [&pw_big, &pw_rhod, nspin, &out_dir, &ucell, istep, out_app_flag, &ofs_running](
 	const std::string data_name,
 	const std::vector<double> &data,
-	const int number_spin)
+	const std::vector<std::string> &channel_suffixes)
 {
+	const int number_spin = static_cast<int>(channel_suffixes.size());
+	const int istep_one_based = istep + 1;
+	const std::string time_stamp = ModuleIO::local_timestamp();
 	for(int is=0; is<number_spin; ++is)
 	{
 		std::ofstream ofs;
 		if(GlobalV::MY_RANK==0)
 		{
-			const std::string file_name =
-					PARAM.globalv.global_out_dir + "xc_" + data_name +
-					"_s" + std::to_string(is+1) + ".cube";
-			ofs.open(file_name);
+			const std::string suffix = channel_suffixes[is].empty()
+				? ""
+				: "_" + channel_suffixes[is];
+			std::string file_name = out_dir + "xc_" + data_name + suffix;
+			// Modes 0 and 1 reuse the fixed name (mode 1 appends complete
+			// frames after the first step); only mode 2 numbers the files.
+			if (out_app_flag == 2)
+			{
+				file_name += "g" + std::to_string(istep + 1);
+			}
+			file_name += ".cube";
+			std::ios_base::openmode open_mode = std::ios::out;
+			const bool append_frame = (out_app_flag == 1) && (istep > 0);
+			if (append_frame)
+			{
+				open_mode |= std::ios::app;
+			}
+			ofs.open(file_name, open_mode);
+			if (!ofs.is_open())
+			{
+				ModuleBase::WARNING_QUIT("write_libxc_r", "Cannot open file: " + file_name);
+			}
 
-			ofs.unsetf(std::ostream::fixed);
-			ofs << std::setprecision(PARAM.inp.out_xc_r[1]);
-			ofs << std::scientific;
+			ModuleIO::write_notice(ofs_running, "XC " + data_name, file_name);
+
+			// Each file holds a single channel, so the header declares one spin
+			// direction; the first comment line carries the one-based ionic step.
+			std::vector<std::string> comment(2);
+			comment[0] = "Ionic_Step " + std::to_string(istep_one_based)
+				+ "  Cubefile created from ABACUS. Inner loop is z, followed by y and x"
+				+ ModuleIO::prov_inline(time_stamp);
+			comment[1] = "1 # number of spin directions";
+			ModuleIO::write_cube_header_for_cell(ofs, ucell, pw_rhod.nx, pw_rhod.ny, pw_rhod.nz,
+				comment, PARAM.inp.out_xc_r[1]);
 		}
 
 	  #ifdef __MPI
@@ -278,54 +317,57 @@ void ModuleIO::write_libxc_r(
 	}
 };
 
-	write_data( "rho", rho, nspin );
+    write_data("rho", rho, libxc_r_channel_suffixes("rho", nspin));
 
-	if(1!=nspin && 2!=PARAM.inp.nspin)
-	{
-		write_data( "amag", amag, 1 );
-	}
+    if (1 != nspin && 2 != PARAM.inp.nspin)
+    {
+        write_data("amag", amag, libxc_r_channel_suffixes("amag", nspin));
+    }
 
-	if(is_gga)
-	{
-		write_data( "sigma", sigma, (1==nspin)?1:3 );
-	}
+    if (is_gga)
+    {
+        write_data("sigma", sigma, libxc_r_channel_suffixes("sigma", nspin));
+    }
 
-	switch( order )
-	{
-		case 4:	write_data( "v4rho4", v4rho4, (1==nspin)?1:5 );
-		case 3:	write_data( "v3rho3", v3rho3, (1==nspin)?1:4 );
-		case 2:	write_data( "v2rho2", v2rho2, (1==nspin)?1:3 );
-		case 1:	write_data( "vrho"  , vrho  , nspin );
-		case 0:	write_data( "exc"   , exc   , 1 );
-			break;
-		default: throw std::domain_error(
-				"order =" + std::to_string(order) +
-				" unfinished in " + std::string(__FILE__) +
-				" line " + std::to_string(__LINE__));
-				break;
-	}
-	if(is_gga)
-	{
-		switch( order )
-		{
-			case 4:	write_data( "v4rho3sigma" , v4rho3sigma , (1==nspin)?1:12 );
-				write_data( "v4rho2sigma2", v4rho2sigma2, (1==nspin)?1:15 );
-				write_data( "v4rhosigma3" , v4rhosigma3 , (1==nspin)?1:20 );
-				write_data( "v4sigma4"    , v4sigma4    , (1==nspin)?1:15 );
-			case 3:	write_data( "v3rho2sigma" , v3rho2sigma , (1==nspin)?1:9  );
-				write_data( "v3rhosigma2" , v3rhosigma2 , (1==nspin)?1:12 );
-				write_data( "v3sigma3"    , v3sigma3    , (1==nspin)?1:10 );
-			case 2:	write_data( "v2rhosigma"  , v2rhosigma  , (1==nspin)?1:6  );
-				write_data( "v2sigma2"    , v2sigma2    , (1==nspin)?1:6  );
-			case 1:	write_data( "vsigma"      , vsigma      , (1==nspin)?1:3  );
-			case 0:	break;
-			default: throw std::domain_error(
-						"order =" + std::to_string(order) +
-						" unfinished in " + std::string(__FILE__) +
-						" line " + std::to_string(__LINE__));
-						break;
-		}
-	}
+    switch (order)
+    {
+        case 4: write_data("v4rho4", v4rho4, libxc_r_channel_suffixes("v4rho4", nspin));
+        case 3: write_data("v3rho3", v3rho3, libxc_r_channel_suffixes("v3rho3", nspin));
+        case 2: write_data("v2rho2", v2rho2, libxc_r_channel_suffixes("v2rho2", nspin));
+        case 1: write_data("vrho", vrho, libxc_r_channel_suffixes("vrho", nspin));
+        case 0: write_data("exc", exc, libxc_r_channel_suffixes("exc", nspin));
+            break;
+        default: throw std::domain_error(
+                "order =" + std::to_string(order) +
+                " unfinished in " + std::string(__FILE__) +
+                " line " + std::to_string(__LINE__));
+                break;
+    }
+    if (is_gga)
+    {
+        switch (order)
+        {
+            case 4:
+                write_data("v4rho3sigma", v4rho3sigma, libxc_r_channel_suffixes("v4rho3sigma", nspin));
+                write_data("v4rho2sigma2", v4rho2sigma2, libxc_r_channel_suffixes("v4rho2sigma2", nspin));
+                write_data("v4rhosigma3", v4rhosigma3, libxc_r_channel_suffixes("v4rhosigma3", nspin));
+                write_data("v4sigma4", v4sigma4, libxc_r_channel_suffixes("v4sigma4", nspin));
+            case 3:
+                write_data("v3rho2sigma", v3rho2sigma, libxc_r_channel_suffixes("v3rho2sigma", nspin));
+                write_data("v3rhosigma2", v3rhosigma2, libxc_r_channel_suffixes("v3rhosigma2", nspin));
+                write_data("v3sigma3", v3sigma3, libxc_r_channel_suffixes("v3sigma3", nspin));
+            case 2:
+                write_data("v2rhosigma", v2rhosigma, libxc_r_channel_suffixes("v2rhosigma", nspin));
+                write_data("v2sigma2", v2sigma2, libxc_r_channel_suffixes("v2sigma2", nspin));
+            case 1: write_data("vsigma", vsigma, libxc_r_channel_suffixes("vsigma", nspin));
+            case 0: break;
+            default: throw std::domain_error(
+                        "order =" + std::to_string(order) +
+                        " unfinished in " + std::string(__FILE__) +
+                        " line " + std::to_string(__LINE__));
+                        break;
+        }
+    }
 
 	XC_Functional_Libxc::finish_func(funcs);
 

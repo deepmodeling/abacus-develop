@@ -27,6 +27,7 @@ void Cal_ldos<T>::cal_ldos_lcao(
 		const UnitCell& ucell,
 		const std::vector<double>& stm_bias,
 		const int nspin,
+		const int istep,
 		const std::string& global_out_dir,
 		const bool two_fermi,
 		const int out_ldos_precision,
@@ -94,7 +95,7 @@ void Cal_ldos<T>::cal_ldos_lcao(
                                       ldos_space.data(),
                                       0,
                                       nspin,
-                                      0,
+                                      istep,
                                       fn.str(),
                                       0,
                                       &ucell,
@@ -126,6 +127,7 @@ void cal_ldos_pw(const elecstate::ElecStatePW<std::complex<double>>* pelec,
                  const std::vector<int>& out_ldos,
                  const std::vector<double>& stm_bias,
                  const int nspin,
+                 const int istep,
                  const std::string& global_out_dir,
                  const bool two_fermi,
                  const int nbands,
@@ -143,12 +145,12 @@ void cal_ldos_pw(const elecstate::ElecStatePW<std::complex<double>>* pelec,
     {
         const int out_ldos_precision = out_ldos[1];
         ModuleIO::stm_mode_pw<Device>(pelec, psi, ctx, pgrid, ucell,
-                                      stm_bias, nspin, global_out_dir, two_fermi,
+                                      stm_bias, nspin, istep, global_out_dir, two_fermi,
                                       out_ldos_precision, ofs_running);
     }
     if (out_ldos[0] == 2 || out_ldos[0] == 3)
     {
-        ModuleIO::ldos_mode_pw<Device>(pelec, psi, ctx, pgrid, ucell,
+        ModuleIO::ldos_mode_pw<Device>(pelec, psi, ctx, pgrid, ucell, istep,
                                        global_out_dir, nbands, dos_edelta_ev, dos_scale,
                                        dos_setemax, dos_emax_ev, dos_setemin, dos_emin_ev,
                                        two_fermi, dos_sigma, ldos_line, ofs_running);
@@ -163,6 +165,7 @@ void stm_mode_pw(const elecstate::ElecStatePW<std::complex<double>>* pelec,
                  const UnitCell& ucell,
                  const std::vector<double>& stm_bias,
                  const int nspin,
+                 const int istep,
                  const std::string& global_out_dir,
                  const bool two_fermi,
                  const int out_ldos_precision,
@@ -231,7 +234,7 @@ void stm_mode_pw(const elecstate::ElecStatePW<std::complex<double>>* pelec,
            << ".cube";
 
         const int precision = out_ldos_precision;
-        ModuleIO::write_vdata_palgrid(pgrid, ldos.data(), 0, nspin, 0, fn.str(), 0, &ucell, precision, 0, two_fermi, false, false, ofs_running, "local DOS");
+        ModuleIO::write_vdata_palgrid(pgrid, ldos.data(), 0, nspin, istep, fn.str(), 0, &ucell, precision, 0, two_fermi, false, false, ofs_running, "local DOS");
     }
 }
 
@@ -241,6 +244,7 @@ void ldos_mode_pw(const elecstate::ElecStatePW<std::complex<double>>* pelec,
                   const Device* ctx,
                   const Parallel_Grid& pgrid,
                   const UnitCell& ucell,
+                  const int istep,
                   const std::string& global_out_dir,
                   const int nbands,
                   const double dos_edelta_ev,
@@ -487,6 +491,7 @@ template void cal_ldos_pw<base_device::DEVICE_CPU>(const elecstate::ElecStatePW<
                                                    const std::vector<int>& out_ldos,
                                                    const std::vector<double>& stm_bias,
                                                    const int nspin,
+                                                   const int istep,
                                                    const std::string& global_out_dir,
                                                    const bool two_fermi,
                                                    const int nbands,
@@ -508,6 +513,7 @@ template void cal_ldos_pw<base_device::DEVICE_GPU>(const elecstate::ElecStatePW<
                                                    const std::vector<int>& out_ldos,
                                                    const std::vector<double>& stm_bias,
                                                    const int nspin,
+                                                   const int istep,
                                                    const std::string& global_out_dir,
                                                    const bool two_fermi,
                                                    const int nbands,

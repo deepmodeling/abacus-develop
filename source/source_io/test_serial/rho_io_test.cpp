@@ -102,11 +102,35 @@ TEST_F(RhoIOTest, Write)
     Parallel_Grid pgrid(nx, ny, nz, nz, nrxx, nz, 1);
     ModuleIO::read_vdata_palgrid(pgrid, my_rank, ofs_running, "support/chg.cube", rho[0], ucell->nat);
     ModuleIO::write_vdata_palgrid(pgrid, rho[0], 0, nspin, 0, "test_write_vdata_palgrid.cube", 0.461002, ucell, 11, 1, false, false, false, ofs_running, "charge density");
-    std::ifstream ifs1("test_write_vdata_palgrid.cube", std::ifstream::binary | std::ifstream::ate);
-    std::ifstream ifs2("support/chg.cube", std::ifstream::binary | std::ifstream::ate);
-    EXPECT_EQ(ifs1.tellg(), ifs2.tellg());
-    ifs1.close();
-    ifs2.close();
+    // The first comment line now carries inline provenance, so compare the
+    // parsed header and data instead of the raw file size.
+    std::vector<std::string> comment;
+    int natom = 0;
+    std::vector<double> origin;
+    int nx_read = 0;
+    int ny_read = 0;
+    int nz_read = 0;
+    std::vector<double> dx;
+    std::vector<double> dy;
+    std::vector<double> dz;
+    std::vector<int> atom_type;
+    std::vector<double> atom_charge;
+    std::vector<std::vector<double>> atom_pos;
+    std::vector<double> data_read;
+    ModuleIO::read_cube("test_write_vdata_palgrid.cube", comment, natom, origin,
+                        nx_read, ny_read, nz_read, dx, dy, dz,
+                        atom_type, atom_charge, atom_pos, data_read);
+    const std::string step_prefix = "Ionic_Step 1  Cubefile created from ABACUS. Inner loop is z, followed by y and x";
+    EXPECT_EQ(comment[0].compare(0, step_prefix.size(), step_prefix), 0);
+    EXPECT_NE(comment[0].find("# ABACUS version:"), std::string::npos);
+    EXPECT_NE(comment[0].find("# Written at "), std::string::npos);
+    EXPECT_EQ(comment[1], "1 # number of spin directions 0.461002 # Fermi energy, in Ry");
+    EXPECT_EQ(natom, 2);
+    EXPECT_EQ(nx_read, nx);
+    EXPECT_EQ(ny_read, ny);
+    EXPECT_EQ(nz_read, nz);
+    ASSERT_EQ(data_read.size(), static_cast<std::size_t>(nx * ny * nz));
+    EXPECT_DOUBLE_EQ(data_read[0], rho[0][0]);
 }
 
 TEST_F(RhoIOTest, TrilinearInterpolate)

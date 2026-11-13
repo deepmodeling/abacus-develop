@@ -97,7 +97,7 @@ void ctrl_output_fp(UnitCell& ucell,
 
             fn += spin_block + geom_block + ".cube";
 
-            const std::string desc_chg = ModuleIO::make_data_desc("charge density", "magnetization density m", is, nspin);
+            const std::string desc_chg = ModuleIO::make_data_desc("Charge density", "Magnetization density m", is, nspin);
 
             ModuleIO::write_vdata_palgrid(para_grid,
                                           chr.rho[is],
@@ -121,7 +121,7 @@ void ctrl_output_fp(UnitCell& ucell,
 
                 fn += spin_block + geom_block + ".cube";
 
-                const std::string desc_tau = ModuleIO::make_data_desc("kinetic energy density", "kinetic energy density magnetization m", is, nspin);
+                const std::string desc_tau = ModuleIO::make_data_desc("Kinetic energy density", "Kinetic energy density magnetization m", is, nspin);
 
                 ModuleIO::write_vdata_palgrid(para_grid,
                                               chr.kin_r[is],
@@ -163,7 +163,7 @@ void ctrl_output_fp(UnitCell& ucell,
 
             fn += spin_block + geom_block + ".cube";
 
-            const std::string desc_pot = ModuleIO::make_data_desc("effective potential", "effective magnetic field b", is, nspin);
+            const std::string desc_pot = ModuleIO::make_data_desc("Effective potential", "Effective magnetic field b", is, nspin);
 
             ModuleIO::write_vdata_palgrid(para_grid,
                                           pelec->pot->get_eff_v(is),
@@ -269,14 +269,21 @@ void ctrl_output_fp(UnitCell& ucell,
     // 7) write xc(r)
     if (inp.out_xc_r[0] >= 0 && should_output)
     {
+        // Mode-2 CHG/ subdirectory is created lazily at write time.
+        ModuleBase::ensure_directory(global_chg_dir);
         ModuleIO::write_libxc_r(inp.out_xc_r[0],
                                 XC_Functional::get_func_id(),
                                 pw_rhod->nrxx, // number of real-space grid
                                 ucell.omega,   // volume of cell
                                 ucell.tpiba,
                                 chr,
+                                ucell,
                                 *pw_big,
-                                *pw_rhod);
+                                *pw_rhod,
+                                global_chg_dir,
+                                istep,
+                                out_app_flag,
+                                ofs_running);
     }
 #endif
 

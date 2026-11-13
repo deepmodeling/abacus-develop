@@ -2,6 +2,8 @@
 #include "source_base/parallel_comm.h"
 #include "source_base/parallel_grid.h"
 #include "source_io/module_output/cube_io.h"
+#include "source_io/module_output/provenance_header.h"
+#include "source_io/module_output/write_notice.h"
 
 #include <vector>
 
@@ -44,6 +46,8 @@ void ModuleIO::write_vdata_palgrid(const Parallel_Grid& pgrid,
 
     start = time(nullptr);
     const bool is_primary_band_group = GlobalV::MY_BNDGROUP == 0;
+    const int istep_one_based = istep + 1;
+    const std::string time_stamp = ModuleIO::local_timestamp();
 
     // reduce
     std::vector<double> data_xyz_full(nxyz); // data to be written
@@ -75,7 +79,9 @@ void ModuleIO::write_vdata_palgrid(const Parallel_Grid& pgrid,
         ss << std::fixed;
         ss << std::setprecision(6);
 
-        ss << "Ionic_Step " << istep + 1 << "  Cubefile created from ABACUS. Inner loop is z, followed by y and x" << std::endl;
+        ss << "Ionic_Step " << istep_one_based
+           << "  Cubefile created from ABACUS. Inner loop is z, followed by y and x"
+           << ModuleIO::prov_inline(time_stamp) << std::endl;
 
         ss << nspin << " # number of spin directions ";
         if (out_fermi == 1)
@@ -177,7 +183,7 @@ void ModuleIO::write_vdata_palgrid(const Parallel_Grid& pgrid,
                    precision,
                    append);
 
-        ofs_running << " Write " << data_desc << " to file: " << fn << std::endl;
+        ModuleIO::write_notice(ofs_running, data_desc, fn);
 
         end = time(nullptr);
         ModuleBase::GlobalFunc::OUT_TIME("write_vdata_palgrid", start, end);
@@ -204,6 +210,52 @@ void ModuleIO::write_cube(const std::string& file,
                           const bool append,
                           const int ndata_line)
 {
+    assert(data.size() >= nx * ny * nz);
+
+    // In append mode (out_app_flag == 1) each written ionic step contributes
+    // one complete cube frame; the previous frame always ends with a newline,
+    // so the appended frame starts on a fresh line. Otherwise the file is
+    // truncated and holds a single frame.
+    std::ios_base::openmode open_mode = std::ios::out | std::ios::trunc;
+    if (append)
+    {
+        open_mode = std::ios::out | std::ios::app;
+    }
+    std::ofstream ofs(file, open_mode);
+    write_cube_header(ofs, comment, natom, origin, nx, ny, nz, dx, dy, dz,
+                      atom_type, atom_charge, atom_pos, precision);
+
+    const int nxy = nx * ny;
+    for (int ixy = 0; ixy < nxy; ++ixy)
+    {
+        for (int iz = 0; iz < nz; ++iz)
+        {
+            ofs << " " << data[ixy * nz + iz];
+            if ((iz + 1) % ndata_line == 0 && iz != nz - 1)
+            {
+                ofs << "\n";
+            }
+        }
+        ofs << "\n";
+    }
+    ofs.close();
+}
+
+void ModuleIO::write_cube_header(std::ofstream& ofs,
+                                 const std::vector<std::string>& comment,
+                                 const int& natom,
+                                 const std::vector<double>& origin,
+                                 const int& nx,
+                                 const int& ny,
+                                 const int& nz,
+                                 const std::vector<double>& dx,
+                                 const std::vector<double>& dy,
+                                 const std::vector<double>& dz,
+                                 const std::vector<int>& atom_type,
+                                 const std::vector<double>& atom_charge,
+                                 const std::vector<std::vector<double>>& atom_pos,
+                                 const int precision)
+{
     assert(comment.size() >= 2);
     for (int i = 0; i < 2; ++i)
     {
@@ -222,19 +274,6 @@ void ModuleIO::write_cube(const std::string& file,
     {
         assert(atom_pos[i].size() >= 3);
     }
-
-    assert(data.size() >= nx * ny * nz);
-
-    // In append mode (out_app_flag == 1) each written ionic step contributes
-    // one complete cube frame; the previous frame always ends with a newline,
-    // so the appended frame starts on a fresh line. Otherwise the file is
-    // truncated and holds a single frame.
-    std::ios_base::openmode open_mode = std::ios::out | std::ios::trunc;
-    if (append)
-    {
-        open_mode = std::ios::out | std::ios::app;
-    }
-    std::ofstream ofs(file, open_mode);
 
     for (int i = 0; i < 2; ++i)
     {
@@ -260,18 +299,68 @@ void ModuleIO::write_cube(const std::string& file,
     ofs.unsetf(std::ofstream::fixed);
     ofs << std::setprecision(precision);
     ofs << std::scientific;
-    const int nxy = nx * ny;
-    for (int ixy = 0; ixy < nxy; ++ixy)
+}
+
+void ModuleIO::write_cube_header_for_cell(std::ofstream& ofs,
+                                          const UnitCell& ucell,
+                                          const int nx,
+                                          const int ny,
+                                          const int nz,
+                                          const std::vector<std::string>& comment,
+                                          const int precision)
+{
+    const double fac = ucell.lat0;
+    std::vector<double> dx = {fac * ucell.latvec.e11 / double(nx),
+                              fac * ucell.latvec.e12 / double(nx),
+                              fac * ucell.latvec.e13 / double(nx)};
+    std::vector<double> dy = {fac * ucell.latvec.e21 / double(ny),
+                              fac * ucell.latvec.e22 / double(ny),
+                              fac * ucell.latvec.e23 / double(ny)};
+    std::vector<double> dz = {fac * ucell.latvec.e31 / double(nz),
+                              fac * ucell.latvec.e32 / double(nz),
+                              fac * ucell.latvec.e33 / double(nz)};
+
+    std::vector<int> atom_type;
+    std::vector<double> atom_charge;
+    std::vector<std::vector<double>> atom_pos;
+    for (int it = 0; it < ucell.ntype; it++)
     {
-        for (int iz = 0; iz < nz; ++iz)
+        // erase the number in label, such as Fe1.
+        std::string element = ucell.atoms[it].label;
+        std::string::iterator temp = element.begin();
+        while (temp != element.end())
         {
-            ofs << " " << data[ixy * nz + iz];
-            if ((iz + 1) % ndata_line == 0 && iz != nz - 1)
+            if ((*temp >= '1') && (*temp <= '9'))
             {
-                ofs << "\n";
+                temp = element.erase(temp);
+            }
+            else
+            {
+                temp++;
             }
         }
-        ofs << "\n";
+
+        for (int ia = 0; ia < ucell.atoms[it].na; ia++)
+        {
+            // convert from label to atomic number
+            int z = 0;
+            for (int j = 0; j != ModuleBase::element_name.size(); j++)
+            {
+                if (element == ModuleBase::element_name[j])
+                {
+                    z = j + 1;
+                    break;
+                }
+            }
+            atom_type.push_back(z);
+            atom_charge.push_back(ucell.atoms[it].ncpp.zv);
+            atom_pos.push_back({fac * ucell.atoms[it].tau[ia].x,
+                                fac * ucell.atoms[it].tau[ia].y,
+                                fac * ucell.atoms[it].tau[ia].z});
+        }
     }
-    ofs.close();
+
+    std::vector<double> origin(3, 0.0);
+    write_cube_header(ofs, comment, ucell.nat, origin, nx, ny, nz, dx, dy, dz,
+                      atom_type, atom_charge, atom_pos, precision);
 }

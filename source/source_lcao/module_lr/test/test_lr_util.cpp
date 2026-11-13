@@ -238,7 +238,7 @@ TEST_F(LRDMTest, SparseWriterKeepsSpinFilesAndDisjointRankKeys)
             std::string line;
             std::getline(input, line);
             // Header step is one-based per governance rule 22 (writer receives istep = 0).
-            EXPECT_EQ(line, "STEP: 1");
+            EXPECT_EQ(line.compare(0, 12, "Ionic_Step 1"), 0);
             std::getline(input, line);
             EXPECT_EQ(line, "Matrix Dimension of EDM(R): " + std::to_string(dimension));
             std::getline(input, line);

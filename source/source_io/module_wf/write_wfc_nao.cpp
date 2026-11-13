@@ -14,6 +14,7 @@
 #include "source_base/formatter.h"
 #include "source_io/module_output/provenance_header.h"
 #include "source_io/module_output/spin_tag.h"
+#include "source_io/module_output/write_notice.h"
 
 namespace
 {
@@ -61,7 +62,7 @@ std::string build_wfc_nao_header(const int istep, const std::string& spin_tag)
         return header;
     }
     const int istep_one_based = istep + 1;
-    const std::string step_line = FmtCore::format("# IONIC STEP %d%s\n", istep_one_based, spin_tag.c_str());
+    const std::string step_line = FmtCore::format("# Ionic_Step %d%s\n", istep_one_based, spin_tag.c_str());
     return header + step_line;
 }
 
@@ -281,6 +282,7 @@ void write_wfc_nao(const int out_type,
         const int nkstot,
         const Parallel_Orbitals& pv,
         const int nspin,
+        std::ofstream& ofs_running,
         const int istep)
 {
     if (!out_type)
@@ -386,6 +388,7 @@ void write_wfc_nao(const int out_type,
                                            append_flag,
                                            header);
             }
+            ModuleIO::write_notice(ofs_running, "LCAO wavefunction coefficients", fn);
         }
     }
     ModuleBase::timer::end("ModuleIO", "write_wfc_nao");
@@ -401,6 +404,7 @@ template void write_wfc_nao<double>(const int out_type,
         const int nkstot,
         const Parallel_Orbitals& pv,
         const int nspin,
+        std::ofstream& ofs_running,
         const int istep);
 
 template void write_wfc_nao<std::complex<double>>(const int out_type,
@@ -413,6 +417,7 @@ template void write_wfc_nao<std::complex<double>>(const int out_type,
         const int nkstot,
         const Parallel_Orbitals& pv,
         const int nspin,
+        std::ofstream& ofs_running,
         const int istep);
 
 } // namespace ModuleIO

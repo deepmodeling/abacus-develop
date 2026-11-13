@@ -8,6 +8,7 @@
 #include "source_io/module_json/para_json.h"
 #include "source_io/module_output/cal_test.h"
 #include "source_io/module_output/print_info.h"
+#include "source_io/module_output/write_notice.h"
 #include "source_io/module_parameter/input_conv.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_io/module_parameter/read_input.h"
@@ -146,6 +147,10 @@ void Driver::reading()
     std::stringstream ss1;
     ss1 << PARAM.globalv.global_out_dir << PARAM.globalv.global_in_card << ".info";
     input.write_parameters(PARAM, ss1.str());
+    if (GlobalV::MY_RANK == 0)
+    {
+        ModuleIO::write_notice(GlobalV::ofs_running, "Input parameters", ss1.str());
+    }
 
     // (*temp*) copy the variables from INPUT to each class
     Input_Conv::Convert();

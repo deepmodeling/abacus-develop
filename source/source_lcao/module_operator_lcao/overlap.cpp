@@ -424,7 +424,7 @@ void Overlap<OperatorLCAO<TK, TR>>::output_SR_async_csr(const int istep,
         }
 
         // Write header information
-        ofs << "IONIC_STEP: " << istep + 1 << std::endl;
+        ofs << "Ionic_Step " << istep + 1 << std::endl;
         ofs << "Matrix Dimension of S_async(R): " << SR_async_serial.get_nbasis() << std::endl;
         ofs << "Matrix number of S_async(R): " << SR_async_serial.size_R_loop() << std::endl;
 

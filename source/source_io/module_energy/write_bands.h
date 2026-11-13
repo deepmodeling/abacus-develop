@@ -20,6 +20,8 @@ namespace ModuleIO
  * @param ekb eigenvalues of k points and bands
  * @param kv klist
  * @param ofs_running running log stream
+ * @param band_dir directory that receives the band output files; the caller
+ *                 resolves it from the output directory configuration
  * @param istep zero-based index of the current ionic step, printed one-based
  *              in the per-step provenance header
  */
@@ -27,6 +29,7 @@ void write_bands(const Input_para& inp,
     const ModuleBase::matrix& ekb,
     const K_Vectors& kv,
     std::ofstream& ofs_running,
+    const std::string& band_dir,
     const int istep);
 
 /**
@@ -41,6 +44,7 @@ void write_bands(const Input_para& inp,
  * @param kv klist
  * @param header provenance header written once in front of the k-point block;
  *               pass an empty string to omit it
+ * @param out_app_flag output append mode: 0 = truncate, 1 = append
  */
 void nscf_bands(const int& is,
                const std::string &eig_file,
@@ -49,7 +53,8 @@ void nscf_bands(const int& is,
                const int& precision,
                const ModuleBase::matrix& ekb,
                const K_Vectors& kv,
-               const std::string& header);
+               const std::string& header,
+               const int out_app_flag);
 }
 
 #endif

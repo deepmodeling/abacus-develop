@@ -1,5 +1,6 @@
 #include "vxc_op_r.h"
 #include "source_io/module_output/spin_tag.h"
+#include "source_io/module_output/write_notice.h"
 
 #include "source_io/module_hs/hs_sparse_io.h"
 #include "source_base/module_out/filename.h"
@@ -34,7 +35,8 @@ void write_Vxc_R(const int nspin,
                  const std::string& global_out_dir,
                  bool cal_exx,
                  double hybrid_alpha,
-                 bool real_number
+                 bool real_number,
+                 const int istep
 #ifdef __EXX
                  ,
                  const std::vector<std::map<int, std::map<hamilt::TAC, RI::Tensor<double>>>>* Hexxd,
@@ -42,6 +44,7 @@ void write_Vxc_R(const int nspin,
 #endif
                  ,
                  const double sparse_thr,
+                 const int precision,
                  std::ofstream& ofs_running)
 {
     ModuleBase::TITLE("ModuleIO", "write_Vxc_R");
@@ -114,23 +117,34 @@ void write_Vxc_R(const int nspin,
     }
 
     // 4. write Vxc(R) in csr format
+    // This matrix is a final-step snapshot: it is computed once at the end of
+    // the calculation, so every out_app_flag mode keeps the fixed filename and
+    // truncates any previous content. The header still records the real
+    // one-based ionic step.
     for (int is = 0; is < nspin0; ++is)
     {
         std::set<Abfs::Vector3_Order<int>> all_R_coor = sparse_format::get_R_range(vxcs_R_ao[is]);
-        const std::string filename = "Vxc_R_spin" + std::to_string(is);
+        const std::string filename = "vxcrs" + std::to_string(is + 1) + "_nao.csr";
         ModuleIO::SparseWriteOptions options;
-        options.filename = global_out_dir + filename + ".csr";
-        options.label = filename;
+        options.filename = global_out_dir + filename;
+        options.label = "Vxc";
         options.threshold = sparse_thr;
+        options.precision = precision;
         options.binary = false;
-        options.istep = -1;
+        options.istep = istep;
+        options.out_app_flag = 0;
         options.reduce = true;
+        // Match the H(R)/S(R) CSR layout: self-describing header with the
+        // cell block and every R vector listed, including empty ones.
+        options.csr_format = true;
+        options.ucell = &ucell;
+        options.nspin = nspin;
+        options.ispin = is;
         ModuleIO::save_sparse(cal_HR_sparse(vxcs_R_ao[is], sparse_thr),
                               all_R_coor,
                               *pv,
                               options);
-        const std::string spin_tag = ModuleIO::make_spin_tag(is, nspin);
-        ofs_running << " Write Vxc(R)" << spin_tag << " matrix in NAO basis to file: " << options.filename << std::endl;
+        ModuleIO::write_matrix_notice(ofs_running, "Vxc(R)", is, nspin, options.filename);
     }
 }
 
@@ -139,33 +153,33 @@ template void write_Vxc_R<double, double>(
     const int, const Parallel_Orbitals*, const UnitCell&, Structure_Factor&, surchem&,
     const ModulePW::PW_Basis&, const ModulePW::PW_Basis&, const ModuleBase::matrix&,
     const Charge&, const K_Vectors&, const std::vector<double>&, Grid_Driver&,
-    const std::string&, bool, double, bool
+    const std::string&, bool, double, bool, const int
 #ifdef __EXX
     , const std::vector<std::map<int, std::map<hamilt::TAC, RI::Tensor<double>>>>*,
     const std::vector<std::map<int, std::map<hamilt::TAC, RI::Tensor<std::complex<double>>>>>*
 #endif
-    , const double, std::ofstream&);
+    , const double, const int, std::ofstream&);
 
 template void write_Vxc_R<std::complex<double>, double>(
     const int, const Parallel_Orbitals*, const UnitCell&, Structure_Factor&, surchem&,
     const ModulePW::PW_Basis&, const ModulePW::PW_Basis&, const ModuleBase::matrix&,
     const Charge&, const K_Vectors&, const std::vector<double>&, Grid_Driver&,
-    const std::string&, bool, double, bool
+    const std::string&, bool, double, bool, const int
 #ifdef __EXX
     , const std::vector<std::map<int, std::map<hamilt::TAC, RI::Tensor<double>>>>*,
     const std::vector<std::map<int, std::map<hamilt::TAC, RI::Tensor<std::complex<double>>>>>*
 #endif
-    , const double, std::ofstream&);
+    , const double, const int, std::ofstream&);
 
 template void write_Vxc_R<std::complex<double>, std::complex<double>>(
     const int, const Parallel_Orbitals*, const UnitCell&, Structure_Factor&, surchem&,
     const ModulePW::PW_Basis&, const ModulePW::PW_Basis&, const ModuleBase::matrix&,
     const Charge&, const K_Vectors&, const std::vector<double>&, Grid_Driver&,
-    const std::string&, bool, double, bool
+    const std::string&, bool, double, bool, const int
 #ifdef __EXX
     , const std::vector<std::map<int, std::map<hamilt::TAC, RI::Tensor<double>>>>*,
     const std::vector<std::map<int, std::map<hamilt::TAC, RI::Tensor<std::complex<double>>>>>*
 #endif
-    , const double, std::ofstream&);
+    , const double, const int, std::ofstream&);
 
 } // namespace ModuleIO

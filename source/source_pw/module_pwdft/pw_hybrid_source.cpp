@@ -86,11 +86,23 @@ void pw::read_exx_source_occupations(std::istream& in,
         throw std::runtime_error("Invalid EXX source occupation dimensions");
     }
     std::string line;
-    std::getline(in, line);
-    std::getline(in, line);
-    std::getline(in, line);
     int saved_spin = 0;
-    if (std::sscanf(line.c_str(), " Spin number %d", &saved_spin) != 1 || saved_spin != nspin)
+    bool spin_found = false;
+    // The header may carry provenance comments and the ionic-step marker before
+    // the "Spin number" line, so scan until the spin line is located.
+    while (std::getline(in, line))
+    {
+        if (std::sscanf(line.c_str(), " Spin number %d", &saved_spin) == 1)
+        {
+            spin_found = true;
+            break;
+        }
+        if (line.find(" spin=") != std::string::npos)
+        {
+            break;
+        }
+    }
+    if (!spin_found || saved_spin != nspin)
     {
         throw std::runtime_error("Missing or incompatible EXX source eig_occ.txt");
     }

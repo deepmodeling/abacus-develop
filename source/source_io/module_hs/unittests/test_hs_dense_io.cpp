@@ -178,7 +178,7 @@ TEST(HsDenseIoSaveMat, TextHeaderContainsStepAndDimension)
                                filename, pv, 0, "genelpa", false);
     const std::string content = read_text_file(filename);
     // MPI text path writes header lines starting with '#'
-    EXPECT_NE(content.find("ionic step"), std::string::npos);
+    EXPECT_NE(content.find("Ionic_Step"), std::string::npos);
     EXPECT_NE(content.find("1"), std::string::npos); // istep+1 = 1
     EXPECT_NE(content.find("gamma only"), std::string::npos);
     EXPECT_NE(content.find("rows"), std::string::npos);
@@ -195,8 +195,8 @@ TEST(HsDenseIoSaveMat, TextHeaderStepTwo)
     ModuleIO::save_mat<double>(1, mat.data(), dim, false, 8, false, false,
                                filename, pv, 0, "genelpa", false);
     const std::string content = read_text_file(filename);
-    // istep=1 -> "ionic step 2"
-    EXPECT_NE(content.find("ionic step 2"), std::string::npos);
+    // istep=1 -> "Ionic_Step 2"
+    EXPECT_NE(content.find("Ionic_Step 2"), std::string::npos);
     std::remove(filename.c_str());
 }
 
@@ -374,6 +374,50 @@ TEST(HsDenseIoSaveMat, BinaryAppendCompleteRecordsAndOverwrite)
         // Exactly one record, containing the replacement values.
         EXPECT_EQ(read_record<double>(ifs, dim), upper_triangle(replacement, dim));
         EXPECT_EQ(ifs.peek(), std::ifstream::traits_type::eof());
+    }
+
+    remove_test_file(filename);
+}
+
+TEST(HsDenseIoSaveMat, TextAppendTwoStepsAndFirstStepTruncates)
+{
+    // The Vxc(MO) writer saves text triangle matrices with
+    // append = (out_app_flag == 1) && (istep > 0). Cover the same shape of
+    // call: a rerun's first step must truncate, later steps must append.
+    const int dim = 2;
+    const std::string filename = testing::TempDir() + "/save_mat_vxcmo_append.txt";
+    remove_test_file(filename);
+
+    Parallel_Orbitals pv;
+    initialize_distribution(pv, dim);
+    const std::vector<double> stale = {1.0, 2.0, 3.0, 4.0};
+    const std::vector<double> second = {5.0, 6.0, 7.0, 8.0};
+    const std::vector<double> stale_local = distribute_matrix(pv, stale, dim);
+    const std::vector<double> second_local = distribute_matrix(pv, second, dim);
+
+    // A previous run left a frame in the file; a fresh run starts at istep 0
+    // with append enabled and must overwrite it.
+    ModuleIO::save_mat(0, stale_local.data(), dim, false, 8, true, true,
+                       filename, pv.para_2d(), test_rank, "cg");
+    // Second ionic step appends a new record.
+    ModuleIO::save_mat(1, second_local.data(), dim, false, 8, true, true,
+                       filename, pv.para_2d(), test_rank, "cg");
+
+    if (test_rank == 0)
+    {
+        const std::string content = read_text_file(filename);
+        size_t records = 0;
+        for (size_t pos = content.find("Ionic_Step"); pos != std::string::npos;
+             pos = content.find("Ionic_Step", pos + 1))
+        {
+            ++records;
+        }
+        EXPECT_EQ(records, static_cast<size_t>(2));
+        const size_t first_step = content.find("Ionic_Step 1");
+        const size_t second_step = content.find("Ionic_Step 2");
+        ASSERT_NE(first_step, std::string::npos);
+        ASSERT_NE(second_step, std::string::npos);
+        EXPECT_LT(first_step, second_step);
     }
 
     remove_test_file(filename);

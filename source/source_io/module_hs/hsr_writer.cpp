@@ -1,5 +1,7 @@
 #include "hsr_writer.h"
 #include "source_io/module_output/spin_tag.h"
+#include "source_io/module_output/write_notice.h"
+#include "source_io/module_output/provenance_header.h"
 
 #include "source_base/module_out/sparse_matrix.h"
 #include "source_base/tool_quit.h"
@@ -74,8 +76,27 @@ std::string ModuleIO::dhr_gen_fname(const std::string& prefix,
     return fname;
 }
 
+std::string ModuleIO::dhk_gen_fname(const std::string& prefix,
+                                     const int ispin,
+                                     const int nspin,
+                                     const bool numbered,
+                                     const int istep)
+{
+    std::string fname = prefix;
+    if (nspin == 2)
+    {
+        fname += "s" + std::to_string(ispin + 1);
+    }
+    if (numbered && istep >= 0)
+    {
+        fname += "g" + std::to_string(istep + 1);
+    }
+    fname += "_nao.txt";
+    return fname;
+}
+
 template <typename TR>
-void ModuleIO::write_hcontainer_csr(const std::string& fname,
+bool ModuleIO::write_hcontainer_csr(const std::string& fname,
                                      const UnitCell* ucell,
                                      const int precision,
                                      hamilt::HContainer<TR>* mat_serial,
@@ -107,7 +128,8 @@ void ModuleIO::write_hcontainer_csr(const std::string& fname,
                                  "Cannot open HContainer CSR file: " + fname);
     }
 
-    ofs << " --- Ionic Step " << istep + 1 << " ---" << std::endl;
+    const std::string time_stamp = ModuleIO::local_timestamp();
+    ofs << "Ionic_Step " << istep + 1 << ModuleIO::prov_inline(time_stamp) << std::endl;
     ofs << " # print " << label << " matrix in real space " << label << "(R)" << std::endl;
     ofs << " " << nspin << " # number of spin directions" << std::endl;
     ofs << " " << ispin + 1 << " # spin index";
@@ -130,7 +152,10 @@ void ModuleIO::write_hcontainer_csr(const std::string& fname,
     const double sparse_threshold = 1e-10;
     hamilt::Output_HContainer<TR> out(mat_serial, ofs, sparse_threshold, precision);
     out.write();
+    // close() flushes the buffer; checking good() afterwards lets the caller
+    // detect a disk-full or quota failure that the destructor would swallow.
     ofs.close();
+    return ofs.good();
 }
 
 namespace
@@ -354,8 +379,7 @@ void ModuleIO::write_hsr(const std::vector<hamilt::HContainer<TR>*>& hr_vec,
                 write_hcontainer_csr(
                     fname, ucell, precision, &hr_serial, istep, append, ispin, nspin, "H", representation_note, efermi_eV, true);
             }
-            const std::string spin_tag = ModuleIO::make_spin_tag(ispin, nspin);
-            ofs_running << " Write H(R)" << spin_tag << " matrix in NAO basis to file: " << fname << std::endl;
+            ModuleIO::write_matrix_notice(ofs_running, "H(R)", ispin, nspin, fname);
         }
     }
 
@@ -386,16 +410,16 @@ void ModuleIO::write_hsr(const std::vector<hamilt::HContainer<TR>*>& hr_vec,
                 write_hcontainer_csr(
                     fname, ucell, precision, &sr_serial, istep, append, 0, 1, "S", representation_note, 0.0, false);
             }
-            ofs_running << " Write S(R) matrix in NAO basis to file: " << fname << std::endl;
+            ModuleIO::write_matrix_notice(ofs_running, "S(R)", fname);
         }
     }
 }
 
 // Explicit instantiations
-template void ModuleIO::write_hcontainer_csr<double>(
+template bool ModuleIO::write_hcontainer_csr<double>(
     const std::string&, const UnitCell*, const int,
     hamilt::HContainer<double>*, const int, const bool, const int, const int, const std::string&, const std::string&, const double, const bool);
-template void ModuleIO::write_hcontainer_csr<std::complex<double>>(
+template bool ModuleIO::write_hcontainer_csr<std::complex<double>>(
     const std::string&, const UnitCell*, const int,
     hamilt::HContainer<std::complex<double>>*, const int, const bool, const int, const int, const std::string&, const std::string&, const double, const bool);
 

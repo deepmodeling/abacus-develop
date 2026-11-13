@@ -26,6 +26,8 @@ namespace ModuleIO
 
 /// @brief Write the Vxc matrix in real space (R), useful for GW calculation
 /// including terms: local/semi-local XC, EXX, DFTU
+/// The files are named vxcrs{spin}_nao.csr as a final-step snapshot; the
+/// spin index is one-based.
 /// @tparam TK K-point data type (double or std::complex<double>)
 /// @tparam TR Real-space data type (double or std::complex<double>)
 template <typename TK, typename TR>
@@ -44,7 +46,8 @@ void write_Vxc_R(const int nspin,
                  const std::string& global_out_dir,
                  bool cal_exx,
                  double hybrid_alpha,
-                 bool real_number
+                 bool real_number,
+                 const int istep
 #ifdef __EXX
                  ,
                  const std::vector<std::map<int, std::map<hamilt::TAC, RI::Tensor<double>>>>* Hexxd,
@@ -52,6 +55,7 @@ void write_Vxc_R(const int nspin,
 #endif
                  ,
                  const double sparse_thr,
+                 const int precision,
                  std::ofstream& ofs_running);
 
 } // namespace ModuleIO

@@ -1,4 +1,4 @@
-IONIC_STEP: 1
+Ionic_Step 1
 Matrix Dimension of S_async(R): 26
 Matrix number of S_async(R): 1
  #----------------------------------------------------------------------#
@@ -171,7 +171,7 @@ Matrix number of S_async(R): 1
  0 26 52 78 104 130 156 182 208 234 260 286 311 336 362 388
  414 440 466 492 518 544 570 596 622 647 672
 
-IONIC_STEP: 2
+Ionic_Step 2
 Matrix Dimension of S_async(R): 26
 Matrix number of S_async(R): 1
  #----------------------------------------------------------------------#

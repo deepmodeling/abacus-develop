@@ -71,7 +71,19 @@ TEST_F(DosTest,Dos)
 	EXPECT_THAT(str, testing::HasSubstr("2.849588"));
     std::istringstream rows(str);
     std::string line;
-    std::getline(rows, line); // ionic step
+    // Skip the per-frame provenance comments, then the ionic-step marker.
+    while (std::getline(rows, line))
+    {
+        if (line.find("# ABACUS version:") != std::string::npos)
+        {
+            continue;
+        }
+        if (line.find("# Written at ") != std::string::npos)
+        {
+            continue;
+        }
+        break;
+    }
     std::getline(rows, line); // declared grid size
     int declared_points = 0;
     std::istringstream(line) >> declared_points;
@@ -222,12 +234,12 @@ TEST_F(DosTest, Mode1Appends)
     const int out_app_flag = 1;
     const int bndpar = 1;
 
-    // First call: istep=0 -> "1 # ionic step".
+    // First call: istep=0 -> "# Ionic_Step 1".
     ModuleIO::cal_dos(dosp.is, dosp.fa, dosp.de_ev, dosp.emax_ev, dosp.emin_ev,
                       dosp.bcoeff, dosp.nks, dosp.nkstot, dosp.wk, dosp.isk,
                       dosp.nbands, dosp.ekb, dosp.wg,
                       /*istep=*/0, out_app_flag, bndpar);
-    // Second call: istep=1 -> "2 # ionic step", appended.
+    // Second call: istep=1 -> "# Ionic_Step 2", appended.
     ModuleIO::cal_dos(dosp.is, dosp.fa, dosp.de_ev, dosp.emax_ev, dosp.emin_ev,
                       dosp.bcoeff, dosp.nks, dosp.nkstot, dosp.wk, dosp.isk,
                       dosp.nbands, dosp.ekb, dosp.wg,
@@ -241,9 +253,9 @@ TEST_F(DosTest, Mode1Appends)
         std::string str((std::istreambuf_iterator<char>(ifs)),
                         std::istreambuf_iterator<char>());
         ifs.close();
-        // Two ionic step headers present.
-        EXPECT_THAT(str, testing::HasSubstr("1    # ionic step"));
-        EXPECT_THAT(str, testing::HasSubstr("2    # ionic step"));
+        // Two Ionic_Step headers present.
+        EXPECT_THAT(str, testing::HasSubstr("# Ionic_Step 1"));
+        EXPECT_THAT(str, testing::HasSubstr("# Ionic_Step 2"));
         remove(fname.c_str());
     }
 }
@@ -282,13 +294,13 @@ TEST_F(DosTest, Mode2Overwrites)
         std::string str((std::istreambuf_iterator<char>(ifs)),
                         std::istreambuf_iterator<char>());
         ifs.close();
-        // Only the last ionic step header must be present.
-        EXPECT_THAT(str, testing::HasSubstr("2    # ionic step"));
-        // A simple count check: "1    # ionic step" must appear only inside
+        // Only the last Ionic_Step header must be present.
+        EXPECT_THAT(str, testing::HasSubstr("# Ionic_Step 2"));
+        // A simple count check: "# Ionic_Step 1" must appear only inside
         // the DOS grid lines as a value, not as a header. Check that the
         // header for step 1 is absent by verifying it is NOT found as a
         // standalone header line.
-        EXPECT_THAT(str, testing::Not(testing::HasSubstr("\n1    # ionic step")));
+        EXPECT_THAT(str, testing::Not(testing::HasSubstr("\n# Ionic_Step 1")));
         remove(fname.c_str());
     }
 }

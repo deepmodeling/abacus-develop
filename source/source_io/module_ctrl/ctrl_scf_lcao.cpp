@@ -24,11 +24,17 @@
 #include "../module_wannier/to_w90_lcao.h"                   // use toW90_LCAO
 #include "../module_wannier/to_w90_lcao_pw.h"             // use toW90_LCAO_IN_PW
 #include "../module_hs/hs_dense_io.h"                           // use ModuleIO::save_mat()
-#include "../module_hs/hsk_writer.h"                            // use ModuleIO::write_hsk()
+#include "../module_hs/vxc_op_mat.h"                            // use ModuleIO::write_Vxc()
+#include "../module_energy/write_eband_terms.h"                 // use ModuleIO::write_eband_terms()
+#include "source_io/module_hs/hsk_writer.h"                            // use ModuleIO::write_hsk()
+#include "source_base/module_external/scalapack_connector.h"            // use Cpxgemr2d<>()
+#include "source_hsolver/parallel_k2d.h"                                // use Parallel_2d
+#include "source_cell/ucell_io.h"                                       // use ModuleIO::UcellIO::write_ucell()
 #include "../module_dm/write_dmk.h"                           // use ModuleIO::write_dmk()
 #include "../module_dm/write_dmr.h"                           // use ModuleIO::write_dmr()
 #include "../module_dos/write_dos_lcao.h"                      // use ModuleIO::write_dos_lcao()
 #include "../module_wf/write_wfc_nao.h"                       // use ModuleIO::write_wfc_nao()
+#include "../module_output/write_notice.h"                     // use ModuleIO::write_notice()
 #include "source_lcao/module_deltaspin/lambda_loop_helper.h"   // print_Mi / print_Mag_Force free functions
 #include "source_lcao/module_deltaspin/spin_constrain.h"   // use spinconstrain::SpinConstrain<TK>
 #include "source_lcao/module_operator_lcao/ekinetic.h" // use hamilt::EKinetic
@@ -71,6 +77,65 @@ void setup_exx_h_params<double>(ModuleIO::WriteHParams& h_params, Exx_NAO<double
 }
 #endif
 
+namespace
+{
+/// Write a square matrix body in flat dmk/write_hsk-compatible layout.
+/// Tag dispatch so the compiler only type-checks the branch that matches
+/// the actual matrix element type (double vs. std::complex<double>).
+template <typename T>
+void write_matrix_body_flat(std::ofstream& ofs,
+                            const std::vector<T>& mat,
+                            const int nlocal,
+                            const int precision,
+                            std::true_type /*is_double*/)
+{
+    ofs << std::fixed;
+    ofs << std::scientific;
+    ofs << std::setprecision(precision);
+    ofs << std::right;
+    for (int i = 0; i < nlocal; ++i)
+    {
+        const size_t ii = i * nlocal;
+        for (int j = 0; j < nlocal; ++j)
+        {
+            if (j % 8 == 0)
+            {
+                ofs << "\n";
+            }
+            ofs << " " << mat[ii + j];
+        }
+        ofs << std::endl;
+    }
+}
+
+template <typename T>
+void write_matrix_body_flat(std::ofstream& ofs,
+                            const std::vector<T>& mat,
+                            const int nlocal,
+                            const int precision,
+                            std::false_type /*is_complex*/)
+{
+    ofs << std::fixed;
+    ofs << std::scientific;
+    ofs << std::setprecision(precision);
+    ofs << std::right;
+    for (int i = 0; i < nlocal; ++i)
+    {
+        const size_t ii = i * nlocal;
+        for (int j = 0; j < nlocal; ++j)
+        {
+            if (j % 4 == 0)
+            {
+                ofs << "\n";
+            }
+            ofs << " (" << mat[ii + j].real()
+                << "," << mat[ii + j].imag() << ")";
+        }
+        ofs << std::endl;
+    }
+}
+} // namespace
+
 template <typename TK, typename TR>
 void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                              const Input_para& inp,
@@ -87,7 +152,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                              const ModulePW::PW_Basis_K* pw_wfc,   // for berryphase
                              const ModulePW::PW_Basis* pw_rho,     // for berryphase
                              const ModulePW::PW_Basis_Big* pw_big, // for Wannier90
-                             const Structure_Factor& sf,           // for Wannier90
+                             Structure_Factor& sf,           // for Wannier90
                              const ModulePW::PW_Basis* pw_rhod,    // dense charge grid (for dH veff pots)
                              const ModuleBase::matrix& vloc,       // local pseudopotential (for dH veff pots)
                              surchem& solvent,                     // solvent model (for dH veff pots)
@@ -147,6 +212,8 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     const int npol = PARAM.globalv.npol;
     const int nlocal = PARAM.globalv.nlocal;
     const bool cal_force = inp.cal_force;
+    const int my_rank = GlobalV::MY_RANK;
+    const int drank = GlobalV::DRANK;
 
     //------------------------------------------------------------------
     //! 1) print out density of states (DOS)
@@ -222,6 +289,11 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
         // Mode-2 MAT/ subdirectory is created lazily at write time.
         ModuleBase::ensure_directory(global_mat_dir);
         const int precision = inp.out_hsk[1];
+        std::vector<double> efermis(nspin == 2 ? 2 : 1);
+        for (int ispin = 0; ispin < efermis.size(); ispin++)
+        {
+            efermis[ispin] = pelec->eferm.get_efval(ispin);
+        }
         ModuleIO::write_hsk(global_mat_dir,
                             nspin,
                             kv.get_nks(),
@@ -230,6 +302,9 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                             kv.isk,
                             p_hamilt,
                             pv,
+                            kv,
+                            &(ucell),
+                            efermis,
                             gamma_only,
                             out_app_flag,
                             istep,
@@ -256,6 +331,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                                 kv.get_nkstot(),
                                 pv,
                                 nspin,
+                                ofs_running,
                                 istep);
     }
 
@@ -557,43 +633,182 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                                                                     two_center_bundle.kinetic_orb.get());
 
         const int nspin_k = (nspin == 2 ? 2 : 1);
+        // T(k) is spin-independent, so its filename carries no spin suffix
+        // (same convention as S(k)); only the k index appears in the name.
+        const int nspin_kinetic_name = 1;
+
+        const int precision = inp.out_mat_tk[1];
+        const bool binary = false; // tk text output, consistent with hk/sk
+        const bool append_mat = (out_app_flag == 1) && (istep > 0);
+
+        // Re-use the block-cyclic descriptor that save_mat uses so we
+        // can Cpxgemr2d the distributed kinetic matrix to rank 0.
+        const Parallel_Blkcyclic& pv_dist = pv.para_2d();
+        Parallel_Blkcyclic pv_glb;
+#ifdef __MPI
+        pv_glb.set(nlocal, nlocal, nlocal, pv_dist.ictxt());
+#endif
+
         for (int ik = 0; ik < kv.get_nks() / nspin_k; ++ik)
         {
             ekinetic->init(ik);
 
-            const int out_label = 1; // 1: .txt, 2: .dat
-
+            // Build filename: T(k) is spin-independent so the spin index is
+            // always 1.  The property is always "t"; filename_output inserts
+            // the k-point index for multi-k runs and omits it for gamma_only.
+            const std::string t_property = "t";
+            const int t_out_type = binary ? 2 : 1;
             std::string t_fn = ModuleIO::filename_output(global_mat_dir,
-                                                         "tk",
+                                                         t_property,
                                                          "nao",
                                                          ik,
                                                          kv.ik2iktot,
-                                                         inp.nspin,
+                                                         nspin_kinetic_name,
                                                          kv.get_nkstot(),
-                                                         out_label,
+                                                         t_out_type,
                                                          out_app_flag,
                                                          gamma_only,
                                                          istep);
 
-            ModuleIO::save_mat(istep,
-                               hsk.get_hk(),
-                               PARAM.globalv.nlocal,
-                               false, // bit
-                               inp.out_mat_tk[1],
-                               1, // true for upper triangle matrix
-                               (inp.out_app_flag == 1),
-                               t_fn,
-                               pv.para_2d(),
-                               GlobalV::DRANK,
-                               PARAM.inp.ks_solver);
+            // Gather the distributed T(k) matrix to rank 0 so we can write
+            // the full-matrix body without MPI-aware row-by-row logic.
+            std::vector<TK> t_global(my_rank == 0 ? nlocal * nlocal : 0);
+#ifdef __MPI
+            Cpxgemr2d<TK>(
+            nlocal, nlocal,
+            hsk.get_hk(), 1, 1,
+            const_cast<int*>(pv_dist.desc()),
+            t_global.data(), 1, 1,
+            const_cast<int*>(pv_glb.desc()),
+            pv_glb.ictxt());
+#else
+            t_global.assign(hsk.get_hk(), hsk.get_hk() + nlocal * nlocal);
+#endif
 
-            if (GlobalV::DRANK == 0)
+            if (my_rank == 0)
             {
-                ofs_running << " Write T(k) matrix in NAO basis to file: " << t_fn << std::endl;
+                std::ios_base::openmode mode = std::ios::out;
+                if (append_mat)
+                {
+                    mode |= std::ios::app;
+                }
+                std::ofstream ofs(t_fn.c_str(), mode);
+                if (!ofs.is_open())
+                {
+                    ofs_running << " WARNING: cannot open " << t_fn << std::endl;
+                    continue;
+                }
+
+                // --- metadata block, aligned with write_dmk / write_hsk ---
+                ofs << "Ionic_Step " << istep + 1 << std::endl;
+                ofs << " " << nspin << " # number of spin directions" << std::endl;
+                ofs << " 1 # spin index (T(k) is spin-independent)" << std::endl;
+                ofs << " " << kv.get_nkstot_nospin() << " # total k points" << std::endl;
+                ofs << " " << kv.get_nkstot() << " # total k points after symmetrized (if open)" << std::endl;
+                ofs << " " << ik + 1 << " # k-point index" << std::endl;
+                ofs << " " << kv.kvec_c[ik].x << " " << kv.kvec_c[ik].y << " " << kv.kvec_c[ik].z << " # k point coordinate (Cartesian)" << std::endl;
+                ofs << " " << kv.kvec_d[ik].x << " " << kv.kvec_d[ik].y << " " << kv.kvec_d[ik].z << " # k point coordinate (direct)" << std::endl;
+                ofs << " " << kv.wk[ik] << " # weight of this k point" << std::endl;
+                ofs << " 0.0 # Fermi energy in Ry (not applicable to T(k))" << std::endl;
+                ofs << " " << nlocal << " # number of localized basis" << std::endl;
+                ofs << " " << nlocal << " " << nlocal << " # size of this matrix" << std::endl;
+                ofs << std::endl;
+
+                // --- UnitCell lattice block ---
+                ModuleIO::UcellIO::write_ucell(ofs, &ucell);
+                ofs << std::endl;
+
+                // --- full matrix body, aligned with write_dmk / write_hsk ---
+                write_matrix_body_flat(ofs, t_global, nlocal, precision,
+                    std::integral_constant<bool, std::is_same<TK, double>::value>());
+
+                ModuleIO::write_matrix_notice(ofs_running, "T(k)", t_fn);
             }
         }
 
         delete ekinetic;
+    }
+
+    //------------------------------------------------------------------
+    //! 8b) Output exchange-correlation potential and band-decomposed energies
+    //------------------------------------------------------------------
+    // Both run on the out_freq_ion rhythm: the MO-basis matrices only when
+    // out_mat_xc is on, the eband_vxc* files for either switch.
+    if (inp.out_mat_xc || inp.out_eband)
+    {
+        const Charge& chg = *pelec->charge;
+        if (inp.out_mat_xc)
+        {
+            // Mode-2 MAT/ subdirectory is created lazily at write time.
+            ModuleBase::ensure_directory(global_mat_dir);
+        }
+        const bool cal_exx = exx_info.info_global.cal_exx;
+        const double etot_xc = pelec->f_en.etot;
+#ifdef __EXX
+        auto* hexxd_ptr = exx_nao.exd ? &exx_nao.exd->get_Hexxs() : nullptr;
+        auto* hexxc_ptr = exx_nao.exc ? &exx_nao.exc->get_Hexxs() : nullptr;
+#endif
+        ModuleIO::write_Vxc<TK, TR>(nspin,
+                                    istep,
+                                    etot_xc,
+                                    nlocal,
+                                    drank,
+                                    &pv,
+                                    *psi,
+                                    ucell,
+                                    sf,
+                                    solvent,
+                                    *pw_rho,
+                                    *pw_rhod,
+                                    vloc,
+                                    chg,
+                                    kv,
+                                    orb.cutoffs(),
+                                    pelec->wg,
+                                    gd,
+                                    inp.dft_plus_u,
+                                    gamma_only,
+                                    inp.out_mat_xc,
+                                    out_app_flag,
+                                    global_mat_dir,
+                                    global_out_dir,
+                                    inp.out_ndigits,
+                                    inp.ks_solver,
+                                    cal_exx,
+                                    exx_info,
+                                    ofs_running
+#ifdef __EXX
+                                    ,
+                                    hexxd_ptr,
+                                    hexxc_ptr
+#endif
+        );
+        if (inp.out_eband)
+        {
+            const double etot = pelec->f_en.etot;
+            ModuleIO::write_eband_terms<TK, TR>(nspin,
+                                                istep,
+                                                out_app_flag,
+                                                etot,
+                                                my_rank,
+                                                nlocal,
+                                                &pv,
+                                                *psi,
+                                                ucell,
+                                                sf,
+                                                solvent,
+                                                *pw_rho,
+                                                *pw_rhod,
+                                                vloc,
+                                                chg,
+                                                kv,
+                                                pelec->wg,
+                                                gd,
+                                                orb.cutoffs(),
+                                                orb,
+                                                two_center_bundle,
+                                                ofs_running);
+        }
     }
 
     //------------------------------------------------------------------
@@ -613,8 +828,8 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                                                           PARAM.inp.out_level,
                                                           PARAM.globalv.gamma_only_local,
                                                           &ofs_running,
-                                                          GlobalV::MY_RANK);
-        mylcalculator.calculate(inp.suffix, global_mat_dir, ucell, inp.out_mat_l[1], GlobalV::MY_RANK, istep_in, out_app_flag);
+                                                          my_rank);
+        mylcalculator.calculate(inp.suffix, global_mat_dir, ucell, pv, inp.out_mat_l[1], my_rank, istep_in, out_app_flag);
     }
 
     //------------------------------------------------------------------
@@ -631,6 +846,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                           ucell,
                           gd,
                           istep,
+                          out_app_flag,
                           true);
     }
 
@@ -854,7 +1070,7 @@ template void ModuleIO::ctrl_scf_lcao<double, double>(
     const ModulePW::PW_Basis_K* pw_wfc,         // for berryphase
     const ModulePW::PW_Basis* pw_rho,           // for berryphase
     const ModulePW::PW_Basis_Big* pw_big,       // for Wannier90
-    const Structure_Factor& sf,                 // for Wannier90
+    Structure_Factor& sf,                 // for Wannier90
     const ModulePW::PW_Basis* pw_rhod,          // dense charge grid (for dH veff pots)
     const ModuleBase::matrix& vloc,             // local pseudopotential (for dH veff pots)
     surchem& solvent,                           // solvent model (for dH veff pots)
@@ -884,7 +1100,7 @@ template void ModuleIO::ctrl_scf_lcao<std::complex<double>, double>(
     const ModulePW::PW_Basis_K* pw_wfc,                       // for berryphase
     const ModulePW::PW_Basis* pw_rho,                         // for berryphase
     const ModulePW::PW_Basis_Big* pw_big,                     // for Wannier90
-    const Structure_Factor& sf,                               // for Wannier90
+    Structure_Factor& sf,                               // for Wannier90
     const ModulePW::PW_Basis* pw_rhod,                        // dense charge grid (for dH veff pots)
     const ModuleBase::matrix& vloc,                           // local pseudopotential (for dH veff pots)
     surchem& solvent,                                         // solvent model (for dH veff pots)
@@ -913,7 +1129,7 @@ template void ModuleIO::ctrl_scf_lcao<std::complex<double>, std::complex<double>
     const ModulePW::PW_Basis_K* pw_wfc,                                     // for berryphase
     const ModulePW::PW_Basis* pw_rho,                                       // for berryphase
     const ModulePW::PW_Basis_Big* pw_big,                                   // for Wannier90
-    const Structure_Factor& sf,                                             // for Wannier90
+    Structure_Factor& sf,                                             // for Wannier90
     const ModulePW::PW_Basis* pw_rhod,                                      // dense charge grid (for dH veff pots)
     const ModuleBase::matrix& vloc,                                         // local pseudopotential (for dH veff pots)
     surchem& solvent,                                                       // solvent model (for dH veff pots)

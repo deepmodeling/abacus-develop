@@ -189,24 +189,25 @@ void init_sparse_output_globals()
 void remove_derivative_files(const std::string& fileflag, int step = -1)
 {
     std::vector<std::string> filenames;
-    if (step >= 0)
+    const std::string suffix = (step >= 0) ? ("g" + std::to_string(step + 1) + "_nao.csr") : "_nao.csr";
+    // Only dH/dR carries a spin index; dS/dR is spin-independent.
+    const bool spin_suffix = (fileflag == "h");
+    for (const char axis : {'x', 'y', 'z'})
     {
-        const std::string suffix = "g" + std::to_string(step + 1) + "_nao.csr";
-        for (const char axis : {'x', 'y', 'z'})
+        if (spin_suffix)
         {
             for (int ispin = 1; ispin <= 2; ++ispin)
             {
                 filenames.push_back("d" + fileflag + "r" + axis + "s" + std::to_string(ispin) + suffix);
             }
         }
-    }
-    else
-    {
-        for (const char axis : {'x', 'y', 'z'})
+        else
         {
+            filenames.push_back("d" + fileflag + "r" + axis + suffix);
+            // Clean up files left by the legacy spin-suffixed naming.
             for (int ispin = 1; ispin <= 2; ++ispin)
             {
-                filenames.push_back("d" + fileflag + "r" + axis + "s" + std::to_string(ispin) + "_nao.csr");
+                filenames.push_back("d" + fileflag + "r" + axis + "s" + std::to_string(ispin) + suffix);
             }
         }
     }

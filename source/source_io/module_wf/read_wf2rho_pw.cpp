@@ -43,8 +43,8 @@ void ModuleIO::read_wf2rho_pw_impl(const ModulePW::PW_Basis_K* pw_wfc,
     ofs_running << " |                                            "
                    "                        |"
                 << std::endl;
-    ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-                   ">>>>>>>>>>>>>>>>>>>>>>>>>"
+    ofs_running << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
+                   "<<<<<<<<<<<<<<<<<<<<<<<<<"
                 << std::endl;
 
     assert(kpar >= 1);
