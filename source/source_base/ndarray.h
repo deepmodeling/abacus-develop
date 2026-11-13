@@ -26,8 +26,11 @@
  * 
  * @tparam T 
  */
+template<typename T, int rank = 0>
+class NDArray;
+
 template<typename T>
-class NDArray
+class NDArray<T, 0>
 {
     // align with STL container implementation, there are several functions compulsory to be implemented
     // constructor: default, copy, move, initializer_list

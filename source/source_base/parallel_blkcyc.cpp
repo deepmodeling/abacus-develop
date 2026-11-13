@@ -94,6 +94,17 @@ int Parallel_Blkcyclic::ncglb() const
     return ncloc_;
 }
 
+int Parallel_Blkcyclic::lld() const
+{
+#ifdef __MPI
+    if (!is_serial_ && ictxt_ >= 0)
+    {
+        return desc_[DESC_LLD];
+    }
+#endif
+    return std::max(nrloc_, 1);
+}
+
 #ifdef __MPI
 MPI_Comm Parallel_Blkcyclic::comm() const
 {
@@ -131,6 +142,16 @@ void Parallel_Blkcyclic::init_grid(const MPI_Comm comm, const bool swap_grid)
     ictxt_ = Csys2blacs_handle(comm);
     char order = 'R'; // row-major
     Cblacs_gridinit(&ictxt_, &order, nrproc_, ncproc_);
+    Cblacs_gridinfo(ictxt_, &nrproc_, &ncproc_, &irproc_, &icproc_);
+}
+
+void Parallel_Blkcyclic::init_grid(const MPI_Comm comm,
+                                   const int nrproc,
+                                   const int ncproc)
+{
+    ictxt_ = Csys2blacs_handle(comm);
+    char order = 'R';
+    Cblacs_gridinit(&ictxt_, &order, nrproc, ncproc);
     Cblacs_gridinfo(ictxt_, &nrproc_, &ncproc_, &irproc_, &icproc_);
 }
 
@@ -263,4 +284,56 @@ void Parallel_Blkcyclic::set_serial(const int nrglb, const int ncglb)
     // dangles once the owner destroys it.
     ictxt_ = UNOWNED_BLACS_CONTEXT;
 #endif
+}
+
+#ifdef __MPI
+std::shared_ptr<const Parallel_Blkcyclic> make_frozen_distribution(
+    const int nrglb,
+    const int ncglb,
+    const int nb,
+    const MPI_Comm comm)
+{
+    std::shared_ptr<Parallel_Blkcyclic> dist
+        = std::make_shared<Parallel_Blkcyclic>();
+    dist->init(nrglb, ncglb, nb, comm, false);
+    return dist;
+}
+
+std::shared_ptr<const Parallel_Blkcyclic> make_frozen_distribution(
+    const int nrglb,
+    const int ncglb,
+    const int nrproc,
+    const int ncproc,
+    const int nb,
+    const MPI_Comm comm)
+{
+    std::shared_ptr<Parallel_Blkcyclic> dist
+        = std::make_shared<Parallel_Blkcyclic>();
+    dist->init_grid(comm, nrproc, ncproc);
+    dist->init_dist(nrglb, ncglb, nb);
+    dist->owns_ictxt_ = true;
+    return dist;
+}
+
+std::shared_ptr<const Parallel_Blkcyclic> make_frozen_distribution(
+    const int nrglb,
+    const int ncglb,
+    const int nb,
+    const int ictxt)
+{
+    std::shared_ptr<Parallel_Blkcyclic> dist
+        = std::make_shared<Parallel_Blkcyclic>();
+    dist->set(nrglb, ncglb, nb, ictxt);
+    return dist;
+}
+#endif
+
+std::shared_ptr<const Parallel_Blkcyclic> make_frozen_distribution(
+    const int nrglb,
+    const int ncglb)
+{
+    std::shared_ptr<Parallel_Blkcyclic> dist
+        = std::make_shared<Parallel_Blkcyclic>();
+    dist->set_serial(nrglb, ncglb);
+    return dist;
 }
