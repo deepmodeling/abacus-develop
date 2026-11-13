@@ -130,13 +130,15 @@ class Relax_Driver
      * @param inp Input parameters for the calculation.
      * @param etot Total energy in Ry corresponding to this structure.
      * @param stress Stress matrix (3x3) in Ry/Bohr^3 corresponding to this structure.
+     * @param ofs_running Running log shared with the relaxation driver.
      */
     void stru_out(const int istep,
                   UnitCell& ucell,
                   const Input_para& inp,
                   const double etot,
                   const ModuleBase::matrix& stress,
-                  const ModuleBase::matrix& force);
+                  const ModuleBase::matrix& force,
+                  std::ofstream& ofs_running);
 
     /**
      * @brief Output JSON format results.

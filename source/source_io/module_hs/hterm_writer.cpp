@@ -369,7 +369,7 @@ static void write_h_term(WriteHParams& params, const HTermSpec& spec)
         hamilt::HContainer<double> hR_serial(&serialV);
         hamilt::gatherParallels(hR_tmp, &hR_serial, 0);
         const hamilt::HContainer<double>& hk_source = hR_serial;
-        const bool do_write = (GlobalV::MY_RANK == 0);
+        const bool do_write = (params.drank == 0);
 #else
         const hamilt::HContainer<double>& hk_source = hR_tmp;
         const bool do_write = true;
@@ -557,7 +557,8 @@ static void write_h_exx_impl(const UnitCell& ucell,
                              const std::string& calculation,
                              const int out_app_flag,
                              const Exx_Info& exx_info,
-                             std::ofstream* ofs_running)
+                             std::ofstream* ofs_running,
+                             const int drank)
 {
     const auto& Hexxs = ex->get_Hexxs(); // vector over spin of map<iat, map<(jat,R), Tensor>>
     const int nspin_out = (nspin == 2 ? 2 : 1);
@@ -581,7 +582,7 @@ static void write_h_exx_impl(const UnitCell& ucell,
         hamilt::HContainer<double> hR_serial(&serialV);
         hamilt::gatherParallels(hR_tmp, &hR_serial, 0);
         const hamilt::HContainer<double>& hk_source = hR_serial;
-        const bool do_write = (GlobalV::MY_RANK == 0);
+        const bool do_write = (drank == 0);
 #else
         const hamilt::HContainer<double>& hk_source = hR_tmp;
         const bool do_write = true;
@@ -634,7 +635,7 @@ void write_h_exx(WriteHParams& params, const Exx_Info& exx_info)
                              params.npol, params.nlocal, params.precision, params.gamma_only_local,
                              params.global_out_dir, params.global_matrix_dir,
                              params.calculation, params.out_app_flag, exx_info,
-                             params.ofs_running);
+                             params.ofs_running, params.drank);
         }
     }
     else
@@ -645,7 +646,7 @@ void write_h_exx(WriteHParams& params, const Exx_Info& exx_info)
                              params.npol, params.nlocal, params.precision, params.gamma_only_local,
                              params.global_out_dir, params.global_matrix_dir,
                              params.calculation, params.out_app_flag, exx_info,
-                             params.ofs_running);
+                             params.ofs_running, params.drank);
         }
     }
 

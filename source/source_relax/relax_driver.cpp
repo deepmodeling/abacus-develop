@@ -67,7 +67,7 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver,
         this->iter_info(steps, inp);
         this->esolve(steps[0], p_esolver, ucell, inp, force, stress, etot);
         geometry_evaluated = true;
-        this->stru_out(steps[0], ucell, inp, etot, stress, force);
+        this->stru_out(steps[0], ucell, inp, etot, stress, force, ofs_running);
         this->json_out(p_esolver, ucell, inp, force, stress);
 
         if (ModuleIO::read_exit_file(my_rank_, "EXIT", ofs_running))
@@ -226,7 +226,8 @@ void Relax_Driver::stru_out(const int istep,
                             const Input_para& inp,
                             const double etot,
                             const ModuleBase::matrix& stress,
-                            const ModuleBase::matrix& force)
+                            const ModuleBase::matrix& force,
+                            std::ofstream& ofs_running)
 {
     // out_stru is effective for scf/nscf/relax/cell-relax; md handles STRU output in run_md.cpp
     if (inp.calculation != "relax" && inp.calculation != "cell-relax" && inp.calculation != "scf"
@@ -271,7 +272,7 @@ void Relax_Driver::stru_out(const int istep,
                                   false);
         if (my_rank_ == 0)
         {
-            ModuleIO::write_notice(GlobalV::ofs_running, "Structure at current step", now_file);
+            ModuleIO::write_notice(ofs_running, "Structure at current step", now_file);
         }
     }
 
@@ -298,7 +299,7 @@ void Relax_Driver::stru_out(const int istep,
                                   append_stru);
         if (my_rank_ == 0)
         {
-            ModuleIO::write_notice(GlobalV::ofs_running, "Structure at current step", step_file);
+            ModuleIO::write_notice(ofs_running, "Structure at current step", step_file);
         }
     }
 }

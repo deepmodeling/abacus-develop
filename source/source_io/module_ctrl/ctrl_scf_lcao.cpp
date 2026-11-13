@@ -211,6 +211,8 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     const int npol = PARAM.globalv.npol;
     const int nlocal = PARAM.globalv.nlocal;
     const bool cal_force = inp.cal_force;
+    const int my_rank = GlobalV::MY_RANK;
+    const int drank = GlobalV::DRANK;
 
     //------------------------------------------------------------------
     //! 1) print out density of states (DOS)
@@ -631,9 +633,6 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
         // (same convention as S(k)); only the k index appears in the name.
         const int nspin_kinetic_name = 1;
 
-        const int drank = GlobalV::DRANK;
-        const int my_rank = GlobalV::MY_RANK;
-        const int nlocal = PARAM.globalv.nlocal;
         const int precision = inp.out_mat_tk[1];
         const bool binary = false; // tk text output, consistent with hk/sk
         const bool append_mat = (out_app_flag == 1) && (istep > 0);
@@ -748,8 +747,8 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
         ModuleIO::write_Vxc<TK, TR>(nspin,
                                     istep,
                                     etot_xc,
-                                    PARAM.globalv.nlocal,
-                                    GlobalV::DRANK,
+                                    nlocal,
+                                    drank,
                                     &pv,
                                     *psi,
                                     ucell,
@@ -787,8 +786,8 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                                                 istep,
                                                 out_app_flag,
                                                 etot,
-                                                GlobalV::MY_RANK,
-                                                PARAM.globalv.nlocal,
+                                                my_rank,
+                                                nlocal,
                                                 &pv,
                                                 *psi,
                                                 ucell,
@@ -824,8 +823,8 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                                                           PARAM.inp.out_level,
                                                           PARAM.globalv.gamma_only_local,
                                                           &ofs_running,
-                                                          GlobalV::MY_RANK);
-        mylcalculator.calculate(inp.suffix, global_mat_dir, ucell, pv, inp.out_mat_l[1], GlobalV::MY_RANK, istep_in, out_app_flag);
+                                                          my_rank);
+        mylcalculator.calculate(inp.suffix, global_mat_dir, ucell, pv, inp.out_mat_l[1], my_rank, istep_in, out_app_flag);
     }
 
     //------------------------------------------------------------------
