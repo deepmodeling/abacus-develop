@@ -43,7 +43,7 @@ void Plus_U_Base::init_base(UnitCell& cell,
                              const double uramping,
                              const int init_occ_mat,
                              const int mixing_dftu,
-                             const DFTU_BASE::OccmatSocLayout soc_layout)
+                             const DFTU_BASE::OccmatSocLayout& soc_layout)
 {
     ModuleBase::TITLE("Plus_U_Base", "init_base");
 
