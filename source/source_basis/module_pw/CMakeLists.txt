@@ -86,7 +86,7 @@ if(USE_CUFFTDX)
         target_link_libraries(${target} PRIVATE mathdx::cufftdx)
         set_target_properties(${target} PROPERTIES CUDA_STANDARD 17 CUDA_STANDARD_REQUIRED ON
                               CUDA_ARCHITECTURES "${fused_targets_${FFT_ARCH}}")
-        target_sources(${ABACUS_BIN_NAME} PRIVATE $<TARGET_OBJECTS:${target}>)
+        target_sources(planewave PRIVATE $<TARGET_OBJECTS:${target}>)
         string(APPEND fused_declarations
           "const FusedFFT* fused_fft_${FFT_LENGTH}_${FFT_ARCH}(const cudaDeviceProp&);\n")
         string(APPEND fused_cases
@@ -103,7 +103,7 @@ if(USE_CUFFTDX)
   add_library(planewave_fused_fft OBJECT ${fused_sources})
   target_link_libraries(planewave_fused_fft PRIVATE mathdx::cufftdx)
   set_target_properties(planewave_fused_fft PROPERTIES CUDA_STANDARD 17 CUDA_STANDARD_REQUIRED ON)
-  target_sources(${ABACUS_BIN_NAME} PRIVATE $<TARGET_OBJECTS:planewave_fused_fft>)
+  target_sources(planewave PRIVATE $<TARGET_OBJECTS:planewave_fused_fft>)
 endif()
 
 if(ENABLE_COVERAGE)
