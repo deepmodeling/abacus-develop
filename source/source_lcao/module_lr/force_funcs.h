@@ -139,8 +139,9 @@ ModuleBase::matrix cal_force_nonlocal_dvnl(
         &gd,
         two_center_bundle.overlap_orb_beta.get());
 
-    hamilt::HContainer<std::complex<double>> tmp_dmr(dm.get_dmr_ptr(1)->get_paraV());
-    std::vector<int> ijrs = dm.get_dmr_ptr(1)->get_ijr_info();
+    hamilt::HContainer<std::complex<double>> tmp_dmr
+        = dm.get_dmr_ptr(1)->template empty_like<std::complex<double>>();
+    const std::vector<int> ijrs = dm.get_dmr_ptr(1)->get_ijr_info();
     tmp_dmr.insert_ijrs(&ijrs);
     tmp_dmr.allocate();
     dm.cal_DMR_full(&tmp_dmr);

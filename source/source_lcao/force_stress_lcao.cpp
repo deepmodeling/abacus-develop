@@ -342,8 +342,9 @@ void Force_Stress_LCAO<T>::cal_operator_fs(UnitCell& ucell,
 
         // For nspin=4 (non-collinear), need complex DMR
         // Create temporary complex DMR for DM
-        hamilt::HContainer<std::complex<double>> tmp_dmr(dmat.dm->get_dmr_ptr(1)->get_paraV());
-        std::vector<int> ijrs = dmat.dm->get_dmr_ptr(1)->get_ijr_info();
+        hamilt::HContainer<std::complex<double>> tmp_dmr
+            = dmat.dm->get_dmr_ptr(1)->template empty_like<std::complex<double>>();
+        const std::vector<int> ijrs = dmat.dm->get_dmr_ptr(1)->get_ijr_info();
         tmp_dmr.insert_ijrs(&ijrs);
         tmp_dmr.allocate();
         dmat.dm->cal_dmr_full(&tmp_dmr, -1);

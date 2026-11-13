@@ -15,6 +15,15 @@ namespace hamilt
 {
 
 /**
+ * TODO(Kirk0830 quotes):
+ * H(R) may use an independent (I,J,R)-based distribution instead of sharing
+ * the 2D block-cyclic layout of H(k). In that design, complete atom-pair
+ * blocks would be owned by one process and folded/redistributed into H(k).
+ * H(R) would then need only AtomPair topology plus BasisFlattenedIndexing;
+ * an AtomPairBlockView would no longer be an architectural abstraction.
+ * Any cross-distribution adapter must remain private to the fold operation.
+ */
+/**
  * class HContainer
  * used to store a matrix for atom-pair local Hamiltonian with specific R-index
  * ----------------------------------------

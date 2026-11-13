@@ -40,20 +40,7 @@ void cast_hcontainer_values(const HContainer<Tin>& src, HContainer<Tout>& dst)
 template<typename Tout, typename Tin>
 HContainer<Tout> make_cast_hcontainer(const HContainer<Tin>& src)
 {
-    const auto ijr_info = src.get_ijr_info();
-
-    if (src.get_paraV() != nullptr)
-    {
-        HContainer<Tout> dst(src.get_paraV(), nullptr, &ijr_info);
-        if (src.is_gamma_only())
-        {
-            dst.fix_gamma();
-        }
-        cast_hcontainer_values(src, dst);
-        return dst;
-    }
-
-    HContainer<Tout> dst(static_cast<int>(src.get_sparse_ap().size()));
+    HContainer<Tout> dst = src.template empty_like<Tout>();
     if (src.is_gamma_only())
     {
         dst.fix_gamma();

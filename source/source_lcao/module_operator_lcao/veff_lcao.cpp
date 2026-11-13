@@ -13,15 +13,14 @@ namespace
 {
 HContainer<double> make_real_hcontainer(const HContainer<std::complex<double>>& complex_hr)
 {
-    HContainer<double> real_hr(complex_hr.get_paraV());
+    HContainer<double> real_hr = complex_hr.empty_like<double>();
     for (int iap = 0; iap < complex_hr.size_atom_pairs(); ++iap)
     {
         const AtomPair<std::complex<double>>& complex_ap = complex_hr.get_atom_pair(iap);
         for (int ir = 0; ir < complex_ap.get_R_size(); ++ir)
         {
             const ModuleBase::Vector3<int> r_index = complex_ap.get_R_index(ir);
-            real_hr.insert_pair(AtomPair<double>(complex_ap.get_atom_i(), complex_ap.get_atom_j(), r_index,
-                                                 complex_hr.get_paraV()));
+            real_hr.insert_pair(complex_ap.get_atom_i(), complex_ap.get_atom_j(), r_index);
         }
     }
     real_hr.allocate(nullptr, true);
