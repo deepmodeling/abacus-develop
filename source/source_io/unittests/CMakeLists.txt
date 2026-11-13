@@ -157,7 +157,7 @@ addtest(
   TARGET MODULE_IO_parse_args
   LIBS parameter base device io_input
   SOURCES test_parse_args.cpp ../parse_args.cpp ../input_help.cpp
-          ../../source_cell/stru_frame_io.cpp)
+          ../parse_command_line.cpp ../../source_cell/stru_frame_io.cpp)
 
 addtest(
   TARGET MODULE_IO_test_read_inp_sys
