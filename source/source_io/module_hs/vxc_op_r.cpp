@@ -127,7 +127,7 @@ void write_Vxc_R(const int nspin,
         options.reduce = true;
         ModuleIO::save_sparse(cal_HR_sparse(vxcs_R_ao[is], sparse_thr),
                               all_R_coor,
-                              *pv,
+                              pv->para_2d(),
                               options);
         const std::string spin_tag = ModuleIO::make_spin_tag(is, nspin);
         ofs_running << " Write Vxc(R)" << spin_tag << " matrix in NAO basis to file: " << options.filename << std::endl;

@@ -72,7 +72,7 @@ void output_TR(const int istep,
                std::ofstream& ofs_running);
 
 template <typename TK>
-void output_SR(Parallel_Orbitals& pv,
+void output_SR(const Parallel_Blkcyclic& dist,
                const Grid_Driver& grid,
                hamilt::Hamilt<TK>* p_ham,
                const std::string& SR_filename,

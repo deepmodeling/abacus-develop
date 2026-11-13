@@ -6,6 +6,7 @@
 #include "source_base/global_function.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
+#include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_io/module_output/spin_tag.h"
 
 #include <cmath>

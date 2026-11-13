@@ -1,6 +1,7 @@
 #include "hs_sparse_io.h"
 #include "hs_sparse_io_detail.h"
 
+#include "source_base/parallel_blkcyc.h"
 #include "source_base/global_function.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
@@ -101,15 +102,15 @@ template <typename Tdata>
 void ModuleIO::save_sparse(
     const SparseRMatrix<Tdata>& smat,
     const std::set<RCoordinate>& all_R_coor,
-    const Parallel_Orbitals& pv,
+    const Parallel_Blkcyclic& dist,
     const SparseWriteOptions& options) {
     ModuleBase::TITLE("ModuleIO", "save_sparse");
     ModuleBase::timer::start("ModuleIO", "save_sparse");
-    const int nlocal = pv.para_2d().nrglb();
+    const int nlocal = dist.nrglb();
     if (nlocal <= 0)
     {
         ModuleBase::WARNING_QUIT("ModuleIO::save_sparse",
-                                 "Parallel_Orbitals global row size must be positive.");
+                                 "matrix global row size must be positive.");
     }
 
     const std::vector<long long> nonzero_num
@@ -138,12 +139,12 @@ void ModuleIO::save_sparse(
 
         if (smat.count(R_coor))
         {
-            save_lat_r(ofs, smat.at(R_coor), pv.para_2d(), options);
+            save_lat_r(ofs, smat.at(R_coor), dist, options);
         }
         else
         {
             SparseRBlock<Tdata> empty_map;
-            save_lat_r(ofs, empty_map, pv.para_2d(), options);
+            save_lat_r(ofs, empty_map, dist, options);
         }
         ++count;
     }
@@ -158,11 +159,11 @@ void ModuleIO::save_sparse(
 template void ModuleIO::save_sparse<double>(
     const SparseRMatrix<double>&,
     const std::set<RCoordinate>&,
-    const Parallel_Orbitals&,
+    const Parallel_Blkcyclic&,
     const SparseWriteOptions&);
 
 template void ModuleIO::save_sparse<std::complex<double>>(
     const SparseRMatrix<std::complex<double>>&,
     const std::set<RCoordinate>&,
-    const Parallel_Orbitals&,
+    const Parallel_Blkcyclic&,
     const SparseWriteOptions&);

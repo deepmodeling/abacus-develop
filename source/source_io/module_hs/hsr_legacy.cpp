@@ -97,7 +97,7 @@ void ModuleIO::output_dHR(const int& istep,
 }
 
 template <typename TK>
-void ModuleIO::output_SR(Parallel_Orbitals& pv,
+void ModuleIO::output_SR(const Parallel_Blkcyclic& dist,
                          const Grid_Driver& grid,
                          hamilt::Hamilt<TK>* p_ham,
                          const std::string& SR_filename,
@@ -141,14 +141,14 @@ void ModuleIO::output_SR(Parallel_Orbitals& pv,
     {
         ModuleIO::save_sparse(HS_Arrays.SR_soc_sparse,
                               HS_Arrays.all_R_coor,
-                              pv,
+                              dist,
                               options);
     }
     else
     {
         ModuleIO::save_sparse(HS_Arrays.SR_sparse,
                               HS_Arrays.all_R_coor,
-                              pv,
+                              dist,
                               options);
     }
 
@@ -201,7 +201,7 @@ void ModuleIO::output_TR(const int istep,
 
     ModuleIO::save_sparse(HS_Arrays.TR_sparse,
                           HS_Arrays.all_R_coor,
-                          pv,
+                          pv.para_2d(),
                           sparse_options);
 
     sparse_format::destroy_T_R_sparse(HS_Arrays);
@@ -210,7 +210,7 @@ void ModuleIO::output_TR(const int istep,
     return;
 }
 
-template void ModuleIO::output_SR<double>(Parallel_Orbitals& pv,
+template void ModuleIO::output_SR<double>(const Parallel_Blkcyclic& dist,
                                           const Grid_Driver& grid,
                                           hamilt::Hamilt<double>* p_ham,
                                           const std::string& SR_filename,
@@ -223,7 +223,7 @@ template void ModuleIO::output_SR<double>(Parallel_Orbitals& pv,
                                           const int out_app_flag,
                                           const int nspin,
                                           std::ofstream& ofs_running);
-template void ModuleIO::output_SR<std::complex<double>>(Parallel_Orbitals& pv,
+template void ModuleIO::output_SR<std::complex<double>>(const Parallel_Blkcyclic& dist,
                                                         const Grid_Driver& grid,
                                                         hamilt::Hamilt<std::complex<double>>* p_ham,
                                                         const std::string& SR_filename,

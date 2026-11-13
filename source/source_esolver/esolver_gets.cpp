@@ -215,7 +215,7 @@ void ESolver_GetS::runner(BaseCell& basecell, const int istep)
     const bool binary = false;
     const double sparse_threshold = 1e-10;
     const int precision = 16;
-    ModuleIO::output_SR(pv,
+    ModuleIO::output_SR(pv.para_2d(),
                         gd,
                         hamilt_ptr,
                         fn,

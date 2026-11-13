@@ -1,13 +1,14 @@
 #ifndef HS_SPARSE_IO_H
 #define HS_SPARSE_IO_H
 
-#include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_lcao/module_ri/abfs_vector3_order.h"
 
 #include <cstddef>
 #include <map>
 #include <set>
 #include <string>
+
+class Parallel_Blkcyclic;
 
 namespace ModuleIO
 {
@@ -37,7 +38,7 @@ struct SparseWriteOptions
 template <typename Tdata>
 void save_sparse(const SparseRMatrix<Tdata>& smat,
                  const std::set<RCoordinate>& all_R_coor,
-                 const Parallel_Orbitals& pv,
+                 const Parallel_Blkcyclic& dist,
                  const SparseWriteOptions& options);
 } // namespace ModuleIO
 

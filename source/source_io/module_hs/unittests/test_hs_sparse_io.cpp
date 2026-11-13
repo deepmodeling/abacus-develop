@@ -10,6 +10,7 @@
  */
 #include "csr_test_helpers.h"
 
+#include "source_base/parallel_blkcyc.h"
 #include "source_io/module_hs/hs_sparse_io.h"
 
 #ifdef __MPI
@@ -22,8 +23,8 @@ TEST(HsSparseIo, SparseHeaderKeepsStepStyle)
     std::remove(filename.c_str());
 
 
-    Parallel_Orbitals pv;
-    init_serial_orbitals(pv);
+    Parallel_Blkcyclic dist;
+    dist.set_serial(2, 2);
     const Abfs::Vector3_Order<int> r_vector(0, 0, 0);
     std::set<Abfs::Vector3_Order<int>> all_R_coor;
     all_R_coor.insert(r_vector);
@@ -38,7 +39,7 @@ TEST(HsSparseIo, SparseHeaderKeepsStepStyle)
     options.binary = false;
     options.istep = 0;
     options.reduce = false;
-    ModuleIO::save_sparse(sparse_matrix, all_R_coor, pv, options);
+    ModuleIO::save_sparse(sparse_matrix, all_R_coor, dist, options);
 
     const std::string output = read_file(filename);
     // istep = 0 is the first ionic step, printed one-based as 1
@@ -56,8 +57,8 @@ TEST(HsSparseIo, SparseTextCountsOnlyValuesAboveThreshold)
     std::remove(filename.c_str());
 
 
-    Parallel_Orbitals pv;
-    init_serial_orbitals(pv);
+    Parallel_Blkcyclic dist;
+    dist.set_serial(2, 2);
     const Abfs::Vector3_Order<int> r_vector(0, 0, 0);
     std::set<Abfs::Vector3_Order<int>> all_R_coor;
     all_R_coor.insert(r_vector);
@@ -74,7 +75,7 @@ TEST(HsSparseIo, SparseTextCountsOnlyValuesAboveThreshold)
     options.binary = false;
     options.istep = 2;
     options.reduce = false;
-    ModuleIO::save_sparse(sparse_matrix, all_R_coor, pv, options);
+    ModuleIO::save_sparse(sparse_matrix, all_R_coor, dist, options);
 
     const std::vector<std::string> lines = read_lines(filename);
     ASSERT_GE(lines.size(), 6);
@@ -121,8 +122,8 @@ TEST(HsSparseIo, SparseBinaryHeaderWritesConcreteStep)
     std::remove(filename.c_str());
 
 
-    Parallel_Orbitals pv;
-    init_serial_orbitals(pv);
+    Parallel_Blkcyclic dist;
+    dist.set_serial(2, 2);
     const Abfs::Vector3_Order<int> r_vector(0, 0, 0);
     std::set<Abfs::Vector3_Order<int>> all_R_coor;
     all_R_coor.insert(r_vector);
@@ -137,7 +138,7 @@ TEST(HsSparseIo, SparseBinaryHeaderWritesConcreteStep)
     options.binary = true;
     options.istep = 3;
     options.reduce = false;
-    ModuleIO::save_sparse(sparse_matrix, all_R_coor, pv, options);
+    ModuleIO::save_sparse(sparse_matrix, all_R_coor, dist, options);
 
     // istep = 3 -> one-based step 4 in the binary header
     const std::vector<int> header_and_r = read_binary_ints(filename, 7);
@@ -152,8 +153,8 @@ TEST(HsSparseIo, SparseBinaryCountsOnlyValuesAboveThreshold)
     std::remove(filename.c_str());
 
 
-    Parallel_Orbitals pv;
-    init_serial_orbitals(pv);
+    Parallel_Blkcyclic dist;
+    dist.set_serial(2, 2);
     const Abfs::Vector3_Order<int> r_vector(0, 0, 0);
     std::set<Abfs::Vector3_Order<int>> all_R_coor;
     all_R_coor.insert(r_vector);
@@ -170,7 +171,7 @@ TEST(HsSparseIo, SparseBinaryCountsOnlyValuesAboveThreshold)
     options.binary = true;
     options.istep = 4;
     options.reduce = false;
-    ModuleIO::save_sparse(sparse_matrix, all_R_coor, pv, options);
+    ModuleIO::save_sparse(sparse_matrix, all_R_coor, dist, options);
 
     std::ifstream ifs(filename.c_str(), std::ios::binary);
     ASSERT_TRUE(ifs.is_open());

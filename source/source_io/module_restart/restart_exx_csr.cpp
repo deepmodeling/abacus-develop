@@ -164,7 +164,7 @@ namespace ModuleIO
             ModuleIO::save_sparse(
                 calculate_RI_Tensor_sparse(sparse_threshold, Hexxs[is], ucell),
                 all_R_coor,
-                pv,
+                pv.para_2d(),
                 options);
         }
     }

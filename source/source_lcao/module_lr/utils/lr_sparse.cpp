@@ -18,7 +18,7 @@ void save_HR(const hamilt::HContainer<TR>& hR, const std::string& filename,
     options.label = "EDM";
     options.threshold = sparse_thr;
     options.istep = 0;
-    ModuleIO::save_sparse(sparse_matrix, all_R, pv, options);
+    ModuleIO::save_sparse(sparse_matrix, all_R, pv.para_2d(), options);
     running_log << "Write file: " << options.filename << std::endl;
 }
 
