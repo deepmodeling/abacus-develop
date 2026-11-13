@@ -15,6 +15,13 @@ addtest(
 
 addtest(TARGET MODULE_IO_spin_tag SOURCES test_spin_tag.cpp)
 
+addtest(
+  TARGET MODULE_IO_libxc_r_suffix
+  SOURCES test_libxc_r_suffix.cpp
+          ../module_chgpot/libxc_r_suffix.cpp)
+
+addtest(TARGET MODULE_IO_frame_append SOURCES test_frame_append.cpp)
+
 addtest(TARGET MODULE_IO_provenance_header SOURCES test_provenance_header.cpp)
 
 if(NOT ENABLE_MPI)
