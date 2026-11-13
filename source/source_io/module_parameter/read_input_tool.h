@@ -247,26 +247,28 @@ namespace ModuleIO
 {
 
 /**
- * @brief Whether the DSP kpar/bndpar layout constraint is applicable.
+ * @brief Whether the DSP kpar/bndpar layout constraint applies.
  *
- * The mtblas/C_PACK libraries on DSP hardware are only invoked by
- * electronic-structure eigensolvers. Machine-learning esolvers
- * (esolver_type = dp / nep) never build a Hamiltonian, never construct
- * k-point pools or band groups, and never call mtblas/C_PACK; the layout
- * constraint must not abort them. See issue #8228.
+ * esolver_type = dp / nep are machine-learning interatomic-potential
+ * solvers: they never build a PW/LCAO Hamiltonian, never construct
+ * k-point pools or band groups, and never call the mtblas/C_PACK
+ * vendor libraries, so the layout constraint is inapplicable.
+ * Comparison is case-insensitive. See issue #8228.
  */
 inline bool dsp_layout_check_needed(const std::string& esolver_type)
 {
-    return !(esolver_type == "dp" || esolver_type == "nep");
+    std::string lower = esolver_type;
+    std::transform(lower.begin(), lower.end(), lower.begin(),
+                   [](unsigned char c) { return std::tolower(c); });
+    return !(lower == "dp" || lower == "nep");
 }
 
 /**
  * @brief The k-point pool count actually consumed by the current basis.
  *
- * After ReadInput::reset_value, exactly one of (kpar, kpar_lcao) carries the
- * user's value and the other is 1, depending on basis_type. Be explicit
- * instead of relying on std::max so that the invariant is documented and
- * future refactors cannot silently break it.
+ * After ReadInput::reset_value, exactly one of (kpar, kpar_lcao) carries
+ * the user value and the other is 1. Select explicitly by basis_type
+ * instead of std::max so the invariant is documented and enforced.
  */
 inline int dsp_effective_kpar(const std::string& basis_type,
                               const int kpar,
@@ -281,9 +283,9 @@ inline int dsp_effective_kpar(const std::string& basis_type,
  *
  * On DSP hardware, the mtblas/C_PACK libraries require exactly one MPI
  * process per k-point pool: the effective pool count (kpar for PW,
- * kpar_lcao for LCAO) times bndpar must equal nproc exactly.
- * Always returns true when esolver_type is dp or nep, because no
- * eigensolver is run. See issue #8228.
+ * kpar_lcao for LCAO) times bndpar must equal nproc exactly. Non-positive
+ * nproc / pool count / bndpar are invalid layouts. Always returns true
+ * when esolver_type is dp or nep. See issue #8228.
  */
 inline bool dsp_kpar_layout_valid(const int nproc,
                                   const std::string& basis_type,
@@ -296,7 +298,15 @@ inline bool dsp_kpar_layout_valid(const int nproc,
     {
         return true;
     }
+    if (nproc <= 0)
+    {
+        return false;
+    }
     const int kpar_eff = dsp_effective_kpar(basis_type, kpar, kpar_lcao);
+    if (kpar_eff <= 0 || bndpar <= 0)
+    {
+        return false;
+    }
     return nproc == kpar_eff * bndpar;
 }
 
