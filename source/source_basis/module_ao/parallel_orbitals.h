@@ -1,16 +1,41 @@
 #ifndef _PARALLEL_ORBITALS_H_
 #define _PARALLEL_ORBITALS_H_
-#include "source_base/parallel_2d.h"
+#include "source_base/parallel_blkcyc.h"
 #include <fstream>
 #include <vector>
 
 /// This class packs the information of 2D-block-cyclic for LCAO code:
 /// parallel distribution of basis, wavefunction and matrix.
-class Parallel_Orbitals : public Parallel_2D
+///
+/// R4 (single storage): this class must never add a copy of any Parallel_Blkcyclic
+/// state field (nrow/ncol/nloc/nb/dim0/dim1/desc/blacs_ctxt).  The only
+/// authoritative copy lives in the para_2d_ member below; re-deriving the
+/// distribution from a duplicated field would silently desynchronize the
+/// LCAO band/atom layers that are computed from it.
+class Parallel_Orbitals
 {
 public:
     Parallel_Orbitals();
     ~Parallel_Orbitals();
+
+    /// Access to the block-cyclic distribution information.  The non-const
+    /// overload exists only for the two cases a const getter cannot serve:
+    /// non-const mutation by setup_2d_division, and test-side descriptor writes.
+    Parallel_Blkcyclic& para_2d() { return para_2d_; }
+
+    const Parallel_Blkcyclic& para_2d() const { return para_2d_; }
+
+    /// Block-cyclic distribution of the wavefunction (nbasis x nbands).  This is
+    /// a distinct layout from the square Hamiltonian distribution, shared with
+    /// the same process grid; it is a temporary adapter seam, not a duplicate of
+    /// para_2d_.
+    const Parallel_Blkcyclic& wfc_layout() const { return wfc_layout_; }
+
+    /// Block-cyclic layout of the MO representation: S and H represented in the MOs
+    /// defined by the DFT reference determinant, i.e. Psi^dagger * S * Psi and
+    /// Psi^dagger * H * Psi.  The square global extent of this layout follows from
+    /// the number nmo of MOs.  Shares the process grid of para_2d_.
+    const Parallel_Blkcyclic& mo_repr_layout() const { return mo_repr_layout_; }
 
     /// local size of bands, used for 2d wavefunction
     /// must divided on dim1 because of elpa interface
@@ -19,9 +44,6 @@ public:
     
     /// ncol_bands*nrow
     long nloc_wfc;
-
-    //ncol_bands*ncol_bands
-    long nloc_Eij;
 
     int lastband_in_proc;
     int lastband_number; 
@@ -36,18 +58,15 @@ public:
     
 #ifdef __MPI
     int desc_wfc[9]; //for wfc, nlocal*nbands
-    int desc_Eij[9]; // for Eij in TDDFT, nbands*nbands
-    int desc_wfc1[9]; // for wfc^T in TDDFT, nbands*nlocal
 
-    /// set the local size of wavefunction and Eij
-    int set_nloc_wfc_Eij(const int& N_A/**< global row size*/,
+    /// set the local sizes of the wavefunction and the MO representation
+    int set_wfc_and_mo_sizes(const int& nmo/**< number of MOs*/,
         std::ofstream& ofs_running,
         std::ofstream& ofs_warning);
 
-    ///@brief set the desc[9] of the 2D-block-cyclic distribution of wavefunction and Eij
-    void set_desc_wfc_Eij(const int& nbasis,
-        const int& nbands,
-        const int& lld);
+    ///@brief set the 2D-block-cyclic layouts of the wavefunction and the MO representation
+    void set_wfc_and_mo_layouts(const int& nbasis,
+        const int& nmo);
 #endif
 
     int get_wfc_global_nbands () const;
@@ -66,8 +85,8 @@ public:
 
     /**
      * @brief dimension getters for 2D-block-cyclic division of Hamiltonian matrix
-     * get_col_size() : total number of columns of Hamiltonian matrix in this processor
-     * get_row_size() : total number of rows of Hamiltonian matrix in this processor
+     * ncloc() : total number of columns of Hamiltonian matrix in this processor
+     * nrloc() : total number of rows of Hamiltonian matrix in this processor
      * get_ncol_atom(iat) : number of columns of Hamiltonian matrix in atom iat
      * get_nrow_atom(iat) : number of rows of Hamiltonian matrix in atom iat
     */
@@ -98,6 +117,21 @@ public:
     std::vector<int> atom_begin_col;
 
     const int* iat2iwt_ = nullptr;
+
+private:
+    /// Block-cyclic distribution of the Hamiltonian matrix.  Single source of
+    /// truth for nrow/ncol/nloc/nb/dim0/dim1/desc/blacs_ctxt (R4).
+    Parallel_Blkcyclic para_2d_;
+
+    /// Block-cyclic distribution of the wavefunction (nbasis x nbands), sharing
+    /// the process grid of para_2d_.  Temporary adapter seam for runtime
+    /// consumers; not a duplicate of the Hamiltonian distribution.
+    Parallel_Blkcyclic wfc_layout_;
+
+    /// Block-cyclic layout of S and H represented in the MOs defined by the DFT
+    /// reference determinant.  Its square global extent follows from the number nmo
+    /// of MOs; it shares the process grid of para_2d_.
+    Parallel_Blkcyclic mo_repr_layout_;
 
 };
 #endif

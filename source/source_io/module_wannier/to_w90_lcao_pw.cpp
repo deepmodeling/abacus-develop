@@ -242,7 +242,7 @@ void toW90_LCAO_IN_PW::get_lcao_wfc_global_ik(
     lcao_wfc_global.create(num_bands, PARAM.globalv.nlocal);
 
     int count_b = -1;
-    int row = this->ParaV->get_row_size();
+    int row = this->ParaV->para_2d().nrloc();
     int global_row_index = 0;
     for (int ib = 0; ib < nbands_; ib++)
     {
@@ -250,13 +250,13 @@ void toW90_LCAO_IN_PW::get_lcao_wfc_global_ik(
 }
         count_b++;
 
-        int ic = this->ParaV->global2local_col(ib);
+        int ic = this->ParaV->para_2d().icloc(ib);
 
         if (ic >= 0)
         {
             for (int ir = 0; ir < row; ir++)
             {
-                global_row_index = this->ParaV->local2global_row(ir);
+                global_row_index = this->ParaV->para_2d().irglb(ir);
                 lcao_wfc_global(count_b, global_row_index) = psi_in(ik, ic, ir);
             }
         }

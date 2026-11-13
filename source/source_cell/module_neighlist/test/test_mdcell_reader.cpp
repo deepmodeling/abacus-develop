@@ -1,9 +1,11 @@
-#include "source_cell/domain_decomposition.h"
+#include "source_cell/dom_decomp.h"
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include "source_cell/mdcell_reader.h"
 #include "source_cell/mdcell.h"
 #include "source_cell/print_cell.h"
+#include "source_cell/stru_frame_io.h"
 #include "source_base/constants.h"
 #include "source_base/parallel_cell.h"
 #include "source_base/global_variable.h"
@@ -11,6 +13,7 @@
 #include <cstdio>
 #include <cstdint>
 #include <fstream>
+#include <iomanip>
 #include <mpi.h>
 #include <set>
 #include <sstream>
@@ -150,12 +153,130 @@ TEST(MDCellReaderTest, ReadOwnedAtomsFromSTRUWithoutUnitCell)
     MPI_Comm_free(&md_comm);
 }
 
+// All inputs describe the same unwrapped fractional positions in a skew cell.
+// Expected positions below are independent of the reader's inverse transform.
+class MDCellReaderUnitsTest : public testing::TestWithParam<const char*>
+{};
+
+TEST_P(MDCellReaderUnitsTest, ConvertsWrapsAndReplicates)
+{
+    const ModuleBase::CommunicationDomain comm = ModuleBase::world_comm_domain();
+    const double lat0 = 2.5;
+    const double tolerance = 1.0e-12;
+    const double input_frac[4][3] = {{0.1, 0.2, 0.3}, {-0.2, 1.3, 0.4},
+                                     {1.4, -0.3, 2.2}, {-1.3, 2.4, -0.2}};
+    const double wrapped[4][3] = {{0.1, 0.2, 0.3}, {0.8, 0.3, 0.4},
+                                  {0.4, 0.7, 0.2}, {0.7, 0.4, 0.8}};
+    const int moves[4][3] = {{1, 1, 1}, {1, 0, 1}, {0, 1, 1}, {1, 1, 0}};
+    const std::string units = GetParam();
+    std::ostringstream filename;
+    filename << testing::TempDir() << "mdcell_reader_" << units << "_rank" << comm.rank() << ".STRU";
+    const std::string stru_file = filename.str();
+    double scale = 1.0;
+    if (units == "Cartesian_au") scale = lat0;
+    if (units == "Cartesian_angstrom") scale = lat0 * ModuleBase::BOHR_TO_A;
+    {
+        std::ofstream ofs(stru_file.c_str());
+        const int local_open_failure = ofs.good() ? 0 : 1;
+        const int open_failures = comm.sum(local_open_failure);
+        EXPECT_EQ(open_failures, 0) << "Failed to open a temporary STRU on one or more ranks";
+        // All ranks must leave together before entering the reader's collectives.
+        if (open_failures != 0)
+        {
+            ofs.close();
+            if (local_open_failure == 0) std::remove(stru_file.c_str());
+            return;
+        }
+        ofs << std::setprecision(17);
+        ofs << "ATOMIC_SPECIES\nHe 4.0026 auto auto\n\nLATTICE_CONSTANT\n" << lat0;
+        ofs << "\n\nLATTICE_VECTORS\n4 0 0\n1 3 0\n0.5 0.75 2\n\nATOMIC_POSITIONS\n";
+        ofs << units << "\n\nHe\n0.0\n4\n";
+        for (int ia = 0; ia < 4; ++ia)
+        {
+            const double x = 4.0 * input_frac[ia][0] + input_frac[ia][1] + 0.5 * input_frac[ia][2];
+            const double y = 3.0 * input_frac[ia][1] + 0.75 * input_frac[ia][2];
+            const double z = 2.0 * input_frac[ia][2];
+            ofs << x * scale << " " << y * scale << " " << z * scale
+                << " m " << moves[ia][0] << " " << moves[ia][1] << " " << moves[ia][2]
+                << " v " << 0.01 * (ia + 1) << " 0 0\n";
+        }
+    }
+
+    const std::vector<std::vector<int> > replicas = {{1, 1, 1}, {2, 3, 2}};
+    for (const std::vector<int>& replica : replicas)
+    {
+        SCOPED_TRACE(units);
+        SCOPED_TRACE(replica[0]);
+        DomainDecomposition decomp;
+        MDCell cell = MDCellReader::read_stru(stru_file, replica, 0.0, comm, decomp);
+        const int expected_count = 4 * replica[0] * replica[1] * replica[2];
+        EXPECT_EQ(cell.nat(), expected_count);
+        EXPECT_EQ(cell.type_atom_counts().size(), 1U);
+        if (cell.type_atom_counts().size() == 1U)
+        {
+            EXPECT_EQ(cell.type_atom_counts()[0], expected_count);
+        }
+        EXPECT_DOUBLE_EQ(cell.lat0(), lat0);
+        const double expected_volume = 24.0 * lat0 * lat0 * lat0 * expected_count / 4;
+        EXPECT_NEAR(cell.omega(), expected_volume, tolerance);
+        const ModuleBase::Matrix3& lattice = cell.latvec();
+        EXPECT_DOUBLE_EQ(lattice.e11, 4.0 * replica[0]);
+        EXPECT_DOUBLE_EQ(lattice.e12, 0.0);
+        EXPECT_DOUBLE_EQ(lattice.e13, 0.0);
+        EXPECT_DOUBLE_EQ(lattice.e21, 1.0 * replica[1]);
+        EXPECT_DOUBLE_EQ(lattice.e22, 3.0 * replica[1]);
+        EXPECT_DOUBLE_EQ(lattice.e23, 0.0);
+        EXPECT_DOUBLE_EQ(lattice.e31, 0.5 * replica[2]);
+        EXPECT_DOUBLE_EQ(lattice.e32, 0.75 * replica[2]);
+        EXPECT_DOUBLE_EQ(lattice.e33, 2.0 * replica[2]);
+        std::vector<int> owners(expected_count, 0);
+        for (const LocalAtom& atom : cell.owned_atoms())
+        {
+            EXPECT_GE(atom.type_index, 0);
+            EXPECT_LT(atom.type_index, expected_count);
+            // Report invalid IDs without indexing owners or skipping the reduction.
+            if (atom.type_index < 0 || atom.type_index >= expected_count) continue;
+            const int id = static_cast<int>(atom.type_index);
+            ++owners[id];
+            const int ia = id % 4;
+            const int image = id / 4;
+            const int iz = image % replica[2];
+            const int iy = (image / replica[2]) % replica[1];
+            const int ix = image / (replica[1] * replica[2]);
+            const double x = wrapped[ia][0] + ix;
+            const double y = wrapped[ia][1] + iy;
+            const double z = wrapped[ia][2] + iz;
+            EXPECT_NEAR(atom.frac.x, x / replica[0], tolerance);
+            EXPECT_NEAR(atom.frac.y, y / replica[1], tolerance);
+            EXPECT_NEAR(atom.frac.z, z / replica[2], tolerance);
+            EXPECT_NEAR(atom.cart.x, 4.0 * x + y + 0.5 * z, tolerance);
+            EXPECT_NEAR(atom.cart.y, 3.0 * y + 0.75 * z, tolerance);
+            EXPECT_NEAR(atom.cart.z, 2.0 * z, tolerance);
+            EXPECT_EQ(decomp.owner_rank_from_frac(atom.frac), comm.rank());
+            EXPECT_EQ(atom.type, 0);
+            EXPECT_DOUBLE_EQ(atom.vel.x, 0.01 * (ia + 1));
+            EXPECT_DOUBLE_EQ(atom.vel.y, 0.0);
+            EXPECT_DOUBLE_EQ(atom.vel.z, 0.0);
+            EXPECT_EQ(atom.mbl.x, moves[ia][0]);
+            EXPECT_EQ(atom.mbl.y, moves[ia][1]);
+            EXPECT_EQ(atom.mbl.z, moves[ia][2]);
+            EXPECT_DOUBLE_EQ(atom.mass, 4.0026 / ModuleBase::AU_to_MASS);
+        }
+        comm.sum(owners.data(), expected_count);
+        for (int count : owners) EXPECT_EQ(count, 1);
+    }
+    EXPECT_EQ(std::remove(stru_file.c_str()), 0);
+}
+
+INSTANTIATE_TEST_SUITE_P(CartesianCoordinates,
+                         MDCellReaderUnitsTest,
+                         testing::Values("Cartesian", "Cartesian_angstrom", "Cartesian_au"));
+
 TEST(MDCellReaderTest, RestartStruPreservesAtomRecordsAcrossRanks)
 {
-    int rank = 0;
-    int size = 1;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    const ModuleBase::CommunicationDomain world_domain = ModuleBase::world_comm_domain();
+    const int rank = world_domain.rank();
+    const int size = world_domain.size();
     ASSERT_GE(size, 4);
 
     std::vector<LocalAtom> owned_atoms;
@@ -227,7 +348,7 @@ TEST(MDCellReaderTest, RestartStruPreservesAtomRecordsAcrossRanks)
     StruMeta metadata;
     metadata.species.resize(2);
     const std::string output_file = "distributed_mdcell_restart.STRU";
-    mdcell::print_stru_file(mdcell, metadata, output_file);
+    mdcell::print_stru_file(mdcell, metadata, output_file, "", false);
 
     DomainDecomposition reader_decomp;
     MDCell round_trip = MDCellReader::read_stru(output_file,
@@ -317,6 +438,168 @@ TEST(MDCellReaderTest, RestartStruPreservesAtomRecordsAcrossRanks)
     }
     MPI_Barrier(MPI_COMM_WORLD);
     if (rank == 0) std::remove(output_file.c_str());
+}
+
+// ---------------------------------------------------------------------------
+// mdcell::print_stru_file append + frame_comment.
+// ---------------------------------------------------------------------------
+TEST(MDCellReaderTest, STRUAppendWithFrameComment)
+{
+    const ModuleBase::CommunicationDomain world_domain = ModuleBase::world_comm_domain();
+    const int rank = world_domain.rank();
+
+    std::vector<LocalAtom> owned_atoms;
+    owned_atoms.push_back(LocalAtom(ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
+                                    ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
+                                    ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
+                                    ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
+                                    ModuleBase::Vector3<int>(1, 0, 1),
+                                    1.0,
+                                    0,
+                                    0,
+                                    rank));
+
+    ModuleBase::Matrix3 lattice = make_lattice();
+    MDCell mdcell;
+    mdcell.initialize_from_owned_atoms(lattice,
+                  lattice.Inverse(),
+                  1.0,
+                  1.0,
+                  1,
+                  owned_atoms,
+                  std::vector<std::string>{"A"},
+                  std::vector<double>{1.0},
+                  std::vector<std::int64_t>{1},
+                  0.0,
+                  ModuleBase::world_comm_domain());
+    StruMeta metadata;
+    metadata.species.resize(1);
+    const std::string output_file = "mdcell_append_test.STRU";
+
+    // First frame: append=false, frame comment set.
+    mdcell::print_stru_file(mdcell, metadata, output_file,
+                            "# MD step 1\n\n", /*append=*/false);
+    // Second frame: append=true with a different comment.
+    mdcell::print_stru_file(mdcell, metadata, output_file,
+                            "# MD step 2\n\n", /*append=*/true);
+
+    if (rank == 0)
+    {
+        std::ifstream ifs(output_file.c_str());
+        std::string str((std::istreambuf_iterator<char>(ifs)),
+                        std::istreambuf_iterator<char>());
+        ifs.close();
+        // Both frame markers must be present.
+        EXPECT_THAT(str, testing::HasSubstr("# MD step 1"));
+        EXPECT_THAT(str, testing::HasSubstr("# MD step 2"));
+        // Two STRU blocks -> two ATOMIC_SPECIES markers.
+        int occurrences = 0;
+        size_t pos = 0;
+        while ((pos = str.find("ATOMIC_SPECIES", pos)) != std::string::npos)
+        {
+            ++occurrences;
+            pos += 14;
+        }
+        EXPECT_EQ(occurrences, 2);
+        std::remove(output_file.c_str());
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Fresh-run truncation: rewriting the fixed-name file (append=false) must
+// drop the frames left by a previous run so extract_last_frame only sees the
+// new run's frames.
+// ---------------------------------------------------------------------------
+TEST(MDCellReaderTest, STRUFreshRunTruncatesPreviousFrames)
+{
+    const ModuleBase::CommunicationDomain world_domain = ModuleBase::world_comm_domain();
+    const int rank = world_domain.rank();
+
+    std::vector<LocalAtom> owned_atoms;
+    owned_atoms.push_back(LocalAtom(ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
+                                    ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
+                                    ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
+                                    ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
+                                    ModuleBase::Vector3<int>(1, 0, 1),
+                                    1.0,
+                                    0,
+                                    0,
+                                    rank));
+
+    ModuleBase::Matrix3 lattice = make_lattice();
+    const ModuleBase::Matrix3 inverse = lattice.Inverse();
+    const std::vector<std::string> species_labels = {"A"};
+    const std::vector<double> species_masses = {1.0};
+    const std::vector<std::int64_t> species_counts = {1};
+    MDCell mdcell;
+    mdcell.initialize_from_owned_atoms(lattice,
+                  inverse,
+                  1.0,
+                  1.0,
+                  1,
+                  owned_atoms,
+                  species_labels,
+                  species_masses,
+                  species_counts,
+                  0.0,
+                  world_domain);
+    StruMeta metadata;
+    metadata.species.resize(1);
+    const std::string output_file = testing::TempDir() + "mdcell_fresh_run_test.STRU";
+    const std::string frame_file = testing::TempDir() + "mdcell_fresh_run_test.frame";
+
+    // Previous run: frames 1 and 2 accumulate.
+    mdcell::print_stru_file(mdcell, metadata, output_file,
+                            "# MD step 1\n\n", /*append=*/false);
+    mdcell::print_stru_file(mdcell, metadata, output_file,
+                            "# MD step 2\n\n", /*append=*/true);
+
+    // The extraction runs on rank zero only; broadcast its result so every
+    // rank takes the same (collective-safe) return decision. Later
+    // print_stru_file calls broadcast/reduce across the whole communicator,
+    // so a rank-local ASSERT here would hang the remaining ranks.
+    const bool extracted = (rank == 0)
+        ? stru_frame_io::extract_last_frame(output_file, frame_file)
+        : true;
+    const int extracted_local = extracted ? 1 : 0;
+    const int extracted_all = world_domain.max(extracted_local);
+    ASSERT_EQ(extracted_all, 1);
+
+    if (rank == 0)
+    {
+        std::ifstream prev(frame_file.c_str());
+        std::string prev_str((std::istreambuf_iterator<char>(prev)),
+                             std::istreambuf_iterator<char>());
+        prev.close();
+        EXPECT_THAT(prev_str, testing::HasSubstr("ATOMIC_SPECIES"));
+    }
+
+    // Fresh run: the first frame truncates the fixed-name file (append=false)
+    // and starts numbering from step 1 again.
+    mdcell::print_stru_file(mdcell, metadata, output_file,
+                            "# MD step 1\n\n", /*append=*/false);
+
+    if (rank == 0)
+    {
+        std::ifstream ifs(output_file.c_str());
+        std::string str((std::istreambuf_iterator<char>(ifs)),
+                        std::istreambuf_iterator<char>());
+        ifs.close();
+        // Only the fresh run's single frame remains: one ATOMIC_SPECIES block,
+        // one frame marker, no trace of the previous step-2 frame.
+        int occurrences = 0;
+        size_t pos = 0;
+        while ((pos = str.find("ATOMIC_SPECIES", pos)) != std::string::npos)
+        {
+            ++occurrences;
+            pos += 14;
+        }
+        EXPECT_EQ(occurrences, 1);
+        EXPECT_THAT(str, testing::HasSubstr("# MD step 1"));
+        EXPECT_THAT(str, testing::Not(testing::HasSubstr("# MD step 2")));
+        std::remove(output_file.c_str());
+        std::remove(frame_file.c_str());
+    }
 }
 
 int main(int argc, char** argv)

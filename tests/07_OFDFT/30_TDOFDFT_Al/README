@@ -1,1 +1,5 @@
-Test case without current dependent potential in TDOFDFT
+TDOFDFT Al regression without a current-dependent potential.
+Use dt=0.001 fs and 51 outputs (50 advances, final time 0.05 fs).
+This short trajectory checks propagation and final energy, force and stress
+with the existing Autotest tolerances. The timestep was separately assessed
+over 0.5 fs; see issue #8272 and PR #8273 for the refinement evidence.

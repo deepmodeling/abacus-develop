@@ -1,6 +1,7 @@
 #include "evolve_elec.h"
 
 #include "evolve_psi.h"
+#include "source_base/parallel_blkcyc.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 
@@ -21,7 +22,9 @@ void Evolve_elec<Device>::solve_psi(const std::vector<EijOutputInfo>& eij_output
                                     const int nlocal,
                                     const int& nks,
                                     hamilt::Hamilt<std::complex<double>>* phm,
-                                    Parallel_Orbitals& para_orb,
+                                    const Parallel_Blkcyclic& matrix_layout,
+                                    const Parallel_Blkcyclic& wfc_layout,
+                                    const Parallel_Blkcyclic& mo_repr_layout,
                                     psi::Psi<std::complex<double>>* psi,
                                     psi::Psi<std::complex<double>>* psi_laststep,
                                     ct::Tensor& Hk_laststep,
@@ -45,7 +48,7 @@ void Evolve_elec<Device>::solve_psi(const std::vector<EijOutputInfo>& eij_output
     // Multi-GPU support
     CublasMpResources cublas_res;
 #ifdef __CUBLASMP
-    init_cublasmp_resources(cublas_res, MPI_COMM_WORLD, para_orb.desc);
+    init_cublasmp_resources(cublas_res, MPI_COMM_WORLD, matrix_layout.desc());
 #endif
 
     for (int ik = 0; ik < nks; ik++)
@@ -59,16 +62,18 @@ void Evolve_elec<Device>::solve_psi(const std::vector<EijOutputInfo>& eij_output
         if (!use_tensor)
         {
             // Construct the local P_k matrix for moving spatial gauge, CPU only for now
-            std::vector<std::complex<double>> P_k_local(para_orb.nloc, {0.0, 0.0});
+            std::vector<std::complex<double>> P_k_local(matrix_layout.size(), {0.0, 0.0});
             if (use_td_moving_gauge && td_mg != nullptr)
             {
-                td_mg->get_P_k(ucell, kvec_d[ik], P_k_local.data(), para_orb.nloc, para_orb.ncol);
+                td_mg->get_P_k(ucell, kvec_d[ik], P_k_local.data(), matrix_layout.size(), matrix_layout.ncloc());
             }
 
-            const int len_HS_laststep = use_lapack ? nlocal * nlocal : para_orb.nloc;
+            const int len_HS_laststep = use_lapack ? nlocal * nlocal : matrix_layout.size();
             evolve_psi(nband,
                        nlocal,
-                       &(para_orb),
+                       matrix_layout,
+                       wfc_layout,
+                       mo_repr_layout,
                        phm,
                        psi[0].get_pointer(),
                        psi_laststep[0].get_pointer(),
@@ -90,7 +95,7 @@ void Evolve_elec<Device>::solve_psi(const std::vector<EijOutputInfo>& eij_output
 
             const int len_psi_k_1 = use_lapack ? nband : psi->get_nbands();
             const int len_psi_k_2 = use_lapack ? nlocal : psi->get_nbasis();
-            const int len_HS_laststep = use_lapack ? nlocal * nlocal : para_orb.nloc;
+            const int len_HS_laststep = use_lapack ? nlocal * nlocal : matrix_layout.size();
 
             // Create Tensor for psi_k, psi_k_laststep, H_laststep, S_laststep, ekb
             ct::Tensor psi_k_tensor(ct::DataType::DT_COMPLEX_DOUBLE, ct_device_type, ct::TensorShape({len_psi_k_1, len_psi_k_2}));
@@ -125,8 +130,8 @@ void Evolve_elec<Device>::solve_psi(const std::vector<EijOutputInfo>& eij_output
                 else
                 {
                     // Multiple processes: gather data to the root process (myid == 0) and point to the gathered data
-                    gatherPsi(myid, root_proc, psi[0].get_pointer(), para_orb, psi_g);
-                    gatherPsi(myid, root_proc, psi_laststep[0].get_pointer(), para_orb, psi_laststep_g);
+                    gatherPsi(myid, root_proc, psi[0].get_pointer(), wfc_layout, psi_g);
+                    gatherPsi(myid, root_proc, psi_laststep[0].get_pointer(), wfc_layout, psi_laststep_g);
 
                     if (myid == root_proc)
                     {
@@ -166,7 +171,9 @@ void Evolve_elec<Device>::solve_psi(const std::vector<EijOutputInfo>& eij_output
 
             evolve_psi_tensor<Device>(nband,
                                       nlocal,
-                                      &(para_orb),
+                                      matrix_layout,
+                                      wfc_layout,
+                                      mo_repr_layout,
                                       phm,
                                       psi_k_tensor,
                                       psi_k_laststep_tensor,
@@ -201,8 +208,8 @@ void Evolve_elec<Device>::solve_psi(const std::vector<EijOutputInfo>& eij_output
                 // If it's multi-process, distribute back; if it's single-process, the data is already in psi[0]
                 if (num_procs > 1)
                 {
-                    distributePsi(para_orb, psi[0].get_pointer(), psi_g);
-                    distributePsi(para_orb, psi_laststep[0].get_pointer(), psi_laststep_g);
+                    distributePsi(wfc_layout, psi[0].get_pointer(), psi_g);
+                    distributePsi(wfc_layout, psi_laststep[0].get_pointer(), psi_laststep_g);
                 }
 #endif
             }

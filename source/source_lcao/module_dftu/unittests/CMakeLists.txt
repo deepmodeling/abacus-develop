@@ -38,12 +38,13 @@ if(ENABLE_MPI)
     TARGET MODULE_DFTU_folding
     LIBS base device
     SOURCES
-      test_dftu_nao_folding.cpp
-      ../../../source_basis/module_ao/parallel_orbitals.cpp
-      # The test instantiates Parallel_Orbitals (a Parallel_2D subclass) and links
-      # the MPI-built base library, so it must keep __MPI to match the layout of
-      # Parallel_2D / Parallel_Orbitals across TUs (otherwise ODR/ABI mismatch).
-    KEEP_FEATURE_DEFINITIONS __MPI)
+    test_dftu_nao_folding.cpp
+    ../../../source_basis/module_ao/parallel_orbitals.cpp
+    # The test instantiates Parallel_Orbitals (a Parallel_Blkcyclic subclass) and links
+    # the MPI-built base library, so it must keep __MPI to match the layout of
+    # Parallel_Blkcyclic / Parallel_Orbitals across TUs (otherwise ODR/ABI mismatch).
+    KEEP_FEATURE_DEFINITIONS
+    __MPI)
 
   addtest(
     TARGET MODULE_DFTU_fs_r
@@ -58,17 +59,24 @@ if(ENABLE_MPI)
   addtest(
     TARGET MODULE_DFTU_fs_k
     LIBS base device
-    SOURCES test_dftu_nao_fs_k.cpp)
+    SOURCES
+    test_dftu_nao_fs_k.cpp
+    ../../../source_basis/module_ao/parallel_orbitals.cpp
+    # The test constructs Parallel_Orbitals normally and links the MPI-built
+    # base library, so it must keep __MPI to match the Parallel_Blkcyclic layout.
+    KEEP_FEATURE_DEFINITIONS
+    __MPI)
 
   addtest(
     TARGET MODULE_DFTU_fs_accum
     LIBS base device
     SOURCES
-      test_dftu_nao_fs_accum.cpp
-      ../../../source_basis/module_ao/parallel_orbitals.cpp
-      # This test uses Parallel_2D::set_serial which is a real implementation
-      # in parallel_2d.cpp; keep __MPI so the serial path links correctly.
-    KEEP_FEATURE_DEFINITIONS __MPI)
+    test_dftu_nao_fs_accum.cpp
+    ../../../source_basis/module_ao/parallel_orbitals.cpp
+    # This test uses Parallel_Blkcyclic::set_serial which is a real implementation
+    # in parallel_blkcyc.cpp; keep __MPI so the serial path links correctly.
+    KEEP_FEATURE_DEFINITIONS
+    __MPI)
 
   if(ENABLE_LCAO)
     addtest(
@@ -94,8 +102,8 @@ if(ENABLE_MPI)
         ../../../source_estate/module_dm/dmr_full.cpp
         ../../../source_pw/module_pwdft/dftu_base.cpp
         ../../../source_pw/module_pwdft/dftu_base_io.cpp
-        ../../../source_pw/module_pwdft/dftu_base_io_read.cpp
-        ../../../source_pw/module_pwdft/dftu_base_io_write.cpp
+        ../../../source_pw/module_pwdft/dftu_base_read.cpp
+        ../../../source_pw/module_pwdft/dftu_base_write.cpp
         ../../../source_pw/module_pwdft/yukawa_screening.cpp
         ../../../source_estate/occ_matrix.cpp
         ../../../source_estate/occ_mixer.cpp
@@ -148,8 +156,8 @@ if(ENABLE_MPI)
         ../../../source_estate/module_dm/dmr_full.cpp
         ../../../source_pw/module_pwdft/dftu_base.cpp
         ../../../source_pw/module_pwdft/dftu_base_io.cpp
-        ../../../source_pw/module_pwdft/dftu_base_io_read.cpp
-        ../../../source_pw/module_pwdft/dftu_base_io_write.cpp
+        ../../../source_pw/module_pwdft/dftu_base_read.cpp
+        ../../../source_pw/module_pwdft/dftu_base_write.cpp
         ../../../source_pw/module_pwdft/yukawa_screening.cpp
         ../../../source_estate/occ_matrix.cpp
         ../../../source_estate/occ_mixer.cpp

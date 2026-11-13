@@ -27,6 +27,14 @@ if(ENABLE_LCAO)
     list(APPEND objects diago_elpa.cpp diago_elpa_native.cpp)
   endif()
 
+  # DSP build without C_PACK: provide the zhegvx_ fallback for
+  # cpack_zhegvx_driver (used by diago_lapack.cpp under __DSP).
+  if(USE_DSP AND NOT MT_CPACK_DIR)
+    list(APPEND objects
+        cpack_zhegvx_fallback.cpp
+    )
+  endif()
+
   if(USE_CUDA)
     set(cuda_objects ./kernels/hegvd_op.cpp ./kernels/cuda/diag_cusolver.cu
                      diago_cusolver.cpp diago_cusolver.h)

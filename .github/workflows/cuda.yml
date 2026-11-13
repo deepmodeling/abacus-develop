@@ -105,7 +105,7 @@ jobs:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
-          ctest --test-dir build -V --timeout 1700 -R '^(MODULE_LCAO_tddft_radial_interpolation_cuda_test|MODULE_LCAO_tddft_snap_psibeta_half_test)$'
+          ctest --test-dir build -V --timeout 1700 -R '^(MODULE_LCAO_tddft_radial_interpolation_cuda_test|MODULE_LCAO_tddft_snap_psibeta_half_test|MODULE_LCAO_radial_tables_gpu)$'
 
       - name: Test 11_PW_GPU
         run: |

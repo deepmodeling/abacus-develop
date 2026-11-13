@@ -79,9 +79,14 @@ class Stress_Func
 
     // 3) the stress from the ewald term (ion-ion intraction under
     //		periodic boundary conditions).
+    // struc_fac contains unnormalized exp(-iG.tau) sums or their B-spline approximation.
+    // Its first rho_basis->npw columns must follow rho_basis's local G order.
+    // Extra columns are allowed for a PW_Basis_Sup dense SF with a matching
+    // smooth-basis prefix; only that prefix is consumed.
     void stress_ewa(const UnitCell& ucell,
                     ModuleBase::matrix& sigma,
                     ModulePW::PW_Basis* rho_basis,
+                    const ModuleBase::ComplexMatrix& struc_fac,
                     const bool is_pw); // ewald part in PW or LCAO basis
 
     // 4) the stress from the local pseudopotentials

@@ -19,6 +19,10 @@ reviews:
         GlobalV/GlobalC/PARAM code references as blocking, and treat
         migration-neutral added usage as reviewer-visible warnings requiring
         reason, scope, risk, and cleanup rationale.
+        For new or modified unit tests, check that a `unittests/test_<name>.cpp`
+        file is named after the source file it actually exercises; the
+        governance checker only enforces the directory layout and the `test_`
+        prefix.
     - path: "source/source_io/module_parameter/**"
       instructions: |
         Treat INPUT parameter metadata, parsing, defaults, descriptions, and

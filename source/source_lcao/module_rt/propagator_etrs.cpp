@@ -6,6 +6,7 @@
 #include "source_io/module_parameter/parameter.h"
 #include "propagator.h"
 
+#include "source_base/parallel_blkcyc.h"
 #include <complex>
 #include <iostream>
 
@@ -20,8 +21,8 @@ void Propagator::compute_propagator_etrs(const int nlocal,
                                          std::ofstream& ofs_running,
                                          const int print_matrix) const
 {
-    std::vector<std::complex<double>> U1(this->ParaV->nloc);
-    std::vector<std::complex<double>> U2(this->ParaV->nloc);
+    std::vector<std::complex<double>> U1(layout_.size());
+    std::vector<std::complex<double>> U2(layout_.size());
     int tag = 2;
     compute_propagator_taylor(nlocal, Stmp, Htmp, U1.data(), ofs_running, print_matrix, tag);
     compute_propagator_taylor(nlocal, Stmp, H_laststep, U2.data(), ofs_running, print_matrix, tag);
@@ -34,16 +35,16 @@ void Propagator::compute_propagator_etrs(const int nlocal,
                              U1.data(),
                              1,
                              1,
-                             this->ParaV->desc,
+                             layout_.desc(),
                              U2.data(),
                              1,
                              1,
-                             this->ParaV->desc,
+                             layout_.desc(),
                              0.0,
                              U_operator,
                              1,
                              1,
-                             this->ParaV->desc);
+                             layout_.desc());
 }
 #endif // __MPI
 } // namespace module_rt

@@ -2,6 +2,8 @@
 
 #include "source_base/module_external/blacs_connector.h"
 #include "source_base/tool_quit.h"
+#include "source_base/basis_flattened_indexing.h"
+#include "source_basis/module_ao/elem_basis_idx_orb.h"
 #include "source_basis/module_pw/pw_basis_big.h" // use PW_Basis_Big
 #include "source_cell/klist.h"
 #include "source_cell/module_neighbor/sltk_atom_arrange.h"
@@ -41,9 +43,22 @@
 namespace ModuleESolver
 {
 
-#ifdef __EXX
 namespace
 {
+std::unique_ptr<BasisFlattenedIndexing> make_basis_flattened_indexing(
+    const UnitCell& ucell,
+    const LCAO_Orbitals& orb)
+{
+    const ModuleBase::Element_Basis_Index::Range range =
+        ModuleBase::Element_Basis_Index::construct_range(orb);
+    const ModuleBase::Element_Basis_Index::IndexLNM hierarchy =
+        ModuleBase::Element_Basis_Index::construct_index(range);
+    std::unique_ptr<BasisFlattenedIndexing> indexing(
+        new BasisFlattenedIndexing(hierarchy, ucell.iat2it, ucell.get_npol()));
+    return indexing;
+}
+
+#ifdef __EXX
 void validate_librpa_v1_kpoints(const Input_para& input, const K_Vectors& kv)
 {
     // Reader-v1 writes the complete Monkhorst-Pack mesh for LibRPA.
@@ -52,8 +67,8 @@ void validate_librpa_v1_kpoints(const Input_para& input, const K_Vectors& kv)
         ModuleBase::WARNING_QUIT("ESolver_KS_LCAO::before_all_runners", "out_librpa_ver=1 requires a uniform Monkhorst-Pack k-point grid.");
     }
 }
-} // namespace
 #endif
+} // namespace
 
 template <typename TK, typename TR>
 ESolver_KS_LCAO<TK, TR>::ESolver_KS_LCAO()
@@ -109,6 +124,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(BaseCell& basecell, const Input
                                  ucell,
                                  two_center_bundle_,
                                  orb_);
+    this->basis_index_ = make_basis_flattened_indexing(ucell, this->orb_);
 
     // 6) generate matrices for optimized auxiliary basis functions when requested
     if (inp.calculation == "gen_opt_abfs")
@@ -174,6 +190,9 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep, const
     ModuleBase::TITLE("ESolver_KS_LCAO", "before_scf");
     ModuleBase::timer::start("ESolver_KS_LCAO", "before_scf");
 
+    // Record the ionic step (not output_step) for provenance headers written in after_all_runners.
+    this->istep_ = istep;
+
     //! 1) call before_scf() of ESolver_KS.
     // The base preparation uses this index only for initial charge output.
     ESolver_KS::before_scf(ucell, output_step);
@@ -233,6 +252,8 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep, const
         this->p_hamilt = new hamilt::HamiltLCAO<TK, TR>(ucell,
                                                         this->gd,
                                                         &this->pv,
+                                                        *(this->basis_index_),
+                                                        this->pv.para_2d(),
                                                         this->pelec->pot,
                                                         this->kv,
                                                         two_center_bundle_,
@@ -373,6 +394,7 @@ void ESolver_KS_LCAO<TK, TR>::cal_force(BaseCell& basecell, ModuleBase::matrix& 
                        this->inp_->test_stress,
                        this->gd,
                        this->pv,
+                       *(this->basis_index_),
                        this->pelec,
                        this->dmat,
                        this->psi,
@@ -443,6 +465,7 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners(BaseCell& basecell)
 
     ModuleIO::ctrl_runner_lcao<TK, TR>(ucell,
                                        *this->inp_,
+                                       this->istep_,
                                        this->kv,
                                        this->pelec,
                                        this->dmat,
@@ -529,11 +552,11 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
     {
         if (exx_info_.info_ri.real_number)
         {
-            this->exx_nao.exd->exx_eachiterinit(istep, ucell, *this->dmat.dm, this->kv, this->pv, iter);
+            this->exx_nao.exd->exx_eachiterinit(istep, ucell, *this->dmat.dm, this->kv, this->pv, iter, *this->pelec);
         }
         else
         {
-            this->exx_nao.exc->exx_eachiterinit(istep, ucell, *this->dmat.dm, this->kv, this->pv, iter);
+            this->exx_nao.exc->exx_eachiterinit(istep, ucell, *this->dmat.dm, this->kv, this->pv, iter, *this->pelec);
         }
     }
 #endif
@@ -690,12 +713,8 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
                          this->kv,
                          this->p_chgmix->get_mixing_beta(),
                          hamilt_lcao,
-                         global_out_dir,
                          this->inp_->nspin,
-                         gamma_only_local,
-                         istep,
-                         iter,
-                         occmat_cfg);
+                         gamma_only_local);
 
     // mohan add 2025-11: push DFT+U energy from Plus_U_Base to ElecState.
     // Covers both dft_plus_u==1 (new method, energy accumulated by DFTU_onsite::contributeHR

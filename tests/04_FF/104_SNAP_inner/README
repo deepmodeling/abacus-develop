@@ -1,0 +1,13 @@
+CPU SNAP inner-switch regression case.
+
+The atoms are inside the smooth inner-switch interval (0.8 to 1.2 Angstrom).
+This case verifies model-file parsing and the complete MD energy, force, and
+stress path with switchinnerflag enabled. The coefficients are a deterministic
+software-test fixture, not a validated physical potential.
+
+The reference was cross-checked with LAMMPS SNAP (30 Mar 2026 development
+build, c46bbef): potential energy -0.24612388 eV, x forces -2.7962 and
++2.7962 eV/Angstrom, and Pxx 3999.6081 bar. ABACUS reports Pxx in kbar.
+
+Model files: ../../SIMULATION_MODELS/snap_104.coeff and
+../../SIMULATION_MODELS/snap_104.param.

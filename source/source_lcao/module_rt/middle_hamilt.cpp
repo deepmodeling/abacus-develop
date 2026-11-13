@@ -1,5 +1,6 @@
 #include "middle_hamilt.h"
 
+#include "source_base/parallel_blkcyc.h"
 #include "source_base/global_variable.h"
 #include "source_base/module_container/ATen/kernels/blas.h"
 #include "source_base/module_device/memory_op.h" // memory operations
@@ -14,7 +15,7 @@ namespace module_rt
 {
 #ifdef __MPI
 
-void half_Hmatrix(const Parallel_Orbitals* pv,
+void half_Hmatrix(const Parallel_Blkcyclic& layout,
                   const int nband,
                   const int nlocal,
                   std::complex<double>* Htmp,
@@ -29,10 +30,10 @@ void half_Hmatrix(const Parallel_Orbitals* pv,
         ofs_running << std::setprecision(10);
         ofs_running << std::endl;
         ofs_running << " H(t+dt) :" << std::endl;
-        for (int i = 0; i < pv->nrow; i++)
+        for (int i = 0; i < layout.nrloc(); i++)
         {
-            const int in = i * pv->ncol;
-            for (int j = 0; j < pv->ncol; j++)
+            const int in = i * layout.ncloc();
+            for (int j = 0; j < layout.ncloc(); j++)
             {
                 ofs_running << Htmp[in + j].real() << "+" << Htmp[in + j].imag() << "i ";
             }
@@ -41,10 +42,10 @@ void half_Hmatrix(const Parallel_Orbitals* pv,
         ofs_running << std::endl;
         ofs_running << std::endl;
         ofs_running << " H(t):" << std::endl;
-        for (int i = 0; i < pv->nrow; i++)
+        for (int i = 0; i < layout.nrloc(); i++)
         {
-            const int in = i * pv->ncol;
-            for (int j = 0; j < pv->ncol; j++)
+            const int in = i * layout.ncloc();
+            for (int j = 0; j < layout.ncloc(); j++)
             {
                 ofs_running << H_laststep[in + j].real() << "+" << H_laststep[in + j].imag() << "i ";
             }
@@ -55,17 +56,17 @@ void half_Hmatrix(const Parallel_Orbitals* pv,
 
     std::complex<double> alpha = {0.5, 0.0};
     std::complex<double> beta = {0.5, 0.0};
-    ScalapackConnector::geadd('N', nlocal, nlocal, alpha, H_laststep, 1, 1, pv->desc, beta, Htmp, 1, 1, pv->desc);
-    ScalapackConnector::geadd('N', nlocal, nlocal, alpha, S_laststep, 1, 1, pv->desc, beta, Stmp, 1, 1, pv->desc);
+    ScalapackConnector::geadd('N', nlocal, nlocal, alpha, H_laststep, 1, 1, layout.desc(), beta, Htmp, 1, 1, layout.desc());
+    ScalapackConnector::geadd('N', nlocal, nlocal, alpha, S_laststep, 1, 1, layout.desc(), beta, Stmp, 1, 1, layout.desc());
 
     if (print_matrix)
     {
         ofs_running << std::endl;
         ofs_running << " H (t+dt/2) :" << std::endl;
-        for (int i = 0; i < pv->nrow; i++)
+        for (int i = 0; i < layout.nrloc(); i++)
         {
-            const int in = i * pv->ncol;
-            for (int j = 0; j < pv->ncol; j++)
+            const int in = i * layout.ncloc();
+            for (int j = 0; j < layout.ncloc(); j++)
             {
                 ofs_running << Htmp[in + j].real() << "+" << Htmp[in + j].imag() << "i ";
             }
@@ -75,7 +76,7 @@ void half_Hmatrix(const Parallel_Orbitals* pv,
     }
 }
 
-void half_Hmatrix_tensor(const Parallel_Orbitals* pv,
+void half_Hmatrix_tensor(const Parallel_Blkcyclic& layout,
                          const int nband,
                          const int nlocal,
                          ct::Tensor& Htmp,
@@ -104,13 +105,13 @@ void half_Hmatrix_tensor(const Parallel_Orbitals* pv,
     void* d_H_last = static_cast<void*>(const_cast<std::complex<double>*>(H_laststep.data<std::complex<double>>()));
     void* d_S_last = static_cast<void*>(const_cast<std::complex<double>*>(S_laststep.data<std::complex<double>>()));
 
-    int64_t m_global = pv->desc[2];
-    int64_t n_global = pv->desc[3];
-    int64_t mb = pv->desc[4];
-    int64_t nb = pv->desc[5];
-    int64_t rsrc = pv->desc[6];
-    int64_t csrc = pv->desc[7];
-    int64_t lld = pv->desc[8];
+    int64_t m_global = layout.desc()[2];
+    int64_t n_global = layout.desc()[3];
+    int64_t mb = layout.desc()[4];
+    int64_t nb = layout.desc()[5];
+    int64_t rsrc = layout.desc()[6];
+    int64_t csrc = layout.desc()[7];
+    int64_t lld = layout.desc()[8];
 
     // 3. Create matrix descriptor
     cublasMpMatrixDescriptor_t desc_mat;
@@ -205,8 +206,7 @@ void half_Hmatrix_tensor(const Parallel_Orbitals* pv,
 }
 
 template <typename Device>
-void half_Hmatrix_tensor_lapack(const Parallel_Orbitals* pv,
-                                const int nband,
+void half_Hmatrix_tensor_lapack(const int nband,
                                 const int nlocal,
                                 ct::Tensor& Htmp,
                                 ct::Tensor& Stmp,
@@ -252,8 +252,7 @@ void half_Hmatrix_tensor_lapack(const Parallel_Orbitals* pv,
 }
 
 // Explicit instantiation of template functions
-template void half_Hmatrix_tensor_lapack<base_device::DEVICE_CPU>(const Parallel_Orbitals* pv,
-                                                                  const int nband,
+template void half_Hmatrix_tensor_lapack<base_device::DEVICE_CPU>(const int nband,
                                                                   const int nlocal,
                                                                   ct::Tensor& Htmp,
                                                                   ct::Tensor& Stmp,
@@ -262,8 +261,7 @@ template void half_Hmatrix_tensor_lapack<base_device::DEVICE_CPU>(const Parallel
                                                                   std::ofstream& ofs_running,
                                                                   const int print_matrix);
 #if ((defined __CUDA) /* || (defined __ROCM) */)
-template void half_Hmatrix_tensor_lapack<base_device::DEVICE_GPU>(const Parallel_Orbitals* pv,
-                                                                  const int nband,
+template void half_Hmatrix_tensor_lapack<base_device::DEVICE_GPU>(const int nband,
                                                                   const int nlocal,
                                                                   ct::Tensor& Htmp,
                                                                   ct::Tensor& Stmp,

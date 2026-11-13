@@ -165,28 +165,28 @@ TEST_F(AXTest, DoubleParallel)
     {
         // c: nao*nbands in para2d, nbands*nao in psi  (row-para and constructed: nao)
         // X: nvirt*nocc in para2d, nocc*nvirt in psi (row-para and constructed: nvirt)
-        Parallel_2D pV;
+        Parallel_Blkcyclic pV;
         LR_Util::setup_2d_division(pV, s.nb, s.naos, s.naos);
-        std::vector<container::Tensor> V(s.nks, container::Tensor(DAT::DT_DOUBLE, DEV::CpuDevice, { pV.get_col_size(), pV.get_row_size() }));
-        Parallel_2D pc;
+        std::vector<container::Tensor> V(s.nks, container::Tensor(DAT::DT_DOUBLE, DEV::CpuDevice, { pV.ncloc(), pV.nrloc() }));
+        Parallel_Blkcyclic pc;
         const int nmo = s.nocc + s.nvirt;
-        LR_Util::setup_2d_division(pc, s.nb, s.naos, nmo, pV.blacs_ctxt);
-        psi::Psi<double, base_device::DEVICE_CPU> c(s.nks, pc.get_col_size(), pc.get_row_size(), {}, true);
-        Parallel_2D px;
-        LR_Util::setup_2d_division(px, s.nb, s.nvirt, s.nocc, pV.blacs_ctxt);
+        LR_Util::setup_2d_division(pc, s.nb, s.naos, nmo, pV.ictxt());
+        psi::Psi<double, base_device::DEVICE_CPU> c(s.nks, pc.ncloc(), pc.nrloc(), {}, true);
+        Parallel_Blkcyclic px;
+        LR_Util::setup_2d_division(px, s.nb, s.nvirt, s.nocc, pV.ictxt());
 
-        EXPECT_EQ(pV.dim0, pc.dim0);
-        EXPECT_EQ(pV.dim1, pc.dim1);
-        EXPECT_GE(s.nvirt, px.dim0);
-        EXPECT_GE(s.nocc, px.dim1);
-        EXPECT_GE(s.naos, pc.dim0);
+        EXPECT_EQ(pV.nrproc(), pc.nrproc());
+        EXPECT_EQ(pV.ncproc(), pc.ncproc());
+        EXPECT_GE(s.nvirt, px.nrproc());
+        EXPECT_GE(s.nocc, px.ncproc());
+        EXPECT_GE(s.naos, pc.nrproc());
 
-        psi::Psi<double, base_device::DEVICE_CPU> AX_pblas_loc(s.nks, nstate, px.get_local_size(), {}, false);
+        psi::Psi<double, base_device::DEVICE_CPU> AX_pblas_loc(s.nks, nstate, px.size(), {}, false);
         psi::Psi<double, base_device::DEVICE_CPU> AX_gather(s.nks, nstate, s.nocc * s.nvirt, {}, false);
 
         //set X and X_full
-        psi::Psi<double, base_device::DEVICE_CPU> X(s.nks, nstate, px.get_local_size(), {}, false);
-        set_rand(X.get_pointer(), nstate * s.nks * px.get_local_size());
+        psi::Psi<double, base_device::DEVICE_CPU> X(s.nks, nstate, px.size(), {}, false);
+        set_rand(X.get_pointer(), nstate * s.nks * px.size());
         psi::Psi<double, base_device::DEVICE_CPU> X_full(s.nks, nstate, s.nocc * s.nvirt, {}, false);        // allocate X_full
         X_full.zero_out();
         for (int istate = 0;istate < nstate;++istate)
@@ -205,9 +205,9 @@ TEST_F(AXTest, DoubleParallel)
         {
             for (int isk = 0;isk < s.nks;++isk)
             {
-                set_rand(V.at(isk).data<double>(), pV.get_local_size());
+                set_rand(V.at(isk).data<double>(), pV.size());
                 c.fix_k(isk);
-                set_rand(c.get_pointer(), pc.get_local_size());
+                set_rand(c.get_pointer(), pc.size());
             }
             X.fix_b(istate);
             X_full.fix_b(istate);
@@ -273,22 +273,22 @@ TEST_F(AXTest, ComplexParallel)
     {
         // c: nao*nbands in para2d, nbands*nao in psi  (row-para and constructed: nao)
         // X: nvirt*nocc in para2d, nocc*nvirt in psi (row-para and constructed: nvirt)
-        Parallel_2D pV;
+        Parallel_Blkcyclic pV;
         LR_Util::setup_2d_division(pV, s.nb, s.naos, s.naos);
-        std::vector<container::Tensor> V(s.nks, container::Tensor(DAT::DT_COMPLEX_DOUBLE, DEV::CpuDevice, { pV.get_col_size(), pV.get_row_size() }));
-        Parallel_2D pc;
+        std::vector<container::Tensor> V(s.nks, container::Tensor(DAT::DT_COMPLEX_DOUBLE, DEV::CpuDevice, { pV.ncloc(), pV.nrloc() }));
+        Parallel_Blkcyclic pc;
         const int nmo = s.nocc + s.nvirt;
-        LR_Util::setup_2d_division(pc, s.nb, s.naos, nmo, pV.blacs_ctxt);
-        psi::Psi<std::complex<double>, base_device::DEVICE_CPU> c(s.nks, pc.get_col_size(), pc.get_row_size(), {}, true);
-        Parallel_2D px;
-        LR_Util::setup_2d_division(px, s.nb, s.nvirt, s.nocc, pV.blacs_ctxt);
+        LR_Util::setup_2d_division(pc, s.nb, s.naos, nmo, pV.ictxt());
+        psi::Psi<std::complex<double>, base_device::DEVICE_CPU> c(s.nks, pc.ncloc(), pc.nrloc(), {}, true);
+        Parallel_Blkcyclic px;
+        LR_Util::setup_2d_division(px, s.nb, s.nvirt, s.nocc, pV.ictxt());
 
-        psi::Psi<std::complex<double>, base_device::DEVICE_CPU> AX_pblas_loc(s.nks, nstate, px.get_local_size(), {}, false);
+        psi::Psi<std::complex<double>, base_device::DEVICE_CPU> AX_pblas_loc(s.nks, nstate, px.size(), {}, false);
         psi::Psi<std::complex<double>, base_device::DEVICE_CPU> AX_gather(s.nks, nstate, s.nocc * s.nvirt, {}, false);
 
         //set X and X_full
-        psi::Psi<std::complex<double>, base_device::DEVICE_CPU> X(s.nks, nstate, px.get_local_size(), {}, false);
-        set_rand(X.get_pointer(), nstate * s.nks * px.get_local_size());
+        psi::Psi<std::complex<double>, base_device::DEVICE_CPU> X(s.nks, nstate, px.size(), {}, false);
+        set_rand(X.get_pointer(), nstate * s.nks * px.size());
         psi::Psi<std::complex<double>, base_device::DEVICE_CPU> X_full(s.nks, nstate, s.nocc * s.nvirt, {}, false);        // allocate X_full
         X_full.zero_out();
         for (int istate = 0;istate < nstate;++istate)
@@ -307,9 +307,9 @@ TEST_F(AXTest, ComplexParallel)
         {
             for (int isk = 0;isk < s.nks;++isk)
             {
-                set_rand(V.at(isk).data<std::complex<double>>(), pV.get_local_size());
+                set_rand(V.at(isk).data<std::complex<double>>(), pV.size());
                 c.fix_k(isk);
-                set_rand(c.get_pointer(), pc.get_local_size());
+                set_rand(c.get_pointer(), pc.size());
             }
             X.fix_b(istate);
             X_full.fix_b(istate);

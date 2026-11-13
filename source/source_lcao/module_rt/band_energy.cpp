@@ -1,5 +1,6 @@
 #include "band_energy.h"
 
+#include "source_base/parallel_blkcyc.h"
 #include "source_base/global_function.h"
 #include "source_base/module_container/ATen/kernels/blas.h"
 #include "source_base/module_device/memory_op.h"
@@ -11,6 +12,7 @@
 
 #include <algorithm>
 #include <complex>
+#include <cstddef>
 #include <fstream>
 #include <vector>
 
@@ -19,20 +21,20 @@ namespace module_rt
 #ifdef __MPI
 namespace
 {
-void gather_eij(const Parallel_Orbitals& pv,
-                const int nband,
-                std::complex<double>* eij,
-                const EijOutputInfo& output_info,
-                std::ofstream& ofs)
+void gather_eij(const Parallel_Blkcyclic& mo_repr_layout,
+                                  const int nband,
+                                  std::complex<double>* mo_hamilt,
+                                  const EijOutputInfo& output_info,
+                                  std::ofstream& ofs)
 {
-    const bool is_root = pv.blacs_in_this_processor(0, 0);
+    const bool is_root = mo_repr_layout.blacs_in_this_processor(0, 0);
     const size_t buffer_size = is_root ? static_cast<size_t>(nband) * nband : 1;
     std::vector<std::complex<double>> gathered(buffer_size);
     int source_desc[9];
-    std::copy(pv.desc_Eij, pv.desc_Eij + 9, source_desc);
+    std::copy(mo_repr_layout.desc(), mo_repr_layout.desc() + 9, source_desc);
     int target_desc[9] = {1, source_desc[1], nband, nband, nband, nband, 0, 0, nband};
     // All grid ranks participate, including ranks whose running log is closed.
-    Cpxgemr2d(nband, nband, eij, 1, 1, source_desc, gathered.data(), 1, 1, target_desc, source_desc[1]);
+    Cpxgemr2d(nband, nband, mo_hamilt, 1, 1, source_desc, gathered.data(), 1, 1, target_desc, source_desc[1]);
     if (is_root)
     {
         ModuleIO::print_eij(gathered.data(), nband, nband, output_info, ofs);
@@ -48,7 +50,9 @@ inline int globalIndex(int localindex, int nblk, int nprocs, int myproc)
     return gIndex;
 }
 
-void compute_ekb(const Parallel_Orbitals* pv,
+void compute_ekb(const Parallel_Blkcyclic& matrix_layout,
+                 const Parallel_Blkcyclic& wfc_layout,
+                 const Parallel_Blkcyclic& mo_repr_layout,
                  const int nband,
                  const int nlocal,
                  const std::complex<double>* Htmp,
@@ -57,23 +61,23 @@ void compute_ekb(const Parallel_Orbitals* pv,
                  std::ofstream& ofs_running,
                  const EijOutputInfo& output_info)
 {
-    assert(pv->nloc_wfc > 0 && pv->nloc > 0);
+    assert(wfc_layout.size() > 0 && matrix_layout.size() > 0 && mo_repr_layout.size() > 0);
 
-    std::complex<double>* tmp1 = new std::complex<double>[pv->nloc_wfc];
-    ModuleBase::GlobalFunc::ZEROS(tmp1, pv->nloc_wfc);
+    std::complex<double>* tmp1 = new std::complex<double>[wfc_layout.size()];
+    ModuleBase::GlobalFunc::ZEROS(tmp1, wfc_layout.size());
 
-    std::complex<double>* eij = new std::complex<double>[pv->nloc];
-    ModuleBase::GlobalFunc::ZEROS(eij, pv->nloc);
-
-    ScalapackConnector::
-        gemm('N', 'N', nlocal, nband, nlocal, 1.0, Htmp, 1, 1, pv->desc, psi_k, 1, 1, pv->desc_wfc, 0.0, tmp1, 1, 1, pv->desc_wfc);
+    std::complex<double>* mo_hamilt = new std::complex<double>[mo_repr_layout.size()];
+    ModuleBase::GlobalFunc::ZEROS(mo_hamilt, mo_repr_layout.size());
 
     ScalapackConnector::
-        gemm('C', 'N', nband, nband, nlocal, 1.0, psi_k, 1, 1, pv->desc_wfc, tmp1, 1, 1, pv->desc_wfc, 0.0, eij, 1, 1, pv->desc_Eij);
+        gemm('N', 'N', nlocal, nband, nlocal, 1.0, Htmp, 1, 1, matrix_layout.desc(), psi_k, 1, 1, wfc_layout.desc(), 0.0, tmp1, 1, 1, wfc_layout.desc());
+
+    ScalapackConnector::
+        gemm('C', 'N', nband, nband, nlocal, 1.0, psi_k, 1, 1, wfc_layout.desc(), tmp1, 1, 1, wfc_layout.desc(), 0.0, mo_hamilt, 1, 1, mo_repr_layout.desc());
 
     if (output_info.threshold >= 0.0)
     {
-        gather_eij(*pv, nband, eij, output_info, ofs_running);
+        gather_eij(mo_repr_layout, nband, mo_hamilt, output_info, ofs_running);
     }
 
     int info = 0;
@@ -83,45 +87,48 @@ void compute_ekb(const Parallel_Orbitals* pv,
     double* eii = new double[nband];
     ModuleBase::GlobalFunc::ZEROS(eii, nband);
 
-    for (int iprow = 0; iprow < pv->dim0; ++iprow)
+    for (int iprow = 0; iprow < mo_repr_layout.nrproc(); ++iprow)
     {
-        for (int ipcol = 0; ipcol < pv->dim1; ++ipcol)
+        for (int ipcol = 0; ipcol < mo_repr_layout.ncproc(); ++ipcol)
         {
-            if (pv->blacs_in_this_processor(iprow, ipcol))
+            if (mo_repr_layout.blacs_in_this_processor(iprow, ipcol))
             {
-                naroc[0] = pv->nrow;
-                naroc[1] = pv->ncol;
+                naroc[0] = mo_repr_layout.nrloc();
+                naroc[1] = mo_repr_layout.ncloc();
+                const int lld = mo_repr_layout.desc()[8];
                 for (int j = 0; j < naroc[1]; ++j)
                 {
-                    int igcol = globalIndex(j, pv->nb, pv->dim1, ipcol);
+                    int igcol = globalIndex(j, mo_repr_layout.nb(), mo_repr_layout.ncproc(), ipcol);
                     if (igcol >= nband)
                     {
                         continue;
                     }
                     for (int i = 0; i < naroc[0]; ++i)
                     {
-                        int igrow = globalIndex(i, pv->nb, pv->dim0, iprow);
+                        int igrow = globalIndex(i, mo_repr_layout.nb(), mo_repr_layout.nrproc(), iprow);
                         if (igrow >= nband)
                         {
                             continue;
                         }
                         if (igcol == igrow)
                         {
-                            eii[igcol] = eij[j * naroc[0] + i].real();
+                            eii[igcol] = mo_hamilt[j * lld + i].real();
                         }
                     }
                 }
             }
         } // loop ipcol
     } // loop iprow
-    info = MPI_Allreduce(eii, ekb, nband, MPI_DOUBLE, MPI_SUM, pv->comm());
+    info = MPI_Allreduce(eii, ekb, nband, MPI_DOUBLE, MPI_SUM, mo_repr_layout.comm());
 
     delete[] tmp1;
-    delete[] eij;
+    delete[] mo_hamilt;
     delete[] eii;
 }
 
-void compute_ekb_tensor(const Parallel_Orbitals* pv,
+void compute_ekb_tensor(const Parallel_Blkcyclic& matrix_layout,
+                        const Parallel_Blkcyclic& wfc_layout,
+                        const Parallel_Blkcyclic& mo_repr_layout,
                         const int nband,
                         const int nlocal,
                         const ct::Tensor& Htmp,
@@ -137,7 +144,7 @@ void compute_ekb_tensor(const Parallel_Orbitals* pv,
         return;
     }
 
-    assert(pv->nloc_wfc > 0 && pv->nloc > 0);
+    assert(wfc_layout.size() > 0 && matrix_layout.size() > 0 && mo_repr_layout.size() > 0);
     assert(Htmp.device_type() == ct::DeviceType::GpuDevice);
     assert(psi_k.device_type() == ct::DeviceType::GpuDevice);
     assert(ekb.device_type() == ct::DeviceType::GpuDevice);
@@ -150,51 +157,53 @@ void compute_ekb_tensor(const Parallel_Orbitals* pv,
     ct::Tensor Tmp1_gpu(ct::DataType::DT_COMPLEX_DOUBLE, ct::DeviceType::GpuDevice, ct::TensorShape({psi_elems}));
     void* d_Tmp1 = static_cast<void*>(Tmp1_gpu.data<std::complex<double>>());
 
-    int64_t eij_elems = pv->nloc;
-    ct::Tensor Eij_gpu(ct::DataType::DT_COMPLEX_DOUBLE, ct::DeviceType::GpuDevice, ct::TensorShape({eij_elems}));
-    void* d_Eij = static_cast<void*>(Eij_gpu.data<std::complex<double>>());
+    const std::size_t mo_hamilt_elems = mo_repr_layout.size();
+    ct::Tensor mo_hamilt_gpu(ct::DataType::DT_COMPLEX_DOUBLE,
+                                         ct::DeviceType::GpuDevice,
+                                         ct::TensorShape({static_cast<int64_t>(mo_hamilt_elems)}));
+    void* d_mo_hamilt = static_cast<void*>(mo_hamilt_gpu.data<std::complex<double>>());
 
     std::complex<double> alpha = {1.0, 0.0};
     std::complex<double> beta = {0.0, 0.0};
 
     // 3. Matrix Descriptors Creation
-    cublasMpMatrixDescriptor_t desc_H, desc_Psi, desc_Eij;
+    cublasMpMatrixDescriptor_t desc_H, desc_Psi, desc_mo_hamilt;
 
     // H descriptor: nlocal x nlocal
-    cublasMpMatrixDescriptorCreate(pv->desc[2],
-                                   pv->desc[3],
-                                   pv->desc[4],
-                                   pv->desc[5],
+    cublasMpMatrixDescriptorCreate(matrix_layout.desc()[2],
+                                   matrix_layout.desc()[3],
+                                   matrix_layout.desc()[4],
+                                   matrix_layout.desc()[5],
                                    0,
                                    0,
-                                   pv->desc[8],
+                                   matrix_layout.desc()[8],
                                    CUDA_C_64F,
                                    cublas_res.cublasmp_grid,
                                    &desc_H);
 
     // Psi descriptor: nlocal x nband
-    cublasMpMatrixDescriptorCreate(pv->desc_wfc[2],
-                                   pv->desc_wfc[3],
-                                   pv->desc_wfc[4],
-                                   pv->desc_wfc[5],
+    cublasMpMatrixDescriptorCreate(wfc_layout.desc()[2],
+                                   wfc_layout.desc()[3],
+                                   wfc_layout.desc()[4],
+                                   wfc_layout.desc()[5],
                                    0,
                                    0,
-                                   pv->desc_wfc[8],
+                                   wfc_layout.desc()[8],
                                    CUDA_C_64F,
                                    cublas_res.cublasmp_grid,
                                    &desc_Psi);
 
-    // Eij descriptor: MUST use nband x nband physically, to match pv->desc_Eij expectations
+    // MO representation descriptor
     cublasMpMatrixDescriptorCreate(nband,
                                    nband,
-                                   pv->desc_Eij[4],
-                                   pv->desc_Eij[5],
+                                   mo_repr_layout.desc()[4],
+                                   mo_repr_layout.desc()[5],
                                    0,
                                    0,
-                                   pv->desc_Eij[8],
+                                   mo_repr_layout.desc()[8],
                                    CUDA_C_64F,
                                    cublas_res.cublasmp_grid,
-                                   &desc_Eij);
+                                   &desc_mo_hamilt);
 
     size_t ws_dev = 0, ws_host = 0;
     void *d_work = nullptr, *h_work = nullptr;
@@ -203,9 +212,9 @@ void compute_ekb_tensor(const Parallel_Orbitals* pv,
     cublasMpGemm_bufferSize(cublas_res.cublasmp_handle,
                             CUBLAS_OP_N,
                             CUBLAS_OP_N,
-                            pv->desc[2],
-                            pv->desc_wfc[3],
-                            pv->desc[3],
+                            matrix_layout.desc()[2],
+                            wfc_layout.desc()[3],
+                            matrix_layout.desc()[3],
                             &alpha,
                             d_H,
                             1,
@@ -230,9 +239,9 @@ void compute_ekb_tensor(const Parallel_Orbitals* pv,
     cublasMpGemm(cublas_res.cublasmp_handle,
                  CUBLAS_OP_N,
                  CUBLAS_OP_N,
-                 pv->desc[2],
-                 pv->desc_wfc[3],
-                 pv->desc[3],
+                 matrix_layout.desc()[2],
+                 wfc_layout.desc()[3],
+                 matrix_layout.desc()[3],
                  &alpha,
                  d_H,
                  1,
@@ -260,9 +269,9 @@ void compute_ekb_tensor(const Parallel_Orbitals* pv,
     cublasMpGemm_bufferSize(cublas_res.cublasmp_handle,
                             CUBLAS_OP_C,
                             CUBLAS_OP_N,
-                            pv->desc_wfc[3],
-                            pv->desc_wfc[3],
-                            pv->desc_wfc[2],
+                            wfc_layout.desc()[3],
+                            wfc_layout.desc()[3],
+                            wfc_layout.desc()[2],
                             &alpha,
                             d_Psi,
                             1,
@@ -273,10 +282,10 @@ void compute_ekb_tensor(const Parallel_Orbitals* pv,
                             1,
                             desc_Psi,
                             &beta,
-                            d_Eij,
+                            d_mo_hamilt,
                             1,
                             1,
-                            desc_Eij,
+                            desc_mo_hamilt,
                             CUBLAS_COMPUTE_64F,
                             &ws_dev,
                             &ws_host);
@@ -287,9 +296,9 @@ void compute_ekb_tensor(const Parallel_Orbitals* pv,
     cublasMpGemm(cublas_res.cublasmp_handle,
                  CUBLAS_OP_C,
                  CUBLAS_OP_N,
-                 pv->desc_wfc[3],
-                 pv->desc_wfc[3],
-                 pv->desc_wfc[2],
+                 wfc_layout.desc()[3],
+                 wfc_layout.desc()[3],
+                 wfc_layout.desc()[2],
                  &alpha,
                  d_Psi,
                  1,
@@ -300,10 +309,10 @@ void compute_ekb_tensor(const Parallel_Orbitals* pv,
                  1,
                  desc_Psi,
                  &beta,
-                 d_Eij,
+                 d_mo_hamilt,
                  1,
                  1,
-                 desc_Eij,
+                 desc_mo_hamilt,
                  CUBLAS_COMPUTE_64F,
                  d_work,
                  ws_dev,
@@ -320,15 +329,16 @@ void compute_ekb_tensor(const Parallel_Orbitals* pv,
     cudaMemsetAsync(d_eii, 0, nband * sizeof(double), cublas_res.stream);
 
     // Launch the extraction kernel
-    module_rt::gpu::launch_extract_ekb_kernel(reinterpret_cast<cuDoubleComplex*>(d_Eij),
+    const int mo_repr_elems = static_cast<int>(mo_repr_layout.size());
+    module_rt::gpu::launch_extract_ekb_kernel(reinterpret_cast<cuDoubleComplex*>(d_mo_hamilt),
                                               d_eii,
-                                              pv->desc_Eij[8],
-                                              pv->nloc,
-                                              pv->desc_Eij[4],
-                                              pv->dim0,
-                                              pv->dim1,
-                                              pv->get_coord_row(),
-                                              pv->get_coord_col(),
+                                              mo_repr_layout.desc()[8],
+                                              mo_repr_elems,
+                                              mo_repr_layout.desc()[4],
+                                              mo_repr_layout.nrproc(),
+                                              mo_repr_layout.ncproc(),
+                                              mo_repr_layout.irproc(),
+                                              mo_repr_layout.icproc(),
                                               nband,
                                               cublas_res.stream);
 
@@ -340,18 +350,17 @@ void compute_ekb_tensor(const Parallel_Orbitals* pv,
     double* d_ekb = static_cast<double*>(ekb.data<double>());
 
     // Direct GPU-to-GPU reduction using CUDA-aware MPI
-    MPI_Allreduce(d_eii, d_ekb, nband, MPI_DOUBLE, MPI_SUM, pv->comm());
+    MPI_Allreduce(d_eii, d_ekb, nband, MPI_DOUBLE, MPI_SUM, mo_repr_layout.comm());
 
     // 8. Cleanup
     cublasMpMatrixDescriptorDestroy(desc_H);
     cublasMpMatrixDescriptorDestroy(desc_Psi);
-    cublasMpMatrixDescriptorDestroy(desc_Eij);
+    cublasMpMatrixDescriptorDestroy(desc_mo_hamilt);
 #endif // __CUBLASMP
 }
 
 template <typename Device>
-void compute_ekb_tensor_lapack(const Parallel_Orbitals* pv,
-                               const int nband,
+void compute_ekb_tensor_lapack(const int nband,
                                const int nlocal,
                                const ct::Tensor& Htmp,
                                const ct::Tensor& psi_k,
@@ -368,9 +377,9 @@ void compute_ekb_tensor_lapack(const Parallel_Orbitals* pv,
     ct::Tensor tmp1(ct::DataType::DT_COMPLEX_DOUBLE, ct_device_type, ct::TensorShape({nlocal * nband})); // tmp1 shape: nlocal * nband
     tmp1.zero();
 
-    ct::Tensor eij(ct::DataType::DT_COMPLEX_DOUBLE, ct_device_type, ct::TensorShape({nlocal * nlocal})); // eij shape: nlocal * nlocal
+    ct::Tensor mo_hamilt(ct::DataType::DT_COMPLEX_DOUBLE, ct_device_type, ct::TensorShape({nlocal * nlocal})); // mo_hamilt shape: nlocal * nlocal
     // Why not use nband * nband ?????
-    eij.zero();
+    mo_hamilt.zero();
 
     std::complex<double> alpha = {1.0, 0.0};
     std::complex<double> beta = {0.0, 0.0};
@@ -390,7 +399,7 @@ void compute_ekb_tensor_lapack(const Parallel_Orbitals* pv,
                                                               tmp1.data<std::complex<double>>(),
                                                               nlocal); // Leading dimension of tmp1
 
-    // Perform matrix multiplication: eij = psi_k^dagger * tmp1
+    // Perform matrix multiplication: mo_hamilt = psi_k^dagger * tmp1
     ct::kernels::blas_gemm<std::complex<double>, ct_Device>()('C',
                                                               'N',
                                                               nband,
@@ -402,16 +411,16 @@ void compute_ekb_tensor_lapack(const Parallel_Orbitals* pv,
                                                               tmp1.data<std::complex<double>>(),
                                                               nlocal, // Leading dimension of tmp1
                                                               &beta,
-                                                              eij.data<std::complex<double>>(),
-                                                              nlocal); // Leading dimension of eij
+                                                              mo_hamilt.data<std::complex<double>>(),
+                                                              nlocal); // Leading dimension of mo_hamilt
 
     if (output_info.threshold >= 0.0)
     {
-        ct::Tensor eij_cpu = eij.to_device<ct::DEVICE_CPU>();
-        ModuleIO::print_eij(eij_cpu.data<std::complex<double>>(), nband, nlocal, output_info, ofs_running);
+        ct::Tensor mo_hamilt_cpu = mo_hamilt.to_device<ct::DEVICE_CPU>();
+        ModuleIO::print_eij(mo_hamilt_cpu.data<std::complex<double>>(), nband, nlocal, output_info, ofs_running);
     }
 
-    // Extract diagonal elements of eij into ekb
+    // Extract diagonal elements of mo_hamilt into ekb
     if (ct_device_type == ct::DeviceType::GpuDevice)
     {
         // GPU implementation
@@ -419,7 +428,7 @@ void compute_ekb_tensor_lapack(const Parallel_Orbitals* pv,
         {
             base_device::memory::synchronize_memory_op<double, Device, Device>()(
                 ekb.data<double>() + i,
-                reinterpret_cast<const double*>(eij.data<std::complex<double>>() + i * nlocal + i),
+                reinterpret_cast<const double*>(mo_hamilt.data<std::complex<double>>() + i * nlocal + i),
                 1);
         }
     }
@@ -428,14 +437,13 @@ void compute_ekb_tensor_lapack(const Parallel_Orbitals* pv,
         // CPU implementation
         for (int i = 0; i < nband; ++i)
         {
-            ekb.data<double>()[i] = eij.data<std::complex<double>>()[i * nlocal + i].real();
+            ekb.data<double>()[i] = mo_hamilt.data<std::complex<double>>()[i * nlocal + i].real();
         }
     }
 }
 
 // Explicit instantiation of template functions
-template void compute_ekb_tensor_lapack<base_device::DEVICE_CPU>(const Parallel_Orbitals* pv,
-                                                                 const int nband,
+template void compute_ekb_tensor_lapack<base_device::DEVICE_CPU>(const int nband,
                                                                  const int nlocal,
                                                                  const ct::Tensor& Htmp,
                                                                  const ct::Tensor& psi_k,
@@ -444,8 +452,7 @@ template void compute_ekb_tensor_lapack<base_device::DEVICE_CPU>(const Parallel_
                                                                  const EijOutputInfo& output_info);
 
 #if ((defined __CUDA) /* || (defined __ROCM) */)
-template void compute_ekb_tensor_lapack<base_device::DEVICE_GPU>(const Parallel_Orbitals* pv,
-                                                                 const int nband,
+template void compute_ekb_tensor_lapack<base_device::DEVICE_GPU>(const int nband,
                                                                  const int nlocal,
                                                                  const ct::Tensor& Htmp,
                                                                  const ct::Tensor& psi_k,

@@ -24,29 +24,29 @@ void gather_row(const T* mat,
                 const int dim,
                 const int i,
                 const bool tri,
-                const Parallel_2D& pv,
+                const Parallel_Blkcyclic& pv,
                 const std::string& ks_solver,
                 std::vector<T>& line)
 {
 #ifdef __MPI
     std::fill(line.begin(), line.end(), T(0));
-    const int ir = pv.global2local_row(i);
+    const int ir = pv.irloc(i);
     if (ir >= 0)
     {
         // data collection
         for (int j = (tri ? i : 0); j < dim; ++j)
         {
-            const int ic = pv.global2local_col(j);
+            const int ic = pv.icloc(j);
             if (ic >= 0)
             {
                 int iic = 0;
                 if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(ks_solver))
                 {
-                    iic = ir + ic * pv.nrow;
+                    iic = ir + ic * pv.nrloc();
                 }
                 else
                 {
-                    iic = ir * pv.ncol + ic;
+                    iic = ir * pv.ncloc() + ic;
                 }
                 line[tri ? j - i : j] = mat[iic];
             }
@@ -73,7 +73,7 @@ void ModuleIO::save_mat(const int istep,
     const bool tri,
     const bool app,
     const std::string& filename,
-    const Parallel_2D& pv,
+    const Parallel_Blkcyclic& pv,
     const int drank,
     const std::string& ks_solver,
     const bool reduce)
@@ -241,14 +241,14 @@ void ModuleIO::save_mat(const int istep,
 
 // Explicit instantiations
 template void ModuleIO::save_mat<double>(const int, const double*, const int, const bool,
-    const int, const bool, const bool, const std::string&, const Parallel_2D&,
+    const int, const bool, const bool, const std::string&, const Parallel_Blkcyclic&,
     const int, const std::string&, const bool);
 template void ModuleIO::save_mat<std::complex<double>>(const int, const std::complex<double>*, const int,
-    const bool, const int, const bool, const bool, const std::string&, const Parallel_2D&,
+    const bool, const int, const bool, const bool, const std::string&, const Parallel_Blkcyclic&,
     const int, const std::string&, const bool);
 template void ModuleIO::save_mat<float>(const int, const float*, const int, const bool,
-    const int, const bool, const bool, const std::string&, const Parallel_2D&,
+    const int, const bool, const bool, const std::string&, const Parallel_Blkcyclic&,
     const int, const std::string&, const bool);
 template void ModuleIO::save_mat<std::complex<float>>(const int, const std::complex<float>*, const int,
-    const bool, const int, const bool, const bool, const std::string&, const Parallel_2D&,
+    const bool, const int, const bool, const bool, const std::string&, const Parallel_Blkcyclic&,
     const int, const std::string&, const bool);

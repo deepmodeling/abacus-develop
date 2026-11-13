@@ -1,7 +1,11 @@
 #include "gtest/gtest.h"
+#include "source_base/atom_basis_view.h"
+#include "source_base/basis_flattened_indexing.h"
+#include "source_base/element_basis_index.h"
 #include "source_hamilt/module_hcontainer/transfer.h"
 #include "source_hamilt/module_hcontainer/hcontainer.h"
 #include <chrono>
+#include <vector>
 #ifdef __MPI
 #include <mpi.h>
 #include "source_hamilt/module_hcontainer/hcontainer_funcs.h"
@@ -59,7 +63,7 @@ class TransferTest : public ::testing::Test
         int global_col = test_size * test_nw;
         std::ofstream ofs_running;
         paraV = new Parallel_Orbitals();
-        paraV->init(global_row, global_col, nb, MPI_COMM_WORLD);
+        paraV->para_2d().init(global_row, global_col, nb, MPI_COMM_WORLD, false);
         paraV->set_atomic_trace(ucell.get_iat2iwt(), test_size, global_row);
     }
 #else
@@ -151,6 +155,93 @@ TEST_F(TransferTest, serialToPara)
 #endif
 }
 
+#ifdef __MPI
+TEST_F(TransferTest, BasisFlattenedLayoutMatchesParallelOrbitals)
+{
+    ModuleBase::Element_Basis_Index::Range range(1);
+    range[0].resize(2);
+    range[0][0].N = 1;
+    range[0][0].M = 1;
+    range[0][1].N = 3;
+    range[0][1].M = 3;
+    const ModuleBase::Element_Basis_Index::IndexLNM hierarchy =
+        ModuleBase::Element_Basis_Index::construct_index(range);
+    const std::vector<int> atom_types(test_size, 0);
+    const BasisFlattenedIndexing basis(hierarchy, atom_types, 1);
+
+    hamilt::HContainer<double> from_basis(basis, paraV->para_2d());
+    for (int iat = 0; iat < test_size; ++iat)
+    {
+        const AtomBasisView basis_rows = AtomBasisView::rows(basis, paraV->para_2d(), iat);
+        const AtomBasisView basis_cols = AtomBasisView::cols(basis, paraV->para_2d(), iat);
+        const std::vector<int> indexes_row = paraV->get_indexes_row(iat);
+        const std::vector<int> indexes_col = paraV->get_indexes_col(iat);
+        const int begin_row_atom = paraV->atom_begin_row[iat];
+        const int begin_col_atom = paraV->atom_begin_col[iat];
+        const int nrow_atom = paraV->get_nrow_atom(iat);
+        const int ncol_atom = paraV->get_ncol_atom(iat);
+        const int indexes_row_size = static_cast<int>(indexes_row.size());
+        const int indexes_col_size = static_cast<int>(indexes_col.size());
+        EXPECT_EQ(basis_rows.local0(), begin_row_atom);
+        EXPECT_EQ(basis_cols.local0(), begin_col_atom);
+        EXPECT_EQ(basis_rows.nloc(), nrow_atom);
+        EXPECT_EQ(basis_cols.nloc(), ncol_atom);
+        EXPECT_EQ(indexes_row_size, basis_rows.nloc());
+        EXPECT_EQ(indexes_col_size, basis_cols.nloc());
+        for (int k = 0; k < basis_rows.nloc(); ++k)
+        {
+            EXPECT_EQ(basis_rows[k], indexes_row[k]);
+        }
+        for (int k = 0; k < basis_cols.nloc(); ++k)
+        {
+            EXPECT_EQ(basis_cols[k], indexes_col[k]);
+        }
+    }
+
+    ASSERT_EQ(from_basis.size_atom_pairs(), HR_para->size_atom_pairs());
+    EXPECT_EQ(from_basis.get_nbasis(), HR_para->get_nbasis());
+    for (int iap = 0; iap < from_basis.size_atom_pairs(); ++iap)
+    {
+        const hamilt::AtomPair<double>& basis_pair = from_basis.get_atom_pair(iap);
+        const hamilt::AtomPair<double>* orbital_pair
+            = HR_para->find_pair(basis_pair.get_atom_i(), basis_pair.get_atom_j());
+        ASSERT_NE(orbital_pair, nullptr);
+        EXPECT_EQ(basis_pair.get_begin_row(), orbital_pair->get_begin_row());
+        EXPECT_EQ(basis_pair.get_begin_col(), orbital_pair->get_begin_col());
+        EXPECT_EQ(basis_pair.get_row_size(), orbital_pair->get_row_size());
+        EXPECT_EQ(basis_pair.get_col_size(), orbital_pair->get_col_size());
+    }
+
+    hamilt::HContainer<double> inserted(basis, paraV->para_2d(), nullptr);
+    const ModuleBase::Vector3<int> R_index(0, 0, 0);
+    for (int iat1 = 0; iat1 < test_size; ++iat1)
+    {
+        for (int iat2 = 0; iat2 < test_size; ++iat2)
+        {
+            inserted.insert_pair(iat1, iat2, R_index);
+        }
+    }
+    EXPECT_EQ(inserted.size_atom_pairs(), HR_para->size_atom_pairs());
+
+    const std::vector<int> ijr_info = HR_para->get_ijr_info();
+    hamilt::HContainer<double> from_sparse(basis, paraV->para_2d(), nullptr, &ijr_info);
+    ASSERT_EQ(from_sparse.size_atom_pairs(), HR_para->size_atom_pairs());
+    EXPECT_EQ(from_sparse.get_nbasis(), HR_para->get_nbasis());
+    for (int iap = 0; iap < from_sparse.size_atom_pairs(); ++iap)
+    {
+        const hamilt::AtomPair<double>& basis_pair = from_sparse.get_atom_pair(iap);
+        const hamilt::AtomPair<double>* orbital_pair
+            = HR_para->find_pair(basis_pair.get_atom_i(), basis_pair.get_atom_j());
+        ASSERT_NE(orbital_pair, nullptr);
+        EXPECT_EQ(basis_pair.get_begin_row(), orbital_pair->get_begin_row());
+        EXPECT_EQ(basis_pair.get_begin_col(), orbital_pair->get_begin_col());
+        EXPECT_EQ(basis_pair.get_row_size(), orbital_pair->get_row_size());
+        EXPECT_EQ(basis_pair.get_col_size(), orbital_pair->get_col_size());
+    }
+}
+
+#endif
+
 TEST_F(TransferTest, paraToSerial)
 {
     // get rank of process
@@ -229,7 +320,7 @@ TEST_F(TransferTest, paraToSerial)
     // now assume the HR_serial is empty and do the same test
     Parallel_Orbitals serialV;
     std::ofstream ofs("test.log");
-    serialV.set_serial(test_size*test_nw, test_size*test_nw);
+    serialV.para_2d().set_serial(test_size*test_nw, test_size*test_nw);
     serialV.set_atomic_trace(ucell.get_iat2iwt(), test_size, test_size*test_nw);
     hamilt::HContainer<double>* HR_serial2;
     if(my_rank == 0)

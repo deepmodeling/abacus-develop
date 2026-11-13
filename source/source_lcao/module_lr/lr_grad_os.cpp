@@ -21,12 +21,12 @@ std::vector<ModuleBase::matrix> evaluate_open_shell_force(
     const int ist_begin_ = label_begin;
     const int ist_end_ = label_begin + nst;
     const std::vector<int>& nvirt_g = inputs.nvirt;
-    const std::vector<Parallel_2D>& paraX_g = inputs.px;
+    const std::vector<Parallel_Blkcyclic>& paraX_g = inputs.px;
     const int nloc_g = inputs.nloc;
 
 
-    const std::vector<int> ld_x = { static_cast<int>(inputs.nk * paraX_g[0].get_local_size()),
-                                    static_cast<int>(inputs.nk * paraX_g[1].get_local_size()) };
+    const std::vector<int> ld_x = { static_cast<int>(inputs.nk * paraX_g[0].size()),
+                                    static_cast<int>(inputs.nk * paraX_g[1].size()) };
     const std::vector<int> off_x = { 0, ld_x[0] };
     std::vector<psi::Psi<T>> c_spin;
     for (int is: {0, 1})
@@ -53,14 +53,14 @@ std::vector<ModuleBase::matrix> evaluate_open_shell_force(
         {
 #ifdef __MPI
             dmx_k[is] = cal_dm_trans_pblas(X_istate + off_x[is], paraX_g[is], c_spin[is], inputs.pc,
-                inputs.nbasis, inputs.nocc[is], nvirt_g[is], inputs.pmat);
+                inputs.nbasis, inputs.nocc[is], nvirt_g[is], inputs.pmat.para_2d());
             dmdiff_k[is] = cal_dm_diff_pblas(X_istate + off_x[is], paraX_g[is], c_spin[is], inputs.pc,
-                inputs.nbasis, inputs.nocc[is], nvirt_g[is], inputs.pmat);
+                inputs.nbasis, inputs.nocc[is], nvirt_g[is], inputs.pmat.para_2d());
             std::vector<ct::Tensor> dmz_k = cal_dm_trans_pblas(Z_istate + off_x[is], paraX_g[is], c_spin[is],
-                inputs.pc, inputs.nbasis, inputs.nocc[is], nvirt_g[is], inputs.pmat);
+                inputs.pc, inputs.nbasis, inputs.nocc[is], nvirt_g[is], inputs.pmat.para_2d());
             for (auto& d: dmz_k)
             {
-                LR_Util::matsym(d.template data<T>(), inputs.nbasis, inputs.pmat);
+                LR_Util::matsym(d.template data<T>(), inputs.nbasis, inputs.pmat.para_2d());
             }
 #else
             dmx_k[is] = cal_dm_trans_blas(X_istate + off_x[is], c_spin[is], inputs.nocc[is], nvirt_g[is]);

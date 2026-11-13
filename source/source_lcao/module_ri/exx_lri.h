@@ -90,10 +90,19 @@ public:
         const K_Vectors &kv_in,
         const LCAO_Orbitals& orb,
         const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& abfs_in = {});
+    void init(
+        const MPI_Comm &mpi_comm_in,
+        const UnitCell &ucell,
+        const K_Vectors &kv_in,
+        const LCAO_Orbitals &orb,
+        const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &abfs_in,
+        const bool use_gpu);
     /// Refresh changed Coulomb kernels while retaining the initialized basis and Gaunt table.
-    void refresh_coulomb(const UnitCell& ucell,
-                         const LCAO_Orbitals& orb,
-                         const CoulombSettings& settings);
+    void refresh_coulomb(
+        const UnitCell &ucell,
+        const LCAO_Orbitals &orb,
+        const CoulombSettings &settings,
+        const bool use_gpu);
     void init_spencer(const MPI_Comm& mpi_comm_in,
                       const UnitCell& ucell,
                       const K_Vectors& kv_in,
@@ -143,9 +152,11 @@ public:
 
     int abfs_Lmax() const { return abfs_Lmax_; }
     const Exx_Info_RI& get_info_ri() const { return info; }
+    const std::array<int, 3>& hybrid_images_period() const { return hybrid_images_period_; }
 
 private:
     Exx_Info_RI info;
+    std::array<int, 3> hybrid_images_period_{{1, 1, 1}};
     int abfs_Lmax_ = 0;
     MPI_Comm mpi_comm;
     const K_Vectors *p_kv = nullptr;

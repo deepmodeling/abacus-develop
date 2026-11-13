@@ -247,6 +247,7 @@ Socket mode always computes energy. Force and stress extraction follows cal_forc
 * `lj`: Lennard-Jones potential.
 * `dp`: Deep Potential (DP) model.
 * `nep`: Neuroevolution potential (NEP).
+* `snap`: Spectral Neighbor Analysis Potential (SNAP).
 * `ks-lr`: Kohn-Sham density functional theory followed by linear-response time-dependent density functional theory (LR-TDDFT; under development).
 * `lr`: Linear-response time-dependent density functional theory (LR-TDDFT) using precomputed Kohn-Sham orbitals (under development).
 * `dfpt`: Density functional perturbation theory (DFPT; under development).
@@ -255,7 +256,7 @@ Socket mode always computes energy. Force and stress extraction follows cal_forc
         item.default_value = "ksdft";
         read_sync_string(input.esolver_type);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            const std::vector<std::string> esolver_types = { "ksdft", "sdft", "ofdft", "tdofdft", "tddft", "lj", "dp", "nep", "lr", "ks-lr", "dfpt" };
+            const std::vector<std::string> esolver_types = { "ksdft", "sdft", "ofdft", "tdofdft", "tddft", "lj", "dp", "nep", "snap", "lr", "ks-lr", "dfpt" };
             if (std::find(esolver_types.begin(), esolver_types.end(), para.input.esolver_type) == esolver_types.end())
             {
                 const std::string warningstr = nofound_str(esolver_types, "esolver_type");
@@ -265,11 +266,16 @@ Socket mode always computes energy. Force and stress extraction follows cal_forc
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "esolver_type=tddft requires calculation=md.");
             }
-            if (para.input.esolver_type == "dp" || para.input.esolver_type == "nep")
+            if (para.input.esolver_type == "dp" || para.input.esolver_type == "nep"
+                || para.input.esolver_type == "snap")
             {
                 if (access(para.input.mdp.pot_file.c_str(), 0) == -1)
                 {
                     ModuleBase::WARNING_QUIT("ReadInput", "Can not find `pot_file` !");
+                }
+                if (para.input.esolver_type == "snap" && access(para.input.mdp.snap_param_file.c_str(), 0) == -1)
+                {
+                    ModuleBase::WARNING_QUIT("ReadInput", "Can not find `snap_param_file` !");
                 }
             }
             // LR reads the ground state wave function from a separate SCF run,
@@ -487,28 +493,49 @@ In socket_driver mode, this flag controls whether the returned frame advertises 
             // the number of MPI processes. Other configurations make the vendor
             // routines return inconsistent results across ranks and the SCF
             // silently diverges, so reject them at input time. See issue #8228.
-            // bndpar <= 0 is rejected by the bndpar input check; skip here so
-            // the diagnostic below never divides by zero.
+            //
+            // Skip conditions:
+            //  1) bndpar <= 0 is rejected by the bndpar input check; skipping
+            //     here avoids a division by zero in the diagnostic below.
+            //  2) esolver_type = dp / nep never runs an eigensolver and never
+            //     touches mtblas/C_PACK, so the kpar/bndpar layout is not
+            //     consumed and must not trigger a diagnostic. See issue #8228.
             if (para.input.bndpar <= 0)
             {
                 return;
             }
+            if (!ModuleIO::dsp_layout_check_needed(para.input.esolver_type))
+            {
+                return;
+            }
             const int nproc = para.sys.nproc;
-            const bool layout_valid = dsp_kpar_layout_valid(nproc,
-                                                            para.input.kpar,
-                                                            para.sys.kpar_lcao,
-                                                            para.input.bndpar);
+            const bool layout_valid = ModuleIO::dsp_kpar_layout_valid(
+                nproc,
+                para.input.basis_type,
+                para.input.kpar,
+                para.sys.kpar_lcao,
+                para.input.bndpar,
+                para.input.esolver_type);
             if (!layout_valid)
             {
-                const std::string msg =
-                    "On DSP hardware, the mtblas/C_PACK libraries require kpar (kpar_lcao for LCAO) * bndpar"
-                    " to equal the number of MPI processes, but got NPROC=" + std::to_string(nproc)
-                    + ", kpar=" + std::to_string(para.input.kpar)
-                    + ", kpar_lcao=" + std::to_string(para.sys.kpar_lcao)
+                const int kpar_eff = ModuleIO::dsp_effective_kpar(
+                    para.input.basis_type, para.input.kpar, para.sys.kpar_lcao);
+                const std::string basis_str
+                    = (para.input.basis_type == "lcao") ? "kpar_lcao" : "kpar";
+                const std::string msg
+                    = "On DSP hardware with esolver_type=" + para.input.esolver_type
+                    + " and basis_type=" + para.input.basis_type
+                    + ", the mtblas/C_PACK libraries require " + basis_str
+                    + " * bndpar to equal the number of MPI processes, but got"
+                    + " NPROC=" + std::to_string(nproc)
+                    + ", " + basis_str + "=" + std::to_string(kpar_eff)
                     + ", bndpar=" + std::to_string(para.input.bndpar)
-                    + ". Please set kpar=" + std::to_string(nproc / para.input.bndpar)
+                    + ". Please set " + basis_str + "="
+                    + std::to_string(nproc / para.input.bndpar)
                     + " or adjust the process count.";
-                ModuleBase::WARNING_QUIT("ReadInput", msg);
+                std::cout << " === Note: kpar * bndpar != NPROC ===" << std::endl;
+                std::cout << msg << std::endl;
+                std::cout << "=== end ===" << std::endl;
             }
         };
 #endif
@@ -1032,11 +1059,46 @@ Available options are:
         item.type = "String";
         item.description = R"(Specifies the precision when performing scf calculation.
 * single: single precision
-* double: double precision)";
+* double: double precision
+PW Kohn-Sham DFT+U and DeltaSpin onsite corrections require double precision.
+PW RT-TDDFT does not support DFT+U or spin constraints at any precision.)";
         item.default_value = "double";
         item.set_availability("basis_type==pw");
         read_sync_string(input.precision);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
+            const Input_para& inp = para.inp;
+            const bool pw_onsite_solver = inp.basis_type == "pw"
+                                          && (inp.esolver_type == "ksdft" || inp.esolver_type == "tddft");
+            if (pw_onsite_solver && inp.precision == "single")
+            {
+                if (inp.esolver_type == "tddft")
+                {
+                    if (inp.dft_plus_u != 0)
+                    {
+                        ModuleBase::WARNING_QUIT(
+                            "ReadInput",
+                            "PW RT-TDDFT does not support DFT+U at any precision; set dft_plus_u=0.");
+                    }
+                    if (inp.sc_mag_switch)
+                    {
+                        ModuleBase::WARNING_QUIT(
+                            "ReadInput",
+                            "PW RT-TDDFT does not support spin constraints at any precision; set sc_mag_switch=false.");
+                    }
+                }
+                if (inp.dft_plus_u != 0)
+                {
+                    ModuleBase::WARNING_QUIT(
+                        "ReadInput",
+                        "PW DFT+U requires precision = double; single precision onsite corrections are not supported.");
+                }
+                if (inp.sc_mag_switch)
+                {
+                    ModuleBase::WARNING_QUIT(
+                        "ReadInput",
+                        "PW DeltaSpin requires precision = double; single precision onsite corrections are not supported.");
+                }
+            }
             // cpu single precision is not supported while float_fftw lib is not available
             if (para.inp.device == "cpu" && para.inp.precision == "single")
             {
@@ -1544,7 +1606,11 @@ updates structures smoothly enough for second-order extrapolation.)";
         item.annotation = "directory of files for reading";
         item.category = "Input files";
         item.type = "String";
-        item.description = "Location of files, such as the electron density (chgs1.cube), required as a starting point.";
+        item.description = "Location of files, such as the electron density (chgs1.cube), required as a starting point. "
+                           "Standalone LR first reads the complete chg.cube/chgs*.cube set. If unavailable, it reads "
+                           "the binary density file {suffix}-CHARGE-DENSITY.restart and performs inverse FFT onto the current grid. "
+                           "The stored spin count must match the requested nspin exactly. "
+                           "This reads ground-state density only; it does not resume a previous calculation.";
         item.default_value = "OUT.$suffix";
         read_sync_string(input.read_file_dir);
         item.reset_value = [](const Input_Item& item, Parameter& para) {

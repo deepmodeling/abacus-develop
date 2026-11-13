@@ -1,5 +1,6 @@
 #include "../ekinetic.h"
 #include "../nonlocal.h"
+#include "test_operator_basis.h"
 
 #include "gtest/gtest.h"
 #include <chrono>
@@ -105,7 +106,7 @@ class TNLTest : public ::testing::Test
         int global_col = test_size * test_nw * 2;
         std::ofstream ofs_running;
         paraV = new Parallel_Orbitals();
-        paraV->init(global_row, global_col, nb, MPI_COMM_WORLD);
+        paraV->para_2d().init(global_row, global_col, nb, MPI_COMM_WORLD, false);
         paraV->set_atomic_trace(ucell.get_iat2iwt(), test_size, global_row);
     }
 #else
@@ -132,10 +133,13 @@ TEST_F(TNLTest, testTVNLcd2cd)
     hsk.set_zero_hk();
     Grid_Driver gd(0, 0);
     std::chrono::high_resolution_clock::time_point start_time = std::chrono::high_resolution_clock::now();
+    const BasisFlattenedIndexing basis = operator_test::make_s_orbital_basis(ucell);
     hamilt::Operator<std::complex<double>>* op
         = new hamilt::EKinetic<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>(&hsk,
                                                                                                     kvec_d_in,
                                                                                                     HR,
+                                                                                                    basis,
+                                                                                                    paraV->para_2d(),
                                                                                                     &ucell,
                                                                                                     {1.0},
                                                                                                     &gd,
@@ -196,9 +200,9 @@ TEST_F(TNLTest, testTVNLcd2cd)
     auto* hk = hsk.get_hk();
     result_ref += 1.0;
     int i = 0;
-    for (int irow = 0; irow < paraV->get_row_size(); ++irow)
+    for (int irow = 0; irow < paraV->para_2d().nrloc(); ++irow)
     {
-        for (int icol = 0; icol < paraV->get_col_size(); ++icol)
+        for (int icol = 0; icol < paraV->para_2d().ncloc(); ++icol)
         {
             if (irow % npol == icol % npol)
             {
@@ -228,9 +232,9 @@ TEST_F(TNLTest, testTVNLcd2cd)
     double result_ref1 = -1.6180339887498931 / 2 + test_size * 10;
     double result_ref2 = -1.1755705045849467 / 2;
     i = 0;
-    for (int irow = 0; irow < paraV->get_row_size(); ++irow)
+    for (int irow = 0; irow < paraV->para_2d().nrloc(); ++irow)
     {
-        for (int icol = 0; icol < paraV->get_col_size(); ++icol)
+        for (int icol = 0; icol < paraV->para_2d().ncloc(); ++icol)
         {
             if (irow % npol == icol % npol)
             {

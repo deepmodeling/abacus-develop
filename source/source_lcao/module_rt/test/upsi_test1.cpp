@@ -18,13 +18,6 @@
  *   - upsi
  *     - apply U_operator to the wave function of the previous step for new wave function.
  */
-Parallel_Orbitals::Parallel_Orbitals()
-{
-}
-Parallel_Orbitals::~Parallel_Orbitals()
-{
-}
-
 TEST(UpsiTest, testUpsi1)
 {
     std::complex<double>* U_operator;
@@ -35,16 +28,9 @@ TEST(UpsiTest, testUpsi1)
     bool print_matrix = false;
     Parallel_Orbitals* pv;
     pv = new Parallel_Orbitals();
-    pv->nloc = nlocal * nband;
-    pv->ncol = nlocal;
+    ASSERT_EQ(pv->para_2d().set(nlocal, nlocal, 1, ictxt), 0);
     pv->ncol_bands = nband;
-
-    // Initialize input matrices
-    int info;
-    int mb = 1, nb = 1, lda = nband, ldc = nlocal;
-    int irsrc = 0, icsrc = 0, lld = numroc_(&nlocal, &mb, &myprow, &irsrc, &nprow);
-    descinit_(pv->desc, &nlocal, &nlocal, &mb, &nb, &irsrc, &icsrc, &ictxt, &lld, &info);
-    descinit_(pv->desc_wfc, &nlocal, &nband, &mb, &nb, &irsrc, &icsrc, &ictxt, &lld, &info);
+    pv->set_wfc_and_mo_layouts(nlocal, nband);
 
     // Initialize data
     U_operator = new std::complex<double>[nlocal * nlocal];
@@ -62,7 +48,15 @@ TEST(UpsiTest, testUpsi1)
     }
 
     // Call the function
-    module_rt::upsi(pv, nband, nlocal, U_operator, psi_k_laststep, psi_k, GlobalV::ofs_running, print_matrix);
+    module_rt::upsi(pv->para_2d(),
+                    pv->wfc_layout(),
+                    nband,
+                    nlocal,
+                    U_operator,
+                    psi_k_laststep,
+                    psi_k,
+                    GlobalV::ofs_running,
+                    print_matrix);
 
     // Check the results
     for (int i = 0; i < nlocal * nband; ++i)

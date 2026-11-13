@@ -2,7 +2,7 @@
 #include "gmock/gmock.h"
 #include "source_io/module_hs/lat_r_csr.h"
 #include "source_base/global_variable.h"
-#include "source_basis/module_ao/parallel_orbitals.h"
+#include "source_base/parallel_blkcyc.h"
 #include <complex>
 #include <cstdio>
 #include <fstream>
@@ -16,36 +16,6 @@
  *   - ModuleIO::save_lat_r
  *     - write one lattice-R block in CSR format
  */
-Parallel_Orbitals::Parallel_Orbitals()
-{
-}
-
-Parallel_Orbitals::~Parallel_Orbitals()
-{
-}
-
-Parallel_2D::~Parallel_2D()
-{
-}
-
-void Parallel_2D::set_serial(const int M_A, const int N_A)
-{
-    this->nrow = M_A;
-    this->ncol = N_A;
-    this->is_serial = true;
-    this->global2local_row_.resize(M_A);
-    this->global2local_row_[0] = 0;
-    this->global2local_row_[1] = 1;
-    this->global2local_row_[2] = -1;
-    this->global2local_row_[3] = 2;
-    this->global2local_row_[4] = -1; //Some rows have global2local_row_ < 0
-}
-
-int Parallel_2D::get_global_row_size() const
-{
-    return this->nrow;
-}
-
 TEST(ModuleIOTest, SaveLatR)
 {
     // Create temporary output file
@@ -57,8 +27,8 @@ TEST(ModuleIOTest, SaveLatR)
     // Define input parameters
     const double sparse_threshold = 1e-8;
     const bool binary = false;
-    Parallel_Orbitals pv;
-    pv.set_serial(5, 5);
+    Parallel_Blkcyclic layout;
+    layout.set_serial(5, 5);
     std::map<size_t, std::map<size_t, double>> XR = {
         {0, {{1, 0.5}, {3, 0.3}}},
         {1, {{0, 0.2}, {2, 0.4}}},
@@ -70,7 +40,7 @@ TEST(ModuleIOTest, SaveLatR)
     options.reduce = true;
 
     // Call function under test
-    ModuleIO::save_lat_r(ofs, XR, pv, options);
+    ModuleIO::save_lat_r(ofs, XR, layout, options);
 
     // Close output file and open it for reading
     ofs.close();
@@ -127,8 +97,8 @@ TEST(ModuleIOTest, SaveLatRComplexKeepsHighPrecision)
     GlobalV::DRANK = 0;
     std::ofstream ofs(filename);
 
-    Parallel_Orbitals pv;
-    pv.set_serial(5, 5);
+    Parallel_Blkcyclic layout;
+    layout.set_serial(5, 5);
     ModuleIO::SparseRBlock<std::complex<double>> XR = {
         {0, {{1, std::complex<double>(1.234567890123456, -2.345678901234567)}}}
     };
@@ -137,7 +107,7 @@ TEST(ModuleIOTest, SaveLatRComplexKeepsHighPrecision)
     options.binary = false;
     options.reduce = false;
 
-    ModuleIO::save_lat_r(ofs, XR, pv, options);
+    ModuleIO::save_lat_r(ofs, XR, layout, options);
     ofs.close();
 
     std::ifstream ifs(filename);
@@ -155,8 +125,8 @@ TEST(ModuleIOTest, SaveLatRUsesConfiguredPrecision)
     GlobalV::DRANK = 0;
     std::ofstream ofs(filename);
 
-    Parallel_Orbitals pv;
-    pv.set_serial(5, 5);
+    Parallel_Blkcyclic layout;
+    layout.set_serial(5, 5);
     ModuleIO::SparseRBlock<std::complex<double>> XR = {
         {0, {{1, std::complex<double>(1.234567890123456, -2.5)}}}
     };
@@ -166,7 +136,7 @@ TEST(ModuleIOTest, SaveLatRUsesConfiguredPrecision)
     options.precision = 8;
     options.reduce = false;
 
-    ModuleIO::save_lat_r(ofs, XR, pv, options);
+    ModuleIO::save_lat_r(ofs, XR, layout, options);
     ofs.close();
 
     std::ifstream ifs(filename);
@@ -181,15 +151,15 @@ void write_out_of_range_sparse_column(const char* filename)
 {
     GlobalV::DRANK = 0;
     std::ofstream ofs(filename);
-    Parallel_Orbitals pv;
-    pv.set_serial(5, 5);
+    Parallel_Blkcyclic layout;
+    layout.set_serial(5, 5);
     ModuleIO::SparseRBlock<double> XR;
     XR[0][5] = 1.0;
     ModuleIO::SparseWriteOptions options;
     options.threshold = 1e-12;
     options.binary = false;
     options.reduce = false;
-    ModuleIO::save_lat_r(ofs, XR, pv, options);
+    ModuleIO::save_lat_r(ofs, XR, layout, options);
 }
 
 TEST(ModuleIOTest, SaveLatRRejectsOutOfRangeColumn)

@@ -8,13 +8,14 @@ addtest(
   LIBS parameter base device symmetry
   SOURCES dfpt_pw_data_test.cpp
           ../dfpt_pw_data.cpp
+          ../dfpt_pw_data_resp.cpp
           ../../../source_cell/qlist.cpp
           ../../../source_cell/reciprocal_grid.cpp
           ../../../source_psi/psi.cpp
           # Shared ctor/dtor stubs for the cell/spepot/Plus_U link closures.
           dfpt_test_mocks.cpp
           # Shared cubic-cell / stru_lib fixture.
-          dfpt_stru_fixture.cpp)
+          dfpt_stru_tool.cpp)
 
 addtest(
   TARGET MODULE_DFPT_kq_basis_test
@@ -36,13 +37,17 @@ addtest(
           ../dfpt_pw_solve.cpp
           ../dfpt_pw_q0.cpp
           ../dfpt_pw_data.cpp
+          ../dfpt_pw_data_resp.cpp
           ../dfpt_pert.cpp
           ../dfpt_pert_vkb.cpp
           ../dfpt_pert_nl.cpp
           ../dfpt_kq_basis.cpp
           ../dfpt_stern.cpp
           ../dfpt_rho.cpp
+          ../dfpt_rho_mix.cpp
+          ../../../source_estate/module_charge/chg_tools.cpp
           ../dfpt_phon.cpp
+          ../dfpt_phon_asr.cpp
           ../dfpt_phon_ewald.cpp
           ../dfpt_phon_elec.cpp
           ../dfpt_q0.cpp
@@ -55,4 +60,4 @@ addtest(
           # Shared ctor/dtor stubs for the cell/spepot/charge/Plus_U closures.
           dfpt_test_mocks.cpp
           # Shared cubic-cell / stru_lib fixture.
-          dfpt_stru_fixture.cpp)
+          dfpt_stru_tool.cpp)

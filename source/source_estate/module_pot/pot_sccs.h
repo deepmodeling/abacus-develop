@@ -30,13 +30,16 @@ std::string check_sccs_cell(const ModuleSccs::SccsConfig& config, const UnitCell
 std::string check_charge(const ModuleSccs::SccsConfig& config, const UnitCell& cell, double electron_count);
 
 // State carried from the component of the previous ionic step, which is
-// rebuilt every ionic step: an activation already reached, and the last
-// unshifted sqrt-CG solution as a warm start. The solver keeps the warm start
-// only when it lowers the initial charge residual, so moved atoms are safe.
+// rebuilt every ionic step: an activation already reached, the last
+// unshifted sqrt-CG solution as a warm start, and the solvent-aware probe
+// kernel of the fixed cell and grid. The solver keeps the warm start only when
+// it lowers the initial charge residual, so moved atoms are safe.
 struct SccsResume
 {
     bool active = false;
     std::vector<double> restart_potential;
+    bool probe_ready = false; // same on every pool rank
+    std::vector<double> probe_kernel; // local G vectors
 };
 
 class PotSccs : public PotBase
@@ -56,7 +59,9 @@ public:
     void add_sol_force(const UnitCell& cell, ModuleBase::matrix& force) const override;
     void sol_energy(double& electrostatic, double& non_electrostatic) const override;
     const std::vector<double>* sol_elec_pot() const override;
-    // eps and the cavity s of the last active evaluation; none before the start.
+    // eps and the cavity s of the last active evaluation, plus the local s
+    // (cavity_local) and the probe solute fraction c (filled_fraction) of a
+    // solvent-aware cavity; none before the start.
     void add_sol_fields(std::vector<SolventGridField>& fields) const override;
 
     // Delayed start: called once per electronic iteration while SCCS waits,
@@ -82,6 +87,8 @@ private:
     std::vector<double> cavity_potential_;
     std::vector<double> epsilon_;
     std::vector<double> solute_;
+    std::vector<double> local_solute_;
+    std::vector<double> filled_fraction_;
 };
 } // namespace elecstate
 #endif

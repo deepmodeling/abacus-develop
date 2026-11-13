@@ -1,5 +1,6 @@
 #include "solve_propagation.h"
 
+#include "source_base/parallel_blkcyc.h"
 #include "source_base/constants.h"
 #include "source_base/global_function.h"
 #include "source_base/module_external/blas_connector.h"
@@ -10,7 +11,8 @@
 namespace module_rt
 {
 #ifdef __MPI
-void solve_propagation(const Parallel_Orbitals* pv,
+void solve_propagation(const Parallel_Blkcyclic& matrix_layout,
+                        const Parallel_Blkcyclic& wfc_layout,
                         const int nband,
                         const int nlocal,
                         const double dt,
@@ -20,13 +22,13 @@ void solve_propagation(const Parallel_Orbitals* pv,
                         std::complex<double>* psi_k)
 {
     // (1) init A,B and copy Htmp to A & B
-    std::complex<double>* operator_A = new std::complex<double>[pv->nloc];
-    ModuleBase::GlobalFunc::ZEROS(operator_A, pv->nloc);
-    BlasConnector::copy(pv->nloc, Htmp, 1, operator_A, 1);
+    std::complex<double>* operator_A = new std::complex<double>[matrix_layout.size()];
+    ModuleBase::GlobalFunc::ZEROS(operator_A, matrix_layout.size());
+    BlasConnector::copy(matrix_layout.size(), Htmp, 1, operator_A, 1);
 
-    std::complex<double>* operator_B = new std::complex<double>[pv->nloc];
-    ModuleBase::GlobalFunc::ZEROS(operator_B, pv->nloc);
-    BlasConnector::copy(pv->nloc, Htmp, 1, operator_B, 1);
+    std::complex<double>* operator_B = new std::complex<double>[matrix_layout.size()];
+    ModuleBase::GlobalFunc::ZEROS(operator_B, matrix_layout.size());
+    BlasConnector::copy(matrix_layout.size(), Htmp, 1, operator_B, 1);
 
     const double dt_au = dt / ModuleBase::AU_to_FS;
     
@@ -38,11 +40,11 @@ void solve_propagation(const Parallel_Orbitals* pv,
     std::complex<double> beta1 = {0.0, -0.25 * dt_au};
     std::complex<double> beta2 = {0.0, 0.25 * dt_au};
 
-    ScalapackConnector::geadd('N', nlocal, nlocal, alpha, Stmp, 1, 1, pv->desc, beta2, operator_A, 1, 1, pv->desc);
-    ScalapackConnector::geadd('N', nlocal, nlocal, alpha, Stmp, 1, 1, pv->desc, beta1, operator_B, 1, 1, pv->desc);
+    ScalapackConnector::geadd('N', nlocal, nlocal, alpha, Stmp, 1, 1, matrix_layout.desc(), beta2, operator_A, 1, 1, matrix_layout.desc());
+    ScalapackConnector::geadd('N', nlocal, nlocal, alpha, Stmp, 1, 1, matrix_layout.desc(), beta1, operator_B, 1, 1, matrix_layout.desc());
     // ->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     // (3) b = operator_B @ psi_k_laststep
-    std::complex<double>* tmp_b = new std::complex<double>[pv->nloc_wfc];
+    std::complex<double>* tmp_b = new std::complex<double>[wfc_layout.size()];
     ScalapackConnector::gemm('N',
                         'N',
                         nlocal,
@@ -52,24 +54,24 @@ void solve_propagation(const Parallel_Orbitals* pv,
                         operator_B,
                         1,
                         1,
-                        pv->desc,
+                        matrix_layout.desc(),
                         psi_k_laststep,
                         1,
                         1,
-                        pv->desc_wfc,
+                        wfc_layout.desc(),
                         0.0,
                         tmp_b,
                         1,
                         1,
-                        pv->desc_wfc);
+                        wfc_layout.desc());
     //get ipiv
-    int* ipiv = new int[pv->nloc];
+    int* ipiv = new int[matrix_layout.size()];
     int info = 0;
     // (4) solve Ac=b
-    ScalapackConnector::gesv(nlocal, nband, operator_A, 1, 1, pv->desc, ipiv, tmp_b, 1, 1, pv->desc_wfc, &info);
+    ScalapackConnector::gesv(nlocal, nband, operator_A, 1, 1, matrix_layout.desc(), ipiv, tmp_b, 1, 1, wfc_layout.desc(), &info);
 
     // copy solution to psi_k
-    BlasConnector::copy(pv->nloc_wfc, tmp_b, 1, psi_k, 1);
+    BlasConnector::copy(wfc_layout.size(), tmp_b, 1, psi_k, 1);
 
     delete[] tmp_b;
     delete[] ipiv;
@@ -77,7 +79,8 @@ void solve_propagation(const Parallel_Orbitals* pv,
     delete[] operator_B;
 }
 
-void solve_propagation(const Parallel_Orbitals* pv,
+void solve_propagation(const Parallel_Blkcyclic& matrix_layout,
+                       const Parallel_Blkcyclic& wfc_layout,
                        const int nband,
                        const int nlocal,
                        const double dt,
@@ -90,11 +93,11 @@ void solve_propagation(const Parallel_Orbitals* pv,
     // Print message for debugging, should be removed later
     std::cout << "Entering solve_propagation with moving gauge P_k..." << std::endl;
     // (1) init A, B and compute HPtmp = Htmp + P_k
-    std::complex<double>* operator_A = new std::complex<double>[pv->nloc];
-    std::complex<double>* operator_B = new std::complex<double>[pv->nloc];
+    std::complex<double>* operator_A = new std::complex<double>[matrix_layout.size()];
+    std::complex<double>* operator_B = new std::complex<double>[matrix_layout.size()];
 
     // Add up Htmp and P_k to get the effective Hamiltonian matrix for moving spatial gauge
-    for (int i = 0; i < pv->nloc; ++i)
+    for (int i = 0; i < matrix_layout.size(); ++i)
     {
         operator_A[i] = Htmp[i] + P_k[i];
         operator_B[i] = Htmp[i] + P_k[i];
@@ -110,12 +113,12 @@ void solve_propagation(const Parallel_Orbitals* pv,
     std::complex<double> beta1 = {0.0, -0.25 * dt_au};
     std::complex<double> beta2 = {0.0, 0.25 * dt_au};
 
-    ScalapackConnector::geadd('N', nlocal, nlocal, alpha, Stmp, 1, 1, pv->desc, beta2, operator_A, 1, 1, pv->desc);
-    ScalapackConnector::geadd('N', nlocal, nlocal, alpha, Stmp, 1, 1, pv->desc, beta1, operator_B, 1, 1, pv->desc);
+    ScalapackConnector::geadd('N', nlocal, nlocal, alpha, Stmp, 1, 1, matrix_layout.desc(), beta2, operator_A, 1, 1, matrix_layout.desc());
+    ScalapackConnector::geadd('N', nlocal, nlocal, alpha, Stmp, 1, 1, matrix_layout.desc(), beta1, operator_B, 1, 1, matrix_layout.desc());
 
     // ->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     // (3) b = operator_B @ psi_k_laststep
-    std::complex<double>* tmp_b = new std::complex<double>[pv->nloc_wfc];
+    std::complex<double>* tmp_b = new std::complex<double>[wfc_layout.size()];
     ScalapackConnector::gemm('N',
                              'N',
                              nlocal,
@@ -125,26 +128,26 @@ void solve_propagation(const Parallel_Orbitals* pv,
                              operator_B,
                             1,
                             1,
-                            pv->desc,
+                            matrix_layout.desc(),
                              psi_k_laststep,
                              1,
                              1,
-                             pv->desc_wfc,
+                             wfc_layout.desc(),
                              0.0,
                             tmp_b,
                             1,
                             1,
-                             pv->desc_wfc);
+                             wfc_layout.desc());
 
     // get ipiv
-    int* ipiv = new int[pv->nloc];
+    int* ipiv = new int[matrix_layout.size()];
     int info = 0;
 
     // (4) solve Ac=b
-    ScalapackConnector::gesv(nlocal, nband, operator_A, 1, 1, pv->desc, ipiv, tmp_b, 1, 1, pv->desc_wfc, &info);
+    ScalapackConnector::gesv(nlocal, nband, operator_A, 1, 1, matrix_layout.desc(), ipiv, tmp_b, 1, 1, wfc_layout.desc(), &info);
 
     //copy solution to psi_k
-    BlasConnector::copy(pv->nloc_wfc, tmp_b, 1, psi_k, 1);
+    BlasConnector::copy(wfc_layout.size(), tmp_b, 1, psi_k, 1);
 
     delete []tmp_b;
     delete []ipiv;

@@ -11,7 +11,7 @@ props_init "$1"
 
 source "$PROPS_SCRIPT_DIR/props_lr.sh"
 if run_lr_tracking_props; then
-    exit 0
+  exit 0
 fi
 
 source "$PROPS_SCRIPT_DIR/props_basic.sh"
@@ -26,7 +26,7 @@ source "$PROPS_SCRIPT_DIR/props_deepks.sh"
 # trailing totaltimeref entry. Add a new category by dropping a
 # props_<cat>.sh next to the others and calling run_<cat>_props here.
 run_lr_force_props
-run_basic_props
+run_basic_props || exit 1
 
 #-------------------------------
 # matrix collectors: out_dm1 (props_mat.sh)
@@ -80,7 +80,10 @@ run_ml_rpa_props
 # so a failing helper (get_sum_*.py, a missing deepks_desc.dat) left an
 # empty value for the threshold check instead of aborting the collection.
 # Keep that behavior with a subshell that disables errexit.
-( set +e; run_deepks_props )
+(
+  set +e
+  run_deepks_props
+)
 
 #--------------------------------------------
 # basic collectors that run after deepks: symmetry

@@ -4,6 +4,28 @@ abacus_disable_feature_definitions(__ROCM)
 
 if(ENABLE_LCAO)
   addtest(
+    TARGET MODULE_LCAO_radial_tables
+    LIBS parameter base device container
+    SOURCES test_center2orb_orb11.cpp
+            ../center2orb.cpp
+            ../center2orb_orb11.cpp
+            ../center2orb_orb21.cpp
+            ${ABACUS_SOURCE_DIR}/source_basis/module_ao/orb_atomic_lm.cpp
+            ${ABACUS_SOURCE_DIR}/source_basis/module_ao/orb_gaunt_table.cpp)
+  if(USE_CUDA)
+    addtest(
+      TARGET MODULE_LCAO_radial_tables_gpu
+      KEEP_FEATURE_DEFINITIONS __CUDA
+      LIBS parameter base device container
+      SOURCES test_center2orb_orb11.cpp
+              ../center2orb.cpp
+              ../center2orb_orb11.cpp
+              ../center2orb_orb21.cpp
+              ${ABACUS_SOURCE_DIR}/source_basis/module_ao/orb_atomic_lm.cpp
+              ${ABACUS_SOURCE_DIR}/source_basis/module_ao/orb_gaunt_table.cpp)
+    set_tests_properties(MODULE_LCAO_radial_tables_gpu PROPERTIES LABELS gpu)
+  endif()
+  addtest(
     TARGET MODULE_LCAO_init_dm_from_file_test
     LIBS parameter base device symmetry
     SOURCES
@@ -51,4 +73,14 @@ if(ENABLE_LCAO)
     TARGET MODULE_LCAO_init_chg_hr_error_test
     LIBS parameter base device
     SOURCES test_init_chg_hr_error.cpp)
+
+  addtest(
+    TARGET MODULE_LCAO_integral_reuse
+    LIBS parameter base device container
+    SOURCES test_center2orb_orb21.cpp
+            ../center2orb.cpp
+            ../center2orb_orb11.cpp
+            ../center2orb_orb21.cpp
+            ${ABACUS_SOURCE_DIR}/source_basis/module_ao/orb_atomic_lm.cpp
+            ${ABACUS_SOURCE_DIR}/source_basis/module_ao/orb_gaunt_table.cpp)
 endif()

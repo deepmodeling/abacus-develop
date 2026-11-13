@@ -8,7 +8,7 @@
 #include "source_psi/psi.h"
 #include "source_base/matrix.h"
 
-#include "source_base/parallel_2d.h"
+#include "source_base/parallel_blkcyc.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_cell/unitcell.h"
 #include "source_basis/module_ao/orb_read.h"
@@ -34,6 +34,9 @@ template <typename TR> class Exx_LRI;
 #include <complex>
 #include <vector>
 #include <iomanip>
+#include <memory>
+
+class BasisFlattenedIndexing; // Defined in source/source_base/basis_flattened_indexing.h
 
 //! Reduced Density Matrix Functional Theory (RDMFT)
 namespace rdmft
@@ -49,7 +52,7 @@ class RDMFT
     
     const Parallel_Orbitals* ParaV = nullptr;
 
-    Parallel_2D para_Eij;
+    Parallel_Blkcyclic para_Eij;
 
     //! obain Ewald and this->pelec->pot
     elecstate::ElecState* pelec = nullptr;
@@ -148,6 +151,8 @@ class RDMFT
     hamilt::HS_Matrix_K<TK>* hsk_exx_XC = nullptr;
 
     std::vector<TK> HK_XC;
+
+    std::unique_ptr<BasisFlattenedIndexing> basis_index_;
     std::vector< std::vector<TK> > DM_XC_pass;
     // ModuleDirectMin::ProdStiefelVariable HK_RDMFT_pass;
     // ModuleDirectMin::ProdStiefelVariable HK_XC_pass;

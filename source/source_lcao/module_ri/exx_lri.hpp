@@ -8,6 +8,8 @@
 
 #include "lri_cv_tools.h"
 #include "exx_lri.h"
+#include "hybrid_image_domain.h"
+#include "source_base/parallel_reduce.h"
 #include "source_cell/unitcell.h"
 #include "ri_2d_comm.h"
 #include "ri_util.h"
@@ -38,6 +40,24 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in,
                           const K_Vectors &kv_in,
                           const LCAO_Orbitals& orb,
                           const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& abfs_in)
+{
+    this->init(
+        mpi_comm_in,
+        ucell,
+        kv_in,
+        orb,
+        abfs_in,
+        false);
+}
+
+template <typename Tdata>
+void Exx_LRI<Tdata>::init(
+    const MPI_Comm &mpi_comm_in,
+    const UnitCell &ucell,
+    const K_Vectors &kv_in,
+    const LCAO_Orbitals &orb,
+    const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &abfs_in,
+    const bool use_gpu)
 {
     ModuleBase::TITLE("Exx_LRI","init");
     ModuleBase::timer::start("Exx_LRI", "init");
@@ -73,15 +93,21 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in,
     this->exx_objs.clear();
     const auto settings = RI_Util::update_coulomb_settings(this->info.coulomb_param, ucell, this->p_kv);
     this->MGT = std::make_shared<ORB_gaunt_table>();
-    this->refresh_coulomb(ucell, orb, settings);
+    this->refresh_coulomb(
+        ucell,
+        orb,
+        settings,
+        use_gpu);
 
     ModuleBase::timer::end("Exx_LRI", "init");
 }
 
-template<typename Tdata>
-void Exx_LRI<Tdata>::refresh_coulomb(const UnitCell& ucell,
-                                   const LCAO_Orbitals& orb,
-                                   const CoulombSettings& settings)
+template <typename Tdata>
+void Exx_LRI<Tdata>::refresh_coulomb(
+    const UnitCell &ucell,
+    const LCAO_Orbitals &orb,
+    const CoulombSettings &settings,
+    const bool use_gpu)
 {
     ModuleBase::TITLE("Exx_LRI", "refresh_coulomb");
     ModuleBase::timer::start("Exx_LRI", "refresh_coulomb");
@@ -113,8 +139,16 @@ void Exx_LRI<Tdata>::refresh_coulomb(const UnitCell& ucell,
         auto& object = this->exx_objs[settings_list.first];
         object.abfs_ccp = Conv_Coulomb_Pot_K::cal_orbs_ccp(
             this->abfs, settings_list.second.second, this->info.ccp_rmesh_times);
-        object.cv.set_orbitals(ucell, orb, this->lcaos, this->abfs, object.abfs_ccp,
-                               this->info.kmesh_times, this->MGT, settings_list.second.first);
+        object.cv.set_orbitals(
+            ucell,
+            orb,
+            this->lcaos,
+            this->abfs,
+            object.abfs_ccp,
+            this->info.kmesh_times,
+            this->MGT,
+            settings_list.second.first,
+            use_gpu);
         object.cv.set_info_ri(&this->info);
         if (settings_list.first == Conv_Coulomb_Pot_K::Coulomb_Method::Ewald)
         {
@@ -191,7 +225,8 @@ void Exx_LRI<Tdata>::init_spencer(
         this->exx_objs[Conv_Coulomb_Pot_K::Coulomb_Method::Center2].abfs_ccp,
         this->info.kmesh_times,
         this->MGT,
-        center2_settings->second.first);
+        center2_settings->second.first,
+        false);
     this->exx_objs[Conv_Coulomb_Pot_K::Coulomb_Method::Center2].cv.set_info_ri(&this->info);
 
     ModuleBase::timer::end("Exx_LRI", "init_spencer");
@@ -231,7 +266,12 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
 
     std::map<TA,std::map<TAC,RI::Tensor<Tdata>>> Vs;
     std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, Ndim>>> dVs;
-    const bool cal_dCV = PARAM.inp.cal_force || PARAM.inp.cal_stress;
+    const bool calculate_stress = PARAM.inp.cal_stress;
+    const bool cal_dCV = (PARAM.inp.cal_force || calculate_stress) && !this->info.unfold_hybrid_images;
+    if (this->info.unfold_hybrid_images && calculate_stress)
+    {
+        throw std::invalid_argument("Unfolded hybrid RI stress is not yet implemented");
+    }
     for(const auto &settings_list : this->coulomb_settings)
     {
         std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>
@@ -279,14 +319,17 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
     }
     if (write_cv && GlobalV::MY_RANK == 0)
         { LRI_CV_Tools::write_Vs_abf(Vs, PARAM.globalv.global_out_dir + "Vs"); }
-    this->exx_lri.set_Vs(std::move(Vs), this->info.V_threshold);
+    if (!this->info.unfold_hybrid_images)
+    {
+        this->exx_lri.set_Vs(std::move(Vs), this->info.V_threshold);
+    }
 
     if (cal_dCV)
     {
         std::array<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>, Ndim>
             dVs_order = LRI_CV_Tools::change_order(std::move(dVs));
         this->exx_lri.set_dVs(std::move(dVs_order), this->info.V_grad_threshold);
-        if(PARAM.inp.cal_stress)
+        if(calculate_stress)
         {
             std::array<std::array<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>,3>,3> dVRs = LRI_CV_Tools::cal_dMRs(ucell,dVs_order);
             this->exx_lri.set_dVRs(std::move(dVRs), this->info.V_grad_R_threshold);
@@ -324,6 +367,27 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
     }
     if (write_cv && GlobalV::MY_RANK == 0)
         { LRI_CV_Tools::write_Cs_ao(Cs, PARAM.globalv.global_out_dir + "Cs"); }
+    if (this->info.unfold_hybrid_images)
+    {
+        RI_2D_Comm::ImageCell c_extent = RI_2D_Comm::retained_image_extent(Cs, this->info.C_threshold);
+        RI_2D_Comm::ImageCell v_extent = RI_2D_Comm::retained_image_extent(Vs, this->info.V_threshold);
+        for (int d = 0; d < 3; ++d)
+        {
+            Parallel_Reduce::reduce_max(c_extent[d]);
+            Parallel_Reduce::reduce_max(v_extent[d]);
+        }
+        const RI_2D_Comm::ImageCell image_period = RI_2D_Comm::hybrid_image_period(c_extent, v_extent);
+        if (image_period != this->hybrid_images_period_
+            && RI::MPI_Wrapper::mpi_get_rank(this->mpi_comm) == 0)
+        {
+            std::cout << "RI_HYBRID_IMAGE_PERIOD " << image_period[0] << " " << image_period[1]
+                      << " " << image_period[2] << " physical_mesh " << period[0] << " " << period[1]
+                      << " " << period[2] << std::endl;
+        }
+        this->hybrid_images_period_ = image_period;
+        this->exx_lri.set_parallel(this->mpi_comm, atoms_pos, latvec, this->hybrid_images_period_);
+        this->exx_lri.set_Vs(Vs, this->info.V_threshold);
+    }
     this->exx_lri.set_Cs(std::move(Cs), this->info.C_threshold);
 
     if (cal_dCV)
@@ -331,7 +395,7 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
         std::array<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>, Ndim>
             dCs_order = LRI_CV_Tools::change_order(std::move(dCs));
         this->exx_lri.set_dCs(std::move(dCs_order), this->info.C_grad_threshold);
-        if(PARAM.inp.cal_stress)
+        if(calculate_stress)
         {
             std::array<std::array<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>,3>,3> dCRs = LRI_CV_Tools::cal_dMRs(ucell,dCs_order);
             this->exx_lri.set_dCRs(std::move(dCRs), this->info.C_grad_R_threshold);
@@ -823,7 +887,8 @@ void Exx_LRI<Tdata>::cal_exx_elec(const std::vector<std::map<TA, std::map<TAC, R
     ModuleBase::TITLE("Exx_LRI","cal_exx_elec");
     ModuleBase::timer::start("Exx_LRI", "cal_exx_elec");
 
-    const std::vector<std::tuple<std::set<TA>, std::set<TA>>> judge = RI_2D_Comm::get_2D_judge(ucell,pv);
+    const std::vector<std::tuple<std::set<TA>, std::set<TA>>> judge
+        = RI_2D_Comm::get_2D_judge(ucell, pv.para_2d());
 
     if(p_symrot)
         { this->exx_lri.set_symmetry(true, p_symrot->get_irred_sector()); }
@@ -848,6 +913,11 @@ void Exx_LRI<Tdata>::cal_exx_elec(const std::vector<std::map<TA, std::map<TAC, R
 
         this->exx_lri.set_Ds(Ds[is], this->info.dm_threshold, suffix);
         this->exx_lri.cal_Hs({ "","",suffix });
+
+        if (this->info.unfold_hybrid_images)
+        {
+            RI_2D_Comm::decode_hybrid_images(this->exx_lri.Hs, this->hybrid_images_period_);
+        }
 
         if (!p_symrot)
         {

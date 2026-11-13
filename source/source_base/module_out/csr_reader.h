@@ -12,7 +12,12 @@ namespace ModuleIO
 /**
  * @brief Class to read CSR file
  * @details This class is used to read CSR file
- * the default format is like:
+ * Both save_sparse's compact three-line header (STEP, Matrix Dimension,
+ * Matrix number) and the cell-aware format below are accepted. Compact CSR
+ * blocks contain an R coordinate/nnz line, values, zero-based column indices,
+ * and dimension+1 row pointers. Invalid dimensions, indices and truncated data
+ * are rejected for both formats rather than producing an empty matrix.
+ * The cell-aware format is like:
  * ```
  *  --- Ionic Step 1 ---
  *  # print density matrix in real space DM(R)
@@ -72,11 +77,17 @@ class csrFileReader : public FileReader
     int getMatrixDimension() const;
 
   private:
+    void parseCompactHeader();
+    void parseCellHeader();
+    void readBlocks();
+    void validateFrameEnd();
+    void nextDataLine();
+    void nextDataToken();
     std::vector<std::vector<int>> RCoordinates;
     std::vector<SparseMatrix<T>> sparse_matrices;
-    int step;
-    int matrixDimension;
-    int numberOfR;
+    int step = 0;
+    int matrixDimension = 0;
+    int numberOfR = 0;
 };
 
 } // namespace ModuleIO

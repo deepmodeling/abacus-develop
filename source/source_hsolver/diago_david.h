@@ -56,6 +56,7 @@ class DiagoDavid
                const int nband_in,
                const int dim_in,
                const int david_ndim_in,
+               const bool use_uspp_in,
                const diag_comm_info& diag_comm_in);
 
     /**
@@ -109,6 +110,8 @@ class DiagoDavid
     const int nbase_x;
     /// dimension of the subspace allowed in Davidson
     const int david_ndim = 4;
+    /// whether the SCF uses ultrasoft pseudopotentials
+    const bool use_uspp = false;
     /// number of unconverged eigenvalues
     int notconv = 0;
 
@@ -230,7 +233,7 @@ class DiagoDavid
      * @param mm_size The size of the square matrix for future lagranges.
      * @param mv_size The size of the lagrange_m array.
      */
-    void SchmidtOrth(const int& dim,
+    bool SchmidtOrth(const int& dim,
                      const int nband,
                      const int m,
                      const T* spsi,
@@ -277,6 +280,9 @@ class DiagoDavid
      *       are met or the maximum number of tries is exceeded.
      */
     bool check_block_conv(const int &ntry, const int &notconv, const int &ntry_max, const int &notconv_max);
+
+    /// @brief Whether to form CUDA float Davidson bases with a single-pass QR.
+    bool use_block_qr() const;
 
     using resmem_complex_op = base_device::memory::resize_memory_op<T, Device>;
     using delmem_complex_op = base_device::memory::delete_memory_op<T, Device>;

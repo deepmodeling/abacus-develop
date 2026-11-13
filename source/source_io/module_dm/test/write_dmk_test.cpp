@@ -38,17 +38,17 @@ Magnetism::~Magnetism() { }
  *     - the serial version without MPI
  */
 
-void init_pv(int nlocal, Parallel_2D& pv)
+void init_pv(int nlocal, Parallel_Blkcyclic& pv)
 {
 #ifdef __MPI
-        pv.init(nlocal, nlocal, 1, MPI_COMM_WORLD);
+        pv.init(nlocal, nlocal, 1, MPI_COMM_WORLD, false);
 #else
         pv.set_serial(nlocal, nlocal);
 #endif             
 }
 
 template <typename T>
-void gen_dmk(std::vector<std::vector<T>>& dmk, std::vector<double>& efs,  int nspin, int nk, int nlocal, Parallel_2D& pv)
+void gen_dmk(std::vector<std::vector<T>>& dmk, std::vector<double>& efs,  int nspin, int nk, int nlocal, Parallel_Blkcyclic& pv)
 {
     int myrank = 0;
 #ifdef __MPI
@@ -67,9 +67,9 @@ void gen_dmk(std::vector<std::vector<T>>& dmk, std::vector<double>& efs,  int ns
         }
     }
 #ifdef __MPI
-    Parallel_2D pv_global;
-    pv_global.init(nlocal, nlocal, nlocal, MPI_COMM_WORLD);
-    dmk.resize(nspin * nk, std::vector<T>(pv.get_local_size(), 0.0));
+    Parallel_Blkcyclic pv_global;
+    pv_global.init(nlocal, nlocal, nlocal, MPI_COMM_WORLD, false);
+    dmk.resize(nspin * nk, std::vector<T>(pv.size(), 0.0));
     for (int i = 0; i < nspin * nk; i++)
     {
         Cpxgemr2d(nlocal,
@@ -77,12 +77,12 @@ void gen_dmk(std::vector<std::vector<T>>& dmk, std::vector<double>& efs,  int ns
                   dmk_global[i].data(),
                   1,
                   1,
-                  pv_global.desc,
+                  const_cast<int*>(pv_global.desc()),
                   dmk[i].data(),
                   1,
                   1,
-                  pv.desc,
-                  pv.blacs_ctxt);
+                  const_cast<int*>(pv.desc()),
+                  pv.ictxt());
     }
 #else
     dmk = dmk_global;
@@ -135,7 +135,7 @@ TEST(DMKTest,WriteDMK) {
     int nlocal = 20;
     std::vector<std::vector<double>> dmk;
     std::vector<std::vector<std::complex<double>>> dmk_multik;
-    Parallel_2D pv;
+    Parallel_Blkcyclic pv;
     std::vector<double> efs;
     init_pv(nlocal, pv);
 
@@ -165,8 +165,8 @@ TEST(DMKTest,WriteDMK) {
     kv.kd_done = true;
     
     std::ofstream ofs_log;
-    ModuleIO::write_dmk(dmk, kv, 3, efs, ucell, pv, out_dir, istep, ofs_log);
-    ModuleIO::write_dmk(dmk_multik, kv, 3, efs, ucell, pv, out_dir, istep, ofs_log);
+    ModuleIO::write_dmk(dmk, kv, 3, efs, ucell, pv, out_dir, istep, 0, ofs_log);
+    ModuleIO::write_dmk(dmk_multik, kv, 3, efs, ucell, pv, out_dir, istep, 0, ofs_log);
     
     std::ifstream ifs;
 
@@ -195,6 +195,8 @@ TEST(DMKTest,WriteDMK) {
                           std::istreambuf_iterator<char>());
         EXPECT_THAT(str, testing::HasSubstr("0 # Fermi energy in Ry"));
         EXPECT_THAT(str, testing::HasSubstr("20 # number of localized basis"));
+        // the matrix body must end with a newline so appended records are not glued
+        EXPECT_EQ(str.back(), '\n');
         ifs.close();
 
         fn = "dmk2s1_nao.txt";
@@ -233,13 +235,188 @@ TEST(DMKTest,WriteDMK) {
     
 };
 
+// ---------------------------------------------------------------------------
+// out_app_flag = 0: one fixed filename, truncated and overwritten each call.
+// ---------------------------------------------------------------------------
+TEST(DMKTest, Mode0FixedNameOverwrite) {
+    UnitCell* ucell;
+    UcellTestPrepare utp = UcellTestLib["Si"];
+    ucell = utp.SetUcellInfo();
+
+    int nspin = 2;
+    int nk = 1;
+    int nlocal = 20;
+    std::vector<std::vector<double>> dmk;
+    std::vector<double> efs;
+    Parallel_Blkcyclic pv;
+    init_pv(nlocal, pv);
+    gen_dmk(dmk, efs, nspin, nk, nlocal, pv);
+
+    K_Vectors kv;
+    kv.set_nkstot(1);
+    kv.set_nkstot_nospin(1);
+    kv.set_nks(1);
+    kv.set_spin_mult(2);
+    kv.kvec_c.resize(1);
+    kv.kvec_c[0].x = 0.0;
+    kv.kvec_c[0].y = 0.0;
+    kv.kvec_c[0].z = 0.0;
+    kv.kvec_d.resize(1);
+    kv.kvec_d[0].x = 0.0;
+    kv.kvec_d[0].y = 0.0;
+    kv.kvec_d[0].z = 0.0;
+    kv.wk.resize(1);
+    kv.wk[0] = 1.0;
+    kv.isk.resize(1);
+    kv.isk[0] = 0;
+
+    const std::string out_dir = "./";
+    const int out_app_flag = 0;
+    std::ofstream ofs_log;
+
+    // Two different isteps -> the same fixed filename, overwritten each call.
+    ModuleIO::write_dmk(dmk, kv, /*precision=*/3, efs, ucell, pv, out_dir, /*istep=*/0, out_app_flag, ofs_log);
+    ModuleIO::write_dmk(dmk, kv, /*precision=*/3, efs, ucell, pv, out_dir, /*istep=*/1, out_app_flag, ofs_log);
+
+    if (GlobalV::MY_RANK == 0)
+    {
+        std::ifstream ifs("dms1_nao.txt");
+        std::string str((std::istreambuf_iterator<char>(ifs)),
+                        std::istreambuf_iterator<char>());
+        ifs.close();
+        // The second write replaced the first record: only step 2 remains.
+        EXPECT_THAT(str, testing::HasSubstr(" --- Ionic Step 2 ---"));
+        EXPECT_THAT(str, testing::Not(testing::HasSubstr(" --- Ionic Step 1 ---")));
+        // g-suffixed files must NOT exist.
+        ifs.open("dms1g1_nao.txt");
+        EXPECT_FALSE(ifs.good());
+        ifs.open("dms1g2_nao.txt");
+        EXPECT_FALSE(ifs.good());
+        remove("dms1_nao.txt");
+        remove("dms2_nao.txt");
+    }
+    delete ucell;
+}
+
+// ---------------------------------------------------------------------------
+// out_app_flag = 1: fixed filename, multiple calls append successive records.
+// ---------------------------------------------------------------------------
+TEST(DMKTest, Mode1FixedNameAppend) {
+    UnitCell* ucell;
+    UcellTestPrepare utp = UcellTestLib["Si"];
+    ucell = utp.SetUcellInfo();
+
+    int nspin = 2;
+    int nk = 1;
+    int nlocal = 20;
+    std::vector<std::vector<double>> dmk;
+    std::vector<double> efs;
+    Parallel_Blkcyclic pv;
+    init_pv(nlocal, pv);
+    gen_dmk(dmk, efs, nspin, nk, nlocal, pv);
+
+    K_Vectors kv;
+    kv.set_nkstot(1);
+    kv.set_nkstot_nospin(1);
+    kv.set_nks(1);
+    kv.set_spin_mult(2);
+    kv.kvec_c.resize(1);
+    kv.kvec_c[0].x = 0.0;
+    kv.kvec_c[0].y = 0.0;
+    kv.kvec_c[0].z = 0.0;
+    kv.kvec_d.resize(1);
+    kv.kvec_d[0].x = 0.0;
+    kv.kvec_d[0].y = 0.0;
+    kv.kvec_d[0].z = 0.0;
+    kv.wk.resize(1);
+    kv.wk[0] = 1.0;
+    kv.isk.resize(1);
+    kv.isk[0] = 0;
+
+    const std::string out_dir = "./";
+    const int out_app_flag = 1;
+    std::ofstream ofs_log;
+
+    // Two ionic steps -> both write to dms1_nao.txt.
+    ModuleIO::write_dmk(dmk, kv, /*precision=*/3, efs, ucell, pv, out_dir, /*istep=*/0, out_app_flag, ofs_log);
+    ModuleIO::write_dmk(dmk, kv, /*precision=*/3, efs, ucell, pv, out_dir, /*istep=*/1, out_app_flag, ofs_log);
+
+    if (GlobalV::MY_RANK == 0)
+    {
+        std::ifstream ifs("dms1_nao.txt");
+        std::string str((std::istreambuf_iterator<char>(ifs)),
+                        std::istreambuf_iterator<char>());
+        ifs.close();
+        // Two "Ionic Step" headers present -> two appended records.
+        EXPECT_THAT(str, testing::HasSubstr(" --- Ionic Step 1 ---"));
+        EXPECT_THAT(str, testing::HasSubstr(" --- Ionic Step 2 ---"));
+        // g-suffixed file must NOT exist.
+        ifs.open("dms1g1_nao.txt");
+        EXPECT_FALSE(ifs.good());
+        remove("dms1_nao.txt");
+    }
+    delete ucell;
+}
+
+// ---------------------------------------------------------------------------
+// out_app_flag = 2: per-step g{step} filename; directory routing is handled by
+// set_global_dir and is covered by io_sys_var_test.
+// ---------------------------------------------------------------------------
+TEST(DMKTest, Mode2PerStepFile) {
+    UnitCell* ucell;
+    UcellTestPrepare utp = UcellTestLib["Si"];
+    ucell = utp.SetUcellInfo();
+
+    int nspin = 2;
+    int nk = 1;
+    int nlocal = 20;
+    std::vector<std::vector<double>> dmk;
+    std::vector<double> efs;
+    Parallel_Blkcyclic pv;
+    init_pv(nlocal, pv);
+    gen_dmk(dmk, efs, nspin, nk, nlocal, pv);
+
+    K_Vectors kv;
+    kv.set_nkstot(1);
+    kv.set_nkstot_nospin(1);
+    kv.set_nks(1);
+    kv.set_spin_mult(2);
+    kv.kvec_c.resize(1);
+    kv.kvec_c[0].x = 0.0;
+    kv.kvec_c[0].y = 0.0;
+    kv.kvec_c[0].z = 0.0;
+    kv.kvec_d.resize(1);
+    kv.kvec_d[0].x = 0.0;
+    kv.kvec_d[0].y = 0.0;
+    kv.kvec_d[0].z = 0.0;
+    kv.wk.resize(1);
+    kv.wk[0] = 1.0;
+    kv.isk.resize(1);
+    kv.isk[0] = 0;
+
+    const std::string out_dir = "./";
+    const int out_app_flag = 2;
+    std::ofstream ofs_log;
+
+    ModuleIO::write_dmk(dmk, kv, /*precision=*/3, efs, ucell, pv, out_dir, /*istep=*/2, out_app_flag, ofs_log);
+
+    if (GlobalV::MY_RANK == 0)
+    {
+        std::ifstream ifs("dms1g3_nao.txt");
+        EXPECT_TRUE(ifs.good());
+        ifs.close();
+        remove("dms1g3_nao.txt");
+    }
+    delete ucell;
+}
+
 /*
 // no function in the main code calls read_dmk??? mohan note 2025-05-25
 TEST(DMKTest, ReadDMK) {
     int nlocal = 26;
     std::vector<std::vector<double>> dmk;
     std::vector<std::vector<std::complex<double>>> dmk_multik;
-    Parallel_2D pv;
+    Parallel_Blkcyclic pv;
     std::vector<double> efs;
 
     init_pv(nlocal, pv);
@@ -260,8 +437,8 @@ TEST(DMKTest, ReadDMK) {
     EXPECT_TRUE(ModuleIO::read_dmk(1, 1, kv, pv, "./support/", dmk_multik, ofs_running));
     EXPECT_EQ(dmk.size(), 1);
     EXPECT_EQ(dmk_multik.size(), 1);
-    EXPECT_EQ(dmk[0].size(), pv.get_local_size());
-    EXPECT_EQ(dmk_multik[0].size(), pv.get_local_size());
+    EXPECT_EQ(dmk[0].size(), pv.size());
+    EXPECT_EQ(dmk_multik[0].size(), pv.size());
     if (GlobalV::MY_RANK == 0)
     {
         EXPECT_NEAR(dmk[0][0], 3.904e-01, 1e-6);

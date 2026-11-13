@@ -34,6 +34,7 @@ addtest(
           ../dfpt_pert_vkb.cpp
           ../dfpt_pert_nl.cpp
           ../dfpt_pw_data.cpp
+          ../dfpt_pw_data_resp.cpp
           ../dfpt_kq_basis.cpp
           ../../../source_cell/qlist.cpp
           ../../../source_cell/reciprocal_grid.cpp
@@ -42,14 +43,18 @@ addtest(
           # (see test/dfpt_test_mocks.cpp).
           ../test/dfpt_test_mocks.cpp
           # Shared serial-side cell/basis/data fixture.
-          dfpt_serial_fixture.cpp)
+          dfpt_test_tool.cpp)
 
 addtest(
   TARGET MODULE_DFPT_rho_serial
   LIBS parameter dfpt_planewave_serial device base symmetry
-  SOURCES dfpt_rho_serial_test.cpp
+  SOURCES test_dfpt_rho.cpp
+          test_dfpt_rho_mix.cpp
           ../dfpt_rho.cpp
+          ../dfpt_rho_mix.cpp
+          ../../../source_estate/module_charge/chg_tools.cpp
           ../dfpt_pw_data.cpp
+          ../dfpt_pw_data_resp.cpp
           ../dfpt_kq_basis.cpp
           ../../../source_cell/qlist.cpp
           ../../../source_cell/reciprocal_grid.cpp
@@ -58,20 +63,27 @@ addtest(
           # (see test/dfpt_test_mocks.cpp).
           ../test/dfpt_test_mocks.cpp
           # Shared serial-side cell/basis/data fixture.
-          dfpt_serial_fixture.cpp)
+          dfpt_test_tool.cpp)
 
 addtest(
   TARGET MODULE_DFPT_phon_serial
   LIBS parameter dfpt_planewave_serial device base symmetry
-  SOURCES dfpt_phon_serial_test.cpp
+  SOURCES test_dfpt_phon_ewald.cpp
+          test_dfpt_phon_elec.cpp
+          test_dfpt_phon_asr.cpp
+          test_dfpt_phon.cpp
           ../dfpt_phon.cpp
+          ../dfpt_phon_asr.cpp
           ../dfpt_phon_ewald.cpp
           ../dfpt_phon_elec.cpp
           ../dfpt_rho.cpp
+          ../dfpt_rho_mix.cpp
+          ../../../source_estate/module_charge/chg_tools.cpp
           ../dfpt_pert.cpp
           ../dfpt_pert_vkb.cpp
           ../dfpt_pert_nl.cpp
           ../dfpt_pw_data.cpp
+          ../dfpt_pw_data_resp.cpp
           ../dfpt_kq_basis.cpp
           ../../../source_cell/qlist.cpp
           ../../../source_cell/reciprocal_grid.cpp
@@ -80,18 +92,20 @@ addtest(
           # (see test/dfpt_test_mocks.cpp).
           ../test/dfpt_test_mocks.cpp
           # Shared serial-side cell/basis/data fixture.
-          dfpt_serial_fixture.cpp)
+          dfpt_test_tool.cpp)
 
 addtest(
   TARGET MODULE_DFPT_q0_serial
   LIBS parameter dfpt_planewave_serial device base symmetry
-  SOURCES dfpt_q0_serial_test.cpp
+  SOURCES test_dfpt_q0.cpp
+          test_dfpt_q0_pos.cpp
           ../dfpt_q0.cpp
           ../dfpt_q0_pos.cpp
           ../dfpt_pert.cpp
           ../dfpt_pert_vkb.cpp
           ../dfpt_pert_nl.cpp
           ../dfpt_pw_data.cpp
+          ../dfpt_pw_data_resp.cpp
           ../dfpt_kq_basis.cpp
           ../../../source_cell/qlist.cpp
           ../../../source_cell/reciprocal_grid.cpp
@@ -100,7 +114,7 @@ addtest(
           # (see test/dfpt_test_mocks.cpp).
           ../test/dfpt_test_mocks.cpp
           # Shared serial-side cell/basis/data fixture.
-          dfpt_serial_fixture.cpp)
+          dfpt_test_tool.cpp)
 
 # QE-format dyn writer + the Gamma-first q-ordering validation consumed by
 # the DFPT driver (test_dfpt_write_dyn.cpp matches dfpt_write_dyn.cpp,
@@ -111,6 +125,7 @@ addtest(
   SOURCES test_dfpt_write_dyn.cpp
           ../dfpt_write_dyn.cpp
           ../dfpt_pw_data.cpp
+          ../dfpt_pw_data_resp.cpp
           ../../../source_cell/qlist.cpp
           ../../../source_cell/reciprocal_grid.cpp
           ../../../source_psi/psi.cpp
@@ -118,7 +133,7 @@ addtest(
           # (see test/dfpt_test_mocks.cpp).
           ../test/dfpt_test_mocks.cpp
           # Shared serial-side cell/basis/data fixture.
-          dfpt_serial_fixture.cpp)
+          dfpt_test_tool.cpp)
 
 # Analytic libxc first-order XC kernel (empty TU without libxc, so the test
 # only exists when the feature is compiled in)
@@ -129,7 +144,10 @@ if(ENABLE_LIBXC)
     SOURCES dfpt_xc_analytic_serial_test.cpp
             ../dfpt_xc_analytic.cpp
             ../dfpt_rho.cpp
+          ../dfpt_rho_mix.cpp
+          ../../../source_estate/module_charge/chg_tools.cpp
             ../dfpt_pw_data.cpp
+          ../dfpt_pw_data_resp.cpp
             ../dfpt_kq_basis.cpp
             ../../../source_cell/qlist.cpp
             ../../../source_cell/reciprocal_grid.cpp
@@ -138,5 +156,5 @@ if(ENABLE_LIBXC)
             # (see test/dfpt_test_mocks.cpp).
             ../test/dfpt_test_mocks.cpp
             # Shared serial-side cell/basis/data fixture.
-            dfpt_serial_fixture.cpp)
+            dfpt_test_tool.cpp)
 endif()

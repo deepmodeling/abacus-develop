@@ -5,7 +5,6 @@
 #include <string>
 #include <vector>
 
-#include "source_base/parallel_2d.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_hamilt/hamilt.h"
 
@@ -25,7 +24,7 @@ void write_hsk(const std::string& global_out_dir,
                hamilt::Hamilt<T>* p_hamilt,
                const Parallel_Orbitals& pv,
                const bool gamma_only,
-               const bool out_app_flag,
+               const int out_app_flag,
                const int istep,
                const int out_type,
                const int precision,

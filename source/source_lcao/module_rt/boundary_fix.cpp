@@ -1,37 +1,137 @@
 #include "boundary_fix.h"
-#include "source_base/libm/libm.h"
+#include "source_base/basis_flattened_indexing.h"
+#include "source_base/parallel_blkcyc.h"
 #include "source_base/constants.h"
+#include "source_base/libm/libm.h"
 #include "source_base/parallel_cell.h"
 #include "source_base/vector3.h"
 
+#include <cassert>
+
 namespace module_rt{
+
+namespace
+{
+struct LocalBasisRange
+{
+    int ibas0;
+    int nbasis;
+};
+
+enum class BasisAxis
+{
+    Row,
+    Column
+};
+
+LocalBasisRange local_basis_range(const BasisFlattenedIndexing& basis,
+                                  const Parallel_Blkcyclic& layout,
+                                  const int iat,
+                                  const BasisAxis axis)
+{
+    const BasisRange global_range = basis.range(iat);
+    int ibas0 = -1;
+    int nbasis = 0;
+    for (std::size_t ibas = global_range.ibas0; ibas < global_range.ibas1; ++ibas)
+    {
+        const int iloc = axis == BasisAxis::Row
+                             ? layout.irloc(static_cast<int>(ibas))
+                             : layout.icloc(static_cast<int>(ibas));
+        if (iloc >= 0)
+        {
+            if (ibas0 < 0)
+            {
+                ibas0 = iloc;
+            }
+            ++nbasis;
+        }
+    }
+    const LocalBasisRange local_range = {ibas0, nbasis};
+    return local_range;
+}
+
+void boundary_shift_mat(const std::complex<double>& phase,
+                        std::complex<double>* matk,
+                        const LocalBasisRange& rows,
+                        const LocalBasisRange& columns,
+                        const int nrloc,
+                        const int ncloc)
+{
+    const std::complex<double> phase_conj = std::conj(phase);
+    if (columns.nbasis > 0)
+    {
+        std::complex<double>* p_matkc = matk + columns.ibas0 * nrloc;
+        for(int nu = 0; nu < columns.nbasis; ++nu)
+        {
+            BlasConnector::scal(nrloc, phase, p_matkc, 1);
+            p_matkc += nrloc;
+        }
+    }
+    if (rows.nbasis > 0)
+    {
+        std::complex<double>* p_matkr = matk + rows.ibas0;
+        for(int mu = 0; mu < rows.nbasis; ++mu)
+        {
+            BlasConnector::scal(ncloc, phase_conj, p_matkr, nrloc);
+            p_matkr += 1;
+        }
+    }
+}
+
+void boundary_shift_c(const std::complex<double>& phase,
+                      std::complex<double>* psi_k,
+                      const int nbands,
+                      const int nbasis,
+                      const LocalBasisRange& rows)
+{
+    const std::complex<double> phase_conj = std::conj(phase);
+    std::complex<double>* p_ck = psi_k + rows.ibas0;
+    for(int nu = 0; nu < rows.nbasis; ++nu)
+    {
+        BlasConnector::scal(nbands, phase_conj, p_ck, nbasis);
+        p_ck += 1;
+    }
+}
+} // namespace
 
 void reset_matrix_boundary(const UnitCell& ucell,
                            const std::vector<ModuleBase::Vector3<double>>& kvec_d,
-                           const int nks,
                            const ModuleBase::Vector3<double>& cart_At_last,
-                           const Parallel_Orbitals* pv,
+                           const BasisFlattenedIndexing& basis,
+                           const Parallel_Blkcyclic& layout,
                            ct::Tensor& hk_last,
                            ct::Tensor& sk_last,
-                           psi::Psi<std::complex<double>>* psi_last,
-                           const size_t len_hs)
+                           psi::Psi<std::complex<double>>* psi_last)
 {
     ModuleBase::TITLE("module_rt", "reset_matrix_boundary");
     ModuleBase::timer::start("module_rt", "reset_matrix_boundary");
+    const int nks = static_cast<int>(kvec_d.size());
+    assert(nks > 0);
+    if (psi_last == nullptr)
+    {
+        ModuleBase::timer::end("module_rt", "reset_matrix_boundary");
+        return;
+    }
+    assert(hk_last.NumElements() % nks == 0);
+    const std::size_t len_hs =
+        static_cast<std::size_t>(hk_last.NumElements()) / static_cast<std::size_t>(nks);
     // Tensor-LAPACK keeps full H/S matrices on rank zero, while psi stays distributed.
-    const bool gathered_matrices = len_hs != static_cast<size_t>(pv->nloc);
-    Parallel_Orbitals full_distribution;
-    const Parallel_Orbitals* matrix_distribution = pv;
+    const bool gathered_matrices = len_hs != layout.size();
+    Parallel_Blkcyclic full_layout;
+    const Parallel_Blkcyclic* matrix_layout = &layout;
     bool update_matrices = true;
     if (gathered_matrices)
     {
-        const int basis_size = pv->get_global_row_size();
-        full_distribution.set_serial(basis_size, basis_size);
-        full_distribution.set_atomic_trace(ucell.get_iat2iwt(), ucell.nat, basis_size);
-        matrix_distribution = &full_distribution;
+        const int basis_size = layout.nrglb();
+        full_layout.set_serial(basis_size, basis_size);
+        matrix_layout = &full_layout;
         const ModuleBase::CommunicationDomain domain = ModuleBase::world_comm_domain();
         update_matrices = domain.rank() == 0;
     }
+    const int matrix_nrloc = matrix_layout->nrloc();
+    const int matrix_ncloc = matrix_layout->ncloc();
+    const int psi_nbands = psi_last->get_nbands();
+    const int psi_nbasis = psi_last->get_nbasis();
     const ModuleBase::Vector3<int> zero = {0, 0, 0};
     for(size_t iat = 0; iat < ucell.nat; iat++)
     {
@@ -40,6 +140,12 @@ void reset_matrix_boundary(const UnitCell& ucell,
         if(ucell.atoms[it].boundary_shift[ia]!=zero)
         {
             const auto& rshift = ucell.atoms[it].boundary_shift[ia];
+            const LocalBasisRange matrix_rows =
+                local_basis_range(basis, *matrix_layout, static_cast<int>(iat), BasisAxis::Row);
+            const LocalBasisRange matrix_columns =
+                local_basis_range(basis, *matrix_layout, static_cast<int>(iat), BasisAxis::Column);
+            const LocalBasisRange psi_rows =
+                local_basis_range(basis, layout, static_cast<int>(iat), BasisAxis::Row);
 #ifdef _OPENMP
 #pragma omp parallel for schedule(dynamic)
 #endif
@@ -61,15 +167,25 @@ void reset_matrix_boundary(const UnitCell& ucell,
                 {
                     std::complex<double>* h = hk_last.template data<std::complex<double>>() + ik * len_hs;
                     std::complex<double>* s = sk_last.template data<std::complex<double>>() + ik * len_hs;
-                    module_rt::boundary_shift_mat(phase, h, matrix_distribution, iat);
-                    module_rt::boundary_shift_mat(phase, s, matrix_distribution, iat);
+                    boundary_shift_mat(phase,
+                                       h,
+                                       matrix_rows,
+                                       matrix_columns,
+                                       matrix_nrloc,
+                                       matrix_ncloc);
+                    boundary_shift_mat(phase,
+                                       s,
+                                       matrix_rows,
+                                       matrix_columns,
+                                       matrix_nrloc,
+                                       matrix_ncloc);
                 }
-                if (pv->nrow > 0 && pv->ncol_bands > 0)
+                if (psi_rows.nbasis > 0 && psi_nbands > 0)
                 {
                     // Saved LCAO coefficients use k-first storage. Index it without
                     // changing the shared Psi cursor in this OpenMP loop.
                     std::complex<double>* psi_k = &(*psi_last)(ik, 0, 0);
-                    module_rt::boundary_shift_c(phase, psi_k, pv, iat);
+                    boundary_shift_c(phase, psi_k, psi_nbands, psi_nbasis, psi_rows);
                 }
             }
         }
@@ -78,52 +194,4 @@ void reset_matrix_boundary(const UnitCell& ucell,
     return;
 }
 
-void boundary_shift_mat(const std::complex<double>& phase,
-                        std::complex<double>* matk,
-                        const Parallel_Orbitals* pv,
-                        const size_t iat)
-{
-    const std::complex<double> phase_conj = std::conj(phase);
-    size_t row0 = pv->atom_begin_row[iat];
-    size_t col0 = pv->atom_begin_col[iat];
-    std::complex<double>* p_matkc = matk + col0 * pv->get_row_size();
-    for(size_t nu = 0; nu < pv->get_ncol_atom(iat); ++nu)
-    {
-        
-        BlasConnector::scal(pv->get_row_size(),
-                            phase,
-                            p_matkc,
-                            1);
-        p_matkc += pv->get_row_size();
-    }
-    std::complex<double>* p_matkr = matk + row0;
-    for(size_t mu = 0; mu < pv->get_nrow_atom(iat); ++mu)
-    {
-        BlasConnector::scal(pv->get_col_size(),
-                            phase_conj,
-                            p_matkr,
-                            pv->get_row_size());
-        p_matkr += 1;
-    }
-    return;
-}
-
-void boundary_shift_c(const std::complex<double>& phase,
-                      std::complex<double>* psi_k_last,
-                      const Parallel_Orbitals* pv,
-                      const size_t iat)
-{
-    const std::complex<double> phase_conj = std::conj(phase);
-    size_t row0 = pv->atom_begin_row[iat];
-    std::complex<double>* p_ck = psi_k_last + row0;
-    for(size_t nu = 0; nu < pv->get_nrow_atom(iat); ++nu)
-    {
-        BlasConnector::scal(pv->ncol_bands,
-                            phase_conj,
-                            p_ck,
-                            pv->get_row_size());
-        p_ck+=1;
-    }
-    return;
-}
 } //namespace module_rt

@@ -37,8 +37,8 @@ namespace LR
             const std::vector<double>& orb_cutoff,
             const Grid_Driver& gd_in,
             const K_Vectors& kv_in,
-            const std::vector<Parallel_2D>& pX_in,
-            const Parallel_2D& pc_in,
+            const std::vector<Parallel_Blkcyclic>& pX_in,
+            const Parallel_Blkcyclic& pc_in,
             const Parallel_Orbitals& pmat_in,
             const std::vector<int>& ispin_ks,
             const T factor_in,
@@ -96,8 +96,8 @@ namespace LR
         std::unique_ptr<hamilt::HContainer<T>> hR = nullptr;
 
         /// parallel info
-        const Parallel_2D& pc;
-        const std::vector<Parallel_2D>& pX; // output vector, OV/OO/VV
+        const Parallel_Blkcyclic& pc;
+        const std::vector<Parallel_Blkcyclic>& pX; // output vector, OV/OO/VV
         const Parallel_Orbitals& pmat;
 
         std::weak_ptr<PotLRBase> pot;

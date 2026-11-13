@@ -907,6 +907,120 @@ TEST_F(TestModuleHsolverMathKernel, matrixCopy_op_gpu)
     delete_memory_op()(device_B);
 }
 
+
+#if __UT_USE_CUDA
+TEST_F(TestModuleHsolverMathKernel, gemm_op_cgemm_blocked_gpu)
+{
+    using Cf = std::complex<float>;
+    using Zd = std::complex<double>;
+
+    struct Case
+    {
+        int m;
+        int n;
+        int k;
+        int lda;
+        int ldb;
+        int ldc;
+        Cf alpha;
+        Cf beta;
+    };
+
+    const std::vector<Case> cases = {
+        // k > 2048, one full block plus a short tail; padded leading dimensions.
+        {3, 2, 2050, 2057, 2053, 8, Cf(1.3f, -0.2f), Cf(0.5f, 0.25f)},
+        // Two full 2048 blocks plus a 5-column tail.
+        {4, 3, 4101, 4106, 4103, 7, Cf(-0.7f, 0.4f), Cf(-0.3f, 0.7f)},
+    };
+
+    ModuleBase::createGpuBlasHandle();
+    for (const Case& c : cases)
+    {
+        std::vector<Cf> A(static_cast<size_t>(c.lda) * c.m, Cf(0.0f, 0.0f));
+        std::vector<Cf> B(static_cast<size_t>(c.ldb) * c.n, Cf(0.0f, 0.0f));
+        std::vector<Cf> C(static_cast<size_t>(c.ldc) * c.n, Cf(0.0f, 0.0f));
+        std::vector<Cf> C0(static_cast<size_t>(c.ldc) * c.n, Cf(0.0f, 0.0f));
+
+        for (int i = 0; i < c.m; ++i)
+        {
+            for (int l = 0; l < c.k; ++l)
+            {
+                A[l + static_cast<size_t>(i) * c.lda]
+                    = Cf(0.001f * (l % 37) - 0.02f, 0.0005f * (l % 23) - 0.01f);
+            }
+        }
+        for (int j = 0; j < c.n; ++j)
+        {
+            for (int l = 0; l < c.k; ++l)
+            {
+                B[l + static_cast<size_t>(j) * c.ldb]
+                    = Cf(0.002f * (l % 29) - 0.03f, 0.0007f * (l % 19) + 0.01f);
+            }
+        }
+        for (int j = 0; j < c.n; ++j)
+        {
+            for (int i = 0; i < c.m; ++i)
+            {
+                C0[i + static_cast<size_t>(j) * c.ldc] = Cf(0.1f * i - 0.2f, 0.05f * j + 0.1f);
+                C[i + static_cast<size_t>(j) * c.ldc] = C0[i + static_cast<size_t>(j) * c.ldc];
+            }
+        }
+
+        std::vector<Zd> ref(static_cast<size_t>(c.ldc) * c.n, Zd(0.0, 0.0));
+        for (int j = 0; j < c.n; ++j)
+        {
+            for (int i = 0; i < c.m; ++i)
+            {
+                Zd sum(0.0, 0.0);
+                for (int l = 0; l < c.k; ++l)
+                {
+                    sum += std::conj(Zd(A[l + static_cast<size_t>(i) * c.lda]))
+                           * Zd(B[l + static_cast<size_t>(j) * c.ldb]);
+                }
+                ref[i + static_cast<size_t>(j) * c.ldc]
+                    = Zd(c.alpha) * sum + Zd(c.beta) * Zd(C0[i + static_cast<size_t>(j) * c.ldc]);
+            }
+        }
+
+        Cf* dA = nullptr;
+        Cf* dB = nullptr;
+        Cf* dC = nullptr;
+        base_device::memory::resize_memory_op<Cf, base_device::DEVICE_GPU>()(dA, A.size());
+        base_device::memory::resize_memory_op<Cf, base_device::DEVICE_GPU>()(dB, B.size());
+        base_device::memory::resize_memory_op<Cf, base_device::DEVICE_GPU>()(dC, C.size());
+        base_device::memory::synchronize_memory_op<Cf, base_device::DEVICE_GPU, base_device::DEVICE_CPU>()(
+            dA, A.data(), A.size());
+        base_device::memory::synchronize_memory_op<Cf, base_device::DEVICE_GPU, base_device::DEVICE_CPU>()(
+            dB, B.data(), B.size());
+        base_device::memory::synchronize_memory_op<Cf, base_device::DEVICE_GPU, base_device::DEVICE_CPU>()(
+            dC, C.data(), C.size());
+
+        ModuleBase::gemm_op<Cf, base_device::DEVICE_GPU>()(
+            'C', 'N', c.m, c.n, c.k, &c.alpha, dA, c.lda, dB, c.ldb, &c.beta, dC, c.ldc);
+
+        base_device::memory::synchronize_memory_op<Cf, base_device::DEVICE_CPU, base_device::DEVICE_GPU>()(
+            C.data(), dC, C.size());
+
+        for (int j = 0; j < c.n; ++j)
+        {
+            for (int i = 0; i < c.m; ++i)
+            {
+                const Zd diff = Zd(C[i + static_cast<size_t>(j) * c.ldc])
+                                - ref[i + static_cast<size_t>(j) * c.ldc];
+                SCOPED_TRACE(::testing::Message() << "m=" << c.m << " n=" << c.n << " k=" << c.k
+                                                  << " i=" << i << " j=" << j);
+                EXPECT_LT(std::abs(diff), 1e-3);
+            }
+        }
+
+        base_device::memory::delete_memory_op<Cf, base_device::DEVICE_GPU>()(dA);
+        base_device::memory::delete_memory_op<Cf, base_device::DEVICE_GPU>()(dB);
+        base_device::memory::delete_memory_op<Cf, base_device::DEVICE_GPU>()(dC);
+    }
+    ModuleBase::destoryBLAShandle();
+}
+#endif // __UT_USE_CUDA
+
 #endif // __UT_USE_CUDA || __UT_USE_ROCM
 
 /*
