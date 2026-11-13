@@ -3,6 +3,7 @@
 
 #include <array>
 #include <cstddef>
+#include <memory>
 #include <vector>
 
 #ifdef __MPI
@@ -54,6 +55,8 @@ class Parallel_Blkcyclic
     {
         return nb_;
     }
+
+    int lld() const;
 
     int nrproc() const
     {
@@ -151,6 +154,18 @@ class Parallel_Blkcyclic
 #endif
 
   private:
+#ifdef __MPI
+    friend std::shared_ptr<const Parallel_Blkcyclic>
+    make_frozen_distribution(int, int, int, MPI_Comm);
+    friend std::shared_ptr<const Parallel_Blkcyclic>
+    make_frozen_distribution(int, int, int, int, int, MPI_Comm);
+    friend std::shared_ptr<const Parallel_Blkcyclic>
+    make_borrowed_distribution(int, int, int, int);
+    friend std::shared_ptr<const Parallel_Blkcyclic>
+    make_borrowed_distribution(
+        int, int, int, const std::shared_ptr<const Parallel_Blkcyclic>&);
+#endif
+
     static constexpr int DESC_SIZE = 9;
     static constexpr int DESC_ICTXT = 1;
     static constexpr int DESC_M = 2;
@@ -181,11 +196,45 @@ class Parallel_Blkcyclic
 
 #ifdef __MPI
     bool owns_ictxt_ = false;
+    std::shared_ptr<const Parallel_Blkcyclic> context_owner_;
 
     void init_grid(const MPI_Comm comm, const bool swap_grid);
+    void init_grid(const MPI_Comm comm, const int nrproc, const int ncproc);
     void init_dist(const int nrglb, const int ncglb, const int nb);
     void release_grid();
 #endif
 };
+
+#ifdef __MPI
+std::shared_ptr<const Parallel_Blkcyclic> make_frozen_distribution(
+    int nrglb,
+    int ncglb,
+    int nb,
+    MPI_Comm comm);
+
+std::shared_ptr<const Parallel_Blkcyclic> make_frozen_distribution(
+    int nrglb,
+    int ncglb,
+    int nrproc,
+    int ncproc,
+    int nb,
+    MPI_Comm comm);
+
+std::shared_ptr<const Parallel_Blkcyclic> make_borrowed_distribution(
+    int nrglb,
+    int ncglb,
+    int nb,
+    int ictxt);
+
+std::shared_ptr<const Parallel_Blkcyclic> make_borrowed_distribution(
+    int nrglb,
+    int ncglb,
+    int nb,
+    const std::shared_ptr<const Parallel_Blkcyclic>& owner);
+#endif
+
+std::shared_ptr<const Parallel_Blkcyclic> make_frozen_distribution(
+    int nrglb,
+    int ncglb);
 
 #endif

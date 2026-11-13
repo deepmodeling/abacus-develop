@@ -8,6 +8,7 @@
 #include <cassert>
 #include <cmath>
 #include <numeric>
+#include <stdexcept>
 #include <utility>
 
 Parallel_Blkcyclic::~Parallel_Blkcyclic()
@@ -34,6 +35,7 @@ Parallel_Blkcyclic& Parallel_Blkcyclic::operator=(
         rhs.owns_ictxt_ = false;
         ictxt_ = rhs.ictxt_;
         rhs.ictxt_ = UNOWNED_BLACS_CONTEXT;
+        context_owner_ = std::move(rhs.context_owner_);
 #endif
         nrloc_ = rhs.nrloc_;
         ncloc_ = rhs.ncloc_;
@@ -94,6 +96,17 @@ int Parallel_Blkcyclic::ncglb() const
     return ncloc_;
 }
 
+int Parallel_Blkcyclic::lld() const
+{
+#ifdef __MPI
+    if (!is_serial_ && ictxt_ >= 0)
+    {
+        return desc_[DESC_LLD];
+    }
+#endif
+    return std::max(nrloc_, 1);
+}
+
 #ifdef __MPI
 MPI_Comm Parallel_Blkcyclic::comm() const
 {
@@ -113,6 +126,7 @@ MPI_Comm Parallel_Blkcyclic::comm() const
 
 void Parallel_Blkcyclic::init_grid(const MPI_Comm comm, const bool swap_grid)
 {
+    context_owner_.reset();
     // determine the number of rows and columns of the process grid
     // by factorizing n = p * q such that p, q are closest and p <= q
     const int num_proc = Parallel_Common::comm_size(comm);
@@ -131,6 +145,17 @@ void Parallel_Blkcyclic::init_grid(const MPI_Comm comm, const bool swap_grid)
     ictxt_ = Csys2blacs_handle(comm);
     char order = 'R'; // row-major
     Cblacs_gridinit(&ictxt_, &order, nrproc_, ncproc_);
+    Cblacs_gridinfo(ictxt_, &nrproc_, &ncproc_, &irproc_, &icproc_);
+}
+
+void Parallel_Blkcyclic::init_grid(const MPI_Comm comm,
+                                   const int nrproc,
+                                   const int ncproc)
+{
+    context_owner_.reset();
+    ictxt_ = Csys2blacs_handle(comm);
+    char order = 'R';
+    Cblacs_gridinit(&ictxt_, &order, nrproc, ncproc);
     Cblacs_gridinfo(ictxt_, &nrproc_, &ncproc_, &irproc_, &icproc_);
 }
 
@@ -209,6 +234,7 @@ int Parallel_Blkcyclic::bind_descriptor(const int nrglb,
     release_grid();
     ictxt_ = ictxt;
     owns_ictxt_ = false;
+    context_owner_.reset();
     Cblacs_gridinfo(ictxt, &nrproc_, &ncproc_, &irproc_, &icproc_);
     init_dist(nrglb, ncglb, nb);
     return nrloc_ == 0 || ncloc_ == 0;
@@ -257,10 +283,85 @@ void Parallel_Blkcyclic::set_serial(const int nrglb, const int ncglb)
     is_serial_ = true;
 #ifdef __MPI
     release_grid();
+    context_owner_.reset();
     // A serial layout must not reference any BLACS grid: for borrowers
     // release_grid() is a no-op, so clear the handle explicitly;
     // otherwise the object keeps a reference to the old grid, which also
     // dangles once the owner destroys it.
     ictxt_ = UNOWNED_BLACS_CONTEXT;
 #endif
+}
+
+#ifdef __MPI
+std::shared_ptr<const Parallel_Blkcyclic> make_frozen_distribution(
+    const int nrglb,
+    const int ncglb,
+    const int nb,
+    const MPI_Comm comm)
+{
+    std::shared_ptr<Parallel_Blkcyclic> dist
+        = std::make_shared<Parallel_Blkcyclic>();
+    dist->init(nrglb, ncglb, nb, comm, false);
+    return dist;
+}
+
+std::shared_ptr<const Parallel_Blkcyclic> make_frozen_distribution(
+    const int nrglb,
+    const int ncglb,
+    const int nrproc,
+    const int ncproc,
+    const int nb,
+    const MPI_Comm comm)
+{
+    std::shared_ptr<Parallel_Blkcyclic> dist
+        = std::make_shared<Parallel_Blkcyclic>();
+    dist->init_grid(comm, nrproc, ncproc);
+    dist->init_dist(nrglb, ncglb, nb);
+    dist->owns_ictxt_ = true;
+    return dist;
+}
+
+std::shared_ptr<const Parallel_Blkcyclic> make_borrowed_distribution(
+    const int nrglb,
+    const int ncglb,
+    const int nb,
+    const int ictxt)
+{
+    std::shared_ptr<Parallel_Blkcyclic> dist
+        = std::make_shared<Parallel_Blkcyclic>();
+    dist->set(nrglb, ncglb, nb, ictxt);
+    return dist;
+}
+
+std::shared_ptr<const Parallel_Blkcyclic> make_borrowed_distribution(
+    const int nrglb,
+    const int ncglb,
+    const int nb,
+    const std::shared_ptr<const Parallel_Blkcyclic>& owner)
+{
+    if (owner == nullptr)
+    {
+        throw std::invalid_argument("distribution owner must not be null");
+    }
+    if (owner->is_serial() || owner->ictxt() < 0)
+    {
+        throw std::invalid_argument(
+            "distribution owner must have an active BLACS context");
+    }
+    std::shared_ptr<Parallel_Blkcyclic> dist
+        = std::make_shared<Parallel_Blkcyclic>();
+    dist->set(nrglb, ncglb, nb, owner->ictxt());
+    dist->context_owner_ = owner;
+    return dist;
+}
+#endif
+
+std::shared_ptr<const Parallel_Blkcyclic> make_frozen_distribution(
+    const int nrglb,
+    const int ncglb)
+{
+    std::shared_ptr<Parallel_Blkcyclic> dist
+        = std::make_shared<Parallel_Blkcyclic>();
+    dist->set_serial(nrglb, ncglb);
+    return dist;
 }
