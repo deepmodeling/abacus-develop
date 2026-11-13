@@ -2,10 +2,10 @@
 
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
-#include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_basis/module_nao/two_center_integrator.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_cell/unitcell.h"
+#include "source_hamilt/module_hcontainer/hcontainer.h"
 #include "source_pw/module_pwdft/dftu_base.h"
 
 #include <algorithm>
@@ -57,11 +57,12 @@ std::vector<AdjacentAtomInfo> build_adjacent_atoms(const UnitCell* ucell,
     return adjs_all;
 }
 
+template <typename T>
 NlmTot cal_nlm_all(const UnitCell& ucell,
                    const Plus_U_Base& dftu,
                    const TwoCenterIntegrator& intor,
                    const std::vector<AdjacentAtomInfo>& adjs_all,
-                   const Parallel_Orbitals& pv)
+                   const hamilt::HContainer<T>& layout)
 {
     ModuleBase::TITLE("DFTU", "cal_nlm_all");
     ModuleBase::timer::start("DFTU_LCAO", "cal_nlm_all");
@@ -94,10 +95,9 @@ NlmTot cal_nlm_all(const UnitCell& ucell,
             const ModuleBase::Vector3<double>& tau1 = adjs.adjacent_tau[ad];
             const Atom* atom1 = &ucell.atoms[T1];
 
-            std::vector<int> all_indexes = pv.get_indexes_row(iat1);
-            std::vector<int> col_indexes = pv.get_indexes_col(iat1);
-            // insert col_indexes into all_indexes to get universal set with no repeat elements
-            all_indexes.insert(all_indexes.end(), col_indexes.begin(), col_indexes.end());
+            std::vector<int> all_indexes = layout.row_basis_offsets(iat1);
+            const std::vector<int> cols = layout.col_basis_offsets(iat1);
+            all_indexes.insert(all_indexes.end(), cols.begin(), cols.end());
             std::sort(all_indexes.begin(), all_indexes.end());
             all_indexes.erase(std::unique(all_indexes.begin(), all_indexes.end()), all_indexes.end());
             for (int iw1l = 0; iw1l < all_indexes.size(); iw1l += npol)
@@ -139,5 +139,17 @@ NlmTot cal_nlm_all(const UnitCell& ucell,
     ModuleBase::timer::end("DFTU_LCAO", "cal_nlm_all");
     return nlm_tot;
 }
+
+template NlmTot cal_nlm_all<double>(const UnitCell& ucell,
+                                    const Plus_U_Base& dftu,
+                                    const TwoCenterIntegrator& intor,
+                                    const std::vector<AdjacentAtomInfo>& adjs_all,
+                                    const hamilt::HContainer<double>& layout);
+template NlmTot cal_nlm_all<std::complex<double>>(
+    const UnitCell& ucell,
+    const Plus_U_Base& dftu,
+    const TwoCenterIntegrator& intor,
+    const std::vector<AdjacentAtomInfo>& adjs_all,
+    const hamilt::HContainer<std::complex<double>>& layout);
 
 } // namespace DFTU_LCAO

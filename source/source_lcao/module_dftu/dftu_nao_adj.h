@@ -14,8 +14,13 @@ class UnitCell;
 class Plus_U_Base;
 class Grid_Driver;
 class AdjacentAtomInfo;
-class Parallel_Orbitals;
 class TwoCenterIntegrator;
+
+namespace hamilt
+{
+template <typename T>
+class HContainer;
+}
 
 namespace DFTU_LCAO
 {
@@ -50,14 +55,27 @@ std::vector<AdjacentAtomInfo> build_adjacent_atoms(const UnitCell* ucell,
  * @param dftu     [in] DFT+U base object (per-type U channels)
  * @param intor    [in] two-center integrator for <phi|chi_m>
  * @param adjs_all [in] adjacent atom info for all Hubbard atoms
- * @param pv       [in] parallel-orbitals descriptor providing local index maps
+ * @param layout   [in] Hamiltonian container providing atom basis ranges
  * @return the overlap table, one outer entry per atom (ucell->nat entries)
  */
+template <typename T>
 NlmTot cal_nlm_all(const UnitCell& ucell,
                    const Plus_U_Base& dftu,
                    const TwoCenterIntegrator& intor,
                    const std::vector<AdjacentAtomInfo>& adjs_all,
-                   const Parallel_Orbitals& pv);
+                   const hamilt::HContainer<T>& layout);
+
+extern template NlmTot cal_nlm_all<double>(const UnitCell& ucell,
+                                           const Plus_U_Base& dftu,
+                                           const TwoCenterIntegrator& intor,
+                                           const std::vector<AdjacentAtomInfo>& adjs_all,
+                                           const hamilt::HContainer<double>& layout);
+extern template NlmTot cal_nlm_all<std::complex<double>>(
+    const UnitCell& ucell,
+    const Plus_U_Base& dftu,
+    const TwoCenterIntegrator& intor,
+    const std::vector<AdjacentAtomInfo>& adjs_all,
+    const hamilt::HContainer<std::complex<double>>& layout);
 
 } // namespace DFTU_LCAO
 

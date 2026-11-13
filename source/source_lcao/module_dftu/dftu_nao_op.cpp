@@ -52,8 +52,7 @@ hamilt::DFTU_onsite<hamilt::OperatorLCAO<TK, TR>>::DFTU_onsite(HS_Matrix_K<TK>* 
     // inside these calls are easy to debug.
     this->adjs_all = DFTU_LCAO::build_adjacent_atoms(
         this->ucell, this->dftu, GridD_in, this->orb_cutoff_, onsite_radius);
-    const Parallel_Orbitals* pv = this->hR->get_atom_pair(0).get_paraV();
-    this->nlm_tot = DFTU_LCAO::cal_nlm_all(*this->ucell, *this->dftu, *this->intor_, this->adjs_all, *pv);
+    this->nlm_tot = DFTU_LCAO::cal_nlm_all(*this->ucell, *this->dftu, *this->intor_, this->adjs_all, *this->hR);
 
     ModuleBase::timer::end("DFTU_onsite", "DFTU_onsite");
 }
