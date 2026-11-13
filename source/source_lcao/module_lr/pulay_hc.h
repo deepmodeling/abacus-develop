@@ -20,7 +20,6 @@ ModuleBase::matrix cal_pulay_fs(
     const double& factor_force = 1.0)
 {
     ModuleBase::matrix f(ucell.nat, 3);
-    const Parallel_Orbitals& pv = *dHS[0].get_paraV();
     const int& npol = ucell.get_npol();
     const int nspin_dmr = dm.get_dmr_vec().size();
     for (int ixyz = 0;ixyz < 3;++ixyz)
@@ -32,6 +31,8 @@ ModuleBase::matrix cal_pulay_fs(
                 hamilt::AtomPair<double>* ap = dHS[ixyz].find_pair(iat0, iat1);
                 if (ap)
                 {
+                    const int row_size = ap->get_row_size();
+                    const int col_size = ap->get_col_size();
                     for (int iR = 0;iR < ap->get_R_size();++iR)
                     {
                         const ModuleBase::Vector3<int>& R = ap->get_R_index(iR);
@@ -42,9 +43,9 @@ ModuleBase::matrix cal_pulay_fs(
                             mat_dmr.push_back(dm.get_dmr_ptr(is + 1)->find_matrix(iat0, iat1, R.x, R.y, R.z));
                         }
 
-                        for (int mu = 0; mu < pv.get_nrow_atom(iat0); mu += npol)
+                        for (int mu = 0; mu < row_size; mu += npol)
                         {
-                            for (int nu = 0; nu < pv.get_ncol_atom(iat1); nu += npol)
+                            for (int nu = 0; nu < col_size; nu += npol)
                             {
                                 double dm2d = 0.0;
                                 for (int is = 0; is < nspin_dmr; ++is)

@@ -1,3 +1,4 @@
+#include "source_lcao/module_lr/pulay_hc.h"
 #include "source_lcao/module_lr/utils/lr_util_hcontainer.h"
 #include "source_cell/klist.h"
 #include "source_cell/unitcell.h"
@@ -137,6 +138,47 @@ TEST_F(LRDMTest, LRTransposePreservesAtomIndices)
         if (pass == 0)
         {
             LR_Util::transpose_DMR(dm, *paraV);
+        }
+    }
+}
+
+TEST_F(LRDMTest, HamiltonianPulayForceUsesPairBlockSizes)
+{
+    const std::vector<ModuleBase::Vector3<double>> kvec(1);
+    hamilt::HContainer<double> structure(paraV);
+    structure.insert_pair(0, 1, ModuleBase::Vector3<int>(0, 0, 0));
+    structure.allocate(nullptr, true);
+
+    module_dm::DensityMatrix<double, double> dm(paraV, 1, kvec, 1);
+    dm.init_dmr(structure);
+    const int spin = 1;
+    auto& dm_block = dm.get_dmr_ptr(spin)->find_pair(0, 1)->get_HR_values(0);
+    const double dm_value = 4.0;
+    std::fill(dm_block.get_pointer(), dm_block.get_pointer() + dm_block.get_row_size() * dm_block.get_col_size(), dm_value);
+
+    std::vector<hamilt::HContainer<double>> dHS;
+    dHS.reserve(3);
+    for (int direction = 0; direction < 3; ++direction)
+    {
+        dHS.emplace_back(paraV);
+        dHS.back().insert_pair(0, 1, ModuleBase::Vector3<int>(0, 0, 0));
+        dHS.back().allocate(nullptr, true);
+        auto& ds_block = dHS.back().find_pair(0, 1)->get_HR_values(0);
+        const double ds_value = direction + 1.0;
+        std::fill(ds_block.get_pointer(), ds_block.get_pointer() + ds_block.get_row_size() * ds_block.get_col_size(), ds_value);
+    }
+
+    const ModuleBase::matrix force = PulayForceStress::cal_pulay_fs(dm, ucell, dHS);
+    const double block_size = dm_block.get_row_size() * dm_block.get_col_size();
+    for (int direction = 0; direction < 3; ++direction)
+    {
+        EXPECT_DOUBLE_EQ(force(0, direction), 2.0 * dm_value * (direction + 1.0) * block_size);
+    }
+    for (int iat = 1; iat < ucell.nat; ++iat)
+    {
+        for (int direction = 0; direction < 3; ++direction)
+        {
+            EXPECT_DOUBLE_EQ(force(iat, direction), 0.0);
         }
     }
 }

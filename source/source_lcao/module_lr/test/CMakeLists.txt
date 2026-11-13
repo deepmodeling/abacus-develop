@@ -106,7 +106,7 @@ addtest(
 
 # LR/DM adapter regressions belong to LR; estate must not depend on this module.
 set(lr_dm_test_sources
-    test_lr_util.cpp
+    ../unittests/test_lr_util.cpp
     ../utils/lr_util.cpp
     ../utils/lr_sparse.cpp
     ../../spar_hsr.cpp
