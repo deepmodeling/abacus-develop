@@ -96,6 +96,10 @@ rules. Read the complete governance document before making or reviewing changes:
   22. Print ionic-step indices one-based (starting from 1) in user-facing
       output files, matching the `g{N}` filename suffix convention; do not
       write zero-based step counters such as `STEP: 0` into output files.
+  23. Use Autotest cases for integration tests. Standalone `add_test()` drivers
+      require a check Autotest cannot express, a PR rationale, and compliance
+      with "Integration Test Drivers" in the governance document. Autotest
+      helpers are unaffected.
 - Use LF line endings for text files. Only `.bat` and `.cmd` files may use CRLF.
 - Keep source file additions deterministic: update the relevant `CMakeLists.txt`
   or explain why the file is generated or included indirectly.
