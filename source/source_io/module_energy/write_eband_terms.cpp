@@ -85,9 +85,9 @@ void write_eband_terms(const int nspin,
             // modes 0 and 2 truncate (mode 2 writes a separate g{step} file).
             const bool append = (out_app_flag == 1) && (istep > 0);
             write_orb_energy(kv, nspin0, nbands, e_orb, out_name, header, out_dir, append);
-            ModuleIO::write_notice(ofs_running,
-                                   "Band-decomposed " + term_symbol + " energy",
-                                   out_dir + out_name);
+            const std::string property = "Band-decomposed " + term_symbol + " energy";
+            const std::string out_path = out_dir + out_name;
+            ModuleIO::write_notice(ofs_running, property, out_path);
         };
 
         auto all_band_energy = [&wg](const int ik, const std::vector<double>& e_orb)->double
