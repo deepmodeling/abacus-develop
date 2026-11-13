@@ -36,14 +36,16 @@ void RPA_LRI<T, Tdata>::out_velocity(const UnitCell& ucell,
     ModuleBase::TITLE("DFT_RPA_interface", "out_velocity");
     ModuleBase::timer::start("RPA_LRI", "out_velocity");
 
-    Parallel_2D parac;
+    Parallel_Blkcyclic parac;
+    const Parallel_Blkcyclic& distribution = parav.para_2d();
+    const int block_size = distribution.nb();
     LR_Util::setup_2d_division(parac,
-                               parav.get_block_size(),
+                               parav.para_2d().nb(),
                                this->runtime.nlocal,
                                this->runtime.input.nbands
 #ifdef __MPI
                                ,
-                               parav.blacs_ctxt
+                               parav.para_2d().ictxt()
 #endif
     );
 

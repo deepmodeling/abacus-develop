@@ -22,8 +22,8 @@ namespace LR
         const std::vector<double>& orb_cutoff = inputs.orb_cutoff;
         const Grid_Driver& gd = inputs.gd;
         const K_Vectors& kv = inputs.kv;
-        const std::vector<Parallel_2D>& px = inputs.px;
-        const Parallel_2D& pc = inputs.pc;
+        const std::vector<Parallel_Blkcyclic>& px = inputs.px;
+        const Parallel_Blkcyclic& pc = inputs.pc;
         const Parallel_Orbitals& pmat = inputs.pmat;
         const std::string& dft_functional = inputs.dft_functional;
         std::weak_ptr<PotHxcLR> pot_hxc_gs = inputs.pot_hxc_gs;
@@ -40,8 +40,8 @@ namespace LR
         ModuleBase::TITLE("Z_vector", "Z_vector");
         const int nk = kv.get_nks() / nspin;
         const int nloc_per_band = openshell
-            ? nk * (px[0].get_local_size() + px[1].get_local_size())
-            : nk * px[0].get_local_size();
+            ? nk * (px[0].size() + px[1].size())
+            : nk * px[0].size();
         container::Tensor R = LR_Util::newTensor<T>({ nstates, nloc_per_band });
         R.zero();
 

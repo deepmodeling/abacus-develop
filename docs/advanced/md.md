@@ -30,6 +30,10 @@ Furthermore, ABACUS also provides a [list of keywords](./input_files/input-main.
 
 The MD output information will be written into the file `MD_dump`， in which the atomic forces, atomic velocities, and lattice virial are controlled by keyword [dump_force](./input_files/input-main.md#dump_force), [dump_vel](./input_files/input-main.md#dump_vel), and [dump_virial](./input_files/input-main.md#dump_virial), respectively.
 
+Use `md_thermo_freq` to set the output interval for MD step, energy, temperature, and pressure information in `running_md.log` and on screen. The default is 1; set it to 0 to disable this thermodynamic output. The interval counts MD steps from 0, so a value of 10 selects steps 0, 10, 20, and so on, including after a restart.
+
+The `md_out_force` INPUT keyword has been removed. An INPUT file that still contains it will fail to parse. For MDCell simulations, per-atom forces are no longer printed in `running_md.log`; use `dump_force 1` to include them in `MD_dump`, and use `md_dumpfreq` to set the trajectory output interval.
+
 [Examples](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/18_md/01_LCAO_NVE_Si8) of MD simulations are also provided.
 There are eight INPUT files corresponding to eight different MD evolution methods in the directory.
 For examlpe, `INPUT_0` shows how to employ the NVE simulation.
@@ -97,3 +101,23 @@ And the filename of DP model is specified by keyword [pot_file](./input_files/in
 ## NEP
 
 If ABACUS is compiled with the Neuroevolution Potential ([NEP](https://gpumd.org/potentials/nep.html)), MD simulations using  NEP models are enabled. To use this feature, set [esolver_type](./input_files/input-main.md#esolver_type) to `nep` and specify the potential file path with the [pot_file](./input_files/input-main.md#pot_file) keyword in your INPUT file.
+
+## SNAP
+
+CPU SNAP calculations use `esolver_type snap`, with the coefficient file in
+`pot_file` and the LAMMPS-style parameter file in `snap_param_file`. The
+implementation supports linear and quadratic coefficients, chemical channels,
+outer cutoff switching, and `switchinnerflag` with `sinner` and `dinner`.
+
+For `chemflag 1`, the chemical-channel axes of each flattened coefficient vector
+follow the element order in the STRU file. Coefficient blocks are matched by
+element name, so their order within `pot_file` is not significant. Reordering
+the elements in STRU without reordering the chemical-channel coefficients can
+change the potential. The values in `sinner` and `dinner` also follow STRU
+element order. This corresponds to the first-appearance order of elements in
+LAMMPS `pair_coeff` mappings.
+
+Unknown SNAP parameter keywords are rejected. Each element-pair cutoff must
+exceed `rmin0`; a contributing neighbor at or below `rmin0` causes an error.
+The radial mapping parameter `rfac0` must
+satisfy `0 < rfac0 <= 1` so that its angle does not cross pi inside a pair cutoff.

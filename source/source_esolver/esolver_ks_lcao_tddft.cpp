@@ -55,12 +55,6 @@ ESolver_KS_LCAO_TDDFT<TR, Device>::~ESolver_KS_LCAO_TDDFT()
     {
         delete td_p;
     }
-
-    if (td_mg_ != nullptr)
-    {
-        delete td_mg_;
-        td_mg_ = nullptr;
-    }
 }
 
 template <typename TR, typename Device>
@@ -114,7 +108,11 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::before_all_runners(BaseCell& basecell, c
     this->pelec->pot->set_td_field_manager(td_field_manager_);
 
     restart_step_ = inp.mdp.md_restart ? td_field_manager_->current_step() : 0;
-    td_p = new TD_info(&ucell, this->pv, this->orb_, *td_field_manager_);
+    td_p = new TD_info(&ucell,
+                       *(this->basis_index_),
+                       this->pv.para_2d(),
+                       this->orb_,
+                       *td_field_manager_);
     totstep += restart_step_;
 
     if (this->inp_->init_wfc == "file")
@@ -177,14 +175,21 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::runner(BaseCell& basecell, const int ist
     td_p->initialize_phase_hybrid(ucell, dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, TR>*>(this->p_hamilt)->getHR());
     // Refresh existing entries too: phase initialization updates geometry but only creates missing keys.
     td_p->update_field();
-    td_p->calculate_grad_overlap(this->pv, ucell, this->gd, this->orb_.cutoffs(), this->two_center_bundle_.overlap_orb.get());
+    td_p->calculate_grad_overlap(ucell,
+                                 this->gd,
+                                 this->orb_.cutoffs(),
+                                 this->two_center_bundle_.overlap_orb.get());
     // Initialize the moving spatial gauge
     if (use_td_moving_gauge && this->td_mg_ == nullptr)
     {
-        this->td_mg_ = new module_rt::TD_MovingGauge();
+        this->td_mg_.reset(new module_rt::TD_MovingGauge());
         auto* hamilt_lcao = dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, TR>*>(this->p_hamilt);
         const hamilt::HContainer<TR>* sR_template = hamilt_lcao->getSR();
-        this->td_mg_->init_DR(sR_template, &ucell, &this->pv, this->two_center_bundle_.overlap_orb.get());
+        this->td_mg_->init_DR(sR_template,
+                              &ucell,
+                              *(this->basis_index_),
+                              this->pv.para_2d(),
+                              this->two_center_bundle_.overlap_orb.get());
     }
 
     if (this->inp_->td_stype == 2)
@@ -201,7 +206,12 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::runner(BaseCell& basecell, const int ist
     if (this->inp_->td_stype != 1 && TD_info::out_current == 1)
     {
         // initialize the velocity operator
-        velocity_mat = new Velocity_op<TR>(&ucell, &(this->gd), &this->pv, this->orb_, this->two_center_bundle_.overlap_orb.get());
+        velocity_mat = new Velocity_op<TR>(&ucell,
+                                           &(this->gd),
+                                           *(this->basis_index_),
+                                           this->pv.para_2d(),
+                                           this->orb_,
+                                           this->two_center_bundle_.overlap_orb.get());
         // calculate velocity operator
         velocity_mat->calculate_grad_term();
         velocity_mat->calculate_vcomm_r();
@@ -215,17 +225,14 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::runner(BaseCell& basecell, const int ist
 
     // Update the last-step matrices and wave functions if any atom crosses the boundary
     // Apply a phase correction to H, S, and psi to keep consistency when atoms cross periodic boundaries
-    const size_t len_hs_ik = use_tensor && use_lapack ? PARAM.globalv.nlocal * PARAM.globalv.nlocal : this->pv.nloc;
-    const int kpoint_count = this->kv.get_nks();
     module_rt::reset_matrix_boundary(ucell,
                                      this->kv.kvec_d,
-                                     kpoint_count,
                                      boundary_A,
-                                     &(this->pv),
+                                     *(this->basis_index_),
+                                     this->pv.para_2d(),
                                      this->Hk_laststep,
                                      this->Sk_laststep,
-                                     this->psi_laststep,
-                                     len_hs_ik);
+                                     this->psi_laststep);
 
     for (int estep = 0; estep < estep_max; estep++)
     {
@@ -409,7 +416,11 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::hamilt2rho_single(UnitCell& ucell, const
     {
         auto* hamilt_lcao = dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, TR>*>(this->p_hamilt);
         const hamilt::HContainer<TR>* sR_template = hamilt_lcao->getSR();
-        this->td_mg_->update_DR(sR_template, &ucell, &this->pv, this->two_center_bundle_.overlap_orb.get());
+        this->td_mg_->update_DR(sR_template,
+                                &ucell,
+                                *(this->basis_index_),
+                                this->pv.para_2d(),
+                                this->two_center_bundle_.overlap_orb.get());
     }
 
     if (this->inp_->init_wfc == "file")
@@ -421,7 +432,9 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::hamilt2rho_single(UnitCell& ucell, const
                                                       PARAM.globalv.nlocal,
                                                       this->kv.get_nks(),
                                                       static_cast<hamilt::Hamilt<std::complex<double>>*>(this->p_hamilt),
-                                                      this->pv,
+                                                      this->pv.para_2d(),
+                                                      this->pv.wfc_layout(),
+                                                      this->pv.mo_repr_layout(),
                                                       this->psi,
                                                       this->psi_laststep,
                                                       this->Hk_laststep,
@@ -431,7 +444,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::hamilt2rho_single(UnitCell& ucell, const
                                                       this->inp_->propagator,
                                                       use_tensor,
                                                       use_lapack,
-                                                      this->td_mg_,
+                                                      this->td_mg_.get(),
                                                       &ucell,
                                                       this->kv.kvec_d,
                                                       use_td_moving_gauge);
@@ -445,7 +458,9 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::hamilt2rho_single(UnitCell& ucell, const
                                                   PARAM.globalv.nlocal,
                                                   this->kv.get_nks(),
                                                   static_cast<hamilt::Hamilt<std::complex<double>>*>(this->p_hamilt),
-                                                  this->pv,
+                                                  this->pv.para_2d(),
+                                                  this->pv.wfc_layout(),
+                                                  this->pv.mo_repr_layout(),
                                                   this->psi,
                                                   this->psi_laststep,
                                                   this->Hk_laststep,
@@ -455,7 +470,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::hamilt2rho_single(UnitCell& ucell, const
                                                   this->inp_->propagator,
                                                   use_tensor,
                                                   use_lapack,
-                                                  this->td_mg_,
+                                                  this->td_mg_.get(),
                                                   &ucell,
                                                   this->kv.kvec_d,
                                                   use_td_moving_gauge);
@@ -575,7 +590,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::store_h_s_psi(UnitCell& ucell, const int
             this->psi_laststep = new psi::Psi<std::complex<double>>(this->kv.get_nks(),
 #ifdef __MPI
                                                                     this->pv.ncol_bands,
-                                                                    this->pv.nrow,
+                                                                    this->pv.para_2d().nrloc(),
 #else
                                                                     nbands,
                                                                     nlocal,
@@ -585,7 +600,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::store_h_s_psi(UnitCell& ucell, const int
         }
 
         // Length of Hk_laststep and Sk_laststep per k-point: nlocal * nlocal for full matrices, nloc for local blocks
-        const int len_HS_ik = use_tensor && use_lapack ? nlocal * nlocal : this->pv.nloc;
+        const int len_HS_ik = use_tensor && use_lapack ? nlocal * nlocal : this->pv.para_2d().size();
         const int len_HS_all = this->kv.get_nks() * len_HS_ik;
 
         // Allocate memory for Hk_laststep; use_tensor && use_lapack requires space for the full matrix

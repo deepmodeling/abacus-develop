@@ -67,18 +67,18 @@ TEST(LR_Util, MatSymDouble)
     std::vector<double> dref(n * n, 0.0);
     LR_Util::matsym(din.data(), n, dref.data());
 
-    Parallel_2D pmat;
+    Parallel_Blkcyclic pmat;
     LR_Util::setup_2d_division(pmat, 1, n, n);
-    std::vector<double> din_local(pmat.get_local_size(), 0.0);
-    for (int i = 0;i < pmat.get_row_size();++i)
-        for (int j = 0;j < pmat.get_col_size();++j)
-            din_local[j * pmat.get_row_size() + i] = din[pmat.local2global_col(j) * n + pmat.local2global_row(i)];
+    std::vector<double> din_local(pmat.size(), 0.0);
+    for (int i = 0;i < pmat.nrloc();++i)
+        for (int j = 0;j < pmat.ncloc();++j)
+            din_local[j * pmat.nrloc() + i] = din[pmat.icglb(j) * n + pmat.irglb(i)];
 
-    std::vector<double> dout_local(pmat.get_local_size(), 0.0);
+    std::vector<double> dout_local(pmat.size(), 0.0);
     LR_Util::matsym(din_local.data(), n, pmat, dout_local.data());
-    for (int i = 0;i < pmat.get_row_size();++i)
-        for (int j = 0;j < pmat.get_col_size();++j)
-            EXPECT_DOUBLE_EQ(dout_local[j * pmat.get_row_size() + i], dref[pmat.local2global_col(j) * n + pmat.local2global_row(i)]);
+    for (int i = 0;i < pmat.nrloc();++i)
+        for (int j = 0;j < pmat.ncloc();++j)
+            EXPECT_DOUBLE_EQ(dout_local[j * pmat.nrloc() + i], dref[pmat.icglb(j) * n + pmat.irglb(i)]);
 
     //in-place version
     LR_Util::matsym(din.data(), n);
@@ -86,7 +86,7 @@ TEST(LR_Util, MatSymDouble)
         EXPECT_DOUBLE_EQ(din[i], dref[i]);
 
     LR_Util::matsym(din_local.data(), n, pmat);
-    for (int i = 0;i < pmat.get_local_size();++i)
+    for (int i = 0;i < pmat.size();++i)
         EXPECT_DOUBLE_EQ(din_local[i], dout_local[i]);
 }
 
@@ -99,20 +99,20 @@ TEST(LR_Util, MatSymComplex)
     std::vector<std::complex<double>> dref(n * n, std::complex<double>(0.0, 0.0));
     LR_Util::matsym(din.data(), n, dref.data());
 
-    Parallel_2D pmat;
+    Parallel_Blkcyclic pmat;
     LR_Util::setup_2d_division(pmat, 1, n, n);
-    std::vector<std::complex<double>> din_local(pmat.get_local_size(), std::complex<double>(0.0, 0.0));
-    for (int i = 0;i < pmat.get_row_size();++i)
-        for (int j = 0;j < pmat.get_col_size();++j)
-            din_local[j * pmat.get_row_size() + i] = din[pmat.local2global_col(j) * n + pmat.local2global_row(i)];
+    std::vector<std::complex<double>> din_local(pmat.size(), std::complex<double>(0.0, 0.0));
+    for (int i = 0;i < pmat.nrloc();++i)
+        for (int j = 0;j < pmat.ncloc();++j)
+            din_local[j * pmat.nrloc() + i] = din[pmat.icglb(j) * n + pmat.irglb(i)];
 
-    std::vector<std::complex<double>> dout_local(pmat.get_local_size(), std::complex<double>(0.0, 0.0));
+    std::vector<std::complex<double>> dout_local(pmat.size(), std::complex<double>(0.0, 0.0));
     LR_Util::matsym(din_local.data(), n, pmat, dout_local.data());
-    for (int i = 0;i < pmat.get_row_size();++i)
-        for (int j = 0;j < pmat.get_col_size();++j)
+    for (int i = 0;i < pmat.nrloc();++i)
+        for (int j = 0;j < pmat.ncloc();++j)
         {
-            EXPECT_DOUBLE_EQ(dout_local[j * pmat.get_row_size() + i].real(), dref[pmat.local2global_col(j) * n + pmat.local2global_row(i)].real());
-            EXPECT_DOUBLE_EQ(dout_local[j * pmat.get_row_size() + i].imag(), dref[pmat.local2global_col(j) * n + pmat.local2global_row(i)].imag());
+            EXPECT_DOUBLE_EQ(dout_local[j * pmat.nrloc() + i].real(), dref[pmat.icglb(j) * n + pmat.irglb(i)].real());
+            EXPECT_DOUBLE_EQ(dout_local[j * pmat.nrloc() + i].imag(), dref[pmat.icglb(j) * n + pmat.irglb(i)].imag());
         }
 
     //in-place version
@@ -124,7 +124,7 @@ TEST(LR_Util, MatSymComplex)
     }
 
     LR_Util::matsym(din_local.data(), n, pmat);
-    for (int i = 0;i < pmat.get_local_size();++i)
+    for (int i = 0;i < pmat.size();++i)
     {
         EXPECT_DOUBLE_EQ(din_local[i].real(), dout_local[i].real());
         EXPECT_DOUBLE_EQ(din_local[i].imag(), dout_local[i].imag());

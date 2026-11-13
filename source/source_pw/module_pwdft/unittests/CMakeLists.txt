@@ -3,6 +3,27 @@ abacus_disable_feature_definitions(__CUDA)
 abacus_disable_feature_definitions(__ROCM)
 abacus_disable_feature_definitions(__EXX)
 
+
+addtest(
+  TARGET MODULE_PW_stress_ewa
+  LIBS parameter base device planewave cell_info
+  SOURCES test_stress_ewa.cpp
+          ../stress_ewa.cpp
+          ../../../source_cell/stru_fac.cpp
+          ../../../source_cell/magnetism.cpp
+          ../../../source_hamilt/module_ewald/h_ewald_pw.cpp
+          ../../../source_hamilt/module_ewald/dnrm2.cpp)
+# Exercise the SF shape contract in the test and its copy of stress_ewa.cpp,
+# including when the surrounding ABACUS build defines NDEBUG.
+target_compile_options(MODULE_PW_stress_ewa PRIVATE -UNDEBUG)
+set_tests_properties(MODULE_PW_stress_ewa PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=1")
+add_test(
+  NAME MODULE_PW_stress_ewa_mpi
+  COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2 ${MPIEXEC_PREFLAGS}
+          $<TARGET_FILE:MODULE_PW_stress_ewa> ${MPIEXEC_POSTFLAGS})
+set_tests_properties(MODULE_PW_stress_ewa_mpi PROPERTIES
+  ENVIRONMENT "OMP_NUM_THREADS=1" PROCESSORS 2)
+
 addtest(
   TARGET MODULE_PW_pwdft_soc
   LIBS parameter
@@ -30,8 +51,8 @@ addtest(
   SOURCES test_dftu_base.cpp
           ../dftu_base.cpp
           ../dftu_base_io.cpp
-          ../dftu_base_io_read.cpp
-          ../dftu_base_io_write.cpp
+          ../dftu_base_read.cpp
+          ../dftu_base_write.cpp
           ../dftu_pw_tools.cpp
           ../yukawa_screening.cpp
           ../../../source_estate/occ_matrix.cpp

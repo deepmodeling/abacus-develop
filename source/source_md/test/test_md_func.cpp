@@ -1,6 +1,6 @@
 #include "source_md/md_func.h"
 #include "source_cell/mdcell.h"
-#include "source_cell/domain_decomposition.h"
+#include "source_cell/dom_decomp.h"
 #include "source_base/parallel_cell.h"
 #include "source_esolver/esolver.h"
 
@@ -64,7 +64,8 @@ TEST(MdForceVirialTest, ReturnsGhostForcesBeforeConvertingUnitsExactlyOnce)
     ModuleBase::matrix virial(3, 3);
     for (int step = 0; step < 2; ++step)
     {
-        MD_func::force_virial(&solver, step, cell, decomp, potential, true, virial, false);
+        const bool positions_updated = step > 0;
+        MD_func::force_virial(&solver, step, positions_updated, cell, decomp, potential, true, virial);
         EXPECT_DOUBLE_EQ(potential, 3.0);
         EXPECT_DOUBLE_EQ(virial(0, 0), 4.0);
         ASSERT_EQ(cell.owned_atoms().size(), 1);

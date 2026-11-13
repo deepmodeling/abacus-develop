@@ -21,10 +21,9 @@ void ModuleIO::save_dH_sparse(const int& istep,
                               const bool& binary,
                               const std::string& fileflag,
                               const int precision,
-                              const std::string& global_out_dir,
                               const std::string& global_matrix_dir,
                               const std::string& calculation,
-                              const bool out_app_flag,
+                              const int out_app_flag,
                               const int nspin,
                               const int nlocal,
                               std::ofstream& ofs_running) {
@@ -67,8 +66,9 @@ void ModuleIO::save_dH_sparse(const int& istep,
 
     const int total_R_num = static_cast<int>(all_R_coor_ptr.size());
     int output_R_number = 0;
-    // Use istep for filename/append decisions; clamp only the header STEP value.
-    const int header_step = std::max(istep, 0);
+    // Use istep for filename/append decisions; clamp only the header STEP
+    // value, printed one-based per governance rule 22.
+    const int header_step = std::max(istep, 0) + 1;
 
     int spin_loop = 1;
     if (nspin == 2) {
@@ -112,20 +112,24 @@ void ModuleIO::save_dH_sparse(const int& istep,
         }
     }
 
-    const bool md_no_append = (calculation == "md") && !out_app_flag;
+    // Modes 0 and 1 keep the fixed filename (mode 0 overwrites, mode 1 appends
+    // every written ionic step); only mode 2 embeds the one-based ionic step
+    // before "_nao".
+    const bool include_step = (istep >= 0) && (out_app_flag == 2);
+
     for (auto& comp: comps)
     {
         for (int ispin = 0; ispin < 2; ++ispin)
         {
-            if (istep >= 0)
+            if (include_step)
             {
-                comp.fname[ispin] << (md_no_append ? global_matrix_dir : global_out_dir)
+                comp.fname[ispin] << global_matrix_dir
                                   << "d" << fileflag << "r" << comp.axis
                                   << "s" << (ispin + 1) << "g" << (istep + 1) << "_nao.csr";
             }
             else
             {
-                comp.fname[ispin] << global_out_dir
+                comp.fname[ispin] << global_matrix_dir
                                   << "d" << fileflag << "r" << comp.axis
                                   << "s" << (ispin + 1) << "_nao.csr";
             }
@@ -134,7 +138,10 @@ void ModuleIO::save_dH_sparse(const int& istep,
 
     if (GlobalV::DRANK == 0)
     {
-        const bool open_in_append = (calculation == "md") && out_app_flag && istep >= 0;
+        // The first written ionic step (istep == 0) truncates the shared file;
+        // later steps append one complete record each. Single-point runs pass
+        // istep <= 0 and therefore always start a fresh file.
+        const bool open_in_append = (out_app_flag == 1) && istep > 0;
         for (auto& comp: comps)
         {
             const std::string label = std::string("dH") + comp.axis;
@@ -149,13 +156,14 @@ void ModuleIO::save_dH_sparse(const int& istep,
                 {
                     mode |= std::ios::app;
                 }
-                else if (!binary)
-                {
-                    const char* matrix_name = (fileflag == "s") ? "dS/dR" : "dH/dR";
-                    const std::string spin_tag = ModuleIO::make_spin_tag(ispin, nspin);
-                    ofs_running << " Write " << matrix_name << " (" << comp.axis << " component)" << spin_tag
-                                << " matrix in NAO basis to file: " << comp.fname[ispin].str() << std::endl;
-                }
+
+                // Announce every written file, including appended multi-step
+                // records and binary output, so the running log tracks each write.
+                const char* matrix_name = (fileflag == "s") ? "dS/dR" : "dH/dR";
+                const std::string spin_tag = ModuleIO::make_spin_tag(ispin, nspin);
+                ofs_running << " Write " << matrix_name << " (" << comp.axis << " component)" << spin_tag
+                            << " matrix in NAO basis to file: " << comp.fname[ispin].str() << std::endl;
+
                 comp.ofs[ispin].open(comp.fname[ispin].str().c_str(), mode);
                 detail::check_output_file_open(comp.ofs[ispin], comp.fname[ispin].str(), "ModuleIO::save_dH_sparse");
 
@@ -214,9 +222,9 @@ void ModuleIO::save_dH_sparse(const int& istep,
             {
                 if (comp.nonzero_num[ispin][count] > 0) {
                     if (nspin != 4) {
-                        save_lat_r(comp.ofs[ispin], comp.sparse[ispin][R_coor], pv, lat_r_options);
+                        save_lat_r(comp.ofs[ispin], comp.sparse[ispin][R_coor], pv.para_2d(), lat_r_options);
                     } else {
-                        save_lat_r(comp.ofs[ispin], (*comp.soc_sparse)[R_coor], pv, lat_r_options);
+                        save_lat_r(comp.ofs[ispin], (*comp.soc_sparse)[R_coor], pv.para_2d(), lat_r_options);
                     }
                 }
             }

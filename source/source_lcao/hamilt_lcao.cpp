@@ -29,9 +29,12 @@ template <typename TK, typename TR>
 HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
                                const Grid_Driver& grid_d,
                                const Parallel_Orbitals* paraV,
+                               const BasisFlattenedIndexing& basis,
+                               const Parallel_Blkcyclic& layout,
                                const K_Vectors& kv_in,
                                const TwoCenterIntegrator& intor_overlap_orb,
                                const std::vector<double>& orb_cutoff)
+    : basis_(basis), layout_(layout)
 {
     this->classname = "HamiltLCAO";
 
@@ -45,6 +48,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
 
     this->getOperator() = new Overlap<OperatorLCAO<TK, TR>>(this->hsk.get(),
                                                                this->kv->kvec_d, this->hR.get(), this->sR.get(),
+                                                               basis, layout,
                                                                &ucell, orb_cutoff, &grid_d,
                                                                &intor_overlap_orb);
 }
@@ -53,6 +57,8 @@ template <typename TK, typename TR>
 HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
                                const Grid_Driver& grid_d,
                                const Parallel_Orbitals* paraV,
+                               const BasisFlattenedIndexing& basis,
+                               const Parallel_Blkcyclic& layout,
                                elecstate::Potential* pot_in,
                                const K_Vectors& kv_in,
                                const TwoCenterBundle& two_center_bundle,
@@ -66,6 +72,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
                                const Input_para& inp,
                                const bool load_exx_flag,
                                TD_info* td_info)
+    : basis_(basis), layout_(layout)
 {
     this->classname = "HamiltLCAO";
 
@@ -107,14 +114,14 @@ HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
     LcaoOpsBundle<TK, TR> bundle;
     if (std::is_same<TK, double>::value)
     {
-        bundle = build_gamma_ops<TK, TR>(ucell, grid_d, paraV, pot_in, two_center_bundle,
+        bundle = build_gamma_ops<TK, TR>(ucell, grid_d, paraV, basis, layout, pot_in, two_center_bundle,
                                          orb, DM_in, p_dftu, deepks, inp, pot_register_in,
                                          this->kv, this->hsk.get(), this->hR.get(), this->sR.get());
     }
     // multi-k-points case to initialize HamiltLCAO, ops will be used
     else if (std::is_same<TK, std::complex<double>>::value)
     {
-        bundle = build_multik_ops<TK, TR>(ucell, grid_d, paraV, pot_in, two_center_bundle,
+        bundle = build_multik_ops<TK, TR>(ucell, grid_d, paraV, basis, layout, pot_in, two_center_bundle,
                                           orb, DM_in, p_dftu, deepks, inp, pot_register_in,
                                           this->kv, this->hsk.get(), this->hR.get(), this->sR.get(), td_info);
     }
@@ -147,6 +154,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
     {
         this->hRS2.resize(this->hR->get_nnr() * 2);
         this->hR->allocate(this->hRS2.data(), 0);
+        this->getHR_vector();
         memory_fold = 2;
     }
 
@@ -163,14 +171,33 @@ std::vector<HContainer<TR>*> HamiltLCAO<TK, TR>::getHR_vector()
 {
     if (this->nspin == 2)
     {
-        const int nnr = this->hRS2.size() / 2;
-        this->hr_spin_up_.reset(new HContainer<TR>(*this->hR, this->hRS2.data()));
-        this->hr_spin_dn_.reset(new HContainer<TR>(*this->hR, this->hRS2.data() + nnr));
+        this->synchronize_spin_storage();
+        const size_t nnr = this->hRS2.size() / 2;
+        TR* up_data = this->hRS2.data();
+        TR* down_data = up_data + nnr;
+        this->hr_spin_up_.reset(new HContainer<TR>(*this->hR, up_data));
+        this->hr_spin_dn_.reset(new HContainer<TR>(*this->hR, down_data));
         return {this->hr_spin_up_.get(), this->hr_spin_dn_.get()};
     }
     else
     {
         return {this->hR.get()};
+    }
+}
+
+template <typename TK, typename TR>
+void HamiltLCAO<TK, TR>::synchronize_spin_storage()
+{
+    if (this->nspin == 2 && this->hRS2.size() != 2 * this->hR->get_nnr())
+    {
+        // The active container has detached from hRS2 during operator assembly.
+        // The spin wrappers retain the old block layout for the inactive channel.
+        resize_spin_storage(*this->hR, *this->hr_spin_up_, this->hRS2, this->current_spin);
+        const size_t nnr = this->hRS2.size() / 2;
+        TR* up_data = this->hRS2.data();
+        TR* down_data = up_data + nnr;
+        this->hr_spin_up_.reset(new HContainer<TR>(*this->hR, up_data));
+        this->hr_spin_dn_.reset(new HContainer<TR>(*this->hR, down_data));
     }
 }
 
@@ -217,6 +244,7 @@ void HamiltLCAO<TK, TR>::updateHk(const int ik)
         this->getOperatorLCAO()->set_current_spin(this->kv->isk[ik]);
     }
     this->getOperator()->init(ik);
+    this->synchronize_spin_storage();
     ModuleBase::timer::end("HamiltLCAO", "updateHk");
 }
 
@@ -226,16 +254,12 @@ void HamiltLCAO<TK, TR>::refresh(bool yes)
     ModuleBase::TITLE("HamiltLCAO", "refresh");
     if(yes)
     {
+        this->synchronize_spin_storage();
         this->getOperatorLCAO()->set_hr_done(false);
         if (this->nspin == 2)
         {
             this->refresh_times = 1;
             this->current_spin = 0;
-            if (this->hR->get_nnr() != this->hRS2.size() / 2)
-            {
-                // operator has changed, resize hRS2
-                this->hRS2.resize(this->hR->get_nnr() * 2);
-            }
             this->hR->allocate(this->hRS2.data(), 0);
         }
     }
@@ -271,12 +295,12 @@ void HamiltLCAO<TK, TR>::updateSk(
 
     if (hk_type == 1) // collumn-major matrix for SK
     {
-        const int nrow = this->hsk->get_pv()->get_row_size();
+        const int nrow = this->hsk->get_pv()->para_2d().nrloc();
         hamilt::folding_HR(*this->sR, this->getSk(), this->kv->kvec_d[ik], nrow, 1);
     }
     else if (hk_type == 0) // row-major matrix for SK
     {
-        const int ncol = this->hsk->get_pv()->get_col_size();
+        const int ncol = this->hsk->get_pv()->para_2d().ncloc();
         hamilt::folding_HR(*this->sR, this->getSk(), this->kv->kvec_d[ik], ncol, 0);
     }
     else

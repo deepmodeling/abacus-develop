@@ -33,6 +33,7 @@ VPATH=./src_global:\
 ./source_base/module_out:\
 ./source_md:\
 ./source_md/module_plumed:\
+./source_md/module_snap:\
 ./source_basis/module_pw:\
 ./source_base/module_fft:\
 ./source_esolver:\
@@ -152,6 +153,8 @@ OBJS_BASE=assoc_laguerre.o\
     complexarray.o\
     complexmatrix.o\
     clebsch_gordan_coeff.o\
+    basis_flattened_indexing.o\
+    atom_basis_view.o\
     element_basis_index.o\
     inverse_matrix.o\
     gather_math_lib_info.o\
@@ -199,7 +202,7 @@ OBJS_BASE=assoc_laguerre.o\
     device.o\
     device_helpers.o\
     output_device.o\
-    parallel_2d.o\
+    parallel_blkcyc.o\
     binstream.o\
     filename.o\
     sparse_matrix.o\
@@ -238,6 +241,7 @@ OBJS_CELL=atom_pseudo.o\
     update_cell.o\
     bcast_cell.o\
     read_stru.o\
+    stru_frame_io.o\
     read_atom_species.o\
     sep.o\
     sep_cell.o\
@@ -247,7 +251,10 @@ OBJS_CELL=atom_pseudo.o\
     cal_ux.o\
     mdcell_reader.o\
     mdcell.o\
-    domain_decomposition.o\
+    dom_core.o\
+    dom_ghost.o\
+    dom_migrate.o\
+    dom_force.o\
     cif_io.o\
     ucell_io.o\
 
@@ -344,6 +351,7 @@ OBJS_ESOLVER=esolver_factory.o\
     esolver_lj.o\
     esolver_dp.o\
     esolver_nep.o\
+    esolver_snap.o\
     esolver_of.o\
     esolver_of_tddft.o\
     esolver_of_interface.o\
@@ -561,6 +569,11 @@ OBJS_MD=fire.o\
     nhchain.o\
     plumed_interface.o\
     run_md.o\
+    module_snap/snap_calculator.o\
+    module_snap/snap_descriptor.o\
+    module_snap/snap_derivative.o\
+    module_snap/snap_model.o\
+    module_snap/snap_cg.o\
     verlet.o\
 
 OBJS_NEIGHBOR=sltk_atom.o\
@@ -669,7 +682,8 @@ OBJS_SCCS=sccs_cavity.o\
     sccs_coul_2d.o\
     sccs_moments.o\
     sccs_pw_coulomb.o\
-    sccs_response.o
+    sccs_response.o\
+    sccs_sa.o
 
 OBJS_SYMMETRY=symm_other.o\
     symm_rot_spin.o\
@@ -914,6 +928,9 @@ OBJS_MODULE_RI=conv_coulomb_pot_k.o\
       matrix_orbs22.o\
       ri_2d_comm.o\
       mix_dmk_2d.o\
+      hybrid_gauge_phase.o\
+      hybrid_image_domain.o\
+      exx_lri_interface.o\
       symm_rotation.o\
       symm_rot_out.o\
       gaussian_abfs.o\
@@ -1012,8 +1029,8 @@ OBJS_SRCPW=h_ewald_pw.o\
     update_cell_pw.o\
     dftu_base.o\
     dftu_base_io.o\
-    dftu_base_io_read.o\
-    dftu_base_io_write.o\
+    dftu_base_read.o\
+    dftu_base_write.o\
     dftu_pw.o\
     dftu_pw_tools.o\
     yukawa_screening.o\

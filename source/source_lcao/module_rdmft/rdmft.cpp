@@ -5,8 +5,10 @@
 
 #include "rdmft.h"
 #include "source_lcao/module_rdmft/rdmft_tools.h"
+#include "source_base/basis_flattened_indexing.h"
 #include "source_base/timer.h"
 #include "source_base/parallel_reduce.h"
+#include "source_basis/module_ao/elem_basis_idx_orb.h"
 #include "source_cell/module_symmetry/symmetry.h"
 
 #ifdef __EXX
@@ -79,6 +81,12 @@ void RDMFT<TK, TR>::init(Parallel_Orbitals& ParaV_in,
     XC_func_rdmft = XC_func_rdmft_in;
     alpha_power = alpha_power_in;
 
+    const ModuleBase::Element_Basis_Index::Range basis_range =
+        ModuleBase::Element_Basis_Index::construct_range(orb_in);
+    const ModuleBase::Element_Basis_Index::IndexLNM basis_hierarchy =
+        ModuleBase::Element_Basis_Index::construct_index(basis_range);
+    basis_index_.reset(new BasisFlattenedIndexing(basis_hierarchy, ucell_in.iat2it, ucell_in.get_npol()));
+
     nspin = PARAM.inp.nspin;
     nbands_total = PARAM.inp.nbands;
     nk_total = ModuleSymmetry::Symmetry::symm_flag == -1 ? kv->get_nkstot_nospin(): kv->get_nks();
@@ -87,7 +95,7 @@ void RDMFT<TK, TR>::init(Parallel_Orbitals& ParaV_in,
 
     // create desc[] and something about MPI to Eij(nbands*nbands)
 #ifdef __MPI
-    para_Eij.set(nbands_total, nbands_total, ParaV->nb, ParaV->blacs_ctxt); // maybe in default, PARAM.inp.nb2d = 0, can't be used
+    para_Eij.set(nbands_total, nbands_total, ParaV->para_2d().nb(), ParaV->para_2d().ictxt()); // maybe in default, PARAM.inp.nb2d = 0, can't be used
 #endif
 
     // 
@@ -103,13 +111,13 @@ void RDMFT<TK, TR>::init(Parallel_Orbitals& ParaV_in,
     wfcHwfc_dft_XC.create(nk_total, nbands_total);
 
     // 
-    wfc.resize(nk_total, ParaV->ncol_bands, ParaV->nrow);   // test ParaV->nrow
-    occNum_HamiltWfc.resize(nk_total, ParaV->ncol_bands, ParaV->nrow);
-    H_wfc_TV.resize(nk_total, ParaV->ncol_bands, ParaV->nrow);
-    H_wfc_hartree.resize(nk_total, ParaV->ncol_bands, ParaV->nrow);
-    H_wfc_XC.resize(nk_total, ParaV->ncol_bands, ParaV->nrow);
-    H_wfc_exx_XC.resize(nk_total, ParaV->ncol_bands, ParaV->nrow);
-    H_wfc_dft_XC.resize(nk_total, ParaV->ncol_bands, ParaV->nrow);
+    wfc.resize(nk_total, ParaV->ncol_bands, ParaV->para_2d().nrloc());   // test ParaV->nrow
+    occNum_HamiltWfc.resize(nk_total, ParaV->ncol_bands, ParaV->para_2d().nrloc());
+    H_wfc_TV.resize(nk_total, ParaV->ncol_bands, ParaV->para_2d().nrloc());
+    H_wfc_hartree.resize(nk_total, ParaV->ncol_bands, ParaV->para_2d().nrloc());
+    H_wfc_XC.resize(nk_total, ParaV->ncol_bands, ParaV->para_2d().nrloc());
+    H_wfc_exx_XC.resize(nk_total, ParaV->ncol_bands, ParaV->para_2d().nrloc());
+    H_wfc_dft_XC.resize(nk_total, ParaV->ncol_bands, ParaV->para_2d().nrloc());
 
     //
     hsk_TV = new hamilt::HS_Matrix_K<TK>(ParaV, true);
@@ -117,15 +125,15 @@ void RDMFT<TK, TR>::init(Parallel_Orbitals& ParaV_in,
     hsk_dft_XC = new hamilt::HS_Matrix_K<TK>(ParaV, true);
     hsk_exx_XC = new hamilt::HS_Matrix_K<TK>(ParaV, true);
 
-    HK_XC.resize( ParaV->get_row_size()*ParaV->get_col_size() );
+    HK_XC.resize( ParaV->para_2d().nrloc()*ParaV->para_2d().ncloc() );
     // HK_RDMFT_pass.resize(nk_total, ParaV->get_row_size(), ParaV->get_col_size());
     // HK_XC_pass.resize(nk_total, ParaV->get_row_size(), ParaV->get_col_size());
 
 
-    Eij_TV.resize( para_Eij.get_row_size()*para_Eij.get_col_size() );
-    Eij_hartree.resize( para_Eij.get_row_size()*para_Eij.get_col_size() );
-    Eij_XC.resize( para_Eij.get_row_size()*para_Eij.get_col_size() );
-    Eij_exx_XC.resize( para_Eij.get_row_size()*para_Eij.get_col_size() );
+    Eij_TV.resize( para_Eij.nrloc()*para_Eij.ncloc() );
+    Eij_hartree.resize( para_Eij.nrloc()*para_Eij.ncloc() );
+    Eij_XC.resize( para_Eij.nrloc()*para_Eij.ncloc() );
+    Eij_exx_XC.resize( para_Eij.nrloc()*para_Eij.ncloc() );
 
     // 
     HR_TV = new hamilt::HContainer<TR>(*ucell, ParaV);
@@ -163,7 +171,7 @@ void RDMFT<TK, TR>::init(Parallel_Orbitals& ParaV_in,
             this->symrot_exx.cal_Ms(*kv, ucell->symm, ucell->atoms,
                     ucell->latvec, ucell->lmax,
                     ucell->nat, ucell->iat2it, ucell->iat2ia,
-                    *ParaV, nspin);
+                    ParaV->para_2d(), nspin);
         }
 
         if (this->exx_info_->info_ri.real_number)

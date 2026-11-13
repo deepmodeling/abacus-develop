@@ -77,6 +77,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
                                           const bool istests,
                                           const Grid_Driver& gd,
                                           Parallel_Orbitals& pv,
+                                          const BasisFlattenedIndexing& basis,
                                           const elecstate::ElecState* pelec,
                                           module_dm::Setup_DM<T> &dmat, // mohan add 2025-11-03
                                           const psi::Psi<T>* psi,
@@ -165,7 +166,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
     }
     // Calculate operator-based force/stress terms (kinetic, overlap,
     // nonlocal, rt-TDDFT hybrid gauge, local Pulay term and DeltaSpin).
-    this->cal_operator_fs(ucell, gd, pv, pelec, dmat, psi, two_center_bundle,
+    this->cal_operator_fs(ucell, gd, pv, basis, pelec, dmat, psi, two_center_bundle,
                           orb, kv, isforce, isstress, cfg, td_info, p_hamilt, parts, sparts);
 
     // MPI reduction for forces
@@ -209,7 +210,8 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
     // }
 
     // EXX force/stress
-    LCAO_domain::cal_exx_fs(ucell, isforce, isstress, exx_info, exx_nao, parts, sparts);
+    const bool is_rt = td_info != nullptr;
+    LCAO_domain::cal_exx_fs(ucell, isforce, isstress, is_rt, exx_info, exx_nao, parts, sparts);
     //--------------------------------
     // begin calculate and output force
     //--------------------------------
@@ -236,6 +238,7 @@ template <typename T>
 void Force_Stress_LCAO<T>::cal_operator_fs(UnitCell& ucell,
                                              const Grid_Driver& gd,
                                              Parallel_Orbitals& pv,
+                                             const BasisFlattenedIndexing& basis,
                                              const elecstate::ElecState* pelec,
                                              module_dm::Setup_DM<T>& dmat,
                                              const psi::Psi<T>* psi,
@@ -276,14 +279,14 @@ void Force_Stress_LCAO<T>::cal_operator_fs(UnitCell& ucell,
         if (cfg.t_in_h)
         {
             hamilt::EKinetic<hamilt::OperatorLCAO<T, double>> tmp_ekinetic(
-                nullptr, kv.kvec_d, nullptr, &ucell, orb.cutoffs(), &gd,
+                nullptr, kv.kvec_d, nullptr, basis, pv.para_2d(), &ucell, orb.cutoffs(), &gd,
                 two_center_bundle.kinetic_orb.get());
             tmp_ekinetic.cal_force_stress(isforce, isstress, dmR, parts.ftvnl_dphi, sparts.stvnl_dphi);
         }
 
         // Calculate overlap force/stress (uses EDM)
         hamilt::Overlap<hamilt::OperatorLCAO<T, double>> tmp_overlap(
-            nullptr, kv.kvec_d, nullptr, nullptr, &ucell, orb.cutoffs(), &gd,
+            nullptr, kv.kvec_d, nullptr, nullptr, basis, pv.para_2d(), &ucell, orb.cutoffs(), &gd,
             two_center_bundle.overlap_orb.get());
         if(td_stype != 2)
         {
@@ -302,7 +305,7 @@ void Force_Stress_LCAO<T>::cal_operator_fs(UnitCell& ucell,
                 nullptr, &kv, nullptr, nullptr, orb, &ucell, orb.cutoffs(), &gd, nullptr, *td_info);
             tmp_hybrid.cal_force_stress(isforce, dmR, parts.fpothybrid);
 
-            cal_foverlap_rt(parts.foverlap, dmat, p_hamilt, kv, pv, ucell, *td_info);
+            cal_foverlap_rt(parts.foverlap, dmat, p_hamilt, kv, basis, pv.para_2d(), ucell, *td_info);
         }
 
         // Switch back to spin channel 0
@@ -325,7 +328,7 @@ void Force_Stress_LCAO<T>::cal_operator_fs(UnitCell& ucell,
         if (cfg.t_in_h)
         {
             hamilt::EKinetic<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>> tmp_ekinetic(
-                nullptr, kv.kvec_d, nullptr, &ucell, orb.cutoffs(), &gd,
+                nullptr, kv.kvec_d, nullptr, basis, pv.para_2d(), &ucell, orb.cutoffs(), &gd,
                 two_center_bundle.kinetic_orb.get());
             tmp_ekinetic.cal_force_stress(isforce, isstress, dmat.dm->get_dmr_ptr(1), parts.ftvnl_dphi,
                                           sparts.stvnl_dphi);
@@ -333,7 +336,7 @@ void Force_Stress_LCAO<T>::cal_operator_fs(UnitCell& ucell,
 
         // Overlap force/stress from the complex EDM (nspin=4)
         hamilt::Overlap<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>> tmp_overlap(
-            nullptr, kv.kvec_d, nullptr, nullptr, &ucell, orb.cutoffs(), &gd,
+            nullptr, kv.kvec_d, nullptr, nullptr, basis, pv.para_2d(), &ucell, orb.cutoffs(), &gd,
             two_center_bundle.overlap_orb.get());
         tmp_overlap.cal_force_stress(isforce, isstress, edm.get_dmr_ptr(1), parts.foverlap, sparts.soverlap);
 

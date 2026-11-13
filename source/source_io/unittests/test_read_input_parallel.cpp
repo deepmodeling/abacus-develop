@@ -220,7 +220,7 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_FALSE(param.inp.out_mat_xc);
     EXPECT_EQ(param.inp.out_mat_xc2[0], 0);
     EXPECT_EQ(param.inp.out_mat_xc2[1], 8);
-    EXPECT_FALSE(param.inp.out_eband_terms);
+    EXPECT_FALSE(param.inp.out_eband);
     EXPECT_EQ(param.inp.out_app_flag, 0);
     EXPECT_EQ(param.inp.out_mat_r[0], 0);
     EXPECT_EQ(param.inp.out_mat_r[1], 8);
@@ -405,6 +405,7 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.inp.mdp.md_damp, 1);
     EXPECT_EQ(param.inp.mdp.md_dt, 1);
     EXPECT_EQ(param.inp.mdp.md_dumpfreq, 1);
+    EXPECT_EQ(param.inp.mdp.md_thermo_freq, 1);
     EXPECT_EQ(param.inp.mdp.md_nraise, 1);
     EXPECT_EQ(param.inp.cal_syns[0], 0);
     EXPECT_EQ(param.inp.cal_syns[1], 8);
@@ -418,7 +419,6 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.inp.mdp.md_pmode, "iso");
     EXPECT_EQ(param.inp.mdp.md_restart, 0);
     EXPECT_EQ(param.inp.mdp.md_restartfreq, 5);
-    EXPECT_FALSE(param.inp.mdp.md_out_force);
     EXPECT_FALSE(param.inp.mdp.plumed);
     EXPECT_EQ(param.inp.mdp.plumed_file, "plumed.dat");
     EXPECT_EQ(param.inp.mdp.md_seed, -1);

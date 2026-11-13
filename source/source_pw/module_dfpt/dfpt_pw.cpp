@@ -140,6 +140,16 @@ void DFPT_PW::set_max_iter(int max_iter)
     pimpl_->data_.set_max_iter(max_iter);
 }
 
+void DFPT_PW::set_lin_conv_thr(double thr)
+{
+    pimpl_->data_.set_lin_conv_thr(thr);
+}
+
+void DFPT_PW::set_lin_max_iter(int max_iter)
+{
+    pimpl_->data_.set_lin_max_iter(max_iter);
+}
+
 void DFPT_PW::set_mix_beta(double beta)
 {
     if (beta > 0.0 && beta <= 1.0)

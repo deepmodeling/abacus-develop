@@ -38,10 +38,10 @@ inline std::complex<double> conj_value(const std::complex<double> x)
  *
  * The local-to-global band mapping is taken verbatim from the historical
  * cal_dm implementation: ib_global advances monotonically while scanning
- * ParaV->global2local_col(). A local band whose global index does not fall
+ * ParaV->icloc(). A local band whose global index does not fall
  * into the columns of wg keeps the legacy factor 1.0 instead of 0.0.
  *
- * @param ParaV orbital distribution, provides global2local_col()
+ * @param ParaV orbital distribution, provides icloc()
  * @param wg band weights for the current k-point
  * @param ik k-point index; wfc must already be fixed to it
  * @param wfc wavefunction block of the current k-point
@@ -62,7 +62,7 @@ void fill_weighted_wfc(const Parallel_Orbitals* ParaV,
     int ib_global = 0;
     for (int ib_local = 0; ib_local < nbands_local; ++ib_local)
     {
-        while (ib_local != ParaV->para_2d().global2local_col(ib_global))
+        while (ib_local != ParaV->para_2d().icloc(ib_global))
         {
             ++ib_global;
             if (ib_global >= wg.nc)
@@ -249,7 +249,7 @@ void dmk_from_psi_impl(const Parallel_Orbitals* ParaV,
     wfc.fix_k(ik);
     fill_weighted_wfc(ParaV, wg, ik, wfc, wg_wfc);
 #ifdef __MPI
-    gemm_dm(wg_wfc, wfc, dmk_out, ParaV->desc_wfc, ParaV->para_2d().get_desc());
+    gemm_dm(wg_wfc, wfc, dmk_out, ParaV->desc_wfc, ParaV->para_2d().desc());
 #else
     gemm_dm(wg_wfc, wfc, dmk_out);
 #endif

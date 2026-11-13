@@ -8,7 +8,7 @@ class UnitCell;
 class Grid_Driver;
 class TwoCenterBundle;
 class Parallel_Orbitals;
-class Parallel_2D;
+class Parallel_Blkcyclic; // Defined in source/source_base/parallel_blkcyc.h
 class K_Vectors;
 namespace LR_Util
 {
@@ -18,7 +18,7 @@ std::vector<std::complex<double>> cal_velocity_mo(const UnitCell& ucell,
                                                 const Grid_Driver& gd,
                                                 const TwoCenterBundle& two_center_bundle,
                                                 const Parallel_Orbitals& pmat,/*nbasis×nbasis*/
-                                                const Parallel_2D& pc,/*nbasis×nbands*/
+                                                const Parallel_Blkcyclic& pc,/*nbasis×nbands*/
                                                 const K_Vectors& kv,
                                                 const psi::Psi<T>& psi_ks,
                                                 const int nk,

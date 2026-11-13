@@ -5,7 +5,7 @@
 #include "source_base/vector3.h"
 #include "source_cell/mdcell.h"
 
-#include "source_cell/domain_decomposition.h"
+#include "source_cell/dom_decomp.h"
 
 #include <cctype>
 #include <cstdint>
@@ -211,10 +211,14 @@ std::vector<LocalAtom> read_owned_atoms(std::ifstream& ifs,
     expect_keyword(ifs, "ATOMIC_POSITIONS");
     const std::string coord_type = next_data_line(ifs, "ATOMIC_POSITIONS type");
     const bool is_cartesian = coord_type == "Cartesian";
+    const bool is_cartesian_angstrom = coord_type == "Cartesian_angstrom";
+    const bool is_cartesian_au = coord_type == "Cartesian_au";
     const bool is_direct = coord_type == "Direct";
-    if (!is_cartesian && !is_direct)
+    if (!is_cartesian && !is_cartesian_angstrom && !is_cartesian_au && !is_direct)
     {
-        throw std::runtime_error("Only Direct and Cartesian ATOMIC_POSITIONS are supported for MD.");
+        throw std::runtime_error(
+            "Only Direct, Cartesian, Cartesian_angstrom and Cartesian_au "
+            "ATOMIC_POSITIONS are supported for MD.");
     }
 
     std::vector<LocalAtom> owned_atoms;
@@ -243,13 +247,22 @@ std::vector<LocalAtom> read_owned_atoms(std::ifstream& ifs,
             }
 
             ModuleBase::Vector3<double> frac;
-            if (is_cartesian)
+            if (is_direct)
             {
-                frac = wrap_fractional(ModuleBase::Vector3<double>(c1, c2, c3) * primitive_gt);
+                frac = wrap_fractional(ModuleBase::Vector3<double>(c1, c2, c3));
             }
             else
             {
-                frac = wrap_fractional(ModuleBase::Vector3<double>(c1, c2, c3));
+                ModuleBase::Vector3<double> cart(c1, c2, c3);
+                if (is_cartesian_angstrom)
+                {
+                    cart = cart / ModuleBase::BOHR_TO_A / metadata.lat0;
+                }
+                else if (is_cartesian_au)
+                {
+                    cart = cart / metadata.lat0;
+                }
+                frac = wrap_fractional(cart * primitive_gt);
             }
 
             ModuleBase::Vector3<int> mbl(1, 1, 1);

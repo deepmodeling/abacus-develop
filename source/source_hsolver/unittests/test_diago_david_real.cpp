@@ -134,6 +134,7 @@ class DiagoDavPrepare
             nband,
             dim,
             order,
+            false,
             comm_info);
 
         hsolver::DiagoIterAssist<double>::PW_DIAG_NMAX = maxiter;

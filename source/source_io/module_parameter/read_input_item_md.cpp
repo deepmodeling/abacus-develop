@@ -159,7 +159,8 @@ Note that md_tlast is only used in NVT/NPT simulations. If md_tlast is unset or 
         item.category = "Molecular dynamics";
         item.type = "Boolean";
         item.description = R"(Control whether to restart molecular dynamics calculations and time-dependent density functional theory calculations.
-* True: ABACUS will read in {md_step}, then read in the corresponding STRU_MD_suffix/STRU/ automatically. For tddft, ABACUS will also read in WFC_NAO_K${kpoint} of the last step (You need to set out_wfc_lcao=1 and out_app_flag=0 to obtain this file).
+* True: ABACUS will read in {md_step}, then read in the corresponding structure file automatically (STRU{istep} from the STRUC/ output directory when out_app_flag=2; older releases wrote STRU_MD_{istep} into a STRU/ subdirectory, which is still recognized). For tddft, ABACUS will also read in the LCAO wavefunction file of the last step (OUT.{suffix}/PSI/wf{k-point index}{spin?}g{step}_nao.txt). You need to set out_wfc_lcao=1 and out_app_flag=2 to obtain this per-step snapshot (modes 0 and 1 write fixed-name files without a step suffix, which cannot be mapped to a specific restart step and are therefore not accepted for istep>0).
+A structure frame is required for {istep}. Because out_freq_ion sets the structure-frame cadence independently of md_restartfreq, keep out_freq_ion unset (0) or equal to md_restartfreq when you intend to restart, and make sure out_stru is positive.
 * False: ABACUS will start molecular dynamics calculations normally from the first step.)";
         item.default_value = "False";
         item.unit = "";
@@ -171,7 +172,12 @@ Note that md_tlast is only used in NVT/NPT simulations. If md_tlast is unset or 
         item.annotation = "The period to output MD restart information";
         item.category = "Molecular dynamics";
         item.type = "Integer";
-        item.description = "The output frequency of OUT.{suffix}/STRU_MD_*, which are used to restart molecular dynamics calculations, see md_restart in detail. Set to 0 to disable MD restart output.";
+        item.description = "The period (in ionic steps) of writing the MD restart file "
+                           "(Restart_md.txt). This cadence is independent of out_freq_ion: "
+                           "restart files are written every md_restartfreq steps regardless of "
+                           "the STRU output cadence. Set to 0 to disable restart-file output. "
+                           "When out_freq_ion is not set (0), it also falls back to md_restartfreq "
+                           "as the STRU output frequency for backward compatibility.";
         item.default_value = "5";
         item.unit = "";
         read_sync_int(input.mdp.md_restartfreq);
@@ -189,6 +195,17 @@ Note that md_tlast is only used in NVT/NPT simulations. If md_tlast is unset or 
         this->add_item(item);
     }
     {
+        Input_Item item("md_thermo_freq");
+        item.annotation = "The period to output MD thermodynamic information";
+        item.category = "Molecular dynamics";
+        item.type = "Integer";
+        item.description = "The output frequency of MD step, energy, temperature, and pressure information in OUT.${suffix}/running_md.log and on screen. Set to 0 to disable this output.";
+        item.default_value = "1";
+        item.unit = "";
+        read_sync_int(input.mdp.md_thermo_freq);
+        this->add_item(item);
+    }
+    {
         Input_Item item("md_neighbor_skin");
         item.annotation = "extra MDCell neighbor-list radius";
         item.category = "Molecular dynamics";
@@ -200,18 +217,6 @@ Note that md_tlast is only used in NVT/NPT simulations. If md_tlast is unset or 
         item.default_value = "0.0";
         item.unit = "Angstrom";
         read_sync_double(input.mdp.md_neighbor_skin);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("md_out_force");
-        item.annotation = "output all atomic forces into running_md.log or not";
-        item.category = "Molecular dynamics";
-        item.type = "Boolean";
-        item.description = "Whether to output the TOTAL-FORCE table in OUT.${suffix}/running_md.log for MDCell molecular dynamics. This does not affect force calculation or molecular dynamics integration.";
-        item.default_value = "True";
-        item.unit = "";
-        item.set_availability("");
-        read_sync_bool(input.mdp.md_out_force);
         this->add_item(item);
     }
     {
@@ -550,6 +555,18 @@ Note: It is a system-dependent empirical parameter. An improper choice might lea
         item.default_value = "graph.pb";
         item.unit = "";
         read_sync_string(input.mdp.pot_file);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("snap_param_file");
+        item.annotation = "the SNAP parameter file";
+        item.category = "Molecular dynamics";
+        item.type = "String";
+        item.description = "The SNAP parameter file used with pot_file as the SNAP coefficient file.";
+        item.default_value = "snap.param";
+        item.unit = "";
+        item.set_availability("esolver_type==snap");
+        read_sync_string(input.mdp.snap_param_file);
         this->add_item(item);
     }
     {

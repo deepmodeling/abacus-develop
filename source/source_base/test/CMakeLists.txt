@@ -268,7 +268,7 @@ addtest(
 addtest(
   TARGET MODULE_BASE_csr_reader
   LIBS parameter base device
-  SOURCES csr_reader_test.cpp)
+  SOURCES csr_reader_test.cpp test_csr_reader.cpp)
 
 if(ENABLE_GOOGLEBENCH)
   addtest(
@@ -276,3 +276,9 @@ if(ENABLE_GOOGLEBENCH)
     LIBS parameter
     SOURCES perf_sphbes_test.cpp ../math_sphbes.cpp ../timer.cpp)
 endif()
+
+AddTest(
+  TARGET MODULE_BASE_filename
+  LIBS parameter base device
+  SOURCES test_filename.cpp
+)

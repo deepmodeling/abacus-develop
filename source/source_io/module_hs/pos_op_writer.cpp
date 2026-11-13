@@ -1,5 +1,6 @@
 #include "pos_op_writer.h"
 
+#include "source_base/parallel_blkcyc.h"
 #include "source_base/global_variable.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
@@ -10,8 +11,10 @@
 #include <cstdio>
 #include <sstream>
 
-PosOpWriter::PosOpWriter(const PosOpBasis& basis, const PosOpCalc& calc, const Parallel_Orbitals& pv)
-    : basis_(basis), calc_(calc), pv_(pv)
+PosOpWriter::PosOpWriter(const PosOpBasis& basis,
+                         const PosOpCalc& calc,
+                         const Parallel_Blkcyclic& layout)
+    : basis_(basis), calc_(calc), layout_(layout)
 {
 }
 
@@ -22,7 +25,7 @@ void PosOpWriter::out_lat_r(const UnitCell& ucell,
                              const std::string& global_out_dir,
                              const std::string& global_matrix_dir,
                              const std::string& calculation,
-                             bool out_app_flag,
+                             int out_app_flag,
                              int nlocal,
                              int npol,
                              double sparse_threshold,
@@ -98,12 +101,12 @@ void PosOpWriter::out_lat_r(const UnitCell& ucell,
         int ir, ic;
         for (int iw1 = 0; iw1 < nlocal; iw1++)
         {
-            ir = pv_.global2local_row(iw1);
+            ir = layout_.irloc(iw1);
             if (ir >= 0)
             {
                 for (int iw2 = 0; iw2 < nlocal; iw2++)
                 {
-                    ic = pv_.global2local_col(iw2);
+                    ic = layout_.icloc(iw2);
                     if (ic >= 0)
                     {
                         int orb_index_row = iw1 / npol;
@@ -203,7 +206,7 @@ void PosOpWriter::out_lat_r(const UnitCell& ucell,
 
                 if (rR_nonzero_num[direction])
                 {
-                    ModuleIO::save_lat_r(ofs_tem1, psi_r_psi_sparse[direction], pv_, lat_r_options);
+                    ModuleIO::save_lat_r(ofs_tem1, psi_r_psi_sparse[direction], layout_, lat_r_options);
                 }
                 else
                 {
@@ -216,19 +219,24 @@ void PosOpWriter::out_lat_r(const UnitCell& ucell,
     if (GlobalV::DRANK == 0)
     {
         std::stringstream ssr;
-        const bool md_no_append = (calculation == "md") && !out_app_flag;
-        if (step >= 0)
+        // Modes 0 and 1 keep the fixed filename (mode 0 overwrites, mode 1
+        // appends all ionic steps); only mode 2 embeds the one-based step.
+        if (step >= 0 && out_app_flag == 2)
         {
-            ssr << (md_no_append ? global_matrix_dir : global_out_dir) << "rrg" << (step + 1) << "_nao.txt";
+            ssr << global_matrix_dir << "rrg" << (step + 1) << "_nao.txt";
         }
         else
         {
-            ssr << global_out_dir << "rr_nao.txt";
+            ssr << global_matrix_dir << "rr_nao.txt";
         }
 
         ofs_tem1.close();
-        const bool open_in_append = (calculation == "md") && out_app_flag && step >= 0;
-        const int header_step = std::max(step, 0);
+        // Append from the second ionic step onward in append mode; the first
+        // step (step == 0) truncates so a rerun does not retain prior frames.
+        // Single-point SCF passes step = -1 and also starts a fresh file.
+        const bool open_in_append = (out_app_flag == 1) && (step > 0);
+        // ionic step printed one-based per governance rule 22
+        const int header_step = std::max(step, 0) + 1;
         ModuleIO::detail::assemble_csr(ssr.str(),
                                        tem1.str(),
                                        header_step,

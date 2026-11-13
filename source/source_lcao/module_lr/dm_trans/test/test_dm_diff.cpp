@@ -132,23 +132,23 @@ TEST_F(DMDiffTest, DoubleParallel)
     {
         // c: nao*nbands in para2d, nbands*nao in psi  (row-para and constructed: nao)
         // X: nvirt*nocc in para2d, nocc*nvirt in psi (row-para and constructed: nvirt)
-        Parallel_2D px;
+        Parallel_Blkcyclic px;
         LR_Util::setup_2d_division(px, s.nb, s.nvirt, s.nocc);
-        psi::Psi<double, base_device::DEVICE_CPU> X(s.nks, nstate, px.get_local_size(), {}, false);
-        Parallel_2D pc;
+        psi::Psi<double, base_device::DEVICE_CPU> X(s.nks, nstate, px.size(), {}, false);
+        Parallel_Blkcyclic pc;
         const int nmo = s.nocc + s.nvirt;
-        LR_Util::setup_2d_division(pc, s.nb, s.naos, nmo, px.blacs_ctxt);
-        psi::Psi<double, base_device::DEVICE_CPU> c(s.nks, pc.get_col_size(), pc.get_row_size(), {}, true);
-        Parallel_2D pmat;
-        LR_Util::setup_2d_division(pmat, s.nb, s.naos, s.naos, px.blacs_ctxt);
+        LR_Util::setup_2d_division(pc, s.nb, s.naos, nmo, px.ictxt());
+        psi::Psi<double, base_device::DEVICE_CPU> c(s.nks, pc.ncloc(), pc.nrloc(), {}, true);
+        Parallel_Blkcyclic pmat;
+        LR_Util::setup_2d_division(pmat, s.nb, s.naos, s.naos, px.ictxt());
 
-        EXPECT_EQ(px.dim0, pc.dim0);
-        EXPECT_EQ(px.dim1, pc.dim1);
-        EXPECT_GE(s.nvirt, px.dim0);
-        EXPECT_GE(s.nocc, px.dim1);
-        EXPECT_GE(s.naos, pc.dim0);
+        EXPECT_EQ(px.nrproc(), pc.nrproc());
+        EXPECT_EQ(px.ncproc(), pc.ncproc());
+        EXPECT_GE(s.nvirt, px.nrproc());
+        EXPECT_GE(s.nocc, px.ncproc());
+        EXPECT_GE(s.naos, pc.nrproc());
 
-        set_rand(X.get_pointer(), nstate * s.nks * px.get_local_size());        //set X and X_full
+        set_rand(X.get_pointer(), nstate * s.nks * px.size());        //set X and X_full
         psi::Psi<double, base_device::DEVICE_CPU> X_full(s.nks, nstate, s.nocc * s.nvirt, {}, false);        // allocate X_full
         X_full.zero_out();
         for (int istate = 0;istate < nstate;++istate)
@@ -165,7 +165,7 @@ TEST_F(DMDiffTest, DoubleParallel)
         for (int istate = 0;istate < nstate;++istate)
         {
             c.fix_k(0);
-            set_rand(c.get_pointer(), s.nks * pc.get_local_size()); // set c
+            set_rand(c.get_pointer(), s.nks * pc.size()); // set c
 
             X.fix_b(istate);
             X_full.fix_b(istate);
@@ -204,17 +204,17 @@ TEST_F(DMDiffTest, ComplexParallel)
     {
         // c: nao*nbands in para2d, nbands*nao in psi  (row-para and constructed: nao)
         // X: nvirt*nocc in para2d, nocc*nvirt in psi (row-para and constructed: nvirt)
-        Parallel_2D px;
+        Parallel_Blkcyclic px;
         LR_Util::setup_2d_division(px, s.nb, s.nvirt, s.nocc);
-        psi::Psi<std::complex<double>, base_device::DEVICE_CPU> X(s.nks, nstate, px.get_local_size(), {}, false);
-        Parallel_2D pc;
+        psi::Psi<std::complex<double>, base_device::DEVICE_CPU> X(s.nks, nstate, px.size(), {}, false);
+        Parallel_Blkcyclic pc;
         const int nmo = s.nocc + s.nvirt;
-        LR_Util::setup_2d_division(pc, s.nb, s.naos, nmo, px.blacs_ctxt);
-        psi::Psi<std::complex<double>, base_device::DEVICE_CPU> c(s.nks, pc.get_col_size(), pc.get_row_size(), {}, true);
-        Parallel_2D pmat;
-        LR_Util::setup_2d_division(pmat, s.nb, s.naos, s.naos, px.blacs_ctxt);
+        LR_Util::setup_2d_division(pc, s.nb, s.naos, nmo, px.ictxt());
+        psi::Psi<std::complex<double>, base_device::DEVICE_CPU> c(s.nks, pc.ncloc(), pc.nrloc(), {}, true);
+        Parallel_Blkcyclic pmat;
+        LR_Util::setup_2d_division(pmat, s.nb, s.naos, s.naos, px.ictxt());
 
-        set_rand(X.get_pointer(), nstate * s.nks * px.get_local_size());        //set X and X_full
+        set_rand(X.get_pointer(), nstate * s.nks * px.size());        //set X and X_full
         psi::Psi<std::complex<double>, base_device::DEVICE_CPU> X_full(s.nks, nstate, s.nocc * s.nvirt, {}, false);        // allocate X_full
         X_full.zero_out();
         for (int istate = 0;istate < nstate;++istate)
@@ -231,7 +231,7 @@ TEST_F(DMDiffTest, ComplexParallel)
         for (int istate = 0;istate < nstate;++istate)
         {
             c.fix_k(0);
-            set_rand(c.get_pointer(), s.nks * pc.get_local_size()); // set c
+            set_rand(c.get_pointer(), s.nks * pc.size()); // set c
 
             X.fix_b(istate);
             X_full.fix_b(istate);

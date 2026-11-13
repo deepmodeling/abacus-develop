@@ -137,8 +137,14 @@ void write_sccs_out(std::ostream& output, const SccsOutput& result, int level,
                                                 "Q_EXPECTED/e", real_text(result.expected_charge, value_digits)};
         write_row(output, gauss);
     }
-    const std::vector<std::string> cavity = {"SCCS_CAVITY", "VOLUME/Bohr3", real_text(result.volume, value_digits),
-                                             "SURFACE/Bohr2", real_text(result.surface, value_digits)};
+    std::vector<std::string> cavity = {"SCCS_CAVITY", "VOLUME/Bohr3", real_text(result.volume, value_digits),
+                                       "SURFACE/Bohr2", real_text(result.surface, value_digits)};
+    if (result.filled)
+    {
+        const std::string filled_text = real_text(result.filled_volume, value_digits);
+        cavity.push_back("V_FILLED/Bohr3");
+        cavity.push_back(filled_text);
+    }
     write_row(output, cavity);
     const std::vector<std::string> transforms = {"SCCS_FFT",
                                                  "R2G_CALLS", int_text(result.transforms.forward_calls),

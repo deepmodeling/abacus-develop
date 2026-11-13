@@ -271,23 +271,23 @@ void ModuleIO::cal_velocity_basis_k(const UnitCell& ucell,
     const std::complex<double> neg_one_real = ModuleBase::NEG_ONE;
     const std::complex<double> zero_complex = ModuleBase::ZERO;
 
-    std::complex<double>* hk = new std::complex<double>[pv->para_2d().get_local_size()];
-    std::complex<double>* sk = new std::complex<double>[pv->para_2d().get_local_size()];
-    std::complex<double>* partial_hk = new std::complex<double>[pv->para_2d().get_local_size()];
-    std::complex<double>* partial_sk = new std::complex<double>[pv->para_2d().get_local_size()];
-    std::complex<double>* rk = new std::complex<double>[pv->para_2d().get_local_size()];
-    std::complex<double>* h_is = new std::complex<double>[pv->para_2d().get_local_size()];
-    std::complex<double>* h_is_r = new std::complex<double>[pv->para_2d().get_local_size()];
-    std::complex<double>* r_is = new std::complex<double>[pv->para_2d().get_local_size()];
-    std::complex<double>* r_is_h = new std::complex<double>[pv->para_2d().get_local_size()];
-    std::complex<double>* h_is_ps = new std::complex<double>[pv->para_2d().get_local_size()];
+    std::complex<double>* hk = new std::complex<double>[pv->para_2d().size()];
+    std::complex<double>* sk = new std::complex<double>[pv->para_2d().size()];
+    std::complex<double>* partial_hk = new std::complex<double>[pv->para_2d().size()];
+    std::complex<double>* partial_sk = new std::complex<double>[pv->para_2d().size()];
+    std::complex<double>* rk = new std::complex<double>[pv->para_2d().size()];
+    std::complex<double>* h_is = new std::complex<double>[pv->para_2d().size()];
+    std::complex<double>* h_is_r = new std::complex<double>[pv->para_2d().size()];
+    std::complex<double>* r_is = new std::complex<double>[pv->para_2d().size()];
+    std::complex<double>* r_is_h = new std::complex<double>[pv->para_2d().size()];
+    std::complex<double>* h_is_ps = new std::complex<double>[pv->para_2d().size()];
 
     for (size_t ik = 0; ik != kv.get_nks(); ++ik)
     {
         // set H(k), S(k)
         // 1.1 set H(k)
-        ModuleBase::GlobalFunc::ZEROS(hk, pv->para_2d().get_local_size());
-        const int nrow = pv->para_2d().get_row_size();
+        ModuleBase::GlobalFunc::ZEROS(hk, pv->para_2d().size());
+        const int nrow = pv->para_2d().nrloc();
         if (td_p->field().gauge() == 2)
         {
             module_rt::folding_HR_td(hR, hk, kv.kvec_d[ik], td_p->endpoint_A(), td_p->get_phase_hybrid(), nrow, 1);
@@ -297,7 +297,7 @@ void ModuleIO::cal_velocity_basis_k(const UnitCell& ucell,
             hamilt::folding_HR(hR, hk, kv.kvec_d[ik], nrow, 1);
         }
         // 1.2 set S(k)
-        ModuleBase::GlobalFunc::ZEROS(sk, pv->para_2d().get_local_size());
+        ModuleBase::GlobalFunc::ZEROS(sk, pv->para_2d().size());
         if (td_p->field().gauge() == 2)
         {
             module_rt::folding_HR_td(sR, sk, kv.kvec_d[ik], td_p->endpoint_A(), td_p->get_phase_hybrid(), nrow, 1);
@@ -307,16 +307,16 @@ void ModuleIO::cal_velocity_basis_k(const UnitCell& ucell,
             hamilt::folding_HR(sR, sk, kv.kvec_d[ik], nrow, 1);
         }
         // 2. set inverse S(k) -> sk will be changed to sk_inv
-        int* ipiv = new int[pv->para_2d().get_local_size()];
+        int* ipiv = new int[pv->para_2d().size()];
         int info = 0;
         // 2.1 compute ipiv
-        ScalapackConnector::getrf(nlocal, nlocal, sk, 1, 1, pv->para_2d().get_desc(), ipiv, &info);
+        ScalapackConnector::getrf(nlocal, nlocal, sk, 1, 1, pv->para_2d().desc(), ipiv, &info);
         int lwork = -1;
         int liwotk = -1;
         std::vector<std::complex<double>> work(1, 0);
         std::vector<int> iwork(1, 0);
         // 2.2 compute work
-        ScalapackConnector::getri(nlocal, sk, 1, 1, pv->para_2d().get_desc(), ipiv, work.data(), &lwork, iwork.data(), &liwotk, &info);
+        ScalapackConnector::getri(nlocal, sk, 1, 1, pv->para_2d().desc(), ipiv, work.data(), &lwork, iwork.data(), &liwotk, &info);
         lwork = work[0].real();
         work.resize(lwork, 0);
         liwotk = iwork[0];
@@ -326,7 +326,7 @@ void ModuleIO::cal_velocity_basis_k(const UnitCell& ucell,
                                   sk, // return sk^-1
                                   1,
                                   1,
-                                  pv->para_2d().get_desc(),
+                                  pv->para_2d().desc(),
                                   ipiv,
                                   work.data(),
                                   &lwork,
@@ -339,7 +339,7 @@ void ModuleIO::cal_velocity_basis_k(const UnitCell& ucell,
         {
             // 3. set partial_H(k), partial_S(k) and r(k)
             // 3.1 set partial_H(k)
-            ModuleBase::GlobalFunc::ZEROS(partial_hk, pv->para_2d().get_local_size());
+            ModuleBase::GlobalFunc::ZEROS(partial_hk, pv->para_2d().size());
             if (td_p->field().gauge() == 2)
             {
                 module_rt::folding_partial_HR_td(ucell,
@@ -357,7 +357,7 @@ void ModuleIO::cal_velocity_basis_k(const UnitCell& ucell,
                 module_rt::folding_partial_HR(ucell, hR, partial_hk, kv.kvec_d[ik], i_alpha, nrow, 1);
             }
             // 3.2 set partial S(k)
-            ModuleBase::GlobalFunc::ZEROS(partial_sk, pv->para_2d().get_local_size());
+            ModuleBase::GlobalFunc::ZEROS(partial_sk, pv->para_2d().size());
             if (td_p->field().gauge() == 2)
             {
                 module_rt::folding_partial_HR_td(ucell,
@@ -375,7 +375,7 @@ void ModuleIO::cal_velocity_basis_k(const UnitCell& ucell,
                 module_rt::folding_partial_HR(ucell, sR, partial_sk, kv.kvec_d[ik], i_alpha, nrow, 1);
             }
             // 3.3 set r(k)
-            ModuleBase::GlobalFunc::ZEROS(rk, pv->para_2d().get_local_size());
+            ModuleBase::GlobalFunc::ZEROS(rk, pv->para_2d().size());
             // folding_rR(rR[i_alpha], partial_sk, rk, pv, kv.kvec_d[ik], nrow, 1);
             if (td_p->field().gauge() == 2)
             {
@@ -388,7 +388,7 @@ void ModuleIO::cal_velocity_basis_k(const UnitCell& ucell,
             // 4. calculate <\vu,k|v_a|\mu,k> = partial_Hk + IMAG_UNIT * (Hk * Sk_inv * rk) - IMAG_UNIT * (rk * Sk_inv *
             // Hk) - Hk * Sk_inv * partial_Sk
             // 4.1.1 Hk * Sk_inv (note 2.)
-            ModuleBase::GlobalFunc::ZEROS(h_is, pv->para_2d().get_local_size());
+            ModuleBase::GlobalFunc::ZEROS(h_is, pv->para_2d().size());
             ScalapackConnector::gemm(N_char,
                                      N_char,
                                      nlocal,
@@ -398,18 +398,18 @@ void ModuleIO::cal_velocity_basis_k(const UnitCell& ucell,
                                      hk,
                                      1,
                                      1,
-                                     pv->para_2d().get_desc(),
+                                     pv->para_2d().desc(),
                                      sk,
                                      1,
                                      1,
-                                     pv->para_2d().get_desc(),
+                                     pv->para_2d().desc(),
                                      zero_complex,
                                      h_is,
                                      1,
                                      1,
-                                     pv->para_2d().get_desc());
+                                     pv->para_2d().desc());
             // 4.1.2 (Hk * Sk_inv) * rk
-            ModuleBase::GlobalFunc::ZEROS(h_is_r, pv->para_2d().get_local_size());
+            ModuleBase::GlobalFunc::ZEROS(h_is_r, pv->para_2d().size());
             ScalapackConnector::gemm(N_char,
                                      N_char,
                                      nlocal,
@@ -419,18 +419,18 @@ void ModuleIO::cal_velocity_basis_k(const UnitCell& ucell,
                                      h_is,
                                      1,
                                      1,
-                                     pv->para_2d().get_desc(),
+                                     pv->para_2d().desc(),
                                      rk,
                                      1,
                                      1,
-                                     pv->para_2d().get_desc(),
+                                     pv->para_2d().desc(),
                                      zero_complex,
                                      h_is_r,
                                      1,
                                      1,
-                                     pv->para_2d().get_desc());
+                                     pv->para_2d().desc());
             // 4.2.1 rk * Sk_inv (note 2.)
-            ModuleBase::GlobalFunc::ZEROS(r_is, pv->para_2d().get_local_size());
+            ModuleBase::GlobalFunc::ZEROS(r_is, pv->para_2d().size());
             ScalapackConnector::gemm(N_char,
                                      N_char,
                                      nlocal,
@@ -440,18 +440,18 @@ void ModuleIO::cal_velocity_basis_k(const UnitCell& ucell,
                                      rk,
                                      1,
                                      1,
-                                     pv->para_2d().get_desc(),
+                                     pv->para_2d().desc(),
                                      sk,
                                      1,
                                      1,
-                                     pv->para_2d().get_desc(),
+                                     pv->para_2d().desc(),
                                      zero_complex,
                                      r_is,
                                      1,
                                      1,
-                                     pv->para_2d().get_desc());
+                                     pv->para_2d().desc());
             // 4.2.2 (rk * Sk_inv) * Hk
-            ModuleBase::GlobalFunc::ZEROS(r_is_h, pv->para_2d().get_local_size());
+            ModuleBase::GlobalFunc::ZEROS(r_is_h, pv->para_2d().size());
             ScalapackConnector::gemm(N_char,
                                      N_char,
                                      nlocal,
@@ -461,18 +461,18 @@ void ModuleIO::cal_velocity_basis_k(const UnitCell& ucell,
                                      r_is,
                                      1,
                                      1,
-                                     pv->para_2d().get_desc(),
+                                     pv->para_2d().desc(),
                                      hk,
                                      1,
                                      1,
-                                     pv->para_2d().get_desc(),
+                                     pv->para_2d().desc(),
                                      zero_complex,
                                      r_is_h,
                                      1,
                                      1,
-                                     pv->para_2d().get_desc());
+                                     pv->para_2d().desc());
             // 4.3.1 (Hk * Sk_inv) * partial_Sk
-            ModuleBase::GlobalFunc::ZEROS(h_is_ps, pv->para_2d().get_local_size());
+            ModuleBase::GlobalFunc::ZEROS(h_is_ps, pv->para_2d().size());
             ScalapackConnector::gemm(N_char,
                                      N_char,
                                      nlocal,
@@ -482,24 +482,24 @@ void ModuleIO::cal_velocity_basis_k(const UnitCell& ucell,
                                      h_is,
                                      1,
                                      1,
-                                     pv->para_2d().get_desc(),
+                                     pv->para_2d().desc(),
                                      partial_sk,
                                      1,
                                      1,
-                                     pv->para_2d().get_desc(),
+                                     pv->para_2d().desc(),
                                      zero_complex,
                                      h_is_ps,
                                      1,
                                      1,
-                                     pv->para_2d().get_desc());
+                                     pv->para_2d().desc());
             // 4.4 h_is_r will be changed to partial_Hk + IMAG_UNIT * (Hk * Sk_inv * rk)
-            ScalapackConnector::geadd('N', nlocal, nlocal, one_real, partial_hk, 1, 1, pv->para_2d().get_desc(), one_imag, h_is_r, 1, 1, pv->para_2d().get_desc());
+            ScalapackConnector::geadd('N', nlocal, nlocal, one_real, partial_hk, 1, 1, pv->para_2d().desc(), one_imag, h_is_r, 1, 1, pv->para_2d().desc());
             // 4.5 r_is_h will be changed to h_is_r - IMAG_UNIT * (rk * Sk_inv * Hk)
-            ScalapackConnector::geadd('N', nlocal, nlocal, one_real, h_is_r, 1, 1, pv->para_2d().get_desc(), neg_one_imag, r_is_h, 1, 1, pv->para_2d().get_desc());
+            ScalapackConnector::geadd('N', nlocal, nlocal, one_real, h_is_r, 1, 1, pv->para_2d().desc(), neg_one_imag, r_is_h, 1, 1, pv->para_2d().desc());
             // 4.6 h_is_ps will be changed to r_is_h - Hk * Sk_inv * partial_Sk
-            ScalapackConnector::geadd('N', nlocal, nlocal, one_real, r_is_h, 1, 1, pv->para_2d().get_desc(), neg_one_real, h_is_ps, 1, 1, pv->para_2d().get_desc());
+            ScalapackConnector::geadd('N', nlocal, nlocal, one_real, r_is_h, 1, 1, pv->para_2d().desc(), neg_one_real, h_is_ps, 1, 1, pv->para_2d().desc());
             // 5. copy h_is_ps to velocity_basis_k[ik][i_alpha]
-            BlasConnector::copy(pv->para_2d().get_local_size(), h_is_ps, 1, velocity_basis_k[ik][i_alpha], 1);
+            BlasConnector::copy(pv->para_2d().size(), h_is_ps, 1, velocity_basis_k[ik][i_alpha], 1);
         }
     }
 
@@ -532,7 +532,7 @@ void ModuleIO::cal_velocity_matrix(const psi::Psi<std::complex<double>>* psi,
     const std::complex<double> zero_complex = ModuleBase::ZERO;
     const int nlocal = PARAM.globalv.nlocal;
     const int nbands = PARAM.inp.nbands;
-    std::complex<double>* vk_c = new std::complex<double>[pv->ncol_bands * pv->nrow_bands]; // local one
+    std::complex<double>* vk_c = new std::complex<double>[pv->mo_repr_layout().size()]; // local one
     std::complex<double>* v_c = new std::complex<double>[pv->nloc_wfc];
 
     for (int ik = 0; ik < kv.get_nks(); ik++)
@@ -542,7 +542,7 @@ void ModuleIO::cal_velocity_matrix(const psi::Psi<std::complex<double>>* psi,
         // 2. set <\Psi_{n,\mu}|v_{\mu,\nu}|\Psi_{m,\nu}> = C^\dagger_{n,\mu} * v_{\mu,\nu} * C_{\nu,m}
         for (size_t i_alpha = 0; i_alpha != 3; ++i_alpha)
         {
-            ModuleBase::GlobalFunc::ZEROS(vk_c, pv->ncol_bands * pv->nrow_bands);
+            ModuleBase::GlobalFunc::ZEROS(vk_c, pv->mo_repr_layout().size());
             ModuleBase::GlobalFunc::ZEROS(v_c, pv->nloc_wfc);
             // v_c_{\mu,m} = v_{\mu,\nu} * C_{\nu,m}
             ScalapackConnector::gemm(N_char,
@@ -554,7 +554,7 @@ void ModuleIO::cal_velocity_matrix(const psi::Psi<std::complex<double>>* psi,
                                      velocity_basis_k[ik][i_alpha],
                                      1,
                                      1,
-                                     pv->para_2d().get_desc(),
+                                     pv->para_2d().desc(),
                                      psi[0].get_pointer(),
                                      1,
                                      1,
@@ -583,18 +583,18 @@ void ModuleIO::cal_velocity_matrix(const psi::Psi<std::complex<double>>* psi,
                                      vk_c,
                                      1,
                                      1,
-                                     pv->desc_Eij);
+                                     pv->mo_repr_layout().desc());
 
             for (int ir = 0; ir < PARAM.inp.nbands; ++ir)
             {
                 for (int ic = 0; ic < PARAM.inp.nbands; ++ic)
                 {
-                    if (pv->para_2d().in_this_processor(ir, ic))
+                    if (pv->mo_repr_layout().in_this_processor(ir, ic))
                     {
-                        // Taoni fix 2026-07-12: vk_c follows the local block-cyclic layout described by desc_Eij.
-                        const int local_row = pv->para_2d().global2local_row(ir);
-                        const int local_col = pv->para_2d().global2local_col(ic);
-                        const int irc = local_col * pv->para_2d().get_row_size() + local_row;
+                        // Taoni fix 2026-07-12: vk_c follows the local block-cyclic layout described by mo_repr_layout().
+                        const int local_row = pv->mo_repr_layout().irloc(ir);
+                        const int local_col = pv->mo_repr_layout().icloc(ic);
+                        const int irc = local_col * pv->mo_repr_layout().nrloc() + local_row;
                         velocity_k[ik][i_alpha](ir, ic) = vk_c[irc];
                     }
                 }
@@ -636,8 +636,8 @@ void ModuleIO::cal_current_comm_k(const UnitCell& ucell,
         rR[i_alpha] = new hamilt::HContainer<double>(pv);
         for (int ik = 0; ik < kv.get_nks(); ik++)
         {
-            velocity_basis_k[ik][i_alpha] = new std::complex<double>[pv->para_2d().get_local_size()];
-            ModuleBase::GlobalFunc::ZEROS(velocity_basis_k[ik][i_alpha], pv->para_2d().get_local_size());
+            velocity_basis_k[ik][i_alpha] = new std::complex<double>[pv->para_2d().size()];
+            ModuleBase::GlobalFunc::ZEROS(velocity_basis_k[ik][i_alpha], pv->para_2d().size());
             velocity_k[ik][i_alpha].create(nbands, nbands);
         }
     }
