@@ -27,7 +27,7 @@ namespace
 std::vector<std::unordered_map<int, std::vector<double>>> build_nlm(
     const UnitCell* ucell,
     const TwoCenterIntegrator* intor,
-    const Parallel_Orbitals* pv,
+    const hamilt::HContainer<double>& layout,
     const int iat0,
     const int T0,
     const int target_L,
@@ -47,10 +47,9 @@ std::vector<std::unordered_map<int, std::vector<double>>> build_nlm(
         const ModuleBase::Vector3<double>& tau1 = adjs.adjacent_tau[ad];
         const Atom* atom1 = &ucell->atoms[T1];
 
-        std::vector<int> all_indexes = pv->get_indexes_row(iat1);
-        std::vector<int> col_indexes = pv->get_indexes_col(iat1);
-        // insert col_indexes into all_indexes to get universal set with no repeat elements
-        all_indexes.insert(all_indexes.end(), col_indexes.begin(), col_indexes.end());
+        std::vector<int> all_indexes = layout.row_basis_offsets(iat1);
+        const std::vector<int> cols = layout.col_basis_offsets(iat1);
+        all_indexes.insert(all_indexes.end(), cols.begin(), cols.end());
         std::sort(all_indexes.begin(), all_indexes.end());
         all_indexes.erase(std::unique(all_indexes.begin(), all_indexes.end()), all_indexes.end());
         for (int iw1l = 0; iw1l < all_indexes.size(); iw1l += npol)
@@ -96,7 +95,7 @@ std::vector<std::unordered_map<int, std::vector<double>>> build_nlm(
 /// @brief accumulate force and stress contributions from all (ad1, ad2)
 ///        adjacent-atom pairs of one Hubbard atom iat0.
 void acc_fs_pairs(const UnitCell* ucell,
-                  const Parallel_Orbitals* pv,
+                  const hamilt::HContainer<double>& layout,
                   const int iat0,
                   const int T0,
                   const AdjacentAtomInfo& adjs,
@@ -142,7 +141,7 @@ void acc_fs_pairs(const UnitCell* ucell,
                 // calculate force
                 if (cal_force)
                 {
-                    cal_for_IJR_nao_r(iat1, iat2, pv,
+                    cal_for_IJR_nao_r(iat1, iat2, layout,
                                     nlm_tot[ad1], nlm_tot[ad2],
                                     pot_onsite, tmp.data(), nspin,
                                     force_tmp1, force_tmp2);
@@ -151,7 +150,7 @@ void acc_fs_pairs(const UnitCell* ucell,
                 // calculate stress
                 if (cal_stress)
                 {
-                    cal_str_IJR_nao_r(iat1, iat2, pv,
+                    cal_str_IJR_nao_r(iat1, iat2, layout,
                                      nlm_tot[ad1], nlm_tot[ad2],
                                      pot_onsite, tmp.data(), nspin,
                                      dis1, dis2, stress_local.data());
@@ -176,7 +175,7 @@ void cal_fs_nao_r_impl(const UnitCell* ucell,
 {
     ModuleBase::timer::start("DFTU_LCAO", "cal_fs_nao_r");
 
-    const Parallel_Orbitals* pv = dmR[0]->get_paraV();
+    const hamilt::HContainer<double>& layout = *dmR[0];
     std::vector<double> stress_tmp;
     if (cal_stress)
     {
@@ -232,7 +231,7 @@ void cal_fs_nao_r_impl(const UnitCell* ucell,
             const int tlp1 = 2 * target_L + 1;
             const AdjacentAtomInfo& adjs = adjs_all[atom_index_all[iat0]];
 
-            auto nlm_tot = build_nlm(ucell, intor, pv, iat0, T0, target_L, adjs);
+            auto nlm_tot = build_nlm(ucell, intor, layout, iat0, T0, target_L, adjs);
 
             // first iteration to calculate occupation matrix
             std::vector<double> occ(tlp1 * tlp1 * nspin, 0);
@@ -253,7 +252,7 @@ void cal_fs_nao_r_impl(const UnitCell* ucell,
             //     U*(1/2*delta(m, m')-occ(m, m'))<chi_m'|phi_{J,R'}>
             //   + <phi_{I,R}|chi_m> U*(1/2*delta(m, m')-occ(m, m'))
             //     d<chi_m'|phi_{J,R'}>/d tau_{J,alpha} * tau_{J,beta} ] for each pair of <IJR> atoms
-            acc_fs_pairs(ucell, pv, iat0, T0, adjs, nlm_tot, pot_onsite,
+            acc_fs_pairs(ucell, layout, iat0, T0, adjs, nlm_tot, pot_onsite,
                          dmR, nspin, cal_force, cal_stress, force_local, stress_local);
         }
 #pragma omp critical

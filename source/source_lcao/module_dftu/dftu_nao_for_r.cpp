@@ -11,7 +11,7 @@ namespace DFTU_LCAO
 
 void cal_for_IJR_nao_r(const int& iat1,
                      const int& iat2,
-                     const Parallel_Orbitals* pv,
+                     const hamilt::HContainer<double>& layout,
                      const std::unordered_map<int, std::vector<double>>& nlm1_all,
                      const std::unordered_map<int, std::vector<double>>& nlm2_all,
                      const std::vector<double>& pot_onsite_in,
@@ -32,8 +32,8 @@ void cal_for_IJR_nao_r(const int& iat1,
     // ---------------------------------------------
     // calculate the Nonlocal matrix for each pair of orbitals
     // ---------------------------------------------
-    std::vector<int> row_indexes = pv->get_indexes_row(iat1);
-    std::vector<int> col_indexes = pv->get_indexes_col(iat2);
+    const std::vector<int> row_indexes = layout.row_basis_offsets(iat1);
+    const std::vector<int> col_indexes = layout.col_basis_offsets(iat2);
     const int m_size = int(sqrt(pot_onsite_in.size() / nspin));
     const int m_size2 = m_size * m_size;
 

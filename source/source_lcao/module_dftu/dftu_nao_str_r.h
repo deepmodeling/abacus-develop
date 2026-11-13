@@ -8,7 +8,6 @@
 /// Naming convention: _r suffix denotes the real-space implementation,
 /// corresponding to _k for the k-space (legacy) one.
 
-#include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_base/vector3.h"
 #include "source_hamilt/module_hcontainer/hcontainer.h"
 
@@ -38,7 +37,7 @@ namespace DFTU_LCAO
  *
  * @param iat1        [in] global atom index of J1
  * @param iat2        [in] global atom index of J2
- * @param pv          [in] Parallel_Orbitals for basis index mapping
+ * @param layout      [in] density-matrix container layout for atom basis ranges
  * @param nlm1_all    [in] pre-computed <phi|chi> and derivatives for atom J1
  * @param nlm2_all    [in] pre-computed <phi|chi> and derivatives for atom J2
  * @param pot_onsite  [in] flattened V_U matrix
@@ -52,7 +51,7 @@ namespace DFTU_LCAO
  */
 void cal_str_IJR_nao_r(const int& iat1,
                       const int& iat2,
-                      const Parallel_Orbitals* pv,
+                      const hamilt::HContainer<double>& layout,
                       const std::unordered_map<int, std::vector<double>>& nlm1_all,
                       const std::unordered_map<int, std::vector<double>>& nlm2_all,
                       const std::vector<double>& pot_onsite_in,
