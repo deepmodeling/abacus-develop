@@ -330,7 +330,7 @@ NDArray<T, 2> NDArray<T, 2>::transpose() const
     const int result_cols = nrglb();
     const int nb = dist_->nb();
     const std::shared_ptr<const Parallel_Blkcyclic> result_dist
-        = make_frozen_distribution(result_rows, result_cols, nb, dist_);
+        = make_borrowed_distribution(result_rows, result_cols, nb, dist_);
     Matrix2d<T> result(result_dist);
     matrix2d_impl::scalapack::transpose(result.view(), view());
     return result;
@@ -363,7 +363,7 @@ NDArray<T, 2> NDArray<T, 2>::dagger() const
     const int result_cols = nrglb();
     const int nb = dist_->nb();
     const std::shared_ptr<const Parallel_Blkcyclic> result_dist
-        = make_frozen_distribution(result_rows, result_cols, nb, dist_);
+        = make_borrowed_distribution(result_rows, result_cols, nb, dist_);
     Matrix2d<T> result(result_dist);
     matrix2d_impl::scalapack::conjugate_transpose(result.view(), view());
     return result;
@@ -436,7 +436,7 @@ NDArray<T, 2> NDArray<T, 2>::matmul(const NDArray<T, 2>& other) const
 
     const int nb = dist_->nb();
     const std::shared_ptr<const Parallel_Blkcyclic> result_dist
-        = make_frozen_distribution(left_rows, result_cols, nb, dist_);
+        = make_borrowed_distribution(left_rows, result_cols, nb, dist_);
     Matrix2d<T> result(result_dist);
     matrix2d_impl::scalapack::matmul(result.view(), view(), other.view());
     return result;

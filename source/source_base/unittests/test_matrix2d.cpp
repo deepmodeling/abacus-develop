@@ -872,10 +872,10 @@ void check_distributed_matmul(const int left_rows,
                      MPI_COMM_WORLD);
     const int left_blacs_context = left.ictxt();
     const std::shared_ptr<const Parallel_Blkcyclic> right_distribution
-        = make_frozen_distribution(shared_cols,
-                                   right_cols,
-                                   block_size,
-                                   left_blacs_context);
+        = make_borrowed_distribution(shared_cols,
+                                     right_cols,
+                                     block_size,
+                                     left_blacs_context);
     Matrix2d<T> right(right_distribution);
     fill_global_values(left);
     fill_global_values(right, 10.0);
@@ -1097,7 +1097,7 @@ TEST(Matrix2dTest, DescriptorAddressStableAcrossOperators)
     Matrix2d<double> left(5, 4, grid.first, grid.second, block, MPI_COMM_WORLD);
     const int left_blacs_context = left.ictxt();
     const std::shared_ptr<const Parallel_Blkcyclic> right_distribution
-        = make_frozen_distribution(4, 6, block, left_blacs_context);
+        = make_borrowed_distribution(4, 6, block, left_blacs_context);
     Matrix2d<double> right(right_distribution);
     fill_global_values(left);
     fill_global_values(right, 10.0);

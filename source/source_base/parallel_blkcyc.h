@@ -160,9 +160,9 @@ class Parallel_Blkcyclic
     friend std::shared_ptr<const Parallel_Blkcyclic>
     make_frozen_distribution(int, int, int, int, int, MPI_Comm);
     friend std::shared_ptr<const Parallel_Blkcyclic>
-    make_frozen_distribution(int, int, int, int);
+    make_borrowed_distribution(int, int, int, int);
     friend std::shared_ptr<const Parallel_Blkcyclic>
-    make_frozen_distribution(
+    make_borrowed_distribution(
         int, int, int, const std::shared_ptr<const Parallel_Blkcyclic>&);
 #endif
 
@@ -220,13 +220,13 @@ std::shared_ptr<const Parallel_Blkcyclic> make_frozen_distribution(
     int nb,
     MPI_Comm comm);
 
-std::shared_ptr<const Parallel_Blkcyclic> make_frozen_distribution(
+std::shared_ptr<const Parallel_Blkcyclic> make_borrowed_distribution(
     int nrglb,
     int ncglb,
     int nb,
     int ictxt);
 
-std::shared_ptr<const Parallel_Blkcyclic> make_frozen_distribution(
+std::shared_ptr<const Parallel_Blkcyclic> make_borrowed_distribution(
     int nrglb,
     int ncglb,
     int nb,

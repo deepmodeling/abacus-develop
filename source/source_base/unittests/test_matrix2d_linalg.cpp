@@ -207,15 +207,15 @@ void check_distributed_solve(const Matrix2d<T>& host_matrix,
                        block_size,
                        MPI_COMM_WORLD);
     const std::shared_ptr<const Parallel_Blkcyclic> solution_dist
-        = make_frozen_distribution(host_solution.nrglb(),
-                                   host_solution.ncglb(),
-                                   block_size,
-                                   matrix.ictxt());
+        = make_borrowed_distribution(host_solution.nrglb(),
+                                     host_solution.ncglb(),
+                                     block_size,
+                                     matrix.ictxt());
     const std::shared_ptr<const Parallel_Blkcyclic> rhs_dist
-        = make_frozen_distribution(host_rhs.nrglb(),
-                                   host_rhs.ncglb(),
-                                   block_size,
-                                   matrix.ictxt());
+        = make_borrowed_distribution(host_rhs.nrglb(),
+                                     host_rhs.ncglb(),
+                                     block_size,
+                                     matrix.ictxt());
     Matrix2d<T> solution(solution_dist);
     Matrix2d<T> rhs(rhs_dist);
     matrix.scatter(host_matrix);

@@ -321,7 +321,7 @@ std::shared_ptr<const Parallel_Blkcyclic> make_frozen_distribution(
     return dist;
 }
 
-std::shared_ptr<const Parallel_Blkcyclic> make_frozen_distribution(
+std::shared_ptr<const Parallel_Blkcyclic> make_borrowed_distribution(
     const int nrglb,
     const int ncglb,
     const int nb,
@@ -333,7 +333,7 @@ std::shared_ptr<const Parallel_Blkcyclic> make_frozen_distribution(
     return dist;
 }
 
-std::shared_ptr<const Parallel_Blkcyclic> make_frozen_distribution(
+std::shared_ptr<const Parallel_Blkcyclic> make_borrowed_distribution(
     const int nrglb,
     const int ncglb,
     const int nb,
