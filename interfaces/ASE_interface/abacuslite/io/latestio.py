@@ -39,9 +39,12 @@ def find_eig_occ_files(directory: Path,
 
     When ``running_log_lines`` is given, only the files announced by the
     current run are returned, so stale files left in a reused output
-    directory by an earlier run are ignored.  If the log carries no such
-    announcement (older builds or hand-written fixtures), the filename
-    based discovery below is used instead.
+    directory by an earlier run are ignored.  An announced file that is
+    missing is dropped instead of falling back to an unannounced file: the
+    log is authoritative for the layout of the current run, and an old
+    ``eig_occ.txt`` must not be reported as the current results.  If the log
+    carries no such announcement (older builds or hand-written fixtures),
+    the filename based discovery below is used instead.
 
     Parameters
     ----------
@@ -63,13 +66,17 @@ def find_eig_occ_files(directory: Path,
             if match is None:
                 continue
             candidate = directory / Path(match.group(1)).name
-            if candidate.exists() and candidate not in announced:
+            if candidate not in announced:
                 announced.append(candidate)
         if announced:
             def _step_number(path: Path) -> int:
                 match = re.search(r'g(\d+)\.txt$', path.name)
                 return int(match.group(1)) if match else 0
-            return sorted(announced, key=_step_number)
+            # The announcement set decides the layout. A missing announced
+            # file is reported as missing (by its absence) rather than being
+            # replaced by a stale unannounced file from an earlier run.
+            existing = [path for path in announced if path.exists()]
+            return sorted(existing, key=_step_number)
 
     single = directory / 'eig_occ.txt'
     if single.exists():
