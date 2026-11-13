@@ -2,7 +2,7 @@
 #define MD_TEST_FIXTURE_H
 
 #include "gtest/gtest.h"
-#include "lj_test_solver.h"
+#include "source_md/unittests/lj_test_solver.h"
 #include "source_io/module_parameter/input_parameter.h"
 #include "source_md/md_base.h"
 #include "source_cell/dom_decomp.h"
