@@ -279,7 +279,7 @@ TEST(WriteHsk, WritesHkAndSkForEveryKPoint)
     }
 
     std::ofstream ofs = open_running_log();
-    ModuleIO::write_hsk("", nspin, nks, nkstot, ik2iktot, isk, &fake, pv,
+    ModuleIO::write_hsk("", nspin, nks, nkstot, ik2iktot, isk, &fake, pv.para_2d(),
                         gamma_only, k_out_app, k_istep, k_out_type, 8, dim,
                         "cg", test_rank, ofs);
 
@@ -357,7 +357,7 @@ TEST(WriteHsk, SkipsOverlapForSpinDownChannel)
     }
 
     std::ofstream ofs = open_running_log();
-    ModuleIO::write_hsk("", nspin, nks, nkstot, ik2iktot, isk, &fake, pv,
+    ModuleIO::write_hsk("", nspin, nks, nkstot, ik2iktot, isk, &fake, pv.para_2d(),
                         gamma_only, k_out_app, k_istep, k_out_type, 8, dim,
                         "cg", test_rank, ofs);
 
@@ -418,7 +418,7 @@ TEST(WriteHsk, WritesComplexKMatrix)
 
     std::ofstream ofs = open_running_log();
     ModuleIO::write_hsk<std::complex<double>>("", nspin, nks, nkstot,
-                                              ik2iktot, isk, &fake, pv,
+                                              ik2iktot, isk, &fake, pv.para_2d(),
                                               gamma_only, k_out_app, k_istep,
                                               k_out_type, 8, dim, "cg",
                                               test_rank, ofs);
@@ -496,7 +496,7 @@ TEST(WriteHsk, Mode2OverwritesSameIstep)
     remove_test_file(s_fn);
 
     std::ofstream ofs = open_running_log();
-    ModuleIO::write_hsk("", nspin, nks, nkstot, ik2iktot, isk, &fake, pv,
+    ModuleIO::write_hsk("", nspin, nks, nkstot, ik2iktot, isk, &fake, pv.para_2d(),
                         gamma_only, out_app_flag, istep, out_type, precision, dim,
                         "cg", test_rank, ofs);
 
@@ -508,7 +508,7 @@ TEST(WriteHsk, Mode2OverwritesSameIstep)
                       distribute_matrix(pv, sk_second, dim));
 
     diag_world_barrier();
-    ModuleIO::write_hsk("", nspin, nks, nkstot, ik2iktot, isk, &fake, pv,
+    ModuleIO::write_hsk("", nspin, nks, nkstot, ik2iktot, isk, &fake, pv.para_2d(),
                         gamma_only, out_app_flag, istep, out_type, precision, dim,
                         "cg", test_rank, ofs);
 

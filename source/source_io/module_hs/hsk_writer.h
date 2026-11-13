@@ -5,15 +5,15 @@
 #include <string>
 #include <vector>
 
-#include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_hamilt/hamilt.h"
 
 // mohan note: this file holds the H(k)/S(k) writer
 // (formerly write_hsk in write_hs.h / write_hs.hpp).
 
+class Parallel_Blkcyclic;
+
 namespace ModuleIO
 {
-
 template <typename T>
 void write_hsk(const std::string& global_out_dir,
                const int nspin,
@@ -22,7 +22,7 @@ void write_hsk(const std::string& global_out_dir,
                const std::vector<int>& ik2iktot,
                const std::vector<int>& isk,
                hamilt::Hamilt<T>* p_hamilt,
-               const Parallel_Orbitals& pv,
+               const Parallel_Blkcyclic& dist,
                const bool gamma_only,
                const int out_app_flag,
                const int istep,

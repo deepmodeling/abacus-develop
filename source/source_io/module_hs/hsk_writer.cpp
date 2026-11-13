@@ -1,6 +1,7 @@
 #include "hsk_writer.h"
 #include "hs_dense_io.h"
 #include "source_base/module_out/filename.h" // use filename_output function
+#include "source_base/parallel_blkcyc.h"
 #include <complex>
 
 template <typename T>
@@ -12,7 +13,7 @@ void ModuleIO::write_hsk(
         const std::vector<int> &ik2iktot,
         const std::vector<int> &isk,
         hamilt::Hamilt<T>* p_hamilt,
-        const Parallel_Orbitals &pv,
+        const Parallel_Blkcyclic &dist,
         const bool gamma_only,
         const int out_app_flag,
         const int istep,
@@ -62,7 +63,7 @@ void ModuleIO::write_hsk(
                 1,
                 append_mat,
                 h_fn,
-                pv.para_2d(),
+                dist,
                 drank,
                 ks_solver);
 
@@ -89,7 +90,7 @@ void ModuleIO::write_hsk(
                 1,
                 append_mat,
                 s_fn,
-                pv.para_2d(),
+                dist,
                 drank,
                 ks_solver);
     } // end ik
@@ -99,12 +100,12 @@ void ModuleIO::write_hsk(
 template void ModuleIO::write_hsk<double>(
     const std::string&, const int, const int, const int,
     const std::vector<int>&, const std::vector<int>&,
-    hamilt::Hamilt<double>*, const Parallel_Orbitals&,
+    hamilt::Hamilt<double>*, const Parallel_Blkcyclic&,
     const bool, const int, const int, const int, const int,
     const int, const std::string&, const int, std::ofstream&);
 template void ModuleIO::write_hsk<std::complex<double>>(
     const std::string&, const int, const int, const int,
     const std::vector<int>&, const std::vector<int>&,
-    hamilt::Hamilt<std::complex<double>>*, const Parallel_Orbitals&,
+    hamilt::Hamilt<std::complex<double>>*, const Parallel_Blkcyclic&,
     const bool, const int, const int, const int, const int,
     const int, const std::string&, const int, std::ofstream&);
