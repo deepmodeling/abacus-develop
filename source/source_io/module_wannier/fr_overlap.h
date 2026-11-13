@@ -4,12 +4,14 @@
 #include <complex>
 #include <functional>
 #include <memory>
+#include <vector>
 #include "source_basis/module_ao/orb_read.h"
-#include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_cell/unitcell.h"
 #include "source_hamilt/module_hcontainer/hcontainer.h"
 #include "source_base/math_lebedev_laikov.h"
+
+class Parallel_Orbitals;
 
 
 template <typename T>
@@ -42,11 +44,12 @@ public:
     }
 
 protected:
-  void initialize_FR(const Grid_Driver* GridD, const Parallel_Orbitals* paraV);
+  void initialize_FR(const Grid_Driver* GridD);
 
   void cal_FR_IJR(const int& iat1,
                   const int& iat2,
-                  const Parallel_Orbitals* paraV,
+                  const std::vector<int>& row_indexes,
+                  const std::vector<int>& col_indexes,
                   const ModuleBase::Vector3<double>& dtau,
                   T* data_pointer);
 

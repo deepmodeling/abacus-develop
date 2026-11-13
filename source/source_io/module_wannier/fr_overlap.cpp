@@ -28,7 +28,7 @@ void FR_overlap<T>::set_parameters(fr_ptr fr_in,
     this->radial_grid_num = radial_grid_num;
     this->Leb_grid.reset(new ModuleBase::Lebedev_laikov_grid(degree));
     this->Leb_grid->generate_grid_points();
-    this->initialize_FR(GridD_in, paraV);
+    this->initialize_FR(GridD_in);
 }
 
 template <typename T>
@@ -59,7 +59,7 @@ FR_overlap<T>::~FR_overlap()
 }
 
 template <typename T>
-void FR_overlap<T>::initialize_FR(const Grid_Driver* GridD, const Parallel_Orbitals* paraV)
+void FR_overlap<T>::initialize_FR(const Grid_Driver* GridD)
 {
     ModuleBase::TITLE("FR_overlap", "initialize_FR");
     ModuleBase::timer::start("FR_overlap", "initialize_FR");
@@ -75,7 +75,7 @@ void FR_overlap<T>::initialize_FR(const Grid_Driver* GridD, const Parallel_Orbit
             const int T2 = adjs.ntype[ad];
             const int I2 = adjs.natom[ad];
             int iat2 = ucell->itia2iat(T2, I2);
-            if (paraV->is_invalid_atom_pair(iat1, iat2))
+            if (!FR_container->owns_atom_pair(iat1, iat2))
             {
                 continue;
             }
@@ -89,8 +89,7 @@ void FR_overlap<T>::initialize_FR(const Grid_Driver* GridD, const Parallel_Orbit
             {
                 continue;
             }
-            hamilt::AtomPair<T> tmp(iat1, iat2, R_index.x, R_index.y, R_index.z, paraV);
-            FR_container->insert_pair(tmp);
+            FR_container->insert_pair(iat1, iat2, R_index);
         }
     }
     // allocate the memory of BaseMatrix in FR_container, and set the new values to zero
@@ -112,7 +111,8 @@ void FR_overlap<T>::calculate_FR()
         hamilt::AtomPair<T>& tmp = this->FR_container->get_atom_pair(iap);
         int iat1 = tmp.get_atom_i();
         int iat2 = tmp.get_atom_j();
-        const Parallel_Orbitals* paraV = tmp.get_paraV();
+        const std::vector<int> row_indexes = this->FR_container->row_basis_offsets(iat1);
+        const std::vector<int> col_indexes = this->FR_container->col_basis_offsets(iat2);
 
         for (int iR = 0; iR < tmp.get_R_size(); ++iR)
         {
@@ -120,7 +120,7 @@ void FR_overlap<T>::calculate_FR()
             ModuleBase::Vector3<int> R_vector(R_index);
             auto dtau = ucell->cal_dtau(iat1, iat2, R_vector) * ucell->lat0;
             T* data_pointer = tmp.get_pointer(iR);
-            this->cal_FR_IJR(iat1, iat2, paraV, dtau, data_pointer);
+            this->cal_FR_IJR(iat1, iat2, row_indexes, col_indexes, dtau, data_pointer);
         }
     }
 
@@ -130,7 +130,8 @@ void FR_overlap<T>::calculate_FR()
 template <typename T>
 void FR_overlap<T>::cal_FR_IJR(const int& iat1,
                                const int& iat2,
-                               const Parallel_Orbitals* paraV,
+                               const std::vector<int>& row_indexes,
+                               const std::vector<int>& col_indexes,
                                const ModuleBase::Vector3<double>& dtau,
                                T* data_pointer)
 {
@@ -167,9 +168,6 @@ void FR_overlap<T>::cal_FR_IJR(const int& iat1,
     // ---------------------------------------------
     // calculate the overlap matrix for each pair of orbitals
     // ---------------------------------------------
-    auto row_indexes = paraV->get_indexes_row(iat1);
-    auto col_indexes = paraV->get_indexes_col(iat2);
-
     std::set<std::pair<int, int>> LN_pair1;
     std::set<std::pair<int, int>> LN_pair2;
     for (int iw1l = 0; iw1l < row_indexes.size(); iw1l += npol)
