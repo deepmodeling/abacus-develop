@@ -46,6 +46,14 @@ namespace
 {
 constexpr double kDoubleThreshold = 1e-12;
 
+/// Elements with a magnitude below this value are dropped by the assembly
+/// layer; the expected matrix below applies the same cutoff.
+constexpr double kLThreshold = 1e-10;
+
+/// Tolerance for comparing against CSR values, which the writer prints with
+/// precision 8 (eight digits after the decimal point).
+constexpr double kCsrValueTolerance = 1e-6;
+
 /// @brief Minimal NonlocalInfoBase stub for unit-testing the Angmom_op
 ///        constructor. Only get_rcutmax_Beta is actually called; the other
 ///        ten overrides return safe placeholders.
@@ -138,9 +146,8 @@ void init_serial_pv(const int dim, Parallel_Orbitals& pv)
     pv.para_2d().set_serial(dim, dim);
 }
 
-/// @brief Read the first line containing "# size of this matrix" from an
-///        L{x,y,z}_nao.csr file to confirm it was written with a nonzero
-///        dimension (the file body itself is produced by the CSR printout).
+/// @brief Read the leading lines of an L{x,y,z}_nao.csr file so the test can
+///        check the provenance line and the CSR banner.
 std::string read_file_head(const std::string& path)
 {
     std::ifstream ifs(path);
@@ -153,6 +160,302 @@ std::string read_file_head(const std::string& path)
         oss << line << '\n';
     }
     return oss.str();
+}
+
+/// @brief One Bravais-vector block read back from a *_nao.csr file.
+struct CsrBlock
+{
+    int rx = 0;
+    int ry = 0;
+    int rz = 0;
+    int nnz = 0;
+    std::vector<double> values;
+    std::vector<int> columns;
+    std::vector<int> row_ptrs;
+};
+
+/// @brief Accept only a line made of exactly four integers, which is the
+///        "Rx Ry Rz nnz" header of one R block.  Every other non-comment line
+///        is either shorter (UnitCell header) or longer (data).
+bool parse_block_header(const std::string& line, CsrBlock& block)
+{
+    std::istringstream iss(line);
+    int rx = 0;
+    int ry = 0;
+    int rz = 0;
+    int nnz = 0;
+    if (!(iss >> rx >> ry >> rz >> nnz))
+    {
+        return false;
+    }
+    std::string trailing;
+    if (iss >> trailing)
+    {
+        return false;
+    }
+    block.rx = rx;
+    block.ry = ry;
+    block.rz = rz;
+    block.nnz = nnz;
+    return true;
+}
+
+/// @brief Parse every R block of an L{x,y,z}_nao.csr file.  The writer emits
+///        "Rx Ry Rz nnz", then " # CSR values", " # CSR column indices" and
+///        " # CSR row pointers" sections, each of which may wrap over lines.
+std::vector<CsrBlock> read_csr_blocks(const std::string& path)
+{
+    enum Section
+    {
+        kHeader,
+        kValues,
+        kColumns,
+        kRowPtrs
+    };
+
+    std::ifstream ifs(path);
+    std::vector<CsrBlock> blocks;
+    std::string line;
+    Section section = kHeader;
+    CsrBlock current;
+    int dim = 0;
+
+    while (std::getline(ifs, line))
+    {
+        if (line.find("# number of localized basis") != std::string::npos)
+        {
+            std::istringstream iss(line);
+            iss >> dim;
+            continue;
+        }
+        if (line.find("# CSR values") != std::string::npos)
+        {
+            section = kValues;
+            continue;
+        }
+        if (line.find("# CSR column indices") != std::string::npos)
+        {
+            section = kColumns;
+            continue;
+        }
+        if (line.find("# CSR row pointers") != std::string::npos)
+        {
+            section = kRowPtrs;
+            continue;
+        }
+        if (line.find('#') != std::string::npos)
+        {
+            continue; // provenance, banner and count comments
+        }
+        if (line.find_first_not_of(" \t\r") == std::string::npos)
+        {
+            continue; // blank separator between sections
+        }
+
+        if (section == kHeader)
+        {
+            parse_block_header(line, current);
+            continue;
+        }
+
+        std::istringstream iss(line);
+        if (section == kValues)
+        {
+            double value = 0.0;
+            while (iss >> value)
+            {
+                current.values.push_back(value);
+            }
+            if (static_cast<int>(current.values.size()) == current.nnz)
+            {
+                section = kHeader;
+            }
+        }
+        else if (section == kColumns)
+        {
+            int column = 0;
+            while (iss >> column)
+            {
+                current.columns.push_back(column);
+            }
+            if (static_cast<int>(current.columns.size()) == current.nnz)
+            {
+                section = kHeader;
+            }
+        }
+        else
+        {
+            int row_ptr = 0;
+            while (iss >> row_ptr)
+            {
+                current.row_ptrs.push_back(row_ptr);
+            }
+            if (static_cast<int>(current.row_ptrs.size()) == dim + 1)
+            {
+                blocks.push_back(current);
+                current = CsrBlock();
+                section = kHeader;
+            }
+        }
+    }
+    return blocks;
+}
+
+/// @brief Dense lookup inside one CSR block; missing entries read as zero.
+double csr_value(const CsrBlock& block, const int row, const int col)
+{
+    const int begin = block.row_ptrs[row];
+    const int end = block.row_ptrs[row + 1];
+    for (int k = begin; k < end; ++k)
+    {
+        if (block.columns[k] == col)
+        {
+            return block.values[k];
+        }
+    }
+    return 0.0;
+}
+
+/// @brief Position of a signed magnetic quantum number inside its (2l+1)
+///        block, using the ABACUS real-harmonic order 0, +1, -1, +2, -2, ...
+int m_position(const int m)
+{
+    if (m > 0)
+    {
+        return 2 * m - 1;
+    }
+    if (m < 0)
+    {
+        return -2 * m;
+    }
+    return 0;
+}
+
+/// @brief First local orbital index of every angular-momentum block of one
+///        atom.  Re-derived here from l_nchi instead of sharing the
+///        production helper, so a change of the production mapping is caught.
+std::vector<int> block_offsets(const Atom& atom)
+{
+    std::vector<int> offsets(atom.nwl + 1, 0);
+    for (int l = 0; l < atom.nwl; ++l)
+    {
+        const int block_size = atom.l_nchi[l] * (2 * l + 1);
+        offsets[l + 1] = offsets[l] + block_size;
+    }
+    return offsets;
+}
+
+/// @brief Home-cell L matrix evaluated directly with the Lx/Ly/Lz kernels.
+///        The one-atom cell makes every pair a self pair, so the displacement
+///        handed to the kernels is zero.
+std::vector<std::vector<double>> expected_l_matrix(
+    const std::unique_ptr<TwoCenterIntegrator>& calculator,
+    const Atom& atom,
+    const char dir)
+{
+    const std::vector<int> offsets = block_offsets(atom);
+    std::vector<std::vector<double>> mat(atom.nw, std::vector<double>(atom.nw, 0.0));
+    const ModuleBase::Vector3<double> dtau(0.0, 0.0, 0.0);
+
+    for (int li = 0; li <= atom.nwl; ++li)
+    {
+        const int block_size_i = 2 * li + 1;
+        for (int iz = 0; iz < atom.l_nchi[li]; ++iz)
+        {
+            for (int mi = -li; mi <= li; ++mi)
+            {
+                const int iw_i = offsets[li] + iz * block_size_i + m_position(mi);
+                for (int lj = 0; lj <= atom.nwl; ++lj)
+                {
+                    const int block_size_j = 2 * lj + 1;
+                    for (int jz = 0; jz < atom.l_nchi[lj]; ++jz)
+                    {
+                        for (int mj = -lj; mj <= lj; ++mj)
+                        {
+                            std::complex<double> val(0.0, 0.0);
+                            if (dir == 'x')
+                            {
+                                val = ModuleIO::cal_LxijR(calculator,
+                                    0, 0, li, iz, mi, 0, 0, lj, jz, mj, dtau);
+                            }
+                            else if (dir == 'y')
+                            {
+                                val = ModuleIO::cal_LyijR(calculator,
+                                    0, 0, li, iz, mi, 0, 0, lj, jz, mj, dtau);
+                            }
+                            else
+                            {
+                                val = ModuleIO::cal_LzijR(calculator,
+                                    0, 0, li, iz, mi, 0, 0, lj, jz, mj, dtau);
+                            }
+
+                            if (std::fabs(val.imag()) > kLThreshold)
+                            {
+                                const int iw_j = offsets[lj] + jz * block_size_j + m_position(mj);
+                                mat[iw_i][iw_j] = val.imag();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return mat;
+}
+
+/// @brief Compare a written CSR block against the expected dense matrix.
+void expect_block_matches(const CsrBlock& block, const std::vector<std::vector<double>>& expected)
+{
+    const int dim = static_cast<int>(expected.size());
+    ASSERT_EQ(static_cast<int>(block.row_ptrs.size()), dim + 1);
+    ASSERT_EQ(static_cast<int>(block.columns.size()), block.nnz);
+    ASSERT_EQ(static_cast<int>(block.values.size()), block.nnz);
+
+    for (int row = 0; row < dim; ++row)
+    {
+        const int begin = block.row_ptrs[row];
+        const int end = block.row_ptrs[row + 1];
+        ASSERT_GE(begin, 0);
+        ASSERT_LE(begin, end);
+        ASSERT_LE(end, block.nnz);
+
+        std::vector<double> dense(dim, 0.0);
+        for (int k = begin; k < end; ++k)
+        {
+            const int col = block.columns[k];
+            ASSERT_GE(col, 0);
+            ASSERT_LT(col, dim);
+            dense[col] = block.values[k];
+        }
+        for (int col = 0; col < dim; ++col)
+        {
+            EXPECT_NEAR(dense[col], expected[row][col], kCsrValueTolerance)
+                << "CSR row " << row << ", column " << col;
+        }
+    }
+}
+
+/// @brief Anchor the p block of Lz to the analytic 3x3 matrix documented at
+///        the top of this file: px and py couple as -i and +i while pz is
+///        inert.  The writer stores the imaginary part, so -1 and +1 appear.
+void expect_lz_p_block(const CsrBlock& block, const Atom& atom)
+{
+    const std::vector<int> offsets = block_offsets(atom);
+    const int p_start = offsets[1];
+    const int p_block_size = 3;
+    const int px_position = m_position(1);
+    const int py_position = m_position(-1);
+
+    for (int shell = 0; shell < atom.l_nchi[1]; ++shell)
+    {
+        const int px = p_start + shell * p_block_size + px_position;
+        const int py = p_start + shell * p_block_size + py_position;
+        EXPECT_NEAR(csr_value(block, px, py), -1.0, kCsrValueTolerance);
+        EXPECT_NEAR(csr_value(block, py, px), 1.0, kCsrValueTolerance);
+        // A purely imaginary Hermitian block has a vanishing diagonal.
+        EXPECT_NEAR(csr_value(block, px, px), 0.0, kCsrValueTolerance);
+        EXPECT_NEAR(csr_value(block, py, py), 0.0, kCsrValueTolerance);
+    }
 }
 } // namespace
 
@@ -281,10 +584,11 @@ TEST_F(CalpLpRTest, CalLyijRTest)
 }
 
 // ---------------------------------------------------------------------------
-// Assembled-path smoke test: construct Angmom_op with a minimal UnitCell and
-// exercise calculate() end-to-end.  The CSR writer emits three files, each
-// with the full header and a nonzero matrix body; the numerical values are
-// checked in a follow-up commit.
+// Assembled-path test: construct Angmom_op with a minimal UnitCell and
+// exercise calculate() end-to-end.  The writer emits one CSR block per
+// Bravais vector for each component; every block is read back and compared
+// with the L kernels evaluated on an independently tabulated two-center
+// table, so index mapping, thresholding and the CSR layout are all covered.
 // ---------------------------------------------------------------------------
 TEST(AngmomOpAssembly, WritesThreeCsrFiles)
 {
@@ -323,12 +627,50 @@ TEST(AngmomOpAssembly, WritesThreeCsrFiles)
     EXPECT_TRUE(ly_fs.is_open()) << ly_path;
     EXPECT_TRUE(lz_fs.is_open()) << lz_path;
 
-    // A zero-matrix write would still open the file and emit metadata; the CSR
-    // banner appears in the body and confirms assemble_angular_momentum filled
-    // at least one (R, i, j) block.
+    // The provenance line is one-based (Ionic_Step 1 for istep = 0) and the
+    // body must carry the CSR banner that precedes the matrix blocks.
     const std::string lx_head = read_file_head(lx_path);
     EXPECT_THAT(lx_head, ::testing::HasSubstr("Ionic_Step"));
     EXPECT_THAT(lx_head, ::testing::HasSubstr("CSR Format"));
+
+    // Independent oracle: tabulate the same two-center table the constructor
+    // builds, then evaluate the kernels directly.  The assembled values are
+    // checked against the kernels, not against hard-coded numbers.
+    ModuleBase::SphericalBesselTransformer sbt(true);
+    const std::string oracle_orbital = orbital_dir + ucell.orbital_fn[0];
+    RadialCollection oracle_orbs;
+    oracle_orbs.build(1, &oracle_orbital, 'o');
+    oracle_orbs.set_transformer(sbt);
+    const double orbital_rcut = oracle_orbs.rcut_max();
+    const int oracle_ngrid = int(orbital_rcut / 0.01) + 1;
+    const double oracle_cutoff = 2.0 * orbital_rcut;
+    oracle_orbs.set_uniform_grid(true, oracle_ngrid, oracle_cutoff, 'i', true);
+    std::unique_ptr<TwoCenterIntegrator> oracle_calculator(new TwoCenterIntegrator);
+    oracle_calculator->tabulate(oracle_orbs, oracle_orbs, 'S', oracle_ngrid, oracle_cutoff);
+
+    const std::vector<std::string> paths = {lx_path, ly_path, lz_path};
+    const std::vector<char> components = {'x', 'y', 'z'};
+    std::vector<std::vector<CsrBlock>> all_blocks;
+    for (size_t ic = 0; ic < paths.size(); ++ic)
+    {
+        const std::vector<CsrBlock> blocks = read_csr_blocks(paths[ic]);
+        // The single atom has no periodic images inside the search radius,
+        // so exactly the home-cell block must be present.
+        ASSERT_EQ(blocks.size(), 1u) << paths[ic];
+        EXPECT_EQ(blocks[0].rx, 0);
+        EXPECT_EQ(blocks[0].ry, 0);
+        EXPECT_EQ(blocks[0].rz, 0);
+        EXPECT_GT(blocks[0].nnz, 0) << paths[ic];
+
+        const std::vector<std::vector<double>> expected =
+            expected_l_matrix(oracle_calculator, ucell.atoms[0], components[ic]);
+        expect_block_matches(blocks[0], expected);
+        all_blocks.push_back(blocks);
+    }
+
+    // Analytic anchor for the p block of Lz, as documented at the top of this
+    // file: <px|Lz|py> = -i and <py|Lz|px> = +i, independent of the oracle.
+    expect_lz_p_block(all_blocks[2][0], ucell.atoms[0]);
 }
 
 int main(int argc, char **argv)
