@@ -1,4 +1,4 @@
-#include "esolver_snap.h"
+#include "snap_potential.h"
 
 #include "source_base/constants.h"
 #include "source_base/parallel_reduce.h"
@@ -13,7 +13,7 @@
 #include <iostream>
 #include <stdexcept>
 
-namespace ModuleESolver
+namespace ModuleMD
 {
 
 namespace
@@ -65,16 +65,15 @@ ModuleMD::SNAP::Neighbor make_neighbor(const NeighborAtom& center,
 }
 }
 
-ESolver_SNAP::ESolver_SNAP(const std::string& coefficient_file,
+SnapPotential::SnapPotential(const std::string& coefficient_file,
                            const std::string& parameter_file,
                            std::ofstream& running_log,
                            const int rank)
     : coefficient_file_(coefficient_file), parameter_file_(parameter_file), running_log_(running_log), rank_(rank)
 {
-    classname = "ESolver_SNAP";
 }
 
-void ESolver_SNAP::initialize(const std::vector<std::string>& labels)
+void SnapPotential::initialize(const std::vector<std::string>& labels)
 {
     std::string error;
     if (!model_.load(coefficient_file_, parameter_file_, labels, error))
@@ -99,12 +98,11 @@ void ESolver_SNAP::initialize(const std::vector<std::string>& labels)
         const std::string message = std::string("Invalid SNAP model: ") + error.what();
         fail(message, rank_);
     }
-    snap_virial_.create(3, 3);
 }
 
-void ESolver_SNAP::before_all_runners(BaseCell& cell, const Input_para& inp)
+void SnapPotential::initialize(BaseCell& cell, const Input_para& inp)
 {
-    inp_ = &inp;
+    static_cast<void>(inp);
     if (cell.kind() == BaseCell::Kind::mdcell)
     {
         MDCell& mdcell = static_cast<MDCell&>(cell);
@@ -120,25 +118,26 @@ void ESolver_SNAP::before_all_runners(BaseCell& cell, const Input_para& inp)
         labels.push_back(ucell.atoms[it].label);
     }
     initialize(labels);
-    snap_force_.create(ucell.nat, 3);
 }
 
-void ESolver_SNAP::runner(BaseCell& cell, const int istep) try
+void SnapPotential::compute(BaseCell& cell,
+                            double& energy,
+                            ModuleBase::matrix& force,
+                            ModuleBase::matrix& stress) try
 {
-    static_cast<void>(istep);
     if (!calculator_)
     {
         fail("SNAP solver was not initialized.", rank_);
     }
-    snap_potential_ = 0.0;
-    snap_virial_.zero_out();
+    energy = 0.0;
+    stress.zero_out();
 
     if (cell.kind() == BaseCell::Kind::mdcell)
     {
         MDCell& mdcell = static_cast<MDCell&>(cell);
         if (!mdcell.has_neighbor_search())
         {
-            fail("MDCell neighbors must be prepared before ESolver_SNAP::runner().", rank_);
+            fail("MDCell neighbors must be prepared before SnapPotential::runner().", rank_);
         }
         std::vector<LocalAtom>& owned_atoms = mdcell.owned_atoms();
         const std::vector<NeighborAtom>& all_atoms = mdcell.neighbor_search().get_all_atoms();
@@ -171,14 +170,14 @@ void ESolver_SNAP::runner(BaseCell& cell, const int istep) try
             const std::size_t center_index = static_cast<std::size_t>(i);
             contribution.add(center_index, neighbor_indices, neighbors, result);
         }
-        snap_potential_ = contribution.energy() / ModuleBase::Ry_to_eV;
+        energy = contribution.energy() / ModuleBase::Ry_to_eV;
         const double virial_scale = 1.0 / (ModuleBase::Ry_to_eV * mdcell.omega());
         for (int row = 0; row < 3; ++row)
         {
             for (int column = 0; column < 3; ++column)
             {
                 const std::size_t index = static_cast<std::size_t>(3 * row + column);
-                snap_virial_(row, column) = contribution.virial()[index] * virial_scale;
+                stress(row, column) = contribution.virial()[index] * virial_scale;
             }
         }
         const double force_scale = 1.0 / (ModuleBase::Ry_to_eV * ModuleBase::ANGSTROM_AU);
@@ -190,8 +189,8 @@ void ESolver_SNAP::runner(BaseCell& cell, const int istep) try
             const double fz = value[2] * force_scale;
             mdcell.ghost_atoms()[i].force.set(fx, fy, fz);
         }
-        Parallel_Reduce::reduce_all(snap_potential_);
-        Parallel_Reduce::reduce_all(snap_virial_.c, 9);
+        Parallel_Reduce::reduce_all(energy);
+        Parallel_Reduce::reduce_all(stress.c, 9);
         for (int i = 0; i < nowned; ++i)
         {
             const std::array<double, 3>& value = contribution.forces()[static_cast<std::size_t>(i)];
@@ -210,7 +209,8 @@ void ESolver_SNAP::runner(BaseCell& cell, const int istep) try
     const NeighborList& list = search.get_neighbor_list();
     const std::vector<NeighborAtom>& inside = search.get_inside_atoms();
     const std::vector<NeighborAtom>& all = search.get_all_atoms();
-    snap_force_.zero_out();
+    force.create(ucell.nat, 3);
+    force.zero_out();
     const std::size_t atom_count = static_cast<std::size_t>(ucell.nat);
     ModuleMD::SNAP::CellAccumulator contribution(atom_count);
     std::vector<int> offsets(static_cast<std::size_t>(ucell.ntype + 1), 0);
@@ -237,14 +237,14 @@ void ESolver_SNAP::runner(BaseCell& cell, const int istep) try
         const std::size_t index = static_cast<std::size_t>(center_index);
         contribution.add(index, atom_indices, neighbors, result);
     }
-    snap_potential_ = contribution.energy() / ModuleBase::Ry_to_eV;
+    energy = contribution.energy() / ModuleBase::Ry_to_eV;
     const double virial_scale = 1.0 / (ModuleBase::Ry_to_eV * ucell.omega);
     for (int row = 0; row < 3; ++row)
     {
         for (int column = 0; column < 3; ++column)
         {
             const std::size_t index = static_cast<std::size_t>(3 * row + column);
-            snap_virial_(row, column) = contribution.virial()[index] * virial_scale;
+            stress(row, column) = contribution.virial()[index] * virial_scale;
         }
     }
     const double force_scale = 1.0 / (ModuleBase::Ry_to_eV * ModuleBase::ANGSTROM_AU);
@@ -254,7 +254,7 @@ void ESolver_SNAP::runner(BaseCell& cell, const int istep) try
         {
             const std::size_t index = static_cast<std::size_t>(atom_index);
             const std::size_t component = static_cast<std::size_t>(direction);
-            snap_force_(atom_index, direction) = contribution.forces()[index][component] * force_scale;
+            force(atom_index, direction) = contribution.forces()[index][component] * force_scale;
         }
     }
 }
@@ -264,63 +264,4 @@ catch (const std::exception& error)
     fail(message, rank_);
 }
 
-double ESolver_SNAP::cal_energy()
-{
-    return snap_potential_;
-}
-
-void ESolver_SNAP::cal_force(BaseCell& cell, ModuleBase::matrix& force)
-{
-    if (cell.kind() == BaseCell::Kind::mdcell)
-    {
-        const MDCell& mdcell = static_cast<const MDCell&>(cell);
-        force.create(mdcell.owned_atoms().size(), 3);
-        for (std::size_t i = 0; i < mdcell.owned_atoms().size(); ++i)
-        {
-            force(i, 0) = mdcell.owned_atoms()[i].force.x;
-            force(i, 1) = mdcell.owned_atoms()[i].force.y;
-            force(i, 2) = mdcell.owned_atoms()[i].force.z;
-        }
-        return;
-    }
-    force = snap_force_;
-    ModuleIO::print_force(running_log_,
-                          static_cast<UnitCell&>(cell),
-                          "TOTAL-FORCE (eV/Angstrom)",
-                          force,
-                          false);
-}
-
-void ESolver_SNAP::cal_stress(BaseCell& cell, ModuleBase::matrix& stress)
-{
-    stress = snap_virial_;
-
-    if (cell.kind() == BaseCell::Kind::unitcell)
-    {
-        ModuleIO::print_stress("TOTAL-STRESS", stress, true, false, running_log_);
-    }
-    else
-    {
-#ifdef __MPI
-        if (static_cast<MDCell&>(cell).mpi_rank() == 0)
-#endif
-        {
-            ModuleIO::print_stress("TOTAL-STRESS", stress, true, false, running_log_);
-        }
-    }
-
-    const double unit_transform = ModuleBase::RYDBERG_SI / pow(ModuleBase::BOHR_RADIUS_SI, 3) * 1.0e-8;
-    const double external_stress[3] = {inp_->press1, inp_->press2, inp_->press3};
-    for (int i = 0; i < 3; ++i)
-    {
-        stress(i, i) -= external_stress[i] / unit_transform;
-    }
-}
-
-void ESolver_SNAP::after_all_runners(BaseCell& cell)
-{
-    static_cast<void>(cell);
-    running_log_ << "\n !FINAL_ETOT_IS " << snap_potential_ * ModuleBase::Ry_to_eV << " eV\n";
-}
-
-} // namespace ModuleESolver
+} // namespace ModuleMD

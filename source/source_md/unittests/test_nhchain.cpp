@@ -1,8 +1,8 @@
 #include "source_cell/dom_decomp.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "setcell.h"
-#include "source_esolver/esolver_lj.h"
+#include "source_md/test/setcell.h"
+#include "lj_test_solver.h"
 #include "source_md/nhchain.h"
 #define doublethreshold 1e-12
 /************************************************
@@ -47,7 +47,7 @@ class NHC_test : public testing::Test
         Setcell::setupcell(ucell);
         Setcell::parameters(inp);
 
-        p_esolver = new ModuleESolver::ESolver_LJ();
+        p_esolver = make_lj_test_solver();
         inp.mdp.md_type = "npt";
         inp.mdp.md_pmode = "tri";
         inp.mdp.md_pfirst = 1;

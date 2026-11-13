@@ -22,10 +22,11 @@
 #endif
 #include "source_base/module_external/blacs_connector.h"
 #endif
-#include "esolver_dp.h"
-#include "esolver_nep.h"
-#include "esolver_snap.h"
-#include "esolver_lj.h"
+#include "source_md/module_dp/dp.h"
+#include "source_md/module_nep/nep_potential.h"
+#include "source_md/module_snap/snap_potential.h"
+#include "esolver_potential.h"
+#include "source_md/module_lj/lj.h"
 #include "esolver_of.h"
 #include "esolver_of_tddft.h"
 
@@ -394,20 +395,32 @@ ESolver* init_esolver(const Input_para& inp)
     }
     else if (esolver_type == "lj_pot")
     {
-        return new ESolver_LJ();
+        std::ofstream& running_log = GlobalV::ofs_running;
+        std::unique_ptr<ModuleMD::Potential> potential(
+            new ModuleMD::LJ(PARAM.globalv.global_out_dir, running_log));
+        return new ESolver_Potential(std::move(potential), running_log);
     }
     else if (esolver_type == "dp_pot")
     {
-        return new ESolver_DP(inp.mdp.pot_file);
+        std::ofstream& running_log = GlobalV::ofs_running;
+        std::unique_ptr<ModuleMD::Potential> potential(
+            new ModuleMD::DP(inp.mdp.pot_file, PARAM.globalv.global_out_dir, running_log));
+        return new ESolver_Potential(std::move(potential), running_log);
     }
     else if (esolver_type == "nep_pot")
     {
-        return new ESolver_NEP(inp.mdp.pot_file);
+        std::ofstream& running_log = GlobalV::ofs_running;
+        std::unique_ptr<ModuleMD::Potential> potential(
+            new ModuleMD::NEPPotential(inp.mdp.pot_file, PARAM.globalv.global_out_dir, running_log));
+        return new ESolver_Potential(std::move(potential), running_log);
     }
     else if (esolver_type == "snap_pot")
     {
         const int rank = GlobalV::MY_RANK;
-        return new ESolver_SNAP(inp.mdp.pot_file, inp.mdp.snap_param_file, GlobalV::ofs_running, rank);
+        std::ofstream& running_log = GlobalV::ofs_running;
+        std::unique_ptr<ModuleMD::Potential> potential(
+            new ModuleMD::SnapPotential(inp.mdp.pot_file, inp.mdp.snap_param_file, running_log, rank));
+        return new ESolver_Potential(std::move(potential), running_log);
     }
     throw std::invalid_argument("esolver_type = " + std::string(esolver_type) + ". Wrong in " + std::string(__FILE__)
                                 + " line " + std::to_string(__LINE__));

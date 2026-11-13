@@ -64,7 +64,8 @@ list(
   ../../source_io/module_output/output_log.cpp
   ../../source_io/module_output/print_info.cpp
   ../../source_cell/cif_io.cpp
-  ../../source_esolver/esolver_lj.cpp
+  ../../source_esolver/esolver_potential.cpp
+  ../module_lj/lj.cpp
   ../../source_base/parallel_reduce.cpp
   ../../source_base/parallel_global.cpp
   ../../source_base/parallel_cell.cpp
@@ -86,13 +87,6 @@ endforeach()
 set(md_test_depend_files
     "${md_test_depend_files}"
     PARENT_SCOPE)
-
-addtest(
-  TARGET MODULE_MD_LJ_pot
-  LIBS parameter psi device
-  SOURCES lj_pot_test.cpp
-          ../../source_cell/module_neighlist/test/test_domain_decomposition.cpp
-          ${depend_files})
 
 addtest(
   TARGET MODULE_MD_func
@@ -121,32 +115,3 @@ addtest(
           ../../source_cell/magnetism.cpp
           ${md_run_json_sources}
           ${depend_files})
-
-addtest(
-  TARGET MODULE_MD_fire
-  LIBS parameter psi device
-  SOURCES fire_test.cpp ../md_base.cpp ../fire.cpp ${depend_files})
-
-addtest(
-  TARGET MODULE_MD_verlet
-  LIBS parameter psi device
-  SOURCES verlet_test.cpp test_md_base.cpp ../md_base.cpp ../verlet.cpp
-          ${depend_files})
-
-addtest(
-  TARGET MODULE_MD_nhc
-  LIBS parameter psi device
-  SOURCES nhchain_test.cpp ../md_base.cpp ../nhchain.cpp
-          ../../source_base/output.cpp ${depend_files})
-
-addtest(
-  TARGET MODULE_MD_msst
-  LIBS parameter psi device
-  SOURCES msst_test.cpp ../md_base.cpp ../msst.cpp
-          ../../source_cell/update_cell.cpp ../../source_base/output.cpp
-          ${depend_files})
-
-addtest(
-  TARGET MODULE_MD_lgv
-  LIBS parameter psi device
-  SOURCES langevin_test.cpp ../md_base.cpp ../langevin.cpp ${depend_files})

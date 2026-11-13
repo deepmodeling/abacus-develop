@@ -1,49 +1,36 @@
-#ifndef ESOLVER_LJ_H
-#define ESOLVER_LJ_H
+#ifndef MODULE_MD_LJ_H
+#define MODULE_MD_LJ_H
 
-#include "esolver.h"
+#include "source_md/potential.h"
+#include "source_base/vector3.h"
 
-namespace ModuleESolver
-{
-class ESolver_LJ;
-}
+#include <iosfwd>
+#include <string>
+#include <vector>
 
-class MDCell;
-
-namespace ModuleESolver
+namespace ModuleMD
 {
 
-class ESolver_LJ : public ESolver
+class LJ : public Potential
 {
   public:
-    ESolver_LJ()
-    {
-        classname = "ESolver_LJ";
-    }
+    LJ(const std::string& output_dir, std::ofstream& running_log);
 
-    void before_all_runners(BaseCell& cell, const Input_para& inp) override;
-
-    void runner(BaseCell& cell, const int istep) override;
-
-    double cal_energy() override;
-
-    void cal_force(BaseCell& cell, ModuleBase::matrix& force) override;
-
-    void cal_stress(BaseCell& cell, ModuleBase::matrix& stress) override;
-
-        void after_all_runners(BaseCell& cell) override;
-
-        void others(BaseCell& cell, const int istep) override;
+    void initialize(BaseCell& cell, const Input_para& inp) override;
+    void compute(BaseCell& cell,
+                 double& energy,
+                 ModuleBase::matrix& force,
+                 ModuleBase::matrix& stress) override;
 
     //====================================================================
     // Test seam.
     //
-    // before_all_runners() derives the LJ tables in three steps. The unit tests
+    // initialize() derives the LJ tables in three steps. The unit tests
     // drive each step on its own and check the table it produced, so the steps
     // and the tables are reachable here rather than by reinterpreting the access
     // specifiers.
     //
-    // Production code must keep going through before_all_runners(); nothing
+    // Production code must keep going through initialize(); nothing
     // outside the tests should call the *_for_testing() wrappers.
     //====================================================================
 
@@ -72,12 +59,6 @@ class ESolver_LJ : public ESolver
     {
         return en_shift;
     }
-    /// @brief computed lattice virials
-    const ModuleBase::matrix& get_lj_virial() const
-    {
-        return lj_virial;
-    }
-
     void rcut_search_radius_for_testing(const int& ntype, const std::vector<double>& rcut)
     {
         rcut_search_radius(ntype, rcut);
@@ -95,6 +76,8 @@ class ESolver_LJ : public ESolver
     }
 
   private:
+    std::string output_dir_;
+    std::ofstream& running_log_;
     double LJ_energy(const double& d, const int& i, const int& j) const;
 
     ModuleBase::Vector3<double> LJ_force(const ModuleBase::Vector3<double>& dr, const int& i, const int& j) const;
@@ -108,17 +91,12 @@ class ESolver_LJ : public ESolver
 
     void cal_en_shift(const int& ntype, const bool& is_shift);
 
-    //--------------temporary----------------------------
     double search_radius = -1.0;
     ModuleBase::matrix lj_rcut;
     ModuleBase::matrix lj_c12;
     ModuleBase::matrix lj_c6;
     ModuleBase::matrix en_shift;
 
-    double lj_potential = 0.0;
-    ModuleBase::matrix lj_force;
-    ModuleBase::matrix lj_virial;
-    //---------------------------------------------------
 };
-} // namespace ModuleESolver
+} // namespace ModuleMD
 #endif
