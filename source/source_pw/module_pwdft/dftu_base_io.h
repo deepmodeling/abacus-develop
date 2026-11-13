@@ -153,7 +153,7 @@ void write_occup_m(const Plus_U_Base& dftu,
 void write_occup_eigenvalues(const Plus_U_Base& dftu,
                              const UnitCell& ucell,
                              std::ostream& ofs,
-                             OccmatSocLayout soc_layout);
+                             const OccmatSocLayout& soc_layout);
 
 } // namespace DFTU_BASE
 

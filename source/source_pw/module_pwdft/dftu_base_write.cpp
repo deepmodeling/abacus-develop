@@ -333,7 +333,7 @@ void write_occup_m(const Plus_U_Base& dftu,
 void write_occup_eigenvalues(const Plus_U_Base& dftu,
                              const UnitCell& ucell,
                              std::ostream& os,
-                             const OccmatSocLayout soc_layout)
+                             const OccmatSocLayout& soc_layout)
 {
     const int nspin = dftu.occmat().nspin();
     for (int type = 0; type < ucell.ntype; ++type)
