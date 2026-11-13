@@ -1,63 +1,65 @@
 #include "propagator.h"
 #include "source_base/parallel_blkcyc.h"
-#include "source_base/global_function.h"
 #include "source_base/module_container/ATen/kernels/blas.h"
 #include "source_base/module_container/ATen/kernels/lapack.h"
 #include "source_base/module_container/ATen/kernels/memory.h" // memory operations (Tensor)
 #include "source_base/module_device/memory_op.h"              // memory operations
-#include "source_base/module_external/blas_connector.h"
-#include "source_base/module_external/scalapack_connector.h"
-#include "source_base/timer.h"
-#include "source_io/module_parameter/parameter.h"
+#include "source_base/matrix2d_linalg.h"
 
 #include <cassert>
 #include <complex>
 #include <cstddef>
 #include <iostream>
+#include <vector>
 
 namespace module_rt
 {
 #ifdef __MPI
-void Propagator::compute_propagator_cn2(const int nlocal,
-                                        const std::complex<double>* Stmp,
-                                        const std::complex<double>* Htmp,
-                                        std::complex<double>* U_operator,
+void Propagator::compute_propagator_cn2(
+                                        Matrix2dView<const std::complex<double>> Stmp,
+                                        Matrix2dView<const std::complex<double>> Htmp,
+                                        Matrix2dView<std::complex<double>> U_operator,
                                         std::ofstream& ofs_running,
                                         const int print_matrix) const
 {
-    assert(layout_.size() > 0);
+    assert(Htmp.size() > 0);
 
-    // (1) copy Htmp to Numerator & Denominator
-    std::complex<double>* Numerator = new std::complex<double>[layout_.size()];
-    ModuleBase::GlobalFunc::ZEROS(Numerator, layout_.size());
-    BlasConnector::copy(layout_.size(), Htmp, 1, Numerator, 1);
+    const int nrloc = Htmp.nrloc();
+    const int ncloc = Htmp.ncloc();
+    const std::complex<double> alpha(1.0, 0.0);
+    const std::complex<double> beta1(0.0, -0.25 * this->dt);
+    const std::complex<double> beta2(0.0, 0.25 * this->dt);
+    matrix2d_linalg::linear_combination(
+        U_operator, alpha, Stmp, beta1, Htmp);
 
-    std::complex<double>* Denominator = new std::complex<double>[layout_.size()];
-    ModuleBase::GlobalFunc::ZEROS(Denominator, layout_.size());
-    BlasConnector::copy(layout_.size(), Htmp, 1, Denominator, 1);
+    std::vector<std::complex<double>> denominator(Htmp.size());
+    Matrix2dView<std::complex<double>> denominator_view(
+        denominator.data(), nrloc, ncloc, Htmp.desc());
+    matrix2d_linalg::linear_combination(
+        denominator_view, alpha, Stmp, beta2, Htmp);
 
     if (print_matrix)
     {
         ofs_running << std::endl;
         ofs_running << " S matrix :" << std::endl;
-        for (int i = 0; i < layout_.nrloc(); i++)
+        for (int i = 0; i < nrloc; ++i)
         {
-            const int in = i * layout_.ncloc();
-            for (int j = 0; j < layout_.ncloc(); j++)
+            for (int j = 0; j < ncloc; ++j)
             {
-                ofs_running << Stmp[in + j].real() << "+" << Stmp[in + j].imag() << "i ";
+                const std::complex<double>& value = Stmp.at_local(i, j);
+                ofs_running << value.real() << "+" << value.imag() << "i ";
             }
             ofs_running << std::endl;
         }
         ofs_running << std::endl;
         ofs_running << std::endl;
         ofs_running << " H matrix :" << std::endl;
-        for (int i = 0; i < layout_.nrloc(); i++)
+        for (int i = 0; i < nrloc; ++i)
         {
-            const int in = i * layout_.ncloc();
-            for (int j = 0; j < layout_.ncloc(); j++)
+            for (int j = 0; j < ncloc; ++j)
             {
-                ofs_running << Numerator[in + j].real() << "+" << Numerator[in + j].imag() << "i ";
+                const std::complex<double>& value = Htmp.at_local(i, j);
+                ofs_running << value.real() << "+" << value.imag() << "i ";
             }
             ofs_running << std::endl;
         }
@@ -65,172 +67,44 @@ void Propagator::compute_propagator_cn2(const int nlocal,
     }
 
     // ->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    // (2) compute Numerator & Denominator by GEADD
-    // Numerator = Stmp - i*para * Htmp;     beta1 = - para = -0.25 * this->dt
-    // Denominator = Stmp + i*para * Htmp;   beta2 = para = 0.25 * this->dt
-    std::complex<double> alpha = {1.0, 0.0};
-    std::complex<double> beta1 = {0.0, -0.25 * this->dt};
-    std::complex<double> beta2 = {0.0, 0.25 * this->dt};
-
-    ScalapackConnector::geadd('N',
-                              nlocal,
-                              nlocal,
-                              alpha,
-                              Stmp,
-                              1,
-                              1,
-                              layout_.desc(),
-                              beta1,
-                              Numerator,
-                              1,
-                              1,
-                              layout_.desc());
-    ScalapackConnector::geadd('N',
-                              nlocal,
-                              nlocal,
-                              alpha,
-                              Stmp,
-                              1,
-                              1,
-                              layout_.desc(),
-                              beta2,
-                              Denominator,
-                              1,
-                              1,
-                              layout_.desc());
-
     if (print_matrix)
     {
         ofs_running << " beta=" << beta1 << std::endl;
         ofs_running << " fenmu:" << std::endl;
-        for (int i = 0; i < layout_.nrloc(); i++)
+        for (int i = 0; i < nrloc; ++i)
         {
-            const int in = i * layout_.ncloc();
-            for (int j = 0; j < layout_.ncloc(); j++)
+            for (int j = 0; j < ncloc; ++j)
             {
-                ofs_running << Denominator[in + j].real() << "+" << Denominator[in + j].imag() << "i ";
-            }
-            ofs_running << std::endl;
-        }
-        ofs_running << std::endl;
-    }
-
-    //->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    // (3) Next, invert Denominator
-    // What is the size of ipiv exactly? Need to check ScaLAPACK documentation!
-    // But anyway, not layout_.size()
-    int* ipiv = new int[layout_.nrloc() + layout_.nb()];
-    ModuleBase::GlobalFunc::ZEROS(ipiv, layout_.nrloc() + layout_.nb());
-    int info = 0;
-    // (3.1) compute ipiv
-    ScalapackConnector::getrf(nlocal, nlocal, Denominator, 1, 1, layout_.desc(), ipiv, &info);
-
-    // Print ipiv
-    if (print_matrix)
-    {
-        ofs_running << " layout_.size() = " << layout_.size() << std::endl;
-        ofs_running << " layout_.nrloc() = " << layout_.nrloc() << std::endl;
-        ofs_running << " layout_.ncloc() = " << layout_.ncloc() << std::endl;
-        ofs_running << " layout_.nb() = " << layout_.nb() << std::endl;
-        ofs_running << " layout_.nb() = " << layout_.nb() << std::endl;
-        ofs_running << " nlocal = " << nlocal << std::endl;
-        ofs_running << " ipiv:" << std::endl;
-        for (int i = 0; i < layout_.size(); i++)
-        {
-            ofs_running << ipiv[i] << " ";
-        }
-        ofs_running << std::endl;
-    }
-
-    int lwork = -1;
-    int liwotk = -1;
-    std::vector<std::complex<double>> work(1, 0);
-    std::vector<int> iwork(1, 0);
-    // (3.2) compute work
-    ScalapackConnector::getri(nlocal,
-                              Denominator,
-                              1,
-                              1,
-                              layout_.desc(),
-                              ipiv,
-                              work.data(),
-                              &lwork,
-                              iwork.data(),
-                              &liwotk,
-                              &info);
-    lwork = work[0].real();
-    work.resize(lwork, 0);
-    liwotk = iwork[0];
-    iwork.resize(liwotk, 0);
-    // (3.3) compute inverse matrix of Denominator
-    ScalapackConnector::getri(nlocal,
-                              Denominator,
-                              1,
-                              1,
-                              layout_.desc(),
-                              ipiv,
-                              work.data(),
-                              &lwork,
-                              iwork.data(),
-                              &liwotk,
-                              &info);
-    assert(0 == info);
-
-    //->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-
-    // (4) U_operator = Denominator * Numerator;
-    ScalapackConnector::gemm('N',
-                             'N',
-                             nlocal,
-                             nlocal,
-                             nlocal,
-                             1.0,
-                             Denominator,
-                             1,
-                             1,
-                             layout_.desc(),
-                             Numerator,
-                             1,
-                             1,
-                             layout_.desc(),
-                             0.0,
-                             U_operator,
-                             1,
-                             1,
-                             layout_.desc());
-
-    if (print_matrix)
-    {
-        ofs_running << " fenmu^-1:" << std::endl;
-        for (int i = 0; i < layout_.nrloc(); i++)
-        {
-            const int in = i * layout_.ncloc();
-            for (int j = 0; j < layout_.ncloc(); j++)
-            {
-                ofs_running << Denominator[in + j].real() << "+" << Denominator[in + j].imag() << "i ";
+                const std::complex<double>& value = denominator_view.at_local(i, j);
+                ofs_running << value.real() << "+" << value.imag() << "i ";
             }
             ofs_running << std::endl;
         }
         ofs_running << std::endl;
         ofs_running << " fenzi:" << std::endl;
-        for (int i = 0; i < layout_.nrloc(); i++)
+        for (int i = 0; i < nrloc; ++i)
         {
-            const int in = i * layout_.ncloc();
-            for (int j = 0; j < layout_.ncloc(); j++)
+            for (int j = 0; j < ncloc; ++j)
             {
-                ofs_running << Numerator[in + j].real() << "+" << Numerator[in + j].imag() << "i ";
+                const std::complex<double>& value = U_operator.at_local(i, j);
+                ofs_running << value.real() << "+" << value.imag() << "i ";
             }
             ofs_running << std::endl;
         }
         ofs_running << std::endl;
+    }
+
+    matrix2d_linalg::solve(denominator_view, U_operator);
+
+    if (print_matrix)
+    {
         ofs_running << " U operator:" << std::endl;
-        for (int i = 0; i < layout_.nrloc(); i++)
+        for (int i = 0; i < nrloc; ++i)
         {
-            const int in = i * layout_.ncloc();
-            for (int j = 0; j < layout_.ncloc(); j++)
+            for (int j = 0; j < ncloc; ++j)
             {
-                double aa = U_operator[in + j].real();
-                double bb = U_operator[in + j].imag();
+                double aa = U_operator.at_local(i, j).real();
+                double bb = U_operator.at_local(i, j).imag();
                 if (std::abs(aa) < 1e-8)
                 {
                     aa = 0.0;
@@ -245,12 +119,11 @@ void Propagator::compute_propagator_cn2(const int nlocal,
         }
     }
 
-    delete[] Numerator;
-    delete[] Denominator;
-    delete[] ipiv;
 }
 
-void Propagator::compute_propagator_cn2_tensor(const int nlocal,
+void Propagator::compute_propagator_cn2_tensor(
+                                               const Parallel_Blkcyclic& layout,
+                                               const int nlocal,
                                                const ct::Tensor& Stmp,
                                                const ct::Tensor& Htmp,
                                                ct::Tensor& U_operator,
@@ -274,7 +147,7 @@ void Propagator::compute_propagator_cn2_tensor(const int nlocal,
     void* d_H = static_cast<void*>(Htmp.data<std::complex<double>>());
     void* d_Num = static_cast<void*>(U_operator.data<std::complex<double>>());
 
-    const std::size_t len_loc = layout_.size();
+    const std::size_t len_loc = layout.size();
 
     // Allocate temporary tensor for denominator matrix
     ct::Tensor Denominator_gpu(ct::DataType::DT_COMPLEX_DOUBLE,
@@ -283,13 +156,13 @@ void Propagator::compute_propagator_cn2_tensor(const int nlocal,
     void* d_Den = static_cast<void*>(Denominator_gpu.data<std::complex<double>>());
 
     // 3. Matrix Descriptors Creation
-    int64_t m_global = layout_.desc()[2];
-    int64_t n_global = layout_.desc()[3];
-    int64_t mb = layout_.desc()[4];
-    int64_t nb = layout_.desc()[5];
-    int64_t rsrc = layout_.desc()[6];
-    int64_t csrc = layout_.desc()[7];
-    int64_t lld = layout_.desc()[8];
+    int64_t m_global = layout.desc()[2];
+    int64_t n_global = layout.desc()[3];
+    int64_t mb = layout.desc()[4];
+    int64_t nb = layout.desc()[5];
+    int64_t rsrc = layout.desc()[6];
+    int64_t csrc = layout.desc()[7];
+    int64_t lld = layout.desc()[8];
 
     // 3.1 cuBLASMp Descriptor
     cublasMpMatrixDescriptor_t desc_blas;

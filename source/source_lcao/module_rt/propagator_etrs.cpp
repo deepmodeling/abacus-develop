@@ -1,50 +1,33 @@
-#include "source_base/module_container/ATen/kernels/blas.h"
-#include "source_base/module_container/ATen/kernels/lapack.h"
-#include "source_base/module_container/ATen/kernels/memory.h" // memory operations (Tensor)
-#include "source_base/module_device/memory_op.h"              // memory operations
-#include "source_base/module_external/scalapack_connector.h"
-#include "source_io/module_parameter/parameter.h"
 #include "propagator.h"
 
-#include "source_base/parallel_blkcyc.h"
+#include "source_base/matrix2d_linalg.h"
+
 #include <complex>
-#include <iostream>
+#include <vector>
 
 namespace module_rt
 {
 #ifdef __MPI
-void Propagator::compute_propagator_etrs(const int nlocal,
-                                         const std::complex<double>* Stmp,
-                                         const std::complex<double>* Htmp,
-                                         const std::complex<double>* H_laststep,
-                                         std::complex<double>* U_operator,
-                                         std::ofstream& ofs_running,
-                                         const int print_matrix) const
+void Propagator::compute_propagator_etrs(
+    Matrix2dView<const std::complex<double>> Stmp,
+    Matrix2dView<const std::complex<double>> Htmp,
+    Matrix2dView<const std::complex<double>> H_laststep,
+    Matrix2dView<std::complex<double>> U_operator,
+    std::ofstream& ofs_running,
+    const int print_matrix) const
 {
-    std::vector<std::complex<double>> U1(layout_.size());
-    std::vector<std::complex<double>> U2(layout_.size());
-    int tag = 2;
-    compute_propagator_taylor(nlocal, Stmp, Htmp, U1.data(), ofs_running, print_matrix, tag);
-    compute_propagator_taylor(nlocal, Stmp, H_laststep, U2.data(), ofs_running, print_matrix, tag);
-    ScalapackConnector::gemm('N',
-                             'N',
-                             nlocal,
-                             nlocal,
-                             nlocal,
-                             1.0,
-                             U1.data(),
-                             1,
-                             1,
-                             layout_.desc(),
-                             U2.data(),
-                             1,
-                             1,
-                             layout_.desc(),
-                             0.0,
-                             U_operator,
-                             1,
-                             1,
-                             layout_.desc());
+    std::vector<std::complex<double>> first_storage(Htmp.size());
+    std::vector<std::complex<double>> second_storage(Htmp.size());
+    Matrix2dView<std::complex<double>> first(
+        first_storage.data(), Htmp.nrloc(), Htmp.ncloc(), Htmp.desc());
+    Matrix2dView<std::complex<double>> second(
+        second_storage.data(), Htmp.nrloc(), Htmp.ncloc(), Htmp.desc());
+    const int tag = 2;
+    compute_propagator_taylor(
+        Stmp, Htmp, first, ofs_running, print_matrix, tag);
+    compute_propagator_taylor(
+        Stmp, H_laststep, second, ofs_running, print_matrix, tag);
+    matrix2d_linalg::matmul(U_operator, first, second);
 }
 #endif // __MPI
 } // namespace module_rt

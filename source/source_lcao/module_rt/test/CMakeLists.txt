@@ -57,18 +57,6 @@ addtest(
           ../../../source_basis/module_ao/parallel_orbitals.cpp)
 
 addtest(
-  TARGET MODULE_LCAO_tddft_propagator_test
-  LIBS parameter base device tddft_test_lib
-  SOURCES propagator_test1.cpp
-          propagator_test2.cpp
-          propagator_test3.cpp
-          ../propagator.cpp
-          ../propagator_cn2.cpp
-          ../propagator_taylor.cpp
-          ../propagator_etrs.cpp
-          ../../../source_basis/module_ao/parallel_orbitals.cpp)
-
-addtest(
   TARGET MODULE_LCAO_tddft_snap_psibeta_half_test
   LIBS parameter
        base

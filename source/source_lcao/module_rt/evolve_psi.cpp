@@ -18,6 +18,7 @@
 #include "source_base/parallel_blkcyc.h"
 
 #include <complex>
+#include <vector>
 
 namespace module_rt
 {
@@ -60,8 +61,22 @@ void evolve_psi(const int nband,
     ModuleBase::GlobalFunc::ZEROS(Hold, matrix_layout.size());
     BlasConnector::copy(matrix_layout.size(), h_mat.p, 1, Hold, 1);
 
-    std::complex<double>* U_operator = new std::complex<double>[matrix_layout.size()];
-    ModuleBase::GlobalFunc::ZEROS(U_operator, matrix_layout.size());
+    std::vector<std::complex<double>> U_operator(matrix_layout.size());
+    Matrix2dView<const std::complex<double>> overlap_view(
+        Stmp,
+        matrix_layout.nrloc(),
+        matrix_layout.ncloc(),
+        matrix_layout.desc());
+    Matrix2dView<const std::complex<double>> hamiltonian_view(
+        Htmp,
+        matrix_layout.nrloc(),
+        matrix_layout.ncloc(),
+        matrix_layout.desc());
+    Matrix2dView<std::complex<double>> operator_view(
+        U_operator.data(),
+        matrix_layout.nrloc(),
+        matrix_layout.ncloc(),
+        matrix_layout.desc());
 
     // (1)->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
@@ -79,8 +94,20 @@ void evolve_psi(const int nband,
         /// @brief compute U_operator
         /// @input Stmp, Htmp, print_matrix
         /// @output U_operator
-        Propagator prop(propagator, matrix_layout, PARAM.inp.td_dt);
-        prop.compute_propagator(nlocal, Stmp, Htmp, H_laststep, U_operator, ofs_running, print_matrix);
+        Matrix2dView<const std::complex<double>> last_hamiltonian_view(
+            H_laststep,
+            matrix_layout.nrloc(),
+            matrix_layout.ncloc(),
+            matrix_layout.desc());
+        const Matrix2dView<const std::complex<double>>* last_hamiltonian
+            = propagator == 2 ? &last_hamiltonian_view : nullptr;
+        Propagator prop(propagator, PARAM.inp.td_dt);
+        prop.compute_propagator(overlap_view,
+                                hamiltonian_view,
+                                last_hamiltonian,
+                                operator_view,
+                                ofs_running,
+                                print_matrix);
     }
 
     // (3)->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -93,7 +120,7 @@ void evolve_psi(const int nband,
              wfc_layout,
              nband,
              nlocal,
-             U_operator,
+             U_operator.data(),
              psi_k_laststep,
              psi_k,
              ofs_running,
@@ -104,30 +131,34 @@ void evolve_psi(const int nband,
         /// @brief solve the propagation equation
         /// @input Stmp, Htmp, psi_k_laststep
         /// @output psi_k
+        Matrix2dView<const std::complex<double>> psi_last_view(
+            psi_k_laststep,
+            wfc_layout.nrloc(),
+            wfc_layout.ncloc(),
+            wfc_layout.desc());
+        Matrix2dView<std::complex<double>> psi_view(
+            psi_k, wfc_layout.nrloc(), wfc_layout.ncloc(), wfc_layout.desc());
         if (use_td_moving_gauge)
         {
-            solve_propagation(matrix_layout,
-                              wfc_layout,
-                              nband,
-                              nlocal,
-                              PARAM.inp.td_dt,
-                              Stmp,
-                              Htmp,
-                              P_k,
-                              psi_k_laststep,
-                              psi_k);
+            Matrix2dView<const std::complex<double>> gauge_view(
+                P_k,
+                matrix_layout.nrloc(),
+                matrix_layout.ncloc(),
+                matrix_layout.desc());
+            solve_propagation(PARAM.inp.td_dt,
+                              overlap_view,
+                              hamiltonian_view,
+                              gauge_view,
+                              psi_last_view,
+                              psi_view);
         }
         else
         {
-            solve_propagation(matrix_layout,
-                              wfc_layout,
-                              nband,
-                              nlocal,
-                              PARAM.inp.td_dt,
-                              Stmp,
-                              Htmp,
-                              psi_k_laststep,
-                              psi_k);
+            solve_propagation(PARAM.inp.td_dt,
+                              overlap_view,
+                              hamiltonian_view,
+                              psi_last_view,
+                              psi_view);
         }
     }
 
@@ -165,7 +196,6 @@ void evolve_psi(const int nband,
     delete[] Stmp;
     delete[] Htmp;
     delete[] Hold;
-    delete[] U_operator;
 
 #endif // __MPI
 
@@ -295,8 +325,17 @@ void evolve_psi_tensor(const int nband,
     U_operator.zero();
 
     // (2) Compute U_operator
-    Propagator prop(propagator, matrix_layout, PARAM.inp.td_dt);
-    prop.compute_propagator_tensor<Device>(nlocal, Stmp, Htmp, H_laststep, U_operator, ofs_running, print_matrix, use_lapack, cublas_res);
+    Propagator prop(propagator, PARAM.inp.td_dt);
+    prop.compute_propagator_tensor<Device>(matrix_layout,
+                                           nlocal,
+                                           Stmp,
+                                           Htmp,
+                                           H_laststep,
+                                           U_operator,
+                                           ofs_running,
+                                           print_matrix,
+                                           use_lapack,
+                                           cublas_res);
 
     // (3) Apply U_operator (psi_k = U * psi_last)
     if (!use_lapack)

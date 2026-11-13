@@ -16,11 +16,12 @@ Propagator::~Propagator()
 {
 }
 #ifdef __MPI
-void Propagator::compute_propagator(const int nlocal,
-                                    const std::complex<double>* Stmp,
-                                    const std::complex<double>* Htmp,
-                                    const std::complex<double>* H_laststep,
-                                    std::complex<double>* U_operator,
+void Propagator::compute_propagator(
+                                    Matrix2dView<const std::complex<double>> Stmp,
+                                    Matrix2dView<const std::complex<double>> Htmp,
+                                    const Matrix2dView<const std::complex<double>>*
+                                        H_laststep,
+                                    Matrix2dView<std::complex<double>> U_operator,
                                     std::ofstream& ofs_running,
                                     const int print_matrix) const
 {
@@ -28,16 +29,22 @@ void Propagator::compute_propagator(const int nlocal,
     switch (ptype)
     {
     case 0:
-        compute_propagator_cn2(nlocal, Stmp, Htmp, U_operator, ofs_running, print_matrix);
+        compute_propagator_cn2(Stmp, Htmp, U_operator, ofs_running, print_matrix);
         break;
 
     case 1:
         tag = 1;
-        compute_propagator_taylor(nlocal, Stmp, Htmp, U_operator, ofs_running, print_matrix, tag);
+        compute_propagator_taylor(Stmp, Htmp, U_operator, ofs_running, print_matrix, tag);
         break;
 
     case 2:
-        compute_propagator_etrs(nlocal, Stmp, Htmp, H_laststep, U_operator, ofs_running, print_matrix);
+        if (H_laststep == nullptr)
+        {
+            ModuleBase::WARNING_QUIT("Propagator::compute_propagator",
+                                     "ETRS requires H(t)");
+        }
+        compute_propagator_etrs(
+            Stmp, Htmp, *H_laststep, U_operator, ofs_running, print_matrix);
         break;
 
     default:
@@ -47,7 +54,9 @@ void Propagator::compute_propagator(const int nlocal,
 }
 
 template <typename Device>
-void Propagator::compute_propagator_tensor(const int nlocal,
+void Propagator::compute_propagator_tensor(
+                                           const Parallel_Blkcyclic& layout,
+                                           const int nlocal,
                                            const ct::Tensor& Stmp,
                                            const ct::Tensor& Htmp,
                                            const ct::Tensor& H_laststep,
@@ -63,7 +72,14 @@ void Propagator::compute_propagator_tensor(const int nlocal,
     case 0:
         if (!use_lapack)
         {
-            compute_propagator_cn2_tensor(nlocal, Stmp, Htmp, U_operator, ofs_running, print_matrix, cublas_res);
+            compute_propagator_cn2_tensor(layout,
+                                          nlocal,
+                                          Stmp,
+                                          Htmp,
+                                          U_operator,
+                                          ofs_running,
+                                          print_matrix,
+                                          cublas_res);
         }
         else
         {
@@ -85,7 +101,9 @@ void Propagator::compute_propagator_tensor(const int nlocal,
 }
 
 // Explicit instantiation of template functions
-template void Propagator::compute_propagator_tensor<base_device::DEVICE_CPU>(const int nlocal,
+template void Propagator::compute_propagator_tensor<base_device::DEVICE_CPU>(
+                                                                             const Parallel_Blkcyclic& layout,
+                                                                             const int nlocal,
                                                                              const ct::Tensor& Stmp,
                                                                              const ct::Tensor& Htmp,
                                                                              const ct::Tensor& H_laststep,
@@ -95,7 +113,9 @@ template void Propagator::compute_propagator_tensor<base_device::DEVICE_CPU>(con
                                                                              const bool use_lapack,
                                                                              CublasMpResources& cublas_res) const;
 #if ((defined __CUDA) /* || (defined __ROCM) */)
-template void Propagator::compute_propagator_tensor<base_device::DEVICE_GPU>(const int nlocal,
+template void Propagator::compute_propagator_tensor<base_device::DEVICE_GPU>(
+                                                                             const Parallel_Blkcyclic& layout,
+                                                                             const int nlocal,
                                                                              const ct::Tensor& Stmp,
                                                                              const ct::Tensor& Htmp,
                                                                              const ct::Tensor& H_laststep,
