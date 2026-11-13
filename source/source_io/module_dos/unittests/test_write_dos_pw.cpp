@@ -188,10 +188,20 @@ TEST_F(DosPWTest,Dos2)
 		EXPECT_THAT(str1, testing::HasSubstr("2.847771"));
         std::istringstream rows(str1);
         std::string line;
-        std::getline(rows, line); // ionic step
-        std::getline(rows, line); // declared grid size
+        // Skip the provenance header ("# ABACUS version", "# Written at") and
+        // the ionic-step marker, then read the declared grid size.
+        bool found_declaration = false;
         int declared_points = 0;
-        std::istringstream(line) >> declared_points;
+        while (std::getline(rows, line))
+        {
+            if (line.find("# number of points") != std::string::npos)
+            {
+                std::istringstream(line) >> declared_points;
+                found_declaration = true;
+                break;
+            }
+        }
+        ASSERT_TRUE(found_declaration);
         EXPECT_EQ(declared_points, 2526);
         std::getline(rows, line); // column names
         int row_count = 0;
