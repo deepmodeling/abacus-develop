@@ -136,8 +136,13 @@ static bool write_hk_text(const std::string& fname,
                           const std::string& term_name,
                           const bool append)
 {
+    // Mode 1 appends the records written after the first ionic step; the first
+    // written step (istep == 0) truncates so a rerun does not keep records left
+    // by an earlier run. Callers pass append == (out_app_flag == 1), so the
+    // first-step guard has to live here, next to the open() call.
+    const bool append_now = append && (istep > 0);
     std::ios_base::openmode mode = std::ios::out;
-    if (append)
+    if (append_now)
     {
         mode |= std::ios::app;
     }
