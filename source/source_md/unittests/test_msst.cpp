@@ -1,7 +1,7 @@
 #include "source_cell/dom_decomp.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "setcell.h"
+#include "source_md/test/setcell.h"
 #include "lj_test_solver.h"
 #include "source_md/msst.h"
 #define doublethreshold 1e-12

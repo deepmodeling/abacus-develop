@@ -89,58 +89,6 @@ set(md_test_depend_files
     PARENT_SCOPE)
 
 addtest(
-  TARGET MODULE_MD_LJ_pot
-  LIBS parameter psi device
-  SOURCES lj_pot_test.cpp
-          ../../source_cell/module_neighlist/test/test_domain_decomposition.cpp
-          ${depend_files})
-
-addtest(
-  TARGET MODULE_MD_LJ_potential
-  LIBS parameter psi device
-  SOURCES ../module_lj/test_lj.cpp ${depend_files})
-
-addtest(
-  TARGET MODULE_MD_SNAP_potential
-  LIBS parameter psi device
-  SOURCES ../module_snap/test_snap_potential.cpp
-          ../module_snap/snap_potential.cpp
-          ../module_snap/snap_calculator.cpp
-          ../module_snap/snap_descriptor.cpp
-          ../module_snap/snap_derivative.cpp
-          ../module_snap/snap_model.cpp
-          ../module_snap/snap_cg.cpp
-          ${depend_files})
-
-set(_md_dp_test_libs parameter psi device)
-if(DEFINED DeePMD_DIR)
-  if(DeePMDC_FOUND)
-    list(APPEND _md_dp_test_libs DeePMD::deepmd_c)
-  else()
-    list(APPEND _md_dp_test_libs DeePMD::deepmd_cc)
-  endif()
-endif()
-
-addtest(
-  TARGET MODULE_MD_DP_potential
-  LIBS ${_md_dp_test_libs}
-  SOURCES ../module_dp/test_dp.cpp ../module_dp/dp.cpp
-          ../../source_cell/module_neighlist/neighbor_list.cpp
-          ${depend_files})
-
-set(_md_nep_test_libs parameter psi device)
-if(DEFINED NEP_DIR AND NEP_FOUND)
-  list(APPEND _md_nep_test_libs NEP::nep)
-endif()
-
-addtest(
-  TARGET MODULE_MD_NEP_potential
-  LIBS ${_md_nep_test_libs}
-  SOURCES ../module_nep/test_nep_potential.cpp ../module_nep/nep_potential.cpp
-          ../../source_cell/module_neighlist/neighbor_list.cpp
-          ${depend_files})
-
-addtest(
   TARGET MODULE_MD_func
   LIBS parameter psi device
   SOURCES md_func_test.cpp test_md_func.cpp ${depend_files})
@@ -167,32 +115,3 @@ addtest(
           ../../source_cell/magnetism.cpp
           ${md_run_json_sources}
           ${depend_files})
-
-addtest(
-  TARGET MODULE_MD_fire
-  LIBS parameter psi device
-  SOURCES fire_test.cpp ../md_base.cpp ../fire.cpp ${depend_files})
-
-addtest(
-  TARGET MODULE_MD_verlet
-  LIBS parameter psi device
-  SOURCES verlet_test.cpp test_md_base.cpp ../md_base.cpp ../verlet.cpp
-          ${depend_files})
-
-addtest(
-  TARGET MODULE_MD_nhc
-  LIBS parameter psi device
-  SOURCES nhchain_test.cpp ../md_base.cpp ../nhchain.cpp
-          ../../source_base/output.cpp ${depend_files})
-
-addtest(
-  TARGET MODULE_MD_msst
-  LIBS parameter psi device
-  SOURCES msst_test.cpp ../md_base.cpp ../msst.cpp
-          ../../source_cell/update_cell.cpp ../../source_base/output.cpp
-          ${depend_files})
-
-addtest(
-  TARGET MODULE_MD_lgv
-  LIBS parameter psi device
-  SOURCES langevin_test.cpp ../md_base.cpp ../langevin.cpp ${depend_files})
