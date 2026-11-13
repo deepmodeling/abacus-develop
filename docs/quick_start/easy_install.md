@@ -164,7 +164,7 @@ Here, 'build' is the path for building ABACUS; and '-D' is used for setting up s
   - `LIBCOMM_DIR`: (Optional) Path to LibComm when `ENABLE_LIBRI=ON`.
 
 ```{important}
-For some dependencies built with CMake, such as Libxc, dftd4, libvdwxc, cereal, and nlohmann-json, you'll have to add their prefix paths to the environment variable `CMAKE_PREFIX_PATH` so that CMake can correctly find and use their CMake configuration files. A non-general variable such as `PKG_DIR` is discouraged for these packages.
+For some dependencies built with CMake, such as Libxc, dftd4, libvdwxc (the rVV10 nonlocal correlation of `vdw_method rvv10`), cereal, and nlohmann-json, you'll have to add their prefix paths to the environment variable `CMAKE_PREFIX_PATH` so that CMake can correctly find and use their CMake configuration files. A non-general variable such as `PKG_DIR` is discouraged for these packages.
 ```
 
 - Components: The values of these variables should be 'ON', '1' or 'OFF', '0'. The default values are given below.

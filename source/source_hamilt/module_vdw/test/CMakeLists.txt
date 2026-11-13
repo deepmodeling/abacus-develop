@@ -20,17 +20,21 @@ if(ENABLE_DFTD4 AND ENABLE_MPI)
 endif()
 
 if(ENABLE_LIBVDWXC AND ENABLE_MPI)
+  set(nonlocal_xc_test_libs
+      xc_
+      planewave
+      parameter
+      MPI::MPI_CXX
+      psi
+      device
+      container
+      base)
+  if(ENABLE_LIBXC)
+    list(APPEND nonlocal_xc_test_libs Libxc::xc)
+  endif()
   addtest(
     TARGET MODULE_HAMILT_nonlocal_xcTest
-    LIBS xc_
-         planewave
-         parameter
-         MPI::MPI_CXX
-         Libxc::xc
-         psi
-         device
-         container
-         base
+    LIBS ${nonlocal_xc_test_libs}
     SOURCES test_nonlocal_xc.cpp test_rvv10_workspace.cpp
             nonlocal_xc_test_helpers.cpp)
   # a collective-path regression shows as a hang, so every registration gets a timeout

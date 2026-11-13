@@ -49,8 +49,7 @@ option(USE_SW "Enable SW Architecture" OFF)
 
 option(ENABLE_ABACUS_LIBM "Build libmath from source to speed up" OFF)
 option(ENABLE_LIBXC "Enable using the LibXC package" OFF)
-cmake_dependent_option(ENABLE_LIBVDWXC "Enable using the libvdwxc package" OFF
-                       "ENABLE_LIBXC" OFF)
+option(ENABLE_LIBVDWXC "Enable using the libvdwxc package" OFF)
 option(ENABLE_FLOAT_FFTW "Enable using single-precision FFTW library." OFF)
 
 option(ENABLE_LCAO "Enable LCAO algorithm" ON)

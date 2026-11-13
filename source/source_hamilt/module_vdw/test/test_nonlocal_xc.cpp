@@ -9,7 +9,9 @@
 #include "source_base/parallel_device.h"
 #include "source_base/parallel_global.h"
 #include "source_cell/unitcell.h"
+#ifdef __LIBXC
 #include "source_hamilt/module_xc/libxc_abacus.h"
+#endif
 
 #include <cmath>
 
@@ -227,9 +229,8 @@ TEST_F(NonlocalXCTest, StressIsTheStrainDerivativeOfTheEnergy)
 TEST_F(NonlocalXCTest, VxcAddsRvv10ToEveryFunctionalPath)
 {
     // v_xc and v_xc_meta with rVV10 equal the semilocal result plus add_rvv10, for native PBE (final
-    // return), a libxc GGA (v_xc_libxc), noncollinear PBE and libxc GGA with the default gga_grad 0
-    // (collinear-mapped branches of v_xc and v_xc_libxc) and with gga_grad 2 (NCGGA return, libxc local
-    // collinear map), and SCAN (v_xc_meta).
+    // return), noncollinear PBE with gga_grad 0 (collinear-mapped branch) and 2 (NCGGA return), and with
+    // Libxc a libxc GGA (v_xc_libxc) in the same layouts and SCAN (v_xc_meta).
     const std::vector<double> valence = local_grid(pw, valence_density);
     const std::vector<double> core = local_grid(pw, core_density);
     const std::vector<double> zeros(pw.nrxx);
@@ -251,9 +252,10 @@ TEST_F(NonlocalXCTest, VxcAddsRvv10ToEveryFunctionalPath)
     const ChargeOnGrid polarized(pw, collinear, core);
     const ChargeOnGrid magnetized(pw, noncollinear, core);
     expect_vxc_adds_rvv10("PBE", polarized.chr, ucell, false, 0, rounding_tolerance);
-    expect_vxc_adds_rvv10("GGA_X_RPW86+GGA_C_PBE", polarized.chr, ucell, false, 0, rounding_tolerance);
     expect_vxc_adds_rvv10("PBE", magnetized.chr, ucell, true, 2, rounding_tolerance);
     expect_vxc_adds_rvv10("PBE", magnetized.chr, ucell, true, 0, rounding_tolerance);
+#ifdef __LIBXC
+    expect_vxc_adds_rvv10("GGA_X_RPW86+GGA_C_PBE", polarized.chr, ucell, false, 0, rounding_tolerance);
     expect_vxc_adds_rvv10("GGA_X_RPW86+GGA_C_PBE", magnetized.chr, ucell, true, 0, rounding_tolerance);
     expect_vxc_adds_rvv10("GGA_X_RPW86+GGA_C_PBE", magnetized.chr, ucell, true, 2, rounding_tolerance);
     // with one spin channel, v_xc_libxc and v_xc_meta hand their density gradient to add_rvv10, so the
@@ -287,6 +289,7 @@ TEST_F(NonlocalXCTest, VxcAddsRvv10ToEveryFunctionalPath)
         results[with_rvv10] = VxcResult(std::get<0>(meta), std::get<1>(meta), std::get<2>(meta));
     }
     expect_rvv10_added(results[1], results[0], charge.chr, 0.0);
+#endif
 }
 
 } // namespace rvv10_test
