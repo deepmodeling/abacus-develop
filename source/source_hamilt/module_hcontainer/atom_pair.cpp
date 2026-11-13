@@ -1,4 +1,5 @@
 #include "atom_pair.h"
+#include "source_base/atom_basis_view.h"
 #include <complex>
 #include <cassert>
 #include "source_base/module_external/blas_connector.h"
@@ -106,6 +107,47 @@ AtomPair<T>::AtomPair(const int& atom_i_,
         BaseMatrix<T> tmp(row_size, col_size);
         this->values.push_back(tmp);
     }
+}
+
+template <typename T>
+AtomPair<T>::AtomPair(const int& atom_i,
+                      const int& atom_j,
+                      const AtomBasisView& rows,
+                      const AtomBasisView& cols,
+                      T* existed_matrix)
+    : atom_i(atom_i), atom_j(atom_j)
+{
+    if (rows.empty() || cols.empty())
+    {
+        throw std::string("Atom-pair not belong this process");
+    }
+    this->row_ap = rows.local0();
+    this->col_ap = cols.local0();
+    this->row_size = rows.nloc();
+    this->col_size = cols.nloc();
+    this->R_index.push_back(ModuleBase::Vector3<int>(0, 0, 0));
+    this->values.push_back(BaseMatrix<T>(row_size, col_size, existed_matrix));
+}
+
+template <typename T>
+AtomPair<T>::AtomPair(const int& atom_i,
+                      const int& atom_j,
+                      const ModuleBase::Vector3<int>& R_index,
+                      const AtomBasisView& rows,
+                      const AtomBasisView& cols,
+                      T* existed_matrix)
+    : atom_i(atom_i), atom_j(atom_j)
+{
+    if (rows.empty() || cols.empty())
+    {
+        throw std::string("Atom-pair not belong this process");
+    }
+    this->row_ap = rows.local0();
+    this->col_ap = cols.local0();
+    this->row_size = rows.nloc();
+    this->col_size = cols.nloc();
+    this->R_index.push_back(R_index);
+    this->values.push_back(BaseMatrix<T>(row_size, col_size, existed_matrix));
 }
 
 // direct save whole matrix of atom-pair

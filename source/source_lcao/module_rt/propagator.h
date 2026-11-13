@@ -8,10 +8,11 @@
 
 #include "source_base/constants.h"
 #include "source_base/module_container/ATen/core/tensor.h" // ct::Tensor
-#include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_lcao/module_rt/kernels/cublasmp_context.h"
 
 #include <complex>
+
+class Parallel_Blkcyclic; // Defined in source/source_base/parallel_blkcyc.h
 
 namespace module_rt
 {
@@ -105,11 +106,9 @@ ct::Tensor create_identity_matrix(const int n, ct::DeviceType device = ct::Devic
 class Propagator
 {
   public:
-    Propagator(const int ptype, const Parallel_Orbitals* pv, const double& dt)
+    Propagator(int ptype, const Parallel_Blkcyclic& layout, const double& dt)
+        : ptype(ptype), dt(dt / ModuleBase::AU_to_FS), layout_(layout)
     {
-        this->ptype = ptype;
-        this->ParaV = pv;
-        this->dt = dt / ModuleBase::AU_to_FS;
     }
     ~Propagator();
 
@@ -146,8 +145,8 @@ class Propagator
 
   private:
     int ptype; // type of propagator
-    const Parallel_Orbitals* ParaV = nullptr;
     double dt; // time step
+    const Parallel_Blkcyclic& layout_; // non-owning block-cyclic layout
 
 #ifdef __MPI
 

@@ -64,7 +64,7 @@ TEST_P(ParallelK2DTest, DividePools)
     ParaPrepare pp = GetParam();
     mpi.KPAR = pp.KPAR_;
     // k2d.Pkpoints = new Parallel_Kpoints;
-    // k2d.get_p2D_pool() = new BlockCyclicDistribution;
+    // k2d.get_p2D_pool() = new Parallel_Blkcyclic;
     if (mpi.KPAR > NPROC)
     {
         std::string output;

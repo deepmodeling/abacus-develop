@@ -31,7 +31,7 @@ TEST(UpsiTest, testUpsi3)
     pv = new Parallel_Orbitals();
     ASSERT_EQ(pv->para_2d().set(nlocal, nlocal, 1, ictxt), 0);
     pv->ncol_bands = nband;
-    pv->set_desc_wfc_Eij(nlocal, nband, pv->para_2d().nrloc());
+    pv->set_wfc_and_mo_layouts(nlocal, nband);
 
     // Initialize data
     U_operator = new std::complex<double>[nlocal * nlocal];
@@ -63,7 +63,15 @@ TEST(UpsiTest, testUpsi3)
     }
 
     // Call the function
-    module_rt::upsi(pv, nband, nlocal, U_operator, psi_k_laststep, psi_k, GlobalV::ofs_running, print_matrix);
+    module_rt::upsi(pv->para_2d(),
+                    pv->wfc_layout(),
+                    nband,
+                    nlocal,
+                    U_operator,
+                    psi_k_laststep,
+                    psi_k,
+                    GlobalV::ofs_running,
+                    print_matrix);
 
     // Check the results
     for (int i = 0; i < nlocal; ++i)
