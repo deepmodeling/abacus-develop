@@ -1,2 +1,2 @@
-dfpt_x: 2-atom Si (a=10.2612 Bohr), ONCV PBE, 20/80 Ry, 4x4x4, q=(0,0.5,0.5).
+dfpt_si_x: 2-atom Si (a=10.2612 Bohr), ONCV PBE, 20/80 Ry, 4x4x4, q=(0,0.5,0.5).
 Cross-validated against QE 6.8: rms 0.17 cm^-1. DFPT is serial-only; single-rank.
