@@ -1,5 +1,6 @@
 #include "setup_dftu_lcao.h"
 #include "source_pw/module_pwdft/dftu_base.h"
+#include "source_base/parallel_blkcyc.h"
 #include "source_lcao/module_dftu/dftu_nao_occ.h"
 #include "source_lcao/module_dftu/dftu_nao_energy.h"
 #include "source_io/module_parameter/parameter.h"
@@ -63,12 +64,16 @@ void finish_dftu_lcao(const bool conv_esolver,
     {
         if (dftu_ptr->get_init_occ_mat() != 2)
         {
-            const Parallel_Orbitals* pv = hamilt_lcao_ptr->getHR()->get_paraV();
-            if (pv != nullptr && hamilt_lcao_ptr != nullptr)
+            if (hamilt_lcao_ptr != nullptr)
             {
-                DFTU_LCAO::cal_occ_mat(pv, ucell, dm_vec, kv, mixing_beta,
-                                       static_cast<hamilt::Hamilt<TK>*>(hamilt_lcao_ptr), *dftu_ptr,
-                                       gamma_only_local, nspin, PARAM.inp.ks_solver);
+                const Parallel_Blkcyclic* dist
+                    = hamilt_lcao_ptr->getHR()->matrix_distribution();
+                if (dist != nullptr)
+                {
+                    DFTU_LCAO::cal_occ_mat(*dist, ucell, dm_vec, kv, mixing_beta,
+                                           static_cast<hamilt::Hamilt<TK>*>(hamilt_lcao_ptr), *dftu_ptr,
+                                           gamma_only_local, nspin, PARAM.inp.ks_solver);
+                }
             }
         }
         if (dftu_ptr->is_occmat_ready())
