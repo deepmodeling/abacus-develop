@@ -72,14 +72,12 @@ TEST_F(OutputHContainerTest, Write)
         ParaV.atom_begin_row[i] = i * 2;
         ParaV.atom_begin_col[i] = i * 2;
     }
-    ParaV.nrow = 4;
-    ParaV.ncol = 4;
     std::ofstream ofs("output_hcontainer.log");
-    ParaV.set_serial(4, 4);
-    // std::cout << "ParaV.global2local_row = " << ParaV.global2local_row(0) << " " << ParaV.global2local_row(1) << " "
-    //           << ParaV.global2local_row(2) << " " << ParaV.global2local_row(3) << std::endl;
-    // std::cout << "ParaV.global2local_col = " << ParaV.global2local_col(0) << " " << ParaV.global2local_col(1) << " "
-    //           << ParaV.global2local_col(2) << " " << ParaV.global2local_col(3) << std::endl;
+    ParaV.para_2d().set_serial(4, 4);
+    // std::cout << "ParaV.irloc = " << ParaV.irloc(0) << " " << ParaV.irloc(1) << " "
+    //           << ParaV.irloc(2) << " " << ParaV.irloc(3) << std::endl;
+    // std::cout << "ParaV.icloc = " << ParaV.icloc(0) << " " << ParaV.icloc(1) << " "
+    //           << ParaV.icloc(2) << " " << ParaV.icloc(3) << std::endl;
     ofs.close();
     remove("output_hcontainer.log");
     hamilt::HContainer<double> HR(&ParaV);
@@ -174,7 +172,7 @@ TYPED_TEST_SUITE(OutputHContainerPreservationTest, OutputTypes);
 TYPED_TEST(OutputHContainerPreservationTest, RepeatedWritesPreserveAllRBlocksAndBackingStorage)
 {
     Parallel_Orbitals para;
-    para.set_serial(4, 4);
+    para.para_2d().set_serial(4, 4);
     const int atom_begin[] = {0, 2};
     para.set_atomic_trace(atom_begin, 2, 4);
     std::vector<TypeParam> first = {TypeParam(1), TypeParam(2), TypeParam(3), TypeParam(4)};

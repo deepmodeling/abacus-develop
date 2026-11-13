@@ -5,10 +5,6 @@ if(ENABLE_ELPA)
 endif()
 
 addtest(
-  TARGET
-  MODULE_BSE_solver_test
-  LIBS
-  ${bse_solver_test_libs}
-  SOURCES
-  hamilt_bse_solver_test.cpp
-  ../hamilt_bse_solver.cpp)
+  TARGET MODULE_BSE_solver_test
+  LIBS ${bse_solver_test_libs}
+  SOURCES hamilt_bse_solver_test.cpp ../hamilt_bse_solver.cpp)

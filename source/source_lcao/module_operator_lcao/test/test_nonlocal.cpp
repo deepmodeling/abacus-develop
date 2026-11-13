@@ -103,7 +103,7 @@ class NonlocalTest : public ::testing::Test
         int global_col = test_size * test_nw;
         std::ofstream ofs_running;
         paraV = new Parallel_Orbitals();
-        paraV->init(global_row, global_col, nb, MPI_COMM_WORLD);
+        paraV->para_2d().init(global_row, global_col, nb, MPI_COMM_WORLD, false);
         paraV->set_atomic_trace(ucell.get_iat2iwt(), test_size, global_row);
     }
 #else
@@ -163,7 +163,7 @@ TEST_F(NonlocalTest, constructHRd2d)
         = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
     // check the value of HK
     double* hk = hsk.get_hk();
-    for (int i = 0; i < paraV->get_row_size() * paraV->get_col_size(); ++i)
+    for (int i = 0; i < paraV->para_2d().nrloc() * paraV->para_2d().ncloc(); ++i)
     {
         EXPECT_EQ(hk[i], 5.0 * test_size);
     }
@@ -222,7 +222,7 @@ TEST_F(NonlocalTest, constructHRd2cd)
     op.contributeHk(0);
     // check the value of HK of gamma point
     auto* hk = hsk.get_hk();
-    for (int i = 0; i < paraV->get_row_size() * paraV->get_col_size(); ++i)
+    for (int i = 0; i < paraV->para_2d().nrloc() * paraV->para_2d().ncloc(); ++i)
     {
         EXPECT_EQ(hk[i].real(), 5.0 * test_size);
         EXPECT_EQ(hk[i].imag(), 0.0);
@@ -231,7 +231,7 @@ TEST_F(NonlocalTest, constructHRd2cd)
     hsk.set_zero_hk();
     op.contributeHk(1);
     // check the value of HK
-    for (int i = 0; i < paraV->get_row_size() * paraV->get_col_size(); ++i)
+    for (int i = 0; i < paraV->para_2d().nrloc() * paraV->para_2d().ncloc(); ++i)
     {
         EXPECT_NEAR(hk[i].real(), 5.0 * test_size, 1e-10);
         EXPECT_NEAR(hk[i].imag(), 0.0, 1e-10);

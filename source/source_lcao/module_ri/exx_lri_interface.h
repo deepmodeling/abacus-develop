@@ -4,6 +4,7 @@
 #include "exx_lri.h"
 #include "source_estate/module_charge/chg_mix.h"
 #include "source_lcao/module_ri/mix_dmk_2d.h"
+#include "source_lcao/module_ri/hybrid_gauge_phase.h"
 #include "source_lcao/module_ri/module_exx_symmetry/symm_rotation.h"
 #include "source_estate/module_dm/density_matrix.h" // mohan add 2025-11-04
 #include "source_hamilt/hamilt.h"
@@ -15,6 +16,7 @@ class Charge_Mixing;
 namespace elecstate
 {
     class ElecState;
+    class TDFieldManager;
 }
 namespace module_dm
 {
@@ -27,12 +29,12 @@ namespace elecstate
     std::vector<std::vector<std::complex<double>>> restore_dm(const K_Vectors& kv,
         const std::vector<std::vector<std::complex<double>>>& dm_k_ibz,
         const ModuleSymmetry::Symmetry_rotation& symrot,
-        const Parallel_2D& pv);
+        const BlockCyclicDistribution& pv);
     /// do nothing if gamma_only
     std::vector<std::vector<double>> restore_dm(const K_Vectors& kv,
         const std::vector<std::vector<double>>& dm_k_ibz,
         const ModuleSymmetry::Symmetry_rotation& symrot,
-        const Parallel_2D& pv);
+        const BlockCyclicDistribution& pv);
 
 }
 
@@ -68,10 +70,12 @@ public:
 
     // Processes in ESolver_KS_LCAO
     /// @brief in init: Exx_LRI::init()
-    void init(const MPI_Comm &mpi_comm,
-              const UnitCell &ucell,
-              const K_Vectors &kv,
-              const LCAO_Orbitals& orb);
+    void init(
+        const MPI_Comm &mpi_comm,
+        const UnitCell &ucell,
+        const K_Vectors &kv,
+        const LCAO_Orbitals &orb,
+        const bool use_gpu);
 
     /// @brief: in cal_exx_ions: Exx_LRI::cal_exx_ions()
     void cal_exx_ions(const UnitCell& ucell, const bool write_cv = false);
@@ -90,14 +94,21 @@ public:
 
     // Processes in ESolver_KS_LCAO
     /// Initialize EXX symmetry before the first ionic step.
-    void exx_before_all_runners(const K_Vectors& kv, const UnitCell& ucell, const Parallel_2D& pv);
+    void exx_before_all_runners(const K_Vectors& kv, const UnitCell& ucell, const BlockCyclicDistribution& pv);
 
     /// Discard old atom mappings, lattice returns and rotation caches before rebuilding.
-    void refresh_symmetry(const K_Vectors& kv, const UnitCell& ucell, const Parallel_2D& pv);
+    void refresh_symmetry(const K_Vectors& kv, const UnitCell& ucell, const BlockCyclicDistribution& pv);
 
     /// @brief in beforescf: set xc type, opt_orb, do DM mixing
-    void exx_beforescf(const int istep, const K_Vectors& kv, const Charge_Mixing& chgmix, const UnitCell& ucell, const LCAO_Orbitals& orb,
-                       const Parallel_2D& pv, const bool update_symmetry);
+    void exx_beforescf(
+        const int istep,
+        const K_Vectors &kv,
+        const Charge_Mixing &chgmix,
+        const UnitCell &ucell,
+        const LCAO_Orbitals &orb,
+        const BlockCyclicDistribution &pv,
+        const bool update_symmetry,
+        const bool use_gpu);
 
     /// @brief in eachiterinit:  do DM mixing and calculate Hexx when entering 2nd SCF
     void exx_eachiterinit(const int istep,
@@ -105,7 +116,8 @@ public:
                           const module_dm::DensityMatrix<T, double>& dm/**< double should be Tdata if complex-PBE-DM is supported*/,
                           const K_Vectors& kv,
                           const Parallel_Orbitals& pv,
-                          const int& iter);
+                          const int& iter,
+                          const elecstate::ElecState& elec);
 
     /// @brief in hamilt2rho: calculate Hexx and Eexx
     void exx_hamilt2rho(elecstate::ElecState& elec, const Parallel_Orbitals& pv, const int iter);
@@ -132,7 +144,8 @@ public:
                             int& iter,
                             const int& istep,
                             const double& etot,
-                            const double& scf_ene_thr);
+                            const double& scf_ene_thr,
+                            const elecstate::TDFieldManager* field);
 
     /// @brief  the step of the outer loop.
     /// nullptr: no dependence on the number of two_level_step, contributeHk will do enerything normally.
@@ -150,6 +163,17 @@ public:
 private:
 
     Mix_DMk_2D<T> mix_DMk_2D;
+    Mix_DMk_2D<std::complex<double>> mix_common_density_;
+    RI_2D_Comm::HybridDensityLayout common_density_layout_;
+
+    std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> prepare_exx_density(
+        const std::vector<std::vector<T>>& dmk, const UnitCell& ucell,
+        const K_Vectors& kv, const Parallel_Orbitals& pv, const int nspin,
+        const bool restart, const ModuleBase::Vector3<double>* source_A);
+    void mix_common_density(RI_2D_Comm::HybridGaugeComplexDensity& density,
+        const UnitCell& ucell, const ModuleBase::Vector3<double>& source_A, const bool restart);
+    void mix_common_density(std::vector<std::map<TA, std::map<TAC, RI::Tensor<double>>>>& density,
+        const UnitCell& ucell, const ModuleBase::Vector3<double>& source_A, const bool restart);
 
     Exx_Info_Global info_global;
     size_t hybrid_step_ = 1;
@@ -174,6 +198,5 @@ private:
     Flag_Finish flag_finish;
 };
 
-#include "exx_lri_interface.hpp"
 
 #endif

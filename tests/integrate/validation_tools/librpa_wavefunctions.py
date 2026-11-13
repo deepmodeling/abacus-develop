@@ -41,7 +41,8 @@ def check_ks_nao(path, nao_dir, tolerance, spinor=False):
             else:
                 name = "wfk{}_nao.txt".format(ik) if nspin == 1 else "wfk{}s{}_nao.txt".format(ik, spin)
             source = nao_dir / name
-            lines = [line.strip() for line in source.read_text().splitlines() if line.strip()]
+            # ignore provenance comment lines starting with '#'
+            lines = [line.strip() for line in source.read_text().splitlines() if line.strip() and not line.strip().startswith("#")]
             if len(lines) < 4 or "(index of k points)" not in lines[0]:
                 raise ValueError("{} has an invalid text KS header".format(source))
             text_index = ik if spinor else ik + (spin - 1) * nk

@@ -3,9 +3,82 @@
 #include "../sccs_parameters.h"
 #include "../sccs_response.h"
 #include "../sccs_pw_coulomb.h"
+#include "../sccs_sa.h"
 #include "source_base/parallel_reduce.h"
 
-using SccsFunctionalTest = SccsTest::PwTest;
+class SccsFunctionalTest : public SccsTest::PwTest
+{
+protected:
+    // cos(2 pi x/L + 0.3) along x, whose flat planes miss the grid.
+    std::vector<double> shifted_mode() const
+    {
+        std::vector<double> values(basis.nrxx);
+        for (int ir = 0; ir < basis.nrxx; ++ir)
+        {
+            const int ix = ir / (basis.ny * basis.nplane);
+            const double angle = ModuleBase::TWO_PI * ix / basis.nx + 0.3;
+            values[ir] = std::cos(angle);
+        }
+        return values;
+    }
+
+    // Directional derivative of the non-electrostatic energy of a filled
+    // cavity in vacuum along a density cosine: electron-potential projection
+    // and central difference of the evaluated energy.
+    void filled_non_electrostatic_derivative(double surface_tension,
+                                             double pressure,
+                                             double& predicted,
+                                             double& finite_difference,
+                                             double& filled_volume)
+    {
+        ModuleSccs::SccsConfig config = ModuleSccs::preset_config(ModuleSccs::Preset::Vacuum);
+        config.surface_tension = surface_tension;
+        config.pressure = pressure;
+        config.surface_regularization = 1e-8;
+        // s is about 0.67 +- 0.13; the probe solute fraction stays inside the filling step.
+        config.cavity.solvent_aware.solvent_radius = 1.5;
+        config.cavity.solvent_aware.filling_thr = 0.67;
+        config.cavity.solvent_aware.filling_spread = 0.1;
+        const ModuleBase::Matrix3 lattice;
+        const std::vector<double> kernel = ModuleSccs::sa_probe_kernel(basis, lattice, length,
+                                                                       config.cavity.solvent_aware);
+        const std::vector<double> mode = shifted_mode();
+        const std::vector<double> charge(basis.nrxx, 0.0);
+        const std::vector<double> cold;
+        ModuleSccs::PolarizationSolverParameters solver;
+        ModuleSccs::PeriodicCoulombOperator coulomb(basis, tpiba);
+        auto evaluate = [&](double step, ModuleSccs::SccsResponse& response, ModuleSccs::FunctionalResult& result) {
+            std::vector<double> density(basis.nrxx);
+            for (int ir = 0; ir < basis.nrxx; ++ir)
+            {
+                density[ir] = 1e-3 * (1.0 + 0.3 * mode[ir]) + step * mode[ir];
+            }
+            ModuleSccs::solve_response(density, charge, config.cavity, kernel, solver, cold, basis, tpiba, coulomb,
+                                       response);
+            ModuleSccs::eval_functional(charge, response, config, kernel, basis, tpiba, coulomb, result);
+        };
+        ModuleSccs::SccsResponse center_response;
+        ModuleSccs::FunctionalResult center;
+        evaluate(0.0, center_response, center);
+        filled_volume = center_response.solvent_aware.volume;
+        predicted = 0.0;
+        for (int ir = 0; ir < basis.nrxx; ++ir)
+        {
+            predicted += center.electron_potential[ir] * mode[ir];
+        }
+        Parallel_Reduce::reduce_pool(predicted);
+        predicted *= basis.omega / basis.nxyz;
+        const double step = 1e-7;
+        ModuleSccs::SccsResponse response;
+        ModuleSccs::FunctionalResult plus;
+        ModuleSccs::FunctionalResult minus;
+        evaluate(step, response, plus);
+        evaluate(-step, response, minus);
+        const double energy_plus = plus.surface_energy + plus.volume_energy;
+        const double energy_minus = minus.surface_energy + minus.volume_energy;
+        finite_difference = (energy_plus - energy_minus) / (2.0 * step);
+    }
+};
 
 TEST_F(SccsFunctionalTest, UniformDielectricEnergyAndElectronDerivative)
 {
@@ -103,7 +176,7 @@ TEST_F(SccsFunctionalTest, ExplicitPeriodicOperatorPreservesResponseAndFunctiona
                                basis, tpiba, legacy);
     ModuleSccs::PeriodicCoulombOperator coulomb(basis, tpiba);
     EXPECT_FALSE(coulomb.has_correction());
-    ModuleSccs::solve_response(density, charge, config.cavity, solver, cold,
+    ModuleSccs::solve_response(density, charge, config.cavity, SccsTest::no_probe, solver, cold,
                                basis, tpiba, coulomb, explicit_response);
     EXPECT_EQ(legacy.polarization.iterations, explicit_response.polarization.iterations);
     EXPECT_EQ(legacy.polarization.potential, explicit_response.polarization.potential);
@@ -113,7 +186,7 @@ TEST_F(SccsFunctionalTest, ExplicitPeriodicOperatorPreservesResponseAndFunctiona
     ModuleSccs::FunctionalResult explicit_result;
     ModuleSccs::eval_functional(charge, legacy, config, basis, tpiba,
                                 legacy_result);
-    ModuleSccs::eval_functional(charge, explicit_response, config, basis, tpiba,
+    ModuleSccs::eval_functional(charge, explicit_response, config, SccsTest::no_probe, basis, tpiba,
                                 coulomb, explicit_result);
     EXPECT_DOUBLE_EQ(legacy_result.reaction_energy, explicit_result.reaction_energy);
     EXPECT_DOUBLE_EQ(legacy_result.surface_energy, explicit_result.surface_energy);
@@ -159,4 +232,23 @@ TEST_F(SccsFunctionalTest, CavityDensityDerivativeOnlyForTheFullCavity)
         const double expected = full.electron_potential[ir] + full.reaction_potential[ir];
         EXPECT_NEAR(full.cavity_potential[ir], expected, 1e-14);
     }
+}
+
+// The filled surface and volume potential is the exact derivative of the
+// discrete energies, with the pressure folded into the surface convolution.
+TEST_F(SccsFunctionalTest, FilledNonElectrostaticPotentialDifferentiatesTheDiscreteEnergy)
+{
+    // Hartree/Bohr^2 and Hartree/Bohr^3, so that both terms enter the derivative.
+    const double surface_tension = 1e-2;
+    const double pressure = 1e-3;
+    double predicted = 0.0;
+    double finite_difference = 0.0;
+    double filled_volume = 0.0;
+    filled_non_electrostatic_derivative(surface_tension, pressure, predicted, finite_difference, filled_volume);
+    // The filling is switched on, and the derivative is far from zero, so the
+    // relative tolerance below tests it.
+    EXPECT_GT(filled_volume, 50.0);
+    EXPECT_GT(std::abs(finite_difference), 1e2);
+    const double tolerance = 1e-6 * std::abs(finite_difference);
+    EXPECT_NEAR(predicted, finite_difference, tolerance);
 }

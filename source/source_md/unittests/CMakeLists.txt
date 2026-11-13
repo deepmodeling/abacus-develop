@@ -16,15 +16,8 @@ if(ENABLE_MPI)
   addtest(
     TARGET MODULE_MD_base_mpi
     KEEP_FEATURE_DEFINITIONS __MPI
-    LIBS parameter psi device container
+    LIBS parameter psi device
     SOURCES test_md_base.cpp ../md_base.cpp
-            ../../source_lcao/module_rt/boundary_fix.cpp
-            ../../source_lcao/module_rt/td_folding.cpp
-            ../../source_hamilt/module_hcontainer/base_matrix.cpp
-            ../../source_hamilt/module_hcontainer/atom_pair.cpp
-            ../../source_hamilt/module_hcontainer/hcontainer.cpp
-            ../../source_basis/module_ao/parallel_orbitals.cpp
-            ../../source_base/parallel_2d.cpp
             ../../source_base/parallel_common.cpp
             ../../source_cell/magnetism.cpp ${md_test_depend_files})
   add_test(
@@ -33,20 +26,51 @@ if(ENABLE_MPI)
             $<TARGET_FILE:MODULE_MD_base_mpi> ${MPIEXEC_POSTFLAGS}
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   set_tests_properties(
-    MODULE_MD_dump_mpi MODULE_MD_dump_mpi_np4
-    MODULE_MD_base_mpi MODULE_MD_base_mpi_np4
-    PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=1;MKL_NUM_THREADS=1;I_MPI_PIN=0" TIMEOUT 60)
+    MODULE_MD_dump_mpi MODULE_MD_dump_mpi_np4 MODULE_MD_base_mpi
+    MODULE_MD_base_mpi_np4
+    PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=1;MKL_NUM_THREADS=1;I_MPI_PIN=0"
+               TIMEOUT 60)
   foreach(rank_count IN ITEMS 1 4)
     math(EXPR processor_count "${rank_count} * 4")
     add_test(
       NAME MODULE_MD_base_mpi_np${rank_count}_omp4
-      COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} ${rank_count}
-              ${MPIEXEC_PREFLAGS} $<TARGET_FILE:MODULE_MD_base_mpi>
-              ${MPIEXEC_POSTFLAGS}
+      COMMAND
+        ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} ${rank_count}
+        ${MPIEXEC_PREFLAGS} $<TARGET_FILE:MODULE_MD_base_mpi>
+        ${MPIEXEC_POSTFLAGS}
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
     set_tests_properties(
       MODULE_MD_base_mpi_np${rank_count}_omp4
       PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=4;MKL_NUM_THREADS=1;I_MPI_PIN=0"
                  PROCESSORS "${processor_count}" TIMEOUT 60)
   endforeach()
+endif()
+
+# Separate MD -> RT contract; the MD unit target above keeps no RT sources.
+# Register after MD support sources are available; the test lives with RT.
+if(ENABLE_LCAO AND ENABLE_MPI)
+  addtest(
+    TARGET INTEGRATION_MD_RT_boundary
+    KEEP_FEATURE_DEFINITIONS __MPI
+    LIBS parameter psi device container
+    SOURCES ../../source_lcao/module_rt/test/test_md_rt_boundary.cpp
+            ../../source_base/test/mpi_test_main.cpp
+            ../md_base.cpp
+            ../../source_lcao/module_rt/boundary_fix.cpp
+            ../../source_lcao/module_rt/td_folding.cpp
+            ../../source_hamilt/module_hcontainer/base_matrix.cpp
+            ../../source_hamilt/module_hcontainer/atom_pair.cpp
+            ../../source_hamilt/module_hcontainer/hcontainer.cpp
+            ../../source_basis/module_ao/parallel_orbitals.cpp
+            ../../source_base/block_cyclic_distribution.cpp
+            ../../source_cell/magnetism.cpp
+            ../../source_base/parallel_common.cpp
+            ${md_test_depend_files})
+  # One executable, separate CTest entries for the RT unit and MD/RT contract.
+  abacus_add_rt_test_variants(
+    INTEGRATION_MD_RT_boundary INTEGRATION_MD_RT_boundary "integration;md;rt"
+    "*MdRtBoundaryTest.*")
+  abacus_add_rt_test_variants(
+    MODULE_LCAO_tddft_td_folding INTEGRATION_MD_RT_boundary "unit;rt"
+    "TdFoldingTest.*")
 endif()

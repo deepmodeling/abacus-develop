@@ -19,12 +19,6 @@
  */
 
 #define doublethreshold 1e-8
-Parallel_Orbitals::Parallel_Orbitals()
-{
-}
-Parallel_Orbitals::~Parallel_Orbitals()
-{
-}
 
 TEST(MiddleHamiltTest, testMiddleHamilt)
 {
@@ -37,15 +31,7 @@ TEST(MiddleHamiltTest, testMiddleHamilt)
     bool print_matrix = false;
     Parallel_Orbitals* pv;
     pv = new Parallel_Orbitals();
-    pv->nloc = nlocal * nlocal;
-    pv->ncol = nlocal;
-    pv->nrow = nlocal;
-
-    // Initialize input matrices
-    int info;
-    int mb = 1, nb = 1, lda = nlocal, ldc = nlocal;
-    int irsrc = 0, icsrc = 0, lld = numroc_(&nlocal, &mb, &myprow, &irsrc, &nprow);
-    descinit_(pv->desc, &nlocal, &nlocal, &mb, &nb, &irsrc, &icsrc, &ictxt, &lld, &info);
+    ASSERT_EQ(pv->para_2d().set(nlocal, nlocal, 1, ictxt), 0);
 
     // Initialize data
     Htmp = new std::complex<double>[nlocal * nlocal];

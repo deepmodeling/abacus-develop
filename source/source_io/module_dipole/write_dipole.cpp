@@ -70,6 +70,9 @@ void write_dipole(const UnitCell& ucell,
     ofs_running << " Write dipole data to file: " << fn << std::endl;
 
     // Empty local FFT partitions contribute zero but must still join the subsequent reduction.
+    // Do NOT reject nplane == 0 alone: some MPI ranks legitimately hold zero
+    // z-planes (empty partition), in which case nrxx is also 0 and the
+    // accumulation loop below is a harmless no-op.
     if (rhopw->nx == 0 || rhopw->ny == 0 || rhopw->nz == 0 || rhopw->nxyz == 0 || (rhopw->nplane == 0 && rhopw->nrxx != 0))
     {
         ModuleBase::WARNING_QUIT("ModuleIO::write_dipole", "Invalid global grid dimensions or inconsistent local plane count");
@@ -119,13 +122,16 @@ void write_dipole(const UnitCell& ucell,
     // Output electronic dipole moment
     print_dipole_moment(ofs_running, "Electronic dipole moment", dipole_elec[0], dipole_elec[1], dipole_elec[2]);
 
-    // Write to file: step index and three dipole components
-    ofs << std::right << std::setw(6) << istep + 1 << std::scientific << std::setprecision(precision - 1);
-    for (int direction = 0; direction < 3; ++direction)
+    // Write to file on master process only; ofs is opened only there.
+    if (GlobalV::MY_RANK == 0)
     {
-        ofs << "  " << std::setw(19) << dipole_elec[direction];
+        ofs << std::right << std::setw(6) << istep + 1 << std::scientific << std::setprecision(precision - 1);
+        for (int direction = 0; direction < 3; ++direction)
+        {
+            ofs << "  " << std::setw(19) << dipole_elec[direction];
+        }
+        ofs << std::endl;
     }
-    ofs << std::endl;
 
     // Calculate ionic dipole moment
     // Accumulate Z_v * taud, then transform to Cartesian coordinates.

@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 #include "source_lcao/module_lr/state_track.h"
-#include "source_base/parallel_2d.h"
+#include "source_base/block_cyclic_distribution.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_basis/module_nao/two_center_integrator.h"
 #include "source_cell/unitcell.h"
@@ -29,22 +29,22 @@ TEST(StateTrack, ClosedShellTripletIgnoresDownSpinVirtualRotation)
     atoms->tau = {{0, 0, 0}, {2, 0, 0}, {4, 0, 0}};
     const std::vector<int> offsets{0, 1, 2};
     cell.set_iat2iwt_for_test(offsets, 1);
-    Parallel_2D pc;
+    BlockCyclicDistribution pc;
 #ifdef __MPI
-    pc.init(3, 3, 1, MPI_COMM_WORLD);
+    pc.init(3, 3, 1, MPI_COMM_WORLD, false);
 #else
     pc.set_serial(3, 3);
 #endif
     Parallel_Orbitals pmat;
-    std::vector<Parallel_2D> px(2);
+    std::vector<BlockCyclicDistribution> px(2);
 #ifdef __MPI
-    pmat.set(3, 3, 1, pc.blacs_ctxt);
+    pmat.para_2d().set(3, 3, 1, pc.ictxt());
     for (auto& block: px)
     {
-        block.set(2, 1, 1, pc.blacs_ctxt);
+        block.set(2, 1, 1, pc.ictxt());
     }
 #else
-    pmat.set_serial(3, 3);
+    pmat.para_2d().set_serial(3, 3);
     for (auto& block: px)
     {
         block.set_serial(2, 1);

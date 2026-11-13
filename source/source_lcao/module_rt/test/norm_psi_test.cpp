@@ -19,12 +19,6 @@
  */
 
 #define doublethreshold 1e-8
-Parallel_Orbitals::Parallel_Orbitals()
-{
-}
-Parallel_Orbitals::~Parallel_Orbitals()
-{
-}
 
 TEST(NormPsiTest, testNormPsi)
 {
@@ -35,29 +29,10 @@ TEST(NormPsiTest, testNormPsi)
     bool print_matrix = false;
     Parallel_Orbitals* pv;
     pv = new Parallel_Orbitals();
-    pv->nloc = nlocal * nlocal;
+    ASSERT_EQ(pv->para_2d().set(nlocal, nlocal, 1, ictxt), 0);
     pv->nloc_wfc = nlocal * nband;
-    pv->ncol = nlocal;
-    pv->nrow = nlocal;
     pv->ncol_bands = nband;
-    pv->dim0 = 1;
-    pv->dim1 = 1;
-    pv->nb = 1;
-    pv->blacs_ctxt = 0;
-    pv->set_coord(0, 0);
-
-    int dim[2];
-    dim[0] = nprow;
-    dim[1] = npcol;
-
-    // Initialize input matrices
-    int info;
-    int mb = 1, nb = 1, lda = nband, ldc = nlocal;
-    int irsrc = 0, icsrc = 0, lld = numroc_(&nlocal, &mb, &myprow, &irsrc, &nprow),
-        lld1 = numroc_(&nband, &mb, &myprow, &irsrc, &nprow);
-    descinit_(pv->desc, &nlocal, &nlocal, &mb, &nb, &irsrc, &icsrc, &ictxt, &lld, &info);
-    descinit_(pv->desc_wfc, &nlocal, &nband, &mb, &nb, &irsrc, &icsrc, &ictxt, &lld, &info);
-    descinit_(pv->desc_Eij, &nband, &nband, &mb, &nb, &irsrc, &icsrc, &ictxt, &lld, &info);
+    pv->set_desc_wfc_Eij(nlocal, nband, pv->para_2d().nrloc());
 
     // Initialize data
     Stmp = new std::complex<double>[nlocal * nlocal];
@@ -129,23 +104,10 @@ TEST(NormPsiTest, EndpointMetricDiffersFromPropagationMetric)
     Parallel_Orbitals pv;
     const int nlocal = 2;
     const int nband = 1;
-    const int block = 1;
-    const int zero = 0;
-    pv.nloc = 4;
+    ASSERT_EQ(pv.para_2d().set(nlocal, nlocal, 1, ictxt), 0);
     pv.nloc_wfc = 2;
-    pv.nrow = pv.ncol = 2;
     pv.ncol_bands = 1;
-    pv.dim0 = pv.dim1 = pv.nb = 1;
-    pv.blacs_ctxt = ictxt;
-    pv.set_coord(0, 0);
-    int info = 0;
-    int lld = 2;
-    descinit_(pv.desc, &nlocal, &nlocal, &block, &block, &zero, &zero, &ictxt, &lld, &info);
-    ASSERT_EQ(info, 0);
-    descinit_(pv.desc_wfc, &nlocal, &nband, &block, &block, &zero, &zero, &ictxt, &lld, &info);
-    ASSERT_EQ(info, 0);
-    descinit_(pv.desc_Eij, &nband, &nband, &block, &block, &zero, &zero, &ictxt, &lld, &info);
-    ASSERT_EQ(info, 0);
+    pv.set_desc_wfc_Eij(nlocal, nband, pv.para_2d().nrloc());
     std::complex<double> endpoint[4] = {2.0, {0.0, -0.4}, {0.0, 0.4}, 1.0};
     std::complex<double> midpoint[4] = {1.5, {0.0, -0.2}, {0.0, 0.2}, 1.0};
     std::complex<double> right[2] = {1.0, {0.0, 0.5}};

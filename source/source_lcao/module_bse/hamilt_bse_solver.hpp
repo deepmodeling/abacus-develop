@@ -26,7 +26,7 @@ namespace BSE
 {
 template <typename T>
 void solve_tda(const std::vector<T>& A,
-               const Parallel_2D& pA,
+               const BlockCyclicDistribution& pA,
                std::vector<double>& ev,
                std::vector<T>& v)
 {
@@ -34,8 +34,8 @@ void solve_tda(const std::vector<T>& A,
     ModuleBase::TITLE("HamiltBSE", "elpa_solve_tda1");
     ModuleBase::timer::start("HamiltBSE", "elpa_solve_tda");
 
-    assert(pA.get_global_row_size() == pA.get_global_col_size());
-    const int nA = pA.get_global_row_size();
+    assert(pA.nrglb() == pA.ncglb());
+    const int nA = pA.nrglb();
 
     elpa_t elpaInstance;
     int status;
@@ -54,12 +54,12 @@ void solve_tda(const std::vector<T>& A,
     }
     elpa_set(elpaInstance, "na", nA, &status);
     elpa_set(elpaInstance, "nev", static_cast<int>(ev.size()), &status);
-    elpa_set(elpaInstance, "local_nrows", pA.get_row_size(), &status);
-    elpa_set(elpaInstance, "local_ncols", pA.get_col_size(), &status);
-    elpa_set(elpaInstance, "nblk", pA.get_block_size(), &status);
+    elpa_set(elpaInstance, "local_nrows", pA.nrloc(), &status);
+    elpa_set(elpaInstance, "local_ncols", pA.ncloc(), &status);
+    elpa_set(elpaInstance, "nblk", pA.nb(), &status);
     elpa_set(elpaInstance, "mpi_comm_parent", MPI_Comm_c2f(MPI_COMM_WORLD), &status);
-    elpa_set(elpaInstance, "process_row", pA.get_coord_row(), &status);
-    elpa_set(elpaInstance, "process_col", pA.get_coord_col(), &status);
+    elpa_set(elpaInstance, "process_row", pA.irproc(), &status);
+    elpa_set(elpaInstance, "process_col", pA.icproc(), &status);
     elpa_set(elpaInstance, "solver", ELPA_SOLVER_2STAGE, &status);
 #ifdef _OPENMP
     int num_threads = omp_get_max_threads();

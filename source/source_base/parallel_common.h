@@ -11,6 +11,15 @@
 namespace Parallel_Common
 {
 
+#ifdef __MPI
+inline int comm_size(const MPI_Comm comm)
+{
+    int size = 0;
+    MPI_Comm_size(comm, &size);
+    return size;
+}
+#endif
+
 //(1) bcast array
 void bcast_complex_double(std::complex<double>* object, const int n);
 void bcast_string(std::string* object, const int n);
@@ -24,6 +33,11 @@ void bcast_string(std::string& object);
 void bcast_double(double& object);
 void bcast_int(int& object);
 void bcast_bool(bool& object);
+
+#ifdef __MPI
+//(3) bcast single on an explicit communicator, from the communicator's rank 0
+void bcast_mpi_offset(MPI_Offset& object, const MPI_Comm& comm);
+#endif
 
 } // namespace Parallel_Common
 

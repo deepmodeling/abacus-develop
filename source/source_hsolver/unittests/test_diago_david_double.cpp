@@ -128,6 +128,7 @@ class DiagoDavPrepare
             nband,
             dim,
             order,
+            false,
             comm_info);
 
         hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_NMAX = maxiter;

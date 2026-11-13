@@ -5,6 +5,7 @@
 #include "source_base/module_parallel/para_world.h"
 #include "source_base/parallel_comm.h"
 #include "source_base/parallel_global.h"
+#include "source_main/version.h"
 
 #include "gtest/gtest.h"
 
@@ -227,6 +228,61 @@ class BandOutputTest : public testing::TestWithParam<BandTopology>
         input_.out_band = {1, 8};
     }
 
+    /// Read the next data line of a band file, skipping the provenance header.
+    static bool read_data_line(std::istream& stream, std::string& line)
+    {
+        while (static_cast<bool>(std::getline(stream, line)))
+        {
+            const std::size_t first = line.find_first_not_of(" \t");
+            if (first != std::string::npos && line[first] == '#')
+            {
+                continue;
+            }
+            return true;
+        }
+        return false;
+    }
+
+    /// Collect the comment lines of a band file in the order they were written.
+    std::vector<std::string> comment_lines(const std::string& name) const
+    {
+        std::vector<std::string> comments;
+        if (world_->rank() != 0)
+        {
+            return comments;
+        }
+        std::ifstream file(directory_ + name);
+        EXPECT_TRUE(file.is_open()) << name;
+        std::string line;
+        while (static_cast<bool>(std::getline(file, line)))
+        {
+            const std::size_t first = line.find_first_not_of(" \t");
+            if (first != std::string::npos && line[first] == '#')
+            {
+                comments.push_back(line);
+            }
+        }
+        return comments;
+    }
+
+    /// Check the three comment lines preceding k-point block number `block`.
+    void expect_header(const std::string& name, int block, int spin, int channels) const
+    {
+        if (world_->rank() != 0)
+        {
+            return;
+        }
+        SCOPED_TRACE(name);
+        const std::vector<std::string> comments = comment_lines(name);
+        ASSERT_GE(comments.size(), static_cast<std::size_t>(3 * block + 3));
+        EXPECT_EQ(comments[3 * block], "# ABACUS version: " + std::string(VERSION));
+        const std::string written = "# Written at ";
+        EXPECT_EQ(comments[3 * block + 1].compare(0, written.size(), written), 0)
+            << comments[3 * block + 1];
+        const std::string tag = (channels == 2) ? (spin == 0 ? " (spin up)" : " (spin down)") : "";
+        EXPECT_EQ(comments[3 * block + 2], "# IONIC STEP " + std::to_string(block + 1) + tag);
+    }
+
     void expect_output(const std::string& name, int spin, int nbands,
                        double fermi, int precision, int copies) const
     {
@@ -244,7 +300,7 @@ class BandOutputTest : public testing::TestWithParam<BandTopology>
         {
             for (int ik = 0; ik < 5; ++ik)
             {
-                ASSERT_TRUE(static_cast<bool>(std::getline(file, line))) << "Missing k-point " << ik;
+                ASSERT_TRUE(read_data_line(file, line)) << "Missing k-point " << ik;
                 std::istringstream row(line);
                 int index = 0;
                 ASSERT_TRUE(static_cast<bool>(row >> index));
@@ -271,7 +327,7 @@ class BandOutputTest : public testing::TestWithParam<BandTopology>
                 EXPECT_FALSE(static_cast<bool>(row >> extra)) << "Unexpected column: " << extra;
             }
         }
-        EXPECT_FALSE(static_cast<bool>(std::getline(file, line))) << "Unexpected line: " << line;
+        EXPECT_FALSE(read_data_line(file, line)) << "Unexpected line: " << line;
     }
 
     std::string read_text(const std::string& name) const
@@ -304,18 +360,21 @@ class BandOutputTest : public testing::TestWithParam<BandTopology>
         {
             SCOPED_TRACE(distributed ? "distributed" : "replicated");
             prepare(nspin, 3, distributed);
-            ModuleIO::write_bands(input_, ekb_, kv_, ofs_running);
+            ModuleIO::write_bands(input_, ekb_, kv_, ofs_running, 0);
             if (nspin == 2)
             {
                 expect_output("bands1.txt", 0, 3, 0.0, 8, 1);
                 expect_output("bands2.txt", 1, 3, 0.0, 8, 1);
                 expect_missing("band.txt");
+                expect_header("bands1.txt", 0, 0, 2);
+                expect_header("bands2.txt", 0, 1, 2);
             }
             else
             {
                 expect_output("band.txt", 0, 3, 0.0, 8, 1);
                 expect_missing("bands1.txt");
                 expect_missing("bands2.txt");
+                expect_header("band.txt", 0, 0, 1);
             }
             // Root must finish reading before another collective call overwrites output.
             Parallel::barrier(*world_);
@@ -326,7 +385,7 @@ class BandOutputTest : public testing::TestWithParam<BandTopology>
 TEST_P(BandOutputTest, DirectSingleSpin)
 {
     prepare(1, 3, false);
-    ModuleIO::nscf_bands(0, directory_ + "direct.txt", 3, 0.0, 8, ekb_, kv_);
+    ModuleIO::nscf_bands(0, directory_ + "direct.txt", 3, 0.0, 8, ekb_, kv_, "");
     expect_output("direct.txt", 0, 3, 0.0, 8, 1);
     if (world_->rank() == 0)
     {
@@ -339,8 +398,8 @@ TEST_P(BandOutputTest, DirectSingleSpin)
 TEST_P(BandOutputTest, DirectBothSpins)
 {
     prepare(2, 3, false);
-    ModuleIO::nscf_bands(0, directory_ + "up.txt", 3, 0.0, 8, ekb_, kv_);
-    ModuleIO::nscf_bands(1, directory_ + "down.txt", 3, 0.0, 8, ekb_, kv_);
+    ModuleIO::nscf_bands(0, directory_ + "up.txt", 3, 0.0, 8, ekb_, kv_, "");
+    ModuleIO::nscf_bands(1, directory_ + "down.txt", 3, 0.0, 8, ekb_, kv_, "");
     expect_output("up.txt", 0, 3, 0.0, 8, 1);
     expect_output("down.txt", 1, 3, 0.0, 8, 1);
 }
@@ -350,7 +409,7 @@ TEST_P(BandOutputTest, PrecisionAndFermiShift)
     prepare(1, 3, false);
     for (const int precision : {4, 8})
     {
-        ModuleIO::nscf_bands(0, directory_ + "direct.txt", 3, 0.25, precision, ekb_, kv_);
+        ModuleIO::nscf_bands(0, directory_ + "direct.txt", 3, 0.25, precision, ekb_, kv_, "");
         expect_output("direct.txt", 0, 3, 0.25, precision, 1);
         if (world_->rank() == 0 && precision == 4)
         {
@@ -366,23 +425,25 @@ TEST_P(BandOutputTest, OverwriteAndAppend)
     prepare(1, 3, true);
     seed_file("band.txt", "stale output\n");
     Parallel::barrier(*world_);
-    ModuleIO::write_bands(input_, ekb_, kv_, ofs_running);
+    ModuleIO::write_bands(input_, ekb_, kv_, ofs_running, 0);
     expect_output("band.txt", 0, 3, 0.0, 8, 1);
+    expect_header("band.txt", 0, 0, 1);
     Parallel::barrier(*world_);
     parameters_->set_output(directory_, true);
-    ModuleIO::write_bands(input_, ekb_, kv_, ofs_running);
+    ModuleIO::write_bands(input_, ekb_, kv_, ofs_running, 1);
     expect_output("band.txt", 0, 3, 0.0, 8, 2);
+    expect_header("band.txt", 1, 0, 1);
 }
 
 TEST_P(BandOutputTest, OutputDisabled)
 {
     prepare(1, 3, true);
     input_.out_band[0] = 0;
-    ModuleIO::write_bands(input_, ekb_, kv_, ofs_running);
+    ModuleIO::write_bands(input_, ekb_, kv_, ofs_running, 0);
     expect_missing("band.txt");
     seed_file("band.txt", "keep this content\n");
     Parallel::barrier(*world_);
-    ModuleIO::write_bands(input_, ekb_, kv_, ofs_running);
+    ModuleIO::write_bands(input_, ekb_, kv_, ofs_running, 0);
     if (world_->rank() == 0)
     {
         EXPECT_EQ(read_text("band.txt"), "keep this content\n");
@@ -413,9 +474,11 @@ TEST_P(BandOutputTest, EmptyBandShard)
     {
         EXPECT_EQ(ekb_.nc, 0);
     }
-    ModuleIO::write_bands(input_, ekb_, kv_, ofs_running);
+    ModuleIO::write_bands(input_, ekb_, kv_, ofs_running, 0);
     expect_output("bands1.txt", 0, 1, 0.0, 8, 1);
     expect_output("bands2.txt", 1, 1, 0.0, 8, 1);
+    expect_header("bands1.txt", 0, 0, 2);
+    expect_header("bands2.txt", 0, 1, 2);
 }
 
 TEST_P(BandOutputTest, RunningLogNamesSpinChannels)
@@ -425,7 +488,7 @@ TEST_P(BandOutputTest, RunningLogNamesSpinChannels)
                                  + std::to_string(world_->rank()) + ".log";
     std::ofstream log(log_name);
     EXPECT_TRUE(log.is_open());
-    ModuleIO::write_bands(input_, ekb_, kv_, log);
+    ModuleIO::write_bands(input_, ekb_, kv_, log, 0);
     log.close();
 
     std::ifstream in(log_name);

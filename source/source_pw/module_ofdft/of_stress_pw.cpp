@@ -72,7 +72,7 @@ void OF_Stress_PW::cal_stress(const int nspin,
     stress_har(ucell,sigmahar, this->rhopw, true, pelec->charge);
 
     // ewald contribution
-    stress_ewa(ucell,sigmaewa, this->rhopw, true);
+    stress_ewa(ucell, sigmaewa, this->rhopw, p_sf->strucFac, true);
 
     // xc contribution: add gradient corrections(non diagonal)
     for (int i = 0; i < 3; i++)

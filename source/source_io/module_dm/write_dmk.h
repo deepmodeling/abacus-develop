@@ -1,7 +1,7 @@
 #ifndef WRITE_DMK_H
 #define WRITE_DMK_H
 
-#include "source_base/parallel_2d.h"
+#include "source_base/block_cyclic_distribution.h"
 #include "source_cell/unitcell.h"
 #include "source_cell/klist.h"
 
@@ -38,18 +38,18 @@ void dmk_readData(std::ifstream& ifs, std::complex<double>& data);
  * @param nspin The number of spin components.
  * @param nk The number of k-points.
  * @param k-vector information.
- * @param pv The Parallel_2D object. Will get the global size and local size
+ * @param pv The BlockCyclicDistribution object. Will get the global size and local size
  * from it, and seperate the data into different processors accordingly.
  * @param dmk_dir The directory path of the DMK file.
  * @param dmk A vector to store the DMK data. If use MPI parallel, the data will
- * be seperated into different processors based on the Parallel_2D object.
+ * be seperated into different processors based on the BlockCyclicDistribution object.
  * @return True if the DMK data is successfully read, false otherwise.
  */
 template <typename T>
 bool read_dmk(const int nspin,
               const int nk,
               const K_Vectors &kv,
-              const Parallel_2D& pv,
+              const BlockCyclicDistribution& pv,
               const std::string& dmk_dir,
               std::vector<std::vector<T>>& dmk,
               std::ofstream &ofs_running);
@@ -66,8 +66,11 @@ bool read_dmk(const int nspin,
  * @param efs A vector containing the Fermi energies, and should have the same
  * size as the number of SPIN.
  * @param ucell A pointer to the UnitCell object.
- * @param pv The Parallel_2D object. The 2d-block parallel information of DMK.
+ * @param pv The BlockCyclicDistribution object. The 2d-block parallel information of DMK.
  * @param dmk_dir The directory the DMK files are written into.
+ * @param out_app_flag Append-mode selector: 1 reuses the fixed filename
+ * across ionic steps and appends a new record per step in multi-step
+ * runs (MD or relax), 0 or 2 inserts the geometry-step index g{N}.
  */
 template <typename T>
 void write_dmk(const std::vector<std::vector<T>>& dmk,
@@ -75,9 +78,10 @@ void write_dmk(const std::vector<std::vector<T>>& dmk,
                const int precision,
                const std::vector<double>& efs,
                const UnitCell* ucell,
-               const Parallel_2D& pv,
+               const BlockCyclicDistribution& pv,
                const std::string& dmk_dir,
                const int istep,
+               const int out_app_flag,
                std::ofstream& ofs_running);
 
 } // namespace ModuleIO

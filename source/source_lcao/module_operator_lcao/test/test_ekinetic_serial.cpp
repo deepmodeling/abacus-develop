@@ -76,7 +76,7 @@ class EKineticTest : public ::testing::Test
         int global_col = test_size * test_nw;
         std::ofstream ofs_running;
         paraV = new Parallel_Orbitals();
-        paraV->init(global_row, global_col, nb, MPI_COMM_WORLD);
+        paraV->para_2d().init(global_row, global_col, nb, MPI_COMM_WORLD, false);
         paraV->set_atomic_trace(ucell.get_iat2iwt(), test_size, global_row);
     }
 #else
@@ -121,7 +121,7 @@ TEST_F(EKineticTest, constructHRcd2cd)
 
     // Verify HK is computed (values should be non-zero for non-gamma k-point)
     bool has_nonzero = false;
-    for (int i = 0; i < paraV->get_row_size() * paraV->get_col_size(); ++i)
+    for (int i = 0; i < paraV->para_2d().nrloc() * paraV->para_2d().ncloc(); ++i)
     {
         if (std::abs(hk[i]) > 1e-10)
         {
@@ -216,7 +216,7 @@ TEST_F(EKineticTest, singleAtom)
 #ifdef __MPI
     int nb = 5;
     paraV_single = new Parallel_Orbitals();
-    paraV_single->init(5, 5, nb, MPI_COMM_WORLD);
+    paraV_single->para_2d().init(5, 5, nb, MPI_COMM_WORLD, false);
     paraV_single->set_atomic_trace(ucell_single.get_iat2iwt(), 1, 5);
 #endif
 
@@ -670,7 +670,7 @@ TEST_F(EKineticTest, forceCalculationNpol2)
     int global_row = test_size * test_nw * 2;  // doubled for npol=2
     int global_col = test_size * test_nw * 2;
     paraV = new Parallel_Orbitals();
-    paraV->init(global_row, global_col, nb, MPI_COMM_WORLD);
+    paraV->para_2d().init(global_row, global_col, nb, MPI_COMM_WORLD, false);
     paraV->set_atomic_trace(ucell.get_iat2iwt(), test_size, global_row);
 #endif
 
@@ -763,7 +763,7 @@ TEST_F(EKineticTest, stressCalculationNpol2)
     int global_row = test_size * test_nw * 2;  // doubled for npol=2
     int global_col = test_size * test_nw * 2;
     paraV = new Parallel_Orbitals();
-    paraV->init(global_row, global_col, nb, MPI_COMM_WORLD);
+    paraV->para_2d().init(global_row, global_col, nb, MPI_COMM_WORLD, false);
     paraV->set_atomic_trace(ucell.get_iat2iwt(), test_size, global_row);
 #endif
 

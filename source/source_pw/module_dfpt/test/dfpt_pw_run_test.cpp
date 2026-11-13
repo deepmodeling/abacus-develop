@@ -8,11 +8,12 @@
 #include "source_cell/pseudo.h"
 #include "source_cell/qlist.h"
 #include "source_cell/unitcell.h"
-#include "dfpt_stru_fixture.h"
+#include "dfpt_stru_tool.h"
 #include "source_base/global_variable.h"
 #include "source_base/parallel_global.h"
 #include "source_estate/module_charge/chg_mix.h"
 #include "source_pw/module_dfpt/dfpt_pw.h"
+#include "source_pw/module_dfpt/dfpt_pw_data.h"
 #include "source_pw/module_pwdft/dftu_base.h"
 
 // ctor/dtor stubs for the cell/spepot/charge link closures live in the
@@ -33,16 +34,18 @@
  *     i.e. 3*nat entries for each q.
  */
 
-class DFPT_PWRunTest : public DFPTStruTestFixture
+class DFPT_PWRunTest : public ::testing::Test
 {
   protected:
+    UnitCell ucell;
     ModuleDFPT::DFPT_PW dfpt;
     std::ofstream ofs_running;
     std::string output;
 
     void SetUp() override
     {
-        construct_ucell(stru_lib[0]);
+        const dfpt_test::stru_ stru = dfpt_test::cubic_carbon_stru();
+        dfpt_test::construct_ucell(ucell, stru);
         ofs_running.open("tmp_dfpt_run");
         ModuleSymmetry::Symmetry symm;
         const int cal_symm_repr[2] = {0, 6};
@@ -55,7 +58,8 @@ class DFPT_PWRunTest : public DFPTStruTestFixture
     void TearDown() override
     {
         ofs_running.close();
-        ClearUcell();
+        delete[] ucell.atoms;
+        ucell.atoms = nullptr;
         remove("tmp_dfpt_run");
     }
 };
@@ -154,4 +158,33 @@ TEST_F(DFPT_PWRunTest, DftuReservationWithProviderRejectsInit)
         },
         ::testing::ExitedWithCode(1),
         "DFT\\+U with DFPT is not supported");
+}
+
+TEST(DFPT_PWForwarding, LinKnobsReachDataLayer)
+{
+    // Public-forwarding check of the dedicated Sternheimer knobs: the
+    // setters only touch Impl::data_ and DFPT_PW constructs its Impl in
+    // the default constructor, so the whole path is inspectable before
+    // init() with no basis or pseudopotential setup (the data-layer
+    // inheritance semantics themselves are pinned by
+    // DFPT_PW_DataTest.LinSolverKnobsInheritByDefault).
+    ModuleDFPT::DFPT_PW dfpt;
+    // unset knobs inherit the outer values through the public path
+    dfpt.set_conv_thr(1e-8);
+    dfpt.set_max_iter(100);
+    EXPECT_DOUBLE_EQ(dfpt.get_data().get_lin_conv_thr(), 1e-8);
+    EXPECT_EQ(dfpt.get_data().get_lin_max_iter(), 100);
+
+    // explicit pins survive later outer changes (getter-side fallback
+    // without memory: sentinel reset is covered at the data layer)
+    dfpt.set_lin_conv_thr(1e-6);
+    dfpt.set_lin_max_iter(30);
+    EXPECT_DOUBLE_EQ(dfpt.get_data().get_lin_conv_thr(), 1e-6);
+    EXPECT_EQ(dfpt.get_data().get_lin_max_iter(), 30);
+    dfpt.set_conv_thr(1e-10);
+    dfpt.set_max_iter(45);
+    EXPECT_DOUBLE_EQ(dfpt.get_data().get_conv_thr(), 1e-10);
+    EXPECT_EQ(dfpt.get_data().get_max_iter(), 45);
+    EXPECT_DOUBLE_EQ(dfpt.get_data().get_lin_conv_thr(), 1e-6);
+    EXPECT_EQ(dfpt.get_data().get_lin_max_iter(), 30);
 }

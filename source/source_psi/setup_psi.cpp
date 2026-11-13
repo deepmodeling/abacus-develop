@@ -34,7 +34,7 @@ void Setup_Psi<T>::allocate_psi(psi::Psi<T>*& psi,
             if (inp.ks_solver == "genelpa" || inp.ks_solver == "elpa" || inp.ks_solver == "lapack"
                 || inp.ks_solver == "pexsi" || inp.ks_solver == "cusolver" || inp.ks_solver == "cusolvermp")
             {
-                ncol = para_orb.ncol;
+                ncol = para_orb.para_2d().ncloc();
             }
         }
         else
@@ -46,7 +46,7 @@ void Setup_Psi<T>::allocate_psi(psi::Psi<T>*& psi,
             ncol = inp.nbands;
 #endif
         }
-        psi = new psi::Psi<T>(nsk, ncol, para_orb.nrow, kv.ngk, true);
+        psi = new psi::Psi<T>(nsk, ncol, para_orb.para_2d().nrloc(), kv.ngk, true);
     }
 }
 

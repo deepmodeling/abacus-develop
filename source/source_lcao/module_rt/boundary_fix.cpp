@@ -19,14 +19,14 @@ void reset_matrix_boundary(const UnitCell& ucell,
     ModuleBase::TITLE("module_rt", "reset_matrix_boundary");
     ModuleBase::timer::start("module_rt", "reset_matrix_boundary");
     // Tensor-LAPACK keeps full H/S matrices on rank zero, while psi stays distributed.
-    const bool gathered_matrices = len_hs != static_cast<size_t>(pv->nloc);
+    const bool gathered_matrices = len_hs != pv->para_2d().size();
     Parallel_Orbitals full_distribution;
     const Parallel_Orbitals* matrix_distribution = pv;
     bool update_matrices = true;
     if (gathered_matrices)
     {
-        const int basis_size = pv->get_global_row_size();
-        full_distribution.set_serial(basis_size, basis_size);
+        const int basis_size = pv->para_2d().nrglb();
+        full_distribution.para_2d().set_serial(basis_size, basis_size);
         full_distribution.set_atomic_trace(ucell.get_iat2iwt(), ucell.nat, basis_size);
         matrix_distribution = &full_distribution;
         const ModuleBase::CommunicationDomain domain = ModuleBase::world_comm_domain();
@@ -64,7 +64,7 @@ void reset_matrix_boundary(const UnitCell& ucell,
                     module_rt::boundary_shift_mat(phase, h, matrix_distribution, iat);
                     module_rt::boundary_shift_mat(phase, s, matrix_distribution, iat);
                 }
-                if (pv->nrow > 0 && pv->ncol_bands > 0)
+                if (pv->para_2d().nrloc() > 0 && pv->ncol_bands > 0)
                 {
                     // Saved LCAO coefficients use k-first storage. Index it without
                     // changing the shared Psi cursor in this OpenMP loop.
@@ -86,23 +86,23 @@ void boundary_shift_mat(const std::complex<double>& phase,
     const std::complex<double> phase_conj = std::conj(phase);
     size_t row0 = pv->atom_begin_row[iat];
     size_t col0 = pv->atom_begin_col[iat];
-    std::complex<double>* p_matkc = matk + col0 * pv->get_row_size();
+    std::complex<double>* p_matkc = matk + col0 * pv->para_2d().nrloc();
     for(size_t nu = 0; nu < pv->get_ncol_atom(iat); ++nu)
     {
         
-        BlasConnector::scal(pv->get_row_size(),
+        BlasConnector::scal(pv->para_2d().nrloc(),
                             phase,
                             p_matkc,
                             1);
-        p_matkc += pv->get_row_size();
+        p_matkc += pv->para_2d().nrloc();
     }
     std::complex<double>* p_matkr = matk + row0;
     for(size_t mu = 0; mu < pv->get_nrow_atom(iat); ++mu)
     {
-        BlasConnector::scal(pv->get_col_size(),
+        BlasConnector::scal(pv->para_2d().ncloc(),
                             phase_conj,
                             p_matkr,
-                            pv->get_row_size());
+                            pv->para_2d().nrloc());
         p_matkr += 1;
     }
     return;
@@ -121,7 +121,7 @@ void boundary_shift_c(const std::complex<double>& phase,
         BlasConnector::scal(pv->ncol_bands,
                             phase_conj,
                             p_ck,
-                            pv->get_row_size());
+                            pv->para_2d().nrloc());
         p_ck+=1;
     }
     return;

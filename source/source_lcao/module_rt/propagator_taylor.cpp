@@ -22,35 +22,35 @@ void Propagator::compute_propagator_taylor(const int nlocal,
                                            const int print_matrix,
                                            const int tag) const
 {
-    assert(this->ParaV->nloc > 0);
+    assert(this->ParaV->para_2d().size() > 0);
 
-    ModuleBase::GlobalFunc::ZEROS(U_operator, this->ParaV->nloc);
-    std::complex<double>* A_matrix = new std::complex<double>[this->ParaV->nloc];
-    ModuleBase::GlobalFunc::ZEROS(A_matrix, this->ParaV->nloc);
-    std::complex<double>* rank0 = new std::complex<double>[this->ParaV->nloc];
-    ModuleBase::GlobalFunc::ZEROS(rank0, this->ParaV->nloc);
-    std::complex<double>* rank2 = new std::complex<double>[this->ParaV->nloc];
-    ModuleBase::GlobalFunc::ZEROS(rank2, this->ParaV->nloc);
-    std::complex<double>* rank3 = new std::complex<double>[this->ParaV->nloc];
-    ModuleBase::GlobalFunc::ZEROS(rank3, this->ParaV->nloc);
-    std::complex<double>* rank4 = new std::complex<double>[this->ParaV->nloc];
-    ModuleBase::GlobalFunc::ZEROS(rank4, this->ParaV->nloc);
-    std::complex<double>* tmp1 = new std::complex<double>[this->ParaV->nloc];
-    ModuleBase::GlobalFunc::ZEROS(tmp1, this->ParaV->nloc);
-    std::complex<double>* tmp2 = new std::complex<double>[this->ParaV->nloc];
-    ModuleBase::GlobalFunc::ZEROS(tmp2, this->ParaV->nloc);
-    std::complex<double>* Sinv = new std::complex<double>[this->ParaV->nloc];
-    ModuleBase::GlobalFunc::ZEROS(Sinv, this->ParaV->nloc);
-    BlasConnector::copy(this->ParaV->nloc, Stmp, 1, Sinv, 1);
+    ModuleBase::GlobalFunc::ZEROS(U_operator, this->ParaV->para_2d().size());
+    std::complex<double>* A_matrix = new std::complex<double>[this->ParaV->para_2d().size()];
+    ModuleBase::GlobalFunc::ZEROS(A_matrix, this->ParaV->para_2d().size());
+    std::complex<double>* rank0 = new std::complex<double>[this->ParaV->para_2d().size()];
+    ModuleBase::GlobalFunc::ZEROS(rank0, this->ParaV->para_2d().size());
+    std::complex<double>* rank2 = new std::complex<double>[this->ParaV->para_2d().size()];
+    ModuleBase::GlobalFunc::ZEROS(rank2, this->ParaV->para_2d().size());
+    std::complex<double>* rank3 = new std::complex<double>[this->ParaV->para_2d().size()];
+    ModuleBase::GlobalFunc::ZEROS(rank3, this->ParaV->para_2d().size());
+    std::complex<double>* rank4 = new std::complex<double>[this->ParaV->para_2d().size()];
+    ModuleBase::GlobalFunc::ZEROS(rank4, this->ParaV->para_2d().size());
+    std::complex<double>* tmp1 = new std::complex<double>[this->ParaV->para_2d().size()];
+    ModuleBase::GlobalFunc::ZEROS(tmp1, this->ParaV->para_2d().size());
+    std::complex<double>* tmp2 = new std::complex<double>[this->ParaV->para_2d().size()];
+    ModuleBase::GlobalFunc::ZEROS(tmp2, this->ParaV->para_2d().size());
+    std::complex<double>* Sinv = new std::complex<double>[this->ParaV->para_2d().size()];
+    ModuleBase::GlobalFunc::ZEROS(Sinv, this->ParaV->para_2d().size());
+    BlasConnector::copy(this->ParaV->para_2d().size(), Stmp, 1, Sinv, 1);
 
     if (print_matrix)
     {
         ofs_running << std::endl;
         ofs_running << " S matrix :" << std::endl;
-        for (int i = 0; i < this->ParaV->nrow; i++)
+        for (int i = 0; i < this->ParaV->para_2d().nrloc(); i++)
         {
-            const int in = i * this->ParaV->ncol;
-            for (int j = 0; j < this->ParaV->ncol; j++)
+            const int in = i * this->ParaV->para_2d().ncloc();
+            for (int j = 0; j < this->ParaV->para_2d().ncloc(); j++)
             {
                 ofs_running << Stmp[in + j].real() << "+" << Stmp[in + j].imag() << "i ";
             }
@@ -59,10 +59,10 @@ void Propagator::compute_propagator_taylor(const int nlocal,
         ofs_running << std::endl;
         ofs_running << std::endl;
         ofs_running << " H matrix :" << std::endl;
-        for (int i = 0; i < this->ParaV->nrow; i++)
+        for (int i = 0; i < this->ParaV->para_2d().nrloc(); i++)
         {
-            const int in = i * this->ParaV->ncol;
-            for (int j = 0; j < this->ParaV->ncol; j++)
+            const int in = i * this->ParaV->para_2d().ncloc();
+            for (int j = 0; j < this->ParaV->para_2d().ncloc(); j++)
             {
                 ofs_running << Htmp[in + j].real() << "+" << Htmp[in + j].imag() << "i ";
             }
@@ -75,24 +75,24 @@ void Propagator::compute_propagator_taylor(const int nlocal,
     int info = 0;
     int naroc[2] = {0, 0}; // maximum number of row or column
 
-    for (int iprow = 0; iprow < this->ParaV->dim0; ++iprow)
+    for (int iprow = 0; iprow < this->ParaV->para_2d().nrproc(); ++iprow)
     {
-        for (int ipcol = 0; ipcol < this->ParaV->dim1; ++ipcol)
+        for (int ipcol = 0; ipcol < this->ParaV->para_2d().ncproc(); ++ipcol)
         {
-            if (ParaV->blacs_in_this_processor(iprow, ipcol))
+            if (ParaV->para_2d().blacs_in_this_processor(iprow, ipcol))
             {
-                naroc[0] = this->ParaV->nrow;
-                naroc[1] = this->ParaV->ncol;
+                naroc[0] = this->ParaV->para_2d().nrloc();
+                naroc[1] = this->ParaV->para_2d().ncloc();
                 for (int j = 0; j < naroc[1]; ++j)
                 {
-                    int igcol = globalIndex(j, this->ParaV->nb, this->ParaV->dim1, ipcol);
+                    int igcol = globalIndex(j, this->ParaV->para_2d().nb(), this->ParaV->para_2d().ncproc(), ipcol);
                     if (igcol >= nlocal)
                     {
                         continue;
                     }
                     for (int i = 0; i < naroc[0]; ++i)
                     {
-                        int igrow = globalIndex(i, this->ParaV->nb, this->ParaV->dim0, iprow);
+                        int igrow = globalIndex(i, this->ParaV->para_2d().nb(), this->ParaV->para_2d().nrproc(), iprow);
                         if (igrow >= nlocal)
                         {
                             continue;
@@ -115,9 +115,9 @@ void Propagator::compute_propagator_taylor(const int nlocal,
 
     //->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     // invert Stmp
-    int* ipiv = new int[this->ParaV->nloc];
+    int* ipiv = new int[this->ParaV->para_2d().size()];
     // (3.1) compute ipiv
-    ScalapackConnector::getrf(nlocal, nlocal, Sinv, 1, 1, this->ParaV->desc, ipiv, &info);
+    ScalapackConnector::getrf(nlocal, nlocal, Sinv, 1, 1, this->ParaV->para_2d().desc(), ipiv, &info);
     int lwork = -1;
     int liwotk = -1;
     std::vector<std::complex<double>> work(1, 0);
@@ -127,7 +127,7 @@ void Propagator::compute_propagator_taylor(const int nlocal,
                               Sinv,
                               1,
                               1,
-                              this->ParaV->desc,
+                              this->ParaV->para_2d().desc(),
                               ipiv,
                               work.data(),
                               &lwork,
@@ -142,7 +142,7 @@ void Propagator::compute_propagator_taylor(const int nlocal,
                               Sinv,
                               1,
                               1,
-                              this->ParaV->desc,
+                              this->ParaV->para_2d().desc(),
                               ipiv,
                               work.data(),
                               &lwork,
@@ -161,16 +161,16 @@ void Propagator::compute_propagator_taylor(const int nlocal,
                              Sinv,
                              1,
                              1,
-                             this->ParaV->desc,
+                             this->ParaV->para_2d().desc(),
                              Htmp,
                              1,
                              1,
-                             this->ParaV->desc,
+                             this->ParaV->para_2d().desc(),
                              0.0,
                              U_operator,
                              1,
                              1,
-                             this->ParaV->desc);
+                             this->ParaV->para_2d().desc());
 
     //  rank2 = A^2 ;
     ScalapackConnector::gemm('N',
@@ -182,16 +182,16 @@ void Propagator::compute_propagator_taylor(const int nlocal,
                              U_operator,
                              1,
                              1,
-                             this->ParaV->desc,
+                             this->ParaV->para_2d().desc(),
                              U_operator,
                              1,
                              1,
-                             this->ParaV->desc,
+                             this->ParaV->para_2d().desc(),
                              0.0,
                              rank2,
                              1,
                              1,
-                             this->ParaV->desc);
+                             this->ParaV->para_2d().desc());
 
     //  rank3 = A^3 ;
     ScalapackConnector::gemm('N',
@@ -203,16 +203,16 @@ void Propagator::compute_propagator_taylor(const int nlocal,
                              U_operator,
                              1,
                              1,
-                             this->ParaV->desc,
+                             this->ParaV->para_2d().desc(),
                              rank2,
                              1,
                              1,
-                             this->ParaV->desc,
+                             this->ParaV->para_2d().desc(),
                              0.0,
                              rank3,
                              1,
                              1,
-                             this->ParaV->desc);
+                             this->ParaV->para_2d().desc());
 
     //  rank4 = A^4 ;
     ScalapackConnector::gemm('N',
@@ -224,16 +224,16 @@ void Propagator::compute_propagator_taylor(const int nlocal,
                              U_operator,
                              1,
                              1,
-                             this->ParaV->desc,
+                             this->ParaV->para_2d().desc(),
                              rank3,
                              1,
                              1,
-                             this->ParaV->desc,
+                             this->ParaV->para_2d().desc(),
                              0.0,
                              rank4,
                              1,
                              1,
-                             this->ParaV->desc);
+                             this->ParaV->para_2d().desc());
 
     std::complex<double> p1 = {1.0, 0.0};
     std::complex<double> p2 = {1.0 / 2.0, 0.0};
@@ -247,12 +247,12 @@ void Propagator::compute_propagator_taylor(const int nlocal,
                               rank0,
                               1,
                               1,
-                              this->ParaV->desc,
+                              this->ParaV->para_2d().desc(),
                               p1,
                               U_operator,
                               1,
                               1,
-                              this->ParaV->desc);
+                              this->ParaV->para_2d().desc());
 
     ScalapackConnector::geadd('N',
                               nlocal,
@@ -261,12 +261,12 @@ void Propagator::compute_propagator_taylor(const int nlocal,
                               rank2,
                               1,
                               1,
-                              this->ParaV->desc,
+                              this->ParaV->para_2d().desc(),
                               p1,
                               U_operator,
                               1,
                               1,
-                              this->ParaV->desc);
+                              this->ParaV->para_2d().desc());
 
     ScalapackConnector::geadd('N',
                               nlocal,
@@ -275,12 +275,12 @@ void Propagator::compute_propagator_taylor(const int nlocal,
                               rank3,
                               1,
                               1,
-                              this->ParaV->desc,
+                              this->ParaV->para_2d().desc(),
                               p1,
                               U_operator,
                               1,
                               1,
-                              this->ParaV->desc);
+                              this->ParaV->para_2d().desc());
 
     ScalapackConnector::geadd('N',
                               nlocal,
@@ -289,20 +289,20 @@ void Propagator::compute_propagator_taylor(const int nlocal,
                               rank4,
                               1,
                               1,
-                              this->ParaV->desc,
+                              this->ParaV->para_2d().desc(),
                               p1,
                               U_operator,
                               1,
                               1,
-                              this->ParaV->desc);
+                              this->ParaV->para_2d().desc());
 
     if (print_matrix)
     {
         ofs_running << " A_matrix:" << std::endl;
-        for (int i = 0; i < this->ParaV->nrow; i++)
+        for (int i = 0; i < this->ParaV->para_2d().nrloc(); i++)
         {
-            const int in = i * this->ParaV->ncol;
-            for (int j = 0; j < this->ParaV->ncol; j++)
+            const int in = i * this->ParaV->para_2d().ncloc();
+            for (int j = 0; j < this->ParaV->para_2d().ncloc(); j++)
             {
                 ofs_running << A_matrix[in + j].real() << "+" << A_matrix[in + j].imag() << "i ";
             }
@@ -310,10 +310,10 @@ void Propagator::compute_propagator_taylor(const int nlocal,
         }
         ofs_running << std::endl;
         ofs_running << " U operator:" << std::endl;
-        for (int i = 0; i < this->ParaV->nrow; i++)
+        for (int i = 0; i < this->ParaV->para_2d().nrloc(); i++)
         {
-            const int in = i * this->ParaV->ncol;
-            for (int j = 0; j < this->ParaV->ncol; j++)
+            const int in = i * this->ParaV->para_2d().ncloc();
+            for (int j = 0; j < this->ParaV->para_2d().ncloc(); j++)
             {
                 double aa = U_operator[in + j].real();
                 double bb = U_operator[in + j].imag();

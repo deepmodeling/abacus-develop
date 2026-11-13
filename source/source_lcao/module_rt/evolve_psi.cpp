@@ -44,20 +44,20 @@ void evolve_psi(const int nband,
     hamilt::MatrixBlock<std::complex<double>> s_mat;
     p_hamilt->matrix(h_mat, s_mat);
 
-    std::complex<double>* Stmp = new std::complex<double>[pv->nloc];
-    ModuleBase::GlobalFunc::ZEROS(Stmp, pv->nloc);
-    BlasConnector::copy(pv->nloc, s_mat.p, 1, Stmp, 1);
+    std::complex<double>* Stmp = new std::complex<double>[pv->para_2d().size()];
+    ModuleBase::GlobalFunc::ZEROS(Stmp, pv->para_2d().size());
+    BlasConnector::copy(pv->para_2d().size(), s_mat.p, 1, Stmp, 1);
 
-    std::complex<double>* Htmp = new std::complex<double>[pv->nloc];
-    ModuleBase::GlobalFunc::ZEROS(Htmp, pv->nloc);
-    BlasConnector::copy(pv->nloc, h_mat.p, 1, Htmp, 1);
+    std::complex<double>* Htmp = new std::complex<double>[pv->para_2d().size()];
+    ModuleBase::GlobalFunc::ZEROS(Htmp, pv->para_2d().size());
+    BlasConnector::copy(pv->para_2d().size(), h_mat.p, 1, Htmp, 1);
 
-    std::complex<double>* Hold = new std::complex<double>[pv->nloc];
-    ModuleBase::GlobalFunc::ZEROS(Hold, pv->nloc);
-    BlasConnector::copy(pv->nloc, h_mat.p, 1, Hold, 1);
+    std::complex<double>* Hold = new std::complex<double>[pv->para_2d().size()];
+    ModuleBase::GlobalFunc::ZEROS(Hold, pv->para_2d().size());
+    BlasConnector::copy(pv->para_2d().size(), h_mat.p, 1, Hold, 1);
 
-    std::complex<double>* U_operator = new std::complex<double>[pv->nloc];
-    ModuleBase::GlobalFunc::ZEROS(U_operator, pv->nloc);
+    std::complex<double>* U_operator = new std::complex<double>[pv->para_2d().size()];
+    ModuleBase::GlobalFunc::ZEROS(U_operator, pv->para_2d().size());
 
     // (1)->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
@@ -204,7 +204,7 @@ void evolve_psi_tensor(const int nband,
         s_src = s_mat.p;
     }
 
-    const int len_HS = use_lapack ? nlocal * nlocal : pv->nloc;
+    const int len_HS = use_lapack ? nlocal * nlocal : pv->para_2d().size();
 
     ct::Tensor Stmp(ct::DataType::DT_COMPLEX_DOUBLE, ct_device_type, ct::TensorShape({len_HS}));
 

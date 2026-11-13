@@ -11,6 +11,7 @@
 
 #include <algorithm>
 #include <complex>
+#include <cstddef>
 #include <fstream>
 #include <vector>
 
@@ -25,7 +26,7 @@ void gather_eij(const Parallel_Orbitals& pv,
                 const EijOutputInfo& output_info,
                 std::ofstream& ofs)
 {
-    const bool is_root = pv.blacs_in_this_processor(0, 0);
+    const bool is_root = pv.para_2d().blacs_in_this_processor(0, 0);
     const size_t buffer_size = is_root ? static_cast<size_t>(nband) * nband : 1;
     std::vector<std::complex<double>> gathered(buffer_size);
     int source_desc[9];
@@ -57,16 +58,16 @@ void compute_ekb(const Parallel_Orbitals* pv,
                  std::ofstream& ofs_running,
                  const EijOutputInfo& output_info)
 {
-    assert(pv->nloc_wfc > 0 && pv->nloc > 0);
+    assert(pv->nloc_wfc > 0 && pv->para_2d().size() > 0);
 
     std::complex<double>* tmp1 = new std::complex<double>[pv->nloc_wfc];
     ModuleBase::GlobalFunc::ZEROS(tmp1, pv->nloc_wfc);
 
-    std::complex<double>* eij = new std::complex<double>[pv->nloc];
-    ModuleBase::GlobalFunc::ZEROS(eij, pv->nloc);
+    std::complex<double>* eij = new std::complex<double>[pv->para_2d().size()];
+    ModuleBase::GlobalFunc::ZEROS(eij, pv->para_2d().size());
 
     ScalapackConnector::
-        gemm('N', 'N', nlocal, nband, nlocal, 1.0, Htmp, 1, 1, pv->desc, psi_k, 1, 1, pv->desc_wfc, 0.0, tmp1, 1, 1, pv->desc_wfc);
+        gemm('N', 'N', nlocal, nband, nlocal, 1.0, Htmp, 1, 1, pv->para_2d().desc(), psi_k, 1, 1, pv->desc_wfc, 0.0, tmp1, 1, 1, pv->desc_wfc);
 
     ScalapackConnector::
         gemm('C', 'N', nband, nband, nlocal, 1.0, psi_k, 1, 1, pv->desc_wfc, tmp1, 1, 1, pv->desc_wfc, 0.0, eij, 1, 1, pv->desc_Eij);
@@ -83,24 +84,24 @@ void compute_ekb(const Parallel_Orbitals* pv,
     double* eii = new double[nband];
     ModuleBase::GlobalFunc::ZEROS(eii, nband);
 
-    for (int iprow = 0; iprow < pv->dim0; ++iprow)
+    for (int iprow = 0; iprow < pv->para_2d().nrproc(); ++iprow)
     {
-        for (int ipcol = 0; ipcol < pv->dim1; ++ipcol)
+        for (int ipcol = 0; ipcol < pv->para_2d().ncproc(); ++ipcol)
         {
-            if (pv->blacs_in_this_processor(iprow, ipcol))
+            if (pv->para_2d().blacs_in_this_processor(iprow, ipcol))
             {
-                naroc[0] = pv->nrow;
-                naroc[1] = pv->ncol;
+                naroc[0] = pv->para_2d().nrloc();
+                naroc[1] = pv->para_2d().ncloc();
                 for (int j = 0; j < naroc[1]; ++j)
                 {
-                    int igcol = globalIndex(j, pv->nb, pv->dim1, ipcol);
+                    int igcol = globalIndex(j, pv->para_2d().nb(), pv->para_2d().ncproc(), ipcol);
                     if (igcol >= nband)
                     {
                         continue;
                     }
                     for (int i = 0; i < naroc[0]; ++i)
                     {
-                        int igrow = globalIndex(i, pv->nb, pv->dim0, iprow);
+                        int igrow = globalIndex(i, pv->para_2d().nb(), pv->para_2d().nrproc(), iprow);
                         if (igrow >= nband)
                         {
                             continue;
@@ -114,7 +115,7 @@ void compute_ekb(const Parallel_Orbitals* pv,
             }
         } // loop ipcol
     } // loop iprow
-    info = MPI_Allreduce(eii, ekb, nband, MPI_DOUBLE, MPI_SUM, pv->comm());
+    info = MPI_Allreduce(eii, ekb, nband, MPI_DOUBLE, MPI_SUM, pv->para_2d().comm());
 
     delete[] tmp1;
     delete[] eij;
@@ -137,7 +138,7 @@ void compute_ekb_tensor(const Parallel_Orbitals* pv,
         return;
     }
 
-    assert(pv->nloc_wfc > 0 && pv->nloc > 0);
+    assert(pv->nloc_wfc > 0 && pv->para_2d().size() > 0);
     assert(Htmp.device_type() == ct::DeviceType::GpuDevice);
     assert(psi_k.device_type() == ct::DeviceType::GpuDevice);
     assert(ekb.device_type() == ct::DeviceType::GpuDevice);
@@ -150,8 +151,10 @@ void compute_ekb_tensor(const Parallel_Orbitals* pv,
     ct::Tensor Tmp1_gpu(ct::DataType::DT_COMPLEX_DOUBLE, ct::DeviceType::GpuDevice, ct::TensorShape({psi_elems}));
     void* d_Tmp1 = static_cast<void*>(Tmp1_gpu.data<std::complex<double>>());
 
-    int64_t eij_elems = pv->nloc;
-    ct::Tensor Eij_gpu(ct::DataType::DT_COMPLEX_DOUBLE, ct::DeviceType::GpuDevice, ct::TensorShape({eij_elems}));
+    const std::size_t eij_elems = pv->para_2d().size();
+    ct::Tensor Eij_gpu(ct::DataType::DT_COMPLEX_DOUBLE,
+                       ct::DeviceType::GpuDevice,
+                       ct::TensorShape({static_cast<int64_t>(eij_elems)}));
     void* d_Eij = static_cast<void*>(Eij_gpu.data<std::complex<double>>());
 
     std::complex<double> alpha = {1.0, 0.0};
@@ -161,13 +164,13 @@ void compute_ekb_tensor(const Parallel_Orbitals* pv,
     cublasMpMatrixDescriptor_t desc_H, desc_Psi, desc_Eij;
 
     // H descriptor: nlocal x nlocal
-    cublasMpMatrixDescriptorCreate(pv->desc[2],
-                                   pv->desc[3],
-                                   pv->desc[4],
-                                   pv->desc[5],
+    cublasMpMatrixDescriptorCreate(pv->para_2d().desc()[2],
+                                   pv->para_2d().desc()[3],
+                                   pv->para_2d().desc()[4],
+                                   pv->para_2d().desc()[5],
                                    0,
                                    0,
-                                   pv->desc[8],
+                                   pv->para_2d().desc()[8],
                                    CUDA_C_64F,
                                    cublas_res.cublasmp_grid,
                                    &desc_H);
@@ -203,9 +206,9 @@ void compute_ekb_tensor(const Parallel_Orbitals* pv,
     cublasMpGemm_bufferSize(cublas_res.cublasmp_handle,
                             CUBLAS_OP_N,
                             CUBLAS_OP_N,
-                            pv->desc[2],
+                            pv->para_2d().desc()[2],
                             pv->desc_wfc[3],
-                            pv->desc[3],
+                            pv->para_2d().desc()[3],
                             &alpha,
                             d_H,
                             1,
@@ -230,9 +233,9 @@ void compute_ekb_tensor(const Parallel_Orbitals* pv,
     cublasMpGemm(cublas_res.cublasmp_handle,
                  CUBLAS_OP_N,
                  CUBLAS_OP_N,
-                 pv->desc[2],
+                 pv->para_2d().desc()[2],
                  pv->desc_wfc[3],
-                 pv->desc[3],
+                 pv->para_2d().desc()[3],
                  &alpha,
                  d_H,
                  1,
@@ -323,12 +326,12 @@ void compute_ekb_tensor(const Parallel_Orbitals* pv,
     module_rt::gpu::launch_extract_ekb_kernel(reinterpret_cast<cuDoubleComplex*>(d_Eij),
                                               d_eii,
                                               pv->desc_Eij[8],
-                                              pv->nloc,
+                                              pv->para_2d().size(),
                                               pv->desc_Eij[4],
-                                              pv->dim0,
-                                              pv->dim1,
-                                              pv->get_coord_row(),
-                                              pv->get_coord_col(),
+                                              pv->para_2d().nrproc(),
+                                              pv->para_2d().ncproc(),
+                                              pv->para_2d().irproc(),
+                                              pv->para_2d().icproc(),
                                               nband,
                                               cublas_res.stream);
 
@@ -340,7 +343,8 @@ void compute_ekb_tensor(const Parallel_Orbitals* pv,
     double* d_ekb = static_cast<double*>(ekb.data<double>());
 
     // Direct GPU-to-GPU reduction using CUDA-aware MPI
-    MPI_Allreduce(d_eii, d_ekb, nband, MPI_DOUBLE, MPI_SUM, pv->comm());
+    MPI_Comm comm = pv->para_2d().comm();
+    MPI_Allreduce(d_eii, d_ekb, nband, MPI_DOUBLE, MPI_SUM, comm);
 
     // 8. Cleanup
     cublasMpMatrixDescriptorDestroy(desc_H);

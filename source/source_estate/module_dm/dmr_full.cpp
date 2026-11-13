@@ -28,7 +28,7 @@ void cal_dmr_full(
     }
 
     ModuleBase::timer::start("DensityMatrix", "cal_dmr_full");
-    const int ld_hk = dm.pv->nrow;
+    const int ld_hk = dm.pv->para_2d().nrloc();
     hamilt::HContainer<TR_out>* const dmr_full = dmR_out;
     dmr_full->set_zero();
     const std::map<ModuleBase::Vector3<int>, std::complex<double>> no_hybrid_phase;

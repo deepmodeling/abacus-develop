@@ -25,7 +25,7 @@ std::vector<ModuleBase::matrix> evaluate_closed_shell_force(
     const int ist_begin = label_begin;
     const int ist_end = label_begin + nst;
     const std::vector<int>& nvirt_g = inputs.nvirt;
-    const std::vector<Parallel_2D>& paraX_g = inputs.px;
+    const std::vector<BlockCyclicDistribution>& paraX_g = inputs.px;
     const int nloc_g = inputs.nloc;
 
 
@@ -47,7 +47,7 @@ std::vector<ModuleBase::matrix> evaluate_closed_shell_force(
         // The imag part will be cancelled in the force calculation, so we use double DM(R) to calculate force.
         // But complex transition DM(R) is still used in energy density matrix calculation.
 #ifdef __MPI
-        const auto& dm_trans_k = cal_dm_trans_pblas(Xz.data<T>() + offset, paraX_g[ispin], c, inputs.pc, inputs.nbasis, inputs.nocc[ispin], nvirt_g[ispin], inputs.pmat);
+        const auto& dm_trans_k = cal_dm_trans_pblas(Xz.data<T>() + offset, paraX_g[ispin], c, inputs.pc, inputs.nbasis, inputs.nocc[ispin], nvirt_g[ispin], inputs.pmat.para_2d());
 #else
         const auto& dm_trans_k = cal_dm_trans_blas(Xz.data<T>() + offset, c, inputs.nocc[ispin], nvirt_g[ispin]);
 #endif
@@ -74,7 +74,7 @@ std::vector<ModuleBase::matrix> evaluate_closed_shell_force(
         // LR_Util::print_DMR(dm_trans, "dm_trans of istate " + std::to_string(istate));
         // difference density matrix
 #ifdef __MPI
-        std::vector<ct::Tensor> dm_diff_k = cal_dm_diff_pblas(Xz.data<T>() + offset, paraX_g[ispin], c, inputs.pc, inputs.nbasis, inputs.nocc[ispin], nvirt_g[ispin], inputs.pmat);
+        std::vector<ct::Tensor> dm_diff_k = cal_dm_diff_pblas(Xz.data<T>() + offset, paraX_g[ispin], c, inputs.pc, inputs.nbasis, inputs.nocc[ispin], nvirt_g[ispin], inputs.pmat.para_2d());
 #else
         std::vector<ct::Tensor> dm_diff_k = cal_dm_diff_blas(Xz.data<T>() + offset, c, inputs.nbasis, inputs.nocc[ispin], nvirt_g[ispin]);
 #endif
@@ -85,7 +85,7 @@ std::vector<ModuleBase::matrix> evaluate_closed_shell_force(
         // LR_Util::print_value(dm_diff_k[0].data<T>(), inputs.pmat.get_col_size(), inputs.pmat.get_row_size());
 
 #ifdef __MPI
-        const std::vector<ct::Tensor>& dm_relaxed_k = cal_dm_trans_pblas(Z.template data<T>() + zoffset, paraX_g[ispin], c, inputs.pc, inputs.nbasis, inputs.nocc[ispin], nvirt_g[ispin], inputs.pmat);
+        const std::vector<ct::Tensor>& dm_relaxed_k = cal_dm_trans_pblas(Z.template data<T>() + zoffset, paraX_g[ispin], c, inputs.pc, inputs.nbasis, inputs.nocc[ispin], nvirt_g[ispin], inputs.pmat.para_2d());
 #else
         const std::vector<ct::Tensor>& dm_relaxed_k = cal_dm_trans_blas(Z.template data<T>() + zoffset, c, inputs.nocc[ispin], nvirt_g[ispin]);
 #endif
@@ -94,7 +94,7 @@ std::vector<ModuleBase::matrix> evaluate_closed_shell_force(
 #ifdef __MPI
         for (auto& d: dm_relaxed_k)
         {
-            LR_Util::matsym(d.data<T>(), inputs.nbasis, inputs.pmat);
+            LR_Util::matsym(d.data<T>(), inputs.nbasis, inputs.pmat.para_2d());
         } // symmetrize
 #else
         for (auto& d: dm_relaxed_k)
@@ -141,7 +141,7 @@ std::vector<ModuleBase::matrix> evaluate_closed_shell_force(
         if (inputs.test_force && inputs.nocc[0] == 1 && nvirt_g[0] == 1)
         {
 #ifdef __MPI
-            const std::vector<ct::Tensor>& dm_diff = cal_dm_diff_pblas(Xz.data<T>() + offset, paraX_g[0], c, inputs.pc, inputs.nbasis, inputs.nocc[0], nvirt_g[0], inputs.pmat);
+            const std::vector<ct::Tensor>& dm_diff = cal_dm_diff_pblas(Xz.data<T>() + offset, paraX_g[0], c, inputs.pc, inputs.nbasis, inputs.nocc[0], nvirt_g[0], inputs.pmat.para_2d());
 #else
             const std::vector<ct::Tensor>& dm_diff = cal_dm_diff_blas(Xz.data<T>() + offset, c, inputs.nbasis, inputs.nocc[0], nvirt_g[0]);
 #endif
