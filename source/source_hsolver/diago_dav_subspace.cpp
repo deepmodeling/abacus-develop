@@ -718,6 +718,10 @@ void Diago_DavSubspace<T, Device>::cal_elem(const int& dim,
         columns_per_panel = 64;
     }
 #endif
+    if (this->host_backed_action_)
+    {
+        columns_per_panel = std::min(columns_per_panel, this->action_panel_cols_);
+    }
     // The eigensolver reads the upper triangle. Each column panel includes
     // every existing basis row and ends at its final diagonal entry, omitting
     // the lower rows that cannot affect the projected eigenproblem.

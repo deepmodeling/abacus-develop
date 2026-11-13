@@ -1048,7 +1048,7 @@ TEST_F(TestModuleHsolverMathKernel, gemm_op_host_scalar_alignment_gpu)
     std::vector<T> C0(static_cast<size_t>(ldc) * n, T(0.0, 0.0));
     std::vector<T> C(static_cast<size_t>(ldc) * n, T(0.0, 0.0));
     A[0] = T(2.0, 1.0);
-    A[1 + lda] = T(-0.5, 0.75);
+    A[1] = T(-0.5, 0.75);
     B[0] = T(3.0, -1.0);
     for (int row = 0; row < m; ++row)
     {
@@ -1082,7 +1082,7 @@ TEST_F(TestModuleHsolverMathKernel, gemm_op_host_scalar_alignment_gpu)
             C.data(), dC, C.size());
         for (int row = 0; row < m; ++row)
         {
-            const T product = (row == 0 ? A[0] : (row == 1 ? A[1 + lda] : T(0.0, 0.0))) * B[0];
+            const T product = (row == 0 ? A[0] : (row == 1 ? A[1] : T(0.0, 0.0))) * B[0];
             const T expected = alpha.value * product + beta.value * C0[row];
             SCOPED_TRACE(::testing::Message() << "repetition=" << repetition << " row=" << row);
             EXPECT_LT(std::abs(C[row] - expected), 1e-12);

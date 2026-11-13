@@ -240,6 +240,10 @@ void HSolverPW<T, Device>::solve(HSOperator<T, Device>& op,
                                  _pes_pw->skip_weights);
 
     elecstate::calEBand(_pes_pw->ekb,_pes_pw->wg,_pes_pw->f_en);
+
+    this->davidson_cache_.reset();
+    if (kpoint_storage) { kpoint_storage->restore(); }
+
     if (skip_charge)
     {
         if (this->use_uspp)
@@ -252,8 +256,6 @@ void HSolverPW<T, Device>::solve(HSOperator<T, Device>& op,
         reinterpret_cast<elecstate::ElecStatePW<T, Device>*>(pes)->psiToRho(psi);
     }
 
-    this->davidson_cache_.reset();
-    if (kpoint_storage) { kpoint_storage->restore(); }
     ModuleBase::timer::end("HSolverPW", "solve");
     return;
 }
