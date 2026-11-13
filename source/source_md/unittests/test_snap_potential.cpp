@@ -7,18 +7,31 @@
 #include "gtest/gtest.h"
 
 #include <cmath>
+#include <cstdio>
 #include <fstream>
 #include <string>
 
 TEST(SnapPotential, UnitCellAndMDCellAgree)
 {
-    const std::string source_file = __FILE__;
-    const std::string marker = "/source/source_md/";
-    const std::size_t marker_pos = source_file.find(marker);
-    ASSERT_NE(marker_pos, std::string::npos);
-    const std::string model_dir = source_file.substr(0, marker_pos) + "/tests/SIMULATION_MODELS/";
-    const std::string coefficient_file = model_dir + "snap_102.coeff";
-    const std::string parameter_file = model_dir + "snap_102.param";
+    const std::string coefficient_file = testing::TempDir() + "snap_potential_coeff.txt";
+    const std::string parameter_file = testing::TempDir() + "snap_potential_param.txt";
+    {
+        std::ofstream output(coefficient_file.c_str());
+        ASSERT_TRUE(output.is_open());
+        output << "1 56\nSi 0.5 1\n0.125\n";
+        for (int index = 2; index <= 56; ++index)
+        {
+            const double coefficient = (index % 2 == 0 ? -1.0 : 1.0) * index * 0.001;
+            output << coefficient << '\n';
+        }
+        ASSERT_TRUE(output.good());
+    }
+    {
+        std::ofstream output(parameter_file.c_str());
+        ASSERT_TRUE(output.is_open());
+        output << "rcutfac 4.9\ntwojmax 8\nrfac0 0.99363\nrmin0 0\nquadraticflag 0\nbzeroflag 0\n";
+        ASSERT_TRUE(output.good());
+    }
 
     UnitCell unitcell;
     Setcell::setupcell(unitcell);
@@ -60,4 +73,6 @@ TEST(SnapPotential, UnitCellAndMDCellAgree)
         EXPECT_NEAR(mdcell.owned_atoms()[i].force.y, unit_force(i, 1), 1e-10);
         EXPECT_NEAR(mdcell.owned_atoms()[i].force.z, unit_force(i, 2), 1e-10);
     }
+    std::remove(coefficient_file.c_str());
+    std::remove(parameter_file.c_str());
 }
