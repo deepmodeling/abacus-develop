@@ -100,6 +100,7 @@ void cal_mi_pw(ScState& state,
         const int nbands = psi_t->get_nbands();
         const int nks = psi_t->get_nk();
         const int npol = psi_t->get_npol();
+#if defined(__CUDA)
         const int atoms = static_cast<int>(state.get_mi().size());
         const int* nh_iat = &onsite_p->get_nh(0);
         std::vector<int> offsets(atoms + 1, 0);
@@ -135,6 +136,20 @@ void cal_mi_pw(ScState& state,
         base_device::memory::delete_memory_op<int, base_device::DEVICE_GPU>()(d_offsets);
         base_device::memory::delete_memory_op<double, base_device::DEVICE_GPU>()(d_mi);
         base_device::memory::delete_memory_op<double, base_device::DEVICE_GPU>()(d_weights);
+#else
+        for (int ik = 0; ik < nks; ik++)
+        {
+            psi_t->fix_k(ik);
+            psi_pointer = psi_t->get_pointer();
+            onsite_p->tabulate_atomic(ik);
+            onsite_p->overlap_proj_psi(nbands * npol, psi_pointer);
+            const std::complex<double>* becp = onsite_p->get_h_becp();
+            const int nkb = onsite_p->get_tot_nproj();
+            const int spin_sign = (npol == 2) ? 1 : spin_sign_at(state, pelec, ik);
+            accumulate_Mi_from_becp(becp, nkb, nbands, npol, spin_sign,
+                                    &pelec->wg(ik, 0), &onsite_p->get_nh(0), state.get_mi());
+        }
+#endif
     }
 #endif
     // MPI reduction: sum Mi across all k-pool ranks
@@ -656,79 +671,14 @@ void update_psi_charge_pw_gpu(ScState& state,
             PARAM.inp.use_k_continuity);
 
         hamilt::HamiltHSOperator<std::complex<double>, base_device::DEVICE_GPU> op(hamilt_t, pw_wfc);
-        bool use_action_cache = cache.hpsi_host != nullptr && cache.hpsi_nk == nk
-                                && cache.hpsi_bands == nbands;
-        if (use_action_cache)
-        {
-            const int leading = psi_t->get_current_ngk();
-            use_action_cache = cache.hpsi_rows == leading;
-        }
-        if (use_action_cache)
-        {
-            std::vector<ModuleBase::Vector3<double>> delta_lambda(nh_iat != nullptr ? state.get_nat() : 0);
-            for (int iat = 0; iat < state.get_nat(); ++iat)
-            {
-                delta_lambda[iat] = state.get_sc_lambda()[iat] - cache.lambda_in_sub()[iat];
-            }
-            const int npwx = onsite_p->get_npwx();
-            const int action_bands = nbands;
-            const int action_rows = cache.hpsi_rows;
-            spinconstrain::HPsiTransfer transfer(cache.hpsi_host, cache.hpsi_nk, action_bands, action_rows);
-            typename hsolver::Diago_DavSubspace<std::complex<double>, base_device::DEVICE_GPU>::InitialHPsiFunc
-                initial_hpsi = [&](int ik, std::complex<double>* output, int output_leading) {
-                    transfer.restore(ik, output, output_leading);
-                    // Prepare the next projector block while the pinned upload
-                    // is in flight; the default stream orders the following GEMM.
-                    onsite_p->tabulate_atomic(ik);
-                    apply_constraint_action_gpu(state, pelec, cache.becp_k(ik, nbands * nkb * npol),
-                                                delta_lambda.data(), output, output_leading, npwx, ik,
-                                                nbands, nkb, nh_iat);
-                };
-            typename hsolver::Diago_DavSubspace<std::complex<double>,
-                                                base_device::DEVICE_GPU>::BasisObserver observer;
-            const int becp_rows = nkb * npol;
-            observer.rotate = [&](int observer_ik, int count, const std::complex<double>* coefficients,
-                                  int coefficient_leading, bool /*final*/) {
-                if (observer_ik < 0 || observer_ik >= nk || count <= 0)
-                {
-                    return;
-                }
-                std::complex<double>* becp = cache.becp_k(observer_ik, nbands * nkb * npol);
-                std::complex<double>* rotated = nullptr;
-                base_device::memory::resize_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(
-                    rotated, size_t(becp_rows) * nbands);
-                ModuleBase::gemm_op<std::complex<double>, base_device::DEVICE_GPU>()(
-                    'N', 'N', becp_rows, nbands, count,
-                    &ModuleBase::ONE, becp, becp_rows, coefficients, coefficient_leading,
-                    &ModuleBase::ZERO, rotated, becp_rows);
-                base_device::memory::synchronize_memory_op<std::complex<double>,
-                                                           base_device::DEVICE_GPU,
-                                                           base_device::DEVICE_GPU>()(
-                    becp, rotated, size_t(becp_rows) * nbands);
-                base_device::memory::delete_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(rotated);
-            };
-            hsolver_pw_obj.solve(op,
-                                 psi_t[0],
-                                 pelec,
-                                 pelec->ekb.c,
-                                 rank_in_pool,
-                                 nproc_in_pool,
-                                 ofs_running,
-                                 false,
-                                 initial_hpsi,
-                                 &observer);
-        }
-        else
-        {
-            hsolver_pw_obj.solve(op,
-                                 psi_t[0],
-                                 pelec,
-                                 pelec->ekb.c,
-                                 rank_in_pool,
-                                 nproc_in_pool,
-                                 ofs_running,
-                                 false);
-        }
+        hsolver_pw_obj.solve(op,
+                             psi_t[0],
+                             pelec,
+                             pelec->ekb.c,
+                             rank_in_pool,
+                             nproc_in_pool,
+                             ofs_running,
+                             false);
     }
     else
     {

@@ -249,8 +249,8 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
                     this->pw_cache_.allocate_gpu(nbands, nk, size_becp);
                     this->pw_cache_.lambda_in_sub() = this->state_.get_sc_lambda();
                 }
-                hsolver::FixedOverlapSubspace* fixed_overlap = nullptr;
 #if defined(__CUDA)
+                hsolver::FixedOverlapSubspace* fixed_overlap = nullptr;
                 fixed_overlap = static_cast<hsolver::FixedOverlapSubspace*>(this->pw_cache_.fixed_overlap);
                 if (initial_hs && nkb > 0)
                 {
