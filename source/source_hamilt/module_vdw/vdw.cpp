@@ -45,6 +45,11 @@ std::string parse_xcname(const std::string& xc_input, const std::vector<std::str
 namespace vdw
 {
 
+bool is_rvv10(const std::string& vdw_method)
+{
+    return vdw_method == "rvv10";
+}
+
 std::unique_ptr<Vdw> make_vdw(const UnitCell& ucell, const Input_para& input, std::ofstream* plog)
 {
     // NOTE: the following lines are incorrect!
@@ -93,6 +98,21 @@ std::unique_ptr<Vdw> make_vdw(const UnitCell& ucell, const Input_para& input, st
                                  "DFT-D4 support was not enabled at build time. "
                                  "Rebuild ABACUS with -DENABLE_DFTD4=ON.");
 #endif
+    }
+    else if (is_rvv10(input.vdw_method))
+    {
+#ifndef __LIBVDWXC
+        ModuleBase::WARNING_QUIT("ModuleHamiltGeneral::ModuleVDW::make_vdw",
+                                 "rVV10 support was not enabled at build time. "
+                                 "Rebuild ABACUS with -DENABLE_LIBVDWXC=ON.");
+#endif
+        // rVV10 is evaluated inside XC_Functional, so there is no pairwise term here
+        if (plog != nullptr)
+        {
+            *plog << "\nrVV10 nonlocal correlation (libvdwxc): b=" << input.vdw_rvv10_b << " C=" << input.vdw_rvv10_c
+                  << "\nincluded in the exchange-correlation energy, potential, forces and stress" << std::endl;
+        }
+        return nullptr;
     }
     else if (input.vdw_method != "none")
     {

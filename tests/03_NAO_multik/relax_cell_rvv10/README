@@ -1,0 +1,2 @@
+One cell-relaxation step of SnTe in LCAO (relax_cell_vdw4_d4 with rVV10 instead of D4): energy, forces, stress through the LCAO grid.
+Needs ENABLE_LIBXC and ENABLE_LIBVDWXC; reference from 4 MPI ranks.

@@ -1,0 +1,2 @@
+rVV10 (vdw_method rvv10, libvdwxc) on native PBE for GaAs with NLCC pseudopotentials and two spin channels: energy, forces, stress. Needs ENABLE_LIBVDWXC; reference from 4 MPI ranks.
+The native XC path is used on purpose: in PW, the stress of a libxc functional with NLCC pseudopotentials counts the core term twice (a separate, pre-existing issue).
