@@ -175,6 +175,55 @@ void ReadInput::item_dfpt()
         this->add_item(item);
     }
     {
+        Input_Item item("dfpt_lin_conv_thr");
+        item.annotation = "convergence threshold of the inner Sternheimer linear solve";
+        item.category = category;
+        item.type = "Real";
+        item.description = "Dedicated convergence threshold of the projected CG solve of the "
+                           "Sternheimer equation inside every DFPT response iteration, as the "
+                           "relative residual ||P_c r|| / ||P_c b|| of the projected system "
+                           "(r: CG residual, b: projected right-hand side, P_c: complement of "
+                           "the occupied subspace at k+q). Non-positive values (the default) "
+                           "inherit dfpt_conv_thr, which reproduces the historical "
+                           "single-knob behavior. Accuracy tradeoff of truncating the inner "
+                           "solve: the outer mixing residual does NOT check the achieved "
+                           "Sternheimer residual, so a loose inner threshold or a small "
+                           "dfpt_lin_max_iter can shift converged observables; the same "
+                           "controls also affect the one-shot Gamma position response (the "
+                           "bare q = 0 operator legs inherit them as well). When the knobs "
+                           "are tightened for a hard response, validate the phonons, "
+                           "dielectric tensor and Born charges against tighter inner "
+                           "settings to quantify the truncation error. Decouple them when a "
+                           "flat semicore band system needs a loose inner solve to keep the "
+                           "outer mixing stable: the shifted operator is then near-singular "
+                           "and a very deep inner solve amplifies the response beyond what "
+                           "the outer mixing can damp.";
+        item.default_value = "-1.0 (inherit dfpt_conv_thr)";
+        read_sync_double(input.dfpt_lin_conv_thr);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("dfpt_lin_max_iter");
+        item.annotation = "iteration cap of the inner Sternheimer linear solve";
+        item.category = category;
+        item.type = "Integer";
+        item.description = "Dedicated iteration cap of the projected CG solve of the "
+                           "Sternheimer equation inside every DFPT response iteration. "
+                           "Non-positive values (the default) inherit dfpt_max_iter, which "
+                           "reproduces the historical single-knob behavior. Lower it to "
+                           "truncate the CG before it drives into near-singular directions of "
+                           "a flat-band system; raise it for otherwise unconverged inner "
+                           "solves without enlarging the outer mixing budget. The cap has the "
+                           "same accuracy tradeoff as dfpt_lin_conv_thr: the outer mixing "
+                           "residual does not check the achieved Sternheimer residual, the "
+                           "one-shot Gamma position response shares the cap, and truncated "
+                           "inner solves should be validated against tighter settings on the "
+                           "phonons, dielectric tensor and Born charges.";
+        item.default_value = "0 (inherit dfpt_max_iter)";
+        read_sync_int(input.dfpt_lin_max_iter);
+        this->add_item(item);
+    }
+    {
         Input_Item item("dfpt_mix_beta");
         item.annotation = "mixing coefficient of the DFPT first-order density";
         item.category = category;
