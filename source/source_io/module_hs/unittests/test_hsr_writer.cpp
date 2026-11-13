@@ -203,7 +203,9 @@ TEST(HsrWriterIo, HContainerCsrHeaderKeepsCurrentFormat)
 
     // label "H": header carries the Fermi energy of this spin channel
     const double efermi_eV = 5.4321;
-    ModuleIO::write_hcontainer_csr(filename, &ucell, 5, &matrix, 0, false, 0, 1, "H", "", efermi_eV, true);
+    const bool written = ModuleIO::write_hcontainer_csr(
+        filename, &ucell, 5, &matrix, 0, false, 0, 1, "H", "", efermi_eV, true);
+    EXPECT_TRUE(written);
 
     const std::string output = read_file(filename);
     EXPECT_THAT(output, testing::HasSubstr("Ionic_Step 1  # ABACUS version:"));

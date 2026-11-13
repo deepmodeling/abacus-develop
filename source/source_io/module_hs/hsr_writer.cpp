@@ -96,7 +96,7 @@ std::string ModuleIO::dhk_gen_fname(const std::string& prefix,
 }
 
 template <typename TR>
-void ModuleIO::write_hcontainer_csr(const std::string& fname,
+bool ModuleIO::write_hcontainer_csr(const std::string& fname,
                                      const UnitCell* ucell,
                                      const int precision,
                                      hamilt::HContainer<TR>* mat_serial,
@@ -152,7 +152,10 @@ void ModuleIO::write_hcontainer_csr(const std::string& fname,
     const double sparse_threshold = 1e-10;
     hamilt::Output_HContainer<TR> out(mat_serial, ofs, sparse_threshold, precision);
     out.write();
+    // close() flushes the buffer; checking good() afterwards lets the caller
+    // detect a disk-full or quota failure that the destructor would swallow.
     ofs.close();
+    return ofs.good();
 }
 
 namespace
@@ -413,10 +416,10 @@ void ModuleIO::write_hsr(const std::vector<hamilt::HContainer<TR>*>& hr_vec,
 }
 
 // Explicit instantiations
-template void ModuleIO::write_hcontainer_csr<double>(
+template bool ModuleIO::write_hcontainer_csr<double>(
     const std::string&, const UnitCell*, const int,
     hamilt::HContainer<double>*, const int, const bool, const int, const int, const std::string&, const std::string&, const double, const bool);
-template void ModuleIO::write_hcontainer_csr<std::complex<double>>(
+template bool ModuleIO::write_hcontainer_csr<std::complex<double>>(
     const std::string&, const UnitCell*, const int,
     hamilt::HContainer<std::complex<double>>*, const int, const bool, const int, const int, const std::string&, const std::string&, const double, const bool);
 

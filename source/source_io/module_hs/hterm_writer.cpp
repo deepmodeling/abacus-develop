@@ -104,11 +104,11 @@ static void gather_and_write(const std::string& prefix,
         // the Hamiltonian, not the full H(R): they do not carry the Fermi annotation
         const double no_efermi = 0.0;
 #ifdef __MPI
-        write_hcontainer_csr(fname, &ucell, 8, &hr_serial, istep, append, ispin, nspin, label, "", no_efermi, false);
+        const bool written = write_hcontainer_csr(fname, &ucell, 8, &hr_serial, istep, append, ispin, nspin, label, "", no_efermi, false);
 #else
-        write_hcontainer_csr(fname, &ucell, 8, &hR, istep, append, ispin, nspin, label, "", no_efermi, false);
+        const bool written = write_hcontainer_csr(fname, &ucell, 8, &hR, istep, append, ispin, nspin, label, "", no_efermi, false);
 #endif
-        if (ofs_running != nullptr)
+        if (written && ofs_running != nullptr)
         {
             const std::string property = "H(R) (" + term_name + " term)";
             ModuleIO::write_matrix_notice(*ofs_running, property, ispin, nspin, fname);
@@ -119,7 +119,9 @@ static void gather_and_write(const std::string& prefix,
 // Write one folded Hamiltonian-term matrix H(k) using the same text layout as
 // write_dmk / write_hsk: metadata block, UnitCell block, flat matrix body
 // (8 real or 4 complex values per line, no "Row N" markers).
-static void write_hk_text(const std::string& fname,
+// Returns true only if the record was fully written; on an open or write
+// failure the caller must not announce the file in the running log.
+static bool write_hk_text(const std::string& fname,
                           const std::vector<std::complex<double>>& hk_global,
                           const K_Vectors& kv,
                           const int ik,
@@ -143,7 +145,7 @@ static void write_hk_text(const std::string& fname,
     if (!ofs.is_open())
     {
         ModuleBase::WARNING("ModuleIO::write_h_term", "Cannot open file < " + fname + " >.");
-        return;
+        return false;
     }
 
     // metadata block, mirrors write_dmk / write_hsk
@@ -210,6 +212,10 @@ static void write_hk_text(const std::string& fname,
     // Terminate the body so that an appended record (out_app_flag == 1) starts
     // on a fresh line instead of being glued to the last value.
     ofs << std::endl;
+    // Flush explicitly so that a mid-write failure (e.g. a full disk) is
+    // detected here instead of being dropped silently by the destructor.
+    ofs.flush();
+    return ofs.good();
 }
 
 // Canonical running-log name of a Hamiltonian-term H(k) output prefix, so that
@@ -285,10 +291,10 @@ static void write_hk_at_k(const hamilt::HContainer<double>& hR,
                                                         gamma_only,
                                                         istep);
 
-    write_hk_text(fname, hk_global, kv, ik, ibz_ik, nlocal, precision, gamma_only,
-                  nspin, ispin, istep, ucell, term_name, append);
+    const bool written = write_hk_text(fname, hk_global, kv, ik, ibz_ik, nlocal, precision, gamma_only,
+                                       nspin, ispin, istep, ucell, term_name, append);
 
-    if (ofs_running != nullptr)
+    if (written && ofs_running != nullptr)
     {
         // Spin-independent terms are written once with nspin_name == 1, which
         // makes write_matrix_notice emit no spin label for them.

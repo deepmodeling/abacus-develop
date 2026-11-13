@@ -63,8 +63,11 @@ std::string dhk_gen_fname(const std::string& prefix,
 /// @param append whether to append to an existing file; the first written step (istep <= 0) truncates
 /// @param efermi_eV the Fermi energy in eV for this spin channel
 /// @param has_efermi whether to append the Fermi energy to the spin-index line
+/// @return true only if the whole record was written and the stream closed
+///         cleanly; callers must not announce the file in the running log
+///         when this returns false.
 template <typename TR>
-void write_hcontainer_csr(const std::string& fname,
+bool write_hcontainer_csr(const std::string& fname,
                           const UnitCell* ucell,
                           const int precision,
                           hamilt::HContainer<TR>* mat_serial,
