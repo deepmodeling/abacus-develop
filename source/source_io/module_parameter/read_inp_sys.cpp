@@ -493,28 +493,49 @@ In socket_driver mode, this flag controls whether the returned frame advertises 
             // the number of MPI processes. Other configurations make the vendor
             // routines return inconsistent results across ranks and the SCF
             // silently diverges, so reject them at input time. See issue #8228.
-            // bndpar <= 0 is rejected by the bndpar input check; skip here so
-            // the diagnostic below never divides by zero.
+            //
+            // Skip conditions:
+            //  1) bndpar <= 0 is rejected by the bndpar input check; skipping
+            //     here avoids a division by zero in the diagnostic below.
+            //  2) esolver_type = dp / nep never runs an eigensolver and never
+            //     touches mtblas/C_PACK, so the kpar/bndpar layout is not
+            //     consumed and must not trigger a diagnostic. See issue #8228.
             if (para.input.bndpar <= 0)
             {
                 return;
             }
+            if (!ModuleIO::dsp_layout_check_needed(para.input.esolver_type))
+            {
+                return;
+            }
             const int nproc = para.sys.nproc;
-            const bool layout_valid = dsp_kpar_layout_valid(nproc,
-                                                            para.input.kpar,
-                                                            para.sys.kpar_lcao,
-                                                            para.input.bndpar);
+            const bool layout_valid = ModuleIO::dsp_kpar_layout_valid(
+                nproc,
+                para.input.basis_type,
+                para.input.kpar,
+                para.sys.kpar_lcao,
+                para.input.bndpar,
+                para.input.esolver_type);
             if (!layout_valid)
             {
-                const std::string msg =
-                    "On DSP hardware, the mtblas/C_PACK libraries require kpar (kpar_lcao for LCAO) * bndpar"
-                    " to equal the number of MPI processes, but got NPROC=" + std::to_string(nproc)
-                    + ", kpar=" + std::to_string(para.input.kpar)
-                    + ", kpar_lcao=" + std::to_string(para.sys.kpar_lcao)
+                const int kpar_eff = ModuleIO::dsp_effective_kpar(
+                    para.input.basis_type, para.input.kpar, para.sys.kpar_lcao);
+                const std::string basis_str
+                    = (para.input.basis_type == "lcao") ? "kpar_lcao" : "kpar";
+                const std::string msg
+                    = "On DSP hardware with esolver_type=" + para.input.esolver_type
+                    + " and basis_type=" + para.input.basis_type
+                    + ", the mtblas/C_PACK libraries require " + basis_str
+                    + " * bndpar to equal the number of MPI processes, but got"
+                    + " NPROC=" + std::to_string(nproc)
+                    + ", " + basis_str + "=" + std::to_string(kpar_eff)
                     + ", bndpar=" + std::to_string(para.input.bndpar)
-                    + ". Please set kpar=" + std::to_string(nproc / para.input.bndpar)
+                    + ". Please set " + basis_str + "="
+                    + std::to_string(nproc / para.input.bndpar)
                     + " or adjust the process count.";
-                ModuleBase::WARNING_QUIT("ReadInput", msg);
+                std::cout << " === Note: kpar * bndpar != NPROC ===" << std::endl;
+                std::cout << msg << std::endl;
+                std::cout << "=== end ===" << std::endl;
             }
         };
 #endif

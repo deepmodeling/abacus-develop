@@ -162,6 +162,59 @@ TEST_F(DFPT_PW_DataTest, PerIrrepScfLedger)
     clear_qlist();
 }
 
+TEST_F(DFPT_PW_DataTest, LinSolverKnobsInheritByDefault)
+{
+    init_qlist();
+
+    // unset linear knobs must track the outer mixing values in any setter
+    // order (the historical single-knob behavior); explicit values take
+    // precedence and must survive later changes of the outer knobs
+    data.set_conv_thr(1e-6);
+    data.set_max_iter(25);
+    EXPECT_DOUBLE_EQ(data.get_lin_conv_thr(), 1e-6);
+    EXPECT_EQ(data.get_lin_max_iter(), 25);
+
+    // late outer changes keep propagating while the lin knobs are unset
+    data.set_conv_thr(1e-10);
+    data.set_max_iter(40);
+    EXPECT_DOUBLE_EQ(data.get_lin_conv_thr(), 1e-10);
+    EXPECT_EQ(data.get_lin_max_iter(), 40);
+
+    // explicit lin values decouple from the outer knobs permanently
+    data.set_lin_conv_thr(1e-7);
+    data.set_lin_max_iter(12);
+    EXPECT_DOUBLE_EQ(data.get_lin_conv_thr(), 1e-7);
+    EXPECT_EQ(data.get_lin_max_iter(), 12);
+
+    data.set_conv_thr(1e-12);
+    data.set_max_iter(80);
+    EXPECT_DOUBLE_EQ(data.get_lin_conv_thr(), 1e-7);
+    EXPECT_EQ(data.get_lin_max_iter(), 12);
+
+    // resetting an explicit override back to the sentinel resumes
+    // inheritance immediately (the getter-side fallback has no memory)
+    data.set_lin_conv_thr(-1.0);
+    EXPECT_DOUBLE_EQ(data.get_lin_conv_thr(), 1e-12);
+    data.set_lin_max_iter(0);
+    EXPECT_EQ(data.get_lin_max_iter(), 80);
+
+    // and the resumed inheritance keeps tracking later outer changes
+    data.set_conv_thr(1e-9);
+    data.set_max_iter(45);
+    EXPECT_DOUBLE_EQ(data.get_lin_conv_thr(), 1e-9);
+    EXPECT_EQ(data.get_lin_max_iter(), 45);
+
+    // one knob may inherit while the other stays pinned
+    data.set_lin_conv_thr(5e-8);
+    EXPECT_DOUBLE_EQ(data.get_lin_conv_thr(), 5e-8);
+    EXPECT_EQ(data.get_lin_max_iter(), 45);
+    data.set_max_iter(60);
+    EXPECT_EQ(data.get_lin_max_iter(), 60);
+    EXPECT_DOUBLE_EQ(data.get_lin_conv_thr(), 5e-8);
+
+    clear_qlist();
+}
+
 TEST_F(DFPT_PW_DataTest, DftuReservationWithNullProvider)
 {
     init_qlist();
