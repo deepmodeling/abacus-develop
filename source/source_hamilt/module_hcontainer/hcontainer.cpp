@@ -351,6 +351,50 @@ bool HContainer<T>::owns_atom_pair(const int iat1, const int iat2) const
     return false;
 }
 
+template <typename T>
+std::vector<int> HContainer<T>::row_basis_offsets(const int iat) const
+{
+    if (this->basis_index != nullptr)
+    {
+        const AtomBasisView rows
+            = AtomBasisView::rows(*this->basis_index, *this->matrix_dist, iat);
+        std::vector<int> offsets(rows.nloc());
+        for (int i = 0; i < rows.nloc(); ++i)
+        {
+            offsets[i] = rows[i];
+        }
+        return offsets;
+    }
+    if (this->paraV != nullptr)
+    {
+        return this->paraV->get_indexes_row(iat);
+    }
+    ModuleBase::WARNING_QUIT("HContainer::row_basis_offsets", "matrix layout is not initialized");
+    return std::vector<int>();
+}
+
+template <typename T>
+std::vector<int> HContainer<T>::col_basis_offsets(const int iat) const
+{
+    if (this->basis_index != nullptr)
+    {
+        const AtomBasisView cols
+            = AtomBasisView::cols(*this->basis_index, *this->matrix_dist, iat);
+        std::vector<int> offsets(cols.nloc());
+        for (int i = 0; i < cols.nloc(); ++i)
+        {
+            offsets[i] = cols[i];
+        }
+        return offsets;
+    }
+    if (this->paraV != nullptr)
+    {
+        return this->paraV->get_indexes_col(iat);
+    }
+    ModuleBase::WARNING_QUIT("HContainer::col_basis_offsets", "matrix layout is not initialized");
+    return std::vector<int>();
+}
+
 // allocate
 template <typename T>
 void HContainer<T>::allocate(T* data_array, bool is_zero)

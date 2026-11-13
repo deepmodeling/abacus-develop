@@ -105,22 +105,15 @@ std::vector<double> cross_ao_overlap(const UnitCell& cell,
         auto& pair = overlap_r.get_atom_pair(pair_index);
         const int i = pair.get_atom_i();
         const int j = pair.get_atom_j();
+        const std::vector<int> rows = overlap_r.row_basis_offsets(i);
+        const std::vector<int> cols = overlap_r.col_basis_offsets(j);
         const auto displacement = (cell.get_tau(j) - old_positions[i]) * cell.lat0;
-        const std::vector<int> row_offsets = pmat.get_indexes_row(i);
-        const std::vector<int> col_offsets = pmat.get_indexes_col(j);
         for (int ir = 0; ir < pair.get_R_size(); ++ir)
         {
             const auto index = pair.get_R_index(ir);
             const auto shifted = displacement + index * lattice;
             double* const values = pair.get_pointer(ir);
-            hamilt::cal_overlap_block(cell,
-                                      integrator,
-                                      i,
-                                      j,
-                                      row_offsets,
-                                      col_offsets,
-                                      shifted,
-                                      values);
+            hamilt::cal_overlap_block(cell, integrator, i, j, rows, cols, shifted, values);
         }
     }
     // Use the complex Fourier overload even at Gamma: it folds every retained R

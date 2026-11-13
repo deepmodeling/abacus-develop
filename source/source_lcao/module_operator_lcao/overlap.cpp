@@ -170,10 +170,8 @@ void Overlap<OperatorLCAO<TK, TR>>::calculate_SR()
         AtomPair<TR>& tmp = this->SR->get_atom_pair(iap);
         const int iat1 = tmp.get_atom_i();
         const int iat2 = tmp.get_atom_j();
-        const AtomBasisView rows = AtomBasisView::rows(basis_, para_layout_, iat1);
-        const AtomBasisView cols = AtomBasisView::cols(basis_, para_layout_, iat2);
-        const std::vector<int> row_offsets = collect_atom_entries(rows);
-        const std::vector<int> col_offsets = collect_atom_entries(cols);
+        const std::vector<int> rows = this->SR->row_basis_offsets(iat1);
+        const std::vector<int> cols = this->SR->col_basis_offsets(iat2);
 
         for (int iR = 0; iR < tmp.get_R_size(); ++iR)
         {
@@ -181,14 +179,7 @@ void Overlap<OperatorLCAO<TK, TR>>::calculate_SR()
             auto dtau = ucell->cal_dtau(iat1, iat2, R_index);
             TR* data_pointer = tmp.get_pointer(iR);
             const auto displacement = dtau * this->ucell->lat0;
-            cal_overlap_block(*this->ucell,
-                              *this->intor_,
-                              iat1,
-                              iat2,
-                              row_offsets,
-                              col_offsets,
-                              displacement,
-                              data_pointer);
+            cal_overlap_block(*this->ucell, *this->intor_, iat1, iat2, rows, cols, displacement, data_pointer);
         }
     }
     // if TK == double, then SR should be fixed to gamma case
@@ -299,14 +290,14 @@ TK* Overlap<OperatorLCAO<TK, TR>>::getSk()
 template <typename TK, typename TR>
 HContainer<TR>* Overlap<OperatorLCAO<TK, TR>>::calculate_SR_async(const UnitCell& ucell_in,
                                                                                             const double md_dt,
-                                                                                            const Parallel_Orbitals* paraV)
+                                                                 const HContainer<TR>& layout)
 {
     ModuleBase::TITLE("OverlapNew", "calculate_SR_async");
     ModuleBase::timer::start("OverlapNew", "calculate_SR_async");
 
     // Initialize SR_async for Hefei-NAMD asynchronous overlap calculation
     // This is done here to use the exact dtau with velocity shifts
-    HContainer<TR>* SR_async = new HContainer<TR>(paraV);
+    HContainer<TR>* SR_async = new HContainer<TR>(layout.empty_like());
 
     // Define velocity shift modifier for dtau
     // This shifts atom1 backward to its position at (t - dt),
@@ -332,10 +323,8 @@ HContainer<TR>* Overlap<OperatorLCAO<TK, TR>>::calculate_SR_async(const UnitCell
         AtomPair<TR>& atom_pair = SR_async->get_atom_pair(iap);
         const int iat1 = atom_pair.get_atom_i();
         const int iat2 = atom_pair.get_atom_j();
-        const AtomBasisView rows = AtomBasisView::rows(basis_, para_layout_, iat1);
-        const AtomBasisView cols = AtomBasisView::cols(basis_, para_layout_, iat2);
-        const std::vector<int> row_offsets = collect_atom_entries(rows);
-        const std::vector<int> col_offsets = collect_atom_entries(cols);
+        const std::vector<int> rows = SR_async->row_basis_offsets(iat1);
+        const std::vector<int> cols = SR_async->col_basis_offsets(iat2);
 
         // Get atom type and index for velocity lookup
         int T1 = 0;
@@ -356,14 +345,8 @@ HContainer<TR>* Overlap<OperatorLCAO<TK, TR>>::calculate_SR_async(const UnitCell
 
             TR* data_pointer = atom_pair.get_pointer(iR);
             const auto displacement = dtau * this->ucell->lat0;
-            cal_overlap_block(*this->ucell,
-                              *this->intor_,
-                              iat1,
-                              iat2,
-                              row_offsets,
-                              col_offsets,
-                              displacement,
-                              data_pointer);
+            cal_overlap_block(
+                *this->ucell, *this->intor_, iat1, iat2, rows, cols, displacement, data_pointer);
         }
     }
 
@@ -375,6 +358,21 @@ HContainer<TR>* Overlap<OperatorLCAO<TK, TR>>::calculate_SR_async(const UnitCell
 
     ModuleBase::timer::end("OverlapNew", "calculate_SR_async");
     return SR_async;
+}
+
+template <typename TK, typename TR>
+HContainer<TR>* Overlap<OperatorLCAO<TK, TR>>::calculate_SR_async(
+    const UnitCell& ucell_in,
+    const double md_dt,
+    const Parallel_Orbitals* paraV)
+{
+    if (paraV == nullptr)
+    {
+        ModuleBase::WARNING_QUIT(
+            "Overlap::calculate_SR_async", "parallel orbital layout is null");
+    }
+    const HContainer<TR> layout(paraV);
+    return this->calculate_SR_async(ucell_in, md_dt, layout);
 }
 
 template <typename TK, typename TR>

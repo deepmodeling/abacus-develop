@@ -1,6 +1,5 @@
 #ifndef ABACUS_LCAO_OVLP_BLOCK_H
 #define ABACUS_LCAO_OVLP_BLOCK_H
-
 #include <vector>
 
 namespace ModuleBase

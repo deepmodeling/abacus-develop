@@ -823,8 +823,8 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
 
         // Use precision from cal_syns[1] (default 8 if not specified)
         const int precision = inp.cal_syns[1];
-        const Parallel_Orbitals* paraV = p_hamilt->getSR()->get_paraV();
-        hamilt::HContainer<TR>* SR_async = overlap_async->calculate_SR_async(ucell, PARAM.mdp.md_dt, paraV);
+        hamilt::HContainer<TR>* SR_async
+            = overlap_async->calculate_SR_async(ucell, PARAM.mdp.md_dt, *p_hamilt->getSR());
         overlap_async->output_SR_async_csr(istep, SR_async, precision);
 
         // Clean up

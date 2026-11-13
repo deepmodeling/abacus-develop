@@ -166,6 +166,14 @@ class HContainer
     // move assignment
     HContainer& operator=(HContainer<T>&& HR_in) noexcept;
 
+    /**
+     * @brief Create an empty container with the same basis and matrix layout.
+     *
+     * Atom-pair topology, R blocks, and matrix data are not copied.
+     */
+    template <typename U = T>
+    HContainer<U> empty_like() const;
+
     // simple constructor
     HContainer(int natom);
 
@@ -253,6 +261,16 @@ class HContainer
      * does not imply that the physical matrix element is zero.
      */
     bool owns_atom_pair(int iat1, int iat2) const;
+
+    /**
+     * @brief Return locally owned row-basis offsets for one atom.
+     */
+    std::vector<int> row_basis_offsets(int iat) const;
+
+    /**
+     * @brief Return locally owned column-basis offsets for one atom.
+     */
+    std::vector<int> col_basis_offsets(int iat) const;
 
     /**
      * @brief find AtomPair with atom index atom_i and atom_j
@@ -521,6 +539,9 @@ class HContainer
     int get_nbasis() const;
 
   private:
+    template <typename>
+    friend class HContainer;
+
     // i-j atom pairs, sorted by matrix of (atom_i, atom_j)
     std::vector<AtomPair<T>> atom_pairs;
 
@@ -565,6 +586,19 @@ class HContainer
     // int multiple = 1;
     // int current_multiple = 0;
 };
+
+template <typename T>
+template <typename U>
+HContainer<U> HContainer<T>::empty_like() const
+{
+    HContainer<U> result;
+    result.paraV = this->paraV;
+    result.basis_index = this->basis_index;
+    result.matrix_dist = this->matrix_dist;
+    result.sparse_ap.resize(this->sparse_ap.size());
+    result.sparse_ap_index.resize(this->sparse_ap_index.size());
+    return result;
+}
 
 } // namespace hamilt
 

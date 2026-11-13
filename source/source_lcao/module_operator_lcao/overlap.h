@@ -140,10 +140,14 @@ class Overlap<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
      * Calculates <phi(t-1)|phi(t)> by shifting atom positions backward
      * @param ucell unit cell with current atomic positions and velocities
      * @param md_dt molecular dynamics time step (in fs)
-     * @param paraV parallel orbitals object for matrix distribution
+     * @param layout container whose matrix layout and atom blocks are reused
      * @return pointer to the created SR_async container (caller must delete)
      */
-    hamilt::HContainer<TR>* calculate_SR_async(const UnitCell& ucell, const double md_dt, const Parallel_Orbitals* paraV);
+    hamilt::HContainer<TR>* calculate_SR_async(
+        const UnitCell& ucell, const double md_dt, const HContainer<TR>& layout);
+
+    hamilt::HContainer<TR>* calculate_SR_async(
+        const UnitCell& ucell, const double md_dt, const Parallel_Orbitals* paraV);
 
     /**
      * @brief output asynchronous overlap matrix in CSR format
