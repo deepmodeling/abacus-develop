@@ -118,7 +118,7 @@ Overlap<OperatorLCAO<TK, TR>>::Overlap(HS_Matrix_K<TK>* hsk_in,
                                                              HContainer<TR>* hR_in,
                                                              HContainer<TR>* SR_in,
                                                              const BasisFlattenedIndexing& basis,
-                                                             const Parallel_Blkcyclic& layout,
+                                                             const Parallel_Blkcyclic& para_layout,
                                                              const UnitCell* ucell_in,
                                                              const std::vector<double>& orb_cutoff,
                                                              const Grid_Driver* GridD_in,
@@ -126,7 +126,7 @@ Overlap<OperatorLCAO<TK, TR>>::Overlap(HS_Matrix_K<TK>* hsk_in,
     : OperatorLCAO<TK, TR>(hsk_in, kvec_d_in, hR_in),
       orb_cutoff_(orb_cutoff),
       basis_(basis),
-      layout_(layout),
+      para_layout_(para_layout),
       intor_(intor),
       gridD(GridD_in)
 {
@@ -173,8 +173,8 @@ void Overlap<OperatorLCAO<TK, TR>>::calculate_SR()
         AtomPair<TR>& tmp = this->SR->get_atom_pair(iap);
         const int iat1 = tmp.get_atom_i();
         const int iat2 = tmp.get_atom_j();
-        const AtomBasisView rows = AtomBasisView::rows(basis_, layout_, iat1);
-        const AtomBasisView cols = AtomBasisView::cols(basis_, layout_, iat2);
+        const AtomBasisView rows = AtomBasisView::rows(basis_, para_layout_, iat1);
+        const AtomBasisView cols = AtomBasisView::cols(basis_, para_layout_, iat2);
         const std::vector<int> row_offsets = collect_atom_entries(rows);
         const std::vector<int> col_offsets = collect_atom_entries(cols);
 
@@ -335,8 +335,8 @@ HContainer<TR>* Overlap<OperatorLCAO<TK, TR>>::calculate_SR_async(const UnitCell
         AtomPair<TR>& atom_pair = SR_async->get_atom_pair(iap);
         const int iat1 = atom_pair.get_atom_i();
         const int iat2 = atom_pair.get_atom_j();
-        const AtomBasisView rows = AtomBasisView::rows(basis_, layout_, iat1);
-        const AtomBasisView cols = AtomBasisView::cols(basis_, layout_, iat2);
+        const AtomBasisView rows = AtomBasisView::rows(basis_, para_layout_, iat1);
+        const AtomBasisView cols = AtomBasisView::cols(basis_, para_layout_, iat2);
         const std::vector<int> row_offsets = collect_atom_entries(rows);
         const std::vector<int> col_offsets = collect_atom_entries(cols);
 

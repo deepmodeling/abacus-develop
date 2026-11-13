@@ -16,7 +16,7 @@ hamilt::EKinetic<hamilt::OperatorLCAO<TK, TR>>::EKinetic(
     const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
     hamilt::HContainer<TR>* hR_in,
     const BasisFlattenedIndexing& basis,
-    const Parallel_Blkcyclic& layout,
+    const Parallel_Blkcyclic& para_layout,
     const UnitCell* ucell_in,
     const std::vector<double>& orb_cutoff,
     const Grid_Driver* GridD_in,
@@ -24,7 +24,7 @@ hamilt::EKinetic<hamilt::OperatorLCAO<TK, TR>>::EKinetic(
     : hamilt::OperatorLCAO<TK, TR>(hsk_in, kvec_d_in, hR_in),
       orb_cutoff_(orb_cutoff),
       basis_(basis),
-      layout_(layout),
+      para_layout_(para_layout),
       intor_(intor),
       gridD(GridD_in)
 {
@@ -66,14 +66,14 @@ void hamilt::EKinetic<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(const Grid_Dr
         ucell->iat2iait(iat1, &I1, &T1);
         AdjacentAtomInfo adjs;
         GridD->Find_atom(*ucell, tau1, T1, I1, &adjs);
-        const AtomBasisView rows = AtomBasisView::rows(basis_, layout_, iat1);
+        const AtomBasisView rows = AtomBasisView::rows(basis_, para_layout_, iat1);
         std::vector<bool> is_adj(adjs.adj_num + 1, false);
         for (int ad1 = 0; ad1 < adjs.adj_num + 1; ++ad1)
         {
             const int T2 = adjs.ntype[ad1];
             const int I2 = adjs.natom[ad1];
             const int iat2 = ucell->itia2iat(T2, I2);
-            const AtomBasisView cols = AtomBasisView::cols(basis_, layout_, iat2);
+            const AtomBasisView cols = AtomBasisView::cols(basis_, para_layout_, iat2);
             if (rows.empty() || cols.empty())
             {
                 continue;
@@ -184,8 +184,8 @@ void hamilt::EKinetic<hamilt::OperatorLCAO<TK, TR>>::cal_HR_IJR(const int& iat1,
     // calculate the Ekinetic matrix for each pair of orbitals
     // ---------------------------------------------
     double olm[3] = {0, 0, 0};
-    const AtomBasisView rows = AtomBasisView::rows(basis_, layout_, iat1);
-    const AtomBasisView cols = AtomBasisView::cols(basis_, layout_, iat2);
+    const AtomBasisView rows = AtomBasisView::rows(basis_, para_layout_, iat1);
+    const AtomBasisView cols = AtomBasisView::cols(basis_, para_layout_, iat2);
     const int step_trace = cols.nloc() + 1;
     for (int iw1l = 0; iw1l < rows.nloc(); iw1l += npol)
     {

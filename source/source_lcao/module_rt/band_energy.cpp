@@ -21,7 +21,7 @@ namespace module_rt
 #ifdef __MPI
 namespace
 {
-void gather_mo_hamilt(const Parallel_Blkcyclic& mo_repr_layout,
+void gather_eij(const Parallel_Blkcyclic& mo_repr_layout,
                                   const int nband,
                                   std::complex<double>* mo_hamilt,
                                   const EijOutputInfo& output_info,
@@ -77,7 +77,7 @@ void compute_ekb(const Parallel_Blkcyclic& matrix_layout,
 
     if (output_info.threshold >= 0.0)
     {
-        gather_mo_hamilt(mo_repr_layout, nband, mo_hamilt, output_info, ofs_running);
+        gather_eij(mo_repr_layout, nband, mo_hamilt, output_info, ofs_running);
     }
 
     int info = 0;
