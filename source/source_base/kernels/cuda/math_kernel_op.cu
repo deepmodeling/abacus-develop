@@ -10,6 +10,17 @@
 #include <thrust/execution_policy.h>
 #include <thrust/inner_product.h>
 namespace ModuleBase {
+namespace
+{
+// Shape thresholds for the cuBLAS ZGEMM3M dispatch. These are empirical
+// crossover points, not physical constants.
+constexpr int zgemm3m_min_m = 128;
+constexpr int zgemm3m_min_k = 64;
+constexpr int zgemm3m_min_n = 128;
+constexpr int zgemm3m_tall_n = 64;
+constexpr int zgemm3m_tall_k = 4096;
+constexpr int zgemm3m_large_dim = 4096;
+} // namespace
 template <typename T>
 struct GetTypeThrust {
     using type = T;
@@ -59,7 +70,8 @@ void scal_op<float, base_device::DEVICE_GPU>::operator()(const int& N,
                                                          std::complex<float>* X,
                                                          const int& incx)
 {
-    CHECK_CUBLAS(cublasCscal(cublas_handle, N, (float2*)alpha, (float2*)X, incx));
+    const auto scalar = make_cuComplex(alpha->real(), alpha->imag());
+    CHECK_CUBLAS(cublasCscal(cublas_handle, N, &scalar, (float2*)X, incx));
 }
 
 template <>
@@ -68,7 +80,8 @@ void scal_op<double, base_device::DEVICE_GPU>::operator()(const int& N,
                                                           std::complex<double>* X,
                                                           const int& incx)
 {
-    CHECK_CUBLAS(cublasZscal(cublas_handle, N, (double2*)alpha, (double2*)X, incx));
+    const auto scalar = make_cuDoubleComplex(alpha->real(), alpha->imag());
+    CHECK_CUBLAS(cublasZscal(cublas_handle, N, &scalar, (double2*)X, incx));
 }
 
 template <>
@@ -90,7 +103,8 @@ void axpy_op<std::complex<float>, base_device::DEVICE_GPU>::operator()(const int
                                                                        std::complex<float>* Y,
                                                                        const int& incY)
 {
-    CHECK_CUBLAS(cublasCaxpy(cublas_handle, N, (float2*)alpha, (float2*)X, incX, (float2*)Y, incY));
+    const auto scalar = make_cuComplex(alpha->real(), alpha->imag());
+    CHECK_CUBLAS(cublasCaxpy(cublas_handle, N, &scalar, (float2*)X, incX, (float2*)Y, incY));
 }
 
 template <>
@@ -101,7 +115,8 @@ void axpy_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(const in
                                                                         std::complex<double>* Y,
                                                                         const int& incY)
 {
-    CHECK_CUBLAS(cublasZaxpy(cublas_handle, N, (double2*)alpha, (double2*)X, incX, (double2*)Y, incY));
+    const auto scalar = make_cuDoubleComplex(alpha->real(), alpha->imag());
+    CHECK_CUBLAS(cublasZaxpy(cublas_handle, N, &scalar, (double2*)X, incX, (double2*)Y, incY));
 }
 
 
@@ -294,21 +309,24 @@ void gemm_op<std::complex<float>, base_device::DEVICE_GPU>::operator()(const cha
 {
     cublasOperation_t cutransA = judge_trans_op(true, transa, "gemm_op");
     cublasOperation_t cutransB = judge_trans_op(true, transb, "gemm_op");
+    const auto alpha_value = make_cuComplex(alpha->real(), alpha->imag());
+    const auto beta_value = make_cuComplex(beta->real(), beta->imag());
     // Bound rounding error in long single-precision conjugate inner products.
     constexpr int block = 2048;
     if (cutransA == CUBLAS_OP_C && cutransB == CUBLAS_OP_N && k > block)
     {
-        const std::complex<float> one(1.0f, 0.0f);
+        const auto one_value = make_cuComplex(1.0f, 0.0f);
         for (int offset = 0; offset < k; offset += block)
         {
             CHECK_CUBLAS(cublasCgemm(cublas_handle, cutransA, cutransB, m, n, std::min(block, k - offset),
-                (float2*)alpha, (float2*)(a + offset), lda, (float2*)(b + offset), ldb,
-                (float2*)(offset == 0 ? beta : &one), (float2*)c, ldc));
+                &alpha_value, (float2*)(a + offset), lda, (float2*)(b + offset), ldb,
+                (offset == 0 ? &beta_value : &one_value), (float2*)c, ldc));
         }
     }
     else
     {
-        CHECK_CUBLAS(cublasCgemm(cublas_handle, cutransA, cutransB, m, n ,k, (float2*)alpha, (float2*)a , lda, (float2*)b, ldb, (float2*)beta, (float2*)c, ldc));
+        CHECK_CUBLAS(cublasCgemm(cublas_handle, cutransA, cutransB, m, n, k, &alpha_value, (float2*)a, lda,
+                                 (float2*)b, ldb, &beta_value, (float2*)c, ldc));
     }
 }
 
@@ -332,7 +350,45 @@ void gemm_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(const ch
     if (cublas_handle == nullptr) {
         CHECK_CUBLAS(cublasCreate(&cublas_handle));
     }
-    CHECK_CUBLAS(cublasZgemm(cublas_handle, cutransA, cutransB, m, n ,k, (double2*)alpha, (double2*)a , lda, (double2*)b, ldb, (double2*)beta, (double2*)c, ldc));
+    const auto alpha_value = make_cuDoubleComplex(alpha->real(), alpha->imag());
+    const auto beta_value = make_cuDoubleComplex(beta->real(), beta->imag());
+    // Three real products reduce arithmetic for wide complex GEMMs. Narrow or
+    // small products retain the conventional complex accumulation order.
+    if (m >= zgemm3m_min_m && k >= zgemm3m_min_k
+        && (n >= zgemm3m_min_n
+            || (transa == 'C' && transb == 'N' && n >= zgemm3m_tall_n && k >= zgemm3m_tall_k))
+        && (m >= zgemm3m_large_dim || n >= zgemm3m_large_dim || k >= zgemm3m_large_dim))
+    {
+        CHECK_CUBLAS(cublasZgemm3m(cublas_handle, cutransA, cutransB, m, n, k,
+                                   &alpha_value, reinterpret_cast<const cuDoubleComplex*>(a), lda,
+                                   reinterpret_cast<const cuDoubleComplex*>(b), ldb,
+                                   &beta_value, reinterpret_cast<cuDoubleComplex*>(c), ldc));
+        return;
+    }
+    CHECK_CUBLAS(cublasZgemm(cublas_handle, cutransA, cutransB, m, n, k, &alpha_value, (double2*)a, lda, (double2*)b,
+                             ldb, &beta_value, (double2*)c, ldc));
+}
+
+void gemm_strided_batched_gpu(char transa, char transb, int m, int n, int k,
+                              const std::complex<double>& alpha, const std::complex<double>* a,
+                              int lda, long long stride_a, const std::complex<double>* b,
+                              int ldb, long long stride_b, const std::complex<double>& beta,
+                              std::complex<double>* c, int ldc, long long stride_c, int batches)
+{
+    if (cublas_handle == nullptr)
+    {
+        CHECK_CUBLAS(cublasCreate(&cublas_handle));
+    }
+    const auto alpha_value = make_cuDoubleComplex(alpha.real(), alpha.imag());
+    const auto beta_value = make_cuDoubleComplex(beta.real(), beta.imag());
+    CHECK_CUBLAS(cublasZgemmStridedBatched(cublas_handle,
+                                           judge_trans_op(true, transa, "gemm_strided_batched_gpu"),
+                                           judge_trans_op(true, transb, "gemm_strided_batched_gpu"),
+                                           m, n, k, &alpha_value,
+                                           reinterpret_cast<const cuDoubleComplex*>(a), lda, stride_a,
+                                           reinterpret_cast<const cuDoubleComplex*>(b), ldb, stride_b,
+                                           &beta_value, reinterpret_cast<cuDoubleComplex*>(c), ldc,
+                                           stride_c, batches));
 }
 
 template <>

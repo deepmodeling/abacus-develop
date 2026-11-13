@@ -81,6 +81,10 @@ list(
 
 add_library(module_pwdft OBJECT ${objects})
 
+if(USE_CUDA)
+  target_sources(module_pwdft PRIVATE kernels/cuda/projector_fold.cu)
+endif()
+
 if(ENABLE_COVERAGE)
   add_coverage(module_pwdft)
 endif()

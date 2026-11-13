@@ -47,28 +47,12 @@ std::vector<FPTYPE> Nonlocal_maths<FPTYPE, Device>::cal_gk(int ik, const ModuleP
     return gk;
 }
 
-// tabulate the spherical haromonic functions up to lmax. The q vector is given as input.
-// I would rather call this function as cal_ylm_cpu2gpu, distincting from the pure cpu implementation
+// Tabulate real spherical harmonics from G+k vectors on the execution device.
 template <typename FPTYPE, typename Device>
 void Nonlocal_maths<FPTYPE, Device>::cal_ylm(int lmax, int npw, const FPTYPE* q, FPTYPE* ylm)
 {
     const int ntot_ylm = (lmax + 1) * (lmax + 1);
-    if (this->device == base_device::GpuDevice)
-    {
-        // alias
-        using syncmem_var_h2d_op = base_device::memory::synchronize_memory_op<FPTYPE, Device, base_device::DEVICE_CPU>;
-        // allocate
-        std::vector<FPTYPE> ylm_cpu(ntot_ylm * npw);
-        // calculate
-        ModuleBase::YlmReal::Ylm_Real(cpu_ctx, ntot_ylm, npw, q, ylm_cpu.data());
-        // send from cpu to gpu
-        syncmem_var_h2d_op()(ylm, ylm_cpu.data(), ylm_cpu.size());
-    }
-    else
-    {
-        // calculate. Why not implement this logic branch inside some function???
-        ModuleBase::YlmReal::Ylm_Real(cpu_ctx, ntot_ylm, npw, q, ylm);
-    }
+    ModuleBase::YlmReal::Ylm_Real(ctx, ntot_ylm, npw, q, ylm);
     return;
 }
 

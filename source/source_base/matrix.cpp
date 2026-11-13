@@ -8,6 +8,9 @@
 #include <cmath>
 #include <cstdlib>
 #include <limits>
+#ifdef _OPENMP
+#include <omp.h>
+#endif
 
 #include "matrix.h"
 
@@ -283,6 +286,20 @@ void matrix::operator+=(const matrix & m)
     assert( nc==m.nc );
     const int size=nc*nr;
     const double * const c_in = m.c;
+#ifdef _OPENMP
+    // Large fields amortize parallel-region overhead; nested calls and small
+    // matrices retain the serial path without creating an OpenMP region.
+    constexpr int min_parallel_size = 1 << 20;
+    if (size >= min_parallel_size && !omp_in_parallel())
+    {
+#pragma omp parallel for schedule(static)
+        for (int i = 0; i < size; ++i)
+        {
+            c[i] += c_in[i];
+        }
+        return;
+    }
+#endif
     for( int i = 0; i < size; ++i ) 
     {
         c[i] += c_in[i];

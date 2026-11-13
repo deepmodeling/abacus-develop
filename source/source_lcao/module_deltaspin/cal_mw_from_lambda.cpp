@@ -14,6 +14,11 @@
 #include "source_pw/module_proj/onsite_proj.h"
 #include "spin_constrain.h"
 
+#if defined(__CUDA)
+#include "source_base/module_device/device_check.h"
+#include "source_hsolver/kernels/fixed_overlap.h"
+#include <cuda_runtime.h>
+#endif
 #ifdef __LCAO
 #include "source_estate/elecstate_lcao.h"
 #include "source_estate/module_dm/dm_from_psi.h"
@@ -90,10 +95,12 @@
 template <>
 void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
         int i_step,
-        const ModuleBase::Vector3<double>* delta_lambda)
+        const ModuleBase::Vector3<double>* delta_lambda,
+        std::ostream& ofs_running)
 {
     ModuleBase::TITLE("spinconstrain::SpinConstrain", "cal_mw_from_lambda");
     ModuleBase::timer::start("spinconstrain::SpinConstrain", "cal_mw_from_lambda");
+    const bool use_gpu = PARAM.inp.device == "gpu";
 #ifdef __MPI
     const hsolver::diag_comm_info diag_comm(POOL_WORLD, GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL);
 #else
@@ -114,7 +121,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
                                                              PARAM.globalv.nlocal,
                                                              PARAM.inp.nbands,
                                                              PARAM.inp.nelec,
-                                                             PARAM.inp.device == "gpu",
+                                                             use_gpu,
                                                              GlobalV::NPROC,
                                                              GlobalV::MY_RANK);
         if (this->state_.nspin_ == 2)
@@ -152,7 +159,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
             int nbands = 0;
             int npol = 0;
             const int* nh_iat = nullptr;
-            if (PARAM.inp.device == "cpu")
+            if (!use_gpu)
             {
                 // =============================================================
                 // PW PATH (CPU): Subspace diagonalization + Mi from becp
@@ -199,7 +206,10 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
                     memcpy(h_tmp.data(), h_k, sizeof(std::complex<double>) * nbands * nbands);
                     memcpy(s_tmp.data(), s_k, sizeof(std::complex<double>) * nbands * nbands);
                     // Apply DeltaSpin correction (skip for initialization step i_step=-1)
-                    if (i_step != -1) pw::calculate_delta_hcc(this->state_, this->pw_cache_, this->pelec, h_tmp.data(), becp_k, this->state_.get_sc_lambda().data(), nbands, nkb, nh_iat, ik, true);
+                    if (i_step != -1)
+                        pw::calculate_delta_hcc(this->state_, this->pw_cache_, this->pelec, h_tmp.data(), becp_k,
+                                                this->state_.get_sc_lambda().data(), nbands, nkb, nh_iat, ik, true,
+                                                use_gpu);
 
                     // Diagonalize in subspace, update becp (response wavefunctions)
                     hsolver::DiagoIterAssist<std::complex<double>>::diag_responce(h_tmp.data(),
@@ -239,6 +249,26 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
                     this->pw_cache_.allocate_gpu(nbands, nk, size_becp);
                     this->pw_cache_.lambda_in_sub() = this->state_.get_sc_lambda();
                 }
+#if defined(__CUDA)
+                hsolver::FixedOverlapSubspace* fixed_overlap = nullptr;
+                fixed_overlap = static_cast<hsolver::FixedOverlapSubspace*>(this->pw_cache_.fixed_overlap);
+                if (initial_hs && nkb > 0)
+                {
+                    delete fixed_overlap;
+                    fixed_overlap = new hsolver::FixedOverlapSubspace(nk, nbands, nkb * npol);
+                    if (!fixed_overlap->available())
+                    {
+                        delete fixed_overlap;
+                        fixed_overlap = nullptr;
+                        ofs_running << "Fixed-overlap cache unavailable; using generalized response solves.\n";
+                    }
+                    this->pw_cache_.fixed_overlap = fixed_overlap;
+                }
+                bool batch_response = false;
+                if (fixed_overlap && nk > 1) { batch_response = fixed_overlap->prepare_batch(); }
+#else
+                const bool batch_response = false;
+#endif
                 std::complex<double>* becp_pointer = nullptr;
                 base_device::memory::resize_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(becp_pointer, size_becp);
                 for (int ik = 0; ik < nk; ++ik)
@@ -259,20 +289,68 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
                             diag_comm);
                         base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_GPU, base_device::DEVICE_GPU>()(becp_k, onsite_p->get_becp(), size_becp);
                     }
-                    base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_GPU, base_device::DEVICE_GPU>()(h_tmp, h_k, nbands * nbands);
-                    base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_GPU, base_device::DEVICE_GPU>()(s_tmp, s_k, nbands * nbands);
-                    if (i_step != -1) pw::calculate_delta_hcc(this->state_, this->pw_cache_, this->pelec, h_tmp, becp_k, this->state_.get_sc_lambda().data(), nbands, nkb, nh_iat, ik, true);
+                    const std::complex<double>* response_h = h_k;
+                    const std::complex<double>* response_projectors = becp_k;
+#if defined(__CUDA)
+                    if (fixed_overlap)
+                    {
+                        if (initial_hs)
+                        {
+                            fixed_overlap->prepare(ik, h_k, s_k, becp_k);
+                        }
+                        response_h = fixed_overlap->hamiltonian(ik);
+                        response_projectors = fixed_overlap->projectors(ik);
+                    }
+#endif
+                    base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_GPU,
+                                                               base_device::DEVICE_GPU>()(h_tmp, response_h,
+                                                                                          nbands * nbands);
+                    if (i_step != -1)
+                    {
+                        pw::calculate_delta_hcc(this->state_, this->pw_cache_, this->pelec, h_tmp,
+                                                response_projectors, this->state_.get_sc_lambda().data(),
+                                                nbands, nkb, nh_iat, ik, true, use_gpu);
+                    }
 
-                    hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_GPU>::diag_responce(h_tmp,
-                                                                                  s_tmp,
-                                                                                  nbands,
-                                                                                  becp_k,
-                                                                                  becp_pointer,
-                                                                                  nkb * npol,
-                                                                                  &this->pelec->ekb(ik, 0));
+#if defined(__CUDA)
+                    if (batch_response)
+                    {
+                        fixed_overlap->capture_batch(ik, h_tmp);
+                    }
+                    else if (fixed_overlap)
+                    {
+                        fixed_overlap->diagonalize(h_tmp, response_projectors, becp_pointer,
+                                                   &this->pelec->ekb(ik, 0));
+                    }
+                    else
+#endif
+                    {
+                        base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_GPU,
+                                                                   base_device::DEVICE_GPU>()(s_tmp, s_k,
+                                                                                              nbands * nbands);
+                        hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_GPU>::diag_responce(
+                            h_tmp, s_tmp, nbands, becp_k, becp_pointer, nkb * npol,
+                            &this->pelec->ekb(ik, 0));
+                    }
+#if defined(__CUDA)
+                    if (batch_response) { continue; }
+#endif
                     base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_CPU, base_device::DEVICE_GPU>()(&becp_tmp[ik * size_becp], becp_pointer, size_becp);
                 }
 
+#if defined(__CUDA)
+                if (batch_response)
+                {
+                    fixed_overlap->diagonalize_batch(&this->pelec->ekb(0, 0), this->pelec->ekb.nc);
+                    for (int ik = 0; ik < nk; ++ik)
+                    {
+                        fixed_overlap->rotate_batch(ik, becp_pointer);
+                        base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_CPU,
+                                                                   base_device::DEVICE_GPU>()(&becp_tmp[ik * size_becp],
+                                                                                              becp_pointer, size_becp);
+                    }
+                }
+#endif
                 base_device::memory::delete_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(becp_pointer);
                 base_device::memory::delete_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(h_tmp);
                 base_device::memory::delete_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(s_tmp);
@@ -315,7 +393,8 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
  * which perform subspace diagonalization and optional full-space refinement.
  */
 template <>
-void spinconstrain::SpinConstrain<std::complex<double>>::update_psi_charge(const ModuleBase::Vector3<double>* delta_lambda, bool pw_solve, bool full_update)
+void spinconstrain::SpinConstrain<std::complex<double>>::update_psi_charge(
+    const ModuleBase::Vector3<double> *delta_lambda, bool pw_solve, bool full_update, std::ostream &ofs_running)
 {
     ModuleBase::TITLE("spinconstrain::SpinConstrain", "update_psi_charge");
     ModuleBase::timer::start("spinconstrain::SpinConstrain", "update_psi_charge");
@@ -338,16 +417,22 @@ void spinconstrain::SpinConstrain<std::complex<double>>::update_psi_charge(const
     else
 #endif
     {
-        if (PARAM.inp.device == "cpu")
+        const bool use_gpu = PARAM.inp.device == "gpu";
+        const std::string& ks_solver = PARAM.inp.ks_solver;
+        const int rank_in_pool = this->pw_wfc_->poolrank;
+        const int nproc_in_pool = this->pw_wfc_->poolnproc;
+        if (!use_gpu)
         {
             pw::update_psi_charge_pw_cpu(this->state_, this->pw_cache_, this->psi, this->p_hamilt,
-                                         this->pelec, this->pw_wfc_, delta_lambda, pw_solve, full_update);
+                                         this->pelec, this->pw_wfc_, delta_lambda, pw_solve, full_update,
+                                         ks_solver, rank_in_pool, nproc_in_pool, ofs_running);
         }
 #if ((defined __CUDA) || (defined __ROCM))
         else
         {
             pw::update_psi_charge_pw_gpu(this->state_, this->pw_cache_, this->psi, this->p_hamilt,
-                                         this->pelec, this->pw_wfc_, delta_lambda, pw_solve, full_update);
+                                         this->pelec, this->pw_wfc_, delta_lambda, pw_solve, full_update,
+                                         ks_solver, rank_in_pool, nproc_in_pool, ofs_running);
         }
 #endif
     }

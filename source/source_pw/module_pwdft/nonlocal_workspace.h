@@ -3,6 +3,9 @@
 
 #include "source_pw/module_pwdft/vnl_pw.h"
 #include <cstddef>
+#if defined(__CUDA)
+namespace hamilt { class ProjectorFold; }
+#endif
 
 namespace hamilt
 {
@@ -31,22 +34,32 @@ class NonlocalWorkspace
 
     /** @brief Apply beta D beta-dagger, preserving pool collectives on empty ranks. */
     void apply(const UnitCell& cell, const pseudopot_cell_vnl& pp,
-               const ModulePW::PW_Basis_K& basis, const int spin,
+               const ModulePW::PW_Basis_K& basis, const int ik, const int spin,
                const int bands, const int nbasis, const int npol, const int npw,
                const bool is_first_node, const T* vkb, const T* psi, T* hpsi);
 
     /** @brief Borrow the most recently computed projection coefficients. */
     T* get_becp() const { return becp_; }
 
+    /** @brief Force the folded projector cache to refresh on the next projection. */
+    void invalidate_fold();
+
     /** @brief Project and contract on every pool rank, including empty PW partitions; bands counts spin-component columns.
      * B uses [column][projector] and DB [projector][column]; both borrowed arrays are pool-reduced and valid until the next operation.
      */
     void project_contract(const UnitCell& cell, const pseudopot_cell_vnl& pp,
-                          const ModulePW::PW_Basis_K& basis, int spin,
+                          const ModulePW::PW_Basis_K& basis, int ik, int spin,
                           int bands, int nbasis, int npol, int npw,
                           const T* vkb, const T* psi);
     const T* projections() const { return becp_; }
     const T* contracted() const { return ps_; }
+
+  private:
+#if defined(__CUDA)
+    ProjectorFold* projector_fold_ = nullptr;
+    bool fold_attempted_ = false;
+    int fold_ik_ = -1;
+#endif
 };
 } // namespace hamilt
 #endif

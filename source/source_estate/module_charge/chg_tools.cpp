@@ -325,7 +325,23 @@ void set_rho_core(const UnitCell& ucell,
         rhog_core[ig] = vg[ig];
     }
 
-    rhopw.recip2real(vg.data(), rho_core);
+    if (rhopw.gamma_only)
+    {
+        rhopw.recip2real(vg.data(), rho_core);
+    }
+    else
+    {
+        // The charge diagnostics require both components of the inverse transform.
+        auto* core_grid = rhopw.fft_bundle.template get_auxr_data<double>();
+        rhopw.recip2real(vg.data(), core_grid);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
+        for (int ir = 0; ir < rhopw.nrxx; ++ir)
+        {
+            rho_core[ir] = core_grid[ir].real();
+        }
+    }
 
     // test on the charge and computation of the core energy
     double rhoima = 0.0;

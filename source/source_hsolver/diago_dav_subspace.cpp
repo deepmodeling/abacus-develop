@@ -4,6 +4,10 @@
 #include "diago_iter_assist.h"
 
 #include "source_base/module_device/device.h"
+#if defined(__CUDA)
+#include "source_base/module_device/device_check.h"
+#include <cuda_runtime.h>
+#endif
 #include "source_base/parallel_cell.h"
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"
@@ -21,6 +25,8 @@
 #include <iomanip>
 #include <limits>
 #include <sstream>
+#include <stdexcept>
+#include <type_traits>
 #include <vector>
 
 #ifdef __MPI
@@ -41,18 +47,33 @@ Diago_DavSubspace<T, Device>::Diago_DavSubspace(const std::vector<Real>& precond
                                                 const diag_comm_info& diag_comm_in,
                                                 const int diag_subspace_in,
                                                 const int diago_subspace_bs_in)
+    : Diago_DavSubspace(precondition_in, nband_in, nbasis_in, david_ndim_in, diag_thr_in,
+                        diag_nmax_in, diag_comm_in, diag_subspace_in, diago_subspace_bs_in, false)
+{
+}
+
+template <typename T, typename Device>
+Diago_DavSubspace<T, Device>::Diago_DavSubspace(const std::vector<Real>& precondition_in,
+                                                const int& nband_in,
+                                                const int& nbasis_in,
+                                                const int& david_ndim_in,
+                                                const double& diag_thr_in,
+                                                const int& diag_nmax_in,
+                                                const diag_comm_info& diag_comm_in,
+                                                const int diag_subspace_in,
+                                                const int diago_subspace_bs_in,
+                                                const bool host_backed_action_in)
     : precondition(precondition_in), n_band(nband_in), dim(nbasis_in), nbase_x(nband_in * david_ndim_in),
       diag_thr(diag_thr_in), iter_nmax(diag_nmax_in), diag_comm(diag_comm_in),
-        diag_subspace(diag_subspace_in), diago_subspace_bs(diago_subspace_bs_in)
+        diag_subspace(diag_subspace_in), diago_subspace_bs(diago_subspace_bs_in),
+        host_backed_action_(host_backed_action_in)
 {
     this->device = base_device::get_device_type(this->ctx);
-
     this->one = &one_;
     this->zero = &zero_;
     this->neg_one = &neg_one_;
 
     assert(david_ndim_in > 1);
-    // Block ownership can be empty or uneven; use the actual communicator sum.
     ModuleBase::CommunicationDomain domain;
 #ifdef __MPI
     domain.initialize(this->diag_comm.comm);
@@ -61,33 +82,38 @@ Diago_DavSubspace<T, Device>::Diago_DavSubspace(const std::vector<Real>& precond
     assert(this->nbase_x < global_dimension);
     assert(diag_subspace >= 0 && diag_subspace < 3);
 
-    // TODO: Added memory usage statistics
-
     const int local_storage = std::max(this->nbase_x * this->dim, 1);
-    //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     resmem_complex_op()(this->psi_in_iter, local_storage, "DAV::psi_in_iter");
     setmem_complex_op()(this->psi_in_iter, 0, this->nbase_x * this->dim);
 
-    // the product of H and psi in the reduced psi set
-    resmem_complex_op()(this->hpsi, local_storage, "DAV::hpsi");
-    setmem_complex_op()(this->hpsi, 0, this->nbase_x * this->dim);
-
-    // the product of S and psi in the reduced psi set
+    const size_t action_elements = size_t(this->nbase_x) * this->dim;
+    if (this->host_backed_action_ && this->device == base_device::GpuDevice)
+    {
+#if defined(__CUDA)
+        CHECK_CUDA(cudaHostAlloc(reinterpret_cast<void**>(&this->hpsi), action_elements * sizeof(T),
+                                 cudaHostAllocDefault));
+        std::fill(this->hpsi, this->hpsi + action_elements, T{});
+        this->action_panel_cols_ = std::min(64, std::max(1, this->nbase_x));
+        resmem_complex_op()(this->hpsi_panel_, size_t(this->action_panel_cols_) * this->dim, "DAV::hpsi_panel");
+        setmem_complex_op()(this->hpsi_panel_, 0, size_t(this->action_panel_cols_) * this->dim);
+#else
+        this->host_backed_action_ = false;
+#endif
+    }
+    if (!this->host_backed_action_)
+    {
+        resmem_complex_op()(this->hpsi, local_storage, "DAV::hpsi");
+        setmem_complex_op()(this->hpsi, 0, this->nbase_x * this->dim);
+    }
     resmem_complex_op()(this->spsi, local_storage, "DAV::spsi");
     setmem_complex_op()(this->spsi, 0, this->nbase_x * this->dim);
 
-    // Hamiltonian on the reduced psi set
     resmem_complex_op()(this->hcc, this->nbase_x * this->nbase_x, "DAV::hcc");
     setmem_complex_op()(this->hcc, 0, this->nbase_x * this->nbase_x);
-
-    // Overlap on the reduced psi set
     resmem_complex_op()(this->scc, this->nbase_x * this->nbase_x, "DAV::scc");
     setmem_complex_op()(this->scc, 0, this->nbase_x * this->nbase_x);
-
-    // Eigenvectors
     resmem_complex_op()(this->vcc, this->nbase_x * this->nbase_x, "DAV::vcc");
     setmem_complex_op()(this->vcc, 0, this->nbase_x * this->nbase_x);
-    //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 #if defined(__CUDA) || defined(__ROCM)
     if (this->device == base_device::GpuDevice)
@@ -101,11 +127,118 @@ Diago_DavSubspace<T, Device>::Diago_DavSubspace(const std::vector<Real>& precond
 }
 
 template <typename T, typename Device>
+void Diago_DavSubspace<T, Device>::update_precondition(const std::vector<Real>& precondition_in)
+{
+    assert(static_cast<int>(precondition_in.size()) >= this->dim);
+    this->precondition = precondition_in;
+#if defined(__CUDA) || defined(__ROCM)
+    if (this->device == base_device::GpuDevice)
+    {
+        syncmem_var_h2d_op()(this->d_precondition, this->precondition.data(), this->dim);
+    }
+#endif
+}
+
+template <typename T, typename Device>
+bool Diago_DavSubspace<T, Device>::layout_matches(const int& nband, const int& nbasis, const int& david_ndim,
+                                                  const int& method, const int& block_size,
+                                                  const bool host_backed) const
+{
+    return this->n_band == nband && this->dim == nbasis && this->nbase_x == nband * david_ndim
+           && this->diag_subspace == method && this->diago_subspace_bs == block_size
+           && this->host_backed_action_ == host_backed;
+}
+
+template <typename T, typename Device>
+T* Diago_DavSubspace<T, Device>::hpsi_panel(const int first, const int count) const
+{
+    if (!this->host_backed_action_)
+    {
+        return this->hpsi + size_t(first) * this->dim;
+    }
+    assert(count >= 0 && count <= this->action_panel_cols_);
+    if (count > 0)
+    {
+#if defined(__CUDA)
+        CHECK_CUDA(cudaMemcpy(this->hpsi_panel_, this->hpsi + size_t(first) * this->dim,
+                              size_t(count) * this->dim * sizeof(T), cudaMemcpyHostToDevice));
+#else
+        syncmem_complex_op()(this->hpsi_panel_, this->hpsi + size_t(first) * this->dim,
+                             size_t(count) * this->dim);
+#endif
+    }
+    return this->hpsi_panel_;
+}
+
+template <typename T, typename Device>
+void Diago_DavSubspace<T, Device>::hpsi_store(const int first, const int count, const T* source) const
+{
+    if (count <= 0)
+    {
+        return;
+    }
+    if (!this->host_backed_action_)
+    {
+        syncmem_complex_op()(this->hpsi + size_t(first) * this->dim, source, size_t(count) * this->dim);
+        return;
+    }
+#if defined(__CUDA)
+    CHECK_CUDA(cudaMemcpy(this->hpsi + size_t(first) * this->dim, source,
+                          size_t(count) * this->dim * sizeof(T), cudaMemcpyDeviceToHost));
+#else
+    syncmem_complex_op()(this->hpsi + size_t(first) * this->dim, source, size_t(count) * this->dim);
+#endif
+}
+
+template <typename T, typename Device>
+void Diago_DavSubspace<T, Device>::hpsi_multiply(const int action_cols, const T* coefficients,
+                                                 const int coefficient_leading, const int columns,
+                                                 T* output, const bool accumulate) const
+{
+    const int matrix_ld = std::max(this->dim, 1);
+    if (!this->host_backed_action_)
+    {
+        const T beta = accumulate ? *this->one : *this->zero;
+#ifdef __DSP
+        ModuleBase::gemm_op_mt<T, Device>()
+#else
+        ModuleBase::gemm_op<T, Device>()
+#endif
+            ('N', 'N', this->dim, columns, action_cols, this->one, this->hpsi, matrix_ld, coefficients,
+             coefficient_leading, &beta, output, matrix_ld);
+        return;
+    }
+    for (int first = 0; first < action_cols; first += this->action_panel_cols_)
+    {
+        const int count = std::min(this->action_panel_cols_, action_cols - first);
+        T* panel = this->hpsi_panel(first, count);
+        const T beta = (accumulate || first != 0) ? *this->one : *this->zero;
+#ifdef __DSP
+        ModuleBase::gemm_op_mt<T, Device>()
+#else
+        ModuleBase::gemm_op<T, Device>()
+#endif
+            ('N', 'N', this->dim, columns, count, this->one, panel, matrix_ld,
+             coefficients + first, coefficient_leading, &beta, output, matrix_ld);
+    }
+}
+
+template <typename T, typename Device>
 Diago_DavSubspace<T, Device>::~Diago_DavSubspace()
 {
     delmem_complex_op()(this->psi_in_iter);
 
-    delmem_complex_op()(this->hpsi);
+    if (this->host_backed_action_)
+    {
+#if defined(__CUDA)
+        cudaFreeHost(this->hpsi);
+        delmem_complex_op()(this->hpsi_panel_);
+#endif
+    }
+    else
+    {
+        delmem_complex_op()(this->hpsi);
+    }
     delmem_complex_op()(this->spsi);
     delmem_complex_op()(this->hcc);
     delmem_complex_op()(this->scc);
@@ -127,7 +260,9 @@ int Diago_DavSubspace<T, Device>::diag_once(const HSOperator<T, Device>& op,
                                             const int psi_in_dmax,
                                             Real* eigenvalue_in_hsolver,
                                             const std::vector<double>& ethr_band,
-                                            const int ik)
+                                            const int ik,
+                                            const InitialHPsiFunc* initial_hpsi,
+                                            const BasisObserver* basis_observer)
 {
     ModuleBase::timer::start("Diago_DavSubspace", "diag_once");
     const int matrix_ld = std::max(this->dim, 1);
@@ -159,7 +294,38 @@ int Diago_DavSubspace<T, Device>::diag_once(const HSOperator<T, Device>& op,
     // compute h*psi_in_iter
     // NOTE: bands after the first n_band should yield zero
     // hpsi[:, 0:nbase_x] = H * psi_in_iter[:, 0:nbase_x]
-    op.hpsi(this->psi_in_iter, this->hpsi, this->dim, this->notconv);
+    if (initial_hpsi != nullptr)
+    {
+        if (this->host_backed_action_)
+        {
+            T* temporary = nullptr;
+            resmem_complex_op()(temporary, size_t(this->notconv) * this->dim);
+            (*initial_hpsi)(ik, temporary, this->dim);
+            this->hpsi_store(0, this->notconv, temporary);
+            delmem_complex_op()(temporary);
+        }
+        else
+        {
+            (*initial_hpsi)(ik, this->hpsi, this->dim);
+        }
+    }
+    else if (this->host_backed_action_)
+    {
+        for (int first = 0; first < this->notconv; first += this->action_panel_cols_)
+        {
+            const int count = std::min(this->action_panel_cols_, this->notconv - first);
+            op.hpsi(this->psi_in_iter + size_t(first) * this->dim, this->hpsi_panel_, this->dim, count);
+            this->hpsi_store(first, count, this->hpsi_panel_);
+        }
+    }
+    else
+    {
+        op.hpsi(this->psi_in_iter, this->hpsi, this->dim, this->notconv);
+    }
+    if (basis_observer && basis_observer->capture)
+    {
+        basis_observer->capture(ik, 0, this->notconv, initial_hpsi != nullptr);
+    }
 
     // compute s*psi_in_iter
     // spsi[:, 0:nbase_x] = S * psi_in_iter[:, 0:nbase_x]
@@ -168,6 +334,12 @@ int Diago_DavSubspace<T, Device>::diag_once(const HSOperator<T, Device>& op,
     this->cal_elem(this->dim, nbase, this->notconv, this->psi_in_iter, this->spsi, this->hpsi, this->hcc, this->scc);
 
     this->diag_zhegvx(nbase, this->notconv, this->hcc, this->scc, this->nbase_x, &eigenvalue_iter, this->vcc);
+    if (this->solver_failed_)
+    {
+        ModuleBase::timer::end("Diago_DavSubspace", "first");
+        ModuleBase::timer::end("Diago_DavSubspace", "diag_once");
+        return -1;
+    }
 
     for (size_t m = 0; m < this->n_band; m++)
     {
@@ -207,6 +379,11 @@ int Diago_DavSubspace<T, Device>::diag_once(const HSOperator<T, Device>& op,
                            this->scc);
 
             this->diag_zhegvx(nbase, this->n_band, this->hcc, this->scc, this->nbase_x, &eigenvalue_iter, this->vcc);
+            if (this->solver_failed_)
+            {
+                ModuleBase::timer::end("Diago_DavSubspace", "diag_once");
+                return -1;
+            }
 
             // check convergence and update eigenvalues
             ModuleBase::timer::start("Diago_DavSubspace", "check_update");
@@ -258,7 +435,10 @@ int Diago_DavSubspace<T, Device>::diag_once(const HSOperator<T, Device>& op,
             if (!this->notconv || (dav_iter == this->iter_nmax))
             {
                 // overall convergence or last iteration: exit the iteration
-
+                if (basis_observer && basis_observer->rotate)
+                {
+                    basis_observer->rotate(ik, nbase, this->vcc, this->nbase_x, true);
+                }
                 ModuleBase::timer::end("Diago_DavSubspace", "last");
                 break;
             }
@@ -281,6 +461,10 @@ int Diago_DavSubspace<T, Device>::diag_once(const HSOperator<T, Device>& op,
                               this->hcc,
                               this->scc,
                               this->vcc);
+                if (basis_observer && basis_observer->rotate)
+                {
+                    basis_observer->rotate(ik, nbase, this->vcc, this->nbase_x, false);
+                }
 
                 ModuleBase::timer::end("Diago_DavSubspace", "last");
             }
@@ -321,48 +505,8 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HSOperator<T, Device>& op,
         active_eigenvalues[i] = (*eigenvalue_iter)[unconv[i]];
     }
 
-    if (notconv > 1){
-
-#ifdef __DSP
-    ModuleBase::gemm_op_mt<T, Device>()
-#else
-    ModuleBase::gemm_op<T, Device>()
-#endif
-                        ('N',
-                         'N',
-                         this->dim,
-                         notconv,
-                         nbase,
-                         this->one,
-                         hpsi,
-                         matrix_ld,
-                         active_vcc,
-                         this->nbase_x,
-                         this->zero,
-                         psi_iter + (nbase) * this->dim,
-                         matrix_ld);
-    } else
-    {
-
-#ifdef __DSP
-    ModuleBase::gemv_op_mt<T, Device>()
-#else
-    ModuleBase::gemv_op<T, Device>()
-#endif
-                        ('N',
-                         this->dim,     // m: row of A
-                         nbase,         // n: col of A
-                         this->one,     // alpha
-                         hpsi,          // A dim * nbase
-                         matrix_ld,     // LDA: if(N) max(1,m)
-                         active_vcc,           // X nbase
-                         1,             // incx
-                         this->zero,    // beta
-                         psi_iter + (nbase) * this->dim,  // Y dim
-                         1              // incy
-                        );
-    }
-
+    this->hpsi_multiply(nbase, active_vcc, this->nbase_x, notconv,
+                        psi_iter + size_t(nbase) * this->dim, false);
 
     // Eigenvalues operation section
     Real* e_temp_hd = active_eigenvalues.data();
@@ -528,7 +672,19 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HSOperator<T, Device>& op,
 
     // update hpsi[:, nbase:nbase+notconv]
     // hpsi[:, nbase:nbase+notconv] = H * psi_iter[:, nbase:nbase+notconv]
-    op.hpsi(psi_iter + nbase * dim, hpsi + nbase * this->dim, this->dim, notconv);
+    if (this->host_backed_action_)
+    {
+        for (int first = 0; first < notconv; first += this->action_panel_cols_)
+        {
+            const int count = std::min(this->action_panel_cols_, notconv - first);
+            op.hpsi(psi_iter + size_t(nbase + first) * dim, this->hpsi_panel_, dim, count);
+            this->hpsi_store(nbase + first, count, this->hpsi_panel_);
+        }
+    }
+    else
+    {
+        op.hpsi(psi_iter + nbase * dim, hpsi + nbase * this->dim, this->dim, notconv);
+    }
     op.spsi(psi_iter + nbase * dim, spsi + nbase * this->dim, this->dim, notconv);
 
     ModuleBase::timer::end("Diago_DavSubspace", "cal_grad");
@@ -558,44 +714,49 @@ void Diago_DavSubspace<T, Device>::cal_elem(const int& dim,
         setmem_complex_op()(s_contribution, 0, contribution_size);
     }
 
-    if (notconv > 1){
-#ifdef __DSP
-    ModuleBase::gemm_op_mt<T, Device>()
-#else
-    ModuleBase::gemm_op<T, Device>()
+    if (notconv > 1 || this->host_backed_action_){
+    int columns_per_panel = notconv;
+#if defined(__CUDA)
+    if (this->device == base_device::GpuDevice
+        && std::is_same<T, std::complex<double>>::value && notconv >= 256)
+    {
+        columns_per_panel = 64;
+    }
 #endif
-        ('C',
-         'N',
-         nbase + notconv,
-         notconv,
-         this->dim,
-         this->one,
-         psi_iter,
-         matrix_ld,
-         &hpsi[nbase * this->dim],
-         matrix_ld,
-         this->zero,
-         &hcc[nbase * this->nbase_x],
-         this->nbase_x);
-
+    if (this->host_backed_action_)
+    {
+        columns_per_panel = std::min(columns_per_panel, this->action_panel_cols_);
+    }
+    // The eigensolver reads the upper triangle. Each column panel includes
+    // every existing basis row and ends at its final diagonal entry, omitting
+    // the lower rows that cannot affect the projected eigenproblem.
+    for (int first = 0; first < notconv; first += columns_per_panel)
+    {
+        const int columns = std::min(columns_per_panel, notconv - first);
+        const int basis_offset = nbase + first;
+        const int rows = basis_offset + columns;
+        const T* h_action = this->host_backed_action_
+                                ? this->hpsi_panel(basis_offset, columns)
+                                : hpsi + basis_offset * this->dim;
 #ifdef __DSP
-    ModuleBase::gemm_op_mt<T, Device>()
+        ModuleBase::gemm_op_mt<T, Device>()
 #else
-    ModuleBase::gemm_op<T, Device>()
+        ModuleBase::gemm_op<T, Device>()
 #endif
-        ('C',
-         'N',
-         nbase + notconv,
-         notconv,
-         this->dim,
-         this->one,
-         psi_iter,
-         matrix_ld,
-         spsi + nbase * this->dim,
-         matrix_ld,
-         this->zero,
-         &scc[nbase * this->nbase_x],
-         this->nbase_x);
+            ('C', 'N', rows, columns, this->dim,
+             this->one, psi_iter, matrix_ld,
+             h_action, matrix_ld,
+             this->zero, hcc + basis_offset * this->nbase_x, this->nbase_x);
+#ifdef __DSP
+        ModuleBase::gemm_op_mt<T, Device>()
+#else
+        ModuleBase::gemm_op<T, Device>()
+#endif
+            ('C', 'N', rows, columns, this->dim,
+             this->one, psi_iter, matrix_ld,
+             spsi + basis_offset * this->dim, matrix_ld,
+             this->zero, scc + basis_offset * this->nbase_x, this->nbase_x);
+    }
 
         } else {
 
@@ -676,7 +837,17 @@ void Diago_DavSubspace<T, Device>::diag_zhegvx(const int& nbase,
         if (this->diag_comm.rank == 0)
         {
             syncmem_complex_op()(this->d_scc, scc, nbase * this->nbase_x);
-            ct::kernels::lapack_hegvd<T, ct_Device>()(nbase, this->nbase_x, this->hcc, this->d_scc, this->d_eigenvalue, this->vcc);
+            try
+            {
+                ct::kernels::lapack_hegvd<T, ct_Device>()(nbase, this->nbase_x, this->hcc, this->d_scc,
+                                                          this->d_eigenvalue, this->vcc);
+            }
+            catch (const std::exception&)
+            {
+                this->solver_failed_ = true;
+                ModuleBase::timer::end("Diago_DavSubspace", "diag_zhegvx");
+                return;
+            }
             syncmem_var_d2h_op()((*eigenvalue_iter).data(), this->d_eigenvalue, this->nbase_x);
         }
 #endif
@@ -804,27 +975,9 @@ void Diago_DavSubspace<T, Device>::refresh(const int& dim,
     ModuleBase::timer::start("Diago_DavSubspace", "refresh");
     const int matrix_ld = std::max(this->dim, 1);
 
-#ifdef __DSP
-    ModuleBase::gemm_op_mt<T, Device>()
-#else
-    ModuleBase::gemm_op<T, Device>()
-#endif
-                        ('N',
-                         'N',
-                         this->dim,
-                         nband,
-                         nbase,
-                         this->one,
-                         this->hpsi,
-                         matrix_ld,
-                         this->vcc,
-                         this->nbase_x,
-                         this->zero,
-                         psi_iter + nband * this->dim,
-                         matrix_ld);
-
-    // update hpsi
-    syncmem_complex_op()(hpsi, psi_iter + nband * this->dim, this->dim * nband);
+    this->hpsi_multiply(nbase, this->vcc, this->nbase_x, nband,
+                        psi_iter + size_t(nband) * this->dim, false);
+    this->hpsi_store(0, nband, psi_iter + size_t(nband) * this->dim);
 
 #ifdef __DSP
     ModuleBase::gemm_op_mt<T, Device>()
@@ -898,6 +1051,7 @@ int Diago_DavSubspace<T, Device>::diag(const HSOperator<T, Device>& op,
 {
     /// record the times of trying iterative diagonalization
     this->notconv = 0;
+    this->solver_failed_ = false;
 
     int sum_iter = 0;
     int ntry = 0;
@@ -905,7 +1059,13 @@ int Diago_DavSubspace<T, Device>::diag(const HSOperator<T, Device>& op,
     do
     {
 
-        sum_iter += this->diag_once(op, psi_in, psi_in_dmax, eigenvalue_in_hsolver, ethr_band, ik);
+        const int iter_once =
+            this->diag_once(op, psi_in, psi_in_dmax, eigenvalue_in_hsolver, ethr_band, ik, nullptr, nullptr);
+        if (iter_once < 0 || this->solver_failed_)
+        {
+            return -1;
+        }
+        sum_iter += iter_once;
 
         ++ntry;
 
@@ -917,6 +1077,42 @@ int Diago_DavSubspace<T, Device>::diag(const HSOperator<T, Device>& op,
         std::cout << "\n Diago_DavSubspace::diag', too many bands are not converged! \n";
     }
 
+    return sum_iter;
+}
+
+template <typename T, typename Device>
+int Diago_DavSubspace<T, Device>::diag(const HSOperator<T, Device>& op,
+                                       T* psi_in,
+                                       const int psi_in_dmax,
+                                       Real* eigenvalue_in_hsolver,
+                                       const std::vector<double>& ethr_band,
+                                       const bool& scf_type,
+                                       const int ik,
+                                       const InitialHPsiFunc* initial_hpsi,
+                                       const BasisObserver* basis_observer)
+{
+    this->notconv = 0;
+    this->solver_failed_ = false;
+
+    int sum_iter = 0;
+    int ntry = 0;
+    do
+    {
+        const int iter_once = this->diag_once(op, psi_in, psi_in_dmax, eigenvalue_in_hsolver,
+                                              ethr_band, ik, initial_hpsi, basis_observer);
+        if (iter_once < 0 || this->solver_failed_)
+        {
+            return -1;
+        }
+        sum_iter += iter_once;
+        ++ntry;
+    } while (this->test_exit_cond(ntry, this->notconv, scf_type));
+
+    if (notconv > std::max(5, this->n_band / 4))
+    {
+        std::cout << "\n notconv = " << this->notconv;
+        std::cout << "\n Diago_DavSubspace::diag', too many bands are not converged! \n";
+    }
     return sum_iter;
 }
 

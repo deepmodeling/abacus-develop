@@ -689,9 +689,11 @@ if(USE_CUDA)
     source_pw/module_pwdft/kernels/cuda/onsite_op.cu
     source_basis/module_pw/kernels/cuda/pw_op.cu
     source_hsolver/kernels/cuda/hegvd_op.cu
+    source_hsolver/kernels/cuda/fixed_overlap.cu
     source_hsolver/kernels/cuda/bpcg_kernel_op.cu
     source_hsolver/module_linalg/kernels/cuda/linear_op.cu
     source_estate/kernels/cuda/elecstate_op.cu
+    source_estate/kernels/cuda/hartree_op.cu
     source_base/module_device/cuda/memory_op.cu
     source_pw/module_pwdft/kernels/cuda/force_op.cu
     source_pw/module_pwdft/kernels/cuda/stress_op.cu
@@ -702,6 +704,7 @@ if(USE_CUDA)
     source_base/kernels/cuda/math_kernel_op.cu
     source_base/kernels/cuda/math_kernel_op_vec.cu
     source_hamilt/module_xc/kernels/cuda/xc_functional_op.cu
+    source_hamilt/module_xc/kernels/cuda/ncgga_sf_op.cu
     source_pw/module_ofdft/kernels/cuda/kedf_wt_gpu.cu
     source_pw/module_pwdft/kernels/cuda/cal_density_real_op.cu
     source_pw/module_pwdft/kernels/cuda/mul_potential_op.cu

@@ -3,11 +3,134 @@
 #include "pw_basis_k.h"
 #include "pw_gatherscatter.h"
 
+#include <algorithm>
 #include <cassert>
 #include <complex>
+#if defined(__CUFFTDX)
+#include "source_basis/module_pw/kernels/fused_veff.h"
+#endif
 
 namespace ModulePW
 {
+
+#if defined(__CUFFTDX)
+void PW_Basis_K::spinor_to_slabs(const std::complex<double>* input, int ik, int stride,
+                                std::complex<double>* up, std::complex<double>* down, int bands) const
+{
+    const int stick_size = this->fft_bundle.fused_veff_stick_size();
+    auto* sticks = this->fft_bundle.get_spinor_stick_data(bands);
+    if (this->d_isz2igl_k != nullptr)
+    {
+        const int* reverse = this->d_isz2igl_k + size_t(ik) * stick_size;
+        fused_fft(this->nz)->load_sticks(input, sticks, reverse, this->nst, bands, stride);
+        this->fft_bundle.transform_spinor_slabs(up, down, this->d_fftixy2is, true, bands);
+    }
+    else
+    {
+        base_device::memory::set_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(
+            sticks, 0, 2 * bands * stick_size);
+        const int* index = this->d_igl2isz_k + ik * this->npwk_max;
+        pack_spinor_sticks(this->npwk[ik],
+                           stride,
+                           index,
+                           input,
+                           sticks,
+                           sticks + bands * stick_size,
+                           bands,
+                           stick_size);
+        this->fft_bundle.transform_spinor_sticks(up, down, this->d_fftixy2is, true, bands);
+    }
+}
+
+void PW_Basis_K::slabs_to_spinor(std::complex<double>* up, std::complex<double>* down, int ik,
+                                int stride, std::complex<double>* output, int bands) const
+{
+    const int stick_size = this->fft_bundle.fused_veff_stick_size();
+    auto* sticks = this->fft_bundle.get_spinor_stick_data(bands);
+    if (this->d_isz2igl_k != nullptr)
+    {
+        this->fft_bundle.transform_spinor_slabs(up, down, this->d_fftixy2is, false, bands);
+        const int* reverse = this->d_isz2igl_k + size_t(ik) * stick_size;
+        fused_fft(this->nz)->add_sticks(sticks, output, reverse, this->nst, bands, stride, this->nxyz);
+    }
+    else
+    {
+        this->fft_bundle.transform_spinor_sticks(up, down, this->d_fftixy2is, false, bands);
+        const int* index = this->d_igl2isz_k + ik * this->npwk_max;
+        add_spinor_sticks(this->npwk[ik], stride, this->nxyz, index, sticks, sticks + bands * stick_size, output,
+                         bands, stick_size);
+    }
+}
+
+void PW_Basis_K::add_spinor_density(const std::complex<double>* input, double weight, double* density,
+                                   int ik, int stride, std::complex<double>* up, std::complex<double>* down) const
+{
+    this->add_spinor_density(input, &weight, 1, density, ik, stride, up, down);
+}
+
+void PW_Basis_K::add_spinor_density(const std::complex<double>* input,
+                                    const double* weights,
+                                    int bands,
+                                    double* density,
+                                    int ik,
+                                    int stride,
+                                    std::complex<double>* up,
+                                    std::complex<double>* down) const
+{
+    assert(ik >= 0 && ik < this->nks && stride >= this->npwk[ik]);
+    assert(this->d_fftixy2is != nullptr && this->fft_bundle.fused_veff_stick_size() > 0);
+    assert(bands >= 1 && bands <= std::min(4, this->fft_bundle.spinor_batch_size()));
+    ModuleBase::timer::start(this->classname, "spinor_density gpu");
+    this->spinor_to_slabs(input, ik, stride, up, down, bands);
+    fused_density_x(this->nx,
+                    this->ny * this->nz,
+                    this->fft_bundle.lixy() + 1,
+                    this->fft_bundle.rixy(),
+                    weights,
+                    bands,
+                    density,
+                    up,
+                    down);
+    ModuleBase::timer::end(this->classname, "spinor_density gpu");
+}
+
+void PW_Basis_K::add_spinor_potential(const std::complex<double>* input, const double* potential,
+                                     std::complex<double>* output, int ik, int stride,
+                                     std::complex<double>* up, std::complex<double>* down, int bands) const
+{
+    assert(ik >= 0 && ik < this->nks && stride >= this->npwk[ik]);
+    assert(this->ig2ixyz_k != nullptr && this->fft_bundle.fused_veff_grid_size() > 0);
+    ModuleBase::timer::start(this->classname, "spinor_potential gpu");
+    const int stick_size = this->fft_bundle.fused_veff_stick_size();
+    if (stick_size > 0)
+    {
+        assert(this->d_fftixy2is != nullptr);
+        this->spinor_to_slabs(input, ik, stride, up, down, bands);
+        fused_veff_x(this->nx,
+                     this->ny * this->nz,
+                     this->fft_bundle.lixy() + 1,
+                     this->fft_bundle.rixy(),
+                     potential,
+                     up,
+                     down,
+                     bands);
+        this->slabs_to_spinor(up, down, ik, stride, output, bands);
+        ModuleBase::timer::end(this->classname, "spinor_potential gpu");
+        return;
+    }
+    assert(bands == 1);
+    const int size = this->fft_bundle.fused_veff_grid_size();
+    base_device::memory::set_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(up, 0, size);
+    base_device::memory::set_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(down, 0, size);
+    const int* index = this->ig2ixyz_k + ik * this->npwk_max;
+    pack_spinor_grid(this->npwk[ik], stride, this->ny * this->nz, this->fft_bundle.lixy() + 1, this->fft_bundle.rixy(),
+                     index, input, up, down);
+    this->fft_bundle.apply_spinor_potential(potential, up, down);
+    add_spinor_grid(this->npwk[ik], stride, this->ny * this->nz, this->fft_bundle.lixy() + 1, this->fft_bundle.rixy(),
+                    this->nxyz, index, up, down, output);
+    ModuleBase::timer::end(this->classname, "spinor_potential gpu");
+}
+#endif
 
 /**
  * @brief transform real space to reciprocal space
@@ -339,12 +462,9 @@ void PW_Basis_K::real_to_recip(const base_device::DEVICE_GPU* ctx,
     assert(this->gamma_only == false);
     assert(this->poolnproc == 1);
 
-    base_device::memory::synchronize_memory_op<std::complex<float>, base_device::DEVICE_GPU, base_device::DEVICE_GPU>()(
-        this->fft_bundle.get_auxr_3d_data<float>(),
-        in,
-        this->nrxx);
-
-    this->fft_bundle.fft3D_forward(this->fft_bundle.get_auxr_3d_data<float>(), this->fft_bundle.get_auxr_3d_data<float>());
+    // Out-of-place complex transforms preserve the input grid.
+    this->fft_bundle.fft3D_forward(const_cast<std::complex<float>*>(in),
+                                   this->fft_bundle.get_auxr_3d_data<float>());
 
     const int startig = ik * this->npwk_max;
     const int npw_k = this->npwk[ik];
@@ -369,13 +489,9 @@ void PW_Basis_K::real_to_recip(const base_device::DEVICE_GPU* ctx,
     assert(this->gamma_only == false);
     assert(this->poolnproc == 1);
 
-    base_device::memory::synchronize_memory_op<std::complex<double>,
-                                               base_device::DEVICE_GPU,
-                                               base_device::DEVICE_GPU>()(this->fft_bundle.get_auxr_3d_data<double>(),
-                                                                          in,
-                                                                          this->nrxx);
-
-    this->fft_bundle.fft3D_forward(this->fft_bundle.get_auxr_3d_data<double>(), this->fft_bundle.get_auxr_3d_data<double>());
+    // Only the plane-wave support is extracted from the transformed grid.
+    this->fft_bundle.fft3D_forward_pw(const_cast<std::complex<double>*>(in),
+                                      this->fft_bundle.get_auxr_3d_data<double>());
 
     const int startig = ik * this->npwk_max;
     const int npw_k = this->npwk[ik];
@@ -413,13 +529,17 @@ void PW_Basis_K::recip_to_real(const base_device::DEVICE_GPU* ctx,
                                                         this->ig2ixyz_k + startig,
                                                         in,
                                                         this->fft_bundle.get_auxr_3d_data<float>());
-    this->fft_bundle.fft3D_backward(this->fft_bundle.get_auxr_3d_data<float>(), this->fft_bundle.get_auxr_3d_data<float>());
-
-    set_recip_to_real_output_op<float, base_device::DEVICE_GPU>()(this->nrxx,
-                                                                  add,
-                                                                  factor,
-                                                                  this->fft_bundle.get_auxr_3d_data<float>(),
-                                                                  out);
+    if (add)
+    {
+        auto* grid = this->fft_bundle.get_auxr_3d_data<float>();
+        this->fft_bundle.fft3D_backward(grid, grid);
+        set_recip_to_real_output_op<float, base_device::DEVICE_GPU>()(
+            this->nrxx, true, factor, grid, out);
+    }
+    else
+    {
+        this->fft_bundle.fft3D_backward(this->fft_bundle.get_auxr_3d_data<float>(), out);
+    }
 
     ModuleBase::timer::end(this->classname, "recip_to_real gpu");
 }
@@ -447,13 +567,17 @@ void PW_Basis_K::recip_to_real(const base_device::DEVICE_GPU* ctx,
                                                          this->ig2ixyz_k + startig,
                                                          in,
                                                          this->fft_bundle.get_auxr_3d_data<double>());
-    this->fft_bundle.fft3D_backward(this->fft_bundle.get_auxr_3d_data<double>(), this->fft_bundle.get_auxr_3d_data<double>());
-
-    set_recip_to_real_output_op<double, base_device::DEVICE_GPU>()(this->nrxx,
-                                                                   add,
-                                                                   factor,
-                                                                   this->fft_bundle.get_auxr_3d_data<double>(),
-                                                                   out);
+    if (add)
+    {
+        auto* grid = this->fft_bundle.get_auxr_3d_data<double>();
+        this->fft_bundle.fft3D_backward_pw(grid, grid);
+        set_recip_to_real_output_op<double, base_device::DEVICE_GPU>()(
+            this->nrxx, true, factor, grid, out);
+    }
+    else
+    {
+        this->fft_bundle.fft3D_backward_pw(this->fft_bundle.get_auxr_3d_data<double>(), out);
+    }
 
     ModuleBase::timer::end(this->classname, "recip_to_real gpu");
 }
@@ -469,13 +593,9 @@ void PW_Basis_K::real2recip_gpu(const std::complex<FPTYPE>* in,
     assert(this->gamma_only == false);
     assert(this->poolnproc == 1);
 
-    base_device::memory::synchronize_memory_op<std::complex<FPTYPE>,
-                                               base_device::DEVICE_GPU,
-                                               base_device::DEVICE_GPU>()(this->fft_bundle.get_auxr_3d_data<FPTYPE>(),
-                                                                          in,
-                                                                          this->nrxx);
-
-    this->fft_bundle.fft3D_forward(this->fft_bundle.get_auxr_3d_data<FPTYPE>(), this->fft_bundle.get_auxr_3d_data<FPTYPE>());
+    // Out-of-place complex transforms preserve the input grid.
+    this->fft_bundle.fft3D_forward(const_cast<std::complex<FPTYPE>*>(in),
+                                   this->fft_bundle.get_auxr_3d_data<FPTYPE>());
 
     const int startig = ik * this->npwk_max;
     const int npw_k = this->npwk[ik];
@@ -511,13 +631,17 @@ void PW_Basis_K::recip2real_gpu(const std::complex<FPTYPE>* in,
                                                          this->ig2ixyz_k + startig,
                                                          in,
                                                          this->fft_bundle.get_auxr_3d_data<FPTYPE>());
-    this->fft_bundle.fft3D_backward(this->fft_bundle.get_auxr_3d_data<FPTYPE>(), this->fft_bundle.get_auxr_3d_data<FPTYPE>());
-
-    set_recip_to_real_output_op<FPTYPE, base_device::DEVICE_GPU>()(this->nrxx,
-                                                                   add,
-                                                                   factor,
-                                                                   this->fft_bundle.get_auxr_3d_data<FPTYPE>(),
-                                                                   out);
+    if (add)
+    {
+        auto* grid = this->fft_bundle.get_auxr_3d_data<FPTYPE>();
+        this->fft_bundle.fft3D_backward(grid, grid);
+        set_recip_to_real_output_op<FPTYPE, base_device::DEVICE_GPU>()(
+            this->nrxx, true, factor, grid, out);
+    }
+    else
+    {
+        this->fft_bundle.fft3D_backward(this->fft_bundle.get_auxr_3d_data<FPTYPE>(), out);
+    }
 
     ModuleBase::timer::end(this->classname, "recip_to_real gpu");
 }

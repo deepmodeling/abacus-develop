@@ -100,6 +100,16 @@ public:
                           const double& erf_sigma_in = 0.1);
 
   private:
+#if defined(__CUFFTDX)
+    int* d_fftixy2is = nullptr;
+    // Per-k inverse plane-wave maps, with -1 at unoccupied z coefficients.
+    int* d_isz2igl_k = nullptr;
+    void setup_spinor_wave_map();
+    void spinor_to_slabs(const std::complex<double>* input, int ik, int stride,
+                         std::complex<double>* up, std::complex<double>* down, int bands) const;
+    void slabs_to_spinor(std::complex<double>* up, std::complex<double>* down, int ik,
+                         int stride, std::complex<double>* output, int bands) const;
+#endif
     float  * s_gk2 = nullptr;
     double * d_gk2 = nullptr; // modulus (G+K)^2 of G vectors [npwk_max*nks]
     //create igl2isz_k map array for fft
@@ -110,6 +120,21 @@ public:
     ModuleBase::Vector3<double> cal_GplusK_cartesian(const int ik, const int ig) const;
 
   public:
+#if defined(__CUFFTDX)
+    // Adds the local spinor potential to the plane-wave output. Both scratch
+    // grids contain bands * ft.fused_veff_grid_size() double-complex elements.
+    void add_spinor_potential(const std::complex<double>* input, const double* potential,
+                              std::complex<double>* output, int ik, int stride,
+                              std::complex<double>* up, std::complex<double>* down, int bands = 1) const;
+    // Adds charge and all three magnetization channels, each of length nxyz.
+    void add_spinor_density(const std::complex<double>* input, double weight, double* density,
+                            int ik, int stride, std::complex<double>* up, std::complex<double>* down) const;
+    // Accumulates consecutive bands with host weights, preserving band order.
+    void add_spinor_density(const std::complex<double>* input, const double* weights, int bands,
+                            double* density, int ik, int stride,
+                            std::complex<double>* up, std::complex<double>* down) const;
+#endif
+
     template <typename FPTYPE>
     void real2recip(const FPTYPE* in,
                     std::complex<FPTYPE>* out,

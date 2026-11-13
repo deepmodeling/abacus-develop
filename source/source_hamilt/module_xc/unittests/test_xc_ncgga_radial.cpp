@@ -11,7 +11,7 @@
 namespace
 {
 
-double dot(const std::array<double, 3>& left, const std::array<double, 3>& right)
+double dot(const double (&left)[3], const std::array<double, 3>& right)
 {
     double result = 0.0;
     for (int component = 0; component < 3; ++component)

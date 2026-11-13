@@ -9,6 +9,15 @@
 namespace hamilt
 {
 
+#if defined(__CUDA)
+/// Accumulate the six kinetic-stress components over occupied bands for one k point.
+/// gk stores three npwk_max blocks already scaled by tpiba and kvec; kfac is the
+/// erf cutoff factor. wg points at the host weights of this k point.
+void kinetic_stress_batched_gpu(int npw, int npwk_max, int npm, int nband_stride, int npol,
+                                const std::complex<double>* psi, const double* gk, const double* kfac,
+                                const double* wg, double* sums);
+#endif
+
 template <typename FPTYPE, typename Device>
 struct cal_dbecp_noevc_nl_op
 {

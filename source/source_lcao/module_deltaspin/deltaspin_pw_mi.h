@@ -24,6 +24,7 @@
 #define DELTASPIN_PW_MI_H
 
 #include <complex>
+#include <ostream>
 
 #include "source_base/vector3.h"
 #include "deltaspin_state.h"
@@ -99,7 +100,8 @@ void calculate_delta_hcc(ScState& state,
                          const int nkb,
                          const int* nh_iat,
                          const int ik,
-                         const bool full_update);
+                         const bool full_update,
+                         const bool use_gpu);
 
 /**
  * @brief CPU implementation of PW wavefunction and charge density update.
@@ -130,7 +132,11 @@ void update_psi_charge_pw_cpu(ScState& state,
                               ModulePW::PW_Basis_K* pw_wfc,
                               const ModuleBase::Vector3<double>* delta_lambda,
                               bool pw_solve,
-                              bool full_update);
+                              bool full_update,
+                              const std::string& ks_solver,
+                              const int rank_in_pool,
+                              const int nproc_in_pool,
+                              std::ostream& ofs_running);
 
 #if ((defined __CUDA) || (defined __ROCM))
 /**
@@ -146,7 +152,11 @@ void update_psi_charge_pw_gpu(ScState& state,
                               ModulePW::PW_Basis_K* pw_wfc,
                               const ModuleBase::Vector3<double>* delta_lambda,
                               bool pw_solve,
-                              bool full_update);
+                              bool full_update,
+                              const std::string& ks_solver,
+                              const int rank_in_pool,
+                              const int nproc_in_pool,
+                              std::ostream& ofs_running);
 #endif // __CUDA || __ROCM
 
 } // namespace pw

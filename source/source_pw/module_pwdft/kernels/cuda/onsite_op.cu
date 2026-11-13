@@ -10,6 +10,125 @@ namespace hamilt
 
 #define THREADS_PER_BLOCK 256
 
+namespace
+{
+
+template <bool Spinor>
+__global__ void apply_spin_constraint(int bands, int nkb, int sign, const double* lambda,
+                                      const thrust::complex<double>* becp, thrust::complex<double>* ps)
+{
+    const int index = blockIdx.x * blockDim.x + threadIdx.x;
+    if (index < bands * nkb)
+    {
+        const int ip = index % nkb;
+        const int band = index / nkb;
+        const int row = band * (Spinor ? 2 : 1) * nkb + ip;
+        const double z = lambda[3 * ip + 2];
+        if (Spinor)
+        {
+            const thrust::complex<double> diagonal(z, 0.0);
+            const thrust::complex<double> plus(lambda[3 * ip], lambda[3 * ip + 1]);
+            const thrust::complex<double> minus(lambda[3 * ip], -lambda[3 * ip + 1]);
+            const auto up = becp[row], down = becp[row + nkb];
+            ps[row] = diagonal * up + minus * down;
+            ps[row + nkb] = plus * up - diagonal * down;
+        }
+        else
+        {
+            ps[row] = (z * sign) * becp[row];
+        }
+    }
+}
+
+} // namespace
+
+namespace
+{
+
+template <bool Spinor>
+__global__ void accumulate_moments(int bands, int nkb, int sign, const int* offsets,
+                                   const double* weights, const thrust::complex<double>* becp,
+                                   double* mi_xyz)
+{
+    const int band = blockIdx.x * blockDim.x + threadIdx.x;
+    if (band >= bands)
+    {
+        return;
+    }
+    const int atom = blockIdx.y;
+    const double weight = weights[band];
+    if (weight == 0.0)
+    {
+        return;
+    }
+    double up_norm = 0.0, down_norm = 0.0, cross_real = 0.0, cross_imag = 0.0;
+    for (int projector = offsets[atom]; projector < offsets[atom + 1]; ++projector)
+    {
+        const int row = band * (Spinor ? 2 : 1) * nkb + projector;
+        const auto up = becp[row];
+        up_norm += up.real() * up.real() + up.imag() * up.imag();
+        if (Spinor)
+        {
+            const auto down = becp[row + nkb];
+            down_norm += down.real() * down.real() + down.imag() * down.imag();
+            cross_real += up.real() * down.real() + up.imag() * down.imag();
+            cross_imag += up.real() * down.imag() - up.imag() * down.real();
+        }
+    }
+    if (Spinor)
+    {
+        atomicAdd(&mi_xyz[3 * atom], weight * 2.0 * cross_real);
+        atomicAdd(&mi_xyz[3 * atom + 1], weight * 2.0 * cross_imag);
+        atomicAdd(&mi_xyz[3 * atom + 2], weight * (up_norm - down_norm));
+    }
+    else
+    {
+        atomicAdd(&mi_xyz[3 * atom + 2], weight * sign * up_norm);
+    }
+}
+
+} // namespace
+
+void accumulate_projector_moments_gpu(int bands, int npol, int atoms, int nkb, int sign,
+                                      const int* offsets, const double* weights,
+                                      const std::complex<double>* projections, double* mi_xyz)
+{
+    if (atoms <= 0 || bands <= 0)
+    {
+        return;
+    }
+    const int threads = 128;
+    const dim3 grid((bands + threads - 1) / threads, atoms);
+    const auto* input = reinterpret_cast<const thrust::complex<double>*>(projections);
+    if (npol == 2)
+    {
+        accumulate_moments<true><<<grid, threads>>>(bands, nkb, sign, offsets, weights, input, mi_xyz);
+    }
+    else
+    {
+        accumulate_moments<false><<<grid, threads>>>(bands, nkb, sign, offsets, weights, input, mi_xyz);
+    }
+    CHECK_CUDA_SYNC();
+}
+
+void spin_constraint_projectors_gpu(int bands, int npol, int nkb, int sign,
+                                    const double* lambda, const std::complex<double>* becp,
+                                    std::complex<double>* ps)
+{
+    const int blocks = (bands * nkb + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
+    const auto* input = reinterpret_cast<const thrust::complex<double>*>(becp);
+    auto* output = reinterpret_cast<thrust::complex<double>*>(ps);
+    if (npol == 2)
+    {
+        apply_spin_constraint<true><<<blocks, THREADS_PER_BLOCK>>>(bands, nkb, sign, lambda, input, output);
+    }
+    else
+    {
+        apply_spin_constraint<false><<<blocks, THREADS_PER_BLOCK>>>(bands, nkb, sign, lambda, input, output);
+    }
+    CHECK_CUDA_SYNC();
+}
+
 template <typename FPTYPE>
 __global__ void onsite_op(const int npm,
                           const int npol,

@@ -1,0 +1,120 @@
+"""Attribute application ZGEMMs to device kernels using CUDA launch correlation."""
+
+import argparse
+import collections
+import heapq
+import json
+from pathlib import Path
+import sqlite3
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("database", type=Path)
+    parser.add_argument("--global-pid", type=int, help="Encoded Nsight process ID for one MPI rank")
+    parser.add_argument("--output", type=Path)
+    args = parser.parse_args()
+    connection = sqlite3.connect(f"file:{args.database.resolve()}?mode=ro", uri=True)
+    process_parameters = () if args.global_pid is None else (~((1 << 24) - 1), args.global_pid)
+    nvtx_filter = "" if args.global_pid is None else " AND (n.globalTid & ?) = ?"
+    runtime_filter = "" if args.global_pid is None else " WHERE (globalTid & ?) = ?"
+    ranges = collections.defaultdict(list)
+    phases = []
+    phase_processes = set()
+    for start, end, tid, label in connection.execute(
+        "SELECT start, end, globalTid, coalesce(text, s.value) FROM NVTX_EVENTS n "
+        "LEFT JOIN StringIds s ON n.textId=s.id WHERE end IS NOT NULL" + nvtx_filter + " ORDER BY start",
+        process_parameters,
+    ):
+        process = tid & ~((1 << 24) - 1)
+        ranges[tid].append((start, end, label))
+        if label == "ESolver_KS_PW/hamilt2density":
+            phases.append((start, end))
+            phase_processes.add(process)
+    if len(phase_processes) > 1:
+        raise ValueError("Multiple application processes require --global-pid")
+    if len(phases) < 3:
+        raise ValueError("At least three hamilt2density ranges are required")
+    steady_start, steady_end = phases[2][0], phases[-1][1]
+    positions = collections.defaultdict(int)
+    active = collections.defaultdict(dict)
+    ends = collections.defaultdict(list)
+    launch_info = {}
+    calls = collections.defaultdict(set)
+    for start, tid, correlation in connection.execute(
+        "SELECT start, globalTid, correlationId FROM CUPTI_ACTIVITY_KIND_RUNTIME" + runtime_filter + " ORDER BY globalTid, start",
+        process_parameters,
+    ):
+        while positions[tid] < len(ranges[tid]) and ranges[tid][positions[tid]][0] <= start:
+            index = positions[tid]
+            entry = ranges[tid][index]
+            active[tid][index] = entry
+            heapq.heappush(ends[tid], (entry[1], index))
+            positions[tid] += 1
+        while ends[tid] and ends[tid][0][0] <= start:
+            _, index = heapq.heappop(ends[tid])
+            active[tid].pop(index)
+        ancestors = sorted(active[tid].values())
+        shape = next((entry for entry in reversed(ancestors) if entry[2].startswith(("ZGEMM/", "ZGEMM3M/", "ZGEMM_BATCH/"))), None)
+        if shape is None:
+            continue
+        parents = [entry[2] for entry in ancestors if entry[0] <= shape[0]
+                   and entry[1] >= shape[1] and not entry[2].startswith(("ZGEMM/", "ZGEMM3M/", "ZGEMM_BATCH/"))]
+        parent = parents[-1] if parents else "outside_marked_ranges"
+        parts = shape[2].split("/")
+        batches = int(parts[8]) if parts[0] == "ZGEMM_BATCH" else 1
+        key = (parent, parts[0], parts[1], *(int(value) for value in parts[2:8]), batches)
+        scopes = ("all", "steady") if steady_start <= shape[0] < steady_end else ("all",)
+        launch_info[(tid & ~((1 << 24) - 1), correlation)] = (key, scopes)
+        for scope in scopes:
+            calls[(scope, *key)].add((tid, shape[0], shape[1]))
+    durations = collections.Counter()
+    kernel_counts = collections.Counter()
+    for start, end, pid, correlation in connection.execute(
+        "SELECT start, end, globalPid, correlationId FROM CUPTI_ACTIVITY_KIND_KERNEL"
+        + (" WHERE globalPid=?" if args.global_pid is not None else ""),
+        () if args.global_pid is None else (args.global_pid,),
+    ):
+        info = launch_info.get((pid, correlation))
+        if info is None:
+            continue
+        key, scopes = info
+        for scope in scopes:
+            durations[(scope, *key)] += end - start
+            kernel_counts[(scope, *key)] += 1
+    names = ("scope", "parent", "method", "transpose", "m", "n", "k", "lda", "ldb", "ldc", "batches")
+    rows = []
+    for key, identifiers in calls.items():
+        row = dict(zip(names, key))
+        count = len(identifiers)
+        seconds = durations[key] / 1e9
+        work_per_product = 6 if row["method"] == "ZGEMM3M" else 8
+        flops = work_per_product * row["m"] * row["n"] * row["k"] * count * row["batches"]
+        rows.append({**row, "calls": count, "gpu_kernels": kernel_counts[key],
+                     "gpu_seconds": seconds, "nominal_flops": flops,
+                     "tflops_per_second": flops / seconds / 1e12 if seconds else None})
+    summaries = []
+    for scope in ("all", "steady"):
+        selected = [row for row in rows if row["scope"] == scope]
+        seconds = sum(row["gpu_seconds"] for row in selected)
+        flops = sum(row["nominal_flops"] for row in selected)
+        summaries.append({"scope": scope, "calls": sum(row["calls"] for row in selected),
+                          "gpu_seconds": seconds, "nominal_flops": flops,
+                          "tflops_per_second": flops / seconds / 1e12 if seconds else None})
+    result = {"global_pid": args.global_pid,
+              "scope": "Application double-complex GEMM wrapper only; excludes internal cuSolver GEMMs. "
+                       "Nominal multiply work is 8*m*n*k for ZGEMM, 6*m*n*k for ZGEMM3M, "
+                       "or 8*m*n*k*batches for ZGEMM_BATCH; "
+                       "it excludes packing, recombination and alpha/beta operations. "
+                       "GPU duration is the sum of correlated kernels, not host API duration. "
+                       "Steady excludes the first two hamilt2density calls and final forces/stress.",
+              "summary": summaries,
+              "shapes": sorted(rows, key=lambda row: (row["scope"], -row["gpu_seconds"]))}
+    destination = args.output or args.database.with_name("gemm-attribution.json")
+    with destination.open("x") as stream:
+        stream.write(json.dumps(result, indent=2) + "\n")
+    print(json.dumps(summaries))
+
+
+if __name__ == "__main__":
+    main()

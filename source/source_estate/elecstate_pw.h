@@ -54,7 +54,7 @@ class ElecStatePW : public ElecState
     }
 
     //! init rho_data and kin_r_data
-    void init_rho_data();
+    void init_rho_data(bool domag, bool domag_z, int nspin);
     Real** rho = nullptr;   // [Device] [spin][nrxx] rho
     T** rhog = nullptr;     // [Device] [spin][nrxx] rhog
     Real** kin_r = nullptr; // [Device] [spin][nrxx] kin_r
@@ -71,13 +71,13 @@ class ElecStatePW : public ElecState
 
     //! calculate electronic charge density on grid points or density matrix in real space
     //! the consequence charge density rho saved into rho_out, preparing for charge mixing.
-    void updateRhoK(const psi::Psi<T, Device>& psi); // override;
+    void updateRhoK(const psi::Psi<T, Device>& psi, bool domag, bool domag_z, int nspin); // override;
     
     //! sum over all pools for rho and ebands
     void parallelK();
     
     //! calcualte rho for each k
-    void rhoBandK(const psi::Psi<T, Device>& psi);
+    void rhoBandK(const psi::Psi<T, Device>& psi, bool domag, bool domag_z, int nspin);
 
     //! add to the charge density in reciprocal space the part which is due to the US augmentation.
     void add_usrho(const psi::Psi<T, Device>& psi);
@@ -89,6 +89,7 @@ class ElecStatePW : public ElecState
     Device * ctx = {};
 
     bool init_rho = false;
+    bool fused_density = false;
 
     mutable T* vkb = nullptr;
 

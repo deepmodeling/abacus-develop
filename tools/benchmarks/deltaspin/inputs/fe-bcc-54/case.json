@@ -1,0 +1,29 @@
+{
+  "atom_count": 54,
+  "structure": "bcc Fe cubic supercell",
+  "repetitions": [
+    3,
+    3,
+    3
+  ],
+  "conventional_lattice_A": 2.866,
+  "cell_edge_A": 8.598,
+  "displaced_atom_index": 0,
+  "displacement_A": [
+    0.02,
+    0,
+    0
+  ],
+  "target_moment_uB_per_atom": [
+    0,
+    0,
+    2.2
+  ],
+  "k_mesh": [
+    2,
+    2,
+    2
+  ],
+  "kspacing": 0.0,
+  "purpose": "Performance and numerical-equivalence benchmark; no structural relaxation or converged materials-property claim."
+}

@@ -1019,6 +1019,81 @@ TEST_F(TestModuleHsolverMathKernel, gemm_op_cgemm_blocked_gpu)
     }
     ModuleBase::destoryBLAShandle();
 }
+
+TEST_F(TestModuleHsolverMathKernel, gemm_op_host_scalar_alignment_gpu)
+{
+    using T = std::complex<double>;
+    struct alignas(16) HostScalar
+    {
+        double padding;
+        T value;
+    };
+
+    // std::complex<double> is only 8-byte aligned inside this 16-byte struct,
+    // while cuDoubleComplex requires 16-byte alignment. A single-column
+    // product exercises the cuBLAS scalar-read path used by the production
+    // DeltaSpin solver.
+    HostScalar alpha{0.0, T(1.0, 0.0)};
+    HostScalar beta{0.0, T(0.0, 0.0)};
+
+    const int m = 257;
+    const int n = 1;
+    const int k = 64;
+    const int lda = 264;
+    const int ldb = 72;
+    const int ldc = 264;
+
+    std::vector<T> A(static_cast<size_t>(lda) * m, T(0.0, 0.0));
+    std::vector<T> B(static_cast<size_t>(ldb) * n, T(0.0, 0.0));
+    std::vector<T> C0(static_cast<size_t>(ldc) * n, T(0.0, 0.0));
+    std::vector<T> C(static_cast<size_t>(ldc) * n, T(0.0, 0.0));
+    A[0] = T(2.0, 1.0);
+    A[1] = T(-0.5, 0.75);
+    B[0] = T(3.0, -1.0);
+    for (int row = 0; row < m; ++row)
+    {
+        C0[row] = T(0.1 * row - 0.2, 0.05);
+    }
+
+    T* dA = nullptr;
+    T* dB = nullptr;
+    T* dC = nullptr;
+    base_device::memory::resize_memory_op<T, base_device::DEVICE_GPU>()(dA, A.size());
+    base_device::memory::resize_memory_op<T, base_device::DEVICE_GPU>()(dB, B.size());
+    base_device::memory::resize_memory_op<T, base_device::DEVICE_GPU>()(dC, C.size());
+    base_device::memory::synchronize_memory_op<T, base_device::DEVICE_GPU, base_device::DEVICE_CPU>()(
+        dA, A.data(), A.size());
+    base_device::memory::synchronize_memory_op<T, base_device::DEVICE_GPU, base_device::DEVICE_CPU>()(
+        dB, B.data(), B.size());
+
+    ModuleBase::createGpuBlasHandle();
+    for (int repetition = 0; repetition < 2; ++repetition)
+    {
+        if (repetition == 1)
+        {
+            alpha.value = T(2.0, -0.5);
+            beta.value = T(0.25, 0.75);
+        }
+        base_device::memory::synchronize_memory_op<T, base_device::DEVICE_GPU, base_device::DEVICE_CPU>()(
+            dC, C0.data(), C0.size());
+        ModuleBase::gemm_op<T, base_device::DEVICE_GPU>()(
+            'N', 'N', m, n, k, &alpha.value, dA, lda, dB, ldb, &beta.value, dC, ldc);
+        base_device::memory::synchronize_memory_op<T, base_device::DEVICE_CPU, base_device::DEVICE_GPU>()(
+            C.data(), dC, C.size());
+        for (int row = 0; row < m; ++row)
+        {
+            const T product = (row == 0 ? A[0] : (row == 1 ? A[1] : T(0.0, 0.0))) * B[0];
+            const T expected = alpha.value * product + beta.value * C0[row];
+            SCOPED_TRACE(::testing::Message() << "repetition=" << repetition << " row=" << row);
+            EXPECT_LT(std::abs(C[row] - expected), 1e-12);
+        }
+    }
+    ModuleBase::destoryBLAShandle();
+
+    base_device::memory::delete_memory_op<T, base_device::DEVICE_GPU>()(dA);
+    base_device::memory::delete_memory_op<T, base_device::DEVICE_GPU>()(dB);
+    base_device::memory::delete_memory_op<T, base_device::DEVICE_GPU>()(dC);
+}
 #endif // __UT_USE_CUDA
 
 #endif // __UT_USE_CUDA || __UT_USE_ROCM

@@ -9,6 +9,7 @@
 
 namespace psi
 {
+template <typename T, typename Device> class KPointStorage;
 
 // structure for getting range of Psi
 // two display method: k index first or bands index first
@@ -140,6 +141,7 @@ class Psi
     int get_npol() const;
 
   private:
+    friend class KPointStorage<T, Device>;
     T* psi = nullptr; // avoid using C++ STL
 
     Device* ctx = {}; // an context identifier for obtaining the device variable

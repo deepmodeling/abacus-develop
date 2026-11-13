@@ -46,6 +46,7 @@ PW_Basis:: ~PW_Basis()
         delmem_int_op()(this->ig2ixyz_gpu);
     }
 #endif
+    this->fft3d_bundle.clear();
 }
 
 /// 
@@ -70,6 +71,25 @@ void PW_Basis::setuptransform()
         this->fft_bundle.initfft(this->nx,this->ny,this->nz,this->liy,this->riy,this->nst,this->nplane,this->poolnproc,this->gamma_only, this->xprime);
     }
     this->fft_bundle.setupFFT();
+
+    this->fft3d_bundle.clear();
+#if defined(__CUDA) || defined(__ROCM)
+    if (this->device == "gpu" && this->poolnproc == 1 && !this->gamma_only)
+    {
+        this->fft3d_bundle.setfft("gpu", this->precision);
+        if (this->xprime)
+        {
+            this->fft3d_bundle.initfft(this->nx, this->ny, this->nz, this->lix, this->rix, this->nst,
+                                       this->nplane, this->poolnproc, this->gamma_only, this->xprime);
+        }
+        else
+        {
+            this->fft3d_bundle.initfft(this->nx, this->ny, this->nz, this->liy, this->riy, this->nst,
+                                       this->nplane, this->poolnproc, this->gamma_only, this->xprime);
+        }
+        this->fft3d_bundle.setupFFT();
+    }
+#endif
     ModuleBase::timer::end(this->classname, "setuptransform");
 }
 

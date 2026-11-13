@@ -5,6 +5,7 @@
 #include "source_base/vector3.h"
 #include "source_basis/module_pw/pw_basis.h"
 #include "source_estate/module_charge/charge.h"
+#include "ncgga_sf_gpu.h"
 #include "xc_functional.h"
 #include "xc_ncgga_radial.h"
 
@@ -20,7 +21,8 @@ namespace NCGGA_SF_Builtin
 std::tuple<double, double, ModuleBase::matrix> v_xc_ncgga_sf_builtin(const int& nrxx,
                                                                      const double& omega,
                                                                      const double tpiba,
-                                                                     const Charge* const chr)
+                                                                     const Charge* const chr,
+                                                                     const bool use_gpu)
 {
     ModuleBase::TITLE("XC_Functional", "v_xc_ncgga_sf_builtin");
     ModuleBase::timer::start("XC_Functional", "v_xc_ncgga_sf_builtin");
@@ -64,6 +66,25 @@ std::tuple<double, double, ModuleBase::matrix> v_xc_ncgga_sf_builtin(const int& 
     double vtxc = 0;
     ModuleBase::matrix v(4, nrxx);
 
+    bool used_gpu = false;
+    std::vector<ModuleBase::Vector3<double>> gpu_flux_up;
+    std::vector<ModuleBase::Vector3<double>> gpu_flux_down;
+#if defined(__CUDA)
+    if (use_gpu && XC_Functional::get_func_type() == 2
+        && XC_Functional::get_func_id().size() >= 2
+        && XC_Functional::get_func_id()[0] == XC_GGA_X_PBE
+        && XC_Functional::get_func_id()[1] == XC_GGA_C_PBE)
+    {
+        gpu_flux_up.resize(nrxx);
+        gpu_flux_down.resize(nrxx);
+        used_gpu = ncgga_sf_local_gpu(nrxx, spin_map.data(), rhotmp1.data(), rhotmp2.data(),
+                                      gdr1.data(), gdr2.data(), e2, is_gga, v,
+                                      gpu_flux_up, gpu_flux_down, etxc);
+    }
+#endif
+
+    if (!used_gpu)
+    {
     for (int ir = 0; ir < nrxx; ++ir)
     {
         const double arho = spin_map[ir].absolute_density;
@@ -165,6 +186,22 @@ std::tuple<double, double, ModuleBase::matrix> v_xc_ncgga_sf_builtin(const int& 
         }
 
         etxc += etxcgc;
+    }
+    }
+    else if (is_gga)
+    {
+        std::vector<double> divergence_up(nrxx);
+        std::vector<double> divergence_down(nrxx);
+        XC_Functional::grad_dot(gpu_flux_up.data(), divergence_up.data(), rhopw, tpiba);
+        XC_Functional::grad_dot(gpu_flux_down.data(), divergence_down.data(), rhopw, tpiba);
+        for (int ir = 0; ir < nrxx; ++ir)
+        {
+            for (int channel = 0; channel < 4; ++channel)
+            {
+                v(channel, ir) -= spin_map[ir].jacobian(0, channel) * divergence_up[ir]
+                                  + spin_map[ir].jacobian(1, channel) * divergence_down[ir];
+            }
+        }
     }
 
     // vtxc uses the same completed four-component potential returned to the

@@ -126,16 +126,22 @@ run_cube_props() {
       echo "Can't find file $full_path"
       exit 1
     fi
-    awk 'BEGIN {max=0;read=0;band=1}
+    awk 'BEGIN {max=0;read=0;band=1;pending=0}
 	{
-		if(read==0 && $2 == "Band" && $3 == band){read=1}
+		if(read==0 && $2 == "Band" && $3 == band){read=1;pending=0}
 		else if(read==1 && $2 == "Band" && $3 == band)
-			{printf"Max_wfc_%d %.4f\n",band,max;read =0;band+=1;max=0}
+			{printf"Max_wfc_%d %.4f\n",band,max;read =0;band+=1;max=0;pending=0}
 		else if(read==1)
 			{
 				for(i=1;i<=NF;i++)
 				{
-					if(sqrt($i*$i)>max) {max=sqrt($i*$i)}
+					if(pending==0){real_part=$i;pending=1}
+					else
+					{
+						mag=sqrt(real_part*real_part+$i*$i)
+						if(mag>max) {max=mag}
+						pending=0
+					}
 				}
 			}
 	}' "$full_path" >>"$props_result_file"

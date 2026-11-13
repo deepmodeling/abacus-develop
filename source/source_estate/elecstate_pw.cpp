@@ -14,6 +14,9 @@
 #include "source_io/module_parameter/parameter.h"
 #include "source_lcao/module_deltaspin/spin_constrain.h"
 #include "source_pw/module_pwdft/vnl_pw.h"
+#if defined(__CUFFTDX)
+#include "source_basis/module_pw/kernels/fused_veff.h"
+#endif
 
 namespace elecstate
 {
@@ -66,7 +69,7 @@ double ElecStatePW<T, Device>::get_spin_constrain_energy()
 }
 
 template <typename T, typename Device>
-void ElecStatePW<T, Device>::init_rho_data()
+void ElecStatePW<T, Device>::init_rho_data(bool domag, bool domag_z, int nspin)
 {
     if (this->init_rho)
     {
@@ -112,8 +115,24 @@ void ElecStatePW<T, Device>::init_rho_data()
             this->kin_r = reinterpret_cast<Real**>(this->charge->kin_r);
         }
     }
-    resmem_complex_op()(this->wfcr, this->basis->nmaxgr, "ElecSPW::wfcr");
-    resmem_complex_op()(this->wfcr_another_spin, this->basis->nrxx, "ElecSPW::wfcr_a");
+    int grid_size = this->basis->nmaxgr;
+    int spin_grid_size = this->basis->nrxx;
+#if defined(__CUFFTDX)
+    this->fused_density = std::is_same<T, std::complex<double>>::value
+                          && std::is_same<Device, base_device::DEVICE_GPU>::value
+                          && nspin == 4 && domag
+                          && this->charge->nrxx == this->basis->nrxx
+                          && this->basis->d_igl2isz_k != nullptr
+                          && this->basis->fft_bundle.fused_veff_stick_size() > 0
+                          && ModulePW::fused_veff_supported();
+    if (this->fused_density)
+    {
+        grid_size = spin_grid_size = std::min(4, this->basis->fft_bundle.spinor_batch_size())
+                                     * this->basis->fft_bundle.fused_veff_grid_size();
+    }
+#endif
+    resmem_complex_op()(this->wfcr, grid_size, "ElecSPW::wfcr");
+    resmem_complex_op()(this->wfcr_another_spin, spin_grid_size, "ElecSPW::wfcr_a");
     this->init_rho = true;
 }
 
@@ -123,9 +142,9 @@ void ElecStatePW<T, Device>::psiToRho(const psi::Psi<T, Device>& psi)
     ModuleBase::TITLE("ElecStatePW", "psiToRho");
     ModuleBase::timer::start("ElecStatePW", "psiToRho");
 
-    this->init_rho_data();
+    this->init_rho_data(PARAM.globalv.domag, PARAM.globalv.domag_z, this->charge->nspin);
 
-    for (int is = 0; is < PARAM.inp.nspin; is++)
+    for (int is = 0; is < this->charge->nspin; is++)
     {
         // denghui replaced at 20221110
         // ModuleBase::GlobalFunc::ZEROS(this->rho[is], this->charge->nrxx);
@@ -160,7 +179,7 @@ void ElecStatePW<T, Device>::psiToRho(const psi::Psi<T, Device>& psi)
     for (int ik = 0; ik < psi.get_nk(); ++ik)
     {
         psi.fix_k(ik);
-        this->updateRhoK(psi);
+        this->updateRhoK(psi, PARAM.globalv.domag, PARAM.globalv.domag_z, this->charge->nspin);
         if (sum_k_in_double)
         {
             accumulate_k(this->rho, this->charge->rho, ik == 0);
@@ -172,7 +191,7 @@ void ElecStatePW<T, Device>::psiToRho(const psi::Psi<T, Device>& psi)
     if ((!sum_k_in_double || psi.get_nk() == 0)
         && (PARAM.inp.device == "gpu" || PARAM.inp.precision == "single"))
     {
-        for (int ii = 0; ii < PARAM.inp.nspin; ii++)
+        for (int ii = 0; ii < this->charge->nspin; ii++)
         {
             castmem_var_d2h_op()(this->charge->rho[ii], this->rho[ii], this->charge->nrxx);
             if (XC_Functional::get_func_type() == 3)
@@ -188,9 +207,9 @@ void ElecStatePW<T, Device>::psiToRho(const psi::Psi<T, Device>& psi)
 }
 
 template <typename T, typename Device>
-void ElecStatePW<T, Device>::updateRhoK(const psi::Psi<T, Device>& psi)
+void ElecStatePW<T, Device>::updateRhoK(const psi::Psi<T, Device>& psi, bool domag, bool domag_z, int nspin)
 {
-    this->rhoBandK(psi);
+    this->rhoBandK(psi, domag, domag_z, nspin);
 }
 
 template <typename T, typename Device>
@@ -206,7 +225,7 @@ void ElecStatePW<T, Device>::parallelK()
 }
 
 template <typename T, typename Device>
-void ElecStatePW<T, Device>::rhoBandK(const psi::Psi<T, Device>& psi)
+void ElecStatePW<T, Device>::rhoBandK(const psi::Psi<T, Device>& psi, bool domag, bool domag_z, int nspin)
 {
     ModuleBase::TITLE("ElecStatePW", "rhoBandK");
 
@@ -219,7 +238,7 @@ void ElecStatePW<T, Device>::rhoBandK(const psi::Psi<T, Device>& psi)
     // if (PARAM.inp.nspin == 4)
     //     wfcr_another_spin.resize(this->charge->nrxx);
 
-    this->init_rho_data();
+    this->init_rho_data(domag, domag_z, nspin);
     int ik = psi.get_current_k();
     int npw = psi.get_current_ngk();
     int current_spin = 0;
@@ -234,49 +253,67 @@ void ElecStatePW<T, Device>::rhoBandK(const psi::Psi<T, Device>& psi)
         int npwx = npw / 2;
         for (int ibnd = 0; ibnd < nbands; ibnd++)
         {
-            ///
-            /// only occupied band should be calculated.
-            /// be care of when smearing_sigma is large, wg would less than 0
-            ///
+            const auto w1 = static_cast<Real>(this->wg(ik, ibnd) / ucell->omega);
+            /// Negative smearing weights contribute; only exact zeros are omitted.
+            if (w1 == 0.0)
+            {
+                continue;
+            }
 
+#if defined(__CUFFTDX)
+            if (this->fused_density)
+            {
+                double weights[4] = {w1};
+                const int capacity = std::min(4, this->basis->fft_bundle.spinor_batch_size());
+                int bands = 1;
+                while (bands < capacity && ibnd + bands < nbands)
+                {
+                    const double weight = this->wg(ik, ibnd + bands) / this->ucell->omega;
+                    if (weight == 0.0)
+                    {
+                        break;
+                    }
+                    weights[bands++] = weight;
+                }
+                this->basis->add_spinor_density(reinterpret_cast<const std::complex<double>*>(&psi(ibnd, 0)),
+                                                weights, bands, reinterpret_cast<double*>(this->rho[0]), ik, npwx,
+                                                reinterpret_cast<std::complex<double>*>(this->wfcr),
+                                                reinterpret_cast<std::complex<double>*>(this->wfcr_another_spin));
+                ibnd += bands - 1;
+                continue;
+            }
+#endif
             this->basis->recip_to_real(this->ctx, &psi(ibnd, 0), this->wfcr, ik);
 
             this->basis->recip_to_real(this->ctx, &psi(ibnd, npwx), this->wfcr_another_spin, ik);
 
-            const auto w1 = static_cast<Real>(this->wg(ik, ibnd) / ucell->omega);
-
-            if (w1 != 0.0)
-            {
-                // replaced by denghui at 20221110
-                elecstate_pw_op()(this->ctx,
-                                  PARAM.globalv.domag,
-                                  PARAM.globalv.domag_z,
-                                  this->basis->nrxx,
-                                  this->charge->nrxx,
-                                  w1,
-                                  this->rho,
-                                  this->wfcr,
-                                  this->wfcr_another_spin);
-            }
+            // replaced by denghui at 20221110
+            elecstate_pw_op()(this->ctx,
+                              domag,
+                              domag_z,
+                              this->basis->nrxx,
+                              this->charge->nrxx,
+                              w1,
+                              this->rho,
+                              this->wfcr,
+                              this->wfcr_another_spin);
         }
     }
     else
     {
         for (int ibnd = 0; ibnd < nbands; ibnd++)
         {
-            ///
-            /// only occupied band should be calculated.
-            ///
+            const auto w1 = static_cast<Real>(this->wg(ik, ibnd) / ucell->omega);
+            if (w1 == 0.0)
+            {
+                continue;
+            }
 
             this->basis->recip_to_real(this->ctx, &psi(ibnd, 0), this->wfcr, ik);
 
-            const auto w1 = static_cast<Real>(this->wg(ik, ibnd) / ucell->omega);
-
-            if (w1 != 0.0)
-            {
-                // replaced by denghui at 20221110
-                elecstate_pw_op()(this->ctx, current_spin, this->basis->nrxx, this->charge->nrxx, w1, this->rho, this->wfcr);
-            }
+            // replaced by denghui at 20221110
+            elecstate_pw_op()(this->ctx, current_spin, this->basis->nrxx, this->charge->nrxx, w1, this->rho,
+                              this->wfcr);
 
             // kinetic energy density
             if (XC_Functional::get_func_type() == 3)

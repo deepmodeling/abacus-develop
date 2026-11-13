@@ -9,6 +9,21 @@
 namespace hamilt
 {
 
+#if __CUDA || __UT_USE_CUDA
+/// Assemble three Cartesian G+k components per plane wave directly on CUDA.
+/// A constant reduced vector-potential shift is added to every component.
+void cal_gk_gpu(int npw,
+                const double* gcar,
+                const double* kvec,
+                double shift_x,
+                double shift_y,
+                double shift_z,
+                double* gk);
+
+/// Return false when any shifted projector momentum exceeds the radial table.
+bool gk_range_valid_gpu(const double* gk, int npw, double tpiba, double dq, double bound);
+#endif
+
 template <typename FPTYPE, typename Device>
 struct cal_vnl_op
 {

@@ -1,0 +1,47 @@
+INPUT_PARAMETERS
+suffix  ABACUS
+calculation     scf
+ecutwfc 100
+scf_thr_type    2
+scf_thr 1e-06    # rho的收敛标准，
+scf_ene_thr     -1.0
+scf_nmax        150
+
+smearing_method gaussian
+smearing_sigma  0.01
+
+mixing_type     broyden
+mixing_beta     0.2
+mixing_beta_mag 0.2
+mixing_ndim     30
+
+scf_os_stop   0
+
+ks_solver       dav_subspace
+basis_type      pw
+pw_diag_ndim    2
+pw_diag_nmax    20
+pw_seed 1
+kspacing        0.0
+device          gpu
+
+symmetry        -1
+noncolin        1
+nspin   4
+lspinorb        0
+gga_grad       2
+onsite_radius   3.0   # 基本可以用。严谨来说需要对每种材料测试不同的onsite_radius大小，取原子磁矩最大值对应的参数值
+
+cal_stress      1
+cal_force       1
+
+sc_mag_switch   1   #是否进行deltaspin的计算，限制磁矩， 设置为0，不进行deltaspin计算
+sc_thr  1e-07        # 磁矩收敛的阈值
+nsc     10            # 内循环的步数
+nsc_min 2             # 内循环最小步数
+alpha_trial     0.01
+sccut   3.0
+sc_scf_thr      10
+sc_os_ndim    5   # control how many steps when drho oscillation will do twice DS inner loop
+
+ntype 2

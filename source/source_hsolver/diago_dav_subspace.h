@@ -10,6 +10,7 @@
 #include "source_hsolver/diag_comm_info.h"
 #include "source_hsolver/hs_operator.h"
 
+#include <functional>
 #include <vector>
 
 namespace hsolver
@@ -35,7 +36,37 @@ class Diago_DavSubspace
                       const int diago_dav_method_in,
                       const int block_size_in);
 
+    Diago_DavSubspace(const std::vector<Real>& precondition_in,
+                      const int& nband_in,
+                      const int& nbasis_in,
+                      const int& david_ndim_in,
+                      const double& diag_thr_in,
+                      const int& diag_nmax_in,
+                      const diag_comm_info& diag_comm_in,
+                      const int diago_dav_method_in,
+                      const int block_size_in,
+                      const bool host_backed_action_in);
+
     ~Diago_DavSubspace();
+
+    /// Supply Hamiltonian actions for the initial basis, avoiding a fresh
+    /// operator application. The callback receives (ik, output, leading).
+    using InitialHPsiFunc = std::function<void(int, T*, int)>;
+
+    /// Follow Davidson basis changes so callers can transport cached overlaps.
+    struct BasisObserver
+    {
+        std::function<void(int, int, int, bool)> capture;
+        std::function<void(int, int, const T*, int, bool)> rotate;
+        std::function<void(int)> invalidate;
+    };
+
+    /// Refresh the preconditioner without reallocating the solver workspace.
+    void update_precondition(const std::vector<Real>& precondition_in);
+
+    /// True when a cached solver can serve a problem with this fixed layout.
+    bool layout_matches(const int& nband, const int& nbasis, const int& david_ndim,
+                        const int& method, const int& block_size, const bool host_backed) const;
 
     /// General operators (for example LR-TDDFT) need not have a single k point.
     int diag(const HSOperator<T, Device>& op,
@@ -53,6 +84,18 @@ class Diago_DavSubspace
              const std::vector<double>& ethr_band,
              const bool& scf_type,
              const int ik);
+
+    /// Overload with cached initial Hamiltonian actions. A null callback keeps
+    /// the ordinary operator application.
+    int diag(const HSOperator<T, Device>& op,
+             T* psi_in,
+             const int psi_in_dmax,
+             Real* eigenvalue_in,
+             const std::vector<double>& ethr_band,
+             const bool& scf_type,
+             const int ik,
+             const InitialHPsiFunc* initial_hpsi,
+             const BasisObserver* basis_observer);
 
   private:
     /// for MPI communication
@@ -74,11 +117,14 @@ class Diago_DavSubspace
     const int nbase_x = 0;
 
     /// precondition for diag
-    const std::vector<Real>& precondition;
+    std::vector<Real> precondition;
     Real* d_precondition = nullptr;
 
     /// record for how many bands not have convergence eigenvalues
     int notconv = 0;
+
+    /// set when the projected eigensolver reports a numerical failure
+    bool solver_failed_ = false;
 
     T* psi_in_iter = nullptr;
 
@@ -87,6 +133,15 @@ class Diago_DavSubspace
 
     /// the product of S and psi in the reduced basis set
     T* spsi = nullptr;
+
+    bool host_backed_action_ = false;
+    T* hpsi_panel_ = nullptr;
+    int action_panel_cols_ = 0;
+
+    T* hpsi_panel(const int first, const int count) const;
+    void hpsi_store(const int first, const int count, const T* source) const;
+    void hpsi_multiply(const int action_cols, const T* coefficients, const int coefficient_leading,
+                       const int columns, T* output, const bool accumulate) const;
 
     /// Hamiltonian on the reduced basis
     T* hcc = nullptr;
@@ -159,7 +214,9 @@ class Diago_DavSubspace
                   const int psi_in_dmax,
                   Real* eigenvalue_in,
                   const std::vector<double>& ethr_band,
-                  const int ik);
+                  const int ik,
+                  const InitialHPsiFunc* initial_hpsi,
+                  const BasisObserver* basis_observer);
 
     bool test_exit_cond(const int& ntry, const int& notconv, const bool& scf);
 

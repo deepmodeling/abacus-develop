@@ -297,10 +297,18 @@ struct lapack_hegvd<T, DEVICE_GPU> {
         CHECK_CUDA(cudaMalloc(&d_B_backup, sizeof(T) * dim * lda));
         CHECK_CUDA(cudaMemcpy(d_B_backup, Mat_B, sizeof(T) * dim * lda, cudaMemcpyDeviceToDevice));
 
-        cuSolverConnector::hegvd(cusolver_handle, itype, jobz, uplo, dim,
-                eigen_vec, lda,
-                d_B_backup, lda,
-                eigen_val);
+        try
+        {
+            cuSolverConnector::hegvd(cusolver_handle, itype, jobz, uplo, dim,
+                    eigen_vec, lda,
+                    d_B_backup, lda,
+                    eigen_val);
+        }
+        catch (...)
+        {
+            CHECK_CUDA(cudaFree(d_B_backup));
+            throw;
+        }
         CHECK_CUDA(cudaFree(d_B_backup));
     }
 };

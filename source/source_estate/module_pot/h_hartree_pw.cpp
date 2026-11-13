@@ -5,10 +5,95 @@
 #include "source_base/timer.h"
 #include "source_base/parallel_reduce.h"
 
+#include <algorithm>
+#if defined(__CUDA)
+#include "source_basis/module_pw/kernels/pw_op.h"
+#include "source_estate/kernels/hartree_op.h"
+#endif
+
 namespace elecstate
 {
 
 double H_Hartree_pw::hartree_energy = 0.0;
+
+#if defined(__CUDA)
+namespace
+{
+
+bool hartree_gpu_eligible(const ModulePW::PW_Basis& basis)
+{
+    return basis.get_device() == "gpu" && basis.poolnproc == 1 && !basis.gamma_only
+           && basis.ig2ixyz_gpu != nullptr
+           && basis.fft3d_bundle.template get_auxr_3d_data<double>() != nullptr;
+}
+
+ModuleBase::matrix hartree_gpu(const UnitCell& cell, const ModulePW::PW_Basis& basis,
+                               int nspin, const double* const* rho, double& energy)
+{
+    using Complex = std::complex<double>;
+    const int channels = nspin == 2 ? 2 : 1;
+    const int blocks = hartree_reduction_size_gpu(basis.npw);
+    std::vector<double> density(channels * basis.nrxx);
+    for (int spin = 0; spin < channels; ++spin)
+    {
+        std::copy(rho[spin], rho[spin] + basis.nrxx, density.data() + spin * basis.nrxx);
+    }
+    std::vector<double> host_gg(basis.npw);
+    std::copy(basis.gg, basis.gg + basis.npw, host_gg.begin());
+
+    double* d_density = nullptr;
+    double* d_gg = nullptr;
+    Complex* d_coefficients = nullptr;
+    double* d_sums = nullptr;
+    base_device::memory::resize_memory_op<double, base_device::DEVICE_GPU>()(d_density, channels * basis.nrxx);
+    base_device::memory::resize_memory_op<double, base_device::DEVICE_GPU>()(d_gg, basis.npw);
+    base_device::memory::resize_memory_op<Complex, base_device::DEVICE_GPU>()(d_coefficients, basis.npw);
+    base_device::memory::resize_memory_op<double, base_device::DEVICE_GPU>()(d_sums, blocks);
+    base_device::memory::synchronize_memory_op<double, base_device::DEVICE_GPU, base_device::DEVICE_CPU>()(
+        d_density, density.data(), channels * basis.nrxx);
+    base_device::memory::synchronize_memory_op<double, base_device::DEVICE_GPU, base_device::DEVICE_CPU>()(
+        d_gg, host_gg.data(), basis.npw);
+
+    auto* grid = basis.fft3d_bundle.template get_auxr_3d_data<double>();
+    hartree_pack_density_gpu(basis.nrxx, channels, d_density, grid);
+    basis.fft3d_bundle.fft3D_forward(grid, grid);
+    hartree_coefficients_gpu(basis.npw, basis.ig2ixyz_gpu, d_gg, 1.0 / basis.nxyz,
+                             ModuleBase::e2 * ModuleBase::FOUR_PI, cell.tpiba2, grid,
+                             d_coefficients, d_sums);
+    base_device::memory::set_memory_op<Complex, base_device::DEVICE_GPU>()(grid, 0, basis.nxyz);
+    ModulePW::set_3d_fft_box_op<double, base_device::DEVICE_GPU>()(
+        basis.npw, basis.ig2ixyz_gpu, d_coefficients, grid);
+    basis.fft3d_bundle.fft3D_backward(grid, grid);
+    ModulePW::extract_real_grid_gpu(basis.nrxx, false, 1.0, grid, d_density);
+    ModuleBase::matrix potential(nspin, basis.nrxx);
+    base_device::memory::synchronize_memory_op<double, base_device::DEVICE_CPU, base_device::DEVICE_GPU>()(
+        potential.c, d_density, basis.nrxx);
+    if (nspin != 4)
+    {
+        for (int spin = 1; spin < nspin; ++spin)
+        {
+            std::copy(potential.c, potential.c + basis.nrxx, potential.c + spin * basis.nrxx);
+        }
+    }
+    std::vector<double> host_sums(blocks);
+    base_device::memory::synchronize_memory_op<double, base_device::DEVICE_CPU, base_device::DEVICE_GPU>()(
+        host_sums.data(), d_sums, blocks);
+    energy = 0;
+    for (int block = 0; block < blocks; ++block)
+    {
+        energy += host_sums[block];
+    }
+    energy *= 0.5 * cell.omega;
+
+    base_device::memory::delete_memory_op<double, base_device::DEVICE_GPU>()(d_density);
+    base_device::memory::delete_memory_op<double, base_device::DEVICE_GPU>()(d_gg);
+    base_device::memory::delete_memory_op<Complex, base_device::DEVICE_GPU>()(d_coefficients);
+    base_device::memory::delete_memory_op<double, base_device::DEVICE_GPU>()(d_sums);
+    return potential;
+}
+
+} // namespace
+#endif
 
 //--------------------------------------------------------------------
 // Transform charge density to hartree potential.
@@ -20,6 +105,15 @@ ModuleBase::matrix H_Hartree_pw::v_hartree(const UnitCell &cell,
 {
     ModuleBase::TITLE("H_Hartree_pw", "v_hartree");
     ModuleBase::timer::start("H_Hartree_pw", "v_hartree");
+
+#if defined(__CUDA)
+    if (hartree_gpu_eligible(*rho_basis))
+    {
+        auto potential = hartree_gpu(cell, *rho_basis, nspin, rho, H_Hartree_pw::hartree_energy);
+        ModuleBase::timer::end("H_Hartree_pw", "v_hartree");
+        return potential;
+    }
+#endif
 
     //  Hartree potential VH(r) from n(r)
     std::vector<std::complex<double>> Porter(rho_basis->nmaxgr);

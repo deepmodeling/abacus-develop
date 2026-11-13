@@ -11,9 +11,13 @@
 #include "source_hsolver/diago_dav_subspace.h"
 #include "source_hsolver/diago_david.h"
 #include "source_hsolver/diago_iter_assist.h"
+#include "source_psi/kpoint_storage.h"
 #include "source_psi/psi.h"
 
 #include <algorithm>
+#include <cstdlib>
+#include <string>
+#include <type_traits>
 #include <ostream>
 #include <vector>
 
@@ -96,6 +100,32 @@ void HSolverPW<T, Device>::solve(HSOperator<T, Device>& op,
         build_k_neighbors();
     }
 
+#if defined(__CUDA)
+    this->reuse_davidson_ = std::is_same<Device, base_device::DEVICE_GPU>::value
+                            && std::is_same<T, std::complex<double>>::value;
+#else
+    this->reuse_davidson_ = false;
+#endif
+
+    std::unique_ptr<psi::KPointStorage<T, Device>> kpoint_storage;
+    this->host_backed_action_ = false;
+#if defined(__CUDA)
+    if (std::is_same<Device, base_device::DEVICE_GPU>::value && !use_k_continuity)
+    {
+        size_t free_bytes = 0;
+        size_t total_bytes = 0;
+        cudaMemGetInfo(&free_bytes, &total_bytes);
+        const size_t psi_bytes = size_t(psi.get_nk()) * psi.get_nbands() * psi.get_nbasis() * sizeof(T);
+        const size_t dim = psi.get_nbasis();
+        const size_t davidson_bytes = 2 * size_t(psi.get_nbands()) * this->pw_diag_ndim * dim * sizeof(T);
+        const bool stage = psi_bytes + davidson_bytes > size_t(free_bytes * 0.9);
+        const char* action_env = std::getenv("ABACUS_DAV_HOST_ACTION");
+        this->host_backed_action_ = std::is_same<T, std::complex<double>>::value
+                                    && (stage || (action_env != nullptr && std::string(action_env) == "1"));
+        kpoint_storage.reset(new psi::KPointStorage<T, Device>(psi, this->wfc_basis->nks, stage));
+    }
+#endif
+
     // Loop over k points for solve Hamiltonian to charge density
     if (use_k_continuity) {
         // K-point continuity case
@@ -109,7 +139,8 @@ void HSolverPW<T, Device>::solve(HSOperator<T, Device>& op,
 
 
             // update psi pointer for each k point
-            psi.fix_k(ik);
+            if (kpoint_storage && kpoint_storage->active()) { kpoint_storage->load(ik); }
+            else { psi.fix_k(ik); }
 
             // If using k-point continuity and not first k-point, propagate from parent
             if (ik > 0 && count == 0 && k_parent.find(ik) != k_parent.end()) {
@@ -152,7 +183,8 @@ void HSolverPW<T, Device>::solve(HSOperator<T, Device>& op,
 
 
             // update psi pointer for each k point
-            psi.fix_k(ik);
+            if (kpoint_storage && kpoint_storage->active()) { kpoint_storage->load(ik); }
+            else { psi.fix_k(ik); }
 
             // template add precondition calculating here
             update_precondition(precondition, ik, this->wfc_basis->npwk[ik], Real(pes->pot->get_vl_of_0()));
@@ -170,6 +202,7 @@ void HSolverPW<T, Device>::solve(HSOperator<T, Device>& op,
 
             // solve eigenvector and eigenvalue for H(k)
             this->hamiltSolvePsiK(op, psi, precondition, eigenvalues.data() + ik * psi.get_nbands(), this->wfc_basis->nks);
+            if (kpoint_storage && kpoint_storage->active()) { kpoint_storage->store(ik); }
 
             // output iteration information and reset avg_iter
             if (skip_charge)
@@ -207,6 +240,10 @@ void HSolverPW<T, Device>::solve(HSOperator<T, Device>& op,
                                  _pes_pw->skip_weights);
 
     elecstate::calEBand(_pes_pw->ekb,_pes_pw->wg,_pes_pw->f_en);
+
+    this->davidson_cache_.reset();
+    if (kpoint_storage) { kpoint_storage->restore(); }
+
     if (skip_charge)
     {
         if (this->use_uspp)
@@ -221,6 +258,27 @@ void HSolverPW<T, Device>::solve(HSOperator<T, Device>& op,
 
     ModuleBase::timer::end("HSolverPW", "solve");
     return;
+}
+
+template <typename T, typename Device>
+void HSolverPW<T, Device>::solve(HSOperator<T, Device>& op,
+                                 psi::Psi<T, Device>& psi,
+                                 elecstate::ElecState* pes,
+                                 double* out_eigenvalues,
+                                 const int rank_in_pool_in,
+                                 const int nproc_in_pool_in,
+                                 std::ostream& log,
+                                 const bool skip_charge,
+                                 const typename Diago_DavSubspace<T, Device>::InitialHPsiFunc& initial_hpsi,
+                                 const typename Diago_DavSubspace<T, Device>::BasisObserver* basis_observer)
+{
+    this->initial_hpsi_func_ = initial_hpsi;
+    this->has_initial_hpsi_ = true;
+    this->basis_observer_ = basis_observer;
+    this->solve(op, psi, pes, out_eigenvalues, rank_in_pool_in, nproc_in_pool_in, log, skip_charge);
+    this->has_initial_hpsi_ = false;
+    this->initial_hpsi_func_ = {};
+    this->basis_observer_ = nullptr;
 }
 
 template <typename T, typename Device>
@@ -297,25 +355,94 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(const HSOperator<T, Device>& op,
     {
         bool scf = this->calculation_type == "nscf" ? false : true;
 
-        Diago_DavSubspace<T, Device> dav_subspace(pre_condition,
-                                                  psi.get_nbands(),
-                                                  psi.get_k_first() ? psi.get_current_ngk()
-                                                                    : psi.get_nk() * psi.get_nbasis(),
-                                                  this->pw_diag_ndim,
-                                                  this->diag_thr,
-                                                  this->diag_iter_max,
-                                                  comm_info,
-                                                  this->diag_subspace,
-                                                  this->nb2d);
+        const int nband = psi.get_nbands();
+        const int nbasis_layout = psi.get_k_first() ? psi.get_current_ngk()
+                                                    : psi.get_nk() * psi.get_nbasis();
+        Diago_DavSubspace<T, Device>* davidson = nullptr;
+        if (this->reuse_davidson_)
+        {
+            if (!this->davidson_cache_
+                || !this->davidson_cache_->layout_matches(nband, nbasis_layout, this->pw_diag_ndim,
+                                                          this->diag_subspace, this->nb2d,
+                                                          this->host_backed_action_))
+            {
+                this->davidson_cache_.reset(new Diago_DavSubspace<T, Device>(pre_condition,
+                                                                             nband,
+                                                                             nbasis_layout,
+                                                                             this->pw_diag_ndim,
+                                                                             this->diag_thr,
+                                                                             this->diag_iter_max,
+                                                                             comm_info,
+                                                                             this->diag_subspace,
+                                                                             this->nb2d,
+                                                                             this->host_backed_action_));
+            }
+            else
+            {
+                this->davidson_cache_->update_precondition(pre_condition);
+            }
+            davidson = this->davidson_cache_.get();
+        }
+        else
+        {
+            this->davidson_cache_.reset(new Diago_DavSubspace<T, Device>(pre_condition,
+                                                                         nband,
+                                                                         nbasis_layout,
+                                                                         this->pw_diag_ndim,
+                                                                         this->diag_thr,
+                                                                         this->diag_iter_max,
+                                                                         comm_info,
+                                                                         this->diag_subspace,
+                                                                         this->nb2d,
+                                                                         this->host_backed_action_));
+            davidson = this->davidson_cache_.get();
+        }
 
-        DiagoIterAssist<T, Device>::avg_iter += static_cast<double>(
-            dav_subspace.diag(op,
-                              psi.get_pointer(),
-                              psi.get_nbasis(),
-                              eigenvalue,
-                              this->ethr_band,
-                              scf,
-                              psi.get_current_k()));
+        const typename Diago_DavSubspace<T, Device>::InitialHPsiFunc* initial_hpsi_ptr =
+            this->has_initial_hpsi_ ? &this->initial_hpsi_func_ : nullptr;
+        int dav_result = davidson->diag(op,
+                                       psi.get_pointer(),
+                                       psi.get_nbasis(),
+                                       eigenvalue,
+                                       this->ethr_band,
+                                       scf,
+                                       psi.get_current_k(),
+                                       initial_hpsi_ptr,
+                                       this->basis_observer_);
+        if (!this->reuse_davidson_)
+        {
+            this->davidson_cache_.reset();
+        }
+        if (dav_result == -1)
+        {
+            // A numerical failure invalidates the Davidson workspace. Release it
+            // before allocating CG state or changing the wavefunction basis.
+            if (this->basis_observer_ && this->basis_observer_->invalidate)
+            {
+                this->basis_observer_->invalidate(psi.get_current_k());
+            }
+            this->davidson_cache_.reset();
+            std::cout << "error of Diago_DavSubspace::diag, recalculate by cg method " << std::endl;
+            DiagoCG<T, Device> cg(this->basis_type,
+                                  this->calculation_type,
+                                  this->need_subspace,
+                                  comm_info,
+                                  this->diag_thr,
+                                  this->diag_iter_max);
+            DiagoIterAssist<T, Device>::avg_iter += static_cast<double>(
+                cg.diag(op,
+                        psi.get_nbasis(),
+                        psi.get_nbands(),
+                        psi.get_current_ngk(),
+                        psi.get_pointer(),
+                        eigenvalue,
+                        this->ethr_band,
+                        pre_condition.data()));
+        }
+        else
+        {
+            DiagoIterAssist<T, Device>::avg_iter += static_cast<double>(dav_result);
+        }
     }
     else if (this->method == "dav")
     {

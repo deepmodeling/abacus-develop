@@ -80,7 +80,7 @@ template void diago_hs_para<float>(float* h,
                                    float* const wfc,
                                    const MPI_Comm& comm,
                                    const int diag_subspace,
-                                   const int block_size);          
+                                   const int block_size);
 template void diago_hs_para<std::complex<float>>(std::complex<float>* h,
                                                  std::complex<float>* s,
                                                  const int lda,
@@ -95,7 +95,7 @@ template void diago_hs_para<std::complex<float>>(std::complex<float>* h,
 
 
 template<>
-void elecstate::ElecStatePW<std::complex<double>, base_device::DEVICE_CPU>::init_rho_data() 
+void elecstate::ElecStatePW<std::complex<double>, base_device::DEVICE_CPU>::init_rho_data(bool, bool, int)
 {
 }
 

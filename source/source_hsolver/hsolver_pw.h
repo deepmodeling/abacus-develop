@@ -5,15 +5,17 @@
 #include "source_basis/module_pw/pw_basis_k.h"
 #include "source_estate/elecstate.h"
 #include "source_hsolver/hs_operator.h"
+#include "source_hsolver/diago_dav_subspace.h"
 
+#include <functional>
 #include <iosfwd>
+#include <memory>
 #include <unordered_map>
 
 class TestHSolverPW; // unit-test fixture, see source_hsolver/unittests/
 
 namespace hsolver
 {
-
 template <typename T, typename Device = base_device::DEVICE_CPU>
 class HSolverPW
 {
@@ -68,6 +70,18 @@ class HSolverPW
                std::ostream& log,
                const bool skip_charge);
 
+    /// Solve with cached initial Hamiltonian actions for the Davidson path.
+    void solve(HSOperator<T, Device>& op,
+               psi::Psi<T, Device>& psi,
+               elecstate::ElecState* pes,
+               double* out_eigenvalues,
+               const int rank_in_pool_in,
+               const int nproc_in_pool_in,
+               std::ostream& log,
+               const bool skip_charge,
+               const typename Diago_DavSubspace<T, Device>::InitialHPsiFunc& initial_hpsi,
+               const typename Diago_DavSubspace<T, Device>::BasisObserver* basis_observer);
+
   protected:
     // diago caller
     void hamiltSolvePsiK(const HSOperator<T, Device>& op,
@@ -81,6 +95,12 @@ class HSolverPW
 
     void output_iterInfo(std::ostream& log);
 
+    std::unique_ptr<Diago_DavSubspace<T, Device>> davidson_cache_;
+    bool reuse_davidson_ = false;
+    typename Diago_DavSubspace<T, Device>::InitialHPsiFunc initial_hpsi_func_;
+    bool has_initial_hpsi_ = false;
+    bool host_backed_action_ = false;
+    const typename Diago_DavSubspace<T, Device>::BasisObserver* basis_observer_ = nullptr;
     ModulePW::PW_Basis_K* wfc_basis = nullptr;
 
     const std::string calculation_type;

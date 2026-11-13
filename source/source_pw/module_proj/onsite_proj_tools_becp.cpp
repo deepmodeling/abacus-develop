@@ -111,7 +111,6 @@ void hamilt::Onsite_Proj_tools<FPTYPE, Device>::cal_becp(int ik,
         std::complex<FPTYPE>* d_sk = this->hd_sk;
         // prepare ylm，size: (lmax+1)^2 * this->max_npw
         const int lmax_ = this->lprojmax;
-        maths.cal_ylm(lmax_, npw, g_plus_k.data(), hd_ylm);
 
         // DEBUG: ONCE YOU CHECK ylm VALUES, YOU UNCOMMENT THE FOLLOW
         // std::vector<ModuleBase::Vector3<double>> qs(npw);
@@ -147,6 +146,7 @@ void hamilt::Onsite_Proj_tools<FPTYPE, Device>::cal_becp(int ik,
             gk = d_g_plus_k;
             vq_tb = d_vq_tab;
         }
+        maths.cal_ylm(lmax_, npw, gk, hd_ylm);
 
         // int vkb_size = 0;
         for (int it = 0; it < this->ucell_->ntype; it++) // loop all elements
@@ -245,19 +245,22 @@ void hamilt::Onsite_Proj_tools<FPTYPE, Device>::cal_becp(int ik,
 
     if (this->device == base_device::GpuDevice)
     {
-        if (host_becp == nullptr)
+        if (this->wfc_basis_ != nullptr && this->wfc_basis_->poolnproc > 1)
         {
-            host_becp_.resize(size_becp_act);
-            host_becp = host_becp_.data();
-        }
-        if (size_becp_act > 0)
-        {
-            syncmem_complex_d2h_op()(host_becp, becp_tmp, size_becp_act);
-        }
-        Parallel_Reduce::reduce_pool(host_becp, size_becp_act);
-        if (size_becp_act > 0)
-        {
-            syncmem_complex_h2d_op()(becp_tmp, host_becp, size_becp_act);
+            if (host_becp == nullptr)
+            {
+                host_becp_.resize(size_becp_act);
+                host_becp = host_becp_.data();
+            }
+            if (size_becp_act > 0)
+            {
+                syncmem_complex_d2h_op()(host_becp, becp_tmp, size_becp_act);
+            }
+            Parallel_Reduce::reduce_pool(host_becp, size_becp_act);
+            if (size_becp_act > 0)
+            {
+                syncmem_complex_h2d_op()(becp_tmp, host_becp, size_becp_act);
+            }
         }
     }
     else

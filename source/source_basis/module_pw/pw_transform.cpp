@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <cassert>
 #include <complex>
+#include <type_traits>
 
 namespace ModulePW
 {
@@ -19,6 +20,165 @@ inline int block_end(const int begin, const int size)
 {
     return std::min(begin + pw_transform_cache_block, size);
 }
+
+#if defined(__CUDA)
+template <typename Real>
+void upload_fft_input(const int size,
+                      const std::complex<Real>* input,
+                      std::complex<Real>* grid,
+                      std::complex<Real>* /*scratch*/)
+{
+    base_device::memory::synchronize_memory_op<std::complex<Real>,
+                                               base_device::DEVICE_GPU,
+                                               base_device::DEVICE_CPU>()(grid, input, size);
+}
+
+template <typename Real>
+void upload_fft_input(const int size,
+                      const Real* input,
+                      std::complex<Real>* grid,
+                      std::complex<Real>* scratch)
+{
+    // A complex allocation also stores the contiguous real input before its FFT coefficients are gathered.
+    auto* real_input = reinterpret_cast<Real*>(scratch);
+    base_device::memory::synchronize_memory_op<Real, base_device::DEVICE_GPU, base_device::DEVICE_CPU>()(
+        real_input, input, size);
+    pack_real_grid_gpu(size, real_input, grid);
+}
+
+template <typename Real>
+Real* prepare_inverse_output(const int size,
+                             const bool add,
+                             const Real factor,
+                             std::complex<Real>* grid,
+                             Real* output)
+{
+    extract_real_grid_gpu(size, add, factor, grid, output);
+    return output;
+}
+
+template <typename Real>
+std::complex<Real>* prepare_inverse_output(const int size,
+                                           const bool add,
+                                           const Real factor,
+                                           std::complex<Real>* grid,
+                                           std::complex<Real>* output)
+{
+    if (!add)
+    {
+        return grid;
+    }
+    set_recip_to_real_output_op<Real, base_device::DEVICE_GPU>()(size, true, factor, grid, output);
+    return output;
+}
+
+template <typename Input, typename Real>
+void real2recip_host_to_device(const PW_Basis& basis,
+                               const Input* in,
+                               std::complex<Real>* out,
+                               const bool add,
+                               const Real factor)
+{
+    using Complex = std::complex<Real>;
+    int scratch_size = basis.npw;
+    if (std::is_same<Input, Real>::value)
+    {
+        scratch_size = std::max(scratch_size, (basis.nrxx + 1) / 2);
+    }
+    Complex* scratch = nullptr;
+    base_device::memory::resize_memory_op<Complex, base_device::DEVICE_GPU>()(scratch, scratch_size);
+    auto* grid = basis.fft3d_bundle.template get_auxr_3d_data<Real>();
+    upload_fft_input(basis.nrxx, in, grid, scratch);
+    basis.fft3d_bundle.fft3D_forward(grid, grid);
+    if (add)
+    {
+        base_device::memory::synchronize_memory_op<Complex, base_device::DEVICE_GPU, base_device::DEVICE_CPU>()(
+            scratch, out, basis.npw);
+    }
+    // Evaluating the reciprocal scale before multiplication preserves the host transform's rounding order.
+    const Real scale = (add ? factor : Real(1)) / Real(basis.nxyz);
+    gather_fft_coefficients_gpu(basis.npw, add, scale, basis.ig2ixyz_gpu, grid, scratch);
+    base_device::memory::synchronize_memory_op<Complex, base_device::DEVICE_CPU, base_device::DEVICE_GPU>()(
+        out, scratch, basis.npw);
+    base_device::memory::delete_memory_op<Complex, base_device::DEVICE_GPU>()(scratch);
+}
+
+template <typename Real, typename Output>
+void recip2real_device_to_host(const PW_Basis& basis,
+                               const std::complex<Real>* in,
+                               Output* out,
+                               const bool add,
+                               const Real factor)
+{
+    using Complex = std::complex<Real>;
+    int scratch_size = basis.npw;
+    if (std::is_same<Output, Real>::value)
+    {
+        scratch_size = std::max(scratch_size, (basis.nrxx + 1) / 2);
+    }
+    else if (add)
+    {
+        scratch_size = std::max(scratch_size, basis.nrxx);
+    }
+    Complex* scratch = nullptr;
+    base_device::memory::resize_memory_op<Complex, base_device::DEVICE_GPU>()(scratch, scratch_size);
+    base_device::memory::synchronize_memory_op<Complex, base_device::DEVICE_GPU, base_device::DEVICE_CPU>()(
+        scratch, in, basis.npw);
+    auto* grid = basis.fft3d_bundle.template get_auxr_3d_data<Real>();
+    base_device::memory::set_memory_op<Complex, base_device::DEVICE_GPU>()(grid, 0, basis.nxyz);
+    set_3d_fft_box_op<Real, base_device::DEVICE_GPU>()(basis.npw, basis.ig2ixyz_gpu, scratch, grid);
+    basis.fft3d_bundle.fft3D_backward(grid, grid);
+    auto* result = reinterpret_cast<Output*>(scratch);
+    if (add)
+    {
+        base_device::memory::synchronize_memory_op<Output, base_device::DEVICE_GPU, base_device::DEVICE_CPU>()(
+            result, out, basis.nrxx);
+    }
+    result = prepare_inverse_output(basis.nrxx, add, factor, grid, result);
+    base_device::memory::synchronize_memory_op<Output, base_device::DEVICE_CPU, base_device::DEVICE_GPU>()(
+        out, result, basis.nrxx);
+    base_device::memory::delete_memory_op<Complex, base_device::DEVICE_GPU>()(scratch);
+}
+
+inline bool use_host_gpu_density_transform(const PW_Basis& basis)
+{
+    return basis.get_device() == "gpu" && basis.poolnproc == 1 && !basis.gamma_only
+           && basis.ig2ixyz_gpu != nullptr
+           && basis.fft3d_bundle.template get_auxr_3d_data<double>() != nullptr;
+}
+
+template <typename Input, typename Real>
+void maybe_real2recip_host_to_device(const PW_Basis& basis,
+                                     const Input* in,
+                                     std::complex<Real>* out,
+                                     const bool add,
+                                     const Real factor,
+                                     bool& handled)
+{
+    handled = false;
+    if (use_host_gpu_density_transform(basis))
+    {
+        real2recip_host_to_device(basis, in, out, add, factor);
+        handled = true;
+    }
+}
+
+template <typename Real, typename Output>
+void maybe_recip2real_device_to_host(const PW_Basis& basis,
+                                     const std::complex<Real>* in,
+                                     Output* out,
+                                     const bool add,
+                                     const Real factor,
+                                     bool& handled)
+{
+    handled = false;
+    if (use_host_gpu_density_transform(basis))
+    {
+        recip2real_device_to_host(basis, in, out, add, factor);
+        handled = true;
+    }
+}
+#endif
 } // namespace
 
 //     const base_device::DEVICE_CPU* PW_Basis::get_default_device_ctx() {
@@ -58,6 +218,14 @@ void PW_Basis::real2recip(const std::complex<FPTYPE>* in,
                           const FPTYPE factor) const
 {
     ModuleBase::timer::start(this->classname, "real2recip");
+#if defined(__CUDA)
+    if (use_host_gpu_density_transform(*this))
+    {
+        real2recip_host_to_device(*this, in, out, add, factor);
+        ModuleBase::timer::end(this->classname, "real2recip");
+        return;
+    }
+#endif
 
     assert(this->gamma_only == false);
     const int nrxx_ = this->nrxx;
@@ -150,6 +318,14 @@ template <typename FPTYPE>
 void PW_Basis::real2recip(const FPTYPE* in, std::complex<FPTYPE>* out, const bool add, const FPTYPE factor) const
 {
     ModuleBase::timer::start(this->classname, "real2recip");
+#if defined(__CUDA)
+    if (use_host_gpu_density_transform(*this))
+    {
+        real2recip_host_to_device(*this, in, out, add, factor);
+        ModuleBase::timer::end(this->classname, "real2recip");
+        return;
+    }
+#endif
     const int nrxx_ = this->nrxx;
     const int npw_ = this->npw;
     const int nxyz_ = this->nxyz;
@@ -276,6 +452,14 @@ void PW_Basis::recip2real(const std::complex<FPTYPE>* in,
                           const FPTYPE factor) const
 {
     ModuleBase::timer::start(this->classname, "recip2real");
+#if defined(__CUDA)
+    if (use_host_gpu_density_transform(*this))
+    {
+        recip2real_device_to_host(*this, in, out, add, factor);
+        ModuleBase::timer::end(this->classname, "recip2real");
+        return;
+    }
+#endif
     assert(this->gamma_only == false);
     const int nst_ = this->nst;
     const int nz_ = this->nz;
@@ -381,6 +565,14 @@ template <typename FPTYPE>
 void PW_Basis::recip2real(const std::complex<FPTYPE>* in, FPTYPE* out, const bool add, const FPTYPE factor) const
 {
     ModuleBase::timer::start(this->classname, "recip2real");
+#if defined(__CUDA)
+    if (use_host_gpu_density_transform(*this))
+    {
+        recip2real_device_to_host(*this, in, out, add, factor);
+        ModuleBase::timer::end(this->classname, "recip2real");
+        return;
+    }
+#endif
     const int nst_ = this->nst;
     const int nz_ = this->nz;
     const int npw_ = this->npw;

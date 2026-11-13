@@ -104,87 +104,44 @@ void kerker_screen_real(const MixingConfig& cfg,
     assert(nspin == 1 || nspin == 2 || nspin == 4);
 
     /// consider a resize for mixing_angle
-    int resize_tmp = 1;
-    if (nspin == 4 && cfg.mixing_angle > 0)
-    {
-        resize_tmp = 2;
-    }
+    const int spin_channels = (nspin == 4 && cfg.mixing_angle > 0) ? 2 : nspin;
+    constexpr double magnetization_gg0_threshold = 0.0001;
+    constexpr double magnetization_beta_threshold = 0.1;
+    const bool screen_magnetization
+        = cfg.mixing_gg0_mag > magnetization_gg0_threshold && cfg.mixing_beta_mag > magnetization_beta_threshold;
+    const int screened_channels = screen_magnetization ? spin_channels : 1;
 
-    std::vector<std::complex<double>> drhog(rhopw->npw * nspin / resize_tmp);
-    std::vector<double> drhor_filter(rhopw->nrxx * nspin / resize_tmp);
-
-    for (int is = 0; is < nspin / resize_tmp; ++is)
+    std::vector<std::complex<double>> drhog(rhopw->npw);
+    std::vector<double> drhor_filter(rhopw->nrxx);
+    for (int spin = 0; spin < screened_channels; ++spin)
     {
+        double* residual = drhor + spin * rhopw->nrxx;
+        const double screening = spin == 0 ? cfg.mixing_gg0 : cfg.mixing_gg0_mag;
+        const double beta = spin == 0 ? cfg.mixing_beta : cfg.mixing_beta_mag;
+        const double gg0 = std::pow(screening * ModuleBase::BOHR_TO_A / tpiba, 2);
+        const double gg0_amin = cfg.mixing_gg0_min / beta;
         // Note after this process some G which is higher than Gmax will be filtered.
         // Thus we cannot use kerker_screen_recip(drhog.data()) directly after it.
-        rhopw->real2recip(drhor + is * rhopw->nrxx, drhog.data() + is * rhopw->npw);
-    }
-    double fac = 0.0;
-    double gg0 = 0.0;
-    double amin = 0.0;
-
-    for (int is = 0; is < nspin / resize_tmp; is++)
-    {
-
-        if (is >= 1)
-        {
-            if (cfg.mixing_gg0_mag <= 0.0001 || cfg.mixing_beta_mag <= 0.1)
-            {
-#ifdef __DEBUG
-                assert(is == 1); /// make sure break works
-#endif
-                double is_mag = nspin - 1;
-                if (nspin == 4 && cfg.mixing_angle > 0)
-                {
-                    is_mag = 1;
-                }
-                for (int ig = 0; ig < rhopw->npw * is_mag; ig++)
-                {
-                    drhog[is * rhopw->npw + ig] = 0;
-                }
-                break;
-            }
-            fac = cfg.mixing_gg0_mag;
-            amin = cfg.mixing_beta_mag;
-        }
-        else
-        {
-            fac = cfg.mixing_gg0;
-            amin = cfg.mixing_beta;
-        }
-
-        gg0 = std::pow(fac * ModuleBase::BOHR_TO_A / tpiba, 2);
-
-        const int is_idx = is * rhopw->npw;
-        const double gg0_amin = cfg.mixing_gg0_min / amin;
+        rhopw->real2recip(residual, drhog.data());
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 512)
 #endif
-        for (int ig = 0; ig < rhopw->npw; ig++)
+        for (int ig = 0; ig < rhopw->npw; ++ig)
         {
-            double gg = rhopw->gg[ig];
-            // I have not decided how to handle gg=0 part, will be changed in future
-            //if (gg == 0)
-            //{
-            //    drhog[is_idx + ig] *= 0;
-            //    continue;
-            //}
-            double filter_g = std::max(gg / (gg + gg0), gg0_amin);
-            drhog[is_idx + ig] *= (1 - filter_g);
+            const double gg = rhopw->gg[ig];
+            const double filter = std::max(gg / (gg + gg0), gg0_amin);
+            drhog[ig] *= (1 - filter);
         }
-    }
-    /// inverse FT
-    for (int is = 0; is < nspin / resize_tmp; ++is)
-    {
-        rhopw->recip2real(drhog.data() + is * rhopw->npw, drhor_filter.data() + is * rhopw->nrxx);
-    }
-
+        // Subtracting the low-frequency correction preserves residual components above the basis cutoff.
+        // A disabled magnetic filter is the identity and requires no transform.
+        rhopw->recip2real(drhog.data(), drhor_filter.data());
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 512)
 #endif
-    for (int ir = 0; ir < rhopw->nrxx * nspin / resize_tmp; ir++)
-    {
-        drhor[ir] -= drhor_filter[ir];
+        for (int ir = 0; ir < rhopw->nrxx; ++ir)
+        {
+            residual[ir] -= drhor_filter[ir];
+        }
     }
 
     ModuleBase::timer::end("module_charge", "kerker_screen_real");

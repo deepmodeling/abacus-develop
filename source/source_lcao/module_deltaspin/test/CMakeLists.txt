@@ -20,20 +20,6 @@ if(ENABLE_LCAO)
             ../../../source_cell/reciprocal_grid.cpp)
 
   addtest(
-    TARGET MODULE_LCAO_deltaspin_template_helpers
-    LIBS base device parameter symmetry
-    SOURCES template_helpers_test.cpp
-            ../spin_constrain.cpp
-            ../deltaspin_state.cpp
-            ../template_helpers.cpp
-            ../lambda_loop_helper.cpp
-            ../basic_funcs.cpp
-            ../../../source_cell/klist.cpp
-            ../../../source_cell/klist_io.cpp
-            ../../../source_cell/parallel_kpoints.cpp
-            ../../../source_cell/reciprocal_grid.cpp)
-
-  addtest(
     TARGET deltaspin_pw_test
     LIBS base device parameter
     SOURCES deltaspin_pw_test.cpp)

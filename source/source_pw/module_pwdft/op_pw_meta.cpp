@@ -26,7 +26,6 @@ Meta<OperatorPW<T, Device>>::Meta(Real tpiba_in,
     this->vk_row = vk_row;
     this->vk_col = vk_col;
     this->wfcpw = wfcpw_in;
-    resmem_complex_op()(this->porter, this->wfcpw->nmaxgr, "Meta<PW>::porter");
 
 }
 
@@ -52,6 +51,11 @@ void Meta<OperatorPW<T, Device>>::act(
     }
 
     ModuleBase::timer::start("Operator", "MetaPW");
+
+    if (this->porter == nullptr)
+    {
+        resmem_complex_op()(this->porter, this->wfcpw->nmaxgr, "Meta<PW>::porter");
+    }
     if(is_first_node)
     {
         setmem_complex_op()(tmhpsi, 0, nbasis*nbands/npol);

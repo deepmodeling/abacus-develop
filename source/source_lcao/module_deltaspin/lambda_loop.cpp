@@ -121,7 +121,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop(int out
             // STEP -1: INITIALIZATION
             // Compute initial magnetic moments and save starting state
             // =============================================================
-            this->cal_mw_from_lambda(i_step);
+            this->cal_mw_from_lambda(i_step, nullptr, ofs_running);
             spin = this->state_.get_mi();
 
             // Save initial lambda: for unconstrained components (constrain==0), set to 0
@@ -165,7 +165,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop(int out
             }
 
             // Apply lambda and compute new magnetic moments
-            this->cal_mw_from_lambda(i_step, delta_lambda.data());
+            this->cal_mw_from_lambda(i_step, delta_lambda.data(), ofs_running);
             new_spin = this->state_.get_mi();
 
             // Check if gradient dM/dlambda has decayed below threshold
@@ -175,7 +175,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop(int out
                 // Gradient has decayed: further optimization yields diminishing returns
                 // Apply the last successful step and exit
                 add_scalar_multiply_2d(initial_lambda, dnu_last_step, one, this->state_.get_lambda());
-                this->update_psi_charge(dnu_last_step.data(), true, true);
+                this->update_psi_charge(dnu_last_step.data(), true, true, ofs_running);
 #ifdef __MPI
                 duration = (double)(MPI_Wtime() - iterstart);
 #else
@@ -263,7 +263,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop(int out
             // Save RMS for ESolver to display in the SCF iteration table.
             this->last_rms_error_ = rms_error;
             // Converged or max steps reached: final update
-            this->update_psi_charge(dnu_last_step.data(), rerun, true);
+            this->update_psi_charge(dnu_last_step.data(), rerun, true, ofs_running);
 
             // [PW basis] Extra verification: re-compute Mi from scratch
             if(PARAM.inp.basis_type == "pw")
@@ -349,7 +349,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop(int out
         // =============================================================
         // TRIAL STEP: compute Mi at trial position
         // =============================================================
-        this->cal_mw_from_lambda(i_step, delta_lambda.data());
+        this->cal_mw_from_lambda(i_step, delta_lambda.data(), ofs_running);
         spin_plus = this->state_.get_mi();
 
         // Find optimal step size via linear interpolation
