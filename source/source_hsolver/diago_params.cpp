@@ -16,8 +16,7 @@ void setup_diago_params_pw(const int istep,
     DiagoIterAssist<T, Device>::SCF_ITER = iter;
     DiagoIterAssist<T, Device>::PW_DIAG_THR = ethr;
 
-    // PPCG also uses the configured iteration budget for NSCF calculations.
-    if (inp.calculation != "nscf" || inp.ks_solver == "ppcg")
+    if (inp.calculation != "nscf")
     {
         DiagoIterAssist<T, Device>::PW_DIAG_NMAX = inp.pw_diag_nmax;
     }

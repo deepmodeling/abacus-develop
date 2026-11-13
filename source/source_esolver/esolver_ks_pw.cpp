@@ -305,6 +305,12 @@ void ESolver_KS_PW<T, Device>::hamilt2rho_single(UnitCell& ucell, const int iste
 
     if (!skip_solve)
     {
+        // PPCG takes its iteration budget directly from INPUT in every calculation mode.
+        int diag_iter_max = hsolver::DiagoIterAssist<T, Device>::PW_DIAG_NMAX;
+        if (this->inp_->ks_solver == "ppcg")
+        {
+            diag_iter_max = this->inp_->pw_diag_nmax;
+        }
         hsolver::HSolverPW<T, Device> hsolver_pw_obj(this->pw_wfc,
                                                      this->inp_->calculation,
                                                      this->inp_->basis_type,
@@ -312,7 +318,7 @@ void ESolver_KS_PW<T, Device>::hamilt2rho_single(UnitCell& ucell, const int iste
                                                      PARAM.globalv.use_uspp,
                                                      this->inp_->nspin,
                                                      hsolver::DiagoIterAssist<T, Device>::SCF_ITER,
-                                                     hsolver::DiagoIterAssist<T, Device>::PW_DIAG_NMAX,
+                                                     diag_iter_max,
                                                      hsolver::DiagoIterAssist<T, Device>::PW_DIAG_THR,
                                                      hsolver::DiagoIterAssist<T, Device>::need_subspace,
                                                      this->inp_->nbands,

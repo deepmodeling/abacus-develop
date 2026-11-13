@@ -290,7 +290,7 @@ class TestHSolverPW : public ::testing::Test
             false,
             1,
             DiagoAssist::SCF_ITER,
-            DiagoAssist::PW_DIAG_NMAX,
+            inp.pw_diag_nmax,
             DiagoAssist::PW_DIAG_THR,
             DiagoAssist::need_subspace,
             2,
@@ -672,22 +672,23 @@ TEST_F(TestHSolverPW, PPCGConvergedDispatchHasNoWarning)
     EXPECT_NEAR(eigenvalues[1], 2.0, 1.0e-12);
 }
 
-TEST_F(TestHSolverPW, PPCGNscfDispatchUsesConfiguredBudget)
+TEST_F(TestHSolverPW, PPCGNscfDispatchUsesExplicitBudget)
 {
     DiagoAssist::PW_DIAG_NMAX = 30;
     std::ostringstream log;
     const std::vector<double> eigenvalues = run_ppcg_dispatch("nscf", false, 77, log);
+    EXPECT_EQ(DiagoAssist::PW_DIAG_NMAX, 30);
     EXPECT_EQ(log.str().find("PPCG did not converge"), std::string::npos);
     EXPECT_NEAR(eigenvalues[0], 1.0, 1.0e-12);
     EXPECT_NEAR(eigenvalues[1], 2.0, 1.0e-12);
 }
 
-TEST_F(TestHSolverPW, DiagoParamsPreservesOtherNscfSolverBudgets)
+TEST_F(TestHSolverPW, DiagoParamsPreservesNscfSolverBudgets)
 {
     Input_para inp;
     inp.calculation = "nscf";
     inp.pw_diag_nmax = 77;
-    for (const std::string solver : {"cg", "dav", "dav_subspace", "bpcg"})
+    for (const std::string solver : {"cg", "dav", "dav_subspace", "bpcg", "ppcg"})
     {
         SCOPED_TRACE(solver);
         inp.ks_solver = solver;
