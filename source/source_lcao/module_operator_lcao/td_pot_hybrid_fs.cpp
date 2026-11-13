@@ -34,8 +34,7 @@ void TD_pot_hybrid<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
             const int T2 = adjs.ntype[ad1];
             const int I2 = adjs.natom[ad1];
             const int iat2 = ucell->itia2iat(T2, I2);
-            const AtomBasisView cols = this->td_info_->col_basis(iat2);
-            if (rows.empty() || cols.empty())
+            if (dmR->row_basis_offsets(iat1).empty() || dmR->col_basis_offsets(iat2).empty())
             {
                 continue;
             }
@@ -69,7 +68,7 @@ void TD_pot_hybrid<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
             const BaseMatrix<TR>* tmp = dmR->find_matrix(iat1, iat2, R_index2);
             if (tmp != nullptr)
             {
-                this->cal_force_IJR(iat1, iat2, dtau, dR, tmp->get_pointer(), force_tmp1, force_tmp2);
+                this->cal_force_IJR(iat1, iat2, *dmR, dtau, dR, tmp->get_pointer(), force_tmp1, force_tmp2);
             }
             else
             {
@@ -105,6 +104,7 @@ void TD_pot_hybrid<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
 template <>
 void TD_pot_hybrid<OperatorLCAO<std::complex<double>, std::complex<double>>>::cal_force_IJR(const int& iat1,
                                                                             const int& iat2,
+                                                                            const HContainer<std::complex<double>>& dmR,
                                                                             const ModuleBase::Vector3<double>& dtau,
                                                                             const ModuleBase::Vector3<double>& dR,
                                                                             std::complex<double>* dmR_pointer,
@@ -116,6 +116,7 @@ void TD_pot_hybrid<OperatorLCAO<std::complex<double>, std::complex<double>>>::ca
 template <typename TK, typename TR>
 void TD_pot_hybrid<OperatorLCAO<TK, TR>>::cal_force_IJR(const int& iat1,
                                                         const int& iat2,
+                                                        const HContainer<TR>& dmR,
                                                         const ModuleBase::Vector3<double>& dtau,
                                                         const ModuleBase::Vector3<double>& dR,
                                                         TR* dmR_pointer,
@@ -143,22 +144,22 @@ void TD_pot_hybrid<OperatorLCAO<TK, TR>>::cal_force_IJR(const int& iat1,
     // calculate the Ekinetic matrix for each pair of orbitals
     // ---------------------------------------------
     double olm[3] = {0, 0, 0};
-    const AtomBasisView rows = this->td_info_->row_basis(iat1);
-    const AtomBasisView cols = this->td_info_->col_basis(iat2);
-    const int step_trace = cols.nloc() + 1;
+    const std::vector<int> row_indexes = dmR.row_basis_offsets(iat1);
+    const std::vector<int> col_indexes = dmR.col_basis_offsets(iat2);
+    const int step_trace = col_indexes.size() + 1;
     ModuleBase::Vector3<double> shift = {0.0, 0.0, 1.0};
     const ModuleBase::Vector3<double>& tau1 = this->ucell->get_tau(iat1);
     const ModuleBase::Vector3<double> tau2 = tau1 + dtau;
-    for (int iw1l = 0; iw1l < rows.nloc(); iw1l++)
+    for (std::size_t iw1l = 0; iw1l < row_indexes.size(); ++iw1l)
     {
-        const int iw1 = rows[iw1l];
+        const int iw1 = row_indexes[iw1l];
         const int L1 = iw2l1[iw1];
         const int N1 = iw2n1[iw1];
         const int m1 = iw2m1[iw1];
 
-        for (int iw2l = 0; iw2l < cols.nloc(); iw2l++)
+        for (std::size_t iw2l = 0; iw2l < col_indexes.size(); ++iw2l)
         {
-            const int iw2 = cols[iw2l];
+            const int iw2 = col_indexes[iw2l];
             const int L2 = iw2l2[iw2];
             const int N2 = iw2n2[iw2];
             const int m2 = iw2m2[iw2];
@@ -187,12 +188,14 @@ template void TD_pot_hybrid<OperatorLCAO<std::complex<double>, std::complex<doub
 // Note: <complex<double>,complex<double>> has a template<> specialization above
 template void TD_pot_hybrid<OperatorLCAO<double, double>>::cal_force_IJR(
     const int& iat1, const int& iat2,
+    const HContainer<double>& dmR,
     const ModuleBase::Vector3<double>& dtau,
     const ModuleBase::Vector3<double>& dR,
     double* dmR_pointer,
     double* force1, double* force2);
 template void TD_pot_hybrid<OperatorLCAO<std::complex<double>, double>>::cal_force_IJR(
     const int& iat1, const int& iat2,
+    const HContainer<double>& dmR,
     const ModuleBase::Vector3<double>& dtau,
     const ModuleBase::Vector3<double>& dR,
     double* dmR_pointer,

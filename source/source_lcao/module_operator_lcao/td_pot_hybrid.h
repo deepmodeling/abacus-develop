@@ -125,6 +125,7 @@ class TD_pot_hybrid<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
 
     void cal_force_IJR(const int& iat1,
                     const int& iat2,
+                    const HContainer<TR>& dmR,
                     const ModuleBase::Vector3<double>& dtau,     
                     const ModuleBase::Vector3<double>& dR,                  
                     TR* dmR_pointer,
