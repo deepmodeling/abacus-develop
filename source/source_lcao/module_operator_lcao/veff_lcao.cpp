@@ -60,9 +60,6 @@ void Veff<OperatorLCAO<TK, TR>>::initialize_HR(const UnitCell* ucell_in, const G
     ModuleBase::timer::start("Veff", "initialize_HR");
 
     this->nspin = PARAM.inp.nspin;
-    auto* paraV = this->hR->get_paraV();// get parallel orbitals from HR
-    // TODO: if paraV is nullptr, AtomPair can not use paraV for constructor, I will repair it in the future.
-
     for (int iat1 = 0; iat1 < ucell_in->nat; iat1++)
     {
         auto tau1 = ucell_in->get_tau(iat1);
@@ -76,7 +73,7 @@ void Veff<OperatorLCAO<TK, TR>>::initialize_HR(const UnitCell* ucell_in, const G
             const int T2 = adjs.ntype[ad1];
             const int I2 = adjs.natom[ad1];
             const int iat2 = ucell_in->itia2iat(T2, I2);
-            if (paraV->is_invalid_atom_pair(iat1, iat2))
+            if (!this->hR->owns_atom_pair(iat1, iat2))
             {
                 continue;
             }
@@ -88,8 +85,7 @@ void Veff<OperatorLCAO<TK, TR>>::initialize_HR(const UnitCell* ucell_in, const G
             if (ucell_in->cal_dtau(iat1, iat2, R_index2).norm() * ucell_in->lat0
                 < orb_cutoff_[T1] + orb_cutoff_[T2])
             {
-                hamilt::AtomPair<TR> tmp(iat1, iat2, R_index2, paraV);
-                this->hR->insert_pair(tmp);
+                this->hR->insert_pair(iat1, iat2, R_index2);
             }
         }
     }

@@ -53,8 +53,6 @@ void populate_atom_pairs(hamilt::HContainer<TR>* container,
                          const std::vector<double>& orb_cutoff,
                          std::function<void(int, int, int, ModuleBase::Vector3<double>&)> dtau_modifier = nullptr)
 {
-    const Parallel_Orbitals* paraV = container->get_paraV();
-
     for (int iat1 = 0; iat1 < ucell->nat; iat1++)
     {
         const auto tau1 = ucell->get_tau(iat1);
@@ -73,7 +71,7 @@ void populate_atom_pairs(hamilt::HContainer<TR>* container,
             const int iat2 = ucell->itia2iat(T2, I2);
 
             // Skip if atom pair has no local orbitals in parallel distribution
-            if (paraV->is_invalid_atom_pair(iat1, iat2))
+            if (!container->owns_atom_pair(iat1, iat2))
             {
                 continue;
             }
@@ -98,8 +96,7 @@ void populate_atom_pairs(hamilt::HContainer<TR>* container,
                 continue;
             }
 
-            hamilt::AtomPair<TR> atom_pair(iat1, iat2, R_index, paraV);
-            container->insert_pair(atom_pair);
+            container->insert_pair(iat1, iat2, R_index);
         }
     }
 
@@ -231,12 +228,12 @@ void Overlap<OperatorLCAO<double, double>>::contributeHk(int ik)
     this->hsk->set_zero_sk();
     if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
     {
-        const int nrow = this->SR->get_atom_pair(0).get_paraV()->para_2d().nrloc();
+        const int nrow = this->para_layout_.nrloc();
         folding_HR(*this->SR, this->hsk->get_sk(), this->kvec_d[ik], nrow, 1);
     }
     else
     {
-        const int ncol = this->SR->get_atom_pair(0).get_paraV()->para_2d().ncloc();
+        const int ncol = this->para_layout_.ncloc();
         folding_HR(*this->SR, this->hsk->get_sk(), this->kvec_d[ik], ncol, 0);
     }
     
@@ -255,7 +252,7 @@ void Overlap<OperatorLCAO<TK, TR>>::contributeHk(int ik)
     this->hsk->set_zero_sk();
     if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
     {
-        const int nrow = this->SR->get_atom_pair(0).get_paraV()->para_2d().nrloc();
+        const int nrow = this->para_layout_.nrloc();
         if(this->td_info_ != nullptr && this->td_info_->field().gauge() == 2)
         {
             module_rt::folding_HR_td(*this->SR, this->hsk->get_sk(), this->kvec_d[ik], this->td_info_->endpoint_A(), this->td_info_->get_phase_hybrid(), nrow, 1);
@@ -267,7 +264,7 @@ void Overlap<OperatorLCAO<TK, TR>>::contributeHk(int ik)
     }
     else
     {
-        const int ncol = this->SR->get_atom_pair(0).get_paraV()->para_2d().ncloc();
+        const int ncol = this->para_layout_.ncloc();
         if(this->td_info_ != nullptr && this->td_info_->field().gauge() == 2)
         {
             module_rt::folding_HR_td(*this->SR, this->hsk->get_sk(), this->kvec_d[ik], this->td_info_->endpoint_A(), this->td_info_->get_phase_hybrid(), ncol, 0);

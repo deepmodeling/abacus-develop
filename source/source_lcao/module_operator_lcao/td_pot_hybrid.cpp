@@ -69,8 +69,7 @@ void hamilt::TD_pot_hybrid<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(const Gr
             const int T2 = adjs.ntype[ad1];
             const int I2 = adjs.natom[ad1];
             const int iat2 = ucell->itia2iat(T2, I2);
-            const AtomBasisView cols = this->td_info_->col_basis(iat2);
-            if (rows.empty() || cols.empty())
+            if (!this->hR->owns_atom_pair(iat1, iat2))
             {
                 continue;
             }

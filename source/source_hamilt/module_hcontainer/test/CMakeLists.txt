@@ -37,18 +37,6 @@ if(ENABLE_LCAO)
             ../../../source_basis/module_ao/parallel_orbitals.cpp
             tmp_mocks.cpp)
 
-  addtest(
-    TARGET MODULE_LCAO_hcontainer_transfer_test
-    LIBS parameter psi base device
-    SOURCES test_transfer.cpp
-            ../func_transfer.cpp
-            ../base_matrix.cpp
-            ../hcontainer.cpp
-            ../atom_pair.cpp
-            ../transfer.cpp
-            ../../../source_basis/module_ao/parallel_orbitals.cpp
-            tmp_mocks.cpp)
-
   abacus_copy_test_files(parallel_hcontainer_tests.sh)
   find_program(BASH bash)
   add_test(

@@ -327,6 +327,30 @@ bool HContainer<T>::same_layout(const AtomPair<T>& atom_pair) const
     return atom_pair.get_paraV() == nullptr && rows_match && cols_match;
 }
 
+template <typename T>
+bool HContainer<T>::owns_atom_pair(const int iat1, const int iat2) const
+{
+    if (iat1 < 0 || iat1 >= static_cast<int>(this->sparse_ap.size()) || iat2 < 0
+        || iat2 >= static_cast<int>(this->sparse_ap.size()))
+    {
+        return false;
+    }
+    if (this->basis_index != nullptr)
+    {
+        const AtomBasisView rows
+            = AtomBasisView::rows(*this->basis_index, *this->matrix_dist, iat1);
+        const AtomBasisView cols
+            = AtomBasisView::cols(*this->basis_index, *this->matrix_dist, iat2);
+        return !rows.empty() && !cols.empty();
+    }
+    if (this->paraV != nullptr)
+    {
+        return !this->paraV->is_invalid_atom_pair(iat1, iat2);
+    }
+    ModuleBase::WARNING_QUIT("HContainer::owns_atom_pair", "matrix layout is not initialized");
+    return false;
+}
+
 // allocate
 template <typename T>
 void HContainer<T>::allocate(T* data_array, bool is_zero)

@@ -53,9 +53,6 @@ void Nonlocal<OperatorLCAO<TK, TR>>::initialize_HR(const Grid_Driver* GridD)
     ModuleBase::TITLE("Nonlocal", "initialize_HR");
     ModuleBase::timer::start("Nonlocal", "initialize_HR");
 
-    auto* paraV = this->hR->get_paraV();// get parallel orbitals from HR
-    // TODO: if paraV is nullptr, AtomPair can not use paraV for constructor, I will repair it in the future.
-
     this->adjs_all.clear();
     this->adjs_all.reserve(this->ucell->nat);
     for (int iat0 = 0; iat0 < ucell->nat; iat0++)
@@ -97,17 +94,15 @@ void Nonlocal<OperatorLCAO<TK, TR>>::initialize_HR(const Grid_Driver* GridD)
                 const int I2 = adjs.natom[ad2];
                 const int iat2 = ucell->itia2iat(T2, I2);
                 ModuleBase::Vector3<int>& R_index2 = adjs.box[ad2];
-                if (paraV->is_invalid_atom_pair(iat1, iat2))
+                if (!this->hR->owns_atom_pair(iat1, iat2))
                 {
                     continue;
                 }
-                AtomPair<TR> tmp(iat1,
-                                         iat2,
-                                         R_index2.x - R_index1.x,
-                                         R_index2.y - R_index1.y,
-                                         R_index2.z - R_index1.z,
-                                         paraV);
-                this->hR->insert_pair(tmp);
+                const ModuleBase::Vector3<int> R_index(
+                    R_index2.x - R_index1.x,
+                    R_index2.y - R_index1.y,
+                    R_index2.z - R_index1.z);
+                this->hR->insert_pair(iat1, iat2, R_index);
             }
         }
     }

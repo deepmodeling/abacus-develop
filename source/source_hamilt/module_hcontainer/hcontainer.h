@@ -235,9 +235,24 @@ class HContainer
     void insert_pair(const AtomPair<T>& atom_ij);
 
     void insert_pair(const int iat1, const int iat2);
+    /**
+     * @brief Insert an atom pair using this container's matrix layout.
+     *
+     * The row and column block geometry is derived from the same basis and
+     * matrix distribution used by this container. The pair must satisfy
+     * owns_atom_pair().
+     */
     void insert_pair(const int iat1,
                      const int iat2,
                      const ModuleBase::Vector3<int>& R_index);
+
+    /**
+     * @brief Test whether this process has local row and column basis blocks for an atom pair.
+     *
+     * Absence means the pair has no local matrix block and must be skipped. It
+     * does not imply that the physical matrix element is zero.
+     */
+    bool owns_atom_pair(int iat1, int iat2) const;
 
     /**
      * @brief find AtomPair with atom index atom_i and atom_j

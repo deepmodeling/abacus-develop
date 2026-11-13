@@ -1,4 +1,4 @@
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
 #include "source_base/atom_basis_view.h"
 #include "source_base/basis_flattened_indexing.h"
 #include "source_base/element_basis_index.h"
@@ -237,6 +237,39 @@ TEST_F(TransferTest, BasisFlattenedLayoutMatchesParallelOrbitals)
         EXPECT_EQ(basis_pair.get_begin_col(), orbital_pair->get_begin_col());
         EXPECT_EQ(basis_pair.get_row_size(), orbital_pair->get_row_size());
         EXPECT_EQ(basis_pair.get_col_size(), orbital_pair->get_col_size());
+    }
+
+    hamilt::HContainer<double> from_basis_inserted(basis, paraV->para_2d());
+    hamilt::HContainer<double> from_orbital_inserted(paraV);
+    for (int iap = 0; iap < HR_para->size_atom_pairs(); ++iap)
+    {
+        const hamilt::AtomPair<double>& source_pair = HR_para->get_atom_pair(iap);
+        const int iat1 = source_pair.get_atom_i();
+        const int iat2 = source_pair.get_atom_j();
+        EXPECT_TRUE(from_basis_inserted.owns_atom_pair(iat1, iat2));
+        EXPECT_TRUE(from_orbital_inserted.owns_atom_pair(iat1, iat2));
+        for (int ir = 0; ir < source_pair.get_R_size(); ++ir)
+        {
+            const ModuleBase::Vector3<int> R_index = source_pair.get_R_index(ir);
+            from_basis_inserted.insert_pair(iat1, iat2, R_index);
+            from_orbital_inserted.insert_pair(iat1, iat2, R_index);
+        }
+    }
+    EXPECT_FALSE(from_basis_inserted.owns_atom_pair(-1, 0));
+    EXPECT_FALSE(from_orbital_inserted.owns_atom_pair(0, test_size));
+    ASSERT_EQ(from_basis_inserted.size_atom_pairs(), HR_para->size_atom_pairs());
+    ASSERT_EQ(from_orbital_inserted.size_atom_pairs(), HR_para->size_atom_pairs());
+    for (int iap = 0; iap < from_basis_inserted.size_atom_pairs(); ++iap)
+    {
+        const hamilt::AtomPair<double>& basis_pair = from_basis_inserted.get_atom_pair(iap);
+        const hamilt::AtomPair<double>* orbital_pair
+            = from_orbital_inserted.find_pair(basis_pair.get_atom_i(), basis_pair.get_atom_j());
+        ASSERT_NE(orbital_pair, nullptr);
+        EXPECT_EQ(basis_pair.get_begin_row(), orbital_pair->get_begin_row());
+        EXPECT_EQ(basis_pair.get_begin_col(), orbital_pair->get_begin_col());
+        EXPECT_EQ(basis_pair.get_row_size(), orbital_pair->get_row_size());
+        EXPECT_EQ(basis_pair.get_col_size(), orbital_pair->get_col_size());
+        EXPECT_EQ(basis_pair.get_R_size(), orbital_pair->get_R_size());
     }
 }
 
