@@ -13,6 +13,7 @@
 #include "source_base/parallel_global.h"
 #include "source_estate/module_charge/chg_mix.h"
 #include "source_pw/module_dfpt/dfpt_pw.h"
+#include "source_pw/module_dfpt/dfpt_pw_data.h"
 #include "source_pw/module_pwdft/dftu_base.h"
 
 // ctor/dtor stubs for the cell/spepot/charge link closures live in the
@@ -157,4 +158,33 @@ TEST_F(DFPT_PWRunTest, DftuReservationWithProviderRejectsInit)
         },
         ::testing::ExitedWithCode(1),
         "DFT\\+U with DFPT is not supported");
+}
+
+TEST(DFPT_PWForwarding, LinKnobsReachDataLayer)
+{
+    // Public-forwarding check of the dedicated Sternheimer knobs: the
+    // setters only touch Impl::data_ and DFPT_PW constructs its Impl in
+    // the default constructor, so the whole path is inspectable before
+    // init() with no basis or pseudopotential setup (the data-layer
+    // inheritance semantics themselves are pinned by
+    // DFPT_PW_DataTest.LinSolverKnobsInheritByDefault).
+    ModuleDFPT::DFPT_PW dfpt;
+    // unset knobs inherit the outer values through the public path
+    dfpt.set_conv_thr(1e-8);
+    dfpt.set_max_iter(100);
+    EXPECT_DOUBLE_EQ(dfpt.get_data().get_lin_conv_thr(), 1e-8);
+    EXPECT_EQ(dfpt.get_data().get_lin_max_iter(), 100);
+
+    // explicit pins survive later outer changes (getter-side fallback
+    // without memory: sentinel reset is covered at the data layer)
+    dfpt.set_lin_conv_thr(1e-6);
+    dfpt.set_lin_max_iter(30);
+    EXPECT_DOUBLE_EQ(dfpt.get_data().get_lin_conv_thr(), 1e-6);
+    EXPECT_EQ(dfpt.get_data().get_lin_max_iter(), 30);
+    dfpt.set_conv_thr(1e-10);
+    dfpt.set_max_iter(45);
+    EXPECT_DOUBLE_EQ(dfpt.get_data().get_conv_thr(), 1e-10);
+    EXPECT_EQ(dfpt.get_data().get_max_iter(), 45);
+    EXPECT_DOUBLE_EQ(dfpt.get_data().get_lin_conv_thr(), 1e-6);
+    EXPECT_EQ(dfpt.get_data().get_lin_max_iter(), 30);
 }

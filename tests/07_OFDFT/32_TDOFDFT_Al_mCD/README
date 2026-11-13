@@ -1,1 +1,11 @@
 Test case with modified current dependent potential (alpha=2.0) in TDOFDFT
+
+The stress reference uses the same order-10 B-spline structure factors as the
+Ewald energy. Replacing the former per-atom reciprocal stress changes the final
+totalstressref fingerprint from 181323.302533 to 181323.286697 kbar; this
+fingerprint sums the absolute values of all nine stress components.
+At the final MD configuration, the largest Ewald component change is
+0.00263860 kbar. All six components agree with central energy-strain differences
+at steps 3e-5 and 1e-5 to within 4.5e-6 kbar. Restoring only the former Ewald
+stress in a comparison executable passes the original reference. The energy,
+force, MD input, and stress tolerance (0.01 kbar) are unchanged.
