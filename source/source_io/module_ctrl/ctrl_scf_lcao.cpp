@@ -158,7 +158,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
         ModuleBase::ensure_directory(global_dos_dir);
         ModuleIO::write_dos_lcao(psi,
                                  p_hamilt,
-                                 pv,
+                                 pv.para_2d(),
                                  ucell,
                                  kv,
                                  inp.nbands,

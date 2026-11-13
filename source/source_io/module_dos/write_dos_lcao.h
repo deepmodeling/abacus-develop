@@ -5,9 +5,9 @@
 #include "source_cell/klist.h"  // use K_Vectors
 #include "source_psi/psi.h"     // use psi::Psi<T>
 #include "source_hamilt/hamilt.h" // use hamilt::Hamilt<T>
-#include "source_basis/module_ao/parallel_orbitals.h" // use Parallel_Orbitals
 #include "source_estate/fp_energy.h" // use elecstate::Efermi
 
+class Parallel_Blkcyclic;
 
 namespace ModuleIO
 {
@@ -18,7 +18,7 @@ namespace ModuleIO
     void write_dos_lcao(
         const psi::Psi<T>* psi,      // LCAO wave functions
         hamilt::Hamilt<T>* p_ham,    // Hamiltonian
-        const Parallel_Orbitals &pv, // Parallel scheme for LCAO wave functions
+        const Parallel_Blkcyclic& dist,
         const UnitCell& ucell,       // Unit cell information
         const K_Vectors& kv,         // k-point information in Brillouin zone
         const int nbands,            // Number of bands

@@ -10,7 +10,7 @@ template <typename T>
 void write_dos_lcao(
         const psi::Psi<T>* psi,
         hamilt::Hamilt<T>* p_ham,
-        const Parallel_Orbitals &pv, 
+        const Parallel_Blkcyclic& dist,
         const UnitCell& ucell,
         const K_Vectors& kv,
         const int nbands,
@@ -93,7 +93,7 @@ void write_dos_lcao(
     // out_dos >= 1: always compute PDOS alongside DOS (LCAO only)
     cal_pdos(psi,
             p_ham,
-            pv,
+            dist,
             ucell,
             kv,
             nspin0,
@@ -118,7 +118,7 @@ void write_dos_lcao(
 template void write_dos_lcao(
         const psi::Psi<double>* psi,
         hamilt::Hamilt<double>* p_ham,
-        const Parallel_Orbitals &pv, 
+        const Parallel_Blkcyclic& dist,
         const UnitCell& ucell,
         const K_Vectors& kv,
         const int nbands,
@@ -145,7 +145,7 @@ template void write_dos_lcao(
 template void write_dos_lcao(
         const psi::Psi<std::complex<double>>* psi,
         hamilt::Hamilt<std::complex<double>>* p_ham,
-        const Parallel_Orbitals &pv, 
+        const Parallel_Blkcyclic& dist,
         const UnitCell& ucell,
         const K_Vectors& kv,
         const int nbands,

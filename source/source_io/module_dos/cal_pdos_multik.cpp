@@ -3,6 +3,7 @@
 #include "source_base/parallel_reduce.h"
 #include "source_base/module_external/blas_connector.h"
 #include "source_base/module_external/scalapack_connector.h"
+#include "source_base/parallel_blkcyc.h"
 #include "source_io/module_output/write_orb_info.h"
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
@@ -11,7 +12,7 @@
 void ModuleIO::cal_pdos(
 		const psi::Psi<std::complex<double>>* psi,
 		hamilt::Hamilt<std::complex<double>>* p_ham,
-		const Parallel_Orbitals& pv,
+		const Parallel_Blkcyclic& dist,
 		const UnitCell& ucell,
 		const K_Vectors& kv,
 		const int nspin0,
@@ -59,7 +60,7 @@ void ModuleIO::cal_pdos(
     {
         std::vector<ModuleBase::ComplexMatrix> mulk;
         mulk.resize(1);
-        mulk[0].create(pv.para_2d().ncloc(), pv.para_2d().nrloc());
+        mulk[0].create(dist.ncloc(), dist.nrloc());
 
         for (int ik = 0; ik < kv.get_nks(); ik++)
         {
@@ -127,17 +128,17 @@ void ModuleIO::cal_pdos(
                             sk,
                             &one_int,
                             &one_int,
-                            pv.para_2d().desc(),
+                            dist.desc(),
                             p_dwfc,
                             &one_int,
                             &nb,
-                            pv.para_2d().desc(),
+                            dist.desc(),
                             &one_int,
                             &zero_float[0],
                             mulk[0].c,
                             &one_int,
                             &nb,
-                            pv.para_2d().desc(),
+                            dist.desc(),
                             &one_int);
 #else
                     // Serial fallback: mulk = S^T * conj(psi) (band i),
@@ -145,7 +146,7 @@ void ModuleIO::cal_pdos(
                     const std::complex<double> one_float(1.0, 0.0);
                     const std::complex<double> zero_float(0.0, 0.0);
                     const char T_char = 'T';
-                    std::complex<double>* mulk_col = mulk[0].c + static_cast<size_t>(i) * pv.para_2d().nrloc();
+                    std::complex<double>* mulk_col = mulk[0].c + static_cast<size_t>(i) * dist.nrloc();
                     BlasConnector::gemv(T_char,
                                         nlocal,
                                         nlocal,
@@ -161,10 +162,10 @@ void ModuleIO::cal_pdos(
 
                     for (int j = 0; j < nlocal; ++j)
                     {
-                        if (pv.para_2d().in_this_processor(j, i))
+                        if (dist.in_this_processor(j, i))
                         {
-                            const int ir = pv.para_2d().irloc(j);
-                            const int ic = pv.para_2d().icloc(i);
+                            const int ir = dist.irloc(j);
+                            const int ic = dist.icloc(i);
 
                             waveg[j] = mulk[0](ic, ir) * psi[0](ic, ir);
                             const double x = waveg[j].real();

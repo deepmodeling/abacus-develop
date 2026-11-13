@@ -3,6 +3,7 @@
 #include "source_base/parallel_reduce.h"
 #include "source_base/module_external/blas_connector.h"
 #include "source_base/module_external/scalapack_connector.h"
+#include "source_base/parallel_blkcyc.h"
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
 #include "source_lcao/hamilt_lcao.h"
@@ -12,7 +13,7 @@
 void ModuleIO::cal_pdos(
 		const psi::Psi<double>* psi,
 		hamilt::Hamilt<double>* p_ham,
-		const Parallel_Orbitals& pv,
+		const Parallel_Blkcyclic& dist,
 		const UnitCell& ucell,
         const K_Vectors& kv,
 		const int nspin0,
@@ -60,7 +61,7 @@ void ModuleIO::cal_pdos(
     {
         std::vector<ModuleBase::matrix> mulk;
         mulk.resize(1);
-        mulk[0].create(pv.para_2d().ncloc(), pv.para_2d().nrloc());
+        mulk[0].create(dist.ncloc(), dist.nrloc());
 
         psi->fix_k(is);
         const double* ppsi = psi->get_pointer();
@@ -93,23 +94,23 @@ void ModuleIO::cal_pdos(
                     sk,
                     &one_int,
                     &one_int,
-                    pv.para_2d().desc(),
+                    dist.desc(),
                     ppsi,
                     &one_int,
                     &nb,
-                    pv.para_2d().desc(),
+                    dist.desc(),
                     &one_int,
                     &zero_float,
                     mulk[0].c,
                     &one_int,
                     &nb,
-                    pv.para_2d().desc(),
+                    dist.desc(),
                     &one_int);
 #else
             // Serial fallback: mulk = S^T * psi (column i of the wavefunction),
             // written into column i of mulk to match the pdgemv_ layout above
             const char T_char = 'T';
-            double* mulk_col = mulk[0].c + static_cast<size_t>(i) * pv.para_2d().nrloc();
+            double* mulk_col = mulk[0].c + static_cast<size_t>(i) * dist.nrloc();
             BlasConnector::gemv(T_char,
                                 nlocal,
                                 nlocal,
@@ -126,10 +127,10 @@ void ModuleIO::cal_pdos(
             for (int j = 0; j < nlocal; ++j)
             {
                 // computation performed on this processor
-                if (pv.para_2d().in_this_processor(j, i))
+                if (dist.in_this_processor(j, i))
                 {
-                    const int ir = pv.para_2d().irloc(j);
-                    const int ic = pv.para_2d().icloc(i);
+                    const int ir = dist.irloc(j);
+                    const int ic = dist.icloc(i);
                     waveg[j] = mulk[0](ic, ir) * psi[0](ic, ir);
                     const double x = waveg[j].real();
                     BlasConnector::axpy(npoints, x, gauss.data(), 1, pdosk[is].c + j * pdosk[is].nc, 1);
