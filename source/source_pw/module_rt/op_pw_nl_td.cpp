@@ -54,6 +54,9 @@ void TDNonlocalPW<T, Device>::init(const int ik_in)
 
         // Generate projectors shifted by the current vector potential.
         this->ppcell->getvnl(this->ctx, *this->ucell, this->ik, A_au, this->vkb_td);
+        // The same k point may receive a different field, so the folded
+        // projector tables must be rebuilt from the refreshed projectors.
+        this->workspace_.invalidate_fold();
     }
 
     if (this->next_op != nullptr)

@@ -49,6 +49,14 @@ NonlocalWorkspace<T, Device>::~NonlocalWorkspace()
 }
 
 template <typename T, typename Device>
+void NonlocalWorkspace<T, Device>::invalidate_fold()
+{
+#if defined(__CUDA)
+    fold_ik_ = -1;
+#endif
+}
+
+template <typename T, typename Device>
 void NonlocalWorkspace<T, Device>::project(const T* vkb, const T* psi, const int npw,
                                          const int ldv, const int ldp, const int nkb, const int bands)
 {

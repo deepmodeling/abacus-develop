@@ -41,6 +41,9 @@ class NonlocalWorkspace
     /** @brief Borrow the most recently computed projection coefficients. */
     T* get_becp() const { return becp_; }
 
+    /** @brief Force the folded projector cache to refresh on the next projection. */
+    void invalidate_fold();
+
     /** @brief Project and contract on every pool rank, including empty PW partitions; bands counts spin-component columns.
      * B uses [column][projector] and DB [projector][column]; both borrowed arrays are pool-reduced and valid until the next operation.
      */
