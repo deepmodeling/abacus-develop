@@ -72,6 +72,16 @@ void evolve_psi(const int nband,
         matrix_layout.nrloc(),
         matrix_layout.ncloc(),
         matrix_layout.desc());
+    Matrix2dView<std::complex<double>> hamiltonian_work_view(
+        Htmp,
+        matrix_layout.nrloc(),
+        matrix_layout.ncloc(),
+        matrix_layout.desc());
+    Matrix2dView<std::complex<double>> overlap_work_view(
+        Stmp,
+        matrix_layout.nrloc(),
+        matrix_layout.ncloc(),
+        matrix_layout.desc());
     Matrix2dView<std::complex<double>> operator_view(
         U_operator.data(),
         matrix_layout.nrloc(),
@@ -85,7 +95,22 @@ void evolve_psi(const int nband,
     /// @output Htmp
     if (propagator != 2)
     {
-        half_Hmatrix(matrix_layout, nband, nlocal, Htmp, Stmp, H_laststep, S_laststep, ofs_running, print_matrix);
+        Matrix2dView<const std::complex<double>> last_hamiltonian_view(
+            H_laststep,
+            matrix_layout.nrloc(),
+            matrix_layout.ncloc(),
+            matrix_layout.desc());
+        Matrix2dView<const std::complex<double>> last_overlap_view(
+            S_laststep,
+            matrix_layout.nrloc(),
+            matrix_layout.ncloc(),
+            matrix_layout.desc());
+        half_Hmatrix(last_hamiltonian_view,
+                     last_overlap_view,
+                     hamiltonian_work_view,
+                     overlap_work_view,
+                     ofs_running,
+                     print_matrix);
     }
 
     // (2)->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>

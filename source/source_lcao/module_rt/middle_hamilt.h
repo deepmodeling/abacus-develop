@@ -14,27 +14,29 @@
 
 class Parallel_Blkcyclic; // Defined in source/source_base/parallel_blkcyc.h
 
+template <typename T>
+class Matrix2dView;
+
 namespace module_rt
 {
 #ifdef __MPI
 /**
  *  @brief compute H(t+dt/2)
  *
- * @param[in] layout block-cyclic matrix layout
- * @param[in] nband number of bands
- * @param[in] nlocal number of orbitals
- * @param[in] Htmp H(t+dt)
- * @param[in] H_laststep H(t)
- * @param[in] print_matirx print internal matrix or not
- * @param[out] Htmp H(t+dt/2)
+ * The four matrix views must use the same host or distributed layout.
+ *
+ * @param[in] previous_hamiltonian H(t).
+ * @param[in] previous_overlap S(t).
+ * @param[in,out] hamiltonian H(t+dt) on input, H(t+dt/2) on return.
+ * @param[in,out] overlap S(t+dt) on input, S(t+dt/2) on return.
+ * @param[in,out] ofs_running Running log.
+ * @param[in] print_matrix Whether to print intermediate matrices.
  */
-void half_Hmatrix(const Parallel_Blkcyclic& layout,
-                  const int nband,
-                  const int nlocal,
-                  std::complex<double>* Htmp,
-                  std::complex<double>* Stmp,
-                  const std::complex<double>* H_laststep,
-                  const std::complex<double>* S_laststep,
+void half_Hmatrix(
+                  Matrix2dView<const std::complex<double>> previous_hamiltonian,
+                  Matrix2dView<const std::complex<double>> previous_overlap,
+                  Matrix2dView<std::complex<double>> hamiltonian,
+                  Matrix2dView<std::complex<double>> overlap,
                   std::ofstream& ofs_running,
                   const int print_matrix);
 

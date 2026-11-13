@@ -2,77 +2,66 @@
 
 #include "source_base/parallel_blkcyc.h"
 #include "source_base/global_variable.h"
+#include "source_base/matrix2d_linalg.h"
+#include "source_base/matrix2d_view.h"
 #include "source_base/module_container/ATen/kernels/blas.h"
 #include "source_base/module_device/memory_op.h" // memory operations
-#include "source_base/module_external/scalapack_connector.h"
 #include "source_base/timer.h"
 
 #include <cassert>
 #include <complex>
+#include <iomanip>
 #include <iostream>
 
 namespace module_rt
 {
 #ifdef __MPI
+namespace
+{
+void print_local_matrix(
+    std::ofstream& ofs_running,
+    const Matrix2dView<const std::complex<double>>& matrix,
+    const char* label)
+{
+    ofs_running << std::setprecision(10);
+    ofs_running << std::endl;
+    ofs_running << " " << label << " :" << std::endl;
+    for (int i = 0; i < matrix.nrloc(); ++i)
+    {
+        for (int j = 0; j < matrix.ncloc(); ++j)
+        {
+            const std::complex<double>& value = matrix.at_local(i, j);
+            ofs_running << value.real() << "+" << value.imag() << "i ";
+        }
+        ofs_running << std::endl;
+    }
+    ofs_running << std::endl;
+}
+} // namespace
 
-void half_Hmatrix(const Parallel_Blkcyclic& layout,
-                  const int nband,
-                  const int nlocal,
-                  std::complex<double>* Htmp,
-                  std::complex<double>* Stmp,
-                  const std::complex<double>* H_laststep,
-                  const std::complex<double>* S_laststep,
+void half_Hmatrix(
+                  Matrix2dView<const std::complex<double>> previous_hamiltonian,
+                  Matrix2dView<const std::complex<double>> previous_overlap,
+                  Matrix2dView<std::complex<double>> hamiltonian,
+                  Matrix2dView<std::complex<double>> overlap,
                   std::ofstream& ofs_running,
                   const int print_matrix)
 {
     if (print_matrix)
     {
-        ofs_running << std::setprecision(10);
-        ofs_running << std::endl;
-        ofs_running << " H(t+dt) :" << std::endl;
-        for (int i = 0; i < layout.nrloc(); i++)
-        {
-            const int in = i * layout.ncloc();
-            for (int j = 0; j < layout.ncloc(); j++)
-            {
-                ofs_running << Htmp[in + j].real() << "+" << Htmp[in + j].imag() << "i ";
-            }
-            ofs_running << std::endl;
-        }
-        ofs_running << std::endl;
-        ofs_running << std::endl;
-        ofs_running << " H(t):" << std::endl;
-        for (int i = 0; i < layout.nrloc(); i++)
-        {
-            const int in = i * layout.ncloc();
-            for (int j = 0; j < layout.ncloc(); j++)
-            {
-                ofs_running << H_laststep[in + j].real() << "+" << H_laststep[in + j].imag() << "i ";
-            }
-            ofs_running << std::endl;
-        }
-        ofs_running << std::endl;
+        print_local_matrix(ofs_running, hamiltonian, "H(t+dt)");
+        print_local_matrix(ofs_running, previous_hamiltonian, "H(t)");
     }
 
-    std::complex<double> alpha = {0.5, 0.0};
-    std::complex<double> beta = {0.5, 0.0};
-    ScalapackConnector::geadd('N', nlocal, nlocal, alpha, H_laststep, 1, 1, layout.desc(), beta, Htmp, 1, 1, layout.desc());
-    ScalapackConnector::geadd('N', nlocal, nlocal, alpha, S_laststep, 1, 1, layout.desc(), beta, Stmp, 1, 1, layout.desc());
+    const std::complex<double> half(0.5, 0.0);
+    matrix2d_linalg::linear_combination(
+        hamiltonian, half, previous_hamiltonian, half, hamiltonian);
+    matrix2d_linalg::linear_combination(
+        overlap, half, previous_overlap, half, overlap);
 
     if (print_matrix)
     {
-        ofs_running << std::endl;
-        ofs_running << " H (t+dt/2) :" << std::endl;
-        for (int i = 0; i < layout.nrloc(); i++)
-        {
-            const int in = i * layout.ncloc();
-            for (int j = 0; j < layout.ncloc(); j++)
-            {
-                ofs_running << Htmp[in + j].real() << "+" << Htmp[in + j].imag() << "i ";
-            }
-            ofs_running << std::endl;
-        }
-        ofs_running << std::endl;
+        print_local_matrix(ofs_running, hamiltonian, "H(t+dt/2)");
     }
 }
 
