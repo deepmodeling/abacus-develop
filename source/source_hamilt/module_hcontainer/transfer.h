@@ -81,8 +81,6 @@ class HTransPara
     // temporary variables
     std::vector<std::vector<int>> atom_i_index;
 
-    const Parallel_Orbitals* paraV = nullptr;
-
     // unpack BaseMatrix-values from ith rank
     void unpack_data(int irank, const T* values);
 
