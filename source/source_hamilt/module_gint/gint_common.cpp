@@ -1,4 +1,5 @@
 #include "gint_common.h"
+#include "source_base/parallel_blkcyc.h"
 #include "source_hamilt/module_hcontainer/hcontainer.h"
 #include "source_hamilt/module_hcontainer/hcontainer_funcs.h"
 #include "source_base/tool_quit.h"
@@ -129,14 +130,19 @@ void merge_hr_part_to_hR(const std::vector<hamilt::HContainer<double>>& hr_gint_
     ModuleBase::timer::start("Gint_k", "transfer_pvpR");
 
     const UnitCell* ucell_in = gint_info.get_ucell();
-    int mg = hR->get_paraV()->para_2d().nrglb()/2;
-    int ng = hR->get_paraV()->para_2d().ncglb()/2;
-    int nb = hR->get_paraV()->para_2d().nb()/2;
+    const Parallel_Blkcyclic* distribution = hR->matrix_distribution();
+    if (distribution == nullptr)
+    {
+        ModuleBase::WARNING_QUIT("merge_hr_part_to_hR", "matrix distribution is not initialized");
+    }
+    int mg = distribution->nrglb()/2;
+    int ng = distribution->ncglb()/2;
+    int nb = distribution->nb()/2;
     hamilt::HContainer<std::complex<double>>* hR_tmp;
 
 
 #ifdef __MPI
-    int blacs_ctxt = hR->get_paraV()->para_2d().ictxt();
+    int blacs_ctxt = distribution->ictxt();
     std::vector<int> iat2iwt(ucell_in->nat);
     for (int iat = 0; iat < ucell_in->nat; iat++) {
         iat2iwt[iat] = ucell_in->get_iat2iwt()[iat]/2;
@@ -311,13 +317,18 @@ void dm_2d_to_gint(
         // is=0:↑↑, 1:↑↓, 2:↓↑, 3:↓↓
         const int row_set[4] = {0, 0, 1, 1};
         const int col_set[4] = {0, 1, 0, 1};
-        int mg = dm[0]->get_paraV()->para_2d().nrglb()/2;
-        int ng = dm[0]->get_paraV()->para_2d().ncglb()/2;
-        int nb = dm[0]->get_paraV()->para_2d().nb()/2;
+        const Parallel_Blkcyclic* distribution = dm[0]->matrix_distribution();
+        if (distribution == nullptr)
+        {
+            ModuleBase::WARNING_QUIT("dm_2d_to_gint", "matrix distribution is not initialized");
+        }
+        int mg = distribution->nrglb()/2;
+        int ng = distribution->ncglb()/2;
+        int nb = distribution->nb()/2;
         const UnitCell* ucell = gint_info.get_ucell();
         auto ijr_info = dm[0]->get_ijr_info();
 #ifdef __MPI
-        int blacs_ctxt = dm[0]->get_paraV()->para_2d().ictxt();
+        int blacs_ctxt = distribution->ictxt();
         std::vector<int> iat2iwt(ucell->nat);
         for (int iat = 0; iat < ucell->nat; iat++) {
             iat2iwt[iat] = ucell->get_iat2iwt()[iat]/2;

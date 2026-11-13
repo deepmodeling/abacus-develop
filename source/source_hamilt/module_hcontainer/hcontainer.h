@@ -226,6 +226,14 @@ class HContainer
     const Parallel_Orbitals* get_paraV() const { return this->paraV; };
 
     /**
+     * @brief Return the matrix distribution used by this container.
+     *
+     * The returned pointer is null when no distributed matrix layout was
+     * supplied. It borrows storage owned by this container's layout source.
+     */
+    const Parallel_Blkcyclic* matrix_distribution() const;
+
+    /**
      * @brief allocate memory for all <IJR> matrix
      * if data_array is not nullptr,
      *     use memory after data_array for each BaseMatrix;

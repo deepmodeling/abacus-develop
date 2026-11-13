@@ -395,6 +395,20 @@ std::vector<int> HContainer<T>::col_basis_offsets(const int iat) const
     return std::vector<int>();
 }
 
+template <typename T>
+const Parallel_Blkcyclic* HContainer<T>::matrix_distribution() const
+{
+    if (this->basis_index != nullptr)
+    {
+        return this->matrix_dist;
+    }
+    if (this->paraV != nullptr)
+    {
+        return &this->paraV->para_2d();
+    }
+    return nullptr;
+}
+
 // allocate
 template <typename T>
 void HContainer<T>::allocate(T* data_array, bool is_zero)
