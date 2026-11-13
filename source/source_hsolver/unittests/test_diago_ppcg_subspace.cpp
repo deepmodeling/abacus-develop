@@ -1,5 +1,5 @@
 // Local subspace transformations, rank truncation and input/storage contracts.
-#include "../../diago_ppcg_test_support.h"
+#include "diago_ppcg_test_support.h"
 
 #include <algorithm>
 #include <limits>

@@ -1,5 +1,5 @@
 // Iteration budgets, operator image reuse, convergence status and trace handling.
-#include "../../diago_ppcg_test_support.h"
+#include "diago_ppcg_test_support.h"
 #include "source_base/timer.h"
 
 #include <algorithm>
