@@ -1,5 +1,6 @@
 #include "td_pot_hybrid.h"
 
+#include "source_base/atom_basis_view.h"
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
@@ -54,9 +55,6 @@ void hamilt::TD_pot_hybrid<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(const Gr
     ModuleBase::TITLE("TD_pot_hybrid", "initialize_HR");
     ModuleBase::timer::start("TD_pot_hybrid", "initialize_HR");
 
-    auto* paraV = this->hR->get_paraV();// get parallel orbitals from HR
-    // TODO: if paraV is nullptr, AtomPair can not use paraV for constructor, I will repair it in the future.
-
     for (int iat1 = 0; iat1 < ucell->nat; iat1++)
     {
         auto tau1 = ucell->get_tau(iat1);
@@ -64,13 +62,15 @@ void hamilt::TD_pot_hybrid<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(const Gr
         ucell->iat2iait(iat1, &I1, &T1);
         AdjacentAtomInfo adjs;
         GridD->Find_atom(*ucell, tau1, T1, I1, &adjs);
+        const AtomBasisView rows = this->td_info_->row_basis(iat1);
         std::vector<bool> is_adj(adjs.adj_num + 1, false);
         for (int ad1 = 0; ad1 < adjs.adj_num + 1; ++ad1)
         {
             const int T2 = adjs.ntype[ad1];
             const int I2 = adjs.natom[ad1];
             const int iat2 = ucell->itia2iat(T2, I2);
-            if (paraV->is_invalid_atom_pair(iat1, iat2))
+            const AtomBasisView cols = this->td_info_->col_basis(iat2);
+            if (rows.empty() || cols.empty())
             {
                 continue;
             }
@@ -93,8 +93,7 @@ void hamilt::TD_pot_hybrid<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(const Gr
             const int I2 = adjs.natom[ad];
             int iat2 = ucell->itia2iat(T2, I2);
             ModuleBase::Vector3<int>& R_index = adjs.box[ad];
-            hamilt::AtomPair<TR> tmp(iat1, iat2, R_index, paraV);
-            this->hR->insert_pair(tmp);
+            this->hR->insert_pair(iat1, iat2, R_index);
         }
     }
     // allocate the memory of BaseMatrix in HR, and set the new values to zero
@@ -113,7 +112,6 @@ void hamilt::TD_pot_hybrid<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
     }
     ModuleBase::timer::start("TD_pot_hybrid", "calculate_HR");
 
-    const Parallel_Orbitals* paraV = this->HR_fixed->get_atom_pair(0).get_paraV();
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
@@ -136,7 +134,7 @@ void hamilt::TD_pot_hybrid<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
             hamilt::BaseMatrix<TR>* tmp_overlap = this->SR->find_matrix(iat1, iat2, R_index2);
             if (tmp != nullptr)
             {
-                this->cal_HR_IJR(iat1, iat2, paraV, dtau, dR, tmp->get_pointer(), tmp_overlap->get_pointer());
+                this->cal_HR_IJR(iat1, iat2, dtau, dR, tmp->get_pointer(), tmp_overlap->get_pointer());
             }
             else
             {
@@ -152,7 +150,6 @@ void hamilt::TD_pot_hybrid<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
 template <typename TK, typename TR>
 void hamilt::TD_pot_hybrid<hamilt::OperatorLCAO<TK, TR>>::cal_HR_IJR(const int& iat1,
                                                                    const int& iat2,
-                                                                   const Parallel_Orbitals* paraV,
                                                                    const ModuleBase::Vector3<double>& dtau,
                                                                    const ModuleBase::Vector3<double>& dR,
                                                                    TR* hr_mat_p,
@@ -184,15 +181,15 @@ void hamilt::TD_pot_hybrid<hamilt::OperatorLCAO<TK, TR>>::cal_HR_IJR(const int& 
     // calculate the Ekinetic matrix for each pair of orbitals
     // ---------------------------------------------
     double olm[3] = {0, 0, 0};
-    auto row_indexes = paraV->get_indexes_row(iat1);
-    auto col_indexes = paraV->get_indexes_col(iat2);
-    const int step_trace = col_indexes.size() + 1;
+    const AtomBasisView rows = this->td_info_->row_basis(iat1);
+    const AtomBasisView cols = this->td_info_->col_basis(iat2);
+    const int step_trace = cols.nloc() + 1;
 
     const ModuleBase::Vector3<double>& tau1 = this->ucell->get_tau(iat1);
     const ModuleBase::Vector3<double> tau2 = tau1 + dtau;
-    for (int iw1l = 0; iw1l < row_indexes.size(); iw1l += npol)
+    for (int iw1l = 0; iw1l < rows.nloc(); iw1l += npol)
     {
-        const int iw1 = row_indexes[iw1l] / npol;
+        const int iw1 = rows[iw1l] / npol;
         const int L1 = iw2l1[iw1];
         const int N1 = iw2n1[iw1];
         const int m1 = iw2m1[iw1];
@@ -200,9 +197,9 @@ void hamilt::TD_pot_hybrid<hamilt::OperatorLCAO<TK, TR>>::cal_HR_IJR(const int& 
         // convert m (0,1,...2l) to M (-l, -l+1, ..., l-1, l)
         int M1 = (m1 % 2 == 0) ? -m1 / 2 : (m1 + 1) / 2;
 
-        for (int iw2l = 0; iw2l < col_indexes.size(); iw2l += npol)
+        for (int iw2l = 0; iw2l < cols.nloc(); iw2l += npol)
         {
-            const int iw2 = col_indexes[iw2l] / npol;
+            const int iw2 = cols[iw2l] / npol;
             const int L2 = iw2l2[iw2];
             const int N2 = iw2n2[iw2];
             const int m2 = iw2m2[iw2];
@@ -219,8 +216,8 @@ void hamilt::TD_pot_hybrid<hamilt::OperatorLCAO<TK, TR>>::cal_HR_IJR(const int& 
             hr_mat_p += npol;
             sr_p += npol;
         }
-        hr_mat_p += (npol - 1) * col_indexes.size();
-        sr_p += (npol - 1) * col_indexes.size();
+        hr_mat_p += (npol - 1) * cols.nloc();
+        sr_p += (npol - 1) * cols.nloc();
     }
 }
 // init two center integrals and vector potential for td_ekintic term

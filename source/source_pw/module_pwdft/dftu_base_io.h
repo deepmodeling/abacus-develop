@@ -75,7 +75,7 @@ void append_ion_step_snapshot(const Plus_U_Base& dftu,
                               bool conv_esolver,
                               bool occmat_ready,
                               const OccmatOutputCfg& cfg,
-                              OccmatSocLayout soc_layout);
+                              const OccmatSocLayout& soc_layout);
 
 /// Read the local occupation number matrix from file (rank 0 only).
 ///
@@ -86,15 +86,15 @@ void append_ion_step_snapshot(const Plus_U_Base& dftu,
 /// @param soc_layout storage layout of the nspin == 4 occupation matrix;
 ///        the PW path stores 4 contiguous Pauli blocks (b0, b1, b2, b3) and
 ///        must reconstruct them from the (n_uu, Re(n_ud), Im(n_ud), n_dd)
-///        blocks written to the file; the LCAO path stores a real 2m x 2m
-///        spin-basis matrix and discards Im(n_ud).
+///        blocks written to the file; LCAO dft_plus_u=1 also uses Pauli
+///        blocks, while dft_plus_u=2 stores a real 2m x 2m spin-basis matrix.
 void read_occup_m(const UnitCell& ucell,
                   OccupationMatrix& occ,
                   const std::vector<int>& l_channel,
                   const std::string& fn,
                   int nspin,
                   int npol,
-                  OccmatSocLayout soc_layout);
+                  const OccmatSocLayout& soc_layout);
 
 /// Broadcast the local occupation number matrices from rank 0 to all ranks.
 ///
@@ -135,19 +135,25 @@ void write_latest_occmat(const Plus_U_Base& dftu,
                          const std::string& global_out_dir,
                          const OccmatStepInfo& step,
                          const OccmatOutputCfg& cfg,
-                         OccmatSocLayout soc_layout);
+                         const OccmatSocLayout& soc_layout);
 
 /// Write local occupation matrices to the given stream.
 ///
 /// Writes the compact snapshot layout accepted by read_occup_m(). The output
 /// includes per-atom magnetism, electron counts and the full matrix blocks.
-/// soc_layout tells how the nspin == 4 storage is arranged (PW Pauli blocks
-/// or LCAO real spin-basis matrix).
+/// soc_layout tells how the nspin == 4 storage is arranged (PW and LCAO
+/// dft_plus_u=1 Pauli blocks, or LCAO dft_plus_u=2 real spin-basis matrix).
 /// Caller is responsible for opening/closing the stream.
 void write_occup_m(const Plus_U_Base& dftu,
                    const UnitCell& ucell,
                    std::ostream& ofs,
-                   OccmatSocLayout soc_layout);
+                   const OccmatSocLayout& soc_layout);
+
+/// Append sorted occupation eigenvalues as restart-safe comment lines.
+void write_occup_eigenvalues(const Plus_U_Base& dftu,
+                             const UnitCell& ucell,
+                             std::ostream& ofs,
+                             const OccmatSocLayout& soc_layout);
 
 } // namespace DFTU_BASE
 

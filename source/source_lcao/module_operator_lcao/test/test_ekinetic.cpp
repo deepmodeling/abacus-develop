@@ -1,6 +1,9 @@
 #include "../ekinetic.h"
+#include "test_operator_basis.h"
 
 #include "gtest/gtest.h"
+
+#include <memory>
 
 //---------------------------------------
 // Unit test of EKinetic class
@@ -57,6 +60,7 @@ class EKineticTest : public ::testing::Test
         }
         ucell.set_iat2iwt(1);
         init_parav();
+        basis_.reset(new BasisFlattenedIndexing(operator_test::make_s_orbital_basis(ucell)));
         // set up a HContainer with ucell
         HR = new hamilt::HContainer<double>(paraV);
     }
@@ -88,6 +92,7 @@ class EKineticTest : public ::testing::Test
     UnitCell ucell;
     hamilt::HContainer<double>* HR;
     Parallel_Orbitals* paraV;
+    std::unique_ptr<BasisFlattenedIndexing> basis_;
     TwoCenterIntegrator intor_;
 
     int dsize;
@@ -102,7 +107,7 @@ TEST_F(EKineticTest, constructHRd2d)
     hsk.set_zero_hk();
     Grid_Driver gd(0, 0);
     hamilt::EKinetic<hamilt::OperatorLCAO<double, double>>
-        op(&hsk, kvec_d_in, HR, &ucell, {1.0}, &gd, &intor_);
+        op(&hsk, kvec_d_in, HR, *basis_, paraV->para_2d(), &ucell, {1.0}, &gd, &intor_);
     op.contributeHR();
     // check the value of HR
     for (int iap = 0; iap < HR->size_atom_pairs(); ++iap)
@@ -152,7 +157,7 @@ TEST_F(EKineticTest, constructHRd2cd)
     hsk.set_zero_hk();
     Grid_Driver gd(0, 0);
     hamilt::EKinetic<hamilt::OperatorLCAO<std::complex<double>, double>>
-        op(&hsk, kvec_d_in, HR, &ucell, {1.0}, &gd, &intor_);
+        op(&hsk, kvec_d_in, HR, *basis_, paraV->para_2d(), &ucell, {1.0}, &gd, &intor_);
     op.contributeHR();
     // check the value of HR
     for (int iap = 0; iap < HR->size_atom_pairs(); ++iap)

@@ -23,18 +23,16 @@ struct SocCompactBlocks
     std::vector<double> down_down;
 };
 
-// Retained for the follow-up occupation-eigensystem output refactor. The
-// compact writer does not currently call these helpers: this PR only removes
-// the legacy text format and separates the writer from the file orchestration.
-namespace retained_eigenvalue_helpers
+namespace
 {
+constexpr double jacobi_tolerance = 1.0e-10;
 
 inline void jacobi_rotate(std::vector<std::vector<double>>& matrix,
                           const int p,
                           const int q,
                           const int size)
 {
-    if (std::abs(matrix[p][q]) <= 1.0e-10)
+    if (std::abs(matrix[p][q]) <= jacobi_tolerance)
     {
         return;
     }
@@ -67,6 +65,11 @@ inline std::vector<double> calculate_eigenvalues(std::vector<std::vector<double>
                                                  const int size)
 {
     std::vector<double> eigenvalues(size);
+    if (size == 1)
+    {
+        eigenvalues[0] = matrix[0][0];
+        return eigenvalues;
+    }
     while (true)
     {
         int p = 0;
@@ -83,7 +86,7 @@ inline std::vector<double> calculate_eigenvalues(std::vector<std::vector<double>
             }
         }
 
-        if (std::abs(matrix[p][q]) < 1.0e-10)
+        if (std::abs(matrix[p][q]) <= jacobi_tolerance)
         {
             for (int i = 0; i < size; ++i)
             {
@@ -93,6 +96,7 @@ inline std::vector<double> calculate_eigenvalues(std::vector<std::vector<double>
         }
         jacobi_rotate(matrix, p, q, size);
     }
+    std::sort(eigenvalues.begin(), eigenvalues.end());
     return eigenvalues;
 }
 
@@ -110,9 +114,10 @@ inline std::vector<double> calculate_spinor_eigenvalues(const SocCompactBlocks& 
             spinor_matrix(row, column + orbital_size)
                 = std::complex<double>(blocks.up_down_real[index],
                                        blocks.up_down_imag[index]);
+            const int transposed_index = column * orbital_size + row;
             spinor_matrix(row + orbital_size, column)
-                = std::complex<double>(blocks.up_down_real[index],
-                                       -blocks.up_down_imag[index]);
+                = std::complex<double>(blocks.up_down_real[transposed_index],
+                                       -blocks.up_down_imag[transposed_index]);
             spinor_matrix(row + orbital_size, column + orbital_size)
                 = blocks.down_down[index];
         }
@@ -159,12 +164,12 @@ inline std::vector<double> calculate_spinor_eigenvalues(const SocCompactBlocks& 
     return eigenvalues;
 }
 
-} // namespace retained_eigenvalue_helpers
+} // namespace
 
 static SocCompactBlocks extract_soc_compact_blocks(const Plus_U_Base& dftu,
                                                    const int iat,
                                                    const int l,
-                                                   const OccmatSocLayout layout)
+                                                   const OccmatSocLayout& layout)
 {
     const int size = 2 * l + 1;
     const int block_size = size * size;
@@ -199,10 +204,9 @@ static SocCompactBlocks extract_soc_compact_blocks(const Plus_U_Base& dftu,
                 const int index = row * size + column;
                 const double up_up = occmat.get(iat, l, 0, row, column);
                 const double up_down = occmat.get(iat, l, 0, row, column + size);
-                const double down_up = occmat.get(iat, l, 0, row + size, column);
                 const double down_down = occmat.get(iat, l, 0, row + size, column + size);
                 blocks.up_up[index] = up_up;
-                blocks.up_down_real[index] = 0.5 * (up_down + down_up);
+                blocks.up_down_real[index] = up_down;
                 blocks.down_down[index] = down_down;
             }
         }
@@ -260,7 +264,7 @@ static void write_soc_atom(const Plus_U_Base& dftu,
                            const int type,
                            const int iat,
                            const int l,
-                           const OccmatSocLayout layout)
+                           const OccmatSocLayout& layout)
 {
     const int size = 2 * l + 1;
     const SocCompactBlocks blocks = extract_soc_compact_blocks(dftu, iat, l, layout);
@@ -300,7 +304,7 @@ static void write_soc_atom(const Plus_U_Base& dftu,
 void write_occup_m(const Plus_U_Base& dftu,
                    const UnitCell& ucell,
                    std::ostream& os,
-                   const OccmatSocLayout soc_layout)
+                   const OccmatSocLayout& soc_layout)
 {
     ModuleBase::TITLE("DFTU_BASE", "write_occup_m");
     const int nspin = dftu.occmat().nspin();
@@ -321,6 +325,69 @@ void write_occup_m(const Plus_U_Base& dftu,
             else
             {
                 write_collinear_atom(dftu, ucell, os, type, iat, l);
+            }
+        }
+    }
+}
+
+void write_occup_eigenvalues(const Plus_U_Base& dftu,
+                             const UnitCell& ucell,
+                             std::ostream& os,
+                             const OccmatSocLayout& soc_layout)
+{
+    const int nspin = dftu.occmat().nspin();
+    for (int type = 0; type < ucell.ntype; ++type)
+    {
+        if (!dftu.has_l_channel(type))
+        {
+            continue;
+        }
+        const int l = dftu.get_l_channel(type);
+        const int size = 2 * l + 1;
+        for (int atom = 0; atom < ucell.atoms[type].na; ++atom)
+        {
+            const int iat = ucell.itia2iat(type, atom);
+            // nspin=1 maintains one matrix; nspin=4 packs both spinor components in one matrix.
+            const int channels = nspin == 2 ? 2 : 1;
+            for (int spin = 0; spin < channels; ++spin)
+            {
+                std::vector<double> values;
+                if (nspin == 4)
+                {
+                    const SocCompactBlocks blocks = extract_soc_compact_blocks(dftu, iat, l, soc_layout);
+                    values = calculate_spinor_eigenvalues(blocks, size);
+                }
+                else
+                {
+                    std::vector<std::vector<double>> matrix(size, std::vector<double>(size));
+                    for (int row = 0; row < size; ++row)
+                    {
+                        for (int column = 0; column < size; ++column)
+                        {
+                            matrix[row][column] = dftu.occmat().get(iat, l, spin, row, column);
+                        }
+                    }
+                    values = calculate_eigenvalues(matrix, size);
+                }
+                os << "# eigenvalues atom " << iat + 1 << " L " << l;
+                if (nspin == 4)
+                {
+                    os << " spinor:";
+                }
+                else if (nspin == 1)
+                {
+                    os << " nonmagnetic:";
+                }
+                else
+                {
+                    os << " spin " << spin + 1 << ":";
+                }
+                os << std::fixed << std::setprecision(8);
+                for (const double value : values)
+                {
+                    os << " " << value;
+                }
+                os << "\n";
             }
         }
     }

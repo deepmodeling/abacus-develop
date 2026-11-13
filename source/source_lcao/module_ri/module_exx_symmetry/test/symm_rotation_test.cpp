@@ -15,7 +15,7 @@ tested functions:
 - get_return_lattice
 
 untested functions:
-- cal_Ms (depending on UnitCell,K_Vectors, BlockCyclicDistribution)
+- cal_Ms (depending on UnitCell,K_Vectors, Parallel_Blkcyclic)
 - restore_dm  (depending on Ms)
 - rot_matrix_ao (depending on Ms)
 
@@ -54,7 +54,7 @@ protected:
     std::vector<std::complex<double>> cmm_p_C41_ref = { -ModuleBase::IMAG_UNIT / sqrt(2), 0, -1 / sqrt(2), 0, 1, 0, -ModuleBase::IMAG_UNIT / sqrt(2), 0, 1 / sqrt(2) };
     std::vector<std::complex<double>> c_dagger_D_c_C41_ref = { 1, 0, 0, 0, 0, -1, 0, 1, 0 };
     ModuleSymmetry::Symmetry_rotation symrot;
-    BlockCyclicDistribution pv;
+    Parallel_Blkcyclic pv;
     const int matsize = 5;  //2s1p
 };
 
@@ -175,7 +175,7 @@ TEST_F(SymmetryRotationTest, SetBlockToMat2d)
 TEST_F(SymmetryRotationTest, SetSigmaY2d)
 {
     const int nao = 3, nl = 2 * nao;
-    BlockCyclicDistribution pv2;
+    Parallel_Blkcyclic pv2;
     pv2.init(nl, nl, 2, MPI_COMM_WORLD, false);
     std::vector<std::complex<double>> sy = symrot.set_sigma_y_2d(pv2);
     // every entry: sigma_y[[0,-i],[i,0]] on the orbital-diagonal 2x2 blocks, zero elsewhere
@@ -198,7 +198,7 @@ TEST_F(SymmetryRotationTest, SetSigmaY2d)
 TEST_F(SymmetryRotationTest, TrsSpinRotate)
 {
     const int nao = 3, nl = 2 * nao;
-    BlockCyclicDistribution pv2;
+    Parallel_Blkcyclic pv2;
     pv2.init(nl, nl, 2, MPI_COMM_WORLD, false);
     std::vector<std::complex<double>> sy = symrot.set_sigma_y_2d(pv2);
 

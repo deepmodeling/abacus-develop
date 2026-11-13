@@ -120,7 +120,7 @@ In molecular dynamics simulations, the output frequency is controlled by out_fre
         item.annotation = "output DFT+U occupation matrices";
         item.category = "Output information";
         item.type = "Boolean";
-        item.description = "Whether to output the DFT+U occupation matrices. When set to 1 (default), the latest occupation matrix is written to occ_mat.txt at every electronic step, and a numbered file occ_matg{geom_step}.txt is created for every output ionic step selected by out_freq_ion, in which electronic-step sections are appended according to out_freq_elec."
+        item.description = "Whether to output the DFT+U occupation matrices. When set to 1 (default), the latest occupation matrix is written to occ_mat.txt at every electronic step, and a numbered file occ_matg{geom_step}.txt is created for every output ionic step selected by out_freq_ion, in which electronic-step sections are appended according to out_freq_elec. Sorted eigenvalues of the stored occupation matrix are appended as comment lines only to the latest occ_mat.txt, not to the numbered files. For nspin=1, one nonmagnetic spectrum is written."
                            "\n\nThis parameter only takes effect for DFT+U calculations (dft_plus_u > 0) and is independent of out_chg: disabling the charge density output does not disable the occupation-matrix output.";
         item.default_value = "True";
         item.unit = "";

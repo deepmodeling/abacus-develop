@@ -1,5 +1,5 @@
-#ifndef ABACUS_SOURCE_SOURCE_BASE_BLOCK_CYCLIC_DISTRIBUTION_H
-#define ABACUS_SOURCE_SOURCE_BASE_BLOCK_CYCLIC_DISTRIBUTION_H
+#ifndef PARALLEL_BLKCYC
+#define PARALLEL_BLKCYC
 
 #include <array>
 #include <cstddef>
@@ -9,21 +9,28 @@
 #include <mpi.h>
 #endif
 
-// Responsibilities:
-// 1. Describe a block-cyclic layout: process grid, block size, local shape,
-//    global/local index maps, and owner queries.
-// 2. Own or borrow the BLACS context and maintain the ScaLAPACK descriptor.
-// It does not own physical matrices, atom ownership, or trace information.
-class BlockCyclicDistribution
+/**
+ * @brief Parallel block-cyclic matrix distribution.
+ *
+ * Blkcyclic is the ABACUS shorthand for block-cyclic.
+ *
+ * Responsibilities:
+ * 1. Describe the process grid, block size, local shape, global/local index
+ *    maps, and owner queries.
+ * 2. Own or borrow the BLACS context and maintain the ScaLAPACK descriptor.
+ *
+ * It does not own physical matrices, atom ownership, or trace information.
+ */
+class Parallel_Blkcyclic
 {
   public:
-    BlockCyclicDistribution() = default;
-    ~BlockCyclicDistribution();
+    Parallel_Blkcyclic() = default;
+    ~Parallel_Blkcyclic();
 
-    BlockCyclicDistribution(const BlockCyclicDistribution&) = delete;
-    BlockCyclicDistribution& operator=(const BlockCyclicDistribution&) = delete;
-    BlockCyclicDistribution(BlockCyclicDistribution&& rhs) noexcept;
-    BlockCyclicDistribution& operator=(BlockCyclicDistribution&& rhs) noexcept;
+    Parallel_Blkcyclic(const Parallel_Blkcyclic&) = delete;
+    Parallel_Blkcyclic& operator=(const Parallel_Blkcyclic&) = delete;
+    Parallel_Blkcyclic(Parallel_Blkcyclic&& rhs) noexcept;
+    Parallel_Blkcyclic& operator=(Parallel_Blkcyclic&& rhs) noexcept;
 
     int nrloc() const
     {

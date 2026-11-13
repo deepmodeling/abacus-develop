@@ -212,9 +212,9 @@ namespace ModuleESolver
         void set_gint();
 
         /// @brief variables for parallel distribution of KS orbitals
-        BlockCyclicDistribution paraC_;
+        Parallel_Blkcyclic paraC_;
         /// @brief variables for parallel distribution of excited states
-        std::vector<BlockCyclicDistribution> paraX_;
+        std::vector<Parallel_Blkcyclic> paraX_;
 
         // ---------------- the Z-vector (CPSCF) window ----------------
         // The Z-vector equation enforces the Brillouin condition in EVERY occupied-virtual
@@ -227,8 +227,8 @@ namespace ModuleESolver
         // -- and with it any finite-difference reference -- is untouched.
         std::unique_ptr<psi::Psi<T>> psi_ks_z_;
         ModuleBase::matrix eig_ks_z_;
-        BlockCyclicDistribution paraC_z_;
-        std::vector<BlockCyclicDistribution> paraX_z_;
+        Parallel_Blkcyclic paraC_z_;
+        std::vector<Parallel_Blkcyclic> paraX_z_;
         std::vector<int> nvirt_z_;
         int nbands_z_ = 0;
         int nloc_per_state_z_ = 0;
@@ -263,7 +263,7 @@ namespace ModuleESolver
         /// reset nocc, nvirt, npairs after read ground-state wavefunction when nspin=2
         void reset_dim_spin2();
 
-        /// setup Parallel_Orbitals info. beyond BlockCyclicDistribution
+        /// setup Parallel_Orbitals info. beyond Parallel_Blkcyclic
         void set_parallel_orbitals_band(Parallel_Orbitals& p, const int nbands_in);
 
         ///========================== for gradient calculation =========================

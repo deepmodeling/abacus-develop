@@ -1,7 +1,9 @@
 #include "esolver_gets.h"
 
+#include "source_base/basis_flattened_indexing.h"
 #include "source_base/fs_compat.h"
 #include "source_base/timer.h"
+#include "source_basis/module_ao/elem_basis_idx_orb.h"
 #include "source_cell/module_neighbor/sltk_atom_arrange.h"
 #include "source_cell/read_pp_ucell.h"
 #include "source_estate/elecstate_lcao.h"
@@ -131,6 +133,12 @@ void ESolver_GetS::before_all_runners(BaseCell& basecell, const Input_para& inp)
                                  two_center_bundle_,
                                  orb_);
 
+    const ModuleBase::Element_Basis_Index::Range basis_range =
+        ModuleBase::Element_Basis_Index::construct_range(orb_);
+    const ModuleBase::Element_Basis_Index::IndexLNM basis_hierarchy =
+        ModuleBase::Element_Basis_Index::construct_index(basis_range);
+    basis_index_.reset(new BasisFlattenedIndexing(basis_hierarchy, ucell.iat2it, ucell.get_npol()));
+
     ModuleBase::timer::end("ESolver_GetS", "before_all_runners");
 }
 
@@ -174,6 +182,8 @@ void ESolver_GetS::runner(BaseCell& basecell, const int istep)
                 = new hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>(ucell,
                                                                                      gd,
                                                                                      &this->pv,
+                                                                                     *basis_index_,
+                                                                                     this->pv.para_2d(),
                                                                                      this->kv,
                                                                                      *(two_center_bundle_.overlap_orb),
                                                                                      orb_.cutoffs());
@@ -187,6 +197,8 @@ void ESolver_GetS::runner(BaseCell& basecell, const int istep)
             this->p_hamilt = new hamilt::HamiltLCAO<std::complex<double>, double>(ucell,
                                                                                   gd,
                                                                                   &this->pv,
+                                                                                  *basis_index_,
+                                                                                  this->pv.para_2d(),
                                                                                   this->kv,
                                                                                   *(two_center_bundle_.overlap_orb),
                                                                                   orb_.cutoffs());
@@ -224,7 +236,7 @@ void ESolver_GetS::runner(BaseCell& basecell, const int istep)
         Position_op r_matrix;
         const bool cal_force = PARAM.inp.cal_force;
         const int nlocal = PARAM.globalv.nlocal;
-        r_matrix.init(ucell, pv, orb_, cal_force, nlocal);
+        r_matrix.init(ucell, pv.para_2d(), orb_, cal_force, nlocal);
         r_matrix.out_rR(ucell,
                         gd,
                         -1, // get_s has no ionic step; use -1 for no step suffix

@@ -1,5 +1,6 @@
 #include "norm_psi.h"
 
+#include "source_base/parallel_blkcyc.h"
 #include "source_base/global_function.h" // ModuleBase::GlobalFunc::ZEROS
 #include "source_base/module_container/ATen/kernels/blas.h"
 #include "source_base/module_external/blas_connector.h"
@@ -27,7 +28,9 @@ inline int globalIndex(int localindex, int nblk, int nprocs, int myproc)
     return gIndex;
 }
 
-void norm_psi(const Parallel_Orbitals* pv,
+void norm_psi(const Parallel_Blkcyclic& matrix_layout,
+              const Parallel_Blkcyclic& wfc_layout,
+              const Parallel_Blkcyclic& mo_repr_layout,
               const int nband,
               const int nlocal,
               const std::complex<double>* Stmp,
@@ -35,13 +38,13 @@ void norm_psi(const Parallel_Orbitals* pv,
               std::ofstream& ofs_running,
               const int print_matrix)
 {
-    assert(pv->nloc_wfc > 0 && pv->para_2d().size() > 0);
+    assert(wfc_layout.size() > 0 && matrix_layout.size() > 0 && mo_repr_layout.size() > 0);
 
-    std::complex<double>* tmp1 = new std::complex<double>[pv->nloc_wfc];
-    ModuleBase::GlobalFunc::ZEROS(tmp1, pv->nloc_wfc);
+    std::complex<double>* tmp1 = new std::complex<double>[wfc_layout.size()];
+    ModuleBase::GlobalFunc::ZEROS(tmp1, wfc_layout.size());
 
-    std::complex<double>* Cij = new std::complex<double>[pv->para_2d().size()];
-    ModuleBase::GlobalFunc::ZEROS(Cij, pv->para_2d().size());
+    std::complex<double>* mo_ovlp = new std::complex<double>[mo_repr_layout.size()];
+    ModuleBase::GlobalFunc::ZEROS(mo_ovlp, mo_repr_layout.size());
 
     ScalapackConnector::gemm('N',
                              'N',
@@ -52,16 +55,16 @@ void norm_psi(const Parallel_Orbitals* pv,
                              Stmp,
                              1,
                              1,
-                             pv->para_2d().desc(),
+                             matrix_layout.desc(),
                              psi_k,
                              1,
                              1,
-                             pv->desc_wfc,
+                             wfc_layout.desc(),
                              0.0,
                              tmp1,
                              1,
                              1,
-                             pv->desc_wfc);
+                             wfc_layout.desc());
 
     ScalapackConnector::gemm('C',
                              'N',
@@ -72,27 +75,27 @@ void norm_psi(const Parallel_Orbitals* pv,
                              psi_k,
                              1,
                              1,
-                             pv->desc_wfc,
+                             wfc_layout.desc(),
                              tmp1,
                              1,
                              1,
-                             pv->desc_wfc,
+                             wfc_layout.desc(),
                              0.0,
-                             Cij,
+                             mo_ovlp,
                              1,
                              1,
-                             pv->desc_Eij);
+                             mo_repr_layout.desc());
 
     if (print_matrix)
     {
         ofs_running << "original Cij :" << std::endl;
-        for (int i = 0; i < pv->para_2d().ncloc(); i++)
+        for (int i = 0; i < mo_repr_layout.ncloc(); i++)
         {
-            const int in = i * pv->para_2d().ncloc();
-            for (int j = 0; j < pv->para_2d().nrloc(); j++)
+            const int in = i * mo_repr_layout.desc()[8];
+            for (int j = 0; j < mo_repr_layout.nrloc(); j++)
             {
-                double aa = Cij[in + j].real();
-                double bb = Cij[in + j].imag();
+                double aa = mo_ovlp[in + j].real();
+                double bb = mo_ovlp[in + j].imag();
                 if (std::abs(aa) < 1e-8)
                 {
                     aa = 0.0;
@@ -110,35 +113,36 @@ void norm_psi(const Parallel_Orbitals* pv,
 
     int naroc[2] = {0, 0}; // maximum number of row or column
 
-    for (int iprow = 0; iprow < pv->para_2d().nrproc(); ++iprow)
+    for (int iprow = 0; iprow < mo_repr_layout.nrproc(); ++iprow)
     {
-        for (int ipcol = 0; ipcol < pv->para_2d().ncproc(); ++ipcol)
+        for (int ipcol = 0; ipcol < mo_repr_layout.ncproc(); ++ipcol)
         {
-            if (pv->para_2d().blacs_in_this_processor(iprow, ipcol))
+            if (mo_repr_layout.blacs_in_this_processor(iprow, ipcol))
             {
-                naroc[0] = pv->para_2d().nrloc();
-                naroc[1] = pv->para_2d().ncloc();
+                naroc[0] = mo_repr_layout.nrloc();
+                naroc[1] = mo_repr_layout.ncloc();
+                const int lld = mo_repr_layout.desc()[8];
                 for (int j = 0; j < naroc[1]; ++j)
                 {
-                    int igcol = globalIndex(j, pv->para_2d().nb(), pv->para_2d().ncproc(), ipcol);
+                    int igcol = globalIndex(j, mo_repr_layout.nb(), mo_repr_layout.ncproc(), ipcol);
                     if (igcol >= nband)
                     {
                         continue;
                     }
                     for (int i = 0; i < naroc[0]; ++i)
                     {
-                        int igrow = globalIndex(i, pv->para_2d().nb(), pv->para_2d().nrproc(), iprow);
+                        int igrow = globalIndex(i, mo_repr_layout.nb(), mo_repr_layout.nrproc(), iprow);
                         if (igrow >= nband)
                         {
                             continue;
                         }
                         if (igcol == igrow)
                         {
-                            Cij[j * naroc[0] + i] = {1.0 / sqrt(Cij[j * naroc[0] + i].real()), 0.0};
+                            mo_ovlp[j * lld + i] = {1.0 / sqrt(mo_ovlp[j * lld + i].real()), 0.0};
                         }
                         else
                         {
-                            Cij[j * naroc[0] + i] = {0.0, 0.0};
+                            mo_ovlp[j * lld + i] = {0.0, 0.0};
                         }
                     }
                 }
@@ -146,7 +150,7 @@ void norm_psi(const Parallel_Orbitals* pv,
         } // loop ipcol
     } // loop iprow
 
-    BlasConnector::copy(pv->nloc_wfc, psi_k, 1, tmp1, 1);
+    BlasConnector::copy(wfc_layout.size(), psi_k, 1, tmp1, 1);
 
     ScalapackConnector::gemm('N',
                              'N',
@@ -157,36 +161,36 @@ void norm_psi(const Parallel_Orbitals* pv,
                              tmp1,
                              1,
                              1,
-                             pv->desc_wfc,
-                             Cij,
+                             wfc_layout.desc(),
+                             mo_ovlp,
                              1,
                              1,
-                             pv->desc_Eij,
+                             mo_repr_layout.desc(),
                              0.0,
                              psi_k,
                              1,
                              1,
-                             pv->desc_wfc);
+                             wfc_layout.desc());
 
     if (print_matrix)
     {
         ofs_running << " Cij:" << std::endl;
-        for (int i = 0; i < pv->para_2d().ncloc(); i++)
+        for (int i = 0; i < mo_repr_layout.ncloc(); i++)
         {
-            const int in = i * pv->para_2d().ncloc();
-            for (int j = 0; j < pv->para_2d().nrloc(); j++)
+            const int in = i * mo_repr_layout.desc()[8];
+            for (int j = 0; j < mo_repr_layout.nrloc(); j++)
             {
-                ofs_running << Cij[in + j].real() << "+" << Cij[in + j].imag() << "i ";
+                ofs_running << mo_ovlp[in + j].real() << "+" << mo_ovlp[in + j].imag() << "i ";
             }
             ofs_running << std::endl;
         }
         ofs_running << std::endl;
         ofs_running << std::endl;
         ofs_running << " psi_k:" << std::endl;
-        for (int i = 0; i < pv->ncol_bands; i++)
+        for (int i = 0; i < wfc_layout.ncloc(); i++)
         {
-            const int in = i * pv->para_2d().ncloc();
-            for (int j = 0; j < pv->para_2d().ncloc(); j++)
+            const int in = i * wfc_layout.desc()[8];
+            for (int j = 0; j < wfc_layout.nrloc(); j++)
             {
                 double aa = psi_k[in + j].real();
                 double bb = psi_k[in + j].imag();
@@ -204,10 +208,10 @@ void norm_psi(const Parallel_Orbitals* pv,
         }
         ofs_running << std::endl;
         ofs_running << " psi_k before normalization:" << std::endl;
-        for (int i = 0; i < pv->ncol_bands; i++)
+        for (int i = 0; i < wfc_layout.ncloc(); i++)
         {
-            const int in = i * pv->para_2d().ncloc();
-            for (int j = 0; j < pv->para_2d().ncloc(); j++)
+            const int in = i * wfc_layout.desc()[8];
+            for (int j = 0; j < wfc_layout.nrloc(); j++)
             {
                 double aa = tmp1[in + j].real();
                 double bb = tmp1[in + j].imag();
@@ -228,10 +232,12 @@ void norm_psi(const Parallel_Orbitals* pv,
     }
 
     delete[] tmp1;
-    delete[] Cij;
+    delete[] mo_ovlp;
 }
 
-void norm_psi_tensor(const Parallel_Orbitals* pv,
+void norm_psi_tensor(const Parallel_Blkcyclic& matrix_layout,
+                     const Parallel_Blkcyclic& wfc_layout,
+                     const Parallel_Blkcyclic& mo_repr_layout,
                      const int nband,
                      const int nlocal,
                      const ct::Tensor& Stmp,
@@ -246,6 +252,8 @@ void norm_psi_tensor(const Parallel_Orbitals* pv,
         return;
     }
 
+    assert(wfc_layout.size() > 0 && matrix_layout.size() > 0 && mo_repr_layout.size() > 0);
+
     void* d_S = static_cast<void*>(const_cast<std::complex<double>*>(Stmp.data<std::complex<double>>()));
     void* d_Psi = static_cast<void*>(psi_k.data<std::complex<double>>());
     int64_t psi_elems = psi_k.NumElements();
@@ -253,51 +261,51 @@ void norm_psi_tensor(const Parallel_Orbitals* pv,
     ct::Tensor Tmp1_gpu(ct::DataType::DT_COMPLEX_DOUBLE, ct::DeviceType::GpuDevice, ct::TensorShape({psi_elems}));
     void* d_Tmp1 = static_cast<void*>(Tmp1_gpu.data<std::complex<double>>());
 
-    const std::size_t cij_elems = pv->para_2d().size();
-    ct::Tensor Cij_gpu(ct::DataType::DT_COMPLEX_DOUBLE,
-                       ct::DeviceType::GpuDevice,
-                       ct::TensorShape({static_cast<int64_t>(cij_elems)}));
-    void* d_Cij = static_cast<void*>(Cij_gpu.data<std::complex<double>>());
+    const std::size_t cij_elems = mo_repr_layout.size();
+    ct::Tensor mo_ovlp_gpu(ct::DataType::DT_COMPLEX_DOUBLE,
+                                     ct::DeviceType::GpuDevice,
+                                     ct::TensorShape({static_cast<int64_t>(cij_elems)}));
+    void* d_mo_ovlp = static_cast<void*>(mo_ovlp_gpu.data<std::complex<double>>());
 
-    cudaMemsetAsync(d_Cij, 0, cij_elems * sizeof(std::complex<double>), cublas_res.stream);
+    cudaMemsetAsync(d_mo_ovlp, 0, cij_elems * sizeof(std::complex<double>), cublas_res.stream);
 
     std::complex<double> alpha = {1.0, 0.0};
     std::complex<double> beta = {0.0, 0.0};
 
-    cublasMpMatrixDescriptor_t desc_S, desc_Psi, desc_Cij;
+    cublasMpMatrixDescriptor_t desc_S, desc_Psi, desc_mo_ovlp;
 
     cublasMpMatrixDescriptorCreate(nlocal,
                                    nlocal,
-                                   pv->para_2d().desc()[4],
-                                   pv->para_2d().desc()[5],
+                                   matrix_layout.desc()[4],
+                                   matrix_layout.desc()[5],
                                    0,
                                    0,
-                                   pv->para_2d().desc()[8],
+                                   matrix_layout.desc()[8],
                                    CUDA_C_64F,
                                    cublas_res.cublasmp_grid,
                                    &desc_S);
 
     cublasMpMatrixDescriptorCreate(nlocal,
                                    nband,
-                                   pv->desc_wfc[4],
-                                   pv->desc_wfc[5],
+                                   wfc_layout.desc()[4],
+                                   wfc_layout.desc()[5],
                                    0,
                                    0,
-                                   pv->desc_wfc[8],
+                                   wfc_layout.desc()[8],
                                    CUDA_C_64F,
                                    cublas_res.cublasmp_grid,
                                    &desc_Psi);
 
     cublasMpMatrixDescriptorCreate(nband,
                                    nband,
-                                   pv->desc_Eij[4],
-                                   pv->desc_Eij[5],
+                                   mo_repr_layout.desc()[4],
+                                   mo_repr_layout.desc()[5],
                                    0,
                                    0,
-                                   pv->desc_Eij[8],
+                                   mo_repr_layout.desc()[8],
                                    CUDA_C_64F,
                                    cublas_res.cublasmp_grid,
-                                   &desc_Cij);
+                                   &desc_mo_ovlp);
 
     size_t ws_dev = 0, ws_host = 0;
     void *d_work = nullptr, *h_work = nullptr;
@@ -359,7 +367,7 @@ void norm_psi_tensor(const Parallel_Orbitals* pv,
     cudaFreeAsync(d_work, cublas_res.stream);
     free(h_work);
 
-    // GEMM 2: Psi^H * Tmp1 -> Cij
+    // GEMM 2: Psi^H * Tmp1 -> mo_ovlp
     cublasMpGemm_bufferSize(cublas_res.cublasmp_handle,
                             CUBLAS_OP_C,
                             CUBLAS_OP_N,
@@ -376,10 +384,10 @@ void norm_psi_tensor(const Parallel_Orbitals* pv,
                             1,
                             desc_Psi,
                             &beta,
-                            d_Cij,
+                            d_mo_ovlp,
                             1,
                             1,
-                            desc_Cij,
+                            desc_mo_ovlp,
                             CUBLAS_COMPUTE_64F,
                             &ws_dev,
                             &ws_host);
@@ -403,10 +411,10 @@ void norm_psi_tensor(const Parallel_Orbitals* pv,
                  1,
                  desc_Psi,
                  &beta,
-                 d_Cij,
+                 d_mo_ovlp,
                  1,
                  1,
-                 desc_Cij,
+                 desc_mo_ovlp,
                  CUBLAS_COMPUTE_64F,
                  d_work,
                  ws_dev,
@@ -417,18 +425,19 @@ void norm_psi_tensor(const Parallel_Orbitals* pv,
     free(h_work);
 
     // Launch GPU In-place Normalization using the C++ wrapper
-    module_rt::gpu::launch_normalize_cij_kernel(reinterpret_cast<cuDoubleComplex*>(d_Cij),
-                                                pv->desc_Eij[8],
-                                                pv->para_2d().size(),
-                                                pv->desc_Eij[4],
-                                                pv->para_2d().nrproc(),
-                                                pv->para_2d().ncproc(),
-                                                pv->para_2d().irproc(),
-                                                pv->para_2d().icproc(),
+    const int mo_ovlp_elems = static_cast<int>(mo_repr_layout.size());
+    module_rt::gpu::launch_normalize_cij_kernel(reinterpret_cast<cuDoubleComplex*>(d_mo_ovlp),
+                                                mo_repr_layout.desc()[8],
+                                                mo_ovlp_elems,
+                                                mo_repr_layout.desc()[4],
+                                                mo_repr_layout.nrproc(),
+                                                mo_repr_layout.ncproc(),
+                                                mo_repr_layout.irproc(),
+                                                mo_repr_layout.icproc(),
                                                 nband,
                                                 cublas_res.stream);
 
-    // GEMM 3: Tmp1 * Cij -> Psi
+    // GEMM 3: Tmp1 * mo_ovlp -> Psi
     cudaMemcpyAsync(d_Tmp1,
                     d_Psi,
                     psi_elems * sizeof(std::complex<double>),
@@ -446,10 +455,10 @@ void norm_psi_tensor(const Parallel_Orbitals* pv,
                             1,
                             1,
                             desc_Psi,
-                            d_Cij,
+                            d_mo_ovlp,
                             1,
                             1,
-                            desc_Cij,
+                            desc_mo_ovlp,
                             &beta,
                             d_Psi,
                             1,
@@ -473,10 +482,10 @@ void norm_psi_tensor(const Parallel_Orbitals* pv,
                  1,
                  1,
                  desc_Psi,
-                 d_Cij,
+                 d_mo_ovlp,
                  1,
                  1,
-                 desc_Cij,
+                 desc_mo_ovlp,
                  &beta,
                  d_Psi,
                  1,
@@ -492,7 +501,7 @@ void norm_psi_tensor(const Parallel_Orbitals* pv,
 
     cublasMpMatrixDescriptorDestroy(desc_S);
     cublasMpMatrixDescriptorDestroy(desc_Psi);
-    cublasMpMatrixDescriptorDestroy(desc_Cij);
+    cublasMpMatrixDescriptorDestroy(desc_mo_ovlp);
 
     cudaFreeAsync(d_work, cublas_res.stream);
     free(h_work);
@@ -500,8 +509,7 @@ void norm_psi_tensor(const Parallel_Orbitals* pv,
 }
 
 template <typename Device>
-void norm_psi_tensor_lapack(const Parallel_Orbitals* pv,
-                            const int nband,
+void norm_psi_tensor_lapack(const int nband,
                             const int nlocal,
                             const ct::Tensor& Stmp,
                             ct::Tensor& psi_k,
@@ -517,13 +525,13 @@ void norm_psi_tensor_lapack(const Parallel_Orbitals* pv,
     ct::Tensor tmp1(
         ct::DataType::DT_COMPLEX_DOUBLE,
         ct_device_type,
-        ct::TensorShape({nlocal * nband})); // tmp1 shape: nlocal * nband (under 2D block cyclic is pv->nloc_wfc)
+        ct::TensorShape({nlocal * nband})); // tmp1 shape: nlocal * nband
     tmp1.zero();
 
-    ct::Tensor Cij(ct::DataType::DT_COMPLEX_DOUBLE,
-                   ct_device_type,
-                   ct::TensorShape({nlocal * nlocal})); // Cij shape: nlocal * nlocal
-    Cij.zero();
+    ct::Tensor mo_ovlp(ct::DataType::DT_COMPLEX_DOUBLE,
+                            ct_device_type,
+                            ct::TensorShape({nlocal * nlocal})); // mo_ovlp shape: nlocal * nlocal
+    mo_ovlp.zero();
 
     std::complex<double> alpha = {1.0, 0.0};
     std::complex<double> beta = {0.0, 0.0};
@@ -543,7 +551,7 @@ void norm_psi_tensor_lapack(const Parallel_Orbitals* pv,
                                                               tmp1.data<std::complex<double>>(),
                                                               nlocal); // Leading dimension of tmp1
 
-    // Perform matrix multiplication: Cij = psi_k^dagger * tmp1
+    // Perform matrix multiplication: mo_ovlp = psi_k^dagger * tmp1
     ct::kernels::blas_gemm<std::complex<double>, ct_Device>()('C',
                                                               'N',
                                                               nband,
@@ -555,14 +563,14 @@ void norm_psi_tensor_lapack(const Parallel_Orbitals* pv,
                                                               tmp1.data<std::complex<double>>(),
                                                               nlocal, // Leading dimension of tmp1
                                                               &beta,
-                                                              Cij.data<std::complex<double>>(),
-                                                              nlocal); // Leading dimension of Cij
+                                                              mo_ovlp.data<std::complex<double>>(),
+                                                              nlocal); // Leading dimension of mo_ovlp
 
-    // Normalize Cij: set diagonal elements to 1/sqrt(Cij[i][i]), off-diagonal elements to 0
+    // Normalize mo_ovlp: set diagonal elements to 1/sqrt(mo_ovlp[i][i]), off-diagonal elements to 0
     if (ct_device_type == ct::DeviceType::GpuDevice)
     {
-        // Step 1: Copy Cij from GPU to CPU
-        ct::Tensor Cij_cpu = Cij.to_device<ct::DEVICE_CPU>();
+        // Step 1: Copy mo_ovlp from GPU to CPU
+        ct::Tensor mo_ovlp_cpu = mo_ovlp.to_device<ct::DEVICE_CPU>();
 
         // Step 2: Perform normalization on CPU
         for (int i = 0; i < nband; ++i)
@@ -572,18 +580,18 @@ void norm_psi_tensor_lapack(const Parallel_Orbitals* pv,
             {
                 if (i == j)
                 {
-                    Cij_cpu.data<std::complex<double>>()[in + j]
-                        = {1.0 / sqrt(Cij_cpu.data<std::complex<double>>()[in + j].real()), 0.0};
+                    mo_ovlp_cpu.data<std::complex<double>>()[in + j]
+                        = {1.0 / sqrt(mo_ovlp_cpu.data<std::complex<double>>()[in + j].real()), 0.0};
                 }
                 else
                 {
-                    Cij_cpu.data<std::complex<double>>()[in + j] = {0.0, 0.0};
+                    mo_ovlp_cpu.data<std::complex<double>>()[in + j] = {0.0, 0.0};
                 }
             }
         }
 
-        // Step 3: Copy normalized Cij back to GPU
-        Cij = Cij_cpu.to_device<ct_Device>();
+        // Step 3: Copy normalized mo_ovlp back to GPU
+        mo_ovlp = mo_ovlp_cpu.to_device<ct_Device>();
     }
     else
     {
@@ -595,12 +603,12 @@ void norm_psi_tensor_lapack(const Parallel_Orbitals* pv,
             {
                 if (i == j)
                 {
-                    Cij.data<std::complex<double>>()[in + j]
-                        = {1.0 / sqrt(Cij.data<std::complex<double>>()[in + j].real()), 0.0};
+                    mo_ovlp.data<std::complex<double>>()[in + j]
+                        = {1.0 / sqrt(mo_ovlp.data<std::complex<double>>()[in + j].real()), 0.0};
                 }
                 else
                 {
-                    Cij.data<std::complex<double>>()[in + j] = {0.0, 0.0};
+                    mo_ovlp.data<std::complex<double>>()[in + j] = {0.0, 0.0};
                 }
             }
         }
@@ -610,7 +618,7 @@ void norm_psi_tensor_lapack(const Parallel_Orbitals* pv,
     // tmp1.CopyFrom(psi_k); // Does not work because this will cause tmp1 and psi_k to share the same data
     tmp1 = psi_k; // operator= overload for Tensor class
 
-    // Perform matrix multiplication: psi_k = tmp1 * Cij
+    // Perform matrix multiplication: psi_k = tmp1 * mo_ovlp
     ct::kernels::blas_gemm<std::complex<double>, ct_Device>()('N',
                                                               'N',
                                                               nlocal,
@@ -619,24 +627,22 @@ void norm_psi_tensor_lapack(const Parallel_Orbitals* pv,
                                                               &alpha,
                                                               tmp1.data<std::complex<double>>(),
                                                               nlocal, // Leading dimension of tmp1
-                                                              Cij.data<std::complex<double>>(),
-                                                              nlocal, // Leading dimension of Cij
+                                                              mo_ovlp.data<std::complex<double>>(),
+                                                              nlocal, // Leading dimension of mo_ovlp
                                                               &beta,
                                                               psi_k.data<std::complex<double>>(),
                                                               nlocal); // Leading dimension of psi_k
 }
 
 // Explicit instantiation of template functions
-template void norm_psi_tensor_lapack<base_device::DEVICE_CPU>(const Parallel_Orbitals* pv,
-                                                              const int nband,
+template void norm_psi_tensor_lapack<base_device::DEVICE_CPU>(const int nband,
                                                               const int nlocal,
                                                               const ct::Tensor& Stmp,
                                                               ct::Tensor& psi_k,
                                                               std::ofstream& ofs_running,
                                                               const int print_matrix);
 #if ((defined __CUDA) /* || (defined __ROCM) */)
-template void norm_psi_tensor_lapack<base_device::DEVICE_GPU>(const Parallel_Orbitals* pv,
-                                                              const int nband,
+template void norm_psi_tensor_lapack<base_device::DEVICE_GPU>(const int nband,
                                                               const int nlocal,
                                                               const ct::Tensor& Stmp,
                                                               ct::Tensor& psi_k,
