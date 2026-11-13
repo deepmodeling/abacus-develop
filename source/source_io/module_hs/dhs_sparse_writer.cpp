@@ -3,10 +3,10 @@
 #include "hs_sparse_io.h"
 #include "hs_sparse_io_detail.h"
 #include "lat_r_csr.h"
+#include "source_base/parallel_blkcyc.h"
 #include "source_base/global_function.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
-#include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_io/module_output/spin_tag.h"
 
 #include <cmath>
@@ -16,7 +16,7 @@
 #include <vector>
 
 void ModuleIO::save_dH_sparse(const int& istep,
-                              const Parallel_Orbitals& pv,
+                              const Parallel_Blkcyclic& dist,
                               LCAO_HS_Arrays& HS_Arrays,
                               const double& sparse_thr,
                               const bool& binary,
@@ -223,9 +223,9 @@ void ModuleIO::save_dH_sparse(const int& istep,
             {
                 if (comp.nonzero_num[ispin][count] > 0) {
                     if (nspin != 4) {
-                        save_lat_r(comp.ofs[ispin], comp.sparse[ispin][R_coor], pv.para_2d(), lat_r_options);
+                        save_lat_r(comp.ofs[ispin], comp.sparse[ispin][R_coor], dist, lat_r_options);
                     } else {
-                        save_lat_r(comp.ofs[ispin], (*comp.soc_sparse)[R_coor], pv.para_2d(), lat_r_options);
+                        save_lat_r(comp.ofs[ispin], (*comp.soc_sparse)[R_coor], dist, lat_r_options);
                     }
                 }
             }
