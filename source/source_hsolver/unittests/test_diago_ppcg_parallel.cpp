@@ -27,6 +27,7 @@
 #include <fstream>
 #include <limits>
 #include <random>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <unistd.h>
@@ -151,7 +152,6 @@ int main(int argc, char** argv)
     int mypool = 0;
     int rank_in_pool = 0;
     divide_pools(nproc, myrank, nproc_in_pool, kpar, mypool, rank_in_pool);
-    const bool world_root_is_correct = Parallel_Reduce::is_world_root() == (myrank == 0);
     BP_WORLD = MPI_COMM_WORLD;
 
     using T    = std::complex<double>;
@@ -297,21 +297,25 @@ int main(int argc, char** argv)
     }
     const bool size_validation_before_operator = collective_size_failed && h_calls == 0;
 
+    std::ostringstream running_log;
     solver.diag(h_op, nullptr, n_local, nband, n_local,
-                psi.data(), eval.data(), ethr, prec.data());
+                psi.data(), eval.data(), ethr, prec.data(), running_log);
+    const std::string trace_message = "PPCG residual trace written: " + trace_path;
+    const bool wrote_trace = running_log.str().find(trace_message) != std::string::npos;
+    const bool trace_writer_is_correct = wrote_trace == (myrank == 0);
 
     // The lowest nband eigenvalues of the global diagonal matrix are 1..nband.
     int ok = 1;
-    if (!world_root_is_correct
+    if (!trace_writer_is_correct
         || !validation_before_operator
         || !size_validation_before_operator
         || trace_environment_ok != 1)
     {
         ok = 0;
     }
-    if (!world_root_is_correct)
+    if (!trace_writer_is_correct)
     {
-        std::fprintf(stderr, "rank %d: MPI world-root detection is inconsistent\n", myrank);
+        std::fprintf(stderr, "rank %d: only the MPI world root should write the residual trace\n", myrank);
     }
     if (!validation_before_operator)
     {
