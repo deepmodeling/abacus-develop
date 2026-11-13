@@ -18,7 +18,6 @@ void Nonlocal<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
     // begin the calculation of force and stress
     ModuleBase::timer::start("Nonlocal", "cal_force_stress");
 
-    const Parallel_Orbitals* paraV = dmR->get_paraV();
     const int npol = this->ucell->get_npol();
     std::vector<double> stress_tmp(6, 0);
     if (cal_force)
@@ -72,8 +71,8 @@ void Nonlocal<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
             const ModuleBase::Vector3<double>& tau1 = adjs.adjacent_tau[ad];
             const Atom* atom1 = &ucell->atoms[T1];
 
-            auto all_indexes = paraV->get_indexes_row(iat1);
-            auto col_indexes = paraV->get_indexes_col(iat1);
+            auto all_indexes = dmR->row_basis_offsets(iat1);
+            auto col_indexes = dmR->col_basis_offsets(iat1);
             // insert col_indexes into all_indexes to get universal set with no repeat elements
             all_indexes.insert(all_indexes.end(), col_indexes.begin(), col_indexes.end());
             std::sort(all_indexes.begin(), all_indexes.end());
@@ -126,8 +125,10 @@ void Nonlocal<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
                                                   R_index2[1] - R_index1[1],
                                                   R_index2[2] - R_index1[2]);
                 const hamilt::BaseMatrix<TR>* tmp = dmR->find_matrix(iat1, iat2, R_vector[0], R_vector[1], R_vector[2]);
-                int row_size = paraV->para_2d().nrloc();
-                int col_size = paraV->para_2d().ncloc();
+                const std::vector<int> row_indexes = dmR->row_basis_offsets(iat1);
+                const std::vector<int> col_indexes = dmR->col_basis_offsets(iat2);
+                const int row_size = static_cast<int>(row_indexes.size());
+                const int col_size = static_cast<int>(col_indexes.size());
                 if(row_size == 0 || col_size == 0)
                 {
                     continue;
@@ -140,7 +141,7 @@ void Nonlocal<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
                         this->cal_force_IJR(iat1,
                                             iat2,
                                             T0,
-                                            paraV,
+                                            *dmR,
                                             nlm_iat0[ad1],
                                             nlm_iat0[ad2],
                                             tmp,
@@ -153,7 +154,7 @@ void Nonlocal<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
                         this->cal_stress_IJR(iat1,
                                              iat2,
                                              T0,
-                                             paraV,
+                                             *dmR,
                                              nlm_iat0[ad1],
                                              nlm_iat0[ad2],
                                              tmp,
@@ -221,7 +222,7 @@ template <>
 inline void Nonlocal<OperatorLCAO<std::complex<double>, std::complex<double>>>::cal_force_IJR(const int& iat1,
                                                const int& iat2,
                                                const int& T0,
-                                               const Parallel_Orbitals* paraV,
+                                               const HContainer<std::complex<double>>& dmR,
                                                const std::unordered_map<int, std::vector<double>>& nlm1_all,
                                                const std::unordered_map<int, std::vector<double>>& nlm2_all,
                                                const hamilt::BaseMatrix<std::complex<double>>* dmR_pointer,
@@ -235,8 +236,8 @@ inline void Nonlocal<OperatorLCAO<std::complex<double>, std::complex<double>>>::
     // ---------------------------------------------
     // calculate the Nonlocal matrix for each pair of orbitals
     // ---------------------------------------------
-    auto row_indexes = paraV->get_indexes_row(iat1);
-    auto col_indexes = paraV->get_indexes_col(iat2);
+    const std::vector<int> row_indexes = dmR.row_basis_offsets(iat1);
+    const std::vector<int> col_indexes = dmR.col_basis_offsets(iat2);
     // step_trace = 0 for NSPIN=2; ={0, 1, local_col, local_col+1} for NSPIN=4
     std::vector<int> step_trace;
     OperatorForceStress::setup_step_trace(npol, col_indexes.size(), step_trace);
@@ -286,7 +287,7 @@ template <>
 inline void Nonlocal<OperatorLCAO<std::complex<double>, std::complex<double>>>::cal_stress_IJR(const int& iat1,
                                                 const int& iat2,
                                                 const int& T0,
-                                                const Parallel_Orbitals* paraV,
+                                                const HContainer<std::complex<double>>& dmR,
                                                 const std::unordered_map<int, std::vector<double>>& nlm1_all,
                                                 const std::unordered_map<int, std::vector<double>>& nlm2_all,
                                                 const hamilt::BaseMatrix<std::complex<double>>* dmR_pointer,
@@ -302,8 +303,8 @@ inline void Nonlocal<OperatorLCAO<std::complex<double>, std::complex<double>>>::
     // ---------------------------------------------
     // calculate the Nonlocal matrix for each pair of orbitals
     // ---------------------------------------------
-    auto row_indexes = paraV->get_indexes_row(iat1);
-    auto col_indexes = paraV->get_indexes_col(iat2);
+    const std::vector<int> row_indexes = dmR.row_basis_offsets(iat1);
+    const std::vector<int> col_indexes = dmR.col_basis_offsets(iat2);
     // step_trace = 0 for NSPIN=2; ={0, 1, local_col, local_col+1} for NSPIN=4
     std::vector<int> step_trace;
     OperatorForceStress::setup_step_trace(npol, col_indexes.size(), step_trace);
@@ -354,7 +355,7 @@ template <typename TK, typename TR>
 void Nonlocal<OperatorLCAO<TK, TR>>::cal_force_IJR(const int& iat1,
                                                const int& iat2,
                                                const int& T0,
-                                               const Parallel_Orbitals* paraV,
+                                               const HContainer<TR>& dmR,
                                                const std::unordered_map<int, std::vector<double>>& nlm1_all,
                                                const std::unordered_map<int, std::vector<double>>& nlm2_all,
                                                const hamilt::BaseMatrix<TR>* dmR_pointer,
@@ -364,8 +365,8 @@ void Nonlocal<OperatorLCAO<TK, TR>>::cal_force_IJR(const int& iat1,
     // ---------------------------------------------
     // calculate the Nonlocal matrix for each pair of orbitals
     // ---------------------------------------------
-    auto row_indexes = paraV->get_indexes_row(iat1);
-    auto col_indexes = paraV->get_indexes_col(iat2);
+    const std::vector<int> row_indexes = dmR.row_basis_offsets(iat1);
+    const std::vector<int> col_indexes = dmR.col_basis_offsets(iat2);
     // calculate the local matrix
     const double* tmp_d = nullptr;
     const double* dm_pointer = dmR_pointer->get_pointer();
@@ -404,7 +405,7 @@ template <typename TK, typename TR>
 void Nonlocal<OperatorLCAO<TK, TR>>::cal_stress_IJR(const int& iat1,
                                                 const int& iat2,
                                                 const int& T0,
-                                                const Parallel_Orbitals* paraV,
+                                                const HContainer<TR>& dmR,
                                                 const std::unordered_map<int, std::vector<double>>& nlm1_all,
                                                 const std::unordered_map<int, std::vector<double>>& nlm2_all,
                                                 const hamilt::BaseMatrix<TR>* dmR_pointer,
@@ -415,8 +416,8 @@ void Nonlocal<OperatorLCAO<TK, TR>>::cal_stress_IJR(const int& iat1,
     // ---------------------------------------------
     // calculate the Nonlocal matrix for each pair of orbitals
     // ---------------------------------------------
-    auto row_indexes = paraV->get_indexes_row(iat1);
-    auto col_indexes = paraV->get_indexes_col(iat2);
+    const std::vector<int> row_indexes = dmR.row_basis_offsets(iat1);
+    const std::vector<int> col_indexes = dmR.col_basis_offsets(iat2);
     // calculate the local matrix
     const double* tmp_d = nullptr;
     const double* dm_pointer = dmR_pointer->get_pointer();
@@ -470,14 +471,14 @@ template void Nonlocal<OperatorLCAO<std::complex<double>, std::complex<double>>>
 // explicit member function instantiations for cal_force_IJR (generic template)
 template void Nonlocal<OperatorLCAO<double, double>>::cal_force_IJR(
     const int& iat1, const int& iat2, const int& T0,
-    const Parallel_Orbitals* paraV,
+    const HContainer<double>& dmR,
     const std::unordered_map<int, std::vector<double>>& nlm1_all,
     const std::unordered_map<int, std::vector<double>>& nlm2_all,
     const hamilt::BaseMatrix<double>* dmR_pointer,
     double* force1, double* force2);
 template void Nonlocal<OperatorLCAO<std::complex<double>, double>>::cal_force_IJR(
     const int& iat1, const int& iat2, const int& T0,
-    const Parallel_Orbitals* paraV,
+    const HContainer<double>& dmR,
     const std::unordered_map<int, std::vector<double>>& nlm1_all,
     const std::unordered_map<int, std::vector<double>>& nlm2_all,
     const hamilt::BaseMatrix<double>* dmR_pointer,
@@ -486,7 +487,7 @@ template void Nonlocal<OperatorLCAO<std::complex<double>, double>>::cal_force_IJ
 // explicit member function instantiations for cal_stress_IJR (generic template)
 template void Nonlocal<OperatorLCAO<double, double>>::cal_stress_IJR(
     const int& iat1, const int& iat2, const int& T0,
-    const Parallel_Orbitals* paraV,
+    const HContainer<double>& dmR,
     const std::unordered_map<int, std::vector<double>>& nlm1_all,
     const std::unordered_map<int, std::vector<double>>& nlm2_all,
     const hamilt::BaseMatrix<double>* dmR_pointer,
@@ -495,7 +496,7 @@ template void Nonlocal<OperatorLCAO<double, double>>::cal_stress_IJR(
     double* stress);
 template void Nonlocal<OperatorLCAO<std::complex<double>, double>>::cal_stress_IJR(
     const int& iat1, const int& iat2, const int& T0,
-    const Parallel_Orbitals* paraV,
+    const HContainer<double>& dmR,
     const std::unordered_map<int, std::vector<double>>& nlm1_all,
     const std::unordered_map<int, std::vector<double>>& nlm2_all,
     const hamilt::BaseMatrix<double>* dmR_pointer,
