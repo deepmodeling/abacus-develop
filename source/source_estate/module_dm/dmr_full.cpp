@@ -28,7 +28,7 @@ void cal_dmr_full(
     }
 
     ModuleBase::timer::start("DensityMatrix", "cal_dmr_full");
-    const int ld_hk = dm.pv->para_2d().nrloc();
+    const int ld_hk = dm.dist->nrloc();
     hamilt::HContainer<TR_out>* const dmr_full = dmR_out;
     dmr_full->set_zero();
     const std::map<ModuleBase::Vector3<int>, std::complex<double>> no_hybrid_phase;
@@ -38,7 +38,7 @@ void cal_dmr_full(
     for (int i = 0; i < dmr_full->size_atom_pairs(); ++i)
     {
         hamilt::AtomPair<TR_out>& atom_pair = dmr_full->get_atom_pair(i);
-        const DmrBlock block = get_dmr_block(dm.pv, atom_pair.get_atom_i(), atom_pair.get_atom_j());
+        const DmrBlock block = dm.block_for_atom_pair(atom_pair.get_atom_i(), atom_pair.get_atom_j());
         const int R_size = atom_pair.get_R_size();
 
         // precompute k-phase factors and collect DMR block pointers

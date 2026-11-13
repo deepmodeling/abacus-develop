@@ -3,6 +3,8 @@
 #include <array>
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include "source_base/basis_flattened_indexing.h"
+#include "source_base/element_basis_index.h"
 #include "source_estate/module_dm/density_matrix.h"
 #include "source_hamilt/module_hcontainer/hcontainer.h"
 #include "source_cell/klist.h"
@@ -115,6 +117,29 @@ TEST_F(DMTest, DMInit1)
     EXPECT_EQ(DM.get_dmr_ptr(1)->get_atom_pair(2, 2).get_row_size(), paraV->get_nrow_atom(2));
     EXPECT_EQ(DM.get_dmr_ptr(1)->get_atom_pair(2, 2).get_col_size(), paraV->get_ncol_atom(2));
     delete kv;
+}
+
+TEST_F(DMTest, DMInitExplicitLayout)
+{
+    ModuleBase::Element_Basis_Index::Range range(1);
+    range[0].resize(1);
+    range[0][0].N = test_nw;
+    range[0][0].M = 1;
+    const ModuleBase::Element_Basis_Index::IndexLNM hierarchy
+        = ModuleBase::Element_Basis_Index::construct_index(range);
+    const std::vector<int> atom_types(test_size, 0);
+    const BasisFlattenedIndexing basis_index(hierarchy, atom_types, 1);
+
+    std::vector<ModuleBase::Vector3<double>> kvec_d(2);
+    kvec_d[1].x = 0.5;
+    module_dm::DensityMatrix<double, double> DM(
+        basis_index, paraV->para_2d(), 1, kvec_d, 1);
+    Grid_Driver gd(0, 0);
+    DM.init_dmr(&gd, &ucell);
+
+    EXPECT_EQ(DM.get_dmr_ptr(1)->size_atom_pairs(), test_size * test_size);
+    EXPECT_EQ(DM.get_dmr_ptr(1)->get_atom_pair(2, 2).get_row_size(), paraV->get_nrow_atom(2));
+    EXPECT_EQ(DM.get_dmr_ptr(1)->get_atom_pair(2, 2).get_col_size(), paraV->get_ncol_atom(2));
 }
 
 // test for construct DMR from RA and UnitCell

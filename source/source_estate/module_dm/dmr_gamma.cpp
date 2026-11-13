@@ -21,7 +21,7 @@ void DensityMatrix<double, double>::cal_dmr(const int ik_in)
     assert(this->dmr.size()==this->spin_mult && "DMR has not been initialized!");
 
     ModuleBase::timer::start("DensityMatrix", "cal_dmr");
-    const int ld_hk = this->pv->para_2d().nrloc();
+    const int ld_hk = this->dist->nrloc();
     for (int is = 1; is <= this->spin_mult; ++is)
     {
         const int ik_begin = this->_nk * (is - 1); // jump this->_nk for spin_down if nspin==2
@@ -35,10 +35,11 @@ void DensityMatrix<double, double>::cal_dmr(const int ik_in)
             hamilt::AtomPair<TR>& target_ap = target_DMR->get_atom_pair(i);
             const int iat1 = target_ap.get_atom_i();
             const int iat2 = target_ap.get_atom_j();
-            const int row_ap = this->pv->atom_begin_row[iat1];
-            const int col_ap = this->pv->atom_begin_col[iat2];
-            const int row_size = this->pv->get_nrow_atom(iat1);
-            const int col_size = this->pv->get_ncol_atom(iat2);
+            const DmrBlock block = this->block_for_atom_pair(iat1, iat2);
+            const int row_ap = block.row0;
+            const int col_ap = block.col0;
+            const int row_size = block.nrows;
+            const int col_size = block.ncols;
             const int R_size = target_ap.get_R_size();
             assert(row_ap != -1 && col_ap != -1 && "Atom-pair not belong this process");
             assert(R_size == 1);
@@ -57,7 +58,7 @@ void DensityMatrix<double, double>::cal_dmr(const int ik_in)
             // transpose DMK col=>row
             const TK* DMK_mat_ptr
                 = this->dmk[0 + ik_begin].data()
-                  + col_ap * this->pv->para_2d().nrloc() + row_ap;
+                  + col_ap * ld_hk + row_ap;
             // set DMR element
             TR* target_DMR_ptr = target_mat->get_pointer();
             for (int mu = 0; mu < row_size; ++mu)

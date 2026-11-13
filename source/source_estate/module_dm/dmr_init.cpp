@@ -14,6 +14,24 @@
 namespace module_dm
 {
 
+namespace
+{
+template <typename TR>
+std::unique_ptr<hamilt::HContainer<TR>> make_empty_dmr_container(
+    const BasisFlattenedIndexing* basis_index,
+    const Parallel_Blkcyclic* dist,
+    const Parallel_Orbitals* pv)
+{
+    if (basis_index != nullptr)
+    {
+        const std::vector<int> no_ijr(1, 0);
+        return std::unique_ptr<hamilt::HContainer<TR>>(
+            new hamilt::HContainer<TR>(*basis_index, *dist, nullptr, &no_ijr));
+    }
+    return std::unique_ptr<hamilt::HContainer<TR>>(new hamilt::HContainer<TR>(pv));
+}
+} // namespace
+
 // initialize density matrix DMR from UnitCell (mainly used in UnitTest)
 template <typename TK, typename TR>
 void DensityMatrix<TK, TR>::init_dmr(const Grid_Driver* GridD_in, const UnitCell* ucell)
@@ -21,7 +39,8 @@ void DensityMatrix<TK, TR>::init_dmr(const Grid_Driver* GridD_in, const UnitCell
     ModuleBase::TITLE("DensityMatrix", "init_dmr");
     this->clear_dmr();
     // construct a new DMR
-    std::unique_ptr<hamilt::HContainer<TR>> tmp_DMR(new hamilt::HContainer<TR>(this->pv));
+    std::unique_ptr<hamilt::HContainer<TR>> tmp_DMR
+        = make_empty_dmr_container<TR>(this->basis_index, this->dist, this->pv);
     // set up a HContainer
     for (int iat1 = 0; iat1 < ucell->nat; iat1++)
     {
@@ -36,14 +55,12 @@ void DensityMatrix<TK, TR>::init_dmr(const Grid_Driver* GridD_in, const UnitCell
             const int T2 = adjs.ntype[ad];
             const int I2 = adjs.natom[ad];
             int iat2 = ucell->itia2iat(T2, I2);
-            if (this->pv->is_invalid_atom_pair(iat1, iat2))
+            if (!tmp_DMR->owns_atom_pair(iat1, iat2))
             {
                 continue;
             }
             ModuleBase::Vector3<int>& R_index = adjs.box[ad];
-            // std::cout << "R_index: " << R_index.x << " " << R_index.y << " " << R_index.z << std::endl;
-            hamilt::AtomPair<TR> tmp_ap(iat1, iat2, R_index, this->pv);
-            tmp_DMR->insert_pair(tmp_ap);
+            tmp_DMR->insert_pair(iat1, iat2, R_index);
         }
     }
     // allocate the memory of BaseMatrix in SR, and set the new values to zero
@@ -69,7 +86,8 @@ void DensityMatrix<TK, TR>::init_dmr(Record_adj& ra, const UnitCell* ucell)
     ModuleBase::TITLE("DensityMatrix", "init_dmr");
     this->clear_dmr();
     // construct a new DMR
-    std::unique_ptr<hamilt::HContainer<TR>> tmp_DMR(new hamilt::HContainer<TR>(this->pv));
+    std::unique_ptr<hamilt::HContainer<TR>> tmp_DMR
+        = make_empty_dmr_container<TR>(this->basis_index, this->dist, this->pv);
     // set up a HContainer
     for (int iat1 = 0; iat1 < ucell->nat; iat1++)
     {
@@ -81,17 +99,14 @@ void DensityMatrix<TK, TR>::init_dmr(Record_adj& ra, const UnitCell* ucell)
             const int T2 = ra.get_info(iat1, ad)[3];
             const int I2 = ra.get_info(iat1, ad)[4];
             int iat2 = ucell->itia2iat(T2, I2);
-            if (this->pv->is_invalid_atom_pair(iat1, iat2))
+            if (!tmp_DMR->owns_atom_pair(iat1, iat2))
             {
                 continue;
             }
-            hamilt::AtomPair<TR> tmp_ap(iat1,
-                                        iat2,
-                                        ra.get_info(iat1, ad)[0],
-                                        ra.get_info(iat1, ad)[1],
-                                        ra.get_info(iat1, ad)[2],
-                                        this->pv);
-            tmp_DMR->insert_pair(tmp_ap);
+            const ModuleBase::Vector3<int> R_index(ra.get_info(iat1, ad)[0],
+                                                   ra.get_info(iat1, ad)[1],
+                                                   ra.get_info(iat1, ad)[2]);
+            tmp_DMR->insert_pair(iat1, iat2, R_index);
         }
     }
     if (std::is_same<TK, double>::value)

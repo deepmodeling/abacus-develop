@@ -138,7 +138,14 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(BaseCell& basecell, const Input
         return;
     }
 
-    LCAO_domain::set_psi_occ_dm_chg<TK>(this->kv, this->psi, this->pv, this->pelec, this->dmat, this->chr, inp);
+    LCAO_domain::set_psi_occ_dm_chg<TK>(this->kv,
+                                       this->psi,
+                                       this->pv,
+                                       *(this->basis_index_),
+                                       this->pelec,
+                                       this->dmat,
+                                       this->chr,
+                                       inp);
 
     LCAO_domain::set_pot<TK>(ucell,
                              this->kv,

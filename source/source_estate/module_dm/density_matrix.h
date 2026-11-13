@@ -11,6 +11,9 @@
 #include "source_cell/record_adj.h"
 #include "source_hamilt/module_hcontainer/hcontainer.h"
 
+class BasisFlattenedIndexing;
+class Parallel_Blkcyclic;
+
 namespace module_dm
 {
 /**
@@ -103,6 +106,10 @@ struct ShiftRealComplex<std::complex<double>>
 
     /// @brief extract the block geometry for atom pair (iat1, iat2) from the parallel orbitals layout
     DmrBlock get_dmr_block(const Parallel_Orbitals* pv, const int iat1, const int iat2);
+    DmrBlock get_dmr_block(const BasisFlattenedIndexing& basis_index,
+                           const Parallel_Blkcyclic& dist,
+                           const int iat1,
+                           const int iat2);
 
     /**
      * @brief precompute k-phase factors e^{ikR} and collect DMR block pointers for one atom pair
@@ -204,6 +211,27 @@ class DensityMatrix
      * @param nspin the global physical nspin from INPUT (1/2/4); defaults to spin_mult.
      */
     DensityMatrix(const Parallel_Orbitals* pv, const int spin_mult, const int nspin = 0);
+
+    /**
+     * @brief Constructor with explicit basis and matrix distribution layouts.
+     *
+     * The indexing and distribution objects are borrowed and must outlive this
+     * DensityMatrix instance.
+     */
+    DensityMatrix(const BasisFlattenedIndexing& basis_index_in,
+                  const Parallel_Blkcyclic& dist_in,
+                  const int spin_mult,
+                  const std::vector<ModuleBase::Vector3<double>>& kvec_d,
+                  const int nk,
+                  const int nspin = 0);
+
+    /**
+     * @brief Gamma-only constructor with explicit layout objects.
+     */
+    DensityMatrix(const BasisFlattenedIndexing& basis_index_in,
+                  const Parallel_Blkcyclic& dist_in,
+                  const int spin_mult,
+                  const int nspin = 0);
 
     /**
      * @brief initialize density matrix DMR from UnitCell
@@ -406,6 +434,13 @@ class DensityMatrix
      */
     void clear_dmr();
 
+    void resize_dmk(const int nks);
+
+    /**
+     * @brief Return the local DMK block geometry for an atom pair.
+     */
+    DmrBlock block_for_atom_pair(const int iat1, const int iat2) const;
+
     /**
      * @brief HContainer for density matrix in real space for 2D parallelization
      * vector.size() = 1 for non-polarization and SOC
@@ -440,6 +475,12 @@ class DensityMatrix
      * @brief Parallel_Orbitals object, which contain all information of 2D block cyclic distribution
      */
     const Parallel_Orbitals* pv = nullptr;
+
+    /// Borrowed explicit basis layout; null on the legacy PV construction path.
+    const BasisFlattenedIndexing* basis_index = nullptr;
+
+    /// Borrowed matrix distribution shared by DMK and DMR.
+    const Parallel_Blkcyclic* dist = nullptr;
 
     /**
      * @brief spin multiplicity used to size the density matrix (1 - none spin and SOC ;

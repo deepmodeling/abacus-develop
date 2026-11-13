@@ -4,7 +4,8 @@
 #include "source_estate/module_dm/dm_holder.h"
 
 class K_Vectors;
-class Parallel_Orbitals;
+class BasisFlattenedIndexing;
+class Parallel_Blkcyclic;
 
 namespace LCAO_domain
 {
@@ -14,7 +15,8 @@ namespace LCAO_domain
 template <typename TK>
 void allocate_dm(module_dm::Setup_DM<TK>& dmat,
                  const K_Vectors* kv,
-                 const Parallel_Orbitals* pv,
+                 const BasisFlattenedIndexing& basis_index,
+                 const Parallel_Blkcyclic& dist,
                  const int nspin);
 } // namespace LCAO_domain
 

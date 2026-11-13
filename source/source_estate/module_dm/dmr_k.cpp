@@ -19,7 +19,7 @@ void accumulate_dmr(
     const int ik_in,
     const char* func_name)
 {
-    const int ld_hk = dm.pv->para_2d().nrloc();
+    const int ld_hk = dm.dist->nrloc();
     for (int is = 1; is <= dm.spin_mult; ++is)
     {
         const int ik_begin = dm._nk * (is - 1); // jump dm._nk for spin_down if nspin==2
@@ -42,7 +42,7 @@ void accumulate_dmr(
         for (int i = 0; i < dmr_spin->size_atom_pairs(); ++i)
         {
             hamilt::AtomPair<TR_out>& atom_pair = dmr_spin->get_atom_pair(i);
-            const DmrBlock block = get_dmr_block(dm.pv, atom_pair.get_atom_i(), atom_pair.get_atom_j());
+            const DmrBlock block = dm.block_for_atom_pair(atom_pair.get_atom_i(), atom_pair.get_atom_j());
 
             // precompute k-phase factors and collect DMR block pointers
             std::vector<std::vector<TK>> kphase_vec;

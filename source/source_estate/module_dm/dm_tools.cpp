@@ -1,11 +1,15 @@
 #include "density_matrix.h"
 
+#include "source_base/basis_flattened_indexing.h"
+#include "source_base/parallel_blkcyc.h"
 #include "source_base/libm/libm.h"
 #include "source_base/tool_title.h"
 #include "source_base/tool_quit.h"
 #include "source_base/constants.h"
 #include "source_base/timer.h"
 #include "source_cell/klist.h"
+
+#include <stdexcept>
 
 namespace module_dm
 {
@@ -76,6 +80,77 @@ DmrBlock get_dmr_block(
     block.ncols = pv->get_ncol_atom(iat2);
     assert(block.row0 != -1 && block.col0 != -1 && "Atom-pair not belong this process");
     return block;
+}
+
+DmrBlock get_dmr_block(
+    const BasisFlattenedIndexing& basis_index,
+    const Parallel_Blkcyclic& dist,
+    const int iat1,
+    const int iat2)
+{
+    DmrBlock block;
+    block.row0 = -1;
+    block.col0 = -1;
+    block.nrows = 0;
+    block.ncols = 0;
+
+    const BasisRange row_slice = basis_index.range(iat1);
+    int last_row = -2;
+    for (std::size_t ibas = row_slice.ibas0; ibas < row_slice.ibas1; ++ibas)
+    {
+        const int ir = dist.irloc(static_cast<int>(ibas));
+        if (ir < 0)
+        {
+            continue;
+        }
+        if (block.row0 < 0)
+        {
+            block.row0 = ir;
+        }
+        else if (ir != last_row + 1)
+        {
+            throw std::invalid_argument("local atom basis rows are not contiguous");
+        }
+        last_row = ir;
+        ++block.nrows;
+    }
+
+    const BasisRange col_slice = basis_index.range(iat2);
+    int last_col = -2;
+    for (std::size_t ibas = col_slice.ibas0; ibas < col_slice.ibas1; ++ibas)
+    {
+        const int ic = dist.icloc(static_cast<int>(ibas));
+        if (ic < 0)
+        {
+            continue;
+        }
+        if (block.col0 < 0)
+        {
+            block.col0 = ic;
+        }
+        else if (ic != last_col + 1)
+        {
+            throw std::invalid_argument("local atom basis columns are not contiguous");
+        }
+        last_col = ic;
+        ++block.ncols;
+    }
+
+    if (block.row0 < 0 || block.col0 < 0)
+    {
+        throw std::invalid_argument("atom pair is not owned by this process");
+    }
+    return block;
+}
+
+template <typename TK, typename TR>
+DmrBlock DensityMatrix<TK, TR>::block_for_atom_pair(const int iat1, const int iat2) const
+{
+    if (this->basis_index != nullptr)
+    {
+        return get_dmr_block(*this->basis_index, *this->dist, iat1, iat2);
+    }
+    return get_dmr_block(this->pv, iat1, iat2);
 }
 
 template <typename TK, typename TR>
@@ -318,5 +393,11 @@ template void add_dmr_soc<std::complex<double>, std::complex<double>>(
     const int,
     const int,
     std::vector<std::complex<double>*>&);
+
+template DmrBlock DensityMatrix<double, double>::block_for_atom_pair(const int, const int) const;
+template DmrBlock DensityMatrix<std::complex<double>, double>::block_for_atom_pair(const int, const int) const;
+template DmrBlock DensityMatrix<std::complex<double>, std::complex<double>>::block_for_atom_pair(
+    const int,
+    const int) const;
 
 } // namespace module_dm

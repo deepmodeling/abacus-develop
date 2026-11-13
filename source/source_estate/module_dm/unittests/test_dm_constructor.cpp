@@ -2,6 +2,8 @@
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include "source_base/basis_flattened_indexing.h"
+#include "source_base/element_basis_index.h"
 #include "source_estate/module_dm/density_matrix.h"
 #include "source_hamilt/module_hcontainer/hcontainer.h"
 #include "source_cell/klist.h"
@@ -98,6 +100,28 @@ TEST_F(DMTest, DMConstructor_GammaOnly)
     module_dm::DensityMatrix<double, double> DM(paraV, nspin);
     // compare
     EXPECT_EQ(DM.get_dmk_size(), nspin);
+    EXPECT_EQ(DM.get_dmk_nrow(), paraV->para_2d().nrloc());
+    EXPECT_EQ(DM.get_dmk_ncol(), paraV->para_2d().ncloc());
+}
+
+TEST_F(DMTest, DMConstructor_ExplicitLayout)
+{
+    ModuleBase::Element_Basis_Index::Range range(1);
+    range[0].resize(1);
+    range[0][0].N = test_nw;
+    range[0][0].M = 1;
+    const ModuleBase::Element_Basis_Index::IndexLNM hierarchy
+        = ModuleBase::Element_Basis_Index::construct_index(range);
+    const std::vector<int> atom_types(test_size, 0);
+    const BasisFlattenedIndexing basis_index(hierarchy, atom_types, 1);
+
+    std::vector<ModuleBase::Vector3<double>> kvec_d(2);
+    kvec_d[1].x = 0.5;
+    const int nspin = 2;
+    module_dm::DensityMatrix<double, double> DM(
+        basis_index, paraV->para_2d(), nspin, kvec_d, 1, nspin);
+
+    EXPECT_EQ(DM.get_dmk_nks(), nspin);
     EXPECT_EQ(DM.get_dmk_nrow(), paraV->para_2d().nrloc());
     EXPECT_EQ(DM.get_dmk_ncol(), paraV->para_2d().ncloc());
 }

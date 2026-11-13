@@ -5,13 +5,14 @@ abacus_disable_feature_definitions(__ROCM)
 abacus_copy_test_files(support)
 
 if(ENABLE_MPI)
-  addtest(
+  AddTest(
     TARGET MODULE_ESTATE_dm_constructor_test
     LIBS parameter base device symmetry
     SOURCES test_dm_constructor.cpp
             ../density_matrix.cpp
             ../dmr_gamma.cpp
             ../dmr_init.cpp
+            ../dm_tools.cpp
             ../dm_setter.cpp
             ../dm_getter.cpp
             tmp_mocks.cpp
@@ -24,13 +25,14 @@ if(ENABLE_MPI)
             ${ABACUS_SOURCE_DIR}/source_cell/parallel_kpoints.cpp
             ${ABACUS_SOURCE_DIR}/source_cell/reciprocal_grid.cpp)
 
-  addtest(
+  AddTest(
     TARGET MODULE_ESTATE_dm_init_test
     LIBS parameter base device symmetry
     SOURCES test_dm_r_init.cpp
             ../density_matrix.cpp
             ../dmr_gamma.cpp
             ../dmr_init.cpp
+            ../dm_tools.cpp
             ../dm_setter.cpp
             ../dm_getter.cpp
             tmp_mocks.cpp

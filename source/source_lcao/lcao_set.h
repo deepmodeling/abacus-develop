@@ -17,6 +17,7 @@
 
 // Plus_U_Base forward declaration, full definition in source_pw/module_pwdft/dftu_base.h
 class Plus_U_Base;
+class BasisFlattenedIndexing;
 
 namespace LCAO_domain
 {
@@ -30,6 +31,7 @@ void set_psi_occ_dm_chg(
         const K_Vectors &kv, // k-points
         psi::Psi<TK>* &psi, // coefficients of NAO basis
         const Parallel_Orbitals &pv, // parallel scheme of NAO basis
+        const BasisFlattenedIndexing& basis_index,
         elecstate::ElecState* pelec, // eigen values and weights
         module_dm::Setup_DM<TK> &dmat, // density matrix 
         Charge &chr, // charge density 

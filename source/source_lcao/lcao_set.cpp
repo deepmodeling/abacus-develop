@@ -15,6 +15,7 @@ void LCAO_domain::set_psi_occ_dm_chg(
         const K_Vectors &kv, // k-points
         psi::Psi<TK>* &psi, // coefficients of NAO basis
         const Parallel_Orbitals &pv, // parallel scheme of NAO basis
+        const BasisFlattenedIndexing& basis_index,
         elecstate::ElecState* pelec, // eigen values and weights
         module_dm::Setup_DM<TK> &dmat, // density matrix 
         Charge &chr, // charge density 
@@ -43,7 +44,7 @@ void LCAO_domain::set_psi_occ_dm_chg(
     }
 
     //! 4) init DMK, but DMR is constructed in before_scf()
-    LCAO_domain::allocate_dm(dmat, &kv, &pv, inp.nspin);
+    LCAO_domain::allocate_dm(dmat, &kv, basis_index, pv.para_2d(), inp.nspin);
 
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "CHARGE");
 
@@ -272,6 +273,7 @@ template void LCAO_domain::set_psi_occ_dm_chg<double>(
         const K_Vectors &kv, // k-points
         psi::Psi<double>* &psi, // coefficients of NAO basis
         const Parallel_Orbitals &pv, // parallel scheme of NAO basis
+        const BasisFlattenedIndexing& basis_index,
         elecstate::ElecState* pelec, // eigen values and weights
         module_dm::Setup_DM<double> &dmat, // density matrix 
         Charge &chr, // charge density 
@@ -281,6 +283,7 @@ template void LCAO_domain::set_psi_occ_dm_chg<std::complex<double>>(
         const K_Vectors &kv, // k-points
         psi::Psi<std::complex<double>>* &psi, // coefficients of NAO basis
         const Parallel_Orbitals &pv, // parallel scheme of NAO basis
+        const BasisFlattenedIndexing& basis_index,
         elecstate::ElecState* pelec, // eigen values and weights
         module_dm::Setup_DM<std::complex<double>> &dmat, // density matrix 
         Charge &chr, // charge density 
