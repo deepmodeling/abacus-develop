@@ -16,3 +16,11 @@ AddTest(
           ../middle_hamilt.cpp
           ../../../source_basis/module_ao/parallel_orbitals.cpp
 )
+
+AddTest(
+  TARGET MODULE_LCAO_tddft_upsi_test
+  LIBS parameter base device tddft_test_lib
+  SOURCES test_upsi.cpp
+          ../upsi.cpp
+          ../../../source_basis/module_ao/parallel_orbitals.cpp
+)

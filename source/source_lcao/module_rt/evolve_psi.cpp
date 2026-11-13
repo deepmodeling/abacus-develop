@@ -87,6 +87,13 @@ void evolve_psi(const int nband,
         matrix_layout.nrloc(),
         matrix_layout.ncloc(),
         matrix_layout.desc());
+    Matrix2dView<const std::complex<double>> psi_last_view(
+        psi_k_laststep,
+        wfc_layout.nrloc(),
+        wfc_layout.ncloc(),
+        wfc_layout.desc());
+    Matrix2dView<std::complex<double>> psi_view(
+        psi_k, wfc_layout.nrloc(), wfc_layout.ncloc(), wfc_layout.desc());
 
     // (1)->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
@@ -141,13 +148,9 @@ void evolve_psi(const int nband,
         /// @brief apply U_operator to the wave function of the previous step for new wave function
         /// @input U_operator, psi_k_laststep, print_matrix
         /// @output psi_k
-        upsi(matrix_layout,
-             wfc_layout,
-             nband,
-             nlocal,
-             U_operator.data(),
-             psi_k_laststep,
-             psi_k,
+        upsi(operator_view,
+             psi_last_view,
+             psi_view,
              ofs_running,
              print_matrix);
     }
@@ -156,13 +159,6 @@ void evolve_psi(const int nband,
         /// @brief solve the propagation equation
         /// @input Stmp, Htmp, psi_k_laststep
         /// @output psi_k
-        Matrix2dView<const std::complex<double>> psi_last_view(
-            psi_k_laststep,
-            wfc_layout.nrloc(),
-            wfc_layout.ncloc(),
-            wfc_layout.desc());
-        Matrix2dView<std::complex<double>> psi_view(
-            psi_k, wfc_layout.nrloc(), wfc_layout.ncloc(), wfc_layout.desc());
         if (use_td_moving_gauge)
         {
             Matrix2dView<const std::complex<double>> gauge_view(

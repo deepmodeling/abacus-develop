@@ -1,9 +1,9 @@
 #include "upsi.h"
 
 #include "source_base/parallel_blkcyc.h"
+#include "source_base/matrix2d_linalg.h"
+#include "source_base/matrix2d_view.h"
 #include "source_base/module_container/ATen/kernels/blas.h"
-#include "source_base/module_external/scalapack_connector.h"
-#include "source_base/timer.h"
 
 #include <cassert>
 #include <complex>
@@ -12,81 +12,48 @@
 namespace module_rt
 {
 #ifdef __MPI
-void upsi(const Parallel_Blkcyclic& matrix_layout,
-          const Parallel_Blkcyclic& wfc_layout,
-          const int nband,
-          const int nlocal,
-          const std::complex<double>* U_operator,
-          const std::complex<double>* psi_k_laststep,
-          std::complex<double>* psi_k,
+namespace
+{
+void print_local_matrix(
+    std::ofstream& ofs_running,
+    const Matrix2dView<const std::complex<double>>& matrix,
+    const char* label)
+{
+    ofs_running << std::endl;
+    ofs_running << " " << label << ":" << std::endl;
+    for (int i = 0; i < matrix.nrloc(); ++i)
+    {
+        for (int j = 0; j < matrix.ncloc(); ++j)
+        {
+            std::complex<double> value = matrix.at_local(i, j);
+            if (std::abs(value.real()) < 1.0e-8)
+            {
+                value.real(0.0);
+            }
+            if (std::abs(value.imag()) < 1.0e-8)
+            {
+                value.imag(0.0);
+            }
+            ofs_running << value.real() << "+" << value.imag() << "i ";
+        }
+        ofs_running << std::endl;
+    }
+    ofs_running << std::endl;
+}
+} // namespace
+
+void upsi(Matrix2dView<const std::complex<double>> propagator,
+          Matrix2dView<const std::complex<double>> previous_psi,
+          Matrix2dView<std::complex<double>> psi,
           std::ofstream& ofs_running,
           const int print_matrix)
 {
-    ScalapackConnector::gemm('N',
-                             'N',
-                             nlocal,
-                             nband,
-                             nlocal,
-                             1.0,
-                             U_operator,
-                             1,
-                             1,
-                             matrix_layout.desc(),
-                             psi_k_laststep,
-                             1,
-                             1,
-                             wfc_layout.desc(),
-                             0.0,
-                             psi_k,
-                             1,
-                             1,
-                             wfc_layout.desc());
+    matrix2d_linalg::matmul(psi, propagator, previous_psi);
 
     if (print_matrix)
     {
-        ofs_running << std::endl;
-        ofs_running << " psi_k:" << std::endl;
-        for (int i = 0; i < wfc_layout.ncloc(); i++)
-        {
-            const int in = i * wfc_layout.nrloc();
-            for (int j = 0; j < wfc_layout.nrloc(); j++)
-            {
-                double aa = psi_k[in + j].real();
-                double bb = psi_k[in + j].imag();
-                if (std::abs(aa) < 1e-8)
-                {
-                    aa = 0.0;
-                }
-                if (std::abs(bb) < 1e-8)
-                {
-                    bb = 0.0;
-                }
-                ofs_running << aa << "+" << bb << "i ";
-            }
-            ofs_running << std::endl;
-        }
-        ofs_running << std::endl;
-        ofs_running << " psi_k_laststep:" << std::endl;
-        for (int i = 0; i < wfc_layout.ncloc(); i++)
-        {
-            const int in = i * wfc_layout.nrloc();
-            for (int j = 0; j < wfc_layout.nrloc(); j++)
-            {
-                double aa = psi_k_laststep[in + j].real();
-                double bb = psi_k_laststep[in + j].imag();
-                if (std::abs(aa) < 1e-8)
-                {
-                    aa = 0.0;
-                }
-                if (std::abs(bb) < 1e-8)
-                {
-                    bb = 0.0;
-                }
-                ofs_running << aa << "+" << bb << "i ";
-            }
-            ofs_running << std::endl;
-        }
-        ofs_running << std::endl;
+        print_local_matrix(ofs_running, psi, "psi");
+        print_local_matrix(ofs_running, previous_psi, "previous psi");
     }
 }
 

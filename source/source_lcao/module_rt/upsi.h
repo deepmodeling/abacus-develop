@@ -15,28 +15,26 @@
 
 class Parallel_Blkcyclic; // Defined in source/source_base/parallel_blkcyc.h
 
+template <typename T>
+class Matrix2dView;
+
 namespace module_rt
 {
 #ifdef __MPI
 /**
  *  @brief apply U_operator to the wave function of the previous step for new wave function
  *
- * @param[in] matrix_layout block-cyclic layout of the U/Hamiltonian matrices
- * @param[in] wfc_layout block-cyclic layout of the wavefunction
- * @param[in] nband number of bands
- * @param[in] nlocal number of orbitals
- * @param[in] U_operator operator of propagator
- * @param[in] psi_k_laststep psi of last step
- * @param[in] print_matirx print internal matrix or not
- * @param[out] psi_k psi of this step
+ * All views must use compatible process grids and block sizes.
+ *
+ * @param[in] propagator Time-evolution operator.
+ * @param[in] previous_psi Wave function at the previous step.
+ * @param[out] psi Wave function at this step.
+ * @param[in,out] ofs_running Running log.
+ * @param[in] print_matrix Whether to print intermediate matrices.
  */
-void upsi(const Parallel_Blkcyclic& matrix_layout,
-          const Parallel_Blkcyclic& wfc_layout,
-          const int nband,
-          const int nlocal,
-          const std::complex<double>* U_operator,
-          const std::complex<double>* psi_k_laststep,
-          std::complex<double>* psi_k,
+void upsi(Matrix2dView<const std::complex<double>> propagator,
+          Matrix2dView<const std::complex<double>> previous_psi,
+          Matrix2dView<std::complex<double>> psi,
           std::ofstream& ofs_running,
           const int print_matrix);
 

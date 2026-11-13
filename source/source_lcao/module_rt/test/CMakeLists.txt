@@ -45,12 +45,6 @@ addtest(
           ../../../source_basis/module_ao/parallel_orbitals.cpp)
 
 addtest(
-  TARGET MODULE_LCAO_tddft_upsi_test
-  LIBS parameter base device tddft_test_lib
-  SOURCES upsi_test1.cpp upsi_test2.cpp upsi_test3.cpp ../upsi.cpp
-          ../../../source_basis/module_ao/parallel_orbitals.cpp)
-
-addtest(
   TARGET MODULE_LCAO_tddft_snap_psibeta_half_test
   LIBS parameter
        base
