@@ -66,6 +66,11 @@ addtest(
   LIBS parameter base device io_input
   SOURCES test_read_input_parallel.cpp)
 
+addtest(
+  TARGET MODULE_IO_test_read_inp_model
+  LIBS parameter base device io_input
+  SOURCES test_read_inp_model.cpp ../../source_base/test/mpi_test_main.cpp)
+
 add_test(
   NAME MODULE_IO_input_test_para_4
   COMMAND mpirun -np 4 "$<TARGET_FILE:MODULE_IO_input_test_para>"

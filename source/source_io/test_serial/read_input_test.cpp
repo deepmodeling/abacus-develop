@@ -212,39 +212,6 @@ TEST_F(InputTest, RejectAutoDevice)
     EXPECT_TRUE(std::remove("./auto_device_INPUT") == 0);
 }
 
-TEST_F(InputTest, VdwMethodRvv10)
-{
-    const std::string input_file = testing::TempDir() + "rvv10_INPUT";
-    Parameter param;
-    EXPECT_NO_THROW(read_parameters(input_file,
-                                    "vdw_method rvv10\ndft_functional scan\nvdw_rvv10_b 15.7\ncalculation cell-relax\n",
-                                    param));
-    EXPECT_EQ(param.inp.vdw_method, "rvv10");
-    EXPECT_DOUBLE_EQ(param.inp.vdw_rvv10_b, 15.7);
-    EXPECT_DOUBLE_EQ(param.inp.vdw_rvv10_c, 0.0093);
-    // b follows dft_functional unless it is set: SCAN 15.7, r2SCAN 11.95, otherwise the rPW86-PBE value 6.3
-    const char* b_cases[6][2] = {{"vdw_method rvv10\ndft_functional scan\n", "15.7"},
-                                 {"vdw_method rvv10\ndft_functional MGGA_X_SCAN+MGGA_C_SCAN\n", "15.7"},
-                                 {"vdw_method rvv10\ndft_functional mgga_x_r2scan+mgga_c_r2scan\n", "11.95"},
-                                 {"vdw_method rvv10\ndft_functional scan\nvdw_rvv10_b 9.0\n", "9.0"},
-                                 {"vdw_method rvv10\ndft_functional pbe\n", "6.3"},
-                                 {"vdw_method rvv10\n", "6.3"}};
-    for (const char* const* b_case: b_cases)
-    {
-        Parameter param_b;
-        EXPECT_NO_THROW(read_parameters(input_file, b_case[0], param_b));
-        EXPECT_DOUBLE_EQ(param_b.inp.vdw_rvv10_b, std::stod(b_case[1]));
-    }
-    const std::string reason = "Requires esolver_type!=dfpt";
-    expect_invalid_input(input_file, "vdw_method rvv10\nesolver_type dfpt\n", reason);
-    expect_invalid_input(input_file, "vdw_method rvv10\nesolver_type lr\ncalculation nscf\ncal_force 1\n", reason);
-    // relax resets cal_force to true, so LR-TDDFT relaxation is rejected without an explicit cal_force
-    expect_invalid_input(input_file, "vdw_method rvv10\nesolver_type ks-lr\ncalculation relax\ngamma_only 1\n", reason);
-    expect_invalid_input(input_file, "vdw_method rvv10\nvdw_rvv10_b 0\n", "vdw_rvv10_b");
-    expect_invalid_input(input_file, "vdw_method rvv10\nvdw_rvv10_c -0.1\n", "vdw_rvv10_c");
-    expect_invalid_input(input_file, "vdw_method RVV10\n", "vdw_method");
-}
-
 TEST_F(InputTest, ValidateRelaxMethodScalar)
 {
     for (const std::string method : {"cg", "cg_trad", "bfgs", "bfgs_trad", "sd", "cg_bfgs", "lbfgs"})

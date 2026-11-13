@@ -2,12 +2,7 @@
 // the cell orientation, and the rebuild after a change of grid, cell, processes or a release.
 #include "nonlocal_xc_test_helpers.h"
 
-#include "../nonlocal_xc.h"
-#include "source_base/constants.h"
-#include "source_base/matrix3.h"
-#include "source_base/parallel_device.h"
 #include "source_basis/module_pw/pw_basis_big.h"
-#include "source_cell/unitcell.h"
 
 #include <cmath>
 

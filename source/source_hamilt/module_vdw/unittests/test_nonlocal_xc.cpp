@@ -2,13 +2,8 @@
 // derivatives of the energy, and every XC evaluator that adds the term. main() of the test target is here.
 #include "nonlocal_xc_test_helpers.h"
 
-#include "../nonlocal_xc.h"
-#include "source_base/constants.h"
-#include "source_base/matrix3.h"
 #include "source_base/parallel_comm.h"
-#include "source_base/parallel_device.h"
 #include "source_base/parallel_global.h"
-#include "source_cell/unitcell.h"
 #ifdef __LIBXC
 #include "source_hamilt/module_xc/libxc_abacus.h"
 #endif
