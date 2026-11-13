@@ -43,10 +43,7 @@ enum OccmatSocLayout
     SOC_LAYOUT_SPIN_BASIS_REAL
 };
 
-inline OccmatSocLayout lcao_soc_layout(const int dft_plus_u)
-{
-    return dft_plus_u == 1 ? SOC_LAYOUT_PAULI : SOC_LAYOUT_SPIN_BASIS_REAL;
-}
+OccmatSocLayout lcao_soc_layout(int dft_plus_u);
 
 } // namespace DFTU_BASE
 

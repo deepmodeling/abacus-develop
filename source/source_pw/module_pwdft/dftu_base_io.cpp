@@ -18,6 +18,11 @@
 namespace DFTU_BASE
 {
 
+OccmatSocLayout lcao_soc_layout(const int dft_plus_u)
+{
+    return dft_plus_u == 1 ? SOC_LAYOUT_PAULI : SOC_LAYOUT_SPIN_BASIS_REAL;
+}
+
 // Write the STRU-style provenance header shared by occ_mat.txt and the
 // per-ionic-step snapshot files: ABACUS version, local timestamp and the
 // 1-based relaxation step this file belongs to.
