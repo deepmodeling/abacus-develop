@@ -262,6 +262,29 @@ TEST_F(DMTest, DMInit4)
     delete kv;
 }
 
+TEST_F(DMTest, InitDMRFromOppositeValueType)
+{
+    K_Vectors kv;
+    kv.set_nks(1);
+    kv.kvec_d.resize(1);
+
+    hamilt::HContainer<std::complex<double>> source(paraV);
+    const ModuleBase::Vector3<int> R_index(1, 0, 0);
+    source.insert_pair(2, 3, R_index);
+    source.allocate(nullptr, true);
+
+    module_dm::DensityMatrix<std::complex<double>, double> dm(paraV, 1, kv.kvec_d, 1);
+    dm.init_dmr(source);
+
+    const hamilt::HContainer<double>* result = dm.get_dmr_ptr(1);
+    ASSERT_NE(result, nullptr);
+    ASSERT_EQ(result->size_atom_pairs(), 1);
+    EXPECT_EQ(result->get_atom_pair(0).get_atom_i(), 2);
+    EXPECT_EQ(result->get_atom_pair(0).get_atom_j(), 3);
+    EXPECT_EQ(result->get_atom_pair(0).find_R(R_index), 0);
+    EXPECT_NE(result->find_matrix(2, 3, R_index), nullptr);
+}
+
 // test for save_dmr
 TEST_F(DMTest, saveDMR)
 {

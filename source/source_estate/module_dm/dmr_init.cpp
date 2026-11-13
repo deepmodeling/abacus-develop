@@ -135,8 +135,7 @@ void DensityMatrix<TK, TR>::init_dmr(const hamilt::HContainer<TRShift>& DMR_in)
     int size_ap = DMR_in.size_atom_pairs();
     if (size_ap > 0)
     {
-        const Parallel_Orbitals* paraV_ = DMR_in.get_atom_pair(0).get_paraV();
-        std::unique_ptr<hamilt::HContainer<TR>> tmp_DMR(new hamilt::HContainer<TR>(paraV_));
+        auto tmp_DMR = DMR_in.template empty_like<TR>();
         for (int iap = 0; iap < size_ap; iap++)
         {
             const int iat1 = DMR_in.get_atom_pair(iap).get_atom_i();
@@ -144,12 +143,12 @@ void DensityMatrix<TK, TR>::init_dmr(const hamilt::HContainer<TRShift>& DMR_in)
             for (int ir = 0; ir < DMR_in.get_atom_pair(iap).get_R_size(); ir++)
             {
                 const ModuleBase::Vector3<int> R_index = DMR_in.get_atom_pair(iap).get_R_index(ir);
-                hamilt::AtomPair<TR> tmp_ap(iat1, iat2, R_index, paraV_);
-                tmp_DMR->insert_pair(tmp_ap);
+                tmp_DMR.insert_pair(iat1, iat2, R_index);
             }
         }
-        tmp_DMR->allocate(nullptr, true);
-        this->dmr.push_back(tmp_DMR.release());
+        tmp_DMR.allocate(nullptr, true);
+        std::unique_ptr<hamilt::HContainer<TR>> dmr_for_spin(new hamilt::HContainer<TR>(std::move(tmp_DMR)));
+        this->dmr.push_back(dmr_for_spin.release());
         if (this->spin_mult == 2)
         {
             std::unique_ptr<hamilt::HContainer<TR>> tmp_DMR1(new hamilt::HContainer<TR>(*this->dmr[0]));
