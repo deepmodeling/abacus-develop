@@ -82,7 +82,6 @@ void add_HR(const hamilt::HContainer<Tadd>* hR, hamilt::HContainer<Tfull>* full_
 void init_from_adj(const UnitCell& ucell,
                    const Grid_Driver& GridD,
                    const LCAO_Orbitals& orb,
-                   const Parallel_Orbitals* pv,
                    std::vector<AdjacentAtomInfo>& adjs_all,
                    ModuleBase::Vector3<hamilt::HContainer<double>*>& rR);
 template <typename TR, typename TA>

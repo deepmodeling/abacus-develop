@@ -31,8 +31,7 @@ void ModuleIO::init_from_hR(const hamilt::HContainer<TR>* hR, hamilt::HContainer
         for (int iR = 0; iR < atom_ij.get_R_size(); iR++)
         {
             const ModuleBase::Vector3<int> r_index = atom_ij.get_R_index(iR);
-            hamilt::AtomPair<TA> atom_ij_ta(iat1, iat2, r_index, hR->get_paraV());
-            aimR->insert_pair(atom_ij_ta);
+            aimR->insert_pair(iat1, iat2, r_index);
         }
     }
     aimR->allocate(nullptr, true);
@@ -42,7 +41,6 @@ void ModuleIO::init_from_hR(const hamilt::HContainer<TR>* hR, hamilt::HContainer
 void ModuleIO::init_from_adj(const UnitCell& ucell,
                              const Grid_Driver& GridD,
                              const LCAO_Orbitals& orb,
-                             const Parallel_Orbitals* pv,
                              std::vector<AdjacentAtomInfo>& adjs_all,
                              ModuleBase::Vector3<hamilt::HContainer<double>*>& rR)
 {
@@ -66,7 +64,7 @@ void ModuleIO::init_from_adj(const UnitCell& ucell,
             const int T2 = adjs.ntype[ad1];
             const int I2 = adjs.natom[ad1];
             const int iat2 = ucell.itia2iat(T2, I2);
-            if (pv->is_invalid_atom_pair(iat1, iat2))
+            if (!rR[0]->owns_atom_pair(iat1, iat2))
             {
                 continue;
             }
@@ -88,10 +86,9 @@ void ModuleIO::init_from_adj(const UnitCell& ucell,
             const int I2 = adjs.natom[ad];
             int iat2 = ucell.itia2iat(T2, I2);
             ModuleBase::Vector3<int>& R_index = adjs.box[ad];
-            hamilt::AtomPair<double> tmp(iat1, iat2, R_index, pv);
             for (size_t i_alpha = 0; i_alpha != 3; ++i_alpha)
             {
-                rR[i_alpha]->insert_pair(tmp);
+                rR[i_alpha]->insert_pair(iat1, iat2, R_index);
             }
         }
     }
@@ -116,7 +113,7 @@ void ModuleIO::set_rR_from_hR(const UnitCell& ucell,
 
     // init
     std::vector<AdjacentAtomInfo> adjs_all;
-    init_from_adj(ucell, GridD, orb, pv, adjs_all, rR);
+    init_from_adj(ucell, GridD, orb, adjs_all, rR);
 
     for (int iat1 = 0; iat1 < ucell.nat; iat1++)
     {
