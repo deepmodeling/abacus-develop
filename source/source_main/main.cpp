@@ -7,6 +7,7 @@
 #include "source_base/parallel_global.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_io/parse_args.h"
+#include "source_io/parse_command_line.h"
 #include "source_main/driver.h"
 #include "source_main/version.h"
 #ifdef _OPENMP
@@ -14,6 +15,7 @@
 #endif
 
 #include <ctime>
+#include <exception>
 #include <iostream>
 
 namespace
@@ -54,12 +56,20 @@ void print_welcome_banner()
 
 int main(int argc, char** argv)
 {
-    /*
-    read the arguement in the command-line,
-    with "abacus -v", the program exit and returns version info,
-    with no arguments, the program continues.
-    */
-    ModuleIO::parse_args(argc, argv);
+    // Finish all CLI validation before acquiring MPI or FFTW resources.
+    // Informational flags keep their existing early-exit precedence.
+    ModuleIO::CommandLineArgs cli;
+    try
+    {
+        ModuleIO::parse_args(argc, argv);
+        cli = ModuleIO::parse_command_line(argc, argv);
+    }
+    catch (const std::exception& error)
+    {
+        std::cerr << "Command line error: " << error.what() << std::endl;
+        ModuleIO::print_help(argv[0]);
+        return 1;
+    }
 
     /*
     read the mpi parameters in the command-line,
@@ -80,11 +90,17 @@ int main(int argc, char** argv)
 #endif
     PARAM.set_pal_param(my_rank, nproc, nthread_per_proc);
 
+    if (my_rank == 0 && !cli.vars.empty())
+    {
+        std::cerr << "Warning: -p/--parameter variables are parsed but are not applied to INPUT in PART I."
+                  << std::endl;
+    }
+
     /*
     main program for doing electronic structure calculations.
     */
     Driver DD;
-    DD.init();
+    DD.init(cli);
 
     /*
     After running mpi version of abacus, release the mpi resources.
