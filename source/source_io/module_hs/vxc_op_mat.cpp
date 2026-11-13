@@ -163,9 +163,9 @@ void write_Vxc(const int nspin,
         const std::string header_tot = build_eband_header(istep, etot_eV, "V_xc", time_stamp);
         const std::string name_tot = eband_filename("eband_vxc", istep, out_app_flag);
         write_orb_energy(kv, nspin0, nbands, e_orb_tot, name_tot, header_tot, global_out_dir, append);
-        ModuleIO::write_notice(ofs_running,
-                               "Band-decomposed V_xc energy",
-                               global_out_dir + name_tot);
+        const std::string property_tot = "Band-decomposed V_xc energy";
+        const std::string path_tot = global_out_dir + name_tot;
+        ModuleIO::write_notice(ofs_running, property_tot, path_tot);
 #ifdef __EXX
         if (cal_exx)
         {
@@ -175,12 +175,12 @@ void write_Vxc(const int nspin,
             const std::string name_exx = eband_filename("eband_vxc_exx", istep, out_app_flag);
             write_orb_energy(kv, nspin0, nbands, e_orb_locxc, name_loc, header_loc, global_out_dir, append);
             write_orb_energy(kv, nspin0, nbands, e_orb_exx, name_exx, header_exx, global_out_dir, append);
-            ModuleIO::write_notice(ofs_running,
-                                   "Band-decomposed V_xc_local energy",
-                                   global_out_dir + name_loc);
-            ModuleIO::write_notice(ofs_running,
-                                   "Band-decomposed V_EXX energy",
-                                   global_out_dir + name_exx);
+            const std::string property_loc = "Band-decomposed V_xc_local energy";
+            const std::string property_exx = "Band-decomposed V_EXX energy";
+            const std::string path_loc = global_out_dir + name_loc;
+            const std::string path_exx = global_out_dir + name_exx;
+            ModuleIO::write_notice(ofs_running, property_loc, path_loc);
+            ModuleIO::write_notice(ofs_running, property_exx, path_exx);
         }
 #endif
     }
