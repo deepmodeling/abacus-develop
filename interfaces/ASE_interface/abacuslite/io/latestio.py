@@ -862,6 +862,34 @@ class TestLatestIO(unittest.TestCase):
             elecstate = read_band_from_eig_occ_files([file1, file2])
             self.assertEqual(len(elecstate), 2)
 
+    def test_read_band_from_eig_occ_accepts_legacy_step_marker(self):
+        # The reader promises to accept both the current "# Ionic_Step N"
+        # marker and the legacy "N     # ionic step" spelling. Run the same
+        # fixture through both and compare the parsed frames.
+        fn = self.testfiles / 'nspin4-gamma-eigocc'
+        current = read_band_from_eig_occ_files([fn])
+
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmpdir:
+            legacy = Path(tmpdir) / 'eig_occ.txt'
+            lines = []
+            for line in fn.read_text(encoding='utf-8').splitlines(keepends=True):
+                match = re.match(r'^\s*#\s*Ionic[ _]Step\s+(\d+)\s*$', line,
+                                 re.IGNORECASE)
+                if match:
+                    lines.append('{}     # ionic step\n'.format(int(match.group(1))))
+                else:
+                    lines.append(line)
+            legacy.write_text(''.join(lines), encoding='utf-8')
+            parsed = read_band_from_eig_occ_files([legacy])
+
+        self.assertEqual(len(parsed), len(current))
+        for frame, reference in zip(parsed, current):
+            self.assertEqual(frame['step'], reference['step'])
+            np.testing.assert_allclose(frame['k'], reference['k'])
+            np.testing.assert_allclose(frame['e'], reference['e'])
+            np.testing.assert_allclose(frame['occ'], reference['occ'])
+
     def test_read_traj_from_running_log(self):
         traj = read_traj_from_running_log(self.testfiles / 'lcao-symm0-nspin2-multik-cellrelax')
         self.assertEqual(len(traj), 3)
