@@ -5,7 +5,9 @@
 #include "source_base/global_function.h"
 #include "source_base/parallel_common.h"
 #include "source_base/timer.h"
+#include "source_cell/klist.h"
 #include "source_cell/ucell_io.h"
+#include "source_cell/unitcell.h"
 #include "source_io/module_output/spin_tag.h"
 #include "source_io/module_output/write_notice.h"
 

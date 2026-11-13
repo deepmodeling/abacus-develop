@@ -20,7 +20,9 @@
 #include "source_base/module_parallel/para_mpi_func.h"
 #include "source_base/module_parallel/para_world.h"
 #include "source_base/parallel_comm.h"
+#include "source_base/parallel_common.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
+#include "source_cell/klist.h"
 #include "source_hamilt/hamilt.h"
 
 #include "gtest/gtest.h"
@@ -699,8 +701,9 @@ TEST(WriteHsk, WritesDenseTextAndAppendsRecords)
                       distribute_matrix(pv, sk_first, dim));
 
     // Text mode drops the extra "k" and the .dat suffix: hk1_nao.txt/sk1_nao.txt.
-    const std::string h_fn = "hk1_nao.txt";
-    const std::string s_fn = "sk1_nao.txt";
+    const std::string out_dir = testing::TempDir();
+    const std::string h_fn = out_dir + "hk1_nao.txt";
+    const std::string s_fn = out_dir + "sk1_nao.txt";
     remove_test_file(h_fn);
     remove_test_file(s_fn);
 
@@ -711,7 +714,7 @@ TEST(WriteHsk, WritesDenseTextAndAppendsRecords)
     kv.set_nkstot_nospin(nkstot);
     const std::vector<double> efs = {0.0};
 
-    ModuleIO::write_hsk<std::complex<double>>("", nspin, nks, nkstot,
+    ModuleIO::write_hsk<std::complex<double>>(out_dir, nspin, nks, nkstot,
                                               ik2iktot, isk, &fake, pv,
                                               kv, nullptr, efs,
                                               gamma_only, out_app_flag, 0,
@@ -730,7 +733,7 @@ TEST(WriteHsk, WritesDenseTextAndAppendsRecords)
     fake.set_k_matrix(0, distribute_matrix(pv, hk_second, dim),
                       distribute_matrix(pv, sk_second, dim));
 
-    ModuleIO::write_hsk<std::complex<double>>("", nspin, nks, nkstot,
+    ModuleIO::write_hsk<std::complex<double>>(out_dir, nspin, nks, nkstot,
                                               ik2iktot, isk, &fake, pv,
                                               kv, nullptr, efs,
                                               gamma_only, out_app_flag, 1,
@@ -866,7 +869,7 @@ int main(int argc, char** argv)
     MPI_Init(&argc, &argv);
     DIAG_WORLD = MPI_COMM_WORLD;
     MPI_Comm_rank(DIAG_WORLD, &test_rank);
-    MPI_Comm_size(DIAG_WORLD, &test_world_size);
+    test_world_size = Parallel_Common::comm_size(DIAG_WORLD);
 #else
     test_rank = 0;
     test_world_size = 1;

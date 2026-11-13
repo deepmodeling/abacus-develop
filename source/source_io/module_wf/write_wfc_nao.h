@@ -4,7 +4,7 @@
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_psi/psi.h"
 #include "source_base/vector3.h"
-#include <fstream>
+#include <iosfwd>
 #include <string>
 #include <vector>
 

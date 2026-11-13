@@ -2,7 +2,7 @@
 #define WRITE_ORB_INFO
 #include "source_cell/unitcell.h"
 
-#include <fstream>
+#include <iosfwd>
 
 namespace ModuleIO
 {

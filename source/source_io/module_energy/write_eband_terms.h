@@ -4,7 +4,7 @@
 #include "source_base/matrix.h"
 #include "source_psi/psi.h"
 
-#include <fstream>
+#include <iosfwd>
 #include <vector>
 
 class Grid_Driver;

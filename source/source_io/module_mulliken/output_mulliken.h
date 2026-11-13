@@ -5,7 +5,7 @@
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_cell/cell_index.h"
 
-#include <fstream>
+#include <iosfwd>
 #include <map>
 #include <vector>
 

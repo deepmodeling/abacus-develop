@@ -105,7 +105,7 @@ Each ionic step is a complete record with no padding; its header is self-identif
 4. `nnz` native `int` column indices.
 5. `dimension + 1` native `long long` row pointers.
 
-All R blocks stored by the internal HContainer are present, including blocks with zero nonzero values. The sparse threshold is `1e-10`, matching text CSR output. The format uses the host integer representation and byte order and therefore requires a compatible ABI. It does not contain unit-cell, spin, or matrix-label metadata; those are determined by the calculation input and filename.
+All R blocks stored by the internal HContainer are present, including blocks with zero nonzero values. The binary sparse threshold is `1e-10`; the text CSR files instead drop complex components below `1e-16` and keep real values unfiltered, so the two formats may differ on near-zero elements. The format uses the host integer representation and byte order and therefore requires a compatible ABI. It does not contain unit-cell, spin, or matrix-label metadata; those are determined by the calculation input and filename.
 
 When `out_app_flag` is 1, the first ionic step truncates the shared file and later ionic steps append complete records. When `out_app_flag` is 0, the fixed file is truncated and overwritten at every write. Only when `out_app_flag` is 2 is every ionic step written to its own file.
 

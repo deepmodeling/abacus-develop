@@ -4,7 +4,7 @@
 #include "source_base/matrix.h"
 #include "source_cell/unitcell.h"
 
-#include <fstream>
+#include <iosfwd>
 
 namespace ModuleIO
 {

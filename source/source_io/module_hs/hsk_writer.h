@@ -6,12 +6,13 @@
 #include <vector>
 
 #include "source_basis/module_ao/parallel_orbitals.h"
-#include "source_cell/klist.h"
-#include "source_cell/unitcell.h"
 #include "source_hamilt/hamilt.h"
 
 // mohan note: this file holds the H(k)/S(k) writer
 // (formerly write_hsk in write_hs.h / write_hs.hpp).
+
+class K_Vectors;
+class UnitCell;
 
 namespace ModuleIO
 {

@@ -69,7 +69,7 @@ out_mat_h_vh         1    # MAT/vhk{ki}g{step}_nao.txt (spin-independent)
 out_mat_h_vxc        1    # MAT/vxck{ki}s{spin}g{step}_nao.txt (spin-dependent)
 
 out_proj_band        1    # pbands{spin}.xml (mode 0/1), pbands{spin}g{last}.xml (mode 2); final snapshot only
-#out_mat_dh          1    # HAS BUGS!!! (multi-rank runs may hang) per-atom dH/dk text:
+#out_mat_dh          1    # HAS BUGS!!! (multi-rank runs may hang) per-atom dH(k)/dR_I text:
                           # MAT/dhk[xyz]_iat{I}[_ik{ki}][s{spin}][g{step}]_nao.txt (_ik{ki} only for multi-k),
                           # plus total dH/dR in CSR: MAT/dhr[xyz]s{spin}[g{step}]_nao.csr
 #out_mat_dh_t        1    # MAT/dtk[xyz]_iat{I}[_ik{ki}][s{spin}][g{step}]_nao.txt

@@ -11,7 +11,7 @@
 #include "source_io/module_hs/vxc_op_tools.h"
 
 #include <complex>
-#include <fstream>
+#include <iosfwd>
 #include <map>
 #include <string>
 #include <vector>
