@@ -1,7 +1,6 @@
 #ifndef DELTA_SPIN_LCAO_H
 #define DELTA_SPIN_LCAO_H
 
-#include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_basis/module_nao/two_center_integrator.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_cell/unitcell.h"
@@ -9,6 +8,8 @@
 #include "source_hamilt/module_hcontainer/hcontainer.h"
 #include <unordered_map>
 #include <complex>
+
+class Parallel_Blkcyclic;
 
 namespace hamilt
 {
@@ -34,7 +35,6 @@ class DeltaSpin<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
                                     const Grid_Driver* gridD_in,
                                     const TwoCenterIntegrator* intor,
                                     const std::vector<double>& orb_cutoff);
-    ~DeltaSpin<OperatorLCAO<TK, TR>>();
 
     /**
      * @brief contributeHR() is used to calculate the HR matrix
@@ -91,14 +91,10 @@ class DeltaSpin<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
                           ModuleBase::matrix& force,
                           ModuleBase::matrix& stress);
 
-    /// @brief Compute P_I_sub(k) = D_I(k)^dag D_I(k) for all constrained atoms
-    /// Uses saved B_I overlaps and 2D-block distributed wavefunctions
-    /// @param kvec_d  k-point in direct coordinates (for phase factor)
-    /// @param psi_k   wavefunction coefficients C_k (2D-block distributed)
-    /// @param nbands_global  global number of bands
-    /// @param PI_sub  output: PI_sub[iat] is nbands×nbands Hermitian matrix (gathered to all procs)
-    ///                Only filled for constrained atoms; empty for unconstrained.
-    void cal_PI_sub(const ModuleBase::Vector3<double>& kvec_d,
+    /// Compute P_I_sub(k) = D_I(k)^dag D_I(k) for all constrained atoms.
+    void cal_PI_sub(const Parallel_Blkcyclic& matrix_layout,
+                    const Parallel_Blkcyclic& wfc_layout,
+                    const ModuleBase::Vector3<double>& kvec_d,
                     const std::complex<double>* psi_k,
                     const int nbands_global,
                     std::vector<std::vector<std::complex<double>>>& PI_sub) const;
@@ -107,10 +103,6 @@ class DeltaSpin<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
     const UnitCell* ucell = nullptr;
 
     const Grid_Driver* gridD = nullptr;
-
-    const Parallel_Orbitals* paraV = nullptr;
-
-    hamilt::HContainer<TR>* HR = nullptr;
 
     const TwoCenterIntegrator* intor_ = nullptr;
 
@@ -153,7 +145,7 @@ class DeltaSpin<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
      */
     void cal_force_IJR(const int& iat1,
                        const int& iat2,
-                       const Parallel_Orbitals* paraV,
+                       const HContainer<double>& dmR,
                        const std::unordered_map<int, std::vector<double>>& nlm1_all,
                        const std::unordered_map<int, std::vector<double>>& nlm2_all,
                        const hamilt::BaseMatrix<double>* dmR_pointer,
@@ -166,7 +158,7 @@ class DeltaSpin<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
      */
     void cal_stress_IJR(const int& iat1,
                         const int& iat2,
-                        const Parallel_Orbitals* paraV,
+                        const HContainer<double>& dmR,
                         const std::unordered_map<int, std::vector<double>>& nlm1_all,
                         const std::unordered_map<int, std::vector<double>>& nlm2_all,
                         const hamilt::BaseMatrix<double>* dmR_pointer,
@@ -182,7 +174,7 @@ class DeltaSpin<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
     void pre_coeff_array(const std::vector<TR>& coeff, const int row_size, const int col_size);
 
     std::vector<bool> constraint_atom_list;
-    std::vector<hamilt::HContainer<TR>*> pre_hr;
+    std::vector<hamilt::HContainer<TR>> pre_hr;
 
     std::vector<double> tmp_dmr_memory;
     std::vector<TR> tmp_coeff_array;
@@ -195,15 +187,14 @@ class DeltaSpin<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
     /// the shared OperatorLCAO::hr_done to avoid cross-k-point accumulation.
     bool sc_hr_done = false;
 
-    /// @brief Saved B_I overlap data for subspace projection optimization
-    /// For each constrained atom I, stores the overlaps <phi_mu|alpha_I_lm> organized by adjacent atoms
+    /// Saved alpha-orbital overlaps used by cal_PI_sub.
     struct BI_AdjacentData {
-        int iat_adj;                                          ///< global atom index of adjacent atom
-        ModuleBase::Vector3<int> R_index;                     ///< cell index of adjacent atom
-        std::unordered_map<int, std::vector<double>> nlm;     ///< iw_global -> <phi_iw|alpha_I_lm>
+        int iat_adj;
+        ModuleBase::Vector3<int> R_index;
+        std::unordered_map<int, std::vector<double>> nlm;
     };
-    std::vector<std::vector<BI_AdjacentData>> B_I_data;       ///< [iat][adj_index]
-    std::vector<int> B_I_nproj;                               ///< r = max_l_plus_1^2 per constrained atom
+    std::vector<std::vector<BI_AdjacentData>> B_I_data;
+    std::vector<int> B_I_nproj;
 };
 
 }

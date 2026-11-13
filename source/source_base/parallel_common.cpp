@@ -203,6 +203,18 @@ void allreduce_sum(std::complex<double>& value, const MPI_Comm comm)
     value = std::complex<double>(values[0], values[1]);
 }
 
+void allreduce_sum(std::complex<float>* values, const int count, const MPI_Comm comm)
+{
+    MPI_Allreduce(
+        MPI_IN_PLACE, values, count, MPI_C_FLOAT_COMPLEX, MPI_SUM, comm);
+}
+
+void allreduce_sum(std::complex<double>* values, const int count, const MPI_Comm comm)
+{
+    MPI_Allreduce(
+        MPI_IN_PLACE, values, count, MPI_C_DOUBLE_COMPLEX, MPI_SUM, comm);
+}
+
 void allreduce_max(double& value, const MPI_Comm comm)
 {
     MPI_Allreduce(MPI_IN_PLACE, &value, 1, MPI_DOUBLE, MPI_MAX, comm);

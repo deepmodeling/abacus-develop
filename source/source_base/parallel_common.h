@@ -86,6 +86,8 @@ void allreduce_sum(float& value, MPI_Comm comm);
 void allreduce_sum(double& value, MPI_Comm comm);
 void allreduce_sum(std::complex<float>& value, MPI_Comm comm);
 void allreduce_sum(std::complex<double>& value, MPI_Comm comm);
+void allreduce_sum(std::complex<float>* values, int count, MPI_Comm comm);
+void allreduce_sum(std::complex<double>* values, int count, MPI_Comm comm);
 void allreduce_max(double& value, MPI_Comm comm);
 #else
 inline void barrier()

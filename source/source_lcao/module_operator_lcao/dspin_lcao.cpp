@@ -1,6 +1,9 @@
 #include "dspin_lcao.h"
 
 #include "source_base/memory_recorder.h"
+#include "source_base/module_external/blas_connector.h"
+#include "source_base/parallel_blkcyc.h"
+#include "source_base/parallel_common.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
@@ -33,22 +36,6 @@ hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::DeltaSpin(HS_Matrix_K<TK>* hsk_
     this->update_lambda_.resize(this->nspin, false);
     this->B_I_data.resize(this->ucell->nat);
     this->B_I_nproj.resize(this->ucell->nat, 0);
-}
-
-// destructor
-template <typename TK, typename TR>
-hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::~DeltaSpin()
-{
-    for (auto& hr : this->pre_hr)
-    {
-        if (hr != nullptr)
-        {
-            delete hr;
-            hr = nullptr;
-        }
-    }
-    this->pre_hr.clear();
-    this->pre_hr.shrink_to_fit();
 }
 
 // simple functions to calculate the coefficients from lambda
@@ -121,9 +108,9 @@ void hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
         cal_coeff_lambda(current_lambda, coefficients);
 
         // magnetic moment = \sum_{\mu\nu,R} dmR * pre_hr
-        for(int iap=0;iap<this->pre_hr[iat]->size_atom_pairs();iap++)
+        for(int iap=0;iap<this->pre_hr[iat].size_atom_pairs();iap++)
         {
-            hamilt::AtomPair<TR>& tmp = this->pre_hr[iat]->get_atom_pair(iap);
+            hamilt::AtomPair<TR>& tmp = this->pre_hr[iat].get_atom_pair(iap);
             int iat1 = tmp.get_atom_i();
             int iat2 = tmp.get_atom_j();
             int row_size = tmp.get_row_size();
@@ -226,23 +213,10 @@ void hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::cal_pre_HR()
     {
         return;
     }
-    this->paraV = this->hR->get_paraV();
     ModuleBase::timer::start("DeltaSpin", "cal_pre_HR");
-    // Reset the caches from a possible previous initialization:
-    // pre_hr holds raw HContainer pointers, so clear() alone would leak them,
-    // and stale B_I_data would survive for atoms that are no longer constrained.
-    for (auto& hr : this->pre_hr)
-    {
-        delete hr;
-    }
+    // Reset cached contributions from a possible previous initialization.
     this->pre_hr.clear();
-    this->pre_hr.resize(this->ucell->nat, nullptr);
-    for (auto& b : this->B_I_data)
-    {
-        b.clear();
-    }
-    this->B_I_data.clear();
-    this->B_I_data.resize(this->ucell->nat);
+    this->pre_hr.resize(this->ucell->nat);
 
     const int npol = this->ucell->get_npol();
     size_t memory_cost = 0;
@@ -281,7 +255,7 @@ void hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::cal_pre_HR()
         filter_adjs(is_adj, adjs);
 
         // second step: prepare the <IJR> pairs for each iat-atom
-        this->pre_hr[iat] = new hamilt::HContainer<TR>(this->paraV);
+        this->pre_hr[iat] = this->hR->template empty_like<TR>();
         for (int ad1 = 0; ad1 < adjs.adj_num + 1; ++ad1)
         {
             const int T1 = adjs.ntype[ad1];
@@ -294,22 +268,18 @@ void hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::cal_pre_HR()
                 const int I2 = adjs.natom[ad2];
                 const int iat2 = this->ucell->itia2iat(T2, I2);
                 ModuleBase::Vector3<int>& R_index2 = adjs.box[ad2];
-                int r_vector[3] = {R_index2.x - R_index1.x, R_index2.y - R_index1.y, R_index2.z - R_index1.z};
+                const ModuleBase::Vector3<int> R_vector(R_index2.x - R_index1.x,
+                                                        R_index2.y - R_index1.y,
+                                                        R_index2.z - R_index1.z);
                 // keep the size of pre_hr for each atom less than this->hR
-                if(this->hR->find_matrix(iat1, iat2, r_vector[0], r_vector[1], r_vector[2]) == nullptr)
+                if(this->hR->find_matrix(iat1, iat2, R_vector.x, R_vector.y, R_vector.z) == nullptr)
                 {
                     continue;
                 }
-                hamilt::AtomPair<TR> tmp(iat1,
-                                         iat2,
-                                         r_vector[0],
-                                         r_vector[1],
-                                         r_vector[2],
-                                         paraV);
-                this->pre_hr[iat]->insert_pair(tmp);
+                this->pre_hr[iat].insert_pair(iat1, iat2, R_vector);
             }
         }
-        this->pre_hr[iat]->allocate(nullptr, true);
+        this->pre_hr[iat].allocate(nullptr, true);
 
         // third step: calculate the <phi|alpha> overlap integrals
         const int max_l_plus_1 = this->ucell->atoms[T0].nwl + 1;
@@ -322,8 +292,9 @@ void hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::cal_pre_HR()
             const Atom* atom1 = &ucell->atoms[T1];
             const ModuleBase::Vector3<double>& tau1 = adjs.adjacent_tau[ad];
 
-            auto all_indexes = paraV->get_indexes_row(iat1);
-            auto col_indexes = paraV->get_indexes_col(iat1);
+            std::vector<int> all_indexes = this->hR->row_basis_offsets(iat1);
+            const std::vector<int> col_indexes
+                = this->hR->col_basis_offsets(iat1);
             // insert col_indexes into all_indexes to get universal set with no repeat elements
             all_indexes.insert(all_indexes.end(), col_indexes.begin(), col_indexes.end());
             std::sort(all_indexes.begin(), all_indexes.end());
@@ -367,13 +338,13 @@ void hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::cal_pre_HR()
             }
         }
 
-        // Save B_I overlap data for subspace projection optimization
         this->B_I_data[iat].clear();
         this->B_I_nproj[iat] = max_l_plus_1 * max_l_plus_1;
         for (int ad = 0; ad < adjs.adj_num + 1; ++ad)
         {
             BI_AdjacentData bi_ad;
-            bi_ad.iat_adj = this->ucell->itia2iat(adjs.ntype[ad], adjs.natom[ad]);
+            bi_ad.iat_adj
+                = this->ucell->itia2iat(adjs.ntype[ad], adjs.natom[ad]);
             bi_ad.R_index = adjs.box[ad];
             bi_ad.nlm = nlm_iat0[ad];
             this->B_I_data[iat].push_back(std::move(bi_ad));
@@ -397,7 +368,8 @@ void hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::cal_pre_HR()
                 ModuleBase::Vector3<int> R_vector(R_index2[0] - R_index1[0],
                                                   R_index2[1] - R_index1[1],
                                                   R_index2[2] - R_index1[2]);
-                hamilt::BaseMatrix<TR>* tmp = this->pre_hr[iat]->find_matrix(iat1, iat2, R_vector[0], R_vector[1], R_vector[2]);
+                hamilt::BaseMatrix<TR>* tmp
+                    = this->pre_hr[iat].find_matrix(iat1, iat2, R_vector[0], R_vector[1], R_vector[2]);
                 // if not found , skip this pair of atoms
                 if (tmp != nullptr)
                 {
@@ -405,7 +377,7 @@ void hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::cal_pre_HR()
                 }
             }
         }
-        memory_cost += this->pre_hr[iat]->get_memory_size();
+        memory_cost += this->pre_hr[iat].get_memory_size();
     }
     ModuleBase::Memory::record("DeltaSpin:pre_HR", memory_cost);
     ModuleBase::timer::end("DeltaSpin", "cal_pre_HR");
@@ -426,15 +398,16 @@ void hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::cal_HR_IJR(const int& iat1
     // ---------------------------------------------
     // calculate the Nonlocal matrix for each pair of orbitals
     // ---------------------------------------------
-    auto row_indexes = this->paraV->get_indexes_row(iat1);
-    auto col_indexes = this->paraV->get_indexes_col(iat2);
+    const std::vector<int> row_indexes = this->hR->row_basis_offsets(iat1);
+    const std::vector<int> col_indexes = this->hR->col_basis_offsets(iat2);
+    const int ncol_atom = static_cast<int>(col_indexes.size());
     // step_trace = 0 for NSPIN=1,2; ={0, 1, local_col, local_col+1} for NSPIN=4
     std::vector<int> step_trace(npol*npol, 0);
     for (int is = 0; is < npol; is++)
     {
         for (int is2 = 0; is2 < npol; is2++)
         {
-            step_trace[is * npol + is2] = this->paraV->get_ncol_atom(iat2) * is + is2;
+            step_trace[is * npol + is2] = ncol_atom * is + is2;
         }
     }
     // calculate the local matrix
@@ -488,9 +461,9 @@ std::vector<double> hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::cal_moment(
             continue;
         }
         // magnetic moment = \sum_{\mu\nu,R} dmR * pre_hr
-        for(int iap=0;iap<this->pre_hr[iat]->size_atom_pairs();iap++)
+        for(int iap=0;iap<this->pre_hr[iat].size_atom_pairs();iap++)
         {
-            hamilt::AtomPair<TR>& tmp = this->pre_hr[iat]->get_atom_pair(iap);
+            hamilt::AtomPair<TR>& tmp = this->pre_hr[iat].get_atom_pair(iap);
             int iat1 = tmp.get_atom_i();
             int iat2 = tmp.get_atom_j();
             int row_size = tmp.get_row_size();
@@ -558,11 +531,10 @@ void hamilt::DeltaSpin<hamilt::OperatorLCAO<std::complex<double>, std::complex<d
     moment[2] += tmp_moment[2].real();
 }
 
-// cal_PI_sub: compute P_I_sub(k) = D_I(k)^dag D_I(k) for all constrained atoms
-// D_I(k) = B_I(k) * C_k, where B_I(k)[lm, mu] = sum_R <alpha_I_lm|phi_{mu,R}> exp(ik·R)
-// C_k is the 2D-block distributed wavefunction matrix
 template <typename TK, typename TR>
 void hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::cal_PI_sub(
+    const Parallel_Blkcyclic& matrix_layout,
+    const Parallel_Blkcyclic& wfc_layout,
     const ModuleBase::Vector3<double>& kvec_d,
     const std::complex<double>* psi_k,
     const int nbands_global,
@@ -571,11 +543,12 @@ void hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::cal_PI_sub(
     const int nat = this->ucell->nat;
     PI_sub.resize(nat);
 
-    const int nrow_local = this->paraV->para_2d().nrloc();   // local rows of C_k
-    const int ncol_local = this->paraV->ncol_bands;        // local band columns of C_k
-    const int lda = nrow_local;  // leading dimension (column-major for ScaLAPACK)
+    const int ncol_local = wfc_layout.ncloc();
+    const int lda = matrix_layout.lld();
+    const std::complex<double> one(1.0, 0.0);
+    const std::complex<double> zero(0.0, 0.0);
 
-    for (int iat = 0; iat < nat; iat++)
+    for (int iat = 0; iat < nat; ++iat)
     {
         if (!this->constraint_atom_list[iat])
         {
@@ -583,65 +556,63 @@ void hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::cal_PI_sub(
             continue;
         }
 
-        const int r = this->B_I_nproj[iat];
-        // D_I_local: r × nbands_global, initialized to zero
-        // We accumulate local contributions, then MPI_Allreduce
-        std::vector<std::complex<double>> D_I(r * nbands_global, {0.0, 0.0});
+        const int nproj = this->B_I_nproj[iat];
+        std::vector<std::complex<double>> projected(
+            static_cast<std::size_t>(nproj) * nbands_global, zero);
 
-        for (const auto& bi_ad : this->B_I_data[iat])
+        for (const BI_AdjacentData& adjacent : this->B_I_data[iat])
         {
-            // Phase factor: exp(i * 2pi * k · R)
-            const double arg = 2.0 * M_PI * (kvec_d.x * bi_ad.R_index.x
-                                            + kvec_d.y * bi_ad.R_index.y
-                                            + kvec_d.z * bi_ad.R_index.z);
-            const std::complex<double> phase(cos(arg), sin(arg));
+            const double argument
+                = 2.0 * M_PI
+                * (kvec_d.x * adjacent.R_index.x
+                   + kvec_d.y * adjacent.R_index.y
+                   + kvec_d.z * adjacent.R_index.z);
+            const std::complex<double> phase(cos(argument), sin(argument));
 
-            for (const auto& nlm_pair : bi_ad.nlm)
+            for (const auto& overlap : adjacent.nlm)
             {
-                const int iw_global = nlm_pair.first;
-                const std::vector<double>& nlm_vec = nlm_pair.second;
-                // Check if this global orbital index is in our local rows
-                const int iw_local = this->paraV->para_2d().irloc(iw_global);
-                if (iw_local < 0) { continue;
+                const int ibas = overlap.first;
+                const std::vector<double>& coefficients = overlap.second;
+                const int irloc = matrix_layout.irloc(ibas);
+                if (irloc < 0)
+                {
+                    continue;
                 }
 
-                // D_I[lm + jb_global * r] += nlm_vec[lm] * phase * C_k[iw_local, jb_local]
-                // Column-major storage for BLAS: D_I[lm + jb * r]
-                // C_k is column-major: C_k[irow, icol] = psi_k[irow + icol * lda]
-                for (int jb_local = 0; jb_local < ncol_local; jb_local++)
+                for (int jbloc = 0; jbloc < ncol_local; ++jbloc)
                 {
-                    const int jb_global = this->paraV->para_2d().icglb(jb_local);
-                    const std::complex<double> c_val = phase * psi_k[iw_local + jb_local * lda];
-                    for (int lm = 0; lm < r; lm++)
+                    const int jbglb = wfc_layout.icglb(jbloc);
+                    const std::complex<double> value
+                        = phase * psi_k[irloc + jbloc * lda];
+                    for (int m = 0; m < nproj; ++m)
                     {
-                        D_I[lm + jb_global * r] += nlm_vec[lm] * c_val;
+                        projected[m + jbglb * nproj]
+                            += coefficients[m] * value;
                     }
                 }
             }
         }
 
-        // MPI_Allreduce to sum D_I across all processes
 #ifdef __MPI
-        MPI_Allreduce(MPI_IN_PLACE, D_I.data(), 2 * r * nbands_global,
-                      MPI_DOUBLE, MPI_SUM, this->paraV->para_2d().comm());
+        Parallel_Common::allreduce_sum(
+            projected.data(), static_cast<int>(projected.size()), matrix_layout.comm());
 #endif
 
-        // Compute P_I_sub = D_I^dag D_I (nbands × nbands Hermitian matrix)
-        // Using zgemm: C = alpha * A^H * B + beta * C
-        // A = D_I (r × nbands), B = D_I (r × nbands)
-        // C = P_I_sub (nbands × nbands)
-        PI_sub[iat].resize(nbands_global * nbands_global, {0.0, 0.0});
-        const std::complex<double> one = {1.0, 0.0};
-        const std::complex<double> zero_c = {0.0, 0.0};
-        // D_I is stored column-major: D_I[lm + jb_global * r]
-        // zgemm: P = D^H * D, where D is r × nbands (column-major)
-        // A^H: conjugate transpose of A (nbands × r)
-        // B: D_I (r × nbands)
-        // Result: nbands × nbands
-        zgemm_("C", "N", &nbands_global, &nbands_global, &r,
-               &one, D_I.data(), &r,
-               D_I.data(), &r,
-               &zero_c, PI_sub[iat].data(), &nbands_global);
+        PI_sub[iat].assign(
+            static_cast<std::size_t>(nbands_global) * nbands_global, zero);
+        zgemm_("C",
+               "N",
+               &nbands_global,
+               &nbands_global,
+               &nproj,
+               &one,
+               projected.data(),
+               &nproj,
+               projected.data(),
+               &nproj,
+               &zero,
+               PI_sub[iat].data(),
+               &nbands_global);
     }
 }
 
