@@ -22,7 +22,6 @@ BUILD_DIR=build_abacus_gcc_aocl
 rm -rf "${BUILD_DIR}"
 
 PREFIX="${ABACUS_DIR}"
-LAPACK="${AOCLhome}/lib"
 SCALAPACK="${AOCLhome}/lib"
 FFTW3="${AOCLhome}"
 LIBRI="${LIBRI_ROOT}"
@@ -62,7 +61,6 @@ cmake_args=(
   -DCMAKE_INSTALL_PREFIX="${PREFIX}"
   -DCMAKE_CXX_COMPILER=g++
   -DMPI_CXX_COMPILER=mpicxx
-  -DLAPACK_DIR="${LAPACK}"
   -DSCALAPACK_DIR="${SCALAPACK}"
   -DFFTW3_DIR="${FFTW3}"
   -DENABLE_LCAO=ON
