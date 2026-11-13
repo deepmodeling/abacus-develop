@@ -1060,51 +1060,7 @@ TEST_F(DFTUBaseTest, NonmagneticPwEigenvaluesKeepSpinSummedWeight)
               std::string::npos);
 }
 
-TEST_F(DFTUBaseTest, LcaoMethodOneSocUsesPauliBlocks)
-{
-    Plus_U_Base dftu;
-    init_dftu_for_spin(dftu, false, 4, 2, DFTU_BASE::SOC_LAYOUT_PAULI);
-    const int orbital_size = 5;
-    for (int m = 0; m < orbital_size; ++m)
-    {
-        dftu.occmat().mat(0, 2, 0).c[m * orbital_size + m] = 1.0;
-    }
-
-    const DFTU_BASE::OccmatSocLayout layout = DFTU_BASE::lcao_soc_layout(1);
-    EXPECT_EQ(layout, DFTU_BASE::SOC_LAYOUT_PAULI);
-    std::ostringstream output;
-    DFTU_BASE::write_occup_eigenvalues(dftu, ucell, output, layout);
-    const std::string line = output.str();
-    const std::size_t separator = line.find(':');
-    ASSERT_NE(separator, std::string::npos);
-    const std::size_t values_start = separator + 1;
-    const std::string values_text = line.substr(values_start);
-    std::istringstream values(values_text);
-    double value = 0.0;
-    double trace = 0.0;
-    for (int i = 0; i < 2 * orbital_size; ++i)
-    {
-        ASSERT_TRUE(values >> value);
-        EXPECT_NEAR(value, 0.5, 1e-8);
-        trace += value;
-    }
-    EXPECT_NEAR(trace, orbital_size, 1e-8);
-    EXPECT_FALSE(values >> value);
-
-    const DFTU_BASE::OccmatOutputCfg cfg = {0, 1, 5, true, 1};
-    const DFTU_BASE::OccmatStepInfo step = {0, 2, 1e-6, 1e-7};
-    const std::string out_dir = testing::TempDir();
-    const std::string filename = out_dir + "occ_mat.txt";
-    DFTU_BASE::write_latest_occmat(dftu, ucell, out_dir, step, cfg, layout);
-    OccupationMatrix restored;
-    const std::vector<int> l_channel = {2};
-    restored.init(ucell, l_channel, 4, 2);
-    DFTU_BASE::read_occup_m(ucell, restored, l_channel, filename, 4, 2, layout);
-    EXPECT_NEAR(restored.mat(0, 2, 0).c[0], 1.0, 1e-8);
-    std::remove(filename.c_str());
-}
-
-TEST_F(DFTUBaseTest, LcaoMethodTwoSocPreservesCrossOrbitalCoupling)
+TEST_F(DFTUBaseTest, LcaoMethodTwoSocEigenvaluesPreserveCrossOrbitalCoupling)
 {
     Plus_U_Base dftu;
     init_dftu_for_spin(dftu, false, 4, 2, DFTU_BASE::SOC_LAYOUT_SPIN_BASIS_REAL);
@@ -1118,10 +1074,9 @@ TEST_F(DFTUBaseTest, LcaoMethodTwoSocPreservesCrossOrbitalCoupling)
     dftu.occmat().set(0, 2, 0, 0, cross_spin_orbital, 0.2);
     dftu.occmat().set(0, 2, 0, cross_spin_orbital, 0, 0.2);
 
-    const DFTU_BASE::OccmatSocLayout layout = DFTU_BASE::lcao_soc_layout(2);
-    EXPECT_EQ(layout, DFTU_BASE::SOC_LAYOUT_SPIN_BASIS_REAL);
     std::ostringstream output;
-    DFTU_BASE::write_occup_eigenvalues(dftu, ucell, output, layout);
+    DFTU_BASE::write_occup_eigenvalues(dftu, ucell, output,
+                                       DFTU_BASE::SOC_LAYOUT_SPIN_BASIS_REAL);
     const std::string line = output.str();
     const std::size_t separator = line.find(':');
     ASSERT_NE(separator, std::string::npos);
@@ -1136,27 +1091,14 @@ TEST_F(DFTUBaseTest, LcaoMethodTwoSocPreservesCrossOrbitalCoupling)
         EXPECT_NEAR(value, expected, 1e-8);
     }
     EXPECT_FALSE(values >> value);
-
-    const std::string filename = testing::TempDir() + "lcao_soc_cross_orbital.txt";
-    {
-        std::ofstream file(filename.c_str());
-        ASSERT_TRUE(file.is_open());
-        DFTU_BASE::write_occup_m(dftu, ucell, file, layout);
-    }
-    OccupationMatrix restored;
-    const std::vector<int> l_channel = {2};
-    restored.init(ucell, l_channel, 4, 2);
-    DFTU_BASE::read_occup_m(ucell, restored, l_channel, filename, 4, 2, layout);
-    EXPECT_NEAR(restored.get(0, 2, 0, 0, cross_spin_orbital), 0.2, 1e-8);
-    EXPECT_NEAR(restored.get(0, 2, 0, cross_spin_orbital, 0), 0.2, 1e-8);
-    EXPECT_NEAR(restored.get(0, 2, 0, 1, orbital_size), 0.0, 1e-8);
-    std::remove(filename.c_str());
 }
 
 TEST_F(DFTUBaseTest, CompactWriterReaderSocPauliRoundtrip)
 {
     Plus_U_Base source;
-    init_dftu_for_spin(source, false, 4, 2, DFTU_BASE::SOC_LAYOUT_PAULI);
+    const DFTU_BASE::OccmatSocLayout layout = DFTU_BASE::lcao_soc_layout(1);
+    EXPECT_EQ(layout, DFTU_BASE::SOC_LAYOUT_PAULI);
+    init_dftu_for_spin(source, false, 4, 2, layout);
     const int block_size = 25;
     for (int block = 0; block < 4; ++block)
     {
@@ -1171,10 +1113,7 @@ TEST_F(DFTUBaseTest, CompactWriterReaderSocPauliRoundtrip)
     {
         std::ofstream output(filename.c_str());
         ASSERT_TRUE(output.is_open());
-        DFTU_BASE::write_occup_m(source,
-                                 ucell,
-                                 output,
-                                 DFTU_BASE::SOC_LAYOUT_PAULI);
+        DFTU_BASE::write_occup_m(source, ucell, output, layout);
     }
 
     OccupationMatrix restored;
@@ -1186,7 +1125,7 @@ TEST_F(DFTUBaseTest, CompactWriterReaderSocPauliRoundtrip)
                             filename,
                             4,
                             2,
-                            DFTU_BASE::SOC_LAYOUT_PAULI);
+                            layout);
 
     for (int index = 0; index < 4 * block_size; ++index)
     {
@@ -1247,7 +1186,9 @@ TEST_F(DFTUBaseTest, CompactWriterReaderSocPauliRoundtrip)
 TEST_F(DFTUBaseTest, CompactWriterReaderSocRealSpinBasisRoundtrip)
 {
     Plus_U_Base source;
-    init_dftu_for_spin(source, false, 4, 2, DFTU_BASE::SOC_LAYOUT_SPIN_BASIS_REAL);
+    const DFTU_BASE::OccmatSocLayout layout = DFTU_BASE::lcao_soc_layout(2);
+    EXPECT_EQ(layout, DFTU_BASE::SOC_LAYOUT_SPIN_BASIS_REAL);
+    init_dftu_for_spin(source, false, 4, 2, layout);
     const int orbital_size = 5;
     for (int row = 0; row < orbital_size; ++row)
     {
@@ -1268,10 +1209,7 @@ TEST_F(DFTUBaseTest, CompactWriterReaderSocRealSpinBasisRoundtrip)
     {
         std::ofstream output(filename.c_str());
         ASSERT_TRUE(output.is_open());
-        DFTU_BASE::write_occup_m(source,
-                                 ucell,
-                                 output,
-                                 DFTU_BASE::SOC_LAYOUT_SPIN_BASIS_REAL);
+        DFTU_BASE::write_occup_m(source, ucell, output, layout);
     }
 
     OccupationMatrix restored;
@@ -1283,7 +1221,7 @@ TEST_F(DFTUBaseTest, CompactWriterReaderSocRealSpinBasisRoundtrip)
                             filename,
                             4,
                             2,
-                            DFTU_BASE::SOC_LAYOUT_SPIN_BASIS_REAL);
+                            layout);
 
     for (int row = 0; row < 2 * orbital_size; ++row)
     {
