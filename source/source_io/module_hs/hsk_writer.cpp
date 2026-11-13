@@ -2,6 +2,7 @@
 #include "hs_dense_io.h"
 #include "source_base/module_external/scalapack_connector.h"
 #include "source_base/module_out/filename.h" // use filename_output function
+#include "source_base/global_function.h"
 #include "source_base/parallel_common.h"
 #include "source_base/timer.h"
 #include "source_cell/ucell_io.h"
@@ -52,6 +53,18 @@ void ModuleIO::write_hsk(
     // only consume .dat files (e.g. post-processing scripts) are not
     // affected by the text-format alignment.
     const bool binary = (out_type == 2);
+
+    // The text body is documented as row-major (i, j). A column-major solver
+    // stores its local block as mat[i + j * nrloc], and the Cpxgemr2d serial
+    // destination keeps that layout, so reading mat[i * nlocal + j] would emit
+    // the transpose (H(k)^T = conj(H(k)) for a Hermitian matrix). Select the
+    // traversal order from the solver storage convention instead.
+    const bool column_major_source
+        = ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(ks_solver);
+    auto dense_index = [nlocal, column_major_source](const int i, const int j) -> size_t {
+        return column_major_source ? static_cast<size_t>(j) * nlocal + i
+                                   : static_cast<size_t>(i) * nlocal + j;
+    };
 
     ofs_running << "\n WRITE H(k) OR S(k)" << std::endl;
 
@@ -213,7 +226,6 @@ void ModuleIO::write_hsk(
                     ofs << std::right;
                     for (int i = 0; i < nlocal; ++i)
                     {
-                        const size_t ii = i * nlocal;
                         for (int j = 0; j < nlocal; ++j)
                         {
                             if (std::is_same<T, double>::value)
@@ -222,7 +234,7 @@ void ModuleIO::write_hsk(
                                 {
                                     ofs << "\n";
                                 }
-                                ofs << " " << h_global[ii + j];
+                                ofs << " " << h_global[dense_index(i, j)];
                             }
                             else if (std::is_same<T, std::complex<double>>::value)
                             {
@@ -231,12 +243,12 @@ void ModuleIO::write_hsk(
                                     ofs << "\n";
                                 }
 
-                                double real_v = std::real(h_global[ii + j]);
+                                double real_v = std::real(h_global[dense_index(i, j)]);
                                 if (std::abs(real_v) < k_hk_zero_thr)
                                 {
                                     real_v = 0.0;
                                 }
-                                double imag_v = std::imag(h_global[ii + j]);
+                                double imag_v = std::imag(h_global[dense_index(i, j)]);
                                 if (std::abs(imag_v) < k_hk_zero_thr)
                                 {
                                     imag_v = 0.0;
@@ -345,7 +357,6 @@ void ModuleIO::write_hsk(
                 ofs << std::right;
                 for (int i = 0; i < nlocal; ++i)
                 {
-                    const size_t ii = i * nlocal;
                     for (int j = 0; j < nlocal; ++j)
                     {
                         if (std::is_same<T, double>::value)
@@ -354,7 +365,7 @@ void ModuleIO::write_hsk(
                             {
                                 ofs << "\n";
                             }
-                            ofs << " " << s_global[ii + j];
+                            ofs << " " << s_global[dense_index(i, j)];
                         }
                         else if (std::is_same<T, std::complex<double>>::value)
                         {
@@ -363,12 +374,12 @@ void ModuleIO::write_hsk(
                                 ofs << "\n";
                             }
 
-                            double real_v = std::real(s_global[ii + j]);
+                            double real_v = std::real(s_global[dense_index(i, j)]);
                             if (std::abs(real_v) < k_hk_zero_thr)
                             {
                                 real_v = 0.0;
                             }
-                            double imag_v = std::imag(s_global[ii + j]);
+                            double imag_v = std::imag(s_global[dense_index(i, j)]);
                             if (std::abs(imag_v) < k_hk_zero_thr)
                             {
                                 imag_v = 0.0;

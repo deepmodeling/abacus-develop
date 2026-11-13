@@ -147,6 +147,35 @@ std::vector<T> distribute_matrix(const Parallel_Orbitals& pv,
 }
 
 /**
+ * @brief Extract the block of a global square matrix owned by this rank,
+ *        using the column-major local storage of genelpa/elpa/scalapack_gvx.
+ */
+template <typename T>
+std::vector<T> distribute_matrix_column_major(const Parallel_Orbitals& pv,
+                                              const std::vector<T>& global,
+                                              const int dim)
+{
+    std::vector<T> local(pv.para_2d().size(), T());
+    for (int i = 0; i < dim; ++i)
+    {
+        const int ir = pv.para_2d().irloc(i);
+        if (ir < 0)
+        {
+            continue;
+        }
+        for (int j = 0; j < dim; ++j)
+        {
+            const int ic = pv.para_2d().icloc(j);
+            if (ic >= 0)
+            {
+                local[ir + ic * pv.para_2d().nrloc()] = global[i * dim + j];
+            }
+        }
+    }
+    return local;
+}
+
+/**
  * @brief Pack the upper triangle of a square matrix row by row.
  */
 template <typename T>
@@ -735,6 +764,93 @@ TEST(WriteHsk, WritesDenseTextAndAppendsRecords)
         {
             EXPECT_NEAR(s_values[i].real(), s_expected[i].real(), 1e-6);
             EXPECT_NEAR(s_values[i].imag(), s_expected[i].imag(), 1e-6);
+        }
+    }
+
+    remove_test_file(h_fn);
+    remove_test_file(s_fn);
+    ofs.close();
+    remove_test_file("write_hsk_running_" + std::to_string(test_rank) + ".log");
+}
+
+// ---------------------------------------------------------------------------
+// Text body order follows the documented row-major (i, j) traversal even when
+// the solver stores its local block column-major (genelpa/elpa/scalapack_gvx).
+// A non-Hermitian probe matrix makes an accidental transpose visible.
+// ---------------------------------------------------------------------------
+
+TEST(WriteHsk, TextBodyKeepsRowMajorOrderForColumnMajorSolver)
+{
+    if (test_world_size > 1)
+    {
+        return;
+    }
+
+    const int dim = 2;
+    const int nspin = 1;
+    const int nks = 1;
+    const int nkstot = 1;
+    const std::vector<int> ik2iktot = {0};
+    const std::vector<int> isk = {0};
+    const bool gamma_only = false;
+    const int out_type = 1;
+    const int out_app_flag = 0;
+    const int precision = 8;
+
+    Parallel_Orbitals pv;
+    initialize_distribution(pv, dim);
+
+    FakeHamilt<std::complex<double>> fake;
+    fake.dim = dim;
+
+    const std::vector<std::complex<double>> hk_global
+        = {std::complex<double>(1.0, 0.0), std::complex<double>(2.0, 3.0),
+           std::complex<double>(4.0, 5.0), std::complex<double>(6.0, 0.0)};
+    const std::vector<std::complex<double>> sk_global
+        = {std::complex<double>(7.0, 0.0), std::complex<double>(8.0, 1.0),
+           std::complex<double>(9.0, 2.0), std::complex<double>(10.0, 0.0)};
+    fake.set_k_matrix(0, distribute_matrix_column_major(pv, hk_global, dim),
+                      distribute_matrix_column_major(pv, sk_global, dim));
+
+    const std::string out_dir = testing::TempDir();
+    const std::string h_fn = out_dir + "hk1_nao.txt";
+    const std::string s_fn = out_dir + "sk1_nao.txt";
+    remove_test_file(h_fn);
+    remove_test_file(s_fn);
+
+    std::ofstream ofs = open_running_log();
+    K_Vectors kv;
+    fill_dummy_kv(nkstot, kv);
+    kv.set_nkstot(nkstot);
+    kv.set_nkstot_nospin(nkstot);
+    const std::vector<double> efs = {0.0};
+
+    ModuleIO::write_hsk<std::complex<double>>(out_dir, nspin, nks, nkstot,
+                                              ik2iktot, isk, &fake, pv,
+                                              kv, nullptr, efs,
+                                              gamma_only, out_app_flag, 0,
+                                              out_type, precision, dim, "genelpa",
+                                              test_rank, ofs);
+    diag_world_barrier();
+
+    if (test_rank == 0)
+    {
+        const std::vector<std::complex<double>> h_values
+            = read_text_complex_values(h_fn);
+        ASSERT_EQ(h_values.size(), hk_global.size());
+        for (size_t i = 0; i < h_values.size(); ++i)
+        {
+            EXPECT_NEAR(h_values[i].real(), hk_global[i].real(), 1e-6);
+            EXPECT_NEAR(h_values[i].imag(), hk_global[i].imag(), 1e-6);
+        }
+
+        const std::vector<std::complex<double>> s_values
+            = read_text_complex_values(s_fn);
+        ASSERT_EQ(s_values.size(), sk_global.size());
+        for (size_t i = 0; i < s_values.size(); ++i)
+        {
+            EXPECT_NEAR(s_values[i].real(), sk_global[i].real(), 1e-6);
+            EXPECT_NEAR(s_values[i].imag(), sk_global[i].imag(), 1e-6);
         }
     }
 
