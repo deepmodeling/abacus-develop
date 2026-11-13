@@ -33,13 +33,13 @@ namespace ModuleIO
      *          in the collective reduction.
      * @param ofs Output text stream.
      * @param XR Sparse block of the selected matrix component.
-     * @param pv Parallel orbital distribution used for the MPI reduction.
+     * @param layout Block-cyclic distribution used for the MPI reduction.
      * @param options Sparse output options (threshold, precision, reduction).
      */
     template <typename T>
     void save_lat_r_csr(std::ofstream& ofs,
         const SparseRBlock<T>& XR,
-        const Parallel_Orbitals& pv,
+        const Parallel_Blkcyclic& layout,
         const SparseWriteOptions& options);
 }
 

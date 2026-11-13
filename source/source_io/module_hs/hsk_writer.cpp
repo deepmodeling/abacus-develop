@@ -113,9 +113,9 @@ void ModuleIO::write_hsk(
     // run; only later steps (istep > 0) append.
     const bool append_on_restart = (out_app_flag == 1) && (istep > 0);
 
-    const BlockCyclicDistribution& pv_dist = pv.para_2d();
+    const Parallel_Blkcyclic& pv_dist = pv.para_2d();
     const int my_rank = drank;
-    BlockCyclicDistribution pv_glb;
+    Parallel_Blkcyclic pv_glb;
 
     for (int ik = 0; ik < nks; ++ik)
     {

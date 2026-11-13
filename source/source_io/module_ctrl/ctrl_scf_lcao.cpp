@@ -643,8 +643,8 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
 
         // Re-use the block-cyclic descriptor that save_mat uses so we
         // can Cpxgemr2d the distributed kinetic matrix to rank 0.
-        const BlockCyclicDistribution& pv_dist = pv.para_2d();
-        BlockCyclicDistribution pv_glb;
+        const Parallel_Blkcyclic& pv_dist = pv.para_2d();
+        Parallel_Blkcyclic pv_glb;
 #ifdef __MPI
         pv_glb.set(nlocal, nlocal, nlocal, pv_dist.ictxt());
 #endif
@@ -805,6 +805,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                                                 pelec->wg,
                                                 gd,
                                                 orb.cutoffs(),
+                                                orb,
                                                 two_center_bundle,
                                                 ofs_running);
         }

@@ -149,14 +149,14 @@ void ModuleIO::write_csr_banner(std::ofstream& ofs)
 template <typename T>
 void ModuleIO::save_lat_r_csr(std::ofstream& ofs,
     const SparseRBlock<T>& XR,
-    const Parallel_Orbitals& pv,
+    const Parallel_Blkcyclic& layout,
     const SparseWriteOptions& options)
 {
-    const int nlocal = pv.para_2d().nrglb();
+    const int nlocal = layout.nrglb();
     if (nlocal <= 0)
     {
         ModuleBase::WARNING_QUIT("ModuleIO::save_lat_r_csr",
-                                 "Parallel_Orbitals global row size must be positive.");
+                                 "Block-cyclic global row size must be positive.");
     }
 
     ModuleIO::SparseMatrix<T> sparse_matrix(nlocal, nlocal);
@@ -167,7 +167,7 @@ void ModuleIO::save_lat_r_csr(std::ofstream& ofs,
     {
         ModuleBase::GlobalFunc::ZEROS(line.data(), nlocal);
 
-        if (!options.reduce || pv.para_2d().irloc(row) >= 0)
+        if (!options.reduce || layout.irloc(row) >= 0)
         {
             auto iter = XR.find(row);
             if (iter != XR.end())
@@ -206,10 +206,10 @@ void ModuleIO::save_lat_r_csr(std::ofstream& ofs,
 
 template void ModuleIO::save_lat_r_csr<double>(std::ofstream& ofs,
     const SparseRBlock<double>& XR,
-    const Parallel_Orbitals& pv,
+    const Parallel_Blkcyclic& layout,
     const SparseWriteOptions& options);
 
 template void ModuleIO::save_lat_r_csr<std::complex<double>>(std::ofstream& ofs,
     const SparseRBlock<std::complex<double>>& XR,
-    const Parallel_Orbitals& pv,
+    const Parallel_Blkcyclic& layout,
     const SparseWriteOptions& options);
