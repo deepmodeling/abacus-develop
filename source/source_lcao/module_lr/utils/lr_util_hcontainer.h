@@ -151,11 +151,11 @@ namespace LR_Util
                        const Grid_Driver& gd,
                        const std::vector<double>& orb_cutoff)
     {
-        const auto& pmat = *hR.get_paraV();
         for (int iat1 = 0; iat1 < ucell.nat; iat1++)
         {
             auto tau1 = ucell.get_tau(iat1);
-            int T1, I1;
+            int T1 = 0;
+            int I1 = 0;
             ucell.iat2iait(iat1, &I1, &T1);
             AdjacentAtomInfo adjs;
             gd.Find_atom(ucell, tau1, T1, I1, &adjs);
@@ -163,16 +163,14 @@ namespace LR_Util
             {
                 const int T2 = adjs.ntype[ad];
                 const int I2 = adjs.natom[ad];
-                int iat2 = ucell.itia2iat(T2, I2);
-                if (pmat.is_invalid_atom_pair(iat1, iat2)) { continue; }
+                const int iat2 = ucell.itia2iat(T2, I2);
+                if (!hR.owns_atom_pair(iat1, iat2)) { continue; }
                 const ModuleBase::Vector3<int>& R_index = adjs.box[ad];
                 if (ucell.cal_dtau(iat1, iat2, R_index).norm() * ucell.lat0 >= orb_cutoff[T1] + orb_cutoff[T2]) { continue; }
-                hamilt::AtomPair<TR> tmp(iat1, iat2, R_index.x, R_index.y, R_index.z, &pmat);
-                hR.insert_pair(tmp);
+                hR.insert_pair(iat1, iat2, R_index);
             }
         }
         hR.allocate(nullptr, true);
-        // hR.set_paraV(&pmat);
         if (std::is_same<T, double>::value) { hR.fix_gamma(); }
     }
     template <typename T, typename TR>
