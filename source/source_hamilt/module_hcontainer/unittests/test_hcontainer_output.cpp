@@ -1,5 +1,8 @@
 #include "source_hamilt/module_hcontainer/hcontainer.h"
 #include "source_hamilt/module_hcontainer/output_hcontainer.h"
+#include "source_base/basis_flattened_indexing.h"
+#include "source_base/element_basis_index.h"
+#include "source_base/parallel_blkcyc.h"
 #include "source_cell/unitcell.h"
 #include <complex>
 #include <sstream>
@@ -159,6 +162,37 @@ TEST_F(OutputHContainerTest, Write)
     EXPECT_THAT(output, testing::HasSubstr(" 5.00e+00 6.00e+00 1.00e+01"));
     EXPECT_THAT(output, testing::HasSubstr(" 2 3 3"));
     EXPECT_THAT(output, testing::HasSubstr(" 0 0 0 2 3"));
+}
+
+TEST_F(OutputHContainerTest, WriteBasisLayoutContainer)
+{
+    hamilt::HContainer<double> host_matrix(ucell);
+    EXPECT_EQ(host_matrix.get_nbasis(), 4);
+
+    ModuleBase::Element_Basis_Index::Range range(1);
+    range[0].resize(1);
+    range[0][0].N = 2;
+    range[0][0].M = 1;
+    const ModuleBase::Element_Basis_Index::IndexLNM hierarchy
+        = ModuleBase::Element_Basis_Index::construct_index(range);
+    const BasisFlattenedIndexing indexing(hierarchy, {0, 0}, 1);
+    Parallel_Blkcyclic dist;
+    dist.set_serial(4, 4);
+
+    hamilt::HContainer<double> matrix(indexing, dist);
+    hamilt::AtomPair<double>* pair = matrix.find_pair(0, 0);
+    ASSERT_NE(pair, nullptr);
+    double* values = pair->get_pointer(0);
+    values[0] = 1.0;
+    values[1] = 2.0;
+    values[2] = 3.0;
+    values[3] = 4.0;
+
+    std::ostringstream output_stream;
+    hamilt::Output_HContainer<double> writer(&matrix, output_stream, 1e-10, 2);
+    writer.write();
+    EXPECT_THAT(output_stream.str(), testing::HasSubstr(" 0 0 0 4\n"));
+    EXPECT_THAT(output_stream.str(), testing::HasSubstr(" 1.00e+00 2.00e+00 3.00e+00 4.00e+00"));
 }
 
 template <typename T>

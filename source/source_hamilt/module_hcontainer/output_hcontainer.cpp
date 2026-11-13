@@ -109,15 +109,15 @@ void Output_HContainer<T>::write(int rx_in, int ry_in, int rz_in)
 template <typename T>
 void Output_HContainer<T>::write_single_R(int rx, int ry, int rz)
 {
-    if (this->_hcontainer->get_paraV() == nullptr)
+    const int nbasis = this->_hcontainer->get_nbasis();
+    if (nbasis <= 0)
     {
-        ModuleBase::WARNING_QUIT("Output_HContainer::write_single_R", "paraV is nullptr! Unable to write the matrix.");
+        ModuleBase::WARNING_QUIT("Output_HContainer::write_single_R", "matrix basis is not initialized");
     }
     this->_hcontainer->fix_R(rx, ry, rz);
 
     ModuleIO::SparseMatrix<T> sparse_matrix
-        = ModuleIO::SparseMatrix<T>(_hcontainer->get_nbasis(), _hcontainer->get_nbasis());
-    assert(_hcontainer->get_nbasis()>0);
+        = ModuleIO::SparseMatrix<T>(nbasis, nbasis);
 
     sparse_matrix.setSparseThreshold(this->_sparse_threshold);
 

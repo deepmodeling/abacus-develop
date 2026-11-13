@@ -288,7 +288,21 @@ int HContainer<T>::get_nbasis() const
     {
         return static_cast<int>(this->basis_index->size());
     }
-    return this->paraV->para_2d().nrglb();
+    if (this->paraV != nullptr)
+    {
+        return this->paraV->para_2d().nrglb();
+    }
+    std::vector<int> nrloc(this->sparse_ap.size(), 0);
+    for (const AtomPair<T>& atom_pair : this->atom_pairs)
+    {
+        nrloc[atom_pair.get_atom_i()] = atom_pair.get_row_size();
+    }
+    int nbasis = 0;
+    for (const int size : nrloc)
+    {
+        nbasis += size;
+    }
+    return nbasis;
 }
 
 template <typename T>

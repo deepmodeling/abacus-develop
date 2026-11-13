@@ -48,7 +48,7 @@ if(ENABLE_LCAO)
   addtest(
     TARGET MODULE_LCAO_hcontainer_output_test
     LIBS parameter base device
-    SOURCES test_hcontainer_output.cpp
+    SOURCES ../unittests/test_hcontainer_output.cpp
             tmp_mocks.cpp
             ../output_hcontainer.cpp
             ../base_matrix.cpp
