@@ -136,4 +136,4 @@ scf_sccs_full
 relax_sccs
 scf_sccs_sa
 scf_sccs_sa_pcc_2d_lowpass
-dfpt_si_x
+dfpt_si_g
