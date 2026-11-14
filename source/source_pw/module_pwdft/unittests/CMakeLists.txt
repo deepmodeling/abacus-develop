@@ -49,6 +49,9 @@ addtest(
   TARGET MODULE_PW_dftu_base_test
   LIBS parameter base device
   SOURCES test_dftu_base.cpp
+          test_dftu_base_read.cpp
+          test_dftu_base_write.cpp
+          test_dftu_base_io.cpp
           ../dftu_base.cpp
           ../dftu_base_io.cpp
           ../dftu_base_read.cpp
