@@ -39,11 +39,12 @@ run_dfpt_props() {
       !found{next}
       /^[ \t]*$/{next}
       found && /^(Direct|Cartesian|direct|cartesian)/{next}
-      found && /^[A-Za-z][A-Za-z0-9]*[ \t]*$/{
+      found && /^[A-Za-z][A-Za-z0-9]*([ \t].*)?$/{
         getline
         getline
-        natom += $1 + 0
-        for(i=0; i<($1+0); i++) getline
+        cnt = $1 + 0
+        natom += cnt
+        for(i=0; i<cnt; i++) getline
       }
       END{print natom+0}
     ' STRU 2>/dev/null)
