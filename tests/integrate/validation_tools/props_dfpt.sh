@@ -56,18 +56,17 @@ run_dfpt_props() {
   if ! awk -v expected_total="$expected_total" '
     function fail(msg) { printf "ERROR: run_dfpt_props: %s\n", msg > "/dev/stderr"; bad = 1; exit 1 }
     function close_block() {
-      if (block_type[seq] == "freq") {
-        if (nextmode[seq] == 0) {
-          fail("freq block " seq " has no mode rows")
-        }
-        if (expected_total > 0 && nextmode[seq] != expected_total) {
-          fail("freq block " seq " has " nextmode[seq] " modes; expected " expected_total " (3*natom from STRU)")
-        }
-        if (expected_total == 0 && expected_modes > 0 && nextmode[seq] != expected_modes) {
-          fail("freq block " seq " has " nextmode[seq] " modes; expected " expected_modes " (from first block)")
-        }
-        if (expected_modes == 0) expected_modes = nextmode[seq]
+      if (seq == "") return  # no previous block to close
+      if (nextmode[seq] == 0) {
+        fail(block_type[seq] " block " seq " has no mode rows")
       }
+      if (expected_total > 0 && nextmode[seq] != expected_total) {
+        fail(block_type[seq] " block " seq " has " nextmode[seq] " modes; expected " expected_total " (3*natom from STRU)")
+      }
+      if (expected_total == 0 && expected_modes > 0 && nextmode[seq] != expected_modes) {
+        fail(block_type[seq] " block " seq " has " nextmode[seq] " modes; expected " expected_modes " (from first block)")
+      }
+      if (expected_modes == 0) expected_modes = nextmode[seq]
     }
     /^ *DFPT phonon frequencies at q #/ {
       close_block()
