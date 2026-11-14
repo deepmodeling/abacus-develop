@@ -58,7 +58,8 @@ void add_rvv10(const XCFunctionalParameters& parameters,
  */
 void add_rvv10_stress(const XCFunctionalParameters& parameters, const Charge& chr, ModuleBase::matrix& sigma);
 
-/// Release the libvdwxc object of the run. Call before MPI_Finalize; a later evaluation builds it again.
+/// Release the libvdwxc object of the run. The driver calls it after the last XC evaluation and before
+/// MPI_Finalize; a later evaluation builds the object again.
 void finalize_rvv10();
 #else
 inline void add_rvv10(const XCFunctionalParameters&, const Charge&, double&, double&, ModuleBase::matrix&)

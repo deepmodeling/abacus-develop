@@ -4,6 +4,7 @@
 #include "source_cell/dom_decomp.h"
 #include "source_cell/mdcell.h"
 #include "source_esolver/esolver_factory.h"
+#include "source_hamilt/module_vdw/nonlocal_xc.h"
 #include "source_hsolver/kernels/hegvd_op.h"
 #include "source_io/module_json/para_json.h"
 #include "source_io/module_parameter/parameter.h"
@@ -137,6 +138,10 @@ void Driver::driver_run()
     }
 
     delete p_esolver;
+
+    // No XC evaluation follows; the libvdwxc object of vdw_method rvv10 holds FFT plans that must be
+    // destroyed before MPI_Finalize.
+    vdw::finalize_rvv10();
 
     this->finalize_hardware();
 
