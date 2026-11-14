@@ -41,11 +41,6 @@ addtest(
           ../../source_base/module_device/output_device.cpp)
 
 addtest(
-  TARGET MODULE_IO_read_item_serial
-  LIBS parameter base device io_input_serial
-  SOURCES read_input_item_test.cpp test_read_inp_sccs.cpp)
-
-addtest(
   TARGET MODULE_IO_input_domain_reader
   LIBS parameter base device io_input_serial
   SOURCES test_read_input.cpp ../input_help.cpp)

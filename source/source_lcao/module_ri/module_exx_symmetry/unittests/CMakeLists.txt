@@ -4,7 +4,7 @@ abacus_disable_feature_definitions(__ROCM)
 addtest(
   TARGET MODULE_RI_EXX_SYMMETRY_rotation
   LIBS base device symmetry neighbor parameter
-  SOURCES symm_rotation_test.cpp
+  SOURCES test_symm_rotation_main.cpp
           test_symm_rotation.cpp
           ../symm_rotation.cpp
           ../symm_rot_out.cpp

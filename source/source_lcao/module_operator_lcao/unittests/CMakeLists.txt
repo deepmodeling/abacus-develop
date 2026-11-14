@@ -6,7 +6,7 @@ if(ENABLE_LCAO)
     LIBS parameter psi base device container
     SOURCES test_ovlp_block.cpp
             ../ovlp_block.cpp
-            tmp_mocks.cpp
+            test_tmp_mocks.cpp
             ../../../source_basis/module_ao/parallel_orbitals.cpp
             ../../../source_basis/module_ao/orb_atomic_lm.cpp
             ../../../source_hamilt/operator.cpp
@@ -32,7 +32,7 @@ if(ENABLE_LCAO)
             ../../../source_hamilt/module_hcontainer/transfer.cpp
             ../../../source_basis/module_ao/parallel_orbitals.cpp
             ../../../source_basis/module_ao/orb_atomic_lm.cpp
-            tmp_mocks.cpp
+            test_tmp_mocks.cpp
             ../../../source_hamilt/operator.cpp
             ../../module_rt/td_folding.cpp)
 
@@ -53,7 +53,7 @@ if(ENABLE_LCAO)
             ../../../source_hamilt/module_hcontainer/transfer.cpp
             ../../../source_basis/module_ao/parallel_orbitals.cpp
             ../../../source_basis/module_ao/orb_atomic_lm.cpp
-            tmp_mocks.cpp
+            test_tmp_mocks.cpp
             ../../../source_hamilt/operator.cpp
             ../../module_rt/td_folding.cpp)
 
@@ -74,7 +74,7 @@ if(ENABLE_LCAO)
             ../../../source_hamilt/module_hcontainer/transfer.cpp
             ../../../source_basis/module_ao/parallel_orbitals.cpp
             ../../../source_basis/module_ao/orb_atomic_lm.cpp
-            tmp_mocks.cpp
+            test_tmp_mocks.cpp
             ../../../source_hamilt/operator.cpp
             ../../module_rt/td_folding.cpp)
 
@@ -92,7 +92,7 @@ if(ENABLE_LCAO)
             ../../../source_hamilt/module_hcontainer/atom_pair.cpp
             ../../../source_basis/module_ao/parallel_orbitals.cpp
             ../../../source_basis/module_ao/orb_atomic_lm.cpp
-            tmp_mocks.cpp
+            test_tmp_mocks.cpp
             ../../../source_hamilt/operator.cpp)
 
   addtest(
@@ -109,7 +109,7 @@ if(ENABLE_LCAO)
             ../../../source_hamilt/module_hcontainer/atom_pair.cpp
             ../../../source_basis/module_ao/parallel_orbitals.cpp
             ../../../source_basis/module_ao/orb_atomic_lm.cpp
-            tmp_mocks.cpp
+            test_tmp_mocks.cpp
             ../../../source_hamilt/operator.cpp)
 
   addtest(
@@ -126,7 +126,7 @@ if(ENABLE_LCAO)
             ../../../source_hamilt/module_hcontainer/atom_pair.cpp
             ../../../source_basis/module_ao/parallel_orbitals.cpp
             ../../../source_basis/module_ao/orb_atomic_lm.cpp
-            tmp_mocks.cpp
+            test_tmp_mocks.cpp
             ../../../source_hamilt/operator.cpp)
 
   addtest(
@@ -146,7 +146,7 @@ if(ENABLE_LCAO)
             ../../../source_hamilt/module_hcontainer/atom_pair.cpp
             ../../../source_basis/module_ao/parallel_orbitals.cpp
             ../../../source_basis/module_ao/orb_atomic_lm.cpp
-            tmp_mocks.cpp
+            test_tmp_mocks.cpp
             ../../../source_hamilt/operator.cpp)
 
   if(ENABLE_LIBRI)
@@ -186,7 +186,7 @@ if(ENABLE_LCAO)
       ../../../source_io/module_restart/restart.cpp
       ../../../source_io/module_restart/restart_exx_csr.cpp
       ../../../source_cell/ucell_io.cpp
-      tmp_mocks.cpp
+      test_tmp_mocks.cpp
       ../../../source_hamilt/operator.cpp)
   endif()
 
