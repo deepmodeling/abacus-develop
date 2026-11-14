@@ -37,6 +37,9 @@ const double finite_difference_tolerance = 2.0e-6;
 const double strain_step = 1.0e-4;
 const double strain_tolerance = 1.0e-5;
 const double basis_cutoff = 4.0;
+// Lower bounds that show a compared quantity is not trivially zero or unchanged.
+const double nonzero_stress = 1.0e-10;
+const double distinct_energy = 1.0e-8;
 // PW_Basis lowers a larger cutoff to the largest G sphere inside the FFT box. The test densities have
 // only first-shell G components, well inside that sphere, so a small strain changes none of them.
 const double largest_sphere_cutoff = 1.0e6;
@@ -200,7 +203,8 @@ inline std::vector<double> local_grid(const ModulePW::PW_Basis& pw, GridFunction
         {
             for (int iz = 0; iz < pw.nplane; ++iz)
             {
-                values[(ix * pw.ny + iy) * pw.nplane + iz] = f(pw, ix, iy, pw.startz_current + iz);
+                const int global_z = pw.startz_current + iz;
+                values[(ix * pw.ny + iy) * pw.nplane + iz] = f(pw, ix, iy, global_z);
             }
         }
     }
@@ -210,7 +214,8 @@ inline std::vector<double> local_grid(const ModulePW::PW_Basis& pw, GridFunction
 inline ModuleBase::Matrix3 oblique_lattice(const double z_sign)
 {
     const double c3 = 2.0 * z_sign;
-    return ModuleBase::Matrix3(1.0, 0.0, 0.0, -0.5, std::sqrt(0.75), 0.0, 0.0, 0.0, c3);
+    const double b2 = std::sqrt(0.75);
+    return ModuleBase::Matrix3(1.0, 0.0, 0.0, -0.5, b2, 0.0, 0.0, 0.0, c3);
 }
 
 inline ModuleBase::Matrix3 strained_lattice(const ModuleBase::Matrix3& lattice,
@@ -358,7 +363,8 @@ inline void expect_distributed_matches_complete(ModulePW::PW_Basis& distributed,
     }
     const ModuleBase::matrix stress = rvv10_stress(distributed, {valence}, core);
     const ModuleBase::matrix stress_complete = rvv10_stress(complete, {valence_complete}, core_complete);
-    EXPECT_GT(std::abs(stress_complete(0, 0)), 1.0e-10);
+    const double stress_magnitude = std::abs(stress_complete(0, 0));
+    EXPECT_GT(stress_magnitude, nonzero_stress);
     for (int a = 0; a < 3; ++a)
     {
         for (int b = 0; b < 3; ++b)

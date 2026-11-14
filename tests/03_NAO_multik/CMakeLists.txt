@@ -21,11 +21,11 @@ if(ENABLE_CNPY)
     WORKING_DIRECTORY ${ABACUS_TEST_DIR}/03_NAO_multik)
 endif()
 
-# the rVV10 cases also use the Libxc functional rPW86-PBE
+# rVV10 with the Libxc functional rPW86-PBE
 if(ENABLE_LIBVDWXC AND ENABLE_LIBXC)
   add_test(
-    NAME 03_NAO_multik_libvdwxc
+    NAME 03_NAO_multik_libvdwxc_libxc
     COMMAND ${BASH} ../integrate/Autotest.sh -a ${ABACUS_BIN_PATH} -n 4 -j auto
-            -f CASES_LIBVDWXC.txt
+            -f CASES_LIBVDWXC_LIBXC.txt
     WORKING_DIRECTORY ${ABACUS_TEST_DIR}/03_NAO_multik)
 endif()

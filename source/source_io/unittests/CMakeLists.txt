@@ -40,6 +40,7 @@ foreach(
         duplicate_string_eof
         invalid_value
         invalid_dependency
+        rvv10_lr_relax
         valid)
   add_test(
     NAME MODULE_IO_input_error_mpi_${input_case}

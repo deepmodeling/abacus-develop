@@ -338,15 +338,17 @@ Available options are:
             {
                 return;
             }
+            const double rvv10_b_scan = 15.7;
+            const double rvv10_b_r2scan = 11.95;
             std::string functional = para.input.dft_functional;
             std::transform(functional.begin(), functional.end(), functional.begin(), ::toupper);
             if (functional == "SCAN" || functional == "MGGA_X_SCAN+MGGA_C_SCAN")
             {
-                para.input.vdw_rvv10_b = 15.7;
+                para.input.vdw_rvv10_b = rvv10_b_scan;
             }
             else if (functional == "MGGA_X_R2SCAN+MGGA_C_R2SCAN")
             {
-                para.input.vdw_rvv10_b = 11.95;
+                para.input.vdw_rvv10_b = rvv10_b_r2scan;
             }
             else if (functional == "DEFAULT")
             {

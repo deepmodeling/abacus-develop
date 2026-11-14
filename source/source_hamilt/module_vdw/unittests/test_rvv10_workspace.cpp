@@ -39,8 +39,10 @@ TEST_F(NonlocalXCTest, BigGridDistributionMatchesCompleteGrid)
     ucell.omega = big.omega;
     ucell.tpiba = big.tpiba;
     ucell.magnet.lsign_ = false;
-    const std::vector<std::vector<double>> unpolarized(1, local_grid(big, valence_density));
-    const ChargeOnGrid single(big, unpolarized, local_grid(big, core_density));
+    const std::vector<double> valence = local_grid(big, valence_density);
+    const std::vector<double> core = local_grid(big, core_density);
+    const std::vector<std::vector<double>> unpolarized(1, valence);
+    const ChargeOnGrid single(big, unpolarized, core);
 #ifdef __LIBXC
     expect_vxc_adds_rvv10("GGA_X_RPW86+GGA_C_PBE", single.chr, ucell, false, 0, 0.0);
 #else
@@ -69,7 +71,8 @@ TEST_F(NonlocalXCTest, WorkspaceFollowsGridCellAndProcessChanges)
     // back must reproduce the earlier results.
     ModulePW::PW_Basis orthogonal{"cpu", "double"};
     orthogonal.initmpi(1, 0, MPI_COMM_SELF);
-    const ModuleBase::Matrix3 rectangle(std::sqrt(0.75), 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 2.0);
+    const double a1 = std::sqrt(0.75);
+    const ModuleBase::Matrix3 rectangle(a1, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 2.0);
     setup(orthogonal, rectangle, basis_cutoff);
     ModulePW::PW_Basis finer{"cpu", "double"};
     finer.initmpi(1, 0, MPI_COMM_SELF);
@@ -92,7 +95,8 @@ TEST_F(NonlocalXCTest, WorkspaceFollowsGridCellAndProcessChanges)
     expect_same_result(again, first, rounding_tolerance, rounding_tolerance);
     expect_same_result(other_grid_again, other_grid, rounding_tolerance, rounding_tolerance);
     EXPECT_NEAR(std::get<0>(distributed), std::get<0>(first), rounding_tolerance);
-    EXPECT_GT(std::abs(std::get<0>(other_cell) - std::get<0>(first)), 1.0e-8);
+    const double energy_change = std::abs(std::get<0>(other_cell) - std::get<0>(first));
+    EXPECT_GT(energy_change, distinct_energy);
     // the end of a run releases the libvdwxc object; a later evaluation builds it again
     vdw::finalize_rvv10();
     const VxcResult after_release = rvv10_result(serial, {valence}, core);
