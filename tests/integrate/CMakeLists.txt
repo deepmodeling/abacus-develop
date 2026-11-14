@@ -32,4 +32,9 @@ if(LR_FORCE_TEST_PYTHON)
     COMMAND ${LR_FORCE_TEST_PYTHON} -m unittest discover -s
             ${CMAKE_CURRENT_SOURCE_DIR}/validation_tools -p test_props_basic.py)
   set_tests_properties(md_force_collector PROPERTIES TIMEOUT 30)
+  add_test(
+    NAME dfpt_freq_collector
+    COMMAND ${LR_FORCE_TEST_PYTHON} -m unittest discover -s
+            ${CMAKE_CURRENT_SOURCE_DIR}/validation_tools -p test_props_dfpt.py)
+  set_tests_properties(dfpt_freq_collector PROPERTIES TIMEOUT 30)
 endif()
