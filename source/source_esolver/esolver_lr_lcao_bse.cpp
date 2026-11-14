@@ -633,7 +633,7 @@ void ESolver_BSE<T, TR>::lri_init()
     std::map<TA, std::map<TAC, RI::Tensor<T>>> Ws_in;
     // if (GlobalV::MY_RANK == 0) // comment to read from all processes to avoid communication
     // {
-        Cs_in = LRI_CV_Tools::read_Cs_ao_all<T>(this->rpa_dir);
+        Cs_in = LRI_CV_Tools::read_Cs_ao_all<T>(this->rpa_dir, 0.0);
         if (this->inp_->ri_hartree_benchmark == "aims-librpa" )
         {
             Vs_in = LR_IO::read_coulomb_mat_general_k<T, T>(this->rpa_dir, Cs_in, this->kRlist);

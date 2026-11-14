@@ -159,6 +159,14 @@ addtest(
   LIBS base device
   SOURCES test_read_inp_sys.cpp)
 
+# INPUT-item registration tests: defaults, read, and validation for the
+# parameters this branch adds. io_input_serial is the object library that
+# compiles the read_inp_* translation units.
+addtest(
+  TARGET MODULE_IO_read_item_serial
+  LIBS parameter base device io_input_serial
+  SOURCES test_read_input_item.cpp test_read_inp_sccs.cpp)
+
 addtest(
   TARGET MODULE_IO_input_help_test
   LIBS parameter base device io_input
@@ -320,6 +328,7 @@ if(ENABLE_LIBRI)
     LIBS parameter base device
     SOURCES test_restart_exx_csr.cpp ../module_restart/restart_exx_csr.cpp
             ../module_hs/hs_sparse_io.cpp ../module_hs/lat_r_csr.cpp
+            ../../source_cell/ucell_io.cpp
             ../../source_basis/module_ao/parallel_orbitals.cpp
             tmp_mocks.cpp)
 endif()

@@ -12,6 +12,8 @@ if(ENABLE_LIBRI)
     matrix_orbs22.cpp
     ri_2d_comm.cpp
     mix_dmk_2d.cpp
+    mix_matrix.cpp
+    direct_2d_coulomb.cpp
     hybrid_gauge_phase.cpp
     hybrid_image_domain.cpp)
 

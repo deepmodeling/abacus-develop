@@ -234,7 +234,7 @@ void Exx_LRI_Interface<T, Tdata>::exx_beforescf(
             || (istep > 0)
             || (PARAM.inp.init_wfc == "file"))
         {
-            XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
+            XC_Functional::set_xc_type(XC_Functional::resolve_runtime_xc_type(PARAM.inp.dft_functional, ucell));
         }
         else
         {
@@ -322,7 +322,7 @@ void Exx_LRI_Interface<T, Tdata>::exx_eachiterinit(const int istep,
             {
                 const void* cur_mixing = static_cast<const void*>(this->p_chgmix_->get_mixing());
                 if (this->last_borrowed_mixing_ != nullptr && cur_mixing != this->last_borrowed_mixing_)
-                    { flag_restart = true; }   
+                    { flag_restart = true; }
                 this->last_borrowed_mixing_ = cur_mixing;
                 this->mix_DMk_2D.set_mixing(this->p_chgmix_->get_mixing());
                 this->mix_common_density_.set_mixing(this->p_chgmix_->get_mixing());
@@ -330,7 +330,10 @@ void Exx_LRI_Interface<T, Tdata>::exx_eachiterinit(const int istep,
 
             const elecstate::TDFieldManager* field = elec.pot->td_field_manager();
             const RI_2D_Comm::HybridDensityTime density_time = RI_2D_Comm::hybrid_density_time(istep, iter);
-            const bool use_left_density = density_time == RI_2D_Comm::HybridDensityTime::Left;
+            // This branch used to guard dm_last_step here; keep that guard
+            // because the pointer is only filled at the end of a step.
+            const bool use_left_density = density_time == RI_2D_Comm::HybridDensityTime::Left
+                && this->dm_last_step != nullptr;
             const module_dm::DensityMatrix<T, double>& source_density = use_left_density ? *this->dm_last_step : dm;
             const ModuleBase::Vector3<double>* source_A = nullptr;
             if (field != nullptr && field->gauge() == 2)
@@ -506,7 +509,7 @@ bool Exx_LRI_Interface<T, Tdata>::exx_after_converge(
         else
         {
             // update exx and redo scf
-            XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
+            XC_Functional::set_xc_type(XC_Functional::resolve_runtime_xc_type(PARAM.inp.dft_functional, ucell));
             iter = 0;
             std::cout << " Entering 2nd SCF, where EXX is updated" << std::endl;
             this->two_level_step++;
@@ -531,7 +534,7 @@ bool Exx_LRI_Interface<T, Tdata>::exx_after_converge(
             this->etot_last_outer_loop = etot;
             // update exx and redo scf
             if (this->two_level_step == 0)
-                { XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func); }
+                { XC_Functional::set_xc_type(XC_Functional::resolve_runtime_xc_type(PARAM.inp.dft_functional, ucell)); }
 
             std::cout << " Updating EXX " << std::flush;
             timeval t_start;       gettimeofday(&t_start, nullptr);

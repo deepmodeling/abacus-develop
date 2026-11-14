@@ -64,7 +64,7 @@ addtest(
 set(root_overlap_test_sources
     ../state_ovlp.cpp
     ../../module_operator_lcao/ovlp_block.cpp
-    ../../module_operator_lcao/test/tmp_mocks.cpp
+    ../../module_operator_lcao/unittests/test_tmp_mocks.cpp
     ../../../source_basis/module_ao/parallel_orbitals.cpp
     ../../../source_basis/module_ao/orb_atomic_lm.cpp
     ../../../source_hamilt/operator.cpp
