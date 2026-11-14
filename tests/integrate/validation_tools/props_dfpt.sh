@@ -15,11 +15,10 @@
 #
 # Completeness guard: the collection fails (returns 1) when the log is
 # missing, contains no analytic frequency block, any block's mode set
-# does not form a dense 0..N sequence starting at 0, or any freq block
-# has a different total mode count than the first complete block (every
-# q point has exactly 3*natom modes — a truncated tail at EOF that is
-# internally dense would otherwise become an incomplete reference on
-# first-time generation, where no old result.ref exists to cross-check).
+# does not start at mode 0 and form a dense 0..N sequence, any freq
+# block's total does not equal 3*natom (read from STRU), or a freq
+# block header is followed by no mode rows at all. These checks apply
+# on first-time reference generation as well as comparison runs.
 
 run_dfpt_props() {
   if [ -z "$esolver_type" ] || [ "$esolver_type" != "dfpt" ]; then
@@ -30,33 +29,44 @@ run_dfpt_props() {
     echo "ERROR: run_dfpt_props: $dfpt_log not found, DFPT frequencies not collected" >&2
     return 1
   fi
-  # count atoms from STRU to derive the expected 3*natom mode count;
-  # this catches a single-block truncation that the cross-block consistency
-  # check cannot detect (1-atom complete vs 2-atom truncated look identical)
+  # count atoms from STRU: walk each species block in ATOMIC_POSITIONS
+  # (element name → magnetic moment → atom count → coordinate lines) and
+  # sum the counts; handles multi-species cells and single-letter elements
   local natom=0
   if [ -f "STRU" ]; then
-    natom=$(awk '/^ *Direct|^ *Cartesian/{found=1;next} found && /^[A-Z][a-z]/{getline; getline; natom+=$1} END{print natom}' STRU 2>/dev/null)
+    natom=$(awk '
+      /ATOMIC_POSITIONS/{found=1; next}
+      !found{next}
+      /^[ \t]*$/{next}
+      found && /^(Direct|Cartesian|direct|cartesian)/{next}
+      found && /^[A-Za-z][A-Za-z0-9]*[ \t]*$/{
+        getline
+        getline
+        natom += $1 + 0
+        for(i=0; i<($1+0); i++) getline
+      }
+      END{print natom+0}
+    ' STRU 2>/dev/null)
   fi
   local expected_total=$((natom * 3))
   # emit one "key value" line per frequency; awk rewrites the block header
-  # into the key prefix and drops everything else. The mode index keeps its
-  # zero-based printing so keys stay stable across cell sizes. Per-block
-  # mode indices are checked for density (0..N with no gaps); every freq
-  # block must have exactly expected_total modes (3*natom from STRU).
+  # into the key prefix and drops everything else. Mode 0 must open every
+  # block; indices are checked for dense 0..N; every freq block must end
+  # at exactly expected_total (3*natom from STRU); empty freq blocks fail.
   if ! awk -v expected_total="$expected_total" '
     function fail(msg) { printf "ERROR: run_dfpt_props: %s\n", msg > "/dev/stderr"; bad = 1; exit 1 }
     function close_block() {
-      if (seq != "" && nextmode[seq] > 0) {
-        if (expected_total > 0 && block_type[seq] == "freq" && nextmode[seq] != expected_total) {
-          fail("freq block " seq " has " nextmode[seq] " modes; expected " expected_total " (3*natom from STRU): truncated at EOF or mid-block")
-        } else if (expected_modes == 0) {
-          expected_modes = nextmode[seq]
-          if (expected_modes % 3 != 0) {
-            fail("first freq block has " expected_modes " modes; not a multiple of 3 (expected 3*natom)")
-          }
-        } else if (block_type[seq] == "freq" && nextmode[seq] != expected_modes) {
-          fail("freq block " seq " has " nextmode[seq] " modes; expected " expected_modes " (truncated at EOF or mid-block)")
+      if (block_type[seq] == "freq") {
+        if (nextmode[seq] == 0) {
+          fail("freq block " seq " has no mode rows")
         }
+        if (expected_total > 0 && nextmode[seq] != expected_total) {
+          fail("freq block " seq " has " nextmode[seq] " modes; expected " expected_total " (3*natom from STRU)")
+        }
+        if (expected_total == 0 && expected_modes > 0 && nextmode[seq] != expected_modes) {
+          fail("freq block " seq " has " nextmode[seq] " modes; expected " expected_modes " (from first block)")
+        }
+        if (expected_modes == 0) expected_modes = nextmode[seq]
       }
     }
     /^ *DFPT phonon frequencies at q #/ {
@@ -72,8 +82,8 @@ run_dfpt_props() {
     /^ *mode +[0-9]+ :/ {
       if (block == "") next
       mi = $2
-      if (mi != nextmode[seq] && nextmode[seq] > 0) {
-        fail("mode " mi " out of sequence in " seq " (expected " nextmode[seq] "): truncated or dropped rows")
+      if (mi != nextmode[seq]) {
+        fail("mode " mi " out of sequence in " seq " (expected " nextmode[seq] "): missing or dropped rows")
       }
       nextmode[seq] = mi + 1
       val = $4
@@ -96,15 +106,13 @@ run_dfpt_props() {
     echo "ERROR: run_dfpt_props: incomplete phonon frequency spectrum in $dfpt_log (truncated output or format drift); failing the collection" >&2
     return 1
   fi
-  # zero-key guard: a DFPT log with no analytic block at all
+  # zero-key guard
   if ! grep -q "^dfpt_freq_" "$props_result_file"; then
     echo "ERROR: run_dfpt_props: no complete phonon frequency block found in $dfpt_log (truncated output or format drift); failing the collection" >&2
     return 1
   fi
-  # cross-reference guard: when generating result.out against an existing
-  # result.ref (comparison mode), every dfpt_* key in the reference must
-  # appear in the collected output — a log truncated mid-block would
-  # otherwise pass on its surviving prefix
+  # cross-reference guard (comparison mode only; first-time generation
+  # relies on the STRU-derived 3*natom check above)
   local ref_file="result.ref"
   if [ -f "$ref_file" ] && grep -q "^dfpt_freq_" "$ref_file"; then
     local missing
