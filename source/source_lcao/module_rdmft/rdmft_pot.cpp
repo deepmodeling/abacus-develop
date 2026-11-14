@@ -45,6 +45,8 @@ void RDMFT<TK, TR>::cal_V_TV()
     V_ekinetic_potential = new hamilt::EKinetic<hamilt::OperatorLCAO<TK, TR>>(hsk_TV,
                                                                                  kv->kvec_d,
                                                                                  HR_TV,
+                                                                                 *basis_index_,
+                                                                                 ParaV->para_2d(),
                                                                                  this->ucell,
                                                                                  orb->cutoffs(),
                                                                                  this->gd,

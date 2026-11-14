@@ -187,18 +187,21 @@ public:
     void post_process_Hexx(std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Hexxs_io) const;
     double post_process_Eexx(const double& Eexx_in) const;
 
+    const std::array<int, 3>& hybrid_images_period() const { return hybrid_images_period_; }
+
 private:
-	// Keep an owned copy: RPA_LRI may construct Exx_LRI from a temporary
-	// local Exx_Info_RI when the cut/full Coulomb settings are adjusted.
-	// Storing a reference here leaves a dangling reference after that caller
-	// returns and can corrupt the subsequent RI matrix construction.
-	Exx_Info_RI info;
-	const ExxLriRuntime runtime;
-	int abfs_Lmax_ = 0;
-	MPI_Comm mpi_comm;
-	const K_Vectors *p_kv = nullptr;
-	std::shared_ptr<ORB_gaunt_table> MGT;
-	std::vector<double> orb_cutoff_;
+    // Keep an owned copy: RPA_LRI may construct Exx_LRI from a temporary
+    // local Exx_Info_RI when the cut/full Coulomb settings are adjusted.
+    // Storing a reference here leaves a dangling reference after that caller
+    // returns and can corrupt the subsequent RI matrix construction.
+    Exx_Info_RI info;
+    std::array<int, 3> hybrid_images_period_{{1, 1, 1}};
+    const ExxLriRuntime runtime;
+    int abfs_Lmax_ = 0;
+    MPI_Comm mpi_comm;
+    const K_Vectors* p_kv = nullptr;
+    std::shared_ptr<ORB_gaunt_table> MGT;
+    std::vector<double> orb_cutoff_;
 
 	std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> lcaos;
 	std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> abfs;

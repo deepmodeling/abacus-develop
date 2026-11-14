@@ -24,7 +24,7 @@ struct OccMatReadState
                     const UnitCell& ucell,
                     OccupationMatrix& occ,
                     int nspin,
-                    OccmatSocLayout soc_layout)
+                    const OccmatSocLayout& soc_layout)
         : input(input),
           filename(filename),
           ucell(ucell),
@@ -50,7 +50,7 @@ static void read_occup_validate_configuration(const UnitCell& ucell,
                                                const std::vector<int>& l_channel,
                                                int nspin,
                                                int npol,
-                                               OccmatSocLayout soc_layout);
+                                               const OccmatSocLayout& soc_layout);
 static void read_occup_atom_block(OccMatReadState& state, int type, int iat, int l);
 
 void read_occup_m(const UnitCell& ucell,
@@ -59,7 +59,7 @@ void read_occup_m(const UnitCell& ucell,
                   const std::string& fn,
                   int nspin,
                   int npol,
-                  OccmatSocLayout soc_layout)
+                  const OccmatSocLayout& soc_layout)
 {
     ModuleBase::TITLE("DFTU_BASE", "read_occup_m");
     if (GlobalV::MY_RANK != 0)
@@ -139,7 +139,7 @@ static void read_occup_validate_configuration(
     const std::vector<int>& l_channel,
     const int nspin,
     const int npol,
-    const OccmatSocLayout soc_layout)
+    const OccmatSocLayout& soc_layout)
 {
     bool valid = static_cast<int>(l_channel.size()) == ucell.ntype;
     valid = valid && (nspin == 1 || nspin == 2 || nspin == 4);
@@ -315,9 +315,10 @@ static void read_occup_store_blocks(OccMatReadState& state,
             std::copy_n(blocks[1].begin() + block_offset,
                         size,
                         matrix.begin() + row * matrix_size + size);
-            std::copy_n(blocks[1].begin() + block_offset,
-                        size,
-                        matrix.begin() + (size + row) * matrix_size);
+            for (int column = 0; column < size; ++column)
+            {
+                matrix[(size + row) * matrix_size + column] = blocks[1][column * size + row];
+            }
             std::copy_n(blocks[3].begin() + block_offset,
                         size,
                         matrix.begin() + (size + row) * matrix_size + size);

@@ -14,7 +14,7 @@ OMP_NUM_THREADS=${ABACUS_THREADS} mpirun -np ${ABACUS_NPROCS} ${ABACUS_PATH} | t
 
 rm INPUT KPT
 
-if [[ ! -f scf.output ]] || 
+if [[ ! -f scf.output ]] ||
    [[ ! -f nscf.output ]] ||
    [[ ! -f OUT.ABACUS/running_scf.log ]] ||
    [[ ! -f OUT.ABACUS/running_nscf.log ]] ||

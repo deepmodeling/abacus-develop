@@ -40,7 +40,7 @@ class Charge_Mixing
                     double& tpiba_in);
 
     /// Disable Kerker screening for subsequent mix_rho calls.
-    /// Used by the non-separate-loop EXX path (exx_lri_interface.hpp)
+    /// Used by the non-separate-loop EXX path (exx_lri_interface.cpp)
     /// after EXX convergence: Kerker damping fights the DM update there.
     /// The Kerker kernels read cfg_ (immutable INPUT snapshot), so the
     /// disable flag must live on Charge_Mixing itself rather than mutating cfg_.

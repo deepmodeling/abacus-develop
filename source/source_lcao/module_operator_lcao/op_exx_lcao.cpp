@@ -34,20 +34,17 @@ namespace hamilt
 template<>
 void OperatorEXX<OperatorLCAO<double, double>>::add_loaded_Hexx(const int ik)
 {
-    const int nloc = this->hR->get_paraV()->para_2d().size();
-    BlasConnector::axpy(nloc, 1.0, this->Hexxd_k_load[ik].data(), 1, this->hsk->get_hk(), 1);
+    BlasConnector::axpy(this->hR->get_paraV()->para_2d().size(), 1.0, this->Hexxd_k_load[ik].data(), 1, this->hsk->get_hk(), 1);
 }
 template<>
 void OperatorEXX<OperatorLCAO<std::complex<double>, double>>::add_loaded_Hexx(const int ik)
 {
-    const int nloc = this->hR->get_paraV()->para_2d().size();
-    BlasConnector::axpy(nloc, 1.0, this->Hexxc_k_load[ik].data(), 1, this->hsk->get_hk(), 1);
+    BlasConnector::axpy(this->hR->get_paraV()->para_2d().size(), 1.0, this->Hexxc_k_load[ik].data(), 1, this->hsk->get_hk(), 1);
 }
 template<>
 void OperatorEXX<OperatorLCAO<std::complex<double>, std::complex<double>>>::add_loaded_Hexx(const int ik)
 {
-    const int nloc = this->hR->get_paraV()->para_2d().size();
-    BlasConnector::axpy(nloc, 1.0, this->Hexxc_k_load[ik].data(), 1, this->hsk->get_hk(), 1);
+    BlasConnector::axpy(this->hR->get_paraV()->para_2d().size(), 1.0, this->Hexxc_k_load[ik].data(), 1, this->hsk->get_hk(), 1);
 }
 
 } // namespace hamilt
@@ -404,11 +401,10 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
                     this->Hexxd_k_load.resize(this->kv.get_nks());
                     for (int ik = 0; ik < this->kv.get_nks(); ik++)
                     {
-                        const int nloc = pv->para_2d().size();
-                        this->Hexxd_k_load[ik].resize(nloc, 0.0);
+                        this->Hexxd_k_load[ik].resize(pv->para_2d().size(), 0.0);
                         this->restart = GlobalC::restart.load_disk("Hexx",
                                                                    ik,
-                                                                   nloc,
+                                                                   pv->para_2d().size(),
                                                                    this->Hexxd_k_load[ik].data(),
                                                                    false);
                         if (!this->restart)
@@ -422,11 +418,10 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
                     this->Hexxc_k_load.resize(this->kv.get_nks());
                     for (int ik = 0; ik < this->kv.get_nks(); ik++)
                     {
-                        const int nloc = pv->para_2d().size();
-                        this->Hexxc_k_load[ik].resize(nloc, 0.0);
+                        this->Hexxc_k_load[ik].resize(pv->para_2d().size(), 0.0);
                         this->restart = GlobalC::restart.load_disk("Hexx",
                                                                    ik,
-                                                                   nloc,
+                                                                   pv->para_2d().size(),
                                                                    this->Hexxc_k_load[ik].data(),
                                                                    false);
                         if (!this->restart)
@@ -566,6 +561,46 @@ void OperatorEXX<OperatorLCAO<TK, TR>>::contributeHR()
         }
         else
         {
+            if (exx_info_ptr->info_ri.unfold_hybrid_images && !this->Hexxc->empty())
+            {
+                using ComplexHexx = std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>;
+                bool missing_image = false;
+                const Parallel_Orbitals* pv = this->hR->get_paraV();
+                for (const ComplexHexx& spin : *this->Hexxc)
+                {
+                    for (const typename ComplexHexx::value_type& row : spin)
+                    {
+                        for (const typename ComplexHexx::mapped_type::value_type& block : row.second)
+                        {
+                            const std::array<int, 3>& R = block.first.second;
+                            const int other_atom = block.first.first;
+                            if (pv->get_nrow_atom(row.first) > 0 && pv->get_ncol_atom(other_atom) > 0
+                                && this->hR->find_matrix(row.first, other_atom, R[0], R[1], R[2]) == nullptr)
+                            {
+                                missing_image = true;
+                            }
+                        }
+                    }
+                }
+                if (missing_image)
+                {
+                    // allocate() zeros the entire container. Preserve contributions
+                    // already assembled by preceding operators before growing it.
+                    HContainer<TR> saved(*this->hR);
+                    saved.add_value_intersection(*this->hR);
+                    std::vector<ComplexHexx> spin_blocks(1);
+                    for (const ComplexHexx& spin : *this->Hexxc)
+                    {
+                        spin_blocks[0] = spin;
+                        reallocate_hcontainer(spin_blocks, this->hR, nullptr);
+                    }
+                    this->hR->add_value_intersection(saved);
+                }
+                if (this->td_info_ != nullptr)
+                {
+                    this->td_info_->initialize_phase_hybrid(this->ucell, this->hR);
+                }
+            }
             RI_2D_Comm::add_HexxR(this->current_spin,
                                   exx_info_ptr->info_global.hybrid_alpha,
                                   *this->Hexxc,

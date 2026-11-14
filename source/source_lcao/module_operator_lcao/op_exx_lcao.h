@@ -19,7 +19,8 @@
 #include <utility>
 #include <vector>
 
-// Forward declaration to avoid circular include (exx_lri_interface.hpp includes op_exx_lcao.h)
+// Forward declaration of the EXX interface; avoids a circular include
+// because exx_lri_interface.hpp includes op_exx_lcao.h.
 template <typename T, typename Tdata>
 class Exx_LRI_Interface;
 

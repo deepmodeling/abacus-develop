@@ -1,6 +1,8 @@
 #include "lr_spectrum.h"
+#include "source_base/basis_flattened_indexing.h"
 #include "utils/spectrum_weights.h"
 #include "source_base/global_variable.h"
+#include "source_basis/module_ao/elem_basis_idx_orb.h"
 #include "source_lcao/module_lr/dm_trans/dm_trans.h"
 #include "source_lcao/module_lr/utils/lr_util_hcontainer.h"
 #include "math.h"
@@ -19,8 +21,18 @@ namespace LR
         const auto& inp = PARAM.inp;
         two_center_bundle.to_LCAO_Orbitals(orb, inp.lcao_ecut, inp.lcao_dk, inp.lcao_dr, inp.lcao_rmax,
                                            inp.out_element_info, inp.cal_force);
+        const ModuleBase::Element_Basis_Index::Range range =
+            ModuleBase::Element_Basis_Index::construct_range(orb);
+        const ModuleBase::Element_Basis_Index::IndexLNM hierarchy =
+            ModuleBase::Element_Basis_Index::construct_index(range);
+        const BasisFlattenedIndexing basis(hierarchy, ucell.iat2it, ucell.get_npol());
         // actually this class calculates the velocity matrix v(R) at A=0
-        Velocity_op<std::complex<double>> vR(&ucell, &gd, &pmat, orb, two_center_bundle.overlap_orb.get());
+        Velocity_op<std::complex<double>> vR(&ucell,
+                                             &gd,
+                                             basis,
+                                             pmat.para_2d(),
+                                             orb,
+                                             two_center_bundle.overlap_orb.get());
         vR.calculate_vcomm_r(); // $<\mu, 0|i[Vnl, r]|\nu, R>$
         vR.calculate_grad_term();   // $<\mu, 0|-i∇r|\nu, R>$
         return vR;
@@ -210,7 +222,7 @@ namespace LR
         ModuleBase::timer::end("LR_Spectrum", "test_transition_dipoles_velocity_omega");
     }
 
-    inline void cal_eig_ks_diff(double* const eig_ks_diff, const double* const eig_ks, const BlockCyclicDistribution& px, const int nk, const int nocc, const int nvirt)
+    inline void cal_eig_ks_diff(double* const eig_ks_diff, const double* const eig_ks, const Parallel_Blkcyclic& px, const int nk, const int nocc, const int nvirt)
     {
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static)

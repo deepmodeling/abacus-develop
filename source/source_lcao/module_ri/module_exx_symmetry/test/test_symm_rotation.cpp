@@ -48,7 +48,7 @@ void check_little_group_restoration(const int nspin)
 {
     const int channels = nspin == 2 ? 2 : 1;
     const int n = 4;
-    BlockCyclicDistribution pv;
+    Parallel_Blkcyclic pv;
     pv.init(n, n, 1, MPI_COMM_WORLD, false);
     ModuleSymmetry::Symmetry_rotation rotation;
     std::vector<Complex> identity(n * n, 0.0);
@@ -210,7 +210,7 @@ TEST(SymmetryDensityRestoration, RebuildAfterCellSymmetryAnalysis)
     {
         kv.kstars[0][operation] = kv.kvec_d[0] * cell.symm.kgmatrix[operation];
     }
-    BlockCyclicDistribution pv;
+    Parallel_Blkcyclic pv;
     pv.init(3, 3, 1, MPI_COMM_WORLD, false);
     const ModuleSymmetry::TC period = {2, 2, 2};
     const std::vector<ModuleSymmetry::TC> cells = {{0, 0, 0}, {1, 0, 0}, {0, 1, 0}, {0, 0, 1}};

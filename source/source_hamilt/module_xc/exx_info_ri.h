@@ -12,6 +12,7 @@ struct Exx_Info_RI
     std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string, std::string>>> coulomb_param;
 
     bool real_number = false;
+    bool unfold_hybrid_images = false;
     bool coul_moment = false;
     bool rotate_abfs = false;
 

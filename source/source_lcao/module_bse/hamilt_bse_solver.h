@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 
-#include "source_base/block_cyclic_distribution.h"
+#include "source_base/parallel_blkcyc.h"
 
 namespace BSE
 {
@@ -17,15 +17,15 @@ void printM(const std::vector<T>& A, int m, int n, std::string file, std::string
 void arrayFlatten1(const std::vector<std::complex<double>>& A,
                    const std::vector<std::complex<double>>& B,
                    std::vector<std::complex<double>>& result,
-                   const BlockCyclicDistribution& pA,
-                   const BlockCyclicDistribution& pM);
+                   const Parallel_Blkcyclic& pA,
+                   const Parallel_Blkcyclic& pM);
 
 /// @brief result={{Re(A+B), Im(A-B)},{-Im(A+B), Re(A-B)}}
 void arrayFlatten2(const std::vector<std::complex<double>>& A,
                    const std::vector<std::complex<double>>& B,
                    std::vector<double>& result,
-                   const BlockCyclicDistribution& pA,
-                   const BlockCyclicDistribution& pM);
+                   const Parallel_Blkcyclic& pA,
+                   const Parallel_Blkcyclic& pM);
 
 /// @brief solve full BSE through matrix M = {{Re(A+B), Im(A-B)},{-Im(A+B), Re(A-B)}}
 /// @attention A_part and B_part will be destroyed (swapped with empty vectors)
@@ -33,14 +33,14 @@ void arrayFlatten2(const std::vector<std::complex<double>>& A,
 void solve_full(const int my_rank,
                 std::vector<std::complex<double>>& A_part,
                 std::vector<std::complex<double>>& B_part,
-                const BlockCyclicDistribution& pA,
-                const BlockCyclicDistribution& pM,
+                const Parallel_Blkcyclic& pA,
+                const Parallel_Blkcyclic& pM,
                 std::vector<double>& ev,
                 std::vector<std::complex<double>>& global_v);
 /// @brief template solve TDA BSE, implemented in hamilt_bse_solver.hpp
 template <typename T>
 void solve_tda(const std::vector<T>& A,
-               const BlockCyclicDistribution& pA,
+               const Parallel_Blkcyclic& pA,
                std::vector<double>& ev,
                std::vector<T>& v);
 }

@@ -1,6 +1,6 @@
 #ifndef ABACUS_LR_HSOLVER_LRTD_H
 #define ABACUS_LR_HSOLVER_LRTD_H
-#include "source_base/block_cyclic_distribution.h"
+#include "source_base/parallel_blkcyc.h"
 #include "source_base/macros.h"
 #include <complex>
 #include <string>
@@ -21,7 +21,7 @@ namespace HSolver
             const int& nk,
             const std::vector<int>& nocc,
             const std::vector<int>& nvirt,
-            const std::vector<BlockCyclicDistribution>& pX,
+            const std::vector<Parallel_Blkcyclic>& pX,
             double* eig,
             const std::string method,
             const Real<T>& diag_ethr, ///< threshold for diagonalization

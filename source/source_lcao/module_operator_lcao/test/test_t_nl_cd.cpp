@@ -1,5 +1,6 @@
 #include "../ekinetic.h"
 #include "../nonlocal.h"
+#include "test_operator_basis.h"
 
 #include "gtest/gtest.h"
 #include <chrono>
@@ -132,10 +133,13 @@ TEST_F(TNLTest, testTVNLcd2cd)
     hsk.set_zero_hk();
     Grid_Driver gd(0, 0);
     std::chrono::high_resolution_clock::time_point start_time = std::chrono::high_resolution_clock::now();
+    const BasisFlattenedIndexing basis = operator_test::make_s_orbital_basis(ucell);
     hamilt::Operator<std::complex<double>>* op
         = new hamilt::EKinetic<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>(&hsk,
                                                                                                     kvec_d_in,
                                                                                                     HR,
+                                                                                                    basis,
+                                                                                                    paraV->para_2d(),
                                                                                                     &ucell,
                                                                                                     {1.0},
                                                                                                     &gd,

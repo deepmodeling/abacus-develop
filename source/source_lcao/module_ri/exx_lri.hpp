@@ -9,7 +9,9 @@
 #include "lri_cv_tools.h"
 #include "exx_lri.h"
 #include "exx_lri_detail.h"
+#include "hybrid_image_domain.h"
 #include "source_base/parallel_common.h"
+#include "source_base/parallel_reduce.h"
 #include "source_cell/unitcell.h"
 #include "ri_2d_comm.h"
 #include "ri_util.h"
@@ -1350,6 +1352,13 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
     std::map<TA,std::map<TAC,RI::Tensor<Tdata>>> Vs;
     std::map<TA,std::map<TAC,RI::Tensor<Tdata>>> Vs_long;
     std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, Ndim>>> dVs;
+    const bool calculate_stress = this->runtime.cal_stress;
+    const bool cal_dCV
+        = (this->runtime.cal_force || calculate_stress) && !this->info.unfold_hybrid_images;
+    if (this->info.unfold_hybrid_images && calculate_stress)
+    {
+        throw std::invalid_argument("Unfolded hybrid RI stress is not yet implemented");
+    }
     for (const auto& settings_list : this->coulomb_settings)
     {
         auto Vs_temp = (settings_list.first == Conv_Coulomb_Pot_K::Coulomb_Method::Ewald)
@@ -1526,7 +1535,11 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
             Vs_long);
     }
     const double V_threshold_short = this->info.V_threshold;
-    this->exx_lri.set_Vs(std::move(Vs), V_threshold_short, this->use_rotated_n0_long_range ? "short" : "");
+    if (!this->info.unfold_hybrid_images)
+    {
+        this->exx_lri.set_Vs(std::move(Vs), V_threshold_short,
+                             this->use_rotated_n0_long_range ? "short" : "");
+    }
     if (this->use_rotated_n0_long_range)
     {
         this->exx_lri.set_Vs(std::move(Vs_long), this->info.V_threshold_long, "long");
@@ -1536,7 +1549,7 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
         std::array<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>, Ndim>
             dVs_order = LRI_CV_Tools::change_order(std::move(dVs));
         this->exx_lri.set_dVs(std::move(dVs_order), this->info.V_grad_threshold);
-        if(this->runtime.cal_stress)
+        if (calculate_stress)
         {
             std::array<std::array<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>,3>,3> dVRs = LRI_CV_Tools::cal_dMRs(ucell,dVs_order);
             this->exx_lri.set_dVRs(std::move(dVRs), this->info.V_grad_R_threshold);
@@ -1607,13 +1620,33 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
     }
     this->exx_lri.set_Cs(std::move(Cs), this->info.C_threshold, this->use_rotated_n0_long_range ? "short" : "");
     ExxLriDetail::maybe_set_weighted_short_config(this->exx_lri, this->info, this->runtime.rank);
+    if (this->info.unfold_hybrid_images)
+    {
+        RI_2D_Comm::ImageCell c_extent = RI_2D_Comm::retained_image_extent(Cs, this->info.C_threshold);
+        RI_2D_Comm::ImageCell v_extent = RI_2D_Comm::retained_image_extent(Vs, this->info.V_threshold);
+        for (int d = 0; d < 3; ++d)
+        {
+            Parallel_Reduce::reduce_max(c_extent[d]);
+            Parallel_Reduce::reduce_max(v_extent[d]);
+        }
+        const RI_2D_Comm::ImageCell image_period = RI_2D_Comm::hybrid_image_period(c_extent, v_extent);
+        if (image_period != this->hybrid_images_period_
+            && RI::MPI_Wrapper::mpi_get_rank(this->mpi_comm) == 0)
+        {
+            std::cout << "RI_HYBRID_IMAGE_PERIOD " << image_period[0] << " " << image_period[1]
+                      << " " << image_period[2] << " physical_mesh " << period[0] << " " << period[1]
+                      << " " << period[2] << std::endl;
+        }
+        this->hybrid_images_period_ = image_period;
+        this->exx_lri.set_parallel(this->mpi_comm, atoms_pos, latvec, this->hybrid_images_period_);
+    }
 
     if(this->runtime.cal_force || this->runtime.cal_stress)
     {
         std::array<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>, Ndim>
             dCs_order = LRI_CV_Tools::change_order(std::move(dCs));
         this->exx_lri.set_dCs(std::move(dCs_order), this->info.C_grad_threshold);
-        if(this->runtime.cal_stress)
+        if (calculate_stress)
         {
             std::array<std::array<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>,3>,3> dCRs = LRI_CV_Tools::cal_dMRs(ucell,dCs_order);
             this->exx_lri.set_dCRs(std::move(dCRs), this->info.C_grad_R_threshold);
@@ -2259,14 +2292,21 @@ void Exx_LRI<Tdata>::cal_exx_elec(const std::vector<std::map<TA, std::map<TAC, R
     this->Eexx = 0;
     for(int is=0; is<this->runtime.nspin; ++is)
     {
-        const std::string suffix = ((this->runtime.cal_force || this->runtime.cal_stress) ? std::to_string(is) : "");
+        const std::string suffix
+            = ((this->runtime.cal_force || this->runtime.cal_stress) ? std::to_string(is) : "");
+        const std::string channel_suffix
+            = this->use_rotated_n0_long_range ? "short" : "";
         auto short_channel = run_exx_channel(this->exx_lri,
                                              Ds[is],
                                              is,
                                              suffix,
-                                             this->use_rotated_n0_long_range ? "short" : "",
-                                             this->use_rotated_n0_long_range ? "short" : "",
+                                             channel_suffix,
+                                             channel_suffix,
                                              this->use_rotated_n0_long_range ? short_cal_hs_time : full_cal_hs_time);
+        if (this->info.unfold_hybrid_images)
+        {
+            RI_2D_Comm::decode_hybrid_images(short_channel.first, this->hybrid_images_period_);
+        }
         if (this->use_rotated_n0_long_range)
         {
             auto long_channel = run_exx_channel(this->exx_lri,
