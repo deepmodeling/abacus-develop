@@ -20,6 +20,7 @@ source "$PROPS_SCRIPT_DIR/props_cube.sh"
 source "$PROPS_SCRIPT_DIR/props_ml.sh"
 source "$PROPS_SCRIPT_DIR/props_tddft.sh"
 source "$PROPS_SCRIPT_DIR/props_deepks.sh"
+source "$PROPS_SCRIPT_DIR/props_dfpt.sh"
 
 # Property collectors run in the same order as the original monolithic
 # script so result files stay byte-identical; props_finalize() writes the
@@ -27,6 +28,13 @@ source "$PROPS_SCRIPT_DIR/props_deepks.sh"
 # props_<cat>.sh next to the others and calling run_<cat>_props here.
 run_lr_force_props
 run_basic_props || exit 1
+
+#---------------------------------------
+# dfpt collectors (props_dfpt.sh): phonon frequencies per q point;
+# a DFPT case with no complete frequency block fails the collection
+# instead of passing on etot alone
+#---------------------------------------
+run_dfpt_props || exit 1
 
 #-------------------------------
 # matrix collectors: out_dm1 (props_mat.sh)
