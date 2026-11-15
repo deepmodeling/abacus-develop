@@ -25,7 +25,7 @@
 #include "source_md/module_dp/dp.h"
 #include "source_md/module_nep/nep_potential.h"
 #include "source_md/module_snap/snap_potential.h"
-#include "esolver_interatomic_potential.h"
+#include "esolver_forcefields.h"
 #include "source_md/module_lj/lj.h"
 #include "esolver_of.h"
 #include "esolver_of_tddft.h"
@@ -398,21 +398,21 @@ ESolver* init_esolver(const Input_para& inp)
         std::ofstream& running_log = GlobalV::ofs_running;
         std::unique_ptr<ModuleMD::Potential> potential(
             new ModuleMD::LJ(PARAM.globalv.global_out_dir, running_log));
-        return new ESolver_InteratomicPotential(std::move(potential), running_log);
+        return new esolver_forcefields(std::move(potential), running_log);
     }
     else if (esolver_type == "dp_pot")
     {
         std::ofstream& running_log = GlobalV::ofs_running;
         std::unique_ptr<ModuleMD::Potential> potential(
             new ModuleMD::DP(inp.mdp.pot_file, PARAM.globalv.global_out_dir, running_log));
-        return new ESolver_InteratomicPotential(std::move(potential), running_log);
+        return new esolver_forcefields(std::move(potential), running_log);
     }
     else if (esolver_type == "nep_pot")
     {
         std::ofstream& running_log = GlobalV::ofs_running;
         std::unique_ptr<ModuleMD::Potential> potential(
             new ModuleMD::NEPPotential(inp.mdp.pot_file, PARAM.globalv.global_out_dir, running_log));
-        return new ESolver_InteratomicPotential(std::move(potential), running_log);
+        return new esolver_forcefields(std::move(potential), running_log);
     }
     else if (esolver_type == "snap_pot")
     {
@@ -420,7 +420,7 @@ ESolver* init_esolver(const Input_para& inp)
         std::ofstream& running_log = GlobalV::ofs_running;
         std::unique_ptr<ModuleMD::Potential> potential(
             new ModuleMD::SnapPotential(inp.mdp.pot_file, inp.mdp.snap_param_file, running_log, rank));
-        return new ESolver_InteratomicPotential(std::move(potential), running_log);
+        return new esolver_forcefields(std::move(potential), running_log);
     }
     throw std::invalid_argument("esolver_type = " + std::string(esolver_type) + ". Wrong in " + std::string(__FILE__)
                                 + " line " + std::to_string(__LINE__));

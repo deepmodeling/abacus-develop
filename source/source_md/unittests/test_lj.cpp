@@ -305,7 +305,7 @@ TEST_F(LJ_pot_test, CalEnShift)
 }
 
 #include "source_md/module_lj/lj.h"
-#include "source_esolver/esolver_interatomic_potential.h"
+#include "source_esolver/esolver_forcefields.h"
 #include "source_cell/dom_decomp.h"
 #include "source_md/test/setcell.h"
 
@@ -324,7 +324,7 @@ TEST(LJPotential, UnitCellEnergyForceAndStress)
     const std::string output_dir = testing::TempDir();
     std::ofstream running_log;
     std::unique_ptr<ModuleMD::Potential> potential(new ModuleMD::LJ(output_dir, running_log));
-    ModuleESolver::ESolver_InteratomicPotential solver(std::move(potential), running_log);
+    ModuleESolver::esolver_forcefields solver(std::move(potential), running_log);
     solver.before_all_runners(cell, input);
     solver.runner(cell, 0);
 
@@ -347,7 +347,7 @@ TEST(LJPotential, MDCellWritesOwnedForces)
     const std::string output_dir = testing::TempDir();
     std::ofstream running_log;
     std::unique_ptr<ModuleMD::Potential> potential(new ModuleMD::LJ(output_dir, running_log));
-    ModuleESolver::ESolver_InteratomicPotential solver(std::move(potential), running_log);
+    ModuleESolver::esolver_forcefields solver(std::move(potential), running_log);
     solver.before_all_runners(cell, input);
     DomainDecomposition decomp;
     decomp.init(ModuleBase::world_comm_domain(), cell.latvec(), cell.lat0(), 0.0, 0.0);

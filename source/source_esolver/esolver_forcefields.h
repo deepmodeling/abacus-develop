@@ -1,5 +1,5 @@
-#ifndef ESOLVER_INTERATOMIC_POTENTIAL_H
-#define ESOLVER_INTERATOMIC_POTENTIAL_H
+#ifndef ESOLVER_FORCEFIELDS_H
+#define ESOLVER_FORCEFIELDS_H
 
 #include "esolver.h"
 #include <iosfwd>
@@ -12,11 +12,11 @@ class Potential;
 
 namespace ModuleESolver
 {
-class ESolver_InteratomicPotential : public ESolver
+class esolver_forcefields : public ESolver
 {
   public:
-    ESolver_InteratomicPotential(std::unique_ptr<ModuleMD::Potential> potential, std::ofstream& running_log);
-    ~ESolver_InteratomicPotential() override;
+    esolver_forcefields(std::unique_ptr<ModuleMD::Potential> potential, std::ofstream& running_log);
+    ~esolver_forcefields() override;
 
     void before_all_runners(BaseCell& cell, const Input_para& inp) override;
     void runner(BaseCell& cell, int istep) override;

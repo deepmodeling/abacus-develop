@@ -1,4 +1,4 @@
-#include "esolver_interatomic_potential.h"
+#include "esolver_forcefields.h"
 
 #include "source_base/constants.h"
 #include "source_cell/mdcell.h"
@@ -13,22 +13,22 @@
 
 namespace ModuleESolver
 {
-ESolver_InteratomicPotential::ESolver_InteratomicPotential(std::unique_ptr<ModuleMD::Potential> potential, std::ofstream& running_log)
+esolver_forcefields::esolver_forcefields(std::unique_ptr<ModuleMD::Potential> potential, std::ofstream& running_log)
     : potential_(std::move(potential)), running_log_(running_log)
 {
-    classname = "ESolver_InteratomicPotential";
+    classname = "esolver_forcefields";
 }
 
-ESolver_InteratomicPotential::~ESolver_InteratomicPotential() = default;
+esolver_forcefields::~esolver_forcefields() = default;
 
-void ESolver_InteratomicPotential::before_all_runners(BaseCell& cell, const Input_para& inp)
+void esolver_forcefields::before_all_runners(BaseCell& cell, const Input_para& inp)
 {
     inp_ = &inp;
     stress_.create(3, 3);
     potential_->initialize(cell, inp);
 }
 
-void ESolver_InteratomicPotential::runner(BaseCell& cell, int istep)
+void esolver_forcefields::runner(BaseCell& cell, int istep)
 {
     static_cast<void>(istep);
     energy_ = 0.0;
@@ -41,12 +41,12 @@ void ESolver_InteratomicPotential::runner(BaseCell& cell, int istep)
     }
 }
 
-double ESolver_InteratomicPotential::cal_energy()
+double esolver_forcefields::cal_energy()
 {
     return energy_;
 }
 
-void ESolver_InteratomicPotential::cal_force(BaseCell& cell, ModuleBase::matrix& force)
+void esolver_forcefields::cal_force(BaseCell& cell, ModuleBase::matrix& force)
 {
     if (cell.kind() == BaseCell::Kind::mdcell)
     {
@@ -65,7 +65,7 @@ void ESolver_InteratomicPotential::cal_force(BaseCell& cell, ModuleBase::matrix&
     ModuleIO::print_force(running_log_, static_cast<UnitCell&>(cell), "TOTAL-FORCE (eV/Angstrom)", force, false);
 }
 
-void ESolver_InteratomicPotential::cal_stress(BaseCell& cell, ModuleBase::matrix& stress)
+void esolver_forcefields::cal_stress(BaseCell& cell, ModuleBase::matrix& stress)
 {
     stress = stress_;
     bool print_stress = true;
@@ -85,7 +85,7 @@ void ESolver_InteratomicPotential::cal_stress(BaseCell& cell, ModuleBase::matrix
     stress(2, 2) -= inp_->press3 / unit_transform;
 }
 
-void ESolver_InteratomicPotential::after_all_runners(BaseCell& cell)
+void esolver_forcefields::after_all_runners(BaseCell& cell)
 {
     static_cast<void>(cell);
     running_log_ << "\n --------------------------------------------" << std::endl;
