@@ -26,7 +26,7 @@
 #endif
 #endif
 #include "source_base/parallel_common.h"
-#include "source_base/parallel_reduce.h"
+#include "source_base/parallel_cell.h"
 #include "source_base/timer.h"
 #include "source_cell/ghost_exchange_plan.h"
 #include "source_cell/mdcell.h"
@@ -248,8 +248,12 @@ void DP::compute(BaseCell& basecell,
 
         std::array<double, 9> local_virial;
         std::copy(virial.begin(), virial.end(), local_virial.begin());
-        Parallel_Reduce::reduce_all(local_energy);
-        Parallel_Reduce::reduce_all(local_virial.data(), 9);
+        ModuleBase::CommunicationDomain domain;
+#ifdef __MPI
+        domain.initialize(mdcell.communicator());
+#endif
+        domain.sum(&local_energy, 1);
+        domain.sum(local_virial.data(), 9);
         const double fact_e = rescaling / ModuleBase::Ry_to_eV;
         const double fact_f = rescaling / (ModuleBase::Ry_to_eV * ModuleBase::ANGSTROM_AU);
         const double fact_v = rescaling / (mdcell.omega() * ModuleBase::Ry_to_eV);

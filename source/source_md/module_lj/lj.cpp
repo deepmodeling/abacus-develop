@@ -1,6 +1,6 @@
 #include "lj.h"
 
-#include "source_base/parallel_reduce.h"
+#include "source_base/parallel_cell.h"
 #include "source_cell/mdcell.h"
 #include "source_cell/module_neighlist/neighbor_search.h"
 #include "source_cell/module_neighlist/neighbor_types.h"
@@ -163,8 +163,12 @@ void LJ::compute(BaseCell& cell,
         }
     }
 
-    Parallel_Reduce::reduce_all(local_potential);
-    Parallel_Reduce::reduce_all(local_virial.data(), static_cast<int>(local_virial.size()));
+    ModuleBase::CommunicationDomain domain;
+#ifdef __MPI
+    domain.initialize(mdcell.communicator());
+#endif
+    domain.sum(&local_potential, 1);
+    domain.sum(local_virial.data(), static_cast<int>(local_virial.size()));
 
     energy = local_potential / 2.0;
     for (int i = 0; i < 3; ++i)

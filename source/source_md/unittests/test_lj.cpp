@@ -1,10 +1,12 @@
 #include "source_cell/dom_decomp.h"
+#include "source_base/parallel_cell.h"
 #include "gtest/gtest.h"
 #include "source_md/test/setcell.h"
 #include "lj_test_solver.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_md/md_func.h"
 #include <fstream>
+#include <cstdint>
 #include <string>
 constexpr double doublethreshold = 1e-12;
 
@@ -362,3 +364,58 @@ TEST(LJPotential, MDCellWritesOwnedForces)
         EXPECT_DOUBLE_EQ(force(i, 2), cell.owned_atoms()[i].force.z);
     }
 }
+
+#ifdef __MPI
+TEST(LJPotential, SplitCommunicatorReducesWithinCell)
+{
+    UnitCell unitcell;
+    Setcell::setupcell(unitcell);
+    Input_para input;
+    Setcell::parameters(input);
+
+    ModuleBase::CommunicationDomain domain;
+    domain.initialize(MPI_COMM_SELF);
+    std::vector<LocalAtom> atoms;
+    for (int index = 0; index < unitcell.atoms[0].na; ++index)
+    {
+        atoms.push_back(LocalAtom(unitcell.atoms[0].tau[index],
+                                  unitcell.atoms[0].taud[index],
+                                  unitcell.atoms[0].vel[index],
+                                  ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
+                                  unitcell.atoms[0].mbl[index],
+                                  unitcell.atoms[0].mass / ModuleBase::AU_to_MASS,
+                                  0,
+                                  index,
+                                  0));
+    }
+    const std::vector<std::string> labels(1, unitcell.atoms[0].label);
+    const std::vector<double> masses(1, unitcell.atoms[0].mass);
+    const std::vector<std::int64_t> counts(1, unitcell.atoms[0].na);
+    MDCell cell;
+    cell.initialize_from_owned_atoms(unitcell.latvec,
+                                     unitcell.GT,
+                                     unitcell.lat0,
+                                     unitcell.omega,
+                                     unitcell.nat,
+                                     atoms,
+                                     labels,
+                                     masses,
+                                     counts,
+                                     0.0,
+                                     domain);
+
+    std::ofstream running_log;
+    ModuleMD::LJ potential(testing::TempDir(), running_log);
+    potential.initialize(cell, input);
+    DomainDecomposition decomposition;
+    decomposition.init(domain, cell.latvec(), cell.lat0(), 0.0, 0.0);
+    decomposition.prepare_neighbors(cell);
+    double energy = 0.0;
+    ModuleBase::matrix force;
+    ModuleBase::matrix stress(3, 3);
+    potential.compute(cell, energy, force, stress);
+
+    EXPECT_NEAR(energy, -0.023915637247068761, 1e-12);
+    EXPECT_NEAR(stress(0, 0), 1.6072044445526372e-6, 1e-10);
+}
+#endif

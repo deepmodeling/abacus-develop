@@ -16,7 +16,7 @@
  */
 #include "nep_potential.h"
 #include "source_base/parallel_common.h"
-#include "source_base/parallel_reduce.h"
+#include "source_base/parallel_cell.h"
 #include "source_base/timer.h"
 #ifdef __NEP
 #include "nep.h"
@@ -186,8 +186,12 @@ void NEPPotential::compute(BaseCell& basecell,
                                                                            force[static_cast<std::size_t>(nowned_atoms + iat)][2]);
         }
 
-        Parallel_Reduce::reduce_all(local_energy);
-        Parallel_Reduce::reduce_all(local_virial, 6);
+        ModuleBase::CommunicationDomain domain;
+#ifdef __MPI
+        domain.initialize(mdcell.communicator());
+#endif
+        domain.sum(&local_energy, 1);
+        domain.sum(local_virial, 6);
         const double fact_e = 1.0 / ModuleBase::Ry_to_eV;
         const double fact_f = 1.0 / (ModuleBase::Ry_to_eV * ModuleBase::ANGSTROM_AU);
         const double fact_v = 1.0 / (mdcell.omega() * ModuleBase::Ry_to_eV);

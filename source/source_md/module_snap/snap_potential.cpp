@@ -1,7 +1,7 @@
 #include "snap_potential.h"
 
 #include "source_base/constants.h"
-#include "source_base/parallel_reduce.h"
+#include "source_base/parallel_cell.h"
 #include "source_cell/mdcell.h"
 #include "source_cell/module_neighlist/neighbor_search.h"
 #include "source_io/module_output/output_log.h"
@@ -189,8 +189,12 @@ void SnapPotential::compute(BaseCell& cell,
             const double fz = value[2] * force_scale;
             mdcell.ghost_atoms()[i].force.set(fx, fy, fz);
         }
-        Parallel_Reduce::reduce_all(energy);
-        Parallel_Reduce::reduce_all(stress.c, 9);
+        ModuleBase::CommunicationDomain domain;
+#ifdef __MPI
+        domain.initialize(mdcell.communicator());
+#endif
+        domain.sum(&energy, 1);
+        domain.sum(stress.c, 9);
         for (int i = 0; i < nowned; ++i)
         {
             const std::array<double, 3>& value = contribution.forces()[static_cast<std::size_t>(i)];
