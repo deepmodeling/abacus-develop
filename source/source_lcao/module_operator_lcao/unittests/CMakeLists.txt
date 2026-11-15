@@ -191,12 +191,6 @@ if(ENABLE_LCAO)
       # elecstate and module_exx_symmetry symbols this focused test does not
       # link.
       ../../module_ri/ri_2d_comm.cpp
-      # op_exx_lcao.cpp calls XC_Functional (resolve_runtime_xc_type /
-      # set_xc_type / set_xc_first_loop) and TD_info::initialize_phase_hybrid
-      # for the td_stype=2 hybrid path; both live outside this target's
-      # library list, so compile the two translation units in.
-      ../../../source_hamilt/module_xc/xc_functional.cpp
-      ../../module_rt/td_info.cpp
       test_tmp_mocks.cpp
       ../../../source_hamilt/operator.cpp)
   endif()

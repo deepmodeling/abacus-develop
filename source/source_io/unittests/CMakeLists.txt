@@ -17,6 +17,16 @@ addtest(TARGET MODULE_IO_spin_tag SOURCES test_spin_tag.cpp)
 
 addtest(TARGET MODULE_IO_provenance_header SOURCES test_provenance_header.cpp)
 
+addtest(
+  TARGET MODULE_IO_read_item_serial
+  LIBS parameter base device io_input_serial
+  # io_input_serial compiles the read_inp_* translation units without __MPI
+  # (its former directory disabled it). The test asserts those same branches,
+  # so drop __MPI here too; otherwise an MPI build tripped the serial
+  # ScaLAPACK validator outside EXPECT_EXIT.
+  DROP_FEATURE_DEFINITIONS __MPI
+  SOURCES test_read_input_item.cpp test_read_inp_sccs.cpp)
+
 if(NOT ENABLE_MPI)
   return()
 endif()
@@ -162,15 +172,6 @@ addtest(
 # INPUT-item registration tests: defaults, read, and validation for the
 # parameters this branch adds. io_input_serial is the object library that
 # compiles the read_inp_* translation units.
-addtest(
-  TARGET MODULE_IO_read_item_serial
-  LIBS parameter base device io_input_serial
-  # io_input_serial compiles the read_inp_* translation units without __MPI
-  # (its former directory disabled it). The test asserts those same branches,
-  # so drop __MPI here too; otherwise an MPI build tripped the serial
-  # ScaLAPACK validator outside EXPECT_EXIT.
-  DROP_FEATURE_DEFINITIONS __MPI
-  SOURCES test_read_input_item.cpp test_read_inp_sccs.cpp)
 
 addtest(
   TARGET MODULE_IO_input_help_test

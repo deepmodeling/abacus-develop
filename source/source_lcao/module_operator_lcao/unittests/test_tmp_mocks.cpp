@@ -283,6 +283,19 @@ const ModuleBase::Vector3<double>& TD_info::endpoint_A() const
     return value;
 }
 
+// OperatorEXX::contributeHR calls this for a td_stype=2 hybrid run. The
+// fixture never builds a TD context, so a no-op keeps the linker satisfied
+// without pulling module_rt's TD implementation into this focused test.
+template <typename TR>
+void TD_info::initialize_phase_hybrid(const UnitCell& ucell, const hamilt::HContainer<TR>* hR)
+{
+    (void)ucell;
+    (void)hR;
+}
+template void TD_info::initialize_phase_hybrid<double>(const UnitCell&, const hamilt::HContainer<double>*);
+template void TD_info::initialize_phase_hybrid<std::complex<double>>(const UnitCell&,
+                                                                    const hamilt::HContainer<std::complex<double>>*);
+
 int elecstate::TDFieldManager::gauge() const
 {
     return gauge_;
@@ -294,10 +307,29 @@ int elecstate::TDFieldManager::gauge() const
 
 // op_exx_lcao.cpp reads the global XC functional type inside OperatorEXX
 // member functions that the cell-nearest test never enters; satisfy the
-// linker without module_xc's PW-dependent objects.
+// linker without module_xc's PW-dependent objects. The same stubs also
+// stand in for the EXX hybrid paths that resolve the runtime functional and
+// enter the first SCF loop, so the fixture needs no real module_xc source (a
+// real xc_functional.cpp would duplicate func_type and set_xc_type here).
 #include "source_hamilt/module_xc/xc_functional.h"
 int XC_Functional::func_type = 0;
 void XC_Functional::set_xc_type(const std::string xc_func_in)
 {
     (void)xc_func_in;
+}
+void XC_Functional::set_xc_first_loop(const UnitCell& ucell)
+{
+    (void)ucell;
+}
+std::string XC_Functional::resolve_runtime_xc_type(const std::string& input_xc_func,
+                                                   const std::string& pseudo_xc_func)
+{
+    (void)pseudo_xc_func;
+    return input_xc_func;
+}
+std::string XC_Functional::resolve_runtime_xc_type(const std::string& input_functional,
+                                                   const UnitCell& ucell)
+{
+    (void)ucell;
+    return input_functional;
 }
