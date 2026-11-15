@@ -165,6 +165,11 @@ addtest(
 addtest(
   TARGET MODULE_IO_read_item_serial
   LIBS parameter base device io_input_serial
+  # io_input_serial compiles the read_inp_* translation units without __MPI
+  # (its former directory disabled it). The test asserts those same branches,
+  # so drop __MPI here too; otherwise an MPI build tripped the serial
+  # ScaLAPACK validator outside EXPECT_EXIT.
+  DROP_FEATURE_DEFINITIONS __MPI
   SOURCES test_read_input_item.cpp test_read_inp_sccs.cpp)
 
 addtest(

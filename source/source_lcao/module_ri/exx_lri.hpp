@@ -1456,7 +1456,7 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
 
         Vs = Vs.empty() ? std::move(Vs_temp) : LRI_CV_Tools::add(Vs, Vs_temp);
 
-        if (this->runtime.cal_force || this->runtime.cal_stress)
+        if (cal_dCV)
         {
             auto dVs_temp = this->exx_objs[settings_list.first].cv.cal_dVs(
                 ucell,
@@ -1544,7 +1544,7 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
     {
         this->exx_lri.set_Vs(std::move(Vs_long), this->info.V_threshold_long, "long");
     }
-    if(this->runtime.cal_force || this->runtime.cal_stress)
+    if (cal_dCV)
     {
         std::array<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>, Ndim>
             dVs_order = LRI_CV_Tools::change_order(std::move(dVs));
@@ -1571,7 +1571,7 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
                 ucell,
                 list_As_Cs.first,
                 list_As_Cs.second[0],
-                {{"cal_dC",this->runtime.cal_force || this->runtime.cal_stress},
+                {{"cal_dC",cal_dCV},
                  {"writable_Cws",true},
                  {"writable_dCws",true},
                  {"writable_Vws",false},
@@ -1580,7 +1580,7 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
             this->exx_objs[settings_list.first].cv.Cws = LRI_CV_Tools::get_CVws(ucell, Cs_temp);
             Cs = Cs.empty() ? Cs_temp : LRI_CV_Tools::add(Cs, Cs_temp);
 
-            if (this->runtime.cal_force || this->runtime.cal_stress)
+            if (cal_dCV)
             {
                 auto& dCs_temp = std::get<1>(Cs_dCs);
                 this->exx_objs[settings_list.first].cv.dCws = LRI_CV_Tools::get_dCVws(ucell, dCs_temp);
@@ -1618,8 +1618,6 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
             "Cs_long");
         this->exx_lri.flag_finish.Cs = true;
     }
-    this->exx_lri.set_Cs(std::move(Cs), this->info.C_threshold, this->use_rotated_n0_long_range ? "short" : "");
-    ExxLriDetail::maybe_set_weighted_short_config(this->exx_lri, this->info, this->runtime.rank);
     if (this->info.unfold_hybrid_images)
     {
         RI_2D_Comm::ImageCell c_extent = RI_2D_Comm::retained_image_extent(Cs, this->info.C_threshold);
@@ -1639,9 +1637,15 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
         }
         this->hybrid_images_period_ = image_period;
         this->exx_lri.set_parallel(this->mpi_comm, atoms_pos, latvec, this->hybrid_images_period_);
+        // Vs was withheld above until the image period was known; install it
+        // now, before Cs, so both maps use the same parallel layout.
+        this->exx_lri.set_Vs(Vs, this->info.V_threshold);
     }
+    this->exx_lri.set_Cs(std::move(Cs), this->info.C_threshold,
+                         this->use_rotated_n0_long_range ? "short" : "");
+    ExxLriDetail::maybe_set_weighted_short_config(this->exx_lri, this->info, this->runtime.rank);
 
-    if(this->runtime.cal_force || this->runtime.cal_stress)
+    if (cal_dCV)
     {
         std::array<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>, Ndim>
             dCs_order = LRI_CV_Tools::change_order(std::move(dCs));

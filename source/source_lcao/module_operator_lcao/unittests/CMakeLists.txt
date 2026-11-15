@@ -186,6 +186,12 @@ if(ENABLE_LCAO)
       ../../../source_io/module_restart/restart.cpp
       ../../../source_io/module_restart/restart_exx_csr.cpp
       ../../../source_cell/ucell_io.cpp
+      # op_exx_lcao.cpp calls XC_Functional (resolve_runtime_xc_type /
+      # set_xc_type / set_xc_first_loop) and TD_info::initialize_phase_hybrid
+      # for the td_stype=2 hybrid path; both live outside this target's
+      # library list, so compile the two translation units in.
+      ../../../source_hamilt/module_xc/xc_functional.cpp
+      ../../module_rt/td_info.cpp
       test_tmp_mocks.cpp
       ../../../source_hamilt/operator.cpp)
   endif()

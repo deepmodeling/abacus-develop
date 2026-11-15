@@ -53,7 +53,7 @@ endif()
 function(AddTest) # function for UT
   cmake_parse_arguments(
     UT "DYN" "TARGET"
-    "LIBS;DYN_LIBS;STATIC_LIBS;SOURCES;DEPENDS;KEEP_FEATURE_DEFINITIONS"
+    "LIBS;DYN_LIBS;STATIC_LIBS;SOURCES;DEPENDS;KEEP_FEATURE_DEFINITIONS;DROP_FEATURE_DEFINITIONS"
     ${ARGN})
   add_executable(${UT_TARGET} ${UT_SOURCES})
 
@@ -63,6 +63,14 @@ function(AddTest) # function for UT
   if(UT_KEEP_FEATURE_DEFINITIONS)
     set_property(TARGET ${UT_TARGET} PROPERTY ABACUS_KEPT_FEATURE_DEFINITIONS
                                               ${UT_KEEP_FEATURE_DEFINITIONS})
+  endif()
+
+  # The converse: drop a definition the directory keeps, for a test that links
+  # code compiled without it. A test exercising a serial object library must
+  # not see the feature the library was built without.
+  if(UT_DROP_FEATURE_DEFINITIONS)
+    set_property(TARGET ${UT_TARGET} PROPERTY ABACUS_DROPPED_FEATURE_DEFINITIONS
+                                              ${UT_DROP_FEATURE_DEFINITIONS})
   endif()
 
   if(ENABLE_COVERAGE)
