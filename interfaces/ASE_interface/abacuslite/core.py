@@ -66,7 +66,7 @@ __LEGACYIO__ = True
 SOCKET_METADATA_SCHEMA = 'abacus.socket.properties.v1'
 
 
-def _schema_compatible_properties(results, natoms):
+def _schema_compatible_properties(results):
     """Project calculator results through ASE's installed Properties schema."""
     from ase.calculators.calculator import Properties, all_outputs
 
@@ -74,10 +74,10 @@ def _schema_compatible_properties(results, natoms):
     for name, value in results.items():
         if name not in all_outputs:
             continue
-        shape = np.shape(value)
-        if name == 'magmom' and shape != ():
-            continue
-        if name == 'magmoms' and shape != (natoms,):
+        candidate = {**exported, name: value}
+        try:
+            Properties(candidate)
+        except (KeyError, TypeError, ValueError):
             continue
         exported[name] = value
     return Properties(exported)
@@ -900,9 +900,7 @@ class AbacusTemplate(CalculatorTemplate):
                 name: value for name, value in singlepoint.results.items()
                 if name not in vector_moments
             }
-        results = dict(_schema_compatible_properties(
-            singlepoint.properties(), len(atoms)
-        ))
+        results = dict(_schema_compatible_properties(singlepoint.properties()))
         results.update(vector_moments)
         if vector_moments:
             results.setdefault('natoms', len(atoms))
@@ -998,8 +996,7 @@ class Abacus(GenericFileIOCalculator):
 
     def export_properties(self):
         """Export only values accepted by ASE's versioned Properties schema."""
-        natoms = len(self.atoms) if self.atoms is not None else 0
-        return _schema_compatible_properties(self.results, natoms)
+        return _schema_compatible_properties(self.results)
 
     @classmethod
     def restart(cls, profile=None, directory='.', **kwargs):
