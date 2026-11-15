@@ -351,7 +351,7 @@ OBJS_ESOLVER=esolver_factory.o\
     esolver_ks_pw_tddft.o\
     esolver_ks_lcaopw.o\
     esolver_sdft_pw.o\
-    esolver_potential.o\
+    esolver_interatomic_potential.o\
     esolver_of.o\
     esolver_of_tddft.o\
     esolver_of_interface.o\

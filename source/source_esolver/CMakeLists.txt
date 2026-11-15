@@ -8,7 +8,7 @@ list(
   esolver_ks_pw_tddft.cpp
   esolver_ks_lcaopw.cpp
   esolver_sdft_pw.cpp
-  esolver_potential.cpp
+  esolver_interatomic_potential.cpp
   esolver_of.cpp
   esolver_of_tddft.cpp
   esolver_of_interface.cpp
