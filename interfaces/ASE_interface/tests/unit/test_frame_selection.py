@@ -411,8 +411,7 @@ def test_scf_read_results_preserves_backend_neutral_efermi(tmp_path):
     directory = _read_results_fixture(tmp_path)
     results = _template().read_results(directory)
 
-    # The selected parser value in this real nspin=2 log is the second
-    # channel's Fermi level, -2.04 eV.
+    # The selected parser value in this nspin=1 log is -2.04 eV.
     assert results["efermi"] == pytest.approx(-2.04)
     assert results["fermi_level"] == pytest.approx(results["efermi"])
 

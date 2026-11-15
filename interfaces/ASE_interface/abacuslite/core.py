@@ -968,6 +968,23 @@ class Abacus(GenericFileIOCalculator):
             properties=properties,
         )
 
+    def export_properties(self):
+        """Export only values accepted by ASE's versioned Properties schema."""
+        from ase.calculators.calculator import Properties, all_outputs
+
+        exported = {}
+        natoms = len(self.atoms) if self.atoms is not None else None
+        for name, value in self.results.items():
+            if name not in all_outputs:
+                continue
+            shape = np.shape(value)
+            if name == 'magmom' and shape != ():
+                continue
+            if name == 'magmoms' and (natoms is None or shape != (natoms,)):
+                continue
+            exported[name] = value
+        return Properties(exported)
+
     @classmethod
     def restart(cls, profile=None, directory='.', **kwargs):
         '''instantiate one ABACUS calculator from an existing job directory,

@@ -157,11 +157,40 @@ def test_noncollinear_results_need_no_global_ase_patch(tmp_path, name, version, 
     assert atoms.get_potential_energy() == pytest.approx(energy)
     np.testing.assert_allclose(atoms.calc.results["magmoms"], moments)
     assert atoms.calc.results["eigenvalues"].shape[-1] > 0
+    exported = atoms.calc.export_properties()
+    assert exported["energy"] == pytest.approx(energy)
+    assert "fermi_level" in exported
+    assert "magmoms" not in exported
+    assert "energy_without_entropy" not in exported
+    assert atoms.get_properties(["energy"])["energy"] == pytest.approx(energy)
     # A noncollinear calculation must not make later collinear ASE result
     # conversion reject its scalar per-atom moments.
     collinear = legacyio.read_abacus_out(
         FIXTURES / "multiframe_scf_trial_last" / "running_scf.log", index=-1)
     assert np.asarray(collinear.calc.properties()["magmoms"]).shape == (3,)
+
+
+def test_scf_handoff_accepts_negative_noncollinear_component(tmp_path):
+    source = FIXTURES / "noncollinear_scf" / "latest"
+
+    class NegativeMomentProfile(ReplayProfile):
+        def run(self, directory, inputfile, outputfile, errorfile=None, append=False):
+            super().run(directory, inputfile, outputfile, errorfile, append)
+            path = Path(directory) / "STRU"
+            path.write_text(path.read_text().replace(
+                "mag 0.0 1.0 0.0", "mag 0.0 -1.0 0.0"
+            ))
+
+    atoms = Atoms("Fe2", positions=[[0, 0, 0], [2.6, 2.6, 2.6]],
+                  cell=[5.2, 5.2, 5.2], pbc=True)
+    atoms.calc = Abacus(
+        profile=NegativeMomentProfile("v3.11.0-beta10", source),
+        directory=tmp_path,
+        pseudopotentials={"Fe": "Fe.upf"},
+        inp={"basis_type": "pw", "gamma_only": True, "nspin": 4},
+    )
+    atoms.get_potential_energy()
+    assert atoms.calc.results["magmoms"].shape == (2, 3)
 
 
 def test_input_io_without_an_engine_preserves_declared_values(tmp_path):

@@ -461,10 +461,17 @@ def _parse_coord_line(line):
                 result['mag'] = ('Spherical',
                                  list(map(float, fields[idx+1:idx+6:2])))
                 idx += 6
-            elif idx + 2 < len(fields) and fields[idx+2][0].isdigit():
-                result['mag'] = ('Cartesian',
-                                 list(map(float, fields[idx+1:idx+4])))
-                idx += 4
+            elif idx + 3 < len(fields):
+                try:
+                    vector = list(map(float, fields[idx+1:idx+4]))
+                except ValueError:
+                    vector = None
+                if vector is not None:
+                    result['mag'] = ('Cartesian', vector)
+                    idx += 4
+                    continue
+                result['mag'] = float(fields[idx+1])
+                idx += 2
             else: # collinear
                 result['mag'] = float(fields[idx+1])
                 idx += 2

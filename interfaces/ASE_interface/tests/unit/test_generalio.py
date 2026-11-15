@@ -5,7 +5,13 @@ from pathlib import Path
 import numpy as np
 from ase.atoms import Atoms
 
-from abacuslite.io.generalio import load_pseudo, load_orbital, write_stru, read_stru
+from abacuslite.io.generalio import (
+    _parse_coord_line,
+    load_pseudo,
+    load_orbital,
+    write_stru,
+    read_stru,
+)
 
 class TestAbacusCalculatorIOUtil(unittest.TestCase):
 
@@ -37,6 +43,10 @@ class TestAbacusCalculatorIOUtil(unittest.TestCase):
                                    rtol=0, atol=1e-7)
         np.testing.assert_allclose(species[1]['atom'][0]['v'],
                                    [0, 2 * au_per_angstrom_fs, 0], rtol=0, atol=1e-7)
+
+    def test_read_stru_accepts_signed_noncollinear_moment(self):
+        atom = _parse_coord_line('0 0 0 mag 1.0 -1.0 0.0')
+        self.assertEqual(atom['mag'], ('Cartesian', [1.0, -1.0, 0.0]))
 
     def test_write_stru_preserves_explicit_mass_for_each_species(self):
         atoms = Atoms('HOH', positions=np.zeros((3, 3)), cell=[8, 8, 8])

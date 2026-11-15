@@ -10,16 +10,6 @@ import numpy as np
 from ase.atoms import Atoms
 from abacuslite import Abacus, AbacusProfile
 
-'''SPECIAL: ase does not support the noncolinear spin yet
-till 2026/3/24, see ase/outputs.py:L154-155, in which the 
-magmom cannot be set as the vector, so we release the 
-datatype of magmom and magmoms by ourself'''
-from ase.outputs import _defineprop, all_outputs
-del all_outputs['magmom']
-del all_outputs['magmoms']
-_defineprop('magmom', float, shape=3) # re-define the magmom can be set as the vector
-_defineprop('magmoms', float, shape=('natoms', 3))
-
 fe = Atoms(symbols=['Fe'] * 2,
            scaled_positions=[[0., 0., 0.], [0.5, 0.5, 0.5]],
            magmoms=np.array([[0, 0, 1], [0, 0, 1]]),
