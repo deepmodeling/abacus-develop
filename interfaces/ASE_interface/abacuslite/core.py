@@ -205,13 +205,13 @@ def _validate_atomorder(atomorder, natoms, stru_path):
             f"{natoms} integer indices; fail-closed)"
         ) from exc
 
-    valid_integer = all(
-        isinstance(value, (int, np.integer)) and not isinstance(value, (bool, np.bool_))
-        for value in values
-    )
     if (
         len(values) != natoms
-        or not valid_integer
+        or not all(
+            isinstance(value, (int, np.integer))
+            and not isinstance(value, (bool, np.bool_))
+            for value in values
+        )
         or sorted(values) != list(range(natoms))
     ):
         raise RuntimeError(
