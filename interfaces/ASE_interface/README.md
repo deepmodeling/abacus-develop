@@ -7,7 +7,7 @@ abacuslite is a lightweight plugin for ABACUS (Atomic-orbital Based Ab-initio Co
 ### Key Features
 
 - **Lightweight Design**: Implemented as a plugin, no need to modify ASE core code
-- **Version Compatibility**: Requires `ase>=3.23`, which provides the GenericFileIO calculator API used by the plugin
+- **Version Compatibility**: Requires `ase>=3.23`, because ASE 3.22 lacks `ase.calculators.genericfileio`, which this plugin imports
 - **ASE Integration**: Uses ASE as the running platform, making ABACUS a callable calculator within it
 - **Function Support**: Provides SCF-based energy, force, and stress evaluations through ASE. ASE can use these evaluations for relaxation, molecular dynamics, NEB, band-structure, and density-of-states workflows.
 - **Socket Support**: `AbacusSocketIO` provides fixed-cell i-PI socket calculations, with energy always available and forces/stress enabled independently when requested.
@@ -48,10 +48,15 @@ continue to use the final frame; native MD uses MD_dump when the running log
 does not contain the trajectory. Each calculator retains its own LTS/develop
 reader, so calculators for different engine versions can coexist.
 
+Both output readers accept paths or named text streams, using the log filename
+to locate companion output files. Caller-owned streams remain open. Returned
+structures have periodic boundary conditions for both SCF and MD calculations;
+periodicity does not depend on whether the geometry came from MD_dump.
+
 The default SCF identity tolerance is **1e-4 Angstrom**, applied to each cell
 component and periodic Cartesian position residual with no relative tolerance.
 This accommodates common six-significant-digit running-log rounding; the
-previously used 1e-5 bound rejects the retained LTS rounding fixture. It is a
+stricter 1e-5 bound can reject valid LTS output. It is a
 structure-identity tolerance, separate from SCF, force and optimization
 convergence settings. It is not a universal printing-error bound: larger cells,
 non-unit lattice constants and skewed-cell coordinate transformations can
@@ -69,12 +74,12 @@ STRU writing preserves representable species masses and converts ASE
 velocities to atomic units. Different masses within one ABACUS species are
 rejected because one species entry cannot represent them.
 
-Parser and calculator regressions run without an engine:
-
-```bash
-python -m pip install pytest
-PYTHONPATH=interfaces/ASE_interface python -m pytest interfaces/ASE_interface/tests/unit -q
-```
+The existing inline tests (`abacuslite/xtest.sh`) and engine integration tests
+(`tests/xtest.sh`) are run by the ASE plugin workflow. Standalone offline
+regressions and recorded output fixtures are maintained in
+[QuantumMisaka/abacuslite](https://github.com/QuantumMisaka/abacuslite).
+The calculator and parser corrections were adapted from standalone revisions
+`39ab1d5` and `5d3da5d`, with follow-up ASE compatibility fixes.
 
 ## Authors
 

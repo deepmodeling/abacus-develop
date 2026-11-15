@@ -17,6 +17,7 @@ from ase.stress import full_3x3_to_voigt_6_stress
 # some output formats are not updated,
 # for these cases, we import from the legacyio module
 from abacuslite.io.legacyio import (
+    _read_log_source,
     read_kpoints_from_running_log,
     read_energies_from_running_log,
     read_traj_from_md_dump,
@@ -398,13 +399,14 @@ def read_abacus_out(fileobj,
     -> read_results()
     -> read_abacus_out() *here*
 
-    For standalone use, pass a Path so companion files can be located:
+    Supply a path or a named text stream so companion files can be located:
     >>> read_abacus_out(Path("OUT.ABACUS/running_scf.log"), index=-1)
 
     Parameters
     ----------
-    fileobj : Path
-        Running-log path; strings and open streams are not supported.
+    fileobj : str | Path | text stream
+        Running-log path or open text stream with a filesystem name.
+        Streams remain owned by the caller and are not closed here.
     index : int or slice
         The index of the frames to read.
     results_required : bool
@@ -418,14 +420,8 @@ def read_abacus_out(fileobj,
     atoms : Atoms | List[Atoms]
         The atoms object, whose calculator is the `SinglePointDFTCalculator`.
     '''
-    assert isinstance(fileobj, Path)
-    # it is required that the running log file is passed as the Path object
-    # so that the band structure file ``eig_occ.txt`` can be located as the
-    # one in the same folder, otherwise the reading of elecstate will be
-    # invalid and cause the failure
-    with open(fileobj) as f:
-        abacus_lines = f.readlines()
-    
+    log_path, abacus_lines = _read_log_source(fileobj)
+
     # read the esolver type
     eslvtyp = read_esolver_type_from_running_log(abacus_lines)
     # FIXME: implement read_ksdft_esolver_out instead of read_abacus_out to
@@ -434,12 +430,12 @@ def read_abacus_out(fileobj,
     # read the structure, with the cell, elem, etc. (nframe)
     # if it is MD run, the trajectories will be in the file MD_dump, instead
     # of the running log
-    is_md_dump = fileobj.name == 'running_md.log'
-    trajectory = read_traj_from_md_dump(fileobj.parent / 'MD_dump') \
-        if is_md_dump else read_traj_from_running_log(abacus_lines)
+    md_calculation = log_path.name == 'running_md.log'
+    trajectory = read_traj_from_md_dump(log_path.parent / 'MD_dump') \
+        if md_calculation else read_traj_from_running_log(abacus_lines)
 
     # read the eigenvalues (nframe, nk, nbnd)
-    elecstate = read_band_from_eig_occ(fileobj.parent / 'eig_occ.txt')
+    elecstate = read_band_from_eig_occ(log_path.parent / 'eig_occ.txt')
 
     # read the atomic forces (nframe, nat, 3)
     forces = read_forces_from_running_log(abacus_lines)
@@ -489,14 +485,15 @@ def read_abacus_out(fileobj,
         trajectory, elecstate, magmom, forces, stress, energies):
         # for each frame, a structure can be defined
         ind = ind or list(range(len(frame['elem'])))
-        # MD_dump lattice vectors are multiples of alat, while its Cartesian
-        # positions and the running-log structures are already in Angstrom.
+        # Native MD geometry comes from MD_dump: lattice vectors use alat,
+        # positions use Angstrom. Running-log cells are already in Angstrom;
+        # their positions retain the logged coordinate convention.
         cell = frame['cell'] * frame['alat_in_angstrom'] \
-            if is_md_dump else frame['cell']
+            if md_calculation else frame['cell']
         atoms = Atoms(symbols=np.array(frame['elem'])[ind].tolist(), 
                       positions=frame['coords'][ind], 
                       cell=cell,
-                      pbc=is_md_dump,
+                      pbc=True,  # ABACUS uses a periodic simulation cell for every run.
                       magmoms=mag[ind])
         # from result, a calculator can be assembled
         # however, sometimes the force and stress is not calculated
@@ -672,10 +669,10 @@ class TestLatestIO(unittest.TestCase):
         for s, ref in zip(stresses, reference):
             self.assertTrue(np.allclose(s, -0.1 * GPa * ref))
 
-    def test_read_abacus_out_string(self):
+    def test_read_abacus_out_string_reports_missing_companion_file(self):
         fn = self.testfiles / 'pw-symm0-nspin4-gamma-md'
-        # the case that does not give the instance of Path
-        with self.assertRaises(AssertionError):
+        # String paths are accepted; this fixture lacks its companion band file.
+        with self.assertRaisesRegex(FileNotFoundError, "eig_occ.txt"):
             read_abacus_out(str(fn))
 
     def test_read_pw_symm0_nspin4_gamma_md(self):

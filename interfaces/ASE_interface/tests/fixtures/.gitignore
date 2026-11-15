@@ -1,3 +1,0 @@
-# Recorded engine outputs are test inputs.
-!*.log
-!OUT.*/

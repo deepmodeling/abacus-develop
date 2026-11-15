@@ -205,6 +205,8 @@ def _validate_atomorder(atomorder, natoms, stru_path):
             f"{natoms} integer indices; fail-closed)"
         ) from exc
 
+    # A permutation needs one non-boolean integer per atom, with every
+    # index present exactly once; sorting checks both range and uniqueness.
     if (
         len(values) != natoms
         or not all(
@@ -296,7 +298,7 @@ def _read_stru_reference(directory, stru_file, atomorder, log_path=None):
         IndexError,
         np.linalg.LinAlgError,
     ) as exc:
-        suffix = f"；log: {log_path}" if log_path is not None else ""
+        suffix = f"; log: {log_path}" if log_path is not None else ""
         raise RuntimeError(
             f"Invalid scf STRU identity data (STRU: {stru_path}{suffix}; "
             f"{exc}; fail-closed)"
@@ -311,37 +313,57 @@ def _read_stru_reference(directory, stru_file, atomorder, log_path=None):
     }
 
 
-def _stru_positions_in_ase_order(directory, stru_file, atomorder):
-    """Return normalized STRU positions for compatibility with existing callers."""
-    return _read_stru_reference(directory, stru_file, atomorder)['positions']
+def _log_coordinate_system(log_path, *, legacyio=None, trajectory=None):
+    """Return whether log coordinates are fractional and their Cartesian scale.
 
-
-def _frame_coordinate_metadata(log_path, *, legacyio=None):
-    """Return the frame coordinate convention and lattice constant from a log.
-
-    The selected reader returns fractional coordinates for DIRECT logs and
-    Cartesian coordinates for CARTESIAN logs. Use the coordinate header
-    actually printed in the log, not the STRU ``coord_type``: ``write_stru``
-    may write a Cartesian STRU while ABACUS prints DIRECT coordinates. Both
-    readers expose the same ``coordinate`` and ``alat_in_angstrom`` fields
-    through ``read_traj_from_running_log``.
+    Use the running-log header rather than STRU's coordinate convention:
+    ABACUS may print DIRECT coordinates after reading a Cartesian STRU.
+    Reuse the validated trajectory during result collection; direct matcher
+    callers can still read the coordinate header from the selected reader.
     """
-    use_legacy = __LEGACYIO__ if legacyio is None else legacyio
-    if use_legacy:
-        from abacuslite.io.legacyio import read_traj_from_running_log
-    else:
-        from abacuslite.io.latestio import read_traj_from_running_log
-    traj = read_traj_from_running_log(log_path)
-    direct = str(traj[0]['coordinate']).lower().startswith('d')
-    scale = float(traj[0]['alat_in_angstrom'])
+    if trajectory is None:
+        use_legacy = __LEGACYIO__ if legacyio is None else legacyio
+        if use_legacy:
+            from abacuslite.io.legacyio import read_traj_from_running_log
+        else:
+            from abacuslite.io.latestio import read_traj_from_running_log
+        trajectory = read_traj_from_running_log(log_path)
+    direct = str(trajectory[0]['coordinate']).lower().startswith('d')
+    scale = float(trajectory[0]['alat_in_angstrom'])
     if not np.isfinite(scale) or scale <= 0:
         raise ValueError(f"Invalid lattice constant in Angstrom: {scale!r}")
     return direct, scale
 
 
-def _frame_coordinate_is_direct(log_path, *, legacyio=None):
-    """Return the coordinate convention exposed by the selected log reader."""
-    return _frame_coordinate_metadata(log_path, legacyio=legacyio)[0]
+def _validate_raw_scf_frame(frame, frame_index, expected):
+    """Validate one raw frame before atom reordering can hide extra atoms."""
+    context = f"frame {frame_index}"
+    expected_shape = expected['positions'].shape
+    expected_natoms = len(expected['symbols'])
+    coords = np.asarray(frame['coords'], dtype=float)
+    if coords.ndim >= 1 and coords.shape[0] != expected_natoms:
+        raise ValueError(
+            f"{context} atom count {coords.shape[0]}, expected {expected_natoms}"
+        )
+    if coords.shape != expected_shape:
+        raise ValueError(
+            f"{context} positions shape {coords.shape}, expected {expected_shape}"
+        )
+    if not np.isfinite(coords).all():
+        raise ValueError(f"{context} positions are non-finite")
+
+    elements = np.asarray(frame['elem'])
+    if elements.shape != (expected_natoms,):
+        raise ValueError(
+            f"{context} atom symbols shape {elements.shape}, "
+            f"expected ({expected_natoms},)"
+        )
+    cell = np.asarray(frame['cell'], dtype=float)
+    if cell.shape != (3, 3):
+        raise ValueError(f"{context} cell shape {cell.shape}, expected (3, 3)")
+    if not np.isfinite(cell).all():
+        raise ValueError(f"{context} cell is non-finite")
+    _invert_cell(cell, context)
 
 
 def _validate_raw_scf_trajectory(log_path, expected, *, legacyio=None):
@@ -356,36 +378,8 @@ def _validate_raw_scf_trajectory(log_path, expected, *, legacyio=None):
         trajectory = read_traj_from_running_log(log_path)
         if not trajectory:
             raise ValueError("no raw trajectory frames")
-        expected_shape = expected['positions'].shape
-        expected_natoms = len(expected['symbols'])
         for frame_index, frame in enumerate(trajectory):
-            coords = np.asarray(frame['coords'], dtype=float)
-            if coords.shape != expected_shape:
-                mismatch = (
-                    f"atom count {coords.shape[0]}, expected {expected_shape[0]}; "
-                    if coords.ndim >= 1 and coords.shape[0] != expected_shape[0]
-                    else ""
-                )
-                raise ValueError(
-                    f"frame {frame_index} {mismatch}positions shape {coords.shape}, "
-                    f"expected {expected_shape}"
-                )
-            if not np.isfinite(coords).all():
-                raise ValueError(f"frame {frame_index} positions are non-finite")
-            elements = np.asarray(frame['elem'])
-            if elements.ndim != 1 or len(elements) != expected_natoms:
-                raise ValueError(
-                    f"frame {frame_index} atom count {len(elements)}, "
-                    f"expected {expected_natoms}"
-                )
-            cell = np.asarray(frame['cell'], dtype=float)
-            if cell.shape != (3, 3):
-                raise ValueError(
-                    f"frame {frame_index} cell shape {cell.shape}, expected (3, 3)"
-                )
-            if not np.isfinite(cell).all():
-                raise ValueError(f"frame {frame_index} cell is non-finite")
-            _invert_cell(cell, f"frame {frame_index}")
+            _validate_raw_scf_frame(frame, frame_index, expected)
     except RuntimeError:
         raise
     except (AssertionError, KeyError, OSError, TypeError, ValueError, IndexError) as exc:
@@ -474,7 +468,7 @@ def _normalize_scf_frame(frame, frame_index, expected, frame_is_direct, atol,
 
 def _select_scf_frame_for_structure(
     frames, log_path, directory, atomorder, atol=1e-4, stru_file='STRU', _reference=None,
-    *, legacyio=None
+    *, legacyio=None, _trajectory=None
 ):
     """Return the latest periodic-equivalent frame; malformed SCF data fails closed.
 
@@ -528,8 +522,8 @@ def _select_scf_frame_for_structure(
     )
     frame_label = 'frame' if nframes == 1 else 'frames'
     try:
-        frame_is_direct, cartesian_scale = _frame_coordinate_metadata(
-            log_path, legacyio=legacyio
+        frame_is_direct, cartesian_scale = _log_coordinate_system(
+            log_path, legacyio=legacyio, trajectory=_trajectory
         )
     except Exception as exc:
         raise RuntimeError(
@@ -838,6 +832,7 @@ class AbacusTemplate(CalculatorTemplate):
         log = outdir / f'running_{self.calculation}.log'
         stru_file = getattr(self, 'stru_file', 'STRU') or 'STRU'
         reference = None
+        raw_trajectory = None
         parser_atomorder = self.atomorder
         if self.calculation == 'scf':
             # Read and validate STRU/mapping before passing sort_atoms_with to
@@ -847,7 +842,9 @@ class AbacusTemplate(CalculatorTemplate):
             )
             # Validate raw parser cardinality before sort_atoms_with can slice
             # away an extra/missing atom and make a corrupt frame look valid.
-            _validate_raw_scf_trajectory(log, reference, legacyio=self._legacyio)
+            raw_trajectory = _validate_raw_scf_trajectory(
+                log, reference, legacyio=self._legacyio
+            )
             parser_atomorder = None if self.atomorder is None else reference['atomorder']
 
         # Read all frames: SCF selects the frame matching the current STRU;
@@ -874,15 +871,13 @@ class AbacusTemplate(CalculatorTemplate):
                 stru_file=stru_file,
                 _reference=reference,
                 legacyio=self._legacyio,
+                _trajectory=raw_trajectory,
             )
         assert atoms is not None
 
-        # ``SinglePointDFTCalculator.properties()`` exposes the Fermi level
-        # under ASE's ``fermi_level`` property, while the CP adapter consumes
-        # the backend-neutral ``efermi`` fact.  Keep both names in the result
-        # mapping so file-backed ABACUS evaluations do not lose this value at
-        # the GenericFileIOCalculator boundary.  Older ASE snapshots store it
-        # on ``eFermi``; tolerate that spelling as well.
+        # Preserve the Fermi level under ASE's ``fermi_level`` name and the
+        # existing ``efermi`` result alias. Older ASE versions may store the
+        # value on ``eFermi`` instead.
         # ASE's Properties schema accepts scalar magnetic moments only,
         # although SinglePointDFTCalculator supports vector moments. Project
         # other properties through ASE and retain vectors as result metadata,

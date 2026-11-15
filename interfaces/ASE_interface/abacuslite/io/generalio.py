@@ -434,50 +434,64 @@ def _parse_coord_line(line):
 
     '''
     fields = line.split()
-    result = { 'coord' : [float(x) for x in fields[0:3]] }
-
+    if len(fields) < 3:
+        raise ValueError('An atom record requires three coordinate values')
+    result = {'coord': list(map(float, fields[:3]))}
+    aliases = {'m': 'm', 'v': 'v', 'vel': 'v', 'velocity': 'v',
+               'mag': 'mag', 'magmom': 'mag', 'angle1': 'angle1',
+               'angle2': 'angle2'}
+    options = {}
     idx = 3
     while idx < len(fields):
-        if fields[idx].isdigit(): # no keyword, 0/1 -> frozen atom
-            result['m'] = [int(x) for x in fields[idx:idx+3]]
-            idx += 3
-        elif fields[idx] == 'm': # frozen atom
-            result['m'] = [int(x) for x in fields[idx+1:idx+4]]
-            idx += 4
-        elif fields[idx] in ['v', 'vel', 'velocity']: # initial velocity
-            result['v'] = [float(x) for x in fields[idx+1:idx+4]]
-            idx += 4
-        elif fields[idx] in ['mag', 'magmom']:
-            '''
-            here we assume that frozen atom info cannot be placed after
-            a collinear mag info without a keyword
-            i.e., the following coordinate line
-                0.0 0.0 0.0 mag 1.0 0 0 0
-            is not allowed; one must explicitly specify 'm' in this case:
-                0.0 0.0 0.0 mag 1.0 m 0 0 0
+        token = fields[idx]
+        if token in ('0', '1'):
+            # Mobility may omit its keyword after a complete property, too.
 
-            '''
-            if idx + 2 < len(fields) and fields[idx+2] == 'angle1':
-                result['mag'] = ('Spherical',
-                                 list(map(float, fields[idx+1:idx+6:2])))
-                idx += 6
-            elif idx + 3 < len(fields):
-                try:
-                    vector = list(map(float, fields[idx+1:idx+4]))
-                except ValueError:
-                    vector = None
-                if vector is not None:
-                    result['mag'] = ('Cartesian', vector)
-                    idx += 4
-                    continue
-                result['mag'] = float(fields[idx+1])
-                idx += 2
-            else: # collinear
-                result['mag'] = float(fields[idx+1])
-                idx += 2
+            keyword = 'm'
         else:
-            raise ValueError('Error: unknown keyword %s'%fields[idx])
+            if token not in aliases:
+                raise ValueError(f'Unknown atom keyword: {token}')
+            keyword = aliases[token]
+            idx += 1
+        if keyword in options:
+            raise ValueError(f'Duplicate atom keyword: {keyword}')
+        start = idx
+        while idx < len(fields) and fields[idx] not in aliases:
+            idx += 1
+        values = fields[start:idx]
+        if keyword == 'mag':
+            expected = (1, 3)
+        elif keyword in ('angle1', 'angle2'):
+            expected = (1,)
+        else:
+            expected = (3,)
+        # A complete property may be followed by the legacy bare triplet.
+        # For mag, use its vector width so scalar-plus-flags stays ambiguous.
+        if len(values) == max(expected) + 3 and all(
+                value in ('0', '1') for value in values[-3:]):
+            values = values[:-3]
+            idx -= 3
+        if len(values) not in expected:
+            raise ValueError(f'{keyword} requires {expected} values, got {len(values)}')
+        if keyword == 'm':
+            if any(value not in ('0', '1') for value in values):
+                raise ValueError('Mobility flags must be 0 or 1')
+            options[keyword] = list(map(int, values))
+        else:
+            options[keyword] = list(map(float, values))
 
+    for keyword in ('m', 'v'):
+        if keyword in options:
+            result[keyword] = options[keyword]
+    angles = [key in options for key in ('angle1', 'angle2')]
+    if any(angles):
+        if not all(angles) or len(options.get('mag', [])) != 1:
+            raise ValueError('Spherical moments require mag, angle1 and angle2')
+        result['mag'] = ('Spherical',
+                         options['mag'] + options['angle1'] + options['angle2'])
+    elif 'mag' in options:
+        values = options['mag']
+        result['mag'] = values[0] if len(values) == 1 else ('Cartesian', values)
     return result
 
 def _atomic_positions_gen(lines):
