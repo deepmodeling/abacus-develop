@@ -63,8 +63,7 @@ non-unit lattice constants and skewed-cell coordinate transformations can
 accumulate more error.
 
 Result parsing does **not read abacus.json**. Missing or malformed JSON does not
-affect collection. The input writer only backs up an old JSON file to prevent
-downstream tools from treating it as output of a new run.
+affect collection. Writing new input leaves existing JSON files untouched.
 
 Both ASE `energy` and `free_energy` retain ABACUS's force-consistent
 `E_KohnSham`. When an entropy term is present, `energy_without_entropy` is

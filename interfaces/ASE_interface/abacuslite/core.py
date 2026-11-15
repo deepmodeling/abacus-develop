@@ -287,8 +287,6 @@ def _read_stru_reference(directory, stru_file, atomorder, log_path=None):
             raise ValueError(f"unsupported STRU coordinate type {stru['coord_type']!r}")
         if not np.isfinite(species_positions).all():
             raise ValueError("non-finite normalized STRU positions")
-    except RuntimeError:
-        raise
     except (
         AssertionError,
         KeyError,
@@ -305,9 +303,8 @@ def _read_stru_reference(directory, stru_file, atomorder, log_path=None):
         ) from exc
 
     return {
-        'path': stru_path,
-        'positions': np.asarray(species_positions, dtype=float)[mapping].copy(),
-        'cell': np.asarray(cell, dtype=float).copy(),
+        'positions': species_positions[mapping],
+        'cell': cell,
         'symbols': [raw_symbols[index] for index in mapping],
         'atomorder': mapping,
     }
@@ -380,8 +377,6 @@ def _validate_raw_scf_trajectory(log_path, expected, *, legacyio=None):
             raise ValueError("no raw trajectory frames")
         for frame_index, frame in enumerate(trajectory):
             _validate_raw_scf_frame(frame, frame_index, expected)
-    except RuntimeError:
-        raise
     except (AssertionError, KeyError, OSError, TypeError, ValueError, IndexError) as exc:
         raise RuntimeError(
             f"Invalid raw scf trajectory (log: {log_path}; {exc}; fail-closed)"
@@ -438,31 +433,19 @@ def _normalize_scf_frame(frame, frame_index, expected, frame_is_direct, atol,
     frame_cart = positions @ cell if frame_is_direct else positions * cartesian_scale
     if not np.isfinite(frame_cart).all():
         raise ValueError(f"{context} normalized Cartesian positions are non-finite")
-    cell_delta = cell - expected['cell']
-    cell_diff = float(np.max(np.abs(cell_delta)))
-    same_cell = bool(np.allclose(cell, expected['cell'], atol=atol, rtol=0.0))
-    if not same_cell:
-        return {
-            'frame': frame,
-            'frame_index': frame_index,
-            'frame_cart': frame_cart,
-            'cell_diff': cell_diff,
-            'periodic_residual': None,
-            'matches': False,
-        }
-
-    delta_frac = (frame_cart - expected['positions']) @ cell_inverse
-    periodic_cart = (delta_frac - np.rint(delta_frac)) @ cell
-    if not np.isfinite(periodic_cart).all():
-        raise ValueError(f"{context} periodic residual is non-finite")
-    periodic_residual = float(np.max(np.abs(periodic_cart)))
+    cell_diff = float(np.max(np.abs(cell - expected['cell'])))
+    periodic_residual = None
+    if np.allclose(cell, expected['cell'], atol=atol, rtol=0.0):
+        delta_frac = (frame_cart - expected['positions']) @ cell_inverse
+        periodic_cart = (delta_frac - np.rint(delta_frac)) @ cell
+        if not np.isfinite(periodic_cart).all():
+            raise ValueError(f"{context} periodic residual is non-finite")
+        periodic_residual = float(np.max(np.abs(periodic_cart)))
     return {
-        'frame': frame,
-        'frame_index': frame_index,
         'frame_cart': frame_cart,
         'cell_diff': cell_diff,
         'periodic_residual': periodic_residual,
-        'matches': periodic_residual <= atol,
+        'matches': periodic_residual is not None and periodic_residual <= atol,
     }
 
 
@@ -470,36 +453,12 @@ def _select_scf_frame_for_structure(
     frames, log_path, directory, atomorder, atol=1e-4, stru_file='STRU', _reference=None,
     *, legacyio=None, _trajectory=None
 ):
-    """Return the latest periodic-equivalent frame; malformed SCF data fails closed.
+    """Select the latest frame matching STRU in ASE atom order.
 
-    Parameters
-    ----------
-    frames : list of Atoms
-        Frames returned by ``read_abacus_out``, reordered into ASE atom order.
-    log_path : Path
-        Running log path, used in fail-closed diagnostics.
-    directory : Path
-        Calculation directory containing the STRU written by ``write_input``.
-    atomorder : list of int
-        Permutation from species order to ASE atom order.
-    stru_file : str or Path
-        The STRU filename recorded by ``write_input``; defaults to ``STRU``.
-    atol : float
-        Absolute Angstrom bound for cell components and periodic Cartesian
-        residuals, with no relative tolerance. Explicit overrides are retained.
-        The ``1e-4`` default accommodates ordinary running-log rounding:
-        with a lattice constant near 1 Angstrom, six-significant-digit
-        vectors in ``[10, 100)`` can lose up to ``5e-5`` Angstrom per
-        component. A ``1e-5`` bound rejected valid recorded LTS output.
-        This fixed absolute bound is not a universal printing-error budget:
-        larger cells, independently rounded lattice constants and skewed
-        cells can accumulate more error. It does not change an SCF or
-        optimization convergence threshold.
-
-    Raises
-    ------
-    RuntimeError
-        If no frame matches the current STRU, or a frame is malformed.
+    Validate every candidate before returning, including those after a match.
+    Compare cell components and periodic Cartesian residuals with absolute
+    ``atol`` in Angstrom and ``rtol=0``. The 1e-4 default accommodates ordinary
+    log rounding; it is a structure identity bound, not a convergence setting.
     """
     try:
         nframes = len(frames)
@@ -531,16 +490,17 @@ def _select_scf_frame_for_structure(
             f"({exc}; fail-closed)"
         ) from exc
 
-    normalized = []
+    selected = None
+    last = None
     invalid = []
     for frame_index, frame in enumerate(frames):
         try:
-            normalized.append(
-                _normalize_scf_frame(
-                    frame, frame_index, expected, frame_is_direct, atol,
-                    cartesian_scale=cartesian_scale
-                )
+            last = _normalize_scf_frame(
+                frame, frame_index, expected, frame_is_direct, atol,
+                cartesian_scale=cartesian_scale
             )
+            if last['matches']:
+                selected = frame
         except (AttributeError, TypeError, ValueError, IndexError) as exc:
             invalid.append(f"frame {frame_index}: {exc}")
 
@@ -550,12 +510,9 @@ def _select_scf_frame_for_structure(
             f"Malformed scf frames in log {log_path} ({nframes} {frame_label}; "
             f"{details}; atol={atol}; fail-closed)"
         )
+    if selected is not None:
+        return selected
 
-    for info in reversed(normalized):
-        if info['matches']:
-            return info['frame']
-
-    last = normalized[-1]
     raw_diff = float(
         np.max(np.abs(last['frame_cart'] - expected['positions']))
     )
@@ -705,9 +662,6 @@ class AbacusTemplate(CalculatorTemplate):
 
         # STRU
         _ = file_safe_backup(directory / self.stru_file)
-        # abacuslite itself no longer reads abacus.json; keep a previous run's
-        # file out of the way so downstream completion markers cannot see it.
-        _ = file_safe_backup(directory / 'abacus.json')
         # group atoms by first-occurrence species order. Keep the reverse map so
         # that we will recover the order in function read_results()
         ind = species_group_indices(atoms.get_chemical_symbols())
@@ -875,9 +829,6 @@ class AbacusTemplate(CalculatorTemplate):
             )
         assert atoms is not None
 
-        # Preserve the Fermi level under ASE's ``fermi_level`` name and the
-        # existing ``efermi`` result alias. Older ASE versions may store the
-        # value on ``eFermi`` instead.
         # ASE's Properties schema accepts scalar magnetic moments only,
         # although SinglePointDFTCalculator supports vector moments. Project
         # other properties through ASE and retain vectors as result metadata,
@@ -895,22 +846,15 @@ class AbacusTemplate(CalculatorTemplate):
                 name: value for name, value in singlepoint.results.items()
                 if name not in vector_moments
             }
-        results = dict(_schema_compatible_properties(singlepoint.properties()))
+        results = dict(singlepoint.properties())
         results.update(vector_moments)
         if vector_moments:
             results.setdefault('natoms', len(atoms))
         if 'energy_without_entropy' in atoms.info:
             results['energy_without_entropy'] = atoms.info['energy_without_entropy']
-        efermi = results.get("efermi", results.get("fermi_level"))
-        if efermi is None:
-            for attribute in ("efermi", "eFermi", "fermi_level"):
-                candidate = getattr(atoms.calc, attribute, None)
-                if candidate is not None:
-                    efermi = candidate
-                    break
-        if efermi is not None:
-            results["efermi"] = efermi
-            results.setdefault("fermi_level", efermi)
+        # Keep the existing result alias alongside ASE's standard property.
+        if 'fermi_level' in results:
+            results['efermi'] = results['fermi_level']
         return results
 
     def load_profile(self, cfg, **kwargs):
