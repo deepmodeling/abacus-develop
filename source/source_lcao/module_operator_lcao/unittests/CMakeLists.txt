@@ -162,6 +162,11 @@ if(ENABLE_LCAO)
       cereal::cereal
       SOURCES
       test_op_exx_nscf_nearest.cpp
+      # op_exx_lcao.cpp is needed for init_cell_nearest and
+      # reallocate_hcontainer; it also instantiates the OperatorEXX members
+      # this fixture never runs. test_tmp_mocks.cpp supplies the
+      # Exx_LRI_Interface entry points those members reference, so the target
+      # does not have to link module_ri, elecstate or module_exx_symmetry.
       ../op_exx_lcao.cpp
       ../../../source_hamilt/module_hcontainer/func_folding.cpp
       ../../../source_hamilt/module_hcontainer/base_matrix.cpp

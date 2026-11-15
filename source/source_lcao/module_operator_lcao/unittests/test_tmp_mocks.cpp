@@ -333,3 +333,60 @@ std::string XC_Functional::resolve_runtime_xc_type(const std::string& input_func
     (void)ucell;
     return input_functional;
 }
+
+// op_exx_lcao.cpp defines the OperatorEXX members this fixture compiles but
+// never runs. Their contributeHR/cal_dH paths call Exx_LRI_Interface, whose
+// implementation lives in module_ri and would drag in elecstate and
+// module_exx_symmetry. Provide the four instantiations that op_exx_lcao.cpp
+// references; the fixture never reaches them.
+#include "source_lcao/module_ri/exx_lri_interface.h"
+
+namespace
+{
+template <typename TK, typename TD>
+using ExxDMap = std::vector<std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<TD>>>>;
+
+} // namespace
+
+template <>
+void Exx_LRI_Interface<double, double>::cal_exx_elec(const ExxDMap<double, double>&, const UnitCell&,
+                                                     const Parallel_Orbitals&,
+                                                     const ModuleSymmetry::Symmetry_rotation*)
+{
+}
+template <>
+void Exx_LRI_Interface<double, std::complex<double>>::cal_exx_elec(
+    const ExxDMap<double, std::complex<double>>&, const UnitCell&, const Parallel_Orbitals&,
+    const ModuleSymmetry::Symmetry_rotation*)
+{
+}
+template <>
+void Exx_LRI_Interface<std::complex<double>, double>::cal_exx_elec(
+    const ExxDMap<std::complex<double>, double>&, const UnitCell&, const Parallel_Orbitals&,
+    const ModuleSymmetry::Symmetry_rotation*)
+{
+}
+template <>
+void Exx_LRI_Interface<std::complex<double>, std::complex<double>>::cal_exx_elec(
+    const ExxDMap<std::complex<double>, std::complex<double>>&, const UnitCell&,
+    const Parallel_Orbitals&, const ModuleSymmetry::Symmetry_rotation*)
+{
+}
+
+template <>
+void Exx_LRI_Interface<double, double>::cal_exx_ions(const UnitCell&, const bool)
+{
+}
+template <>
+void Exx_LRI_Interface<double, std::complex<double>>::cal_exx_ions(const UnitCell&, const bool)
+{
+}
+template <>
+void Exx_LRI_Interface<std::complex<double>, double>::cal_exx_ions(const UnitCell&, const bool)
+{
+}
+template <>
+void Exx_LRI_Interface<std::complex<double>, std::complex<double>>::cal_exx_ions(const UnitCell&,
+                                                                               const bool)
+{
+}
