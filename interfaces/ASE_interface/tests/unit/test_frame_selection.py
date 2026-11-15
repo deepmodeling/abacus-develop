@@ -451,7 +451,7 @@ def test_scf_read_results_fails_closed_when_no_frame_matches(tmp_path):
         _template().read_results(directory)
     msg = str(excinfo.value)
     assert "running_scf.log" in msg
-    assert "4 帧" in msg
+    assert "4 frames" in msg
     assert "fail-closed" in msg
 
 
@@ -487,7 +487,7 @@ def test_frame_selection_tolerance_both_sides(tmp_path):
     msg = str(excinfo.value)
     assert "fail-closed" in msg
     assert "running_scf.log" in msg
-    assert "1 帧" in msg
+    assert "1 frame" in msg
 
     # 对照：放宽容差（0.5 Å）后同一位移帧命中 → 容差两侧语义
     loose = _select_scf_frame_for_structure([frames[1]], log, directory, [0, 1, 2], atol=0.5)

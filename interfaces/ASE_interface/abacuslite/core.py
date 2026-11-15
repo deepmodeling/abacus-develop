@@ -201,8 +201,8 @@ def _validate_atomorder(atomorder, natoms, stru_path):
         values = list(atomorder)
     except (TypeError, ValueError) as exc:
         raise RuntimeError(
-            f"scf atomorder 无法解析（STRU: {stru_path}；期望 {natoms} 个整数索引；"
-            f"fail-closed）"
+            f"Cannot parse scf atomorder (STRU: {stru_path}; expected "
+            f"{natoms} integer indices; fail-closed)"
         ) from exc
 
     valid_integer = all(
@@ -215,8 +215,9 @@ def _validate_atomorder(atomorder, natoms, stru_path):
         or sorted(values) != list(range(natoms))
     ):
         raise RuntimeError(
-            f"scf atomorder 非法（STRU: {stru_path}；收到 {values!r}，"
-            f"期望 {natoms} 个从 0 到 {max(natoms - 1, 0)} 的唯一索引；fail-closed）"
+            f"Invalid scf atomorder (STRU: {stru_path}; received {values!r}, "
+            f"expected {natoms} unique indices from 0 to {max(natoms - 1, 0)}; "
+            f"fail-closed)"
         )
     return [int(value) for value in values]
 
@@ -277,12 +278,12 @@ def _read_stru_reference(directory, stru_file, atomorder, log_path=None):
         cell_inverse = _invert_cell(cell, f"STRU {stru_path}")
 
         if coord_type.startswith('d'):
-            positions_species = coordinates @ cell
+            species_positions = coordinates @ cell
         elif coord_type.startswith('c'):
-            positions_species = coordinates * lattice_constant * Bohr
+            species_positions = coordinates * lattice_constant * Bohr
         else:
             raise ValueError(f"unsupported STRU coordinate type {stru['coord_type']!r}")
-        if not np.isfinite(positions_species).all():
+        if not np.isfinite(species_positions).all():
             raise ValueError("non-finite normalized STRU positions")
     except RuntimeError:
         raise
@@ -297,12 +298,13 @@ def _read_stru_reference(directory, stru_file, atomorder, log_path=None):
     ) as exc:
         suffix = f"；log: {log_path}" if log_path is not None else ""
         raise RuntimeError(
-            f"scf STRU 身份信息无效（STRU: {stru_path}{suffix}；{exc}；fail-closed）"
+            f"Invalid scf STRU identity data (STRU: {stru_path}{suffix}; "
+            f"{exc}; fail-closed)"
         ) from exc
 
     return {
         'path': stru_path,
-        'positions': np.asarray(positions_species, dtype=float)[mapping].copy(),
+        'positions': np.asarray(species_positions, dtype=float)[mapping].copy(),
         'cell': np.asarray(cell, dtype=float).copy(),
         'cell_inverse': np.asarray(cell_inverse, dtype=float).copy(),
         'symbols': [raw_symbols[index] for index in mapping],
@@ -389,7 +391,7 @@ def _validate_raw_scf_trajectory(log_path, expected, *, legacyio=None):
         raise
     except (AssertionError, KeyError, OSError, TypeError, ValueError, IndexError) as exc:
         raise RuntimeError(
-            f"scf running log 原始帧校验失败：{log_path}（{exc}；fail-closed）"
+            f"Invalid raw scf trajectory (log: {log_path}; {exc}; fail-closed)"
         ) from exc
     return trajectory
 
@@ -510,25 +512,30 @@ def _select_scf_frame_for_structure(
         nframes = len(frames)
     except TypeError as exc:
         raise RuntimeError(
-            f"scf running log 帧集合无效：{log_path}（无法读取帧数；fail-closed）"
+            f"Invalid scf frame collection (log: {log_path}; cannot read "
+            f"frame count; fail-closed)"
         ) from exc
     if nframes == 0:
         raise RuntimeError(
-            f"scf running log 无帧：{log_path}（共 0 帧；atol={atol}；fail-closed）"
+            f"No scf frames in log {log_path} (0 frames; atol={atol}; "
+            f"fail-closed)"
         )
     if not np.isfinite(atol) or atol < 0:
-        raise RuntimeError(f"scf 帧匹配 atol 无效：{atol!r}（fail-closed）")
+        raise RuntimeError(f"Invalid scf frame-matching atol: {atol!r} "
+                           f"(fail-closed)")
 
     expected = _reference or _read_stru_reference(
         directory, stru_file, atomorder, log_path=log_path
     )
+    frame_label = 'frame' if nframes == 1 else 'frames'
     try:
         frame_is_direct, cartesian_scale = _frame_coordinate_metadata(
             log_path, legacyio=legacyio
         )
     except Exception as exc:
         raise RuntimeError(
-            f"scf running log 坐标头无法解析：{log_path}（{exc}；fail-closed）"
+            f"Cannot parse scf log coordinate header: {log_path} "
+            f"({exc}; fail-closed)"
         ) from exc
 
     normalized = []
@@ -547,8 +554,8 @@ def _select_scf_frame_for_structure(
     if invalid:
         details = "; ".join(invalid)
         raise RuntimeError(
-            f"scf running log 含损坏帧：{log_path}（共 {nframes} 帧；{details}；"
-            f"atol={atol}；fail-closed）"
+            f"Malformed scf frames in log {log_path} ({nframes} {frame_label}; "
+            f"{details}; atol={atol}; fail-closed)"
         )
 
     for info in reversed(normalized):
@@ -565,10 +572,11 @@ def _select_scf_frame_for_structure(
         else "n/a (cell mismatch)"
     )
     raise RuntimeError(
-        f"scf running log 无与当前结构匹配的帧：{log_path}（共 {nframes} 帧；"
-        f"末帧 raw Cartesian Å 最大差异 {raw_diff:.6g}；"
-        f"periodic residual={periodic}；cell 最大差异={last['cell_diff']:.6g} Å；"
-        f"atol={atol}；fail-closed）"
+        f"No frame in scf log matches the current structure: {log_path} "
+        f"({nframes} {frame_label}; last-frame raw Cartesian max difference "
+        f"{raw_diff:.6g} Angstrom; periodic residual={periodic}; "
+        f"maximum cell difference={last['cell_diff']:.6g} Angstrom; "
+        f"atol={atol}; fail-closed)"
     )
 
 
@@ -851,8 +859,8 @@ class AbacusTemplate(CalculatorTemplate):
             if self.calculation != 'scf':
                 raise
             raise RuntimeError(
-                f"scf running log parser failed：{log}（atomorder/帧结构解析错误："
-                f"{exc}；fail-closed）"
+                f"scf running log parser failed: {log} (atomorder/frame "
+                f"structure error: {exc}; fail-closed)"
             ) from exc
         if not frames:
             raise RuntimeError(f"no ABACUS running-log frames in {log}")
