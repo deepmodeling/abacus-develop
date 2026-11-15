@@ -991,8 +991,8 @@ class Abacus(GenericFileIOCalculator):
 
     def export_properties(self):
         """Export only values accepted by ASE's versioned Properties schema."""
-        natoms = len(self.atoms) if self.atoms is not None else None
-        return _schema_compatible_properties(self.results, natoms or 0)
+        natoms = len(self.atoms) if self.atoms is not None else 0
+        return _schema_compatible_properties(self.results, natoms)
 
     @classmethod
     def restart(cls, profile=None, directory='.', **kwargs):
