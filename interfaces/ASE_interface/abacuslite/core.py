@@ -275,7 +275,7 @@ def _read_stru_reference(directory, stru_file, atomorder, log_path=None):
         cell = lattice_vectors * lattice_constant * Bohr
         if not np.isfinite(cell).all():
             raise ValueError("non-finite STRU cell")
-        cell_inverse = _invert_cell(cell, f"STRU {stru_path}")
+        _invert_cell(cell, f"STRU {stru_path}")
 
         if coord_type.startswith('d'):
             species_positions = coordinates @ cell
@@ -306,7 +306,6 @@ def _read_stru_reference(directory, stru_file, atomorder, log_path=None):
         'path': stru_path,
         'positions': np.asarray(species_positions, dtype=float)[mapping].copy(),
         'cell': np.asarray(cell, dtype=float).copy(),
-        'cell_inverse': np.asarray(cell_inverse, dtype=float).copy(),
         'symbols': [raw_symbols[index] for index in mapping],
         'atomorder': mapping,
     }
