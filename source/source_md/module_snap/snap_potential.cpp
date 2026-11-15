@@ -191,7 +191,8 @@ void SnapPotential::compute(BaseCell& cell,
         }
         ModuleBase::CommunicationDomain domain;
 #ifdef __MPI
-        domain.initialize(mdcell.communicator());
+        const MPI_Comm cell_communicator = mdcell.communicator();
+        domain.initialize(cell_communicator);
 #endif
         domain.sum(&energy, 1);
         domain.sum(stress.c, 9);

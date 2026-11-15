@@ -378,15 +378,18 @@ TEST(LJPotential, SplitCommunicatorReducesWithinCell)
     std::vector<LocalAtom> atoms;
     for (int index = 0; index < unitcell.atoms[0].na; ++index)
     {
-        atoms.push_back(LocalAtom(unitcell.atoms[0].tau[index],
-                                  unitcell.atoms[0].taud[index],
-                                  unitcell.atoms[0].vel[index],
-                                  ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
-                                  unitcell.atoms[0].mbl[index],
-                                  unitcell.atoms[0].mass / ModuleBase::AU_to_MASS,
-                                  0,
-                                  index,
-                                  0));
+        const ModuleBase::Vector3<double> zero_force(0.0, 0.0, 0.0);
+        const double mass_au = unitcell.atoms[0].mass / ModuleBase::AU_to_MASS;
+        const LocalAtom atom(unitcell.atoms[0].tau[index],
+                             unitcell.atoms[0].taud[index],
+                             unitcell.atoms[0].vel[index],
+                             zero_force,
+                             unitcell.atoms[0].mbl[index],
+                             mass_au,
+                             0,
+                             index,
+                             0);
+        atoms.push_back(atom);
     }
     const std::vector<std::string> labels(1, unitcell.atoms[0].label);
     const std::vector<double> masses(1, unitcell.atoms[0].mass);
@@ -405,7 +408,8 @@ TEST(LJPotential, SplitCommunicatorReducesWithinCell)
                                      domain);
 
     std::ofstream running_log;
-    ModuleMD::LJ potential(testing::TempDir(), running_log);
+    const std::string output_dir = testing::TempDir();
+    ModuleMD::LJ potential(output_dir, running_log);
     potential.initialize(cell, input);
     DomainDecomposition decomposition;
     decomposition.init(domain, cell.latvec(), cell.lat0(), 0.0, 0.0);
