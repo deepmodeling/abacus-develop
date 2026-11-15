@@ -1,10 +1,12 @@
 #ifndef SOURCE_MD_POTENTIAL_H
 #define SOURCE_MD_POTENTIAL_H
 
-#include "source_base/matrix.h"
-
 class BaseCell;
 struct Input_para;
+namespace ModuleBase
+{
+class matrix;
+}
 
 namespace ModuleMD
 {

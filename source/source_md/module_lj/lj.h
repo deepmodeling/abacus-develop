@@ -2,6 +2,7 @@
 #define MODULE_MD_LJ_H
 
 #include "source_md/potential.h"
+#include "source_base/matrix.h"
 #include "source_base/vector3.h"
 
 #include <iosfwd>
