@@ -36,12 +36,14 @@ struct OccmatStepInfo
 enum OccmatSocLayout
 {
     /// 4 contiguous Pauli-component blocks [charge, sigma_x, sigma_y, sigma_z],
-    /// each (2l+1)x(2l+1); used by the PW path
+    /// each (2l+1)x(2l+1); used by PW and LCAO dft_plus_u=1
     SOC_LAYOUT_PAULI,
     /// real symmetric matrix in spin basis (m + spin-polarization index);
-    /// imaginary parts are not stored; used by the LCAO path
+    /// imaginary parts are not stored; used by LCAO dft_plus_u=2
     SOC_LAYOUT_SPIN_BASIS_REAL
 };
+
+OccmatSocLayout lcao_soc_layout(int dft_plus_u);
 
 } // namespace DFTU_BASE
 
