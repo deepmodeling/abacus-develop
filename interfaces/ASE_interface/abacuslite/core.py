@@ -1,8 +1,7 @@
 # fmt: off
 
 '''
-here the ase-abacus implementation is pasted and modified. 
-Source:
+Adapted from the ase-abacus implementation:
 https://gitlab.com/1041176461/ase-abacus/-/blob/master/ase/calculators/abacus.py
 
 This module defines an ASE interface to ABACUS.
@@ -26,7 +25,7 @@ Modified on Wed Jun 20 15:00:00 2018
 Modified on Wed Jun 03 23:00:00 2022
 @author: Ji Yu-yang
 
-Refactored from Sun Dec 07 21:41 2025
+Refactored on 2025-12-07
 @author: Huang Yi-ke
 '''
 
@@ -36,6 +35,7 @@ import re
 import shutil
 import tempfile
 import unittest
+from copy import copy
 from pathlib import Path
 from typing import Dict, Optional, List
 
@@ -63,26 +63,31 @@ from abacuslite.io.generalio import (
 )
 
 __LEGACYIO__ = True
+SOCKET_METADATA_SCHEMA = 'abacus.socket.properties.v1'
+
+
+def _uses_legacy_io(version: str) -> bool:
+    """Resolve a format without mutating another calculator's reader."""
+    match = re.match(
+        r'^v(\d+)\.(\d+)\.(\d+)(\.\d+|-(alpha|beta|rc)\.?\d+)?(?:\+[A-Za-z0-9.-]+)?$',
+        version,
+    )
+    assert match, f'Invalid ABACUS version: {version}'
+    assert int(match.group(1)) >= 3, 'ABACUS v2.x is not supported'
+    minor = int(match.group(2))
+    return not (minor >= 11 or (minor == 9 and match.group(4) is not None))
+
+
 def switch_io_backend_version(version: str) -> bool:
-    '''determine if the i/o is in legacy format by the version number,
-    for detailed discussion, see issue #7260
-    '''
+    """Set the compatibility default for subsequently created templates.
+
+    Existing calculators retain the format selected from their own profile.
+    Explicit io.legacyio/io.latestio functions are unaffected by this helper.
+    """
     global __LEGACYIO__
-    m = re.match(r'^v(\d+)\.(\d+)\.(\d+)(\.\d+|\-(alpha|beta|rc)\.\d+|\-(alpha|beta|rc)\d+)?$', version)
-    assert m, f'Invalid format of version number, please check file version.h'
-    assert int(m.group(1)) >= 3, f'ABACUS v2.x is not supported'
-    if int(m.group(2)) >= 11:
-        __LEGACYIO__ = False
-    elif int(m.group(2)) == 9:
-        if m.group(4) is not None:
-            # it is also possible to divide the version more carefully,
-            # but because 3.9.0.x are all on the develop branch, up to
-            # now, there is no user submit issue to request such a careful
-            # division
-            __LEGACYIO__ = False
-    else:
-        __LEGACYIO__ = True
+    __LEGACYIO__ = _uses_legacy_io(version)
     return __LEGACYIO__
+
 
 class AbacusProfile(BaseProfile):
     '''AbacusProfile for interacting the ASE with ABACUS that installed in
@@ -105,10 +110,14 @@ class AbacusProfile(BaseProfile):
             `OMP_NUM_THREADS=1 mpirun -np X abacus`. Here please do not set
             the number of omp threads in `command`, instead, use `nomp=1`.
         pseudo_dir : str or Path, optional
-            The directory containing pseudopotential files.
+            The directory containing pseudopotential files. If ``None`` (the
+            default), ``ABACUS_PP_PATH`` is used when set; an explicit value,
+            including an empty string, is preserved.
         orbital_dir : str or Path, optional
             The directory containing orbital basis files. This is only necessary
-            for an ABACUS-LCAO calculation
+            for an ABACUS-LCAO calculation. If ``None`` (the default),
+            ``ABACUS_ORB_PATH`` is used when set; an explicit value, including
+            an empty string, is preserved.
         omp_num_threads : int, optional
             The number of omp threads to use.
         '''
@@ -116,8 +125,14 @@ class AbacusProfile(BaseProfile):
         # further validation on the command will be in the __init__ of
         # the base class
         super().__init__(command, **kwargs)
-        self.pseudo_dir  = pseudo_dir
-        self.orbital_dir = orbital_dir
+        # These two community conventions are the only environment fallbacks
+        # in this package; explicit arguments always take precedence. Only an
+        # omitted (None) argument falls back, so an explicit empty string is
+        # preserved instead of being replaced by the environment.
+        self.pseudo_dir = (pseudo_dir if pseudo_dir is not None
+                           else (os.environ.get("ABACUS_PP_PATH") or None))
+        self.orbital_dir = (orbital_dir if orbital_dir is not None
+                            else (os.environ.get("ABACUS_ORB_PATH") or None))
 
         if omp_num_threads is not None:
             # set the number of omp threads for the present process
@@ -160,6 +175,386 @@ class AbacusProfile(BaseProfile):
         cmd_ = [*self._split_command, '--version']
         return AbacusProfile.parse_version(read_stdout(cmd_))
 
+def _validate_atomorder(atomorder, natoms, stru_path):
+    """Validate the species-to-ASE permutation before handing it to a parser."""
+    if atomorder is None:
+        return list(range(natoms))
+
+    try:
+        values = list(atomorder)
+    except (TypeError, ValueError) as exc:
+        raise RuntimeError(
+            f"scf atomorder 无法解析（STRU: {stru_path}；期望 {natoms} 个整数索引；"
+            f"fail-closed）"
+        ) from exc
+
+    valid_integer = all(
+        isinstance(value, (int, np.integer)) and not isinstance(value, (bool, np.bool_))
+        for value in values
+    )
+    if (
+        len(values) != natoms
+        or not valid_integer
+        or sorted(values) != list(range(natoms))
+    ):
+        raise RuntimeError(
+            f"scf atomorder 非法（STRU: {stru_path}；收到 {values!r}，"
+            f"期望 {natoms} 个从 0 到 {max(natoms - 1, 0)} 的唯一索引；fail-closed）"
+        )
+    return [int(value) for value in values]
+
+
+def _invert_cell(cell, context):
+    """Return a cell inverse or raise a diagnostic validation error."""
+    try:
+        return np.linalg.solve(cell, np.eye(3, dtype=float))
+    except np.linalg.LinAlgError as exc:
+        raise ValueError(f"singular cell in {context}") from exc
+
+
+def _read_stru_reference(directory, stru_file, atomorder, log_path=None):
+    """Normalize STRU coordinates, cell, symbols, and mapping for SCF matching."""
+    from ase.units import Bohr
+    from abacuslite.io.generalio import read_stru
+
+    stru_path = Path(directory) / (stru_file or 'STRU')
+    try:
+        stru = read_stru(stru_path)
+        species = stru['species']
+        lat = stru['lat']
+        coord_type = str(stru['coord_type']).lower()
+        raw_symbols = []
+        raw_coords = []
+        for species_entry in species:
+            symbol = species_entry['symbol']
+            atoms = species_entry['atom']
+            declared_natoms = species_entry['natom']
+            if declared_natoms != len(atoms):
+                raise ValueError(
+                    f"STRU species {symbol!r} declared natom={declared_natoms}, "
+                    f"but contains {len(atoms)} atom records"
+                )
+            for atom in atoms:
+                raw_symbols.append(str(symbol))
+                raw_coords.append(atom['coord'])
+
+        natoms = len(raw_symbols)
+        mapping = _validate_atomorder(atomorder, natoms, stru_path)
+        coordinates = np.asarray(raw_coords, dtype=float)
+        if coordinates.shape != (natoms, 3):
+            raise ValueError(
+                f"STRU positions shape {coordinates.shape}, expected ({natoms}, 3)"
+            )
+        if not np.isfinite(coordinates).all():
+            raise ValueError("non-finite STRU positions")
+
+        lattice_vectors = np.asarray(lat['vec'], dtype=float)
+        if lattice_vectors.shape != (3, 3):
+            raise ValueError(
+                f"STRU cell shape {lattice_vectors.shape}, expected (3, 3)"
+            )
+        lattice_constant = float(lat['const'])
+        cell = lattice_vectors * lattice_constant * Bohr
+        if not np.isfinite(cell).all():
+            raise ValueError("non-finite STRU cell")
+        cell_inverse = _invert_cell(cell, f"STRU {stru_path}")
+
+        if coord_type.startswith('d'):
+            positions_species = coordinates @ cell
+        elif coord_type.startswith('c'):
+            positions_species = coordinates * lattice_constant * Bohr
+        else:
+            raise ValueError(f"unsupported STRU coordinate type {stru['coord_type']!r}")
+        if not np.isfinite(positions_species).all():
+            raise ValueError("non-finite normalized STRU positions")
+    except RuntimeError:
+        raise
+    except (
+        AssertionError,
+        KeyError,
+        OSError,
+        TypeError,
+        ValueError,
+        IndexError,
+        np.linalg.LinAlgError,
+    ) as exc:
+        suffix = f"；log: {log_path}" if log_path is not None else ""
+        raise RuntimeError(
+            f"scf STRU 身份信息无效（STRU: {stru_path}{suffix}；{exc}；fail-closed）"
+        ) from exc
+
+    return {
+        'path': stru_path,
+        'positions': np.asarray(positions_species, dtype=float)[mapping].copy(),
+        'cell': np.asarray(cell, dtype=float).copy(),
+        'cell_inverse': np.asarray(cell_inverse, dtype=float).copy(),
+        'symbols': [raw_symbols[index] for index in mapping],
+        'atomorder': mapping,
+    }
+
+
+def _stru_positions_in_ase_order(directory, stru_file, atomorder):
+    """Return normalized STRU positions for compatibility with existing callers."""
+    return _read_stru_reference(directory, stru_file, atomorder)['positions']
+
+
+def _frame_coordinate_metadata(log_path, *, legacyio=None):
+    """Return the frame coordinate convention and lattice constant from a log.
+
+    The selected reader returns fractional coordinates for DIRECT logs and
+    Cartesian coordinates for CARTESIAN logs. Use the coordinate header
+    actually printed in the log, not the STRU ``coord_type``: ``write_stru``
+    may write a Cartesian STRU while ABACUS prints DIRECT coordinates. Both
+    readers expose the same ``coordinate`` and ``alat_in_angstrom`` fields
+    through ``read_traj_from_running_log``.
+    """
+    use_legacy = __LEGACYIO__ if legacyio is None else legacyio
+    if use_legacy:
+        from abacuslite.io.legacyio import read_traj_from_running_log
+    else:
+        from abacuslite.io.latestio import read_traj_from_running_log
+    traj = read_traj_from_running_log(log_path)
+    direct = str(traj[0]['coordinate']).lower().startswith('d')
+    scale = float(traj[0]['alat_in_angstrom'])
+    if not np.isfinite(scale) or scale <= 0:
+        raise ValueError(f"Invalid lattice constant in Angstrom: {scale!r}")
+    return direct, scale
+
+
+def _frame_coordinate_is_direct(log_path, *, legacyio=None):
+    """Return the coordinate convention exposed by the selected log reader."""
+    return _frame_coordinate_metadata(log_path, legacyio=legacyio)[0]
+
+
+def _validate_raw_scf_trajectory(log_path, expected, *, legacyio=None):
+    """Check raw trajectory cardinality before parser atom reordering."""
+    use_legacy = __LEGACYIO__ if legacyio is None else legacyio
+    if use_legacy:
+        from abacuslite.io.legacyio import read_traj_from_running_log
+    else:
+        from abacuslite.io.latestio import read_traj_from_running_log
+
+    try:
+        trajectory = read_traj_from_running_log(log_path)
+        if not trajectory:
+            raise ValueError("no raw trajectory frames")
+        expected_shape = expected['positions'].shape
+        expected_natoms = len(expected['symbols'])
+        for frame_index, frame in enumerate(trajectory):
+            coords = np.asarray(frame['coords'], dtype=float)
+            if coords.shape != expected_shape:
+                mismatch = (
+                    f"atom count {coords.shape[0]}, expected {expected_shape[0]}; "
+                    if coords.ndim >= 1 and coords.shape[0] != expected_shape[0]
+                    else ""
+                )
+                raise ValueError(
+                    f"frame {frame_index} {mismatch}positions shape {coords.shape}, "
+                    f"expected {expected_shape}"
+                )
+            if not np.isfinite(coords).all():
+                raise ValueError(f"frame {frame_index} positions are non-finite")
+            elements = np.asarray(frame['elem'])
+            if elements.ndim != 1 or len(elements) != expected_natoms:
+                raise ValueError(
+                    f"frame {frame_index} atom count {len(elements)}, "
+                    f"expected {expected_natoms}"
+                )
+            cell = np.asarray(frame['cell'], dtype=float)
+            if cell.shape != (3, 3):
+                raise ValueError(
+                    f"frame {frame_index} cell shape {cell.shape}, expected (3, 3)"
+                )
+            if not np.isfinite(cell).all():
+                raise ValueError(f"frame {frame_index} cell is non-finite")
+            _invert_cell(cell, f"frame {frame_index}")
+    except RuntimeError:
+        raise
+    except (AssertionError, KeyError, OSError, TypeError, ValueError, IndexError) as exc:
+        raise RuntimeError(
+            f"scf running log 原始帧校验失败：{log_path}（{exc}；fail-closed）"
+        ) from exc
+    return trajectory
+
+
+def _normalize_scf_frame(frame, frame_index, expected, frame_is_direct, atol,
+                         cartesian_scale=1.0):
+    """Normalize one parser frame and return match diagnostics.
+
+    A finite, well-shaped frame with a different position or cell is a valid
+    candidate mismatch. Malformed data is represented as ``ValueError`` so the
+    caller can validate every frame before selecting any one of them.
+    """
+    context = f"frame {frame_index}"
+    try:
+        symbols = list(frame.get_chemical_symbols())
+    except (AttributeError, TypeError, ValueError) as exc:
+        raise ValueError(f"{context} symbols are unavailable") from exc
+    if len(symbols) != len(expected['symbols']):
+        raise ValueError(
+            f"{context} atom count {len(symbols)}, expected {len(expected['symbols'])}"
+        )
+    if symbols != expected['symbols']:
+        raise ValueError(
+            f"{context} symbols {symbols!r} do not match STRU symbols "
+            f"{expected['symbols']!r}"
+        )
+
+    try:
+        positions = np.asarray(frame.positions, dtype=float)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"{context} positions cannot be converted to float") from exc
+    if positions.shape != expected['positions'].shape:
+        raise ValueError(
+            f"{context} positions shape {positions.shape}, expected "
+            f"{expected['positions'].shape}"
+        )
+    if not np.isfinite(positions).all():
+        raise ValueError(f"{context} positions are non-finite")
+
+    try:
+        cell = np.asarray(frame.cell, dtype=float)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"{context} cell cannot be converted to float") from exc
+    if cell.shape != (3, 3):
+        raise ValueError(f"{context} cell shape {cell.shape}, expected (3, 3)")
+    if not np.isfinite(cell).all():
+        raise ValueError(f"{context} cell is non-finite")
+    cell_inverse = _invert_cell(cell, context)
+
+    # ABACUS prints Cartesian tau in units of alat, while cell is already in Å.
+    frame_cart = positions @ cell if frame_is_direct else positions * cartesian_scale
+    if not np.isfinite(frame_cart).all():
+        raise ValueError(f"{context} normalized Cartesian positions are non-finite")
+    cell_delta = cell - expected['cell']
+    cell_diff = float(np.max(np.abs(cell_delta)))
+    same_cell = bool(np.allclose(cell, expected['cell'], atol=atol, rtol=0.0))
+    if not same_cell:
+        return {
+            'frame': frame,
+            'frame_index': frame_index,
+            'frame_cart': frame_cart,
+            'cell_diff': cell_diff,
+            'periodic_residual': None,
+            'matches': False,
+        }
+
+    delta_frac = (frame_cart - expected['positions']) @ cell_inverse
+    periodic_cart = (delta_frac - np.rint(delta_frac)) @ cell
+    if not np.isfinite(periodic_cart).all():
+        raise ValueError(f"{context} periodic residual is non-finite")
+    periodic_residual = float(np.max(np.abs(periodic_cart)))
+    return {
+        'frame': frame,
+        'frame_index': frame_index,
+        'frame_cart': frame_cart,
+        'cell_diff': cell_diff,
+        'periodic_residual': periodic_residual,
+        'matches': periodic_residual <= atol,
+    }
+
+
+def _select_scf_frame_for_structure(
+    frames, log_path, directory, atomorder, atol=1e-4, stru_file='STRU', _reference=None,
+    *, legacyio=None
+):
+    """Return the latest periodic-equivalent frame; malformed SCF data fails closed.
+
+    Parameters
+    ----------
+    frames : list of Atoms
+        Frames returned by ``read_abacus_out``, reordered into ASE atom order.
+    log_path : Path
+        Running log path, used in fail-closed diagnostics.
+    directory : Path
+        Calculation directory containing the STRU written by ``write_input``.
+    atomorder : list of int
+        Permutation from species order to ASE atom order.
+    stru_file : str or Path
+        The STRU filename recorded by ``write_input``; defaults to ``STRU``.
+    atol : float
+        Absolute Angstrom bound for cell components and periodic Cartesian
+        residuals, with no relative tolerance. Explicit overrides are retained.
+        The ``1e-4`` default accommodates ordinary running-log rounding:
+        with a lattice constant near 1 Angstrom, six-significant-digit
+        vectors in ``[10, 100)`` can lose up to ``5e-5`` Angstrom per
+        component. A ``1e-5`` bound rejected valid recorded LTS output.
+        This fixed absolute bound is not a universal printing-error budget:
+        larger cells, independently rounded lattice constants and skewed
+        cells can accumulate more error. It does not change an SCF or
+        optimization convergence threshold.
+
+    Raises
+    ------
+    RuntimeError
+        If no frame matches the current STRU, or a frame is malformed.
+    """
+    try:
+        nframes = len(frames)
+    except TypeError as exc:
+        raise RuntimeError(
+            f"scf running log 帧集合无效：{log_path}（无法读取帧数；fail-closed）"
+        ) from exc
+    if nframes == 0:
+        raise RuntimeError(
+            f"scf running log 无帧：{log_path}（共 0 帧；atol={atol}；fail-closed）"
+        )
+    if not np.isfinite(atol) or atol < 0:
+        raise RuntimeError(f"scf 帧匹配 atol 无效：{atol!r}（fail-closed）")
+
+    expected = _reference or _read_stru_reference(
+        directory, stru_file, atomorder, log_path=log_path
+    )
+    try:
+        frame_is_direct, cartesian_scale = _frame_coordinate_metadata(
+            log_path, legacyio=legacyio
+        )
+    except Exception as exc:
+        raise RuntimeError(
+            f"scf running log 坐标头无法解析：{log_path}（{exc}；fail-closed）"
+        ) from exc
+
+    normalized = []
+    invalid = []
+    for frame_index, frame in enumerate(frames):
+        try:
+            normalized.append(
+                _normalize_scf_frame(
+                    frame, frame_index, expected, frame_is_direct, atol,
+                    cartesian_scale=cartesian_scale
+                )
+            )
+        except (AttributeError, TypeError, ValueError, IndexError) as exc:
+            invalid.append(f"frame {frame_index}: {exc}")
+
+    if invalid:
+        details = "; ".join(invalid)
+        raise RuntimeError(
+            f"scf running log 含损坏帧：{log_path}（共 {nframes} 帧；{details}；"
+            f"atol={atol}；fail-closed）"
+        )
+
+    for info in reversed(normalized):
+        if info['matches']:
+            return info['frame']
+
+    last = normalized[-1]
+    raw_diff = float(
+        np.max(np.abs(last['frame_cart'] - expected['positions']))
+    )
+    periodic = (
+        f"{last['periodic_residual']:.6g} Å"
+        if last['periodic_residual'] is not None
+        else "n/a (cell mismatch)"
+    )
+    raise RuntimeError(
+        f"scf running log 无与当前结构匹配的帧：{log_path}（共 {nframes} 帧；"
+        f"末帧 raw Cartesian Å 最大差异 {raw_diff:.6g}；"
+        f"periodic residual={periodic}；cell 最大差异={last['cell_diff']:.6g} Å；"
+        f"atol={atol}；fail-closed）"
+    )
+
+
 class AbacusTemplate(CalculatorTemplate):
     
     implemented_properties = [
@@ -168,6 +563,7 @@ class AbacusTemplate(CalculatorTemplate):
     _label = 'abacus'
 
     def __init__(self):
+        self._legacyio = __LEGACYIO__
         super().__init__(
             'abacus',
             self.implemented_properties
@@ -287,19 +683,23 @@ class AbacusTemplate(CalculatorTemplate):
 
         # copy the `parameters` because later we will modify it
         parameters = parameters.copy()
+        self.stru_file = parameters.get('stru_file', 'STRU') or 'STRU'
 
         # STRU
-        _ = file_safe_backup(directory / parameters.get('stru_file', 'STRU'))
-        # group atoms by first-occurrence species order. Keep the reverse map
-        # so that we will recover the order in function read_results()
+        _ = file_safe_backup(directory / self.stru_file)
+        # abacuslite itself no longer reads abacus.json; keep a previous run's
+        # file out of the way so downstream completion markers cannot see it.
+        _ = file_safe_backup(directory / 'abacus.json')
+        # group atoms by first-occurrence species order. Keep the reverse map so
+        # that we will recover the order in function read_results()
         ind = species_group_indices(atoms.get_chemical_symbols())
         self.atomorder = sorted(range(len(atoms)), key=lambda i: ind[i]) # revmap
         # then we write
         _ = write_stru(atoms[ind], 
-                       outdir=directory, 
+                       outdir=directory,
                        pp_file=parameters.get('pseudopotentials'),
                        orb_file=parameters.get('basissets'),
-                       fname=parameters.get('stru_file', 'STRU'))
+                       fname=self.stru_file)
 
         # KPT, if needed
         if 'kpts' in parameters:
@@ -334,7 +734,7 @@ class AbacusTemplate(CalculatorTemplate):
         # remove possible key-value pairs whose value is None
         parameters = {k: v for k, v in parameters.items() if v is not None}
 
-        # FIXME: only support the ksdft esolver_type presently
+        # Limitation: only the ksdft esolver is supported.
         if parameters.get('esolver_type', 'ksdft') != 'ksdft':
             raise NotImplementedError(
                 'ABACUS Lite only supports the ksdft esolver_type presently, '
@@ -404,21 +804,93 @@ class AbacusTemplate(CalculatorTemplate):
 
     def read_results(self, directory) -> Dict:
         '''the function that returns the desired properties in dict'''
-        read_abacus_out = lambda fn: None
-        global __LEGACYIO__
-        if __LEGACYIO__:
+        if self._legacyio:
             from abacuslite.io.legacyio import read_abacus_out
         else:
             from abacuslite.io.latestio import read_abacus_out
 
+        directory = Path(directory)
         outdir = directory / f'OUT.{self.suffix}'
-        # only the last frame
-        atoms: Optional[Atoms] = read_abacus_out(
-            outdir / f'running_{self.calculation}.log',
-            sort_atoms_with=self.atomorder)[-1]
+        log = outdir / f'running_{self.calculation}.log'
+        stru_file = getattr(self, 'stru_file', 'STRU') or 'STRU'
+        reference = None
+        parser_atomorder = self.atomorder
+        if self.calculation == 'scf':
+            # Read and validate STRU/mapping before passing sort_atoms_with to
+            # the parser; otherwise a malformed mapping leaks a bare IndexError.
+            reference = _read_stru_reference(
+                directory, stru_file, self.atomorder, log_path=log
+            )
+            # Validate raw parser cardinality before sort_atoms_with can slice
+            # away an extra/missing atom and make a corrupt frame look valid.
+            _validate_raw_scf_trajectory(log, reference, legacyio=self._legacyio)
+            parser_atomorder = None if self.atomorder is None else reference['atomorder']
+
+        # Read all frames: SCF selects the frame matching the current STRU;
+        # relax and MD keep the final-frame behavior.
+        try:
+            frames = read_abacus_out(log, sort_atoms_with=parser_atomorder)
+        except (IndexError, AssertionError, KeyError, TypeError, ValueError) as exc:
+            if self.calculation != 'scf':
+                raise
+            raise RuntimeError(
+                f"scf running log parser failed：{log}（atomorder/帧结构解析错误："
+                f"{exc}；fail-closed）"
+            ) from exc
+        if not frames:
+            raise RuntimeError(f"no ABACUS running-log frames in {log}")
+        if self.calculation != 'scf':
+            atoms: Optional[Atoms] = frames[-1]  # relax/MD keep the final frame.
+        else:
+            atoms = _select_scf_frame_for_structure(
+                frames,
+                log,
+                directory,
+                reference['atomorder'],
+                stru_file=stru_file,
+                _reference=reference,
+                legacyio=self._legacyio,
+            )
         assert atoms is not None
 
-        return dict(atoms.calc.properties())
+        # ``SinglePointDFTCalculator.properties()`` exposes the Fermi level
+        # under ASE's ``fermi_level`` property, while the CP adapter consumes
+        # the backend-neutral ``efermi`` fact.  Keep both names in the result
+        # mapping so file-backed ABACUS evaluations do not lose this value at
+        # the GenericFileIOCalculator boundary.  Older ASE snapshots store it
+        # on ``eFermi``; tolerate that spelling as well.
+        # ASE's Properties schema accepts scalar magnetic moments only,
+        # although SinglePointDFTCalculator supports vector moments. Project
+        # other properties through ASE and retain vectors as result metadata,
+        # without changing ASE's process-global output definitions.
+        singlepoint = atoms.calc
+        vector_moments = {
+            name: singlepoint.results[name]
+            for name, shape in (('magmom', (3,)), ('magmoms', (len(atoms), 3)))
+            if name in singlepoint.results
+            and np.shape(singlepoint.results[name]) == shape
+        }
+        if vector_moments:
+            singlepoint = copy(singlepoint)
+            singlepoint.results = {name: value for name, value in singlepoint.results.items()
+                                   if name not in vector_moments}
+        results = dict(singlepoint.properties())
+        results.update(vector_moments)
+        if vector_moments:
+            results.setdefault('natoms', len(atoms))
+        if 'energy_without_entropy' in atoms.info:
+            results['energy_without_entropy'] = atoms.info['energy_without_entropy']
+        efermi = results.get("efermi", results.get("fermi_level"))
+        if efermi is None:
+            for attribute in ("efermi", "eFermi", "fermi_level"):
+                candidate = getattr(atoms.calc, attribute, None)
+                if candidate is not None:
+                    efermi = candidate
+                    break
+        if efermi is not None:
+            results["efermi"] = efermi
+            results.setdefault("fermi_level", efermi)
+        return results
 
     def load_profile(self, cfg, **kwargs):
         return AbacusProfile.from_config(cfg, self.name, **kwargs)
@@ -467,20 +939,19 @@ class Abacus(GenericFileIOCalculator):
         **kwargs:
             Other parameters to be passed to the ABACUS calculator.
         '''
-        # not recommended :(
+        # Fallback profile for callers that do not provide one.
         profile = AbacusProfile('abacus') if profile is None else profile
 
         # to be compatible with both the legacy and latest format of i/o, the
         # switch is needed. 
-        _ = switch_io_backend_version(profile.version())
+        template = AbacusTemplate()
+        template._legacyio = _uses_legacy_io(profile.version())
 
-        # because ABACUS run job in folders, based on the assumption that
-        # there is only one job in the folder. Therefore once there are already
-        # files in the folder, will try to create a new one...(seriously?)
+        # Optional ABACUS INPUT parameters, merged with calculator keywords.
         inp = kwargs.pop('inp', {})
 
         super().__init__(
-            template=AbacusTemplate(),
+            template=template,
             profile=profile,
             parameters=kwargs | inp,
             directory=directory,
@@ -503,8 +974,9 @@ class Abacus(GenericFileIOCalculator):
         optionally overwrite some keywords'''
         directory = Path(directory)
         inp_read = read_input(directory / 'INPUT')
+        inp = inp_read | kwargs.pop('inp', {})
 
-        pporb_read = read_stru(directory / 'STRU')['species']
+        pporb_read = read_stru(directory / (inp.get('stru_file', 'STRU') or 'STRU'))['species']
         pseudopotentials = kwargs.get(
             'pseudopotentials',
             {pporb['symbol']: pporb['pp_file'] for pporb in pporb_read}
@@ -522,19 +994,32 @@ class Abacus(GenericFileIOCalculator):
             basissets = {}
         assert all([forb is not None for forb in basissets.values()])
 
-        kpts = kwargs.get('kpts', read_kpt(directory / inp_read.get('kpoint_file', 'KPT')))
         if 'kpts' in kwargs:
-            del kwargs['kpts']
-
-        inp = inp_read | kwargs.get('inp', {})
-        if 'inp' in kwargs:
-            del kwargs['inp']
+            kpts_kwargs = {'kpts': kwargs.pop('kpts')}
+        else:
+            kpt_file = directory / (inp.get('kpoint_file', 'KPT') or 'KPT')
+            if kpt_file.is_file():
+                kpts_kwargs = {'kpts': read_kpt(kpt_file)}
+            else:
+                gamma_only = str(inp.get('gamma_only', '')).strip().lower() in (
+                    '1', 'true', 't', '.true.')
+                raw_spacing = inp.get('kspacing', '')
+                spacing = (raw_spacing if isinstance(raw_spacing, (list, tuple))
+                           else str(raw_spacing).split())
+                try:
+                    implicit_kpts = gamma_only or bool(spacing) and all(
+                        float(value) > 0 for value in spacing)
+                except ValueError:
+                    implicit_kpts = gamma_only
+                if not implicit_kpts:
+                    read_kpt(kpt_file)  # preserve the missing/invalid KPT error
+                kpts_kwargs = {}
 
         return cls(profile=profile, 
                    directory=directory,
                    pseudopotentials=pseudopotentials,
                    basissets=basissets,
-                   kpts=kpts,
+                   **kpts_kwargs,
                    inp=inp,
                    **kwargs)
 
@@ -578,13 +1063,15 @@ class Abacus(GenericFileIOCalculator):
         # we should overwrite the 'calculation' to 'nscf', and 'init_chg' to 'file'
         assert symmetry == 'off'
         
-        kwargs.setdefault('inp', {}).update({'calculation': 'nscf',
-                                             'init_chg': 'file',
-                                             'symmetry': 0,
-                                             'out_band': 1,
-                                             'kspacing': 0.0,       # overwrite
-                                             'gamma_only': False,
-                                             'read_file_dir': 'OUT.ABACUS'})  # overwrite
+        inp = kwargs.setdefault('inp', {})
+        inp.update({'calculation': 'nscf',
+                    'init_chg': 'file',
+                    'symmetry': 0,
+                    'out_band': 1,
+                    'kspacing': 0.0,       # overwrite
+                    'gamma_only': False})
+        source_suffix = getattr(self, 'parameters', {}).get('suffix', 'ABACUS')
+        inp.setdefault('read_file_dir', f'OUT.{source_suffix}')
 
         profile = self.profile if profile is None else profile
 
@@ -860,7 +1347,7 @@ class AbacusSocketIO(SocketIOCalculator):
             raise ValueError('ABACUS socket extras are not valid UTF-8 JSON') from error
         if not isinstance(metadata, dict):
             raise ValueError('ABACUS socket extras must be a JSON object')
-        if metadata.get('schema') != 'abacus.socket.properties.v1':
+        if metadata.get('schema') != SOCKET_METADATA_SCHEMA:
             raise ValueError('unsupported ABACUS socket extras schema')
         present = metadata.get('present')
         if not isinstance(present, list):
@@ -955,7 +1442,6 @@ class AbacusSocketIO(SocketIOCalculator):
         for sorted_index, original_index in enumerate(order):
             reordered[original_index] = forces[sorted_index]
         return reordered
-
 
 class TestAbacusCalculator(unittest.TestCase):
 

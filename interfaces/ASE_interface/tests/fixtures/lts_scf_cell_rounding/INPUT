@@ -1,0 +1,33 @@
+INPUT_PARAMETERS
+calculation scf
+basis_type lcao
+cal_force 1
+cal_stress 1
+scf_thr 1e-07
+scf_nmax 100
+symmetry 0
+device gpu
+precision double
+ecutwfc 100
+ks_solver cusolver
+nupdown 1
+dft_functional pbe
+nspin 2
+smearing_method fixed
+smearing_sigma 0.004
+mixing_type broyden
+mixing_beta 0.4
+mixing_beta_mag 0.4
+mixing_ndim 20
+mixing_gg0 0.0
+gamma_only 1
+relax_new True
+relax_nmax 100
+force_thr_ev 0.02
+stress_thr 1.0
+out_mul 1
+out_chg -1
+onsite_radius 3
+pseudo_dir /fixture/assets/PP
+orbital_dir /fixture/assets/ORB
+

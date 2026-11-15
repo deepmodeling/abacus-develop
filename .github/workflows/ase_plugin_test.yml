@@ -29,7 +29,7 @@ jobs:
         shell: bash -l {0}
         run: |
           conda install -y pip
-          pip install numpy scipy matplotlib
+          pip install numpy scipy matplotlib pytest
 
       - name: Install abacuslite
         shell: bash -l {0}
@@ -60,6 +60,11 @@ jobs:
           if [ -f /usr/local/bin/abacus_2p ]; then
             ln -sf /usr/local/bin/abacus_2p /usr/local/bin/abacus
           fi
+
+      - name: Run offline calculator and parser regressions
+        shell: bash -l {0}
+        run: |
+          python -m pytest interfaces/ASE_interface/tests/unit -q
 
       - name: Run unit tests
         shell: bash -l {0}

@@ -6,7 +6,7 @@ import tempfile
 import unittest
 from pathlib import Path
 from io import TextIOWrapper
-from typing import Optional, Dict, List, Any
+from typing import Optional, Dict, List, Any, Mapping
 
 import numpy as np
 from ase.atoms import Atoms
@@ -14,6 +14,26 @@ from ase.build import bulk
 from ase.constraints import FixAtoms, FixCartesian
 from ase.data import chemical_symbols, atomic_masses
 ATOM_MASS = dict(zip(chemical_symbols, atomic_masses.tolist()))
+
+
+def energy_components(ener: Mapping[str, float]) -> Dict[str, float]:
+    """Return optional energy metadata from one ABACUS energy table.
+
+    ``E_KohnSham`` already includes ``E_entropy(-TS)`` and remains the
+    force-consistent ASE energy. The separate no-entropy value is metadata,
+    not an ASE ``free_energy`` replacement. Missing entropy stays unknown.
+
+    Args:
+        ener: Frame-local ABACUS energies in eV.
+
+    Returns:
+        The no-entropy energy in eV when its entropy term is available.
+    """
+    if 'E_entropy(-TS)' not in ener:
+        return {}
+    return {
+        'energy_without_entropy': float(ener['E_KohnSham']) - float(ener['E_entropy(-TS)']),
+    }
 
 def load_pseudo(pseudo_dir: str) -> Dict[str, str]:
     '''load the pseudopotential mapping from the pseudo_dir'''
@@ -234,7 +254,8 @@ def write_stru(stru: Atoms,
     '''
     from ase.units import (
         Bohr as __BOHR__, 
-        Angstrom as __ANGSTROM__
+        Angstrom as __ANGSTROM__,
+        AUT as __AUT__,
     )
     assert isinstance(stru, Atoms)
     pp_file = pp_file or {} # can be None, for those non-ESolver_KS cases
@@ -246,6 +267,11 @@ def write_stru(stru: Atoms,
     ind = species_group_indices(elem)
     coords = stru.get_positions()[ind]
     mobility = _constraint_mobility(stru)[ind]
+    # ASE velocities are Angstrom / ASE time; STRU v is Bohr / atomic time.
+    # ABACUS MD writes v / (ANGSTROM_AU * AU_to_FS) as Angstrom/fs.
+    velocities = (stru.get_velocities()[ind] * __AUT__ / __BOHR__
+                  if stru.has('momenta') else np.zeros((len(stru), 3)))
+    masses = stru.get_masses()[ind]
     elem = [elem[i] for i in ind]
 
     # handle the atomic magnetic moment (issue #6516)
@@ -255,6 +281,15 @@ def write_stru(stru: Atoms,
                for m in magmoms]
     elem_uniq = list(dict.fromkeys(elem))
     nat = np.array([elem.count(e) for e in elem_uniq])
+    species_masses = []
+    start = 0
+    for symbol, count in zip(elem_uniq, nat):
+        values = masses[start:start + count]
+        if not np.all(values == values[0]):
+            raise ValueError(f'Different masses for species {symbol} cannot be '
+                             'represented by one ABACUS STRU species entry')
+        species_masses.append(float(values[0]))
+        start += count
     stru_dict = {
         'coord_type': 'Cartesian',
         'lat': {
@@ -264,7 +299,7 @@ def write_stru(stru: Atoms,
         'species': [
             {
                 'symbol': e,
-                'mass': ATOM_MASS[e],
+                'mass': species_masses[i],
                 'pp_file': pp_file.get(e, ''),
                 'pp_type': '',
                 'natom': n,
@@ -273,7 +308,7 @@ def write_stru(stru: Atoms,
                     magmoms[j] | {
                         'coord': coords[j].tolist(), # coordinate
                         'm': mobility[j].tolist(), # mobility
-                        'v': [0.0, 0.0, 0.0], # velocity
+                        'v': velocities[j].tolist(), # atomic units of velocity
                     } for j in range(np.sum(nat[:i]), np.sum(nat[:i+1]))
                 ]
             }
@@ -602,8 +637,8 @@ def _read_kpoint(raw: List[str]) -> Dict[str, Any]:
     assert raw[2].lower() in ['direct', 'cartesian'], \
              f'Invalid KPT file, expected "Direct" or "Cartesian" in the third line, ' \
              f'got {raw[2]}'
-    mymatch = [re.match(r'^(-?\d+(\.\d+)?)\s+(-?\d+(\.\d+)?)\s+(-?\d+(\.\d+)?)\s*'
-                        r'(\d+).*', l) 
+    mymatch = [re.match(r'^(-?\d+(?:\.\d+)?)\s+(-?\d+(?:\.\d+)?)\s+(-?\d+(?:\.\d+)?)\s*'
+                        r'(\d+).*', l)
               for l in raw[3:]]
     assert all(m for m in mymatch), \
              'Invalid KPT file, expected the k-points to be in the format ' \
@@ -614,7 +649,7 @@ def _read_kpoint(raw: List[str]) -> Dict[str, Any]:
         'coordinate': 'Cartesian' if raw[2].lower() == 'cartesian' else 'Direct',
         'nk': int(raw[1]),
         'kpoints': [tuple(map(float, m.groups()[:3])) for m in mymatch],
-        'weights': [int(m.groups()[6]) for m in mymatch]
+        'weights': [int(m.groups()[3]) for m in mymatch]
     }
 
 def read_kpt(fn: str) -> Dict[str, Any]:

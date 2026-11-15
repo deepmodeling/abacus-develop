@@ -1,0 +1,5 @@
+INPUT_PARAMETERS
+# 单点 SCF：金样目录的输入参数（帧选择只对 calculation=scf 生效，spec R1/R2）
+calculation     scf
+cal_force       1
+cal_stress      0

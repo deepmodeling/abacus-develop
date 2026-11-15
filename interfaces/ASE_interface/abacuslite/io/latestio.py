@@ -24,6 +24,7 @@ from abacuslite.io.legacyio import (
     is_invalid_arr,
     find_final_info_with_iter_header
 )
+from abacuslite.io.generalio import energy_components
 
 def read_esolver_type_from_running_log(src: str | Path | List[str]) \
     -> str:
@@ -125,8 +126,8 @@ def read_band_from_eig_occ(src: str | Path | List[str]) \
     k = k.reshape((nframe, nspin, nk, 3))
 
     ekbpat  = r'\d+\s+'
-    ekbpat += r'(-?\d+(\.\d+)?(e[+-]\d+)?)\s+'
-    ekbpat += r'(\d+(\.\d+)?(e[+-]\d+)?)'
+    ekbpat += r'(-?\d+(\.\d+)?([eE][+-]?\d+)?)\s+'
+    ekbpat += r'(-?\d+(\.\d+)?([eE][+-]?\d+)?)'
     iekb = [i for i, l in enumerate(raw) if re.match(ekbpat, l)]
     assert len(iekb) > 0, f'No band energy found'
     assert len(iekb) % (nspin*nk) == 0
@@ -397,21 +398,17 @@ def read_abacus_out(fileobj,
     -> read_results()
     -> read_abacus_out() *here*
 
-    To use this function as a standalone one, the fileobj should be
-    the return of the open() function, which is a TextIOWrapper object:
-    >>> with open(fn) as fileobj:
-    ...     read_abacus_out(fileobj)
+    For standalone use, pass a Path so companion files can be located:
+    >>> read_abacus_out(Path("OUT.ABACUS/running_scf.log"), index=-1)
 
     Parameters
     ----------
-    fileobj : str | Path | TextIOWrapper
-        The file object to read.
-    index : slice
+    fileobj : Path
+        Running-log path; strings and open streams are not supported.
+    index : int or slice
         The index of the frames to read.
     results_required : bool
-        Whether the results are required. If True, the results will be
-        returned. If False, the results will not be returned. This parameter
-        is not used.
+        Retained for compatibility; currently has no effect.
     sort_atoms_with: Optional[List[int]]
         The sort order of the atoms. If not None, the atoms will be sorted
         according to the order in the list.
@@ -437,9 +434,9 @@ def read_abacus_out(fileobj,
     # read the structure, with the cell, elem, etc. (nframe)
     # if it is MD run, the trajectories will be in the file MD_dump, instead
     # of the running log
-    trajectory = read_traj_from_running_log(abacus_lines) \
-        if fileobj.name != 'running_md.log' else \
-        read_traj_from_md_dump(fileobj.parent / 'MD_dump')
+    is_md_dump = fileobj.name == 'running_md.log'
+    trajectory = read_traj_from_md_dump(fileobj.parent / 'MD_dump') \
+        if is_md_dump else read_traj_from_running_log(abacus_lines)
 
     # read the eigenvalues (nframe, nk, nbnd)
     elecstate = read_band_from_eig_occ(fileobj.parent / 'eig_occ.txt')
@@ -492,19 +489,25 @@ def read_abacus_out(fileobj,
         trajectory, elecstate, magmom, forces, stress, energies):
         # for each frame, a structure can be defined
         ind = ind or list(range(len(frame['elem'])))
+        # MD_dump lattice vectors are multiples of alat, while its Cartesian
+        # positions and the running-log structures are already in Angstrom.
+        cell = frame['cell'] * frame['alat_in_angstrom'] \
+            if is_md_dump else frame['cell']
         atoms = Atoms(symbols=np.array(frame['elem'])[ind].tolist(), 
                       positions=frame['coords'][ind], 
-                      cell=frame['cell'],
+                      cell=cell,
+                      pbc=is_md_dump,
                       magmoms=mag[ind])
         # from result, a calculator can be assembled
         # however, sometimes the force and stress is not calculated
         # in this case, we set them to None
         frs  = None if is_invalid_arr(frs)  else frs[ind]
         strs = None if is_invalid_arr(strs) else full_3x3_to_voigt_6_stress(strs)
+        atoms.info.update(energy_components(ener))
         calc = SinglePointDFTCalculator(atoms=atoms, energy=ener['E_KohnSham'],
                                         free_energy=ener['E_KohnSham'],
                                         forces=frs, stress=strs,
-                                        magmoms=mag[ind], efermi=ener['E_Fermi'],
+                                        magmoms=mag[ind], efermi=ener.get('E_Fermi'),
                                         ibzkpts=kvecd, dipole=None)
         # import the eigenvalues and occupations kpoint-by-kpoint
         calc.kpts = []

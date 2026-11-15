@@ -1,0 +1,403 @@
+                                                                                     
+                              ABACUS v3.11.0-beta10
+
+               Atomic-orbital Based Ab-initio Computation at UStc                    
+
+                     Website: http://abacus.ustc.edu.cn/                             
+               Documentation: https://abacus.deepmodeling.com/                       
+                  Repository: https://github.com/abacusmodeling/abacus-develop       
+                              https://github.com/deepmodeling/abacus-develop         
+                      Commit: 73cd09436 (Sat Oct 17 09:46:27 2026 +0800)
+
+    Start Time is Sat Oct 17 18:37:56 2026
+                                                                                     
+ ------------------------------------------------------------------------------------
+
+ READING GENERAL INFORMATION
+                           global_out_dir = OUT.ABACUS/
+                           global_in_card = INPUT
+                               pseudo_dir = /work/source-develop/tests/PP_ORB/
+                              orbital_dir = /work/source-develop/tests/PP_ORB/
+                                    DRANK = 1
+                                    DSIZE = 2
+                                   DCOLOR = 1
+                                    GRANK = 1
+                                    GSIZE = 1
+
+ #ENERGY SOLVER# ksdft_lcao
+ RUNNING WITH DEVICE  : CPU / AMD Ryzen 9 3950X 16-Core Processor (x1)
+
+
+ >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+ |                                                                    |
+ |                        #Setup Unitcell#                            |
+ | From the input file and the structure file we know the number of   |
+ | different elments in this unitcell, then we list the detail        |
+ | information for each element, especially the zeta and polar atomic |
+ | orbital number for each element. The total atom number is counted. |
+ | We calculate the nearest atom distance for each atom and show the  |
+ | Cartesian and Direct coordinates for each atom. We list the file   |
+ | address for atomic orbitals. The volume and the lattice vectors    |
+ | in real and reciprocal space is also shown.                        |
+ |                                                                    |
+ <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+ READING UNITCELL INFORMATION
+                       Number of elements = 1
+                  Lattice constant (Bohr) = 1.88973
+              Lattice constant (Angstrom) = 1
+
+ READING ATOM TYPE 1
+                               Atom label = Fe
+                      L=0, number of zeta = 4
+                      L=1, number of zeta = 2
+                      L=2, number of zeta = 2
+                      L=3, number of zeta = 1
+            Number of atoms for this type = 2
+              Magnetization for this type = [ 1, 0, 0 ]
+      Magnetization for this type (atom2) = [ 0, 1, 0 ]
+
+                        TOTAL ATOM NUMBER = 2
+
+ CARTESIAN COORDINATES ( UNIT =      1.88972613 Bohr )
+ atom                  x                  y                  z     mag
+   Fe     0.000000000000     0.000000000000     0.000000000000  1.0000
+   Fe     2.600000000000     2.600000000000     2.600000000000  1.0000
+
+ ATOMIC VELOCITIES
+ atom                 vx                 vy                 vz
+   Fe                  0                  0                  0
+   Fe                  0                  0                  0
+
+                     Cell volume (Bohr^3) = 948.87
+                        Cell volume (A^3) = 140.608
+
+ Lattice vectors: (Cartesian coordinate: in unit of a_0)
+                 +5.2                  +0                  +0
+                   +0                +5.2                  +0
+                   +0                  +0                +5.2
+ Reciprocal vectors: (Cartesian coordinate: in unit of 2 pi/a_0)
+            +0.192308                  -0                  +0
+                   -0           +0.192308                  -0
+                   +0                  -0           +0.192308
+
+
+ >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+ |                                                                    |
+ |                 #Read Pseudopotentials Files#                      |
+ | ABACUS supports norm-conserving (NC) pseudopotentials for both     |
+ | plane wave basis set and numerical atomic orbital basis set.       |
+ | In addition, ABACUS supports ultrasoft pseudopotentials (USPP)     |
+ | for plane wave basis set.                                          |
+ |                                                                    |
+ <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+                PAO radial cut off (Bohr) = 15
+
+                     Pseudopotential file = Fe.upf
+                     Pseudopotential type = NC
+          Exchange-correlation functional = PBE
+                 Nonlocal core correction = 1
+                        Valence electrons = 16
+                                     Lmax = 2
+                           Number of zeta = 6
+                     Number of projectors = 10
+                           L of projector = 0
+                           L of projector = 0
+                           L of projector = 1
+                           L of projector = 1
+                           L of projector = 1
+                           L of projector = 1
+                           L of projector = 2
+                           L of projector = 2
+                           L of projector = 2
+                           L of projector = 2
+         Number of pseudo atomic orbitals = 40
+            Electron number of element Fe = 16
+      Total electron number of element Fe = 32
+          Autoset the number of electrons = 32
+               Occupied electronic states = 32
+                 Number of basis (NLOCAL) = 108
+     Number of electronic states (NBANDS) = 52
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ Warning: the number of valence electrons in pseudopotential > 8 for Fe: [Ar] 3d6 4s2
+ Pseudopotentials with additional electrons can yield (more) accurate outcomes, but may be less efficient.
+ If you're confident that your chosen pseudopotential is appropriate, you can safely ignore this warning.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                  
+ XC:	101	130	
+
+
+ >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+ |                                                                    |
+ |           #Setup Plane Waves of Charge/Potential#                  |
+ | Use the kinetic energy cutoff and the lattice vectors to generate  |
+ | the dimensions of FFT grid, which is used to represent the charge  |
+ | density or potential. If USPP is used, a double grid technique     |
+ | is applied.                                                        |
+ |                                                                    |
+ <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+ SETUP PLANE WAVES FOR CHARGE/POTENTIAL
+  Energy cutoff for charge/potential (Ry) = 400
+            FFT grid for charge/potential = [ 64, 64, 64 ]
+           Number of FFT grids this proc. = 131072
+                Division for big FFT grid = [ 4, 4, 4 ]
+      FFT (big) grid for charge/potential = [ 16, 16, 16 ]
+     Number of FFT (big) grids this proc. = 2048
+                    Number of plane waves = 128203
+        Number of sticks on FFT x-y plane = 3077
+
+ PARALLEL PW FOR CHARGE/POTENTIAL
+     PROC   COLUMNS(POT)             PW
+        1           1538          64100
+        2           1539          64103
+ --------------- SUM -------------------
+        2           3077         128203
+
+                            Number of |g| = 818
+                                  Max |g| = 36.1686
+                                  Min |g| = 0
+ DONE : SETUP UNITCELL Time : 0.0816107 (SEC)
+
+
+ >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+ |                                                                    |
+ |                       #Setup K-points#                             |
+ | We setup the k-points according to input parameters.               |
+ | The reduced k-points are set according to symmetry operations.     |
+ | We treat the spin as another set of k-points.                      |
+ |                                                                    |
+ <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+
+ SETUP K-POINTS
+                                    nspin = 4
+                   Input type of k points = Monkhorst-Pack(Gamma)
+                                   nkstot = 8
+ K-POINTS DIRECT COORDINATES
+ KPOINTS    DIRECT_X    DIRECT_Y    DIRECT_Z  WEIGHT
+       1  0.00000000  0.00000000  0.00000000  0.1250
+       2  0.50000000  0.00000000  0.00000000  0.1250
+       3  0.00000000  0.50000000  0.00000000  0.1250
+       4  0.50000000  0.50000000  0.00000000  0.1250
+       5  0.00000000  0.00000000  0.50000000  0.1250
+       6  0.50000000  0.00000000  0.50000000  0.1250
+       7  0.00000000  0.50000000  0.50000000  0.1250
+       8  0.50000000  0.50000000  0.50000000  0.1250
+
+
+       Number of k-points in this process = 8
+       Minimum distributed k-point number = 8
+
+ K-POINTS CARTESIAN COORDINATES
+ KPOINTS CARTESIAN_X CARTESIAN_Y CARTESIAN_Z  WEIGHT
+       1  0.00000000  0.00000000  0.00000000  0.1250
+       2  0.09615385  0.00000000  0.00000000  0.1250
+       3  0.00000000  0.09615385  0.00000000  0.1250
+       4  0.09615385  0.09615385  0.00000000  0.1250
+       5  0.00000000  0.00000000  0.09615385  0.1250
+       6  0.09615385  0.00000000  0.09615385  0.1250
+       7  0.00000000  0.09615385  0.09615385  0.1250
+       8  0.09615385  0.09615385  0.09615385  0.1250
+
+
+ K-POINTS DIRECT COORDINATES
+ KPOINTS    DIRECT_X    DIRECT_Y    DIRECT_Z  WEIGHT
+       1  0.00000000  0.00000000  0.00000000  0.1250
+       2  0.50000000  0.00000000  0.00000000  0.1250
+       3  0.00000000  0.50000000  0.00000000  0.1250
+       4  0.50000000  0.50000000  0.00000000  0.1250
+       5  0.00000000  0.00000000  0.50000000  0.1250
+       6  0.50000000  0.00000000  0.50000000  0.1250
+       7  0.00000000  0.50000000  0.50000000  0.1250
+       8  0.50000000  0.50000000  0.50000000  0.1250
+
+ DONE : INIT K-POINTS Time : 0.0821046 (SEC)
+
+
+ >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+ |                                                                    |
+ | Setup charge mixing parameters                                     |
+ |                                                                    |
+ <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+                              mixing_type = broyden
+                              mixing_beta = 0.4
+                               mixing_gg0 = 1
+                           mixing_gg0_min = 0.1
+                          mixing_beta_mag = 1.6
+                           mixing_gg0_mag = 0
+                              mixing_ndim = 8
+
+
+ >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+ |                                                                    |
+ |              #Setup Plane Waves of Wave Functions#                 |
+ | Use the kinetic energy cutoff and the lattice vectors to generate  |
+ | the dimensions of FFT grid, which is used to represent the wave    |
+ | functions of electrons.                                            |
+ |                                                                    |
+ <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+ SETUP PLANE WAVES FOR WAVE FUNCTIONS
+     Energy cutoff for wavefunc (unit:Ry) = 100
+              FFT grid for wave functions = [ 64, 64, 64 ]
+              Number of total plane waves = 18853
+        Number of sticks on FFT x-y plane = 861
+
+ PARALLEL PW FOR WAVE FUNCTIONS
+     PROC   COLUMNS(POT)             PW
+        1            431           9427
+        2            430           9426
+ --------------- sum -------------------
+        2            861          18853
+ DONE : INIT PLANEWAVE Time : 0.108068 (SEC)
+
+                                 init_chg = atomic
+ SET NONLOCAL PSEUDOPOTENTIAL PROJECTORS FOR ELEMENT Fe
+ Max number of nonlocal projectors (all elements) = 10
+ DONE : CHARGE Time : 0.28753 (SEC)
+
+ DONE : POTENTIALS Time : 0.318211 (SEC)
+
+ ================================================================
+ SELF-CONSISTENT
+ ================================================================
+
+
+ >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+ |                                                                    |
+ |                    #Search Adjacent Atoms#                         |
+ | Set the adjacent atoms for each atom and set the periodic boundary |
+ | condition for the atoms on real space FFT grid. For k-dependent    |
+ | algorithm, we also need to set the sparse H and S matrix element   |
+ | for each atom.                                                     |
+ |                                                                    |
+ <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+ SETUP SEARCHING RADIUS
+         Orbital max radius cutoff (Bohr) = 6
+  Nonlocal proj. max radius cutoff (Bohr) = 1.58
+                     Search radius (Bohr) = 15.2
+ SEARCH ADJACENT ATOMS
+                  searching radius (Bohr) = 15.2
+          Radius (unit: lattice constant) = 8.02
+                      Max number of cells = [ 3, 3, 3 ]
+                      Min number of cells = [ 2, 2, 2 ]
+                 Min coordinates of atoms = [ -10.4, -10.4, -10.4 ]
+                 Max coordinates of atoms = [ 13, 13, 13 ]
+                   Number of needed cells = [ 5, 5, 5 ]
+                                ParaV.nnr = 43740
+ DONE : INIT SCF Time : 0.609346 (SEC)
+
+
+ ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ --> #ION MOVE#         1  #ELEC ITER#         1
+ ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+          Total magnetism (Bohr mag/cell) = [ 3.17495, 3.17495, 2.71392e-15 ]
+       Absolute magnetism (Bohr mag/cell) = 6.4671
+               Electron density deviation = 0.190564
+ ----------------------------------------------------------
+      Energy           Rydberg                 eV          
+ ----------------------------------------------------------
+  E_KohnSham     -497.1652812029      -6764.2806721311     
+  E_KS(sigma->0) -497.1468792638      -6764.0303009052     
+  E_Harris       -492.0881455209      -6695.2026973376     
+  E_band         -75.0039295496       -1020.4808142650     
+  E_one_elec     -474.9558991035      -6462.1065265201     
+  E_Hartree      233.9882950728       3183.5740782950      
+  E_xc           -70.4645788242       -958.7197791795      
+  E_Ewald        -189.6171722242      -2579.8739808970     
+  E_entropy(-TS) -0.0368038782        -0.5007424518        
+  E_descf        3.9208777545         53.3462786223        
+  E_localpp      -834.0090803174      -11347.2756760569    
+  E_exx          0.0000000000         0.0000000000         
+  E_Fermi        0.0511965470         0.6965647565         
+  E_gap(k)       0.0021468857         0.0292098780         
+ ----------------------------------------------------------
+
+ !!SCF IS NOT CONVERGED!!
+ Write eigenvalues and occupations to file: OUT.ABACUS/eig_occ.txt
+-------------------------------------------------------------------------------------------
+       Total Magnetism (uB)                    x                    y                    z 
+-------------------------------------------------------------------------------------------
+                        Fe1         3.2449553172         0.0700029668         0.0000000000 
+                        Fe2        -0.0700029668        -3.2449553172         0.0000000000 
+-------------------------------------------------------------------------------------------
+
+-------------------------------------------------------------------------------------------
+       Total Magnetism (uB)       Magnitude (uB)       Polar (degree)     Azimuth (degree) 
+-------------------------------------------------------------------------------------------
+                        Fe1         3.2457103115        90.0000000000         1.2358421392 
+                        Fe2         3.2457103115        90.0000000000       -91.2358421392 
+-------------------------------------------------------------------------------------------
+
+
+ --------------------------------------------
+ !FINAL_ETOT_IS -6764.280672131095 eV
+ --------------------------------------------
+
+
+
+ TIME STATISTICS
+------------------------------------------------------------------
+   CLASS_NAME           NAME        TIME/s  CALLS   AVG/s  PER/%  
+------------------------------------------------------------------
+                 total              1.42   13       0.11   100.00 
+ Driver          atomic_world       1.42   1        1.42   100.00 
+ ESolver_KS_LCAO before_all_runners 0.31   1        0.31   21.54  
+ module_charge   atomic_rho         0.09   2        0.04   5.99   
+ PW_Basis_Sup    recip2real         0.10   38       0.00   6.83   
+ ppcell_vl       init_vloc          0.03   1        0.03   1.80   
+ Relax_Driver    relax_driver       1.10   1        1.10   77.06  
+ ESolver_KS      runner             1.10   1        1.10   77.06  
+ ESolver_KS_LCAO before_scf         0.29   1        0.29   20.45  
+ module_charge   set_rho_core       0.03   1        0.03   2.23   
+ Potential       init_pot           0.25   1        0.25   17.57  
+ Potential       cal_veff           0.51   2        0.25   35.74  
+ H_Hartree_pw    v_hartree          0.02   2        0.01   1.15   
+ PW_Basis_Sup    real2recip         0.08   30       0.00   5.51   
+ PotXC           cal_veff           0.49   2        0.24   34.32  
+ XC_Functional   v_xc               0.49   2        0.24   34.22  
+ HSolverLCAO     solve              0.42   1        0.42   29.20  
+ HamiltLCAO      updateHk           0.18   8        0.02   12.54  
+ OperatorLCAO    init               0.18   40       0.00   12.54  
+ Veff            contributeHR       0.16   1        0.16   11.56  
+ Gint            cal_gint_vl        0.16   1        0.16   11.55  
+ HSolverLCAO     hamiltSolvePsiK    0.09   8        0.01   6.46   
+ LCAO_domain     dm2rho             0.14   1        0.14   10.08  
+ Gint            cal_gint_rho       0.14   1        0.14   9.74   
+ Charge_Mixing   mix_rho            0.04   1        0.04   2.54   
+ Charge_Mixing   mix_rho_real       0.03   1        0.03   2.43   
+ module_charge   kerker_screen_real 0.02   1        0.02   1.48   
+ ESolver_KS_LCAO after_scf          0.05   1        0.05   3.33   
+------------------------------------------------------------------
+
+
+ NAME-------------------------|MEMORY(MB)------------------
+                         total          99.88
+                    ORB::Jl(x)          36.87
+                      Chg::rho              8
+                 Chg::rho_save              8
+                     Pot::veff              8
+              Pot::veff_smooth              8
+                     Chg::rhog          3.912
+                Chg::rhog_save          3.912
+                  PW_B_K::gcar          2.944
+      TwoCenterTable: Nonlocal          2.631
+       TwoCenterTable: Kinetic          2.164
+       TwoCenterTable: Overlap          2.164
+                 Chg::rho_core              2
+                 Pot::veff_fix              2
+                  SF::strucFac          1.956
+            DensityMatrix::DMK          1.424
+                HamiltLCAO::hR           1.34
+                HamiltLCAO::sR           1.34
+ -------------   < 1.0 MB has been ignored ----------------
+ ----------------------------------------------------------
+
+ Start  Time  : Sat Oct 17 18:37:56 2026
+ Finish Time  : Sat Oct 17 18:37:57 2026
+ Total  Time  : 0 h 0 mins 1 secs 

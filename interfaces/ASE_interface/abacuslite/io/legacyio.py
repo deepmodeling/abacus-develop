@@ -13,6 +13,7 @@ from ase.calculators.singlepoint import (
 )
 from ase.units import Ry, eV, GPa, bar
 from ase.stress import full_3x3_to_voigt_6_stress
+from abacuslite.io.generalio import energy_components
 # from ase.utils import reader
 
 __all__ = ['read_kpoints_from_running_log', 
@@ -736,7 +737,7 @@ def read_iter_header_from_running_log(src: str | Path | List[str]) \
     raw = [l.strip() for l in raw]
     raw = [l for l in raw if l] # remove empty lines
 
-    HEADER_PAT = r'(LCAO|PW)\s+ALGORITHM\s+-+\s+ION=\s+([0-9]+)\s+ELEC=\s+([0-9]+)'
+    HEADER_PAT = r'(LCAO|PW)\s+ALGORITHM\s+-+\s+ION=\s*([0-9]+)\s+ELEC=\s*([0-9]+)'
     res = [re.findall(HEADER_PAT, l) for l in raw]
 
     return [(int(pack[0][1]), int(pack[0][2])) for pack in res if pack]
@@ -843,8 +844,26 @@ def read_abacus_out(fileobj,
     # read the esolver type
     eslvtyp = read_esolver_type_from_running_log(abacus_lines)
     
-    # read the structure, with the cell, elem, etc. (nframe)
-    trajectory = read_traj_from_running_log(abacus_lines)
+    # Prefer MD_dump when present: current LTS running_md.log normally contains
+    # only the initial structure, but older complete MD logs stand alone.
+    log_path = Path(fileobj if isinstance(fileobj, (str, Path)) else fileobj.name)
+    is_md_log = log_path.name == 'running_md.log'
+    dump_path = log_path.parent / 'MD_dump' if is_md_log else None
+    uses_md_dump = is_md_log and dump_path.exists()
+    if uses_md_dump:
+        if not dump_path.is_file():
+            raise ValueError(f'Invalid MD_dump: expected a file at {dump_path}')
+        try:
+            trajectory = read_traj_from_md_dump(dump_path)
+        except (AssertionError, IndexError, ValueError, ZeroDivisionError) as exc:
+            raise ValueError(f'Invalid or truncated MD_dump: {dump_path}: {exc}') from exc
+        log_structures = read_traj_from_running_log(abacus_lines)
+        if log_structures:
+            symbols = log_structures[0]['elem']
+            if any(frame['elem'] != symbols for frame in trajectory):
+                raise ValueError(f'MD_dump frame atom count/order disagrees with {log_path}')
+    else:
+        trajectory = read_traj_from_running_log(abacus_lines)
     # read the eigenvalues (nframe, nk, nbnd)
     elecstate = read_band_from_running_log(abacus_lines)
     # read the atomic forces (nframe, nat, 3)
@@ -871,6 +890,12 @@ def read_abacus_out(fileobj,
     magmom = read_magmom_from_running_log(abacus_lines)
 
     # roughly check the integrity of data from their length consistency
+    if is_md_log and (len(trajectory) != len(energies)
+                      or len(trajectory) != len(elecstate)):
+        source = 'MD_dump' if uses_md_dump else 'running_md.log without MD_dump'
+        raise ValueError(f'{source} geometry frame count {len(trajectory)} != '
+                         f'energy/electronic frame counts '
+                         f'{len(energies)}/{len(elecstate)} in {log_path}')
     assert len(trajectory) == len(energies), \
         f'Inconsistent length: {len(trajectory)} != {len(energies)}'
     assert len(trajectory) == len(elecstate), \
@@ -892,9 +917,25 @@ def read_abacus_out(fileobj,
         trajectory, elecstate, magmom, forces, stress, energies):
         # for each frame, a structure can be defined
         ind = ind or list(range(len(frame['elem'])))
+        positions = frame['coords'][ind]
+        if is_md_log:
+            if uses_md_dump:
+                cell = frame['cell'] * frame['alat_in_angstrom']
+                # MD_dump labels Cartesian positions directly in Angstrom.
+            else:
+                cell = frame['cell']  # running-log reader already returns Angstrom
+                if frame['coordinate'] == 'Direct':
+                    positions = positions @ cell
+                elif frame['coordinate'] == 'Cartesian':
+                    positions = positions * frame['alat_in_angstrom']
+                else:
+                    raise ValueError(f'Unknown MD coordinate system: {frame["coordinate"]}')
+        else:
+            cell = frame['cell']
         atoms = Atoms(symbols=np.array(frame['elem'])[ind].tolist(), 
-                      positions=frame['coords'][ind], 
-                      cell=frame['cell'],
+                      positions=positions,
+                      cell=cell,
+                      pbc=is_md_log,
                       magmoms=mag[ind])
         
         # from result, a calculator can be assembled
@@ -902,10 +943,11 @@ def read_abacus_out(fileobj,
         # in this case, we set them to None
         frs  = None if is_invalid_arr(frs)  else frs[ind]
         strs = None if is_invalid_arr(strs) else full_3x3_to_voigt_6_stress(strs)
+        atoms.info.update(energy_components(ener))
         calc = SinglePointDFTCalculator(atoms=atoms, energy=ener['E_KohnSham'],
                                         free_energy=ener['E_KohnSham'],
                                         forces=frs, stress=strs,
-                                        magmoms=mag[ind], efermi=ener['E_Fermi'],
+                                        magmoms=mag[ind], efermi=ener.get('E_Fermi'),
                                         ibzkpts=kvecd, dipole=None)
         # import the eigenvalues and occupations kpoint-by-kpoint
         calc.kpts = []
@@ -1245,11 +1287,10 @@ class TestLegacyIO(unittest.TestCase):
         self.assertEqual(header[2], (2,1))
         fn = self.testfiles / 'pw-symm0-nspin4-gamma-md_'
         header = read_iter_header_from_running_log(fn)
-        self.assertEqual(header[0], (1,1))
-        self.assertEqual(header[1], (1,2))
-        self.assertEqual(header[2], (1,3))
-        self.assertEqual(header[3], (3,2))
-        self.assertEqual(header[4], (3,3))
+        # Include the compact ION=2/ELEC=1 and ION=3/ELEC=1 headers too.
+        self.assertEqual(
+            header, [(1, 1), (1, 2), (1, 3), (2, 1), (3, 1), (3, 2), (3, 3)]
+        )
 
     def test_find_final_info_with_iter_header(self):
         info = [1, 2, 3, 4, 5, 6]
