@@ -66,6 +66,23 @@ __LEGACYIO__ = True
 SOCKET_METADATA_SCHEMA = 'abacus.socket.properties.v1'
 
 
+def _schema_compatible_properties(results, natoms):
+    """Project calculator results through ASE's installed Properties schema."""
+    from ase.calculators.calculator import Properties, all_outputs
+
+    exported = {}
+    for name, value in results.items():
+        if name not in all_outputs:
+            continue
+        shape = np.shape(value)
+        if name == 'magmom' and shape != ():
+            continue
+        if name == 'magmoms' and shape != (natoms,):
+            continue
+        exported[name] = value
+    return Properties(exported)
+
+
 def _uses_legacy_io(version: str) -> bool:
     """Resolve a format without mutating another calculator's reader."""
     match = re.match(
@@ -872,9 +889,13 @@ class AbacusTemplate(CalculatorTemplate):
         }
         if vector_moments:
             singlepoint = copy(singlepoint)
-            singlepoint.results = {name: value for name, value in singlepoint.results.items()
-                                   if name not in vector_moments}
-        results = dict(singlepoint.properties())
+            singlepoint.results = {
+                name: value for name, value in singlepoint.results.items()
+                if name not in vector_moments
+            }
+        results = dict(_schema_compatible_properties(
+            singlepoint.properties(), len(atoms)
+        ))
         results.update(vector_moments)
         if vector_moments:
             results.setdefault('natoms', len(atoms))
@@ -970,20 +991,8 @@ class Abacus(GenericFileIOCalculator):
 
     def export_properties(self):
         """Export only values accepted by ASE's versioned Properties schema."""
-        from ase.calculators.calculator import Properties, all_outputs
-
-        exported = {}
         natoms = len(self.atoms) if self.atoms is not None else None
-        for name, value in self.results.items():
-            if name not in all_outputs:
-                continue
-            shape = np.shape(value)
-            if name == 'magmom' and shape != ():
-                continue
-            if name == 'magmoms' and (natoms is None or shape != (natoms,)):
-                continue
-            exported[name] = value
-        return Properties(exported)
+        return _schema_compatible_properties(self.results, natoms or 0)
 
     @classmethod
     def restart(cls, profile=None, directory='.', **kwargs):
