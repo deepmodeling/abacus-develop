@@ -160,7 +160,6 @@ if(ENABLE_LCAO)
       device
       container
       cereal::cereal
-      ri
       SOURCES
       test_op_exx_nscf_nearest.cpp
       ../op_exx_lcao.cpp
@@ -186,6 +185,12 @@ if(ENABLE_LCAO)
       ../../../source_io/module_restart/restart.cpp
       ../../../source_io/module_restart/restart_exx_csr.cpp
       ../../../source_cell/ucell_io.cpp
+      # op_exx_lcao.cpp calls RI_2D_Comm::add_HexxR and dm_container_to_Ds.
+      # Compile just that translation unit rather than the whole ri object
+      # library: the latter also pulls in Exx_LRI_Interface, which needs
+      # elecstate and module_exx_symmetry symbols this focused test does not
+      # link.
+      ../../module_ri/ri_2d_comm.cpp
       # op_exx_lcao.cpp calls XC_Functional (resolve_runtime_xc_type /
       # set_xc_type / set_xc_first_loop) and TD_info::initialize_phase_hybrid
       # for the td_stype=2 hybrid path; both live outside this target's
