@@ -334,11 +334,17 @@ std::string XC_Functional::resolve_runtime_xc_type(const std::string& input_func
     return input_functional;
 }
 
-// op_exx_lcao.cpp defines the OperatorEXX members this fixture compiles but
-// never runs. Their contributeHR/cal_dH paths call Exx_LRI_Interface, whose
-// implementation lives in module_ri and would drag in elecstate and
-// module_exx_symmetry. Provide the four instantiations that op_exx_lcao.cpp
+// op_exx_lcao.cpp defines the OperatorEXX members the EXX fixture compiles
+// but never runs. Their contributeHR/cal_dH paths call Exx_LRI_Interface,
+// whose implementation lives in module_ri and would drag in elecstate and
+// module_exx_symmetry. Provide the instantiations that op_exx_lcao.cpp
 // references; the fixture never reaches them.
+//
+// This file is shared with the operator, DFTU and LR fixtures, which also
+// build with ENABLE_LIBRI=OFF. LibRI's headers only exist when that option
+// is on, so everything below has to stay behind __EXX; those other targets
+// never compile op_exx_lcao.cpp and therefore need none of these stubs.
+#ifdef __EXX
 #include "source_lcao/module_ri/exx_lri_interface.h"
 
 namespace
@@ -390,3 +396,4 @@ void Exx_LRI_Interface<std::complex<double>, std::complex<double>>::cal_exx_ions
                                                                                const bool)
 {
 }
+#endif // __EXX
