@@ -127,14 +127,40 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force(cons
 template<typename T, typename TR>
 LR::GradientInputs<T> ModuleESolver::ESolver_LR<T, TR>::gradient_inputs_() const
 {
-    return { *this->ucell_, this->kv, this->gd(), this->orb_cutoff_, this->paraMat_,
-        this->paraC_z_, this->paraX_z_, *this->psi_ks_z_, this->eig_ks_z_, this->nocc,
-        this->nvirt_z_, this->nspin, this->nk, this->nbasis, this->nloc_per_state_z_,
-        this->xc_kernel, this->inp_->dft_functional, this->inp_->ks_solver,
-        this->inp_->test_force, this->excited_relax_, this->out_dir, this->my_rank_,
-        this->spin_types, this->pot, this->pot_hxc_gs, this->ofs_running_
+    const double response_tolerance = this->inp_->lr_grad_thr;
+    const int response_max_iterations = this->inp_->lr_grad_maxiter;
+    return {*this->ucell_,
+        this->kv,
+        this->gd(),
+        this->orb_cutoff_,
+        this->paraMat_,
+        this->paraC_z_,
+        this->paraX_z_,
+        *this->psi_ks_z_,
+        this->eig_ks_z_,
+        this->nocc,
+        this->nvirt_z_,
+        this->nspin,
+        this->nk,
+        this->nbasis,
+        this->nloc_per_state_z_,
+        this->xc_kernel,
+        this->inp_->dft_functional,
+        this->inp_->ks_solver,
+        this->inp_->test_force,
+        this->excited_relax_,
+        this->out_dir,
+        this->my_rank_,
+        this->spin_types,
+        this->pot,
+        this->pot_hxc_gs,
+        this->ofs_running_,
+        response_tolerance,
+        response_max_iterations
 #ifdef __EXX
-        , this->exx_lri, this->exx_info.info_global.hybrid_alpha
+        ,
+        this->exx_lri,
+        this->exx_info.info_global.hybrid_alpha
 #endif
     };
 }
@@ -157,7 +183,16 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force_Xz(c
         , inputs.exx_lri, inputs.hybrid_alpha
 #endif
     );
-    const auto forces = LR::evaluate_closed_shell_force(inputs, force_terms, dm_gs, Xz, Z, omega, label_begin, ispin);
+    const auto forces = LR::evaluate_closed_shell_force(
+        inputs,
+        force_terms,
+        dm_gs,
+        Xz,
+        Z,
+        omega,
+        label_begin,
+        ispin,
+        true);
     ModuleBase::timer::end("ESolver_LR", "cal_force_Xz");
     return forces;
 }
@@ -356,7 +391,15 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force_open
         , inputs.exx_lri, inputs.hybrid_alpha
 #endif
     );
-    const auto forces = LR::evaluate_open_shell_force(inputs, force_terms, dm_gs, Xz, Z, omega, label_begin);
+    const auto forces = LR::evaluate_open_shell_force(
+        inputs,
+        force_terms,
+        dm_gs,
+        Xz,
+        Z,
+        omega,
+        label_begin,
+        true);
     ModuleBase::timer::end("ESolver_LR", "cal_force_openshell_Xz");
     return forces;
 }

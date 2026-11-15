@@ -1,17 +1,18 @@
 // LR execution flow and final spectrum/density output.
 #include "esolver_lr_lcao_tddft.h"
-#include "source_lcao/module_lr/utils/lr_io.h"
-#include "source_lcao/module_lr/utils/lr_util_print.h"
-#include "source_lcao/module_lr/utils/lr_util.h"
+#include "source_hamilt/module_xc/xc_functional.h"
 #include "source_lcao/module_lr/hamilt_ulr.h"
 #include "source_lcao/module_lr/hsolver_lrtd.h"
-#include "source_lcao/module_lr/lr_spectrum.h"
-#include "source_lcao/module_lr/utils/spectrum_weights.h"
 #include "source_lcao/module_lr/lr_density.h"
-#include "source_lcao/module_lr/ri_benchmark/ri_benchmark.h"
+#include "source_lcao/module_lr/lr_spectrum.h"
+#include "source_lcao/module_lr/nacv_cs.h"
 #include "source_lcao/module_lr/operator_casida/operator_lr_diag.h"
+#include "source_lcao/module_lr/ri_benchmark/ri_benchmark.h"
+#include "source_lcao/module_lr/utils/lr_io.h"
+#include "source_lcao/module_lr/utils/lr_util.h"
+#include "source_lcao/module_lr/utils/lr_util_print.h"
+#include "source_lcao/module_lr/utils/spectrum_weights.h"
 #include "source_lcao/module_lr/zeq_solver.h"
-#include "source_hamilt/module_xc/xc_functional.h"
 #include <algorithm>
 #include <iomanip>
 
@@ -37,6 +38,7 @@ void ModuleESolver::ESolver_LR<T, TR>::runner(BaseCell& basecell, const int iste
 
     ModuleBase::TITLE("ESolver_LR", "runner");
     ModuleBase::timer::start("ESolver_LR", "runner");
+    const int geometry_index = istep + 1;
 
     if (this->ks_)
     {
@@ -46,11 +48,11 @@ void ModuleESolver::ESolver_LR<T, TR>::runner(BaseCell& basecell, const int iste
         XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
         this->ks_->runner(ucell, istep);
         this->conv_esolver = this->ks_->conv_esolver;
-        if (this->inp_->calculation == "relax" && !this->conv_esolver)
+        if ((this->inp_->calculation == "relax" || !this->inp_->lr_nac_pairs.empty()) && !this->conv_esolver)
         {
             ModuleBase::WARNING_QUIT(
                 "ESolver_LR",
-                "Excited-state relaxation requires a converged ground-state SCF; ionic step rejected");
+                "LR forces and derivative couplings require a converged ground-state SCF; ionic step rejected");
         }
         this->etot_gs_ = this->ks_->cal_energy();
         if (!this->ks_initialized_)
@@ -64,7 +66,26 @@ void ModuleESolver::ESolver_LR<T, TR>::runner(BaseCell& basecell, const int iste
         }
     }
 
+    if (!this->inp_->lr_nac_pairs.empty())
+    {
+        if (this->openshell)
+        {
+            LR::validate_nac_occupations(this->wg_ks_all, this->nocc, this->nbasis);
+        }
+        else
+        {
+            const int occupied_bands = this->nocc.at(0);
+            LR::validate_nac_occupations(
+                this->wg_ks_all,
+                occupied_bands,
+                this->nbasis,
+                this->nspin);
+        }
+    }
+
     //allocate 2-particle state and setup 2d division
+    this->lr_residuals_.clear();
+    this->lr_residuals_.resize(this->nspin);
     this->setup_eigenvectors_X();
     this->pelec->ekb.create(nspin, this->nstates);
 
@@ -90,17 +111,35 @@ void ModuleESolver::ESolver_LR<T, TR>::runner(BaseCell& basecell, const int iste
     }
     else if (this->inp_->lr_solver != "spectrum")
     {
-        auto write_states = [this, &efile_out, &vfile_out](const std::string& label,
-                                const Real<T>* e,
-                                const T* v,
-                                const int& dim,
-                                const int& nst,
-                                const int& prec = 8) -> void {
+        auto write_states = [this, &efile_out, &vfile_out](
+                                const std::string &label,
+                                const Real<T> *e,
+                                const T *v,
+                                const int &dim,
+                                const int &nst) -> void
+        {
             if (this->my_rank_ == 0)
             {
-                assert(nst == LR_Util::write_value(efile_out(label), prec, e, nst));
+                const int written = LR_Util::write_value(
+                    efile_out(label),
+                    17,
+                    e,
+                    nst);
+                if (written != nst)
+                {
+                    ModuleBase::WARNING_QUIT("ESolver_LR", "Incomplete LR excitation-energy output");
+                }
             }
-            assert(nst * dim == LR_Util::write_value(vfile_out(label), prec, v, nst, dim));
+            const int written = LR_Util::write_value(
+                vfile_out(label),
+                17,
+                v,
+                nst,
+                dim);
+            if (written != nst * dim)
+            {
+                ModuleBase::WARNING_QUIT("ESolver_LR", "Incomplete LR excitation-amplitude output");
+            }
         };
         std::vector<double> precondition(this->inp_->lr_solver == "lapack" ? 0 : nloc_per_state, 1.0);
         // allocate and initialize A matrix and density matrix
@@ -138,6 +177,26 @@ void ModuleESolver::ESolver_LR<T, TR>::runner(BaseCell& basecell, const int iste
                                this->nk, this->nocc, this->nvirt, this->paraX_,
                                this->pelec->ekb.c, this->inp_->lr_solver,
                                this->inp_->lr_thr, precondition, true);
+            if (!this->inp_->lr_nac_pairs.empty())
+            {
+                const T *amplitudes = this->X[0].template data<T>();
+                const double *energies = this->pelec->ekb.c;
+                this->lr_residuals_[0] = LR::HSolver::eigenpair_residuals(
+                    hulr,
+                    amplitudes,
+                    energies,
+                    nloc_per_state,
+                    nstates);
+                if (this->my_rank_ == 0)
+                {
+                    LR::print_nac_eigenpairs(
+                        this->ofs_running_,
+                        geometry_index,
+                        this->spin_types[0],
+                        energies,
+                        this->lr_residuals_[0]);
+                }
+            }
             if (this->inp_->out_wfc_lr) { write_states("openshell", this->pelec->ekb.c, this->X[0].template data<T>(), nloc_per_state, nstates); }
         }
         else
@@ -180,6 +239,26 @@ void ModuleESolver::ESolver_LR<T, TR>::runner(BaseCell& basecell, const int iste
                                    this->inp_->lr_solver,
                                    this->inp_->lr_thr,
                                    precondition, true);
+                if (!this->inp_->lr_nac_pairs.empty() || this->inp_->out_wfc_lr)
+                {
+                    const T *amplitudes = this->X[is].template data<T>();
+                    const double *energies = this->pelec->ekb.c + is * nstates;
+                    this->lr_residuals_[is] = LR::HSolver::eigenpair_residuals(
+                        hlr,
+                        amplitudes,
+                        energies,
+                        nloc_per_state,
+                        nstates);
+                    if (this->my_rank_ == 0)
+                    {
+                        LR::print_nac_eigenpairs(
+                            this->ofs_running_,
+                            geometry_index,
+                            spin_types[is],
+                            energies,
+                            this->lr_residuals_[is]);
+                    }
+                }
                 if (this->inp_->out_wfc_lr) { write_states(spin_types[is], this->pelec->ekb.c + is * nstates, this->X[is].template data<T>(), nloc_per_state, nstates); }
             }
         }
@@ -247,6 +326,28 @@ void ModuleESolver::ESolver_LR<T, TR>::runner(BaseCell& basecell, const int iste
             << " | |F_gs|max = " << max_abs(this->force_gs_) * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A
             << ", |F_Omega|max = " << max_abs(this->lr_force_) * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A
             << " eV/Angstrom" << std::defaultfloat << std::endl;
+    }
+
+    if (!this->inp_->lr_nac_pairs.empty())
+    {
+        const int channel = this->inp_->lr_nac_spin == "triplet" ? 1 : 0;
+        const int output_step = istep + 1;
+        for (std::size_t pair = 0; pair < this->inp_->lr_nac_pairs.size(); pair += 2)
+        {
+            const int bra = this->inp_->lr_nac_pairs[pair];
+            const int ket = this->inp_->lr_nac_pairs[pair + 1];
+            const LR::NacvResult coupling = this->cal_nac(bra, ket, channel);
+            if (this->my_rank_ == 0)
+            {
+                LR::print_nac_result(
+                    this->ofs_running_,
+                    coupling,
+                    output_step,
+                    bra,
+                    ket,
+                    this->inp_->lr_nac_spin);
+            }
+        }
     }
 
     ModuleBase::timer::end("ESolver_LR", "runner");

@@ -29,6 +29,7 @@ if(ENABLE_LCAO)
     esolver_lr_cfg.cpp
     esolver_lr_lcao_tddft.cpp
     esolver_lr_grad.cpp
+    esolver_lr_nac.cpp
     esolver_lr_rlx.cpp
     esolver_gets.cpp
     lcao_others.cpp

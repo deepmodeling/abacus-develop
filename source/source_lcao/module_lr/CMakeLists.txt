@@ -5,6 +5,7 @@ if(ENABLE_LCAO)
   add_subdirectory(ri_benchmark)
   if(BUILD_TESTING)
     add_subdirectory(test)
+    add_subdirectory(unittests)
   endif()
 
   list(
@@ -40,6 +41,8 @@ if(ENABLE_LCAO)
     hamilt_casida.cpp
     potentials/xc_kernel.cpp
     potentials/xc_kxc.cpp
+    nacv_cs.cpp
+    nacv_result.cpp
     gradient_output.cpp
     lr_grad_cs.cpp
     lr_grad_os.cpp
