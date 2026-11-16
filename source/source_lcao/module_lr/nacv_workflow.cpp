@@ -5,6 +5,7 @@
 #include "hamilt_ulr.h"
 #include "lr_amp.h"
 #include "nacv_cs.h"
+#include "nacv_force.h"
 #include "nacv_response.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
@@ -38,7 +39,9 @@ NacvResult evaluate_nac_pair(
     const NacvInputs<double> &,
     int,
     int,
-    int);
+    int,
+    NacvForce &,
+    NacvResponse &);
 void validate_nac_data(const NacvInputs<double> &);
 } // namespace
 
@@ -91,6 +94,20 @@ template <> void run_nac_requests<double>(const NacvInputs<double> &data, int io
     validate_nac_data(data);
     const auto &request = data.request;
     const int channel = request.spin_name == "triplet" ? 1 : 0;
+    const ForceSettings settings{data.gradient.nspin,
+        data.gradient.test_force,
+        request.local_potential,
+        request.hartree_potential,
+        data.gradient.dft_functional};
+    NacvForce force_terms(data, settings);
+    const NacvResponseControls controls{request.response_tolerance, request.response_max_iterations};
+    NacvResponse response_context(
+        data.gradient,
+        channel,
+        data.open_shell,
+        request.response_solver,
+        controls);
+
     for (std::size_t pair = 0; pair < request.pairs.size(); pair += 2)
     {
         const int bra = request.pairs[pair];
@@ -99,7 +116,9 @@ template <> void run_nac_requests<double>(const NacvInputs<double> &data, int io
             data,
             bra,
             ket,
-            channel);
+            channel,
+            force_terms,
+            response_context);
         if (data.gradient.my_rank == 0)
         {
             print_nac_result(
@@ -208,9 +227,10 @@ NacvResult evaluate_nac_pair(
     const NacvInputs<double> &data,
     int bra_state,
     int ket_state,
-    int spin_channel)
+    int spin_channel,
+    NacvForce &force_terms,
+    NacvResponse &response_context)
 {
-
     const bool reverse = bra_state > ket_state;
     const int lower = std::min(bra_state, ket_state);
     const int upper = std::max(bra_state, ket_state);
@@ -238,35 +258,10 @@ NacvResult evaluate_nac_pair(
         residuals.at(ket_index));
     const LR::GradientInputs<double> &inputs = data.gradient;
     const auto &ground_density = data.ground_density;
-    const LR::ForceSettings settings{data.gradient.nspin,
-        data.gradient.test_force,
-        data.request.local_potential,
-        data.request.hartree_potential,
-        data.gradient.dft_functional};
-    LR::LR_Force<double> force_terms(
-        data.gradient.ucell,
-        data.gradient.kv.kvec_d,
-        data.gradient.pmat,
-        data.density_basis,
-        data.smooth_basis,
-        data.local_potential,
-        data.structure_factor,
-        data.gradient.gd,
-        data.two_center_bundle,
-        settings,
-        data.gradient.ofs
-#ifdef __EXX
-        ,
-        inputs.exx_lri,
-        inputs.hybrid_alpha
-#endif
-    );
-    const NacvResponseControls controls{data.request.response_tolerance, data.request.response_max_iterations};
     LR::NacvResult result = LR::evaluate_aux_tda_nac(
         inputs,
         force_terms,
         ground_density,
-        data.two_center_bundle,
         spin_channel,
         ground_bra,
         bra_pointer,
@@ -274,8 +269,7 @@ NacvResult evaluate_nac_pair(
         bra_energy,
         ket_energy,
         gap_resolution,
-        data.request.response_solver,
-        controls);
+        response_context);
     if (reverse)
     {
         LR::reverse_nac_pair(result);

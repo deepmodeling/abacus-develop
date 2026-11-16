@@ -31,6 +31,20 @@ inline double gs_dm_channel_factor(const int& nspin)
         std::string dft_functional;
     };
 
+    /**
+     * @brief Borrowed geometry-fixed inputs for repeated analytic force contractions.
+     * @details Derivatives are Cartesian x/y/z HContainers in the existing distributed
+     * AO layout. Potentials retain their normal ground-state XC definition.
+     * The owner keeps every referenced object alive for the complete force batch.
+     */
+    struct ForceGeometry
+    {
+        const std::vector<hamilt::HContainer<double>> &overlap;
+        const std::vector<hamilt::HContainer<double>> &kinetic;
+        const elecstate::Potential &local;
+        const elecstate::Potential &ground;
+    };
+
     template<typename TK>
     class LR_Force
     {
@@ -61,6 +75,8 @@ inline double gs_dm_channel_factor(const int& nspin)
             vl_in_h_(settings.vl_in_h), vh_in_h_(settings.vh_in_h), dft_functional_(settings.dft_functional)
         {
         }
+
+        virtual ~LR_Force() = default;
 
         /// 1. $Tr[H_{GS}^x * (T+D^Z)]$, where GS=groud state and $(T+D^Z)$ is the relaxed difference density matrix
         ModuleBase::matrix cal_force_hamilt_gs_dm_relaxed_diff(const module_dm::DensityMatrix<TK, double>& relaxed_diff_dm,
@@ -109,15 +125,21 @@ inline double gs_dm_channel_factor(const int& nspin)
             const elecstate::Potential& pot_gs);
 
     protected:
-        const UnitCell& ucell_;
-        const std::vector<ModuleBase::Vector3<double>>& kvec_d_;
-        const Parallel_Orbitals& pv_;
-        const ModulePW::PW_Basis& rhodpw_;
-        const ModulePW::PW_Basis& rhopw_;
-        const pseudopot_cell_vl& locpp_;
-        const Structure_Factor& sf_;
-        const Grid_Driver& gd_;
-        const TwoCenterBundle& two_center_bundle_;
+      /**
+       * @brief Supply optional geometry-fixed intermediates without changing force formulas.
+       * @return Borrowed view valid for this batch, or nullptr for the ordinary LR path.
+       */
+      virtual const ForceGeometry *geometry_terms() { return nullptr; }
+
+      const UnitCell &ucell_;
+      const std::vector<ModuleBase::Vector3<double>> &kvec_d_;
+      const Parallel_Orbitals &pv_;
+      const ModulePW::PW_Basis &rhodpw_;
+      const ModulePW::PW_Basis &rhopw_;
+      const pseudopot_cell_vl &locpp_;
+      const Structure_Factor &sf_;
+      const Grid_Driver &gd_;
+      const TwoCenterBundle &two_center_bundle_;
 #ifdef __EXX
         std::weak_ptr<Exx_LRI<TK>> exx_lri_;
         const double alpha_;

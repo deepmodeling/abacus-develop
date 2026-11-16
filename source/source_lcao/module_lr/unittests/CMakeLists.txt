@@ -30,3 +30,18 @@ endif()
 addtest(
   TARGET MODULE_LR_nacv_xc_names
   SOURCES test_nacv_xc_names.cpp)
+
+if(ENABLE_MPI)
+  addtest(
+    TARGET MODULE_LR_nacv_factorization
+    LIBS base parameter ${math_libs} container device psi MPI::MPI_CXX
+    SOURCES test_nacv_factorization.cpp ../nacv_factorization.cpp ../utils/lr_util.cpp
+            ../../../source_base/test/mpi_test_main.cpp)
+  add_test(
+    NAME MODULE_LR_nacv_factorization_mpi4
+    COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 4 ${MPIEXEC_PREFLAGS}
+            $<TARGET_FILE:MODULE_LR_nacv_factorization> ${MPIEXEC_POSTFLAGS})
+  set_tests_properties(MODULE_LR_nacv_factorization_mpi4 PROPERTIES PROCESSORS 4 TIMEOUT 120)
+  set_tests_properties(MODULE_LR_nacv_factorization MODULE_LR_nacv_factorization_mpi4
+    PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=1;MKL_NUM_THREADS=1;OPENBLAS_NUM_THREADS=1")
+endif()

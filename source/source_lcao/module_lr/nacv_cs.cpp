@@ -1,9 +1,8 @@
 #include "nacv_cs.h"
 
 #include "cal_edm.h"
-#include "cal_hs_grad.h"
 #include "gradient_inputs.h"
-#include "hamilt_zeq_l.h"
+#include "nacv_force.h"
 #include "nacv_response.h"
 #include "pulay_hc.h"
 #include "source_base/timer.h"
@@ -344,13 +343,13 @@ module_dm::DensityMatrix<double, double> sparse_density(
  * @brief Contract the antisymmetric moving-AO connection for an auxiliary state pair.
  * @param[in] inputs Borrowed current geometry and validated parallel AO layout.
  * @param[in] density Local interstate AO coefficient tensor, including spin factors.
- * @param[in] integrals Current two-center integrals used for overlap derivatives.
+ * @param[in] geometry Borrowed overlap derivatives for this geometry.
  * @return Owned atom-major nat-by-3 connection in bohr^-1.
  * @details Contracts the antisymmetric density with the bra-center overlap
  * derivative; the symmetric metric-response term is handled separately.
  */
 ModuleBase::matrix antisymmetric_ao_connection(
-    const LR::GradientInputs<double> &inputs, const ct::Tensor &density, const TwoCenterBundle &integrals)
+    const LR::GradientInputs<double> &inputs, const ct::Tensor &density, const LR::ForceGeometry &geometry)
 {
     const std::int64_t size = inputs.pmat.para_2d().size();
     const std::int64_t storage_size = std::max<std::int64_t>(1, size);
@@ -378,12 +377,6 @@ ModuleBase::matrix antisymmetric_ao_connection(
         difference.data<double>()[index] = density.data<double>()[index] - transposed[index];
     }
     const module_dm::DensityMatrix<double, double> dm = sparse_density(inputs, difference, false);
-    const std::vector<hamilt::HContainer<double>> overlap_derivative = cal_hs_grad(
-        'S',
-        inputs.ucell,
-        inputs.pmat,
-        inputs.gd,
-        integrals);
     // cal_hs_grad stores the separation derivative, minus the bra-center derivative.
     // The Pulay contraction contributes 2*factor*D*dHS. Thus -1/4 gives
     // Gamma : (B-B^T)/2 from D-D^T, with Gamma=D^T. No symmetric metric term is added here.
@@ -391,7 +384,7 @@ ModuleBase::matrix antisymmetric_ao_connection(
     return PulayForceStress::cal_pulay_fs(
         dm,
         inputs.ucell,
-        overlap_derivative,
+        geometry.overlap,
         contraction_factor);
 }
 
@@ -400,7 +393,7 @@ ModuleBase::matrix antisymmetric_ao_connection(
  * @param[in] inputs Validated singlet geometry, orbitals, kernels and distributions.
  * @param[in] ket Local TDA excitation amplitudes in the full response window.
  * @param[in] energy Positive ket excitation energy in Ry.
- * @param[in] solver Explicit existing Z-vector solver selection.
+ * @param[in,out] context Geometry-local orbital-response operators and direct factors.
  * @param[in] open_shell True for the concatenated alpha/beta orbital response.
  * @return Owned dimensionless local adjoint tensor of shape1-by-inputs.nloc.
  * @details The RHS is energy*ket for unrestricted spin orbitals and
@@ -411,9 +404,8 @@ ct::Tensor ground_adjoint(
     const LR::GradientInputs<double> &inputs,
     const double *ket,
     double energy,
-    const std::string &solver,
     bool open_shell,
-    const LR::NacvResponseControls &controls)
+    LR::NacvResponse &context)
 {
     const int ld = inputs.nloc;
     ct::Tensor rhs = LR_Util::newTensor<double>({1, ld});
@@ -427,81 +419,7 @@ ct::Tensor ground_adjoint(
     {
         rhs.data<double>()[index] = scale * ket[index];
     }
-    if (open_shell)
-    {
-        const int global_dimension = inputs.nocc[0] * inputs.nvirt[0] + inputs.nocc[1] * inputs.nvirt[1];
-        LR::Z_vector_UL<double> hessian(
-            inputs.xc_kernel,
-            inputs.nspin,
-            inputs.nbasis,
-            inputs.nocc,
-            inputs.nvirt,
-            inputs.ucell,
-            inputs.orb_cutoff,
-            inputs.gd,
-            inputs.psi_ks,
-            inputs.eig_ks,
-#ifdef __EXX
-            inputs.exx_lri,
-            inputs.hybrid_alpha,
-#endif
-            inputs.pot_hxc_gs,
-            inputs.kv,
-            inputs.px,
-            inputs.pc,
-            inputs.pmat,
-            inputs.dft_functional,
-            inputs.nk,
-            ld,
-            global_dimension);
-        LR::solve_nac_zeq_with(
-            solution.data<double>(),
-            rhs.data<double>(),
-            ld,
-            1,
-            hessian,
-            2,
-            solver,
-            false,
-            controls);
-        return solution;
-    }
-    const std::string spin = "singlet";
-    const std::string input_directory;
-    LR::Z_vector_L<double> hessian(
-        inputs.xc_kernel,
-        inputs.nspin,
-        inputs.nbasis,
-        inputs.nocc,
-        inputs.nvirt,
-        inputs.ucell,
-        inputs.orb_cutoff,
-        inputs.gd,
-        inputs.psi_ks,
-        inputs.eig_ks,
-#ifdef __EXX
-        inputs.exx_lri,
-        inputs.hybrid_alpha,
-#endif
-        inputs.pot_hxc_gs,
-        inputs.kv,
-        inputs.px,
-        inputs.pc,
-        inputs.pmat,
-        spin,
-        input_directory,
-        inputs.out_dir,
-        inputs.dft_functional);
-    LR::solve_nac_zeq_with(
-        solution.data<double>(),
-        rhs.data<double>(),
-        ld,
-        1,
-        hessian,
-        1,
-        solver,
-        false,
-        controls);
+    context.solve(rhs.data<double>(), solution.data<double>(), 1);
     return solution;
 }
 
@@ -511,9 +429,8 @@ namespace LR
 {
 NacvResult evaluate_aux_tda_nac(
     const GradientInputs<double> &inputs,
-    LR_Force<double> &force_terms,
+    NacvForce &force_terms,
     const module_dm::DensityMatrix<double, double> &ground_density,
-    const TwoCenterBundle &two_center_bundle,
     int spin_channel,
     bool bra_ground,
     const double *bra,
@@ -521,8 +438,7 @@ NacvResult evaluate_aux_tda_nac(
     double bra_energy_ry,
     double ket_energy_ry,
     double gap_resolution_ry,
-    const std::string &response_solver,
-    const NacvResponseControls &controls)
+    NacvResponse &response_context)
 {
     const NacvTimer timer;
     NacvResult result;
@@ -553,9 +469,8 @@ NacvResult evaluate_aux_tda_nac(
             inputs,
             ket,
             ket_energy_ry,
-            response_solver,
             open_shell,
-            controls);
+            response_context);
         ct::Tensor zero_amplitudes = LR_Util::newTensor<double>({1, inputs.nloc});
         zero_amplitudes.zero();
         const std::vector<double> energy{ket_energy_ry};
@@ -612,21 +527,8 @@ NacvResult evaluate_aux_tda_nac(
             combinations.data<double>()[inputs.nloc + index] = (bra[index] - ket[index]) * inverse_sqrt_two;
         }
         ct::Tensor response = LR_Util::newTensor<double>({2, inputs.nloc});
-        const std::string input_directory;
-        const std::string &spin = inputs.spin_types[spin_channel];
-        std::weak_ptr<PotHxcLR> potential = inputs.pot[spin_channel];
         const int pair_count = 2;
-        solve_nac_zvector(
-            inputs,
-            combinations.data<double>(),
-            response.data<double>(),
-            pair_count,
-            potential,
-            spin,
-            input_directory,
-            open_shell,
-            response_solver,
-            controls);
+        response_context.solve_polarized(combinations.data<double>(), response.data<double>(), pair_count);
         const double mean_energy = 0.5 * (bra_energy_ry + ket_energy_ry);
         const std::vector<double> energies{mean_energy, mean_energy};
         std::vector<ModuleBase::matrix> forces;
@@ -657,7 +559,7 @@ NacvResult evaluate_aux_tda_nac(
         }
         pair_force = (forces[0] - forces[1]) * 0.5;
     }
-    result.ao_connection = antisymmetric_ao_connection(inputs, density, two_center_bundle);
+    result.ao_connection = antisymmetric_ao_connection(inputs, density, force_terms.geometry());
     assemble_nacv_result(result, pair_force, gap_resolution_ry);
     return result;
 }

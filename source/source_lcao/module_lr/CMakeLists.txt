@@ -44,6 +44,8 @@ if(ENABLE_LCAO)
     nacv_workflow.cpp
     nacv_cg.cpp
     nacv_response.cpp
+    nacv_factorization.cpp
+    nacv_force.cpp
     nacv_io.cpp
     nacv_cs.cpp
     nacv_result.cpp

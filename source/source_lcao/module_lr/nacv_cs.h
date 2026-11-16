@@ -7,7 +7,6 @@
 #include <string>
 #include <vector>
 
-class TwoCenterBundle;
 namespace module_dm
 {
 template <typename TK, typename TR> class DensityMatrix;
@@ -15,8 +14,8 @@ template <typename TK, typename TR> class DensityMatrix;
 namespace LR
 {
 template <typename T> struct GradientInputs;
-struct NacvResponseControls;
-template <typename T> class LR_Force;
+class NacvResponse;
+class NacvForce;
 
 /**
  * @brief One real Gamma-point auxiliary-TDA derivative-coupling pair.
@@ -101,7 +100,6 @@ double nacv_gap_resolution(
  * @param[in] inputs Explicit ground-state geometry, orbital layouts, kernel and log.
  * @param[in,out] force_terms Existing analytic force contractions for this geometry.
  * @param[in] ground_density Ground density in the force convention, two channels for unrestricted orbitals.
- * @param[in] two_center_bundle Current analytic two-center integrals.
  * @param[in] spin_channel Closed-shell adaptation index, or zero for the concatenated up/down channel.
  * @param[in] bra_ground True for S0-to-excited coupling; otherwise an excited pair.
  * @param[in] bra Local widened bra amplitudes; ignored for S0. May be null only
@@ -110,8 +108,7 @@ double nacv_gap_resolution(
  * @param[in] bra_energy_ry Excitation energy of the bra, zero for S0, in Rydberg.
  * @param[in] ket_energy_ry Positive ket excitation energy in Rydberg.
  * @param[in] gap_resolution_ry Nonnegative eigenpair-resolution bound in Rydberg.
- * @param[in] response_solver Existing GS Hessian solver selection.
- * @param[in] controls INPUT-validated NAC response convergence settings.
+ * @param[in,out] response_context Geometry-local response operators and direct factors.
  * @pre The geometry-local NAC entry has validated the reference and selected roots.
  * @return Owned raw/ETF vectors in bohr^-1, numerators in Ry/bohr and diagnostics.
  * @throw std::invalid_argument For unsupported geometry, spin, energies or layouts.
@@ -123,9 +120,8 @@ double nacv_gap_resolution(
  */
 NacvResult evaluate_aux_tda_nac(
     const GradientInputs<double> &inputs,
-    LR_Force<double> &force_terms,
+    NacvForce &force_terms,
     const module_dm::DensityMatrix<double, double> &ground_density,
-    const TwoCenterBundle &two_center_bundle,
     int spin_channel,
     bool bra_ground,
     const double *bra,
@@ -133,8 +129,7 @@ NacvResult evaluate_aux_tda_nac(
     double bra_energy_ry,
     double ket_energy_ry,
     double gap_resolution_ry,
-    const std::string &response_solver,
-    const NacvResponseControls &controls);
+    NacvResponse &response_context);
 
 /**
  * @brief Assemble raw/ETF numerators and divide only an electronically resolved gap.

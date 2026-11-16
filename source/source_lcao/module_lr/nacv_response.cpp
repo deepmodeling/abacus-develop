@@ -1,208 +1,396 @@
 #include "nacv_response.h"
+#include "gradient_inputs.h"
 #include "hamilt_zeq_l.h"
 #include "hamilt_zeq_r.h"
+#include "nacv_cg.h"
+#include "nacv_factorization.h"
+#include "nacv_timer.h"
+#include "zeq_solver.h"
+#include <algorithm>
+#include <utility>
 namespace LR
 {
-template <typename T>
-void solve_nac_zvector(
-    const GradientInputs<T> &inputs,
-    const T *const X,
-    T *const Z,
-    const int &nstates,
-    std::weak_ptr<PotHxcLR> pot,
-    const std::string &spin_type,
-    const std::string &in_dir,
-    const bool openshell,
-    const std::string &zvec_solver,
+struct NacvResponse::Impl
+{
+    const GradientInputs<double> &inputs;
+    const int channel;
+    const bool open_shell;
+    const std::string solver;
+    const NacvResponseControls controls;
+    const std::string input_directory;
+    std::unique_ptr<Z_vector_L<double>> closed_left;
+    std::unique_ptr<Z_vector_UL<double>> open_left;
+    std::unique_ptr<Z_vector_R<double>> closed_right;
+    std::unique_ptr<Z_vector_UR<double>> open_right;
+    Parallel_Blkcyclic matrix_layout;
+    std::unique_ptr<NacvFactorization> factorization;
+
+    Impl(
+        const GradientInputs<double> &data,
+        int selected_channel,
+        bool unrestricted,
+        const std::string &selected_solver,
+        const NacvResponseControls &settings)
+        : inputs(data), channel(selected_channel), open_shell(unrestricted), solver(selected_solver), controls(settings)
+    {
+    }
+
+    void prepare_left()
+    {
+        const NacvTimerScope timer("NacvResponse", "prepare_left");
+        const auto &g = inputs;
+        if (open_shell)
+        {
+            if (open_left)
+            {
+                return;
+            }
+            const int dimension = g.nk * (g.nocc[0] * g.nvirt[0] + g.nocc[1] * g.nvirt[1]);
+            open_left.reset(new Z_vector_UL<double>(
+                g.xc_kernel,
+                g.nspin,
+                g.nbasis,
+                g.nocc,
+                g.nvirt,
+                g.ucell,
+                g.orb_cutoff,
+                g.gd,
+                g.psi_ks,
+                g.eig_ks,
+#ifdef __EXX
+                g.exx_lri,
+                g.hybrid_alpha,
+#endif
+                g.pot_hxc_gs,
+                g.kv,
+                g.px,
+                g.pc,
+                g.pmat,
+                g.dft_functional,
+                g.nk,
+                g.nloc,
+                dimension));
+        }
+        else
+        {
+            if (closed_left)
+            {
+                return;
+            }
+            const auto &spin = g.spin_types[channel];
+            closed_left.reset(new Z_vector_L<double>(
+                g.xc_kernel,
+                g.nspin,
+                g.nbasis,
+                g.nocc,
+                g.nvirt,
+                g.ucell,
+                g.orb_cutoff,
+                g.gd,
+                g.psi_ks,
+                g.eig_ks,
+#ifdef __EXX
+                g.exx_lri,
+                g.hybrid_alpha,
+#endif
+                g.pot_hxc_gs,
+                g.kv,
+                g.px,
+                g.pc,
+                g.pmat,
+                spin,
+                input_directory,
+                g.out_dir,
+                g.dft_functional));
+        }
+    }
+
+    void prepare_right()
+    {
+        const NacvTimerScope timer("NacvResponse", "prepare_right");
+        const auto &g = inputs;
+        const auto &spin = g.spin_types[channel];
+        const std::weak_ptr<PotHxcLR> potential = g.pot[channel];
+        if (open_shell)
+        {
+            if (open_right)
+            {
+                return;
+            }
+            const int dimension = g.nk * (g.nocc[0] * g.nvirt[0] + g.nocc[1] * g.nvirt[1]);
+            open_right.reset(new Z_vector_UR<double>(
+                g.xc_kernel,
+                g.nspin,
+                g.nbasis,
+                g.nocc,
+                g.nvirt,
+                g.ucell,
+                g.orb_cutoff,
+                g.gd,
+                g.psi_ks,
+                g.eig_ks,
+#ifdef __EXX
+                g.exx_lri,
+                g.hybrid_alpha,
+#endif
+                potential,
+                g.pot_hxc_gs,
+                g.kv,
+                g.px,
+                g.pc,
+                g.pmat,
+                g.ks_solver,
+                g.dft_functional,
+                g.nk,
+                g.nloc,
+                dimension));
+        }
+        else
+        {
+            if (closed_right)
+            {
+                return;
+            }
+            closed_right.reset(new Z_vector_R<double>(
+                g.xc_kernel,
+                g.nspin,
+                g.nbasis,
+                g.nocc,
+                g.nvirt,
+                g.ucell,
+                g.orb_cutoff,
+                g.gd,
+                g.psi_ks,
+                g.eig_ks,
+#ifdef __EXX
+                g.exx_lri,
+                g.hybrid_alpha,
+#endif
+                potential,
+                g.pot_hxc_gs,
+                g.kv,
+                g.px,
+                g.pc,
+                g.pmat,
+                input_directory,
+                g.out_dir,
+                g.dft_functional,
+                spin));
+        }
+    }
+
+    template <typename Operator> void prepare_matrix(Operator &left, int spin_count)
+    {
+        const NacvTimerScope timer("NacvResponse", "prepare_matrix");
+        const int dimension = zvec_global_dim(left, spin_count);
+        if (solver == "lapack")
+        {
+            auto matrix = left.matrix();
+            factorization.reset(new NacvFactorization(std::move(matrix), dimension));
+        }
+#ifdef __MPI
+        else
+        {
+            const auto &px = inputs.px[0];
+            const int process_dimension = std::max(px.nrproc(), px.ncproc());
+            const int block = std::max(1, std::min(32, dimension / process_dimension));
+            LR_Util::setup_2d_division(
+                matrix_layout,
+                block,
+                dimension,
+                dimension,
+                px.ictxt());
+            auto matrix = zvec_hessian_2d<double>(
+                left,
+                spin_count,
+                inputs.nloc,
+                matrix_layout);
+            const bool cholesky = solver == "scalapack_chol";
+            factorization.reset(new NacvFactorization(std::move(matrix), matrix_layout, cholesky));
+        }
+#else
+        else
+        {
+            throw std::logic_error("ScaLAPACK NAC response requires an MPI build");
+        }
+#endif
+    }
+
+    template <typename Operator>
+    void solve_with(
+        Operator &left,
+        double *rhs,
+        double *solution,
+        int count,
+        int spin_count)
+    {
+        const int ld = inputs.nloc;
+        if (solver == "cg")
+        {
+            const auto apply = [&left, ld, count](const double *in, double *out)
+            {
+                left.hPsi(
+                    in,
+                    out,
+                    ld,
+                    count);
+            };
+            solve_nac_cg(
+                solution,
+                rhs,
+                ld,
+                count,
+                apply,
+                inputs.test_force,
+                controls.tolerance,
+                controls.max_iterations);
+            return;
+        }
+        if (!factorization)
+        {
+            prepare_matrix(left, spin_count);
+        }
+        const int dimension = zvec_global_dim(left, spin_count);
+        const std::size_t full_size = static_cast<std::size_t>(dimension) * count;
+        std::vector<double> full(full_size, 0.0);
+        for (int state = 0; state < count; ++state)
+        {
+            double *target = full.data() + static_cast<std::size_t>(state) * dimension;
+            const double *source = rhs + state * ld;
+#ifdef __MPI
+            zvec_local_to_full(
+                left,
+                spin_count,
+                source,
+                target);
+#else
+            std::copy_n(source, dimension, target);
+#endif
+        }
+        if (solver == "lapack")
+        {
+            factorization->solve(full, count);
+        }
+#ifdef __MPI
+        else
+        {
+            Parallel_Blkcyclic rhs_layout;
+            LR_Util::setup_2d_division(
+                rhs_layout,
+                matrix_layout.nb(),
+                dimension,
+                count,
+                matrix_layout.ictxt());
+            const std::size_t storage = std::max<std::size_t>(1, rhs_layout.size());
+            std::vector<double> local(storage, 0.0);
+            for (int col = 0; col < rhs_layout.ncloc(); ++col)
+            {
+                for (int row = 0; row < rhs_layout.nrloc(); ++row)
+                {
+                    local[col * rhs_layout.nrloc() + row] =
+                        full[rhs_layout.icglb(col) * dimension + rhs_layout.irglb(row)];
+                }
+            }
+            factorization->solve(local, rhs_layout);
+            std::fill(full.begin(), full.end(), 0.0);
+            LR_Util::gather_2d_to_full(
+                rhs_layout,
+                local.data(),
+                full.data(),
+                false,
+                dimension,
+                count);
+        }
+#endif
+        for (int state = 0; state < count; ++state)
+        {
+            const double *source = full.data() + static_cast<std::size_t>(state) * dimension;
+            double *target = solution + state * ld;
+#ifdef __MPI
+            zvec_full_to_local(
+                left,
+                spin_count,
+                source,
+                target);
+#else
+            std::copy_n(source, dimension, target);
+#endif
+        }
+        if (inputs.test_force)
+        {
+            LR_Util::print_value(solution, count, ld);
+        }
+    }
+};
+
+NacvResponse::NacvResponse(
+    const GradientInputs<double> &inputs,
+    int channel,
+    bool open_shell,
+    const std::string &solver,
     const NacvResponseControls &controls)
 {
-    const int &nspin = inputs.nspin;
-    const int &naos = inputs.nbasis;
-    const std::vector<int> &nocc = inputs.nocc;
-    const std::vector<int> &nvirt = inputs.nvirt;
-    const UnitCell &ucell = inputs.ucell;
-    const std::vector<double> &orb_cutoff = inputs.orb_cutoff;
-    const Grid_Driver &gd = inputs.gd;
-    const K_Vectors &kv = inputs.kv;
-    const std::vector<Parallel_Blkcyclic> &px = inputs.px;
-    const Parallel_Blkcyclic &pc = inputs.pc;
-    const Parallel_Orbitals &pmat = inputs.pmat;
-    const std::string &dft_functional = inputs.dft_functional;
-    std::weak_ptr<PotHxcLR> pot_hxc_gs = inputs.pot_hxc_gs;
-#ifdef __EXX
-    std::weak_ptr<Exx_LRI<T>> exx_lri = inputs.exx_lri;
-    const double &exx_alpha = inputs.hybrid_alpha;
-#endif
-    const std::string &xc_kernel = inputs.xc_kernel;
-    const psi::Psi<T> &psi_ks = inputs.psi_ks;
-    const ModuleBase::matrix &eig_ks = inputs.eig_ks;
-    const std::string &out_dir = inputs.out_dir;
-    const std::string &ks_solver = inputs.ks_solver;
-    const bool test_force = inputs.test_force;
-    ModuleBase::TITLE("Z_vector", "Z_vector");
-    const int nk = kv.get_nks() / nspin;
-    const int nloc_per_band = openshell ? nk * (px[0].size() + px[1].size()) : nk * px[0].size();
-    container::Tensor R = LR_Util::newTensor<T>({nstates, nloc_per_band});
-    R.zero();
+    impl_.reset(new Impl(
+        inputs,
+        channel,
+        open_shell,
+        solver,
+        controls));
+}
+NacvResponse::~NacvResponse() = default;
 
-    if (openshell)
+void NacvResponse::solve(double *rhs, double *solution, int count)
+{
+    const NacvTimerScope timer("NacvResponse", "solve");
+    if (!impl_->closed_left && !impl_->open_left)
     {
-        // Concatenated spin-channel dimensions are prepared before operator construction.
-        const int global_dimension = nk * (nocc[0] * nvirt[0] + nocc[1] * nvirt[1]);
-        Z_vector_UR<T> ops_R(
-            xc_kernel,
-            nspin,
-            naos,
-            nocc,
-            nvirt,
-            ucell,
-            orb_cutoff,
-            gd,
-            psi_ks,
-            eig_ks,
-#ifdef __EXX
-            exx_lri,
-            exx_alpha,
-#endif
-            pot,
-            pot_hxc_gs,
-            kv,
-            px,
-            pc,
-            pmat,
-            ks_solver,
-            dft_functional,
-            nk,
-            nloc_per_band,
-            global_dimension);
-        Z_vector_UL<T> ops_L(
-            xc_kernel,
-            nspin,
-            naos,
-            nocc,
-            nvirt,
-            ucell,
-            orb_cutoff,
-            gd,
-            psi_ks,
-            eig_ks,
-#ifdef __EXX
-            exx_lri,
-            exx_alpha,
-#endif
-            pot_hxc_gs,
-            kv,
-            px,
-            pc,
-            pmat,
-            dft_functional,
-            nk,
-            nloc_per_band,
-            global_dimension);
-        ops_R.hPsi(
-            X,
-            R.template data<T>(),
-            nloc_per_band,
-            nstates);
-        solve_nac_zeq_with(
-            Z,
-            R.template data<T>(),
-            nloc_per_band,
-            nstates,
-            ops_L,
-            2,
-            zvec_solver,
-            test_force,
-            controls);
+        impl_->prepare_left();
+    }
+    if (impl_->open_shell)
+    {
+        impl_->solve_with(
+            *impl_->open_left,
+            rhs,
+            solution,
+            count,
+            2);
     }
     else
     {
-        Z_vector_R<T> ops_R(
-            xc_kernel,
-            nspin,
-            naos,
-            nocc,
-            nvirt,
-            ucell,
-            orb_cutoff,
-            gd,
-            psi_ks,
-            eig_ks,
-#ifdef __EXX
-            exx_lri,
-            exx_alpha,
-#endif
-            pot,
-            pot_hxc_gs,
-            kv,
-            px,
-            pc,
-            pmat,
-            in_dir,
-            out_dir,
-            dft_functional,
-            spin_type);
-        Z_vector_L<T> ops_L(
-            xc_kernel,
-            nspin,
-            naos,
-            nocc,
-            nvirt,
-            ucell,
-            orb_cutoff,
-            gd,
-            psi_ks,
-            eig_ks,
-#ifdef __EXX
-            exx_lri,
-            exx_alpha,
-#endif
-            pot_hxc_gs,
-            kv,
-            px,
-            pc,
-            pmat,
-            spin_type,
-            in_dir,
-            out_dir,
-            dft_functional);
-        ops_R.hPsi(
-            X,
-            R.template data<T>(),
-            nloc_per_band,
-            nstates);
-        solve_nac_zeq_with(
-            Z,
-            R.template data<T>(),
-            nloc_per_band,
-            nstates,
-            ops_L,
-            1,
-            zvec_solver,
-            test_force,
-            controls);
+        impl_->solve_with(
+            *impl_->closed_left,
+            rhs,
+            solution,
+            count,
+            1);
     }
 }
-template void solve_nac_zvector<double>(
-    const GradientInputs<double> &,
-    const double *const,
-    double *const,
-    const int &,
-    std::weak_ptr<PotHxcLR>,
-    const std::string &,
-    const std::string &,
-    bool,
-    const std::string &,
-    const NacvResponseControls &);
-template void solve_nac_zvector<std::complex<double>>(
-    const GradientInputs<std::complex<double>> &,
-    const std::complex<double> *const,
-    std::complex<double> *const,
-    const int &,
-    std::weak_ptr<PotHxcLR>,
-    const std::string &,
-    const std::string &,
-    bool,
-    const std::string &,
-    const NacvResponseControls &);
+void NacvResponse::solve_polarized(const double *amplitudes, double *solution, int count)
+{
+    const NacvTimerScope timer("NacvResponse", "solve_polarized");
+    if (!impl_->closed_right && !impl_->open_right)
+    {
+        impl_->prepare_right();
+    }
+    const int ld = impl_->inputs.nloc;
+    ct::Tensor rhs = LR_Util::newTensor<double>({count, ld});
+    rhs.zero();
+    if (impl_->open_shell)
+    {
+        impl_->open_right->hPsi(
+            amplitudes,
+            rhs.data<double>(),
+            ld,
+            count);
+    }
+    else
+    {
+        impl_->closed_right->hPsi(
+            amplitudes,
+            rhs.data<double>(),
+            ld,
+            count);
+    }
+    solve(rhs.data<double>(), solution, count);
+}
 } // namespace LR

@@ -275,3 +275,53 @@ TEST(ZeqCgPrecision, EmptyLocalRanksParticipateInTheGlobalResidual)
         EXPECT_NEAR(solution[index], 1.0 / (index + 2.0), 1e-12);
     }
 }
+
+TEST(ZeqCgPrecision, ReusesTheSuccessfulTrueResidualCertification)
+{
+    double rhs[] = {0.0};
+    if (owns_rhs())
+    {
+        rhs[0] = 1.0;
+    }
+    double solution[] = {9.0};
+    int applications = 0;
+    const auto diagonal = [&applications](const double *input, double *output)
+    {
+        ++applications;
+        output[0] = 2.0 * input[0];
+    };
+    LR::solve_nac_cg(
+        solution,
+        rhs,
+        1,
+        1,
+        diagonal,
+        false,
+        1e-12,
+        4);
+    EXPECT_EQ(applications, 2);
+    EXPECT_DOUBLE_EQ(solution[0], rhs[0] * 0.5);
+}
+
+TEST(ZeqCgPrecision, ZeroRhsIsCertifiedExactlyOnce)
+{
+    double rhs[] = {0.0};
+    double solution[] = {9.0};
+    int applications = 0;
+    const auto diagonal = [&applications](const double *input, double *output)
+    {
+        ++applications;
+        output[0] = 2.0 * input[0];
+    };
+    LR::solve_nac_cg(
+        solution,
+        rhs,
+        1,
+        1,
+        diagonal,
+        false,
+        1e-12,
+        4);
+    EXPECT_EQ(applications, 1);
+    EXPECT_DOUBLE_EQ(solution[0], 0.0);
+}

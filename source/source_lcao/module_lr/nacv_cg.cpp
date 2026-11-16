@@ -73,6 +73,7 @@ void solve_nac_cg(
     int iterations = 0;
     int replacements = 0;
     bool correction_update_pending = false;
+    bool true_residual_ready = false;
     double residual = std::numeric_limits<double>::infinity();
     while (iterations < maxiter)
     {
@@ -93,6 +94,7 @@ void solve_nac_cg(
                 size);
             if (residual < tol)
             {
+                true_residual_ready = true;
                 break;
             }
             if (!std::isfinite(residual))
@@ -125,13 +127,17 @@ void solve_nac_cg(
         ++iterations;
         correction_update_pending = false;
     }
-    // Certification also covers termination at the configured update limit.
-    f_LZ(Z, LP.data<double>());
-    residual = response_residual(
-        LP.data<double>(),
-        R,
-        correction.data(),
-        size);
+    // A successful break already certified this unchanged Z. The update-limit
+    // path still needs its own explicit operator application.
+    if (!true_residual_ready)
+    {
+        f_LZ(Z, LP.data<double>());
+        residual = response_residual(
+            LP.data<double>(),
+            R,
+            correction.data(),
+            size);
+    }
     std::cout << "Z-vector CG true residual=" << residual << " tolerance=" << tol << std::endl;
     if (!(residual < tol))
     {
