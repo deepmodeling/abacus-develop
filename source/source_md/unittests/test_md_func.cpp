@@ -249,6 +249,11 @@ int main(int argc, char** argv)
 #include "source_md/unittests/md_test_fixture.h"
 #include "source_md/md_func.h"
 
+#include <cstdio>
+#include <cstdlib>
+#include <fstream>
+#include <unistd.h>
+
 constexpr double doublethreshold = 1e-12;
 
 namespace
@@ -399,6 +404,11 @@ TEST_F(MD_func_test, compute_stress)
 
 TEST_F(MD_func_test, dump_info)
 {
+    std::string pattern = testing::TempDir() + "abacus-md-func-XXXXXX";
+    char* directory = mkdtemp(&pattern[0]);
+    ASSERT_NE(directory, nullptr);
+    const std::string out_dir = pattern + "/";
+    const std::string dump_path = out_dir + "MD_dump";
     MDCell mdcell;
     DomainDecomposition decomp;
     initialize_mdcell_from_ucell(mdcell, ucell, decomp);
@@ -407,7 +417,7 @@ TEST_F(MD_func_test, dump_info)
         atom.vel = ModuleBase::Vector3<double>(0.0, 0.0, 0.0);
     }
     MD_func::dump_info(0, out_dir, mdcell, inp.mdp, inp.cal_stress, virial);
-    std::ifstream ifs("MD_dump");
+    std::ifstream ifs(dump_path.c_str());
     std::string output_str;
     getline(ifs, output_str);
     EXPECT_THAT(output_str, testing::HasSubstr("MDSTEP:  0"));
@@ -453,7 +463,7 @@ TEST_F(MD_func_test, dump_info)
 
     // append
     MD_func::dump_info(1, out_dir, mdcell, inp.mdp, inp.cal_stress, virial);
-    std::ifstream ifs2("MD_dump");
+    std::ifstream ifs2(dump_path.c_str());
     getline(ifs2, output_str);
     EXPECT_THAT(output_str, testing::HasSubstr("MDSTEP:  0"));
     getline(ifs2, output_str);
@@ -538,15 +548,18 @@ TEST_F(MD_func_test, dump_info)
                                    "0.000000000000  0.000000000000  0.000000000000  0.000000000000  0.000000000000"));
     ifs2.close();
 
-    remove("MD_dump");
+    std::remove(dump_path.c_str());
+    rmdir(pattern.c_str());
 }
 
 TEST_F(MD_func_test, print_stress)
 {
-    GlobalV::ofs_running.open("running.log");
-    MD_func::print_stress(GlobalV::ofs_running, virial, stress);
+    const std::string log_path = testing::TempDir() + "abacus-md-print-stress.log";
+    std::ofstream running_log(log_path.c_str());
+    MD_func::print_stress(running_log, virial, stress);
+    running_log.close();
 
-    std::ifstream ifs("running.log");
+    std::ifstream ifs(log_path.c_str());
     std::string output_str;
     getline(ifs, output_str);
     EXPECT_THAT(output_str, testing::HasSubstr("ELECTRONIC      PART OF STRESS: 0 kbar"));
@@ -577,12 +590,13 @@ TEST_F(MD_func_test, print_stress)
 */
 
     ifs.close();
-    remove("running.log");
+    std::remove(log_path.c_str());
 }
 
 TEST_F(MD_func_test, current_md_info_mdcell_accepts_step_only_restart)
 {
-    std::ofstream file("Restart_md.txt");
+    const std::string restart_file = testing::TempDir() + "Restart_md.txt";
+    std::ofstream file(restart_file.c_str());
     file << 123;
     file.close();
 
@@ -591,11 +605,12 @@ TEST_F(MD_func_test, current_md_info_mdcell_accepts_step_only_restart)
     initialize_mdcell_from_ucell(mdcell, ucell, decomp);
     int istep = -1;
     double temperature = 0.0;
-    MD_func::current_md_info(mdcell, "./", istep, temperature);
+    const std::string restart_directory = testing::TempDir();
+    MD_func::current_md_info(mdcell, restart_directory, istep, temperature);
 
     EXPECT_EQ(istep, 123);
     EXPECT_DOUBLE_EQ(temperature, 0.0);
-    remove("Restart_md.txt");
+    std::remove(restart_file.c_str());
 }
 
 TEST_F(MD_func_test, global_dof_mdcell)
