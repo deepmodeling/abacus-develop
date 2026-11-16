@@ -406,47 +406,35 @@ void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const doubl
 
         if (nspin == 1)
         {
-            // 1. $2f^{\rho\sigma}*\nabla\rho$
-            this->v2rhosigma_2drho_.resize(nrxx);
+            this->closed_shell_gga_s_.rho_sigma.resize(nrxx);
+            this->closed_shell_gga_s_.sigma_sigma.resize(nrxx);
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 4096)
 #endif
-            for (size_t i = 0; i < nrxx; ++i)
+            for (int i = 0; i < nrxx; ++i)
             {
-                this->v2rhosigma_2drho_[i] = gradrho[0][i] * v2rs[i] * 2.;
+                this->closed_shell_gga_s_.rho_sigma[i] = v2rs[i] * 2.;
+                this->closed_shell_gga_s_.sigma_sigma[i] = v2s2[i] * 4.;
             }
-
-            // 2. $4f^{\sigma\sigma}*\nabla\rho$
-            this->v2sigma2_4drho_.resize(nrxx);
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static, 4096)
-#endif
-            for (size_t i = 0; i < nrxx; ++i)
-            {
-                this->v2sigma2_4drho_[i] = gradrho[0][i] * v2s2[i] * 4.;
-            }
-
-            // The third-order kernels contracted with $\nabla\rho$ used to be pre-built here;
-            // they are now folded into `GxcCoef::e_*` (with $\nabla\rho$ factored back out)
         }
         else if (2 == nspin)    //close-shell
         {
             if (!openshell_)
             {
-                this->v2rhosigma_drho_singlet_.resize(nrxx);
-                this->v2sigma2_drho_singlet_.resize(nrxx);
-                this->v2rhosigma_drho_triplet_.resize(nrxx);
-                this->v2sigma2_drho_triplet_.resize(nrxx);
+                this->closed_shell_gga_s_.rho_sigma.resize(nrxx);
+                this->closed_shell_gga_s_.sigma_sigma.resize(nrxx);
+                this->closed_shell_gga_t_.rho_sigma.resize(nrxx);
+                this->closed_shell_gga_t_.sigma_sigma.resize(nrxx);
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 4096)
 #endif
                 for (int i = 0;i < nrxx;++i)
                 {
                     const int istart = i * 6;
-                    this->v2rhosigma_drho_singlet_[i] = gradrho[0][i] * (v2rs[istart] + v2rs[istart + 1] + v2rs[istart + 2]) * 2.;
-                    this->v2sigma2_drho_singlet_[i] = gradrho[0][i] * (v2s2[istart] * 2. + v2s2[istart + 1] * 3. + v2s2[istart + 2] * 2. + v2s2[istart + 3] + v2s2[istart + 4]) * 2.;
-                    this->v2rhosigma_drho_triplet_[i] = gradrho[0][i] * (v2rs[istart] - v2rs[istart + 2]) * 2.;
-                    this->v2sigma2_drho_triplet_[i] = gradrho[0][i] * (v2s2[istart] * 2. + v2s2[istart + 1] - v2s2[istart + 2] * 2. - v2s2[istart + 4]) * 2.;
+                    this->closed_shell_gga_s_.rho_sigma[i] = (v2rs[istart] + v2rs[istart + 1] + v2rs[istart + 2]) * 2.;
+                    this->closed_shell_gga_s_.sigma_sigma[i] = (v2s2[istart] * 2. + v2s2[istart + 1] * 3. + v2s2[istart + 2] * 2. + v2s2[istart + 3] + v2s2[istart + 4]) * 2.;
+                    this->closed_shell_gga_t_.rho_sigma[i] = (v2rs[istart] - v2rs[istart + 2]) * 2.;
+                    this->closed_shell_gga_t_.sigma_sigma[i] = (v2s2[istart] * 2. + v2s2[istart + 1] - v2s2[istart + 2] * 2. - v2s2[istart + 4]) * 2.;
                 }
             }
             else
@@ -626,7 +614,6 @@ void LR::KernelXC::build_gxc_coef(GxcCoef& dst, const bool triplet, const int& n
     const double mu[3] = { 1., triplet ? 0. : 1., triplet ? -1. : 1. };
     const double nu[3] = { 1., triplet ? -1. : 1., 1. };
     const double th[3] = { 2., 1., 0. };
-    const double tht[3] = { 2., triplet ? -1. : 1., 0. };
 
     dst.a_s2.resize(nrxx, 0.);
     if (is_gga)
@@ -634,8 +621,6 @@ void LR::KernelXC::build_gxc_coef(GxcCoef& dst, const bool triplet, const int& n
         dst.a_st.resize(nrxx, 0.);
         dst.a_t2.resize(nrxx, 0.);
         dst.a_q.resize(nrxx, 0.);
-        dst.c_s.resize(nrxx, 0.);
-        dst.c_t.resize(nrxx, 0.);
         dst.e_s2.resize(nrxx);
         dst.e_st.resize(nrxx);
         dst.e_t2.resize(nrxx);
@@ -677,8 +662,6 @@ void LR::KernelXC::build_gxc_coef(GxcCoef& dst, const bool triplet, const int& n
             dst.a_st[i] = to_singlet * v3r2s[i] * 4.;
             dst.a_t2[i] = to_singlet * v3rs2[i] * 4.;
             dst.a_q[i] = to_singlet * v2rs[i] * 2.;
-            dst.c_s[i] = to_singlet * v2rs[i] * 4.;
-            dst.c_t[i] = to_singlet * v2s2[i] * 8.;
             dst.e_s2[i] = to_singlet * v3r2s[i] * 2.;
             dst.e_st[i] = to_singlet * v3rs2[i] * 8.;
             dst.e_t2[i] = to_singlet * v3s3[i] * 8.;
@@ -749,12 +732,9 @@ void LR::KernelXC::build_gxc_coef(GxcCoef& dst, const bool triplet, const int& n
         double Q = 0.;
         double R = 0.;
         double S = 0.;
-        double T = 0.;
-        double St = 0.;
         for (int a = 0;a < 3;++a)
         {
             const double w = th[a];
-            const double wt = tht[a];
             if (w != 0.)
             {
                 P += w * (eta[0] * eta[0] * v3r2s[o9 + 0 + a]
@@ -777,20 +757,7 @@ void LR::KernelXC::build_gxc_coef(GxcCoef& dst, const bool triplet, const int& n
                     S += w * nu[c] * v2s2[o6 + p2[a][c]];
                 }
             }
-            if (wt != 0.)
-            {
-                for (int sg = 0; sg < 2; ++sg)
-                {
-                    T += wt * eta[sg] * v2rs[o6 + 3 * sg + a];
-                }
-                for (int c = 0; c < 3; ++c)
-                {
-                    St += wt * mu[c] * v2s2[o6 + p2[a][c]];
-                }
-            }
         }
-        dst.c_s[i] = T * 2.;
-        dst.c_t[i] = St * 4.;
         dst.e_s2[i] = P;
         dst.e_st[i] = Q * 4.;
         dst.e_t2[i] = R * 4.;

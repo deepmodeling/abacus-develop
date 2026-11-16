@@ -280,8 +280,9 @@ namespace LR
 
                         double* const vxc = scratch().vxc.data();
                         Vec3* const e_drho = scratch().gdot.data();
-                        const Vec3* const rs2 = fxc.v2rhosigma_2drho.data();
-                        const Vec3* const ss4 = fxc.v2sigma2_4drho.data();
+                        const auto& coefficients = fxc.closed_shell_gga(false);
+                        const double* const rs2 = coefficients.rho_sigma.data();
+                        const double* const ss4 = coefficients.sigma_sigma.data();
                         const Vec3* const dgs = fxc.drho_gs.at(0).data();
                         const double* const vsig = fxc.vsigma.data();
                         const double* const rr = fxc.v2rho2.data();
@@ -292,8 +293,8 @@ namespace LR
 #endif
                         for (int ir = 0;ir < nrxx;++ir)
                         {
-                            e_drho[ir] = -(rs2[ir] * rho[ir]
-                                + ss4[ir] * (dgs[ir] * drho[ir])
+                            e_drho[ir] = -(dgs[ir] * (rs2[ir] * rho[ir]
+                                + ss4[ir] * (dgs[ir] * drho[ir]))
                                 + drho[ir] * (vsig[ir] * 2.));
                         }
                         XC_Functional::grad_dot(e_drho, vxc, &this->rho_basis_, this->tpiba_);
@@ -304,7 +305,7 @@ namespace LR
 #endif
                         for (int ir = 0;ir < nrxx;++ir)
                         {
-                            vxc[ir] += rr[ir] * rho[ir] + rs2[ir] * drho[ir];
+                            vxc[ir] += rr[ir] * rho[ir] + rs2[ir] * (dgs[ir] * drho[ir]);
                         }
                         BlasConnector::axpy(nrxx, ModuleBase::e2 * prefac, vxc, 1, v_eff.c, 1);
                     };
@@ -326,10 +327,9 @@ namespace LR
 
                         double* const vxc = scratch().vxc.data();
                         Vec3* const gdot = scratch().gdot.data();
-                        const Vec3* const rs = triplet ? fxc.v2rhosigma_drho_triplet.data()
-                                                       : fxc.v2rhosigma_drho_singlet.data();
-                        const Vec3* const ss = triplet ? fxc.v2sigma2_drho_triplet.data()
-                                                       : fxc.v2sigma2_drho_singlet.data();
+                        const auto& coefficients = fxc.closed_shell_gga(triplet);
+                        const double* const rs = coefficients.rho_sigma.data();
+                        const double* const ss = coefficients.sigma_sigma.data();
                         const Vec3* const dgs = fxc.drho_gs.at(0).data();
                         const double* const vsig = this->vsigma_comb_.data();   // 2*vsigma_uu -+ vsigma_ud
                         const double* const rr = this->v2rho2_comb_.data();     // v2rho2_uu -+ v2rho2_ud
@@ -340,8 +340,8 @@ namespace LR
 #endif
                         for (int ir = 0;ir < nrxx;++ir)
                         {
-                            gdot[ir] = -(rs[ir] * rho[ir]
-                                + ss[ir] * (dgs[ir] * drho[ir])
+                            gdot[ir] = -(dgs[ir] * (rs[ir] * rho[ir]
+                                + ss[ir] * (dgs[ir] * drho[ir]))
                                 + drho[ir] * vsig[ir]);
                         }
                         XC_Functional::grad_dot(gdot, vxc, &this->rho_basis_, this->tpiba_);
@@ -352,7 +352,7 @@ namespace LR
 #endif
                         for (int ir = 0;ir < nrxx;++ir)
                         {
-                            vxc[ir] += rho[ir] * rr[ir] + drho[ir] * rs[ir];
+                            vxc[ir] += rho[ir] * rr[ir] + (drho[ir] * dgs[ir]) * rs[ir];
                         }
                         BlasConnector::axpy(nrxx, ModuleBase::e2 * prefac, vxc, 1, v_eff.c, 1);
                     };

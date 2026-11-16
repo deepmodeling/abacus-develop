@@ -7,6 +7,11 @@
 #include "source_hamilt/module_xc/libxc_abacus.h"
 #include "source_io/module_output/cube_io.h"
 
+namespace
+{
+ModuleBase::Vector3<double> last_gga_divergence;
+}
+
 // Keep the real kernel/LibXC and potential code. Mock geometry ownership, FFTs,
 // external coefficient-file input, and grid masks: exercise binding and metadata.
 UnitCell::UnitCell() {}
@@ -51,9 +56,10 @@ void XC_Functional::grad_rho(const std::complex<double>*, ModuleBase::Vector3<do
 {
     out[0] = ModuleBase::Vector3<double>(0.1, 0.2, 0.3);
 }
-void XC_Functional::grad_dot(const ModuleBase::Vector3<double>*, double* out,
+void XC_Functional::grad_dot(const ModuleBase::Vector3<double>* in, double* out,
     const ModulePW::PW_Basis*, const double)
 {
+    last_gga_divergence = in[0];
     out[0] = 0.;
 }
 namespace ModuleIO
@@ -374,4 +380,64 @@ TEST_F(PotHxcLRTest, ScalarTripletRequiresSpinResolvedKernelFiles)
     input.lr_init_xc_kernel = {"file", "uu", "ud", "dd"};
     const auto prepared = LR::prepare_lr_potentials(input, "lda", basis, cell, charge, grid, 1, false);
     EXPECT_EQ(prepared.kernel->v2rho2.size(), 3);
+}
+
+TEST_F(PotHxcLRTest, ClosedShellScalarReuseMatchesIndependentGxcContractions)
+{
+    down = up;
+    for (const int nspin : {1, 2})
+    {
+        const auto kernel = LR::build_xc_kernel("pbe", basis, cell, charge, grid,
+            nspin, false, LR::KernelXC::BothSpins, init);
+        const int spin_cases = (nspin == 1) ? 1 : 2;
+        for (int spin = 0; spin < spin_cases; ++spin)
+        {
+            const bool triplet = (spin == 1);
+            const auto& scalar = kernel->closed_shell_gga(triplet);
+            ASSERT_EQ(scalar.rho_sigma.size(), 1u);
+            ASSERT_EQ(scalar.sigma_sigma.size(), 1u);
+            const auto& g = kernel->gxc(triplet);
+            const double eta[2] = {1., triplet ? -1. : 1.};
+            const double mu[3] = {1., triplet ? 0. : 1., triplet ? -1. : 1.};
+            const double weight[3] = {2., triplet ? -1. : 1., 0.};
+            double cs = 0.;
+            double ct = 0.;
+            if (nspin == 1)
+            {
+                EXPECT_DOUBLE_EQ(scalar.rho_sigma[0], 2. * kernel->v2rhosigma[0]);
+                EXPECT_DOUBLE_EQ(scalar.sigma_sigma[0], 4. * kernel->v2sigma2[0]);
+                cs = 16. * kernel->v2rhosigma[0];
+                ct = 32. * kernel->v2sigma2[0];
+            }
+            else
+            {
+                for (int a = 0; a < 3; ++a)
+                {
+                    for (int b = 0; b < 2; ++b)
+                    {
+                        cs += 2. * weight[a] * eta[b] * kernel->v2rhosigma[3 * b + a];
+                    }
+                    for (int b = 0; b < 3; ++b)
+                    {
+                        ct += 4. * weight[a] * mu[b] * kernel->v2sigma2[LR::libxc_idx::p2[a][b]];
+                    }
+                }
+                EXPECT_NEAR(2. * scalar.rho_sigma[0], cs, 1e-11);
+                EXPECT_NEAR(2. * scalar.sigma_sigma[0], ct, 1e-11);
+            }
+            LR::PotGradXCLR potential(*kernel, basis, cell, 1, nspin, triplet);
+            ModuleBase::matrix result(1, 1);
+            potential.cal_v_eff(density, cell, result);
+            const auto& dg = kernel->drho_gs[0][0];
+            const ModuleBase::Vector3<double> dx(0.1, 0.2, 0.3);
+            const double t = dg * dx;
+            const double q = dx * dx;
+            const double e = g.e_s2[0] * up * up + g.e_st[0] * up * t
+                + g.e_t2[0] * t * t + g.e_q[0] * q;
+            const auto expected = -(dg * e + dx * (cs * up + ct * t));
+            EXPECT_NEAR(last_gga_divergence.x, expected.x, 1e-11);
+            EXPECT_NEAR(last_gga_divergence.y, expected.y, 1e-11);
+            EXPECT_NEAR(last_gga_divergence.z, expected.z, 1e-11);
+        }
+    }
 }

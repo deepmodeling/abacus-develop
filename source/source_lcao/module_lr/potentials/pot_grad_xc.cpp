@@ -111,8 +111,11 @@ namespace LR
             const double* const e_st = g.e_st.data();
             const double* const e_t2 = g.e_t2.data();
             const double* const e_q = g.e_q.data();
-            const double* const c_s = g.c_s.data();
-            const double* const c_t = g.c_t.data();
+            const auto& coefficients = kxc.closed_shell_gga(this->triplet_);
+            const double* const rs = coefficients.rho_sigma.data();
+            const double* const ss = coefficients.sigma_sigma.data();
+            // nspin=1 gxc includes the singlet factor 4; nspin=2 already uses spin sums.
+            const double transition_gradient_factor = (kxc.nspin() == 1) ? 8. : 2.;
             const double* const a_s2 = g.a_s2.data();
             const double* const a_st = g.a_st.data();
             const double* const a_t2 = g.a_t2.data();
@@ -134,7 +137,7 @@ namespace LR
                 const double q = drho1[ir] * drho1[ir];         // $\nabla\rho^1\cdot\nabla\rho^1$
                 const double e = e_s2[ir] * (s * s) + e_st[ir] * (s * t)
                     + e_t2[ir] * (t * t) + e_q[ir] * q;
-                gdot_terms[ir] = -(drho * e + drho1[ir] * (c_s[ir] * s + c_t[ir] * t));
+                gdot_terms[ir] = -(drho * e + drho1[ir] * (transition_gradient_factor * (rs[ir] * s + ss[ir] * t)));
             }
             XC_Functional::grad_dot(gdot_terms, v_tmp, &this->rho_basis_, this->tpiba_);
 

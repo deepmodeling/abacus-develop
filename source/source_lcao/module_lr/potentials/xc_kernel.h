@@ -93,8 +93,6 @@ namespace LR
 
         // const references
         CREF(vrho);CREF(vsigma); CREF(v2rho2); CREF(v2rhosigma); CREF(v2sigma2);
-        CREF3(v2rhosigma_2drho); CREF3(v2sigma2_4drho);
-        CREF3(v2rhosigma_drho_singlet); CREF3(v2rhosigma_drho_triplet); CREF3(v2sigma2_drho_singlet);CREF3(v2sigma2_drho_triplet);
         CREF3(v2rhosigma_drho_uu); CREF3(v2rhosigma_drho_ud); CREF3(v2rhosigma_drho_du); CREF3(v2rhosigma_drho_dd);
         CREF3(v2sigma2_drho_uu_u); CREF3(v2sigma2_drho_uu_d); CREF3(v2sigma2_drho_ud_u); CREF3(v2sigma2_drho_ud_d);
         CREF3(v2sigma2_drho_du_u); CREF3(v2sigma2_drho_du_d); CREF3(v2sigma2_drho_dd_u); CREF3(v2sigma2_drho_dd_d);
@@ -102,6 +100,23 @@ namespace LR
         CREF(v3rho2sigma);
         CREF(v3rhosigma2);
         CREF(v3sigma3);
+        /// Scalar GGA response coefficients: 2 F^(1) and 2 S^(1).
+        /// The common ground-state gradient is supplied by the potential contraction.
+        /// These same arrays supply the transition-gradient terms of gxc; no duplicate cache.
+        struct ClosedShellGga
+        {
+            Tvec rho_sigma;
+            Tvec sigma_sigma;
+        };
+        const ClosedShellGga& closed_shell_gga(const bool triplet) const
+        {
+            if (openshell_)
+            {
+                throw std::logic_error("Closed-shell GGA coefficients requested for an open-shell kernel");
+            }
+            return (nspin_ == 1 || !triplet) ? closed_shell_gga_s_ : closed_shell_gga_t_;
+        }
+
         /// @brief The coefficients of
         ///     $v^{(2)}(r)=\iint dr'dr''\,g^{xc}(r,r',r'')\rho^1(r')\rho^1(r'')$
         /// for ONE spin combination, stored exactly as they appear in the final formula:
@@ -110,7 +125,9 @@ namespace LR
         ///          + (c_s\,s + c_t\,t)\,\nabla\rho^1\,]$
         /// with $s=\rho^1$, $t=\nabla\rho\cdot\nabla\rho^1$, $q=\nabla\rho^1\cdot\nabla\rho^1$.
         ///
-        /// Every numeric factor and every spin sum is folded in here, so `PotGradXCLR::cal_v_eff`
+        /// The transition-gradient scalars c_s and c_t reuse ClosedShellGga (factor 2 for
+        /// nspin=2, factor 8 for singlet-normalized nspin=1). The other factors are folded
+        /// in here, so `PotGradXCLR::cal_v_eff`
         /// is a literal transcription of the formula with no arithmetic of its own, and nspin=1,
         /// singlet and triplet all run through the same code. For LDA only `a_s2` is filled.
         /// $v^{(2)} = A - \nabla\cdot E$
@@ -125,9 +142,6 @@ namespace LR
             std::vector<double> a_st;
             std::vector<double> a_t2;
             std::vector<double> a_q;
-            // Scalars multiplying the transition-density gradient.
-            std::vector<double> c_s;
-            std::vector<double> c_t;
             // Divergence coefficients, all multiplying the ground-state density gradient.
             std::vector<double> e_s2;
             std::vector<double> e_st;
@@ -188,16 +202,9 @@ namespace LR
         // std::map<std::string, std::vector<ModuleBase::Vector3<double>>> grad_kernel_set_;// [kernel_type][nrxx][nspin],  intermediate terms for GGA
         // for nspin=1, gga
         std::vector<std::vector<ModuleBase::Vector3<double>>> drho_gs_; ///< $\nabla\rho$ of the ground state, size: nspin*nrxx
-        std::vector<ModuleBase::Vector3<double>> v2rhosigma_2drho_;  ///< $f^{\rho\sigma}*\nabla\rho *2$
-        std::vector<ModuleBase::Vector3<double>> v2sigma2_4drho_; ///< $f^{\sigma\sigma}*\nabla\rho *4$
+        ClosedShellGga closed_shell_gga_s_;
+        ClosedShellGga closed_shell_gga_t_;
 
-        // for nspin=2 (close-shell), gga kernels
-        Tvec3 v2rhosigma_drho_singlet_; ///< $2(f^{\rho_u\sigma_{uu}}+f^{\rho_u\sigma_{ud}}+f^{\rho_u\sigma_{dd}})*\nabla\rho)$
-        Tvec3 v2rhosigma_drho_triplet_; ///< $2(f^{\rho_u\sigma_{uu}}-f^{\rho_u\sigma_{ud}})*\nabla\rho)$
-        Tvec3 v2sigma2_drho_singlet_;   /// < $(4f^{\sigma_{uu}\sigma_{uu}}+6f^{\sigma_{uu}\sigma_{ud}}+4f^{\sigma_{uu}\sigma_{dd}}+2f^{\sigma_{ud}\sigma_{ud}}+2f^{\sigma_{ud}\sigma_{dd}})\nabla\rho$
-        Tvec3 v2sigma2_drho_triplet_;   /// < $(4f^{\sigma_{uu}\sigma_{uu}}+2f^{\sigma_{uu}\sigma_{ud}}-4f^{\sigma_{uu}\sigma_{dd}}-2f^{\sigma_{ud}\sigma_{dd}})\nabla\rho$
-
-        // for nspin=2 (open shell), gga kernels
         Tvec3 v2rhosigma_drho_uu_;  ///< $2f^{\rho_u\sigma_{uu}}\nabla\rho_u+f^{\rho_u\sigma_{ud}}\nabla\rho_d$
         Tvec3 v2rhosigma_drho_ud_;  ///< $f^{\rho_u\sigma_{ud}}\nabla\rho_u+2f^{\rho_u\sigma_{dd}}\nabla\rho_d$
         Tvec3 v2rhosigma_drho_du_;  ///< $2f^{\rho_d\sigma_{uu}}\nabla\rho_u+f^{\rho_d\sigma_{ud}}\nabla\rho_d$
