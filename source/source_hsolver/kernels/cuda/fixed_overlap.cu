@@ -163,7 +163,8 @@ __global__ void expand_hermitian_upper(const double2* input, double2* output, in
     if (index >= size_t(size) * size) { return; }
     const int row = index % size, column = index / size;
     const auto value = row <= column ? input[index] : input[size_t(row) * size + column];
-    output[index] = make_double2(value.x, row == column ? 0.0 : row < column ? value.y : -value.y);
+    const double imaginary = row == column ? 0.0 : (row < column ? value.y : -value.y);
+    output[index] = make_double2(value.x, imaginary);
 }
 
 } // namespace
