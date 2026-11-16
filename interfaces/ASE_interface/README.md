@@ -49,9 +49,17 @@ does not contain the trajectory. Each calculator retains its own LTS/develop
 reader, so calculators for different engine versions can coexist.
 
 Both output readers accept paths or named text streams, using the log filename
-to locate companion output files. Caller-owned streams remain open. Returned
-structures have periodic boundary conditions for both SCF and MD calculations;
-periodicity does not depend on whether the geometry came from MD_dump.
+to locate companion output files. Caller-owned streams remain open and are read
+from their current position; seek to the start before rereading. Returned ASE
+positions and cells are Cartesian Angstrom values, with Direct and alat
+conversions applied once by the reader. Raw trajectory dictionaries retain
+their file-native conventions.
+
+Returned structures represent the simulation box with periodic boundaries in
+all directions, including molecules in vacuum and slabs. This changes earlier
+SCF output flags; readers do not infer physical isolation from vacuum thickness.
+For nonperiodic geometry analysis, make a copy and explicitly set its `pbc`
+flags; this does not change the completed calculation's boundary conditions.
 
 The default SCF identity tolerance is **1e-4 Angstrom**, applied to each cell
 component and periodic Cartesian position residual with no relative tolerance.

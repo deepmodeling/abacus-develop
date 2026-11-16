@@ -310,31 +310,12 @@ def _read_stru_reference(directory, stru_file, atomorder, log_path=None):
     }
 
 
-def _log_coordinate_system(log_path, *, legacyio=None, trajectory=None):
-    """Return whether log coordinates are fractional and their Cartesian scale.
-
-    Use the running-log header rather than STRU's coordinate convention:
-    ABACUS may print DIRECT coordinates after reading a Cartesian STRU.
-    Reuse the validated trajectory during result collection; direct matcher
-    callers can still read the coordinate header from the selected reader.
-    """
-    if trajectory is None:
-        use_legacy = __LEGACYIO__ if legacyio is None else legacyio
-        if use_legacy:
-            from abacuslite.io.legacyio import read_traj_from_running_log
-        else:
-            from abacuslite.io.latestio import read_traj_from_running_log
-        trajectory = read_traj_from_running_log(log_path)
-    direct = str(trajectory[0]['coordinate']).lower().startswith('d')
-    scale = float(trajectory[0]['alat_in_angstrom'])
-    if not np.isfinite(scale) or scale <= 0:
-        raise ValueError(f"Invalid lattice constant in Angstrom: {scale!r}")
-    return direct, scale
-
-
 def _validate_raw_scf_frame(frame, frame_index, expected):
     """Validate one raw frame before atom reordering can hide extra atoms."""
     context = f"frame {frame_index}"
+    scale = float(frame['alat_in_angstrom'])
+    if not np.isfinite(scale) or scale <= 0:
+        raise ValueError(f"{context} invalid lattice constant in Angstrom: {scale!r}")
     expected_shape = expected['positions'].shape
     expected_natoms = len(expected['symbols'])
     coords = np.asarray(frame['coords'], dtype=float)
@@ -384,8 +365,7 @@ def _validate_raw_scf_trajectory(log_path, expected, *, legacyio=None):
     return trajectory
 
 
-def _normalize_scf_frame(frame, frame_index, expected, frame_is_direct, atol,
-                         cartesian_scale=1.0):
+def _normalize_scf_frame(frame, frame_index, expected, atol):
     """Normalize one parser frame and return match diagnostics.
 
     A finite, well-shaped frame with a different position or cell is a valid
@@ -429,10 +409,8 @@ def _normalize_scf_frame(frame, frame_index, expected, frame_is_direct, atol,
         raise ValueError(f"{context} cell is non-finite")
     cell_inverse = _invert_cell(cell, context)
 
-    # ABACUS prints Cartesian tau in units of alat, while cell is already in Å.
-    frame_cart = positions @ cell if frame_is_direct else positions * cartesian_scale
-    if not np.isfinite(frame_cart).all():
-        raise ValueError(f"{context} normalized Cartesian positions are non-finite")
+    # Public readers return standard ASE Cartesian positions in Angstrom.
+    frame_cart = positions
     cell_diff = float(np.max(np.abs(cell - expected['cell'])))
     periodic_residual = None
     if np.allclose(cell, expected['cell'], atol=atol, rtol=0.0):
@@ -450,8 +428,7 @@ def _normalize_scf_frame(frame, frame_index, expected, frame_is_direct, atol,
 
 
 def _select_scf_frame_for_structure(
-    frames, log_path, directory, atomorder, atol=1e-4, stru_file='STRU', _reference=None,
-    *, legacyio=None, _trajectory=None
+    frames, log_path, directory, atomorder, atol=1e-4, stru_file='STRU', _reference=None
 ):
     """Select the latest frame matching STRU in ASE atom order.
 
@@ -480,24 +457,13 @@ def _select_scf_frame_for_structure(
         directory, stru_file, atomorder, log_path=log_path
     )
     frame_label = 'frame' if nframes == 1 else 'frames'
-    try:
-        frame_is_direct, cartesian_scale = _log_coordinate_system(
-            log_path, legacyio=legacyio, trajectory=_trajectory
-        )
-    except Exception as exc:
-        raise RuntimeError(
-            f"Cannot parse scf log coordinate header: {log_path} "
-            f"({exc}; fail-closed)"
-        ) from exc
-
     selected = None
     last = None
     invalid = []
     for frame_index, frame in enumerate(frames):
         try:
             last = _normalize_scf_frame(
-                frame, frame_index, expected, frame_is_direct, atol,
-                cartesian_scale=cartesian_scale
+                frame, frame_index, expected, atol
             )
             if last['matches']:
                 selected = frame
@@ -786,7 +752,6 @@ class AbacusTemplate(CalculatorTemplate):
         log = outdir / f'running_{self.calculation}.log'
         stru_file = getattr(self, 'stru_file', 'STRU') or 'STRU'
         reference = None
-        raw_trajectory = None
         parser_atomorder = self.atomorder
         if self.calculation == 'scf':
             # Read and validate STRU/mapping before passing sort_atoms_with to
@@ -796,7 +761,7 @@ class AbacusTemplate(CalculatorTemplate):
             )
             # Validate raw parser cardinality before sort_atoms_with can slice
             # away an extra/missing atom and make a corrupt frame look valid.
-            raw_trajectory = _validate_raw_scf_trajectory(
+            _validate_raw_scf_trajectory(
                 log, reference, legacyio=self._legacyio
             )
             parser_atomorder = None if self.atomorder is None else reference['atomorder']
@@ -824,8 +789,6 @@ class AbacusTemplate(CalculatorTemplate):
                 reference['atomorder'],
                 stru_file=stru_file,
                 _reference=reference,
-                legacyio=self._legacyio,
-                _trajectory=raw_trajectory,
             )
         assert atoms is not None
 

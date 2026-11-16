@@ -846,7 +846,9 @@ def read_abacus_out(fileobj,
     Returns
     -------
     atoms : Atoms | List[Atoms]
-        The atoms object, whose calculator is the `SinglePointDFTCalculator`.
+        Standard ASE geometry: Cartesian positions and cell in Angstrom, with
+        the periodic ABACUS simulation box. The attached calculator is a
+        `SinglePointDFTCalculator`.
     '''
     log_path, abacus_lines = _read_log_source(fileobj)
 
@@ -926,20 +928,17 @@ def read_abacus_out(fileobj,
         # for each frame, a structure can be defined
         ind = ind or list(range(len(frame['elem'])))
         positions = frame['coords'][ind]
-        if md_calculation:
-            if geometry_from_dump:
-                # This format prints lattice vectors in alat and positions in Angstrom.
-                cell = frame['cell'] * frame['alat_in_angstrom']
-            else:
-                cell = frame['cell']  # running-log reader already returns Angstrom
-                if frame['coordinate'] == 'Direct':
-                    positions = positions @ cell
-                elif frame['coordinate'] == 'Cartesian':
-                    positions = positions * frame['alat_in_angstrom']
-                else:
-                    raise ValueError(f'Unknown MD coordinate system: {frame["coordinate"]}')
+        if md_calculation and geometry_from_dump:
+            # MD_dump lattice vectors use alat; positions are already Angstrom.
+            cell = frame['cell'] * frame['alat_in_angstrom']
         else:
-            cell = frame['cell']
+            cell = frame['cell']  # Running-log cells are already Angstrom.
+            if frame['coordinate'] == 'Direct':
+                positions = positions @ cell
+            elif frame['coordinate'] == 'Cartesian':
+                positions = positions * frame['alat_in_angstrom']
+            else:
+                raise ValueError(f'Unknown coordinate system: {frame["coordinate"]}')
         atoms = Atoms(symbols=np.array(frame['elem'])[ind].tolist(), 
                       positions=positions,
                       cell=cell,
@@ -1077,6 +1076,8 @@ class TestLegacyIO(unittest.TestCase):
                                 [1.0, 0.0, 0.0],
                                 [2.0, 0.0, 0.0]]),
             'cell': np.eye(3),
+            'coordinate': 'Cartesian',
+            'alat_in_angstrom': 1.0,
         }
         elecstate = [{
             'k': np.zeros((1, 1, 3)),

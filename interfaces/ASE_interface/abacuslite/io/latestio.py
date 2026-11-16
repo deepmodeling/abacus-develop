@@ -418,7 +418,9 @@ def read_abacus_out(fileobj,
     Returns
     -------
     atoms : Atoms | List[Atoms]
-        The atoms object, whose calculator is the `SinglePointDFTCalculator`.
+        Standard ASE geometry: Cartesian positions and cell in Angstrom, with
+        the periodic ABACUS simulation box. The attached calculator is a
+        `SinglePointDFTCalculator`.
     '''
     log_path, abacus_lines = _read_log_source(fileobj)
 
@@ -485,13 +487,20 @@ def read_abacus_out(fileobj,
         trajectory, elecstate, magmom, forces, stress, energies):
         # for each frame, a structure can be defined
         ind = ind or list(range(len(frame['elem'])))
-        # Native MD geometry comes from MD_dump: lattice vectors use alat,
-        # positions use Angstrom. Running-log cells are already in Angstrom;
-        # their positions retain the logged coordinate convention.
-        cell = frame['cell'] * frame['alat_in_angstrom'] \
-            if md_calculation else frame['cell']
+        positions = frame['coords'][ind]
+        if md_calculation:
+            # MD_dump lattice vectors use alat; positions are already Angstrom.
+            cell = frame['cell'] * frame['alat_in_angstrom']
+        else:
+            cell = frame['cell']  # Running-log cells are already Angstrom.
+            if frame['coordinate'] == 'Direct':
+                positions = positions @ cell
+            elif frame['coordinate'] == 'Cartesian':
+                positions = positions * frame['alat_in_angstrom']
+            else:
+                raise ValueError(f'Unknown coordinate system: {frame["coordinate"]}')
         atoms = Atoms(symbols=np.array(frame['elem'])[ind].tolist(), 
-                      positions=frame['coords'][ind], 
+                      positions=positions,
                       cell=cell,
                       pbc=True,  # ABACUS uses a periodic simulation cell for every run.
                       magmoms=mag[ind])
@@ -538,6 +547,8 @@ class TestLatestIO(unittest.TestCase):
                                 [1.0, 0.0, 0.0],
                                 [2.0, 0.0, 0.0]]),
             'cell': np.eye(3),
+            'coordinate': 'Cartesian',
+            'alat_in_angstrom': 1.0,
         }
         elecstate = [{
             'k': np.zeros((1, 1, 3)),
