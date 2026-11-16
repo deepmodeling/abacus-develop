@@ -1,0 +1,1 @@
+Fixed-ion Si PBE/hybrid-gauge commutator current with nspin=2 and vl_in_h=0 preserves the shared Hamiltonian for both spins.
