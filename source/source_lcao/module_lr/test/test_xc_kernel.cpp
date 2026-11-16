@@ -246,3 +246,115 @@ TEST_F(KernelXCTest, HseGroundResponseUsesUnmodifiedSigma)
             LR::KernelXC::Singlet),
         std::invalid_argument);
 }
+
+TEST_F(KernelXCTest, SigmaFloorJacobianPreservesOtherFunctionals)
+{
+    const std::vector<double> sigma = {-2.0,
+        0.5e-6,
+        1e-6,
+        2e-6};
+    std::vector<double> buffer;
+    std::vector<double> jacobian;
+    const auto &original = LR_Util::prepare_xc_sigma(
+        sigma,
+        false,
+        buffer,
+        jacobian);
+    EXPECT_EQ(&original, &sigma);
+    EXPECT_TRUE(jacobian.empty());
+    const auto &stabilized = LR_Util::prepare_xc_sigma(
+        sigma,
+        true,
+        buffer,
+        jacobian);
+    EXPECT_EQ(
+        stabilized, (std::vector<double>{1e-6,
+                        1e-6,
+                        1e-6,
+                        2e-6}));
+    EXPECT_EQ(
+        jacobian, (std::vector<double>{0.0,
+                      0.0,
+                      0.0,
+                      1.0}));
+    const std::vector<double> empty;
+    EXPECT_TRUE(
+        LR_Util::prepare_xc_sigma(
+            empty,
+            true,
+            buffer,
+            jacobian)
+            .empty());
+    EXPECT_TRUE(jacobian.empty());
+}
+
+
+TEST_F(KernelXCTest, HseClippedKernelGradientMatchesIndependentFiniteDifference)
+{
+    if (!hse_has_kxc(1))
+    {
+        GTEST_SKIP() << "Installed LibXC does not advertise HSE third derivatives";
+    }
+    basis.nrxx = 1;
+    basis.npw = 1;
+    basis.nmaxgr = 1;
+    charge.nrxx = 1;
+    cell.tpiba = 0.001;
+    const auto kernel = build("hse", 1, LR::KernelXC::Singlet);
+    const auto &coefficients = kernel->gxc(false);
+    const ModuleBase::Vector3<double> base_gradient(0.1, 0.2, 0.3);
+    const ModuleBase::Vector3<double> perturbation_gradient(0.03, -0.02, 0.04);
+    const double u = 0.4;
+    const auto gradient = base_gradient * cell.tpiba;
+    const double t = gradient * perturbation_gradient;
+    const double q = perturbation_gradient * perturbation_gradient;
+    const double radial = coefficients.e_s2[0] * u * u + coefficients.e_st[0] * u * t + coefficients.e_t2[0] * t * t +
+                          coefficients.e_q[0] * q;
+    const auto& second_order = kernel->closed_shell_gga(false);
+    const double explicit_gradient = 8.0 * (second_order.rho_sigma[0] * u + second_order.sigma_sigma[0] * t);
+    const auto derivative = gradient * radial + perturbation_gradient * explicit_gradient;
+    const double analytic = (derivative * base_gradient) / 4.0;
+    // Differentiate the second-order LR quadratic form, without using any third derivative.
+    const auto quadratic = [&](const double scale) -> double
+    {
+        cell.tpiba = scale;
+        const auto second = build("hse", 1, LR::KernelXC::NoGxc);
+        const double projection = (base_gradient * scale) * perturbation_gradient;
+        return second->v2rho2[0] * u * u + 4.0 * second->v2rhosigma[0] * u * projection +
+               4.0 * second->v2sigma2[0] * projection * projection + 2.0 * second->vsigma[0] * q;
+    };
+    for (const double h : {1e-5, 5e-6})
+    {
+        const double plus = quadratic(0.001 + h);
+        const double minus = quadratic(0.001 - h);
+        const double finite_difference = (plus - minus) / (2.0 * h);
+        EXPECT_NEAR(analytic, finite_difference, 1e-9);
+    }
+    EXPECT_DOUBLE_EQ(radial, 0.0);
+    EXPECT_NE(explicit_gradient, 0.0);
+}
+
+TEST_F(KernelXCTest, PolarizedHseClippingMasksOnlyImplicitSigmaDerivatives)
+{
+    if (!hse_has_kxc(2))
+    {
+        GTEST_SKIP() << "Installed LibXC does not advertise polarized HSE third derivatives";
+    }
+    basis.nrxx = 1;
+    basis.npw = 1;
+    basis.nmaxgr = 1;
+    charge.nrxx = 1;
+    cell.tpiba = 0.001;
+    const auto kernel = build("hse", 2, LR::KernelXC::BothSpins);
+    for (const bool triplet : {false, true})
+    {
+        const auto &coefficients = kernel->gxc(triplet);
+        EXPECT_DOUBLE_EQ(coefficients.e_s2[0], 0.0);
+        EXPECT_DOUBLE_EQ(coefficients.e_st[0], 0.0);
+        EXPECT_DOUBLE_EQ(coefficients.e_t2[0], 0.0);
+        EXPECT_DOUBLE_EQ(coefficients.e_q[0], 0.0);
+        EXPECT_NE(kernel->closed_shell_gga(triplet).rho_sigma[0], 0.0);
+    }
+    const auto pbe = build("pbe", 2, LR::KernelXC::BothSpins);
+    EXPECT_NE(pbe->gxc(false).e_s2[0], 0.0);
+}

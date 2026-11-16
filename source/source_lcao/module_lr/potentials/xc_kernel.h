@@ -171,6 +171,11 @@ namespace LR
             return ret;
         }
 
+        /// Componentwise derivative of prepared sigma; empty means identity.
+        /// Borrowed for the kernel lifetime, point-major: one component at nspin=1,
+        /// or (uu, ud, dd) at nspin=2. Only implicit coefficient derivatives use it.
+        const Tvec& sigma_jacobian() const { return sigma_jacobian_; }
+
         const bool& openshell = openshell_;
         const std::vector<std::vector<ModuleBase::Vector3<double>>>& drho_gs = drho_gs_;
         /// Whether THIS kernel (built for its own functional name, which may differ from the
@@ -244,6 +249,7 @@ namespace LR
         int functional_type_ = 0;
         const int gxc_spin_ = GxcSpin::NoGxc;   ///< which `GxcCoef` sets to build, see `GxcSpin`
         const Purpose purpose_;
+        Tvec sigma_jacobian_;
         // ================================== XC kernel Gradiants ====================================
         const ModulePW::PW_Basis& rho_basis_;
         const bool openshell_ = false;

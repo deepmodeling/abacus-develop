@@ -374,7 +374,19 @@ void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const doubl
             // this does not alter the existing GS potential or low-density cutoff policy.
             const bool stabilize_hse = is_hse06 && purpose_ == Purpose::LinearResponse;
             std::vector<double> hse_sigma;
-            const std::vector<double>& sigma_input = LR_Util::prepare_xc_sigma(sigma, stabilize_hse, hse_sigma);
+            // Differentiate the LR matrix actually used: only implicit dependence on
+            // max(sigma, sigma_cut) carries its Jacobian, not explicit gradient factors.
+            const std::vector<double>* sigma_input_ptr = nullptr;
+            if (need_kxc)
+            {
+                sigma_input_ptr = &LR_Util::prepare_xc_sigma(sigma, stabilize_hse,
+                    hse_sigma, sigma_jacobian_);
+            }
+            else
+            {
+                sigma_input_ptr = &LR_Util::prepare_xc_sigma(sigma, stabilize_hse, hse_sigma);
+            }
+            const std::vector<double>& sigma_input = *sigma_input_ptr;
             xc_gga_vxc(&func, nrxx, rho.data(), sigma_input.data(), vrho_tmp.data(), vsigma_tmp.data());
             xc_gga_fxc(&func, nrxx, rho.data(), sigma_input.data(), v2rho2_tmp.data(), v2rhosigma_tmp.data(), v2sigma2_tmp.data());
             // std::cout << "max element of v2sigma2_tmp: " << *std::max_element(v2sigma2_tmp.begin(), v2sigma2_tmp.end()) << std::endl;
@@ -694,10 +706,11 @@ void LR::KernelXC::build_gxc_coef(GxcCoef& dst, const bool triplet, const int& n
             dst.a_st[i] = to_singlet * v3r2s[i] * 4.;
             dst.a_t2[i] = to_singlet * v3rs2[i] * 4.;
             dst.a_q[i] = to_singlet * v2rs[i] * 2.;
-            dst.e_s2[i] = to_singlet * v3r2s[i] * 2.;
-            dst.e_st[i] = to_singlet * v3rs2[i] * 8.;
-            dst.e_t2[i] = to_singlet * v3s3[i] * 8.;
-            dst.e_q[i] = to_singlet * v2s2[i] * 4.;
+            const double sigma_jacobian = sigma_jacobian_.empty() ? 1.0 : sigma_jacobian_[i];
+            dst.e_s2[i] = to_singlet * v3r2s[i] * 2. * sigma_jacobian;
+            dst.e_st[i] = to_singlet * v3rs2[i] * 8. * sigma_jacobian;
+            dst.e_t2[i] = to_singlet * v3s3[i] * 8. * sigma_jacobian;
+            dst.e_q[i] = to_singlet * v2s2[i] * 4. * sigma_jacobian;
         }
         return;
     }
@@ -766,7 +779,8 @@ void LR::KernelXC::build_gxc_coef(GxcCoef& dst, const bool triplet, const int& n
         double S = 0.;
         for (int a = 0;a < 3;++a)
         {
-            const double w = th[a];
+            const double sigma_jacobian = sigma_jacobian_.empty() ? 1.0 : sigma_jacobian_[3 * i + a];
+            const double w = th[a] * sigma_jacobian;
             if (w != 0.)
             {
                 P += w * (eta[0] * eta[0] * v3r2s[o9 + 0 + a]

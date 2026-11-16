@@ -7,6 +7,12 @@
 #include <stdexcept>
 #include "source_base/module_container/base/third_party/lapack.h"
 #include "source_base/module_external/scalapack_connector.h"
+namespace
+{
+// Existing LR HSE sigma floor in bohr^-8; shared by preparation and its Jacobian.
+constexpr double hse_sigma_floor() { return 1e-6; }
+}
+
 namespace LR_Util
 {
     int spin_population_difference(const ModuleBase::matrix& wg, const int kpar, const int rank_in_pool)
@@ -116,11 +122,32 @@ namespace LR_Util
             return sigma;
         }
         hse_buffer.resize(sigma.size());
+        const double sigma_floor = hse_sigma_floor();
         for (std::size_t index = 0; index < sigma.size(); ++index)
         {
-            hse_buffer[index] = std::max(sigma[index], 1e-6);
+            hse_buffer[index] = std::max(sigma[index], sigma_floor);
         }
         return hse_buffer;
+    }
+
+    const std::vector<double> &prepare_xc_sigma(
+        const std::vector<double> &sigma,
+        const bool is_hse06,
+        std::vector<double> &hse_buffer,
+        std::vector<double> &jacobian)
+    {
+        const std::vector<double> &prepared = prepare_xc_sigma(sigma, is_hse06, hse_buffer);
+        jacobian.clear();
+        if (is_hse06)
+        {
+            jacobian.resize(sigma.size());
+            const double sigma_floor = hse_sigma_floor();
+            for (std::size_t index = 0; index < sigma.size(); ++index)
+            {
+                jacobian[index] = sigma[index] > sigma_floor ? 1.0 : 0.0;
+            }
+        }
+        return prepared;
     }
 
     /// =================PHYSICS====================

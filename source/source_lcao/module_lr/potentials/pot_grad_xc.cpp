@@ -190,6 +190,7 @@ namespace LR
         const std::vector<double>& v3r2s = kxc.v3rho2sigma;
         const std::vector<double>& v3rs2 = kxc.v3rhosigma2;
         const std::vector<double>& v3s3 = kxc.v3sigma3;
+        const auto& sigma_jacobian = kxc.sigma_jacobian();
 
         // Branch on THIS kernel's own GGA-ness, not the ground state's (see `cal_v_eff`).
         if (!kxc.is_gga())   // LDA: only $g^{\rho\rho\rho}$ survives
@@ -322,7 +323,10 @@ namespace LR
                     upp += Q[b] * v2s2[o6 + p2[a][b]];
                 }
 
-                E += th * (drho[c] * upp + dr1[c] * (2. * up));
+                // Prepared-sigma coefficients carry J; explicit transition-gradient
+                // factors retain their full derivative, including below the floor.
+                const double jacobian = sigma_jacobian.empty() ? 1.0 : sigma_jacobian[3 * ir + a];
+                E += th * (drho[c] * (upp * jacobian) + dr1[c] * (2. * up));
             }
             gdot_terms[ir] = -E;   // `grad_dot` then yields $-\nabla\cdot\boldsymbol{E}_\tau$
         }
