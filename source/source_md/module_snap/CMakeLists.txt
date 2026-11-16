@@ -8,7 +8,3 @@ target_sources(
     snap_cg.cpp
     snap.cpp
 )
-
-if(BUILD_TESTING)
-  add_subdirectory(unittest)
-endif()

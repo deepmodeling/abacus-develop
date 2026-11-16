@@ -2,6 +2,28 @@ abacus_disable_feature_definitions(__MPI __LCAO)
 abacus_add_local_feature_definitions(__NORMAL)
 
 addtest(
+  TARGET MODULE_MD_SNAP_model
+  SOURCES test_snap_model.cpp ../module_snap/snap_model.cpp)
+
+addtest(
+  TARGET MODULE_MD_SNAP_cg
+  SOURCES test_snap_cg.cpp ../module_snap/snap_cg.cpp)
+
+addtest(
+  TARGET MODULE_MD_SNAP_descriptor
+  LIBS base device
+  SOURCES test_snap_descriptor.cpp ../module_snap/snap_descriptor.cpp
+          ../module_snap/snap_derivative.cpp ../module_snap/snap_model.cpp
+          ../module_snap/snap_cg.cpp)
+
+addtest(
+  TARGET MODULE_MD_SNAP_calculator
+  LIBS base device
+  SOURCES test_snap_calculator.cpp ../module_snap/snap_calculator.cpp
+          ../module_snap/snap_descriptor.cpp ../module_snap/snap_derivative.cpp
+          ../module_snap/snap_model.cpp ../module_snap/snap_cg.cpp)
+
+addtest(
   TARGET MODULE_MD_LJ_potential
   LIBS parameter psi device
   SOURCES test_lj.cpp
