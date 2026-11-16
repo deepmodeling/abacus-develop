@@ -341,11 +341,13 @@ TYPED_TEST(DavSubspaceTest, HostBackedDenseActionsMatchResident)
     for (int i = 0; i < dim; ++i)
         for (int j = 0; j < dim; ++j)
         {
-            h[i * dim + j] = 0.5 * (h[i * dim + j] + h[j * dim + i]);
             Real value = 0;
             for (int k = 0; k < dim; ++k) value += a[k * dim + i] * a[k * dim + j];
             s[i * dim + j] = value + (i == j ? Real(4) : Real(0));
         }
+    for (int i = 0; i < dim; ++i)
+        for (int j = i + 1; j < dim; ++j)
+            h[j * dim + i] = h[i * dim + j];
     std::vector<TypeParam> base(ld * nbands, TypeParam(0));
     for (int band = 0; band < nbands; ++band)
         for (int i = 0; i < dim; ++i)
@@ -366,16 +368,31 @@ TYPED_TEST(DavSubspaceTest, HostBackedDenseActionsMatchResident)
         base_device::memory::resize_memory_op<TypeParam, TestDevice>()(device_psi, psi.size());
         base_device::memory::synchronize_memory_op<TypeParam, TestDevice, base_device::DEVICE_CPU>()(
             device_psi, psi.data(), psi.size());
-        solver.diag(op, device_psi, ld, eig.data(), thr, false, 6);
+        const int status = solver.diag(op, device_psi, ld, eig.data(), thr, false, 6);
         base_device::memory::synchronize_memory_op<TypeParam, base_device::DEVICE_CPU, TestDevice>()(
             psi.data(), device_psi, psi.size());
         base_device::memory::delete_memory_op<TypeParam, TestDevice>()(device_psi);
+        return status;
     };
     std::vector<TypeParam> resident = base, host = base;
     std::vector<Real> er, eh;
-    run(false, resident, er);
-    run(true, host, eh);
+    EXPECT_GE(run(false, resident, er), 0);
+    EXPECT_GE(run(true, host, eh), 0);
     for (int band = 0; band < nbands; ++band) EXPECT_NEAR(er[band], eh[band], 1e-8);
+    const auto expect_s_orthonormal = [&](const std::vector<TypeParam>& psi) {
+        for (int left = 0; left < nbands; ++left)
+            for (int right = 0; right < nbands; ++right)
+            {
+                Real value = 0;
+                for (int i = 0; i < dim; ++i)
+                    for (int j = 0; j < dim; ++j)
+                        value += std::real(std::conj(psi[left * ld + i]) * s[i * dim + j]
+                                           * psi[right * ld + j]);
+                EXPECT_NEAR(value, left == right ? Real(1) : Real(0), 1e-8);
+            }
+    };
+    expect_s_orthonormal(resident);
+    expect_s_orthonormal(host);
     for (int band = 0; band < nbands; ++band)
     {
         std::complex<double> overlap(0, 0);
