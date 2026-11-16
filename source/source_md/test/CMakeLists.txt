@@ -91,7 +91,7 @@ set(md_test_depend_files
 addtest(
   TARGET MODULE_MD_func
   LIBS parameter psi device
-  SOURCES md_func_test.cpp test_md_func.cpp ${depend_files})
+  SOURCES ../unittests/test_md_func.cpp ${depend_files})
 
 set(md_run_json_sources)
 if(ENABLE_JSON)
