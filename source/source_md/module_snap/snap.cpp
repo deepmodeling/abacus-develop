@@ -1,4 +1,4 @@
-#include "snap_potential.h"
+#include "snap.h"
 
 #include "source_base/constants.h"
 #include "source_base/parallel_cell.h"

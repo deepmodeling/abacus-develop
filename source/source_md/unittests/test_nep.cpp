@@ -1,4 +1,4 @@
-#include "source_md/module_nep/nep_potential.h"
+#include "source_md/module_nep/nep.h"
 
 #include "source_cell/dom_decomp.h"
 #include "source_md/test/setcell.h"

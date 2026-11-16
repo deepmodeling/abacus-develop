@@ -1,4 +1,4 @@
-#include "source_md/module_snap/snap_potential.h"
+#include "source_md/module_snap/snap.h"
 
 #include "source_cell/dom_decomp.h"
 #include "source_io/module_parameter/parameter.h"

@@ -9,10 +9,10 @@ addtest(
           ${md_test_depend_files})
 
 addtest(
-  TARGET MODULE_MD_SNAP_potential
+  TARGET MODULE_MD_snap
   LIBS parameter psi device
-  SOURCES test_snap_potential.cpp
-          ../module_snap/snap_potential.cpp
+  SOURCES test_snap.cpp
+          ../module_snap/snap.cpp
           ../module_snap/snap_calculator.cpp
           ../module_snap/snap_descriptor.cpp
           ../module_snap/snap_derivative.cpp
@@ -42,9 +42,9 @@ if(DEFINED NEP_DIR AND NEP_FOUND)
 endif()
 
 addtest(
-  TARGET MODULE_MD_NEP_potential
+  TARGET MODULE_MD_nep
   LIBS ${_md_nep_test_libs}
-  SOURCES test_nep_potential.cpp ../module_nep/nep_potential.cpp
+  SOURCES test_nep.cpp ../module_nep/nep.cpp
           ../../source_cell/module_neighlist/neighbor_list.cpp
           ${md_test_depend_files})
 

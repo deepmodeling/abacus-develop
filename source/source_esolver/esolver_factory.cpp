@@ -23,8 +23,8 @@
 #include "source_base/module_external/blacs_connector.h"
 #endif
 #include "source_md/module_dp/dp.h"
-#include "source_md/module_nep/nep_potential.h"
-#include "source_md/module_snap/snap_potential.h"
+#include "source_md/module_nep/nep.h"
+#include "source_md/module_snap/snap.h"
 #include "esolver_forcefields.h"
 #include "source_md/module_lj/lj.h"
 #include "esolver_of.h"
