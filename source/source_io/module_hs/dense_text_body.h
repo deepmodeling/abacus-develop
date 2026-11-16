@@ -2,11 +2,23 @@
 #define DENSE_TEXT_BODY_H
 
 #include <complex>
+#include <cstddef>
 #include <iosfwd>
 #include <vector>
 
 namespace ModuleIO
 {
+
+/// @brief Flat index of matrix element (i, j) in a gathered buffer.
+/// @details A row-major buffer stores (i, j) at i * nlocal + j, while a
+///          column-major buffer stores it at j * nlocal + i. Writers and
+///          readers of the flat NAO text layout must share this mapping so that
+///          the file always stays row-major.
+/// @param[in] i            row index, must be non-negative
+/// @param[in] j            column index, must be non-negative
+/// @param[in] nlocal       matrix dimension, must be positive
+/// @param[in] column_major whether the buffer is stored column-major
+std::size_t dense_buffer_index(const int i, const int j, const int nlocal, const bool column_major);
 
 /// @brief Write a dense square matrix body in the flat NAO text layout shared
 ///        by the DM(k), H(k)/S(k) and T(k) writers.

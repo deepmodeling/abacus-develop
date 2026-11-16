@@ -23,11 +23,7 @@ std::size_t row_major_index(const int i, const int j, const int nlocal)
 /// @details A column-major buffer stores (i, j) at j * nlocal + i.
 std::size_t source_index(const int i, const int j, const int nlocal, const bool column_major)
 {
-    if (column_major)
-    {
-        return row_major_index(j, i, nlocal);
-    }
-    return row_major_index(i, j, nlocal);
+    return ModuleIO::dense_buffer_index(i, j, nlocal, column_major);
 }
 
 /// @brief Validate the arguments shared by both overloads.
@@ -50,6 +46,18 @@ void set_body_format(std::ofstream& ofs, const int precision)
     ofs << std::right;
 }
 } // namespace
+
+std::size_t ModuleIO::dense_buffer_index(const int i, const int j, const int nlocal, const bool column_major)
+{
+    assert(i >= 0);
+    assert(j >= 0);
+    assert(nlocal > 0);
+    if (column_major)
+    {
+        return row_major_index(j, i, nlocal);
+    }
+    return row_major_index(i, j, nlocal);
+}
 
 void ModuleIO::write_dense_text_body(std::ofstream& ofs,
                                      const std::vector<double>& mat,
