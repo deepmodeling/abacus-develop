@@ -77,7 +77,6 @@ class OnsiteProj<OperatorPW<T, Device>> : public OperatorPW<T, Device>
     base_device::DEVICE_CPU* cpu_ctx = {};
 
     using gemv_op = hsolver::gemv_op<T, Device>;
-    using gemm_op = hsolver::gemm_op<T, Device>;
     using setmem_complex_op = base_device::memory::set_memory_op<T, Device>;
     using resmem_complex_op = base_device::memory::resize_memory_op<T, Device>;
     using delmem_complex_op = base_device::memory::delete_memory_op<T, Device>;
@@ -89,7 +88,6 @@ class OnsiteProj<OperatorPW<T, Device>> : public OperatorPW<T, Device>
     using syncmem_int_h2d_op = base_device::memory::synchronize_memory_op<int, Device, base_device::DEVICE_CPU>;
     using syncmem_real_h2d_op = base_device::memory::synchronize_memory_op<Real, Device, base_device::DEVICE_CPU>;
 
-    T one{1, 0};
     T zero{0, 0};
 };
 

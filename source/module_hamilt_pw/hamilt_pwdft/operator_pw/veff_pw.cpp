@@ -2,6 +2,12 @@
 
 #include "module_base/timer.h"
 #include "module_base/tool_quit.h"
+#if defined(__CUFFTDX)
+#include "module_basis/module_pw/kernels/fused_veff.h"
+#endif
+
+#include <algorithm>
+#include <type_traits>
 
 namespace hamilt {
 
@@ -23,9 +29,11 @@ Veff<OperatorPW<T, Device>>::Veff(const int* isk_in,
     this->veff_row = veff_row;
     this->veff_col = veff_col;
     this->wfcpw = wfcpw_in;
-    resmem_complex_op()(this->ctx, this->porter, this->wfcpw->nmaxgr, "Veff<PW>::porter");
-    resmem_complex_op()(this->ctx, this->porter1, this->wfcpw->nmaxgr, "Veff<PW>::porter1");
-
+#if defined(__CUFFTDX)
+    this->fused_fft_enabled = std::is_same<T, std::complex<double>>::value
+                              && std::is_same<Device, base_device::DEVICE_GPU>::value
+                              && ModulePW::fused_veff_supported();
+#endif
 }
 
 template<typename T, typename Device>
@@ -53,10 +61,46 @@ void Veff<OperatorPW<T, Device>>::act(
 
     int max_npw = nbasis / npol;
     const int current_spin = this->isk[this->ik];
+    int fused_size = 0;
+#if defined(__CUFFTDX)
+    if (this->fused_fft_enabled && npol == 2 && this->veff != nullptr
+        && this->veff_row == 4 && this->veff_col == this->wfcpw->nxyz)
+    {
+        fused_size = this->wfcpw->fft_bundle.fused_veff_grid_size();
+    }
+#endif
+    int batch_size = 1;
+#if defined(__CUFFTDX)
+    if (fused_size > 0 && this->wfcpw->fft_bundle.fused_veff_stick_size() > 0)
+    {
+        batch_size = std::min(nbands / npol, this->wfcpw->ft.spinor_batch_size());
+    }
+#endif
+    const int size = fused_size > 0 ? batch_size * fused_size : this->wfcpw->nmaxgr;
+    if (this->porter_size < size)
+    {
+        resmem_complex_op()(this->ctx, this->porter, size, "Veff<PW>::porter");
+        resmem_complex_op()(this->ctx, this->porter1, size, "Veff<PW>::porter1");
+        this->porter_size = size;
+    }
     
     // T *porter = new T[wfcpw->nmaxgr];
-    for (int ib = 0; ib < nbands; ib += npol)
+    for (int ib = 0; ib < nbands;)
     {
+        const int remaining = (nbands - ib) / npol;
+        const int bands = std::min(batch_size, remaining);
+#if defined(__CUFFTDX)
+        if (fused_size > 0)
+        {
+            this->wfcpw->add_spinor_potential(reinterpret_cast<const std::complex<double>*>(tmpsi_in),
+                                             reinterpret_cast<const double*>(this->veff),
+                                             reinterpret_cast<std::complex<double>*>(tmhpsi),
+                                             this->ik, max_npw,
+                                             reinterpret_cast<std::complex<double>*>(this->porter),
+                                             reinterpret_cast<std::complex<double>*>(this->porter1), bands);
+        }
+        else
+#endif
         if (npol == 1)
         {
             // wfcpw->recip2real(tmpsi_in, porter, this->ik);
@@ -108,8 +152,9 @@ void Veff<OperatorPW<T, Device>>::act(
             wfcpw->real_to_recip(this->ctx, this->porter, tmhpsi, this->ik, true);
             wfcpw->real_to_recip(this->ctx, this->porter1, tmhpsi + max_npw, this->ik, true);
         }
-        tmhpsi += max_npw * npol;
-        tmpsi_in += max_npw * npol;
+        tmhpsi += bands * max_npw * npol;
+        tmpsi_in += bands * max_npw * npol;
+        ib += bands * npol;
     }
     ModuleBase::timer::tick("Operator", "VeffPW");
 }
@@ -124,8 +169,11 @@ hamilt::Veff<OperatorPW<T, Device>>::Veff(const Veff<OperatorPW<T_in, Device_in>
     this->veff_col = veff->get_veff_col();
     this->veff_row = veff->get_veff_row();
     this->wfcpw = veff->get_wfcpw();
-    resmem_complex_op()(this->ctx, this->porter, this->wfcpw->nmaxgr);
-    resmem_complex_op()(this->ctx, this->porter1, this->wfcpw->nmaxgr);
+#if defined(__CUFFTDX)
+    this->fused_fft_enabled = std::is_same<T, std::complex<double>>::value
+                              && std::is_same<Device, base_device::DEVICE_GPU>::value
+                              && ModulePW::fused_veff_supported();
+#endif
     this->veff = veff->get_veff();
     if (this->isk == nullptr || this->veff == nullptr || this->wfcpw == nullptr) {
         ModuleBase::WARNING_QUIT("VeffPW", "Constuctor of Operator::VeffPW is failed, please check your code!");

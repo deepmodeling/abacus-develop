@@ -2,6 +2,7 @@
 #define SPIN_CONSTRAIN_H
 
 #include <map>
+#include <memory>
 #include <vector>
 
 #include "module_base/constants.h"
@@ -11,6 +12,10 @@
 #include "module_basis/module_ao/parallel_orbitals.h"
 #include "module_cell/klist.h"
 #include "module_cell/unitcell.h"
+#include "module_hsolver/hsolver.h"
+#if defined(__CUDA)
+#include "module_hsolver/kernels/fixed_overlap.h"
+#endif
 #include "module_hamilt_general/operator.h"
 #include "module_elecstate/elecstate.h"
 
@@ -66,7 +71,13 @@ public:
   /// update the charge density and psi for PW base with new lambda
   void update_psi_charge(const ModuleBase::Vector3<double>* delta_lambda, bool pw_solve = true);
 
-  void calculate_delta_hcc(std::complex<double>* h_tmp, const std::complex<double>* becp_k, const ModuleBase::Vector3<double>* delta_lambda, const int nbands, const int nkb, const int* nh_iat);
+  void calculate_delta_hcc(std::complex<double>* h_tmp,
+                           const std::complex<double>* becp_k,
+                           const ModuleBase::Vector3<double>* delta_lambda,
+                           const int nbands,
+                           const int nkb,
+                           const int* nh_iat,
+                           const int sign);
 
   /// lambda loop helper functions
   bool check_rms_stop(int outer_step, int i_step, double rms_error, double duration, double total_duration);
@@ -245,6 +256,8 @@ public:
     void set_mag_converged(bool is_Mi_converged_in){this->is_Mi_converged = is_Mi_converged_in;}
     /// @brief get is_Mi_converged
     bool mag_converged() const {return this->is_Mi_converged;}
+    /// Invalidate projections before wavefunctions change outside observed Davidson solves.
+    void invalidate_nonlocal_projections() { this->nonlocal_projections.clear(); }
   private:
     /// operator for spin-constrained DFT, used for calculating current atomic magnetic moment
     hamilt::Operator<FPTYPE>* p_operator = nullptr;
@@ -254,6 +267,18 @@ public:
     FPTYPE* sub_h_save;
     FPTYPE* sub_s_save;
     FPTYPE* becp_save;
+#if defined(__CUDA)
+    /// Orthonormal response matrices for one fixed-wavefunction constraint loop.
+    std::unique_ptr<hsolver::FixedOverlapSubspace> fixed_overlap;
+#endif
+    /// Constraint field used to construct the saved projected Hamiltonian.
+    std::vector<ModuleBase::Vector3<double>> subspace_lambda;
+    /// Pinned host storage reused across constraint loops and released at destruction.
+    std::unique_ptr<FPTYPE, void (*)(FPTYPE*)> hpsi_cache{nullptr, nullptr};
+    size_t hpsi_cache_capacity = 0;
+    /// Per-k nonlocal overlaps for the current wavefunctions, in host memory.
+    /// Empty entries denote invalid projections; ionic/solver setup clears all entries.
+    std::vector<std::vector<FPTYPE>> nonlocal_projections;
 };
 
 

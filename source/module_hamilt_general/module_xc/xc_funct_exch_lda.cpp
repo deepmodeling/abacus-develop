@@ -9,6 +9,7 @@
 //  3. slater_rxc_spin
 
 #include "xc_functional.h"
+#include "xc_math.h"
 
 //Slater exchange with alpha=2/3
 void XC_Functional::slater(const double &rs, double &ex, double &vx)
@@ -60,21 +61,7 @@ void XC_Functional::slater_rxc(const double &rs, double &ex, double &vx)
 void XC_Functional::slater_spin( const double &rho, const double &zeta, 
 		double &ex, double &vxup, double &vxdw)
 {
-    const double f = - 1.107838149573033610;
-    const double alpha = 2.00 / 3.00;
-    // f = -9/8*(3/pi)^(1/3)
-    const double third = 1.0 / 3.0;
-    const double p43 = 4.0 / 3.0;
-
-    double rho13 = pow(((1.0 + zeta) * rho) , third);
-    double exup = f * alpha * rho13;
-    vxup = p43 * f * alpha * rho13;
-    rho13 = pow(((1.0 - zeta) * rho) , third);
-    double exdw = f * alpha * rho13;
-    vxdw = p43 * f * alpha * rho13;
-    ex = 0.50 * ((1.0 + zeta) * exup + (1.0 - zeta) * exdw);
-
-    return;
+    xc_math::slater_spin(rho, zeta, ex, vxup, vxdw);
 }
 
 // Slater exchange with alpha=2/3, spin-polarized case

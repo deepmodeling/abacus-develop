@@ -629,7 +629,23 @@ void Charge::atomic_rho(const int spin_number_need,
         std::vector<double> ne(spin_number_need);
         for (int is = 0; is < spin_number_need; is++)
         {
-            this->rhopw->recip2real(&rho_g3d(is, 0), rho_in[is]);
+            if (this->rhopw->gamma_only)
+            {
+                this->rhopw->recip2real(&rho_g3d(is, 0), rho_in[is]);
+            }
+            else
+            {
+                // The starting-charge diagnostics retain the full complex transform.
+                auto* density_grid = this->rhopw->fft_bundle.get_auxr_data<double>();
+                this->rhopw->recip2real(&rho_g3d(is, 0), density_grid);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
+                for (int ir = 0; ir < this->rhopw->nrxx; ++ir)
+                {
+                    rho_in[is][ir] = density_grid[ir].real();
+                }
+            }
 
             for (int ir = 0; ir < this->rhopw->nrxx; ++ir) {
                 ne[is] += rho_in[is][ir];

@@ -147,6 +147,10 @@ void cal_vkb1_nl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_devi
                                                                  const FPTYPE* gcar,
                                                                  std::complex<FPTYPE>* vkb1)
 {
+    if (nkb <= 0)
+    {
+        return;
+    }
     cal_vkb1_nl<FPTYPE><<<nkb, THREADS_PER_BLOCK>>>(
             npwx,
             vkb_nc,
@@ -184,6 +188,10 @@ void cal_force_nl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_dev
                                                                   const std::complex<FPTYPE>* dbecp,
                                                                   FPTYPE* force)
 {
+    if (nbands_occ <= 0 || ntype <= 0)
+    {
+        return;
+    }
     cal_force_nl<FPTYPE><<<nbands_occ * ntype, THREADS_PER_BLOCK>>>(
             nondiagonal,
             ntype, spin,
@@ -302,6 +310,10 @@ void cal_force_nl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_dev
                     const std::complex<FPTYPE>* dbecp,
                     FPTYPE* force)
 {
+    if (nbands_occ <= 0 || ntype <= 0)
+    {
+        return;
+    }
     cal_force_nl<FPTYPE><<<nbands_occ * ntype, THREADS_PER_BLOCK>>>(
             ntype,
             deeq_2, deeq_3, deeq_4,
@@ -314,6 +326,93 @@ void cal_force_nl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_dev
             reinterpret_cast<const thrust::complex<FPTYPE>*>(dbecp),
             force);// array of data
 
+    cudaCheckOnDebug();
+}
+
+template <typename FPTYPE>
+__global__ void saveVkbValues_(const int* gcar_zero_ptrs,
+                               const thrust::complex<FPTYPE>* vkb_ptr,
+                               thrust::complex<FPTYPE>* vkb_save_ptr,
+                               int nkb,
+                               int npw,
+                               int ipol,
+                               int npwx)
+{
+    const size_t index = size_t(blockIdx.x) * blockDim.x + threadIdx.x;
+    const int zero_count = gcar_zero_ptrs[size_t(ipol) * npwx];
+    if (index >= size_t(nkb) * zero_count) { return; }
+    const int* zero_indices = gcar_zero_ptrs + size_t(ipol) * npwx + 1;
+    const size_t projector = index / zero_count;
+    const int row = zero_indices[index % zero_count];
+    vkb_save_ptr[index] = vkb_ptr[projector * npw + row];
+}
+
+template <typename FPTYPE>
+void saveVkbValues(const int* gcar_zero_ptrs,
+                   const std::complex<FPTYPE>* vkb_ptr,
+                   std::complex<FPTYPE>* vkb_save_ptr,
+                   int nkb,
+                   int gcar_zero_count,
+                   int npw,
+                   int ipol,
+                   int npwx)
+{
+    const size_t count = size_t(nkb) * gcar_zero_count;
+    if (count == 0) { return; }
+    const size_t blocks = (count + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
+    saveVkbValues_<FPTYPE>
+        <<<blocks, THREADS_PER_BLOCK>>>(gcar_zero_ptrs,
+                                                       reinterpret_cast<const thrust::complex<FPTYPE>*>(vkb_ptr),
+                                                       reinterpret_cast<thrust::complex<FPTYPE>*>(vkb_save_ptr),
+                                                       nkb,
+                                                       npw,
+                                                       ipol,
+                                                       npwx);
+    cudaCheckOnDebug();
+}
+
+template <typename FPTYPE>
+__global__ void revertVkbValues_(const int* gcar_zero_ptrs,
+                                 thrust::complex<FPTYPE>* vkb_ptr,
+                                 const thrust::complex<FPTYPE>* vkb_save_ptr,
+                                 int nkb,
+                                 int npw,
+                                 int ipol,
+                                 int npwx,
+                                 const thrust::complex<FPTYPE> coeff)
+{
+    const size_t index = size_t(blockIdx.x) * blockDim.x + threadIdx.x;
+    const int zero_count = gcar_zero_ptrs[size_t(ipol) * npwx];
+    if (index >= size_t(nkb) * zero_count) { return; }
+    const int* zero_indices = gcar_zero_ptrs + size_t(ipol) * npwx + 1;
+    const size_t projector = index / zero_count;
+    const int row = zero_indices[index % zero_count];
+    vkb_ptr[projector * npw + row] = vkb_save_ptr[index] * coeff;
+}
+
+template <typename FPTYPE>
+void revertVkbValues(const int* gcar_zero_ptrs,
+                     std::complex<FPTYPE>* vkb_ptr,
+                     const std::complex<FPTYPE>* vkb_save_ptr,
+                     int nkb,
+                     int gcar_zero_count,
+                     int npw,
+                     int ipol,
+                     int npwx,
+                     const std::complex<FPTYPE> coeff)
+{
+    const size_t count = size_t(nkb) * gcar_zero_count;
+    if (count == 0) { return; }
+    const size_t blocks = (count + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
+    revertVkbValues_<FPTYPE>
+        <<<blocks, THREADS_PER_BLOCK>>>(gcar_zero_ptrs,
+                                                       reinterpret_cast<thrust::complex<FPTYPE>*>(vkb_ptr),
+                                                       reinterpret_cast<const thrust::complex<FPTYPE>*>(vkb_save_ptr),
+                                                       nkb,
+                                                       npw,
+                                                       ipol,
+                                                       npwx,
+                                                       static_cast<const thrust::complex<FPTYPE>>(coeff));
     cudaCheckOnDebug();
 }
 
@@ -482,6 +581,10 @@ void cal_force_nl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_dev
                                                                   const std::complex<FPTYPE>* dbecp,
                                                                   FPTYPE* force)
 {
+    if (nbands_occ <= 0 || ntype <= 0)
+    {
+        return;
+    }
     cal_force_onsite<FPTYPE>
         <<<nbands_occ * ntype, THREADS_PER_BLOCK>>>(wg_nc,
                                                     ntype,
@@ -527,6 +630,10 @@ void cal_force_nl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_dev
     {
         spin_sign = (isk[ik] == 0) ? 1 : -1;
     }
+    if (nbands_occ <= 0 || ntype <= 0)
+    {
+        return;
+    }
     cal_force_onsite<FPTYPE>
         <<<nbands_occ * ntype, THREADS_PER_BLOCK>>>(wg_nc,
                                                     ntype,
@@ -545,103 +652,6 @@ void cal_force_nl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_dev
                                                     reinterpret_cast<const thrust::complex<FPTYPE>*>(dbecp),
                                                     force); // array of data
 
-    cudaCheckOnDebug();
-}
-
-template <typename FPTYPE>
-__global__ void saveVkbValues_(
-    const int *gcar_zero_ptrs, 
-    const thrust::complex<FPTYPE> *vkb_ptr, 
-    thrust::complex<FPTYPE> *vkb_save_ptr, 
-    int nkb, 
-    int npw, 
-    int ipol,
-    int npwx)
-{
-    int index = blockIdx.x * blockDim.x + threadIdx.x; // global index
-    int n_total_gcar_zeros = gcar_zero_ptrs[ipol * npwx];
-    const int* gcar_zero_ptr = gcar_zero_ptrs + ipol * npwx + 1; // skip the first element
-    int ikb = index / n_total_gcar_zeros;              // index of nkb
-    int icount = index % n_total_gcar_zeros;           // index of n_total_gcar_zeros
-    
-    // check if the index is valid
-    if(ikb < nkb)
-    {
-        int ig = gcar_zero_ptr[icount]; // get ig from gcar_zero_ptrs
-        // use the flat index to get the saved position, pay attention to the relationship between ikb and npw,
-        vkb_save_ptr[index] = vkb_ptr[ikb * npw + ig];    // save the value
-    }
-}
-
-template <typename FPTYPE>
-void saveVkbValues(
-    const int *gcar_zero_ptrs, 
-    const std::complex<FPTYPE> *vkb_ptr, 
-    std::complex<FPTYPE> *vkb_save_ptr, 
-    int nkb, 
-    int gcar_zero_count,
-    int npw, 
-    int ipol,
-    int npwx)
-{
-    saveVkbValues_<FPTYPE><<<nkb*gcar_zero_count , THREADS_PER_BLOCK>>>(
-        gcar_zero_ptrs, 
-        reinterpret_cast<const thrust::complex<FPTYPE>*>(vkb_ptr), 
-        reinterpret_cast<thrust::complex<FPTYPE>*>(vkb_save_ptr), 
-        nkb, 
-        npw, 
-        ipol,
-        npwx);
-    cudaCheckOnDebug();
-}
-
-template <typename FPTYPE>
-__global__ void revertVkbValues_(
-    const int *gcar_zero_ptrs, 
-    thrust::complex<FPTYPE> *vkb_ptr, 
-    const thrust::complex<FPTYPE> *vkb_save_ptr, 
-    int nkb, 
-    int npw, 
-    int ipol,
-    int npwx,
-    const thrust::complex<FPTYPE> coeff)
-{
-    int index = blockIdx.x * blockDim.x + threadIdx.x; // global index
-    int n_total_gcar_zeros = gcar_zero_ptrs[ipol * npwx];
-    const int* gcar_zero_ptr = gcar_zero_ptrs + ipol * npwx + 1; // skip the first element
-    int ikb = index / n_total_gcar_zeros;              // index of nkb
-    int icount = index % n_total_gcar_zeros;           // index of n_total_gcar_zeros
-    
-    // check if the index is valid
-    if(ikb < nkb && icount < n_total_gcar_zeros)
-    {
-        int ig = gcar_zero_ptr[icount]; // get ig from gcar_zero_ptrs
-        // use the flat index to get the saved position, pay attention to the relationship between ikb and npw,
-        vkb_ptr[ikb * npw + ig] = vkb_save_ptr[index] * coeff;    // revert the values
-    }
-}
-
-template <typename FPTYPE>
-void revertVkbValues(
-    const int *gcar_zero_ptrs, 
-    std::complex<FPTYPE> *vkb_ptr, 
-    const std::complex<FPTYPE> *vkb_save_ptr, 
-    int nkb, 
-    int gcar_zero_count,
-    int npw, 
-    int ipol,
-    int npwx, 
-    const std::complex<FPTYPE> coeff)
-{
-    revertVkbValues_<FPTYPE><<<nkb*gcar_zero_count , THREADS_PER_BLOCK>>>(
-        gcar_zero_ptrs, 
-        reinterpret_cast<thrust::complex<FPTYPE>*>(vkb_ptr), 
-        reinterpret_cast<const thrust::complex<FPTYPE>*>(vkb_save_ptr), 
-        nkb, 
-        npw, 
-        ipol,
-        npwx,
-        static_cast<const thrust::complex<FPTYPE>>(coeff));
     cudaCheckOnDebug();
 }
 
@@ -841,6 +851,10 @@ void cal_force_loc_op<FPTYPE, base_device::DEVICE_GPU>::operator()(
     const int vloc_nc,
     FPTYPE* forcelc)
 {
+    if (nat <= 0)
+    {
+        return;
+    }
     force_loc_kernel<FPTYPE>
         <<<nat, THREADS_PER_BLOCK>>>(nat,
                                      npw,
@@ -868,6 +882,10 @@ void cal_force_ew_op<FPTYPE, base_device::DEVICE_GPU>::operator()(
     const std::complex<FPTYPE>* aux,
     FPTYPE* forceion)
 {
+    if (nat <= 0)
+    {
+        return;
+    }
     force_ew_kernel<FPTYPE>
         <<<nat, THREADS_PER_BLOCK>>>(nat,
                                      npw,

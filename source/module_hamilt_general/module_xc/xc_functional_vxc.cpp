@@ -34,7 +34,20 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional::v_xc(
     //Exchange-Correlation potential Vxc(r) from n(r)
     double etxc = 0.0;
     double vtxc = 0.0;
-    ModuleBase::matrix v(PARAM.inp.nspin, nrxx);
+    ModuleBase::matrix v;
+#if defined(__CUDA)
+    if (use_gpu_pbe(*chr->rhopw))
+    {
+        v.create(PARAM.inp.nspin, nrxx, false);
+        v_xc_pbe_gpu(etxc, vtxc, v, *chr, *ucell);
+        // This path contains the complete density grid on a single pool rank.
+        etxc *= ucell->omega / chr->rhopw->nxyz;
+        vtxc *= ucell->omega / chr->rhopw->nxyz;
+        ModuleBase::timer::tick("XC_Functional", "v_xc");
+        return std::make_tuple(etxc, vtxc, std::move(v));
+    }
+#endif
+    v.create(PARAM.inp.nspin, nrxx);
 
     // the square of the e charge
     // in Rydeberg unit, so * 2.0.

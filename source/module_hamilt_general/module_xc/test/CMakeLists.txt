@@ -40,6 +40,7 @@ AddTest(
     ../xc_funct_exch_lda.cpp ../xc_funct_hcth.cpp
     ../../../module_base/matrix.cpp
     ../../../module_base/memory.cpp
+    ../../../module_base/timer.cpp
     ../../../module_base/libm/branred.cpp
     ../../../module_base/libm/sincos.cpp
     ../../../module_base/blas_connector.cpp

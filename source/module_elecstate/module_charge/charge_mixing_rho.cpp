@@ -1,5 +1,7 @@
 #include "charge_mixing.h"
 
+#include <memory>
+
 #include "module_parameter/parameter.h"
 #include "module_base/timer.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
@@ -505,12 +507,12 @@ void Charge_Mixing::mix_rho(Charge* chr)
 
     // the charge before mixing.
     const int nrxx = chr->rhopw->nrxx;
-    std::vector<double> rho123(PARAM.inp.nspin * nrxx);
+    std::unique_ptr<double[]> rho123(new double[PARAM.inp.nspin * nrxx]);
     for (int is = 0; is < PARAM.inp.nspin; ++is)
     {
         if (is == 0 || is == 3 || !PARAM.globalv.domag_z)
         {
-            double* rho123_is = rho123.data() + is * nrxx;
+            double* rho123_is = rho123.get() + is * nrxx;
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 512)
 #endif
@@ -520,13 +522,13 @@ void Charge_Mixing::mix_rho(Charge* chr)
             }
         }
     }
-    std::vector<double> kin_r123;
+    std::unique_ptr<double[]> kin_r123;
     if ((XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5) && mixing_tau)
     {
-        kin_r123.resize(PARAM.inp.nspin * nrxx);
+        kin_r123.reset(new double[PARAM.inp.nspin * nrxx]);
         for (int is = 0; is < PARAM.inp.nspin; ++is)
         {
-            double* kin_r123_is = kin_r123.data() + is * nrxx;
+            double* kin_r123_is = kin_r123.get() + is * nrxx;
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 512)
 #endif
@@ -537,10 +539,10 @@ void Charge_Mixing::mix_rho(Charge* chr)
         }
     }
 #ifdef USE_PAW
-    std::vector<double> nhat_r123;
+    std::unique_ptr<double[]> nhat_r123;
     if(PARAM.inp.use_paw)
     {
-        nhat_r123.resize(PARAM.inp.nspin * nrxx);
+        nhat_r123.reset(new double[PARAM.inp.nspin * nrxx]);
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 512)
 #endif
@@ -548,7 +550,7 @@ void Charge_Mixing::mix_rho(Charge* chr)
         {
             for(int is = 0; is < PARAM.inp.nspin; ++is)
             {
-                nhat_r123[ir+is*nrxx] = chr->nhat[0][ir];
+                nhat_r123.get()[ir+is*nrxx] = chr->nhat[0][ir];
             }
         }
     }        
@@ -570,7 +572,7 @@ void Charge_Mixing::mix_rho(Charge* chr)
     {
         if (is == 0 || is == 3 || !PARAM.globalv.domag_z)
         {
-            double* rho123_is = rho123.data() + is * nrxx;
+            double* rho123_is = rho123.get() + is * nrxx;
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 512)
 #endif
@@ -585,7 +587,7 @@ void Charge_Mixing::mix_rho(Charge* chr)
     {
         for (int is = 0; is < PARAM.inp.nspin; ++is)
         {
-            double* kin_r123_is = kin_r123.data() + is * nrxx;
+            double* kin_r123_is = kin_r123.get() + is * nrxx;
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 512)
 #endif
@@ -606,7 +608,7 @@ void Charge_Mixing::mix_rho(Charge* chr)
         {
             for(int is = 0; is < PARAM.inp.nspin; ++is)
             {
-                chr->nhat_save[is][ir] = nhat_r123[ir+is*nrxx];
+                chr->nhat_save[is][ir] = nhat_r123.get()[ir+is*nrxx];
             }
         }
     }

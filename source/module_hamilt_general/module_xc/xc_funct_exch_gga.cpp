@@ -9,6 +9,7 @@
 //  1. becke88_spin
 
 #include "xc_functional.h"
+#include "xc_math.h"
 
 void XC_Functional::becke88(const double &rho, const double &grho, double &sx, double &v1x, double &v2x)
 {
@@ -78,57 +79,7 @@ void XC_Functional::ggax(const double &rho, const double &grho, double &sx, doub
 void XC_Functional::pbex(const double &rho, const double &grho, const int &iflag, 
 double &sx, double &v1x, double &v2x)
 {
-    // PBE exchange (without Slater exchange):
-    // iflag=0  J.P.Perdew, K.Burke, M.Ernzerhof, PRL 77, 3865 (1996)
-    // iflag=1  "revised' PBE: Y. Zhang et al., PRL 80, 890 (1998)
-
-    // input: charge and squared gradient
-    // output: energy
-    // output: potential
-    // (3*pi2*|rho|)^(1/3)
-    // |grho|
-    // |grho|/(2*kf*|rho|)
-    // s^2
-    // n*ds/dn
-    // n*ds/d(gn)
-    // exchange energy LDA part
-    // exchange energy gradient part
-    
-	// numerical coefficients (NB: c2=(3 pi^2)^(1/3) )
-    const double third = 1.0 / 3.0;
-    const double pi = 3.14159265358979323846;
-    const double c1 = 0.750 / pi;
-    const double c2 = 3.0936677262801360;
-    const double c5 = 4.0 * third;
-    // parameters of the functional
-    double k[3] = { 0.8040, 1.24500, 0.8040 };
-    const double mu[3] = {0.2195149727645171, 0.2195149727645171, 0.12345679012345679} ;//modified by zhengdy, to ensure the same parameters with another dft code.
-
-    const double agrho = sqrt(grho);
-    const double kf = c2 * pow(rho, third);
-    const double dsg = 0.50 / kf;
-    const double s1 = agrho * dsg / rho;
-    const double s2 = s1 * s1;
-    const double ds = - c5 * s1;
-
-    // Energy
-    const double f1 = s2 * mu[iflag] / k [iflag];
-    const double f2 = 1.0 + f1;
-    const double f3 = k [iflag] / f2;
-    const double fx = k [iflag] - f3;
-    const double exunif = - c1 * kf;
-    sx = exunif * fx;
-
-    // Potential
-    const double dxunif = exunif * third;
-    const double dfx1 = f2 * f2;
-    const double dfx = 2.0 * mu[iflag] * s1 / dfx1;
-    
-	v1x = sx + dxunif * fx + exunif * dfx * ds;
-    v2x = exunif * dfx * dsg / agrho;
-    sx = sx * rho;
-
-	return;
+    xc_math::pbex(rho, grho, iflag, sx, v1x, v2x);
 }
 
 void XC_Functional::optx(const double rho, const double grho, double &sx, double &v1x, double &v2x)

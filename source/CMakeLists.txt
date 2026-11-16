@@ -66,6 +66,7 @@ if(USE_CUDA)
     module_hsolver/kernels/cuda/dngvd_op.cu
     module_hsolver/kernels/cuda/math_kernel_op.cu
     module_elecstate/kernels/cuda/elecstate_op.cu
+    module_elecstate/kernels/cuda/hartree_op.cu
 
     # module_psi/kernels/cuda/memory_op.cu
     module_base/module_device/cuda/memory_op.cu

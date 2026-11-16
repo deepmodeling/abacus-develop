@@ -101,6 +101,16 @@ public:
                           const double& erf_sigma_in = 0.1);
 
   private:
+#if defined(__CUFFTDX)
+    int* d_fftixy2is = nullptr;
+    // Per-k inverse plane-wave maps, with -1 at unoccupied z coefficients.
+    int* d_isz2igl_k = nullptr;
+    void setup_spinor_wave_map();
+    void spinor_to_slabs(const std::complex<double>* input, int ik, int stride,
+                         std::complex<double>* up, std::complex<double>* down, int bands) const;
+    void slabs_to_spinor(std::complex<double>* up, std::complex<double>* down, int ik,
+                         int stride, std::complex<double>* output, int bands) const;
+#endif
     float  * s_gk2 = nullptr;
     double * d_gk2 = nullptr; // modulus (G+K)^2 of G vectors [npwk_max*nks]
     //create igl2isz_k map array for fft
@@ -150,6 +160,24 @@ public:
                        const int ik,
                        const bool add = false,
                        const FPTYPE factor = 1.0) const; // in:(nz, ns)  ; out(nplane,nx*ny)
+
+#if defined(__CUFFTDX)
+    // Adds the local spinor potential to the plane-wave output. Both scratch
+    // grids contain bands * ft.fused_veff_grid_size() double-complex elements.
+    // The batch is at most ft.spinor_batch_size(); multiple bands use sparse sticks.
+    void add_spinor_potential(const std::complex<double>* input, const double* potential,
+                             std::complex<double>* output, int ik, int stride,
+                             std::complex<double>* up, std::complex<double>* down, int bands = 1) const;
+    // Adds charge and all three magnetization channels, each of length nxyz.
+    // The scratch grids use the same compact layout as add_spinor_potential.
+    void add_spinor_density(const std::complex<double>* input, double weight, double* density,
+                            int ik, int stride, std::complex<double>* up, std::complex<double>* down) const;
+    // Accumulates consecutive bands with host weights, preserving band order.
+    // Scratch grids contain bands * ft.fused_veff_grid_size() elements each;
+    // bands is at most min(4, ft.spinor_batch_size()).
+    void add_spinor_density(const std::complex<double>* input, const double* weights, int bands, double* density,
+                            int ik, int stride, std::complex<double>* up, std::complex<double>* down) const;
+#endif
 
   public:
     //operator:

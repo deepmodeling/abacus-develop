@@ -79,7 +79,7 @@ class Meta<OperatorPW<T, Device>> : public OperatorPW<T, Device>
 
     Device* ctx = {};
     base_device::DEVICE_CPU* cpu_ctx = {};
-    T *porter = nullptr;
+    mutable T *porter = nullptr;
     using meta_op = meta_pw_op<Real, Device>;
     using vector_mul_vector_op = hsolver::vector_mul_vector_op<T, Device>;
     using resmem_complex_op = base_device::memory::resize_memory_op<T, Device>;

@@ -10,6 +10,7 @@
 //  3. pbec_spin
 
 #include "xc_functional.h"
+#include "xc_math.h"
 
 void XC_Functional::perdew86(const double rho, const double grho, double &sc, double &v1c, double &v2c)
 {
@@ -372,67 +373,5 @@ void XC_Functional::ggac_spin(double rho, double zeta, double grho, double &sc,
 void XC_Functional::pbec_spin(double rho, double zeta, double grho, const int &iflag, double &sc,
                double &v1cup, double &v1cdw, double &v2c)
 {
-    //-----------------------------------------------------------
-
-    // PBE correlation (without LDA part) - spin-polarized
-    // J.P.Perdew, K.Burke, M.Ernzerhof, PRL 77, 3865 (1996).
-
-    // USE kinds
-    // implicit none
-    // real(kind=DP) :: rho, zeta, grho, sc, v1cup, v1cdw, v2c
-    double ga, be[3];//mohan add
-    // parameter :
-    ga = 0.0310910;
-    be[1] = 0.06672455060314922;//zhengdy add 2019-09-12, ensure same parameter with another dft code.
-	be[2] = 0.0460000;//mohan add 2012-05-28
-    double third, pi34, xkf, xks;
-    // parameter :
-    third = 1.0 / 3.0;
-    pi34 = 0.62035049089940;
-    // parameter :
-    xkf = 1.9191582926775130;
-    xks = 1.1283791670955130;
-    // pi34=(3/4pi)^(1/3), xkf=(9 pi/4)^(1/3), xks= sqrt(4/pi)
-    double kf, ks, rs, ec, vcup, vcdw, t, expe, af, y, xy, qy,
-    s1, h0, ddh0;
-    double fz, fz2, fz3, dfz, bfup, bfdw, dh0up, dh0dw, dh0zup, dh0zdw; // fz4
-
-    rs = pi34 / pow(rho, third);
-	XC_Functional::pw_spin(rs, zeta, ec, vcup, vcdw); //mohan fix bug 2012-05-28
-    kf = xkf / rs;
-    ks = xks * sqrt(kf);
-    fz = 0.50 * (pow((1.0 + zeta) , (2.0 / 3.0)) + pow((1.0 - zeta) , (
-                     2.0 / 3.0)));
-    fz2 = fz * fz;
-    fz3 = fz2 * fz;
-    //fz4 = fz3 * fz;
-    dfz = (pow((1.0 + zeta) , (- 1.0 / 3.0)) - pow((1.0 - zeta) , (-
-            1.0 / 3.0))) / 3.0;
-    t = sqrt(grho) / (2.0 * fz * ks * rho);
-    expe = exp(- ec / (fz3 * ga));
-    af = be[iflag] / ga * (1.0 / (expe - 1.0));
-    bfup = expe * (vcup - ec) / fz3;
-    bfdw = expe * (vcdw - ec) / fz3;
-    y = af * t * t;
-    xy = (1.0 + y) / (1.0 + y + y * y);
-    qy = y * y * (2.0 + y) / pow( (1.0 + y + y * y),2 );
-//    qy *= qy; //bug
-    s1 = 1.0 + be[iflag] / ga * t * t * xy;
-    h0 = fz3 * ga * log(s1);
-    dh0up = be[iflag] * t * t * fz3 / s1 * (- 7.0 / 3.0 * xy - qy *
-                                     (af * bfup / be[iflag] - 7.0 / 3.0));
-    dh0dw = be[iflag] * t * t * fz3 / s1 * (- 7.0 / 3.0 * xy - qy *
-                                     (af * bfdw / be[iflag] - 7.0 / 3.0));
-    dh0zup = (3.0 * h0 / fz - be[iflag] * t * t * fz2 / s1 * (2.0 * xy -
-              qy * (3.0 * af * expe * ec / fz3 / be[iflag] + 2.0))) * dfz * (1.0 -
-                      zeta);
-    dh0zdw = - (3.0 * h0 / fz - be[iflag] * t * t * fz2 / s1 * (2.0 * xy -
-                qy * (3.0 * af * expe * ec / fz3 / be[iflag] + 2.0))) * dfz * (1.0 +
-                        zeta);
-    ddh0 = be[iflag] * fz / (2.0 * ks * ks * rho) * (xy - qy) / s1;
-    sc = rho * h0;
-    v1cup = h0 + dh0up + dh0zup;
-    v1cdw = h0 + dh0dw + dh0zdw;
-    v2c = ddh0;
-    return;
+    xc_math::pbec_spin(rho, zeta, grho, iflag, sc, v1cup, v1cdw, v2c);
 } // end subroutine pbec_spin

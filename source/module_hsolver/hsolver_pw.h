@@ -10,6 +10,7 @@
 
 namespace hsolver
 {
+template <typename T, typename Device> class Diago_DavSubspace;
 
 template <typename T, typename Device = base_device::DEVICE_CPU>
 class HSolverPW
@@ -24,6 +25,23 @@ class HSolverPW
     using setmem_complex_op = base_device::memory::set_memory_op<T, Device>;
 
   public:
+    using InitialHPsiFunc = std::function<void(int, T*, int)>;
+
+    /// A complete observer follows Davidson basis changes for each k point.
+    /// capture receives the first band, count and whether the action comes
+    /// from a cache. Cached products are restored before initial_hpsi, so
+    /// their uploads precede the Hamiltonian-action restore. Otherwise capture runs
+    /// after hPsi, when fresh projector products are available.
+    /// rotate receives the old basis size, Ritz coefficients,
+    /// leading dimension and final/restart flag. invalidate precedes a
+    /// fallback that changes wavefunctions without Davidson rotations.
+    struct BasisObserver
+    {
+        std::function<void(int, int, int, bool)> capture;
+        std::function<void(int, int, const T*, int, bool)> rotate;
+        std::function<void(int)> invalidate;
+    };
+
     HSolverPW(ModulePW::PW_Basis_K* wfc_basis_in,
               const std::string calculation_type_in,
               const std::string basis_type_in,
@@ -57,6 +75,21 @@ class HSolverPW
                const double tpiba,
                const int nat);
 
+    /// Solve with projected matrices for the unchanged initial wavefunctions.
+    void solve(hamilt::Hamilt<T, Device>* pHamilt,
+               psi::Psi<T, Device>& psi,
+               elecstate::ElecState* pes,
+               double* out_eigenvalues,
+               const int rank_in_pool_in,
+               const int nproc_in_pool_in,
+               const bool skip_charge,
+               const double tpiba,
+               const int nat,
+               const T* initial_h,
+               const T* initial_s,
+               const InitialHPsiFunc& initial_hpsi = {},
+               const BasisObserver* basis_observer = nullptr);
+
 
   protected:
     // diago caller
@@ -64,7 +97,13 @@ class HSolverPW
                          psi::Psi<T, Device>& psi,
                          std::vector<Real>& pre_condition,
                          Real* eigenvalue,
-                         const int& nk_nums);
+                         const int& nk_nums,
+                         const T* initial_h = nullptr,
+                         const T* initial_s = nullptr,
+                         const InitialHPsiFunc& initial_hpsi = {},
+                         const BasisObserver* basis_observer = nullptr,
+                         std::unique_ptr<Diago_DavSubspace<T, Device>>* reusable_davidson = nullptr,
+                         bool host_backed_action = false);
 
     // calculate the precondition array for diagonalization in PW base
     void update_precondition(std::vector<Real>& h_diag, const int ik, const int npw, const Real vl_of_0);

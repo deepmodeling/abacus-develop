@@ -54,13 +54,12 @@ class Nonlocal_maths
      */
     std::vector<FPTYPE> cal_gk(int ik, const ModulePW::PW_Basis_K* pw_basis);
     /**
-     * @brief calculate the real spherical harmonic functions on cpu (and optionally send to gpu,
-     * if gpu is available)
+     * @brief Calculate real spherical harmonic functions on the execution device.
      * 
      * @param lmax [in] maximum angular momentum to calculate
      * @param npw [in] number of G+k vectors
-     * @param gk_in [in] the G+k vectors
-     * @param ylm [out] the spherical harmonic functions
+     * @param gk_in [in] the G+k vectors, stored on Device
+     * @param ylm [out] the spherical harmonic functions, stored on Device
      */
     void cal_ylm(int lmax, int npw, const FPTYPE* gk_in, FPTYPE* ylm);
     /// calculate the derivate of the sperical bessel function for projections
@@ -149,29 +148,12 @@ std::vector<FPTYPE> Nonlocal_maths<FPTYPE, Device>::cal_gk(int ik, const ModuleP
     return gk;
 }
 
-// tabulate the spherical haromonic functions up to lmax. The q vector is given as input.
-// I would rather call this function as cal_ylm_cpu2gpu, distincting from the pure cpu implementation
+// Tabulate real spherical harmonics from G+k vectors on the execution device.
 template <typename FPTYPE, typename Device>
 void Nonlocal_maths<FPTYPE, Device>::cal_ylm(int lmax, int npw, const FPTYPE* q, FPTYPE* ylm)
 {
     const int ntot_ylm = (lmax + 1) * (lmax + 1);
-    if (this->device == base_device::GpuDevice)
-    {
-        // alias
-        using syncmem_var_h2d_op = base_device::memory::synchronize_memory_op<FPTYPE, Device, base_device::DEVICE_CPU>;
-        // allocate
-        std::vector<FPTYPE> ylm_cpu(ntot_ylm * npw);
-        // calculate
-        ModuleBase::YlmReal::Ylm_Real(cpu_ctx, ntot_ylm, npw, q, ylm_cpu.data());
-        // send from cpu to gpu
-        syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, ylm, ylm_cpu.data(), ylm_cpu.size());
-    }
-    else
-    {
-        // calculate. Why not implement this logic branch inside some function???
-        ModuleBase::YlmReal::Ylm_Real(cpu_ctx, ntot_ylm, npw, q, ylm);
-    }
-    return;
+    ModuleBase::YlmReal::Ylm_Real(ctx, ntot_ylm, npw, q, ylm);
 }
 
 // this function calculate the numerical derivate of the spherical harmonic functions respect to the G vector...

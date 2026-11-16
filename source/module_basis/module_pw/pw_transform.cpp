@@ -1,12 +1,191 @@
 #include "module_fft/fft_bundle.h"
 #include <complex>
 #include "pw_basis.h"
+#include "kernels/pw_op.h"
+#include <algorithm>
+#include <type_traits>
 #include <cassert>
 #include "module_base/global_function.h"
 #include "module_base/timer.h"
 #include "pw_gatherscatter.h"
 
 namespace ModulePW {
+
+#if defined(__CUDA)
+namespace {
+
+template <typename Real>
+void upload_fft_input(int size, const std::complex<Real>* input, std::complex<Real>* grid,
+                      std::complex<Real>* /*scratch*/)
+{
+    base_device::memory::synchronize_memory_op<std::complex<Real>, base_device::DEVICE_GPU, base_device::DEVICE_CPU>()(
+        nullptr, nullptr, grid, input, size);
+}
+
+template <typename Real>
+void upload_fft_input(int size, const Real* input, std::complex<Real>* grid, std::complex<Real>* scratch)
+{
+    // The allocation stores the real input before it holds the gathered Fourier coefficients.
+    auto* real_input = reinterpret_cast<Real*>(scratch);
+    base_device::memory::synchronize_memory_op<Real, base_device::DEVICE_GPU, base_device::DEVICE_CPU>()(
+        nullptr, nullptr, real_input, input, size);
+    pack_real_grid_gpu(size, real_input, grid);
+}
+
+template <typename Real>
+Real* prepare_inverse_output(int size, bool add, Real factor, std::complex<Real>* grid, Real* output)
+{
+    extract_real_grid_gpu(size, add, factor, grid, output);
+    return output;
+}
+
+template <typename Real>
+std::complex<Real>* prepare_inverse_output(int size, bool add, Real factor, std::complex<Real>* grid,
+                                          std::complex<Real>* output)
+{
+    if (!add) { return grid; }
+    set_recip_to_real_output_op<Real, base_device::DEVICE_GPU>()(nullptr, size, true, factor, grid, output);
+    return output;
+}
+
+} // namespace
+
+template <typename Input, typename Real>
+void PW_Basis::real2recip_gpu(const Input* in, std::complex<Real>* out, bool add, Real factor) const
+{
+    using Complex = std::complex<Real>;
+    int scratch_size = this->npw;
+    if (std::is_same<Input, Real>::value)
+    {
+        scratch_size = std::max(scratch_size, (this->nrxx + 1) / 2);
+    }
+    Complex* scratch = nullptr;
+    base_device::memory::resize_memory_op<Complex, base_device::DEVICE_GPU>()(gpu_ctx, scratch, scratch_size);
+    auto* grid = this->fft_bundle.get_auxr_3d_data<Real>();
+    upload_fft_input(this->nrxx, in, grid, scratch);
+    this->fft_bundle.fft3D_forward(gpu_ctx, grid, grid);
+    if (add)
+    {
+        base_device::memory::synchronize_memory_op<Complex, base_device::DEVICE_GPU, base_device::DEVICE_CPU>()(
+            gpu_ctx, cpu_ctx, scratch, out, this->npw);
+    }
+    // Evaluating the reciprocal scale before multiplication preserves the host transform's rounding order.
+    const Real scale = (add ? factor : Real(1)) / Real(this->nxyz);
+    gather_fft_coefficients_gpu(this->npw, add, scale, this->d_ig2fftbox, grid, scratch);
+    base_device::memory::synchronize_memory_op<Complex, base_device::DEVICE_CPU, base_device::DEVICE_GPU>()(
+        cpu_ctx, gpu_ctx, out, scratch, this->npw);
+    base_device::memory::delete_memory_op<Complex, base_device::DEVICE_GPU>()(gpu_ctx, scratch);
+}
+
+template <typename Real, typename Output>
+void PW_Basis::recip2real_gpu(const std::complex<Real>* in, Output* out, bool add, Real factor) const
+{
+    using Complex = std::complex<Real>;
+    int scratch_size = this->npw;
+    if (std::is_same<Output, Real>::value)
+    {
+        scratch_size = std::max(scratch_size, (this->nrxx + 1) / 2);
+    }
+    else if (add)
+    {
+        scratch_size = std::max(scratch_size, this->nrxx);
+    }
+    Complex* scratch = nullptr;
+    base_device::memory::resize_memory_op<Complex, base_device::DEVICE_GPU>()(gpu_ctx, scratch, scratch_size);
+    base_device::memory::synchronize_memory_op<Complex, base_device::DEVICE_GPU, base_device::DEVICE_CPU>()(
+        gpu_ctx, cpu_ctx, scratch, in, this->npw);
+    auto* grid = this->fft_bundle.get_auxr_3d_data<Real>();
+    base_device::memory::set_memory_op<Complex, base_device::DEVICE_GPU>()(gpu_ctx, grid, 0, this->nxyz);
+    set_3d_fft_box_op<Real, base_device::DEVICE_GPU>()(gpu_ctx, this->npw, this->d_ig2fftbox, scratch, grid);
+    this->fft_bundle.fft3D_backward(gpu_ctx, grid, grid);
+    auto* result = reinterpret_cast<Output*>(scratch);
+    if (add)
+    {
+        base_device::memory::synchronize_memory_op<Output, base_device::DEVICE_GPU, base_device::DEVICE_CPU>()(
+            gpu_ctx, cpu_ctx, result, out, this->nrxx);
+    }
+    result = prepare_inverse_output(this->nrxx, add, factor, grid, result);
+    base_device::memory::synchronize_memory_op<Output, base_device::DEVICE_CPU, base_device::DEVICE_GPU>()(
+        cpu_ctx, gpu_ctx, out, result, this->nrxx);
+    base_device::memory::delete_memory_op<Complex, base_device::DEVICE_GPU>()(gpu_ctx, scratch);
+}
+#endif
+
+
+#if defined(__CUDA) || defined(__ROCM)
+template <typename FPTYPE>
+void PW_Basis::fft3d_gpu(bool inverse) const
+{
+    using Complex = std::complex<FPTYPE>;
+    auto* host_grid = this->fft_bundle.get_auxr_data<FPTYPE>();
+    auto* device_grid = this->fft_bundle.get_auxr_3d_data<FPTYPE>();
+    base_device::memory::synchronize_memory_op<Complex, base_device::DEVICE_GPU, base_device::DEVICE_CPU>()(
+        gpu_ctx, cpu_ctx, device_grid, host_grid, this->nxyz);
+    if (inverse)
+    {
+        this->fft_bundle.fft3D_backward<FPTYPE>(gpu_ctx, device_grid, device_grid);
+    }
+    else
+    {
+        this->fft_bundle.fft3D_forward<FPTYPE>(gpu_ctx, device_grid, device_grid);
+    }
+    base_device::memory::synchronize_memory_op<Complex, base_device::DEVICE_CPU, base_device::DEVICE_GPU>()(
+        cpu_ctx, gpu_ctx, host_grid, device_grid, this->nxyz);
+}
+#endif
+
+template <typename FPTYPE>
+void PW_Basis::fft_forward() const
+{
+    auto* auxr = this->fft_bundle.get_auxr_data<FPTYPE>();
+    auto* auxg = this->fft_bundle.get_auxg_data<FPTYPE>();
+#if defined(__CUDA) || defined(__ROCM)
+    if (this->device == "gpu" && this->poolnproc == 1 && !this->gamma_only)
+    {
+        // A complete complex grid can be transformed before gathering its sticks.
+        this->fft3d_gpu<FPTYPE>(false);
+        this->gatherp_scatters(auxr, auxg);
+        return;
+    }
+#endif
+    if (this->gamma_only)
+    {
+        this->fft_bundle.fftxyr2c(this->fft_bundle.get_rspace_data<FPTYPE>(), auxr);
+    }
+    else
+    {
+        this->fft_bundle.fftxyfor(auxr, auxr);
+    }
+    this->gatherp_scatters(auxr, auxg);
+    this->fft_bundle.fftzfor(auxg, auxg);
+}
+
+template <typename FPTYPE>
+void PW_Basis::fft_backward() const
+{
+    auto* auxr = this->fft_bundle.get_auxr_data<FPTYPE>();
+    auto* auxg = this->fft_bundle.get_auxg_data<FPTYPE>();
+#if defined(__CUDA) || defined(__ROCM)
+    if (this->device == "gpu" && this->poolnproc == 1 && !this->gamma_only)
+    {
+        // Assemble the reciprocal grid before the full inverse transform.
+        this->gathers_scatterp(auxg, auxr);
+        this->fft3d_gpu<FPTYPE>(true);
+        return;
+    }
+#endif
+    this->fft_bundle.fftzbac(auxg, auxg);
+    this->gathers_scatterp(auxg, auxr);
+    if (this->gamma_only)
+    {
+        this->fft_bundle.fftxyc2r(auxr, this->fft_bundle.get_rspace_data<FPTYPE>());
+    }
+    else
+    {
+        this->fft_bundle.fftxybac(auxr, auxr);
+    }
+}
+
 /**
  * @brief transform real space to reciprocal space
  * @details c(g)=\int dr*f(r)*exp(-ig*r)
@@ -21,6 +200,14 @@ void PW_Basis::real2recip(const std::complex<FPTYPE>* in,
                           const FPTYPE factor) const
 {
     ModuleBase::timer::tick(this->classname, "real2recip");
+#if defined(__CUDA)
+    if (this->d_ig2fftbox != nullptr)
+    {
+        this->real2recip_gpu(in, out, add, factor);
+        ModuleBase::timer::tick(this->classname, "real2recip");
+        return;
+    }
+#endif
 
     assert(this->gamma_only == false);
 #ifdef _OPENMP
@@ -30,11 +217,7 @@ void PW_Basis::real2recip(const std::complex<FPTYPE>* in,
     {
         this->fft_bundle.get_auxr_data<FPTYPE>()[ir] = in[ir];
     }
-    this->fft_bundle.fftxyfor(fft_bundle.get_auxr_data<FPTYPE>(),fft_bundle.get_auxr_data<FPTYPE>());
-
-    this->gatherp_scatters(this->fft_bundle.get_auxr_data<FPTYPE>(), this->fft_bundle.get_auxg_data<FPTYPE>());
-    
-    this->fft_bundle.fftzfor(fft_bundle.get_auxg_data<FPTYPE>(),fft_bundle.get_auxg_data<FPTYPE>());
+    this->fft_forward<FPTYPE>();
 
     if(add)
     {
@@ -72,6 +255,14 @@ template <typename FPTYPE>
 void PW_Basis::real2recip(const FPTYPE* in, std::complex<FPTYPE>* out, const bool add, const FPTYPE factor) const
 {
     ModuleBase::timer::tick(this->classname, "real2recip");
+#if defined(__CUDA)
+    if (this->d_ig2fftbox != nullptr)
+    {
+        this->real2recip_gpu(in, out, add, factor);
+        ModuleBase::timer::tick(this->classname, "real2recip");
+        return;
+    }
+#endif
     if(this->gamma_only)
     {
         const int npy = this->ny * this->nplane;
@@ -86,7 +277,6 @@ void PW_Basis::real2recip(const FPTYPE* in, std::complex<FPTYPE>* out, const boo
             }
         }
 
-        this->fft_bundle.fftxyr2c(fft_bundle.get_rspace_data<FPTYPE>(),fft_bundle.get_auxr_data<FPTYPE>());
     }
     else
     {
@@ -97,11 +287,8 @@ void PW_Basis::real2recip(const FPTYPE* in, std::complex<FPTYPE>* out, const boo
         {
             this->fft_bundle.get_auxr_data<FPTYPE>()[ir] = std::complex<FPTYPE>(in[ir],0);
         }
-        this->fft_bundle.fftxyfor(fft_bundle.get_auxr_data<FPTYPE>(),fft_bundle.get_auxr_data<FPTYPE>());
     }
-    this->gatherp_scatters(this->fft_bundle.get_auxr_data<FPTYPE>(), this->fft_bundle.get_auxg_data<FPTYPE>());
-    
-    this->fft_bundle.fftzfor(fft_bundle.get_auxg_data<FPTYPE>(),fft_bundle.get_auxg_data<FPTYPE>());
+    this->fft_forward<FPTYPE>();
 
     if(add)
     {
@@ -142,6 +329,14 @@ void PW_Basis::recip2real(const std::complex<FPTYPE>* in,
                           const FPTYPE factor) const
 {
     ModuleBase::timer::tick(this->classname, "recip2real");
+#if defined(__CUDA)
+    if (this->d_ig2fftbox != nullptr)
+    {
+        this->recip2real_gpu(in, out, add, factor);
+        ModuleBase::timer::tick(this->classname, "recip2real");
+        return;
+    }
+#endif
     assert(this->gamma_only == false);
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 4096/sizeof(FPTYPE))
@@ -158,11 +353,7 @@ void PW_Basis::recip2real(const std::complex<FPTYPE>* in,
     {
         this->fft_bundle.get_auxg_data<FPTYPE>()[this->ig2isz[ig]] = in[ig];
     }
-    this->fft_bundle.fftzbac(fft_bundle.get_auxg_data<FPTYPE>(), fft_bundle.get_auxg_data<FPTYPE>());
-
-    this->gathers_scatterp(this->fft_bundle.get_auxg_data<FPTYPE>(),this->fft_bundle.get_auxr_data<FPTYPE>());
-
-    this->fft_bundle.fftxybac(fft_bundle.get_auxr_data<FPTYPE>(),fft_bundle.get_auxr_data<FPTYPE>());
+    this->fft_backward<FPTYPE>();
     
     if(add)
     {
@@ -198,6 +389,14 @@ template <typename FPTYPE>
 void PW_Basis::recip2real(const std::complex<FPTYPE>* in, FPTYPE* out, const bool add, const FPTYPE factor) const
 {
     ModuleBase::timer::tick(this->classname, "recip2real");
+#if defined(__CUDA)
+    if (this->d_ig2fftbox != nullptr)
+    {
+        this->recip2real_gpu(in, out, add, factor);
+        ModuleBase::timer::tick(this->classname, "recip2real");
+        return;
+    }
+#endif
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 4096/sizeof(FPTYPE))
 #endif
@@ -213,14 +412,10 @@ void PW_Basis::recip2real(const std::complex<FPTYPE>* in, FPTYPE* out, const boo
     {
         this->fft_bundle.get_auxg_data<FPTYPE>()[this->ig2isz[ig]] = in[ig];
     }
-    this->fft_bundle.fftzbac(fft_bundle.get_auxg_data<FPTYPE>(), fft_bundle.get_auxg_data<FPTYPE>());
-
-    this->gathers_scatterp(this->fft_bundle.get_auxg_data<FPTYPE>(), this->fft_bundle.get_auxr_data<FPTYPE>());
+    this->fft_backward<FPTYPE>();
 
     if(this->gamma_only)
     {
-        this->fft_bundle.fftxyc2r(fft_bundle.get_auxr_data<FPTYPE>(),fft_bundle.get_rspace_data<FPTYPE>());
-
         // r2c in place
         const int npy = this->ny * this->nplane;
 
@@ -253,7 +448,6 @@ void PW_Basis::recip2real(const std::complex<FPTYPE>* in, FPTYPE* out, const boo
     }
     else
     {
-        this->fft_bundle.fftxybac(fft_bundle.get_auxr_data<FPTYPE>(),fft_bundle.get_auxr_data<FPTYPE>());
         if(add)
         {
 #ifdef _OPENMP

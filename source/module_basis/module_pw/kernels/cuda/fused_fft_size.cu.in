@@ -1,0 +1,9 @@
+#include "module_basis/module_pw/kernels/cuda/fused_fft.cuh"
+
+namespace ModulePW
+{
+const FusedFFT* fused_fft_@FFT_LENGTH@_@FFT_ARCH@(const cudaDeviceProp& properties)
+{
+    return make_fused_fft<@FFT_LENGTH@, @FFT_SM@>(properties);
+}
+} // namespace ModulePW

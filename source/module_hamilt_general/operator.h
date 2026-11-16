@@ -2,6 +2,7 @@
 #define OPERATOR_H
 
 #include <complex>
+#include <functional>
 
 #include "module_base/global_function.h"
 #include "module_base/tool_quit.h"
@@ -47,7 +48,13 @@ class Operator
     /// if this procedure is not suitable for your operator, just override this function.
     /// output of hpsi would be first member of the returned tuple 
     typedef std::tuple<const psi::Psi<T, Device>*, const psi::Range, T*> hpsi_info;
-    virtual hpsi_info hPsi(hpsi_info& input)const;
+    virtual hpsi_info hPsi(hpsi_info& input) const;
+    /// An optional action adds one operator's contribution and returns true
+    /// when it replaces the ordinary act call. Arguments describe the current
+    /// spin-component columns, basis leading dimension, polarization count,
+    /// input/output buffers and active plane-wave count. It is call-scoped.
+    using Action = std::function<bool(const Operator*, int, int, int, const T*, T*, int)>;
+    hpsi_info hPsi(hpsi_info& input, const Action& action) const;
 
     virtual void init(const int ik_in);
 

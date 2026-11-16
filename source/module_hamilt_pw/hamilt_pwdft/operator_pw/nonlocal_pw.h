@@ -8,8 +8,13 @@
 #include "module_hsolver/kernels/math_kernel_op.h"
 
 #include "module_hamilt_pw/hamilt_pwdft/VNL_in_pw.h"
+#include <memory>
 
 namespace hamilt {
+
+#if defined(__CUDA)
+class ProjectorFold;
+#endif
 
 #ifndef NONLOCALTEMPLATE_H
 #define NONLOCALTEMPLATE_H
@@ -58,16 +63,17 @@ class Nonlocal<OperatorPW<T, Device>> : public OperatorPW<T, Device>
         return this->becp;
     }
 
+    /// Reserve the ordinary projection buffer for nbands spin-component columns.
+    T* prepare_becp(int nbands) const;
+
+    /// Add the nonlocal action from reduced projector overlaps with shape
+    /// (nkb, nbands), column-major. The overlaps already include pool reduction.
+    void act_projected(int nbands, int nbasis, int npol, const T* projections,
+                       T* output, int npw) const;
+
   private:
-    void add_nonlocal_pp(T *hpsi_in, const T *becp, const int m) const;
-
-    mutable int max_npw = 0;
-
-    mutable int npw = 0;
-
-    mutable int npol = 0;
-
-    mutable size_t nkb_m = 0;
+    mutable size_t becp_capacity = 0;
+    mutable size_t ps_capacity = 0;
 
     const int* isk = nullptr;
 
@@ -80,6 +86,9 @@ class Nonlocal<OperatorPW<T, Device>> : public OperatorPW<T, Device>
     mutable T *ps = nullptr;
     mutable T *vkb = nullptr;
     mutable T *becp = nullptr;
+#if defined(__CUDA)
+    std::unique_ptr<ProjectorFold> projector_fold;
+#endif
     Device* ctx = {};
     base_device::DEVICE_CPU* cpu_ctx = {};
     Real * deeq = nullptr;

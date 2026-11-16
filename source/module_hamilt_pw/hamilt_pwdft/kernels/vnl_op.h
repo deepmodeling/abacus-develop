@@ -8,6 +8,12 @@
 namespace hamilt
 {
 
+#if __CUDA || __UT_USE_CUDA
+/// Add one Cartesian k vector to npw Cartesian G vectors on the GPU.
+/// Both inputs and the output store three consecutive double components per vector.
+void cal_gk_gpu(int npw, const double* gcar, const double* kvec, double* gk);
+#endif
+
 template <typename FPTYPE, typename Device>
 struct cal_vnl_op
 {

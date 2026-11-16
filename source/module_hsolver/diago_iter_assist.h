@@ -70,7 +70,10 @@ class DiagoIterAssist
     static void cal_hs_subspace(const hamilt::Hamilt<T, Device>* pHamilt, // hamiltonian operator carrier
                                                 const psi::Psi<T, Device>& psi,     // [in] wavefunction
                                                 T *hcc, 
-                                                T *scc);
+                                                T *scc,
+                                                T *hpsi_host = nullptr,
+                                                bool identity_overlap = false,
+                                                const typename hamilt::Operator<T, Device>::Action& action = {});
 
     /// @brief calculate the response matrix from rotation matrix solved by diagonalization of H and S matrix
     /// @param hcc : Hamiltonian matrix
