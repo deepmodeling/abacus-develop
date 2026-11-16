@@ -10,12 +10,12 @@ class matrix;
 
 namespace ModuleMD
 {
-// The potential supplies Ry, Ry/Bohr, and Ry/Bohr^3 values. For MDCell it
+// The force field supplies Ry, Ry/Bohr, and Ry/Bohr^3 values. For MDCell it
 // writes owned and ghost forces to the atoms; for UnitCell it fills force.
-class Potential
+class ForceField
 {
   public:
-    virtual ~Potential() {}
+    virtual ~ForceField() {}
     virtual void initialize(BaseCell& cell, const Input_para& inp) = 0;
     virtual void compute(BaseCell& cell,
                          double& energy,

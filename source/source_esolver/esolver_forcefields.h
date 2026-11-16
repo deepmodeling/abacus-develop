@@ -7,7 +7,7 @@
 
 namespace ModuleMD
 {
-class Potential;
+class ForceField;
 }
 
 namespace ModuleESolver
@@ -15,7 +15,7 @@ namespace ModuleESolver
 class esolver_forcefields : public ESolver
 {
   public:
-    esolver_forcefields(std::unique_ptr<ModuleMD::Potential> potential, std::ofstream& running_log);
+    esolver_forcefields(std::unique_ptr<ModuleMD::ForceField> potential, std::ofstream& running_log);
     ~esolver_forcefields() override;
 
     void before_all_runners(BaseCell& cell, const Input_para& inp) override;
@@ -26,7 +26,7 @@ class esolver_forcefields : public ESolver
     void after_all_runners(BaseCell& cell) override;
 
   private:
-    std::unique_ptr<ModuleMD::Potential> potential_;
+    std::unique_ptr<ModuleMD::ForceField> potential_;
     std::ofstream& running_log_;
     double energy_ = 0.0;
     ModuleBase::matrix force_;

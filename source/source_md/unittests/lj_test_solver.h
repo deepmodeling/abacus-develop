@@ -10,7 +10,7 @@
 
 inline ModuleESolver::ESolver* make_lj_test_solver()
 {
-    std::unique_ptr<ModuleMD::Potential> potential(
+    std::unique_ptr<ModuleMD::ForceField> potential(
         new ModuleMD::LJ(PARAM.globalv.global_out_dir, GlobalV::ofs_running));
     return new ModuleESolver::esolver_forcefields(std::move(potential), GlobalV::ofs_running);
 }

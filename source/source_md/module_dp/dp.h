@@ -29,7 +29,7 @@ class UnitCell;
 
 namespace ModuleMD
 {
-class DP : public Potential
+class DP : public ForceField
 {
   public:
     DP(const std::string& pot_file, const std::string& output_dir, std::ofstream& running_log);

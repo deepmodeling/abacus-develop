@@ -13,7 +13,7 @@
 
 namespace ModuleESolver
 {
-esolver_forcefields::esolver_forcefields(std::unique_ptr<ModuleMD::Potential> potential, std::ofstream& running_log)
+esolver_forcefields::esolver_forcefields(std::unique_ptr<ModuleMD::ForceField> potential, std::ofstream& running_log)
     : potential_(std::move(potential)), running_log_(running_log)
 {
     classname = "esolver_forcefields";

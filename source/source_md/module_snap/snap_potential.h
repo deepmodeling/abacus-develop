@@ -12,7 +12,7 @@
 namespace ModuleMD
 {
 
-class SnapPotential : public Potential
+class SnapPotential : public ForceField
 {
   public:
     SnapPotential(const std::string& coefficient_file,

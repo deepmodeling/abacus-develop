@@ -12,7 +12,7 @@
 namespace ModuleMD
 {
 
-class LJ : public Potential
+class LJ : public ForceField
 {
   public:
     LJ(const std::string& output_dir, std::ofstream& running_log);

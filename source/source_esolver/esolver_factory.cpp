@@ -396,21 +396,21 @@ ESolver* init_esolver(const Input_para& inp)
     else if (esolver_type == "lj_pot")
     {
         std::ofstream& running_log = GlobalV::ofs_running;
-        std::unique_ptr<ModuleMD::Potential> potential(
+        std::unique_ptr<ModuleMD::ForceField> potential(
             new ModuleMD::LJ(PARAM.globalv.global_out_dir, running_log));
         return new esolver_forcefields(std::move(potential), running_log);
     }
     else if (esolver_type == "dp_pot")
     {
         std::ofstream& running_log = GlobalV::ofs_running;
-        std::unique_ptr<ModuleMD::Potential> potential(
+        std::unique_ptr<ModuleMD::ForceField> potential(
             new ModuleMD::DP(inp.mdp.pot_file, PARAM.globalv.global_out_dir, running_log));
         return new esolver_forcefields(std::move(potential), running_log);
     }
     else if (esolver_type == "nep_pot")
     {
         std::ofstream& running_log = GlobalV::ofs_running;
-        std::unique_ptr<ModuleMD::Potential> potential(
+        std::unique_ptr<ModuleMD::ForceField> potential(
             new ModuleMD::NEPPotential(inp.mdp.pot_file, PARAM.globalv.global_out_dir, running_log));
         return new esolver_forcefields(std::move(potential), running_log);
     }
@@ -418,7 +418,7 @@ ESolver* init_esolver(const Input_para& inp)
     {
         const int rank = GlobalV::MY_RANK;
         std::ofstream& running_log = GlobalV::ofs_running;
-        std::unique_ptr<ModuleMD::Potential> potential(
+        std::unique_ptr<ModuleMD::ForceField> potential(
             new ModuleMD::SnapPotential(inp.mdp.pot_file, inp.mdp.snap_param_file, running_log, rank));
         return new esolver_forcefields(std::move(potential), running_log);
     }

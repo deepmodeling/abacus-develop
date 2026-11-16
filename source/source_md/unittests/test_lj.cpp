@@ -323,7 +323,7 @@ TEST(LJPotential, UnitCellEnergyForceAndStress)
     Setcell::parameters(input);
     const std::string output_dir = testing::TempDir();
     std::ofstream running_log;
-    std::unique_ptr<ModuleMD::Potential> potential(new ModuleMD::LJ(output_dir, running_log));
+    std::unique_ptr<ModuleMD::ForceField> potential(new ModuleMD::LJ(output_dir, running_log));
     ModuleESolver::esolver_forcefields solver(std::move(potential), running_log);
     solver.before_all_runners(cell, input);
     solver.runner(cell, 0);
@@ -346,7 +346,7 @@ TEST(LJPotential, MDCellWritesOwnedForces)
     Setcell::parameters(input);
     const std::string output_dir = testing::TempDir();
     std::ofstream running_log;
-    std::unique_ptr<ModuleMD::Potential> potential(new ModuleMD::LJ(output_dir, running_log));
+    std::unique_ptr<ModuleMD::ForceField> potential(new ModuleMD::LJ(output_dir, running_log));
     ModuleESolver::esolver_forcefields solver(std::move(potential), running_log);
     solver.before_all_runners(cell, input);
     DomainDecomposition decomp;

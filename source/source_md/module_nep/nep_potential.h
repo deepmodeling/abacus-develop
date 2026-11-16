@@ -13,7 +13,7 @@ class UnitCell;
 
 namespace ModuleMD
 {
-class NEPPotential : public Potential
+class NEPPotential : public ForceField
 {
   public:
     NEPPotential(const std::string& pot_file, const std::string& output_dir, std::ofstream& running_log);
