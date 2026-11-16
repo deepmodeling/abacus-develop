@@ -57,6 +57,8 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional::v_xc(
     // Evaluate the regularized mapped-density local-collinear graph.
     if (nspin == 4 && (domag || domag_z) && gga_grad == 2)
     {
+        // The remaining global read is only the device selection; the other
+        // configuration needed by the NCGGA-SF path is passed explicitly.
         return ModuleXC::NCGGA_SF_Builtin::v_xc_ncgga_sf_builtin(nrxx, ucell->omega, ucell->tpiba, chr,
                                                                  PARAM.inp.device == "gpu");
     }
