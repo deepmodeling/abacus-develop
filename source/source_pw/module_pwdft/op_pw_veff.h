@@ -72,9 +72,6 @@ class Veff<OperatorPW<T, Device>> : public OperatorPW<T, Device>
     mutable T *porter = nullptr;
     mutable T *porter1 = nullptr;
     mutable int porter_size = 0;
-#if defined(__CUFFTDX)
-    bool fused_fft_enabled = false;
-#endif
     base_device::AbacusDevice_t device = {};
     using veff_op = veff_pw_op<Real, Device>;
 
