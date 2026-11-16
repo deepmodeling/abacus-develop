@@ -145,6 +145,8 @@ namespace LR
         /// divergence, this factorization no longer holds and they must go back to `Vector3`.
         struct GxcCoef
         {
+            /// Availability is independent of the number of points assigned to this rank.
+            bool built = false;
             // Local part A.
             std::vector<double> a_s2;
             std::vector<double> a_st;
@@ -162,7 +164,7 @@ namespace LR
         const GxcCoef& gxc(const bool triplet) const
         {
             const GxcCoef& ret = (nspin_ == 1 || !triplet) ? gxc_s_ : gxc_t_;
-            if (ret.a_s2.empty())
+            if (!ret.built)
             {
                 throw std::runtime_error(
                     "KernelXC: the " + std::string(triplet ? "triplet" : "singlet")

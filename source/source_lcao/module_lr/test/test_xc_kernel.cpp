@@ -358,3 +358,48 @@ TEST_F(KernelXCTest, PolarizedHseClippingMasksOnlyImplicitSigmaDerivatives)
     const auto pbe = build("pbe", 2, LR::KernelXC::BothSpins);
     EXPECT_NE(pbe->gxc(false).e_s2[0], 0.0);
 }
+
+TEST_F(KernelXCTest, RequestedCoefficientsExistOnEmptyRanks)
+{
+    for (const std::string &name : {"lda", "pbe"})
+    {
+        for (const int spins : {1, 2})
+        {
+            const auto kernel = build(name, spins, LR::KernelXC::BothSpins);
+            EXPECT_TRUE(kernel->gxc(false).a_s2.empty());
+            EXPECT_TRUE(kernel->gxc(true).a_s2.empty());
+            EXPECT_EQ(kernel->is_gga(), name == "pbe");
+        }
+    }
+}
+
+TEST_F(KernelXCTest, MissingSpinStillThrowsOnEmptyRanks)
+{
+    const auto absent = build("pbe", 2, LR::KernelXC::NoGxc);
+    EXPECT_THROW(absent->gxc(false), std::runtime_error);
+    EXPECT_THROW(absent->gxc(true), std::runtime_error);
+    const auto singlet = build("pbe", 2, LR::KernelXC::Singlet);
+    EXPECT_NO_THROW(singlet->gxc(false));
+    EXPECT_THROW(singlet->gxc(true), std::runtime_error);
+    const auto triplet = build("pbe", 2, LR::KernelXC::Triplet);
+    EXPECT_THROW(triplet->gxc(false), std::runtime_error);
+    EXPECT_NO_THROW(triplet->gxc(true));
+    const auto nonlocal = build("hf", 2, LR::KernelXC::BothSpins);
+    EXPECT_THROW(nonlocal->gxc(false), std::runtime_error);
+}
+
+TEST_F(KernelXCTest, RequestedCoefficientsRetainLocalValues)
+{
+    basis.nrxx = 1;
+    basis.npw = 1;
+    basis.nmaxgr = 1;
+    charge.nrxx = 1;
+    const auto kernel = build("lda", 2, LR::KernelXC::BothSpins);
+    ASSERT_EQ(kernel->v3rho3.size(), 4);
+    const double expected_singlet = kernel->v3rho3[0] + 2.0 * kernel->v3rho3[1] + kernel->v3rho3[2];
+    const double expected_triplet = kernel->v3rho3[0] - 2.0 * kernel->v3rho3[1] + kernel->v3rho3[2];
+    ASSERT_EQ(kernel->gxc(false).a_s2.size(), 1);
+    ASSERT_EQ(kernel->gxc(true).a_s2.size(), 1);
+    EXPECT_DOUBLE_EQ(kernel->gxc(false).a_s2[0], expected_singlet);
+    EXPECT_DOUBLE_EQ(kernel->gxc(true).a_s2[0], expected_triplet);
+}

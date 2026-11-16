@@ -371,3 +371,56 @@ TEST_F(PotGradXCTest, UnrestrictedHseMatchesIndependentQuadraticFiniteDifference
         }
     }
 }
+
+TEST_F(PotGradXCTest, EmptyLocalGridPreservesEmptySpinChannels)
+{
+    basis.nrxx = 0;
+    basis.npw = 0;
+    basis.nmaxgr = 0;
+    charge.nrxx = 0;
+    const auto coefficients = kernel("pbe", true, LR::KernelXC::BothSpins);
+    LR::PotGradXCLR potential(
+        *coefficients,
+        basis,
+        cell,
+        0,
+        2,
+        false);
+    const double *channels[2] = {nullptr, nullptr};
+    for (int tau = 0; tau < 2; ++tau)
+    {
+        ModuleBase::matrix result(1, 0);
+        EXPECT_NO_THROW(potential.cal_v_eff_openshell(
+            channels,
+            cell,
+            result,
+            tau));
+        EXPECT_EQ(result.nc, 0);
+    }
+}
+
+
+TEST_F(PotGradXCTest, EmptyClosedShellGridRetainsRequestedCoefficients)
+{
+    basis.nrxx = 0;
+    basis.npw = 0;
+    basis.nmaxgr = 0;
+    charge.nrxx = 0;
+    const std::vector<std::string> initialization = {"default"};
+    for (const std::string name : {"lda", "pbe"})
+    {
+        for (const int spins : {1, 2})
+        {
+            const auto coefficients = LR::build_xc_kernel(name, basis, cell, charge,
+                grid, spins, false, LR::KernelXC::BothSpins, initialization);
+            double* channels[2] = {nullptr, nullptr};
+            for (const bool triplet : {false, true})
+            {
+                LR::PotGradXCLR potential(*coefficients, basis, cell, 0, spins, triplet);
+                ModuleBase::matrix result(1, 0);
+                EXPECT_NO_THROW(potential.cal_v_eff(channels, cell, result));
+                EXPECT_EQ(result.nc, 0);
+            }
+        }
+    }
+}
