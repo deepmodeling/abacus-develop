@@ -1,11 +1,13 @@
 #ifndef ABACUS_NCGGA_SF_GPU_H
 #define ABACUS_NCGGA_SF_GPU_H
 
+#if defined(__CUDA)
 #include "source_base/matrix.h"
 #include "source_base/vector3.h"
 #include "source_hamilt/module_xc/xc_ncgga_radial.h"
 
 #include <vector>
+#endif
 
 namespace ModuleXC
 {
