@@ -41,6 +41,8 @@ if(ENABLE_LCAO)
     hamilt_casida.cpp
     potentials/xc_kernel.cpp
     potentials/xc_kxc.cpp
+    nacv_workflow.cpp
+    utils/lr_state_io.cpp
     nacv_cs.cpp
     nacv_result.cpp
     gradient_output.cpp

@@ -29,9 +29,7 @@ namespace LR
 {
 template <typename T>
 struct GradientInputs;
-struct NacvResult;
 }
-
 namespace ModuleESolver
 {
     struct LRRuntime
@@ -60,16 +58,6 @@ namespace ModuleESolver
         virtual double cal_energy() override;
         /// Force on the atoms in the relaxed excited state, F = -d(E_gs + Omega)/dR (Ry/Bohr).
         virtual void cal_force(BaseCell& basecell, ModuleBase::matrix& force) override;
-
-        /**
-         * @brief Evaluate a requested real-Gamma auxiliary TDA coupling after LR convergence.
-         * @param[in] bra_state Surface index, with zero denoting the ground reference.
-         * @param[in] ket_state Distinct surface index inside the solved LR window.
-         * @param[in] spin_channel Closed-shell adaptation index, or zero for unrestricted updown.
-         * @return Owned raw/ETF vectors in Bohr^-1 and gap-weighted numerators in Ry/Bohr.
-         */
-        LR::NacvResult cal_nac(int bra_state, int ket_state, int spin_channel);
-
         /// Not implemented: there is no excited-state stress. `cell-relax` is rejected at input.
         virtual void cal_stress(BaseCell& basecell, ModuleBase::matrix& stress) override;
 
@@ -357,9 +345,6 @@ namespace ModuleESolver
         ModuleBase::matrix cal_jt_force_(const std::vector<ModuleBase::matrix>& diag,
             std::ofstream& ofs);
         LR::GradientInputs<T> gradient_inputs_() const;
-
-        /// Actual operator residual norms, in Ry, for the current requested NAC roots.
-        std::vector<std::vector<double>> lr_residuals_;
         /// Widen a multiplet's eigenvectors into the Z window, one block each. Members need not be
         /// contiguous, so they are padded one at a time.
         ct::Tensor pad_group_to_z_(const int ispin, const std::vector<int>& group) const;

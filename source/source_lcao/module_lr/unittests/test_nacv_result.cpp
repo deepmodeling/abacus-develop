@@ -1,4 +1,5 @@
 #include "../nacv_cs.h"
+#include "../nacv_workflow.h"
 
 #include <gtest/gtest.h>
 #include <iomanip>
@@ -480,4 +481,131 @@ TEST(NacvResult, RejectsMissingUnrestrictedSpinWindows)
     EXPECT_THROW(LR::validate_nac_occupations(weights, std::vector<int>{4, 0}, 8), std::invalid_argument);
     EXPECT_THROW(LR::validate_nac_occupations(weights, std::vector<int>{4, 8}, 8), std::invalid_argument);
     EXPECT_THROW(LR::validate_nac_occupations(weights, std::vector<int>{4, 2}, 7), std::invalid_argument);
+}
+
+TEST(NacvResult, ReferenceChecksAreDisabledWithoutRequestedPairs)
+{
+    const std::vector<int> empty;
+    const std::string spin = "singlet";
+    const std::string solver = "lapack";
+    const LR::NacvRequest request{empty,
+        spin,
+        solver,
+        false,
+        false,
+        false,
+        2,
+        true,
+        true,
+        false};
+    const ModuleBase::matrix weights;
+    EXPECT_NO_THROW(
+        LR::validate_nac_reference(
+            request,
+            false,
+            false,
+            false,
+            weights,
+            empty,
+            0,
+            0));
+    EXPECT_FALSE(LR::nac_eigenpairs_requested(request, false));
+}
+
+TEST(NacvResult, PreservesClosedAndUnrestrictedDiagnosticSelection)
+{
+    std::vector<int> pairs;
+    const std::string spin = "singlet";
+    const std::string solver = "lapack";
+    const LR::NacvRequest request{pairs,
+        spin,
+        solver,
+        true,
+        true,
+        true,
+        1,
+        true,
+        true,
+        true};
+    EXPECT_TRUE(LR::nac_eigenpairs_requested(request, false));
+    EXPECT_FALSE(LR::nac_eigenpairs_requested(request, true));
+    pairs = {0, 1};
+    EXPECT_TRUE(LR::nac_eigenpairs_requested(request, true));
+}
+
+TEST(NacvResult, ReferenceChecksKeepIntegerRksAndUksConventions)
+{
+    const std::vector<int> pairs{0, 1};
+    const std::vector<int> occupied{1, 1};
+    const std::string spin = "singlet";
+    const std::string solver = "lapack";
+    const LR::NacvRequest request{pairs,
+        spin,
+        solver,
+        true,
+        true,
+        true,
+        1,
+        true,
+        true,
+        false};
+    ModuleBase::matrix rks(1, 3);
+    rks(0, 0) = 2.0;
+    EXPECT_NO_THROW(
+        LR::validate_nac_reference(
+            request,
+            false,
+            true,
+            true,
+            rks,
+            occupied,
+            3,
+            1));
+    EXPECT_THROW(
+        LR::validate_nac_reference(
+            request,
+            false,
+            false,
+            true,
+            rks,
+            occupied,
+            3,
+            1),
+        std::logic_error);
+    EXPECT_THROW(
+        LR::validate_nac_reference(
+            request,
+            false,
+            true,
+            false,
+            rks,
+            occupied,
+            3,
+            1),
+        std::logic_error);
+    ModuleBase::matrix uks(2, 3);
+    uks(0, 0) = 1.0;
+    uks(1, 0) = 1.0;
+    EXPECT_NO_THROW(
+        LR::validate_nac_reference(
+            request,
+            true,
+            true,
+            true,
+            uks,
+            occupied,
+            3,
+            2));
+    uks(1, 0) = 0.5;
+    EXPECT_THROW(
+        LR::validate_nac_reference(
+            request,
+            true,
+            true,
+            true,
+            uks,
+            occupied,
+            3,
+            2),
+        std::invalid_argument);
 }

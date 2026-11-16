@@ -1,4 +1,5 @@
 #include "nacv_cs.h"
+#include "nacv_workflow.h"
 #include "utils/xc_kernel_names.h"
 
 #include <algorithm>
@@ -35,6 +36,52 @@ void validate_functional_names(const std::string &reference_xc, const std::strin
     }
 }
 } // namespace
+
+bool nac_eigenpairs_requested(const NacvRequest &request, bool open_shell)
+{
+    return !request.pairs.empty() || (!open_shell && request.output_wavefunctions);
+}
+
+void validate_nac_reference(
+    const NacvRequest &request,
+    bool open_shell,
+    bool converged,
+    bool data_ready,
+    const ModuleBase::matrix &weights,
+    const std::vector<int> &occupied,
+    int basis,
+    int spin_channels)
+{
+    if (request.pairs.empty())
+    {
+        return;
+    }
+    if (!request.embedded_ks || !request.gamma_only || !request.force_response || !converged || !data_ready)
+    {
+        throw std::logic_error("Analytic NAC requires converged KS/LR data and the force-response window");
+    }
+    if (request.kpar != 1)
+    {
+        throw std::logic_error("Analytic NAC requires a real Gamma LR channel and kpar=1");
+    }
+    if (open_shell)
+    {
+        for (int spin = 0; spin < 2; ++spin)
+        {
+            validate_nac_window(occupied.at(spin), basis - occupied.at(spin), basis);
+        }
+        validate_nac_occupations(weights, occupied, basis);
+    }
+    else
+    {
+        const int occupied_bands = occupied.at(0);
+        validate_nac_occupations(
+            weights,
+            occupied_bands,
+            basis,
+            spin_channels);
+    }
+}
 
 void validate_nac_occupations(
     const ModuleBase::matrix &weights,

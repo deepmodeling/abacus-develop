@@ -1190,7 +1190,7 @@ OBJS_LR_GRAD=lr_force.o\
     state_ovlp.o\
     grad_jt.o\
     gradient_output.o\
-    lr_grad_cs.o nacv_cs.o nacv_result.o\
+    lr_grad_cs.o nacv_cs.o nacv_workflow.o lr_state_io.o nacv_result.o\
     lr_grad_os.o\
     exx_proj.o\
     cvcx_serial.o\
@@ -1198,7 +1198,7 @@ OBJS_LR_GRAD=lr_force.o\
     cal_edm.o\
     zeqlin_solv.o\
     pot_grad_xc.o\
-    esolver_lr_grad.o esolver_lr_nac.o\
+    esolver_lr_grad.o\
     esolver_lr_rlx.o\
 
 OBJS_RDMFT=rdmft.o\
