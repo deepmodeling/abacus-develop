@@ -4,7 +4,7 @@
 #include "source_cell/mdcell.h"
 #include "source_io/module_output/output_log.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_md/potential.h"
+#include "source_md/forcefield.h"
 
 #include <cmath>
 #include <iomanip>

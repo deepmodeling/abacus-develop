@@ -1,5 +1,5 @@
-#ifndef SOURCE_MD_POTENTIAL_H
-#define SOURCE_MD_POTENTIAL_H
+#ifndef SOURCE_MD_FORCEFIELD_H
+#define SOURCE_MD_FORCEFIELD_H
 
 class BaseCell;
 struct Input_para;

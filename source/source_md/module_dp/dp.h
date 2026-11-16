@@ -1,7 +1,7 @@
 #ifndef SOURCE_MD_MODULE_DP_DP_H
 #define SOURCE_MD_MODULE_DP_DP_H
 
-#include "source_md/potential.h"
+#include "source_md/forcefield.h"
 
 #ifdef __DPMD
 #ifdef __DPMDC

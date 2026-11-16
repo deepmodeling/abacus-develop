@@ -1,7 +1,7 @@
 #ifndef MODULE_MD_SNAP_POTENTIAL_H
 #define MODULE_MD_SNAP_POTENTIAL_H
 
-#include "source_md/potential.h"
+#include "source_md/forcefield.h"
 #include "source_md/module_snap/snap_calculator.h"
 
 #include <iosfwd>

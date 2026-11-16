@@ -1,7 +1,7 @@
 #ifndef SOURCE_MD_MODULE_NEP_POTENTIAL_H
 #define SOURCE_MD_MODULE_NEP_POTENTIAL_H
 
-#include "source_md/potential.h"
+#include "source_md/forcefield.h"
 
 #include <iosfwd>
 #include <memory>
