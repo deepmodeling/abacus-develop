@@ -312,7 +312,7 @@ std::complex<double>* FFT_CUDA<FPTYPE>::get_spinor_stick_data(int) const
 template <>
 std::complex<double>* FFT_CUDA<double>::get_spinor_stick_data(int bands) const
 {
-    assert(bands == 1 || bands == 2 || bands == 4);
+    assert(bands >= 1);
     const int size = std::max(this->nx * this->ny * this->nz, 2 * bands * this->fused_veff_stick_size());
     if (this->z_auxr_3d_capacity < size)
     {
@@ -332,7 +332,20 @@ void FFT_CUDA<double>::transform_spinor_sticks(std::complex<double>* up, std::co
 {
     const int stick_size = this->fused_veff_stick_size();
     assert(stick_size > 0 && reverse != nullptr);
-    assert(bands == 1 || bands == 2 || bands == 4);
+    assert(bands >= 1);
+    if (bands != 1 && bands != 2 && bands != 4)
+    {
+        const int grid_size = this->fused_veff_grid_size();
+        for (int first = 0; first < bands;)
+        {
+            const int remaining = bands - first;
+            const int chunk = remaining >= 4 ? 4 : (remaining >= 2 ? 2 : 1);
+            this->transform_spinor_sticks(up + first * grid_size, down + first * grid_size,
+                                          reverse, inverse, chunk);
+            first += chunk;
+        }
+        return;
+    }
     auto& plan = this->z_stick_handle[bands / 2];
     if (!plan)
     {

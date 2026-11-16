@@ -246,6 +246,9 @@ void TDSpinPW<Real, Device>::soc(const psi::Psi<Complex, Device>& psi,
         if (npw > 0)
         {
             pp.getvnl(context, cell, ik, a, beta);
+            // The same k point can be reused with a new field, so refresh the
+            // folded projector tables from the regenerated beta.
+            nonlocal_.invalidate_fold();
         }
         nonlocal_.project_contract(cell, pp, basis, ik, 0, ncols, ld_psi, 2, npw, beta, psi.get_pointer());
         if (basis.poolrank != 0)
