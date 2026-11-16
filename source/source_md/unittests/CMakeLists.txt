@@ -54,9 +54,15 @@ addtest(
   SOURCES test_fire.cpp ../md_base.cpp ../fire.cpp ${md_test_depend_files})
 
 addtest(
+  TARGET MODULE_MD_base
+  LIBS parameter psi device
+  SOURCES test_md_base.cpp ../md_base.cpp
+          ../../source_cell/magnetism.cpp ${md_test_depend_files})
+
+addtest(
   TARGET MODULE_MD_verlet
   LIBS parameter psi device
-  SOURCES test_verlet.cpp ../test/test_md_base.cpp ../md_base.cpp ../verlet.cpp
+  SOURCES test_verlet.cpp ../md_base.cpp ../verlet.cpp
           ${md_test_depend_files})
 
 addtest(
