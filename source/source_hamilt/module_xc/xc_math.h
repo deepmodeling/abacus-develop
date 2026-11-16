@@ -2,19 +2,14 @@
 #define ABACUS_XC_MATH_H
 
 #include <cmath>
-
-#if defined(__CUDACC__)
-#define ABACUS_XC_HOST_DEVICE __host__ __device__
-#else
-#define ABACUS_XC_HOST_DEVICE
-#endif
+#include <base/macros/macros.h>
 
 // Scalar exchange-correlation formulas shared by host and device evaluation.
 namespace xc_math
 {
 
 // Slater exchange with alpha = 2/3 for spin-polarized density.
-ABACUS_XC_HOST_DEVICE inline void slater_spin(const double& rho,
+AT_HOST_DEVICE inline void slater_spin(const double& rho,
                                               const double& zeta,
                                               double& ex,
                                               double& vxup,
@@ -37,7 +32,7 @@ ABACUS_XC_HOST_DEVICE inline void slater_spin(const double& rho,
     return;
 }
 
-ABACUS_XC_HOST_DEVICE inline void pw_spin(const double& rs, const double& zeta, double& ec, double& vcup, double& vcdw)
+AT_HOST_DEVICE inline void pw_spin(const double& rs, const double& zeta, double& ec, double& vcup, double& vcdw)
 {
     const double a = 0.0310910;
     const double a1 = 0.213700;
@@ -137,7 +132,7 @@ ABACUS_XC_HOST_DEVICE inline void pw_spin(const double& rs, const double& zeta, 
     return;
 }
 
-ABACUS_XC_HOST_DEVICE inline void pbex(const double& rho,
+AT_HOST_DEVICE inline void pbex(const double& rho,
                                        const double& grho,
                                        const int& iflag,
                                        double& sx,
@@ -202,7 +197,7 @@ ABACUS_XC_HOST_DEVICE inline void pbex(const double& rho,
     return;
 }
 
-ABACUS_XC_HOST_DEVICE inline void pbec_spin(double rho,
+AT_HOST_DEVICE inline void pbec_spin(double rho,
                                             double zeta,
                                             double grho,
                                             const int& iflag,
@@ -273,5 +268,4 @@ ABACUS_XC_HOST_DEVICE inline void pbec_spin(double rho,
 
 } // namespace xc_math
 
-#undef ABACUS_XC_HOST_DEVICE
 #endif
