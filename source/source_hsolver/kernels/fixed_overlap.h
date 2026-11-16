@@ -50,7 +50,9 @@ class FixedOverlapSubspace
   private:
     class Batch;
     std::unique_ptr<Batch> batch_;
-    const int points_, bands_, rows_;
+    const int points_;
+    const int bands_;
+    const int rows_;
     Complex* storage_ = nullptr;
     Complex* h_ = nullptr;
     Complex* r_ = nullptr;
