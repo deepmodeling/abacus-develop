@@ -1,11 +1,8 @@
 #include "dftu_base_test_fixture.h"
 #include "source_pw/module_pwdft/dftu_base.h"
+#include "source_pw/module_pwdft/dftu_base_io.h"
 #include "source_pw/module_pwdft/dftu_pw_tools.h"
 #include "source_cell/atom_spec.h"
-
-#ifdef __MPI
-#include <mpi.h>
-#endif
 
 #include <cstdio>
 #include <cmath>

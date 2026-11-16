@@ -1,7 +1,7 @@
 #ifndef DFTU_BASE_TEST_FIXTURE_H
 #define DFTU_BASE_TEST_FIXTURE_H
 
-#include "source_pw/module_pwdft/dftu_base_io.h"
+#include "source_pw/module_pwdft/dftu_types.h"
 #include "source_cell/unitcell.h"
 #include "gtest/gtest.h"
 
