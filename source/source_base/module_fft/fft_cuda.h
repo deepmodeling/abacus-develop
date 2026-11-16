@@ -80,7 +80,6 @@ class FFT_CUDA : public FFT_BASE<FPTYPE>
         mutable cufftHandle z_x_handle = {};
         mutable cufftHandle z_yz_left_handle = {};
         mutable cufftHandle z_yz_right_handle = {};
-        mutable cufftHandle z_stick_handle[3] = {};
        
         mutable std::complex<float>* c_auxr_3d = nullptr;  // fft space
         mutable std::complex<double>* z_auxr_3d = nullptr; // fft space

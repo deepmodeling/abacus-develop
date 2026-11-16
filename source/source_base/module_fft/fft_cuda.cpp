@@ -15,9 +15,6 @@ constexpr int pruned_fft_min_grid_points = 1 << 20;
 // Keep one quarter of the x planes inactive before using the pruned plan.
 constexpr int pruned_fft_active_numerator = 3;
 constexpr int pruned_fft_active_denominator = 4;
-// Upper bound for the fused spinor workspace, in bytes.
-constexpr size_t spinor_workspace_bytes = 256ULL * 1024 * 1024;
-constexpr int max_spinor_batch = 16;
 } // namespace
 
 template <typename FPTYPE>
@@ -79,8 +76,7 @@ void FFT_CUDA<double>::cleanFFT()
         cufftDestroy(z_handle);
         z_handle = {};
     }
-    for (auto* handle : {&z_x_handle, &z_yz_left_handle, &z_yz_right_handle,
-                         &z_stick_handle[0], &z_stick_handle[1], &z_stick_handle[2]})
+    for (auto* handle : {&z_x_handle, &z_yz_left_handle, &z_yz_right_handle})
     {
         if (*handle)
         {

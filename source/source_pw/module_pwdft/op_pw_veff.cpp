@@ -29,7 +29,6 @@ Veff<OperatorPW<T, Device>>::Veff(const int* isk_in,
     this->wfcpw = wfcpw_in;
     resmem_complex_op()(this->porter, this->wfcpw->nmaxgr, "Veff<PW>::porter");
     resmem_complex_op()(this->porter1, this->wfcpw->nmaxgr, "Veff<PW>::porter1");
-    this->porter_size = this->wfcpw->nmaxgr;
 
 }
 
@@ -58,7 +57,6 @@ void Veff<OperatorPW<T, Device>>::act(
     int max_npw = nbasis / npol;
     const int current_spin = this->isk[this->ik];
     const int psi_offset= max_npw * npol;
-    int fused_size = 0;
 #ifdef __DSP
     if (npol == 1)
     {
@@ -148,7 +146,6 @@ hamilt::Veff<OperatorPW<T, Device>>::Veff(const Veff<OperatorPW<T_in, Device_in>
     this->wfcpw = veff->get_wfcpw();
     resmem_complex_op()(this->porter, this->wfcpw->nmaxgr);
     resmem_complex_op()(this->porter1, this->wfcpw->nmaxgr);
-    this->porter_size = this->wfcpw->nmaxgr;
     this->veff = veff->get_veff();
     if (this->isk == nullptr || this->veff == nullptr || this->wfcpw == nullptr) {
         ModuleBase::WARNING_QUIT("VeffPW", "Constuctor of Operator::VeffPW is failed, please check your code!");
