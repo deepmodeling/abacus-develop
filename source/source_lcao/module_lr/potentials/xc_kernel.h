@@ -8,7 +8,6 @@
 #include <stdexcept>
 #include <memory>
 #define CREF(x) const std::vector<double>& x = x##_
-#define CREF3(x) const std::vector<ModuleBase::Vector3<double>>& x = x##_
 namespace LR
 {
     /// libxc component layout for the spin-POLARIZED case, shared by the closed- and open-shell
@@ -58,11 +57,32 @@ namespace LR
         constexpr int chan[2][3] = { {0, 1, -1}, {-1, 0, 1} };
     }
 
+    /// Derivative of the local energy's sigma-channel partial derivative along a density
+    /// perturbation. Input coefficients are the packed LibXC arrays for ONE grid point;
+    /// density_response has two components and sigma_response has (uu, ud, dd).
+    /// The half-open spin range selects one input spin or both. Only structurally active
+    /// sigma channels are read, avoiding artificial zero-times-NaN contributions.
+    /// Used by the unrestricted second-order potential contraction.
+    inline double sigma_potential_derivative(const double* rho_sigma, const double* sigma_sigma,
+        const int channel, const double* density_response, const double* sigma_response,
+        const int first_spin, const int end_spin)
+    {
+        double response = 0.;
+        for (int spin = first_spin; spin < end_spin; ++spin)
+        {
+            response += rho_sigma[libxc_idx::rs(spin, channel)] * density_response[spin];
+        }
+        for (int a = first_spin; a < end_spin + 1; ++a)
+        {
+            response += sigma_sigma[libxc_idx::p2[channel][a]] * sigma_response[a];
+        }
+        return response;
+    }
+
     /// @brief Calculate the exchange-correlation (XC) kernel ($f_{xc}=\delta^2E_xc/\delta\rho^2$) and store its components.
     class KernelXC
     {
         using Tvec = std::vector<double>;
-        using Tvec3 = std::vector<ModuleBase::Vector3<double>>;
     public:
         /// Which spin combinations of the $g^{xc}$ coefficient set (`GxcCoef`) to build.
         enum GxcSpin { NoGxc = 0, Singlet = 1, Triplet = 2, BothSpins = 3 };
@@ -101,14 +121,11 @@ namespace LR
 
         // const references
         CREF(vrho);CREF(vsigma); CREF(v2rho2); CREF(v2rhosigma); CREF(v2sigma2);
-        CREF3(v2rhosigma_drho_uu); CREF3(v2rhosigma_drho_ud); CREF3(v2rhosigma_drho_du); CREF3(v2rhosigma_drho_dd);
-        CREF3(v2sigma2_drho_uu_u); CREF3(v2sigma2_drho_uu_d); CREF3(v2sigma2_drho_ud_u); CREF3(v2sigma2_drho_ud_d);
-        CREF3(v2sigma2_drho_du_u); CREF3(v2sigma2_drho_du_d); CREF3(v2sigma2_drho_dd_u); CREF3(v2sigma2_drho_dd_d);
         CREF(v3rho3);
         CREF(v3rho2sigma);
         CREF(v3rhosigma2);
         CREF(v3sigma3);
-        /// Scalar GGA response coefficients: 2 F^(1) and 2 S^(1).
+        /// Scalar mixed-density/gradient and gradient/gradient GGA response coefficients.
         /// The common ground-state gradient is supplied by the potential contraction.
         /// These same arrays supply the transition-gradient terms of gxc; no duplicate cache.
         struct ClosedShellGga
@@ -220,18 +237,6 @@ namespace LR
         ClosedShellGga closed_shell_gga_s_;
         ClosedShellGga closed_shell_gga_t_;
 
-        Tvec3 v2rhosigma_drho_uu_;  ///< $2f^{\rho_u\sigma_{uu}}\nabla\rho_u+f^{\rho_u\sigma_{ud}}\nabla\rho_d$
-        Tvec3 v2rhosigma_drho_ud_;  ///< $f^{\rho_u\sigma_{ud}}\nabla\rho_u+2f^{\rho_u\sigma_{dd}}\nabla\rho_d$
-        Tvec3 v2rhosigma_drho_du_;  ///< $2f^{\rho_d\sigma_{uu}}\nabla\rho_u+f^{\rho_d\sigma_{ud}}\nabla\rho_d$
-        Tvec3 v2rhosigma_drho_dd_;  ///< $f^{\rho_d\sigma_{ud}}\nabla\rho_u+2f^{\rho_d\sigma_{dd}}\nabla\rho_d$
-        Tvec3 v2sigma2_drho_uu_u_;   /// $4f^{\sigma_{uu}\sigma_{uu}}\nabla\rho_u+2f^{\sigma_{uu}\sigma_{ud}\nabla\rho_d$
-        Tvec3 v2sigma2_drho_uu_d_;   /// $2f^{\sigma_{uu}\sigma_{ud}}\nabla\rho_u+f^{\sigma_{ud}\sigma_{ud}}\nabla\rho_d$
-        Tvec3 v2sigma2_drho_ud_u_;   /// $2f^{\sigma_{uu}\sigma_{ud}}\nabla\rho_u+f^{\sigma_{ud}\sigma_{ud}}\nabla\rho_d$
-        Tvec3 v2sigma2_drho_ud_d_;   /// $4f^{\sigma_{uu}\sigma_{dd}}\nabla\rho_u+2f^{\sigma_{ud}\sigma_{dd}\nabla\rho_d$
-        Tvec3 v2sigma2_drho_du_u_;   /// $4f^{\sigma_{uu}\sigma_{dd}}\nabla\rho_d+2f^{\sigma_{uu}\sigma_{ud}\nabla\rho_u$
-        Tvec3 v2sigma2_drho_du_d_;   /// $2f^{\sigma_{ud}\sigma_{dd}}\nabla\rho_d+f^{\sigma_{ud}\sigma_{ud}}\nabla\rho_u$
-        Tvec3 v2sigma2_drho_dd_u_;   /// $2f^{\sigma_{ud}\sigma_{dd}}\nabla\rho_d+f^{\sigma_{ud}\sigma_{ud}}\nabla\rho_u$
-        Tvec3 v2sigma2_drho_dd_d_;   /// $4f^{\sigma_{dd}\sigma_{dd}}\nabla\rho_d+2f^{\sigma_{ud}\sigma_{dd}\nabla\rho_u$
         // ================================== XC kernels ============================================
         // ================================== XC kernel Gradiants ====================================
         Tvec v3rho3_;

@@ -289,16 +289,9 @@ namespace LR
                     continue;
                 }
                 const int c = chan[tau][a];
-                double up = 0.;
+                const double up = sigma_potential_derivative(
+                    v2rs.data() + o6, v2s2.data() + o6, a, s, S, 0, 2);
                 double upp = 0.;
-                for (int s0 = 0; s0 < 2; ++s0)
-                {
-                    up += s[s0] * v2rs[o6 + rs(s0, a)];
-                }
-                for (int b = 0; b < 3; ++b)
-                {
-                    up += S[b] * v2s2[o6 + p2[a][b]];
-                }
 
                 for (int s0 = 0;s0 < 2;++s0) {
                     for (int s1 = 0; s1 < 2; ++s1)

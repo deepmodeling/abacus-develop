@@ -483,40 +483,7 @@ void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const doubl
                     this->closed_shell_gga_t_.sigma_sigma[i] = (v2s2[istart] * 2. + v2s2[istart + 1] - v2s2[istart + 2] * 2. - v2s2[istart + 4]) * 2.;
                 }
             }
-            else
-            {
-                this->v2rhosigma_drho_uu_.resize(nrxx);
-                this->v2rhosigma_drho_ud_.resize(nrxx);
-                this->v2rhosigma_drho_du_.resize(nrxx);
-                this->v2rhosigma_drho_dd_.resize(nrxx);
-                this->v2sigma2_drho_uu_u_.resize(nrxx);
-                this->v2sigma2_drho_uu_d_.resize(nrxx);
-                this->v2sigma2_drho_ud_u_.resize(nrxx);
-                this->v2sigma2_drho_ud_d_.resize(nrxx);
-                this->v2sigma2_drho_du_u_.resize(nrxx);
-                this->v2sigma2_drho_du_d_.resize(nrxx);
-                this->v2sigma2_drho_dd_u_.resize(nrxx);
-                this->v2sigma2_drho_dd_d_.resize(nrxx);
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static, 4096)
-#endif
-                for (int i = 0;i < nrxx;++i)
-                {
-                    const int istart = i * 6;
-                    this->v2rhosigma_drho_uu_[i] = gradrho[0][i] * v2rs[istart] * 2. + gradrho[1][i] * v2rs[istart + 1];
-                    this->v2rhosigma_drho_ud_[i] = gradrho[0][i] * v2rs[istart + 1] + gradrho[1][i] * v2rs[istart + 2] * 2.;
-                    this->v2rhosigma_drho_du_[i] = gradrho[0][i] * v2rs[istart + 3] * 2. + gradrho[1][i] * v2rs[istart + 4];
-                    this->v2rhosigma_drho_dd_[i] = gradrho[0][i] * v2rs[istart + 4] + gradrho[1][i] * v2rs[istart + 5] * 2.;
-                    this->v2sigma2_drho_uu_u_[i] = gradrho[0][i] * v2s2[istart] * 4. + gradrho[1][i] * v2s2[istart + 1] * 2.;
-                    this->v2sigma2_drho_uu_d_[i] = gradrho[0][i] * v2s2[istart + 1] * 2. + gradrho[1][i] * v2s2[istart + 3];
-                    this->v2sigma2_drho_ud_u_[i] = gradrho[0][i] * v2s2[istart + 1] * 2. + gradrho[1][i] * v2s2[istart + 3];
-                    this->v2sigma2_drho_ud_d_[i] = gradrho[0][i] * v2s2[istart + 2] * 4. + gradrho[1][i] * v2s2[istart + 4] * 2.;
-                    this->v2sigma2_drho_du_u_[i] = gradrho[1][i] * v2s2[istart + 2] * 4. + gradrho[0][i] * v2s2[istart + 1] * 2.;
-                    this->v2sigma2_drho_du_d_[i] = gradrho[1][i] * v2s2[istart + 4] * 2. + gradrho[0][i] * v2s2[istart + 3];
-                    this->v2sigma2_drho_dd_u_[i] = gradrho[1][i] * v2s2[istart + 4] * 2. + gradrho[0][i] * v2s2[istart + 3];
-                    this->v2sigma2_drho_dd_d_[i] = gradrho[1][i] * v2s2[istart + 5] * 4. + gradrho[0][i] * v2s2[istart + 4] * 2.;
-                }
-            }
+
         }
         else
         {

@@ -1,4 +1,6 @@
 #include <gtest/gtest.h>
+#include <limits>
+#include "source_base/constants.h"
 #include "../kernel_pots.h"
 #include "../potentials/pot_grad_xc.h"
 #include "source_io/module_parameter/input_parameter.h"
@@ -10,6 +12,7 @@
 namespace
 {
 ModuleBase::Vector3<double> last_gga_divergence;
+bool asymmetric_test_gradients = false;
 }
 
 // Keep the real kernel/LibXC and potential code. Mock geometry ownership, FFTs,
@@ -51,10 +54,16 @@ void PW_Basis::recip2real(const std::complex<T>* in, std::complex<T>* out, const
 template void PW_Basis::recip2real<double>(const std::complex<double>*, std::complex<double>*, bool, double) const;
 }
 
-void XC_Functional::grad_rho(const std::complex<double>*, ModuleBase::Vector3<double>* out,
+void XC_Functional::grad_rho(const std::complex<double>* in, ModuleBase::Vector3<double>* out,
     const ModulePW::PW_Basis*, const double)
 {
     out[0] = ModuleBase::Vector3<double>(0.1, 0.2, 0.3);
+    if (asymmetric_test_gradients && in[0].real() < 0.25)
+    {
+        out[0] = (in[0].real() > 0.15)
+            ? ModuleBase::Vector3<double>(-0.3, 0.1, 0.05)
+            : ModuleBase::Vector3<double>(0.2, -0.15, 0.4);
+    }
 }
 void XC_Functional::grad_dot(const ModuleBase::Vector3<double>* in, double* out,
     const ModulePW::PW_Basis*, const double)
@@ -94,6 +103,7 @@ protected:
     std::vector<std::string> init = {"default"};
     void SetUp() override
     {
+        asymmetric_test_gradients = false;
         basis.nrxx = 1;
         basis.npw = 1;
         basis.nmaxgr = 1;
@@ -457,4 +467,72 @@ TEST_F(PotHxcLRTest, HseGroundResponseDoesNotReuseLrSigmaFloor)
         EXPECT_EQ(gs->xc_kernel_components().nspin(), spins);
         EXPECT_TRUE(gs->xc_kernel_components().v3rho3.empty());
     }
+}
+
+TEST_F(PotHxcLRTest, UnrestrictedScalarContractionPreservesAllSpinBlocks)
+{
+    asymmetric_test_gradients = true;
+    basis.ig_gge0 = 0;
+    const auto kernel = LR::build_xc_kernel("pbe", basis, cell, charge, grid,
+        2, true, LR::KernelXC::BothSpins, init);
+    LR::PotHxcLR potential(kernel, basis, cell, 1, 2, LR::PotHxcLR::S2_updown);
+    const auto& gu = kernel->drho_gs[0][0];
+    const auto& gd = kernel->drho_gs[1][0];
+    const auto gradient_cross = ModuleBase::cross(gu, gd);
+    EXPECT_GT(gradient_cross.norm(), 0.01);
+    const ModuleBase::Vector3<double> zero(0., 0., 0.);
+    const ModuleBase::Vector3<double> sigma_gradient[2][3] = {
+        {gu * 2., gd, zero}, {zero, gu, gd * 2.}};
+    const ModuleBase::Vector3<double> perturbation_gradient(0.2, -0.15, 0.4);
+    double perturbation = 0.07;
+    double* response[1] = {&perturbation};
+    for (int output = 0; output < 2; ++output)
+    {
+        for (int input = 0; input < 2; ++input)
+        {
+            ModuleBase::matrix result(1, 1);
+            const std::vector<int> block = {output, input};
+            potential.cal_v_eff(response, cell, result, block);
+            ModuleBase::Vector3<double> mixed_divergence(0., 0., 0.);
+            ModuleBase::Vector3<double> mixed_local(0., 0., 0.);
+            ModuleBase::Vector3<double> hessian_action(0., 0., 0.);
+            for (int a = 0; a < 3; ++a)
+            {
+                mixed_divergence += sigma_gradient[output][a] * kernel->v2rhosigma[3 * input + a];
+                mixed_local += sigma_gradient[input][a] * kernel->v2rhosigma[3 * output + a];
+                for (int b = 0; b < 3; ++b)
+                {
+                    const double coefficient = kernel->v2sigma2[LR::libxc_idx::p2[a][b]];
+                    const double contraction = sigma_gradient[input][b] * perturbation_gradient;
+                    hessian_action += sigma_gradient[output][a] * (coefficient * contraction);
+                }
+            }
+            const int component = (output == input) ? 2 * output : 1;
+            const double multiplicity = (output == input) ? 2. : 1.;
+            hessian_action += perturbation_gradient * (multiplicity * kernel->vsigma[component]);
+            const auto expected = -(mixed_divergence * perturbation + hessian_action);
+            EXPECT_NEAR(last_gga_divergence.x, expected.x, 1e-12);
+            EXPECT_NEAR(last_gga_divergence.y, expected.y, 1e-12);
+            EXPECT_NEAR(last_gga_divergence.z, expected.z, 1e-12);
+            const double local = kernel->v2rho2[output + input] * perturbation
+                + mixed_local * perturbation_gradient;
+            EXPECT_NEAR(result(0, 0), ModuleBase::e2 * local, 1e-12);
+        }
+    }
+    asymmetric_test_gradients = false;
+}
+
+TEST_F(PotHxcLRTest, UnrestrictedBlockDoesNotReadInactiveScalarComponents)
+{
+    const double nan = std::numeric_limits<double>::quiet_NaN();
+    const double rho_sigma[6] = {1., 2., 3., nan, nan, nan};
+    const double sigma_sigma[6] = {4., 5., nan, 6., nan, nan};
+    const double density_response[2] = {0.2, 0.};
+    const double sigma_response[3] = {0.1, 0.3, 0.};
+    const double first = LR::sigma_potential_derivative(
+        rho_sigma, sigma_sigma, 0, density_response, sigma_response, 0, 1);
+    const double second = LR::sigma_potential_derivative(
+        rho_sigma, sigma_sigma, 1, density_response, sigma_response, 0, 1);
+    EXPECT_DOUBLE_EQ(first, 0.2 + 0.4 + 1.5);
+    EXPECT_DOUBLE_EQ(second, 0.4 + 0.5 + 1.8);
 }
