@@ -5,6 +5,7 @@ if(ENABLE_LCAO)
   add_subdirectory(ri_benchmark)
   if(BUILD_TESTING)
     add_subdirectory(test)
+    add_subdirectory(unittests)
   endif()
 
   list(
