@@ -24,6 +24,9 @@ run_tddft_props() {
   if ! test -z "$out_current" && [ $out_current ]; then
     current1ref=current_tot.txt.ref
     current1cal=OUT.autotest/current_tot.txt
+    if [ "$out_current" == 2 ]; then
+      current1cal=OUT.autotest/current_tot_comm.txt
+    fi
     local current_tol=1e-10
     if [ -f threshold ]; then
       local configured_tol

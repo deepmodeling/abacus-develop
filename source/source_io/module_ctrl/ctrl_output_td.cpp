@@ -51,7 +51,9 @@ void ctrl_output_td(const UnitCell& ucell,
     }
     else if (TD_info::out_current == 2)
     {
-        ModuleIO::write_current(ucell, grid, istep, psi, pelec, kv, pv, orb, td_p, p_hamilt->getSR(), p_hamilt->getHR(), exx_nao, exx_info);
+        const hamilt::HContainer<TR>* sR = p_hamilt->getSR();
+        const std::vector<hamilt::HContainer<TR>*> spin_hR = p_hamilt->getHR_vector();
+        ModuleIO::write_current(ucell, grid, istep, psi, pelec, kv, pv, orb, td_p, sR, spin_hR, exx_nao, exx_info);
     }
 #endif // __LCAO
 }
