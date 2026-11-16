@@ -35,8 +35,18 @@ run_tddft_props() {
         current_tol=$configured_tol
       fi
     fi
-    python3 "$COMPARE_SCRIPT" "$current1ref" "$current1cal" -tol "$current_tol"
-    echo "CompareCurrent_pass $?" >>$props_result_file
+    local current_status=1
+    if [ -f "$current1ref" ] && [ -f "$current1cal" ]; then
+      local reference_rows
+      local current_rows
+      reference_rows=$(awk 'NF { count++ } END { print count+0 }' "$current1ref")
+      current_rows=$(awk 'NF { count++ } END { print count+0 }' "$current1cal")
+      if [ "$reference_rows" -gt 0 ] && [ "$current_rows" -ge "$reference_rows" ]; then
+        python3 "$COMPARE_SCRIPT" "$current1ref" "$current1cal" -tol "$current_tol"
+        current_status=$?
+      fi
+    fi
+    echo "CompareCurrent_pass $current_status" >>$props_result_file
   fi
 
   #--------------------------------------------
