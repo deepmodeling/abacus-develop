@@ -131,7 +131,7 @@ addtest(
   TARGET MODULE_MD_LJ_potential
   LIBS parameter psi device
   SOURCES test_lj.cpp
-          ../../source_cell/module_neighlist/test/test_domain_decomposition.cpp
+          ../../source_cell/module_neighlist/unittests/test_domain_decomposition.cpp
           ${depend_files})
 
 addtest(

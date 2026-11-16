@@ -43,7 +43,7 @@ if(ENABLE_MPI)
   add_executable(
     MODULE_CELL_NEIGHBOR_mdcell_migrate_mpi
     test_mdcell_migrate_mpi.cpp
-    test_domain_decomposition.cpp
+    ../unittests/test_domain_decomposition.cpp
     ../../mdcell.cpp
     ../../dom_core.cpp
     ../../dom_ghost.cpp
