@@ -1,3 +1,4 @@
+#include <complex>
 #include <iomanip>
 #include <sstream>
 #include <fstream>
@@ -8,7 +9,7 @@
 
 #include "source_io/module_dm/write_dmk.h"
 #include "source_base/global_variable.h"
-#include "../../unittests/prepare_unitcell.h"
+#include "prepare_unitcell.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -95,6 +96,79 @@ void gen_dmk(std::vector<std::vector<T>>& dmk, std::vector<double>& efs,  int ns
     }
 }
 
+/// @brief Fill the single-k-point K_Vectors metadata used by the writers.
+void init_kv(K_Vectors& kv, const double weight)
+{
+    kv.set_nkstot(1);
+    kv.set_nkstot_nospin(1);
+    kv.set_nks(1);
+    kv.set_spin_mult(2);
+    kv.kvec_c.resize(1);
+    kv.kvec_c[0].x = 0.0;
+    kv.kvec_c[0].y = 0.0;
+    kv.kvec_c[0].z = 0.0;
+    kv.kvec_d.resize(1);
+    kv.kvec_d[0].x = 0.0;
+    kv.kvec_d[0].y = 0.0;
+    kv.kvec_d[0].z = 0.0;
+    kv.wk.resize(1);
+    kv.wk[0] = weight;
+    kv.isk.resize(1);
+    kv.isk[0] = 0;
+    kv.kc_done = true;
+    kv.kd_done = true;
+}
+
+/// @brief Tokenize the numbers of the matrix body written at the end of a DMK
+///        file.
+/// @details The body is the trailing run of lines carrying complex pairs, so it
+///          is collected from the end of the file; taking the first "(" instead
+///          would hit the UnitCell header, and parsing the whole file would
+///          trip over the non-numeric metadata. Parentheses and commas become
+///          whitespace, so the value order (real, imaginary, real, ...) is
+///          preserved.
+std::vector<double> read_numbers(const std::string& fname)
+{
+    std::ifstream ifs(fname.c_str());
+    std::vector<std::string> lines;
+    std::string line;
+    while (std::getline(ifs, line))
+    {
+        lines.push_back(line);
+    }
+    std::size_t first_body_line = lines.size();
+    while (first_body_line > 0)
+    {
+        const std::string& candidate = lines[first_body_line - 1];
+        if (candidate.find('(') == std::string::npos || candidate.find(')') == std::string::npos)
+        {
+            break;
+        }
+        --first_body_line;
+    }
+    std::string text;
+    for (std::size_t i = first_body_line; i < lines.size(); ++i)
+    {
+        text += lines[i];
+        text += " ";
+    }
+    for (std::size_t i = 0; i < text.size(); ++i)
+    {
+        const char c = text[i];
+        if (c == '(' || c == ')' || c == ',')
+        {
+            text[i] = ' ';
+        }
+    }
+    std::istringstream iss(text);
+    std::vector<double> values;
+    double value = 0.0;
+    while (iss >> value)
+    {
+        values.push_back(value);
+    }
+    return values;
+}
 
 TEST(DMKTest, GenFileName) {
     bool gamma_only = true;
@@ -145,28 +219,13 @@ TEST(DMKTest,WriteDMK) {
 
     const int istep = -1;
     K_Vectors kv;
-    kv.set_nkstot(1);
-    kv.set_nkstot_nospin(1);
-    kv.set_nks(1);
-    kv.set_spin_mult(2);
-    kv.kvec_c.resize(1);
-    kv.kvec_c[0].x = 0.0;
-    kv.kvec_c[0].y = 0.0;
-    kv.kvec_c[0].z = 0.0;
-    kv.kvec_d.resize(1);
-    kv.kvec_d[0].x = 0.0;
-    kv.kvec_d[0].y = 0.0;
-    kv.kvec_d[0].z = 0.0;
-    kv.wk.resize(1);
-    kv.wk[0] = 1.0;
-    kv.isk.resize(1);
-    kv.isk[0] = 0;
-    kv.kc_done = true;
-    kv.kd_done = true;
+    init_kv(kv, 1.0);
     
     std::ofstream ofs_log;
-    ModuleIO::write_dmk(dmk, kv, 3, efs, ucell, pv, out_dir, istep, 0, ofs_log);
-    ModuleIO::write_dmk(dmk_multik, kv, 3, efs, ucell, pv, out_dir, istep, 0, ofs_log);
+    ModuleIO::write_dmk(dmk, kv, 3, efs, ucell, pv, /*column_major=*/true,
+                        out_dir, istep, 0, ofs_log);
+    ModuleIO::write_dmk(dmk_multik, kv, 3, efs, ucell, pv, /*column_major=*/true,
+                        out_dir, istep, 0, ofs_log);
     
     std::ifstream ifs;
 
@@ -236,6 +295,77 @@ TEST(DMKTest,WriteDMK) {
 };
 
 // ---------------------------------------------------------------------------
+// The DM(k) text body is row-major even when the local blocks are stored
+// column-major, which is what genelpa/elpa/scalapack_gvx and the other
+// column-major solvers leave behind. A non-symmetric complex probe makes an
+// accidental transpose (the complex conjugate of a Hermitian matrix) visible.
+// ---------------------------------------------------------------------------
+TEST(DMKTest, BodyIsRowMajorForColumnMajorStorage) {
+    UnitCell* ucell;
+    UcellTestPrepare utp = UcellTestLib["Si"];
+    ucell = utp.SetUcellInfo();
+
+    const int nspin = 1;
+    const int nk = 1;
+    const int nlocal = 2;
+    Parallel_Blkcyclic pv;
+    init_pv(nlocal, pv);
+
+    // Row-major probe: (0,0)=1, (0,1)=2+3i, (1,0)=4+5i, (1,1)=6.
+    const std::vector<std::complex<double>> probe
+        = {std::complex<double>(1.0, 0.0), std::complex<double>(2.0, 3.0),
+           std::complex<double>(4.0, 5.0), std::complex<double>(6.0, 0.0)};
+
+    // Column-major storage of the same matrix: local[ir + ic * nrloc].
+    std::vector<std::vector<std::complex<double>>> dmk(
+        1, std::vector<std::complex<double>>(pv.size(), std::complex<double>(0.0, 0.0)));
+    for (int i = 0; i < nlocal; ++i)
+    {
+        const int ir = pv.irloc(i);
+        if (ir < 0)
+        {
+            continue;
+        }
+        for (int j = 0; j < nlocal; ++j)
+        {
+            const int ic = pv.icloc(j);
+            if (ic >= 0)
+            {
+                dmk[0][ir + ic * pv.nrloc()] = probe[i * nlocal + j];
+            }
+        }
+    }
+
+    std::vector<double> efs(nspin, 0.0);
+    K_Vectors kv;
+    init_kv(kv, 1.0);
+
+    const std::string out_dir = testing::TempDir();
+    std::ofstream ofs_log;
+    ModuleIO::write_dmk(dmk, kv, 8, efs, ucell, pv, /*column_major=*/true,
+                        out_dir, /*istep=*/0, /*out_app_flag=*/0, ofs_log);
+
+    if (GlobalV::MY_RANK == 0)
+    {
+        // nk = 1 with a multi-k (complex) DM -> dmk1_nao.txt.
+        const std::string fn = out_dir + "dmk1_nao.txt";
+        const std::vector<double> values = read_numbers(fn);
+        ASSERT_EQ(values.size(), 8u);
+        EXPECT_NEAR(values[0], 1.0, 1e-8);
+        EXPECT_NEAR(values[1], 0.0, 1e-8);
+        EXPECT_NEAR(values[2], 2.0, 1e-8);
+        EXPECT_NEAR(values[3], 3.0, 1e-8);
+        EXPECT_NEAR(values[4], 4.0, 1e-8);
+        EXPECT_NEAR(values[5], 5.0, 1e-8);
+        EXPECT_NEAR(values[6], 6.0, 1e-8);
+        EXPECT_NEAR(values[7], 0.0, 1e-8);
+        remove(fn.c_str());
+    }
+
+    delete ucell;
+}
+
+// ---------------------------------------------------------------------------
 // out_app_flag = 0: one fixed filename, truncated and overwritten each call.
 // ---------------------------------------------------------------------------
 TEST(DMKTest, Mode0FixedNameOverwrite) {
@@ -253,30 +383,17 @@ TEST(DMKTest, Mode0FixedNameOverwrite) {
     gen_dmk(dmk, efs, nspin, nk, nlocal, pv);
 
     K_Vectors kv;
-    kv.set_nkstot(1);
-    kv.set_nkstot_nospin(1);
-    kv.set_nks(1);
-    kv.set_spin_mult(2);
-    kv.kvec_c.resize(1);
-    kv.kvec_c[0].x = 0.0;
-    kv.kvec_c[0].y = 0.0;
-    kv.kvec_c[0].z = 0.0;
-    kv.kvec_d.resize(1);
-    kv.kvec_d[0].x = 0.0;
-    kv.kvec_d[0].y = 0.0;
-    kv.kvec_d[0].z = 0.0;
-    kv.wk.resize(1);
-    kv.wk[0] = 1.0;
-    kv.isk.resize(1);
-    kv.isk[0] = 0;
+    init_kv(kv, 1.0);
 
     const std::string out_dir = "./";
     const int out_app_flag = 0;
     std::ofstream ofs_log;
 
     // Two different isteps -> the same fixed filename, overwritten each call.
-    ModuleIO::write_dmk(dmk, kv, /*precision=*/3, efs, ucell, pv, out_dir, /*istep=*/0, out_app_flag, ofs_log);
-    ModuleIO::write_dmk(dmk, kv, /*precision=*/3, efs, ucell, pv, out_dir, /*istep=*/1, out_app_flag, ofs_log);
+    ModuleIO::write_dmk(dmk, kv, /*precision=*/3, efs, ucell, pv, /*column_major=*/true,
+                        out_dir, /*istep=*/0, out_app_flag, ofs_log);
+    ModuleIO::write_dmk(dmk, kv, /*precision=*/3, efs, ucell, pv, /*column_major=*/true,
+                        out_dir, /*istep=*/1, out_app_flag, ofs_log);
 
     if (GlobalV::MY_RANK == 0)
     {
@@ -316,30 +433,17 @@ TEST(DMKTest, Mode1FixedNameAppend) {
     gen_dmk(dmk, efs, nspin, nk, nlocal, pv);
 
     K_Vectors kv;
-    kv.set_nkstot(1);
-    kv.set_nkstot_nospin(1);
-    kv.set_nks(1);
-    kv.set_spin_mult(2);
-    kv.kvec_c.resize(1);
-    kv.kvec_c[0].x = 0.0;
-    kv.kvec_c[0].y = 0.0;
-    kv.kvec_c[0].z = 0.0;
-    kv.kvec_d.resize(1);
-    kv.kvec_d[0].x = 0.0;
-    kv.kvec_d[0].y = 0.0;
-    kv.kvec_d[0].z = 0.0;
-    kv.wk.resize(1);
-    kv.wk[0] = 1.0;
-    kv.isk.resize(1);
-    kv.isk[0] = 0;
+    init_kv(kv, 1.0);
 
     const std::string out_dir = "./";
     const int out_app_flag = 1;
     std::ofstream ofs_log;
 
     // Two ionic steps -> both write to dms1_nao.txt.
-    ModuleIO::write_dmk(dmk, kv, /*precision=*/3, efs, ucell, pv, out_dir, /*istep=*/0, out_app_flag, ofs_log);
-    ModuleIO::write_dmk(dmk, kv, /*precision=*/3, efs, ucell, pv, out_dir, /*istep=*/1, out_app_flag, ofs_log);
+    ModuleIO::write_dmk(dmk, kv, /*precision=*/3, efs, ucell, pv, /*column_major=*/true,
+                        out_dir, /*istep=*/0, out_app_flag, ofs_log);
+    ModuleIO::write_dmk(dmk, kv, /*precision=*/3, efs, ucell, pv, /*column_major=*/true,
+                        out_dir, /*istep=*/1, out_app_flag, ofs_log);
 
     if (GlobalV::MY_RANK == 0)
     {
@@ -377,28 +481,14 @@ TEST(DMKTest, Mode2PerStepFile) {
     gen_dmk(dmk, efs, nspin, nk, nlocal, pv);
 
     K_Vectors kv;
-    kv.set_nkstot(1);
-    kv.set_nkstot_nospin(1);
-    kv.set_nks(1);
-    kv.set_spin_mult(2);
-    kv.kvec_c.resize(1);
-    kv.kvec_c[0].x = 0.0;
-    kv.kvec_c[0].y = 0.0;
-    kv.kvec_c[0].z = 0.0;
-    kv.kvec_d.resize(1);
-    kv.kvec_d[0].x = 0.0;
-    kv.kvec_d[0].y = 0.0;
-    kv.kvec_d[0].z = 0.0;
-    kv.wk.resize(1);
-    kv.wk[0] = 1.0;
-    kv.isk.resize(1);
-    kv.isk[0] = 0;
+    init_kv(kv, 1.0);
 
     const std::string out_dir = "./";
     const int out_app_flag = 2;
     std::ofstream ofs_log;
 
-    ModuleIO::write_dmk(dmk, kv, /*precision=*/3, efs, ucell, pv, out_dir, /*istep=*/2, out_app_flag, ofs_log);
+    ModuleIO::write_dmk(dmk, kv, /*precision=*/3, efs, ucell, pv, /*column_major=*/true,
+                        out_dir, /*istep=*/2, out_app_flag, ofs_log);
 
     if (GlobalV::MY_RANK == 0)
     {

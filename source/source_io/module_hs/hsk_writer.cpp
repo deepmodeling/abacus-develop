@@ -1,4 +1,5 @@
 #include "hsk_writer.h"
+#include "dense_text_body.h"
 #include "hs_dense_io.h"
 #include "source_base/module_external/scalapack_connector.h"
 #include "source_base/module_out/filename.h" // use filename_output function
@@ -14,16 +15,8 @@
 #include <complex>
 #include <cstdio>
 #include <fstream>
-#include <iomanip>
 #include <string>
 #include <vector>
-
-namespace
-{
-// Threshold below which a complex matrix element is flushed to zero in the
-// text output so that tiny numerical noise does not clutter the file.
-constexpr double k_hk_zero_thr = 1.0e-16;
-} // namespace
 
 template <typename T>
 void ModuleIO::write_hsk(
@@ -59,14 +52,10 @@ void ModuleIO::write_hsk(
     // The text body is documented as row-major (i, j). A column-major solver
     // stores its local block as mat[i + j * nrloc], and the Cpxgemr2d serial
     // destination keeps that layout, so reading mat[i * nlocal + j] would emit
-    // the transpose (H(k)^T = conj(H(k)) for a Hermitian matrix). Select the
-    // traversal order from the solver storage convention instead.
+    // the transpose (H(k)^T = conj(H(k)) for a Hermitian matrix). The shared
+    // body writer selects the traversal order from this flag.
     const bool column_major_source
         = ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(ks_solver);
-    auto dense_index = [nlocal, column_major_source](const int i, const int j) -> size_t {
-        return column_major_source ? static_cast<size_t>(j) * nlocal + i
-                                   : static_cast<size_t>(i) * nlocal + j;
-    };
 
     ofs_running << "\n WRITE H(k) OR S(k)" << std::endl;
 
@@ -222,47 +211,7 @@ void ModuleIO::write_hsk(
                     ofs << std::endl;
 
                     // --- matrix body: flat, 4 complex / 8 double per line ---
-                    ofs << std::fixed;
-                    ofs << std::scientific;
-                    ofs << std::setprecision(precision);
-                    ofs << std::right;
-                    for (int i = 0; i < nlocal; ++i)
-                    {
-                        for (int j = 0; j < nlocal; ++j)
-                        {
-                            if (std::is_same<T, double>::value)
-                            {
-                                if (j % 8 == 0)
-                                {
-                                    ofs << "\n";
-                                }
-                                ofs << " " << h_global[dense_index(i, j)];
-                            }
-                            else if (std::is_same<T, std::complex<double>>::value)
-                            {
-                                if (j % 4 == 0)
-                                {
-                                    ofs << "\n";
-                                }
-
-                                double real_v = std::real(h_global[dense_index(i, j)]);
-                                if (std::abs(real_v) < k_hk_zero_thr)
-                                {
-                                    real_v = 0.0;
-                                }
-                                double imag_v = std::imag(h_global[dense_index(i, j)]);
-                                if (std::abs(imag_v) < k_hk_zero_thr)
-                                {
-                                    imag_v = 0.0;
-                                }
-
-                                ofs << " (" << real_v << "," << imag_v << ")";
-                            }
-                        }
-                    }
-                    // Terminate the matrix body with a newline so that the next
-                    // appended record (out_app_flag == 1) starts on a fresh line.
-                    ofs << std::endl;
+                    ModuleIO::write_dense_text_body(ofs, h_global, nlocal, precision, column_major_source);
                 }
             } // rank0
         } // text mode
@@ -353,45 +302,7 @@ void ModuleIO::write_hsk(
                 ofs << std::endl;
 
                 // --- matrix body ---
-                ofs << std::fixed;
-                ofs << std::scientific;
-                ofs << std::setprecision(precision);
-                ofs << std::right;
-                for (int i = 0; i < nlocal; ++i)
-                {
-                    for (int j = 0; j < nlocal; ++j)
-                    {
-                        if (std::is_same<T, double>::value)
-                        {
-                            if (j % 8 == 0)
-                            {
-                                ofs << "\n";
-                            }
-                            ofs << " " << s_global[dense_index(i, j)];
-                        }
-                        else if (std::is_same<T, std::complex<double>>::value)
-                        {
-                            if (j % 4 == 0)
-                            {
-                                ofs << "\n";
-                            }
-
-                            double real_v = std::real(s_global[dense_index(i, j)]);
-                            if (std::abs(real_v) < k_hk_zero_thr)
-                            {
-                                real_v = 0.0;
-                            }
-                            double imag_v = std::imag(s_global[dense_index(i, j)]);
-                            if (std::abs(imag_v) < k_hk_zero_thr)
-                            {
-                                imag_v = 0.0;
-                            }
-
-                            ofs << " (" << real_v << "," << imag_v << ")";
-                        }
-                    }
-                }
-                ofs << std::endl;
+                ModuleIO::write_dense_text_body(ofs, s_global, nlocal, precision, column_major_source);
             } // rank0
         } // text mode
     } // end ik

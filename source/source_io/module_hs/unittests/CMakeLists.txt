@@ -2,6 +2,7 @@ addtest(
   TARGET MODULE_IO_hsk_writer_test
   LIBS parameter base device symmetry
   SOURCES test_hsk_writer.cpp ../hsk_writer.cpp ../hs_dense_io.cpp
+          ../dense_text_body.cpp
           ../../../source_basis/module_ao/parallel_orbitals.cpp
           ../../../source_cell/klist.cpp
           ../../../source_cell/klist_io.cpp
@@ -13,6 +14,10 @@ add_test(
   NAME MODULE_IO_hsk_writer_test_parallel
   COMMAND mpirun -np 2 "$<TARGET_FILE:MODULE_IO_hsk_writer_test>"
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+
+addtest(
+  TARGET MODULE_IO_dense_text_body_test
+  SOURCES test_dense_text_body.cpp ../dense_text_body.cpp)
 
 addtest(
   TARGET MODULE_IO_lat_r_csr_test

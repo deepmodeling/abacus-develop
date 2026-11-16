@@ -3,6 +3,7 @@
 
 #include "source_base/formatter.h"
 #include "source_base/fs_compat.h" // use ModuleBase::ensure_directory
+#include "source_base/global_function.h" // use ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER
 #include "source_base/module_out/filename.h"
 #include "source_base/tool_quit.h" // use ModuleBase::WARNING_QUIT
 #include "source_estate/elecstate_lcao.h" // use elecstate::ElecState
@@ -27,6 +28,7 @@
 #include "../module_hs/vxc_op_mat.h"                            // use ModuleIO::write_Vxc()
 #include "../module_energy/write_eband_terms.h"                 // use ModuleIO::write_eband_terms()
 #include "source_io/module_hs/hsk_writer.h"                            // use ModuleIO::write_hsk()
+#include "source_io/module_hs/dense_text_body.h"                       // use ModuleIO::write_dense_text_body()
 #include "source_base/module_external/scalapack_connector.h"            // use Cpxgemr2d<>()
 #include "source_hsolver/parallel_k2d.h"                                // use Parallel_2d
 #include "source_cell/ucell_io.h"                                       // use ModuleIO::UcellIO::write_ucell()
@@ -77,65 +79,6 @@ void setup_exx_h_params<double>(ModuleIO::WriteHParams& h_params, Exx_NAO<double
 }
 #endif
 
-namespace
-{
-/// Write a square matrix body in flat dmk/write_hsk-compatible layout.
-/// Tag dispatch so the compiler only type-checks the branch that matches
-/// the actual matrix element type (double vs. std::complex<double>).
-template <typename T>
-void write_matrix_body_flat(std::ofstream& ofs,
-                            const std::vector<T>& mat,
-                            const int nlocal,
-                            const int precision,
-                            std::true_type /*is_double*/)
-{
-    ofs << std::fixed;
-    ofs << std::scientific;
-    ofs << std::setprecision(precision);
-    ofs << std::right;
-    for (int i = 0; i < nlocal; ++i)
-    {
-        const size_t ii = i * nlocal;
-        for (int j = 0; j < nlocal; ++j)
-        {
-            if (j % 8 == 0)
-            {
-                ofs << "\n";
-            }
-            ofs << " " << mat[ii + j];
-        }
-        ofs << std::endl;
-    }
-}
-
-template <typename T>
-void write_matrix_body_flat(std::ofstream& ofs,
-                            const std::vector<T>& mat,
-                            const int nlocal,
-                            const int precision,
-                            std::false_type /*is_complex*/)
-{
-    ofs << std::fixed;
-    ofs << std::scientific;
-    ofs << std::setprecision(precision);
-    ofs << std::right;
-    for (int i = 0; i < nlocal; ++i)
-    {
-        const size_t ii = i * nlocal;
-        for (int j = 0; j < nlocal; ++j)
-        {
-            if (j % 4 == 0)
-            {
-                ofs << "\n";
-            }
-            ofs << " (" << mat[ii + j].real()
-                << "," << mat[ii + j].imag() << ")";
-        }
-        ofs << std::endl;
-    }
-}
-} // namespace
-
 template <typename TK, typename TR>
 void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                              const Input_para& inp,
@@ -167,6 +110,13 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
 {
     ModuleBase::TITLE("ModuleIO", "ctrl_scf_lcao");
     ModuleBase::timer::start("ModuleIO", "ctrl_scf_lcao");
+
+    // The local storage of every square NAO matrix depends on the eigensolver:
+    // the column-major solvers keep mat[i + j * nrloc] in each local block. The
+    // text body of DM(k), H(k)/S(k) and T(k) is documented as row-major, so the
+    // writers need this flag to emit (i, j) instead of the transpose.
+    const std::string& ks_solver = PARAM.inp.ks_solver;
+    const bool column_major_source = ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(ks_solver);
 
     //*****
     // if istep_in = -1, istep will not appear in file name
@@ -277,7 +227,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
         const int precision = inp.out_dmk[1];
 
         ModuleIO::write_dmk(dm->get_dmk_vec(), kv, precision, efermis, &(ucell), pv.para_2d(),
-                            global_mat_dir, istep, out_app_flag, ofs_running);
+                            column_major_source, global_mat_dir, istep, out_app_flag, ofs_running);
     }
 
     //------------------------------------------------------------------
@@ -567,7 +517,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
         // they land in MAT/ together with the other matrix outputs in mode 2
         h_params.global_out_dir = global_mat_dir;
         h_params.global_matrix_dir = global_matrix_dir;
-        h_params.ks_solver = PARAM.inp.ks_solver;
+        h_params.ks_solver = ks_solver;
         h_params.drank = GlobalV::DRANK;
         h_params.ofs_running = &ofs_running;
         // out_mat_h_t is a legacy alias for out_mat_tk (resolved at input
@@ -719,8 +669,8 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                 ofs << std::endl;
 
                 // --- full matrix body, aligned with write_dmk / write_hsk ---
-                write_matrix_body_flat(ofs, t_global, nlocal, precision,
-                    std::integral_constant<bool, std::is_same<TK, double>::value>());
+                ModuleIO::write_dense_text_body(ofs, t_global, nlocal, precision,
+                                                column_major_source);
 
                 ModuleIO::write_matrix_notice(ofs_running, "T(k)", t_fn);
             }

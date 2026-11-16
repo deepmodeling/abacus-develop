@@ -1,4 +1,5 @@
 #include "source_io/module_dm/write_dmk.h"
+#include "source_io/module_hs/dense_text_body.h"
 #include "source_io/module_output/spin_tag.h"
 #include "source_io/module_output/write_notice.h"
 
@@ -187,6 +188,7 @@ void ModuleIO::write_dmk(const std::vector<std::vector<T>>& dmk,
         const std::vector<double>& efs,
         const UnitCell* ucell,
         const Parallel_Blkcyclic& pv,
+        const bool column_major,
         const std::string& dmk_dir,
         const int istep,
         const int out_app_flag,
@@ -216,7 +218,6 @@ void ModuleIO::write_dmk(const std::vector<std::vector<T>>& dmk,
     const int nspin = efs.size();
     assert(nspin > 0);
     const int nk = dmk.size() / nspin;
-    const double dm_thr = 1.0e-16; // mohan set 2025-09-02
 
     if (nk * nspin != dmk.size())
     {
@@ -294,49 +295,10 @@ void ModuleIO::write_dmk(const std::vector<std::vector<T>>& dmk,
                 // write ucell
                 ModuleIO::UcellIO::write_ucell(ofs, ucell);
 
-                ofs << std::fixed;
-                ofs << std::scientific;
-                ofs << std::setprecision(precision);
-                ofs << std::right;
-                for (int i = 0; i < nlocal; ++i)
-                {
-                    const size_t ii = i * nlocal;
-                    for (int j = 0; j < nlocal; ++j)
-                    {
-                        if (std::is_same<double, T>::value)
-                        {
-                            if (j % 8 == 0)
-                            {
-                                ofs << "\n";
-                            }
-                            ofs << " " << dmk_global[ii + j];
-                        }
-                        else if (std::is_same<std::complex<double>, T>::value)
-                        {
-                            if (j % 4 == 0)
-                            {
-                                ofs << "\n";
-                            }
-
-                            double real_v = std::real(dmk_global[ii + j]);
-                            if(std::abs(real_v) < dm_thr)
-                            {
-                                real_v = 0.0;
-                            }
-                            double imag_v = std::imag(dmk_global[ii + j]);
-                            if(std::abs(imag_v) < dm_thr)
-                            {
-                                imag_v = 0.0;
-                            }
-
-                            ofs << " (" << real_v << "," << imag_v << ")";
-                        }
-                    }
-                }
-                // Terminate the matrix body with a newline so that the next
-                // appended record (out_app_flag == 1) starts on a fresh line
-                // instead of being glued to the last value of this step.
-                ofs << std::endl;
+                // The file body is row-major; column_major selects the
+                // traversal order of the gathered (possibly column-major)
+                // DM(k) buffer so the transpose is not emitted.
+                ModuleIO::write_dense_text_body(ofs, dmk_global, nlocal, precision, column_major);
                 ofs.close();
             } // rank0
         }     // ik
@@ -367,6 +329,7 @@ template void ModuleIO::write_dmk<double>(const std::vector<std::vector<double>>
         const std::vector<double>& efs,
         const UnitCell* ucell,
         const Parallel_Blkcyclic& pv,
+        const bool column_major,
         const std::string& dmk_dir,
         const int istep,
         const int out_app_flag,
@@ -378,6 +341,7 @@ template void ModuleIO::write_dmk<std::complex<double>>(const std::vector<std::v
         const std::vector<double>& efs,
         const UnitCell* ucell,
         const Parallel_Blkcyclic& pv,
+        const bool column_major,
         const std::string& dmk_dir,
         const int istep,
         const int out_app_flag,

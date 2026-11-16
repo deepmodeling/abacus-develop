@@ -102,6 +102,7 @@ if(ENABLE_LCAO)
     module_hs/hs_sparse_io.cpp
     module_hs/dhs_sparse_writer.cpp
     module_hs/hsk_writer.cpp
+    module_hs/dense_text_body.cpp
     module_hs/hsr_writer.cpp
     module_hs/hsr_legacy.cpp
     module_hs/hterm_writer.cpp

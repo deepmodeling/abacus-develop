@@ -67,6 +67,9 @@ bool read_dmk(const int nspin,
  * size as the number of SPIN.
  * @param ucell A pointer to the UnitCell object.
  * @param pv The Parallel_Blkcyclic object. The 2d-block parallel information of DMK.
+ * @param column_major Whether the local DMK blocks are stored column-major
+ * (genelpa/elpa/scalapack_gvx and the other column-major solvers). The file
+ * body is always row-major, so this selects the traversal order.
  * @param dmk_dir The directory the DMK files are written into.
  * @param out_app_flag Append-mode selector: 1 reuses the fixed filename
  * across ionic steps and appends a new record per step in multi-step
@@ -79,6 +82,7 @@ void write_dmk(const std::vector<std::vector<T>>& dmk,
                const std::vector<double>& efs,
                const UnitCell* ucell,
                const Parallel_Blkcyclic& pv,
+               const bool column_major,
                const std::string& dmk_dir,
                const int istep,
                const int out_app_flag,

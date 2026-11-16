@@ -285,8 +285,9 @@ add_test(
 addtest(
   TARGET MODULE_IO_write_dmk
   LIBS parameter base device cell_info symmetry
-  SOURCES ../module_dm/test/write_dmk_test.cpp
+  SOURCES test_write_dmk.cpp
           ../module_dm/write_dmk.cpp
+          ../module_hs/dense_text_body.cpp
           ../../source_cell/ucell_io.cpp
           ../../source_cell/klist.cpp
           ../../source_cell/klist_io.cpp
