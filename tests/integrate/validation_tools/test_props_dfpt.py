@@ -32,6 +32,43 @@ Si
 0.25000000 0.25000000 0.25000000 1 1 1
 """
 
+
+STRU_COMMENTED_MIXED = """ATOMIC_POSITIONS
+Cartesian_angstrom
+
+Si # silicon
+0.0
+1
+2.715 0.0 0.0 1 1 1
+
+Ge # germanium
+0.0
+1
+2.715 2.715 0.0 1 1 1
+"""
+
+STRU_INDENTED = """ATOMIC_POSITIONS
+Direct
+
+  Si
+  0.0
+  2
+  0.0 0.0 0.0 1 1 1
+  0.25 0.25 0.25 1 1 1
+"""
+
+STRU_BLANK_LINES = """ATOMIC_POSITIONS
+Direct
+
+Si
+
+0.0
+
+2
+0.0 0.0 0.0 1 1 1
+0.25 0.25 0.25 1 1 1
+"""
+
 GOOD_FREQ_BLOCK = (
     " DFPT phonon frequencies at q #0 = (0.000000 0.000000 0.000000) (direct) in cm^-1:\n"
     "   mode   0 : -0.000001 cm^-1\n"
@@ -144,6 +181,33 @@ class DFPTFrequencyCollectorTest(unittest.TestCase):
         result, output = self.run_collector(GOOD_FREQ_BLOCK, stru_text=None)
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(len(output.strip().splitlines()), 6)
+
+
+    # --- STRU parser edge cases ---
+
+    def test_commented_mixed_species_stru_passes(self):
+        """Si/Ge with comments, Cartesian, first coordinate 2.715 (x > atom count)."""
+        result, output = self.run_collector(GOOD_FREQ_BLOCK, stru_text=STRU_COMMENTED_MIXED)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(len(output.strip().splitlines()), 6)
+
+    def test_indented_element_label_stru_passes(self):
+        """Indented element names (leading whitespace) are valid STRU."""
+        result, output = self.run_collector(GOOD_FREQ_BLOCK, stru_text=STRU_INDENTED)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(len(output.strip().splitlines()), 6)
+
+    def test_blank_lines_in_species_block_stru_passes(self):
+        """Blank lines within a species block (before mag/count) are valid STRU."""
+        result, output = self.run_collector(GOOD_FREQ_BLOCK, stru_text=STRU_BLANK_LINES)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(len(output.strip().splitlines()), 6)
+
+    def test_unreadable_stru_fails(self):
+        """STRU exists but atom count cannot be parsed → reject."""
+        bad_stru = "ATOMIC_POSITIONS\nDirect\n\nGarbageData\n"
+        result, output = self.run_collector(GOOD_FREQ_BLOCK, stru_text=bad_stru)
+        self.assertNotEqual(result.returncode, 0)
 
 
 if __name__ == "__main__":

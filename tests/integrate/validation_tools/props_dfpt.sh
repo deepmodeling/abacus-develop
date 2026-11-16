@@ -33,21 +33,38 @@ run_dfpt_props() {
   # (element name → magnetic moment → atom count → coordinate lines) and
   # sum the counts; handles multi-species cells and single-letter elements
   local natom=0
+  local stru_present=0
   if [ -f "STRU" ]; then
+    stru_present=1
     natom=$(awk '
+      function is_blank(s){ return s ~ /^[ 	]*$/ }
+      function skip_blanks(){ while((getline line > 0) && is_blank(line)); return line }
       /ATOMIC_POSITIONS/{found=1; next}
       !found{next}
-      /^[ \t]*$/{next}
+      is_blank($0){next}
       found && /^(Direct|Cartesian|direct|cartesian)/{next}
-      found && /^[A-Za-z][A-Za-z0-9]*([ \t].*)?$/{
-        getline
-        getline
-        cnt = $1 + 0
+      found && /^[ 	]*[A-Za-z][A-Za-z0-9]*([ 	].*)?$/{
+        # skip blank lines before the magnetic moment line
+        line = skip_blanks()
+        if (line == "" || is_blank(line)) next
+        # skip blank lines before the atom count line
+        line = skip_blanks()
+        if (line == "" || is_blank(line)) next
+        split(line, fields)
+        cnt = fields[1] + 0
+        if (cnt <= 0) next
         natom += cnt
         for(i=0; i<cnt; i++) getline
       }
       END{print natom+0}
     ' STRU 2>/dev/null)
+    # STRU exists but atom count is unreadable: reject rather than
+    # silently skipping the mode-count validation (an incomplete
+    # spectrum could become the first reference)
+    if [ "$natom" -le 0 ] 2>/dev/null; then
+      echo "ERROR: run_dfpt_props: STRU exists but atom count is unreadable (natom=$natom); cannot derive 3*natom for mode validation" >&2
+      return 1
+    fi
   fi
   local expected_total=$((natom * 3))
   # emit one "key value" line per frequency; awk rewrites the block header
