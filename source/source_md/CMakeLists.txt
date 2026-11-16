@@ -21,7 +21,5 @@ endif()
 add_subdirectory(module_plumed)
 
 if(BUILD_TESTING)
-  if(ENABLE_MPI)
-    add_subdirectory(unittests)
-  endif()
+  add_subdirectory(unittests)
 endif()
