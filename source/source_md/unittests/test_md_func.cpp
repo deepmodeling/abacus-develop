@@ -246,7 +246,7 @@ int main(int argc, char** argv)
 #include "source_cell/dom_decomp.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "source_md/test/md_test_fixture.h"
+#include "source_md/unittests/md_test_fixture.h"
 #include "source_md/md_func.h"
 
 constexpr double doublethreshold = 1e-12;

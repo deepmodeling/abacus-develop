@@ -2,7 +2,7 @@
 
 #include "source_cell/dom_decomp.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_md/test/setcell.h"
+#include "source_md/unittests/setcell.h"
 
 #include "gtest/gtest.h"
 

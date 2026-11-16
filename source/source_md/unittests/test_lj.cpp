@@ -1,7 +1,7 @@
 #include "source_cell/dom_decomp.h"
 #include "source_base/parallel_cell.h"
 #include "gtest/gtest.h"
-#include "source_md/test/setcell.h"
+#include "source_md/unittests/setcell.h"
 #include "lj_test_solver.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_md/md_func.h"
@@ -307,7 +307,7 @@ TEST_F(LJ_pot_test, CalEnShift)
 #include "source_md/module_lj/lj.h"
 #include "source_esolver/esolver_forcefields.h"
 #include "source_cell/dom_decomp.h"
-#include "source_md/test/setcell.h"
+#include "source_md/unittests/setcell.h"
 
 #include "gtest/gtest.h"
 
