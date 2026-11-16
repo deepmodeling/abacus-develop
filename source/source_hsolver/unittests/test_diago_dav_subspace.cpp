@@ -383,12 +383,13 @@ TYPED_TEST(DavSubspaceTest, HostBackedDenseActionsMatchResident)
         for (int left = 0; left < nbands; ++left)
             for (int right = 0; right < nbands; ++right)
             {
-                Real value = 0;
+                TypeParam value(0, 0);
                 for (int i = 0; i < dim; ++i)
                     for (int j = 0; j < dim; ++j)
-                        value += std::real(std::conj(psi[left * ld + i]) * s[i * dim + j]
-                                           * psi[right * ld + j]);
-                EXPECT_NEAR(value, left == right ? Real(1) : Real(0), 1e-8);
+                        value += std::conj(psi[left * ld + i]) * s[i * dim + j]
+                                 * psi[right * ld + j];
+                const TypeParam target = left == right ? TypeParam(1, 0) : TypeParam(0, 0);
+                EXPECT_LT(std::abs(value - target), 1e-8);
             }
     };
     expect_s_orthonormal(resident);
