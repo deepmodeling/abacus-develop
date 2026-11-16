@@ -39,9 +39,38 @@ LR::KernelXC::KernelXC(const ModulePW::PW_Basis& rho_basis,
     const std::string& kernel_name,
     const std::vector<std::string>& lr_init_xc_kernel,
     const bool openshell,
-    const int gxc_spin) :nspin_(nspin), kernel_name_(kernel_name), gxc_spin_(gxc_spin),
-    rho_basis_(rho_basis), openshell_(openshell)
+    const int gxc_spin)
+    : KernelXC(Purpose::LinearResponse, rho_basis, ucell, chg_gs, pgrid, nspin,
+        kernel_name, lr_init_xc_kernel, openshell, gxc_spin)
 {
+}
+
+std::shared_ptr<const LR::KernelXC> LR::build_gs_xc_kernel(const std::string& kernel_name,
+    const ModulePW::PW_Basis& rho_basis, const UnitCell& ucell, const Charge& chg_gs,
+    const Parallel_Grid& pgrid, const int nspin, const bool openshell,
+    const std::vector<std::string>& lr_init_xc_kernel)
+{
+    return std::make_shared<const KernelXC>(KernelXC::Purpose::GroundStateResponse,
+        rho_basis, ucell, chg_gs, pgrid, nspin, kernel_name, lr_init_xc_kernel,
+        openshell, KernelXC::NoGxc);
+}
+
+LR::KernelXC::KernelXC(Purpose purpose, const ModulePW::PW_Basis& rho_basis,
+    const UnitCell& ucell,
+    const Charge& chg_gs,
+    const Parallel_Grid& pgrid,
+    const int& nspin,
+    const std::string& kernel_name,
+    const std::vector<std::string>& lr_init_xc_kernel,
+    const bool openshell,
+    const int gxc_spin)
+    : nspin_(nspin), kernel_name_(kernel_name), gxc_spin_(gxc_spin), purpose_(purpose),
+      rho_basis_(rho_basis), openshell_(openshell)
+{
+    if (purpose == Purpose::GroundStateResponse && gxc_spin != NoGxc)
+    {
+        throw std::invalid_argument("KernelXC: ground-state response requires only second derivatives");
+    }
     if (!LR_Util::has_local_xc(kernel_name))
     {
         return;
@@ -341,8 +370,11 @@ void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const doubl
             // of functionals that were never broken; also confirmed to resolve 08_BeH2/hse (both
             // its DZP and TZDP bases, all excited states).
             const bool is_hse06 = func.info->number == XC_HYB_GGA_XC_HSE06;
+            // SCF does not use the LR sigma floor. Keep its orbital response separate;
+            // this does not alter the existing GS potential or low-density cutoff policy.
+            const bool stabilize_hse = is_hse06 && purpose_ == Purpose::LinearResponse;
             std::vector<double> hse_sigma;
-            const std::vector<double>& sigma_input = LR_Util::prepare_xc_sigma(sigma, is_hse06, hse_sigma);
+            const std::vector<double>& sigma_input = LR_Util::prepare_xc_sigma(sigma, stabilize_hse, hse_sigma);
             xc_gga_vxc(&func, nrxx, rho.data(), sigma_input.data(), vrho_tmp.data(), vsigma_tmp.data());
             xc_gga_fxc(&func, nrxx, rho.data(), sigma_input.data(), v2rho2_tmp.data(), v2rhosigma_tmp.data(), v2sigma2_tmp.data());
             // std::cout << "max element of v2sigma2_tmp: " << *std::max_element(v2sigma2_tmp.begin(), v2sigma2_tmp.end()) << std::endl;

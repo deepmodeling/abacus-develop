@@ -66,6 +66,8 @@ namespace LR
     public:
         /// Which spin combinations of the $g^{xc}$ coefficient set (`GxcCoef`) to build.
         enum GxcSpin { NoGxc = 0, Singlet = 1, Triplet = 2, BothSpins = 3 };
+        /// GS response uses raw sigma; the existing HSE floor belongs only to LR.
+        enum class Purpose { LinearResponse, GroundStateResponse };
         KernelXC(const ModulePW::PW_Basis& rho_basis,
             const UnitCell& ucell,
             const Charge& chg_gs,
@@ -75,6 +77,12 @@ namespace LR
             const std::vector<std::string>& lr_init_xc_kernel,
             const bool openshell = false,
             const int gxc_spin = GxcSpin::NoGxc);
+        /// Explicit response role; GS response requests only second derivatives.
+        /// Density and grid are borrowed and never modified; their spin layouts must agree.
+        KernelXC(Purpose purpose, const ModulePW::PW_Basis& rho_basis,
+            const UnitCell& ucell, const Charge& chg_gs, const Parallel_Grid& pgrid,
+            const int& nspin, const std::string& kernel_name,
+            const std::vector<std::string>& lr_init_xc_kernel, bool openshell, int gxc_spin);
         ~KernelXC() {}
 
         /// Metadata belongs to this coefficient set, independent of later global XC changes.
@@ -235,6 +243,7 @@ namespace LR
         const std::string kernel_name_;
         int functional_type_ = 0;
         const int gxc_spin_ = GxcSpin::NoGxc;   ///< which `GxcCoef` sets to build, see `GxcSpin`
+        const Purpose purpose_;
         // ================================== XC kernel Gradiants ====================================
         const ModulePW::PW_Basis& rho_basis_;
         const bool openshell_ = false;
@@ -246,6 +255,13 @@ namespace LR
         const ModulePW::PW_Basis& rho_basis, const UnitCell& ucell, const Charge& chg_gs,
         const Parallel_Grid& pgrid, const int nspin, const bool openshell, const int gxc_spin,
         const std::vector<std::string>& lr_init_xc_kernel);
+    /// Build immutable GS orbital-response coefficients without the LR HSE sigma floor.
+    /// Uses the supplied GS functional, density and grid, requesting no third derivatives.
+    std::shared_ptr<const KernelXC> build_gs_xc_kernel(const std::string& kernel_name,
+        const ModulePW::PW_Basis& rho_basis, const UnitCell& ucell, const Charge& chg_gs,
+        const Parallel_Grid& pgrid, int nspin, bool openshell,
+        const std::vector<std::string>& lr_init_xc_kernel);
+
 }
 
 #endif // ABACUS_SOURCE_LCAO_MODULE_LR_POTENTIALS_XC_KERNEL_H

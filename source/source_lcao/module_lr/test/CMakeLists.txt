@@ -16,6 +16,16 @@ if(ENABLE_LIBXC)
             ../../../source_hamilt/module_xc/libxc_setup.cpp)
 
   addtest(
+    TARGET MODULE_LR_xc_kernel
+    LIBS base parameter device container psi Libxc::xc
+    SOURCES test_xc_kernel.cpp
+            ../potentials/xc_kxc.cpp
+            ../potentials/xc_kernel.cpp
+            ../utils/lr_util.cpp
+            ../../../source_hamilt/module_xc/xc_functional.cpp
+            ../../../source_hamilt/module_xc/libxc_setup.cpp)
+
+  addtest(
     TARGET MODULE_LR_xc_kxc
     LIBS Libxc::xc
     SOURCES test_xc_kxc.cpp ../potentials/xc_kxc.cpp)

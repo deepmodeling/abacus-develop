@@ -81,11 +81,27 @@ std::shared_ptr<PotHxcLR> prepare_gs_potential(const Input_para& input, const st
     // contribution to W and the force use the corresponding LR potential instead.
     const int gxc_gs = (!LR_Util::has_local_xc(xc_kernel) || !LR_Util::has_local_xc(xc_kernel_gs)) ? GX::NoGxc
         : ((nspin == 1) ? GX::Singlet : GX::BothSpins);
-    // When the LR kernel *is* the ground-state functional -- the usual TDDFT case -- the two
-    // `KernelXC` are bit-for-bit identical, so reuse the one just built.
-    const bool share_lr = prepared.kernel->nspin() == nspin && (xc_kernel_gs == xc_kernel) && ((prepared.gxc & gxc_gs) == gxc_gs);
-    std::shared_ptr<const LR::KernelXC> kernel_gs = share_lr ? prepared.kernel
-        : LR::build_xc_kernel(xc_kernel_gs, rho_basis, ucell, chg_gs, grid, nspin, oshell, gxc_gs, input.lr_init_xc_kernel);
+    // HSE's sigma floor is an LR stabilization, absent from the SCF potential.
+    // Other matching functionals retain sharing when spin layouts and derivative orders agree.
+    // Legacy GS/LR low-density cutoffs remain different; this fixes only the sigma-floor mismatch.
+    const bool separate_hse_response = xc_kernel_gs == "hse";
+    const bool share_lr = !separate_hse_response && prepared.kernel->nspin() == nspin
+        && xc_kernel_gs == xc_kernel && ((prepared.gxc & gxc_gs) == gxc_gs);
+    std::shared_ptr<const LR::KernelXC> kernel_gs;
+    if (separate_hse_response)
+    {
+        kernel_gs = LR::build_gs_xc_kernel(xc_kernel_gs, rho_basis, ucell, chg_gs,
+            grid, nspin, oshell, input.lr_init_xc_kernel);
+    }
+    else if (share_lr)
+    {
+        kernel_gs = prepared.kernel;
+    }
+    else
+    {
+        kernel_gs = LR::build_xc_kernel(xc_kernel_gs, rho_basis, ucell, chg_gs,
+            grid, nspin, oshell, gxc_gs, input.lr_init_xc_kernel);
+    }
     return std::make_shared<LR::PotHxcLR>(kernel_gs, rho_basis, ucell, chg_gs.nrxx, nspin, st_gs);
 }
 }

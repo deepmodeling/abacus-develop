@@ -441,3 +441,20 @@ TEST_F(PotHxcLRTest, ClosedShellScalarReuseMatchesIndependentGxcContractions)
         }
     }
 }
+
+TEST_F(PotHxcLRTest, HseGroundResponseDoesNotReuseLrSigmaFloor)
+{
+    Input_para input;
+    input.dft_functional = "hse";
+    input.lr_init_xc_kernel = init;
+    for (const int spins : {1, 2})
+    {
+        const auto prepared = LR::prepare_lr_potentials(input, input.dft_functional,
+            basis, cell, charge, grid, spins, false);
+        const auto gs = LR::prepare_gs_potential(input, input.dft_functional,
+            basis, cell, charge, grid, spins, false, prepared);
+        EXPECT_NE(&gs->xc_kernel_components(), prepared.kernel.get());
+        EXPECT_EQ(gs->xc_kernel_components().nspin(), spins);
+        EXPECT_TRUE(gs->xc_kernel_components().v3rho3.empty());
+    }
+}
