@@ -1,17 +1,17 @@
 #ifndef ABACUS_SOURCE_LCAO_MODULE_LR_UTILS_LR_UTIL_H
 #define ABACUS_SOURCE_LCAO_MODULE_LR_UTILS_LR_UTIL_H
 
-#include "source_base/complexmatrix.h"
+#include <cstddef>
+#include <complex>
+#include <vector>
+#include <utility>
 #include "source_base/matrix.h"
+#include "source_base/complexmatrix.h"
 #include "source_base/parallel_blkcyc.h"
 #include "source_psi/psi.h"
-#include "xc_kernel_names.h"
 #include <ATen/core/tensor.h>
 #include <ATen/ops/linalg_op.h>
-#include <complex>
-#include <cstddef>
-#include <utility>
-#include <vector>
+#include <set>
 
 class UnitCell;
 
@@ -41,6 +41,36 @@ namespace LR_Util
                                                std::vector<double>& hse_buffer);
 
     /// =====================PHYSICS====================
+    /// @brief the xc kernels that carry an exact-exchange (EXX) term
+    ///
+    /// Membership here says only *that* the kernel has an EXX part, never *which* Coulomb
+    /// operator that part uses. The operator is the general range-separated form
+    /// $v_1(r)=[\alpha+\beta\,\mathrm{erfc}(\mu r)]/r$, and it is built from
+    /// `coulomb_param`, which `input_conv` fills from `dft_functional` plus
+    /// `exx_fock_alpha` ($\alpha$), `exx_erfc_alpha` ($\beta$) and `exx_erfc_omega` ($\mu$).
+    /// Its overall weight reaches this module as `exx_info.info_global.hybrid_alpha`
+    /// ($=\max(|\alpha|,|\beta|)$, the factor by which `coulomb_param` was normalized).
+    inline const std::set<std::string>& hybrid_xc_list()
+    {
+        static const std::set<std::string> l = { "hf", "hse", "pbe0", "b3lyp",
+            "cam_pbeh", "lc_pbe", "lc_wpbe", "lrc_wpbe", "lrc_wpbeh" };
+        return l;
+    }
+
+    /// @brief check if the xc functional has local xc kernel
+    inline bool has_local_xc(const std::string& name)
+    {
+        if (std::set<std::string>({"lda", "pwlda", "pbe"}).count(name))
+        {
+            return true;
+        }
+        // Every hybrid but pure HF keeps a semilocal remainder: the KS exchange left over after
+        // the EXX part is taken out, $(1-\alpha)E_x^\text{KS-LR}+[1-(\alpha+\beta)]E_x^
+        // \text{KS-SR}$. libxc returns exactly that once `f_xc_libxc` hands the functional its
+        // external parameters, so no per-functional code is needed here -- only the name.
+        return name != "hf" && hybrid_xc_list().count(name);
+    }
+
     /// @brief calculate the number of electrons
     /// @tparam TCell
     /// @param ucell

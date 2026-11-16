@@ -1,20 +1,16 @@
 #include "hsolver_lrtd.h"
 #include "hamilt_casida.h"
 #include "hamilt_ulr.h"
-#include "source_base/module_container/ATen/core/tensor_map.h"
-#include "source_base/parallel_comm.h"
-#include "source_base/parallel_reduce.h"
-#include "source_hsolver/diag_comm_info.h"
-#include "source_hsolver/diago_cg.h"
-#include "source_hsolver/diago_dav_subspace.h"
-#include "source_hsolver/diago_david.h"
-#include "source_hsolver/diago_iter_assist.h"
 #include "source_io/module_parameter/parameter.h"
+#include "source_hsolver/diag_comm_info.h"
+#include "source_hsolver/diago_david.h"
+#include "source_hsolver/diago_dav_subspace.h"
+#include "source_hsolver/diago_cg.h"
+#include "source_hsolver/diago_iter_assist.h"
 #include "source_lcao/module_lr/utils/lr_util.h"
 #include "source_lcao/module_lr/utils/lr_util_print.h"
-#include <algorithm>
-#include <cmath>
-#include <stdexcept>
+#include "source_base/module_container/ATen/core/tensor_map.h"
+#include "source_base/parallel_comm.h"
 
 namespace LR
 {
@@ -186,132 +182,10 @@ namespace LR
                 << "; current threshold: " << diag_ethr << std::endl;
             ModuleBase::timer::end("HSolverLR", "solve");
         }
-        template <typename T, typename THamilt>
-        std::vector<double> eigenpair_residuals(
-            const THamilt &hm,
-            const T *amplitudes,
-            const double *energies,
-            int local_size,
-            int state_count)
-        {
-            ModuleBase::timer::start("HSolverLR", "eigenpair_residuals");
-            const std::size_t total_size = static_cast<std::size_t>(local_size) * state_count;
-            const std::size_t storage_size = std::max<std::size_t>(1, total_size);
-            const T zero = T(0);
-            std::vector<T> applied(storage_size, zero);
-            hm.hPsi(
-                amplitudes,
-                applied.data(),
-                local_size,
-                state_count);
-            std::vector<double> residuals(state_count);
-            for (int state = 0; state < state_count; ++state)
-            {
-                double residual_square = 0.0;
-                double norm_square = 0.0;
-                for (int row = 0; row < local_size; ++row)
-                {
-                    const std::size_t index = static_cast<std::size_t>(state) * local_size + row;
-                    const T response_residual = applied[index] - energies[state] * amplitudes[index];
-                    const double residual = std::abs(response_residual);
-                    const double magnitude = std::abs(amplitudes[index]);
-                    residual_square += residual * residual;
-                    norm_square += magnitude * magnitude;
-                }
-                Parallel_Reduce::reduce_all(residual_square);
-                Parallel_Reduce::reduce_all(norm_square);
-                if (!std::isfinite(residual_square) || !std::isfinite(norm_square) || norm_square <= 0.0)
-                {
-                    ModuleBase::timer::end("HSolverLR", "eigenpair_residuals");
-                    throw std::runtime_error("Invalid LR eigenpair residual for analytic NAC");
-                }
-                const double normalized_square = residual_square / norm_square;
-                residuals[state] = std::sqrt(normalized_square);
-            }
-            ModuleBase::timer::end("HSolverLR", "eigenpair_residuals");
-            return residuals;
-        }
-        template std::vector<double> eigenpair_residuals<double, HamiltLR<double>>(
-            const HamiltLR<double> &,
-            const double *,
-            const double *,
-            int,
-            int);
-        template std::vector<double> eigenpair_residuals<std::complex<double>, HamiltLR<std::complex<double>>>(
-            const HamiltLR<std::complex<double>> &,
-            const std::complex<double> *,
-            const double *,
-            int,
-            int);
+template void solve<double, HamiltLR<double>>(const HamiltLR<double>&, double*, const int&, const int&, const int&, const std::vector<int>&, const std::vector<int>&, const std::vector<Parallel_Blkcyclic>&, double*, const std::string, const double&, const std::vector<double>&, const bool);
+template void solve<double, HamiltULR<double>>(const HamiltULR<double>&, double*, const int&, const int&, const int&, const std::vector<int>&, const std::vector<int>&, const std::vector<Parallel_Blkcyclic>&, double*, const std::string, const double&, const std::vector<double>&, const bool);
+template void solve<std::complex<double>, HamiltLR<std::complex<double>>>(const HamiltLR<std::complex<double>>&, std::complex<double>*, const int&, const int&, const int&, const std::vector<int>&, const std::vector<int>&, const std::vector<Parallel_Blkcyclic>&, double*, const std::string, const double&, const std::vector<double>&, const bool);
+template void solve<std::complex<double>, HamiltULR<std::complex<double>>>(const HamiltULR<std::complex<double>>&, std::complex<double>*, const int&, const int&, const int&, const std::vector<int>&, const std::vector<int>&, const std::vector<Parallel_Blkcyclic>&, double*, const std::string, const double&, const std::vector<double>&, const bool);
 
-        template std::vector<double> eigenpair_residuals<double, HamiltULR<double>>(
-            const HamiltULR<double> &,
-            const double *,
-            const double *,
-            int,
-            int);
-        template std::vector<double> eigenpair_residuals<std::complex<double>, HamiltULR<std::complex<double>>>(
-            const HamiltULR<std::complex<double>> &,
-            const std::complex<double> *,
-            const double *,
-            int,
-            int);
-
-        template void solve<double, HamiltLR<double>>(
-            const HamiltLR<double> &,
-            double *,
-            const int &,
-            const int &,
-            const int &,
-            const std::vector<int> &,
-            const std::vector<int> &,
-            const std::vector<Parallel_Blkcyclic> &,
-            double *,
-            const std::string,
-            const double &,
-            const std::vector<double> &,
-            const bool);
-        template void solve<double, HamiltULR<double>>(
-            const HamiltULR<double> &,
-            double *,
-            const int &,
-            const int &,
-            const int &,
-            const std::vector<int> &,
-            const std::vector<int> &,
-            const std::vector<Parallel_Blkcyclic> &,
-            double *,
-            const std::string,
-            const double &,
-            const std::vector<double> &,
-            const bool);
-        template void solve<std::complex<double>, HamiltLR<std::complex<double>>>(
-            const HamiltLR<std::complex<double>> &,
-            std::complex<double> *,
-            const int &,
-            const int &,
-            const int &,
-            const std::vector<int> &,
-            const std::vector<int> &,
-            const std::vector<Parallel_Blkcyclic> &,
-            double *,
-            const std::string,
-            const double &,
-            const std::vector<double> &,
-            const bool);
-        template void solve<std::complex<double>, HamiltULR<std::complex<double>>>(
-            const HamiltULR<std::complex<double>> &,
-            std::complex<double> *,
-            const int &,
-            const int &,
-            const int &,
-            const std::vector<int> &,
-            const std::vector<int> &,
-            const std::vector<Parallel_Blkcyclic> &,
-            double *,
-            const std::string,
-            const double &,
-            const std::vector<double> &,
-            const bool);
     }
 }

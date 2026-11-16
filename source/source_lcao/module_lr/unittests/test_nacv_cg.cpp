@@ -1,7 +1,7 @@
 #include "source_base/opt_cg.h"
 #include "source_base/parallel_cell.h"
 #include "source_base/parallel_reduce.h"
-#include "source_lcao/module_lr/zeq_cg.h"
+#include "source_lcao/module_lr/nacv_cg.h"
 
 #include <cmath>
 #include <cstdint>
@@ -31,7 +31,7 @@ TEST(ZeqCgPrecision, TightToleranceMatchesIndependentDiagonalInverse)
         rhs[1] = -3.0;
     }
     double solution[] = {9.0, 7.0};
-    LR::solve_Z_CG(
+    LR::solve_nac_cg(
         solution,
         rhs,
         2,
@@ -54,7 +54,7 @@ TEST(ZeqCgPrecision, RequestedThresholdChangesSmallResponseResolution)
     }
     double loose[] = {7.0, 7.0};
     double tight[] = {7.0, 7.0};
-    LR::solve_Z_CG(
+    LR::solve_nac_cg(
         loose,
         rhs,
         2,
@@ -63,7 +63,7 @@ TEST(ZeqCgPrecision, RequestedThresholdChangesSmallResponseResolution)
         false,
         1e-6,
         10);
-    LR::solve_Z_CG(
+    LR::solve_nac_cg(
         tight,
         rhs,
         2,
@@ -107,7 +107,7 @@ TEST(ZeqCgPrecision, ConditionedSystemMatchesIndependentInverseAndTrueResidual)
             output[index] = eigenvalues[index] * input[index];
         }
     };
-    LR::solve_Z_CG(
+    LR::solve_nac_cg(
         solution.data(),
         rhs.data(),
         size,
@@ -186,7 +186,7 @@ TEST(ZeqCgPrecision, ResidualReplacementMakesProgressAtTheThreshold)
         const int maximum_updates = 1;
         const int states = 1;
         EXPECT_NO_THROW(
-            LR::solve_Z_CG(
+            LR::solve_nac_cg(
                 solution_data,
                 rhs_data,
                 size,
@@ -211,7 +211,7 @@ TEST(ZeqCgPrecision, IterationLimitRejectsAnUncertifiedVector)
     }
     double solution[] = {0.0, 0.0};
     EXPECT_THROW(
-        LR::solve_Z_CG(
+        LR::solve_nac_cg(
             solution,
             rhs,
             2,
@@ -221,55 +221,6 @@ TEST(ZeqCgPrecision, IterationLimitRejectsAnUncertifiedVector)
             1e-12,
             1),
         std::runtime_error);
-}
-
-TEST(ZeqCgPrecision, RejectsInvalidConfiguration)
-{
-    double rhs[] = {0.0, 0.0};
-    double solution[] = {0.0, 0.0};
-    for (const double tolerance : {0.0,
-             -1.0,
-             std::numeric_limits<double>::quiet_NaN(),
-             std::numeric_limits<double>::infinity()})
-    {
-        EXPECT_THROW(
-            LR::solve_Z_CG(
-                solution,
-                rhs,
-                2,
-                1,
-                diagonal_operator,
-                false,
-                tolerance,
-                10),
-            std::invalid_argument);
-    }
-    EXPECT_THROW(
-        LR::solve_Z_CG(
-            solution,
-            rhs,
-            2,
-            1,
-            diagonal_operator,
-            false,
-            1e-6,
-            0),
-        std::invalid_argument);
-    const std::vector<std::pair<int, int>> invalid_dimensions = {{-1, 1}, {1, 0}, {std::numeric_limits<int>::max(), 2}};
-    for (const auto &dimensions : invalid_dimensions)
-    {
-        EXPECT_THROW(
-            LR::solve_Z_CG(
-                solution,
-                rhs,
-                dimensions.first,
-                dimensions.second,
-                diagonal_operator,
-                false,
-                1e-6,
-                10),
-            std::invalid_argument);
-    }
 }
 
 TEST(ZeqCgPrecision, CertifiesTheActualOperatorAtTheReturnedVector)
@@ -286,7 +237,7 @@ TEST(ZeqCgPrecision, CertifiesTheActualOperatorAtTheReturnedVector)
         output[0] = scale * input[0];
     };
     EXPECT_THROW(
-        LR::solve_Z_CG(
+        LR::solve_nac_cg(
             solution,
             rhs,
             1,
@@ -310,7 +261,7 @@ TEST(ZeqCgPrecision, EmptyLocalRanksParticipateInTheGlobalResidual)
             output[index] = (index + 2.0) * input[index];
         }
     };
-    LR::solve_Z_CG(
+    LR::solve_nac_cg(
         solution.data(),
         rhs.data(),
         local_size,

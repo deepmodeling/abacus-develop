@@ -15,14 +15,18 @@ endif()
 
 if(ENABLE_MPI)
   addtest(
-    TARGET MODULE_LR_zeq_cg_precision
+    TARGET MODULE_LR_nacv_cg
     LIBS base parameter container device psi MPI::MPI_CXX
-    SOURCES test_zeq_cg.cpp ../zeq_cg.cpp ../../../source_base/test/mpi_test_main.cpp)
+    SOURCES test_nacv_cg.cpp ../nacv_cg.cpp ../../../source_base/test/mpi_test_main.cpp)
   add_test(
-    NAME MODULE_LR_zeq_cg_precision_mpi4
+    NAME MODULE_LR_nacv_cg_mpi4
     COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 4 ${MPIEXEC_PREFLAGS}
-            $<TARGET_FILE:MODULE_LR_zeq_cg_precision> ${MPIEXEC_POSTFLAGS})
-  set_tests_properties(MODULE_LR_zeq_cg_precision_mpi4 PROPERTIES PROCESSORS 4 TIMEOUT 120)
-  set_tests_properties(MODULE_LR_zeq_cg_precision MODULE_LR_zeq_cg_precision_mpi4
+            $<TARGET_FILE:MODULE_LR_nacv_cg> ${MPIEXEC_POSTFLAGS})
+  set_tests_properties(MODULE_LR_nacv_cg_mpi4 PROPERTIES PROCESSORS 4 TIMEOUT 120)
+  set_tests_properties(MODULE_LR_nacv_cg MODULE_LR_nacv_cg_mpi4
     PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=1;MKL_NUM_THREADS=1;OPENBLAS_NUM_THREADS=1")
 endif()
+
+addtest(
+  TARGET MODULE_LR_nacv_xc_names
+  SOURCES test_nacv_xc_names.cpp)

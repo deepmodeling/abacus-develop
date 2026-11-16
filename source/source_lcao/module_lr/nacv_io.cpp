@@ -1,12 +1,28 @@
-#include "lr_state_io.h"
+#include "nacv_io.h"
 
-#include "lr_util_print.h"
+#include "source_base/parallel_blkcyc.h"
 #include "source_base/tool_quit.h"
+
+#include <array>
+#include <cassert>
+#include <cmath>
+#include <complex>
+#include <fstream>
+#include <iomanip>
+#include <iostream>
+#include <map>
+#include <ostream>
+#include <string>
+#include <utility>
+#include <vector>
+
+// The legacy print header assumes these stream/container/layout definitions.
+#include "utils/lr_util_print.h"
 
 namespace LR
 {
 template <typename T>
-void write_excitation_states(
+void write_nac_states(
     const std::string &directory,
     const std::string &label,
     const std::string &suffix,
@@ -43,7 +59,7 @@ void write_excitation_states(
         ModuleBase::WARNING_QUIT("ESolver_LR", "Incomplete LR excitation-amplitude output");
     }
 }
-template void write_excitation_states<double>(
+template void write_nac_states<double>(
     const std::string &,
     const std::string &,
     const std::string &,
@@ -52,7 +68,7 @@ template void write_excitation_states<double>(
     const double *,
     int,
     int);
-template void write_excitation_states<std::complex<double>>(
+template void write_nac_states<std::complex<double>>(
     const std::string &,
     const std::string &,
     const std::string &,

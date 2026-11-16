@@ -127,8 +127,6 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force(cons
 template<typename T, typename TR>
 LR::GradientInputs<T> ModuleESolver::ESolver_LR<T, TR>::gradient_inputs_() const
 {
-    const double response_tolerance = this->inp_->lr_grad_thr;
-    const int response_max_iterations = this->inp_->lr_grad_maxiter;
     return {*this->ucell_,
         this->kv,
         this->gd(),
@@ -154,9 +152,7 @@ LR::GradientInputs<T> ModuleESolver::ESolver_LR<T, TR>::gradient_inputs_() const
         this->spin_types,
         this->pot,
         this->pot_hxc_gs,
-        this->ofs_running_,
-        response_tolerance,
-        response_max_iterations
+        this->ofs_running_
 #ifdef __EXX
         ,
         this->exx_lri,

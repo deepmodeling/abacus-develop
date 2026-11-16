@@ -1,12 +1,14 @@
-#ifndef ABACUS_SOURCE_LCAO_MODULE_LR_UTILS_XC_KERNEL_NAMES_H
-#define ABACUS_SOURCE_LCAO_MODULE_LR_UTILS_XC_KERNEL_NAMES_H
+#ifndef ABACUS_LR_NACV_XC_NAMES_H
+#define ABACUS_LR_NACV_XC_NAMES_H
 
 #include <algorithm>
 #include <cctype>
 #include <set>
 #include <string>
 
-namespace LR_Util
+namespace LR
+{
+namespace NacvXC
 {
 /**
  * @brief Resolve built-in ground-state aliases before selecting a response kernel.
@@ -78,6 +80,7 @@ inline bool has_local_xc(const std::string &name)
     }
     return name != "hf" && hybrid_xc_list().count(name);
 }
-} // namespace LR_Util
+} // namespace NacvXC
+} // namespace LR
 
 #endif

@@ -34,8 +34,6 @@ struct GradientInputs
     const std::vector<std::shared_ptr<PotHxcLR>>& pot;
     const std::shared_ptr<PotHxcLR>& pot_hxc_gs;
     std::ofstream& ofs;
-    double response_tolerance;   ///< Absolute global combined CG residual norm in Ry.
-    int response_max_iterations; ///< Maximum CG response updates.
 #ifdef __EXX
     const std::shared_ptr<Exx_LRI<T>>& exx_lri;
     double hybrid_alpha;
@@ -52,18 +50,6 @@ std::vector<ModuleBase::matrix> evaluate_closed_shell_force(
     int label_begin,
     int ispin,
     bool emit_state_forces);
-/**
- * @brief Contract ordinary or polarized unrestricted LR force contributions.
- * @param[in] inputs Borrowed geometry, full spin windows, kernels and controls.
- * @param[in,out] force_terms Geometry-local analytic force contractions.
- * @param[in] dm_gs Spin-resolved ground-state density.
- * @param[in] Xz Packed up/down amplitudes; one row per requested quadratic state.
- * @param[in] Z Matching orbital-response rows.
- * @param[in] omega Energies in Ry, one per row; may be common pair energies.
- * @param[in] label_begin Zero-based state label for ordinary force output.
- * @param[in] emit_state_forces True for physical state output; false for NAC polarization.
- * @return Owned atom-major force matrices in Ry/bohr.
- */
 template <typename T>
 std::vector<ModuleBase::matrix> evaluate_open_shell_force(
     const GradientInputs<T> &inputs,

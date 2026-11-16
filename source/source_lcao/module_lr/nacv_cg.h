@@ -1,5 +1,5 @@
-#ifndef ABACUS_SOURCE_LCAO_MODULE_LR_ZEQ_CG_H
-#define ABACUS_SOURCE_LCAO_MODULE_LR_ZEQ_CG_H
+#ifndef ABACUS_LR_NACV_CG_H
+#define ABACUS_LR_NACV_CG_H
 
 #include <complex>
 #include <functional>
@@ -17,7 +17,7 @@ namespace LR
  * @param[in] tolerance Positive finite absolute global Euclidean norm bound on LZ-R.
  * The physical response residual and tolerance have units Ry; Z is dimensionless.
  * @param[in] max_iterations Positive total update limit, including residual corrections.
- * @throw std::invalid_argument For invalid local dimensions, tolerance or iteration bound.
+ * @pre Dimensions are the prepared NAC response layout; controls passed INPUT validation.
  * @throw std::runtime_error If the explicitly recomputed residual is not below tolerance.
  * @details A converged recurrence is checked against LZ-R. When these differ,
  * retain Z and restart a correction equation with the true residual, using the
@@ -25,7 +25,7 @@ namespace LR
  * before another recursive-norm check, so rounding differences cannot cause
  * an unlimited sequence of zero-update restarts. R is never modified.
  */
-void solve_Z_CG(
+void solve_nac_cg(
     double *const Z,
     double *R,
     const int &ld,
@@ -47,7 +47,7 @@ void solve_Z_CG(
  * @param[in] max_iterations Reserved iteration bound.
  * @throw std::runtime_error Always: complex CG response is not implemented.
  */
-void solve_Z_CG(
+void solve_nac_cg(
     std::complex<double> *const Z,
     std::complex<double> *R,
     const int &ld,
@@ -57,39 +57,5 @@ void solve_Z_CG(
     const double tolerance,
     const int max_iterations);
 
-/**
- * @brief Preserve the original real CG entry point with explicit compatibility settings.
- * @param[out] Z Local state-major solution storage.
- * @param[in] R Local right-hand side in Ry.
- * @param[in] ld Local entries per state.
- * @param[in] nstates Number of right-hand sides.
- * @param[in] f_LZ Collective linear response operator.
- * @param[in] test_force Whether to print the final vector.
- * @details Uses tolerance1e-6Ry and100updates,the original official defaults.
- */
-void solve_Z_CG(
-    double *Z,
-    double *R,
-    const int &ld,
-    const int &nstates,
-    std::function<void(const double *, double *)> f_LZ,
-    bool test_force);
-
-/**
- * @brief Preserve the explicit rejection of the unavailable complex CG solver.
- * @param[out] Z Reserved local solution storage.
- * @param[in] R Reserved local right-hand side.
- * @param[in] ld Local entries per state.
- * @param[in] nstates Number of right-hand sides.
- * @param[in] f_LZ Reserved complex response operator.
- * @param[in] test_force Reserved diagnostic switch.
- */
-void solve_Z_CG(
-    std::complex<double> *Z,
-    std::complex<double> *R,
-    const int &ld,
-    const int &nstates,
-    std::function<void(const std::complex<double> *, std::complex<double> *)> f_LZ,
-    bool test_force);
 } // namespace LR
 #endif

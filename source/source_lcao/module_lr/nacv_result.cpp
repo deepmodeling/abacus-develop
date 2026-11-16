@@ -1,6 +1,5 @@
 #include "nacv_cs.h"
-#include "nacv_workflow.h"
-#include "utils/xc_kernel_names.h"
+#include "nacv_xc_names.h"
 
 #include <algorithm>
 #include <cmath>
@@ -11,75 +10,11 @@
 
 namespace LR
 {
-namespace
+void validate_nac_window(int occupied, int virtuals, int basis)
 {
-/**
- * @brief Check response availability, optionally deferring unresolved INPUT defaults.
- * @param[in] reference_xc Requested or resolved KS functional name.
- * @param[in] response_xc Requested or resolved LR kernel name.
- * @param[in] allow_defaults Whether default names may await pseudopotential resolution.
- * @throw std::invalid_argument For a known unavailable KS or LR response.
- */
-void validate_functional_names(const std::string &reference_xc, const std::string &response_xc, bool allow_defaults)
-{
-    const std::string reference = LR_Util::canonical_xc_name(reference_xc);
-    const std::string response = LR_Util::canonical_xc_name(response_xc);
-    const bool reference_default = allow_defaults && reference == "default";
-    const bool response_default = allow_defaults && response == "default";
-    const bool reference_supported =
-        reference_default || LR_Util::has_local_xc(reference) || reference == "hf" || reference == "none";
-    const bool response_supported =
-        response_default || LR_Util::has_local_xc(response) || response == "hf" || response == "rpa";
-    if (!reference_supported || !response_supported)
+    if (occupied <= 0 || virtuals <= 0 || basis <= occupied || virtuals != basis - occupied)
     {
-        throw std::invalid_argument("Analytic NAC requires implemented KS orbital-response and LR XC derivatives");
-    }
-}
-} // namespace
-
-bool nac_eigenpairs_requested(const NacvRequest &request, bool open_shell)
-{
-    return !request.pairs.empty() || (!open_shell && request.output_wavefunctions);
-}
-
-void validate_nac_reference(
-    const NacvRequest &request,
-    bool open_shell,
-    bool converged,
-    bool data_ready,
-    const ModuleBase::matrix &weights,
-    const std::vector<int> &occupied,
-    int basis,
-    int spin_channels)
-{
-    if (request.pairs.empty())
-    {
-        return;
-    }
-    if (!request.embedded_ks || !request.gamma_only || !request.force_response || !converged || !data_ready)
-    {
-        throw std::logic_error("Analytic NAC requires converged KS/LR data and the force-response window");
-    }
-    if (request.kpar != 1)
-    {
-        throw std::logic_error("Analytic NAC requires a real Gamma LR channel and kpar=1");
-    }
-    if (open_shell)
-    {
-        for (int spin = 0; spin < 2; ++spin)
-        {
-            validate_nac_window(occupied.at(spin), basis - occupied.at(spin), basis);
-        }
-        validate_nac_occupations(weights, occupied, basis);
-    }
-    else
-    {
-        const int occupied_bands = occupied.at(0);
-        validate_nac_occupations(
-            weights,
-            occupied_bands,
-            basis,
-            spin_channels);
+        throw std::invalid_argument("Analytic NAC requires the complete occupied/virtual orbital window");
     }
 }
 
@@ -149,19 +84,13 @@ void validate_nac_occupations(const ModuleBase::matrix &weights, const std::vect
 
 void validate_nac_functionals(const std::string &reference_xc, const std::string &response_xc)
 {
-    validate_functional_names(reference_xc, response_xc, false);
-}
-
-void validate_nac_xc_request(const std::string &reference_xc, const std::string &response_xc)
-{
-    validate_functional_names(reference_xc, response_xc, true);
-}
-
-void validate_nac_window(int occupied, int virtuals, int basis)
-{
-    if (occupied <= 0 || virtuals <= 0 || basis <= occupied || virtuals != basis - occupied)
+    const std::string reference = NacvXC::canonical_xc_name(reference_xc);
+    const std::string response = NacvXC::canonical_xc_name(response_xc);
+    const bool reference_supported = NacvXC::has_local_xc(reference) || reference == "hf" || reference == "none";
+    const bool response_supported = NacvXC::has_local_xc(response) || response == "hf" || response == "rpa";
+    if (!reference_supported || !response_supported)
     {
-        throw std::invalid_argument("Analytic NAC requires the complete occupied/virtual orbital window");
+        throw std::invalid_argument("Analytic NAC requires implemented KS orbital-response and LR XC derivatives");
     }
 }
 
@@ -171,20 +100,11 @@ double nacv_gap_resolution(
     double bra_residual,
     double ket_residual)
 {
-    if (!std::isfinite(bra_energy) || !std::isfinite(ket_energy) || !std::isfinite(bra_residual) ||
-        !std::isfinite(ket_residual) || bra_residual < 0.0 || ket_residual < 0.0)
-    {
-        throw std::invalid_argument("NAC gap resolution requires finite energies and nonnegative residual norms");
-    }
     const double bra_magnitude = std::abs(bra_energy);
     const double ket_magnitude = std::abs(ket_energy);
     const double energy_scale = std::max(bra_magnitude, ket_magnitude);
     const double roundoff_resolution = 16.0 * std::numeric_limits<double>::epsilon() * energy_scale;
     const double resolution = bra_residual + ket_residual + roundoff_resolution;
-    if (!std::isfinite(resolution))
-    {
-        throw std::overflow_error("NAC gap resolution overflowed");
-    }
     return resolution;
 }
 
@@ -202,11 +122,6 @@ void assemble_nacv_result(NacvResult &result, const ModuleBase::matrix &force_co
 {
     const double gap = result.gap_rydberg;
     const int atoms = force_correction.nr;
-    if (!std::isfinite(gap) || !std::isfinite(resolution) || resolution < 0.0 || force_correction.nc != 3 ||
-        atoms <= 0 || result.ao_connection.nr != atoms || result.ao_connection.nc != 3)
-    {
-        throw std::invalid_argument("Invalid NAC result dimensions or gap resolution");
-    }
     result.raw.create(atoms, 3);
     result.etf.create(atoms, 3);
     result.numerator_raw.create(atoms, 3);
@@ -245,17 +160,6 @@ void print_nac_eigenpairs(
     const double *energies_ry,
     const std::vector<double> &residuals_ry)
 {
-    if (ionic_step < 1 || energies_ry == nullptr || residuals_ry.empty())
-    {
-        throw std::invalid_argument("LR residual output requires a one-based geometry and eigenpairs");
-    }
-    for (std::size_t state = 0; state < residuals_ry.size(); ++state)
-    {
-        if (!std::isfinite(energies_ry[state]) || !std::isfinite(residuals_ry[state]) || residuals_ry[state] < 0.0)
-        {
-            throw std::invalid_argument("LR residual output requires finite eigenpair diagnostics");
-        }
-    }
     const std::streamsize precision = output.precision();
     const std::ios::fmtflags flags = output.flags();
     output << std::scientific << std::setprecision(17);
@@ -288,10 +192,6 @@ void print_nac_result(
     int ket_state,
     const std::string &spin_name)
 {
-    if (ionic_step < 1 || bra_state < 0 || ket_state < 0 || bra_state == ket_state)
-    {
-        throw std::invalid_argument("NAC output requires a one-based geometry and distinct nonnegative states");
-    }
     const std::streamsize precision = output.precision();
     const std::ios::fmtflags flags = output.flags();
     output << std::scientific << std::setprecision(17);

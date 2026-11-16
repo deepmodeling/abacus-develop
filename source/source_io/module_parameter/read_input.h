@@ -147,6 +147,10 @@ class ReadInput
     void item_tdofdft();
     // items for linear response tddft
     void item_lr_tddft();
+    /** @brief Register the optional NAC state-pair and spin controls. */
+    void item_lr_nacv();
+    /** @brief Register the NAC orbital-response convergence controls. */
+    void item_lr_nacv_response();
     // items for BSE
     void item_bse();
     // items for density functional perturbation theory

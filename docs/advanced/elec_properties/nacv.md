@@ -27,7 +27,7 @@ lr_grad_maxiter 800
 Surface zero denotes the ground state. Excited-state indices are one-based.
 The default empty `lr_nac_pairs` disables NAC calculations. The configuration
 above illustrates a tighter response solve; the defaults remain `1e-6` Ry and
-100 iterations. These two controls apply to iterative CG orbital response;
+100 iterations. These two controls apply only to iterative CG orbital response for NAC;
 direct response solvers do not use them. A failed certified response solve is an
 error, rather than a silently accepted coupling. See the generated INPUT help
 for the authoritative parameter defaults, allowed values and restrictions.
@@ -60,9 +60,9 @@ Ordinary ground-state support
 for a functional does not by itself imply that its LR kernel, third XC
 derivatives and analytic NAC response are available or verified.
 The NAC evaluator rejects unavailable ground-state and LR response combinations,
-including a meta-GGA reference with an unrelated available LR kernel. Known
-unsupported names are rejected before starting KS work. An unresolved `default`
-is checked again after its actual functional is known. Ground-state aliases
+including a meta-GGA reference with an unrelated available LR kernel. The
+resolved reference and response names are checked once at the NAC batch entry,
+after the KS/LR reference is available. Ground-state aliases
 are resolved before selecting the ground-state response
 kernel; use the corresponding canonical name for `xc_kernel`.
 

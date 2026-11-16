@@ -15,6 +15,7 @@ template <typename TK, typename TR> class DensityMatrix;
 namespace LR
 {
 template <typename T> struct GradientInputs;
+struct NacvResponseControls;
 template <typename T> class LR_Force;
 
 /**
@@ -81,24 +82,13 @@ void validate_nac_occupations(const ModuleBase::matrix &weights, const std::vect
 void validate_nac_functionals(const std::string &reference_xc, const std::string &response_xc);
 
 /**
- * @brief Reject known unavailable NAC functional requests before starting KS work.
- * @param[in] reference_xc INPUT KS functional name, possibly an unresolved default.
- * @param[in] response_xc INPUT LR kernel name, possibly an unresolved default.
- * @throw std::invalid_argument For a known unsupported KS or LR response.
- * @details Default names are deferred to validate_nac_functionals after resolution;
- * accepting a default here does not certify its eventual derivative availability.
- */
-void validate_nac_xc_request(const std::string &reference_xc, const std::string &response_xc);
-
-/**
  * @brief Bound the resolution of a pair gap using certified eigenpair residuals.
  * @param[in] bra_energy Excitation energy in Ry; zero for the ground state.
  * @param[in] ket_energy Excitation energy in Ry.
  * @param[in] bra_residual Normalized operator residual norm in Ry; zero for S0.
  * @param[in] ket_residual Normalized operator residual norm in Ry.
  * @return Sum of residual norms and a floating-point roundoff bound, in Ry.
- * @throw std::invalid_argument For nonfinite energies or negative/nonfinite norms.
- * @throw std::overflow_error If the bound cannot be represented.
+ * @pre Energies and nonnegative residuals come from certified LR eigenpairs.
  */
 double nacv_gap_resolution(
     double bra_energy,
@@ -121,6 +111,8 @@ double nacv_gap_resolution(
  * @param[in] ket_energy_ry Positive ket excitation energy in Rydberg.
  * @param[in] gap_resolution_ry Nonnegative eigenpair-resolution bound in Rydberg.
  * @param[in] response_solver Existing GS Hessian solver selection.
+ * @param[in] controls INPUT-validated NAC response convergence settings.
+ * @pre The geometry-local NAC entry has validated the reference and selected roots.
  * @return Owned raw/ETF vectors in bohr^-1, numerators in Ry/bohr and diagnostics.
  * @throw std::invalid_argument For unsupported geometry, spin, energies or layouts.
  * @details Implements direct differentiation of the auxiliary determinant expansion
@@ -141,14 +133,15 @@ NacvResult evaluate_aux_tda_nac(
     double bra_energy_ry,
     double ket_energy_ry,
     double gap_resolution_ry,
-    const std::string &response_solver);
+    const std::string &response_solver,
+    const NacvResponseControls &controls);
 
 /**
  * @brief Assemble raw/ETF numerators and divide only an electronically resolved gap.
  * @param[in,out] result Gap in Ry and AO connection in bohr^-1;owns returned matrices.
  * @param[in] force_correction Pair force in Ry/bohr,atom-major nat-by-3.
  * @param[in] resolution Nonnegative residual-based gap resolution in Ry.
- * @throw std::invalid_argument For invalid dimensions,energies or resolution.
+ * @pre Matrices use the prepared nat-by-3 layout and a certified nonnegative resolution.
  * @throw std::runtime_error For a nonfinite connection or numerator.
  * @throw std::overflow_error For a nonfinite divided coupling.
  * @details Reinitializes output vectors;unresolved gaps retain numerators without division.

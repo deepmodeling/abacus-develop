@@ -1,22 +1,11 @@
 #ifndef ABACUS_SOURCE_LCAO_MODULE_LR_UTILS_LR_UTIL_PRINT_H
 #define ABACUS_SOURCE_LCAO_MODULE_LR_UTILS_LR_UTIL_PRINT_H
 
-#include "source_base/constants.h"
-#include "source_base/parallel_blkcyc.h"
-#include "source_psi/psi.h"
 #include <ATen/tensor.h>
-#include <array>
-#include <cassert>
-#include <cmath>
-#include <complex>
-#include <fstream>
+#include "source_base/constants.h"
 #include <iomanip>
-#include <iostream>
-#include <map>
 #include <ostream>
-#include <string>
-#include <utility>
-#include <vector>
+#include "source_psi/psi.h"
 #ifdef __EXX
 #include <RI/global/Tensor.h>
 #endif

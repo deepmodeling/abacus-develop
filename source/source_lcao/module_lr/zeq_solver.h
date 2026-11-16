@@ -1,16 +1,19 @@
 #ifndef ABACUS_SOURCE_LCAO_MODULE_LR_ZEQ_SOLVER_H
 #define ABACUS_SOURCE_LCAO_MODULE_LR_ZEQ_SOLVER_H
 #include "gradient_inputs.h"
-#include "source_lcao/module_lr/utils/lr_util.h"
-#include "source_lcao/module_lr/utils/lr_util_print.h"
-#include "zeq_cg.h"
-#include "zeqlin_solv.h"
 #include <algorithm>
 #include <stdexcept>
 #include <vector>
+#include "source_lcao/module_lr/utils/lr_util.h"
+#include "source_lcao/module_lr/utils/lr_util_print.h"
+#include "zeqlin_solv.h"
 
 namespace LR
 {
+    void solve_Z_CG(double* const Z, double* R, const int& ld, const int& nstates,
+        std::function<void(const double* const, double* const)> f_LZ, const bool test_force);
+    void solve_Z_CG(std::complex<double>* const Z, std::complex<double>* R, const int& ld, const int& nstates,
+        std::function<void(const std::complex<double>* const, std::complex<double>* const)> f_LZ, const bool test_force);
     /// @brief Global length of one state's Z-vector: $\sum_\sigma n_k n_{occ,\sigma} n_{virt,\sigma}$.
     /// `THam` only has to expose `nk`, `nocc` and `nvirt`.
     template<typename THam>
@@ -264,21 +267,12 @@ namespace LR
 #endif
     }
 
-    /// @brief Dispatch the explicit response solver and iterative convergence controls.
+    /// @brief Run the configured solver (and then, for testing, every supported one).
     /// Shared by the closed- and open-shell paths; `THamL` only needs `hPsi` plus what
     /// `solve_Z_lapack` reads.
-    template <typename T, typename THamL>
-    inline void solve_zeq_with(
-        T *const Z,
-        T *const R,
-        const int ld,
-        const int nstates,
-        THamL &ops_L,
-        const int nspin_x,
-        const std::string &zvec_solver,
-        const bool test_force,
-        const double response_tolerance,
-        const int response_max_iterations)
+    template<typename T, typename THamL>
+    inline void solve_zeq_with(T* const Z, T* const R, const int ld, const int nstates,
+        THamL& ops_L, const int nspin_x, const std::string& zvec_solver, const bool test_force)
     {
         for (int i = 0; i < nstates * ld; ++i)
         {
@@ -291,13 +285,10 @@ namespace LR
                 R,
                 ld,
                 nstates,
-                [&ops_L, ld, nstates](const T *const in, T *const out)
-                {
+                [&ops_L, ld, nstates](const T* const in, T* const out) {
                     ops_L.hPsi(in, out, ld, nstates);
                 },
-                test_force,
-                response_tolerance,
-                response_max_iterations);
+                test_force);
         }
         else if (zvec_solver == "lapack")
         {
@@ -321,36 +312,16 @@ namespace LR
     /// a template function (rather than a generic lambda, which needs C++14) so the closed- and
     /// open-shell call sites in `Z_vector_equation` -- which pass different `Z_vector_R`/`UR` and
     /// `Z_vector_L`/`UL` types -- can share this body under the repository's C++11 baseline.
-    template <typename T, typename TOpsR, typename TOpsL>
-    void build_and_solve_zeq(
-        TOpsR &ops_R,
-        TOpsL &ops_L,
-        const int nspin_x,
-        const T *const X,
-        container::Tensor &R,
-        T *const Z,
-        const int nloc_per_band,
-        const int nstates,
-        const std::string &zvec_solver,
-        const bool test_force,
-        const double response_tolerance,
-        const int response_max_iterations)
+    template<typename T, typename TOpsR, typename TOpsL>
+    void build_and_solve_zeq(TOpsR& ops_R, TOpsL& ops_L, const int nspin_x,
+        const T* const X, container::Tensor& R, T* const Z,
+        const int nloc_per_band, const int nstates, const std::string& zvec_solver, const bool test_force)
     {
         ModuleBase::timer::start("Z_vector", "build_and_solve_zeq");
         ops_R.hPsi(X, R.template data<T>(), nloc_per_band, nstates);  // act each operator on X
         // std::cout << "The right side of the Z-vector equation:" << std::endl;
         // LR_Util::print_value(R.template data<T>(), nstates, nloc_per_band);
-        solve_zeq_with(
-            Z,
-            R.template data<T>(),
-            nloc_per_band,
-            nstates,
-            ops_L,
-            nspin_x,
-            zvec_solver,
-            test_force,
-            response_tolerance,
-            response_max_iterations);
+        solve_zeq_with(Z, R.template data<T>(), nloc_per_band, nstates, ops_L, nspin_x, zvec_solver, test_force);
         ModuleBase::timer::end("Z_vector", "build_and_solve_zeq");
     }
 

@@ -1,7 +1,6 @@
 #ifndef ABACUS_LR_NACV_WORKFLOW_H
 #define ABACUS_LR_NACV_WORKFLOW_H
 
-#include <complex>
 #include <iosfwd>
 #include <string>
 #include <vector>
@@ -41,13 +40,10 @@ struct NacvRequest
     const std::vector<int> &pairs;
     const std::string &spin_name;
     const std::string &response_solver;
-    bool embedded_ks;
-    bool gamma_only;
-    bool force_response;
-    int kpar;
     bool local_potential;
     bool hartree_potential;
-    bool output_wavefunctions;
+    double response_tolerance;
+    int response_max_iterations;
 };
 
 /**
@@ -66,6 +62,7 @@ template <typename T> struct NacvInputs
     const ModuleBase::matrix &energies;
     const std::vector<std::vector<double>> &residuals;
     const module_dm::DensityMatrix<T, double> &ground_density;
+    const ModuleBase::matrix &occupations;
     const ModulePW::PW_Basis &density_basis;
     const ModulePW::PW_Basis &smooth_basis;
     const pseudopot_cell_vl &local_potential;
@@ -74,36 +71,6 @@ template <typename T> struct NacvInputs
     bool open_shell;
     const NacvRequest &request;
 };
-
-/**
- * @brief Check NAC reference prerequisites once before solving LR.
- * @param[in] request Borrowed batch controls; empty pairs are a no-op.
- * @param[in] open_shell Whether LR concatenates alpha and beta transitions.
- * @param[in] converged Ground-state SCF convergence flag.
- * @param[in] data_ready Availability of the KS/LR force-response data.
- * @param[in] weights Gamma occupation weights in the existing spin convention.
- * @param[in] occupied Occupied orbital counts for each spin space.
- * @param[in] basis Complete spatial orbital count.
- * @param[in] spin_channels Number of reference spin channels.
- * @throw std::logic_error For unavailable or unconverged reference data.
- */
-void validate_nac_reference(
-    const NacvRequest &request,
-    bool open_shell,
-    bool converged,
-    bool data_ready,
-    const ModuleBase::matrix &weights,
-    const std::vector<int> &occupied,
-    int basis,
-    int spin_channels);
-
-/**
- * @brief Select the existing LR residual-reporting behavior.
- * @param[in] request NAC and wavefunction-output controls.
- * @param[in] open_shell Whether the unrestricted LR branch is active.
- * @return True for requested NAC, or closed-shell wavefunction output.
- */
-bool nac_eigenpairs_requested(const NacvRequest &request, bool open_shell);
 
 /**
  * @brief Collect and report residuals while the local LR operator is alive.

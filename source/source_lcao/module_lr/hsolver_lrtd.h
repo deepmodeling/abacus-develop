@@ -12,23 +12,6 @@ template<typename T> class HamiltULR;
 template<typename T> using Real = typename GetTypeReal<T>::type;
 namespace HSolver
 {
-/**
- * @brief Reapply the LR operator and measure each normalized eigenpair residual.
- * @param[in] hm Current distributed LR Hamiltonian.
- * @param[in] amplitudes State-major local eigenvectors.
- * @param[in] energies Eigenvalues in Ry.
- * @param[in] local_size Local entries per state.
- * @param[in] state_count Number of states.
- * @return One global Euclidean residual norm per state, in Ry.
- */
-template <typename T, typename THamilt>
-std::vector<double> eigenpair_residuals(
-    const THamilt &hm,
-    const T *amplitudes,
-    const double *energies,
-    int local_size,
-    int state_count);
-
 /// Solve the distributed LR eigenproblem using the selected dense or iterative backend.
         template<typename T, typename THamilt>
         void solve(const THamilt& hm,

@@ -813,6 +813,7 @@ OBJS_IO=module_parameter/input_conv.o\
     module_parameter/read_input_item_md.o\
     module_parameter/read_inp_ofdft.o\
     module_parameter/read_input_item_sdft.o\
+    module_parameter/nacv_input.o\
     module_parameter/read_inp_tddft.o\
     module_parameter/read_inp_bse.o\
     module_parameter/read_inp_deepks.o\
@@ -1190,7 +1191,7 @@ OBJS_LR_GRAD=lr_force.o\
     state_ovlp.o\
     grad_jt.o\
     gradient_output.o\
-    lr_grad_cs.o nacv_cs.o nacv_workflow.o lr_state_io.o nacv_result.o\
+    lr_grad_cs.o nacv_cs.o nacv_workflow.o nacv_cg.o nacv_response.o nacv_io.o nacv_result.o\
     lr_grad_os.o\
     exx_proj.o\
     cvcx_serial.o\

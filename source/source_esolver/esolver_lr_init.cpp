@@ -1,16 +1,15 @@
 #include "source_lcao/module_lr/init_helpers.h"
 // Initialize LR from an embedded KS solver or standalone ground-state files.
 #include "esolver_lr_lcao_tddft.h"
-#include "source_base/module_external/scalapack_connector.h"
 #include "source_basis/module_pw/pw_basis_big.h"
-#include "source_cell/module_neighbor/sltk_atom_arrange.h"
-#include "source_hamilt/module_gint/gint.h"
-#include "source_hamilt/module_xc/xc_functional.h"
-#include "source_io/module_output/print_info.h"
-#include "source_io/module_parameter/parameter.h"
-#include "source_lcao/module_lr/nacv_cs.h"
 #include "source_lcao/module_lr/utils/lr_util.h"
 #include "source_lcao/module_lr/utils/lr_util_print.h"
+#include "source_hamilt/module_gint/gint.h"
+#include "source_hamilt/module_xc/xc_functional.h"
+#include "source_cell/module_neighbor/sltk_atom_arrange.h"
+#include "source_io/module_output/print_info.h"
+#include "source_base/module_external/scalapack_connector.h"
+#include "source_io/module_parameter/parameter.h"
 #ifdef __JSON
 #include "source_io/module_json/output_info.h"
 #endif
@@ -88,10 +87,6 @@ void ModuleESolver::ESolver_LR<T, TR>::before_all_runners(BaseCell& basecell, co
     this->inp_ = &inp;
     if (inp.esolver_type == "ks-lr")
     {
-        if (!inp.lr_nac_pairs.empty())
-        {
-            LR::validate_nac_xc_request(inp.dft_functional, inp.xc_kernel);
-        }
 #ifdef __JSON
         // The embedded KS run happens before Relax_Driver starts its first step.
         Json::init_output_array_obj();

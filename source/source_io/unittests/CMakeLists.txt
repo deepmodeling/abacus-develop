@@ -329,4 +329,4 @@ addtest(TARGET MODULE_IO_write_elf_logic_test SOURCES test_write_elf_logic.cpp)
 addtest(
   TARGET MODULE_IO_lr_nac_input
   LIBS parameter base device io_input
-  SOURCES test_read_inp_tddft.cpp ../../source_cell/stru_frame_io.cpp)
+  SOURCES test_nacv_input.cpp ../../source_cell/stru_frame_io.cpp)

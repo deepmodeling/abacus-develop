@@ -6,11 +6,11 @@
 #include "source_lcao/module_lr/hsolver_lrtd.h"
 #include "source_lcao/module_lr/lr_density.h"
 #include "source_lcao/module_lr/lr_spectrum.h"
+#include "source_lcao/module_lr/nacv_io.h"
 #include "source_lcao/module_lr/nacv_workflow.h"
 #include "source_lcao/module_lr/operator_casida/operator_lr_diag.h"
 #include "source_lcao/module_lr/ri_benchmark/ri_benchmark.h"
 #include "source_lcao/module_lr/utils/lr_io.h"
-#include "source_lcao/module_lr/utils/lr_state_io.h"
 #include "source_lcao/module_lr/utils/lr_util.h"
 #include "source_lcao/module_lr/utils/lr_util_print.h"
 #include "source_lcao/module_lr/utils/spectrum_weights.h"
@@ -44,13 +44,11 @@ void ModuleESolver::ESolver_LR<T, TR>::runner(BaseCell& basecell, const int iste
     const LR::NacvRequest nac_request{this->inp_->lr_nac_pairs,
         this->inp_->lr_nac_spin,
         this->inp_->lr_grad_solver,
-        this->inp_->esolver_type == "ks-lr",
-        this->inp_->gamma_only,
-        this->inp_->cal_force,
-        this->inp_->kpar,
         this->inp_->vl_in_h,
         this->inp_->vh_in_h,
-        this->inp_->out_wfc_lr};
+        this->inp_->lr_grad_thr,
+        this->inp_->lr_grad_maxiter};
+    const bool nac_requested = !nac_request.pairs.empty();
 
     if (this->ks_)
     {
@@ -60,10 +58,11 @@ void ModuleESolver::ESolver_LR<T, TR>::runner(BaseCell& basecell, const int iste
         XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
         this->ks_->runner(ucell, istep);
         this->conv_esolver = this->ks_->conv_esolver;
-        if (this->inp_->calculation == "relax" && !this->conv_esolver)
+        if ((this->inp_->calculation == "relax" || nac_requested) && !this->conv_esolver)
         {
             ModuleBase::WARNING_QUIT(
-                "ESolver_LR", "Excited-state relaxation requires a converged ground-state SCF; ionic step rejected");
+                "ESolver_LR",
+                "LR forces and derivative couplings require a converged ground-state SCF; ionic step rejected");
         }
         this->etot_gs_ = this->ks_->cal_energy();
         if (!this->ks_initialized_)
@@ -77,18 +76,7 @@ void ModuleESolver::ESolver_LR<T, TR>::runner(BaseCell& basecell, const int iste
         }
     }
 
-    const bool nac_data_ready = this->psi_ks_z_ && this->pelec && this->ucell_;
-    LR::validate_nac_reference(
-        nac_request,
-        this->openshell,
-        this->conv_esolver,
-        nac_data_ready,
-        this->wg_ks_all,
-        this->nocc,
-        this->nbasis,
-        this->nspin);
     std::vector<std::vector<double>> nac_residuals(this->nspin);
-    const bool collect_residuals = LR::nac_eigenpairs_requested(nac_request, this->openshell);
 
     //allocate 2-particle state and setup 2d division
     this->setup_eigenvectors_X();
@@ -102,6 +90,15 @@ void ModuleESolver::ESolver_LR<T, TR>::runner(BaseCell& basecell, const int iste
     // a relaxation writes these once per ionic step; without the suffix every step would overwrite
     // the last, and the trajectory would be impossible to inspect afterwards
     const std::string step_suffix = this->excited_relax_ ? "_step" + std::to_string(istep) : "";
+    auto efile_out = [this, &step_suffix](const std::string &label) -> std::string
+    {
+        return this->out_dir + "Excitation_Energy_" + label + step_suffix + ".dat";
+    };
+    auto vfile_out = [this, &step_suffix](const std::string &label) -> std::string
+    {
+        return this->out_dir + "Excitation_Amplitude_" + label + step_suffix + "_" +
+               std::to_string(this->my_rank_ + 1) + ".dat";
+    };
     if (this->inp_->lr_solver == "elpa")
     {
         ModuleBase::WARNING_QUIT("ESolver_LR", "ESolver_LR doesn't support elpa now.");
@@ -109,6 +106,44 @@ void ModuleESolver::ESolver_LR<T, TR>::runner(BaseCell& basecell, const int iste
     }
     else if (this->inp_->lr_solver != "spectrum")
     {
+        auto write_states = [this, &efile_out, &vfile_out, &nac_request, &step_suffix](
+                                const std::string &label,
+                                const Real<T> *e,
+                                const T *v,
+                                const int &dim,
+                                const int &nst,
+                                const int &prec = 8) -> void
+        {
+            if (!nac_request.pairs.empty())
+            {
+                LR::write_nac_states(
+                    this->out_dir,
+                    label,
+                    step_suffix,
+                    this->my_rank_,
+                    e,
+                    v,
+                    dim,
+                    nst);
+                return;
+            }
+            if (this->my_rank_ == 0)
+            {
+                assert(
+                    nst == LR_Util::write_value(
+                               efile_out(label),
+                               prec,
+                               e,
+                               nst));
+            }
+            assert(
+                nst * dim == LR_Util::write_value(
+                                 vfile_out(label),
+                                 prec,
+                                 v,
+                                 nst,
+                                 dim));
+        };
         std::vector<double> precondition(this->inp_->lr_solver == "lapack" ? 0 : nloc_per_state, 1.0);
         // allocate and initialize A matrix and density matrix
         if (openshell)
@@ -153,7 +188,7 @@ void ModuleESolver::ESolver_LR<T, TR>::runner(BaseCell& basecell, const int iste
                 energies,
                 nloc_per_state,
                 nstates,
-                collect_residuals,
+                nac_requested,
                 geometry_index,
                 this->spin_types[0],
                 this->my_rank_,
@@ -162,11 +197,8 @@ void ModuleESolver::ESolver_LR<T, TR>::runner(BaseCell& basecell, const int iste
 
             {
 
-                LR::write_excitation_states(
-                    this->out_dir,
+                write_states(
                     "openshell",
-                    step_suffix,
-                    this->my_rank_,
                     energies,
                     amplitudes,
                     nloc_per_state,
@@ -221,7 +253,7 @@ void ModuleESolver::ESolver_LR<T, TR>::runner(BaseCell& basecell, const int iste
                     energies,
                     nloc_per_state,
                     nstates,
-                    collect_residuals,
+                    nac_requested,
                     geometry_index,
                     spin_types[is],
                     this->my_rank_,
@@ -230,11 +262,8 @@ void ModuleESolver::ESolver_LR<T, TR>::runner(BaseCell& basecell, const int iste
 
                 {
 
-                    LR::write_excitation_states(
-                        this->out_dir,
+                    write_states(
                         spin_types[is],
-                        step_suffix,
-                        this->my_rank_,
                         energies,
                         amplitudes,
                         nloc_per_state,
@@ -320,6 +349,7 @@ void ModuleESolver::ESolver_LR<T, TR>::runner(BaseCell& basecell, const int iste
             this->pelec->ekb,
             nac_residuals,
             ground_density,
+            this->wg_ks_all,
             *this->pw_rhod,
             *this->pw_rho,
             this->vloc(),

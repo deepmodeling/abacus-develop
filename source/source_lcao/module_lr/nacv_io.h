@@ -1,7 +1,6 @@
-#ifndef ABACUS_LR_STATE_IO_H
-#define ABACUS_LR_STATE_IO_H
+#ifndef ABACUS_LR_NACV_IO_H
+#define ABACUS_LR_NACV_IO_H
 
-#include <complex>
 #include <string>
 
 namespace LR
@@ -20,7 +19,7 @@ namespace LR
  * Output calls execute with NDEBUG as well as in assertion-enabled builds.
  */
 template <typename T>
-void write_excitation_states(
+void write_nac_states(
     const std::string &directory,
     const std::string &label,
     const std::string &suffix,

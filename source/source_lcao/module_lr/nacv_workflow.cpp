@@ -3,9 +3,10 @@
 #include "gradient_inputs.h"
 #include "hamilt_casida.h"
 #include "hamilt_ulr.h"
-#include "hsolver_lrtd.h"
 #include "lr_amp.h"
 #include "nacv_cs.h"
+#include "nacv_response.h"
+#include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 
 #include <algorithm>
@@ -26,6 +27,149 @@ class NacWorkflowTimer
     NacWorkflowTimer(const NacWorkflowTimer &) = delete;
     NacWorkflowTimer &operator=(const NacWorkflowTimer &) = delete;
 };
+template <typename T, typename THamilt>
+std::vector<double> nac_eigenpair_residuals(
+    const THamilt &,
+    const T *,
+    const double *,
+    int,
+    int);
+NacvResult evaluate_nac_pair(
+    const NacvInputs<double> &,
+    int,
+    int,
+    int);
+void validate_nac_data(const NacvInputs<double> &);
+} // namespace
+
+template <typename T, typename THamilt>
+std::vector<double> collect_nac_eigenpairs(
+    const THamilt &hamiltonian,
+    const T *amplitudes,
+    const double *energies,
+    int local_size,
+    int state_count,
+    bool requested,
+    int ionic_step,
+    const std::string &spin_name,
+    int rank,
+    std::ostream &output)
+{
+    if (!requested)
+    {
+        return {};
+    }
+    std::vector<double> residuals = nac_eigenpair_residuals(
+        hamiltonian,
+        amplitudes,
+        energies,
+        local_size,
+        state_count);
+    if (rank == 0)
+    {
+        print_nac_eigenpairs(
+            output,
+            ionic_step,
+            spin_name,
+            energies,
+            residuals);
+    }
+    return residuals;
+}
+
+template <typename T> void run_nac_requests(const NacvInputs<T> &data, int)
+{
+    if (!data.request.pairs.empty())
+    {
+        throw std::logic_error("Analytic auxiliary TDA NAC is implemented for real Gamma orbitals only");
+    }
+}
+
+template <> void run_nac_requests<double>(const NacvInputs<double> &data, int ionic_step)
+{
+    const NacWorkflowTimer timer;
+    validate_nac_data(data);
+    const auto &request = data.request;
+    const int channel = request.spin_name == "triplet" ? 1 : 0;
+    for (std::size_t pair = 0; pair < request.pairs.size(); pair += 2)
+    {
+        const int bra = request.pairs[pair];
+        const int ket = request.pairs[pair + 1];
+        const NacvResult coupling = evaluate_nac_pair(
+            data,
+            bra,
+            ket,
+            channel);
+        if (data.gradient.my_rank == 0)
+        {
+            print_nac_result(
+                data.gradient.ofs,
+                coupling,
+                ionic_step,
+                bra,
+                ket,
+                request.spin_name);
+        }
+    }
+}
+
+namespace
+{
+
+/**
+ * @brief Reapply the LR operator and measure global eigenpair residual norms.
+ * @param[in] hm Distributed operator for the current geometry.
+ * @param[in] amplitudes State-major local eigenvectors.
+ * @param[in] energies Excitation energies in Ry.
+ * @param[in] local_size Local entries per root, possibly zero on empty ranks.
+ * @param[in] state_count Number of solved roots.
+ * @return One global normalized Euclidean residual per root in Ry.
+ */
+template <typename T, typename THamilt>
+std::vector<double> nac_eigenpair_residuals(
+    const THamilt &hm,
+    const T *amplitudes,
+    const double *energies,
+    int local_size,
+    int state_count)
+{
+    ModuleBase::timer::start("LR", "nac_eigenpair_residuals");
+    const std::size_t total_size = static_cast<std::size_t>(local_size) * state_count;
+    const std::size_t storage_size = std::max<std::size_t>(1, total_size);
+    const T zero = T(0);
+    std::vector<T> applied(storage_size, zero);
+    hm.hPsi(
+        amplitudes,
+        applied.data(),
+        local_size,
+        state_count);
+    std::vector<double> residuals(state_count);
+    for (int state = 0; state < state_count; ++state)
+    {
+        double residual_square = 0.0;
+        double norm_square = 0.0;
+        for (int row = 0; row < local_size; ++row)
+        {
+            const std::size_t index = static_cast<std::size_t>(state) * local_size + row;
+            const T response_residual = applied[index] - energies[state] * amplitudes[index];
+            const double residual = std::abs(response_residual);
+            const double magnitude = std::abs(amplitudes[index]);
+            residual_square += residual * residual;
+            norm_square += magnitude * magnitude;
+        }
+        Parallel_Reduce::reduce_all(residual_square);
+        Parallel_Reduce::reduce_all(norm_square);
+        if (!std::isfinite(residual_square) || !std::isfinite(norm_square) || norm_square <= 0.0)
+        {
+            ModuleBase::timer::end("LR", "nac_eigenpair_residuals");
+            throw std::runtime_error("Invalid LR eigenpair residual for analytic NAC");
+        }
+        const double normalized_square = residual_square / norm_square;
+        residuals[state] = std::sqrt(normalized_square);
+    }
+    ModuleBase::timer::end("LR", "nac_eigenpair_residuals");
+    return residuals;
+}
 
 /**
  * @brief Widen one root using the existing shared amplitude-distribution helper.
@@ -67,30 +211,11 @@ NacvResult evaluate_nac_pair(
     int spin_channel)
 {
 
-    const double absolute_magnetization = data.gradient.ucell.magnet.abs_mag;
-    if (!std::isfinite(absolute_magnetization) || absolute_magnetization < 0.0)
-    {
-        throw std::invalid_argument("Analytic NAC requires finite reference magnetization");
-    }
-    if (!data.open_shell && absolute_magnetization > 1e-6)
-    {
-        throw std::invalid_argument(
-            "Analytic NAC requires a closed-shell reference with absolute magnetization <= 1e-6");
-    }
-    if (bra_state < 0 || ket_state < 0 || bra_state > data.energies.nc || ket_state > data.energies.nc ||
-        bra_state == ket_state)
-    {
-        throw std::out_of_range("Analytic NAC needs two distinct surfaces inside the solved state window");
-    }
     const bool reverse = bra_state > ket_state;
     const int lower = std::min(bra_state, ket_state);
     const int upper = std::max(bra_state, ket_state);
     const bool ground_bra = lower == 0;
     const std::vector<double> &residuals = data.residuals.at(spin_channel);
-    if (residuals.size() != static_cast<std::size_t>(data.energies.nc))
-    {
-        throw std::logic_error("Analytic NAC requires certified LR eigenpair residuals");
-    }
     const int ket_index = upper - 1;
     const ct::Tensor ket = pad_nac_state(data, spin_channel, ket_index);
     ct::Tensor bra;
@@ -136,6 +261,7 @@ NacvResult evaluate_nac_pair(
         inputs.hybrid_alpha
 #endif
     );
+    const NacvResponseControls controls{data.request.response_tolerance, data.request.response_max_iterations};
     LR::NacvResult result = LR::evaluate_aux_tda_nac(
         inputs,
         force_terms,
@@ -148,107 +274,67 @@ NacvResult evaluate_nac_pair(
         bra_energy,
         ket_energy,
         gap_resolution,
-        data.request.response_solver);
+        data.request.response_solver,
+        controls);
     if (reverse)
     {
         LR::reverse_nac_pair(result);
     }
     return result;
 }
-} // namespace
 
-template <typename T, typename THamilt>
-std::vector<double> collect_nac_eigenpairs(
-    const THamilt &hamiltonian,
-    const T *amplitudes,
-    const double *energies,
-    int local_size,
-    int state_count,
-    bool requested,
-    int ionic_step,
-    const std::string &spin_name,
-    int rank,
-    std::ostream &output)
+/**
+ * @brief Validate the computed reference once at the NAC batch boundary.
+ * @param[in] data Borrowed, solver-owned geometry and converged LR state data.
+ * @details INPUT already checked mode flags, pair indices and CG controls.
+ * Occupations, complete orbital windows and positive requested excitation
+ * energies can only be checked after the actual KS/LR reference is available.
+ */
+void validate_nac_data(const NacvInputs<double> &data)
 {
-    if (!requested)
-    {
-        return {};
-    }
-    std::vector<double> residuals = HSolver::eigenpair_residuals(
-        hamiltonian,
-        amplitudes,
-        energies,
-        local_size,
-        state_count);
-    if (rank == 0)
-    {
-        print_nac_eigenpairs(
-            output,
-            ionic_step,
-            spin_name,
-            energies,
-            residuals);
-    }
-    return residuals;
-}
-
-template <typename T> void run_nac_requests(const NacvInputs<T> &data, int)
-{
-    if (!data.request.pairs.empty())
-    {
-        throw std::logic_error("Analytic auxiliary TDA NAC is implemented for real Gamma orbitals only");
-    }
-}
-
-template <> void run_nac_requests<double>(const NacvInputs<double> &data, int ionic_step)
-{
-    const NacWorkflowTimer timer;
+    const auto &inputs = data.gradient;
     const auto &request = data.request;
     const int channel = request.spin_name == "triplet" ? 1 : 0;
-    if (data.gradient.nk != 1 || channel < 0 || channel >= data.gradient.nspin)
-    {
-        throw std::logic_error("Analytic NAC requires a real Gamma LR channel and kpar=1");
-    }
-    if (data.open_shell && (channel != 0 || request.spin_name != "updown"))
-    {
-        throw std::invalid_argument("Unrestricted analytic NAC requires lr_nac_spin=updown");
-    }
-    if (!data.open_shell && request.spin_name == "updown")
-    {
-        throw std::invalid_argument("lr_nac_spin=updown requires an unrestricted LR reference");
-    }
     if (data.open_shell)
     {
+        if (request.spin_name != "updown")
+        {
+            throw std::invalid_argument("Unrestricted analytic NAC requires lr_nac_spin=updown");
+        }
         for (int spin = 0; spin < 2; ++spin)
         {
-            validate_nac_window(data.gradient.nocc[spin], data.virtuals[spin], data.gradient.nbasis);
+            validate_nac_window(inputs.nocc[spin], data.virtuals[spin], inputs.nbasis);
         }
+        validate_nac_occupations(data.occupations, inputs.nocc, inputs.nbasis);
     }
     else
     {
-        validate_nac_window(data.gradient.nocc[channel], data.virtuals[channel], data.gradient.nbasis);
-    }
-    for (std::size_t pair = 0; pair < request.pairs.size(); pair += 2)
-    {
-        const int bra = request.pairs[pair];
-        const int ket = request.pairs[pair + 1];
-        const NacvResult coupling = evaluate_nac_pair(
-            data,
-            bra,
-            ket,
-            channel);
-        if (data.gradient.my_rank == 0)
+        if (request.spin_name == "updown" || inputs.ucell.magnet.abs_mag > 1e-6)
         {
-            print_nac_result(
-                data.gradient.ofs,
-                coupling,
-                ionic_step,
-                bra,
-                ket,
-                request.spin_name);
+            throw std::invalid_argument("Spin-adapted analytic NAC requires a closed-shell reference");
+        }
+        validate_nac_window(inputs.nocc[channel], data.virtuals[channel], inputs.nbasis);
+        validate_nac_occupations(
+            data.occupations,
+            inputs.nocc[channel],
+            inputs.nbasis,
+            inputs.nspin);
+    }
+    std::string reference_xc = inputs.dft_functional;
+    if (reference_xc == "default")
+    {
+        reference_xc = inputs.ucell.atoms[0].ncpp.xc_func;
+    }
+    validate_nac_functionals(reference_xc, inputs.xc_kernel);
+    for (const int state : request.pairs)
+    {
+        if (state > 0 && !(data.energies(channel, state - 1) > 0.0))
+        {
+            throw std::invalid_argument("Analytic NAC requires positive requested excitation energies");
         }
     }
 }
+} // namespace
 
 template void run_nac_requests<std::complex<double>>(const NacvInputs<std::complex<double>> &, int);
 

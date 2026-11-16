@@ -1,5 +1,4 @@
 #include "../nacv_cs.h"
-#include "../nacv_workflow.h"
 
 #include <gtest/gtest.h>
 #include <iomanip>
@@ -40,19 +39,7 @@ TEST(NacvResult, RequiresCompleteOrbitalWindowWithoutIntegerOverflow)
     EXPECT_THROW(LR::validate_nac_window(largest, largest, 28), std::invalid_argument);
 }
 
-TEST(NacvResult, DefersOnlyUnresolvedDefaultsBeforeScf)
-{
-    EXPECT_NO_THROW(LR::validate_nac_xc_request("default", "PBE"));
-    EXPECT_NO_THROW(LR::validate_nac_xc_request("PZ", "default"));
-    EXPECT_NO_THROW(LR::validate_nac_xc_request("DEFAULT", "default"));
-    EXPECT_NO_THROW(LR::validate_nac_xc_request("NONE", "rpa"));
-    EXPECT_NO_THROW(LR::validate_nac_xc_request("HF", "hf"));
-    EXPECT_THROW(LR::validate_nac_functionals("default", "pbe"), std::invalid_argument);
-    EXPECT_THROW(LR::validate_nac_functionals("PBE", "default"), std::invalid_argument);
-    EXPECT_THROW(LR::validate_nac_functionals("default", "default"), std::invalid_argument);
-}
-
-TEST(NacvResult, RejectsKnownUnavailableBuiltinsBeforeScf)
+TEST(NacvResult, RejectsUnavailableResolvedFunctionalNames)
 {
     const std::vector<std::string> unsupported = {"PBESOL",
         "REVPBE",
@@ -73,10 +60,10 @@ TEST(NacvResult, RejectsKnownUnavailableBuiltinsBeforeScf)
         "BLYP_LR"};
     for (const std::string &name : unsupported)
     {
-        EXPECT_THROW(LR::validate_nac_xc_request(name, "pbe"), std::invalid_argument);
-        EXPECT_THROW(LR::validate_nac_xc_request("PBE", name), std::invalid_argument);
-        EXPECT_THROW(LR::validate_nac_xc_request("default", name), std::invalid_argument);
-        EXPECT_THROW(LR::validate_nac_xc_request(name, "default"), std::invalid_argument);
+        EXPECT_THROW(LR::validate_nac_functionals(name, "pbe"), std::invalid_argument);
+        EXPECT_THROW(LR::validate_nac_functionals("PBE", name), std::invalid_argument);
+        EXPECT_THROW(LR::validate_nac_functionals("default", name), std::invalid_argument);
+        EXPECT_THROW(LR::validate_nac_functionals(name, "default"), std::invalid_argument);
     }
 }
 
@@ -198,44 +185,6 @@ TEST(NacvResult, GapResolutionUsesOperatorResidualsAndRoundoff)
             0.0,
             0.0),
         roundoff);
-    const double nan = std::numeric_limits<double>::quiet_NaN();
-    const double infinity = std::numeric_limits<double>::infinity();
-    EXPECT_THROW(
-        LR::nacv_gap_resolution(
-            nan,
-            1.0,
-            0.0,
-            0.0),
-        std::invalid_argument);
-    EXPECT_THROW(
-        LR::nacv_gap_resolution(
-            0.0,
-            infinity,
-            0.0,
-            0.0),
-        std::invalid_argument);
-    EXPECT_THROW(
-        LR::nacv_gap_resolution(
-            0.0,
-            1.0,
-            -1.0,
-            0.0),
-        std::invalid_argument);
-    EXPECT_THROW(
-        LR::nacv_gap_resolution(
-            0.0,
-            1.0,
-            0.0,
-            nan),
-        std::invalid_argument);
-    const double largest = std::numeric_limits<double>::max();
-    EXPECT_THROW(
-        LR::nacv_gap_resolution(
-            0.0,
-            1.0,
-            largest,
-            largest),
-        std::overflow_error);
 }
 
 TEST(NacvResult, ResolvesSignedGapAndPreservesUnits)
@@ -292,18 +241,6 @@ TEST(NacvResult, ReversePreservesGapWeightedNumerators)
     EXPECT_DOUBLE_EQ(result.raw(0, 0), original.raw(0, 0));
 }
 
-TEST(NacvResult, RejectsInvalidShapeGapAndResolutionInRelease)
-{
-    LR::NacvResult result = example_result(2.0);
-    const ModuleBase::matrix force = example_force();
-    ModuleBase::matrix invalid_force(1, 2);
-    EXPECT_THROW(LR::assemble_nacv_result(result, invalid_force, 1e-8), std::invalid_argument);
-    EXPECT_THROW(LR::assemble_nacv_result(result, force, -1.0), std::invalid_argument);
-    const double nan = std::numeric_limits<double>::quiet_NaN();
-    EXPECT_THROW(LR::assemble_nacv_result(result, force, nan), std::invalid_argument);
-    result.gap_rydberg = nan;
-    EXPECT_THROW(LR::assemble_nacv_result(result, force, 1e-8), std::invalid_argument);
-}
 
 TEST(NacvResult, RejectsNonfiniteConnectionAndForce)
 {
@@ -369,30 +306,12 @@ TEST(NacvResult, OutputConvertsNumeratorsToHartreeAndRestoresStream)
     EXPECT_DOUBLE_EQ(numerator_etf, 1.0);
 }
 
-TEST(NacvResult, OutputRejectsInvalidIndicesAndReportsStreamFailure)
+TEST(NacvResult, OutputReportsStreamFailure)
 {
     LR::NacvResult result = example_result(2.0);
     const ModuleBase::matrix force = example_force();
     LR::assemble_nacv_result(result, force, 1e-8);
     std::ostringstream output;
-    EXPECT_THROW(
-        LR::print_nac_result(
-            output,
-            result,
-            0,
-            0,
-            1,
-            "singlet"),
-        std::invalid_argument);
-    EXPECT_THROW(
-        LR::print_nac_result(
-            output,
-            result,
-            1,
-            1,
-            1,
-            "singlet"),
-        std::invalid_argument);
     output.setstate(std::ios::badbit);
     EXPECT_THROW(
         LR::print_nac_result(
@@ -437,15 +356,6 @@ TEST(NacvResult, EigenpairDiagnosticsKeepPhysicalUnitsAndStreamFormat)
         EXPECT_DOUBLE_EQ(energy, state);
         EXPECT_DOUBLE_EQ(residual, state * 1e-10);
     }
-    const std::vector<double> invalid_residuals{-1.0};
-    EXPECT_THROW(
-        LR::print_nac_eigenpairs(
-            output,
-            3,
-            "singlet",
-            energies,
-            invalid_residuals),
-        std::invalid_argument);
 }
 
 TEST(NacvResult, AcceptsUnequalIntegerUnrestrictedSpinSpaces)
@@ -481,131 +391,4 @@ TEST(NacvResult, RejectsMissingUnrestrictedSpinWindows)
     EXPECT_THROW(LR::validate_nac_occupations(weights, std::vector<int>{4, 0}, 8), std::invalid_argument);
     EXPECT_THROW(LR::validate_nac_occupations(weights, std::vector<int>{4, 8}, 8), std::invalid_argument);
     EXPECT_THROW(LR::validate_nac_occupations(weights, std::vector<int>{4, 2}, 7), std::invalid_argument);
-}
-
-TEST(NacvResult, ReferenceChecksAreDisabledWithoutRequestedPairs)
-{
-    const std::vector<int> empty;
-    const std::string spin = "singlet";
-    const std::string solver = "lapack";
-    const LR::NacvRequest request{empty,
-        spin,
-        solver,
-        false,
-        false,
-        false,
-        2,
-        true,
-        true,
-        false};
-    const ModuleBase::matrix weights;
-    EXPECT_NO_THROW(
-        LR::validate_nac_reference(
-            request,
-            false,
-            false,
-            false,
-            weights,
-            empty,
-            0,
-            0));
-    EXPECT_FALSE(LR::nac_eigenpairs_requested(request, false));
-}
-
-TEST(NacvResult, PreservesClosedAndUnrestrictedDiagnosticSelection)
-{
-    std::vector<int> pairs;
-    const std::string spin = "singlet";
-    const std::string solver = "lapack";
-    const LR::NacvRequest request{pairs,
-        spin,
-        solver,
-        true,
-        true,
-        true,
-        1,
-        true,
-        true,
-        true};
-    EXPECT_TRUE(LR::nac_eigenpairs_requested(request, false));
-    EXPECT_FALSE(LR::nac_eigenpairs_requested(request, true));
-    pairs = {0, 1};
-    EXPECT_TRUE(LR::nac_eigenpairs_requested(request, true));
-}
-
-TEST(NacvResult, ReferenceChecksKeepIntegerRksAndUksConventions)
-{
-    const std::vector<int> pairs{0, 1};
-    const std::vector<int> occupied{1, 1};
-    const std::string spin = "singlet";
-    const std::string solver = "lapack";
-    const LR::NacvRequest request{pairs,
-        spin,
-        solver,
-        true,
-        true,
-        true,
-        1,
-        true,
-        true,
-        false};
-    ModuleBase::matrix rks(1, 3);
-    rks(0, 0) = 2.0;
-    EXPECT_NO_THROW(
-        LR::validate_nac_reference(
-            request,
-            false,
-            true,
-            true,
-            rks,
-            occupied,
-            3,
-            1));
-    EXPECT_THROW(
-        LR::validate_nac_reference(
-            request,
-            false,
-            false,
-            true,
-            rks,
-            occupied,
-            3,
-            1),
-        std::logic_error);
-    EXPECT_THROW(
-        LR::validate_nac_reference(
-            request,
-            false,
-            true,
-            false,
-            rks,
-            occupied,
-            3,
-            1),
-        std::logic_error);
-    ModuleBase::matrix uks(2, 3);
-    uks(0, 0) = 1.0;
-    uks(1, 0) = 1.0;
-    EXPECT_NO_THROW(
-        LR::validate_nac_reference(
-            request,
-            true,
-            true,
-            true,
-            uks,
-            occupied,
-            3,
-            2));
-    uks(1, 0) = 0.5;
-    EXPECT_THROW(
-        LR::validate_nac_reference(
-            request,
-            true,
-            true,
-            true,
-            uks,
-            occupied,
-            3,
-            2),
-        std::invalid_argument);
 }

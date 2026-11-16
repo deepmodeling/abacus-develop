@@ -4,10 +4,9 @@
 #include "cal_hs_grad.h"
 #include "gradient_inputs.h"
 #include "hamilt_zeq_l.h"
+#include "nacv_response.h"
 #include "pulay_hc.h"
-#include "source_base/parallel_cell.h"
 #include "source_base/timer.h"
-#include "zeq_solver.h"
 
 #include <algorithm>
 #include <cmath>
@@ -37,104 +36,6 @@ bool unrestricted_nac(const LR::GradientInputs<double> &inputs)
 }
 
 /**
- * @brief Validate rank-local NAC inputs before a response or matrix collective.
- * @param[in] inputs Borrowed real-Gamma geometry, orbital layouts and kernels.
- * @param[in] spin_channel Closed-shell adaptation index, or zero for unrestricted amplitudes.
- * @param[in] bra_ground True when the bra is S0 and bra amplitudes are unused.
- * @param[in] bra Local bra amplitudes; may be null for S0 or zero local storage.
- * @param[in] ket Local ket amplitudes; may be null only for zero local storage.
- * @param[in] bra_energy Bra excitation energy in Ry, zero only for S0.
- * @param[in] ket_energy Positive ket excitation energy in Ry.
- * @param[in] resolution Nonnegative energy-resolution bound in Ry.
- * @throw std::invalid_argument For inconsistent dimensions or nonfinite data.
- * @details The caller synchronizes validation failures before any collective.
- */
-void validate_inputs(
-    const LR::GradientInputs<double> &inputs,
-    int spin_channel,
-    bool bra_ground,
-    const double *bra,
-    const double *ket,
-    double bra_energy,
-    double ket_energy,
-    double resolution)
-{
-    if (inputs.nk != 1 || inputs.ucell.get_npol() != 1 || inputs.nloc < 0 || spin_channel < 0 ||
-        spin_channel >= static_cast<int>(inputs.spin_types.size()) ||
-        spin_channel >= static_cast<int>(inputs.px.size()))
-    {
-        throw std::invalid_argument("Analytic auxiliary TDA NAC requires a real Gamma spin layout");
-    }
-    const bool open_shell = unrestricted_nac(inputs);
-    if (open_shell && (inputs.nspin != 2 || spin_channel != 0 || inputs.px.size() != 2 || inputs.nocc.size() != 2 ||
-                          inputs.nvirt.size() != 2))
-    {
-        throw std::invalid_argument("Unrestricted NAC requires two explicit spin orbital windows");
-    }
-    std::int64_t expected_local_size = inputs.px[spin_channel].size();
-    if (open_shell)
-    {
-        expected_local_size = inputs.px[0].size() + inputs.px[1].size();
-    }
-    if (spin_channel >= static_cast<int>(inputs.nocc.size()) || spin_channel >= static_cast<int>(inputs.nvirt.size()) ||
-        inputs.nloc != expected_local_size)
-    {
-        throw std::invalid_argument("Analytic auxiliary TDA NAC orbital windows are inconsistent");
-    }
-    std::int64_t global_dimension = 0;
-    const int window_count = open_shell ? 2 : 1;
-    for (int spin = 0; spin < window_count; ++spin)
-    {
-        int window = spin_channel;
-        if (open_shell)
-        {
-            window = spin;
-        }
-        LR::validate_nac_window(inputs.nocc[window], inputs.nvirt[window], inputs.nbasis);
-        global_dimension += static_cast<std::int64_t>(inputs.nocc[window]) * inputs.nvirt[window];
-    }
-    if (global_dimension > std::numeric_limits<int>::max())
-    {
-        throw std::invalid_argument("Analytic NAC orbital response exceeds supported solver dimensions");
-    }
-    std::string reference_xc = inputs.dft_functional;
-    if (reference_xc == "default")
-    {
-        if (inputs.ucell.ntype <= 0 || inputs.ucell.atoms == nullptr)
-        {
-            throw std::invalid_argument("Analytic NAC cannot resolve the default functional without pseudopotentials");
-        }
-        reference_xc = inputs.ucell.atoms[0].ncpp.xc_func;
-    }
-    LR::validate_nac_functionals(reference_xc, inputs.xc_kernel);
-    const std::string &spin = inputs.spin_types[spin_channel];
-    if (spin != "singlet" && spin != "triplet" && !open_shell)
-    {
-        throw std::invalid_argument("Unsupported spin adaptation for analytic auxiliary TDA NAC");
-    }
-    if (!std::isfinite(bra_energy) || !std::isfinite(ket_energy) || ket_energy <= 0.0 || !std::isfinite(resolution) ||
-        resolution < 0.0)
-    {
-        throw std::invalid_argument("Analytic auxiliary TDA NAC requires finite energies and gap resolution");
-    }
-    if ((bra_ground && bra_energy != 0.0) || (!bra_ground && bra_energy <= 0.0))
-    {
-        throw std::invalid_argument("Analytic auxiliary TDA NAC excitation energies are inconsistent");
-    }
-    if (inputs.nloc > 0 && (ket == nullptr || (!bra_ground && bra == nullptr)))
-    {
-        throw std::invalid_argument("Analytic auxiliary TDA NAC amplitudes are missing on an owning rank");
-    }
-    for (int index = 0; index < inputs.nloc; ++index)
-    {
-        if (!std::isfinite(ket[index]) || (!bra_ground && !std::isfinite(bra[index])))
-        {
-            throw std::invalid_argument("Analytic auxiliary TDA NAC amplitudes must be finite");
-        }
-    }
-}
-
-/**
  * @brief Transform the particle-minus-hole interstate density to the AO layout.
  * @param[in] inputs Borrowed geometry, orbitals and distributed matrix layouts.
  * @param[in] spin_channel Channel supplying the occupied and virtual windows.
@@ -143,7 +44,7 @@ void validate_inputs(
  * @param[in] ket Local ket amplitudes in the same canonical MO gauge and layout.
  * @return Owned AO coefficient tensor in inputs.pmat's local layout.
  * @pre The two states are distinct orthogonal roots; the reference-overlap
- * density is omitted. Inputs have passed validate_inputs on all ranks.
+ * density is omitted. Inputs have passed the geometry-local NAC batch entry.
  * @details Uses D(p,q)=<bra|a_q^dagger a_p|ket>, with the spin sum implicit.
  */
 ct::Tensor pair_density_ao(
@@ -511,7 +412,8 @@ ct::Tensor ground_adjoint(
     const double *ket,
     double energy,
     const std::string &solver,
-    bool open_shell)
+    bool open_shell,
+    const LR::NacvResponseControls &controls)
 {
     const int ld = inputs.nloc;
     ct::Tensor rhs = LR_Util::newTensor<double>({1, ld});
@@ -552,7 +454,7 @@ ct::Tensor ground_adjoint(
             inputs.nk,
             ld,
             global_dimension);
-        LR::solve_zeq_with(
+        LR::solve_nac_zeq_with(
             solution.data<double>(),
             rhs.data<double>(),
             ld,
@@ -561,8 +463,7 @@ ct::Tensor ground_adjoint(
             2,
             solver,
             false,
-            inputs.response_tolerance,
-            inputs.response_max_iterations);
+            controls);
         return solution;
     }
     const std::string spin = "singlet";
@@ -591,7 +492,7 @@ ct::Tensor ground_adjoint(
         input_directory,
         inputs.out_dir,
         inputs.dft_functional);
-    LR::solve_zeq_with(
+    LR::solve_nac_zeq_with(
         solution.data<double>(),
         rhs.data<double>(),
         ld,
@@ -600,8 +501,7 @@ ct::Tensor ground_adjoint(
         1,
         solver,
         false,
-        inputs.response_tolerance,
-        inputs.response_max_iterations);
+        controls);
     return solution;
 }
 
@@ -621,36 +521,10 @@ NacvResult evaluate_aux_tda_nac(
     double bra_energy_ry,
     double ket_energy_ry,
     double gap_resolution_ry,
-    const std::string &response_solver)
+    const std::string &response_solver,
+    const NacvResponseControls &controls)
 {
     const NacvTimer timer;
-    std::string validation_error;
-    try
-    {
-        validate_inputs(
-            inputs,
-            spin_channel,
-            bra_ground,
-            bra,
-            ket,
-            bra_energy_ry,
-            ket_energy_ry,
-            gap_resolution_ry);
-    }
-    catch (const std::exception &exception)
-    {
-        validation_error = exception.what();
-    }
-    const ModuleBase::CommunicationDomain domain = ModuleBase::world_comm_domain();
-    const int invalid_local_input = !validation_error.empty();
-    if (domain.max(invalid_local_input) != 0)
-    {
-        if (validation_error.empty())
-        {
-            validation_error = "Analytic auxiliary TDA NAC input is invalid on another MPI rank";
-        }
-        throw std::invalid_argument(validation_error);
-    }
     NacvResult result;
     result.gap_rydberg = ket_energy_ry - bra_energy_ry;
     result.raw.create(inputs.ucell.nat, 3);
@@ -680,7 +554,8 @@ NacvResult evaluate_aux_tda_nac(
             ket,
             ket_energy_ry,
             response_solver,
-            open_shell);
+            open_shell,
+            controls);
         ct::Tensor zero_amplitudes = LR_Util::newTensor<double>({1, inputs.nloc});
         zero_amplitudes.zero();
         const std::vector<double> energy{ket_energy_ry};
@@ -741,7 +616,7 @@ NacvResult evaluate_aux_tda_nac(
         const std::string &spin = inputs.spin_types[spin_channel];
         std::weak_ptr<PotHxcLR> potential = inputs.pot[spin_channel];
         const int pair_count = 2;
-        Z_vector_equation(
+        solve_nac_zvector(
             inputs,
             combinations.data<double>(),
             response.data<double>(),
@@ -750,7 +625,8 @@ NacvResult evaluate_aux_tda_nac(
             spin,
             input_directory,
             open_shell,
-            response_solver);
+            response_solver,
+            controls);
         const double mean_energy = 0.5 * (bra_energy_ry + ket_energy_ry);
         const std::vector<double> energies{mean_energy, mean_energy};
         std::vector<ModuleBase::matrix> forces;
