@@ -86,7 +86,7 @@ class ESolver_KS_LCAO_TDDFT : public ESolver_KS_LCAO<std::complex<double>, TR>
     //! Moving spatial gauge for Ehrenfest dynamics, to calculate the correction term arising from the movement of basis
     bool use_td_moving_gauge = false;
     //! Moving-basis correction matrices, allocated when the moving spatial gauge is enabled.
-    module_rt::TD_MovingGauge* td_mg_ = nullptr;
+    std::unique_ptr<module_rt::TD_MovingGauge> td_mg_;
 
     //! Whether the saved restart endpoint has been replayed to rebuild the electronic state.
     bool restart_done = false;

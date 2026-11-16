@@ -1,4 +1,6 @@
 #include "velocity_op.h"
+#include "source_base/atom_basis_view.h"
+#include "source_base/parallel_blkcyc.h"
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
 #include "source_lcao/module_rt/snap_psb_half_tddft.h"
@@ -13,28 +15,24 @@ template <typename TR>
 bool Velocity_op<TR>::init_done = false;
 template <typename TR>
 Velocity_op<TR>::Velocity_op(const UnitCell* ucell_in,
-                      const Grid_Driver* GridD_in,
-                      const Parallel_Orbitals* paraV,
-                      const LCAO_Orbitals& orb,
-                      const TwoCenterIntegrator* intor)
-    : ucell(ucell_in), paraV(paraV) , orb_(orb), intor_(intor)
-{   
+                             const Grid_Driver* GridD_in,
+                             const BasisFlattenedIndexing& basis,
+                             const Parallel_Blkcyclic& layout,
+                             const LCAO_Orbitals& orb,
+                             const TwoCenterIntegrator* intor)
+    : ucell(ucell_in), layout_(layout), orb_(orb), intor_(intor)
+{
+    basis_.reset(new BasisFlattenedIndexing(basis));
+    this->build_atom_basis();
+
     // for length gauge, the A(t) = 0 for all the time.
     this->cart_At = ModuleBase::Vector3<double>(0,0,0);
-    this->initialize_grad_term(GridD_in, paraV);
-    this->initialize_vcomm_r(GridD_in, paraV);
-}
-template <typename TR>
-Velocity_op<TR>::~Velocity_op()
-{
-    for (int dir=0;dir<3;dir++)
-    {
-        delete this->current_term[dir];
-    }
+    this->initialize_grad_term(GridD_in);
+    this->initialize_vcomm_r(GridD_in);
 }
 //allocate space for current_term
 template <typename TR>
-void Velocity_op<TR>::initialize_vcomm_r(const Grid_Driver* GridD, const Parallel_Orbitals* paraV)
+void Velocity_op<TR>::initialize_vcomm_r(const Grid_Driver* GridD)
 {
     ModuleBase::TITLE("Velocity_op", "initialize_vcomm_r");
     ModuleBase::timer::start("Velocity_op", "initialize_vcomm_r");
@@ -42,14 +40,17 @@ void Velocity_op<TR>::initialize_vcomm_r(const Grid_Driver* GridD, const Paralle
     {
         const bool cal_force = PARAM.inp.cal_force;
         const int nlocal = PARAM.globalv.nlocal;
-        r_calculator.init_nonlocal(*ucell, *paraV, orb_, cal_force, nlocal);
+        r_calculator.init_nonlocal(*ucell, layout_, orb_, cal_force, nlocal);
         init_done = true;
     }
 
     for (int dir=0;dir<3;dir++)
     {
         if (this->current_term[dir] == nullptr)
-        this->current_term[dir] = new hamilt::HContainer<std::complex<double>>(paraV);
+        {
+            this->current_term[dir].reset(new hamilt::HContainer<std::complex<double>>(
+                *basis_, layout_, static_cast<std::complex<double>*>(nullptr)));
+        }
     }
     this->adjs_vcommr.clear();
     this->adjs_vcommr.reserve(this->ucell->nat);
@@ -92,19 +93,16 @@ void Velocity_op<TR>::initialize_vcomm_r(const Grid_Driver* GridD, const Paralle
                 const int I2 = adjs.natom[ad2];
                 const int iat2 = ucell->itia2iat(T2, I2);
                 ModuleBase::Vector3<int>& R_index2 = adjs.box[ad2];
-                if (paraV->is_invalid_atom_pair(iat1, iat2))
+                if (atom_rows_[iat1].empty() || atom_cols_[iat2].empty())
                 {
                     continue;
                 }
-                hamilt::AtomPair<std::complex<double>> tmp(iat1,
-                                         iat2,
-                                         R_index2.x - R_index1.x,
-                                         R_index2.y - R_index1.y,
-                                         R_index2.z - R_index1.z,
-                                         paraV);
+                const ModuleBase::Vector3<int> R_vector(R_index2.x - R_index1.x,
+                                                        R_index2.y - R_index1.y,
+                                                        R_index2.z - R_index1.z);
                 for (int dir=0;dir<3;dir++)
                 {
-                    this->current_term[dir]->insert_pair(tmp);
+                    this->current_term[dir]->insert_pair(iat1, iat2, R_vector);
                 }
             }
         }
@@ -117,14 +115,17 @@ void Velocity_op<TR>::initialize_vcomm_r(const Grid_Driver* GridD, const Paralle
     ModuleBase::timer::end("Velocity_op", "initialize_vcomm_r");
 }
 template <typename TR>
-void Velocity_op<TR>::initialize_grad_term(const Grid_Driver* GridD, const Parallel_Orbitals* paraV)
+void Velocity_op<TR>::initialize_grad_term(const Grid_Driver* GridD)
 {
     ModuleBase::TITLE("Velocity_op", "initialize_grad_term");
     ModuleBase::timer::start("Velocity_op", "initialize_grad_term");
     for (int dir=0;dir<3;dir++)
     {
         if (this->current_term[dir] == nullptr)
-        this->current_term[dir] = new hamilt::HContainer<std::complex<double>>(paraV);
+        {
+            this->current_term[dir].reset(new hamilt::HContainer<std::complex<double>>(
+                *basis_, layout_, static_cast<std::complex<double>*>(nullptr)));
+        }
     }
     this->adjs_grad.clear();
     this->adjs_grad.reserve(this->ucell->nat);
@@ -141,7 +142,7 @@ void Velocity_op<TR>::initialize_grad_term(const Grid_Driver* GridD, const Paral
             const int T2 = adjs.ntype[ad1];
             const int I2 = adjs.natom[ad1];
             const int iat2 = ucell->itia2iat(T2, I2);
-            if (paraV->is_invalid_atom_pair(iat1, iat2))
+            if (atom_rows_[iat1].empty() || atom_cols_[iat2].empty())
             {
                 continue;
             }
@@ -164,10 +165,9 @@ void Velocity_op<TR>::initialize_grad_term(const Grid_Driver* GridD, const Paral
             const int I2 = adjs.natom[ad];
             int iat2 = ucell->itia2iat(T2, I2);
             ModuleBase::Vector3<int>& R_index = adjs.box[ad];
-            hamilt::AtomPair<std::complex<double>> tmp(iat1, iat2, R_index.x, R_index.y, R_index.z, paraV);
             for (int dir=0;dir<3;dir++)
             {
-                this->current_term[dir]->insert_pair(tmp);
+                this->current_term[dir]->insert_pair(iat1, iat2, R_index);
             }
         }
     }
@@ -179,13 +179,29 @@ void Velocity_op<TR>::initialize_grad_term(const Grid_Driver* GridD, const Paral
 
     ModuleBase::timer::end("Velocity_op", "initialize_grad_term");
 }
+
+template <typename TR>
+void Velocity_op<TR>::build_atom_basis()
+{
+    atom_rows_.clear();
+    atom_cols_.clear();
+    atom_rows_.reserve(ucell->nat);
+    atom_cols_.reserve(ucell->nat);
+    for (int iat = 0; iat < ucell->nat; ++iat)
+    {
+        const AtomBasisView rows = AtomBasisView::rows(*basis_, layout_, iat);
+        const AtomBasisView cols = AtomBasisView::cols(*basis_, layout_, iat);
+        atom_rows_.push_back(rows);
+        atom_cols_.push_back(cols);
+    }
+}
+
 template <typename TR>
 void Velocity_op<TR>::calculate_vcomm_r()
 {
     ModuleBase::TITLE("Velocity_op", "calculate_vcomm_r");
     ModuleBase::timer::start("Velocity_op", "calculate_vcomm_r");
 
-    const Parallel_Orbitals* paraV = this->current_term[0]->get_atom_pair(0).get_paraV();
     const int npol = this->ucell->get_npol();
 
     // 1. calculate <psi|beta> for each pair of atoms
@@ -212,15 +228,44 @@ void Velocity_op<TR>::calculate_vcomm_r()
                 const int iat1 = ucell->itia2iat(T1, I1);
                 const ModuleBase::Vector3<double>& tau1 = adjs.adjacent_tau[ad];
                 const Atom* atom1 = &ucell->atoms[T1];
-                auto all_indexes = paraV->get_indexes_row(iat1);
-                auto col_indexes = paraV->get_indexes_col(iat1);
-                // insert col_indexes into all_indexes to get universal set with no repeat elements
-                all_indexes.insert(all_indexes.end(), col_indexes.begin(), col_indexes.end());
-                std::sort(all_indexes.begin(), all_indexes.end());
-                all_indexes.erase(std::unique(all_indexes.begin(), all_indexes.end()), all_indexes.end());
-                for (int iw1l = 0; iw1l < all_indexes.size(); iw1l += npol)
+                const AtomBasisView& rows = atom_rows_[iat1];
+                const AtomBasisView& cols = atom_cols_[iat1];
+                // Both views enumerate strictly increasing atom-local basis entries,
+                // npol consecutive ones per spatial orbital.  Merging the two sorted
+                // streams on the fly with index cursors gives the universal set with
+                // no repeat elements that the previous sort plus unique built in one
+                // materialized vector, and every npol-th merged entry is processed.
+                int irow = 0;
+                int icol = 0;
+                int iunion = 0;
+                while (irow < rows.nloc() || icol < cols.nloc())
                 {
-                    const int iw1 = all_indexes[iw1l] / npol;
+                    int entry = 0;
+                    if (icol >= cols.nloc() || (irow < rows.nloc() && rows[irow] < cols[icol]))
+                    {
+                        entry = rows[irow];
+                        ++irow;
+                    }
+                    else
+                    {
+                        entry = cols[icol];
+                        ++icol;
+                    }
+                    if (irow < rows.nloc() && rows[irow] == entry)
+                    {
+                        ++irow;
+                    }
+                    if (icol < cols.nloc() && cols[icol] == entry)
+                    {
+                        ++icol;
+                    }
+                    const bool sampled = (iunion % npol == 0);
+                    ++iunion;
+                    if (!sampled)
+                    {
+                        continue;
+                    }
+                    const int iw1 = entry / npol;
                     //std::vector<std::vector<std::complex<double>>> nlm;
                     std::vector<std::vector<double>> nlm;
                     // nlm is a vector of vectors, but size of outer vector is only 1 when out_current is false
@@ -242,7 +287,7 @@ void Velocity_op<TR>::calculate_vcomm_r()
                                                 T0);
                     for (int dir = 0; dir < 4; dir++)
                     {
-                        nlm_tot[ad][dir].insert({all_indexes[iw1l], nlm[dir]});
+                        nlm_tot[ad][dir].insert({entry, nlm[dir]});
                     }
                 }
             }
@@ -309,7 +354,6 @@ void Velocity_op<TR>::calculate_vcomm_r()
                         this->cal_vcomm_r_IJR(iat1,
                                             iat2,
                                             T0,
-                                            paraV,
                                             nlm_tot[ad1],
                                             nlm_tot[ad2],
                                             tmp_c);
@@ -327,7 +371,6 @@ void Velocity_op<TR>::cal_vcomm_r_IJR(
     const int& iat1,
     const int& iat2,
     const int& T0,
-    const Parallel_Orbitals* paraV,
     const std::vector<std::unordered_map<int, std::vector<double>>>& nlm1_all,
     const std::vector<std::unordered_map<int, std::vector<double>>>& nlm2_all,
     std::complex<double>** current_mat_p)
@@ -339,36 +382,36 @@ void Velocity_op<TR>::cal_vcomm_r_IJR(
     // ---------------------------------------------
     // calculate the Nonlocal matrix for each pair of orbitals
     // ---------------------------------------------
-    auto row_indexes = paraV->get_indexes_row(iat1);
-    auto col_indexes = paraV->get_indexes_col(iat2);
+    const AtomBasisView& rows = atom_rows_[iat1];
+    const AtomBasisView& cols = atom_cols_[iat2];
     // step_trace = 0 for NSPIN=1,2; ={0, 1, local_col, local_col+1} for NSPIN=4
     std::vector<int> step_trace(npol * npol, 0);
     for (int is = 0; is < npol; is++)
     {
         for (int is2 = 0; is2 < npol; is2++)
         {
-            step_trace[is * npol + is2] = col_indexes.size() * is + is2;
+            step_trace[is * npol + is2] = cols.nloc() * is + is2;
         }
     }
     // calculate the local matrix
     const TR* tmp_d = nullptr;
-    for (int iw1l = 0; iw1l < row_indexes.size(); iw1l += npol)
+    for (int iw1l = 0; iw1l < rows.nloc(); iw1l += npol)
     {
-        // const std::vector<std::complex<double>>* nlm1 = &(nlm1_all[0].find(row_indexes[iw1l])->second);
+        // const std::vector<std::complex<double>>* nlm1 = &(nlm1_all[0].find(rows[iw1l])->second);
         //std::vector<const std::vector<std::complex<double>>*> nlm1;
         std::vector<const std::vector<double>*> nlm1;
         for (int dir = 0; dir < 4; dir++)
         {
-            nlm1.push_back(&(nlm1_all[dir].find(row_indexes[iw1l])->second));
+            nlm1.push_back(&(nlm1_all[dir].find(rows[iw1l])->second));
         }
 
-        for (int iw2l = 0; iw2l < col_indexes.size(); iw2l += npol)
+        for (int iw2l = 0; iw2l < cols.nloc(); iw2l += npol)
         {
             //std::vector<const std::vector<std::complex<double>>*> nlm2;
             std::vector<const std::vector<double>*> nlm2;
             for (int dir = 0; dir < 4; dir++)
             {
-                nlm2.push_back(&(nlm2_all[dir].find(col_indexes[iw2l])->second));
+                nlm2.push_back(&(nlm2_all[dir].find(cols[iw2l])->second));
             }
 
 #ifdef __DEBUG
@@ -403,7 +446,7 @@ void Velocity_op<TR>::cal_vcomm_r_IJR(
         }
         for (int dir = 0; dir < 3; dir++)
         {
-            current_mat_p[dir] += (npol - 1) * col_indexes.size();
+            current_mat_p[dir] += (npol - 1) * cols.nloc();
         }
     }
 }
@@ -417,7 +460,6 @@ void Velocity_op<TR>::calculate_grad_term()
     }
     ModuleBase::timer::start("Velocity_op", "calculate_grad_term");
 
-    const Parallel_Orbitals* paraV = this->current_term[0]->get_atom_pair(0).get_paraV();
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
@@ -446,7 +488,7 @@ void Velocity_op<TR>::calculate_grad_term()
             }
             if (tmp_c[0] != nullptr)
             {
-                this->cal_grad_IJR(iat1, iat2, paraV, dtau, tmp_c);
+                this->cal_grad_IJR(iat1, iat2, dtau, tmp_c);
             }
             else
             {
@@ -458,10 +500,9 @@ void Velocity_op<TR>::calculate_grad_term()
 }
 template <typename TR>
 void Velocity_op<TR>::cal_grad_IJR(const int& iat1,
-                              const int& iat2,
-                              const Parallel_Orbitals* paraV,
-                              const ModuleBase::Vector3<double>& dtau,
-                              std::complex<double>** current_mat_p)
+                                  const int& iat2,
+                                  const ModuleBase::Vector3<double>& dtau,
+                                  std::complex<double>** current_mat_p)
 {
     // ---------------------------------------------
     // get info of orbitals of atom1 and atom2 from ucell
@@ -495,21 +536,21 @@ void Velocity_op<TR>::cal_grad_IJR(const int& iat1,
     // calculate the Ekinetic matrix for each pair of orbitals
     // ---------------------------------------------
     double grad[3] = {0, 0, 0};
-    auto row_indexes = paraV->get_indexes_row(iat1);
-    auto col_indexes = paraV->get_indexes_col(iat2);
-    const int step_trace = col_indexes.size() + 1;
-    for(int iw1l = 0; iw1l < row_indexes.size(); iw1l += npol)
+    const AtomBasisView& rows = atom_rows_[iat1];
+    const AtomBasisView& cols = atom_cols_[iat2];
+    const int step_trace = cols.nloc() + 1;
+    for(int iw1l = 0; iw1l < rows.nloc(); iw1l += npol)
     {
-        const int iw1 = row_indexes[iw1l] / npol;
+        const int iw1 = rows[iw1l] / npol;
         const int L1 = iw2l1[iw1];
         const int N1 = iw2n1[iw1];
         const int m1 = iw2m1[iw1];
         // convert m (0,1,...2l) to M (-l, -l+1, ..., l-1, l)
         int M1 = (m1 % 2 == 0) ? -m1 / 2 : (m1 + 1) / 2;
 
-        for (int iw2l = 0; iw2l < col_indexes.size(); iw2l += npol)
+        for (int iw2l = 0; iw2l < cols.nloc(); iw2l += npol)
         {
-            const int iw2 = col_indexes[iw2l] / npol;
+            const int iw2 = cols[iw2l] / npol;
             const int L2 = iw2l2[iw2];
             const int N2 = iw2n2[iw2];
             const int m2 = iw2m2[iw2];
@@ -533,7 +574,7 @@ void Velocity_op<TR>::cal_grad_IJR(const int& iat1,
         }
         for (int dir = 0; dir < 3; dir++)
         {
-            current_mat_p[dir] += (npol - 1) * col_indexes.size();
+            current_mat_p[dir] += (npol - 1) * cols.nloc();
         }   
     }
 }

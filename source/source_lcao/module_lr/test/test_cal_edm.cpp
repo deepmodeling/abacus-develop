@@ -44,10 +44,10 @@ template<typename T> void check_contractions()
     const int nvirt = 3;
     const int nbands = nocc + nvirt;
     const int block = 1;
-    BlockCyclicDistribution pc;
-    BlockCyclicDistribution px;
-    BlockCyclicDistribution pao;
-    BlockCyclicDistribution pmat;
+    Parallel_Blkcyclic pc;
+    Parallel_Blkcyclic px;
+    Parallel_Blkcyclic pao;
+    Parallel_Blkcyclic pmat;
     LR_Util::setup_2d_division(pc, block, naos, nbands);
 #ifdef __MPI
     LR_Util::setup_2d_division(px, block, nvirt, nocc, pc.ictxt());

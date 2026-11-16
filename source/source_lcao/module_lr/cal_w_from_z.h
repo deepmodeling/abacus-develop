@@ -27,8 +27,8 @@ namespace LR
         const int nk,
         const int nocc,
         const int nvirt,
-        const BlockCyclicDistribution& px,
-        const BlockCyclicDistribution& p_occ_occ)
+        const Parallel_Blkcyclic& px,
+        const Parallel_Blkcyclic& p_occ_occ)
     {
         for (int ik = 0;ik < nk;++ik)
         {
@@ -71,7 +71,7 @@ namespace LR
         const double eig,
         const double* const eig_ks,
         const psi::Psi<T>& psi_ks, // the closed-shell caller supplies a single-spin view
-        const std::vector<BlockCyclicDistribution>& p_occ_occ,
+        const std::vector<Parallel_Blkcyclic>& p_occ_occ,
         const std::string& spin_type = "singlet")
     {
         const int& nspin = inputs.nspin;
@@ -82,8 +82,8 @@ namespace LR
         const std::vector<double>& orb_cutoff = inputs.orb_cutoff;
         const Grid_Driver& gd = inputs.gd;
         const K_Vectors& kv = inputs.kv;
-        const std::vector<BlockCyclicDistribution>& px = inputs.px;
-        const BlockCyclicDistribution& pc = inputs.pc;
+        const std::vector<Parallel_Blkcyclic>& px = inputs.px;
+        const Parallel_Blkcyclic& pc = inputs.pc;
         const Parallel_Orbitals& pmat = inputs.pmat;
         const std::string& dft_functional = inputs.dft_functional;
         std::weak_ptr<PotHxcLR> pot_hxc_gs = inputs.pot_hxc_gs;
@@ -220,7 +220,7 @@ namespace LR
         const T* const X,
         const double eig,
         const double* const eig_ks,
-        const std::vector<BlockCyclicDistribution>& p_occ_occ)
+        const std::vector<Parallel_Blkcyclic>& p_occ_occ)
     {
         const int& nspin = inputs.nspin;
         const int& naos = inputs.nbasis;
@@ -230,8 +230,8 @@ namespace LR
         const std::vector<double>& orb_cutoff = inputs.orb_cutoff;
         const Grid_Driver& gd = inputs.gd;
         const K_Vectors& kv = inputs.kv;
-        const std::vector<BlockCyclicDistribution>& px = inputs.px;
-        const BlockCyclicDistribution& pc = inputs.pc;
+        const std::vector<Parallel_Blkcyclic>& px = inputs.px;
+        const Parallel_Blkcyclic& pc = inputs.pc;
         const Parallel_Orbitals& pmat = inputs.pmat;
         const std::string& dft_functional = inputs.dft_functional;
         std::weak_ptr<PotHxcLR> pot_hxc_gs = inputs.pot_hxc_gs;

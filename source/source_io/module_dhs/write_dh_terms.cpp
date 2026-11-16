@@ -1,4 +1,6 @@
 #include "source_base/timer.h"
+#include "source_base/basis_flattened_indexing.h"
+#include "source_basis/module_ao/elem_basis_idx_orb.h"
 #include "source_io/module_hs/hsr_writer.h"
 #include "source_cell/ucell_io.h"
 #include "source_io/module_parameter/parameter.h"
@@ -111,10 +113,17 @@ void fill_dH_t(WriteDHParams& params, PerIContainers& c)
     const Grid_Driver& gd = *params.gd;
     const TwoCenterBundle& two_center_bundle = *params.two_center_bundle;
     const std::vector<double>& orb_cutoff = params.orb->cutoffs();
+    const ModuleBase::Element_Basis_Index::Range basis_range =
+        ModuleBase::Element_Basis_Index::construct_range(*params.orb);
+    const ModuleBase::Element_Basis_Index::IndexLNM basis_hierarchy =
+        ModuleBase::Element_Basis_Index::construct_index(basis_range);
+    const BasisFlattenedIndexing basis(basis_hierarchy, ucell.iat2it, ucell.get_npol());
 
     hamilt::EKinetic<hamilt::OperatorLCAO<double, double>> tmp_ekinetic(nullptr,
                                                                         params.kv->kvec_d,
                                                                         nullptr,
+                                                                        basis,
+                                                                        params.pv->para_2d(),
                                                                         &ucell,
                                                                         orb_cutoff,
                                                                         &gd,

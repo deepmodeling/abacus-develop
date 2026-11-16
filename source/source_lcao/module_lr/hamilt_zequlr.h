@@ -34,7 +34,7 @@ namespace LR
         // The caller prepares them; construction only binds immutable layout data.
         ZeqULR(const std::vector<int>& nocc_in,
             const std::vector<int>& nvirt_in,
-            const std::vector<BlockCyclicDistribution>& pX_in,
+            const std::vector<Parallel_Blkcyclic>& pX_in,
             const int nk_in,
             const int local_dimension,
             const int global_dimension)
@@ -158,7 +158,7 @@ namespace LR
 
         const std::vector<int>& nocc;
         const std::vector<int>& nvirt;
-        const std::vector<BlockCyclicDistribution>& pX;
+        const std::vector<Parallel_Blkcyclic>& pX;
         const int nk = 1;
         const int ldim = 1;
         const int gdim = 1;

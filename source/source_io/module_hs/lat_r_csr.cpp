@@ -1,4 +1,5 @@
 #include "lat_r_csr.h"
+#include "source_base/parallel_blkcyc.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
@@ -22,14 +23,14 @@ inline void write_data(std::ofstream& ofs, const std::complex<double>& data, con
 template<typename T>
 void ModuleIO::save_lat_r(std::ofstream& ofs,
     const SparseRBlock<T>& XR,
-    const Parallel_Orbitals& pv,
+    const Parallel_Blkcyclic& layout,
     const SparseWriteOptions& options)
 {
-    const int nlocal = pv.para_2d().nrglb();
+    const int nlocal = layout.nrglb();
     if (nlocal <= 0)
     {
         ModuleBase::WARNING_QUIT("ModuleIO::save_lat_r",
-                                 "Parallel_Orbitals global row size must be positive.");
+                                 "Block-cyclic global row size must be positive.");
     }
 
     std::vector<long long> indptr;
@@ -43,7 +44,7 @@ void ModuleIO::save_lat_r(std::ofstream& ofs,
     {
         ModuleBase::GlobalFunc::ZEROS(line.data(), nlocal);
 
-        if (!options.reduce || pv.para_2d().irloc(row) >= 0)
+        if (!options.reduce || layout.irloc(row) >= 0)
         {
             auto iter = XR.find(row);
             if (iter != XR.end())
@@ -123,10 +124,10 @@ void ModuleIO::save_lat_r(std::ofstream& ofs,
 
 template void ModuleIO::save_lat_r<double>(std::ofstream& ofs,
     const SparseRBlock<double>& XR,
-    const Parallel_Orbitals& pv,
+    const Parallel_Blkcyclic& layout,
     const SparseWriteOptions& options);
 
 template void ModuleIO::save_lat_r<std::complex<double>>(std::ofstream& ofs,
     const SparseRBlock<std::complex<double>>& XR,
-    const Parallel_Orbitals& pv,
+    const Parallel_Blkcyclic& layout,
     const SparseWriteOptions& options);

@@ -56,11 +56,9 @@ void ESolver_BSE<T, TR>::before_all_runners(BaseCell& basecell, const Input_para
     this->set_dimension();
     //  setup 2d-block distribution for AO-matrix and KS wfc
     LR_Util::setup_2d_division(this->paraMat_.para_2d(), 1, this->nbasis, this->nbasis);
-    const int nrow = this->paraMat_.para_2d().nrloc();
-    const int block_size = this->paraMat_.para_2d().nb();
 #ifdef __MPI
-    this->paraMat_.set_desc_wfc_Eij(this->nbasis, this->nbands, nrow);
-    int err = this->paraMat_.set_nloc_wfc_Eij(this->nbands, GlobalV::ofs_running, GlobalV::ofs_warning);
+    this->paraMat_.set_wfc_and_mo_layouts(this->nbasis, this->nbands);
+    int err = this->paraMat_.set_wfc_and_mo_sizes(this->nbands, GlobalV::ofs_running, GlobalV::ofs_warning);
     this->paraMat_.set_atomic_trace(ucell.get_iat2iwt(), ucell.nat, this->nbasis);
 #else
     this->paraMat_.nrow_bands = this->nbasis;
@@ -69,7 +67,7 @@ void ESolver_BSE<T, TR>::before_all_runners(BaseCell& basecell, const Input_para
 
     this->psi_ks.reset(new psi::Psi<T>(this->kv.get_nks(),
                                        this->paraMat_.ncol_bands,
-                                       nrow,
+                                       this->paraMat_.para_2d().nrloc(),
                                        this->kv.ngk,
                                        true));
     this->psi_ks_global = new psi::Psi<T>(this->kv.get_nks(),
@@ -85,7 +83,7 @@ void ESolver_BSE<T, TR>::before_all_runners(BaseCell& basecell, const Input_para
         this->reset_dim_spin2();
     }
 
-    LR_Util::setup_2d_division(this->paraC_, block_size, this->nbasis, this->nbands
+    LR_Util::setup_2d_division(this->paraC_, this->paraMat_.para_2d().nb(), this->nbasis, this->nbands
 #ifdef __MPI
             , this->paraMat_.para_2d().ictxt()
 #endif
@@ -771,7 +769,7 @@ void ESolver_BSE<T, TR>::allocate_eigen_infos()
 
     for (int is = 0; is < this->nspin; ++is)
     {
-        BlockCyclicDistribution px;
+        Parallel_Blkcyclic px;
         LR_Util::setup_2d_division(px, /*nb2d=*/1, this->nvirt[is], this->nocc[is]
 #ifdef __MPI
             , this->paraC_.ictxt()

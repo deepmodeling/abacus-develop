@@ -6,6 +6,16 @@
 
 namespace hamilt
 {
+/** Remap two-spin storage after an operator grows the active H(R).
+ * stored_layout describes the old buffer; current contains the assembled active spin.
+ * New blocks of the inactive spin are zero until its operators assemble them.
+ */
+template <typename T>
+void resize_spin_storage(HContainer<T>& current,
+                         const HContainer<T>& stored_layout,
+                         std::vector<T>& storage,
+                         const int current_spin);
+
 /**
  * @brief calculate the Hk matrix with specific k vector
  * @param hR the HContainer of <I,J,R> atom pairs

@@ -1,4 +1,5 @@
 #include "../overlap.h"
+#include "test_operator_basis.h"
 
 #include "gtest/gtest.h"
 
@@ -18,6 +19,7 @@
 // modify test_size to test different size of unitcell
 int test_size = 10;
 int test_nw = 10;
+
 class OverlapTest : public ::testing::Test
 {
   protected:
@@ -103,8 +105,9 @@ TEST_F(OverlapTest, constructHRcd2cd)
     hsk.set_zero_sk();
     Grid_Driver gd(0, 0);
 
+    const BasisFlattenedIndexing basis = operator_test::make_s_orbital_basis(ucell);
     hamilt::Overlap<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>
-        op(&hsk, kvec_d_in, nullptr, SR_complex, &ucell, {1.0}, &gd, &intor_);
+        op(&hsk, kvec_d_in, nullptr, SR_complex, basis, paraV->para_2d(), &ucell, {1.0}, &gd, &intor_);
     op.contributeHR();
 
     // Check that SR_complex has been initialized
@@ -141,8 +144,9 @@ TEST_F(OverlapTest, getSk)
     hsk.set_zero_sk();
     Grid_Driver gd(0, 0);
 
+    const BasisFlattenedIndexing basis = operator_test::make_s_orbital_basis(ucell);
     hamilt::Overlap<hamilt::OperatorLCAO<double, double>>
-        op(&hsk, kvec_d_in, nullptr, SR, &ucell, {1.0}, &gd, &intor_);
+        op(&hsk, kvec_d_in, nullptr, SR, basis, paraV->para_2d(), &ucell, {1.0}, &gd, &intor_);
 
     op.contributeHR();
     op.contributeHk(0);
@@ -170,8 +174,9 @@ TEST_F(OverlapTest, kVectorCaching)
     hsk.set_zero_sk();
     Grid_Driver gd(0, 0);
 
+    const BasisFlattenedIndexing basis = operator_test::make_s_orbital_basis(ucell);
     hamilt::Overlap<hamilt::OperatorLCAO<std::complex<double>, double>>
-        op(&hsk, kvec_d_in, nullptr, SR, &ucell, {1.0}, &gd, &intor_);
+        op(&hsk, kvec_d_in, nullptr, SR, basis, paraV->para_2d(), &ucell, {1.0}, &gd, &intor_);
 
     op.contributeHR();
 
@@ -234,8 +239,9 @@ TEST_F(OverlapTest, singleAtom)
     hsk.set_zero_sk();
     Grid_Driver gd(0, 0);
 
-    hamilt::Overlap<hamilt::OperatorLCAO<double, double>>
-        op(&hsk, kvec_d_in, nullptr, SR_single, &ucell_single, {1.0}, &gd, &intor_);
+    const BasisFlattenedIndexing basis_single = operator_test::make_s_orbital_basis(ucell_single);
+    hamilt::Overlap<hamilt::OperatorLCAO<double, double>> op(
+        &hsk, kvec_d_in, nullptr, SR_single, basis_single, paraV_single->para_2d(), &ucell_single, {1.0}, &gd, &intor_);
 
     op.contributeHR();
 
@@ -281,8 +287,9 @@ TEST_F(OverlapTest, differentOrbitals)
     hsk.set_zero_sk();
     Grid_Driver gd(0, 0);
 
+    const BasisFlattenedIndexing basis = operator_test::make_s_orbital_basis(ucell);
     hamilt::Overlap<hamilt::OperatorLCAO<double, double>>
-        op(&hsk, kvec_d_in, nullptr, SR, &ucell, {1.0}, &gd, &intor_);
+        op(&hsk, kvec_d_in, nullptr, SR, basis, paraV->para_2d(), &ucell, {1.0}, &gd, &intor_);
 
     op.contributeHR();
 
@@ -304,8 +311,9 @@ TEST_F(OverlapTest, forceCalculation)
     hsk.set_zero_sk();
     Grid_Driver gd(0, 0);
 
+    const BasisFlattenedIndexing basis = operator_test::make_s_orbital_basis(ucell);
     hamilt::Overlap<hamilt::OperatorLCAO<double, double>>
-        op(&hsk, kvec_d_in, nullptr, SR, &ucell, {1.0}, &gd, &intor_);
+        op(&hsk, kvec_d_in, nullptr, SR, basis, paraV->para_2d(), &ucell, {1.0}, &gd, &intor_);
 
     op.contributeHR();
 
@@ -366,8 +374,9 @@ TEST_F(OverlapTest, stressCalculation)
     hsk.set_zero_sk();
     Grid_Driver gd(0, 0);
 
+    const BasisFlattenedIndexing basis = operator_test::make_s_orbital_basis(ucell);
     hamilt::Overlap<hamilt::OperatorLCAO<double, double>>
-        op(&hsk, kvec_d_in, nullptr, SR, &ucell, {1.0}, &gd, &intor_);
+        op(&hsk, kvec_d_in, nullptr, SR, basis, paraV->para_2d(), &ucell, {1.0}, &gd, &intor_);
 
     op.contributeHR();
 
@@ -432,8 +441,9 @@ TEST_F(OverlapTest, forceStressTogether)
     hsk.set_zero_sk();
     Grid_Driver gd(0, 0);
 
+    const BasisFlattenedIndexing basis = operator_test::make_s_orbital_basis(ucell);
     hamilt::Overlap<hamilt::OperatorLCAO<double, double>>
-        op(&hsk, kvec_d_in, nullptr, SR, &ucell, {1.0}, &gd, &intor_);
+        op(&hsk, kvec_d_in, nullptr, SR, basis, paraV->para_2d(), &ucell, {1.0}, &gd, &intor_);
 
     op.contributeHR();
 
@@ -495,8 +505,9 @@ TEST_F(OverlapTest, zeroOrbitalCutoff)
     Grid_Driver gd(0, 0);
 
     // Use zero cutoff - should result in no atom pairs (except possibly self-interaction)
+    const BasisFlattenedIndexing basis = operator_test::make_s_orbital_basis(ucell);
     hamilt::Overlap<hamilt::OperatorLCAO<double, double>>
-        op(&hsk, kvec_d_in, nullptr, SR, &ucell, {0.0}, &gd, &intor_);
+        op(&hsk, kvec_d_in, nullptr, SR, basis, paraV->para_2d(), &ucell, {0.0}, &gd, &intor_);
 
     op.contributeHR();
 
@@ -514,8 +525,9 @@ TEST_F(OverlapTest, largeOrbitalCutoff)
     Grid_Driver gd(0, 0);
 
     // Use very large cutoff - should include all atoms
+    const BasisFlattenedIndexing basis = operator_test::make_s_orbital_basis(ucell);
     hamilt::Overlap<hamilt::OperatorLCAO<double, double>>
-        op(&hsk, kvec_d_in, nullptr, SR, &ucell, {1000.0}, &gd, &intor_);
+        op(&hsk, kvec_d_in, nullptr, SR, basis, paraV->para_2d(), &ucell, {1000.0}, &gd, &intor_);
 
     op.contributeHR();
 
@@ -548,8 +560,9 @@ TEST_F(OverlapTest, cutoffBoundary)
     Grid_Driver gd(0, 0);
 
     // Use cutoff of 5.0 - atoms at exactly this distance should be excluded
+    const BasisFlattenedIndexing basis = operator_test::make_s_orbital_basis(ucell);
     hamilt::Overlap<hamilt::OperatorLCAO<double, double>>
-        op(&hsk, kvec_d_in, nullptr, SR, &ucell, {2.5}, &gd, &intor_);
+        op(&hsk, kvec_d_in, nullptr, SR, basis, paraV->para_2d(), &ucell, {2.5}, &gd, &intor_);
 
     op.contributeHR();
 
@@ -566,8 +579,9 @@ TEST_F(OverlapTest, hermitianProperty)
     hsk.set_zero_sk();
     Grid_Driver gd(0, 0);
 
+    const BasisFlattenedIndexing basis = operator_test::make_s_orbital_basis(ucell);
     hamilt::Overlap<hamilt::OperatorLCAO<std::complex<double>, double>>
-        op(&hsk, kvec_d_in, nullptr, SR, &ucell, {1.0}, &gd, &intor_);
+        op(&hsk, kvec_d_in, nullptr, SR, basis, paraV->para_2d(), &ucell, {1.0}, &gd, &intor_);
 
     op.contributeHR();
     op.contributeHk(0);
@@ -600,8 +614,9 @@ TEST_F(OverlapTest, nullSRPointer)
     Grid_Driver gd(0, 0);
 
     // Pass nullptr for SR - should not crash during construction
+    const BasisFlattenedIndexing basis = operator_test::make_s_orbital_basis(ucell);
     hamilt::Overlap<hamilt::OperatorLCAO<double, double>>
-        op(&hsk, kvec_d_in, nullptr, nullptr, &ucell, {1.0}, &gd, &intor_);
+        op(&hsk, kvec_d_in, nullptr, nullptr, basis, paraV->para_2d(), &ucell, {1.0}, &gd, &intor_);
 
     // Test passes if no crash occurs during construction
     EXPECT_TRUE(true);
@@ -633,8 +648,9 @@ TEST_F(OverlapTest, forceCalculationNpol2)
     hsk.set_zero_sk();
     Grid_Driver gd(0, 0);
 
+    const BasisFlattenedIndexing basis = operator_test::make_s_orbital_basis(ucell);
     hamilt::Overlap<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>
-        op(&hsk, kvec_d_in, nullptr, SR_complex, &ucell, {1.0}, &gd, &intor_);
+        op(&hsk, kvec_d_in, nullptr, SR_complex, basis, paraV->para_2d(), &ucell, {1.0}, &gd, &intor_);
 
     op.contributeHR();
 
@@ -726,8 +742,9 @@ TEST_F(OverlapTest, stressCalculationNpol2)
     hsk.set_zero_sk();
     Grid_Driver gd(0, 0);
 
+    const BasisFlattenedIndexing basis = operator_test::make_s_orbital_basis(ucell);
     hamilt::Overlap<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>
-        op(&hsk, kvec_d_in, nullptr, SR_complex, &ucell, {1.0}, &gd, &intor_);
+        op(&hsk, kvec_d_in, nullptr, SR_complex, basis, paraV->para_2d(), &ucell, {1.0}, &gd, &intor_);
 
     op.contributeHR();
 

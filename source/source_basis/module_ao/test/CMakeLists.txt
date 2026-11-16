@@ -31,7 +31,7 @@ list(
   ../../../source_base/libm/sincos.cpp
   ../../../source_base/sph_bessel_tf.cpp
   ../../../source_base/cubic_spline.cpp
-    ../../../source_base/block_cyclic_distribution.cpp
+    ../../../source_base/parallel_blkcyc.cpp
   ../orb_read.cpp
   ../orb_atomic.cpp
   ../orb_atomic_lm.cpp
@@ -81,3 +81,16 @@ if(ENABLE_MPI)
 endif()
 
 abacus_copy_test_files(lcao_H2O)
+addtest(
+  TARGET MODULE_AO_parallel_orbitals_composition_test
+  SOURCES test_parallel_orbitals_composition.cpp ../parallel_orbitals.cpp
+  LIBS parameter device base)
+
+abacus_copy_test_files(test_parallel_orbitals_composition.sh)
+if(ENABLE_MPI)
+  add_test(
+    NAME MODULE_AO_parallel_orbitals_composition_test_para
+    COMMAND ${BASH} test_parallel_orbitals_composition.sh
+            "$<TARGET_FILE:MODULE_AO_parallel_orbitals_composition_test>"
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+endif()

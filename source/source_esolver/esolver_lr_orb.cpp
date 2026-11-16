@@ -15,18 +15,16 @@ template<typename T, typename TR>
 void ModuleESolver::ESolver_LR<T, TR>::set_parallel_orbitals_band(Parallel_Orbitals& pmat, const int nbands_in)
 {
 #ifdef __MPI
-    const int ld = std::max(pmat.para_2d().nrloc(), 1);
-    pmat.set_desc_wfc_Eij(this->nbasis, nbands_in, ld);
+    pmat.set_wfc_and_mo_layouts(this->nbasis, nbands_in);
     // The KS helper rejects empty band columns. LR windows may legitimately
     // have fewer blocks than the inherited KS process grid has columns.
-    BlockCyclicDistribution bands;
+    Parallel_Blkcyclic bands;
     const int block_size = pmat.para_2d().nb();
     LR_Util::setup_2d_division(bands, block_size, this->nbasis, nbands_in, pmat.para_2d().ictxt());
     pmat.nbands = nbands_in;
     pmat.nrow_bands = bands.nrloc();
     pmat.ncol_bands = bands.ncloc();
     pmat.nloc_wfc = bands.size();
-    pmat.nloc_Eij = pmat.ncol_bands * pmat.ncol_bands;
     // Skipped for the aims benchmark: with `aims_nbasis` the per-atom orbital counts behind
     // `iat2iwt` do not match `nbasis`, so the atomic trace would be wrong. The guard came from
     // d4fe3fe84 ("Support different basis number from aims"), and was silently undone by
@@ -51,7 +49,7 @@ void ModuleESolver::ESolver_LR<T, TR>::setup_eigenvectors_X()
     const int block_size = this->paraC_.nb();
     for (int is = 0;is < nspin;++is)
     {
-        BlockCyclicDistribution px;
+        Parallel_Blkcyclic px;
         LR_Util::setup_2d_division(px, block_size, this->nvirt[is], this->nocc[is]
 #ifdef __MPI
             , this->paraC_.ictxt()
@@ -83,7 +81,7 @@ void ModuleESolver::ESolver_LR<T, TR>::set_X_initial_guess()
         const int& no = this->nocc[is];
         const int& nv = this->nvirt[is];
         const int& np = this->npairs[is];
-        const BlockCyclicDistribution& px = this->paraX_[is];
+        const Parallel_Blkcyclic& px = this->paraX_[is];
 
         // if (E_{lumo}-E_{homo-1} < E_{lumo+1}-E{homo}), mode = 0, else 1(smaller first)
         bool ix_mode = false;   //default
@@ -223,7 +221,7 @@ void ModuleESolver::ESolver_LR<T, TR>::fill_z_window_(const int* desc_src)
     this->paraX_z_.clear();
     for (int is = 0; is < this->nspin; ++is)
     {
-        BlockCyclicDistribution px;
+        Parallel_Blkcyclic px;
         LR_Util::setup_2d_division(px, block_size, this->nvirt_z_[is], this->nocc[is]
 #ifdef __MPI
             , this->paraC_z_.ictxt()

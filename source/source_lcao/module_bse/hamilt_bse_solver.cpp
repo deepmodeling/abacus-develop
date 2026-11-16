@@ -21,8 +21,8 @@ void printM(const std::vector<T>& A, int m, int n, std::string file, std::string
 void arrayFlatten1(const std::vector<std::complex<double>>& A,
                    const std::vector<std::complex<double>>& B,
                    std::vector<std::complex<double>>& result, // result={{A,B},{-B*,-A*}}
-                   const BlockCyclicDistribution& pA,
-                   const BlockCyclicDistribution& pM)
+                   const Parallel_Blkcyclic& pA,
+                   const Parallel_Blkcyclic& pM)
 {
     int nA = pA.nrglb();
 #ifdef __MPI
@@ -60,8 +60,8 @@ void arrayFlatten1(const std::vector<std::complex<double>>& A,
 void arrayFlatten2(const std::vector<std::complex<double>>& A,
                    const std::vector<std::complex<double>>& B,
                    std::vector<double>& result, // result={{Re(A+B), Im(A-B)},{-Im(A+B), Re(A-B)}}
-                   const BlockCyclicDistribution& pA,
-                   const BlockCyclicDistribution& pM)
+                   const Parallel_Blkcyclic& pA,
+                   const Parallel_Blkcyclic& pM)
 {
     int nA = pA.nrglb();
 #ifdef __MPI
@@ -108,8 +108,8 @@ void arrayFlatten2(const std::vector<std::complex<double>>& A,
 void solve_full(const int my_rank,
                 std::vector<std::complex<double>>& A_part,
                 std::vector<std::complex<double>>& B_part,
-                const BlockCyclicDistribution& pA,
-                const BlockCyclicDistribution& pM,
+                const Parallel_Blkcyclic& pA,
+                const Parallel_Blkcyclic& pM,
                 std::vector<double>& ev,
                 std::vector<std::complex<double>>& v)
 {

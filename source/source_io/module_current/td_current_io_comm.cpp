@@ -532,7 +532,7 @@ void ModuleIO::cal_velocity_matrix(const psi::Psi<std::complex<double>>* psi,
     const std::complex<double> zero_complex = ModuleBase::ZERO;
     const int nlocal = PARAM.globalv.nlocal;
     const int nbands = PARAM.inp.nbands;
-    std::complex<double>* vk_c = new std::complex<double>[pv->ncol_bands * pv->nrow_bands]; // local one
+    std::complex<double>* vk_c = new std::complex<double>[pv->mo_repr_layout().size()]; // local one
     std::complex<double>* v_c = new std::complex<double>[pv->nloc_wfc];
 
     for (int ik = 0; ik < kv.get_nks(); ik++)
@@ -542,7 +542,7 @@ void ModuleIO::cal_velocity_matrix(const psi::Psi<std::complex<double>>* psi,
         // 2. set <\Psi_{n,\mu}|v_{\mu,\nu}|\Psi_{m,\nu}> = C^\dagger_{n,\mu} * v_{\mu,\nu} * C_{\nu,m}
         for (size_t i_alpha = 0; i_alpha != 3; ++i_alpha)
         {
-            ModuleBase::GlobalFunc::ZEROS(vk_c, pv->ncol_bands * pv->nrow_bands);
+            ModuleBase::GlobalFunc::ZEROS(vk_c, pv->mo_repr_layout().size());
             ModuleBase::GlobalFunc::ZEROS(v_c, pv->nloc_wfc);
             // v_c_{\mu,m} = v_{\mu,\nu} * C_{\nu,m}
             ScalapackConnector::gemm(N_char,
@@ -583,18 +583,18 @@ void ModuleIO::cal_velocity_matrix(const psi::Psi<std::complex<double>>* psi,
                                      vk_c,
                                      1,
                                      1,
-                                     pv->desc_Eij);
+                                     pv->mo_repr_layout().desc());
 
             for (int ir = 0; ir < PARAM.inp.nbands; ++ir)
             {
                 for (int ic = 0; ic < PARAM.inp.nbands; ++ic)
                 {
-                    if (pv->para_2d().in_this_processor(ir, ic))
+                    if (pv->mo_repr_layout().in_this_processor(ir, ic))
                     {
-                        // Taoni fix 2026-07-12: vk_c follows the local block-cyclic layout described by desc_Eij.
-                        const int local_row = pv->para_2d().irloc(ir);
-                        const int local_col = pv->para_2d().icloc(ic);
-                        const int irc = local_col * pv->para_2d().nrloc() + local_row;
+                        // Taoni fix 2026-07-12: vk_c follows the local block-cyclic layout described by mo_repr_layout().
+                        const int local_row = pv->mo_repr_layout().irloc(ir);
+                        const int local_col = pv->mo_repr_layout().icloc(ic);
+                        const int irc = local_col * pv->mo_repr_layout().nrloc() + local_row;
                         velocity_k[ik][i_alpha](ir, ic) = vk_c[irc];
                     }
                 }

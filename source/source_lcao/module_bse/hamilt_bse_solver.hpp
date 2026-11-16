@@ -26,7 +26,7 @@ namespace BSE
 {
 template <typename T>
 void solve_tda(const std::vector<T>& A,
-               const BlockCyclicDistribution& pA,
+               const Parallel_Blkcyclic& pA,
                std::vector<double>& ev,
                std::vector<T>& v)
 {

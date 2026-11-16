@@ -331,7 +331,7 @@ void Stress_Func<FPTYPE, Device>::stress_pw_terms(UnitCell& ucell,
     this->stress_har(ucell, sigmahar, rhopw, 0, chr);
 
     // ewald stress: use plane wave only.
-    this->stress_ewa(ucell, sigmaewa, rhopw, 0); // remain problem
+    this->stress_ewa(ucell, sigmaewa, rhopw, sf.strucFac, false);
 
     // stress due to core correlation.
     this->stress_cc(sigmacc, rhopw, ucell, &sf, 0, locpp.numeric, chr,

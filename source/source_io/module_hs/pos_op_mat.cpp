@@ -14,29 +14,29 @@ Position_op::~Position_op()
 }
 
 void Position_op::init(const UnitCell& ucell,
-                           const Parallel_Orbitals& pv,
-                           const LCAO_Orbitals& orb,
-                           const bool cal_force,
-                           const int nlocal)
+                       const Parallel_Blkcyclic& layout,
+                       const LCAO_Orbitals& orb,
+                       const bool cal_force,
+                       const int nlocal)
 {
     basis_ = std::unique_ptr<PosOpBasis>(new PosOpBasis());
     basis_->build(ucell, orb, cal_force, nlocal);
 
     calc_ = std::unique_ptr<PosOpCalc>(new PosOpCalc(*basis_));
-    writer_ = std::unique_ptr<PosOpWriter>(new PosOpWriter(*basis_, *calc_, pv));
+    writer_ = std::unique_ptr<PosOpWriter>(new PosOpWriter(*basis_, *calc_, layout));
 }
 
 void Position_op::init_nonlocal(const UnitCell& ucell,
-                                    const Parallel_Orbitals& pv,
-                                    const LCAO_Orbitals& orb,
-                                    const bool cal_force,
-                                    const int nlocal)
+                                const Parallel_Blkcyclic& layout,
+                                const LCAO_Orbitals& orb,
+                                const bool cal_force,
+                                const int nlocal)
 {
     basis_ = std::unique_ptr<PosOpBasis>(new PosOpBasis());
     basis_->build_nonlocal(ucell, orb, cal_force, nlocal);
 
     calc_ = std::unique_ptr<PosOpCalc>(new PosOpCalc(*basis_));
-    writer_ = std::unique_ptr<PosOpWriter>(new PosOpWriter(*basis_, *calc_, pv));
+    writer_ = std::unique_ptr<PosOpWriter>(new PosOpWriter(*basis_, *calc_, layout));
 }
 
 ModuleBase::Vector3<double> Position_op::get_psi_r_psi(const ModuleBase::Vector3<double>& R1,

@@ -268,8 +268,8 @@ double DFPT_PW::Impl::solve_displacement(int q_idx, int iat, int idir)
     rho_.reset_mixing(q_idx);
     data_.set_drho_g(q_idx, 0, std::vector<std::complex<double>>(npw, std::complex<double>(0.0, 0.0)));
 
-    const int lin_max = data_.get_max_iter();
-    const double lin_thr = data_.get_conv_thr();
+    const int lin_max = data_.get_lin_max_iter();
+    const double lin_thr = data_.get_lin_conv_thr();
 
     bool converged = false;
     double residual = 0.0;
@@ -445,8 +445,8 @@ double DFPT_PW::Impl::solve_displacement(int q_idx, int iat, int idir)
         // default iteration trace (GS-SCF style); the DFPT_DEBUG snapshots
         // above stay opt-in diagnostics. Formatting goes through a local
         // buffer so the stream flags/precision are never disturbed for
-        // the surrounding output (#8164 review: setprecision pollution
-        // degraded the DBG snapshots of the next iteration)
+        // the surrounding output (setprecision pollution degraded the
+        // DBG snapshots of the next iteration)
         {
             std::ostringstream trace;
             trace << "  DFPT mix iter=" << std::setw(3) << std::right << iter + 1 << "/" << max_iter_ << " residual="

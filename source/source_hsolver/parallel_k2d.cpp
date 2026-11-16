@@ -27,8 +27,8 @@ void Parallel_K2D<TK>::set_para_env(int nks,
                    &this->POOL_WORLD_K2D);
 #endif
     this->Pkpoints.reset(new Parallel_Kpoints());
-    this->P2D_global.reset(new BlockCyclicDistribution());
-    this->P2D_pool.reset(new BlockCyclicDistribution());
+    this->P2D_global.reset(new Parallel_Blkcyclic());
+    this->P2D_pool.reset(new Parallel_Blkcyclic());
     this->Pkpoints
         ->kinfo(nks, kpar, this->MY_POOL, this->RANK_IN_POOL, nproc, nspin);
     this->P2D_global->init(nw, nw, nb2d, MPI_COMM_WORLD, false);
@@ -49,10 +49,10 @@ void Parallel_K2D<TK>::distribute_hsk(hsolver::HSMatrix<TK>& hs,
             this->hk_pool.resize(this->P2D_pool->size(), 0.0);
             this->sk_pool.resize(this->P2D_pool->size(), 0.0);
         }
-        constexpr int DESC_SIZE = 9;
-        int desc_pool[DESC_SIZE];
+        constexpr int DESCRIPTOR_ENTRY_COUNT = 9;
+        int desc_pool[DESCRIPTOR_ENTRY_COUNT];
         const int* const pool_descriptor = this->P2D_pool->desc();
-        std::copy(pool_descriptor, pool_descriptor + DESC_SIZE, desc_pool);
+        std::copy(pool_descriptor, pool_descriptor + DESCRIPTOR_ENTRY_COUNT, desc_pool);
         if (this->MY_POOL != this->Pkpoints->whichpool[ik_kpar[ipool]]) {
             desc_pool[1] = -1;
         }

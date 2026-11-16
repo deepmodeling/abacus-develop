@@ -105,6 +105,9 @@ class Potential : public PotBase
     /// Implicit-solvent fields of the registered components, for out_sol.
     std::vector<SolventGridField> sol_out_fields() const;
 
+    /// @brief Read the shared RT-TDDFT field state.
+    const TDFieldManager* td_field_manager() const { return td_field_manager_.get(); }
+
     /**
      * @brief Inject the shared RT-TDDFT field state before potential setup.
      *

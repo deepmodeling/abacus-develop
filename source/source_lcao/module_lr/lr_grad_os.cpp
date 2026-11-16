@@ -21,7 +21,7 @@ std::vector<ModuleBase::matrix> evaluate_open_shell_force(
     const int ist_begin_ = label_begin;
     const int ist_end_ = label_begin + nst;
     const std::vector<int>& nvirt_g = inputs.nvirt;
-    const std::vector<BlockCyclicDistribution>& paraX_g = inputs.px;
+    const std::vector<Parallel_Blkcyclic>& paraX_g = inputs.px;
     const int nloc_g = inputs.nloc;
 
 

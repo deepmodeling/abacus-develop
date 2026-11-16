@@ -61,7 +61,7 @@ TEST(PropagatorTest, testPropagatorETRS)
 
     // Call the function
     int propagator = 2;
-    module_rt::Propagator prop(propagator, pv, md_dt);
+    module_rt::Propagator prop(propagator, pv->para_2d(), md_dt);
     prop.compute_propagator(nlocal, Stmp, Htmp, Hlaststep, U_operator, GlobalV::ofs_running, print_matrix);
 
     // Check the results

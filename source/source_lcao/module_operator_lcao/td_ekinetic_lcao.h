@@ -69,7 +69,6 @@ class TDEkinetic<OperatorLCAO<TK,TR>> : public OperatorLCAO<TK, TR>
      */
     void cal_HR_IJR(const int& iat1,
                     const int& iat2,
-                    const Parallel_Orbitals* paraV,
                     const ModuleBase::Vector3<double>& dtau,
                     std::complex<double>* hr_mat_p,
                     std::complex<double>** current_mat_p);
