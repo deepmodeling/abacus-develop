@@ -1,8 +1,8 @@
 #include "source_cell/dom_decomp.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "setcell.h"
-#include "source_esolver/esolver_lj.h"
+#include "source_md/test/setcell.h"
+#include "lj_test_solver.h"
 #include "source_md/verlet.h"
 
 #include <fstream>
@@ -51,7 +51,7 @@ class Verlet_test : public testing::Test
         Setcell::setupcell(ucell);
         Setcell::parameters(inp);
 
-        p_esolver = new ModuleESolver::ESolver_LJ();
+        p_esolver = make_lj_test_solver();
         mdcell = Setcell::setup_mdcell(ucell);
         decomp.init(ModuleBase::world_comm_domain(), mdcell.latvec(), mdcell.lat0(), 0.0, 0.0);
         p_esolver->before_all_runners(mdcell, inp);
