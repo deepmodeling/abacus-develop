@@ -2,8 +2,6 @@
 
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"
-#include <algorithm>
-#include <type_traits>
 
 namespace hamilt {
 
