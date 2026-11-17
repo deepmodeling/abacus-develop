@@ -1,5 +1,5 @@
-#ifndef SOURCE_MD_MODULE_NEP_NEP_H
-#define SOURCE_MD_MODULE_NEP_NEP_H
+#ifndef SOURCE_MD_MODULE_NEP_NEP_FORCEFIELD_H
+#define SOURCE_MD_MODULE_NEP_NEP_FORCEFIELD_H
 
 #include "source_md/forcefield.h"
 

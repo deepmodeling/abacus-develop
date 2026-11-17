@@ -1,5 +1,5 @@
-#ifndef SOURCE_MD_MODULE_DP_DP_H
-#define SOURCE_MD_MODULE_DP_DP_H
+#ifndef SOURCE_MD_MODULE_DP_DP_FORCEFIELD_H
+#define SOURCE_MD_MODULE_DP_DP_FORCEFIELD_H
 
 #include "source_md/forcefield.h"
 

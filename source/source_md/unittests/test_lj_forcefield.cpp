@@ -262,7 +262,7 @@ TEST_F(LJ_pot_test, CalEnShift)
     EXPECT_NEAR(p_esolver->get_en_shift()(1, 1), -5.6443326024140752e-06, doublethreshold);
 }
 
-#include "source_md/module_lj/lj.h"
+#include "source_md/module_lj/lj_forcefield.h"
 #include "source_esolver/esolver_forcefields.h"
 #include "source_cell/dom_decomp.h"
 #include "source_md/unittests/setcell.h"

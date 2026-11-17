@@ -1,4 +1,4 @@
-#include "source_md/module_dp/dp.h"
+#include "source_md/module_dp/dp_forcefield.h"
 
 #include "source_md/unittests/setcell.h"
 

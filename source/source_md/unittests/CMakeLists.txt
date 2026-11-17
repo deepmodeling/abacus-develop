@@ -65,7 +65,7 @@ list(
   ../../source_io/module_output/print_info.cpp
   ../../source_cell/cif_io.cpp
   ../../source_esolver/esolver_forcefields.cpp
-  ../module_lj/lj.cpp
+  ../module_lj/lj_forcefield.cpp
   ../../source_base/parallel_reduce.cpp
   ../../source_base/parallel_global.cpp
   ../../source_base/parallel_cell.cpp
@@ -128,15 +128,15 @@ addtest(
           ../module_snap/snap_model.cpp ../module_snap/snap_cg.cpp)
 
 addtest(
-  TARGET MODULE_MD_LJ_potential
+  TARGET MODULE_MD_lj_forcefield
   LIBS parameter psi device
-  SOURCES test_lj.cpp ${depend_files})
+  SOURCES test_lj_forcefield.cpp ${depend_files})
 
 addtest(
-  TARGET MODULE_MD_snap
+  TARGET MODULE_MD_snap_forcefield
   LIBS parameter psi device
-  SOURCES test_snap.cpp
-          ../module_snap/snap.cpp
+  SOURCES test_snap_forcefield.cpp
+          ../module_snap/snap_forcefield.cpp
           ../module_snap/snap_calculator.cpp
           ../module_snap/snap_descriptor.cpp
           ../module_snap/snap_derivative.cpp
@@ -154,9 +154,9 @@ if(DEFINED DeePMD_DIR)
 endif()
 
 addtest(
-  TARGET MODULE_MD_DP_potential
+  TARGET MODULE_MD_dp_forcefield
   LIBS ${_md_dp_test_libs}
-  SOURCES test_dp.cpp ../module_dp/dp.cpp
+  SOURCES test_dp_forcefield.cpp ../module_dp/dp_forcefield.cpp
           ../../source_cell/module_neighlist/neighbor_list.cpp
           ${depend_files})
 
@@ -166,9 +166,9 @@ if(DEFINED NEP_DIR AND NEP_FOUND)
 endif()
 
 addtest(
-  TARGET MODULE_MD_nep
+  TARGET MODULE_MD_nep_forcefield
   LIBS ${_md_nep_test_libs}
-  SOURCES test_nep.cpp ../module_nep/nep.cpp
+  SOURCES test_nep_forcefield.cpp ../module_nep/nep_forcefield.cpp
           ../../source_cell/module_neighlist/neighbor_list.cpp
           ${depend_files})
 
@@ -209,24 +209,24 @@ addtest(
 
 if(ENABLE_MPI)
   addtest(
-    TARGET MODULE_MD_LJ_potential_mpi
+    TARGET MODULE_MD_lj_forcefield_mpi
     KEEP_FEATURE_DEFINITIONS __MPI
     LIBS parameter psi device
-    SOURCES test_lj.cpp ../../source_base/test/mpi_test_main.cpp
+    SOURCES test_lj_forcefield.cpp ../../source_base/test/mpi_test_main.cpp
             ../../source_base/parallel_common.cpp
             ${depend_files})
   set_tests_properties(
-    MODULE_MD_LJ_potential_mpi
+    MODULE_MD_lj_forcefield_mpi
     PROPERTIES ENVIRONMENT "GTEST_FILTER=LJPotential.SplitCommunicatorReducesWithinCell;OMP_NUM_THREADS=1"
                TIMEOUT 60)
   add_test(
-    NAME MODULE_MD_LJ_potential_mpi_np4
+    NAME MODULE_MD_lj_forcefield_mpi_np4
     COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 4 ${MPIEXEC_PREFLAGS}
-            $<TARGET_FILE:MODULE_MD_LJ_potential_mpi>
+            $<TARGET_FILE:MODULE_MD_lj_forcefield_mpi>
             --gtest_filter=LJPotential.SplitCommunicatorReducesWithinCell
             ${MPIEXEC_POSTFLAGS}
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-  set_tests_properties(MODULE_MD_LJ_potential_mpi_np4
+  set_tests_properties(MODULE_MD_lj_forcefield_mpi_np4
                        PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=1;MKL_NUM_THREADS=1;I_MPI_PIN=0"
                                   TIMEOUT 60)
   addtest(
