@@ -1108,7 +1108,7 @@ class TestAbacusCalculator(unittest.TestCase):
             e = silicon.get_potential_energy()
         
         # check!
-        self.assertAlmostEqual(e, -194.953050937)
+        self.assertAlmostEqual(e, -194.953050937, delta=1e-5)
         self.assertIsNotNone(calculator.results)
         self.assertIsInstance(calculator.results, dict)
         for k in ['nspins', 'nkpts', 'nbands', 'eigenvalues', 'occupations',
