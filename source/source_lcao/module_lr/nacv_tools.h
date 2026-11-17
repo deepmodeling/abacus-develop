@@ -10,7 +10,6 @@
 #include <complex>
 #include <functional>
 #include <iosfwd>
-#include <set>
 #include <string>
 #include <vector>
 
@@ -35,6 +34,15 @@ struct NacvResult
     double gap_rydberg = 0.0;
     bool gap_resolved = false;
 };
+
+/**
+ * @brief Check deferred surface bounds after the LR root count is resolved.
+ * @param[in] pairs INPUT-validated nonnegative surface indices; zero denotes S0.
+ * @param[in] state_count Actual number of solved excited states.
+ * @throw std::invalid_argument If a requested root exceeds the solved window.
+ * @details INPUT may leave lr_nstates nonpositive to request an automatic count.
+ */
+void validate_nac_surfaces(const std::vector<int> &pairs, int state_count);
 
 /**
  * @brief Require the complete occupied/virtual orbital window for analytic NAC.
@@ -260,7 +268,10 @@ namespace LR
  * @param[in] amplitudes State-major local amplitude array.
  * @param[in] local_size Entries per state on this rank.
  * @param[in] state_count Number of states to write.
- * @details Stream precision remains 17 after the decimal in scientific notation.
+ * @param[in,out] output Borrowed running log for successful absolute-path confirmations.
+ * @throw std::runtime_error On all ranks if any state output file fails.
+ * @pre All ranks in the LR world domain call this collectively; rank is the world rank.
+ * @details Values are unfiltered, with 17 digits after the decimal in scientific notation.
  * Output calls execute with NDEBUG as well as in assertion-enabled builds.
  */
 template <typename T>
@@ -272,7 +283,8 @@ void write_nac_states(
     const double *energies,
     const T *amplitudes,
     int local_size,
-    int state_count);
+    int state_count,
+    std::ostream &output);
 } // namespace LR
 
 namespace LR
@@ -311,44 +323,6 @@ inline std::string canonical_xc_name(const std::string &name)
     return canonical;
 }
 
-/**
- * @brief Enumerate canonical LR kernels carrying exact exchange.
- * @return Immutable lowercase names; weights/range separation come from Coulomb settings.
- * @details Membership does not select the Coulomb operator. The general kernel
- * [alpha + beta erfc(mu r)]/r comes from coulomb_param, assembled from the KS
- * functional and the explicit EXX parameters. Its overall scale is supplied by
- * hybrid_alpha = max(abs(alpha), abs(beta)); this list must not replace those
- * settings with a functional-name-dependent prefactor.
- */
-inline const std::set<std::string> &hybrid_xc_list()
-{
-    static const std::set<std::string> names = {"hf",
-        "hse",
-        "pbe0",
-        "b3lyp",
-        "cam_pbeh",
-        "lc_pbe",
-        "lc_wpbe",
-        "lrc_wpbe",
-        "lrc_wpbeh"};
-    return names;
-}
-
-/**
- * @brief Identify implemented LR kernels with a semilocal XC remainder.
- * @param[in] name Canonical lowercase kernel name, not an arbitrary KS name.
- * @return True for implemented LDA/GGA kernels and hybrids other than pure HF.
- * @details LibXC supplies each hybrid's weighted semilocal remainder after its
- * external parameters are set. Membership does not certify analytic NAC accuracy.
- */
-inline bool has_local_xc(const std::string &name)
-{
-    if (name == "lda" || name == "pwlda" || name == "pbe")
-    {
-        return true;
-    }
-    return name != "hf" && hybrid_xc_list().count(name);
-}
 } // namespace NacvXC
 } // namespace LR
 namespace LR

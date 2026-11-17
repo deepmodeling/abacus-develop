@@ -1007,7 +1007,8 @@ NacvResult evaluate_nac_pair(
 /**
  * @brief Validate the computed reference once at the NAC batch boundary.
  * @param[in] data Borrowed, solver-owned geometry and converged LR state data.
- * @details INPUT already checked mode flags, pair indices and CG controls.
+ * @details INPUT checked mode flags, pair structure and CG controls. The upper
+ * surface bound is deferred until the solver resolves its root count.
  * Occupations, complete orbital windows and positive requested excitation
  * energies can only be checked after the actual KS/LR reference is available.
  */
@@ -1016,6 +1017,7 @@ void validate_nac_data(const NacvInputs<double> &data)
     const auto &inputs = data.gradient;
     const auto &request = data.request;
     const int channel = request.spin_name == "triplet" ? 1 : 0;
+    validate_nac_surfaces(request.pairs, data.energies.nc);
     if (data.open_shell)
     {
         if (request.spin_name != "updown")
@@ -1293,8 +1295,12 @@ struct NacvResponse::Impl
         else
         {
             const auto &px = inputs.px[0];
-            const int process_dimension = std::max(px.nrproc(), px.ncproc());
-            const int block = std::max(1, std::min(32, dimension / process_dimension));
+            const int process_rows = px.nrproc();
+            const int process_columns = px.ncproc();
+            const int process_dimension = std::max(process_rows, process_columns);
+            const int local_dimension = dimension / process_dimension;
+            const int bounded_dimension = std::min(32, local_dimension);
+            const int block = std::max(1, bounded_dimension);
             LR_Util::setup_2d_division(
                 matrix_layout,
                 block,

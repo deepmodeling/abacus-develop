@@ -124,7 +124,8 @@ void ModuleESolver::ESolver_LR<T, TR>::runner(BaseCell& basecell, const int iste
                     e,
                     v,
                     dim,
-                    nst);
+                    nst,
+                    this->ofs_running_);
                 return;
             }
             if (this->my_rank_ == 0)

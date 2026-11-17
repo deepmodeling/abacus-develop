@@ -296,3 +296,17 @@ TEST(LrNacInput, ExplicitUnrestrictedChannelRequiresTwoSpins)
         "lr_unrestricted", {"true"});
     EXPECT_NO_THROW(pairs.check_value(pairs, parameter));
 }
+
+TEST(LrNacInput, RejectsHartreeDisabledOnlyWhenNacIsRequested)
+{
+    const ModuleIO::ReadInput reader(0);
+    Parameter parameter;
+    prepare_nac_input(reader, parameter);
+    read_nac_item(reader, parameter, "vh_in_h", {"0"});
+    const ModuleIO::Input_Item pairs = nac_input_item(reader, "lr_nac_pairs");
+    EXPECT_NE(pairs.get_availability().find("vh_in_h==1"), std::string::npos);
+    EXPECT_EXIT(pairs.check_value(pairs, parameter), ::testing::ExitedWithCode(1), "");
+    read_nac_item(reader, parameter, "lr_nac_pairs", {});
+    EXPECT_NO_THROW(pairs.check_value(pairs, parameter));
+    EXPECT_EQ(parameter.inp.vh_in_h, 0);
+}

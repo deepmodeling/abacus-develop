@@ -25,7 +25,9 @@ lr_grad_maxiter 800
 ```
 
 Surface zero denotes the ground state. Excited-state indices are one-based.
-The default empty `lr_nac_pairs` disables NAC calculations. The configuration
+The default empty `lr_nac_pairs` disables NAC calculations. When `lr_nstates`
+is automatic (nonpositive), requested surfaces are checked against the resolved
+number of LR roots before any state is accessed. The configuration
 above illustrates a tighter response solve; the defaults remain `1e-6` Ry and
 100 iterations. These two controls apply only to iterative CG orbital response for NAC;
 direct response solvers do not use them. A failed certified response solve is an
@@ -36,7 +38,8 @@ the solver retains its accumulated solution and restarts a correction equation
 with the true residual. All correction updates count toward the same limit;
 this does not relax the requested accuracy.
 
-Use one real Gamma point and `kpar 1`. For a nonmagnetic closed-shell reference,
+Use one real Gamma point, `kpar 1` and `vh_in_h 1`. Hartree-disabled debugging
+configurations are rejected because NAC orbital response includes the Hartree kernel. For a nonmagnetic closed-shell reference,
 select `lr_nac_spin singlet` or `triplet` (the latter requires `nspin 2`).
 For an unrestricted reference, use `nspin 2` and `lr_nac_spin updown`. The latter
 uses both alpha and beta orbital spaces at fixed reference M_S; it does not
@@ -93,6 +96,11 @@ residual norms and a floating-point roundoff bound. For an unresolved gap,
 the finite numerators remain available and the divided vectors are zero with
 the resolved flag false. These zeros must not be interpreted as physical zero
 couplings. No artificial gap clipping is applied.
+
+When NAC output is enabled, existing excitation-energy and amplitude files retain
+all nonzero coefficients at full double precision, including magnitudes at or below
+`1e-10`. Successful writes are confirmed with their absolute paths in the running
+log. An open, write, flush or close failure aborts the output operation.
 
 ## Numerical checks and interpretation
 

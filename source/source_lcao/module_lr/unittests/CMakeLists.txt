@@ -1,14 +1,22 @@
 addtest(
-  TARGET MODULE_LR_nacv_result
+  TARGET MODULE_LR_nacv_tools
   LIBS base parameter ${math_libs} device container psi
-  SOURCES test_nacv_tools_result.cpp ../nacv_tools.cpp ../utils/lr_util.cpp)
+  SOURCES test_nacv_tools.cpp ../nacv_tools.cpp ../utils/lr_util.cpp)
+# State serialization must also execute with assertions disabled.
+target_compile_definitions(MODULE_LR_nacv_tools PRIVATE NDEBUG)
 
-addtest(
-  TARGET MODULE_LR_nacv_io
-  LIBS base parameter ${math_libs} device container psi
-  SOURCES test_nacv_tools_io.cpp ../nacv_tools.cpp ../utils/lr_util.cpp)
-# State export must run even when assertions are disabled.
-target_compile_definitions(MODULE_LR_nacv_io PRIVATE NDEBUG)
+if(ENABLE_MPI)
+  target_sources(MODULE_LR_nacv_tools PRIVATE ../../../source_base/test/mpi_test_main.cpp)
+  target_link_libraries(MODULE_LR_nacv_tools PRIVATE MPI::MPI_CXX)
+  add_test(
+    NAME MODULE_LR_nacv_tools_mpi4
+    COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 4 ${MPIEXEC_PREFLAGS}
+            $<TARGET_FILE:MODULE_LR_nacv_tools>
+            --gtest_filter=ZeqCgPrecision.*:NacvFactorization.*:NacvIoMpi.* ${MPIEXEC_POSTFLAGS})
+  set_tests_properties(MODULE_LR_nacv_tools_mpi4 PROPERTIES PROCESSORS 4 TIMEOUT 120)
+  set_tests_properties(MODULE_LR_nacv_tools MODULE_LR_nacv_tools_mpi4
+    PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=1;MKL_NUM_THREADS=1;OPENBLAS_NUM_THREADS=1")
+endif()
 
 if(ENABLE_LIBXC)
   addtest(
@@ -18,22 +26,3 @@ if(ENABLE_LIBXC)
             ../utils/lr_util.cpp ../../../source_hamilt/module_xc/xc_functional.cpp
             ../../../source_hamilt/module_xc/libxc_setup.cpp)
 endif()
-
-if(ENABLE_MPI)
-  addtest(
-    TARGET MODULE_LR_nacv_solver
-    LIBS base parameter ${math_libs} container device psi MPI::MPI_CXX
-    SOURCES test_nacv_tools_solver.cpp ../nacv_tools.cpp ../utils/lr_util.cpp
-            ../../../source_base/test/mpi_test_main.cpp)
-  add_test(
-    NAME MODULE_LR_nacv_solver_mpi4
-    COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 4 ${MPIEXEC_PREFLAGS}
-            $<TARGET_FILE:MODULE_LR_nacv_solver> ${MPIEXEC_POSTFLAGS})
-  set_tests_properties(MODULE_LR_nacv_solver_mpi4 PROPERTIES PROCESSORS 4 TIMEOUT 120)
-  set_tests_properties(MODULE_LR_nacv_solver MODULE_LR_nacv_solver_mpi4
-    PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=1;MKL_NUM_THREADS=1;OPENBLAS_NUM_THREADS=1")
-endif()
-
-addtest(
-  TARGET MODULE_LR_nacv_xc_names
-  SOURCES test_nacv_tools_xc_names.cpp)

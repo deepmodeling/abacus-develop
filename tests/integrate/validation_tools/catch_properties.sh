@@ -9,6 +9,12 @@ PROPS_SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 source "$PROPS_SCRIPT_DIR/props_common.sh"
 props_init "$1"
 
+# An optional case manifest selects plain file records for generic comparison.
+if [ -f records.compare ]; then
+  run_record_file_props
+  exit 0
+fi
+
 source "$PROPS_SCRIPT_DIR/props_lr.sh"
 if run_lr_tracking_props; then
   exit 0

@@ -1,0 +1,1251 @@
+{
+  "definition": "Independent centered electronic determinant overlaps; ETF subtracts an independently differentiated moving-AO connection, never the analytic AO vector.",
+  "source_directory": "/publicfs01/fs1-t/home/sc82256/soft/ABACUS/test/NACV_Upstream_20261114/results/LiH_HF_1p5A_10A_8879069_98/fd",
+  "program_sha256": "6ef7295106dcacc0a2ea81161ed9ddb991e35422fb80798877d6af2e8069848d",
+  "geometry_angstrom": {
+    "bond": 1.5,
+    "cubic_edge": 10
+  },
+  "functional": "HF",
+  "cutoff_ry": 100,
+  "fd_steps_bohr": [
+    0.00025,
+    0.000125
+  ],
+  "selected_step_bohr": 0.000125,
+  "rows": [
+    {
+      "pair": [
+        0,
+        1
+      ],
+      "atom": 0,
+      "axis": 2,
+      "kind": "raw",
+      "h_bohr": 0.00025,
+      "fd_bohr_inverse": 5.985804441526242e-11
+    },
+    {
+      "pair": [
+        0,
+        1
+      ],
+      "atom": 0,
+      "axis": 2,
+      "kind": "etf",
+      "h_bohr": 0.00025,
+      "fd_bohr_inverse": 5.985802914939443e-11
+    },
+    {
+      "pair": [
+        0,
+        1
+      ],
+      "atom": 0,
+      "axis": 2,
+      "kind": "ao",
+      "h_bohr": 0.00025,
+      "fd_bohr_inverse": 1.5265867987213404e-17
+    },
+    {
+      "pair": [
+        1,
+        4
+      ],
+      "atom": 0,
+      "axis": 2,
+      "kind": "raw",
+      "h_bohr": 0.00025,
+      "fd_bohr_inverse": 3.0665173990425205e-13
+    },
+    {
+      "pair": [
+        1,
+        4
+      ],
+      "atom": 0,
+      "axis": 2,
+      "kind": "etf",
+      "h_bohr": 0.00025,
+      "fd_bohr_inverse": 3.0659424165935405e-13
+    },
+    {
+      "pair": [
+        1,
+        4
+      ],
+      "atom": 0,
+      "axis": 2,
+      "kind": "ao",
+      "h_bohr": 0.00025,
+      "fd_bohr_inverse": 5.749824489798494e-17
+    },
+    {
+      "pair": [
+        0,
+        1
+      ],
+      "atom": 0,
+      "axis": 2,
+      "kind": "raw",
+      "h_bohr": 0.000125,
+      "fd_bohr_inverse": -7.887646175477019e-10
+    },
+    {
+      "pair": [
+        0,
+        1
+      ],
+      "atom": 0,
+      "axis": 2,
+      "kind": "etf",
+      "h_bohr": 0.000125,
+      "fd_bohr_inverse": -7.887646328135611e-10
+    },
+    {
+      "pair": [
+        0,
+        1
+      ],
+      "atom": 0,
+      "axis": 2,
+      "kind": "ao",
+      "h_bohr": 0.000125,
+      "fd_bohr_inverse": 1.5265859229393268e-17
+    },
+    {
+      "pair": [
+        1,
+        4
+      ],
+      "atom": 0,
+      "axis": 2,
+      "kind": "raw",
+      "h_bohr": 0.000125,
+      "fd_bohr_inverse": -6.225991404356237e-11
+    },
+    {
+      "pair": [
+        1,
+        4
+      ],
+      "atom": 0,
+      "axis": 2,
+      "kind": "etf",
+      "h_bohr": 0.000125,
+      "fd_bohr_inverse": -6.2259971541821e-11
+    },
+    {
+      "pair": [
+        1,
+        4
+      ],
+      "atom": 0,
+      "axis": 2,
+      "kind": "ao",
+      "h_bohr": 0.000125,
+      "fd_bohr_inverse": 5.749825863048246e-17
+    },
+    {
+      "pair": [
+        0,
+        1
+      ],
+      "atom": 0,
+      "axis": 1,
+      "kind": "raw",
+      "h_bohr": 0.00025,
+      "fd_bohr_inverse": -1.1653041552006261e-10
+    },
+    {
+      "pair": [
+        0,
+        1
+      ],
+      "atom": 0,
+      "axis": 1,
+      "kind": "etf",
+      "h_bohr": 0.00025,
+      "fd_bohr_inverse": -1.1653041630275474e-10
+    },
+    {
+      "pair": [
+        0,
+        1
+      ],
+      "atom": 0,
+      "axis": 1,
+      "kind": "ao",
+      "h_bohr": 0.00025,
+      "fd_bohr_inverse": 7.826921315946836e-19
+    },
+    {
+      "pair": [
+        1,
+        4
+      ],
+      "atom": 0,
+      "axis": 1,
+      "kind": "raw",
+      "h_bohr": 0.00025,
+      "fd_bohr_inverse": 4.1499447959092045e-11
+    },
+    {
+      "pair": [
+        1,
+        4
+      ],
+      "atom": 0,
+      "axis": 1,
+      "kind": "etf",
+      "h_bohr": 0.00025,
+      "fd_bohr_inverse": 4.149945487433626e-11
+    },
+    {
+      "pair": [
+        1,
+        4
+      ],
+      "atom": 0,
+      "axis": 1,
+      "kind": "ao",
+      "h_bohr": 0.00025,
+      "fd_bohr_inverse": -6.9152442150943705e-18
+    },
+    {
+      "pair": [
+        0,
+        1
+      ],
+      "atom": 0,
+      "axis": 1,
+      "kind": "raw",
+      "h_bohr": 0.000125,
+      "fd_bohr_inverse": 8.842311496763357e-11
+    },
+    {
+      "pair": [
+        0,
+        1
+      ],
+      "atom": 0,
+      "axis": 1,
+      "kind": "etf",
+      "h_bohr": 0.000125,
+      "fd_bohr_inverse": 8.842311418493854e-11
+    },
+    {
+      "pair": [
+        0,
+        1
+      ],
+      "atom": 0,
+      "axis": 1,
+      "kind": "ao",
+      "h_bohr": 0.000125,
+      "fd_bohr_inverse": 7.826950323434995e-19
+    },
+    {
+      "pair": [
+        1,
+        4
+      ],
+      "atom": 0,
+      "axis": 1,
+      "kind": "raw",
+      "h_bohr": 0.000125,
+      "fd_bohr_inverse": 6.422522988405983e-10
+    },
+    {
+      "pair": [
+        1,
+        4
+      ],
+      "atom": 0,
+      "axis": 1,
+      "kind": "etf",
+      "h_bohr": 0.000125,
+      "fd_bohr_inverse": 6.422523057558433e-10
+    },
+    {
+      "pair": [
+        1,
+        4
+      ],
+      "atom": 0,
+      "axis": 1,
+      "kind": "ao",
+      "h_bohr": 0.000125,
+      "fd_bohr_inverse": -6.915245034974656e-18
+    },
+    {
+      "pair": [
+        0,
+        1
+      ],
+      "atom": 0,
+      "axis": 0,
+      "kind": "raw",
+      "h_bohr": 0.00025,
+      "fd_bohr_inverse": 0.09719923156559954
+    },
+    {
+      "pair": [
+        0,
+        1
+      ],
+      "atom": 0,
+      "axis": 0,
+      "kind": "etf",
+      "h_bohr": 0.00025,
+      "fd_bohr_inverse": 0.08170806188122354
+    },
+    {
+      "pair": [
+        0,
+        1
+      ],
+      "atom": 0,
+      "axis": 0,
+      "kind": "ao",
+      "h_bohr": 0.00025,
+      "fd_bohr_inverse": 0.015491169684376005
+    },
+    {
+      "pair": [
+        1,
+        4
+      ],
+      "atom": 0,
+      "axis": 0,
+      "kind": "raw",
+      "h_bohr": 0.00025,
+      "fd_bohr_inverse": 0.06286945048154119
+    },
+    {
+      "pair": [
+        1,
+        4
+      ],
+      "atom": 0,
+      "axis": 0,
+      "kind": "etf",
+      "h_bohr": 0.00025,
+      "fd_bohr_inverse": 0.11996962905397898
+    },
+    {
+      "pair": [
+        1,
+        4
+      ],
+      "atom": 0,
+      "axis": 0,
+      "kind": "ao",
+      "h_bohr": 0.00025,
+      "fd_bohr_inverse": -0.05710017857243779
+    },
+    {
+      "pair": [
+        0,
+        1
+      ],
+      "atom": 0,
+      "axis": 0,
+      "kind": "raw",
+      "h_bohr": 0.000125,
+      "fd_bohr_inverse": 0.09719923671878569
+    },
+    {
+      "pair": [
+        0,
+        1
+      ],
+      "atom": 0,
+      "axis": 0,
+      "kind": "etf",
+      "h_bohr": 0.000125,
+      "fd_bohr_inverse": 0.08170806818719634
+    },
+    {
+      "pair": [
+        0,
+        1
+      ],
+      "atom": 0,
+      "axis": 0,
+      "kind": "ao",
+      "h_bohr": 0.000125,
+      "fd_bohr_inverse": 0.015491168531589359
+    },
+    {
+      "pair": [
+        1,
+        4
+      ],
+      "atom": 0,
+      "axis": 0,
+      "kind": "raw",
+      "h_bohr": 0.000125,
+      "fd_bohr_inverse": 0.06286944567391373
+    },
+    {
+      "pair": [
+        1,
+        4
+      ],
+      "atom": 0,
+      "axis": 0,
+      "kind": "etf",
+      "h_bohr": 0.000125,
+      "fd_bohr_inverse": 0.11996962294418324
+    },
+    {
+      "pair": [
+        1,
+        4
+      ],
+      "atom": 0,
+      "axis": 0,
+      "kind": "ao",
+      "h_bohr": 0.000125,
+      "fd_bohr_inverse": -0.05710017727026952
+    },
+    {
+      "pair": [
+        0,
+        1
+      ],
+      "atom": 1,
+      "axis": 0,
+      "kind": "raw",
+      "h_bohr": 0.00025,
+      "fd_bohr_inverse": -0.03739774482923179
+    },
+    {
+      "pair": [
+        0,
+        1
+      ],
+      "atom": 1,
+      "axis": 0,
+      "kind": "etf",
+      "h_bohr": 0.00025,
+      "fd_bohr_inverse": -0.08170708217386871
+    },
+    {
+      "pair": [
+        0,
+        1
+      ],
+      "atom": 1,
+      "axis": 0,
+      "kind": "ao",
+      "h_bohr": 0.00025,
+      "fd_bohr_inverse": 0.04430933734463692
+    },
+    {
+      "pair": [
+        1,
+        4
+      ],
+      "atom": 1,
+      "axis": 0,
+      "kind": "raw",
+      "h_bohr": 0.00025,
+      "fd_bohr_inverse": -0.10492432202210594
+    },
+    {
+      "pair": [
+        1,
+        4
+      ],
+      "atom": 1,
+      "axis": 0,
+      "kind": "etf",
+      "h_bohr": 0.00025,
+      "fd_bohr_inverse": -0.11997029458510862
+    },
+    {
+      "pair": [
+        1,
+        4
+      ],
+      "atom": 1,
+      "axis": 0,
+      "kind": "ao",
+      "h_bohr": 0.00025,
+      "fd_bohr_inverse": 0.01504597256300268
+    },
+    {
+      "pair": [
+        0,
+        1
+      ],
+      "atom": 1,
+      "axis": 0,
+      "kind": "raw",
+      "h_bohr": 0.000125,
+      "fd_bohr_inverse": -0.037397739864426044
+    },
+    {
+      "pair": [
+        0,
+        1
+      ],
+      "atom": 1,
+      "axis": 0,
+      "kind": "etf",
+      "h_bohr": 0.000125,
+      "fd_bohr_inverse": -0.08170707724825164
+    },
+    {
+      "pair": [
+        0,
+        1
+      ],
+      "atom": 1,
+      "axis": 0,
+      "kind": "ao",
+      "h_bohr": 0.000125,
+      "fd_bohr_inverse": 0.0443093373838256
+    },
+    {
+      "pair": [
+        1,
+        4
+      ],
+      "atom": 1,
+      "axis": 0,
+      "kind": "raw",
+      "h_bohr": 0.000125,
+      "fd_bohr_inverse": -0.10492431585393729
+    },
+    {
+      "pair": [
+        1,
+        4
+      ],
+      "atom": 1,
+      "axis": 0,
+      "kind": "etf",
+      "h_bohr": 0.000125,
+      "fd_bohr_inverse": -0.11997028807010147
+    },
+    {
+      "pair": [
+        1,
+        4
+      ],
+      "atom": 1,
+      "axis": 0,
+      "kind": "ao",
+      "h_bohr": 0.000125,
+      "fd_bohr_inverse": 0.015045972216164188
+    },
+    {
+      "pair": [
+        0,
+        1
+      ],
+      "atom": 1,
+      "axis": 1,
+      "kind": "raw",
+      "h_bohr": 0.00025,
+      "fd_bohr_inverse": -1.0812725319380563e-11
+    },
+    {
+      "pair": [
+        0,
+        1
+      ],
+      "atom": 1,
+      "axis": 1,
+      "kind": "etf",
+      "h_bohr": 0.00025,
+      "fd_bohr_inverse": -1.0812745393248894e-11
+    },
+    {
+      "pair": [
+        0,
+        1
+      ],
+      "atom": 1,
+      "axis": 1,
+      "kind": "ao",
+      "h_bohr": 0.00025,
+      "fd_bohr_inverse": 2.0073868330293802e-17
+    },
+    {
+      "pair": [
+        1,
+        4
+      ],
+      "atom": 1,
+      "axis": 1,
+      "kind": "raw",
+      "h_bohr": 0.00025,
+      "fd_bohr_inverse": -2.2096957019416644e-11
+    },
+    {
+      "pair": [
+        1,
+        4
+      ],
+      "atom": 1,
+      "axis": 1,
+      "kind": "etf",
+      "h_bohr": 0.00025,
+      "fd_bohr_inverse": -2.20969501215407e-11
+    },
+    {
+      "pair": [
+        1,
+        4
+      ],
+      "atom": 1,
+      "axis": 1,
+      "kind": "ao",
+      "h_bohr": 0.00025,
+      "fd_bohr_inverse": -6.897875942949093e-18
+    },
+    {
+      "pair": [
+        0,
+        1
+      ],
+      "atom": 1,
+      "axis": 1,
+      "kind": "raw",
+      "h_bohr": 0.000125,
+      "fd_bohr_inverse": 1.1085130353136048e-10
+    },
+    {
+      "pair": [
+        0,
+        1
+      ],
+      "atom": 1,
+      "axis": 1,
+      "kind": "etf",
+      "h_bohr": 0.000125,
+      "fd_bohr_inverse": 1.1085128345749004e-10
+    },
+    {
+      "pair": [
+        0,
+        1
+      ],
+      "atom": 1,
+      "axis": 1,
+      "kind": "ao",
+      "h_bohr": 0.000125,
+      "fd_bohr_inverse": 2.0073870428061376e-17
+    },
+    {
+      "pair": [
+        1,
+        4
+      ],
+      "atom": 1,
+      "axis": 1,
+      "kind": "raw",
+      "h_bohr": 0.000125,
+      "fd_bohr_inverse": -6.131677633391855e-10
+    },
+    {
+      "pair": [
+        1,
+        4
+      ],
+      "atom": 1,
+      "axis": 1,
+      "kind": "etf",
+      "h_bohr": 0.000125,
+      "fd_bohr_inverse": -6.131677564413083e-10
+    },
+    {
+      "pair": [
+        1,
+        4
+      ],
+      "atom": 1,
+      "axis": 1,
+      "kind": "ao",
+      "h_bohr": 0.000125,
+      "fd_bohr_inverse": -6.897877075238869e-18
+    },
+    {
+      "pair": [
+        0,
+        1
+      ],
+      "atom": 1,
+      "axis": 2,
+      "kind": "raw",
+      "h_bohr": 0.00025,
+      "fd_bohr_inverse": -6.802036998615272e-11
+    },
+    {
+      "pair": [
+        0,
+        1
+      ],
+      "atom": 1,
+      "axis": 2,
+      "kind": "etf",
+      "h_bohr": 0.00025,
+      "fd_bohr_inverse": -6.802039613957998e-11
+    },
+    {
+      "pair": [
+        0,
+        1
+      ],
+      "atom": 1,
+      "axis": 2,
+      "kind": "ao",
+      "h_bohr": 0.00025,
+      "fd_bohr_inverse": 2.6153427254113445e-17
+    },
+    {
+      "pair": [
+        1,
+        4
+      ],
+      "atom": 1,
+      "axis": 2,
+      "kind": "raw",
+      "h_bohr": 0.00025,
+      "fd_bohr_inverse": 7.655873242971475e-12
+    },
+    {
+      "pair": [
+        1,
+        4
+      ],
+      "atom": 1,
+      "axis": 2,
+      "kind": "etf",
+      "h_bohr": 0.00025,
+      "fd_bohr_inverse": 7.655733184221787e-12
+    },
+    {
+      "pair": [
+        1,
+        4
+      ],
+      "atom": 1,
+      "axis": 2,
+      "kind": "ao",
+      "h_bohr": 0.00025,
+      "fd_bohr_inverse": 1.4005874968839714e-16
+    },
+    {
+      "pair": [
+        0,
+        1
+      ],
+      "atom": 1,
+      "axis": 2,
+      "kind": "raw",
+      "h_bohr": 0.000125,
+      "fd_bohr_inverse": 4.4606432077189e-11
+    },
+    {
+      "pair": [
+        0,
+        1
+      ],
+      "atom": 1,
+      "axis": 2,
+      "kind": "etf",
+      "h_bohr": 0.000125,
+      "fd_bohr_inverse": 4.460640592376222e-11
+    },
+    {
+      "pair": [
+        0,
+        1
+      ],
+      "atom": 1,
+      "axis": 2,
+      "kind": "ao",
+      "h_bohr": 0.000125,
+      "fd_bohr_inverse": 2.6153426780391147e-17
+    },
+    {
+      "pair": [
+        1,
+        4
+      ],
+      "atom": 1,
+      "axis": 2,
+      "kind": "raw",
+      "h_bohr": 0.000125,
+      "fd_bohr_inverse": -7.240248101752993e-13
+    },
+    {
+      "pair": [
+        1,
+        4
+      ],
+      "atom": 1,
+      "axis": 2,
+      "kind": "etf",
+      "h_bohr": 0.000125,
+      "fd_bohr_inverse": -7.241648689413496e-13
+    },
+    {
+      "pair": [
+        1,
+        4
+      ],
+      "atom": 1,
+      "axis": 2,
+      "kind": "ao",
+      "h_bohr": 0.000125,
+      "fd_bohr_inverse": 1.4005876605029885e-16
+    }
+  ],
+  "convergence": [
+    {
+      "pair": [
+        0,
+        1
+      ],
+      "atom": 0,
+      "axis": 2,
+      "kind": "raw",
+      "error": 8.486226619629643e-10,
+      "limit": 1.0000000788764618e-05,
+      "passed": true
+    },
+    {
+      "pair": [
+        0,
+        1
+      ],
+      "atom": 0,
+      "axis": 2,
+      "kind": "etf",
+      "error": 8.486226619629555e-10,
+      "limit": 1.0000000788764633e-05,
+      "passed": true
+    },
+    {
+      "pair": [
+        0,
+        1
+      ],
+      "atom": 0,
+      "axis": 2,
+      "kind": "ao",
+      "error": 8.757820136815466e-24,
+      "limit": 1.0000000000000016e-05,
+      "passed": true
+    },
+    {
+      "pair": [
+        1,
+        4
+      ],
+      "atom": 0,
+      "axis": 2,
+      "kind": "raw",
+      "error": 6.256656578346662e-11,
+      "limit": 1.0000000062259914e-05,
+      "passed": true
+    },
+    {
+      "pair": [
+        1,
+        4
+      ],
+      "atom": 0,
+      "axis": 2,
+      "kind": "etf",
+      "error": 6.256656578348035e-11,
+      "limit": 1.0000000062259972e-05,
+      "passed": true
+    },
+    {
+      "pair": [
+        1,
+        4
+      ],
+      "atom": 0,
+      "axis": 2,
+      "kind": "ao",
+      "error": 1.373249751596839e-23,
+      "limit": 1.0000000000000058e-05,
+      "passed": true
+    },
+    {
+      "pair": [
+        0,
+        1
+      ],
+      "atom": 0,
+      "axis": 1,
+      "kind": "raw",
+      "error": 2.0495353048769619e-10,
+      "limit": 1.0000000088423115e-05,
+      "passed": true
+    },
+    {
+      "pair": [
+        0,
+        1
+      ],
+      "atom": 0,
+      "axis": 1,
+      "kind": "etf",
+      "error": 2.049535304876933e-10,
+      "limit": 1.0000000088423115e-05,
+      "passed": true
+    },
+    {
+      "pair": [
+        0,
+        1
+      ],
+      "atom": 0,
+      "axis": 1,
+      "kind": "ao",
+      "error": 2.9007488159585115e-24,
+      "limit": 1e-05,
+      "passed": true
+    },
+    {
+      "pair": [
+        1,
+        4
+      ],
+      "atom": 0,
+      "axis": 1,
+      "kind": "raw",
+      "error": 6.007528508815062e-10,
+      "limit": 1.00000006422523e-05,
+      "passed": true
+    },
+    {
+      "pair": [
+        1,
+        4
+      ],
+      "atom": 0,
+      "axis": 1,
+      "kind": "etf",
+      "error": 6.00752850881507e-10,
+      "limit": 1.0000000642252306e-05,
+      "passed": true
+    },
+    {
+      "pair": [
+        1,
+        4
+      ],
+      "atom": 0,
+      "axis": 1,
+      "kind": "ao",
+      "error": 8.198802857356784e-25,
+      "limit": 1.0000000000000008e-05,
+      "passed": true
+    },
+    {
+      "pair": [
+        0,
+        1
+      ],
+      "atom": 0,
+      "axis": 0,
+      "kind": "raw",
+      "error": 5.153186155570921e-09,
+      "limit": 0.00010719923671878569,
+      "passed": true
+    },
+    {
+      "pair": [
+        0,
+        1
+      ],
+      "atom": 0,
+      "axis": 0,
+      "kind": "etf",
+      "error": 6.305972799491855e-09,
+      "limit": 9.170806818719634e-05,
+      "passed": true
+    },
+    {
+      "pair": [
+        0,
+        1
+      ],
+      "atom": 0,
+      "axis": 0,
+      "kind": "ao",
+      "error": 1.1527866456556568e-09,
+      "limit": 2.5491168531589363e-05,
+      "passed": true
+    },
+    {
+      "pair": [
+        1,
+        4
+      ],
+      "atom": 0,
+      "axis": 0,
+      "kind": "raw",
+      "error": 4.807627462799502e-09,
+      "limit": 7.286944567391373e-05,
+      "passed": true
+    },
+    {
+      "pair": [
+        1,
+        4
+      ],
+      "atom": 0,
+      "axis": 0,
+      "kind": "etf",
+      "error": 6.1097957387845625e-09,
+      "limit": 0.00012996962294418326,
+      "passed": true
+    },
+    {
+      "pair": [
+        1,
+        4
+      ],
+      "atom": 0,
+      "axis": 0,
+      "kind": "ao",
+      "error": 1.3021682759850606e-09,
+      "limit": 6.710017727026953e-05,
+      "passed": true
+    },
+    {
+      "pair": [
+        0,
+        1
+      ],
+      "atom": 1,
+      "axis": 0,
+      "kind": "raw",
+      "error": 4.964805747076362e-09,
+      "limit": 4.7397739864426046e-05,
+      "passed": true
+    },
+    {
+      "pair": [
+        0,
+        1
+      ],
+      "atom": 1,
+      "axis": 0,
+      "kind": "etf",
+      "error": 4.925617066997567e-09,
+      "limit": 9.170707724825164e-05,
+      "passed": true
+    },
+    {
+      "pair": [
+        0,
+        1
+      ],
+      "atom": 1,
+      "axis": 0,
+      "kind": "ao",
+      "error": 3.918868007879439e-11,
+      "limit": 5.43093373838256e-05,
+      "passed": true
+    },
+    {
+      "pair": [
+        1,
+        4
+      ],
+      "atom": 1,
+      "axis": 0,
+      "kind": "raw",
+      "error": 6.168168656395245e-09,
+      "limit": 0.00011492431585393728,
+      "passed": true
+    },
+    {
+      "pair": [
+        1,
+        4
+      ],
+      "atom": 1,
+      "axis": 0,
+      "kind": "etf",
+      "error": 6.5150071448805136e-09,
+      "limit": 0.0001299702880701015,
+      "passed": true
+    },
+    {
+      "pair": [
+        1,
+        4
+      ],
+      "atom": 1,
+      "axis": 0,
+      "kind": "ao",
+      "error": 3.4683849195471517e-10,
+      "limit": 2.504597221616419e-05,
+      "passed": true
+    },
+    {
+      "pair": [
+        0,
+        1
+      ],
+      "atom": 1,
+      "axis": 1,
+      "kind": "raw",
+      "error": 1.2166402885074104e-10,
+      "limit": 1.0000000110851304e-05,
+      "passed": true
+    },
+    {
+      "pair": [
+        0,
+        1
+      ],
+      "atom": 1,
+      "axis": 1,
+      "kind": "etf",
+      "error": 1.2166402885073894e-10,
+      "limit": 1.0000000110851284e-05,
+      "passed": true
+    },
+    {
+      "pair": [
+        0,
+        1
+      ],
+      "atom": 1,
+      "axis": 1,
+      "kind": "ao",
+      "error": 2.097767573919799e-24,
+      "limit": 1.0000000000000021e-05,
+      "passed": true
+    },
+    {
+      "pair": [
+        1,
+        4
+      ],
+      "atom": 1,
+      "axis": 1,
+      "kind": "raw",
+      "error": 5.910708063197688e-10,
+      "limit": 1.0000000613167765e-05,
+      "passed": true
+    },
+    {
+      "pair": [
+        1,
+        4
+      ],
+      "atom": 1,
+      "axis": 1,
+      "kind": "etf",
+      "error": 5.910708063197677e-10,
+      "limit": 1.0000000613167758e-05,
+      "passed": true
+    },
+    {
+      "pair": [
+        1,
+        4
+      ],
+      "atom": 1,
+      "axis": 1,
+      "kind": "ao",
+      "error": 1.132289776216493e-24,
+      "limit": 1.0000000000000008e-05,
+      "passed": true
+    },
+    {
+      "pair": [
+        0,
+        1
+      ],
+      "atom": 1,
+      "axis": 2,
+      "kind": "raw",
+      "error": 1.1262680206334172e-10,
+      "limit": 1.0000000044606433e-05,
+      "passed": true
+    },
+    {
+      "pair": [
+        0,
+        1
+      ],
+      "atom": 1,
+      "axis": 2,
+      "kind": "etf",
+      "error": 1.126268020633422e-10,
+      "limit": 1.0000000044606408e-05,
+      "passed": true
+    },
+    {
+      "pair": [
+        0,
+        1
+      ],
+      "atom": 1,
+      "axis": 2,
+      "kind": "ao",
+      "error": 4.737222980532906e-25,
+      "limit": 1.0000000000000026e-05,
+      "passed": true
+    },
+    {
+      "pair": [
+        1,
+        4
+      ],
+      "atom": 1,
+      "axis": 2,
+      "kind": "raw",
+      "error": 8.379898053146775e-12,
+      "limit": 1.0000000000724026e-05,
+      "passed": true
+    },
+    {
+      "pair": [
+        1,
+        4
+      ],
+      "atom": 1,
+      "axis": 2,
+      "kind": "etf",
+      "error": 8.379898053163136e-12,
+      "limit": 1.0000000000724165e-05,
+      "passed": true
+    },
+    {
+      "pair": [
+        1,
+        4
+      ],
+      "atom": 1,
+      "axis": 2,
+      "kind": "ao",
+      "error": 1.636190171606887e-23,
+      "limit": 1.0000000000000141e-05,
+      "passed": true
+    }
+  ],
+  "basis_and_pp_files": {
+    "H_gga_6au_100Ry_2s1p.orb": "b29dc5af8b7c653c405ab4c9db5f4a00d24fb6d63d304d5607fc7e1c408d7258",
+    "Li_gga_8au_100Ry_4s1p.orb": "6af83d57fa9ff26ff4f8bf1fbf8168149edf041e1d4c78943eafde3881e2efed",
+    "H_ONCV_PBE-1.0.upf": "3f5deaaf57ff09d87da2c2c186eb1654d174fe385c9edc265036b3c8869286ef",
+    "Li_ONCV_PBE-1.0.upf": "ca3d1f1d598deb7949829506da9df3ad1e323073681399d4f7b1bfff3b689d0a"
+  },
+  "comparison": "Absolute component magnitudes, because the nondegenerate electronic eigenvector signs are arbitrary. No normalization or fitted scale; absolute tolerance 1e-5 bohr^-1 is stricter than the original 1e-5+0.001*abs(FD) screen."
+}

@@ -18,11 +18,11 @@ void ReadInput::item_lr_nacv()
         item.default_value = "";
         item.unit = "";
         item.set_availability(
-            "esolver_type==ks-lr and basis_type==lcao and gamma_only==true and cal_force==true and dft_plus_u==0");
+            "esolver_type==ks-lr and basis_type==lcao and gamma_only==true and cal_force==true and dft_plus_u==0 and vh_in_h==1");
         item.description =
             R"(An even list of surface indices, for example `0 1 1 2`, requests S0-S1 and S1-S2 analytic derivative couplings after each LR geometry. Zero is the KS reference determinant; positive indices are LR roots counted from one within `lr_nac_spin`. Each pair must satisfy 0 <= bra < ket <= lr_nstates and may appear only once. The empty default disables this output and adds no response solves.
 
-Requires a converged real Gamma `ks-lr` calculation, `cal_force=true`, `kpar=1`, `dft_plus_u=0`, and an LR eigensolver other than spectrum. Occupied bands must be fully occupied and virtual bands empty within floating-point roundoff; fractional-occupation response is not implemented. Hubbard response and projector derivatives are not implemented in the analytic LR force/NAC path. The implementation differentiates the spin-adapted or collinear unrestricted auxiliary TDA determinant wavefunction defined by the LR orbitals and amplitudes; it is not full quadratic-response TDDFT. Use `lr_nac_spin=updown` for an unrestricted reference with nonempty occupied and virtual windows in both spin channels. Closed-shell singlet/triplet adaptations use the corresponding spin label; their S0-triplet spin-free couplings are exactly zero without SOC. Complex-k and spin-flip calculations are rejected.
+Requires a converged real Gamma `ks-lr` calculation, `cal_force=true`, `kpar=1`, `dft_plus_u=0`, `vh_in_h=1`, and an LR eigensolver other than spectrum. Occupied bands must be fully occupied and virtual bands empty within floating-point roundoff; fractional-occupation response is not implemented. Hubbard response and projector derivatives are not implemented in the analytic LR force/NAC path. The implementation differentiates the spin-adapted or collinear unrestricted auxiliary TDA determinant wavefunction defined by the LR orbitals and amplitudes; it is not full quadratic-response TDDFT. Use `lr_nac_spin=updown` for an unrestricted reference with nonempty occupied and virtual windows in both spin channels. Closed-shell singlet/triplet adaptations use the corresponding spin label; their S0-triplet spin-free couplings are exactly zero without SOC. Complex-k and spin-flip calculations are rejected.
 
 The running log contains NACV_BEGIN/COMPONENT/END records: raw, ETF and moving-AO vectors in bohr^-1, then raw/ETF gap-weighted numerators in Hartree/bohr. The energy gap is printed in Hartree. An unresolved gap retains its numerators, sets the resolution flag false and leaves the divided vectors zero; no energy-gap clipping is used. Phase and state ordering follow the current LR eigenvectors. Compare degenerate states as subspaces, not individual vector components.
 
@@ -63,6 +63,11 @@ The occupied and virtual LR windows must include every occupied and virtual orbi
                 ModuleBase::WARNING_QUIT(
                     "ReadInput", "lr_nac_pairs requires dft_plus_u=0; Hubbard response and projector derivatives are "
                                  "not implemented");
+            }
+            if (input.vh_in_h != 1)
+            {
+                ModuleBase::WARNING_QUIT(
+                    "ReadInput", "lr_nac_pairs requires vh_in_h=1; Hartree-disabled ground-state response is not implemented");
             }
             if (pairs.size() % 2 != 0)
             {
@@ -111,7 +116,7 @@ The occupied and virtual LR windows must include every occupied and virtual orbi
         item.default_value = "singlet";
         item.unit = "";
         item.set_availability(
-            "esolver_type==ks-lr and basis_type==lcao and gamma_only==true and cal_force==true and dft_plus_u==0");
+            "esolver_type==ks-lr and basis_type==lcao and gamma_only==true and cal_force==true and dft_plus_u==0 and vh_in_h==1");
         item.description =
             "Select singlet/triplet for a closed-shell reference or updown for a collinear unrestricted "
             "reference with two nonempty occupied spin spaces. Triplet and updown require nspin=2. "

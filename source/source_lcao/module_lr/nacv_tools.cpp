@@ -6,27 +6,32 @@
 #include "source_base/module_external/scalapack_connector.h"
 #include "source_base/opt_cg.h"
 #include "source_base/parallel_blkcyc.h"
+#include "source_base/parallel_cell.h"
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"
 #include "source_base/tool_title.h"
 #include "utils/lr_util.h"
-#include "utils/lr_util_print.h"
 #include <algorithm>
 #include <array>
 #include <cassert>
 #include <cmath>
 #include <complex>
+#include <cstdlib>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <limits>
 #include <map>
+#include <memory>
 #include <ostream>
 #include <sstream>
 #include <stdexcept>
 #include <string>
 #include <utility>
 #include <vector>
+
+// The diagnostic printer requires the stream/container/layout definitions above.
+#include "utils/lr_util_print.h"
 
 namespace LR
 {
@@ -342,6 +347,17 @@ void NacvFactorization::solve(std::vector<double> &rhs, const Parallel_Blkcyclic
 
 namespace LR
 {
+void validate_nac_surfaces(const std::vector<int> &pairs, int state_count)
+{
+    for (const int state : pairs)
+    {
+        if (state > state_count)
+        {
+            throw std::invalid_argument("lr_nac_pairs exceeds the resolved number of LR states");
+        }
+    }
+}
+
 void validate_nac_window(int occupied, int virtuals, int basis)
 {
     if (occupied <= 0 || virtuals <= 0 || basis <= occupied || virtuals != basis - occupied)
@@ -418,8 +434,8 @@ void validate_nac_functionals(const std::string &reference_xc, const std::string
 {
     const std::string reference = NacvXC::canonical_xc_name(reference_xc);
     const std::string response = NacvXC::canonical_xc_name(response_xc);
-    const bool reference_supported = NacvXC::has_local_xc(reference) || reference == "hf" || reference == "none";
-    const bool response_supported = NacvXC::has_local_xc(response) || response == "hf" || response == "rpa";
+    const bool reference_supported = LR_Util::has_local_xc(reference) || reference == "hf" || reference == "none";
+    const bool response_supported = LR_Util::has_local_xc(response) || response == "hf" || response == "rpa";
     if (!reference_supported || !response_supported)
     {
         throw std::invalid_argument("Analytic NAC requires implemented KS orbital-response and LR XC derivatives");
@@ -550,10 +566,61 @@ void print_nac_result(
 }
 } // namespace LR
 
-// The legacy print header assumes these stream/container/layout definitions.
-
 namespace LR
 {
+namespace
+{
+/**
+ * @brief Serialize unfiltered state rows and confirm successful file completion.
+ * @param[in] filename Output path, opened with truncation.
+ * @param[in] values Row-major real or complex values in the existing LR convention.
+ * @param[in] rows Number of states, or one for the excitation-energy row.
+ * @param[in] columns Number of entries per row; may be zero on empty MPI ranks.
+ * @return Absolute path of the successfully closed file.
+ * @throw std::runtime_error For an open, write, close or path-resolution failure.
+ */
+template <typename T>
+std::string write_nac_state_file(
+    const std::string &filename,
+    const T *values,
+    int rows,
+    int columns)
+{
+    std::ofstream file(filename.c_str());
+    if (!file.is_open())
+    {
+        throw std::runtime_error("Could not open LR state output: " + filename);
+    }
+    file << std::scientific << std::setprecision(17);
+    for (int row = 0; row < rows; ++row)
+    {
+        for (int column = 0; column < columns; ++column)
+        {
+            const int index = row * columns + column;
+            file << values[index] << ' ';
+        }
+        file << '\n';
+    }
+    // close() flushes buffered output and retains write/flush/close failures.
+    file.close();
+    if (file.fail())
+    {
+        throw std::runtime_error("Could not complete LR state output: " + filename);
+    }
+#ifdef _WIN32
+    char *absolute_path = ::_fullpath(nullptr, filename.c_str(), 0);
+#else
+    char *absolute_path = ::realpath(filename.c_str(), nullptr);
+#endif
+    if (absolute_path == nullptr)
+    {
+        throw std::runtime_error("Could not resolve LR state output path: " + filename);
+    }
+    const std::unique_ptr<char, decltype(&std::free)> resolved_path(absolute_path, &std::free);
+    return std::string(resolved_path.get());
+}
+} // namespace
+
 template <typename T>
 void write_nac_states(
     const std::string &directory,
@@ -563,34 +630,50 @@ void write_nac_states(
     const double *energies,
     const T *amplitudes,
     int local_size,
-    int state_count)
+    int state_count,
+    std::ostream &output)
 {
-    if (rank == 0)
+    std::string confirmations;
+    std::string failure;
+    try
     {
-        const std::string filename = directory + "Excitation_Energy_" + label + suffix + ".dat";
-        const int written = LR_Util::write_value(
-            filename,
-            17,
-            energies,
-            state_count);
-        if (written != state_count)
+        if (rank == 0)
         {
-            ModuleBase::WARNING_QUIT("ESolver_LR", "Incomplete LR excitation-energy output");
+            const std::string filename = directory + "Excitation_Energy_" + label + suffix + ".dat";
+            const std::string written = write_nac_state_file(
+                filename,
+                energies,
+                1,
+                state_count);
+            confirmations += "Write file: " + written + "\n";
         }
+        const int output_rank = rank + 1;
+        const std::string filename =
+            directory + "Excitation_Amplitude_" + label + suffix + "_" + std::to_string(output_rank) + ".dat";
+        const std::string written = write_nac_state_file(
+            filename,
+            amplitudes,
+            state_count,
+            local_size);
+        confirmations += "Write file: " + written + "\n";
     }
-    const int output_rank = rank + 1;
-    const std::string filename =
-        directory + "Excitation_Amplitude_" + label + suffix + "_" + std::to_string(output_rank) + ".dat";
-    const int written = LR_Util::write_value(
-        filename,
-        17,
-        amplitudes,
-        state_count,
-        local_size);
-    if (written != state_count * local_size)
+    catch (const std::runtime_error &error)
     {
-        ModuleBase::WARNING_QUIT("ESolver_LR", "Incomplete LR excitation-amplitude output");
+        failure = error.what();
     }
+    const auto domain = ModuleBase::world_comm_domain();
+    const int local_failure = !failure.empty();
+    if (domain.max(local_failure) != 0)
+    {
+        if (!local_failure)
+        {
+            failure = "LR state output failed on another MPI rank";
+        }
+        throw std::runtime_error(failure);
+    }
+    const int maximum_count = std::numeric_limits<int>::max();
+    const std::string gathered = domain.gather_text(confirmations, maximum_count);
+    output << gathered;
 }
 template void write_nac_states<double>(
     const std::string &,
@@ -600,7 +683,8 @@ template void write_nac_states<double>(
     const double *,
     const double *,
     int,
-    int);
+    int,
+    std::ostream &);
 template void write_nac_states<std::complex<double>>(
     const std::string &,
     const std::string &,
@@ -609,5 +693,6 @@ template void write_nac_states<std::complex<double>>(
     const double *,
     const std::complex<double> *,
     int,
-    int);
+    int,
+    std::ostream &);
 } // namespace LR
