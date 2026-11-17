@@ -22,7 +22,8 @@ TEST_F(DFTUBaseTest, AppendSnapshotNAPlaceholderAndReady)
     this->init_dftu(dftu, false);
 
     const DFTU_BASE::OccmatOutputCfg cfg = {1, 1, 5, true, 1};
-    const std::string out_dir = testing::TempDir();
+    DFTUTestDirectory temp_dir;
+    const std::string out_dir = temp_dir.path();
     const DFTU_BASE::OccmatStepInfo first_step = {0, 1, 1e-6, 0.5};
     const DFTU_BASE::OccmatStepInfo second_step = {1, 2, 1e-6, 0.5};
 
@@ -37,7 +38,7 @@ TEST_F(DFTUBaseTest, AppendSnapshotNAPlaceholderAndReady)
                                         cfg,
                                         DFTU_BASE::SOC_LAYOUT_PAULI);
 
-    const std::string fn1 = out_dir + "occ_matg1.txt";
+    const std::string fn1 = temp_dir.file("occ_matg1.txt");
     std::ifstream ifs(fn1.c_str());
     ASSERT_TRUE(ifs.is_open());
     std::stringstream ss;
@@ -60,7 +61,7 @@ TEST_F(DFTUBaseTest, AppendSnapshotNAPlaceholderAndReady)
                                         cfg,
                                         DFTU_BASE::SOC_LAYOUT_PAULI);
 
-    const std::string fn2 = out_dir + "occ_matg2.txt";
+    const std::string fn2 = temp_dir.file("occ_matg2.txt");
     std::ifstream ifs2(fn2.c_str());
     ASSERT_TRUE(ifs2.is_open());
     std::stringstream ss2;
@@ -71,10 +72,6 @@ TEST_F(DFTUBaseTest, AppendSnapshotNAPlaceholderAndReady)
     EXPECT_EQ(content2.find("N/A"), std::string::npos);
     EXPECT_EQ(content2.find("# eigenvalues"), std::string::npos);
 
-    // Clean up so subsequent tests checking "file not written" are not
-    // fooled by leftovers.  std::remove is Rule 17 compliant.
-    std::remove((out_dir + "occ_matg1.txt").c_str());
-    std::remove((out_dir + "occ_matg2.txt").c_str());
 }
 
 /// out_occ_mat = false must suppress both the numbered snapshot file and the
@@ -85,13 +82,9 @@ TEST_F(DFTUBaseTest, OccMatSwitchDisabledWritesNothing)
     this->init_dftu(dftu, false);
 
     const DFTU_BASE::OccmatOutputCfg cfg = {1, 1, 5, false, 1};
-    const std::string out_dir = testing::TempDir();
+    DFTUTestDirectory temp_dir;
+    const std::string out_dir = temp_dir.path();
     const DFTU_BASE::OccmatStepInfo step = {0, 1, 1e-6, 0.5};
-
-    // Remove stale files from previous test binary runs so the
-    // "file not written" assertions are meaningful.
-    std::remove((out_dir + "occ_matg1.txt").c_str());
-    std::remove((out_dir + "occ_mat.txt").c_str());
 
     DFTU_BASE::append_ion_step_snapshot(dftu,
                                         ucell,
@@ -102,7 +95,7 @@ TEST_F(DFTUBaseTest, OccMatSwitchDisabledWritesNothing)
                                         cfg,
                                         DFTU_BASE::SOC_LAYOUT_PAULI);
 
-    const std::string fn_g1 = out_dir + "occ_matg1.txt";
+    const std::string fn_g1 = temp_dir.file("occ_matg1.txt");
     std::ifstream ifs(fn_g1.c_str());
     EXPECT_FALSE(ifs.is_open());
 
@@ -113,7 +106,7 @@ TEST_F(DFTUBaseTest, OccMatSwitchDisabledWritesNothing)
                                    cfg,
                                    DFTU_BASE::SOC_LAYOUT_PAULI);
 
-    const std::string fn_latest = out_dir + "occ_mat.txt";
+    const std::string fn_latest = temp_dir.file("occ_mat.txt");
     std::ifstream ifs_latest(fn_latest.c_str());
     EXPECT_FALSE(ifs_latest.is_open());
 }
@@ -133,7 +126,8 @@ TEST_F(DFTUBaseTest, DftPlusUDisabledWritesNothing)
     // not even reach has_l_channel() when dft_plus_u == 0.
 
     const DFTU_BASE::OccmatOutputCfg cfg = {1, 1, 5, true, 0};
-    const std::string out_dir = testing::TempDir() + "guard_test/";
+    DFTUTestDirectory temp_dir;
+    const std::string out_dir = temp_dir.path();
     const DFTU_BASE::OccmatStepInfo step = {0, 1, 1e-6, 0.5};
 
     DFTU_BASE::append_ion_step_snapshot(dftu,
@@ -145,7 +139,7 @@ TEST_F(DFTUBaseTest, DftPlusUDisabledWritesNothing)
                                         cfg,
                                         DFTU_BASE::SOC_LAYOUT_PAULI);
 
-    const std::string fn_g1 = out_dir + "occ_matg1.txt";
+    const std::string fn_g1 = temp_dir.file("occ_matg1.txt");
     std::ifstream ifs(fn_g1.c_str());
     EXPECT_FALSE(ifs.is_open());
 
@@ -156,7 +150,7 @@ TEST_F(DFTUBaseTest, DftPlusUDisabledWritesNothing)
                                    cfg,
                                    DFTU_BASE::SOC_LAYOUT_PAULI);
 
-    const std::string fn_latest = out_dir + "occ_mat.txt";
+    const std::string fn_latest = temp_dir.file("occ_mat.txt");
     std::ifstream ifs_latest(fn_latest.c_str());
     EXPECT_FALSE(ifs_latest.is_open());
 }
@@ -178,8 +172,9 @@ TEST_F(DFTUBaseTest, LatestOccMatIncludesSortedCollinearEigenvalues)
 
     const DFTU_BASE::OccmatOutputCfg cfg = {0, 1, 5, true, 1};
     const DFTU_BASE::OccmatStepInfo step = {0, 2, 1e-6, 1e-7};
-    const std::string filename = testing::TempDir() + "occ_mat.txt";
-    DFTU_BASE::write_latest_occmat(dftu, ucell, testing::TempDir(), step, cfg,
+    DFTUTestDirectory temp_dir;
+    const std::string filename = temp_dir.file("occ_mat.txt");
+    DFTU_BASE::write_latest_occmat(dftu, ucell, temp_dir.path(), step, cfg,
                                    DFTU_BASE::SOC_LAYOUT_PAULI);
 
     std::ifstream input(filename.c_str());
@@ -217,7 +212,6 @@ TEST_F(DFTUBaseTest, LatestOccMatIncludesSortedCollinearEigenvalues)
     DFTU_BASE::read_occup_m(ucell, restored, l_channel, filename, 2, 1,
                             DFTU_BASE::SOC_LAYOUT_PAULI);
     EXPECT_NEAR(restored.get(0, 2, 0, 0, 1), 0.1, 1e-8);
-    std::remove(filename.c_str());
 }
 
 TEST_F(DFTUBaseTest, SocEigenvaluesIncludeImaginarySpinCoupling)
@@ -405,7 +399,8 @@ TEST_F(DFTUBaseTest, AppendSnapshotGuardDftuOffBeforeIterValidation)
 
     // Use a unique subdirectory so files from other tests in the same
     // binary do not cause false positives.
-    const std::string out_dir = testing::TempDir() + "guard_test/";
+    DFTUTestDirectory temp_dir;
+    const std::string out_dir = temp_dir.path();
 
     // iter=0 is intentionally invalid; the guard-first check ensures
     // this does not abort.
@@ -421,7 +416,7 @@ TEST_F(DFTUBaseTest, AppendSnapshotGuardDftuOffBeforeIterValidation)
     // If we reach here the guard worked.  No file should have been written
     // (the directory may not even exist, which is fine — the guard
     // returned before any file IO).
-    const std::string fn_g1 = out_dir + "occ_matg1.txt";
+    const std::string fn_g1 = temp_dir.file("occ_matg1.txt");
     std::ifstream ifs(fn_g1.c_str());
     EXPECT_FALSE(ifs.is_open());
 

@@ -67,8 +67,9 @@ TEST_F(DFTUBaseTest, InitBaseReadsFixedOccMat)
 {
     // Use the gtest-managed temporary directory so the test never creates
     // or deletes directories itself (see AGENTS.md rule 17).
-    const std::string dir = testing::TempDir();
-    const std::string fn = dir + "occ_mat.txt";
+    DFTUTestDirectory temp_dir;
+    const std::string dir = temp_dir.path();
+    const std::string fn = temp_dir.file("occ_mat.txt");
 
     // One Fe atom, L=2, two spin channels of 5x5, filled with distinct
     // constants.
@@ -130,8 +131,9 @@ TEST_F(DFTUBaseTest, InitBaseReadsFixedOccMat)
 TEST_F(DFTUBaseTest, InitBaseReadsOccMatSocPauliRoundtrip)
 {
     // Use the gtest-managed temporary directory (AGENTS.md rule 17).
-    const std::string dir = testing::TempDir();
-    const std::string fn = dir + "occ_mat.txt";
+    DFTUTestDirectory temp_dir;
+    const std::string dir = temp_dir.path();
+    const std::string fn = temp_dir.file("occ_mat.txt");
 
     // One Fe atom, L=2 -> nm=5. The 2m x 2m flat buffer (100 elements)
     // holds 4 contiguous m^2 blocks: [b0, b1, b2, b3]. The file stores
@@ -225,7 +227,8 @@ TEST_F(DFTUBaseTest, InitBaseReadsOccMatSocPauliRoundtrip)
 
 TEST_F(DFTUBaseTest, ReadOccMatCompactHandlesLongComment)
 {
-    const std::string fn = testing::TempDir() + "compact_long_comment.txt";
+    DFTUTestDirectory temp_dir;
+    const std::string fn = temp_dir.file("compact_long_comment.txt");
     {
         std::ofstream ofs(fn);
         ASSERT_TRUE(ofs.is_open());
@@ -292,7 +295,8 @@ TEST_F(DFTUBaseTest, ReadOccMatCompactMultipleAtomsSkipsUncorrelatedSpecies)
     multi_cell.itia2iat(1, 1) = 3;
     multi_cell.set_iat2iwt(1);
 
-    const std::string fn = testing::TempDir() + "compact_multi_atom.txt";
+    DFTUTestDirectory temp_dir;
+    const std::string fn = temp_dir.file("compact_multi_atom.txt");
     {
         std::ofstream ofs(fn);
         ASSERT_TRUE(ofs.is_open());
@@ -319,7 +323,8 @@ TEST_F(DFTUBaseTest, ReadOccMatCompactMultipleAtomsSkipsUncorrelatedSpecies)
 
 TEST_F(DFTUBaseTest, ReadOccMatCompactSocRealSpinBasis)
 {
-    const std::string fn = testing::TempDir() + "compact_soc_real.txt";
+    DFTUTestDirectory temp_dir;
+    const std::string fn = temp_dir.file("compact_soc_real.txt");
     {
         std::ofstream ofs(fn);
         ASSERT_TRUE(ofs.is_open());
@@ -352,7 +357,8 @@ TEST_F(DFTUBaseTest, ReadOccMatCompactSocRealSpinBasis)
 
 TEST_F(DFTUBaseTest, ReadOccMatRejectsLegacyHeader)
 {
-    const std::string fn = testing::TempDir() + "legacy_header.txt";
+    DFTUTestDirectory temp_dir;
+    const std::string fn = temp_dir.file("legacy_header.txt");
     {
         std::ofstream ofs(fn);
         ASSERT_TRUE(ofs.is_open());
@@ -374,7 +380,8 @@ TEST_F(DFTUBaseTest, ReadOccMatRejectsLegacyHeader)
 
 TEST_F(DFTUBaseTest, ReadOccMatRejectsShortMatrixRow)
 {
-    const std::string fn = testing::TempDir() + "short_matrix_row.txt";
+    DFTUTestDirectory temp_dir;
+    const std::string fn = temp_dir.file("short_matrix_row.txt");
     {
         std::ofstream ofs(fn);
         ASSERT_TRUE(ofs.is_open());
@@ -400,7 +407,8 @@ TEST_F(DFTUBaseTest, ReadOccMatRejectsShortMatrixRow)
 
 TEST_F(DFTUBaseTest, ReadOccMatRejectsLongMatrixRow)
 {
-    const std::string fn = testing::TempDir() + "long_matrix_row.txt";
+    DFTUTestDirectory temp_dir;
+    const std::string fn = temp_dir.file("long_matrix_row.txt");
     {
         std::ofstream ofs(fn);
         ASSERT_TRUE(ofs.is_open());
@@ -426,7 +434,8 @@ TEST_F(DFTUBaseTest, ReadOccMatRejectsLongMatrixRow)
 
 TEST_F(DFTUBaseTest, ReadOccMatRejectsMissingSocBlock)
 {
-    const std::string fn = testing::TempDir() + "missing_soc_block.txt";
+    DFTUTestDirectory temp_dir;
+    const std::string fn = temp_dir.file("missing_soc_block.txt");
     {
         std::ofstream ofs(fn);
         ASSERT_TRUE(ofs.is_open());
@@ -453,7 +462,8 @@ TEST_F(DFTUBaseTest, ReadOccMatRejectsMissingSocBlock)
 
 TEST_F(DFTUBaseTest, ReadOccMatRejectsExtraContent)
 {
-    const std::string fn = testing::TempDir() + "extra_content.txt";
+    DFTUTestDirectory temp_dir;
+    const std::string fn = temp_dir.file("extra_content.txt");
     {
         std::ofstream ofs(fn);
         ASSERT_TRUE(ofs.is_open());

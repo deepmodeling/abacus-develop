@@ -9,12 +9,44 @@
 
 #include <cstdio>
 #include <cmath>
+#include <cstdlib>
 #include <fstream>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <vector>
 #include <numeric>
+#include <unistd.h>
 
+
+DFTUTestDirectory::DFTUTestDirectory()
+{
+    const std::string path_template = testing::TempDir() + "abacus-dftu-XXXXXX";
+    std::vector<char> writable_path(path_template.begin(), path_template.end());
+    writable_path.push_back('\0');
+    char* created = ::mkdtemp(writable_path.data());
+    if (created == nullptr)
+    {
+        throw std::runtime_error("Could not create DFT+U test directory");
+    }
+    path_ = std::string(created) + "/";
+}
+
+DFTUTestDirectory::~DFTUTestDirectory()
+{
+    for (const std::string& filename : files_)
+    {
+        std::remove(filename.c_str());
+    }
+    ::rmdir(path_.c_str());
+}
+
+std::string DFTUTestDirectory::file(const std::string& name)
+{
+    const std::string filename = path_ + name;
+    files_.push_back(filename);
+    return filename;
+}
 
 
 void DFTUBaseTest::SetUp()
@@ -215,8 +247,9 @@ TEST_F(DFTUBaseTest, InitBaseComputesMixedOrbitalOffsetsForSpinModes)
 /// energy from the file-loaded matrix.
 TEST_F(DFTUBaseTest, InitOccMat1BuildsPotentialFromFile)
 {
-    const std::string dir = testing::TempDir();
-    const std::string fn = dir + "occ_mat.txt";
+    DFTUTestDirectory temp_dir;
+    const std::string dir = temp_dir.path();
+    const std::string fn = temp_dir.file("occ_mat.txt");
 
     // One Fe atom, L=2, nspin=2.  All 25 elements per spin set to a
     // constant so expected pot_onsite and energy are easy to compute.
@@ -324,8 +357,9 @@ TEST_F(DFTUBaseTest, InitOccMat1BuildsPotentialFromFile)
 /// property of mode 2 ("fixed matrix").
 TEST_F(DFTUBaseTest, InitOccMat2BuildsPotentialFromFileAndIsStable)
 {
-    const std::string dir = testing::TempDir();
-    const std::string fn = dir + "occ_mat.txt";
+    DFTUTestDirectory temp_dir;
+    const std::string dir = temp_dir.path();
+    const std::string fn = temp_dir.file("occ_mat.txt");
 
     const double occ_up = 0.1;
     const double occ_dn = 0.2;

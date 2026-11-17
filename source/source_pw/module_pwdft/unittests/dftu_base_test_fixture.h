@@ -5,7 +5,24 @@
 #include "source_cell/unitcell.h"
 #include "gtest/gtest.h"
 
+#include <string>
+#include <vector>
+
 class Plus_U_Base;
+
+/// Give each file-based test a private directory and remove its fixtures.
+class DFTUTestDirectory
+{
+  public:
+    DFTUTestDirectory();
+    ~DFTUTestDirectory();
+    const std::string& path() const { return path_; }
+    std::string file(const std::string& name);
+
+  private:
+    std::string path_;
+    std::vector<std::string> files_;
+};
 
 class DFTUBaseTest : public testing::Test
 {

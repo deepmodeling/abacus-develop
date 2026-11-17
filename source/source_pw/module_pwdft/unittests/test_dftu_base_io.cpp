@@ -19,7 +19,8 @@ TEST(FindFirstExistingFileTest, ReturnsFirstExistingCandidate)
     // Use the gtest-managed temp dir for writable fixtures, and a
     // non-existent subdir for the "no candidate" case. The test never
     // creates or deletes directories itself (AGENTS.md rule 17).
-    const std::string td = testing::TempDir();
+    DFTUTestDirectory temp_dir;
+    const std::string td = temp_dir.path();
 
     // No candidates exist -> empty string. All three names are unique to
     // this test, so they should not be present in td.
@@ -33,7 +34,7 @@ TEST(FindFirstExistingFileTest, ReturnsFirstExistingCandidate)
     // Only the second candidate exists -> it is returned even though the
     // first comes earlier in the list.
     {
-        const std::string fn = td + "ffe_second_only.txt";
+        const std::string fn = temp_dir.file("ffe_second_only.txt");
         std::ofstream(fn).close();
         const std::vector<std::string> candidates = {"ffe_absent_1.txt",
                                                       "ffe_second_only.txt",
@@ -43,7 +44,7 @@ TEST(FindFirstExistingFileTest, ReturnsFirstExistingCandidate)
 
     // The first candidate exists -> it takes precedence over the second.
     {
-        const std::string fn = td + "ffe_first_wins.txt";
+        const std::string fn = temp_dir.file("ffe_first_wins.txt");
         std::ofstream(fn).close();
         const std::vector<std::string> candidates = {"ffe_first_wins.txt",
                                                       "ffe_second_only.txt",
@@ -68,7 +69,8 @@ TEST_F(DFTUBaseTest, CompactWriterReaderCollinearRoundtrip)
         }
     }
 
-    const std::string filename = testing::TempDir() + "compact_writer_collinear.txt";
+    DFTUTestDirectory temp_dir;
+    const std::string filename = temp_dir.file("compact_writer_collinear.txt");
     {
         std::ofstream output(filename.c_str());
         ASSERT_TRUE(output.is_open());
@@ -159,7 +161,8 @@ TEST_F(DFTUBaseTest, CompactWriterReaderSocPauliRoundtrip)
         }
     }
 
-    const std::string filename = testing::TempDir() + "compact_writer_soc_pauli.txt";
+    DFTUTestDirectory temp_dir;
+    const std::string filename = temp_dir.file("compact_writer_soc_pauli.txt");
     {
         std::ofstream output(filename.c_str());
         ASSERT_TRUE(output.is_open());
@@ -255,7 +258,8 @@ TEST_F(DFTUBaseTest, CompactWriterReaderSocRealSpinBasisRoundtrip)
         }
     }
 
-    const std::string filename = testing::TempDir() + "compact_writer_soc_real.txt";
+    DFTUTestDirectory temp_dir;
+    const std::string filename = temp_dir.file("compact_writer_soc_real.txt");
     {
         std::ofstream output(filename.c_str());
         ASSERT_TRUE(output.is_open());
