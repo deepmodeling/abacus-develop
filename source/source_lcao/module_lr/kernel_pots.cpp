@@ -1,5 +1,5 @@
 #include "kernel_pots.h"
-#include "nacv_xc_names.h"
+#include "nacv_tools.h"
 #include "potentials/pot_hxc_lrtd.h"
 #include "source_cell/unitcell.h"
 #include "source_io/module_parameter/input_parameter.h"

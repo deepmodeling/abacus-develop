@@ -1,5 +1,8 @@
-#ifndef ABACUS_LR_NACV_WORKFLOW_H
-#define ABACUS_LR_NACV_WORKFLOW_H
+/** @file nacv.h
+ * @brief Declare the explicit borrowed inputs and ESolver entry points for analytic NAC.
+ */
+#ifndef ABACUS_LR_NACV_H
+#define ABACUS_LR_NACV_H
 
 #include <iosfwd>
 #include <string>
@@ -104,8 +107,8 @@ std::vector<double> collect_nac_eigenpairs(
  * @param[in] data Borrowed geometry-local inputs; numerical contractions are unchanged.
  * @param[in] ionic_step One-based index written to the existing running log.
  * @throw std::logic_error For orbitals other than real Gamma.
- * @details Each pair owns its force evaluator. Ground density is prepared once
- * per geometry and remains read-only throughout the batch.
+ * @details Response operators and force geometry terms are reused within the batch.
+ * Ground density remains read-only throughout the geometry.
  */
 template <typename T> void run_nac_requests(const NacvInputs<T> &data, int ionic_step);
 } // namespace LR
