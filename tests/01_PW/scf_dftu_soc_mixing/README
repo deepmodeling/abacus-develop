@@ -1,4 +1,0 @@
-PW spin-orbit DFT+U occupation-matrix mixing regression. The Fe d occupation
-matrix has 100 values per atom (nspin=4, npol=2, l=2). The run must reach the
-second SCF iteration, where the freshly projected occupation matrix is
-flattened, mixed, and written back before the +U potential is rebuilt.
