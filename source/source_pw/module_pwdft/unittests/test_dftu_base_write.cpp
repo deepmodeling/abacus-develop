@@ -266,7 +266,26 @@ TEST_F(DFTUBaseTest, CollinearEigenvaluesStopAtJacobiCutoff)
     std::ostringstream output;
     DFTU_BASE::write_occup_eigenvalues(dftu, ucell, output,
                                        DFTU_BASE::SOC_LAYOUT_PAULI);
-    EXPECT_NE(output.str().find("# eigenvalues atom 1 L 2 spin 1:"), std::string::npos);
+    std::istringstream lines(output.str());
+    std::string first_line;
+    const bool first_line_read = static_cast<bool>(std::getline(lines, first_line));
+    ASSERT_TRUE(first_line_read);
+    EXPECT_EQ(first_line.find("# eigenvalues atom 1 L 2 spin 1:"), 0u);
+    const std::size_t separator = first_line.find(':');
+    ASSERT_NE(separator, std::string::npos);
+    const std::size_t values_start = separator + 1;
+    const std::string values_text = first_line.substr(values_start);
+    std::istringstream values(values_text);
+    double value = 0.0;
+    for (int m = 0; m < 5; ++m)
+    {
+        const bool has_value = static_cast<bool>(values >> value);
+        ASSERT_TRUE(has_value);
+        const double expected = m < 3 ? 0.0 : 0.5;
+        EXPECT_NEAR(value, expected, 1e-8);
+    }
+    const bool has_extra_value = static_cast<bool>(values >> value);
+    EXPECT_FALSE(has_extra_value);
 }
 
 TEST_F(DFTUBaseTest, NonmagneticEigenvaluesUseOnlyMaintainedChannel)
@@ -282,9 +301,23 @@ TEST_F(DFTUBaseTest, NonmagneticEigenvaluesUseOnlyMaintainedChannel)
     const std::string result = output.str();
     EXPECT_EQ(result.find("spin 2"), std::string::npos);
     EXPECT_EQ(result.find("spin 1"), std::string::npos);
-    EXPECT_NE(result.find("# eigenvalues atom 1 L 2 nonmagnetic: 0.00000000 0.00000000 0.00000000 0.00000000 0.60000000"),
-              std::string::npos);
+    EXPECT_EQ(result.find("# eigenvalues atom 1 L 2 nonmagnetic:"), 0u);
     EXPECT_EQ(result.find("\n# eigenvalues", 1), std::string::npos);
+    const std::size_t separator = result.find(':');
+    ASSERT_NE(separator, std::string::npos);
+    const std::size_t values_start = separator + 1;
+    const std::string values_text = result.substr(values_start);
+    std::istringstream values(values_text);
+    double value = 0.0;
+    for (int m = 0; m < 5; ++m)
+    {
+        const bool has_value = static_cast<bool>(values >> value);
+        ASSERT_TRUE(has_value);
+        const double expected = m == 4 ? 0.6 : 0.0;
+        EXPECT_NEAR(value, expected, 1e-8);
+    }
+    const bool has_extra_value = static_cast<bool>(values >> value);
+    EXPECT_FALSE(has_extra_value);
 }
 
 TEST_F(DFTUBaseTest, NonmagneticPwEigenvaluesKeepSpinSummedWeight)
@@ -302,8 +335,23 @@ TEST_F(DFTUBaseTest, NonmagneticPwEigenvaluesKeepSpinSummedWeight)
     std::ostringstream output;
     DFTU_BASE::write_occup_eigenvalues(dftu, ucell, output,
                                        DFTU_BASE::SOC_LAYOUT_PAULI);
-    EXPECT_NE(output.str().find("nonmagnetic: 0.00000000 0.00000000 0.00000000 0.00000000 2.00000000"),
-              std::string::npos);
+    const std::string result = output.str();
+    EXPECT_EQ(result.find("# eigenvalues atom 1 L 2 nonmagnetic:"), 0u);
+    const std::size_t separator = result.find(':');
+    ASSERT_NE(separator, std::string::npos);
+    const std::size_t values_start = separator + 1;
+    const std::string values_text = result.substr(values_start);
+    std::istringstream values(values_text);
+    double value = 0.0;
+    for (int m = 0; m < 5; ++m)
+    {
+        const bool has_value = static_cast<bool>(values >> value);
+        ASSERT_TRUE(has_value);
+        const double expected = m == 4 ? 2.0 : 0.0;
+        EXPECT_NEAR(value, expected, 1e-8);
+    }
+    const bool has_extra_value = static_cast<bool>(values >> value);
+    EXPECT_FALSE(has_extra_value);
 }
 
 TEST_F(DFTUBaseTest, LcaoMethodTwoSocEigenvaluesPreserveCrossOrbitalCoupling)
