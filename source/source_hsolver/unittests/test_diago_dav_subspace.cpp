@@ -378,6 +378,8 @@ TYPED_TEST(DavSubspaceTest, HostBackedDenseActionsMatchResident)
     std::vector<Real> er, eh;
     EXPECT_GE(run(false, resident, er), 0);
     EXPECT_GE(run(true, host, eh), 0);
+    const TypeParam relative_phase(0, 1);
+    for (auto& value : host) { value *= relative_phase; }
     for (int band = 0; band < nbands; ++band) EXPECT_NEAR(er[band], eh[band], 1e-8);
     const auto expect_s_orthonormal = [&](const std::vector<TypeParam>& psi) {
         for (int left = 0; left < nbands; ++left)
@@ -403,7 +405,7 @@ TYPED_TEST(DavSubspaceTest, HostBackedDenseActionsMatchResident)
         const auto phase = std::abs(overlap) > 0 ? overlap / std::abs(overlap) : std::complex<double>(1, 0);
         for (int i = 0; i < dim; ++i)
             EXPECT_NEAR(std::abs(std::complex<double>(resident[band * ld + i])
-                                 - phase * std::complex<double>(host[band * ld + i])), 0.0, 1e-8);
+                                 - std::conj(phase) * std::complex<double>(host[band * ld + i])), 0.0, 1e-8);
     }
 }
 #endif
