@@ -1,10 +1,14 @@
 #include "source_cell/dom_decomp.h"
+#include "source_base/parallel_cell.h"
 #include "gtest/gtest.h"
-#include "setcell.h"
-#include "source_esolver/esolver_lj.h"
+#include "source_md/test/setcell.h"
+#include "lj_test_solver.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_md/md_func.h"
-#define doublethreshold 1e-12
+#include <fstream>
+#include <cstdint>
+#include <string>
+constexpr double doublethreshold = 1e-12;
 
 /************************************************
  *  unit test of functions in esolver_lj.h
@@ -24,6 +28,8 @@ class LJ_pot_test : public testing::Test
     int natom;
     UnitCell ucell;
     Input_para inp;
+    std::ofstream running_log;
+    std::string output_dir;
 
     void SetUp()
     {
@@ -33,6 +39,7 @@ class LJ_pot_test : public testing::Test
         stress.create(3, 3);
 
         Setcell::parameters(inp);
+        output_dir = testing::TempDir();
     }
 
     void TearDown()
@@ -42,7 +49,7 @@ class LJ_pot_test : public testing::Test
 
 TEST_F(LJ_pot_test, potential)
 {
-    ModuleESolver::ESolver* p_esolver = new ModuleESolver::ESolver_LJ();
+    ModuleESolver::ESolver* p_esolver = make_lj_test_solver();
     MDCell mdcell;
     mdcell = Setcell::setup_mdcell(ucell);
     DomainDecomposition decomp;
@@ -55,7 +62,7 @@ TEST_F(LJ_pot_test, potential)
 
 TEST_F(LJ_pot_test, unitcell_compatibility)
 {
-    ModuleESolver::ESolver* p_esolver = new ModuleESolver::ESolver_LJ();
+    ModuleESolver::ESolver* p_esolver = make_lj_test_solver();
     p_esolver->before_all_runners(ucell, inp);
     p_esolver->runner(ucell, 0);
     p_esolver->cal_force(ucell, stress);
@@ -68,7 +75,7 @@ TEST_F(LJ_pot_test, unitcell_compatibility)
 
 TEST_F(LJ_pot_test, force)
 {
-    ModuleESolver::ESolver* p_esolver = new ModuleESolver::ESolver_LJ();
+    ModuleESolver::ESolver* p_esolver = make_lj_test_solver();
     MDCell mdcell;
     mdcell = Setcell::setup_mdcell(ucell);
     DomainDecomposition decomp;
@@ -93,17 +100,17 @@ TEST_F(LJ_pot_test, force)
 
 TEST_F(LJ_pot_test, mdcell_cal_force)
 {
-    ModuleESolver::ESolver_LJ p_esolver;
+    std::unique_ptr<ModuleESolver::ESolver> p_esolver(make_lj_test_solver());
     MDCell mdcell;
     mdcell = Setcell::setup_mdcell(ucell);
     DomainDecomposition decomp;
     decomp.init(ModuleBase::world_comm_domain(), mdcell.latvec(), mdcell.lat0(), 0.0, 0.0);
-    p_esolver.before_all_runners(mdcell, inp);
+    p_esolver->before_all_runners(mdcell, inp);
     decomp.prepare_neighbors(mdcell);
-    p_esolver.runner(mdcell, 0);
+    p_esolver->runner(mdcell, 0);
 
     ModuleBase::matrix force;
-    p_esolver.cal_force(mdcell, force);
+    p_esolver->cal_force(mdcell, force);
     for (int iat = 0; iat < mdcell.owned_atoms().size(); ++iat)
     {
         const LocalAtom& atom = mdcell.owned_atoms()[static_cast<std::size_t>(iat)];
@@ -115,7 +122,7 @@ TEST_F(LJ_pot_test, mdcell_cal_force)
 
 TEST_F(LJ_pot_test, stress)
 {
-    ModuleESolver::ESolver* p_esolver = new ModuleESolver::ESolver_LJ();
+    ModuleESolver::ESolver* p_esolver = make_lj_test_solver();
     MDCell mdcell;
     mdcell = Setcell::setup_mdcell(ucell);
     DomainDecomposition decomp;
@@ -136,15 +143,18 @@ TEST_F(LJ_pot_test, stress)
 
 TEST_F(LJ_pot_test, mdcell_stress_includes_external_pressure)
 {
-    ModuleESolver::ESolver_LJ p_esolver;
+    std::unique_ptr<ModuleESolver::ESolver> p_esolver(make_lj_test_solver());
     MDCell mdcell;
     mdcell = Setcell::setup_mdcell(ucell);
     DomainDecomposition decomp;
     decomp.init(ModuleBase::world_comm_domain(), mdcell.latvec(), mdcell.lat0(), 0.0, 0.0);
     Input_para input = inp;
-    p_esolver.before_all_runners(mdcell, input);
+    p_esolver->before_all_runners(mdcell, input);
     decomp.prepare_neighbors(mdcell);
-    p_esolver.runner(mdcell, 0);
+    p_esolver->runner(mdcell, 0);
+
+    ModuleBase::matrix internal_stress;
+    p_esolver->cal_stress(mdcell, internal_stress);
 
     const double saved_press1 = input.press1;
     const double saved_press2 = input.press2;
@@ -153,12 +163,12 @@ TEST_F(LJ_pot_test, mdcell_stress_includes_external_pressure)
     input.press2 = 2.0;
     input.press3 = 3.0;
 
-    p_esolver.cal_stress(mdcell, stress);
+    p_esolver->cal_stress(mdcell, stress);
 
     const double unit_transform = ModuleBase::RYDBERG_SI / pow(ModuleBase::BOHR_RADIUS_SI, 3) * 1.0e-8;
-    EXPECT_NEAR(stress(0, 0), p_esolver.get_lj_virial()(0, 0) - 1.0 / unit_transform, doublethreshold);
-    EXPECT_NEAR(stress(1, 1), p_esolver.get_lj_virial()(1, 1) - 2.0 / unit_transform, doublethreshold);
-    EXPECT_NEAR(stress(2, 2), p_esolver.get_lj_virial()(2, 2) - 3.0 / unit_transform, doublethreshold);
+    EXPECT_NEAR(stress(0, 0), internal_stress(0, 0) - 1.0 / unit_transform, doublethreshold);
+    EXPECT_NEAR(stress(1, 1), internal_stress(1, 1) - 2.0 / unit_transform, doublethreshold);
+    EXPECT_NEAR(stress(2, 2), internal_stress(2, 2) - 3.0 / unit_transform, doublethreshold);
 
     input.press1 = saved_press1;
     input.press2 = saved_press2;
@@ -167,7 +177,7 @@ TEST_F(LJ_pot_test, mdcell_stress_includes_external_pressure)
 
 TEST_F(LJ_pot_test, RcutSearchRadius)
 {
-    ModuleESolver::ESolver_LJ* p_esolver = new ModuleESolver::ESolver_LJ();
+    ModuleMD::LJ* p_esolver = new ModuleMD::LJ(output_dir, running_log);
     ucell.ntype = 2;
     std::vector<double> rcut = {3.0};
     p_esolver->rcut_search_radius_for_testing(ucell.ntype, rcut);
@@ -192,7 +202,7 @@ TEST_F(LJ_pot_test, RcutSearchRadius)
 
 TEST_F(LJ_pot_test, SetC6C12)
 {
-    ModuleESolver::ESolver_LJ* p_esolver = new ModuleESolver::ESolver_LJ();
+    ModuleMD::LJ* p_esolver = new ModuleMD::LJ(output_dir, running_log);
     ucell.ntype = 2;
 
     // no rule
@@ -265,7 +275,7 @@ TEST_F(LJ_pot_test, SetC6C12)
 
 TEST_F(LJ_pot_test, CalEnShift)
 {
-    ModuleESolver::ESolver_LJ* p_esolver = new ModuleESolver::ESolver_LJ();
+    ModuleMD::LJ* p_esolver = new ModuleMD::LJ(output_dir, running_log);
     ucell.ntype = 2;
 
     std::vector<double> rcut = {3.0};
@@ -293,3 +303,123 @@ TEST_F(LJ_pot_test, CalEnShift)
     EXPECT_NEAR(p_esolver->get_en_shift()(1, 0), -3.303688865319793e-07, doublethreshold);
     EXPECT_NEAR(p_esolver->get_en_shift()(1, 1), -5.6443326024140752e-06, doublethreshold);
 }
+
+#include "source_md/module_lj/lj.h"
+#include "source_esolver/esolver_forcefields.h"
+#include "source_cell/dom_decomp.h"
+#include "source_md/test/setcell.h"
+
+#include "gtest/gtest.h"
+
+#include <memory>
+#include <fstream>
+#include <utility>
+
+TEST(LJPotential, UnitCellEnergyForceAndStress)
+{
+    UnitCell cell;
+    Setcell::setupcell(cell);
+    Input_para input;
+    Setcell::parameters(input);
+    const std::string output_dir = testing::TempDir();
+    std::ofstream running_log;
+    std::unique_ptr<ModuleMD::ForceField> potential(new ModuleMD::LJ(output_dir, running_log));
+    ModuleESolver::esolver_forcefields solver(std::move(potential), running_log);
+    solver.before_all_runners(cell, input);
+    solver.runner(cell, 0);
+
+    EXPECT_NEAR(solver.cal_energy(), -0.023915637247068761, 1e-12);
+    ModuleBase::matrix force;
+    solver.cal_force(cell, force);
+    EXPECT_NEAR(force(0, 0), 0.00099635466178755387, 1e-12);
+    ModuleBase::matrix stress;
+    solver.cal_stress(cell, stress);
+    EXPECT_NEAR(stress(0, 0), 1.6072044445526372e-6, 1e-10);
+}
+
+TEST(LJPotential, MDCellWritesOwnedForces)
+{
+    UnitCell unitcell;
+    Setcell::setupcell(unitcell);
+    MDCell cell = Setcell::setup_mdcell(unitcell);
+    Input_para input;
+    Setcell::parameters(input);
+    const std::string output_dir = testing::TempDir();
+    std::ofstream running_log;
+    std::unique_ptr<ModuleMD::ForceField> potential(new ModuleMD::LJ(output_dir, running_log));
+    ModuleESolver::esolver_forcefields solver(std::move(potential), running_log);
+    solver.before_all_runners(cell, input);
+    DomainDecomposition decomp;
+    decomp.init(ModuleBase::world_comm_domain(), cell.latvec(), cell.lat0(), 0.0, 0.0);
+    decomp.prepare_neighbors(cell);
+    solver.runner(cell, 0);
+
+    EXPECT_NEAR(solver.cal_energy(), -0.023915637247068761, 1e-12);
+    ModuleBase::matrix force;
+    solver.cal_force(cell, force);
+    for (std::size_t i = 0; i < cell.owned_atoms().size(); ++i)
+    {
+        EXPECT_DOUBLE_EQ(force(i, 0), cell.owned_atoms()[i].force.x);
+        EXPECT_DOUBLE_EQ(force(i, 1), cell.owned_atoms()[i].force.y);
+        EXPECT_DOUBLE_EQ(force(i, 2), cell.owned_atoms()[i].force.z);
+    }
+}
+
+#ifdef __MPI
+TEST(LJPotential, SplitCommunicatorReducesWithinCell)
+{
+    UnitCell unitcell;
+    Setcell::setupcell(unitcell);
+    Input_para input;
+    Setcell::parameters(input);
+
+    ModuleBase::CommunicationDomain domain;
+    domain.initialize(MPI_COMM_SELF);
+    std::vector<LocalAtom> atoms;
+    for (int index = 0; index < unitcell.atoms[0].na; ++index)
+    {
+        const ModuleBase::Vector3<double> zero_force(0.0, 0.0, 0.0);
+        const double mass_au = unitcell.atoms[0].mass / ModuleBase::AU_to_MASS;
+        const LocalAtom atom(unitcell.atoms[0].tau[index],
+                             unitcell.atoms[0].taud[index],
+                             unitcell.atoms[0].vel[index],
+                             zero_force,
+                             unitcell.atoms[0].mbl[index],
+                             mass_au,
+                             0,
+                             index,
+                             0);
+        atoms.push_back(atom);
+    }
+    const std::vector<std::string> labels(1, unitcell.atoms[0].label);
+    const std::vector<double> masses(1, unitcell.atoms[0].mass);
+    const std::vector<std::int64_t> counts(1, unitcell.atoms[0].na);
+    MDCell cell;
+    cell.initialize_from_owned_atoms(unitcell.latvec,
+                                     unitcell.GT,
+                                     unitcell.lat0,
+                                     unitcell.omega,
+                                     unitcell.nat,
+                                     atoms,
+                                     labels,
+                                     masses,
+                                     counts,
+                                     0.0,
+                                     domain);
+
+    std::ofstream running_log;
+    const std::string output_dir = testing::TempDir();
+    ModuleMD::LJ potential(output_dir, running_log);
+    potential.initialize(cell, input);
+    DomainDecomposition decomposition;
+    decomposition.init(domain, cell.latvec(), cell.lat0(), 0.0, 0.0);
+    decomposition.prepare_neighbors(cell);
+    double energy = 0.0;
+    ModuleBase::matrix force;
+    ModuleBase::matrix stress(3, 3);
+    potential.compute(cell, energy, force, stress);
+
+    EXPECT_NEAR(energy, -0.023915637247068761, 1e-12);
+    EXPECT_NEAR(stress(0, 0), 1.6072044445526372e-6, 1e-10);
+}
+#endif
