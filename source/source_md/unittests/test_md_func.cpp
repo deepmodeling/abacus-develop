@@ -634,7 +634,14 @@ TEST_F(MD_func_test, current_step_warning)
     initialize_mdcell_from_ucell(mdcell, ucell, decomp);
     int istep = 0;
     double temperature = 0.0;
-    EXPECT_EXIT(MD_func::current_md_info(mdcell, "./", istep, temperature), ::testing::ExitedWithCode(1), "");
+    std::string pattern = testing::TempDir() + "abacus-md-missing-restart-XXXXXX";
+    char* created = mkdtemp(&pattern[0]);
+    ASSERT_NE(created, nullptr);
+    const std::string empty_directory = pattern + "/";
+    EXPECT_EXIT(MD_func::current_md_info(mdcell, empty_directory, istep, temperature),
+                ::testing::ExitedWithCode(1),
+                "");
+    EXPECT_EQ(rmdir(pattern.c_str()), 0);
 }
 
 #include "source_md/md_func.h"
