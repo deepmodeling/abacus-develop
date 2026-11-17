@@ -315,7 +315,11 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep, const
                                          this->dmat,
                                          ucell,
                                          &(this->pv),
-                                         this->pelec->charge);
+                                         this->pelec->charge,
+                                         this->kv,
+                                         istep,
+                                         this->inp_->out_app_flag,
+                                         this->inp_->ks_solver);
         }
         if (this->inp_->init_chg == "hr")
         {

@@ -1,4 +1,5 @@
 #include <complex>
+#include <cstdio>
 #include <iomanip>
 #include <sstream>
 #include <fstream>
@@ -8,6 +9,7 @@
 #include <map>
 
 #include "source_io/module_dm/write_dmk.h"
+#include "source_io/module_hs/dense_text_body.h"
 #include "source_base/global_variable.h"
 #include "prepare_unitcell.h"
 
@@ -193,6 +195,78 @@ void fill_local_dmk(const std::vector<T>& probe, const int nlocal,
             }
         }
     }
+}
+
+/// @brief Fill the K_Vectors metadata for nspin spin channels and nk k-points.
+/// @details write_dmk reads one k-point coordinate, weight and index per file,
+///          so a multi-k round trip needs real k-point arrays instead of the
+///          single-point metadata set up by init_kv.
+void init_kv_multi(K_Vectors& kv, const int nspin, const int nk)
+{
+    kv.set_nkstot(nspin * nk);
+    kv.set_nkstot_nospin(nk);
+    kv.set_nks(nspin * nk);
+    kv.set_spin_mult(2);
+    kv.kvec_c.resize(nk);
+    kv.kvec_d.resize(nk);
+    kv.wk.resize(nk);
+    kv.isk.resize(nk);
+    for (int ik = 0; ik < nk; ++ik)
+    {
+        kv.kvec_c[ik].x = 0.1 * ik;
+        kv.kvec_c[ik].y = 0.0;
+        kv.kvec_c[ik].z = 0.0;
+        kv.kvec_d[ik].x = 0.1 * ik;
+        kv.kvec_d[ik].y = 0.0;
+        kv.kvec_d[ik].z = 0.0;
+        kv.wk[ik] = 1.0 / nk;
+        kv.isk[ik] = 0;
+    }
+    kv.kc_done = true;
+    kv.kd_done = true;
+}
+
+/// @brief Copy a file inside the scratch directory.
+/// @details Used to build a file whose header contradicts the name the reader
+///          looks for, which cannot be produced through write_dmk itself.
+bool copy_file(const std::string& src, const std::string& dst)
+{
+    std::ifstream ifs(src.c_str());
+    if (!ifs.good())
+    {
+        return false;
+    }
+    std::ofstream ofs(dst.c_str());
+    if (!ofs.good())
+    {
+        return false;
+    }
+    ofs << ifs.rdbuf();
+    return ofs.good();
+}
+
+/// @brief Drop the final line of a text file to simulate a truncated write.
+bool drop_last_line(const std::string& fname)
+{
+    std::ifstream ifs(fname.c_str());
+    std::vector<std::string> lines;
+    std::string line;
+    while (std::getline(ifs, line))
+    {
+        lines.push_back(line);
+    }
+    ifs.close();
+    if (lines.empty())
+    {
+        return false;
+    }
+    std::ofstream ofs(fname.c_str());
+    for (std::size_t i = 0; i + 1 < lines.size(); ++i)
+    {
+        ofs << lines[i] << "\n";
+    }
+    ofs.close();
+    return true;
 }
 
 TEST(DMKTest, GenFileName) {
@@ -602,6 +676,78 @@ TEST(DMKTest, ReadDMKRoundTripGamma) {
     delete ucell;
 }
 
+TEST(DMKTest, ReadDMKRoundTripMultipleMatrices) {
+    UnitCell* ucell;
+    UcellTestPrepare utp = UcellTestLib["Si"];
+    ucell = utp.SetUcellInfo();
+
+    const int nspin = 2;
+    const int nk = 2;
+    const int nlocal = 2;
+    Parallel_Blkcyclic pv;
+    init_pv(nlocal, pv);
+
+    K_Vectors kv;
+    init_kv(kv, 0.5);
+    kv.set_nkstot(nspin * nk);
+    kv.set_nkstot_nospin(nk);
+    kv.set_nks(nspin * nk);
+    kv.kvec_c.resize(nk);
+    kv.kvec_d.resize(nk);
+    kv.wk.resize(nk);
+    kv.isk.resize(nk);
+    for (int ik = 0; ik < nk; ++ik)
+    {
+        kv.kvec_c[ik].x = 0.1 * ik;
+        kv.kvec_d[ik].x = 0.1 * ik;
+        kv.wk[ik] = 0.5;
+        kv.isk[ik] = 0;
+    }
+
+    std::vector<std::vector<std::complex<double>>> dmk(nspin * nk);
+    for (int index = 0; index < nspin * nk; ++index)
+    {
+        std::vector<std::complex<double>> probe(nlocal * nlocal);
+        for (int element = 0; element < nlocal * nlocal; ++element)
+        {
+            probe[element] = std::complex<double>(0.25 * (index + 1) * (element + 1),
+                                                  0.1 * index - 0.2 * element);
+        }
+        std::vector<std::vector<std::complex<double>>> one_dmk;
+        fill_local_dmk(probe, nlocal, pv, one_dmk);
+        dmk[index] = one_dmk[0];
+    }
+
+    const std::string out_dir = testing::TempDir();
+    const std::vector<double> efs(nspin, 0.0);
+    std::ofstream ofs_log;
+    ModuleIO::write_dmk(dmk, kv, /*precision=*/12, efs, ucell, pv, /*column_major=*/true,
+                        out_dir, /*istep=*/0, /*out_app_flag=*/0, ofs_log);
+
+    std::vector<std::vector<std::complex<double>>> dmk_read;
+    EXPECT_TRUE(ModuleIO::read_dmk(nspin, nk, kv, pv, /*column_major=*/true, out_dir,
+                                   /*istep=*/0, /*out_app_flag=*/0, dmk_read, ofs_log));
+    ASSERT_EQ(dmk_read.size(), dmk.size());
+    for (int index = 0; index < nspin * nk; ++index)
+    {
+        ASSERT_EQ(dmk_read[index].size(), dmk[index].size());
+        for (std::size_t element = 0; element < dmk[index].size(); ++element)
+        {
+            EXPECT_NEAR(dmk_read[index][element].real(), dmk[index][element].real(), 1e-8);
+            EXPECT_NEAR(dmk_read[index][element].imag(), dmk[index][element].imag(), 1e-8);
+        }
+    }
+
+    if (GlobalV::MY_RANK == 0)
+    {
+        remove((out_dir + "dmk1s1_nao.txt").c_str());
+        remove((out_dir + "dmk2s1_nao.txt").c_str());
+        remove((out_dir + "dmk1s2_nao.txt").c_str());
+        remove((out_dir + "dmk2s2_nao.txt").c_str());
+    }
+    delete ucell;
+}
+
 // A missing file must be reported cooperatively instead of aborting a single
 // rank, so the caller can decide how to continue.
 TEST(DMKTest, ReadDMKMissingFileReturnsFalse) {
@@ -614,11 +760,13 @@ TEST(DMKTest, ReadDMKMissingFileReturnsFalse) {
     K_Vectors kv;
     init_kv(kv, 1.0);
 
-    std::vector<std::vector<double>> dmk;
+    std::vector<std::vector<double>> dmk(1, std::vector<double>(nlocal * nlocal, 7.0));
+    const std::vector<std::vector<double>> original = dmk;
     std::ofstream ofs_log;
     const std::string missing_dir = testing::TempDir() + "dmk_no_such_dir/";
     EXPECT_FALSE(ModuleIO::read_dmk(nspin, nk, kv, pv, /*column_major=*/true, missing_dir,
                                     /*istep=*/0, /*out_app_flag=*/0, dmk, ofs_log));
+    EXPECT_EQ(dmk, original);
 }
 
 // ---------------------------------------------------------------------------
@@ -743,6 +891,367 @@ TEST(DMKTest, ReadDMKMode1FrameSelection) {
     if (GlobalV::MY_RANK == 0)
     {
         remove((out_dir + "dmk1_nao.txt").c_str());
+    }
+    delete ucell;
+}
+
+/// @brief Check that every block of a DM(k) buffer still holds the sentinel.
+bool all_equal_to(const std::vector<std::vector<std::complex<double>>>& dmk,
+                  const std::complex<double>& sentinel)
+{
+    for (std::size_t ib = 0; ib < dmk.size(); ++ib)
+    {
+        for (std::size_t ie = 0; ie < dmk[ib].size(); ++ie)
+        {
+            if (dmk[ib][ie] != sentinel)
+            {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+// ---------------------------------------------------------------------------
+// A failure on a later (spin, k) point must discard the matrices that were
+// already read; otherwise the caller would keep a half-updated DM(k) and run
+// the next SCF from a mixture of two restarts.
+// ---------------------------------------------------------------------------
+TEST(DMKTest, ReadDMKPartialFailureKeepsCallerData) {
+    UnitCell* ucell;
+    UcellTestPrepare utp = UcellTestLib["Si"];
+    ucell = utp.SetUcellInfo();
+
+    const int nspin = 1;
+    const int nk = 2;
+    const int nlocal = 2;
+    Parallel_Blkcyclic pv;
+    init_pv(nlocal, pv);
+
+    K_Vectors kv;
+    init_kv_multi(kv, nspin, nk);
+
+    std::vector<std::vector<std::complex<double>>> dmk;
+    for (int ik = 0; ik < nk; ++ik)
+    {
+        std::vector<std::complex<double>> probe(nlocal * nlocal,
+                                                std::complex<double>(ik + 1.0, 0.5 * ik));
+        std::vector<std::vector<std::complex<double>>> one_dmk;
+        fill_local_dmk(probe, nlocal, pv, one_dmk);
+        dmk.push_back(one_dmk[0]);
+    }
+
+    const std::vector<double> efs(nspin, 0.0);
+    const std::string out_dir = testing::TempDir();
+    std::ofstream ofs_log;
+    ModuleIO::write_dmk(dmk, kv, /*precision=*/12, efs, ucell, pv, /*column_major=*/true,
+                        out_dir, /*istep=*/0, /*out_app_flag=*/0, ofs_log);
+
+    // Removing the last matrix makes the first one read successfully and the
+    // second one fail, so the failure happens after partial progress.
+    if (GlobalV::MY_RANK == 0)
+    {
+        std::remove((out_dir + "dmk2_nao.txt").c_str());
+    }
+
+    const std::complex<double> sentinel(7.0, 7.0);
+    std::vector<std::vector<std::complex<double>>> dmk_read(
+        nspin * nk, std::vector<std::complex<double>>(pv.nrloc() * pv.ncloc(), sentinel));
+
+    EXPECT_FALSE(ModuleIO::read_dmk(nspin, nk, kv, pv, /*column_major=*/true, out_dir,
+                                    /*istep=*/0, /*out_app_flag=*/0, dmk_read, ofs_log));
+    EXPECT_TRUE(all_equal_to(dmk_read, sentinel));
+
+    if (GlobalV::MY_RANK == 0)
+    {
+        std::remove((out_dir + "dmk1_nao.txt").c_str());
+    }
+    delete ucell;
+}
+
+// ---------------------------------------------------------------------------
+// A spin-down file whose header claims spin 1 must be rejected instead of being
+// loaded as the down channel.
+// ---------------------------------------------------------------------------
+TEST(DMKTest, ReadDMKRejectsSpinMismatch) {
+    UnitCell* ucell;
+    UcellTestPrepare utp = UcellTestLib["Si"];
+    ucell = utp.SetUcellInfo();
+
+    const int nspin = 2;
+    const int nk = 1;
+    const int nlocal = 2;
+    Parallel_Blkcyclic pv;
+    init_pv(nlocal, pv);
+
+    K_Vectors kv;
+    init_kv_multi(kv, nspin, nk);
+
+    const std::vector<std::complex<double>> probe_up
+        = {std::complex<double>(1.0, 0.0), std::complex<double>(2.0, 3.0),
+           std::complex<double>(4.0, 5.0), std::complex<double>(6.0, 0.0)};
+    const std::vector<std::complex<double>> probe_down
+        = {std::complex<double>(7.0, 0.0), std::complex<double>(8.0, 1.0),
+           std::complex<double>(9.0, 2.0), std::complex<double>(10.0, 0.0)};
+    std::vector<std::vector<std::complex<double>>> dmk;
+    std::vector<std::vector<std::complex<double>>> probe_block;
+    fill_local_dmk(probe_up, nlocal, pv, probe_block);
+    dmk.push_back(probe_block[0]);
+    fill_local_dmk(probe_down, nlocal, pv, probe_block);
+    dmk.push_back(probe_block[0]);
+
+    std::vector<double> efs(nspin, 0.0);
+    efs[1] = 0.1;
+    const std::string out_dir = testing::TempDir();
+    std::ofstream ofs_log;
+    ModuleIO::write_dmk(dmk, kv, /*precision=*/12, efs, ucell, pv, /*column_major=*/true,
+                        out_dir, /*istep=*/0, /*out_app_flag=*/0, ofs_log);
+
+    // Overwrite the spin-down file with the spin-up one: the content now
+    // contradicts both the name and the requested spin channel.
+    if (GlobalV::MY_RANK == 0)
+    {
+        EXPECT_TRUE(copy_file(out_dir + "dmk1s1_nao.txt", out_dir + "dmk1s2_nao.txt"));
+    }
+
+    const std::complex<double> sentinel(7.0, 7.0);
+    std::vector<std::vector<std::complex<double>>> dmk_read(
+        nspin * nk, std::vector<std::complex<double>>(pv.nrloc() * pv.ncloc(), sentinel));
+    EXPECT_FALSE(ModuleIO::read_dmk(nspin, nk, kv, pv, /*column_major=*/true, out_dir,
+                                    /*istep=*/0, /*out_app_flag=*/0, dmk_read, ofs_log));
+    EXPECT_TRUE(all_equal_to(dmk_read, sentinel));
+
+    if (GlobalV::MY_RANK == 0)
+    {
+        std::remove((out_dir + "dmk1s1_nao.txt").c_str());
+        std::remove((out_dir + "dmk1s2_nao.txt").c_str());
+    }
+    delete ucell;
+}
+
+// ---------------------------------------------------------------------------
+// k-point metadata: a different k-mesh and a file holding the wrong k-point
+// must both be rejected instead of being used for the requested index.
+// ---------------------------------------------------------------------------
+TEST(DMKTest, ReadDMKRejectsKPointMismatch) {
+    UnitCell* ucell;
+    UcellTestPrepare utp = UcellTestLib["Si"];
+    ucell = utp.SetUcellInfo();
+
+    const int nspin = 1;
+    const int nk = 2;
+    const int nlocal = 2;
+    Parallel_Blkcyclic pv;
+    init_pv(nlocal, pv);
+
+    K_Vectors kv;
+    init_kv_multi(kv, nspin, nk);
+
+    std::vector<std::vector<std::complex<double>>> dmk;
+    for (int ik = 0; ik < nk; ++ik)
+    {
+        std::vector<std::complex<double>> probe(nlocal * nlocal,
+                                                std::complex<double>(ik + 1.0, 0.5 * ik));
+        std::vector<std::vector<std::complex<double>>> one_dmk;
+        fill_local_dmk(probe, nlocal, pv, one_dmk);
+        dmk.push_back(one_dmk[0]);
+    }
+
+    const std::vector<double> efs(nspin, 0.0);
+    const std::string out_dir = testing::TempDir();
+    std::ofstream ofs_log;
+    ModuleIO::write_dmk(dmk, kv, /*precision=*/12, efs, ucell, pv, /*column_major=*/true,
+                        out_dir, /*istep=*/0, /*out_app_flag=*/0, ofs_log);
+
+    // A restart with a different total number of k-points must not reuse these
+    // files even though the per-k filename happens to match.
+    K_Vectors kv_other_mesh;
+    init_kv_multi(kv_other_mesh, nspin, nk);
+    kv_other_mesh.set_nkstot(nspin * nk + 1);
+    std::vector<std::vector<std::complex<double>>> dmk_read;
+    EXPECT_FALSE(ModuleIO::read_dmk(nspin, nk, kv_other_mesh, pv, /*column_major=*/true,
+                                    out_dir, /*istep=*/0, /*out_app_flag=*/0, dmk_read, ofs_log));
+
+    // The second k-point's record copied over the first name: the header index
+    // no longer matches the requested k-point.
+    if (GlobalV::MY_RANK == 0)
+    {
+        EXPECT_TRUE(copy_file(out_dir + "dmk2_nao.txt", out_dir + "dmk1_nao.txt"));
+    }
+    dmk_read.clear();
+    EXPECT_FALSE(ModuleIO::read_dmk(nspin, nk, kv, pv, /*column_major=*/true, out_dir,
+                                    /*istep=*/0, /*out_app_flag=*/0, dmk_read, ofs_log));
+
+    if (GlobalV::MY_RANK == 0)
+    {
+        std::remove((out_dir + "dmk1_nao.txt").c_str());
+        std::remove((out_dir + "dmk2_nao.txt").c_str());
+    }
+    delete ucell;
+}
+
+// ---------------------------------------------------------------------------
+// A basis size that differs from the current calculation must be rejected, not
+// silently truncated or over-read.
+// ---------------------------------------------------------------------------
+TEST(DMKTest, ReadDMKRejectsBasisMismatch) {
+    UnitCell* ucell;
+    UcellTestPrepare utp = UcellTestLib["Si"];
+    ucell = utp.SetUcellInfo();
+
+    const int nspin = 1;
+    const int nk = 1;
+    const int nlocal = 2;
+    Parallel_Blkcyclic pv;
+    init_pv(nlocal, pv);
+
+    K_Vectors kv;
+    init_kv_multi(kv, nspin, nk);
+
+    const std::vector<std::complex<double>> probe
+        = {std::complex<double>(1.0, 0.0), std::complex<double>(2.0, 3.0),
+           std::complex<double>(4.0, 5.0), std::complex<double>(6.0, 0.0)};
+    std::vector<std::vector<std::complex<double>>> dmk;
+    fill_local_dmk(probe, nlocal, pv, dmk);
+
+    const std::vector<double> efs(nspin, 0.0);
+    const std::string out_dir = testing::TempDir();
+    std::ofstream ofs_log;
+    ModuleIO::write_dmk(dmk, kv, /*precision=*/12, efs, ucell, pv, /*column_major=*/true,
+                        out_dir, /*istep=*/0, /*out_app_flag=*/0, ofs_log);
+
+    // Read the 2x2 record with a 3-orbital distribution.
+    Parallel_Blkcyclic pv_wide;
+    init_pv(nlocal + 1, pv_wide);
+    std::vector<std::vector<std::complex<double>>> dmk_read(
+        nspin * nk, std::vector<std::complex<double>>(pv_wide.nrloc() * pv_wide.ncloc(),
+                                                      std::complex<double>(7.0, 7.0)));
+    EXPECT_FALSE(ModuleIO::read_dmk(nspin, nk, kv, pv_wide, /*column_major=*/true, out_dir,
+                                    /*istep=*/0, /*out_app_flag=*/0, dmk_read, ofs_log));
+
+    if (GlobalV::MY_RANK == 0)
+    {
+        std::remove((out_dir + "dmk1_nao.txt").c_str());
+    }
+    delete ucell;
+}
+
+// ---------------------------------------------------------------------------
+// Truncated input: a file cut inside the header and a complete file whose last
+// body line was lost must both fail instead of yielding a partial matrix.
+// ---------------------------------------------------------------------------
+TEST(DMKTest, ReadDMKRejectsTruncatedFile) {
+    const int nspin = 1;
+    const int nk = 1;
+    const int nlocal = 2;
+    Parallel_Blkcyclic pv;
+    init_pv(nlocal, pv);
+
+    K_Vectors kv;
+    init_kv_multi(kv, nspin, nk);
+
+    const std::string out_dir = testing::TempDir();
+    std::ofstream ofs_log;
+
+    // Cut inside the header: only the spin count survives.
+    if (GlobalV::MY_RANK == 0)
+    {
+        std::ofstream ofs((out_dir + "dm_nao.txt").c_str());
+        ofs << "1\n";
+        ofs.close();
+    }
+    std::vector<std::vector<double>> dmk_read;
+    EXPECT_FALSE(ModuleIO::read_dmk(nspin, nk, kv, pv, /*column_major=*/true, out_dir,
+                                    /*istep=*/0, /*out_app_flag=*/0, dmk_read, ofs_log));
+
+    // A complete record whose final line was lost: the body is short.
+    UnitCell* ucell;
+    UcellTestPrepare utp = UcellTestLib["Si"];
+    ucell = utp.SetUcellInfo();
+
+    const std::vector<double> probe = {1.0, 2.0, 3.0, 4.0};
+    std::vector<std::vector<double>> dmk;
+    fill_local_dmk(probe, nlocal, pv, dmk);
+    const std::vector<double> efs(nspin, 0.0);
+    ModuleIO::write_dmk(dmk, kv, /*precision=*/12, efs, ucell, pv, /*column_major=*/true,
+                        out_dir, /*istep=*/0, /*out_app_flag=*/0, ofs_log);
+
+    if (GlobalV::MY_RANK == 0)
+    {
+        EXPECT_TRUE(drop_last_line(out_dir + "dm_nao.txt"));
+    }
+    dmk_read.clear();
+    EXPECT_FALSE(ModuleIO::read_dmk(nspin, nk, kv, pv, /*column_major=*/true, out_dir,
+                                    /*istep=*/0, /*out_app_flag=*/0, dmk_read, ofs_log));
+
+    if (GlobalV::MY_RANK == 0)
+    {
+        std::remove((out_dir + "dm_nao.txt").c_str());
+    }
+    delete ucell;
+}
+
+// ---------------------------------------------------------------------------
+// The flat index shared by the readers and the writers: a row-major buffer
+// stores (i, j) at i * nlocal + j, a column-major one at j * nlocal + i. All
+// LCAO ks_solver choices are column-major, so this mapping is what keeps the
+// file row-major for every supported solver.
+// ---------------------------------------------------------------------------
+TEST(DMKTest, DenseBufferIndexSelectsLayout) {
+    EXPECT_EQ(ModuleIO::dense_buffer_index(0, 0, 3, /*column_major=*/false), 0u);
+    EXPECT_EQ(ModuleIO::dense_buffer_index(0, 1, 3, /*column_major=*/false), 1u);
+    EXPECT_EQ(ModuleIO::dense_buffer_index(1, 0, 3, /*column_major=*/false), 3u);
+    EXPECT_EQ(ModuleIO::dense_buffer_index(2, 1, 3, /*column_major=*/false), 7u);
+    EXPECT_EQ(ModuleIO::dense_buffer_index(0, 1, 3, /*column_major=*/true), 3u);
+    EXPECT_EQ(ModuleIO::dense_buffer_index(1, 0, 3, /*column_major=*/true), 1u);
+    EXPECT_EQ(ModuleIO::dense_buffer_index(1, 2, 3, /*column_major=*/true), 7u);
+}
+
+// ---------------------------------------------------------------------------
+// With column_major = false the reader and the writer must still agree on the
+// same layout, otherwise a restart would read a transposed matrix. No current
+// LCAO solver takes this branch, so this only pins their mutual consistency.
+// ---------------------------------------------------------------------------
+TEST(DMKTest, ReadDMKRoundTripRowMajorFlag) {
+    UnitCell* ucell;
+    UcellTestPrepare utp = UcellTestLib["Si"];
+    ucell = utp.SetUcellInfo();
+
+    const int nspin = 1;
+    const int nk = 1;
+    const int nlocal = 2;
+    Parallel_Blkcyclic pv;
+    init_pv(nlocal, pv);
+
+    const std::vector<std::complex<double>> probe
+        = {std::complex<double>(1.0, 0.0), std::complex<double>(2.0, 3.0),
+           std::complex<double>(4.0, 5.0), std::complex<double>(6.0, 0.0)};
+    std::vector<std::vector<std::complex<double>>> dmk;
+    fill_local_dmk(probe, nlocal, pv, dmk);
+
+    const std::vector<double> efs(nspin, 0.0);
+    K_Vectors kv;
+    init_kv(kv, 1.0);
+
+    const std::string out_dir = testing::TempDir();
+    std::ofstream ofs_log;
+    ModuleIO::write_dmk(dmk, kv, /*precision=*/12, efs, ucell, pv, /*column_major=*/false,
+                        out_dir, /*istep=*/0, /*out_app_flag=*/0, ofs_log);
+
+    std::vector<std::vector<std::complex<double>>> dmk_read;
+    EXPECT_TRUE(ModuleIO::read_dmk(nspin, nk, kv, pv, /*column_major=*/false, out_dir,
+                                   /*istep=*/0, /*out_app_flag=*/0, dmk_read, ofs_log));
+    ASSERT_EQ(dmk_read.size(), 1u);
+    ASSERT_EQ(dmk_read[0].size(), dmk[0].size());
+    for (std::size_t idx = 0; idx < dmk[0].size(); ++idx)
+    {
+        EXPECT_NEAR(dmk_read[0][idx].real(), dmk[0][idx].real(), 1e-8);
+        EXPECT_NEAR(dmk_read[0][idx].imag(), dmk[0][idx].imag(), 1e-8);
+    }
+
+    if (GlobalV::MY_RANK == 0)
+    {
+        std::remove((out_dir + "dmk1_nao.txt").c_str());
     }
     delete ucell;
 }

@@ -182,224 +182,245 @@ bool ModuleIO::read_dmk(const int nspin,
 
     const int nlocal = pv.nrglb();
     const bool gamma_only = std::is_same<double, T>::value;
-    std::vector<std::vector<T>> dmk_global(nspin * nk, std::vector<T>(nlocal * nlocal, 0));
+    std::vector<T> dmk_global(my_rank == 0 ? nlocal * nlocal : 0);
+    std::vector<std::vector<T>> dmk_read(
+        nspin * nk, std::vector<T>(pv.nrloc() * pv.ncloc(), T(0)));
+
+    // write_dmk emits an optional "Ionic_Step" frame marker followed by
+    // eleven header lines: nspin, spin index, nkstot_nospin, nkstot, ik,
+    // kvec_c, kvec_d, weight, Fermi energy, nlocal and the matrix size.
+    // Reading them in order also rejects files of a different layout,
+    // spin channel or k-mesh instead of silently mismatching them.
+    const int n_header = 11;
+    std::vector<std::string> header(n_header);
+    std::string line;
+
+#ifdef __MPI
+    Parallel_Blkcyclic pv_glb;
+    pv_glb.set(nlocal, nlocal, nlocal, pv.ictxt());
+#endif
 
     bool read_success = true;
-    if (my_rank == 0)
+    for (int ispin = 0; ispin < nspin && read_success; ispin++)
     {
-        // write_dmk emits an optional "Ionic_Step" frame marker followed by
-        // eleven header lines: nspin, spin index, nkstot_nospin, nkstot, ik,
-        // kvec_c, kvec_d, weight, Fermi energy, nlocal and the matrix size.
-        // Reading them in order also rejects files of a different layout,
-        // spin channel or k-mesh instead of silently mismatching them.
-        const int n_header = 11;
-        std::vector<std::string> header(n_header);
-        std::string line;
-
-        for (int ispin = 0; ispin < nspin && read_success; ispin++)
+        for (int ik = 0; ik < nk && read_success; ik++)
         {
-            for (int ik = 0; ik < nk && read_success; ik++)
+            const std::size_t index_k = static_cast<std::size_t>(ik) + static_cast<std::size_t>(nk) * ispin;
+            if (my_rank == 0)
             {
-                // Mirror the writer: only mode 2 embeds the ionic step in the
-                // filename, modes 0 and 1 reuse a fixed name.
-                const int istep_file = (out_app_flag == 2) ? istep : -1;
-                const std::string fn = dmk_dir + dmk_gen_fname(gamma_only, ispin, nspin, ik, istep_file);
-                std::ifstream ifs(fn.c_str());
-
-                if (!ifs)
+                // Keep file-local error exits inside this scope so every rank
+                // reaches the cooperative status broadcast below.
+                do
                 {
-                    ofs_running << " Cannot find density matrix file " << fn << " for k-point " << ik+1 << std::endl;
-                    ModuleBase::WARNING("ModuleIO::read_dmk", "Can't open density matrix (k) file < " + fn + " >.");
-                    read_success = false;
-                    break;
-                }
-                ofs_running << " Read density matrix file " << fn << " for k-point " << ik+1 << std::endl;
+                    // Mirror the writer: only mode 2 embeds the ionic step in the
+                    // filename, modes 0 and 1 reuse a fixed name.
+                    const int istep_file = (out_app_flag == 2) ? istep : -1;
+                    const std::string fn = dmk_dir + dmk_gen_fname(
+                                                         gamma_only,
+                                                         ispin,
+                                                         nspin,
+                                                         ik,
+                                                         istep_file);
+                    std::ifstream ifs(fn.c_str());
 
-                // A fixed-name file of a multi-step run (mode 1) holds one
-                // record per ionic step, so the requested frame has to be
-                // located first; a negative step keeps the first frame.
-                if (out_app_flag == 1 && istep >= 0)
-                {
-                    if (!seek_frame(ifs, istep + 1))
+                    if (!ifs)
                     {
-                        ofs_running << " Cannot find ionic step " << istep + 1
-                                    << " in density matrix file " << fn << std::endl;
+                        ofs_running << " Cannot find density matrix file " << fn << " for k-point " << ik + 1
+                                    << std::endl;
+                        ModuleBase::WARNING("ModuleIO::read_dmk", "Can't open density matrix (k) file < " + fn + " >.");
                         read_success = false;
                         break;
                     }
-                }
+                    ofs_running << " Read density matrix file " << fn << " for k-point " << ik + 1 << std::endl;
 
-                // ---- header ----
-                int frame_step = -1;
-                if (!read_data_line(ifs, line))
-                {
-                    ofs_running << " Empty density matrix file " << fn << std::endl;
-                    read_success = false;
-                    break;
-                }
-                if (line.find("Ionic_Step") != std::string::npos)
-                {
-                    std::istringstream iss_step(line.substr(line.find("Ionic_Step") + 10));
-                    iss_step >> frame_step;
-                    if (!read_data_line(ifs, line))
+                    // A fixed-name file of a multi-step run (mode 1) holds one
+                    // record per ionic step, so the requested frame has to be
+                    // located first; a negative step keeps the first frame.
+                    if (out_app_flag == 1 && istep >= 0)
                     {
-                        ofs_running << " Truncated density matrix file " << fn << std::endl;
-                        read_success = false;
-                        break;
-                    }
-                }
-                // A per-step file (mode 2) must describe the step its name
-                // announces, otherwise the restart would silently mix steps.
-                if (out_app_flag == 2 && frame_step >= 0 && frame_step != istep + 1)
-                {
-                    ofs_running << " Ionic step mismatch in density matrix file " << fn << ": file says "
-                                << frame_step << ", expected " << istep + 1 << std::endl;
-                    read_success = false;
-                    break;
-                }
-                header[0] = line;
-                for (int ih = 1; ih < n_header; ++ih)
-                {
-                    if (!read_data_line(ifs, header[ih]))
-                    {
-                        ofs_running << " Truncated density matrix file " << fn << std::endl;
-                        read_success = false;
-                        break;
-                    }
-                }
-                if (!read_success)
-                {
-                    break;
-                }
-
-                int nspin_file = 0;
-                int ispin_file = 0;
-                int nkstot_nospin_file = 0;
-                int nkstot_file = 0;
-                int ik_file = 0;
-                double ef_file = 0.0;
-                int nlocal_file = 0;
-                int nrow_file = 0;
-                int ncol_file = 0;
-                bool header_ok = parse_leading_int(header[0], nspin_file);
-                header_ok = header_ok && parse_leading_int(header[1], ispin_file);
-                header_ok = header_ok && parse_leading_int(header[2], nkstot_nospin_file);
-                header_ok = header_ok && parse_leading_int(header[3], nkstot_file);
-                header_ok = header_ok && parse_leading_int(header[4], ik_file);
-                header_ok = header_ok && parse_leading_double(header[8], ef_file);
-                header_ok = header_ok && parse_leading_int(header[9], nlocal_file);
-                {
-                    std::istringstream iss(header[10]);
-                    header_ok = header_ok && static_cast<bool>(iss >> nrow_file >> ncol_file);
-                }
-                if (!header_ok)
-                {
-                    ofs_running << " Malformed header in density matrix file " << fn << std::endl;
-                    read_success = false;
-                    break;
-                }
-                if (nspin_file != nspin || ispin_file != ispin + 1)
-                {
-                    ofs_running << " Spin mismatch in density matrix file " << fn << ": file says nspin = "
-                                << nspin_file << ", spin index = " << ispin_file << "; expected nspin = " << nspin
-                                << ", spin index = " << ispin + 1 << std::endl;
-                    read_success = false;
-                    break;
-                }
-                if (nkstot_nospin_file != kv.get_nkstot_nospin() || nkstot_file != kv.get_nkstot()
-                    || ik_file != ik + 1)
-                {
-                    ofs_running << " k-point mismatch in density matrix file " << fn << ": file says nkstot = "
-                                << nkstot_file << " (nospin " << nkstot_nospin_file << "), ik = " << ik_file
-                                << "; expected nkstot = " << kv.get_nkstot() << " (nospin "
-                                << kv.get_nkstot_nospin() << "), ik = " << ik + 1 << std::endl;
-                    read_success = false;
-                    break;
-                }
-                if (nlocal_file != nlocal || nrow_file != nlocal || ncol_file != nlocal)
-                {
-                    ofs_running << " Basis size mismatch in density matrix file " << fn << ": file says "
-                                << nlocal_file << " basis and a " << nrow_file << " x " << ncol_file
-                                << " matrix, expected " << nlocal << std::endl;
-                    read_success = false;
-                    break;
-                }
-                ofs_running << " Fermi energy of " << fn << " is " << ef_file << " Ry" << std::endl;
-
-                // ---- UnitCell block between the header and the matrix body ----
-                // Consume the blank separator line(s) first, then let the
-                // UnitCell reader skip its fixed set of lines.
-                while (true)
-                {
-                    const std::streampos pos = ifs.tellg();
-                    if (!std::getline(ifs, line))
-                    {
-                        break;
-                    }
-                    if (line.find_first_not_of(" \t\r") != std::string::npos)
-                    {
-                        ifs.seekg(pos);
-                        break;
-                    }
-                }
-                ModuleIO::UcellIO::read_ucell(ifs);
-
-                // ---- matrix body, always row-major in the file ----
-                const std::size_t index_k = static_cast<std::size_t>(ik) + static_cast<std::size_t>(nk) * ispin;
-                for (int i = 0; i < nlocal && read_success; ++i)
-                {
-                    for (int j = 0; j < nlocal; ++j)
-                    {
-                        T value = T(0);
-                        if (!dmk_readData(ifs, value))
+                        if (!seek_frame(ifs, istep + 1))
                         {
+                            ofs_running << " Cannot find ionic step " << istep + 1 << " in density matrix file " << fn
+                                        << std::endl;
                             read_success = false;
                             break;
                         }
-                        dmk_global[index_k][ModuleIO::dense_buffer_index(i, j, nlocal, column_major)] = value;
                     }
-                }
-                if (!read_success)
-                {
-                    ofs_running << " Failed to read the matrix body of density matrix file " << fn << std::endl;
-                    break;
-                }
-                ifs.close();
-            } // ik
-        } // ispin
-    }     // rank0
+
+                    // ---- header ----
+                    int frame_step = -1;
+                    if (!read_data_line(ifs, line))
+                    {
+                        ofs_running << " Empty density matrix file " << fn << std::endl;
+                        read_success = false;
+                        break;
+                    }
+                    if (line.find("Ionic_Step") != std::string::npos)
+                    {
+                        std::istringstream iss_step(line.substr(line.find("Ionic_Step") + 10));
+                        iss_step >> frame_step;
+                        if (!read_data_line(ifs, line))
+                        {
+                            ofs_running << " Truncated density matrix file " << fn << std::endl;
+                            read_success = false;
+                            break;
+                        }
+                    }
+                    // A per-step file (mode 2) must describe the step its name
+                    // announces, otherwise the restart would silently mix steps.
+                    if (out_app_flag == 2 && frame_step >= 0 && frame_step != istep + 1)
+                    {
+                        ofs_running << " Ionic step mismatch in density matrix file " << fn << ": file says "
+                                    << frame_step << ", expected " << istep + 1 << std::endl;
+                        read_success = false;
+                        break;
+                    }
+                    header[0] = line;
+                    for (int ih = 1; ih < n_header; ++ih)
+                    {
+                        if (!read_data_line(ifs, header[ih]))
+                        {
+                            ofs_running << " Truncated density matrix file " << fn << std::endl;
+                            read_success = false;
+                            break;
+                        }
+                    }
+                    if (!read_success)
+                    {
+                        break;
+                    }
+
+                    int nspin_file = 0;
+                    int ispin_file = 0;
+                    int nkstot_nospin_file = 0;
+                    int nkstot_file = 0;
+                    int ik_file = 0;
+                    double ef_file = 0.0;
+                    int nlocal_file = 0;
+                    int nrow_file = 0;
+                    int ncol_file = 0;
+                    bool header_ok = parse_leading_int(header[0], nspin_file);
+                    header_ok = header_ok && parse_leading_int(header[1], ispin_file);
+                    header_ok = header_ok && parse_leading_int(header[2], nkstot_nospin_file);
+                    header_ok = header_ok && parse_leading_int(header[3], nkstot_file);
+                    header_ok = header_ok && parse_leading_int(header[4], ik_file);
+                    header_ok = header_ok && parse_leading_double(header[8], ef_file);
+                    header_ok = header_ok && parse_leading_int(header[9], nlocal_file);
+                    {
+                        std::istringstream iss(header[10]);
+                        header_ok = header_ok && static_cast<bool>(iss >> nrow_file >> ncol_file);
+                    }
+                    if (!header_ok)
+                    {
+                        ofs_running << " Malformed header in density matrix file " << fn << std::endl;
+                        read_success = false;
+                        break;
+                    }
+                    if (nspin_file != nspin || ispin_file != ispin + 1)
+                    {
+                        ofs_running << " Spin mismatch in density matrix file " << fn
+                                    << ": file says nspin = " << nspin_file << ", spin index = " << ispin_file
+                                    << "; expected nspin = " << nspin << ", spin index = " << ispin + 1 << std::endl;
+                        read_success = false;
+                        break;
+                    }
+                    if (nkstot_nospin_file != kv.get_nkstot_nospin() || nkstot_file != kv.get_nkstot() ||
+                        ik_file != ik + 1)
+                    {
+                        ofs_running << " k-point mismatch in density matrix file " << fn
+                                    << ": file says nkstot = " << nkstot_file << " (nospin " << nkstot_nospin_file
+                                    << "), ik = " << ik_file << "; expected nkstot = " << kv.get_nkstot() << " (nospin "
+                                    << kv.get_nkstot_nospin() << "), ik = " << ik + 1 << std::endl;
+                        read_success = false;
+                        break;
+                    }
+                    if (nlocal_file != nlocal || nrow_file != nlocal || ncol_file != nlocal)
+                    {
+                        ofs_running << " Basis size mismatch in density matrix file " << fn << ": file says "
+                                    << nlocal_file << " basis and a " << nrow_file << " x " << ncol_file
+                                    << " matrix, expected " << nlocal << std::endl;
+                        read_success = false;
+                        break;
+                    }
+                    ofs_running << " Fermi energy of " << fn << " is " << ef_file << " Ry" << std::endl;
+
+                    // ---- UnitCell block between the header and the matrix body ----
+                    // Consume the blank separator line(s) first, then let the
+                    // UnitCell reader skip its fixed set of lines.
+                    while (true)
+                    {
+                        const std::streampos pos = ifs.tellg();
+                        if (!std::getline(ifs, line))
+                        {
+                            break;
+                        }
+                        if (line.find_first_not_of(" \t\r") != std::string::npos)
+                        {
+                            ifs.seekg(pos);
+                            break;
+                        }
+                    }
+                    ModuleIO::UcellIO::read_ucell(ifs);
+
+                    // ---- matrix body, always row-major in the file ----
+                    for (int i = 0; i < nlocal && read_success; ++i)
+                    {
+                        for (int j = 0; j < nlocal; ++j)
+                        {
+                            T value = T(0);
+                            if (!dmk_readData(ifs, value))
+                            {
+                                read_success = false;
+                                break;
+                            }
+                            dmk_global[ModuleIO::dense_buffer_index(
+                                i,
+                                j,
+                                nlocal,
+                                column_major)] = value;
+                        }
+                    }
+                    if (!read_success)
+                    {
+                        ofs_running << " Failed to read the matrix body of density matrix file " << fn << std::endl;
+                        break;
+                    }
+                    ifs.close();
+                } while (false);
+            } // rank0
 
 #ifdef __MPI
-    // Cooperative failure: every rank has to reach the distribution below with
-    // the same read_success value, otherwise the run would hang.
-    Parallel_Common::bcast_bool(read_success);
+            // Cooperative failure: every rank distributes the same matrix or
+            // stops together, so a rank-0 parse error cannot deadlock the run.
+            Parallel_Common::bcast_bool(read_success);
 #endif
+            if (!read_success)
+            {
+                break;
+            }
+
+#ifdef __MPI
+            Cpxgemr2d(
+                nlocal,
+                nlocal,
+                dmk_global.data(),
+                1,
+                1,
+                const_cast<int*>(pv_glb.desc()),
+                dmk_read[index_k].data(),
+                1,
+                1,
+                const_cast<int*>(pv.desc()),
+                pv_glb.ictxt());
+#else
+            dmk_read[index_k] = dmk_global;
+#endif
+        } // ik
+    } // ispin
 
     if (read_success)
     {
-#ifdef __MPI
-        // seperate dmk data to each processor with 2D block distribution
-        dmk.resize(nspin * nk, std::vector<T>(pv.nrloc() * pv.ncloc()));
-        Parallel_Blkcyclic pv_glb;
-        pv_glb.set(nlocal, nlocal, nlocal, pv.ictxt());
-        for (int ik = 0; ik < nspin * nk; ik++)
-        {
-            Cpxgemr2d(
-            nlocal,
-            nlocal,
-            dmk_global[ik].data(),
-            1,
-            1,
-            const_cast<int*>(pv_glb.desc()),
-            dmk[ik].data(),
-            1,
-            1,
-            const_cast<int*>(pv.desc()),
-            pv_glb.ictxt());
-        }
-#else
-        dmk = dmk_global;
-#endif
+        dmk.swap(dmk_read);
     }
     ModuleBase::timer::end("ModuleIO", "read_dmk");
     return read_success;
@@ -449,13 +470,13 @@ void ModuleIO::write_dmk(const std::vector<std::vector<T>>& dmk,
     }
 
     Parallel_Blkcyclic pv_glb;
+    std::vector<T> dmk_global(my_rank == 0 ? nlocal * nlocal : 0);
 
     for (int ispin = 0; ispin < nspin; ispin++)
     {
         for (int ik = 0; ik < nk; ik++)
         {
-            // gather dmk[ik] to dmk_global
-            std::vector<T> dmk_global(my_rank == 0 ? nlocal * nlocal : 0);
+            // gather dmk[ik] to the reused global buffer
 #ifdef __MPI
             pv_glb.set(nlocal, nlocal, nlocal, pv.ictxt());
             Cpxgemr2d(
