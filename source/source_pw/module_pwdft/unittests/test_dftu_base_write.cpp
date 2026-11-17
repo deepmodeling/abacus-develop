@@ -2,15 +2,12 @@
 #include "source_pw/module_pwdft/dftu_base.h"
 #include "source_pw/module_pwdft/dftu_base_io.h"
 #include "source_pw/module_pwdft/dftu_pw_tools.h"
-#include "source_cell/atom_spec.h"
 
-#include <cstdio>
 #include <cmath>
 #include <fstream>
 #include <sstream>
 #include <string>
 #include <vector>
-#include <numeric>
 
 
 /// append_ion_step_snapshot must record an "N/A" placeholder instead of a
