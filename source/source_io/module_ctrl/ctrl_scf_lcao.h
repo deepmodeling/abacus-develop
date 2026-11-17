@@ -48,6 +48,7 @@ void ctrl_scf_lcao(UnitCell& ucell,
                    const Exx_Info& exx_info,
                    const bool conv_esolver,
                    const bool scf_nmax_flag,
+                   const bool last_ion_step,
                    const int istep,
                    std::ofstream& ofs_running);
 } // namespace ModuleIO

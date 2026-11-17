@@ -1,6 +1,11 @@
 abacus_disable_feature_definitions(__MPI __LCAO)
 abacus_add_local_feature_definitions(__NORMAL)
 
+# Header-only MD loop predicates (is_last_step / is_frame_write_step).
+addtest(
+  TARGET MODULE_MD_final_step
+  SOURCES test_run_md.cpp)
+
 if(ENABLE_MPI)
   addtest(
     TARGET MODULE_MD_dump_mpi

@@ -854,6 +854,9 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
     ESolver_KS::after_scf(ucell, istep, conv_esolver);
 
     //! 2) write LCAO output using the applicable ionic or RT-TDDFT electronic step
+    //! The outer ionic driver marks the final ionic step on the cell so the
+    //! output gate can always persist the final snapshot.
+    const bool is_final_step = ucell.last_ion_step;
     ModuleIO::ctrl_scf_lcao<TK, TR>(ucell,
                                     *this->inp_,
                                     this->kv,
@@ -879,6 +882,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
                                     this->exx_info_,
                                     conv_esolver,
                                     this->scf_nmax_flag,
+                                    is_final_step,
                                     istep,
                                     GlobalV::ofs_running);
 

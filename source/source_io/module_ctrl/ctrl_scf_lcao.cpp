@@ -105,6 +105,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                              const Exx_Info& exx_info,
                              const bool conv_esolver,
                              const bool scf_nmax_flag,
+                             const bool last_ion_step,
                              const int istep,
                              std::ofstream& ofs_running)
 {
@@ -126,7 +127,12 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     bool out_flag = false;
     if (PARAM.inp.esolver_type != "tddft" && inp.out_freq_ion > 0) // default value of out_freq_ion is 0
     {
-        if (istep % inp.out_freq_ion == 0)
+        // The final ionic step is always written: even when it is off the
+        // output cadence, the final geometry still has to be persisted. The
+        // final step is independent of SCF convergence (an unconverged final
+        // step is still useful), and it is not duplicated when it happens to
+        // fall on the cadence because this function writes at most once.
+        if (istep % inp.out_freq_ion == 0 || last_ion_step)
         {
             istep_in = istep;
             out_flag = true;
@@ -140,7 +146,10 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
             out_flag = true;
         }
     }
-    else if (conv_esolver || scf_nmax_flag) // mohan add scf_nmax_flag on 20250921
+    // With out_freq_ion == 0 every converged SCF is written; the final step is
+    // added as a fallback for a final SCF that neither converged nor reached
+    // scf_nmax.
+    else if (conv_esolver || scf_nmax_flag || last_ion_step) // mohan add scf_nmax_flag on 20250921
     {
         out_flag = true;
     }
@@ -1030,6 +1039,7 @@ template void ModuleIO::ctrl_scf_lcao<double, double>(
     const Exx_Info& exx_info,
     const bool conv_esolver,
     const bool scf_nmax_flag,
+    const bool last_ion_step,
     const int istep,
     std::ofstream& ofs_running);
 
@@ -1060,6 +1070,7 @@ template void ModuleIO::ctrl_scf_lcao<std::complex<double>, double>(
     const Exx_Info& exx_info,
     const bool conv_esolver,
     const bool scf_nmax_flag,
+    const bool last_ion_step,
     const int istep,
     std::ofstream& ofs_running);
 
@@ -1089,5 +1100,6 @@ template void ModuleIO::ctrl_scf_lcao<std::complex<double>, std::complex<double>
     const Exx_Info& exx_info,
     const bool conv_esolver,
     const bool scf_nmax_flag,
+    const bool last_ion_step,
     const int istep,
     std::ofstream& ofs_running);
