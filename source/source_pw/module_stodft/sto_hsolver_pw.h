@@ -31,7 +31,9 @@ class StoHSolverPW : public hsolver::HSolverPW<T, Device>
                  const int nb2d_in,
                  const bool ks_run_in,
                  const bool all_ks_run_in,
-                 const int bndpar_in)
+                 const int bndpar_in,
+                 const bool domag_in,
+                 const bool domag_z_in)
         : hsolver::HSolverPW<T, Device>(wfc_basis_in,
                                         calculation_type_in,
                                         basis_type_in,
@@ -47,7 +49,8 @@ class StoHSolverPW : public hsolver::HSolverPW<T, Device>
                                         pw_diag_ndim_in,
                                         diag_subspace_in,
                                         nb2d_in),
-          ks_run(ks_run_in), all_ks_run(all_ks_run_in), bndpar(bndpar_in)
+          ks_run(ks_run_in), all_ks_run(all_ks_run_in), bndpar(bndpar_in),
+          domag(domag_in), domag_z(domag_z_in)
     {
         stoiter.init(pkv, wfc_basis_in, stowf, stoche, p_hamilt_sto);
     }
@@ -70,6 +73,8 @@ class StoHSolverPW : public hsolver::HSolverPW<T, Device>
     const bool ks_run;     // true if the current process runs the KS part of the SDFT calculation
     const bool all_ks_run; // true if every process runs the KS part
     const int bndpar;      // number of band-parallel groups
+    const bool domag;      // whether magnetization is constrained
+    const bool domag_z;    // whether only the z magnetization is constrained
 
     using setmem_complex_op = base_device::memory::set_memory_op<T, Device>;
     using setmem_var_op = base_device::memory::set_memory_op<Real, Device>;

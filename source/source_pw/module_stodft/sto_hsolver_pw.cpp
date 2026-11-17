@@ -121,7 +121,7 @@ void StoHSolverPW<T, Device>::solve(const UnitCell& ucell,
 
     //(5) calculate new charge density
     // calculate KS rho.
-    pes_pw->init_rho_data(PARAM.globalv.domag, PARAM.globalv.domag_z, pes_pw->charge->nspin);
+    pes_pw->init_rho_data(this->domag, this->domag_z, pes_pw->charge->nspin);
     if (nbands > 0)
     {
         pes_pw->psiToRho(psi);

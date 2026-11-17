@@ -175,7 +175,9 @@ void ESolver_SDFT_PW<T, Device>::hamilt2rho_single(UnitCell& ucell, int istep, i
                                                this->inp_->nb2d,
                                                PARAM.globalv.ks_run,
                                                PARAM.globalv.all_ks_run,
-                                               this->inp_->bndpar);
+                                               this->inp_->bndpar,
+                                               PARAM.globalv.domag,
+                                               PARAM.globalv.domag_z);
 
     sto_hsolver_pw_obj.solve(ucell,
                              static_cast<hamilt::Hamilt<T, Device>*>(this->p_hamilt),

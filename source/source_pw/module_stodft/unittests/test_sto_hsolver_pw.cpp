@@ -303,7 +303,9 @@ class TestStoHSolverPW : public ::testing::Test
             0,
             false,
             true,
-            1);
+            1,
+            false,
+            false);
 
     hamilt::Hamilt<std::complex<double>> hamilt_test_d;
 
