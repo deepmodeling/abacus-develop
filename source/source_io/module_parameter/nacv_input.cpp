@@ -127,14 +127,14 @@ void ReadInput::item_lr_nacv_response()
 {
     {
         Input_Item item("lr_grad_thr");
-        item.annotation = "absolute true-residual norm tolerance for Z-vector CG";
+        item.annotation = "absolute true-residual norm tolerance for NAC Z-vector CG";
         item.set_availability("lr_grad_solver==cg");
         item.category = "Linear Response TDDFT";
         item.type = "Real";
         item.default_value = "1e-6";
         item.unit = "Ry";
         item.description =
-            R"(Positive finite absolute global Euclidean norm bound on $(A+B)Z-R$ for `lr_grad_solver cg`. The norm combines all distributed entries and all right-hand sides in a solve. It is recomputed with the actual response operator after iteration, rather than accepted from the recursive CG residual alone. Applies to LR analytic forces and auxiliary TDA ground-excited and excited-excited NAC adjoints. Ignored by direct Z-vector solvers. It is independent of `lr_thr`, which controls the excitation eigensolver. Small excitation gaps can amplify response errors in divided NAC vectors; check convergence of the requested observable explicitly.)";
+            R"(Positive finite absolute global Euclidean norm bound on $(A+B)Z-R$ for `lr_grad_solver cg`. The norm combines all distributed entries and all right-hand sides in a solve. It is recomputed with the actual response operator after iteration, rather than accepted from the recursive CG residual alone. Applies only to CG orbital-response solves for auxiliary TDA ground-excited and excited-excited NACs. It does not control ordinary LR analytic-force response solves. Ignored by direct Z-vector solvers. It is independent of `lr_thr`, which controls the excitation eigensolver. Small excitation gaps can amplify response errors in divided NAC vectors; check convergence of the requested observable explicitly.)";
         item.check_value = [](const Input_Item &item, const Parameter &para)
         {
             const double tolerance = para.input.lr_grad_thr;
