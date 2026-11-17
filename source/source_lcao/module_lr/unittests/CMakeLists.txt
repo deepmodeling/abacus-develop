@@ -4,6 +4,13 @@ addtest(
 # This isolated result test does not exercise matrix BLAS operations.
 target_compile_definitions(MODULE_LR_nacv_result PRIVATE __NORMAL)
 
+addtest(
+  TARGET MODULE_LR_nacv_io
+  LIBS base parameter device container psi
+  SOURCES test_nacv_io.cpp ../nacv_io.cpp)
+# State export must run even when assertions are disabled.
+target_compile_definitions(MODULE_LR_nacv_io PRIVATE NDEBUG)
+
 if(ENABLE_LIBXC)
   addtest(
     TARGET MODULE_LR_xc_kernel

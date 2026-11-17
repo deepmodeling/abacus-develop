@@ -1,5 +1,6 @@
 #include "../nacv_cs.h"
 
+#include <cmath>
 #include <gtest/gtest.h>
 #include <iomanip>
 #include <limits>
@@ -241,7 +242,6 @@ TEST(NacvResult, ReversePreservesGapWeightedNumerators)
     EXPECT_DOUBLE_EQ(result.raw(0, 0), original.raw(0, 0));
 }
 
-
 TEST(NacvResult, RejectsNonfiniteConnectionAndForce)
 {
     LR::NacvResult result = example_result(2.0);
@@ -391,4 +391,58 @@ TEST(NacvResult, RejectsMissingUnrestrictedSpinWindows)
     EXPECT_THROW(LR::validate_nac_occupations(weights, std::vector<int>{4, 0}, 8), std::invalid_argument);
     EXPECT_THROW(LR::validate_nac_occupations(weights, std::vector<int>{4, 8}, 8), std::invalid_argument);
     EXPECT_THROW(LR::validate_nac_occupations(weights, std::vector<int>{4, 2}, 7), std::invalid_argument);
+}
+
+TEST(NacvResult, AvoidedCrossingMatchesTheExactTwoLevelDerivativeCoupling)
+{
+    const double slope = 0.5;
+    const double coupling = 0.2;
+    for (const double position : {-0.8, 0.0, 0.8})
+    {
+        // H(R) = {{slope*R,coupling},{coupling,-slope*R}} in Ry.
+        // Its normalized eigenvectors are (-sin(theta),cos(theta)) and
+        // (cos(theta),sin(theta)); contract dH/dR independently of NAC assembly.
+        const double diagonal = slope * position;
+        const double energy_squared = diagonal * diagonal + coupling * coupling;
+        const double energy = std::sqrt(energy_squared);
+        const double theta = 0.5 * std::atan2(coupling, diagonal);
+        const double bra_first = -std::sin(theta);
+        const double bra_second = std::cos(theta);
+        const double ket_first = std::cos(theta);
+        const double ket_second = std::sin(theta);
+        const double hamiltonian_derivative = slope * (bra_first * ket_first - bra_second * ket_second);
+        ModuleBase::matrix force(1, 3);
+        force(0, 0) = -hamiltonian_derivative;
+        LR::NacvResult result;
+        result.gap_rydberg = 2.0 * energy;
+        result.ao_connection.create(1, 3);
+        LR::assemble_nacv_result(result, force, 1e-12);
+        const double exact_coupling = -slope * coupling / (2.0 * energy_squared);
+        ASSERT_TRUE(result.gap_resolved);
+        EXPECT_NEAR(result.raw(0, 0), exact_coupling, 1e-14);
+        EXPECT_NEAR(result.etf(0, 0), exact_coupling, 1e-14);
+        EXPECT_DOUBLE_EQ(result.raw(0, 1), 0.0);
+        EXPECT_DOUBLE_EQ(result.raw(0, 2), 0.0);
+        EXPECT_DOUBLE_EQ(result.numerator_raw(0, 0), hamiltonian_derivative);
+    }
+}
+
+TEST(NacvResult, ElectronicPhaseFlipChangesVectorsAndNumeratorsTogether)
+{
+    const ModuleBase::matrix force = example_force();
+    LR::NacvResult original = example_result(2.0);
+    LR::assemble_nacv_result(original, force, 1e-8);
+    LR::NacvResult flipped = example_result(2.0);
+    flipped.ao_connection *= -1.0;
+    const ModuleBase::matrix flipped_force = force * -1.0;
+    LR::assemble_nacv_result(flipped, flipped_force, 1e-8);
+    EXPECT_DOUBLE_EQ(flipped.gap_rydberg, original.gap_rydberg);
+    EXPECT_EQ(flipped.gap_resolved, original.gap_resolved);
+    for (int axis = 0; axis < 3; ++axis)
+    {
+        EXPECT_DOUBLE_EQ(flipped.raw(0, axis), -original.raw(0, axis));
+        EXPECT_DOUBLE_EQ(flipped.etf(0, axis), -original.etf(0, axis));
+        EXPECT_DOUBLE_EQ(flipped.numerator_raw(0, axis), -original.numerator_raw(0, axis));
+        EXPECT_DOUBLE_EQ(flipped.numerator_etf(0, axis), -original.numerator_etf(0, axis));
+    }
 }

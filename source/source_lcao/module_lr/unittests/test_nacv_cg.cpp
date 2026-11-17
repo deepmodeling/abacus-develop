@@ -325,3 +325,71 @@ TEST(ZeqCgPrecision, ZeroRhsIsCertifiedExactlyOnce)
     EXPECT_EQ(applications, 1);
     EXPECT_DOUBLE_EQ(solution[0], 0.0);
 }
+
+TEST(ZeqCgPrecision, CoupledMultipleRightHandSidesMatchKnownSolutions)
+{
+    const int local_size = owns_rhs() ? 3 : 0;
+    const int states = 2;
+    std::vector<double> rhs(local_size * states, 0.0);
+    std::vector<double> expected;
+    if (owns_rhs())
+    {
+        // The same positive-definite Hessian acts on both state-major RHS rows.
+        // L = {{4,1,0},{1,3,1},{0,1,2}}.
+        rhs = {2.0,
+            -2.0,
+            4.0,
+            -3.5,
+            2.5,
+            4.5};
+        expected = {1.0,
+            -2.0,
+            3.0,
+            -1.0,
+            0.5,
+            2.0};
+    }
+    const std::vector<double> original_rhs = rhs;
+    std::vector<double> solution(rhs.size(), 7.0);
+    const auto hessian = [local_size, states](const double *input, double *output)
+    {
+        if (local_size == 0)
+        {
+            return;
+        }
+        for (int state = 0; state < states; ++state)
+        {
+            const int offset = state * local_size;
+            output[offset] = 4.0 * input[offset] + input[offset + 1];
+            output[offset + 1] = input[offset] + 3.0 * input[offset + 1] + input[offset + 2];
+            output[offset + 2] = input[offset + 1] + 2.0 * input[offset + 2];
+        }
+    };
+    double *const solution_data = solution.data();
+    double *const rhs_data = rhs.data();
+    LR::solve_nac_cg(
+        solution_data,
+        rhs_data,
+        local_size,
+        states,
+        hessian,
+        false,
+        1e-12,
+        10);
+    EXPECT_EQ(rhs, original_rhs);
+    for (std::size_t index = 0; index < expected.size(); ++index)
+    {
+        EXPECT_NEAR(solution[index], expected[index], 1e-12);
+    }
+    std::vector<double> applied(rhs.size(), 0.0);
+    double *const applied_data = applied.data();
+    hessian(solution_data, applied_data);
+    double residual_squared = 0.0;
+    for (std::size_t index = 0; index < rhs.size(); ++index)
+    {
+        const double residual = applied[index] - rhs[index];
+        residual_squared += residual * residual;
+    }
+    Parallel_Reduce::reduce_all(residual_squared);
+    EXPECT_LT(std::sqrt(residual_squared), 1e-12);
+}
