@@ -154,76 +154,54 @@ TEST_F(DFTUBaseTest, InitBaseSeedsURampingState)
 }
 
 
-// =====================================================================
-// uterm_mat_index calculation
-//
-// nspin=1: offset = sum(tlp1^2), total = sum(all tlp1^2)
-// nspin=2: same per-spin-channel, then pot_index *= 2 (split layout)
-// nspin=4: offset = sum((tlp1*npol)^2), each atom = 4*tlp1^2
-// =====================================================================
-
-class EffPotIndexTest : public ::testing::Test
+/// init_base owns the flat potential offsets used by PW and the occupation
+/// mixer. Check the real layout for unequal orbital sizes and all spin modes.
+TEST_F(DFTUBaseTest, InitBaseComputesMixedOrbitalOffsetsForSpinModes)
 {
-  protected:
-    struct AtomSpec { int l; int na; }; // correlated orbital l, number of atoms
-    std::vector<int> uterm_mat_index;
-    int pot_index;
-
-    void compute_indices(const std::vector<AtomSpec>& atoms, int nspin)
+    UnitCell multi_cell;
+    multi_cell.ntype = 3;
+    multi_cell.nat = 3;
+    multi_cell.atoms = new Atom[multi_cell.ntype];
+    multi_cell.set_atom_flag = true;
+    const std::vector<int> l_channel = {1, 2, 1};
+    for (int it = 0; it < multi_cell.ntype; ++it)
     {
-        pot_index = 0;
-        uterm_mat_index.resize(atoms.size());
-
-        for (size_t i = 0; i < atoms.size(); i++)
-        {
-            int tlp1 = 2 * atoms[i].l + 1;
-            int tlp1_npol = tlp1 * (nspin == 4 ? 2 : 1);
-
-            if (nspin == 4)
-            {
-                uterm_mat_index[i] = pot_index;
-                pot_index += tlp1_npol * tlp1_npol;
-            }
-            else
-            {
-                uterm_mat_index[i] = pot_index;
-                pot_index += tlp1 * tlp1;
-            }
-        }
-
-        if (nspin == 2)
-            pot_index *= 2;
+        Atom& atom = multi_cell.atoms[it];
+        const int l = l_channel[it];
+        atom.na = 1;
+        atom.nwl = l;
+        atom.nw = 2 * l + 1;
+        atom.l_nchi.assign(l + 1, 0);
+        atom.l_nchi[l] = 1;
+        atom.set_index();
     }
-};
+    multi_cell.set_iat2itia();
+    multi_cell.itia2iat.create(multi_cell.ntype, 1);
+    for (int it = 0; it < multi_cell.ntype; ++it)
+    {
+        multi_cell.itia2iat(it, 0) = it;
+    }
 
-TEST_F(EffPotIndexTest, Nspin1_MixedOrbitals)
-{
-    // 3 atoms: p(l=1), d(l=2), p(l=1)
-    std::vector<AtomSpec> atoms = {{1, 1}, {2, 1}, {1, 1}};
-    compute_indices(atoms, 1);
+    const std::vector<double> hubbard_u = {0.0, 0.0, 0.0};
+    for (const int nspin : {1, 2, 4})
+    {
+        const int npol = nspin == 4 ? 2 : 1;
+        multi_cell.set_iat2iwt(npol);
+        Plus_U_Base dftu;
+        dftu.init_base(multi_cell, npol, nspin, l_channel,
+                       false, 0.5, "", "", "none", "cpu", hubbard_u,
+                       0.0, 0, 0, DFTU_BASE::SOC_LAYOUT_PAULI);
 
-    // p: 9, d: 25, p: 9
-    EXPECT_EQ(uterm_mat_index[0], 0);
-    EXPECT_EQ(uterm_mat_index[1], 9);
-    EXPECT_EQ(uterm_mat_index[2], 34);
-    EXPECT_EQ(pot_index, 43); // 9 + 25 + 9
-}
-
-TEST_F(EffPotIndexTest, Nspin2and4_SplitAndPauli)
-{
-    // nspin=2: 2 d-atoms, split layout [up | dn]
-    std::vector<AtomSpec> atoms2 = {{2, 1}, {2, 1}};
-    compute_indices(atoms2, 2);
-    EXPECT_EQ(uterm_mat_index[0], 0);
-    EXPECT_EQ(uterm_mat_index[1], 25);
-    EXPECT_EQ(pot_index, 100); // (25 + 25) * 2
-
-    // nspin=4: d + p atoms, Pauli blocks
-    std::vector<AtomSpec> atoms4 = {{2, 1}, {1, 1}};
-    compute_indices(atoms4, 4);
-    EXPECT_EQ(uterm_mat_index[0], 0);    // d: (5*2)^2 = 100
-    EXPECT_EQ(uterm_mat_index[1], 100);  // p: (3*2)^2 = 36
-    EXPECT_EQ(pot_index, 136);
+        const std::vector<int>& index = dftu.get_uterm_mat_index();
+        ASSERT_EQ(index.size(), 3u);
+        EXPECT_EQ(index[0], 0);
+        const int second_offset = nspin == 4 ? 36 : 9;
+        const int third_offset = nspin == 4 ? 136 : 34;
+        const int total_size = nspin == 4 ? 172 : (nspin == 2 ? 86 : 43);
+        EXPECT_EQ(index[1], second_offset);
+        EXPECT_EQ(index[2], third_offset);
+        EXPECT_EQ(dftu.get_uterm_mat().size(), static_cast<size_t>(total_size));
+    }
 }
 
 
