@@ -1,0 +1,3 @@
+# Two- and four-rank fixed runs differ by 3.54e-6 eV, while the pre-fix
+# two-rank run differs by 3.90e-4 eV.
+threshold 0.00005

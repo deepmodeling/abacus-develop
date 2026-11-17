@@ -88,6 +88,7 @@ scf_pbe0_spin2_kpar
 scf_pbe0_afm_kpar
 099_PW_15_SO_avg
 100_PW_DJ_SO
+scf_dftu_soc_mixing
 101_PW_W90
 102_PW_MD_1O
 103_PW_MD_2O

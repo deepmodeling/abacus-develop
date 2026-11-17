@@ -206,6 +206,49 @@ TEST_F(OccMatMixerTest, FlatRoundtripNspin2)
     }
 }
 
+TEST_F(OccMatMixerTest, FlatRoundtripNspin4AllPauliBlocks)
+{
+    const int nspin = 4;
+    const int npol = 2;
+    const int spinor_block = block * npol * npol;
+    flat_index[1] = spinor_block;
+
+    OccupationMatrix occmat;
+    occmat.init(cell, l_channel, nspin, npol);
+
+    OccMatMixer mixer;
+    mixer.init(&cell, &l_channel, &flat_index, nspin, cell.nat * spinor_block);
+
+    for (int iat = 0; iat < cell.nat; iat++)
+    {
+        for (int m = 0; m < spinor_block; m++)
+        {
+            occmat.mat(iat, l_corr, 0).c[m] = 1000.0 * iat + m + 1.0;
+        }
+    }
+
+    mixer.collect(occmat);
+    for (int iat = 0; iat < cell.nat; iat++)
+    {
+        for (int m = 0; m < spinor_block; m++)
+        {
+            EXPECT_DOUBLE_EQ(mixer.uom()[flat_index[iat] + m],
+                             1000.0 * iat + m + 1.0);
+        }
+    }
+
+    occmat.zero(cell, l_channel);
+    mixer.write_back(occmat);
+    for (int iat = 0; iat < cell.nat; iat++)
+    {
+        for (int m = 0; m < spinor_block; m++)
+        {
+            EXPECT_DOUBLE_EQ(occmat.mat(iat, l_corr, 0).c[m],
+                             1000.0 * iat + m + 1.0);
+        }
+    }
+}
+
 // ----------------------------------------------------------------------
 // begin_iter/seed_save flatten the saved (not the live) occupation matrix
 // ----------------------------------------------------------------------
