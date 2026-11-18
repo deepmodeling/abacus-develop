@@ -32,7 +32,39 @@ find_library(
 # Handle the QUIET and REQUIRED arguments and
 # set DeePMD_FOUND to TRUE if all variables are non-zero.
 include(FindPackageHandleStandardArgs)
-if(DeePMD_INCLUDE_C_DIR)
+include(CheckCXXSourceCompiles)
+if(DeePMD_INCLUDE_DIR AND deepmd_cc)
+  set(_abacus_saved_required_includes ${CMAKE_REQUIRED_INCLUDES})
+  set(_abacus_saved_required_libraries ${CMAKE_REQUIRED_LIBRARIES})
+  set(CMAKE_REQUIRED_INCLUDES ${CMAKE_REQUIRED_INCLUDES} ${DeePMD_INCLUDE_DIR})
+  set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES} ${deepmd_cc})
+  check_cxx_source_compiles(
+    "#include <deepmd/DeepPot.h>
+     int main() { deepmd::DeepPot model; return model.is_aparam_nall(); }"
+    DeePMD_CXX_API_USABLE)
+  set(CMAKE_REQUIRED_INCLUDES ${_abacus_saved_required_includes})
+  set(CMAKE_REQUIRED_LIBRARIES ${_abacus_saved_required_libraries})
+  unset(_abacus_saved_required_includes)
+  unset(_abacus_saved_required_libraries)
+endif()
+# The C++ API exposes is_aparam_nall() on an initialized model. Prefer it
+# when both libraries are installed to avoid loading a second model for this
+# property in the C API compatibility path.
+if(DeePMD_CXX_API_USABLE)
+  find_package_handle_standard_args(DeePMD DEFAULT_MSG deepmd_cc
+                                    DeePMD_INCLUDE_DIR)
+  if(DeePMD_FOUND)
+    set(DeePMDC_FOUND FALSE)
+    if(NOT TARGET DeePMD::deepmd_cc)
+      add_library(DeePMD::deepmd_cc UNKNOWN IMPORTED)
+      set_target_properties(
+        DeePMD::deepmd_cc
+        PROPERTIES IMPORTED_LINK_INTERFACE_LANGUAGES "CXX"
+                   IMPORTED_LOCATION "${deepmd_cc}"
+                   INTERFACE_INCLUDE_DIRECTORIES "${DeePMD_INCLUDE_DIR}")
+    endif()
+  endif()
+else()
   find_package_handle_standard_args(DeePMD DEFAULT_MSG deepmd_c
                                     DeePMD_INCLUDE_C_DIR)
   if(DeePMD_FOUND)
@@ -47,25 +79,10 @@ if(DeePMD_INCLUDE_C_DIR)
                    INTERFACE_INCLUDE_DIRECTORIES "${DeePMD_INCLUDE_DIR}")
     endif()
   endif()
-else()
-  find_package_handle_standard_args(DeePMD DEFAULT_MSG deepmd_cc
-                                    DeePMD_INCLUDE_DIR)
-  if(DeePMD_FOUND)
-    set(DeePMD_INCLUDE_DIR ${DeePMD_INCLUDE_DIR})
-    if(NOT TARGET DeePMD::deepmd_cc)
-      add_library(DeePMD::deepmd_cc UNKNOWN IMPORTED)
-      set_target_properties(
-        DeePMD::deepmd_cc
-        PROPERTIES IMPORTED_LINK_INTERFACE_LANGUAGES "C"
-                   IMPORTED_LOCATION "${deepmd_cc}"
-                   INTERFACE_INCLUDE_DIRECTORIES "${DeePMD_INCLUDE_DIR}")
-    endif()
-  endif()
 endif()
 
 set(CMAKE_REQUIRED_INCLUDES ${CMAKE_REQUIRED_INCLUDES} ${DeePMD_INCLUDE_DIR})
 
-include(CheckCXXSourceCompiles)
 if(DeePMD_FOUND)
   # The communication constructor is inline and calls into the DeePMD
   # library, so the feature probe must link against the selected API library.

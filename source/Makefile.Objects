@@ -578,6 +578,7 @@ OBJS_MD=fire.o\
     module_snap/snap_potential.o\
     module_lj/lj.o\
     module_dp/dp.o\
+    module_dp/dp_aparam.o\
     module_nep/nep_potential.o\
     verlet.o\
 

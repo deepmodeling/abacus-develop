@@ -63,6 +63,13 @@ void sync_geometry_from_unitcell(MDCell& mdcell, const UnitCell& ucell)
     {
         throw std::runtime_error("UnitCell and MDCell atom counts differ.");
     }
+    for (int it = 0; it < ucell.ntype; ++it)
+    {
+        if (mdcell.type_atom_counts()[static_cast<std::size_t>(it)] != ucell.atoms[it].na)
+        {
+            throw std::runtime_error("UnitCell and MDCell type atom counts differ.");
+        }
+    }
 
     const ModuleBase::Matrix3& old_lattice = mdcell.latvec();
     const ModuleBase::Matrix3& new_lattice = ucell.latvec;

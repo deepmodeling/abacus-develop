@@ -1,1 +1,1 @@
-target_sources(md PRIVATE dp.cpp)
+target_sources(md PRIVATE dp.cpp dp_aparam.cpp)

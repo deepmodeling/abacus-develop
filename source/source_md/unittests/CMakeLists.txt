@@ -32,9 +32,13 @@ endif()
 addtest(
   TARGET MODULE_MD_DP_potential
   LIBS ${_md_dp_test_libs}
-  SOURCES test_dp.cpp ../module_dp/dp.cpp
+  SOURCES test_dp.cpp ../module_dp/dp.cpp ../module_dp/dp_aparam.cpp
           ../../source_cell/module_neighlist/neighbor_list.cpp
           ${md_test_depend_files})
+
+addtest(
+  TARGET MODULE_MD_dp_aparam
+  SOURCES test_dp_aparam.cpp ../module_dp/dp_aparam.cpp)
 
 set(_md_nep_test_libs parameter psi device)
 if(DEFINED NEP_DIR AND NEP_FOUND)

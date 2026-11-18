@@ -2,7 +2,6 @@
 
 #include "source_base/matrix.h"
 #include "source_base/parallel_cell.h"
-#include "source_base/parallel_global.h"
 #include "source_cell/dom_decomp.h"
 #include "source_cell/mdcell.h"
 #include "source_cell/unitcell.h"
@@ -67,24 +66,4 @@ TEST(MDCellAdapterTest, SyncGeometryAndCollectForces)
     EXPECT_DOUBLE_EQ(full_force(0, 1), 2.0);
     EXPECT_DOUBLE_EQ(full_force(1, 0), 2.0);
     EXPECT_DOUBLE_EQ(full_force(1, 2), 6.0);
-}
-
-int main(int argc, char** argv)
-{
-    int nproc = 1;
-    int nthreads = 1;
-    int rank = 0;
-    Parallel_Global::read_pal_param(argc, argv, nproc, nthreads, rank);
-    ::testing::InitGoogleTest(&argc, argv);
-    const int result = RUN_ALL_TESTS();
-#ifdef __MPI
-    POOL_WORLD = MPI_COMM_NULL;
-    KP_WORLD = MPI_COMM_NULL;
-    INT_BGROUP = MPI_COMM_NULL;
-    BP_WORLD = MPI_COMM_NULL;
-    GRID_WORLD = MPI_COMM_NULL;
-    DIAG_WORLD = MPI_COMM_NULL;
-    Parallel_Global::finalize_mpi();
-#endif
-    return result;
 }
