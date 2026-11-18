@@ -1,6 +1,9 @@
 #include "../ekinetic.h"
+#include "test_operator_basis.h"
 
 #include "gtest/gtest.h"
+
+#include <memory>
 
 //---------------------------------------
 // Unit test of EKinetic class
@@ -57,6 +60,7 @@ class EKineticTest : public ::testing::Test
         }
         ucell.set_iat2iwt(1);
         init_parav();
+        basis_.reset(new BasisFlattenedIndexing(operator_test::make_s_orbital_basis(ucell)));
         // set up a HContainer with ucell
         HR = new hamilt::HContainer<double>(paraV);
     }
@@ -76,7 +80,7 @@ class EKineticTest : public ::testing::Test
         int global_col = test_size * test_nw;
         std::ofstream ofs_running;
         paraV = new Parallel_Orbitals();
-        paraV->para_2d().init(global_row, global_col, nb, MPI_COMM_WORLD);
+        paraV->para_2d().init(global_row, global_col, nb, MPI_COMM_WORLD, false);
         paraV->set_atomic_trace(ucell.get_iat2iwt(), test_size, global_row);
     }
 #else
@@ -88,6 +92,7 @@ class EKineticTest : public ::testing::Test
     UnitCell ucell;
     hamilt::HContainer<double>* HR;
     Parallel_Orbitals* paraV;
+    std::unique_ptr<BasisFlattenedIndexing> basis_;
     TwoCenterIntegrator intor_;
 
     int dsize;
@@ -102,7 +107,7 @@ TEST_F(EKineticTest, constructHRd2d)
     hsk.set_zero_hk();
     Grid_Driver gd(0, 0);
     hamilt::EKinetic<hamilt::OperatorLCAO<double, double>>
-        op(&hsk, kvec_d_in, HR, &ucell, {1.0}, &gd, &intor_);
+        op(&hsk, kvec_d_in, HR, *basis_, paraV->para_2d(), &ucell, {1.0}, &gd, &intor_);
     op.contributeHR();
     // check the value of HR
     for (int iap = 0; iap < HR->size_atom_pairs(); ++iap)
@@ -122,7 +127,7 @@ TEST_F(EKineticTest, constructHRd2d)
     op.contributeHk(0);
     // check the value of HK
     double* hk = hsk.get_hk();
-    for (int i = 0; i < paraV->para_2d().get_row_size() * paraV->para_2d().get_col_size(); ++i)
+    for (int i = 0; i < paraV->para_2d().nrloc() * paraV->para_2d().ncloc(); ++i)
     {
         EXPECT_EQ(hk[i], 1.0);
     }
@@ -152,7 +157,7 @@ TEST_F(EKineticTest, constructHRd2cd)
     hsk.set_zero_hk();
     Grid_Driver gd(0, 0);
     hamilt::EKinetic<hamilt::OperatorLCAO<std::complex<double>, double>>
-        op(&hsk, kvec_d_in, HR, &ucell, {1.0}, &gd, &intor_);
+        op(&hsk, kvec_d_in, HR, *basis_, paraV->para_2d(), &ucell, {1.0}, &gd, &intor_);
     op.contributeHR();
     // check the value of HR
     for (int iap = 0; iap < HR->size_atom_pairs(); ++iap)
@@ -172,7 +177,7 @@ TEST_F(EKineticTest, constructHRd2cd)
     op.contributeHk(0);
     auto* hk = hsk.get_hk();
     // check the value of HK of gamma point
-    for (int i = 0; i < paraV->para_2d().get_row_size() * paraV->para_2d().get_col_size(); ++i)
+    for (int i = 0; i < paraV->para_2d().nrloc() * paraV->para_2d().ncloc(); ++i)
     {
         EXPECT_EQ(hk[i].real(), 1.0);
         EXPECT_EQ(hk[i].imag(), 0.0);
@@ -181,7 +186,7 @@ TEST_F(EKineticTest, constructHRd2cd)
     hsk.set_zero_hk();
     op.contributeHk(1);
     // check the value of HK
-    for (int i = 0; i < paraV->para_2d().get_row_size() * paraV->para_2d().get_col_size(); ++i)
+    for (int i = 0; i < paraV->para_2d().nrloc() * paraV->para_2d().ncloc(); ++i)
     {
         EXPECT_NEAR(hk[i].real(), -1.6180339887498945 / 2, 1e-10);
         EXPECT_NEAR(hk[i].imag(), -1.1755705045849467 / 2, 1e-10);

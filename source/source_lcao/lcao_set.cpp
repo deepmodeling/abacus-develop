@@ -86,13 +86,15 @@ void LCAO_domain::set_pot(
     {
         // init_base does not see paraV; validate the square-matrix invariant
         // of the LCAO parallel distribution here.
-        const int global_rows = pv.para_2d().get_global_row_size();
-        const int global_cols = pv.para_2d().get_global_col_size();
+        const int global_rows = pv.para_2d().nrglb();
+        const int global_cols = pv.para_2d().ncglb();
         if (global_rows != global_cols)
         {
             ModuleBase::WARNING_QUIT("LCAO_domain::set_pot",
                                      "Global row and column dimensions do not match");
         }
+        const DFTU_BASE::OccmatSocLayout occmat_soc_layout
+            = DFTU_BASE::lcao_soc_layout(inp.dft_plus_u);
         dftu.init_base(ucell,
                        PARAM.globalv.npol,
                        inp.nspin,
@@ -107,7 +109,7 @@ void LCAO_domain::set_pot(
                        PARAM.globalv.uramping,
                        inp.init_occ_mat,
                        inp.mixing_dftu,
-                       DFTU_BASE::SOC_LAYOUT_SPIN_BASIS_REAL);
+                       occmat_soc_layout);
     }
 
     //! 4) init exact exchange calculations

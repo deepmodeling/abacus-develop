@@ -19,7 +19,7 @@ inline void cal_dm(const Parallel_Orbitals* ParaV, const ModuleBase::matrix& wg,
 
     for (int ik = 0; ik < wfc.get_nk(); ++ik)
     {
-        dm[ik].create(ParaV->para_2d().get_col_size(), ParaV->para_2d().get_row_size());
+        dm[ik].create(ParaV->para_2d().ncloc(), ParaV->para_2d().nrloc());
         module_dm::dmk_from_psi(ParaV, wg, ik, wfc, dm[ik].c);
     }
     ModuleBase::timer::end("elecstate","cal_dm");
@@ -32,7 +32,7 @@ inline void cal_dm(const Parallel_Orbitals* ParaV, const ModuleBase::matrix& wg,
 
     for (int ik = 0; ik < wfc.get_nk(); ++ik)
     {
-        dm[ik].create(ParaV->para_2d().get_col_size(), ParaV->para_2d().get_row_size());
+        dm[ik].create(ParaV->para_2d().ncloc(), ParaV->para_2d().nrloc());
         module_dm::dmk_from_psi(ParaV, wg, ik, wfc, dm[ik].c);
     }
 

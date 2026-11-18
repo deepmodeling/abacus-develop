@@ -54,7 +54,7 @@ namespace LR
             const int& nk,
             const std::vector<int>& nocc,
             const std::vector<int>& nvirt,
-            const std::vector<Parallel_2D>& pX,
+            const std::vector<Parallel_Blkcyclic>& pX,
             double* eig,
             const std::string method,
             const Real<T>& diag_ethr, ///< threshold for diagonalization
@@ -114,6 +114,7 @@ namespace LR
                                                  nband,
                                                  dim,
                                                  davidson_dimension,
+                                                 false,
                                                  comm_info);
                     std::vector<double> ethr_band(nband, diag_ethr);
                     hsolver::DiagoIterAssist<T>::avg_iter += static_cast<double>(david.diag(op,
@@ -181,10 +182,10 @@ namespace LR
                 << "; current threshold: " << diag_ethr << std::endl;
             ModuleBase::timer::end("HSolverLR", "solve");
         }
-template void solve<double, HamiltLR<double>>(const HamiltLR<double>&, double*, const int&, const int&, const int&, const std::vector<int>&, const std::vector<int>&, const std::vector<Parallel_2D>&, double*, const std::string, const double&, const std::vector<double>&, const bool);
-template void solve<double, HamiltULR<double>>(const HamiltULR<double>&, double*, const int&, const int&, const int&, const std::vector<int>&, const std::vector<int>&, const std::vector<Parallel_2D>&, double*, const std::string, const double&, const std::vector<double>&, const bool);
-template void solve<std::complex<double>, HamiltLR<std::complex<double>>>(const HamiltLR<std::complex<double>>&, std::complex<double>*, const int&, const int&, const int&, const std::vector<int>&, const std::vector<int>&, const std::vector<Parallel_2D>&, double*, const std::string, const double&, const std::vector<double>&, const bool);
-template void solve<std::complex<double>, HamiltULR<std::complex<double>>>(const HamiltULR<std::complex<double>>&, std::complex<double>*, const int&, const int&, const int&, const std::vector<int>&, const std::vector<int>&, const std::vector<Parallel_2D>&, double*, const std::string, const double&, const std::vector<double>&, const bool);
+template void solve<double, HamiltLR<double>>(const HamiltLR<double>&, double*, const int&, const int&, const int&, const std::vector<int>&, const std::vector<int>&, const std::vector<Parallel_Blkcyclic>&, double*, const std::string, const double&, const std::vector<double>&, const bool);
+template void solve<double, HamiltULR<double>>(const HamiltULR<double>&, double*, const int&, const int&, const int&, const std::vector<int>&, const std::vector<int>&, const std::vector<Parallel_Blkcyclic>&, double*, const std::string, const double&, const std::vector<double>&, const bool);
+template void solve<std::complex<double>, HamiltLR<std::complex<double>>>(const HamiltLR<std::complex<double>>&, std::complex<double>*, const int&, const int&, const int&, const std::vector<int>&, const std::vector<int>&, const std::vector<Parallel_Blkcyclic>&, double*, const std::string, const double&, const std::vector<double>&, const bool);
+template void solve<std::complex<double>, HamiltULR<std::complex<double>>>(const HamiltULR<std::complex<double>>&, std::complex<double>*, const int&, const int&, const int&, const std::vector<int>&, const std::vector<int>&, const std::vector<Parallel_Blkcyclic>&, double*, const std::string, const double&, const std::vector<double>&, const bool);
 
     }
 }

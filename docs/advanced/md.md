@@ -30,6 +30,10 @@ Furthermore, ABACUS also provides a [list of keywords](./input_files/input-main.
 
 The MD output information will be written into the file `MD_dump`， in which the atomic forces, atomic velocities, and lattice virial are controlled by keyword [dump_force](./input_files/input-main.md#dump_force), [dump_vel](./input_files/input-main.md#dump_vel), and [dump_virial](./input_files/input-main.md#dump_virial), respectively.
 
+Use `md_thermo_freq` to set the output interval for MD step, energy, temperature, and pressure information in `running_md.log` and on screen. The default is 1; set it to 0 to disable this thermodynamic output. The interval counts MD steps from 0, so a value of 10 selects steps 0, 10, 20, and so on, including after a restart.
+
+The `md_out_force` INPUT keyword has been removed. An INPUT file that still contains it will fail to parse. For MDCell simulations, per-atom forces are no longer printed in `running_md.log`; use `dump_force 1` to include them in `MD_dump`, and use `md_dumpfreq` to set the trajectory output interval.
+
 [Examples](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/18_md/01_LCAO_NVE_Si8) of MD simulations are also provided.
 There are eight INPUT files corresponding to eight different MD evolution methods in the directory.
 For examlpe, `INPUT_0` shows how to employ the NVE simulation.

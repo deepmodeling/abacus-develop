@@ -133,39 +133,39 @@ TEST_F(AO2MOTest, DoubleParallel)
     {
         // c: nao*nbands in para2d, nbands*nao in psi  (row-para and constructed: nao)
         // X: nvirt*nocc in para2d, nocc*nvirt in psi (row-para and constructed: nvirt)
-        Parallel_2D pV;
+        Parallel_Blkcyclic pV;
         LR_Util::setup_2d_division(pV, s.nb, s.naos, s.naos);
-        std::vector<container::Tensor> V(s.nks, container::Tensor(DAT::DT_DOUBLE, DEV::CpuDevice, { pV.get_col_size(), pV.get_row_size() }));
-        Parallel_2D pc;
-        LR_Util::setup_2d_division(pc, s.nb, s.naos, s.nocc + s.nvirt, pV.blacs_ctxt);
+        std::vector<container::Tensor> V(s.nks, container::Tensor(DAT::DT_DOUBLE, DEV::CpuDevice, { pV.ncloc(), pV.nrloc() }));
+        Parallel_Blkcyclic pc;
+        LR_Util::setup_2d_division(pc, s.nb, s.naos, s.nocc + s.nvirt, pV.ictxt());
 
-        std::vector<int> ngk_temp(s.nks, pc.get_row_size());
-        psi::Psi<double> c(s.nks, pc.get_col_size(), pc.get_row_size(), ngk_temp, true);
-        Parallel_2D pvo, poo, pvv;
-        LR_Util::setup_2d_division(pvo, s.nb, s.nvirt, s.nocc, pV.blacs_ctxt);
-        LR_Util::setup_2d_division(poo, s.nb, s.nocc, s.nocc, pV.blacs_ctxt);
-        LR_Util::setup_2d_division(pvv, s.nb, s.nvirt, s.nvirt, pV.blacs_ctxt);
+        std::vector<int> ngk_temp(s.nks, pc.nrloc());
+        psi::Psi<double> c(s.nks, pc.ncloc(), pc.nrloc(), ngk_temp, true);
+        Parallel_Blkcyclic pvo, poo, pvv;
+        LR_Util::setup_2d_division(pvo, s.nb, s.nvirt, s.nocc, pV.ictxt());
+        LR_Util::setup_2d_division(poo, s.nb, s.nocc, s.nocc, pV.ictxt());
+        LR_Util::setup_2d_division(pvv, s.nb, s.nvirt, s.nvirt, pV.ictxt());
 
-        EXPECT_EQ(pV.dim0, pc.dim0);
-        EXPECT_EQ(pV.dim1, pc.dim1);
-        EXPECT_GE(s.nvirt, pvo.dim0);
-        EXPECT_GE(s.nocc, pvo.dim1);
-        EXPECT_GE(s.naos, pc.dim0);
-        psi::Psi<double> vo_pblas_loc(s.nks, nstate, pvo.get_local_size(), pvo.get_local_size(), false);
+        EXPECT_EQ(pV.nrproc(), pc.nrproc());
+        EXPECT_EQ(pV.ncproc(), pc.ncproc());
+        EXPECT_GE(s.nvirt, pvo.nrproc());
+        EXPECT_GE(s.nocc, pvo.ncproc());
+        EXPECT_GE(s.naos, pc.nrproc());
+        psi::Psi<double> vo_pblas_loc(s.nks, nstate, pvo.size(), pvo.size(), false);
         psi::Psi<double> vo_gather(s.nks, nstate, s.nocc * s.nvirt, s.nocc * s.nvirt, false);
         vo_gather.zero_out();
-        psi::Psi<double> oo_pblas_loc(s.nks, nstate, poo.get_local_size(), poo.get_local_size(), false);
+        psi::Psi<double> oo_pblas_loc(s.nks, nstate, poo.size(), poo.size(), false);
         psi::Psi<double> oo_gather(s.nks, nstate, s.nocc * s.nocc, s.nocc * s.nocc, false);
         oo_gather.zero_out();
-        psi::Psi<double> vv_pblas_loc(s.nks, nstate, pvv.get_local_size(), pvv.get_local_size(), false);
+        psi::Psi<double> vv_pblas_loc(s.nks, nstate, pvv.size(), pvv.size(), false);
         psi::Psi<double> vv_gather(s.nks, nstate, s.nvirt * s.nvirt, s.nvirt * s.nvirt, false);
         vv_gather.zero_out();
         for (int istate = 0;istate < nstate;++istate)
         {
             for (int isk = 0;isk < s.nks;++isk)
             {
-                set_rand(V.at(isk).data<double>(), pV.get_local_size());
-                set_rand(&c(isk, 0, 0), pc.get_local_size());
+                set_rand(V.at(isk).data<double>(), pV.size());
+                set_rand(&c(isk, 0, 0), pc.size());
             }
             LR::ao_to_mo_pblas(V, pV, c, pc, s.naos, s.nocc, s.nvirt, pvo, &vo_pblas_loc(istate, 0, 0), false, LR_Util::MO_TYPE::VO, unit_factor);
             LR::ao_to_mo_pblas(V, pV, c, pc, s.naos, s.nocc, s.nvirt, poo, &oo_pblas_loc(istate, 0, 0), false, LR_Util::MO_TYPE::OO, unit_factor);
@@ -210,34 +210,34 @@ TEST_F(AO2MOTest, ComplexParallel)
     {
         // c: nao*nbands in para2d, nbands*nao in psi  (row-para and constructed: nao)
         // X: nvirt*nocc in para2d, nocc*nvirt in psi (row-para and constructed: nvirt)
-        Parallel_2D pV;
+        Parallel_Blkcyclic pV;
         LR_Util::setup_2d_division(pV, s.nb, s.naos, s.naos);
-        std::vector<container::Tensor> V(s.nks, container::Tensor(DAT::DT_COMPLEX_DOUBLE, DEV::CpuDevice, { pV.get_col_size(), pV.get_row_size() }));
-        Parallel_2D pc;
-        LR_Util::setup_2d_division(pc, s.nb, s.naos, s.nocc + s.nvirt, pV.blacs_ctxt);
+        std::vector<container::Tensor> V(s.nks, container::Tensor(DAT::DT_COMPLEX_DOUBLE, DEV::CpuDevice, { pV.ncloc(), pV.nrloc() }));
+        Parallel_Blkcyclic pc;
+        LR_Util::setup_2d_division(pc, s.nb, s.naos, s.nocc + s.nvirt, pV.ictxt());
 
-        std::vector<int> ngk_temp_1(s.nks, pc.get_row_size());
-        psi::Psi<std::complex<double>> c(s.nks, pc.get_col_size(), pc.get_row_size(), ngk_temp_1, true);
-        Parallel_2D pvo, poo, pvv;
-        LR_Util::setup_2d_division(pvo, s.nb, s.nvirt, s.nocc, pV.blacs_ctxt);
-        LR_Util::setup_2d_division(poo, s.nb, s.nocc, s.nocc, pV.blacs_ctxt);
-        LR_Util::setup_2d_division(pvv, s.nb, s.nvirt, s.nvirt, pV.blacs_ctxt);
+        std::vector<int> ngk_temp_1(s.nks, pc.nrloc());
+        psi::Psi<std::complex<double>> c(s.nks, pc.ncloc(), pc.nrloc(), ngk_temp_1, true);
+        Parallel_Blkcyclic pvo, poo, pvv;
+        LR_Util::setup_2d_division(pvo, s.nb, s.nvirt, s.nocc, pV.ictxt());
+        LR_Util::setup_2d_division(poo, s.nb, s.nocc, s.nocc, pV.ictxt());
+        LR_Util::setup_2d_division(pvv, s.nb, s.nvirt, s.nvirt, pV.ictxt());
 
-        psi::Psi<std::complex<double>> vo_pblas_loc(s.nks, nstate, pvo.get_local_size(), pvo.get_local_size(), false);
+        psi::Psi<std::complex<double>> vo_pblas_loc(s.nks, nstate, pvo.size(), pvo.size(), false);
         psi::Psi<std::complex<double>> vo_gather(s.nks, nstate, s.nocc * s.nvirt, s.nocc * s.nvirt, false);
         vo_gather.zero_out();
-        psi::Psi<std::complex<double>> oo_pblas_loc(s.nks, nstate, poo.get_local_size(), poo.get_local_size(), false);
+        psi::Psi<std::complex<double>> oo_pblas_loc(s.nks, nstate, poo.size(), poo.size(), false);
         psi::Psi<std::complex<double>> oo_gather(s.nks, nstate, s.nocc * s.nocc, s.nocc * s.nocc, false);
         oo_gather.zero_out();
-        psi::Psi<std::complex<double>> vv_pblas_loc(s.nks, nstate, pvv.get_local_size(), pvv.get_local_size(), false);
+        psi::Psi<std::complex<double>> vv_pblas_loc(s.nks, nstate, pvv.size(), pvv.size(), false);
         psi::Psi<std::complex<double>> vv_gather(s.nks, nstate, s.nvirt * s.nvirt, s.nvirt * s.nvirt, false);
         vv_gather.zero_out();
         for (int istate = 0;istate < nstate;++istate)
         {
             for (int isk = 0;isk < s.nks;++isk)
             {
-                set_rand(V.at(isk).data<std::complex<double>>(), pV.get_local_size());
-                set_rand(&c(isk, 0, 0), pc.get_local_size());
+                set_rand(V.at(isk).data<std::complex<double>>(), pV.size());
+                set_rand(&c(isk, 0, 0), pc.size());
             }
             LR::ao_to_mo_pblas(V, pV, c, pc, s.naos, s.nocc, s.nvirt, pvo, &vo_pblas_loc(istate, 0, 0), false, LR_Util::MO_TYPE::VO, unit_factor);
             LR::ao_to_mo_pblas(V, pV, c, pc, s.naos, s.nocc, s.nvirt, poo, &oo_pblas_loc(istate, 0, 0), false, LR_Util::MO_TYPE::OO, unit_factor);

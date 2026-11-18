@@ -1,3 +1,5 @@
+#include <type_traits>
+
 #include "source_base/math_polyint.h"
 #include "source_base/parallel_reduce.h"
 #include "source_io/module_parameter/parameter.h"
@@ -28,14 +30,19 @@ void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix& sigma,
     }
     ModuleBase::timer::start("Stress", "stress_nl");
 
+    const int nks = p_kv->get_nks();
+    constexpr bool split_k = std::is_same<FPTYPE, float>::value
+                             && std::is_same<Device, base_device::DEVICE_GPU>::value;
+    const int stress_count = 9 * (split_k && nks > 0 ? nks : 1);
     FPTYPE* stress_device = nullptr;
-    resmem_var_op()(stress_device, 9);
-    setmem_var_op()(stress_device, 0, 9);
-    std::vector<FPTYPE> sigmanlc(9, 0.0);
+    resmem_var_op()(stress_device, stress_count);
+    setmem_var_op()(stress_device, 0, stress_count);
+    std::vector<FPTYPE> stress_host(stress_count, 0.0);
+    using SumType = typename std::conditional<split_k, double, FPTYPE>::type;
+    std::vector<SumType> sigmanlc(9, 0.0);
 
     hamilt::FS_Nonlocal_tools<FPTYPE, Device> nl_tools(&nlpp_in, &ucell_in, p_kv, wfc_basis, p_sf, wg, &ekb);
 
-    const int nks = p_kv->get_nks();
     const int max_nbands = wg.nc;
     for (int ik = 0; ik < nks; ik++) // loop k points
     {
@@ -62,13 +69,20 @@ void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix& sigma,
             for (int jpol = 0; jpol <= ipol; jpol++)
             {
                 nl_tools.cal_vkb_deri_s(ik, max_nbands, ipol, jpol);
-                nl_tools.cal_dbecp_s(ik, npm, &psi_in[0](ik,0,0));
-                nl_tools.cal_stress(ik, npm, true, ipol, jpol, stress_device);
+                nl_tools.cal_dbecp_s(ik, npm, &psi_in[0](ik, 0, 0));
+                nl_tools.cal_stress(ik, npm, true, ipol, jpol, stress_device + (split_k ? 9 * ik : 0));
             }
         }
     }
     // transfer stress from device to host
-    syncmem_var_d2h_op()(sigmanlc.data(), stress_device, 9);
+    syncmem_var_d2h_op()(stress_host.data(), stress_device, stress_count);
+    for (int ik = 0; ik < (split_k ? nks : 1); ++ik)
+    {
+        for (int i = 0; i < 9; ++i)
+        {
+            sigmanlc[i] += static_cast<double>(stress_host[9 * ik + i]);
+        }
+    }
     delmem_var_op()(stress_device);
     // sum up forcenl from all processors
     for (int l = 0; l < 3; l++)

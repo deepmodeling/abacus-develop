@@ -1,6 +1,9 @@
 #include "../ekinetic.h"
+#include "test_operator_basis.h"
 
 #include "gtest/gtest.h"
+
+#include <memory>
 
 //---------------------------------------
 // Unit test of EKinetic class
@@ -57,6 +60,7 @@ class EKineticTest : public ::testing::Test
         }
         ucell.set_iat2iwt(1);
         init_parav();
+        basis_.reset(new BasisFlattenedIndexing(operator_test::make_s_orbital_basis(ucell)));
         // set up a HContainer with ucell
         HR = new hamilt::HContainer<double>(paraV);
     }
@@ -76,7 +80,7 @@ class EKineticTest : public ::testing::Test
         int global_col = test_size * test_nw;
         std::ofstream ofs_running;
         paraV = new Parallel_Orbitals();
-        paraV->para_2d().init(global_row, global_col, nb, MPI_COMM_WORLD);
+        paraV->para_2d().init(global_row, global_col, nb, MPI_COMM_WORLD, false);
         paraV->set_atomic_trace(ucell.get_iat2iwt(), test_size, global_row);
     }
 #else
@@ -88,6 +92,7 @@ class EKineticTest : public ::testing::Test
     UnitCell ucell;
     hamilt::HContainer<double>* HR;
     Parallel_Orbitals* paraV;
+    std::unique_ptr<BasisFlattenedIndexing> basis_;
     TwoCenterIntegrator intor_;
 
     int dsize;
@@ -105,7 +110,7 @@ TEST_F(EKineticTest, constructHRcd2cd)
     Grid_Driver gd(0, 0);
 
     hamilt::EKinetic<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>
-        op(&hsk, kvec_d_in, HR_complex, &ucell, {1.0}, &gd, &intor_);
+        op(&hsk, kvec_d_in, HR_complex, *basis_, paraV->para_2d(), &ucell, {1.0}, &gd, &intor_);
     op.contributeHR();
 
     // Check that HR_complex has been initialized
@@ -121,7 +126,7 @@ TEST_F(EKineticTest, constructHRcd2cd)
 
     // Verify HK is computed (values should be non-zero for non-gamma k-point)
     bool has_nonzero = false;
-    for (int i = 0; i < paraV->para_2d().get_row_size() * paraV->para_2d().get_col_size(); ++i)
+    for (int i = 0; i < paraV->para_2d().nrloc() * paraV->para_2d().ncloc(); ++i)
     {
         if (std::abs(hk[i]) > 1e-10)
         {
@@ -143,7 +148,7 @@ TEST_F(EKineticTest, setHRFixed)
     Grid_Driver gd(0, 0);
 
     hamilt::EKinetic<hamilt::OperatorLCAO<double, double>>
-        op(&hsk, kvec_d_in, HR, &ucell, {1.0}, &gd, &intor_);
+        op(&hsk, kvec_d_in, HR, *basis_, paraV->para_2d(), &ucell, {1.0}, &gd, &intor_);
 
     // First contributeHR - this creates and calculates HR_fixed internally
     op.contributeHR();
@@ -216,7 +221,7 @@ TEST_F(EKineticTest, singleAtom)
 #ifdef __MPI
     int nb = 5;
     paraV_single = new Parallel_Orbitals();
-    paraV_single->para_2d().init(5, 5, nb, MPI_COMM_WORLD);
+    paraV_single->para_2d().init(5, 5, nb, MPI_COMM_WORLD, false);
     paraV_single->set_atomic_trace(ucell_single.get_iat2iwt(), 1, 5);
 #endif
 
@@ -227,8 +232,17 @@ TEST_F(EKineticTest, singleAtom)
     hsk.set_zero_hk();
     Grid_Driver gd(0, 0);
 
+    const BasisFlattenedIndexing basis_single = operator_test::make_s_orbital_basis(ucell_single);
     hamilt::EKinetic<hamilt::OperatorLCAO<double, double>>
-        op(&hsk, kvec_d_in, HR_single, &ucell_single, {1.0}, &gd, &intor_);
+        op(&hsk,
+           kvec_d_in,
+           HR_single,
+           basis_single,
+           paraV_single->para_2d(),
+           &ucell_single,
+           {1.0},
+           &gd,
+           &intor_);
 
     op.contributeHR();
 
@@ -276,7 +290,7 @@ TEST_F(EKineticTest, differentOrbitals)
     Grid_Driver gd(0, 0);
 
     hamilt::EKinetic<hamilt::OperatorLCAO<double, double>>
-        op(&hsk, kvec_d_in, HR, &ucell, {1.0}, &gd, &intor_);
+        op(&hsk, kvec_d_in, HR, *basis_, paraV->para_2d(), &ucell, {1.0}, &gd, &intor_);
 
     op.contributeHR();
 
@@ -299,7 +313,7 @@ TEST_F(EKineticTest, forceCalculation)
     Grid_Driver gd(0, 0);
 
     hamilt::EKinetic<hamilt::OperatorLCAO<double, double>>
-        op(&hsk, kvec_d_in, HR, &ucell, {1.0}, &gd, &intor_);
+        op(&hsk, kvec_d_in, HR, *basis_, paraV->para_2d(), &ucell, {1.0}, &gd, &intor_);
 
     op.contributeHR();
 
@@ -374,7 +388,7 @@ TEST_F(EKineticTest, stressCalculation)
     Grid_Driver gd(0, 0);
 
     hamilt::EKinetic<hamilt::OperatorLCAO<double, double>>
-        op(&hsk, kvec_d_in, HR, &ucell, {1.0}, &gd, &intor_);
+        op(&hsk, kvec_d_in, HR, *basis_, paraV->para_2d(), &ucell, {1.0}, &gd, &intor_);
 
     op.contributeHR();
 
@@ -440,7 +454,7 @@ TEST_F(EKineticTest, forceStressTogether)
     Grid_Driver gd(0, 0);
 
     hamilt::EKinetic<hamilt::OperatorLCAO<double, double>>
-        op(&hsk, kvec_d_in, HR, &ucell, {1.0}, &gd, &intor_);
+        op(&hsk, kvec_d_in, HR, *basis_, paraV->para_2d(), &ucell, {1.0}, &gd, &intor_);
 
     op.contributeHR();
 
@@ -502,7 +516,7 @@ TEST_F(EKineticTest, nullDensityMatrix)
     Grid_Driver gd(0, 0);
 
     hamilt::EKinetic<hamilt::OperatorLCAO<double, double>>
-        op(&hsk, kvec_d_in, HR, &ucell, {1.0}, &gd, &intor_);
+        op(&hsk, kvec_d_in, HR, *basis_, paraV->para_2d(), &ucell, {1.0}, &gd, &intor_);
 
     op.contributeHR();
 
@@ -529,7 +543,7 @@ TEST_F(EKineticTest, zeroOrbitalCutoff)
 
     // Use zero cutoff - should result in no atom pairs (except possibly self-interaction)
     hamilt::EKinetic<hamilt::OperatorLCAO<double, double>>
-        op(&hsk, kvec_d_in, HR, &ucell, {0.0}, &gd, &intor_);
+        op(&hsk, kvec_d_in, HR, *basis_, paraV->para_2d(), &ucell, {0.0}, &gd, &intor_);
 
     op.contributeHR();
 
@@ -548,7 +562,7 @@ TEST_F(EKineticTest, largeOrbitalCutoff)
 
     // Use very large cutoff - should include all atoms
     hamilt::EKinetic<hamilt::OperatorLCAO<double, double>>
-        op(&hsk, kvec_d_in, HR, &ucell, {1000.0}, &gd, &intor_);
+        op(&hsk, kvec_d_in, HR, *basis_, paraV->para_2d(), &ucell, {1000.0}, &gd, &intor_);
 
     op.contributeHR();
 
@@ -582,7 +596,7 @@ TEST_F(EKineticTest, cutoffBoundary)
 
     // Use cutoff of 5.0 - atoms at exactly this distance should be excluded
     hamilt::EKinetic<hamilt::OperatorLCAO<double, double>>
-        op(&hsk, kvec_d_in, HR, &ucell, {2.5}, &gd, &intor_);
+        op(&hsk, kvec_d_in, HR, *basis_, paraV->para_2d(), &ucell, {2.5}, &gd, &intor_);
 
     op.contributeHR();
 
@@ -599,7 +613,7 @@ TEST_F(EKineticTest, multipleContributeHRAccumulation)
     Grid_Driver gd(0, 0);
 
     hamilt::EKinetic<hamilt::OperatorLCAO<double, double>>
-        op(&hsk, kvec_d_in, HR, &ucell, {1.0}, &gd, &intor_);
+        op(&hsk, kvec_d_in, HR, *basis_, paraV->para_2d(), &ucell, {1.0}, &gd, &intor_);
 
     // First call
     op.contributeHR();
@@ -661,6 +675,7 @@ TEST_F(EKineticTest, forceCalculationNpol2)
 {
     // Set up unit cell with npol=2
     ucell.set_iat2iwt(2);  // npol=2
+    basis_.reset(new BasisFlattenedIndexing(operator_test::make_s_orbital_basis(ucell)));
 
     // Reinitialize paraV with doubled size for npol=2
     delete paraV;
@@ -670,7 +685,7 @@ TEST_F(EKineticTest, forceCalculationNpol2)
     int global_row = test_size * test_nw * 2;  // doubled for npol=2
     int global_col = test_size * test_nw * 2;
     paraV = new Parallel_Orbitals();
-    paraV->para_2d().init(global_row, global_col, nb, MPI_COMM_WORLD);
+    paraV->para_2d().init(global_row, global_col, nb, MPI_COMM_WORLD, false);
     paraV->set_atomic_trace(ucell.get_iat2iwt(), test_size, global_row);
 #endif
 
@@ -683,7 +698,7 @@ TEST_F(EKineticTest, forceCalculationNpol2)
     Grid_Driver gd(0, 0);
 
     hamilt::EKinetic<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>
-        op(&hsk, kvec_d_in, HR_complex, &ucell, {1.0}, &gd, &intor_);
+        op(&hsk, kvec_d_in, HR_complex, *basis_, paraV->para_2d(), &ucell, {1.0}, &gd, &intor_);
 
     op.contributeHR();
 
@@ -747,6 +762,7 @@ TEST_F(EKineticTest, stressCalculationNpol2)
 {
     // Set up unit cell with npol=2
     ucell.set_iat2iwt(2);  // npol=2
+    basis_.reset(new BasisFlattenedIndexing(operator_test::make_s_orbital_basis(ucell)));
 
     // Initialize unit cell parameters for stress calculation
     ucell.lat0 = 1.0;
@@ -763,7 +779,7 @@ TEST_F(EKineticTest, stressCalculationNpol2)
     int global_row = test_size * test_nw * 2;  // doubled for npol=2
     int global_col = test_size * test_nw * 2;
     paraV = new Parallel_Orbitals();
-    paraV->para_2d().init(global_row, global_col, nb, MPI_COMM_WORLD);
+    paraV->para_2d().init(global_row, global_col, nb, MPI_COMM_WORLD, false);
     paraV->set_atomic_trace(ucell.get_iat2iwt(), test_size, global_row);
 #endif
 
@@ -776,7 +792,7 @@ TEST_F(EKineticTest, stressCalculationNpol2)
     Grid_Driver gd(0, 0);
 
     hamilt::EKinetic<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>
-        op(&hsk, kvec_d_in, HR_complex, &ucell, {1.0}, &gd, &intor_);
+        op(&hsk, kvec_d_in, HR_complex, *basis_, paraV->para_2d(), &ucell, {1.0}, &gd, &intor_);
 
     op.contributeHR();
 

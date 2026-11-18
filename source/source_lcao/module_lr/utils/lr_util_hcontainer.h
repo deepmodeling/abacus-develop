@@ -233,10 +233,10 @@ namespace LR_Util
 #ifdef __MPI
             // dm(k) is 2D-block-cyclic distributed, so the transpose needs the PBLAS routine
             // `mattrans` (pdtran_/pztranc_) rather than a plain serial swap.
-            LR_Util::mattrans(dk.data(), pv.para_2d().get_global_row_size(), pv.para_2d());
+            LR_Util::mattrans(dk.data(), pv.para_2d().nrglb(), pv.para_2d());
 #else
             // In a serial build the entire square AO matrix is local, in column-major order.
-            const int n = pv.para_2d().get_global_row_size();
+            const int n = pv.para_2d().nrglb();
             std::vector<TK> transposed(dk.size());
             for (int j = 0; j < n; ++j)
             {
@@ -260,7 +260,7 @@ namespace LR_Util
         for (auto& dk : dm.get_dmk_vec())
         {
 #ifdef __MPI
-            LR_Util::mattrans(dk.data(), pv.para_2d().get_global_row_size(), pv.para_2d());
+            LR_Util::mattrans(dk.data(), pv.para_2d().nrglb(), pv.para_2d());
 #else
             throw std::runtime_error("transpose_DMR requires MPI (PBLAS mattrans) for the 2D-block-cyclic dm(k) transpose.");
 #endif
@@ -288,9 +288,9 @@ namespace LR_Util
         if (symmetrize)
             for (int ik = 0; ik < nk; ++ik)
 #ifdef __MPI
-                LR_Util::matsym(dmk[ik].data<TK>(), pmat.para_2d().get_global_row_size(), pmat.para_2d());
+                LR_Util::matsym(dmk[ik].data<TK>(), pmat.para_2d().nrglb(), pmat.para_2d());
 #else
-                LR_Util::matsym(dmk[ik].data<TK>(), pmat.para_2d().get_global_row_size());
+                LR_Util::matsym(dmk[ik].data<TK>(), pmat.para_2d().nrglb());
 #endif
 
         for (int ik = 0; ik < nk; ++ik)
@@ -331,9 +331,9 @@ namespace LR_Util
                 for (int ik = 0; ik < nk; ++ik)
                 {
 #ifdef __MPI
-                    LR_Util::matsym(dmk[is][ik].data<TK>(), pmat.para_2d().get_global_row_size(), pmat.para_2d());
+                    LR_Util::matsym(dmk[is][ik].data<TK>(), pmat.para_2d().nrglb(), pmat.para_2d());
 #else
-                    LR_Util::matsym(dmk[is][ik].data<TK>(), pmat.para_2d().get_global_row_size());
+                    LR_Util::matsym(dmk[is][ik].data<TK>(), pmat.para_2d().nrglb());
 #endif
                 }
             }

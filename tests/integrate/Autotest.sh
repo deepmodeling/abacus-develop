@@ -387,7 +387,15 @@ run_case() {
             check_out result.out $my_threshold $my_force_threshold $my_stress_threshold $my_fatal_threshold $my_descriptor_threshold $my_wfc_threshold
           fi
         else
-          bash -e ../../integrate/validation_tools/catch_properties.sh result.ref
+          # Keep the existing reference until collection finishes successfully.
+          if bash -e ../../integrate/validation_tools/catch_properties.sh result.ref.new; then
+            mv result.ref.new result.ref
+          else
+            rm -f result.ref.new
+            echo -e "\e[0;31m [ERROR     ]  Fatal Error in catch_properties.sh \e[0m"
+            let fatal++
+            fatal_case_list+=$dir'\n'
+          fi
         fi
       fi
 
@@ -527,5 +535,10 @@ if [ -z $g ]; then
     exit 1
   fi
 else
+  if [ "$fatal" -gt 0 ] || [ "$failed" -gt 0 ]; then
+    echo -e "\e[0;31m[ERROR     ]\e[0m Reference generation failed for $fatal cases."
+    printf "%b" "$fatal_case_list"
+    exit 1
+  fi
   echo "Generate test cases complete."
 fi

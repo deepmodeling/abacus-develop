@@ -27,10 +27,10 @@ init_vel          1
 
 md_restart        0
 md_type           nve
-md_nstep          3
-md_dt             0.25
+md_nstep          51 # initial state plus 50 advances: final time = 0.05 fs
+md_dt             0.001 # fs; the electronic RK4 uses this step without subcycling
 md_tfirst         58022.52706
-md_dumpfreq       10
+md_dumpfreq       1
 md_tfreq          1.08
 md_tchain         1
 nbspline          10 # be sure fft dimension is odd

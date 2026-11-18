@@ -30,9 +30,9 @@ int get_linear_index(const std::string& ks_solver,
 {
     if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(ks_solver))
     {
-        return mu + nu * pv.para_2d().get_row_size();
+        return mu + nu * pv.para_2d().nrloc();
     }
-    return mu * pv.para_2d().get_col_size() + nu;
+    return mu * pv.para_2d().ncloc() + nu;
 }
 } // namespace DFTU_LCAO
 

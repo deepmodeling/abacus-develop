@@ -1,4 +1,5 @@
 #include "ekinetic.h"
+#include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_base/timer.h"
 
 namespace hamilt

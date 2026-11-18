@@ -9,7 +9,7 @@
 #include "hamilt_bse_solver.h"
 #include "molecular_lri.h"
 
-#include "source_base/parallel_2d.h"
+#include "source_base/parallel_blkcyc.h"
 #include "source_base/timer.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_cell/unitcell.h"
@@ -33,7 +33,7 @@ public:
     std::vector<T> VA_local, WA_local;
     std::vector<T> VB_local, WB_local;
     int ndim = 0; // dimension of BSE matrix
-    Parallel_2D pA;
+    Parallel_Blkcyclic pA;
     /// @brief constructor for BSE_Matrix
     HamiltBSE(const int& nspin,
               const int& naos,
@@ -48,8 +48,8 @@ public:
               MolecularLRI<T>& mo_lri_in,
               std::weak_ptr<LR::PotHxcLR> pot_in,
               const K_Vectors& kv_in,
-              const std::vector<Parallel_2D>& pX_in,
-              const Parallel_2D& pc_in,
+              const std::vector<Parallel_Blkcyclic>& pX_in,
+              const Parallel_Blkcyclic& pc_in,
               const Parallel_Orbitals& pmat_in,
               const std::vector<std::string>& spin_types_in,
               const std::string& tda,
@@ -78,7 +78,7 @@ public:
     void cal_V_by_grid(bool is_A);
     void grid_calculation(hamilt::HContainer<T>& VR) const;
     
-    inline void write_AB_matrix(const std::string& file, const int& prec, const T* ptr, const Parallel_2D& pM)
+    inline void write_AB_matrix(const std::string& file, const int& prec, const T* ptr, const Parallel_Blkcyclic& pM)
     {
         std::ofstream ofs(file);
         if (!ofs.is_open()){
@@ -86,19 +86,19 @@ public:
         }
         ofs << file << "(Ry, transpose) with threshold " << prec << std::endl;
         ofs << std::setprecision(prec) << std::scientific;
-        LR_Util::write_value(ofs, ptr, pM.get_row_size(), pM.get_col_size());
+        LR_Util::write_value(ofs, ptr, pM.nrloc(), pM.ncloc());
         ofs.close();
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "finish writing " + file);
     }
 
-    inline void read_AB_matrix(const std::string& file, T* ptr, const Parallel_2D& pM)
+    inline void read_AB_matrix(const std::string& file, T* ptr, const Parallel_Blkcyclic& pM)
     {
         std::ifstream ifs(file);
         if (!ifs.is_open()){
             throw std::runtime_error("Cannot open file " + file);
         }
         ifs.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // skip the first line
-        LR_Util::read_value(ifs, ptr, pM.get_row_size(), pM.get_col_size());
+        LR_Util::read_value(ifs, ptr, pM.nrloc(), pM.ncloc());
         ifs.close();
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "finish reading " + file);
     }
@@ -119,8 +119,8 @@ private:
     std::weak_ptr<LR::PotHxcLR> pot;
     const K_Vectors& kv;
     int nk = 1;
-    const std::vector<Parallel_2D>& pX; // for tda, also pY for full
-    const Parallel_2D& pc;
+    const std::vector<Parallel_Blkcyclic>& pX; // for tda, also pY for full
+    const Parallel_Blkcyclic& pc;
     const Parallel_Orbitals& pmat;
     const std::vector<std::string>& spin_types; // singlet, triplet, and rpa, ipa(independent particle approx)
     const bool bse_ri_hartree;

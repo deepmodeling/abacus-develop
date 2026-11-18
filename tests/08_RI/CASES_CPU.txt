@@ -21,6 +21,7 @@ lr_tddft_multik
 rpa_scf_gamma
 rpa_scf_shrink_multik
 rt_tddft_pbe0_gamma
+rt_tddft_hse_spin2
 bse_lr_multik
 nscf_hse_multik
 

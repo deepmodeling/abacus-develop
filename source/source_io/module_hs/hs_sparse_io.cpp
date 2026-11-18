@@ -105,7 +105,7 @@ void ModuleIO::save_sparse(
     const SparseWriteOptions& options) {
     ModuleBase::TITLE("ModuleIO", "save_sparse");
     ModuleBase::timer::start("ModuleIO", "save_sparse");
-    const int nlocal = pv.para_2d().get_global_row_size();
+    const int nlocal = pv.para_2d().nrglb();
     if (nlocal <= 0)
     {
         ModuleBase::WARNING_QUIT("ModuleIO::save_sparse",
@@ -138,12 +138,12 @@ void ModuleIO::save_sparse(
 
         if (smat.count(R_coor))
         {
-            save_lat_r(ofs, smat.at(R_coor), pv, options);
+            save_lat_r(ofs, smat.at(R_coor), pv.para_2d(), options);
         }
         else
         {
             SparseRBlock<Tdata> empty_map;
-            save_lat_r(ofs, empty_map, pv, options);
+            save_lat_r(ofs, empty_map, pv.para_2d(), options);
         }
         ++count;
     }

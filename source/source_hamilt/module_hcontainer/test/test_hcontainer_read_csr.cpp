@@ -113,7 +113,7 @@ TEST_F(ReadHContainerTest, ReadAndOutputHContainer)
     // std::cout << SR.size_R_loop() << std::endl;
     // output_SR.write(-2, -1, 0);
     ofs_out << "STEP: " << 0 << std::endl;
-    ofs_out << "Matrix Dimension of S(R): " << paraV.para_2d().get_col_size() << std::endl;
+    ofs_out << "Matrix Dimension of S(R): " << paraV.para_2d().ncloc() << std::endl;
     ofs_out << "Matrix number of S(R): " << SR.size_R_loop() << std::endl;
     output_SR.write();
     ofs_out.close();

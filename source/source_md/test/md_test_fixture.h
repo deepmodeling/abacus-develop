@@ -2,10 +2,10 @@
 #define MD_TEST_FIXTURE_H
 
 #include "gtest/gtest.h"
-#include "source_esolver/esolver_lj.h"
+#include "source_md/unittests/lj_test_solver.h"
 #include "source_io/module_parameter/input_parameter.h"
 #include "source_md/md_base.h"
-#include "source_cell/domain_decomposition.h"
+#include "source_cell/dom_decomp.h"
 #include "setcell.h"
 
 #include <memory>
@@ -24,7 +24,7 @@ class MdTestBase : public testing::Test
         Setcell::setupcell(ucell);
         Setcell::parameters(inp);
 
-        p_esolver.reset(new ModuleESolver::ESolver_LJ());
+        p_esolver.reset(make_lj_test_solver());
         p_esolver->before_all_runners(ucell, inp);
     }
 };

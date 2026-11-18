@@ -80,12 +80,16 @@ struct lapack_geqrf_inplace {
      * @param n The number of columns in the matrix A. n >= 0
      * @param A Pointer to the matrix A to be factorized. On exit, contains the QR factorization
      * @param lda The leading dimension of the matrix A. lda >= max(1, m)
+     * @param rdiag Optional host buffer receiving the diagonal of R before A is
+     *              overwritten with Q. Must hold at least min(m, n) entries, or
+     *              be nullptr when the rank is not needed.
      */
     void operator()(
         const int m,
         const int n,
         T *A,
-        const int lda);
+        const int lda,
+        T* rdiag);
 };
 
 // This is QR factorization

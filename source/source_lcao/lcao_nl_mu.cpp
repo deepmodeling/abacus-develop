@@ -263,8 +263,8 @@ static void build_psi_beta(
             for (int iw1 = 0; iw1 < nw1_tot; ++iw1)
             {
                 const int iw1_all = start1 + iw1;
-                const int iw1_local = pv.para_2d().global2local_row(iw1_all);
-                const int iw2_local = pv.para_2d().global2local_col(iw1_all);
+                const int iw1_local = pv.para_2d().irloc(iw1_all);
+                const int iw2_local = pv.para_2d().icloc(iw1_all);
                 if (iw1_local < 0 && iw2_local < 0)
                 {
                     continue;
@@ -337,7 +337,7 @@ static int accum_nlm_block(
     {
         const int j0 = j / npol; // added by zhengdy-soc
         const int iw1_all = pair.start1 + j;
-        const int mu = pv.para_2d().global2local_row(iw1_all);
+        const int mu = pv.para_2d().irloc(iw1_all);
         if (mu < 0)
         {
             continue;
@@ -349,7 +349,7 @@ static int accum_nlm_block(
         {
             const int k0 = k / npol;
             const int iw2_all = pair.start2 + k;
-            const int nu = pv.para_2d().global2local_col(iw2_all);
+            const int nu = pv.para_2d().icloc(iw2_all);
             if (nu < 0)
             {
                 continue;
@@ -579,7 +579,7 @@ void build_Nonlocal_mu_new(const Parallel_Orbitals& pv,
                         {
                             const int j0 = j / npol; // added by zhengdy-soc
                             const int iw1_all = start1 + j;
-                            const int mu = pv.para_2d().global2local_row(iw1_all);
+                            const int mu = pv.para_2d().irloc(iw1_all);
                             if (mu < 0)
                             {
                                 continue;
@@ -591,7 +591,7 @@ void build_Nonlocal_mu_new(const Parallel_Orbitals& pv,
                             {
                                 const int k0 = k / npol;
                                 const int iw2_all = start2 + k;
-                                const int nu = pv.para_2d().global2local_col(iw2_all);
+                                const int nu = pv.para_2d().icloc(iw2_all);
                                 if (nu < 0)
                                 {
                                     continue;

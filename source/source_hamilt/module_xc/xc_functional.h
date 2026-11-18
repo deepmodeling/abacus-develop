@@ -324,6 +324,18 @@ class XC_Functional
         const T* rhog,
         T* grad);
 
+    // Overload with precomputed precision-matched gcar/kvec_c device buffers.
+    template <typename T, typename Device,
+              typename Real = typename GetTypeReal<T>::type>
+    static void grad_wfc(
+        const int ik,
+        const Real tpiba,
+        const ModulePW::PW_Basis_K* wfc_basis,
+        const Real* gcar,
+        const Real* kvec_c,
+        const T* rhog,
+        T* grad);
+
     static void grad_rho(
         const std::complex<double>* rhog,
         ModuleBase::Vector3<double>* gdr,

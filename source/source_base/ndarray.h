@@ -45,8 +45,8 @@ public:
      */
     NDArray()= delete;
     // initializer_list constructor
-    NDArray(std::initializer_list<size_t> il) : shape_(il), data_(std::accumulate(shape_.begin(), shape_.end(), 1, std::multiplies<size_t>())) {}
-    NDArray(std::initializer_list<int> il) : shape_(il.begin(), il.end()), data_(std::accumulate(shape_.begin(), shape_.end(), 1, std::multiplies<size_t>())) {}
+    NDArray(std::initializer_list<size_t> il) : shape_(il), data_(std::accumulate(shape_.begin(), shape_.end(), std::size_t{1}, std::multiplies<size_t>())) {}
+    NDArray(std::initializer_list<int> il) : shape_(il.begin(), il.end()), data_(std::accumulate(shape_.begin(), shape_.end(), std::size_t{1}, std::multiplies<size_t>())) {}
     // variadic template constructor, (delegate constructor)
     template<typename... Args> NDArray(const size_t idx, Args... args) : NDArray({idx, static_cast<size_t>(args)...}) {}
     template<typename... Args> NDArray(const int& idx, Args... args) : NDArray({idx, static_cast<int>(args)...}) {} // not happy with this because size_t can have larger range
@@ -178,7 +178,7 @@ public:
             dims[idx] = data_.size() / size;
         }
         // calculate the size
-        size_t size = std::accumulate(dims.begin(), dims.end(), 1, std::multiplies<size_t>());
+        size_t size = std::accumulate(dims.begin(), dims.end(), std::size_t{1}, std::multiplies<size_t>());
         // assert size is the same
         assert(size == data_.size());
         // assign dims to shape_
@@ -212,7 +212,7 @@ public:
         size_t index = 0;
         for (size_t i = 0; i < shape_.size(); ++i)
         {
-            index += indices[i] * std::accumulate(shape_.begin() + i + 1, shape_.end(), 1, std::multiplies<size_t>());
+            index += indices[i] * std::accumulate(shape_.begin() + i + 1, shape_.end(), std::size_t{1}, std::multiplies<size_t>());
         }
         assert(index < data_.size()); // assert the index is within the data
         return index;

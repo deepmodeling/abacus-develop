@@ -59,7 +59,7 @@ void ModuleIO::cal_pdos(
     {
         std::vector<ModuleBase::ComplexMatrix> mulk;
         mulk.resize(1);
-        mulk[0].create(pv.para_2d().get_col_size(), pv.para_2d().get_row_size());
+        mulk[0].create(pv.para_2d().ncloc(), pv.para_2d().nrloc());
 
         for (int ik = 0; ik < kv.get_nks(); ik++)
         {
@@ -127,17 +127,17 @@ void ModuleIO::cal_pdos(
                             sk,
                             &one_int,
                             &one_int,
-                            pv.para_2d().get_desc(),
+                            pv.para_2d().desc(),
                             p_dwfc,
                             &one_int,
                             &nb,
-                            pv.para_2d().get_desc(),
+                            pv.para_2d().desc(),
                             &one_int,
                             &zero_float[0],
                             mulk[0].c,
                             &one_int,
                             &nb,
-                            pv.para_2d().get_desc(),
+                            pv.para_2d().desc(),
                             &one_int);
 #else
                     // Serial fallback: mulk = S^T * conj(psi) (band i),
@@ -145,7 +145,7 @@ void ModuleIO::cal_pdos(
                     const std::complex<double> one_float(1.0, 0.0);
                     const std::complex<double> zero_float(0.0, 0.0);
                     const char T_char = 'T';
-                    std::complex<double>* mulk_col = mulk[0].c + static_cast<size_t>(i) * pv.para_2d().get_row_size();
+                    std::complex<double>* mulk_col = mulk[0].c + static_cast<size_t>(i) * pv.para_2d().nrloc();
                     BlasConnector::gemv(T_char,
                                         nlocal,
                                         nlocal,
@@ -163,8 +163,8 @@ void ModuleIO::cal_pdos(
                     {
                         if (pv.para_2d().in_this_processor(j, i))
                         {
-                            const int ir = pv.para_2d().global2local_row(j);
-                            const int ic = pv.para_2d().global2local_col(i);
+                            const int ir = pv.para_2d().irloc(j);
+                            const int ic = pv.para_2d().icloc(i);
 
                             waveg[j] = mulk[0](ic, ir) * psi[0](ic, ir);
                             const double x = waveg[j].real();

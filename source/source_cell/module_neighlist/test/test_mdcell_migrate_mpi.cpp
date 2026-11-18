@@ -1,4 +1,4 @@
-#include "source_cell/domain_decomposition.h"
+#include "source_cell/dom_decomp.h"
 #include <gtest/gtest.h>
 
 #include "source_cell/mdcell.h"

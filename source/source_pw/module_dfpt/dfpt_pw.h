@@ -142,6 +142,12 @@ class DFPT_PW
 
     void set_max_iter(int max_iter);
 
+    /// dedicated knobs of the inner Sternheimer linear solve; non-positive
+    /// values keep the historical inherit-from-outer behavior
+    void set_lin_conv_thr(double thr);
+
+    void set_lin_max_iter(int max_iter);
+
     void set_mix_beta(double beta);
 
     /// acoustic sum rule on the Gamma dynamical matrix ("no" | "simple" |

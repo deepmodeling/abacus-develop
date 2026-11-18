@@ -132,15 +132,15 @@ namespace LR
             const int result_size = static_cast<int>(result.size());
             Parallel_Reduce::reduce_all(result.data(), result_size);
             const bool transpose = occupied && std::is_same<T, std::complex<double>>::value;
-            const int start = ik * pX.get_local_size();
+            const int start = ik * pX.size();
             for (int io = 0; io < nocc; ++io)
             {
                 for (int iv = 0; iv < nright; ++iv)
                 {
                     if (pX.in_this_processor(iv, io))
                     {
-                        const int local = pX.global2local_col(io) * pX.get_row_size()
-                                        + pX.global2local_row(iv);
+                        const int local = pX.icloc(io) * pX.nrloc()
+                                        + pX.irloc(iv);
                         // The legacy complex CC_oo probe orders (io,iv), unlike
                         // CC_vo/CXC_o; preserve it even for nonsymmetric H(k).
                         const int index = transpose ? iv * nocc + io : io * nright + iv;

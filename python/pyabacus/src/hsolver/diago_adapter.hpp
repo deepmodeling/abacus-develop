@@ -85,7 +85,7 @@ class PyDiagoDavidAdapter
     {
         const PyHSOperator<T> op(mm_op);
 
-        solver_ = std::make_unique<SolverType>(precond_vec.data(), nband_, nbasis_, dav_ndim, comm_info);
+        solver_ = std::make_unique<SolverType>(precond_vec.data(), nband_, nbasis_, dav_ndim, false, comm_info);
 
         return solver_->diag(op, nbasis_, storage_.psi_ptr(), storage_.eigenvalue_ptr(), diag_ethr, max_iter);
     }

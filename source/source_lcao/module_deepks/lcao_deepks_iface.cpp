@@ -810,7 +810,7 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
             {
                 LCAO_deepks_io::print_dm(nks,
                                           PARAM.globalv.nlocal,
-                                          ParaV->para_2d().get_row_size(),
+                                          ParaV->para_2d().nrloc(),
                                           dm->get_dmk_vec());
 
                 DeePKS_domain::check_gedm(deepks_param, ld->gedm);

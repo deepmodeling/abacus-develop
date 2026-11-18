@@ -13,12 +13,19 @@
 //calcualte the Ewald stress term in PW and LCAO
 template<typename FPTYPE, typename Device>
 void Stress_Func<FPTYPE, Device>::stress_ewa(const UnitCell& ucell,
-                                             ModuleBase::matrix& sigma, 
-                                             ModulePW::PW_Basis* rho_basis, 
-                                             const bool is_pw)
+                                              ModuleBase::matrix& sigma,
+                                              ModulePW::PW_Basis* rho_basis,
+                                              const ModuleBase::ComplexMatrix& struc_fac,
+                                              const bool is_pw)
 {
     ModuleBase::TITLE("Stress","stress_ewa");
     ModuleBase::timer::start("Stress","stress_ewa");
+
+    assert(struc_fac.nr == ucell.ntype);
+    // PW_Basis_Sup stores the matching smooth G vectors first; dense-only
+    // columns are allowed because this routine reads only rho_basis->npw.
+    assert(struc_fac.nc >= rho_basis->npw);
+    const Parameter& parameters = PARAM;
 
     FPTYPE charge=0;
     for(int it=0; it < ucell.ntype; it++)
@@ -43,9 +50,10 @@ void Stress_Func<FPTYPE, Device>::stress_ewa(const UnitCell& ucell,
     }
     while(upperbound>1e-7);
 
-    //G-space sum here
-    //Determine if this processor contains G=0 and set the constant term 
-    FPTYPE sdewald=0.0;
+    // G-space sum here
+    // Determine if this processor contains G=0 and set the constant term
+    // Long reciprocal-space sums need double accumulation in both precision modes.
+    double sdewald = 0.0;
     const int ig0 = rho_basis->ig_gge0;
     if( ig0 >= 0)
     {
@@ -59,19 +67,18 @@ void Stress_Func<FPTYPE, Device>::stress_ewa(const UnitCell& ucell,
     //sdewald is the diagonal term 
 
     FPTYPE fact=1.0;
-    if (PARAM.globalv.gamma_only_pw && is_pw) 
+    if (parameters.globalv.gamma_only_pw && is_pw)
     {
         fact=2.0;
     }
 //    else fact=1.0;
 
 #pragma omp parallel
-{
-    ModuleBase::matrix local_sigma(3, 3);
-    FPTYPE local_sdewald = 0;
+    {
+        ModuleBase::matrix local_sigma(3, 3);
+        double local_sdewald = 0.0;
 
     FPTYPE g2,g2a;
-    FPTYPE arg;
     std::complex<FPTYPE> rhostar;
     FPTYPE sewald;
 
@@ -88,13 +95,9 @@ void Stress_Func<FPTYPE, Device>::stress_ewa(const UnitCell& ucell,
 
         for(int it=0; it < ucell.ntype; it++)
         {
-            for(int i=0; i<ucell.atoms[it].na; i++)
-            {
-                arg = (rho_basis->gcar[ig] * ucell.atoms[it].tau[i]) * (ModuleBase::TWO_PI);
-                FPTYPE sinp, cosp;
-                ModuleBase::libm::sincos(arg, &sinp, &cosp);
-                rhostar = rhostar + std::complex<FPTYPE>(ucell.atoms[it].ncpp.zv * cosp,ucell.atoms[it].ncpp.zv * sinp);
-            }
+            // The ionic charge sum uses exp(+iG.tau), the conjugate of S_t(G).
+            const std::complex<FPTYPE> sf_value = struc_fac(it, ig);
+            rhostar += ucell.atoms[it].ncpp.zv * std::conj(sf_value);
         }
         rhostar /= ucell.omega;
         sewald = fact* (ModuleBase::TWO_PI) * ModuleBase::e2 * ModuleBase::libm::exp(-g2a) / g2 * pow(std::abs(rhostar),2);
@@ -144,7 +147,7 @@ void Stress_Func<FPTYPE, Device>::stress_ewa(const UnitCell& ucell,
                 //calculate tau[na]-tau[nb]
                 d_tau = ucell.atoms[it].tau[i] - ucell.atoms[jt].tau[j];
                 //generates nearest-neighbors shells 
-                H_Ewald_pw::rgen(d_tau, rmax, irr.data(), ucell.latvec, ucell.G, r.data(), r2.data(), mxr, nrm, PARAM.inp.test_energy);
+                H_Ewald_pw::rgen(d_tau, rmax, irr.data(), ucell.latvec, ucell.G, r.data(), r2.data(), mxr, nrm, parameters.inp.test_energy);
                 for(int nr=0; nr<nrm; nr++)
                 {
                     rr=sqrt(r2[nr]) * ucell.lat0;

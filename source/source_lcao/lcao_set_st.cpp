@@ -286,7 +286,7 @@ void single_overlap(const ST_env& env,
     {
         // mohan add 2010-06-29
         // set the value in Hloc and Sloc
-        // according to global2local_row and global2local_col
+        // according to irloc and icloc
         // the last paramete: 1 for Sloc, 2 for Hloc
         // and 3 for Hloc_fixed.
         LCAO_domain::set_mat2d(iw1_all, iw2_all, olm[0], env.pv, HSloc);
@@ -445,8 +445,8 @@ void build_ST_new(ForceStressArrays& fsr,
                             // the difference is that here we use {L,N,m} for ccycle,
                             // build_Nonlocal_mu use atom.nw for cycle.
                             // so, here we use ParaO::in_this_processor,
-                            // in build_Non... use global2local_row
-                            // and global2local_col directly,
+                            // in build_Non... use irloc
+                            // and icloc directly,
                             if (!pv.para_2d().in_this_processor(iw1_all, iw2_all))
                             {
                                 ++iw2_all;
@@ -515,14 +515,14 @@ void build_ST_new(ForceStressArrays& fsr,
                     {
                         for (int jj = 0; jj < atom1->nw * npol; ++jj)
                         {
-                            const int mu = pv.para_2d().global2local_row(start1 + jj);
+                            const int mu = pv.para_2d().irloc(start1 + jj);
                             if (mu < 0)
                             {
                                 continue;
                             }
                             for (int kk = 0; kk < atom2->nw * npol; ++kk)
                             {
-                                const int nu = pv.para_2d().global2local_col(start2 + kk);
+                                const int nu = pv.para_2d().icloc(start2 + kk);
                                 if (nu < 0)
                                 {
                                     continue;

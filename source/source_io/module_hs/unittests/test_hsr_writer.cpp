@@ -438,7 +438,7 @@ TEST(HsrWriterIo, HContainerBinaryMpiGatherWritesCompleteFiles)
     serial_pv.para_2d().set_serial(2, 2);
     serial_pv.set_atomic_trace(iat2iwt, 1, 2);
     Parallel_Orbitals parallel_pv;
-    ASSERT_EQ(parallel_pv.para_2d().init(2, 2, 1, MPI_COMM_WORLD), 0);
+    ASSERT_EQ(parallel_pv.para_2d().init(2, 2, 1, MPI_COMM_WORLD, false), 0);
     parallel_pv.set_atomic_trace(iat2iwt, 1, 2);
 
     hamilt::HContainer<double> hr_serial(ucell, &serial_pv);
@@ -463,7 +463,7 @@ TEST(HsrWriterIo, HContainerBinaryMpiGatherWritesCompleteFiles)
     eferm.ef = 0.4; // Ry; used only for the H(R) header
     std::ofstream ofs_running_null; // not opened; test does not inspect the running log
     ModuleIO::write_hsr(
-        hr_vec, &sr_parallel, &ucell, 2, 8, parallel_pv.para_2d(), 1, true, iat2iwt, 1, 0, "./", eferm,
+        hr_vec, &sr_parallel, &ucell, 2, 8, parallel_pv.para_2d(), true, true, iat2iwt, 1, 0, "./", eferm,
         ofs_running_null);
     MPI_Barrier(MPI_COMM_WORLD);
 
@@ -551,7 +551,7 @@ TEST(HsrWriterIo, WriteHsrTextCsrCarriesPerSpinFermiFromEfermi)
 
     std::ofstream ofs_running_null; // not opened; test does not inspect the running log
     ModuleIO::write_hsr(
-        hr_vec, &sr, &ucell, 1, 8, pv.para_2d(), 1, true, iat2iwt_ptr, 1, 0, "./", eferm,
+        hr_vec, &sr, &ucell, 1, 8, pv.para_2d(), true, true, iat2iwt_ptr, 1, 0, "./", eferm,
         ofs_running_null);
 
     const std::string output_up = read_file(hr_up_filename);

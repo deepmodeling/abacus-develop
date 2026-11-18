@@ -11,6 +11,15 @@
 namespace Parallel_Common
 {
 
+#ifdef __MPI
+inline int comm_size(const MPI_Comm comm)
+{
+    int size = 0;
+    MPI_Comm_size(comm, &size);
+    return size;
+}
+#endif
+
 //(1) bcast array
 void bcast_complex_double(std::complex<double>* object, const int n);
 void bcast_string(std::string* object, const int n);

@@ -48,7 +48,7 @@ DensityMatrix<TK, TR>::DensityMatrix(const Parallel_Orbitals* paraV_in,
     this->dmk.resize(nks);
     for (int ik = 0; ik < nks; ik++)
     {
-        this->dmk[ik].resize(this->pv->para_2d().get_row_size() * this->pv->para_2d().get_col_size());
+        this->dmk[ik].resize(this->pv->para_2d().nrloc() * this->pv->para_2d().ncloc());
     }
     ModuleBase::Memory::record("DensityMatrix::DMK", this->dmk.size() * this->dmk[0].size() * sizeof(TK));
 }
@@ -62,7 +62,7 @@ DensityMatrix<TK, TR>::DensityMatrix(const Parallel_Orbitals* paraV_in, const in
     this->dmk.resize(this->spin_mult);
     for (int ik = 0; ik < this->spin_mult; ik++)
     {
-        this->dmk[ik].resize(this->pv->para_2d().get_row_size() * this->pv->para_2d().get_col_size());
+        this->dmk[ik].resize(this->pv->para_2d().nrloc() * this->pv->para_2d().ncloc());
     }
     ModuleBase::Memory::record("DensityMatrix::DMK", this->dmk.size() * this->dmk[0].size() * sizeof(TK));
 }

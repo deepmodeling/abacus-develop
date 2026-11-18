@@ -45,6 +45,8 @@ void RDMFT<TK, TR>::cal_V_TV()
     V_ekinetic_potential = new hamilt::EKinetic<hamilt::OperatorLCAO<TK, TR>>(hsk_TV,
                                                                                  kv->kvec_d,
                                                                                  HR_TV,
+                                                                                 *basis_index_,
+                                                                                 ParaV->para_2d(),
                                                                                  this->ucell,
                                                                                  orb->cutoffs(),
                                                                                  this->gd,
@@ -227,7 +229,7 @@ void RDMFT<TK, TR>::cal_V_XC(const UnitCell& ucell)
     {
         HR_exx_XC->set_zero();
 
-        const int64_t nloc = ParaV->para_2d().get_local_size();
+        const std::size_t nloc = ParaV->para_2d().size();
         std::vector< std::vector<TK> > DM_XC(nk_total, std::vector<TK>(nloc));
         get_DM_XC(DM_XC);
         // get DM_XC of all k points

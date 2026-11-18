@@ -5,6 +5,7 @@
 
 #include <base/macros/macros.h>
 #include <cuda_runtime.h>
+#include <algorithm>
 #include <thrust/complex.h>
 #include <thrust/execution_policy.h>
 #include <thrust/inner_product.h>
@@ -293,7 +294,22 @@ void gemm_op<std::complex<float>, base_device::DEVICE_GPU>::operator()(const cha
 {
     cublasOperation_t cutransA = judge_trans_op(true, transa, "gemm_op");
     cublasOperation_t cutransB = judge_trans_op(true, transb, "gemm_op");
-    CHECK_CUBLAS(cublasCgemm(cublas_handle, cutransA, cutransB, m, n ,k, (float2*)alpha, (float2*)a , lda, (float2*)b, ldb, (float2*)beta, (float2*)c, ldc));
+    // Bound rounding error in long single-precision conjugate inner products.
+    constexpr int block = 2048;
+    if (cutransA == CUBLAS_OP_C && cutransB == CUBLAS_OP_N && k > block)
+    {
+        const std::complex<float> one(1.0f, 0.0f);
+        for (int offset = 0; offset < k; offset += block)
+        {
+            CHECK_CUBLAS(cublasCgemm(cublas_handle, cutransA, cutransB, m, n, std::min(block, k - offset),
+                (float2*)alpha, (float2*)(a + offset), lda, (float2*)(b + offset), ldb,
+                (float2*)(offset == 0 ? beta : &one), (float2*)c, ldc));
+        }
+    }
+    else
+    {
+        CHECK_CUBLAS(cublasCgemm(cublas_handle, cutransA, cutransB, m, n ,k, (float2*)alpha, (float2*)a , lda, (float2*)b, ldb, (float2*)beta, (float2*)c, ldc));
+    }
 }
 
 template <>

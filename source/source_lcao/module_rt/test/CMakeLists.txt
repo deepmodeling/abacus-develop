@@ -114,3 +114,64 @@ if(USE_CUDA)
     LIBS base device
     SOURCES rad_interp_cuda_test.cu ../radial_interpolation.cpp)
 endif()
+
+# Boundary correction owns only cell/orbital state, with no MD or HContainer model.
+addtest(
+  TARGET MODULE_LCAO_tddft_boundary_fix
+  LIBS parameter base psi device
+  SOURCES test_boundary_fix.cpp
+          ../boundary_fix.cpp
+          ../../../source_base/test/mpi_test_main.cpp
+          ../../../source_basis/module_ao/parallel_orbitals.cpp
+          ../../../source_cell/unitcell.cpp
+          ../../../source_cell/unitcell_index.cpp
+          ../../../source_cell/atom_spec.cpp
+          ../../../source_cell/atom_pseudo.cpp
+          ../../../source_cell/pseudo.cpp
+          ../../../source_cell/magnetism.cpp
+          ../../../source_cell/sep.cpp
+          ../../../source_cell/sep_cell.cpp)
+
+function(abacus_add_rt_test_variants name binary labels filter)
+  if(NOT name STREQUAL binary)
+    add_test(
+      NAME ${name}
+      COMMAND $<TARGET_FILE:${binary}>
+      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+  endif()
+  set_tests_properties(
+    ${name}
+    PROPERTIES
+      ENVIRONMENT
+      "OMP_NUM_THREADS=1;MKL_NUM_THREADS=1;I_MPI_PIN=0;GTEST_FILTER=${filter}"
+      LABELS "${labels}" TIMEOUT 60)
+  foreach(rank_count IN ITEMS 1 4)
+    foreach(thread_count IN ITEMS 1 4)
+      if(rank_count EQUAL 1 AND thread_count EQUAL 1)
+        continue()
+      endif()
+      set(test_name ${name}_np${rank_count}_omp${thread_count})
+      math(EXPR processor_count "${rank_count} * ${thread_count}")
+      add_test(
+        NAME ${test_name}
+        COMMAND
+          ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} ${rank_count}
+          ${MPIEXEC_PREFLAGS} $<TARGET_FILE:${binary}> ${MPIEXEC_POSTFLAGS}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+      set_tests_properties(
+        ${test_name}
+        PROPERTIES
+          ENVIRONMENT
+          "OMP_NUM_THREADS=${thread_count};MKL_NUM_THREADS=1;I_MPI_PIN=0;GTEST_FILTER=${filter}"
+          LABELS
+          "${labels}"
+          PROCESSORS
+          ${processor_count}
+          TIMEOUT
+          60)
+    endforeach()
+  endforeach()
+endfunction()
+
+abacus_add_rt_test_variants(MODULE_LCAO_tddft_boundary_fix
+                            MODULE_LCAO_tddft_boundary_fix "unit;rt" "*")
