@@ -25,6 +25,10 @@ DONE
 EXCITED-STATE TOTAL-FORCE (eV/Angstrom)
 H1 88 88 88
 '''
+NEW_LOG = LOG.replace(
+    'Forces (-gradients) of each excited state:',
+    'Excitation-energy force contributions (-dOmega/dR) of each state:')
+
 REFERENCE = '''singlet 0 0 1 -2 3
 singlet 0 1 -4 5 -6
 singlet 1 0 7 -8 9
@@ -39,6 +43,18 @@ class LRForceCheckTest(unittest.TestCase):
         actual = read_forces(LOG)
         self.assertEqual(len(actual), 6)
         compare(actual, read_reference(REFERENCE), 1e-6)
+
+    def test_new_and_mixed_titles_match_the_same_reference(self):
+        mixed_log = NEW_LOG.replace(
+            'Excitation-energy force contributions (-dOmega/dR) of each state:',
+            'Forces (-gradients) of each excited state:', 1)
+        extra_tables = (NEW_LOG + 'GROUND-STATE FORCE (eV/Angstrom)\n'
+                        '0 0 force 999 999 999\n'
+                        'EXCITED-STATE TOTAL-FORCE (eV/Angstrom)\n'
+                        '0 0 force 888 888 888\n')
+        for log in (NEW_LOG, mixed_log, extra_tables):
+            with self.subTest(log=log):
+                compare(read_forces(log), read_reference(REFERENCE), 1e-6)
 
     def test_sign_reversal_fails_with_identical_absolute_sum(self):
         actual = read_forces(LOG)
@@ -86,8 +102,13 @@ class LRForceCheckTest(unittest.TestCase):
             'source "$1/props_common.sh"', 'source "$1/props_lr.sh"',
             'PROPS_SCRIPT_DIR="$1"', 'is_lr=1', 'has_force=1',
             'running_path=running.log', 'props_result_file=result.out', 'run_lr_force_props'])
-        variants = [(LOG, '0'), (LOG.replace('1 -2 3', '-1 2 -3'), '1'),
-                    (LOG.replace('   1 force -16 17 -18\n', ''), '1')]
+        extra_tables = (NEW_LOG + 'GROUND-STATE FORCE (eV/Angstrom)\n'
+                        '0 0 force 999 999 999\n'
+                        'EXCITED-STATE TOTAL-FORCE (eV/Angstrom)\n'
+                        '0 0 force 888 888 888\n')
+        variants = [(LOG, '0'), (NEW_LOG, '0'), (extra_tables, '0'),
+                    (NEW_LOG.replace('1 -2 3', '-1 2 -3'), '1'),
+                    (NEW_LOG.replace('   1 force -16 17 -18\n', ''), '1')]
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             (root / 'lr_force.ref').write_text(REFERENCE)
@@ -99,6 +120,8 @@ class LRForceCheckTest(unittest.TestCase):
                 self.assertEqual(result.returncode, 0, result.stderr)
                 values = dict(line.split() for line in (root / 'result.out').read_text().splitlines())
                 self.assertEqual(values['CompareLRForce_pass'], expected)
+                if expected == '0':
+                    self.assertEqual(float(values['totalforceref']), 171.0)
 
     def test_tolerance_is_absolute_per_component(self):
         expected = read_forces(LOG)

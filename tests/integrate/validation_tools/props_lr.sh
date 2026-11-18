@@ -20,7 +20,20 @@ run_lr_tracking_props() {
 run_lr_force_props() {
   # LR prints a separate force table for each excited state and spin channel.
   if [ $is_lr == 1 ] && ! test -z "$has_force" && [ $has_force == 1 ]; then
-    awk '/Forces \(-gradients\) of each excited state/{flag=1; next} flag{for(i=1;i<=NF;i++) if($i=="force"){print $(i+1),$(i+2),$(i+3)}}' "$running_path" >lr_force.txt
+    awk '
+      /Forces \(-gradients\) of each excited state:|Excitation-energy force contributions \(-dOmega\/dR\) of each state:/ {
+        active = 1
+        next
+      }
+      active && (NF == 0 || ($1 == "state" && $2 == "atom")) { next }
+      active && ($2 == "force" || $3 == "force") {
+        for (i = 1; i <= NF; ++i) {
+          if ($i == "force") print $(i+1), $(i+2), $(i+3)
+        }
+        next
+      }
+      active { active = 0 }
+    ' "$running_path" >lr_force.txt
     # Accumulate all components before rounding the LR force total.
     total_lr_force=$(awk '{for (i=1; i<=NF; ++i) sum += sqrt($i*$i)} END {printf "%.10f\n", sum}' lr_force.txt)
     rm lr_force.txt
