@@ -121,6 +121,7 @@ if(ENABLE_MPI)
     SOURCES test_elecstate.cpp
             ../elecstate.cpp
             ../elecstate_tools.cpp
+            ../electronic_control.cpp
             ../param_update.cpp
             ../electronic_occupations.cpp
             ../occupy.cpp

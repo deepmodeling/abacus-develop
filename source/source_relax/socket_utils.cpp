@@ -256,7 +256,8 @@ double unchanged_cell_tolerance(const SocketFrame::Matrix9& cell)
     return 32.0 * std::numeric_limits<double>::epsilon() * std::max(1.0, maximum);
 }
 
-void set_positions_from_ipi_bohr(UnitCell& ucell, const std::vector<double>& positions_bohr)
+void set_positions_from_ipi_bohr(UnitCell& ucell, const std::vector<double>& positions_bohr,
+                                 bool minimum_image_displacement)
 {
     if (positions_bohr.size() != static_cast<std::size_t>(3 * ucell.nat))
     {
@@ -295,9 +296,12 @@ void set_positions_from_ipi_bohr(UnitCell& ucell, const std::vector<double>& pos
             atom->dis[ia].x = dx - atom->taud[ia].x;
             atom->dis[ia].y = dy - atom->taud[ia].y;
             atom->dis[ia].z = dz - atom->taud[ia].z;
-            atom->dis[ia].x -= std::round(atom->dis[ia].x);
-            atom->dis[ia].y -= std::round(atom->dis[ia].y);
-            atom->dis[ia].z -= std::round(atom->dis[ia].z);
+            if (minimum_image_displacement)
+            {
+                atom->dis[ia].x -= std::round(atom->dis[ia].x);
+                atom->dis[ia].y -= std::round(atom->dis[ia].y);
+                atom->dis[ia].z -= std::round(atom->dis[ia].z);
+            }
             atom->taud[ia].x = dx;
             atom->taud[ia].y = dy;
             atom->taud[ia].z = dz;

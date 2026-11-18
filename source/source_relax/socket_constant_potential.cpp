@@ -37,26 +37,33 @@ double number(const std::map<std::string, std::string>& tokens, const std::strin
 
 namespace SocketCP
 {
-ScopedElectronicStep::ScopedElectronicStep(UnitCell& cell, elecstate::ElectronicStep* step) : cell_(cell)
+ScopedElectronicStep::ScopedElectronicStep(elecstate::ElectronicStep** slot,
+                                           elecstate::ElectronicStep* step) : slot_(slot)
 {
-    if (cell_.electronic_step != nullptr)
-    { throw std::runtime_error("an electronic step is already bound to this cell"); }
-    cell_.electronic_step = step;
+    if (slot_ == nullptr)
+    {
+        if (step != nullptr)
+        { throw std::runtime_error("electronic request requires a solver slot"); }
+        return;
+    }
+    if (*slot_ != nullptr)
+    { throw std::runtime_error("an electronic step is already bound to this solver"); }
+    *slot_ = step;
 }
 
 ScopedElectronicStep::~ScopedElectronicStep()
 {
-    cell_.electronic_step = nullptr;
+    if (slot_ != nullptr) { *slot_ = nullptr; }
 }
 
 void run_electronic_step(ModuleESolver::ESolver& solver, UnitCell& cell,
+                         elecstate::ElectronicStep& step,
                          const Input_para& inp, const System_para& system,
                          int functional_type, int istep)
 {
-    if (cell.electronic_step == nullptr || cell.electronic_step->parameters == nullptr
-        || cell.electronic_step->request_applied || cell.electronic_step->result_ready)
+    if (step.parameters == nullptr || step.request_applied || step.result_ready)
     { throw std::runtime_error("electron control requires a fresh bound electronic step"); }
-    const elecstate::ElectronicControl& control = cell.electronic_step->control;
+    const elecstate::ElectronicControl& control = step.control;
     if (inp.assume_isolated == "makov-payne")
     {
         throw std::runtime_error(
@@ -69,6 +76,13 @@ void run_electronic_step(ModuleESolver::ESolver& solver, UnitCell& cell,
         throw std::runtime_error(
             "constant-potential control requires CPU double-precision PW/LCAO KSDFT with "
             "norm-conserving pseudopotentials; specialized solver corrections are not supported");
+    }
+    if (inp.basis_type == "lcao" && (inp.dm_to_rho || inp.ks_solver == "pexsi"
+                                    || inp.ks_solver == "cusolver" || inp.ks_solver == "cusolvermp"))
+    {
+        throw std::runtime_error(
+            "constant-potential LCAO requires dm_to_rho=0 and a CPU eigensolver "
+            "that computes band occupations and the Fermi level");
     }
     if (functional_type < 1 || functional_type > 5)
     {
@@ -106,12 +120,17 @@ void run_electronic_step(ModuleESolver::ESolver& solver, UnitCell& cell,
         throw std::runtime_error(
             "electron number exceeds band capacity or gives invalid spin populations; increase nbands");
     }
-    if (inp.smearing_method == "fixed"
-        && (std::abs(control.nelect - std::round(control.nelect)) > 1.0e-8
-            || (two_fermi && (std::abs(up-std::round(up)) > 1.0e-8 || std::abs(down-std::round(down)) > 1.0e-8))))
-    { throw std::runtime_error("fractional electron populations require a smearing occupation method"); }
+    if (inp.smearing_method == "fixed")
+    {
+        // Native iweights fills paired bands for a shared Fermi level and single bands per spin otherwise.
+        const double paired = 0.5 * control.nelect;
+        const bool full_bands = two_fermi ? up == std::floor(up) && down == std::floor(down)
+                                          : paired == std::floor(paired);
+        if (!full_bands)
+        { throw std::runtime_error("fractional electron populations per occupied band require a smearing occupation method"); }
+    }
     solver.runner(cell, istep);
-    if (!cell.electronic_step->request_applied)
+    if (!step.request_applied)
     { throw std::runtime_error("selected ESolver did not apply the constant-potential electron request"); }
 }
 

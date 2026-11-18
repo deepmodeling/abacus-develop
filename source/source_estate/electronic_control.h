@@ -2,9 +2,16 @@
 #define ABACUS_ELECTRONIC_CONTROL_H
 
 class Parameter;
+class UnitCell;
+class surchem;
+struct Input_para;
+namespace ModulePW { class PW_Basis; }
 
 namespace elecstate
 {
+class ElecState;
+struct Efermi;
+
 // Physical requests and results; no socket or serialization dependencies.
 struct ElectronicControl
 {
@@ -37,6 +44,15 @@ struct ElectronicStep
     bool request_applied = false;
     bool result_ready = false;
 };
-}
+
+void prepare_electronic_step(const UnitCell& cell, ElecState* state, ElectronicStep& step, const Input_para& input);
+// Call after nuclear forces: constructing the reference updates electric-field state.
+void complete_electronic_step(const UnitCell& cell, ElecState* state, ModulePW::PW_Basis* basis,
+                              const surchem& solvent, const Input_para& input,
+                              bool converged, ElectronicStep& step);
+
+void update_electron_count(ElecState& state, double nelect, int nspin, double nupdown, bool two_fermi);
+double electronic_chemical_potential(const Efermi& fermi, bool two_fermi);
+} // namespace elecstate
 
 #endif

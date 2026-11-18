@@ -2,7 +2,7 @@
 #include "source_pw/module_pwdft/pw_hybrid_nscf.h"
 
 #include "source_estate/elecstate_pw.h"
-#include "source_estate/elecstate_tools.h"
+#include "source_estate/electronic_control.h"
 #include "source_estate/module_charge/chg_symm.h"
 #include "source_hamilt/hamilt_hs_adapter.h"
 #include "source_hsolver/diago_iter_assist.h"
@@ -167,12 +167,12 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
     ModuleBase::TITLE("ESolver_KS_PW", "before_scf");
     ModuleBase::timer::start("ESolver_KS_PW", "before_scf");
 
-    if (ucell.electronic_step != nullptr)
+    const bool electronic_step_active = this->electronic_step != nullptr;
+    if (electronic_step_active)
     {
         const int functional_type = XC_Functional::get_func_type();
         validate_electronic_step_exx(functional_type, this->general_exx_info_.cal_exx);
-        elecstate::prepare_electronic_step(this->pelec, *ucell.electronic_step, *this->inp_);
-        this->exx_helper->begin_electronic_step();
+        elecstate::prepare_electronic_step(ucell, this->pelec, *this->electronic_step, *this->inp_);
     }
 
     ESolver_KS::before_scf(ucell, istep);
@@ -230,7 +230,8 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
     this->stp.init(this->p_hamilt);
 
     //! Setup EXX helper for Hamiltonian and psi
-    exx_helper->before_scf(this->p_hamilt, this->stp.template get_psi_t<T, Device>(), *this->inp_, this->general_exx_info_);
+    exx_helper->before_scf(this->p_hamilt, this->stp.template get_psi_t<T, Device>(), *this->inp_,
+                           this->general_exx_info_, electronic_step_active);
 
     if (this->inp_->calculation == "nscf" && this->general_exx_info_.cal_exx)
     {
@@ -521,10 +522,10 @@ void ESolver_KS_PW<T, Device>::cal_force(BaseCell& basecell, ModuleBase::matrix&
                  this->pw_wfc,
                  this->stp.template get_psi_d<T, Device>());
 
-    if (ucell.electronic_step != nullptr)
+    if (this->electronic_step != nullptr)
     {
         elecstate::complete_electronic_step(ucell, this->pelec, this->pw_rhod, this->solvent,
-                                           *this->inp_, this->conv_esolver, *ucell.electronic_step);
+                                           *this->inp_, this->conv_esolver, *this->electronic_step);
     }
 }
 

@@ -60,7 +60,8 @@ std::vector<double> ipi_cell_bohr_from_unitcell(const UnitCell& ucell);
 double max_wrapped_direct_delta_from_unitcell(const UnitCell& ucell, const std::vector<double>& positions_bohr);
 double max_abs_delta(const std::vector<double>& a, const std::vector<double>& b);
 double unchanged_cell_tolerance(const SocketFrame::Matrix9& cell);
-void set_positions_from_ipi_bohr(UnitCell& ucell, const std::vector<double>& positions_bohr);
+void set_positions_from_ipi_bohr(UnitCell& ucell, const std::vector<double>& positions_bohr,
+                                 bool minimum_image_displacement);
 std::vector<double> flatten_forces_hartree_per_bohr(const ModuleBase::matrix& force, int nat);
 SocketFrame::Matrix9 matrix9_from_stress(const ModuleBase::matrix& stress);
 std::vector<double> vector_from_matrix9(const SocketFrame::Matrix9& values);

@@ -54,9 +54,7 @@ std::vector<double> electrostatic_potential(const UnitCell& cell, ModulePW::PW_B
     return potential;
 }
 
-double planar_potential_average(const UnitCell& cell, const ModulePW::PW_Basis& basis,
-                                const std::vector<double>& potential, int axis,
-                                double minimum_A, double maximum_A)
+double checked_window_height(const UnitCell& cell, int axis, double minimum_A, double maximum_A)
 {
     if (axis < 0 || axis > 2 || !std::isfinite(minimum_A) || !std::isfinite(maximum_A)
         || minimum_A < 0 || maximum_A <= minimum_A)
@@ -77,19 +75,51 @@ double planar_potential_average(const UnitCell& cell, const ModulePW::PW_Basis& 
     const double height_A = cell.lat0_angstrom * std::abs(volume) / std::sqrt(area2);
     if (!std::isfinite(height_A) || height_A <= 0.0 || maximum_A > height_A + 1.0e-10)
     { throw std::runtime_error("electrostatic averaging window lies outside the cell height"); }
+    return height_A;
+}
+
+std::pair<int, int> potential_window_planes(const UnitCell& cell, const ModulePW::PW_Basis& basis,
+                                            int axis, double minimum_A, double maximum_A)
+{
+    const double height_A = checked_window_height(cell, axis, minimum_A, maximum_A);
     const int grid[3] = {basis.nx, basis.ny, basis.nz};
-    if (grid[0] <= 0 || grid[1] <= 0 || grid[2] <= 0 || basis.nrxx < 0
-        || (basis.nrxx > 0 && basis.nplane <= 0) || potential.size() != static_cast<std::size_t>(basis.nrxx))
+    if (grid[0] <= 0 || grid[1] <= 0 || grid[2] <= 0)
+    { throw std::runtime_error("invalid distributed FFT grid for electrostatic averaging"); }
+
+    // Use the same i/n coordinates as the cube writer, including at roundoff-sensitive edges.
+    const int count = grid[axis];
+    const auto first_at_or_after = [count, height_A](double bound) {
+        int lo = 0;
+        int hi = count;
+        while (lo < hi)
+        {
+            const int mid = lo + (hi - lo) / 2;
+            if (static_cast<double>(mid) / count * height_A < bound) { lo = mid + 1; }
+            else { hi = mid; }
+        }
+        return lo;
+    };
+    const int first = first_at_or_after(minimum_A);
+    const int end = first_at_or_after(maximum_A);
+    if (first == end) { throw std::runtime_error("no FFT points in averaging window"); }
+    return {first, end};
+}
+
+double planar_potential_average(const UnitCell& cell, const ModulePW::PW_Basis& basis,
+                                const std::vector<double>& potential, int axis,
+                                double minimum_A, double maximum_A)
+{
+    const auto planes = potential_window_planes(cell, basis, axis, minimum_A, maximum_A);
+    if (basis.nrxx < 0 || (basis.nrxx > 0 && basis.nplane <= 0)
+        || potential.size() != static_cast<std::size_t>(basis.nrxx))
     { throw std::runtime_error("invalid distributed FFT grid for electrostatic averaging"); }
     double reduction[3] = {0.0, 0.0, 0.0};
     for (int ir = 0; ir < basis.nrxx; ++ir)
     {
         const int xy = ir / basis.nplane;
         const int indices[3] = {xy / basis.ny, xy % basis.ny, ir % basis.nplane + basis.startz_current};
-        // FFT points and ABACUS cube origins are at i/n, not voxel centers.
-        const double coordinate_A = double(indices[axis]) / grid[axis] * height_A;
         if (!std::isfinite(potential[ir])) { reduction[2] += 1.0; }
-        if (coordinate_A >= minimum_A && coordinate_A < maximum_A)
+        if (indices[axis] >= planes.first && indices[axis] < planes.second)
         { reduction[0] += potential[ir]; reduction[1] += 1.0; }
     }
     // Reduce over this FFT grid's communicator without summing replicated pools.

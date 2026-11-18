@@ -26,21 +26,22 @@ struct Observables
     double workfunction_eV = 0.0;
 };
 
-// Borrow one rank-local request through the existing cell argument for this evaluation.
+// Borrow one rank-local request through the solver slot for this evaluation.
 class ScopedElectronicStep
 {
   public:
-    ScopedElectronicStep(UnitCell& cell, elecstate::ElectronicStep* step);
+    ScopedElectronicStep(elecstate::ElectronicStep** slot, elecstate::ElectronicStep* step);
     ~ScopedElectronicStep();
     ScopedElectronicStep(const ScopedElectronicStep&) = delete;
     ScopedElectronicStep& operator=(const ScopedElectronicStep&) = delete;
 
   private:
-    UnitCell& cell_;
+    elecstate::ElectronicStep** slot_;
 };
 
 // Apply one external electron-number request and evaluate the current geometry.
 void run_electronic_step(ModuleESolver::ESolver& solver, UnitCell& cell,
+                         elecstate::ElectronicStep& step,
                          const Input_para& input, const System_para& system,
                          int functional_type, int istep);
 

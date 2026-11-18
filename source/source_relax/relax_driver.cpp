@@ -24,8 +24,8 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver,
 
     // Cache global configuration once so downstream helpers do not each reach
     // into PARAM / GlobalV.
-    out_dir_ = PARAM.globalv.global_stru_dir;
-    deepks_setorb_ = PARAM.globalv.deepks_setorb;
+    out_dir_ = system.global_stru_dir;
+    deepks_setorb_ = system.deepks_setorb;
     my_rank_ = GlobalV::MY_RANK;
 
     if (inp.socket_driver)

@@ -273,6 +273,7 @@ OBJS_DEEPKS=lcao_deepks.o\
 
 
 OBJS_ELECSTAT=elecstate.o\
+    electronic_control.o\
     electronic_occupations.o\
     init_scf.o\
     param_update.o\

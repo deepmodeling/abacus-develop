@@ -20,15 +20,10 @@ struct Exx_Helper : public Exx_HelperBase
     virtual ~Exx_Helper() = default;
     OperatorEXX *op_exx = nullptr;
 
-    void begin_electronic_step() override
-    {
-        strict_electronic_step = true;
-        exx_iter = 0;
-    }
-
     void init(const UnitCell& ucell, const Input_para& inp, const ModuleBase::matrix& wg, const General_Exx_Info& exx_info) override;
 
-    void before_scf(void* p_hamilt, void* psi, const Input_para& inp, const General_Exx_Info& exx_info) override;
+    void before_scf(void* p_hamilt, void* psi, const Input_para& inp,
+                    const General_Exx_Info& exx_info, bool electronic_step_active) override;
 
     bool iter_finish(void* p_elec, Charge* p_charge, void* psi,
                      UnitCell& ucell, const Input_para& inp,
@@ -42,13 +37,9 @@ struct Exx_Helper : public Exx_HelperBase
     void set_op() override
     {
         op_exx->first_iter = first_iter;
-        if (strict_electronic_step)
-        {
-            // Warm starts construct ACE immediately and require valid occupations.
-            op_exx->set_wg(wg);
-        }
+        // A warm start constructs ACE in set_psi and reads the current occupations.
+        op_exx->set_wg(wg);
         set_psi(psi);
-        if (!strict_electronic_step) { op_exx->set_wg(wg); }
     }
 
     bool exx_after_converge(int iter, bool ene_conv, const Input_para& inp) override;

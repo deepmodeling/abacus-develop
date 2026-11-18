@@ -6,7 +6,7 @@
 #include "source_cell/klist.h"
 #include "source_cell/module_neighbor/sltk_atom_arrange.h"
 #include "source_estate/elecstate_lcao.h"
-#include "source_estate/elecstate_tools.h"
+#include "source_estate/electronic_control.h"
 #include "source_estate/module_charge/chg_dmr.h"
 #include "source_estate/module_charge/chg_symm.h"
 #include "source_hamilt/hamilt_hs_adapter.h"
@@ -174,14 +174,15 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep, const
     ModuleBase::TITLE("ESolver_KS_LCAO", "before_scf");
     ModuleBase::timer::start("ESolver_KS_LCAO", "before_scf");
 
-    if (ucell.electronic_step != nullptr)
+    const bool electronic_step_active = this->electronic_step != nullptr;
+    if (electronic_step_active)
     {
-        elecstate::prepare_electronic_step(this->pelec, *ucell.electronic_step, *this->inp_);
-#ifdef __EXX
-        if (this->exx_nao.exd) { this->exx_nao.exd->begin_electronic_step(); }
-        if (this->exx_nao.exc) { this->exx_nao.exc->begin_electronic_step(); }
-#endif
+        elecstate::prepare_electronic_step(ucell, this->pelec, *this->electronic_step, *this->inp_);
     }
+#ifdef __EXX
+    if (this->exx_nao.exd) { this->exx_nao.exd->begin_electronic_step(electronic_step_active); }
+    if (this->exx_nao.exc) { this->exx_nao.exc->begin_electronic_step(electronic_step_active); }
+#endif
 
     // Record the ionic step (not output_step) for provenance headers written in after_all_runners.
     this->istep_ = istep;
@@ -411,10 +412,10 @@ void ESolver_KS_LCAO<TK, TR>::cal_force(BaseCell& basecell, ModuleBase::matrix& 
 
     this->have_force = true;
 
-    if (ucell.electronic_step != nullptr)
+    if (this->electronic_step != nullptr)
     {
         elecstate::complete_electronic_step(ucell, this->pelec, this->pw_rhod, this->solvent,
-                                           *this->inp_, this->conv_esolver, *ucell.electronic_step);
+                                           *this->inp_, this->conv_esolver, *this->electronic_step);
     }
 
     ModuleBase::timer::end("ESolver_KS_LCAO", "cal_force");

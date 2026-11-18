@@ -45,7 +45,8 @@ void Exx_Helper<T, Device>::init(const UnitCell& ucell, const Input_para& inp, c
 }
 
 template <typename T, typename Device>
-void Exx_Helper<T, Device>::before_scf(void* p_hamilt, void* psi, const Input_para& inp, const General_Exx_Info& exx_info)
+void Exx_Helper<T, Device>::before_scf(void* p_hamilt, void* psi, const Input_para& inp,
+                                       const General_Exx_Info& exx_info, bool electronic_step_active)
 {
     /// Return if not a valid calculation type
     if (inp.calculation != "scf" && inp.calculation != "relax"
@@ -58,6 +59,12 @@ void Exx_Helper<T, Device>::before_scf(void* p_hamilt, void* psi, const Input_pa
     if (!exx_info.cal_exx || inp.basis_type != "pw")
     {
         return;
+    }
+
+    strict_electronic_step = electronic_step_active;
+    if (electronic_step_active)
+    {
+        exx_iter = 0;
     }
 
     /// Set EXX helper to Hamiltonian

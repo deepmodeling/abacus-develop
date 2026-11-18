@@ -38,14 +38,33 @@ int main(int argc, char** argv)
 }
 #endif
 
+namespace
+{
+elecstate::PotentialWindow reference_window;
+int reference_calls = 0;
+bool reference_available = false;
+constexpr double reference_value = -0.375;
+}
+
 // Mock functions for testing elecstate.cpp
 namespace elecstate
 {
+std::pair<int, int> potential_window_planes(const UnitCell&, const ModulePW::PW_Basis&, int, double, double)
+{
+    throw std::runtime_error("empty window in electron-state fixture");
+}
+
 double electrostatic_reference(const UnitCell&, ModulePW::PW_Basis&, const Charge&, const Potential&,
-                               const surchem&, const Input_para&, const PotentialWindow&)
+                               const surchem&, const Input_para&, const PotentialWindow& window)
 {
     // Real grid/reference calculations have their own MPI unit and client tests.
-    throw std::runtime_error("electrostatic reference unavailable in electron-state fixture");
+    reference_window = window;
+    ++reference_calls;
+    if (!reference_available)
+    {
+        throw std::runtime_error("electrostatic reference unavailable in electron-state fixture");
+    }
+    return reference_value;
 }
 
 void Potential::init_pot(Charge const*)
@@ -209,6 +228,9 @@ class ElecStateTest : public ::testing::Test
     {
         elecstate = new elecstate::ElecState;
         TestParameters::reset();
+        reference_window = elecstate::PotentialWindow{};
+        reference_calls = 0;
+        reference_available = false;
         GlobalV::KPAR = 1;
         GlobalV::NPROC_IN_POOL = 1;
     }
@@ -264,14 +286,24 @@ TEST_F(ElecStateTest, ElectronicStepChecksInitializationBeforeUpdatingParameters
     step.parameters = &parameters;
     step.control.nelect = 8.25;
     step.two_fermi = true;
-    EXPECT_THROW(elecstate::prepare_electronic_step(elecstate, step, input), std::runtime_error);
+    EXPECT_THROW(elecstate::prepare_electronic_step(ucell, elecstate, step, input), std::runtime_error);
     EXPECT_DOUBLE_EQ(0.0, parameters.inp.nelec);
     EXPECT_FALSE(step.request_applied);
 
     Charge charge;
     elecstate->charge = &charge;
     elecstate->pot = new elecstate::Potential;
-    elecstate::prepare_electronic_step(elecstate, step, input);
+    step.window.axis = 2;
+    EXPECT_THROW(elecstate::prepare_electronic_step(ucell, elecstate, step, input), std::runtime_error);
+    ModulePW::PW_Basis basis;
+    charge.rhopw = &basis;
+    EXPECT_THROW(elecstate::prepare_electronic_step(ucell, elecstate, step, input), std::runtime_error);
+    EXPECT_DOUBLE_EQ(0.0, parameters.inp.nelec);
+    EXPECT_FALSE(step.request_applied);
+    EXPECT_FALSE(step.result_ready);
+    EXPECT_TRUE(elecstate->nelec_spin.empty());
+    step.window.axis = -1;
+    elecstate::prepare_electronic_step(ucell, elecstate, step, input);
     EXPECT_DOUBLE_EQ(8.25, parameters.inp.nelec);
     EXPECT_TRUE(step.request_applied);
     EXPECT_TRUE(elecstate->eferm.two_efermi);
@@ -279,7 +311,7 @@ TEST_F(ElecStateTest, ElectronicStepChecksInitializationBeforeUpdatingParameters
     EXPECT_DOUBLE_EQ(4.375, elecstate->nelec_spin[0]);
     EXPECT_DOUBLE_EQ(3.875, elecstate->nelec_spin[1]);
     step.control.nelect = 7.75;
-    EXPECT_THROW(elecstate::prepare_electronic_step(elecstate, step, input), std::runtime_error);
+    EXPECT_THROW(elecstate::prepare_electronic_step(ucell, elecstate, step, input), std::runtime_error);
     EXPECT_DOUBLE_EQ(8.25, parameters.inp.nelec);
 }
 
@@ -315,13 +347,56 @@ TEST_F(ElecStateTest, ElectronicResultRequiresConvergenceAndMatchingOccupations)
     EXPECT_THROW(elecstate::complete_electronic_step(ucell, elecstate, &basis, solvent, input, true, step),
                  std::runtime_error);
     EXPECT_FALSE(step.result_ready);
+    EXPECT_EQ(1, reference_calls);
     step.window.axis = -1;
     elecstate::complete_electronic_step(ucell, elecstate, &basis, solvent, input, true, step);
     EXPECT_TRUE(step.result_ready);
     EXPECT_DOUBLE_EQ(8.25, step.result.nelect);
     EXPECT_DOUBLE_EQ(-0.125, step.result.fermi_ry);
+    EXPECT_DOUBLE_EQ(0.0, step.result.reference_ry);
+    EXPECT_EQ(1, reference_calls);
     EXPECT_THROW(elecstate::complete_electronic_step(ucell, elecstate, &basis, solvent, input, true, step),
                  std::runtime_error);
+}
+
+TEST_F(ElecStateTest, ElectronicResultForwardsPotentialWindow)
+{
+    Charge charge;
+    elecstate->charge = &charge;
+    elecstate->pot = new elecstate::Potential;
+    elecstate->wg.create(1, 1);
+    elecstate->wg(0, 0) = 8.25;
+    elecstate->eferm.ef = -0.125;
+    ModulePW::PW_Basis basis;
+    basis.poolnproc = 1;
+    surchem solvent;
+    Input_para input;
+    input.kpar = 1;
+    input.bndpar = 1;
+    reference_available = true;
+
+    for (int axis = 0; axis < 3; ++axis)
+    {
+        elecstate::ElectronicStep step;
+        step.control.nelect = 8.25;
+        step.request_applied = true;
+        step.window.axis = axis;
+        step.window.minimum_A = 3.5 + axis;
+        step.window.maximum_A = 6.25 + axis;
+        elecstate::complete_electronic_step(ucell, elecstate, &basis, solvent, input, true, step);
+
+        EXPECT_EQ(axis + 1, reference_calls);
+        EXPECT_EQ(axis, reference_window.axis);
+        EXPECT_DOUBLE_EQ(step.window.minimum_A, reference_window.minimum_A);
+        EXPECT_DOUBLE_EQ(step.window.maximum_A, reference_window.maximum_A);
+        EXPECT_TRUE(step.result_ready);
+        EXPECT_DOUBLE_EQ(reference_value, step.result.reference_ry);
+        EXPECT_DOUBLE_EQ(8.25, step.result.nelect);
+        EXPECT_DOUBLE_EQ(-0.125, step.result.fermi_ry);
+        EXPECT_THROW(elecstate::complete_electronic_step(ucell, elecstate, &basis, solvent, input, true, step),
+                     std::runtime_error);
+        EXPECT_EQ(axis + 1, reference_calls);
+    }
 }
 
 TEST_F(ElecStateTest, Constructor)

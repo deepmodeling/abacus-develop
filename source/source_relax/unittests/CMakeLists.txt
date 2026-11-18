@@ -26,7 +26,6 @@ addtest(
   LIBS MPI::MPI_CXX base device
   KEEP_FEATURE_DEFINITIONS __MPI
   SOURCES test_socket_driver.cpp
-          ../socket_driver.cpp
           ../socket_utils.cpp
           ../socket_handlers.cpp
           ../socket_constant_potential.cpp

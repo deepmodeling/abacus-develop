@@ -27,6 +27,7 @@ struct DriverContext
     const Input_para* inp = nullptr;
     Parameter* parameters = nullptr;
     const System_para* system = nullptr;
+    elecstate::ElectronicStep** electronic_slot = nullptr;
     SocketUtils::DriverState state = SocketUtils::DriverState::NeedInit;
     int istep = 0;
     int nat_return = 0;
@@ -38,6 +39,12 @@ struct DriverContext
     bool charge_pending = false;
     std::vector<double> cp_wire_cell;
 };
+
+// Run one socket session with an optional, rank-local electronic request slot.
+bool run_socket_driver(ModuleESolver::ESolver* solver, UnitCell& cell,
+                       const Input_para& input, Parameter* parameters,
+                       const System_para* system, elecstate::ElectronicStep** electronic_slot,
+                       std::ofstream& log);
 
 // Reads the next i-PI header on the root rank and broadcasts it to all ranks.
 // Returns an empty string when the peer closed the connection while no frame

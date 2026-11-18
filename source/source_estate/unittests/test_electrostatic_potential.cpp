@@ -162,6 +162,22 @@ TEST_F(ElectrostaticPotentialTest, HalfOpenWindowsOnAllAxes)
     expect_average(2, 1.0, 3.0, 166.5);
 }
 
+TEST_F(ElectrostaticPotentialTest, WindowPreflightMatchesCubePointsAtAdjacentDoubles)
+{
+    set_grid(5);
+    const double below_one = std::nextafter(1.0, 0.0);
+    const double above_one = std::nextafter(1.0, 2.0);
+    for (int axis = 0; axis < 3; ++axis)
+    {
+        EXPECT_THROW(elecstate::potential_window_planes(cell, basis, axis, below_one, 1.0), std::runtime_error);
+        const auto planes = elecstate::potential_window_planes(cell, basis, axis, 1.0, above_one);
+        EXPECT_EQ(1, planes.first);
+        EXPECT_EQ(2, planes.second);
+    }
+    expect_average(2, 1.0, above_one, 166.0);
+    EXPECT_THROW(elecstate::checked_window_height(cell, 2, 20.0, 30.0), std::runtime_error);
+}
+
 TEST_F(ElectrostaticPotentialTest, UnequalPartitionsUsePointCounts)
 {
     set_grid(5);
