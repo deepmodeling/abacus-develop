@@ -1,8 +1,12 @@
+#include "source_base/constants.h"
+#include "source_base/global_function.h"
 #include "source_base/global_variable.h"
 #include "source_base/kernels/math_kernel_op.h"
+#include "source_base/parallel_cell.h"
 #include "source_cell/check_atomic_stru.h"
 #include "source_cell/dom_decomp.h"
 #include "source_cell/mdcell.h"
+#include "source_cell/mdcell_adapter.h"
 #include "source_esolver/esolver_factory.h"
 #include "source_hsolver/kernels/hegvd_op.h"
 #include "source_io/module_json/para_json.h"
@@ -13,6 +17,7 @@
 
 #include <ATen/kernels/blas.h>
 #include <ATen/kernels/lapack.h>
+#include <vector>
 
 #ifdef __DSP
 #include "source_base/kernels/dsp/dsp_connector.h"
@@ -92,9 +97,24 @@ void Driver::driver_run()
     {
         MDCell mdcell;
         DomainDecomposition decomp;
+        const ModuleBase::CommunicationDomain domain = ModuleBase::world_comm_domain();
         if (direct_mdcell)
         {
-            Run_MD::prepare_mdcell(mdcell, PARAM, decomp);
+            std::vector<int> effective_replicate = input.cell_replica;
+            if (input.mdp.md_restart)
+            {
+                effective_replicate = {1, 1, 1};
+            }
+            const double skin = input.mdp.md_neighbor_skin / ModuleBase::BOHR_TO_A;
+            MDCellAdapter::initialize_from_stru(mdcell,
+                                                decomp,
+                                                PARAM.globalv.global_in_stru,
+                                                effective_replicate,
+                                                skin,
+                                                domain);
+            GlobalV::ofs_running << std::endl;
+            ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "TOTAL ATOM NUMBER", mdcell.nat());
+            GlobalV::ofs_running << std::endl;
             p_esolver->before_all_runners(mdcell, PARAM.inp);
             Run_MD::md_line(mdcell, p_esolver, PARAM, decomp);
             p_esolver->after_all_runners(mdcell);
@@ -102,7 +122,8 @@ void Driver::driver_run()
         else
         {
             initialize_ucell();
-            Run_MD::prepare_mdcell(mdcell, ucell, decomp);
+            MDCellAdapter::initialize_from_unitcell(mdcell, decomp, ucell, 0.0, domain);
+            mdcell.set_backing_unitcell(ucell);
             p_esolver->before_all_runners(ucell, PARAM.inp);
             Run_MD::md_line(mdcell, p_esolver, PARAM, decomp);
             p_esolver->after_all_runners(ucell);

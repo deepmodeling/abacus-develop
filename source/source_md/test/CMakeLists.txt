@@ -104,7 +104,7 @@ endif()
 addtest(
   TARGET MODULE_MD_run
   LIBS parameter psi device
-  SOURCES run_md_test.cpp
+  SOURCES ../unittests/test_run_md.cpp
           ../run_md.cpp
           ../module_plumed/plumed_interface.cpp
           ../md_base.cpp

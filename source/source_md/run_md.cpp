@@ -1,11 +1,7 @@
 #include "run_md.h"
 
-#include "source_base/constants.h"
 #include "source_base/fs_compat.h"
-#include "source_base/global_function.h"
 #include "source_base/global_variable.h"
-#include "source_base/parallel_cell.h"
-#include "source_cell/mdcell_adapter.h"
 #include "source_cell/mdcell.h"
 #include "source_cell/dom_decomp.h"
 #include "source_io/module_parameter/parameter.h"
@@ -50,35 +46,6 @@ bool is_frame_write_step(const int current_step,
     const bool want_output_frame = do_output_step && out_stru;
     const bool want_checkpoint_frame = do_restart_step;
     return want_output_frame || want_checkpoint_frame;
-}
-
-void prepare_mdcell(MDCell& mdcell, const Parameter& param_in, DomainDecomposition& decomp)
-{
-    const Input_para& input = param_in.inp;
-    std::vector<int> effective_replicate = input.cell_replica;
-    if (input.mdp.md_restart)
-    {
-        effective_replicate = {1, 1, 1};
-    }
-
-    const ModuleBase::CommunicationDomain comm_domain = ModuleBase::world_comm_domain();
-    const double skin = input.mdp.md_neighbor_skin / ModuleBase::BOHR_TO_A;
-    MDCellAdapter::initialize_from_stru(mdcell,
-                                        decomp,
-                                        param_in.globalv.global_in_stru,
-                                        effective_replicate,
-                                        skin,
-                                        comm_domain);
-    GlobalV::ofs_running << std::endl;
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "TOTAL ATOM NUMBER", mdcell.nat());
-    GlobalV::ofs_running << std::endl;
-}
-
-void prepare_mdcell(MDCell& mdcell, UnitCell& ucell, DomainDecomposition& decomp)
-{
-    const ModuleBase::CommunicationDomain comm_domain = ModuleBase::world_comm_domain();
-    MDCellAdapter::initialize_from_unitcell(mdcell, decomp, ucell, 0.0, comm_domain);
-    mdcell.set_backing_unitcell(ucell);
 }
 
 void md_line(MDCell& mdcell,

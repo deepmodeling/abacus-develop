@@ -3,7 +3,6 @@
 
 class MDCell;
 class DomainDecomposition;
-class UnitCell;
 struct Parameter;
 
 namespace ModuleESolver
@@ -31,10 +30,6 @@ bool is_cadence_step(int current_step, int freq);
 /// md_line(). This predicate exists so the "checkpoint frame tracks
 /// Restart_md.txt" invariant stays unit-testable.
 bool is_frame_write_step(int current_step, int out_freq_ion, int md_restartfreq, bool out_stru);
-
-void prepare_mdcell(MDCell& mdcell, const Parameter& param_in, DomainDecomposition& decomp);
-
-void prepare_mdcell(MDCell& mdcell, UnitCell& ucell, DomainDecomposition& decomp);
 
 /**
  * @brief the md loop line

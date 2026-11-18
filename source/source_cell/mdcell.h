@@ -20,10 +20,6 @@ class UnitCell;
 class MDCell;
 class NeighborSearch;
 class DomainDecomposition;
-namespace Run_MD
-{
-void prepare_mdcell(MDCell& mdcell, UnitCell& ucell, DomainDecomposition& decomp);
-}
 namespace ModuleBase
 {
 class CommunicationDomain;
@@ -87,7 +83,6 @@ public:
 #endif
 
 private:
-    friend void Run_MD::prepare_mdcell(MDCell& mdcell, UnitCell& ucell, DomainDecomposition& decomp);
     Kind get_kind() const override;
     std::int64_t get_nat() const override;
     double get_lat0() const override;
