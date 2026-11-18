@@ -7,10 +7,8 @@
 #include "source_base/global_variable.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
-#include "source_cell/ucell_io.h"
 #include "source_io/module_output/spin_tag.h"
 #include "source_io/module_output/write_notice.h"
-#include "source_io/module_output/provenance_header.h"
 
 #include <cmath>
 #include <complex>
@@ -184,7 +182,7 @@ void ModuleIO::save_dH_sparse(const int& istep,
         // The first written ionic step (istep == 0) truncates the shared file;
         // later steps append one complete record each. Single-point runs pass
         // istep <= 0 and therefore always start a fresh file.
-        const bool open_in_append = (out_app_flag == 1) && istep > 0;
+        const bool open_in_append = detail::append_ionic_step(out_app_flag, istep);
         for (auto& comp: comps)
         {
             for (int ispin = 0; ispin < spin_loop; ++ispin)
@@ -210,28 +208,32 @@ void ModuleIO::save_dH_sparse(const int& istep,
 
                 if (binary)
                 {
-                    comp.ofs[ispin].write(reinterpret_cast<const char*>(&header_step), sizeof(int));
-                    comp.ofs[ispin].write(reinterpret_cast<const char*>(&nlocal), sizeof(int));
-                    comp.ofs[ispin].write(reinterpret_cast<const char*>(&output_R_number), sizeof(int));
+                    ModuleIO::detail::write_csr_binary_header(comp.ofs[ispin],
+                                                              header_step,
+                                                              nlocal,
+                                                              output_R_number);
                 }
                 else
                 {
                     // Self-describing header matching the H(R)/S(R) CSR layout,
                     // so readers can recover the cell, basis size and R count
                     // without extra metadata.
-                    const std::string time_stamp = ModuleIO::local_timestamp();
-                    comp.ofs[ispin] << "Ionic_Step " << header_step
-                                    << ModuleIO::prov_inline(time_stamp) << std::endl;
-                    comp.ofs[ispin] << " # print " << matrix_name << " matrix in real space "
-                                    << matrix_label << comp.axis << "(R)" << std::endl;
-                    comp.ofs[ispin] << " " << header_nspin << " # number of spin directions" << std::endl;
-                    comp.ofs[ispin] << " " << (ispin + 1) << " # spin index" << std::endl;
-                    comp.ofs[ispin] << " " << nlocal << " # number of localized basis" << std::endl;
-                    comp.ofs[ispin] << " " << output_R_number << " # number of Bravais lattice vector R" << std::endl;
-                    comp.ofs[ispin] << std::endl;
-                    ModuleIO::UcellIO::write_ucell(comp.ofs[ispin], ucell);
-                    comp.ofs[ispin] << std::endl;
-                    ModuleIO::write_csr_banner(comp.ofs[ispin]);
+                    const std::string description = " # print " + matrix_name
+                                                    + " matrix in real space "
+                                                    + matrix_label + comp.axis + "(R)";
+                    const ModuleIO::detail::CsrTextHeader header = {
+                        header_step,
+                        description,
+                        header_nspin,
+                        ispin + 1,
+                        nlocal,
+                        output_R_number,
+                        ucell,
+                        std::string(),
+                        false,
+                        0.0,
+                        true};
+                    ModuleIO::detail::write_csr_text_header(comp.ofs[ispin], header);
                 }
             }
         }
@@ -257,16 +259,13 @@ void ModuleIO::save_dH_sparse(const int& istep,
             for (auto& comp: comps)
             {
                 for (int ispin = 0; ispin < spin_loop; ++ispin) {
-                    if (binary) {
-                        const int comp_count = static_cast<int>(comp.nonzero_num[ispin][count]);
-                        comp.ofs[ispin].write(reinterpret_cast<char*>(&dRx), sizeof(int));
-                        comp.ofs[ispin].write(reinterpret_cast<char*>(&dRy), sizeof(int));
-                        comp.ofs[ispin].write(reinterpret_cast<char*>(&dRz), sizeof(int));
-                        comp.ofs[ispin].write(reinterpret_cast<const char*>(&comp_count), sizeof(int));
-                    } else {
-                        comp.ofs[ispin] << dRx << " " << dRy << " " << dRz << " "
-                                        << comp.nonzero_num[ispin][count] << std::endl;
-                    }
+                    ModuleIO::detail::write_R_record(comp.ofs[ispin],
+                                                     dRx,
+                                                     dRy,
+                                                     dRz,
+                                                     comp.nonzero_num[ispin][count],
+                                                     binary,
+                                                     false);
                 }
             }
         }

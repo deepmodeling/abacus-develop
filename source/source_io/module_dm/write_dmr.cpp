@@ -1,12 +1,11 @@
 #include "write_dmr.h"
+#include "source_io/module_hs/hs_sparse_io_detail.h"
 #include "source_io/module_output/spin_tag.h"
 #include "source_io/module_output/write_notice.h"
-#include "source_io/module_output/provenance_header.h"
 
 #include "source_base/global_variable.h"
 #include "source_hamilt/module_hcontainer/hcontainer_funcs.h"
 #include "source_hamilt/module_hcontainer/output_hcontainer.h"
-#include "source_cell/ucell_io.h"
 
 namespace ModuleIO
 {
@@ -61,22 +60,22 @@ void write_dmr_csr(std::string& fname,
     {
         ofs.open(fname);
     }
+    ModuleIO::detail::check_output_file_open(ofs, fname, "ModuleIO::write_dmr_csr");
 
-
-    const std::string time_stamp = ModuleIO::local_timestamp();
-    ofs << "Ionic_Step " << istep+1 << ModuleIO::prov_inline(time_stamp) << std::endl;
-    ofs << " # print density matrix in real space DM(R)" << std::endl;
-    ofs << " " << nspin << " # number of spin directions" << std::endl;
-    ofs << " " << ispin+1 << " # spin index" << std::endl;
-    ofs << " " << dm_serial->get_nbasis()
-        << " # number of localized basis" << std::endl;
-    ofs << " " << dm_serial->size_R_loop()
-        << " # number of Bravais lattice vector R" << std::endl;
-    ofs << std::endl;
-
-    // write ucell
-    ModuleIO::UcellIO::write_ucell(ofs, ucell);
-    ofs << std::endl;
+    const std::string description = " # print density matrix in real space DM(R)";
+    const ModuleIO::detail::CsrTextHeader header = {
+        istep + 1,
+        description,
+        nspin,
+        ispin + 1,
+        dm_serial->get_nbasis(),
+        static_cast<int>(dm_serial->size_R_loop()),
+        ucell,
+        std::string(),
+        false,
+        0.0,
+        false};
+    ModuleIO::detail::write_csr_text_header(ofs, header);
 
     // write HR_serial to ofs
     const double sparse_threshold = 1e-10;

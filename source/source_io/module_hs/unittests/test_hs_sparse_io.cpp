@@ -286,7 +286,7 @@ TEST(HsSparseIo, SparseCsrHeaderWritesCellAndBanner)
     std::remove(filename.c_str());
 }
 
-TEST(HsSparseIo, SparseCsrWritesEmptyRBlocks)
+TEST(HsSparseIo, SparseCsrSkipsEmptyRBlocks)
 {
     const std::string filename = testing::TempDir() + "write_hs_r_csr_empty_s.csr";
     std::remove(filename.c_str());
@@ -322,15 +322,15 @@ TEST(HsSparseIo, SparseCsrWritesEmptyRBlocks)
     EXPECT_EQ(lines[2], " 2 # number of spin directions");
     EXPECT_EQ(lines[3], " 2 # spin index");
     EXPECT_EQ(lines[4], " 2 # number of localized basis");
-    // Every R vector of the list is announced, including the empty one.
-    EXPECT_EQ(lines[5], " 2 # number of Bravais lattice vector R");
+    // Only R vectors with at least one element above the threshold are listed,
+    // so the header count matches the written R blocks.
+    EXPECT_EQ(lines[5], " 1 # number of Bravais lattice vector R");
 
     const std::string output = read_file(filename);
     EXPECT_THAT(output, testing::HasSubstr(" 0 0 0 1\n # CSR values\n"));
-    // An R block without elements above the threshold is still written with
-    // the same four-line record as the H(R)/S(R) writer.
-    EXPECT_THAT(output, testing::HasSubstr(
-        " 1 0 0 0\n # CSR values\n\n # CSR column indices\n\n # CSR row pointers\n 0 0 0\n"));
+    // The empty R block must not be persisted: sparse output stores only the
+    // non-zero R set, regardless of how many candidate R vectors were passed.
+    EXPECT_EQ(output.find(" 1 0 0 0"), std::string::npos);
 
     std::remove(filename.c_str());
 }

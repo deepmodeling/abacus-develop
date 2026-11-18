@@ -133,19 +133,6 @@ template void ModuleIO::save_lat_r<std::complex<double>>(std::ofstream& ofs,
     const Parallel_Blkcyclic& layout,
     const SparseWriteOptions& options);
 
-void ModuleIO::write_csr_banner(std::ofstream& ofs)
-{
-    ofs << " #----------------------------------------------------------------------#" << std::endl;
-    ofs << " #                               CSR Format                             #" << std::endl;
-    ofs << " # The outer loop corresponds to the number of Bravais lattice vectors. #" << std::endl;
-    ofs << " # The first line contains the index of the Bravais lattice vector      #" << std::endl;
-    ofs << " # (Rx, Ry, Rz), followed by the number of non-zero elements.           #" << std::endl;
-    ofs << " # The subsequent lines consist of three blocks of data, which are      #" << std::endl;
-    ofs << " # values, column indices, row pointers.                                #" << std::endl;
-    ofs << " #----------------------------------------------------------------------#" << std::endl;
-    ofs << std::endl;
-}
-
 template <typename T>
 void ModuleIO::save_lat_r_csr(std::ofstream& ofs,
     const SparseRBlock<T>& XR,

@@ -16,13 +16,6 @@ namespace ModuleIO
         const SparseWriteOptions& options);
 
     /**
-     * @brief Write the CSR-format description banner used by H(R)/S(R)/r(R)
-     *        sparse text output.
-     * @param ofs Output text stream.
-     */
-    void write_csr_banner(std::ofstream& ofs);
-
-    /**
      * @brief Write one R block in the H(R)/S(R)/r(R) CSR text layout.
      * @details The block is reduced across ranks exactly like save_lat_r, then
      *          printed through SparseMatrix so that values wrap every six

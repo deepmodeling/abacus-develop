@@ -1,9 +1,7 @@
 #include "pos_op_csr.h"
 
 #include "source_base/tool_quit.h"
-#include "source_cell/ucell_io.h"
-#include "source_io/module_hs/lat_r_csr.h"
-#include "source_io/module_output/provenance_header.h"
+#include "source_io/module_hs/hs_sparse_io_detail.h"
 
 #include <fstream>
 
@@ -47,9 +45,7 @@ void assemble_csr(const std::string& output_filename,
 
     if (binary)
     {
-        out_r.write(reinterpret_cast<const char*>(&step), sizeof(int));
-        out_r.write(reinterpret_cast<const char*>(&nlocal), sizeof(int));
-        out_r.write(reinterpret_cast<const char*>(&output_R_number), sizeof(int));
+        ModuleIO::detail::write_csr_binary_header(out_r, step, nlocal, output_R_number);
     }
     else
     {
@@ -57,17 +53,21 @@ void assemble_csr(const std::string& output_filename,
         {
             ModuleBase::WARNING_QUIT(context, "UnitCell pointer must not be null for text r(R) output.");
         }
-        const std::string time_stamp = ModuleIO::local_timestamp();
-        out_r << "Ionic_Step " << step << ModuleIO::prov_inline(time_stamp) << std::endl;
-        out_r << " # print r matrix in real space r(R) " << axis << "-component" << std::endl;
-        out_r << " 1 # number of spin directions" << std::endl;
-        out_r << " 1 # spin index" << std::endl;
-        out_r << " " << nlocal << " # number of localized basis" << std::endl;
-        out_r << " " << output_R_number << " # number of Bravais lattice vector R" << std::endl;
-        out_r << std::endl;
-        ModuleIO::UcellIO::write_ucell(out_r, ucell);
-        out_r << std::endl;
-        ModuleIO::write_csr_banner(out_r);
+        const std::string description = " # print r matrix in real space r(R) " + axis
+                                        + "-component";
+        const ModuleIO::detail::CsrTextHeader header = {
+            step,
+            description,
+            1,
+            1,
+            nlocal,
+            output_R_number,
+            ucell,
+            std::string(),
+            false,
+            0.0,
+            true};
+        ModuleIO::detail::write_csr_text_header(out_r, header);
     }
 
     std::ifstream payload(payload_filename.c_str(), payload_mode);

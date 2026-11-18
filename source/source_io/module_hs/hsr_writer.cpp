@@ -1,11 +1,10 @@
 #include "hsr_writer.h"
+#include "hs_sparse_io_detail.h"
 #include "source_io/module_output/spin_tag.h"
 #include "source_io/module_output/write_notice.h"
-#include "source_io/module_output/provenance_header.h"
 
 #include "source_base/module_out/sparse_matrix.h"
 #include "source_base/tool_quit.h"
-#include "source_cell/ucell_io.h"
 #include "source_cell/unitcell.h"
 #include "source_base/global_variable.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
@@ -122,32 +121,22 @@ bool ModuleIO::write_hcontainer_csr(const std::string& fname,
     {
         ofs.open(fname);
     }
-    if (!ofs.is_open())
-    {
-        ModuleBase::WARNING_QUIT("ModuleIO::write_hcontainer_csr",
-                                 "Cannot open HContainer CSR file: " + fname);
-    }
+    ModuleIO::detail::check_output_file_open(ofs, fname, "ModuleIO::write_hcontainer_csr");
 
-    const std::string time_stamp = ModuleIO::local_timestamp();
-    ofs << "Ionic_Step " << istep + 1 << ModuleIO::prov_inline(time_stamp) << std::endl;
-    ofs << " # print " << label << " matrix in real space " << label << "(R)" << std::endl;
-    ofs << " " << nspin << " # number of spin directions" << std::endl;
-    ofs << " " << ispin + 1 << " # spin index";
-    if (has_efermi)
-    {
-        ofs << ", E_Fermi = " << std::setprecision(6) << efermi_eV << " eV";
-    }
-    ofs << std::endl;
-    ofs << " " << mat_serial->get_nbasis() << " # number of localized basis" << std::endl;
-    ofs << " " << mat_serial->size_R_loop() << " # number of Bravais lattice vector R" << std::endl;
-    ofs << std::endl;
-
-    ModuleIO::UcellIO::write_ucell(ofs, ucell);
-    if (!representation_note.empty())
-    {
-        ofs << "# representation: " << representation_note << std::endl;
-    }
-    ofs << std::endl;
+    const std::string description = " # print " + label + " matrix in real space " + label + "(R)";
+    const ModuleIO::detail::CsrTextHeader header = {
+        istep + 1,
+        description,
+        nspin,
+        ispin + 1,
+        mat_serial->get_nbasis(),
+        static_cast<int>(mat_serial->size_R_loop()),
+        ucell,
+        representation_note,
+        has_efermi,
+        efermi_eV,
+        false};
+    ModuleIO::detail::write_csr_text_header(ofs, header);
 
     const double sparse_threshold = 1e-10;
     hamilt::Output_HContainer<TR> out(mat_serial, ofs, sparse_threshold, precision);
