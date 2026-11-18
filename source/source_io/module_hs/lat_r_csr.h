@@ -34,6 +34,22 @@ namespace ModuleIO
         const SparseRBlock<T>& XR,
         const Parallel_Blkcyclic& layout,
         const SparseWriteOptions& options);
+
+    /**
+     * @brief Write an all-zero R block in the H(R)/S(R)/r(R) CSR text layout.
+     * @details Callers that already know a block is globally empty (for
+     *          example from an allreduced nonzero count) use this instead of
+     *          save_lat_r_csr to skip its row-wise MPI reductions. The emitted
+     *          bytes are identical to save_lat_r_csr on an empty block: an
+     *          empty SparseMatrix printed on the rank that owns the stream.
+     * @param ofs Output text stream.
+     * @param nlocal Number of localized basis functions.
+     * @param options Sparse output options (precision and reduce flag).
+     */
+    template <typename T>
+    void save_lat_r_empty_csr(std::ofstream& ofs,
+        int nlocal,
+        const SparseWriteOptions& options);
 }
 
 #endif

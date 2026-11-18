@@ -213,10 +213,20 @@ void PosOpWriter::out_lat_r(const UnitCell& ucell,
                                              lat_r_options);
                     }
                 }
+                else if (nnz == 0)
+                {
+                    // A globally empty component still needs its zero block to
+                    // match the shared R count, but it needs no row-wise
+                    // reductions: print the empty CSR block directly.
+                    ModuleIO::save_lat_r_empty_csr<double>(ofs_tem[direction],
+                                                           layout_.nrglb(),
+                                                           lat_r_options);
+                }
                 else
                 {
                     // Text output always emits the three CSR sections so that
-                    // an empty component block remains a valid zero matrix record.
+                    // a non-empty block carries its values, column indices and
+                    // row pointers in the shared CSR layout.
                     ModuleIO::save_lat_r_csr(ofs_tem[direction],
                                              psi_r_psi_sparse[direction],
                                              layout_,

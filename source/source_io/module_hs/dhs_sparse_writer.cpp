@@ -292,6 +292,24 @@ void ModuleIO::save_dH_sparse(const int& istep,
                         save_lat_r(comp.ofs[ispin], (*comp.soc_sparse)[R_coor], pv.para_2d(), lat_r_options);
                     }
                 }
+                else if (nnz == 0)
+                {
+                    // A globally empty component still needs its zero block to
+                    // match the shared R count, but it needs no row-wise
+                    // reductions: print the empty CSR block directly.
+                    if (nspin != 4)
+                    {
+                        ModuleIO::save_lat_r_empty_csr<double>(comp.ofs[ispin],
+                                                               pv.para_2d().nrglb(),
+                                                               lat_r_options);
+                    }
+                    else
+                    {
+                        ModuleIO::save_lat_r_empty_csr<std::complex<double>>(comp.ofs[ispin],
+                                                                             pv.para_2d().nrglb(),
+                                                                             lat_r_options);
+                    }
+                }
                 else if (nspin != 4)
                 {
                     const SparseRBlock<double>& block = block_or_empty(comp.sparse[ispin], R_coor);

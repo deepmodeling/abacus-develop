@@ -200,3 +200,29 @@ template void ModuleIO::save_lat_r_csr<std::complex<double>>(std::ofstream& ofs,
     const SparseRBlock<std::complex<double>>& XR,
     const Parallel_Blkcyclic& layout,
     const SparseWriteOptions& options);
+
+template <typename T>
+void ModuleIO::save_lat_r_empty_csr(std::ofstream& ofs,
+    const int nlocal,
+    const SparseWriteOptions& options)
+{
+    if (nlocal <= 0)
+    {
+        ModuleBase::WARNING_QUIT("ModuleIO::save_lat_r_empty_csr",
+                                 "Block-cyclic global row size must be positive.");
+    }
+
+    if (!options.reduce || ofs.is_open())
+    {
+        ModuleIO::SparseMatrix<T> sparse_matrix(nlocal, nlocal);
+        sparse_matrix.printToCSR(ofs, options.precision);
+    }
+}
+
+template void ModuleIO::save_lat_r_empty_csr<double>(std::ofstream& ofs,
+    int nlocal,
+    const SparseWriteOptions& options);
+
+template void ModuleIO::save_lat_r_empty_csr<std::complex<double>>(std::ofstream& ofs,
+    int nlocal,
+    const SparseWriteOptions& options);
