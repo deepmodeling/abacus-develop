@@ -11,6 +11,7 @@ class UnitCell;
 namespace ModuleBase
 {
 class CommunicationDomain;
+class matrix;
 }
 
 namespace MDCellAdapter
@@ -27,6 +28,13 @@ void initialize_from_unitcell(MDCell& mdcell,
                               const UnitCell& ucell,
                               double skin,
                               const ModuleBase::CommunicationDomain& domain);
+
+void sync_geometry_from_unitcell(MDCell& mdcell, const UnitCell& ucell);
+
+void collect_full_forces(MDCell& mdcell,
+                         DomainDecomposition& decomp,
+                         const UnitCell& ucell,
+                         ModuleBase::matrix& full_force);
 }
 
 #endif

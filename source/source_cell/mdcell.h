@@ -56,6 +56,7 @@ public:
     bool has_neighbor_search() const;
     const NeighborSearch& neighbor_search() const;
     void set_lattice_vectors(const ModuleBase::Matrix3& latvec);
+    void set_lattice_geometry(const ModuleBase::Matrix3& latvec, double lat0);
     void refresh_cart_from_frac();
     /// Copy state; mark a position update only when requested, otherwise preserve the flag.
     void sync_backing_unitcell(const bool positions_updated);
