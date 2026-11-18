@@ -3,6 +3,8 @@
 
 #include "gtest/gtest.h"
 
+#include <cstdio>
+#include <fstream>
 #include <sstream>
 #include <iomanip>
 #include <stdexcept>
@@ -145,4 +147,84 @@ TEST(PWHybridSource, ReadsExistingBinaryWavefunctionHeader)
     saved[0] = 0;
     std::istringstream invalid(saved, std::ios::binary);
     EXPECT_THROW(pw::read_exx_source_header(invalid), std::runtime_error);
+}
+
+namespace
+{
+/**
+ * @brief Create an empty placeholder file for a resolver test.
+ */
+void touch(const std::string& path)
+{
+    std::ofstream out(path.c_str(), std::ios::binary);
+    out << "source";
+}
+
+/**
+ * @brief Resolve a name inside the gtest temporary directory.
+ */
+std::string temp_path(const std::string& name)
+{
+    return testing::TempDir() + name;
+}
+} // namespace
+
+TEST(PWHybridSource, ResolverPrefersFixedName)
+{
+    const std::string fixed = temp_path("resolver_fixed.txt");
+    const std::string numbered = temp_path("resolver_fixedg2.txt");
+    touch(fixed);
+    touch(numbered);
+    const std::vector<std::string> directories(1, testing::TempDir());
+    EXPECT_EQ(pw::resolve_source_file(directories, "resolver_fixed.txt", ".txt", false), fixed);
+    std::remove(fixed.c_str());
+    std::remove(numbered.c_str());
+}
+
+TEST(PWHybridSource, ResolverSelectsLatestIonicStep)
+{
+    const std::vector<std::string> directories(1, testing::TempDir());
+    const std::string g1 = temp_path("resolver_stepg1.txt");
+    const std::string g3 = temp_path("resolver_stepg3.txt");
+    touch(g3);
+    touch(g1);
+    EXPECT_EQ(pw::resolve_source_file(directories, "resolver_step.txt", ".txt", false), g3);
+    std::remove(g1.c_str());
+    std::remove(g3.c_str());
+}
+
+TEST(PWHybridSource, ResolverSelectsLatestElectronicStepWithinLatestIonicStep)
+{
+    const std::vector<std::string> directories(1, testing::TempDir());
+    const std::string g1e7 = temp_path("resolver_wfg1e7_pw.dat");
+    const std::string g2e3 = temp_path("resolver_wfg2e3_pw.dat");
+    const std::string g2e5 = temp_path("resolver_wfg2e5_pw.dat");
+    touch(g1e7);
+    touch(g2e3);
+    touch(g2e5);
+    EXPECT_EQ(pw::resolve_source_file(directories, "resolver_wf_pw.dat", "_pw.dat", true), g2e5);
+    std::remove(g1e7.c_str());
+    std::remove(g2e3.c_str());
+    std::remove(g2e5.c_str());
+}
+
+TEST(PWHybridSource, ResolverFallsBackToTheSecondDirectory)
+{
+    const std::vector<std::string> directories = {temp_path("resolver_absent/"), testing::TempDir()};
+    const std::string g1 = temp_path("resolver_psig1.txt");
+    touch(g1);
+    EXPECT_EQ(pw::resolve_source_file(directories, "resolver_psi.txt", ".txt", false), g1);
+    std::remove(g1.c_str());
+}
+
+TEST(PWHybridSource, ResolverRejectsMissingAndElectronicSuffixWhenDisallowed)
+{
+    const std::vector<std::string> directories(1, testing::TempDir());
+    EXPECT_THROW(pw::resolve_source_file(directories, "resolver_missing.txt", ".txt", false),
+                 std::runtime_error);
+    const std::string electronic = temp_path("resolver_occeig_occg1e2.txt");
+    touch(electronic);
+    EXPECT_THROW(pw::resolve_source_file(directories, "resolver_occeig_occ.txt", ".txt", false),
+                 std::runtime_error);
+    std::remove(electronic.c_str());
 }
