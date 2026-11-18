@@ -23,7 +23,6 @@ scf_out_chg_tau
 019_PW_Coulomb
 020_PW_kspace
 022_PW_CG
-scf_psi_atomic_random
 023_PW_DA
 024_PW_DS
 025_PW_DS_sca
