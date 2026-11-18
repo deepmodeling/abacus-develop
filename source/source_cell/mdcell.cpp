@@ -152,12 +152,6 @@ bool MDCell::has_neighbor_search() const
     return neighbor_layout_valid_ && neighbor_search_ != NULL;
 }
 
-void MDCell::set_lattice_vectors(const ModuleBase::Matrix3& latvec)
-{
-    const double lattice_constant = lat0_;
-    set_lattice_geometry(latvec, lattice_constant);
-}
-
 void MDCell::set_lattice_geometry(const ModuleBase::Matrix3& latvec, double lat0)
 {
     if (lat0 <= 0.0)

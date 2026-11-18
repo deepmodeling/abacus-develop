@@ -266,7 +266,8 @@ void MSST::rescale(std::ofstream& ofs, const double& volume)
     latvec.e11 *= dilation[0];
     latvec.e22 *= dilation[1];
     latvec.e33 *= dilation[2];
-    mdcell.set_lattice_vectors(latvec);
+    const double lat0 = mdcell.lat0();
+    mdcell.set_lattice_geometry(latvec, lat0);
     mdcell.refresh_cart_from_frac();
 
     /// rescale velocity
