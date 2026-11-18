@@ -37,9 +37,7 @@ void md_line(MDCell& mdcell,
 {
     ModuleBase::TITLE("Run_MD", "md_line");
     ModuleBase::timer::start("Run_MD", "md_line");
-    /// determine the md_type
     MD_base* mdrun = nullptr;
-    /// the integrators take the values they use, not the whole Parameter
     const MD_para& mdp = param_in.mdp;
     const bool cal_stress = param_in.inp.cal_stress;
     const bool init_vel = param_in.inp.init_vel;
@@ -69,8 +67,6 @@ void md_line(MDCell& mdcell,
         ModuleBase::WARNING_QUIT("md_line", "no such md_type!");
     }
 
-    /// interface to PLUMED: no-op unless `plumed` is set in INPUT and ABACUS
-    /// was compiled with PLUMED support (-DPLUMED_ROOT=...)
     ModulePlumed::PlumedInterface plumed;
     std::vector<ModuleBase::Vector3<double>> plumed_positions;
     std::vector<ModuleBase::Vector3<double>> plumed_forces;
@@ -106,24 +102,14 @@ void md_line(MDCell& mdcell,
         }
     };
 
-    /// Effective ionic-step output frequency for STRU and other per-step
-    /// output files. Prefer out_freq_ion; fall back to md_restartfreq for
-    /// backward compatibility when out_freq_ion is not set (0).
+    // An unset out_freq_ion uses the restart cadence for regular output.
     const int eff_output_freq = (param_in.inp.out_freq_ion > 0)
                                     ? param_in.inp.out_freq_ion
                                     : param_in.mdp.md_restartfreq;
 
-    /// Restart-file cadence is independent of the output cadence so that
-    /// out_freq_ion and md_restartfreq can be set to different values.
     const int restart_freq = param_in.mdp.md_restartfreq;
 
-    /// out_app_flag == 1 writes one fixed-name "STRU" file. A previous
-    /// release kept per-step STRU_MD_{step} files inside a STRU/
-    /// subdirectory of the output directory (the mode-2 directory has
-    /// since been renamed to STRUC/), so an MD restarted from those
-    /// files still sees that directory. Writing the fixed name on top of a
-    /// directory aborts the run, therefore the legacy numbered layout is
-    /// kept whenever such a directory is present.
+    // Preserve numbered frames if a legacy STRU/ directory occupies the fixed-name path.
     const bool append_stru_allowed = (param_in.inp.out_app_flag == 1);
     bool has_legacy_stru_dir = false;
     std::string stru_out_dir = PARAM.globalv.global_stru_dir;
@@ -137,15 +123,13 @@ void md_line(MDCell& mdcell,
         }
     }
 
-    /// md cycle, mohan update 2026-01-04, change '<=' to '<'
     while ((mdrun->step_ + mdrun->step_rst_) < param_in.mdp.md_nstep && !mdrun->stop)
     {
         const int md_step = mdrun->step_ + mdrun->step_rst_;
         bool print_thermo = param_in.mdp.md_thermo_freq > 0
                             && md_step % param_in.mdp.md_thermo_freq == 0;
 #ifdef __JSON
-        // JSON output currently follows the UnitCell-backed electronic-structure path.
-        // Start one output record before the solver appends SCF information for this MD step.
+        // Start the UnitCell-backed JSON record before the solver writes SCF data.
         if (mdcell.has_backing_unitcell())
         {
             Json::init_output_array_obj();
@@ -156,7 +140,7 @@ void md_line(MDCell& mdcell,
         {
             mdrun->setup(p_esolver, param_in.globalv.global_readin_dir, decomp);
 
-            // setup() may load step_rst_ from Restart_md.txt.
+            // setup() may change step_rst_ when resuming a run.
             const int restart_step = mdrun->step_ + mdrun->step_rst_;
             print_thermo = param_in.mdp.md_thermo_freq > 0
                            && restart_step % param_in.mdp.md_thermo_freq == 0;
@@ -182,14 +166,12 @@ void md_line(MDCell& mdcell,
                             static_cast<int>(mdcell.owned_atoms().size()),
                             mdrun->get_md_dt(),
                             plumed_masses.data());
-                /// the initial configuration already carries positions and
-                /// forces, so PLUMED can be called right away
+                // The initial state already has positions and forces.
                 run_plumed_step(mdrun->step_ + mdrun->step_rst_);
             }
         }
         else
         {
-            // mohan add 2026-01-04
             const int stress_step = 0;
             const int force_step = 0;
             const int istep_print = md_step + 1;
@@ -199,15 +181,8 @@ void md_line(MDCell& mdcell,
             }
             mdrun->first_half(GlobalV::ofs_running);
 
-            /// update force and virial due to the update of atom positions.
-            /// The electronic solver interprets the step index as the local
-            /// step of this run: istep == 0/1 enables its initialization
-            /// branches (init_chg dm/hr, init_wfc file, PW need_subspace),
-            /// so pass the local step; the global step is used only by the
-            /// MD-side output writers below (print_md, dump_info, STRU
-            /// naming, write_restart, PLUMED).
-            /// first_half has already drifted the positions in this run, so
-            /// the charge-extrapolation history may advance.
+            // The solver needs the local step for initialization; output uses the global step.
+            // first_half has moved the atoms, so charge extrapolation may advance.
             const bool positions_updated = true;
             MD_func::force_virial(p_esolver,
                                   mdrun->step_,
@@ -220,9 +195,7 @@ void md_line(MDCell& mdcell,
 
             if (plumed.active())
             {
-                /// let PLUMED compute the collective variables and add the
-                /// biasing forces; they are used by the second half of the
-                /// current step and by the first half of the next one
+                // PLUMED adds forces before the integrator's second half.
                 run_plumed_step(mdrun->step_ + mdrun->step_rst_);
             }
 
@@ -257,15 +230,8 @@ void md_line(MDCell& mdcell,
         const bool do_restart_step = restart_freq > 0 && current_step % restart_freq == 0;
         const bool write_any_frame = (do_output_step && param_in.inp.out_stru > 0) || do_restart_step;
 
-        /// A checkpoint STRU frame must exist on every restart step so that the
-        /// state written to Restart_md.txt (coordinates + thermostat state +
-        /// step number) can actually be resumed from. This frame is paired
-        /// with Restart_md.txt on the md_restartfreq cadence and is independent
-        /// of both out_freq_ion and out_stru: out_stru=0 silences the regular
-        /// per-step output only, not the restart-ready frame. When the same
-        /// step fires both the output cadence and the restart cadence we write
-        /// one frame shared by both paths, so the cumulative STRU is not
-        /// duplicated in out_app_flag=1 mode.
+        // Every restart step needs a matching STRU frame, even when out_stru=0.
+        // A step on both cadences writes only one frame.
         if (write_any_frame)
         {
             if (mdcell.has_backing_unitcell())
@@ -273,19 +239,9 @@ void md_line(MDCell& mdcell,
                 const bool positions_updated = false;
                 mdcell.sync_backing_unitcell(positions_updated);
             }
-            // Mode-2 STRUC/ subdirectory is created lazily at write time.
             ModuleBase::ensure_directory(stru_out_dir);
             const int stru_step = current_step + 1;
-            // File-name selection and append/truncate are two independent
-            // decisions. The file name is fixed to "STRU" whenever mode 1
-            // accumulation is allowed (and no legacy STRU/ directory is in
-            // the way); modes 0/2 keep the numbered STRU{stru_step} files.
-            // Whether to append depends on whether this is the very first
-            // step of a fresh (non-restart) run: a fresh first frame
-            // truncates the fixed-name file so it does not keep frames
-            // from a previous run, while later steps and restarted runs
-            // append one frame each, introduced by a one-based
-            // "# MD step N" comment line.
+            // A fresh run truncates the fixed-name STRU; later frames append.
             const bool use_fixed_name = append_stru_allowed && !has_legacy_stru_dir;
             const bool is_first_step_of_fresh_run = (mdrun->step_ == 0) && (mdrun->step_rst_ == 0);
             const bool append_stru = use_fixed_name && !is_first_step_of_fresh_run;
@@ -301,10 +257,6 @@ void md_line(MDCell& mdcell,
             mdcell::print_stru_file(mdcell, mdcell.stru_meta(), file.str(), frame_comment, append_stru);
         }
 
-        /// Restart files follow md_restartfreq independently of the output
-        /// cadence, so setting out_freq_ion does not suppress or re-aim
-        /// md_restartfreq. A matching checkpoint STRU frame was written in
-        /// the block above whenever do_restart_step was true.
         if (do_restart_step)
         {
             mdrun->write_restart(PARAM.globalv.global_out_dir);
@@ -313,7 +265,6 @@ void md_line(MDCell& mdcell,
         mdrun->step_++;
     }
 
-    /// flush the COLVAR and other PLUMED output files
     plumed.finalize();
 
     delete mdrun;
