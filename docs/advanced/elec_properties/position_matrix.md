@@ -25,7 +25,7 @@ Ionic_Step 1
  #----------------------------------------------------------------------#
 ```
 
-The header records the ionic step, the matrix label and Cartesian component, the spin metadata, the number of localized basis functions and the number of Bravais lattice vectors, followed by the `user_defined_lattice` cell block and the CSR format description. The rest of the file consists of one sparse block per Bravais lattice vector, such as:
+The header records the ionic step, the matrix label and Cartesian component, the spin metadata, the number of localized basis functions and the number of non-empty Bravais lattice vectors actually written, followed by the `user_defined_lattice` cell block and the CSR format description. The rest of the file consists of one sparse block per non-empty Bravais lattice vector (an R vector is kept when at least one of the three Cartesian components has an element above the sparse threshold), such as:
 
 ```
 -5 -5 -5 12          // R (lattice vector) and number of non-zero elements
