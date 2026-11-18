@@ -189,6 +189,17 @@ TEST_F(OccMatMixerTest, FlatRoundtripNspin2)
     }
 
     mixer.collect(occmat);   // occ -> uom_
+    const int half_size = cell.nat * block;
+    for (int iat = 0; iat < cell.nat; ++iat)
+    {
+        for (int m = 0; m < block; ++m)
+        {
+            const int up_index = flat_index[iat] + m;
+            const int down_index = half_size + up_index;
+            EXPECT_DOUBLE_EQ(mixer.uom()[up_index], 1000.0 * iat + m);
+            EXPECT_DOUBLE_EQ(mixer.uom()[down_index], 1000.0 * iat + 100.0 + m);
+        }
+    }
     // scramble the nested matrix, then restore it from the flat buffer
     occmat.zero(cell, l_channel);
     mixer.write_back(occmat); // uom_ -> occ
