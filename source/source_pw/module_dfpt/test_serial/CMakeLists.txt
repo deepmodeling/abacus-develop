@@ -141,7 +141,7 @@ if(ENABLE_LIBXC)
   addtest(
     TARGET MODULE_DFPT_xc_analytic_serial
     LIBS parameter dfpt_planewave_serial device base symmetry Libxc::xc
-    SOURCES dfpt_xc_analytic_serial_test.cpp
+    SOURCES ../unittests/test_dfpt_xc_analytic.cpp
             ../dfpt_xc_analytic.cpp
             ../dfpt_rho.cpp
           ../dfpt_rho_mix.cpp

@@ -69,6 +69,11 @@ set(_abacus_feature_definitions
     $<$<BOOL:${ENABLE_DFTD4}>:__DFTD4>
     $<$<BOOL:${MATH_INFO}>:GATHER_INFO>)
 
+if(USE_CUDA AND ENABLE_LIBXC AND Libxc_ENABLE_CUDA AND
+   Libxc_VERSION VERSION_GREATER_EQUAL "7.1.0")
+  list(APPEND _abacus_feature_definitions ABACUS_LIBXC_CUDA)
+endif()
+
 if(ABACUS_COMMIT_INFO_INCLUDE_DIR)
   list(APPEND _abacus_feature_definitions COMMIT_INFO)
 endif()

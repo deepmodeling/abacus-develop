@@ -18,7 +18,7 @@ if(ENABLE_LIBXC)
   addtest(
     TARGET MODULE_LR_xc_kxc
     LIBS Libxc::xc
-    SOURCES test_xc_kxc.cpp ../potentials/xc_kxc.cpp)
+    SOURCES ../unittests/test_xc_kxc.cpp ../potentials/xc_kxc.cpp)
 endif()
 
 addtest(

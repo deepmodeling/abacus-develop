@@ -100,7 +100,8 @@ addtest(
   TARGET MODULE_HAMILT_XCTest_VXC
   LIBS parameter MPI::MPI_CXX Libxc::xc psi device container
   SOURCES test_xc5.cpp
-          test_libxc_tools.cpp
+          ../unittests/test_libxc_tools.cpp
+          ../unittests/test_libxc_pot.cpp
           ../xc_grad.cpp
           ../xc_grad_prepare.cpp
           ../xc_grad_kernel.cpp

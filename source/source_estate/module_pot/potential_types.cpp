@@ -56,7 +56,9 @@ PotBase* Potential::get_pot_type(const std::string& pot_type, const Input_para& 
     }
     else if (pot_type == "xc")
     {
-        return new PotXC(PARAM.globalv.domag, PARAM.globalv.domag_z, input.gga_grad, this->rho_basis_, this->etxc_, this->vtxc_, &(this->vofk_eff));
+        const bool xc_gpu = input.xc_device == "gpu";
+        return new PotXC(PARAM.globalv.domag, PARAM.globalv.domag_z, input.gga_grad, xc_gpu,
+                         this->rho_basis_, this->etxc_, this->vtxc_, &(this->vofk_eff));
     }
     else if (pot_type == "pcc" || pot_type == "pcc_2d")
     {

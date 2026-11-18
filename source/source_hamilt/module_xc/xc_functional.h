@@ -76,6 +76,18 @@ class XC_Functional
         const double hybrid_alpha,
         const double hse_omega);
 
+    static std::tuple<double, double, ModuleBase::matrix> v_xc(
+        const int &nrxx, // number of real-space grid
+        const Charge* const chr,
+        const UnitCell *ucell, // charge density
+        const int nspin,
+        const bool domag,
+        const bool domag_z,
+        const int gga_grad,
+        const double hybrid_alpha,
+        const double hse_omega,
+        const bool use_gpu);
+
 //-------------------
 //  xc_functional.cpp
 //-------------------
