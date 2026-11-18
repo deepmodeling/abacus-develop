@@ -4,6 +4,8 @@
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_io/module_output/cube_io.h"
 #include <gtest/gtest.h>
+#include "source_base/parallel_cell.h"
+#include <limits>
 
 // Keep the actual LibXC evaluation and coefficient construction. Geometry ownership,
 // FFTs and grid masks are isolated; no local grid point may be accessed on an empty rank.
@@ -227,6 +229,7 @@ TEST_F(KernelXCTest, HseGroundResponseUsesUnmodifiedSigma)
         &frs,
         &fss);
     XC_Functional_Libxc::finish_func(functions);
+    EXPECT_FALSE(ground->gs_sigma_fallback_used());
     EXPECT_DOUBLE_EQ(ground->v2rho2[0], frr);
     EXPECT_DOUBLE_EQ(ground->v2rhosigma[0], frs);
     EXPECT_DOUBLE_EQ(ground->v2sigma2[0], fss);
@@ -245,6 +248,54 @@ TEST_F(KernelXCTest, HseGroundResponseUsesUnmodifiedSigma)
             false,
             LR::KernelXC::Singlet),
         std::invalid_argument);
+}
+
+// A genuine LibXC HSE small-gradient failure. Only one rank has points; all ranks
+// must retry together, including empty ranks. Compare every spin coefficient with
+// a separately evaluated floored LR kernel, including finite raw entries.
+TEST_F(KernelXCTest, HseGroundResponseFallbackIncludesEmptyRanksAndAllSpinBlocks)
+{
+    const auto domain = ModuleBase::world_comm_domain();
+    const int candidate_rank = domain.rank();
+    for (const int spins : {1, 2})
+    {
+        const bool owns_points = candidate_rank == 0;
+        basis.nrxx = owns_points ? 1 : 0;
+        basis.npw = basis.nrxx;
+        basis.nmaxgr = basis.nrxx;
+        charge.nrxx = basis.nrxx;
+        cell.tpiba = 0.; // The fixture's mock gradient is zero: sigma = 0.
+        const std::vector<std::string> initialization = {"default"};
+        const auto ground = LR::build_gs_xc_kernel(
+            "hse", basis, cell, charge, grid, spins, false, initialization);
+        const auto floored = build("hse", spins, LR::KernelXC::NoGxc);
+        // A library with a corrected sigma=0 evaluation need not take the fallback.
+        // The installed KXC-enabled LibXC 5.2.3 exercises it for both spin layouts.
+        if (!ground->gs_sigma_fallback_used())
+        {
+            GTEST_SKIP() << "Installed LibXC evaluates this raw HSE point finitely";
+        }
+        EXPECT_EQ(ground->vsigma, floored->vsigma);
+        EXPECT_EQ(ground->v2rho2, floored->v2rho2);
+        EXPECT_EQ(ground->v2rhosigma, floored->v2rhosigma);
+        EXPECT_EQ(ground->v2sigma2, floored->v2sigma2);
+        EXPECT_TRUE(ground->sigma_jacobian().empty());
+        EXPECT_THROW(ground->gxc(false), std::runtime_error);
+    }
+}
+
+TEST_F(KernelXCTest, HseGroundResponseRetryFailsCollectivelyIfStillNonfinite)
+{
+    const auto domain = ModuleBase::world_comm_domain();
+    const bool owns_points = domain.rank() == 0;
+    basis.nrxx = owns_points ? 1 : 0;
+    basis.npw = basis.nrxx;
+    basis.nmaxgr = basis.nrxx;
+    charge.nrxx = basis.nrxx;
+    cell.tpiba = std::numeric_limits<double>::quiet_NaN();
+    const std::vector<std::string> initialization = {"default"};
+    EXPECT_THROW(LR::build_gs_xc_kernel(
+        "hse", basis, cell, charge, grid, 1, false, initialization), std::runtime_error);
 }
 
 TEST_F(KernelXCTest, SigmaFloorJacobianPreservesOtherFunctionals)

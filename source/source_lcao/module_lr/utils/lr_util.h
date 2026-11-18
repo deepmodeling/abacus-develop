@@ -29,6 +29,9 @@ template <> struct ToComplex<std::complex<float>> { using type = std::complex<fl
 
 namespace LR_Util
 {
+    /// Existing HSE sigma floor (bohr^-8), shared by LR and the GS fallback.
+    double hse_sigma_floor();
+
     /// Sum k-point spin populations before rounding; count each pool only once.
     int spin_population_difference(const ModuleBase::matrix& wg, int kpar, int rank_in_pool);
 

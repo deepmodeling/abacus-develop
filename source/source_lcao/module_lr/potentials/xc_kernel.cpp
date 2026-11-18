@@ -3,6 +3,8 @@
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/timer.h"
+#include "source_base/parallel_reduce.h"
+#include <sstream>
 #include "source_base/tool_quit.h"
 #include "source_lcao/module_lr/utils/lr_util.h"
 #include "source_lcao/module_lr/utils/lr_util_xc.hpp"
@@ -17,6 +19,35 @@
 #ifdef __LIBXC
 #include <xc.h>
 #include "source_hamilt/module_xc/libxc_abacus.h"
+
+namespace
+{
+/// Count all coefficients read by a GGA response, including its first-order sigma term.
+/// Empty grid ranks still join the reduction and the resulting retry decision.
+void count_nonfinite_gga_response(const std::vector<double>& vsigma,
+    const std::vector<double>& rho_rho, const std::vector<double>& rho_sigma,
+    const std::vector<double>& sigma_sigma, long long* counts)
+{
+    const std::vector<double>* coefficients[4] = {&vsigma, &rho_rho, &rho_sigma, &sigma_sigma};
+    for (int component = 0; component < 4; ++component)
+    {
+        counts[component] = 0;
+        for (const double value : *coefficients[component])
+        {
+            if (!std::isfinite(value))
+            {
+                ++counts[component];
+            }
+        }
+    }
+    Parallel_Reduce::reduce_all(counts, 4);
+}
+
+bool has_nonfinite_response(const long long* counts)
+{
+    return counts[0] != 0 || counts[1] != 0 || counts[2] != 0 || counts[3] != 0;
+}
+} // namespace
 #endif
 #ifdef _OPENMP
 #include <omp.h>
@@ -372,8 +403,8 @@ void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const doubl
             // of functionals that were never broken; also confirmed to resolve 08_BeH2/hse (both
             // its DZP and TZDP bases, all excited states).
             const bool is_hse06 = func.info->number == XC_HYB_GGA_XC_HSE06;
-            // SCF does not use the LR sigma floor. Keep its orbital response separate;
-            // this does not alter the existing GS potential or low-density cutoff policy.
+            // SCF does not use the LR floor. Try raw GS coefficients first; only
+            // non-finite HSE response coefficients permit the approximate fallback below.
             const bool stabilize_hse = is_hse06 && purpose_ == Purpose::LinearResponse;
             std::vector<double> hse_sigma;
             // Differentiate the LR matrix actually used: only implicit dependence on
@@ -391,8 +422,39 @@ void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const doubl
             const std::vector<double>& sigma_input = *sigma_input_ptr;
             xc_gga_vxc(&func, nrxx, rho.data(), sigma_input.data(), vrho_tmp.data(), vsigma_tmp.data());
             xc_gga_fxc(&func, nrxx, rho.data(), sigma_input.data(), v2rho2_tmp.data(), v2rhosigma_tmp.data(), v2sigma2_tmp.data());
-            // std::cout << "max element of v2sigma2_tmp: " << *std::max_element(v2sigma2_tmp.begin(), v2sigma2_tmp.end()) << std::endl;
-            // std::cout << "rho corresponding to max element of v2sigma2_tmp: " << rho[(std::max_element(v2sigma2_tmp.begin(), v2sigma2_tmp.end()) - v2sigma2_tmp.begin()) / 6] << std::endl;
+            if (is_hse06 && purpose_ == Purpose::GroundStateResponse)
+            {
+                long long invalid[4] = {0, 0, 0, 0};
+                count_nonfinite_gga_response(vsigma_tmp, v2rho2_tmp, v2rhosigma_tmp, v2sigma2_tmp, invalid);
+                if (has_nonfinite_response(invalid))
+                {
+                    // Recompute the complete GGA response on every rank, not just its NaNs.
+                    // Keep e_sigma and all FXC blocks at the same evaluation point.
+                    const std::vector<double>& fallback_sigma = LR_Util::prepare_xc_sigma(sigma, true, hse_sigma);
+                    xc_gga_vxc(&func, nrxx, rho.data(), fallback_sigma.data(), vrho_tmp.data(), vsigma_tmp.data());
+                    xc_gga_fxc(&func, nrxx, rho.data(), fallback_sigma.data(),
+                        v2rho2_tmp.data(), v2rhosigma_tmp.data(), v2sigma2_tmp.data());
+                    long long remaining[4] = {0, 0, 0, 0};
+                    count_nonfinite_gga_response(vsigma_tmp, v2rho2_tmp, v2rhosigma_tmp, v2sigma2_tmp, remaining);
+                    if (has_nonfinite_response(remaining))
+                    {
+                        XC_Functional_Libxc::finish_func(funcs);
+                        ModuleBase::timer::end("XC_Functional", "f_xc_libxc");
+                        throw std::runtime_error("HSE GS response remains non-finite after the sigma-floor retry; "
+                            "cannot compute excitation-energy gradients");
+                    }
+                    gs_sigma_fallback_used_ = true;
+                    std::ostringstream message;
+                    message << "Non-finite HSE GS response: e_sigma=" << invalid[0]
+                        << ", e_rhorho=" << invalid[1] << ", e_rhosigma=" << invalid[2]
+                        << ", e_sigmasigma=" << invalid[3]
+                        << ". Recomputed e_sigma and all FXC on every rank at sigma >= "
+                        << LR_Util::hse_sigma_floor() << " a0^-8. Using an approximate GS orbital Hessian; "
+                        "the SCF potential is unchanged and gradients are not guaranteed to match finite differences.";
+                    const std::string warning = message.str();
+                    ModuleBase::WARNING("KernelXC::GroundStateResponse", warning);
+                }
+            }
             // cut off by sgn. nspin=2 only: `cutoff_grid_data_spin2` assumes >1 component per
             // grid point (it asserts on it), and at nspin=1 there is exactly one, for which both
             // of its `for_each` ranges are empty -- the cutoff is a no-op anyway.

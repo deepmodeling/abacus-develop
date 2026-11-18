@@ -86,7 +86,7 @@ namespace LR
     public:
         /// Which spin combinations of the $g^{xc}$ coefficient set (`GxcCoef`) to build.
         enum GxcSpin { NoGxc = 0, Singlet = 1, Triplet = 2, BothSpins = 3 };
-        /// GS response uses raw sigma; the existing HSE floor belongs only to LR.
+        /// GS response starts from raw sigma; non-finite HSE coefficients trigger a reported fallback.
         enum class Purpose { LinearResponse, GroundStateResponse };
         KernelXC(const ModulePW::PW_Basis& rho_basis,
             const UnitCell& ucell,
@@ -118,6 +118,10 @@ namespace LR
         {
             return kernel_name_;
         }
+
+        /// Construction metadata: true only after a collective HSE GS-response fallback.
+        /// This flags an approximate orbital Hessian; the SCF potential is unchanged.
+        bool gs_sigma_fallback_used() const { return gs_sigma_fallback_used_; }
 
         // const references
         CREF(vrho);CREF(vsigma); CREF(v2rho2); CREF(v2rhosigma); CREF(v2sigma2);
@@ -257,6 +261,7 @@ namespace LR
         const int gxc_spin_ = GxcSpin::NoGxc;   ///< which `GxcCoef` sets to build, see `GxcSpin`
         const Purpose purpose_;
         Tvec sigma_jacobian_;
+        bool gs_sigma_fallback_used_ = false;
         // ================================== XC kernel Gradiants ====================================
         const ModulePW::PW_Basis& rho_basis_;
         const bool openshell_ = false;
@@ -268,7 +273,7 @@ namespace LR
         const ModulePW::PW_Basis& rho_basis, const UnitCell& ucell, const Charge& chg_gs,
         const Parallel_Grid& pgrid, const int nspin, const bool openshell, const int gxc_spin,
         const std::vector<std::string>& lr_init_xc_kernel);
-    /// Build immutable GS orbital-response coefficients without the LR HSE sigma floor.
+    /// Build immutable GS response from raw coefficients, retrying non-finite HSE with the LR floor.
     /// Uses the supplied GS functional, density and grid, requesting no third derivatives.
     std::shared_ptr<const KernelXC> build_gs_xc_kernel(const std::string& kernel_name,
         const ModulePW::PW_Basis& rho_basis, const UnitCell& ucell, const Charge& chg_gs,

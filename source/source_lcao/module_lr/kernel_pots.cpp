@@ -81,7 +81,7 @@ std::shared_ptr<PotHxcLR> prepare_gs_potential(const Input_para& input, const st
     // contribution to W and the force use the corresponding LR potential instead.
     const int gxc_gs = (!LR_Util::has_local_xc(xc_kernel) || !LR_Util::has_local_xc(xc_kernel_gs)) ? GX::NoGxc
         : ((nspin == 1) ? GX::Singlet : GX::BothSpins);
-    // HSE's sigma floor is an LR stabilization, absent from the SCF potential.
+    // HSE GS response starts raw and reports an approximate fallback only for non-finite coefficients.
     // Other matching functionals retain sharing when spin layouts and derivative orders agree.
     // Legacy GS/LR low-density cutoffs remain different; this fixes only the sigma-floor mismatch.
     const bool separate_hse_response = xc_kernel_gs == "hse";

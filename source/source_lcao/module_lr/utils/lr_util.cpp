@@ -7,14 +7,9 @@
 #include <stdexcept>
 #include "source_base/module_container/base/third_party/lapack.h"
 #include "source_base/module_external/scalapack_connector.h"
-namespace
-{
-// Existing LR HSE sigma floor in bohr^-8; shared by preparation and its Jacobian.
-constexpr double hse_sigma_floor() { return 1e-6; }
-}
-
 namespace LR_Util
 {
+    double hse_sigma_floor() { return 1e-6; }
     int spin_population_difference(const ModuleBase::matrix& wg, const int kpar, const int rank_in_pool)
     {   // only for nspin=2
         const int nk = wg.nr / 2;
