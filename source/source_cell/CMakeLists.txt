@@ -6,7 +6,8 @@ add_library(domain_decomposition OBJECT
   dom_core.cpp
   dom_ghost.cpp
   dom_migrate.cpp
-  dom_force.cpp)
+  dom_force.cpp
+  mdcell_adapter.cpp)
 
 add_library(
   cell OBJECT

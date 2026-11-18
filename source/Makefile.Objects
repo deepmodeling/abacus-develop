@@ -254,6 +254,7 @@ OBJS_CELL=atom_pseudo.o\
     cal_ux.o\
     mdcell_reader.o\
     mdcell.o\
+    mdcell_adapter.o\
     dom_core.o\
     dom_ghost.o\
     dom_migrate.o\

@@ -6,6 +6,7 @@
 #include "source_base/global_variable.h"
 #include "source_base/parallel_cell.h"
 #include "source_cell/mdcell_reader.h"
+#include "source_cell/mdcell_adapter.h"
 #include "source_cell/mdcell.h"
 #include "source_cell/dom_decomp.h"
 #include "source_io/module_parameter/parameter.h"
@@ -62,11 +63,13 @@ void prepare_mdcell(MDCell& mdcell, const Parameter& param_in, DomainDecompositi
     }
 
     const ModuleBase::CommunicationDomain comm_domain = ModuleBase::world_comm_domain();
-    mdcell = MDCellReader::read_stru(param_in.globalv.global_in_stru,
-                                     effective_replicate,
-                                     input.mdp.md_neighbor_skin / ModuleBase::BOHR_TO_A,
-                                     comm_domain,
-                                     decomp);
+    const double skin = input.mdp.md_neighbor_skin / ModuleBase::BOHR_TO_A;
+    MDCellAdapter::initialize_from_stru(mdcell,
+                                        decomp,
+                                        param_in.globalv.global_in_stru,
+                                        effective_replicate,
+                                        skin,
+                                        comm_domain);
     GlobalV::ofs_running << std::endl;
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "TOTAL ATOM NUMBER", mdcell.nat());
     GlobalV::ofs_running << std::endl;
@@ -75,30 +78,8 @@ void prepare_mdcell(MDCell& mdcell, const Parameter& param_in, DomainDecompositi
 void prepare_mdcell(MDCell& mdcell, UnitCell& ucell, DomainDecomposition& decomp)
 {
     const ModuleBase::CommunicationDomain comm_domain = ModuleBase::world_comm_domain();
-    decomp.init(comm_domain, ucell.latvec, ucell.lat0, 0.0, 0.0);
-    const std::vector<LocalAtom> owned_atoms = decomp.split_owned_atoms_from_ucell(ucell);
-    std::vector<std::string> type_labels;
-    std::vector<double> type_masses;
-    std::vector<std::int64_t> type_atom_counts;
-    for (int it = 0; it < ucell.ntype; ++it)
-    {
-        type_labels.push_back(ucell.atoms[it].label);
-        type_masses.push_back(ucell.atoms[it].mass);
-        type_atom_counts.push_back(ucell.atoms[it].na);
-    }
-    mdcell.initialize_from_owned_atoms(ucell.latvec,
-                                       ucell.GT,
-                                       ucell.lat0,
-                                       ucell.omega,
-                                       ucell.nat,
-                                       owned_atoms,
-                                       type_labels,
-                                       type_masses,
-                                       type_atom_counts,
-                                       0.0,
-                                       comm_domain);
+    MDCellAdapter::initialize_from_unitcell(mdcell, decomp, ucell, 0.0, comm_domain);
     mdcell.set_backing_unitcell(ucell);
-    mdcell.mutable_stru_meta() = unitcell::make_stru_meta(ucell);
 }
 
 void md_line(MDCell& mdcell,
