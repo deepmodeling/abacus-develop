@@ -494,6 +494,15 @@ std::string ReadInput::prepare_input(Parameter& param)
     {
         errors += "Invalid INPUT parameter 'out_stru': value 2 (CIF) is not supported for calculation = md; use 0 or 1.\n";
     }
+    // The CSR angular-momentum writer indexes the scalar real-harmonic basis.
+    // In nspin = 4 the spinor basis doubles nlocal and uses a different
+    // magnetic-quantum-number ordering, so only the spin-up block could be
+    // filled; reject the request before the calculation starts.
+    if (param.input.nspin == 4 && param.input.out_mat_l[0] != 0)
+    {
+        errors += "Invalid INPUT parameter 'out_mat_l': nspin = 4 is not supported because only the scalar "
+                  "(npol = 1) angular-momentum block can be written; set out_mat_l to 0.\n";
+    }
 
     // Snapshot typed effective values once for shared domain and dependency checks.
     InputValues values;

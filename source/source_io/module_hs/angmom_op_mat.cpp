@@ -452,9 +452,12 @@ void ModuleIO::Angmom_op::calculate(
     ModuleBase::TITLE("Angmom_op", "calculate");
     ModuleBase::timer::start("Angmom_op", "calculate");
 
-    // The CSR writer below covers the scalar (npol = 1) basis only. For
-    // nspin = 4 the orbital dimension is doubled by npol, so reject the
-    // request explicitly instead of writing a matrix with mismatched sizes.
+    // The CSR writer below indexes the scalar (npol = 1) real-harmonic basis.
+    // For nspin = 4 the spinor basis doubles nlocal and uses a different
+    // magnetic-quantum-number ordering, and L would have to be written as
+    // L (x) I_2; filling only the scalar block would silently halve any
+    // contraction with DM(R). This combination is rejected during INPUT
+    // validation; the check remains here as a defensive guard.
     const int npol = ucell.get_npol();
     if (npol != 1)
     {

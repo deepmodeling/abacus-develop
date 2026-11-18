@@ -26,16 +26,16 @@ class InputDomainReaderTest : public testing::Test
         std::remove(written.c_str());
     }
 
-    void write_input(const std::string& values)
+    void write_input(const std::string& values, const std::string& basis = "pw")
     {
         std::ofstream out(filename);
-        out << "INPUT_PARAMETERS\nbasis_type pw\nntype 1\necutwfc 20\n" << values;
+        out << "INPUT_PARAMETERS\nbasis_type " << basis << "\nntype 1\necutwfc 20\n" << values;
         ASSERT_TRUE(out.good());
     }
 
-    std::string reject_input(const std::string& values)
+    std::string reject_input(const std::string& values, const std::string& basis = "pw")
     {
-        write_input(values);
+        write_input(values, basis);
         ModuleIO::ReadInput reader(0);
         reader.check_ntype_flag = false;
         Parameter input;
@@ -94,6 +94,13 @@ TEST_F(InputDomainReaderTest, ReportsIndependentErrorsTogether)
     const std::string output = reject_input("nspin 3\ngga_grad -1\n");
     EXPECT_NE(output.find("Invalid INPUT parameter 'nspin'"), std::string::npos);
     EXPECT_NE(output.find("Invalid INPUT parameter 'gga_grad'"), std::string::npos);
+}
+
+TEST_F(InputDomainReaderTest, RejectsAngularMomentumOutputWithSpinorBasis)
+{
+    const std::string output = reject_input("nspin 4\nout_mat_l 1\n", "lcao");
+    EXPECT_NE(output.find("Invalid INPUT parameter 'out_mat_l'"), std::string::npos);
+    EXPECT_NE(output.find("nspin = 4"), std::string::npos);
 }
 
 TEST_F(InputDomainReaderTest, RejectsMissingValuesIncludingLastLineWithoutNewline)
