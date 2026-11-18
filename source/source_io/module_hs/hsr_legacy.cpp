@@ -98,7 +98,8 @@ void ModuleIO::output_dHR(const int& istep,
 }
 
 template <typename TK>
-void ModuleIO::output_SR(Parallel_Orbitals& pv,
+void ModuleIO::output_SR(const UnitCell& ucell,
+                         Parallel_Orbitals& pv,
                          const Grid_Driver& grid,
                          hamilt::Hamilt<TK>* p_ham,
                          const std::string& SR_filename,
@@ -138,6 +139,14 @@ void ModuleIO::output_SR(Parallel_Orbitals& pv,
     options.reduce = true;
     options.calculation = calculation;
     options.out_app_flag = out_app_flag;
+    // The overlap matrix is spin-independent and uses the same
+    // self-describing CSR header as the other R-space outputs, so a
+    // calculation with S(R) enabled does not produce a second, compact
+    // header layout for the same file name.
+    options.csr_format = true;
+    options.ucell = &ucell;
+    options.nspin = 1;
+    options.ispin = 0;
 
     if (nspin == 4)
     {
@@ -214,7 +223,8 @@ void ModuleIO::output_TR(const int istep,
     return;
 }
 
-template void ModuleIO::output_SR<double>(Parallel_Orbitals& pv,
+template void ModuleIO::output_SR<double>(const UnitCell& ucell,
+                                          Parallel_Orbitals& pv,
                                           const Grid_Driver& grid,
                                           hamilt::Hamilt<double>* p_ham,
                                           const std::string& SR_filename,
@@ -227,7 +237,8 @@ template void ModuleIO::output_SR<double>(Parallel_Orbitals& pv,
                                           const int out_app_flag,
                                           const int nspin,
                                           std::ofstream& ofs_running);
-template void ModuleIO::output_SR<std::complex<double>>(Parallel_Orbitals& pv,
+template void ModuleIO::output_SR<std::complex<double>>(const UnitCell& ucell,
+                                                        Parallel_Orbitals& pv,
                                                         const Grid_Driver& grid,
                                                         hamilt::Hamilt<std::complex<double>>* p_ham,
                                                         const std::string& SR_filename,
