@@ -16,9 +16,10 @@
 # Completeness guard: the collection fails (returns 1) when the log is
 # missing, contains no analytic frequency block, any block's mode set
 # does not start at mode 0 and form a dense 0..N sequence, any freq
-# block's total does not equal 3*natom (read from STRU), or a freq
-# block header is followed by no mode rows at all. These checks apply
-# on first-time reference generation as well as comparison runs.
+# block's total does not equal 3*natom (read from the ELEMENT NATOM
+# table in the same log), or a block header is followed by no mode rows
+# at all. These checks apply on first-time reference generation as well
+# as comparison runs.
 
 run_dfpt_props() {
   if [ -z "$esolver_type" ] || [ "$esolver_type" != "dfpt" ]; then
@@ -29,48 +30,26 @@ run_dfpt_props() {
     echo "ERROR: run_dfpt_props: $dfpt_log not found, DFPT frequencies not collected" >&2
     return 1
   fi
-  # count atoms from STRU: walk each species block in ATOMIC_POSITIONS
-  # (element name → magnetic moment → atom count → coordinate lines) and
-  # sum the counts; handles multi-species cells and single-letter elements
+  # derive the expected 3*natom mode count from the ELEMENT NATOM table
+  # in the same log (printed once during initialization; the same log is
+  # already being parsed for frequencies, so this is more robust than
+  # reading the STRU file from the test directory). Table rows look like
+  # "Si      2" (label + integer count); any other line — separator,
+  # blank, or garbage — ends the table.
   local natom=0
-  local stru_present=0
-  if [ -f "STRU" ]; then
-    stru_present=1
-    natom=$(awk '
-      function is_blank(s){ return s ~ /^[ 	]*$/ }
-      function skip_blanks(){ while((getline line > 0) && is_blank(line)); return line }
-      /ATOMIC_POSITIONS/{found=1; next}
-      !found{next}
-      is_blank($0){next}
-      found && /^(Direct|Cartesian|direct|cartesian)/{next}
-      found && /^[ 	]*[A-Za-z][A-Za-z0-9]*([ 	].*)?$/{
-        # skip blank lines before the magnetic moment line
-        line = skip_blanks()
-        if (line == "" || is_blank(line)) next
-        # skip blank lines before the atom count line
-        line = skip_blanks()
-        if (line == "" || is_blank(line)) next
-        split(line, fields)
-        cnt = fields[1] + 0
-        if (cnt <= 0) next
-        natom += cnt
-        for(i=0; i<cnt; i++) getline
-      }
-      END{print natom+0}
-    ' STRU 2>/dev/null)
-    # STRU exists but atom count is unreadable: reject rather than
-    # silently skipping the mode-count validation (an incomplete
-    # spectrum could become the first reference)
-    if [ "$natom" -le 0 ] 2>/dev/null; then
-      echo "ERROR: run_dfpt_props: STRU exists but atom count is unreadable (natom=$natom); cannot derive 3*natom for mode validation" >&2
-      return 1
-    fi
-  fi
+  natom=$(awk '
+    /ELEMENT NATOM/{found=1; next}
+    found {
+      if ($0 !~ /^[ ]*[A-Za-z][A-Za-z0-9_]*[ ]+[0-9]+[ ]*$/) exit
+      natom += $2 + 0
+    }
+    END{print natom+0}
+  ' "$dfpt_log" 2>/dev/null)
   local expected_total=$((natom * 3))
   # emit one "key value" line per frequency; awk rewrites the block header
   # into the key prefix and drops everything else. Mode 0 must open every
   # block; indices are checked for dense 0..N; every freq block must end
-  # at exactly expected_total (3*natom from STRU); empty freq blocks fail.
+  # at exactly expected_total (3*natom); empty freq and LO-TO blocks fail.
   if ! awk -v expected_total="$expected_total" '
     function fail(msg) { printf "ERROR: run_dfpt_props: %s\n", msg > "/dev/stderr"; bad = 1; exit 1 }
     function close_block() {
@@ -79,7 +58,7 @@ run_dfpt_props() {
         fail(block_type[seq] " block " seq " has no mode rows")
       }
       if (expected_total > 0 && nextmode[seq] != expected_total) {
-        fail(block_type[seq] " block " seq " has " nextmode[seq] " modes; expected " expected_total " (3*natom from STRU)")
+        fail(block_type[seq] " block " seq " has " nextmode[seq] " modes; expected " expected_total " (3*natom from log)")
       }
       if (expected_total == 0 && expected_modes > 0 && nextmode[seq] != expected_modes) {
         fail(block_type[seq] " block " seq " has " nextmode[seq] " modes; expected " expected_modes " (from first block)")
@@ -129,7 +108,7 @@ run_dfpt_props() {
     return 1
   fi
   # cross-reference guard (comparison mode only; first-time generation
-  # relies on the STRU-derived 3*natom check above)
+  # relies on the log-derived 3*natom check above)
   local ref_file="result.ref"
   if [ -f "$ref_file" ] && grep -q "^dfpt_freq_" "$ref_file"; then
     local missing

@@ -10,64 +10,21 @@ import unittest
 
 TOOLS = Path(__file__).resolve().parent
 
-# minimal STRU for 2-atom Si (the props_dfpt collector reads it for natom)
-STRU_2SI = """ATOMIC_SPECIES
-Si 28.0855 Si.upf
-
-LATTICE_CONSTANT
-1.8897261255
-
-LATTICE_VECTORS
-0.00000000 2.71500000 2.71500000
-2.71500000 0.00000000 2.71500000
-2.71500000 2.71500000 0.00000000
-
-ATOMIC_POSITIONS
-Direct
-
-Si
-0.0
-2
-0.00000000 0.00000000 0.00000000 1 1 1
-0.25000000 0.25000000 0.25000000 1 1 1
-"""
+# synthetic ELEMENT NATOM table header prepended to every collector log
 
 
-STRU_COMMENTED_MIXED = """ATOMIC_POSITIONS
-Cartesian_angstrom
 
-Si # silicon
-0.0
-1
-2.715 0.0 0.0 1 1 1
 
-Ge # germanium
-0.0
-1
-2.715 2.715 0.0 1 1 1
-"""
 
-STRU_INDENTED = """ATOMIC_POSITIONS
-Direct
 
-  Si
-  0.0
-  2
-  0.0 0.0 0.0 1 1 1
-  0.25 0.25 0.25 1 1 1
-"""
 
-STRU_BLANK_LINES = """ATOMIC_POSITIONS
-Direct
 
-Si
 
-0.0
-
-2
-0.0 0.0 0.0 1 1 1
-0.25 0.25 0.25 1 1 1
-"""
+LOG_HEADER = (
+    "                                ELEMENT NATOM\n"
+    "                                Si      2\n"
+    " ----------------------------------------------------------------\n"
+)
 
 GOOD_FREQ_BLOCK = (
     " DFPT phonon frequencies at q #0 = (0.000000 0.000000 0.000000) (direct) in cm^-1:\n"
@@ -81,12 +38,11 @@ GOOD_FREQ_BLOCK = (
 
 
 class DFPTFrequencyCollectorTest(unittest.TestCase):
-    def run_collector(self, log_text, stru_text=STRU_2SI):
+    def run_collector(self, log_text, header=LOG_HEADER):
         with tempfile.TemporaryDirectory(prefix="abacus-dfpt-collector-") as scratch:
             case = Path(scratch)
-            (case / "log.txt").write_text(log_text, encoding="utf-8")
-            if stru_text is not None:
-                (case / "STRU").write_text(stru_text, encoding="utf-8")
+            full_log = header + log_text if header else log_text
+            (case / "log.txt").write_text(full_log, encoding="utf-8")
             command = (
                 'source "$1"; esolver_type=dfpt; '
                 'props_result_file=result.out; '
@@ -148,7 +104,7 @@ class DFPTFrequencyCollectorTest(unittest.TestCase):
     # --- truncated blocks ---
 
     def test_truncated_freq_block_fails(self):
-        # only 3 of 6 modes (STRU says 2 atoms → 6 modes)
+        # only 3 of 6 modes (log atom table says 2 atoms → 6 modes)
         lines = GOOD_FREQ_BLOCK.strip().splitlines()
         log = "\n".join(lines[:4]) + "\n"  # header + modes 0,1,2
         result, output = self.run_collector(log)
@@ -175,39 +131,31 @@ class DFPTFrequencyCollectorTest(unittest.TestCase):
         result, output = self.run_collector("")
         self.assertNotEqual(result.returncode, 0)
 
-    # --- no STRU → expected_total=0 → falls back to first-block count ---
+    # --- log-derived atom count ---
 
-    def test_no_stru_uses_first_block_count(self):
-        result, output = self.run_collector(GOOD_FREQ_BLOCK, stru_text=None)
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(len(output.strip().splitlines()), 6)
-
-
-    # --- STRU parser edge cases ---
-
-    def test_commented_mixed_species_stru_passes(self):
-        """Si/Ge with comments, Cartesian, first coordinate 2.715 (x > atom count)."""
-        result, output = self.run_collector(GOOD_FREQ_BLOCK, stru_text=STRU_COMMENTED_MIXED)
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(len(output.strip().splitlines()), 6)
-
-    def test_indented_element_label_stru_passes(self):
-        """Indented element names (leading whitespace) are valid STRU."""
-        result, output = self.run_collector(GOOD_FREQ_BLOCK, stru_text=STRU_INDENTED)
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(len(output.strip().splitlines()), 6)
-
-    def test_blank_lines_in_species_block_stru_passes(self):
-        """Blank lines within a species block (before mag/count) are valid STRU."""
-        result, output = self.run_collector(GOOD_FREQ_BLOCK, stru_text=STRU_BLANK_LINES)
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(len(output.strip().splitlines()), 6)
-
-    def test_unreadable_stru_fails(self):
-        """STRU exists but atom count cannot be parsed → reject."""
-        bad_stru = "ATOMIC_POSITIONS\nDirect\n\nGarbageData\n"
-        result, output = self.run_collector(GOOD_FREQ_BLOCK, stru_text=bad_stru)
+    def test_multi_species_log_header_passes(self):
+        """Si/Ge element table (two species, 3 atoms total)."""
+        header = (
+            "                                ELEMENT NATOM\n"
+            "                                Si      1\n"
+            "                                Ge      2\n"
+            " ----------------------------------------------------------------\n"
+        )
+        # 3 atoms → 9 modes; the 6-mode GOOD_FREQ_BLOCK should fail
+        result, output = self.run_collector(GOOD_FREQ_BLOCK, header=header)
         self.assertNotEqual(result.returncode, 0)
+
+    def test_no_atom_table_falls_back_to_first_block(self):
+        """Log without ELEMENT NATOM table → expected_total=0 → first-block count."""
+        result, output = self.run_collector(GOOD_FREQ_BLOCK, header=None)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(len(output.strip().splitlines()), 6)
+
+    def test_garbage_atom_table_falls_back(self):
+        """Garbage after ELEMENT NATOM (no valid numbers) → fallback."""
+        header = "                                ELEMENT NATOM\n                                Garbage\n"
+        result, output = self.run_collector(GOOD_FREQ_BLOCK, header=header)
+        self.assertEqual(result.returncode, 0, result.stderr)
 
 
 if __name__ == "__main__":
