@@ -4,13 +4,14 @@
 #endif
 #include "source_base/constants.h"
 #include "source_cell/unitcell.h"
-#include "source_esolver/esolver.h"
+#include "source_esolver/esolver_fp.h"
 #include "source_estate/module_pot/electrostatic_potential.h"
+#include "source_hamilt/module_vdw/vdw.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_io/module_parameter/input_parameter.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_relax/socket_constant_potential.h"
-#include "source_relax/socket_handlers.h"
+#include "source_relax/socket_driver.h"
 #include "source_relax/socket_utils.h"
 
 #include "gmock/gmock.h"
@@ -31,6 +32,29 @@
 #include <sys/un.h>
 #include <sys/wait.h>
 #include <unistd.h>
+
+// The socket fixture exercises the production FP type and its request slot.
+// Its electronic solver supplies its own numerical results, so no SCF setup is needed.
+ModuleESolver::ESolver_FP::ESolver_FP() = default;
+ModuleESolver::ESolver_FP::~ESolver_FP() = default;
+void ModuleESolver::ESolver_FP::before_all_runners(BaseCell&, const Input_para&) {}
+void ModuleESolver::ESolver_FP::after_all_runners(BaseCell&) {}
+void ModuleESolver::ESolver_FP::before_scf(UnitCell&, int) {}
+void ModuleESolver::ESolver_FP::after_scf(UnitCell&, int, bool) {}
+void ModuleESolver::ESolver_FP::iter_finish(UnitCell&, int, int&, bool&) {}
+Charge::Charge() = default;
+Charge::~Charge() = default;
+Structure_Factor::Structure_Factor() = default;
+Structure_Factor::~Structure_Factor() = default;
+pseudopot_cell_vl::pseudopot_cell_vl() = default;
+pseudopot_cell_vl::~pseudopot_cell_vl() = default;
+module_charge::Charge_Extra::Charge_Extra() = default;
+surchem::surchem() = default;
+surchem::~surchem() = default;
+void ModuleCell::ReciprocalGrid::renew(const int&) {}
+void K_Vectors::renew(const int&) {}
+void K_Vectors::reduce_by_symmetry(const UnitCell&, const ModuleSymmetry::Symmetry&, bool,
+                                   std::string&, bool&, int, std::ofstream&) {}
 
 int XC_Functional::func_type = 2;
 
@@ -221,10 +245,11 @@ class UnixSocketServer
     std::string path_;
 };
 
-class FakeESolver : public ModuleESolver::ESolver
+template <typename Solver>
+class FrameESolver : public Solver
 {
   public:
-    explicit FakeESolver(const bool converged) : converged_(converged)
+    explicit FrameESolver(const bool converged) : converged_(converged)
     {
     }
 
@@ -235,7 +260,6 @@ class FakeESolver : public ModuleESolver::ESolver
     void runner(BaseCell& cell, const int step) override
     {
         UnitCell& ucell = dynamic_cast<UnitCell&>(cell);
-        electronic_context_seen = electronic_step != nullptr;
         position_ = ucell.atoms[0].tau[0].x;
         this->conv_esolver = converged_ && step == 0;
     }
@@ -263,13 +287,13 @@ class FakeESolver : public ModuleESolver::ESolver
         stress(2, 2) = 2.0;
     }
 
-    bool electronic_context_seen = false;
-    elecstate::ElectronicStep* electronic_step = nullptr;
-
   private:
     double position_ = 0.0;
     bool converged_;
 };
+
+using OrdinaryESolver = FrameESolver<ModuleESolver::ESolver>;
+using FrameFPSolver = FrameESolver<ModuleESolver::ESolver_FP>;
 
 enum class ElectronicFailure
 {
@@ -280,10 +304,10 @@ enum class ElectronicFailure
     MissingSlot
 };
 
-class ControlledESolver : public FakeESolver
+class ControlledESolver : public FrameFPSolver
 {
   public:
-    explicit ControlledESolver(const ElectronicFailure failure) : FakeESolver(true), failure_(failure) {}
+    explicit ControlledESolver(const ElectronicFailure failure) : FrameFPSolver(true), failure_(failure) {}
 
     void runner(BaseCell& cell, const int step) override
     {
@@ -298,16 +322,16 @@ class ControlledESolver : public FakeESolver
             electronic_step->request_applied = true;
             ++control_count;
         }
-        FakeESolver::runner(cell, step);
+        FrameFPSolver::runner(cell, step);
         ++runner_count;
         conv_esolver = failure_ != ElectronicFailure::SecondFrame || step == 0;
     }
 
-    double cal_energy() override { return FakeESolver::cal_energy() + nelect; }
+    double cal_energy() override { return FrameFPSolver::cal_energy() + nelect; }
 
     void cal_force(BaseCell& cell, ModuleBase::matrix& force) override
     {
-        FakeESolver::cal_force(cell, force);
+        FrameFPSolver::cal_force(cell, force);
         elecstate::ElectronicStep* electronic = electronic_step;
         if (!electronic || !electronic->request_applied || electronic->result_ready || !conv_esolver)
         {
@@ -574,15 +598,16 @@ DriverResult run_driver_frame(const bool converged,
     return run_driver_session([&]() {
         UnitCell cell;
         initialize_one_atom_cell(cell);
-        Input_para input;
+        Parameter parameters;
+        Input_para& input = TestParameters::input(parameters);
         input.cal_force = cal_force;
         input.cal_stress = cal_stress;
-        FakeESolver solver(converged);
+        OrdinaryESolver solver(converged);
         std::ofstream running("/dev/null");
-        SocketHandlers::run_socket_driver(&solver, cell, input, nullptr, nullptr, nullptr, running);
-        if (solver.electronic_context_seen || solver.electronic_step != nullptr)
+        Socket_Driver driver;
+        if (!driver.socket_driver(&solver, cell, parameters, input, parameters.globalv, running))
         {
-            throw std::runtime_error("ordinary evaluation acquired electronic request state");
+            throw std::runtime_error("ordinary socket driver reported no completed frame");
         }
     }, [&](const int fd) {
         send_fixed_cell_frame(fd);
@@ -609,12 +634,16 @@ DriverResult run_constant_potential_session(const std::function<void(int)>& peer
         input.nspin = 1;
         input.nbands = 8;
         input.smearing_method = "gaussian";
-        ControlledESolver solver(failure);
         std::ofstream running("/dev/null");
-        elecstate::ElectronicStep** slot = &solver.electronic_step;
-        if (failure == ElectronicFailure::MissingSlot) { slot = nullptr; }
-        SocketHandlers::run_socket_driver(&solver, cell, parameters.inp, &parameters,
-                                         &parameters.globalv, slot, running);
+        Socket_Driver driver;
+        if (failure == ElectronicFailure::MissingSlot)
+        {
+            OrdinaryESolver solver(true);
+            driver.socket_driver(&solver, cell, parameters, input, parameters.globalv, running);
+            return;
+        }
+        ControlledESolver solver(failure);
+        driver.socket_driver(&solver, cell, parameters, input, parameters.globalv, running);
         if (solver.electronic_step != nullptr)
         {
             throw std::runtime_error("completed electronic request remained bound to the solver");
@@ -655,7 +684,7 @@ TEST(SocketDriverTest, CrossingUsesRequestedDisplacementConvention)
 
 TEST(SocketElectronicFrameTest, BindingIsScopedAndRejectsNestedRequests)
 {
-    FakeESolver solver(true);
+    FrameFPSolver solver(true);
     elecstate::ElectronicStep first;
     elecstate::ElectronicStep second;
     EXPECT_EQ(nullptr, solver.electronic_step);
@@ -686,8 +715,8 @@ TEST(SocketElectronicFrameTest, MissingSlotOnlyAcceptsOrdinaryEvaluation)
 
 TEST(SocketElectronicFrameTest, SeparateSolversDoNotShareRequestState)
 {
-    FakeESolver first_solver(true);
-    FakeESolver second_solver(true);
+    FrameFPSolver first_solver(true);
+    FrameFPSolver second_solver(true);
     elecstate::ElectronicStep first;
     elecstate::ElectronicStep second;
     first.control.nelect = 8.25;
@@ -825,7 +854,7 @@ TEST(SocketDriverTest, FixedOccupationsAcceptFullBandsInEachRequestedChannel)
     }
 }
 
-TEST(SocketDriverTest, ConstantPotentialFramesApplyChargeAndReturnWindowFeedback)
+TEST(SocketDriverTest, PublicDriverBindsFPRequestAndReturnsWindowFeedback)
 {
     const DriverResult result = run_constant_potential_session([](const int fd) {
         const double counts[] = {8.25, 7.75};
@@ -867,7 +896,7 @@ TEST(SocketDriverTest, ConstantPotentialFramesApplyChargeAndReturnWindowFeedback
     EXPECT_THAT(result.diagnostic, testing::HasSubstr("CP calls: 2 controls, 2 runners, 2 collections"));
 }
 
-TEST(SocketDriverTest, ConstantPotentialInitRequiresElectronicSlot)
+TEST(SocketDriverTest, PublicDriverRejectsConstantPotentialInitForOrdinarySolver)
 {
     const DriverResult result = run_constant_potential_session([](const int fd) {
         EXPECT_EQ("", read_header_or_close(fd));
@@ -1014,7 +1043,7 @@ TEST(SocketDriverTest, NonconvergedFrameIsPublishedWithMetadata)
     EXPECT_THAT(response.extra, testing::HasSubstr("\"scf_converged\":false"));
 }
 
-TEST(SocketDriverTest, EnergyOnlyFrameMarksForceAndStressAbsent)
+TEST(SocketDriverTest, PublicDriverReturnsOrdinaryEnergyOnlyFrame)
 {
     ForceResponse response;
     const DriverResult result = run_driver_frame(true, false, false, [&](const int fd) {
@@ -1024,6 +1053,8 @@ TEST(SocketDriverTest, EnergyOnlyFrameMarksForceAndStressAbsent)
 
     EXPECT_EQ("FORCEREADY", response.header);
     EXPECT_EQ(0, result.exit_code);
+    EXPECT_DOUBLE_EQ(2.0, response.energy_hartree);
+    EXPECT_THAT(response.extra, testing::Not(testing::HasSubstr("\"nelect\"")));
     EXPECT_THAT(response.extra, testing::HasSubstr("\"present\":[\"energy\"]"));
     EXPECT_THAT(response.extra, testing::Not(testing::HasSubstr("\"forces\"")));
     EXPECT_THAT(response.extra, testing::Not(testing::HasSubstr("\"stress\"")));
