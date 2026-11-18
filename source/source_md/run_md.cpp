@@ -5,7 +5,6 @@
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
 #include "source_base/parallel_cell.h"
-#include "source_cell/mdcell_reader.h"
 #include "source_cell/mdcell_adapter.h"
 #include "source_cell/mdcell.h"
 #include "source_cell/dom_decomp.h"

@@ -113,7 +113,6 @@ addtest(
           ../msst.cpp
           ../nhchain.cpp
           ../verlet.cpp
-          ../../source_cell/mdcell_reader.cpp
           ../../source_cell/magnetism.cpp
           ${md_run_json_sources}
           ${depend_files})
