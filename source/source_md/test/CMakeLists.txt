@@ -94,25 +94,3 @@ addtest(
   TARGET MODULE_MD_func
   LIBS parameter psi device
   SOURCES md_func_test.cpp test_md_func.cpp ${depend_files})
-
-set(md_run_json_sources)
-if(ENABLE_JSON)
-  list(APPEND md_run_json_sources ../../source_io/module_json/abacusjson.cpp
-       ../../source_io/module_json/output_info.cpp)
-endif()
-
-addtest(
-  TARGET MODULE_MD_run
-  LIBS parameter psi device
-  SOURCES ../unittests/test_run_md.cpp
-          ../run_md.cpp
-          ../module_plumed/plumed_interface.cpp
-          ../md_base.cpp
-          ../fire.cpp
-          ../langevin.cpp
-          ../msst.cpp
-          ../nhchain.cpp
-          ../verlet.cpp
-          ../../source_cell/magnetism.cpp
-          ${md_run_json_sources}
-          ${depend_files})

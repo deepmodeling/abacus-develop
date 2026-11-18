@@ -30,24 +30,6 @@
 namespace Run_MD
 {
 
-bool is_cadence_step(const int current_step, const int freq)
-{
-    return freq > 0 && current_step % freq == 0;
-}
-
-bool is_frame_write_step(const int current_step,
-                         const int out_freq_ion,
-                         const int md_restartfreq,
-                         const bool out_stru)
-{
-    const int eff_output_freq = (out_freq_ion > 0) ? out_freq_ion : md_restartfreq;
-    const bool do_output_step = is_cadence_step(current_step, eff_output_freq);
-    const bool do_restart_step = is_cadence_step(current_step, md_restartfreq);
-    const bool want_output_frame = do_output_step && out_stru;
-    const bool want_checkpoint_frame = do_restart_step;
-    return want_output_frame || want_checkpoint_frame;
-}
-
 void md_line(MDCell& mdcell,
              ModuleESolver::ESolver* p_esolver,
              const Parameter& param_in,
@@ -271,12 +253,9 @@ void md_line(MDCell& mdcell,
         }
 
         const int current_step = mdrun->step_ + mdrun->step_rst_;
-        const bool do_output_step = is_cadence_step(current_step, eff_output_freq);
-        const bool do_restart_step = is_cadence_step(current_step, restart_freq);
-        const bool write_any_frame = is_frame_write_step(current_step,
-                                                         param_in.inp.out_freq_ion,
-                                                         restart_freq,
-                                                         param_in.inp.out_stru > 0);
+        const bool do_output_step = eff_output_freq > 0 && current_step % eff_output_freq == 0;
+        const bool do_restart_step = restart_freq > 0 && current_step % restart_freq == 0;
+        const bool write_any_frame = (do_output_step && param_in.inp.out_stru > 0) || do_restart_step;
 
         /// A checkpoint STRU frame must exist on every restart step so that the
         /// state written to Restart_md.txt (coordinates + thermostat state +
@@ -286,8 +265,7 @@ void md_line(MDCell& mdcell,
         /// per-step output only, not the restart-ready frame. When the same
         /// step fires both the output cadence and the restart cadence we write
         /// one frame shared by both paths, so the cumulative STRU is not
-        /// duplicated in out_app_flag=1 mode. See is_frame_write_step for the
-        /// formal predicate behind write_any_frame.
+        /// duplicated in out_app_flag=1 mode.
         if (write_any_frame)
         {
             if (mdcell.has_backing_unitcell())
