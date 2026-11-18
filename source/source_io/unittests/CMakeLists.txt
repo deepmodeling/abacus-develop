@@ -47,6 +47,9 @@ foreach(
         duplicate_string_eof
         invalid_value
         invalid_dependency
+        out_dmk_zero_precision
+        out_hsk_zero_precision
+        out_mat_tk_zero_precision
         valid)
   add_test(
     NAME MODULE_IO_input_error_mpi_${input_case}

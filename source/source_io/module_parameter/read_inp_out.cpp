@@ -245,6 +245,8 @@ The optional second integer controls the output precision. If not provided, the 
 
     The file names are fixed for out_app_flag = 0 (overwritten at every write) and out_app_flag = 1 (records appended). Only out_app_flag = 2 inserts a one-based geometry-step suffix before _nao (for example dmk1g1_nao.txt).
 
+    The optional second integer specifies the text precision (must be a positive integer); it defaults to 8.
+
     [NOTE] Version difference (develop vs 3.10-LTS):
     * In develop, out_dmk supports both gamma-only and multi-k-point density-matrix output.
     * In 3.10-LTS, the corresponding keyword is out_dm, and the output files are SPIN1_DM and SPIN2_DM, etc.)";
@@ -590,7 +592,7 @@ The LDOS is evaluated once after all ionic steps finish; the cube header records
         item.type = R"(Integer \[Integer\](optional))";
         item.description = R"(Output the Hamiltonian and overlap matrices in reciprocal space for each k-point into files in the directory OUT.${suffix}. The first integer selects the format:
 * 0: disabled;
-* 1: text output; the optional second integer controls precision and defaults to 8;
+* 1: text output; the optional second integer controls precision (must be a positive integer) and defaults to 8;
 * 2: binary output in the native ABACUS .dat format;
 * 3: NPZ output, which is not implemented for H(k)/S(k).
 
@@ -748,7 +750,7 @@ For binary output, each file uses the same basename as text output with a .dat s
         item.annotation = "output kinetic matrix of electrons T(k)";
         item.category = "Output information";
         item.type = R"(Boolean \[Integer\](optional))";
-        item.description = "Whether to print the kinetic-energy matrices T(k) for each k-point into OUT.${suffix}. Text output uses the same self-describing layout as out_hsk 1: an Ionic_Step header, the k-point and basis metadata, a user_defined_lattice block, and then the complete dense N x N matrix in row-major order, with four complex values for multi-k or eight real values for gamma-only per line. T(k) is spin-independent, so no spin suffix is used: gamma-only calculations write t_nao.txt, multi-k calculations write tk{k}_nao.txt, where {k} is the one-based k-point index, and out_app_flag = 2 inserts a g{step} index before _nao. The optional second parameter specifies the text precision."
+        item.description = "Whether to print the kinetic-energy matrices T(k) for each k-point into OUT.${suffix}. Text output uses the same self-describing layout as out_hsk 1: an Ionic_Step header, the k-point and basis metadata, a user_defined_lattice block, and then the complete dense N x N matrix in row-major order, with four complex values for multi-k or eight real values for gamma-only per line. T(k) is spin-independent, so no spin suffix is used: gamma-only calculations write t_nao.txt, multi-k calculations write tk{k}_nao.txt, where {k} is the one-based k-point index, and out_app_flag = 2 inserts a g{step} index before _nao. The optional second parameter specifies the text precision (must be a positive integer)."
                           "\n\n[NOTE] In the 3.10-LTS version, the file names are data-TR-sparse_SPIN0.csr, etc.";
         item.default_value = "False [8]";
         item.unit = "Ry";

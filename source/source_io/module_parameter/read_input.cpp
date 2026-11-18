@@ -504,6 +504,24 @@ std::string ReadInput::prepare_input(Parameter& param)
                   "(npol = 1) angular-momentum block can be written; set out_mat_l to 0.\n";
     }
 
+    // The dense text body writer asserts a positive precision. These checks run
+    // on rank 0 inside prepare_input and the accumulated errors are broadcast
+    // to every rank before aborting, so the message must be returned here
+    // rather than raised with WARNING_QUIT (which would leave the other ranks
+    // blocked in the broadcast).
+    if (param.input.out_dmk[1] <= 0)
+    {
+        errors += "Invalid INPUT parameter 'out_dmk': precision must be a positive integer.\n";
+    }
+    if (param.input.out_hsk[1] <= 0)
+    {
+        errors += "Invalid INPUT parameter 'out_hsk': precision must be a positive integer.\n";
+    }
+    if (param.input.out_mat_tk[1] <= 0)
+    {
+        errors += "Invalid INPUT parameter 'out_mat_tk': precision must be a positive integer.\n";
+    }
+
     // Snapshot typed effective values once for shared domain and dependency checks.
     InputValues values;
     for (const auto& entry : this->input_lists)
