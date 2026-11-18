@@ -2,6 +2,7 @@
 #define HS_SPARSE_IO_DETAIL_H
 
 #include "hs_sparse_io.h"
+#include "source_base/module_out/sparse_matrix.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/tool_quit.h"
 #include "source_cell/ucell_io.h"
@@ -139,24 +140,6 @@ inline std::string make_sparse_R_filename(const std::string& prefix,
 }
 
 /**
- * @brief Write the CSR-format description banner used by all R-space sparse
- *        text output (H(R)/S(R), DM(R), dH/dR, r(R), T(R), Vxc(R), L(R)).
- * @param ofs Output text stream.
- */
-inline void write_csr_banner(std::ofstream& ofs)
-{
-    ofs << " #----------------------------------------------------------------------#" << std::endl;
-    ofs << " #                               CSR Format                             #" << std::endl;
-    ofs << " # The outer loop corresponds to the number of Bravais lattice vectors. #" << std::endl;
-    ofs << " # The first line contains the index of the Bravais lattice vector      #" << std::endl;
-    ofs << " # (Rx, Ry, Rz), followed by the number of non-zero elements.           #" << std::endl;
-    ofs << " # The subsequent lines consist of three blocks of data, which are      #" << std::endl;
-    ofs << " # values, column indices, row pointers.                                #" << std::endl;
-    ofs << " #----------------------------------------------------------------------#" << std::endl;
-    ofs << std::endl;
-}
-
-/**
  * @brief Metadata shared by every self-describing CSR text writer.
  * @details Callers set all fields explicitly so a new output type cannot
  *          silently inherit the wrong spin or cell metadata.
@@ -232,7 +215,7 @@ inline void write_csr_text_header(std::ofstream& ofs, const CsrTextHeader& heade
 
     if (header.write_banner)
     {
-        write_csr_banner(ofs);
+        ModuleIO::write_csr_banner(ofs);
     }
 }
 
