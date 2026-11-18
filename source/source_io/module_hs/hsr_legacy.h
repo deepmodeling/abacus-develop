@@ -76,15 +76,14 @@ void output_SR(const UnitCell& ucell,
                Parallel_Orbitals& pv,
                const Grid_Driver& grid,
                hamilt::Hamilt<TK>* p_ham,
-               const std::string& SR_filename,
                const bool& binary,
                const double& sparse_threshold,
                const int precision,
-               const std::string& global_out_dir,
                const std::string& global_matrix_dir,
                const std::string& calculation,
                const int out_app_flag,
                const int nspin,
+               const int istep,
                std::ofstream& ofs_running);
 
 } // namespace ModuleIO

@@ -167,13 +167,14 @@ void ModuleIO::save_dH_sparse(const int& istep,
             {
                 spin_suffix = "s" + std::to_string(ispin + 1);
             }
-            comp.fname[ispin] << global_matrix_dir
-                              << "d" << fileflag << "r" << comp.axis << spin_suffix;
-            if (include_step)
-            {
-                comp.fname[ispin] << "g" << (istep + 1);
-            }
-            comp.fname[ispin] << "_nao.csr";
+            const std::string axis_token(1, comp.axis);
+            const std::string prefix = "d" + fileflag + "r" + axis_token;
+            const std::string name = ModuleIO::detail::make_sparse_R_filename(prefix,
+                                                                             spin_suffix,
+                                                                             include_step,
+                                                                             istep,
+                                                                             ".csr");
+            comp.fname[ispin].str(global_matrix_dir + name);
         }
     }
 

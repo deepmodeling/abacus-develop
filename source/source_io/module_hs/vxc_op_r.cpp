@@ -3,6 +3,7 @@
 #include "source_io/module_output/write_notice.h"
 
 #include "source_io/module_hs/hs_sparse_io.h"
+#include "source_io/module_hs/hs_sparse_io_detail.h"
 #include "source_base/module_out/filename.h"
 
 namespace ModuleIO
@@ -124,7 +125,9 @@ void write_Vxc_R(const int nspin,
     for (int is = 0; is < nspin0; ++is)
     {
         std::set<Abfs::Vector3_Order<int>> all_R_coor = sparse_format::get_R_range(vxcs_R_ao[is]);
-        const std::string filename = "vxcrs" + std::to_string(is + 1) + "_nao.csr";
+        const std::string spin_suffix = "s" + std::to_string(is + 1);
+        const std::string filename
+            = ModuleIO::detail::make_sparse_R_filename("vxcr", spin_suffix, false, -1, ".csr");
         ModuleIO::SparseWriteOptions options;
         options.filename = global_out_dir + filename;
         options.label = "Vxc";

@@ -208,7 +208,6 @@ void ESolver_GetS::runner(BaseCell& basecell, const int istep)
         }
     }
 
-    const std::string fn = PARAM.globalv.global_out_dir + "sr_nao.csr";
     const std::string global_matrix_dir = PARAM.globalv.global_matrix_dir;
 
     auto* hamilt_ptr = static_cast<hamilt::Hamilt<std::complex<double>>*>(this->p_hamilt);
@@ -219,15 +218,14 @@ void ESolver_GetS::runner(BaseCell& basecell, const int istep)
                         pv,
                         gd,
                         hamilt_ptr,
-                        fn,
                         binary,
                         sparse_threshold,
                         precision,
-                        PARAM.globalv.global_out_dir,
                         global_matrix_dir,
                         PARAM.inp.calculation,
                         PARAM.inp.out_app_flag,
                         PARAM.inp.nspin,
+                        istep,
                         GlobalV::ofs_running);
 
     if (this->inp_->out_mat_r[0])

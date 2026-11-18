@@ -11,28 +11,18 @@ namespace ModuleIO
 {
 std::string dmr_gen_fname(const int out_type, const int ispin, const bool numbered, const int istep)
 {
-    std::string fname = "dmr.csr";
+    const std::string spin_suffix = "s" + std::to_string(ispin + 1);
     if (out_type == 1)
     {
-        if (numbered && istep >= 0)
-        {
-            // spa stands for sparse
-            fname = "dmrs" + std::to_string(ispin+1) + "g" + std::to_string(istep + 1) + "_nao.csr";
-        }
-        else
-        {
-            fname = "dmrs" + std::to_string(ispin+1) + "_nao.csr";
-        }
+        // spa stands for sparse
+        return detail::make_sparse_R_filename("dmr", spin_suffix, numbered, istep, ".csr");
     }
     else if (out_type == 2)
     {
-        fname = "dmrs" + std::to_string(ispin+1) + "_nao.npz";
+        return detail::make_sparse_R_filename("dmr", spin_suffix, false, istep, ".npz");
     }
-    else
-    {
-        ModuleBase::WARNING("write_dmr", "the output type of density matrix DM(R) should be csr or npz.");
-    }
-    return fname;
+    ModuleBase::WARNING("write_dmr", "the output type of density matrix DM(R) should be csr or npz.");
+    return "dmr.csr";
 }
 
 void write_dmr_csr(std::string& fname,

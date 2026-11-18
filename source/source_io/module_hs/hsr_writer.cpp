@@ -36,14 +36,8 @@ std::string ModuleIO::hsr_gen_fname(const std::string& prefix,
                                      const int out_type)
 {
     const std::string extension = out_type == 2 ? ".dat" : ".csr";
-    if (numbered && istep >= 0)
-    {
-        return prefix + std::to_string(ispin + 1) + "g" + std::to_string(istep + 1) + "_nao" + extension;
-    }
-    else
-    {
-        return prefix + std::to_string(ispin + 1) + "_nao" + extension;
-    }
+    const std::string spin_suffix = std::to_string(ispin + 1);
+    return detail::make_sparse_R_filename(prefix, spin_suffix, numbered, istep, extension);
 }
 
 std::string ModuleIO::sr_gen_fname(const bool numbered, const int istep)
@@ -54,11 +48,7 @@ std::string ModuleIO::sr_gen_fname(const bool numbered, const int istep)
 std::string ModuleIO::sr_gen_fname(const bool numbered, const int istep, const int out_type)
 {
     const std::string extension = out_type == 2 ? ".dat" : ".csr";
-    if (numbered && istep >= 0)
-    {
-        return "srg" + std::to_string(istep + 1) + "_nao" + extension;
-    }
-    return "sr_nao" + extension;
+    return detail::make_sparse_R_filename("sr", "", numbered, istep, extension);
 }
 
 std::string ModuleIO::dhr_gen_fname(const std::string& prefix,
@@ -66,13 +56,8 @@ std::string ModuleIO::dhr_gen_fname(const std::string& prefix,
                                      const bool numbered,
                                      const int istep)
 {
-    std::string fname = prefix + "rs" + std::to_string(ispin + 1);
-    if (numbered && istep >= 0)
-    {
-        fname += "g" + std::to_string(istep + 1);
-    }
-    fname += "_nao.csr";
-    return fname;
+    const std::string spin_suffix = "s" + std::to_string(ispin + 1);
+    return detail::make_sparse_R_filename(prefix + "r", spin_suffix, numbered, istep, ".csr");
 }
 
 std::string ModuleIO::dhk_gen_fname(const std::string& prefix,
@@ -81,17 +66,12 @@ std::string ModuleIO::dhk_gen_fname(const std::string& prefix,
                                      const bool numbered,
                                      const int istep)
 {
-    std::string fname = prefix;
+    std::string spin_suffix;
     if (nspin == 2)
     {
-        fname += "s" + std::to_string(ispin + 1);
+        spin_suffix = "s" + std::to_string(ispin + 1);
     }
-    if (numbered && istep >= 0)
-    {
-        fname += "g" + std::to_string(istep + 1);
-    }
-    fname += "_nao.txt";
-    return fname;
+    return detail::make_sparse_R_filename(prefix, spin_suffix, numbered, istep, ".txt");
 }
 
 template <typename TR>

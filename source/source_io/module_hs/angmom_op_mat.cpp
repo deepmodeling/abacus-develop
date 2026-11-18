@@ -14,6 +14,7 @@
 #include "source_cell/module_neighbor/sltk_atom_arrange.h"
 #include "source_io/module_hs/angmom_op_mat.h"
 #include "source_io/module_hs/hs_sparse_io.h"
+#include "source_io/module_hs/hs_sparse_io_detail.h"
 #include "source_io/module_output/write_notice.h"
 #include "source_base/parallel_common.h"
 #include "source_base/timer.h"
@@ -471,8 +472,7 @@ void ModuleIO::Angmom_op::calculate(
     ///        overwrites, mode 1 appends each written step); only mode 2
     ///        carries "g{istep+1}" (e.g., "g1") following the out_freq_ion
     ///        convention.
-    const std::string step_suffix = (istep >= 0 && out_app_flag == 2)
-        ? "g" + std::to_string(istep + 1) : "";
+    const bool numbered = (istep >= 0) && (out_app_flag == 2);
     const std::string dir = "xyz";
 
     for (char d : dir)
@@ -486,7 +486,13 @@ void ModuleIO::Angmom_op::calculate(
                                   ucell,
                                   d);
 
-        std::string fn = outdir + "l" + d + step_suffix + "_nao.csr";
+        const std::string prefix = std::string("l") + d;
+        const std::string name = ModuleIO::detail::make_sparse_R_filename(prefix,
+                                                                          "",
+                                                                          numbered,
+                                                                          istep,
+                                                                          ".csr");
+        std::string fn = outdir + name;
         ModuleIO::SparseWriteOptions options;
         options.filename = fn;
         options.label = std::string("L") + d;

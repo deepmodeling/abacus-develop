@@ -4,6 +4,7 @@
 #include "source_base/global_variable.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
+#include "source_io/module_hs/hs_sparse_io_detail.h"
 #include "source_io/module_hs/lat_r_csr.h"
 #include "source_io/module_hs/pos_op_csr.h"
 #include "source_io/module_output/write_notice.h"
@@ -238,20 +239,16 @@ void PosOpWriter::out_lat_r(const UnitCell& ucell,
         {
             // Modes 0 and 1 keep the fixed filename (mode 0 overwrites, mode 1
             // appends all ionic steps); only mode 2 embeds the one-based step.
-            std::stringstream ssr;
-            if (step >= 0 && out_app_flag == 2)
-            {
-                ssr << global_matrix_dir << "rr" << axis_label[direction] << "g"
-                    << (step + 1) << "_nao.csr";
-            }
-            else
-            {
-                ssr << global_matrix_dir << "rr" << axis_label[direction] << "_nao.csr";
-            }
-
-            const std::string output_name = ssr.str();
-            const std::string payload_name = tem[direction].str();
             const std::string axis(1, axis_label[direction]);
+            const std::string prefix = "rr" + axis;
+            const bool numbered = (step >= 0) && (out_app_flag == 2);
+            const std::string name = ModuleIO::detail::make_sparse_R_filename(prefix,
+                                                                             "",
+                                                                             numbered,
+                                                                             step,
+                                                                             ".csr");
+            const std::string output_name = global_matrix_dir + name;
+            const std::string payload_name = tem[direction].str();
 
             ofs_tem[direction].close();
             ModuleIO::detail::assemble_csr(output_name,

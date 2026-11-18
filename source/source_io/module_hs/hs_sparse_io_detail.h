@@ -99,6 +99,46 @@ inline bool append_ionic_step(const int out_app_flag, const int istep)
 }
 
 /**
+ * @brief Build the "<prefix><spin suffix>[g<step>]_nao<ext>" name shared by
+ *        every R-space sparse output.
+ * @details Centralizing the suffix order keeps H(R), S(R), DM(R), dH/dR,
+ *          r(R), T(R), Vxc(R) and L(R) file names consistent and avoids one
+ *          writer drifting from the others.
+ * @param prefix Property prefix without spin or step, e.g. "dhrx", "rrx".
+ * @param spin_suffix Spin token appended to the prefix ("s1", "1") or empty
+ *        when the quantity is spin independent.
+ * @param numbered Whether to embed the one-based ionic step.
+ * @param istep Zero-based ionic step index.
+ * @param extension File extension including the leading dot.
+ * @return Assembled file name without any directory prefix.
+ */
+inline std::string make_sparse_R_filename(const std::string& prefix,
+                                          const std::string& spin_suffix,
+                                          const bool numbered,
+                                          const int istep,
+                                          const std::string& extension)
+{
+    if (prefix.empty())
+    {
+        ModuleBase::WARNING_QUIT("ModuleIO::detail::make_sparse_R_filename",
+                                 "File name prefix must not be empty.");
+    }
+    if (extension.empty() || extension[0] != '.')
+    {
+        ModuleBase::WARNING_QUIT("ModuleIO::detail::make_sparse_R_filename",
+                                 "File extension must start with a dot.");
+    }
+
+    std::string name = prefix + spin_suffix;
+    if (numbered && istep >= 0)
+    {
+        name += "g" + std::to_string(istep + 1);
+    }
+    name += "_nao" + extension;
+    return name;
+}
+
+/**
  * @brief Write the CSR-format description banner used by all R-space sparse
  *        text output (H(R)/S(R), DM(R), dH/dR, r(R), T(R), Vxc(R), L(R)).
  * @param ofs Output text stream.

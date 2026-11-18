@@ -7,6 +7,7 @@
 #include "source_lcao/spar_st.h"
 #include "dhs_sparse_writer.h"
 #include "hs_sparse_io.h"
+#include "hs_sparse_io_detail.h"
 #include "source_io/module_output/write_notice.h"
 
 #include <complex>
@@ -102,21 +103,29 @@ void ModuleIO::output_SR(const UnitCell& ucell,
                          Parallel_Orbitals& pv,
                          const Grid_Driver& grid,
                          hamilt::Hamilt<TK>* p_ham,
-                         const std::string& SR_filename,
                          const bool& binary,
                          const double& sparse_thr,
                          const int precision,
-                         const std::string& global_out_dir,
                          const std::string& global_matrix_dir,
                          const std::string& calculation,
                          const int out_app_flag,
                          const int nspin,
+                         const int istep,
                          std::ofstream& ofs_running)
 {
     ModuleBase::TITLE("ModuleIO", "output_SR");
     ModuleBase::timer::start("ModuleIO", "output_SR");
 
-    ModuleIO::write_matrix_notice(ofs_running, "S(R)", SR_filename);
+    // Mode 2 places S(R) in the matrix directory with the one-based step in the
+    // name; modes 0 and 1 keep the fixed name in the same directory.
+    const bool numbered = (out_app_flag == 2);
+    const std::string fname = global_matrix_dir
+                              + ModuleIO::detail::make_sparse_R_filename("sr",
+                                                                         "",
+                                                                         numbered,
+                                                                         istep,
+                                                                         ".csr");
+    ModuleIO::write_matrix_notice(ofs_running, "S(R)", fname);
 
     LCAO_HS_Arrays HS_Arrays;
 
@@ -128,9 +137,8 @@ void ModuleIO::output_SR(const UnitCell& ucell,
                           sparse_thr,
                           p_ham);
 
-    const int istep = 0;
     ModuleIO::SparseWriteOptions options;
-    options.filename = SR_filename;
+    options.filename = fname;
     options.label = "S";
     options.threshold = sparse_thr;
     options.binary = binary;
@@ -186,17 +194,15 @@ void ModuleIO::output_TR(const int istep,
     std::stringstream sst;
     // Modes 0 and 1 keep the fixed name (mode 0 overwrites, mode 1 appends all
     // ionic steps); only mode 2 embeds the one-based ionic step.
-    if (istep >= 0 && options.out_app_flag == 2)
-    {
-        // insert the 1-indexed ionic-step suffix right after the "tr" prefix,
-        // i.e. tr_nao.csr -> trg{step+1}_nao.csr (aligned with lxg/rrg naming)
-        const std::string base = TR_filename.substr(0, TR_filename.size() - std::string("_nao.csr").size());
-        sst << options.global_matrix_dir << base << "g" << (istep + 1) << "_nao.csr";
-    }
-    else
-    {
-        sst << options.global_matrix_dir << TR_filename;
-    }
+    const bool numbered = (istep >= 0) && (options.out_app_flag == 2);
+    const std::string base
+        = TR_filename.substr(0, TR_filename.size() - std::string("_nao.csr").size());
+    const std::string name = ModuleIO::detail::make_sparse_R_filename(base,
+                                                                     "",
+                                                                     numbered,
+                                                                     istep,
+                                                                     ".csr");
+    sst << options.global_matrix_dir << name;
     ModuleIO::write_matrix_notice(ofs_running, "T(R)", sst.str());
     sparse_format::cal_TR(ucell, pv, HS_Arrays, grid, two_center_bundle, orb, options.sparse_threshold);
     ModuleIO::SparseWriteOptions sparse_options;
@@ -227,27 +233,25 @@ template void ModuleIO::output_SR<double>(const UnitCell& ucell,
                                           Parallel_Orbitals& pv,
                                           const Grid_Driver& grid,
                                           hamilt::Hamilt<double>* p_ham,
-                                          const std::string& SR_filename,
                                           const bool& binary,
                                           const double& sparse_thr,
                                           const int precision,
-                                          const std::string& global_out_dir,
                                           const std::string& global_matrix_dir,
                                           const std::string& calculation,
                                           const int out_app_flag,
                                           const int nspin,
+                                          const int istep,
                                           std::ofstream& ofs_running);
 template void ModuleIO::output_SR<std::complex<double>>(const UnitCell& ucell,
                                                         Parallel_Orbitals& pv,
                                                         const Grid_Driver& grid,
                                                         hamilt::Hamilt<std::complex<double>>* p_ham,
-                                                        const std::string& SR_filename,
                                                         const bool& binary,
                                                         const double& sparse_thr,
                                                         const int precision,
-                                                        const std::string& global_out_dir,
                                                         const std::string& global_matrix_dir,
                                                         const std::string& calculation,
                                                         const int out_app_flag,
                                                         const int nspin,
+                                                        const int istep,
                                                         std::ofstream& ofs_running);
