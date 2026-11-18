@@ -13,8 +13,9 @@
 /**
  * @brief Non-owning two-dimensional matrix view.
  *
- * Host views use row-major storage. Distributed views borrow a frozen
- * block-cyclic distribution and use its local column-major layout.
+ * Host views use row-major storage. Views backed by a frozen block-cyclic
+ * distribution use its local column-major layout, including serial frozen
+ * distributions in non-MPI builds.
  */
 template <typename T>
 class Matrix2dView
@@ -49,7 +50,6 @@ class Matrix2dView
         assert(ncglb_ >= 0);
     }
 
-#ifdef __MPI
     Matrix2dView(T* data,
                  std::shared_ptr<const Parallel_Blkcyclic> dist)
         : data_(data),
@@ -67,9 +67,10 @@ class Matrix2dView
         nrloc_ = distribution.nrloc();
         ncloc_ = distribution.ncloc();
         lld_ = distribution.lld();
+#ifdef __MPI
         desc_ = distribution.desc();
-    }
 #endif
+    }
 
     T* data() const { return data_; }
     int nrglb() const { return nrglb_; }

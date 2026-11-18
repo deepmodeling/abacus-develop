@@ -6,6 +6,8 @@
 
 #ifdef __MPI
 #include "source_base/parallel_common.h"
+#else
+#include "source_base/matrix2d_view.h"
 #endif
 
 #include "gtest/gtest.h"
@@ -611,39 +613,66 @@ void check_gather_scatter(Matrix2d<T>& matrix)
 }
 
 template <typename T>
-std::size_t set_padding_sentinel(Matrix2d<T>& matrix, const T& sentinel)
+std::size_t expected_local_storage_size(const Matrix2d<T>& matrix)
 {
-    const int local_rows = matrix.nrloc();
-    const int local_cols = matrix.ncloc();
-    const std::size_t leading_dimension
-        = static_cast<std::size_t>(std::max(local_rows, 1));
+    const int lld = matrix.lld();
+    const int leading_dimension = std::max(lld, 1);
     const std::size_t column_major_elements
-        = leading_dimension * static_cast<std::size_t>(local_cols);
+        = static_cast<std::size_t>(leading_dimension)
+            * static_cast<std::size_t>(matrix.ncloc());
     const std::size_t row_major_elements
-        = static_cast<std::size_t>(local_rows)
-        * std::max(static_cast<std::size_t>(local_cols), leading_dimension);
-    const std::size_t storage_elements = std::max(column_major_elements, row_major_elements);
-    const std::size_t logical_elements
-        = static_cast<std::size_t>(local_rows) * static_cast<std::size_t>(local_cols);
-    for (std::size_t index = logical_elements; index < storage_elements; ++index)
-    {
-        matrix.data()[index] = sentinel;
-    }
-    return storage_elements - logical_elements;
+        = static_cast<std::size_t>(matrix.nrloc())
+            * static_cast<std::size_t>(matrix.ncloc());
+    const std::size_t logical_extent
+        = std::max(column_major_elements, row_major_elements);
+    const std::size_t empty_rank_minimum = 1;
+    return std::max(logical_extent, empty_rank_minimum);
 }
 
 template <typename T>
-void expect_padding_sentinel(const Matrix2d<T>& matrix,
-                             const std::size_t padding_elements,
-                             const T& sentinel)
+std::vector<std::size_t> set_padding_sentinel(Matrix2d<T>& matrix,
+                                               const T& sentinel)
 {
     const int local_rows = matrix.nrloc();
     const int local_cols = matrix.ncloc();
-    const std::size_t logical_elements
-        = static_cast<std::size_t>(local_rows) * static_cast<std::size_t>(local_cols);
-    for (std::size_t index = 0; index < padding_elements; ++index)
+    const int lld = matrix.lld();
+    const std::size_t leading_dimension = static_cast<std::size_t>(lld);
+    const std::size_t storage_elements = expected_local_storage_size(matrix);
+    std::vector<unsigned char> is_logical(storage_elements, 0);
+    std::vector<std::size_t> padding_indices;
+    for (int local_col = 0; local_col < local_cols; ++local_col)
     {
-        expect_scalar_near(matrix.data()[logical_elements + index], sentinel);
+        for (int local_row = 0; local_row < local_rows; ++local_row)
+        {
+            const std::size_t index
+                = static_cast<std::size_t>(local_col) * leading_dimension
+                    + static_cast<std::size_t>(local_row);
+            is_logical[index] = 1;
+        }
+    }
+    for (std::size_t index = 0; index < storage_elements; ++index)
+    {
+        if (is_logical[index] == 0)
+        {
+            matrix.data()[index] = sentinel;
+            padding_indices.push_back(index);
+        }
+    }
+    return padding_indices;
+}
+
+template <typename T>
+void expect_padding_sentinel(
+    const Matrix2d<T>& matrix,
+    const std::vector<std::size_t>& padding_indices,
+    const T& sentinel)
+{
+    for (std::size_t padding_index = 0;
+         padding_index < padding_indices.size();
+         ++padding_index)
+    {
+        const std::size_t index = padding_indices[padding_index];
+        expect_scalar_near(matrix.data()[index], sentinel);
     }
 }
 
@@ -1030,31 +1059,68 @@ TEST(Matrix2dTest, UnsupportedDistributedTypesThrow)
 {
     const std::vector<std::pair<int, int>> grids = available_process_grids();
     const std::pair<int, int>& grid = grids[0];
+    const int block_size = 3;
     {
-        Matrix2d<int> source(5, 3, grid.first, grid.second, 3, MPI_COMM_WORLD);
+        Matrix2d<int> source(5,
+                             3,
+                             grid.first,
+                             grid.second,
+                             block_size,
+                             MPI_COMM_WORLD);
         EXPECT_THROW(source.transpose(), std::invalid_argument);
     }
     {
-        Matrix2d<float> source(5, 3, grid.first, grid.second, 3, MPI_COMM_WORLD);
+        Matrix2d<float> source(5,
+                               3,
+                               grid.first,
+                               grid.second,
+                               block_size,
+                               MPI_COMM_WORLD);
         EXPECT_THROW(source.transpose(), std::invalid_argument);
     }
     {
-        Matrix2d<std::complex<float>> source(5, 3, grid.first, grid.second, 3, MPI_COMM_WORLD);
+        Matrix2d<std::complex<float>> source(5,
+                                             3,
+                                             grid.first,
+                                             grid.second,
+                                             block_size,
+                                             MPI_COMM_WORLD);
         EXPECT_THROW(source.transpose(), std::invalid_argument);
     }
     {
-        Matrix2d<int> left(5, 4, grid.first, grid.second, 3, MPI_COMM_WORLD);
-        Matrix2d<int> right(4, 6, grid.first, grid.second, 3, MPI_COMM_WORLD);
+        Matrix2d<int> left(5,
+                           4,
+                           grid.first,
+                           grid.second,
+                           block_size,
+                           MPI_COMM_WORLD);
+        const std::shared_ptr<const Parallel_Blkcyclic> right_distribution
+            = make_borrowed_distribution(4, 6, block_size, left.ictxt());
+        Matrix2d<int> right(right_distribution);
         EXPECT_THROW(left.matmul(right), std::invalid_argument);
     }
     {
-        Matrix2d<float> left(5, 4, grid.first, grid.second, 3, MPI_COMM_WORLD);
-        Matrix2d<float> right(4, 6, grid.first, grid.second, 3, MPI_COMM_WORLD);
+        Matrix2d<float> left(5,
+                             4,
+                             grid.first,
+                             grid.second,
+                             block_size,
+                             MPI_COMM_WORLD);
+        const std::shared_ptr<const Parallel_Blkcyclic> right_distribution
+            = make_borrowed_distribution(4, 6, block_size, left.ictxt());
+        Matrix2d<float> right(right_distribution);
         EXPECT_THROW(left.matmul(right), std::invalid_argument);
     }
     {
-        Matrix2d<std::complex<float>> left(5, 4, grid.first, grid.second, 3, MPI_COMM_WORLD);
-        Matrix2d<std::complex<float>> right(4, 6, grid.first, grid.second, 3, MPI_COMM_WORLD);
+        Matrix2d<std::complex<float>> left(5,
+                                           4,
+                                           grid.first,
+                                           grid.second,
+                                           block_size,
+                                           MPI_COMM_WORLD);
+        const std::shared_ptr<const Parallel_Blkcyclic> right_distribution
+            = make_borrowed_distribution(4, 6, block_size, left.ictxt());
+        Matrix2d<std::complex<float>> right(right_distribution);
         EXPECT_THROW(left.matmul(right), std::invalid_argument);
     }
 }
@@ -1155,6 +1221,63 @@ TEST(Matrix2dTest, SerialDistributionHandleUsesColumnMajorLayout)
     EXPECT_EQ(matrix.ictxt(), -1);
     check_distribution_layout(matrix, 3, 2);
 }
+
+TEST(Matrix2dTest, SerialDistributionTallSkinnyStorageUsesColumnExtent)
+{
+    const int global_rows = 1024;
+    const int global_cols = 1;
+    const std::shared_ptr<const Parallel_Blkcyclic> distribution
+        = make_frozen_distribution(global_rows, global_cols);
+    Matrix2d<double> matrix(distribution);
+
+    const std::size_t expected_storage_elements
+        = static_cast<std::size_t>(global_rows)
+            * static_cast<std::size_t>(global_cols);
+    const std::size_t row_major_elements
+        = static_cast<std::size_t>(matrix.nrloc())
+            * static_cast<std::size_t>(matrix.ncloc());
+    EXPECT_EQ(matrix.local_storage_size(), expected_storage_elements);
+    EXPECT_LE(row_major_elements, matrix.local_storage_size());
+}
+
+#ifndef __MPI
+TEST(Matrix2dTest, SerialDistributionViewMatchesColumnMajorStorageWithoutMpi)
+{
+    const std::shared_ptr<const Parallel_Blkcyclic> distribution
+        = make_frozen_distribution(3, 2);
+    Matrix2d<double> matrix(distribution);
+    fill_global_values(matrix);
+
+    Matrix2dView<double> matrix_view = matrix.view();
+    ASSERT_TRUE(matrix_view.is_distributed());
+    EXPECT_EQ(matrix_view.nrglb(), matrix.nrglb());
+    EXPECT_EQ(matrix_view.ncglb(), matrix.ncglb());
+    EXPECT_EQ(matrix_view.nrloc(), matrix.nrloc());
+    EXPECT_EQ(matrix_view.ncloc(), matrix.ncloc());
+    EXPECT_EQ(matrix_view.lld(), matrix.lld());
+    EXPECT_EQ(matrix_view.data(), matrix.data());
+    for (int local_row = 0; local_row < matrix.nrloc(); ++local_row)
+    {
+        for (int local_col = 0; local_col < matrix.ncloc(); ++local_col)
+        {
+            EXPECT_EQ(&matrix_view.at_local(local_row, local_col),
+                      &matrix.at_local(local_row, local_col));
+        }
+    }
+
+    const Matrix2d<double>& const_matrix = matrix;
+    Matrix2dView<const double> const_view = const_matrix.view();
+    EXPECT_EQ(const_view.data(), matrix.data());
+    for (int local_row = 0; local_row < matrix.nrloc(); ++local_row)
+    {
+        for (int local_col = 0; local_col < matrix.ncloc(); ++local_col)
+        {
+            EXPECT_EQ(&const_view.at_local(local_row, local_col),
+                      &matrix.at_local(local_row, local_col));
+        }
+    }
+}
+#endif
 
 TEST(Matrix2dTest, CopiesShareDistributionAndDeepCopyStorage)
 {
@@ -1274,6 +1397,17 @@ TEST(Matrix2dTest, HostComplexElementwiseAndReductions)
     check_reductions(matrix, other);
 }
 
+TEST(Matrix2dTest, MaxAbsWidensIntegerBeforeTakingAbsoluteValue)
+{
+    Matrix2d<int> matrix(1, 2);
+    matrix.at_local(0, 0) = std::numeric_limits<int>::min();
+    matrix.at_local(0, 1) = std::numeric_limits<int>::max();
+    const double int_min_as_double
+        = static_cast<double>(std::numeric_limits<int>::min());
+    const double expected = -int_min_as_double;
+    EXPECT_DOUBLE_EQ(matrix.max_abs(), expected);
+}
+
 TEST(Matrix2dTest, SerialDistributionGatherReturnsHostRowMajorCopy)
 {
     const std::shared_ptr<const Parallel_Blkcyclic> distribution
@@ -1341,41 +1475,75 @@ TEST(Matrix2dTest, DistributedComplexAcrossBlocksAndProcessGrids)
     }
 }
 
-TEST(Matrix2dTest, PaddingDoesNotAffectOperatorsOrGather)
+TEST(Matrix2dTest, TallSkinnyPaddingDoesNotAffectOperatorsOrGather)
 {
     const int number_of_ranks = Parallel_Common::comm_size(MPI_COMM_WORLD);
-    Matrix2d<double> matrix(9, 4, 1, number_of_ranks, 2, MPI_COMM_WORLD);
+    const int global_rows = 1025;
+    const int global_cols = 3;
+    const int block_size = 7;
+    Matrix2d<double> matrix(global_rows,
+                            global_cols,
+                            1,
+                            number_of_ranks,
+                            block_size,
+                            MPI_COMM_WORLD);
     Matrix2d<double> other(matrix.distribution());
     fill_global_values(matrix);
     fill_global_values(other, 10.0);
 
     const double sentinel = -98765.25;
-    const std::size_t padding_elements = set_padding_sentinel(matrix, sentinel);
-    ASSERT_GT(padding_elements, 0U);
+    const std::size_t expected_storage_elements
+        = expected_local_storage_size(matrix);
+    const std::size_t logical_elements
+        = static_cast<std::size_t>(matrix.nrloc())
+            * static_cast<std::size_t>(matrix.ncloc());
+    EXPECT_EQ(matrix.local_storage_size(), expected_storage_elements);
+    EXPECT_LE(logical_elements, matrix.local_storage_size());
+    const std::vector<std::size_t> padding_indices
+        = set_padding_sentinel(matrix, sentinel);
+    const std::size_t expected_padding_elements
+        = expected_storage_elements - logical_elements;
+    EXPECT_EQ(padding_indices.size(), expected_padding_elements);
+    if (number_of_ranks > 1)
+    {
+        if (matrix.icproc() == 0)
+        {
+            EXPECT_GT(matrix.ncloc(), 0);
+        }
+        else
+        {
+            EXPECT_EQ(matrix.ncloc(), 0);
+            EXPECT_EQ(matrix.local_storage_size(), 1U);
+            EXPECT_EQ(padding_indices.size(), 1U);
+        }
+    }
     set_padding_sentinel(other, 12345.5);
 
     matrix += other;
-    Matrix2d<double> expected = make_host_reference<double>(9, 4);
-    const Matrix2d<double> other_reference = make_host_reference<double>(9, 4, 10.0);
-    for (int row = 0; row < 9; ++row)
+    Matrix2d<double> expected
+        = make_host_reference<double>(global_rows, global_cols);
+    const Matrix2d<double> other_reference
+        = make_host_reference<double>(global_rows, global_cols, 10.0);
+    for (int row = 0; row < global_rows; ++row)
     {
-        for (int col = 0; col < 4; ++col)
+        for (int col = 0; col < global_cols; ++col)
         {
             expected.at_local(row, col) += other_reference.at_local(row, col);
         }
     }
     verify_global_matrix(matrix.gather(), expected);
-    expect_padding_sentinel(matrix, padding_elements, sentinel);
+    expect_padding_sentinel(matrix, padding_indices, sentinel);
 
     matrix.fill(2.0);
-    expect_padding_sentinel(matrix, padding_elements, sentinel);
+    expect_padding_sentinel(matrix, padding_indices, sentinel);
     matrix.scale(3.0);
-    expect_padding_sentinel(matrix, padding_elements, sentinel);
+    expect_padding_sentinel(matrix, padding_indices, sentinel);
 
-    const Matrix2d<double> scatter_reference = make_host_reference<double>(9, 4);
+    const Matrix2d<double> scatter_reference
+        = make_host_reference<double>(global_rows, global_cols);
     matrix.scatter(scatter_reference);
     verify_global_matrix(matrix.gather(), scatter_reference);
-    expect_padding_sentinel(matrix, padding_elements, sentinel);
+    expect_padding_sentinel(matrix, padding_indices, sentinel);
 }
 
 TEST(Matrix2dTest, RejectsIncompatibleDistributions)

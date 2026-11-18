@@ -157,24 +157,20 @@ void matmul(Matrix2dView<T> result,
 template <typename T>
 Matrix2dView<T> NDArray<T, 2>::view()
 {
-#ifdef __MPI
     if (dist_ != nullptr)
     {
         return Matrix2dView<T>(data(), dist_);
     }
-#endif
     return Matrix2dView<T>(data(), nrglb(), ncglb());
 }
 
 template <typename T>
 Matrix2dView<const T> NDArray<T, 2>::view() const
 {
-#ifdef __MPI
     if (dist_ != nullptr)
     {
         return Matrix2dView<const T>(data(), dist_);
     }
-#endif
     return Matrix2dView<const T>(data(), nrglb(), ncglb());
 }
 

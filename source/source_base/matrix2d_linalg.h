@@ -15,9 +15,18 @@ void solve(Matrix2dView<double> matrix,
 void solve(Matrix2dView<std::complex<double>> matrix,
            Matrix2dView<std::complex<double>> rhs);
 
+/**
+ * @brief Multiply two matrix views into result.
+ *
+ * The result view must not overlap either input view. The host implementation
+ * writes result while still reading left and right.
+ */
 void matmul(Matrix2dView<double> result,
             Matrix2dView<const double> left,
             Matrix2dView<const double> right);
+/**
+ * @copydoc matmul(Matrix2dView<double>,Matrix2dView<const double>,Matrix2dView<const double>)
+ */
 void matmul(Matrix2dView<std::complex<double>> result,
             Matrix2dView<const std::complex<double>> left,
             Matrix2dView<const std::complex<double>> right);

@@ -44,6 +44,19 @@ double absolute_square(const std::complex<T>& value)
     return real_value * real_value + imaginary_value * imaginary_value;
 }
 
+template <typename T>
+double absolute_value(const T& value)
+{
+    const double widened_value = static_cast<double>(value);
+    return std::abs(widened_value);
+}
+
+template <typename T>
+double absolute_value(const std::complex<T>& value)
+{
+    return static_cast<double>(std::abs(value));
+}
+
 template <typename Value, typename Element>
 void reduce_sum_over_processes(Value& value, const Matrix2d<Element>& matrix)
 {
@@ -238,23 +251,23 @@ double norm2(const Matrix2d<T>& matrix)
 template <typename T>
 double max_abs(const Matrix2d<T>& matrix)
 {
-    double value = 0.0;
+    double max_value = 0.0;
     const int nrloc = matrix.nrloc();
     const int ncloc = matrix.ncloc();
 #ifdef _OPENMP
-#pragma omp parallel for collapse(2) reduction(max : value) schedule(static)
+#pragma omp parallel for collapse(2) reduction(max : max_value) schedule(static)
 #endif
     for (int i = 0; i < nrloc; ++i)
     {
         for (int j = 0; j < ncloc; ++j)
         {
-            value = std::max(
-                value,
-                static_cast<double>(std::abs(matrix.at_local(i, j))));
+            const T& element = matrix.at_local(i, j);
+            const double element_abs = absolute_value(element);
+            max_value = std::max(max_value, element_abs);
         }
     }
-    reduce_max_over_processes(value, matrix);
-    return value;
+    reduce_max_over_processes(max_value, matrix);
+    return max_value;
 }
 
 template <typename T>

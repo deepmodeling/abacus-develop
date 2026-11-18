@@ -114,7 +114,25 @@ class NDArray<T, 2> final
     std::vector<T> diagonal() const;
 
     NDArray gather() const;
+
+    /**
+     * @brief Gather the distributed matrix on one rank.
+     *
+     * MPI collectives require every rank to call this function. When
+     * iproot == 0, ranks other than rank zero return a 0 x 0 host placeholder.
+     * Such placeholder results, or a root-only gathered matrix, must not be fed
+     * back to scatter() because scatter() requires a full host matrix on every
+     * rank.
+     */
     NDArray gather_on_root(const int iproot) const;
+
+    /**
+     * @brief Scatter a full host matrix into the frozen distribution.
+     *
+     * The MPI implementation is collective: every rank must call scatter()
+     * with a complete host matrix of the global shape. Only the payload passed
+     * by communicator rank zero is read; payloads on other ranks are ignored.
+     */
     void scatter(const NDArray& matglb);
 
     T& at_global(const int i, const int j)
@@ -239,6 +257,14 @@ class NDArray<T, 2> final
             ? static_cast<std::size_t>(nrloc_) * static_cast<std::size_t>(ncloc_)
             : dist_->size();
     }
+
+    /**
+     * @brief Number of T elements in the physical local storage buffer.
+     *
+     * This includes column-major padding and the minimum element reserved on
+     * ranks that own no local rows or columns.
+     */
+    std::size_t local_storage_size() const { return storage_.size(); }
     int nrproc() const { return dist_ == nullptr ? 1 : dist_->nrproc(); }
     int ncproc() const { return dist_ == nullptr ? 1 : dist_->ncproc(); }
     int irproc() const { return dist_ == nullptr ? 0 : dist_->irproc(); }
@@ -332,12 +358,22 @@ class NDArray<T, 2> final
         assert(nrloc_ >= 0);
         assert(ncloc_ >= 0);
 
-        const int lld = std::max(nrloc_, 1);
-        const int ncmax = std::max(ncloc_, lld);
-        const std::size_t ncm = static_cast<std::size_t>(lld) * static_cast<std::size_t>(ncloc_);
-        const std::size_t nrm = static_cast<std::size_t>(nrloc_) * static_cast<std::size_t>(ncmax);
-        const std::size_t n = std::max(ncm, nrm);
-        storage_.resize(n);
+        const int distribution_lld = dist_->lld();
+        const int lld = std::max(distribution_lld, 1);
+        const std::size_t leading_dimension = static_cast<std::size_t>(lld);
+        // The actual BLACS/LAPACK buffer is column-major. The row-major extent
+        // is kept in the maximum as a guard for local logical accesses.
+        const std::size_t column_major_elements
+            = leading_dimension * static_cast<std::size_t>(ncloc_);
+        const std::size_t row_major_elements
+            = static_cast<std::size_t>(nrloc_)
+                * static_cast<std::size_t>(ncloc_);
+        const std::size_t logical_extent
+            = std::max(column_major_elements, row_major_elements);
+        const std::size_t empty_rank_minimum = 1;
+        const std::size_t storage_elements
+            = std::max(logical_extent, empty_rank_minimum);
+        storage_.resize(storage_elements);
     }
 
     int nrloc_ = 0;
