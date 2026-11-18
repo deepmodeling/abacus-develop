@@ -16,8 +16,8 @@ from ase.data import chemical_symbols, atomic_masses
 ATOM_MASS = dict(zip(chemical_symbols, atomic_masses.tolist()))
 
 
-def energy_components(ener: Mapping[str, float]) -> Dict[str, float]:
-    """Return optional energy metadata from one ABACUS energy table.
+def _energy_without_entropy_metadata(ener: Mapping[str, float]) -> Dict[str, float]:
+    """Return the no-entropy energy as metadata when the log reports -TS.
 
     ``E_KohnSham`` already includes ``E_entropy(-TS)`` and remains the
     force-consistent ASE energy. The separate no-entropy value is metadata,
