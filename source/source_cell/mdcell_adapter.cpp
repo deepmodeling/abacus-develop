@@ -1,5 +1,7 @@
 #include "source_cell/mdcell_adapter.h"
 
+#include "source_base/constants.h"
+#include "source_base/global_function.h"
 #include "source_base/parallel_cell.h"
 #include "source_base/matrix.h"
 #include "source_cell/dom_decomp.h"
@@ -20,10 +22,30 @@ void initialize_from_stru(MDCell& mdcell,
                           DomainDecomposition& decomp,
                           const std::string& stru_file,
                           const std::vector<int>& cell_replica,
-                          double skin,
-                          const ModuleBase::CommunicationDomain& domain)
+                          bool md_restart,
+                          double neighbor_skin_angstrom,
+                          std::ofstream& running_log)
 {
-    mdcell = MDCellReader::read_stru(stru_file, cell_replica, skin, domain, decomp);
+    std::vector<int> effective_replicate = cell_replica;
+    if (md_restart)
+    {
+        effective_replicate = {1, 1, 1};
+    }
+    const double skin = neighbor_skin_angstrom / ModuleBase::BOHR_TO_A;
+    const ModuleBase::CommunicationDomain domain = ModuleBase::world_comm_domain();
+    mdcell = MDCellReader::read_stru(stru_file, effective_replicate, skin, domain, decomp);
+    running_log << std::endl;
+    ModuleBase::GlobalFunc::OUT(running_log, "TOTAL ATOM NUMBER", mdcell.nat());
+    running_log << std::endl;
+}
+
+void initialize_backed_from_unitcell(MDCell& mdcell,
+                                     DomainDecomposition& decomp,
+                                     UnitCell& ucell)
+{
+    const ModuleBase::CommunicationDomain domain = ModuleBase::world_comm_domain();
+    initialize_from_unitcell(mdcell, decomp, ucell, 0.0, domain);
+    mdcell.set_backing_unitcell(ucell);
 }
 
 void initialize_from_unitcell(MDCell& mdcell,

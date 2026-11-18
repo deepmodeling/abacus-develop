@@ -8,6 +8,66 @@
 
 #include "gtest/gtest.h"
 
+#include <chrono>
+#include <cstdio>
+#include <fstream>
+#include <string>
+#include <vector>
+
+TEST(MDCellAdapterTest, StruRestartDoesNotReplicateCheckpointAgain)
+{
+    const ModuleBase::CommunicationDomain domain = ModuleBase::world_comm_domain();
+    const long long stamp = std::chrono::steady_clock::now().time_since_epoch().count();
+    const int rank = domain.rank();
+    const std::string file_prefix = testing::TempDir() + "mdcell_adapter_" + std::to_string(rank)
+                                    + "_" + std::to_string(stamp);
+    const std::string stru_file = file_prefix + ".STRU";
+    const std::string log_file = file_prefix + ".log";
+    const char* const stru_path = stru_file.c_str();
+    const char* const log_path = log_file.c_str();
+    {
+        std::ofstream out(stru_path);
+        ASSERT_TRUE(out.good());
+        out << "ATOMIC_SPECIES\nHe 4.0026 auto auto\n\n"
+               "LATTICE_CONSTANT\n1.0\n\n"
+               "LATTICE_VECTORS\n4.0 0.0 0.0\n0.0 4.0 0.0\n0.0 0.0 4.0\n\n"
+               "ATOMIC_POSITIONS\nDirect\n\nHe\n0.0\n1\n"
+               "0.25 0.25 0.25 m 1 1 1\n";
+        ASSERT_TRUE(out.good());
+    }
+
+    std::ofstream running_log(log_path);
+    ASSERT_TRUE(running_log.good());
+    const std::vector<int> replica = {2, 1, 1};
+    MDCell fresh;
+    DomainDecomposition fresh_decomp;
+    MDCellAdapter::initialize_from_stru(fresh, fresh_decomp, stru_file, replica, false, 1.0, running_log);
+    EXPECT_EQ(fresh.nat(), 2);
+
+    MDCell restarted;
+    DomainDecomposition restart_decomp;
+    MDCellAdapter::initialize_from_stru(restarted, restart_decomp, stru_file, replica, true, 1.0, running_log);
+    EXPECT_EQ(restarted.nat(), 1);
+    running_log.close();
+
+    std::ifstream log_input(log_path);
+    ASSERT_TRUE(log_input.good());
+    std::string log_line;
+    int atom_count_lines = 0;
+    while (std::getline(log_input, log_line))
+    {
+        const bool is_atom_count = log_line.find("TOTAL ATOM NUMBER") != std::string::npos;
+        if (is_atom_count)
+        {
+            ++atom_count_lines;
+        }
+    }
+    EXPECT_EQ(atom_count_lines, 2);
+
+    std::remove(stru_path);
+    std::remove(log_path);
+}
+
 TEST(MDCellAdapterTest, InitializeFromUnitCellPreservesAtomsAndAllowsBacking)
 {
     UnitCell ucell;
@@ -47,7 +107,7 @@ TEST(MDCellAdapterTest, InitializeFromUnitCellPreservesAtomsAndAllowsBacking)
     EXPECT_EQ(mdcell.nat(), ucell.nat);
     EXPECT_EQ(mdcell.stru_meta().species.size(), 1U);
     EXPECT_FALSE(mdcell.has_backing_unitcell());
-    mdcell.set_backing_unitcell(ucell);
+    MDCellAdapter::initialize_backed_from_unitcell(mdcell, decomp, ucell);
     EXPECT_EQ(&mdcell.backing_unitcell(), &ucell);
     const ModuleBase::Vector3<double> frac(0.8, 0.25, 0.5);
     const int owner = decomp.owner_rank_from_frac(frac);
