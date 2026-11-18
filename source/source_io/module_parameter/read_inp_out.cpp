@@ -19,7 +19,7 @@ void ReadInput::item_output()
                           "\n\nThis parameter only controls how often a write happens, not how many files are kept: with out_app_flag = 0 each write overwrites the same fixed filename, with out_app_flag = 1 records are appended to one fixed filename, and with out_app_flag = 2 each written step gets its own g{step} file."
                           "\n\nIn molecular dynamics calculations, out_freq_ion controls the cadence of the structure frames written when out_stru is positive; when out_freq_ion is 0, md_restartfreq is used as the structure-output frequency. The MD restart file Restart_md.txt always follows md_restartfreq and is independent of out_freq_ion."
                           "\n\nFor DFT+U calculations with out_occ_mat = 1, a separate occupation-matrix file occ_matg{geom_step}.txt is created for every output ionic step. The converged (or final, if not converged) electronic step is always recorded in that file; when out_freq_elec is set smaller than scf_nmax, additional electronic steps are appended as separate sections, each labelled only with the electronic-step number."
-                          "\n\n[NOTE] In RT-TDDFT calculations, this parameter is inactive; output frequency is instead controlled by out_freq_td.";
+                          "\n\nIn RT-TDDFT calculations, this parameter counts completed electronic evolution steps (`STEP OF ELECTRON EVOLVE`) instead, because one ionic step contains `estep_per_md` electronic steps. To write once per ionic step, set it to `estep_per_md`.";
         item.default_value = "0";
         item.unit = "";
         item.reset_value = [](const Input_Item& item, Parameter& para) {
@@ -33,20 +33,17 @@ void ReadInput::item_output()
     }
     {
         Input_Item item("out_freq_td");
-        item.annotation = "print information every few completed electronic iterations in RT-TDDFT";
+        item.annotation = "deprecated alias for out_freq_ion in RT-TDDFT";
         item.category = "Real-Time TDDFT (Common)";
         item.type = "Integer";
-        item.description = "Controls the output interval in completed electronic evolution steps during RT-TDDFT calculations. When set to a positive integer `n`, detailed information (see `out_freq_ion`) is printed every `n` electron time-evolution steps (i.e., every `STEP OF ELECTRON EVOLVE`). For example, if you wish to output information once per ionic step, you should set `out_freq_td` equal to `estep_per_md`, since one ionic step corresponds to `estep_per_md` electronic evolution steps."
-                          "\n\n[NOTE] This parameter is only active in RT-TDDFT mode (`esolver_type = tddft`). It has no effect in ground-state calculations.";
+        item.description = "Deprecated alias for out_freq_ion in RT-TDDFT calculations. It counted completed electronic evolution steps and is now mapped to out_freq_ion when out_freq_ion is not set explicitly. If both parameters are present, out_freq_ion takes precedence."
+                          "\n\n[NOTE] This parameter is ignored outside RT-TDDFT mode (`esolver_type = tddft`).";
         item.default_value = "0";
         item.unit = "";
-        item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.out_freq_td <= 0)
-            {
-                para.input.out_freq_td = 0; // 0 means no output of info
-            }
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            para.input.out_freq_td_compat = std::stoi(item.str_values[0]);
         };
-        read_sync_int(input.out_freq_td);
+        add_int_bcast(input.out_freq_td_compat);
         this->add_item(item);
     }
     {

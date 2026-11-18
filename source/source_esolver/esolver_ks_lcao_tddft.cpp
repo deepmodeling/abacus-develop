@@ -354,7 +354,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::runner(BaseCell& basecell, const int ist
         // 3) after_scf
         //----------------------------------------------------------------
         this->after_scf(ucell, totstep, conv_esolver);
-        if (this->inp_->out_freq_td > 0 && totstep % this->inp_->out_freq_td == 0 && GlobalV::MY_RANK == 0)
+        if (this->inp_->out_freq_ion > 0 && totstep % this->inp_->out_freq_ion == 0 && GlobalV::MY_RANK == 0)
         {
             td_field_manager_->write_restart(PARAM.globalv.global_out_dir);
         }

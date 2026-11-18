@@ -125,7 +125,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     int istep_in = -1;
     int iter_in = -1;
     bool out_flag = false;
-    if (PARAM.inp.esolver_type != "tddft" && inp.out_freq_ion > 0) // default value of out_freq_ion is 0
+    if (inp.out_freq_ion > 0) // default value of out_freq_ion is 0
     {
         // The final ionic step is always written: even when it is off the
         // output cadence, the final geometry still has to be persisted. The
@@ -138,17 +138,9 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
             out_flag = true;
         }
     }
-    else if (PARAM.inp.esolver_type == "tddft" && inp.out_freq_td > 0) // default value of out_freq_td is 0
-    {
-        if (istep % inp.out_freq_td == 0)
-        {
-            istep_in = istep;
-            out_flag = true;
-        }
-    }
     // With out_freq_ion == 0 every converged SCF is written; the final step is
     // added as a fallback for a final SCF that neither converged nor reached
-    // scf_nmax.
+    // scf_nmax. In RT-TDDFT istep is the cumulative electronic evolution step.
     else if (conv_esolver || scf_nmax_flag || last_ion_step) // mohan add scf_nmax_flag on 20250921
     {
         out_flag = true;

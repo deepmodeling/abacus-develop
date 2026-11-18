@@ -43,7 +43,7 @@ void ModuleIO::ctrl_iter_pw(const int istep,
     int istep_in = -1;
     int iter_in = -1;
     bool out_wfc_flag = false;
-    const int output_frequency = inp.esolver_type == "tddft" ? inp.out_freq_td : inp.out_freq_ion;
+    const int output_frequency = inp.out_freq_ion;
     if (output_frequency > 0)
     {
         if (istep % output_frequency == 0)
@@ -125,7 +125,7 @@ void ModuleIO::ctrl_scf_pw(const int istep,
     ModuleBase::TITLE("ModuleIO", "ctrl_scf_pw");
     ModuleBase::timer::start("ModuleIO", "ctrl_scf_pw");
 
-    const int output_frequency = inp.esolver_type == "tddft" ? inp.out_freq_td : inp.out_freq_ion;
+    const int output_frequency = inp.out_freq_ion;
     const bool selected_step = output_frequency == 0 || (output_frequency > 0 && istep % output_frequency == 0);
     const bool output_td_state = inp.esolver_type != "tddft" || selected_step;
 

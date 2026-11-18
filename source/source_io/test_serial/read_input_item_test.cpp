@@ -1511,6 +1511,49 @@ TEST_F(InputTest, OutEbandLegacyAlias)
     }
 }
 
+TEST_F(InputTest, TdOutputFrequencyLegacyAlias)
+{
+    {
+        // In RT-TDDFT the legacy key is forwarded to out_freq_ion unchanged.
+        ModuleIO::ReadInput readinput(0);
+        Parameter param;
+        TestParameters::input(param).esolver_type = "tddft";
+        auto legacy = find_label("out_freq_td", readinput.input_lists);
+        legacy->second.str_values = {"5"};
+        legacy->second.read_value(legacy->second, param);
+
+        readinput.normalize_td_output_frequency(param);
+        EXPECT_EQ(TestParameters::input(param).out_freq_ion, 5);
+    }
+    {
+        // The canonical key wins when both are present.
+        ModuleIO::ReadInput readinput(0);
+        Parameter param;
+        TestParameters::input(param).esolver_type = "tddft";
+        auto primary = find_label("out_freq_ion", readinput.input_lists);
+        auto legacy = find_label("out_freq_td", readinput.input_lists);
+        primary->second.str_values = {"2"};
+        legacy->second.str_values = {"5"};
+        primary->second.read_value(primary->second, param);
+        legacy->second.read_value(legacy->second, param);
+
+        readinput.normalize_td_output_frequency(param);
+        EXPECT_EQ(TestParameters::input(param).out_freq_ion, 2);
+    }
+    {
+        // Outside RT-TDDFT the legacy key has no effect.
+        ModuleIO::ReadInput readinput(0);
+        Parameter param;
+        TestParameters::input(param).esolver_type = "ksdft";
+        auto legacy = find_label("out_freq_td", readinput.input_lists);
+        legacy->second.str_values = {"5"};
+        legacy->second.read_value(legacy->second, param);
+
+        readinput.normalize_td_output_frequency(param);
+        EXPECT_EQ(TestParameters::input(param).out_freq_ion, 0);
+    }
+}
+
 TEST_F(InputTest, HsOutputAliases)
 {
     {

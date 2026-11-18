@@ -43,7 +43,7 @@ void ctrl_output_fp(UnitCell& ucell,
     const std::string global_elf_dir = PARAM.globalv.global_elf_dir;
     const std::string global_dip_dir = PARAM.globalv.global_dip_dir;
 
-    const int output_frequency = inp.esolver_type == "tddft" ? inp.out_freq_td : inp.out_freq_ion;
+    const int output_frequency = inp.out_freq_ion;
     // Print the global electronic step for TDDFT and the ionic step otherwise.
     int istep_in = -1;
     if (output_frequency > 0)

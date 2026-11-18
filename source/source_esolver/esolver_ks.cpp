@@ -514,8 +514,9 @@ void ESolver_KS::after_scf(UnitCell& ucell, const int istep, const bool conv_eso
     ESolver_FP::after_scf(ucell, istep, conv_esolver);
 
     // 3) write eigenvalues and occupations to eig_occ.txt
-    // Follow out_freq_ion so the snapshot rhythm matches the other per-step
-    // outputs; a non-positive frequency keeps the historical every-step write.
+    // In RT-TDDFT istep is the cumulative electronic evolution step, so
+    // out_freq_ion counts electronic steps there and ionic steps otherwise.
+    // A non-positive frequency keeps the historical every-step write.
     const int out_freq_ion = this->inp_->out_freq_ion;
     const bool write_step_outputs = (out_freq_ion <= 0) || (istep % out_freq_ion == 0);
     if (write_step_outputs)

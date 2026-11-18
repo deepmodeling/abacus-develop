@@ -485,6 +485,7 @@ std::string ReadInput::prepare_input(Parameter& param)
     this->normalize_hs_output_options(param);
     this->normalize_occ_mat_options(param);
     this->normalize_out_eband_alias(param);
+    this->normalize_td_output_frequency(param);
 
     // The MD driver writes ABACUS STRU frames only, and the restart logic reads
     // them back, so CIF output (out_stru = 2) is not available for MD. Reject it
@@ -662,6 +663,40 @@ void ReadInput::normalize_out_eband_alias(Parameter& param)
     else if (out_eband_terms_is_read)
     {
         param.input.out_eband = param.input.out_eband_terms_compat;
+    }
+}
+
+void ReadInput::normalize_td_output_frequency(Parameter& param)
+{
+    const auto item_is_read = [this](const std::string& label) {
+        const auto item = std::find_if(
+            this->input_lists.begin(),
+            this->input_lists.end(),
+            [&label](const std::pair<std::string, Input_Item>& entry) { return entry.first == label; });
+        return item != this->input_lists.end() && item->second.is_read();
+    };
+
+    // out_freq_td is the legacy RT-TDDFT spelling of out_freq_ion. Both counted
+    // completed electronic evolution steps, so the value can be forwarded
+    // unchanged. The canonical out_freq_ion wins when both are present.
+    if (!item_is_read("out_freq_td"))
+    {
+        return;
+    }
+    if (param.input.esolver_type != "tddft")
+    {
+        ModuleBase::WARNING("ReadInput", "out_freq_td is only available in RT-TDDFT and is ignored");
+        return;
+    }
+    ModuleBase::WARNING("ReadInput", "out_freq_td is deprecated; use out_freq_ion instead");
+    if (item_is_read("out_freq_ion"))
+    {
+        ModuleBase::WARNING("ReadInput", "both out_freq_ion and out_freq_td are set; out_freq_ion takes precedence");
+        return;
+    }
+    if (param.input.out_freq_td_compat > 0)
+    {
+        param.input.out_freq_ion = param.input.out_freq_td_compat;
     }
 }
 
