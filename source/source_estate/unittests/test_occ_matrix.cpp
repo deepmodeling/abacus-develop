@@ -315,3 +315,46 @@ TEST_F(OccMatrixTest, WriteSaveToFlatEmptyBufferIsNoOp)
     occmat.write_save_to_flat(cell, {2}, index, uom_save);
     EXPECT_TRUE(uom_save.empty());
 }
+
+// The live matrix uses the same per-atom offsets as the DFT+U potential.
+// Check the flat result before reading it back, so matching serializer and
+// deserializer mistakes cannot hide an incorrect layout.
+TEST_F(OccMatrixTest, FlatLiveMatrixNspin1MixedOrbitals)
+{
+    make_cell({1, 2}, {1, 2}, {{0, 1}, {0, 0, 1}}, 1);
+    const std::vector<int> l_channel = {1, 2};
+    const std::vector<int> index = {0, 9};
+    OccupationMatrix occmat;
+    occmat.init(cell, l_channel, 1, 1);
+
+    for (int element = 0; element < 9; ++element)
+    {
+        occmat.mat(0, 1, 0).c[element] = 100.0 + element;
+    }
+    for (int element = 0; element < 25; ++element)
+    {
+        occmat.mat(1, 2, 0).c[element] = 200.0 + element;
+    }
+
+    std::vector<double> flat(34, -1.0);
+    occmat.write_to_flat(cell, l_channel, index, flat);
+    for (int element = 0; element < 9; ++element)
+    {
+        EXPECT_DOUBLE_EQ(flat[element], 100.0 + element);
+    }
+    for (int element = 0; element < 25; ++element)
+    {
+        EXPECT_DOUBLE_EQ(flat[index[1] + element], 200.0 + element);
+    }
+
+    occmat.zero(cell, l_channel);
+    occmat.read_from_flat(cell, l_channel, index, flat);
+    for (int element = 0; element < 9; ++element)
+    {
+        EXPECT_DOUBLE_EQ(occmat.mat(0, 1, 0).c[element], 100.0 + element);
+    }
+    for (int element = 0; element < 25; ++element)
+    {
+        EXPECT_DOUBLE_EQ(occmat.mat(1, 2, 0).c[element], 200.0 + element);
+    }
+}
