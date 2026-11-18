@@ -453,6 +453,20 @@ void ReadInput::item_postprocess()
         this->add_item(item);
     }
     {
+        Input_Item item("out_wannier_spn");
+        item.annotation = "write Wannier90 spin matrices";
+        item.category = "Berry phase and wannier90 interface";
+        item.type = "Boolean";
+        item.description = "Write <seedname>.spn with the x, y, z Pauli matrix elements. "
+                           "Set spinors=true and spn_formatted=true in the Wannier90 input.";
+        item.default_value = "0";
+        item.domain.add_requirement("out_wannier_spn==true",
+                                    "towannier90==true and calculation==nscf and basis_type==lcao "
+                                    "and wannier_method==2 and nspin==4");
+        read_sync_bool(input.out_wannier_spn);
+        this->add_item(item);
+    }
+    {
         Input_Item item("out_wannier_unk");
         item.annotation = "output UNK. file or not";
         item.category = "Berry phase and wannier90 interface";

@@ -10,6 +10,7 @@
 #include "source_base/parallel_reduce.h"
 #include "source_base/module_external/scalapack_connector.h"
 #include "source_hamilt/module_hcontainer/atom_pair.h"
+#include "source_hamilt/module_hcontainer/hcontainer_funcs.h"
 
 #include <fstream>
 #include <functional>
@@ -121,5 +122,98 @@ void toW90_LCAO::cal_Amn(const UnitCell& ucell, const K_Vectors& kv, const psi::
 void toW90_LCAO::out_unk(const psi::Psi<std::complex<double>>& psi)
 {
 }
+
+template <typename TK, typename TR>
+void toW90_LCAO::write_spn(const psi::Psi<TK>& psi, const hamilt::HContainer<TR>& sr, const K_Vectors& kv,
+                           const std::string& out_dir, std::ostream& log) const
+{
+    using ModuleBase::ComplexMatrix;
+    const auto& layout = ParaV->para_2d();
+    const bool writer = layout.irproc() == 0 && layout.icproc() == 0;
+    const std::string path = out_dir + wannier_file_name + ".spn";
+    std::ofstream file;
+    if (writer)
+    {
+        file.open(path);
+        if (!file)
+        {
+            ModuleBase::WARNING_QUIT("toW90_LCAO::write_spn", "Cannot open " + path);
+        }
+        file << "ABACUS spin matrices\n" << num_bands << ' ' << cal_num_kpts << '\n'
+             << std::scientific << std::setprecision(16);
+    }
+
+    for (int ik = 0; ik < cal_num_kpts; ++ik)
+    {
+        ComplexMatrix coeff(num_bands, layout.nrglb());
+        for (int ib = 0; ib < num_bands; ++ib)
+        {
+            const int col = layout.icloc(cal_band_index[ib]);
+            if (col >= 0)
+            {
+                for (int row = 0; row < layout.nrloc(); ++row)
+                {
+                    coeff(ib, layout.irglb(row)) = psi(ik, col, row);
+                }
+            }
+        }
+        Parallel_Reduce::reduce_all(coeff.c, coeff.size);
+
+        // Each rank contracts its own S(k) block. Spin is the fast index within each orbital.
+        ComplexMatrix overlap(layout.nrloc(), layout.ncloc());
+        hamilt::folding_HR(sr, overlap.c, kv.kvec_d[ik], overlap.nc, 0);
+        ComplexMatrix ket(overlap.nc, num_bands);
+        ComplexMatrix bra(3 * num_bands, overlap.nr);
+        for (int ib = 0; ib < num_bands; ++ib)
+        {
+            for (int col = 0; col < overlap.nc; ++col)
+            {
+                ket(col, ib) = coeff(ib, layout.icglb(col));
+            }
+            for (int row = 0; row < overlap.nr; ++row)
+            {
+                const int orbital = layout.irglb(row);
+                const double sign = orbital % 2 == 0 ? 1.0 : -1.0;
+                const auto flipped = std::conj(coeff(ib, orbital ^ 1));
+                bra(3 * ib, row) = flipped;
+                bra(3 * ib + 1, row) = std::complex<double>(0, sign) * flipped;
+                bra(3 * ib + 2, row) = sign * std::conj(coeff(ib, orbital));
+            }
+        }
+        ComplexMatrix spin = bra * (overlap * ket);
+        Parallel_Reduce::reduce_all(spin.c, spin.size);
+        if (writer)
+        {
+            for (int m = 0; m < num_bands; ++m)
+            {
+                for (int n = 0; n <= m; ++n)
+                {
+                    for (int axis = 0; axis < 3; ++axis)
+                    {
+                        const auto value = spin(3 * n + axis, m);
+                        file << value.real() << ' ' << value.imag() << '\n';
+                    }
+                }
+            }
+        }
+    }
+    if (writer)
+    {
+        file.close();
+        if (!file)
+        {
+            ModuleBase::WARNING_QUIT("toW90_LCAO::write_spn", "Error writing " + path);
+        }
+        log << " Wrote Wannier90 spin matrices to " << path << '\n';
+    }
+}
+
+using Complex = std::complex<double>;
+template void toW90_LCAO::write_spn(const psi::Psi<Complex>&, const hamilt::HContainer<Complex>&,
+                                    const K_Vectors&, const std::string&, std::ostream&) const;
+template void toW90_LCAO::write_spn(const psi::Psi<Complex>&, const hamilt::HContainer<double>&,
+                                    const K_Vectors&, const std::string&, std::ostream&) const;
+template void toW90_LCAO::write_spn(const psi::Psi<double>&, const hamilt::HContainer<double>&,
+                                    const K_Vectors&, const std::string&, std::ostream&) const;
 
 #endif
