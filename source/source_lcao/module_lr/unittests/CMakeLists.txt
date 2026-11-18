@@ -14,8 +14,10 @@ if(ENABLE_MPI)
             $<TARGET_FILE:MODULE_LR_nacv_tools>
             --gtest_filter=ZeqCgPrecision.*:NacvFactorization.*:NacvIoMpi.* ${MPIEXEC_POSTFLAGS})
   set_tests_properties(MODULE_LR_nacv_tools_mpi4 PROPERTIES PROCESSORS 4 TIMEOUT 120)
+  # Both invocations of NacvIoMpi use the same scratch filenames.
   set_tests_properties(MODULE_LR_nacv_tools MODULE_LR_nacv_tools_mpi4
-    PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=1;MKL_NUM_THREADS=1;OPENBLAS_NUM_THREADS=1")
+    PROPERTIES RESOURCE_LOCK nacv_tools_scratch
+               ENVIRONMENT "OMP_NUM_THREADS=1;MKL_NUM_THREADS=1;OPENBLAS_NUM_THREADS=1")
 endif()
 
 if(ENABLE_LIBXC)
