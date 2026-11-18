@@ -1,0 +1,8 @@
+PW initialization regression: atomic+random followed by CG subspace rotation.
+
+Uses the Si cell, six requested bands, and physical reference from 022_PW_CG.
+The pseudopotential supplies eight atomic orbitals for this two-atom cell, so
+atomic+random generates the mixed initial subspace and CG rotates it into the
+six requested bands. A fixed pw_seed makes the initial guess reproducible.
+Only the initial wavefunctions differ from 022_PW_CG; the converged energy
+and symmetry reference and the default Autotest tolerances are unchanged.

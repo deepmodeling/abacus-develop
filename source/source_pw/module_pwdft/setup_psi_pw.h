@@ -8,7 +8,7 @@
 class UnitCell;
 class K_Vectors;
 class Structure_Factor;
-class Input_para;
+struct Input_para;
 namespace ModulePW
 {
 class PW_Basis_K;
