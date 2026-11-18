@@ -4,7 +4,7 @@
 #include "source_basis/module_ao/parallel_orbitals.h" // use para_orb
 #include "source_cell/klist.h"
 #include "source_io/module_parameter/input_parameter.h"
-#include "source_psi/psi_prepare.h"
+#include "source_psi/psi.h"
 
 template <typename T>
 class Setup_Psi

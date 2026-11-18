@@ -1,8 +1,13 @@
 #ifndef PSI_PREPARE_H
 #define PSI_PREPARE_H
-#include "source_hamilt/hamilt.h"
 #include "source_psi/psi_base.h"
-#include "source_psi/psi_prepare_base.h"
+#include "source_pw/module_pwdft/psi_prepare_base.h"
+
+namespace hamilt
+{
+template <typename T, typename Device>
+class Hamilt;
+}
 
 namespace psi
 {

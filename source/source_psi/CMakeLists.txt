@@ -1,7 +1,6 @@
 add_library(psi OBJECT psi.cpp)
 
-add_library(psi_overall_init OBJECT setup_psi_pw.cpp setup_psi.cpp
-                                    psi_prepare.cpp)
+add_library(psi_overall_init OBJECT setup_psi.cpp)
 
 add_library(
   psi_init OBJECT

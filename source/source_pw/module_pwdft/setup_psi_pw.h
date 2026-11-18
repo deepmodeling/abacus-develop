@@ -2,13 +2,23 @@
 #define SETUP_PSI_PW_H
 
 #include "source_base/module_device/device.h"
-#include "source_basis/module_pw/pw_basis_k.h"
-#include "source_cell/klist.h"
-#include "source_cell/stru_fac.h"
-#include "source_cell/unitcell.h"
-#include "source_hamilt/hamilt.h"
-#include "source_io/module_parameter/input_parameter.h"
-#include "source_psi/psi_prepare.h"
+#include "source_psi/psi.h"
+#include "psi_prepare_base.h"
+
+class UnitCell;
+class K_Vectors;
+class Structure_Factor;
+class Input_para;
+namespace ModulePW
+{
+class PW_Basis_K;
+}
+namespace hamilt
+{
+class HamiltBase;
+template <typename T, typename Device>
+class Hamilt;
+}
 
 class Setup_Psi_pw
 {

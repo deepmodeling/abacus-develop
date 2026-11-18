@@ -38,6 +38,8 @@ list(
   setup_pot.cpp
   setup_pwrho.cpp
   setup_pwwfc.cpp
+  setup_psi_pw.cpp
+  psi_prepare.cpp
   uspp_support.cpp
   update_cell_pw.cpp
   setup_dftu_pw.cpp

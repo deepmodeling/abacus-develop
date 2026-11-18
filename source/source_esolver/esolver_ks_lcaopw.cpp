@@ -1,4 +1,6 @@
 #include "esolver_ks_lcaopw.h"
+
+#include "source_pw/module_pwdft/psi_prepare.h"
 #include "source_pw/module_pwdft/elecond.h"
 #include "source_io/module_parameter/input_conv.h"
 #include <iostream>

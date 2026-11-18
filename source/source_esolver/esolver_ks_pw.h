@@ -1,7 +1,7 @@
 #ifndef ESOLVER_KS_PW_H
 #define ESOLVER_KS_PW_H
 #include "./esolver_ks.h"
-#include "source_psi/setup_psi_pw.h" // mohan add 20251012
+#include "source_pw/module_pwdft/setup_psi_pw.h" // mohan add 20251012
 #include "source_pw/module_pwdft/exx_helper_base.h"
 #include "source_pw/module_pwdft/vsep_pw.h"
 
