@@ -3,6 +3,10 @@
 
 #include <xc.h>
 
+#if defined(ABACUS_LIBXC_CUDA) && !defined(XC_FLAGS_ON_HOST)
+#error "CMake found CUDA Libxc >= 7.1.0 but xc.h lacks host/device selection. Check the compiler include path."
+#endif
+
 namespace XC_Functional_Libxc
 {
 // A CUDA-enabled Libxc defaults to device pointers. Keep host callers explicit.
