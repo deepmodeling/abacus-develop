@@ -1082,6 +1082,44 @@ class TestAbacusCalculator(unittest.TestCase):
     here = Path(__file__).parent
     pporb = here.parent.parent.parent / 'tests' / 'PP_ORB'
 
+    def test_scf_reference_matches_engine_coordinate_modes(self):
+        from ase.units import Bohr
+
+        cell = np.array([[4., 0., 0.], [1., 5., 0.], [2., 3., 6.]])
+        alat = 2.0
+        lattice_vectors = cell / (alat * Bohr)
+        lattice = '\n'.join(' '.join(map(str, row)) for row in lattice_vectors)
+        position = np.array([1., 2., 3.])
+        center = np.array([3.5, 4., 3.])
+        coordinates = {
+            'Direct': np.linalg.solve(cell.T, position),
+            'Cartesian': position / (alat * Bohr),
+            'Cartesian_au': position / Bohr,
+            'Cartesian_angstrom': position,
+        }
+        for axes in ('xy', 'xz', 'yz', 'xyz'):
+            shift = [axis in axes for axis in 'xyz']
+            coordinates[f'Cartesian_angstrom_center_{axes}'] = position - center * shift
+        frame = Atoms('Si', positions=[position], cell=cell)
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            directory = Path(tmpdir)
+            stru = directory / 'STRU'
+            log = directory / 'running_scf.log'
+            for mode, coord in coordinates.items():
+                with self.subTest(mode=mode):
+                    xyz = ' '.join(map(str, coord))
+                    stru.write_text(
+                        f'ATOMIC_SPECIES\nSi 28 Si.upf\n'
+                        f'LATTICE_CONSTANT\n{alat}\nLATTICE_VECTORS\n{lattice}\n'
+                        f'ATOMIC_POSITIONS\n{mode}\nSi\n0\n1\n'
+                        f'{xyz} mag 0 0 1 sc 1 1 1\n'
+                    )
+                    selected = _select_scf_frame_for_structure(
+                        [frame], log, directory, None
+                    )
+                    self.assertIs(selected, frame)
+
     def test_socketio_species_order_mapping(self):
         atoms = Atoms(symbols=['Si', 'O', 'C', 'Si', 'O', 'C'])
         order = AbacusSocketIO._socket_sort_indices(atoms)

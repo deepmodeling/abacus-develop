@@ -5,7 +5,7 @@ from pathlib import Path
 import numpy as np
 from ase.units import Bohr
 
-from abacuslite.io.generalio import read_stru
+from abacuslite.io.generalio import _read_stru_geometry
 
 
 def _validate_atomorder(atomorder, natoms, stru_path):
@@ -52,7 +52,7 @@ def _read_stru_reference(directory, stru_file, atomorder, log_path=None):
     """Normalize STRU coordinates, cell, symbols, and mapping for SCF matching."""
     stru_path = Path(directory) / (stru_file or 'STRU')
     try:
-        stru = read_stru(stru_path)
+        stru = _read_stru_geometry(stru_path)
         species = stru['species']
         lat = stru['lat']
         coord_type = str(stru['coord_type']).lower()
@@ -92,10 +92,24 @@ def _read_stru_reference(directory, stru_file, atomorder, log_path=None):
             raise ValueError("non-finite STRU cell")
         _invert_cell(cell, f"STRU {stru_path}")
 
-        if coord_type.startswith('d'):
+        if coord_type == 'direct':
             species_positions = coordinates @ cell
-        elif coord_type.startswith('c'):
+        elif coord_type == 'cartesian':
             species_positions = coordinates * lattice_constant * Bohr
+        elif coord_type == 'cartesian_au':
+            species_positions = coordinates * Bohr
+        elif coord_type == 'cartesian_angstrom':
+            species_positions = coordinates
+        elif coord_type in (
+            'cartesian_angstrom_center_xy',
+            'cartesian_angstrom_center_xz',
+            'cartesian_angstrom_center_yz',
+            'cartesian_angstrom_center_xyz',
+        ):
+            # The engine masks Cartesian components of the cell center.
+            axes = coord_type.rsplit('_', 1)[1]
+            center = cell.sum(axis=0) / 2.0
+            species_positions = coordinates + center * [axis in axes for axis in 'xyz']
         else:
             raise ValueError(f"unsupported STRU coordinate type {stru['coord_type']!r}")
         if not np.isfinite(species_positions).all():

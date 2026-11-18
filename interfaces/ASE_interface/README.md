@@ -43,6 +43,9 @@ The regular `Abacus` calculator runs one ABACUS calculation for each ASE propert
 
 SCF results are selected by matching the written STRU to the running-log
 structure, including periodic translations and the original ASE atom order.
+The match uses geometry only, with STRU coordinate units and centering
+interpreted as in ABACUS. Per-atom spin and constraint options do not take
+part in this check.
 Unmatched or malformed SCF output raises an error. Native relaxation and MD
 continue to use the final frame; native MD uses MD_dump when the running log
 does not contain the trajectory. Each calculator retains its own LTS/develop

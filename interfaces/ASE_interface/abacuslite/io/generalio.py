@@ -494,16 +494,16 @@ def _parse_coord_line(line):
         result['mag'] = values[0] if len(values) == 1 else ('Cartesian', values)
     return result
 
-def _atomic_positions_gen(lines):
+def _atomic_positions_gen(lines, parse_atom=_parse_coord_line):
     '''
     Iteratively generates info per species from the ATOMIC_POSITIONS block.
 
     '''
     natom = int(lines[2])
     yield {'symbol': lines[0], 'mag_each': float(lines[1]), 'natom': natom,
-           'atom': [_parse_coord_line(line) for line in lines[3:3+natom]]}
+           'atom': [parse_atom(line) for line in lines[3:3+natom]]}
     if len(lines) > 3 + natom:
-        yield from _atomic_positions_gen(lines[3+natom:])
+        yield from _atomic_positions_gen(lines[3+natom:], parse_atom)
 
 def read_stru(fn: str) -> Dict[str, Any]:
     '''
@@ -523,6 +523,22 @@ def read_stru(fn: str) -> Dict[str, Any]:
             List of atomic species. Each dict contains 'symbol', 'mass',
             'pp_file', and optionally 'pp_type'.
     '''
+    return _read_stru(fn, _parse_coord_line)
+
+
+def _parse_stru_atom_geometry(line):
+    coordinates = line.split(maxsplit=3)[:3]
+    if len(coordinates) != 3:
+        raise ValueError('An atom record requires three coordinate values')
+    return {'coord': list(map(float, coordinates))}
+
+
+def _read_stru_geometry(fn):
+    """Read STRU for geometry checks without interpreting atom options."""
+    return _read_stru(fn, _parse_stru_atom_geometry)
+
+
+def _read_stru(fn, parse_atom):
     block_title = ['ATOMIC_SPECIES',
                    'NUMERICAL_ORBITAL',
                    'LATTICE_CONSTANT',
@@ -568,7 +584,7 @@ def read_stru(fn: str) -> Dict[str, Any]:
     #============ ATOMIC_POSITIONS ============
     stru['coord_type'] = blocks['ATOMIC_POSITIONS'][0]
     index = { s['symbol'] : i for i, s in enumerate(stru['species']) }
-    for ap in _atomic_positions_gen(blocks['ATOMIC_POSITIONS'][1:]):
+    for ap in _atomic_positions_gen(blocks['ATOMIC_POSITIONS'][1:], parse_atom):
         stru['species'][index[ap['symbol']]].update(ap)
 
     return stru
