@@ -100,8 +100,9 @@ For nspin=2, two files are written (pdoss1* and pdoss2*), one per spin channel. 
 
 For a single-point LCAO SCF or NSCF calculation, set `out_dos 1` and
 `pdos_format npy` to write `pdos.npy`. The default is `pdos_format text`.
-Total DOS still goes to `doss{spin}.txt`. Set `pdosfile` to the path of
-`pdos.npy` in the `abacus-plot -d -p` configuration, or open it with NumPy:
+Total DOS still goes to `doss{spin}.txt`. If the output directory contains
+both formats, set `pdosfile` to the desired file in the `abacus-plot -d -p`
+configuration. You can also open the binary file with NumPy:
 
 ```python
 import numpy as np

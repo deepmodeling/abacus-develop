@@ -391,6 +391,10 @@ class PDOS(DOS):
         Returns a list with one (nspin=1) or two (nspin=2) file paths.
         """
         path = Path(self.pdosfile)
+        if path.is_dir() and (path / "pdos.npy").is_file():
+            if any(path.glob("pdoss[12]*.txt")):
+                raise ValueError(f"Both text PDOS and pdos.npy found in {path}. Pass a specific PDOS file.")
+            return [str(path / "pdos.npy")]
         if path.is_file():
             name = path.name
             if name.startswith("pdoss"):
@@ -419,8 +423,6 @@ class PDOS(DOS):
             if matches:
                 candidates.append(matches[0])
             elif spin == 1:
-                if path.is_dir() and (path / "pdos.npy").is_file():
-                    return [str(path / "pdos.npy")]
                 raise FileNotFoundError(
                     f"No text PDOS file matching '{pattern}'")
         return candidates

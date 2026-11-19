@@ -103,7 +103,8 @@ void ModuleIO::write_pdos_text(
         {
             const int it = ucell.iat2it[iat];
             const bool spinor = nspin == 4;
-            const auto channels = atom_pdos(ucell, iat, pdos + is, 1, spinor);
+            const auto* spin_pdos = pdos + is;
+            const auto channels = atom_pdos(ucell, iat, spin_pdos, 1, spinor);
 
             for (int n = 0; n < npoints; ++n)
             {
@@ -183,7 +184,8 @@ void ModuleIO::write_pdos_npy(const UnitCell& cell, const std::vector<ModuleBase
             out.write(reinterpret_cast<const char*>(attrs), sizeof(attrs));
             out.write(reinterpret_cast<const char*>(grid), sizeof(grid));
             out.write(label.data(), label.size());
-            out.write(reinterpret_cast<const char*>(channel.second.data()), channel.second.size() * sizeof(double));
+            const auto spectrum_bytes = channel.second.size() * sizeof(double);
+            out.write(reinterpret_cast<const char*>(channel.second.data()), spectrum_bytes);
         }
     }
     out.close();

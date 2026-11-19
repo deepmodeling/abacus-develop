@@ -68,6 +68,7 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.inp.npart_sto, 1);
     EXPECT_FALSE(param.inp.cal_cond);
     EXPECT_EQ(param.inp.dos_nche, 100);
+    EXPECT_EQ(param.inp.pdos_format, "text");
     EXPECT_DOUBLE_EQ(param.inp.cond_che_thr, 1e-8);
     EXPECT_DOUBLE_EQ(param.inp.cond_dw, 0.1);
     EXPECT_DOUBLE_EQ(param.inp.cond_wcut, 10);
@@ -776,6 +777,45 @@ TEST_F(InputParaTest, RemovedElpaZSolverIsRejected)
     item.str_values = {"elpa"};
     item.read_value(item, param);
     EXPECT_EXIT(item.check_value(item, param), testing::ExitedWithCode(1), "");
+}
+
+TEST_F(InputParaTest, PdosFormat)
+{
+    ModuleIO::ReadInput reader(0);
+    const auto& entries = reader.get_input_lists();
+    std::map<std::string, ModuleIO::Input_Item> items(entries.begin(), entries.end());
+    Parameter param;
+    auto set = [&](const std::string& key, const std::string& value) {
+        auto& item = items.at(key);
+        item.str_values = {value};
+        item.read_value(item, param);
+    };
+    const auto& format = items.at("pdos_format");
+    EXPECT_FALSE(format.domain.validate_explicit("pdos_format", {"invalid"}).empty());
+    for (const auto* token : {"text", "npy"})
+    {
+        EXPECT_TRUE(format.domain.validate_explicit("pdos_format", {token}).empty());
+    }
+
+    set("basis_type", "lcao");
+    set("pdos_format", "npy");
+    ASSERT_EQ(param.inp.pdos_format, "npy");
+    set("out_dos", "1");
+    for (const auto* calculation : {"scf", "nscf"})
+    {
+        set("calculation", calculation);
+        format.check_value(format, param);
+    }
+    set("calculation", "md");
+    EXPECT_EXIT(format.check_value(format, param), testing::ExitedWithCode(1), "");
+    set("calculation", "scf");
+    set("esolver_type", "lr");
+    EXPECT_EXIT(format.check_value(format, param), testing::ExitedWithCode(1), "");
+    set("esolver_type", "ksdft");
+    set("basis_type", "pw");
+    EXPECT_EXIT(format.check_value(format, param), testing::ExitedWithCode(1), "");
+    set("out_dos", "0");
+    format.check_value(format, param);
 }
 
 

@@ -144,6 +144,13 @@ class PDOSNumPyTest(unittest.TestCase):
                                   orbital["l"], orbital["m"]), (1, 3, "Fe", 1, -1))
                 np.testing.assert_array_equal(orbital["data"], values.T)
 
+            text = path.parent / "pdoss1.txt"
+            text.write_text("0.0 1 Fe 9.0\n")
+            with self.assertRaisesRegex(ValueError, "Pass a specific PDOS file"):
+                PDOS(path.parent)
+            np.testing.assert_array_equal(PDOS(path).orbitals[0]["data"], values.T)
+            self.assertEqual(PDOS(text).orbitals[0]["data"].item(), 9.)
+
 
 if __name__ == "__main__":
     unittest.main()
