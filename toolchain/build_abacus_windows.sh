@@ -117,7 +117,7 @@ cmake --build $BUILD_DIR -j "${NUM_JOBS}"
 # then resolves to it in the MSYS2 shell (and in cmd/PowerShell). The glob
 # matches the configured target (abacus_basic_para.exe, abacus_pw_ser.exe, ...)
 # but not the abacus.exe copy itself (no underscore).
-built_exe=$(ls "${ABACUS_DIR}/${BUILD_DIR}"/abacus_*.exe 2>/dev/null | head -n 1)
+built_exe=$(ls "${ABACUS_DIR}/${BUILD_DIR}"/abacus_*.exe 2> /dev/null | head -n 1)
 if [ -n "$built_exe" ]; then
   cp -f "$built_exe" "${ABACUS_DIR}/${BUILD_DIR}/abacus.exe"
   echo "Created generic launcher: ${ABACUS_DIR}/${BUILD_DIR}/abacus.exe -> $(basename "$built_exe")"
@@ -134,7 +134,7 @@ fi
 # (msmpi.dll in System32, kernel32, ...) resolve on their own and are skipped.
 if [ -n "$built_exe" ]; then
   echo "Bundling dependent DLLs into ${BUILD_DIR}/ ..."
-  ldd "${ABACUS_DIR}/${BUILD_DIR}/abacus.exe" 2>/dev/null |
+  ldd "${ABACUS_DIR}/${BUILD_DIR}/abacus.exe" 2> /dev/null |
     awk -v p="$MINGW_PREFIX" '$3 ~ p {print $3}' | sort -u |
     while read -r dll; do cp -f "$dll" "${ABACUS_DIR}/${BUILD_DIR}/"; done
 fi
@@ -145,7 +145,7 @@ fi
 # one thread per rank -- otherwise each rank's multithreaded OpenBLAS
 # oversubscribes the cores and its buffer allocator fails under several ranks.
 if [ "$ENABLE_MPI" = "ON" ]; then
-  cat <<'SHIM' >"${ABACUS_DIR}/${BUILD_DIR}/mpirun"
+  cat << 'SHIM' > "${ABACUS_DIR}/${BUILD_DIR}/mpirun"
 #!/bin/bash
 # mpirun -> mpiexec shim for native Windows (MS-MPI). See build_abacus_windows.sh.
 export OMP_NUM_THREADS=1
@@ -162,7 +162,7 @@ fi
 # OPENBLAS_NUM_THREADS) is what actually caps its threads; pin it to 1 so that
 # `mpiexec -n N abacus` doesn't oversubscribe and trip OpenBLAS's buffer
 # allocator. (Both are set; OPENBLAS_NUM_THREADS alone has no effect here.)
-cat <<EOF >"${TOOL}/abacus_env.sh"
+cat << EOF > "${TOOL}/abacus_env.sh"
 #!/bin/bash
 [ -f "${INSTALL_DIR}/setup" ] && source "${INSTALL_DIR}/setup"
 export PATH="${ABACUS_DIR}/${BUILD_DIR}":\${PATH}
@@ -173,7 +173,7 @@ export OMP_NUM_THREADS=1
 export OPENBLAS_NUM_THREADS=1
 EOF
 
-cat <<EOF
+cat << EOF
 ========================== usage =========================
 Done! Binary: $(basename "$built_exe") in ${ABACUS_DIR}/${BUILD_DIR}/
 Run it from a MinGW bash shell:

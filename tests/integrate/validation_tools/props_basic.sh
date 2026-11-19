@@ -26,8 +26,8 @@ run_basic_props() {
   if [ $calculation != "get_wf" ] && [ $calculation != "get_pchg" ] && [ $calculation != "get_s" ] && [ $is_lr == 0 ]; then
     etot=$(grep "ETOT_" "$running_path" | tail -1 | awk '{print $2}')
     etotperatom=$(awk 'BEGIN {x='$etot';y='$natom';printf "%.10f\n",x/y}')
-    echo "etotref $etot" >>$props_result_file
-    echo "etotperatomref $etotperatom" >>$props_result_file
+    echo "etotref $etot" >> $props_result_file
+    echo "etotperatomref $etotperatom" >> $props_result_file
   fi
 
   # Opt-in collinear magnetic-state check. Comparing both moments distinguishes
@@ -40,7 +40,7 @@ run_basic_props() {
             if (!have_total || !have_absolute) exit 1
             print total, absolute
         }
-    ' "$running_path" >magnetism.out
+    ' "$running_path" > magnetism.out
     record_compare_result "$props_result_file" "CompareMagnetism_pass" "magnetism.ref" "magnetism.out" 3
   fi
 
@@ -96,24 +96,24 @@ run_basic_props() {
           print force_x[iat], force_y[iat], force_z[iat]
         }
       }
-    ' "$force_source" >force.txt; then
+    ' "$force_source" > force.txt; then
       echo "[ERROR] Failed to extract $natom valid force rows from $force_source" >&2
       rm -f force.txt
       return 1
     fi
     total_force=$(sum_file force.txt)
     rm force.txt
-    echo "totalforceref $total_force" >>$props_result_file
+    echo "totalforceref $total_force" >> $props_result_file
   fi
 
   #-------------------------------
   # stress information
   #-------------------------------
   if ! test -z "$has_stress" && [ $has_stress == 1 ]; then
-    grep -A6 "TOTAL-STRESS" $running_path | awk 'NF==3' | tail -3 >stress.txt
+    grep -A6 "TOTAL-STRESS" $running_path | awk 'NF==3' | tail -3 > stress.txt
     total_stress=$(sum_file stress.txt)
     rm stress.txt
-    echo "totalstressref $total_stress" >>$props_result_file
+    echo "totalstressref $total_stress" >> $props_result_file
   fi
 
   #-------------------------------
@@ -121,7 +121,7 @@ run_basic_props() {
   #-------------------------------
   if ! test -z "$has_dos" && [ $has_dos == 1 ]; then
     total_dos=$(cat OUT.autotest/dos*.txt | awk 'END {print}' | awk '{print $3}')
-    echo "totaldosref $total_dos" >>$props_result_file
+    echo "totaldosref $total_dos" >> $props_result_file
   fi
 
   #-------------------------------
@@ -131,7 +131,7 @@ run_basic_props() {
     onref=refOnsager.txt
     oncal=OUT.autotest/Onsager.txt
     python3 $COMPARE_SCRIPT $onref $oncal 3 -com_type 0
-    echo "CompareH_Failed $?" >>$props_result_file
+    echo "CompareH_Failed $?" >> $props_result_file
     rm -f je-je.txt Chebycoef
   fi
 
@@ -145,8 +145,8 @@ run_basic_props_post_ml() {
   if ! test -z "$imp_sol" && { [ "$imp_sol" = 1 ] || [ "$imp_sol" = 2 ]; }; then
     esol_el=$(grep E_sol_el $running_path | tail -1 | awk '{print $3}')
     esol_cav=$(grep E_sol_cav $running_path | tail -1 | awk '{print $3}')
-    echo "esolelref $esol_el" >>$props_result_file
-    echo "esolcavref $esol_cav" >>$props_result_file
+    echo "esolelref $esol_el" >> $props_result_file
+    echo "esolcavref $esol_cav" >> $props_result_file
   fi
 
   # Solvent-aware SCCS (imp_sol 2, sccs_solvent_radius > 0). With sccs_debug 2
@@ -163,7 +163,7 @@ run_basic_props_post_ml() {
       echo "Error: solvent-aware SCCS with sccs_debug 2 but no V_FILLED/Bohr3 in $running_path"
       exit 1
     fi
-    echo "sccs_filled_volumeref $filled_volume" >>$props_result_file
+    echo "sccs_filled_volumeref $filled_volume" >> $props_result_file
   fi
 
   # out_sol 1: the cubes must exist (the cases set imp_sol 2, or imp_sol 1 with
@@ -184,7 +184,7 @@ run_basic_props_post_ml() {
     done
     # Append mode retains earlier geometries; compare the final complete frame.
     integral=$(python3 "$CUBE_TOOL" integrate-last "OUT.autotest/sol_cavity.cube") || return 1
-    echo "sol_cavity_integralref $integral" >>$props_result_file
+    echo "sol_cavity_integralref $integral" >> $props_result_file
   fi
 
   #--------------------------------------------
@@ -192,7 +192,7 @@ run_basic_props_post_ml() {
   #--------------------------------------------
   if [[ "$assume_isolated" == "pcc_0d" || "$assume_isolated" == "pcc_2d" ]]; then
     epcc=$(grep E_pcc "$running_path" | tail -1 | awk '{print $3}')
-    echo "epccref $epcc" >>$props_result_file
+    echo "epccref $epcc" >> $props_result_file
   fi
 
 }
@@ -208,16 +208,16 @@ run_basic_props_post_deepks() {
     pointgroup=$(grep 'POINT GROUP =' $running_path | grep -v 'MAGNETIC' | grep -v 'BvK' | awk '{print $4}')
     spacegroup=$(grep 'SPACE GROUP =' $running_path | grep -v 'MAGNETIC' | grep -v 'BvK' | awk '{print $7}')
     nksibz=$(grep 'Number of irreducible k-points' $running_path | awk '{print $6}')
-    echo "pointgroupref $pointgroup" >>$props_result_file
-    echo "spacegroupref $spacegroup" >>$props_result_file
-    echo "nksibzref $nksibz" >>$props_result_file
+    echo "pointgroupref $pointgroup" >> $props_result_file
+    echo "spacegroupref $spacegroup" >> $props_result_file
+    echo "nksibzref $nksibz" >> $props_result_file
     # (nspin=4) magnetic (Shubnikov) group analysis: capture the space-group-consistent
     # magnetic point group. Only printed when the group is actually reduced (magnetic);
     # non-magnetic nspin=4 does not print it, so the capture is skipped when empty.
     if ! test -z "$nspin" && [ $nspin == 4 ]; then
       magpointgroup=$(grep 'MAGNETIC POINT GROUP IN SPACE GROUP' $running_path | awk '{print $NF}')
       if ! test -z "$magpointgroup"; then
-        echo "magpointgroupref $magpointgroup" >>$props_result_file
+        echo "magpointgroupref $magpointgroup" >> $props_result_file
       fi
     fi
   fi
@@ -237,7 +237,7 @@ run_basic_props_post_rdmft() {
     fi
 
     # Find all running*.log files in OUT.autotest directory
-    log_files=$(ls OUT.autotest/running*.log 2>/dev/null)
+    log_files=$(ls OUT.autotest/running*.log 2> /dev/null)
 
     if [ -z "$log_files" ]; then
       echo "Error: No running*.log files found in OUT.autotest/"
@@ -256,10 +256,10 @@ run_basic_props_post_rdmft() {
 
     if $all_valid; then
       echo "All log filenames contain 'running_${calculation}_' - validation passed"
-      echo "log_filename_validation 1" >>$props_result_file
+      echo "log_filename_validation 1" >> $props_result_file
     else
       echo "Error: Some log filenames do not contain 'running_${calculation}_'"
-      echo "log_filename_validation 0" >>$props_result_file
+      echo "log_filename_validation 0" >> $props_result_file
       exit 1
     fi
   fi

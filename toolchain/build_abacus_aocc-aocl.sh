@@ -92,14 +92,14 @@ cmake "${cmake_args[@]}"
 cmake --build "${BUILD_DIR}" --target install -j "${NUM_JOBS}"
 
 # generate abacus_env.sh
-cat <<EOF >"${TOOL}/abacus_env.sh"
+cat << EOF > "${TOOL}/abacus_env.sh"
 #!/bin/bash
 source "${INSTALL_DIR}/setup"
 export PATH="${PREFIX}/bin":\${PATH}
 EOF
 
 # generate information
-cat <<EOF
+cat << EOF
 ========================== usage =========================
 Done!
 To use the installed ABACUS version

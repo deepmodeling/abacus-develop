@@ -33,7 +33,7 @@ run_tddft_props() {
       fi
     fi
     python3 "$COMPARE_SCRIPT" "$current1ref" "$current1cal" -tol "$current_tol"
-    echo "CompareCurrent_pass $?" >>$props_result_file
+    echo "CompareCurrent_pass $?" >> $props_result_file
   fi
 
   #--------------------------------------------
@@ -42,7 +42,7 @@ run_tddft_props() {
   if ! test -z "$out_efield" && [ "$out_efield" == 1 ]; then
     efield_refs=(efield_*.txt.ref)
     if [ ! -e "${efield_refs[0]}" ]; then
-      echo "CompareEfieldReference_pass 1" >>$props_result_file
+      echo "CompareEfieldReference_pass 1" >> $props_result_file
     else
       for efield_ref in "${efield_refs[@]}"; do
         efield_name=${efield_ref%.ref}
