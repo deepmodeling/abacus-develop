@@ -80,7 +80,7 @@ void write_dh_perI(WriteDHParams& params,
         for (int d = 0; d < 3; ++d)
         {
             hamilt::HContainer<double>* hR = g[d][iat];
-            const std::string tag = std::string(1, dirc[d]) + "_iat" + std::to_string(iat + 1);
+            const std::string tag = std::string(1, dirc[d]) + "_ia" + std::to_string(iat + 1);
 
             // ---- real space dH(R), CSR (only when also_dhR; dH(k) below is always written) ----
             if (params.also_dhR)
@@ -128,11 +128,7 @@ void write_dh_perI(WriteDHParams& params,
 #else
                 hamilt::folding_HR(*hR, hk.data(), params.kv->kvec_d[ik], nlocal, 0);
 #endif
-                std::string fk = kprefix + tag;
-                if (nks > 1)
-                {
-                    fk += "_ik" + std::to_string(params.kv->ik2iktot[ik]);
-                }
+                std::string fk = kprefix + std::to_string(params.kv->ik2iktot[ik] + 1) + tag;
                 // Spin-polarized runs write one file per spin channel, and mode 2
                 // numbers the file per ionic step, matching the other MAT outputs.
                 fk = mat_dir + ModuleIO::dhk_gen_fname(fk, ispin, nspin, numbered, params.istep);

@@ -1,6 +1,6 @@
 #------------------------------------------------------------------------
 # Ionic_Step 1
-# filename OUT.autotest/dhkz_iat2_nao.txt
+# filename OUT.autotest/dhk1z_ia2_nao.txt
 # gamma only 0
 # rows 10
 # columns 10
