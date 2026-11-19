@@ -79,7 +79,7 @@ void HSolverLIP<T>::solve(HSOperator<T>& op,       // ESolver_KS_PW::p_hamilt be
         ModuleBase::timer::end("HSolverLIP", "solve");
         return;
     }
-    reinterpret_cast<elecstate::ElecStatePW<T>*>(pes)->psiToRho(psi);
+    pes->psiToRho(psi);
 
     ModuleBase::timer::end("HSolverLIP", "solve");
     return;
