@@ -92,8 +92,8 @@ TEST(ModuleIOTest, SaveLatR)
 
 TEST(ModuleIOTest, SaveLatREmptyCsrMatchesZeroBlock)
 {
-    const std::string reference_name = "/tmp/test_lat_r_empty_reference.dat";
-    const std::string direct_name = "/tmp/test_lat_r_empty_direct.dat";
+    const std::string reference_name = testing::TempDir() + "test_lat_r_empty_reference.dat";
+    const std::string direct_name = testing::TempDir() + "test_lat_r_empty_direct.dat";
     std::remove(reference_name.c_str());
     std::remove(direct_name.c_str());
 
@@ -108,15 +108,19 @@ TEST(ModuleIOTest, SaveLatREmptyCsrMatchesZeroBlock)
 
     const ModuleIO::SparseRBlock<double> empty_block;
     std::ofstream reference(reference_name);
+    ASSERT_TRUE(reference.is_open());
     ModuleIO::save_lat_r_csr(reference, empty_block, layout, options);
     reference.close();
 
     std::ofstream direct(direct_name);
+    ASSERT_TRUE(direct.is_open());
     ModuleIO::save_lat_r_empty_csr<double>(direct, 5, options);
     direct.close();
 
     std::ifstream reference_in(reference_name);
     std::ifstream direct_in(direct_name);
+    ASSERT_TRUE(reference_in.is_open());
+    ASSERT_TRUE(direct_in.is_open());
     const std::string reference_output((std::istreambuf_iterator<char>(reference_in)),
                                        std::istreambuf_iterator<char>());
     const std::string direct_output((std::istreambuf_iterator<char>(direct_in)),
