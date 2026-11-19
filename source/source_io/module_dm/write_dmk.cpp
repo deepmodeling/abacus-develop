@@ -6,9 +6,11 @@
 #include "source_base/parallel_common.h"
 #include "source_base/module_external/scalapack_connector.h"
 #include "source_base/timer.h"
+#include "source_base/vector3.h"
 #include "source_cell/ucell_io.h"
 
 #include <cassert>
+#include <cmath>
 #include <cstddef>
 #include <cstdlib>
 #include <fstream>
@@ -53,6 +55,30 @@ bool parse_leading_double(const std::string& line, double& value)
 {
     std::istringstream iss(line);
     return static_cast<bool>(iss >> value);
+}
+
+/// @brief Parse the three leading real numbers of a header line into a vector.
+bool parse_leading_vec3(const std::string& line, ModuleBase::Vector3<double>& vec)
+{
+    std::istringstream iss(line);
+    return static_cast<bool>(iss >> vec.x >> vec.y >> vec.z);
+}
+
+/// @brief Compare two k-point coordinates in direct space, allowing integer
+///        offsets (i.e. differing by a reciprocal lattice vector).
+/// @details The density matrix is invariant under k -> k + G because the
+///          phase factor e^{ik·R} is unchanged; only a mismatch modulo the
+///          reciprocal lattice is a genuine inconsistency.
+bool same_kvec_direct(const ModuleBase::Vector3<double>& a,
+                      const ModuleBase::Vector3<double>& b,
+                      const double tol = 1e-6)
+{
+    const double dx = a.x - b.x;
+    const double dy = a.y - b.y;
+    const double dz = a.z - b.z;
+    return std::abs(dx - std::round(dx)) < tol
+        && std::abs(dy - std::round(dy)) < tol
+        && std::abs(dz - std::round(dz)) < tol;
 }
 
 /// @brief Advance the stream to the frame opened by "Ionic_Step target_step".
@@ -331,6 +357,29 @@ bool ModuleIO::read_dmk(const int nspin,
                                     << ": file says nkstot = " << nkstot_file << " (nospin " << nkstot_nospin_file
                                     << "), ik = " << ik_file << "; expected nkstot = " << kv.get_nkstot() << " (nospin "
                                     << kv.get_nkstot_nospin() << "), ik = " << ik + 1 << std::endl;
+                        read_success = false;
+                        break;
+                    }
+
+                    // The counts and the index alone do not pin down the k-point:
+                    // a reordered or shifted mesh of the same size would pass the
+                    // check above but describe a different density. The stored
+                    // direct coordinates must therefore match the current mesh
+                    // (modulo a reciprocal lattice vector, which leaves the
+                    // phase e^{ik·R} unchanged).
+                    ModuleBase::Vector3<double> kvec_d_file;
+                    if (!parse_leading_vec3(header[6], kvec_d_file))
+                    {
+                        ofs_running << " Malformed k-point coordinates in density matrix file " << fn << std::endl;
+                        read_success = false;
+                        break;
+                    }
+                    if (!same_kvec_direct(kvec_d_file, kv.kvec_d[ik]))
+                    {
+                        ofs_running << " k-point coordinate mismatch in density matrix file " << fn
+                                    << ": file says kvec_d = (" << kvec_d_file.x << ", " << kvec_d_file.y << ", "
+                                    << kvec_d_file.z << "); expected (" << kv.kvec_d[ik].x << ", "
+                                    << kv.kvec_d[ik].y << ", " << kv.kvec_d[ik].z << ")" << std::endl;
                         read_success = false;
                         break;
                     }

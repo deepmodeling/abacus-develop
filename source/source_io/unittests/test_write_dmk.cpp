@@ -1091,6 +1091,79 @@ TEST(DMKTest, ReadDMKRejectsKPointMismatch) {
 }
 
 // ---------------------------------------------------------------------------
+// k-point coordinates: a mesh of the same size but with reordered or shifted
+// k-vectors must be rejected, because cal_dmr pairs the read DM(k) with the
+// current KPT phases and would silently build a wrong density.
+// ---------------------------------------------------------------------------
+TEST(DMKTest, ReadDMKRejectsKVecMismatch) {
+    UnitCell* ucell;
+    UcellTestPrepare utp = UcellTestLib["Si"];
+    ucell = utp.SetUcellInfo();
+
+    const int nspin = 1;
+    const int nk = 2;
+    const int nlocal = 2;
+    Parallel_Blkcyclic pv;
+    init_pv(nlocal, pv);
+
+    K_Vectors kv;
+    init_kv_multi(kv, nspin, nk);
+
+    std::vector<std::vector<std::complex<double>>> dmk;
+    for (int ik = 0; ik < nk; ++ik)
+    {
+        std::vector<std::complex<double>> probe(nlocal * nlocal,
+                                                std::complex<double>(ik + 1.0, 0.5 * ik));
+        std::vector<std::vector<std::complex<double>>> one_dmk;
+        fill_local_dmk(probe, nlocal, pv, one_dmk);
+        dmk.push_back(one_dmk[0]);
+    }
+
+    const std::vector<double> efs(nspin, 0.0);
+    const std::string out_dir = testing::TempDir();
+    std::ofstream ofs_log;
+    ModuleIO::write_dmk(dmk, kv, /*precision=*/12, efs, ucell, pv, /*column_major=*/true,
+                        out_dir, /*istep=*/0, /*out_app_flag=*/0, ofs_log);
+
+    // Same nkstot and same indices, but the k-vectors are swapped between the
+    // two files: the stored coordinate no longer matches the requested ik.
+    K_Vectors kv_swapped;
+    init_kv_multi(kv_swapped, nspin, nk);
+    kv_swapped.kvec_d[0].x = 0.1;
+    kv_swapped.kvec_d[1].x = 0.0;
+    std::vector<std::vector<std::complex<double>>> dmk_read;
+    EXPECT_FALSE(ModuleIO::read_dmk(nspin, nk, kv_swapped, pv, /*column_major=*/true,
+                                    out_dir, /*istep=*/0, /*out_app_flag=*/0, dmk_read, ofs_log));
+
+    // A mesh shifted by a fractional amount with the same count and indices
+    // must also be rejected.
+    K_Vectors kv_shifted;
+    init_kv_multi(kv_shifted, nspin, nk);
+    kv_shifted.kvec_d[0].x += 0.05;
+    kv_shifted.kvec_d[1].x += 0.05;
+    dmk_read.clear();
+    EXPECT_FALSE(ModuleIO::read_dmk(nspin, nk, kv_shifted, pv, /*column_major=*/true,
+                                    out_dir, /*istep=*/0, /*out_app_flag=*/0, dmk_read, ofs_log));
+
+    // A shift by an integer reciprocal-lattice vector leaves e^{ik·R}
+    // unchanged, so the same DM(k) is still valid and must be accepted.
+    K_Vectors kv_wrapped;
+    init_kv_multi(kv_wrapped, nspin, nk);
+    kv_wrapped.kvec_d[0].x += 1.0;
+    kv_wrapped.kvec_d[1].x -= 2.0;
+    dmk_read.clear();
+    EXPECT_TRUE(ModuleIO::read_dmk(nspin, nk, kv_wrapped, pv, /*column_major=*/true,
+                                   out_dir, /*istep=*/0, /*out_app_flag=*/0, dmk_read, ofs_log));
+
+    if (GlobalV::MY_RANK == 0)
+    {
+        std::remove((out_dir + "dmk1_nao.txt").c_str());
+        std::remove((out_dir + "dmk2_nao.txt").c_str());
+    }
+    delete ucell;
+}
+
+// ---------------------------------------------------------------------------
 // A basis size that differs from the current calculation must be rejected, not
 // silently truncated or over-read.
 // ---------------------------------------------------------------------------
