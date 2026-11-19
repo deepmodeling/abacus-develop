@@ -137,19 +137,50 @@ if(DeePMD_FOUND)
              return 0;
          }"
     DeePMD_HAS_NLIST_MAPPING)
+
+  # The InputNlist constructor can exist even when the PyTorch operator was
+  # built without USE_MPI. In that build its embedding exchange is local only.
+  # Require a direct MPI dependency of the operator before enabling the
+  # distributed inference path.
+  unset(DeePMD_PT_OPERATOR CACHE)
+  find_file(
+    DeePMD_PT_OPERATOR
+    NAMES libdeepmd_op_pt.so
+    HINTS ${DeePMD_DIR}
+    PATH_SUFFIXES lib lib64
+    NO_DEFAULT_PATH)
+  set(DeePMD_PT_OPERATOR_MPI FALSE)
+  if(DeePMD_PT_OPERATOR AND CMAKE_READELF)
+    execute_process(
+      COMMAND ${CMAKE_READELF} -d ${DeePMD_PT_OPERATOR}
+      RESULT_VARIABLE _abacus_dp_readelf_result
+      OUTPUT_VARIABLE _abacus_dp_operator_dynamic)
+    if(_abacus_dp_readelf_result EQUAL 0
+       AND _abacus_dp_operator_dynamic MATCHES "NEEDED[^\n]*libmpi\\.so")
+      set(DeePMD_PT_OPERATOR_MPI TRUE)
+    endif()
+    unset(_abacus_dp_readelf_result)
+    unset(_abacus_dp_operator_dynamic)
+  endif()
+  if(NOT DeePMD_PT_OPERATOR_MPI)
+    set(DeePMD_INPUT_NLIST_COMM_ARGS 0)
+  endif()
   set(CMAKE_REQUIRED_LIBRARIES ${_abacus_saved_required_libraries})
   unset(_abacus_saved_required_libraries)
   unset(_abacus_dp_nlist_type)
   unset(_abacus_dp_nlist_header)
 endif()
 
-if(DeePMD_FOUND
-   AND DEFINED DeePMD_INPUT_NLIST_COMM_ARGS
-   AND DeePMD_INPUT_NLIST_COMM_ARGS EQUAL 0)
-  message(
-    WARNING
-      "The installed DeePMD API has no communication-capable InputNlist constructor; "
-      "message-passing MDCell support requires a newer DeePMD-kit API.")
+if(DeePMD_FOUND AND NOT DeePMD_PT_OPERATOR_MPI)
+  message(WARNING
+          "Distributed DeePMD inference is disabled: the PyTorch operator's "
+          "direct libmpi.so dependency could not be verified.")
+elseif(DeePMD_FOUND
+       AND DEFINED DeePMD_INPUT_NLIST_COMM_ARGS
+       AND DeePMD_INPUT_NLIST_COMM_ARGS EQUAL 0)
+  message(WARNING
+          "Distributed DeePMD inference is disabled: communication-capable "
+          "InputNlist is unavailable.")
 endif()
 
 mark_as_advanced(DeePMD_INCLUDE_DIR deepmd_c deepmd_cc)

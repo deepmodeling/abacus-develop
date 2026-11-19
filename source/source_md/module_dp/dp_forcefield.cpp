@@ -1,6 +1,5 @@
 /**
  * @file dp_forcefield.cpp
-#include "source_io/module_parameter/parameter.h"
  * @brief Implementation of ESolver_DP class for DeePMD method.
  *
  * This file contains the implementation of the ESolver_DP class, which is used for solving the energy and forces in a
@@ -127,7 +126,7 @@ void DP::initialize(BaseCell& basecell, const Input_para& inp)
 #if defined(__DPMD) && (!defined(__DPMD_COMM_NLIST_ARGS) || __DPMD_COMM_NLIST_ARGS == 0)
     if (world_domain.size() > 1)
     {
-        ModuleBase::WARNING_QUIT("DP", "Distributed DeePMD requires communication-capable InputNlist.");
+        ModuleBase::WARNING_QUIT("DP", "Distributed DeePMD requires communication-capable InputNlist and an MPI-enabled PyTorch operator linked to libmpi.so.");
     }
 #endif
 

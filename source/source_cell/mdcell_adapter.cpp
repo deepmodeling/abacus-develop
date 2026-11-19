@@ -154,7 +154,8 @@ void collect_full_forces(MDCell& mdcell,
         throw std::runtime_error("Invalid UnitCell atom offsets.");
     }
 
-    std::vector<double> values(static_cast<std::size_t>(3 * ucell.nat), 0.0);
+    const int component_count = 3 * ucell.nat;
+    std::vector<double> values(static_cast<std::size_t>(component_count), 0.0);
     std::vector<int> owners(static_cast<std::size_t>(ucell.nat), 0);
     const std::vector<LocalAtom>& atoms = mdcell.owned_atoms();
     for (std::size_t i = 0; i < atoms.size(); ++i)
@@ -177,7 +178,7 @@ void collect_full_forces(MDCell& mdcell,
     domain.initialize(mdcell.communicator());
 #endif
     domain.sum(owners.data(), ucell.nat);
-    domain.sum(values.data(), 3 * ucell.nat);
+    domain.sum(values.data(), component_count);
     full_force.create(ucell.nat, 3);
     for (int iat = 0; iat < ucell.nat; ++iat)
     {
