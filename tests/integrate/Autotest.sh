@@ -53,8 +53,8 @@ mpi_np_flag=${ABACUS_MPIEXEC_NUMPROC_FLAG:--np}
 # FindMPI may require launcher-specific flags (for example
 # Open MPI's --allow-run-as-root in a CI container). Keep these as arrays so
 # every invocation uses the same command assembled by the CMake test setup.
-read -r -a mpi_preflags <<<"${ABACUS_MPIEXEC_PREFLAGS:-}"
-read -r -a mpi_postflags <<<"${ABACUS_MPIEXEC_POSTFLAGS:-}"
+read -r -a mpi_preflags <<< "${ABACUS_MPIEXEC_PREFLAGS:-}"
+read -r -a mpi_postflags <<< "${ABACUS_MPIEXEC_POSTFLAGS:-}"
 
 threshold_file="threshold"
 # can specify the threshold for each test case
@@ -102,13 +102,13 @@ ncores=$(OMP_NUM_THREADS= OMP_THREAD_LIMIT= nproc)
 # a wide OpenMP team, because these cases are only a few atoms each.
 #----------------------------------------------------------
 if [ "$njobs" == "auto" ]; then
-  if [ "$np" -le 0 ] 2>/dev/null; then
+  if [ "$np" -le 0 ] 2> /dev/null; then
     njobs=$ncores
   else
     njobs=$(expr $ncores / $np)
   fi
 fi
-if [ "$njobs" -lt 1 ] 2>/dev/null; then
+if [ "$njobs" -lt 1 ] 2> /dev/null; then
   njobs=1
 fi
 
@@ -130,14 +130,14 @@ if [ "$njobs" -gt 1 ] && [ "$nt_explicit" == false ]; then
   nt=""
 fi
 if [[ -z "$nt" ]]; then
-  if [ "$np" -le 0 ] 2>/dev/null; then
+  if [ "$np" -le 0 ] 2> /dev/null; then
     # serial build (no MPI launcher): use all cores for OpenMP
     nt=$(expr $ncores / $njobs)
   else
     nt=$(expr $ncores / ${np} / $njobs)
   fi
 fi
-if [ "$nt" -lt 1 ] 2>/dev/null; then
+if [ "$nt" -lt 1 ] 2> /dev/null; then
   nt=1
 fi
 export OMP_NUM_THREADS=${nt}
@@ -346,16 +346,16 @@ run_case() {
     TIMEFORMAT='[----------] Time elapsed: %R seconds'
     #parallel test
     time {
-      if [ "$np" -le 0 ] 2>/dev/null; then
+      if [ "$np" -le 0 ] 2> /dev/null; then
         # serial build: run the binary directly, no MPI launcher.
         # This lets a serial ABACUS (ENABLE_MPI=OFF, e.g. the native
         # Windows build) reuse this harness unchanged.
-        $abacus >log.txt
+        $abacus > log.txt
       elif grep -qE '^[[:space:]]*of_ml_gene_data[[:space:]]+1([[:space:]]|$)' INPUT; then
         # of_ml_gene_data supports single-rank only.
-        "$mpi_launcher" "$mpi_np_flag" 1 "${mpi_preflags[@]}" "$abacus" "${mpi_postflags[@]}" >log.txt
+        "$mpi_launcher" "$mpi_np_flag" 1 "${mpi_preflags[@]}" "$abacus" "${mpi_postflags[@]}" > log.txt
       else
-        "$mpi_launcher" "$mpi_np_flag" $np "${mpi_preflags[@]}" "$abacus" "${mpi_postflags[@]}" >log.txt
+        "$mpi_launcher" "$mpi_np_flag" $np "${mpi_preflags[@]}" "$abacus" "${mpi_postflags[@]}" > log.txt
       fi
 
       # if ABACUS failed, print out the error message
@@ -400,12 +400,12 @@ run_case() {
       fi
 
       if [ "$sanitize" == true ]; then
-        echo -e "## Test case ${dir}\n" >>${report}
+        echo -e "## Test case ${dir}\n" >> ${report}
         for diagnostic in asan.*; do
-          echo -e "### On process id ${diagnostic}\n" >>${report}
-          echo -e "\`\`\`bash" >>${report}
-          cat ${diagnostic} >>${report}
-          echo -e "\`\`\`\n" >>${report}
+          echo -e "### On process id ${diagnostic}\n" >> ${report}
+          echo -e "\`\`\`bash" >> ${report}
+          cat ${diagnostic} >> ${report}
+          echo -e "\`\`\`\n" >> ${report}
         done
       fi
     }
@@ -423,7 +423,7 @@ run_case() {
     echo "FATAL_LIST $fatal_case_list"
     echo "FATAL_DETAIL $fatal_detail_list"
     echo "STATUS $case_status"
-  } >"$result_dir/$dir.res"
+  } > "$result_dir/$dir.res"
 }
 
 #---------------------------------------------
@@ -431,7 +431,7 @@ run_case() {
 #---------------------------------------------
 
 test -e $cases_file || (echo "Please specify test cases file by -f option." && exit 1)
-which $abacus >/dev/null || (echo "No ABACUS executable was found." && exit 1)
+which $abacus > /dev/null || (echo "No ABACUS executable was found." && exit 1)
 
 testdir=$(grep -Ev '^[[:space:]]*(#|$)' "$cases_file" | grep -E "$case")
 failed=0
@@ -451,7 +451,7 @@ trap 'rm -rf "$result_dir"' EXIT
 if [ "$sanitize" == true ]; then
   echo "Testing with Address Sanitizer..."
   mkdir ../html
-  echo -e "# Address Sanitizer Diagnostics\n" >../html/README.md
+  echo -e "# Address Sanitizer Diagnostics\n" > ../html/README.md
   report=$(realpath ../html/README.md)
   export ASAN_OPTIONS="log_path=asan"
 fi
@@ -469,7 +469,7 @@ else
   # output is buffered to a file.
   #-----------------------------------------------------
   for dir in $testdir; do
-    (run_case $dir) >"$result_dir/$dir.out" 2>&1 &
+    (run_case $dir) > "$result_dir/$dir.out" 2>&1 &
     while [ $(jobs -rp | wc -l) -ge $njobs ]; do
       sleep 0.2
     done
@@ -508,7 +508,7 @@ for dir in $testdir; do
       FATAL_DETAIL) fatal_detail_list+=$rvalue ;;
       STATUS) case_status+=$rvalue ;;
     esac
-  done <"$result_dir/$dir.res"
+  done < "$result_dir/$dir.res"
 done
 
 if [ "$sanitize" == true ]; then
@@ -520,7 +520,7 @@ if [ "$sanitize" == true ]; then
 fi
 
 if [ -z $g ]; then
-  printf "%b" "$case_status" >test.sum
+  printf "%b" "$case_status" > test.sum
   if [[ "$failed" -eq 0 && "$fatal" -eq 0 ]]; then
     echo -e "\e[0;32m[ PASSED   ] \e[0m $ok test cases passed."
   else

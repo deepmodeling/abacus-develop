@@ -48,7 +48,7 @@ case "$with_nep" in
       tar -xzf $filename
       cd $dirname
 
-      cat <<EOF >Makefile
+      cat << EOF > Makefile
 CXX ?= g++
 
 # Compiler flags
@@ -89,8 +89,8 @@ install:
 	cp src/*.h \$(PREFIX)/include/
 EOF
 
-      make >make.log 2>&1 || tail -n ${LOG_LINES} make.log
-      make PREFIX="${pkg_install_dir}" install >install.log 2>&1 || tail -n ${LOG_LINES} install.log
+      make > make.log 2>&1 || tail -n ${LOG_LINES} make.log
+      make PREFIX="${pkg_install_dir}" install > install.log 2>&1 || tail -n ${LOG_LINES} install.log
 
       cd ..
       write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage4/$(basename ${SCRIPT_NAME})"
@@ -119,7 +119,7 @@ esac
 if [ "$with_nep" != "__DONTUSE__" ]; then
   NEP_LIBS="-lnep"
   if [ "$with_nep" != "__SYSTEM__" ]; then
-    cat <<EOF >"${BUILDDIR}/setup_nep"
+    cat << EOF > "${BUILDDIR}/setup_nep"
 prepend_path LD_LIBRARY_PATH "${pkg_install_dir}/lib"
 prepend_path LD_RUN_PATH "${pkg_install_dir}/lib"
 prepend_path LIBRARY_PATH "${pkg_install_dir}/lib"
@@ -127,7 +127,7 @@ prepend_path CPATH "${pkg_install_dir}/include"
 prepend_path CMAKE_PREFIX_PATH "${pkg_install_dir}"
 EOF
   fi
-  cat <<EOF >>"${BUILDDIR}/setup_nep"
+  cat << EOF >> "${BUILDDIR}/setup_nep"
 export NEP_ROOT="${pkg_install_dir}"
 EOF
   filter_setup "${BUILDDIR}/setup_nep" $SETUPFILE

@@ -23,7 +23,7 @@ run_cube_pot_props() {
     pot1ref=pot.cube.ref
     pot1cal=OUT.autotest/pot.cube
     python3 $COMPARE_SCRIPT $pot1ref $pot1cal 3
-    echo "ComparePot1_pass $?" >>$props_result_file
+    echo "ComparePot1_pass $?" >> $props_result_file
   fi
 
   #-------------------------------
@@ -33,7 +33,7 @@ run_cube_pot_props() {
     pot1ref=potes.cube.ref
     pot1cal=OUT.autotest/potes.cube
     python3 $COMPARE_SCRIPT $pot1ref $pot1cal 8
-    echo "ComparePot_pass $?" >>$props_result_file
+    echo "ComparePot_pass $?" >> $props_result_file
   fi
 
   #-------------------------------
@@ -44,7 +44,7 @@ run_cube_pot_props() {
     elf1ref=elftot.cube.ref
     elf1cal=OUT.autotest/elftot.cube
     python3 $COMPARE_SCRIPT $elf1ref $elf1cal 3
-    echo "ComparePot1_pass $?" >>$props_result_file
+    echo "ComparePot1_pass $?" >> $props_result_file
   fi
 
 }
@@ -66,7 +66,7 @@ run_cube_props() {
   if ! test -z "$has_scan" && [ $has_scan == "scan" ] &&
     ! test -z "$out_chg" && [ $out_chg == 1 ]; then
     python3 $COMPARE_SCRIPT tau.cube.ref OUT.autotest/tau.cube 8
-    echo "tau.cube_pass $?" >>$props_result_file
+    echo "tau.cube_pass $?" >> $props_result_file
   fi
 
   #---------------------------------------
@@ -76,7 +76,7 @@ run_cube_props() {
   if ! test -z "$has_ldos" && [ $has_ldos == 1 ]; then
     stm_bias=$(get_input_key_value "stm_bias" "OUT.autotest/INPUT.info")
     python3 $COMPARE_SCRIPT ldos.cube.ref OUT.autotest/ldos_"$stm_bias"ev.cube 8
-    echo "ldos.cube_pass $?" >>$props_result_file
+    echo "ldos.cube_pass $?" >> $props_result_file
   fi
 
   #---------------------------------------
@@ -95,7 +95,7 @@ run_cube_props() {
         variance_wfc_r=$(sed -n "13,$"p OUT.autotest/wfc_realspace/wfc_realspace_0_$band |
           awk -v all=$allgrid 'BEGIN {sumall=0} {for(i=1;i<=NF;i++) {sumall+=($i-1)*($i-1)}}\
 						END {printf"%.5f",(sumall/all)}')
-        echo "variance_wfc_r_0_$band $variance_wfc_r" >>$props_result_file
+        echo "variance_wfc_r_0_$band $variance_wfc_r" >> $props_result_file
       else
         echo "Can't find file OUT.autotest/wfc_realspace/wfc_realspace_0_$band"
         exit 1
@@ -138,7 +138,7 @@ run_cube_props() {
 					if(sqrt($i*$i)>max) {max=sqrt($i*$i)}
 				}
 			}
-	}' "$full_path" >>"$props_result_file"
+	}' "$full_path" >> "$props_result_file"
   fi
 
   #--------------------------------------------
@@ -150,7 +150,7 @@ run_cube_props() {
     if ! test -z "$gamma_only" && [ $gamma_only == 1 ]; then
       wfc_cal=OUT.autotest/wf_nao.txt
       wfc_ref=wf_nao.txt.ref
-    else  # multi-k point case
+    else # multi-k point case
       if ! test -z "$out_app_flag" && [ $out_app_flag == 0 ]; then
         # mode 0 overwrites one fixed file at every write, so the file holds
         # the last written step; the reference below records that step (3).
@@ -201,8 +201,8 @@ run_cube_props() {
     # downstream comparison.
     if [ "$wfc_prep_ok" -ne 1 ]; then
       wfc_pass=1
-    elif ! sed '/^[[:space:]]*#/d' "$wfc_cal" >"$wfc_cal_nohdr" \
-      || ! sed '/^[[:space:]]*#/d' "$wfc_ref" >"$wfc_ref_nohdr"; then
+    elif ! sed '/^[[:space:]]*#/d' "$wfc_cal" > "$wfc_cal_nohdr" ||
+      ! sed '/^[[:space:]]*#/d' "$wfc_ref" > "$wfc_ref_nohdr"; then
       echo "Error: failed to strip comment lines from $wfc_cal or $wfc_ref"
       wfc_pass=1
     else
@@ -210,7 +210,7 @@ run_cube_props() {
       wfc_pass=$?
     fi
     rm -f "$wfc_cal_nohdr" "$wfc_ref_nohdr"
-    echo "Compare_wfc_lcao_pass $wfc_pass" >>$props_result_file
+    echo "Compare_wfc_lcao_pass $wfc_pass" >> $props_result_file
   fi
 
 }
@@ -222,7 +222,7 @@ run_cube_tail_props() {
   #--------------------------------------------
   if ! test -z "$out_mul" && [ $out_mul == 1 ]; then
     python3 $COMPARE_SCRIPT mulliken.txt.ref OUT.autotest/mulliken.txt 3
-    echo "Compare_mulliken_pass $?" >>$props_result_file
+    echo "Compare_mulliken_pass $?" >> $props_result_file
   fi
 
   #--------------------------------------------
@@ -243,11 +243,11 @@ run_cube_tail_props() {
     pchg_cube=${pchg_ref%.ref}
     pchg_key=$(sanitize_result_key "${pchg_cube}_compare")
     if [ ! -f "OUT.autotest/$pchg_cube" ]; then
-      echo "$pchg_key 1" >>"$props_result_file"
+      echo "$pchg_key 1" >> "$props_result_file"
       continue
     fi
     python3 "$COMPARE_SCRIPT" "$pchg_ref" "OUT.autotest/$pchg_cube" -tol "$pchg_tol"
-    echo "$pchg_key $?" >>"$props_result_file"
+    echo "$pchg_key $?" >> "$props_result_file"
   done
   shopt -u nullglob
 
@@ -281,7 +281,7 @@ run_cube_tail_props() {
           continue
         fi
         total_chg=$(python3 "$CUBE_TOOL" integrate "OUT.autotest/$cube")
-        echo "$cube $total_chg" >>$props_result_file
+        echo "$cube $total_chg" >> $props_result_file
       done
     fi
 
@@ -311,8 +311,8 @@ run_cube_tail_props() {
 
         if fingerprint=$(python3 "$CUBE_TOOL" fingerprint-wfc "${fingerprint_args[@]}"); then
           while read -r metric value; do
-            echo "${result_prefix}_${metric} $value" >>"$props_result_file"
-          done <<<"$fingerprint"
+            echo "${result_prefix}_${metric} $value" >> "$props_result_file"
+          done <<< "$fingerprint"
         else
           echo "Error: Failed to generate wavefunction fingerprint for $state_prefix"
           exit 1
@@ -327,9 +327,9 @@ run_cube_tail_props() {
   if [ "$nspin" = "4" ] && { [ "$if_separate_k" = "1" ] || [ "$if_separate_k" = "true" ]; } &&
     [ -n "$out_wfc_norm" ] && [ -n "$out_wfc_re_im" ] && [ -n "$out_pchg" ]; then
     if python3 "$CUBE_TOOL" check-spinor OUT.autotest; then
-      echo "pw_spinor_cube_identity 0" >>"$props_result_file"
+      echo "pw_spinor_cube_identity 0" >> "$props_result_file"
     else
-      echo "pw_spinor_cube_identity 1" >>"$props_result_file"
+      echo "pw_spinor_cube_identity 1" >> "$props_result_file"
     fi
   fi
 
