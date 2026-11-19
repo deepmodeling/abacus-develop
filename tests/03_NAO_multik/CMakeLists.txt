@@ -20,7 +20,7 @@ if(ENABLE_LCAO AND ENABLE_MPI AND WANNIER90_EXECUTABLE AND POSTW90_EXECUTABLE)
   find_package(Python3 QUIET COMPONENTS Interpreter NumPy)
   if(Python3_NumPy_FOUND AND MPIEXEC_EXECUTABLE)
     add_test(NAME 03_NAO_wannier_spn
-      COMMAND ${Python3_EXECUTABLE} ${ABACUS_TEST_DIR}/integrate/validation_tools/check_wannier_spn.py
+      COMMAND ${Python3_EXECUTABLE} ${PROJECT_SOURCE_DIR}/interfaces/Wannier90_interface/tests/check_wannier_spn.py
               ${WANNIER90_EXECUTABLE} ${POSTW90_EXECUTABLE}
               ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 4 ${MPIEXEC_PREFLAGS}
               ${ABACUS_BIN_PATH} ${MPIEXEC_POSTFLAGS})

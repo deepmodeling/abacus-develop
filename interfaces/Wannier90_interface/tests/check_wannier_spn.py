@@ -63,7 +63,7 @@ def check_spn_io_failure(work, abacus, logs, error):
 
 
 def main(work, wannier, postw90, abacus):
-    tests = Path(__file__).resolve().parents[2]
+    tests = Path(__file__).resolve().parents[3] / "tests"
     case = tests / "03_NAO_multik" / "wannier_spn"
     shutil.copy(case / "STRU", work)
     shutil.copy(case / "KPT", work)
