@@ -44,7 +44,8 @@ The regular `Abacus` calculator runs one ABACUS calculation for each ASE propert
 SCF collection requires one running-log geometry record and one parsed result.
 The calculator checks the atom count, element order, cell and periodic
 positions against the written STRU before reordering the result for ASE.
-STRU coordinate units and centering follow ABACUS conventions. A missing,
+This check requires explicit `LATTICE_VECTORS` as written by the ASE
+calculator. STRU coordinate units and centering follow ABACUS conventions. A missing,
 multiple, malformed or mismatched SCF geometry record raises an error.
 Native relaxation and MD use the final frame. The legacy reader can use
 MD_dump when present, and the develop reader reads native MD from MD_dump.
@@ -63,14 +64,11 @@ SCF output flags; readers do not infer physical isolation from vacuum thickness.
 For nonperiodic geometry analysis, make a copy and explicitly set its `pbc`
 flags; this does not change the completed calculation's boundary conditions.
 
-The default SCF identity tolerance is **1e-4 Angstrom**, applied to each cell
-component and periodic Cartesian position residual with no relative tolerance.
-This accommodates common six-significant-digit running-log rounding; the
-stricter 1e-5 bound can reject valid LTS output. It is a
-structure-identity tolerance, separate from SCF, force and optimization
-convergence settings. It is not a universal printing-error bound: larger cells,
-non-unit lattice constants and skewed-cell coordinate transformations can
-accumulate more error.
+SCF checks the lattice scale and dimensionless vectors at the running log's
+six-significant-digit precision. It uses the written cell for periodic
+wrapping and an absolute **1e-4 Angstrom** tolerance for Cartesian position
+residuals. These tolerances govern geometry comparison independently of SCF,
+force, and optimization convergence settings.
 
 Result parsing does **not read abacus.json**. Missing or malformed JSON does not
 affect collection. Writing new input leaves existing JSON files untouched.

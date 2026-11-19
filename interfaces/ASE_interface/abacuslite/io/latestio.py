@@ -674,7 +674,7 @@ class TestLatestIO(unittest.TestCase):
         for s, ref in zip(stresses, reference):
             self.assertTrue(np.allclose(s, -0.1 * GPa * ref))
 
-    def test_read_abacus_out_string_reports_missing_companion_file(self):
+    def test_read_abacus_out_string(self):
         fn = self.testfiles / 'pw-symm0-nspin4-gamma-md'
         # String paths are accepted; this fixture lacks its companion band file.
         with self.assertRaisesRegex(FileNotFoundError, "eig_occ.txt"):

@@ -387,12 +387,17 @@ def _write_kpoint(data: Dict[str, Any], f: TextIOWrapper):
     '''
     write the k-point file whose mode is specifying kpoints one-by-one
     '''
+    kpoints = data['kpoints']
+    weights = data.get('weights')
+    if weights is None:
+        weights = data.get('nkinterpl', [1] * len(kpoints))
+    if len(kpoints) != data['nk'] or len(weights) != len(kpoints):
+        raise ValueError('Explicit KPT requires one weight per declared k point')
     f.write('K_POINTS\n')
     f.write(f"{data['nk']}\n")
     f.write(f"{data['coordinate'].capitalize()}\n")
-    nkinterpl = data.get('nkinterpl', [1 for _ in data['kpoints']])
-    for k, nk in zip(data['kpoints'], data.get('nkinterpl', nkinterpl)):
-        f.write(f"{k[0]} {k[1]} {k[2]} {nk}\n")
+    for (x, y, z), weight in zip(kpoints, weights):
+        f.write(f"{x} {y} {z} {weight}\n")
 
 def read_kpoint_from_running_log(fn: str) -> Dict[str, Any]:
     '''Read the k-point information from the ABACUS running log file.'''
@@ -481,16 +486,16 @@ def _parse_coord_line(line):
             expected = (3,)
         # A complete property may be followed by the legacy bare triplet.
         # For mag, use its vector width so scalar-plus-flags stays ambiguous.
-        if len(values) == max(expected) + 3 and all(
-                value in ('0', '1') for value in values[-3:]):
+        if len(values) == max(expected) + 3 and values[-3] in ('0', '1'):
             values = values[:-3]
             idx -= 3
         if len(values) not in expected:
             raise ValueError(f'{keyword} requires {expected} values, got {len(values)}')
         if keyword == 'm':
-            if any(value not in ('0', '1') for value in values):
+            flags = list(map(int, values))
+            if any(flag not in (0, 1) for flag in flags):
                 raise ValueError('Mobility flags must be 0 or 1')
-            options[keyword] = list(map(int, values))
+            options[keyword] = flags
         else:
             options[keyword] = list(map(float, values))
 
@@ -688,19 +693,26 @@ def _read_kpoint(raw: List[str]) -> Dict[str, Any]:
     assert raw[2].lower() in ['direct', 'cartesian'], \
              f'Invalid KPT file, expected "Direct" or "Cartesian" in the third line, ' \
              f'got {raw[2]}'
-    mymatch = [re.match(r'^(-?\d+(?:\.\d+)?)\s+(-?\d+(?:\.\d+)?)\s+(-?\d+(?:\.\d+)?)\s*'
-                        r'(\d+).*', l)
-              for l in raw[3:]]
-    assert all(m for m in mymatch), \
-             'Invalid KPT file, expected the k-points to be in the format ' \
-             '"x y z n # comment"'
-
+    points = []
+    weights = []
+    for line_number, line in enumerate(raw[3:], start=4):
+        fields = re.split(r'#|//|!', line, maxsplit=1)[0].split()
+        try:
+            x, y, z, weight = map(float, fields)
+        except ValueError as exc:
+            raise ValueError(
+                f'Invalid explicit KPT row {line_number}: expected x y z weight'
+            ) from exc
+        if not np.isfinite([x, y, z, weight]).all():
+            raise ValueError(f'Invalid explicit KPT row {line_number}: non-finite value')
+        points.append((x, y, z))
+        weights.append(weight)
     return {
         'mode': 'point',
         'coordinate': 'Cartesian' if raw[2].lower() == 'cartesian' else 'Direct',
         'nk': int(raw[1]),
-        'kpoints': [tuple(map(float, m.groups()[:3])) for m in mymatch],
-        'weights': [int(m.groups()[3]) for m in mymatch]
+        'kpoints': points,
+        'weights': weights,
     }
 
 def read_kpt(fn: str) -> Dict[str, Any]:

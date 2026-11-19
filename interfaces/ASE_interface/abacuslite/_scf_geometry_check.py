@@ -3,7 +3,7 @@
 import numpy as np
 from ase.units import Bohr
 
-from abacuslite.io.generalio import _read_stru_geometry, _running_log_geometry
+from abacuslite.io.generalio import _read_stru_geometry
 
 
 def _validate_atomorder(atomorder, natoms, stru_path):
@@ -77,6 +77,8 @@ def _read_stru_reference(stru_path):
         if not np.isfinite(coordinates).all():
             raise ValueError("non-finite STRU positions")
 
+        if 'vec' not in lat:
+            raise ValueError("SCF geometry checking requires explicit LATTICE_VECTORS")
         lattice_vectors = np.asarray(lat['vec'], dtype=float)
         if lattice_vectors.shape != (3, 3):
             raise ValueError(
@@ -127,6 +129,10 @@ def _read_stru_reference(stru_path):
     return {
         'positions': species_positions,
         'cell': cell,
+        'lattice_vectors': lattice_vectors,
+        'alat': lattice_constant * Bohr,
+        # ABACUS prints the product with its own Bohr-to-Angstrom constant.
+        'log_alat': lattice_constant * 0.5291770,
         'symbols': raw_symbols,
     }
 
@@ -152,7 +158,8 @@ def _check_log_geometry(record, expected):
     scale = float(record['alat_in_angstrom'])
     if not np.isfinite(scale) or scale <= 0:
         raise ValueError(f"invalid lattice constant in Angstrom: {scale!r}")
-    positions, cell = _running_log_geometry(record)
+    positions = np.asarray(record['coords'], dtype=float)
+    cell = np.asarray(record['cell'], dtype=float)
     natoms = len(expected['symbols'])
     if positions.ndim >= 1 and positions.shape[0] != natoms:
         raise ValueError(f"atom count {positions.shape[0]}, expected {natoms}")
@@ -164,17 +171,36 @@ def _check_log_geometry(record, expected):
     if cell.shape != (3, 3) or not np.isfinite(cell).all():
         raise ValueError("expected a finite (3, 3) cell")
 
-    # Absolute Angstrom tolerance accounts for running-log print resolution.
-    atol = 1e-4
-    cell_diff = float(np.max(np.abs(cell - expected['cell'])))
-    if cell_diff > atol:
-        raise ValueError(f"cell differs from STRU by {cell_diff:.6g} Angstrom (atol={atol})")
-    cell_inverse = _invert_cell(cell, 'SCF log')
+    # ABACUS prints the scale and the dimensionless matrix separately.
+    # A single Cartesian tolerance on their product rejects valid large cells.
+    if not _matches_log_precision(scale, expected['log_alat']):
+        raise ValueError("lattice constant in log differs from STRU")
+    if not _matches_log_precision(cell / scale, expected['lattice_vectors']):
+        raise ValueError("lattice vectors in log differ from STRU")
+
+    cell = expected['cell']
+    if record['coordinate'] == 'Direct':
+        positions = positions @ cell
+    elif record['coordinate'] == 'Cartesian':
+        positions = positions * expected['alat']
+    else:
+        raise ValueError(f"Unknown coordinate system: {record['coordinate']}")
+    cell_inverse = _invert_cell(cell, 'STRU')
     delta_frac = (positions - expected['positions']) @ cell_inverse
     periodic_cart = (delta_frac - np.rint(delta_frac)) @ cell
     if not np.isfinite(periodic_cart).all():
         raise ValueError("non-finite periodic position residual")
     residual = float(np.max(np.abs(periodic_cart)))
+    atol = 1e-4
     if residual > atol:
         raise ValueError(f"positions differ from STRU by {residual:.6g} Angstrom "
                          f"after periodic wrapping (atol={atol})")
+
+
+def _matches_log_precision(actual, expected):
+    """Compare using the six significant digits of ABACUS's default log."""
+    magnitude = np.abs(expected)
+    nonzero_magnitude = np.where(magnitude > 0, magnitude, 1.)
+    half_unit = 0.5 * 10. ** (np.floor(np.log10(nonzero_magnitude)) - 5)
+    tolerance = np.where(magnitude > 0, half_unit + 1e-12 * magnitude, 1e-12)
+    return bool(np.all(np.abs(actual - expected) <= tolerance))
