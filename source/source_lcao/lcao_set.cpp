@@ -1,5 +1,6 @@
 #include "source_lcao/lcao_set.h"
 #include "source_base/global_function.h"
+#include "source_base/parallel_common.h"
 #include "source_io/module_dm/write_dmk.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_psi/setup_psi.h" // use Setup_Psi
@@ -181,16 +182,23 @@ void LCAO_domain::init_chg_dm(
 
     const int nspin_dm = (nspin == 2) ? 2 : 1;
     bool dmr_found = false;
-    for (int is = 0; is < nspin_dm; ++is)
+    // Rank 0 probes the DMR files and broadcasts the decision so every rank
+    // takes the same communication path (DMR distribution vs DM(k) broadcast);
+    // a rank-local decision could deadlock the two mismatched collectives.
+    if (GlobalV::MY_RANK == 0)
     {
-        const std::string dmfile = readin_dir + "dmrs" + std::to_string(is + 1) + "_nao.csr";
-        std::ifstream ifs(dmfile.c_str());
-        if (ifs.good())
+        for (int is = 0; is < nspin_dm; ++is)
         {
-            dmr_found = true;
-            break;
+            const std::string dmfile = readin_dir + "dmrs" + std::to_string(is + 1) + "_nao.csr";
+            std::ifstream ifs(dmfile.c_str());
+            if (ifs.good())
+            {
+                dmr_found = true;
+                break;
+            }
         }
     }
+    Parallel_Common::bcast_bool(dmr_found);
 
     // Preserve the established DMR restart path. Only when no DMR file exists
     // do we interpret init_chg=dm as a request to restart from dense DM(k).
