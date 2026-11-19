@@ -427,7 +427,14 @@ bool ModuleIO::read_dmk(const int nspin,
                             break;
                         }
                     }
-                    ModuleIO::UcellIO::read_ucell(ifs);
+                    if (!ModuleIO::UcellIO::read_ucell(ifs))
+                    {
+                        ofs_running << " Malformed UnitCell block in density matrix file " << fn
+                                    << ": could not parse the atom-count line or ran out of data"
+                                    << std::endl;
+                        read_success = false;
+                        break;
+                    }
 
                     // ---- matrix body, always row-major in the file ----
                     for (int i = 0; i < nlocal && read_success; ++i)

@@ -1264,6 +1264,103 @@ TEST(DMKTest, ReadDMKRejectsTruncatedFile) {
     delete ucell;
 }
 
+/// @brief Replace a specific line of a text file with new content.
+/// @param fname Path of the file to rewrite (must exist).
+/// @param target Zero-based line index to replace; out-of-range returns false.
+/// @param new_content The replacement text, written with a trailing newline.
+bool rewrite_line(const std::string& fname, std::size_t target, const std::string& new_content)
+{
+    std::ifstream ifs(fname.c_str());
+    if (!ifs.good())
+    {
+        return false;
+    }
+    std::vector<std::string> lines;
+    std::string line;
+    while (std::getline(ifs, line))
+    {
+        lines.push_back(line);
+    }
+    if (target >= lines.size())
+    {
+        return false;
+    }
+    lines[target] = new_content;
+    std::ofstream ofs(fname.c_str());
+    if (!ofs.good())
+    {
+        return false;
+    }
+    for (std::size_t i = 0; i < lines.size(); ++i)
+    {
+        ofs << lines[i] << "\n";
+    }
+    return ofs.good();
+}
+
+// ---------------------------------------------------------------------------
+// UnitCell block integrity: a file whose per-type atom-count line cannot be
+// parsed as integers used to leave the void skipper at the subsequent
+// coordinate rows. A small (e.g. nlocal = 2) matrix read would then consume
+// those coordinates and the reader would hand back a bogus density matrix.
+// The skipper must fail fast instead, so read_dmk reports parse failure.
+// ---------------------------------------------------------------------------
+TEST(DMKTest, ReadDMKRejectsMalformedAtomCount) {
+    UnitCell* ucell;
+    UcellTestPrepare utp = UcellTestLib["Si"];
+    ucell = utp.SetUcellInfo();
+
+    const int nspin = 1;
+    const int nk = 1;
+    const int nlocal = 2;
+    Parallel_Blkcyclic pv;
+    init_pv(nlocal, pv);
+
+    // Row-major probe: 1, 2 / 3, 4.
+    const std::vector<double> probe = {1.0, 2.0, 3.0, 4.0};
+    std::vector<std::vector<double>> dmk;
+    fill_local_dmk(probe, nlocal, pv, dmk);
+
+    const std::vector<double> efs(nspin, 0.0);
+    K_Vectors kv;
+    init_kv(kv, 1.0);
+
+    const std::string out_dir = testing::TempDir();
+    std::ofstream ofs_log;
+    ModuleIO::write_dmk(dmk, kv, /*precision=*/12, efs, ucell, pv, /*column_major=*/true,
+                        out_dir, /*istep=*/0, /*out_app_flag=*/0, ofs_log);
+
+    if (GlobalV::MY_RANK == 0)
+    {
+        // write_dmk emits a 14-line header (Ionic_Step through the trailing
+        // blank separator) followed by the UnitCell block written by write_ucell.
+        // For a canonical Si single cell (ntype = 1, na = 2) the per-type atom
+        // counts sit at global line index 20:
+        //   14: latName, 15: lat0, 16-18: latvec rows, 19: atom labels,
+        //   20: per-type counts " 2", 21: "Direct", 22-23: coordinates.
+        // Replace the counts with a non-numeric token so read_ucell has to
+        // bail out with total_natom == 0. With the old void skipper that
+        // would leave the stream at the coordinate rows, whose six doubles
+        // are enough to satisfy a 2x2 gamma matrix read.
+        const std::string fn = out_dir + "dm_nao.txt";
+        ASSERT_TRUE(rewrite_line(fn, /*target=*/20, "X # malformed count\n"));
+    }
+
+    const std::vector<std::vector<double>> sentinel(
+        1, std::vector<double>(pv.nrloc() * pv.ncloc(), 7.0));
+    std::vector<std::vector<double>> dmk_read = sentinel;
+    EXPECT_FALSE(ModuleIO::read_dmk(nspin, nk, kv, pv, /*column_major=*/true, out_dir,
+                                    /*istep=*/0, /*out_app_flag=*/0, dmk_read, ofs_log));
+    // The caller buffer must not be touched on failure.
+    EXPECT_EQ(dmk_read, sentinel);
+
+    if (GlobalV::MY_RANK == 0)
+    {
+        std::remove((out_dir + "dm_nao.txt").c_str());
+    }
+    delete ucell;
+}
+
 // ---------------------------------------------------------------------------
 // The flat index shared by the readers and the writers: a row-major buffer
 // stores (i, j) at i * nlocal + j, a column-major one at j * nlocal + i. All
