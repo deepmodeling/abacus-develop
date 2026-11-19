@@ -2,7 +2,7 @@
 #include "cal_dos.h"
 #include "cal_pdos_gamma.h"
 #include "cal_pdos_multik.h"
-#include "write_pdos_npy.h"
+#include "write_pdos.h"
 #include "write_pdos_text.h"
 #include "source_base/global_variable.h"
 #include "source_base/parallel_common.h"

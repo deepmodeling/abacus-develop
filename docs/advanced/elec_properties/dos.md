@@ -120,9 +120,9 @@ energy = first["energy_min_eV"] + np.arange(rows["pdos"].shape[-1]) * first["ene
 first_orbital = rows["pdos"][0, 0, :]    # first orbital and first spin channel
 ```
 
-Each row includes the one-based `atom_index`, UTF-8 byte string `species`, `l`, signed `m`, `nspin`, and one-based `ionic_step`. A single-point calculation uses step 1. The fields `schema_version` (1) and `record_bytes` (payload size of the complete array) identify the schema and delimit records for append recovery.
+Each row includes the one-based `atom_index`, UTF-8 byte string `species`, `l`, signed `m`, `nspin`, and one-based `ionic_step`. A single-point calculation uses step 1. The fields `schema_version` (1) and `record_bytes` (payload size of the complete array) identify the schema and record boundaries. Appending to a damaged final record reports an error and leaves the existing records in place.
 
-For DOS, mode `out_app_flag 0` replaces the fixed-name file. Mode 1 appends one complete NumPy array per write, with the first ionic step starting a fresh file. Each array can have a different energy grid. `np.load(path)` opens the first record. To read consecutive records, open the file once in `"rb"` mode and call `np.load(stream, allow_pickle=False)` for each one. Mode 2 writes numbered steps such as `DOS/doss1g2.npy` and `DOS/pdosg2.npy`.
+For DOS, mode `out_app_flag 0` truncates the fixed-name file before writing. An interruption can leave an incomplete final array. Mode 1 appends one complete NumPy array per write, with the first ionic step starting a fresh file. Each array can have a different energy grid. `np.load(path)` opens the first record. To read consecutive records, open the file once in `"rb"` mode and call `np.load(stream, allow_pickle=False)` for each one. Mode 2 writes numbered steps such as `DOS/doss1g2.npy` and `DOS/pdosg2.npy`.
 
 For `abacus-plot`, use `tdosfile` for total DOS and `pdosfile` for projected DOS. The common JSON option `record` selects a one-based NPY record and defaults to 1.
 

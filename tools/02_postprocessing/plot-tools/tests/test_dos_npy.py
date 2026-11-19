@@ -7,20 +7,25 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 
-from abacus_plot.dos import PDOS
+from abacus_plot.dos import PDOS, TDOS
 
 
-def frame(nspin, ne, step):
-    channels = 2 if nspin == 2 else 1
-    dtype = [("record_bytes", "<u8"), ("schema_version", "<i4"), ("ionic_step", "<i4"),
-             ("nspin", "<i4"), ("atom_index", "<i4"), ("l", "<i4"), ("m", "<i4"),
-             ("energy_min_eV", "<f8"), ("energy_step_eV", "<f8"), ("species", "S8"),
-             ("pdos", "<f8", (channels, ne))]
-    rows = np.zeros(3, dtype=dtype)
+def frame(n, fields, step):
+    rows = np.zeros(n, dtype=[("record_bytes", "<u8"), ("schema_version", "<i4"),
+                              ("ionic_step", "<i4"), *fields])
     rows["record_bytes"] = rows.nbytes
     rows["schema_version"] = 1
-    rows["nspin"] = nspin
     rows["ionic_step"] = step
+    return rows
+
+
+def pdos_frame(nspin, ne, step):
+    channels = 2 if nspin == 2 else 1
+    fields = [("nspin", "<i4"), ("atom_index", "<i4"), ("l", "<i4"), ("m", "<i4"),
+              ("energy_min_eV", "<f8"), ("energy_step_eV", "<f8"), ("species", "S8"),
+              ("pdos", "<f8", (channels, ne))]
+    rows = frame(3, fields, step)
+    rows["nspin"] = nspin
     rows["atom_index"] = [1, 2, 2]
     rows["l"] = [0, 1, 1]
     rows["m"] = [0, 1, -1]
@@ -31,7 +36,7 @@ def frame(nspin, ne, step):
     return rows
 
 
-class PdosNpyTest(unittest.TestCase):
+class DosNpyTest(unittest.TestCase):
     def setUp(self):
         temp = tempfile.TemporaryDirectory()
         self.addCleanup(temp.cleanup)
@@ -40,9 +45,9 @@ class PdosNpyTest(unittest.TestCase):
         self.path = self.root / "pdos.npy"
 
     def test_plot_and_export_selected_record(self):
-        second = frame(2, 4, 3)
+        second = pdos_frame(2, 4, 3)
         with self.path.open("wb") as stream:
-            np.save(stream, frame(1, 2, 1))
+            np.save(stream, pdos_frame(1, 2, 1))
             np.save(stream, second)
         self.assertEqual(PDOS(self.root).nspin, 1)
         reader = PDOS(self.path, record=2)
@@ -65,7 +70,7 @@ class PdosNpyTest(unittest.TestCase):
             PDOS(self.path, record=3)
 
     def test_text_precedence_and_explicit_binary_path(self):
-        np.save(self.path, frame(4, 3, 1))
+        np.save(self.path, pdos_frame(4, 3, 1))
         (self.root / "pdoss1.txt").write_text("0.0 1 H 88.0\n")
         self.assertEqual(PDOS(self.root).orbitals[0]["data"][0, 0], 88.0)
         self.assertEqual(PDOS(self.path).nspin, 1)
@@ -74,10 +79,34 @@ class PdosNpyTest(unittest.TestCase):
 
     def test_incomplete_record_and_foreign_array(self):
         with self.path.open("wb") as stream:
-            np.save(stream, frame(1, 3, 1))
+            np.save(stream, pdos_frame(1, 3, 1))
             stream.truncate(stream.tell() - 1)
         with self.assertRaisesRegex(ValueError, "Incomplete PDOS"):
             PDOS(self.path)
         np.save(self.path, np.array([1.0]))
         with self.assertRaisesRegex(ValueError, "structured PDOS"):
             PDOS(self.path)
+
+    def test_both_tdos_spin_channels_and_appended_grid(self):
+        columns = ["energy_eV", "dos", "dos_int", "dos_smear", "dos_smear_int"]
+        for spin in (1, 2):
+            with (self.root / f"doss{spin}g2.npy").open("wb") as out:
+                for step in (1, 2):
+                    data = frame(step + 1, [("spin_channel", "<i8"), *[(c, "<f8") for c in columns]], step)
+                    data["spin_channel"] = spin
+                    data["energy_eV"] = np.arange(step + 1)
+                    for i, col in enumerate(columns[1:]):
+                        data[col] = spin * 10 + i + step
+                    np.save(out, data, allow_pickle=False)
+        tdos = TDOS(self.root, record=2)
+        self.assertEqual(tdos.nspin, 2)
+        np.testing.assert_equal(tdos.energy[:, 0], [0, 1, 2])
+        np.testing.assert_equal(tdos.dos_smear, [[14, 24]] * 3)
+        with self.assertRaisesRegex(ValueError, "no TDOS record"):
+            TDOS(self.root, record=3)
+
+    def test_foreign_structured_array(self):
+        path = self.root / "doss1.npy"
+        np.save(path, frame(2, [("pdos", "<f8")], 1))
+        with self.assertRaisesRegex(ValueError, "Missing TDOS fields"):
+            TDOS(path)

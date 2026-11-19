@@ -176,7 +176,6 @@ bool ModuleIO::cal_dos(const int& is,  // index for spin
     std::vector<double> dos(npoints, 0.0);
     std::vector<double> ene(npoints, 0.0);
     std::vector<double> dos_smear(npoints, 0.0);
-    std::vector<double> sum_elec(npoints, 0.0);
 
     const double b = std::sqrt(2.0) * bcoeff;
     const double gauss_norm = std::sqrt(ModuleBase::PI) * b;
@@ -226,56 +225,43 @@ bool ModuleIO::cal_dos(const int& is,  // index for spin
     std::string error;
     if (root)
     {
-        std::vector<double> smear_integral(npy ? npoints : 0);
-        for (int n = 0; n < npoints; ++n)
+        try
         {
-            dos[n] /= static_cast<double>(nkstot);
-            sum += dos[n];
-            sum_elec[n] = sum;
-
-            if (dos_smear[n] < dos_thr)
-            {
-                dos_smear[n] = 0.0;
-            }
-            sum2 += dos_smear[n] * de_ev;
-
+            std::array<char, 16> prefix;
+            const std::int64_t spin = is + 1;
             if (npy)
             {
-                smear_integral[n] = sum2;
-                continue;
+                const std::string fields = "('spin_channel','=i8'),('energy_eV','=f8'),('dos','=f8'),"
+                                           "('dos_int','=f8'),('dos_smear','=f8'),('dos_smear_int','=f8')";
+                const int step = std::max(1, istep + 1);
+                const size_t row_bytes = prefix.size() + sizeof(spin) + 5 * sizeof(double);
+                prefix = open_npy_record(ofs_dos, fn, append_step, step, fields, "dos_smear", npoints, row_bytes);
             }
-            ofs_dos << std::setw(13) << ene[n]
-                 << " " << std::setw(12) << dos[n]
-                 << " " << std::setw(12) << sum_elec[n]
-                 << " " << std::setw(14) << dos_smear[n]
-                 << " " << std::setw(14) << sum2 << std::endl;
-        }
-        if (npy)
-        {
-            const std::string fields = "('spin_channel','=i8'),('energy_eV','=f8'),('dos','=f8'),"
-                                       "('dos_int','=f8'),('dos_smear','=f8'),('dos_smear_int','=f8')";
-            const int step = std::max(1, istep + 1);
-            const std::int64_t spin = is + 1;
-            const size_t row_bytes = sizeof(NpyPrefix) + sizeof(spin) + 5 * sizeof(double);
-            try
+            for (int n = 0; n < npoints; ++n)
             {
-                write_npy_record(fn, append_step, step, fields, "dos_smear", npoints, row_bytes,
-                                 [&](std::ostream& out, const NpyPrefix& prefix) {
-                    for (int n = 0; n < npoints; ++n)
-                    {
-                        const double row[] = {ene[n], dos[n], sum_elec[n], dos_smear[n], smear_integral[n]};
-                        out.write(prefix.data(), prefix.size());
-                        out.write(reinterpret_cast<const char*>(&spin), sizeof(spin));
-                        out.write(reinterpret_cast<const char*>(row), sizeof(row));
-                    }
-                });
+                dos[n] /= static_cast<double>(nkstot);
+                sum += dos[n];
+                if (dos_smear[n] < dos_thr) { dos_smear[n] = 0.0; }
+                sum2 += dos_smear[n] * de_ev;
+                if (npy)
+                {
+                    const double row[] = {ene[n], dos[n], sum, dos_smear[n], sum2};
+                    ofs_dos.write(prefix.data(), prefix.size());
+                    ofs_dos.write(reinterpret_cast<const char*>(&spin), sizeof(spin));
+                    ofs_dos.write(reinterpret_cast<const char*>(row), sizeof(row));
+                }
+                else
+                {
+                    ofs_dos << std::setw(13) << ene[n]
+                            << " " << std::setw(12) << dos[n]
+                            << " " << std::setw(12) << sum
+                            << " " << std::setw(14) << dos_smear[n]
+                            << " " << std::setw(14) << sum2 << std::endl;
+                }
             }
-            catch (const std::exception& e) { error = e.what(); }
-        }
-        else
-        {
             ofs_dos.close();
         }
+        catch (const std::exception& e) { error = e.what(); }
     }
     if (npy)
     {

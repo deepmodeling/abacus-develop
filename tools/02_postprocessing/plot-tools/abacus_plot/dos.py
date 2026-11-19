@@ -14,10 +14,43 @@ from pathlib import Path
 from typing import Dict, List, Sequence, Tuple, Union, Any
 from matplotlib.figure import Figure
 from matplotlib import axes
-from abacus_plot.npy_record import check_record, read_npy_record
+from numpy.lib import format as npy_format
 
 from abacus_plot.utils import (energy_minus_efermi, get_angular_momentum_label,
                                get_angular_momentum_name, remove_empty, handle_data, parse_projected_data)
+
+
+def _check_record(record):
+    if isinstance(record, bool) or not isinstance(record, (int, np.integer)) or record < 1:
+        raise ValueError("record must be a positive integer")
+
+
+def _read_npy_record(path, record, kind, fields):
+    path = Path(path)
+    end = path.stat().st_size
+    with path.open("rb") as stream:
+        for _ in range(record):
+            if stream.tell() == end:
+                raise ValueError(f"{path} has no {kind} record {record}")
+            if npy_format.read_magic(stream) != (1, 0):
+                raise ValueError(f"Unsupported ABACUS {kind} NPY header in {path}")
+            shape, _, dtype = npy_format.read_array_header_1_0(stream)
+            if len(shape) != 1 or shape[0] < 1 or dtype.hasobject or not dtype.names:
+                raise ValueError(f"Expected a nonempty array of structured {kind} data in {path}")
+            required = {"schema_version", "record_bytes", "ionic_step", *fields}
+            if not required.issubset(dtype.names):
+                raise ValueError(f"Missing {kind} fields in {path}")
+            offset = stream.tell()
+            size = shape[0] * dtype.itemsize
+            if size > end - offset:
+                raise ValueError(f"Incomplete {kind} record in {path}")
+            stream.seek(size, 1)
+        rows = np.memmap(stream, mode="r", offset=offset, dtype=dtype, shape=shape)
+    step = rows["ionic_step"]
+    if (not np.all(rows["schema_version"] == 1) or not np.all(rows["record_bytes"] == size)
+            or step[0] < 1 or not np.all(step == step[0])):
+        raise ValueError(f"Invalid {kind} record metadata in {path}")
+    return rows
 
 
 def _npy_files(prefix):
@@ -197,7 +230,7 @@ class TDOS(DOS):
 
     def __init__(self, tdosfile: Union[PathLike, Sequence[PathLike]] = None, record: int = 1) -> None:
         self.tdosfile = tdosfile
-        check_record(record)
+        _check_record(record)
         self._read(record)
         super().__init__(self.nspin)
 
@@ -262,7 +295,7 @@ class TDOS(DOS):
         """
         if Path(fname).suffix == ".npy":
             fields = ("energy_eV", "dos", "dos_int", "dos_smear", "dos_smear_int")
-            rows = read_npy_record(fname, record, "TDOS", (*fields, "spin_channel"))
+            rows = _read_npy_record(fname, record, "TDOS", (*fields, "spin_channel"))
             for key in fields:
                 if rows[key].ndim != 1 or rows[key].dtype.kind != "f" or rows[key].dtype.itemsize != 8:
                     raise ValueError(f"Invalid TDOS column {key} in {fname}")
@@ -420,7 +453,7 @@ class PDOS(DOS):
 
     def __init__(self, pdosfile: PathLike = None, record: int = 1) -> None:
         self.pdosfile = pdosfile
-        check_record(record)
+        _check_record(record)
         self._read(record)
         super().__init__(self.nspin)
 
@@ -537,7 +570,7 @@ class PDOS(DOS):
 
     def _read_npy(self, path, record):
         fields = {"nspin", "atom_index", "species", "l", "m", "energy_min_eV", "energy_step_eV", "pdos"}
-        rows = read_npy_record(path, record, "PDOS", fields)
+        rows = _read_npy_record(path, record, "PDOS", fields)
         first = rows[0]
         values = rows["pdos"]
         if (first["nspin"] not in (1, 2, 4) or values.ndim != 3 or values.shape[2] == 0

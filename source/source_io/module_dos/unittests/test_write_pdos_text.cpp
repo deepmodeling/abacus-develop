@@ -1,10 +1,13 @@
+#include <cstdio>
 #include <fstream>
+#include <stdexcept>
 #include <sstream>
 #include <string>
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
+#include "../write_pdos.h"
 #include "../write_pdos_text.h"
 #include "source_base/global_variable.h"
 #include "source_cell/unitcell.h"
@@ -241,4 +244,55 @@ TEST_F(WritePdosTextTest, Mode2PerStepFile)
     remove("./pdoss1g4.txt");
     GlobalV::ofs_running.close();
     remove("test_write_pdos_text.log");
+}
+
+TEST_F(WritePdosTextTest, NpyAppendOverwriteAndNumberedSteps)
+{
+    Atom& atom = ucell->atoms[0];
+    atom.nw = 2;
+    atom.nwl = 0;
+    atom.l_nchi = {2};
+    atom.set_index();
+    std::vector<ModuleBase::matrix> data(1);
+    data[0].create(2, 2);
+    data[0](0, 0) = 4.25;
+    data[0](1, 0) = -1.25;
+    data[0](0, 1) = 1e-8;
+
+    const std::string prefix = testing::TempDir() + "/abacus-pdos-frame-";
+    auto write = [&](int step, int mode) {
+        return ModuleIO::write_pdos_npy(*ucell, data, 1, -1.0, 0.25, prefix, step, mode);
+    };
+    auto bytes = [](const std::string& path) {
+        std::ifstream in(path, std::ios::binary);
+        std::ostringstream buffer;
+        buffer << in.rdbuf();
+        return buffer.str();
+    };
+    const auto path = write(0, 1);
+    const auto first = bytes(path);
+    const double expected[] = {3.0, 0.0};
+    ASSERT_GE(first.size(), sizeof(expected));
+    EXPECT_EQ(first.substr(first.size() - sizeof(expected)),
+              std::string(reinterpret_cast<const char*>(expected), sizeof(expected)));
+    const auto numbered = write(1, 2);
+    EXPECT_EQ(numbered, prefix + "pdosg2.npy");
+    const auto second = bytes(numbered);
+    write(1, 1);
+    EXPECT_EQ(bytes(path), first + second);
+    write(1, 0);
+    EXPECT_EQ(bytes(path), second);
+    write(0, 1);
+    EXPECT_EQ(bytes(path), first);
+
+    // An incomplete next step must be left untouched on a subsequent append.
+    const auto partial = second.substr(0, second.size() - 1);
+    std::ofstream(path, std::ios::binary | std::ios::app).write(partial.data(), partial.size());
+    EXPECT_THROW(write(2, 1), std::runtime_error);
+    EXPECT_EQ(bytes(path), first + partial);
+    std::ofstream(path, std::ios::binary) << "foreign data";
+    EXPECT_THROW(write(2, 1), std::runtime_error);
+    EXPECT_EQ(bytes(path), "foreign data");
+    std::remove(path.c_str());
+    std::remove(numbered.c_str());
 }
