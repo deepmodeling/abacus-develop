@@ -51,11 +51,11 @@ std::vector<double> arrange_aparam(const std::vector<double>& input,
         const LocalAtom& atom = iat < owned.size() ? owned[iat] : ghost[iat - owned.size()];
         if (atom.type < 0 || static_cast<std::size_t>(atom.type) >= type_counts.size()
             || atom.type_index < 0
-            || atom.type_index >= type_counts[static_cast<std::size_t>(atom.type)])
+            || atom.type_index >= type_counts[atom.type])
         {
             throw std::invalid_argument("MDCell atomic parameter identity is invalid.");
         }
-        const std::size_t global_index = offsets[static_cast<std::size_t>(atom.type)]
+        const std::size_t global_index = offsets[atom.type]
                                          + static_cast<std::size_t>(atom.type_index);
         const std::size_t source = input.size() == width ? 0 : global_index * width;
         for (std::size_t component = 0; component < width; ++component)

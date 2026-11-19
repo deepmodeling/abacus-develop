@@ -87,7 +87,7 @@ void sync_geometry_from_unitcell(MDCell& mdcell, const UnitCell& ucell)
     }
     for (int it = 0; it < ucell.ntype; ++it)
     {
-        if (mdcell.type_atom_counts()[static_cast<std::size_t>(it)] != ucell.atoms[it].na)
+        if (mdcell.type_atom_counts()[it] != ucell.atoms[it].na)
         {
             throw std::runtime_error("UnitCell and MDCell type atom counts differ.");
         }
@@ -143,8 +143,8 @@ void collect_full_forces(MDCell& mdcell,
     std::vector<int> offsets(static_cast<std::size_t>(ucell.ntype + 1), 0);
     for (int it = 0; it < ucell.ntype; ++it)
     {
-        offsets[static_cast<std::size_t>(it + 1)] = offsets[static_cast<std::size_t>(it)] + ucell.atoms[it].na;
-        if (mdcell.type_atom_counts()[static_cast<std::size_t>(it)] != ucell.atoms[it].na)
+        offsets[it + 1] = offsets[it] + ucell.atoms[it].na;
+        if (mdcell.type_atom_counts()[it] != ucell.atoms[it].na)
         {
             throw std::runtime_error("UnitCell and MDCell type atom counts differ.");
         }
@@ -165,11 +165,11 @@ void collect_full_forces(MDCell& mdcell,
         {
             throw std::runtime_error("MDCell force atom identity is outside the UnitCell.");
         }
-        const int iat = offsets[static_cast<std::size_t>(atom.type)] + static_cast<int>(atom.type_index);
-        owners[static_cast<std::size_t>(iat)] += 1;
-        values[static_cast<std::size_t>(3 * iat)] += atom.force.x;
-        values[static_cast<std::size_t>(3 * iat + 1)] += atom.force.y;
-        values[static_cast<std::size_t>(3 * iat + 2)] += atom.force.z;
+        const int iat = offsets[atom.type] + static_cast<int>(atom.type_index);
+        owners[iat] += 1;
+        values[3 * iat] += atom.force.x;
+        values[3 * iat + 1] += atom.force.y;
+        values[3 * iat + 2] += atom.force.z;
     }
 
     ModuleBase::CommunicationDomain domain;
@@ -181,13 +181,13 @@ void collect_full_forces(MDCell& mdcell,
     full_force.create(ucell.nat, 3);
     for (int iat = 0; iat < ucell.nat; ++iat)
     {
-        if (owners[static_cast<std::size_t>(iat)] != 1)
+        if (owners[iat] != 1)
         {
             throw std::runtime_error("UnitCell atom does not have exactly one MDCell owner.");
         }
         for (int axis = 0; axis < 3; ++axis)
         {
-            full_force(iat, axis) = values[static_cast<std::size_t>(3 * iat + axis)];
+            full_force(iat, axis) = values[3 * iat + axis];
         }
     }
 }
