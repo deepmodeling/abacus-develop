@@ -7,10 +7,14 @@
 #include "source_hamilt/hamilt.h" // use hamilt::Hamilt<T>
 #include "source_basis/module_ao/parallel_orbitals.h" // use Parallel_Orbitals
 #include "source_estate/fp_energy.h" // use elecstate::Efermi
+#include <vector>
 
 
 namespace ModuleIO
 {
+    void write_pdos(const UnitCell& ucell, const std::vector<ModuleBase::matrix>& pdos, int nspin, int nlocal,
+                    double emin, double de, const std::string& out_dir, int istep, int out_app_flag, bool npy);
+
     /// @brief calculate density of states(DOS), 
     /// partial density of states(PDOS),
     ///  and mulliken charge for LCAO base
@@ -29,7 +33,6 @@ namespace ModuleIO
         const double& dos_scale,                
         const double& bcoeff,
         const std::string& dos_format,
-        const std::string& pdos_format,
         const int out_app_flag,
         const int istep,
         const int nspin,

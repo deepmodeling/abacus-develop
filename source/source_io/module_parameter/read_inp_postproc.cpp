@@ -23,24 +23,6 @@ void ReadInput::item_postprocess()
         this->add_item(item);
     }
     {
-        Input_Item item("pdos_format");
-        item.domain.set_choices({"text", "npy"});
-        item.annotation = "LCAO projected DOS file format";
-        item.category = "Density of states";
-        item.type = "String";
-        item.description = "With out_dos_format text, pdos_format npy selects NumPy for LCAO projected "
-                           "DOS alone. With out_dos_format npy both total and projected DOS use NumPy.";
-        item.default_value = "text";
-        read_sync_string(input.pdos_format);
-        item.check_value = [](const Input_Item&, const Parameter& para) {
-            if (para.input.pdos_format == "npy" && para.input.basis_type != "lcao")
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "pdos_format npy requires basis_type lcao");
-            }
-        };
-        this->add_item(item);
-    }
-    {
         Input_Item item("dos_edelta_ev");
         item.annotation = "delta energy for dos";
         item.category = "Density of states";

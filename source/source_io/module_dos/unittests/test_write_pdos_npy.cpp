@@ -28,8 +28,8 @@ protected:
         cell.atoms[0].label = "Si";
         cell.atoms[0].nw = 2;
         cell.atoms[0].nwl = 0;
-        cell.atoms[0].iw2l = {0, 0};
-        cell.atoms[0].iw2m = {0, 0};
+        cell.atoms[0].l_nchi = {2};
+        cell.atoms[0].set_index();
         cell.set_iat2iwt_for_test({0}, 1);
         pdos.front().create(2, 2);
         pdos.front()(0, 0) = 4.25;

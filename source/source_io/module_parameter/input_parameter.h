@@ -541,7 +541,6 @@ struct Input_para
 
     // ==============   #Parameters (12.Postprocess) ===========================
     std::string out_dos_format = "text"; ///< total and projected DOS file format
-    std::string pdos_format = "text"; ///< compatibility option for binary PDOS alone
     double dos_emin_ev = -15.0;
     double dos_emax_ev = 15.0;
     double dos_edelta_ev = 0.03;

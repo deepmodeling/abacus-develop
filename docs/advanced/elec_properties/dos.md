@@ -109,7 +109,7 @@ out_dos_format  npy
 
 Each file contains a standard NumPy 1.0 structured array with named fields. Total DOS uses one row per energy point in `doss1.npy`, with a separate `doss2.npy` for collinear spin. The five binary64 fields are `energy_eV`, `dos`, `dos_int`, `dos_smear` and `dos_smear_int`, in the same units as the text columns. `spin_channel` gives the one-based channel. For example, `np.load("doss1.npy")["dos_smear"]` returns the smeared DOS in states/eV per cell.
 
-LCAO projected DOS uses one row per atom and `(l,m)` channel in `pdos.npy`. Contributions from all zeta components are summed. Across the array, the binary64 `pdos` field has axes `(orbital, spin channel, energy point)` and units of 1/eV. There are two spin channels for `nspin=2` and one for `nspin=1` or `4`. The latter includes both spinor components. Both output formats apply the same small-value threshold. With `out_dos_format text`, `pdos_format npy` selects binary PDOS alone.
+LCAO projected DOS uses one row per atom and `(l,m)` channel in `pdos.npy`. Contributions from all zeta components are summed. Across the array, the binary64 `pdos` field has axes `(orbital, spin channel, energy point)` and units of 1/eV. There are two spin channels for `nspin=2` and one for `nspin=1` or `4`. The latter includes both spinor components. Both output formats apply the same small-value threshold.
 
 ```python
 import numpy as np
@@ -124,7 +124,7 @@ Each row includes the one-based `atom_index`, UTF-8 byte string `species`, `l`, 
 
 For DOS, mode `out_app_flag 0` replaces the fixed-name file. Mode 1 appends one complete NumPy array per write, with the first ionic step starting a fresh file. Each array can have a different energy grid. `np.load(path)` opens the first record. To read consecutive records, open the file once in `"rb"` mode and call `np.load(stream, allow_pickle=False)` for each one. Mode 2 writes numbered steps such as `DOS/doss1g2.npy` and `DOS/pdosg2.npy`.
 
-For `abacus-plot`, use `tdosfile` for total DOS and `pdosfile` for projected DOS. The common JSON option `record` selects a one-based NPY record and defaults to 1. PDOS also accepts the spelling `pdos_record`.
+For `abacus-plot`, use `tdosfile` for total DOS and `pdosfile` for projected DOS. The common JSON option `record` selects a one-based NPY record and defaults to 1.
 
 ```json
 {"pdosfile": "OUT.ABACUS/pdos.npy", "record": 1, "species": ["Si"]}

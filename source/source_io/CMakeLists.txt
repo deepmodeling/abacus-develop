@@ -76,7 +76,6 @@ if(ENABLE_LCAO)
     module_dos/cal_pdos_gamma.cpp
     module_dos/cal_pdos_multik.cpp
     module_dos/write_pdos_text.cpp
-    module_dos/pdos_orbitals.cpp
     module_dos/write_pdos_npy.cpp
     module_output/write_orb_info.cpp
     module_energy/write_proj_band_lcao.cpp

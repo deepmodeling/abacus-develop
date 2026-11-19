@@ -31,7 +31,6 @@ if(ENABLE_MPI)
     LIBS parameter base device
     SOURCES test_write_pdos_text.cpp
             ../write_pdos_text.cpp
-            ../pdos_orbitals.cpp
             ../../../source_cell/atom_spec.cpp
             ../../../source_cell/atom_pseudo.cpp
             ../../../source_cell/pseudo.cpp
@@ -47,7 +46,6 @@ if(ENABLE_LCAO)
     SOURCES test_write_pdos_npy.cpp
             ../write_pdos_npy.cpp
             ../../module_output/npy_record.cpp
-            ../pdos_orbitals.cpp
             ../../../source_cell/atom_spec.cpp
             ../../../source_cell/atom_pseudo.cpp
             ../../../source_cell/pseudo.cpp

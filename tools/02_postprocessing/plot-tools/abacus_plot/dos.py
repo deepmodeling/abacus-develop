@@ -20,6 +20,16 @@ from abacus_plot.utils import (energy_minus_efermi, get_angular_momentum_label,
                                get_angular_momentum_name, remove_empty, handle_data, parse_projected_data)
 
 
+def _npy_files(prefix):
+    """Find the fixed DOS file, or numbered steps in ionic-step order."""
+    fixed = prefix.with_name(prefix.name + ".npy")
+    if fixed.is_file():
+        return [fixed]
+    start = len(prefix.name) + 1
+    numbered = (p for p in prefix.parent.glob(prefix.name + "g*.npy") if p.stem[start:].isdigit())
+    return sorted(numbered, key=lambda p: int(p.stem[start:]))
+
+
 class DOS:
     """Parse DOS data"""
 
@@ -214,9 +224,7 @@ class TDOS(DOS):
             if not matches1 and (path / "dos.txt").is_file():
                 matches1 = [str(path / "dos.txt")]  # legacy PW nspin=1 name
             if not matches1:
-                fixed = path / "doss1.npy"
-                numbered = [p for p in path.glob("doss1g*.npy") if p.stem[6:].isdigit()]
-                matches1 = [fixed] if fixed.is_file() else sorted(numbered, key=lambda p: int(p.stem[6:]))
+                matches1 = _npy_files(path / "doss1")
             if not matches1:
                 raise FileNotFoundError(
                     f"No TDOS file found in directory '{path}'")
@@ -422,6 +430,8 @@ class PDOS(DOS):
         Returns a list with one (nspin=1) or two (nspin=2) file paths.
         """
         path = Path(self.pdosfile)
+        if path.suffix == ".npy" and not path.is_dir():
+            return [str(path)]
         if path.is_file():
             name = path.name
             if name.startswith("pdoss"):
@@ -450,6 +460,9 @@ class PDOS(DOS):
             if matches:
                 candidates.append(matches[0])
             elif spin == 1:
+                binary = _npy_files(Path(prefix))
+                if binary:
+                    return [str(binary[0])]
                 raise FileNotFoundError(
                     f"No text PDOS file matching '{pattern}'")
         return candidates
@@ -549,23 +562,10 @@ class PDOS(DOS):
             spin-polarized pair, or a path/prefix used to discover the
             ``pdoss1*``/``pdoss2*`` files.
         """
-        path = Path(self.pdosfile)
-        if path.suffix == ".npy" and not path.is_dir():
-            self._read_npy(path, record)
+        spin_files = self._find_spin_files()
+        if Path(spin_files[0]).suffix == ".npy":
+            self._read_npy(spin_files[0], record)
             return
-        try:
-            spin_files = self._find_spin_files()
-        except FileNotFoundError:
-            prefix = path / "pdos" if path.is_dir() else path
-            candidates = [prefix.with_name(prefix.name + ".npy")]
-            numbered = [p for p in prefix.parent.glob(prefix.name + "g*.npy")
-                        if p.stem[len(prefix.name) + 1:].isdigit()]
-            candidates.extend(sorted(numbered, key=lambda p: int(p.stem[len(prefix.name) + 1:])))
-            for candidate in candidates:
-                if candidate.is_file():
-                    self._read_npy(candidate, record)
-                    return
-            raise
         if record != 1:
             raise ValueError("PDOS record selection requires a .npy file")
         self.nspin = len(spin_files)

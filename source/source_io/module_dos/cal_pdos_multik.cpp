@@ -1,28 +1,34 @@
 #include "cal_pdos_multik.h"
+#include "write_dos_lcao.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/module_external/blas_connector.h"
 #include "source_base/module_external/scalapack_connector.h"
 #include "source_base/global_function.h"
 #include "source_lcao/hamilt_lcao.h"
 
-std::vector<ModuleBase::matrix> ModuleIO::cal_pdos(
+void ModuleIO::cal_pdos(
 		const psi::Psi<std::complex<double>>* psi,
 		hamilt::Hamilt<std::complex<double>>* p_ham,
 		const Parallel_Orbitals& pv,
+		const UnitCell& ucell,
 		const K_Vectors& kv,
-		const int nspin,
+		const int nspin0,
 		const int nbands,
 		const ModuleBase::matrix& ekb,
 		const double& emax,
 		const double& emin,
 		const double& dos_edelta_ev,
 		const double& bcoeff,
-		const int nlocal)
+		const int istep,
+		const int out_app_flag,
+		const int nlocal,
+		const int nspin,
+		const std::string& global_out_dir,
+		bool npy)
 {
     ModuleBase::TITLE("ModuleIO", "cal_pdos_multik");
 
-    const int nspin0 = nspin == 2 ? 2 : 1;
-    assert(nspin == 1 || nspin == 2 || nspin == 4);
+    assert(nspin0>0);
     assert(emax>=emin);
     assert(dos_edelta_ev>0.0);
 
@@ -179,5 +185,5 @@ std::vector<ModuleBase::matrix> ModuleIO::cal_pdos(
 #endif
     } // is
 
-    return pdos;
+    write_pdos(ucell, pdos, nspin, nlocal, emin, dos_edelta_ev, global_out_dir, istep, out_app_flag, npy);
 }
