@@ -1,5 +1,5 @@
-#ifndef MODULE_MD_LJ_H
-#define MODULE_MD_LJ_H
+#ifndef SOURCE_MD_MODULE_LJ_LJ_FORCEFIELD_H
+#define SOURCE_MD_MODULE_LJ_LJ_FORCEFIELD_H
 
 #include "source_md/forcefield.h"
 #include "source_base/matrix.h"

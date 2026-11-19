@@ -1,5 +1,5 @@
 /**
- * @file dp.cpp
+ * @file dp_forcefield.cpp
 #include "source_io/module_parameter/parameter.h"
  * @brief Implementation of ESolver_DP class for DeePMD method.
  *
@@ -17,7 +17,7 @@
  * @author YuLiu98
  * @date 2023-05-15
  */
-#include "dp.h"
+#include "dp_forcefield.h"
 #ifdef __DPMD
 #ifdef __DPMDC
 #include "deepmd/deepmd.hpp"

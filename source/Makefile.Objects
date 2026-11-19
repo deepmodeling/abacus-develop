@@ -574,10 +574,10 @@ OBJS_MD=fire.o\
     module_snap/snap_derivative.o\
     module_snap/snap_model.o\
     module_snap/snap_cg.o\
-    module_snap/snap_potential.o\
-    module_lj/lj.o\
-    module_dp/dp.o\
-    module_nep/nep_potential.o\
+    module_snap/snap_forcefield.o\
+    module_lj/lj_forcefield.o\
+    module_dp/dp_forcefield.o\
+    module_nep/nep_forcefield.o\
     verlet.o\
 
 OBJS_NEIGHBOR=sltk_atom.o\
@@ -807,6 +807,7 @@ OBJS_IO=module_parameter/input_conv.o\
     init_info.o\
     output_info.o\
     parse_args.o\
+    parse_command_line.o\
     module_parameter/availability.o\
     module_parameter/availability_validator.o\
     module_parameter/input_domain.o\

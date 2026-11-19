@@ -1,4 +1,4 @@
-#include "lj.h"
+#include "lj_forcefield.h"
 
 #include "source_base/parallel_cell.h"
 #include "source_cell/mdcell.h"
