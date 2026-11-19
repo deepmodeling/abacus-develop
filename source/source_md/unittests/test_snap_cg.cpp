@@ -1,4 +1,4 @@
-#include "../snap_cg.h"
+#include "source_md/module_snap/snap_cg.h"
 
 #include <gtest/gtest.h>
 

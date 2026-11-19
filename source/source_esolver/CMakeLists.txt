@@ -44,6 +44,7 @@ if(ENABLE_COVERAGE)
 endif()
 
 if(BUILD_TESTING)
+  add_subdirectory(unittests)
   if(ENABLE_MPI)
     add_subdirectory(test)
   endif()

@@ -251,8 +251,7 @@ TEST_F(DomainDecompositionTest, LatticeAndCutoffChangesRebuildNeighbors)
     expect_neighbor_count(1);
     ModuleBase::Matrix3 lattice = cell.latvec();
     lattice.e11 = 8.0;
-    const double lat0 = cell.lat0();
-    cell.set_lattice_geometry(lattice, lat0);
+    cell.set_lattice_vectors(lattice);
     cell.refresh_cart_from_frac();
     decomp.prepare_neighbors(cell);
     expect_neighbor_count(0);
@@ -436,8 +435,7 @@ TEST_F(DomainDecompositionTest, SkewCellMultipleImagesMatchBruteForce)
     lattice.e21 = 0.8;
     lattice.e31 = 0.4;
     lattice.e32 = 0.6;
-    const double lat0 = cell.lat0();
-    cell.set_lattice_geometry(lattice, lat0);
+    cell.set_lattice_vectors(lattice);
     cell.refresh_cart_from_frac();
     const double cutoff = 4.5; // Larger than a cell height: multiple image layers.
     cell.set_neighbor_cutoff(cutoff);

@@ -1,5 +1,5 @@
-#ifndef MODULE_MD_SNAP_POTENTIAL_H
-#define MODULE_MD_SNAP_POTENTIAL_H
+#ifndef SOURCE_MD_MODULE_SNAP_SNAP_FORCEFIELD_H
+#define SOURCE_MD_MODULE_SNAP_SNAP_FORCEFIELD_H
 
 #include "source_md/forcefield.h"
 #include "source_md/module_snap/snap_calculator.h"
@@ -39,4 +39,4 @@ class SnapPotential : public ForceField
 
 } // namespace ModuleMD
 
-#endif // MODULE_MD_SNAP_POTENTIAL_H
+#endif // SOURCE_MD_MODULE_SNAP_SNAP_FORCEFIELD_H

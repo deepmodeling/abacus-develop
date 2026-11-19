@@ -1,6 +1,7 @@
 #include "parse_args.h"
 #include "build_info.h"
 #include "input_help.h"
+#include "parse_command_line.h"
 
 #include <cstdlib>
 #include <iostream>
@@ -274,6 +275,13 @@ void parse_args(int argc, char** argv)
         }
         else
         {
+            const int option_size = run_control_option_size(argc, argv, i);
+            if (option_size != 0)
+            {
+                i += option_size - 1;
+                continue;
+            }
+
             // Error message goes to stderr
             std::cerr << "Error: Unknown argument: " << arg << std::endl;
             std::cerr << std::endl;
