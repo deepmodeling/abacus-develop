@@ -12,56 +12,59 @@ namespace
 {
 constexpr int LOCAL_METADATA_SIZE = 6;
 
-int checked_mpi_count(const std::size_t count)
+void assert_valid_mpi_count(const std::size_t nbytes)
 {
-    if (count > static_cast<std::size_t>(std::numeric_limits<int>::max()))
+    if (nbytes > static_cast<std::size_t>(std::numeric_limits<int>::max()))
     {
         throw std::invalid_argument(
             "Matrix2d collective matrix buffer exceeds MPI count range");
     }
-    return static_cast<int>(count);
 }
 
-std::vector<int> make_byte_displacements(const std::vector<int>& counts)
+int mpi_count(const std::size_t nbytes)
 {
-    std::vector<int> displacements(counts.size(), 0);
-    int off = 0;
-    for (std::size_t ip = 0; ip < counts.size(); ++ip)
+    return static_cast<int>(nbytes);
+}
+
+std::vector<int> make_byte_displs(const std::vector<int>& nbytes)
+{
+    std::vector<int> displs(nbytes.size(), 0);
+    int offset = 0;
+    for (std::size_t ip = 0; ip < nbytes.size(); ++ip)
     {
-        displacements[ip] = off;
-        if (counts[ip] > std::numeric_limits<int>::max() - off)
+        displs[ip] = offset;
+        if (nbytes[ip] > std::numeric_limits<int>::max() - offset)
         {
             throw std::invalid_argument(
                 "Matrix2d collective matrix buffer size overflow");
         }
-        off += counts[ip];
+        offset += nbytes[ip];
     }
-    return displacements;
+    return displs;
 }
 
-std::vector<int> allgather_byte_counts(const int local_count, const MPI_Comm comm)
+std::vector<int> allgather_nbytes(const int nbytes_local, const MPI_Comm comm)
 {
     const int nproc = Parallel_Common::comm_size(comm);
-    const int integer_bytes = checked_mpi_count(sizeof(int));
-    std::vector<int> recv(nproc, integer_bytes);
+    const int nbytes_int = static_cast<int>(sizeof(int));
+    std::vector<int> recvcounts(static_cast<std::size_t>(nproc), nbytes_int);
     const std::vector<int> rdispls
-        = make_byte_displacements(recv);
-    std::vector<int> counts(nproc, 0);
-    const int local_count_bytes = checked_mpi_count(sizeof(local_count));
+        = make_byte_displs(recvcounts);
+    std::vector<int> nbytes(static_cast<std::size_t>(nproc), 0);
 
-    Parallel_Common::allgatherv_bytes(&local_count,
-                                      local_count_bytes,
-                                      counts.data(),
-                                      recv.data(),
+    Parallel_Common::allgatherv_bytes(&nbytes_local,
+                                      nbytes_int,
+                                      nbytes.data(),
+                                      recvcounts.data(),
                                       rdispls.data(),
                                       comm);
-    return counts;
+    return nbytes;
 }
 
 template <typename T>
 std::vector<int> make_local_metadata(const Matrix2d<T>& matrix)
 {
-    const std::shared_ptr<const Parallel_Blkcyclic> dist
+    const std::shared_ptr<const Parallel_Blkcyclic> distrib
         = matrix.distribution();
     std::vector<int> metadata;
     metadata.reserve(LOCAL_METADATA_SIZE + matrix.nrloc()
@@ -70,15 +73,15 @@ std::vector<int> make_local_metadata(const Matrix2d<T>& matrix)
     metadata.push_back(matrix.ncloc());
     metadata.push_back(matrix.nrglb());
     metadata.push_back(matrix.ncglb());
-    metadata.push_back(dist->irproc());
-    metadata.push_back(dist->icproc());
+    metadata.push_back(distrib->irproc());
+    metadata.push_back(distrib->icproc());
     for (int irloc = 0; irloc < matrix.nrloc(); ++irloc)
     {
-        metadata.push_back(dist->irglb(irloc));
+        metadata.push_back(distrib->irglb(irloc));
     }
     for (int icloc = 0; icloc < matrix.ncloc(); ++icloc)
     {
-        metadata.push_back(dist->icglb(icloc));
+        metadata.push_back(distrib->icglb(icloc));
     }
     return metadata;
 }
@@ -87,28 +90,27 @@ template <typename T>
 std::vector<unsigned char> make_local_matrix_buffer(const Matrix2d<T>& matrix)
 {
     const std::vector<int> metadata = make_local_metadata(matrix);
-    const std::size_t nmeta = metadata.size() * sizeof(int);
+    const std::size_t nmeta = metadata.size();
+    const std::size_t nmeta_bytes = nmeta * sizeof(int);
     const std::size_t data_elements = static_cast<std::size_t>(matrix.nrloc())
         * static_cast<std::size_t>(matrix.ncloc());
     const std::size_t data_bytes = data_elements * sizeof(T);
-    const std::size_t buffer_bytes = nmeta + data_bytes;
-    std::vector<unsigned char> buffer(buffer_bytes);
+    const std::size_t nbytes_buffer = nmeta_bytes + data_bytes;
+    std::vector<unsigned char> buffer(nbytes_buffer);
 
-    std::memcpy(buffer.data(), metadata.data(), nmeta);
+    std::memcpy(buffer.data(), metadata.data(), nmeta_bytes);
     for (int irloc = 0; irloc < matrix.nrloc(); ++irloc)
     {
         for (int icloc = 0; icloc < matrix.ncloc(); ++icloc)
         {
-            const std::size_t irloc_index = static_cast<std::size_t>(irloc);
-            const std::size_t icloc_index = static_cast<std::size_t>(icloc);
+            const std::size_t uirloc = static_cast<std::size_t>(irloc);
+            const std::size_t uicloc = static_cast<std::size_t>(icloc);
             const std::size_t idx
-                = irloc_index * static_cast<std::size_t>(matrix.ncloc())
-                + icloc_index;
-            const T& value = matrix.at_local(irloc, icloc);
-            const std::size_t off
-                = nmeta + idx * sizeof(T);
+                = uirloc * static_cast<std::size_t>(matrix.ncloc()) + uicloc;
+            const T& value = matrix.atloc(irloc, icloc);
+            const std::size_t offset = nmeta_bytes + idx * sizeof(T);
             unsigned char* const destination
-                = buffer.data() + off;
+                = buffer.data() + offset;
             std::memcpy(destination, &value, sizeof(T));
         }
     }
@@ -155,25 +157,25 @@ LocalMatrixBufferView view_local_matrix_buffer(
             "Matrix2d collective matrix buffer has invalid dimensions");
     }
 
-    const std::size_t metadata_count
+    const std::size_t nmeta
         = static_cast<std::size_t>(LOCAL_METADATA_SIZE) + view.nrloc + view.ncloc;
-    const std::size_t nmeta = metadata_count * sizeof(int);
+    const std::size_t nmeta_bytes = nmeta * sizeof(int);
     const std::size_t data_elements
         = static_cast<std::size_t>(view.nrloc) * static_cast<std::size_t>(view.ncloc);
-    const std::size_t expected_bytes = nmeta + data_elements * sizeof(T);
+    const std::size_t expected_bytes = nmeta_bytes + data_elements * sizeof(T);
     if (buffer.size() != expected_bytes)
     {
         throw std::invalid_argument(
             "Matrix2d collective matrix buffer has an invalid size");
     }
 
-    std::vector<int> metadata(metadata_count);
-    std::memcpy(metadata.data(), buffer.data(), nmeta);
+    std::vector<int> metadata(nmeta);
+    std::memcpy(metadata.data(), buffer.data(), nmeta_bytes);
     view.irglb.assign(metadata.begin() + LOCAL_METADATA_SIZE,
                       metadata.begin() + LOCAL_METADATA_SIZE + view.nrloc);
     view.icglb.assign(metadata.begin() + LOCAL_METADATA_SIZE + view.nrloc,
                       metadata.end());
-    view.data = buffer.data() + nmeta;
+    view.data = buffer.data() + nmeta_bytes;
     return view;
 }
 
@@ -224,7 +226,7 @@ Matrix2d<T> rebuild_global_matrix(
                     + static_cast<std::size_t>(icloc);
                 T value;
                 std::memcpy(&value, view.data + idx * sizeof(T), sizeof(T));
-                result.at_local(irglb, icglb) = value;
+                result.atloc(irglb, icglb) = value;
             }
         }
     }
@@ -238,26 +240,28 @@ std::vector<std::vector<unsigned char>> allgather_local_matrix_buffers(
 {
     const std::vector<unsigned char> local_buffer
         = make_local_matrix_buffer(matrix);
-    const int local_count = checked_mpi_count(local_buffer.size());
-    std::vector<int> pcounts = allgather_byte_counts(local_count, comm);
-    const std::vector<int> pdispls
-        = make_byte_displacements(pcounts);
-    const int total_bytes = pdispls.back() + pcounts.back();
+    assert_valid_mpi_count(local_buffer.size());
+    const int nbytes_local_mpi = mpi_count(local_buffer.size());
+    const std::vector<int> recvcounts
+        = allgather_nbytes(nbytes_local_mpi, comm);
+    const std::vector<int> rdispls
+        = make_byte_displs(recvcounts);
+    const int total_bytes = rdispls.back() + recvcounts.back();
     std::vector<unsigned char> received(total_bytes);
 
     Parallel_Common::allgatherv_bytes(local_buffer.data(),
-                                      local_count,
+                                      nbytes_local_mpi,
                                       received.data(),
-                                      pcounts.data(),
-                                      pdispls.data(),
+                                      recvcounts.data(),
+                                      rdispls.data(),
                                       comm);
 
-    std::vector<std::vector<unsigned char>> buffers(pcounts.size());
-    for (std::size_t ip = 0; ip < pcounts.size(); ++ip)
+    std::vector<std::vector<unsigned char>> buffers(recvcounts.size());
+    for (std::size_t ip = 0; ip < recvcounts.size(); ++ip)
     {
-        const std::size_t begin = static_cast<std::size_t>(pdispls[ip]);
+        const std::size_t begin = static_cast<std::size_t>(rdispls[ip]);
         const std::size_t end
-            = begin + static_cast<std::size_t>(pcounts[ip]);
+            = begin + static_cast<std::size_t>(recvcounts[ip]);
         buffers[ip].assign(received.begin() + begin, received.begin() + end);
     }
     return buffers;
@@ -288,11 +292,13 @@ std::unique_ptr<Matrix2d<T>> gather_on_root(const Matrix2d<T>& matrix,
 
     const std::vector<unsigned char> local_buffer
         = make_local_matrix_buffer(matrix);
-    const int local_count = checked_mpi_count(local_buffer.size());
-    std::vector<int> pcounts = allgather_byte_counts(local_count, comm);
-    const std::vector<int> pdispls
-        = make_byte_displacements(pcounts);
-    const int total_bytes = pdispls.back() + pcounts.back();
+    assert_valid_mpi_count(local_buffer.size());
+    const int nbytes_local_mpi = mpi_count(local_buffer.size());
+    const std::vector<int> recvcounts
+        = allgather_nbytes(nbytes_local_mpi, comm);
+    const std::vector<int> rdispls
+        = make_byte_displs(recvcounts);
+    const int total_bytes = rdispls.back() + recvcounts.back();
     std::vector<unsigned char> received;
     if (ip == iproot)
     {
@@ -301,10 +307,10 @@ std::unique_ptr<Matrix2d<T>> gather_on_root(const Matrix2d<T>& matrix,
 
     unsigned char* const recvbuf = ip == iproot ? received.data() : nullptr;
     Parallel_Common::gatherv_bytes(local_buffer.data(),
-                                   local_count,
+                                   nbytes_local_mpi,
                                    recvbuf,
-                                   pcounts.data(),
-                                   pdispls.data(),
+                                   recvcounts.data(),
+                                   rdispls.data(),
                                    iproot,
                                    comm);
     if (ip != iproot)
@@ -312,13 +318,13 @@ std::unique_ptr<Matrix2d<T>> gather_on_root(const Matrix2d<T>& matrix,
         return std::unique_ptr<Matrix2d<T>>();
     }
 
-    std::vector<std::vector<unsigned char>> buffers(pcounts.size());
-    for (std::size_t ipsrc = 0; ipsrc < pcounts.size(); ++ipsrc)
+    std::vector<std::vector<unsigned char>> buffers(recvcounts.size());
+    for (std::size_t ipsrc = 0; ipsrc < recvcounts.size(); ++ipsrc)
     {
         const std::size_t begin
-            = static_cast<std::size_t>(pdispls[ipsrc]);
+            = static_cast<std::size_t>(rdispls[ipsrc]);
         const std::size_t end
-            = begin + static_cast<std::size_t>(pcounts[ipsrc]);
+            = begin + static_cast<std::size_t>(recvcounts[ipsrc]);
         buffers[ipsrc].assign(received.begin() + begin, received.begin() + end);
     }
     return std::unique_ptr<Matrix2d<T>>(
@@ -333,43 +339,42 @@ void scatter_from_host(const Matrix2d<T>& matglb, Matrix2d<T>& matloc)
         throw std::invalid_argument("scatter requires a host global matrix");
     }
 
-    const std::shared_ptr<const Parallel_Blkcyclic> dist
+    const std::shared_ptr<const Parallel_Blkcyclic> distrib
         = matloc.distribution();
-    const MPI_Comm comm = dist->comm();
+    const MPI_Comm comm = distrib->comm();
     if (comm == MPI_COMM_NULL)
     {
         throw std::invalid_argument("scatter requires a valid MPI comm");
     }
 
-    const std::vector<int> local_meta = make_local_metadata(matloc);
-    const std::size_t local_metadata_size
-        = local_meta.size() * sizeof(int);
-    const int nmeta
-        = checked_mpi_count(local_metadata_size);
-    std::vector<int> mcounts
-        = allgather_byte_counts(nmeta, comm);
-    const std::vector<int> mdispls
-        = make_byte_displacements(mcounts);
+    const std::vector<int> metadata = make_local_metadata(matloc);
+    const std::size_t nmeta = metadata.size();
+    const std::size_t nmeta_bytes = nmeta * sizeof(int);
+    assert_valid_mpi_count(nmeta_bytes);
+    const int nmeta_mpi = mpi_count(nmeta_bytes);
+    const std::vector<int> metacounts = allgather_nbytes(nmeta_mpi, comm);
+    const std::vector<int> metadispls
+        = make_byte_displs(metacounts);
     const int metadata_total_bytes
-        = mdispls.back() + mcounts.back();
-    const int metadata_element_bytes = checked_mpi_count(sizeof(int));
-    if (metadata_total_bytes % metadata_element_bytes != 0)
+        = metadispls.back() + metacounts.back();
+    const int nbytes_int = static_cast<int>(sizeof(int));
+    if (metadata_total_bytes % nbytes_int != 0)
     {
         throw std::invalid_argument("Matrix2d scatter metadata has an invalid byte count");
     }
-    const int metadata_elements = metadata_total_bytes / metadata_element_bytes;
-    std::vector<int> all_metadata(metadata_elements);
+    const int nmeta_all = metadata_total_bytes / nbytes_int;
+    std::vector<int> all_metadata(nmeta_all);
 
-    Parallel_Common::allgatherv_bytes(local_meta.data(),
-                                      nmeta,
+    Parallel_Common::allgatherv_bytes(metadata.data(),
+                                      nmeta_mpi,
                                       all_metadata.data(),
-                                      mcounts.data(),
-                                      mdispls.data(),
+                                      metacounts.data(),
+                                      metadispls.data(),
                                       comm);
 
     const int nproc = Parallel_Common::comm_size(comm);
     const int ip = Parallel_Common::comm_rank(comm);
-    std::vector<int> send(nproc, 0);
+    std::vector<int> sendcounts(nproc, 0);
     std::vector<LocalMatrixBufferView> views;
     views.reserve(nproc);
     std::size_t metadata_offset = 0;
@@ -389,9 +394,9 @@ void scatter_from_host(const Matrix2d<T>& matglb, Matrix2d<T>& matloc)
         view.iprow = all_metadata[metadata_offset + 4];
         view.ipcol = all_metadata[metadata_offset + 5];
         metadata_offset += LOCAL_METADATA_SIZE;
-        const std::size_t axes_count
+        const std::size_t naxes
             = static_cast<std::size_t>(view.nrloc + view.ncloc);
-        if (metadata_offset + axes_count > all_metadata.size())
+        if (metadata_offset + naxes > all_metadata.size())
         {
             throw std::invalid_argument("Matrix2d scatter axes are truncated");
         }
@@ -400,19 +405,19 @@ void scatter_from_host(const Matrix2d<T>& matglb, Matrix2d<T>& matloc)
         view.icglb.assign(all_metadata.begin() + metadata_offset + view.nrloc,
                           all_metadata.begin() + metadata_offset + view.nrloc
                               + view.ncloc);
-        metadata_offset += axes_count;
+        metadata_offset += naxes;
 
         if (view.nrloc < 0 || view.ncloc < 0
             || view.nrglb != nrglb || view.ncglb != ncglb)
         {
             throw std::invalid_argument("Matrix2d ranks disagree on scatter global shape");
         }
-        const std::size_t local_elements
+        const std::size_t nelem_local
             = static_cast<std::size_t>(view.nrloc)
             * static_cast<std::size_t>(view.ncloc);
-        const std::size_t local_buffer_size = local_elements * sizeof(T);
-        const int local_buffer_bytes = checked_mpi_count(local_buffer_size);
-        send[ipsrc] = local_buffer_bytes;
+        const std::size_t nbytes_local = nelem_local * sizeof(T);
+        assert_valid_mpi_count(nbytes_local);
+        sendcounts[ipsrc] = mpi_count(nbytes_local);
         views.push_back(view);
     }
     if (metadata_offset != all_metadata.size())
@@ -424,11 +429,11 @@ void scatter_from_host(const Matrix2d<T>& matglb, Matrix2d<T>& matloc)
         throw std::invalid_argument("scatter global matrix shape does not match distribution");
     }
 
-    const std::vector<int> sdispls = make_byte_displacements(send);
+    const std::vector<int> sdispls = make_byte_displs(sendcounts);
     std::vector<unsigned char> sendbuf;
     if (ip == 0)
     {
-        const int total_bytes = sdispls.back() + send.back();
+        const int total_bytes = sdispls.back() + sendcounts.back();
         sendbuf.resize(total_bytes);
         for (int ipdst = 0; ipdst < nproc; ++ipdst)
         {
@@ -443,7 +448,7 @@ void scatter_from_host(const Matrix2d<T>& matglb, Matrix2d<T>& matloc)
                         = static_cast<std::size_t>(irloc)
                             * static_cast<std::size_t>(view.ncloc)
                         + static_cast<std::size_t>(icloc);
-                    const T& value = matglb.at_local(irglb, icglb);
+                    const T& value = matglb.atloc(irglb, icglb);
                     const std::size_t send_offset
                         = static_cast<std::size_t>(sdispls[ipdst])
                             + idx * sizeof(T);
@@ -455,15 +460,16 @@ void scatter_from_host(const Matrix2d<T>& matglb, Matrix2d<T>& matloc)
         }
     }
 
-    const std::size_t receive_elements
+    const std::size_t nelem_recv
         = static_cast<std::size_t>(matloc.nrloc())
         * static_cast<std::size_t>(matloc.ncloc());
-    const std::size_t receive_buffer_bytes = receive_elements * sizeof(T);
-    std::vector<unsigned char> recvbuf(receive_buffer_bytes);
-    const int recv = checked_mpi_count(receive_buffer_bytes);
+    const std::size_t nbytes_recv = nelem_recv * sizeof(T);
+    std::vector<unsigned char> recvbuf(nbytes_recv);
+    assert_valid_mpi_count(nbytes_recv);
+    const int recv = mpi_count(nbytes_recv);
     const unsigned char* receive_source = ip == 0 ? sendbuf.data() : nullptr;
     Parallel_Common::scatterv_bytes(receive_source,
-                                    send.data(),
+                                    sendcounts.data(),
                                     sdispls.data(),
                                     recvbuf.data(),
                                     recv,
@@ -483,7 +489,7 @@ void scatter_from_host(const Matrix2d<T>& matglb, Matrix2d<T>& matloc)
                 = recvbuf.data() + receive_offset;
             T value;
             std::memcpy(&value, source, sizeof(T));
-            matloc.at_local(irloc, icloc) = value;
+            matloc.atloc(irloc, icloc) = value;
         }
     }
 }

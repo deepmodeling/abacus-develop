@@ -112,7 +112,7 @@ void conjugate_transpose(
 
 namespace
 {
-void check_scalapack_error(const char* operation, const int info)
+void throw_scalapack_error(const char* operation, const int info)
 {
     if (info < 0)
     {
@@ -155,7 +155,7 @@ void inv(Matrix2dView<double> matrix)
                               desc,
                               ipiv.data(),
                               &info);
-    check_scalapack_error("ScaLAPACK getrf", info);
+    throw_scalapack_error("ScaLAPACK getrf", info);
 
     int lwork = -1;
     int liwork = -1;
@@ -172,7 +172,7 @@ void inv(Matrix2dView<double> matrix)
                               iwork.data(),
                               &liwork,
                               &info);
-    check_scalapack_error("ScaLAPACK getri workspace query", info);
+    throw_scalapack_error("ScaLAPACK getri workspace query", info);
     lwork = queried_workspace_size(work[0]);
     liwork = iwork[0];
     work.resize(static_cast<std::size_t>(lwork));
@@ -188,7 +188,7 @@ void inv(Matrix2dView<double> matrix)
                               iwork.data(),
                               &liwork,
                               &info);
-    check_scalapack_error("ScaLAPACK getri", info);
+    throw_scalapack_error("ScaLAPACK getri", info);
 }
 
 void inv(Matrix2dView<std::complex<double>> matrix)
@@ -208,7 +208,7 @@ void inv(Matrix2dView<std::complex<double>> matrix)
                               desc,
                               ipiv.data(),
                               &info);
-    check_scalapack_error("ScaLAPACK getrf", info);
+    throw_scalapack_error("ScaLAPACK getrf", info);
 
     int lwork = -1;
     int liwork = -1;
@@ -225,7 +225,7 @@ void inv(Matrix2dView<std::complex<double>> matrix)
                               iwork.data(),
                               &liwork,
                               &info);
-    check_scalapack_error("ScaLAPACK getri workspace query", info);
+    throw_scalapack_error("ScaLAPACK getri workspace query", info);
     lwork = queried_workspace_size(work[0]);
     liwork = iwork[0];
     work.resize(static_cast<std::size_t>(lwork));
@@ -241,7 +241,7 @@ void inv(Matrix2dView<std::complex<double>> matrix)
                               iwork.data(),
                               &liwork,
                               &info);
-    check_scalapack_error("ScaLAPACK getri", info);
+    throw_scalapack_error("ScaLAPACK getri", info);
 }
 
 void solve(Matrix2dView<double> matrix,
@@ -268,7 +268,7 @@ void solve(Matrix2dView<double> matrix,
                              jb,
                              rhs.desc(),
                              &info);
-    check_scalapack_error("ScaLAPACK gesv", info);
+    throw_scalapack_error("ScaLAPACK gesv", info);
 }
 
 void solve(Matrix2dView<std::complex<double>> matrix,
@@ -295,7 +295,7 @@ void solve(Matrix2dView<std::complex<double>> matrix,
                              jb,
                              rhs.desc(),
                              &info);
-    check_scalapack_error("ScaLAPACK gesv", info);
+    throw_scalapack_error("ScaLAPACK gesv", info);
 }
 
 void matmul(Matrix2dView<double> result,

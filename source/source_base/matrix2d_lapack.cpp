@@ -10,7 +10,7 @@
 
 namespace
 {
-void check_host_layout(const Matrix2dView<double>& matrix)
+void assert_host_layout(const Matrix2dView<double>& matrix)
 {
     if (matrix.is_distributed() && !matrix.distribution()->is_serial())
     {
@@ -18,7 +18,7 @@ void check_host_layout(const Matrix2dView<double>& matrix)
     }
 }
 
-void check_host_layout(const Matrix2dView<std::complex<double>>& matrix)
+void assert_host_layout(const Matrix2dView<std::complex<double>>& matrix)
 {
     if (matrix.is_distributed() && !matrix.distribution()->is_serial())
     {
@@ -26,7 +26,7 @@ void check_host_layout(const Matrix2dView<std::complex<double>>& matrix)
     }
 }
 
-void check_inverse_dimensions(const int nr, const int nc)
+void assert_inverse_dimensions(const int nr, const int nc)
 {
     if (nr <= 0 || nr != nc)
     {
@@ -34,9 +34,9 @@ void check_inverse_dimensions(const int nr, const int nc)
     }
 }
 
-void check_solve_dimensions(const int nr,
-                            const int nc,
-                            const int rhs_nr)
+void assert_solve_dimensions(const int nr,
+                             const int nc,
+                             const int rhs_nr)
 {
     if (nr <= 0 || nr != nc || rhs_nr != nr)
     {
@@ -66,9 +66,9 @@ namespace lapack
 {
 void inv(Matrix2dView<double> matrix)
 {
-    check_host_layout(matrix);
+    assert_host_layout(matrix);
     const int n = matrix.nrglb();
-    check_inverse_dimensions(n, matrix.ncglb());
+    assert_inverse_dimensions(n, matrix.ncglb());
 
     const int lda = matrix.lld();
     std::vector<int> ipiv(static_cast<std::size_t>(n));
@@ -108,9 +108,9 @@ void inv(Matrix2dView<double> matrix)
 
 void inv(Matrix2dView<std::complex<double>> matrix)
 {
-    check_host_layout(matrix);
+    assert_host_layout(matrix);
     const int n = matrix.nrglb();
-    check_inverse_dimensions(n, matrix.ncglb());
+    assert_inverse_dimensions(n, matrix.ncglb());
 
     const int lda = matrix.lld();
     std::vector<int> ipiv(static_cast<std::size_t>(n));
@@ -151,11 +151,11 @@ void inv(Matrix2dView<std::complex<double>> matrix)
 void solve(Matrix2dView<double> matrix,
            Matrix2dView<double> rhs)
 {
-    check_host_layout(matrix);
-    check_host_layout(rhs);
+    assert_host_layout(matrix);
+    assert_host_layout(rhs);
     const int n = matrix.nrglb();
     const int nrhs = rhs.ncglb();
-    check_solve_dimensions(n, matrix.ncglb(), rhs.nrglb());
+    assert_solve_dimensions(n, matrix.ncglb(), rhs.nrglb());
 
     const int lda = matrix.lld();
     std::vector<int> ipiv(static_cast<std::size_t>(n));
@@ -178,7 +178,7 @@ void solve(Matrix2dView<double> matrix,
             rhs_column_major[static_cast<std::size_t>(i)
                              + static_cast<std::size_t>(j)
                                  * static_cast<std::size_t>(n)]
-                = rhs.at_local(i, j);
+                = rhs.atloc(i, j);
         }
     }
 
@@ -199,7 +199,7 @@ void solve(Matrix2dView<double> matrix,
     {
         for (int j = 0; j < nrhs; ++j)
         {
-            rhs.at_local(i, j)
+            rhs.atloc(i, j)
                 = rhs_column_major[static_cast<std::size_t>(i)
                                    + static_cast<std::size_t>(j)
                                        * static_cast<std::size_t>(n)];
@@ -210,11 +210,11 @@ void solve(Matrix2dView<double> matrix,
 void solve(Matrix2dView<std::complex<double>> matrix,
            Matrix2dView<std::complex<double>> rhs)
 {
-    check_host_layout(matrix);
-    check_host_layout(rhs);
+    assert_host_layout(matrix);
+    assert_host_layout(rhs);
     const int n = matrix.nrglb();
     const int nrhs = rhs.ncglb();
-    check_solve_dimensions(n, matrix.ncglb(), rhs.nrglb());
+    assert_solve_dimensions(n, matrix.ncglb(), rhs.nrglb());
 
     const int lda = matrix.lld();
     std::vector<int> ipiv(static_cast<std::size_t>(n));
@@ -237,7 +237,7 @@ void solve(Matrix2dView<std::complex<double>> matrix,
             rhs_column_major[static_cast<std::size_t>(i)
                              + static_cast<std::size_t>(j)
                                  * static_cast<std::size_t>(n)]
-                = rhs.at_local(i, j);
+                = rhs.atloc(i, j);
         }
     }
 
@@ -258,7 +258,7 @@ void solve(Matrix2dView<std::complex<double>> matrix,
     {
         for (int j = 0; j < nrhs; ++j)
         {
-            rhs.at_local(i, j)
+            rhs.atloc(i, j)
                 = rhs_column_major[static_cast<std::size_t>(i)
                                    + static_cast<std::size_t>(j)
                                        * static_cast<std::size_t>(n)];

@@ -25,8 +25,8 @@ bool has_serial_distribution(const Matrix2dView<T>& matrix)
 }
 
 template <typename T, typename U>
-void check_same_shape(const Matrix2dView<T>& left,
-                      const Matrix2dView<U>& right)
+void assert_same_shape(const Matrix2dView<T>& left,
+                       const Matrix2dView<U>& right)
 {
     if (left.nrglb() != right.nrglb() || left.ncglb() != right.ncglb())
     {
@@ -35,8 +35,8 @@ void check_same_shape(const Matrix2dView<T>& left,
 }
 
 template <typename T, typename U>
-void check_compatible_layout(const Matrix2dView<T>& left,
-                             const Matrix2dView<U>& right)
+void assert_compatible_layout(const Matrix2dView<T>& left,
+                              const Matrix2dView<U>& right)
 {
     if (left.is_distributed() != right.is_distributed())
     {
@@ -47,14 +47,14 @@ void check_compatible_layout(const Matrix2dView<T>& left,
     {
         return;
     }
-    const bool left_is_serial = has_serial_distribution(left);
-    const bool right_is_serial = has_serial_distribution(right);
-    if (left_is_serial != right_is_serial)
+    const bool serial = has_serial_distribution(left);
+    const bool serial_ = has_serial_distribution(right);
+    if (serial != serial_)
     {
         throw std::invalid_argument(
             "matrix operations require matching serial or parallel distributions");
     }
-    if (left_is_serial)
+    if (serial)
     {
         return;
     }
@@ -72,9 +72,9 @@ void check_compatible_layout(const Matrix2dView<T>& left,
 }
 
 template <typename T>
-void check_matmul_views(Matrix2dView<T> result,
-                        Matrix2dView<const T> left,
-                        Matrix2dView<const T> right)
+void assert_matmul_views(Matrix2dView<T> result,
+                         Matrix2dView<const T> left,
+                         Matrix2dView<const T> right)
 {
     if (left.ncglb() != right.nrglb()
         || result.nrglb() != left.nrglb()
@@ -82,8 +82,8 @@ void check_matmul_views(Matrix2dView<T> result,
     {
         throw std::invalid_argument("matrix multiplication dimensions are incompatible");
     }
-    check_compatible_layout(result, left);
-    check_compatible_layout(result, right);
+    assert_compatible_layout(result, left);
+    assert_compatible_layout(result, right);
 }
 
 template <typename T>
@@ -98,9 +98,9 @@ void matmul_host(Matrix2dView<T> result,
             T value = T();
             for (int k = 0; k < left.ncglb(); ++k)
             {
-                value += left.at_local(i, k) * right.at_local(k, j);
+                value += left.atloc(i, k) * right.atloc(k, j);
             }
-            result.at_local(i, j) = value;
+            result.atloc(i, j) = value;
         }
     }
 }
@@ -112,16 +112,16 @@ void linear_combination_impl(Matrix2dView<T> result,
                              const T beta,
                              Matrix2dView<const T> right)
 {
-    check_same_shape(result, left);
-    check_same_shape(result, right);
-    check_compatible_layout(result, left);
-    check_compatible_layout(result, right);
+    assert_same_shape(result, left);
+    assert_same_shape(result, right);
+    assert_compatible_layout(result, left);
+    assert_compatible_layout(result, right);
     for (int i = 0; i < result.nrloc(); ++i)
     {
         for (int j = 0; j < result.ncloc(); ++j)
         {
-            result.at_local(i, j)
-                = alpha * left.at_local(i, j) + beta * right.at_local(i, j);
+            result.atloc(i, j)
+                = alpha * left.atloc(i, j) + beta * right.atloc(i, j);
         }
     }
 }
@@ -133,7 +133,7 @@ void scale_impl(Matrix2dView<T> matrix, const T factor)
     {
         for (int j = 0; j < matrix.ncloc(); ++j)
         {
-            matrix.at_local(i, j) *= factor;
+            matrix.atloc(i, j) *= factor;
         }
     }
 }
@@ -145,20 +145,20 @@ void set_identity_impl(Matrix2dView<T> matrix)
     {
         throw std::invalid_argument("identity requires a square matrix");
     }
-    const std::shared_ptr<const Parallel_Blkcyclic> dist
+    const std::shared_ptr<const Parallel_Blkcyclic> distrib
         = matrix.distribution();
     for (int i = 0; i < matrix.nrloc(); ++i)
     {
         for (int j = 0; j < matrix.ncloc(); ++j)
         {
-            const int irglb = dist == nullptr ? i : dist->irglb(i);
-            const int icglb = dist == nullptr ? j : dist->icglb(j);
-            matrix.at_local(i, j) = irglb == icglb ? T(1.0) : T();
+            const int irglb = distrib == nullptr ? i : distrib->irglb(i);
+            const int icglb = distrib == nullptr ? j : distrib->icglb(j);
+            matrix.atloc(i, j) = irglb == icglb ? T(1.0) : T();
         }
     }
 }
 
-void check_inverse_view(const Matrix2dView<double>& matrix)
+void assert_inverse_view(const Matrix2dView<double>& matrix)
 {
     if (matrix.nrglb() <= 0 || matrix.nrglb() != matrix.ncglb())
     {
@@ -166,7 +166,7 @@ void check_inverse_view(const Matrix2dView<double>& matrix)
     }
 }
 
-void check_inverse_view(const Matrix2dView<std::complex<double>>& matrix)
+void assert_inverse_view(const Matrix2dView<std::complex<double>>& matrix)
 {
     if (matrix.nrglb() <= 0 || matrix.nrglb() != matrix.ncglb())
     {
@@ -174,8 +174,8 @@ void check_inverse_view(const Matrix2dView<std::complex<double>>& matrix)
     }
 }
 
-void check_solve_views(const Matrix2dView<double>& matrix,
-                       const Matrix2dView<double>& rhs)
+void assert_solve_views(const Matrix2dView<double>& matrix,
+                        const Matrix2dView<double>& rhs)
 {
     if (matrix.nrglb() <= 0
         || matrix.nrglb() != matrix.ncglb()
@@ -212,8 +212,8 @@ void check_solve_views(const Matrix2dView<double>& matrix,
     }
 }
 
-void check_solve_views(const Matrix2dView<std::complex<double>>& matrix,
-                       const Matrix2dView<std::complex<double>>& rhs)
+void assert_solve_views(const Matrix2dView<std::complex<double>>& matrix,
+                        const Matrix2dView<std::complex<double>>& rhs)
 {
     if (matrix.nrglb() <= 0
         || matrix.nrglb() != matrix.ncglb()
@@ -255,7 +255,7 @@ namespace matrix2d_linalg
 {
 void inv(Matrix2dView<double> matrix)
 {
-    check_inverse_view(matrix);
+    assert_inverse_view(matrix);
     if (has_active_distribution(matrix))
     {
 #ifdef __MPI
@@ -270,7 +270,7 @@ void inv(Matrix2dView<double> matrix)
 
 void inv(Matrix2dView<std::complex<double>> matrix)
 {
-    check_inverse_view(matrix);
+    assert_inverse_view(matrix);
     if (has_active_distribution(matrix))
     {
 #ifdef __MPI
@@ -286,7 +286,7 @@ void inv(Matrix2dView<std::complex<double>> matrix)
 void solve(Matrix2dView<double> matrix,
            Matrix2dView<double> rhs)
 {
-    check_solve_views(matrix, rhs);
+    assert_solve_views(matrix, rhs);
     if (has_active_distribution(matrix))
     {
 #ifdef __MPI
@@ -302,7 +302,7 @@ void solve(Matrix2dView<double> matrix,
 void solve(Matrix2dView<std::complex<double>> matrix,
            Matrix2dView<std::complex<double>> rhs)
 {
-    check_solve_views(matrix, rhs);
+    assert_solve_views(matrix, rhs);
     if (has_active_distribution(matrix))
     {
 #ifdef __MPI
@@ -319,7 +319,7 @@ void matmul(Matrix2dView<double> result,
             Matrix2dView<const double> left,
             Matrix2dView<const double> right)
 {
-    check_matmul_views(result, left, right);
+    assert_matmul_views(result, left, right);
     if (has_active_distribution(result))
     {
 #ifdef __MPI
@@ -336,7 +336,7 @@ void matmul(Matrix2dView<std::complex<double>> result,
             Matrix2dView<const std::complex<double>> left,
             Matrix2dView<const std::complex<double>> right)
 {
-    check_matmul_views(result, left, right);
+    assert_matmul_views(result, left, right);
     if (has_active_distribution(result))
     {
 #ifdef __MPI

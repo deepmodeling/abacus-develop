@@ -58,26 +58,26 @@ void bcast_mpi_offset(MPI_Offset& object, const MPI_Comm& comm);
 
 void barrier(const MPI_Comm comm);
 
-void gatherv_bytes(const void* send_buffer,
-                   int send_count,
-                   void* receive_buffer,
-                   const int* receive_counts,
-                   const int* receive_displacements,
+void gatherv_bytes(const void* sendbuf,
+                   int send,
+                   void* recvbuf,
+                   const int* recvcounts,
+                   const int* rdispls,
                    int root,
                    MPI_Comm comm);
 
-void allgatherv_bytes(const void* send_buffer,
-                      int send_count,
-                      void* receive_buffer,
-                      const int* receive_counts,
-                      const int* receive_displacements,
+void allgatherv_bytes(const void* sendbuf,
+                      int send,
+                      void* recvbuf,
+                      const int* recvcounts,
+                      const int* rdispls,
                       MPI_Comm comm);
 
-void scatterv_bytes(const void* send_buffer,
-                    const int* send_counts,
-                    const int* send_displacements,
-                    void* receive_buffer,
-                    int receive_count,
+void scatterv_bytes(const void* sendbuf,
+                    const int* sendcounts,
+                    const int* sdispls,
+                    void* recvbuf,
+                    int recv,
                     int root,
                     MPI_Comm comm);
 
@@ -92,50 +92,50 @@ inline void barrier()
 {
 }
 
-inline void gatherv_bytes(const void* send_buffer,
-                          int send_count,
-                          void* receive_buffer,
+inline void gatherv_bytes(const void* sendbuf,
+                          int send,
+                          void* recvbuf,
                           const int*,
                           const int*,
                           int,
                           int)
 {
-    if (receive_buffer != nullptr && send_count > 0)
+    if (recvbuf != nullptr && send > 0)
     {
-        std::copy(static_cast<const unsigned char*>(send_buffer),
-                  static_cast<const unsigned char*>(send_buffer) + send_count,
-                  static_cast<unsigned char*>(receive_buffer));
+        std::copy(static_cast<const unsigned char*>(sendbuf),
+                  static_cast<const unsigned char*>(sendbuf) + send,
+                  static_cast<unsigned char*>(recvbuf));
     }
 }
 
-inline void allgatherv_bytes(const void* send_buffer,
-                             int send_count,
-                             void* receive_buffer,
+inline void allgatherv_bytes(const void* sendbuf,
+                             int send,
+                             void* recvbuf,
                              const int*,
                              const int*,
                              int)
 {
-    if (receive_buffer != nullptr && send_count > 0)
+    if (recvbuf != nullptr && send > 0)
     {
-        std::copy(static_cast<const unsigned char*>(send_buffer),
-                  static_cast<const unsigned char*>(send_buffer) + send_count,
-                  static_cast<unsigned char*>(receive_buffer));
+        std::copy(static_cast<const unsigned char*>(sendbuf),
+                  static_cast<const unsigned char*>(sendbuf) + send,
+                  static_cast<unsigned char*>(recvbuf));
     }
 }
 
-inline void scatterv_bytes(const void* send_buffer,
+inline void scatterv_bytes(const void* sendbuf,
                            const int*,
                            const int*,
-                           void* receive_buffer,
-                           int receive_count,
+                           void* recvbuf,
+                           int recv,
                            int,
                            int)
 {
-    if (receive_buffer != nullptr && receive_count > 0)
+    if (recvbuf != nullptr && recv > 0)
     {
-        std::copy(static_cast<const unsigned char*>(send_buffer),
-                  static_cast<const unsigned char*>(send_buffer) + receive_count,
-                  static_cast<unsigned char*>(receive_buffer));
+        std::copy(static_cast<const unsigned char*>(sendbuf),
+                  static_cast<const unsigned char*>(sendbuf) + recv,
+                  static_cast<unsigned char*>(recvbuf));
     }
 }
 #endif

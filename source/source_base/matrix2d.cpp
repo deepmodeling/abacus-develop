@@ -12,108 +12,56 @@
 
 namespace
 {
+namespace elementwise
+{
 template <typename T>
-T conjugate_element(const T& value)
+T conj(const T& value)
 {
     return value;
 }
 
-template <>
-std::complex<float> conjugate_element<std::complex<float>>(
-    const std::complex<float>& value)
+inline std::complex<float> conj(const std::complex<float>& value)
 {
     return std::conj(value);
 }
 
-template <>
-std::complex<double> conjugate_element<std::complex<double>>(
-    const std::complex<double>& value)
+inline std::complex<double> conj(const std::complex<double>& value)
 {
     return std::conj(value);
 }
 
 template <typename T>
-double real_element(const T& value)
+double real(const T& value)
 {
     return static_cast<double>(value);
 }
 
-template <>
-double real_element<std::complex<float>>(const std::complex<float>& value)
+inline double real(const std::complex<float>& value)
 {
     return static_cast<double>(value.real());
 }
 
-template <>
-double real_element<std::complex<double>>(const std::complex<double>& value)
+inline double real(const std::complex<double>& value)
 {
     return value.real();
 }
 
 template <typename T>
-double imaginary_element(const T&)
+double imag(const T&)
 {
     return 0.0;
 }
 
-template <>
-double imaginary_element<std::complex<float>>(const std::complex<float>& value)
+inline double imag(const std::complex<float>& value)
 {
     return static_cast<double>(value.imag());
 }
 
-template <>
-double imaginary_element<std::complex<double>>(const std::complex<double>& value)
+inline double imag(const std::complex<double>& value)
 {
     return value.imag();
 }
-
-template <typename T>
-Matrix2d<double> extract_real_or_imaginary(const Matrix2d<T>& matrix,
-                                           const bool extract_real)
-{
-    Matrix2d<double> result = matrix.is_distributed()
-        ? Matrix2d<double>(matrix.distribution())
-        : Matrix2d<double>(matrix.nrglb(),
-                           matrix.ncglb());
-
-    const int nrloc = matrix.nrloc();
-    const int ncloc = matrix.ncloc();
-#ifdef _OPENMP
-#pragma omp parallel for collapse(2) schedule(static)
-#endif
-    for (int i = 0; i < nrloc; ++i)
-    {
-        for (int j = 0; j < ncloc; ++j)
-        {
-            const T& value = matrix.at_local(i, j);
-            result.at_local(i, j)
-                = extract_real ? real_element(value) : imaginary_element(value);
-        }
-    }
-    return result;
-}
-
-template <typename T>
-void write_real_or_imaginary(const Matrix2d<T>& matrix,
-                             Matrix2d<double>& output,
-                             const bool extract_real)
-{
-    const int nrloc = matrix.nrloc();
-    const int ncloc = matrix.ncloc();
-#ifdef _OPENMP
-#pragma omp parallel for collapse(2) schedule(static)
-#endif
-    for (int i = 0; i < nrloc; ++i)
-    {
-        for (int j = 0; j < ncloc; ++j)
-        {
-            const T& value = matrix.at_local(i, j);
-            output.at_local(i, j)
-                = extract_real ? real_element(value) : imaginary_element(value);
-        }
-    }
-}
+} // namespace elementwise
 
 } // namespace
 
@@ -157,9 +105,9 @@ void matmul(Matrix2dView<T> result,
 template <typename T>
 Matrix2dView<T> NDArray<T, 2>::view()
 {
-    if (dist_ != nullptr)
+    if (distrib_ != nullptr)
     {
-        return Matrix2dView<T>(data(), dist_);
+        return Matrix2dView<T>(data(), distrib_);
     }
     return Matrix2dView<T>(data(), nrglb(), ncglb());
 }
@@ -167,9 +115,9 @@ Matrix2dView<T> NDArray<T, 2>::view()
 template <typename T>
 Matrix2dView<const T> NDArray<T, 2>::view() const
 {
-    if (dist_ != nullptr)
+    if (distrib_ != nullptr)
     {
-        return Matrix2dView<const T>(data(), dist_);
+        return Matrix2dView<const T>(data(), distrib_);
     }
     return Matrix2dView<const T>(data(), nrglb(), ncglb());
 }
@@ -177,7 +125,7 @@ Matrix2dView<const T> NDArray<T, 2>::view() const
 template <typename T>
 void NDArray<T, 2>::fill(const T& value)
 {
-    if (dist_ == nullptr)
+    if (distrib_ == nullptr)
     {
         std::fill(storage_.begin(), storage_.end(), value);
         return;
@@ -191,7 +139,7 @@ void NDArray<T, 2>::fill(const T& value)
     {
         for (int icloc = 0; icloc < ncloc; ++icloc)
         {
-            at_local(irloc, icloc) = value;
+            atloc(irloc, icloc) = value;
         }
     }
 }
@@ -199,7 +147,7 @@ void NDArray<T, 2>::fill(const T& value)
 template <typename T>
 void NDArray<T, 2>::scale(const T& value)
 {
-    if (dist_ == nullptr)
+    if (distrib_ == nullptr)
     {
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static)
@@ -219,7 +167,7 @@ void NDArray<T, 2>::scale(const T& value)
     {
         for (int icloc = 0; icloc < ncloc; ++icloc)
         {
-            at_local(irloc, icloc) *= value;
+            atloc(irloc, icloc) *= value;
         }
     }
 }
@@ -227,7 +175,7 @@ void NDArray<T, 2>::scale(const T& value)
 template <typename T>
 NDArray<T, 2>& NDArray<T, 2>::operator+=(const NDArray<T, 2>& other)
 {
-    validate_compatible_layout(other);
+    assert_compatible_layout(other);
     const int nrloc = this->nrloc();
     const int ncloc = this->ncloc();
 #ifdef _OPENMP
@@ -237,7 +185,7 @@ NDArray<T, 2>& NDArray<T, 2>::operator+=(const NDArray<T, 2>& other)
     {
         for (int icloc = 0; icloc < ncloc; ++icloc)
         {
-            at_local(irloc, icloc) += other.at_local(irloc, icloc);
+            atloc(irloc, icloc) += other.atloc(irloc, icloc);
         }
     }
     return *this;
@@ -246,7 +194,7 @@ NDArray<T, 2>& NDArray<T, 2>::operator+=(const NDArray<T, 2>& other)
 template <typename T>
 NDArray<T, 2>& NDArray<T, 2>::operator-=(const NDArray<T, 2>& other)
 {
-    validate_compatible_layout(other);
+    assert_compatible_layout(other);
     const int nrloc = this->nrloc();
     const int ncloc = this->ncloc();
 #ifdef _OPENMP
@@ -256,7 +204,7 @@ NDArray<T, 2>& NDArray<T, 2>::operator-=(const NDArray<T, 2>& other)
     {
         for (int icloc = 0; icloc < ncloc; ++icloc)
         {
-            at_local(irloc, icloc) -= other.at_local(irloc, icloc);
+            atloc(irloc, icloc) -= other.atloc(irloc, icloc);
         }
     }
     return *this;
@@ -265,7 +213,7 @@ NDArray<T, 2>& NDArray<T, 2>::operator-=(const NDArray<T, 2>& other)
 template <typename T>
 NDArray<T, 2>& NDArray<T, 2>::operator*=(const NDArray<T, 2>& other)
 {
-    validate_compatible_layout(other);
+    assert_compatible_layout(other);
     const int nrloc = this->nrloc();
     const int ncloc = this->ncloc();
 #ifdef _OPENMP
@@ -275,7 +223,7 @@ NDArray<T, 2>& NDArray<T, 2>::operator*=(const NDArray<T, 2>& other)
     {
         for (int icloc = 0; icloc < ncloc; ++icloc)
         {
-            at_local(irloc, icloc) *= other.at_local(irloc, icloc);
+            atloc(irloc, icloc) *= other.atloc(irloc, icloc);
         }
     }
     return *this;
@@ -293,7 +241,7 @@ NDArray<T, 2>& NDArray<T, 2>::conjugate()
     {
         for (int j = 0; j < ncloc; ++j)
         {
-            at_local(i, j) = conjugate_element(at_local(i, j));
+            atloc(i, j) = elementwise::conj(atloc(i, j));
         }
     }
     return *this;
@@ -302,7 +250,7 @@ NDArray<T, 2>& NDArray<T, 2>::conjugate()
 template <typename T>
 NDArray<T, 2> NDArray<T, 2>::transpose() const
 {
-    if (dist_ == nullptr || dist_->is_serial())
+    if (distrib_ == nullptr || distrib_->is_serial())
     {
         // Serial degenerate path: a serial frozen distribution owns the full
         // matrix on one rank with column-major local layout; treat it like the
@@ -315,7 +263,7 @@ NDArray<T, 2> NDArray<T, 2>::transpose() const
         {
             for (int j = 0; j < ncloc_; ++j)
             {
-                result.at_local(j, i) = at_local(i, j);
+                result.atloc(j, i) = atloc(i, j);
             }
         }
         return result;
@@ -324,10 +272,10 @@ NDArray<T, 2> NDArray<T, 2>::transpose() const
 #ifdef __MPI
     const int nr = ncglb();
     const int nc = nrglb();
-    const int nb = dist_->nb();
-    const std::shared_ptr<const Parallel_Blkcyclic> result_dist
-        = make_borrowed_distribution(nr, nc, nb, dist_);
-    Matrix2d<T> result(result_dist);
+    const int nb = distrib_->nb();
+    const std::shared_ptr<const Parallel_Blkcyclic> result_distrib
+        = make_borrowed_distribution(nr, nc, nb, distrib_);
+    Matrix2d<T> result(result_distrib);
     matrix2d_impl::scalapack::transpose(result.view(), view());
     return result;
 #else
@@ -338,7 +286,7 @@ NDArray<T, 2> NDArray<T, 2>::transpose() const
 template <typename T>
 NDArray<T, 2> NDArray<T, 2>::dagger() const
 {
-    if (dist_ == nullptr || dist_->is_serial())
+    if (distrib_ == nullptr || distrib_->is_serial())
     {
         Matrix2d<T> result(ncloc_, nrloc_);
 #ifdef _OPENMP
@@ -348,7 +296,7 @@ NDArray<T, 2> NDArray<T, 2>::dagger() const
         {
             for (int j = 0; j < ncloc_; ++j)
             {
-                result.at_local(j, i) = conjugate_element(at_local(i, j));
+                result.atloc(j, i) = elementwise::conj(atloc(i, j));
             }
         }
         return result;
@@ -357,10 +305,10 @@ NDArray<T, 2> NDArray<T, 2>::dagger() const
 #ifdef __MPI
     const int nr = ncglb();
     const int nc = nrglb();
-    const int nb = dist_->nb();
-    const std::shared_ptr<const Parallel_Blkcyclic> result_dist
-        = make_borrowed_distribution(nr, nc, nb, dist_);
-    Matrix2d<T> result(result_dist);
+    const int nb = distrib_->nb();
+    const std::shared_ptr<const Parallel_Blkcyclic> result_distrib
+        = make_borrowed_distribution(nr, nc, nb, distrib_);
+    Matrix2d<T> result(result_distrib);
     matrix2d_impl::scalapack::conjugate_transpose(result.view(), view());
     return result;
 #else
@@ -383,16 +331,16 @@ NDArray<T, 2> NDArray<T, 2>::matmul(const NDArray<T, 2>& other) const
         }
     }
 
-    const bool this_is_serial
-        = dist_ == nullptr || dist_->is_serial();
-    const bool other_is_serial
+    const bool serial
+        = distrib_ == nullptr || distrib_->is_serial();
+    const bool serial_
         = other.distribution() == nullptr || other.distribution()->is_serial();
-    if (this_is_serial != other_is_serial)
+    if (serial != serial_)
     {
         throw std::invalid_argument("host and distributed matrices are incompatible");
     }
 
-    if (this_is_serial)
+    if (serial)
     {
         // Serial degenerate path: both sides are host or serial frozen
         // distributions, so matmul degrades to the host triple loop.
@@ -407,35 +355,35 @@ NDArray<T, 2> NDArray<T, 2>::matmul(const NDArray<T, 2>& other) const
                 T value = T();
                 for (int k_ = 0; k_ < k; ++k_)
                 {
-                    value += at_local(i, k_) * other.at_local(k_, j);
+                    value += atloc(i, k_) * other.atloc(k_, j);
                 }
-                result.at_local(i, j) = value;
+                result.atloc(i, j) = value;
             }
         }
         return result;
     }
 
 #ifdef __MPI
-    const std::shared_ptr<const Parallel_Blkcyclic> other_dist
+    const std::shared_ptr<const Parallel_Blkcyclic> other_distrib
         = other.distribution();
-    if (dist_->nb() != other_dist->nb())
+    if (distrib_->nb() != other_distrib->nb())
     {
         throw std::invalid_argument("matrix block sizes are incompatible");
     }
-    if (dist_->nrproc() != other_dist->nrproc()
-        || dist_->ncproc() != other_dist->ncproc())
+    if (distrib_->nrproc() != other_distrib->nrproc()
+        || distrib_->ncproc() != other_distrib->ncproc())
     {
         throw std::invalid_argument("matrix process grids are incompatible");
     }
-    if (dist_->ictxt() != other_dist->ictxt())
+    if (distrib_->ictxt() != other_distrib->ictxt())
     {
         throw std::invalid_argument("matrix BLACS contexts are incompatible");
     }
 
-    const int nb = dist_->nb();
-    const std::shared_ptr<const Parallel_Blkcyclic> result_dist
-        = make_borrowed_distribution(m, n, nb, dist_);
-    Matrix2d<T> result(result_dist);
+    const int nb = distrib_->nb();
+    const std::shared_ptr<const Parallel_Blkcyclic> result_distrib
+        = make_borrowed_distribution(m, n, nb, distrib_);
+    Matrix2d<T> result(result_distrib);
     matrix2d_impl::scalapack::matmul(result.view(), view(), other.view());
     return result;
 #else
@@ -446,27 +394,43 @@ NDArray<T, 2> NDArray<T, 2>::matmul(const NDArray<T, 2>& other) const
 template <typename T>
 NDArray<double, 2> NDArray<T, 2>::real() const
 {
-    return extract_real_or_imaginary(*this, true);
+    Matrix2d<double> result = is_distributed()
+        ? Matrix2d<double>(distribution())
+        : Matrix2d<double>(nrglb(), ncglb());
+    const int nrloc = this->nrloc();
+    const int ncloc = this->ncloc();
+#ifdef _OPENMP
+#pragma omp parallel for collapse(2) schedule(static)
+#endif
+    for (int i = 0; i < nrloc; ++i)
+    {
+        for (int j = 0; j < ncloc; ++j)
+        {
+            result.atloc(i, j) = elementwise::real(atloc(i, j));
+        }
+    }
+    return result;
 }
 
 template <typename T>
 NDArray<double, 2> NDArray<T, 2>::imag() const
 {
-    return extract_real_or_imaginary(*this, false);
-}
-
-template <typename T>
-void NDArray<T, 2>::real(NDArray<double, 2>& output) const
-{
-    validate_compatible_layout(output);
-    write_real_or_imaginary(*this, output, true);
-}
-
-template <typename T>
-void NDArray<T, 2>::imag(NDArray<double, 2>& output) const
-{
-    validate_compatible_layout(output);
-    write_real_or_imaginary(*this, output, false);
+    Matrix2d<double> result = is_distributed()
+        ? Matrix2d<double>(distribution())
+        : Matrix2d<double>(nrglb(), ncglb());
+    const int nrloc = this->nrloc();
+    const int ncloc = this->ncloc();
+#ifdef _OPENMP
+#pragma omp parallel for collapse(2) schedule(static)
+#endif
+    for (int i = 0; i < nrloc; ++i)
+    {
+        for (int j = 0; j < ncloc; ++j)
+        {
+            result.atloc(i, j) = elementwise::imag(atloc(i, j));
+        }
+    }
+    return result;
 }
 
 template <typename T>
@@ -476,22 +440,16 @@ T NDArray<T, 2>::sum() const
 }
 
 template <typename T>
-double NDArray<T, 2>::sum_squares() const
-{
-    return matrix2d_impl::sum_squares(*this);
-}
-
-template <typename T>
 T NDArray<T, 2>::dot(const NDArray<T, 2>& other) const
 {
-    validate_compatible_layout(other);
+    assert_compatible_layout(other);
     return matrix2d_impl::dot(*this, other);
 }
 
 template <typename T>
-double NDArray<T, 2>::norm2() const
+double NDArray<T, 2>::norm() const
 {
-    return matrix2d_impl::norm2(*this);
+    return matrix2d_impl::norm(*this);
 }
 
 template <typename T>
@@ -509,26 +467,26 @@ std::vector<T> NDArray<T, 2>::diagonal() const
 template <typename T>
 NDArray<T, 2> NDArray<T, 2>::gather() const
 {
-    if (dist_ == nullptr)
+    if (distrib_ == nullptr)
     {
         return *this;
     }
-    if (dist_->is_serial())
+    if (distrib_->is_serial())
     {
         Matrix2d<T> result(nrglb(), ncglb());
         for (int irloc = 0; irloc < nrloc(); ++irloc)
         {
-            const int irglb = dist_->irglb(irloc);
+            const int irglb = distrib_->irglb(irloc);
             for (int icloc = 0; icloc < ncloc(); ++icloc)
             {
-                const int icglb = dist_->icglb(icloc);
-                result.at_local(irglb, icglb) = at_local(irloc, icloc);
+                const int icglb = distrib_->icglb(icloc);
+                result.atloc(irglb, icglb) = atloc(irloc, icloc);
             }
         }
         return result;
     }
 #ifdef __MPI
-    const MPI_Comm comm = dist_->comm();
+    const MPI_Comm comm = distrib_->comm();
     if (comm == MPI_COMM_NULL)
     {
         throw std::invalid_argument("gather requires a valid MPI comm");
@@ -542,7 +500,7 @@ NDArray<T, 2> NDArray<T, 2>::gather() const
 template <typename T>
 NDArray<T, 2> NDArray<T, 2>::gather_on_root(const int iproot) const
 {
-    if (dist_ == nullptr)
+    if (distrib_ == nullptr)
     {
         if (iproot == 0)
         {
@@ -550,7 +508,7 @@ NDArray<T, 2> NDArray<T, 2>::gather_on_root(const int iproot) const
         }
         return NDArray(EmptyMatrixTag());
     }
-    if (dist_->is_serial())
+    if (distrib_->is_serial())
     {
         if (iproot != 0)
         {
@@ -559,17 +517,17 @@ NDArray<T, 2> NDArray<T, 2>::gather_on_root(const int iproot) const
         Matrix2d<T> result(nrglb(), ncglb());
         for (int irloc = 0; irloc < nrloc(); ++irloc)
         {
-            const int irglb = dist_->irglb(irloc);
+            const int irglb = distrib_->irglb(irloc);
             for (int icloc = 0; icloc < ncloc(); ++icloc)
             {
-                const int icglb = dist_->icglb(icloc);
-                result.at_local(irglb, icglb) = at_local(irloc, icloc);
+                const int icglb = distrib_->icglb(icloc);
+                result.atloc(irglb, icglb) = atloc(irloc, icloc);
             }
         }
         return result;
     }
 #ifdef __MPI
-    const MPI_Comm comm = dist_->comm();
+    const MPI_Comm comm = distrib_->comm();
     if (comm == MPI_COMM_NULL)
     {
         throw std::invalid_argument("gather_on_root requires a valid MPI comm");
@@ -590,7 +548,7 @@ NDArray<T, 2> NDArray<T, 2>::gather_on_root(const int iproot) const
 template <typename T>
 void NDArray<T, 2>::scatter(const NDArray<T, 2>& matglb)
 {
-    if (dist_ == nullptr)
+    if (distrib_ == nullptr)
     {
         if (matglb.is_distributed())
         {
@@ -605,7 +563,7 @@ void NDArray<T, 2>::scatter(const NDArray<T, 2>& matglb)
         return;
     }
 
-    if (dist_->is_serial())
+    if (distrib_->is_serial())
     {
         if (matglb.is_distributed())
         {
@@ -620,9 +578,9 @@ void NDArray<T, 2>::scatter(const NDArray<T, 2>& matglb)
         {
             for (int icloc = 0; icloc < ncloc(); ++icloc)
             {
-                at_local(irloc, icloc)
-                    = matglb.at_local(dist_->irglb(irloc),
-                                             dist_->icglb(icloc));
+                atloc(irloc, icloc)
+                    = matglb.atloc(distrib_->irglb(irloc),
+                                   distrib_->icglb(icloc));
             }
         }
         return;

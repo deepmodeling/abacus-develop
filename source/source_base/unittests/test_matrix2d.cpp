@@ -139,7 +139,7 @@ void check_host_layout()
     EXPECT_EQ(matrix.lld(), 3);
     EXPECT_EQ(matrix.desc(), nullptr);
     EXPECT_EQ(matrix.ictxt(), -1);
-    EXPECT_EQ(matrix.data(), &matrix.at_local(0, 0));
+    EXPECT_EQ(matrix.data(), &matrix.atloc(0, 0));
 
     double value = 1.0;
     for (int ir = 0; ir < 2; ++ir)
@@ -148,10 +148,10 @@ void check_host_layout()
         {
             const std::size_t expected_index = static_cast<std::size_t>(ir) * 3U
                 + static_cast<std::size_t>(ic);
-            EXPECT_EQ(&matrix.at_local(ir, ic), matrix.data() + expected_index);
-            EXPECT_EQ(&matrix.at_global(ir, ic), &matrix.at_local(ir, ic));
-            EXPECT_TRUE(matrix.owns_global_index(ir, ic));
-            matrix.at_local(ir, ic) = value;
+            EXPECT_EQ(&matrix.atloc(ir, ic), matrix.data() + expected_index);
+            EXPECT_EQ(&matrix.atglb(ir, ic), &matrix.atloc(ir, ic));
+            EXPECT_TRUE(matrix.in_this_processor(ir, ic));
+            matrix.atloc(ir, ic) = value;
             value += 1.0;
         }
     }
@@ -165,8 +165,8 @@ void check_host_layout()
 
     const Matrix2d<double>& const_matrix = matrix;
     EXPECT_EQ(const_matrix.data(), matrix.data());
-    EXPECT_EQ(&const_matrix.at_local(1, 2), matrix.data() + 5);
-    EXPECT_EQ(&const_matrix.at_global(1, 2), matrix.data() + 5);
+    EXPECT_EQ(&const_matrix.atloc(1, 2), matrix.data() + 5);
+    EXPECT_EQ(&const_matrix.atglb(1, 2), matrix.data() + 5);
 }
 
 void check_distribution_layout(Matrix2d<double>& matrix,
@@ -199,7 +199,7 @@ void check_distribution_layout(Matrix2d<double>& matrix,
             const std::size_t expected_index
                 = static_cast<std::size_t>(icloc) * lld
                 + static_cast<std::size_t>(irloc);
-            EXPECT_EQ(&matrix.at_local(irloc, icloc), matrix.data() + expected_index);
+            EXPECT_EQ(&matrix.atloc(irloc, icloc), matrix.data() + expected_index);
         }
     }
 
@@ -208,7 +208,7 @@ void check_distribution_layout(Matrix2d<double>& matrix,
         for (int icglb = 0; icglb < ncglb; ++icglb)
         {
             const bool expected_owner = distrib->in_this_processor(irglb, icglb);
-            EXPECT_EQ(matrix.owns_global_index(irglb, icglb), expected_owner);
+            EXPECT_EQ(matrix.in_this_processor(irglb, icglb), expected_owner);
             if (!expected_owner)
             {
                 continue;
@@ -218,11 +218,11 @@ void check_distribution_layout(Matrix2d<double>& matrix,
             const int icloc = distrib->icloc(icglb);
             ASSERT_NE(irloc, -1);
             ASSERT_NE(icloc, -1);
-            EXPECT_EQ(&matrix.at_global(irglb, icglb),
-                      &matrix.at_local(irloc, icloc));
+            EXPECT_EQ(&matrix.atglb(irglb, icglb),
+                      &matrix.atloc(irloc, icloc));
             const double value = static_cast<double>(irglb * ncglb + icglb);
-            matrix.at_global(irglb, icglb) = value;
-            EXPECT_EQ(matrix.at_local(irloc, icloc), value);
+            matrix.atglb(irglb, icglb) = value;
+            EXPECT_EQ(matrix.atloc(irloc, icloc), value);
         }
     }
 
@@ -374,9 +374,9 @@ void fill_global_values(Matrix2d<T>& matrix, const double offset = 0.0)
     {
         for (int ic = 0; ic < matrix.ncglb(); ++ic)
         {
-            if (matrix.owns_global_index(ir, ic))
+            if (matrix.in_this_processor(ir, ic))
             {
-                matrix.at_global(ir, ic) = test_value<T>(ir, ic, offset);
+                matrix.atglb(ir, ic) = test_value<T>(ir, ic, offset);
             }
         }
     }
@@ -392,7 +392,7 @@ Matrix2d<T> make_host_reference(const int nr,
     {
         for (int ic = 0; ic < nc; ++ic)
         {
-            reference.at_local(ir, ic) = test_value<T>(ir, ic, offset);
+            reference.atloc(ir, ic) = test_value<T>(ir, ic, offset);
         }
     }
     return reference;
@@ -413,7 +413,7 @@ void verify_global_matrix(const Matrix2d<T>& actual, const Matrix2d<T>& expected
                     * static_cast<std::size_t>(expected.ncglb())
                 + static_cast<std::size_t>(ic);
             expect_scalar_near(actual.data()[c_order_index],
-                               expected.at_local(ir, ic));
+                               expected.atloc(ir, ic));
         }
     }
 }
@@ -438,7 +438,7 @@ void check_elementwise_operations(Matrix2d<T>& matrix, Matrix2d<T>& other)
     {
         for (int ic = 0; ic < nc; ++ic)
         {
-            expected.at_local(ir, ic) *= constant_value<T>(2.5);
+            expected.atloc(ir, ic) *= constant_value<T>(2.5);
         }
     }
     verify_global_matrix(filled.gather(), expected);
@@ -451,7 +451,7 @@ void check_elementwise_operations(Matrix2d<T>& matrix, Matrix2d<T>& other)
     {
         for (int ic = 0; ic < nc; ++ic)
         {
-            expected.at_local(ir, ic) += expected_other.at_local(ir, ic);
+            expected.atloc(ir, ic) += expected_other.atloc(ir, ic);
         }
     }
     verify_global_matrix(filled.gather(), expected);
@@ -463,7 +463,7 @@ void check_elementwise_operations(Matrix2d<T>& matrix, Matrix2d<T>& other)
     {
         for (int ic = 0; ic < nc; ++ic)
         {
-            expected.at_local(ir, ic) -= expected_other.at_local(ir, ic);
+            expected.atloc(ir, ic) -= expected_other.atloc(ir, ic);
         }
     }
     verify_global_matrix(filled.gather(), expected);
@@ -475,7 +475,7 @@ void check_elementwise_operations(Matrix2d<T>& matrix, Matrix2d<T>& other)
     {
         for (int ic = 0; ic < nc; ++ic)
         {
-            expected.at_local(ir, ic) *= expected_other.at_local(ir, ic);
+            expected.atloc(ir, ic) *= expected_other.atloc(ir, ic);
         }
     }
     verify_global_matrix(filled.gather(), expected);
@@ -487,8 +487,8 @@ void check_elementwise_operations(Matrix2d<T>& matrix, Matrix2d<T>& other)
     {
         for (int ic = 0; ic < nc; ++ic)
         {
-            expected.at_local(ir, ic)
-                = conjugate_value(expected.at_local(ir, ic));
+            expected.atloc(ir, ic)
+                = conjugate_value(expected.atloc(ir, ic));
         }
     }
     verify_global_matrix(filled.gather(), expected);
@@ -500,22 +500,12 @@ void check_elementwise_operations(Matrix2d<T>& matrix, Matrix2d<T>& other)
     {
         for (int ic = 0; ic < nc; ++ic)
         {
-            const T& value = matrix_reference.at_local(ir, ic);
-            expected_real.at_local(ir, ic) = real_part(value);
-            expected_imag.at_local(ir, ic) = imaginary_part(value);
+            const T& value = matrix_reference.atloc(ir, ic);
+            expected_real.atloc(ir, ic) = real_part(value);
+            expected_imag.atloc(ir, ic) = imaginary_part(value);
         }
     }
 
-    Matrix2d<double> real_output = matrix.is_distributed()
-        ? Matrix2d<double>(matrix.distribution())
-        : Matrix2d<double>(nr, nc);
-    Matrix2d<double> imaginary_output = matrix.is_distributed()
-        ? Matrix2d<double>(matrix.distribution())
-        : Matrix2d<double>(nr, nc);
-    matrix.real(real_output);
-    matrix.imag(imaginary_output);
-    verify_global_matrix(real_output.gather(), expected_real);
-    verify_global_matrix(imaginary_output.gather(), expected_imag);
     verify_global_matrix(matrix.real().gather(), expected_real);
     verify_global_matrix(matrix.imag().gather(), expected_imag);
 }
@@ -532,17 +522,17 @@ void check_reductions(Matrix2d<T>& matrix, Matrix2d<T>& other)
         10.0);
     T reference_sum = T();
     T reference_dot = T();
-    double reference_sum_squares = 0.0;
+    double reference_norm_sq = 0.0;
     double reference_max_abs = 0.0;
     for (int ir = 0; ir < matrix.nrglb(); ++ir)
     {
         for (int ic = 0; ic < matrix.ncglb(); ++ic)
         {
-            const T& value = matrix_reference.at_local(ir, ic);
-            const T& other_value = other_reference.at_local(ir, ic);
+            const T& value = matrix_reference.atloc(ir, ic);
+            const T& other_value = other_reference.atloc(ir, ic);
             reference_sum += value;
             reference_dot += conjugate_value(value) * other_value;
-            reference_sum_squares += real_part(value) * real_part(value)
+            reference_norm_sq += real_part(value) * real_part(value)
                 + imaginary_part(value) * imaginary_part(value);
             reference_max_abs = std::max(reference_max_abs,
                                          static_cast<double>(std::abs(value)));
@@ -551,10 +541,9 @@ void check_reductions(Matrix2d<T>& matrix, Matrix2d<T>& other)
 
     expect_scalar_near(matrix.sum(), reference_sum);
     expect_scalar_near(matrix.dot(other), reference_dot);
-    const T expected_self_dot = static_cast<T>(matrix.sum_squares());
+    const T expected_self_dot = static_cast<T>(reference_norm_sq);
     expect_scalar_near(matrix.dot(matrix), expected_self_dot);
-    expect_scalar_near(matrix.sum_squares(), reference_sum_squares);
-    expect_scalar_near(matrix.norm2(), std::sqrt(reference_sum_squares));
+    expect_scalar_near(matrix.norm(), std::sqrt(reference_norm_sq));
     expect_scalar_near(matrix.max_abs(), reference_max_abs);
 
     const std::vector<T> diagonal = matrix.diagonal();
@@ -563,7 +552,7 @@ void check_reductions(Matrix2d<T>& matrix, Matrix2d<T>& other)
     for (int i = 0; i < diagonal_size; ++i)
     {
         expect_scalar_near(diagonal[static_cast<std::size_t>(i)],
-                           matrix_reference.at_local(i, i));
+                           matrix_reference.atloc(i, i));
     }
 }
 
@@ -615,8 +604,8 @@ void check_gather_scatter(Matrix2d<T>& matrix)
 template <typename T>
 std::size_t expected_local_storage_size(const Matrix2d<T>& matrix)
 {
-    const int lld_dist = matrix.lld();
-    const int lld = std::max(lld_dist, 1);
+    const int lld_distrib = matrix.lld();
+    const int lld = std::max(lld_distrib, 1);
     const std::size_t column_major_elements
         = static_cast<std::size_t>(lld)
             * static_cast<std::size_t>(matrix.ncloc());
@@ -635,8 +624,8 @@ std::vector<std::size_t> set_padding_sentinel(Matrix2d<T>& matrix,
 {
     const int nrloc = matrix.nrloc();
     const int ncloc = matrix.ncloc();
-    const int lld_dist = matrix.lld();
-    const std::size_t lld = static_cast<std::size_t>(lld_dist);
+    const int lld_distrib = matrix.lld();
+    const std::size_t lld = static_cast<std::size_t>(lld_distrib);
     const std::size_t storage_elements = expected_local_storage_size(matrix);
     std::vector<unsigned char> is_logical(storage_elements, 0);
     std::vector<std::size_t> padding_indices;
@@ -712,8 +701,8 @@ Matrix2d<T> make_transpose_reference(const Matrix2d<T>& source)
     {
         for (int ic = 0; ic < nc; ++ic)
         {
-            reference.at_local(ic, ir)
-                = source.at_local(ir, ic);
+            reference.atloc(ic, ir)
+                = source.atloc(ir, ic);
         }
     }
     return reference;
@@ -729,8 +718,8 @@ Matrix2d<T> make_dagger_reference(const Matrix2d<T>& source)
     {
         for (int ic = 0; ic < nc; ++ic)
         {
-            reference.at_local(ic, ir)
-                = conjugate_value(source.at_local(ir, ic));
+            reference.atloc(ic, ir)
+                = conjugate_value(source.atloc(ir, ic));
         }
     }
     return reference;
@@ -749,11 +738,11 @@ Matrix2d<T> make_matmul_reference(const Matrix2d<T>& left,
         for (int ic = 0; ic < n; ++ic)
         {
             T value = T();
-            for (int kk = 0; kk < k; ++kk)
+            for (int ik = 0; ik < k; ++ik)
             {
-                value += left.at_local(ir, kk) * right.at_local(kk, ic);
+                value += left.atloc(ir, ik) * right.atloc(ik, ic);
             }
-            reference.at_local(ir, ic) = value;
+            reference.atloc(ir, ic) = value;
         }
     }
     return reference;
@@ -998,23 +987,23 @@ TEST(Matrix2dTest, SerialDegenerateDistributionTransposeAndMatmul)
 TEST(Matrix2dTest, TransposeAndDaggerDistributedMatchHost)
 {
     const std::vector<std::pair<int, int>> grids = available_process_grids();
-    for (std::size_t grid_index = 0; grid_index < grids.size(); ++grid_index)
+    for (std::size_t igrid = 0; igrid < grids.size(); ++igrid)
     {
         check_distributed_transpose<double>(5, 3,
-                                            grids[grid_index].first,
-                                            grids[grid_index].second,
+                                            grids[igrid].first,
+                                            grids[igrid].second,
                                             3);
         check_distributed_transpose<double>(3, 5,
-                                            grids[grid_index].first,
-                                            grids[grid_index].second,
+                                            grids[igrid].first,
+                                            grids[igrid].second,
                                             3);
         check_distributed_transpose<std::complex<double>>(5, 3,
-                                                          grids[grid_index].first,
-                                                          grids[grid_index].second,
+                                                          grids[igrid].first,
+                                                          grids[igrid].second,
                                                           3);
         check_distributed_transpose<std::complex<double>>(3, 5,
-                                                          grids[grid_index].first,
-                                                          grids[grid_index].second,
+                                                          grids[igrid].first,
+                                                          grids[igrid].second,
                                                           3);
     }
 }
@@ -1042,15 +1031,15 @@ TEST(Matrix2dTest, DistributedResultRetainsBlacsContext)
 TEST(Matrix2dTest, MatmulDistributedMatchesHost)
 {
     const std::vector<std::pair<int, int>> grids = available_process_grids();
-    for (std::size_t grid_index = 0; grid_index < grids.size(); ++grid_index)
+    for (std::size_t igrid = 0; igrid < grids.size(); ++igrid)
     {
         check_distributed_matmul<double>(5, 4, 6,
-                                         grids[grid_index].first,
-                                         grids[grid_index].second,
+                                         grids[igrid].first,
+                                         grids[igrid].second,
                                          3);
         check_distributed_matmul<std::complex<double>>(5, 4, 6,
-                                                       grids[grid_index].first,
-                                                       grids[grid_index].second,
+                                                       grids[igrid].first,
+                                                       grids[igrid].second,
                                                        3);
     }
 }
@@ -1129,10 +1118,11 @@ TEST(Matrix2dTest, IncompatibleDistributionThrows)
 {
     const std::vector<std::pair<int, int>> grids = available_process_grids();
     const std::pair<int, int>& grid = grids[0];
-    const int block = 3;
+    const int nrblk = 3;
     {
-        Matrix2d<double> first(8, 6, grid.first, grid.second, block, MPI_COMM_WORLD);
-        Matrix2d<double> different_block(6, 8, grid.first, grid.second, block + 1, MPI_COMM_WORLD);
+        Matrix2d<double> first(8, 6, grid.first, grid.second, nrblk, MPI_COMM_WORLD);
+        Matrix2d<double> different_block(
+            6, 8, grid.first, grid.second, nrblk + 1, MPI_COMM_WORLD);
         fill_global_values(first);
         fill_global_values(different_block, 10.0);
         EXPECT_THROW(first.matmul(different_block), std::invalid_argument);
@@ -1140,15 +1130,17 @@ TEST(Matrix2dTest, IncompatibleDistributionThrows)
     if (grids.size() > 1)
     {
         const std::pair<int, int>& other_grid = grids[1];
-        Matrix2d<double> first(8, 6, grid.first, grid.second, block, MPI_COMM_WORLD);
-        Matrix2d<double> different_grid(6, 8, other_grid.first, other_grid.second, block, MPI_COMM_WORLD);
+        Matrix2d<double> first(8, 6, grid.first, grid.second, nrblk, MPI_COMM_WORLD);
+        Matrix2d<double> different_grid(
+            6, 8, other_grid.first, other_grid.second, nrblk, MPI_COMM_WORLD);
         fill_global_values(first);
         fill_global_values(different_grid, 10.0);
         EXPECT_THROW(first.matmul(different_grid), std::invalid_argument);
     }
     {
-        Matrix2d<double> first(8, 6, grid.first, grid.second, block, MPI_COMM_WORLD);
-        Matrix2d<double> different_context(6, 8, grid.first, grid.second, block, MPI_COMM_WORLD);
+        Matrix2d<double> first(8, 6, grid.first, grid.second, nrblk, MPI_COMM_WORLD);
+        Matrix2d<double> different_context(
+            6, 8, grid.first, grid.second, nrblk, MPI_COMM_WORLD);
         fill_global_values(first);
         fill_global_values(different_context, 10.0);
         EXPECT_THROW(first.matmul(different_context), std::invalid_argument);
@@ -1159,11 +1151,11 @@ TEST(Matrix2dTest, DescriptorAddressStableAcrossOperators)
 {
     const std::vector<std::pair<int, int>> grids = available_process_grids();
     const std::pair<int, int>& grid = grids[0];
-    const int block = 3;
-    Matrix2d<double> left(5, 4, grid.first, grid.second, block, MPI_COMM_WORLD);
+    const int nrblk = 3;
+    Matrix2d<double> left(5, 4, grid.first, grid.second, nrblk, MPI_COMM_WORLD);
     const int ictxt = left.ictxt();
     const std::shared_ptr<const Parallel_Blkcyclic> right_distrib
-        = make_borrowed_distribution(4, 6, block, ictxt);
+        = make_borrowed_distribution(4, 6, nrblk, ictxt);
     Matrix2d<double> right(right_distrib);
     fill_global_values(left);
     fill_global_values(right, 10.0);
@@ -1192,22 +1184,22 @@ TEST(Matrix2dTest, HostConstructionAndRowMajorLayout)
 TEST(Matrix2dTest, HostCopyDeepCopiesStorage)
 {
     Matrix2d<double> source(2, 2);
-    source.at_local(0, 0) = 1.0;
-    source.at_local(0, 1) = 2.0;
-    source.at_local(1, 0) = 3.0;
-    source.at_local(1, 1) = 4.0;
+    source.atloc(0, 0) = 1.0;
+    source.atloc(0, 1) = 2.0;
+    source.atloc(1, 0) = 3.0;
+    source.atloc(1, 1) = 4.0;
 
     Matrix2d<double> copy(source);
     EXPECT_EQ(copy.distribution(), nullptr);
     EXPECT_NE(copy.data(), source.data());
-    EXPECT_EQ(copy.at_local(1, 1), 4.0);
-    copy.at_local(1, 1) = 9.0;
-    EXPECT_EQ(source.at_local(1, 1), 4.0);
+    EXPECT_EQ(copy.atloc(1, 1), 4.0);
+    copy.atloc(1, 1) = 9.0;
+    EXPECT_EQ(source.atloc(1, 1), 4.0);
 
     Matrix2d<double> assigned(1, 1);
     assigned = source;
     EXPECT_NE(assigned.data(), source.data());
-    EXPECT_EQ(assigned.at_local(0, 1), 2.0);
+    EXPECT_EQ(assigned.atloc(0, 1), 2.0);
 }
 
 TEST(Matrix2dTest, SerialDistributionHandleUsesColumnMajorLayout)
@@ -1260,8 +1252,8 @@ TEST(Matrix2dTest, SerialDistributionViewMatchesColumnMajorStorageWithoutMpi)
     {
         for (int icloc = 0; icloc < matrix.ncloc(); ++icloc)
         {
-            EXPECT_EQ(&matrix_view.at_local(irloc, icloc),
-                      &matrix.at_local(irloc, icloc));
+            EXPECT_EQ(&matrix_view.atloc(irloc, icloc),
+                      &matrix.atloc(irloc, icloc));
         }
     }
 
@@ -1272,8 +1264,8 @@ TEST(Matrix2dTest, SerialDistributionViewMatchesColumnMajorStorageWithoutMpi)
     {
         for (int icloc = 0; icloc < matrix.ncloc(); ++icloc)
         {
-            EXPECT_EQ(&const_view.at_local(irloc, icloc),
-                      &matrix.at_local(irloc, icloc));
+            EXPECT_EQ(&const_view.atloc(irloc, icloc),
+                      &matrix.atloc(irloc, icloc));
         }
     }
 }
@@ -1284,15 +1276,15 @@ TEST(Matrix2dTest, CopiesShareDistributionAndDeepCopyStorage)
     const std::shared_ptr<const Parallel_Blkcyclic> distrib
         = make_frozen_distribution(3, 2);
     Matrix2d<double> source(distrib);
-    source.at_local(0, 0) = 7.0;
+    source.atloc(0, 0) = 7.0;
 
     Matrix2d<double> copy(source);
     EXPECT_EQ(copy.distribution().get(), distrib.get());
     EXPECT_EQ(source.distribution().get(), copy.distribution().get());
     EXPECT_NE(copy.data(), source.data());
-    EXPECT_EQ(copy.at_local(0, 0), 7.0);
-    copy.at_local(0, 0) = 8.0;
-    EXPECT_EQ(source.at_local(0, 0), 7.0);
+    EXPECT_EQ(copy.atloc(0, 0), 7.0);
+    copy.atloc(0, 0) = 8.0;
+    EXPECT_EQ(source.atloc(0, 0), 7.0);
 }
 
 TEST(Matrix2dTest, MatricesFromSameHandleShareContext)
@@ -1400,8 +1392,8 @@ TEST(Matrix2dTest, HostComplexElementwiseAndReductions)
 TEST(Matrix2dTest, MaxAbsWidensIntegerBeforeTakingAbsoluteValue)
 {
     Matrix2d<int> matrix(1, 2);
-    matrix.at_local(0, 0) = std::numeric_limits<int>::min();
-    matrix.at_local(0, 1) = std::numeric_limits<int>::max();
+    matrix.atloc(0, 0) = std::numeric_limits<int>::min();
+    matrix.atloc(0, 1) = std::numeric_limits<int>::max();
     const double int_min_as_double
         = static_cast<double>(std::numeric_limits<int>::min());
     const double expected = -int_min_as_double;
@@ -1429,16 +1421,16 @@ TEST(Matrix2dTest, DistributedDoubleAcrossBlocksAndProcessGrids)
 {
     report_reduction_tolerances();
     const std::vector<std::pair<int, int>> grids = available_process_grids();
-    const int blocks[] = {2, 3, 4};
-    for (std::size_t grid_index = 0; grid_index < grids.size(); ++grid_index)
+    const int nrblks[] = {2, 3, 4};
+    for (std::size_t igrid = 0; igrid < grids.size(); ++igrid)
     {
-        for (std::size_t block_index = 0; block_index < 3; ++block_index)
+        for (std::size_t iblk = 0; iblk < 3; ++iblk)
         {
             Matrix2d<double> matrix(9,
                                     7,
-                                    grids[grid_index].first,
-                                    grids[grid_index].second,
-                                    blocks[block_index],
+                                    grids[igrid].first,
+                                    grids[igrid].second,
+                                    nrblks[iblk],
                                     MPI_COMM_WORLD);
             Matrix2d<double> other(matrix.distribution());
             fill_global_values(matrix);
@@ -1454,16 +1446,16 @@ TEST(Matrix2dTest, DistributedComplexAcrossBlocksAndProcessGrids)
 {
     report_reduction_tolerances();
     const std::vector<std::pair<int, int>> grids = available_process_grids();
-    const int blocks[] = {2, 3, 4};
-    for (std::size_t grid_index = 0; grid_index < grids.size(); ++grid_index)
+    const int nrblks[] = {2, 3, 4};
+    for (std::size_t igrid = 0; igrid < grids.size(); ++igrid)
     {
-        for (std::size_t block_index = 0; block_index < 3; ++block_index)
+        for (std::size_t iblk = 0; iblk < 3; ++iblk)
         {
             Matrix2d<std::complex<double>> matrix(9,
                                                   7,
-                                                  grids[grid_index].first,
-                                                  grids[grid_index].second,
-                                                  blocks[block_index],
+                                                  grids[igrid].first,
+                                                  grids[igrid].second,
+                                                  nrblks[iblk],
                                                   MPI_COMM_WORLD);
             Matrix2d<std::complex<double>> other(matrix.distribution());
             fill_global_values(matrix);
@@ -1528,7 +1520,7 @@ TEST(Matrix2dTest, TallSkinnyPaddingDoesNotAffectOperatorsOrGather)
     {
         for (int ic = 0; ic < ncglb; ++ic)
         {
-            expected.at_local(ir, ic) += other_reference.at_local(ir, ic);
+            expected.atloc(ir, ic) += other_reference.atloc(ir, ic);
         }
     }
     verify_global_matrix(matrix.gather(), expected);

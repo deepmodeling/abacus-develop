@@ -32,7 +32,7 @@ class Matrix2dView
           ncloc_(other.ncloc()),
           lld_(other.lld()),
           desc_(other.desc()),
-          dist_(other.distribution())
+          distrib_(other.distribution())
     {
     }
 
@@ -44,14 +44,14 @@ class Matrix2dView
           ncloc_(ncglb),
           lld_(ncglb),
           desc_(nullptr),
-          dist_(nullptr)
+          distrib_(nullptr)
     {
         assert(nrglb_ >= 0);
         assert(ncglb_ >= 0);
     }
 
     Matrix2dView(T* data,
-                 std::shared_ptr<const Parallel_Blkcyclic> dist)
+                 std::shared_ptr<const Parallel_Blkcyclic> distrib)
         : data_(data),
           nrglb_(0),
           ncglb_(0),
@@ -59,16 +59,21 @@ class Matrix2dView
           ncloc_(0),
           lld_(0),
           desc_(nullptr),
-          dist_(std::move(dist))
+          distrib_(std::move(distrib))
     {
-        const Parallel_Blkcyclic& distrib = checked_distribution(dist_);
-        nrglb_ = distrib.nrglb();
-        ncglb_ = distrib.ncglb();
-        nrloc_ = distrib.nrloc();
-        ncloc_ = distrib.ncloc();
-        lld_ = distrib.lld();
+        if (distrib_ == nullptr)
+        {
+            throw std::invalid_argument(
+                "matrix view distribution must not be null");
+        }
+        const Parallel_Blkcyclic& distribution = *distrib_;
+        nrglb_ = distribution.nrglb();
+        ncglb_ = distribution.ncglb();
+        nrloc_ = distribution.nrloc();
+        ncloc_ = distribution.ncloc();
+        lld_ = distribution.lld();
 #ifdef __MPI
-        desc_ = distrib.desc();
+        desc_ = distribution.desc();
 #endif
     }
 
@@ -84,11 +89,11 @@ class Matrix2dView
             * static_cast<std::size_t>(ncloc_);
     }
 
-    bool is_distributed() const { return dist_ != nullptr; }
+    bool is_distributed() const { return distrib_ != nullptr; }
     const std::shared_ptr<const Parallel_Blkcyclic>&
     distribution() const
     {
-        return dist_;
+        return distrib_;
     }
 
     const int* desc() const
@@ -96,13 +101,13 @@ class Matrix2dView
         return desc_;
     }
 
-    T& at_local(const int i, const int j) const
+    T& atloc(const int i, const int j) const
     {
         assert(i >= 0);
         assert(i < nrloc_);
         assert(j >= 0);
         assert(j < ncloc_);
-        const std::size_t offset = dist_ == nullptr
+        const std::size_t offset = distrib_ == nullptr
             ? static_cast<std::size_t>(i) * static_cast<std::size_t>(ncloc_)
                 + static_cast<std::size_t>(j)
             : static_cast<std::size_t>(j) * static_cast<std::size_t>(lld_)
@@ -111,16 +116,6 @@ class Matrix2dView
     }
 
   private:
-    static const Parallel_Blkcyclic& checked_distribution(
-        const std::shared_ptr<const Parallel_Blkcyclic>& dist)
-    {
-        if (dist == nullptr)
-        {
-            throw std::invalid_argument("matrix view distribution must not be null");
-        }
-        return *dist;
-    }
-
     T* data_;
     int nrglb_;
     int ncglb_;
@@ -128,7 +123,7 @@ class Matrix2dView
     int ncloc_;
     int lld_;
     const int* desc_;
-    std::shared_ptr<const Parallel_Blkcyclic> dist_;
+    std::shared_ptr<const Parallel_Blkcyclic> distrib_;
 };
 
 #endif

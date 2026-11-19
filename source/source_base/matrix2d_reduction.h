@@ -9,13 +9,10 @@ template <typename T>
 T sum(const Matrix2d<T>& matrix);
 
 template <typename T>
-double sum_squares(const Matrix2d<T>& matrix);
-
-template <typename T>
 T dot(const Matrix2d<T>& left, const Matrix2d<T>& right);
 
 template <typename T>
-double norm2(const Matrix2d<T>& matrix);
+double norm(const Matrix2d<T>& matrix);
 
 template <typename T>
 double max_abs(const Matrix2d<T>& matrix);

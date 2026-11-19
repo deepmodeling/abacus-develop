@@ -17,17 +17,20 @@
 
 namespace
 {
+namespace elementwise
+{
 template <typename T>
-T conjugate_value(const T& value)
+T conj(const T& value)
 {
     return value;
 }
 
 template <typename T>
-std::complex<T> conjugate_value(const std::complex<T>& value)
+std::complex<T> conj(const std::complex<T>& value)
 {
     return std::conj(value);
 }
+} // namespace elementwise
 
 template <typename T>
 double absolute_square(const T& value)
@@ -39,9 +42,9 @@ double absolute_square(const T& value)
 template <typename T>
 double absolute_square(const std::complex<T>& value)
 {
-    const double real_value = static_cast<double>(value.real());
-    const double imaginary_value = static_cast<double>(value.imag());
-    return real_value * real_value + imaginary_value * imaginary_value;
+    const double real = static_cast<double>(value.real());
+    const double imag = static_cast<double>(value.imag());
+    return real * real + imag * imag;
 }
 
 template <typename T>
@@ -61,11 +64,11 @@ template <typename Value, typename Element>
 void reduce_sum_over_processes(Value& value, const Matrix2d<Element>& matrix)
 {
 #ifdef __MPI
-    const std::shared_ptr<const Parallel_Blkcyclic> dist
+    const std::shared_ptr<const Parallel_Blkcyclic> distrib
         = matrix.distribution();
-    if (dist != nullptr && !dist->is_serial())
+    if (distrib != nullptr && !distrib->is_serial())
     {
-        const MPI_Comm comm = dist->comm();
+        const MPI_Comm comm = distrib->comm();
         if (comm != MPI_COMM_NULL)
         {
             Parallel_Common::allreduce_sum(value, comm);
@@ -81,11 +84,11 @@ template <typename T>
 void reduce_max_over_processes(double& value, const Matrix2d<T>& matrix)
 {
 #ifdef __MPI
-    const std::shared_ptr<const Parallel_Blkcyclic> dist
+    const std::shared_ptr<const Parallel_Blkcyclic> distrib
         = matrix.distribution();
-    if (dist != nullptr && !dist->is_serial())
+    if (distrib != nullptr && !distrib->is_serial())
     {
-        const MPI_Comm comm = dist->comm();
+        const MPI_Comm comm = distrib->comm();
         if (comm != MPI_COMM_NULL)
         {
             Parallel_Common::allreduce_max(value, comm);
@@ -97,50 +100,54 @@ void reduce_max_over_processes(double& value, const Matrix2d<T>& matrix)
 #endif
 }
 
-int checked_mpi_count(const std::size_t count)
+void assert_valid_mpi_count(const std::size_t nbytes)
 {
-    if (count > static_cast<std::size_t>(std::numeric_limits<int>::max()))
+    if (nbytes > static_cast<std::size_t>(std::numeric_limits<int>::max()))
     {
         throw std::invalid_argument(
             "Matrix2d diagonal data buffer exceeds MPI count range");
     }
-    return static_cast<int>(count);
 }
 
-std::vector<int> make_byte_displacements(const std::vector<int>& counts)
+int mpi_count(const std::size_t nbytes)
 {
-    std::vector<int> displacements(counts.size(), 0);
-    int off = 0;
-    for (std::size_t ip = 0; ip < counts.size(); ++ip)
+    return static_cast<int>(nbytes);
+}
+
+std::vector<int> make_byte_displs(const std::vector<int>& nbytes)
+{
+    std::vector<int> displs(nbytes.size(), 0);
+    int offset = 0;
+    for (std::size_t ip = 0; ip < nbytes.size(); ++ip)
     {
-        displacements[ip] = off;
-        if (counts[ip] > std::numeric_limits<int>::max() - off)
+        displs[ip] = offset;
+        if (nbytes[ip] > std::numeric_limits<int>::max() - offset)
         {
             throw std::invalid_argument(
                 "Matrix2d diagonal data buffer size overflow");
         }
-        off += counts[ip];
+        offset += nbytes[ip];
     }
-    return displacements;
+    return displs;
 }
 
 #ifdef __MPI
-std::vector<int> gather_byte_counts(const int local_count, const MPI_Comm comm)
+std::vector<int> gather_nbytes(const int nbytes_local, const MPI_Comm comm)
 {
     const int nproc = Parallel_Common::comm_size(comm);
-    const std::vector<int> recv(
-        static_cast<std::size_t>(nproc),
-        checked_mpi_count(sizeof(int)));
+    const int nbytes_int = static_cast<int>(sizeof(int));
+    const std::vector<int> recvcounts(static_cast<std::size_t>(nproc),
+                                      nbytes_int);
     const std::vector<int> rdispls
-        = make_byte_displacements(recv);
-    std::vector<int> counts(static_cast<std::size_t>(nproc), 0);
-    Parallel_Common::allgatherv_bytes(&local_count,
-                                      checked_mpi_count(sizeof(local_count)),
-                                      counts.data(),
-                                      recv.data(),
+        = make_byte_displs(recvcounts);
+    std::vector<int> nbytes(static_cast<std::size_t>(nproc), 0);
+    Parallel_Common::allgatherv_bytes(&nbytes_local,
+                                      nbytes_int,
+                                      nbytes.data(),
+                                      recvcounts.data(),
                                       rdispls.data(),
                                       comm);
-    return counts;
+    return nbytes;
 }
 #endif
 } // namespace
@@ -163,7 +170,7 @@ T sum(const Matrix2d<T>& matrix)
         {
             for (int j = 0; j < ncloc; ++j)
             {
-                partial_sums[ip] += matrix.at_local(i, j);
+                partial_sums[ip] += matrix.atloc(i, j);
             }
         }
     }
@@ -176,7 +183,7 @@ T sum(const Matrix2d<T>& matrix)
     {
         for (int j = 0; j < ncloc; ++j)
         {
-            value += matrix.at_local(i, j);
+            value += matrix.atloc(i, j);
         }
     }
 #endif
@@ -185,7 +192,7 @@ T sum(const Matrix2d<T>& matrix)
 }
 
 template <typename T>
-double sum_squares(const Matrix2d<T>& matrix)
+double norm(const Matrix2d<T>& matrix)
 {
     double value = 0.0;
     const int nrloc = matrix.nrloc();
@@ -197,11 +204,11 @@ double sum_squares(const Matrix2d<T>& matrix)
     {
         for (int j = 0; j < ncloc; ++j)
         {
-            value += absolute_square(matrix.at_local(i, j));
+            value += absolute_square(matrix.atloc(i, j));
         }
     }
     reduce_sum_over_processes(value, matrix);
-    return value;
+    return std::sqrt(value);
 }
 
 template <typename T>
@@ -220,9 +227,8 @@ T dot(const Matrix2d<T>& left, const Matrix2d<T>& right)
         {
             for (int j = 0; j < ncloc; ++j)
             {
-                partial_sums[ip]
-                    += conjugate_value(left.at_local(i, j))
-                        * right.at_local(i, j);
+                partial_sums[ip] += elementwise::conj(left.atloc(i, j))
+                    * right.atloc(i, j);
             }
         }
     }
@@ -235,19 +241,13 @@ T dot(const Matrix2d<T>& left, const Matrix2d<T>& right)
     {
         for (int j = 0; j < ncloc; ++j)
         {
-            value += conjugate_value(left.at_local(i, j))
-                * right.at_local(i, j);
+            value += elementwise::conj(left.atloc(i, j))
+                * right.atloc(i, j);
         }
     }
 #endif
     reduce_sum_over_processes(value, left);
     return value;
-}
-
-template <typename T>
-double norm2(const Matrix2d<T>& matrix)
-{
-    return std::sqrt(sum_squares(matrix));
 }
 
 template <typename T>
@@ -263,7 +263,7 @@ double max_abs(const Matrix2d<T>& matrix)
     {
         for (int j = 0; j < ncloc; ++j)
         {
-            const T& element = matrix.at_local(i, j);
+            const T& element = matrix.atloc(i, j);
             const double element_abs = absolute_value(element);
             max_value = std::max(max_value, element_abs);
         }
@@ -279,39 +279,38 @@ std::vector<T> diagonal(const Matrix2d<T>& matrix)
     std::vector<T> values(static_cast<std::size_t>(diagonal_size), T());
     const int nrloc = matrix.nrloc();
     const int ncloc = matrix.ncloc();
-    const std::shared_ptr<const Parallel_Blkcyclic> dist
+    const std::shared_ptr<const Parallel_Blkcyclic> distrib
         = matrix.distribution();
     std::vector<std::pair<int, T>> local_entries;
     for (int irloc = 0; irloc < nrloc; ++irloc)
     {
         for (int icloc = 0; icloc < ncloc; ++icloc)
         {
-            const int irglb = dist == nullptr ? irloc : dist->irglb(irloc);
-            const int icglb = dist == nullptr ? icloc : dist->icglb(icloc);
+            const int irglb = distrib == nullptr ? irloc : distrib->irglb(irloc);
+            const int icglb = distrib == nullptr ? icloc : distrib->icglb(icloc);
             if (irglb == icglb && irglb < diagonal_size)
             {
-                const T value = matrix.at_local(irloc, icloc);
+                const T value = matrix.atloc(irloc, icloc);
                 local_entries.push_back(std::pair<int, T>(irglb, value));
             }
         }
     }
 #ifdef __MPI
-    if (dist != nullptr && !dist->is_serial())
+    if (distrib != nullptr && !distrib->is_serial())
     {
-        const MPI_Comm comm = dist->comm();
+        const MPI_Comm comm = distrib->comm();
         if (comm != MPI_COMM_NULL)
         {
-            const std::size_t entry_bytes = sizeof(int) + sizeof(T);
-            const std::size_t local_diagonal_buffer_bytes
-                = sizeof(int) + local_entries.size() * entry_bytes;
-            std::vector<unsigned char> local_diagonal_buffer(
-                local_diagonal_buffer_bytes);
-            const int local_entry_count
-                = checked_mpi_count(local_entries.size());
+            const std::size_t nbytes_entry = sizeof(int) + sizeof(T);
+            const std::size_t nbytes_local
+                = sizeof(int) + local_entries.size() * nbytes_entry;
+            std::vector<unsigned char> local_diagonal_buffer(nbytes_local);
+            assert_valid_mpi_count(local_entries.size());
+            const int nentry_local = mpi_count(local_entries.size());
             std::memcpy(local_diagonal_buffer.data(),
-                        &local_entry_count,
-                        sizeof(local_entry_count));
-            std::size_t offset = sizeof(local_entry_count);
+                        &nentry_local,
+                        sizeof(nentry_local));
+            std::size_t offset = sizeof(nentry_local);
             for (const std::pair<int, T>& entry : local_entries)
             {
                 std::memcpy(local_diagonal_buffer.data() + offset,
@@ -324,71 +323,71 @@ std::vector<T> diagonal(const Matrix2d<T>& matrix)
                 offset += sizeof(entry.second);
             }
 
-            const int local_count
-                = checked_mpi_count(local_diagonal_buffer.size());
-            const std::vector<int> pcounts
-                = gather_byte_counts(local_count, comm);
-            const std::vector<int> pdispls
-                = make_byte_displacements(pcounts);
+            assert_valid_mpi_count(nbytes_local);
+            const int nbytes_local_mpi = mpi_count(nbytes_local);
+            const std::vector<int> recvcounts
+                = gather_nbytes(nbytes_local_mpi, comm);
+            const std::vector<int> rdispls
+                = make_byte_displs(recvcounts);
             const int total_bytes
-                = pdispls.back() + pcounts.back();
+                = rdispls.back() + recvcounts.back();
             std::vector<unsigned char> received(
                 static_cast<std::size_t>(total_bytes));
             Parallel_Common::allgatherv_bytes(local_diagonal_buffer.data(),
-                                              local_count,
+                                              nbytes_local_mpi,
                                               received.data(),
-                                              pcounts.data(),
-                                              pdispls.data(),
+                                              recvcounts.data(),
+                                              rdispls.data(),
                                               comm);
 
-            for (std::size_t ip = 0; ip < pcounts.size(); ++ip)
+            for (std::size_t ip = 0; ip < recvcounts.size(); ++ip)
             {
                 const std::size_t begin
-                    = static_cast<std::size_t>(pdispls[ip]);
+                    = static_cast<std::size_t>(rdispls[ip]);
                 const std::size_t end
-                    = begin + static_cast<std::size_t>(pcounts[ip]);
+                    = begin + static_cast<std::size_t>(recvcounts[ip]);
                 if (end - begin < sizeof(int))
                 {
                     throw std::runtime_error(
                         "Matrix2d diagonal data buffer is truncated");
                 }
-                int entry_count = 0;
-                std::memcpy(&entry_count,
+                int nentry = 0;
+                std::memcpy(&nentry,
                             received.data() + begin,
-                            sizeof(entry_count));
+                            sizeof(nentry));
                 const std::size_t expected_bytes
-                    = static_cast<std::size_t>(entry_count) * entry_bytes;
-                if (entry_count < 0
+                    = static_cast<std::size_t>(nentry) * nbytes_entry;
+                if (nentry < 0
                     || end - begin != sizeof(int) + expected_bytes)
                 {
                     throw std::runtime_error(
                         "Matrix2d diagonal data buffer has an invalid size");
                 }
-                std::size_t entry_offset = begin + sizeof(entry_count);
-                for (int ientry = 0; ientry < entry_count; ++ientry)
+                std::size_t entry_offset = begin + sizeof(nentry);
+                for (int ientry = 0; ientry < nentry; ++ientry)
                 {
-                    int index = 0;
+                    int irglb = 0;
                     T value = T();
-                    std::memcpy(&index,
+                    std::memcpy(&irglb,
                                 received.data() + entry_offset,
-                                sizeof(index));
-                    entry_offset += sizeof(index);
+                                sizeof(irglb));
+                    entry_offset += sizeof(irglb);
                     std::memcpy(&value,
                                 received.data() + entry_offset,
                                 sizeof(value));
                     entry_offset += sizeof(value);
-                    if (index < 0 || index >= diagonal_size)
+                    if (irglb < 0 || irglb >= diagonal_size)
                     {
                         throw std::runtime_error(
-                            "Matrix2d diagonal index is outside global shape");
+                            "Matrix2d diagonal entry is outside global shape");
                     }
-                    values[static_cast<std::size_t>(index)] += value;
+                    values[static_cast<std::size_t>(irglb)] += value;
                 }
             }
         }
     }
 #endif
-    if (dist == nullptr || dist->is_serial())
+    if (distrib == nullptr || distrib->is_serial())
     {
         for (const std::pair<int, T>& entry : local_entries)
         {
@@ -406,14 +405,6 @@ template std::complex<float> sum<std::complex<float>>(
 template std::complex<double> sum<std::complex<double>>(
     const Matrix2d<std::complex<double>>& matrix);
 
-template double sum_squares<int>(const Matrix2d<int>& matrix);
-template double sum_squares<float>(const Matrix2d<float>& matrix);
-template double sum_squares<double>(const Matrix2d<double>& matrix);
-template double sum_squares<std::complex<float>>(
-    const Matrix2d<std::complex<float>>& matrix);
-template double sum_squares<std::complex<double>>(
-    const Matrix2d<std::complex<double>>& matrix);
-
 template int dot<int>(const Matrix2d<int>& left, const Matrix2d<int>& right);
 template float dot<float>(const Matrix2d<float>& left,
                           const Matrix2d<float>& right);
@@ -426,12 +417,12 @@ template std::complex<double> dot<std::complex<double>>(
     const Matrix2d<std::complex<double>>& left,
     const Matrix2d<std::complex<double>>& right);
 
-template double norm2<int>(const Matrix2d<int>& matrix);
-template double norm2<float>(const Matrix2d<float>& matrix);
-template double norm2<double>(const Matrix2d<double>& matrix);
-template double norm2<std::complex<float>>(
+template double norm<int>(const Matrix2d<int>& matrix);
+template double norm<float>(const Matrix2d<float>& matrix);
+template double norm<double>(const Matrix2d<double>& matrix);
+template double norm<std::complex<float>>(
     const Matrix2d<std::complex<float>>& matrix);
-template double norm2<std::complex<double>>(
+template double norm<std::complex<double>>(
     const Matrix2d<std::complex<double>>& matrix);
 
 template double max_abs<int>(const Matrix2d<int>& matrix);

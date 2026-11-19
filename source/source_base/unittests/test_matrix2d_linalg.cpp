@@ -38,7 +38,7 @@ void expect_host_matrices_near(const Matrix2d<T>& actual,
     {
         for (int j = 0; j < expected.ncglb(); ++j)
         {
-            expect_near(actual.at_local(i, j), expected.at_local(i, j));
+            expect_near(actual.atloc(i, j), expected.atloc(i, j));
         }
     }
 }
@@ -46,40 +46,40 @@ void expect_host_matrices_near(const Matrix2d<T>& actual,
 Matrix2d<double> make_real_system()
 {
     Matrix2d<double> matrix(2, 2);
-    matrix.at_local(0, 0) = 4.0;
-    matrix.at_local(0, 1) = 1.0;
-    matrix.at_local(1, 0) = 2.0;
-    matrix.at_local(1, 1) = 3.0;
+    matrix.atloc(0, 0) = 4.0;
+    matrix.atloc(0, 1) = 1.0;
+    matrix.atloc(1, 0) = 2.0;
+    matrix.atloc(1, 1) = 3.0;
     return matrix;
 }
 
 Matrix2d<double> make_real_inverse_reference()
 {
     Matrix2d<double> inverse(2, 2);
-    inverse.at_local(0, 0) = 0.3;
-    inverse.at_local(0, 1) = -0.1;
-    inverse.at_local(1, 0) = -0.2;
-    inverse.at_local(1, 1) = 0.4;
+    inverse.atloc(0, 0) = 0.3;
+    inverse.atloc(0, 1) = -0.1;
+    inverse.atloc(1, 0) = -0.2;
+    inverse.atloc(1, 1) = 0.4;
     return inverse;
 }
 
 Matrix2d<std::complex<double>> make_complex_system()
 {
     Matrix2d<std::complex<double>> matrix(2, 2);
-    matrix.at_local(0, 0) = std::complex<double>(1.0, 1.0);
-    matrix.at_local(0, 1) = std::complex<double>(2.0, 0.0);
-    matrix.at_local(1, 0) = std::complex<double>(3.0, 0.0);
-    matrix.at_local(1, 1) = std::complex<double>(4.0, -1.0);
+    matrix.atloc(0, 0) = std::complex<double>(1.0, 1.0);
+    matrix.atloc(0, 1) = std::complex<double>(2.0, 0.0);
+    matrix.atloc(1, 0) = std::complex<double>(3.0, 0.0);
+    matrix.atloc(1, 1) = std::complex<double>(4.0, -1.0);
     return matrix;
 }
 
 Matrix2d<std::complex<double>> make_complex_solution()
 {
     Matrix2d<std::complex<double>> solution(2, 2);
-    solution.at_local(0, 0) = std::complex<double>(1.0, 0.0);
-    solution.at_local(0, 1) = std::complex<double>(0.0, 2.0);
-    solution.at_local(1, 0) = std::complex<double>(3.0, 0.0);
-    solution.at_local(1, 1) = std::complex<double>(4.0, 0.0);
+    solution.atloc(0, 0) = std::complex<double>(1.0, 0.0);
+    solution.atloc(0, 1) = std::complex<double>(0.0, 2.0);
+    solution.atloc(1, 0) = std::complex<double>(3.0, 0.0);
+    solution.atloc(1, 1) = std::complex<double>(4.0, 0.0);
     return solution;
 }
 
@@ -115,15 +115,15 @@ Matrix2d<double> make_distributed_real_system(const int size)
         {
             if (i == j)
             {
-                matrix.at_local(i, j) = 6.0 + i;
+                matrix.atloc(i, j) = 6.0 + i;
             }
             else if (std::abs(i - j) == 1)
             {
-                matrix.at_local(i, j) = 0.5;
+                matrix.atloc(i, j) = 0.5;
             }
             else
             {
-                matrix.at_local(i, j) = 0.0;
+                matrix.atloc(i, j) = 0.0;
             }
         }
     }
@@ -138,7 +138,7 @@ Matrix2d<double> make_distributed_real_solution(const int nr,
     {
         for (int j = 0; j < nc; ++j)
         {
-            solution.at_local(i, j)
+            solution.atloc(i, j)
                 = static_cast<double>(1 + i + 2 * j);
         }
     }
@@ -154,22 +154,22 @@ Matrix2d<std::complex<double>> make_distributed_complex_system(const int size)
         {
             if (i == j)
             {
-                matrix.at_local(i, j)
+                matrix.atloc(i, j)
                     = std::complex<double>(6.0 + i, 0.5);
             }
             else if (j == i + 1)
             {
-                matrix.at_local(i, j)
+                matrix.atloc(i, j)
                     = std::complex<double>(0.5, 0.25);
             }
             else if (j + 1 == i)
             {
-                matrix.at_local(i, j)
+                matrix.atloc(i, j)
                     = std::complex<double>(0.5, -0.25);
             }
             else
             {
-                matrix.at_local(i, j) = std::complex<double>(0.0, 0.0);
+                matrix.atloc(i, j) = std::complex<double>(0.0, 0.0);
             }
         }
     }
@@ -185,7 +185,7 @@ Matrix2d<std::complex<double>> make_distributed_complex_solution(
     {
         for (int j = 0; j < nc; ++j)
         {
-            solution.at_local(i, j)
+            solution.atloc(i, j)
                 = std::complex<double>(1 + i + 2 * j, i - j);
         }
     }
@@ -206,18 +206,18 @@ void check_distributed_solve(const Matrix2d<T>& host_matrix,
                        ncproc,
                        nrblk,
                        MPI_COMM_WORLD);
-    const std::shared_ptr<const Parallel_Blkcyclic> solution_dist
+    const std::shared_ptr<const Parallel_Blkcyclic> solution_distrib
         = make_borrowed_distribution(host_solution.nrglb(),
                                      host_solution.ncglb(),
                                      nrblk,
                                      matrix.ictxt());
-    const std::shared_ptr<const Parallel_Blkcyclic> rhs_dist
+    const std::shared_ptr<const Parallel_Blkcyclic> rhs_distrib
         = make_borrowed_distribution(host_rhs.nrglb(),
                                      host_rhs.ncglb(),
                                      nrblk,
                                      matrix.ictxt());
-    Matrix2d<T> solution(solution_dist);
-    Matrix2d<T> rhs(rhs_dist);
+    Matrix2d<T> solution(solution_distrib);
+    Matrix2d<T> rhs(rhs_distrib);
     matrix.scatter(host_matrix);
     solution.scatter(host_solution);
     const Matrix2d<T>& matrix_input = matrix;
@@ -261,10 +261,10 @@ TEST(Matrix2dLinalgTest, HostRealInverseAndSolve)
     expect_host_matrices_near(inverse, make_real_inverse_reference());
 
     Matrix2d<double> rhs(2, 2);
-    rhs.at_local(0, 0) = 1.0;
-    rhs.at_local(0, 1) = 2.0;
-    rhs.at_local(1, 0) = 3.0;
-    rhs.at_local(1, 1) = 4.0;
+    rhs.atloc(0, 0) = 1.0;
+    rhs.atloc(0, 1) = 2.0;
+    rhs.atloc(1, 0) = 3.0;
+    rhs.atloc(1, 1) = 4.0;
     const Matrix2d<double> expected = make_real_inverse_reference().matmul(rhs);
     Matrix2d<double> matrix = make_real_system();
     matrix2d_linalg::solve(matrix.view(), rhs.view());
@@ -284,10 +284,10 @@ TEST(Matrix2dLinalgTest, HostComplexSolve)
     Matrix2d<std::complex<double>> inverse = make_complex_system();
     matrix2d_linalg::inv(inverse.view());
     Matrix2d<std::complex<double>> inverse_reference(2, 2);
-    inverse_reference.at_local(0, 0) = std::complex<double>(-0.7, -1.1);
-    inverse_reference.at_local(0, 1) = std::complex<double>(0.2, 0.6);
-    inverse_reference.at_local(1, 0) = std::complex<double>(0.3, 0.9);
-    inverse_reference.at_local(1, 1) = std::complex<double>(0.2, -0.4);
+    inverse_reference.atloc(0, 0) = std::complex<double>(-0.7, -1.1);
+    inverse_reference.atloc(0, 1) = std::complex<double>(0.2, 0.6);
+    inverse_reference.atloc(1, 0) = std::complex<double>(0.3, 0.9);
+    inverse_reference.atloc(1, 1) = std::complex<double>(0.2, -0.4);
     expect_host_matrices_near(inverse, inverse_reference);
 }
 
@@ -297,26 +297,26 @@ TEST(Matrix2dLinalgTest, SerialDistributionUsesLocalBackend)
         = make_frozen_distribution(2, 2);
 
     Matrix2d<double> matrix(distrib);
-    matrix.at_local(0, 0) = 4.0;
-    matrix.at_local(0, 1) = 1.0;
-    matrix.at_local(1, 0) = 2.0;
-    matrix.at_local(1, 1) = 3.0;
+    matrix.atloc(0, 0) = 4.0;
+    matrix.atloc(0, 1) = 1.0;
+    matrix.atloc(1, 0) = 2.0;
+    matrix.atloc(1, 1) = 3.0;
 
     Matrix2d<double> rhs(distrib);
-    rhs.at_local(0, 0) = 1.0;
-    rhs.at_local(0, 1) = 2.0;
-    rhs.at_local(1, 0) = 3.0;
-    rhs.at_local(1, 1) = 4.0;
+    rhs.atloc(0, 0) = 1.0;
+    rhs.atloc(0, 1) = 2.0;
+    rhs.atloc(1, 0) = 3.0;
+    rhs.atloc(1, 1) = 4.0;
     const Matrix2d<double> expected = make_real_inverse_reference().matmul(rhs);
 
     matrix2d_linalg::solve(matrix.view(), rhs.view());
     expect_host_matrices_near(rhs, expected);
 
     Matrix2d<double> inverse(distrib);
-    inverse.at_local(0, 0) = 4.0;
-    inverse.at_local(0, 1) = 1.0;
-    inverse.at_local(1, 0) = 2.0;
-    inverse.at_local(1, 1) = 3.0;
+    inverse.atloc(0, 0) = 4.0;
+    inverse.atloc(0, 1) = 1.0;
+    inverse.atloc(1, 0) = 2.0;
+    inverse.atloc(1, 1) = 3.0;
     matrix2d_linalg::inv(inverse.view());
     expect_host_matrices_near(inverse, make_real_inverse_reference());
 }
@@ -326,12 +326,12 @@ TEST(Matrix2dLinalgTest, ExternalBufferViewDoesNotCopy)
     std::vector<double> values = {4.0, 1.0, 2.0, 3.0};
     Matrix2dView<double> matrix(values.data(), 2, 2);
     Matrix2d<double> rhs(2, 1);
-    rhs.at_local(0, 0) = 1.0;
-    rhs.at_local(1, 0) = 2.0;
+    rhs.atloc(0, 0) = 1.0;
+    rhs.atloc(1, 0) = 2.0;
     matrix2d_linalg::solve(matrix, rhs.view());
 
-    expect_near(rhs.at_local(0, 0), 0.1);
-    expect_near(rhs.at_local(1, 0), 0.6);
+    expect_near(rhs.atloc(0, 0), 0.1);
+    expect_near(rhs.atloc(1, 0), 0.6);
     EXPECT_EQ(matrix.data(), values.data());
 }
 
@@ -351,9 +351,9 @@ TEST(Matrix2dLinalgTest, HostViewMatmulAndLinearCombination)
     {
         for (int j = 0; j < 2; ++j)
         {
-            combined_reference.at_local(i, j)
-                = 2.0 * left.at_local(i, j)
-                    - 0.5 * right.at_local(i, j);
+            combined_reference.atloc(i, j)
+                = 2.0 * left.atloc(i, j)
+                    - 0.5 * right.atloc(i, j);
         }
     }
     expect_host_matrices_near(combined, combined_reference);
@@ -365,9 +365,9 @@ TEST(Matrix2dLinalgTest, HostViewMatmulAndLinearCombination)
         for (int j = 0; j < 2; ++j)
         {
             const double identity_value = i == j ? 1.0 : 0.0;
-            expect_near(combined.at_local(i, j),
-                        3.0 * combined_reference.at_local(i, j));
-            expect_near(product.at_local(i, j), identity_value);
+            expect_near(combined.atloc(i, j),
+                        3.0 * combined_reference.atloc(i, j));
+            expect_near(product.atloc(i, j), identity_value);
         }
     }
 }
@@ -375,10 +375,10 @@ TEST(Matrix2dLinalgTest, HostViewMatmulAndLinearCombination)
 TEST(Matrix2dLinalgTest, RejectsSingularAndMismatchedMatrices)
 {
     Matrix2d<double> singular(2, 2);
-    singular.at_local(0, 0) = 1.0;
-    singular.at_local(0, 1) = 2.0;
-    singular.at_local(1, 0) = 2.0;
-    singular.at_local(1, 1) = 4.0;
+    singular.atloc(0, 0) = 1.0;
+    singular.atloc(0, 1) = 2.0;
+    singular.atloc(1, 0) = 2.0;
+    singular.atloc(1, 1) = 4.0;
     EXPECT_THROW(matrix2d_linalg::inv(singular.view()), std::runtime_error);
 
     Matrix2d<double> matrix = make_real_system();
@@ -400,21 +400,21 @@ TEST(Matrix2dLinalgTest, DistributedRealAndComplexSolve)
     const Matrix2d<std::complex<double>> complex_solution
         = make_distributed_complex_solution(size, nrhs);
     const std::vector<std::pair<int, int>> grids = available_process_grids();
-    const int blocks[] = {2, 3};
-    for (std::size_t grid_index = 0; grid_index < grids.size(); ++grid_index)
+    const int nrblks[] = {2, 3};
+    for (std::size_t igrid = 0; igrid < grids.size(); ++igrid)
     {
-        for (std::size_t block_index = 0; block_index < 2; ++block_index)
+        for (std::size_t iblk = 0; iblk < 2; ++iblk)
         {
             check_distributed_solve(real_matrix,
                                     real_solution,
-                                    grids[grid_index].first,
-                                    grids[grid_index].second,
-                                    blocks[block_index]);
+                                    grids[igrid].first,
+                                    grids[igrid].second,
+                                    nrblks[iblk]);
             check_distributed_solve(complex_matrix,
                                     complex_solution,
-                                    grids[grid_index].first,
-                                    grids[grid_index].second,
-                                    blocks[block_index]);
+                                    grids[igrid].first,
+                                    grids[igrid].second,
+                                    nrblks[iblk]);
         }
     }
 }
@@ -426,19 +426,19 @@ TEST(Matrix2dLinalgTest, DistributedRealAndComplexInverse)
     const Matrix2d<std::complex<double>> complex_matrix
         = make_distributed_complex_system(size);
     const std::vector<std::pair<int, int>> grids = available_process_grids();
-    const int blocks[] = {2, 3};
-    for (std::size_t grid_index = 0; grid_index < grids.size(); ++grid_index)
+    const int nrblks[] = {2, 3};
+    for (std::size_t igrid = 0; igrid < grids.size(); ++igrid)
     {
-        for (std::size_t block_index = 0; block_index < 2; ++block_index)
+        for (std::size_t iblk = 0; iblk < 2; ++iblk)
         {
             check_distributed_inverse(real_matrix,
-                                      grids[grid_index].first,
-                                      grids[grid_index].second,
-                                      blocks[block_index]);
+                                      grids[igrid].first,
+                                      grids[igrid].second,
+                                      nrblks[iblk]);
             check_distributed_inverse(complex_matrix,
-                                      grids[grid_index].first,
-                                      grids[grid_index].second,
-                                      blocks[block_index]);
+                                      grids[igrid].first,
+                                      grids[igrid].second,
+                                      nrblks[iblk]);
         }
     }
 }
@@ -446,17 +446,17 @@ TEST(Matrix2dLinalgTest, DistributedRealAndComplexInverse)
 TEST(Matrix2dLinalgTest, DistributedIdentityAndLinearCombination)
 {
     const int size = 5;
-    const int blocks[] = {2, 3};
+    const int nrblks[] = {2, 3};
     const std::vector<std::pair<int, int>> grids = available_process_grids();
-    for (std::size_t grid_index = 0; grid_index < grids.size(); ++grid_index)
+    for (std::size_t igrid = 0; igrid < grids.size(); ++igrid)
     {
-        for (std::size_t block_index = 0; block_index < 2; ++block_index)
+        for (std::size_t iblk = 0; iblk < 2; ++iblk)
         {
             Matrix2d<double> identity(size,
                                       size,
-                                      grids[grid_index].first,
-                                      grids[grid_index].second,
-                                      blocks[block_index],
+                                      grids[igrid].first,
+                                      grids[igrid].second,
+                                      nrblks[iblk],
                                       MPI_COMM_WORLD);
             matrix2d_linalg::set_identity(identity.view());
             Matrix2d<double> identity_expected(size, size);
@@ -477,9 +477,9 @@ TEST(Matrix2dLinalgTest, DistributedIdentityAndLinearCombination)
             {
                 for (int j = 0; j < size; ++j)
                 {
-                    combined_expected.at_local(i, j)
-                        = 2.0 * host_left.at_local(i, j)
-                            + 0.5 * identity_expected.at_local(i, j);
+                    combined_expected.atloc(i, j)
+                        = 2.0 * host_left.atloc(i, j)
+                            + 0.5 * identity_expected.atloc(i, j);
                 }
             }
             expect_host_matrices_near(combined.gather(), combined_expected);

@@ -119,56 +119,56 @@ void barrier(const MPI_Comm comm)
     MPI_Barrier(comm);
 }
 
-void gatherv_bytes(const void* send_buffer,
-                   const int send_count,
-                   void* receive_buffer,
-                   const int* receive_counts,
-                   const int* receive_displacements,
+void gatherv_bytes(const void* sendbuf,
+                   const int send,
+                   void* recvbuf,
+                   const int* recvcounts,
+                   const int* rdispls,
                    const int root,
                    const MPI_Comm comm)
 {
-    MPI_Gatherv(send_buffer,
-                send_count,
+    MPI_Gatherv(sendbuf,
+                send,
                 MPI_BYTE,
-                receive_buffer,
-                receive_counts,
-                receive_displacements,
+                recvbuf,
+                recvcounts,
+                rdispls,
                 MPI_BYTE,
                 root,
                 comm);
 }
 
-void allgatherv_bytes(const void* send_buffer,
-                      const int send_count,
-                      void* receive_buffer,
-                      const int* receive_counts,
-                      const int* receive_displacements,
+void allgatherv_bytes(const void* sendbuf,
+                      const int send,
+                      void* recvbuf,
+                      const int* recvcounts,
+                      const int* rdispls,
                       const MPI_Comm comm)
 {
-    MPI_Allgatherv(send_buffer,
-                   send_count,
+    MPI_Allgatherv(sendbuf,
+                   send,
                    MPI_BYTE,
-                   receive_buffer,
-                   receive_counts,
-                   receive_displacements,
+                   recvbuf,
+                   recvcounts,
+                   rdispls,
                    MPI_BYTE,
                    comm);
 }
 
-void scatterv_bytes(const void* send_buffer,
-                    const int* send_counts,
-                    const int* send_displacements,
-                    void* receive_buffer,
-                    const int receive_count,
+void scatterv_bytes(const void* sendbuf,
+                    const int* sendcounts,
+                    const int* sdispls,
+                    void* recvbuf,
+                    const int recv,
                     const int root,
                     const MPI_Comm comm)
 {
-    MPI_Scatterv(send_buffer,
-                 send_counts,
-                 send_displacements,
+    MPI_Scatterv(sendbuf,
+                 sendcounts,
+                 sdispls,
                  MPI_BYTE,
-                 receive_buffer,
-                 receive_count,
+                 recvbuf,
+                 recv,
                  MPI_BYTE,
                  root,
                  comm);

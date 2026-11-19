@@ -299,10 +299,10 @@ std::shared_ptr<const Parallel_Blkcyclic> make_frozen_distribution(
     const int nb,
     const MPI_Comm comm)
 {
-    std::shared_ptr<Parallel_Blkcyclic> dist
+    std::shared_ptr<Parallel_Blkcyclic> distrib
         = std::make_shared<Parallel_Blkcyclic>();
-    dist->init(nrglb, ncglb, nb, comm, false);
-    return dist;
+    distrib->init(nrglb, ncglb, nb, comm, false);
+    return distrib;
 }
 
 std::shared_ptr<const Parallel_Blkcyclic> make_frozen_distribution(
@@ -313,12 +313,12 @@ std::shared_ptr<const Parallel_Blkcyclic> make_frozen_distribution(
     const int nb,
     const MPI_Comm comm)
 {
-    std::shared_ptr<Parallel_Blkcyclic> dist
+    std::shared_ptr<Parallel_Blkcyclic> distrib
         = std::make_shared<Parallel_Blkcyclic>();
-    dist->init_grid(comm, nrproc, ncproc);
-    dist->init_dist(nrglb, ncglb, nb);
-    dist->owns_ictxt_ = true;
-    return dist;
+    distrib->init_grid(comm, nrproc, ncproc);
+    distrib->init_dist(nrglb, ncglb, nb);
+    distrib->owns_ictxt_ = true;
+    return distrib;
 }
 
 std::shared_ptr<const Parallel_Blkcyclic> make_borrowed_distribution(
@@ -327,10 +327,10 @@ std::shared_ptr<const Parallel_Blkcyclic> make_borrowed_distribution(
     const int nb,
     const int ictxt)
 {
-    std::shared_ptr<Parallel_Blkcyclic> dist
+    std::shared_ptr<Parallel_Blkcyclic> distrib
         = std::make_shared<Parallel_Blkcyclic>();
-    dist->set(nrglb, ncglb, nb, ictxt);
-    return dist;
+    distrib->set(nrglb, ncglb, nb, ictxt);
+    return distrib;
 }
 
 std::shared_ptr<const Parallel_Blkcyclic> make_borrowed_distribution(
@@ -348,11 +348,11 @@ std::shared_ptr<const Parallel_Blkcyclic> make_borrowed_distribution(
         throw std::invalid_argument(
             "distribution owner must have an active BLACS context");
     }
-    std::shared_ptr<Parallel_Blkcyclic> dist
+    std::shared_ptr<Parallel_Blkcyclic> distrib
         = std::make_shared<Parallel_Blkcyclic>();
-    dist->set(nrglb, ncglb, nb, owner->ictxt());
-    dist->context_owner_ = owner;
-    return dist;
+    distrib->set(nrglb, ncglb, nb, owner->ictxt());
+    distrib->context_owner_ = owner;
+    return distrib;
 }
 #endif
 
@@ -360,8 +360,8 @@ std::shared_ptr<const Parallel_Blkcyclic> make_frozen_distribution(
     const int nrglb,
     const int ncglb)
 {
-    std::shared_ptr<Parallel_Blkcyclic> dist
+    std::shared_ptr<Parallel_Blkcyclic> distrib
         = std::make_shared<Parallel_Blkcyclic>();
-    dist->set_serial(nrglb, ncglb);
-    return dist;
+    distrib->set_serial(nrglb, ncglb);
+    return distrib;
 }

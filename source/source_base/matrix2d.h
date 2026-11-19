@@ -45,9 +45,9 @@ class NDArray<T, 2> final
             const int ncglb,
             const MPI_Comm comm)
     {
-        const std::shared_ptr<const Parallel_Blkcyclic> dist
+        const std::shared_ptr<const Parallel_Blkcyclic> distrib // distribution, not distance
             = make_frozen_distribution(nrglb, ncglb, 1, comm);
-        initialize_distributed_storage(dist);
+        initialize_distributed_storage(distrib);
     }
 
     NDArray(const int nrglb,
@@ -55,9 +55,9 @@ class NDArray<T, 2> final
             const int nb,
             const MPI_Comm comm)
     {
-        const std::shared_ptr<const Parallel_Blkcyclic> dist
+        const std::shared_ptr<const Parallel_Blkcyclic> distrib
             = make_frozen_distribution(nrglb, ncglb, nb, comm);
-        initialize_distributed_storage(dist);
+        initialize_distributed_storage(distrib);
     }
 
     NDArray(const int nrglb,
@@ -67,16 +67,16 @@ class NDArray<T, 2> final
             const int nb,
             const MPI_Comm comm)
     {
-        const std::shared_ptr<const Parallel_Blkcyclic> dist
+        const std::shared_ptr<const Parallel_Blkcyclic> distrib
             = make_frozen_distribution(nrglb, ncglb, nrproc, ncproc, nb, comm);
-        initialize_distributed_storage(dist);
+        initialize_distributed_storage(distrib);
     }
 #endif
 
-    explicit NDArray(std::shared_ptr<const Parallel_Blkcyclic> dist)
-        : dist_(std::move(dist))
+    explicit NDArray(std::shared_ptr<const Parallel_Blkcyclic> distrib)
+        : distrib_(std::move(distrib))
     {
-        if (dist_ == nullptr)
+        if (distrib_ == nullptr)
         {
             throw std::invalid_argument("distribution must not be null");
         }
@@ -101,15 +101,15 @@ class NDArray<T, 2> final
     NDArray dagger() const;
     NDArray matmul(const NDArray& other) const;
 
+    /** Return a newly allocated matrix containing the real parts. */
     NDArray<double, 2> real() const;
+    /** Return a newly allocated matrix containing the imaginary parts. */
     NDArray<double, 2> imag() const;
-    void real(NDArray<double, 2>& output) const;
-    void imag(NDArray<double, 2>& output) const;
 
     T sum() const;
-    double sum_squares() const;
     T dot(const NDArray& other) const;
-    double norm2() const;
+    /** Return the Frobenius norm sqrt(sum_ij |a_ij|^2). */
+    double norm() const;
     double max_abs() const;
     std::vector<T> diagonal() const;
 
@@ -136,127 +136,130 @@ class NDArray<T, 2> final
      */
     void scatter(const NDArray& matglb);
 
-    T& at_global(const int i, const int j)
+    /** Access an owned element by global row and column indices. */
+    T& atglb(const int irglb, const int icglb)
     {
-        assert(i >= 0);
-        assert(i < nrglb());
-        assert(j >= 0);
-        assert(j < ncglb());
+        assert(irglb >= 0);
+        assert(irglb < nrglb());
+        assert(icglb >= 0);
+        assert(icglb < ncglb());
 
-        if (dist_ == nullptr)
+        if (distrib_ == nullptr)
         {
-            return at_local(i, j);
+            return atloc(irglb, icglb);
         }
 
-        const std::size_t iglb = static_cast<std::size_t>(i);
-        const std::size_t jglb = static_cast<std::size_t>(j);
-        const bool owns = dist_->in_this_processor(iglb, jglb);
+        const bool owns = distrib_->in_this_processor(irglb, icglb);
         assert(owns);
 
-        const int irloc = dist_->irloc(i);
-        const int icloc = dist_->icloc(j);
+        const int irloc = distrib_->irloc(irglb);
+        const int icloc = distrib_->icloc(icglb);
         assert(irloc != -1);
         assert(icloc != -1);
-        return at_local(irloc, icloc);
+        return atloc(irloc, icloc);
     }
 
-    const T& at_global(const int i, const int j) const
+    /** Access an owned element by global row and column indices. */
+    const T& atglb(const int irglb, const int icglb) const
     {
-        assert(i >= 0);
-        assert(i < nrglb());
-        assert(j >= 0);
-        assert(j < ncglb());
+        assert(irglb >= 0);
+        assert(irglb < nrglb());
+        assert(icglb >= 0);
+        assert(icglb < ncglb());
 
-        if (dist_ == nullptr)
+        if (distrib_ == nullptr)
         {
-            return at_local(i, j);
+            return atloc(irglb, icglb);
         }
 
-        const std::size_t iglb = static_cast<std::size_t>(i);
-        const std::size_t jglb = static_cast<std::size_t>(j);
-        const bool owns = dist_->in_this_processor(iglb, jglb);
+        const bool owns = distrib_->in_this_processor(irglb, icglb);
         assert(owns);
 
-        const int irloc = dist_->irloc(i);
-        const int icloc = dist_->icloc(j);
+        const int irloc = distrib_->irloc(irglb);
+        const int icloc = distrib_->icloc(icglb);
         assert(irloc != -1);
         assert(icloc != -1);
-        return at_local(irloc, icloc);
+        return atloc(irloc, icloc);
     }
 
-    T& at_local(const int i, const int j)
+    /** Access an element by local row and column indices. */
+    T& atloc(const int irloc, const int icloc)
     {
-        assert(i >= 0);
-        assert(i < nrloc());
-        assert(j >= 0);
-        assert(j < ncloc());
+        assert(irloc >= 0);
+        assert(irloc < nrloc());
+        assert(icloc >= 0);
+        assert(icloc < ncloc());
 
-        std::size_t ioff = 0;
-        if (dist_ == nullptr)
+        std::size_t offset = 0;
+        if (distrib_ == nullptr)
         {
-            ioff = static_cast<std::size_t>(i) * static_cast<std::size_t>(ncloc_)
-                + static_cast<std::size_t>(j);
+            offset = static_cast<std::size_t>(irloc)
+                    * static_cast<std::size_t>(ncloc_)
+                + static_cast<std::size_t>(icloc);
         }
         else
         {
-            const int lld = dist_->lld();
-            ioff = static_cast<std::size_t>(j) * static_cast<std::size_t>(lld)
-                + static_cast<std::size_t>(i);
+            const int lld = distrib_->lld();
+            offset = static_cast<std::size_t>(icloc)
+                    * static_cast<std::size_t>(lld)
+                + static_cast<std::size_t>(irloc);
         }
-        assert(ioff < storage_.size());
-        return storage_[ioff];
+        assert(offset < storage_.size());
+        return storage_[offset];
     }
 
-    const T& at_local(const int i, const int j) const
+    /** Access an element by local row and column indices. */
+    const T& atloc(const int irloc, const int icloc) const
     {
-        assert(i >= 0);
-        assert(i < nrloc());
-        assert(j >= 0);
-        assert(j < ncloc());
+        assert(irloc >= 0);
+        assert(irloc < nrloc());
+        assert(icloc >= 0);
+        assert(icloc < ncloc());
 
-        std::size_t ioff = 0;
-        if (dist_ == nullptr)
+        std::size_t offset = 0;
+        if (distrib_ == nullptr)
         {
-            ioff = static_cast<std::size_t>(i) * static_cast<std::size_t>(ncloc_)
-                + static_cast<std::size_t>(j);
+            offset = static_cast<std::size_t>(irloc)
+                    * static_cast<std::size_t>(ncloc_)
+                + static_cast<std::size_t>(icloc);
         }
         else
         {
-            const int lld = dist_->lld();
-            ioff = static_cast<std::size_t>(j) * static_cast<std::size_t>(lld)
-                + static_cast<std::size_t>(i);
+            const int lld = distrib_->lld();
+            offset = static_cast<std::size_t>(icloc)
+                    * static_cast<std::size_t>(lld)
+                + static_cast<std::size_t>(irloc);
         }
-        assert(ioff < storage_.size());
-        return storage_[ioff];
+        assert(offset < storage_.size());
+        return storage_[offset];
     }
 
-    bool owns_global_index(const int i, const int j) const
+    /** Return whether this processor owns the given global indices. */
+    bool in_this_processor(const int irglb, const int icglb) const
     {
-        assert(i >= 0);
-        assert(i < nrglb());
-        assert(j >= 0);
-        assert(j < ncglb());
-        if (dist_ == nullptr)
+        assert(irglb >= 0);
+        assert(irglb < nrglb());
+        assert(icglb >= 0);
+        assert(icglb < ncglb());
+        if (distrib_ == nullptr)
         {
             return true;
         }
-        const std::size_t iglb = static_cast<std::size_t>(i);
-        const std::size_t jglb = static_cast<std::size_t>(j);
-        return dist_->in_this_processor(iglb, jglb);
+        return distrib_->in_this_processor(irglb, icglb);
     }
 
     T* data() { return storage_.data(); }
     const T* data() const { return storage_.data(); }
 
-    int nrglb() const { return dist_ == nullptr ? nrloc_ : dist_->nrglb(); }
-    int ncglb() const { return dist_ == nullptr ? ncloc_ : dist_->ncglb(); }
-    int nrloc() const { return dist_ == nullptr ? nrloc_ : dist_->nrloc(); }
-    int ncloc() const { return dist_ == nullptr ? ncloc_ : dist_->ncloc(); }
+    int nrglb() const { return distrib_ == nullptr ? nrloc_ : distrib_->nrglb(); }
+    int ncglb() const { return distrib_ == nullptr ? ncloc_ : distrib_->ncglb(); }
+    int nrloc() const { return distrib_ == nullptr ? nrloc_ : distrib_->nrloc(); }
+    int ncloc() const { return distrib_ == nullptr ? ncloc_ : distrib_->ncloc(); }
     std::size_t size() const
     {
-        return dist_ == nullptr
+        return distrib_ == nullptr
             ? static_cast<std::size_t>(nrloc_) * static_cast<std::size_t>(ncloc_)
-            : dist_->size();
+            : distrib_->size();
     }
 
     /**
@@ -266,16 +269,16 @@ class NDArray<T, 2> final
      * ranks that own no local rows or columns.
      */
     std::size_t local_storage_size() const { return storage_.size(); }
-    int nrproc() const { return dist_ == nullptr ? 1 : dist_->nrproc(); }
-    int ncproc() const { return dist_ == nullptr ? 1 : dist_->ncproc(); }
-    int irproc() const { return dist_ == nullptr ? 0 : dist_->irproc(); }
-    int icproc() const { return dist_ == nullptr ? 0 : dist_->icproc(); }
-    int lld() const { return dist_ == nullptr ? ncloc_ : dist_->lld(); }
+    int nrproc() const { return distrib_ == nullptr ? 1 : distrib_->nrproc(); }
+    int ncproc() const { return distrib_ == nullptr ? 1 : distrib_->ncproc(); }
+    int irproc() const { return distrib_ == nullptr ? 0 : distrib_->irproc(); }
+    int icproc() const { return distrib_ == nullptr ? 0 : distrib_->icproc(); }
+    int lld() const { return distrib_ == nullptr ? ncloc_ : distrib_->lld(); }
 
     const int* desc() const
     {
 #ifdef __MPI
-        return dist_ != nullptr ? dist_->desc() : nullptr;
+        return distrib_ != nullptr ? distrib_->desc() : nullptr;
 #else
         return nullptr;
 #endif
@@ -284,14 +287,14 @@ class NDArray<T, 2> final
     int ictxt() const
     {
 #ifdef __MPI
-        return dist_ != nullptr ? dist_->ictxt() : -1;
+        return distrib_ != nullptr ? distrib_->ictxt() : -1;
 #else
         return -1;
 #endif
     }
 
-    const std::shared_ptr<const Parallel_Blkcyclic>& distribution() const { return dist_; }
-    bool is_distributed() const { return dist_ != nullptr; }
+    const std::shared_ptr<const Parallel_Blkcyclic>& distribution() const { return distrib_; }
+    bool is_distributed() const { return distrib_ != nullptr; }
 
     Matrix2dView<T> view();
     Matrix2dView<const T> view() const;
@@ -306,7 +309,7 @@ class NDArray<T, 2> final
     }
 
     template <typename U>
-    void validate_compatible_layout(const NDArray<U, 2>& other) const
+    void assert_compatible_layout(const NDArray<U, 2>& other) const
     {
         if (nrglb() != other.nrglb()
             || ncglb() != other.ncglb())
@@ -314,53 +317,53 @@ class NDArray<T, 2> final
             throw std::invalid_argument("matrix global shapes are incompatible");
         }
 
-        const bool this_is_distributed = dist_ != nullptr;
-        const bool other_is_distributed = other.distribution() != nullptr;
-        if (this_is_distributed != other_is_distributed)
+        const bool distributed = distrib_ != nullptr;
+        const bool distributed_ = other.distribution() != nullptr;
+        if (distributed != distributed_)
         {
             throw std::invalid_argument("host and distributed matrices are incompatible");
         }
 
-        if (!this_is_distributed)
+        if (!distributed)
         {
             return;
         }
 
-        if (dist_->nb() != other.distribution()->nb())
+        if (distrib_->nb() != other.distribution()->nb())
         {
             throw std::invalid_argument("matrix block sizes are incompatible");
         }
-        if (dist_->nrproc() != other.distribution()->nrproc()
-            || dist_->ncproc() != other.distribution()->ncproc())
+        if (distrib_->nrproc() != other.distribution()->nrproc()
+            || distrib_->ncproc() != other.distribution()->ncproc())
         {
             throw std::invalid_argument("matrix process grids are incompatible");
         }
-        if (dist_ != other.distribution())
+        if (distrib_ != other.distribution())
         {
             throw std::invalid_argument("matrix distribution handles are incompatible");
         }
     }
 
     void initialize_distributed_storage(
-        const std::shared_ptr<const Parallel_Blkcyclic>& dist)
+        const std::shared_ptr<const Parallel_Blkcyclic>& distrib)
     {
-        if (dist == nullptr)
+        if (distrib == nullptr)
         {
             throw std::invalid_argument("distribution must not be null");
         }
-        dist_ = dist;
+        distrib_ = distrib;
         initialize_distributed_storage();
     }
 
     void initialize_distributed_storage()
     {
-        nrloc_ = dist_->nrloc();
-        ncloc_ = dist_->ncloc();
+        nrloc_ = distrib_->nrloc();
+        ncloc_ = distrib_->ncloc();
         assert(nrloc_ >= 0);
         assert(ncloc_ >= 0);
 
-        const int distrib_lld = dist_->lld();
-        const int lld = std::max(distrib_lld, 1);
+        const int lld_distrib = distrib_->lld();
+        const int lld = std::max(lld_distrib, 1);
         const std::size_t ld = static_cast<std::size_t>(lld);
         // The actual BLACS/LAPACK buffer is column-major. The row-major extent
         // is kept in the maximum as a guard for local logical accesses.
@@ -380,7 +383,7 @@ class NDArray<T, 2> final
     int nrloc_ = 0;
     int ncloc_ = 0;
     std::vector<T> storage_;
-    std::shared_ptr<const Parallel_Blkcyclic> dist_;
+    std::shared_ptr<const Parallel_Blkcyclic> distrib_;
 };
 
 template <typename T>
