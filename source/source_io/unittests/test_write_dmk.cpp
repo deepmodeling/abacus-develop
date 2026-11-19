@@ -1329,6 +1329,168 @@ TEST(DMKTest, ReadDMKRoundTripRowMajorFlag) {
     delete ucell;
 }
 
+// ---------------------------------------------------------------------------
+// The reader must reject non-finite matrix components: strtod reports an
+// overflowing literal such as "1e999" only through errno while consuming the
+// full token, and both strtod and the stream extractor accept the literal
+// spellings "inf"/"nan" without flagging a failure. Such a component would
+// otherwise be installed as the restart density.
+// ---------------------------------------------------------------------------
+
+/// @brief Overwrite the first matrix-body token of a written DM(k) file.
+/// @details The complex body is the only section whose tokens contain '(';
+///          for the real body of a 2x2 matrix the whole body is the final
+///          line (8 values per line). Both fixtures used below keep the body
+///          free of comment markers, which the header and the UnitCell block
+///          never are on their numeric lines.
+bool patch_first_body_token(const std::string& fname,
+                            const std::string& token,
+                            const bool complex_body)
+{
+    std::ifstream ifs(fname.c_str());
+    std::vector<std::string> lines;
+    std::string line;
+    while (std::getline(ifs, line))
+    {
+        lines.push_back(line);
+    }
+    ifs.close();
+    if (lines.empty())
+    {
+        return false;
+    }
+
+    std::size_t target = lines.size();
+    if (complex_body)
+    {
+        for (std::size_t i = 0; i < lines.size(); ++i)
+        {
+            if (lines[i].find('(') != std::string::npos)
+            {
+                target = i;
+                break;
+            }
+        }
+    }
+    else
+    {
+        target = lines.size() - 1;
+    }
+    if (target == lines.size())
+    {
+        return false;
+    }
+
+    std::string& current = lines[target];
+    const std::size_t first = current.find_first_not_of(" \t");
+    if (first == std::string::npos)
+    {
+        return false;
+    }
+    const std::size_t end = current.find_first_of(" \t", first);
+    current.replace(first, end == std::string::npos ? std::string::npos : end - first, token);
+
+    std::ofstream ofs(fname.c_str());
+    for (const std::string& out_line : lines)
+    {
+        ofs << out_line << "\n";
+    }
+    return true;
+}
+
+TEST(DMKTest, ReadDMKRejectsOverflowingComplexComponent) {
+    UnitCell* ucell;
+    UcellTestPrepare utp = UcellTestLib["Si"];
+    ucell = utp.SetUcellInfo();
+
+    const int nspin = 1;
+    const int nk = 1;
+    const int nlocal = 2;
+    Parallel_Blkcyclic pv;
+    init_pv(nlocal, pv);
+
+    const std::vector<std::complex<double>> probe
+        = {std::complex<double>(1.0, 0.0), std::complex<double>(2.0, 3.0),
+           std::complex<double>(4.0, 5.0), std::complex<double>(6.0, 0.0)};
+    std::vector<std::vector<std::complex<double>>> dmk;
+    fill_local_dmk(probe, nlocal, pv, dmk);
+
+    const std::vector<double> efs(nspin, 0.0);
+    K_Vectors kv;
+    init_kv(kv, 1.0);
+
+    const std::string out_dir = testing::TempDir();
+    std::ofstream ofs_log;
+    ModuleIO::write_dmk(dmk, kv, /*precision=*/12, efs, ucell, pv, /*column_major=*/true,
+                        out_dir, /*istep=*/0, /*out_app_flag=*/0, ofs_log);
+
+    // strtod consumes "1e999" fully and only reports the overflow via ERANGE.
+    if (GlobalV::MY_RANK == 0)
+    {
+        EXPECT_TRUE(patch_first_body_token(out_dir + "dmk1_nao.txt", "(1e999,0)", true));
+    }
+    std::vector<std::vector<std::complex<double>>> dmk_read;
+    EXPECT_FALSE(ModuleIO::read_dmk(nspin, nk, kv, pv, /*column_major=*/true, out_dir,
+                                    /*istep=*/0, /*out_app_flag=*/0, dmk_read, ofs_log));
+
+    // The literal "nan" parses without any errno flag and must be rejected too.
+    ModuleIO::write_dmk(dmk, kv, /*precision=*/12, efs, ucell, pv, /*column_major=*/true,
+                        out_dir, /*istep=*/0, /*out_app_flag=*/0, ofs_log);
+    if (GlobalV::MY_RANK == 0)
+    {
+        EXPECT_TRUE(patch_first_body_token(out_dir + "dmk1_nao.txt", "(nan,0)", true));
+    }
+    dmk_read.clear();
+    EXPECT_FALSE(ModuleIO::read_dmk(nspin, nk, kv, pv, /*column_major=*/true, out_dir,
+                                    /*istep=*/0, /*out_app_flag=*/0, dmk_read, ofs_log));
+
+    if (GlobalV::MY_RANK == 0)
+    {
+        std::remove((out_dir + "dmk1_nao.txt").c_str());
+    }
+    delete ucell;
+}
+
+TEST(DMKTest, ReadDMKRejectsNonFiniteRealComponent) {
+    UnitCell* ucell;
+    UcellTestPrepare utp = UcellTestLib["Si"];
+    ucell = utp.SetUcellInfo();
+
+    const int nspin = 1;
+    const int nk = 1;
+    const int nlocal = 2;
+    Parallel_Blkcyclic pv;
+    init_pv(nlocal, pv);
+
+    const std::vector<double> probe = {1.0, 2.0, 3.0, 4.0};
+    std::vector<std::vector<double>> dmk;
+    fill_local_dmk(probe, nlocal, pv, dmk);
+
+    const std::vector<double> efs(nspin, 0.0);
+    K_Vectors kv;
+    init_kv(kv, 1.0);
+
+    const std::string out_dir = testing::TempDir();
+    std::ofstream ofs_log;
+    ModuleIO::write_dmk(dmk, kv, /*precision=*/12, efs, ucell, pv, /*column_major=*/true,
+                        out_dir, /*istep=*/0, /*out_app_flag=*/0, ofs_log);
+
+    // The stream extractor accepts the literal "inf" without setting failbit.
+    if (GlobalV::MY_RANK == 0)
+    {
+        EXPECT_TRUE(patch_first_body_token(out_dir + "dm_nao.txt", "inf", false));
+    }
+    std::vector<std::vector<double>> dmk_read;
+    EXPECT_FALSE(ModuleIO::read_dmk(nspin, nk, kv, pv, /*column_major=*/true, out_dir,
+                                    /*istep=*/0, /*out_app_flag=*/0, dmk_read, ofs_log));
+
+    if (GlobalV::MY_RANK == 0)
+    {
+        std::remove((out_dir + "dm_nao.txt").c_str());
+    }
+    delete ucell;
+}
+
 
 #ifdef __MPI
 int main(int argc, char** argv)

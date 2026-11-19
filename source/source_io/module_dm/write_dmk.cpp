@@ -9,6 +9,7 @@
 #include "source_base/vector3.h"
 #include "source_cell/ucell_io.h"
 
+#include <cerrno>
 #include <cassert>
 #include <cmath>
 #include <cstddef>
@@ -145,7 +146,13 @@ bool ModuleIO::dmk_readData(std::ifstream& ifs, double& data)
     {
         return false;
     }
-    return !ifs.fail();
+    if (ifs.fail())
+    {
+        return false;
+    }
+    // The stream extractor accepts the literals "inf"/"nan" without setting
+    // failbit; a restart density must stay finite, so reject them here.
+    return std::isfinite(data);
 }
 
 bool ModuleIO::dmk_readData(std::ifstream& ifs, std::complex<double>& data)
@@ -170,14 +177,25 @@ bool ModuleIO::dmk_readData(std::ifstream& ifs, std::complex<double>& data)
     const std::string real_str = complex_str.substr(1, comma_pos - 1);
     const std::string imag_str = complex_str.substr(comma_pos + 1, complex_str.size() - comma_pos - 2);
 
+    // strtod consumes the full substring on overflow (e.g. "1e999") and only
+    // reports the range error through errno, so the end-pointer check alone
+    // would accept an infinite component; errno must be checked explicitly.
+    errno = 0;
     char* end_ptr = nullptr;
     const double real_v = std::strtod(real_str.c_str(), &end_ptr);
-    if (end_ptr == real_str.c_str() || *end_ptr != '\0')
+    if (end_ptr == real_str.c_str() || *end_ptr != '\0' || errno == ERANGE)
     {
         return false;
     }
+    errno = 0;
     const double imag_v = std::strtod(imag_str.c_str(), &end_ptr);
-    if (end_ptr == imag_str.c_str() || *end_ptr != '\0')
+    if (end_ptr == imag_str.c_str() || *end_ptr != '\0' || errno == ERANGE)
+    {
+        return false;
+    }
+    // Also reject the literal "inf"/"nan" spellings that strtod parses
+    // without setting errno: a density matrix component must be finite.
+    if (!std::isfinite(real_v) || !std::isfinite(imag_v))
     {
         return false;
     }
