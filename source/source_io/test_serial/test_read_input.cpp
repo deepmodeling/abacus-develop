@@ -26,14 +26,19 @@ class InputDomainReaderTest : public testing::Test
         std::remove(written.c_str());
     }
 
-    void write_input(const std::string& values, const std::string& basis = "pw")
+    void write_input(const std::string& values, const std::string& basis)
     {
         std::ofstream out(filename);
         out << "INPUT_PARAMETERS\nbasis_type " << basis << "\nntype 1\necutwfc 20\n" << values;
         ASSERT_TRUE(out.good());
     }
 
-    std::string reject_input(const std::string& values, const std::string& basis = "pw")
+    void write_input(const std::string& values)
+    {
+        write_input(values, "pw");
+    }
+
+    std::string reject_input(const std::string& values, const std::string& basis)
     {
         write_input(values, basis);
         ModuleIO::ReadInput reader(0);
@@ -42,6 +47,11 @@ class InputDomainReaderTest : public testing::Test
         testing::internal::CaptureStdout();
         EXPECT_EXIT(reader.read_parameters(input, filename), testing::ExitedWithCode(1), "");
         return testing::internal::GetCapturedStdout();
+    }
+
+    std::string reject_input(const std::string& values)
+    {
+        return reject_input(values, "pw");
     }
 };
 
