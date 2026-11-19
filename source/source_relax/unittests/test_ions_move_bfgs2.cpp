@@ -3,8 +3,8 @@
 #include "source_io/module_parameter/parameter.h"
 #include "source_relax/ions_move_basic.h" // for Ions_Move_Basic static members
 #include "source_relax/ions_move_bfgs2.h"
-#include "source_relax/relax_data.h"
 #include "source_relax/relax_criteria.h"
+#include "source_relax/relax_data.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -33,99 +33,38 @@ class BFGSTest : public ::testing::Test
     // fixture itself) are reached through these forwarders. They all carry a
     // get_ / call_ prefix because several tests declare locals named pos,
     // force, size, steplength, dpos and maxstep.
-    const std::vector<std::vector<double>>& get_H() const
-    {
-        return bfgs.H;
-    }
-    const std::vector<ModuleBase::Vector3<double>>& get_pos() const
-    {
-        return bfgs.pos;
-    }
-    const std::vector<double>& get_pos0() const
-    {
-        return bfgs.pos0;
-    }
-    const std::vector<ModuleBase::Vector3<double>>& get_pos_taud() const
-    {
-        return bfgs.pos_taud;
-    }
-    const std::vector<double>& get_pos_taud0() const
-    {
-        return bfgs.pos_taud0;
-    }
-    const std::vector<ModuleBase::Vector3<double>>& get_force() const
-    {
-        return bfgs.force;
-    }
-    const std::vector<double>& get_force0() const
-    {
-        return bfgs.force0;
-    }
-    const std::vector<double>& get_steplength() const
-    {
-        return bfgs.steplength;
-    }
-    const std::vector<ModuleBase::Vector3<double>>& get_dpos() const
-    {
-        return bfgs.dpos;
-    }
-    int get_size() const
-    {
-        return bfgs.size;
-    }
-    double get_alpha() const
-    {
-        return bfgs.alpha;
-    }
-    double get_maxstep() const
-    {
-        return bfgs.maxstep;
-    }
-    bool get_sign() const
-    {
-        return bfgs.sign;
-    }
-    bool get_is_initialized() const
-    {
-        return bfgs.is_initialized;
-    }
+    const std::vector<std::vector<double>> &get_H() const { return bfgs.H; }
+    const std::vector<ModuleBase::Vector3<double>> &get_pos() const { return bfgs.pos; }
+    const std::vector<double> &get_pos0() const { return bfgs.pos0; }
+    const std::vector<ModuleBase::Vector3<double>> &get_pos_taud() const { return bfgs.pos_taud; }
+    const std::vector<double> &get_pos_taud0() const { return bfgs.pos_taud0; }
+    const std::vector<ModuleBase::Vector3<double>> &get_force() const { return bfgs.force; }
+    const std::vector<double> &get_force0() const { return bfgs.force0; }
+    const std::vector<double> &get_steplength() const { return bfgs.steplength; }
+    const std::vector<ModuleBase::Vector3<double>> &get_dpos() const { return bfgs.dpos; }
+    int get_size() const { return bfgs.size; }
+    double get_alpha() const { return bfgs.alpha; }
+    double get_maxstep() const { return bfgs.maxstep; }
+    bool get_sign() const { return bfgs.sign; }
+    bool get_is_initialized() const { return bfgs.is_initialized; }
 
-    void set_sign(const bool value)
-    {
-        bfgs.sign = value;
-    }
-    void set_is_initialized(const bool value)
-    {
-        bfgs.is_initialized = value;
-    }
-    void set_force0(const std::vector<double>& value)
-    {
-        bfgs.force0 = value;
-    }
-    void set_pos_taud_x(const int i, const double value)
-    {
-        bfgs.pos_taud[i].x = value;
-    }
+    void set_sign(const bool value) { bfgs.sign = value; }
+    void set_is_initialized(const bool value) { bfgs.is_initialized = value; }
+    void set_force0(const std::vector<double> &value) { bfgs.force0 = value; }
+    void set_pos_taud_x(const int i, const double value) { bfgs.pos_taud[i].x = value; }
 
-    void call_DetermineStep(std::vector<double>& steplength,
-                            std::vector<ModuleBase::Vector3<double>>& dpos,
-                            double& maxstep)
+    void call_DetermineStep(
+        std::vector<double> &steplength, std::vector<ModuleBase::Vector3<double>> &dpos, double &maxstep)
     {
         bfgs.DetermineStep(steplength, dpos, maxstep);
     }
-    void call_Update(std::vector<double>& pos, std::vector<double>& force, UnitCell& ucell)
+    void call_Update(std::vector<double> &pos, std::vector<double> &force, UnitCell &ucell)
     {
         bfgs.Update(pos, force, bfgs.H, ucell);
     }
-    void call_GetPos(UnitCell& ucell)
-    {
-        bfgs.GetPos(ucell, bfgs.pos);
-    }
-    void call_GetPostaud(UnitCell& ucell)
-    {
-        bfgs.GetPostaud(ucell, bfgs.pos_taud);
-    }
-    void call_CalculateLargestGrad(const ModuleBase::matrix& force, UnitCell& ucell)
+    void call_GetPos(UnitCell &ucell) { bfgs.GetPos(ucell, bfgs.pos); }
+    void call_GetPostaud(UnitCell &ucell) { bfgs.GetPostaud(ucell, bfgs.pos_taud); }
+    void call_CalculateLargestGrad(const ModuleBase::matrix &force, UnitCell &ucell)
     {
         bfgs.CalculateLargestGrad(force, ucell);
     }
@@ -207,8 +146,8 @@ TEST_F(BFGSTest, DetermineStepScaling)
     bfgs.allocate(size);
 
     std::vector<double> steplength = {1.0, 0.1};
-    std::vector<ModuleBase::Vector3<double>> dpos
-        = {ModuleBase::Vector3<double>(1.0, 1.0, 1.0), ModuleBase::Vector3<double>(0.1, 0.1, 0.1)};
+    std::vector<ModuleBase::Vector3<double>> dpos = {
+        ModuleBase::Vector3<double>(1.0, 1.0, 1.0), ModuleBase::Vector3<double>(0.1, 0.1, 0.1)};
     double maxstep = 0.5;
     call_DetermineStep(steplength, dpos, maxstep);
 

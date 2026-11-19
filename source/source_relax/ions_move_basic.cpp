@@ -15,11 +15,12 @@ double Ions_Move_Basic::relax_bfgs_rmin = -1.0; // default is 1e-5
 double Ions_Move_Basic::relax_bfgs_init = -1.0; // default is 0.5
 double Ions_Move_Basic::best_xxx = 1.0;
 
-void Ions_Move_Basic::setup_gradient(const UnitCell& ucell,
-                                     const ModuleBase::matrix& force,
-                                     double* pos,
-                                     double* grad,
-                                     std::ofstream& ofs)
+void Ions_Move_Basic::setup_gradient(
+    const UnitCell &ucell,
+    const ModuleBase::matrix &force,
+    double *pos,
+    double *grad,
+    std::ofstream &ofs)
 {
     ModuleBase::TITLE("Ions_Move_Basic", "setup_gradient");
 
@@ -38,7 +39,7 @@ void Ions_Move_Basic::setup_gradient(const UnitCell& ucell,
     int iat = 0;
     for (int it = 0; it < ucell.ntype; it++)
     {
-        Atom* atom = &ucell.atoms[it];
+        Atom *atom = &ucell.atoms[it];
         for (int ia = 0; ia < ucell.atoms[it].na; ia++)
         {
             for (int ik = 0; ik < 3; ++ik)
@@ -56,11 +57,12 @@ void Ions_Move_Basic::setup_gradient(const UnitCell& ucell,
     return;
 }
 
-void Ions_Move_Basic::move_atoms(UnitCell& ucell,
-                                 double* move,
-                                 double* pos,
-                                 std::ofstream& ofs,
-                                 const int test_relax_method)
+void Ions_Move_Basic::move_atoms(
+    UnitCell &ucell,
+    double *move,
+    double *pos,
+    std::ofstream &ofs,
+    const int test_relax_method)
 {
     ModuleBase::TITLE("Ions_Move_Basic", "move_atoms");
 
@@ -115,15 +117,16 @@ void Ions_Move_Basic::move_atoms(UnitCell& ucell,
     return;
 }
 
-bool Ions_Move_Basic::check_converged(const UnitCell& ucell,
-                                      const double* grad,
-                                      int& update_iter,
-                                      std::ofstream& ofs,
-                                      std::vector<double>& etot_info,
-                                      const double& force_thr,
-                                      const double& force_thr_ev,
-                                      const std::string& out_level,
-                                      const int test_relax_method)
+bool Ions_Move_Basic::check_converged(
+    const UnitCell &ucell,
+    const double *grad,
+    int &update_iter,
+    std::ofstream &ofs,
+    std::vector<double> &etot_info,
+    const double &force_thr,
+    const double &force_thr_ev,
+    const std::string &out_level,
+    const int test_relax_method)
 {
     ModuleBase::TITLE("Ions_Move_Basic", "check_converged");
     assert(dim > 0);
@@ -180,11 +183,12 @@ bool Ions_Move_Basic::check_converged(const UnitCell& ucell,
     }
 }
 
-void Ions_Move_Basic::terminate(const bool converged,
-                                const int update_iter,
-                                const UnitCell& ucell,
-                                const int istep,
-                                std::ofstream& ofs)
+void Ions_Move_Basic::terminate(
+    const bool converged,
+    const int update_iter,
+    const UnitCell &ucell,
+    const int istep,
+    std::ofstream &ofs)
 {
     ModuleBase::TITLE("Ions_Move_Basic", "terminate");
     if (converged)
@@ -219,7 +223,7 @@ void Ions_Move_Basic::terminate(const bool converged,
     return;
 }
 
-void Ions_Move_Basic::setup_etot(const double& energy_in, const int istep, std::vector<double>& etot_info)
+void Ions_Move_Basic::setup_etot(const double &energy_in, const int istep, std::vector<double> &etot_info)
 {
     // etot_info[0] = etot (current total energy)
     // etot_info[1] = etot_p (previous total energy)
@@ -237,7 +241,7 @@ void Ions_Move_Basic::setup_etot(const double& energy_in, const int istep, std::
     }
 }
 
-double Ions_Move_Basic::dot_func(const double* a, const double* b, const int& dim_in)
+double Ions_Move_Basic::dot_func(const double *a, const double *b, const int &dim_in)
 {
     double result = 0.0;
     for (int i = 0; i < dim_in; i++)

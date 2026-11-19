@@ -34,12 +34,13 @@ namespace relax_stru_io
  *        marked N/A and the NOTE explains that forces are omitted.
  * @return The formatted header string.
  */
-std::string build_stru_header(const int istep,
-                              const double etot,
-                              const ModuleBase::matrix& stress,
-                              const Input_para& inp,
-                              const bool is_final,
-                              const bool geometry_evaluated);
+std::string build_stru_header(
+    const int istep,
+    const double etot,
+    const ModuleBase::matrix &stress,
+    const Input_para &inp,
+    const bool is_final,
+    const bool geometry_evaluated);
 
 /**
  * @brief Whether orbital output is required in the structure file.
@@ -47,7 +48,7 @@ std::string build_stru_header(const int istep,
  * True for lcao / lcao_in_pw bases, and for pw with nao-initialized
  * wavefunctions.
  */
-bool need_orbital(const Input_para& inp);
+bool need_orbital(const Input_para &inp);
 
 /**
  * @brief Write one structure file in STRU (out_stru == 1) or CIF
@@ -67,16 +68,17 @@ bool need_orbital(const Input_para& inp);
  * @param append true to append the structure block (STRU format only,
  *        for out_app_flag == 1 multi-step runs); CIF always truncates.
  */
-void write_stru(UnitCell& ucell,
-                const Input_para& inp,
-                const std::string& filename,
-                const std::string& header,
-                const ModuleBase::matrix& force,
-                const bool need_orb,
-                const bool deepks_setorb,
-                const int my_rank,
-                const bool has_force,
-                const bool append);
+void write_stru(
+    UnitCell &ucell,
+    const Input_para &inp,
+    const std::string &filename,
+    const std::string &header,
+    const ModuleBase::matrix &force,
+    const bool need_orb,
+    const bool deepks_setorb,
+    const int my_rank,
+    const bool has_force,
+    const bool append);
 } // namespace relax_stru_io
 
 #endif
