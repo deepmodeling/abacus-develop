@@ -12,3 +12,5 @@ The 1e-3 eV/Angstrom component/total tolerance accommodates printed-energy
 precision and finite-step error; it does not compare against a full-window model.
 lr_density.ref selects the electron-hole filename check; no separate ground-state
 charge-cube reference is needed. totalforceref is the absolute sum of the FD forces.
+Autotest clears this opted-in case's old LR electron-hole cubes before every run
+so stale expected or extra-channel files cannot mask missing output or cause failures.

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Signed force regression must catch changes hidden by an absolute-value sum."""
 import unittest
+import os
 from pathlib import Path
 import subprocess
 import tempfile
@@ -160,6 +161,61 @@ class LRForceCheckTest(unittest.TestCase):
                 self.assertEqual(result.returncode, 0, result.stderr)
                 self.assertEqual((root / 'result.out').read_text().strip(),
                                  'CompareLRDensity_pass ' + expected)
+
+    def test_autotest_rerun_clears_only_opted_in_lr_density_cubes(self):
+        integrate = Path(__file__).resolve().parents[1]
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / 'integrate').symlink_to(integrate, target_is_directory=True)
+            suite = root / '08_RI'
+            case = suite / 'density_rerun'
+            output = case / 'OUT.autotest'
+            output.mkdir(parents=True)
+            (suite / 'CASES_CPU.txt').write_text('density_rerun\n')
+            (case / 'INPUT').write_text('calculation scf\nesolver_type ks-lr\nnspin 1\nout_chg 1\n')
+            (case / 'result.ref').write_text('CompareLRDensity_pass 0\n')
+            (case / 'lr_density.ref').write_text('LR_e-h_density_triplet_1.cube\n')
+            (output / 'LR_e-h_density_triplet_1.cube').write_text('stale expected cube')
+            (output / 'LR_e-h_density_singlet_1.cube').write_text('stale wrong label')
+            charge = output / 'chg.cube'
+            charge.write_text('preserve ground-state output')
+            executable = root / 'fake-abacus'
+            executable.write_text('''#!/usr/bin/env python3
+from pathlib import Path
+output = Path('OUT.autotest')
+if Path('lr_density.ref').exists():
+    assert not list(output.glob('LR_e-h_density_*.cube')), 'stale cubes reached executable'
+assert (output / 'chg.cube').read_text() == 'preserve ground-state output'
+(output / 'running_scf.log').write_text('atomic_world 0.01 0.01\\n')
+if Path('emit-density').exists():
+    (output / 'LR_e-h_density_triplet_1.cube').write_text('current run cube')
+''')
+            executable.chmod(0o755)
+            command = ['bash', str(integrate / 'Autotest.sh'), '-a', str(executable),
+                       '-n', '0', '-o', '1', '-j', '1']
+            environment = dict(os.environ, OMP_NUM_THREADS='1')
+            # First rerun removes both old labels and accepts newly generated cubes.
+            emit = case / 'emit-density'
+            emit.touch()
+            result = subprocess.run(command, cwd=suite, env=environment, capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertEqual((output / 'LR_e-h_density_triplet_1.cube').read_text(), 'current run cube')
+            self.assertFalse((output / 'LR_e-h_density_singlet_1.cube').exists())
+            # A run that emits nothing must not pass on the preceding run's cube.
+            emit.unlink()
+            result = subprocess.run(command, cwd=suite, env=environment, capture_output=True, text=True)
+            self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertIn('CompareLRDensity_pass 1', (case / 'result.out').read_text())
+            self.assertFalse(list(output.glob('LR_e-h_density_*.cube')))
+            self.assertEqual(charge.read_text(), 'preserve ground-state output')
+            # No opt-in reference means no cleanup, even when using the same harness.
+            (case / 'lr_density.ref').unlink()
+            stale = output / 'LR_e-h_density_singlet_1.cube'
+            stale.write_text('unmanaged output')
+            result = subprocess.run(command + ['-p'], cwd=suite, env=environment,
+                                    capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertEqual(stale.read_text(), 'unmanaged output')
 
 
 if __name__ == '__main__':
