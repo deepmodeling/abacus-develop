@@ -2,45 +2,17 @@
 #include "cal_dos.h"
 #include "cal_pdos_gamma.h"
 #include "cal_pdos_multik.h"
-#include "write_pdos.h"
 #include "write_pdos_text.h"
 #include "source_base/global_variable.h"
 #include "source_base/parallel_common.h"
 #include "source_base/tool_quit.h"
 #include "source_io/module_output/write_orb_info.h"
 
+#include <exception>
+#include <sstream>
+
 namespace ModuleIO
 {
-
-void write_pdos(const UnitCell& ucell, const std::vector<ModuleBase::matrix>& pdos, int nspin, int nlocal,
-                double emin, double de, const std::string& out_dir, int istep, int out_app_flag, bool npy)
-{
-    std::string error;
-    if (GlobalV::MY_RANK == 0)
-    {
-        if (npy)
-        {
-            try
-            {
-                const auto path = write_pdos_npy(ucell, pdos, nspin, emin, de, out_dir, istep, out_app_flag);
-                GlobalV::ofs_running << " Wrote projected DOS to " << path << '\n';
-            }
-            catch (const std::exception& e) { error = e.what(); }
-        }
-        else
-        {
-            write_pdos_text(ucell, pdos.data(), nspin, nlocal, pdos.front().nc, emin, de, out_dir, istep, out_app_flag);
-        }
-        if (error.empty()) { write_orb_info(&ucell); }
-    }
-    if (npy)
-    {
-#ifdef __MPI
-        Parallel_Common::bcast_string(error);
-#endif
-        if (!error.empty()) { ModuleBase::WARNING_QUIT("write_pdos", error); }
-    }
-}
 
 template <typename T>
 void write_dos_lcao(
@@ -56,7 +28,7 @@ void write_dos_lcao(
         const double& dos_edelta_ev,
         const double& dos_scale,
         const double& bcoeff,
-        const std::string& dos_format,
+        const bool pdos_npy,
         const int out_app_flag,
         const int istep,
         const int nspin,
@@ -72,7 +44,6 @@ void write_dos_lcao(
 {
     ModuleBase::TITLE("ModuleIO", "write_dos_lcao");
     
-    const bool npy = dos_format == "npy";
     const int nspin0 = (nspin == 2) ? 2 : 1;
 
     double emax = 0.0;
@@ -107,8 +78,7 @@ void write_dos_lcao(
             ss << "g" << istep+1;
         }
 
-        ss << (npy ? ".npy" : ".txt");
-        if (npy) { ofs_running << " DOS file: " << ss.str() << '\n'; }
+        ss << ".txt";
 
         ModuleIO::cal_dos(is,
                 ss.str(),
@@ -130,10 +100,9 @@ void write_dos_lcao(
 
 
     // out_dos >= 1: always compute PDOS alongside DOS (LCAO only)
-    cal_pdos(psi,
+    const auto pdos = cal_pdos(psi,
             p_ham,
             pv,
-            ucell,
             kv,
             nspin0,
             nbands,
@@ -142,12 +111,37 @@ void write_dos_lcao(
             emin,
             dos_edelta_ev,
             bcoeff,
-            istep,
-            out_app_flag,
             nlocal,
-            nspin,
-            global_out_dir,
-            npy);
+            nspin);
+
+    std::string error;
+    if (GlobalV::MY_RANK == 0)
+    {
+        if (pdos_npy)
+        {
+            const std::string path = global_out_dir + "pdos.npy";
+            try
+            {
+                write_pdos_npy(ucell, pdos, nspin, emin, dos_edelta_ev, path);
+                ofs_running << " Wrote projected DOS to " << path << '\n';
+            }
+            catch (const std::exception& e)
+            {
+                error = path + ": " + e.what();
+            }
+        }
+        else
+        {
+            write_pdos_text(ucell, pdos.data(), nspin, nlocal, pdos.front().nc,
+                            emin, dos_edelta_ev, global_out_dir, istep, out_app_flag);
+        }
+        if (error.empty()) { write_orb_info(&ucell); }
+    }
+    if (pdos_npy)
+    {
+        Parallel_Common::bcast_string(error);
+        if (!error.empty()) { ModuleBase::WARNING_QUIT("write_dos_lcao", error); }
+    }
 
     ofs_running << " #DOS CALCULATION ENDS# " << std::endl;
 
@@ -168,7 +162,7 @@ template void write_dos_lcao(
         const double& dos_edelta_ev,
         const double& dos_scale,
         const double& bcoeff,
-        const std::string& dos_format,
+        const bool pdos_npy,
         const int out_app_flag,
         const int istep,
         const int nspin,
@@ -196,7 +190,7 @@ template void write_dos_lcao(
         const double& dos_edelta_ev,
         const double& dos_scale,
         const double& bcoeff,
-        const std::string& dos_format,
+        const bool pdos_npy,
         const int out_app_flag,
         const int istep,
         const int nspin,

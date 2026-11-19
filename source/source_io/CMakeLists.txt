@@ -12,7 +12,6 @@ list(
   module_bessel/bessel_basis.cpp
   module_output/cal_test.cpp
   module_dos/cal_dos.cpp
-  module_output/npy_record.cpp
   module_dos/cal_ldos.cpp
   module_ml/cal_mlkedf_desc.cpp
   module_dos/write_dos_pw.cpp
@@ -76,7 +75,6 @@ if(ENABLE_LCAO)
     module_dos/cal_pdos_gamma.cpp
     module_dos/cal_pdos_multik.cpp
     module_dos/write_pdos_text.cpp
-    module_dos/write_pdos.cpp
     module_output/write_orb_info.cpp
     module_energy/write_proj_band_lcao.cpp
     module_chgpot/get_pchg_lcao.cpp

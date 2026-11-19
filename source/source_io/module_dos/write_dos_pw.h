@@ -20,7 +20,6 @@ namespace ModuleIO
             const double &dos_edelta_ev,
             const double &dos_scale,
             const double &bcoeff,
-            const std::string& dos_format,
             const int nspin,
             const int out_dos,
             const bool dos_setemax,

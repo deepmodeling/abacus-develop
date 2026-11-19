@@ -98,36 +98,20 @@ The `# istep:` line is only present for geometry-optimization (istep) output. Wi
 
 For nspin=2, two files are written (pdoss1* and pdoss2*), one per spin channel. For nspin=4, the two spinor components are summed into a single file. The unit of PDOS is also `(number of states)/(eV * unitcell)`.
 
-### NumPy output
-
-Set `out_dos_format npy` to write the total DOS (PW and LCAO) and projected DOS (LCAO) selected by `out_dos` as NumPy arrays. The default format is `text`. The NPY writer is built into ABACUS.
-
-```text
-out_dos         1
-out_dos_format  npy
-```
-
-Each file contains a standard NumPy 1.0 structured array with named fields. Total DOS uses one row per energy point in `doss1.npy`, with a separate `doss2.npy` for collinear spin. The five binary64 fields are `energy_eV`, `dos`, `dos_int`, `dos_smear` and `dos_smear_int`, in the same units as the text columns. `spin_channel` gives the one-based channel. For example, `np.load("doss1.npy")["dos_smear"]` returns the smeared DOS in states/eV per cell.
-
-LCAO projected DOS uses one row per atom and `(l,m)` channel in `pdos.npy`. Contributions from all zeta components are summed. Across the array, the binary64 `pdos` field has axes `(orbital, spin channel, energy point)` and units of 1/eV. There are two spin channels for `nspin=2` and one for `nspin=1` or `4`. The latter includes both spinor components. Both output formats apply the same small-value threshold.
+For a single-point LCAO SCF or NSCF calculation, set `out_dos 1` and
+`pdos_format npy` to write `pdos.npy`. The default is `pdos_format text`.
+Total DOS still goes to `doss{spin}.txt`. Set `pdosfile` to the path of
+`pdos.npy` in the `abacus-plot -d -p` configuration, or open it with NumPy:
 
 ```python
 import numpy as np
 
-rows = np.load("OUT.ABACUS/pdos.npy", allow_pickle=False, mmap_mode="r")
-first = rows[0]
-energy = first["energy_min_eV"] + np.arange(rows["pdos"].shape[-1]) * first["energy_step_eV"]
-first_orbital = rows["pdos"][0, 0, :]    # first orbital and first spin channel
+rows = np.load("pdos.npy", mmap_mode="r")
+spectrum = rows["pdos"][0]  # (spin channel, energy point), in 1/eV
+energy_eV = rows["energy_min_eV"][0] + np.arange(spectrum.shape[1]) * rows["energy_step_eV"][0]
 ```
 
-Each row includes the one-based `atom_index`, UTF-8 byte string `species`, `l`, signed `m`, `nspin`, and one-based `ionic_step`. A single-point calculation uses step 1. The fields `schema_version` (1) and `record_bytes` (payload size of the complete array) identify the schema and record boundaries. Appending to a damaged final record reports an error and leaves the existing records in place.
-
-For DOS, mode `out_app_flag 0` truncates the fixed-name file before writing. An interruption can leave an incomplete final array. Mode 1 appends one complete NumPy array per write, with the first ionic step starting a fresh file. Each array can have a different energy grid. `np.load(path)` opens the first record. To read consecutive records, open the file once in `"rb"` mode and call `np.load(stream, allow_pickle=False)` for each one. Mode 2 writes numbered steps such as `DOS/doss1g2.npy` and `DOS/pdosg2.npy`.
-
-For `abacus-plot`, use `tdosfile` for total DOS and `pdosfile` for projected DOS. The common JSON option `record` selects a one-based NPY record and defaults to 1.
-
-```json
-{"pdosfile": "OUT.ABACUS/pdos.npy", "record": 1, "species": ["Si"]}
-```
-
-Run `abacus-plot -d -p -f config.json` to plot, or `abacus-plot -d -o -f config.json` to export the selected species' curves.
+Each row identifies one channel by `atom_index` (one-based), `species`, `l`
+and signed `m`. `nspin` is the input spin mode. Modes 1 and 4 store one
+spectrum per row, and mode 2 stores spin-up and spin-down. The array uses
+binary64 and the same zeta sums and zero threshold as text.

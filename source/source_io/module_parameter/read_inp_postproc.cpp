@@ -10,16 +10,24 @@ void ReadInput::item_postprocess()
     // in the generated documentation (docs/advanced/input_files/input-main.md).
     // Please preserve this ordering when adding new parameters.
     {
-        Input_Item item("out_dos_format");
+        Input_Item item("pdos_format");
         item.domain.set_choices({"text", "npy"});
-        item.annotation = "file format for total and projected DOS";
+        item.annotation = "file format for LCAO projected DOS";
         item.category = "Density of states";
         item.type = "String";
-        item.description = "Select text or NumPy NPY for the outputs enabled by out_dos. "
-                           "This covers total DOS for PW and LCAO, and projected DOS for LCAO. "
-                           "NPY stores named binary64 fields and one array per written ionic step.";
+        item.description = "With out_dos = 1, select per-spin text files or a single pdos.npy "
+                           "for projected DOS. NumPy output is available for single-point LCAO SCF and NSCF.";
         item.default_value = "text";
-        read_sync_string(input.out_dos_format);
+        read_sync_string(input.pdos_format);
+        item.check_value = [](const Input_Item&, const Parameter& para) {
+            const auto& in = para.input;
+            if (in.out_dos && in.pdos_format == "npy"
+                && (in.basis_type != "lcao" || in.esolver_type != "ksdft"
+                    || (in.calculation != "scf" && in.calculation != "nscf")))
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "pdos_format npy requires a single-point LCAO KSDFT SCF or NSCF calculation.");
+            }
+        };
         this->add_item(item);
     }
     {

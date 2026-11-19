@@ -11,7 +11,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 
-from abacus_plot.dos import DOSPlot, TDOS
+from abacus_plot.dos import DOSPlot, PDOS, TDOS
 
 
 class TDOSTest(unittest.TestCase):
@@ -124,6 +124,25 @@ class TDOSTest(unittest.TestCase):
             with mock.patch.object(ax, "get_subplotspec", get_spec, create=True):
                 DOSPlot(fig, ax)._set_figure()
             self.assertEqual(ax.get_xlabel(), "Energy(eV)")
+
+
+class PDOSNumPyTest(unittest.TestCase):
+    def test_spin_channels_and_energy_grid(self):
+        values = np.array([[1., 2., 3.], [4., 5., 6.]])
+        dtype = [("nspin", "i4"), ("atom_index", "i4"), ("l", "i4"), ("m", "i4"),
+                 ("energy_min_eV", "f8"), ("energy_step_eV", "f8"), ("species", "S8"),
+                 ("pdos", "f8", values.shape)]
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "pdos.npy"
+            np.save(path, np.array([(2, 3, 1, -1, -1., .5, b"Fe", values)], dtype=dtype))
+            for source in (path, path.parent):
+                result = PDOS(source)
+                self.assertEqual(result.nspin, 2)
+                np.testing.assert_array_equal(result.energy[:, 0], [-1., -.5, 0.])
+                orbital, = result.orbitals
+                self.assertEqual((orbital["index"], orbital["atom_index"], orbital["species"],
+                                  orbital["l"], orbital["m"]), (1, 3, "Fe", 1, -1))
+                np.testing.assert_array_equal(orbital["data"], values.T)
 
 
 if __name__ == "__main__":

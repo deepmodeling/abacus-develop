@@ -12,7 +12,7 @@ if(ENABLE_MPI)
   addtest(
     TARGET MODULE_DOS_cal_dos
     LIBS parameter base device
-    SOURCES test_cal_dos.cpp ../cal_dos.cpp ../../module_output/npy_record.cpp)
+    SOURCES test_cal_dos.cpp ../cal_dos.cpp)
 
   addtest(
     TARGET MODULE_DOS_write_dos_pw
@@ -20,25 +20,20 @@ if(ENABLE_MPI)
     SOURCES test_write_dos_pw.cpp
             ../write_dos_pw.cpp
             ../cal_dos.cpp
-            ../../module_output/npy_record.cpp
             ../../../source_cell/parallel_kpoints.cpp
             ../../../source_cell/klist.cpp
             ../../../source_cell/klist_io.cpp
             ../../../source_cell/reciprocal_grid.cpp)
 
-endif()
-
-if(ENABLE_MPI OR ENABLE_LCAO)
   addtest(
     TARGET MODULE_DOS_write_pdos_text
     LIBS parameter base device
     SOURCES test_write_pdos_text.cpp
             ../write_pdos_text.cpp
-            ../write_pdos.cpp
-            ../../module_output/npy_record.cpp
             ../../../source_cell/atom_spec.cpp
             ../../../source_cell/atom_pseudo.cpp
             ../../../source_cell/pseudo.cpp
             ../../../source_cell/magnetism.cpp
             ../../../source_cell/test/support/mock_unitcell.cpp)
+
 endif()

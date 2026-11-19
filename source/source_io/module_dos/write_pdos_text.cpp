@@ -1,11 +1,54 @@
 #include "write_pdos_text.h"
-#include "write_pdos.h"
 
 #include "source_base/global_variable.h"
 
+#include <algorithm>
+#include <cmath>
+#include <cstdint>
 #include <fstream>
 #include <iomanip>
+#include <limits>
+#include <locale>
+#include <map>
 #include <sstream>
+#include <stdexcept>
+
+namespace
+{
+// Each (l, real-harmonic column) contains the zeta sum in spin-major order.
+using PdosBlock = std::map<std::pair<int, int>, std::vector<double>>;
+PdosBlock atom_pdos(const UnitCell& cell, int iat, const ModuleBase::matrix* pdos,
+                                        int spins, bool spinor)
+{
+    const Atom& atom = cell.atoms[cell.iat2it[iat]];
+    const int ne = pdos[0].nc;
+    const int first = cell.get_iat2iwt()[iat];
+    const int npol = spinor ? 2 : 1;
+    PdosBlock block;
+    for (int iw = 0; iw < atom.nw; ++iw)
+    {
+        auto& channel = block[{atom.iw2l[iw], atom.iw2m[iw]}];
+        if (channel.empty()) { channel.resize(static_cast<size_t>(spins) * ne); }
+        const int row = first + npol * iw;
+        for (int is = 0; is < spins; ++is)
+        {
+            double* values = channel.data() + static_cast<size_t>(is) * ne;
+            for (int n = 0; n < ne; ++n)
+            {
+                values[n] += spinor ? pdos[is](row, n) + pdos[is](row + 1, n) : pdos[is](row, n);
+            }
+        }
+    }
+    for (auto& channel : block)
+    {
+        for (double& value : channel.second)
+        {
+            if (std::abs(value) < 1e-6) { value = 0.0; }
+        }
+    }
+    return block;
+}
+}
 
 void ModuleIO::write_pdos_text(
         const UnitCell& ucell,
@@ -80,4 +123,68 @@ void ModuleIO::write_pdos_text(
 
         ofs.close();
     }
+}
+
+void ModuleIO::write_pdos_npy(const UnitCell& cell, const std::vector<ModuleBase::matrix>& pdos,
+                           int nspin, double emin, double de, const std::string& path)
+{
+    const int ne = pdos.front().nc;
+    size_t width = 1;
+    size_t count = 0;
+    for (int it = 0; it < cell.ntype; ++it)
+    {
+        const Atom& atom = cell.atoms[it];
+        width = std::max(width, atom.label.size());
+        for (int l = 0; l <= atom.nwl; ++l)
+        {
+            if (atom.l_nchi[l] > 0) { count += static_cast<size_t>(atom.na) * (2 * l + 1); }
+        }
+    }
+    width = (width + 7) / 8 * 8;
+    std::ostringstream fields;
+    fields.imbue(std::locale::classic());
+    fields << "('nspin','=i4'),('atom_index','=i4'),('l','=i4'),('m','=i4'),"
+           << "('energy_min_eV','=f8'),('energy_step_eV','=f8'),('species','|S" << width
+           << "'),('pdos','=f8',(" << pdos.size() << "," << ne << "))";
+    // NPY v1 stores a little-endian header length and an explicit byte order for the payload.
+    static_assert(sizeof(double) == 8 && std::numeric_limits<double>::is_iec559, "PDOS requires binary64");
+    const std::uint16_t one = 1;
+    const char endian = *reinterpret_cast<const unsigned char*>(&one) ? '<' : '>';
+    std::string header = "{'descr': [" + fields.str() + "], 'fortran_order': False, 'shape': ("
+                       + std::to_string(count) + ",), }";
+    std::replace(header.begin(), header.end(), '=', endian);
+    header.append((64 - (11 + header.size()) % 64) % 64, ' ');
+    header += '\n';
+    const std::uint64_t row_bytes = 32 + width + sizeof(double) * static_cast<std::uint64_t>(ne) * pdos.size();
+    if (header.size() > 65535 || row_bytes > std::numeric_limits<std::int32_t>::max())
+    {
+        throw std::runtime_error("PDOS array exceeds NumPy v1 dtype limits");
+    }
+    const unsigned char length[] = {static_cast<unsigned char>(header.size()),
+                                    static_cast<unsigned char>(header.size() >> 8)};
+    std::ofstream out;
+    out.exceptions(std::ios::badbit | std::ios::failbit);
+    out.open(path, std::ios::binary | std::ios::trunc);
+    out.write("\x93NUMPY\x01\x00", 8);
+    out.write(reinterpret_cast<const char*>(length), sizeof(length));
+    out.write(header.data(), header.size());
+    const double grid[] = {emin, de};
+    const bool spinor = nspin == 4;
+    for (int iat = 0; iat < cell.nat; ++iat)
+    {
+        std::string label = cell.atoms[cell.iat2it[iat]].label;
+        label.resize(width, '\0');
+        const auto channels = atom_pdos(cell, iat, pdos.data(), pdos.size(), spinor);
+        for (const auto& channel : channels)
+        {
+            const int col = channel.first.second;
+            const int m = col % 2 == 0 ? -col / 2 : (col + 1) / 2;
+            const std::int32_t attrs[] = {nspin, iat + 1, channel.first.first, m};
+            out.write(reinterpret_cast<const char*>(attrs), sizeof(attrs));
+            out.write(reinterpret_cast<const char*>(grid), sizeof(grid));
+            out.write(label.data(), label.size());
+            out.write(reinterpret_cast<const char*>(channel.second.data()), channel.second.size() * sizeof(double));
+        }
+    }
+    out.close();
 }

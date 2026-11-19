@@ -1,6 +1,4 @@
 #include "cal_dos.h"
-#include "source_io/module_output/npy_record.h"
-#include "source_base/parallel_common.h"
 
 #include "source_base/constants.h"
 #include "source_base/global_function.h"
@@ -117,11 +115,9 @@ bool ModuleIO::cal_dos(const int& is,  // index for spin
 
     std::ofstream ofs_dos;
 
-    const bool npy = fn.size() >= 4 && fn.compare(fn.size() - 4, 4, ".npy") == 0;
-    const bool append_step = (out_app_flag == 1) && (istep > 0);
-    const bool root = GlobalV::MY_RANK == 0;
-    if (root && !npy)
+    if (GlobalV::MY_RANK == 0)
     {
+        const bool append_step = (out_app_flag == 1) && (istep > 0);
         if (append_step)
         {
             ofs_dos.open(fn.c_str(), std::ios::app);
@@ -156,7 +152,7 @@ bool ModuleIO::cal_dos(const int& is,  // index for spin
         ModuleBase::WARNING("ModuleIO::cal_dos", "npoints <= 0");
         return false;
     }
-    if (root && !npy)
+    if (GlobalV::MY_RANK == 0)
     {
         ofs_dos << npoints << " # number of points" << std::endl;
         ofs_dos << std::fixed << std::setprecision(6);
@@ -176,6 +172,7 @@ bool ModuleIO::cal_dos(const int& is,  // index for spin
     std::vector<double> dos(npoints, 0.0);
     std::vector<double> ene(npoints, 0.0);
     std::vector<double> dos_smear(npoints, 0.0);
+    std::vector<double> sum_elec(npoints, 0.0);
 
     const double b = std::sqrt(2.0) * bcoeff;
     const double gauss_norm = std::sqrt(ModuleBase::PI) * b;
@@ -222,53 +219,31 @@ bool ModuleIO::cal_dos(const int& is,  // index for spin
     double sum2 = 0.0;
     const double dos_thr = 1.0e-12;
 
-    std::string error;
-    if (root)
+    if (GlobalV::MY_RANK == 0)
     {
-        try
+        for (int n = 0; n < npoints; ++n)
         {
-            std::array<char, 16> prefix;
-            const std::int64_t spin = is + 1;
-            if (npy)
+            dos[n] /= static_cast<double>(nkstot);
+            sum += dos[n];
+            sum_elec[n] = sum;
+
+            if (dos_smear[n] < dos_thr)
             {
-                const std::string fields = "('spin_channel','=i8'),('energy_eV','=f8'),('dos','=f8'),"
-                                           "('dos_int','=f8'),('dos_smear','=f8'),('dos_smear_int','=f8')";
-                const int step = std::max(1, istep + 1);
-                const size_t row_bytes = prefix.size() + sizeof(spin) + 5 * sizeof(double);
-                prefix = open_npy_record(ofs_dos, fn, append_step, step, fields, "dos_smear", npoints, row_bytes);
+                dos_smear[n] = 0.0;
             }
-            for (int n = 0; n < npoints; ++n)
-            {
-                dos[n] /= static_cast<double>(nkstot);
-                sum += dos[n];
-                if (dos_smear[n] < dos_thr) { dos_smear[n] = 0.0; }
-                sum2 += dos_smear[n] * de_ev;
-                if (npy)
-                {
-                    const double row[] = {ene[n], dos[n], sum, dos_smear[n], sum2};
-                    ofs_dos.write(prefix.data(), prefix.size());
-                    ofs_dos.write(reinterpret_cast<const char*>(&spin), sizeof(spin));
-                    ofs_dos.write(reinterpret_cast<const char*>(row), sizeof(row));
-                }
-                else
-                {
-                    ofs_dos << std::setw(13) << ene[n]
-                            << " " << std::setw(12) << dos[n]
-                            << " " << std::setw(12) << sum
-                            << " " << std::setw(14) << dos_smear[n]
-                            << " " << std::setw(14) << sum2 << std::endl;
-                }
-            }
-            ofs_dos.close();
+            sum2 += dos_smear[n] * de_ev;
+
+            ofs_dos << std::setw(13) << ene[n]
+                 << " " << std::setw(12) << dos[n]
+                 << " " << std::setw(12) << sum_elec[n]
+                 << " " << std::setw(14) << dos_smear[n]
+                 << " " << std::setw(14) << sum2 << std::endl;
         }
-        catch (const std::exception& e) { error = e.what(); }
     }
-    if (npy)
+
+    if (GlobalV::MY_RANK == 0)
     {
-#ifdef __MPI
-        Parallel_Common::bcast_string(error);
-#endif
-        if (!error.empty()) { ModuleBase::WARNING_QUIT("cal_dos", error); }
+        ofs_dos.close();
     }
 
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Number of bands", nbands);
