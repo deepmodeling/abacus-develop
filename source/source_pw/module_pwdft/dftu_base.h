@@ -54,7 +54,7 @@ class Plus_U_Base
                    const double uramping,
                    const int init_occ_mat,
                    const int mixing_dftu,
-                   const DFTU_BASE::OccmatSocLayout soc_layout);
+                   const DFTU_BASE::OccmatSocLayout& soc_layout);
 
     void uramping_update();
     bool u_converged();

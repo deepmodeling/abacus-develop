@@ -83,54 +83,6 @@ void prepare_mdcell(MDCell& mdcell, UnitCell& ucell, DomainDecomposition& decomp
     mdcell.mutable_stru_meta() = unitcell::make_stru_meta(ucell);
 }
 
-namespace
-{
-/// @brief collect the absolute Cartesian positions (in Bohr) of the atoms
-/// owned by this rank; the cell stores cart in units of the lattice constant
-void collect_plumed_positions(const MDCell& mdcell, std::vector<ModuleBase::Vector3<double>>& positions)
-{
-    const double lat0 = mdcell.lat0();
-    const std::vector<LocalAtom>& atoms = mdcell.owned_atoms();
-    positions.resize(atoms.size());
-    for (std::size_t i = 0; i < atoms.size(); ++i)
-    {
-        positions[i] = atoms[i].cart * lat0;
-    }
-}
-
-/// @brief gather the atomic forces (in Hartree/Bohr)
-void collect_plumed_forces(const MDCell& mdcell, std::vector<ModuleBase::Vector3<double>>& forces)
-{
-    const std::vector<LocalAtom>& atoms = mdcell.owned_atoms();
-    forces.resize(atoms.size());
-    for (std::size_t i = 0; i < atoms.size(); ++i)
-    {
-        forces[i] = atoms[i].force;
-    }
-}
-
-/// @brief write the (PLUMED-biased) forces back into the cell
-void apply_plumed_forces(MDCell& mdcell, const std::vector<ModuleBase::Vector3<double>>& forces)
-{
-    std::vector<LocalAtom>& atoms = mdcell.owned_atoms();
-    for (std::size_t i = 0; i < atoms.size(); ++i)
-    {
-        atoms[i].force = forces[i];
-    }
-}
-
-/// @brief 3x3 cell matrix (in Bohr, row-major) expected by PLUMED
-void collect_plumed_cell(const MDCell& mdcell, double* cell)
-{
-    const double lat0 = mdcell.lat0();
-    const double* latvec = &mdcell.latvec().e11; // unitless lattice vectors
-    for (int i = 0; i < 9; ++i)
-    {
-        cell[i] = latvec[i] * lat0;
-    }
-}
-} // namespace
-
 void md_line(MDCell& mdcell,
              ModuleESolver::ESolver* p_esolver,
              const Parameter& param_in,
@@ -178,16 +130,33 @@ void md_line(MDCell& mdcell,
     double plumed_cell[9];
 
     auto run_plumed_step = [&](const int istep) {
-        collect_plumed_positions(mdcell, plumed_positions);
-        collect_plumed_forces(mdcell, plumed_forces);
-        collect_plumed_cell(mdcell, plumed_cell);
+        std::vector<LocalAtom>& atoms = mdcell.owned_atoms();
+        const double lat0 = mdcell.lat0();
+        plumed_positions.resize(atoms.size());
+        plumed_forces.resize(atoms.size());
+        for (std::size_t i = 0; i < atoms.size(); ++i)
+        {
+            plumed_positions[i] = atoms[i].cart * lat0; // Bohr
+            plumed_forces[i] = atoms[i].force; // Hartree/Bohr
+        }
+
+        const double* latvec = &mdcell.latvec().e11;
+        for (int i = 0; i < 9; ++i)
+        {
+            plumed_cell[i] = latvec[i] * lat0; // row-major, Bohr
+        }
+
+        const double* virial = param_in.inp.cal_stress ? mdrun->virial.c : nullptr;
         plumed.move(istep,
                     plumed_positions.data(),
                     plumed_forces.data(),
                     plumed_cell,
                     mdrun->potential,
-                    param_in.inp.cal_stress ? mdrun->virial.c : nullptr);
-        apply_plumed_forces(mdcell, plumed_forces);
+                    virial);
+        for (std::size_t i = 0; i < atoms.size(); ++i)
+        {
+            atoms[i].force = plumed_forces[i];
+        }
     };
 
     /// Effective ionic-step output frequency for STRU and other per-step

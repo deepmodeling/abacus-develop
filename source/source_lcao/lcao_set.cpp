@@ -101,6 +101,8 @@ void LCAO_domain::set_pot(
             ModuleBase::WARNING_QUIT("LCAO_domain::set_pot",
                                      "Global row and column dimensions do not match");
         }
+        const DFTU_BASE::OccmatSocLayout occmat_soc_layout
+            = DFTU_BASE::lcao_soc_layout(inp.dft_plus_u);
         dftu.init_base(ucell,
                        PARAM.globalv.npol,
                        inp.nspin,
@@ -115,7 +117,7 @@ void LCAO_domain::set_pot(
                        PARAM.globalv.uramping,
                        inp.init_occ_mat,
                        inp.mixing_dftu,
-                       DFTU_BASE::SOC_LAYOUT_SPIN_BASIS_REAL);
+                       occmat_soc_layout);
     }
 
     //! 4) init exact exchange calculations

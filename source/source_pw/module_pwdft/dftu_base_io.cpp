@@ -18,6 +18,11 @@
 namespace DFTU_BASE
 {
 
+OccmatSocLayout lcao_soc_layout(const int dft_plus_u)
+{
+    return dft_plus_u == 1 ? SOC_LAYOUT_PAULI : SOC_LAYOUT_SPIN_BASIS_REAL;
+}
+
 // Write the STRU-style provenance header shared by occ_mat.txt and the
 // per-ionic-step snapshot files: ABACUS version, local timestamp and the
 // 1-based relaxation step this file belongs to.
@@ -185,7 +190,7 @@ static void write_snapshot_section(std::ostream& os,
                                    const UnitCell& ucell,
                                    const OccmatStepInfo& step,
                                    const bool occmat_ready,
-                                   const OccmatSocLayout soc_layout)
+                                   const OccmatSocLayout& soc_layout)
 {
     os << "# Electronic step " << step.iter << "\n";
     os << "# scf_thr " << std::scientific << std::setprecision(8) << step.scf_thr << "\n";
@@ -213,7 +218,7 @@ void append_ion_step_snapshot(const Plus_U_Base& dftu,
                               const bool conv_esolver,
                               const bool occmat_ready,
                               const OccmatOutputCfg& cfg,
-                              const OccmatSocLayout soc_layout)
+                              const OccmatSocLayout& soc_layout)
 {
     ModuleBase::TITLE("DFTU_BASE", "append_ion_step_snapshot");
 
@@ -269,7 +274,7 @@ void write_latest_occmat(const Plus_U_Base& dftu,
                          const std::string& global_out_dir,
                          const OccmatStepInfo& step,
                          const OccmatOutputCfg& cfg,
-                         const OccmatSocLayout soc_layout)
+                         const OccmatSocLayout& soc_layout)
 {
     ModuleBase::TITLE("DFTU_BASE", "write_latest_occmat");
 
@@ -293,6 +298,7 @@ void write_latest_occmat(const Plus_U_Base& dftu,
     // esolver gates on latest_ready, the LCAO esolver computes it every
     // electronic iteration.
     write_snapshot_section(ofdftu, dftu, ucell, step, true, soc_layout);
+    write_occup_eigenvalues(dftu, ucell, ofdftu, soc_layout);
 }
 
 
