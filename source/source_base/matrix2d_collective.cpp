@@ -24,15 +24,15 @@ int checked_mpi_count(const std::size_t count)
 std::vector<int> make_byte_displacements(const std::vector<int>& counts)
 {
     std::vector<int> displacements(counts.size(), 0);
-    int displacement = 0;
+    int off = 0;
     for (std::size_t ip = 0; ip < counts.size(); ++ip)
     {
-        displacements[ip] = displacement;
-        if (counts[ip] > std::numeric_limits<int>::max() - displacement)
+        displacements[ip] = off;
+        if (counts[ip] > std::numeric_limits<int>::max() - off)
         {
             throw std::invalid_argument("Matrix2d collective payload size overflow");
         }
-        displacement += counts[ip];
+        off += counts[ip];
     }
     return displacements;
 }
@@ -41,17 +41,17 @@ std::vector<int> allgather_byte_counts(const int local_count, const MPI_Comm com
 {
     const int nproc = Parallel_Common::comm_size(comm);
     const int integer_bytes = checked_mpi_count(sizeof(int));
-    std::vector<int> receive_counts(nproc, integer_bytes);
-    const std::vector<int> receive_displacements
-        = make_byte_displacements(receive_counts);
+    std::vector<int> recv(nproc, integer_bytes);
+    const std::vector<int> rdispls
+        = make_byte_displacements(recv);
     std::vector<int> counts(nproc, 0);
     const int local_count_bytes = checked_mpi_count(sizeof(local_count));
 
     Parallel_Common::allgatherv_bytes(&local_count,
                                       local_count_bytes,
                                       counts.data(),
-                                      receive_counts.data(),
-                                      receive_displacements.data(),
+                                      recv.data(),
+                                      rdispls.data(),
                                       comm);
     return counts;
 }
@@ -85,28 +85,28 @@ template <typename T>
 std::vector<unsigned char> make_local_payload(const Matrix2d<T>& matrix)
 {
     const std::vector<int> metadata = make_local_metadata(matrix);
-    const std::size_t metadata_bytes = metadata.size() * sizeof(int);
+    const std::size_t nmeta = metadata.size() * sizeof(int);
     const std::size_t data_elements = static_cast<std::size_t>(matrix.nrloc())
         * static_cast<std::size_t>(matrix.ncloc());
     const std::size_t data_bytes = data_elements * sizeof(T);
-    const std::size_t payload_bytes = metadata_bytes + data_bytes;
+    const std::size_t payload_bytes = nmeta + data_bytes;
     std::vector<unsigned char> payload(payload_bytes);
 
-    std::memcpy(payload.data(), metadata.data(), metadata_bytes);
+    std::memcpy(payload.data(), metadata.data(), nmeta);
     for (int irloc = 0; irloc < matrix.nrloc(); ++irloc)
     {
         for (int icloc = 0; icloc < matrix.ncloc(); ++icloc)
         {
             const std::size_t irloc_index = static_cast<std::size_t>(irloc);
             const std::size_t icloc_index = static_cast<std::size_t>(icloc);
-            const std::size_t element_index
+            const std::size_t idx
                 = irloc_index * static_cast<std::size_t>(matrix.ncloc())
                 + icloc_index;
             const T& value = matrix.at_local(irloc, icloc);
-            const std::size_t destination_offset
-                = metadata_bytes + element_index * sizeof(T);
+            const std::size_t off
+                = nmeta + idx * sizeof(T);
             unsigned char* const destination
-                = payload.data() + destination_offset;
+                = payload.data() + off;
             std::memcpy(destination, &value, sizeof(T));
         }
     }
@@ -152,22 +152,22 @@ LocalPayloadView view_local_payload(const std::vector<unsigned char>& payload)
 
     const std::size_t metadata_count
         = static_cast<std::size_t>(LOCAL_METADATA_SIZE) + view.nrloc + view.ncloc;
-    const std::size_t metadata_bytes = metadata_count * sizeof(int);
+    const std::size_t nmeta = metadata_count * sizeof(int);
     const std::size_t data_elements
         = static_cast<std::size_t>(view.nrloc) * static_cast<std::size_t>(view.ncloc);
-    const std::size_t expected_bytes = metadata_bytes + data_elements * sizeof(T);
+    const std::size_t expected_bytes = nmeta + data_elements * sizeof(T);
     if (payload.size() != expected_bytes)
     {
         throw std::invalid_argument("Matrix2d collective payload has an invalid size");
     }
 
     std::vector<int> metadata(metadata_count);
-    std::memcpy(metadata.data(), payload.data(), metadata_bytes);
+    std::memcpy(metadata.data(), payload.data(), nmeta);
     view.irglb.assign(metadata.begin() + LOCAL_METADATA_SIZE,
                       metadata.begin() + LOCAL_METADATA_SIZE + view.nrloc);
     view.icglb.assign(metadata.begin() + LOCAL_METADATA_SIZE + view.nrloc,
                       metadata.end());
-    view.data = payload.data() + metadata_bytes;
+    view.data = payload.data() + nmeta;
     return view;
 }
 
@@ -212,12 +212,12 @@ Matrix2d<T> rebuild_global_matrix(
                 {
                     throw std::invalid_argument("Matrix2d column axis is outside global shape");
                 }
-                const std::size_t element_index
+                const std::size_t idx
                     = static_cast<std::size_t>(irloc)
                         * static_cast<std::size_t>(view.ncloc)
                     + static_cast<std::size_t>(icloc);
                 T value;
-                std::memcpy(&value, view.data + element_index * sizeof(T), sizeof(T));
+                std::memcpy(&value, view.data + idx * sizeof(T), sizeof(T));
                 result.at_local(irglb, icglb) = value;
             }
         }
@@ -232,25 +232,25 @@ std::vector<std::vector<unsigned char>> allgather_payloads(
 {
     const std::vector<unsigned char> local_payload = make_local_payload(matrix);
     const int local_count = checked_mpi_count(local_payload.size());
-    std::vector<int> payload_counts = allgather_byte_counts(local_count, comm);
-    const std::vector<int> payload_displacements
-        = make_byte_displacements(payload_counts);
-    const int total_bytes = payload_displacements.back() + payload_counts.back();
+    std::vector<int> pcounts = allgather_byte_counts(local_count, comm);
+    const std::vector<int> pdispls
+        = make_byte_displacements(pcounts);
+    const int total_bytes = pdispls.back() + pcounts.back();
     std::vector<unsigned char> received(total_bytes);
 
     Parallel_Common::allgatherv_bytes(local_payload.data(),
                                       local_count,
                                       received.data(),
-                                      payload_counts.data(),
-                                      payload_displacements.data(),
+                                      pcounts.data(),
+                                      pdispls.data(),
                                       comm);
 
-    std::vector<std::vector<unsigned char>> payloads(payload_counts.size());
-    for (std::size_t ip = 0; ip < payload_counts.size(); ++ip)
+    std::vector<std::vector<unsigned char>> payloads(pcounts.size());
+    for (std::size_t ip = 0; ip < pcounts.size(); ++ip)
     {
-        const std::size_t begin = static_cast<std::size_t>(payload_displacements[ip]);
+        const std::size_t begin = static_cast<std::size_t>(pdispls[ip]);
         const std::size_t end
-            = begin + static_cast<std::size_t>(payload_counts[ip]);
+            = begin + static_cast<std::size_t>(pcounts[ip]);
         payloads[ip].assign(received.begin() + begin, received.begin() + end);
     }
     return payloads;
@@ -281,22 +281,22 @@ std::unique_ptr<Matrix2d<T>> gather_on_root(const Matrix2d<T>& matrix,
 
     const std::vector<unsigned char> local_payload = make_local_payload(matrix);
     const int local_count = checked_mpi_count(local_payload.size());
-    std::vector<int> payload_counts = allgather_byte_counts(local_count, comm);
-    const std::vector<int> payload_displacements
-        = make_byte_displacements(payload_counts);
-    const int total_bytes = payload_displacements.back() + payload_counts.back();
+    std::vector<int> pcounts = allgather_byte_counts(local_count, comm);
+    const std::vector<int> pdispls
+        = make_byte_displacements(pcounts);
+    const int total_bytes = pdispls.back() + pcounts.back();
     std::vector<unsigned char> received;
     if (ip == iproot)
     {
         received.resize(total_bytes);
     }
 
-    unsigned char* const receive_buffer = ip == iproot ? received.data() : nullptr;
+    unsigned char* const recvbuf = ip == iproot ? received.data() : nullptr;
     Parallel_Common::gatherv_bytes(local_payload.data(),
                                    local_count,
-                                   receive_buffer,
-                                   payload_counts.data(),
-                                   payload_displacements.data(),
+                                   recvbuf,
+                                   pcounts.data(),
+                                   pdispls.data(),
                                    iproot,
                                    comm);
     if (ip != iproot)
@@ -304,13 +304,13 @@ std::unique_ptr<Matrix2d<T>> gather_on_root(const Matrix2d<T>& matrix,
         return std::unique_ptr<Matrix2d<T>>();
     }
 
-    std::vector<std::vector<unsigned char>> payloads(payload_counts.size());
-    for (std::size_t ipsrc = 0; ipsrc < payload_counts.size(); ++ipsrc)
+    std::vector<std::vector<unsigned char>> payloads(pcounts.size());
+    for (std::size_t ipsrc = 0; ipsrc < pcounts.size(); ++ipsrc)
     {
         const std::size_t begin
-            = static_cast<std::size_t>(payload_displacements[ipsrc]);
+            = static_cast<std::size_t>(pdispls[ipsrc]);
         const std::size_t end
-            = begin + static_cast<std::size_t>(payload_counts[ipsrc]);
+            = begin + static_cast<std::size_t>(pcounts[ipsrc]);
         payloads[ipsrc].assign(received.begin() + begin, received.begin() + end);
     }
     return std::unique_ptr<Matrix2d<T>>(
@@ -336,14 +336,14 @@ void scatter_from_host(const Matrix2d<T>& matglb, Matrix2d<T>& matloc)
     const std::vector<int> local_meta = make_local_metadata(matloc);
     const std::size_t local_metadata_size
         = local_meta.size() * sizeof(int);
-    const int local_metadata_bytes
+    const int nmeta
         = checked_mpi_count(local_metadata_size);
-    std::vector<int> metadata_counts
-        = allgather_byte_counts(local_metadata_bytes, comm);
-    const std::vector<int> metadata_displacements
-        = make_byte_displacements(metadata_counts);
+    std::vector<int> mcounts
+        = allgather_byte_counts(nmeta, comm);
+    const std::vector<int> mdispls
+        = make_byte_displacements(mcounts);
     const int metadata_total_bytes
-        = metadata_displacements.back() + metadata_counts.back();
+        = mdispls.back() + mcounts.back();
     const int metadata_element_bytes = checked_mpi_count(sizeof(int));
     if (metadata_total_bytes % metadata_element_bytes != 0)
     {
@@ -353,15 +353,15 @@ void scatter_from_host(const Matrix2d<T>& matglb, Matrix2d<T>& matloc)
     std::vector<int> all_metadata(metadata_elements);
 
     Parallel_Common::allgatherv_bytes(local_meta.data(),
-                                      local_metadata_bytes,
+                                      nmeta,
                                       all_metadata.data(),
-                                      metadata_counts.data(),
-                                      metadata_displacements.data(),
+                                      mcounts.data(),
+                                      mdispls.data(),
                                       comm);
 
     const int nproc = Parallel_Common::comm_size(comm);
     const int ip = Parallel_Common::comm_rank(comm);
-    std::vector<int> send_counts(nproc, 0);
+    std::vector<int> send(nproc, 0);
     std::vector<LocalPayloadView> views;
     views.reserve(nproc);
     std::size_t metadata_offset = 0;
@@ -404,7 +404,7 @@ void scatter_from_host(const Matrix2d<T>& matglb, Matrix2d<T>& matloc)
             * static_cast<std::size_t>(view.ncloc);
         const std::size_t local_payload_size = local_elements * sizeof(T);
         const int local_payload_bytes = checked_mpi_count(local_payload_size);
-        send_counts[ipsrc] = local_payload_bytes;
+        send[ipsrc] = local_payload_bytes;
         views.push_back(view);
     }
     if (metadata_offset != all_metadata.size())
@@ -416,12 +416,12 @@ void scatter_from_host(const Matrix2d<T>& matglb, Matrix2d<T>& matloc)
         throw std::invalid_argument("scatter global matrix shape does not match distribution");
     }
 
-    const std::vector<int> send_displacements = make_byte_displacements(send_counts);
-    std::vector<unsigned char> send_buffer;
+    const std::vector<int> sdispls = make_byte_displacements(send);
+    std::vector<unsigned char> sendbuf;
     if (ip == 0)
     {
-        const int total_bytes = send_displacements.back() + send_counts.back();
-        send_buffer.resize(total_bytes);
+        const int total_bytes = sdispls.back() + send.back();
+        sendbuf.resize(total_bytes);
         for (int ipdst = 0; ipdst < nproc; ++ipdst)
         {
             const LocalPayloadView& view = views[ipdst];
@@ -431,16 +431,16 @@ void scatter_from_host(const Matrix2d<T>& matglb, Matrix2d<T>& matloc)
                 for (int icloc = 0; icloc < view.ncloc; ++icloc)
                 {
                     const int icglb = view.icglb[icloc];
-                    const std::size_t element_index
+                    const std::size_t idx
                         = static_cast<std::size_t>(irloc)
                             * static_cast<std::size_t>(view.ncloc)
                         + static_cast<std::size_t>(icloc);
                     const T& value = matglb.at_local(irglb, icglb);
                     const std::size_t send_offset
-                        = static_cast<std::size_t>(send_displacements[ipdst])
-                            + element_index * sizeof(T);
+                        = static_cast<std::size_t>(sdispls[ipdst])
+                            + idx * sizeof(T);
                     unsigned char* const destination
-                        = send_buffer.data() + send_offset;
+                        = sendbuf.data() + send_offset;
                     std::memcpy(destination, &value, sizeof(T));
                 }
             }
@@ -451,14 +451,14 @@ void scatter_from_host(const Matrix2d<T>& matglb, Matrix2d<T>& matloc)
         = static_cast<std::size_t>(matloc.nrloc())
         * static_cast<std::size_t>(matloc.ncloc());
     const std::size_t receive_payload_bytes = receive_elements * sizeof(T);
-    std::vector<unsigned char> receive_buffer(receive_payload_bytes);
-    const int receive_count = checked_mpi_count(receive_payload_bytes);
-    const unsigned char* receive_source = ip == 0 ? send_buffer.data() : nullptr;
+    std::vector<unsigned char> recvbuf(receive_payload_bytes);
+    const int recv = checked_mpi_count(receive_payload_bytes);
+    const unsigned char* receive_source = ip == 0 ? sendbuf.data() : nullptr;
     Parallel_Common::scatterv_bytes(receive_source,
-                                    send_counts.data(),
-                                    send_displacements.data(),
-                                    receive_buffer.data(),
-                                    receive_count,
+                                    send.data(),
+                                    sdispls.data(),
+                                    recvbuf.data(),
+                                    recv,
                                     0,
                                     comm);
 
@@ -466,13 +466,13 @@ void scatter_from_host(const Matrix2d<T>& matglb, Matrix2d<T>& matloc)
     {
         for (int icloc = 0; icloc < matloc.ncloc(); ++icloc)
         {
-            const std::size_t element_index
+            const std::size_t idx
                 = static_cast<std::size_t>(irloc)
                     * static_cast<std::size_t>(matloc.ncloc())
                 + static_cast<std::size_t>(icloc);
-            const std::size_t receive_offset = element_index * sizeof(T);
+            const std::size_t receive_offset = idx * sizeof(T);
             const unsigned char* const source
-                = receive_buffer.data() + receive_offset;
+                = recvbuf.data() + receive_offset;
             T value;
             std::memcpy(&value, source, sizeof(T));
             matloc.at_local(irloc, icloc) = value;

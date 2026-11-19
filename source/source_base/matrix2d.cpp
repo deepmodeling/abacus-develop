@@ -322,11 +322,11 @@ NDArray<T, 2> NDArray<T, 2>::transpose() const
     }
 
 #ifdef __MPI
-    const int result_rows = ncglb();
-    const int result_cols = nrglb();
+    const int nr = ncglb();
+    const int nc = nrglb();
     const int nb = dist_->nb();
     const std::shared_ptr<const Parallel_Blkcyclic> result_dist
-        = make_borrowed_distribution(result_rows, result_cols, nb, dist_);
+        = make_borrowed_distribution(nr, nc, nb, dist_);
     Matrix2d<T> result(result_dist);
     matrix2d_impl::scalapack::transpose(result.view(), view());
     return result;
@@ -355,11 +355,11 @@ NDArray<T, 2> NDArray<T, 2>::dagger() const
     }
 
 #ifdef __MPI
-    const int result_rows = ncglb();
-    const int result_cols = nrglb();
+    const int nr = ncglb();
+    const int nc = nrglb();
     const int nb = dist_->nb();
     const std::shared_ptr<const Parallel_Blkcyclic> result_dist
-        = make_borrowed_distribution(result_rows, result_cols, nb, dist_);
+        = make_borrowed_distribution(nr, nc, nb, dist_);
     Matrix2d<T> result(result_dist);
     matrix2d_impl::scalapack::conjugate_transpose(result.view(), view());
     return result;
@@ -372,11 +372,11 @@ NDArray<T, 2> NDArray<T, 2>::dagger() const
 template <typename T>
 NDArray<T, 2> NDArray<T, 2>::matmul(const NDArray<T, 2>& other) const
 {
-    const int left_rows = nrglb();
-    const int shared_dimension = ncglb();
-    const int other_shared_dimension = other.nrglb();
-    const int result_cols = other.ncglb();
-    if (shared_dimension != other_shared_dimension)
+    const int m = nrglb();
+    const int k = ncglb();
+    const int k2 = other.nrglb();
+    const int n = other.ncglb();
+    if (k != k2)
     {
         throw std::invalid_argument("matrix inner dimensions are incompatible");
     }
@@ -394,18 +394,18 @@ NDArray<T, 2> NDArray<T, 2>::matmul(const NDArray<T, 2>& other) const
     {
         // Serial degenerate path: both sides are host or serial frozen
         // distributions, so matmul degrades to the host triple loop.
-        Matrix2d<T> result(left_rows, result_cols);
+        Matrix2d<T> result(m, n);
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2) schedule(static)
 #endif
-        for (int i = 0; i < left_rows; ++i)
+        for (int i = 0; i < m; ++i)
         {
-            for (int j = 0; j < result_cols; ++j)
+            for (int j = 0; j < n; ++j)
             {
                 T value = T();
-                for (int k = 0; k < shared_dimension; ++k)
+                for (int kk = 0; kk < k; ++kk)
                 {
-                    value += at_local(i, k) * other.at_local(k, j);
+                    value += at_local(i, kk) * other.at_local(kk, j);
                 }
                 result.at_local(i, j) = value;
             }
@@ -432,7 +432,7 @@ NDArray<T, 2> NDArray<T, 2>::matmul(const NDArray<T, 2>& other) const
 
     const int nb = dist_->nb();
     const std::shared_ptr<const Parallel_Blkcyclic> result_dist
-        = make_borrowed_distribution(left_rows, result_cols, nb, dist_);
+        = make_borrowed_distribution(m, n, nb, dist_);
     Matrix2d<T> result(result_dist);
     matrix2d_impl::scalapack::matmul(result.view(), view(), other.view());
     return result;

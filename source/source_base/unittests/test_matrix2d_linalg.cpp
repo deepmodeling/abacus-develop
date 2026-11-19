@@ -86,18 +86,18 @@ Matrix2d<std::complex<double>> make_complex_solution()
 #ifdef __MPI
 std::vector<std::pair<int, int>> available_process_grids()
 {
-    const int number_of_ranks = Parallel_Common::comm_size(MPI_COMM_WORLD);
+    const int nproc = Parallel_Common::comm_size(MPI_COMM_WORLD);
     std::vector<std::pair<int, int>> grids;
-    if (number_of_ranks == 1)
+    if (nproc == 1)
     {
         grids.push_back(std::make_pair(1, 1));
     }
-    if (number_of_ranks == 2)
+    if (nproc == 2)
     {
         grids.push_back(std::make_pair(1, 2));
         grids.push_back(std::make_pair(2, 1));
     }
-    if (number_of_ranks == 4)
+    if (nproc == 4)
     {
         grids.push_back(std::make_pair(1, 4));
         grids.push_back(std::make_pair(2, 2));
@@ -130,13 +130,13 @@ Matrix2d<double> make_distributed_real_system(const int size)
     return matrix;
 }
 
-Matrix2d<double> make_distributed_real_solution(const int rows,
-                                                const int cols)
+Matrix2d<double> make_distributed_real_solution(const int nr,
+                                                const int nc)
 {
-    Matrix2d<double> solution(rows, cols);
-    for (int i = 0; i < rows; ++i)
+    Matrix2d<double> solution(nr, nc);
+    for (int i = 0; i < nr; ++i)
     {
-        for (int j = 0; j < cols; ++j)
+        for (int j = 0; j < nc; ++j)
         {
             solution.at_local(i, j)
                 = static_cast<double>(1 + i + 2 * j);
@@ -177,13 +177,13 @@ Matrix2d<std::complex<double>> make_distributed_complex_system(const int size)
 }
 
 Matrix2d<std::complex<double>> make_distributed_complex_solution(
-    const int rows,
-    const int cols)
+    const int nr,
+    const int nc)
 {
-    Matrix2d<std::complex<double>> solution(rows, cols);
-    for (int i = 0; i < rows; ++i)
+    Matrix2d<std::complex<double>> solution(nr, nc);
+    for (int i = 0; i < nr; ++i)
     {
-        for (int j = 0; j < cols; ++j)
+        for (int j = 0; j < nc; ++j)
         {
             solution.at_local(i, j)
                 = std::complex<double>(1 + i + 2 * j, i - j);
@@ -195,26 +195,26 @@ Matrix2d<std::complex<double>> make_distributed_complex_solution(
 template <typename T>
 void check_distributed_solve(const Matrix2d<T>& host_matrix,
                              const Matrix2d<T>& host_solution,
-                             const int grid_rows,
-                             const int grid_cols,
-                             const int block_size)
+                             const int nrproc,
+                             const int ncproc,
+                             const int nrblk)
 {
     const Matrix2d<T> host_rhs = host_matrix.matmul(host_solution);
     Matrix2d<T> matrix(host_matrix.nrglb(),
                        host_matrix.ncglb(),
-                       grid_rows,
-                       grid_cols,
-                       block_size,
+                       nrproc,
+                       ncproc,
+                       nrblk,
                        MPI_COMM_WORLD);
     const std::shared_ptr<const Parallel_Blkcyclic> solution_dist
         = make_borrowed_distribution(host_solution.nrglb(),
                                      host_solution.ncglb(),
-                                     block_size,
+                                     nrblk,
                                      matrix.ictxt());
     const std::shared_ptr<const Parallel_Blkcyclic> rhs_dist
         = make_borrowed_distribution(host_rhs.nrglb(),
                                      host_rhs.ncglb(),
-                                     block_size,
+                                     nrblk,
                                      matrix.ictxt());
     Matrix2d<T> solution(solution_dist);
     Matrix2d<T> rhs(rhs_dist);
@@ -233,18 +233,18 @@ void check_distributed_solve(const Matrix2d<T>& host_matrix,
 
 template <typename T>
 void check_distributed_inverse(const Matrix2d<T>& host_matrix,
-                               const int grid_rows,
-                               const int grid_cols,
-                               const int block_size)
+                               const int nrproc,
+                               const int ncproc,
+                               const int nrblk)
 {
     Matrix2d<T> expected = host_matrix;
     matrix2d_linalg::inv(expected.view());
 
     Matrix2d<T> matrix(host_matrix.nrglb(),
                        host_matrix.ncglb(),
-                       grid_rows,
-                       grid_cols,
-                       block_size,
+                       nrproc,
+                       ncproc,
+                       nrblk,
                        MPI_COMM_WORLD);
     matrix.scatter(host_matrix);
     matrix2d_linalg::inv(matrix.view());
@@ -293,16 +293,16 @@ TEST(Matrix2dLinalgTest, HostComplexSolve)
 
 TEST(Matrix2dLinalgTest, SerialDistributionUsesLocalBackend)
 {
-    const std::shared_ptr<const Parallel_Blkcyclic> distribution
+    const std::shared_ptr<const Parallel_Blkcyclic> distrib
         = make_frozen_distribution(2, 2);
 
-    Matrix2d<double> matrix(distribution);
+    Matrix2d<double> matrix(distrib);
     matrix.at_local(0, 0) = 4.0;
     matrix.at_local(0, 1) = 1.0;
     matrix.at_local(1, 0) = 2.0;
     matrix.at_local(1, 1) = 3.0;
 
-    Matrix2d<double> rhs(distribution);
+    Matrix2d<double> rhs(distrib);
     rhs.at_local(0, 0) = 1.0;
     rhs.at_local(0, 1) = 2.0;
     rhs.at_local(1, 0) = 3.0;
@@ -312,7 +312,7 @@ TEST(Matrix2dLinalgTest, SerialDistributionUsesLocalBackend)
     matrix2d_linalg::solve(matrix.view(), rhs.view());
     expect_host_matrices_near(rhs, expected);
 
-    Matrix2d<double> inverse(distribution);
+    Matrix2d<double> inverse(distrib);
     inverse.at_local(0, 0) = 4.0;
     inverse.at_local(0, 1) = 1.0;
     inverse.at_local(1, 0) = 2.0;
@@ -391,14 +391,14 @@ TEST(Matrix2dLinalgTest, RejectsSingularAndMismatchedMatrices)
 TEST(Matrix2dLinalgTest, DistributedRealAndComplexSolve)
 {
     const int size = 5;
-    const int rhs_columns = 3;
+    const int nrhs = 3;
     const Matrix2d<double> real_matrix = make_distributed_real_system(size);
     const Matrix2d<double> real_solution
-        = make_distributed_real_solution(size, rhs_columns);
+        = make_distributed_real_solution(size, nrhs);
     const Matrix2d<std::complex<double>> complex_matrix
         = make_distributed_complex_system(size);
     const Matrix2d<std::complex<double>> complex_solution
-        = make_distributed_complex_solution(size, rhs_columns);
+        = make_distributed_complex_solution(size, nrhs);
     const std::vector<std::pair<int, int>> grids = available_process_grids();
     const int blocks[] = {2, 3};
     for (std::size_t grid_index = 0; grid_index < grids.size(); ++grid_index)

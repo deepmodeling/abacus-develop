@@ -22,12 +22,12 @@ void transpose(Matrix2dView<double> result,
     const double* source_data = source.data();
     const int ia = 1;
     const int ja = 1;
-    const int* source_descriptor = source.desc();
+    const int* desc_src = source.desc();
     const double beta = 0.0;
     double* result_data = result.data();
     const int ic = 1;
     const int jc = 1;
-    const int* result_descriptor = result.desc();
+    const int* desc_res = result.desc();
     ScalapackConnector::tranu(
         /* m= */ n,
         /* n= */ m,
@@ -35,12 +35,12 @@ void transpose(Matrix2dView<double> result,
         /* a= */ source_data,
         /* ia= */ ia,
         /* ja= */ ja,
-        /* desca= */ source_descriptor,
+        /* desca= */ desc_src,
         /* beta= */ beta,
         /* c= */ result_data,
         /* ic= */ ic,
         /* jc= */ jc,
-        /* descc= */ result_descriptor);
+        /* descc= */ desc_res);
 }
 
 void conjugate_transpose(Matrix2dView<double> result,
@@ -58,12 +58,12 @@ void transpose(Matrix2dView<std::complex<double>> result,
     const std::complex<double>* source_data = source.data();
     const int ia = 1;
     const int ja = 1;
-    const int* source_descriptor = source.desc();
+    const int* desc_src = source.desc();
     const std::complex<double> beta(0.0, 0.0);
     std::complex<double>* result_data = result.data();
     const int ic = 1;
     const int jc = 1;
-    const int* result_descriptor = result.desc();
+    const int* desc_res = result.desc();
     ScalapackConnector::tranu(
         /* m= */ n,
         /* n= */ m,
@@ -71,12 +71,12 @@ void transpose(Matrix2dView<std::complex<double>> result,
         /* a= */ source_data,
         /* ia= */ ia,
         /* ja= */ ja,
-        /* desca= */ source_descriptor,
+        /* desca= */ desc_src,
         /* beta= */ beta,
         /* c= */ result_data,
         /* ic= */ ic,
         /* jc= */ jc,
-        /* descc= */ result_descriptor);
+        /* descc= */ desc_res);
 }
 
 void conjugate_transpose(
@@ -89,12 +89,12 @@ void conjugate_transpose(
     const std::complex<double>* source_data = source.data();
     const int ia = 1;
     const int ja = 1;
-    const int* source_descriptor = source.desc();
+    const int* desc_src = source.desc();
     const std::complex<double> beta(0.0, 0.0);
     std::complex<double>* result_data = result.data();
     const int ic = 1;
     const int jc = 1;
-    const int* result_descriptor = result.desc();
+    const int* desc_res = result.desc();
     ScalapackConnector::tranc(
         /* m= */ n,
         /* n= */ m,
@@ -102,12 +102,12 @@ void conjugate_transpose(
         /* a= */ source_data,
         /* ia= */ ia,
         /* ja= */ ja,
-        /* desca= */ source_descriptor,
+        /* desca= */ desc_src,
         /* beta= */ beta,
         /* c= */ result_data,
         /* ic= */ ic,
         /* jc= */ jc,
-        /* descc= */ result_descriptor);
+        /* descc= */ desc_res);
 }
 
 namespace
@@ -143,8 +143,8 @@ void inv(Matrix2dView<double> matrix)
     const int n = matrix.nrglb();
     const int ia = 1;
     const int ja = 1;
-    const int* descriptor = matrix.desc();
-    const int pivot_size = matrix.nrloc() + descriptor[4];
+    const int* desc = matrix.desc();
+    const int pivot_size = matrix.nrloc() + desc[4];
     std::vector<int> ipiv(static_cast<std::size_t>(pivot_size));
     int info = 0;
     ScalapackConnector::getrf(n,
@@ -152,7 +152,7 @@ void inv(Matrix2dView<double> matrix)
                               matrix.data(),
                               ia,
                               ja,
-                              descriptor,
+                              desc,
                               ipiv.data(),
                               &info);
     check_scalapack_error("ScaLAPACK getrf", info);
@@ -165,7 +165,7 @@ void inv(Matrix2dView<double> matrix)
                               matrix.data(),
                               ia,
                               ja,
-                              descriptor,
+                              desc,
                               ipiv.data(),
                               work.data(),
                               &lwork,
@@ -181,7 +181,7 @@ void inv(Matrix2dView<double> matrix)
                               matrix.data(),
                               ia,
                               ja,
-                              descriptor,
+                              desc,
                               ipiv.data(),
                               work.data(),
                               &lwork,
@@ -196,8 +196,8 @@ void inv(Matrix2dView<std::complex<double>> matrix)
     const int n = matrix.nrglb();
     const int ia = 1;
     const int ja = 1;
-    const int* descriptor = matrix.desc();
-    const int pivot_size = matrix.nrloc() + descriptor[4];
+    const int* desc = matrix.desc();
+    const int pivot_size = matrix.nrloc() + desc[4];
     std::vector<int> ipiv(static_cast<std::size_t>(pivot_size));
     int info = 0;
     ScalapackConnector::getrf(n,
@@ -205,7 +205,7 @@ void inv(Matrix2dView<std::complex<double>> matrix)
                               matrix.data(),
                               ia,
                               ja,
-                              descriptor,
+                              desc,
                               ipiv.data(),
                               &info);
     check_scalapack_error("ScaLAPACK getrf", info);
@@ -218,7 +218,7 @@ void inv(Matrix2dView<std::complex<double>> matrix)
                               matrix.data(),
                               ia,
                               ja,
-                              descriptor,
+                              desc,
                               ipiv.data(),
                               work.data(),
                               &lwork,
@@ -234,7 +234,7 @@ void inv(Matrix2dView<std::complex<double>> matrix)
                               matrix.data(),
                               ia,
                               ja,
-                              descriptor,
+                              desc,
                               ipiv.data(),
                               work.data(),
                               &lwork,
@@ -311,16 +311,16 @@ void matmul(Matrix2dView<double> result,
     const double* left_data = left.data();
     const int ia = 1;
     const int ja = 1;
-    const int* left_descriptor = left.desc();
+    const int* desc_lhs = left.desc(); // lhs = left operand
     const double* right_data = right.data();
     const int ib = 1;
     const int jb = 1;
-    const int* right_descriptor = right.desc();
+    const int* desc_rhs = right.desc(); // rhs = right operand
     const double beta = 0.0;
     double* result_data = result.data();
     const int ic = 1;
     const int jc = 1;
-    const int* result_descriptor = result.desc();
+    const int* desc_res = result.desc();
     ScalapackConnector::gemm(
         /* transa= */ transa,
         /* transb= */ transb,
@@ -331,16 +331,16 @@ void matmul(Matrix2dView<double> result,
         /* A= */ left_data,
         /* IA= */ ia,
         /* JA= */ ja,
-        /* DESCA= */ left_descriptor,
+        /* DESCA= */ desc_lhs,
         /* B= */ right_data,
         /* IB= */ ib,
         /* JB= */ jb,
-        /* DESCB= */ right_descriptor,
+        /* DESCB= */ desc_rhs,
         /* beta= */ beta,
         /* C= */ result_data,
         /* IC= */ ic,
         /* JC= */ jc,
-        /* DESCC= */ result_descriptor);
+        /* DESCC= */ desc_res);
 }
 
 void matmul(Matrix2dView<std::complex<double>> result,
@@ -356,16 +356,16 @@ void matmul(Matrix2dView<std::complex<double>> result,
     const std::complex<double>* left_data = left.data();
     const int ia = 1;
     const int ja = 1;
-    const int* left_descriptor = left.desc();
+    const int* desc_lhs = left.desc();
     const std::complex<double>* right_data = right.data();
     const int ib = 1;
     const int jb = 1;
-    const int* right_descriptor = right.desc();
+    const int* desc_rhs = right.desc();
     const std::complex<double> beta(0.0, 0.0);
     std::complex<double>* result_data = result.data();
     const int ic = 1;
     const int jc = 1;
-    const int* result_descriptor = result.desc();
+    const int* desc_res = result.desc();
     ScalapackConnector::gemm(
         /* transa= */ transa,
         /* transb= */ transb,
@@ -376,16 +376,16 @@ void matmul(Matrix2dView<std::complex<double>> result,
         /* A= */ left_data,
         /* IA= */ ia,
         /* JA= */ ja,
-        /* DESCA= */ left_descriptor,
+        /* DESCA= */ desc_lhs,
         /* B= */ right_data,
         /* IB= */ ib,
         /* JB= */ jb,
-        /* DESCB= */ right_descriptor,
+        /* DESCB= */ desc_rhs,
         /* beta= */ beta,
         /* C= */ result_data,
         /* IC= */ ic,
         /* JC= */ jc,
-        /* DESCC= */ result_descriptor);
+        /* DESCC= */ desc_res);
 }
 
 } // namespace scalapack

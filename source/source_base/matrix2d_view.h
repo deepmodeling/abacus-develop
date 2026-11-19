@@ -61,14 +61,14 @@ class Matrix2dView
           desc_(nullptr),
           dist_(std::move(dist))
     {
-        const Parallel_Blkcyclic& distribution = checked_distribution(dist_);
-        nrglb_ = distribution.nrglb();
-        ncglb_ = distribution.ncglb();
-        nrloc_ = distribution.nrloc();
-        ncloc_ = distribution.ncloc();
-        lld_ = distribution.lld();
+        const Parallel_Blkcyclic& distrib = checked_distribution(dist_);
+        nrglb_ = distrib.nrglb();
+        ncglb_ = distrib.ncglb();
+        nrloc_ = distrib.nrloc();
+        ncloc_ = distrib.ncloc();
+        lld_ = distrib.lld();
 #ifdef __MPI
-        desc_ = distribution.desc();
+        desc_ = distrib.desc();
 #endif
     }
 

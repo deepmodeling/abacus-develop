@@ -358,13 +358,13 @@ class NDArray<T, 2> final
         assert(nrloc_ >= 0);
         assert(ncloc_ >= 0);
 
-        const int distribution_lld = dist_->lld();
-        const int lld = std::max(distribution_lld, 1);
-        const std::size_t leading_dimension = static_cast<std::size_t>(lld);
+        const int distrib_lld = dist_->lld();
+        const int lld = std::max(distrib_lld, 1);
+        const std::size_t ld = static_cast<std::size_t>(lld);
         // The actual BLACS/LAPACK buffer is column-major. The row-major extent
         // is kept in the maximum as a guard for local logical accesses.
         const std::size_t column_major_elements
-            = leading_dimension * static_cast<std::size_t>(ncloc_);
+            = ld * static_cast<std::size_t>(ncloc_);
         const std::size_t row_major_elements
             = static_cast<std::size_t>(nrloc_)
                 * static_cast<std::size_t>(ncloc_);

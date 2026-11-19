@@ -109,15 +109,15 @@ int checked_mpi_count(const std::size_t count)
 std::vector<int> make_byte_displacements(const std::vector<int>& counts)
 {
     std::vector<int> displacements(counts.size(), 0);
-    int displacement = 0;
+    int off = 0;
     for (std::size_t ip = 0; ip < counts.size(); ++ip)
     {
-        displacements[ip] = displacement;
-        if (counts[ip] > std::numeric_limits<int>::max() - displacement)
+        displacements[ip] = off;
+        if (counts[ip] > std::numeric_limits<int>::max() - off)
         {
             throw std::invalid_argument("Matrix2d diagonal payload size overflow");
         }
-        displacement += counts[ip];
+        off += counts[ip];
     }
     return displacements;
 }
@@ -126,17 +126,17 @@ std::vector<int> make_byte_displacements(const std::vector<int>& counts)
 std::vector<int> gather_byte_counts(const int local_count, const MPI_Comm comm)
 {
     const int nproc = Parallel_Common::comm_size(comm);
-    const std::vector<int> receive_counts(
+    const std::vector<int> recv(
         static_cast<std::size_t>(nproc),
         checked_mpi_count(sizeof(int)));
-    const std::vector<int> receive_displacements
-        = make_byte_displacements(receive_counts);
+    const std::vector<int> rdispls
+        = make_byte_displacements(recv);
     std::vector<int> counts(static_cast<std::size_t>(nproc), 0);
     Parallel_Common::allgatherv_bytes(&local_count,
                                       checked_mpi_count(sizeof(local_count)),
                                       counts.data(),
-                                      receive_counts.data(),
-                                      receive_displacements.data(),
+                                      recv.data(),
+                                      rdispls.data(),
                                       comm);
     return counts;
 }
@@ -322,27 +322,27 @@ std::vector<T> diagonal(const Matrix2d<T>& matrix)
             }
 
             const int local_count = checked_mpi_count(local_payload.size());
-            const std::vector<int> payload_counts
+            const std::vector<int> pcounts
                 = gather_byte_counts(local_count, comm);
-            const std::vector<int> payload_displacements
-                = make_byte_displacements(payload_counts);
+            const std::vector<int> pdispls
+                = make_byte_displacements(pcounts);
             const int total_bytes
-                = payload_displacements.back() + payload_counts.back();
+                = pdispls.back() + pcounts.back();
             std::vector<unsigned char> received(
                 static_cast<std::size_t>(total_bytes));
             Parallel_Common::allgatherv_bytes(local_payload.data(),
                                               local_count,
                                               received.data(),
-                                              payload_counts.data(),
-                                              payload_displacements.data(),
+                                              pcounts.data(),
+                                              pdispls.data(),
                                               comm);
 
-            for (std::size_t ip = 0; ip < payload_counts.size(); ++ip)
+            for (std::size_t ip = 0; ip < pcounts.size(); ++ip)
             {
                 const std::size_t begin
-                    = static_cast<std::size_t>(payload_displacements[ip]);
+                    = static_cast<std::size_t>(pdispls[ip]);
                 const std::size_t end
-                    = begin + static_cast<std::size_t>(payload_counts[ip]);
+                    = begin + static_cast<std::size_t>(pcounts[ip]);
                 if (end - begin < sizeof(int))
                 {
                     throw std::runtime_error(

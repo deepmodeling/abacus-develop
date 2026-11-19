@@ -142,16 +142,16 @@ void check_host_layout()
     EXPECT_EQ(matrix.data(), &matrix.at_local(0, 0));
 
     double value = 1.0;
-    for (int row = 0; row < 2; ++row)
+    for (int ir = 0; ir < 2; ++ir)
     {
-        for (int col = 0; col < 3; ++col)
+        for (int ic = 0; ic < 3; ++ic)
         {
-            const std::size_t expected_index = static_cast<std::size_t>(row) * 3U
-                + static_cast<std::size_t>(col);
-            EXPECT_EQ(&matrix.at_local(row, col), matrix.data() + expected_index);
-            EXPECT_EQ(&matrix.at_global(row, col), &matrix.at_local(row, col));
-            EXPECT_TRUE(matrix.owns_global_index(row, col));
-            matrix.at_local(row, col) = value;
+            const std::size_t expected_index = static_cast<std::size_t>(ir) * 3U
+                + static_cast<std::size_t>(ic);
+            EXPECT_EQ(&matrix.at_local(ir, ic), matrix.data() + expected_index);
+            EXPECT_EQ(&matrix.at_global(ir, ic), &matrix.at_local(ir, ic));
+            EXPECT_TRUE(matrix.owns_global_index(ir, ic));
+            matrix.at_local(ir, ic) = value;
             value += 1.0;
         }
     }
@@ -170,59 +170,59 @@ void check_host_layout()
 }
 
 void check_distribution_layout(Matrix2d<double>& matrix,
-                               const int global_rows,
-                               const int global_cols)
+                               const int nrglb,
+                               const int ncglb)
 {
-    const std::shared_ptr<const Parallel_Blkcyclic>& distribution
+    const std::shared_ptr<const Parallel_Blkcyclic>& distrib
         = matrix.distribution();
-    ASSERT_NE(distribution, nullptr);
-    EXPECT_EQ(matrix.nrglb(), global_rows);
-    EXPECT_EQ(matrix.ncglb(), global_cols);
-    EXPECT_EQ(matrix.nrloc(), distribution->nrloc());
-    EXPECT_EQ(matrix.ncloc(), distribution->ncloc());
+    ASSERT_NE(distrib, nullptr);
+    EXPECT_EQ(matrix.nrglb(), nrglb);
+    EXPECT_EQ(matrix.ncglb(), ncglb);
+    EXPECT_EQ(matrix.nrloc(), distrib->nrloc());
+    EXPECT_EQ(matrix.ncloc(), distrib->ncloc());
     EXPECT_EQ(matrix.size(),
-              distribution->size());
-    EXPECT_EQ(matrix.nrproc(), distribution->nrproc());
-    EXPECT_EQ(matrix.ncproc(), distribution->ncproc());
-    EXPECT_EQ(matrix.irproc(), distribution->irproc());
-    EXPECT_EQ(matrix.icproc(), distribution->icproc());
-    EXPECT_EQ(matrix.lld(), distribution->lld());
+              distrib->size());
+    EXPECT_EQ(matrix.nrproc(), distrib->nrproc());
+    EXPECT_EQ(matrix.ncproc(), distrib->ncproc());
+    EXPECT_EQ(matrix.irproc(), distrib->irproc());
+    EXPECT_EQ(matrix.icproc(), distrib->icproc());
+    EXPECT_EQ(matrix.lld(), distrib->lld());
 
-    const int local_rows = matrix.nrloc();
-    const int local_cols = matrix.ncloc();
-    const std::size_t leading_dimension
+    const int nrloc = matrix.nrloc();
+    const int ncloc = matrix.ncloc();
+    const std::size_t lld
         = static_cast<std::size_t>(matrix.lld());
-    for (int local_row = 0; local_row < local_rows; ++local_row)
+    for (int irloc = 0; irloc < nrloc; ++irloc)
     {
-        for (int local_col = 0; local_col < local_cols; ++local_col)
+        for (int icloc = 0; icloc < ncloc; ++icloc)
         {
             const std::size_t expected_index
-                = static_cast<std::size_t>(local_col) * leading_dimension
-                + static_cast<std::size_t>(local_row);
-            EXPECT_EQ(&matrix.at_local(local_row, local_col), matrix.data() + expected_index);
+                = static_cast<std::size_t>(icloc) * lld
+                + static_cast<std::size_t>(irloc);
+            EXPECT_EQ(&matrix.at_local(irloc, icloc), matrix.data() + expected_index);
         }
     }
 
-    for (int global_row = 0; global_row < global_rows; ++global_row)
+    for (int irglb = 0; irglb < nrglb; ++irglb)
     {
-        for (int global_col = 0; global_col < global_cols; ++global_col)
+        for (int icglb = 0; icglb < ncglb; ++icglb)
         {
-            const bool expected_owner = distribution->in_this_processor(global_row, global_col);
-            EXPECT_EQ(matrix.owns_global_index(global_row, global_col), expected_owner);
+            const bool expected_owner = distrib->in_this_processor(irglb, icglb);
+            EXPECT_EQ(matrix.owns_global_index(irglb, icglb), expected_owner);
             if (!expected_owner)
             {
                 continue;
             }
 
-            const int local_row = distribution->irloc(global_row);
-            const int local_col = distribution->icloc(global_col);
-            ASSERT_NE(local_row, -1);
-            ASSERT_NE(local_col, -1);
-            EXPECT_EQ(&matrix.at_global(global_row, global_col),
-                      &matrix.at_local(local_row, local_col));
-            const double value = static_cast<double>(global_row * global_cols + global_col);
-            matrix.at_global(global_row, global_col) = value;
-            EXPECT_EQ(matrix.at_local(local_row, local_col), value);
+            const int irloc = distrib->irloc(irglb);
+            const int icloc = distrib->icloc(icglb);
+            ASSERT_NE(irloc, -1);
+            ASSERT_NE(icloc, -1);
+            EXPECT_EQ(&matrix.at_global(irglb, icglb),
+                      &matrix.at_local(irloc, icloc));
+            const double value = static_cast<double>(irglb * ncglb + icglb);
+            matrix.at_global(irglb, icglb) = value;
+            EXPECT_EQ(matrix.at_local(irloc, icloc), value);
         }
     }
 
@@ -232,9 +232,9 @@ void check_distribution_layout(Matrix2d<double>& matrix,
 
 #ifdef __MPI
 void check_mpi_descriptor(Matrix2d<double>& matrix,
-                          const int global_rows,
-                          const int global_cols,
-                          const int block_size)
+                          const int nrglb,
+                          const int ncglb,
+                          const int nrblk)
 {
     constexpr int DESCRIPTOR_MATRIX_TYPE_INDEX = 0;
     constexpr int DESCRIPTOR_BLACS_CONTEXT_INDEX = 1;
@@ -244,15 +244,15 @@ void check_mpi_descriptor(Matrix2d<double>& matrix,
     constexpr int DESCRIPTOR_BLOCK_COLS_INDEX = 5;
     constexpr int DESCRIPTOR_LEADING_DIM_INDEX = 8;
 
-    const int* const descriptor = matrix.desc();
-    ASSERT_NE(descriptor, nullptr);
-    EXPECT_EQ(descriptor[DESCRIPTOR_MATRIX_TYPE_INDEX], 1);
-    EXPECT_EQ(descriptor[DESCRIPTOR_BLACS_CONTEXT_INDEX], matrix.ictxt());
-    EXPECT_EQ(descriptor[DESCRIPTOR_GLOBAL_ROWS_INDEX], global_rows);
-    EXPECT_EQ(descriptor[DESCRIPTOR_GLOBAL_COLS_INDEX], global_cols);
-    EXPECT_EQ(descriptor[DESCRIPTOR_BLOCK_ROWS_INDEX], block_size);
-    EXPECT_EQ(descriptor[DESCRIPTOR_BLOCK_COLS_INDEX], block_size);
-    EXPECT_EQ(descriptor[DESCRIPTOR_LEADING_DIM_INDEX], matrix.lld());
+    const int* const desc = matrix.desc();
+    ASSERT_NE(desc, nullptr);
+    EXPECT_EQ(desc[DESCRIPTOR_MATRIX_TYPE_INDEX], 1);
+    EXPECT_EQ(desc[DESCRIPTOR_BLACS_CONTEXT_INDEX], matrix.ictxt());
+    EXPECT_EQ(desc[DESCRIPTOR_GLOBAL_ROWS_INDEX], nrglb);
+    EXPECT_EQ(desc[DESCRIPTOR_GLOBAL_COLS_INDEX], ncglb);
+    EXPECT_EQ(desc[DESCRIPTOR_BLOCK_ROWS_INDEX], nrblk);
+    EXPECT_EQ(desc[DESCRIPTOR_BLOCK_COLS_INDEX], nrblk);
+    EXPECT_EQ(desc[DESCRIPTOR_LEADING_DIM_INDEX], matrix.lld());
     EXPECT_GE(matrix.ictxt(), 0);
     EXPECT_EQ(matrix.nrproc() * matrix.ncproc(),
               Parallel_Common::comm_size(MPI_COMM_WORLD));
@@ -285,18 +285,18 @@ double reduction_tolerance<std::complex<double>>()
 }
 
 template <typename T>
-T test_value(const int row, const int col, const double offset)
+T test_value(const int ir, const int ic, const double offset)
 {
-    return static_cast<T>(offset + 0.5 + 1.25 * row - 0.75 * col);
+    return static_cast<T>(offset + 0.5 + 1.25 * ir - 0.75 * ic);
 }
 
 template <>
-std::complex<double> test_value<std::complex<double>>(const int row,
-                                                       const int col,
+std::complex<double> test_value<std::complex<double>>(const int ir,
+                                                       const int ic,
                                                        const double offset)
 {
-    return std::complex<double>(offset + 0.5 + 1.25 * row - 0.75 * col,
-                                0.25 - 0.5 * row + 0.875 * col);
+    return std::complex<double>(offset + 0.5 + 1.25 * ir - 0.75 * ic,
+                                0.25 - 0.5 * ir + 0.875 * ic);
 }
 
 template <typename T>
@@ -370,29 +370,29 @@ void expect_scalar_near<std::complex<double>>(
 template <typename T>
 void fill_global_values(Matrix2d<T>& matrix, const double offset = 0.0)
 {
-    for (int row = 0; row < matrix.nrglb(); ++row)
+    for (int ir = 0; ir < matrix.nrglb(); ++ir)
     {
-        for (int col = 0; col < matrix.ncglb(); ++col)
+        for (int ic = 0; ic < matrix.ncglb(); ++ic)
         {
-            if (matrix.owns_global_index(row, col))
+            if (matrix.owns_global_index(ir, ic))
             {
-                matrix.at_global(row, col) = test_value<T>(row, col, offset);
+                matrix.at_global(ir, ic) = test_value<T>(ir, ic, offset);
             }
         }
     }
 }
 
 template <typename T>
-Matrix2d<T> make_host_reference(const int rows,
-                                const int cols,
+Matrix2d<T> make_host_reference(const int nr,
+                                const int nc,
                                 const double offset = 0.0)
 {
-    Matrix2d<T> reference(rows, cols);
-    for (int row = 0; row < rows; ++row)
+    Matrix2d<T> reference(nr, nc);
+    for (int ir = 0; ir < nr; ++ir)
     {
-        for (int col = 0; col < cols; ++col)
+        for (int ic = 0; ic < nc; ++ic)
         {
-            reference.at_local(row, col) = test_value<T>(row, col, offset);
+            reference.at_local(ir, ic) = test_value<T>(ir, ic, offset);
         }
     }
     return reference;
@@ -404,16 +404,16 @@ void verify_global_matrix(const Matrix2d<T>& actual, const Matrix2d<T>& expected
     ASSERT_FALSE(actual.is_distributed());
     ASSERT_EQ(actual.nrglb(), expected.nrglb());
     ASSERT_EQ(actual.ncglb(), expected.ncglb());
-    for (int row = 0; row < expected.nrglb(); ++row)
+    for (int ir = 0; ir < expected.nrglb(); ++ir)
     {
-        for (int col = 0; col < expected.ncglb(); ++col)
+        for (int ic = 0; ic < expected.ncglb(); ++ic)
         {
             const std::size_t c_order_index
-                = static_cast<std::size_t>(row)
+                = static_cast<std::size_t>(ir)
                     * static_cast<std::size_t>(expected.ncglb())
-                + static_cast<std::size_t>(col);
+                + static_cast<std::size_t>(ic);
             expect_scalar_near(actual.data()[c_order_index],
-                               expected.at_local(row, col));
+                               expected.at_local(ir, ic));
         }
     }
 }
@@ -421,97 +421,97 @@ void verify_global_matrix(const Matrix2d<T>& actual, const Matrix2d<T>& expected
 template <typename T>
 void check_elementwise_operations(Matrix2d<T>& matrix, Matrix2d<T>& other)
 {
-    const int rows = matrix.nrglb();
-    const int cols = matrix.ncglb();
+    const int nr = matrix.nrglb();
+    const int nc = matrix.ncglb();
 
     Matrix2d<T> filled = matrix;
     const T fill_value = constant_value<T>(3.5);
     filled.fill(fill_value);
-    Matrix2d<T> expected(rows, cols);
+    Matrix2d<T> expected(nr, nc);
     expected.fill(fill_value);
     verify_global_matrix(filled.gather(), expected);
 
     filled = matrix;
     filled.scale(constant_value<T>(2.5));
-    expected = make_host_reference<T>(rows, cols);
-    for (int row = 0; row < rows; ++row)
+    expected = make_host_reference<T>(nr, nc);
+    for (int ir = 0; ir < nr; ++ir)
     {
-        for (int col = 0; col < cols; ++col)
+        for (int ic = 0; ic < nc; ++ic)
         {
-            expected.at_local(row, col) *= constant_value<T>(2.5);
+            expected.at_local(ir, ic) *= constant_value<T>(2.5);
         }
     }
     verify_global_matrix(filled.gather(), expected);
 
     filled = matrix;
     filled += other;
-    expected = make_host_reference<T>(rows, cols);
-    Matrix2d<T> expected_other = make_host_reference<T>(rows, cols, 10.0);
-    for (int row = 0; row < rows; ++row)
+    expected = make_host_reference<T>(nr, nc);
+    Matrix2d<T> expected_other = make_host_reference<T>(nr, nc, 10.0);
+    for (int ir = 0; ir < nr; ++ir)
     {
-        for (int col = 0; col < cols; ++col)
+        for (int ic = 0; ic < nc; ++ic)
         {
-            expected.at_local(row, col) += expected_other.at_local(row, col);
+            expected.at_local(ir, ic) += expected_other.at_local(ir, ic);
         }
     }
     verify_global_matrix(filled.gather(), expected);
 
     filled = matrix;
     filled -= other;
-    expected = make_host_reference<T>(rows, cols);
-    for (int row = 0; row < rows; ++row)
+    expected = make_host_reference<T>(nr, nc);
+    for (int ir = 0; ir < nr; ++ir)
     {
-        for (int col = 0; col < cols; ++col)
+        for (int ic = 0; ic < nc; ++ic)
         {
-            expected.at_local(row, col) -= expected_other.at_local(row, col);
+            expected.at_local(ir, ic) -= expected_other.at_local(ir, ic);
         }
     }
     verify_global_matrix(filled.gather(), expected);
 
     filled = matrix;
     filled *= other;
-    expected = make_host_reference<T>(rows, cols);
-    for (int row = 0; row < rows; ++row)
+    expected = make_host_reference<T>(nr, nc);
+    for (int ir = 0; ir < nr; ++ir)
     {
-        for (int col = 0; col < cols; ++col)
+        for (int ic = 0; ic < nc; ++ic)
         {
-            expected.at_local(row, col) *= expected_other.at_local(row, col);
+            expected.at_local(ir, ic) *= expected_other.at_local(ir, ic);
         }
     }
     verify_global_matrix(filled.gather(), expected);
 
     filled = matrix;
     filled.conjugate();
-    expected = make_host_reference<T>(rows, cols);
-    for (int row = 0; row < rows; ++row)
+    expected = make_host_reference<T>(nr, nc);
+    for (int ir = 0; ir < nr; ++ir)
     {
-        for (int col = 0; col < cols; ++col)
+        for (int ic = 0; ic < nc; ++ic)
         {
-            expected.at_local(row, col)
-                = conjugate_value(expected.at_local(row, col));
+            expected.at_local(ir, ic)
+                = conjugate_value(expected.at_local(ir, ic));
         }
     }
     verify_global_matrix(filled.gather(), expected);
 
-    Matrix2d<double> expected_real(rows, cols);
-    Matrix2d<double> expected_imag(rows, cols);
-    const Matrix2d<T> matrix_reference = make_host_reference<T>(rows, cols);
-    for (int row = 0; row < rows; ++row)
+    Matrix2d<double> expected_real(nr, nc);
+    Matrix2d<double> expected_imag(nr, nc);
+    const Matrix2d<T> matrix_reference = make_host_reference<T>(nr, nc);
+    for (int ir = 0; ir < nr; ++ir)
     {
-        for (int col = 0; col < cols; ++col)
+        for (int ic = 0; ic < nc; ++ic)
         {
-            const T& value = matrix_reference.at_local(row, col);
-            expected_real.at_local(row, col) = real_part(value);
-            expected_imag.at_local(row, col) = imaginary_part(value);
+            const T& value = matrix_reference.at_local(ir, ic);
+            expected_real.at_local(ir, ic) = real_part(value);
+            expected_imag.at_local(ir, ic) = imaginary_part(value);
         }
     }
 
     Matrix2d<double> real_output = matrix.is_distributed()
         ? Matrix2d<double>(matrix.distribution())
-        : Matrix2d<double>(rows, cols);
+        : Matrix2d<double>(nr, nc);
     Matrix2d<double> imaginary_output = matrix.is_distributed()
         ? Matrix2d<double>(matrix.distribution())
-        : Matrix2d<double>(rows, cols);
+        : Matrix2d<double>(nr, nc);
     matrix.real(real_output);
     matrix.imag(imaginary_output);
     verify_global_matrix(real_output.gather(), expected_real);
@@ -534,12 +534,12 @@ void check_reductions(Matrix2d<T>& matrix, Matrix2d<T>& other)
     T reference_dot = T();
     double reference_sum_squares = 0.0;
     double reference_max_abs = 0.0;
-    for (int row = 0; row < matrix.nrglb(); ++row)
+    for (int ir = 0; ir < matrix.nrglb(); ++ir)
     {
-        for (int col = 0; col < matrix.ncglb(); ++col)
+        for (int ic = 0; ic < matrix.ncglb(); ++ic)
         {
-            const T& value = matrix_reference.at_local(row, col);
-            const T& other_value = other_reference.at_local(row, col);
+            const T& value = matrix_reference.at_local(ir, ic);
+            const T& other_value = other_reference.at_local(ir, ic);
             reference_sum += value;
             reference_dot += conjugate_value(value) * other_value;
             reference_sum_squares += real_part(value) * real_part(value)
@@ -570,19 +570,19 @@ void check_reductions(Matrix2d<T>& matrix, Matrix2d<T>& other)
 template <typename T>
 void check_gather_scatter(Matrix2d<T>& matrix)
 {
-    const int rows = matrix.nrglb();
-    const int cols = matrix.ncglb();
-    const Matrix2d<T> expected = make_host_reference<T>(rows, cols);
+    const int nr = matrix.nrglb();
+    const int nc = matrix.ncglb();
+    const Matrix2d<T> expected = make_host_reference<T>(nr, nc);
     const Matrix2d<T> gathered = matrix.gather();
     verify_global_matrix(gathered, expected);
     EXPECT_EQ(std::memcmp(gathered.data(),
                           expected.data(),
-                          static_cast<std::size_t>(rows * cols) * sizeof(T)),
+                          static_cast<std::size_t>(nr * nc) * sizeof(T)),
               0);
     const Matrix2d<T> gathered_again = matrix.gather();
     EXPECT_EQ(std::memcmp(gathered.data(),
                           gathered_again.data(),
-                          static_cast<std::size_t>(rows * cols) * sizeof(T)),
+                          static_cast<std::size_t>(nr * nc) * sizeof(T)),
               0);
 
     Matrix2d<T> restored(matrix.distribution());
@@ -592,9 +592,9 @@ void check_gather_scatter(Matrix2d<T>& matrix)
 
 #ifdef __MPI
     const int rank = Parallel_Common::comm_rank(MPI_COMM_WORLD);
-    const int root_rank = Parallel_Common::comm_size(MPI_COMM_WORLD) - 1;
-    const Matrix2d<T> root_result = matrix.gather_on_root(root_rank);
-    if (rank == root_rank)
+    const int root = Parallel_Common::comm_size(MPI_COMM_WORLD) - 1;
+    const Matrix2d<T> root_result = matrix.gather_on_root(root);
+    if (rank == root)
     {
         verify_global_matrix(root_result, expected);
     }
@@ -608,17 +608,17 @@ void check_gather_scatter(Matrix2d<T>& matrix)
     }
 #endif
 
-    Matrix2d<T> wrong_shape(rows + 1, cols);
+    Matrix2d<T> wrong_shape(nr + 1, nc);
     EXPECT_THROW(restored.scatter(wrong_shape), std::invalid_argument);
 }
 
 template <typename T>
 std::size_t expected_local_storage_size(const Matrix2d<T>& matrix)
 {
-    const int lld = matrix.lld();
-    const int leading_dimension = std::max(lld, 1);
+    const int lld_dist = matrix.lld();
+    const int lld = std::max(lld_dist, 1);
     const std::size_t column_major_elements
-        = static_cast<std::size_t>(leading_dimension)
+        = static_cast<std::size_t>(lld)
             * static_cast<std::size_t>(matrix.ncloc());
     const std::size_t row_major_elements
         = static_cast<std::size_t>(matrix.nrloc())
@@ -633,20 +633,20 @@ template <typename T>
 std::vector<std::size_t> set_padding_sentinel(Matrix2d<T>& matrix,
                                                const T& sentinel)
 {
-    const int local_rows = matrix.nrloc();
-    const int local_cols = matrix.ncloc();
-    const int lld = matrix.lld();
-    const std::size_t leading_dimension = static_cast<std::size_t>(lld);
+    const int nrloc = matrix.nrloc();
+    const int ncloc = matrix.ncloc();
+    const int lld_dist = matrix.lld();
+    const std::size_t lld = static_cast<std::size_t>(lld_dist);
     const std::size_t storage_elements = expected_local_storage_size(matrix);
     std::vector<unsigned char> is_logical(storage_elements, 0);
     std::vector<std::size_t> padding_indices;
-    for (int local_col = 0; local_col < local_cols; ++local_col)
+    for (int icloc = 0; icloc < ncloc; ++icloc)
     {
-        for (int local_row = 0; local_row < local_rows; ++local_row)
+        for (int irloc = 0; irloc < nrloc; ++irloc)
         {
             const std::size_t index
-                = static_cast<std::size_t>(local_col) * leading_dimension
-                    + static_cast<std::size_t>(local_row);
+                = static_cast<std::size_t>(icloc) * lld
+                    + static_cast<std::size_t>(irloc);
             is_logical[index] = 1;
         }
     }
@@ -680,20 +680,20 @@ std::vector<std::pair<int, int>> available_process_grids()
 {
     std::vector<std::pair<int, int>> grids;
 #ifdef __MPI
-    const int number_of_ranks = Parallel_Common::comm_size(MPI_COMM_WORLD);
+    const int nproc = Parallel_Common::comm_size(MPI_COMM_WORLD);
 #else
-    const int number_of_ranks = 1;
+    const int nproc = 1;
 #endif
-    if (number_of_ranks == 1)
+    if (nproc == 1)
     {
         grids.push_back(std::make_pair(1, 1));
     }
-    if (number_of_ranks == 2)
+    if (nproc == 2)
     {
         grids.push_back(std::make_pair(1, 2));
         grids.push_back(std::make_pair(2, 1));
     }
-    if (number_of_ranks == 4)
+    if (nproc == 4)
     {
         grids.push_back(std::make_pair(1, 4));
         grids.push_back(std::make_pair(2, 2));
@@ -705,15 +705,15 @@ std::vector<std::pair<int, int>> available_process_grids()
 template <typename T>
 Matrix2d<T> make_transpose_reference(const Matrix2d<T>& source)
 {
-    const int source_rows = source.nrglb();
-    const int source_cols = source.ncglb();
-    Matrix2d<T> reference(source_cols, source_rows);
-    for (int row = 0; row < source_rows; ++row)
+    const int nr = source.nrglb();
+    const int nc = source.ncglb();
+    Matrix2d<T> reference(nc, nr);
+    for (int ir = 0; ir < nr; ++ir)
     {
-        for (int col = 0; col < source_cols; ++col)
+        for (int ic = 0; ic < nc; ++ic)
         {
-            reference.at_local(col, row)
-                = source.at_local(row, col);
+            reference.at_local(ic, ir)
+                = source.at_local(ir, ic);
         }
     }
     return reference;
@@ -722,15 +722,15 @@ Matrix2d<T> make_transpose_reference(const Matrix2d<T>& source)
 template <typename T>
 Matrix2d<T> make_dagger_reference(const Matrix2d<T>& source)
 {
-    const int source_rows = source.nrglb();
-    const int source_cols = source.ncglb();
-    Matrix2d<T> reference(source_cols, source_rows);
-    for (int row = 0; row < source_rows; ++row)
+    const int nr = source.nrglb();
+    const int nc = source.ncglb();
+    Matrix2d<T> reference(nc, nr);
+    for (int ir = 0; ir < nr; ++ir)
     {
-        for (int col = 0; col < source_cols; ++col)
+        for (int ic = 0; ic < nc; ++ic)
         {
-            reference.at_local(col, row)
-                = conjugate_value(source.at_local(row, col));
+            reference.at_local(ic, ir)
+                = conjugate_value(source.at_local(ir, ic));
         }
     }
     return reference;
@@ -740,45 +740,45 @@ template <typename T>
 Matrix2d<T> make_matmul_reference(const Matrix2d<T>& left,
                                   const Matrix2d<T>& right)
 {
-    const int rows = left.nrglb();
-    const int shared = left.ncglb();
-    const int cols = right.ncglb();
-    Matrix2d<T> reference(rows, cols);
-    for (int row = 0; row < rows; ++row)
+    const int m = left.nrglb();
+    const int k = left.ncglb();
+    const int n = right.ncglb();
+    Matrix2d<T> reference(m, n);
+    for (int ir = 0; ir < m; ++ir)
     {
-        for (int col = 0; col < cols; ++col)
+        for (int ic = 0; ic < n; ++ic)
         {
             T value = T();
-            for (int inner = 0; inner < shared; ++inner)
+            for (int kk = 0; kk < k; ++kk)
             {
-                value += left.at_local(row, inner) * right.at_local(inner, col);
+                value += left.at_local(ir, kk) * right.at_local(kk, ic);
             }
-            reference.at_local(row, col) = value;
+            reference.at_local(ir, ic) = value;
         }
     }
     return reference;
 }
 
 template <typename T>
-Matrix2d<T> make_host_transpose_reference(const int rows,
-                                          const int cols)
+Matrix2d<T> make_host_transpose_reference(const int nr,
+                                          const int nc)
 {
-    return make_transpose_reference(make_host_reference<T>(rows, cols));
+    return make_transpose_reference(make_host_reference<T>(nr, nc));
 }
 
 template <typename T>
-Matrix2d<T> make_host_matmul_reference(const int left_rows,
-                                       const int shared_cols,
-                                       const int right_cols)
+Matrix2d<T> make_host_matmul_reference(const int m,
+                                       const int k,
+                                       const int n)
 {
-    return make_matmul_reference(make_host_reference<T>(left_rows, shared_cols),
-                                 make_host_reference<T>(shared_cols, right_cols, 10.0));
+    return make_matmul_reference(make_host_reference<T>(m, k),
+                                 make_host_reference<T>(k, n, 10.0));
 }
 
 template <typename T>
-void check_host_transpose(const int rows, const int cols)
+void check_host_transpose(const int nr, const int nc)
 {
-    const Matrix2d<T> source = make_host_reference<T>(rows, cols);
+    const Matrix2d<T> source = make_host_reference<T>(nr, nc);
     const Matrix2d<T> transposed = source.transpose();
     const Matrix2d<T> dagger = source.dagger();
     const Matrix2d<T> expected_transpose = make_transpose_reference(source);
@@ -788,19 +788,19 @@ void check_host_transpose(const int rows, const int cols)
     verify_global_matrix(dagger, expected_dagger);
     EXPECT_FALSE(transposed.is_distributed());
     EXPECT_FALSE(dagger.is_distributed());
-    EXPECT_EQ(transposed.nrglb(), cols);
-    EXPECT_EQ(transposed.ncglb(), rows);
-    EXPECT_EQ(dagger.nrglb(), cols);
-    EXPECT_EQ(dagger.ncglb(), rows);
+    EXPECT_EQ(transposed.nrglb(), nc);
+    EXPECT_EQ(transposed.ncglb(), nr);
+    EXPECT_EQ(dagger.nrglb(), nc);
+    EXPECT_EQ(dagger.ncglb(), nr);
 }
 
 template <typename T>
-void check_host_matmul(const int left_rows,
-                       const int shared_cols,
-                       const int right_cols)
+void check_host_matmul(const int m,
+                       const int k,
+                       const int n)
 {
-    const Matrix2d<T> left = make_host_reference<T>(left_rows, shared_cols);
-    const Matrix2d<T> right = make_host_reference<T>(shared_cols, right_cols, 10.0);
+    const Matrix2d<T> left = make_host_reference<T>(m, k);
+    const Matrix2d<T> right = make_host_reference<T>(k, n, 10.0);
     const Matrix2d<T> product = left.matmul(right);
     const Matrix2d<T> expected = make_matmul_reference(left, right);
 
@@ -811,125 +811,125 @@ void check_host_matmul(const int left_rows,
 #ifdef __MPI
 template <typename T>
 void check_mpi_descriptor_for_type(const Matrix2d<T>& matrix,
-                                   const int global_rows,
-                                   const int global_cols,
-                                   const int block_size)
+                                   const int nrglb,
+                                   const int ncglb,
+                                   const int nrblk)
 {
-    const int* const descriptor = matrix.desc();
-    ASSERT_NE(descriptor, nullptr);
-    EXPECT_EQ(descriptor[0], 1);
-    EXPECT_EQ(descriptor[1], matrix.ictxt());
-    EXPECT_EQ(descriptor[2], global_rows);
-    EXPECT_EQ(descriptor[3], global_cols);
-    EXPECT_EQ(descriptor[4], block_size);
-    EXPECT_EQ(descriptor[5], block_size);
-    EXPECT_EQ(descriptor[6], 0);
-    EXPECT_EQ(descriptor[7], 0);
-    EXPECT_GT(descriptor[8], 0);
+    const int* const desc = matrix.desc();
+    ASSERT_NE(desc, nullptr);
+    EXPECT_EQ(desc[0], 1);
+    EXPECT_EQ(desc[1], matrix.ictxt());
+    EXPECT_EQ(desc[2], nrglb);
+    EXPECT_EQ(desc[3], ncglb);
+    EXPECT_EQ(desc[4], nrblk);
+    EXPECT_EQ(desc[5], nrblk);
+    EXPECT_EQ(desc[6], 0);
+    EXPECT_EQ(desc[7], 0);
+    EXPECT_GT(desc[8], 0);
 }
 
 template <typename T>
-void check_distributed_transpose(const int rows,
-                                 const int cols,
-                                 const int grid_rows,
-                                 const int grid_cols,
-                                 const int block_size)
+void check_distributed_transpose(const int nr,
+                                 const int nc,
+                                 const int nrproc,
+                                 const int ncproc,
+                                 const int nrblk)
 {
-    Matrix2d<T> source(rows,
-                       cols,
-                       grid_rows,
-                       grid_cols,
-                       block_size,
+    Matrix2d<T> source(nr,
+                       nc,
+                       nrproc,
+                       ncproc,
+                       nrblk,
                        MPI_COMM_WORLD);
     fill_global_values(source);
-    const int* const source_descriptor_before = source.desc();
+    const int* const desc_src0 = source.desc();
 
     const Matrix2d<T> transposed = source.transpose();
     const Matrix2d<T> dagger = source.dagger();
-    const int* const source_descriptor_after = source.desc();
-    const int* const result_descriptor = transposed.desc();
-    const int* const dagger_descriptor = dagger.desc();
+    const int* const desc_src1 = source.desc();
+    const int* const desc_res = transposed.desc();
+    const int* const desc_dag = dagger.desc();
 
     ASSERT_TRUE(transposed.is_distributed());
     ASSERT_TRUE(dagger.is_distributed());
-    EXPECT_EQ(source_descriptor_after, source_descriptor_before);
-    EXPECT_NE(result_descriptor, nullptr);
-    EXPECT_NE(dagger_descriptor, nullptr);
+    EXPECT_EQ(desc_src1, desc_src0);
+    EXPECT_NE(desc_res, nullptr);
+    EXPECT_NE(desc_dag, nullptr);
     EXPECT_EQ(source.ictxt(), transposed.ictxt());
     EXPECT_EQ(source.ictxt(), dagger.ictxt());
-    check_mpi_descriptor_for_type(transposed, cols, rows, block_size);
-    check_mpi_descriptor_for_type(dagger, cols, rows, block_size);
+    check_mpi_descriptor_for_type(transposed, nc, nr, nrblk);
+    check_mpi_descriptor_for_type(dagger, nc, nr, nrblk);
     verify_global_matrix(transposed.gather(),
-                         make_host_transpose_reference<T>(rows, cols));
+                         make_host_transpose_reference<T>(nr, nc));
     verify_global_matrix(dagger.gather(),
                          make_dagger_reference(source.gather()));
-    EXPECT_EQ(source.desc(), source_descriptor_after);
-    EXPECT_EQ(transposed.desc(), result_descriptor);
-    EXPECT_EQ(dagger.desc(), dagger_descriptor);
+    EXPECT_EQ(source.desc(), desc_src1);
+    EXPECT_EQ(transposed.desc(), desc_res);
+    EXPECT_EQ(dagger.desc(), desc_dag);
 }
 
 template <typename T>
-Matrix2d<T> make_transpose_without_source(const int rows,
-                                          const int cols,
-                                          const int grid_rows,
-                                          const int grid_cols,
-                                          const int block_size)
+Matrix2d<T> make_transpose_without_source(const int nr,
+                                          const int nc,
+                                          const int nrproc,
+                                          const int ncproc,
+                                          const int nrblk)
 {
-    Matrix2d<T> source(rows,
-                       cols,
-                       grid_rows,
-                       grid_cols,
-                       block_size,
+    Matrix2d<T> source(nr,
+                       nc,
+                       nrproc,
+                       ncproc,
+                       nrblk,
                        MPI_COMM_WORLD);
     fill_global_values(source);
     return source.transpose();
 }
 
 template <typename T>
-void check_distributed_matmul(const int left_rows,
-                              const int shared_cols,
-                              const int right_cols,
-                              const int grid_rows,
-                              const int grid_cols,
-                              const int block_size)
+void check_distributed_matmul(const int m,
+                              const int k,
+                              const int n,
+                              const int nrproc,
+                              const int ncproc,
+                              const int nrblk)
 {
-    Matrix2d<T> left(left_rows,
-                     shared_cols,
-                     grid_rows,
-                     grid_cols,
-                     block_size,
+    Matrix2d<T> left(m,
+                     k,
+                     nrproc,
+                     ncproc,
+                     nrblk,
                      MPI_COMM_WORLD);
-    const int left_blacs_context = left.ictxt();
-    const std::shared_ptr<const Parallel_Blkcyclic> right_distribution
-        = make_borrowed_distribution(shared_cols,
-                                     right_cols,
-                                     block_size,
-                                     left_blacs_context);
-    Matrix2d<T> right(right_distribution);
+    const int ictxt = left.ictxt();
+    const std::shared_ptr<const Parallel_Blkcyclic> right_distrib
+        = make_borrowed_distribution(k,
+                                     n,
+                                     nrblk,
+                                     ictxt);
+    Matrix2d<T> right(right_distrib);
     fill_global_values(left);
     fill_global_values(right, 10.0);
 
-    const int* const left_descriptor_before = left.desc();
-    const int* const right_descriptor_before = right.desc();
+    const int* const desc_lhs0 = left.desc();
+    const int* const desc_rhs0 = right.desc();
     const Matrix2d<T> product = left.matmul(right);
-    const int* const left_descriptor_after = left.desc();
-    const int* const right_descriptor_after = right.desc();
-    const int* const result_descriptor = product.desc();
+    const int* const desc_lhs1 = left.desc();
+    const int* const desc_rhs1 = right.desc();
+    const int* const desc_res = product.desc();
 
     ASSERT_TRUE(product.is_distributed());
-    EXPECT_EQ(left_descriptor_after, left_descriptor_before);
-    EXPECT_EQ(right_descriptor_after, right_descriptor_before);
-    EXPECT_NE(result_descriptor, nullptr);
+    EXPECT_EQ(desc_lhs1, desc_lhs0);
+    EXPECT_EQ(desc_rhs1, desc_rhs0);
+    EXPECT_NE(desc_res, nullptr);
     EXPECT_EQ(left.ictxt(), right.ictxt());
     EXPECT_EQ(left.ictxt(), product.ictxt());
-    check_mpi_descriptor_for_type(product, left_rows, right_cols, block_size);
+    check_mpi_descriptor_for_type(product, m, n, nrblk);
     verify_global_matrix(product.gather(),
-                         make_host_matmul_reference<T>(left_rows,
-                                                       shared_cols,
-                                                       right_cols));
-    EXPECT_EQ(left.desc(), left_descriptor_after);
-    EXPECT_EQ(right.desc(), right_descriptor_after);
-    EXPECT_EQ(product.desc(), result_descriptor);
+                         make_host_matmul_reference<T>(m,
+                                                       k,
+                                                       n));
+    EXPECT_EQ(left.desc(), desc_lhs1);
+    EXPECT_EQ(right.desc(), desc_rhs1);
+    EXPECT_EQ(product.desc(), desc_res);
 }
 #endif
 } // namespace
@@ -950,29 +950,29 @@ TEST(Matrix2dTest, HostMatmulMatchesTripleLoopReference)
 
 TEST(Matrix2dTest, SerialDegenerateDistributionTransposeAndMatmul)
 {
-    const std::shared_ptr<const Parallel_Blkcyclic> transpose_distribution
+    const std::shared_ptr<const Parallel_Blkcyclic> transpose_distrib
         = make_frozen_distribution(5, 3);
-    Matrix2d<double> transpose_source(transpose_distribution);
+    Matrix2d<double> transpose_source(transpose_distrib);
     fill_global_values(transpose_source);
     verify_global_matrix(transpose_source.transpose().gather(),
                          make_host_transpose_reference<double>(5, 3));
     verify_global_matrix(transpose_source.dagger().gather(),
                          make_host_transpose_reference<double>(5, 3));
 
-    const std::shared_ptr<const Parallel_Blkcyclic> left_distribution
+    const std::shared_ptr<const Parallel_Blkcyclic> left_distrib
         = make_frozen_distribution(5, 4);
-    const std::shared_ptr<const Parallel_Blkcyclic> right_distribution
+    const std::shared_ptr<const Parallel_Blkcyclic> right_distrib
         = make_frozen_distribution(4, 6);
-    Matrix2d<double> left(left_distribution);
-    Matrix2d<double> right(right_distribution);
+    Matrix2d<double> left(left_distrib);
+    Matrix2d<double> right(right_distrib);
     fill_global_values(left);
     fill_global_values(right, 10.0);
     verify_global_matrix(left.matmul(right).gather(),
                          make_host_matmul_reference<double>(5, 4, 6));
 
-    const std::shared_ptr<const Parallel_Blkcyclic> complex_transpose_distribution
+    const std::shared_ptr<const Parallel_Blkcyclic> complex_transpose_distrib
         = make_frozen_distribution(5, 3);
-    Matrix2d<std::complex<double>> complex_transpose_source(complex_transpose_distribution);
+    Matrix2d<std::complex<double>> complex_transpose_source(complex_transpose_distrib);
     fill_global_values(complex_transpose_source);
     verify_global_matrix(
         complex_transpose_source.transpose().gather(),
@@ -981,12 +981,12 @@ TEST(Matrix2dTest, SerialDegenerateDistributionTransposeAndMatmul)
         complex_transpose_source.dagger().gather(),
         make_dagger_reference(complex_transpose_source.gather()));
 
-    const std::shared_ptr<const Parallel_Blkcyclic> complex_left_distribution
+    const std::shared_ptr<const Parallel_Blkcyclic> complex_left_distrib
         = make_frozen_distribution(5, 4);
-    const std::shared_ptr<const Parallel_Blkcyclic> complex_right_distribution
+    const std::shared_ptr<const Parallel_Blkcyclic> complex_right_distrib
         = make_frozen_distribution(4, 6);
-    Matrix2d<std::complex<double>> complex_left(complex_left_distribution);
-    Matrix2d<std::complex<double>> complex_right(complex_right_distribution);
+    Matrix2d<std::complex<double>> complex_left(complex_left_distrib);
+    Matrix2d<std::complex<double>> complex_right(complex_right_distrib);
     fill_global_values(complex_left);
     fill_global_values(complex_right, 10.0);
     verify_global_matrix(
@@ -1027,10 +1027,10 @@ TEST(Matrix2dTest, DistributedResultRetainsBlacsContext)
         return;
     }
 
-    const int grid_rows = grids.front().first;
-    const int grid_cols = grids.front().second;
+    const int nrproc = grids.front().first;
+    const int ncproc = grids.front().second;
     const Matrix2d<double> transposed
-        = make_transpose_without_source<double>(5, 3, grid_rows, grid_cols, 3);
+        = make_transpose_without_source<double>(5, 3, nrproc, ncproc, 3);
 
     ASSERT_TRUE(transposed.is_distributed());
     ASSERT_NE(transposed.distribution(), nullptr);
@@ -1059,13 +1059,13 @@ TEST(Matrix2dTest, UnsupportedDistributedTypesThrow)
 {
     const std::vector<std::pair<int, int>> grids = available_process_grids();
     const std::pair<int, int>& grid = grids[0];
-    const int block_size = 3;
+    const int nrblk = 3;
     {
         Matrix2d<int> source(5,
                              3,
                              grid.first,
                              grid.second,
-                             block_size,
+                             nrblk,
                              MPI_COMM_WORLD);
         EXPECT_THROW(source.transpose(), std::invalid_argument);
     }
@@ -1074,7 +1074,7 @@ TEST(Matrix2dTest, UnsupportedDistributedTypesThrow)
                                3,
                                grid.first,
                                grid.second,
-                               block_size,
+                               nrblk,
                                MPI_COMM_WORLD);
         EXPECT_THROW(source.transpose(), std::invalid_argument);
     }
@@ -1083,7 +1083,7 @@ TEST(Matrix2dTest, UnsupportedDistributedTypesThrow)
                                              3,
                                              grid.first,
                                              grid.second,
-                                             block_size,
+                                             nrblk,
                                              MPI_COMM_WORLD);
         EXPECT_THROW(source.transpose(), std::invalid_argument);
     }
@@ -1092,11 +1092,11 @@ TEST(Matrix2dTest, UnsupportedDistributedTypesThrow)
                            4,
                            grid.first,
                            grid.second,
-                           block_size,
+                           nrblk,
                            MPI_COMM_WORLD);
-        const std::shared_ptr<const Parallel_Blkcyclic> right_distribution
-            = make_borrowed_distribution(4, 6, block_size, left.ictxt());
-        Matrix2d<int> right(right_distribution);
+        const std::shared_ptr<const Parallel_Blkcyclic> right_distrib
+            = make_borrowed_distribution(4, 6, nrblk, left.ictxt());
+        Matrix2d<int> right(right_distrib);
         EXPECT_THROW(left.matmul(right), std::invalid_argument);
     }
     {
@@ -1104,11 +1104,11 @@ TEST(Matrix2dTest, UnsupportedDistributedTypesThrow)
                              4,
                              grid.first,
                              grid.second,
-                             block_size,
+                             nrblk,
                              MPI_COMM_WORLD);
-        const std::shared_ptr<const Parallel_Blkcyclic> right_distribution
-            = make_borrowed_distribution(4, 6, block_size, left.ictxt());
-        Matrix2d<float> right(right_distribution);
+        const std::shared_ptr<const Parallel_Blkcyclic> right_distrib
+            = make_borrowed_distribution(4, 6, nrblk, left.ictxt());
+        Matrix2d<float> right(right_distrib);
         EXPECT_THROW(left.matmul(right), std::invalid_argument);
     }
     {
@@ -1116,11 +1116,11 @@ TEST(Matrix2dTest, UnsupportedDistributedTypesThrow)
                                            4,
                                            grid.first,
                                            grid.second,
-                                           block_size,
+                                           nrblk,
                                            MPI_COMM_WORLD);
-        const std::shared_ptr<const Parallel_Blkcyclic> right_distribution
-            = make_borrowed_distribution(4, 6, block_size, left.ictxt());
-        Matrix2d<std::complex<float>> right(right_distribution);
+        const std::shared_ptr<const Parallel_Blkcyclic> right_distrib
+            = make_borrowed_distribution(4, 6, nrblk, left.ictxt());
+        Matrix2d<std::complex<float>> right(right_distrib);
         EXPECT_THROW(left.matmul(right), std::invalid_argument);
     }
 }
@@ -1161,21 +1161,21 @@ TEST(Matrix2dTest, DescriptorAddressStableAcrossOperators)
     const std::pair<int, int>& grid = grids[0];
     const int block = 3;
     Matrix2d<double> left(5, 4, grid.first, grid.second, block, MPI_COMM_WORLD);
-    const int left_blacs_context = left.ictxt();
-    const std::shared_ptr<const Parallel_Blkcyclic> right_distribution
-        = make_borrowed_distribution(4, 6, block, left_blacs_context);
-    Matrix2d<double> right(right_distribution);
+    const int ictxt = left.ictxt();
+    const std::shared_ptr<const Parallel_Blkcyclic> right_distrib
+        = make_borrowed_distribution(4, 6, block, ictxt);
+    Matrix2d<double> right(right_distrib);
     fill_global_values(left);
     fill_global_values(right, 10.0);
 
-    const int* const left_descriptor = left.desc();
-    const int* const right_descriptor = right.desc();
+    const int* const desc_lhs = left.desc();
+    const int* const desc_rhs = right.desc();
 
     const Matrix2d<double> transposed = left.transpose();
     const Matrix2d<double> product = left.matmul(right);
 
-    EXPECT_EQ(left.desc(), left_descriptor);
-    EXPECT_EQ(right.desc(), right_descriptor);
+    EXPECT_EQ(left.desc(), desc_lhs);
+    EXPECT_EQ(right.desc(), desc_rhs);
     EXPECT_EQ(left.ictxt(), transposed.ictxt());
     EXPECT_EQ(left.ictxt(), product.ictxt());
 
@@ -1212,27 +1212,27 @@ TEST(Matrix2dTest, HostCopyDeepCopiesStorage)
 
 TEST(Matrix2dTest, SerialDistributionHandleUsesColumnMajorLayout)
 {
-    const std::shared_ptr<const Parallel_Blkcyclic> distribution
+    const std::shared_ptr<const Parallel_Blkcyclic> distrib
         = make_frozen_distribution(3, 2);
-    Matrix2d<double> matrix(distribution);
+    Matrix2d<double> matrix(distrib);
 
     EXPECT_TRUE(matrix.is_distributed());
-    EXPECT_EQ(matrix.distribution().get(), distribution.get());
+    EXPECT_EQ(matrix.distribution().get(), distrib.get());
     EXPECT_EQ(matrix.ictxt(), -1);
     check_distribution_layout(matrix, 3, 2);
 }
 
 TEST(Matrix2dTest, SerialDistributionTallSkinnyStorageUsesColumnExtent)
 {
-    const int global_rows = 1024;
-    const int global_cols = 1;
-    const std::shared_ptr<const Parallel_Blkcyclic> distribution
-        = make_frozen_distribution(global_rows, global_cols);
-    Matrix2d<double> matrix(distribution);
+    const int nrglb = 1024;
+    const int ncglb = 1;
+    const std::shared_ptr<const Parallel_Blkcyclic> distrib
+        = make_frozen_distribution(nrglb, ncglb);
+    Matrix2d<double> matrix(distrib);
 
     const std::size_t expected_storage_elements
-        = static_cast<std::size_t>(global_rows)
-            * static_cast<std::size_t>(global_cols);
+        = static_cast<std::size_t>(nrglb)
+            * static_cast<std::size_t>(ncglb);
     const std::size_t row_major_elements
         = static_cast<std::size_t>(matrix.nrloc())
             * static_cast<std::size_t>(matrix.ncloc());
@@ -1243,9 +1243,9 @@ TEST(Matrix2dTest, SerialDistributionTallSkinnyStorageUsesColumnExtent)
 #ifndef __MPI
 TEST(Matrix2dTest, SerialDistributionViewMatchesColumnMajorStorageWithoutMpi)
 {
-    const std::shared_ptr<const Parallel_Blkcyclic> distribution
+    const std::shared_ptr<const Parallel_Blkcyclic> distrib
         = make_frozen_distribution(3, 2);
-    Matrix2d<double> matrix(distribution);
+    Matrix2d<double> matrix(distrib);
     fill_global_values(matrix);
 
     Matrix2dView<double> matrix_view = matrix.view();
@@ -1256,24 +1256,24 @@ TEST(Matrix2dTest, SerialDistributionViewMatchesColumnMajorStorageWithoutMpi)
     EXPECT_EQ(matrix_view.ncloc(), matrix.ncloc());
     EXPECT_EQ(matrix_view.lld(), matrix.lld());
     EXPECT_EQ(matrix_view.data(), matrix.data());
-    for (int local_row = 0; local_row < matrix.nrloc(); ++local_row)
+    for (int irloc = 0; irloc < matrix.nrloc(); ++irloc)
     {
-        for (int local_col = 0; local_col < matrix.ncloc(); ++local_col)
+        for (int icloc = 0; icloc < matrix.ncloc(); ++icloc)
         {
-            EXPECT_EQ(&matrix_view.at_local(local_row, local_col),
-                      &matrix.at_local(local_row, local_col));
+            EXPECT_EQ(&matrix_view.at_local(irloc, icloc),
+                      &matrix.at_local(irloc, icloc));
         }
     }
 
     const Matrix2d<double>& const_matrix = matrix;
     Matrix2dView<const double> const_view = const_matrix.view();
     EXPECT_EQ(const_view.data(), matrix.data());
-    for (int local_row = 0; local_row < matrix.nrloc(); ++local_row)
+    for (int irloc = 0; irloc < matrix.nrloc(); ++irloc)
     {
-        for (int local_col = 0; local_col < matrix.ncloc(); ++local_col)
+        for (int icloc = 0; icloc < matrix.ncloc(); ++icloc)
         {
-            EXPECT_EQ(&const_view.at_local(local_row, local_col),
-                      &matrix.at_local(local_row, local_col));
+            EXPECT_EQ(&const_view.at_local(irloc, icloc),
+                      &matrix.at_local(irloc, icloc));
         }
     }
 }
@@ -1281,13 +1281,13 @@ TEST(Matrix2dTest, SerialDistributionViewMatchesColumnMajorStorageWithoutMpi)
 
 TEST(Matrix2dTest, CopiesShareDistributionAndDeepCopyStorage)
 {
-    const std::shared_ptr<const Parallel_Blkcyclic> distribution
+    const std::shared_ptr<const Parallel_Blkcyclic> distrib
         = make_frozen_distribution(3, 2);
-    Matrix2d<double> source(distribution);
+    Matrix2d<double> source(distrib);
     source.at_local(0, 0) = 7.0;
 
     Matrix2d<double> copy(source);
-    EXPECT_EQ(copy.distribution().get(), distribution.get());
+    EXPECT_EQ(copy.distribution().get(), distrib.get());
     EXPECT_EQ(source.distribution().get(), copy.distribution().get());
     EXPECT_NE(copy.data(), source.data());
     EXPECT_EQ(copy.at_local(0, 0), 7.0);
@@ -1297,10 +1297,10 @@ TEST(Matrix2dTest, CopiesShareDistributionAndDeepCopyStorage)
 
 TEST(Matrix2dTest, MatricesFromSameHandleShareContext)
 {
-    const std::shared_ptr<const Parallel_Blkcyclic> distribution
+    const std::shared_ptr<const Parallel_Blkcyclic> distrib
         = make_frozen_distribution(5, 4);
-    Matrix2d<double> first(distribution);
-    Matrix2d<double> second(distribution);
+    Matrix2d<double> first(distrib);
+    Matrix2d<double> second(distrib);
 
     EXPECT_EQ(first.distribution().get(), second.distribution().get());
     EXPECT_EQ(first.ictxt(), second.ictxt());
@@ -1309,10 +1309,10 @@ TEST(Matrix2dTest, MatricesFromSameHandleShareContext)
 
 TEST(Matrix2dTest, RejectsNullDistribution)
 {
-    const std::shared_ptr<const Parallel_Blkcyclic> distribution;
+    const std::shared_ptr<const Parallel_Blkcyclic> distrib;
     EXPECT_THROW(
         {
-            Matrix2d<double> matrix(distribution);
+            Matrix2d<double> matrix(distrib);
             static_cast<void>(matrix);
         },
         std::invalid_argument);
@@ -1321,42 +1321,42 @@ TEST(Matrix2dTest, RejectsNullDistribution)
 #ifdef __MPI
 TEST(Matrix2dTest, BlockSizeConstructorAtLocalAndAtGlobal)
 {
-    const int global_rows = 8;
-    const int global_cols = 6;
-    const int block_size = 2;
-    Matrix2d<double> matrix(global_rows, global_cols, block_size, MPI_COMM_WORLD);
+    const int nrglb = 8;
+    const int ncglb = 6;
+    const int nrblk = 2;
+    Matrix2d<double> matrix(nrglb, ncglb, nrblk, MPI_COMM_WORLD);
 
-    check_mpi_descriptor(matrix, global_rows, global_cols, block_size);
-    check_distribution_layout(matrix, global_rows, global_cols);
+    check_mpi_descriptor(matrix, nrglb, ncglb, nrblk);
+    check_distribution_layout(matrix, nrglb, ncglb);
 }
 
 TEST(Matrix2dTest, UnitBlockConstructorAtLocalAndAtGlobal)
 {
-    const int global_rows = 5;
-    const int global_cols = 3;
-    Matrix2d<double> matrix(global_rows, global_cols, MPI_COMM_WORLD);
+    const int nrglb = 5;
+    const int ncglb = 3;
+    Matrix2d<double> matrix(nrglb, ncglb, MPI_COMM_WORLD);
 
-    check_mpi_descriptor(matrix, global_rows, global_cols, 1);
-    check_distribution_layout(matrix, global_rows, global_cols);
+    check_mpi_descriptor(matrix, nrglb, ncglb, 1);
+    check_distribution_layout(matrix, nrglb, ncglb);
 }
 
 TEST(Matrix2dTest, FrozenHandleConstructorSharesBlacsContext)
 {
-    const int global_rows = 8;
-    const int global_cols = 6;
-    const int block_size = 2;
-    const std::shared_ptr<const Parallel_Blkcyclic> distribution
-        = make_frozen_distribution(global_rows, global_cols, block_size, MPI_COMM_WORLD);
-    Matrix2d<double> first(distribution);
-    Matrix2d<double> second(distribution);
+    const int nrglb = 8;
+    const int ncglb = 6;
+    const int nrblk = 2;
+    const std::shared_ptr<const Parallel_Blkcyclic> distrib
+        = make_frozen_distribution(nrglb, ncglb, nrblk, MPI_COMM_WORLD);
+    Matrix2d<double> first(distrib);
+    Matrix2d<double> second(distrib);
 
-    const int distribution_context = distribution->ictxt();
-    EXPECT_GE(distribution_context, 0);
-    EXPECT_EQ(first.distribution().get(), distribution.get());
-    EXPECT_EQ(second.distribution().get(), distribution.get());
-    EXPECT_EQ(first.ictxt(), distribution_context);
-    EXPECT_EQ(second.ictxt(), distribution_context);
-    check_mpi_descriptor(first, global_rows, global_cols, block_size);
+    const int ictxt = distrib->ictxt();
+    EXPECT_GE(ictxt, 0);
+    EXPECT_EQ(first.distribution().get(), distrib.get());
+    EXPECT_EQ(second.distribution().get(), distrib.get());
+    EXPECT_EQ(first.ictxt(), ictxt);
+    EXPECT_EQ(second.ictxt(), ictxt);
+    check_mpi_descriptor(first, nrglb, ncglb, nrblk);
 }
 #endif
 
@@ -1410,9 +1410,9 @@ TEST(Matrix2dTest, MaxAbsWidensIntegerBeforeTakingAbsoluteValue)
 
 TEST(Matrix2dTest, SerialDistributionGatherReturnsHostRowMajorCopy)
 {
-    const std::shared_ptr<const Parallel_Blkcyclic> distribution
+    const std::shared_ptr<const Parallel_Blkcyclic> distrib
         = make_frozen_distribution(3, 2);
-    Matrix2d<double> matrix(distribution);
+    Matrix2d<double> matrix(distrib);
     fill_global_values(matrix);
 
     const Matrix2d<double> gathered = matrix.gather();
@@ -1477,15 +1477,15 @@ TEST(Matrix2dTest, DistributedComplexAcrossBlocksAndProcessGrids)
 
 TEST(Matrix2dTest, TallSkinnyPaddingDoesNotAffectOperatorsOrGather)
 {
-    const int number_of_ranks = Parallel_Common::comm_size(MPI_COMM_WORLD);
-    const int global_rows = 1025;
-    const int global_cols = 3;
-    const int block_size = 7;
-    Matrix2d<double> matrix(global_rows,
-                            global_cols,
+    const int nproc = Parallel_Common::comm_size(MPI_COMM_WORLD);
+    const int nrglb = 1025;
+    const int ncglb = 3;
+    const int nrblk = 7;
+    Matrix2d<double> matrix(nrglb,
+                            ncglb,
                             1,
-                            number_of_ranks,
-                            block_size,
+                            nproc,
+                            nrblk,
                             MPI_COMM_WORLD);
     Matrix2d<double> other(matrix.distribution());
     fill_global_values(matrix);
@@ -1504,7 +1504,7 @@ TEST(Matrix2dTest, TallSkinnyPaddingDoesNotAffectOperatorsOrGather)
     const std::size_t expected_padding_elements
         = expected_storage_elements - logical_elements;
     EXPECT_EQ(padding_indices.size(), expected_padding_elements);
-    if (number_of_ranks > 1)
+    if (nproc > 1)
     {
         if (matrix.icproc() == 0)
         {
@@ -1521,14 +1521,14 @@ TEST(Matrix2dTest, TallSkinnyPaddingDoesNotAffectOperatorsOrGather)
 
     matrix += other;
     Matrix2d<double> expected
-        = make_host_reference<double>(global_rows, global_cols);
+        = make_host_reference<double>(nrglb, ncglb);
     const Matrix2d<double> other_reference
-        = make_host_reference<double>(global_rows, global_cols, 10.0);
-    for (int row = 0; row < global_rows; ++row)
+        = make_host_reference<double>(nrglb, ncglb, 10.0);
+    for (int ir = 0; ir < nrglb; ++ir)
     {
-        for (int col = 0; col < global_cols; ++col)
+        for (int ic = 0; ic < ncglb; ++ic)
         {
-            expected.at_local(row, col) += other_reference.at_local(row, col);
+            expected.at_local(ir, ic) += other_reference.at_local(ir, ic);
         }
     }
     verify_global_matrix(matrix.gather(), expected);
@@ -1540,7 +1540,7 @@ TEST(Matrix2dTest, TallSkinnyPaddingDoesNotAffectOperatorsOrGather)
     expect_padding_sentinel(matrix, padding_indices, sentinel);
 
     const Matrix2d<double> scatter_reference
-        = make_host_reference<double>(global_rows, global_cols);
+        = make_host_reference<double>(nrglb, ncglb);
     matrix.scatter(scatter_reference);
     verify_global_matrix(matrix.gather(), scatter_reference);
     expect_padding_sentinel(matrix, padding_indices, sentinel);
@@ -1548,7 +1548,7 @@ TEST(Matrix2dTest, TallSkinnyPaddingDoesNotAffectOperatorsOrGather)
 
 TEST(Matrix2dTest, RejectsIncompatibleDistributions)
 {
-    const int number_of_ranks = Parallel_Common::comm_size(MPI_COMM_WORLD);
+    const int nproc = Parallel_Common::comm_size(MPI_COMM_WORLD);
     const std::vector<std::pair<int, int>> grids = available_process_grids();
     Matrix2d<double> first(8,
                            6,
@@ -1576,7 +1576,7 @@ TEST(Matrix2dTest, RejectsIncompatibleDistributions)
     EXPECT_THROW(first += host, std::invalid_argument);
     EXPECT_THROW(first.dot(host), std::invalid_argument);
 
-    if (number_of_ranks > 1)
+    if (nproc > 1)
     {
         const std::pair<int, int>& other_grid = grids[1];
         Matrix2d<double> different_grid(8,
