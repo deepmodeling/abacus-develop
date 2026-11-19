@@ -13,7 +13,7 @@ from ase.calculators.singlepoint import (
 )
 from ase.units import Ry, eV, GPa, bar
 from ase.stress import full_3x3_to_voigt_6_stress
-from abacuslite.io.generalio import _energy_without_entropy_metadata
+from abacuslite.io.generalio import _energy_without_entropy_metadata, _running_log_geometry
 # from ase.utils import reader
 
 __all__ = ['read_kpoints_from_running_log', 
@@ -927,20 +927,14 @@ def read_abacus_out(fileobj,
         trajectory, elecstate, magmom, forces, stress, energies):
         # for each frame, a structure can be defined
         ind = ind or list(range(len(frame['elem'])))
-        positions = frame['coords'][ind]
         if md_calculation and geometry_from_dump:
             # MD_dump lattice vectors use alat; positions are already Angstrom.
             cell = frame['cell'] * frame['alat_in_angstrom']
+            positions = frame['coords']
         else:
-            cell = frame['cell']  # Running-log cells are already Angstrom.
-            if frame['coordinate'] == 'Direct':
-                positions = positions @ cell
-            elif frame['coordinate'] == 'Cartesian':
-                positions = positions * frame['alat_in_angstrom']
-            else:
-                raise ValueError(f'Unknown coordinate system: {frame["coordinate"]}')
+            positions, cell = _running_log_geometry(frame)
         atoms = Atoms(symbols=np.array(frame['elem'])[ind].tolist(), 
-                      positions=positions,
+                      positions=positions[ind],
                       cell=cell,
                       pbc=True,  # ABACUS uses a periodic simulation cell for every run.
                       magmoms=mag[ind])

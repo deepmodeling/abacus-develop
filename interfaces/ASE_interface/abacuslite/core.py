@@ -51,11 +51,7 @@ from ase.atoms import Atoms
 from ase.dft.kpoints import BandPath
 from ase.io import read
 
-from abacuslite._scf_frames import (
-    _read_stru_reference,
-    _select_scf_frame_for_structure,
-    _validate_raw_scf_trajectory,
-)
+from abacuslite._scf_geometry_check import _check_scf_geometry
 from abacuslite.io.generalio import (
     file_safe_backup,
     read_input,
@@ -452,24 +448,14 @@ class AbacusTemplate(CalculatorTemplate):
         directory = Path(directory)
         outdir = directory / f'OUT.{self.suffix}'
         log = outdir / f'running_{self.calculation}.log'
-        stru_file = getattr(self, 'stru_file', 'STRU') or 'STRU'
-        reference = None
         parser_atomorder = self.atomorder
         if self.calculation == 'scf':
-            # Read and validate STRU/mapping before passing sort_atoms_with to
-            # the parser; otherwise a malformed mapping leaks a bare IndexError.
-            reference = _read_stru_reference(
-                directory, stru_file, self.atomorder, log_path=log
+            stru_file = getattr(self, 'stru_file', 'STRU') or 'STRU'
+            stru_path = directory / stru_file
+            parser_atomorder = _check_scf_geometry(
+                stru_path, log, self.atomorder, read_traj_from_running_log
             )
-            # Validate raw parser cardinality before sort_atoms_with can slice
-            # away an extra/missing atom and make a corrupt frame look valid.
-            _validate_raw_scf_trajectory(
-                log, reference, read_traj_from_running_log
-            )
-            parser_atomorder = None if self.atomorder is None else reference['atomorder']
 
-        # Read all frames: SCF selects the frame matching the current STRU;
-        # relax and MD keep the final-frame behavior.
         try:
             frames = read_abacus_out(log, sort_atoms_with=parser_atomorder)
         except (IndexError, AssertionError, KeyError, TypeError, ValueError) as exc:
@@ -479,19 +465,16 @@ class AbacusTemplate(CalculatorTemplate):
                 f"scf running log parser failed: {log} (atomorder/frame "
                 f"structure error: {exc}; fail-closed)"
             ) from exc
-        if not frames:
-            raise RuntimeError(f"no ABACUS running-log frames in {log}")
-        if self.calculation != 'scf':
-            atoms: Optional[Atoms] = frames[-1]  # relax/MD keep the final frame.
+        if self.calculation == 'scf':
+            if len(frames) != 1:
+                raise RuntimeError(
+                    f"Invalid SCF results in {log}. Expected exactly one, found {len(frames)}"
+                )
+            atoms = frames[0]
         else:
-            atoms = _select_scf_frame_for_structure(
-                frames,
-                log,
-                directory,
-                reference['atomorder'],
-                stru_file=stru_file,
-                _reference=reference,
-            )
+            if not frames:
+                raise RuntimeError(f"no ABACUS running-log frames in {log}")
+            atoms = frames[-1]
         assert atoms is not None
 
         # ASE's Properties schema accepts scalar magnetic moments only,
@@ -1082,6 +1065,41 @@ class TestAbacusCalculator(unittest.TestCase):
     here = Path(__file__).parent
     pporb = here.parent.parent.parent / 'tests' / 'PP_ORB'
 
+    def test_scf_requires_one_geometry_record(self):
+        from unittest.mock import patch
+        from ase.calculators.singlepoint import SinglePointDFTCalculator
+
+        atoms = Atoms('Si', positions=[[1., 2., 3.]], cell=[5., 6., 7.], pbc=True)
+        atoms.calc = SinglePointDFTCalculator(atoms, energy=-1.)
+        record = {
+            'alat_in_angstrom': 1.,
+            'cell': atoms.cell.array,
+            'coordinate': 'Cartesian',
+            'coords': atoms.positions,
+            'elem': ['Si'],
+        }
+        with tempfile.TemporaryDirectory() as tmpdir:
+            directory = Path(tmpdir)
+            write_stru(atoms, outdir=directory, pp_file={'Si': 'Si.upf'})
+            template = AbacusTemplate()
+            template.calculation = 'scf'
+            template.suffix = 'ABACUS'
+            template.atomorder = None
+            for reader in ('legacyio', 'latestio'):
+                template._legacyio = reader == 'legacyio'
+                module = f'abacuslite.io.{reader}'
+                for count in (0, 2):
+                    with self.subTest(reader=reader, count=count), \
+                         patch(f'{module}.read_traj_from_running_log',
+                               return_value=[record] * count), \
+                         patch(f'{module}.read_abacus_out',
+                               return_value=[atoms] * count) as read_results:
+                        with self.assertRaisesRegex(
+                            RuntimeError, f'expected exactly one geometry record, found {count}'
+                        ):
+                            template.read_results(directory)
+                        read_results.assert_not_called()
+
     def test_scf_reference_matches_engine_coordinate_modes(self):
         from ase.units import Bohr
 
@@ -1100,7 +1118,13 @@ class TestAbacusCalculator(unittest.TestCase):
         for axes in ('xy', 'xz', 'yz', 'xyz'):
             shift = [axis in axes for axis in 'xyz']
             coordinates[f'Cartesian_angstrom_center_{axes}'] = position - center * shift
-        frame = Atoms('Si', positions=[position], cell=cell)
+        record = {
+            'alat_in_angstrom': 1.,
+            'cell': cell,
+            'coordinate': 'Cartesian',
+            'coords': [position + cell[0] - cell[1]],
+            'elem': ['Si'],
+        }
 
         with tempfile.TemporaryDirectory() as tmpdir:
             directory = Path(tmpdir)
@@ -1115,10 +1139,37 @@ class TestAbacusCalculator(unittest.TestCase):
                         f'ATOMIC_POSITIONS\n{mode}\nSi\n0\n1\n'
                         f'{xyz} mag 0 0 1 sc 1 1 1\n'
                     )
-                    selected = _select_scf_frame_for_structure(
-                        [frame], log, directory, None
-                    )
-                    self.assertIs(selected, frame)
+                    _check_scf_geometry(stru, log, [0], lambda _: [record])
+            record['coords'] = [position + [0., 0., 0.01]]
+            with self.assertRaisesRegex(RuntimeError, 'positions differ from STRU'):
+                _check_scf_geometry(stru, log, None, lambda _: [record])
+
+    def test_scf_checks_file_order_before_ase_reordering(self):
+        atoms = Atoms('Si2O', positions=[[1., 2., 3.], [2., 2., 3.], [3., 2., 3.]],
+                      cell=[5., 6., 7.], pbc=True)
+        record = {
+            'alat_in_angstrom': 1.,
+            'cell': atoms.cell.array,
+            'coordinate': 'Cartesian',
+            'coords': atoms.positions,
+            'elem': atoms.get_chemical_symbols(),
+        }
+        with tempfile.TemporaryDirectory() as tmpdir:
+            stru = Path(tmpdir) / 'STRU'
+            log = Path(tmpdir) / 'running_scf.log'
+            write_stru(atoms, outdir=stru.parent, pp_file={'Si': 'Si.upf', 'O': 'O.upf'})
+            mapping = [0, 2, 1]
+            read_geometry = lambda _: [record]
+            self.assertEqual(_check_scf_geometry(stru, log, mapping, read_geometry), mapping)
+            with self.assertRaisesRegex(RuntimeError, 'Invalid scf atomorder'):
+                _check_scf_geometry(stru, log, [0, 2, 2], read_geometry)
+            record['coords'] = atoms.positions[mapping]
+            record['elem'] = [atoms.symbols[i] for i in mapping]
+            with self.assertRaisesRegex(RuntimeError, 'atom symbols .* do not match STRU'):
+                _check_scf_geometry(stru, log, mapping, read_geometry)
+            record['coords'] = np.vstack([atoms.positions, atoms.positions[0]])
+            with self.assertRaisesRegex(RuntimeError, 'atom count 4, expected 3'):
+                _check_scf_geometry(stru, log, mapping, read_geometry)
 
     def test_socketio_species_order_mapping(self):
         atoms = Atoms(symbols=['Si', 'O', 'C', 'Si', 'O', 'C'])

@@ -16,6 +16,20 @@ from ase.data import chemical_symbols, atomic_masses
 ATOM_MASS = dict(zip(chemical_symbols, atomic_masses.tolist()))
 
 
+def _running_log_geometry(record):
+    """Convert a running-log geometry record to Cartesian Angstrom."""
+    positions = np.asarray(record['coords'], dtype=float)
+    cell = np.asarray(record['cell'], dtype=float)
+    coordinate = record['coordinate']
+    if coordinate == 'Direct':
+        positions = positions @ cell
+    elif coordinate == 'Cartesian':
+        positions = positions * record['alat_in_angstrom']
+    else:
+        raise ValueError(f'Unknown coordinate system: {coordinate}')
+    return positions, cell
+
+
 def _energy_without_entropy_metadata(ener: Mapping[str, float]) -> Dict[str, float]:
     """Return the no-entropy energy as metadata when the log reports -TS.
 
