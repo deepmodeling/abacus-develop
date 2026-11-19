@@ -11,6 +11,7 @@ add_library(
   relax_driver.cpp
   relax_stru_io.cpp
   relax_sync.cpp
+  relax_geometry.cpp
   line_search.cpp
   ions_move_lbfgs.cpp
   relax_nsync.cpp

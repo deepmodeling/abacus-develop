@@ -63,6 +63,7 @@ addtest(
   TARGET MODULE_RELAX_relax_sync_test
   SOURCES test_relax_sync.cpp
           ../relax_sync.cpp
+          ../relax_geometry.cpp
           ../line_search.cpp
           ../relax_data.cpp
           ../../source_base/tool_quit.cpp
@@ -91,7 +92,8 @@ addtest(
   TARGET MODULE_RELAX_lat_change_method_test
   LIBS parameter base device
   SOURCES test_lat_change_method.cpp ../lat_change_method.cpp
-          ../lattice_change_basic.cpp ../relax_data.cpp test_mock_remake_cell.cpp)
+          ../lattice_change_basic.cpp ../relax_data.cpp
+          test_mock_remake_cell.cpp)
 
 addtest(
   TARGET MODULE_RELAX_lattice_change_basic_test
@@ -213,6 +215,7 @@ addtest(
           ../relax_driver.cpp
           ../relax_nsync.cpp
           ../relax_sync.cpp
+          ../relax_geometry.cpp
           ../relax_data.cpp
           ../line_search.cpp
           ../ions_move_methods.cpp
