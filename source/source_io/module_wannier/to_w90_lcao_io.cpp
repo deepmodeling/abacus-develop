@@ -12,6 +12,7 @@
 #include "source_hamilt/module_hcontainer/atom_pair.h"
 #include "source_hamilt/module_hcontainer/hcontainer_funcs.h"
 
+#include <cstdlib>
 #include <fstream>
 #include <functional>
 
@@ -149,6 +150,8 @@ void toW90_LCAO::write_spn(const psi::Psi<TK>& psi, const hamilt::HContainer<TR>
              << std::scientific << std::setprecision(16);
     }
 
+    constexpr int num_spin_components = 3;
+    const int num_spin_rows = num_spin_components * num_bands;
     for (int ik = 0; ik < cal_num_kpts; ++ik)
     {
         ComplexMatrix coeff(num_bands, layout.nrglb());
@@ -169,21 +172,25 @@ void toW90_LCAO::write_spn(const psi::Psi<TK>& psi, const hamilt::HContainer<TR>
         ComplexMatrix overlap(layout.nrloc(), layout.ncloc());
         hamilt::folding_HR(sr, overlap.c, kv.kvec_d[ik], overlap.nc, 0);
         ComplexMatrix ket(overlap.nc, num_bands);
-        ComplexMatrix bra(3 * num_bands, overlap.nr);
+        ComplexMatrix bra(num_spin_rows, overlap.nr);
         for (int ib = 0; ib < num_bands; ++ib)
         {
             for (int col = 0; col < overlap.nc; ++col)
             {
                 ket(col, ib) = coeff(ib, layout.icglb(col));
             }
+            const int spin_x_row = num_spin_components * ib;
+            const int spin_y_row = spin_x_row + 1;
+            const int spin_z_row = spin_x_row + 2;
             for (int row = 0; row < overlap.nr; ++row)
             {
                 const int orbital = layout.irglb(row);
+                const int opposite_spin_index = orbital ^ 1;
                 const double sign = orbital % 2 == 0 ? 1.0 : -1.0;
-                const auto flipped = std::conj(coeff(ib, orbital ^ 1));
-                bra(3 * ib, row) = flipped;
-                bra(3 * ib + 1, row) = std::complex<double>(0, sign) * flipped;
-                bra(3 * ib + 2, row) = sign * std::conj(coeff(ib, orbital));
+                const auto flipped = std::conj(coeff(ib, opposite_spin_index));
+                bra(spin_x_row, row) = flipped;
+                bra(spin_y_row, row) = std::complex<double>(0, sign) * flipped;
+                bra(spin_z_row, row) = sign * std::conj(coeff(ib, orbital));
             }
         }
         ComplexMatrix spin = bra * (overlap * ket);
@@ -194,9 +201,10 @@ void toW90_LCAO::write_spn(const psi::Psi<TK>& psi, const hamilt::HContainer<TR>
             {
                 for (int n = 0; n <= m; ++n)
                 {
-                    for (int axis = 0; axis < 3; ++axis)
+                    for (int axis = 0; axis < num_spin_components; ++axis)
                     {
-                        const auto value = spin(3 * n + axis, m);
+                        const int spin_row = num_spin_components * n + axis;
+                        const auto value = spin(spin_row, m);
                         file << value.real() << ' ' << value.imag() << '\n';
                     }
                 }
@@ -215,7 +223,14 @@ void toW90_LCAO::write_spn(const psi::Psi<TK>& psi, const hamilt::HContainer<TR>
     }
     if (writer)
     {
-        log << " Wrote Wannier90 spin matrices to " << path << '\n';
+#ifdef _WIN32
+        char* resolved_path = ::_fullpath(nullptr, path.c_str(), 0);
+#else
+        char* resolved_path = ::realpath(path.c_str(), nullptr);
+#endif
+        const std::string log_path = resolved_path ? resolved_path : path;
+        std::free(resolved_path);
+        log << " Wrote Wannier90 spin matrices to " << log_path << '\n';
     }
 }
 

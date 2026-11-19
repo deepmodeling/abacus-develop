@@ -79,6 +79,11 @@ def main(work, wannier, postw90, abacus):
     assert (out / "oxygen.eig").is_file() and not (out / "oxygen.spn").exists()
     (work / "INPUT").write_text(nscf + "out_wannier_spn 1\nout_wfc_lcao 2\nout_hsk 2\n")
     subprocess.run(abacus, cwd=work, check=True)
+    running_log = (out / "running_nscf.log").read_text()
+    match = re.search(r"^ Wrote Wannier90 spin matrices to (.+)$", running_log, re.MULTILINE)
+    assert match, "Missing .spn path in running_nscf.log"
+    logged_spn = Path(match.group(1))
+    assert logged_spn.is_absolute() and logged_spn.samefile(out / "oxygen.spn"), logged_spn
     check_spin(out)
     for ext in ["eig", "mmn", "amn", "spn"]:
         shutil.copy(out / f"oxygen.{ext}", work)
