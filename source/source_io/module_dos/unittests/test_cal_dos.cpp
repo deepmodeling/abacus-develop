@@ -2,6 +2,9 @@
 #include "gmock/gmock.h"
 #include "../cal_dos.h"
 #include "source_base/global_variable.h"
+#include <cmath>
+#include <cstdint>
+#include <cstdio>
 #include <string>
 #include <sstream>
 #ifdef __MPI
@@ -26,6 +29,56 @@ class DosTest : public ::testing::Test
 protected:
 	std::string output;
 };
+
+TEST_F(DosTest, NpyStoresFiveColumnsAcrossSteps)
+{
+    const std::string path = testing::TempDir() + "/abacus-total-dos-steps.npy";
+    const std::vector<double> weights{1.0};
+    const std::vector<int> spins{0};
+    const ModuleBase::matrix eigenvalues(1, 1);
+    const ModuleBase::matrix occupations(1, 1);
+    const double sigma = 0.05;
+    for (int step = 0; step < 2; ++step)
+    {
+        ASSERT_TRUE(ModuleIO::cal_dos(0, path, 1.0, 1.0, 0.0, sigma, 1, 1, weights, spins,
+                                      1, eigenvalues, occupations, step, 1, 1));
+    }
+    std::ifstream in(path, std::ios::binary);
+    for (int step = 1; step <= 2; ++step)
+    {
+        unsigned char prefix[10];
+        ASSERT_TRUE(in.read(reinterpret_cast<char*>(prefix), sizeof(prefix)));
+        EXPECT_EQ(std::string(reinterpret_cast<char*>(prefix), 8), std::string("\x93NUMPY\x01\x00", 8));
+        std::string header(prefix[8] + 256 * prefix[9], '\0');
+        ASSERT_TRUE(in.read(&header[0], header.size()));
+        EXPECT_NE(header.find("'dos_smear_int'"), std::string::npos);
+        EXPECT_NE(header.find("'shape': (2,)"), std::string::npos);
+        const double peak = 1.0 / (sigma * std::sqrt(2.0 * std::acos(-1.0)));
+        for (int n = 0; n < 2; ++n)
+        {
+            unsigned char bytes[8];
+            std::int32_t flags[2];
+            std::int64_t spin = 0;
+            double data[5];
+            ASSERT_TRUE(in.read(reinterpret_cast<char*>(bytes), sizeof(bytes)));
+            ASSERT_TRUE(in.read(reinterpret_cast<char*>(flags), sizeof(flags)));
+            ASSERT_TRUE(in.read(reinterpret_cast<char*>(&spin), sizeof(spin)));
+            ASSERT_TRUE(in.read(reinterpret_cast<char*>(data), sizeof(data)));
+            EXPECT_EQ(bytes[0], 128);
+            EXPECT_EQ(flags[0], 1);
+            EXPECT_EQ(flags[1], step);
+            EXPECT_EQ(spin, 1);
+            EXPECT_DOUBLE_EQ(data[0], n);
+            EXPECT_DOUBLE_EQ(data[1], n == 0 ? 1.0 : 0.0);
+            EXPECT_DOUBLE_EQ(data[2], 1.0);
+            EXPECT_NEAR(data[3], n == 0 ? peak : 0.0, 1e-12);
+            EXPECT_NEAR(data[4], peak, 1e-12);
+        }
+    }
+    EXPECT_EQ(in.peek(), std::char_traits<char>::eof());
+    in.close();
+    std::remove(path.c_str());
+}
 
 TEST_F(DosTest,Dos)
 {

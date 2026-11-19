@@ -13,6 +13,7 @@ void ModuleIO::write_dos_pw(
         const double& dos_edelta_ev,
         const double& dos_scale,
         const double& bcoeff,
+        const std::string& spectral_format,
         const int nspin,
         const int out_dos,
         const bool dos_setemax,
@@ -61,7 +62,7 @@ void ModuleIO::write_dos_pw(
             ss << "g" << istep_in+1;
         }
 
-        ss << ".txt";
+        ss << (spectral_format == "npy" ? ".npy" : ".txt");
 
         ModuleBase::GlobalFunc::OUT(ofs_running, "DOS file", ss.str());
 

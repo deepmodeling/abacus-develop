@@ -79,5 +79,5 @@ class PdosNpyTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "Incomplete PDOS"):
             PDOS(self.path)
         np.save(self.path, np.array([1.0]))
-        with self.assertRaisesRegex(ValueError, "PDOS orbitals"):
+        with self.assertRaisesRegex(ValueError, "structured PDOS"):
             PDOS(self.path)

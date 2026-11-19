@@ -1,4 +1,6 @@
 #include "cal_dos.h"
+#include "source_io/module_output/npy_record.h"
+#include "source_base/parallel_common.h"
 
 #include "source_base/constants.h"
 #include "source_base/global_function.h"
@@ -115,9 +117,11 @@ bool ModuleIO::cal_dos(const int& is,  // index for spin
 
     std::ofstream ofs_dos;
 
-    if (GlobalV::MY_RANK == 0)
+    const bool npy = fn.size() >= 4 && fn.compare(fn.size() - 4, 4, ".npy") == 0;
+    const bool append_step = (out_app_flag == 1) && (istep > 0);
+    const bool root = GlobalV::MY_RANK == 0;
+    if (root && !npy)
     {
-        const bool append_step = (out_app_flag == 1) && (istep > 0);
         if (append_step)
         {
             ofs_dos.open(fn.c_str(), std::ios::app);
@@ -152,7 +156,7 @@ bool ModuleIO::cal_dos(const int& is,  // index for spin
         ModuleBase::WARNING("ModuleIO::cal_dos", "npoints <= 0");
         return false;
     }
-    if (GlobalV::MY_RANK == 0)
+    if (root && !npy)
     {
         ofs_dos << npoints << " # number of points" << std::endl;
         ofs_dos << std::fixed << std::setprecision(6);
@@ -219,8 +223,10 @@ bool ModuleIO::cal_dos(const int& is,  // index for spin
     double sum2 = 0.0;
     const double dos_thr = 1.0e-12;
 
-    if (GlobalV::MY_RANK == 0)
+    std::string error;
+    if (root)
     {
+        std::vector<double> smear_integral(npy ? npoints : 0);
         for (int n = 0; n < npoints; ++n)
         {
             dos[n] /= static_cast<double>(nkstot);
@@ -233,17 +239,50 @@ bool ModuleIO::cal_dos(const int& is,  // index for spin
             }
             sum2 += dos_smear[n] * de_ev;
 
+            if (npy)
+            {
+                smear_integral[n] = sum2;
+                continue;
+            }
             ofs_dos << std::setw(13) << ene[n]
                  << " " << std::setw(12) << dos[n]
                  << " " << std::setw(12) << sum_elec[n]
                  << " " << std::setw(14) << dos_smear[n]
                  << " " << std::setw(14) << sum2 << std::endl;
         }
+        if (npy)
+        {
+            const std::string fields = "('spin_channel','=i8'),('energy_eV','=f8'),('dos','=f8'),"
+                                       "('dos_int','=f8'),('dos_smear','=f8'),('dos_smear_int','=f8')";
+            const int step = std::max(1, istep + 1);
+            const std::int64_t spin = is + 1;
+            const size_t row_bytes = sizeof(NpyPrefix) + sizeof(spin) + 5 * sizeof(double);
+            try
+            {
+                write_npy_record(fn, append_step, step, fields, "dos_smear", npoints, row_bytes,
+                                 [&](std::ostream& out, const NpyPrefix& prefix) {
+                    for (int n = 0; n < npoints; ++n)
+                    {
+                        const double row[] = {ene[n], dos[n], sum_elec[n], dos_smear[n], smear_integral[n]};
+                        out.write(prefix.data(), prefix.size());
+                        out.write(reinterpret_cast<const char*>(&spin), sizeof(spin));
+                        out.write(reinterpret_cast<const char*>(row), sizeof(row));
+                    }
+                });
+            }
+            catch (const std::exception& e) { error = e.what(); }
+        }
+        else
+        {
+            ofs_dos.close();
+        }
     }
-
-    if (GlobalV::MY_RANK == 0)
+    if (npy)
     {
-        ofs_dos.close();
+#ifdef __MPI
+        Parallel_Common::bcast_string(error);
+#endif
+        if (!error.empty()) { ModuleBase::WARNING_QUIT("cal_dos", error); }
     }
 
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Number of bands", nbands);

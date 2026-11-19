@@ -12,6 +12,7 @@ list(
   module_bessel/bessel_basis.cpp
   module_output/cal_test.cpp
   module_dos/cal_dos.cpp
+  module_output/npy_record.cpp
   module_dos/cal_ldos.cpp
   module_ml/cal_mlkedf_desc.cpp
   module_dos/write_dos_pw.cpp

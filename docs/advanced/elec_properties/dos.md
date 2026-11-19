@@ -98,16 +98,18 @@ The `# istep:` line is only present for geometry-optimization (istep) output. Wi
 
 For nspin=2, two files are written (pdoss1* and pdoss2*), one per spin channel. For nspin=4, the two spinor components are summed into a single file. The unit of PDOS is also `(number of states)/(eV * unitcell)`.
 
-### NumPy output for LCAO
+### NumPy output
 
-The default `pdos_format text` writes the text files above. To write projected DOS in NumPy format, use
+Set `out_spectral_format npy` to write the spectra selected by `out_dos` as NumPy arrays. This includes total DOS for PW and LCAO and projected DOS for LCAO. The default format is `text`. The NPY writer is built into ABACUS.
 
 ```text
-out_dos      1
-pdos_format  npy
+out_dos              1
+out_spectral_format  npy
 ```
 
-This requires only an LCAO build. Total DOS continues to use `doss*.txt`. Each output is a standard, pickle-free NumPy 1.0 structured array with one row for each atom and each `(l,m)` channel present in its basis (all zeta components summed). The `pdos` field holds float64 spectra in 1/eV, with axes `(orbital, spin channel, energy point)` across the array. There are two spin channels for `nspin=2` and one for `nspin=1` or `4`. The latter includes both spinor components. Both output formats apply the same small-value threshold.
+Each file contains a standard NumPy 1.0 structured array with named fields. Total DOS uses one row per energy point in `doss1.npy`, with a separate `doss2.npy` for collinear spin. The five binary64 fields are `energy_eV`, `dos`, `dos_int`, `dos_smear` and `dos_smear_int`, in the same units as the text columns. `spin_channel` gives the one-based channel. For example, `np.load("doss1.npy")["dos_smear"]` returns the smeared DOS in states/eV per cell.
+
+LCAO projected DOS uses one row per atom and `(l,m)` channel in `pdos.npy`. Contributions from all zeta components are summed. Across the array, the binary64 `pdos` field has axes `(orbital, spin channel, energy point)` and units of 1/eV. There are two spin channels for `nspin=2` and one for `nspin=1` or `4`. The latter includes both spinor components. Both output formats apply the same small-value threshold. With the default spectral format, `pdos_format npy` selects binary PDOS alone.
 
 ```python
 import numpy as np
@@ -120,12 +122,12 @@ first_orbital = rows["pdos"][0, 0, :]    # first orbital and first spin channel
 
 Each row includes the one-based `atom_index`, UTF-8 byte string `species`, `l`, signed `m`, `nspin`, and one-based `ionic_step`. A single-point calculation uses step 1. The fields `schema_version` (1) and `record_bytes` (payload size of the complete array) identify the schema and delimit records for append recovery.
 
-Mode `out_app_flag 0` replaces `pdos.npy`. Mode 1 appends one complete NumPy array per write to that file, with the first ionic step starting a fresh file. Each array can have a different energy grid. `np.load(path)` opens the first record. To read consecutive records, open the file once in `"rb"` mode and call `np.load(stream, allow_pickle=False)` for each one. Mode 2 writes numbered steps into `DOS/pdosgN.npy`.
+For DOS, mode `out_app_flag 0` replaces the fixed-name file. Mode 1 appends one complete NumPy array per write, with the first ionic step starting a fresh file. Each array can have a different energy grid. `np.load(path)` opens the first record. To read consecutive records, open the file once in `"rb"` mode and call `np.load(stream, allow_pickle=False)` for each one. Mode 2 writes numbered steps such as `DOS/doss1g2.npy` and `DOS/pdosg2.npy`.
 
-The plotting and data-export commands both accept the file via `pdosfile`. For an appended file, `pdos_record` selects the one-based record number and defaults to 1.
+For `abacus-plot`, use `tdosfile` for total DOS and `pdosfile` for projected DOS. The common JSON option `record` selects a one-based NPY record and defaults to 1. PDOS also accepts the spelling `pdos_record`.
 
 ```json
-{"pdosfile": "OUT.ABACUS/pdos.npy", "pdos_record": 1, "species": ["Si"]}
+{"pdosfile": "OUT.ABACUS/pdos.npy", "record": 1, "species": ["Si"]}
 ```
 
 Run `abacus-plot -d -p -f config.json` to plot, or `abacus-plot -d -o -f config.json` to export the selected species' curves.

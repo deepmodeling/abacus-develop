@@ -540,7 +540,8 @@ struct Input_para
     std::string spillage_outdir = "./"; ///< output directory for spillage
 
     // ==============   #Parameters (12.Postprocess) ===========================
-    std::string pdos_format = "text"; ///< LCAO projected DOS output format
+    std::string out_spectral_format = "text"; ///< output format for spectra enabled by out_dos
+    std::string pdos_format = "text"; ///< compatibility option for binary PDOS alone
     double dos_emin_ev = -15.0;
     double dos_emax_ev = 15.0;
     double dos_edelta_ev = 0.03;

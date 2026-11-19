@@ -71,7 +71,7 @@ class Show:
             fig, ax = plt.subplots(figsize=figsize)
             prec = text.pop("prec", 0.01)
             smearing = text.pop("smearing", True)
-            tdos = TDOS(tdosfile)
+            tdos = TDOS(tdosfile, record=text.pop("record", 1))
             tdos.plot(fig, ax, efermi=efermi, shift=shift,
                       energy_range=energy_range, dos_range=dos_range, prec=prec, smearing=smearing, **text)
             dpi = text.pop("dpi", 400)
@@ -80,7 +80,7 @@ class Show:
         if args.dos and args.projected:
             text = read_json(args.file)
             pdosfile = text.pop("pdosfile", '')
-            record = text.pop("pdos_record", 1)
+            record = text.pop("record", text.pop("pdos_record", 1))
             efermi = text.pop("efermi", 0.0)
             energy_range = text.pop("energy_range", [])
             dos_range = text.pop("dos_range", [])
@@ -113,7 +113,7 @@ class Show:
         if args.dos and args.out:
             text = read_json(args.file)
             pdosfile = text.pop("pdosfile", '')
-            record = text.pop("pdos_record", 1)
+            record = text.pop("record", text.pop("pdos_record", 1))
             index = key2int(text.pop("index", None))
             atom_index = key2int(text.pop("atom_index", None))
             species = text.pop("species", None)
