@@ -103,7 +103,7 @@ TEST(MdCellMigrateMpiTest, AtomCrossingDomainMigratesToNewOwner)
 
         for (int i = 0; i < mdcell.owned_atoms().size(); ++i)
         {
-            EXPECT_EQ(mdcell.owned_atoms()[static_cast<std::size_t>(i)].owner_rank, rank);
+            EXPECT_EQ(mdcell.owned_atoms()[i].owner_rank, rank);
         }
     }
 }

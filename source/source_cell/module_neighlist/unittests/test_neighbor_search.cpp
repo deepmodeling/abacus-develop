@@ -28,11 +28,11 @@ void initialize_test_ucell(UnitCell& ucell,
     for (int it = 0; it < ntype; ++it)
     {
         ucell.atoms[it].type = it;
-        ucell.atoms[it].na = na[static_cast<std::size_t>(it)];
+        ucell.atoms[it].na = na[it];
         ucell.atoms[it].tau.resize(static_cast<std::size_t>(ucell.atoms[it].na));
         for (int ia = 0; ia < ucell.atoms[it].na; ++ia)
         {
-            ucell.atoms[it].tau[static_cast<std::size_t>(ia)] = tau[iat++];
+            ucell.atoms[it].tau[ia] = tau[iat++];
         }
         ucell.nat += ucell.atoms[it].na;
     }

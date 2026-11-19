@@ -166,11 +166,11 @@ TEST(SnapCalculator, SupportsChemicalChannels)
     EXPECT_NEAR(analytic.energy.energy, finite_difference.energy.energy, 1.0e-12);
     for (int direction = 0; direction < 3; ++direction)
     {
-        EXPECT_NEAR(analytic.center_force[static_cast<std::size_t>(direction)],
-                    finite_difference.center_force[static_cast<std::size_t>(direction)],
+        EXPECT_NEAR(analytic.center_force[direction],
+                    finite_difference.center_force[direction],
                     1.0e-5);
-        EXPECT_NEAR(analytic.neighbor_forces[0][static_cast<std::size_t>(direction)],
-                    finite_difference.neighbor_forces[0][static_cast<std::size_t>(direction)],
+        EXPECT_NEAR(analytic.neighbor_forces[0][direction],
+                    finite_difference.neighbor_forces[0][direction],
                     1.0e-5);
     }
 }
@@ -312,8 +312,8 @@ TEST(SnapCalculator, FiniteDifferenceForcesConservePairContribution)
 
     for (int direction = 0; direction < 3; ++direction)
     {
-        EXPECT_DOUBLE_EQ(result.center_force[static_cast<std::size_t>(direction)]
-                             + result.neighbor_forces[0][static_cast<std::size_t>(direction)],
+        EXPECT_DOUBLE_EQ(result.center_force[direction]
+                             + result.neighbor_forces[0][direction],
                          0.0);
     }
 }
@@ -330,8 +330,8 @@ TEST(SnapCalculator, AnalyticForceMatchesFiniteDifference)
     const ModuleMD::SNAP::ForceResult finite = calculator.compute_with_finite_difference_force(neighbors, 0, 1.0e-6);
     for (int direction = 0; direction < 3; ++direction)
     {
-        EXPECT_NEAR(analytic.neighbor_forces[0][static_cast<std::size_t>(direction)],
-                    finite.neighbor_forces[0][static_cast<std::size_t>(direction)],
+        EXPECT_NEAR(analytic.neighbor_forces[0][direction],
+                    finite.neighbor_forces[0][direction],
                     1.0e-6);
     }
 }
@@ -362,8 +362,8 @@ TEST(SnapCalculator, InnerSwitchMatchesFiniteDifference)
     {
         for (int direction = 0; direction < 3; ++direction)
         {
-            EXPECT_NEAR(analytic.neighbor_forces[i][static_cast<std::size_t>(direction)],
-                        finite.neighbor_forces[i][static_cast<std::size_t>(direction)], 1.0e-5);
+            EXPECT_NEAR(analytic.neighbor_forces[i][direction],
+                        finite.neighbor_forces[i][direction], 1.0e-5);
         }
     }
 
@@ -378,8 +378,8 @@ TEST(SnapCalculator, InnerSwitchMatchesFiniteDifference)
     {
         for (int direction = 0; direction < 3; ++direction)
         {
-            EXPECT_NEAR(quadratic_analytic.neighbor_forces[i][static_cast<std::size_t>(direction)],
-                        quadratic_finite.neighbor_forces[i][static_cast<std::size_t>(direction)], 1.0e-5);
+            EXPECT_NEAR(quadratic_analytic.neighbor_forces[i][direction],
+                        quadratic_finite.neighbor_forces[i][direction], 1.0e-5);
         }
     }
 }
@@ -414,9 +414,9 @@ TEST(SnapCalculator, InnerSwitchSkipsSingularRadius)
     EXPECT_TRUE(std::isfinite(near_analytic.energy.energy));
     for (int direction = 0; direction < 3; ++direction)
     {
-        EXPECT_TRUE(std::isfinite(near_analytic.neighbor_forces[0][static_cast<std::size_t>(direction)]));
-        EXPECT_NEAR(near_analytic.neighbor_forces[0][static_cast<std::size_t>(direction)],
-                    near_finite.neighbor_forces[0][static_cast<std::size_t>(direction)], 1.0e-4);
+        EXPECT_TRUE(std::isfinite(near_analytic.neighbor_forces[0][direction]));
+        EXPECT_NEAR(near_analytic.neighbor_forces[0][direction],
+                    near_finite.neighbor_forces[0][direction], 1.0e-4);
     }
 }
 
@@ -435,8 +435,8 @@ TEST(SnapCalculator, ZeroWeightSkipsInvalidRadius)
     EXPECT_DOUBLE_EQ(result.energy.energy, isolated_energy);
     for (int direction = 0; direction < 3; ++direction)
     {
-        EXPECT_DOUBLE_EQ(result.center_force[static_cast<std::size_t>(direction)], 0.0);
-        EXPECT_DOUBLE_EQ(result.neighbor_forces[0][static_cast<std::size_t>(direction)], 0.0);
+        EXPECT_DOUBLE_EQ(result.center_force[direction], 0.0);
+        EXPECT_DOUBLE_EQ(result.neighbor_forces[0][direction], 0.0);
     }
     neighbor.weight = 1.0;
     const std::vector<ModuleMD::SNAP::Neighbor> active(1, neighbor);
@@ -458,12 +458,12 @@ TEST(SnapCalculator, AngularQuadraticForcesMatchEnergyGradientAndStrain)
         {
             std::array<std::array<double, 3>, 3> plus = positions;
             std::array<std::array<double, 3>, 3> minus = positions;
-            plus[atom][static_cast<std::size_t>(direction)] += displacement;
-            minus[atom][static_cast<std::size_t>(direction)] -= displacement;
+            plus[atom][direction] += displacement;
+            minus[atom][direction] -= displacement;
             const double energy_gradient = (evaluate_small_cell(calculator, plus).energy
                                             - evaluate_small_cell(calculator, minus).energy)
                                            / (2.0 * displacement);
-            EXPECT_NEAR(result.forces[atom][static_cast<std::size_t>(direction)],
+            EXPECT_NEAR(result.forces[atom][direction],
                         -energy_gradient, 1.0e-4);
         }
     }
@@ -473,7 +473,7 @@ TEST(SnapCalculator, AngularQuadraticForcesMatchEnergyGradientAndStrain)
         double total_force = 0.0;
         for (std::size_t atom = 0; atom < positions.size(); ++atom)
         {
-            total_force += result.forces[atom][static_cast<std::size_t>(direction)];
+            total_force += result.forces[atom][direction];
         }
         EXPECT_NEAR(total_force, 0.0, 1.0e-10);
     }

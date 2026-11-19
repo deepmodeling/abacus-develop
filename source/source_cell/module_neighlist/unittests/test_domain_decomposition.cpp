@@ -118,7 +118,7 @@ TEST_F(DomainDecompositionTest, GhostExchangePlanMatchesGhostLayout)
             ASSERT_GE(owner, 0);
             ASSERT_LT(owner, static_cast<int>(cell.owned_atoms().size()));
             EXPECT_EQ(cell.ghost_atoms()[iat].type_index,
-                      cell.owned_atoms()[static_cast<std::size_t>(owner)].type_index);
+                      cell.owned_atoms()[owner].type_index);
         }
     }
     else
@@ -160,7 +160,7 @@ TEST_F(DomainDecompositionTest, GhostExchangePlanMatchesGhostLayout)
                                                  + iatom;
                 ASSERT_LT(ghost_index, cell.ghost_atoms().size());
                 EXPECT_EQ(cell.ghost_atoms()[ghost_index].type_index,
-                          cell.owned_atoms()[static_cast<std::size_t>(owned_index)].type_index);
+                          cell.owned_atoms()[owned_index].type_index);
             }
         }
     }
