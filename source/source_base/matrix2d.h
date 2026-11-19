@@ -130,8 +130,9 @@ class NDArray<T, 2> final
      * @brief Scatter a full host matrix into the frozen distribution.
      *
      * The MPI implementation is collective: every rank must call scatter()
-     * with a complete host matrix of the global shape. Only the payload passed
-     * by communicator rank zero is read; payloads on other ranks are ignored.
+     * with a complete host matrix of the global shape. Only the matrix supplied
+     * by communicator rank zero is read; matrices supplied by other ranks are
+     * ignored.
      */
     void scatter(const NDArray& matglb);
 

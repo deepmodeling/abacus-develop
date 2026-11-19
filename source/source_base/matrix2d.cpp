@@ -374,11 +374,13 @@ NDArray<T, 2> NDArray<T, 2>::matmul(const NDArray<T, 2>& other) const
 {
     const int m = nrglb();
     const int k = ncglb();
-    const int k2 = other.nrglb();
     const int n = other.ncglb();
-    if (k != k2)
     {
-        throw std::invalid_argument("matrix inner dimensions are incompatible");
+        const int k_ = other.nrglb();
+        if (k != k_)
+        {
+            throw std::invalid_argument("matrix inner dimensions are incompatible");
+        }
     }
 
     const bool this_is_serial
@@ -403,9 +405,9 @@ NDArray<T, 2> NDArray<T, 2>::matmul(const NDArray<T, 2>& other) const
             for (int j = 0; j < n; ++j)
             {
                 T value = T();
-                for (int kk = 0; kk < k; ++kk)
+                for (int k_ = 0; k_ < k; ++k_)
                 {
-                    value += at_local(i, kk) * other.at_local(kk, j);
+                    value += at_local(i, k_) * other.at_local(k_, j);
                 }
                 result.at_local(i, j) = value;
             }

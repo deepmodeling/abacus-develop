@@ -101,7 +101,8 @@ int checked_mpi_count(const std::size_t count)
 {
     if (count > static_cast<std::size_t>(std::numeric_limits<int>::max()))
     {
-        throw std::invalid_argument("Matrix2d diagonal payload exceeds MPI count range");
+        throw std::invalid_argument(
+            "Matrix2d diagonal data buffer exceeds MPI count range");
     }
     return static_cast<int>(count);
 }
@@ -115,7 +116,8 @@ std::vector<int> make_byte_displacements(const std::vector<int>& counts)
         displacements[ip] = off;
         if (counts[ip] > std::numeric_limits<int>::max() - off)
         {
-            throw std::invalid_argument("Matrix2d diagonal payload size overflow");
+            throw std::invalid_argument(
+                "Matrix2d diagonal data buffer size overflow");
         }
         off += counts[ip];
     }
@@ -300,28 +302,30 @@ std::vector<T> diagonal(const Matrix2d<T>& matrix)
         if (comm != MPI_COMM_NULL)
         {
             const std::size_t entry_bytes = sizeof(int) + sizeof(T);
-            const std::size_t local_payload_bytes
+            const std::size_t local_diagonal_buffer_bytes
                 = sizeof(int) + local_entries.size() * entry_bytes;
-            std::vector<unsigned char> local_payload(local_payload_bytes);
+            std::vector<unsigned char> local_diagonal_buffer(
+                local_diagonal_buffer_bytes);
             const int local_entry_count
                 = checked_mpi_count(local_entries.size());
-            std::memcpy(local_payload.data(),
+            std::memcpy(local_diagonal_buffer.data(),
                         &local_entry_count,
                         sizeof(local_entry_count));
             std::size_t offset = sizeof(local_entry_count);
             for (const std::pair<int, T>& entry : local_entries)
             {
-                std::memcpy(local_payload.data() + offset,
+                std::memcpy(local_diagonal_buffer.data() + offset,
                             &entry.first,
                             sizeof(entry.first));
                 offset += sizeof(entry.first);
-                std::memcpy(local_payload.data() + offset,
+                std::memcpy(local_diagonal_buffer.data() + offset,
                             &entry.second,
                             sizeof(entry.second));
                 offset += sizeof(entry.second);
             }
 
-            const int local_count = checked_mpi_count(local_payload.size());
+            const int local_count
+                = checked_mpi_count(local_diagonal_buffer.size());
             const std::vector<int> pcounts
                 = gather_byte_counts(local_count, comm);
             const std::vector<int> pdispls
@@ -330,7 +334,7 @@ std::vector<T> diagonal(const Matrix2d<T>& matrix)
                 = pdispls.back() + pcounts.back();
             std::vector<unsigned char> received(
                 static_cast<std::size_t>(total_bytes));
-            Parallel_Common::allgatherv_bytes(local_payload.data(),
+            Parallel_Common::allgatherv_bytes(local_diagonal_buffer.data(),
                                               local_count,
                                               received.data(),
                                               pcounts.data(),
@@ -346,7 +350,7 @@ std::vector<T> diagonal(const Matrix2d<T>& matrix)
                 if (end - begin < sizeof(int))
                 {
                     throw std::runtime_error(
-                        "Matrix2d diagonal payload is truncated");
+                        "Matrix2d diagonal data buffer is truncated");
                 }
                 int entry_count = 0;
                 std::memcpy(&entry_count,
@@ -358,7 +362,7 @@ std::vector<T> diagonal(const Matrix2d<T>& matrix)
                     || end - begin != sizeof(int) + expected_bytes)
                 {
                     throw std::runtime_error(
-                        "Matrix2d diagonal payload has an invalid size");
+                        "Matrix2d diagonal data buffer has an invalid size");
                 }
                 std::size_t entry_offset = begin + sizeof(entry_count);
                 for (int ientry = 0; ientry < entry_count; ++ientry)
