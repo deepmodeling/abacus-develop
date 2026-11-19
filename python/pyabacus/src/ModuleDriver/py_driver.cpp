@@ -451,7 +451,7 @@ CalculationResult PyDriver::run(const std::string& input_dir,
         if (cal == "scf" || cal == "relax" || cal == "cell-relax" || cal == "nscf")
         {
             Relax_Driver rl_driver;
-            rl_driver.relax_driver(impl_->p_esolver_, *impl_->ucell_, PARAM.inp, GlobalV::ofs_running);
+            rl_driver.relax_driver(impl_->p_esolver_, *impl_->ucell_, PARAM, GlobalV::ofs_running);
         }
         else if (cal == "get_s")
         {

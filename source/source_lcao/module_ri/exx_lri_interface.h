@@ -110,6 +110,8 @@ public:
         const bool update_symmetry,
         const bool use_gpu);
 
+    void begin_electronic_step(bool active) { strict_electronic_step_ = active; }
+
     /// @brief in eachiterinit:  do DM mixing and calculate Hexx when entering 2nd SCF
     void exx_eachiterinit(const int istep,
                           const UnitCell& ucell,
@@ -162,6 +164,7 @@ public:
 
 private:
 
+    bool strict_electronic_step_ = false;
     Mix_DMk_2D<T> mix_DMk_2D;
     Mix_DMk_2D<std::complex<double>> mix_common_density_;
     RI_2D_Comm::HybridDensityLayout common_density_layout_;

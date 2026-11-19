@@ -180,12 +180,19 @@ void ESolver_KS::runner(BaseCell& basecell, const int istep)
     ModuleBase::TITLE("ESolver_KS", "runner");
     ModuleBase::timer::start(this->classname, "runner");
 
+    const bool controlled = this->electronic_step != nullptr;
+    if (controlled)
+    {
+        this->conv_esolver = false;
+    }
+
     // 1) before_scf (electronic iteration loops)
     this->before_scf(ucell, istep);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT SCF");
 
     const int iter_limit = this->scf_iter_limit(istep);
-    const bool converged = this->scf_loop(ucell, istep, iter_limit);
+    const bool scf_converged = this->scf_loop(ucell, istep, iter_limit);
+    const bool converged = scf_converged && !(controlled && this->oscillate_esolver);
     this->after_scf(ucell, istep, converged);
     this->conv_esolver = converged;
     ModuleBase::timer::end(this->classname, "runner");

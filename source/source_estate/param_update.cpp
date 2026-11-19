@@ -14,4 +14,9 @@ void ParamUpdater::update_from_atoms_info(const AtomsInfoResult& atoms_info)
     PARAM.sys.ks_run = atoms_info.ks_run;
 }
 
+void ParamUpdater::update_electron_count(double nelect, Parameter& parameters)
+{
+    parameters.input.nelec = nelect;
+}
+
 }

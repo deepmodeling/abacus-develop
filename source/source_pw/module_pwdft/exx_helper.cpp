@@ -7,6 +7,19 @@
 #include "source_estate/elecstate_pw.h" // use ElecStatePW
 #include "source_estate/module_charge/charge.h" // use Charge
 #include <chrono> // for timing
+#include <stdexcept>
+
+void validate_electronic_step_exx(int functional_type, bool cal_exx)
+{
+    // Separate-loop SCAN0 starts as SCAN, before switching to hybrid meta-GGA.
+    // The upstream PW density path updates tau only for non-hybrid meta-GGA.
+    if (functional_type == 5 || (functional_type == 3 && cal_exx))
+    {
+        throw std::runtime_error(
+            "constant-potential PW hybrid meta-GGA is unsupported: "
+            "upstream kinetic-energy-density updates do not handle hybrid functionals");
+    }
+}
 
 template <typename T, typename Device>
 void Exx_Helper<T, Device>::init(const UnitCell& ucell, const Input_para& inp, const ModuleBase::matrix& wg, const General_Exx_Info& exx_info)
@@ -32,7 +45,8 @@ void Exx_Helper<T, Device>::init(const UnitCell& ucell, const Input_para& inp, c
 }
 
 template <typename T, typename Device>
-void Exx_Helper<T, Device>::before_scf(void* p_hamilt, void* psi, const Input_para& inp, const General_Exx_Info& exx_info)
+void Exx_Helper<T, Device>::before_scf(void* p_hamilt, void* psi, const Input_para& inp,
+                                       const General_Exx_Info& exx_info, bool electronic_step_active)
 {
     /// Return if not a valid calculation type
     if (inp.calculation != "scf" && inp.calculation != "relax"
@@ -45,6 +59,12 @@ void Exx_Helper<T, Device>::before_scf(void* p_hamilt, void* psi, const Input_pa
     if (!exx_info.cal_exx || inp.basis_type != "pw")
     {
         return;
+    }
+
+    strict_electronic_step = electronic_step_active;
+    if (electronic_step_active)
+    {
+        exx_iter = 0;
     }
 
     /// Set EXX helper to Hamiltonian
@@ -90,7 +110,7 @@ bool Exx_Helper<T, Device>::iter_finish(void* p_elec, Charge* p_charge, void* ps
             }
             bool conv_ene = std::abs(dexx) < inp.exx_ene_thr;
 
-            conv_esolver = this->exx_after_converge(iter, conv_ene);
+            conv_esolver = this->exx_after_converge(iter, conv_ene, inp);
 
             if (!conv_esolver)
             {
@@ -130,9 +150,20 @@ double Exx_Helper<T, Device>::cal_exx_energy(void* psi_)
 }
 
 template <typename T, typename Device>
-bool Exx_Helper<T, Device>::exx_after_converge(int iter, bool ene_conv)
+bool Exx_Helper<T, Device>::exx_after_converge(int iter, bool ene_conv, const Input_para& inp)
 {
-    if (op_exx->first_iter)
+    if (strict_electronic_step && op_exx->separate_loop)
+    {
+        // A changed electron number must complete at least one EXX update.
+        // Reaching the outer-loop budget is not a convergence criterion.
+        const bool outer_converged = exx_iter > 0
+            && ((inp.exx_thr_type == "energy" && ene_conv)
+                || (inp.exx_thr_type == "density" && iter == 1));
+        if (outer_converged) { return true; }
+        if (exx_iter >= inp.exx_hybrid_step)
+        { throw std::runtime_error("constant-potential EXX outer loop did not converge; increase exx_hybrid_step"); }
+    }
+    else if (op_exx->first_iter)
     {
         op_exx->first_iter = false;
     }
@@ -140,15 +171,15 @@ bool Exx_Helper<T, Device>::exx_after_converge(int iter, bool ene_conv)
     {
         return true;
     }
-    else if (PARAM.inp.exx_thr_type == "energy" && ene_conv)
+    else if (inp.exx_thr_type == "energy" && ene_conv)
     {
         return true;
     }
-    else if (PARAM.inp.exx_thr_type == "density" && iter == 1)
+    else if (inp.exx_thr_type == "density" && iter == 1)
     {
         return true;
     }
-    else if (exx_iter >= PARAM.inp.exx_hybrid_step)
+    else if (exx_iter >= inp.exx_hybrid_step)
     {
         GlobalV::ofs_running << " !!EXX IS NOT CONVERGED!!" << std::endl;
         std::cout << " !!EXX IS NOT CONVERGED!!" << std::endl;
@@ -188,4 +219,3 @@ template class Exx_Helper<std::complex<double>, base_device::DEVICE_CPU>;
 template class Exx_Helper<std::complex<float>, base_device::DEVICE_GPU>;
 template class Exx_Helper<std::complex<double>, base_device::DEVICE_GPU>;
 #endif
-
