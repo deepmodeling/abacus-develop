@@ -769,6 +769,90 @@ TEST(DMKTest, ReadDMKMissingFileReturnsFalse) {
     EXPECT_EQ(dmk, original);
 }
 
+#ifdef __MPI
+/// @brief Verify that split descriptor communicators keep their read status independent.
+TEST(DMKTest, ReadDMKSplitCommunicatorStatus)
+{
+    int world_rank = 0;
+    int world_size = 0;
+    MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+    if (world_size < 2)
+    {
+        GTEST_SKIP() << "This test requires at least two MPI ranks";
+    }
+
+    const int nspin = 1;
+    const int nk = 1;
+    const int nlocal = 2;
+    UnitCell* ucell;
+    UcellTestPrepare utp = UcellTestLib["Si"];
+    ucell = utp.SetUcellInfo();
+
+    Parallel_Blkcyclic pv_world;
+    init_pv(nlocal, pv_world);
+    const std::vector<double> probe = {1.0, 2.0, 3.0, 4.0};
+    std::vector<std::vector<double>> dmk;
+    fill_local_dmk(probe, nlocal, pv_world, dmk);
+
+    K_Vectors kv;
+    init_kv(kv, 1.0);
+    const std::vector<double> efs(nspin, 0.0);
+    const std::string out_dir = testing::TempDir();
+    std::ofstream ofs_log;
+    ModuleIO::write_dmk(dmk, kv, /*precision=*/12, efs, ucell, pv_world, /*column_major=*/true,
+                        out_dir, /*istep=*/0, /*out_app_flag=*/0, ofs_log);
+    MPI_Barrier(MPI_COMM_WORLD);
+
+    const int color = world_rank % 2;
+    MPI_Comm split_comm = MPI_COMM_NULL;
+    MPI_Comm_split(MPI_COMM_WORLD, color, world_rank, &split_comm);
+
+    int local_pass = 1;
+    {
+        Parallel_Blkcyclic pv_split;
+        pv_split.init(nlocal, nlocal, 1, split_comm, false);
+        const std::vector<double> sentinel(pv_split.size(), 7.0);
+        std::vector<std::vector<double>> dmk_read(1, sentinel);
+        const bool expect_success = (color == 0);
+        const std::string read_dir = expect_success ? out_dir : out_dir + "dmk_split_missing_dir/";
+        const bool read_success = ModuleIO::read_dmk(nspin, nk, kv, pv_split, /*column_major=*/true,
+                                                     read_dir, /*istep=*/0, /*out_app_flag=*/0,
+                                                     dmk_read, ofs_log);
+        if (read_success != expect_success)
+        {
+            local_pass = 0;
+        }
+
+        if (expect_success)
+        {
+            std::vector<std::vector<double>> expected;
+            fill_local_dmk(probe, nlocal, pv_split, expected);
+            if (dmk_read != expected)
+            {
+                local_pass = 0;
+            }
+        }
+        else if (dmk_read.size() != 1 || dmk_read[0] != sentinel)
+        {
+            local_pass = 0;
+        }
+    }
+    MPI_Comm_free(&split_comm);
+
+    int global_pass = 0;
+    MPI_Allreduce(&local_pass, &global_pass, 1, MPI_INT, MPI_MIN, MPI_COMM_WORLD);
+    EXPECT_EQ(global_pass, 1) << "Split communicators exchanged read status or returned incorrect data";
+
+    if (world_rank == 0)
+    {
+        std::remove((out_dir + "dm_nao.txt").c_str());
+    }
+    MPI_Barrier(MPI_COMM_WORLD);
+    delete ucell;
+}
+#endif
+
 // ---------------------------------------------------------------------------
 // out_app_flag = 2: the ionic step is part of the filename, so the reader has
 // to request the matching g{istep+1} file and reject a frame whose marker

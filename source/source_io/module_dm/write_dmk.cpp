@@ -466,7 +466,7 @@ bool ModuleIO::read_dmk(const int nspin,
 #ifdef __MPI
             // Cooperative failure: every rank distributes the same matrix or
             // stops together, so a rank-0 parse error cannot deadlock the run.
-            Parallel_Common::bcast_bool(read_success);
+            Parallel_Common::bcast_bool(read_success, pv.comm());
 #endif
             if (!read_success)
             {
