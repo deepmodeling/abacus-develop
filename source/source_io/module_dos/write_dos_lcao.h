@@ -28,7 +28,7 @@ namespace ModuleIO
         const double& dos_edelta_ev,            // Delta energy
         const double& dos_scale,                
         const double& bcoeff,
-        const std::string& spectral_format,
+        const std::string& dos_format,
         const std::string& pdos_format,
         const int out_app_flag,
         const int istep,

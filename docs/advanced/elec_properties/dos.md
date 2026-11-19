@@ -100,16 +100,16 @@ For nspin=2, two files are written (pdoss1* and pdoss2*), one per spin channel. 
 
 ### NumPy output
 
-Set `out_spectral_format npy` to write the spectra selected by `out_dos` as NumPy arrays. This includes total DOS for PW and LCAO and projected DOS for LCAO. The default format is `text`. The NPY writer is built into ABACUS.
+Set `out_dos_format npy` to write the total DOS (PW and LCAO) and projected DOS (LCAO) selected by `out_dos` as NumPy arrays. The default format is `text`. The NPY writer is built into ABACUS.
 
 ```text
-out_dos              1
-out_spectral_format  npy
+out_dos         1
+out_dos_format  npy
 ```
 
 Each file contains a standard NumPy 1.0 structured array with named fields. Total DOS uses one row per energy point in `doss1.npy`, with a separate `doss2.npy` for collinear spin. The five binary64 fields are `energy_eV`, `dos`, `dos_int`, `dos_smear` and `dos_smear_int`, in the same units as the text columns. `spin_channel` gives the one-based channel. For example, `np.load("doss1.npy")["dos_smear"]` returns the smeared DOS in states/eV per cell.
 
-LCAO projected DOS uses one row per atom and `(l,m)` channel in `pdos.npy`. Contributions from all zeta components are summed. Across the array, the binary64 `pdos` field has axes `(orbital, spin channel, energy point)` and units of 1/eV. There are two spin channels for `nspin=2` and one for `nspin=1` or `4`. The latter includes both spinor components. Both output formats apply the same small-value threshold. With the default spectral format, `pdos_format npy` selects binary PDOS alone.
+LCAO projected DOS uses one row per atom and `(l,m)` channel in `pdos.npy`. Contributions from all zeta components are summed. Across the array, the binary64 `pdos` field has axes `(orbital, spin channel, energy point)` and units of 1/eV. There are two spin channels for `nspin=2` and one for `nspin=1` or `4`. The latter includes both spinor components. Both output formats apply the same small-value threshold. With `out_dos_format text`, `pdos_format npy` selects binary PDOS alone.
 
 ```python
 import numpy as np

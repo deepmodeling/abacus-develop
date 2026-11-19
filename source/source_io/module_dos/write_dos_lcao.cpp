@@ -26,7 +26,7 @@ void write_dos_lcao(
         const double& dos_edelta_ev,
         const double& dos_scale,
         const double& bcoeff,
-        const std::string& spectral_format,
+        const std::string& dos_format,
         const std::string& pdos_format,
         const int out_app_flag,
         const int istep,
@@ -77,7 +77,7 @@ void write_dos_lcao(
             ss << "g" << istep+1;
         }
 
-        ss << (spectral_format == "npy" ? ".npy" : ".txt");
+        ss << (dos_format == "npy" ? ".npy" : ".txt");
         ofs_running << " DOS file: " << ss.str() << '\n';
 
         ModuleIO::cal_dos(is,
@@ -102,7 +102,7 @@ void write_dos_lcao(
     // out_dos >= 1: always compute PDOS alongside DOS (LCAO only)
     const auto pdos = cal_pdos(psi, p_ham, pv, kv, nspin, nbands, ekb, emax, emin, dos_edelta_ev, bcoeff, nlocal);
     const bool root = GlobalV::MY_RANK == 0;
-    if (spectral_format == "npy" || pdos_format == "npy")
+    if (dos_format == "npy" || pdos_format == "npy")
     {
         std::string error;
         if (root)
@@ -154,7 +154,7 @@ template void write_dos_lcao(
         const double& dos_edelta_ev,
         const double& dos_scale,
         const double& bcoeff,
-        const std::string& spectral_format,
+        const std::string& dos_format,
         const std::string& pdos_format,
         const int out_app_flag,
         const int istep,
@@ -183,7 +183,7 @@ template void write_dos_lcao(
         const double& dos_edelta_ev,
         const double& dos_scale,
         const double& bcoeff,
-        const std::string& spectral_format,
+        const std::string& dos_format,
         const std::string& pdos_format,
         const int out_app_flag,
         const int istep,

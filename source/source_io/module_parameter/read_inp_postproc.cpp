@@ -10,7 +10,7 @@ void ReadInput::item_postprocess()
     // in the generated documentation (docs/advanced/input_files/input-main.md).
     // Please preserve this ordering when adding new parameters.
     {
-        Input_Item item("out_spectral_format");
+        Input_Item item("out_dos_format");
         item.domain.set_choices({"text", "npy"});
         item.annotation = "file format for total and projected DOS";
         item.category = "Density of states";
@@ -19,7 +19,7 @@ void ReadInput::item_postprocess()
                            "This covers total DOS for PW and LCAO, and projected DOS for LCAO. "
                            "NPY stores named binary64 fields and one array per written ionic step.";
         item.default_value = "text";
-        read_sync_string(input.out_spectral_format);
+        read_sync_string(input.out_dos_format);
         this->add_item(item);
     }
     {
@@ -28,8 +28,8 @@ void ReadInput::item_postprocess()
         item.annotation = "LCAO projected DOS file format";
         item.category = "Density of states";
         item.type = "String";
-        item.description = "With out_spectral_format text, pdos_format npy selects NumPy for LCAO projected "
-                           "DOS alone. With out_spectral_format npy both total and projected DOS use NumPy.";
+        item.description = "With out_dos_format text, pdos_format npy selects NumPy for LCAO projected "
+                           "DOS alone. With out_dos_format npy both total and projected DOS use NumPy.";
         item.default_value = "text";
         read_sync_string(input.pdos_format);
         item.check_value = [](const Input_Item&, const Parameter& para) {
