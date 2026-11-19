@@ -23,8 +23,6 @@ rpa_scf_shrink_multik
 rt_tddft_pbe0_gamma
 rt_tddft_hse_spin2
 rt_tddft_hse_current_spin2_up
-rt_tddft_hse_current_spin2_down
-rt_tddft_pbe_current_shared
 bse_lr_multik
 nscf_hse_multik
 
