@@ -1,8 +1,8 @@
 #include "for_test.h"
-#include "mock_remake_cell.h"
 #include "source_relax/lattice_change_basic.h"
 #include "source_relax/lattice_change_cg.h"
 #include "source_relax/relax_criteria.h"
+#include "test_mock_remake_cell.h"
 
 #include "gtest/gtest.h"
 

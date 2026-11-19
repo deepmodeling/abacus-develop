@@ -1,6 +1,6 @@
 #include "for_test.h"
-#include "mock_remake_cell.h"
 #include "source_relax/lat_change_method.h"
+#include "test_mock_remake_cell.h"
 
 #include "gtest/gtest.h"
 #include <fstream>
