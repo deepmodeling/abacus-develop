@@ -124,9 +124,15 @@ void DP::initialize(BaseCell& basecell, const Input_para& inp)
     }
 #endif
 #if defined(__DPMD) && (!defined(__DPMD_COMM_NLIST_ARGS) || __DPMD_COMM_NLIST_ARGS == 0)
-    if (world_domain.size() > 1)
+    bool is_tensorflow_model = false;
+    if (dp_file.size() >= 3)
     {
-        ModuleBase::WARNING_QUIT("DP", "Distributed DeePMD requires communication-capable InputNlist and an MPI-enabled PyTorch operator linked to libmpi.so.");
+        const std::size_t suffix_start = dp_file.size() - 3;
+        is_tensorflow_model = dp_file.compare(suffix_start, 3, ".pb") == 0;
+    }
+    if (world_domain.size() > 1 && !is_tensorflow_model)
+    {
+        ModuleBase::WARNING_QUIT("DP", "Distributed PyTorch DeePMD requires communication-capable InputNlist and an MPI-enabled operator linked to libmpi.so.");
     }
 #endif
 

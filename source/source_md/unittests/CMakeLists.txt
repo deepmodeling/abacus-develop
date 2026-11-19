@@ -60,6 +60,8 @@ list(
   ../../source_cell/dom_migrate.cpp
   ../../source_cell/dom_force.cpp
   ../../source_cell/mdcell.cpp
+  ../../source_cell/mdcell_adapter.cpp
+  ../../source_cell/mdcell_reader.cpp
   ../../source_base/output.cpp
   ../../source_io/module_output/output_log.cpp
   ../../source_io/module_output/print_info.cpp

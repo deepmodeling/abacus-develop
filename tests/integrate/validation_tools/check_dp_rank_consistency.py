@@ -39,18 +39,39 @@ def read_observables(log_text):
     return [float(energy.group(1))] + forces + stress
 
 
-def run_case(args, structure, ranks, case_dir):
+def read_frames(log_text):
+    starts = [match.start() for match in re.finditer(r"#TOTAL ENERGY#", log_text)]
+    return [read_observables(log_text[start:stop])
+            for start, stop in zip(starts, starts[1:] + [len(log_text)])]
+
+
+def compare_frames(label, serial_frames, parallel_frames, minimum_frames):
+    if len(serial_frames) != len(parallel_frames) or len(serial_frames) < minimum_frames:
+        raise AssertionError("{} has {} one-rank and {} four-rank evaluations".format(
+            label, len(serial_frames), len(parallel_frames)))
+    tolerances = [1e-5] + [1e-4] * 6 + [1e-3] * 9
+    for step, (serial, parallel) in enumerate(zip(serial_frames, parallel_frames)):
+        for index, (left, right) in enumerate(zip(serial, parallel)):
+            if abs(left - right) > tolerances[index]:
+                raise AssertionError("{} step {} observable {} differs: {} vs {}".format(
+                    label, step, index, left, right))
+
+
+def run_case(args, structure, ranks, case_dir, calculation):
     case_dir.mkdir()
     (case_dir / "STRU").write_text(structure)
-    (case_dir / "INPUT").write_text(
+    input_text = (
         "INPUT_PARAMETERS\n"
         "suffix rank_check\n"
-        "calculation scf\n"
+        "calculation " + calculation + "\n"
         "esolver_type dp\n"
         "pot_file " + str(args.model.resolve()) + "\n"
         "cal_force 1\n"
         "cal_stress 1\n"
         "device cpu\n")
+    if calculation != "scf":
+        input_text += "relax_nmax 2\nforce_thr_ev 1e-10\nstress_thr 1e-10\n"
+    (case_dir / "INPUT").write_text(input_text)
     command = [args.mpi, args.mpi_np_flag, str(ranks), args.abacus]
     env = os.environ.copy()
     env["OMP_NUM_THREADS"] = "1"
@@ -61,8 +82,8 @@ def run_case(args, structure, ranks, case_dir):
     if result.returncode:
         raise AssertionError("DP run failed on {} ranks:\n{}".format(
             ranks, result.stdout))
-    log = case_dir / "OUT.rank_check" / "running_scf.log"
-    return read_observables(log.read_text())
+    log = case_dir / "OUT.rank_check" / ("running_" + calculation + ".log")
+    return read_frames(log.read_text())
 
 
 def main():
@@ -82,13 +103,10 @@ def main():
     with tempfile.TemporaryDirectory(prefix="abacus-dp-ranks-") as scratch:
         baseline = None
         for label, variant in structures.items():
-            serial = run_case(args, variant, 1, Path(scratch) / (label + "_np1"))
-            parallel = run_case(args, variant, 4, Path(scratch) / (label + "_np4"))
-            tolerances = [1e-5] + [1e-4] * 6 + [1e-3] * 9
-            for index, (left, right) in enumerate(zip(serial, parallel)):
-                if abs(left - right) > tolerances[index]:
-                    raise AssertionError("{} observable {} differs: {} vs {}\nnp1={}\nnp4={}".format(
-                        label, index, left, right, serial, parallel))
+            serial_frames = run_case(args, variant, 1, Path(scratch) / (label + "_np1"), "scf")
+            parallel_frames = run_case(args, variant, 4, Path(scratch) / (label + "_np4"), "scf")
+            compare_frames(label, serial_frames, parallel_frames, 1)
+            serial = serial_frames[0]
             print("{}: energy, 6 force components and 9 stress components agree; "
                   "energy={}, max_force={}".format(label, serial[0], max(abs(x) for x in serial[1:7])))
             if label == "original":
@@ -97,6 +115,16 @@ def main():
                 raise AssertionError("{} geometry update did not change the DP energy".format(label))
             if label == "moved" and max(abs(x) for x in serial[1:7]) < 1e-3:
                 raise AssertionError("Coordinate update did not produce a measurable DP force")
+
+        for calculation in ("relax", "cell-relax"):
+            variant = structures["moved"]
+            serial_frames = run_case(args, variant, 1,
+                                     Path(scratch) / (calculation + "_np1"), calculation)
+            parallel_frames = run_case(args, variant, 4,
+                                       Path(scratch) / (calculation + "_np4"), calculation)
+            compare_frames(calculation, serial_frames, parallel_frames, 2)
+            print("{}: {} consecutive evaluations agree at one and four ranks".format(
+                calculation, len(serial_frames)))
 
 
 if __name__ == "__main__":

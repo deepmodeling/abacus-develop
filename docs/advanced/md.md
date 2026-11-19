@@ -101,10 +101,12 @@ And the filename of DP model is specified by keyword [pot_file](./input_files/in
 DP calculations, including `relax` and `cell-relax`, use a domain-decomposed
 MDCell for model inference. Each MPI rank evaluates its owned atoms and nearby
 ghost atoms; ABACUS combines the resulting forces for geometry optimization.
-Multi-rank runs require a DeePMD-kit build with communication-capable neighbor
-lists and an MPI-enabled `libdeepmd_op_pt.so` linked against the same MPI runtime
-as ABACUS. ABACUS checks the operator's direct `libmpi.so` dependency at build
-time and rejects distributed inference when it cannot verify this capability.
+Multi-rank PyTorch model runs require a DeePMD-kit build with communication-capable
+neighbor lists and an MPI-enabled `libdeepmd_op_pt.so` linked against the same
+MPI runtime as ABACUS. ABACUS checks the operator's direct `libmpi.so` dependency
+at build time and rejects distributed PyTorch inference when it cannot verify
+this capability. Ordinary TensorFlow `.pb` models can use the multi-rank MDCell
+path without the PyTorch operator.
 For models with atomic parameters, `dp_aparam` accepts either one set of
 `dim_aparam` values for every atom or `nat * dim_aparam` values in global
 species-block atom order, after `cell_replica` expansion when applicable.

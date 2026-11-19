@@ -173,13 +173,13 @@ endif()
 
 if(DeePMD_FOUND AND NOT DeePMD_PT_OPERATOR_MPI)
   message(WARNING
-          "Distributed DeePMD inference is disabled: the PyTorch operator's "
+          "Distributed PyTorch DeePMD inference is disabled: the operator's "
           "direct libmpi.so dependency could not be verified.")
 elseif(DeePMD_FOUND
        AND DEFINED DeePMD_INPUT_NLIST_COMM_ARGS
        AND DeePMD_INPUT_NLIST_COMM_ARGS EQUAL 0)
   message(WARNING
-          "Distributed DeePMD inference is disabled: communication-capable "
+          "Distributed PyTorch DeePMD inference is disabled: communication-capable "
           "InputNlist is unavailable.")
 endif()
 

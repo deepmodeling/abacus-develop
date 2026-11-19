@@ -29,6 +29,10 @@ def run_case(executable, fixture, out_stru, expected):
         restart = output / "Restart_md.txt"
         if not restart.is_file() or restart.stat().st_size == 0:
             raise AssertionError("Missing MD restart for out_stru={}".format(out_stru))
+        restart_step = restart.read_text().splitlines()[0]
+        if restart_step != "3":
+            raise AssertionError("out_stru={} restart step is {}, expected 3".format(
+                out_stru, restart_step))
 
 
 def main():
