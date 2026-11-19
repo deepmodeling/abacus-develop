@@ -248,7 +248,7 @@ void init_vel(MDCell& mdcell,
         }
         for (LocalAtom& atom : mdcell.owned_atoms())
         {
-            atom.vel = velocities[offsets[static_cast<std::size_t>(atom.type)] + atom.type_index];
+            atom.vel = velocities[offsets[atom.type] + atom.type_index];
         }
         return;
     }
