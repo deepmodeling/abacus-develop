@@ -695,6 +695,127 @@ void make_two_type_cell(UnitCell &ucell, const int mbl_flat[9])
 void free_two_type_cell(UnitCell &ucell) { delete[] ucell.atoms; }
 } // namespace
 
+TEST(RelaxSyncConvergence, ProjectedForceAndStressInSkewCell)
+{
+    const int mbl[9] = {0, 0, 0, 1, 1, 1, 1, 1, 1};
+    UnitCell ucell;
+    make_two_type_cell(ucell, mbl);
+    ucell.latvec.e21 = 1.0;
+    ucell.GT = ucell.latvec.Inverse();
+    ucell.lat_axis_free[0] = 0;
+
+    Input_para inp;
+    inp.calculation = "cell-relax";
+    inp.fixed_axes = "a";
+    inp.force_thr = 0.002;
+    inp.force_thr_ev = inp.force_thr * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A;
+    inp.stress_thr = 3.0;
+
+    ModuleBase::matrix force(3, 3);
+    force(0, 0) = 0.1; // frozen atom
+    force(1, 2) = -0.001;
+    ModuleBase::matrix stress(3, 3);
+    stress(0, 0) = 3.0e-5;
+    // Masking the first row of latvec * stress and transforming back leaves
+    // only the (1, 0) component, with half the original magnitude.
+    const double to_kbar = ModuleBase::RYDBERG_SI / std::pow(ModuleBase::BOHR_RADIUS_SI, 3) * 1.0e-8;
+
+    Relax rl;
+    rl.init_relax(ucell.nat, inp);
+    std::ofstream log;
+    EXPECT_TRUE(rl.relax_step(ucell, force, stress, 0.0, log));
+    const double expected_force = 0.001 * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A;
+    const double expected_stress = 1.5e-5 * to_kbar;
+    EXPECT_THAT(rl.get_max_force_history(), testing::ElementsAre(testing::DoubleEq(expected_force)));
+    EXPECT_THAT(rl.get_max_stress_history(), testing::ElementsAre(testing::DoubleEq(expected_stress)));
+
+    free_two_type_cell(ucell);
+}
+
+TEST(RelaxSyncCellMove, UsesOldReciprocalCellAndNewLattice)
+{
+    const int mbl[9] = {1, 1, 1, 1, 1, 1, 1, 1, 1};
+    UnitCell ucell;
+    make_two_type_cell(ucell, mbl);
+    ucell.latvec.e21 = 1.0;
+    ucell.GT = ucell.latvec.Inverse();
+    ucell.atoms[0].taud[0] = {0.25, 0.25, 0.25};
+
+    Input_para inp;
+    inp.calculation = "cell-relax";
+    inp.relax_scale_force = 10.0; // unit ionic step factor on the first CG trial
+    inp.force_thr = 0.0;
+    inp.stress_thr = 0.0;
+
+    // Translate by 0.2 Bohr along Cartesian y and expand the lattice by 1/8.
+    ModuleBase::matrix force(3, 3);
+    force(0, 1) = 0.2 * ModuleBase::BOHR_TO_A * ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV;
+    ModuleBase::matrix stress(3, 3);
+    for (int axis = 0; axis < 3; ++axis)
+    {
+        stress(axis, axis) = 0.125 * ucell.nat / (ucell.omega * ModuleBase::Ry_to_eV);
+    }
+    Relax rl;
+    rl.init_relax(ucell.nat, inp);
+    std::ofstream log;
+    EXPECT_FALSE(rl.relax_step(ucell, force, stress, 0.0, log));
+
+    // The old inverse lattice maps the translation to (-0.05, 0.10, 0).
+    const auto &atom = ucell.atoms[0];
+    EXPECT_DOUBLE_EQ(atom.taud[0].x, 0.20);
+    EXPECT_DOUBLE_EQ(atom.taud[0].y, 0.35);
+    EXPECT_DOUBLE_EQ(atom.taud[0].z, 0.25);
+    EXPECT_DOUBLE_EQ(atom.tau[0].x, 0.84375);
+    EXPECT_DOUBLE_EQ(atom.tau[0].y, 0.7875);
+    EXPECT_DOUBLE_EQ(atom.tau[0].z, 0.5625);
+
+    free_two_type_cell(ucell);
+}
+
+TEST(RelaxSyncCellMove, SymmetryPreservesSearchStateForCorrection)
+{
+    using ModuleSymmetry::Symmetry;
+    const int mbl[9] = {};
+    UnitCell ucell;
+    make_two_type_cell(ucell, mbl);
+    ucell.GT = ucell.latvec.Inverse();
+    ucell.symm.nrotk = 2;
+    const int old_symm_flag = Symmetry::symm_flag;
+    Symmetry::symm_flag = 1;
+
+    Input_para inp;
+    inp.calculation = "cell-relax";
+    inp.relax_scale_force = 10.0;
+    inp.force_thr = 0.0;
+    inp.stress_thr = 0.0;
+    const ModuleBase::matrix force(3, 3);
+    ModuleBase::matrix stress(3, 3);
+    const double shear_stress = ucell.nat / (8.0 * ucell.omega * ModuleBase::Ry_to_eV);
+    stress(0, 1) = stress(0, 2) = shear_stress;
+    stress(1, 0) = 2.0 * shear_stress;
+
+    Relax rl;
+    rl.init_relax(ucell.nat, inp);
+    std::ofstream log;
+    EXPECT_FALSE(rl.relax_step(ucell, force, stress, 0.0, log));
+    EXPECT_NEAR(ucell.latvec.e12, 0.25, 1.0e-12);
+    EXPECT_NEAR(ucell.latvec.e21, 0.50, 1.0e-12);
+    EXPECT_NEAR(ucell.latvec.e13, 0.00, 1.0e-12);
+
+    // Equal endpoint energies and opposite slopes give a half-step correction.
+    // The second slope uses the projected and transposed direction from the trial.
+    stress.zero_out();
+    stress(0, 1) = -3.0 * ucell.nat / (8.0 * ucell.omega * ModuleBase::Ry_to_eV);
+    EXPECT_FALSE(rl.relax_step(ucell, force, stress, 0.0, log));
+    EXPECT_NEAR(ucell.latvec.e12, 0.00, 1.0e-12);
+    EXPECT_NEAR(ucell.latvec.e21, 0.375, 1.0e-12);
+    EXPECT_NEAR(ucell.latvec.e11, 2.00, 1.0e-12);
+    EXPECT_NEAR(ucell.latvec.e22, 2.00, 1.0e-12);
+
+    Symmetry::symm_flag = old_symm_flag;
+    free_two_type_cell(ucell);
+}
+
 // fixed_axes="shape": only the hydrostatic part of the stress survives, so the
 // lattice scales isotropically (off-diagonals stay zero, diagonal scales equal).
 TEST(RelaxSyncCellMove, FixedShapeIsotropicScale)
@@ -861,7 +982,7 @@ TEST(RelaxSyncConvergence, ClearsPreviousGeometryUpdate)
 }
 
 // fixed_axes="volume": the cell may change shape but its volume is re-scaled
-// back to the original omega after each move (relax_sync.cpp Step 1).
+// back to the original omega after each move.
 TEST(RelaxSyncCellMove, FixedVolumePreservesOmega)
 {
     const int mbl[9] = {1, 1, 1, 1, 1, 1, 1, 1, 1};
@@ -898,7 +1019,7 @@ TEST(RelaxSyncCellMove, FixedVolumePreservesOmega)
 }
 
 // lat_axis_free = {1,0,0}: only the first lattice row may move; rows 2 and 3
-// must remain exactly at their initial values (relax_sync.cpp 572-589).
+// must remain exactly at their initial values.
 TEST(RelaxSyncCellMove, PartialAxisFreeKeepsLockedRows)
 {
     const int mbl[9] = {1, 1, 1, 1, 1, 1, 1, 1, 1};
@@ -945,7 +1066,7 @@ TEST(RelaxSyncCellMove, PartialAxisFreeKeepsLockedRows)
 
 // Mixed mbl flags across two atom types: each atom's direct-coordinate
 // displacement must be zero along the constrained (mbl==0) directions and
-// nonzero only along free ones (relax_sync.cpp Step 2&3, iat2it/iat2ia + mbl).
+// nonzero only along free ones.
 TEST(RelaxSyncCellMove, MixedMblMovesOnlyFreeComponents)
 {
     // atom0: free x only; atom1(type1,ia0): free y only; atom2(type1,ia1): free z only

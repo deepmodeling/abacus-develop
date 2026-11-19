@@ -63,6 +63,7 @@ addtest(
   TARGET MODULE_RELAX_relax_sync_test
   SOURCES test_relax_sync.cpp
           ../relax_sync.cpp
+          ../relax_geometry.cpp
           ../line_search.cpp
           ../relax_data.cpp
           ../../source_base/tool_quit.cpp
@@ -213,6 +214,7 @@ addtest(
           ../relax_driver.cpp
           ../relax_nsync.cpp
           ../relax_sync.cpp
+          ../relax_geometry.cpp
           ../relax_data.cpp
           ../line_search.cpp
           ../ions_move_methods.cpp
