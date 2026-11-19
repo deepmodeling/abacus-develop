@@ -51,7 +51,6 @@ from ase.atoms import Atoms
 from ase.dft.kpoints import BandPath
 from ase.io import read
 
-from abacuslite._scf_geometry_check import _check_scf_geometry
 from abacuslite.io.generalio import (
     file_safe_backup,
     read_input,
@@ -441,40 +440,21 @@ class AbacusTemplate(CalculatorTemplate):
     def read_results(self, directory) -> Dict:
         '''the function that returns the desired properties in dict'''
         if self._legacyio:
-            from abacuslite.io.legacyio import read_abacus_out, read_traj_from_running_log
+            from abacuslite.io.legacyio import read_abacus_out
         else:
-            from abacuslite.io.latestio import read_abacus_out, read_traj_from_running_log
+            from abacuslite.io.latestio import read_abacus_out
 
         directory = Path(directory)
         outdir = directory / f'OUT.{self.suffix}'
         log = outdir / f'running_{self.calculation}.log'
-        parser_atomorder = self.atomorder
-        if self.calculation == 'scf':
-            stru_file = getattr(self, 'stru_file', 'STRU') or 'STRU'
-            stru_path = directory / stru_file
-            parser_atomorder = _check_scf_geometry(
-                stru_path, log, self.atomorder, read_traj_from_running_log
-            )
-
-        try:
-            frames = read_abacus_out(log, sort_atoms_with=parser_atomorder)
-        except (IndexError, AssertionError, KeyError, TypeError, ValueError) as exc:
-            if self.calculation != 'scf':
-                raise
+        frames = read_abacus_out(log, sort_atoms_with=self.atomorder)
+        if self.calculation == 'scf' and len(frames) != 1:
             raise RuntimeError(
-                f"scf running log parser failed: {log} (atomorder/frame "
-                f"structure error: {exc}; fail-closed)"
-            ) from exc
-        if self.calculation == 'scf':
-            if len(frames) != 1:
-                raise RuntimeError(
-                    f"Invalid SCF results in {log}. Expected exactly one, found {len(frames)}"
-                )
-            atoms = frames[0]
-        else:
-            if not frames:
-                raise RuntimeError(f"no ABACUS running-log frames in {log}")
-            atoms = frames[-1]
+                f"Invalid SCF results in {log}. Expected exactly one, found {len(frames)}"
+            )
+        if not frames:
+            raise RuntimeError(f"no ABACUS running-log frames in {log}")
+        atoms = frames[-1]
         assert atoms is not None
 
         # ASE's Properties schema accepts scalar magnetic moments only,

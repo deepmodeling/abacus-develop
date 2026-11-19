@@ -41,15 +41,11 @@ The regular `Abacus` calculator runs one ABACUS calculation for each ASE propert
 
 ## Result collection
 
-SCF collection requires one running-log geometry record and one parsed result.
-The calculator checks the atom count, element order, cell and periodic
-positions against the written STRU before reordering the result for ASE.
-This check requires explicit `LATTICE_VECTORS` as written by the ASE
-calculator. STRU coordinate units and centering follow ABACUS conventions. A missing,
-multiple, malformed or mismatched SCF geometry record raises an error.
-Native relaxation and MD use the final frame. The legacy reader can use
-MD_dump when present, and the develop reader reads native MD from MD_dump.
-Each calculator retains its own LTS/develop reader.
+The ASE calculator requires exactly one parsed result for single-point SCF.
+Native relaxation and MD use the final parsed frame. The readers restore ASE
+atom order using the mapping created when the calculator writes STRU. The
+legacy reader can use MD_dump when present, and the develop reader reads
+native MD from MD_dump. Each calculator retains its own LTS/develop reader.
 
 Both output readers accept paths or named text streams, using the log filename
 to locate companion output files. Caller-owned streams remain open and are read
@@ -63,12 +59,6 @@ all directions, including molecules in vacuum and slabs. This changes earlier
 SCF output flags; readers do not infer physical isolation from vacuum thickness.
 For nonperiodic geometry analysis, make a copy and explicitly set its `pbc`
 flags; this does not change the completed calculation's boundary conditions.
-
-SCF checks the lattice scale and dimensionless vectors at the running log's
-six-significant-digit precision. It uses the written cell for periodic
-wrapping and an absolute **1e-4 Angstrom** tolerance for Cartesian position
-residuals. These tolerances govern geometry comparison independently of SCF,
-force, and optimization convergence settings.
 
 Result parsing does **not read abacus.json**. Missing or malformed JSON does not
 affect collection. Writing new input leaves existing JSON files untouched.
