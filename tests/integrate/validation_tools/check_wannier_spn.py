@@ -53,6 +53,15 @@ def check_spin(out):
     print(f"Verified {actual.size} spin matrix elements, max error {max(abs(actual - expected)):.3e}")
 
 
+def check_spn_io_failure(work, abacus, logs, error):
+    result = subprocess.run(abacus, cwd=work, capture_output=True, text=True, timeout=60)
+    assert result.returncode != 0, "ABACUS accepted an unwritable .spn file"
+    diagnostic = f"{error} OUT.ABACUS/oxygen.spn"
+    for log in logs:
+        assert diagnostic in log.read_text(), f"{log.name} missing '{diagnostic}'\n{result.stdout}{result.stderr}"
+    print(f"Verified '{diagnostic}' on {len(logs)} MPI rank(s)")
+
+
 def main(work, wannier, postw90, abacus):
     tests = Path(__file__).resolve().parents[2]
     case = tests / "03_NAO_multik" / "wannier_spn"
@@ -80,6 +89,25 @@ def main(work, wannier, postw90, abacus):
     moment = [float(x) for x in re.findall(r"[xyz] component:\s+(\S+)", output)]
     assert len(moment) == 3 and np.isfinite(moment).all()
     print(f"postw90 spin moment (Bohr magnetons/cell): {moment}")
+
+    # Native ABACUS can export spin matrices independently of the Python workflow.
+    companions = [out / f"oxygen.{ext}" for ext in ("mmn", "amn", "eig")]
+    spn = out / "oxygen.spn"
+    for path in [spn, *companions]:
+        path.unlink()
+    (work / "INPUT").write_text(nscf + "out_wannier_spn 1\nout_wannier_mmn 0\n"
+                                "out_wannier_amn 0\nout_wannier_eig 0\nout_alllog 1\n")
+    subprocess.run(abacus, cwd=work, check=True)
+    assert spn.stat().st_size > 0 and not any(path.exists() for path in companions)
+    logs = sorted(out.glob("running_nscf_*.log"))
+    assert logs, "out_alllog did not produce per-rank NSCF logs"
+    spn.unlink()
+    spn.mkdir()
+    check_spn_io_failure(work, abacus, logs, "Cannot open")
+    spn.rmdir()
+    if Path("/dev/full").is_char_device():
+        spn.symlink_to("/dev/full")
+        check_spn_io_failure(work, abacus, logs, "Error writing")
 
 
 if __name__ == "__main__":

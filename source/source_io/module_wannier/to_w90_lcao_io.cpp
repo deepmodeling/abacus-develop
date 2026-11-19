@@ -132,13 +132,19 @@ void toW90_LCAO::write_spn(const psi::Psi<TK>& psi, const hamilt::HContainer<TR>
     const bool writer = layout.irproc() == 0 && layout.icproc() == 0;
     const std::string path = out_dir + wannier_file_name + ".spn";
     std::ofstream file;
+    int io_error = 0;
     if (writer)
     {
         file.open(path);
-        if (!file)
-        {
-            ModuleBase::WARNING_QUIT("toW90_LCAO::write_spn", "Cannot open " + path);
-        }
+        io_error = file.fail();
+    }
+    Parallel_Reduce::reduce_max(io_error);
+    if (io_error)
+    {
+        ModuleBase::WARNING_QUIT("toW90_LCAO::write_spn", "Cannot open " + path);
+    }
+    if (writer)
+    {
         file << "ABACUS spin matrices\n" << num_bands << ' ' << cal_num_kpts << '\n'
              << std::scientific << std::setprecision(16);
     }
@@ -200,10 +206,15 @@ void toW90_LCAO::write_spn(const psi::Psi<TK>& psi, const hamilt::HContainer<TR>
     if (writer)
     {
         file.close();
-        if (!file)
-        {
-            ModuleBase::WARNING_QUIT("toW90_LCAO::write_spn", "Error writing " + path);
-        }
+        io_error = file.fail();
+    }
+    Parallel_Reduce::reduce_max(io_error);
+    if (io_error)
+    {
+        ModuleBase::WARNING_QUIT("toW90_LCAO::write_spn", "Error writing " + path);
+    }
+    if (writer)
+    {
         log << " Wrote Wannier90 spin matrices to " << path << '\n';
     }
 }
