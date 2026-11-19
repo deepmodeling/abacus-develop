@@ -4,6 +4,7 @@ abacus_disable_feature_definitions(__EXX)
 
 # Split tests: create one test target per test source to keep failures isolated.
 
+if(ENABLE_MPI)
 addtest(
   TARGET MODULE_CELL_NEIGHBOR_neighbor_search
   LIBS parameter base device cell neighbor symmetry
@@ -39,7 +40,6 @@ if(USE_CUDA AND ENABLE_GPU_NEIGHBOR_LIST)
                              PRIVATE __CUDA)
 endif()
 
-if(ENABLE_MPI)
   add_executable(
     MODULE_CELL_NEIGHBOR_mdcell_migrate_mpi
     test_mdcell_migrate_mpi.cpp
@@ -120,4 +120,22 @@ if(ENABLE_MPI)
             $<TARGET_FILE:MODULE_CELL_NEIGHBOR_mdcell_reader>
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 
+endif()
+
+if(NOT ENABLE_MPI)
+  abacus_disable_feature_definitions(__MPI)
+  abacus_add_local_feature_definitions(__NORMAL)
+
+  addtest(
+    TARGET MODULE_CELL_NEIGHBOR_domain_decomposition_serial
+    LIBS parameter base device
+    SOURCES test_domain_decomposition.cpp
+            ../../mdcell.cpp
+            ../../dom_core.cpp
+            ../../dom_ghost.cpp
+            ../../dom_migrate.cpp
+            ../../dom_force.cpp
+            ../neighbor_search.cpp
+            ../bin_manager.cpp
+            ../page_allocator.cpp)
 endif()

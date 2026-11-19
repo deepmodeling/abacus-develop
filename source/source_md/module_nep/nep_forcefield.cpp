@@ -1,5 +1,5 @@
 /**
- * @file nep_potential.cpp
+ * @file nep_forcefield.cpp
  * @brief Implementation of the NEP potential for molecular dynamics.
  *
  * This file contains the implementation of the NEP potential, which is used for solving the energy and forces in a
@@ -14,7 +14,7 @@
  * @author MoseyQAQ
  * @date 2025-10-10
  */
-#include "nep_potential.h"
+#include "nep_forcefield.h"
 #include "source_base/parallel_common.h"
 #include "source_base/parallel_cell.h"
 #include "source_base/timer.h"

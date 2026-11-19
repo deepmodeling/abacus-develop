@@ -3,7 +3,7 @@
 
 #include "source_base/global_variable.h"
 #include "source_esolver/esolver_forcefields.h"
-#include "source_md/module_lj/lj.h"
+#include "source_md/module_lj/lj_forcefield.h"
 #include "source_io/module_parameter/parameter.h"
 
 #include <memory>

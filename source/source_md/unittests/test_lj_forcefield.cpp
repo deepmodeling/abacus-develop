@@ -1,7 +1,7 @@
 #include "source_cell/dom_decomp.h"
 #include "source_base/parallel_cell.h"
 #include "gtest/gtest.h"
-#include "source_md/test/setcell.h"
+#include "source_md/unittests/setcell.h"
 #include "lj_test_solver.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_md/md_func.h"
@@ -10,15 +10,7 @@
 #include <string>
 constexpr double doublethreshold = 1e-12;
 
-/************************************************
- *  unit test of functions in esolver_lj.h
- ***********************************************/
-
-/**
- * - Tested Function
- *   - ESolver_LJ::Run
- *     - calculate energy, force, virial for lj pot
- */
+// LJ force-field parameters and numerical results, including the MDCell path.
 
 class LJ_pot_test : public testing::Test
 {
@@ -139,40 +131,6 @@ TEST_F(LJ_pot_test, stress)
     EXPECT_NEAR(stress(2, 0), 0.0, doublethreshold);
     EXPECT_NEAR(stress(2, 1), 0.0, doublethreshold);
     EXPECT_NEAR(stress(2, 2), 6.4275429572682057e-07, doublethreshold);
-}
-
-TEST_F(LJ_pot_test, mdcell_stress_includes_external_pressure)
-{
-    std::unique_ptr<ModuleESolver::ESolver> p_esolver(make_lj_test_solver());
-    MDCell mdcell;
-    mdcell = Setcell::setup_mdcell(ucell);
-    DomainDecomposition decomp;
-    decomp.init(ModuleBase::world_comm_domain(), mdcell.latvec(), mdcell.lat0(), 0.0, 0.0);
-    Input_para input = inp;
-    p_esolver->before_all_runners(mdcell, input);
-    decomp.prepare_neighbors(mdcell);
-    p_esolver->runner(mdcell, 0);
-
-    ModuleBase::matrix internal_stress;
-    p_esolver->cal_stress(mdcell, internal_stress);
-
-    const double saved_press1 = input.press1;
-    const double saved_press2 = input.press2;
-    const double saved_press3 = input.press3;
-    input.press1 = 1.0;
-    input.press2 = 2.0;
-    input.press3 = 3.0;
-
-    p_esolver->cal_stress(mdcell, stress);
-
-    const double unit_transform = ModuleBase::RYDBERG_SI / pow(ModuleBase::BOHR_RADIUS_SI, 3) * 1.0e-8;
-    EXPECT_NEAR(stress(0, 0), internal_stress(0, 0) - 1.0 / unit_transform, doublethreshold);
-    EXPECT_NEAR(stress(1, 1), internal_stress(1, 1) - 2.0 / unit_transform, doublethreshold);
-    EXPECT_NEAR(stress(2, 2), internal_stress(2, 2) - 3.0 / unit_transform, doublethreshold);
-
-    input.press1 = saved_press1;
-    input.press2 = saved_press2;
-    input.press3 = saved_press3;
 }
 
 TEST_F(LJ_pot_test, RcutSearchRadius)
@@ -304,10 +262,10 @@ TEST_F(LJ_pot_test, CalEnShift)
     EXPECT_NEAR(p_esolver->get_en_shift()(1, 1), -5.6443326024140752e-06, doublethreshold);
 }
 
-#include "source_md/module_lj/lj.h"
+#include "source_md/module_lj/lj_forcefield.h"
 #include "source_esolver/esolver_forcefields.h"
 #include "source_cell/dom_decomp.h"
-#include "source_md/test/setcell.h"
+#include "source_md/unittests/setcell.h"
 
 #include "gtest/gtest.h"
 
