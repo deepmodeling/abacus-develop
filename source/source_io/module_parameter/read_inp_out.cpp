@@ -1435,7 +1435,11 @@ For binary output, each file uses the same basename as text output with a .dat s
 * 3: v3rho3, v3rho2sigma, v3rhosigma2, v3sigma3
 * 4: v4rho4, v4rho3sigma, v4rho2sigma2, v4rhosigma3, v4sigma4 The meaning of the files is presented in Libxc
 
-The files are written to OUT.${suffix}/CHG/ when out_app_flag = 2 and to OUT.${suffix}/ otherwise, as xc_<quantity>[_s{spin}][_{component}][g{step}].cube. Spin-resolved quantities carry s{spin}, while tensor quantities carry their Libxc component tuple, for example xc_v2rhosigma_0_00.cube. Each file is a standard Gaussian cube file whose header carries the one-based ionic step as "Ionic_Step N"; with out_app_flag = 2 the g{step} suffix selects one file per written step, and with out_app_flag = 1 every written step appends one complete cube frame while the first written step truncates the file.
+The files are written to OUT.${suffix}/CHG/ when out_app_flag = 2 and to OUT.${suffix}/ otherwise, as xc_<quantity>[<channel>][g{step}].cube, where <channel> depends on the quantity:
+* scalar quantities (exc, amag) carry no channel suffix, for example xc_exc.cube;
+* spin-resolved rho and vrho carry _s{spin} with the one-based spin index, for example xc_rho_s1.cube;
+* density-gradient channels carry their Libxc component tuple joined by "_": _00/_01/_11 for sigma, vsigma and v2rho2, _0_00 for v2rhosigma, _00_00 for v2sigma2, and the analogous multi-segment tuples for the mixed v3* and v4* quantities, for example xc_v2rhosigma_0_00.cube and xc_v3rhosigma2_0_00_01.cube.
+Each file is a standard Gaussian cube file whose header carries the one-based ionic step as "Ionic_Step N"; with out_app_flag = 2 the g{step} suffix selects one file per written step, and with out_app_flag = 1 every written step appends one complete cube frame while the first written step truncates the file.
 
 The second integer controls the precision of the charge density output, if not given, will use 3 as default.
 
