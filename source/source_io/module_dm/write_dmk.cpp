@@ -600,6 +600,12 @@ void ModuleIO::write_dmk(const std::vector<std::vector<T>>& dmk,
                     << " # k point coordinate (direct) " << std::endl;
                 ofs << " " << kv.wk[ik] << " # weight of this k point" << std::endl;
                 ofs << " " << efs[ispin] << " # Fermi energy in Ry " << std::endl;
+                // State the element convention in the file itself: dm_from_psi
+                // builds DM = sum_n w_n conj(c_n) c_n^T (conj on the first
+                // index), i.e. the complex conjugate of the physical one-body
+                // density matrix. This line lives inside the header block so
+                // read_data_line (which skips '#' lines) absorbs it.
+                ofs << "# matrix element (i,j) = sum_n w_n * conj(c_n,i) * c_n,j" << std::endl;
                 ofs << " " << nlocal << " # number of localized basis " << std::endl;
                 ofs << " " << nlocal << " " << nlocal << " # size of this matrix " << std::endl;
                 ofs << std::endl;

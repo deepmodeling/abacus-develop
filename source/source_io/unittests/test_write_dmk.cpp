@@ -1281,6 +1281,68 @@ TEST(DMKTest, DenseBufferIndexSelectsLayout) {
 }
 
 // ---------------------------------------------------------------------------
+// The header must state the conj-first element convention, and read_dmk must
+// transparently skip that comment line when the file is read back.
+// ---------------------------------------------------------------------------
+TEST(DMKTest, HeaderStatesConjFirstConvention) {
+    UnitCell* ucell;
+    UcellTestPrepare utp = UcellTestLib["Si"];
+    ucell = utp.SetUcellInfo();
+
+    const int nspin = 1;
+    const int nk = 1;
+    const int nlocal = 2;
+    Parallel_Blkcyclic pv;
+    init_pv(nlocal, pv);
+
+    // Non-symmetric complex probe: a conj-last (i.e. transposed) read of the
+    // Hermitian-interpreted body would flip the off-diagonal imaginary signs.
+    const std::vector<std::complex<double>> probe
+        = {std::complex<double>(1.0, 0.0), std::complex<double>(2.0, 3.0),
+           std::complex<double>(4.0, 5.0), std::complex<double>(6.0, 0.0)};
+    std::vector<std::vector<std::complex<double>>> dmk;
+    fill_local_dmk(probe, nlocal, pv, dmk);
+
+    std::vector<double> efs(nspin, 0.0);
+    K_Vectors kv;
+    init_kv(kv, 1.0);
+
+    const std::string out_dir = testing::TempDir();
+    std::ofstream ofs_log;
+    ModuleIO::write_dmk(dmk, kv, /*precision=*/12, efs, ucell, pv, /*column_major=*/true,
+                        out_dir, /*istep=*/0, /*out_app_flag=*/0, ofs_log);
+
+    if (GlobalV::MY_RANK == 0)
+    {
+        const std::string fn = out_dir + "dmk1_nao.txt";
+        std::ifstream ifs(fn.c_str());
+        const std::string str((std::istreambuf_iterator<char>(ifs)),
+                              std::istreambuf_iterator<char>());
+        ifs.close();
+        EXPECT_THAT(str, testing::HasSubstr(
+            "# matrix element (i,j) = sum_n w_n * conj(c_n,i) * c_n,j"));
+    }
+
+    // The '#' comment line inside the header must not disturb the round trip.
+    std::vector<std::vector<std::complex<double>>> dmk_read;
+    EXPECT_TRUE(ModuleIO::read_dmk(nspin, nk, kv, pv, /*column_major=*/true, out_dir,
+                                   /*istep=*/0, /*out_app_flag=*/0, dmk_read, ofs_log));
+    ASSERT_EQ(dmk_read.size(), 1u);
+    ASSERT_EQ(dmk_read[0].size(), dmk[0].size());
+    for (std::size_t idx = 0; idx < dmk[0].size(); ++idx)
+    {
+        EXPECT_NEAR(dmk_read[0][idx].real(), dmk[0][idx].real(), 1e-8);
+        EXPECT_NEAR(dmk_read[0][idx].imag(), dmk[0][idx].imag(), 1e-8);
+    }
+
+    if (GlobalV::MY_RANK == 0)
+    {
+        remove((out_dir + "dmk1_nao.txt").c_str());
+    }
+    delete ucell;
+}
+
+// ---------------------------------------------------------------------------
 // With column_major = false the reader and the writer must still agree on the
 // same layout, otherwise a restart would read a transposed matrix. No current
 // LCAO solver takes this branch, so this only pins their mutual consistency.

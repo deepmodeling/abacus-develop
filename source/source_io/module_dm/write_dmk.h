@@ -72,6 +72,13 @@ bool read_dmk(const int nspin,
 /**
  * @brief Writes the DMK data to a file.
  *
+ * @details The written matrix element is
+ *          D(i,j) = sum_n w_n * conj(c_n,i) * c_n,j
+ *          (complex conjugate on the first band index), matching the
+ *          convention built by dm_from_psi; this is the complex conjugate of
+ *          the physical one-body density matrix sum_n w_n c_n,i conj(c_n,j).
+ *          The same line is also emitted as a '#' comment in the file header.
+ *
  * @tparam T The type of the DMK data.
  * @param dmk A vector containing the DMK data. The first dimension is nspin*nk,
  * and the second dimension is nlocal*nlocal. DMK is parallel in 2d-block type
