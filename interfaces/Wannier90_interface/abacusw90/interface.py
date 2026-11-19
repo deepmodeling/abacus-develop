@@ -44,6 +44,18 @@ class ABACUSWannier90:
             "1", "true", "t", "yes", "y", "on", ".true."
         )
 
+    def _spn_enabled(self) -> bool:
+        params = self._abacus_input.params if self._abacus_input else {}
+        if "out_wannier_spn" in params:
+            return self._output_enabled("out_wannier_spn", default=False)
+        return (
+            self._output_enabled("towannier90", default=False)
+            and str(params.get("calculation", "")).strip() == "nscf"
+            and str(params.get("basis_type", "")).strip() == "lcao"
+            and int(params.get("wannier_method", 1)) == 2
+            and int(params.get("nspin", 1)) == 4
+        )
+
     # ----------------------------------------------------------------
     # Public API: Configuration
     # ----------------------------------------------------------------
@@ -329,7 +341,7 @@ class ABACUSWannier90:
         self.work_dir.mkdir(parents=True, exist_ok=True)
         win_file = self.work_dir / "wannier90.win"
         self._wannier_input.write(win_file, self.structure)
-        if self._output_enabled("out_wannier_spn", default=False):
+        if self._spn_enabled():
             with win_file.open("a") as stream:
                 stream.write("\nspn_formatted = true\n")
         print(f"    Written: {win_file}")
@@ -387,7 +399,7 @@ class ABACUSWannier90:
         out_dir = self.work_dir / "OUT.ABACUS"
         extensions = ["mmn", "amn", "eig"]
         search_dirs = [self.work_dir, out_dir]
-        if self._output_enabled("out_wannier_spn", default=False):
+        if self._spn_enabled():
             # All four files must use the band gauge of the same NSCF run.
             for ext in extensions:
                 flag = f"out_wannier_{ext}"

@@ -70,14 +70,19 @@ def main(work, wannier, postw90, abacus):
     shutil.copy(case / "oxygen.win", work)
     common = (case / "INPUT").read_text() + f"\npseudo_dir {tests}/PP_ORB\norbital_dir {tests}/PP_ORB\n"
     subprocess.run([wannier, "-pp", "oxygen"], cwd=work, check=True)
-    (work / "INPUT").write_text(common + "calculation scf\nout_chg 1\n")
+    scf = common + "calculation scf\nout_chg 1\n"
+    (work / "INPUT").write_text(scf + "out_wannier_spn 1\n")
+    result = subprocess.run(abacus, cwd=work, capture_output=True, text=True)
+    assert result.returncode != 0 and "Invalid INPUT parameter 'out_wannier_spn'" in result.stdout + result.stderr
+    (work / "INPUT").write_text(scf)
     subprocess.run(abacus, cwd=work, check=True)
     nscf = common + "calculation nscf\ninit_chg file\ntowannier90 1\nwannier_method 2\nnnkpfile oxygen.nnkp\n"
     out = work / "OUT.ABACUS"
-    (work / "INPUT").write_text(nscf + "out_wannier_mmn 0\nout_wannier_amn 0\n")
+    assert not (out / "oxygen.spn").exists()
+    (work / "INPUT").write_text(nscf + "out_wannier_spn 0\nout_wannier_mmn 0\nout_wannier_amn 0\n")
     subprocess.run(abacus, cwd=work, check=True)
     assert (out / "oxygen.eig").is_file() and not (out / "oxygen.spn").exists()
-    (work / "INPUT").write_text(nscf + "out_wannier_spn 1\nout_wfc_lcao 2\nout_hsk 2\n")
+    (work / "INPUT").write_text(nscf + "out_wfc_lcao 2\nout_hsk 2\n")
     subprocess.run(abacus, cwd=work, check=True)
     running_log = (out / "running_nscf.log").read_text()
     match = re.search(r"^ Wrote Wannier90 spin matrices to (.+)$", running_log, re.MULTILINE)
