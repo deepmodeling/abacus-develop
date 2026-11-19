@@ -1,1 +1,1 @@
-target_sources(md PRIVATE lj.cpp)
+target_sources(md PRIVATE lj_forcefield.cpp)

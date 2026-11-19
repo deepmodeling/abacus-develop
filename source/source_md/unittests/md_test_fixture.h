@@ -71,9 +71,6 @@ class MdFuncTestFixture : public testing::Test
     double temperature = 0.0;
     int frozen_freedom = 0;
     Input_para inp;
-    /// the md writers take the directory explicitly, so the fixture owns it
-    const std::string out_dir = "./";
-
     void SetUp() override
     {
         Setcell::setupcell(ucell);

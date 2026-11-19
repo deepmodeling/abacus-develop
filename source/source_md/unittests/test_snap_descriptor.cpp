@@ -1,4 +1,4 @@
-#include "../snap_descriptor.h"
+#include "source_md/module_snap/snap_descriptor.h"
 
 #include <gtest/gtest.h>
 
