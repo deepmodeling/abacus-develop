@@ -55,3 +55,29 @@ run_lr_force_props() {
   fi
 
 }
+
+# Optional exact filename check for channel-labelled electron-hole densities.
+run_lr_density_props() {
+  if [ "$is_lr" != 1 ] || [ ! -f lr_density.ref ]; then
+    return 0
+  fi
+  local expected_names
+  local actual_names=""
+  local density_file
+  local valid=1
+  expected_names=$(sed '/^[[:space:]]*$/d' lr_density.ref | sort)
+  for density_file in OUT.autotest/LR_e-h_density_*.cube; do
+    if [ ! -s "$density_file" ]; then
+      valid=0
+    else
+      actual_names+="${density_file##*/}"$'\n'
+    fi
+  done
+  actual_names=$(printf '%s' "$actual_names" | sort)
+  if [ "$valid" == 1 ] && [ -n "$expected_names" ] && [ "$actual_names" = "$expected_names" ]; then
+    echo "CompareLRDensity_pass 0" >>"$props_result_file"
+  else
+    echo "LR density filenames missing, empty, or inconsistent with lr_density.ref" >&2
+    echo "CompareLRDensity_pass 1" >>"$props_result_file"
+  fi
+}

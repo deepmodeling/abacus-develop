@@ -281,6 +281,8 @@ namespace LR
             // $u'_a$ and $u''_a$ do not depend on $\tau$; only the $\theta$ weights and the
             // channel selector below do.
             ModuleBase::Vector3<double> E(0., 0., 0.);
+            const double* const rho_sigma_coefficients = v2rs.data() + o6;
+            const double* const sigma_sigma_coefficients = v2s2.data() + o6;
             for (int a = 0;a < 3;++a)
             {
                 const double th = theta[tau][a];
@@ -290,7 +292,7 @@ namespace LR
                 }
                 const int c = chan[tau][a];
                 const double up = sigma_potential_derivative(
-                    v2rs.data() + o6, v2s2.data() + o6, a, s, S, 0, 2);
+                    rho_sigma_coefficients, sigma_sigma_coefficients, a, s, S, 0, 2);
                 double upp = 0.;
 
                 for (int s0 = 0;s0 < 2;++s0) {

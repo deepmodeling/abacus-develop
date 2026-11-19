@@ -134,6 +134,33 @@ class LRForceCheckTest(unittest.TestCase):
             with self.assertRaises(ValueError):
                 compare(changed, expected, tolerance)
 
+    def test_density_collector_requires_exact_nonempty_channel_files(self):
+        tools = Path(__file__).resolve().parent
+        script = '\n'.join([
+            'source "$1/props_lr.sh"', 'is_lr=1',
+            'props_result_file=result.out', 'run_lr_density_props'])
+        expected_names = ['LR_e-h_density_triplet_1.cube', 'LR_e-h_density_triplet_2.cube']
+        variants = [
+            (dict.fromkeys(expected_names, 'cube data'), '0'),
+            ({name.replace('triplet', 'singlet'): 'cube data' for name in expected_names}, '1'),
+            ({expected_names[0]: 'cube data'}, '1'),
+            ({expected_names[0]: 'cube data', expected_names[1]: ''}, '1'),
+            (dict.fromkeys(expected_names + ['LR_e-h_density_singlet_1.cube'], 'cube data'), '1'),
+            ({}, '1')]
+        for files, expected in variants:
+            with self.subTest(files=files), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                output = root / 'OUT.autotest'
+                output.mkdir()
+                (root / 'lr_density.ref').write_text('\n'.join(expected_names) + '\n')
+                for name, contents in files.items():
+                    (output / name).write_text(contents)
+                result = subprocess.run(['bash', '-e', '-c', script, 'collector-test', str(tools)],
+                                        cwd=root, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual((root / 'result.out').read_text().strip(),
+                                 'CompareLRDensity_pass ' + expected)
+
 
 if __name__ == '__main__':
     unittest.main()

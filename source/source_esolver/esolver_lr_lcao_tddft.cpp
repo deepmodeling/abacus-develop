@@ -285,7 +285,8 @@ void ModuleESolver::ESolver_LR<T, TR>::after_all_runners(BaseCell& basecell)
             for (int is = 0;is < this->nspin;++is)
             {
                 const T* const amplitudes = this->X[0].template data<T>();
-                lr_density.output_eh_density_all_states(amplitudes, is, nstates, this->ofs_running_);
+                const std::string density_label = is == 0 ? "up" : "down";
+                lr_density.output_eh_density_all_states(amplitudes, is, nstates, density_label, this->ofs_running_);
             }
         }
         else
@@ -293,7 +294,7 @@ void ModuleESolver::ESolver_LR<T, TR>::after_all_runners(BaseCell& basecell)
             for (int is = 0;is < this->X.size();++is)
             {
                 const T* const amplitudes = this->X[is].template data<T>();
-                lr_density.output_eh_density_all_states(amplitudes, is, nstates, this->ofs_running_);
+                lr_density.output_eh_density_all_states(amplitudes, is, nstates, this->spin_types[is], this->ofs_running_);
             }
         }
     }
