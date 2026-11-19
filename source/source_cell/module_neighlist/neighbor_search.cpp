@@ -205,11 +205,11 @@ void NeighborSearch::filter_candidate_neighbors_(double cutoff, double lat0)
     for (int i = 0; i < candidate_neighbor_list_.get_ncentral_atoms(); ++i)
     {
         active.clear();
-        const NeighborAtom& center = all_atoms_[static_cast<std::size_t>(i)];
+        const NeighborAtom& center = all_atoms_[i];
         for (int j = 0; j < candidate_neighbor_list_.get_numneigh(i); ++j)
         {
             const int index = candidate_neighbor_list_.get_firstneigh(i)[j];
-            const NeighborAtom& neighbor = all_atoms_[static_cast<std::size_t>(index)];
+            const NeighborAtom& neighbor = all_atoms_[index];
             const double dx = (center.position_x - neighbor.position_x) * lat0;
             const double dy = (center.position_y - neighbor.position_y) * lat0;
             const double dz = (center.position_z - neighbor.position_z) * lat0;

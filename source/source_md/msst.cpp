@@ -98,7 +98,7 @@ void MSST::first_half(std::ofstream& ofs)
     old_v.resize(mdcell.owned_atoms().size());
     for (int i = 0; i < mdcell.owned_atoms().size(); ++i)
     {
-        old_v[static_cast<std::size_t>(i)] = mdcell.owned_atoms()[static_cast<std::size_t>(i)].vel;
+        old_v[i] = mdcell.owned_atoms()[i].vel;
     }
 
     /// propagate velocity sum 1/2 step by temporarily propagating the velocities
@@ -109,7 +109,7 @@ void MSST::first_half(std::ofstream& ofs)
     /// reset the velocities
     for (int i = 0; i < mdcell.owned_atoms().size(); ++i)
     {
-        mdcell.owned_atoms()[static_cast<std::size_t>(i)].vel = old_v[static_cast<std::size_t>(i)];
+        mdcell.owned_atoms()[i].vel = old_v[i];
     }
 
     /// propagate velocities 1/2 step using the new velocity sum

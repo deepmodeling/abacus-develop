@@ -65,7 +65,7 @@ void DomainDecomposition::exchange_ghost_atoms(MDCell& cell)
         const int index = (offset[0] + nlayer[0]) * span_y * span_z
                           + (offset[1] + nlayer[1]) * span_z
                           + (offset[2] + nlayer[2]);
-        slot_lookup[static_cast<std::size_t>(index)] = static_cast<int>(islot);
+        slot_lookup[index] = static_cast<int>(islot);
     }
 
     const auto collect_offsets = [&](const LocalAtom& atom, const int dim, std::vector<int>& offsets) {
@@ -124,11 +124,11 @@ void DomainDecomposition::exchange_ghost_atoms(MDCell& cell)
                     const int lookup_index = (dx + nlayer[0]) * span_y * span_z
                                              + (dy + nlayer[1]) * span_z
                                              + (dz + nlayer[2]);
-                    const int slot_index = slot_lookup[static_cast<std::size_t>(lookup_index)];
+                    const int slot_index = slot_lookup[lookup_index];
                     assert(slot_index >= 0);
-                    const GhostExchangeSlot& slot = slots[static_cast<std::size_t>(slot_index)];
-                    send_buffers[static_cast<std::size_t>(slot_index)].push_back(pack_atom(atom, slot.image_shift));
-                    slots[static_cast<std::size_t>(slot_index)].send_atom_indices.push_back(static_cast<int>(iat));
+                    const GhostExchangeSlot& slot = slots[slot_index];
+                    send_buffers[slot_index].push_back(pack_atom(atom, slot.image_shift));
+                    slots[slot_index].send_atom_indices.push_back(static_cast<int>(iat));
                 }
             }
         }
@@ -144,7 +144,7 @@ void DomainDecomposition::exchange_ghost_atoms(MDCell& cell)
         slot.dynamic_image_shifts.reserve(slot.send_atom_indices.size());
         for (const int index : slot.send_atom_indices)
         {
-            const LocalAtom& atom = owned_atoms[static_cast<std::size_t>(index)];
+            const LocalAtom& atom = owned_atoms[index];
             slot.previous_fracs.push_back({{atom.frac.x, atom.frac.y, atom.frac.z}});
             slot.dynamic_image_shifts.push_back(slot.image_shift);
         }
@@ -280,7 +280,7 @@ void DomainDecomposition::update_ghost_atom_positions(MDCell& cell)
         std::vector<double> send_frac(6 * slot.send_atom_indices.size(), 0.0);
         for (std::size_t i = 0; i < slot.send_atom_indices.size(); ++i)
         {
-            const LocalAtom& atom = owned_atoms[static_cast<std::size_t>(slot.send_atom_indices[i])];
+            const LocalAtom& atom = owned_atoms[slot.send_atom_indices[i]];
             const std::array<int, 3> image_shift = image_shift_for_update(
                 atom, slot.previous_fracs[i], slot.dynamic_image_shifts[i], slot);
             slot.previous_fracs[i] = {{atom.frac.x, atom.frac.y, atom.frac.z}};

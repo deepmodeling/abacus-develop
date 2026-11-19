@@ -141,19 +141,19 @@ void NEPPotential::compute(BaseCell& basecell,
         std::vector<double*> force_ptrs(static_cast<std::size_t>(natom), NULL);
         for (int iat = 0; iat < natom; ++iat)
         {
-            const LocalAtom& atom = iat < nowned_atoms ? owned_atoms[static_cast<std::size_t>(iat)]
-                                                  : ghost_atoms[static_cast<std::size_t>(iat - nowned_atoms)];
+            const LocalAtom& atom = iat < nowned_atoms ? owned_atoms[iat]
+                                                  : ghost_atoms[iat - nowned_atoms];
             if (atom.type < 0 || static_cast<std::size_t>(atom.type) >= md_type_to_nep_type_.size())
             {
                 ModuleBase::WARNING_QUIT("ESolver_NEP", "MDCell atom type is outside the NEP type map.");
             }
-            local_type[static_cast<std::size_t>(iat)] = atom.type;
-            position[static_cast<std::size_t>(iat)][0] = atom.cart.x * mdcell.lat0() * ModuleBase::BOHR_TO_A;
-            position[static_cast<std::size_t>(iat)][1] = atom.cart.y * mdcell.lat0() * ModuleBase::BOHR_TO_A;
-            position[static_cast<std::size_t>(iat)][2] = atom.cart.z * mdcell.lat0() * ModuleBase::BOHR_TO_A;
-            force[static_cast<std::size_t>(iat)].fill(0.0);
-            position_ptrs[static_cast<std::size_t>(iat)] = position[static_cast<std::size_t>(iat)].data();
-            force_ptrs[static_cast<std::size_t>(iat)] = force[static_cast<std::size_t>(iat)].data();
+            local_type[iat] = atom.type;
+            position[iat][0] = atom.cart.x * mdcell.lat0() * ModuleBase::BOHR_TO_A;
+            position[iat][1] = atom.cart.y * mdcell.lat0() * ModuleBase::BOHR_TO_A;
+            position[iat][2] = atom.cart.z * mdcell.lat0() * ModuleBase::BOHR_TO_A;
+            force[iat].fill(0.0);
+            position_ptrs[iat] = position[iat].data();
+            force_ptrs[iat] = force[iat].data();
         }
 
         const NeighborList& neighbor_list = mdcell.neighbor_search().get_neighbor_list();
@@ -162,9 +162,9 @@ void NEPPotential::compute(BaseCell& basecell,
         std::vector<int*> firstneigh(static_cast<std::size_t>(natom), NULL);
         for (int iat = 0; iat < nowned_atoms; ++iat)
         {
-            ilist[static_cast<std::size_t>(iat)] = iat;
-            numneigh[static_cast<std::size_t>(iat)] = neighbor_list.get_numneigh(iat);
-            firstneigh[static_cast<std::size_t>(iat)] = const_cast<int*>(neighbor_list.get_firstneigh(iat));
+            ilist[iat] = iat;
+            numneigh[iat] = neighbor_list.get_numneigh(iat);
+            firstneigh[iat] = const_cast<int*>(neighbor_list.get_firstneigh(iat));
         }
 
         double local_energy = 0.0;
@@ -187,15 +187,15 @@ void NEPPotential::compute(BaseCell& basecell,
         std::vector<LocalAtom>& mutable_ghost_atoms = mdcell.ghost_atoms();
         for (int iat = 0; iat < nowned_atoms; ++iat)
         {
-            mutable_owned_atoms[static_cast<std::size_t>(iat)].force.set(force[static_cast<std::size_t>(iat)][0],
-                                                                           force[static_cast<std::size_t>(iat)][1],
-                                                                           force[static_cast<std::size_t>(iat)][2]);
+            mutable_owned_atoms[iat].force.set(force[iat][0],
+                                                                           force[iat][1],
+                                                                           force[iat][2]);
         }
         for (int iat = 0; iat < nghost; ++iat)
         {
-            mutable_ghost_atoms[static_cast<std::size_t>(iat)].force.set(force[static_cast<std::size_t>(nowned_atoms + iat)][0],
-                                                                           force[static_cast<std::size_t>(nowned_atoms + iat)][1],
-                                                                           force[static_cast<std::size_t>(nowned_atoms + iat)][2]);
+            mutable_ghost_atoms[iat].force.set(force[nowned_atoms + iat][0],
+                                                                           force[nowned_atoms + iat][1],
+                                                                           force[nowned_atoms + iat][2]);
         }
 
         ModuleBase::CommunicationDomain domain;
@@ -211,7 +211,7 @@ void NEPPotential::compute(BaseCell& basecell,
         energy = local_energy * fact_e;
         for (int iat = 0; iat < nowned_atoms; ++iat)
         {
-            LocalAtom& atom = mutable_owned_atoms[static_cast<std::size_t>(iat)];
+            LocalAtom& atom = mutable_owned_atoms[iat];
             atom.force *= fact_f;
         }
         for (LocalAtom& atom : mutable_ghost_atoms)
@@ -314,7 +314,7 @@ void NEPPotential::type_map(const UnitCell& ucell)
     std::vector<std::string> type_labels(static_cast<std::size_t>(ucell.ntype));
     for (int it = 0; it < ucell.ntype; ++it)
     {
-        type_labels[static_cast<std::size_t>(it)] = ucell.atoms[it].label;
+        type_labels[it] = ucell.atoms[it].label;
     }
     initialize_type_map_(type_labels);
 
@@ -323,7 +323,7 @@ void NEPPotential::type_map(const UnitCell& ucell)
     {
         for (int ia = 0; ia < ucell.atoms[it].na; ++ia)
         {
-            atype[static_cast<std::size_t>(iat++)] = md_type_to_nep_type_[static_cast<std::size_t>(it)];
+            atype[iat++] = md_type_to_nep_type_[it];
         }
     }
     assert(ucell.nat == iat);

@@ -162,8 +162,8 @@ void DP::compute(BaseCell& basecell,
         std::vector<int> local_atype(static_cast<std::size_t>(natom), 0);
         for (int iat = 0; iat < natom; ++iat)
         {
-            const LocalAtom& atom = iat < nowned_atoms ? owned_atoms[static_cast<std::size_t>(iat)]
-                                                  : ghost_atoms[static_cast<std::size_t>(iat - nowned_atoms)];
+            const LocalAtom& atom = iat < nowned_atoms ? owned_atoms[iat]
+                                                  : ghost_atoms[iat - nowned_atoms];
             coord[3 * iat] = atom.cart.x * mdcell.lat0() * ModuleBase::BOHR_TO_A;
             coord[3 * iat + 1] = atom.cart.y * mdcell.lat0() * ModuleBase::BOHR_TO_A;
             coord[3 * iat + 2] = atom.cart.z * mdcell.lat0() * ModuleBase::BOHR_TO_A;
@@ -171,7 +171,7 @@ void DP::compute(BaseCell& basecell,
             {
                 ModuleBase::WARNING_QUIT("ESolver_DP", "MDCell atom type is outside the DeePMD type map.");
             }
-            local_atype[static_cast<std::size_t>(iat)] = md_type_to_dp_type_[static_cast<std::size_t>(atom.type)];
+            local_atype[iat] = md_type_to_dp_type_[atom.type];
         }
 
         const int dim_aparam = dp->dim_aparam();
@@ -188,15 +188,15 @@ void DP::compute(BaseCell& basecell,
         std::vector<std::vector<int> > sorted_neighbors(static_cast<std::size_t>(nowned_atoms));
         for (int iat = 0; iat < nowned_atoms; ++iat)
         {
-            ilist[static_cast<std::size_t>(iat)] = iat;
-            sorted_neighbors[static_cast<std::size_t>(iat)]
+            ilist[iat] = iat;
+            sorted_neighbors[iat]
                 = neighbor_list.get_neighbors_sorted_by_distance(iat, coord);
-            numneigh[static_cast<std::size_t>(iat)]
-                = static_cast<int>(sorted_neighbors[static_cast<std::size_t>(iat)].size());
-            firstneigh[static_cast<std::size_t>(iat)]
-                = sorted_neighbors[static_cast<std::size_t>(iat)].empty()
+            numneigh[iat]
+                = static_cast<int>(sorted_neighbors[iat].size());
+            firstneigh[iat]
+                = sorted_neighbors[iat].empty()
                       ? NULL
-                      : sorted_neighbors[static_cast<std::size_t>(iat)].data();
+                      : sorted_neighbors[iat].data();
         }
 
         GhostExchangePlan& ghost_plan = mdcell.get_ghost_exchange_plan();
@@ -244,11 +244,11 @@ void DP::compute(BaseCell& basecell,
         std::vector<LocalAtom>& mutable_ghost_atoms = mdcell.ghost_atoms();
         for (int iat = 0; iat < nowned_atoms; ++iat)
         {
-            mutable_owned_atoms[static_cast<std::size_t>(iat)].force.set(force[3 * iat], force[3 * iat + 1], force[3 * iat + 2]);
+            mutable_owned_atoms[iat].force.set(force[3 * iat], force[3 * iat + 1], force[3 * iat + 2]);
         }
         for (int iat = 0; iat < nghost; ++iat)
         {
-            mutable_ghost_atoms[static_cast<std::size_t>(iat)].force.set(force[3 * (nowned_atoms + iat)],
+            mutable_ghost_atoms[iat].force.set(force[3 * (nowned_atoms + iat)],
                                                                            force[3 * (nowned_atoms + iat) + 1],
                                                                            force[3 * (nowned_atoms + iat) + 2]);
         }
@@ -273,7 +273,7 @@ void DP::compute(BaseCell& basecell,
         energy = local_energy * fact_e;
         for (int iat = 0; iat < nowned_atoms; ++iat)
         {
-            LocalAtom& atom = mutable_owned_atoms[static_cast<std::size_t>(iat)];
+            LocalAtom& atom = mutable_owned_atoms[iat];
             atom.force *= fact_f;
         }
         for (LocalAtom& atom : mutable_ghost_atoms)
@@ -282,7 +282,7 @@ void DP::compute(BaseCell& basecell,
         }
         for (int i = 0; i < 3; ++i)
             for (int j = 0; j < 3; ++j)
-                stress(i, j) = local_virial[static_cast<std::size_t>(3 * i + j)] * fact_v;
+                stress(i, j) = local_virial[3 * i + j] * fact_v;
 #endif
         ModuleBase::timer::end("DP", "compute");
         return;
@@ -356,7 +356,7 @@ void DP::type_map(const UnitCell& ucell)
     std::vector<std::string> type_labels(static_cast<std::size_t>(ucell.ntype));
     for (int it = 0; it < ucell.ntype; ++it)
     {
-        type_labels[static_cast<std::size_t>(it)] = ucell.atoms[it].label;
+        type_labels[it] = ucell.atoms[it].label;
     }
     initialize_type_map_(type_labels);
 
@@ -365,7 +365,7 @@ void DP::type_map(const UnitCell& ucell)
     {
         for (int ia = 0; ia < ucell.atoms[it].na; ++ia)
         {
-            atype[static_cast<std::size_t>(iat++)] = md_type_to_dp_type_[static_cast<std::size_t>(it)];
+            atype[iat++] = md_type_to_dp_type_[it];
         }
     }
     assert(ucell.nat == iat);
