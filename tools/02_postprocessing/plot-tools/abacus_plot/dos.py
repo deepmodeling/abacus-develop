@@ -350,7 +350,10 @@ class TDOS(DOS):
 
 
 class PDOS(DOS):
-    """Parse partial DOS data from the text PDOS files written by ABACUS.
+    """Parse ABACUS text or NumPy projected DOS.
+
+    A NumPy file stores one structured array per output. The one-based
+    ``record`` argument selects an array when several were appended.
 
     The text format (one file per spin channel) looks like::
 
@@ -380,9 +383,11 @@ class PDOS(DOS):
             return 0
         return (col + 1) // 2 if col % 2 == 1 else -(col // 2)
 
-    def __init__(self, pdosfile: PathLike = None) -> None:
+    def __init__(self, pdosfile: PathLike = None, record: int = 1) -> None:
         self.pdosfile = pdosfile
-        self._read()
+        if isinstance(record, bool) or not isinstance(record, (int, np.integer)) or record < 1:
+            raise ValueError("PDOS record must be a positive integer")
+        self._read(record)
         super().__init__(self.nspin)
 
     def _find_spin_files(self) -> List[str]:
@@ -491,14 +496,75 @@ class PDOS(DOS):
 
         return energy, orbitals
 
-    def _read(self):
+    def _read_npy(self, path, record):
+        """Map only the selected array, skipping earlier records by their NPY headers."""
+        from numpy.lib import format
+
+        end = path.stat().st_size
+        with path.open("rb") as stream:
+            for _ in range(record):
+                if stream.tell() == end:
+                    raise ValueError(f"{path} has no PDOS record {record}")
+                if format.read_magic(stream) != (1, 0):
+                    raise ValueError(f"Unsupported ABACUS PDOS NPY header in {path}")
+                shape, _, dtype = format.read_array_header_1_0(stream)
+                if len(shape) != 1 or shape[0] < 1 or dtype.hasobject or not dtype.names:
+                    raise ValueError(f"Expected a nonempty array of PDOS orbitals in {path}")
+                offset = stream.tell()
+                size = shape[0] * dtype.itemsize
+                if size > end - offset:
+                    raise ValueError(f"Incomplete PDOS record in {path}")
+                stream.seek(size, 1)
+
+        rows = np.memmap(path, mode="r", offset=offset, dtype=dtype, shape=shape)
+        required = {"schema_version", "ionic_step", "record_bytes", "nspin", "atom_index",
+                    "species", "l", "m", "energy_min_eV", "energy_step_eV", "pdos"}
+        if not required.issubset(dtype.names) or not np.all(rows["schema_version"] == 1):
+            raise ValueError(f"Unknown PDOS schema in {path}")
+        first = rows[0]
+        values = rows["pdos"]
+        if (first["nspin"] not in (1, 2, 4) or values.ndim != 3 or values.shape[2] == 0
+                or values.shape[1] != (2 if first["nspin"] == 2 else 1)
+                or values.dtype.kind != "f" or values.dtype.itemsize != 8
+                or not np.all(rows["record_bytes"] == size)):
+            raise ValueError(f"Invalid PDOS dimensions in {path}")
+        for field in ("nspin", "ionic_step", "energy_min_eV", "energy_step_eV"):
+            if not np.all(rows[field] == first[field]):
+                raise ValueError(f"Inconsistent {field} in {path}")
+        self.nspin = values.shape[1]
+        self.energy = (first["energy_min_eV"] + np.arange(values.shape[2]) * first["energy_step_eV"])[:, None]
+        self.orbitals = [
+            dict(index=i + 1, atom_index=int(row["atom_index"]), species=row["species"].decode("utf-8"),
+                 l=int(row["l"]), m=int(row["m"]), data=values[i].T)
+            for i, row in enumerate(rows)
+        ]
+
+    def _read(self, record):
         """Read partial DOS data file(s)
 
         :params pdosfile: path of a text PDOS file, a spin-up file of a
             spin-polarized pair, or a path/prefix used to discover the
             ``pdoss1*``/``pdoss2*`` files.
         """
-        spin_files = self._find_spin_files()
+        path = Path(self.pdosfile)
+        if path.suffix == ".npy" and not path.is_dir():
+            self._read_npy(path, record)
+            return
+        try:
+            spin_files = self._find_spin_files()
+        except FileNotFoundError:
+            prefix = path / "pdos" if path.is_dir() else path
+            candidates = [prefix.with_name(prefix.name + ".npy")]
+            numbered = [p for p in prefix.parent.glob(prefix.name + "g*.npy")
+                        if p.stem[len(prefix.name) + 1:].isdigit()]
+            candidates.extend(sorted(numbered, key=lambda p: int(p.stem[len(prefix.name) + 1:])))
+            for candidate in candidates:
+                if candidate.is_file():
+                    self._read_npy(candidate, record)
+                    return
+            raise
+        if record != 1:
+            raise ValueError("PDOS record selection requires a .npy file")
         self.nspin = len(spin_files)
 
         energy, orbitals_up = self._read_one(spin_files[0])

@@ -80,6 +80,7 @@ class Show:
         if args.dos and args.projected:
             text = read_json(args.file)
             pdosfile = text.pop("pdosfile", '')
+            record = text.pop("pdos_record", 1)
             efermi = text.pop("efermi", 0.0)
             energy_range = text.pop("energy_range", [])
             dos_range = text.pop("dos_range", [])
@@ -88,6 +89,8 @@ class Show:
             atom_index = key2int(text.pop("atom_index", None))
             species = text.pop("species", None)
             figsize = text.pop("figsize", (12, 10))
+            if not (index or atom_index or species):
+                fig, ax = plt.subplots(figsize=figsize)
             if index:
                 fig, ax = plt.subplots(
                     len(index), 1, sharex=True, figsize=figsize)
@@ -101,7 +104,7 @@ class Show:
                     len(species) if isinstance(species, dict) else 1, 1,
                     sharex=True, figsize=figsize)
             prec = text.pop("prec", 0.01)
-            pdos = PDOS(pdosfile)
+            pdos = PDOS(pdosfile, record=record)
             pdos.plot(fig=fig, ax=ax, index=index, atom_index=atom_index, species=species, efermi=efermi, shift=shift,
                       energy_range=energy_range, dos_range=dos_range, prec=prec, **text)
             dpi = text.pop("dpi", 400)
@@ -110,11 +113,12 @@ class Show:
         if args.dos and args.out:
             text = read_json(args.file)
             pdosfile = text.pop("pdosfile", '')
+            record = text.pop("pdos_record", 1)
             index = key2int(text.pop("index", None))
             atom_index = key2int(text.pop("atom_index", None))
             species = text.pop("species", None)
             outdir = text.pop("outdir", './')
-            pdos = PDOS(pdosfile)
+            pdos = PDOS(pdosfile, record=record)
             pdos.write(index=index, atom_index=atom_index, species=species, outdir=outdir)
 
 def main():

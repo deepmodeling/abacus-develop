@@ -97,3 +97,35 @@ The PDOS file uses a plain-text format. Each row corresponds to one energy point
 The `# istep:` line is only present for geometry-optimization (istep) output. Within each angular momentum `l`, the `2l+1` columns follow the magnetic-quantum-number order `m = 0, +1, -1, +2, -2, ...`.
 
 For nspin=2, two files are written (pdoss1* and pdoss2*), one per spin channel. For nspin=4, the two spinor components are summed into a single file. The unit of PDOS is also `(number of states)/(eV * unitcell)`.
+
+### NumPy output for LCAO
+
+The default `pdos_format text` writes the text files above. To write projected DOS in NumPy format, use
+
+```text
+out_dos      1
+pdos_format  npy
+```
+
+This requires only an LCAO build. Total DOS continues to use `doss*.txt`. Each output is a standard, pickle-free NumPy 1.0 structured array with one row for each atom and each `(l,m)` channel present in its basis (all zeta components summed). The `pdos` field holds float64 spectra in 1/eV, with axes `(orbital, spin channel, energy point)` across the array. There are two spin channels for `nspin=2` and one for `nspin=1` or `4`. The latter includes both spinor components. Both output formats apply the same small-value threshold.
+
+```python
+import numpy as np
+
+rows = np.load("OUT.ABACUS/pdos.npy", allow_pickle=False, mmap_mode="r")
+first = rows[0]
+energy = first["energy_min_eV"] + np.arange(rows["pdos"].shape[-1]) * first["energy_step_eV"]
+first_orbital = rows["pdos"][0, 0, :]    # first orbital and first spin channel
+```
+
+Each row includes the one-based `atom_index`, UTF-8 byte string `species`, `l`, signed `m`, `nspin`, and one-based `ionic_step`. A single-point calculation uses step 1. The fields `schema_version` (1) and `record_bytes` (payload size of the complete array) identify the schema and delimit records for append recovery.
+
+Mode `out_app_flag 0` replaces `pdos.npy`. Mode 1 appends one complete NumPy array per write to that file, with the first ionic step starting a fresh file. Each array can have a different energy grid. `np.load(path)` opens the first record. To read consecutive records, open the file once in `"rb"` mode and call `np.load(stream, allow_pickle=False)` for each one. Mode 2 writes numbered steps into `DOS/pdosgN.npy`.
+
+The plotting and data-export commands both accept the file via `pdosfile`. For an appended file, `pdos_record` selects the one-based record number and defaults to 1.
+
+```json
+{"pdosfile": "OUT.ABACUS/pdos.npy", "pdos_record": 1, "species": ["Si"]}
+```
+
+Run `abacus-plot -d -p -f config.json` to plot, or `abacus-plot -d -o -f config.json` to export the selected species' curves.

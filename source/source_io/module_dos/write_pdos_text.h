@@ -8,8 +8,8 @@ namespace ModuleIO
 {
 
 /// Write PDOS in plain text long-table format.
-/// File name: pdoss{spin}g{geom}.txt (g{geom} omitted when out_app_flag == 1)
-/// Columns: energy(eV)  atom  species  l  z  m  pdos(1/eV)
+/// Mode 2 adds g{geom} to pdoss{spin}.txt for numbered ionic steps.
+/// Rows contain energy (eV), atom, species and one PDOS value per (l,m), summed over zeta.
 /// For nspin=4, the two spinor components are summed.
 void write_pdos_text(
         const UnitCell& ucell,
