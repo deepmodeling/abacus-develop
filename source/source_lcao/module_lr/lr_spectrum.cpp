@@ -212,7 +212,7 @@ void LR::LR_Spectrum<T>::optical_absorption_method1(const std::vector<double>& f
 }
 
 template<typename T>
-void LR::LR_Spectrum<T>::transition_analysis(const std::string& spintype)
+void LR::LR_Spectrum<T>::transition_analysis(const std::string& spintype, const int energy_precision)
 {
     ModuleBase::TITLE("LR::LR_Spectrum", "transition_analysis");
     ModuleBase::timer::start("LR_Spectrum", "transition_analysis");
@@ -230,9 +230,11 @@ void LR::LR_Spectrum<T>::transition_analysis(const std::string& spintype)
         ofs << std::setw(8) << "State" << std::setw(30) << "Excitation Energy (Ry, eV)" <<
             std::setw(90) << "Transition dipole x, y, z (a.u.)" << std::setw(30) << "Oscillator strength(a.u.)" << '\n';
         ofs << "------------------------------------------------------------------------------------ \n";
+        const int digits = energy_precision > 0 ? energy_precision : 6;
+        const int energy_width = energy_precision > 0 ? std::max(15, digits + 8) : 15;
         for (int istate = 0;istate < nstate;++istate)
-            ofs << std::setw(8) << istate << std::setw(15) << std::setprecision(6) << omega[istate]
-            << std::setw(15) << omega[istate] * ModuleBase::Ry_to_eV
+            ofs << std::setw(8) << istate << std::setw(energy_width) << std::setprecision(digits) << omega[istate]
+            << std::setw(energy_width) << omega[istate] * ModuleBase::Ry_to_eV
             << std::setprecision(4) << std::setw(30) << transition_dipole_[istate].x 
             << std::setw(30) << transition_dipole_[istate].y << std::setw(30) << transition_dipole_[istate].z
             << std::setprecision(6) << std::setw(30) << oscillator_strength_[istate] << std::endl;
@@ -425,14 +427,17 @@ std::map<std::string, int> LR::LR_Spectrum<T>::get_pair_info(const int i)
 }
 
 template<typename T>
-void LR::LR_Spectrum<T>::write_transition_dipole(const std::string& filename)
+void LR::LR_Spectrum<T>::write_transition_dipole(const std::string& filename, const int energy_precision)
 {
     std::ofstream ofs(filename);
     ofs << "Transition dipole moment (a.u.)" << std::endl;
-    ofs << std::setw(6) << "State" << std::setw(13) << "Energy (eV)" << std::setw(15) << "x" << std::setw(23) << "|x|^2" << std::setw(19) << "y" << std::setw(23) <<"|y|^2" << std::setw(19) << "z" << std::setw(23) <<"|z|^2" << std::setw(13) << "average" << std::endl;
+    const int digits = energy_precision > 0 ? energy_precision : 6;
+    const int energy_width = energy_precision > 0 ? std::max(13, digits + 8) : 13;
+    ofs << std::setw(6) << "State" << std::setw(energy_width) << "Energy (eV)" << std::setw(15) << "x" << std::setw(23) << "|x|^2" << std::setw(19) << "y" << std::setw(23) <<"|y|^2" << std::setw(19) << "z" << std::setw(23) <<"|z|^2" << std::setw(13) << "average" << std::endl;
     for (int istate = 0;istate < nstate;++istate)
     {
-        ofs << std::setw(4) << istate << std::setw(13) << std::setprecision(6) << omega[istate] * ModuleBase::Ry_to_eV
+        ofs << std::setw(4) << istate << std::setw(energy_width) << std::setprecision(digits)
+            << omega[istate] * ModuleBase::Ry_to_eV << std::setprecision(6)
         << std::setw(29) << transition_dipole_[istate].x << std::setw(13) << std::norm(transition_dipole_[istate].x)
         << std::setw(29) << transition_dipole_[istate].y << std::setw(13) << std::norm(transition_dipole_[istate].y)
         << std::setw(29) << transition_dipole_[istate].z << std::setw(13) << std::norm(transition_dipole_[istate].z)

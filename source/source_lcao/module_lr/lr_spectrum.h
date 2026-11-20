@@ -53,11 +53,11 @@ namespace LR
         /// @brief calculate the optical absorption spectrum with lorentzian delta function
         void optical_absorption_method2(const std::vector<double>& freq, const double eta);
         /// @brief print out the transition dipole moment and the main contributions to the transition amplitude
-        void transition_analysis(const std::string& spintype);
+        void transition_analysis(const std::string& spintype, const int energy_precision);
 
         //========================================== test functions ==============================================
         /// @brief write transition dipole
-        void write_transition_dipole(const std::string& filename);
+        void write_transition_dipole(const std::string& filename, const int energy_precision);
         /// @brief calculate transition dipole in velocity gauge using excitation eigenvalues instead of KS differences
         void test_transition_dipoles_velocity_omega();
 

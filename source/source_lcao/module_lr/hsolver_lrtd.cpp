@@ -36,13 +36,21 @@ namespace LR
         };
 
         template<typename T>
-        inline void print_eigs(const std::vector<T>& eigs, const std::string& label = "", const double factor = 1.0)
+        inline void print_eigs(const std::vector<T>& eigs, const std::string& label,
+            const double factor, const int energy_precision)
         {
-            std::streamsize old = std::cout.precision();
-            std::cout << label << std::setprecision(8) << std::endl;
+            const auto old_precision = std::cout.precision();
+            const auto old_flags = std::cout.flags();
+            const int digits = energy_precision > 0 ? energy_precision : 8;
+            if (energy_precision > 0)
+            {
+                std::cout << std::defaultfloat;
+            }
+            std::cout << label << std::setprecision(digits) << std::endl;
             for (auto& e : eigs) { std::cout << e * factor << " "; }
             std::cout << std::endl;
-            std::cout.precision(old);
+            std::cout.precision(old_precision);
+            std::cout.flags(old_flags);
         }
 
         /// eigensolver for common Hamilt
@@ -59,7 +67,8 @@ namespace LR
             const std::string method,
             const Real<T>& diag_ethr, ///< threshold for diagonalization
             const std::vector<Real<T>>& precondition,
-            const bool hermitian)
+            const bool hermitian,
+            const int energy_precision)
         {
             ModuleBase::TITLE("HSolverLR", "solve");
             ModuleBase::timer::start("HSolverLR", "solve");
@@ -86,7 +95,7 @@ namespace LR
                 {
                     std::vector<std::complex<double>> eig_complex(gdim);
                     LR_Util::diag_lapack_nh(gdim, Amat_full.data(), eig_complex.data());
-                    print_eigs(eig_complex, "Right eigenvalues: of the non-Hermitian matrix: (Ry)");
+                    print_eigs(eig_complex, "Right eigenvalues: of the non-Hermitian matrix: (Ry)", 1.0, energy_precision);
                     for (int i = 0; i < gdim; i++) { eigenvalue[i] = eig_complex[i].real(); }
                 }
                 bool openshell = std::is_same<THamilt, HamiltULR<T>>::value;
@@ -158,8 +167,8 @@ namespace LR
             for (int ist = 0;ist < nband;++ist) { eig[ist] = eigenvalue[ist]; }
 
             // 6. output eigenvalues and eigenvectors
-            print_eigs(eigenvalue, "eigenvalues: (Ry)");
-            print_eigs(eigenvalue, "eigenvalues: (eV)", ModuleBase::Ry_to_eV);
+            print_eigs(eigenvalue, "eigenvalues: (Ry)", 1.0, energy_precision);
+            print_eigs(eigenvalue, "eigenvalues: (eV)", ModuleBase::Ry_to_eV, energy_precision);
 
             // normalization is already satisfied
             // std::cout << "check normalization of eigenvectors:" << std::endl;
@@ -182,10 +191,10 @@ namespace LR
                 << "; current threshold: " << diag_ethr << std::endl;
             ModuleBase::timer::end("HSolverLR", "solve");
         }
-template void solve<double, HamiltLR<double>>(const HamiltLR<double>&, double*, const int&, const int&, const int&, const std::vector<int>&, const std::vector<int>&, const std::vector<Parallel_Blkcyclic>&, double*, const std::string, const double&, const std::vector<double>&, const bool);
-template void solve<double, HamiltULR<double>>(const HamiltULR<double>&, double*, const int&, const int&, const int&, const std::vector<int>&, const std::vector<int>&, const std::vector<Parallel_Blkcyclic>&, double*, const std::string, const double&, const std::vector<double>&, const bool);
-template void solve<std::complex<double>, HamiltLR<std::complex<double>>>(const HamiltLR<std::complex<double>>&, std::complex<double>*, const int&, const int&, const int&, const std::vector<int>&, const std::vector<int>&, const std::vector<Parallel_Blkcyclic>&, double*, const std::string, const double&, const std::vector<double>&, const bool);
-template void solve<std::complex<double>, HamiltULR<std::complex<double>>>(const HamiltULR<std::complex<double>>&, std::complex<double>*, const int&, const int&, const int&, const std::vector<int>&, const std::vector<int>&, const std::vector<Parallel_Blkcyclic>&, double*, const std::string, const double&, const std::vector<double>&, const bool);
+template void solve<double, HamiltLR<double>>(const HamiltLR<double>&, double*, const int&, const int&, const int&, const std::vector<int>&, const std::vector<int>&, const std::vector<Parallel_Blkcyclic>&, double*, const std::string, const double&, const std::vector<double>&, const bool, const int);
+template void solve<double, HamiltULR<double>>(const HamiltULR<double>&, double*, const int&, const int&, const int&, const std::vector<int>&, const std::vector<int>&, const std::vector<Parallel_Blkcyclic>&, double*, const std::string, const double&, const std::vector<double>&, const bool, const int);
+template void solve<std::complex<double>, HamiltLR<std::complex<double>>>(const HamiltLR<std::complex<double>>&, std::complex<double>*, const int&, const int&, const int&, const std::vector<int>&, const std::vector<int>&, const std::vector<Parallel_Blkcyclic>&, double*, const std::string, const double&, const std::vector<double>&, const bool, const int);
+template void solve<std::complex<double>, HamiltULR<std::complex<double>>>(const HamiltULR<std::complex<double>>&, std::complex<double>*, const int&, const int&, const int&, const std::vector<int>&, const std::vector<int>&, const std::vector<Parallel_Blkcyclic>&, double*, const std::string, const double&, const std::vector<double>&, const bool, const int);
 
     }
 }

@@ -1174,6 +1174,25 @@ void ReadInput::item_lr_tddft()
         this->add_item(item);
     }
     {
+        Input_Item item("lr_energy_precision");
+        item.annotation = "significant digits for LR-TDDFT excitation energies";
+        item.category = "Linear Response TDDFT";
+        item.type = "Integer";
+        item.description = R"(Number of significant digits (1 to 17) for LR-TDDFT excitation energies in the eigensolver output, running-log energy reports, transition analysis and dipole tables, and Excitation_Energy files enabled by out_wfc_lr. The default is 8 significant digits. Set lr_energy_precision 0 to use each output's legacy format. For finite differences, use lr_energy_precision 17. The setting only changes text output and can be used without out_band or out_wfc_lr.)";
+        item.default_value = "8";
+        item.unit = "";
+        item.set_availability("basis_type==lcao and esolver_type in [lr, ks-lr]");
+        read_sync_int(input.lr_energy_precision);
+        item.check_value = [](const Input_Item&, const Parameter& para) {
+            const int precision = para.inp.lr_energy_precision;
+            if (precision < 0 || precision > std::numeric_limits<double>::max_digits10)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "lr_energy_precision must be an integer from 0 to 17");
+            }
+        };
+        this->add_item(item);
+    }
+    {
         Input_Item item("nocc");
         item.annotation = "the occupied orbital window ending at HOMO for LR-TDDFT";
         item.category = "Linear Response TDDFT";

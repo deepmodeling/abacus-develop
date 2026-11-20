@@ -12,15 +12,16 @@
 namespace LR_Util
 {
     /// Report selected excitation energies without evaluating optical matrix elements.
-    /// Match transition_analysis's energy precision so existing energy regressions apply.
     inline void print_excitation_energies(std::ostream& log, const double* energies,
-                                         const int nstates, const std::string& channel)
+                                         const int nstates, const std::string& channel,
+                                         const int energy_precision)
     {
         const auto flags = log.flags();
         const auto precision = log.precision();
         log << " LR excitation energies: " << channel << '\n';
         log << " State   Excitation Energy (Ry, eV)\n";
-        log << std::defaultfloat << std::setprecision(6);
+        const int digits = energy_precision > 0 ? energy_precision : 6;
+        log << std::defaultfloat << std::setprecision(digits);
         for (int state = 0; state < nstates; ++state)
         {
             log << state << ' ' << energies[state] << ' '
@@ -87,6 +88,25 @@ namespace LR_Util
         ofs.close();
         return res;
     }
+    inline bool write_excitation_energy_file(const std::string& file, const double* energies,
+                                             const int nstates, const int energy_precision)
+    {
+        if (energy_precision == 0)
+        {
+            return write_value(file, 8, energies, nstates) == nstates;
+        }
+        std::ofstream ofs(file);
+        const int decimals = energy_precision - 1;
+        ofs << std::scientific << std::setprecision(decimals);
+        for (int state = 0; state < nstates; ++state)
+        {
+            ofs << energies[state] << ' ';
+        }
+        ofs << '\n';
+        ofs.close();
+        return static_cast<bool>(ofs);
+    }
+
     template<typename T>
     int print_value(const T* ptr, const int& size)
     {
