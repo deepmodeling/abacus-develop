@@ -80,7 +80,7 @@ void DiagoElpaNative<T>::diag_pool(ModuleBase::MatrixBlock<T>& h_mat,
     std::vector<T> s_work;
     T* h_elpa = h_mat.p;
     T* s_elpa = s_mat.p;
-    int decomposed_state = this->DecomposedState;
+    int decomposed_state = this->overlap_factor;
     if (!std::is_same<T, double>::value)
     {
         h_work.resize(narows * nacols);
@@ -158,12 +158,12 @@ void DiagoElpaNative<T>::diag_pool(ModuleBase::MatrixBlock<T>& h_mat,
     if (std::is_same<T, double>::value)
     {
         // for gamma only, the decomposed s_mat will be reused
-        this->DecomposedState = 1;
+        this->overlap_factor = 1;
     }
     else
     {
         // for k pointer, the decomposed s_mat can not be reused
-        this->DecomposedState = 0;
+        this->overlap_factor = 0;
     }
 
     const int inc = 1;

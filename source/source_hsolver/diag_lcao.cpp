@@ -65,12 +65,16 @@ void diag_lcao(ModuleBase::MatrixBlock<T>& h,
 #ifdef __ELPA
     if (method == "genelpa")
     {
-        DiagoElpa<T> solver(order, bands);
+        int workspace_factor = 0;
+        auto& overlap_factor = options.reuse_overlap_factor ? DiagoElpa<T>::DecomposedState : workspace_factor;
+        DiagoElpa<T> solver(order, bands, overlap_factor);
         run_diagonalizer(solver, h, s, psi, eigenvalues, options.pool);
     }
     else if (method == "elpa")
     {
-        DiagoElpaNative<T> solver(order, bands, options.use_gpu);
+        int workspace_factor = 0;
+        auto& overlap_factor = options.reuse_overlap_factor ? DiagoElpaNative<T>::DecomposedState : workspace_factor;
+        DiagoElpaNative<T> solver(order, bands, options.use_gpu, overlap_factor);
         run_diagonalizer(solver, h, s, psi, eigenvalues, options.pool);
     }
     else
@@ -98,7 +102,8 @@ void diag_lcao(ModuleBase::MatrixBlock<T>& h,
     }
     else
     {
-        ModuleBase::WARNING_QUIT("diag_lcao", "Unsupported LCAO eigensolver: " + method);
+        const std::string message = "Unsupported LCAO eigensolver: " + method;
+        ModuleBase::WARNING_QUIT("diag_lcao", message);
     }
 }
 

@@ -101,7 +101,8 @@ void pack_transform(Matrix<T>& overlap_vectors, const std::vector<double>& weigh
 #endif
     {
         const std::size_t first_entry = static_cast<std::size_t>(first) * order;
-        std::copy_n(overlap_vectors.data.data() + first_entry, layout.size(), transform.data.data());
+        const T* retained_columns = overlap_vectors.data.data() + first_entry;
+        std::copy_n(retained_columns, layout.size(), transform.data.data());
     }
     const int ld = layout.nrloc();
     for (int col = 0; col < layout.ncloc(); ++col)
@@ -196,7 +197,7 @@ void diagonalize_workspace(ModuleBase::MatrixBlock<T>& h,
 }
 
 template <typename T>
-bool build_transform(ModuleBase::MatrixBlock<T>& s,
+bool build_transform(const ModuleBase::MatrixBlock<T>& s,
                      double cutoff,
                      const LcaoDiagOptions& options,
                      std::vector<double>& values,
@@ -219,8 +220,8 @@ bool build_transform(ModuleBase::MatrixBlock<T>& s,
 }
 
 template <typename T>
-bool diag_sk_cut(ModuleBase::MatrixBlock<T>& h,
-                ModuleBase::MatrixBlock<T>& s,
+void diag_sk_cut(ModuleBase::MatrixBlock<T>& h,
+                const ModuleBase::MatrixBlock<T>& s,
                 psi::Psi<T>& psi,
                 double* eigenvalues,
                 const LcaoDiagOptions& options,
@@ -235,11 +236,13 @@ bool diag_sk_cut(ModuleBase::MatrixBlock<T>& h,
     std::vector<double> values(order);
     std::vector<double> weights;
     const int displayed_k = kpoint + 1;
-    if (!build_transform(s, cutoff, options, values, overlap_vectors, weights))
+    auto workspace_options = options;
+    workspace_options.reuse_overlap_factor = false;
+    if (!build_transform(s, cutoff, workspace_options, values, overlap_vectors, weights))
     {
-        ModuleBase::WARNING_QUIT("LCAO overlap", "Invalid overlap spectrum for k point "
-                                 + std::to_string(displayed_k) + ".");
-        return false;
+        const std::string message = "Invalid overlap spectrum for k point " + std::to_string(displayed_k) + ".";
+        ModuleBase::WARNING_QUIT("LCAO overlap", message);
+        return;
     }
     const auto retained = std::find_if(weights.begin(), weights.end(),
                                        [](double weight) { return weight > 0.0; });
@@ -252,14 +255,36 @@ bool diag_sk_cut(ModuleBase::MatrixBlock<T>& h,
     }
     if (rank < bands)
     {
-        ModuleBase::WARNING_QUIT("LCAO overlap", "At k point " + std::to_string(displayed_k)
-                                 + " the retained overlap rank " + std::to_string(rank)
-                                 + " is smaller than nbands " + std::to_string(bands) + ".");
-        return false;
+        const std::string message = "At k point " + std::to_string(displayed_k)
+                                    + " the retained overlap rank " + std::to_string(rank)
+                                    + " is smaller than nbands " + std::to_string(bands) + ".";
+        ModuleBase::WARNING_QUIT("LCAO overlap", message);
+        return;
     }
     if (rank == order)
     {
-        return false;
+        // Real ELPA factors S in place. Keep the physical overlap available for
+        // the next spectrum check, even when no modes were discarded this time.
+        auto overlap = overlap_vectors.view();
+        copy_hermitian_upper(order, s, overlap);
+        overlap.desc = h.desc;
+        const std::size_t local_bands = psi.get_nbands();
+        if (options.method == "genelpa" && local_bands < h.col)
+        {
+            // GEN-ELPA writes into a square block-cyclic eigenvector buffer.
+            Matrix<T> eigenvectors(order, order, h.desc);
+            diagonalize_workspace(h, overlap, eigenvectors.data.data(), eigenvalues, workspace_options);
+            const std::size_t elements = local_bands * h.row;
+            if (elements != 0)
+            {
+                std::copy_n(eigenvectors.data.data(), elements, vectors);
+            }
+        }
+        else
+        {
+            diag_lcao(h, overlap, psi, eigenvalues, workspace_options);
+        }
+        return;
     }
 
     Matrix<T> transform(order, rank, s.desc);
@@ -287,7 +312,7 @@ bool diag_sk_cut(ModuleBase::MatrixBlock<T>& h,
         {
             std::copy_n(transform.data.data(), elements, vectors);
         }
-        return true;
+        return;
     }
     pad_projected_hamiltonian(projected, rank);
     Matrix<T> identity(solve_order, solve_order, h.desc);
@@ -295,7 +320,7 @@ bool diag_sk_cut(ModuleBase::MatrixBlock<T>& h,
     auto s_identity = identity.view();
     Matrix<T> subspace_vectors(solve_order, solve_order, h.desc);
     s_identity.desc = h_projected.desc;
-    auto projected_options = options;
+    auto projected_options = workspace_options;
     projected_options.order = solve_order;
     diagonalize_workspace(h_projected, s_identity, subspace_vectors.data.data(), eigenvalues, projected_options);
 
@@ -313,19 +338,18 @@ bool diag_sk_cut(ModuleBase::MatrixBlock<T>& h,
     auto y = subspace_vectors.view();
     ModuleBase::MatrixBlock<T> c{vectors, rows, cols, output_desc};
     multiply_matrix_blocks('N', 'N', order, bands, rank, x, y, c);
-    return true;
 }
 
-template bool diag_sk_cut<double>(ModuleBase::MatrixBlock<double>&,
-                                  ModuleBase::MatrixBlock<double>&,
+template void diag_sk_cut<double>(ModuleBase::MatrixBlock<double>&,
+                                  const ModuleBase::MatrixBlock<double>&,
                                   psi::Psi<double>&,
                                   double*,
                                   const LcaoDiagOptions&,
                                   int,
                                   double,
                                   std::ostream*);
-template bool diag_sk_cut<std::complex<double>>(ModuleBase::MatrixBlock<std::complex<double>>&,
-                                                ModuleBase::MatrixBlock<std::complex<double>>&,
+template void diag_sk_cut<std::complex<double>>(ModuleBase::MatrixBlock<std::complex<double>>&,
+                                                const ModuleBase::MatrixBlock<std::complex<double>>&,
                                                 psi::Psi<std::complex<double>>&,
                                                 double*,
                                                 const LcaoDiagOptions&,

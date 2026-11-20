@@ -9,11 +9,12 @@ namespace hsolver
 {
 /**
  * Solve H C = S C e in the retained overlap subspace and return C in the AO layout.
- * Return false when every overlap mode is retained and the caller can use diag_lcao.
+ * Use the original generalized problem when all modes are retained. Preserve the
+ * unfactored overlap across successive calls.
  */
 template <typename T>
-bool diag_sk_cut(ModuleBase::MatrixBlock<T>& h,
-                ModuleBase::MatrixBlock<T>& s,
+void diag_sk_cut(ModuleBase::MatrixBlock<T>& h,
+                const ModuleBase::MatrixBlock<T>& s,
                 psi::Psi<T, base_device::DEVICE_CPU>& psi,
                 double* eigenvalues,
                 const LcaoDiagOptions& options,

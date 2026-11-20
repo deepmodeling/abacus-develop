@@ -30,6 +30,7 @@ struct LcaoDiagOptions
     int bands;
     bool use_gpu;
     const Parallel_Blkcyclic* pool; // Non-null for a temporary k-point pool.
+    bool reuse_overlap_factor; // Reuse the ELPA factor stored in the caller's S buffer.
 };
 
 /** Solve H C = S C e using the configured LCAO backend and its optional k-point pool. */

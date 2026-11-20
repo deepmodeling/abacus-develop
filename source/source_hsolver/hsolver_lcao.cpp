@@ -135,8 +135,7 @@ void HSolverLCAO<T>::hamiltSolvePsiK(ModuleBase::MatrixBlock<T>& hk,
     ModuleBase::TITLE("HSolverLCAO", "hamiltSolvePsiK");
     ModuleBase::timer::start("HSolverLCAO", "hamiltSolvePsiK");
 
-    const LcaoDiagOptions options{this->method, this->nlocal, this->nbands, this->use_gpu, pool};
-    bool solved = false;
+    const LcaoDiagOptions options{this->method, this->nlocal, this->nbands, this->use_gpu, pool, true};
     if (this->overlap_cutoff > 0.0)
     {
         bool report = this->world_rank == 0;
@@ -151,9 +150,9 @@ void HSolverLCAO<T>::hamiltSolvePsiK(ModuleBase::MatrixBlock<T>& hk,
         }
 #endif
         std::ostream* log = report ? &std::cout : nullptr;
-        solved = diag_sk_cut(hk, sk, psi, eigenvalue, options, kpoint, this->overlap_cutoff, log);
+        diag_sk_cut(hk, sk, psi, eigenvalue, options, kpoint, this->overlap_cutoff, log);
     }
-    if (!solved)
+    else
     {
         diag_lcao(hk, sk, psi, eigenvalue, options);
     }

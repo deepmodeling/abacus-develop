@@ -111,8 +111,8 @@ void check_projection(const std::string& method, bool distributed, T phase, int 
     const int local_bands = output_layout.ncloc();
     psi::Psi<T> psi(vectors.data(), 1, local_bands, rows, rows, true);
     const Parallel_Blkcyclic* pool = distributed ? &input_layout : nullptr;
-    const hsolver::LcaoDiagOptions options{method, order, bands, false, pool};
-    EXPECT_TRUE(hsolver::diag_sk_cut(hk, sk, psi, values.data(), options, 0, cutoff, nullptr));
+    const hsolver::LcaoDiagOptions options{method, order, bands, false, pool, true};
+    hsolver::diag_sk_cut(hk, sk, psi, values.data(), options, 0, cutoff, nullptr);
 
     if (retained_rank == 1)
     {
@@ -130,8 +130,6 @@ void check_projection(const std::string& method, bool distributed, T phase, int 
         EXPECT_NEAR(values[1], 1.5 + splitting, 2e-12);
         EXPECT_NEAR(values[2], large_h / large, 2e-12);
     }
-    EXPECT_FALSE(hsolver::diag_sk_cut(hk, sk, psi, values.data(), options, 0, 1e-12, nullptr));
-
     std::vector<T> c(order * bands);
     for (int col = 0; col < output_layout.ncloc(); ++col)
     {
@@ -193,6 +191,134 @@ TEST(DiagSkCut, DistributedRealAndComplex)
     check_projection<Complex>("scalapack_gvx", true, phase, 3, 1);
 }
 #ifdef __ELPA
+void check_full_rank_elpa_fallback(const std::string& method, bool compact)
+{
+    SCOPED_TRACE(method);
+    SCOPED_TRACE(compact);
+    constexpr int order = 4;
+    constexpr int bands = 3;
+    constexpr int matrix_size = order * order;
+    constexpr int vector_size = order * bands;
+    const double energies[order] = {-2.0, 0.5, 2.0, 5.0};
+    std::vector<double> h_full(matrix_size);
+    std::vector<double> s_full(matrix_size);
+    // H = L diag(energies) L^T and S = L L^T for lower bidiagonal L.
+    for (int col = 0; col < order; ++col)
+    {
+        h_full[col + col * order] = 4.0 * energies[col];
+        s_full[col + col * order] = 4.0;
+        if (col > 0)
+        {
+            h_full[col + col * order] += 0.25 * energies[col - 1];
+            h_full[col - 1 + col * order] = h_full[col + (col - 1) * order] = energies[col - 1];
+            s_full[col + col * order] += 0.25;
+            s_full[col - 1 + col * order] = s_full[col + (col - 1) * order] = 1.0;
+        }
+    }
+
+    Parallel_Blkcyclic layout;
+    layout.init(order, order, 1, MPI_COMM_WORLD, false);
+    const int* desc = layout.desc();
+    const int context = layout.ictxt();
+    Parallel_Blkcyclic output;
+    output.bind_descriptor(order, bands, 1, context);
+    const std::size_t rows = layout.nrloc();
+    const std::size_t cols = layout.ncloc();
+    const int local_bands = output.ncloc();
+    const int stored_bands = compact ? local_bands : cols;
+    const std::size_t stored_elements = rows * stored_bands;
+    std::vector<double> h(layout.size());
+    std::vector<double> s(layout.size());
+    std::vector<double> vectors(stored_elements);
+    std::vector<double> values(bands);
+    ModuleBase::MatrixBlock<double> hk{h.data(), rows, cols, desc};
+    ModuleBase::MatrixBlock<double> sk{s.data(), rows, cols, desc};
+    psi::Psi<double> psi(vectors.data(), 1, stored_bands, rows, rows, true);
+    const Parallel_Blkcyclic* pool = compact ? &layout : nullptr;
+    const hsolver::LcaoDiagOptions options{method, order, bands, false, pool, true};
+    for (int col = 0; col < layout.ncloc(); ++col)
+    {
+        const int global_col = layout.icglb(col);
+        for (int row = 0; row < layout.nrloc(); ++row)
+        {
+            const int global_row = layout.irglb(row);
+            s[row + col * rows] = s_full[global_row + global_col * order];
+        }
+    }
+    const auto original_overlap = s;
+
+    for (int step = 0; step < 2; ++step)
+    {
+        SCOPED_TRACE(step);
+        for (int col = 0; col < layout.ncloc(); ++col)
+        {
+            const int global_col = layout.icglb(col);
+            for (int row = 0; row < layout.nrloc(); ++row)
+            {
+                const int global_row = layout.irglb(row);
+                const int idx = global_row + global_col * order;
+                h[row + col * rows] = h_full[idx] + step * s_full[idx];
+            }
+        }
+        hsolver::diag_sk_cut(hk, sk, psi, values.data(), options, 0, 1e-5, nullptr);
+        EXPECT_EQ(s, original_overlap);
+
+        std::vector<double> c(vector_size);
+        for (int col = 0; col < local_bands; ++col)
+        {
+            const int global_col = output.icglb(col);
+            for (int row = 0; row < output.nrloc(); ++row)
+            {
+                const int global_row = output.irglb(row);
+                c[global_row + global_col * order] = vectors[row + col * rows];
+            }
+        }
+        const int count = c.size();
+        Parallel_Reduce::reduce_all(c.data(), count);
+        for (int band = 0; band < bands; ++band)
+        {
+            const double expected_energy = energies[band] + step;
+            EXPECT_NEAR(values[band], expected_energy, 2e-12);
+            std::vector<double> sc(order);
+            for (int row = 0; row < order; ++row)
+            {
+                double hc = 0.0;
+                for (int col = 0; col < order; ++col)
+                {
+                    const int idx = row + col * order;
+                    const double coeff = c[col + band * order];
+                    sc[row] += s_full[idx] * coeff;
+                    hc += (h_full[idx] + step * s_full[idx]) * coeff;
+                }
+                const double expected_hc = values[band] * sc[row];
+                EXPECT_NEAR(hc, expected_hc, 2e-12);
+            }
+            for (int other = 0; other < bands; ++other)
+            {
+                double gram = 0.0;
+                for (int row = 0; row < order; ++row)
+                {
+                    gram += c[row + other * order] * sc[row];
+                }
+                const double expected_gram = other == band ? 1.0 : 0.0;
+                EXPECT_NEAR(gram, expected_gram, 2e-12);
+            }
+        }
+    }
+}
+
+TEST(DiagSkCut, FullRankElpaFallbackAcrossSolves)
+{
+    if (Parallel_Common::comm_size(MPI_COMM_WORLD) > 4)
+    {
+        GTEST_SKIP() << "Four-orbital test uses at most four ranks.";
+    }
+    check_full_rank_elpa_fallback("genelpa", false);
+    check_full_rank_elpa_fallback("genelpa", true);
+    check_full_rank_elpa_fallback("elpa", false);
+    check_full_rank_elpa_fallback("elpa", true);
+}
+
 TEST(DiagSkCut, ElpaBackends)
 {
     if (Parallel_Common::comm_size(MPI_COMM_WORLD) > 4)
