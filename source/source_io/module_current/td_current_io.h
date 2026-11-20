@@ -53,7 +53,7 @@ void write_current(
     const LCAO_Orbitals& orb,
     TD_info* td_p,
     const hamilt::HContainer<TR>* sR,
-    const hamilt::HContainer<TR>* hR,
+    const std::vector<hamilt::HContainer<TR>*>& spin_hR,
     const Exx_NAO<std::complex<double>>& exx_nao,
     const Exx_Info& exx_info
 );
@@ -95,7 +95,7 @@ void cal_velocity_basis_k(const UnitCell& ucell,
                           const K_Vectors& kv,
                           const ModuleBase::Vector3<hamilt::HContainer<double>*>& rR,
                           const hamilt::HContainer<TR>& sR,
-                          const hamilt::HContainer<std::complex<double>>& hR,
+                          const std::vector<const hamilt::HContainer<std::complex<double>>*>& spin_hR,
                           std::vector<ModuleBase::Vector3<std::complex<double>*>>& velocity_basis_k);
 
 void cal_velocity_matrix(const psi::Psi<std::complex<double>>* psi,
@@ -111,7 +111,7 @@ void cal_current_comm_k(const UnitCell& ucell,
                         const K_Vectors& kv,
                         TD_info* td_p,
                         const hamilt::HContainer<TR>& sR,
-                        const hamilt::HContainer<std::complex<double>>& hR,
+                        const std::vector<const hamilt::HContainer<std::complex<double>>*>& spin_hR,
                         const psi::Psi<std::complex<double>>* psi,
                         const elecstate::ElecState* pelec,
                         std::vector<ModuleBase::Vector3<double>>& current_k);
