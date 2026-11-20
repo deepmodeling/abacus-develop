@@ -1299,6 +1299,112 @@ TEST_F(DMKTest, ReadDMKRejectsMalformedAtomCount) {
     }
 }
 
+// Mode 0 uses a fixed filename for every step, so an interrupted write can
+// leave files from different ionic steps on disk. The reader must reject such
+// a mixture instead of building a restart density from two different steps.
+TEST_F(DMKTest, ReadDMKMode0RejectsMixedSteps) {
+    const int nspin = 1;
+    const int nk = 2;
+    const int nlocal = 2;
+    Parallel_Blkcyclic pv;
+    init_pv(nlocal, pv);
+
+    K_Vectors kv;
+    init_kv_multi(kv, nspin, nk);
+
+    std::vector<std::vector<std::complex<double>>> dmk;
+    for (int ik = 0; ik < nk; ++ik)
+    {
+        std::vector<std::complex<double>> probe(nlocal * nlocal,
+                                                std::complex<double>(ik + 1.0, 0.5 * ik));
+        std::vector<std::vector<std::complex<double>>> one_dmk;
+        fill_local_dmk(probe, nlocal, pv, one_dmk);
+        dmk.push_back(one_dmk[0]);
+    }
+
+    const std::vector<double> efs(nspin, 0.0);
+    const std::string out_dir = testing::TempDir();
+    std::ofstream ofs_log;
+    ModuleIO::write_dmk(dmk, kv, /*precision=*/12, efs, ucell, pv, /*column_major=*/true,
+                        out_dir, /*istep=*/0, /*out_app_flag=*/0, ofs_log);
+
+    // Bump the step marker of the second file only, mimicking an interrupted
+    // mode-0 write where dmk2 was refreshed but dmk1 was not.
+    if (GlobalV::MY_RANK == 0)
+    {
+        ASSERT_TRUE(rewrite_line(out_dir + "dmk2_nao.txt", /*target=*/0, "Ionic_Step 2"));
+    }
+
+    const std::complex<double> sentinel(7.0, 7.0);
+    std::vector<std::vector<std::complex<double>>> dmk_read(
+        nspin * nk, std::vector<std::complex<double>>(pv.nrloc() * pv.ncloc(), sentinel));
+    EXPECT_FALSE(ModuleIO::read_dmk(nspin, nk, kv, pv, /*column_major=*/true, out_dir,
+                                    /*istep=*/0, /*out_app_flag=*/0, dmk_read, ofs_log));
+    // The caller buffer must stay untouched on failure.
+    EXPECT_TRUE(all_equal_to(dmk_read, sentinel));
+
+    if (GlobalV::MY_RANK == 0)
+    {
+        std::remove((out_dir + "dmk1_nao.txt").c_str());
+        std::remove((out_dir + "dmk2_nao.txt").c_str());
+    }
+}
+
+// Legacy files written before the Ionic_Step marker existed must stay
+// readable in mode 0: without a marker there is nothing to cross-check.
+TEST_F(DMKTest, ReadDMKMode0AcceptsFilesWithoutStepMarker) {
+    const int nspin = 1;
+    const int nk = 1;
+    const int nlocal = 2;
+    Parallel_Blkcyclic pv;
+    init_pv(nlocal, pv);
+
+    const std::vector<double> probe = {1.0, 2.0, 3.0, 4.0};
+    std::vector<std::vector<double>> dmk;
+    fill_local_dmk(probe, nlocal, pv, dmk);
+
+    const std::vector<double> efs(nspin, 0.0);
+    K_Vectors kv;
+    init_kv(kv, 1.0);
+
+    const std::string out_dir = testing::TempDir();
+    std::ofstream ofs_log;
+    ModuleIO::write_dmk(dmk, kv, /*precision=*/12, efs, ucell, pv, /*column_major=*/true,
+                        out_dir, /*istep=*/0, /*out_app_flag=*/0, ofs_log);
+
+    // Strip the "Ionic_Step" marker line to mimic a pre-marker writer.
+    if (GlobalV::MY_RANK == 0)
+    {
+        const std::string fn = out_dir + "dm_nao.txt";
+        std::ifstream ifs(fn.c_str());
+        std::vector<std::string> lines;
+        std::string line;
+        while (std::getline(ifs, line))
+        {
+            if (line.find("Ionic_Step") == std::string::npos)
+            {
+                lines.push_back(line);
+            }
+        }
+        ifs.close();
+        std::ofstream ofs(fn.c_str());
+        for (const std::string& out_line : lines)
+        {
+            ofs << out_line << "\n";
+        }
+    }
+
+    std::vector<std::vector<double>> dmk_read;
+    EXPECT_TRUE(ModuleIO::read_dmk(nspin, nk, kv, pv, /*column_major=*/true, out_dir,
+                                   /*istep=*/0, /*out_app_flag=*/0, dmk_read, ofs_log));
+    expect_dmk_eq(dmk_read, dmk);
+
+    if (GlobalV::MY_RANK == 0)
+    {
+        std::remove((out_dir + "dm_nao.txt").c_str());
+    }
+}
+
 // The flat index shared by the readers and the writers: a row-major buffer
 // stores (i, j) at i * nlocal + j, a column-major one at j * nlocal + i. All
 // LCAO ks_solver choices are column-major, so this mapping is what keeps the

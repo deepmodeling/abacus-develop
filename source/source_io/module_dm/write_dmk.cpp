@@ -245,6 +245,12 @@ bool ModuleIO::read_dmk(const int nspin,
 #endif
 
     bool read_success = true;
+    // Mode 0 rewrites every k/spin file under the same fixed name at each
+    // ionic step, so an interrupted write can leave files from different
+    // steps on disk. The first parsed marker becomes the reference every
+    // other file has to match; files without a marker (older writer) skip
+    // the cross-check.
+    int common_step = -1;
     for (int ispin = 0; ispin < nspin && read_success; ispin++)
     {
         for (int ik = 0; ik < nk && read_success; ik++)
@@ -318,6 +324,23 @@ bool ModuleIO::read_dmk(const int nspin,
                                     << frame_step << ", expected " << istep + 1 << std::endl;
                         read_success = false;
                         break;
+                    }
+                    // Mode 0 reuses fixed names, so the only cross-file guard
+                    // is that every file carries the same step marker.
+                    if (out_app_flag == 0 && frame_step >= 0)
+                    {
+                        if (common_step < 0)
+                        {
+                            common_step = frame_step;
+                        }
+                        else if (frame_step != common_step)
+                        {
+                            ofs_running << " Inconsistent ionic step in density matrix file " << fn
+                                        << ": file says " << frame_step << ", expected " << common_step
+                                        << " (from the first file)" << std::endl;
+                            read_success = false;
+                            break;
+                        }
                     }
                     header[0] = line;
                     for (int ih = 1; ih < n_header; ++ih)
