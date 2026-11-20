@@ -124,7 +124,7 @@ run_basic_props() {
     echo "totaldosref $total_dos" >>$props_result_file
   fi
   if [ -f pdos.ref.json ]; then
-    python3 "$PROPS_TOOLS_DIR/check_pdos_npy.py" OUT.autotest/pdos.npy pdos.ref.json
+    python3 "$PROPS_TOOLS_DIR/check_pdos_npy.py" OUT.autotest/pdos.npy pdos.ref.json || return 1
   fi
 
   #-------------------------------
