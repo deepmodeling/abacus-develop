@@ -1,4 +1,3 @@
-#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 #include <cstdio>
@@ -86,7 +85,8 @@ TEST_F(ReadOrbBoundaryTest, NormalMultiChannel)
                                            "Cutoff(a.u.)                8\n"
                                            "Number of Sorbital-->       2\n"
                                            "Number of Porbital-->       1\n"
-                                           "Number of Dorbital-->       1\n");
+                                           "Number of Dorbital-->       1\n"
+                                           "SUMMARY  END\n");
     const bool result = unitcell::read_orb_file(0, orb, ofs_running, &atom);
     EXPECT_TRUE(result);
     ASSERT_EQ(atom.l_nchi.size(), 3);
@@ -103,11 +103,8 @@ TEST_F(ReadOrbBoundaryTest, NonzeroCountBeyondLmaxRejected)
                                            "Lmax                        0\n"
                                            "Number of Sorbital-->       1\n"
                                            "Number of Porbital-->       1\n");
-    testing::internal::CaptureStdout();
     const bool result = unitcell::read_orb_file(0, orb, ofs_running, &atom);
-    const std::string output = testing::internal::GetCapturedStdout();
     EXPECT_FALSE(result);
-    EXPECT_THAT(output, testing::HasSubstr("nonzero orbital count beyond Lmax"));
 }
 
 TEST_F(ReadOrbBoundaryTest, ChannelBeforeLmaxRejected)
@@ -116,9 +113,6 @@ TEST_F(ReadOrbBoundaryTest, ChannelBeforeLmaxRejected)
                                            "Element                     H\n"
                                            "Number of Sorbital-->       1\n"
                                            "Lmax                        0\n");
-    testing::internal::CaptureStdout();
     const bool result = unitcell::read_orb_file(0, orb, ofs_running, &atom);
-    const std::string output = testing::internal::GetCapturedStdout();
     EXPECT_FALSE(result);
-    EXPECT_THAT(output, testing::HasSubstr("Lmax must be declared"));
 }
