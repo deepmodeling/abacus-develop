@@ -38,6 +38,7 @@ jobs:
       # every rank a core of its own and keeps the concurrent CUDA contexts
       # far inside the card's memory.
       GPU_TEST_JOBS: "4"
+      CUDA_ARCHITECTURES: "70"
     steps:
       - name: Checkout
         uses: actions/checkout@v7.0.1
@@ -52,16 +53,16 @@ jobs:
       - name: Calculate compiler cache fingerprint
         id: compiler
         run: |
-          fingerprint="$({ c++ --version; nvcc --version; ccache --version; } | sha256sum | cut -d' ' -f1)"
+          fingerprint="$({ c++ --version; nvcc --version; ccache --version; echo "CMAKE_CUDA_ARCHITECTURES=${CUDA_ARCHITECTURES}"; } | sha256sum | cut -d' ' -f1)"
           echo "fingerprint=${fingerprint}" >> "${GITHUB_OUTPUT}"
 
       - name: Restore compiler cache
         uses: actions/cache/restore@v6
         with:
           path: ${{ env.CCACHE_DIR }}
-          key: abacus-cuda-ccache-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.compiler.outputs.fingerprint }}-${{ github.sha }}
+          key: abacus-cuda-ccache-v2-${{ runner.os }}-${{ runner.arch }}-${{ steps.compiler.outputs.fingerprint }}-${{ github.sha }}
           restore-keys: |
-            abacus-cuda-ccache-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.compiler.outputs.fingerprint }}-
+            abacus-cuda-ccache-v2-${{ runner.os }}-${{ runner.arch }}-${{ steps.compiler.outputs.fingerprint }}-
 
       - name: Prepare compiler cache
         run: |
@@ -83,7 +84,7 @@ jobs:
           rm -rf build
           cmake -B build -G Ninja -DUSE_CUDA=ON -DENABLE_LIBXC=ON -DBUILD_TESTING=ON -DENABLE_FLOAT_FFTW=ON \
             -DENABLE_GOOGLEBENCH=OFF \
-            -DCMAKE_CUDA_ARCHITECTURES=70
+            -DCMAKE_CUDA_ARCHITECTURES=${CUDA_ARCHITECTURES}
           cmake --build build -j "$(nproc)"
           cmake --install build
 
@@ -102,7 +103,7 @@ jobs:
         uses: actions/cache/save@v6
         with:
           path: ${{ env.CCACHE_DIR }}
-          key: abacus-cuda-ccache-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.compiler.outputs.fingerprint }}-${{ github.sha }}
+          key: abacus-cuda-ccache-v2-${{ runner.os }}-${{ runner.arch }}-${{ steps.compiler.outputs.fingerprint }}-${{ github.sha }}
 
       - name: Module_LCAO CUDA Unittests
         env:
