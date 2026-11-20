@@ -16,7 +16,8 @@ set(LINALG_TEST_SOURCES
     ../exp_taylor.cpp
     ../orb_buffer.cpp
     ../orthonormal.cpp
-    ../orthonormal_small.cpp)
+    ../orthonormal_small.cpp
+    ../overlap_spectrum.cpp)
 addtest(
   TARGET MODULE_HSOLVER_linalg
   LIBS parameter base device container

@@ -128,6 +128,24 @@ if(ENABLE_MPI)
         SOURCES test_diago_lcao.cpp ../diago_scalapack.cpp ../diago_lapack.cpp ${_dsp_cpack_fallback_src})
     endif()
 
+    set(lcao_sk_cut_test_sources
+        test_diag_sk_cut.cpp ../diag_sk_cut.cpp ../diag_lcao.cpp ../module_linalg/overlap_spectrum.cpp
+        ../diago_scalapack.cpp ../diago_lapack.cpp ${_dsp_cpack_fallback_src})
+    set(lcao_sk_cut_test_libs parameter base psi device)
+    if(TARGET ELPA::ELPA)
+      list(APPEND lcao_sk_cut_test_sources ../diago_elpa.cpp ../diago_elpa_native.cpp)
+      list(APPEND lcao_sk_cut_test_libs ELPA::ELPA genelpa)
+    endif()
+    addtest(
+      TARGET MODULE_HSOLVER_LCAO_sk_cut
+      LIBS ${lcao_sk_cut_test_libs}
+      SOURCES ${lcao_sk_cut_test_sources})
+    add_test(
+      NAME MODULE_HSOLVER_LCAO_sk_cut_parallel
+      COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 4 ${MPIEXEC_PREFLAGS}
+              $<TARGET_FILE:MODULE_HSOLVER_LCAO_sk_cut> ${MPIEXEC_POSTFLAGS})
+    set_tests_properties(MODULE_HSOLVER_LCAO_sk_cut_parallel
+                         PROPERTIES PROCESSORS 4 TIMEOUT 60)
     if(TARGET PEXSI::PEXSI)
       addtest(
         TARGET MODULE_HSOLVER_LCAO_PEXSI
