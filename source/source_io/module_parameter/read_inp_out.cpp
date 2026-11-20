@@ -839,7 +839,7 @@ For binary output, each file uses the same basename as text output with a .dat s
         item.annotation = "output Hamiltonian derivatives dH/dR matrices";
         item.category = "Output information";
         item.type = "Integer";
-        item.description = "Whether to print files containing the Hamiltonian derivatives dH/dR. Only the k-space matrices are currently written, to MAT/ as dhk[xyz]_iat{I}[s{spin}][g{step}]_nao.txt: one file per differentiated atom I and Cartesian direction (multi-k runs add an _ik{ki} suffix), with the s{spin} suffix when nspin = 2 and the g{step} suffix only when out_app_flag = 2. Also controlled by out_freq_ion and out_app_flag."
+        item.description = "Whether to print files containing the Hamiltonian derivatives dH/dR. Only the k-space matrices are currently written, to MAT/ as dhk{k}{xyz}_ia{I}[s{spin}][g{step}]_nao.txt: one file per k point k (1-based, always present in the name), differentiated atom I, and Cartesian direction, with the s{spin} suffix when nspin = 2 and the g{step} suffix only when out_app_flag = 2. Also controlled by out_freq_ion and out_app_flag."
                           "\n\nFormat: <enable> [precision] [iat1 iat2 ...]. The first value (0/1) enables/disables output. The second optional value sets the output precision (default: 8). Starting from the third value, 1-based atom indices can be listed to restrict output to derivatives with respect to those specific atoms only; if no atom indices are given, all atoms are written."
                           "\n\n[NOTE] In the 3.10-LTS version, the file name is data-dHRx-sparse_SPIN0.csr and so on.";
         item.default_value = "0 8";
