@@ -242,12 +242,12 @@ bool ModelData::load(const std::string& coefficient_file,
                 return false;
             }
             std::istringstream value_line(line);
-            if (!(value_line >> values[static_cast<std::size_t>(coefficient)]))
+            if (!(value_line >> values[coefficient]))
             {
                 error = "Invalid SNAP coefficient value.";
                 return false;
             }
-            if (!std::isfinite(values[static_cast<std::size_t>(coefficient)]) || value_line >> extra)
+            if (!std::isfinite(values[coefficient]) || value_line >> extra)
             {
                 error = "Invalid or extra SNAP coefficient value for element: " + element;
                 return false;

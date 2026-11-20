@@ -230,7 +230,7 @@ void BinManager::build_atom_neighbors(
 
                     for (const ModuleNeighList::LocalAtomIndex binned_atom_index : bins_[nidx].get_atom_indices())
                     {
-                        const NeighborAtom& natom = binned_atoms[static_cast<std::size_t>(binned_atom_index)];
+                        const NeighborAtom& natom = binned_atoms[binned_atom_index];
                         double dx = atom.position_x - natom.position_x;
                         double dy = atom.position_y - natom.position_y;
                         double dz = atom.position_z - natom.position_z;

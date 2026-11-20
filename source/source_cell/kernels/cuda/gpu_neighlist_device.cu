@@ -106,8 +106,8 @@ int build_device_impl(int nall,
     if (status != 0) goto cleanup;
     for (int bin = 0; bin < total_bins; ++bin)
     {
-        bin_offsets[static_cast<std::size_t>(bin + 1)]
-            = bin_offsets[static_cast<std::size_t>(bin)] + bin_counts[static_cast<std::size_t>(bin)];
+        bin_offsets[bin + 1]
+            = bin_offsets[bin] + bin_counts[bin];
     }
     status = check_cuda(cudaMemcpy(d_bin_offsets, bin_offsets.data(),
                                    sizeof(int) * (total_bins + 1), cudaMemcpyHostToDevice),
