@@ -13,6 +13,11 @@ addtest(
           ../../source_cell/parallel_kpoints.cpp
           ../../source_cell/reciprocal_grid.cpp)
 
+addTest(
+  TARGET MODULE_IO_parse_command_line_test
+  SOURCES test_parse_command_line.cpp ../parse_command_line.cpp
+)
+
 addtest(TARGET MODULE_IO_spin_tag SOURCES test_spin_tag.cpp)
 
 addtest(TARGET MODULE_IO_provenance_header SOURCES test_provenance_header.cpp)
@@ -152,7 +157,7 @@ addtest(
   TARGET MODULE_IO_parse_args
   LIBS parameter base device io_input
   SOURCES test_parse_args.cpp ../parse_args.cpp ../input_help.cpp
-          ../../source_cell/stru_frame_io.cpp)
+          ../parse_command_line.cpp ../../source_cell/stru_frame_io.cpp)
 
 addtest(
   TARGET MODULE_IO_test_read_inp_sys

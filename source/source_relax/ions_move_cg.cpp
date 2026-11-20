@@ -8,10 +8,7 @@
 
 double Ions_Move_CG::RELAX_CG_THR = -1.0; // default is 0.5
 
-Ions_Move_CG::Ions_Move_CG()
-{
-    this->e0 = 0.0;
-}
+Ions_Move_CG::Ions_Move_CG() { this->e0 = 0.0; }
 
 void Ions_Move_CG::allocate(const int dim)
 {
@@ -39,15 +36,16 @@ void Ions_Move_CG::allocate(const int dim)
     this->fmax = 0.0;
 }
 
-bool Ions_Move_CG::start(UnitCell& ucell,
-                         const ModuleBase::matrix& force,
-                         const double& etot_in,
-                         const int istep,
-                         int& update_iter,
-                         std::ofstream& ofs,
-                         std::vector<double>& etot_info,
-                         std::string& relax_method,
-                         const Relax_Criteria& criteria)
+bool Ions_Move_CG::start(
+    UnitCell &ucell,
+    const ModuleBase::matrix &force,
+    const double &etot_in,
+    const int istep,
+    int &update_iter,
+    std::ofstream &ofs,
+    std::vector<double> &etot_info,
+    std::string &relax_method,
+    const Relax_Criteria &criteria)
 {
     ModuleBase::TITLE("Ions_Move_CG", "start");
     assert(Ions_Move_Basic::dim > 0);
@@ -87,15 +85,9 @@ bool Ions_Move_CG::start(UnitCell& ucell,
         bool converged = false;
         if (flag == 0)
         {
-            converged = Ions_Move_Basic::check_converged(ucell,
-                                                         grad.data(),
-                                                         update_iter,
-                                                         ofs,
-                                                         etot_info,
-                                                         criteria.force_thr,
-                                                         criteria.force_thr_ev,
-                                                         criteria.out_level,
-                                                         criteria.test_relax_method);
+            converged = Ions_Move_Basic::check_converged(
+                ucell, grad.data(), update_iter, ofs, etot_info, criteria.force_thr, criteria.force_thr_ev,
+                criteria.out_level, criteria.test_relax_method);
         }
         if (converged)
         {
@@ -106,13 +98,8 @@ bool Ions_Move_CG::start(UnitCell& ucell,
         if (this->sd)
         {
             e0 = etot_in;
-            CG_Base::setup_cg_grad(dim,
-                                   grad.data(),
-                                   grad0.data(),
-                                   cg_grad.data(),
-                                   cg_grad0.data(),
-                                   this->ncggrad,
-                                   flag);
+            CG_Base::setup_cg_grad(
+                dim, grad.data(), grad0.data(), cg_grad.data(), cg_grad0.data(), this->ncggrad, flag);
             this->ncggrad++;
 
             CG_Base::normalize(dim, cg_gradn.data(), cg_grad.data());

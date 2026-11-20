@@ -114,15 +114,8 @@ TEST_F(IonsMoveBasicTest, CheckConvergedCase1)
     // Call the function being tested
     std::ofstream ofs("test_check_converged_case1.log");
     testing::internal::CaptureStdout();
-    bool converged = Ions_Move_Basic::check_converged(ucell,
-                                                      grad,
-                                                      update_iter,
-                                                      ofs,
-                                                      etot_info,
-                                                      force_thr,
-                                                      force_thr_ev,
-                                                      out_level,
-                                                      test_relax_method);
+    bool converged = Ions_Move_Basic::check_converged(
+        ucell, grad, update_iter, ofs, etot_info, force_thr, force_thr_ev, out_level, test_relax_method);
     std::string std_outout = testing::internal::GetCapturedStdout();
     ofs.close();
 
@@ -132,11 +125,11 @@ TEST_F(IonsMoveBasicTest, CheckConvergedCase1)
     ifs.close();
     std::remove("test_check_converged_case1.log");
 
-    std::string expected_ofs
-        = "                    old total energy (ry) = 0\n                    new total energy (ry) = 0\n              "
-          "     energy difference (ry) = 0\n               largest gradient (ry/bohr) = 0\n\n"
-          " largest force is 0, no "
-          "movement is possible.\n it may converged, otherwise no movement of atom is allowed.\n";
+    std::string expected_ofs =
+        "                    old total energy (ry) = 0\n                    new total energy (ry) = 0\n              "
+        "     energy difference (ry) = 0\n               largest gradient (ry/bohr) = 0\n\n"
+        " largest force is 0, no "
+        "movement is possible.\n it may converged, otherwise no movement of atom is allowed.\n";
     std::string expected_std = " ETOT DIFF (eV)       : 0\n LARGEST GRAD (eV/Angstrom)  : 0\n";
 
     EXPECT_THAT(ofs_output, ::testing::HasSubstr(expected_ofs));
@@ -162,15 +155,8 @@ TEST_F(IonsMoveBasicTest, CheckConvergedCase2)
     // Call the function being tested
     std::ofstream ofs("test_check_converged_case2.log");
     testing::internal::CaptureStdout();
-    bool converged = Ions_Move_Basic::check_converged(ucell,
-                                                      grad,
-                                                      update_iter,
-                                                      ofs,
-                                                      etot_info,
-                                                      force_thr,
-                                                      force_thr_ev,
-                                                      out_level,
-                                                      test_relax_method);
+    bool converged = Ions_Move_Basic::check_converged(
+        ucell, grad, update_iter, ofs, etot_info, force_thr, force_thr_ev, out_level, test_relax_method);
     std::string std_outout = testing::internal::GetCapturedStdout();
     ofs.close();
 
@@ -180,9 +166,9 @@ TEST_F(IonsMoveBasicTest, CheckConvergedCase2)
     ifs.close();
     std::remove("test_check_converged_case2.log");
 
-    std::string expected_ofs
-        = "                    old total energy (ry) = 0\n                    new total energy (ry) = 0\n              "
-          "     energy difference (ry) = 0\n               largest gradient (ry/bohr) = 0.1\n";
+    std::string expected_ofs =
+        "                    old total energy (ry) = 0\n                    new total energy (ry) = 0\n              "
+        "     energy difference (ry) = 0\n               largest gradient (ry/bohr) = 0.1\n";
     std::string expected_std = " ETOT DIFF (eV)       : 0\n LARGEST GRAD (eV/Angstrom)  : 2.57111\n";
 
     EXPECT_THAT(ofs_output, ::testing::HasSubstr(expected_ofs));
@@ -208,15 +194,8 @@ TEST_F(IonsMoveBasicTest, CheckConvergedCase3)
     // Call the function being tested
     std::ofstream ofs("test_check_converged_case3.log");
     testing::internal::CaptureStdout();
-    bool converged = Ions_Move_Basic::check_converged(ucell,
-                                                      grad,
-                                                      update_iter,
-                                                      ofs,
-                                                      etot_info,
-                                                      force_thr,
-                                                      force_thr_ev,
-                                                      out_level,
-                                                      test_relax_method);
+    bool converged = Ions_Move_Basic::check_converged(
+        ucell, grad, update_iter, ofs, etot_info, force_thr, force_thr_ev, out_level, test_relax_method);
     std::string std_outout = testing::internal::GetCapturedStdout();
     ofs.close();
 
@@ -226,9 +205,9 @@ TEST_F(IonsMoveBasicTest, CheckConvergedCase3)
     ifs.close();
     std::remove("test_check_converged_case3.log");
 
-    std::string expected_ofs
-        = "                    old total energy (ry) = 0\n                    new total energy (ry) = 1\n              "
-          "     energy difference (ry) = 1\n               largest gradient (ry/bohr) = 0.1\n";
+    std::string expected_ofs =
+        "                    old total energy (ry) = 0\n                    new total energy (ry) = 1\n              "
+        "     energy difference (ry) = 1\n               largest gradient (ry/bohr) = 0.1\n";
     std::string expected_std = " ETOT DIFF (eV)       : 13.6057\n LARGEST GRAD (eV/Angstrom)  : 2.57111\n";
 
     EXPECT_THAT(ofs_output, ::testing::HasSubstr(expected_ofs));

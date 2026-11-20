@@ -151,8 +151,8 @@ ForceResult Calculator::compute_with_analytic_force(const std::vector<Neighbor>&
             {
                 derivative += force_coefficients[index] * db[index];
             }
-            result.center_force[static_cast<std::size_t>(direction)] += derivative;
-            result.neighbor_forces[neighbor_index][static_cast<std::size_t>(direction)] = -derivative;
+            result.center_force[direction] += derivative;
+            result.neighbor_forces[neighbor_index][direction] = -derivative;
         }
     }
     return result;
@@ -194,8 +194,8 @@ ForceResult Calculator::compute_with_finite_difference_force(const std::vector<N
             }
             const double derivative =
                 (compute(plus, central_element).energy - compute(minus, central_element).energy) / (2.0 * displacement);
-            result.center_force[static_cast<std::size_t>(direction)] += derivative;
-            result.neighbor_forces[neighbor_index][static_cast<std::size_t>(direction)] -= derivative;
+            result.center_force[direction] += derivative;
+            result.neighbor_forces[neighbor_index][direction] -= derivative;
         }
     }
     return result;
@@ -231,8 +231,8 @@ void CellAccumulator::add(const std::size_t center_index,
     energy_ += result.energy.energy;
     for (int direction = 0; direction < 3; ++direction)
     {
-        forces_[center_index][static_cast<std::size_t>(direction)] +=
-            result.center_force[static_cast<std::size_t>(direction)];
+        forces_[center_index][direction] +=
+            result.center_force[direction];
     }
     for (std::size_t index = 0; index < neighbors.size(); ++index)
     {
@@ -241,15 +241,15 @@ void CellAccumulator::add(const std::size_t center_index,
         const std::size_t atom = neighbor_indices[index];
         for (int direction = 0; direction < 3; ++direction)
         {
-            forces_[atom][static_cast<std::size_t>(direction)] +=
-                result.neighbor_forces[index][static_cast<std::size_t>(direction)];
+            forces_[atom][direction] +=
+                result.neighbor_forces[index][direction];
         }
         for (int row = 0; row < 3; ++row)
         {
             for (int column = 0; column < 3; ++column)
             {
-                virial_[static_cast<std::size_t>(3 * row + column)] +=
-                    displacement[row] * result.neighbor_forces[index][static_cast<std::size_t>(column)];
+                virial_[3 * row + column] +=
+                    displacement[row] * result.neighbor_forces[index][column];
             }
         }
     }

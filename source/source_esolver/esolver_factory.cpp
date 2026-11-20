@@ -22,11 +22,11 @@
 #endif
 #include "source_base/module_external/blacs_connector.h"
 #endif
-#include "source_md/module_dp/dp.h"
-#include "source_md/module_nep/nep_potential.h"
-#include "source_md/module_snap/snap_potential.h"
+#include "source_md/module_dp/dp_forcefield.h"
+#include "source_md/module_nep/nep_forcefield.h"
+#include "source_md/module_snap/snap_forcefield.h"
 #include "esolver_forcefields.h"
-#include "source_md/module_lj/lj.h"
+#include "source_md/module_lj/lj_forcefield.h"
 #include "esolver_of.h"
 #include "esolver_of_tddft.h"
 

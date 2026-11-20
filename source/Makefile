@@ -193,10 +193,13 @@ ifdef DeePMD_DIR
     DPMD_COMM_NLIST_13 := $(shell $(CXX) $(OPTS) $(INCLUDES) $(HONG) -DDPMD_PROBE_COMM_13 -fsyntax-only $(DPMD_PROBE_SOURCE) >/dev/null 2>&1 && echo 1)
     DPMD_COMM_NLIST_12 := $(shell $(CXX) $(OPTS) $(INCLUDES) $(HONG) -DDPMD_PROBE_COMM_12 -fsyntax-only $(DPMD_PROBE_SOURCE) >/dev/null 2>&1 && echo 1)
     DPMD_NLIST_MAPPING := $(shell $(CXX) $(OPTS) $(INCLUDES) $(HONG) -DDPMD_PROBE_MAPPING -fsyntax-only $(DPMD_PROBE_SOURCE) >/dev/null 2>&1 && echo 1)
-    ifeq ($(DPMD_COMM_NLIST_13),1)
-        HONG += -D__DPMD_COMM_NLIST_ARGS=13
-    else ifeq ($(DPMD_COMM_NLIST_12),1)
-        HONG += -D__DPMD_COMM_NLIST_ARGS=12
+    DPMD_PT_MPI := $(shell readelf -d $(DeeP_LIB_DIR)/libdeepmd_op_pt.so 2>/dev/null | grep -E 'NEEDED.*libmpi[.]so' >/dev/null && echo 1)
+    ifeq ($(DPMD_PT_MPI),1)
+        ifeq ($(DPMD_COMM_NLIST_13),1)
+            HONG += -D__DPMD_COMM_NLIST_ARGS=13
+        else ifeq ($(DPMD_COMM_NLIST_12),1)
+            HONG += -D__DPMD_COMM_NLIST_ARGS=12
+        endif
     endif
     ifeq ($(DPMD_NLIST_MAPPING),1)
         HONG += -D__DPMD_HAS_NLIST_MAPPING

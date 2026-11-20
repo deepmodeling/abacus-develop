@@ -4,13 +4,14 @@
 
 #include <cmath>
 
-void CG_Base::setup_cg_grad(const int dim,
-                            double* grad,
-                            const double* grad0,
-                            double* cg_grad,
-                            const double* cg_grad0,
-                            const int& ncggrad,
-                            int& flag)
+void CG_Base::setup_cg_grad(
+    const int dim,
+    double *grad,
+    const double *grad0,
+    double *cg_grad,
+    const double *cg_grad0,
+    const int &ncggrad,
+    int &flag)
 {
     ModuleBase::TITLE("CG_Base", "setup_cg_grad");
     double gamma = 0.0;
@@ -57,7 +58,11 @@ void CG_Base::setup_cg_grad(const int dim,
     }
 }
 
-void CG_Base::setup_move(const int dim, double* move, double* cg_gradn, const double& trust_radius)
+void CG_Base::setup_move(
+    const int dim,
+    double *move,
+    double *cg_gradn,
+    const double &trust_radius)
 {
     ModuleBase::TITLE("CG_Base", "setup_move");
     for (int i = 0; i < dim; ++i)
@@ -66,7 +71,15 @@ void CG_Base::setup_move(const int dim, double* move, double* cg_gradn, const do
     }
 }
 
-void CG_Base::Brent(double& fa, double& fb, double& fc, double& xa, double& xb, double& xc, double& best_x, double& xpt)
+void CG_Base::Brent(
+    double &fa,
+    double &fb,
+    double &fc,
+    double &xa,
+    double &xb,
+    double &xc,
+    double &best_x,
+    double &xpt)
 {
     ModuleBase::TITLE("CG_Base", "Brent");
     double dmove = 0.0;
@@ -133,7 +146,11 @@ void CG_Base::Brent(double& fa, double& fb, double& fc, double& xa, double& xb, 
     xc = dmove;
 }
 
-void CG_Base::f_cal(const int dim, const double* g0, const double* g1, double& f_value)
+void CG_Base::f_cal(
+    const int dim,
+    const double *g0,
+    const double *g1,
+    double &f_value)
 {
     ModuleBase::TITLE("CG_Base", "f_cal");
     double hv0 = 0.0;
@@ -146,12 +163,13 @@ void CG_Base::f_cal(const int dim, const double* g0, const double* g1, double& f
     f_value = hel / sqrt(hv0);
 }
 
-void CG_Base::third_order(const double& e0,
-                          const double& e1,
-                          const double& fa,
-                          const double& fb,
-                          const double x,
-                          double& best_x)
+void CG_Base::third_order(
+    const double &e0,
+    const double &e1,
+    const double &fa,
+    const double &fb,
+    const double x,
+    double &best_x)
 {
     ModuleBase::TITLE("CG_Base", "third_order");
     double k3 = 0.0;
@@ -200,7 +218,7 @@ void CG_Base::third_order(const double& e0,
     best_x = dmove;
 }
 
-void CG_Base::normalize(const int dim, double* cg_gradn, const double* cg_grad)
+void CG_Base::normalize(const int dim, double *cg_gradn, const double *cg_grad)
 {
     ModuleBase::TITLE("CG_Base", "normalize");
     double norm = 0.0;
