@@ -57,12 +57,11 @@ void write_current(
     const Exx_NAO<std::complex<double>>& exx_nao,
     const Exx_Info& exx_info
 );
-void set_rR_from_hR(const UnitCell& ucell,
+void set_position_matrix_R(const UnitCell& ucell,
                     const Grid_Driver& GridD,
                     const LCAO_Orbitals& orb,
                     const Parallel_Orbitals* pv,
                     Position_op& r_calculator,
-                    const hamilt::HContainer<std::complex<double>>* hR,
                     ModuleBase::Vector3<hamilt::HContainer<double>*>& rR);
 template <typename TR>
 void sum_HR(
@@ -87,15 +86,16 @@ void init_from_adj(const UnitCell& ucell,
                    ModuleBase::Vector3<hamilt::HContainer<double>*>& rR);
 template <typename TR, typename TA>
 void init_from_hR(const hamilt::HContainer<TR>* hR, hamilt::HContainer<TA>* aimR);
-template <typename TR>
+/// Compute i[H,r] in the nonorthogonal AO basis, in Ry*Bohr.
+/// A null TD context uses field-free Bloch folds. Use one H(R) block per spin.
+template <typename TS, typename TH>
 void cal_velocity_basis_k(const UnitCell& ucell,
-                          TD_info* td_p,
-                          const LCAO_Orbitals& orb,
-                          const Parallel_Orbitals* pv,
+                          const TD_info* td_p,
+                          const Parallel_Blkcyclic& layout,
                           const K_Vectors& kv,
                           const ModuleBase::Vector3<hamilt::HContainer<double>*>& rR,
-                          const hamilt::HContainer<TR>& sR,
-                          const std::vector<const hamilt::HContainer<std::complex<double>>*>& spin_hR,
+                          const hamilt::HContainer<TS>& sR,
+                          const std::vector<const hamilt::HContainer<TH>*>& hr_spin,
                           std::vector<ModuleBase::Vector3<std::complex<double>*>>& velocity_basis_k);
 
 void cal_velocity_matrix(const psi::Psi<std::complex<double>>* psi,

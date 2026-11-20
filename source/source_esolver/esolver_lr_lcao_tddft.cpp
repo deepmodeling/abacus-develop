@@ -1,6 +1,7 @@
 // LR execution flow and final spectrum/density output.
 #include "esolver_lr_lcao_tddft.h"
 #include "source_hamilt/module_xc/xc_functional.h"
+#include "source_lcao/hamilt_lcao.h"
 #include "source_lcao/module_lr/hamilt_ulr.h"
 #include "source_lcao/module_lr/hsolver_lrtd.h"
 #include "source_lcao/module_lr/lr_density.h"
@@ -282,13 +283,49 @@ void ModuleESolver::ESolver_LR<T, TR>::after_all_runners(BaseCell &basecell)
     const std::string gauge = LR_Util::tolower(this->inp_->abs_gauge);
     const bool calculate_spectrum = gauge != "none";
     const std::vector<double> spatial_weights = LR_Util::spatial_k_weights(this->kv.wk, nspin);
-    // cal spectrum
-    if (LR_Util::tolower(this->inp_->abs_gauge) == "velocity")
+    const bool use_velocity = gauge == "velocity" || gauge == "velocity_commutator";
+    const int nspin_tmp = this->inp_->nspin == 2 ? 2 : 1;
+    if (gauge == "velocity")
     {
-        const int nspin_tmp = this->inp_->nspin == 2 ? 2 : 1;
         this->velocity_mo = LR_Util::cal_velocity_mo(
             *this->ucell_, this->gd(), this->tcb(), this->paraMat_, this->paraC_, this->kv, *this->psi_ks, this->nk,
             nspin_tmp, this->nbasis, this->nocc, this->nvirt);
+    }
+    if (gauge == "velocity_commutator")
+    {
+        std::vector<const hamilt::HContainer<double>*> hr;
+        hamilt::HContainer<double> overlap(&this->paraMat_);
+        hamilt::HContainer<double> hr_up(&this->paraMat_);
+        hamilt::HContainer<double> hr_down(&this->paraMat_);
+        const hamilt::HContainer<double>* sr = &overlap;
+        const LCAO_Orbitals& orbitals = this->ks_ ? this->ks_->orb_ : this->orb_;
+        if (this->ks_)
+        {
+            auto* hamilt = static_cast<hamilt::HamiltLCAO<T, TR>*>(this->ks_->p_hamilt);
+            const auto spin_blocks = hamilt->getHR_vector();
+            hr.assign(spin_blocks.begin(), spin_blocks.end());
+            sr = hamilt->getSR();
+        }
+        else
+        {
+            const std::string overlap_path = this->in_dir + "sr_nao.csr";
+            const std::string up_path = this->in_dir + "hrs1_nao.csr";
+            LR_Util::read_velocity_matrix_R(overlap, overlap_path, ucell, this->nbasis, this->my_rank_,
+                                           this->ofs_running_);
+            LR_Util::read_velocity_matrix_R(hr_up, up_path, ucell, this->nbasis, this->my_rank_,
+                                           this->ofs_running_);
+            hr.push_back(&hr_up);
+            if (nspin_tmp == 2)
+            {
+                const std::string down_path = this->in_dir + "hrs2_nao.csr";
+                LR_Util::read_velocity_matrix_R(hr_down, down_path, ucell, this->nbasis, this->my_rank_,
+                                               this->ofs_running_);
+                hr.push_back(&hr_down);
+            }
+        }
+        this->velocity_mo = LR_Util::cal_commutator_velocity_mo(
+            ucell, this->gd(), orbitals, this->paraMat_, this->paraC_, this->kv, *this->psi_ks,
+            this->nk, nspin_tmp, this->nocc, this->nvirt, this->inp_->cal_force, *sr, hr);
     }
     std::vector<double> freq;
     if (calculate_spectrum)
@@ -322,8 +359,8 @@ void ModuleESolver::ESolver_LR<T, TR>::after_all_runners(BaseCell &basecell)
                 nspin, this->nbasis, this->nocc, this->nvirt, *this->pw_rho, *this->psi_ks, *this->ucell_, this->kv,
                 spatial_weights, this->gd(), this->orb_cutoff_, this->tcb(), this->paraX_, this->paraC_, this->paraMat_,
                 &this->pelec->ekb.c[is * nstates], this->eig_ks.c, this->X[is].template data<T>(), nstates, openshell,
-                LR_Util::tolower(this->inp_->abs_gauge), this->my_rank_, this->out_dir);
-            if (LR_Util::tolower(this->inp_->abs_gauge) == "velocity")
+                gauge, this->my_rank_, this->out_dir);
+            if (use_velocity)
             {
                 spectrum.set_vmo(this->velocity_mo.data());
             }

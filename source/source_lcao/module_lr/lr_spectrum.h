@@ -38,7 +38,14 @@ namespace LR
         void set_full(bool tag) { this->is_full = tag; };
         void cal_spectrum(){
             std::cout << "Calculating transition dipole moments in " << this->gauge << " gauge." << std::endl;
-            this->gauge == "velocity" ? this->cal_transition_dipoles_velocity(this->eig_ks) : this->cal_transition_dipoles_length();
+            if (this->gauge == "velocity" || this->gauge == "velocity_commutator")
+            {
+                this->cal_transition_dipoles_velocity(this->eig_ks);
+            }
+            else
+            {
+                this->cal_transition_dipoles_length();
+            }
             this->oscillator_strength();
         }
         /// @brief calculate the optical absorption spectrum with $Im[1/[(w+i\eta)^2-\Omega_S^2]]$

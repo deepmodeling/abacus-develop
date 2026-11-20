@@ -4,6 +4,17 @@
 #include "coulomb_config.h"
 
 #include <cstddef>
+#include <string>
+
+/// Identify functionals that assemble a nonlocal Fock term. The name is lowercase.
+inline bool xc_uses_exact_exchange(const std::string& functional)
+{
+    return functional == "hf" || functional == "pbe0" || functional == "b3lyp"
+        || functional == "hse" || functional == "scan0" || functional == "muller"
+        || functional == "power" || functional == "cwp22" || functional == "wp22"
+        || functional == "lc_pbe" || functional == "lc_wpbe" || functional == "lrc_wpbe"
+        || functional == "lrc_wpbeh" || functional == "cam_pbeh";
+}
 
 /// General EXX configuration, independent of basis type.
 /// Contains the fields needed by both PW and LCAO EXX calculations.

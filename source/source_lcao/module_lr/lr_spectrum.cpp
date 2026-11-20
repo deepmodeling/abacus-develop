@@ -219,7 +219,7 @@ void LR::LR_Spectrum<T>::transition_analysis(const std::string& spintype)
     std::ofstream ofs;
     std::ofstream ofs_k;
     const int nbands = nocc[0] + nvirt[0];
-    const bool use_td_weight = (this->vmo_ptr != nullptr && LR_Util::tolower(this->gauge) == "velocity");
+    const bool use_td_weight = (this->vmo_ptr != nullptr);
     if (this->my_rank == 0)
     {
         ofs.open(this->out_dir + "trans_analysis_" + spintype + ".dat");
@@ -248,7 +248,7 @@ void LR::LR_Spectrum<T>::transition_analysis(const std::string& spintype)
         ofs_k << "# weight2(k) = sum_{state,spin,direction,occ,virt} |td * X|^2 + |td *Y|^2, where td index as (spin,dir,k,occ,virt).\n";
         if (!use_td_weight)
         {
-            ofs_k << "# NOTE: td-weighted statistics require abs_gauge velocity and a valid velocity_mo pointer.\n";
+            ofs_k << "# NOTE: td-weighted statistics require optical velocity matrix elements.\n";
         }
         else { ofs_k << "# \n"; }
         
