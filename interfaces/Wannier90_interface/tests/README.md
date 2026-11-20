@@ -1,32 +1,45 @@
-# Wannier90 spin-matrix regression
+# Wannier90 interface tests
 
-The oxygen inputs in this directory exercise formatted `.spn` output from a
-spinor LCAO calculation. The driver runs SCF, NSCF, Wannier90 and `postw90.x`
-in a temporary directory using the pseudopotential and orbital files in
-`tests/PP_ORB`. [Test driver](../../../interfaces/Wannier90_interface/tests/check_wannier_spn.py)
+Run the commands below from `interfaces/Wannier90_interface/tests/`.
 
-## Run the test
+## Python interface tests
+
+The Python tests check when the interface enables spin output and verify
+that it rejects a disabled companion output before starting NSCF. With pytest installed, set
+`PYTHONPATH` to the parent directory to use the local `abacusw90` package.
+[Test cases](test_interface.py)
+
+```sh
+PYTHONPATH=.. python -m pytest test_interface.py
+```
+
+## Spin-matrix regression
+
+The driver runs a spinor LCAO SCF and NSCF calculation, Wannier90 and
+`postw90.x` in a temporary directory. It reads the oxygen inputs from the
+test case and the pseudopotential and orbitals from `tests/PP_ORB/`.
+[Test driver](check_wannier_spn.py) and [oxygen inputs](../../../tests/03_NAO_multik/wannier_spn/)
 
 Use an MPI-enabled LCAO build with ScaLAPACK (`ks_solver=scalapack_gvx`).
 Configure with `BUILD_TESTING=ON` and make sure CMake can find an MPI launcher,
-Python 3 with NumPy, `wannier90.x` and `postw90.x`. From the repository root,
-run the four-rank CTest case using your build directory.
+Python 3 with NumPy, `wannier90.x` and `postw90.x`. The following command
+runs the four-rank CTest case with a build in the repository's `build/` directory.
 
 ```sh
-ctest --test-dir build -R '^03_NAO_wannier_spn$' --no-tests=error --output-on-failure
+ctest --test-dir ../../../build -R '^03_NAO_wannier_spn$' --no-tests=error --output-on-failure
 ```
 
 Add `-V` to see the driver's output for a passing CTest run.
 To run the driver directly with the executables on `PATH`, use the following
-command from the repository root. Pass the MPI launcher and its arguments as
-separate words. Use `-n 1` for a single MPI rank.
+command. Pass the MPI launcher and its arguments as separate words.
+Use `-n 1` for a single MPI rank.
 
 ```sh
-OMP_NUM_THREADS=1 python3 interfaces/Wannier90_interface/tests/check_wannier_spn.py \
+OMP_NUM_THREADS=1 python3 check_wannier_spn.py \
     wannier90.x postw90.x mpirun -n 4 abacus
 ```
 
-## Read the results
+### Read the results
 
 The driver reconstructs the three Pauli spin matrices from the ABACUS
 wavefunctions and orbital overlaps. It compares 546 complex upper-triangle
