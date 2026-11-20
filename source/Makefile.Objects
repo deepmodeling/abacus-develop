@@ -526,6 +526,7 @@ OBJS_HSOLVER=diago_cg.o\
     exp_lanczos.o\
     orthonormal.o\
     orthonormal_small.o\
+    matrix_block_ops.o\
     overlap_spectrum.o\
     hsolver_lcaopw.o\
     diago_iter_assist.o\

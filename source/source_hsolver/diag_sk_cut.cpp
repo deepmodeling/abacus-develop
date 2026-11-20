@@ -1,9 +1,9 @@
 #include "diag_sk_cut.h"
 
 #include "source_base/matrix_block.h"
-#include "source_base/module_external/blas_connector.h"
 #include "source_base/parallel_blkcyc.h"
 #include "source_base/tool_quit.h"
+#include "source_hsolver/module_linalg/matrix_block_ops.h"
 #include "source_hsolver/module_linalg/overlap_spectrum.h"
 #include "source_psi/psi.h"
 
@@ -82,51 +82,6 @@ void set_identity(Matrix<T>& matrix)
     }
 }
 
-double conjugate(double value)
-{
-    return value;
-}
-
-std::complex<double> conjugate(std::complex<double> value)
-{
-    return std::conj(value);
-}
-
-// Only the upper triangle of the supplied AO matrix is guaranteed to be valid.
-template <typename T>
-void copy_hermitian(const ModuleBase::MatrixBlock<T>& source, Matrix<T>& target)
-{
-    const auto& layout = target.layout;
-    const int order = layout.nrglb();
-    const int ld = layout.nrloc();
-#ifdef __MPI
-    if (!layout.is_serial())
-    {
-        const int one = 1;
-        ScalapackConnector::tranc(order, order, T(1), source.p, one, one,
-                                  source.desc, T(0), target.data.data(), one, one,
-                                  layout.desc());
-    }
-#endif
-    for (int col = 0; col < layout.ncloc(); ++col)
-    {
-        const int global_col = layout.icglb(col);
-        for (int row = 0; row < ld; ++row)
-        {
-            const int global_row = layout.irglb(row);
-            const int idx = row + col * ld;
-            if (global_row <= global_col)
-            {
-                target.data[idx] = source.p[idx];
-            }
-            else if (layout.is_serial())
-            {
-                target.data[idx] = conjugate(source.p[col + row * ld]);
-            }
-        }
-    }
-}
-
 template <typename T>
 void pack_transform(Matrix<T>& overlap_vectors, const std::vector<double>& weights,
                     int first, Matrix<T>& transform)
@@ -158,24 +113,6 @@ void pack_transform(Matrix<T>& overlap_vectors, const std::vector<double>& weigh
             transform.data[row + col * ld] *= scale;
         }
     }
-}
-
-template <typename T>
-void multiply(char transa, int m, int n, int k,
-              const ModuleBase::MatrixBlock<T>& a,
-              const ModuleBase::MatrixBlock<T>& b,
-              ModuleBase::MatrixBlock<T>& c)
-{
-#ifdef __MPI
-    if (c.desc != nullptr)
-    {
-        const int one = 1;
-        ScalapackConnector::gemm(transa, 'N', m, n, k, T(1), a.p, one, one, a.desc,
-                                 b.p, one, one, b.desc, T(0), c.p, one, one, c.desc);
-        return;
-    }
-#endif
-    BlasConnector::gemm_cm(transa, 'N', m, n, k, T(1), a.p, a.row, b.p, b.row, T(0), c.p, c.row);
 }
 
 int projected_solve_order(const Parallel_Blkcyclic& layout, const int rank)
@@ -269,9 +206,9 @@ bool build_transform(ModuleBase::MatrixBlock<T>& s,
     const int order = options.order;
     Matrix<T> overlap(order, order, s.desc);
     Matrix<T> identity(order, order, s.desc);
-    copy_hermitian(s, overlap);
-    set_identity(identity);
     auto overlap_view = overlap.view();
+    copy_hermitian_upper(order, s, overlap_view);
+    set_identity(identity);
     auto identity_view = identity.view();
     identity_view.desc = overlap_view.desc;
     auto spectrum_options = options;
@@ -334,14 +271,11 @@ bool diag_sk_cut(ModuleBase::MatrixBlock<T>& h,
     Matrix<T> projected(solve_order, solve_order, h.desc);
     auto h_projected = projected.view();
     {
-        Matrix<T> h_hermitian(order, order, h.desc);
         Matrix<T> product(order, rank, h.desc);
-        copy_hermitian(h, h_hermitian);
-        const auto h_full = h_hermitian.view();
         auto hx = product.view();
-        multiply('N', order, rank, order, h_full, x, hx);
+        multiply_hermitian_upper(order, rank, h, x, hx);
         const char adjoint = std::is_same<T, double>::value ? 'T' : 'C';
-        multiply(adjoint, rank, rank, order, x, hx, h_projected);
+        multiply_matrix_blocks(adjoint, 'N', rank, rank, order, x, hx, h_projected);
     }
 
     if (rank == 1)
@@ -378,7 +312,7 @@ bool diag_sk_cut(ModuleBase::MatrixBlock<T>& h,
 #endif
     auto y = subspace_vectors.view();
     ModuleBase::MatrixBlock<T> c{vectors, rows, cols, output_desc};
-    multiply('N', order, bands, rank, x, y, c);
+    multiply_matrix_blocks('N', 'N', order, bands, rank, x, y, c);
     return true;
 }
 

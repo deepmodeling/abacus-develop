@@ -3,10 +3,10 @@
 #include "source_base/global_function.h"
 #include "source_base/module_external/blas_connector.h"
 #include "source_base/module_external/blacs_connector.h"
-#include "source_base/module_external/scalapack_connector.h"
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"
 #include "source_hsolver/module_genelpa/elpa_new.h"
+#include "source_hsolver/module_linalg/matrix_block_ops.h"
 #include "omp.h"
 
 namespace hsolver
@@ -85,63 +85,14 @@ void DiagoElpaNative<T>::diag_pool(ModuleBase::MatrixBlock<T>& h_mat,
     {
         h_work.resize(narows * nacols);
         s_work.resize(narows * nacols);
-        const int one = 1;
-        ScalapackConnector::tranc(nFull,
-                                  nFull,
-                                  T(1.0),
-                                  h_mat.p,
-                                  one,
-                                  one,
-                                  h_mat.desc,
-                                  T(0.0),
-                                  h_work.data(),
-                                  one,
-                                  one,
-                                  h_mat.desc);
-        ScalapackConnector::tranc(nFull,
-                                  nFull,
-                                  T(1.0),
-                                  s_mat.p,
-                                  one,
-                                  one,
-                                  s_mat.desc,
-                                  T(0.0),
-                                  s_work.data(),
-                                  one,
-                                  one,
-                                  s_mat.desc);
-        const auto local_to_global = [](const int local_index,
-                                        const int block_size,
-                                        const int process_coordinate,
-                                        const int source_coordinate,
-                                        const int process_count) {
-            if (source_coordinate < 0)
-            {
-                return local_index;
-            }
-            const int process_offset
-                = (process_coordinate - source_coordinate + process_count) % process_count;
-            return ((local_index / block_size) * process_count + process_offset) * block_size
-                   + local_index % block_size;
-        };
-        for (int local_col = 0; local_col < nacols; ++local_col)
-        {
-            const int global_col
-                = local_to_global(local_col, h_mat.desc[5], mypcol, h_mat.desc[7], npcols);
-            for (int local_row = 0; local_row < narows; ++local_row)
-            {
-                const int global_row
-                    = local_to_global(local_row, h_mat.desc[4], myprow, h_mat.desc[6], nprows);
-                if (global_row <= global_col)
-                {
-                    const int local_index = local_row + local_col * narows;
-                    h_work[local_index] = h_mat.p[local_index];
-                    s_work[local_index] = s_mat.p[local_index];
-                }
-            }
-        }
-        h_elpa = h_work.data();
-        s_elpa = s_work.data();
+        auto h_full = h_mat;
+        auto s_full = s_mat;
+        h_full.p = h_work.data();
+        s_full.p = s_work.data();
+        copy_hermitian_upper(nFull, h_mat, h_full);
+        copy_hermitian_upper(nFull, s_mat, s_full);
+        h_elpa = h_full.p;
+        s_elpa = s_full.p;
         decomposed_state = 0;
     }
 

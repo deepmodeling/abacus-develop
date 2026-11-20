@@ -120,6 +120,7 @@ if(ENABLE_MPI)
         TARGET MODULE_HSOLVER_LCAO
         LIBS parameter ELPA::ELPA base genelpa psi device
         SOURCES test_diago_lcao.cpp ../diago_elpa.cpp ../diago_elpa_native.cpp
+                ../module_linalg/matrix_block_ops.cpp
                 ../diago_scalapack.cpp ../diago_lapack.cpp ${_dsp_cpack_fallback_src})
     else()
       addtest(
@@ -130,6 +131,7 @@ if(ENABLE_MPI)
 
     set(lcao_sk_cut_test_sources
         test_diag_sk_cut.cpp ../diag_sk_cut.cpp ../diag_lcao.cpp ../module_linalg/overlap_spectrum.cpp
+        ../module_linalg/matrix_block_ops.cpp
         ../diago_scalapack.cpp ../diago_lapack.cpp ${_dsp_cpack_fallback_src})
     set(lcao_sk_cut_test_libs parameter base psi device)
     if(TARGET ELPA::ELPA)
