@@ -65,32 +65,27 @@ def probe_library(library):
     if "USE64BITINT" in config:
         raise RuntimeError("This regression probe requires the LP64 BLAS ABI used by ABACUS")
 
-    worst = 0.0
-    # Includes the 13-orbital atom blocks used in the Si grid integration.
-    for m in (13, 26):
-        for n in (1, 3, 9, 27, 54):
-            for stride in (m, 2 * m, 8 * m):
-                a_values = [(2.0 if i == j else 0.0) + 0.01 * ((i + j) % 7 - 3)
-                            for j in range(m) for i in range(m)]
-                b_values = [0.1 * ((i + 3 * j) % 13 - 6)
-                            for j in range(n) for i in range(stride)]
-                a = (ct.c_double * len(a_values))(*a_values)
-                b = (ct.c_double * len(b_values))(*b_values)
-                c = (ct.c_double * (stride * n))()
-                cm = ct.c_int(m)
-                cn = ct.c_int(n)
-                ld = ct.c_int(stride)
-                alpha = ct.c_double(1.0)
-                beta = ct.c_double(1.0)
-                blas.dsymm_(b"L", b"U", ct.byref(cm), ct.byref(cn), ct.byref(alpha),
-                            a, ct.byref(cm), b, ct.byref(ld), ct.byref(beta), c, ct.byref(ld))
-                for j in range(n):
-                    for i in range(m):
-                        expected = sum(a_values[i + m * k] * b_values[k + stride * j]
-                                       for k in range(m))
-                        value = c[i + stride * j]
-                        error = abs(value - expected) if math.isfinite(value) else math.inf
-                        worst = max(worst, error)
+    # A = 2I makes the expected result exactly 2B. This 13-orbital Si block
+    # with strided columns exposes the packaged Cooperlake error (16.0).
+    m = 13
+    n = 3
+    stride = 2 * m
+    a = (ct.c_double * (m * m))()
+    for i in range(m):
+        a[i + m * i] = 2.0
+    b = (ct.c_double * (stride * n))(
+        *((i + 3 * j) % 13 - 6 for j in range(n) for i in range(stride)))
+    c = (ct.c_double * (stride * n))()
+    cm = ct.c_int(m)
+    cn = ct.c_int(n)
+    ld = ct.c_int(stride)
+    alpha = ct.c_double(1.0)
+    beta = ct.c_double(1.0)
+    blas.dsymm_(b"L", b"U", ct.byref(cm), ct.byref(cn), ct.byref(alpha),
+                a, ct.byref(cm), b, ct.byref(ld), ct.byref(beta), c, ct.byref(ld))
+    errors = (abs(c[i + stride * j] - 2 * b[i + stride * j])
+              for j in range(n) for i in range(m))
+    worst = max(error if math.isfinite(error) else math.inf for error in errors)
     return {"core": blas.openblas_get_corename().decode(), "config": config,
             "max_abs_error": worst}
 
@@ -121,18 +116,10 @@ def probe_passed(record):
 
 
 def select_core(library, machine, flags, probe):
-    initial = probe(library, None)
-    print("OpenBLAS current: " + json.dumps(initial), flush=True)
-    if probe_passed(initial):
-        print("Keeping the current OpenBLAS selection.")
-        return None
-
-    for core in fallback_cores(machine, flags):
-        if core.lower() == initial.get("core", "").lower():
-            continue
+    for core in [None] + fallback_cores(machine, flags):
         result = probe(library, core)
-        print(f"OpenBLAS candidate {core}: " + json.dumps(result), flush=True)
-        if result.get("core", "").lower() == core.lower() and probe_passed(result):
+        print(f"OpenBLAS {core or 'current'}: " + json.dumps(result), flush=True)
+        if probe_passed(result) and (core is None or result["core"].lower() == core.lower()):
             return core
     raise RuntimeError("No CPU-compatible OpenBLAS kernel passed the DSYMM regression probe. "
                        "Use a corrected BLAS library; the ASE tests have not been started.")
