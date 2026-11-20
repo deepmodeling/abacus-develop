@@ -121,6 +121,12 @@ void DiagoElpaNative<T>::diag_pool(ModuleBase::MatrixBlock<T>& h_mat,
     elpa_set(handle, "blacs_context", (int)cblacs_ctxt, &success);
     elpa_setup(handle);
     elpa_set(handle, "solver", ELPA_SOLVER_1STAGE, &success);
+    // Older ELPA Cannon kernels divide by the local eigenvector column count.
+    // Choose the ScaLAPACK path on every rank if any process column is empty.
+    if (nev <= (npcols - 1) * nblk)
+    {
+        elpa_set(handle, "cannon_for_generalized", 0, &success);
+    }
 
 /*  ELPA_WITH_NVIDIA_GPU_VERSION is a symbol defined in elpa/elpa_configured_options.h
     For example:
