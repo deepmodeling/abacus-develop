@@ -231,11 +231,48 @@ void prepare_exx_nscf(const Input_para& inp,
     // written step so SCF outputs can feed the hybrid NSCF without renaming.
     const std::vector<std::string> wfc_directories = {readin_dir, readin_dir + "PSI/"};
     const std::vector<std::string> eig_occ_directories(1, readin_dir);
+    // Snapshot tokens parsed from the first resolved source file name. The
+    // resolver picks the latest g{step}/e{iter} variant independently per file,
+    // so lock the (ionic, electronic) pair here and require every other source
+    // file to match it; otherwise wavefunctions and occupations could come
+    // from different SCF snapshots and produce an inconsistent EXX operator.
+    // A step-less fixed name (mode 0/1) is reported as -1.
+    int snapshot_ionic = -2;
+    int snapshot_electronic = -2;
+    const auto check_snapshot = [&](const std::string& label,
+                                    const int ionic_step,
+                                    const int electronic_step,
+                                    const bool check_electronic)
+    {
+        if (ionic_step != snapshot_ionic
+            || (check_electronic && snapshot_electronic >= 0 && electronic_step != snapshot_electronic))
+        {
+            throw std::runtime_error(label + " belongs to a different SCF snapshot "
+                + "(g" + std::to_string(ionic_step)
+                + (electronic_step >= 0 ? "e" + std::to_string(electronic_step) : std::string())
+                + ") than the wavefunction snapshot (g" + std::to_string(snapshot_ionic)
+                + (snapshot_electronic >= 0 ? "e" + std::to_string(snapshot_electronic) : std::string())
+                + "); rerun the SCF source so all EXX source files share one snapshot");
+        }
+    };
     const auto resolve_wfc = [&](const int iq, const std::vector<int>& ik2iktot, const int nkstot)
     {
         const std::string fixed_name = ModuleIO::filename_output("", "wf", "pw", iq,
             ik2iktot, inp.nspin, nkstot, 2, false, false, -1);
-        return resolve_source_file(wfc_directories, fixed_name, "_pw.dat", true);
+        int ionic_step = -1;
+        int electronic_step = -1;
+        const std::string path = resolve_source_file(wfc_directories, fixed_name, "_pw.dat", true,
+                                                     &ionic_step, &electronic_step);
+        if (snapshot_ionic == -2)
+        {
+            snapshot_ionic = ionic_step;
+            snapshot_electronic = electronic_step;
+        }
+        else
+        {
+            check_snapshot("EXX source wavefunction " + fixed_name, ionic_step, electronic_step, true);
+        }
+        return path;
     };
     std::vector<ExxSourceHeader> headers;
     try
@@ -282,8 +319,14 @@ void prepare_exx_nscf(const Input_para& inp,
             source_points->wk[iq] = metadata.weight;
             source_points->isk[iq] = iq / nq;
         }
+        int occ_ionic_step = -1;
+        int occ_electronic_step = -1;
         const std::string occupations_filename = resolve_source_file(
-            eig_occ_directories, "eig_occ.txt", ".txt", false);
+            eig_occ_directories, "eig_occ.txt", ".txt", false,
+            &occ_ionic_step, &occ_electronic_step);
+        // eig_occ.txt carries no electronic-iteration suffix, so only its ionic
+        // step can be verified against the wavefunction snapshot.
+        check_snapshot("EXX source eig_occ.txt", occ_ionic_step, occ_electronic_step, false);
         std::ifstream occupations(occupations_filename.c_str());
         read_exx_source_occupations(occupations, headers, inp.nspin, source_weights);
     }

@@ -46,13 +46,19 @@ void read_exx_source_occupations(std::istream& in,
  * @param tail Fixed suffix that follows the optional step tokens, e.g.
  *        "_pw.dat" or ".txt".
  * @param allow_electronic_suffix Whether g{step}e{iter} names are accepted.
+ * @param ionic_step When non-null, receives the parsed one-based ionic step,
+ *        or -1 for a fixed (step-less) file name.
+ * @param electronic_step When non-null, receives the parsed one-based
+ *        electronic iteration, or -1.
  * @return Full path of the selected file.
  * @throws std::runtime_error When no candidate exists.
  */
 std::string resolve_source_file(const std::vector<std::string>& directories,
                                 const std::string& fixed_name,
                                 const std::string& tail,
-                                const bool allow_electronic_suffix);
+                                const bool allow_electronic_suffix,
+                                int* ionic_step = nullptr,
+                                int* electronic_step = nullptr);
 
 }
 #endif

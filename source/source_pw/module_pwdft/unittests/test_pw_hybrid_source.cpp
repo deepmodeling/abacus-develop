@@ -208,6 +208,43 @@ TEST(PWHybridSource, ResolverSelectsLatestElectronicStepWithinLatestIonicStep)
     std::remove(g2e5.c_str());
 }
 
+TEST(PWHybridSource, ResolverReportsSnapshotTokens)
+{
+    const std::vector<std::string> directories(1, testing::TempDir());
+    // Fixed (step-less) name reports -1/-1 so callers can lock any snapshot.
+    const std::string fixed = temp_path("resolver_snap.txt");
+    touch(fixed);
+    int ionic_step = 0;
+    int electronic_step = 0;
+    EXPECT_EQ(pw::resolve_source_file(directories, "resolver_snap.txt", ".txt", false,
+                                      &ionic_step, &electronic_step), fixed);
+    EXPECT_EQ(ionic_step, -1);
+    EXPECT_EQ(electronic_step, -1);
+    std::remove(fixed.c_str());
+    // g{step}e{iter} names report both tokens of the selected variant.
+    const std::string g2e5 = temp_path("resolver_snapg2e5_pw.dat");
+    const std::string g2e3 = temp_path("resolver_snapg2e3_pw.dat");
+    touch(g2e3);
+    touch(g2e5);
+    EXPECT_EQ(pw::resolve_source_file(directories, "resolver_snap_pw.dat", "_pw.dat", true,
+                                      &ionic_step, &electronic_step), g2e5);
+    EXPECT_EQ(ionic_step, 2);
+    EXPECT_EQ(electronic_step, 5);
+    std::remove(g2e3.c_str());
+    std::remove(g2e5.c_str());
+    // Without an electronic suffix the electronic token stays -1.
+    const std::string g3 = temp_path("resolver_snapg3.txt");
+    touch(g3);
+    EXPECT_EQ(pw::resolve_source_file(directories, "resolver_snap.txt", ".txt", false,
+                                      &ionic_step, &electronic_step), g3);
+    EXPECT_EQ(ionic_step, 3);
+    EXPECT_EQ(electronic_step, -1);
+    std::remove(g3.c_str());
+    // Null outputs keep the previous call signature working.
+    EXPECT_THROW(pw::resolve_source_file(directories, "resolver_snap.txt", ".txt", false),
+                 std::runtime_error);
+}
+
 TEST(PWHybridSource, ResolverFallsBackToTheSecondDirectory)
 {
     const std::vector<std::string> directories = {temp_path("resolver_absent/"), testing::TempDir()};

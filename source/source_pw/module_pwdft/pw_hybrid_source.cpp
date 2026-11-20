@@ -243,12 +243,22 @@ bool parse_step_tokens(const std::string& tokens, int& ionic_step, int& electron
 std::string find_in_directory(const std::string& directory,
                               const std::string& fixed_name,
                               const std::string& tail,
-                              const bool allow_electronic_suffix)
+                              const bool allow_electronic_suffix,
+                              int* ionic_step,
+                              int* electronic_step)
 {
     const std::string fixed_path = directory + fixed_name;
     std::ifstream fixed_stream(fixed_path.c_str(), std::ios::binary);
     if (fixed_stream.is_open())
     {
+        if (ionic_step != nullptr)
+        {
+            *ionic_step = -1;
+        }
+        if (electronic_step != nullptr)
+        {
+            *electronic_step = -1;
+        }
         return fixed_path;
     }
 
@@ -308,6 +318,14 @@ std::string find_in_directory(const std::string& directory,
     {
         return std::string();
     }
+    if (ionic_step != nullptr)
+    {
+        *ionic_step = best_ionic_step;
+    }
+    if (electronic_step != nullptr)
+    {
+        *electronic_step = best_electronic_step;
+    }
     return directory + best_name;
 }
 } // namespace
@@ -315,7 +333,9 @@ std::string find_in_directory(const std::string& directory,
 std::string pw::resolve_source_file(const std::vector<std::string>& directories,
                                     const std::string& fixed_name,
                                     const std::string& tail,
-                                    const bool allow_electronic_suffix)
+                                    const bool allow_electronic_suffix,
+                                    int* ionic_step,
+                                    int* electronic_step)
 {
     if (directories.empty() || fixed_name.empty() || tail.empty())
     {
@@ -336,7 +356,9 @@ std::string pw::resolve_source_file(const std::vector<std::string>& directories,
         const std::string found = find_in_directory(directory,
                                                     fixed_name,
                                                     tail,
-                                                    allow_electronic_suffix);
+                                                    allow_electronic_suffix,
+                                                    ionic_step,
+                                                    electronic_step);
         if (!found.empty())
         {
             return found;
