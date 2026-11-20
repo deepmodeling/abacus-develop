@@ -96,6 +96,56 @@ Magnetism::~Magnetism() { }
  *     - the serial version without MPI
  */
 
+/// @brief Fixture owning the Si UnitCell shared by most tests.
+class DMKTest : public testing::Test
+{
+protected:
+    void SetUp() override
+    {
+        UcellTestPrepare utp = UcellTestLib["Si"];
+        ucell = utp.SetUcellInfo();
+    }
+
+    void TearDown() override
+    {
+        delete ucell;
+    }
+
+    UnitCell* ucell = nullptr;
+};
+
+/// @brief Element-wise near-equality check for two identically shaped buffers.
+template <typename T>
+void expect_dmk_eq(const std::vector<std::vector<T>>& actual,
+                   const std::vector<std::vector<T>>& expected)
+{
+    ASSERT_EQ(actual.size(), expected.size());
+    for (std::size_t ib = 0; ib < actual.size(); ++ib)
+    {
+        ASSERT_EQ(actual[ib].size(), expected[ib].size());
+        for (std::size_t ie = 0; ie < actual[ib].size(); ++ie)
+        {
+            EXPECT_NEAR(actual[ib][ie], expected[ib][ie], 1e-8);
+        }
+    }
+}
+
+/// @brief Complex overload: checks real and imaginary parts separately.
+void expect_dmk_eq(const std::vector<std::vector<std::complex<double>>>& actual,
+                   const std::vector<std::vector<std::complex<double>>>& expected)
+{
+    ASSERT_EQ(actual.size(), expected.size());
+    for (std::size_t ib = 0; ib < actual.size(); ++ib)
+    {
+        ASSERT_EQ(actual[ib].size(), expected[ib].size());
+        for (std::size_t ie = 0; ie < actual[ib].size(); ++ie)
+        {
+            EXPECT_NEAR(actual[ib][ie].real(), expected[ib][ie].real(), 1e-8);
+            EXPECT_NEAR(actual[ib][ie].imag(), expected[ib][ie].imag(), 1e-8);
+        }
+    }
+}
+
 void init_pv(int nlocal, Parallel_Blkcyclic& pv)
 {
 #ifdef __MPI
@@ -324,7 +374,7 @@ bool drop_last_line(const std::string& fname)
     return true;
 }
 
-TEST(DMKTest, GenFileName) {
+TEST_F(DMKTest, GenFileName) {
     bool gamma_only = true;
     int ispin = 0;
     int nspin = 2;
@@ -352,11 +402,7 @@ TEST(DMKTest, GenFileName) {
 };
 
 
-TEST(DMKTest,WriteDMK) {
-    UnitCell* ucell;
-    UcellTestPrepare utp = UcellTestLib["Si"];
-    ucell = utp.SetUcellInfo();
-
+TEST_F(DMKTest,WriteDMK) {
     int nspin = 2;
     int nk = 1;
     int nk_multik = 2;
@@ -374,91 +420,46 @@ TEST(DMKTest,WriteDMK) {
     const int istep = -1;
     K_Vectors kv;
     init_kv(kv, 1.0);
-    
+
     std::ofstream ofs_log;
     ModuleIO::write_dmk(dmk, kv, 3, efs, ucell, pv, /*column_major=*/true,
                         out_dir, istep, 0, ofs_log);
     ModuleIO::write_dmk(dmk_multik, kv, 3, efs, ucell, pv, /*column_major=*/true,
                         out_dir, istep, 0, ofs_log);
-    
-    std::ifstream ifs;
 
-    int pass = 0;
     if (GlobalV::MY_RANK == 0)
     {
-        std::string fn = "dms1_nao.txt";
-        ifs.open(fn);
-        std::string str((std::istreambuf_iterator<char>(ifs)),
-                        std::istreambuf_iterator<char>());
-        EXPECT_THAT(str, testing::HasSubstr("0 # Fermi energy in Ry"));
-        EXPECT_THAT(str, testing::HasSubstr("20 # number of localized basis"));
-        ifs.close();
-
-        fn = "dms2_nao.txt";
-        ifs.open(fn);
-        str = std::string((std::istreambuf_iterator<char>(ifs)),
-                          std::istreambuf_iterator<char>());
-        EXPECT_THAT(str, testing::HasSubstr("0.1 # Fermi energy in Ry"));
-        EXPECT_THAT(str, testing::HasSubstr("20 # number of localized basis"));
-        ifs.close();
-
-        fn = "dmk1s1_nao.txt";
-        ifs.open(fn);
-        str = std::string((std::istreambuf_iterator<char>(ifs)),
-                          std::istreambuf_iterator<char>());
-        EXPECT_THAT(str, testing::HasSubstr("0 # Fermi energy in Ry"));
-        EXPECT_THAT(str, testing::HasSubstr("20 # number of localized basis"));
-        // the matrix body must end with a newline so appended records are not glued
-        EXPECT_EQ(str.back(), '\n');
-        ifs.close();
-
-        fn = "dmk2s1_nao.txt";
-        ifs.open(fn);
-        str = std::string((std::istreambuf_iterator<char>(ifs)),
-                          std::istreambuf_iterator<char>());
-        EXPECT_THAT(str, testing::HasSubstr("0 # Fermi energy in Ry"));
-        EXPECT_THAT(str, testing::HasSubstr("20 # number of localized basis"));
-        ifs.close();
-
-        fn = "dmk1s2_nao.txt";
-        ifs.open(fn);
-        str = std::string((std::istreambuf_iterator<char>(ifs)),
-                          std::istreambuf_iterator<char>());
-        EXPECT_THAT(str, testing::HasSubstr("0.1 # Fermi energy in Ry"));
-        EXPECT_THAT(str, testing::HasSubstr("20 # number of localized basis"));
-        ifs.close();
-
-        fn = "dmk2s2_nao.txt";
-        ifs.open(fn);
-        str = std::string((std::istreambuf_iterator<char>(ifs)),
-                          std::istreambuf_iterator<char>());
-        EXPECT_THAT(str, testing::HasSubstr("0.1 # Fermi energy in Ry"));
-        EXPECT_THAT(str, testing::HasSubstr("20 # number of localized basis"));
-        ifs.close();
-        remove("dms1_nao.txt");
-        remove("dms2_nao.txt");
-        remove("dmk1s1_nao.txt");
-        remove("dmk2s1_nao.txt");
-        remove("dmk1s2_nao.txt");
-        remove("dmk2s2_nao.txt");
+        // {filename, expected Fermi energy, check trailing newline}
+        const struct { const char* name; const char* fermi; bool check_newline; } cases[] = {
+            {"dms1_nao.txt",  "0 # Fermi energy in Ry",   false},
+            {"dms2_nao.txt",  "0.1 # Fermi energy in Ry", false},
+            {"dmk1s1_nao.txt","0 # Fermi energy in Ry",   true},
+            {"dmk2s1_nao.txt","0 # Fermi energy in Ry",   false},
+            {"dmk1s2_nao.txt","0.1 # Fermi energy in Ry", false},
+            {"dmk2s2_nao.txt","0.1 # Fermi energy in Ry", false},
+        };
+        for (const auto& c : cases)
+        {
+            std::ifstream ifs(c.name);
+            const std::string str((std::istreambuf_iterator<char>(ifs)),
+                                  std::istreambuf_iterator<char>());
+            ifs.close();
+            EXPECT_THAT(str, testing::HasSubstr(c.fermi)) << c.name;
+            EXPECT_THAT(str, testing::HasSubstr("20 # number of localized basis")) << c.name;
+            // the matrix body must end with a newline so appended records are not glued
+            if (c.check_newline)
+            {
+                EXPECT_EQ(str.back(), '\n') << c.name;
+            }
+            remove(c.name);
+        }
     }
-
-    delete ucell;
-    // remove the generated files
-    
 };
 
-// ---------------------------------------------------------------------------
 // The DM(k) text body is row-major even when the local blocks are stored
-// column-major, which is what genelpa/elpa/scalapack_gvx and the other
-// column-major solvers leave behind. A non-symmetric complex probe makes an
-// accidental transpose (the complex conjugate of a Hermitian matrix) visible.
-// ---------------------------------------------------------------------------
-TEST(DMKTest, BodyIsRowMajorForColumnMajorStorage) {
-    UnitCell* ucell;
-    UcellTestPrepare utp = UcellTestLib["Si"];
-    ucell = utp.SetUcellInfo();
-
+// column-major (as left behind by genelpa/elpa/scalapack_gvx). A non-symmetric
+// complex probe makes an accidental transpose visible.
+TEST_F(DMKTest, BodyIsRowMajorForColumnMajorStorage) {
     const int nspin = 1;
     const int nk = 1;
     const int nlocal = 2;
@@ -488,29 +489,18 @@ TEST(DMKTest, BodyIsRowMajorForColumnMajorStorage) {
         // nk = 1 with a multi-k (complex) DM -> dmk1_nao.txt.
         const std::string fn = out_dir + "dmk1_nao.txt";
         const std::vector<double> values = read_numbers(fn);
-        ASSERT_EQ(values.size(), 8u);
-        EXPECT_NEAR(values[0], 1.0, 1e-8);
-        EXPECT_NEAR(values[1], 0.0, 1e-8);
-        EXPECT_NEAR(values[2], 2.0, 1e-8);
-        EXPECT_NEAR(values[3], 3.0, 1e-8);
-        EXPECT_NEAR(values[4], 4.0, 1e-8);
-        EXPECT_NEAR(values[5], 5.0, 1e-8);
-        EXPECT_NEAR(values[6], 6.0, 1e-8);
-        EXPECT_NEAR(values[7], 0.0, 1e-8);
+        const std::vector<double> expected = {1.0, 0.0, 2.0, 3.0, 4.0, 5.0, 6.0, 0.0};
+        ASSERT_EQ(values.size(), expected.size());
+        for (std::size_t i = 0; i < expected.size(); ++i)
+        {
+            EXPECT_NEAR(values[i], expected[i], 1e-8);
+        }
         remove(fn.c_str());
     }
-
-    delete ucell;
 }
 
-// ---------------------------------------------------------------------------
 // out_app_flag = 0: one fixed filename, truncated and overwritten each call.
-// ---------------------------------------------------------------------------
-TEST(DMKTest, Mode0FixedNameOverwrite) {
-    UnitCell* ucell;
-    UcellTestPrepare utp = UcellTestLib["Si"];
-    ucell = utp.SetUcellInfo();
-
+TEST_F(DMKTest, Mode0FixedNameOverwrite) {
     int nspin = 2;
     int nk = 1;
     int nlocal = 20;
@@ -550,65 +540,12 @@ TEST(DMKTest, Mode0FixedNameOverwrite) {
         remove("dms1_nao.txt");
         remove("dms2_nao.txt");
     }
-    delete ucell;
 }
 
-// ---------------------------------------------------------------------------
-// out_app_flag = 1: fixed filename, multiple calls append successive records.
-// ---------------------------------------------------------------------------
-TEST(DMKTest, Mode1FixedNameAppend) {
-    UnitCell* ucell;
-    UcellTestPrepare utp = UcellTestLib["Si"];
-    ucell = utp.SetUcellInfo();
-
-    int nspin = 2;
-    int nk = 1;
-    int nlocal = 20;
-    std::vector<std::vector<double>> dmk;
-    std::vector<double> efs;
-    Parallel_Blkcyclic pv;
-    init_pv(nlocal, pv);
-    gen_dmk(dmk, efs, nspin, nk, nlocal, pv);
-
-    K_Vectors kv;
-    init_kv(kv, 1.0);
-
-    const std::string out_dir = "./";
-    const int out_app_flag = 1;
-    std::ofstream ofs_log;
-
-    // Two ionic steps -> both write to dms1_nao.txt.
-    ModuleIO::write_dmk(dmk, kv, /*precision=*/3, efs, ucell, pv, /*column_major=*/true,
-                        out_dir, /*istep=*/0, out_app_flag, ofs_log);
-    ModuleIO::write_dmk(dmk, kv, /*precision=*/3, efs, ucell, pv, /*column_major=*/true,
-                        out_dir, /*istep=*/1, out_app_flag, ofs_log);
-
-    if (GlobalV::MY_RANK == 0)
-    {
-        std::ifstream ifs("dms1_nao.txt");
-        std::string str((std::istreambuf_iterator<char>(ifs)),
-                        std::istreambuf_iterator<char>());
-        ifs.close();
-        // Two "Ionic_Step" headers present -> two appended records.
-        EXPECT_THAT(str, testing::HasSubstr("Ionic_Step 1"));
-        EXPECT_THAT(str, testing::HasSubstr("Ionic_Step 2"));
-        // g-suffixed file must NOT exist.
-        ifs.open("dms1g1_nao.txt");
-        EXPECT_FALSE(ifs.good());
-        remove("dms1_nao.txt");
-    }
-    delete ucell;
-}
-
-// ---------------------------------------------------------------------------
 // out_app_flag = 2: per-step g{step} filename; directory routing is handled by
-// set_global_dir and is covered by io_sys_var_test.
-// ---------------------------------------------------------------------------
-TEST(DMKTest, Mode2PerStepFile) {
-    UnitCell* ucell;
-    UcellTestPrepare utp = UcellTestLib["Si"];
-    ucell = utp.SetUcellInfo();
-
+// set_global_dir and is covered by io_sys_var_test. Mode 1 (append) is covered
+// by ReadDMKMode1FrameSelection, which would fail on a wrong write.
+TEST_F(DMKTest, Mode2PerStepFile) {
     int nspin = 2;
     int nk = 1;
     int nlocal = 20;
@@ -635,19 +572,12 @@ TEST(DMKTest, Mode2PerStepFile) {
         ifs.close();
         remove("dms1g3_nao.txt");
     }
-    delete ucell;
 }
 
-// ---------------------------------------------------------------------------
 // Round trip: write a column-major DM(k) and read it back with the same
 // storage order. A transposed read would return the complex conjugate of the
 // Hermitian probe, i.e. the imaginary off-diagonal elements would flip sign.
-// ---------------------------------------------------------------------------
-TEST(DMKTest, ReadDMKRoundTripComplex) {
-    UnitCell* ucell;
-    UcellTestPrepare utp = UcellTestLib["Si"];
-    ucell = utp.SetUcellInfo();
-
+TEST_F(DMKTest, ReadDMKRoundTripComplex) {
     const int nspin = 1;
     const int nk = 1;
     const int nlocal = 2;
@@ -674,26 +604,15 @@ TEST(DMKTest, ReadDMKRoundTripComplex) {
     std::vector<std::vector<std::complex<double>>> dmk_read;
     EXPECT_TRUE(ModuleIO::read_dmk(nspin, nk, kv, pv, /*column_major=*/true, out_dir,
                                    /*istep=*/0, /*out_app_flag=*/0, dmk_read, ofs_log));
-    ASSERT_EQ(dmk_read.size(), 1u);
-    ASSERT_EQ(dmk_read[0].size(), dmk[0].size());
-    for (std::size_t idx = 0; idx < dmk[0].size(); ++idx)
-    {
-        EXPECT_NEAR(dmk_read[0][idx].real(), dmk[0][idx].real(), 1e-8);
-        EXPECT_NEAR(dmk_read[0][idx].imag(), dmk[0][idx].imag(), 1e-8);
-    }
+    expect_dmk_eq(dmk_read, dmk);
 
     if (GlobalV::MY_RANK == 0)
     {
         remove((out_dir + "dmk1_nao.txt").c_str());
     }
-    delete ucell;
 }
 
-TEST(DMKTest, ReadDMKRoundTripGamma) {
-    UnitCell* ucell;
-    UcellTestPrepare utp = UcellTestLib["Si"];
-    ucell = utp.SetUcellInfo();
-
+TEST_F(DMKTest, ReadDMKRoundTripGamma) {
     const int nspin = 1;
     const int nk = 1;
     const int nlocal = 2;
@@ -717,25 +636,15 @@ TEST(DMKTest, ReadDMKRoundTripGamma) {
     std::vector<std::vector<double>> dmk_read;
     EXPECT_TRUE(ModuleIO::read_dmk(nspin, nk, kv, pv, /*column_major=*/true, out_dir,
                                    /*istep=*/0, /*out_app_flag=*/0, dmk_read, ofs_log));
-    ASSERT_EQ(dmk_read.size(), 1u);
-    ASSERT_EQ(dmk_read[0].size(), dmk[0].size());
-    for (std::size_t idx = 0; idx < dmk[0].size(); ++idx)
-    {
-        EXPECT_NEAR(dmk_read[0][idx], dmk[0][idx], 1e-8);
-    }
+    expect_dmk_eq(dmk_read, dmk);
 
     if (GlobalV::MY_RANK == 0)
     {
         remove((out_dir + "dm_nao.txt").c_str());
     }
-    delete ucell;
 }
 
-TEST(DMKTest, ReadDMKRoundTripMultipleMatrices) {
-    UnitCell* ucell;
-    UcellTestPrepare utp = UcellTestLib["Si"];
-    ucell = utp.SetUcellInfo();
-
+TEST_F(DMKTest, ReadDMKRoundTripMultipleMatrices) {
     const int nspin = 2;
     const int nk = 2;
     const int nlocal = 2;
@@ -743,21 +652,7 @@ TEST(DMKTest, ReadDMKRoundTripMultipleMatrices) {
     init_pv(nlocal, pv);
 
     K_Vectors kv;
-    init_kv(kv, 0.5);
-    kv.set_nkstot(nspin * nk);
-    kv.set_nkstot_nospin(nk);
-    kv.set_nks(nspin * nk);
-    kv.kvec_c.resize(nk);
-    kv.kvec_d.resize(nk);
-    kv.wk.resize(nk);
-    kv.isk.resize(nk);
-    for (int ik = 0; ik < nk; ++ik)
-    {
-        kv.kvec_c[ik].x = 0.1 * ik;
-        kv.kvec_d[ik].x = 0.1 * ik;
-        kv.wk[ik] = 0.5;
-        kv.isk[ik] = 0;
-    }
+    init_kv_multi(kv, nspin, nk);
 
     std::vector<std::vector<std::complex<double>>> dmk(nspin * nk);
     for (int index = 0; index < nspin * nk; ++index)
@@ -782,16 +677,7 @@ TEST(DMKTest, ReadDMKRoundTripMultipleMatrices) {
     std::vector<std::vector<std::complex<double>>> dmk_read;
     EXPECT_TRUE(ModuleIO::read_dmk(nspin, nk, kv, pv, /*column_major=*/true, out_dir,
                                    /*istep=*/0, /*out_app_flag=*/0, dmk_read, ofs_log));
-    ASSERT_EQ(dmk_read.size(), dmk.size());
-    for (int index = 0; index < nspin * nk; ++index)
-    {
-        ASSERT_EQ(dmk_read[index].size(), dmk[index].size());
-        for (std::size_t element = 0; element < dmk[index].size(); ++element)
-        {
-            EXPECT_NEAR(dmk_read[index][element].real(), dmk[index][element].real(), 1e-8);
-            EXPECT_NEAR(dmk_read[index][element].imag(), dmk[index][element].imag(), 1e-8);
-        }
-    }
+    expect_dmk_eq(dmk_read, dmk);
 
     if (GlobalV::MY_RANK == 0)
     {
@@ -800,12 +686,11 @@ TEST(DMKTest, ReadDMKRoundTripMultipleMatrices) {
         remove((out_dir + "dmk1s2_nao.txt").c_str());
         remove((out_dir + "dmk2s2_nao.txt").c_str());
     }
-    delete ucell;
 }
 
 // A missing file must be reported cooperatively instead of aborting a single
 // rank, so the caller can decide how to continue.
-TEST(DMKTest, ReadDMKMissingFileReturnsFalse) {
+TEST_F(DMKTest, ReadDMKMissingFileReturnsFalse) {
     const int nspin = 1;
     const int nk = 1;
     const int nlocal = 2;
@@ -826,7 +711,7 @@ TEST(DMKTest, ReadDMKMissingFileReturnsFalse) {
 
 #ifdef __MPI
 /// @brief Verify that split descriptor communicators keep their read status independent.
-TEST(DMKTest, ReadDMKSplitCommunicatorStatus)
+TEST_F(DMKTest, ReadDMKSplitCommunicatorStatus)
 {
     const Parallel::ParaWorld world = Parallel::ParaWorld::make_mpi("test_write_dmk", MPI_COMM_WORLD);
     const int world_rank = world.rank();
@@ -839,9 +724,6 @@ TEST(DMKTest, ReadDMKSplitCommunicatorStatus)
     const int nspin = 1;
     const int nk = 1;
     const int nlocal = 2;
-    UnitCell* ucell;
-    UcellTestPrepare utp = UcellTestLib["Si"];
-    ucell = utp.SetUcellInfo();
 
     Parallel_Blkcyclic pv_world;
     init_pv(nlocal, pv_world);
@@ -901,20 +783,13 @@ TEST(DMKTest, ReadDMKSplitCommunicatorStatus)
         std::remove((out_dir + "dm_nao.txt").c_str());
     }
     world_barrier();
-    delete ucell;
 }
 #endif
 
-// ---------------------------------------------------------------------------
 // out_app_flag = 2: the ionic step is part of the filename, so the reader has
 // to request the matching g{istep+1} file and reject a frame whose marker
 // contradicts the name.
-// ---------------------------------------------------------------------------
-TEST(DMKTest, ReadDMKMode2PerStepFile) {
-    UnitCell* ucell;
-    UcellTestPrepare utp = UcellTestLib["Si"];
-    ucell = utp.SetUcellInfo();
-
+TEST_F(DMKTest, ReadDMKMode2PerStepFile) {
     const int nspin = 1;
     const int nk = 1;
     const int nlocal = 2;
@@ -939,13 +814,7 @@ TEST(DMKTest, ReadDMKMode2PerStepFile) {
     std::vector<std::vector<std::complex<double>>> dmk_read;
     EXPECT_TRUE(ModuleIO::read_dmk(nspin, nk, kv, pv, /*column_major=*/true, out_dir,
                                    /*istep=*/2, /*out_app_flag=*/2, dmk_read, ofs_log));
-    ASSERT_EQ(dmk_read.size(), 1u);
-    ASSERT_EQ(dmk_read[0].size(), dmk[0].size());
-    for (std::size_t idx = 0; idx < dmk[0].size(); ++idx)
-    {
-        EXPECT_NEAR(dmk_read[0][idx].real(), dmk[0][idx].real(), 1e-8);
-        EXPECT_NEAR(dmk_read[0][idx].imag(), dmk[0][idx].imag(), 1e-8);
-    }
+    expect_dmk_eq(dmk_read, dmk);
 
     // A different step maps to another file name, which does not exist.
     std::vector<std::vector<std::complex<double>>> dmk_other_step;
@@ -956,19 +825,12 @@ TEST(DMKTest, ReadDMKMode2PerStepFile) {
     {
         remove((out_dir + "dmk1g3_nao.txt").c_str());
     }
-    delete ucell;
 }
 
-// ---------------------------------------------------------------------------
 // out_app_flag = 1: a fixed-name file accumulates one record per ionic step,
 // so the reader has to select the requested frame instead of always taking the
 // first one.
-// ---------------------------------------------------------------------------
-TEST(DMKTest, ReadDMKMode1FrameSelection) {
-    UnitCell* ucell;
-    UcellTestPrepare utp = UcellTestLib["Si"];
-    ucell = utp.SetUcellInfo();
-
+TEST_F(DMKTest, ReadDMKMode1FrameSelection) {
     const int nspin = 1;
     const int nk = 1;
     const int nlocal = 2;
@@ -1001,22 +863,12 @@ TEST(DMKTest, ReadDMKMode1FrameSelection) {
     std::vector<std::vector<std::complex<double>>> dmk_read;
     EXPECT_TRUE(ModuleIO::read_dmk(nspin, nk, kv, pv, /*column_major=*/true, out_dir,
                                    /*istep=*/0, /*out_app_flag=*/1, dmk_read, ofs_log));
-    ASSERT_EQ(dmk_read.size(), 1u);
-    for (std::size_t idx = 0; idx < dmk_first[0].size(); ++idx)
-    {
-        EXPECT_NEAR(dmk_read[0][idx].real(), dmk_first[0][idx].real(), 1e-8);
-        EXPECT_NEAR(dmk_read[0][idx].imag(), dmk_first[0][idx].imag(), 1e-8);
-    }
+    expect_dmk_eq(dmk_read, dmk_first);
 
     dmk_read.clear();
     EXPECT_TRUE(ModuleIO::read_dmk(nspin, nk, kv, pv, /*column_major=*/true, out_dir,
                                    /*istep=*/1, /*out_app_flag=*/1, dmk_read, ofs_log));
-    ASSERT_EQ(dmk_read.size(), 1u);
-    for (std::size_t idx = 0; idx < dmk_second[0].size(); ++idx)
-    {
-        EXPECT_NEAR(dmk_read[0][idx].real(), dmk_second[0][idx].real(), 1e-8);
-        EXPECT_NEAR(dmk_read[0][idx].imag(), dmk_second[0][idx].imag(), 1e-8);
-    }
+    expect_dmk_eq(dmk_read, dmk_second);
 
     // A frame that was never appended must be reported, not silently replaced
     // by the last available record.
@@ -1028,7 +880,6 @@ TEST(DMKTest, ReadDMKMode1FrameSelection) {
     {
         remove((out_dir + "dmk1_nao.txt").c_str());
     }
-    delete ucell;
 }
 
 /// @brief Check that every block of a DM(k) buffer still holds the sentinel.
@@ -1048,16 +899,10 @@ bool all_equal_to(const std::vector<std::vector<std::complex<double>>>& dmk,
     return true;
 }
 
-// ---------------------------------------------------------------------------
 // A failure on a later (spin, k) point must discard the matrices that were
 // already read; otherwise the caller would keep a half-updated DM(k) and run
 // the next SCF from a mixture of two restarts.
-// ---------------------------------------------------------------------------
-TEST(DMKTest, ReadDMKPartialFailureKeepsCallerData) {
-    UnitCell* ucell;
-    UcellTestPrepare utp = UcellTestLib["Si"];
-    ucell = utp.SetUcellInfo();
-
+TEST_F(DMKTest, ReadDMKPartialFailureKeepsCallerData) {
     const int nspin = 1;
     const int nk = 2;
     const int nlocal = 2;
@@ -1102,18 +947,11 @@ TEST(DMKTest, ReadDMKPartialFailureKeepsCallerData) {
     {
         std::remove((out_dir + "dmk1_nao.txt").c_str());
     }
-    delete ucell;
 }
 
-// ---------------------------------------------------------------------------
 // A spin-down file whose header claims spin 1 must be rejected instead of being
 // loaded as the down channel.
-// ---------------------------------------------------------------------------
-TEST(DMKTest, ReadDMKRejectsSpinMismatch) {
-    UnitCell* ucell;
-    UcellTestPrepare utp = UcellTestLib["Si"];
-    ucell = utp.SetUcellInfo();
-
+TEST_F(DMKTest, ReadDMKRejectsSpinMismatch) {
     const int nspin = 2;
     const int nk = 1;
     const int nlocal = 2;
@@ -1162,18 +1000,11 @@ TEST(DMKTest, ReadDMKRejectsSpinMismatch) {
         std::remove((out_dir + "dmk1s1_nao.txt").c_str());
         std::remove((out_dir + "dmk1s2_nao.txt").c_str());
     }
-    delete ucell;
 }
 
-// ---------------------------------------------------------------------------
 // k-point metadata: a different k-mesh and a file holding the wrong k-point
 // must both be rejected instead of being used for the requested index.
-// ---------------------------------------------------------------------------
-TEST(DMKTest, ReadDMKRejectsKPointMismatch) {
-    UnitCell* ucell;
-    UcellTestPrepare utp = UcellTestLib["Si"];
-    ucell = utp.SetUcellInfo();
-
+TEST_F(DMKTest, ReadDMKRejectsKPointMismatch) {
     const int nspin = 1;
     const int nk = 2;
     const int nlocal = 2;
@@ -1223,19 +1054,12 @@ TEST(DMKTest, ReadDMKRejectsKPointMismatch) {
         std::remove((out_dir + "dmk1_nao.txt").c_str());
         std::remove((out_dir + "dmk2_nao.txt").c_str());
     }
-    delete ucell;
 }
 
-// ---------------------------------------------------------------------------
 // k-point coordinates: a mesh of the same size but with reordered or shifted
 // k-vectors must be rejected, because cal_dmr pairs the read DM(k) with the
 // current KPT phases and would silently build a wrong density.
-// ---------------------------------------------------------------------------
-TEST(DMKTest, ReadDMKRejectsKVecMismatch) {
-    UnitCell* ucell;
-    UcellTestPrepare utp = UcellTestLib["Si"];
-    ucell = utp.SetUcellInfo();
-
+TEST_F(DMKTest, ReadDMKRejectsKVecMismatch) {
     const int nspin = 1;
     const int nk = 2;
     const int nlocal = 2;
@@ -1296,18 +1120,11 @@ TEST(DMKTest, ReadDMKRejectsKVecMismatch) {
         std::remove((out_dir + "dmk1_nao.txt").c_str());
         std::remove((out_dir + "dmk2_nao.txt").c_str());
     }
-    delete ucell;
 }
 
-// ---------------------------------------------------------------------------
 // A basis size that differs from the current calculation must be rejected, not
 // silently truncated or over-read.
-// ---------------------------------------------------------------------------
-TEST(DMKTest, ReadDMKRejectsBasisMismatch) {
-    UnitCell* ucell;
-    UcellTestPrepare utp = UcellTestLib["Si"];
-    ucell = utp.SetUcellInfo();
-
+TEST_F(DMKTest, ReadDMKRejectsBasisMismatch) {
     const int nspin = 1;
     const int nk = 1;
     const int nlocal = 2;
@@ -1342,14 +1159,11 @@ TEST(DMKTest, ReadDMKRejectsBasisMismatch) {
     {
         std::remove((out_dir + "dmk1_nao.txt").c_str());
     }
-    delete ucell;
 }
 
-// ---------------------------------------------------------------------------
 // Truncated input: a file cut inside the header and a complete file whose last
 // body line was lost must both fail instead of yielding a partial matrix.
-// ---------------------------------------------------------------------------
-TEST(DMKTest, ReadDMKRejectsTruncatedFile) {
+TEST_F(DMKTest, ReadDMKRejectsTruncatedFile) {
     const int nspin = 1;
     const int nk = 1;
     const int nlocal = 2;
@@ -1374,10 +1188,6 @@ TEST(DMKTest, ReadDMKRejectsTruncatedFile) {
                                     /*istep=*/0, /*out_app_flag=*/0, dmk_read, ofs_log));
 
     // A complete record whose final line was lost: the body is short.
-    UnitCell* ucell;
-    UcellTestPrepare utp = UcellTestLib["Si"];
-    ucell = utp.SetUcellInfo();
-
     const std::vector<double> probe = {1.0, 2.0, 3.0, 4.0};
     std::vector<std::vector<double>> dmk;
     fill_local_dmk(probe, nlocal, pv, dmk);
@@ -1397,7 +1207,6 @@ TEST(DMKTest, ReadDMKRejectsTruncatedFile) {
     {
         std::remove((out_dir + "dm_nao.txt").c_str());
     }
-    delete ucell;
 }
 
 /// @brief Replace a specific line of a text file with new content.
@@ -1434,18 +1243,12 @@ bool rewrite_line(const std::string& fname, std::size_t target, const std::strin
     return ofs.good();
 }
 
-// ---------------------------------------------------------------------------
 // UnitCell block integrity: a file whose per-type atom-count line cannot be
 // parsed as integers used to leave the void skipper at the subsequent
 // coordinate rows. A small (e.g. nlocal = 2) matrix read would then consume
 // those coordinates and the reader would hand back a bogus density matrix.
 // The skipper must fail fast instead, so read_dmk reports parse failure.
-// ---------------------------------------------------------------------------
-TEST(DMKTest, ReadDMKRejectsMalformedAtomCount) {
-    UnitCell* ucell;
-    UcellTestPrepare utp = UcellTestLib["Si"];
-    ucell = utp.SetUcellInfo();
-
+TEST_F(DMKTest, ReadDMKRejectsMalformedAtomCount) {
     const int nspin = 1;
     const int nk = 1;
     const int nlocal = 2;
@@ -1494,16 +1297,13 @@ TEST(DMKTest, ReadDMKRejectsMalformedAtomCount) {
     {
         std::remove((out_dir + "dm_nao.txt").c_str());
     }
-    delete ucell;
 }
 
-// ---------------------------------------------------------------------------
 // The flat index shared by the readers and the writers: a row-major buffer
 // stores (i, j) at i * nlocal + j, a column-major one at j * nlocal + i. All
 // LCAO ks_solver choices are column-major, so this mapping is what keeps the
 // file row-major for every supported solver.
-// ---------------------------------------------------------------------------
-TEST(DMKTest, DenseBufferIndexSelectsLayout) {
+TEST_F(DMKTest, DenseBufferIndexSelectsLayout) {
     EXPECT_EQ(ModuleIO::dense_buffer_index(0, 0, 3, /*column_major=*/false), 0u);
     EXPECT_EQ(ModuleIO::dense_buffer_index(0, 1, 3, /*column_major=*/false), 1u);
     EXPECT_EQ(ModuleIO::dense_buffer_index(1, 0, 3, /*column_major=*/false), 3u);
@@ -1513,15 +1313,9 @@ TEST(DMKTest, DenseBufferIndexSelectsLayout) {
     EXPECT_EQ(ModuleIO::dense_buffer_index(1, 2, 3, /*column_major=*/true), 7u);
 }
 
-// ---------------------------------------------------------------------------
 // The header must state the conj-first element convention, and read_dmk must
 // transparently skip that comment line when the file is read back.
-// ---------------------------------------------------------------------------
-TEST(DMKTest, HeaderStatesConjFirstConvention) {
-    UnitCell* ucell;
-    UcellTestPrepare utp = UcellTestLib["Si"];
-    ucell = utp.SetUcellInfo();
-
+TEST_F(DMKTest, HeaderStatesConjFirstConvention) {
     const int nspin = 1;
     const int nk = 1;
     const int nlocal = 2;
@@ -1560,31 +1354,18 @@ TEST(DMKTest, HeaderStatesConjFirstConvention) {
     std::vector<std::vector<std::complex<double>>> dmk_read;
     EXPECT_TRUE(ModuleIO::read_dmk(nspin, nk, kv, pv, /*column_major=*/true, out_dir,
                                    /*istep=*/0, /*out_app_flag=*/0, dmk_read, ofs_log));
-    ASSERT_EQ(dmk_read.size(), 1u);
-    ASSERT_EQ(dmk_read[0].size(), dmk[0].size());
-    for (std::size_t idx = 0; idx < dmk[0].size(); ++idx)
-    {
-        EXPECT_NEAR(dmk_read[0][idx].real(), dmk[0][idx].real(), 1e-8);
-        EXPECT_NEAR(dmk_read[0][idx].imag(), dmk[0][idx].imag(), 1e-8);
-    }
+    expect_dmk_eq(dmk_read, dmk);
 
     if (GlobalV::MY_RANK == 0)
     {
         remove((out_dir + "dmk1_nao.txt").c_str());
     }
-    delete ucell;
 }
 
-// ---------------------------------------------------------------------------
 // With column_major = false the reader and the writer must still agree on the
 // same layout, otherwise a restart would read a transposed matrix. No current
 // LCAO solver takes this branch, so this only pins their mutual consistency.
-// ---------------------------------------------------------------------------
-TEST(DMKTest, ReadDMKRoundTripRowMajorFlag) {
-    UnitCell* ucell;
-    UcellTestPrepare utp = UcellTestLib["Si"];
-    ucell = utp.SetUcellInfo();
-
+TEST_F(DMKTest, ReadDMKRoundTripRowMajorFlag) {
     const int nspin = 1;
     const int nk = 1;
     const int nlocal = 2;
@@ -1609,28 +1390,19 @@ TEST(DMKTest, ReadDMKRoundTripRowMajorFlag) {
     std::vector<std::vector<std::complex<double>>> dmk_read;
     EXPECT_TRUE(ModuleIO::read_dmk(nspin, nk, kv, pv, /*column_major=*/false, out_dir,
                                    /*istep=*/0, /*out_app_flag=*/0, dmk_read, ofs_log));
-    ASSERT_EQ(dmk_read.size(), 1u);
-    ASSERT_EQ(dmk_read[0].size(), dmk[0].size());
-    for (std::size_t idx = 0; idx < dmk[0].size(); ++idx)
-    {
-        EXPECT_NEAR(dmk_read[0][idx].real(), dmk[0][idx].real(), 1e-8);
-        EXPECT_NEAR(dmk_read[0][idx].imag(), dmk[0][idx].imag(), 1e-8);
-    }
+    expect_dmk_eq(dmk_read, dmk);
 
     if (GlobalV::MY_RANK == 0)
     {
         std::remove((out_dir + "dmk1_nao.txt").c_str());
     }
-    delete ucell;
 }
 
-// ---------------------------------------------------------------------------
 // The reader must reject non-finite matrix components: strtod reports an
 // overflowing literal such as "1e999" only through errno while consuming the
 // full token, and both strtod and the stream extractor accept the literal
 // spellings "inf"/"nan" without flagging a failure. Such a component would
 // otherwise be installed as the restart density.
-// ---------------------------------------------------------------------------
 
 /// @brief Overwrite the first matrix-body token of a written DM(k) file.
 /// @details The complex body is the only section whose tokens contain '(';
@@ -1693,11 +1465,7 @@ bool patch_first_body_token(const std::string& fname,
     return true;
 }
 
-TEST(DMKTest, ReadDMKRejectsOverflowingComplexComponent) {
-    UnitCell* ucell;
-    UcellTestPrepare utp = UcellTestLib["Si"];
-    ucell = utp.SetUcellInfo();
-
+TEST_F(DMKTest, ReadDMKRejectsOverflowingComplexComponent) {
     const int nspin = 1;
     const int nk = 1;
     const int nlocal = 2;
@@ -1743,14 +1511,9 @@ TEST(DMKTest, ReadDMKRejectsOverflowingComplexComponent) {
     {
         std::remove((out_dir + "dmk1_nao.txt").c_str());
     }
-    delete ucell;
 }
 
-TEST(DMKTest, ReadDMKRejectsNonFiniteRealComponent) {
-    UnitCell* ucell;
-    UcellTestPrepare utp = UcellTestLib["Si"];
-    ucell = utp.SetUcellInfo();
-
+TEST_F(DMKTest, ReadDMKRejectsNonFiniteRealComponent) {
     const int nspin = 1;
     const int nk = 1;
     const int nlocal = 2;
@@ -1783,7 +1546,6 @@ TEST(DMKTest, ReadDMKRejectsNonFiniteRealComponent) {
     {
         std::remove((out_dir + "dm_nao.txt").c_str());
     }
-    delete ucell;
 }
 
 
