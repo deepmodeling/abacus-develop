@@ -353,6 +353,14 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::runner(BaseCell& basecell, const int ist
         //----------------------------------------------------------------
         // 3) after_scf
         //----------------------------------------------------------------
+        // The final-snapshot override in ctrl_scf_lcao may cover only the last
+        // electronic substep of the final ionic step; earlier substeps still
+        // follow the out_freq_ion cadence. A restarted run may stop right after
+        // replaying the endpoint of this ionic step, which is then its last one.
+        const bool restart_endpoint = this->inp_->mdp.md_restart && !restart_done && estep == 0
+                                      && restart_step_ % this->inp_->estep_per_md == 0;
+        const bool last_substep = estep == estep_max - 1 || restart_endpoint;
+        this->final_electronic_step_ = ucell.last_ion_step && last_substep;
         this->after_scf(ucell, totstep, conv_esolver);
         if (this->inp_->out_freq_ion > 0 && totstep % this->inp_->out_freq_ion == 0 && GlobalV::MY_RANK == 0)
         {

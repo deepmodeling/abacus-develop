@@ -857,8 +857,11 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
 
     //! 2) write LCAO output using the applicable ionic or RT-TDDFT electronic step
     //! The outer ionic driver marks the final ionic step on the cell so the
-    //! output gate can always persist the final snapshot.
-    const bool is_final_step = ucell.last_ion_step;
+    //! output gate can always persist the final snapshot. In RT-TDDFT one ionic
+    //! step spans several electronic substeps, so the override is limited to the
+    //! substep the solver flagged as the final one; otherwise every substep of
+    //! the final ionic step would bypass out_freq_ion.
+    const bool is_final_step = ucell.last_ion_step && this->final_electronic_step_;
     ModuleIO::ctrl_scf_lcao<TK, TR>(ucell,
                                     *this->inp_,
                                     this->kv,
