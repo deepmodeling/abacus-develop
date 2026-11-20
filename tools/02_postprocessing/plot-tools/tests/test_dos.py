@@ -127,14 +127,20 @@ class TDOSTest(unittest.TestCase):
 
 
 class PDOSNumPyTest(unittest.TestCase):
-    def test_spin_channels_and_energy_grid(self):
+    @staticmethod
+    def spin_record():
         values = np.array([[1., 2., 3.], [4., 5., 6.]])
         dtype = [("nspin", "i4"), ("atom_index", "i4"), ("l", "i4"), ("m", "i4"),
                  ("energy_min_eV", "f8"), ("energy_step_eV", "f8"), ("species", "S8"),
                  ("pdos", "f8", values.shape)]
+        return np.array([(2, 3, 1, -1, -1., .5, b"Fe", values)], dtype=dtype)
+
+    def test_spin_channels_and_energy_grid(self):
+        record = self.spin_record()
+        values = record["pdos"][0]
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "pdos.npy"
-            np.save(path, np.array([(2, 3, 1, -1, -1., .5, b"Fe", values)], dtype=dtype))
+            np.save(path, record)
             for source in (path, path.parent):
                 result = PDOS(source)
                 self.assertEqual(result.nspin, 2)
@@ -150,6 +156,24 @@ class PDOSNumPyTest(unittest.TestCase):
                 PDOS(path.parent)
             np.testing.assert_array_equal(PDOS(path).orbitals[0]["data"], values.T)
             self.assertEqual(PDOS(text).orbitals[0]["data"].item(), 9.)
+
+    def test_invalid_record_metadata(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "pdos.npy"
+            for field, values, message in (
+                ("nspin", [2, 1], "nspin"),
+                ("energy_min_eV", [-1., 0.], "energy_min_eV"),
+                ("energy_step_eV", [.5, .25], "energy_step_eV"),
+                ("energy_step_eV", [0., 0.], "positive step"),
+                ("energy_step_eV", [-.5, -.5], "positive step"),
+                ("energy_step_eV", [np.inf, np.inf], "finite"),
+            ):
+                with self.subTest(field=field, values=values):
+                    rows = np.repeat(self.spin_record(), 2)
+                    rows[field] = values
+                    np.save(path, rows)
+                    with self.assertRaisesRegex(ValueError, message):
+                        PDOS(path)
 
 
 if __name__ == "__main__":

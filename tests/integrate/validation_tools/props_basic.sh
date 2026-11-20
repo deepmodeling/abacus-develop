@@ -123,6 +123,9 @@ run_basic_props() {
     total_dos=$(cat OUT.autotest/dos*.txt | awk 'END {print}' | awk '{print $3}')
     echo "totaldosref $total_dos" >>$props_result_file
   fi
+  if [ -f pdos.ref.json ]; then
+    python3 "$PROPS_TOOLS_DIR/check_pdos_npy.py" OUT.autotest/pdos.npy pdos.ref.json
+  fi
 
   #-------------------------------
   # Onsager coefficiency

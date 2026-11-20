@@ -500,11 +500,18 @@ class PDOS(DOS):
         fields = {"nspin", "atom_index", "l", "m", "species", "energy_min_eV", "energy_step_eV", "pdos"}
         if rows.ndim != 1 or not rows.size or not fields.issubset(rows.dtype.names or ()):
             raise ValueError(f"Expected an ABACUS PDOS array in {path}")
+        for field in ("nspin", "energy_min_eV", "energy_step_eV"):
+            if not np.all(rows[field] == rows[field][0]):
+                raise ValueError(f"Inconsistent {field} across PDOS records in {path}")
         self.nspin = int(rows["nspin"][0])
         values = rows["pdos"]
         if self.nspin not in (1, 2, 4) or values.ndim != 3 or values.shape[1] != (2 if self.nspin == 2 else 1):
             raise ValueError(f"Invalid PDOS spin dimensions in {path}")
-        grid = rows["energy_min_eV"][0] + np.arange(values.shape[2]) * rows["energy_step_eV"][0]
+        emin = rows["energy_min_eV"][0]
+        step = rows["energy_step_eV"][0]
+        if not np.isfinite(emin) or not np.isfinite(step) or step <= 0:
+            raise ValueError(f"Invalid PDOS energy grid in {path}: expected finite energies and a positive step")
+        grid = emin + np.arange(values.shape[2]) * step
         self.energy = grid[:, None]
         self.orbitals = [
             dict(index=i, atom_index=int(row["atom_index"]), species=row["species"].decode(),
