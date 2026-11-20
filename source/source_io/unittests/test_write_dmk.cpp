@@ -19,7 +19,62 @@
 
 #ifdef __MPI
 #include "mpi.h"
+#include "source_base/module_parallel/para_mpi_func.h"
 #endif
+
+namespace
+{
+#ifdef __MPI
+/**
+ * @brief RAII guard for a test-scoped MPI communicator created with
+ *        MPI_Comm_split; frees the communicator on destruction.
+ *
+ * The project parallel helpers deliberately do not own communicator
+ * lifetimes (see ParaWorld), so this local guard encapsulates the
+ * split/free pair inside the test that needs it.
+ */
+class SplitCommGuard
+{
+public:
+    /**
+     * @brief Split MPI_COMM_WORLD by color.
+     * @param color Processes sharing a color join the same new communicator.
+     * @param key   Rank ordering key inside the new communicator.
+     */
+    SplitCommGuard(const int color, const int key) : comm_(MPI_COMM_NULL)
+    {
+        MPI_Comm_split(MPI_COMM_WORLD, color, key, &comm_);
+    }
+
+    ~SplitCommGuard()
+    {
+        if (comm_ != MPI_COMM_NULL)
+        {
+            MPI_Comm_free(&comm_);
+        }
+    }
+
+    SplitCommGuard(const SplitCommGuard&) = delete;
+    SplitCommGuard& operator=(const SplitCommGuard&) = delete;
+
+    /// @brief Wrapped communicator (owned by this guard).
+    MPI_Comm get() const
+    {
+        return comm_;
+    }
+
+private:
+    MPI_Comm comm_;
+};
+
+/// @brief Synchronize all ranks on MPI_COMM_WORLD via the parallel helpers.
+void world_barrier()
+{
+    const Parallel::ParaWorld world = Parallel::ParaWorld::make_mpi("test_write_dmk", MPI_COMM_WORLD);
+    Parallel::barrier(world);
+}
+#endif
+} // namespace
 
 Magnetism::Magnetism() {
     this->tot_mag = 0.0;
@@ -773,10 +828,9 @@ TEST(DMKTest, ReadDMKMissingFileReturnsFalse) {
 /// @brief Verify that split descriptor communicators keep their read status independent.
 TEST(DMKTest, ReadDMKSplitCommunicatorStatus)
 {
-    int world_rank = 0;
-    int world_size = 0;
-    MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+    const Parallel::ParaWorld world = Parallel::ParaWorld::make_mpi("test_write_dmk", MPI_COMM_WORLD);
+    const int world_rank = world.rank();
+    const int world_size = world.size();
     if (world_size < 2)
     {
         GTEST_SKIP() << "This test requires at least two MPI ranks";
@@ -802,16 +856,15 @@ TEST(DMKTest, ReadDMKSplitCommunicatorStatus)
     std::ofstream ofs_log;
     ModuleIO::write_dmk(dmk, kv, /*precision=*/12, efs, ucell, pv_world, /*column_major=*/true,
                         out_dir, /*istep=*/0, /*out_app_flag=*/0, ofs_log);
-    MPI_Barrier(MPI_COMM_WORLD);
+    world_barrier();
 
     const int color = world_rank % 2;
-    MPI_Comm split_comm = MPI_COMM_NULL;
-    MPI_Comm_split(MPI_COMM_WORLD, color, world_rank, &split_comm);
+    const SplitCommGuard split_guard(color, world_rank);
 
     int local_pass = 1;
     {
         Parallel_Blkcyclic pv_split;
-        pv_split.init(nlocal, nlocal, 1, split_comm, false);
+        pv_split.init(nlocal, nlocal, 1, split_guard.get(), false);
         const std::vector<double> sentinel(pv_split.size(), 7.0);
         std::vector<std::vector<double>> dmk_read(1, sentinel);
         const bool expect_success = (color == 0);
@@ -838,17 +891,16 @@ TEST(DMKTest, ReadDMKSplitCommunicatorStatus)
             local_pass = 0;
         }
     }
-    MPI_Comm_free(&split_comm);
 
-    int global_pass = 0;
-    MPI_Allreduce(&local_pass, &global_pass, 1, MPI_INT, MPI_MIN, MPI_COMM_WORLD);
+    int global_pass = local_pass;
+    Parallel::reduce_min(global_pass, world);
     EXPECT_EQ(global_pass, 1) << "Split communicators exchanged read status or returned incorrect data";
 
     if (world_rank == 0)
     {
         std::remove((out_dir + "dm_nao.txt").c_str());
     }
-    MPI_Barrier(MPI_COMM_WORLD);
+    world_barrier();
     delete ucell;
 }
 #endif

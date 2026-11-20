@@ -27,12 +27,22 @@
 #include <vector>
 #ifdef __MPI
 #include <mpi.h>
+#include "source_base/module_parallel/para_mpi_func.h"
 #endif
 
 namespace
 {
 /// Rank in DIAG_WORLD; 0 without MPI.
 int test_rank = 0;
+
+#ifdef __MPI
+/// @brief Synchronize all ranks on DIAG_WORLD via the parallel helpers.
+void diag_barrier()
+{
+    const Parallel::ParaWorld world = Parallel::ParaWorld::make_mpi("test_hs_dense_io", DIAG_WORLD);
+    Parallel::barrier(world);
+}
+#endif
 
 /**
  * @brief Read the entire content of a text file into a string.
@@ -161,7 +171,7 @@ void remove_test_file(const std::string& filename)
         std::remove(filename.c_str());
     }
 #ifdef __MPI
-    MPI_Barrier(DIAG_WORLD);
+    diag_barrier();
 #endif
 }
 /**
@@ -408,7 +418,7 @@ TEST(HsDenseIoSaveMat, BinaryAppendCompleteRecordsAndOverwrite)
     }
 
 #ifdef __MPI
-    MPI_Barrier(DIAG_WORLD);
+    diag_barrier();
 #endif
     ModuleIO::save_mat(2, replacement_local.data(), dim, true, 8, true, false,
                        filename, pv.para_2d(), test_rank, "cg");
@@ -448,7 +458,7 @@ TEST(HsDenseIoSaveMat, TextAppendTwoStepsAndFirstStepTruncates)
     ModuleIO::save_mat(0, stale_local.data(), dim, false, 8, true, true,
                        filename, pv.para_2d(), test_rank, "cg");
 #ifdef __MPI
-    MPI_Barrier(DIAG_WORLD);
+    diag_barrier();
 #endif
     // A fresh run starts at istep 0 and must truncate the stale frame.
     ModuleIO::save_mat(0, first_local.data(), dim, false, 8, true, false,

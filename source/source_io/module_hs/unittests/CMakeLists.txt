@@ -58,6 +58,8 @@ AddTest(
   ../../../source_base/parallel_common.cpp
   ../../../source_base/parallel_global.cpp
   ../../../source_base/parallel_comm.cpp
+  ../../../source_base/module_parallel/para_world.cpp
+  ../../../source_base/module_parallel/para_mpi_func.cpp
   ../../../source_base/tool_quit.cpp
   ../../../source_base/tool_title.cpp
   ../../../source_base/global_file.cpp
