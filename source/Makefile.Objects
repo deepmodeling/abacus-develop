@@ -254,6 +254,7 @@ OBJS_CELL=atom_pseudo.o\
     cal_ux.o\
     mdcell_reader.o\
     mdcell.o\
+    mdcell_adapter.o\
     dom_core.o\
     dom_ghost.o\
     dom_migrate.o\
@@ -577,6 +578,7 @@ OBJS_MD=fire.o\
     module_snap/snap_forcefield.o\
     module_lj/lj_forcefield.o\
     module_dp/dp_forcefield.o\
+    module_dp/dp_aparam.o\
     module_nep/nep_forcefield.o\
     verlet.o\
 

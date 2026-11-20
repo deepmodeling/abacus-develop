@@ -90,9 +90,10 @@ void NeighborSearch::init_from_mdcell_(const MDCell& cell, double sr)
         ghost_atoms_.push_back(atom);
     }
 
-    const std::size_t page_size = ModuleNeighList::checked_size_product(all_atoms_.size(),
-                                                                        neighbor_reserve_factor,
-                                                                        "NeighborSearch page size");
+    const std::size_t requested_page_size = ModuleNeighList::checked_size_product(all_atoms_.size(),
+                                                                                  neighbor_reserve_factor,
+                                                                                  "NeighborSearch page size");
+    const std::size_t page_size = std::max<std::size_t>(1, requested_page_size);
     neighbor_list_.initialize(inside_atoms_.size(), page_size);
     candidate_neighbor_list_.initialize(inside_atoms_.size(), page_size);
 }

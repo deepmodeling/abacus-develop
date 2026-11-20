@@ -26,6 +26,8 @@ class DeepPot;
 #include <vector>
 
 class UnitCell;
+class MDCell;
+class DomainDecomposition;
 
 namespace ModuleMD
 {
@@ -42,8 +44,10 @@ class DP : public ForceField
                  ModuleBase::matrix& stress) override;
 
   private:
-    void type_map(const UnitCell& cell);
     void initialize_type_map_(const std::vector<std::string>& type_labels);
+    void compute_mdcell_(MDCell& cell,
+                         double& energy,
+                         ModuleBase::matrix& stress);
 
 #ifdef __DPMD
 #ifdef __DPMDC
@@ -55,10 +59,12 @@ class DP : public ForceField
     std::string dp_file;
     std::string output_dir_;
     std::ofstream& running_log_;
-    std::vector<int> atype;
     std::vector<int> md_type_to_dp_type_;
     std::vector<double> fparam;
     std::vector<double> aparam;
+    std::unique_ptr<MDCell> distributed_cell_;
+    std::unique_ptr<DomainDecomposition> decomposition_;
+    bool aparam_nall_ = false;
     double rescaling = 1.0;
 };
 } // namespace ModuleMD
