@@ -1,7 +1,7 @@
-#include "source_base/constants.h"
-#include "source_base/tool_quit.h"
 #include "read_input.h"
 #include "read_input_tool.h"
+#include "source_base/constants.h"
+#include "source_base/tool_quit.h"
 
 #include <algorithm>
 #include <cctype>
@@ -1212,6 +1212,7 @@ void ReadInput::item_lr_tddft()
         read_sync_int(input.lr_nstates);
         this->add_item(item);
     }
+    this->item_lr_nacv();
     {
         Input_Item item("lr_target_state");
         item.annotation = "the initial excited state for geometry relaxation (0-based)";
@@ -1360,6 +1361,7 @@ The threshold proposes candidates; it cannot tell a true degeneracy from an acci
         read_sync_string(input.lr_grad_solver);
         this->add_item(item);
     }
+    this->item_lr_nacv_response();
     {
         Input_Item item("lr_target_spin");
         item.annotation = "spin channel of lr_target_state: singlet, triplet or updown";

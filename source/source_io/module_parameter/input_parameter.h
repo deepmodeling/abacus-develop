@@ -400,6 +400,8 @@ struct Input_para
     std::vector<double> ocp_kb = {}; ///< OCP kb values
 
     // ==============   #Parameters (10.lr-tddft) ===========================
+    std::vector<int> lr_nac_pairs;                   ///< Optional pairs with S0=0 and LR roots counted from one.
+    std::string lr_nac_spin = "singlet";             ///< Closed-shell spin manifold for NAC output.
     int lr_nstates = 1;                              ///< the number of 2-particle states to be solved
     int lr_target_state = 0;                         ///< which excited state the geometry relaxation follows (0-based)
     std::string lr_target_spin = "singlet";          ///< spin channel of that state: singlet / triplet / updown
@@ -407,6 +409,8 @@ struct Input_para
         = 0.0; ///< max excitation-energy spread of a degenerate multiplet whose gradient matrix is computed (Ry); 0 disables
     std::string lr_degen_mode = "state";       ///< what a relaxation follows when the target state sits in a degenerate multiplet: state / average
     std::string lr_grad_solver = "cg";               ///< the linear solver of the Z-vector equation for LR-TDDFT gradients: cg / lapack / scalapack / scalapack_chol / elpa
+    double lr_grad_thr = 1e-6;                       ///< Absolute true CG response residual bound in Ry.
+    int lr_grad_maxiter = 100;                       ///< Maximum CG response updates;official compatibility default.
     std::vector<std::string> lr_init_xc_kernel = {}; ///< The method to initalize the xc kernel
     int nocc = -1;                                   ///< the number of occupied orbitals to form the 2-particle basis
     int nvirt = 1;                              ///< the number of virtual orbitals to form the 2-particle basis (nocc + nvirt <= nbands)

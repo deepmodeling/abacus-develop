@@ -41,15 +41,24 @@ struct GradientInputs
 };
 template <typename T>
 std::vector<ModuleBase::matrix> evaluate_closed_shell_force(
-    const GradientInputs<T>& inputs, LR_Force<T>& force_terms,
-    const module_dm::DensityMatrix<T, double>& dm_gs,
-    const ct::Tensor& Xz, const ct::Tensor& Z,
-    const std::vector<double>& omega, int label_begin, int ispin);
+    const GradientInputs<T> &inputs,
+    LR_Force<T> &force_terms,
+    const module_dm::DensityMatrix<T, double> &dm_gs,
+    const ct::Tensor &Xz,
+    const ct::Tensor &Z,
+    const std::vector<double> &omega,
+    int label_begin,
+    int ispin,
+    bool emit_state_forces);
 template <typename T>
 std::vector<ModuleBase::matrix> evaluate_open_shell_force(
-    const GradientInputs<T>& inputs, LR_Force<T>& force_terms,
-    const module_dm::DensityMatrix<T, double>& dm_gs,
-    const ct::Tensor& Xz, const ct::Tensor& Z,
-    const std::vector<double>& omega, int label_begin);
+    const GradientInputs<T> &inputs,
+    LR_Force<T> &force_terms,
+    const module_dm::DensityMatrix<T, double> &dm_gs,
+    const ct::Tensor &Xz,
+    const ct::Tensor &Z,
+    const std::vector<double> &omega,
+    int label_begin,
+    bool emit_state_forces);
 }
 #endif

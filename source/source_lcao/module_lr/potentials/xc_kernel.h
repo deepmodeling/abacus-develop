@@ -120,6 +120,8 @@ namespace LR
         /// divergence, this factorization no longer holds and they must go back to `Vector3`.
         struct GxcCoef
         {
+            /// Construction state is independent of the local MPI grid size.
+            bool built = false;
             // Local part A.
             std::vector<double> a_s2;
             std::vector<double> a_st;
@@ -140,7 +142,7 @@ namespace LR
         const GxcCoef& gxc(const bool triplet) const
         {
             const GxcCoef& ret = (nspin_ == 1 || !triplet) ? gxc_s_ : gxc_t_;
-            if (ret.a_s2.empty())
+            if (!ret.built)
             {
                 throw std::runtime_error(
                     "KernelXC: the " + std::string(triplet ? "triplet" : "singlet")
@@ -233,8 +235,19 @@ namespace LR
         const bool openshell_ = false;
     };
 
-    /// Explicitly evaluate a coefficient set for one functional and ground-state density.
-    /// Sharing potentials must use compatible spin layouts and derivative requirements.
+    /**
+     * @brief Build shared XC coefficients for a specified functional and ground-state density.
+     * @param[in] kernel_name Functional name, independent of later global XC selections.
+     * @param[in] rho_basis Borrowed density-grid basis; must outlive the coefficient set.
+     * @param[in] ucell Geometry and grid-to-Cartesian scale in atomic units.
+     * @param[in] chg_gs Borrowed ground-state density in bohr^-3.
+     * @param[in] pgrid Distribution used for optional coefficient-file input.
+     * @param[in] nspin Density spin layout, one or two components.
+     * @param[in] openshell Whether to use the unrestricted coefficient layout.
+     * @param[in] gxc_spin Third-derivative spin combinations requested by the caller.
+     * @param[in] lr_init_xc_kernel Explicit coefficient initialization specification.
+     * @return Shared immutable coefficient set; compatible potentials may reuse its ownership.
+     */
     std::shared_ptr<const KernelXC> build_xc_kernel(const std::string& kernel_name,
         const ModulePW::PW_Basis& rho_basis, const UnitCell& ucell, const Charge& chg_gs,
         const Parallel_Grid& pgrid, const int nspin, const bool openshell, const int gxc_spin,

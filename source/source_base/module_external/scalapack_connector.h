@@ -35,6 +35,30 @@ extern "C"
     void pzdotc_(int* n, std::complex<double>* dot, std::complex<double>* x, int* ix, int* jx, int* descx, int* incx,
         std::complex<double>* y, int* iy, int* jy, int* descy, int* incy);
 
+    void pdgetrf_(
+        const int *m,
+        const int *n,
+        double *a,
+        const int *ia,
+        const int *ja,
+        const int *desca,
+        int *ipiv,
+        int *info);
+    void pdgetrs_(
+        const char *trans,
+        const int *n,
+        const int *nrhs,
+        const double *a,
+        const int *ia,
+        const int *ja,
+        const int *desca,
+        const int *ipiv,
+        double *b,
+        const int *ib,
+        const int *jb,
+        const int *descb,
+        int *info);
+
     void pdpotrf_(char *uplo, int *n, double *a, int *ia, int *ja, int *desca, int *info);
 //	void pzpotrf_(char *uplo, int *n, double _Complex *a, int *ia, int *ja, int *desca, int *info);
     void pzpotrf_(char *uplo, int *n, std::complex<double> *a, int *ia, int *ja, int *desca, int *info);
@@ -389,6 +413,60 @@ public:
     {
         int isrc = 1;
         pdsymm_(&side, &uplo, &m, &n, &alpha, a, &isrc, &isrc, desc, b, &isrc, &isrc, desc, &beta, c, &isrc, &isrc, desc);
+    }
+
+    /** @brief Factor a real distributed matrix, retaining pivots for later RHS batches. */
+    static inline void getrf(
+        const int m,
+        const int n,
+        double *a,
+        const int ia,
+        const int ja,
+        const int *desca,
+        int *ipiv,
+        int *info)
+    {
+        pdgetrf_(
+            &m,
+            &n,
+            a,
+            &ia,
+            &ja,
+            desca,
+            ipiv,
+            info);
+    }
+
+    /** @brief Solve with a previously computed real distributed LU factorization. */
+    static inline void getrs(
+        const char trans,
+        const int n,
+        const int nrhs,
+        const double *a,
+        const int ia,
+        const int ja,
+        const int *desca,
+        const int *ipiv,
+        double *b,
+        const int ib,
+        const int jb,
+        const int *descb,
+        int *info)
+    {
+        pdgetrs_(
+            &trans,
+            &n,
+            &nrhs,
+            a,
+            &ia,
+            &ja,
+            desca,
+            ipiv,
+            b,
+            &ib,
+            &jb,
+            descb,
+            info);
     }
 
     static inline

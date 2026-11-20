@@ -121,9 +121,11 @@ inline void cutoff_grid_data_spin2(std::vector<Telement>& func, const std::vecto
     const int nrxx = mask.size() / 2;
     if (nrxx == 0)
     {
-        ModuleBase::WARNING_QUIT("LR::cutoff_grid_data_spin2",
-                                "An MPI rank has no local real-space grid points for the LR XC kernel. "
-                                "Reduce the number of MPI processes (and increase OpenMP threads if needed).");
+        if (!func.empty())
+        {
+            throw std::invalid_argument("LR::cutoff_grid_data_spin2: nonempty data with an empty local grid");
+        }
+        return;
     }
     assert(func.size() % nrxx == 0 && func.size() / nrxx > 1);
     const int n_component = func.size() / nrxx;
@@ -485,10 +487,12 @@ void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const doubl
         if (nspin == 1 || (this->gxc_spin_ & GxcSpin::Singlet)) // Singlet or Bothspin
         {
             this->build_gxc_coef(this->gxc_s_, /*triplet=*/false, nspin, is_gga);
+            this->gxc_s_.built = true;
         }
         if (nspin == 2 && (this->gxc_spin_ & GxcSpin::Triplet)) // Triplet or Bothspin
         {
             this->build_gxc_coef(this->gxc_t_, /*triplet=*/true, nspin, is_gga);
+            this->gxc_t_.built = true;
         }
     }
     if (is_gga)
