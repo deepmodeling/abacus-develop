@@ -32,6 +32,12 @@ add_library(
     math_chebyshev.cpp
     mathzone_add1.cpp
     matrix.cpp
+    matrix2d.cpp
+    matrix2d_collective.cpp
+    matrix2d_lapack.cpp
+    matrix2d_linalg.cpp
+    matrix2d_reduction.cpp
+    matrix2d_scalapack.cpp
     matrix3.cpp
     memory_recorder.cpp
     mymath.cpp
@@ -136,4 +142,5 @@ if(BUILD_TESTING)
       add_subdirectory(libm/test)
     endif()
   endif()
+  add_subdirectory(unittests)
 endif()

@@ -111,6 +111,10 @@ extern "C"
         const int *M, const int *N, 
         std::complex<double> *A, const int *IA, const int *JA, const int *DESCA,
         int *ipiv,  int *info);
+    void pdgetrf_(
+        const int *M, const int *N,
+        double *A, const int *IA, const int *JA, const int *DESCA,
+        int *ipiv, int *info);
     
     void pzgesv_(
             const int *n, const int *nrhs,
@@ -161,6 +165,10 @@ extern "C"
         const int *n, 
         const std::complex<double> *A, const int *ia, const int *ja, const int *desca,
         int *ipiv, const std::complex<double> *work, const int *lwork, const int *iwork, const int *liwork, const int *info);
+    void pdgetri_(
+        const int *n,
+        double *A, const int *ia, const int *ja, const int *desca,
+        int *ipiv, double *work, const int *lwork, const int *iwork, const int *liwork, const int *info);
 
     void pzgeadd_(
         const char *transa,
@@ -401,12 +409,30 @@ public:
     }
 
     static inline
+    void getrf(
+        const int M, const int N,
+        double *A, const int IA, const int JA, const int *DESCA,
+        int *ipiv, int *info)
+    {
+        pdgetrf_(&M, &N, A, &IA, &JA, DESCA, ipiv, info);
+    }
+
+    static inline
     void getri(
         const int n, 
         const std::complex<double> *A, const int ia, const int ja, const int *desca, int *ipiv, 
         const std::complex<double> *work, const int *lwork, const int *iwork, const int *liwork, int *info)
     {
         pzgetri_(&n, A, &ia, &ja, desca, ipiv, work, lwork, iwork, liwork, info);
+    }
+
+    static inline
+    void getri(
+        const int n,
+        double *A, const int ia, const int ja, const int *desca, int *ipiv,
+        double *work, const int *lwork, const int *iwork, const int *liwork, int *info)
+    {
+        pdgetri_(&n, A, &ia, &ja, desca, ipiv, work, lwork, iwork, liwork, info);
     }
 
     static inline
