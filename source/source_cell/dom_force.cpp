@@ -75,7 +75,7 @@ void DomainDecomposition::accumulate_ghost_forces(MDCell& cell)
             {
                 throw std::runtime_error("Ghost force owner is outside the ghost communication stencil.");
             }
-            send_buffers[static_cast<std::size_t>(peer - peer_ranks.begin())].push_back(record);
+            send_buffers[peer - peer_ranks.begin()].push_back(record);
         }
         atom.force.set(0.0, 0.0, 0.0);
     }

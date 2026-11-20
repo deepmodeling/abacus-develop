@@ -93,7 +93,7 @@ void LJ::compute(BaseCell& cell,
 
         for (int local_i = 0; local_i < neighbor_list.get_ncentral_atoms(); ++local_i)
         {
-            const NeighborAtom& center_atom = inside_atoms[static_cast<std::size_t>(local_i)];
+            const NeighborAtom& center_atom = inside_atoms[local_i];
             const int it = center_atom.atom_type;
             const int ia = center_atom.atom_index;
             const int iat = atom_offsets[it] + ia;
@@ -149,7 +149,7 @@ void LJ::compute(BaseCell& cell,
 
     for (int local_i = 0; local_i < neighbor_list.get_ncentral_atoms(); ++local_i)
     {
-        LocalAtom& center_atom = owned_atoms[static_cast<std::size_t>(local_i)];
+        LocalAtom& center_atom = owned_atoms[local_i];
         ModuleBase::Vector3<double> tau1(center_atom.cart.x, center_atom.cart.y, center_atom.cart.z);
         for (int ad = 0; ad < neighbor_list.get_numneigh(local_i); ++ad)
         {

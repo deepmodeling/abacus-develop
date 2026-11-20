@@ -114,7 +114,7 @@ class HeaderBehaviorTest : public testing::Test
         stress(2, 2) = 1.0;
     }
 
-    static std::vector<std::string> split_lines(const std::string& s)
+    static std::vector<std::string> split_lines(const std::string &s)
     {
         std::vector<std::string> lines;
         std::istringstream iss(s);
@@ -126,7 +126,7 @@ class HeaderBehaviorTest : public testing::Test
         return lines;
     }
 
-    static int count_substr(const std::string& s, const std::string& sub)
+    static int count_substr(const std::string &s, const std::string &sub)
     {
         int count = 0;
         size_t pos = 0;
@@ -198,8 +198,8 @@ TEST_F(HeaderBehaviorTest, CalForceStressBothFalse)
 
     ASSERT_EQ(lines.size(), 7u);
     EXPECT_EQ(count_substr(header, "# Stress (kbar): N/A N/A N/A"), 3);
-    EXPECT_THAT(lines[6],
-                testing::HasSubstr("# NOTE: stress not computed (cal_stress=0); forces not computed (cal_force=0)"));
+    EXPECT_THAT(
+        lines[6], testing::HasSubstr("# NOTE: stress not computed (cal_stress=0); forces not computed (cal_force=0)"));
 }
 
 TEST_F(HeaderBehaviorTest, FinalStep)

@@ -3,7 +3,6 @@
 
 class MDCell;
 class DomainDecomposition;
-class UnitCell;
 struct Parameter;
 
 namespace ModuleESolver
@@ -54,10 +53,6 @@ inline bool is_last_step(const int current_step, const int md_nstep)
 {
     return md_nstep > 0 && current_step == md_nstep - 1;
 }
-
-void prepare_mdcell(MDCell& mdcell, const Parameter& param_in, DomainDecomposition& decomp);
-
-void prepare_mdcell(MDCell& mdcell, UnitCell& ucell, DomainDecomposition& decomp);
 
 /**
  * @brief the md loop line

@@ -49,9 +49,9 @@ ModuleMD::SNAP::Neighbor make_neighbor(const NeighborAtom& center,
     result.x = (neighbor.position_x - center.position_x) * lat0 * ModuleBase::BOHR_TO_A;
     result.y = (neighbor.position_y - center.position_y) * lat0 * ModuleBase::BOHR_TO_A;
     result.z = (neighbor.position_z - center.position_z) * lat0 * ModuleBase::BOHR_TO_A;
-    result.weight = parameters.element_weights[static_cast<std::size_t>(neighbor.atom_type)];
-    result.cutoff_radius = (parameters.element_radii[static_cast<std::size_t>(center.atom_type)]
-                            + parameters.element_radii[static_cast<std::size_t>(neighbor.atom_type)])
+    result.weight = parameters.element_weights[neighbor.atom_type];
+    result.cutoff_radius = (parameters.element_radii[center.atom_type]
+                            + parameters.element_radii[neighbor.atom_type])
                            * parameters.rcutfac;
     result.element_index = static_cast<std::size_t>(neighbor.atom_type);
     if (parameters.switchinner_flag)
@@ -146,10 +146,10 @@ void SnapPotential::compute(BaseCell& cell,
         ModuleMD::SNAP::CellAccumulator contribution(all_atoms.size());
         for (int i = 0; i < nowned; ++i)
         {
-            const NeighborAtom center(owned_atoms[static_cast<std::size_t>(i)].cart.x,
-                                      owned_atoms[static_cast<std::size_t>(i)].cart.y,
-                                      owned_atoms[static_cast<std::size_t>(i)].cart.z,
-                                      owned_atoms[static_cast<std::size_t>(i)].type,
+            const NeighborAtom center(owned_atoms[i].cart.x,
+                                      owned_atoms[i].cart.y,
+                                      owned_atoms[i].cart.z,
+                                      owned_atoms[i].type,
                                       i,
                                       i);
             std::vector<ModuleMD::SNAP::Neighbor> neighbors;
@@ -157,7 +157,7 @@ void SnapPotential::compute(BaseCell& cell,
             for (int k = 0; k < list.get_numneigh(i); ++k)
             {
                 const int neighbor_index = list.get_firstneigh(i)[k];
-                const NeighborAtom& neighbor = all_atoms[static_cast<std::size_t>(neighbor_index)];
+                const NeighborAtom& neighbor = all_atoms[neighbor_index];
                 if (neighbor.atom_type < 0 || static_cast<std::size_t>(neighbor.atom_type) >= model_.parameters.elements.size())
                 {
                     fail("MDCell atom type is outside the SNAP element map.", rank_);
@@ -198,11 +198,11 @@ void SnapPotential::compute(BaseCell& cell,
         domain.sum(stress.c, 9);
         for (int i = 0; i < nowned; ++i)
         {
-            const std::array<double, 3>& value = contribution.forces()[static_cast<std::size_t>(i)];
+            const std::array<double, 3>& value = contribution.forces()[i];
             const double fx = value[0] * force_scale;
             const double fy = value[1] * force_scale;
             const double fz = value[2] * force_scale;
-            owned_atoms[static_cast<std::size_t>(i)].force.set(fx, fy, fz);
+            owned_atoms[i].force.set(fx, fy, fz);
         }
         return;
     }
@@ -221,24 +221,24 @@ void SnapPotential::compute(BaseCell& cell,
     std::vector<int> offsets(static_cast<std::size_t>(ucell.ntype + 1), 0);
     for (int it = 0; it < ucell.ntype; ++it)
     {
-        offsets[static_cast<std::size_t>(it + 1)] = offsets[static_cast<std::size_t>(it)] + ucell.atoms[it].na;
+        offsets[it + 1] = offsets[it] + ucell.atoms[it].na;
     }
     for (int local_i = 0; local_i < list.get_ncentral_atoms(); ++local_i)
     {
-        const NeighborAtom& center = inside[static_cast<std::size_t>(local_i)];
+        const NeighborAtom& center = inside[local_i];
         std::vector<ModuleMD::SNAP::Neighbor> neighbors;
         std::vector<std::size_t> atom_indices;
         for (int k = 0; k < list.get_numneigh(local_i); ++k)
         {
-            const NeighborAtom& neighbor = all[static_cast<std::size_t>(list.get_firstneigh(local_i)[k])];
+            const NeighborAtom& neighbor = all[list.get_firstneigh(local_i)[k]];
             neighbors.push_back(make_neighbor(center, neighbor, ucell.lat0, model_.parameters));
-            const int atom_index = offsets[static_cast<std::size_t>(neighbor.atom_type)] + neighbor.atom_index;
+            const int atom_index = offsets[neighbor.atom_type] + neighbor.atom_index;
             const std::size_t index = static_cast<std::size_t>(atom_index);
             atom_indices.push_back(index);
         }
         const std::size_t center_element = static_cast<std::size_t>(center.atom_type);
         const ModuleMD::SNAP::ForceResult result = calculator_->compute_with_analytic_force(neighbors, center_element);
-        const int center_index = offsets[static_cast<std::size_t>(center.atom_type)] + center.atom_index;
+        const int center_index = offsets[center.atom_type] + center.atom_index;
         const std::size_t index = static_cast<std::size_t>(center_index);
         contribution.add(index, atom_indices, neighbors, result);
     }

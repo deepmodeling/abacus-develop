@@ -105,7 +105,7 @@ TEST_F(LJ_pot_test, mdcell_cal_force)
     p_esolver->cal_force(mdcell, force);
     for (int iat = 0; iat < mdcell.owned_atoms().size(); ++iat)
     {
-        const LocalAtom& atom = mdcell.owned_atoms()[static_cast<std::size_t>(iat)];
+        const LocalAtom& atom = mdcell.owned_atoms()[iat];
         EXPECT_DOUBLE_EQ(force(iat, 0), atom.force.x);
         EXPECT_DOUBLE_EQ(force(iat, 1), atom.force.y);
         EXPECT_DOUBLE_EQ(force(iat, 2), atom.force.z);

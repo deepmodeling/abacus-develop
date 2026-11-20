@@ -128,13 +128,13 @@ void ReadInput::item_system()
             }
             for (int i = 0; i < 3; ++i)
             {
-                para.input.cell_replica[static_cast<std::size_t>(i)] = std::stoi(item.str_values[static_cast<std::size_t>(i)]);
+                para.input.cell_replica[i] = std::stoi(item.str_values[i]);
             }
         };
         item.check_value = [](const Input_Item&, const Parameter& para) {
             for (int i = 0; i < 3; ++i)
             {
-                if (para.input.cell_replica[static_cast<std::size_t>(i)] <= 0)
+                if (para.input.cell_replica[i] <= 0)
                 {
                     ModuleBase::WARNING_QUIT("ReadInput", "cell_replica values must all be positive.");
                 }

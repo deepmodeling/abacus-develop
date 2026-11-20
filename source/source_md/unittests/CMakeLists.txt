@@ -60,6 +60,8 @@ list(
   ../../source_cell/dom_migrate.cpp
   ../../source_cell/dom_force.cpp
   ../../source_cell/mdcell.cpp
+  ../../source_cell/mdcell_adapter.cpp
+  ../../source_cell/mdcell_reader.cpp
   ../../source_base/output.cpp
   ../../source_io/module_output/output_log.cpp
   ../../source_io/module_output/print_info.cpp
@@ -81,29 +83,6 @@ addtest(
   TARGET MODULE_MD_func
   LIBS parameter psi device
   SOURCES test_md_func.cpp ${depend_files})
-
-set(md_run_json_sources)
-if(ENABLE_JSON)
-  list(APPEND md_run_json_sources ../../source_io/module_json/abacusjson.cpp
-       ../../source_io/module_json/output_info.cpp)
-endif()
-
-addtest(
-  TARGET MODULE_MD_run
-  LIBS parameter psi device
-  SOURCES test_run_md.cpp
-          ../run_md.cpp
-          ../module_plumed/plumed_interface.cpp
-          ../md_base.cpp
-          ../fire.cpp
-          ../langevin.cpp
-          ../msst.cpp
-          ../nhchain.cpp
-          ../verlet.cpp
-          ../../source_cell/mdcell_reader.cpp
-          ../../source_cell/magnetism.cpp
-          ${md_run_json_sources}
-          ${depend_files})
 
 addtest(
   TARGET MODULE_MD_SNAP_model
@@ -157,8 +136,13 @@ addtest(
   TARGET MODULE_MD_dp_forcefield
   LIBS ${_md_dp_test_libs}
   SOURCES test_dp_forcefield.cpp ../module_dp/dp_forcefield.cpp
+          ../module_dp/dp_aparam.cpp
           ../../source_cell/module_neighlist/neighbor_list.cpp
           ${depend_files})
+
+addtest(
+  TARGET MODULE_MD_dp_aparam
+  SOURCES test_dp_aparam.cpp ../module_dp/dp_aparam.cpp)
 
 set(_md_nep_test_libs parameter psi device)
 if(DEFINED NEP_DIR AND NEP_FOUND)
