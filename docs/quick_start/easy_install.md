@@ -164,13 +164,14 @@ Here, 'build' is the path for building ABACUS; and '-D' is used for setting up s
   - `LIBCOMM_DIR`: (Optional) Path to LibComm when `ENABLE_LIBRI=ON`.
 
 ```{important}
-For some dependencies built with CMake, such as Libxc, dftd4, cereal, and nlohmann-json, you'll have to add their prefix paths to the environment variable `CMAKE_PREFIX_PATH` so that CMake can correctly find and use their CMake configuration files. A non-general variable such as `PKG_DIR` is discouraged for these packages.
+For some dependencies built with CMake, such as Libxc, dftd4, libvdwxc, cereal, and nlohmann-json, you'll have to add their prefix paths to the environment variable `CMAKE_PREFIX_PATH` so that CMake can correctly find and use their CMake configuration files. A non-general variable such as `PKG_DIR` is discouraged for these packages.
 ```
 
 - Components: The values of these variables should be 'ON', '1' or 'OFF', '0'. The default values are given below.
   - `ENABLE_LCAO=ON`: Enable LCAO calculation. If SCALAPACK, ELPA or CEREAL is absent and only require plane-wave calculations, the feature of calculating LCAO basis can be turned off.
   - `ENABLE_LIBXC=OFF`: [Enable Libxc](../advanced/install.md#add-libxc-support) to suppport variety of functionals.
   - `ENABLE_LIBRI=OFF`: [Enable LibRI](../advanced/install.md#add-libri-support) and its LibComm dependency for hybrid-functional calculations. Set `LIBRI_DIR` and `LIBCOMM_DIR` to use manually installed libraries.
+  - `ENABLE_LIBVDWXC=OFF`: [Enable libvdwxc](../advanced/install.md#build-with-libvdwxc-support) for the rVV10 nonlocal correlation (`vdw_method rvv10`).
   - `ENABLE_JSON=OFF`: [Enable JSON output](../advanced/install.md#build-with-json-support) through nlohmann-json.
   - `ENABLE_OPENMP=ON`: Enable OpenMP support. Building ABACUS without OpenMP is not fully tested yet.
   - `BUILD_TESTING=OFF`: [Build unit tests](../advanced/install.md#build-unit-tests).

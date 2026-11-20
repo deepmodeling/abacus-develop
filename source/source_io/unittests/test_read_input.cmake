@@ -31,6 +31,13 @@ elseif(INPUT_CASE STREQUAL "invalid_dependency")
   string(APPEND contents "nspin 2\nnoncolin true\n")
   set(expected "Requires nspin==4")
   set(expected_manual "input-main.html#nspin")
+elseif(INPUT_CASE STREQUAL "rvv10_lr_relax")
+  # relax turns the forces on before the requirement of vdw_method rvv10 is
+  # checked, so LR-TDDFT relaxation is rejected without an explicit cal_force.
+  string(APPEND contents
+         "vdw_method rvv10\nesolver_type ks-lr\ncalculation relax\n")
+  set(expected "Requires esolver_type!=dfpt")
+  set(expected_manual "input-main.html#vdw-method")
 elseif(INPUT_CASE STREQUAL "valid")
   string(APPEND contents "nspin 2\n")
   set(expected_exit 0)

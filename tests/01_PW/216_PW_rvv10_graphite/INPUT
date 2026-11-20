@@ -1,0 +1,16 @@
+INPUT_PARAMETERS
+suffix            autotest
+calculation       scf
+pseudo_dir        ../../PP_ORB
+basis_type        pw
+ecutwfc           40
+scf_thr           1e-8
+scf_nmax          100
+dft_functional    GGA_X_RPW86+GGA_C_PBE
+vdw_method        rvv10
+cal_force         1
+cal_stress        1
+smearing_method   gaussian
+smearing_sigma    0.01
+mixing_type       broyden
+mixing_beta       0.4
