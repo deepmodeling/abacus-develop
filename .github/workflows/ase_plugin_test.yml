@@ -63,9 +63,10 @@ jobs:
 
       - name: Check OpenBLAS and select a compatible kernel
         shell: bash -l {0}
+        working-directory: interfaces/ASE_interface/tests
         run: |
-          python3 -m unittest discover -s .ci -p test_select_openblas_core.py -v
-          python3 .ci/select_openblas_core.py --abacus abacus --github-env "$GITHUB_ENV"
+          python3 -m unittest discover -s . -p test_select_openblas_core.py -v
+          python3 select_openblas_core.py --abacus abacus --github-env "$GITHUB_ENV"
 
       - name: Run unit tests
         shell: bash -l {0}
