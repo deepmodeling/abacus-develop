@@ -28,3 +28,12 @@ if(ENABLE_MPI)
   set_tests_properties(MODULE_CELL_mdcell_adapter_np4
                        PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=1" TIMEOUT 60)
 endif()
+
+addtest(
+  TARGET MODULE_CELL_read_orb_boundary_test
+  LIBS base device
+  SOURCES test_read_orb.cpp
+          ../read_orb.cpp
+          ../atom_spec.cpp
+          ../atom_pseudo.cpp
+          ../pseudo.cpp)

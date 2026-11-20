@@ -44,6 +44,31 @@ namespace unitcell {
             {
                 if (word == spectrum.substr(i, 1) + "orbital-->")
                 {
+                    if (atom->l_nchi.empty())
+                    {
+                        ModuleBase::WARNING("unitcell::read_orb_file",
+                                            "Lmax must be declared before the "
+                                            "\"Number of *orbital-->\" lines in the ORBITAL file.");
+                        return false;
+                    }
+                    if (i >= static_cast<int>(atom->l_nchi.size()))
+                    {
+                        // Orbital generators conventionally keep zero-count
+                        // declaration lines for channels beyond Lmax; tolerate
+                        // those but reject nonzero counts. The value must still
+                        // be read to keep the stream in sync.
+                        int nchi_beyond_lmax = 0;
+                        ModuleBase::GlobalFunc::READ_VALUE(ifs, nchi_beyond_lmax);
+                        if (nchi_beyond_lmax != 0)
+                        {
+                            const std::string msg =
+                                "nonzero orbital count beyond Lmax in the ORBITAL file: " + orb_file;
+                            ModuleBase::WARNING("unitcell::read_orb_file", msg);
+                            return false;
+                        }
+                        valid = true;
+                        break;
+                    }
                     ModuleBase::GlobalFunc::READ_VALUE(ifs, atom->l_nchi[i]);
                     atom->nw += (2*i + 1) * atom->l_nchi[i];
                     std::stringstream ss;
