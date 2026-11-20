@@ -83,7 +83,7 @@ AddTest(
             ../../../source_estate/fp_energy.cpp
             ../../../source_cell/ucell_io.cpp
             ../../../source_basis/module_ao/parallel_orbitals.cpp
-            ../../../source_hamilt/module_hcontainer/test/tmp_mocks.cpp)
+           )
 
   add_test(
     NAME MODULE_IO_hsr_writer_test_parallel
@@ -101,7 +101,6 @@ AddTest(
             ../lat_r_csr.cpp
             ../../../source_cell/ucell_io.cpp
             ../../../source_basis/module_ao/parallel_orbitals.cpp
-            ../../../source_hamilt/module_hcontainer/test/tmp_mocks.cpp
             ../../../source_basis/module_ao/orb_atomic_lm.cpp
             ../../../source_basis/module_ao/orb_atomic.cpp
             ../../../source_basis/module_nao/radial_set.cpp
@@ -125,7 +124,7 @@ AddTest(
             ../lat_r_csr.cpp
             ../../../source_cell/ucell_io.cpp
             ../../../source_basis/module_ao/parallel_orbitals.cpp
-            ../../../source_hamilt/module_hcontainer/test/tmp_mocks.cpp)
+           )
 
   addtest(
     TARGET MODULE_IO_hs_sparse_io_test
@@ -133,7 +132,7 @@ AddTest(
     SOURCES test_hs_sparse_io.cpp ../hs_sparse_io.cpp ../lat_r_csr.cpp
             ../../../source_cell/ucell_io.cpp
             ../../../source_basis/module_ao/parallel_orbitals.cpp
-            ../../../source_hamilt/module_hcontainer/test/tmp_mocks.cpp)
+           )
 
   addtest(
     TARGET MODULE_IO_dhs_sparse_writer_test
@@ -144,7 +143,7 @@ AddTest(
             ../lat_r_csr.cpp
             ../../../source_basis/module_ao/parallel_orbitals.cpp
             ../../../source_cell/ucell_io.cpp
-            ../../../source_hamilt/module_hcontainer/test/tmp_mocks.cpp)
+           )
 
   addtest(
     TARGET MODULE_IO_output_mat_sparse_test

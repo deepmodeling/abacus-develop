@@ -15,6 +15,7 @@
  * 
  * will test if the calculated values are close to the above results.
  */
+#include "source_hamilt/module_hcontainer/unittests/tmp_mocks.h"
 
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>

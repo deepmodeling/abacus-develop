@@ -12,6 +12,7 @@
  * dhs_sparse_writer.cpp only reads GlobalV::DRANK; no PARAM state is
  * involved, so the fixture sets DRANK directly.
  */
+#include "source_hamilt/module_hcontainer/unittests/tmp_mocks.h"
 #include "csr_test_helpers.h"
 
 #include "source_io/module_hs/dhs_sparse_writer.h"

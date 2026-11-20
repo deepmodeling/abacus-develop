@@ -311,11 +311,11 @@ if(ENABLE_LCAO)
   addtest(
     TARGET MODULE_IO_write_dmr_test
     LIBS parameter base device hcontainer
-    SOURCES ../module_dm/test/test_write_dmr.cpp
+    SOURCES test_write_dmr.cpp
             ../module_dm/write_dmr.cpp
             ../../source_cell/ucell_io.cpp
             ../../source_basis/module_ao/parallel_orbitals.cpp
-            ../../source_hamilt/module_hcontainer/test/tmp_mocks.cpp)
+           )
 endif()
 
 addtest(

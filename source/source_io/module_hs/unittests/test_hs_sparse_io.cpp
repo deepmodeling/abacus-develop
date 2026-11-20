@@ -9,6 +9,7 @@
  * hs_sparse_io.cpp only reads GlobalV::DRANK, so the fixture sets it
  * directly; no PARAM state is involved.
  */
+#include "source_hamilt/module_hcontainer/unittests/tmp_mocks.h"
 #include "csr_test_helpers.h"
 
 #include "source_io/module_hs/hs_sparse_io.h"

@@ -74,6 +74,19 @@ void world_barrier()
     Parallel::barrier(world);
 }
 #endif
+
+/// @brief Rank that owns the written files: MPI rank 0, or the only process
+///        in a serial build.
+bool on_io_rank()
+{
+#ifdef __MPI
+    int rank = 0;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    return rank == 0;
+#else
+    return true;
+#endif
+}
 } // namespace
 
 Magnetism::Magnetism() {
@@ -427,7 +440,7 @@ TEST_F(DMKTest,WriteDMK) {
     ModuleIO::write_dmk(dmk_multik, kv, 3, efs, ucell, pv, /*column_major=*/true,
                         out_dir, istep, 0, ofs_log);
 
-    if (GlobalV::MY_RANK == 0)
+    if (on_io_rank())
     {
         // {filename, expected Fermi energy, check trailing newline}
         const struct { const char* name; const char* fermi; bool check_newline; } cases[] = {
@@ -484,7 +497,7 @@ TEST_F(DMKTest, BodyIsRowMajorForColumnMajorStorage) {
     ModuleIO::write_dmk(dmk, kv, 8, efs, ucell, pv, /*column_major=*/true,
                         out_dir, /*istep=*/0, /*out_app_flag=*/0, ofs_log);
 
-    if (GlobalV::MY_RANK == 0)
+    if (on_io_rank())
     {
         // nk = 1 with a multi-k (complex) DM -> dmk1_nao.txt.
         const std::string fn = out_dir + "dmk1_nao.txt";
@@ -523,7 +536,7 @@ TEST_F(DMKTest, Mode0FixedNameOverwrite) {
     ModuleIO::write_dmk(dmk, kv, /*precision=*/3, efs, ucell, pv, /*column_major=*/true,
                         out_dir, /*istep=*/1, out_app_flag, ofs_log);
 
-    if (GlobalV::MY_RANK == 0)
+    if (on_io_rank())
     {
         std::ifstream ifs("dms1_nao.txt");
         std::string str((std::istreambuf_iterator<char>(ifs)),
@@ -565,7 +578,7 @@ TEST_F(DMKTest, Mode2PerStepFile) {
     ModuleIO::write_dmk(dmk, kv, /*precision=*/3, efs, ucell, pv, /*column_major=*/true,
                         out_dir, /*istep=*/2, out_app_flag, ofs_log);
 
-    if (GlobalV::MY_RANK == 0)
+    if (on_io_rank())
     {
         std::ifstream ifs("dms1g3_nao.txt");
         EXPECT_TRUE(ifs.good());
@@ -606,7 +619,7 @@ TEST_F(DMKTest, ReadDMKRoundTripComplex) {
                                    /*istep=*/0, /*out_app_flag=*/0, dmk_read, ofs_log));
     expect_dmk_eq(dmk_read, dmk);
 
-    if (GlobalV::MY_RANK == 0)
+    if (on_io_rank())
     {
         remove((out_dir + "dmk1_nao.txt").c_str());
     }
@@ -638,7 +651,7 @@ TEST_F(DMKTest, ReadDMKRoundTripGamma) {
                                    /*istep=*/0, /*out_app_flag=*/0, dmk_read, ofs_log));
     expect_dmk_eq(dmk_read, dmk);
 
-    if (GlobalV::MY_RANK == 0)
+    if (on_io_rank())
     {
         remove((out_dir + "dm_nao.txt").c_str());
     }
@@ -679,7 +692,7 @@ TEST_F(DMKTest, ReadDMKRoundTripMultipleMatrices) {
                                    /*istep=*/0, /*out_app_flag=*/0, dmk_read, ofs_log));
     expect_dmk_eq(dmk_read, dmk);
 
-    if (GlobalV::MY_RANK == 0)
+    if (on_io_rank())
     {
         remove((out_dir + "dmk1s1_nao.txt").c_str());
         remove((out_dir + "dmk2s1_nao.txt").c_str());
@@ -821,7 +834,7 @@ TEST_F(DMKTest, ReadDMKMode2PerStepFile) {
     EXPECT_FALSE(ModuleIO::read_dmk(nspin, nk, kv, pv, /*column_major=*/true, out_dir,
                                     /*istep=*/0, /*out_app_flag=*/2, dmk_other_step, ofs_log));
 
-    if (GlobalV::MY_RANK == 0)
+    if (on_io_rank())
     {
         remove((out_dir + "dmk1g3_nao.txt").c_str());
     }
@@ -876,7 +889,7 @@ TEST_F(DMKTest, ReadDMKMode1FrameSelection) {
     EXPECT_FALSE(ModuleIO::read_dmk(nspin, nk, kv, pv, /*column_major=*/true, out_dir,
                                     /*istep=*/5, /*out_app_flag=*/1, dmk_missing_frame, ofs_log));
 
-    if (GlobalV::MY_RANK == 0)
+    if (on_io_rank())
     {
         remove((out_dir + "dmk1_nao.txt").c_str());
     }
@@ -930,7 +943,7 @@ TEST_F(DMKTest, ReadDMKPartialFailureKeepsCallerData) {
 
     // Removing the last matrix makes the first one read successfully and the
     // second one fail, so the failure happens after partial progress.
-    if (GlobalV::MY_RANK == 0)
+    if (on_io_rank())
     {
         std::remove((out_dir + "dmk2_nao.txt").c_str());
     }
@@ -943,7 +956,7 @@ TEST_F(DMKTest, ReadDMKPartialFailureKeepsCallerData) {
                                     /*istep=*/0, /*out_app_flag=*/0, dmk_read, ofs_log));
     EXPECT_TRUE(all_equal_to(dmk_read, sentinel));
 
-    if (GlobalV::MY_RANK == 0)
+    if (on_io_rank())
     {
         std::remove((out_dir + "dmk1_nao.txt").c_str());
     }
@@ -983,7 +996,7 @@ TEST_F(DMKTest, ReadDMKRejectsSpinMismatch) {
 
     // Overwrite the spin-down file with the spin-up one: the content now
     // contradicts both the name and the requested spin channel.
-    if (GlobalV::MY_RANK == 0)
+    if (on_io_rank())
     {
         EXPECT_TRUE(copy_file(out_dir + "dmk1s1_nao.txt", out_dir + "dmk1s2_nao.txt"));
     }
@@ -995,7 +1008,7 @@ TEST_F(DMKTest, ReadDMKRejectsSpinMismatch) {
                                     /*istep=*/0, /*out_app_flag=*/0, dmk_read, ofs_log));
     EXPECT_TRUE(all_equal_to(dmk_read, sentinel));
 
-    if (GlobalV::MY_RANK == 0)
+    if (on_io_rank())
     {
         std::remove((out_dir + "dmk1s1_nao.txt").c_str());
         std::remove((out_dir + "dmk1s2_nao.txt").c_str());
@@ -1041,7 +1054,7 @@ TEST_F(DMKTest, ReadDMKRejectsKPointMismatch) {
 
     // The second k-point's record copied over the first name: the header index
     // no longer matches the requested k-point.
-    if (GlobalV::MY_RANK == 0)
+    if (on_io_rank())
     {
         EXPECT_TRUE(copy_file(out_dir + "dmk2_nao.txt", out_dir + "dmk1_nao.txt"));
     }
@@ -1049,7 +1062,7 @@ TEST_F(DMKTest, ReadDMKRejectsKPointMismatch) {
     EXPECT_FALSE(ModuleIO::read_dmk(nspin, nk, kv, pv, /*column_major=*/true, out_dir,
                                     /*istep=*/0, /*out_app_flag=*/0, dmk_read, ofs_log));
 
-    if (GlobalV::MY_RANK == 0)
+    if (on_io_rank())
     {
         std::remove((out_dir + "dmk1_nao.txt").c_str());
         std::remove((out_dir + "dmk2_nao.txt").c_str());
@@ -1115,7 +1128,7 @@ TEST_F(DMKTest, ReadDMKRejectsKVecMismatch) {
     EXPECT_TRUE(ModuleIO::read_dmk(nspin, nk, kv_wrapped, pv, /*column_major=*/true,
                                    out_dir, /*istep=*/0, /*out_app_flag=*/0, dmk_read, ofs_log));
 
-    if (GlobalV::MY_RANK == 0)
+    if (on_io_rank())
     {
         std::remove((out_dir + "dmk1_nao.txt").c_str());
         std::remove((out_dir + "dmk2_nao.txt").c_str());
@@ -1155,7 +1168,7 @@ TEST_F(DMKTest, ReadDMKRejectsBasisMismatch) {
     EXPECT_FALSE(ModuleIO::read_dmk(nspin, nk, kv, pv_wide, /*column_major=*/true, out_dir,
                                     /*istep=*/0, /*out_app_flag=*/0, dmk_read, ofs_log));
 
-    if (GlobalV::MY_RANK == 0)
+    if (on_io_rank())
     {
         std::remove((out_dir + "dmk1_nao.txt").c_str());
     }
@@ -1177,7 +1190,7 @@ TEST_F(DMKTest, ReadDMKRejectsTruncatedFile) {
     std::ofstream ofs_log;
 
     // Cut inside the header: only the spin count survives.
-    if (GlobalV::MY_RANK == 0)
+    if (on_io_rank())
     {
         std::ofstream ofs((out_dir + "dm_nao.txt").c_str());
         ofs << "1\n";
@@ -1195,7 +1208,7 @@ TEST_F(DMKTest, ReadDMKRejectsTruncatedFile) {
     ModuleIO::write_dmk(dmk, kv, /*precision=*/12, efs, ucell, pv, /*column_major=*/true,
                         out_dir, /*istep=*/0, /*out_app_flag=*/0, ofs_log);
 
-    if (GlobalV::MY_RANK == 0)
+    if (on_io_rank())
     {
         EXPECT_TRUE(drop_last_line(out_dir + "dm_nao.txt"));
     }
@@ -1203,7 +1216,7 @@ TEST_F(DMKTest, ReadDMKRejectsTruncatedFile) {
     EXPECT_FALSE(ModuleIO::read_dmk(nspin, nk, kv, pv, /*column_major=*/true, out_dir,
                                     /*istep=*/0, /*out_app_flag=*/0, dmk_read, ofs_log));
 
-    if (GlobalV::MY_RANK == 0)
+    if (on_io_rank())
     {
         std::remove((out_dir + "dm_nao.txt").c_str());
     }
@@ -1269,7 +1282,7 @@ TEST_F(DMKTest, ReadDMKRejectsMalformedAtomCount) {
     ModuleIO::write_dmk(dmk, kv, /*precision=*/12, efs, ucell, pv, /*column_major=*/true,
                         out_dir, /*istep=*/0, /*out_app_flag=*/0, ofs_log);
 
-    if (GlobalV::MY_RANK == 0)
+    if (on_io_rank())
     {
         // write_dmk emits a 14-line header (Ionic_Step through the trailing
         // blank separator) followed by the UnitCell block written by write_ucell.
@@ -1293,7 +1306,7 @@ TEST_F(DMKTest, ReadDMKRejectsMalformedAtomCount) {
     // The caller buffer must not be touched on failure.
     EXPECT_EQ(dmk_read, sentinel);
 
-    if (GlobalV::MY_RANK == 0)
+    if (on_io_rank())
     {
         std::remove((out_dir + "dm_nao.txt").c_str());
     }
@@ -1330,7 +1343,7 @@ TEST_F(DMKTest, ReadDMKMode0RejectsMixedSteps) {
 
     // Bump the step marker of the second file only, mimicking an interrupted
     // mode-0 write where dmk2 was refreshed but dmk1 was not.
-    if (GlobalV::MY_RANK == 0)
+    if (on_io_rank())
     {
         ASSERT_TRUE(rewrite_line(out_dir + "dmk2_nao.txt", /*target=*/0, "Ionic_Step 2"));
     }
@@ -1343,7 +1356,7 @@ TEST_F(DMKTest, ReadDMKMode0RejectsMixedSteps) {
     // The caller buffer must stay untouched on failure.
     EXPECT_TRUE(all_equal_to(dmk_read, sentinel));
 
-    if (GlobalV::MY_RANK == 0)
+    if (on_io_rank())
     {
         std::remove((out_dir + "dmk1_nao.txt").c_str());
         std::remove((out_dir + "dmk2_nao.txt").c_str());
@@ -1373,7 +1386,7 @@ TEST_F(DMKTest, ReadDMKMode0AcceptsFilesWithoutStepMarker) {
                         out_dir, /*istep=*/0, /*out_app_flag=*/0, ofs_log);
 
     // Strip the "Ionic_Step" marker line to mimic a pre-marker writer.
-    if (GlobalV::MY_RANK == 0)
+    if (on_io_rank())
     {
         const std::string fn = out_dir + "dm_nao.txt";
         std::ifstream ifs(fn.c_str());
@@ -1399,7 +1412,7 @@ TEST_F(DMKTest, ReadDMKMode0AcceptsFilesWithoutStepMarker) {
                                    /*istep=*/0, /*out_app_flag=*/0, dmk_read, ofs_log));
     expect_dmk_eq(dmk_read, dmk);
 
-    if (GlobalV::MY_RANK == 0)
+    if (on_io_rank())
     {
         std::remove((out_dir + "dm_nao.txt").c_str());
     }
@@ -1445,7 +1458,7 @@ TEST_F(DMKTest, HeaderStatesConjFirstConvention) {
     ModuleIO::write_dmk(dmk, kv, /*precision=*/12, efs, ucell, pv, /*column_major=*/true,
                         out_dir, /*istep=*/0, /*out_app_flag=*/0, ofs_log);
 
-    if (GlobalV::MY_RANK == 0)
+    if (on_io_rank())
     {
         const std::string fn = out_dir + "dmk1_nao.txt";
         std::ifstream ifs(fn.c_str());
@@ -1462,7 +1475,7 @@ TEST_F(DMKTest, HeaderStatesConjFirstConvention) {
                                    /*istep=*/0, /*out_app_flag=*/0, dmk_read, ofs_log));
     expect_dmk_eq(dmk_read, dmk);
 
-    if (GlobalV::MY_RANK == 0)
+    if (on_io_rank())
     {
         remove((out_dir + "dmk1_nao.txt").c_str());
     }
@@ -1498,7 +1511,7 @@ TEST_F(DMKTest, ReadDMKRoundTripRowMajorFlag) {
                                    /*istep=*/0, /*out_app_flag=*/0, dmk_read, ofs_log));
     expect_dmk_eq(dmk_read, dmk);
 
-    if (GlobalV::MY_RANK == 0)
+    if (on_io_rank())
     {
         std::remove((out_dir + "dmk1_nao.txt").c_str());
     }
@@ -1594,7 +1607,7 @@ TEST_F(DMKTest, ReadDMKRejectsOverflowingComplexComponent) {
                         out_dir, /*istep=*/0, /*out_app_flag=*/0, ofs_log);
 
     // strtod consumes "1e999" fully and only reports the overflow via ERANGE.
-    if (GlobalV::MY_RANK == 0)
+    if (on_io_rank())
     {
         EXPECT_TRUE(patch_first_body_token(out_dir + "dmk1_nao.txt", "(1e999,0)", true));
     }
@@ -1605,7 +1618,7 @@ TEST_F(DMKTest, ReadDMKRejectsOverflowingComplexComponent) {
     // The literal "nan" parses without any errno flag and must be rejected too.
     ModuleIO::write_dmk(dmk, kv, /*precision=*/12, efs, ucell, pv, /*column_major=*/true,
                         out_dir, /*istep=*/0, /*out_app_flag=*/0, ofs_log);
-    if (GlobalV::MY_RANK == 0)
+    if (on_io_rank())
     {
         EXPECT_TRUE(patch_first_body_token(out_dir + "dmk1_nao.txt", "(nan,0)", true));
     }
@@ -1613,7 +1626,7 @@ TEST_F(DMKTest, ReadDMKRejectsOverflowingComplexComponent) {
     EXPECT_FALSE(ModuleIO::read_dmk(nspin, nk, kv, pv, /*column_major=*/true, out_dir,
                                     /*istep=*/0, /*out_app_flag=*/0, dmk_read, ofs_log));
 
-    if (GlobalV::MY_RANK == 0)
+    if (on_io_rank())
     {
         std::remove((out_dir + "dmk1_nao.txt").c_str());
     }
@@ -1640,7 +1653,7 @@ TEST_F(DMKTest, ReadDMKRejectsNonFiniteRealComponent) {
                         out_dir, /*istep=*/0, /*out_app_flag=*/0, ofs_log);
 
     // The stream extractor accepts the literal "inf" without setting failbit.
-    if (GlobalV::MY_RANK == 0)
+    if (on_io_rank())
     {
         EXPECT_TRUE(patch_first_body_token(out_dir + "dm_nao.txt", "inf", false));
     }
@@ -1648,7 +1661,7 @@ TEST_F(DMKTest, ReadDMKRejectsNonFiniteRealComponent) {
     EXPECT_FALSE(ModuleIO::read_dmk(nspin, nk, kv, pv, /*column_major=*/true, out_dir,
                                     /*istep=*/0, /*out_app_flag=*/0, dmk_read, ofs_log));
 
-    if (GlobalV::MY_RANK == 0)
+    if (on_io_rank())
     {
         std::remove((out_dir + "dm_nao.txt").c_str());
     }

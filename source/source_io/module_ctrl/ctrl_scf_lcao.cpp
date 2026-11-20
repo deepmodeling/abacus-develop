@@ -116,7 +116,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     // the column-major solvers keep mat[i + j * nrloc] in each local block. The
     // text body of DM(k), H(k)/S(k) and T(k) is documented as row-major, so the
     // writers need this flag to emit (i, j) instead of the transpose.
-    const std::string& ks_solver = PARAM.inp.ks_solver;
+    const std::string& ks_solver = inp.ks_solver;
     const bool column_major_source = ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(ks_solver);
 
     //*****

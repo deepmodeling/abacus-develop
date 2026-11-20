@@ -8,6 +8,7 @@
  * The writer tests pin down the exact CSR text/binary layout on disk so a
  * format change is caught by a failing test instead of a broken reader.
  */
+#include "source_hamilt/module_hcontainer/unittests/tmp_mocks.h"
 #include "csr_test_helpers.h"
 
 #include "source_base/module_out/csr_reader.h"

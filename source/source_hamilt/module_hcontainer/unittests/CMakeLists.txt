@@ -4,14 +4,14 @@ if(ENABLE_LCAO)
     LIBS parameter psi base device
     SOURCES test_hcontainer.cpp ../base_matrix.cpp ../hcontainer.cpp
             ../atom_pair.cpp
-            ../../../source_basis/module_ao/parallel_orbitals.cpp tmp_mocks.cpp)
+            ../../../source_basis/module_ao/parallel_orbitals.cpp)
 
   addtest(
     TARGET MODULE_LCAO_hcontainer_complex_test
     LIBS parameter psi base device
     SOURCES test_hcontainer_complex.cpp ../base_matrix.cpp ../hcontainer.cpp
             ../atom_pair.cpp
-            ../../../source_basis/module_ao/parallel_orbitals.cpp tmp_mocks.cpp)
+            ../../../source_basis/module_ao/parallel_orbitals.cpp)
 
   # This driver only measures time and memory; keep it with the opt-in benchmarks.
   if(ENABLE_GOOGLEBENCH)
@@ -22,8 +22,7 @@ if(ENABLE_LCAO)
               ../base_matrix.cpp
               ../hcontainer.cpp
               ../atom_pair.cpp
-              ../../../source_basis/module_ao/parallel_orbitals.cpp
-              tmp_mocks.cpp)
+              ../../../source_basis/module_ao/parallel_orbitals.cpp)
   endif()
 
   addtest(
@@ -34,8 +33,7 @@ if(ENABLE_LCAO)
             ../hcontainer.cpp
             ../atom_pair.cpp
             ../func_folding.cpp
-            ../../../source_basis/module_ao/parallel_orbitals.cpp
-            tmp_mocks.cpp)
+            ../../../source_basis/module_ao/parallel_orbitals.cpp)
 
   addtest(
     TARGET MODULE_LCAO_hcontainer_transfer_test
@@ -46,8 +44,7 @@ if(ENABLE_LCAO)
             ../hcontainer.cpp
             ../atom_pair.cpp
             ../transfer.cpp
-            ../../../source_basis/module_ao/parallel_orbitals.cpp
-            tmp_mocks.cpp)
+            ../../../source_basis/module_ao/parallel_orbitals.cpp)
 
   abacus_copy_test_files(parallel_hcontainer_tests.sh)
   find_program(BASH bash)
@@ -61,7 +58,6 @@ if(ENABLE_LCAO)
     TARGET MODULE_LCAO_hcontainer_output_test
     LIBS parameter base device
     SOURCES test_hcontainer_output.cpp
-            tmp_mocks.cpp
             ../output_hcontainer.cpp
             ../base_matrix.cpp
             ../hcontainer.cpp
@@ -75,6 +71,6 @@ if(ENABLE_LCAO)
     LIBS parameter ${math_libs} psi base device
     SOURCES test_add_value.cpp ../base_matrix.cpp ../hcontainer.cpp
             ../atom_pair.cpp
-            ../../../source_basis/module_ao/parallel_orbitals.cpp tmp_mocks.cpp)
+            ../../../source_basis/module_ao/parallel_orbitals.cpp)
 
 endif()

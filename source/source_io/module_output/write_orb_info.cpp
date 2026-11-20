@@ -4,6 +4,7 @@
 #include "source_io/module_output/write_notice.h"
 #include "source_base/name_angular.h"
 #include "source_cell/atom_spec.h"
+#include "source_cell/unitcell.h"
 
 void ModuleIO::write_orb_info(const UnitCell* ucell, std::ofstream& ofs_running)
 {

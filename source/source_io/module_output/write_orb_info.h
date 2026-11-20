@@ -1,8 +1,9 @@
 #ifndef WRITE_ORB_INFO
 #define WRITE_ORB_INFO
-#include "source_cell/unitcell.h"
 
 #include <iosfwd>
+
+class UnitCell;
 
 namespace ModuleIO
 {
