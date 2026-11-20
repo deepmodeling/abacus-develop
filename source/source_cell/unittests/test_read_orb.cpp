@@ -64,7 +64,7 @@ class ReadOrbBoundaryTest : public ::testing::Test
 
 TEST_F(ReadOrbBoundaryTest, ZeroCountBeyondLmaxTolerated)
 {
-    const std::string orb = write_orb_file("H_1s_minimal.orb",
+    std::string orb = write_orb_file("H_1s_minimal.orb",
                                            "Element                     H\n"
                                            "Energy Cutoff(Ry)           100\n"
                                            "Radius Cutoff(a.u.)         8\n"
@@ -80,7 +80,7 @@ TEST_F(ReadOrbBoundaryTest, ZeroCountBeyondLmaxTolerated)
 
 TEST_F(ReadOrbBoundaryTest, NormalMultiChannel)
 {
-    const std::string orb = write_orb_file("C_spd.orb",
+    std::string orb = write_orb_file("C_spd.orb",
                                            "Element                     C\n"
                                            "Lmax                        2\n"
                                            "Cutoff(a.u.)                8\n"
@@ -98,7 +98,7 @@ TEST_F(ReadOrbBoundaryTest, NormalMultiChannel)
 
 TEST_F(ReadOrbBoundaryTest, NonzeroCountBeyondLmaxRejected)
 {
-    const std::string orb = write_orb_file("H_bad_count.orb",
+    std::string orb = write_orb_file("H_bad_count.orb",
                                            "Element                     H\n"
                                            "Lmax                        0\n"
                                            "Number of Sorbital-->       1\n"
@@ -112,7 +112,7 @@ TEST_F(ReadOrbBoundaryTest, NonzeroCountBeyondLmaxRejected)
 
 TEST_F(ReadOrbBoundaryTest, ChannelBeforeLmaxRejected)
 {
-    const std::string orb = write_orb_file("H_no_lmax.orb",
+    std::string orb = write_orb_file("H_no_lmax.orb",
                                            "Element                     H\n"
                                            "Number of Sorbital-->       1\n"
                                            "Lmax                        0\n");
