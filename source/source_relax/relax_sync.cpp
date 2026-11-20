@@ -11,7 +11,7 @@
 
 #include <cmath>
 
-void Relax::init_relax(const int nat_in, const Input_para& inp)
+void Relax::init_relax(const int nat_in, const Input_para &inp)
 {
     ModuleBase::TITLE("Relax", "init_relax");
 
@@ -60,11 +60,12 @@ void Relax::init_relax(const int nat_in, const Input_para& inp)
     }
 }
 
-bool Relax::relax_step(UnitCell& ucell,
-                       const ModuleBase::matrix& force,
-                       const ModuleBase::matrix& stress,
-                       const double etot_in,
-                       std::ofstream& ofs_running)
+bool Relax::relax_step(
+    UnitCell &ucell,
+    const ModuleBase::matrix &force,
+    const ModuleBase::matrix &stress,
+    const double etot_in,
+    std::ofstream &ofs_running)
 {
     ModuleBase::TITLE("Relax", "relax_step");
 
@@ -105,10 +106,11 @@ bool Relax::relax_step(UnitCell& ucell,
     return relax_done;
 }
 
-bool Relax::setup_gradient(const UnitCell& ucell,
-                           const ModuleBase::matrix& force,
-                           const ModuleBase::matrix& stress,
-                           std::ofstream& ofs_running)
+bool Relax::setup_gradient(
+    const UnitCell &ucell,
+    const ModuleBase::matrix &force,
+    const ModuleBase::matrix &stress,
+    std::ofstream &ofs_running)
 {
     ModuleBase::TITLE("Relax", "setup_gradient");
 
@@ -141,10 +143,11 @@ bool Relax::setup_gradient(const UnitCell& ucell,
     return force_converged;
 }
 
-double Relax::setup_ion_gradient(const UnitCell& ucell,
-                                 const ModuleBase::matrix& force,
-                                 bool& force_converged,
-                                 std::ofstream& ofs_running)
+double Relax::setup_ion_gradient(
+    const UnitCell &ucell,
+    const ModuleBase::matrix &force,
+    bool &force_converged,
+    std::ofstream &ofs_running)
 {
     grad_ion.zero_out();
     ModuleBase::matrix force_eva = force * (ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A); // convert to eV/Angstrom
@@ -153,7 +156,7 @@ double Relax::setup_ion_gradient(const UnitCell& ucell,
     int iat = 0;
     for (int it = 0; it < ucell.ntype; it++)
     {
-        Atom* atom = &ucell.atoms[it];
+        Atom *atom = &ucell.atoms[it];
         for (int ia = 0; ia < ucell.atoms[it].na; ia++)
         {
             if (atom->mbl[ia].x == 1)
@@ -212,10 +215,11 @@ double Relax::setup_ion_gradient(const UnitCell& ucell,
     return max_grad;
 }
 
-void Relax::setup_cell_gradient(const UnitCell& ucell,
-                                const ModuleBase::matrix& stress,
-                                bool& force_converged,
-                                std::ofstream& ofs_running)
+void Relax::setup_cell_gradient(
+    const UnitCell &ucell,
+    const ModuleBase::matrix &stress,
+    bool &force_converged,
+    std::ofstream &ofs_running)
 {
     grad_cell.zero_out();
     ModuleBase::matrix stress_ev = stress * (ucell.omega * ModuleBase::Ry_to_eV);
@@ -298,7 +302,7 @@ void Relax::setup_cell_gradient(const UnitCell& ucell,
                 << std::endl;
 }
 
-void Relax::print_gradient_summary(bool force_converged, std::ofstream& ofs_running)
+void Relax::print_gradient_summary(bool force_converged, std::ofstream &ofs_running)
 {
     if (force_converged)
     {
@@ -385,8 +389,8 @@ bool Relax::check_line_search()
         return false;
     }
 
-    if (std::abs(gr_sr) * std::max(gamma, 1.0) > std::abs(gr_gr) / 5.0
-        && !brent_done) // last brent line search not finished
+    if (std::abs(gr_sr) * std::max(gamma, 1.0) > std::abs(gr_gr) / 5.0 &&
+        !brent_done) // last brent line search not finished
     {
         return false;
     }
@@ -394,7 +398,7 @@ bool Relax::check_line_search()
     return true;
 }
 
-void Relax::perform_line_search(std::ofstream& ofs_running)
+void Relax::perform_line_search(std::ofstream &ofs_running)
 {
     ModuleBase::TITLE("Relax", "line_search");
 
@@ -429,7 +433,7 @@ void Relax::perform_line_search(std::ofstream& ofs_running)
     return;
 }
 
-void Relax::new_direction(std::ofstream& ofs_running)
+void Relax::new_direction(std::ofstream &ofs_running)
 {
     ModuleBase::TITLE("Relax", "new_direction");
     if (cg_step != 0)
@@ -519,7 +523,7 @@ void Relax::new_direction(std::ofstream& ofs_running)
     return;
 }
 
-void Relax::move_cell_ions(UnitCell& ucell, const bool is_new_dir, std::ofstream& ofs_running)
+void Relax::move_cell_ions(UnitCell &ucell, const bool is_new_dir, std::ofstream &ofs_running)
 {
     ModuleBase::TITLE("Relax", "move_cell_ions");
 
@@ -586,11 +590,12 @@ void Relax::move_cell_ions(UnitCell& ucell, const bool is_new_dir, std::ofstream
     }
 }
 
-void Relax::update_lattice(UnitCell& ucell, double fac, bool is_new_dir)
+void Relax::update_lattice(UnitCell &ucell, double fac, bool is_new_dir)
 {
     // imo matrix3 class is not a very clever way to store 3*3 matrix ...
     ModuleBase::Matrix3 sr_dr_cell;
-    auto cp_mat_to_mat3 = [&sr_dr_cell, this]() -> void {
+    auto cp_mat_to_mat3 = [&sr_dr_cell, this]() -> void
+    {
         sr_dr_cell.e11 = search_dr_cell(0, 0);
         sr_dr_cell.e12 = search_dr_cell(0, 1);
         sr_dr_cell.e13 = search_dr_cell(0, 2);
@@ -655,7 +660,7 @@ void Relax::update_lattice(UnitCell& ucell, double fac, bool is_new_dir)
     }
 }
 
-void Relax::update_ion_positions(UnitCell& ucell, double fac, std::ofstream& ofs_running)
+void Relax::update_ion_positions(UnitCell &ucell, double fac, std::ofstream &ofs_running)
 {
     // Calculating displacement in Cartesian coordinate (in Angstrom)
     std::vector<double> move_ion(nat * 3, 0.0);
@@ -675,7 +680,7 @@ void Relax::update_ion_positions(UnitCell& ucell, double fac, std::ofstream& ofs
 
         int it = ucell.iat2it[iat];
         int ia = ucell.iat2ia[iat];
-        Atom* atom = &ucell.atoms[it];
+        Atom *atom = &ucell.atoms[it];
 
         if (atom->mbl[ia].x == 1)
         {
@@ -702,7 +707,7 @@ void Relax::update_ion_positions(UnitCell& ucell, double fac, std::ofstream& ofs
     unitcell::print_tau(ucell.atoms, ucell.Coordinate, ucell.ntype, ucell.lat0, ofs_running);
 }
 
-void Relax::update_reciprocal_cell(UnitCell& ucell, std::ofstream& ofs_running)
+void Relax::update_reciprocal_cell(UnitCell &ucell, std::ofstream &ofs_running)
 {
     ucell.a1.x = ucell.latvec.e11;
     ucell.a1.y = ucell.latvec.e12;

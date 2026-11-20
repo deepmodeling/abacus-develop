@@ -1,8 +1,8 @@
 #include "for_test.h"
-#include "mock_remake_cell.h"
 #include "source_relax/lattice_change_basic.h"
 #include "source_relax/lattice_change_cg.h"
 #include "source_relax/relax_criteria.h"
+#include "test_mock_remake_cell.h"
 
 #include "gtest/gtest.h"
 
@@ -37,26 +37,11 @@ class LatticeChangeCGTest : public ::testing::Test
     // Friendship is not inherited: a TEST_F body lives in a class derived from
     // this fixture, so the internals of Lattice_Change_CG (which friends the
     // fixture itself) are reached through these forwarders.
-    const std::vector<double>& get_lat0() const
-    {
-        return lc_cg.lat0;
-    }
-    const std::vector<double>& get_grad0() const
-    {
-        return lc_cg.grad0;
-    }
-    const std::vector<double>& get_cg_grad0() const
-    {
-        return lc_cg.cg_grad0;
-    }
-    const std::vector<double>& get_move0() const
-    {
-        return lc_cg.move0;
-    }
-    void set_move0(const int i, const double value)
-    {
-        lc_cg.move0[i] = value;
-    }
+    const std::vector<double> &get_lat0() const { return lc_cg.lat0; }
+    const std::vector<double> &get_grad0() const { return lc_cg.grad0; }
+    const std::vector<double> &get_cg_grad0() const { return lc_cg.cg_grad0; }
+    const std::vector<double> &get_move0() const { return lc_cg.move0; }
+    void set_move0(const int i, const double value) { lc_cg.move0[i] = value; }
 };
 
 // Test whether the allocate() function can correctly allocate memory space

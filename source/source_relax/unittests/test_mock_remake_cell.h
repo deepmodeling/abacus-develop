@@ -13,7 +13,7 @@ extern std::string remake_cell_latName;
 extern ModuleBase::Matrix3 remake_cell_latvec;
 
 // Mock implementation of remake_cell
-void remake_cell(Lattice& lat);
+void remake_cell(Lattice &lat);
 
 // Helper functions for testing
 void reset_remake_cell_mock();

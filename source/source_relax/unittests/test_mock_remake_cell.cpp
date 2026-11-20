@@ -1,4 +1,4 @@
-#include "mock_remake_cell.h"
+#include "test_mock_remake_cell.h"
 
 #include <cmath>
 
@@ -9,7 +9,7 @@ bool remake_cell_called = false;
 std::string remake_cell_latName = "";
 ModuleBase::Matrix3 remake_cell_latvec;
 
-void remake_cell(Lattice& lat)
+void remake_cell(Lattice &lat)
 {
     remake_cell_called = true;
     remake_cell_latName = lat.latName;
@@ -18,8 +18,8 @@ void remake_cell(Lattice& lat)
     // Mock implementation: enforce simple cubic structure for "sc"
     if (lat.latName == "sc")
     {
-        double celldm = std::sqrt(lat.latvec.e11 * lat.latvec.e11 + lat.latvec.e12 * lat.latvec.e12
-                                  + lat.latvec.e13 * lat.latvec.e13);
+        double celldm = std::sqrt(
+            lat.latvec.e11 * lat.latvec.e11 + lat.latvec.e12 * lat.latvec.e12 + lat.latvec.e13 * lat.latvec.e13);
         lat.latvec.Zero();
         lat.latvec.e11 = celldm;
         lat.latvec.e22 = celldm;
@@ -28,9 +28,10 @@ void remake_cell(Lattice& lat)
     // Mock implementation: enforce FCC structure for "fcc"
     else if (lat.latName == "fcc")
     {
-        double celldm = std::sqrt(lat.latvec.e11 * lat.latvec.e11 + lat.latvec.e12 * lat.latvec.e12
-                                  + lat.latvec.e13 * lat.latvec.e13)
-                        / std::sqrt(2.0);
+        double celldm =
+            std::sqrt(
+                lat.latvec.e11 * lat.latvec.e11 + lat.latvec.e12 * lat.latvec.e12 + lat.latvec.e13 * lat.latvec.e13) /
+            std::sqrt(2.0);
         lat.latvec.e11 = -celldm;
         lat.latvec.e12 = 0.0;
         lat.latvec.e13 = celldm;
@@ -51,8 +52,5 @@ void reset_remake_cell_mock()
     remake_cell_latvec.Zero();
 }
 
-bool was_remake_cell_called()
-{
-    return remake_cell_called;
-}
+bool was_remake_cell_called() { return remake_cell_called; }
 } // namespace unitcell

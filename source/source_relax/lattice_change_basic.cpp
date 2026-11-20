@@ -11,7 +11,11 @@ int Lattice_Change_Basic::stress_step = 0;
 double Lattice_Change_Basic::lattice_change_ini = 0.01; // default is 0.01
 std::string Lattice_Change_Basic::fixed_axes = "None";
 
-void Lattice_Change_Basic::setup_gradient(const UnitCell& ucell, double* lat, double* grad, ModuleBase::matrix& stress)
+void Lattice_Change_Basic::setup_gradient(
+    const UnitCell &ucell,
+    double *lat,
+    double *grad,
+    ModuleBase::matrix &stress)
 {
     ModuleBase::TITLE("Lattice_Change_Basic", "setup_gradient");
 
@@ -97,7 +101,11 @@ void Lattice_Change_Basic::setup_gradient(const UnitCell& ucell, double* lat, do
     return;
 }
 
-void Lattice_Change_Basic::change_lattice(UnitCell& ucell, double* move, double* lat, const bool fixed_ibrav)
+void Lattice_Change_Basic::change_lattice(
+    UnitCell &ucell,
+    double *move,
+    double *lat,
+    const bool fixed_ibrav)
 {
     ModuleBase::TITLE("Lattice_Change_Basic", "change_lattice");
 
@@ -231,11 +239,12 @@ void Lattice_Change_Basic::change_lattice(UnitCell& ucell, double* move, double*
     return;
 }
 
-bool Lattice_Change_Basic::check_converged(const UnitCell& ucell,
-                                           ModuleBase::matrix& stress,
-                                           double* grad,
-                                           std::ofstream& ofs,
-                                           const double& stress_thr)
+bool Lattice_Change_Basic::check_converged(
+    const UnitCell &ucell,
+    ModuleBase::matrix &stress,
+    double *grad,
+    std::ofstream &ofs,
+    const double &stress_thr)
 {
     ModuleBase::TITLE("Lattice_Change_Basic", "check_converged");
 
@@ -307,7 +316,7 @@ bool Lattice_Change_Basic::check_converged(const UnitCell& ucell,
     }
 }
 
-void Lattice_Change_Basic::terminate(const bool converged, std::ofstream& ofs)
+void Lattice_Change_Basic::terminate(const bool converged, std::ofstream &ofs)
 {
     ModuleBase::TITLE("Lattice_Change_Basic", "terminate");
     if (converged)
@@ -337,7 +346,7 @@ void Lattice_Change_Basic::terminate(const bool converged, std::ofstream& ofs)
     return;
 }
 
-void Lattice_Change_Basic::setup_etot(const double& energy_in, std::vector<double>& etot_info)
+void Lattice_Change_Basic::setup_etot(const double &energy_in, std::vector<double> &etot_info)
 {
     // etot_info[0] = etot (current total energy)
     // etot_info[1] = etot_p (previous total energy)

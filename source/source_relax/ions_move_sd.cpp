@@ -8,9 +8,7 @@
 
 using namespace Ions_Move_Basic;
 
-Ions_Move_SD::Ions_Move_SD() : energy_saved(1.0e10)
-{
-}
+Ions_Move_SD::Ions_Move_SD() : energy_saved(1.0e10) {}
 
 void Ions_Move_SD::allocate()
 {
@@ -20,14 +18,15 @@ void Ions_Move_SD::allocate()
     pos_saved.resize(dim, 0.0);
 }
 
-bool Ions_Move_SD::start(UnitCell& ucell,
-                         const ModuleBase::matrix& force,
-                         const double& etot_in,
-                         const int istep,
-                         int& update_iter,
-                         std::ofstream& ofs,
-                         std::vector<double>& etot_info,
-                         const Relax_Criteria& criteria)
+bool Ions_Move_SD::start(
+    UnitCell &ucell,
+    const ModuleBase::matrix &force,
+    const double &etot_in,
+    const int istep,
+    int &update_iter,
+    std::ofstream &ofs,
+    std::vector<double> &etot_info,
+    const Relax_Criteria &criteria)
 {
     ModuleBase::TITLE("Ions_Move_SD", "start");
 
@@ -63,15 +62,9 @@ bool Ions_Move_SD::start(UnitCell& ucell,
         }
     }
 
-    bool converged = Ions_Move_Basic::check_converged(ucell,
-                                                      grad.data(),
-                                                      update_iter,
-                                                      ofs,
-                                                      etot_info,
-                                                      criteria.force_thr,
-                                                      criteria.force_thr_ev,
-                                                      criteria.out_level,
-                                                      criteria.test_relax_method);
+    bool converged = Ions_Move_Basic::check_converged(
+        ucell, grad.data(), update_iter, ofs, etot_info, criteria.force_thr, criteria.force_thr_ev, criteria.out_level,
+        criteria.test_relax_method);
     if (converged)
     {
         Ions_Move_Basic::terminate(converged, update_iter, ucell, istep, ofs);
@@ -90,7 +83,7 @@ bool Ions_Move_SD::start(UnitCell& ucell,
     }
 }
 
-void ions_move_sd::cal_tradius_sd(const int istep, std::vector<double>& etot_info, const std::string& out_level)
+void ions_move_sd::cal_tradius_sd(const int istep, std::vector<double> &etot_info, const std::string &out_level)
 {
     static int accepted_number = 0;
 
