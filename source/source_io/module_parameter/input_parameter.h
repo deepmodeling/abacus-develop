@@ -580,6 +580,7 @@ struct Input_para
     bool out_wannier_amn = true;            ///< output .amn file or not
     bool out_wannier_unk = false;           ///< output UNK. file or not
     bool out_wannier_eig = true;            ///< output .eig file or not
+    bool out_wannier_spn = false;           ///< output formatted spin matrices for Wannier90
     bool out_wannier_wvfn_formatted = true; ///< output UNK. file in text format or in binary format
 
     // ==============   #Parameters (13.Model) ===========================
