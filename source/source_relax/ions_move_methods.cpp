@@ -7,14 +7,10 @@
 
 #include <algorithm>
 
-Ions_Move_Methods::Ions_Move_Methods()
-{
-}
-Ions_Move_Methods::~Ions_Move_Methods()
-{
-}
+Ions_Move_Methods::Ions_Move_Methods() {}
+Ions_Move_Methods::~Ions_Move_Methods() {}
 
-void Ions_Move_Methods::allocate(const int& natom, const std::string& relax_method)
+void Ions_Move_Methods::allocate(const int &natom, const std::string &relax_method)
 {
     if (natom <= 0)
     {
@@ -55,14 +51,15 @@ void Ions_Move_Methods::allocate(const int& natom, const std::string& relax_meth
 }
 
 // void Ions_Move_Methods::cal_movement(const int &istep, const ModuleBase::matrix &f, const double &etot)
-void Ions_Move_Methods::cal_movement(const int& istep,
-                                     const int& force_step,
-                                     const ModuleBase::matrix& f,
-                                     const double& etot,
-                                     UnitCell& ucell,
-                                     std::ofstream& ofs,
-                                     std::string& relax_method,
-                                     const Relax_Criteria& criteria)
+void Ions_Move_Methods::cal_movement(
+    const int &istep,
+    const int &force_step,
+    const ModuleBase::matrix &f,
+    const double &etot,
+    UnitCell &ucell,
+    std::ofstream &ofs,
+    std::string &relax_method,
+    const Relax_Criteria &criteria)
 {
     ModuleBase::TITLE("Ions_Move_Methods", "init");
     if (relax_method == "bfgs")
@@ -97,7 +94,7 @@ void Ions_Move_Methods::cal_movement(const int& istep,
     return;
 }
 
-void Ions_Move_Methods::reset_after_cell_change(const std::string& relax_method, std::ofstream& ofs)
+void Ions_Move_Methods::reset_after_cell_change(const std::string &relax_method, std::ofstream &ofs)
 {
     ModuleBase::TITLE("Ions_Move_Methods", "reset_after_cell_change");
 
@@ -106,7 +103,8 @@ void Ions_Move_Methods::reset_after_cell_change(const std::string& relax_method,
         return;
     }
 
-    const auto reset_common_state = [this]() {
+    const auto reset_common_state = [this]()
+    {
         this->converged_ = false;
         this->update_iter_ = 0;
         std::fill(this->etot_info_.begin(), this->etot_info_.end(), 0.0);

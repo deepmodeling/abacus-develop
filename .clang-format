@@ -4,15 +4,14 @@ BasedOnStyle: LLVM
 
 ColumnLimit: 120
 
-#AlwaysBreakTemplateDeclarations: Yes
+AlwaysBreakTemplateDeclarations: Yes
 #
 #AllowAllArgumentsOnNextLine: false
 #AllowAllParametersOfDeclarationOnNextLine: false
-BinPackArguments: false
+BinPackArguments: true
 BinPackParameters: false
-PackArguments:
-  BinPack: UseBreakAfter
-  BreakAfter: 3
+  #PackArguments:
+  #BinPack: OnePerLine
 PackParameters:
   BinPack: UseBreakAfter
   BreakAfter: 3

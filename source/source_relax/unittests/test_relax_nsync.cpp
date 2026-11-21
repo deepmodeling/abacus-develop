@@ -31,13 +31,16 @@ namespace unitcell
 {
 // Stub: the real update_pos_tau performs lattice-vector algebra that needs a
 // fully built UnitCell; these tests only care about the log output.
-void update_pos_tau(const Lattice&, const double*, const int, const int, Atom*)
+void update_pos_tau(
+    const Lattice &,
+    const double *,
+    const int,
+    const int,
+    Atom *)
 {
 }
 // Stub: the real setup_cell_after_vc recomputes reciprocal lattice etc.
-void setup_cell_after_vc(UnitCell&, std::ofstream&, const int)
-{
-}
+void setup_cell_after_vc(UnitCell &, std::ofstream &, const int) {}
 } // namespace unitcell
 
 UnitCell::UnitCell()
@@ -55,15 +58,9 @@ UnitCell::UnitCell()
     set_atom_flag = true;
     atoms[0].label = "Si";
 }
-UnitCell::~UnitCell()
-{
-}
-Magnetism::Magnetism()
-{
-}
-Magnetism::~Magnetism()
-{
-}
+UnitCell::~UnitCell() {}
+Magnetism::Magnetism() {}
+Magnetism::~Magnetism() {}
 Atom::Atom()
 {
     na = 1;
@@ -75,58 +72,33 @@ Atom::Atom()
     taud.resize(na);
     mbl[0] = {1, 1, 1};
 }
-Atom::~Atom()
-{
-}
+Atom::~Atom() {}
 #ifdef __MPI
-void Atom::bcast_atom()
-{
-}
-void Atom::bcast_atom2()
-{
-}
+void Atom::bcast_atom() {}
+void Atom::bcast_atom2() {}
 #endif
-Atom_pseudo::Atom_pseudo()
-{
-}
-Atom_pseudo::~Atom_pseudo()
-{
-}
-pseudo::pseudo()
-{
-}
-pseudo::~pseudo()
-{
-}
-SepPot::SepPot()
-{
-}
-SepPot::~SepPot()
-{
-}
-Sep_Cell::Sep_Cell() noexcept
-{
-}
-Sep_Cell::~Sep_Cell() noexcept
-{
-}
+Atom_pseudo::Atom_pseudo() {}
+Atom_pseudo::~Atom_pseudo() {}
+pseudo::pseudo() {}
+pseudo::~pseudo() {}
+SepPot::SepPot() {}
+SepPot::~SepPot() {}
+Sep_Cell::Sep_Cell() noexcept {}
+Sep_Cell::~Sep_Cell() noexcept {}
 int ModuleSymmetry::Symmetry::symm_flag = 0;
-void ModuleSymmetry::Symmetry::symmetrize_mat3(ModuleBase::matrix& sigma, const Lattice& lat) const
-{
-}
-void ModuleSymmetry::Symmetry::symmetrize_vec3_nat(double* v) const
-{
-}
+void ModuleSymmetry::Symmetry::symmetrize_mat3(ModuleBase::matrix &sigma, const Lattice &lat) const {}
+void ModuleSymmetry::Symmetry::symmetrize_vec3_nat(double *v) const {}
 
 // Friend of Parameter; the only sanctioned way to write PARAM.input in tests.
 class TestParameters
 {
   public:
-    static void set_relax(const std::string& out_level,
-                          const double relax_bfgs_rmax,
-                          const double relax_bfgs_rmin,
-                          const double relax_bfgs_init,
-                          const std::string& fixed_axes)
+    static void set_relax(
+        const std::string &out_level,
+        const double relax_bfgs_rmax,
+        const double relax_bfgs_rmin,
+        const double relax_bfgs_init,
+        const std::string &fixed_axes)
     {
         PARAM.input.out_level = out_level;
         PARAM.input.relax_bfgs_rmax = relax_bfgs_rmax;
@@ -172,7 +144,7 @@ class IonCellOptimizerTest : public ::testing::Test
     }
 
     // UnitCell is non-copyable (unique_ptr member), so fill it in place.
-    void setup_ucell(UnitCell& ucell)
+    void setup_ucell(UnitCell &ucell)
     {
         ucell.lat_axis_free[0] = 1;
         ucell.lat_axis_free[1] = 1;

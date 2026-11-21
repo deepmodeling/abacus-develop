@@ -177,6 +177,10 @@ std::vector<HContainer<TR>*> HamiltLCAO<TK, TR>::getHR_vector()
         TR* down_data = up_data + nnr;
         this->hr_spin_up_.reset(new HContainer<TR>(*this->hR, up_data));
         this->hr_spin_dn_.reset(new HContainer<TR>(*this->hR, down_data));
+        if (!this->vl_in_h)
+        {
+            return {this->hR.get(), this->hR.get()};
+        }
         return {this->hr_spin_up_.get(), this->hr_spin_dn_.get()};
     }
     else

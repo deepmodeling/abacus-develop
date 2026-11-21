@@ -125,6 +125,7 @@ if(BUILD_TESTING)
         $<TARGET_FILE:MODULE_BASE_parallel_blkcyc>
         ${MPIEXEC_POSTFLAGS}
     )
+    add_subdirectory(unittests)
     add_subdirectory(test)
     add_subdirectory(test_parallel)
     add_subdirectory(kernels/test)

@@ -31,15 +31,7 @@ Output_HContainer<T>::Output_HContainer(hamilt::HContainer<T>* hcontainer,
 template <typename T>
 void Output_HContainer<T>::write(bool write_empty)
 {
-    _ofs << " #----------------------------------------------------------------------#" << std::endl;
-    _ofs << " #                               CSR Format                             #" << std::endl;
-    _ofs << " # The outer loop corresponds to the number of Bravais lattice vectors. #" << std::endl;
-    _ofs << " # The first line contains the index of the Bravais lattice vector      #" << std::endl; 
-    _ofs << " # (Rx, Ry, Rz), followed by the number of non-zero elements.           #" << std::endl;
-    _ofs << " # The subsequent lines consist of three blocks of data, which are      #" << std::endl;
-    _ofs << " # values, column indices, row pointers.                                #" << std::endl;
-    _ofs << " #----------------------------------------------------------------------#" << std::endl;
-    _ofs << std::endl;
+    ModuleIO::write_csr_banner(_ofs);
 
     int size_for_loop_R = this->_hcontainer->size_R_loop();
     int rx=0;

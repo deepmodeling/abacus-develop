@@ -1,0 +1,14 @@
+INPUT_PARAMETERS
+basis_type       lcao
+ks_solver        scalapack_gvx
+nspin            4
+noncolin         1
+lspinorb         1
+symmetry        -1
+nbands          14
+ecutwfc         20
+scf_thr          1e-7
+scf_nmax        100
+mixing_beta      0.3
+smearing_method  gauss
+smearing_sigma   0.02

@@ -20,12 +20,12 @@ using SocketFrame::VirialConversion;
 
 const double EPSILON = std::numeric_limits<double>::epsilon();
 
-CellValidation validate_with_driver_thresholds(const Matrix9& cell, const Matrix9& inverse)
+CellValidation validate_with_driver_thresholds(const Matrix9 &cell, const Matrix9 &inverse)
 {
     return validate_ipi_cell(cell, inverse, 1.0e12, 64.0 * EPSILON, 64.0);
 }
 
-void expect_matrix_near(const Matrix9& expected, const Matrix9& actual, double tolerance)
+void expect_matrix_near(const Matrix9 &expected, const Matrix9 &actual, double tolerance)
 {
     for (std::size_t index = 0; index < expected.size(); ++index)
     {
@@ -69,33 +69,12 @@ TEST(SocketFrameTest, AseTriclinicInverseWireLayoutIsAcceptedAndRecomputedFromCe
     // and sends pinv(A) * Bohr as the inverse field. For this nonsingular
     // cell that received field is inv(H)^T, not inv(H).
     const double bohr_angstrom = 0.5291772105638411;
-    const Matrix9 cell_wire = {{5.0 / bohr_angstrom,
-                                0.5 / bohr_angstrom,
-                                0.25 / bohr_angstrom,
-                                0.0,
-                                4.0 / bohr_angstrom,
-                                0.75 / bohr_angstrom,
-                                0.0,
-                                0.0,
-                                3.0 / bohr_angstrom}};
-    const Matrix9 ase_inverse_wire = {{bohr_angstrom / 5.0,
-                                       0.0,
-                                       0.0,
-                                       -bohr_angstrom / 40.0,
-                                       bohr_angstrom / 4.0,
-                                       0.0,
-                                       -bohr_angstrom / 96.0,
-                                       -bohr_angstrom / 16.0,
-                                       bohr_angstrom / 3.0}};
-    const Matrix9 inverse_computed_from_cell = {{bohr_angstrom / 5.0,
-                                                 -bohr_angstrom / 40.0,
-                                                 -bohr_angstrom / 96.0,
-                                                 0.0,
-                                                 bohr_angstrom / 4.0,
-                                                 -bohr_angstrom / 16.0,
-                                                 0.0,
-                                                 0.0,
-                                                 bohr_angstrom / 3.0}};
+    const Matrix9 cell_wire = {{5.0 / bohr_angstrom, 0.5 / bohr_angstrom, 0.25 / bohr_angstrom, 0.0,
+        4.0 / bohr_angstrom, 0.75 / bohr_angstrom, 0.0, 0.0, 3.0 / bohr_angstrom}};
+    const Matrix9 ase_inverse_wire = {{bohr_angstrom / 5.0, 0.0, 0.0, -bohr_angstrom / 40.0, bohr_angstrom / 4.0, 0.0,
+        -bohr_angstrom / 96.0, -bohr_angstrom / 16.0, bohr_angstrom / 3.0}};
+    const Matrix9 inverse_computed_from_cell = {{bohr_angstrom / 5.0, -bohr_angstrom / 40.0, -bohr_angstrom / 96.0, 0.0,
+        bohr_angstrom / 4.0, -bohr_angstrom / 16.0, 0.0, 0.0, bohr_angstrom / 3.0}};
 
     const CellValidation out = validate_with_driver_thresholds(cell_wire, ase_inverse_wire);
 

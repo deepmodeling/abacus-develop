@@ -20,10 +20,6 @@ class UnitCell;
 class MDCell;
 class NeighborSearch;
 class DomainDecomposition;
-namespace Run_MD
-{
-void prepare_mdcell(MDCell& mdcell, UnitCell& ucell, DomainDecomposition& decomp);
-}
 namespace ModuleBase
 {
 class CommunicationDomain;
@@ -55,7 +51,7 @@ public:
 
     bool has_neighbor_search() const;
     const NeighborSearch& neighbor_search() const;
-    void set_lattice_vectors(const ModuleBase::Matrix3& latvec);
+    void set_lattice_geometry(const ModuleBase::Matrix3& latvec, double lat0);
     void refresh_cart_from_frac();
     /// Copy state; mark a position update only when requested, otherwise preserve the flag.
     void sync_backing_unitcell(const bool positions_updated);
@@ -86,7 +82,6 @@ public:
 #endif
 
 private:
-    friend void Run_MD::prepare_mdcell(MDCell& mdcell, UnitCell& ucell, DomainDecomposition& decomp);
     Kind get_kind() const override;
     std::int64_t get_nat() const override;
     double get_lat0() const override;

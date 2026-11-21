@@ -92,14 +92,23 @@ void bcast_int(int* object, const int n)
 void bcast_bool(bool& object)
 {
 #ifdef __MPI
-    int swap = object;
-    int my_rank;
-    MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
-    MPI_Bcast(&swap, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    if (my_rank != 0)
-        object = static_cast<bool>(swap);
+    bcast_bool(object, MPI_COMM_WORLD);
 #endif
 }
+
+#ifdef __MPI
+void bcast_bool(bool& object, const MPI_Comm& comm)
+{
+    int swap = object;
+    int my_rank;
+    MPI_Comm_rank(comm, &my_rank);
+    MPI_Bcast(&swap, 1, MPI_INT, 0, comm);
+    if (my_rank != 0)
+    {
+        object = static_cast<bool>(swap);
+    }
+}
+#endif
 
 void bcast_char(char* object, const int n)
 {
