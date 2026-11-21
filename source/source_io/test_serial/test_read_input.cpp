@@ -244,6 +244,111 @@ TEST_F(InputDomainReaderTest, ReadsWriterOutputWithEmptyOptionalValues)
     EXPECT_EQ(roundtrip.inp.out_pchg, input.inp.out_pchg);
 }
 
+TEST_F(InputDomainReaderTest, RoundTripsDftuModesWithoutActivatingUnusedAlpha)
+{
+    const std::vector<std::string> modes = {
+        "dft_plus_u 0\n",
+        "dft_plus_u 1\n",
+        "dft_plus_u 1\ndftu_dc fll\n",
+        "dft_plus_u 2\ndftu_dc fll\n",
+        "dft_plus_u 1\ndftu_dc amf\n",
+        "dft_plus_u 1\ndftu_dc mixed\ndftu_alpha 0\n",
+        "dft_plus_u 1\ndftu_dc mixed\ndftu_alpha 0.25\n",
+        "dft_plus_u 1\ndftu_dc mixed\ndftu_alpha 1\n"};
+    for (const int spin : {1, 2})
+    {
+        for (const auto& mode : modes)
+        {
+            SCOPED_TRACE(mode);
+            SCOPED_TRACE(spin);
+            std::ofstream out(filename);
+            out << "INPUT_PARAMETERS\nbasis_type lcao\nntype 1\necutwfc 100\n"
+                   "ks_solver lapack\ndft_functional PBE\nsymmetry 0\n"
+                   "orbital_corr 2\nhubbard_u 2\nonsite_radius 5\nnspin "
+                << spin << '\n' << mode;
+            ASSERT_TRUE(out.good());
+            out.close();
+            ModuleIO::ReadInput reader(0);
+            reader.check_ntype_flag = false;
+            Parameter input;
+            reader.read_parameters(input, filename);
+            const std::string written = filename + ".written";
+            reader.write_parameters(input, written);
+            std::ifstream emitted(written);
+            ASSERT_TRUE(emitted.good());
+            std::ostringstream contents;
+            contents << emitted.rdbuf();
+            const std::string text = contents.str();
+            const bool has_alpha = text.find("dftu_alpha") != std::string::npos;
+            EXPECT_EQ(has_alpha, input.inp.dftu_dc == "mixed");
+
+            ModuleIO::ReadInput rereader(0);
+            rereader.check_ntype_flag = false;
+            Parameter restored;
+            rereader.read_parameters(restored, written);
+            EXPECT_EQ(restored.inp.dft_plus_u, input.inp.dft_plus_u);
+            EXPECT_EQ(restored.inp.dftu_dc, input.inp.dftu_dc);
+            EXPECT_EQ(restored.inp.nspin, spin);
+            if (has_alpha)
+            {
+                EXPECT_DOUBLE_EQ(restored.inp.dftu_alpha, input.inp.dftu_alpha);
+            }
+        }
+    }
+}
+
+TEST_F(InputDomainReaderTest, RejectsMissingOrInactiveDftuAlpha)
+{
+    for (const std::string mode : {"fll", "amf"})
+    {
+        const std::string values = "dftu_dc " + mode + "\ndftu_alpha 0.5\n";
+        const std::string output = reject_input(values);
+        EXPECT_NE(output.find("dftu_alpha is only used with dftu_dc mixed"), std::string::npos);
+    }
+    const std::string output = reject_input("dftu_dc mixed\n");
+    EXPECT_NE(output.find("requires an explicit finite dftu_alpha"), std::string::npos);
+}
+
+TEST_F(InputDomainReaderTest, RoundTripsDftuAlphaAtFullDoublePrecision)
+{
+    const std::vector<std::string> values = {
+        "0", "1e-8", "0.12345678901234566", "0.5", "0.99999999", "0.9999999999999999", "1"};
+    for (const int spin : {1, 2})
+    {
+        for (const std::string& value : values)
+        {
+            SCOPED_TRACE(value);
+            SCOPED_TRACE(spin);
+            std::ofstream out(filename);
+            out << "INPUT_PARAMETERS\nbasis_type lcao\nntype 1\necutwfc 100\n"
+                   "ks_solver lapack\ndft_functional PBE\nsymmetry 0\n"
+                   "orbital_corr 2\nhubbard_u 2\nonsite_radius 5\n"
+                   "dft_plus_u 1\ndftu_dc mixed\ndftu_alpha "
+                << value << "\nnspin " << spin << '\n';
+            ASSERT_TRUE(out.good());
+            out.close();
+            const double expected = std::stod(value);
+            const std::string written = filename + ".written";
+            for (int repeat = 0; repeat < 2; ++repeat)
+            {
+                ModuleIO::ReadInput reader(0);
+                reader.check_ntype_flag = false;
+                Parameter input;
+                reader.read_parameters(input, filename);
+                ASSERT_EQ(input.inp.dftu_alpha, expected);
+                reader.write_parameters(input, written);
+                ModuleIO::ReadInput rereader(0);
+                rereader.check_ntype_flag = false;
+                Parameter restored;
+                rereader.read_parameters(restored, written);
+                EXPECT_EQ(restored.inp.dftu_alpha, expected);
+                EXPECT_EQ(restored.inp.dftu_dc, "mixed");
+                EXPECT_EQ(restored.inp.nspin, spin);
+            }
+        }
+    }
+}
+
 TEST_F(InputDomainReaderTest, RejectsMissingStringChoiceAtEndOfFile)
 {
     const std::string output = reject_input("calculation");

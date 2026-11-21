@@ -698,6 +698,8 @@ struct Input_para
     //    DFT+U       Xin Qu added on 2020-10-29
     int dft_plus_u = 0;                    ///< 0: standard DFT calculation (default)
     bool dft_plus_dmft = false;            ///< true:DFT+DMFT; false: standard DFT calcullation(default)
+    std::string dftu_dc = "fll";          ///< Full DC: fll, amf or fixed-alpha mixed
+    double dftu_alpha = 1.0;              ///< used only by mixed; explicit INPUT required
     bool yukawa_potential = false;         ///< default: false
     double yukawa_lambda = -1.0;           ///< default: -1.0, which means we calculate lambda
     double uramping_eV = -1.0;             ///< U-Ramping method (eV)

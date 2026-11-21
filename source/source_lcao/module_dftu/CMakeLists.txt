@@ -8,6 +8,7 @@ if(ENABLE_LCAO)
     dftu_nao_fs_k.cpp
     dftu_nao_folding.cpp
     dftu_nao_pots.cpp
+    dftu_full_dc.cpp
     dftu_nao_occ.cpp
     dftu_nao_energy.cpp
     dftu_nao_op.cpp

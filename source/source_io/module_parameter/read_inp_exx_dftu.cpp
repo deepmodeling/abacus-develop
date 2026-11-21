@@ -2,6 +2,9 @@
 #include "source_base/tool_quit.h"
 #include "read_input.h"
 #include "read_input_tool.h"
+#include "dftu_dc_check.h"
+#include <iomanip>
+#include <limits>
 namespace ModuleIO
 {
 void ReadInput::item_exx()
@@ -715,6 +718,53 @@ void ReadInput::item_dftu()
                 {
                     ModuleBase::WARNING_QUIT("ReadInput", "WRONG ARGUMENTS, DFT+U with PW base only supports nspin=1/2/4");
                 }
+            }
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("dftu_dc");
+        item.domain.set_choices({"fll", "amf", "mixed"});
+        item.annotation = "double counting for radius-adjustable Full Ueff DFT+U";
+        item.category = "DFT+U correction";
+        item.type = "String";
+        item.default_value = "fll";
+        item.unit = "";
+        item.description = R"(Double counting: `fll` preserves the legacy path; `amf` and `mixed` opt into a Full-only extension (`dft_plus_u=1`).
+Full denotes the existing radius-adjustable localized projection implemented by DFTU_onsite, not an anisotropic U/J functional. hubbard_u is Ueff=U-J.
+AMF subtracts Tr(n_sigma)/(2l+1) separately in each spin channel, using the existing projected occupation without additional normalization.
+`mixed` uses fixed dftu_alpha: 0 is AMF, 1 is FLL. Both local interaction energy and potential are mixed, not two SCF results.
+For nspin=1 the spin-summed occupation is halved and the shell energy doubled, but the potential is not doubled. The band correction is E_corr-ReTr(V*n).
+New modes require explicit PBE, CPU double-precision LCAO KS SCF, nspin=1/2, symmetry=0/-1, a single k pool and atomic cold start. Supported solvers are genelpa, elpa, lapack and scalapack_gvx.
+SOC, spin constraints, force/stress, restart, EXX, U ramping, Yukawa U, occupation/DMR mixing and matrix/Wannier/QO exports are not supported. These restrictions also apply to mixed endpoints, but not to fll.)";
+        read_sync_string(input.dftu_dc);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("dftu_alpha");
+        item.set_availability("dftu_dc==mixed");
+        item.annotation = "fixed FLL weight for mixed Full DFT+U";
+        item.category = "DFT+U correction";
+        item.type = "Real";
+        item.default_value = "explicitly required for mixed; otherwise unused";
+        item.unit = "";
+        item.description = "Explicit finite weight in [0,1] for dftu_dc=mixed. Zero gives AMF and one gives FLL. Not accepted for other DC modes. This weight is fixed, not determined self-consistently.";
+        item.domain.scalar();
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            para.input.dftu_alpha = parse_dftu_alpha(item.str_values.at(0));
+        };
+        sync_double(input.dftu_alpha);
+        item.get_final_value = [](Input_Item& item, const Parameter& para) {
+            // Preserve near-endpoint weights when the emitted INPUT is read again.
+            item.final_value << std::setprecision(std::numeric_limits<double>::max_digits10)
+                             << para.inp.dftu_alpha;
+        };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            const bool was_read = item.is_read();
+            const std::string error = dftu_dc_error(para.inp, was_read, para.sys.kpar_lcao);
+            if (!error.empty())
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", error);
             }
         };
         this->add_item(item);

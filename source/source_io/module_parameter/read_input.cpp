@@ -602,6 +602,11 @@ void ReadInput::write_txt_input(const Parameter& param, const std::string& filen
     for (auto& item: this->input_lists)
     {
         Input_Item* p_item = &(item.second);
+        // An inactive mixed-only weight must not become explicit INPUT on reread.
+        if (p_item->label == "dftu_alpha" && param.inp.dftu_dc != "mixed")
+        {
+            continue;
+        }
         // Do not serialize an inactive internal marker as a public INPUT value.
         if (!p_item->domain.can_write(param)) { continue; }
         if (p_item->get_final_value == nullptr) {

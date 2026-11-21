@@ -43,5 +43,9 @@ int main(int argc, char** argv)
     reader.check_ntype_flag = false;
     Parameter input;
     reader.read_parameters(input, filename);
+    if (input.inp.suffix == "dftu_dc_bcast")
+    {
+        std::printf("DFTU DC received: %s %.17g\n", input.inp.dftu_dc.c_str(), input.inp.dftu_alpha);
+    }
     return 0;
 }

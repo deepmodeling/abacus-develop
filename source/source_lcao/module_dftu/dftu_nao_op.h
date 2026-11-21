@@ -8,6 +8,7 @@
 #include "source_cell/module_symmetry/symm_rotation_k.h" // ModuleSymmetry::Symmetry_rotation_k (value member); LibRI-free
 
 #include <vector>
+#include <string>
 
 class Plus_U_Base;
 class TwoCenterIntegrator;
@@ -56,6 +57,19 @@ class DFTU_onsite<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
                 const int nspin_in,
                 const double onsite_radius,
                 const module_dm::DensityMatrix<TK, double>* dm_in);
+    DFTU_onsite(HS_Matrix_K<TK>* hsk_in,
+                const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
+                hamilt::HContainer<TR>* hR_in,
+                const UnitCell& ucell_in,
+                const Grid_Driver* gridD_in,
+                const TwoCenterIntegrator* intor,
+                const std::vector<double>& orb_cutoff,
+                Plus_U_Base* p_dftu,
+                int nspin_in,
+                double onsite_radius,
+                const module_dm::DensityMatrix<TK, double>* dm_in,
+                const std::string& dc,
+                double alpha);
     ~DFTU_onsite() = default;
 
     /**
@@ -71,6 +85,10 @@ class DFTU_onsite<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
     void set_kv(const K_Vectors* kv_in) { this->kv_ = kv_in; }
 
   private:
+    // Immutable, explicit configuration; legacy constructor selects FLL.
+    const std::string dc_;
+    const double alpha_;
+
     bool should_restore_symmetric_dmr() const;
 
     void ensure_symmetry_rotation(const Parallel_Orbitals& pv);

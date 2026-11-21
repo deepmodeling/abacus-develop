@@ -7,6 +7,10 @@ abacus_disable_feature_definitions(__ROCM)
 abacus_disable_feature_definitions(__MLALGO)
 abacus_disable_feature_definitions(_OPENMP)
 
+addtest(
+  TARGET MODULE_DFTU_full_dc
+  SOURCES test_dftu_full_dc.cpp ../dftu_full_dc.cpp)
+
 if(ENABLE_MPI)
 
   addtest(
@@ -79,6 +83,7 @@ if(ENABLE_MPI)
         ../dftu_nao_op.cpp
         ../dftu_nao_adj.cpp
         ../dftu_nao_pots.cpp
+        ../dftu_full_dc.cpp
         ../dftu_nao_fs_r.cpp
         ../dftu_nao_fs_reduce.cpp
         ../dftu_nao_for_r.cpp
@@ -133,6 +138,7 @@ if(ENABLE_MPI)
         ../dftu_nao_op.cpp
         ../dftu_nao_adj.cpp
         ../dftu_nao_pots.cpp
+        ../dftu_full_dc.cpp
         ../dftu_nao_fs_r.cpp
         ../dftu_nao_fs_reduce.cpp
         ../dftu_nao_for_r.cpp

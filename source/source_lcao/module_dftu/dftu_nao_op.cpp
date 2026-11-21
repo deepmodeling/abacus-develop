@@ -19,6 +19,8 @@
 #include "dftu_nao_fs_r.h"
 #include "dftu_nao_ijr.h"
 #include "dftu_nao_pots.h"
+#include "dftu_full_dc.h"
+#include <stdexcept>
 
 template <typename TK, typename TR>
 hamilt::DFTU_onsite<hamilt::OperatorLCAO<TK, TR>>::DFTU_onsite(HS_Matrix_K<TK>* hsk_in,
@@ -32,7 +34,29 @@ hamilt::DFTU_onsite<hamilt::OperatorLCAO<TK, TR>>::DFTU_onsite(HS_Matrix_K<TK>* 
                                                  const int nspin_in,
                                                  const double onsite_radius,
                                                  const module_dm::DensityMatrix<TK, double>* dm_in)
+    : DFTU_onsite(hsk_in, kvec_d_in, hR_in, ucell_in, GridD_in, intor,
+                  orb_cutoff, p_dftu, nspin_in, onsite_radius, dm_in, "fll", 1.0)
+{
+}
+
+template <typename TK, typename TR>
+hamilt::DFTU_onsite<hamilt::OperatorLCAO<TK, TR>>::DFTU_onsite(
+    HS_Matrix_K<TK>* hsk_in,
+    const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
+    hamilt::HContainer<TR>* hR_in,
+    const UnitCell& ucell_in,
+    const Grid_Driver* GridD_in,
+    const TwoCenterIntegrator* intor,
+    const std::vector<double>& orb_cutoff,
+    Plus_U_Base* p_dftu,
+    const int nspin_in,
+    const double onsite_radius,
+    const module_dm::DensityMatrix<TK, double>* dm_in,
+    const std::string& dc,
+    const double alpha)
     : hamilt::OperatorLCAO<TK, TR>(hsk_in, kvec_d_in, hR_in),
+      dc_(dc),
+      alpha_(alpha),
       ucell(&ucell_in),
       dftu(p_dftu),
       dm_(dm_in),
@@ -42,6 +66,15 @@ hamilt::DFTU_onsite<hamilt::OperatorLCAO<TK, TR>>::DFTU_onsite(HS_Matrix_K<TK>* 
 {
     ModuleBase::timer::start("DFTU_onsite", "DFTU_onsite");
     this->cal_type = calculation_type::lcao_dftu;
+
+    if (dc_ != "fll" && dc_ != "amf" && dc_ != "mixed")
+    {
+        throw std::invalid_argument("Unknown Full DFT+U double counting");
+    }
+    if (dc_ != "fll" && (nspin != 1 && nspin != 2))
+    {
+        throw std::invalid_argument("Full AMF/mixed requires collinear spin");
+    }
 
     assert(this->ucell != nullptr);
     assert(this->dm_ != nullptr);
@@ -186,7 +219,26 @@ void hamilt::DFTU_onsite<hamilt::OperatorLCAO<TK, TR>>::contribute_hubbard_atoms
         const double u_value = this->dftu->get_u_current(T0);
         std::vector<double> pot_onsite_tmp(occ.size());
         double u_energy = this->dftu->get_energy();
-        DFTU_LCAO::cal_pot_onsite(occ, tlp1, u_value, pot_onsite_tmp.data(), u_energy);
+        if (dc_ == "fll")
+        {
+            DFTU_LCAO::cal_pot_onsite(occ, tlp1, u_value, pot_onsite_tmp.data(), u_energy);
+        }
+        else
+        {
+            const double weight = (dc_ == "amf") ? 0.0 : alpha_;
+            std::vector<double> potential;
+            const DFTU_LCAO::FullDcEnergy energy
+                = DFTU_LCAO::evaluate_full_dc(occ, tlp1, u_value, weight, potential);
+            // Match the existing Full projector contraction's transposed layout.
+            for (int m = 0; m < tlp1; ++m)
+            {
+                for (int n = 0; n < tlp1; ++n)
+                {
+                    pot_onsite_tmp[m * tlp1 + n] = potential[n * tlp1 + m];
+                }
+            }
+            u_energy += energy.band_correction;
+        }
         this->dftu->set_energy(u_energy);
 
         std::vector<TR> pot_onsite(occ.size());

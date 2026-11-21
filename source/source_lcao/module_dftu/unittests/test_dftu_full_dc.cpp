@@ -1,0 +1,296 @@
+#include "../dftu_full_dc.h"
+#include <gtest/gtest.h>
+
+#include <cmath>
+#include <limits>
+#include <stdexcept>
+
+namespace
+{
+using Complex = std::complex<double>;
+using DFTU_LCAO::evaluate_full_dc;
+
+std::vector<Complex> example()
+{
+    return {0.8, Complex(0.1, 0.2), Complex(0.1, -0.2), 0.3};
+}
+
+double contraction(const std::vector<Complex>& v, const std::vector<Complex>& n, const int size)
+{
+    Complex sum = 0.0;
+    for (int i = 0; i < size; ++i)
+    {
+        for (int j = 0; j < size; ++j)
+        {
+            sum += v[i * size + j] * n[j * size + i];
+        }
+    }
+    EXPECT_NEAR(sum.imag(), 0.0, 1e-12);
+    return sum.real();
+}
+
+// Independent two-orbital oracle in the spin-summed variable D = 2*n.
+double spin_sum_energy(const std::vector<Complex>& density, const double u, const double alpha)
+{
+    const double d0 = density[0].real();
+    const double d1 = density[3].real();
+    const double trace = d0 + d1;
+    const double square_trace = d0 * d0 + d1 * d1 + 2.0 * std::norm(density[1]);
+    return 0.5 * u * (alpha * trace + (1.0 - alpha) * trace * trace / 4.0 - square_trace / 2.0);
+}
+} // namespace
+
+TEST(DftuFullDc, AnalyticComplexShell)
+{
+    const auto n = example();
+    std::vector<Complex> v;
+    const auto fll = evaluate_full_dc(n, 2, 2.0, 1.0, v);
+    EXPECT_NEAR(fll.interaction, 0.27, 1e-14);
+    EXPECT_NEAR(fll.band_correction, 0.83, 1e-14);
+    EXPECT_NEAR(std::abs(v[0] + 0.6), 0.0, 1e-14);
+    EXPECT_NEAR(std::abs(v[3] - 0.4), 0.0, 1e-14);
+    EXPECT_NEAR(std::abs(v[1] - Complex(-0.2, -0.4)), 0.0, 1e-14);
+    const auto amf = evaluate_full_dc(n, 2, 2.0, 0.0, v);
+    EXPECT_NEAR(amf.interaction, -0.225, 1e-14);
+    EXPECT_NEAR(amf.band_correction, 0.225, 1e-14);
+    EXPECT_NEAR(std::abs(v[0] + 0.5), 0.0, 1e-14);
+    EXPECT_NEAR(std::abs(v[3] - 0.5), 0.0, 1e-14);
+    const auto mixed = evaluate_full_dc(n, 2, 2.0, 0.5, v);
+    EXPECT_NEAR(mixed.interaction, 0.0225, 1e-14);
+    EXPECT_NEAR(mixed.band_correction, 0.5275, 1e-14);
+}
+
+TEST(DftuFullDc, EnergyLedgerUsesTraceContraction)
+{
+    const auto n = example();
+    for (double alpha : {0.0, 0.2, 0.5, 1.0})
+    {
+        std::vector<Complex> v;
+        const auto energy = evaluate_full_dc(n, 2, 3.7, alpha, v);
+        const double band = contraction(v, n, 2);
+        EXPECT_NEAR(energy.interaction - band, energy.band_correction, 1e-13);
+    }
+}
+
+TEST(DftuFullDc, RealAndComplexAgree)
+{
+    const std::vector<double> n = {0.8, 0.1, 0.1, 0.3};
+    const std::vector<Complex> nc(n.begin(), n.end());
+    for (double alpha : {0.0, 0.5, 1.0})
+    {
+        std::vector<double> vr;
+        std::vector<Complex> vc;
+        const auto er = evaluate_full_dc(n, 2, 2.0, alpha, vr);
+        const auto ec = evaluate_full_dc(nc, 2, 2.0, alpha, vc);
+        EXPECT_DOUBLE_EQ(er.interaction, ec.interaction);
+        EXPECT_DOUBLE_EQ(er.band_correction, ec.band_correction);
+        for (int i = 0; i < 4; ++i)
+        {
+            EXPECT_DOUBLE_EQ(vr[i], vc[i].real());
+            EXPECT_DOUBLE_EQ(vc[i].imag(), 0.0);
+        }
+    }
+}
+
+TEST(DftuFullDc, UniformOccupationHasZeroAmf)
+{
+    for (int m : {1, 3, 5, 7})
+    {
+        std::vector<double> n(m * m, 0.0);
+        for (int i = 0; i < m; ++i)
+        {
+            n[i * m + i] = 0.37;
+        }
+        std::vector<double> v;
+        const auto e = evaluate_full_dc(n, m, 4.0, 0.0, v);
+        EXPECT_NEAR(e.interaction, 0.0, 1e-14);
+        EXPECT_NEAR(e.band_correction, 0.0, 1e-14);
+        for (double value : v)
+        {
+            EXPECT_NEAR(value, 0.0, 1e-14);
+        }
+    }
+}
+
+TEST(DftuFullDc, EndpointsAndContinuityWithoutBranches)
+{
+    const auto n = example();
+    std::vector<Complex> vf;
+    std::vector<Complex> va;
+    const auto ef = evaluate_full_dc(n, 2, 2.0, 1.0, vf);
+    const auto ea = evaluate_full_dc(n, 2, 2.0, 0.0, va);
+    for (double alpha : {0.0, 1e-9, 0.25, 0.5, 0.75, 1.0 - 1e-9, 1.0})
+    {
+        std::vector<Complex> v;
+        const auto e = evaluate_full_dc(n, 2, 2.0, alpha, v);
+        EXPECT_NEAR(e.interaction, alpha * ef.interaction + (1.0 - alpha) * ea.interaction, 1e-14);
+        EXPECT_NEAR(e.band_correction, alpha * ef.band_correction + (1.0 - alpha) * ea.band_correction, 1e-14);
+        for (int i = 0; i < 4; ++i)
+        {
+            EXPECT_NEAR(std::abs(v[i] - alpha * vf[i] - (1.0 - alpha) * va[i]), 0.0, 1e-14);
+        }
+    }
+}
+
+TEST(DftuFullDc, FiniteDifferencesIncludingImaginaryOffDiagonal)
+{
+    const auto n = example();
+    const std::vector<std::vector<Complex>> directions = {
+        {1.0, 0.0, 0.0, 0.0}, {0.0, 1.0, 1.0, 0.0},
+        {0.0, Complex(0.0, 1.0), Complex(0.0, -1.0), 0.0}};
+    const double step = 1e-6;
+    for (double alpha : {0.0, 0.5, 1.0})
+    {
+        std::vector<Complex> v;
+        evaluate_full_dc(n, 2, 2.0, alpha, v);
+        for (const auto& d : directions)
+        {
+            auto plus = n;
+            auto minus = n;
+            for (int i = 0; i < 4; ++i)
+            {
+                plus[i] += step * d[i];
+                minus[i] -= step * d[i];
+            }
+            std::vector<Complex> unused;
+            const auto ep = evaluate_full_dc(plus, 2, 2.0, alpha, unused);
+            const auto em = evaluate_full_dc(minus, 2, 2.0, alpha, unused);
+            EXPECT_NEAR((ep.interaction - em.interaction) / (2.0 * step), contraction(v, d, 2), 2e-10);
+        }
+    }
+}
+
+TEST(DftuFullDc, OrbitalPhaseCovariance)
+{
+    const auto n = example();
+    const Complex phase = std::polar(1.0, 0.73);
+    auto rotated = n;
+    rotated[1] *= phase;
+    rotated[2] *= std::conj(phase);
+    for (double alpha : {0.0, 0.5, 1.0})
+    {
+        std::vector<Complex> v;
+        std::vector<Complex> vr;
+        const auto e = evaluate_full_dc(n, 2, 2.0, alpha, v);
+        const auto er = evaluate_full_dc(rotated, 2, 2.0, alpha, vr);
+        EXPECT_NEAR(e.interaction, er.interaction, 1e-14);
+        EXPECT_NEAR(e.band_correction, er.band_correction, 1e-14);
+        EXPECT_NEAR(std::abs(vr[1] - phase * v[1]), 0.0, 1e-14);
+    }
+}
+
+TEST(DftuFullDc, NonmagneticSpinSumHasAnalyticEnergyAndUndoubledPotential)
+{
+    const std::vector<Complex> spin_sum = {1.6, Complex(0.2, 0.4), Complex(0.2, -0.4), 0.6};
+    auto per_spin = spin_sum;
+    for (auto& value : per_spin)
+    {
+        value *= 0.5;
+    }
+    for (double alpha : {0.0, 0.35, 1.0})
+    {
+        SCOPED_TRACE(alpha);
+        std::vector<Complex> v;
+        const auto e = evaluate_full_dc(per_spin, 2, 2.0, alpha, v);
+        // Closed-form values for N_sigma=1.1 and Tr(n_sigma^2)=0.83.
+        EXPECT_NEAR(2.0 * e.interaction, -0.45 + 0.99 * alpha, 1e-14);
+        EXPECT_NEAR(2.0 * e.band_correction, 0.45 + 1.21 * alpha, 1e-14);
+        EXPECT_NEAR(v[0].real(), -0.5 - 0.1 * alpha, 1e-14);
+        EXPECT_NEAR(v[3].real(), 0.5 - 0.1 * alpha, 1e-14);
+        EXPECT_NEAR(std::abs(v[1] - Complex(-0.2, -0.4)), 0.0, 1e-14);
+        const double band = contraction(v, spin_sum, 2);
+        EXPECT_NEAR(2.0 * e.interaction - band, 2.0 * e.band_correction, 1e-14);
+    }
+}
+
+TEST(DftuFullDc, SpinSumChainRuleAgainstIndependentFunctional)
+{
+    const std::vector<Complex> spin_sum = {1.6, Complex(0.2, 0.4), Complex(0.2, -0.4), 0.6};
+    const std::vector<std::vector<Complex>> directions = {
+        {1.0, 0.0, 0.0, 0.0}, {0.0, 1.0, 1.0, 0.0},
+        {0.0, Complex(0.0, 1.0), Complex(0.0, -1.0), 0.0}};
+    auto per_spin = spin_sum;
+    for (auto& value : per_spin)
+    {
+        value *= 0.5;
+    }
+    const double step = 1e-6;
+    for (double alpha : {0.0, 0.35, 1.0})
+    {
+        SCOPED_TRACE(alpha);
+        std::vector<Complex> v;
+        evaluate_full_dc(per_spin, 2, 2.0, alpha, v);
+        for (const auto& direction : directions)
+        {
+            auto plus = spin_sum;
+            auto minus = spin_sum;
+            for (int i = 0; i < 4; ++i)
+            {
+                plus[i] += step * direction[i];
+                minus[i] -= step * direction[i];
+            }
+            const double ep = spin_sum_energy(plus, 2.0, alpha);
+            const double em = spin_sum_energy(minus, 2.0, alpha);
+            const double derivative = (ep - em) / (2.0 * step);
+            const double predicted = contraction(v, direction, 2);
+            EXPECT_NEAR(derivative, predicted, 3e-10);
+        }
+    }
+}
+
+TEST(DftuFullDc, PolarizedShellsUseSeparateSpinAverages)
+{
+    const auto up = example();
+    const std::vector<Complex> down = {0.2, Complex(0.03, -0.04), Complex(0.03, 0.04), 0.1};
+    for (double alpha : {0.0, 0.35, 1.0})
+    {
+        SCOPED_TRACE(alpha);
+        std::vector<Complex> vu;
+        std::vector<Complex> vd;
+        const auto eu = evaluate_full_dc(up, 2, 2.0, alpha, vu);
+        const auto ed = evaluate_full_dc(down, 2, 2.0, alpha, vd);
+        // N_up/M=0.55, N_down/M=0.15, not their common spin average 0.35.
+        EXPECT_NEAR(eu.interaction + ed.interaction, -0.235 + 0.75 * alpha, 1e-14);
+        EXPECT_NEAR(eu.band_correction + ed.band_correction, 0.235 + 0.65 * alpha, 1e-14);
+        EXPECT_NEAR(vu[0].real(), -0.5 - 0.1 * alpha, 1e-14);
+        EXPECT_NEAR(vd[0].real(), -0.1 + 0.7 * alpha, 1e-14);
+        EXPECT_NEAR(vd[3].real(), 0.1 + 0.7 * alpha, 1e-14);
+        EXPECT_NEAR(std::abs(vd[1] - Complex(-0.06, 0.08)), 0.0, 1e-14);
+    }
+}
+
+TEST(DftuFullDc, ZeroUAndNoPersistentState)
+{
+    const auto n = example();
+    std::vector<Complex> v;
+    const auto original = evaluate_full_dc(n, 2, 2.0, 0.5, v);
+    const auto original_v = v;
+    const auto zero = evaluate_full_dc(n, 2, 0.0, 0.5, v);
+    EXPECT_DOUBLE_EQ(zero.interaction, 0.0);
+    for (auto value : v)
+    {
+        EXPECT_DOUBLE_EQ(std::abs(value), 0.0);
+    }
+    const auto again = evaluate_full_dc(n, 2, 2.0, 0.5, v);
+    EXPECT_EQ(original_v, v);
+    EXPECT_DOUBLE_EQ(original.interaction, again.interaction);
+}
+
+TEST(DftuFullDc, InvalidInputsDoNotOverwritePotential)
+{
+    auto n = example();
+    std::vector<Complex> v = {42.0};
+    EXPECT_THROW(evaluate_full_dc(n, 0, 2.0, 0.5, v), std::invalid_argument);
+    EXPECT_THROW(evaluate_full_dc(n, 3, 2.0, 0.5, v), std::invalid_argument);
+    for (double alpha : {-0.1, 1.1, std::numeric_limits<double>::quiet_NaN()})
+    {
+        EXPECT_THROW(evaluate_full_dc(n, 2, 2.0, alpha, v), std::invalid_argument);
+    }
+    n[1] = Complex(0.1, 0.3);
+    EXPECT_THROW(evaluate_full_dc(n, 2, 2.0, 0.5, v), std::invalid_argument);
+    n = example();
+    n[0] = std::numeric_limits<double>::infinity();
+    EXPECT_THROW(evaluate_full_dc(n, 2, 2.0, 0.5, v), std::invalid_argument);
+    ASSERT_EQ(v.size(), 1U);
+    EXPECT_EQ(v[0], Complex(42.0, 0.0));
+}

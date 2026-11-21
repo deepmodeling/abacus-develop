@@ -807,6 +807,7 @@ OBJS_IO=module_parameter/input_conv.o\
     module_parameter/sccs_inp_check.o\
     module_parameter/read_inp_postproc.o\
     module_parameter/read_inp_exx_dftu.o\
+    module_parameter/dftu_dc_check.o\
     module_parameter/read_inp_dfpt.o\
     module_parameter/read_inp_other.o\
     module_parameter/read_inp_out.o\
@@ -1099,6 +1100,7 @@ OBJS_DFTU=dftu_nao_fs_k.o\
       dftu_nao_str_r.o\
       dftu_nao_folding.o\
       dftu_nao_pots.o\
+      dftu_full_dc.o\
       dftu_nao_energy.o\
       dftu_nao_op_legacy.o\
       dftu_nao_adj.o\

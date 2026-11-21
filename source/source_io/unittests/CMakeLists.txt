@@ -15,6 +15,10 @@ addtest(
 
 addtest(TARGET MODULE_IO_spin_tag SOURCES test_spin_tag.cpp)
 
+addtest(
+  TARGET MODULE_IO_dftu_dc_check
+  SOURCES test_dftu_dc_check.cpp ../module_parameter/dftu_dc_check.cpp)
+
 if(NOT ENABLE_MPI)
   return()
 endif()
@@ -35,6 +39,12 @@ foreach(
         duplicate_string_eof
         invalid_value
         invalid_dependency
+        dftu_default
+        dftu_fll
+        dftu_amf
+        dftu_mixed0
+        dftu_mixed05
+        dftu_mixed1
         valid)
   add_test(
     NAME MODULE_IO_input_error_mpi_${input_case}

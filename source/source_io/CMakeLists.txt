@@ -141,6 +141,7 @@ add_library(
   module_parameter/sccs_inp_check.cpp
   module_parameter/read_inp_postproc.cpp
   module_parameter/read_inp_exx_dftu.cpp
+  module_parameter/dftu_dc_check.cpp
   module_parameter/read_inp_other.cpp
   module_parameter/read_inp_out.cpp
   module_parameter/availability.cpp
