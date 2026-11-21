@@ -25,6 +25,10 @@
  *   - ChannelBeforeLmaxRejected
  *     - read_orb_file(): channel lines before the Lmax declaration are
  *       malformed, because l_nchi is not allocated yet
+ *   - NonNumericCountBeyondLmaxRejected / MissingCountBeyondLmaxRejected
+ *     - read_orb_file(): a count that fails numeric extraction (garbage or
+ *       missing) is malformed; READ_VALUE cannot be used for it because it
+ *       hides the failure
  */
 
 class ReadOrbBoundaryTest : public ::testing::Test
@@ -57,6 +61,7 @@ class ReadOrbBoundaryTest : public ::testing::Test
         std::ofstream ofs(orb_path);
         ofs << content;
         ofs.close();
+        ofs_running << "created test ORBITAL file: " << orb_path << std::endl;
         return orb_path;
     }
 };
@@ -113,6 +118,29 @@ TEST_F(ReadOrbBoundaryTest, ChannelBeforeLmaxRejected)
                                            "Element                     H\n"
                                            "Number of Sorbital-->       1\n"
                                            "Lmax                        0\n");
+    const bool result = unitcell::read_orb_file(0, orb, ofs_running, &atom);
+    EXPECT_FALSE(result);
+}
+
+TEST_F(ReadOrbBoundaryTest, NonNumericCountBeyondLmaxRejected)
+{
+    std::string orb = write_orb_file("H_bad_token.orb",
+                                           "Element                     H\n"
+                                           "Lmax                        0\n"
+                                           "Number of Sorbital-->       1\n"
+                                           "Number of Porbital-->       garbage\n");
+    const bool result = unitcell::read_orb_file(0, orb, ofs_running, &atom);
+    EXPECT_FALSE(result);
+}
+
+TEST_F(ReadOrbBoundaryTest, MissingCountBeyondLmaxRejected)
+{
+    std::string orb = write_orb_file("H_missing_count.orb",
+                                           "Element                     H\n"
+                                           "Lmax                        0\n"
+                                           "Number of Sorbital-->       1\n"
+                                           "Number of Porbital-->\n"
+                                           "SUMMARY  END\n");
     const bool result = unitcell::read_orb_file(0, orb, ofs_running, &atom);
     EXPECT_FALSE(result);
 }

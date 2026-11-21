@@ -20,9 +20,8 @@ namespace unitcell {
     }
     std::string word;
     atom->nw = 0;
-    while (ifs.good())
+    while (ifs >> word)
     {
-        ifs >> word;
         if (word == "Element")         // pengfei Li 16-2-29
         {
             ModuleBase::GlobalFunc::READ_VALUE(ifs, atom->label_orb);
@@ -55,10 +54,20 @@ namespace unitcell {
                     {
                         // Orbital generators conventionally keep zero-count
                         // declaration lines for channels beyond Lmax; tolerate
-                        // those but reject nonzero counts. The value must still
-                        // be read to keep the stream in sync.
+                        // those but reject nonzero counts. READ_VALUE cannot be
+                        // used here: it hides extraction failure, which would
+                        // let a missing or non-numeric count pass as zero.
                         int nchi_beyond_lmax = 0;
-                        ModuleBase::GlobalFunc::READ_VALUE(ifs, nchi_beyond_lmax);
+                        ifs >> nchi_beyond_lmax;
+                        if (ifs.fail())
+                        {
+                            const std::string msg =
+                                "missing or non-numeric orbital count in the ORBITAL file: " + orb_file;
+                            ModuleBase::WARNING("unitcell::read_orb_file", msg);
+                            return false;
+                        }
+                        std::string rest_of_line;
+                        std::getline(ifs, rest_of_line);
                         if (nchi_beyond_lmax != 0)
                         {
                             const std::string msg =
