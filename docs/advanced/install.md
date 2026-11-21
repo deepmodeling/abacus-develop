@@ -82,7 +82,8 @@ The new EXX implementation directly depends on [LibRI](https://github.com/abacus
 ```
 
 Experimental LCAO GPU contractions additionally require `ENABLE_LIBRI_GPU=ON`
-(default OFF), `USE_CUDA=ON`, and a CUDA build of DDLA 0.0.6 or newer. Like other dependent
+(default OFF), `USE_CUDA=ON`, LibRI v0.3.0.0 or newer, and a compatible CUDA
+build of DDLA. Like other dependent
 options, GPU RI is disabled when its LibRI/CUDA prerequisites are disabled.
 INPUT `device_exx` defaults to `cpu`, retaining CPU contractions even with
 `device gpu`. To use GPU contractions, set both `device gpu` and `device_exx gpu`.
@@ -102,20 +103,17 @@ multiple ranks share a node. For example, on one node allocated GPUs 0 and 1:
 CUDA_VISIBLE_DEVICES=0,1 mpirun -np 2 abacus
 ```
 
-```{warning}
-GPU RI is awaiting a LibRI release containing the accumulation, OpenMP and
-atom-list fixes in [LibRI #15](https://github.com/abacusmodeling/LibRI/pull/15)
-and the symmetry fixes in [LibRI #16](https://github.com/abacusmodeling/LibRI/pull/16),
-together with the DDLA 0.0.6 public API adaptation in
-[LibRI #19](https://github.com/abacusmodeling/LibRI/pull/19).
-All three pull requests are merged upstream.
-None of these changes are included in LibRI `v0.2.1.1`.
-The supported release will be specified here after it passes integration tests.
-```
+[LibRI v0.3.0.0](https://github.com/abacusmodeling/LibRI/releases/tag/v0.3.0.0)
+is the minimum GPU release. It includes the accumulation, OpenMP, atom-list,
+symmetry and DDLA adapter fixes. Earlier LibRI versions remain usable for CPU RI.
 
 DDLA must provide its installed `LibDDLAConfig.cmake` package and `ddla::ddla`
-target. The tested release is [DDLA v0.0.6](https://github.com/userchba/LibDDLA/releases/tag/v0.0.6),
-built with CUDA support. GPU RI requires C++17.
+target, `DDLA_HAS_GPU`, and the handle-selected `gemmVbatched` and
+`gemmVbatched2s` APIs. Use
+[DDLA commit 7c0ca08b4349a527cec2a0c0af7d1a1082bd38c7](https://github.com/userchba/LibDDLA/commit/7c0ca08b4349a527cec2a0c0af7d1a1082bd38c7)
+or a later compatible revision, built with CUDA support. The original DDLA
+`v0.0.6` release has an incompatible API; its version number alone does not
+establish compatibility. GPU RI requires C++17.
 GPU mode requires an explicitly supplied, compatible LibRI installation;
 the default CPU dependency download is unchanged.
 
