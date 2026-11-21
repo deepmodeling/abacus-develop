@@ -5,8 +5,8 @@ import os
 import tempfile
 import unittest
 from pathlib import Path
-from io import TextIOWrapper
-from typing import Optional, Dict, List, Any, Mapping
+from io import StringIO
+from typing import Optional, Dict, List, Any, Mapping, TextIO
 
 import numpy as np
 from ase.atoms import Atoms
@@ -266,6 +266,10 @@ def write_stru(stru: Atoms,
     str
         The path to the written STRU file.
     '''
+    return _write_ase_stru(stru, outdir, pp_file, orb_file, fname, backup=False)
+
+
+def _write_ase_stru(stru, outdir, pp_file, orb_file, fname, *, backup):
     from ase.units import (
         Bohr as __BOHR__, 
         Angstrom as __ANGSTROM__,
@@ -332,10 +336,12 @@ def write_stru(stru: Atoms,
     if orb_file is not None:
         for s in stru_dict['species']:
             s['orb_file'] = orb_file[s['symbol']]
-    
+    path = Path(outdir) / fname
+    if backup:
+        file_safe_backup(path)
     _write_stru(outdir, stru_dict, fname)
 
-    return (Path(outdir) / fname).resolve().as_posix()
+    return path.resolve().as_posix()
 
 def write_input(data: Dict[str, Any], fn: str) -> str:
     '''
@@ -362,7 +368,7 @@ def write_input(data: Dict[str, Any], fn: str) -> str:
 
     return str(Path(fn).resolve())
 
-def _write_kline(data: Dict[str, Any], f: TextIOWrapper):
+def _write_kline(data: Dict[str, Any], f: TextIO):
     '''
     write the k-point file whose mode is "Line"
     '''
@@ -373,7 +379,7 @@ def _write_kline(data: Dict[str, Any], f: TextIOWrapper):
     for k, nk in zip(data['kpoints'], data['nkinterpl']):
         f.write(f"{k[0]} {k[1]} {k[2]} {nk}\n")
 
-def _write_ksampl_mp(data: Dict[str, Any], f: TextIOWrapper):
+def _write_ksampl_mp(data: Dict[str, Any], f: TextIO):
     '''
     write the k-point file whose mode is automatically sampling with Monkhorst-Pack
     '''
@@ -383,7 +389,7 @@ def _write_ksampl_mp(data: Dict[str, Any], f: TextIOWrapper):
     f.write(f"{data['nk'][0]} {data['nk'][1]} {data['nk'][2]} "
             f"{data['kshift'][0]} {data['kshift'][1]} {data['kshift'][2]}\n")
     
-def _write_kpoint(data: Dict[str, Any], f: TextIOWrapper):
+def _write_kpoint(data: Dict[str, Any], f: TextIO):
     '''
     write the k-point file whose mode is specifying kpoints one-by-one
     '''
@@ -420,6 +426,10 @@ def write_kpt(data: Dict[str, Any], fn: str) -> str:
     str
         the absolute path of the written KPT file
     '''
+    return _write_kpt(data, fn, backup=False)
+
+
+def _write_kpt(data, fn, *, backup):
     assert 'mode' in data, 'KPT data must contain "mode" key'
     mywriter = {
          # 'line': _write_kline,
@@ -429,10 +439,16 @@ def write_kpt(data: Dict[str, Any], fn: str) -> str:
     assert data['mode'] in mywriter, \
            f'Invalid KPT mode {data["mode"]}, must be one of ' \
            f'{list(mywriter.keys())}'
-    with open(fn, 'w') as f:
+    # Validate and format before touching the previous KPT.
+    with StringIO() as f:
         mywriter[data['mode']](data, f)
+        content = f.getvalue()
 
-    return str(Path(fn).resolve())
+    path = Path(fn)
+    if backup:
+        file_safe_backup(path)
+    path.write_text(content)
+    return str(path.resolve())
 
 def _parse_coord_line(line):
     '''
@@ -682,7 +698,8 @@ def _read_kpoint(raw: List[str]) -> Dict[str, Any]:
     for line_number, line in enumerate(raw[3:], start=4):
         fields = re.split(r'#|//|!', line, maxsplit=1)[0].split()
         try:
-            x, y, z, weight = map(float, fields)
+            # ABACUS consumes the first four values and ignores any row label.
+            x, y, z, weight = map(float, fields[:4])
         except ValueError as exc:
             raise ValueError(
                 f'Invalid explicit KPT row {line_number}: expected x y z weight'

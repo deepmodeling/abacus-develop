@@ -52,14 +52,14 @@ from ase.dft.kpoints import BandPath
 from ase.io import read
 
 from abacuslite.io.generalio import (
+    _write_ase_stru,
+    _write_kpt,
     file_safe_backup,
     read_input,
     read_stru,
     read_kpt,
     species_group_indices,
     write_input,
-    write_stru,
-    write_kpt
 )
 
 __LEGACYIO__ = True
@@ -321,26 +321,23 @@ class AbacusTemplate(CalculatorTemplate):
 
         # copy the `parameters` because later we will modify it
         parameters = parameters.copy()
-        self.stru_file = parameters.get('stru_file', 'STRU') or 'STRU'
+        stru_file = parameters.get('stru_file', 'STRU') or 'STRU'
 
         # STRU
-        _ = file_safe_backup(directory / self.stru_file)
         # group atoms by first-occurrence species order. Keep the reverse map so
         # that we will recover the order in function read_results()
         ind = species_group_indices(atoms.get_chemical_symbols())
         self.atomorder = sorted(range(len(atoms)), key=lambda i: ind[i]) # revmap
         # then we write
-        _ = write_stru(atoms[ind], 
-                       outdir=directory,
-                       pp_file=parameters.get('pseudopotentials'),
-                       orb_file=parameters.get('basissets'),
-                       fname=self.stru_file)
+        _write_ase_stru(atoms[ind], directory,
+                        parameters.get('pseudopotentials'),
+                        parameters.get('basissets'),
+                        stru_file, backup=True)
 
         # KPT, if needed
         if 'kpts' in parameters:
-            _ = file_safe_backup(directory / parameters.get('kpoint_file', 'KPT'))
-            _ = write_kpt(parameters['kpts'], 
-                          directory / parameters.get('kpoint_file', 'KPT'))
+            kpt_file = directory / (parameters.get('kpoint_file', 'KPT') or 'KPT')
+            _write_kpt(parameters['kpts'], kpt_file, backup=True)
         # should this function be responsible for checking the integrity
         # of information provided by the user? There may be the case that
         # user provides incomplete information, such that the ABACUS cannot
@@ -448,10 +445,6 @@ class AbacusTemplate(CalculatorTemplate):
         outdir = directory / f'OUT.{self.suffix}'
         log = outdir / f'running_{self.calculation}.log'
         frames = read_abacus_out(log, sort_atoms_with=self.atomorder)
-        if self.calculation == 'scf' and len(frames) != 1:
-            raise RuntimeError(
-                f"Invalid SCF results in {log}. Expected exactly one, found {len(frames)}"
-            )
         if not frames:
             raise RuntimeError(f"no ABACUS running-log frames in {log}")
         atoms = frames[-1]
@@ -573,7 +566,9 @@ class Abacus(GenericFileIOCalculator):
         inp_read = read_input(directory / 'INPUT')
         inp = inp_read | kwargs.pop('inp', {})
 
-        pporb_read = read_stru(directory / (inp.get('stru_file', 'STRU') or 'STRU'))['species']
+        # The old INPUT names the files to read; overrides apply to the next run.
+        stru_file = directory / (inp_read.get('stru_file', 'STRU') or 'STRU')
+        pporb_read = read_stru(stru_file)['species']
         pseudopotentials = kwargs.get(
             'pseudopotentials',
             {pporb['symbol']: pporb['pp_file'] for pporb in pporb_read}
@@ -594,7 +589,7 @@ class Abacus(GenericFileIOCalculator):
         if 'kpts' in kwargs:
             kpts_kwargs = {'kpts': kwargs.pop('kpts')}
         else:
-            kpt_file = directory / (inp.get('kpoint_file', 'KPT') or 'KPT')
+            kpt_file = directory / (inp_read.get('kpoint_file', 'KPT') or 'KPT')
             if kpt_file.is_file():
                 kpts_kwargs = {'kpts': read_kpt(kpt_file)}
             else:
@@ -660,7 +655,7 @@ class Abacus(GenericFileIOCalculator):
         # we should overwrite the 'calculation' to 'nscf', and 'init_chg' to 'file'
         assert symmetry == 'off'
         
-        inp = kwargs.setdefault('inp', {})
+        inp = kwargs.get('inp', {}).copy()
         inp.update({'calculation': 'nscf',
                     'init_chg': 'file',
                     'symmetry': 0,
@@ -668,7 +663,9 @@ class Abacus(GenericFileIOCalculator):
                     'kspacing': 0.0,       # overwrite
                     'gamma_only': False})
         source_suffix = getattr(self, 'parameters', {}).get('suffix', 'ABACUS')
-        inp.setdefault('read_file_dir', f'OUT.{source_suffix}')
+        if inp.get('read_file_dir') is None:
+            inp['read_file_dir'] = f'OUT.{source_suffix}'
+        kwargs['inp'] = inp
 
         profile = self.profile if profile is None else profile
 

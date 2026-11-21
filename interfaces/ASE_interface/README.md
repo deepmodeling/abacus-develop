@@ -41,11 +41,11 @@ The regular `Abacus` calculator runs one ABACUS calculation for each ASE propert
 
 ## Result collection
 
-The ASE calculator requires exactly one parsed result for single-point SCF.
-Native relaxation and MD use the final parsed frame. The readers restore ASE
-atom order using the mapping created when the calculator writes STRU. The
-legacy reader can use MD_dump when present, and the develop reader reads
-native MD from MD_dump. Each calculator retains its own LTS/develop reader.
+The ASE calculator uses the final parsed frame for SCF, native relaxation, and
+native MD. The readers restore ASE atom order using the mapping created when
+the calculator writes STRU. The legacy reader can use MD_dump when present,
+and the develop reader reads native MD from MD_dump. Each calculator retains
+its own LTS/develop reader.
 
 Both output readers accept paths or named text streams, using the log filename
 to locate companion output files. Caller-owned streams remain open and are read
