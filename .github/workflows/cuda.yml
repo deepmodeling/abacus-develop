@@ -28,11 +28,7 @@ jobs:
       CCACHE_BASEDIR: ${{ github.workspace }}
       CCACHE_COMPRESS: "true"
       CCACHE_MAXSIZE: 8G
-      # Test cases to run side by side. The runner has 12 cores and one
-      # V100-32GB; a GPU case is a few atoms and takes about 2 s, so these
-      # suites are bound by process startup, not by the device. Four leaves
-      # every rank a core of its own and keeps the concurrent CUDA contexts
-      # far inside the card's memory.
+      # Test cases to run side by side on the GPU runner.
       GPU_TEST_JOBS: "4"
     steps:
       - name: Checkout
@@ -76,10 +72,17 @@ jobs:
         run: |
           nvidia-smi
           source toolchain/install/setup
+          capabilities="$(nvidia-smi --query-gpu=compute_cap --format=csv,noheader)"
+          if [[ -z "${capabilities}" ]] || grep -qEv '^[0-9]+\.[0-9]+$' <<< "${capabilities}"; then
+            echo "::error::Could not detect valid CUDA compute capabilities from nvidia-smi"
+            exit 1
+          fi
+          architectures="$(tr -d '.' <<< "${capabilities}" | sort -nu | paste -sd';' -)"
+          echo "Detected CUDA architectures: ${architectures}"
           rm -rf build
           cmake -B build -G Ninja -DUSE_CUDA=ON -DENABLE_LIBXC=ON -DBUILD_TESTING=ON -DENABLE_FLOAT_FFTW=ON \
             -DENABLE_GOOGLEBENCH=OFF \
-            -DCMAKE_CUDA_ARCHITECTURES=70
+            -DCMAKE_CUDA_ARCHITECTURES="${architectures}"
           cmake --build build -j "$(nproc)"
           cmake --install build
 

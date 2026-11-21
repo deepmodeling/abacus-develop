@@ -1,1 +1,1 @@
-target_sources(md PRIVATE nep_potential.cpp)
+target_sources(md PRIVATE nep_forcefield.cpp)

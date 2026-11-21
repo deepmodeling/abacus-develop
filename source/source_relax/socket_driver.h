@@ -17,10 +17,11 @@ class Socket_Driver
     Socket_Driver() = default;
     ~Socket_Driver() = default;
 
-    void socket_driver(ModuleESolver::ESolver* p_esolver,
-                       UnitCell& ucell,
-                       const Input_para& inp,
-                       std::ofstream& ofs_running);
+    void socket_driver(
+        ModuleESolver::ESolver *p_esolver,
+        UnitCell &ucell,
+        const Input_para &inp,
+        std::ofstream &ofs_running);
 };
 
 #endif
