@@ -6,6 +6,16 @@ abacus_disable_feature_definitions(__EXX)
 # Keep the existing serial INPUT target and its compile definitions.
 target_sources(MODULE_IO_read_item_serial PRIVATE test_read_inp_exx_dftu.cpp)
 
+if(ENABLE_LIBRI_GPU)
+  # Exercise the real device probe while keeping DeviceContext free of MPI.
+  set_property(
+    SOURCE ${PROJECT_SOURCE_DIR}/source/source_base/module_device/device.cpp
+           TARGET_DIRECTORY MODULE_IO_read_input_serial
+    APPEND
+    PROPERTY COMPILE_DEFINITIONS __CUDA)
+  target_link_libraries(MODULE_IO_read_input_serial PRIVATE CUDA::cudart)
+endif()
+
 addtest(
   TARGET MODULE_IO_write_bands
   LIBS parameter base device symmetry
