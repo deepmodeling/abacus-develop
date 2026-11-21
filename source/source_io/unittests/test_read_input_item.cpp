@@ -2659,7 +2659,7 @@ TEST_F(InputTest, Item_test2)
     }
     { // diag_subspace
         auto it = find_label("diag_subspace", readinput.input_lists);
-        EXPECT_EQ(it->second.get_availability(), "basis_type==pw and ks_solver==dav_subspace");
+        EXPECT_EQ(it->second.get_availability(), "basis_type==pw and (ks_solver==dav_subspace or ks_solver==lobpcg)");
     }
     { // md_nstep
         auto it = find_label("md_nstep", readinput.input_lists);
