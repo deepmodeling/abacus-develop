@@ -1,7 +1,11 @@
 #include "source_io/parse_args.h"
+#include "source_io/parse_command_line.h"
 #include "gtest/gtest.h"
 #include "source_io/module_parameter/read_input.h"
 #include "source_main/version.h"
+
+#include <stdexcept>
+#include <vector>
 
 // Already deal with Testing.cmake
 // #include "build_info.h" 
@@ -280,5 +284,51 @@ TEST_F(ParseArgsTest, HelpFollowedByFlag) {
     // Should show general help, not version
     EXPECT_TRUE(output.find("ABACUS version") == std::string::npos ||
                 output.find("Usage:") != std::string::npos);
+}
+
+TEST_F(ParseArgsTest, CombinedRunControlAndCheckInput)
+{
+    const std::vector<std::vector<std::string>> cases = {
+        {"abacus", "--check-input", "-in", "sub/INPUT", "-p", "a", "-1"},
+        {"abacus", "--input", "sub/INPUT", "--parameter", "a", "-1", "--check-input"}};
+    for (const auto& tokens : cases)
+    {
+        ModuleIO::ReadInput::check_mode = false;
+        std::vector<char*> argv;
+        for (const auto& token : tokens)
+        {
+            argv.push_back(const_cast<char*>(token.c_str()));
+        }
+        ModuleIO::parse_args(argv.size(), argv.data());
+        const auto args = ModuleIO::parse_command_line(argv.size(), argv.data());
+        EXPECT_TRUE(ModuleIO::ReadInput::check_mode);
+        EXPECT_EQ(args.input_file, "sub/INPUT");
+        EXPECT_EQ(args.vars.at("a"), "-1");
+    }
+}
+
+TEST_F(ParseArgsTest, FlagLookingVariableValueIsConsumed)
+{
+    char* argv[] = {const_cast<char*>("abacus"), const_cast<char*>("-p"),
+                    const_cast<char*>("a"), const_cast<char*>("--check-input")};
+    ModuleIO::parse_args(4, argv);
+    const auto args = ModuleIO::parse_command_line(4, argv);
+    EXPECT_FALSE(ModuleIO::ReadInput::check_mode);
+    EXPECT_EQ(args.vars.at("a"), "--check-input");
+}
+
+TEST_F(ParseArgsTest, SharedRunControlArityValidation)
+{
+    char* argv[] = {const_cast<char*>("abacus"), const_cast<char*>("-p"), const_cast<char*>("a")};
+    EXPECT_THROW(ModuleIO::parse_args(3, argv), std::runtime_error);
+    EXPECT_THROW(ModuleIO::parse_command_line(3, argv), std::runtime_error);
+}
+
+TEST_F(ParseArgsTest, HelpStillPrecedesRunControlNameValidation)
+{
+    char* argv[] = {const_cast<char*>("abacus"), const_cast<char*>("-p"),
+                    const_cast<char*>("1invalid"), const_cast<char*>("value"),
+                    const_cast<char*>("--help")};
+    EXPECT_EXIT(ModuleIO::parse_args(5, argv), ::testing::ExitedWithCode(0), "");
 }
 

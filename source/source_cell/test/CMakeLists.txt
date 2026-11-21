@@ -53,6 +53,16 @@ addtest(
   LIBS base device
   SOURCES test_cell_geometry.cpp ../cell_geometry.cpp)
 
+addtest(
+  TARGET
+  MODULE_CELL_stru_frame_io
+  LIBS
+  base
+  device
+  SOURCES
+  test_stru_frame_io.cpp
+  ../stru_frame_io.cpp)
+
 if(NOT ENABLE_MPI)
   return()
 endif()
@@ -274,11 +284,6 @@ add_test(
   COMMAND ${BASH} unitcell_test_parallel.sh
           "$<TARGET_FILE:MODULE_CELL_unitcell_test_para>"
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-
-addtest(
-  TARGET MODULE_CELL_index_test
-  LIBS base device
-  SOURCES cell_index_test.cpp ../cell_index.cpp)
 
 addtest(
   TARGET MODULE_CELL_SEP_TEST

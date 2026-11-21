@@ -48,7 +48,7 @@ TEST_F(PrintCellTest, PrintSTRU_nspin1)
     std::string fn = "C1H2_STRU_nspin1";
 
     unitcell::print_stru_file(*ucell, ucell->atoms, ucell->latvec,
-                              fn, "", 1, false, false, false, false, 0, ModuleBase::matrix(), false);
+                              fn, "", 1, false, false, false, false, 0, ModuleBase::matrix(), false, false);
     std::ifstream ifs;
     ifs.open(fn);
     std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
@@ -91,7 +91,7 @@ TEST_F(PrintCellTest, PrintSTRU_zero_force_computed)
     force.zero_out();
 
     unitcell::print_stru_file(*ucell, ucell->atoms, ucell->latvec,
-                              fn, "", 2, false, false, false, false, 0, force, true);
+                              fn, "", 2, false, false, false, false, 0, force, true, false);
     std::ifstream ifs;
     ifs.open(fn);
     std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
@@ -114,7 +114,7 @@ TEST_F(PrintCellTest, PrintSTRU_force_matrix_without_flag)
     force(0, 0) = 0.1; force(0, 1) = 0.2; force(0, 2) = 0.3;
 
     unitcell::print_stru_file(*ucell, ucell->atoms, ucell->latvec,
-                              fn, "", 2, false, false, false, false, 0, force, false);
+                              fn, "", 2, false, false, false, false, 0, force, false, false);
     std::ifstream ifs;
     ifs.open(fn);
     std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
@@ -131,7 +131,7 @@ TEST_F(PrintCellTest, PrintSTRU_nspin2_no_force)
     std::string fn = "C1H2_STRU_nspin2";
 
     unitcell::print_stru_file(*ucell, ucell->atoms, ucell->latvec,
-                              fn, "", 2, true, false, false, false, 0, ModuleBase::matrix(), false);
+                              fn, "", 2, true, false, false, false, 0, ModuleBase::matrix(), false, false);
     std::ifstream ifs;
     ifs.open(fn);
     std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
@@ -163,7 +163,7 @@ TEST_F(PrintCellTest, PrintSTRU_nspin2_with_mag)
     ucell->atoms[1].mag[0] = -0.5;  // H1
     ucell->atoms[1].mag[1] = 2.0;   // H2
     unitcell::print_stru_file(*ucell, ucell->atoms, ucell->latvec,
-                              fn, "", 2, false, false, false, false, 0, ModuleBase::matrix(), false);
+                              fn, "", 2, false, false, false, false, 0, ModuleBase::matrix(), false, false);
     std::ifstream ifs;
     ifs.open(fn);
     std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
@@ -192,7 +192,7 @@ TEST_F(PrintCellTest, PrintSTRU_nspin2_mulliken)
     ucell->orbital_fn[1] = "__unittest_orbital_fn_1__";
     ucell->atom_mulliken = {{-1, 0.5}, {-1, 0.4}, {-1, 0.3}};
     unitcell::print_stru_file(*ucell, ucell->atoms, ucell->latvec,
-                              fn, "", 2, false, true, true, true, 0, ModuleBase::matrix(), false);
+                              fn, "", 2, false, true, true, true, 0, ModuleBase::matrix(), false, false);
     std::ifstream ifs;
     ifs.open(fn);
     std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
@@ -221,7 +221,7 @@ TEST_F(PrintCellTest, PrintSTRU_nspin4_initial_mag)
     ucell->atoms[1].m_loc_[0].set(0.0, 1.0, 0.0);   // H1
     ucell->atoms[1].m_loc_[1].set(0.0, 0.0, 1.0);   // H2
     unitcell::print_stru_file(*ucell, ucell->atoms, ucell->latvec,
-                              fn, "", 4, false, false, false, false, 0, ModuleBase::matrix(), false);
+                              fn, "", 4, false, false, false, false, 0, ModuleBase::matrix(), false, false);
     std::ifstream ifs;
     ifs.open(fn);
     std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
@@ -247,7 +247,7 @@ TEST_F(PrintCellTest, PrintSTRU_nspin4_mulliken)
 
     ucell->atom_mulliken = {{-1, 0.5, 0.1, 0.2}, {-1, 0.4, 0.3, 0.4}, {-1, 0.3, 0.5, 0.6}};
     unitcell::print_stru_file(*ucell, ucell->atoms, ucell->latvec,
-                              fn, "", 4, false, true, false, false, 0, ModuleBase::matrix(), false);
+                              fn, "", 4, false, true, false, false, 0, ModuleBase::matrix(), false, false);
     std::ifstream ifs;
     ifs.open(fn);
     std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
@@ -274,7 +274,7 @@ TEST_F(PrintCellTest, PrintSTRU_with_force)
     force(2, 0) = 0.05; force(2, 1) = 0.15; force(2, 2) = -0.25; // H2
 
     unitcell::print_stru_file(*ucell, ucell->atoms, ucell->latvec,
-                              fn, "", 2, false, false, false, false, 0, force, true);
+                              fn, "", 2, false, false, false, false, 0, force, true, false);
     std::ifstream ifs;
     ifs.open(fn);
     std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
@@ -389,4 +389,39 @@ TEST_F(PrintCellTest, PrintTauCartesian)
 
     // remove the file
     remove("print_tau_Cartesian");
+}
+
+// ---------------------------------------------------------------------------
+// STRU append flag: append=true accumulates successive structures in one file.
+// ---------------------------------------------------------------------------
+TEST_F(PrintCellTest, STRUAppend)
+{
+    UcellTestPrepare utp = UcellTestLib["C1H2-Index"];
+    ucell = utp.SetUcellInfo();
+    const std::string fn = "STRU_append_test";
+
+    // First call: append=false -> create/truncate.
+    unitcell::print_stru_file(*ucell, ucell->atoms, ucell->latvec,
+                              fn, "", 1, false, false, false, false, 0, ModuleBase::matrix(), false,
+                              /*append=*/false);
+    // Second call: append=true -> accumulate into same file.
+    unitcell::print_stru_file(*ucell, ucell->atoms, ucell->latvec,
+                              fn, "", 1, false, false, false, false, 0, ModuleBase::matrix(), false,
+                              /*append=*/true);
+
+    std::ifstream ifs(fn);
+    std::string str((std::istreambuf_iterator<char>(ifs)),
+                    std::istreambuf_iterator<char>());
+    ifs.close();
+    // Two STRU blocks -> two ATOMIC_SPECIES markers.
+    int occurrences = 0;
+    size_t pos = 0;
+    while ((pos = str.find("ATOMIC_SPECIES", pos)) != std::string::npos)
+    {
+        ++occurrences;
+        pos += 14;
+    }
+    EXPECT_EQ(occurrences, 2);
+
+    remove(fn.c_str());
 }

@@ -152,8 +152,13 @@ bool MDCell::has_neighbor_search() const
     return neighbor_layout_valid_ && neighbor_search_ != NULL;
 }
 
-void MDCell::set_lattice_vectors(const ModuleBase::Matrix3& latvec)
+void MDCell::set_lattice_geometry(const ModuleBase::Matrix3& latvec, double lat0)
 {
+    if (lat0 <= 0.0)
+    {
+        throw std::runtime_error("MDCell lattice constant must be positive.");
+    }
+    lat0_ = lat0;
     latvec_ = latvec;
     gt_ = latvec_.Inverse();
     omega_ = std::abs(latvec_.Det()) * lat0_ * lat0_ * lat0_;

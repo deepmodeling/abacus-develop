@@ -139,14 +139,7 @@ void Matrix_Orbs21::init_radial_table(const bool use_gpu)
                             {
                                 for (auto& coH: coG.second)
                                 {
-                                    if (use_gpu)
-                                    {
-                                        orbitals.push_back(&coH.second);
-                                    }
-                                    else
-                                    {
-                                        coH.second.init_radial_table();
-                                    }
+                                    orbitals.push_back(&coH.second);
                                 }
                             }
                         }
@@ -155,10 +148,7 @@ void Matrix_Orbs21::init_radial_table(const bool use_gpu)
             }
         }
     }
-    if (use_gpu)
-    {
-        Center2_Orb::Orb21::init_radial_table(orbitals, true);
-    }
+    Center2_Orb::Orb21::init_radial_table(orbitals, use_gpu);
     ModuleBase::timer::end("Matrix_Orbs21", "init_radial_table");
 }
 

@@ -1,8 +1,9 @@
 #include "source_base/global_variable.h"
 #include "source_base/kernels/math_kernel_op.h"
 #include "source_cell/check_atomic_stru.h"
-#include "source_cell/domain_decomposition.h"
+#include "source_cell/dom_decomp.h"
 #include "source_cell/mdcell.h"
+#include "source_cell/mdcell_adapter.h"
 #include "source_esolver/esolver_factory.h"
 #include "source_hsolver/kernels/hegvd_op.h"
 #include "source_io/module_json/para_json.h"
@@ -52,7 +53,8 @@ void Driver::driver_run()
     this->init_hardware();
     ModuleESolver::ESolver* p_esolver = ModuleESolver::init_esolver(PARAM.inp);
 
-    const bool direct_mdcell = input.esolver_type == "lj" || input.esolver_type == "dp" || input.esolver_type == "nep";
+    const bool direct_mdcell = input.esolver_type == "lj" || input.esolver_type == "dp" || input.esolver_type == "nep"
+                               || input.esolver_type == "snap";
     UnitCell ucell;
     bool ucell_initialized = false;
     const auto initialize_ucell = [&ucell, &ucell_initialized, &input]() {
@@ -93,7 +95,13 @@ void Driver::driver_run()
         DomainDecomposition decomp;
         if (direct_mdcell)
         {
-            Run_MD::prepare_mdcell(mdcell, PARAM, decomp);
+            MDCellAdapter::initialize_from_stru(mdcell,
+                                                decomp,
+                                                PARAM.globalv.global_in_stru,
+                                                input.cell_replica,
+                                                input.mdp.md_restart,
+                                                input.mdp.md_neighbor_skin,
+                                                GlobalV::ofs_running);
             p_esolver->before_all_runners(mdcell, PARAM.inp);
             Run_MD::md_line(mdcell, p_esolver, PARAM, decomp);
             p_esolver->after_all_runners(mdcell);
@@ -101,7 +109,7 @@ void Driver::driver_run()
         else
         {
             initialize_ucell();
-            Run_MD::prepare_mdcell(mdcell, ucell, decomp);
+            MDCellAdapter::initialize_backed_from_unitcell(mdcell, decomp, ucell);
             p_esolver->before_all_runners(ucell, PARAM.inp);
             Run_MD::md_line(mdcell, p_esolver, PARAM, decomp);
             p_esolver->after_all_runners(ucell);

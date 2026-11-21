@@ -4,25 +4,38 @@
 // closed-form screened-leg product with the dpsi-slot sentinel), and the
 // build_stars + rotate_tensor cyclic-group regression.
 
-#include "dfpt_serial_fixture.h"
+#include "dfpt_test_tool.h"
+#include "source_basis/module_pw/pw_basis.h"
+#include "source_basis/module_pw/pw_basis_k.h"
+#include "source_cell/qlist.h"
+#include "source_cell/unitcell.h"
+#include "source_pw/module_dfpt/dfpt_pw_data.h"
+
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 #include "source_base/constants.h"
 #include "source_base/matrix.h"
 #include "source_base/matrix3.h"
 #include "source_base/vector3.h"
 #include "source_cell/atom_pseudo.h"
 #include "source_cell/atom_spec.h"
-#include "source_cell/qlist.h"
-#include "source_cell/unitcell.h"
 #include "source_cell/stru_fac.h"
 #include "source_psi/psi.h"
 #include "source_pw/module_dfpt/dfpt_pert.h"
 #include "source_pw/module_dfpt/dfpt_q0.h"
 
-// per-file fixture (self-contained, gtest style): this fixture is
-// Gamma-only (k_d_ shadows the generic default k of the base)
-class DFPTQ0SerialTest : public DFPTSerialBase
+// per-file self-contained fixture (gtest style): owns its objects and
+// calls the dfpt_test free-function utilities; Gamma-only
+class DFPTQ0SerialTest : public ::testing::Test
 {
   protected:
+    ModuleBase::Matrix3 latvec_;
+    UnitCell ucell_;
+    ModulePW::PW_Basis pw_rho_;
+    ModulePW::PW_Basis_K pw_wfc_;
+    ModuleCell::QList qlist_;
+    ModuleDFPT::DFPT_PW_Data data_;
+    ModuleBase::Vector3<double> q_cart_;
     Structure_Factor sf_;
     ModuleDFPT::DFPT_Pert pert_;
     ModuleDFPT::DFPT_Q0 q0_;
@@ -32,10 +45,17 @@ class DFPTQ0SerialTest : public DFPTSerialBase
 
     void SetUp() override
     {
-        SetUpCell();
-        SetupBases(k_d_, ModuleBase::Vector3<double>(0.0, 0.0, 0.0), 4);
+        dfpt_test::setup_cell(ucell_, latvec_);
+        dfpt_test::setup_bases(pw_rho_, pw_wfc_, qlist_, data_, ucell_,
+                               k_d_, ModuleBase::Vector3<double>(0.0, 0.0, 0.0), 4, q_cart_);
         pert_.init(ucell_, &pw_rho_, &pw_wfc_, sf_);
         q0_.init(ucell_, &pw_rho_, &pw_wfc_, &pert_);
+    }
+
+    void TearDown() override
+    {
+        delete[] ucell_.atoms;
+        ucell_.atoms = nullptr;
     }
 
     // wfc-basis index of the reciprocal vector (ix, iy, iz)/a at Gamma
@@ -45,7 +65,9 @@ class DFPTQ0SerialTest : public DFPTSerialBase
         for (int ig = 0; ig < npwk; ++ig)
         {
             const ModuleBase::Vector3<double> g = pw_wfc_.getgpluskcar(0, ig);
-            if (std::llround(g.x * a_) == ix && std::llround(g.y * a_) == iy && std::llround(g.z * a_) == iz)
+            if (std::llround(g.x * dfpt_test::cubic_edge) == ix
+                && std::llround(g.y * dfpt_test::cubic_edge) == iy
+                && std::llround(g.z * dfpt_test::cubic_edge) == iz)
             {
                 return ig;
             }
@@ -54,15 +76,13 @@ class DFPTQ0SerialTest : public DFPTSerialBase
     }
 };
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include <cmath>
 #include <complex>
 #include <vector>
 
 TEST_F(DFPTQ0SerialTest, BuildVkbDkMatchesFiniteDifference)
 {
-    MakeNCAtom();
+    dfpt_test::make_nc_atom(ucell_);
     // generic shifted list without any |g| = 0 entry (the direction chain is
     // singular at the origin for l >= 1 rows)
     const int ng = 8;
@@ -270,7 +290,7 @@ TEST_F(DFPTQ0SerialTest, StarRotationCyclicGroup)
     for (int i = 0; i < 3; ++i)
     {
         ucell_.atoms[0].taud[i] = ModuleBase::Vector3<double>(t0[i], t0[(i + 1) % 3], t0[(i + 2) % 3]);
-        ucell_.atoms[0].tau[i] = ucell_.atoms[0].taud[i] * a_;
+        ucell_.atoms[0].tau[i] = ucell_.atoms[0].taud[i] * dfpt_test::cubic_edge;
     }
     ucell_.iat2it.resize(3);
     ucell_.iat2ia.resize(3);
@@ -298,8 +318,8 @@ TEST_F(DFPTQ0SerialTest, StarRotationCyclicGroup)
     // single reduced k point (1/4,0,0) on its own wfc basis
     ModulePW::PW_Basis_K kwfc;
     const ModuleBase::Vector3<double> klist[1] = {ModuleBase::Vector3<double>(0.25, 0.0, 0.0)};
-    kwfc.initgrids(lat0_, latvec_, pw_rho_.nx, pw_rho_.ny, pw_rho_.nz);
-    kwfc.initparameters(false, ecutwfc_, 1, klist);
+    kwfc.initgrids(dfpt_test::lat0, latvec_, pw_rho_.nx, pw_rho_.ny, pw_rho_.nz);
+    kwfc.initparameters(false, dfpt_test::ecutwfc, 1, klist);
     kwfc.fft_bundle.initfftmode(0);
     kwfc.setuptransform();
     kwfc.collect_local_pw();

@@ -2,7 +2,6 @@
 #include "source_pw/module_pwdft/dftu_base.h"
 #include "source_lcao/module_dftu/dftu_nao_occ.h"
 #include "source_lcao/module_dftu/dftu_nao_energy.h"
-#include "source_pw/module_pwdft/dftu_base_io.h" // mohan add 2025-11-08
 #include "source_io/module_parameter/parameter.h"
 #include "source_lcao/hamilt_lcao.h"
 
@@ -47,12 +46,8 @@ void finish_dftu_lcao(const bool conv_esolver,
                        const K_Vectors& kv,
                        const double mixing_beta,
                        void* hamilt_lcao,
-                       const std::string& global_out_dir,
                        int nspin,
-                       const bool gamma_only_local,
-                       int istep,
-                       int iter,
-                       const DFTU_BASE::OccmatOutputCfg& occmat_cfg)
+                       const bool gamma_only_local)
 {
     if (!dft_plus_u)
     {
@@ -81,8 +76,6 @@ void finish_dftu_lcao(const bool conv_esolver,
             DFTU_LCAO::cal_energy_correction(*dftu_ptr, ucell, PARAM.inp.nspin);
         }
     }
-    DFTU_BASE::prepare_ion_step_output(global_out_dir, istep, iter, occmat_cfg);
-    
     /// use the converged occupation matrix for next MD/Relax SCF calculation
     if (conv_esolver)
     {
@@ -99,12 +92,8 @@ template void finish_dftu_lcao<double>(const bool conv_esolver,
                                         const K_Vectors& kv,
                                         const double mixing_beta,
                                         void* hamilt_lcao,
-                                        const std::string& global_out_dir,
                                         int nspin,
-                                        const bool gamma_only_local,
-                                        int istep,
-                                        int iter,
-                                        const DFTU_BASE::OccmatOutputCfg& occmat_cfg);
+                                        const bool gamma_only_local);
 
 template void finish_dftu_lcao<std::complex<double>>(const bool conv_esolver,
                                                       int dft_plus_u,
@@ -114,11 +103,7 @@ template void finish_dftu_lcao<std::complex<double>>(const bool conv_esolver,
                                                       const K_Vectors& kv,
                                                       const double mixing_beta,
                                                       void* hamilt_lcao,
-                                                      const std::string& global_out_dir,
                                                       int nspin,
-                                                      const bool gamma_only_local,
-                                                      int istep,
-                                                      int iter,
-                                                      const DFTU_BASE::OccmatOutputCfg& occmat_cfg);
+                                                      const bool gamma_only_local);
 
 } // namespace ModuleESolver

@@ -4,6 +4,8 @@
 #include "source_lcao/module_lr/ri_benchmark/ri_benchmark.h"
 #include "source_io/module_wf/read_wfc_nao.h"
 #include "source_io/module_output/cube_io.h"
+#include "source_estate/module_charge/chg_rhog_io.h"
+#include "source_base/module_parallel/para_bridge.h"
 #include "source_base/module_external/scalapack_connector.h"
 #include <algorithm>
 
@@ -13,18 +15,16 @@ template<typename T, typename TR>
 void ModuleESolver::ESolver_LR<T, TR>::set_parallel_orbitals_band(Parallel_Orbitals& pmat, const int nbands_in)
 {
 #ifdef __MPI
-    const int leading_dimension = std::max(pmat.para_2d().get_row_size(), 1);
-    pmat.set_desc_wfc_Eij(this->nbasis, nbands_in, leading_dimension);
+    pmat.set_wfc_and_mo_layouts(this->nbasis, nbands_in);
     // The KS helper rejects empty band columns. LR windows may legitimately
     // have fewer blocks than the inherited KS process grid has columns.
-    Parallel_2D bands;
-    const int block_size = pmat.para_2d().get_block_size();
-    LR_Util::setup_2d_division(bands, block_size, this->nbasis, nbands_in, pmat.get_blacs_ctxt());
+    Parallel_Blkcyclic bands;
+    const int block_size = pmat.para_2d().nb();
+    LR_Util::setup_2d_division(bands, block_size, this->nbasis, nbands_in, pmat.para_2d().ictxt());
     pmat.nbands = nbands_in;
-    pmat.nrow_bands = bands.get_row_size();
-    pmat.ncol_bands = bands.get_col_size();
-    pmat.nloc_wfc = bands.get_local_size();
-    pmat.nloc_Eij = pmat.ncol_bands * pmat.ncol_bands;
+    pmat.nrow_bands = bands.nrloc();
+    pmat.ncol_bands = bands.ncloc();
+    pmat.nloc_wfc = bands.size();
     // Skipped for the aims benchmark: with `aims_nbasis` the per-atom orbital counts behind
     // `iat2iwt` do not match `nbasis`, so the atomic trace would be wrong. The guard came from
     // d4fe3fe84 ("Support different basis number from aims"), and was silently undone by
@@ -46,18 +46,18 @@ void ModuleESolver::ESolver_LR<T, TR>::setup_eigenvectors_X()
     // this function is called once per `runner`, and `paraX_` is only ever appended to,
     // so without this reset a second ionic step would double its size
     this->paraX_.clear();
-    const int block_size = this->paraC_.get_block_size();
+    const int block_size = this->paraC_.nb();
     for (int is = 0;is < nspin;++is)
     {
-        Parallel_2D px;
+        Parallel_Blkcyclic px;
         LR_Util::setup_2d_division(px, block_size, this->nvirt[is], this->nocc[is]
 #ifdef __MPI
-            , this->paraC_.blacs_ctxt
+            , this->paraC_.ictxt()
 #endif
         );//nvirt - row, nocc - col
         this->paraX_.emplace_back(std::move(px));
     }
-    this->nloc_per_state = nk * (openshell ? paraX_[0].get_local_size() + paraX_[1].get_local_size() : paraX_[0].get_local_size());
+    this->nloc_per_state = nk * (openshell ? paraX_[0].size() + paraX_[1].size() : paraX_[0].size());
 
     this->X.resize(openshell ? 1 : nspin, LR_Util::newTensor<T>({ nstates, nloc_per_state }));
     for (auto& x: X)
@@ -81,7 +81,7 @@ void ModuleESolver::ESolver_LR<T, TR>::set_X_initial_guess()
         const int& no = this->nocc[is];
         const int& nv = this->nvirt[is];
         const int& np = this->npairs[is];
-        const Parallel_2D& px = this->paraX_[is];
+        const Parallel_Blkcyclic& px = this->paraX_[is];
 
         // if (E_{lumo}-E_{homo-1} < E_{lumo+1}-E{homo}), mode = 0, else 1(smaller first)
         bool ix_mode = false;   //default
@@ -117,12 +117,12 @@ void ModuleESolver::ESolver_LR<T, TR>::set_X_initial_guess()
             const int virt_global = std::get<1>(ix2ioiv[ipair]);   // virt
             const int ik = ib / np;
             const int xstart_b = ib * nloc_per_state;    //start index of band ib
-            const int xstart_bs = (openshell && is == 1) ? xstart_b + nk * paraX_[0].get_local_size() : xstart_b;  // start index of band ib, spin is
+            const int xstart_bs = (openshell && is == 1) ? xstart_b + nk * paraX_[0].size() : xstart_b;  // start index of band ib, spin is
             const int is_in_x = openshell ? 0 : is;     // if openshell, spin-up and spin-down are put together
             if (px.in_this_processor(virt_global, occ_global))
             {
-                const int xstart_pair = ik * px.get_local_size();
-                const int ipair_loc = px.global2local_col(occ_global) * px.get_row_size() + px.global2local_row(virt_global);
+                const int xstart_pair = ik * px.size();
+                const int ipair_loc = px.icloc(occ_global) * px.nrloc() + px.irloc(virt_global);
                 X[is_in_x].data<T>()[xstart_bs + xstart_pair + ipair_loc] = (static_cast<T>(1.0) / static_cast<T>(nk));
             }
         }
@@ -168,7 +168,7 @@ void ModuleESolver::ESolver_LR<T, TR>::read_ks_wfc()
 
     if (this->inp_->cal_force)
     {    // allocate psi_ks_all and eig_ks_all to read all the bands
-        this->psi_ks_all_own_.reset(new psi::Psi<T>(this->kv.get_nks(), paraMat_all_.ncol_bands, paraMat_all_.para_2d().get_row_size(), this->kv.ngk, true));
+        this->psi_ks_all_own_.reset(new psi::Psi<T>(this->kv.get_nks(), paraMat_all_.ncol_bands, paraMat_all_.para_2d().nrloc(), this->kv.ngk, true));
         this->psi_ks_all_ = this->psi_ks_all_own_.get();
         this->eig_ks_all.create(this->kv.get_nks(), this->inp_->nbands);
         this->wg_ks_all.create(this->kv.get_nks(), this->inp_->nbands);
@@ -212,19 +212,19 @@ void ModuleESolver::ESolver_LR<T, TR>::fill_z_window_(const int* desc_src)
         this->nvirt_z_[is] = this->nbands_z_ - this->nocc[is];
     }
 
-    const int block_size = this->paraC_.get_block_size();
+    const int block_size = this->paraC_.nb();
     LR_Util::setup_2d_division(this->paraC_z_, block_size, this->nbasis, this->nbands_z_
 #ifdef __MPI
-        , this->paraMat_.get_blacs_ctxt()
+        , this->paraMat_.para_2d().ictxt()
 #endif
     );
     this->paraX_z_.clear();
     for (int is = 0; is < this->nspin; ++is)
     {
-        Parallel_2D px;
+        Parallel_Blkcyclic px;
         LR_Util::setup_2d_division(px, block_size, this->nvirt_z_[is], this->nocc[is]
 #ifdef __MPI
-            , this->paraC_z_.blacs_ctxt
+            , this->paraC_z_.ictxt()
 #endif
         );
         this->paraX_z_.emplace_back(std::move(px));
@@ -234,12 +234,12 @@ void ModuleESolver::ESolver_LR<T, TR>::fill_z_window_(const int* desc_src)
     // algorithm carries a single channel. (Same rule as `nloc_per_state` in
     // `setup_eigenvectors_X`, applied to the widened windows.)
     this->nloc_per_state_z_ = this->nk * (this->openshell
-        ? this->paraX_z_[0].get_local_size() + this->paraX_z_[1].get_local_size()
-        : this->paraX_z_[0].get_local_size());
+        ? this->paraX_z_[0].size() + this->paraX_z_[1].size()
+        : this->paraX_z_[0].size());
 
 #ifdef __MPI
-    this->psi_ks_z_.reset(new psi::Psi<T>(this->kv.get_nks(), this->paraC_z_.get_col_size(),
-        this->paraC_z_.get_row_size(), this->kv.ngk, true));
+    this->psi_ks_z_.reset(new psi::Psi<T>(this->kv.get_nks(), this->paraC_z_.ncloc(),
+        this->paraC_z_.nrloc(), this->kv.ngk, true));
 #else
     this->psi_ks_z_.reset(new psi::Psi<T>(this->kv.get_nks(), this->nbands_z_, this->nbasis, this->kv.ngk, true));
 #endif
@@ -254,7 +254,7 @@ void ModuleESolver::ESolver_LR<T, TR>::fill_z_window_(const int* desc_src)
         const int first_band = start_band + 1;
         Cpxgemr2d(this->nbasis, this->nbands_z_, this->psi_ks_all_->get_pointer(), 1, first_band,
             const_cast<int*>(desc_src), this->psi_ks_z_->get_pointer(), 1, 1,
-            this->paraC_z_.desc, this->paraC_z_.blacs_ctxt);
+            const_cast<int*>(this->paraC_z_.desc()), this->paraC_z_.ictxt());
 #else
         for (int ib = 0; ib < this->nbands_z_; ++ib)
         {
@@ -293,6 +293,22 @@ void ModuleESolver::ESolver_LR<T, TR>::read_ks_chg(Charge& chg_gs)
     chg_gs.set_rhopw(this->pw_rho);
     const bool kin_den = XC_Functional::get_ked_flag() || (this->inp_->out_elf[0] > 0); // mohan add 20251202
     chg_gs.allocate(this->nspin, kin_den, XC_Functional::get_ked_flag(), this->inp_->test_charge);
+    // Keep the existing cube input authoritative. Choose one density source for
+    // all spin channels and broadcast the decision before collective readers.
+    const Parallel::ParaWorld world = Parallel::make_pw_world();
+    const bool have_cubes = module_charge::has_complete_charge_cubes(this->in_dir, this->nspin, world);
+    if (!have_cubes)
+    {
+        const std::string density_file = this->in_dir + this->inp_->suffix + "-CHARGE-DENSITY.restart";
+        const bool loaded = module_charge::read_rho_from_binary(density_file, *this->pw_rho, this->nspin,
+            chg_gs.rhog, chg_gs.rho, world, this->ofs_running_);
+        if (!loaded)
+        {
+            const std::string message = "No complete charge cube set or readable density restart in " + this->in_dir;
+            ModuleBase::WARNING_QUIT("ESolver_LR::read_ks_chg", message);
+        }
+        return;
+    }
     this->ofs_running_ << " try to read charge from file : ";
     for (int is = 0; is < this->nspin; ++is)
     {

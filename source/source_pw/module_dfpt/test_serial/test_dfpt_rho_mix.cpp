@@ -6,14 +6,18 @@
 
 #include "gtest/gtest.h"
 
-#include "dfpt_serial_fixture.h"
+#include "dfpt_test_tool.h"
+#include "source_basis/module_pw/pw_basis.h"
+#include "source_basis/module_pw/pw_basis_k.h"
+#include "source_cell/qlist.h"
+#include "source_cell/unitcell.h"
+#include "source_pw/module_dfpt/dfpt_pw_data.h"
 #include "source_base/constants.h"
 #include "source_base/matrix.h"
-#include "source_basis/module_pw/pw_basis_k.h"
 #include "source_psi/psi.h"
 #include "source_pw/module_dfpt/dfpt_kq_basis.h"
-#include "source_pw/module_dfpt/dfpt_pw_data.h"
 #include "source_pw/module_dfpt/dfpt_rho.h"
+
 
 namespace
 {
@@ -35,18 +39,43 @@ std::complex<double> crand()
 
 } // namespace
 
-// per-file fixture (self-contained, gtest style)
-class DFPTRhoSerialTest : public DFPTSerialBase
+// per-file self-contained fixture (gtest style): owns its objects and
+// calls the dfpt_test free-function utilities
+class DFPTRhoSerialTest : public ::testing::Test
 {
   protected:
+    ModuleBase::Matrix3 latvec_;
+    UnitCell ucell_;
+    ModulePW::PW_Basis pw_rho_;
+    ModulePW::PW_Basis_K pw_wfc_;
+    ModuleCell::QList qlist_;
+    ModuleDFPT::DFPT_PW_Data data_;
+    ModuleBase::Vector3<double> q_cart_;
     ModuleDFPT::DFPT_Rho rho_;
 
     static const int nbands_ = 2;
 
+    // default (k, q) of this file: q is generic and k = -q so k+q = 0
+    const ModuleBase::Vector3<double> k_d_{-0.13, 0.0, -0.07};
+    const ModuleBase::Vector3<double> q_d_{0.13, 0.0, 0.07};
+
     void SetUp() override
     {
-        DFPTSerialBase::SetUp();
-        rho_.init({1, pw_rho_.nrxx, &pw_rho_, &pw_wfc_, G_, std::string("rho_plain"), 0.4, 0.0});
+        dfpt_test::setup_cell(ucell_, latvec_);
+        SetupRho(k_d_, q_d_);
+    }
+
+    void TearDown() override
+    {
+        delete[] ucell_.atoms;
+        ucell_.atoms = nullptr;
+    }
+
+    // (re)initialize the bases and the plain rho mixer for a given (k, q)
+    void SetupRho(const ModuleBase::Vector3<double>& k_d, const ModuleBase::Vector3<double>& q_d)
+    {
+        dfpt_test::setup_bases(pw_rho_, pw_wfc_, qlist_, data_, ucell_, k_d, q_d, nbands_, q_cart_);
+        rho_.init({1, pw_rho_.nrxx, &pw_rho_, &pw_wfc_, ucell_.G, std::string("rho_plain"), 0.4, 0.0});
     }
 
     void FillRandomStates(psi::Psi<std::complex<double>>& psi,
@@ -150,7 +179,7 @@ TEST_F(DFPTRhoSerialTest, MixDrhoKerkerFirstStepIsPreconditionedScaledOutput)
     }
     ASSERT_GT(w2_min, 0.0);
     const double a2 = 4.0 * w2_min;
-    rho_k.init({1, pw_rho_.nrxx, &pw_rho_, &pw_wfc_, G_, std::string("rho_kerker"), 0.7, a2});
+    rho_k.init({1, pw_rho_.nrxx, &pw_rho_, &pw_wfc_, ucell_.G, std::string("rho_kerker"), 0.7, a2});
 
     std::vector<std::complex<double>> out(pw_rho_.npw);
     int n_small = 0;
@@ -240,7 +269,7 @@ TEST_F(DFPTRhoSerialTest, MixDrhoKerkerStabilizesStiffModelProblem)
 
     // plain beta = 0.7 on the stiff model diverges
     ModuleDFPT::DFPT_Rho rho_p;
-    rho_p.init({1, pw_rho_.nrxx, &pw_rho_, &pw_wfc_, G_, std::string("rho_plain"), 0.7, 0.0});
+    rho_p.init({1, pw_rho_.nrxx, &pw_rho_, &pw_wfc_, ucell_.G, std::string("rho_plain"), 0.7, 0.0});
     data_.set_drho_g(0, 0, std::vector<std::complex<double>>(npw, std::complex<double>(0.0, 0.0)));
     for (int it = 0; it < 40; ++it)
     {
@@ -253,7 +282,7 @@ TEST_F(DFPTRhoSerialTest, MixDrhoKerkerStabilizesStiffModelProblem)
     // kerker beta = 0.7 with a^2 = 9 w2_min (f ~ 0.1 on the stiff shell)
     // converges to the target
     ModuleDFPT::DFPT_Rho rho_k;
-    rho_k.init({1, pw_rho_.nrxx, &pw_rho_, &pw_wfc_, G_, std::string("rho_kerker"), 0.7, 9.0 * w2_min});
+    rho_k.init({1, pw_rho_.nrxx, &pw_rho_, &pw_wfc_, ucell_.G, std::string("rho_kerker"), 0.7, 9.0 * w2_min});
     data_.set_drho_g(0, 0, std::vector<std::complex<double>>(npw, std::complex<double>(0.0, 0.0)));
     for (int it = 0; it < 300; ++it)
     {
@@ -280,13 +309,13 @@ TEST_F(DFPTRhoSerialTest, BroydenConvergesDiagonalSystemFast)
     // the binding shell; 0.72 for d = 0.3), i.e. roughly 100 plain
     // iterations to 1e-10; Modified Broyden on the few distinct
     // eigenvalues should converge in a handful of iterations.
-    SetupBases(k_d_, q_d_, 2);
+    SetupRho(k_d_, q_d_);
     ModuleDFPT::DFPT_Rho::Config cfg;
     cfg.nspin = 1;
     cfg.nrxx = pw_rho_.nrxx;
     cfg.pw_rho = &pw_rho_;
     cfg.pw_wfc = &pw_wfc_;
-    cfg.recip_matrix = G_;
+    cfg.recip_matrix = ucell_.G;
     cfg.mix_type = "rho_broyden";
     cfg.mix_beta = 0.4;
     cfg.kerker_a2 = 1.0;
@@ -349,13 +378,13 @@ TEST_F(DFPTRhoSerialTest, BroydenResetMixingAllowsFreshQAndSameQCycle)
     // allocated Mixing_Data exits through the one-object-one-data guard
     // (broyden_mixing.cpp) and kills the process. The same-q cycle must
     // also restart from a zero input density.
-    SetupBases(k_d_, q_d_, 2);
+    SetupRho(k_d_, q_d_);
     ModuleDFPT::DFPT_Rho::Config cfg;
     cfg.nspin = 1;
     cfg.nrxx = pw_rho_.nrxx;
     cfg.pw_rho = &pw_rho_;
     cfg.pw_wfc = &pw_wfc_;
-    cfg.recip_matrix = G_;
+    cfg.recip_matrix = ucell_.G;
     cfg.mix_type = "rho_broyden";
     cfg.mix_beta = 0.4;
     cfg.kerker_a2 = 1.0;

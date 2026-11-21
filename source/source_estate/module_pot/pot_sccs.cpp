@@ -11,6 +11,7 @@
 #include "source_hamilt/module_sccs/sccs_ion_charge.h"
 #include "source_hamilt/module_sccs/sccs_ion_force.h"
 #include "source_hamilt/module_sccs/sccs_response.h"
+#include "source_hamilt/module_sccs/sccs_thread_sum.h"
 #include "source_hamilt/module_sccs/sccs_pw_coulomb.h"
 #include "source_io/module_parameter/input_parameter.h"
 
@@ -53,6 +54,11 @@ void sccs_cfg_input(const Input_para& input,
     config.surface_regularization = input.sccs_surface_eta;
     config.cavity.lowpass_p1 = input.sccs_lowpass_p1;
     config.cavity.lowpass_p2 = input.sccs_lowpass_p2;
+    config.cavity.solvent_aware.solvent_radius = input.sccs_solvent_radius;
+    config.cavity.solvent_aware.radial_scale = input.sccs_radial_scale;
+    config.cavity.solvent_aware.radial_spread = input.sccs_radial_spread;
+    config.cavity.solvent_aware.filling_thr = input.sccs_filling_thr;
+    config.cavity.solvent_aware.filling_spread = input.sccs_filling_spread;
     if (input.assume_isolated == "pcc_0d")
     {
         config.boundary = ModuleSccs::Boundary::Pcc0d;
@@ -132,6 +138,10 @@ PotSccs::PotSccs(const ModulePW::PW_Basis* basis,
     this->dynamic_mode = true;
     sccs_active_ = config_.start_drho <= 0.0 || resume.active;
     restart_potential_ = resume.restart_potential;
+    if (resume.probe_ready)
+    {
+        fixed_sources_.reuse_probe(resume.probe_kernel);
+    }
 }
 
 SccsResume PotSccs::resume_state() const
@@ -139,6 +149,8 @@ SccsResume PotSccs::resume_state() const
     SccsResume resume;
     resume.active = sccs_active_;
     resume.restart_potential = restart_potential_;
+    resume.probe_ready = fixed_sources_.probe_ready();
+    resume.probe_kernel = fixed_sources_.probe_kernel();
     return resume;
 }
 
@@ -178,14 +190,14 @@ void PotSccs::cal_v_eff(const Charge* charge, const UnitCell* cell, ModuleBase::
     const std::vector<ModuleBase::Vector3<double>>& grid_positions = fixed_sources_.positions();
     std::vector<double> density(basis.nrxx, 0.0);
     std::vector<double> solute_charge(basis.nrxx);
-    double grid_charges[2] = {0.0, 0.0}; // electrons, ions
-    for (int ir = 0; ir < basis.nrxx; ++ir)
-    {
+    const auto add_point = [&](std::size_t ir, std::array<double, 2>& sums) {
         for (int spin = 0; spin < charge->nspin; ++spin) { density[ir] += charge->rho[spin][ir]; }
         solute_charge[ir] = ions[ir] - density[ir];
-        grid_charges[0] += density[ir];
-        grid_charges[1] += ions[ir];
-    }
+        sums[0] += density[ir];
+        sums[1] += ions[ir];
+    };
+    const std::array<double, 2> sums = ModuleSccs::thread_sums<2>(basis.nrxx, add_point);
+    double grid_charges[2] = {sums[0], sums[1]}; // electrons, ions
     // Pool-reduced, so every rank takes the same decision.
     Parallel_Reduce::reduce_pool(grid_charges, 2);
     const double dv = basis.omega / basis.nxyz;
@@ -221,19 +233,24 @@ void PotSccs::cal_v_eff(const Charge* charge, const UnitCell* cell, ModuleBase::
     if (config_.core_electrons)
     {
         const std::vector<double>& core_density = fixed_sources_.core_density();
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static)
+#endif
         for (int ir = 0; ir < basis.nrxx; ++ir)
         {
             density[ir] += core_density[ir];
         }
     }
+    const std::vector<double>& probe_kernel = fixed_sources_.probe_kernel();
     ModuleSccs::SccsResponse response;
-    ModuleSccs::solve_response(density, solute_charge, config_.cavity, solver_, restart_potential_, basis,
-                               cell->tpiba, *coulomb, response);
+    ModuleSccs::solve_response(density, solute_charge, config_.cavity, probe_kernel, solver_,
+                               restart_potential_, basis, cell->tpiba, *coulomb, response);
     // Only the Coulomb-operator FFTs of the sqrt-CG solve, its main cost; the
     // functional below and the cavity derivatives transform outside this count.
     output_.transforms = coulomb->fft_counts();
     ModuleSccs::FunctionalResult functional;
-    ModuleSccs::eval_functional(solute_charge, response, config_, basis, cell->tpiba, *coulomb, functional);
+    ModuleSccs::eval_functional(solute_charge, response, config_, probe_kernel, basis, cell->tpiba, *coulomb,
+                                functional);
     output_.valid = true;
     output_.iterations = response.polarization.iterations;
     output_.warm_started = response.polarization.warm_started;
@@ -242,6 +259,8 @@ void PotSccs::cal_v_eff(const Charge* charge, const UnitCell* cell, ModuleBase::
     output_.reaction_energy = functional.reaction_energy;
     output_.volume = functional.volume;
     output_.surface = functional.surface;
+    output_.filled = response.solvent_aware.enabled();
+    output_.filled_volume = response.solvent_aware.volume;
     output_.far_field_charge = response.far_field_polarization_charge;
     if (config_.collect_report && config_.boundary != ModuleSccs::Boundary::Periodic)
     {
@@ -250,6 +269,9 @@ void PotSccs::cal_v_eff(const Charge* charge, const UnitCell* cell, ModuleBase::
     electrostatic_rydberg_ = 2.0 * functional.reaction_energy;
     non_electrostatic_rydberg_ = 2.0 * (functional.surface_energy + functional.volume_energy);
     electrostatic_potential_.resize(basis.nrxx);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static)
+#endif
     for (int ir = 0; ir < basis.nrxx; ++ir)
     {
         electrostatic_potential_[ir] = -2.0 * functional.reaction_potential[ir];
@@ -259,6 +281,8 @@ void PotSccs::cal_v_eff(const Charge* charge, const UnitCell* cell, ModuleBase::
     cavity_potential_ = std::move(functional.cavity_potential);
     epsilon_ = std::move(response.epsilon);
     solute_ = std::move(response.solute);
+    local_solute_ = std::move(response.solvent_aware.local);
+    filled_fraction_ = std::move(response.solvent_aware.filling.fraction);
     restart_potential_ = std::move(response.restart_potential);
     ModuleBase::timer::end("PotSccs", "cal_v_eff");
 }
@@ -274,6 +298,9 @@ void PotSccs::add_sol_force(const UnitCell& cell, ModuleBase::matrix& force) con
     const ModulePW::PW_Basis& basis = *this->rho_basis_;
     const std::vector<unitcell::AtomData> atoms = unitcell::get_atom_data(cell.atoms, cell.ntype, cell.lat0);
     std::vector<double> reaction(basis.nrxx);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static)
+#endif
     for (int ir = 0; ir < basis.nrxx; ++ir)
     {
         reaction[ir] = -0.5 * electrostatic_potential_[ir];
@@ -349,5 +376,18 @@ void PotSccs::add_sol_fields(std::vector<SolventGridField>& fields) const
     cavity.name = "cavity";
     cavity.values = solute_;
     fields.push_back(cavity);
+    // output_.filled comes from FilledCavity::enabled(), set on every rank.
+    if (!output_.filled)
+    {
+        return;
+    }
+    SolventGridField local;
+    local.name = "cavity_local";
+    local.values = local_solute_;
+    fields.push_back(local);
+    SolventGridField fraction;
+    fraction.name = "filled_fraction";
+    fraction.values = filled_fraction_;
+    fields.push_back(fraction);
 }
 } // namespace elecstate

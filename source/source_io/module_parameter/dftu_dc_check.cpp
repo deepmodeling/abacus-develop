@@ -95,6 +95,8 @@ std::string dftu_dc_error(const Input_para& input, const bool alpha_was_read, co
         &input.out_hsk, &input.out_hsr, &input.out_mat_hs, &input.out_mat_hs2,
         &input.out_mat_dh, &input.out_dmr, &input.out_dmk, &input.out_mat_h_t,
         &input.out_mat_h_vnl, &input.out_mat_h_vl, &input.out_mat_h_vh, &input.out_mat_h_vxc,
+        &input.out_mat_tk, &input.out_mat_vnlk, &input.out_mat_vlk, &input.out_mat_vhk,
+        &input.out_mat_vxck, &input.out_mat_exxk,
         &input.out_mat_h_exx, &input.out_mat_dh_t, &input.out_mat_dh_vl, &input.out_mat_dh_vnl,
         &input.out_mat_dh_vh, &input.out_mat_dh_vxc, &input.out_mat_ds};
     for (const auto* setting : matrix_outputs)
@@ -105,7 +107,7 @@ std::string dftu_dc_error(const Input_para& input, const bool alpha_was_read, co
         }
     }
     if (input.out_hr_npz || input.out_hsr_npz || input.out_hsr_npz_compat || input.out_dm_npz
-        || input.out_eband_terms || input.towannier90 || input.qo_switch)
+        || input.out_eband || input.out_eband_terms_compat || input.towannier90 || input.qo_switch)
     {
         return "AMF/mixed matrix export, Wannier and QO combinations are not supported yet";
     }

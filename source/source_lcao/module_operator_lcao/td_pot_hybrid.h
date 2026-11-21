@@ -1,6 +1,5 @@
 #ifndef TD_POT_HYBRID_H
 #define TD_POT_HYBRID_H
-#include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_basis/module_nao/two_center_integrator.h"
 #include "source_cell/klist.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
@@ -116,7 +115,6 @@ class TD_pot_hybrid<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
      */
     void cal_HR_IJR(const int& iat1,
                     const int& iat2,
-                    const Parallel_Orbitals* paraV,
                     const ModuleBase::Vector3<double>& dtau,
                     const ModuleBase::Vector3<double>& dR,
                     TR* hr_mat_p,
@@ -127,7 +125,6 @@ class TD_pot_hybrid<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
 
     void cal_force_IJR(const int& iat1,
                     const int& iat2,
-                    const Parallel_Orbitals* paraV,
                     const ModuleBase::Vector3<double>& dtau,     
                     const ModuleBase::Vector3<double>& dR,                  
                     TR* dmR_pointer,

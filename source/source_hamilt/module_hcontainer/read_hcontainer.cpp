@@ -32,7 +32,7 @@ void Read_HContainer<T>::read()
     std::vector<int> atom_index_col;
     int natom = this->_ucell->nat;
     Parallel_Orbitals pv_serial;
-    pv_serial.set_serial(this->_nlocal, this->_nlocal);
+    pv_serial.para_2d().set_serial(this->_nlocal, this->_nlocal);
     pv_serial.set_atomic_trace(this->_ucell->get_iat2iwt(), this->_ucell->nat, this->_nlocal);
     for (int iat = 0; iat < natom; ++iat)
     {

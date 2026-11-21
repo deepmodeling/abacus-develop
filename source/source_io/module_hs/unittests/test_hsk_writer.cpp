@@ -17,8 +17,12 @@
 
 #include "source_base/matrix_block.h"
 #include "source_base/module_out/filename.h"
+#include "source_base/module_parallel/para_mpi_func.h"
+#include "source_base/module_parallel/para_world.h"
 #include "source_base/parallel_comm.h"
+#include "source_base/parallel_common.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
+#include "source_cell/klist.h"
 #include "source_hamilt/hamilt.h"
 
 #include "gtest/gtest.h"
@@ -37,6 +41,19 @@ namespace
 {
 /// Rank in DIAG_WORLD; 0 without MPI.
 int test_rank = 0;
+
+/// Size of DIAG_WORLD; 1 without MPI.
+int test_world_size = 1;
+
+/// Collectively synchronize DIAG_WORLD through the guarded Parallel wrappers.
+/// Governance rule 9 forbids direct MPI calls in tests; no-op in serial builds.
+void diag_world_barrier()
+{
+#ifdef __MPI
+    const Parallel::ParaWorld world = Parallel::ParaWorld::make_mpi("test_hsk_writer", DIAG_WORLD);
+    Parallel::barrier(world);
+#endif
+}
 
 /// Output options shared by the tests (binary, no append, step 0).
 const int k_out_type = 2;
@@ -97,9 +114,9 @@ class FakeHamilt : public hamilt::Hamilt<T>
 void initialize_distribution(Parallel_Orbitals& pv, const int dim)
 {
 #ifdef __MPI
-    ASSERT_EQ(pv.init(dim, dim, 1, DIAG_WORLD), 0);
+    ASSERT_EQ(pv.para_2d().init(dim, dim, 1, DIAG_WORLD, false), 0);
 #else
-    pv.set_serial(dim, dim);
+    pv.para_2d().set_serial(dim, dim);
 #endif
 }
 
@@ -111,20 +128,49 @@ std::vector<T> distribute_matrix(const Parallel_Orbitals& pv,
                                  const std::vector<T>& global,
                                  const int dim)
 {
-    std::vector<T> local(pv.get_local_size(), T());
+    std::vector<T> local(pv.para_2d().size(), T());
     for (int i = 0; i < dim; ++i)
     {
-        const int ir = pv.global2local_row(i);
+        const int ir = pv.para_2d().irloc(i);
         if (ir < 0)
         {
             continue;
         }
         for (int j = 0; j < dim; ++j)
         {
-            const int ic = pv.global2local_col(j);
+            const int ic = pv.para_2d().icloc(j);
             if (ic >= 0)
             {
-                local[ir * pv.ncol + ic] = global[i * dim + j];
+                local[ir * pv.para_2d().ncloc() + ic] = global[i * dim + j];
+            }
+        }
+    }
+    return local;
+}
+
+/**
+ * @brief Extract the block of a global square matrix owned by this rank,
+ *        using the column-major local storage of genelpa/elpa/scalapack_gvx.
+ */
+template <typename T>
+std::vector<T> distribute_matrix_column_major(const Parallel_Orbitals& pv,
+                                              const std::vector<T>& global,
+                                              const int dim)
+{
+    std::vector<T> local(pv.para_2d().size(), T());
+    for (int i = 0; i < dim; ++i)
+    {
+        const int ir = pv.para_2d().irloc(i);
+        if (ir < 0)
+        {
+            continue;
+        }
+        for (int j = 0; j < dim; ++j)
+        {
+            const int ic = pv.para_2d().icloc(j);
+            if (ic >= 0)
+            {
+                local[ir + ic * pv.para_2d().nrloc()] = global[i * dim + j];
             }
         }
     }
@@ -206,6 +252,17 @@ std::string expected_filename(const std::string& property,
 }
 
 /**
+ * @brief Construct a minimal K_Vectors in place that satisfies the write_hsk
+ * text path requirements. Binary path callers never read these fields.
+ */
+void fill_dummy_kv(const int nkstot, K_Vectors& kv)
+{
+    kv.kvec_c.resize(nkstot);
+    kv.kvec_d.resize(nkstot);
+    kv.wk.assign(nkstot, 1.0);
+}
+
+/**
  * @brief Open the running-log stream on a per-rank file.
  */
 std::ofstream open_running_log()
@@ -213,6 +270,66 @@ std::ofstream open_running_log()
     const std::string filename
         = "write_hsk_running_" + std::to_string(test_rank) + ".log";
     return std::ofstream(filename.c_str());
+}
+
+/**
+ * @brief Collect every "(real,imag)" pair written after the matrix-size line.
+ *
+ * The text writer stores the dense matrix in row-major order, so the returned
+ * sequence follows matrix rows and columns directly.
+ */
+std::vector<std::complex<double>> read_text_complex_values(const std::string& filename)
+{
+    std::ifstream ifs(filename.c_str());
+    EXPECT_TRUE(ifs.is_open()) << filename;
+    std::vector<std::complex<double>> values;
+    std::string line;
+    bool in_body = false;
+    while (std::getline(ifs, line))
+    {
+        if (!in_body)
+        {
+            if (line.find("# size of this matrix") != std::string::npos)
+            {
+                in_body = true;
+            }
+            continue;
+        }
+        std::size_t pos = 0;
+        while ((pos = line.find('(', pos)) != std::string::npos)
+        {
+            const std::size_t comma = line.find(',', pos);
+            const std::size_t close = line.find(')', comma);
+            if (comma == std::string::npos || close == std::string::npos)
+            {
+                break;
+            }
+            const double real_part = std::stod(line.substr(pos + 1, comma - pos - 1));
+            const double imag_part = std::stod(line.substr(comma + 1, close - comma - 1));
+            values.push_back(std::complex<double>(real_part, imag_part));
+            pos = close + 1;
+        }
+    }
+    return values;
+}
+
+/**
+ * @brief Count the Ionic_Step record headers in a text output file.
+ */
+int count_text_records(const std::string& filename)
+{
+    std::ifstream ifs(filename.c_str());
+    EXPECT_TRUE(ifs.is_open()) << filename;
+    int count = 0;
+    std::string line;
+    while (std::getline(ifs, line))
+    {
+        if (line.find("Ionic_Step ") == 0)
+        {
+            ++count;
+        }
+    }
+    return count;
 }
 
 } // namespace
@@ -267,7 +384,11 @@ TEST(WriteHsk, WritesHkAndSkForEveryKPoint)
     }
 
     std::ofstream ofs = open_running_log();
+    K_Vectors kv;
+    fill_dummy_kv(nkstot, kv);
+    const std::vector<double> efs = {0.0};
     ModuleIO::write_hsk("", nspin, nks, nkstot, ik2iktot, isk, &fake, pv,
+                        kv, nullptr, efs,
                         gamma_only, k_out_app, k_istep, k_out_type, 8, dim,
                         "cg", test_rank, ofs);
 
@@ -345,7 +466,11 @@ TEST(WriteHsk, SkipsOverlapForSpinDownChannel)
     }
 
     std::ofstream ofs = open_running_log();
+    K_Vectors kv;
+    fill_dummy_kv(nkstot, kv);
+    const std::vector<double> efs = {0.0, 0.0};
     ModuleIO::write_hsk("", nspin, nks, nkstot, ik2iktot, isk, &fake, pv,
+                        kv, nullptr, efs,
                         gamma_only, k_out_app, k_istep, k_out_type, 8, dim,
                         "cg", test_rank, ofs);
 
@@ -405,8 +530,12 @@ TEST(WriteHsk, WritesComplexKMatrix)
     remove_test_file(s_fn);
 
     std::ofstream ofs = open_running_log();
+    K_Vectors kv;
+    fill_dummy_kv(nkstot, kv);
+    const std::vector<double> efs = {0.0};
     ModuleIO::write_hsk<std::complex<double>>("", nspin, nks, nkstot,
                                               ik2iktot, isk, &fake, pv,
+                                              kv, nullptr, efs,
                                               gamma_only, k_out_app, k_istep,
                                               k_out_type, 8, dim, "cg",
                                               test_rank, ofs);
@@ -436,14 +565,314 @@ TEST(WriteHsk, WritesComplexKMatrix)
     remove_test_file("write_hsk_running_" + std::to_string(test_rank) + ".log");
 }
 
+// ---------------------------------------------------------------------------
+// Regression guard: out_app_flag = 2 must write non-append records.
+// The old code passed the integer out_app_flag directly to save_mat's
+// boolean append argument, so a rerun in mode 2 would silently grow the
+// file instead of replacing the snapshot. This test sets out_app_flag=2,
+// writes one snapshot, swaps the FakeHamilt buffers, writes the same step
+// again, and verifies the file contains exactly one record holding the
+// second payload.
+// ---------------------------------------------------------------------------
+
+TEST(WriteHsk, Mode2OverwritesSameIstep)
+{
+    const int dim = 2;
+    const int nspin = 1;
+    const int nks = 1;
+    const int nkstot = 1;
+    const std::vector<int> ik2iktot = {0};
+    const std::vector<int> isk = {0};
+    const bool gamma_only = false;
+    const int istep = 0;
+    const int out_app_flag = 2;  // mode 2 => overwrite semantics
+    const int out_type = 2;      // binary
+    const int precision = 8;
+
+    Parallel_Orbitals pv;
+    initialize_distribution(pv, dim);
+
+    FakeHamilt<double> fake;
+    fake.dim = dim;
+
+    // Round 1 payload: H = all 1.0, S = all -1.0
+    std::vector<double> hk_first(dim * dim, 1.0);
+    std::vector<double> sk_first(dim * dim, -1.0);
+    fake.set_k_matrix(0,
+                      distribute_matrix(pv, hk_first, dim),
+                      distribute_matrix(pv, sk_first, dim));
+
+    // filename_output with out_app_flag=2 + istep=0 yields hk{ik}g{step+1}_nao.dat
+    const std::string h_fn = ModuleIO::filename_output(
+        "", "hk", "nao", 0, ik2iktot, nspin, nkstot, out_type,
+        out_app_flag, gamma_only, istep);
+    const std::string s_fn = ModuleIO::filename_output(
+        "", "sk", "nao", 0, ik2iktot, nspin, nkstot, out_type,
+        out_app_flag, gamma_only, istep);
+    remove_test_file(h_fn);
+    remove_test_file(s_fn);
+
+    std::ofstream ofs = open_running_log();
+    K_Vectors kv;
+    fill_dummy_kv(nkstot, kv);
+    const std::vector<double> efs = {0.0};
+    ModuleIO::write_hsk("", nspin, nks, nkstot, ik2iktot, isk, &fake, pv,
+                        kv, nullptr, efs,
+                        gamma_only, out_app_flag, istep, out_type, precision, dim,
+                        "cg", test_rank, ofs);
+
+    // Round 2 payload: different data, same out_app_flag and istep.
+    std::vector<double> hk_second(dim * dim, 9.0);
+    std::vector<double> sk_second(dim * dim, -9.0);
+    fake.set_k_matrix(0,
+                      distribute_matrix(pv, hk_second, dim),
+                      distribute_matrix(pv, sk_second, dim));
+
+    diag_world_barrier();
+    ModuleIO::write_hsk("", nspin, nks, nkstot, ik2iktot, isk, &fake, pv,
+                        kv, nullptr, efs,
+                        gamma_only, out_app_flag, istep, out_type, precision, dim,
+                        "cg", test_rank, ofs);
+
+    if (test_rank == 0)
+    {
+        std::ifstream hfs(h_fn.c_str(), std::ios::binary);
+        ASSERT_TRUE(hfs.is_open()) << h_fn;
+        // Exactly one record — second payload — not two records stacked.
+        EXPECT_EQ(read_record<double>(hfs, dim), upper_triangle(hk_second, dim));
+        EXPECT_EQ(hfs.peek(), std::ifstream::traits_type::eof())
+            << "hk file should contain one overwrite record, not two";
+
+        std::ifstream sfs(s_fn.c_str(), std::ios::binary);
+        ASSERT_TRUE(sfs.is_open()) << s_fn;
+        EXPECT_EQ(read_record<double>(sfs, dim), upper_triangle(sk_second, dim));
+        EXPECT_EQ(sfs.peek(), std::ifstream::traits_type::eof());
+    }
+
+    remove_test_file(h_fn);
+    remove_test_file(s_fn);
+    ofs.close();
+    remove_test_file("write_hsk_running_" + std::to_string(test_rank) + ".log");
+}
+
+// ---------------------------------------------------------------------------
+// Text output: the complete dense matrix is written in row-major order with
+// signed imaginary parts, and out_app_flag = 1 appends one record per step
+// after the first write truncates the file.
+// ---------------------------------------------------------------------------
+
+TEST(WriteHsk, WritesDenseTextAndAppendsRecords)
+{
+    // The dense-matrix value checks below assume that rank 0 owns every
+    // element. Under MPI the 1x1 block distribution leaves the off-diagonal
+    // elements unowned, so those elements are legitimately zero in the gathered
+    // matrix. The parallel run keeps the other WriteHsk cases, which still
+    // exercise the collective gather path.
+    if (test_world_size > 1)
+    {
+        return;
+    }
+
+    const int dim = 2;
+    const int nspin = 1;
+    const int nks = 1;
+    const int nkstot = 1;
+    const std::vector<int> ik2iktot = {0};
+    const std::vector<int> isk = {0};
+    const bool gamma_only = false;
+    const int out_type = 1;      // text
+    const int out_app_flag = 1;  // append after the first step
+    const int precision = 8;
+
+    Parallel_Orbitals pv;
+    initialize_distribution(pv, dim);
+
+    FakeHamilt<std::complex<double>> fake;
+    fake.dim = dim;
+
+    std::vector<std::complex<double>> hk_first(dim * dim);
+    std::vector<std::complex<double>> sk_first(dim * dim);
+    for (int i = 0; i < dim * dim; ++i)
+    {
+        hk_first[i] = std::complex<double>(100.0 + i + 0.5, -100.0 - i - 0.25);
+        sk_first[i] = std::complex<double>(-100.0 - i - 0.5, 100.0 + i + 0.125);
+    }
+    fake.set_k_matrix(0, distribute_matrix(pv, hk_first, dim),
+                      distribute_matrix(pv, sk_first, dim));
+
+    // Text mode drops the extra "k" and the .dat suffix: hk1_nao.txt/sk1_nao.txt.
+    const std::string out_dir = testing::TempDir();
+    const std::string h_fn = out_dir + "hk1_nao.txt";
+    const std::string s_fn = out_dir + "sk1_nao.txt";
+    remove_test_file(h_fn);
+    remove_test_file(s_fn);
+
+    std::ofstream ofs = open_running_log();
+    K_Vectors kv;
+    fill_dummy_kv(nkstot, kv);
+    kv.set_nkstot(nkstot);
+    kv.set_nkstot_nospin(nkstot);
+    const std::vector<double> efs = {0.0};
+
+    ModuleIO::write_hsk<std::complex<double>>(out_dir, nspin, nks, nkstot,
+                                              ik2iktot, isk, &fake, pv,
+                                              kv, nullptr, efs,
+                                              gamma_only, out_app_flag, 0,
+                                              out_type, precision, dim, "cg",
+                                              test_rank, ofs);
+
+    diag_world_barrier();
+
+    std::vector<std::complex<double>> hk_second(dim * dim);
+    std::vector<std::complex<double>> sk_second(dim * dim);
+    for (int i = 0; i < dim * dim; ++i)
+    {
+        hk_second[i] = std::complex<double>(200.0 + i + 0.5, -200.0 - i - 0.75);
+        sk_second[i] = std::complex<double>(-200.0 - i - 0.5, 200.0 + i + 0.375);
+    }
+    fake.set_k_matrix(0, distribute_matrix(pv, hk_second, dim),
+                      distribute_matrix(pv, sk_second, dim));
+
+    ModuleIO::write_hsk<std::complex<double>>(out_dir, nspin, nks, nkstot,
+                                              ik2iktot, isk, &fake, pv,
+                                              kv, nullptr, efs,
+                                              gamma_only, out_app_flag, 1,
+                                              out_type, precision, dim, "cg",
+                                              test_rank, ofs);
+
+    if (test_rank == 0)
+    {
+        EXPECT_EQ(count_text_records(h_fn), 2);
+        EXPECT_EQ(count_text_records(s_fn), 2);
+
+        const std::vector<std::complex<double>> h_values
+            = read_text_complex_values(h_fn);
+        ASSERT_EQ(h_values.size(), static_cast<size_t>(2 * dim * dim));
+        const std::vector<std::complex<double>> h_expected
+            = {hk_first[0], hk_first[1], hk_first[2], hk_first[3],
+               hk_second[0], hk_second[1], hk_second[2], hk_second[3]};
+        for (size_t i = 0; i < h_values.size(); ++i)
+        {
+            EXPECT_NEAR(h_values[i].real(), h_expected[i].real(), 1e-6);
+            EXPECT_NEAR(h_values[i].imag(), h_expected[i].imag(), 1e-6);
+        }
+
+        const std::vector<std::complex<double>> s_values
+            = read_text_complex_values(s_fn);
+        ASSERT_EQ(s_values.size(), static_cast<size_t>(2 * dim * dim));
+        const std::vector<std::complex<double>> s_expected
+            = {sk_first[0], sk_first[1], sk_first[2], sk_first[3],
+               sk_second[0], sk_second[1], sk_second[2], sk_second[3]};
+        for (size_t i = 0; i < s_values.size(); ++i)
+        {
+            EXPECT_NEAR(s_values[i].real(), s_expected[i].real(), 1e-6);
+            EXPECT_NEAR(s_values[i].imag(), s_expected[i].imag(), 1e-6);
+        }
+    }
+
+    remove_test_file(h_fn);
+    remove_test_file(s_fn);
+    ofs.close();
+    remove_test_file("write_hsk_running_" + std::to_string(test_rank) + ".log");
+}
+
+// ---------------------------------------------------------------------------
+// Text body order follows the documented row-major (i, j) traversal even when
+// the solver stores its local block column-major (genelpa/elpa/scalapack_gvx).
+// A non-Hermitian probe matrix makes an accidental transpose visible.
+// ---------------------------------------------------------------------------
+
+TEST(WriteHsk, TextBodyKeepsRowMajorOrderForColumnMajorSolver)
+{
+    if (test_world_size > 1)
+    {
+        return;
+    }
+
+    const int dim = 2;
+    const int nspin = 1;
+    const int nks = 1;
+    const int nkstot = 1;
+    const std::vector<int> ik2iktot = {0};
+    const std::vector<int> isk = {0};
+    const bool gamma_only = false;
+    const int out_type = 1;
+    const int out_app_flag = 0;
+    const int precision = 8;
+
+    Parallel_Orbitals pv;
+    initialize_distribution(pv, dim);
+
+    FakeHamilt<std::complex<double>> fake;
+    fake.dim = dim;
+
+    const std::vector<std::complex<double>> hk_global
+        = {std::complex<double>(1.0, 0.0), std::complex<double>(2.0, 3.0),
+           std::complex<double>(4.0, 5.0), std::complex<double>(6.0, 0.0)};
+    const std::vector<std::complex<double>> sk_global
+        = {std::complex<double>(7.0, 0.0), std::complex<double>(8.0, 1.0),
+           std::complex<double>(9.0, 2.0), std::complex<double>(10.0, 0.0)};
+    fake.set_k_matrix(0, distribute_matrix_column_major(pv, hk_global, dim),
+                      distribute_matrix_column_major(pv, sk_global, dim));
+
+    const std::string out_dir = testing::TempDir();
+    const std::string h_fn = out_dir + "hk1_nao.txt";
+    const std::string s_fn = out_dir + "sk1_nao.txt";
+    remove_test_file(h_fn);
+    remove_test_file(s_fn);
+
+    std::ofstream ofs = open_running_log();
+    K_Vectors kv;
+    fill_dummy_kv(nkstot, kv);
+    kv.set_nkstot(nkstot);
+    kv.set_nkstot_nospin(nkstot);
+    const std::vector<double> efs = {0.0};
+
+    ModuleIO::write_hsk<std::complex<double>>(out_dir, nspin, nks, nkstot,
+                                              ik2iktot, isk, &fake, pv,
+                                              kv, nullptr, efs,
+                                              gamma_only, out_app_flag, 0,
+                                              out_type, precision, dim, "genelpa",
+                                              test_rank, ofs);
+    diag_world_barrier();
+
+    if (test_rank == 0)
+    {
+        const std::vector<std::complex<double>> h_values
+            = read_text_complex_values(h_fn);
+        ASSERT_EQ(h_values.size(), hk_global.size());
+        for (size_t i = 0; i < h_values.size(); ++i)
+        {
+            EXPECT_NEAR(h_values[i].real(), hk_global[i].real(), 1e-6);
+            EXPECT_NEAR(h_values[i].imag(), hk_global[i].imag(), 1e-6);
+        }
+
+        const std::vector<std::complex<double>> s_values
+            = read_text_complex_values(s_fn);
+        ASSERT_EQ(s_values.size(), sk_global.size());
+        for (size_t i = 0; i < s_values.size(); ++i)
+        {
+            EXPECT_NEAR(s_values[i].real(), sk_global[i].real(), 1e-6);
+            EXPECT_NEAR(s_values[i].imag(), sk_global[i].imag(), 1e-6);
+        }
+    }
+
+    remove_test_file(h_fn);
+    remove_test_file(s_fn);
+    ofs.close();
+    remove_test_file("write_hsk_running_" + std::to_string(test_rank) + ".log");
+}
+
 int main(int argc, char** argv)
 {
 #ifdef __MPI
     MPI_Init(&argc, &argv);
     DIAG_WORLD = MPI_COMM_WORLD;
     MPI_Comm_rank(DIAG_WORLD, &test_rank);
+    test_world_size = Parallel_Common::comm_size(DIAG_WORLD);
 #else
     test_rank = 0;
+    test_world_size = 1;
 #endif
 
     testing::InitGoogleTest(&argc, argv);

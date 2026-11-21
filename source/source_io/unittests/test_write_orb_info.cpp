@@ -48,9 +48,9 @@ TEST(OrbInfo,WriteOrbInfo)
     const int nbands = 6;
     unitcell::read_cell_pseudopots(pp_dir, ofs, *ucell, global_out_dir, dft_functional, lspinorb, pseudo_rcut, soc_lambda);
     unitcell::cal_nwfc(ofs,*ucell,ucell->atoms, nspin, nlocal, npol, basis_type, esolver_type, init_wfc, nbands);
-    ModuleIO::write_orb_info(ucell);
+    ModuleIO::write_orb_info(ucell, ofs);
     ofs.close();
-    std::ifstream ifs("Orbital");
+    std::ifstream ifs("nao.txt");
     std::string str((std::istreambuf_iterator<char>(ifs)),std::istreambuf_iterator<char>());
     EXPECT_THAT(str, testing::HasSubstr("#io    spec    l    m    z  sym"));
     EXPECT_THAT(str, testing::HasSubstr("0      Si    0    0    1              s"));
@@ -58,7 +58,7 @@ TEST(OrbInfo,WriteOrbInfo)
     EXPECT_THAT(str, testing::HasSubstr("#sym =Symmetry name of real orbital"));
     ifs.close();
     delete ucell;
-    std::remove("Orbital");
+    std::remove("nao.txt");
     std::remove("running.log");
 }
 

@@ -8,7 +8,7 @@ namespace FrameUtils
 {
 const int kMaxJacobiSweeps = 32;
 
-bool is_finite_matrix(const SocketFrame::Matrix9& values)
+bool is_finite_matrix(const SocketFrame::Matrix9 &values)
 {
     for (std::size_t index = 0; index < values.size(); ++index)
     {
@@ -20,7 +20,7 @@ bool is_finite_matrix(const SocketFrame::Matrix9& values)
     return true;
 }
 
-double column_norm_squared(const SocketFrame::Matrix9& values, int column)
+double column_norm_squared(const SocketFrame::Matrix9 &values, int column)
 {
     double norm_squared = 0.0;
     for (int row = 0; row < kMatrixDimension; ++row)
@@ -31,7 +31,7 @@ double column_norm_squared(const SocketFrame::Matrix9& values, int column)
     return norm_squared;
 }
 
-double column_dot(const SocketFrame::Matrix9& values, int first, int second)
+double column_dot(const SocketFrame::Matrix9 &values, int first, int second)
 {
     double dot = 0.0;
     for (int row = 0; row < kMatrixDimension; ++row)
@@ -41,7 +41,7 @@ double column_dot(const SocketFrame::Matrix9& values, int first, int second)
     return dot;
 }
 
-bool columns_are_orthogonal(const SocketFrame::Matrix9& values)
+bool columns_are_orthogonal(const SocketFrame::Matrix9 &values)
 {
     const double multiplier = 32.0 * std::numeric_limits<double>::epsilon();
     const int pairs[3][2] = {{0, 1}, {0, 2}, {1, 2}};
@@ -60,7 +60,12 @@ bool columns_are_orthogonal(const SocketFrame::Matrix9& values)
     return true;
 }
 
-void rotate_columns(SocketFrame::Matrix9& values, int first, int second, double cosine, double sine)
+void rotate_columns(
+    SocketFrame::Matrix9 &values,
+    int first,
+    int second,
+    double cosine,
+    double sine)
 {
     for (int row = 0; row < kMatrixDimension; ++row)
     {
@@ -73,7 +78,7 @@ void rotate_columns(SocketFrame::Matrix9& values, int first, int second, double 
     }
 }
 
-bool one_sided_jacobi(SocketFrame::Matrix9& columns, SocketFrame::Matrix9& right_vectors)
+bool one_sided_jacobi(SocketFrame::Matrix9 &columns, SocketFrame::Matrix9 &right_vectors)
 {
     right_vectors = {{1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0}};
     const double multiplier = 32.0 * std::numeric_limits<double>::epsilon();
@@ -110,7 +115,7 @@ bool one_sided_jacobi(SocketFrame::Matrix9& columns, SocketFrame::Matrix9& right
     return false;
 }
 
-long double scaled_determinant(const SocketFrame::Matrix9& values)
+long double scaled_determinant(const SocketFrame::Matrix9 &values)
 {
     const long double a00 = values[0];
     const long double a01 = values[1];
@@ -124,9 +129,8 @@ long double scaled_determinant(const SocketFrame::Matrix9& values)
     return a00 * (a11 * a22 - a12 * a21) - a01 * (a10 * a22 - a12 * a20) + a02 * (a10 * a21 - a11 * a20);
 }
 
-double received_inverse_residual(const SocketFrame::Matrix9& cell,
-                                 const SocketFrame::Matrix9& inverse,
-                                 bool transpose_inverse)
+double received_inverse_residual(
+    const SocketFrame::Matrix9 &cell, const SocketFrame::Matrix9 &inverse, bool transpose_inverse)
 {
     long double maximum = 0.0L;
     for (int row = 0; row < kMatrixDimension; ++row)
@@ -136,8 +140,8 @@ double received_inverse_residual(const SocketFrame::Matrix9& cell,
             long double product = 0.0L;
             for (int inner = 0; inner < kMatrixDimension; ++inner)
             {
-                const int inverse_index
-                    = transpose_inverse ? column * kMatrixDimension + inner : inner * kMatrixDimension + column;
+                const int inverse_index =
+                    transpose_inverse ? column * kMatrixDimension + inner : inner * kMatrixDimension + column;
                 product += static_cast<long double>(cell[row * kMatrixDimension + inner]) * inverse[inverse_index];
             }
             const long double expected = row == column ? 1.0L : 0.0L;

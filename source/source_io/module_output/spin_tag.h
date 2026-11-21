@@ -22,6 +22,24 @@ inline std::string make_spin_tag(const int is, const int nspin)
     return " (spin down)";
 }
 
+/// Compact spin-channel label used in per-spin output files
+/// (bands1.txt, wfk1s1_nao.txt, ...). Unlike make_spin_tag, which pads "up"
+/// so both channels share one width in the running log, this form is
+/// unpadded because it heads a file that holds a single channel.
+/// Returns " (spin up)", " (spin down)" or an empty string.
+inline std::string make_compact_spin_tag(const int is, const int nspin)
+{
+    if (nspin != 2 || is < 0)
+    {
+        return "";
+    }
+    if (is == 0)
+    {
+        return " (spin up)";
+    }
+    return " (spin down)";
+}
+
 } // namespace ModuleIO
 
 #endif

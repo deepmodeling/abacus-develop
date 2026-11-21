@@ -6,6 +6,7 @@
 #include "source_lcao/module_lr/hamilt_ulr.h"
 #include "source_lcao/module_lr/hsolver_lrtd.h"
 #include "source_lcao/module_lr/lr_spectrum.h"
+#include "source_lcao/module_lr/utils/spectrum_weights.h"
 #include "source_lcao/module_lr/lr_density.h"
 #include "source_lcao/module_lr/ri_benchmark/ri_benchmark.h"
 #include "source_lcao/module_lr/operator_casida/operator_lr_diag.h"
@@ -108,7 +109,7 @@ void ModuleESolver::ESolver_LR<T, TR>::runner(BaseCell& basecell, const int iste
             for (int is : {0, 1})
             {
                 if (this->inp_->lr_solver != "lapack") {
-                    const int offset_is = is * this->paraX_[0].get_local_size();
+                    const int offset_is = is * this->paraX_[0].size();
                     OperatorLRDiag<double> pre_op(this->eig_ks.c + is * nk * (nocc[0] + nvirt[0]), this->paraX_[is], this->nk, this->nocc[is], this->nvirt[is], false);
                     pre_op.act(1, offset_is, 1, precondition.data() + offset_is, precondition.data() + offset_is);
                 }
@@ -288,6 +289,7 @@ void ModuleESolver::ESolver_LR<T, TR>::after_all_runners(BaseCell& basecell)
 
     const std::string gauge = LR_Util::tolower(this->inp_->abs_gauge);
     const bool calculate_spectrum = gauge != "none";
+    const std::vector<double> spatial_weights = LR_Util::spatial_k_weights(this->kv.wk, nspin);
     //cal spectrum
     if (LR_Util::tolower(this->inp_->abs_gauge) == "velocity" )
     {
@@ -321,7 +323,7 @@ void ModuleESolver::ESolver_LR<T, TR>::after_all_runners(BaseCell& basecell)
         else
         {
             LR_Spectrum<T> spectrum(nspin, this->nbasis, this->nocc, this->nvirt, *this->pw_rho, *this->psi_ks,
-                *this->ucell_, this->kv, this->gd(), this->orb_cutoff_, this->tcb(),
+                *this->ucell_, this->kv, spatial_weights, this->gd(), this->orb_cutoff_, this->tcb(),
                 this->paraX_, this->paraC_, this->paraMat_,
                 &this->pelec->ekb.c[is * nstates], this->eig_ks.c, this->X[is].template data<T>(), nstates, openshell,
                 LR_Util::tolower(this->inp_->abs_gauge), this->my_rank_, this->out_dir);

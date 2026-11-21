@@ -5,36 +5,18 @@
 // against a direct (unscreened) lattice Hessian sum at a generic
 // incommensurate q where the dipole sum is oscillation-screened.
 
-#include "dfpt_serial_fixture.h"
+#include "dfpt_test_tool.h"
+#include "source_basis/module_pw/pw_basis.h"
+#include "source_basis/module_pw/pw_basis_k.h"
+#include "source_cell/qlist.h"
+#include "source_cell/unitcell.h"
+#include "source_pw/module_dfpt/dfpt_pw_data.h"
 #include "source_base/complexmatrix.h"
 #include "source_cell/stru_fac.h"
+#include "source_psi/psi.h"
+#include "source_pw/module_dfpt/dfpt_kq_basis.h"
 #include "source_pw/module_dfpt/dfpt_pert.h"
 #include "source_pw/module_dfpt/dfpt_phon.h"
-
-// per-file fixture (self-contained, gtest style): only the members and
-// helpers this file's cases need
-class DFPTPhonSerialTest : public DFPTSerialBase
-{
-  protected:
-    Structure_Factor sf_;
-    ModuleDFPT::DFPT_Pert pert_;
-    ModuleDFPT::DFPT_Phon phon_;
-
-    void SetUp() override
-    {
-        DFPTSerialBase::SetUp();
-        SetupPhon(k_d_, q_d_);
-    }
-
-    // (re)initialize the bases and the pert/phon wiring for a given (k, q)
-    // pair; SetUp uses the default fixture values
-    void SetupPhon(const ModuleBase::Vector3<double>& k_d, const ModuleBase::Vector3<double>& q_d)
-    {
-        SetupBases(k_d, q_d, 2);
-        pert_.init(ucell_, &pw_rho_, &pw_wfc_, sf_);
-        phon_.init(ucell_, &pw_rho_, &pert_);
-    }
-};
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -43,12 +25,55 @@ class DFPTPhonSerialTest : public DFPTSerialBase
 #include <complex>
 #include <vector>
 
+// per-file self-contained fixture (gtest style): owns its objects and
+// calls the dfpt_test free-function utilities
+class DFPTPhonSerialTest : public ::testing::Test
+{
+  protected:
+    ModuleBase::Matrix3 latvec_;
+    UnitCell ucell_;
+    ModulePW::PW_Basis pw_rho_;
+    ModulePW::PW_Basis_K pw_wfc_;
+    ModuleCell::QList qlist_;
+    ModuleDFPT::DFPT_PW_Data data_;
+    ModuleBase::Vector3<double> q_cart_;
+    Structure_Factor sf_;
+    ModuleDFPT::DFPT_Pert pert_;
+    ModuleDFPT::DFPT_Phon phon_;
+
+    // default (k, q) of this file: q is generic and k = -q so k+q = 0
+    const ModuleBase::Vector3<double> k_d_{-0.13, 0.0, -0.07};
+    const ModuleBase::Vector3<double> q_d_{0.13, 0.0, 0.07};
+
+    void SetUp() override
+    {
+        dfpt_test::setup_cell(ucell_, latvec_);
+        SetupPhon(k_d_, q_d_);
+    }
+
+    void TearDown() override
+    {
+        delete[] ucell_.atoms;
+        ucell_.atoms = nullptr;
+    }
+
+    // (re)initialize the bases and the pert/phon wiring for a given (k, q)
+    // pair; SetUp uses the default fixture values
+    void SetupPhon(const ModuleBase::Vector3<double>& k_d, const ModuleBase::Vector3<double>& q_d)
+    {
+        dfpt_test::setup_bases(pw_rho_, pw_wfc_, qlist_, data_, ucell_, k_d, q_d, 2, q_cart_);
+        pert_.init(ucell_, &pw_rho_, &pw_wfc_, sf_);
+        phon_.init(ucell_, &pw_rho_, &pert_);
+    }
+};
+
+
 TEST_F(DFPTPhonSerialTest, IonIonAcousticSumRuleGamma)
 {
     // a two-atom cell with different charges/masses breaks every symmetry:
     // the Gamma acoustic sum rule is then a razor for the Ewald balance
     // (G part + real part + Gaussian self term)
-    MakeTwoAtomCell();
+    dfpt_test::make_two_atom_cell(ucell_);
     ModuleBase::ComplexMatrix dyn(6, 6, true);
     phon_.ion_ion(ModuleBase::Vector3<double>(0.0, 0.0, 0.0), dyn);
 
@@ -86,7 +111,7 @@ TEST_F(DFPTPhonSerialTest, IonIonAcousticSumRuleGamma)
 TEST_F(DFPTPhonSerialTest, IonIonGammaAcousticZeroModes)
 {
     // same two-atom cell: three acoustic eigenvalues vanish at Gamma
-    MakeTwoAtomCell();
+    dfpt_test::make_two_atom_cell(ucell_);
     ModuleBase::ComplexMatrix dyn(6, 6, true);
     phon_.ion_ion(ModuleBase::Vector3<double>(0.0, 0.0, 0.0), dyn);
     data_.set_dynmat(0, dyn);
@@ -114,7 +139,7 @@ TEST_F(DFPTPhonSerialTest, IonIonGenericQVsDirectSum)
     // two-atom cell at an incommensurate q: the Ewald result must agree
     // with a direct (unscreened) dipole-Hessian lattice sum, whose shell
     // oscillation e^{i q l} makes it convergent
-    MakeTwoAtomCell();
+    dfpt_test::make_two_atom_cell(ucell_);
     const ModuleBase::Vector3<double> tau1(0.0, 0.0, 0.0);
     const ModuleBase::Vector3<double> tau2(0.25, 0.31, 0.17);
     const double z[2] = {4.0, 2.0};
@@ -154,9 +179,9 @@ TEST_F(DFPTPhonSerialTest, IonIonGenericQVsDirectSum)
                         {
                             continue;
                         }
-                        const ModuleBase::Vector3<double> r((n1 * a_ + dt.x) * lat0_,
-                                                            (n2 * a_ + dt.y) * lat0_,
-                                                            (n3 * a_ + dt.z) * lat0_);
+                        const ModuleBase::Vector3<double> r((n1 * dfpt_test::cubic_edge + dt.x) * dfpt_test::lat0,
+                                                            (n2 * dfpt_test::cubic_edge + dt.y) * dfpt_test::lat0,
+                                                            (n3 * dfpt_test::cubic_edge + dt.z) * dfpt_test::lat0);
                         const double r2 = r * r;
                         const double r5 = r2 * r2 * std::sqrt(r2);
                         const double ph = ModuleBase::TWO_PI * (q_d_.x * n1 + q_d_.y * n2 + q_d_.z * n3);

@@ -88,7 +88,7 @@ class AccumulateHrIat0Test : public ::testing::Test
         ucell.set_iat2iwt(1);
         paraV.reset(new Parallel_Orbitals());
 #ifdef __MPI
-        paraV->para_2d().init(nat * nw, nat * nw, nat * nw, MPI_COMM_WORLD);
+        paraV->para_2d().init(nat * nw, nat * nw, nat * nw, MPI_COMM_WORLD, false);
         paraV->set_atomic_trace(ucell.get_iat2iwt(), nat, nat * nw);
 #endif
         HR.reset(new hamilt::HContainer<double>(ucell, paraV.get()));

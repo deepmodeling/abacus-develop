@@ -1,5 +1,13 @@
-#include "dfpt_serial_fixture.h"
+#include "dfpt_test_tool.h"
+#include "source_basis/module_pw/pw_basis.h"
+#include "source_basis/module_pw/pw_basis_k.h"
+#include "source_cell/qlist.h"
+#include "source_cell/unitcell.h"
+#include "source_base/complexmatrix.h"
+#include "source_pw/module_dfpt/dfpt_pw_data.h"
 #include "source_pw/module_dfpt/dfpt_write_dyn.h"
+
+#include "gtest/gtest.h"
 
 #include "source_base/matrix.h"
 #include "source_base/matrix3.h"
@@ -20,15 +28,30 @@
 /// Writer-focused fixture: only the two-atom cell geometry and the
 /// qlist/data binding are needed; the plane-wave bases of the base
 /// SetUp are not on the writer path.
-class DFPTWriteDynTest : public DFPTSerialBase
+// Writer-focused fixture: only the two-atom cell geometry and the
+// qlist/data binding are needed; the plane-wave bases are not on the
+// writer path. Self-contained gtest style, calling the dfpt_test
+// free-function utilities.
+class DFPTWriteDynTest : public ::testing::Test
 {
   protected:
+    ModuleBase::Matrix3 latvec_;
+    UnitCell ucell_;
+    ModuleCell::QList qlist_;
+    ModuleDFPT::DFPT_PW_Data data_;
+
     void SetUp() override
     {
-        SetUpCell();
-        MakeTwoAtomCell();
-        // bind data to qlist exactly like SetupBases does (nat = 2)
+        dfpt_test::setup_cell(ucell_, latvec_);
+        dfpt_test::make_two_atom_cell(ucell_);
+        // bind data to qlist exactly like setup_bases does (nat = 2)
         data_.init(&qlist_, 1, 1, 1, 1, 1, 2, nullptr);
+    }
+
+    void TearDown() override
+    {
+        delete[] ucell_.atoms;
+        ucell_.atoms = nullptr;
     }
 
     /// install an explicit q list (Gamma-first or not) into qlist_

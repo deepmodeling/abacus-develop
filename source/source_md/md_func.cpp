@@ -1,5 +1,5 @@
 #include "md_func.h"
-#include "source_cell/domain_decomposition.h"
+#include "source_cell/dom_decomp.h"
 
 #include "source_base/global_variable.h"
 #include "source_base/parallel_cell.h"
@@ -244,11 +244,11 @@ void init_vel(MDCell& mdcell,
         std::vector<int> offsets(static_cast<std::size_t>(unit.ntype + 1), 0);
         for (int it = 0; it < unit.ntype; ++it)
         {
-            offsets[static_cast<std::size_t>(it + 1)] = offsets[static_cast<std::size_t>(it)] + unit.atoms[it].na;
+            offsets[it + 1] = offsets[it] + unit.atoms[it].na;
         }
         for (LocalAtom& atom : mdcell.owned_atoms())
         {
-            atom.vel = velocities[static_cast<std::size_t>(offsets[static_cast<std::size_t>(atom.type)] + atom.type_index)];
+            atom.vel = velocities[offsets[atom.type] + atom.type_index];
         }
         return;
     }
@@ -312,12 +312,12 @@ void init_vel(MDCell& mdcell,
 
 void force_virial(ModuleESolver::ESolver* p_esolver,
                   const int& istep,
+                  const bool& positions_updated,
                   MDCell& mdcell,
                   DomainDecomposition& decomp,
                   double& potential,
                   const bool& cal_stress,
-                  ModuleBase::matrix& virial,
-                  const bool& md_out_force)
+                  ModuleBase::matrix& virial)
 {
     ModuleBase::TITLE("MD_func", "force_virial");
     ModuleBase::timer::start("MD_func", "force_virial");
@@ -328,10 +328,6 @@ void force_virial(ModuleESolver::ESolver* p_esolver,
         decomp.accumulate_ghost_forces(mdcell);
         potential = 0.5 * p_esolver->cal_energy();
         for (LocalAtom& atom : mdcell.owned_atoms()) atom.force *= 0.5;
-        if (md_out_force)
-        {
-            ModuleIO::print_force(GlobalV::ofs_running, mdcell, "TOTAL-FORCE (eV/Angstrom)");
-        }
         if (cal_stress) { p_esolver->cal_stress(static_cast<BaseCell&>(mdcell), virial); virial *= 0.5; }
     }
     else
@@ -341,15 +337,16 @@ void force_virial(ModuleESolver::ESolver* p_esolver,
             static_cast<std::size_t>(ucell.ntype));
         for (int it = 0; it < ucell.ntype; ++it)
         {
-            backing_velocities[static_cast<std::size_t>(it)] = ucell.atoms[it].vel;
+            backing_velocities[it] = ucell.atoms[it].vel;
         }
-        // Step zero evaluates the initial coordinates before the first MD drift.
-        const bool positions_updated = istep > 0;
+        // The caller reports whether positions drifted in this run; the
+        // initial force evaluation (also of a restarted run) passes false so
+        // the charge-extrapolation history only advances after an MD drift.
         mdcell.sync_backing_unitcell(positions_updated);
         for (int it = 0; it < ucell.ntype; ++it)
         {
-            std::copy(backing_velocities[static_cast<std::size_t>(it)].begin(),
-                      backing_velocities[static_cast<std::size_t>(it)].end(),
+            std::copy(backing_velocities[it].begin(),
+                      backing_velocities[it].end(),
                       ucell.atoms[it].vel.begin());
         }
         p_esolver->runner(ucell, istep); potential = 0.5 * p_esolver->cal_energy();
@@ -487,8 +484,8 @@ void dump_info(const int& step,
     {
         std::ostringstream row;
         row << std::fixed << std::setprecision(12);
-        row << "  " << type_offsets[static_cast<std::size_t>(atom.type)] + atom.type_index
-            << "  " << mdcell.type_labels()[static_cast<std::size_t>(atom.type)]
+        row << "  " << type_offsets[atom.type] + atom.type_index
+            << "  " << mdcell.type_labels()[atom.type]
             << "  " << atom.cart.x * unit_pos << "  " << atom.cart.y * unit_pos << "  " << atom.cart.z * unit_pos;
         if (mdp.dump_force)
             row << "  " << atom.force.x * unit_force << "  " << atom.force.y * unit_force << "  " << atom.force.z * unit_force;
@@ -505,7 +502,7 @@ void dump_info(const int& step,
     const std::size_t maximum_count = std::numeric_limits<int>::max();
     for (const LocalAtom& atom : mdcell.owned_atoms())
     {
-        const std::int64_t index = type_offsets[static_cast<std::size_t>(atom.type)] + atom.type_index;
+        const std::int64_t index = type_offsets[atom.type] + atom.type_index;
         const LocalAtom* atom_pointer = &atom;
         ordered_atoms.emplace_back(index, atom_pointer);
         const std::string row = format_atom(atom);
@@ -656,7 +653,7 @@ std::int64_t global_dof(const MDCell& mdcell)
     std::int64_t local_frozen[3] = {0, 0, 0};
     for (int i = 0; i < mdcell.owned_atoms().size(); ++i)
     {
-        const ModuleBase::Vector3<int>& mbl = mdcell.owned_atoms()[static_cast<std::size_t>(i)].mbl;
+        const ModuleBase::Vector3<int>& mbl = mdcell.owned_atoms()[i].mbl;
         if (mbl.x == 0) ++local_frozen[0];
         if (mbl.y == 0) ++local_frozen[1];
         if (mbl.z == 0) ++local_frozen[2];

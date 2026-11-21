@@ -30,9 +30,9 @@ int get_linear_index(const std::string& ks_solver,
 {
     if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(ks_solver))
     {
-        return mu + nu * pv.para_2d().get_row_size();
+        return mu + nu * pv.para_2d().nrloc();
     }
-    return mu * pv.para_2d().get_col_size() + nu;
+    return mu * pv.para_2d().ncloc() + nu;
 }
 } // namespace DFTU_LCAO
 
@@ -42,8 +42,7 @@ namespace DFTU_LCAO
 TEST(GetLinearIndexTest, RowMajor)
 {
     Parallel_Orbitals pv;
-    pv.para_2d().nrow = 3;
-    pv.para_2d().ncol = 4;
+    pv.para_2d().set_serial(3, 4);
 
     // row-major: mu * ncol + nu ("cg" is not column-major)
     EXPECT_EQ(get_linear_index("cg", 0, 0, pv), 0);
@@ -56,8 +55,7 @@ TEST(GetLinearIndexTest, RowMajor)
 TEST(GetLinearIndexTest, ColumnMajor)
 {
     Parallel_Orbitals pv;
-    pv.para_2d().nrow = 3;
-    pv.para_2d().ncol = 4;
+    pv.para_2d().set_serial(3, 4);
 
     // column-major: mu + nu * nrow
     EXPECT_EQ(get_linear_index("scalapack_gvx", 0, 0, pv), 0);

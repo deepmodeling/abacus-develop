@@ -6,7 +6,7 @@
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
 #include "source_lcao/hamilt_lcao.h"
-#include "source_io/module_output/write_orb_info.h"
+#include "source_io/module_output/write_notice.h"
 
 
 void ModuleIO::cal_pdos(
@@ -23,9 +23,11 @@ void ModuleIO::cal_pdos(
 		const double& dos_edelta_ev,
 		const double& bcoeff,
 		const int istep,
+		const int out_app_flag,
 		const int nlocal,
 		const int nspin,
-		const std::string& global_out_dir)
+		const std::string& global_out_dir,
+		std::ofstream& ofs_running)
 {
     ModuleBase::TITLE("ModuleIO", "cal_pdos_gamma");
 
@@ -59,7 +61,7 @@ void ModuleIO::cal_pdos(
     {
         std::vector<ModuleBase::matrix> mulk;
         mulk.resize(1);
-        mulk[0].create(pv.ncol, pv.nrow);
+        mulk[0].create(pv.para_2d().ncloc(), pv.para_2d().nrloc());
 
         psi->fix_k(is);
         const double* ppsi = psi->get_pointer();
@@ -92,23 +94,23 @@ void ModuleIO::cal_pdos(
                     sk,
                     &one_int,
                     &one_int,
-                    pv.desc,
+                    pv.para_2d().desc(),
                     ppsi,
                     &one_int,
                     &nb,
-                    pv.desc,
+                    pv.para_2d().desc(),
                     &one_int,
                     &zero_float,
                     mulk[0].c,
                     &one_int,
                     &nb,
-                    pv.desc,
+                    pv.para_2d().desc(),
                     &one_int);
 #else
             // Serial fallback: mulk = S^T * psi (column i of the wavefunction),
             // written into column i of mulk to match the pdgemv_ layout above
             const char T_char = 'T';
-            double* mulk_col = mulk[0].c + static_cast<size_t>(i) * pv.nrow;
+            double* mulk_col = mulk[0].c + static_cast<size_t>(i) * pv.para_2d().nrloc();
             BlasConnector::gemv(T_char,
                                 nlocal,
                                 nlocal,
@@ -125,10 +127,10 @@ void ModuleIO::cal_pdos(
             for (int j = 0; j < nlocal; ++j)
             {
                 // computation performed on this processor
-                if (pv.in_this_processor(j, i))
+                if (pv.para_2d().in_this_processor(j, i))
                 {
-                    const int ir = pv.global2local_row(j);
-                    const int ic = pv.global2local_col(i);
+                    const int ir = pv.para_2d().irloc(j);
+                    const int ic = pv.para_2d().icloc(i);
                     waveg[j] = mulk[0](ic, ir) * psi[0](ic, ir);
                     const double x = waveg[j].real();
                     BlasConnector::axpy(npoints, x, gauss.data(), 1, pdosk[is].c + j * pdosk[is].nc, 1);
@@ -148,7 +150,6 @@ void ModuleIO::cal_pdos(
     if (GlobalV::MY_RANK == 0)
     {
         write_pdos_text(ucell, pdos.data(), nspin, nlocal, npoints,
-                        emin, dos_edelta_ev, global_out_dir, istep);
-        ModuleIO::write_orb_info(&ucell);
+                        emin, dos_edelta_ev, global_out_dir, istep, out_app_flag, ofs_running);
     }
 }

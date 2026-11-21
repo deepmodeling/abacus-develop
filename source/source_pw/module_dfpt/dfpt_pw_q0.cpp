@@ -256,8 +256,8 @@ void DFPT_PW::Impl::solve_pos_resp(int q_idx)
     const ModuleBase::Vector3<double> q_cart = data_.get_qvec(q_idx) * ucell_->G;
     const int nk = gs_psi_.get_nk();
     const int nbands = gs_psi_.get_nbands();
-    const int lin_max = data_.get_max_iter();
-    const double lin_thr = data_.get_conv_thr();
+    const int lin_max = data_.get_lin_max_iter();
+    const double lin_thr = data_.get_lin_conv_thr();
 
     for (int a = 0; a < 3; ++a)
     {
@@ -302,8 +302,8 @@ void DFPT_PW::Impl::solve_efield_resp(int q_idx)
     const int npw = pw_rho_->npw;
     const int nk = gs_psi_.get_nk();
     const int nbands = gs_psi_.get_nbands();
-    const int lin_max = data_.get_max_iter();
-    const double lin_thr = data_.get_conv_thr();
+    const int lin_max = data_.get_lin_max_iter();
+    const double lin_thr = data_.get_lin_conv_thr();
 
     for (int a = 0; a < 3; ++a)
     {

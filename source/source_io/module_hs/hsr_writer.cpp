@@ -1,9 +1,10 @@
 #include "hsr_writer.h"
+#include "hs_sparse_io_detail.h"
 #include "source_io/module_output/spin_tag.h"
+#include "source_io/module_output/write_notice.h"
 
 #include "source_base/module_out/sparse_matrix.h"
 #include "source_base/tool_quit.h"
-#include "source_cell/ucell_io.h"
 #include "source_cell/unitcell.h"
 #include "source_base/global_variable.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
@@ -22,64 +23,64 @@
 
 std::string ModuleIO::hsr_gen_fname(const std::string& prefix,
                                      const int ispin,
-                                     const bool append,
+                                     const bool numbered,
                                      const int istep)
 {
-    return hsr_gen_fname(prefix, ispin, append, istep, 1);
+    return hsr_gen_fname(prefix, ispin, numbered, istep, 1);
 }
 
 std::string ModuleIO::hsr_gen_fname(const std::string& prefix,
                                      const int ispin,
-                                     const bool append,
+                                     const bool numbered,
                                      const int istep,
                                      const int out_type)
 {
     const std::string extension = out_type == 2 ? ".dat" : ".csr";
-    if (!append && istep >= 0)
-    {
-        return prefix + std::to_string(ispin + 1) + "g" + std::to_string(istep + 1) + "_nao" + extension;
-    }
-    else
-    {
-        return prefix + std::to_string(ispin + 1) + "_nao" + extension;
-    }
+    const std::string spin_suffix = std::to_string(ispin + 1);
+    return detail::make_sparse_R_filename(prefix, spin_suffix, numbered, istep, extension);
 }
 
-std::string ModuleIO::sr_gen_fname(const bool append, const int istep)
+std::string ModuleIO::sr_gen_fname(const bool numbered, const int istep)
 {
-    return sr_gen_fname(append, istep, 1);
+    return sr_gen_fname(numbered, istep, 1);
 }
 
-std::string ModuleIO::sr_gen_fname(const bool append, const int istep, const int out_type)
+std::string ModuleIO::sr_gen_fname(const bool numbered, const int istep, const int out_type)
 {
     const std::string extension = out_type == 2 ? ".dat" : ".csr";
-    if (!append && istep >= 0)
-    {
-        return "srg" + std::to_string(istep + 1) + "_nao" + extension;
-    }
-    return "sr_nao" + extension;
+    return detail::make_sparse_R_filename("sr", "", numbered, istep, extension);
 }
 
 std::string ModuleIO::dhr_gen_fname(const std::string& prefix,
                                      const int ispin,
-                                     const bool append,
+                                     const bool numbered,
                                      const int istep)
 {
-    std::string fname = prefix + "rs" + std::to_string(ispin + 1);
-    if (!append && istep >= 0)
+    const std::string spin_suffix = "s" + std::to_string(ispin + 1);
+    return detail::make_sparse_R_filename(prefix + "r", spin_suffix, numbered, istep, ".csr");
+}
+
+std::string ModuleIO::dhk_gen_fname(const std::string& prefix,
+                                     const int ispin,
+                                     const int nspin,
+                                     const bool numbered,
+                                     const int istep)
+{
+    std::string spin_suffix;
+    if (nspin == 2)
     {
-        fname += "g" + std::to_string(istep + 1);
+        spin_suffix = "s" + std::to_string(ispin + 1);
     }
-    fname += "_nao.csr";
-    return fname;
+    return detail::make_sparse_R_filename(prefix, spin_suffix, numbered, istep, ".txt");
 }
 
 template <typename TR>
-void ModuleIO::write_hcontainer_csr(const std::string& fname,
+bool ModuleIO::write_hcontainer_csr(const std::string& fname,
                                      const UnitCell* ucell,
                                      const int precision,
                                      hamilt::HContainer<TR>* mat_serial,
                                      const int istep,
+                                     const bool append,
                                      const int ispin,
                                      const int nspin,
                                      const std::string& label,
@@ -88,48 +89,57 @@ void ModuleIO::write_hcontainer_csr(const std::string& fname,
                                      const bool has_efermi)
 {
     std::ofstream ofs;
-    if (istep <= 0)
-    {
-        ofs.open(fname);
-    }
-    else
+    // The first written step of a run (or a single-point SCF) truncates the
+    // fixed file so a rerun does not keep stale records; later steps append
+    // only when the caller asks for it (mode 1).
+    const bool append_now = append && (istep > 0);
+    if (append_now)
     {
         ofs.open(fname, std::ios::app);
     }
-    if (!ofs.is_open())
+    else
     {
-        ModuleBase::WARNING_QUIT("ModuleIO::write_hcontainer_csr",
-                                 "Cannot open HContainer CSR file: " + fname);
+        ofs.open(fname);
     }
+    ModuleIO::detail::check_output_file_open(ofs, fname, "ModuleIO::write_hcontainer_csr");
 
-    ofs << " --- Ionic Step " << istep + 1 << " ---" << std::endl;
-    ofs << " # print " << label << " matrix in real space " << label << "(R)" << std::endl;
-    ofs << " " << nspin << " # number of spin directions" << std::endl;
-    ofs << " " << ispin + 1 << " # spin index";
-    if (has_efermi)
-    {
-        ofs << ", E_Fermi = " << std::setprecision(6) << efermi_eV << " eV";
-    }
-    ofs << std::endl;
-    ofs << " " << mat_serial->get_nbasis() << " # number of localized basis" << std::endl;
-    ofs << " " << mat_serial->size_R_loop() << " # number of Bravais lattice vector R" << std::endl;
-    ofs << std::endl;
-
-    ModuleIO::UcellIO::write_ucell(ofs, ucell);
-    if (!representation_note.empty())
-    {
-        ofs << "# representation: " << representation_note << std::endl;
-    }
-    ofs << std::endl;
+    const std::string description = " # print " + label + " matrix in real space " + label + "(R)";
+    const ModuleIO::detail::CsrTextHeader header = {
+        istep + 1,
+        description,
+        nspin,
+        ispin + 1,
+        mat_serial->get_nbasis(),
+        static_cast<int>(mat_serial->size_R_loop()),
+        ucell,
+        representation_note,
+        has_efermi,
+        efermi_eV,
+        false};
+    ModuleIO::detail::write_csr_text_header(ofs, header);
 
     const double sparse_threshold = 1e-10;
     hamilt::Output_HContainer<TR> out(mat_serial, ofs, sparse_threshold, precision);
     out.write();
+    // close() flushes the buffer; checking good() afterwards lets the caller
+    // detect a disk-full or quota failure that the destructor would swallow.
     ofs.close();
+    return ofs.good();
 }
 
 namespace
 {
+// Magic value ('H', 'S', 'R', 'B') that starts every versioned native binary
+// CSR record. Unversioned records written before this magic was introduced
+// start with a small ionic-step index instead, so the two layouts can be told
+// apart from the first int alone.
+const int hsr_binary_magic = 0x48535242;
+// Version of the native binary CSR record layout. Version 2 stores the
+// one-based ionic step after the magic and version fields; the unversioned
+// layout that shipped in v3.11.0-beta9/beta10 had no magic and stored a
+// zero-based step.
+const int hsr_binary_format_version = 2;
+
 template <typename T>
 void write_native_value(std::ofstream& ofs, const T& value)
 {
@@ -219,9 +229,12 @@ void ModuleIO::write_hcontainer_csr_binary(const std::string& fname,
     }
     std::sort(R_coordinates.begin(), R_coordinates.end());
 
-    const int step = std::max(istep, 0);
+    // ionic step written one-based per governance rule 22
+    const int step = std::max(istep, 0) + 1;
     const int nbasis = mat_serial->get_nbasis();
     const int nR = static_cast<int>(R_coordinates.size());
+    write_native_value(ofs, hsr_binary_magic);
+    write_native_value(ofs, hsr_binary_format_version);
     write_native_value(ofs, step);
     write_native_value(ofs, nbasis);
     write_native_value(ofs, nR);
@@ -282,8 +295,8 @@ void ModuleIO::write_hsr(const std::vector<hamilt::HContainer<TR>*>& hr_vec,
                           const UnitCell* ucell,
                           const int out_type,
                           const int precision,
-                          const Parallel_2D& paraV,
-                          const bool append,
+                          const Parallel_Blkcyclic& paraV,
+                          const int out_app_flag,
                           const bool gamma_only,
                           const int* iat2iwt,
                           const int nat,
@@ -298,6 +311,9 @@ void ModuleIO::write_hsr(const std::vector<hamilt::HContainer<TR>*>& hr_vec,
     }
     const int nspin = hr_vec.size();
     assert(nspin > 0);
+    // Mode 1 appends to the fixed file; only mode 2 embeds the step in the name.
+    const bool append = (out_app_flag == 1);
+    const bool numbered = (out_app_flag == 2);
     const std::string representation_note
         = gamma_only
               ? "gamma-only folded matrix; stored R-space contributions are summed into R = (0, 0, 0)"
@@ -310,7 +326,7 @@ void ModuleIO::write_hsr(const std::vector<hamilt::HContainer<TR>*>& hr_vec,
 
 #ifdef __MPI
         Parallel_Orbitals serialV;
-        serialV.set_serial(nbasis, nbasis);
+        serialV.para_2d().set_serial(nbasis, nbasis);
         serialV.set_atomic_trace(iat2iwt, nat, nbasis);
         hamilt::HContainer<TR> hr_serial(&serialV);
         hamilt::gatherParallels(*hr_vec[ispin], &hr_serial, 0);
@@ -321,7 +337,7 @@ void ModuleIO::write_hsr(const std::vector<hamilt::HContainer<TR>*>& hr_vec,
         if (GlobalV::MY_RANK == 0)
         {
             std::string fname = global_out_dir
-                                + hsr_gen_fname("hrs", ispin, append, istep, out_type);
+                                + hsr_gen_fname("hrs", ispin, numbered, istep, out_type);
             if (out_type == 2)
             {
                 write_hcontainer_csr_binary(fname, &hr_serial, istep, append);
@@ -330,10 +346,9 @@ void ModuleIO::write_hsr(const std::vector<hamilt::HContainer<TR>*>& hr_vec,
             {
                 const double efermi_eV = eferm.get_efval(ispin) * ModuleBase::Ry_to_eV;
                 write_hcontainer_csr(
-                    fname, ucell, precision, &hr_serial, istep, ispin, nspin, "H", representation_note, efermi_eV, true);
+                    fname, ucell, precision, &hr_serial, istep, append, ispin, nspin, "H", representation_note, efermi_eV, true);
             }
-            const std::string spin_tag = ModuleIO::make_spin_tag(ispin, nspin);
-            ofs_running << " Write H(R)" << spin_tag << " matrix in NAO basis to file: " << fname << std::endl;
+            ModuleIO::write_matrix_notice(ofs_running, "H(R)", ispin, nspin, fname);
         }
     }
 
@@ -343,7 +358,7 @@ void ModuleIO::write_hsr(const std::vector<hamilt::HContainer<TR>*>& hr_vec,
 
 #ifdef __MPI
         Parallel_Orbitals serialV;
-        serialV.set_serial(nbasis, nbasis);
+        serialV.para_2d().set_serial(nbasis, nbasis);
         serialV.set_atomic_trace(iat2iwt, nat, nbasis);
         hamilt::HContainer<TR> sr_serial(&serialV);
         hamilt::gatherParallels(*sr, &sr_serial, 0);
@@ -354,7 +369,7 @@ void ModuleIO::write_hsr(const std::vector<hamilt::HContainer<TR>*>& hr_vec,
         if (GlobalV::MY_RANK == 0)
         {
             std::string fname = global_out_dir
-                                + sr_gen_fname(append, istep, out_type);
+                                + sr_gen_fname(numbered, istep, out_type);
             if (out_type == 2)
             {
                 write_hcontainer_csr_binary(fname, &sr_serial, istep, append);
@@ -362,20 +377,20 @@ void ModuleIO::write_hsr(const std::vector<hamilt::HContainer<TR>*>& hr_vec,
             else
             {
                 write_hcontainer_csr(
-                    fname, ucell, precision, &sr_serial, istep, 0, 1, "S", representation_note, 0.0, false);
+                    fname, ucell, precision, &sr_serial, istep, append, 0, 1, "S", representation_note, 0.0, false);
             }
-            ofs_running << " Write S(R) matrix in NAO basis to file: " << fname << std::endl;
+            ModuleIO::write_matrix_notice(ofs_running, "S(R)", fname);
         }
     }
 }
 
 // Explicit instantiations
-template void ModuleIO::write_hcontainer_csr<double>(
+template bool ModuleIO::write_hcontainer_csr<double>(
     const std::string&, const UnitCell*, const int,
-    hamilt::HContainer<double>*, const int, const int, const int, const std::string&, const std::string&, const double, const bool);
-template void ModuleIO::write_hcontainer_csr<std::complex<double>>(
+    hamilt::HContainer<double>*, const int, const bool, const int, const int, const std::string&, const std::string&, const double, const bool);
+template bool ModuleIO::write_hcontainer_csr<std::complex<double>>(
     const std::string&, const UnitCell*, const int,
-    hamilt::HContainer<std::complex<double>>*, const int, const int, const int, const std::string&, const std::string&, const double, const bool);
+    hamilt::HContainer<std::complex<double>>*, const int, const bool, const int, const int, const std::string&, const std::string&, const double, const bool);
 
 template void ModuleIO::write_hcontainer_csr_binary<double>(
     const std::string&, hamilt::HContainer<double>*, const int, const bool);
@@ -385,12 +400,12 @@ template void ModuleIO::write_hcontainer_csr_binary<std::complex<double>>(
 template void ModuleIO::write_hsr<double>(
     const std::vector<hamilt::HContainer<double>*>&,
     const hamilt::HContainer<double>*,
-    const UnitCell*, const int, const int, const Parallel_2D&,
-    const bool, const bool, const int*, const int, const int,
+    const UnitCell*, const int, const int, const Parallel_Blkcyclic&,
+    const int, const bool, const int*, const int, const int,
     const std::string&, const elecstate::Efermi&, std::ofstream&);
 template void ModuleIO::write_hsr<std::complex<double>>(
     const std::vector<hamilt::HContainer<std::complex<double>>*>&,
     const hamilt::HContainer<std::complex<double>>*,
-    const UnitCell*, const int, const int, const Parallel_2D&,
-    const bool, const bool, const int*, const int, const int,
+    const UnitCell*, const int, const int, const Parallel_Blkcyclic&,
+    const int, const bool, const int*, const int, const int,
     const std::string&, const elecstate::Efermi&, std::ofstream&);

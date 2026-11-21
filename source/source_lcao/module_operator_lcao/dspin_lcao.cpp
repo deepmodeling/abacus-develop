@@ -571,7 +571,7 @@ void hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::cal_PI_sub(
     const int nat = this->ucell->nat;
     PI_sub.resize(nat);
 
-    const int nrow_local = this->paraV->para_2d().get_row_size();   // local rows of C_k
+    const int nrow_local = this->paraV->para_2d().nrloc();   // local rows of C_k
     const int ncol_local = this->paraV->ncol_bands;        // local band columns of C_k
     const int lda = nrow_local;  // leading dimension (column-major for ScaLAPACK)
 
@@ -601,7 +601,7 @@ void hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::cal_PI_sub(
                 const int iw_global = nlm_pair.first;
                 const std::vector<double>& nlm_vec = nlm_pair.second;
                 // Check if this global orbital index is in our local rows
-                const int iw_local = this->paraV->para_2d().global2local_row(iw_global);
+                const int iw_local = this->paraV->para_2d().irloc(iw_global);
                 if (iw_local < 0) { continue;
                 }
 
@@ -610,7 +610,7 @@ void hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::cal_PI_sub(
                 // C_k is column-major: C_k[irow, icol] = psi_k[irow + icol * lda]
                 for (int jb_local = 0; jb_local < ncol_local; jb_local++)
                 {
-                    const int jb_global = this->paraV->para_2d().local2global_col(jb_local);
+                    const int jb_global = this->paraV->para_2d().icglb(jb_local);
                     const std::complex<double> c_val = phase * psi_k[iw_local + jb_local * lda];
                     for (int lm = 0; lm < r; lm++)
                     {

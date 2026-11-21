@@ -1,0 +1,19 @@
+INPUT_PARAMETERS
+suffix            autotest
+calculation       scf
+esolver_type      dfpt
+nbands            4
+symmetry          -1
+pseudo_dir        ../../PP_ORB
+ecutwfc           8
+ecutrho          32
+scf_thr           1e-4
+smearing_method   fixed
+scf_nmax          50
+basis_type        pw
+dfpt_qfile        QFILE
+dfpt_conv_thr     1e-3
+dfpt_max_iter     30
+dfpt_compute_q0   false
+dfpt_asr          crystal
+dfpt_loto         false

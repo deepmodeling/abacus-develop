@@ -242,6 +242,12 @@ check_out() {
         compare_thr=$descriptor_thr
       elif [[ $key == wfi*.cube || $key == *_wfc_fp_rms || $key == *_wfc_fp_power_* || $key == *_wfc_fp_cross_* ]]; then
         compare_thr=$wfc_thr
+      elif [[ $key == dfpt_freq_* || $key == dfpt_loto_* ]]; then
+        # DFPT phonon frequencies (cm^-1): same-binary reruns reproduce
+        # the six printed decimals exactly; the margin only absorbs
+        # last-digit rounding across toolchains. The case-wide default
+        # stays at 1e-7 so etot/force keys keep their strict bound.
+        compare_thr=0.0001
       fi
       if [ $(check_deviation_pass $deviation $compare_thr) = 0 ]; then
         if [ $key == "totalforceref" ]; then
@@ -354,6 +360,13 @@ run_case() {
       elif grep -qE '^[[:space:]]*of_ml_gene_data[[:space:]]+1([[:space:]]|$)' INPUT; then
         # of_ml_gene_data supports single-rank only.
         "$mpi_launcher" "$mpi_np_flag" 1 "${mpi_preflags[@]}" "$abacus" "${mpi_postflags[@]}" >log.txt
+      elif grep -qiE '^[[:space:]]*esolver_type[[:space:]]+dfpt([[:space:]]|$)' INPUT; then
+        # The DFPT esolver is currently a serial implementation; MPI
+        # domain decomposition is planned future work. Running more than
+        # one rank crashes in the response-solve FFT gather-scatter
+        # (MPI_Alltoallv with rank-inconsistent stick maps). Run
+        # single-rank like the of_ml_gene_data case above.
+        "$mpi_launcher" "$mpi_np_flag" 1 "${mpi_preflags[@]}" "$abacus" "${mpi_postflags[@]}" >log.txt
       else
         "$mpi_launcher" "$mpi_np_flag" $np "${mpi_preflags[@]}" "$abacus" "${mpi_postflags[@]}" >log.txt
       fi
@@ -387,7 +400,15 @@ run_case() {
             check_out result.out $my_threshold $my_force_threshold $my_stress_threshold $my_fatal_threshold $my_descriptor_threshold $my_wfc_threshold
           fi
         else
-          bash -e ../../integrate/validation_tools/catch_properties.sh result.ref
+          # Keep the existing reference until collection finishes successfully.
+          if bash -e ../../integrate/validation_tools/catch_properties.sh result.ref.new; then
+            mv result.ref.new result.ref
+          else
+            rm -f result.ref.new
+            echo -e "\e[0;31m [ERROR     ]  Fatal Error in catch_properties.sh \e[0m"
+            let fatal++
+            fatal_case_list+=$dir'\n'
+          fi
         fi
       fi
 
@@ -527,5 +548,10 @@ if [ -z $g ]; then
     exit 1
   fi
 else
+  if [ "$fatal" -gt 0 ] || [ "$failed" -gt 0 ]; then
+    echo -e "\e[0;31m[ERROR     ]\e[0m Reference generation failed for $fatal cases."
+    printf "%b" "$fatal_case_list"
+    exit 1
+  fi
   echo "Generate test cases complete."
 fi

@@ -2,6 +2,8 @@
 #include "cal_dos.h"
 #include "cal_pdos_gamma.h"
 #include "cal_pdos_multik.h"
+#include "source_base/global_variable.h"
+#include "source_io/module_output/write_notice.h"
 
 namespace ModuleIO
 {
@@ -20,7 +22,7 @@ void write_dos_lcao(
         const double& dos_edelta_ev,
         const double& dos_scale,
         const double& bcoeff,
-        const bool out_app_flag,
+        const int out_app_flag,
         const int istep,
         const int nspin,
         const int nlocal,
@@ -62,7 +64,9 @@ void write_dos_lcao(
 
         ss << global_out_dir << "doss" << is + 1;
 
-        if(istep>=0)
+        // Modes 0 and 1 reuse the fixed name (mode 0 overwrites, mode 1 appends
+        // a new DOS block per written step); only mode 2 keeps the g{N} suffix.
+        if(istep>=0 && out_app_flag==2)
         {
             ss << "g" << istep+1;
         }
@@ -85,6 +89,11 @@ void write_dos_lcao(
                 istep,
                 out_app_flag,
                 bndpar);
+
+        if (GlobalV::MY_RANK == 0)
+        {
+            ModuleIO::write_notice(ofs_running, "DOS", is, nspin, ss.str());
+        }
     }
 
 
@@ -102,11 +111,13 @@ void write_dos_lcao(
             dos_edelta_ev,
             bcoeff,
             istep,
+            out_app_flag,
             nlocal,
             nspin,
-            global_out_dir);
+            global_out_dir,
+            ofs_running);
 
-    ofs_running << " #DOS CALCULATION ENDS# " << std::endl;
+    ofs_running << " #DOS CALCULATION ENDS#" << std::endl;
 
     return;
 }
@@ -125,7 +136,7 @@ template void write_dos_lcao(
         const double& dos_edelta_ev,
         const double& dos_scale,
         const double& bcoeff,
-        const bool out_app_flag,
+        const int out_app_flag,
         const int istep,
         const int nspin,
         const int nlocal,
@@ -152,7 +163,7 @@ template void write_dos_lcao(
         const double& dos_edelta_ev,
         const double& dos_scale,
         const double& bcoeff,
-        const bool out_app_flag,
+        const int out_app_flag,
         const int istep,
         const int nspin,
         const int nlocal,

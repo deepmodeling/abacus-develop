@@ -157,21 +157,25 @@ target_link_libraries(abacus_link_libs INTERFACE abacus::feature_libs
 set(_abacus_linalg_libs)
 set(_abacus_linalg_include_dirs)
 
+# C_PACK is optional for DSP builds. With MT_CPACK_DIR set, the serial
+# generalized eigensolver is offloaded to cpack_zhegvx_driver from libc_pack.a;
+# otherwise the fallback in source_hsolver/cpack_zhegvx_fallback.cpp forwards it
+# to the configured LAPACK provider's zhegvx_ (see issue #8247).
 if(USE_DSP)
-  if(NOT MT_CPACK_DIR)
-    message(
-      FATAL_ERROR
-        "USE_DSP requires MT_CPACK_DIR to be set to the DSP C_PACK install prefix "
-        "(the directory containing lib/libc_pack.a).")
+  if(MT_CPACK_DIR)
+    set(_abacus_cpack_library "${MT_CPACK_DIR}/lib/libc_pack.a")
+    if(NOT EXISTS "${_abacus_cpack_library}")
+      message(
+        FATAL_ERROR
+          "MT_CPACK_DIR is set to '${MT_CPACK_DIR}' but '${_abacus_cpack_library}' does not exist."
+      )
+    endif()
+    list(APPEND _abacus_linalg_libs ${_abacus_cpack_library})
+  else()
+    message(STATUS
+      "USE_DSP without MT_CPACK_DIR: C_PACK disabled, the serial generalized "
+      "eigensolver falls back to the configured LAPACK provider (zhegvx).")
   endif()
-  set(_abacus_cpack_library "${MT_CPACK_DIR}/lib/libc_pack.a")
-  if(NOT EXISTS "${_abacus_cpack_library}")
-    message(
-      FATAL_ERROR
-        "MT_CPACK_DIR is set to '${MT_CPACK_DIR}' but '${_abacus_cpack_library}' does not exist."
-    )
-  endif()
-  list(APPEND _abacus_linalg_libs ${_abacus_cpack_library})
 endif()
 
 if(USE_KML)

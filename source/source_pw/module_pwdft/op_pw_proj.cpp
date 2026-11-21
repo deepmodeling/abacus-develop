@@ -15,6 +15,7 @@ template<typename T, typename Device>
 OnsiteProj<OperatorPW<T, Device>>::OnsiteProj(const int* isk_in,
         const UnitCell* ucell_in,
         Plus_U_Base* p_dftu,
+        const int nspin_in,
         const bool cal_delta_spin,
         const bool cal_dftu)
 {
@@ -25,6 +26,7 @@ OnsiteProj<OperatorPW<T, Device>>::OnsiteProj(const int* isk_in,
     this->has_delta_spin = cal_delta_spin;
     this->has_dftu = cal_dftu;
     this->dftu = p_dftu; // mohan add 2025-11-08
+    this->nspin = nspin_in;
 }
 
 template<typename T, typename Device>
@@ -149,7 +151,7 @@ void OnsiteProj<OperatorPW<T, Device>>::cal_ps_delta_spin(const int npol, const 
     if (npol == 1)
     {
         int spin_sign = 1;
-        if (PARAM.inp.nspin == 2)
+        if (this->nspin == 2)
         {
             spin_sign = (this->isk[this->ik] == 0) ? 1 : -1;
         }
@@ -290,9 +292,9 @@ void OnsiteProj<OperatorPW<T, Device>>::cal_ps_dftu(
         this->setup_pw_dftu_indices();
     }
 
-    const int isk_val = (PARAM.inp.nspin == 2) ? this->isk[this->ik] : 0;
-    const std::complex<double>* pot_onsite_host = dftu->get_uterm_mat_spin(PARAM.inp.nspin, isk_val);
-    const int pot_onsite_size = dftu->get_size_uterm_mat_spin(PARAM.inp.nspin);
+    const int isk_val = (this->nspin == 2) ? this->isk[this->ik] : 0;
+    const std::complex<double>* pot_onsite_host = dftu->get_uterm_mat_spin(this->nspin, isk_val);
+    const int pot_onsite_size = dftu->get_size_uterm_mat_spin(this->nspin);
     syncmem_complex_h2d_op()(this->pot_onsite_device, pot_onsite_host, pot_onsite_size);
     hamilt::onsite_ps_op<Real, Device>()(
         this->ctx,

@@ -37,6 +37,20 @@ compare_hr_csr() {
   python3 $COMPARE_SCRIPT <(sed -n "$pick" "$ref") <(sed -n "$pick" "$cal") 3
 }
 
+# Band-energy-term files start with comment lines (version, timestamp, ionic
+# step, formula, units) that legitimately change between runs, so the header
+# is stripped and only the numeric body is compared.
+compare_eband_energy() {
+  local ref=$1
+  local cal=$2
+  local accuracy=${3:-4}
+  if ! test -f "$ref" || ! test -f "$cal"; then
+    echo "Error: can not find file $ref or $cal"
+    return 1
+  fi
+  python3 $COMPARE_SCRIPT <(sed '/^[[:space:]]*#/d' "$ref") <(sed '/^[[:space:]]*#/d' "$cal") "$accuracy"
+}
+
 run_mat_dm1_props() {
 
   #-------------------------------
@@ -69,8 +83,8 @@ run_mat_props() {
   # echo $out_pband
   #-------------------------------
   if ! test -z "$out_pband" && [ $out_pband == 1 ]; then
-    orbref=refOrbital
-    orbcal=OUT.autotest/Orbital
+    orbref=refNaoTxt
+    orbcal=OUT.autotest/nao.txt
     python3 $COMPARE_SCRIPT $orbref $orbcal 8
     echo "CompareOrb_pass $?" >>$props_result_file
   fi
@@ -103,11 +117,21 @@ run_mat_props() {
   # echo total_dos
   # echo $has_band
   #-------------------------------
-  if ! test -z "$has_band" && [ $has_band == 1 ]; then
+  if ! test -z "$has_band"  && [  $has_band == 1 ]; then
     bandref=band.txt.ref
     bandcal=OUT.autotest/band.txt
-    python3 $COMPARE_SCRIPT $bandref $bandcal 8
-    echo "CompareBand_pass $?" >>$props_result_file
+    # Every ionic step in band.txt is preceded by a provenance comment block
+    # ("# ABACUS version: ...", "# Written at ...", "# IONIC STEP n"), so the
+    # reference and the computed file are compared after those lines are
+    # stripped. A missing file must be reported explicitly, because process
+    # substitution would hand CompareFile.py an empty stream and pass silently.
+    if ! test -f "$bandref" || ! test -f "$bandcal"; then
+      echo "Error: can not find file $bandref or $bandcal"
+      echo "CompareBand_pass 1" >>$props_result_file
+    else
+      python3 $COMPARE_SCRIPT <(sed '/^[[:space:]]*#/d' "$bandref") <(sed '/^[[:space:]]*#/d' "$bandcal") 8
+      echo "CompareBand_pass $?" >>$props_result_file
+    fi
   fi
 
   #--------------------------------
@@ -118,13 +142,14 @@ run_mat_props() {
     if ! test -z "$gamma_only" && [ $gamma_only == 1 ]; then
       # ========== Γ-point (single k-point) calculation ==========
       if ! test -z "$nspin" && [ $nspin == 2 ]; then
-        # nspin=2 (spin-polarized): compare hks1 + hks2 Hamiltonian + sk overlap matrix
-        h1ref=hks1_nao.txt.ref
-        h1cal=OUT.autotest/hks1_nao.txt
-        h2ref=hks2_nao.txt.ref
-        h2cal=OUT.autotest/hks2_nao.txt
-        sref=sk_nao.txt.ref
-        scal=OUT.autotest/sk_nao.txt
+        # nspin=2 (spin-polarized): compare hs1 + hs2 Hamiltonian + s overlap matrix
+        h1ref=hs1_nao.txt.ref
+        h1cal=OUT.autotest/hs1_nao.txt
+        h2ref=hs2_nao.txt.ref
+        h2cal=OUT.autotest/hs2_nao.txt
+        # S(k) is spin-independent so only one copy is written
+        sref=s_nao.txt.ref
+        scal=OUT.autotest/s_nao.txt
         # Compare Hamiltonian matrix for spin 1
         python3 $COMPARE_SCRIPT $h1ref $h1cal 6
         echo "CompareH1_pass $?" >>$props_result_file
@@ -138,11 +163,11 @@ run_mat_props() {
         # nspin=4 : do nothing, only matching condition without any operation
         true
       else
-        # nspin=1 (non-spin-polarized, default case): compare single hk + sk matrix set
-        href=hk_nao.txt.ref
-        hcal=OUT.autotest/hk_nao.txt
-        sref=sk_nao.txt.ref
-        scal=OUT.autotest/sk_nao.txt
+        # nspin=1 (non-spin-polarized, default case): compare single h + s matrix set
+        href=h_nao.txt.ref
+        hcal=OUT.autotest/h_nao.txt
+        sref=s_nao.txt.ref
+        scal=OUT.autotest/s_nao.txt
         # Compare Hamiltonian matrix
         python3 $COMPARE_SCRIPT $href $hcal 6
         echo "CompareH_pass $?" >>$props_result_file
@@ -190,9 +215,9 @@ run_mat_props() {
     HSK_BINARY_COMPARE="$PROPS_TOOLS_DIR/compare_hsk_binary.py"
     if ! test -z "$gamma_only" && [ $gamma_only == 1 ]; then
       HSK_TEXT_REFERENCE_DIR="../scf_out_hk"
-      python3 $HSK_BINARY_COMPARE OUT.autotest/hk_nao.dat "$HSK_TEXT_REFERENCE_DIR/hk_nao.txt.ref" real 3
+      python3 $HSK_BINARY_COMPARE OUT.autotest/hk_nao.dat "$HSK_TEXT_REFERENCE_DIR/h_nao.txt.ref" real 3
       echo "CompareH_pass $?" >>$props_result_file
-      python3 $HSK_BINARY_COMPARE OUT.autotest/sk_nao.dat "$HSK_TEXT_REFERENCE_DIR/sk_nao.txt.ref" real 3
+      python3 $HSK_BINARY_COMPARE OUT.autotest/sk_nao.dat "$HSK_TEXT_REFERENCE_DIR/s_nao.txt.ref" real 3
       echo "CompareS_pass $?" >>$props_result_file
     else
       HSK_TEXT_REFERENCE_DIR="../scf_out_hsk"
@@ -208,17 +233,17 @@ run_mat_props() {
   #--------------------------------
   if ! test -z "$has_xc" && [ "$has_xc" == 1 ]; then
     if ! test -z "$gamma_only" && [ $gamma_only == 1 ]; then
-      xcref=vxc_nao.txt.ref
-      xccal=OUT.autotest/vxc_nao.txt
+      xcref=vxcmo_nao.txt.ref
+      xccal=OUT.autotest/vxcmo_nao.txt
     else
-      xcref=vxck2_nao.txt.ref
-      xccal=OUT.autotest/vxck2_nao.txt
+      xcref=vxcmok2_nao.txt.ref
+      xccal=OUT.autotest/vxcmok2_nao.txt
     fi
-    oeref=vxc.ref
-    oecal=OUT.autotest/vxc.txt
+    oeref=eband_vxc.ref
+    oecal=OUT.autotest/eband_vxc.txt
     python3 $COMPARE_SCRIPT $xcref $xccal 4
     echo "CompareVXC_pass $?" >>$props_result_file
-    python3 $COMPARE_SCRIPT $oeref $oecal 5
+    compare_eband_energy $oeref $oecal 5
     echo "CompareOrbXC_pass $?" >>$props_result_file
   fi
 
@@ -226,8 +251,8 @@ run_mat_props() {
   # exchange-correlation potential
   #--------------------------------
   if ! test -z "$has_xc2" && [ $has_xc2 == 1 ]; then
-    xc2ref=Vxc_R_spin0.ref
-    xc2cal=OUT.autotest/Vxc_R_spin0.csr
+    xc2ref=vxcrs1_nao.csr.ref
+    xc2cal=OUT.autotest/vxcrs1_nao.csr
     python3 $COMPARE_SCRIPT $xc2ref $xc2cal 8
     echo "CompareVXC_R_pass $?" >>$props_result_file
   fi
@@ -236,21 +261,13 @@ run_mat_props() {
   # separate terms in band enegy
   #--------------------------------
   if ! test -z "$has_eband_separate" && [ $has_eband_separate == 1 ]; then
-    ekref=kinetic_out.ref
-    ekcal=OUT.autotest/kinetic_out.dat
-    python3 $COMPARE_SCRIPT $ekref $ekcal 4
+    compare_eband_energy eband_kin.ref OUT.autotest/eband_kin.txt
     echo "CompareOrbKinetic_pass $?" >>$props_result_file
-    vlref=vpp_local_out.ref
-    vlcal=OUT.autotest/vpp_local_out.dat
-    python3 $COMPARE_SCRIPT $vlref $vlcal 4
+    compare_eband_energy eband_vl.ref OUT.autotest/eband_vl.txt
     echo "CompareOrbVL_pass $?" >>$props_result_file
-    vnlref=vpp_nonlocal_out.ref
-    vnlcal=OUT.autotest/vpp_nonlocal_out.dat
-    python3 $COMPARE_SCRIPT $vnlref $vnlcal 4
+    compare_eband_energy eband_vnl.ref OUT.autotest/eband_vnl.txt
     echo "CompareOrbVNL_pass $?" >>$props_result_file
-    vhref=vhartree_out.ref
-    vhcal=OUT.autotest/vhartree_out.dat
-    python3 $COMPARE_SCRIPT $vhref $vhcal 4
+    compare_eband_energy eband_hart.ref OUT.autotest/eband_hart.txt
     echo "CompareOrbVHartree_pass $?" >>$props_result_file
   fi
 
@@ -304,7 +321,9 @@ run_mat_props() {
   #-----------------------------------
   #echo $has_mat_r
   if ! test -z "$has_mat_r" && [ $has_mat_r == 1 ]; then
-    python3 $COMPARE_SCRIPT rr_nao.txt.ref OUT.autotest/rr_nao.txt 8
+    for axis in x y z; do
+      python3 $COMPARE_SCRIPT "rr${axis}_nao.csr.ref" "OUT.autotest/rr${axis}_nao.csr" 8 || return 1
+    done
     echo "ComparerR_pass $?" >>$props_result_file
   fi
 

@@ -2,7 +2,12 @@ add_subdirectory(module_symmetry)
 add_subdirectory(module_neighbor)
 add_subdirectory(module_neighlist)
 
-add_library(domain_decomposition OBJECT domain_decomposition.cpp)
+add_library(domain_decomposition OBJECT
+  dom_core.cpp
+  dom_ghost.cpp
+  dom_migrate.cpp
+  dom_force.cpp
+  mdcell_adapter.cpp)
 
 add_library(
   cell OBJECT
@@ -38,6 +43,7 @@ add_library(
   magnetism.cpp
   bcast_cell.cpp
   read_stru.cpp
+  stru_frame_io.cpp
   print_cell.cpp
   read_atom_species.cpp
   sep.cpp
@@ -62,6 +68,7 @@ if(ENABLE_COVERAGE)
 endif()
 
 if(BUILD_TESTING)
+  add_subdirectory(unittests)
   add_subdirectory(test)
   if(ENABLE_MPI)
     add_subdirectory(test_pw)

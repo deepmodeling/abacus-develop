@@ -4,6 +4,8 @@
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_psi/psi.h"
 #include "source_base/vector3.h"
+#include <iosfwd>
+#include <string>
 #include <vector>
 
 namespace ModuleIO
@@ -25,7 +27,7 @@ namespace ModuleIO
  */
 template <typename T>
 void write_wfc_nao(const int out_type,
-            const bool out_app_flag,
+            const int out_app_flag,
             const psi::Psi<T>& psi,
             const ModuleBase::matrix& ekb,
             const ModuleBase::matrix& wg,
@@ -34,8 +36,23 @@ void write_wfc_nao(const int out_type,
             const int nkstot,
             const Parallel_Orbitals& pv,
             const int nspin,
+            std::ofstream& ofs_running,
             const int istep=-1) ;
 
+/**
+ * @brief write real-valued Gamma-only wavefunction coefficients to a file.
+ *
+ * @param name output file name
+ * @param ctot global wavefunction coefficient array, size nbands*nlocal
+ * @param nlocal number of orbitals (basis functions)
+ * @param ik local k-point index, used to index ekb/wg rows
+ * @param ekb eigenvalue matrix
+ * @param wg occupation matrix
+ * @param writeBinary true for the binary format, false for text
+ * @param append_flag true to append to an existing file, false to truncate
+ * @param header provenance comment block written before the data in text
+ *        mode; ignored in binary mode
+ */
 void wfc_nao_write2file(const std::string& name,
                         const double* ctot,
                         const int nlocal,
@@ -43,8 +60,24 @@ void wfc_nao_write2file(const std::string& name,
                         const ModuleBase::matrix& ekb,
                         const ModuleBase::matrix& wg,
                         const bool& writeBinary,
-                        const bool& append_flag = false);
+                        const bool& append_flag,
+                        const std::string& header);
 
+/**
+ * @brief write complex wavefunction coefficients to a file.
+ *
+ * @param name output file name
+ * @param ctot global wavefunction coefficient array, size nbands*nlocal
+ * @param nlocal number of orbitals (basis functions)
+ * @param ik local k-point index, used to index ekb/wg rows
+ * @param kvec_c Cartesian k-vector of the k-point
+ * @param ekb eigenvalue matrix
+ * @param wg occupation matrix
+ * @param writeBinary true for the binary format, false for text
+ * @param append_flag true to append to an existing file, false to truncate
+ * @param header provenance comment block written before the data in text
+ *        mode; ignored in binary mode
+ */
 void wfc_nao_write2file_complex(const std::string& name,
                                 const std::complex<double>* ctot,
                                 const int nlocal,
@@ -52,7 +85,8 @@ void wfc_nao_write2file_complex(const std::string& name,
                                 const ModuleBase::Vector3<double>& kvec_c,
                                 const ModuleBase::matrix& ekb,
                                 const ModuleBase::matrix& wg,
-                                const bool& writeBinary = false,
-                                const bool& append_flag = false);
+                                const bool& writeBinary,
+                                const bool& append_flag,
+                                const std::string& header);
 }// namespace ModuleIO
 #endif

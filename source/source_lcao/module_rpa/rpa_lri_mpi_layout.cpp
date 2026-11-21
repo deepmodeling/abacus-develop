@@ -103,10 +103,11 @@ KSEigenvectorMpiLayout make_ks_eigenvector_mpi_layout(const MPI_Comm mpi_comm,
                                                       const int spinor_component)
 {
     KSEigenvectorMpiLayout layout;
+    const Parallel_Blkcyclic& distribution = parav.para_2d();
     std::vector<int> block_lengths;
     std::vector<MPI_Aint> block_displacements;
     bool local_valid = nbands >= 0 && nbasis_wfc >= 0 && parav.ncol_bands >= 0
-                       && parav.ncol_bands <= parav.get_col_size() && spinor_component >= 0
+                       && parav.ncol_bands <= parav.para_2d().ncloc() && spinor_component >= 0
                        && spinor_component < (is_soc ? 2 : 1);
     const int spatial_basis = is_soc ? nbasis_wfc / 2 : nbasis_wfc;
 
@@ -135,10 +136,10 @@ KSEigenvectorMpiLayout make_ks_eigenvector_mpi_layout(const MPI_Comm mpi_comm,
 
         for (int ib_local = 0; local_valid && ib_local < parav.ncol_bands; ++ib_local)
         {
-            const int ib_global = parav.local2global_col(ib_local);
-            for (int ir_local = 0; ir_local < parav.get_row_size(); ++ir_local)
+            const int ib_global = parav.para_2d().icglb(ib_local);
+            for (int ir_local = 0; ir_local < parav.para_2d().nrloc(); ++ir_local)
             {
-                const int iw_global = parav.local2global_row(ir_local);
+                const int iw_global = parav.para_2d().irglb(ir_local);
                 if (is_soc && iw_global % 2 != spinor_component)
                 {
                     continue;

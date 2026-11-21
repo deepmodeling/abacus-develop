@@ -67,7 +67,7 @@ class InitDMFileTest : public testing::Test
 
         // set up parallel orbitals (serial mode)
         paraV = new Parallel_Orbitals();
-        paraV->set_serial(nlocal, nlocal);
+        paraV->para_2d().set_serial(nlocal, nlocal);
         paraV->set_atomic_trace(ucell.get_iat2iwt(), ucell.nat, nlocal);
     }
 
@@ -107,7 +107,8 @@ class InitDMFileTest : public testing::Test
         }
 
         std::string fname = filename;
-        ModuleIO::write_dmr_csr(fname, &ucell, 8, &hc, 0, ispin, nspin);
+        const bool append = false;
+        ModuleIO::write_dmr_csr(fname, &ucell, 8, &hc, 0, ispin, nspin, append);
     }
 
     /// Create DensityMatrix with given nspin and initialize DMR from an HContainer template

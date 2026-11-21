@@ -37,7 +37,7 @@ namespace ModuleIO
         const ModuleBase::matrix &ekb, //store energy for each k point and each band
         const ModuleBase::matrix &wg, //weight of (kpoint,bands))
         const int istep_in, // ionic_step
-        const bool out_app_flag, // whether to append output
+        const int out_app_flag, // 0: no append, 1: append, 2: subdirectory
         const int bndpar); // number of band parallel groups
 
 }

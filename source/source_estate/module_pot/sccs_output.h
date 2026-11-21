@@ -39,6 +39,8 @@ struct SccsOutput
     double reaction_energy = 0.0;
     double volume = 0.0;
     double surface = 0.0;
+    bool filled = false; // solvent-aware cavity
+    double filled_volume = 0.0;
     double far_field_charge = 0.0;
     double expected_charge = 0.0;
     ModuleSccs::CoulombTransformCounts transforms;

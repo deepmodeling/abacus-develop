@@ -35,7 +35,7 @@ void Stress_Func<FPTYPE, Device>::stress_cc(ModuleBase::matrix& sigma,
 		fact = 2.0; //is_pw:PW basis, gamma_only need to FPTYPE.
 	}
 
-	FPTYPE sigmadiag;
+	double sigmadiag;
 	FPTYPE* rhocg = nullptr;
 
 	int judge=0;

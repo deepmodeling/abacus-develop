@@ -85,7 +85,7 @@ void ESolver_DM2rho<TK, TR>::runner(BaseCell& basecell, const int istep)
         fn += ".cube";
 
         // write electron density
-        const std::string desc_chg = ModuleIO::make_data_desc("charge density", "magnetization density m", is, nspin);
+        const std::string desc_chg = ModuleIO::make_data_desc("Charge density", "Magnetization density m", is, nspin);
 
         ModuleIO::write_vdata_palgrid(this->Pgrid,
                                       this->chr.rho[is],
@@ -98,6 +98,7 @@ void ESolver_DM2rho<TK, TR>::runner(BaseCell& basecell, const int istep)
                                       3,
                                       1,
                                       PARAM.globalv.two_fermi,
+                                      false,
                                       false,
                                       GlobalV::ofs_running,
                                       desc_chg);

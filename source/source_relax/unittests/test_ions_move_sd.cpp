@@ -117,7 +117,7 @@ TEST_F(IonsMoveSDTest, TestStartNotConverged)
     std::vector<double> etot_info(2, 0.0);
     for (int it = 0; it < ucell.ntype; it++)
     {
-        Atom* atom = &ucell.atoms[it];
+        Atom *atom = &ucell.atoms[it];
         for (int ia = 0; ia < atom->na; ia++)
         {
             for (int ik = 0; ik < 3; ++ik)

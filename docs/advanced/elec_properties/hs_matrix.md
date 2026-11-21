@@ -12,7 +12,7 @@ and
 
 ## out_hsk
 
-Use [out_hsk](../input_files/input-main.md#out_hsk) to print the upper triangular part of the Hamiltonian and overlap matrices for each k point into `OUT.${suffix}`. It is available for both gamma-only and multi-k calculations. The format value is:
+Use [out_hsk](../input_files/input-main.md#out_hsk) to print the Hamiltonian and overlap matrices for each k point into `OUT.${suffix}`. It is available for both gamma-only and multi-k calculations. The format value is:
 
 | Value | Format |
 | --- | --- |
@@ -27,21 +27,21 @@ The $H(k)$ and $S(k)$ matrices are stored with numerical atomic orbitals as basi
 
 As for information on the k points, one may look for the `SETUP K-POINTS` section in the running log.
 
-The output filenames depend on the k-point algorithm and `nspin`:
+The output filenames depend on the k-point algorithm and `nspin`. Text output (`out_hsk 1`) and native binary output (`out_hsk 2`) use different gamma-only names, because only the text writer omits the `k` marker when there is no k-point index to report:
 
-| Calculation mode | `nspin` | Hamiltonian files | Overlap files |
-| --- | --- | --- | --- |
-| `gamma_only = 1` | 1 | `hk_nao.txt` | `sk_nao.txt` |
-| `gamma_only = 1` | 2 | `hks1_nao.txt`, `hks2_nao.txt` | `sk_nao.txt` |
-| `gamma_only = 0` | 1 | `hk${k}_nao.txt` | `sk${k}_nao.txt` |
-| `gamma_only = 0` | 2 | `hk${k}s1_nao.txt`, `hk${k}s2_nao.txt` | `sk${k}_nao.txt` |
-| `gamma_only = 0` | 4 | `hk${k}s4_nao.txt` | `sk${k}_nao.txt` |
+| Calculation mode | `nspin` | Text H(k) | Text S(k) | Binary H(k) | Binary S(k) |
+| --- | --- | --- | --- | --- | --- |
+| `gamma_only = 1` | 1 | `h_nao.txt` | `s_nao.txt` | `hk_nao.dat` | `sk_nao.dat` |
+| `gamma_only = 1` | 2 | `hs1_nao.txt`, `hs2_nao.txt` | `s_nao.txt` | `hks1_nao.dat`, `hks2_nao.dat` | `sk_nao.dat` |
+| `gamma_only = 0` | 1 | `hk${k}_nao.txt` | `sk${k}_nao.txt` | `hk${k}_nao.dat` | `sk${k}_nao.dat` |
+| `gamma_only = 0` | 2 | `hk${k}s1_nao.txt`, `hk${k}s2_nao.txt` | `sk${k}_nao.txt` | `hk${k}s1_nao.dat`, `hk${k}s2_nao.dat` | `sk${k}_nao.dat` |
+| `gamma_only = 0` | 4 | `hk${k}_nao.txt` | `sk${k}_nao.txt` | `hk${k}s4_nao.dat` | `sk${k}_nao.dat` |
 
-Here `${k}` is the one-based k-point index. For `nspin = 2`, the overlap matrix is spin-independent, so only one overlap file is written for each physical k point. The gamma-only algorithm does not support `nspin = 4`; use the multi-k algorithm with an explicit Gamma-only `KPT` file for a noncollinear calculation at Gamma.
+Here `${k}` is the one-based k-point index. For `nspin = 2`, the overlap matrix is spin-independent, so only one overlap file is written for each physical k point. The gamma-only algorithm does not support `nspin = 4`; use the multi-k algorithm with an explicit Gamma-only `KPT` file for a noncollinear calculation at Gamma. In text output the spinor Hamiltonian is stored as one complex matrix, so no spin suffix is added; the binary format keeps the historical `s4` marker.
 
-When `out_app_flag` is false, `g${step}` is inserted before `_nao`, where `${step}` is the one-based ionic-step index. For example, the first spin channel at the first k point and first ionic step is written to `hk1s1g1_nao.txt`.
+Only when `out_app_flag` is 2 is `g${step}` inserted before `_nao`, where `${step}` is the one-based ionic-step index. For example, the first spin channel at the first k point and first ionic step is written to `hk1s1g1_nao.txt`. With `out_app_flag = 0` the fixed file is truncated and overwritten at every write, and with `out_app_flag = 1` it accumulates one record per written step.
 
-Each output block starts with a comment header containing the one-based ionic-step index, filename, `gamma only` flag, and matrix dimensions. It is followed by `Row 1`, `Row 2`, and so on. Each row contains the matrix elements from the diagonal through the upper triangle.
+With `out_hsk 1`, each ionic-step record is a self-describing text block. It starts with `Ionic_Step ${step}`, followed by the number of spin directions, the one-based spin index, the total number of k points, the one-based k-point index, the Cartesian and direct coordinates, the k-point weight, the Fermi energy in Ry, the number of localized basis functions, and the matrix dimension. A `user_defined_lattice` block with the lattice vectors and atomic positions follows. The matrix body then stores every element of the dense $N \times N$ matrix in row-major order: row by row from $i = 0$ to $N-1$, and within each row from $j = 0$ to $N-1$. Both triangles and the diagonal are written; the body is not restricted to the upper triangle. Four complex values or eight real values are written per line, and values with magnitude below $10^{-10}$ are flushed to zero.
 
 For multi-k calculations, the matrices are Hermitian and each matrix element is written as `(real,imag)`. For gamma-only calculations, the matrices are symmetric and the matrix elements are written as real numbers.
 
@@ -49,7 +49,7 @@ For multi-k calculations, the matrices are Hermitian and each matrix element is 
 
 ### Native Binary Format
 
-For `out_hsk 2`, the filenames in the table above use `.dat` instead of `.txt`. Each matrix record is written without padding or a self-describing header:
+For `out_hsk 2`, the binary filenames listed in the table above are used. Each matrix record is written without padding or a self-describing header:
 
 1. the matrix dimension as a native C++ `int`;
 2. the upper-triangular elements in row-major order, from `(0,0)` through `(0,N-1)`, then `(1,1)` through `(1,N-1)`, and so on;
@@ -57,7 +57,7 @@ For `out_hsk 2`, the filenames in the table above use `.dat` instead of `.txt`. 
 
 The file therefore contains `sizeof(int) + N(N+1)/2 * sizeof(double)` bytes for a gamma-only record and `sizeof(int) + N(N+1) * sizeof(double)` bytes for a multi-k or spinor record. The format uses the host integer representation and byte order and is intended for readers using a compatible ABI.
 
-When `out_app_flag` is true, the first ionic step truncates the shared file and every later step appends another complete record. When it is false, each ionic step has a separate filename containing `g${step}` before `_nao`.
+When `out_app_flag` is 1, the first ionic step truncates the shared file and every later step appends another complete record. When `out_app_flag` is 0, the fixed file is truncated and overwritten at every write. Only when `out_app_flag` is 2 does each ionic step have a separate filename containing `g${step}` before `_nao`.
 
 ## out_hsr
 
@@ -95,19 +95,26 @@ In gamma-only mode, every generated file reports one Bravais lattice vector and 
 
 ### Native Binary CSR Format
 
-Set `out_hsr 2` to write the same H(R) and S(R) matrix sets with a `.dat` suffix. For example, an `nspin = 2` calculation writes `hrs1_nao.dat`, `hrs2_nao.dat`, and `sr_nao.dat`. When `out_app_flag` is false, the one-based ionic step is included before `_nao`, for example `hrs1g1_nao.dat` and `srg1_nao.dat`.
+Set `out_hsr 2` to write the same H(R) and S(R) matrix sets with a `.dat` suffix. For example, an `nspin = 2` calculation writes `hrs1_nao.dat`, `hrs2_nao.dat`, and `sr_nao.dat`. When `out_app_flag` is 2, the one-based ionic step is included before `_nao`, for example `hrs1g1_nao.dat` and `srg1_nao.dat`.
 
-Each ionic step is a complete record with no padding or self-describing header:
+Each ionic step is a complete record with no padding; its header is self-identifying through a magic value and a format version:
 
-1. Native `int`: zero-based ionic step, matrix dimension, number of R blocks.
+1. Versioned header: five native `int` values, namely the magic `0x48535242` (`HSRB`), the format version (`2`), the one-based ionic step, the matrix dimension, and the number of R blocks. The magic and version are absent from the unversioned layout described in the migration note below.
 2. For every R block in lexicographic `(Rx, Ry, Rz)` order, four native `int` values: `Rx`, `Ry`, `Rz`, and `nnz`.
 3. `nnz` matrix values in CSR order. Real matrices use one native `double`; complex matrices use consecutive real and imaginary `double` values.
 4. `nnz` native `int` column indices.
 5. `dimension + 1` native `long long` row pointers.
 
-All R blocks stored by the internal HContainer are present, including blocks with zero nonzero values. The sparse threshold is `1e-10`, matching text CSR output. The format uses the host integer representation and byte order and therefore requires a compatible ABI. It does not contain unit-cell, spin, or matrix-label metadata; those are determined by the calculation input and filename.
+All R blocks stored by the internal HContainer are present, including blocks with zero nonzero values. The binary sparse threshold is `1e-10`; the text CSR files instead drop complex components below `1e-16` and keep real values unfiltered, so the two formats may differ on near-zero elements. The format uses the host integer representation and byte order and therefore requires a compatible ABI. It does not contain unit-cell, spin, or matrix-label metadata; those are determined by the calculation input and filename.
 
-When `out_app_flag` is true, the first ionic step truncates the shared file and later ionic steps append complete records. Otherwise every ionic step is written to its own file.
+When `out_app_flag` is 1, the first ionic step truncates the shared file and later ionic steps append complete records. When `out_app_flag` is 0, the fixed file is truncated and overwritten at every write. Only when `out_app_flag` is 2 is every ionic step written to its own file.
+
+> **Format version and migration note.** The native binary record is now versioned. Version `2` starts with the magic `0x48535242` and the version itself, and stores a one-based ionic step. Earlier files are unversioned and start directly with the ionic step, so the first `int` of an unversioned file is a small step index (`0` or `1`) rather than the magic, which makes the two layouts distinguishable.
+> - **v3.11.0-beta9 and v3.11.0-beta10** wrote unversioned records with a **zero-based** ionic step (the first ionic step is stored as `0`).
+> - **Development builds between that change and this versioning scheme** wrote unversioned records with a **one-based** ionic step, so an unversioned file cannot be interpreted from its content alone; the writer version is required.
+> - **Version `2` and later** write the magic, the format version, and a **one-based** ionic step.
+>
+> The matrix data itself is unchanged; only the header and the step convention differ. Readers should reject a record whose first `int` is not the expected magic instead of guessing the layout, and must consult the format version before interpreting the remaining fields. Reading an unversioned beta file as version `2`, or a version `2` file as unversioned, shifts the reported ionic-step index and misaligns every following field.
 
 ### NPZ Format
 

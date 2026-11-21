@@ -1,4 +1,5 @@
 #include "../overlap.h"
+#include "test_operator_basis.h"
 
 #include "gtest/gtest.h"
 
@@ -17,6 +18,7 @@
 // modify test_size to test different size of unitcell
 int test_size = 10;
 int test_nw = 10;
+
 class OverlapTest : public ::testing::Test
 {
   protected:
@@ -75,7 +77,7 @@ class OverlapTest : public ::testing::Test
         int global_col = test_size * test_nw * 2;
         std::ofstream ofs_running;
         paraV = new Parallel_Orbitals();
-        paraV->para_2d().init(global_row, global_col, nb, MPI_COMM_WORLD);
+        paraV->para_2d().init(global_row, global_col, nb, MPI_COMM_WORLD, false);
         paraV->set_atomic_trace(ucell.get_iat2iwt(), test_size, global_row);
     }
 #else
@@ -101,8 +103,9 @@ TEST_F(OverlapTest, constructHRcd2cd)
     hamilt::HS_Matrix_K<std::complex<double>> hsk(paraV);
     hsk.set_zero_sk();
     Grid_Driver gd(0, 0);
+    const BasisFlattenedIndexing basis = operator_test::make_s_orbital_basis(ucell);
     hamilt::Overlap<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>
-        op(&hsk, kvec_d_in, nullptr, SR, &ucell, {1.0}, &gd, &intor_);
+        op(&hsk, kvec_d_in, nullptr, SR, basis, paraV->para_2d(), &ucell, {1.0}, &gd, &intor_);
     op.contributeHR();
     // check the value of SR
     for (int iap = 0; iap < SR->size_atom_pairs(); ++iap)
@@ -136,9 +139,9 @@ TEST_F(OverlapTest, constructHRcd2cd)
     // check the value of SK of gamma point
     auto* sk = hsk.get_sk();
     int i = 0;
-    for (int irow = 0; irow < paraV->para_2d().get_row_size(); ++irow)
+    for (int irow = 0; irow < paraV->para_2d().nrloc(); ++irow)
     {
-        for (int icol = 0; icol < paraV->para_2d().get_col_size(); ++icol)
+        for (int icol = 0; icol < paraV->para_2d().ncloc(); ++icol)
         {
             if (irow % npol == icol % npol)
             {
@@ -158,9 +161,9 @@ TEST_F(OverlapTest, constructHRcd2cd)
     op.contributeHk(1);
     // check the value of SK
     i = 0;
-    for (int irow = 0; irow < paraV->para_2d().get_row_size(); ++irow)
+    for (int irow = 0; irow < paraV->para_2d().nrloc(); ++irow)
     {
-        for (int icol = 0; icol < paraV->para_2d().get_col_size(); ++icol)
+        for (int icol = 0; icol < paraV->para_2d().ncloc(); ++icol)
         {
             if (irow % npol == icol % npol)
             {

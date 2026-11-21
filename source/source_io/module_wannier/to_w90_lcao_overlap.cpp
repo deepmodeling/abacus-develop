@@ -18,7 +18,7 @@
 
 void toW90_LCAO::cal_orbA_overlap_R(const UnitCell& ucell)
 {
-    int row = this->ParaV->get_row_size();
+    int row = this->ParaV->para_2d().nrloc();
     int R_num = R_coor_car.size();
     int global_ir = 0;
 
@@ -41,7 +41,7 @@ void toW90_LCAO::cal_orbA_overlap_R(const UnitCell& ucell)
 
     for (int ir = 0; ir < row; ir++)
     {
-        global_ir = ParaV->local2global_row(ir);
+        global_ir = ParaV->para_2d().irglb(ir);
         int orb_index_row = global_ir / npol_;
 
         int it1 = iw2it[orb_index_row];
@@ -408,7 +408,7 @@ void toW90_LCAO::unkdotA(const K_Vectors& kv,
 {
     Amn.create(num_bands, num_wannier);
 
-    int row = this->ParaV->get_row_size();
+    int row = this->ParaV->para_2d().nrloc();
     int index_band = -1;
     int R_num = R_coor_car.size();
     if (nspin_ != 4)
@@ -420,7 +420,7 @@ void toW90_LCAO::unkdotA(const K_Vectors& kv,
 }
             index_band++;
 
-            int ic = this->ParaV->global2local_col(ib);
+            int ic = this->ParaV->para_2d().icloc(ib);
             if (ic >= 0)
             {
                 for (int wannier_index = 0; wannier_index < num_wannier; wannier_index++)
@@ -452,7 +452,7 @@ void toW90_LCAO::unkdotA(const K_Vectors& kv,
 }
             index_band++;
 
-            int ic = this->ParaV->global2local_col(ib);
+            int ic = this->ParaV->para_2d().icloc(ib);
             if (ic >= 0)
             {
                 for (int wannier_index = 0; wannier_index < num_wannier; wannier_index++)

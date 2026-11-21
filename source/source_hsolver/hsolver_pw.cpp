@@ -196,17 +196,16 @@ void HSolverPW<T, Device>::solve(HSOperator<T, Device>& op,
         eigenvalues.data(),
         this->wfc_basis->nks * psi.get_nbands());
 
-    auto _pes_pw = reinterpret_cast<elecstate::ElecStatePW<T>*>(pes);
-    elecstate::calculate_weights(_pes_pw->ekb,
-                                 _pes_pw->wg,
-                                 _pes_pw->klist,
-                                 _pes_pw->eferm,
-                                 _pes_pw->f_en,
-                                 _pes_pw->nelec_spin,
+    elecstate::calculate_weights(pes->ekb,
+                                 pes->wg,
+                                 pes->klist,
+                                 pes->eferm,
+                                 pes->f_en,
+                                 pes->nelec_spin,
                                  this->nbands,
-                                 _pes_pw->skip_weights);
+                                 pes->skip_weights);
 
-    elecstate::calEBand(_pes_pw->ekb,_pes_pw->wg,_pes_pw->f_en);
+    elecstate::calEBand(pes->ekb, pes->wg, pes->f_en);
     if (skip_charge)
     {
         if (this->use_uspp)
@@ -216,7 +215,7 @@ void HSolverPW<T, Device>::solve(HSOperator<T, Device>& op,
     }
     else
     {
-        reinterpret_cast<elecstate::ElecStatePW<T, Device>*>(pes)->psiToRho(psi);
+        pes->psiToRho(psi);
     }
 
     ModuleBase::timer::end("HSolverPW", "solve");
@@ -314,7 +313,8 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(const HSOperator<T, Device>& op,
                               psi.get_nbasis(),
                               eigenvalue,
                               this->ethr_band,
-                              scf));
+                              scf,
+                              psi.get_current_k()));
     }
     else if (this->method == "dav")
     {
@@ -335,7 +335,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(const HSOperator<T, Device>& op,
         const int nband = psi.get_nbands();            /// number of eigenpairs sought
         const int ld_psi = psi.get_nbasis();           /// leading dimension of psi
 
-        DiagoDavid<T, Device> david(pre_condition.data(), nband, dim, this->pw_diag_ndim, comm_info);
+        DiagoDavid<T, Device> david(pre_condition.data(), nband, dim, this->pw_diag_ndim, this->use_uspp, comm_info);
         // do diag and add davidson iteration counts up to avg_iter
         DiagoIterAssist<T, Device>::avg_iter += static_cast<double>(
              david.diag(op,

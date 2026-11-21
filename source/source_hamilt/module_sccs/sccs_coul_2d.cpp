@@ -26,6 +26,9 @@ void Pcc2dCoulombOperator::apply_potential(const std::vector<double>& charge, st
 {
     const elecstate::ChargeMoments moments = pool_moments(charge, projected_positions_, basis_);
     periodic_.apply_potential(charge, potential);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static)
+#endif
     for (int ir = 0; ir < basis_.nrxx; ++ir)
     {
         const double coordinate = projected_positions_[ir] * normal_;

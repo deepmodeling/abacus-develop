@@ -7,7 +7,9 @@
 #include "source_base/tool_title.h" // use title
 #include "source_base/global_function.h" // use READ_VALUE
 
+#include <string>
 #include <type_traits>
+#include <vector>
 
 namespace
 {
@@ -17,6 +19,36 @@ bool read_binary_value(std::ifstream& ifs, T& value)
 {
     ifs.read(reinterpret_cast<char*>(&value), sizeof(T));
     return static_cast<bool>(ifs);
+}
+
+/**
+ * @brief skip leading comment lines starting with '#' in a text stream.
+ *
+ * Text wavefunction files may carry a provenance header (ABACUS version,
+ * timestamp, ionic step) before the data block. The stream is left positioned
+ * at the first non-comment character. Must not be used on binary streams,
+ * where '#' is legitimate record data.
+ *
+ * @param ifs text input stream positioned at the start of the file
+ */
+void skip_comment_lines(std::ifstream& ifs)
+{
+    std::string line;
+    while (ifs.peek() != std::char_traits<char>::eof())
+    {
+        const std::streampos pos = ifs.tellg();
+        ifs >> std::ws;
+        if (ifs.peek() == '#')
+        {
+            std::getline(ifs, line);
+        }
+        else
+        {
+            ifs.seekg(pos);
+            ifs.clear();
+            break;
+        }
+    }
 }
 
 template <typename T>
@@ -101,6 +133,10 @@ bool ModuleIO::read_wfc_nao_spin_populations(const std::string& readin_dir,
                 ik, ik2iktot, nspin, nkstot, read_type, false, gamma_only, -1);
             const std::ios_base::openmode mode = binary ? std::ios::in | std::ios::binary : std::ios::in;
             std::ifstream ifs(file.c_str(), mode);
+            if (!binary)
+            {
+                skip_comment_lines(ifs);
+            }
             if (!gamma_only)
             {
                 int ik_file = 0;
@@ -210,7 +246,7 @@ bool ModuleIO::read_wfc_nao(
     bool read_success = true;
     int myrank = 0;
 #ifdef __MPI
-    MPI_Comm_rank(ParaV.comm(), &myrank);
+    MPI_Comm_rank(ParaV.para_2d().comm(), &myrank);
 #endif
     if (skip_band < 0)
     {
@@ -232,7 +268,7 @@ bool ModuleIO::read_wfc_nao(
     {
         // I don't know why, but in orther places, the init of psi is using ParaV.ncol for gamma_only case
         // It seems that the diagonalization of double case need a full matrix of psi.
-        nbands_local = ParaV.ncol;
+        nbands_local = ParaV.para_2d().ncloc();
     }
     psid.resize(nk, nbands_local, nlocal_local);
     if (gamma_only)
@@ -259,6 +295,11 @@ bool ModuleIO::read_wfc_nao(
         else
         {
             std::cout << " Read NAO wave functions from " << ss << std::endl;
+        }
+
+        if (!binary)
+        {
+            skip_comment_lines(ifs);
         }
 
         const auto incomplete_file = [&](const std::string& field) {
@@ -384,18 +425,146 @@ bool ModuleIO::read_wfc_nao(
     {
         if (myrank == 0)
         {
-            const bool out_app_flag = false;
             std::stringstream error_message;
-            std::string readin_dir = global_readin_dir;
-            if(istep >= 0)
-            {
-                readin_dir = readin_dir + "WFC/";
-            }
             const int read_type = binary ? 2 : 1;
-            std::string ss = ModuleIO::filename_output(readin_dir,"wf","nao",
-                    ik,ik2iktot,nspin,nkstot,read_type,out_app_flag,gamma_only,istep);
+            // Candidate file locations, in priority order:
+            // 1. readin_dir + step-suffixed name: layout written by older runs
+            //    with out_app_flag 0 (per-step g files in the OUT directory root)
+            // 2. readin_dir + "PSI/" + step-suffixed name: layout written by
+            //    runs with out_app_flag 2 (also accepts a g file in the root)
+            // 3. readin_dir + "WFC/" + step-suffixed name: layout written by
+            //    releases before the out_app_flag rework
+            // 4. readin_dir + name without the step suffix: written in fixed-name
+            //    modes (out_app_flag 0/1)
+            //
+            // Step-suffixed names are generated with out_app_flag 2, the only
+            // mode that still embeds g{step}; this keeps backward compatibility
+            // with files written by older versions.
+            //
+            // istep semantics:
+            // - istep > 0: positive indexed restart. Only step-suffixed
+            //   snapshots are accepted; the append-mode fixed-name file is
+            //   excluded because read_one_file always loads its first frame,
+            //   which would silently return step-0 data for a positive index.
+            // - istep == 0: ordinary first-frame initialization (e.g.
+            //   non-restart TDDFT). Try the step-suffixed g1 layout first,
+            //   then fall back to the append-mode fixed-name file.
+            // - istep < 0: default read. Append-mode fixed-name file only.
+            std::vector<std::string> candidates;
+            if (istep > 0)
+            {
+                const int suffix_app_flag = 2;
+                candidates.push_back(ModuleIO::filename_output(global_readin_dir,
+                        "wf",
+                        "nao",
+                        ik,
+                        ik2iktot,
+                        nspin,
+                        nkstot,
+                        read_type,
+                        suffix_app_flag,
+                        gamma_only,
+                        istep));
+                const std::string psi_dir = global_readin_dir + "PSI/";
+                candidates.push_back(ModuleIO::filename_output(psi_dir,
+                        "wf",
+                        "nao",
+                        ik,
+                        ik2iktot,
+                        nspin,
+                        nkstot,
+                        read_type,
+                        suffix_app_flag,
+                        gamma_only,
+                        istep));
+                const std::string legacy_dir = global_readin_dir + "WFC/";
+                candidates.push_back(ModuleIO::filename_output(legacy_dir,
+                        "wf",
+                        "nao",
+                        ik,
+                        ik2iktot,
+                        nspin,
+                        nkstot,
+                        read_type,
+                        suffix_app_flag,
+                        gamma_only,
+                        istep));
+            }
+            else if (istep == 0)
+            {
+                const int suffix_app_flag = 2;
+                candidates.push_back(ModuleIO::filename_output(global_readin_dir,
+                        "wf",
+                        "nao",
+                        ik,
+                        ik2iktot,
+                        nspin,
+                        nkstot,
+                        read_type,
+                        suffix_app_flag,
+                        gamma_only,
+                        istep));
+                const std::string psi_dir = global_readin_dir + "PSI/";
+                candidates.push_back(ModuleIO::filename_output(psi_dir,
+                        "wf",
+                        "nao",
+                        ik,
+                        ik2iktot,
+                        nspin,
+                        nkstot,
+                        read_type,
+                        suffix_app_flag,
+                        gamma_only,
+                        istep));
+                const std::string legacy_dir = global_readin_dir + "WFC/";
+                candidates.push_back(ModuleIO::filename_output(legacy_dir,
+                        "wf",
+                        "nao",
+                        ik,
+                        ik2iktot,
+                        nspin,
+                        nkstot,
+                        read_type,
+                        suffix_app_flag,
+                        gamma_only,
+                        istep));
+                const int append_app_flag = 1;
+                candidates.push_back(ModuleIO::filename_output(global_readin_dir,
+                        "wf",
+                        "nao",
+                        ik,
+                        ik2iktot,
+                        nspin,
+                        nkstot,
+                        read_type,
+                        append_app_flag,
+                        gamma_only,
+                        istep));
+            }
+            else
+            {
+                const int append_app_flag = 1;
+                candidates.push_back(ModuleIO::filename_output(global_readin_dir,
+                        "wf",
+                        "nao",
+                        ik,
+                        ik2iktot,
+                        nspin,
+                        nkstot,
+                        read_type,
+                        append_app_flag,
+                        gamma_only,
+                        istep));
+            }
 
-            read_success = read_one_file(ss, error_message, ik, ctot);
+            for (size_t ic = 0; ic < candidates.size(); ++ic)
+            {
+                read_success = read_one_file(candidates[ic], error_message, ik, ctot);
+                if (read_success)
+                {
+                    break;
+                }
+            }
             errors = error_message.str();
         }   
 #ifdef __MPI
@@ -412,19 +581,19 @@ bool ModuleIO::read_wfc_nao(
 
         psid.fix_k(ik);
 #ifdef __MPI
-        Parallel_2D pv_glb;
-        pv_glb.set(nlocal, nbands, std::max(nlocal, nbands), ParaV.blacs_ctxt);
+        Parallel_Blkcyclic pv_glb;
+        pv_glb.set(nlocal, nbands, std::max(nlocal, nbands), ParaV.para_2d().ictxt());
         Cpxgemr2d(nlocal,
                   nbands,
                   ctot.data(),
                   1,
                   1,
-                  pv_glb.desc,
+                  const_cast<int*>(pv_glb.desc()),
                   psid.get_pointer(),
                   1,
                   1,
                   const_cast<int*>(ParaV.desc_wfc),
-                  pv_glb.blacs_ctxt);
+                  pv_glb.ictxt());
         Parallel_Common::bcast_double(&ekb(ik, 0), nbands);
         Parallel_Common::bcast_double(&wg(ik, 0), nbands);
 #else

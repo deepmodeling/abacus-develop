@@ -141,6 +141,8 @@ void ESolver_KS_LCAO<TK, TR>::others(BaseCell& basecell, const int istep)
         this->p_hamilt = new hamilt::HamiltLCAO<TK, TR>(ucell,
                                                         this->gd,
                                                         &this->pv,
+                                                        *(this->basis_index_),
+                                                        this->pv.para_2d(),
                                                         this->pelec->pot,
                                                         this->kv,
                                                         two_center_bundle_,
@@ -200,6 +202,7 @@ void ESolver_KS_LCAO<TK, TR>::others(BaseCell& basecell, const int istep)
                                  this->Pgrid,
                                  this->gd,
                                  this->inp_->out_pchg,
+                                 istep,
                                  global_out_dir,
                                  GlobalV::ofs_running);
         }
@@ -212,6 +215,7 @@ void ESolver_KS_LCAO<TK, TR>::others(BaseCell& basecell, const int istep)
                              this->kv,
                              this->inp_->out_pchg,
                              this->inp_->if_separate_k,
+                             istep,
                              global_out_dir,
                              GlobalV::ofs_running);
         }

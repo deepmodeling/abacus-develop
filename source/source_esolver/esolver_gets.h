@@ -8,6 +8,8 @@
 
 #include <memory>
 
+class BasisFlattenedIndexing; // Defined in source/source_base/basis_flattened_indexing.h
+
 namespace ModuleESolver
 {
 
@@ -40,6 +42,8 @@ class ESolver_GetS : public ESolver_KS
 
     // temporary introduced
     LCAO_Orbitals orb_;
+
+    std::unique_ptr<BasisFlattenedIndexing> basis_index_;
 };
 } // namespace ModuleESolver
 #endif

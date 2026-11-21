@@ -115,6 +115,8 @@ template <typename TK, typename TR>
 LcaoOpsBundle<TK, TR> build_gamma_ops(const UnitCell& ucell,
                                       const Grid_Driver& grid_d,
                                       const Parallel_Orbitals* paraV,
+                                      const BasisFlattenedIndexing& basis,
+                                      const Parallel_Blkcyclic& layout,
                                       elecstate::Potential* pot_in,
                                       const TwoCenterBundle& two_center_bundle,
                                       const LCAO_Orbitals& orb,
@@ -137,6 +139,7 @@ LcaoOpsBundle<TK, TR> build_gamma_ops(const UnitCell& ucell,
     // in Gamma_only case, target SK is hsk->get_sk(), the target SR is sR
     Operator<TK>* ops = new Overlap<OperatorLCAO<TK, TR>>(hsk,
                                                           kv->kvec_d, hR, sR,
+                                                          basis, layout,
                                                           &ucell, orb.cutoffs(), &grid_d,
                                                           two_center_bundle.overlap_orb.get());
 
@@ -145,6 +148,7 @@ LcaoOpsBundle<TK, TR> build_gamma_ops(const UnitCell& ucell,
     {
         Operator<TK>* ekinetic = new EKinetic<OperatorLCAO<TK, TR>>(hsk,
                                                                     kv->kvec_d, hR,
+                                                                    basis, layout,
                                                                     &ucell, orb.cutoffs(), &grid_d,
                                                                     two_center_bundle.kinetic_orb.get());
         ops->add(ekinetic);
@@ -204,6 +208,8 @@ template <typename TK, typename TR>
 LcaoOpsBundle<TK, TR> build_multik_ops(const UnitCell& ucell,
                                        const Grid_Driver& grid_d,
                                        const Parallel_Orbitals* paraV,
+                                       const BasisFlattenedIndexing& basis,
+                                       const Parallel_Blkcyclic& layout,
                                        elecstate::Potential* pot_in,
                                        const TwoCenterBundle& two_center_bundle,
                                        const LCAO_Orbitals& orb,
@@ -245,6 +251,7 @@ LcaoOpsBundle<TK, TR> build_multik_ops(const UnitCell& ucell,
     // overlap term is indispensable
     Operator<TK>* overlap = new Overlap<OperatorLCAO<TK, TR>>(hsk,
                                                               kv->kvec_d, hR, sR,
+                                                              basis, layout,
                                                               &ucell, orb.cutoffs(), &grid_d,
                                                               two_center_bundle.overlap_orb.get());
     if (ops == nullptr)
@@ -262,6 +269,7 @@ LcaoOpsBundle<TK, TR> build_multik_ops(const UnitCell& ucell,
     {
         Operator<TK>* ekinetic = new EKinetic<OperatorLCAO<TK, TR>>(hsk,
                                                                     kv->kvec_d, hR,
+                                                                    basis, layout,
                                                                     &ucell, orb.cutoffs(), &grid_d,
                                                                     two_center_bundle.kinetic_orb.get());
         ops->add(ekinetic);
@@ -357,6 +365,7 @@ template struct LcaoOpsBundle<std::complex<double>, std::complex<double>>;
 
 template LcaoOpsBundle<double, double> build_gamma_ops<double, double>(
     const UnitCell&, const Grid_Driver&, const Parallel_Orbitals*,
+    const BasisFlattenedIndexing&, const Parallel_Blkcyclic&,
     elecstate::Potential*, const TwoCenterBundle&, const LCAO_Orbitals&,
     module_dm::DensityMatrix<double, double>*, Plus_U_Base*, Setup_DeePKS<double>&,
     const Input_para&, const std::vector<std::string>&, const K_Vectors*,
@@ -364,6 +373,7 @@ template LcaoOpsBundle<double, double> build_gamma_ops<double, double>(
 
 template LcaoOpsBundle<double, double> build_multik_ops<double, double>(
     const UnitCell&, const Grid_Driver&, const Parallel_Orbitals*,
+    const BasisFlattenedIndexing&, const Parallel_Blkcyclic&,
     elecstate::Potential*, const TwoCenterBundle&, const LCAO_Orbitals&,
     module_dm::DensityMatrix<double, double>*, Plus_U_Base*, Setup_DeePKS<double>&,
     const Input_para&, const std::vector<std::string>&, const K_Vectors*,
@@ -371,6 +381,7 @@ template LcaoOpsBundle<double, double> build_multik_ops<double, double>(
 
 template LcaoOpsBundle<std::complex<double>, double> build_gamma_ops<std::complex<double>, double>(
     const UnitCell&, const Grid_Driver&, const Parallel_Orbitals*,
+    const BasisFlattenedIndexing&, const Parallel_Blkcyclic&,
     elecstate::Potential*, const TwoCenterBundle&, const LCAO_Orbitals&,
     module_dm::DensityMatrix<std::complex<double>, double>*, Plus_U_Base*,
     Setup_DeePKS<std::complex<double>>&, const Input_para&,
@@ -379,6 +390,7 @@ template LcaoOpsBundle<std::complex<double>, double> build_gamma_ops<std::comple
 
 template LcaoOpsBundle<std::complex<double>, double> build_multik_ops<std::complex<double>, double>(
     const UnitCell&, const Grid_Driver&, const Parallel_Orbitals*,
+    const BasisFlattenedIndexing&, const Parallel_Blkcyclic&,
     elecstate::Potential*, const TwoCenterBundle&, const LCAO_Orbitals&,
     module_dm::DensityMatrix<std::complex<double>, double>*, Plus_U_Base*,
     Setup_DeePKS<std::complex<double>>&, const Input_para&,
@@ -388,6 +400,7 @@ template LcaoOpsBundle<std::complex<double>, double> build_multik_ops<std::compl
 template LcaoOpsBundle<std::complex<double>, std::complex<double>>
 build_gamma_ops<std::complex<double>, std::complex<double>>(
     const UnitCell&, const Grid_Driver&, const Parallel_Orbitals*,
+    const BasisFlattenedIndexing&, const Parallel_Blkcyclic&,
     elecstate::Potential*, const TwoCenterBundle&, const LCAO_Orbitals&,
     module_dm::DensityMatrix<std::complex<double>, double>*, Plus_U_Base*,
     Setup_DeePKS<std::complex<double>>&, const Input_para&,
@@ -398,6 +411,7 @@ build_gamma_ops<std::complex<double>, std::complex<double>>(
 template LcaoOpsBundle<std::complex<double>, std::complex<double>>
 build_multik_ops<std::complex<double>, std::complex<double>>(
     const UnitCell&, const Grid_Driver&, const Parallel_Orbitals*,
+    const BasisFlattenedIndexing&, const Parallel_Blkcyclic&,
     elecstate::Potential*, const TwoCenterBundle&, const LCAO_Orbitals&,
     module_dm::DensityMatrix<std::complex<double>, double>*, Plus_U_Base*,
     Setup_DeePKS<std::complex<double>>&, const Input_para&,

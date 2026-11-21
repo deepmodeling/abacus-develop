@@ -75,6 +75,14 @@ int main(int argc, char** argv)
                                 pool);
 #endif
     testing::InitGoogleTest(&argc, argv);
+    // A forked death-test child would inherit the OpenMP thread pool and
+    // deadlock in its first parallel region, so a single rank re-executes the
+    // binary instead. Under mpirun a re-executed child would join the MPI
+    // job; there the death tests that run OpenMP code are skipped.
+    if (SccsTest::pool_size == 1)
+    {
+        testing::GTEST_FLAG(death_test_style) = "threadsafe";
+    }
     const int status = RUN_ALL_TESTS();
 #ifdef __MPI
     Parallel_Global::finalize_mpi();

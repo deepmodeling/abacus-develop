@@ -69,13 +69,13 @@ void accumulate_onsite_force(Plus_U_Base& dftu,
                 for (int ipol = 0; ipol < npol; ipol++)
                 {
                     const int iwt = dftu.occmat().corr_iwt(iat, lc, m, ipol);
-                    const int mu = pv.para_2d().global2local_row(iwt);
-                    const int nu = pv.para_2d().global2local_col(iwt);
+                    const int mu = pv.para_2d().irloc(iwt);
+                    const int nu = pv.para_2d().icloc(iwt);
                     if (mu < 0 || nu < 0)
                     {
                         continue;
                     }
-                    force_dftu(iat, dim) += std::real(dm[nu * pv.para_2d().get_row_size() + mu]);
+                    force_dftu(iat, dim) += std::real(dm[nu * pv.para_2d().nrloc() + mu]);
                 }
             }
         }
@@ -100,7 +100,7 @@ void cal_force_k(const DftuFsEnv& env,
     const int npol = env.npol();
     const std::string& ks_solver = env.ks_solver();
     const std::vector<double>& orb_cutoff = env.orb_cutoff();
-    const int nlocal = pv.para_2d().get_global_row_size();
+    const int nlocal = pv.para_2d().nrglb();
 
     // shared folding context: read-only params bundled for folding_matrix_k
     DFTU_LCAO::FoldingCtx fold_ctx{npol, ks_solver, orb_cutoff, &ucell, &pv, &gd};
@@ -113,8 +113,8 @@ void cal_force_k(const DftuFsEnv& env,
 
     assert(nlocal > 0);
 
-    std::vector<std::complex<double>> dm_pot_onsite_dSm(pv.para_2d().get_local_size());
-    std::vector<std::complex<double>> dSm_k(pv.para_2d().get_local_size());
+    std::vector<std::complex<double>> dm_pot_onsite_dSm(pv.para_2d().size());
+    std::vector<std::complex<double>> dSm_k(pv.para_2d().size());
 
     for (int dim = 0; dim < 3; dim++)
     {
@@ -136,16 +136,16 @@ void cal_force_k(const DftuFsEnv& env,
                 &dSm_k[0],
                 one_int,
                 one_int,
-                pv.para_2d().get_desc(),
+                pv.para_2d().desc(),
                 rho_pot_onsite,
                 one_int,
                 one_int,
-                pv.para_2d().get_desc(),
+                pv.para_2d().desc(),
                 zero,
                 &dm_pot_onsite_dSm[0],
                 one_int,
                 one_int,
-                pv.para_2d().get_desc());
+                pv.para_2d().desc());
 #endif
 
         accumulate_diag_force(pv, ucell, dm_pot_onsite_dSm.data(), dim, force_dftu);
@@ -160,16 +160,16 @@ void cal_force_k(const DftuFsEnv& env,
                 &dSm_k[0],
                 one_int,
                 one_int,
-                pv.para_2d().get_desc(),
+                pv.para_2d().desc(),
                 rho_pot_onsite,
                 one_int,
                 one_int,
-                pv.para_2d().get_desc(),
+                pv.para_2d().desc(),
                 zero,
                 &dm_pot_onsite_dSm[0],
                 one_int,
                 one_int,
-                pv.para_2d().get_desc());
+                pv.para_2d().desc());
 #endif
 
         accumulate_onsite_force(env.dftu(), pv, ucell, npol,
@@ -194,7 +194,7 @@ void cal_stress_k(const DftuFsEnv& env,
     const int npol = env.npol();
     const std::string& ks_solver = env.ks_solver();
     const std::vector<double>& orb_cutoff = env.orb_cutoff();
-    const int nlocal = pv.para_2d().get_global_row_size();
+    const int nlocal = pv.para_2d().nrglb();
 
     // shared folding context: read-only params bundled for folding_matrix_k
     DFTU_LCAO::FoldingCtx fold_ctx{npol, ks_solver, orb_cutoff, &ucell, &pv, &gd};
@@ -205,8 +205,8 @@ void cal_stress_k(const DftuFsEnv& env,
     const std::complex<double> zero(0.0, 0.0);
     const std::complex<double> one(1.0, 0.0);
 
-    std::vector<std::complex<double>> dm_pot_onsite_sover(pv.para_2d().get_local_size());
-    std::vector<std::complex<double>> dSR_k(pv.para_2d().get_local_size());
+    std::vector<std::complex<double>> dm_pot_onsite_sover(pv.para_2d().size());
+    std::vector<std::complex<double>> dSR_k(pv.para_2d().size());
 
     for (int dim1 = 0; dim1 < 3; dim1++)
     {
@@ -224,16 +224,16 @@ void cal_stress_k(const DftuFsEnv& env,
                     rho_pot_onsite,
                     one_int,
                     one_int,
-                    pv.para_2d().get_desc(),
+                    pv.para_2d().desc(),
                     &dSR_k[0],
                     one_int,
                     one_int,
-                    pv.para_2d().get_desc(),
+                    pv.para_2d().desc(),
                     zero,
                     &dm_pot_onsite_sover[0],
                     one_int,
                     one_int,
-                    pv.para_2d().get_desc());
+                    pv.para_2d().desc());
 #endif
 
             accumulate_diag_stress(pv, dm_pot_onsite_sover.data(), dim1, dim2, 2.0, stress_dftu);
@@ -253,7 +253,7 @@ void cal_force_gamma(const DftuFsEnv& env,
     const Parallel_Orbitals& pv = env.pv();
     const UnitCell& ucell = env.ucell();
     const int npol = env.npol();
-    const int nlocal = pv.para_2d().get_global_row_size();
+    const int nlocal = pv.para_2d().nrglb();
     double* const dsloc[3] = {env.fsr().DSloc_x.data(), env.fsr().DSloc_y.data(), env.fsr().DSloc_z.data()};
 
     const char transN = 'N';
@@ -262,7 +262,7 @@ void cal_force_gamma(const DftuFsEnv& env,
     const double zero = 0.0;
     assert(nlocal > 0);
 
-    std::vector<double> dm_pot_onsite_dSm(pv.para_2d().get_local_size());
+    std::vector<double> dm_pot_onsite_dSm(pv.para_2d().size());
 
     for (int dim = 0; dim < 3; dim++)
     {
@@ -287,16 +287,16 @@ void cal_force_gamma(const DftuFsEnv& env,
                 tmp_ptr,
                 1,
                 1,
-                pv.para_2d().get_desc(),
+                pv.para_2d().desc(),
                 rho_pot_onsite,
                 1,
                 1,
-                pv.para_2d().get_desc(),
+                pv.para_2d().desc(),
                 zero,
                 &dm_pot_onsite_dSm[0],
                 1,
                 1,
-                pv.para_2d().get_desc());
+                pv.para_2d().desc());
 #endif
 
         accumulate_diag_force(pv, ucell, dm_pot_onsite_dSm.data(), dim, force_dftu);
@@ -311,16 +311,16 @@ void cal_force_gamma(const DftuFsEnv& env,
                 tmp_ptr,
                 1,
                 1,
-                pv.para_2d().get_desc(),
+                pv.para_2d().desc(),
                 rho_pot_onsite,
                 1,
                 1,
-                pv.para_2d().get_desc(),
+                pv.para_2d().desc(),
                 zero,
                 &dm_pot_onsite_dSm[0],
                 1,
                 1,
-                pv.para_2d().get_desc());
+                pv.para_2d().desc());
 #endif
 
         accumulate_onsite_force(env.dftu(), pv, ucell, npol,
@@ -344,7 +344,7 @@ void cal_stress_gamma(const DftuFsEnv& env,
     const int npol = env.npol();
     const std::string& ks_solver = env.ks_solver();
     const std::vector<double>& orb_cutoff = env.orb_cutoff();
-    const int nlocal = pv.para_2d().get_global_row_size();
+    const int nlocal = pv.para_2d().nrglb();
     double* dsloc_x = fsr.DSloc_x.data();
     double* dsloc_y = fsr.DSloc_y.data();
     double* dsloc_z = fsr.DSloc_z.data();
@@ -357,8 +357,8 @@ void cal_stress_gamma(const DftuFsEnv& env,
     const double zero = 0.0;
     const double minus_half = -0.5;
 
-    std::vector<double> dSR_gamma(pv.para_2d().get_local_size());
-    std::vector<double> dm_pot_onsite_sover(pv.para_2d().get_local_size());
+    std::vector<double> dSR_gamma(pv.para_2d().size());
+    std::vector<double> dm_pot_onsite_sover(pv.para_2d().size());
 
     for (int dim1 = 0; dim1 < 3; dim1++)
     {
@@ -376,16 +376,16 @@ void cal_stress_gamma(const DftuFsEnv& env,
                     rho_pot_onsite,
                     1,
                     1,
-                    pv.para_2d().get_desc(),
+                    pv.para_2d().desc(),
                     &dSR_gamma[0],
                     1,
                     1,
-                    pv.para_2d().get_desc(),
+                    pv.para_2d().desc(),
                     zero,
                     &dm_pot_onsite_sover[0],
                     1,
                     1,
-                    pv.para_2d().get_desc());
+                    pv.para_2d().desc());
 #endif
 
             accumulate_diag_stress(pv, dm_pot_onsite_sover.data(), dim1, dim2, 2.0, stress_dftu);
@@ -468,28 +468,28 @@ void run_gamma_loop(const DftuFsEnv& env,
     Plus_U_Base& dftu = env.dftu();
     const UnitCell& ucell = env.ucell();
     const Parallel_Orbitals& pv = env.pv();
-    const int nlocal = pv.para_2d().get_global_row_size();
+    const int nlocal = pv.para_2d().nrglb();
 
     const char transN = 'N';
     const char transT = 'T';
     const double alpha = 1.0;
     const double beta = 0.0;
 
-    std::vector<double> rho_pot_onsite(pv.para_2d().get_local_size());
+    std::vector<double> rho_pot_onsite(pv.para_2d().size());
 
     for (int ik = 0; ik < kv.get_nks(); ik++)
     {
         const int spin = kv.isk[ik];
-        std::vector<double> pot_onsite(pv.para_2d().get_local_size(), 0.0);
+        std::vector<double> pot_onsite(pv.para_2d().size(), 0.0);
 
         cal_pot_onsite(dftu, ucell, &pv, spin, false, pot_onsite.data());
 
 #ifdef __MPI
         ScalapackConnector::gemm(transT, transN, nlocal, nlocal, nlocal,
                 alpha, (*dmk_d)[spin].data(), 1, 1,
-                pv.para_2d().get_desc(), pot_onsite.data(), 1, 1,
-                pv.para_2d().get_desc(), beta, rho_pot_onsite.data(),
-                1, 1, pv.para_2d().get_desc());
+                pv.para_2d().desc(), pot_onsite.data(), 1, 1,
+                pv.para_2d().desc(), beta, rho_pot_onsite.data(),
+                1, 1, pv.para_2d().desc());
 #endif
 
         if (cal_force)
@@ -516,7 +516,7 @@ void run_k_loop(const DftuFsEnv& env,
     Plus_U_Base& dftu = env.dftu();
     const UnitCell& ucell = env.ucell();
     const Parallel_Orbitals& pv = env.pv();
-    const int nlocal = pv.para_2d().get_global_row_size();
+    const int nlocal = pv.para_2d().nrglb();
 
     const char transN = 'N';
     const char transT = 'T';
@@ -524,20 +524,20 @@ void run_k_loop(const DftuFsEnv& env,
     const std::complex<double> alpha(1.0, 0.0);
     const std::complex<double> beta(0.0, 0.0);
 
-    std::vector<std::complex<double>> rho_pot_onsite(pv.para_2d().get_local_size());
+    std::vector<std::complex<double>> rho_pot_onsite(pv.para_2d().size());
 
     for (int ik = 0; ik < kv.get_nks(); ik++)
     {
         const int spin = kv.isk[ik];
-        std::vector<std::complex<double>> pot_onsite(pv.para_2d().get_local_size(), std::complex<double>(0.0, 0.0));
+        std::vector<std::complex<double>> pot_onsite(pv.para_2d().size(), std::complex<double>(0.0, 0.0));
 
         cal_pot_onsite(dftu, ucell, &pv, spin, false, pot_onsite.data());
 
 #ifdef __MPI
         ScalapackConnector::gemm(transT, transN, nlocal, nlocal, nlocal,
                 alpha, (*dmk_c)[ik].data(), one_int, one_int,
-                pv.para_2d().get_desc(), pot_onsite.data(), one_int, one_int, pv.para_2d().get_desc(), beta,
-                rho_pot_onsite.data(), one_int, one_int, pv.para_2d().get_desc());
+                pv.para_2d().desc(), pot_onsite.data(), one_int, one_int, pv.para_2d().desc(), beta,
+                rho_pot_onsite.data(), one_int, one_int, pv.para_2d().desc());
 #endif
 
         if (cal_force)

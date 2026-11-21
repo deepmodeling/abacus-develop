@@ -128,6 +128,7 @@ template <typename T>
 void cal_exx_fs(const UnitCell& ucell,
                 const bool isforce,
                 const bool isstress,
+                const bool is_rt,
                 const Exx_Info& exx_info,
                 Exx_NAO<T>& exx_nao,
                 LCAOForceParts& parts,
@@ -140,11 +141,20 @@ void cal_exx_fs(const UnitCell& ucell,
 
     if (cal_exx)
     {
-        if (isforce || isstress)
+        if (isforce && is_rt)
+        {
+            parts.force_exx.create(ucell.nat, 3);
+            parts.force_exx.zero_out();
+            ModuleBase::WARNING("cal_exx_fs",
+                                "The returned forces lack the EXX contribution; "
+                                "RT hybrid-functional forces are not yet implemented.");
+        }
+        const bool calculate_force = isforce && !is_rt;
+        if (calculate_force || isstress)
         {
             std::cout << " >> NOTICE: calculating EXX force/stress, which may be time-consuming" << std::endl;
         }
-        if (isforce)
+        if (calculate_force)
         {
             if (real_number)
             {
@@ -334,9 +344,9 @@ void cal_deepks_fs(const UnitCell& ucell,
 }
 
 // Explicit instantiation for the two electronic types used by ABACUS.
-template void cal_exx_fs<double>(const UnitCell&, const bool, const bool, const Exx_Info&, Exx_NAO<double>&,
+template void cal_exx_fs<double>(const UnitCell&, const bool, const bool, const bool, const Exx_Info&, Exx_NAO<double>&,
                                  LCAOForceParts&, LCAOStressParts&);
-template void cal_exx_fs<std::complex<double>>(const UnitCell&, const bool, const bool, const Exx_Info&,
+template void cal_exx_fs<std::complex<double>>(const UnitCell&, const bool, const bool, const bool, const Exx_Info&,
                                                Exx_NAO<std::complex<double>>&, LCAOForceParts&, LCAOStressParts&);
 
 template void cal_dftu_fs<double>(UnitCell&, const Grid_Driver&, Parallel_Orbitals&, const LCAO_Orbitals&,

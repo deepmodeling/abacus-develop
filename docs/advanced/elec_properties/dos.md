@@ -68,7 +68,7 @@ Gamma
 8 8 8 0 0 0
 ```
 
-Run the program, and you will see a file named doss1g1.txt in the output directory. The columns are: energy(eV), dos (number of states in each energy bin), dos_int (integrated DOS), dos_smear(1/eV) (Gaussian-smeared DOS), dos_smear_int (integrated smeared DOS). Plot the file with graphing software, and you'll get the DOS.
+Run the program, and you will see a file named doss1.txt in the output directory (with `out_app_flag = 2` the name carries a one-based `g{step}` index, e.g., `doss1g1.txt`). The columns are: energy(eV), dos (number of states in each energy bin), dos_int (integrated DOS), dos_smear(1/eV) (Gaussian-smeared DOS), dos_smear_int (integrated smeared DOS). Plot the file with graphing software, and you'll get the DOS.
 
 The `dos` column is a raw per-bin histogram, while `dos_smear` is the physically meaningful density of states in 1/eV. The `abacus-plot` tool plots `dos_smear` by default; set `"smearing": false` in its config.json to plot the raw histogram instead, or apply your own smearing to the raw column with `abacus_plot.utils.gaussian_smearing`. For nspin=2, two files (doss1*/doss2*) are written, one per spin channel; the tool pairs them automatically whether you pass either file, a directory, or a list of both files. For nspin=4, a single spinor-summed file is written.
 
@@ -82,18 +82,18 @@ The `dos` column is a raw per-bin histogram, while `dos_smear` is the physically
 
 ## PDOS
 
-Along with the DOS files, we also produce the projected density of states (PDOS) in files named pdoss{spin}g{geom}.txt (e.g., pdoss1g1.txt).
+Along with the DOS files, we also produce the projected density of states (PDOS) in files named pdoss{spin}.txt; with `out_app_flag = 2` a one-based `g{geom}` index is inserted, e.g., pdoss1g1.txt.
 
 The PDOS file uses a plain-text format. Each row corresponds to one energy point and one atom. Columns: energy(eV), atom (1-based), species, then pdos values ordered as s(1), p(3), d(5), f(7), etc. Zeta components are summed, and values below 1e-6 are zeroed out.
 
 ```
-# istep: 1
+# Ionic_Step 1
 # npoints: 2736
 # energy(eV)  atom  species  pdos(1/eV), columns: s(m=0) p(m=0,+1,-1) d(m=0,+1,-1,+2,-2) f(m=0,+1,-1,+2,-2,+3,-3)
   -55.607730    1     Fe    0.000000    0.000000    0.000000    0.000000    0.000000    0.000000    0.000000    0.000000    0.000000
   ...
 ```
 
-The `# istep:` line is only present for geometry-optimization (istep) output. Within each angular momentum `l`, the `2l+1` columns follow the magnetic-quantum-number order `m = 0, +1, -1, +2, -2, ...`.
+The `# Ionic_Step` line is only present for geometry-optimization (istep) output. Within each angular momentum `l`, the `2l+1` columns follow the magnetic-quantum-number order `m = 0, +1, -1, +2, -2, ...`.
 
 For nspin=2, two files are written (pdoss1* and pdoss2*), one per spin channel. For nspin=4, the two spinor components are summed into a single file. The unit of PDOS is also `(number of states)/(eV * unitcell)`.

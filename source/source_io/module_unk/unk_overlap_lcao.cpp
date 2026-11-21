@@ -508,20 +508,20 @@ void unkOverlap_lcao::prepare_midmatrix_pblas(const UnitCell& ucell,
                                               const Parallel_Orbitals& pv,
                                               const K_Vectors& kv)
 {
-    assert(pv.nloc>0);
+    assert(pv.para_2d().size()>0);
  
-    midmatrix = new std::complex<double>[pv.nloc];
-    ModuleBase::GlobalFunc::ZEROS(midmatrix, pv.nloc);
+    midmatrix = new std::complex<double>[pv.para_2d().size()];
+    ModuleBase::GlobalFunc::ZEROS(midmatrix, pv.para_2d().size());
     for (int iw_row = 0; iw_row < PARAM.globalv.nlocal; iw_row++) // global
     {
         for (int iw_col = 0; iw_col < PARAM.globalv.nlocal; iw_col++) // global
         {
-            int ir = pv.global2local_row(iw_row); // local
-            int ic = pv.global2local_col(iw_col); // local
+            int ir = pv.para_2d().irloc(iw_row); // local
+            int ic = pv.para_2d().icloc(iw_col); // local
 
             if (ir >= 0 && ic >= 0)
             {
-                int index = ic * pv.nrow + ir;
+                int index = ic * pv.para_2d().nrloc() + ir;
                 ModuleBase::Vector3<double> tau1 = ucell.atoms[iw2it(ucell,iw_row)].tau[iw2ia(ucell,iw_row)];
                 for (int iR = 0; iR < orb1_orb2_R[iw_row][iw_col].size(); iR++)
                 {
@@ -548,10 +548,10 @@ std::complex<double> unkOverlap_lcao::det_berryphase(const UnitCell& ucell,
     const std::complex<double> minus = std::complex<double>(-1.0, 0.0);
     std::complex<double> det = std::complex<double>(1.0, 0.0);
     std::complex<double>* midmatrix = nullptr;
-    std::complex<double>* C_matrix = new std::complex<double>[para_orb.nloc];
-    std::complex<double>* out_matrix = new std::complex<double>[para_orb.nloc];
-    ModuleBase::GlobalFunc::ZEROS(C_matrix, para_orb.nloc);
-    ModuleBase::GlobalFunc::ZEROS(out_matrix, para_orb.nloc);
+    std::complex<double>* C_matrix = new std::complex<double>[para_orb.para_2d().size()];
+    std::complex<double>* out_matrix = new std::complex<double>[para_orb.para_2d().size()];
+    ModuleBase::GlobalFunc::ZEROS(C_matrix, para_orb.para_2d().size());
+    ModuleBase::GlobalFunc::ZEROS(out_matrix, para_orb.para_2d().size());
 
     this->prepare_midmatrix_pblas(ucell,ik_L, ik_R, dk, midmatrix, para_orb, kv);
 
@@ -571,16 +571,16 @@ std::complex<double> unkOverlap_lcao::det_berryphase(const UnitCell& ucell,
             &psi_in[0](ik_L, 0, 0),
             one,
             one,
-            para_orb.desc,
+            para_orb.para_2d().desc(),
             midmatrix,
             one,
             one,
-            para_orb.desc,
+            para_orb.para_2d().desc(),
             beta,
             C_matrix,
             one,
             one,
-            para_orb.desc);
+            para_orb.para_2d().desc());
 
     ScalapackConnector::gemm(transb,
             transb,
@@ -591,30 +591,30 @@ std::complex<double> unkOverlap_lcao::det_berryphase(const UnitCell& ucell,
             C_matrix,
             one,
             one,
-            para_orb.desc,
+            para_orb.para_2d().desc(),
             &psi_in[0](ik_R, 0, 0),
             one,
             one,
-            para_orb.desc,
+            para_orb.para_2d().desc(),
             beta,
             out_matrix,
             one,
             one,
-            para_orb.desc);
+            para_orb.para_2d().desc());
 
-    assert(para_orb.nrow>0);
+    assert(para_orb.para_2d().nrloc()>0);
 
-    int* ipiv = new int[para_orb.nrow];
+    int* ipiv = new int[para_orb.para_2d().nrloc()];
     int info = 0;
-    ScalapackConnector::getrf(occBands, occBands, out_matrix, one, one, para_orb.desc, ipiv, &info);
+    ScalapackConnector::getrf(occBands, occBands, out_matrix, one, one, para_orb.para_2d().desc(), ipiv, &info);
 
     for (int i = 0; i < occBands; i++) // global
     {
-        int ir = para_orb.global2local_row(i); // local
-        int ic = para_orb.global2local_col(i); // local
+        int ir = para_orb.para_2d().irloc(i); // local
+        int ic = para_orb.para_2d().icloc(i); // local
         if (ir >= 0 && ic >= 0)
         {
-            int index = ic * para_orb.nrow + ir;
+            int index = ic * para_orb.para_2d().nrloc() + ir;
             if (ipiv[ir] != (i + 1))
             {
                 det = minus * det * out_matrix[index];

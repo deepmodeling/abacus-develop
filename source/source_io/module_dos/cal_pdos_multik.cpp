@@ -3,7 +3,7 @@
 #include "source_base/parallel_reduce.h"
 #include "source_base/module_external/blas_connector.h"
 #include "source_base/module_external/scalapack_connector.h"
-#include "source_io/module_output/write_orb_info.h"
+#include "source_io/module_output/write_notice.h"
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
 #include "source_lcao/hamilt_lcao.h"
@@ -22,9 +22,11 @@ void ModuleIO::cal_pdos(
 		const double& dos_edelta_ev,
 		const double& bcoeff,
 		const int istep,
+		const int out_app_flag,
 		const int nlocal,
 		const int nspin,
-		const std::string& global_out_dir)
+		const std::string& global_out_dir,
+		std::ofstream& ofs_running)
 {
     ModuleBase::TITLE("ModuleIO", "cal_pdos_multik");
 
@@ -58,7 +60,7 @@ void ModuleIO::cal_pdos(
     {
         std::vector<ModuleBase::ComplexMatrix> mulk;
         mulk.resize(1);
-        mulk[0].create(pv.ncol, pv.nrow);
+        mulk[0].create(pv.para_2d().ncloc(), pv.para_2d().nrloc());
 
         for (int ik = 0; ik < kv.get_nks(); ik++)
         {
@@ -126,17 +128,17 @@ void ModuleIO::cal_pdos(
                             sk,
                             &one_int,
                             &one_int,
-                            pv.desc,
+                            pv.para_2d().desc(),
                             p_dwfc,
                             &one_int,
                             &nb,
-                            pv.desc,
+                            pv.para_2d().desc(),
                             &one_int,
                             &zero_float[0],
                             mulk[0].c,
                             &one_int,
                             &nb,
-                            pv.desc,
+                            pv.para_2d().desc(),
                             &one_int);
 #else
                     // Serial fallback: mulk = S^T * conj(psi) (band i),
@@ -144,7 +146,7 @@ void ModuleIO::cal_pdos(
                     const std::complex<double> one_float(1.0, 0.0);
                     const std::complex<double> zero_float(0.0, 0.0);
                     const char T_char = 'T';
-                    std::complex<double>* mulk_col = mulk[0].c + static_cast<size_t>(i) * pv.nrow;
+                    std::complex<double>* mulk_col = mulk[0].c + static_cast<size_t>(i) * pv.para_2d().nrloc();
                     BlasConnector::gemv(T_char,
                                         nlocal,
                                         nlocal,
@@ -160,10 +162,10 @@ void ModuleIO::cal_pdos(
 
                     for (int j = 0; j < nlocal; ++j)
                     {
-                        if (pv.in_this_processor(j, i))
+                        if (pv.para_2d().in_this_processor(j, i))
                         {
-                            const int ir = pv.global2local_row(j);
-                            const int ic = pv.global2local_col(i);
+                            const int ir = pv.para_2d().irloc(j);
+                            const int ic = pv.para_2d().icloc(i);
 
                             waveg[j] = mulk[0](ic, ir) * psi[0](ic, ir);
                             const double x = waveg[j].real();
@@ -188,7 +190,6 @@ void ModuleIO::cal_pdos(
     if (GlobalV::MY_RANK == 0)
     {
         write_pdos_text(ucell, pdos.data(), nspin, nlocal, npoints,
-                        emin, dos_edelta_ev, global_out_dir, istep);
-        ModuleIO::write_orb_info(&ucell);
+                        emin, dos_edelta_ev, global_out_dir, istep, out_app_flag, ofs_running);
     }
 }

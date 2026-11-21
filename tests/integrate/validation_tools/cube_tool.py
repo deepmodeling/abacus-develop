@@ -9,6 +9,11 @@ checks together. Use one of the following subcommands:
     density, partial charge, wavefunction modulus, potential, and other scalar
     cube outputs. The command prints one number: ``sum(values) * voxel_volume``.
 
+``integrate-last CUBE``
+    Integrate the final complete ABACUS scalar cube frame, using its own grid.
+    An incomplete or malformed trailing frame is an error. Used by the solvent
+    relaxation metric; other consumers keep their existing frame selection.
+
 ``fingerprint-wfc RE IM [RE IM ...]``
     Generate a compact, deterministic fingerprint of one complex wavefunction
     state. One real/imaginary pair represents a scalar component; two pairs in
@@ -104,6 +109,77 @@ def read_cube(path):
 
 def integrate_cube(path):
     _, volume, values = read_cube(path)
+    return sum(values) * volume
+
+
+def read_last_cube(path):
+    """Read the final complete ABACUS scalar frame; reject an incomplete tail."""
+    input_path = Path(path)
+    last_frame = None
+    with input_path.open("r", encoding="utf-8") as stream:
+        while True:
+            comment = stream.readline()
+            if not comment:
+                break
+            if not comment.strip():
+                continue
+            if not stream.readline():
+                raise ValueError(f"incomplete cube comment in {input_path}")
+            atom_line = stream.readline().split()
+            if len(atom_line) != 4:
+                raise ValueError(f"invalid scalar atom header in {input_path}")
+            natom = int(atom_line[0])
+            if natom < 0:
+                raise ValueError(f"integrate-last requires a scalar cube in {input_path}")
+            origin = [float(value) for value in atom_line[1:]]
+            shape = []
+            vectors = []
+            for _ in range(3):
+                grid_line = stream.readline().split()
+                if len(grid_line) != 4:
+                    raise ValueError(f"invalid grid header in {input_path}")
+                size = int(grid_line[0])
+                if size <= 0:
+                    raise ValueError(f"invalid grid size in {input_path}")
+                shape.append(size)
+                vectors.append([float(value) for value in grid_line[1:]])
+            for _ in range(natom):
+                atom = stream.readline().split()
+                if len(atom) != 5:
+                    raise ValueError(f"incomplete atom record in {input_path}")
+                int(atom[0])
+                coordinates = [float(value) for value in atom[1:]]
+                if not all(math.isfinite(value) for value in coordinates):
+                    raise ValueError(f"non-finite atom record in {input_path}")
+            metadata = origin + [value for vector in vectors for value in vector]
+            if not all(math.isfinite(value) for value in metadata):
+                raise ValueError(f"non-finite cube header in {input_path}")
+            v1 = vectors[0]
+            v2 = vectors[1]
+            v3 = vectors[2]
+            val0 = v2[1] * v3[2] - v2[2] * v3[1]
+            val1 = v2[0] * v3[2] - v2[2] * v3[0]
+            val2 = v2[0] * v3[1] - v2[1] * v3[0]
+            volume = abs(v1[0] * val0 - v1[1] * val1 + v1[2] * val2)
+            if volume <= 0.0 or not math.isfinite(volume):
+                raise ValueError(f"invalid voxel volume in {input_path}")
+            count = shape[0] * shape[1] * shape[2]
+            values = []
+            while len(values) < count:
+                line = stream.readline()
+                if not line:
+                    raise ValueError(f"incomplete cube data in {input_path}")
+                values.extend(float(value) for value in line.split())
+            if len(values) != count or not all(math.isfinite(value) for value in values):
+                raise ValueError(f"invalid scalar cube data in {input_path}")
+            last_frame = (tuple(shape), volume, values)
+    if last_frame is None:
+        raise ValueError(f"no complete cube frame in {input_path}")
+    return last_frame
+
+
+def integrate_last_cube(path):
+    _, volume, values = read_last_cube(path)
     return sum(values) * volume
 
 
@@ -312,6 +388,10 @@ def run_integrate(args):
     print(f"{integrate_cube(args.cube):.10g}")
 
 
+def run_integrate_last(args):
+    print(f"{integrate_last_cube(args.cube):.10g}")
+
+
 def run_fingerprint_wfc(args):
     for name, value in wfc_fingerprint(args.cube_paths):
         print(f"{name} {format_metric(value)}")
@@ -332,6 +412,12 @@ def build_parser():
     )
     integrate_parser.add_argument("cube", type=Path)
     integrate_parser.set_defaults(handler=run_integrate)
+
+    last_parser = subparsers.add_parser(
+        "integrate-last", help="integrate the final complete ABACUS scalar cube frame"
+    )
+    last_parser.add_argument("cube", type=Path)
+    last_parser.set_defaults(handler=run_integrate_last)
 
     fingerprint_parser = subparsers.add_parser(
         "fingerprint-wfc",

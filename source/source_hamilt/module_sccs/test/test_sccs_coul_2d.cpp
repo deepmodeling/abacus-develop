@@ -126,11 +126,11 @@ TEST_F(SccsPcc2dCoulombTest, UniformDielectricRetainsChargedGaugeAndReactionEner
         ModuleSccs::SccsConfig config = ModuleSccs::preset_config(ModuleSccs::Preset::Vacuum);
         config.cavity.epsilon_bulk = epsilon;
         ModuleSccs::SccsResponse response;
-        ModuleSccs::solve_response(density, charge, config.cavity, solver, cold,
+        ModuleSccs::solve_response(density, charge, config.cavity, SccsTest::no_probe, solver, cold,
                                    basis, tpiba, coulomb, response);
         EXPECT_EQ(response.polarization.iterations, 1);
         ModuleSccs::FunctionalResult result;
-        ModuleSccs::eval_functional(charge, response, config, basis, tpiba,
+        ModuleSccs::eval_functional(charge, response, config, SccsTest::no_probe, basis, tpiba,
                                     coulomb, result);
         for (int ir = 0; ir < basis.nrxx; ++ir)
         {
@@ -169,13 +169,13 @@ TEST_F(SccsPcc2dCoulombTest, NonuniformResponseSatisfiesFixedPointAndWarmStart)
     ModuleSccs::Pcc2dCoulombOperator coulomb(basis, tpiba, positions, normal, parameters);
     const std::vector<double> cold;
     ModuleSccs::SccsResponse response;
-    ModuleSccs::solve_response(density, charge, cavity, solver, cold,
+    ModuleSccs::solve_response(density, charge, cavity, SccsTest::no_probe, solver, cold,
                                basis, tpiba, coulomb, response);
     const bool open_boundary = true;
     ModuleSccs::SccsResponse derivatives;
     ModuleSccs::CavityDerivatives cavity_derivatives;
     const std::vector<double>& coefficient = cavity_derivatives.coefficient;
-    ModuleSccs::make_cav_derivs(density, cavity, basis, tpiba, open_boundary,
+    ModuleSccs::make_cav_derivs(density, cavity, SccsTest::no_probe, basis, tpiba, open_boundary,
                                 derivatives, cavity_derivatives);
     std::vector<double> source(basis.nrxx);
     for (int ir = 0; ir < basis.nrxx; ++ir)
@@ -191,7 +191,7 @@ TEST_F(SccsPcc2dCoulombTest, NonuniformResponseSatisfiesFixedPointAndWarmStart)
         EXPECT_NEAR(response.polarization.potential[ir], expected, 1e-10);
     }
     ModuleSccs::SccsResponse restarted;
-    ModuleSccs::solve_response(density, charge, cavity, solver, response.restart_potential,
+    ModuleSccs::solve_response(density, charge, cavity, SccsTest::no_probe, solver, response.restart_potential,
                                basis, tpiba, coulomb, restarted);
     EXPECT_TRUE(restarted.polarization.warm_started);
     EXPECT_LT(restarted.polarization.iterations, response.polarization.iterations);

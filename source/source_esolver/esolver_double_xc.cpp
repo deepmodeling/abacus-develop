@@ -73,7 +73,7 @@ void ESolver_DoubleXC<TK, TR>::before_all_runners(BaseCell& basecell, const Inpu
                 || this->inp_->ks_solver == "pexsi" || this->inp_->ks_solver == "cusolver"
                 || this->inp_->ks_solver == "cusolvermp")
             {
-                ncol = this->pv.ncol;
+                ncol = this->pv.para_2d().ncloc();
             }
         }
         else
@@ -85,7 +85,7 @@ void ESolver_DoubleXC<TK, TR>::before_all_runners(BaseCell& basecell, const Inpu
             ncol = this->inp_->nbands;
 #endif
         }
-        this->psi_base = new psi::Psi<TK>(nsk, ncol, this->pv.nrow, this->kv.ngk, true);
+        this->psi_base = new psi::Psi<TK>(nsk, ncol, this->pv.para_2d().nrloc(), this->kv.ngk, true);
     }
 
     // 6) initialize the density matrix
@@ -163,6 +163,8 @@ void ESolver_DoubleXC<TK, TR>::before_scf(UnitCell& ucell, const int istep)
         this->p_hamilt_base = new hamilt::HamiltLCAO<TK, TR>(ucell,
                                                              this->gd,
                                                              &this->pv,
+                                                             *(this->basis_index_),
+                                                             this->pv.para_2d(),
                                                              this->pelec_base->pot,
                                                              this->kv,
                                                              this->two_center_bundle_,
@@ -437,6 +439,7 @@ void ESolver_DoubleXC<TK, TR>::cal_force(BaseCell& basecell, ModuleBase::matrix&
                        this->inp_->test_stress,
                        this->gd,
                        this->pv,
+                       *(this->basis_index_),
                        this->pelec_base,
                        this->dmat_base, // mohan add 2025-11-03
                        this->psi,

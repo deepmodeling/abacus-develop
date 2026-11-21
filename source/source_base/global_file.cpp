@@ -30,7 +30,6 @@ void ModuleBase::Global_File::make_dir_out(
     const bool &restart,
     const bool out_alllog,
     const std::string &global_out_dir,
-    const std::string &global_stru_dir,
     const std::string &global_matrix_dir,
     const std::string &global_wfc_dir,
     const std::string &global_mlkedf_descriptor_dir,
@@ -83,45 +82,6 @@ void ModuleBase::Global_File::make_dir_out(
     }
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
-
-    if(calculation == "md")
-    {
-        int make_dir_stru = 0;
-
-        times = 0;
-        while(times<GlobalV::NPROC)
-        {
-            if(rank==times)
-            {
-                int ret = ModuleBase::make_directory(global_stru_dir);
-                if ( ret == 0 || errno == EEXIST )
-                {
-                    std::cout << " MAKE THE STRU DIR    : " << global_stru_dir << std::endl;
-                    make_dir_stru = 1;
-                }
-                else
-                {
-                    std::cout << " PROC " << rank << " CAN NOT MAKE THE STRU DIR !!! " << std::endl;
-                    make_dir_stru = 0;
-                }
-            }
-#ifdef __MPI
-            Parallel_Reduce::reduce_all(make_dir_stru);
-#endif
-            if(make_dir_stru>0) { break;
-}
-            ++times;
-        }
-
-#ifdef __MPI
-        if(make_dir_stru==0)
-        {
-            std::cout << " CAN NOT MAKE THE STRU DIR......." << std::endl;
-            ModuleBase::QUIT();
-        }
-        MPI_Barrier(MPI_COMM_WORLD);
-#endif
-    }
 
     // make dir for HS matrix output in md calculation
     if((out_dir) && calculation == "md")

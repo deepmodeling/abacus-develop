@@ -72,7 +72,8 @@ def read_lowf(flowf):
         np.ndarray: k-vector
     """
     with open(flowf, 'r') as f:
-        lines = [line.strip() for line in f.readlines()]
+        # ignore provenance comment lines starting with '#'
+        lines = [line.strip() for line in f.readlines() if line.strip() and not line.strip().startswith('#')]
     for line in lines:
         if line.endswith("(number of bands)"):
             nband = int(line.split()[0])

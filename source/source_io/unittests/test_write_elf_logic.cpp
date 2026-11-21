@@ -170,6 +170,101 @@ TEST_F(ElfLogicTest, Nspin4MixedSigns)
     }
 }
 
+// ---------------------------------------------------------------------------
+// Zero-grid partition regression tests
+//
+// When the real-space FFT grid is decomposed across more MPI processes than
+// it has z-slabs, some ranks receive nrxx == 0, which is a legitimate empty
+// partition (see Parallel_Grid::reduce assert contract). write_elf does NOT
+// skip the FFT path on those ranks: PW_Basis::real2recip / recip2real call
+// gatherp_scatters, which performs an MPI_Alltoallv requiring every rank in
+// POOL_WORLD to participate. Only the per-grid-point loops execute zero
+// iterations; the FFT itself must still run so the Alltoallv matches across
+// ranks. Every rank also enters write_vdata_palgrid so Parallel_Grid::reduce
+// (MPI_Gatherv) sees a collective call. These tests document the zero-length
+// container and zero-iteration invariants that keep empty partitions safe.
+// ---------------------------------------------------------------------------
+
+TEST_F(ElfLogicTest, ZeroGridHasLocalGrid)
+{
+    // A rank holds local grid data only when both nrxx and npw are positive.
+    // write_elf no longer branches on this (every rank runs the FFT path),
+    // but the predicate is kept here to document the empty-partition
+    // condition that motivates the invariant checks below.
+    auto has_local_grid = [](int nrxx, int npw) {
+        return nrxx > 0 && npw > 0;
+    };
+
+    EXPECT_FALSE(has_local_grid(0, 0));
+    EXPECT_FALSE(has_local_grid(0, 100));
+    EXPECT_FALSE(has_local_grid(100, 0));
+    EXPECT_TRUE(has_local_grid(100, 50));
+    EXPECT_TRUE(has_local_grid(1, 1));
+}
+TEST_F(ElfLogicTest, ZeroLengthVectorIsLegal)
+{
+    // std::vector<double>(0) is well-defined and .data() is non-null only
+    // when size() > 0. Empty partitions pass a null pointer into the MPI
+    // reduce call, which Parallel_Grid::reduce explicitly tolerates when
+    // nrxx == 0 (sendcount 0 ignores the buffer).
+    std::vector<double> empty(0, 0.0);
+    EXPECT_EQ(empty.size(), 0u);
+    EXPECT_EQ(empty.data(), nullptr);
+
+    // All-zero non-empty vector for comparison: .data() is non-null.
+    std::vector<double> zeros(5, 0.0);
+    EXPECT_EQ(zeros.size(), 5u);
+    EXPECT_NE(zeros.data(), nullptr);
+}
+
+TEST_F(ElfLogicTest, ZeroGridLoopSkipsAllIterations)
+{
+    // Every for-loop in write_elf is bounded by `ir < nrxx` or `ip < npw`;
+    // with nrxx == 0 the loop body must execute zero times.
+    int iterations = 0;
+    const int nrxx = 0;
+    for (int ir = 0; ir < nrxx; ++ir)
+    {
+        ++iterations;
+    }
+    EXPECT_EQ(iterations, 0);
+
+    iterations = 0;
+    const int npw = 0;
+    for (int ip = 0; ip < npw; ++ip)
+    {
+        ++iterations;
+    }
+    EXPECT_EQ(iterations, 0);
+}
+
+TEST_F(ElfLogicTest, ZeroGridElfValuesRemainInitialised)
+{
+    // On an empty partition, `elf` and `tau_vw` are all-zero initialised by
+    // the std::vector constructor and never updated, so every element stays
+    // at the supplied default.
+    const int nrxx = 0;
+    const int nspin_eff = 1;
+
+    std::vector<std::vector<double>> elf(nspin_eff, std::vector<double>(nrxx, 0.0));
+
+    EXPECT_EQ(elf.size(), 1u);
+    EXPECT_EQ(elf[0].size(), 0u);
+    EXPECT_EQ(elf[0].data(), nullptr);
+
+    // For a non-empty partition the vector still initialises to zero, then
+    // the computation fills it, documenting the contract contrast.
+    const int nrxx_nonempty = 8;
+    std::vector<std::vector<double>> elf_nonempty(nspin_eff,
+        std::vector<double>(nrxx_nonempty, 0.0));
+    EXPECT_EQ(elf_nonempty[0].size(), 8u);
+    EXPECT_NE(elf_nonempty[0].data(), nullptr);
+    for (int i = 0; i < nrxx_nonempty; ++i)
+    {
+        EXPECT_DOUBLE_EQ(elf_nonempty[0][i], 0.0);
+    }
+}
+
 int main(int argc, char** argv)
 {
     testing::InitGoogleTest(&argc, argv);

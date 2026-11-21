@@ -79,6 +79,10 @@ void init_dm_from_file(
  * @param ucell unit cell
  * @param pv parallel orbitals
  * @param chr charge density object
+ * @param kv k-point metadata used to locate and validate DM(k) files
+ * @param istep ionic step of the DM(k) record to read
+ * @param out_app_flag output mode used by the run that wrote DM(k)
+ * @param ks_solver solver that determines the destination DM(k) storage order
  */
 template <typename TK>
 void init_chg_dm(
@@ -87,7 +91,11 @@ void init_chg_dm(
     module_dm::Setup_DM<TK>& dmat,
     const UnitCell& ucell,
     const Parallel_Orbitals* pv,
-    Charge* chr);
+    Charge* chr,
+    const K_Vectors& kv,
+    const int istep,
+    const int out_app_flag,
+    const std::string& ks_solver);
 
 /**
  * @brief read in HR from file, and save it into hmat

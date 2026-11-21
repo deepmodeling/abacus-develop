@@ -900,7 +900,7 @@ EOF
 EOF
           for ((i_BL = 1; i_BL < ${BL_number[iSTRU]}; i_BL++)); do
             cat >>INPUT <<EOF
-            $(printf %.0f ${ref_bands[iSTRU]}), 
+            $(printf %.0f ${ref_bands[iSTRU]}),
 EOF
           done
           cat >>INPUT <<EOF

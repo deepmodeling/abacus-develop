@@ -42,23 +42,10 @@ class EvolvePsiTest : public testing::Test
     {
         const int nlocal = 2;
         const int nband = 1;
-        const int block = 1;
-        const int zero = 0;
-        const int lld = 2;
-        int info = 0;
-        pv.para_2d().nloc = 4;
+        ASSERT_EQ(pv.para_2d().set(nlocal, nlocal, 1, ictxt), 0);
         pv.nloc_wfc = 2;
-        pv.para_2d().nrow = pv.para_2d().ncol = 2;
         pv.nrow_bands = pv.ncol_bands = 1;
-        pv.para_2d().dim0 = pv.para_2d().dim1 = pv.para_2d().nb = 1;
-        pv.para_2d().blacs_ctxt = ictxt;
-        pv.para_2d().set_coord(0, 0);
-        descinit_(pv.para_2d().desc, &nlocal, &nlocal, &block, &block, &zero, &zero, &ictxt, &lld, &info);
-        ASSERT_EQ(info, 0);
-        descinit_(pv.desc_wfc, &nlocal, &nband, &block, &block, &zero, &zero, &ictxt, &lld, &info);
-        ASSERT_EQ(info, 0);
-        descinit_(pv.desc_Eij, &nband, &nband, &block, &block, &zero, &zero, &ictxt, &lld, &info);
-        ASSERT_EQ(info, 0);
+        pv.set_wfc_and_mo_layouts(nlocal, nband);
     }
 
     void expect_endpoint_norm(const Complex* psi)
@@ -82,9 +69,23 @@ class EvolvePsiTest : public testing::Test
         std::copy(previous_s.begin(), previous_s.end(), last_s.data<Complex>());
         CublasMpResources resources;
         const bool use_lapack = true;
-        module_rt::evolve_psi_tensor<base_device::DEVICE_CPU>(
-            1, 2, &pv, &hamiltonian, psi, last_psi, last_h, last_s, energy, 0, log, 0,
-            use_lapack, resources, output_info);
+        module_rt::evolve_psi_tensor<base_device::DEVICE_CPU>(1,
+                                                              2,
+                                                              pv.para_2d(),
+                                                              pv.wfc_layout(),
+                                                              pv.mo_repr_layout(),
+                                                              &hamiltonian,
+                                                              psi,
+                                                              last_psi,
+                                                              last_h,
+                                                              last_s,
+                                                              energy,
+                                                              0,
+                                                              log,
+                                                              0,
+                                                              use_lapack,
+                                                              resources,
+                                                              output_info);
         expect_endpoint_norm(psi.data<Complex>());
         EXPECT_NEAR(energy.data<double>()[0], 0.0, 1e-12);
     }
@@ -95,8 +96,23 @@ TEST_F(EvolvePsiTest, CpuUsesEndpointOverlap)
     std::array<Complex, 2> psi;
     std::array<Complex, 4> last_h = {{0.0, 0.0, 0.0, 0.0}};
     double energy = 0.0;
-    module_rt::evolve_psi(1, 2, &pv, &hamiltonian, psi.data(), previous_psi.data(),
-                          last_h.data(), previous_s.data(), nullptr, false, &energy, 0, log, 0, output_info);
+    module_rt::evolve_psi(1,
+                          2,
+                          pv.para_2d(),
+                          pv.wfc_layout(),
+                          pv.mo_repr_layout(),
+                          &hamiltonian,
+                          psi.data(),
+                          previous_psi.data(),
+                          last_h.data(),
+                          previous_s.data(),
+                          nullptr,
+                          false,
+                          &energy,
+                          0,
+                          log,
+                          0,
+                          output_info);
     expect_endpoint_norm(psi.data());
     EXPECT_NEAR(energy, 0.0, 1e-12);
 }

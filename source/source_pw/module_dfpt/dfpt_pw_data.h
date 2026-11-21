@@ -209,6 +209,27 @@ class DFPT_PW_Data
         return conv_thr_;
     }
 
+    /// Dedicated knobs of the inner Sternheimer linear solve. Both default
+    /// to the inherit sentinel: unless set explicitly they track the outer
+    /// mixing values (the historical single-knob behavior), so existing
+    /// INPUT files are unaffected.
+    void set_lin_max_iter(int iter)
+    {
+        lin_max_iter_ = iter;
+    }
+    int get_lin_max_iter() const
+    {
+        return lin_max_iter_ > 0 ? lin_max_iter_ : max_iter_;
+    }
+    void set_lin_conv_thr(double thr)
+    {
+        lin_conv_thr_ = thr;
+    }
+    double get_lin_conv_thr() const
+    {
+        return lin_conv_thr_ > 0.0 ? lin_conv_thr_ : conv_thr_;
+    }
+
     /// Per-(q, irrep) SCF convergence ledger (B4: sunk from the retired
     /// DFPT_IrrepData adapter). The irrep dimension is a stage-A slot:
     /// today the single fallback irrep 0 carries the full 3N displacement
@@ -344,6 +365,12 @@ class DFPT_PW_Data
 
     int max_iter_ = 100;
     double conv_thr_ = 1e-8;
+
+    /// inner Sternheimer knobs; <=0 / <=0.0 is the inherit sentinel
+    /// resolved at read time by the getters (keeps tracking the outer
+    /// values until set explicitly)
+    int lin_max_iter_ = 0;
+    double lin_conv_thr_ = -1.0;
 
     ///< per-(q, irrep) SCF ledger (B4: absorbed from DFPT_IrrepData)
     std::map<std::pair<int, int>, bool> converged_;

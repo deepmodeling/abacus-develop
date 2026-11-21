@@ -29,16 +29,9 @@ TEST(UpsiTest, testUpsi3)
     bool print_matrix = false;
     Parallel_Orbitals* pv;
     pv = new Parallel_Orbitals();
-    pv->para_2d().nloc = nlocal * nband;
-    pv->para_2d().ncol = nlocal;
+    ASSERT_EQ(pv->para_2d().set(nlocal, nlocal, 1, ictxt), 0);
     pv->ncol_bands = nband;
-
-    // Initialize input matrices
-    int info;
-    int mb = 1, nb = 1, lda = nband, ldc = nlocal;
-    int irsrc = 0, icsrc = 0, lld = numroc_(&nlocal, &mb, &myprow, &irsrc, &nprow);
-    descinit_(pv->para_2d().desc, &nlocal, &nlocal, &mb, &nb, &irsrc, &icsrc, &ictxt, &lld, &info);
-    descinit_(pv->desc_wfc, &nlocal, &nband, &mb, &nb, &irsrc, &icsrc, &ictxt, &lld, &info);
+    pv->set_wfc_and_mo_layouts(nlocal, nband);
 
     // Initialize data
     U_operator = new std::complex<double>[nlocal * nlocal];
@@ -70,7 +63,15 @@ TEST(UpsiTest, testUpsi3)
     }
 
     // Call the function
-    module_rt::upsi(pv, nband, nlocal, U_operator, psi_k_laststep, psi_k, GlobalV::ofs_running, print_matrix);
+    module_rt::upsi(pv->para_2d(),
+                    pv->wfc_layout(),
+                    nband,
+                    nlocal,
+                    U_operator,
+                    psi_k_laststep,
+                    psi_k,
+                    GlobalV::ofs_running,
+                    print_matrix);
 
     // Check the results
     for (int i = 0; i < nlocal; ++i)

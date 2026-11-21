@@ -20,7 +20,7 @@ void ModuleIO::write_dos_pw(
         const bool dos_setemin,
         const double dos_emin_ev,
         const bool two_fermi,
-        const bool out_app_flag,
+        const int out_app_flag,
         const int bndpar,
         const std::string& global_out_dir,
         std::ofstream& ofs_running)
@@ -54,7 +54,9 @@ void ModuleIO::write_dos_pw(
         std::stringstream ss;
         ss << global_out_dir << "doss" << is + 1;
 
-        if(istep_in>=0)
+        // Modes 0 and 1 reuse the fixed name (mode 0 overwrites, mode 1 appends
+        // a new DOS block per written step); only mode 2 keeps the g{N} suffix.
+        if(istep_in>=0 && out_app_flag==2)
         {
             ss << "g" << istep_in+1;
         }

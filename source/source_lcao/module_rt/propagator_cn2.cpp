@@ -1,4 +1,5 @@
 #include "propagator.h"
+#include "source_base/parallel_blkcyc.h"
 #include "source_base/global_function.h"
 #include "source_base/module_container/ATen/kernels/blas.h"
 #include "source_base/module_container/ATen/kernels/lapack.h"
@@ -11,6 +12,7 @@
 
 #include <cassert>
 #include <complex>
+#include <cstddef>
 #include <iostream>
 
 namespace module_rt
@@ -23,25 +25,25 @@ void Propagator::compute_propagator_cn2(const int nlocal,
                                         std::ofstream& ofs_running,
                                         const int print_matrix) const
 {
-    assert(this->ParaV->para_2d().get_local_size() > 0);
+    assert(layout_.size() > 0);
 
     // (1) copy Htmp to Numerator & Denominator
-    std::complex<double>* Numerator = new std::complex<double>[this->ParaV->para_2d().get_local_size()];
-    ModuleBase::GlobalFunc::ZEROS(Numerator, this->ParaV->para_2d().get_local_size());
-    BlasConnector::copy(this->ParaV->para_2d().get_local_size(), Htmp, 1, Numerator, 1);
+    std::complex<double>* Numerator = new std::complex<double>[layout_.size()];
+    ModuleBase::GlobalFunc::ZEROS(Numerator, layout_.size());
+    BlasConnector::copy(layout_.size(), Htmp, 1, Numerator, 1);
 
-    std::complex<double>* Denominator = new std::complex<double>[this->ParaV->para_2d().get_local_size()];
-    ModuleBase::GlobalFunc::ZEROS(Denominator, this->ParaV->para_2d().get_local_size());
-    BlasConnector::copy(this->ParaV->para_2d().get_local_size(), Htmp, 1, Denominator, 1);
+    std::complex<double>* Denominator = new std::complex<double>[layout_.size()];
+    ModuleBase::GlobalFunc::ZEROS(Denominator, layout_.size());
+    BlasConnector::copy(layout_.size(), Htmp, 1, Denominator, 1);
 
     if (print_matrix)
     {
         ofs_running << std::endl;
         ofs_running << " S matrix :" << std::endl;
-        for (int i = 0; i < this->ParaV->para_2d().get_row_size(); i++)
+        for (int i = 0; i < layout_.nrloc(); i++)
         {
-            const int in = i * this->ParaV->para_2d().get_col_size();
-            for (int j = 0; j < this->ParaV->para_2d().get_col_size(); j++)
+            const int in = i * layout_.ncloc();
+            for (int j = 0; j < layout_.ncloc(); j++)
             {
                 ofs_running << Stmp[in + j].real() << "+" << Stmp[in + j].imag() << "i ";
             }
@@ -50,10 +52,10 @@ void Propagator::compute_propagator_cn2(const int nlocal,
         ofs_running << std::endl;
         ofs_running << std::endl;
         ofs_running << " H matrix :" << std::endl;
-        for (int i = 0; i < this->ParaV->para_2d().get_row_size(); i++)
+        for (int i = 0; i < layout_.nrloc(); i++)
         {
-            const int in = i * this->ParaV->para_2d().get_col_size();
-            for (int j = 0; j < this->ParaV->para_2d().get_col_size(); j++)
+            const int in = i * layout_.ncloc();
+            for (int j = 0; j < layout_.ncloc(); j++)
             {
                 ofs_running << Numerator[in + j].real() << "+" << Numerator[in + j].imag() << "i ";
             }
@@ -77,12 +79,12 @@ void Propagator::compute_propagator_cn2(const int nlocal,
                               Stmp,
                               1,
                               1,
-                              this->ParaV->para_2d().get_desc(),
+                              layout_.desc(),
                               beta1,
                               Numerator,
                               1,
                               1,
-                              this->ParaV->para_2d().get_desc());
+                              layout_.desc());
     ScalapackConnector::geadd('N',
                               nlocal,
                               nlocal,
@@ -90,21 +92,21 @@ void Propagator::compute_propagator_cn2(const int nlocal,
                               Stmp,
                               1,
                               1,
-                              this->ParaV->para_2d().get_desc(),
+                              layout_.desc(),
                               beta2,
                               Denominator,
                               1,
                               1,
-                              this->ParaV->para_2d().get_desc());
+                              layout_.desc());
 
     if (print_matrix)
     {
         ofs_running << " beta=" << beta1 << std::endl;
         ofs_running << " fenmu:" << std::endl;
-        for (int i = 0; i < this->ParaV->para_2d().get_row_size(); i++)
+        for (int i = 0; i < layout_.nrloc(); i++)
         {
-            const int in = i * this->ParaV->para_2d().get_col_size();
-            for (int j = 0; j < this->ParaV->para_2d().get_col_size(); j++)
+            const int in = i * layout_.ncloc();
+            for (int j = 0; j < layout_.ncloc(); j++)
             {
                 ofs_running << Denominator[in + j].real() << "+" << Denominator[in + j].imag() << "i ";
             }
@@ -116,24 +118,24 @@ void Propagator::compute_propagator_cn2(const int nlocal,
     //->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     // (3) Next, invert Denominator
     // What is the size of ipiv exactly? Need to check ScaLAPACK documentation!
-    // But anyway, not this->ParaV->nloc
-    int* ipiv = new int[this->ParaV->para_2d().get_row_size() + this->ParaV->para_2d().get_block_size()];
-    ModuleBase::GlobalFunc::ZEROS(ipiv, this->ParaV->para_2d().get_row_size() + this->ParaV->para_2d().get_block_size());
+    // But anyway, not layout_.size()
+    int* ipiv = new int[layout_.nrloc() + layout_.nb()];
+    ModuleBase::GlobalFunc::ZEROS(ipiv, layout_.nrloc() + layout_.nb());
     int info = 0;
     // (3.1) compute ipiv
-    ScalapackConnector::getrf(nlocal, nlocal, Denominator, 1, 1, this->ParaV->para_2d().get_desc(), ipiv, &info);
+    ScalapackConnector::getrf(nlocal, nlocal, Denominator, 1, 1, layout_.desc(), ipiv, &info);
 
     // Print ipiv
     if (print_matrix)
     {
-        ofs_running << " this->ParaV->nloc = " << this->ParaV->para_2d().get_local_size() << std::endl;
-        ofs_running << " this->ParaV->nrow = " << this->ParaV->para_2d().get_row_size() << std::endl;
-        ofs_running << " this->ParaV->ncol = " << this->ParaV->para_2d().get_col_size() << std::endl;
-        ofs_running << " this->ParaV->nb = " << this->ParaV->para_2d().get_block_size() << std::endl;
-        ofs_running << " this->ParaV->get_block_size() = " << this->ParaV->para_2d().get_block_size() << std::endl;
+        ofs_running << " layout_.size() = " << layout_.size() << std::endl;
+        ofs_running << " layout_.nrloc() = " << layout_.nrloc() << std::endl;
+        ofs_running << " layout_.ncloc() = " << layout_.ncloc() << std::endl;
+        ofs_running << " layout_.nb() = " << layout_.nb() << std::endl;
+        ofs_running << " layout_.nb() = " << layout_.nb() << std::endl;
         ofs_running << " nlocal = " << nlocal << std::endl;
         ofs_running << " ipiv:" << std::endl;
-        for (int i = 0; i < this->ParaV->para_2d().get_local_size(); i++)
+        for (int i = 0; i < layout_.size(); i++)
         {
             ofs_running << ipiv[i] << " ";
         }
@@ -149,7 +151,7 @@ void Propagator::compute_propagator_cn2(const int nlocal,
                               Denominator,
                               1,
                               1,
-                              this->ParaV->para_2d().get_desc(),
+                              layout_.desc(),
                               ipiv,
                               work.data(),
                               &lwork,
@@ -165,7 +167,7 @@ void Propagator::compute_propagator_cn2(const int nlocal,
                               Denominator,
                               1,
                               1,
-                              this->ParaV->para_2d().get_desc(),
+                              layout_.desc(),
                               ipiv,
                               work.data(),
                               &lwork,
@@ -186,24 +188,24 @@ void Propagator::compute_propagator_cn2(const int nlocal,
                              Denominator,
                              1,
                              1,
-                             this->ParaV->para_2d().get_desc(),
+                             layout_.desc(),
                              Numerator,
                              1,
                              1,
-                             this->ParaV->para_2d().get_desc(),
+                             layout_.desc(),
                              0.0,
                              U_operator,
                              1,
                              1,
-                             this->ParaV->para_2d().get_desc());
+                             layout_.desc());
 
     if (print_matrix)
     {
         ofs_running << " fenmu^-1:" << std::endl;
-        for (int i = 0; i < this->ParaV->para_2d().get_row_size(); i++)
+        for (int i = 0; i < layout_.nrloc(); i++)
         {
-            const int in = i * this->ParaV->para_2d().get_col_size();
-            for (int j = 0; j < this->ParaV->para_2d().get_col_size(); j++)
+            const int in = i * layout_.ncloc();
+            for (int j = 0; j < layout_.ncloc(); j++)
             {
                 ofs_running << Denominator[in + j].real() << "+" << Denominator[in + j].imag() << "i ";
             }
@@ -211,10 +213,10 @@ void Propagator::compute_propagator_cn2(const int nlocal,
         }
         ofs_running << std::endl;
         ofs_running << " fenzi:" << std::endl;
-        for (int i = 0; i < this->ParaV->para_2d().get_row_size(); i++)
+        for (int i = 0; i < layout_.nrloc(); i++)
         {
-            const int in = i * this->ParaV->para_2d().get_col_size();
-            for (int j = 0; j < this->ParaV->para_2d().get_col_size(); j++)
+            const int in = i * layout_.ncloc();
+            for (int j = 0; j < layout_.ncloc(); j++)
             {
                 ofs_running << Numerator[in + j].real() << "+" << Numerator[in + j].imag() << "i ";
             }
@@ -222,10 +224,10 @@ void Propagator::compute_propagator_cn2(const int nlocal,
         }
         ofs_running << std::endl;
         ofs_running << " U operator:" << std::endl;
-        for (int i = 0; i < this->ParaV->para_2d().get_row_size(); i++)
+        for (int i = 0; i < layout_.nrloc(); i++)
         {
-            const int in = i * this->ParaV->para_2d().get_col_size();
-            for (int j = 0; j < this->ParaV->para_2d().get_col_size(); j++)
+            const int in = i * layout_.ncloc();
+            for (int j = 0; j < layout_.ncloc(); j++)
             {
                 double aa = U_operator[in + j].real();
                 double bb = U_operator[in + j].imag();
@@ -272,20 +274,22 @@ void Propagator::compute_propagator_cn2_tensor(const int nlocal,
     void* d_H = static_cast<void*>(Htmp.data<std::complex<double>>());
     void* d_Num = static_cast<void*>(U_operator.data<std::complex<double>>());
 
-    int64_t len_loc = this->ParaV->nloc;
+    const std::size_t len_loc = layout_.size();
 
     // Allocate temporary tensor for denominator matrix
-    ct::Tensor Denominator_gpu(ct::DataType::DT_COMPLEX_DOUBLE, ct::DeviceType::GpuDevice, ct::TensorShape({len_loc}));
+    ct::Tensor Denominator_gpu(ct::DataType::DT_COMPLEX_DOUBLE,
+                               ct::DeviceType::GpuDevice,
+                               ct::TensorShape({static_cast<int64_t>(len_loc)}));
     void* d_Den = static_cast<void*>(Denominator_gpu.data<std::complex<double>>());
 
     // 3. Matrix Descriptors Creation
-    int64_t m_global = this->ParaV->desc[2];
-    int64_t n_global = this->ParaV->desc[3];
-    int64_t mb = this->ParaV->desc[4];
-    int64_t nb = this->ParaV->desc[5];
-    int64_t rsrc = this->ParaV->desc[6];
-    int64_t csrc = this->ParaV->desc[7];
-    int64_t lld = this->ParaV->desc[8];
+    int64_t m_global = layout_.desc()[2];
+    int64_t n_global = layout_.desc()[3];
+    int64_t mb = layout_.desc()[4];
+    int64_t nb = layout_.desc()[5];
+    int64_t rsrc = layout_.desc()[6];
+    int64_t csrc = layout_.desc()[7];
+    int64_t lld = layout_.desc()[8];
 
     // 3.1 cuBLASMp Descriptor
     cublasMpMatrixDescriptor_t desc_blas;

@@ -7,13 +7,14 @@
 #include <cmath>
 #include <ostream>
 
-bool Line_Search::line_search(const bool restart,
-                              const double x, // current point
-                              const double y, // function value at current point
-                              const double f, // derivative at current point
-                              double& xnew,   // the next point that we want to try
-                              const double conv_thr,
-                              std::ofstream& ofs_running)
+bool Line_Search::line_search(
+    const bool restart,
+    const double x, // current point
+    const double y, // function value at current point
+    const double f, // derivative at current point
+    double &xnew,   // the next point that we want to try
+    const double conv_thr,
+    std::ofstream &ofs_running)
 {
     if (restart)
     {
@@ -47,7 +48,11 @@ bool Line_Search::line_search(const bool restart,
     __builtin_unreachable();
 }
 
-bool Line_Search::first_order(const double x, const double y, const double f, double& xnew)
+bool Line_Search::first_order(
+    const double x,
+    const double y,
+    const double f,
+    double &xnew)
 {
     xa = x; // set the first endpoint
     ya = y;
@@ -57,7 +62,12 @@ bool Line_Search::first_order(const double x, const double y, const double f, do
     return false;
 }
 
-bool Line_Search::third_order(const double x, const double y, const double f, double& xnew, const double conv_thr)
+bool Line_Search::third_order(
+    const double x,
+    const double y,
+    const double f,
+    double &xnew,
+    const double conv_thr)
 {
     double dmove = 0.0;
     double dmoveh = 0.0;
@@ -109,8 +119,8 @@ bool Line_Search::third_order(const double x, const double y, const double f, do
             dmoveh = 4.0;
         }
 
-        if (dmove > 2.0 * dmoveh || dmoveh > 2.0 * dmove || (fa * fb > 0 && dmove < 1.0)
-            || (fa * fb < 0 && dmove > 1.0))
+        if (dmove > 2.0 * dmoveh || dmoveh > 2.0 * dmove || (fa * fb > 0 && dmove < 1.0) ||
+            (fa * fb < 0 && dmove > 1.0))
         {
             dmove = dmoveh;
         }
@@ -196,12 +206,13 @@ void Line_Search::update_brent(const double x, const double y, const double f)
     }
 }
 
-bool Line_Search::brent(const double x,
-                        const double y,
-                        const double f,
-                        double& xnew,
-                        const double conv_thr,
-                        std::ofstream& ofs_running)
+bool Line_Search::brent(
+    const double x,
+    const double y,
+    const double f,
+    double &xnew,
+    const double conv_thr,
+    std::ofstream &ofs_running)
 {
     ls_step++;
 

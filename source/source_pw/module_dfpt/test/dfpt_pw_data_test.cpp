@@ -8,7 +8,7 @@
 #include "source_cell/pseudo.h"
 #include "source_cell/qlist.h"
 #include "source_cell/unitcell.h"
-#include "dfpt_stru_fixture.h"
+#include "dfpt_stru_tool.h"
 #include "source_base/global_variable.h"
 #include "source_base/parallel_global.h"
 #include "source_pw/module_dfpt/dfpt_pw_data.h"
@@ -33,9 +33,10 @@
  *     - per-(q, irrep) SCF ledger (B4: sunk from DFPT_IrrepData)
  */
 
-class DFPT_PW_DataTest : public DFPTStruTestFixture
+class DFPT_PW_DataTest : public ::testing::Test
 {
   protected:
+    UnitCell ucell;
     ModuleCell::QList qlist;
     ModuleDFPT::DFPT_PW_Data data;
     std::ifstream ifs;
@@ -46,7 +47,8 @@ class DFPT_PW_DataTest : public DFPTStruTestFixture
     // build a reduced 2x2x2 q-mesh (4 irreducible q-points for O_h)
     void init_qlist()
     {
-        construct_ucell(stru_lib[0]);
+        const dfpt_test::stru_ stru = dfpt_test::cubic_carbon_stru();
+        dfpt_test::construct_ucell(ucell, stru);
         ofs_running.open("tmp_dfpt_qlist");
         ModuleSymmetry::Symmetry symm;
         const int cal_symm_repr[2] = {0, 6};
@@ -61,7 +63,8 @@ class DFPT_PW_DataTest : public DFPTStruTestFixture
     {
         data.clean();
         ofs_running.close();
-        ClearUcell();
+        delete[] ucell.atoms;
+        ucell.atoms = nullptr;
         remove("tmp_dfpt_qlist");
     }
 };
@@ -155,6 +158,59 @@ TEST_F(DFPT_PW_DataTest, PerIrrepScfLedger)
     EXPECT_TRUE(data.get_residuals(0, 0).empty());
     EXPECT_EQ(data.get_current_iter(0, 0), 0);
     EXPECT_FALSE(data.get_converged(1, 0));
+
+    clear_qlist();
+}
+
+TEST_F(DFPT_PW_DataTest, LinSolverKnobsInheritByDefault)
+{
+    init_qlist();
+
+    // unset linear knobs must track the outer mixing values in any setter
+    // order (the historical single-knob behavior); explicit values take
+    // precedence and must survive later changes of the outer knobs
+    data.set_conv_thr(1e-6);
+    data.set_max_iter(25);
+    EXPECT_DOUBLE_EQ(data.get_lin_conv_thr(), 1e-6);
+    EXPECT_EQ(data.get_lin_max_iter(), 25);
+
+    // late outer changes keep propagating while the lin knobs are unset
+    data.set_conv_thr(1e-10);
+    data.set_max_iter(40);
+    EXPECT_DOUBLE_EQ(data.get_lin_conv_thr(), 1e-10);
+    EXPECT_EQ(data.get_lin_max_iter(), 40);
+
+    // explicit lin values decouple from the outer knobs permanently
+    data.set_lin_conv_thr(1e-7);
+    data.set_lin_max_iter(12);
+    EXPECT_DOUBLE_EQ(data.get_lin_conv_thr(), 1e-7);
+    EXPECT_EQ(data.get_lin_max_iter(), 12);
+
+    data.set_conv_thr(1e-12);
+    data.set_max_iter(80);
+    EXPECT_DOUBLE_EQ(data.get_lin_conv_thr(), 1e-7);
+    EXPECT_EQ(data.get_lin_max_iter(), 12);
+
+    // resetting an explicit override back to the sentinel resumes
+    // inheritance immediately (the getter-side fallback has no memory)
+    data.set_lin_conv_thr(-1.0);
+    EXPECT_DOUBLE_EQ(data.get_lin_conv_thr(), 1e-12);
+    data.set_lin_max_iter(0);
+    EXPECT_EQ(data.get_lin_max_iter(), 80);
+
+    // and the resumed inheritance keeps tracking later outer changes
+    data.set_conv_thr(1e-9);
+    data.set_max_iter(45);
+    EXPECT_DOUBLE_EQ(data.get_lin_conv_thr(), 1e-9);
+    EXPECT_EQ(data.get_lin_max_iter(), 45);
+
+    // one knob may inherit while the other stays pinned
+    data.set_lin_conv_thr(5e-8);
+    EXPECT_DOUBLE_EQ(data.get_lin_conv_thr(), 5e-8);
+    EXPECT_EQ(data.get_lin_max_iter(), 45);
+    data.set_max_iter(60);
+    EXPECT_EQ(data.get_lin_max_iter(), 60);
+    EXPECT_DOUBLE_EQ(data.get_lin_conv_thr(), 5e-8);
 
     clear_qlist();
 }

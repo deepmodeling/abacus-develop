@@ -69,6 +69,8 @@ struct NativeDoubleRBlock
 
 struct NativeDoubleRecord
 {
+    int magic = 0;
+    int format_version = 0;
     int step = 0;
     int nbasis = 0;
     std::vector<NativeDoubleRBlock> blocks;
@@ -77,6 +79,8 @@ struct NativeDoubleRecord
 NativeDoubleRecord read_native_double_record(std::ifstream& ifs)
 {
     NativeDoubleRecord record;
+    record.magic = read_binary_value<int>(ifs);
+    record.format_version = read_binary_value<int>(ifs);
     record.step = read_binary_value<int>(ifs);
     record.nbasis = read_binary_value<int>(ifs);
     const int nR = read_binary_value<int>(ifs);
@@ -156,9 +160,7 @@ void init_serial_orbitals(Parallel_Orbitals& pv)
     pv.atom_begin_row[1] = 2;
     pv.atom_begin_col[0] = 0;
     pv.atom_begin_col[1] = 2;
-    pv.nrow = 2;
-    pv.ncol = 2;
-    pv.set_serial(2, 2);
+    pv.para_2d().set_serial(2, 2);
 }
 
 void fill_matrix(hamilt::HContainer<double>& matrix, Parallel_Orbitals& pv, double* values)
@@ -187,24 +189,25 @@ void init_sparse_output_globals()
 void remove_derivative_files(const std::string& fileflag, int step = -1)
 {
     std::vector<std::string> filenames;
-    if (step >= 0)
+    const std::string suffix = (step >= 0) ? ("g" + std::to_string(step + 1) + "_nao.csr") : "_nao.csr";
+    // Only dH/dR carries a spin index; dS/dR is spin-independent.
+    const bool spin_suffix = (fileflag == "h");
+    for (const char axis : {'x', 'y', 'z'})
     {
-        const std::string suffix = "g" + std::to_string(step + 1) + "_nao.csr";
-        for (const char axis : {'x', 'y', 'z'})
+        if (spin_suffix)
         {
             for (int ispin = 1; ispin <= 2; ++ispin)
             {
                 filenames.push_back("d" + fileflag + "r" + axis + "s" + std::to_string(ispin) + suffix);
             }
         }
-    }
-    else
-    {
-        for (const char axis : {'x', 'y', 'z'})
+        else
         {
+            filenames.push_back("d" + fileflag + "r" + axis + suffix);
+            // Clean up files left by the legacy spin-suffixed naming.
             for (int ispin = 1; ispin <= 2; ++ispin)
             {
-                filenames.push_back("d" + fileflag + "r" + axis + "s" + std::to_string(ispin) + "_nao.csr");
+                filenames.push_back("d" + fileflag + "r" + axis + "s" + std::to_string(ispin) + suffix);
             }
         }
     }

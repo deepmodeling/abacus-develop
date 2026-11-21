@@ -6,11 +6,11 @@ out_dmk    1
 ```
 After finishing the calculation, the density matrix is written into `OUT.${suffix}/`.
 
-For current develop versions:
-- gamma-only (`gamma_only = 1`): `dmg1_nao.txt` (`nspin=1/4`) or `dms1g1_nao.txt` and `dms2g1_nao.txt` (`nspin=2`)
-- multi-k (`gamma_only = 0`): `dmk1g1_nao.txt`, `dmk2g1_nao.txt`, ... (`nspin=1/4`) or `dmk1s1g1_nao.txt`, `dmk1s2g1_nao.txt`, ... (`nspin=2`)
+For current develop versions, the default filenames (with `out_app_flag = 0` or `1`) are:
+- gamma-only (`gamma_only = 1`): `dm_nao.txt` (`nspin=1/4`) or `dms1_nao.txt` and `dms2_nao.txt` (`nspin=2`)
+- multi-k (`gamma_only = 0`): `dmk1_nao.txt`, `dmk2_nao.txt`, ... (`nspin=1/4`) or `dmk1s1_nao.txt`, `dmk1s2_nao.txt`, ... (`nspin=2`)
 
-Here `g{istep}` denotes the geometry/step index in the output filename.
+With `out_app_flag = 2`, a one-based geometry-step suffix `g{istep}` is inserted before `_nao` (for example `dmk1g1_nao.txt`). With `out_app_flag = 0` the fixed file is truncated and overwritten at every write, and with `out_app_flag = 1` records are appended to the fixed file.
 
 For 3.10-LTS, the corresponding keyword is `out_dm`, and file names follow the legacy style such as `SPIN1_DM` and `SPIN2_DM`.
 

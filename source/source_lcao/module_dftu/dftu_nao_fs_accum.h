@@ -33,15 +33,15 @@ void accumulate_diag_force(const Parallel_Orbitals& pv,
 {
     assert(dm != nullptr);
     assert(dim >= 0 && dim < 3);
-    for (int ir = 0; ir < pv.para_2d().get_row_size(); ir++)
+    for (int ir = 0; ir < pv.para_2d().nrloc(); ir++)
     {
-        const int iwt1 = pv.para_2d().local2global_row(ir);
+        const int iwt1 = pv.para_2d().irglb(ir);
         const int iat1 = ucell.iwt2iat[iwt1];
-        for (int ic = 0; ic < pv.para_2d().get_col_size(); ic++)
+        for (int ic = 0; ic < pv.para_2d().ncloc(); ic++)
         {
-            if (pv.para_2d().local2global_col(ic) == iwt1)
+            if (pv.para_2d().icglb(ic) == iwt1)
             {
-                force_dftu(iat1, dim) += std::real(dm[ic * pv.para_2d().get_row_size() + ir]);
+                force_dftu(iat1, dim) += std::real(dm[ic * pv.para_2d().nrloc() + ir]);
             }
         }
     }
@@ -59,14 +59,14 @@ void accumulate_diag_stress(const Parallel_Orbitals& pv,
     assert(dm != nullptr);
     assert(dim1 >= 0 && dim1 < 3);
     assert(dim2 >= 0 && dim2 < 3);
-    for (int ir = 0; ir < pv.para_2d().get_row_size(); ir++)
+    for (int ir = 0; ir < pv.para_2d().nrloc(); ir++)
     {
-        const int iwt1 = pv.para_2d().local2global_row(ir);
-        for (int ic = 0; ic < pv.para_2d().get_col_size(); ic++)
+        const int iwt1 = pv.para_2d().irglb(ir);
+        for (int ic = 0; ic < pv.para_2d().ncloc(); ic++)
         {
-            if (pv.para_2d().local2global_col(ic) == iwt1)
+            if (pv.para_2d().icglb(ic) == iwt1)
             {
-                stress_dftu(dim1, dim2) += factor * std::real(dm[ic * pv.para_2d().get_row_size() + ir]);
+                stress_dftu(dim1, dim2) += factor * std::real(dm[ic * pv.para_2d().nrloc() + ir]);
             }
         }
     }

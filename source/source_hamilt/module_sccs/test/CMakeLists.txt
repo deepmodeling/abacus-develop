@@ -17,6 +17,10 @@ addtest(
           test_sccs_ion_force.cpp
           test_sccs_response.cpp
           test_sccs_functional.cpp
+          test_sccs_sa.cpp
+          test_sccs_sa_probe.cpp
+          sccs_sa_test.cpp
+          test_sccs_thread_sum.cpp
           ../../../source_estate/unittests/test_pot_sccs.cpp
           ../../../source_estate/unittests/test_sccs_pcc_0d.cpp
           ../../../source_estate/unittests/test_sccs_pcc_2d.cpp
@@ -50,9 +54,33 @@ addtest(
           ../sccs_pw_coulomb.cpp
           ../sccs_response.cpp
           ../sccs_cavity.cpp
+          ../sccs_sa.cpp
           ../../module_xc/xc_grad_utils.cpp)
-set_tests_properties(MODULE_HAMILT_sccs_poisson
-                     PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=1" TIMEOUT 60)
+# All entries below run this binary in the same directory, where
+# ChargedDielectricCellWarnsAndRuns writes and removes its warning log, so they
+# share a lock and never run at the same time.
+set_tests_properties(
+  MODULE_HAMILT_sccs_poisson PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=1" TIMEOUT
+                                        60 RESOURCE_LOCK sccs_poisson_workdir)
+if(ENABLE_OPENMP)
+  # Four threads: the grid sums combine per-thread partial sums, and a fixed
+  # team must repeat a solve bit for bit. OMP_DYNAMIC=FALSE keeps the runtime
+  # from shrinking the team.
+  add_test(
+    NAME MODULE_HAMILT_sccs_poisson_omp4
+    COMMAND $<TARGET_FILE:MODULE_HAMILT_sccs_poisson>
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+  set_tests_properties(
+    MODULE_HAMILT_sccs_poisson_omp4
+    PROPERTIES ENVIRONMENT
+               "OMP_NUM_THREADS=4;OMP_DYNAMIC=FALSE"
+               TIMEOUT
+               60
+               PROCESSORS
+               4
+               RESOURCE_LOCK
+               sccs_poisson_workdir)
+endif()
 
 if(ENABLE_MPI)
   add_test(
@@ -60,8 +88,15 @@ if(ENABLE_MPI)
     COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2 ${MPIEXEC_PREFLAGS}
             $<TARGET_FILE:MODULE_HAMILT_sccs_poisson> ${MPIEXEC_POSTFLAGS})
   set_tests_properties(
-    MODULE_HAMILT_sccs_poisson_mpi PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=1"
-                                              TIMEOUT 60 PROCESSORS 2)
+    MODULE_HAMILT_sccs_poisson_mpi
+    PROPERTIES ENVIRONMENT
+               "OMP_NUM_THREADS=1"
+               TIMEOUT
+               60
+               PROCESSORS
+               2
+               RESOURCE_LOCK
+               sccs_poisson_workdir)
   # Three ranks on a grid with two z planes leave one rank with nrxx == 0;
   # a rank that skips a collective hangs, and the timeout turns that into a failure.
   add_test(
@@ -72,5 +107,12 @@ if(ENABLE_MPI)
       --gtest_filter=*EmptyPartition*)
   set_tests_properties(
     MODULE_HAMILT_sccs_empty_partition_mpi
-    PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=1" TIMEOUT 60 PROCESSORS 3)
+    PROPERTIES ENVIRONMENT
+               "OMP_NUM_THREADS=1"
+               TIMEOUT
+               60
+               PROCESSORS
+               3
+               RESOURCE_LOCK
+               sccs_poisson_workdir)
 endif()

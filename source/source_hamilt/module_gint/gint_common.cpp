@@ -142,20 +142,20 @@ void merge_hr_part_to_hR(const std::vector<hamilt::HContainer<double>>& hr_gint_
     ModuleBase::timer::start("Gint_k", "transfer_pvpR");
 
     const UnitCell* ucell_in = gint_info.get_ucell();
-    int mg = hR->get_paraV()->get_global_row_size()/2;
-    int ng = hR->get_paraV()->get_global_col_size()/2;
-    int nb = hR->get_paraV()->get_block_size()/2;
+    int mg = hR->get_paraV()->para_2d().nrglb()/2;
+    int ng = hR->get_paraV()->para_2d().ncglb()/2;
+    int nb = hR->get_paraV()->para_2d().nb()/2;
     hamilt::HContainer<std::complex<double>>* hR_tmp;
 
 
 #ifdef __MPI
-    int blacs_ctxt = hR->get_paraV()->blacs_ctxt;
+    int blacs_ctxt = hR->get_paraV()->para_2d().ictxt();
     std::vector<int> iat2iwt(ucell_in->nat);
     for (int iat = 0; iat < ucell_in->nat; iat++) {
         iat2iwt[iat] = ucell_in->get_iat2iwt()[iat]/2;
     }
     Parallel_Orbitals *pv = new Parallel_Orbitals();
-    pv->set(mg, ng, nb, blacs_ctxt);
+    pv->para_2d().set(mg, ng, nb, blacs_ctxt);
     pv->set_atomic_trace(iat2iwt.data(), ucell_in->nat, mg);
     auto ijr_info = hR->get_ijr_info();
     hR_tmp = new hamilt::HContainer<std::complex<double>>(pv, nullptr, &ijr_info);
@@ -324,19 +324,19 @@ void dm_2d_to_gint(
         // is=0:↑↑, 1:↑↓, 2:↓↑, 3:↓↓
         const int row_set[4] = {0, 0, 1, 1};
         const int col_set[4] = {0, 1, 0, 1};
-        int mg = dm[0]->get_paraV()->get_global_row_size()/2;
-        int ng = dm[0]->get_paraV()->get_global_col_size()/2;
-        int nb = dm[0]->get_paraV()->get_block_size()/2;
+        int mg = dm[0]->get_paraV()->para_2d().nrglb()/2;
+        int ng = dm[0]->get_paraV()->para_2d().ncglb()/2;
+        int nb = dm[0]->get_paraV()->para_2d().nb()/2;
         const UnitCell* ucell = gint_info.get_ucell();
         auto ijr_info = dm[0]->get_ijr_info();
 #ifdef __MPI
-        int blacs_ctxt = dm[0]->get_paraV()->blacs_ctxt;
+        int blacs_ctxt = dm[0]->get_paraV()->para_2d().ictxt();
         std::vector<int> iat2iwt(ucell->nat);
         for (int iat = 0; iat < ucell->nat; iat++) {
             iat2iwt[iat] = ucell->get_iat2iwt()[iat]/2;
         }
         Parallel_Orbitals pv{};
-        pv.set(mg, ng, nb, blacs_ctxt);
+        pv.para_2d().set(mg, ng, nb, blacs_ctxt);
         pv.set_atomic_trace(iat2iwt.data(), ucell->nat, mg);
         HContainer<TDM> dm2d_tmp(&pv, nullptr, &ijr_info);
 #else
@@ -418,12 +418,12 @@ void wfc_2d_to_gint(const T* wfc_2d,
 
     // get the rank of the current process
     int rank = 0;
-    MPI_Comm_rank(pv.comm(), &rank);
+    MPI_Comm_rank(pv.para_2d().comm(), &rank);
 
     // calculate the maximum number of nlocal over all processes in pv.comm() range
     long buf_size = 0;
-    mpi_info = MPI_Reduce(&pv.nloc_wfc, &buf_size, 1, MPI_LONG, MPI_MAX, 0, pv.comm());
-    mpi_info = MPI_Bcast(&buf_size, 1, MPI_LONG, 0, pv.comm()); // get and then broadcast
+    mpi_info = MPI_Reduce(&pv.nloc_wfc, &buf_size, 1, MPI_LONG, MPI_MAX, 0, pv.para_2d().comm());
+    mpi_info = MPI_Bcast(&buf_size, 1, MPI_LONG, 0, pv.para_2d().comm()); // get and then broadcast
     std::vector<T> wfc_block(buf_size);
 
     // this quantity seems to have the value returned by function numroc_ in ScaLAPACK?
@@ -434,28 +434,28 @@ void wfc_2d_to_gint(const T* wfc_2d,
     char top = ' ';
 
     // loop over all processors
-    for (int iprow = 0; iprow < pv.dim0; ++iprow)
+    for (int iprow = 0; iprow < pv.para_2d().nrproc(); ++iprow)
     {
-        for (int ipcol = 0; ipcol < pv.dim1; ++ipcol)
+        for (int ipcol = 0; ipcol < pv.para_2d().ncproc(); ++ipcol)
         {
-            if (pv.blacs_in_this_processor(iprow, ipcol))
+            if (pv.para_2d().blacs_in_this_processor(iprow, ipcol))
             {
                 BlasConnector::copy(pv.nloc_wfc, wfc_2d, mem_stride, wfc_block.data(), mem_stride);
-                naroc[0] = pv.nrow;
+                naroc[0] = pv.para_2d().nrloc();
                 naroc[1] = pv.ncol_bands;
-                Cxgebs2d(pv.blacs_ctxt, &scope, &top, 2, 1, naroc, 2);
-                Cxgebs2d(pv.blacs_ctxt, &scope, &top, buf_size, 1, wfc_block.data(), buf_size);
+                Cxgebs2d(pv.para_2d().ictxt(), &scope, &top, 2, 1, naroc, 2);
+                Cxgebs2d(pv.para_2d().ictxt(), &scope, &top, buf_size, 1, wfc_block.data(), buf_size);
             }
             else
             {
-                Cxgebr2d(pv.blacs_ctxt, &scope, &top, 2, 1, naroc, 2, iprow, ipcol);
-                Cxgebr2d(pv.blacs_ctxt, &scope, &top, buf_size, 1, wfc_block.data(), buf_size, iprow, ipcol);
+                Cxgebr2d(pv.para_2d().ictxt(), &scope, &top, 2, 1, naroc, 2, iprow, ipcol);
+                Cxgebr2d(pv.para_2d().ictxt(), &scope, &top, buf_size, 1, wfc_block.data(), buf_size, iprow, ipcol);
             }
 
             // then use it to set the wfc_grid.
-            const int nb = pv.nb;
-            const int dim0 = pv.dim0;
-            const int dim1 = pv.dim1;
+            const int nb = pv.para_2d().nb();
+            const int dim0 = pv.para_2d().nrproc();
+            const int dim1 = pv.para_2d().ncproc();
             for (int j = 0; j < naroc[1]; ++j)
             {
                 int igcol = globalIndex(j, nb, dim1, ipcol);

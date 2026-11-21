@@ -14,7 +14,6 @@
 #include "source_base/kernels/math_kernel_op.h"
 #include "source_base/tool_quit.h"
 #include "source_base/timer.h"
-#include "source_io/module_parameter/parameter.h"
 
 /**
  * ===============================================================================================
@@ -234,6 +233,9 @@ void projectors::OnsiteProjector<T, Device>::init_proj(const std::string& orbita
         nr = std::max(nr, nr_); // the maximal nr
         assert(dr == -1.0 || dr == dr_); // the dr should be the same for all types
         dr = (dr == -1.0) ? dr_ : dr;
+        rgrid.resize(nr_);
+        std::iota(rgrid.begin(), rgrid.end(), 0);
+        std::for_each(rgrid.begin(), rgrid.end(), [dr](double& r_i) { r_i *= dr; });
         for(int ip = 0; ip < nproj_it; ++ip)
         {
             if (!(onsite_r[idx] > 0.0) || onsite_r[idx] >= (nr_ - 1) * dr_)
@@ -245,11 +247,7 @@ void projectors::OnsiteProjector<T, Device>::init_proj(const std::string& orbita
             int irad = 0;
             irad = std::accumulate(nzeta.begin(), nzeta.begin() + l, irad);
             irad += izeta;
-            std::vector<double> temp = radials[irad];
-            rgrid.resize(nr_);
-            std::iota(rgrid.begin(), rgrid.end(), 0);
-            std::for_each(rgrid.begin(), rgrid.end(), [dr](double& r_i) { r_i *= dr; });
-            smoothgen(nr_, rgrid.data(), temp.data(), onsite_r[idx], projs[idx]);
+            smoothgen(nr_, rgrid.data(), radials[irad].data(), onsite_r[idx], projs[idx]);
             it2iproj[it][ip] = idx;
             ++idx;
         }

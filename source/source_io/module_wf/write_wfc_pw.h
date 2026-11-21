@@ -7,9 +7,14 @@
 namespace ModuleIO
 {
 
+// istep is the filename sentinel: -1 keeps the ionic step out of the file
+// name. append_step is the real output step that decides whether the fixed
+// file is appended (a new frame per step) or truncated; pass -1 for a
+// single-point write that always truncates.
 void write_wfc_pw(
         const int istep,
         const int iter,
+        const int append_step,
         const int kpar,
         const int my_pool,
         const int my_rank,
@@ -19,6 +24,7 @@ void write_wfc_pw(
         const int rank_in_pool,
         const int nproc_in_pool,
         const int out_wfc_pw,
+        const int out_app_flag,
         const double& ecutwfc,
         const std::string& global_out_dir,
         const psi::Psi<std::complex<double>>& psi,

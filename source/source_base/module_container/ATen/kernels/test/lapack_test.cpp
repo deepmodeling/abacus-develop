@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
 
+#include <vector>
+
 #include <ATen/core/tensor.h>
 #include <ATen/kernels/lapack.h>
 #include <base/utils/gtest.h>
@@ -134,9 +136,10 @@ TYPED_TEST(LapackTest, GeqrfInPlace) {
     }).to_device<Device>());
 
     Tensor A = A_input; // will be overwritten as Q
+    std::vector<Type> rdiag(n);
 
-    // do geqrf -> get orthogonal Q
-    geqrfCalculator(m, n, A.data<Type>(), lda);
+    // do geqrf -> get orthogonal Q and the diagonal of R
+    geqrfCalculator(m, n, A.data<Type>(), lda, rdiag.data());
 
     // check on CPU
     Tensor Q = A.to_device<DEVICE_CPU>();
@@ -189,6 +192,26 @@ TYPED_TEST(LapackTest, GeqrfInPlace) {
             EXPECT_NEAR(std::abs(QtQ.data<Type>()[i + j * n]), std::abs(expected), 1e-5)
                 << "Q^T * Q not identity at (" << i << "," << j << ")";
         }
+    }
+
+    // R = Q^H * A_original; its diagonal must match the values captured
+    // before geqrf overwrote A with Q.
+    Tensor R = std::move(Tensor({
+        static_cast<Type>(0.0), static_cast<Type>(0.0), static_cast<Type>(0.0),
+        static_cast<Type>(0.0), static_cast<Type>(0.0), static_cast<Type>(0.0),
+        static_cast<Type>(0.0), static_cast<Type>(0.0), static_cast<Type>(0.0)
+    }).to_device<DEVICE_CPU>());
+    Tensor A_cpu = A_input.to_device<DEVICE_CPU>();
+    gemm('C', 'N',
+         n, n, m,
+         &alpha,
+         Q_data, lda,
+         A_cpu.data<Type>(), lda,
+         &beta,
+         R.data<Type>(), n);
+    for (int j = 0; j < n; ++j) {
+        EXPECT_NEAR(std::abs(R.data<Type>()[j + j * n]), std::abs(rdiag[j]), 1e-5)
+            << "R diagonal mismatch at " << j;
     }
 }
 

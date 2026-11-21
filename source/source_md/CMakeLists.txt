@@ -9,6 +9,11 @@ add_library(
   run_md.cpp
   verlet.cpp)
 
+add_subdirectory(module_snap)
+add_subdirectory(module_lj)
+add_subdirectory(module_dp)
+add_subdirectory(module_nep)
+
 if(ENABLE_COVERAGE)
   add_coverage(md)
 endif()
@@ -16,8 +21,5 @@ endif()
 add_subdirectory(module_plumed)
 
 if(BUILD_TESTING)
-  if(ENABLE_MPI)
-    add_subdirectory(test)
-    add_subdirectory(unittests)
-  endif()
+  add_subdirectory(unittests)
 endif()

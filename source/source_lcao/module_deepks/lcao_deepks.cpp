@@ -200,8 +200,8 @@ void LCAO_Deepks<T>::allocate_V_delta(const int nat, const int nks)
     V_delta.resize(nks);
     for (int ik = 0; ik < nks; ik++)
     {
-        this->V_delta[ik].resize(pv->nloc);
-        ModuleBase::GlobalFunc::ZEROS(this->V_delta[ik].data(), pv->nloc);
+        this->V_delta[ik].resize(pv->para_2d().size());
+        ModuleBase::GlobalFunc::ZEROS(this->V_delta[ik].data(), pv->para_2d().size());
     }
 
     // init gedm**
