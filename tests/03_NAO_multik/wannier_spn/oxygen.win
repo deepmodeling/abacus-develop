@@ -1,0 +1,31 @@
+num_bands = 13
+num_wann = 4
+exclude_bands = 3
+spinors = true
+spn_formatted = true
+spin_moment = true
+spin_kmesh = 2 1 1
+fermi_energy = 0.0
+num_iter = 0
+mp_grid = 2 1 1
+
+begin unit_cell_cart
+bohr
+7 0 0
+0 18 0
+0 0 18
+end unit_cell_cart
+
+begin atoms_frac
+O 0.5 0.5 0.43611111111111112
+O 0.5 0.5 0.56388888888888888
+end atoms_frac
+
+begin projections
+O:s
+end projections
+
+begin kpoints
+0.25 0.0 0.0
+-0.25 0.0 0.0
+end kpoints
