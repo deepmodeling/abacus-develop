@@ -95,9 +95,9 @@ INPUT resets still apply; for example, `calculation md` sets `symmetry` to `0`
 before this check. Use `symmetry 0` (time reversal only) or `symmetry -1` (no
 symmetry), or select CPU RI when spatial symmetry is needed.
 
-The selector applies to the LCAO Kohn-Sham exchange engine. Independent LR and
-RDMFT exchange engines retain CPU contractions; LR inherits the selected backend
-only when it reuses the Kohn-Sham exchange object.
+The selector applies to the LCAO Kohn-Sham exchange engine. LR and RDMFT exchange
+engines retain CPU contractions, including when LR reuses Kohn-Sham exchange
+geometry.
 
 All MPI ranks on a node must see the same allocated
 GPU list, with at least as many visible GPUs as local ranks. Giving each rank its

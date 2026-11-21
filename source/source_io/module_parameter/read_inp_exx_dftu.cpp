@@ -248,8 +248,8 @@ void ReadInput::item_exx()
 GPU contractions temporarily reject symmetry=1, regardless of
 exx_symmetry_realspace, pending a validated LibRI GPU symmetry fix.
 Use symmetry=0 (time reversal only) or symmetry=-1 (no symmetry).
-Independent LR and RDMFT exchange engines retain CPU contractions. LR inherits
-this selection only when it reuses the Kohn-Sham exchange object.
+LR and RDMFT exchange engines retain CPU contractions, including when LR reuses
+Kohn-Sham exchange geometry.
 For GPU contractions, all MPI ranks on a node must see the same allocated GPU
 list, with at least as many visible GPUs as local ranks; per-rank single-GPU
 masking is unsupported.)";
