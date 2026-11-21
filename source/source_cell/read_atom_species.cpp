@@ -348,8 +348,12 @@ bool read_lattice_constant(std::ifstream& ifa,
             double e21 = 0.0; double e22 = 0.0;
             if( ModuleBase::GlobalFunc::SCAN_LINE_BEGIN(ifa, "LATTICE_PARAMETERS") )
             {
-                ifa >> bba >> cba;
-                ModuleBase::GlobalFunc::READ_VALUE(ifa, cosab);
+                ifa >> bba >> cba >> cosab;
+                if (ifa.fail())
+                {
+                    ModuleBase::WARNING_QUIT("unitcell::read_lattice_constant",
+                                             "invalid LATTICE_PARAMETERS for lattice type sm");
+                }
                 e21 = bba * cosab;
                 e22 = bba * sqrt(1.0-cosab*cosab);
             }
@@ -364,8 +368,12 @@ bool read_lattice_constant(std::ifstream& ifa,
             double e21 = 0.0; double e22 = 0.0;
             if( ModuleBase::GlobalFunc::SCAN_LINE_BEGIN(ifa, "LATTICE_PARAMETERS") )
             {
-                ifa >> bba >> cba;
-                ModuleBase::GlobalFunc::READ_VALUE(ifa, cosab);
+                ifa >> bba >> cba >> cosab;
+                if (ifa.fail())
+                {
+                    ModuleBase::WARNING_QUIT("unitcell::read_lattice_constant",
+                                             "invalid LATTICE_PARAMETERS for lattice type bacm");
+                }
                 e21 = bba * cosab;
                 e22 = bba * sqrt(1.0-cosab*cosab);
                 cba = cba / 2.0;
@@ -385,8 +393,12 @@ bool read_lattice_constant(std::ifstream& ifa,
             double term = 0.0;
             if( ModuleBase::GlobalFunc::SCAN_LINE_BEGIN(ifa, "LATTICE_PARAMETERS") )
             {
-                ifa >> bba >> cba >> cosab >> cosac;
-                ModuleBase::GlobalFunc::READ_VALUE(ifa, cosbc);
+                ifa >> bba >> cba >> cosab >> cosac >> cosbc;
+                if (ifa.fail())
+                {
+                    ModuleBase::WARNING_QUIT("unitcell::read_lattice_constant",
+                                             "invalid LATTICE_PARAMETERS for lattice type triclinic");
+                }
                 sinab = sqrt(1.0-cosab*cosab);
             }
             latvec.e11 = 1.0;         latvec.e12 = 0.0;         latvec.e13 = 0.0;

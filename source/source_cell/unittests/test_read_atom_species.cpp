@@ -21,7 +21,12 @@
  *   - TrigonalMalformedParamRejected
  *     - a failed cos(alpha) extraction must not silently become the
  *       simple-cubic (alpha = 90 degree) special case
- *   - ValidHexagonalWithParams
+ *   - SmPartiallyMalformedParamsRejected / BacmPartiallyMalformedParamsRejected
+ *     / TriclinicPartiallyMalformedParamsRejected
+ *     - a partially malformed multi-value LATTICE_PARAMETERS line (e.g.
+ *       "2 3 bad") leaves a finite nonzero-volume cell, so the determinant
+ *       check alone is not enough for these branches
+ *   - ValidHexagonalWithParams / ValidSmWithParams
  *     - a hexagonal lattice with c/a given still reads normally
  *   - CubicScNeedsNoParams
  *     - cubic lattice names do not need LATTICE_PARAMETERS
@@ -111,6 +116,61 @@ TEST_F(ReadLatticeValidationTest, ValidHexagonalWithParams)
     std::ifstream ifa(stru);
     EXPECT_TRUE(unitcell::read_lattice_constant(ifa, ofs_running, lat));
     EXPECT_DOUBLE_EQ(lat.latvec.e33, 1.633);
+    EXPECT_GT(lat.latvec.Det(), 0.0);
+    ifa.close();
+}
+
+TEST_F(ReadLatticeValidationTest, SmPartiallyMalformedParamsRejected)
+{
+    // "2 3 bad": the first two values read fine and the failed cosine read
+    // leaves a finite diag(1,2,3)-like cell, which the determinant check
+    // alone would accept
+    const std::string stru =
+        write_stru_file("sm_partial_bad.stru", "LATTICE_CONSTANT\n4.0\nLATTICE_PARAMETERS\n2 3 bad\n");
+    lat.latName = "sm";
+    std::ifstream ifa(stru);
+    testing::internal::CaptureStdout();
+    EXPECT_EXIT(unitcell::read_lattice_constant(ifa, ofs_running, lat), ::testing::ExitedWithCode(1), "");
+    const std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_THAT(output, testing::HasSubstr("invalid LATTICE_PARAMETERS for lattice type sm"));
+    ifa.close();
+}
+
+TEST_F(ReadLatticeValidationTest, BacmPartiallyMalformedParamsRejected)
+{
+    const std::string stru =
+        write_stru_file("bacm_partial_bad.stru", "LATTICE_CONSTANT\n4.0\nLATTICE_PARAMETERS\n2 3 bad\n");
+    lat.latName = "bacm";
+    std::ifstream ifa(stru);
+    testing::internal::CaptureStdout();
+    EXPECT_EXIT(unitcell::read_lattice_constant(ifa, ofs_running, lat), ::testing::ExitedWithCode(1), "");
+    const std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_THAT(output, testing::HasSubstr("invalid LATTICE_PARAMETERS for lattice type bacm"));
+    ifa.close();
+}
+
+TEST_F(ReadLatticeValidationTest, TriclinicPartiallyMalformedParamsRejected)
+{
+    const std::string stru = write_stru_file("triclinic_partial_bad.stru",
+                                             "LATTICE_CONSTANT\n4.0\nLATTICE_PARAMETERS\n0.5 0.5 bad\n");
+    lat.latName = "triclinic";
+    std::ifstream ifa(stru);
+    testing::internal::CaptureStdout();
+    EXPECT_EXIT(unitcell::read_lattice_constant(ifa, ofs_running, lat), ::testing::ExitedWithCode(1), "");
+    const std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_THAT(output, testing::HasSubstr("invalid LATTICE_PARAMETERS for lattice type triclinic"));
+    ifa.close();
+}
+
+TEST_F(ReadLatticeValidationTest, ValidSmWithParams)
+{
+    const std::string stru =
+        write_stru_file("sm_valid.stru", "LATTICE_CONSTANT\n4.0\nLATTICE_PARAMETERS\n2 3 0.5\n");
+    lat.latName = "sm";
+    std::ifstream ifa(stru);
+    EXPECT_TRUE(unitcell::read_lattice_constant(ifa, ofs_running, lat));
+    EXPECT_DOUBLE_EQ(lat.latvec.e21, 2.0 * 0.5);
+    EXPECT_DOUBLE_EQ(lat.latvec.e33, 3.0);
     EXPECT_GT(lat.latvec.Det(), 0.0);
     ifa.close();
 }
