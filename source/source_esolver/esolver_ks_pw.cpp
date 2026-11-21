@@ -165,6 +165,8 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
     ModuleBase::TITLE("ESolver_KS_PW", "before_scf");
     ModuleBase::timer::start("ESolver_KS_PW", "before_scf");
 
+    this->istep_ = istep;
+
     ESolver_KS::before_scf(ucell, istep);
 
     //! Init variables (once the cell has changed)
@@ -572,6 +574,7 @@ void ESolver_KS_PW<T, Device>::after_all_runners(BaseCell& basecell)
                                         this->ppcell,
                                         this->solvent,
                                         this->Pgrid,
+                                        this->istep_,
                                         *this->inp_,
                                         GlobalV::ofs_running);
 

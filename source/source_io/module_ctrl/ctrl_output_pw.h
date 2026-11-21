@@ -55,6 +55,7 @@ void ctrl_runner_pw(UnitCell& ucell,
                     pseudopot_cell_vnl& ppcell,
                     surchem& solvent,
                     Parallel_Grid& para_grid,
+                    const int istep,
                     const Input_para& inp,
                     std::ofstream& ofs_running);
 

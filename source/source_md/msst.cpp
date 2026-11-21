@@ -98,7 +98,7 @@ void MSST::first_half(std::ofstream& ofs)
     old_v.resize(mdcell.owned_atoms().size());
     for (int i = 0; i < mdcell.owned_atoms().size(); ++i)
     {
-        old_v[static_cast<std::size_t>(i)] = mdcell.owned_atoms()[static_cast<std::size_t>(i)].vel;
+        old_v[i] = mdcell.owned_atoms()[i].vel;
     }
 
     /// propagate velocity sum 1/2 step by temporarily propagating the velocities
@@ -109,7 +109,7 @@ void MSST::first_half(std::ofstream& ofs)
     /// reset the velocities
     for (int i = 0; i < mdcell.owned_atoms().size(); ++i)
     {
-        mdcell.owned_atoms()[static_cast<std::size_t>(i)].vel = old_v[static_cast<std::size_t>(i)];
+        mdcell.owned_atoms()[i].vel = old_v[i];
     }
 
     /// propagate velocities 1/2 step using the new velocity sum
@@ -266,7 +266,8 @@ void MSST::rescale(std::ofstream& ofs, const double& volume)
     latvec.e11 *= dilation[0];
     latvec.e22 *= dilation[1];
     latvec.e33 *= dilation[2];
-    mdcell.set_lattice_vectors(latvec);
+    const double lat0 = mdcell.lat0();
+    mdcell.set_lattice_geometry(latvec, lat0);
     mdcell.refresh_cart_from_frac();
 
     /// rescale velocity

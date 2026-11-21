@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import math
+import re
 import sys
 
 usage = '''
@@ -67,6 +68,53 @@ def is_two_data_diff(data1,data2,epsilon,compareAbsoluteDiff):
         if abs(data1-data2)/max(abs(data1),abs(data2)) > epsilon: return True
     return False
 
+# Per-frame provenance comments carry a runtime-dependent timestamp, so they
+# cannot live in reference files. They are dropped before comparison.
+PROVENANCE_PREFIXES = (
+    "# ABACUS version:",
+    "# Written at",
+)
+INLINE_PROVENANCE_MARKERS = ("# ABACUS version:", "# Written at")
+
+# Older releases wrote bare "Ionic_Step N", compact "STEP: N" or the reversed
+# "N     # Ionic_Step"; the unified spelling is "# Ionic_Step N". All of them
+# are mapped to one canonical form so old and new reference files compare.
+STEP_PATTERNS = (
+    re.compile(r"^\s*(?:#\s*)?Ionic_Step\s+(\d+)\s*$"),
+    re.compile(r"^\s*STEP:\s*(\d+)\s*$"),
+    re.compile(r"^\s*(\d+)\s*#\s*Ionic_Step\s*$"),
+)
+
+
+def strip_provenance(line):
+    """Return the comparable content of one line, or None to drop it."""
+    if line.strip().startswith(PROVENANCE_PREFIXES):
+        return None
+    result = line
+    for marker in INLINE_PROVENANCE_MARKERS:
+        index = result.find(marker)
+        if index >= 0:
+            result = result[:index]
+    return result.rstrip()
+
+
+def canonical_step(line):
+    for pattern in STEP_PATTERNS:
+        match = pattern.match(line)
+        if match:
+            return "Ionic_Step " + match.group(1)
+    return line
+
+
+def normalize_lines(lines):
+    normalized = []
+    for line in lines:
+        stripped = strip_provenance(line)
+        if stripped is None:
+            continue
+        normalized.append(canonical_step(stripped))
+    return normalized
+
 def ReadFile(file1,lines):
     # Open the path directly instead of pre-checking with os.path.isfile,
     # so that non-regular files such as /dev/fd/<n> pipes produced by bash
@@ -114,6 +162,8 @@ if __name__ == "__main__":
     lines2 = []
     ReadFile(file1,lines1)
     ReadFile(file2,lines2)
+    lines1 = normalize_lines(lines1)
+    lines2 = normalize_lines(lines2)
    
     for i in range(min(len(lines1),len(lines2))):
         if lines1[i].strip() == lines2[i].strip():continue

@@ -7,11 +7,13 @@
 #include <string>
 
 class Parallel_Orbitals;
+class UnitCell;
 
 namespace ModuleIO
 {
 void save_dH_sparse(const int& istep,
                     const Parallel_Orbitals& pv,
+                    const UnitCell* ucell,
                     LCAO_HS_Arrays& HS_Arrays,
                     const double& sparse_thr,
                     const bool& binary,

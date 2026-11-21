@@ -254,6 +254,7 @@ OBJS_CELL=atom_pseudo.o\
     cal_ux.o\
     mdcell_reader.o\
     mdcell.o\
+    mdcell_adapter.o\
     dom_core.o\
     dom_ghost.o\
     dom_migrate.o\
@@ -574,10 +575,11 @@ OBJS_MD=fire.o\
     module_snap/snap_derivative.o\
     module_snap/snap_model.o\
     module_snap/snap_cg.o\
-    module_snap/snap_potential.o\
-    module_lj/lj.o\
-    module_dp/dp.o\
-    module_nep/nep_potential.o\
+    module_snap/snap_forcefield.o\
+    module_lj/lj_forcefield.o\
+    module_dp/dp_forcefield.o\
+    module_dp/dp_aparam.o\
+    module_nep/nep_forcefield.o\
     verlet.o\
 
 OBJS_NEIGHBOR=sltk_atom.o\
@@ -792,6 +794,7 @@ OBJS_IO=module_parameter/input_conv.o\
     td_efield_io.o\
     td_vecpot_io.o\
     module_chgpot/write_libxc_r.o\
+    module_chgpot/libxc_r_suffix.o\
     module_chgpot/get_pchg_pw.o\
     module_output/output_log.o\
     module_hs/output_mat_sparse.o\
@@ -807,6 +810,7 @@ OBJS_IO=module_parameter/input_conv.o\
     init_info.o\
     output_info.o\
     parse_args.o\
+    parse_command_line.o\
     module_parameter/availability.o\
     module_parameter/availability_validator.o\
     module_parameter/input_domain.o\
@@ -853,6 +857,7 @@ OBJS_IO_LCAO=module_hs/pos_op_mat.o\
       module_hs/dhs_sparse_writer.o\
       module_hs/lat_r_csr.o\
       module_hs/hsk_writer.o\
+      module_hs/dense_text_body.o\
       module_hs/hsr_writer.o\
       module_hs/hsr_legacy.o\
       module_dm/write_dmr.o\

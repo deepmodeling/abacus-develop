@@ -34,11 +34,11 @@ class IonsMoveCGTest : public ::testing::Test
     {
         // Clean up after each test
     }
-    void setupucell(UnitCell& ucell)
+    void setupucell(UnitCell &ucell)
     {
         for (int it = 0; it < ucell.ntype; it++)
         {
-            Atom* atom = &ucell.atoms[it];
+            Atom *atom = &ucell.atoms[it];
             atom->label = "test";
             for (int ia = 0; ia < atom->na; ia++)
             {
@@ -59,26 +59,11 @@ class IonsMoveCGTest : public ::testing::Test
     // Friendship is not inherited: a TEST_F body lives in a class derived from
     // this fixture, so the internals of Ions_Move_CG (which friends the fixture
     // itself) are reached through these forwarders.
-    const std::vector<double>& get_pos0() const
-    {
-        return im_cg.pos0;
-    }
-    const std::vector<double>& get_grad0() const
-    {
-        return im_cg.grad0;
-    }
-    const std::vector<double>& get_cg_grad0() const
-    {
-        return im_cg.cg_grad0;
-    }
-    const std::vector<double>& get_move0() const
-    {
-        return im_cg.move0;
-    }
-    void set_move0(const int i, const double value)
-    {
-        im_cg.move0[i] = value;
-    }
+    const std::vector<double> &get_pos0() const { return im_cg.pos0; }
+    const std::vector<double> &get_grad0() const { return im_cg.grad0; }
+    const std::vector<double> &get_cg_grad0() const { return im_cg.cg_grad0; }
+    const std::vector<double> &get_move0() const { return im_cg.move0; }
+    void set_move0(const int i, const double value) { im_cg.move0[i] = value; }
 };
 
 // Test whether the allocate() function can correctly allocate memory space

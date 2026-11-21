@@ -19,8 +19,8 @@
  */
 namespace Ions_Move_Basic
 {
-static int& dim = Relax_Data::dim;                      ///< Dimension of free variables (3 * number of atoms)
-static double& largest_grad = Relax_Data::largest_grad; ///< Largest gradient component
+static int &dim = Relax_Data::dim;                      ///< Dimension of free variables (3 * number of atoms)
+static double &largest_grad = Relax_Data::largest_grad; ///< Largest gradient component
 
 // Ions-specific parameters (not shared with lattice change)
 extern double trust_radius;     ///< Current trust radius
@@ -38,11 +38,12 @@ extern double best_xxx;         ///< Last step length from CG, used as BFGS init
  * @param grad Output gradient array (dimension: dim)
  * @param ofs Output stream for logging
  */
-void setup_gradient(const UnitCell& ucell,
-                    const ModuleBase::matrix& force,
-                    double* pos,
-                    double* grad,
-                    std::ofstream& ofs);
+void setup_gradient(
+    const UnitCell &ucell,
+    const ModuleBase::matrix &force,
+    double *pos,
+    double *grad,
+    std::ofstream &ofs);
 
 /**
  * @brief Move atoms according to displacement vector.
@@ -52,7 +53,12 @@ void setup_gradient(const UnitCell& ucell,
  * @param ofs Output stream for logging
  * @param test_relax_method Verbosity level for relaxation debug output
  */
-void move_atoms(UnitCell& ucell, double* move, double* pos, std::ofstream& ofs, const int test_relax_method);
+void move_atoms(
+    UnitCell &ucell,
+    double *move,
+    double *pos,
+    std::ofstream &ofs,
+    const int test_relax_method);
 
 /**
  * @brief Check convergence based on gradient threshold.
@@ -67,15 +73,16 @@ void move_atoms(UnitCell& ucell, double* move, double* pos, std::ofstream& ofs, 
  * @param test_relax_method Verbosity level for relaxation debug output
  * @return true if converged, false otherwise
  */
-bool check_converged(const UnitCell& ucell,
-                     const double* grad,
-                     int& update_iter,
-                     std::ofstream& ofs,
-                     std::vector<double>& etot_info,
-                     const double& force_thr,
-                     const double& force_thr_ev,
-                     const std::string& out_level,
-                     const int test_relax_method);
+bool check_converged(
+    const UnitCell &ucell,
+    const double *grad,
+    int &update_iter,
+    std::ofstream &ofs,
+    std::vector<double> &etot_info,
+    const double &force_thr,
+    const double &force_thr_ev,
+    const std::string &out_level,
+    const int test_relax_method);
 
 /**
  * @brief Terminate geometry optimization and output results.
@@ -85,7 +92,12 @@ bool check_converged(const UnitCell& ucell,
  * @param istep Current ionic step index
  * @param ofs Output stream for logging
  */
-void terminate(const bool converged, const int update_iter, const UnitCell& ucell, const int istep, std::ofstream& ofs);
+void terminate(
+    const bool converged,
+    const int update_iter,
+    const UnitCell &ucell,
+    const int istep,
+    std::ofstream &ofs);
 
 /**
  * @brief Update energy values and compute energy difference.
@@ -94,7 +106,7 @@ void terminate(const bool converged, const int update_iter, const UnitCell& ucel
  * @param istep Current ionic step index
  * @param etot_info Energy information array [etot, etot_p, ediff]
  */
-void setup_etot(const double& energy_in, const int istep, std::vector<double>& etot_info);
+void setup_etot(const double &energy_in, const int istep, std::vector<double> &etot_info);
 
 /**
  * @brief Compute dot product of two vectors.
@@ -103,7 +115,7 @@ void setup_etot(const double& energy_in, const int istep, std::vector<double>& e
  * @param dim_in Dimension of vectors
  * @return Dot product value
  */
-double dot_func(const double* a, const double* b, const int& dim_in);
+double dot_func(const double *a, const double *b, const int &dim_in);
 
 /**
  * @brief Third-order polynomial interpolation for line search.

@@ -485,6 +485,7 @@ std::string ReadInput::prepare_input(Parameter& param)
     this->normalize_hs_output_options(param);
     this->normalize_occ_mat_options(param);
     this->normalize_out_eband_alias(param);
+    this->normalize_td_output_frequency(param);
 
     // The MD driver writes ABACUS STRU frames only, and the restart logic reads
     // them back, so CIF output (out_stru = 2) is not available for MD. Reject it
@@ -492,6 +493,33 @@ std::string ReadInput::prepare_input(Parameter& param)
     if (param.input.calculation == "md" && param.input.out_stru == 2)
     {
         errors += "Invalid INPUT parameter 'out_stru': value 2 (CIF) is not supported for calculation = md; use 0 or 1.\n";
+    }
+    // The CSR angular-momentum writer indexes the scalar real-harmonic basis.
+    // In nspin = 4 the spinor basis doubles nlocal and uses a different
+    // magnetic-quantum-number ordering, so only the spin-up block could be
+    // filled; reject the request before the calculation starts.
+    if (param.input.nspin == 4 && param.input.out_mat_l[0] != 0)
+    {
+        errors += "Invalid INPUT parameter 'out_mat_l': nspin = 4 is not supported because only the scalar "
+                  "(npol = 1) angular-momentum block can be written; set out_mat_l to 0.\n";
+    }
+
+    // The dense text body writer asserts a positive precision. These checks run
+    // on rank 0 inside prepare_input and the accumulated errors are broadcast
+    // to every rank before aborting, so the message must be returned here
+    // rather than raised with WARNING_QUIT (which would leave the other ranks
+    // blocked in the broadcast).
+    if (param.input.out_dmk[1] <= 0)
+    {
+        errors += "Invalid INPUT parameter 'out_dmk': precision must be a positive integer.\n";
+    }
+    if (param.input.out_hsk[1] <= 0)
+    {
+        errors += "Invalid INPUT parameter 'out_hsk': precision must be a positive integer.\n";
+    }
+    if (param.input.out_mat_tk[1] <= 0)
+    {
+        errors += "Invalid INPUT parameter 'out_mat_tk': precision must be a positive integer.\n";
     }
 
     // Snapshot typed effective values once for shared domain and dependency checks.
@@ -662,6 +690,40 @@ void ReadInput::normalize_out_eband_alias(Parameter& param)
     else if (out_eband_terms_is_read)
     {
         param.input.out_eband = param.input.out_eband_terms_compat;
+    }
+}
+
+void ReadInput::normalize_td_output_frequency(Parameter& param)
+{
+    const auto item_is_read = [this](const std::string& label) {
+        const auto item = std::find_if(
+            this->input_lists.begin(),
+            this->input_lists.end(),
+            [&label](const std::pair<std::string, Input_Item>& entry) { return entry.first == label; });
+        return item != this->input_lists.end() && item->second.is_read();
+    };
+
+    // out_freq_td is the legacy RT-TDDFT spelling of out_freq_ion. Both counted
+    // completed electronic evolution steps, so the value can be forwarded
+    // unchanged. The canonical out_freq_ion wins when both are present.
+    if (!item_is_read("out_freq_td"))
+    {
+        return;
+    }
+    if (param.input.esolver_type != "tddft")
+    {
+        ModuleBase::WARNING("ReadInput", "out_freq_td is only available in RT-TDDFT and is ignored");
+        return;
+    }
+    ModuleBase::WARNING("ReadInput", "out_freq_td is deprecated; use out_freq_ion instead");
+    if (item_is_read("out_freq_ion"))
+    {
+        ModuleBase::WARNING("ReadInput", "both out_freq_ion and out_freq_td are set; out_freq_ion takes precedence");
+        return;
+    }
+    if (param.input.out_freq_td_compat > 0)
+    {
+        param.input.out_freq_ion = param.input.out_freq_td_compat;
     }
 }
 

@@ -71,6 +71,15 @@ class ESolver_KS_LCAO : public ESolver_KS
     /// written once at the end of a run.
     int istep_ = 0;
 
+    /// @brief Whether the current after_scf() call ends the final electronic step of the run.
+    /// @details Non-RT solvers perform one electronic calculation per ionic step, so
+    /// the default stays true and the final-snapshot override keeps covering every
+    /// call of the final ionic step. RT-TDDFT updates this flag before each
+    /// electronic substep, so the override in ctrl_scf_lcao applies only to the
+    /// last substep of the final ionic step instead of bypassing out_freq_ion for
+    /// the whole final ionic step.
+    bool final_electronic_step_ = true;
+
     //! Prepare charge mixing and Hamiltonian updates for an SCF iteration.
     virtual void iter_init(UnitCell& ucell, const int istep, const int iter) override;
 

@@ -10,7 +10,7 @@
 class IpiSocketClosed : public std::runtime_error
 {
   public:
-    explicit IpiSocketClosed(const std::string& message);
+    explicit IpiSocketClosed(const std::string &message);
 };
 
 class IpiSocket
@@ -19,14 +19,14 @@ class IpiSocket
     IpiSocket() = default;
     ~IpiSocket();
 
-    IpiSocket(const IpiSocket&) = delete;
-    IpiSocket& operator=(const IpiSocket&) = delete;
+    IpiSocket(const IpiSocket &) = delete;
+    IpiSocket &operator=(const IpiSocket &) = delete;
 
-    void connect(const std::string& address);
+    void connect(const std::string &address);
     void close();
 
     std::string read_header();
-    void write_header(const std::string& header);
+    void write_header(const std::string &header);
 
     std::int32_t read_int32();
     void write_int32(std::int32_t value);
@@ -35,15 +35,15 @@ class IpiSocket
     void write_double(double value);
 
     std::vector<double> read_doubles(std::size_t n);
-    void write_doubles(const std::vector<double>& values);
+    void write_doubles(const std::vector<double> &values);
     std::string read_string(std::size_t nbytes);
-    void write_string(const std::string& value);
+    void write_string(const std::string &value);
 
   private:
     int fd_ = -1;
 
-    void read_exact(void* data, std::size_t nbytes);
-    void write_exact(const void* data, std::size_t nbytes);
+    void read_exact(void *data, std::size_t nbytes);
+    void write_exact(const void *data, std::size_t nbytes);
 };
 
 #endif

@@ -41,7 +41,7 @@ void Langevin::first_half(std::ofstream& ofs)
 
     for (int i = 0; i < mdcell.owned_atoms().size(); ++i)
     {
-        LocalAtom& atom = mdcell.owned_atoms()[static_cast<std::size_t>(i)];
+        LocalAtom& atom = mdcell.owned_atoms()[i];
         for (int k = 0; k < 3; ++k)
         {
             if (atom.mbl[k]) atom.vel[k] += 0.5 * total_force[i][k] * md_dt / atom.mass;
@@ -62,7 +62,7 @@ void Langevin::second_half()
     post_force();
     for (int i = 0; i < mdcell.owned_atoms().size(); ++i)
     {
-        LocalAtom& atom = mdcell.owned_atoms()[static_cast<std::size_t>(i)];
+        LocalAtom& atom = mdcell.owned_atoms()[i];
         for (int k = 0; k < 3; ++k)
         {
             if (atom.mbl[k]) atom.vel[k] += 0.5 * total_force[i][k] * md_dt / atom.mass;
@@ -107,7 +107,7 @@ void Langevin::post_force()
         {
             random_value[k] = static_cast<double>(std::rand()) / RAND_MAX - 0.5;
         }
-        const LocalAtom& atom = mdcell.owned_atoms()[static_cast<std::size_t>(i)];
+        const LocalAtom& atom = mdcell.owned_atoms()[i];
         ModuleBase::Vector3<double> fictitious_force = -atom.mass * atom.vel / md_damp;
         for (int j = 0; j < 3; ++j)
         {

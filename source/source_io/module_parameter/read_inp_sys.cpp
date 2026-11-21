@@ -128,13 +128,13 @@ void ReadInput::item_system()
             }
             for (int i = 0; i < 3; ++i)
             {
-                para.input.cell_replica[static_cast<std::size_t>(i)] = std::stoi(item.str_values[static_cast<std::size_t>(i)]);
+                para.input.cell_replica[i] = std::stoi(item.str_values[i]);
             }
         };
         item.check_value = [](const Input_Item&, const Parameter& para) {
             for (int i = 0; i < 3; ++i)
             {
-                if (para.input.cell_replica[static_cast<std::size_t>(i)] <= 0)
+                if (para.input.cell_replica[i] <= 0)
                 {
                     ModuleBase::WARNING_QUIT("ReadInput", "cell_replica values must all be positive.");
                 }
@@ -780,7 +780,7 @@ For `basis_type=lcao_in_pw`, `init_wfc` is automatically set to `nao`.
 * atomic: the density is starting from the summation of the atomic density of single atoms.
 * file: the density will be read in from a binary file charge-density.dat first. If it does not exist, the charge density will be read in from cube files.
 * wfc: the density will be calculated by wavefunctions and occupations.
-* dm: the density will be calculated by real space density matrix(DMR) of LCAO base.
+* dm: the density will be calculated from the LCAO real-space density matrix (DMR) CSR files. If no DMR file exists, the dense k-space density matrix (DM(k)) files written by out_dmk are read instead and transformed to DMR.
 * dm_no_renormalize: same as dm, but the charge density is not renormalized to the number of electrons.
 * hr: the real space Hamiltonian matrix(HR) will be read in from file hrs1_nao.csr in directory read_file_dir.
 * auto: Abacus first attempts to read the density from a file; if not found, it defaults to using atomic density.)";

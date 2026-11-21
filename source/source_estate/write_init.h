@@ -3,7 +3,7 @@
 // to cube files in real space. It is part of the module_io package.
 //
 // Output files are named according to the following convention:
-//   - Frequency is out_freq_td for RT-TDDFT and out_freq_ion otherwise.
+//   - Frequency is out_freq_ion; in RT-TDDFT it counts electronic evolution steps.
 //   - Frequency = 0: chg_ini.cube/pot_ini.cube, chgs1_ini.cube/chgs2_ini.cube
 //   - Frequency > 0: chgg{#}_ini.cube/potg{#}_ini.cube, chgs{#}g{#}_ini.cube
 //   - File indices start from 1 (istep + 1); RT-TDDFT uses electronic steps.
@@ -40,7 +40,7 @@ std::string gen_ini_filename(const std::string& prefix,
 
 // Write initial charge density to cube file in real space.
 // Triggered when inp.out_chg[0] == 2.
-// Use out_freq_td and an electronic istep for RT-TDDFT, out_freq_ion and an ionic istep otherwise.
+// Use out_freq_ion; in RT-TDDFT istep is the cumulative electronic step, otherwise the ionic step.
 // Zero frequency overwrites the same file; positive frequency selects istep % frequency == 0.
 // File naming and one-based indices follow the convention above.
 void write_chg_init(const UnitCell& ucell,
@@ -55,7 +55,7 @@ void write_chg_init(const UnitCell& ucell,
 
 // Write initial effective potential to cube file in real space.
 // Triggered when inp.out_pot[0] == 3.
-// Use out_freq_td and an electronic istep for RT-TDDFT, out_freq_ion and an ionic istep otherwise.
+// Use out_freq_ion; in RT-TDDFT istep is the cumulative electronic step, otherwise the ionic step.
 // Zero frequency overwrites the same file; positive frequency selects istep % frequency == 0.
 // File naming and one-based indices follow the convention above.
 void write_pot_init(const UnitCell& ucell,

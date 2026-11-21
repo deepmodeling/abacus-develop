@@ -49,7 +49,7 @@ sum_file() {
 get_input_key_value() {
   key=$1
   inputf=$2
-  value=$(awk -v key=$key '{if($1==key) a=$2} END {print a}' $inputf)
+  value=$(awk -v key=$key 'BEGIN{key=toupper(key)} {if(toupper($1)==key) a=$2} END {print a}' $inputf)
   echo $value
 }
 

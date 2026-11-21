@@ -28,14 +28,11 @@ namespace
 {
 constexpr std::size_t kIpiHeaderLen = 12;
 
-std::string errno_message(const std::string& prefix)
-{
-    return prefix + ": " + std::strerror(errno);
-}
+std::string errno_message(const std::string &prefix) { return prefix + ": " + std::strerror(errno); }
 
-void send_all(const int fd, const void* data, const std::size_t nbytes)
+void send_all(const int fd, const void *data, const std::size_t nbytes)
 {
-    const char* cursor = static_cast<const char*>(data);
+    const char *cursor = static_cast<const char *>(data);
     std::size_t done = 0;
     while (done < nbytes)
     {
@@ -62,12 +59,12 @@ void send_all(const int fd, const void* data, const std::size_t nbytes)
 }
 
 template <typename T>
-void send_value(const int fd, const T& value)
+void send_value(const int fd, const T &value)
 {
     send_all(fd, &value, sizeof(value));
 }
 
-void send_header(const int fd, const std::string& header)
+void send_header(const int fd, const std::string &header)
 {
     std::string padded = header;
     padded.resize(kIpiHeaderLen, ' ');
@@ -81,7 +78,7 @@ bool try_send_status(const int fd)
         send_header(fd, "STATUS");
         return true;
     }
-    catch (const std::runtime_error&)
+    catch (const std::runtime_error &)
     {
         if (errno == EPIPE || errno == ECONNRESET)
         {
@@ -131,7 +128,7 @@ class UnixSocketServer
     UnixSocketServer()
     {
         char dir_template[] = "/tmp/abacus_socket_driver_test_XXXXXX";
-        char* made_dir = ::mkdtemp(dir_template);
+        char *made_dir = ::mkdtemp(dir_template);
         if (made_dir == nullptr)
         {
             throw std::runtime_error(errno_message("mkdtemp failed"));
@@ -149,7 +146,7 @@ class UnixSocketServer
         std::memset(&address, 0, sizeof(address));
         address.sun_family = AF_UNIX;
         std::strncpy(address.sun_path, path_.c_str(), sizeof(address.sun_path) - 1);
-        if (::bind(listen_fd_, reinterpret_cast<sockaddr*>(&address), sizeof(address)) != 0)
+        if (::bind(listen_fd_, reinterpret_cast<sockaddr *>(&address), sizeof(address)) != 0)
         {
             throw std::runtime_error(errno_message("bind failed"));
         }
@@ -175,13 +172,10 @@ class UnixSocketServer
         }
     }
 
-    UnixSocketServer(const UnixSocketServer&) = delete;
-    UnixSocketServer& operator=(const UnixSocketServer&) = delete;
+    UnixSocketServer(const UnixSocketServer &) = delete;
+    UnixSocketServer &operator=(const UnixSocketServer &) = delete;
 
-    std::string address() const
-    {
-        return path_ + ":UNIX";
-    }
+    std::string address() const { return path_ + ":UNIX"; }
 
     int accept_once() const
     {
@@ -202,36 +196,27 @@ class UnixSocketServer
 class FakeESolver : public ModuleESolver::ESolver
 {
   public:
-    explicit FakeESolver(const bool converged) : converged_(converged)
-    {
-    }
+    explicit FakeESolver(const bool converged) : converged_(converged) {}
 
-    void before_all_runners(BaseCell&, const Input_para&) override
-    {
-    }
+    void before_all_runners(BaseCell &, const Input_para &) override {}
 
-    void runner(BaseCell& cell, const int step) override
+    void runner(BaseCell &cell, const int step) override
     {
-        position_ = dynamic_cast<UnitCell&>(cell).atoms[0].tau[0].x;
+        position_ = dynamic_cast<UnitCell &>(cell).atoms[0].tau[0].x;
         this->conv_esolver = converged_ && step == 0;
     }
 
-    void after_all_runners(BaseCell&) override
-    {
-    }
+    void after_all_runners(BaseCell &) override {}
 
-    double cal_energy() override
-    {
-        return 4.0 + position_;
-    }
+    double cal_energy() override { return 4.0 + position_; }
 
-    void cal_force(BaseCell& cell, ModuleBase::matrix& force) override
+    void cal_force(BaseCell &cell, ModuleBase::matrix &force) override
     {
-        force.create(dynamic_cast<UnitCell&>(cell).nat, 3);
+        force.create(dynamic_cast<UnitCell &>(cell).nat, 3);
         force(0, 0) = 4.0 + 2.0 * position_;
     }
 
-    void cal_stress(BaseCell&, ModuleBase::matrix& stress) override
+    void cal_stress(BaseCell &, ModuleBase::matrix &stress) override
     {
         stress.create(3, 3);
         stress(0, 0) = 2.0 + 3.0 * position_;
@@ -261,7 +246,7 @@ struct ForceResponse
     std::string extra;
 };
 
-void initialize_one_atom_cell(UnitCell& ucell)
+void initialize_one_atom_cell(UnitCell &ucell)
 {
     ucell.lat0 = 1.0;
     ucell.latvec.Identity();
@@ -297,9 +282,9 @@ void send_fixed_cell_frame(const int fd)
     send_positions(fd, 0.0);
 }
 
-void read_all(const int fd, void* data, const std::size_t nbytes)
+void read_all(const int fd, void *data, const std::size_t nbytes)
 {
-    char* cursor = static_cast<char*>(data);
+    char *cursor = static_cast<char *>(data);
     std::size_t done = 0;
     while (done < nbytes)
     {
@@ -379,10 +364,11 @@ std::string read_pipe(const int fd)
     return output;
 }
 
-DriverResult run_driver_frame(const bool converged,
-                              const bool cal_force,
-                              const bool cal_stress,
-                              const std::function<void(int)>& peer_action)
+DriverResult run_driver_frame(
+    const bool converged,
+    const bool cal_force,
+    const bool cal_stress,
+    const std::function<void(int)> &peer_action)
 {
     UnixSocketServer server;
     int output_pipe[2];
@@ -472,10 +458,13 @@ DriverResult run_driver_frame(const bool converged,
 TEST(SocketDriverTest, NonconvergedFrameIsPublishedWithMetadata)
 {
     ForceResponse response;
-    const DriverResult result = run_driver_frame(false, true, false, [&](const int fd) {
-        send_header(fd, "GETFORCE");
-        response = read_force_response(fd);
-    });
+    const DriverResult result = run_driver_frame(
+        false, true, false,
+        [&](const int fd)
+        {
+            send_header(fd, "GETFORCE");
+            response = read_force_response(fd);
+        });
 
     EXPECT_EQ("FORCEREADY", response.header);
     EXPECT_EQ(0, result.exit_code);
@@ -485,10 +474,13 @@ TEST(SocketDriverTest, NonconvergedFrameIsPublishedWithMetadata)
 TEST(SocketDriverTest, EnergyOnlyFrameMarksForceAndStressAbsent)
 {
     ForceResponse response;
-    const DriverResult result = run_driver_frame(true, false, false, [&](const int fd) {
-        send_header(fd, "GETFORCE");
-        response = read_force_response(fd);
-    });
+    const DriverResult result = run_driver_frame(
+        true, false, false,
+        [&](const int fd)
+        {
+            send_header(fd, "GETFORCE");
+            response = read_force_response(fd);
+        });
 
     EXPECT_EQ("FORCEREADY", response.header);
     EXPECT_EQ(0, result.exit_code);
@@ -502,10 +494,13 @@ TEST(SocketDriverTest, EnergyOnlyFrameMarksForceAndStressAbsent)
 TEST(SocketDriverTest, EnergyAndStressFrameDoesNotAdvertiseForce)
 {
     ForceResponse response;
-    const DriverResult result = run_driver_frame(true, false, true, [&](const int fd) {
-        send_header(fd, "GETFORCE");
-        response = read_force_response(fd);
-    });
+    const DriverResult result = run_driver_frame(
+        true, false, true,
+        [&](const int fd)
+        {
+            send_header(fd, "GETFORCE");
+            response = read_force_response(fd);
+        });
 
     EXPECT_EQ("FORCEREADY", response.header);
     EXPECT_EQ(0, result.exit_code);
@@ -517,10 +512,13 @@ TEST(SocketDriverTest, EnergyAndStressFrameDoesNotAdvertiseForce)
 TEST(SocketDriverTest, EnergyAndForceFrameAdvertisesOnlyForce)
 {
     ForceResponse response;
-    const DriverResult result = run_driver_frame(true, true, false, [&](const int fd) {
-        send_header(fd, "GETFORCE");
-        response = read_force_response(fd);
-    });
+    const DriverResult result = run_driver_frame(
+        true, true, false,
+        [&](const int fd)
+        {
+            send_header(fd, "GETFORCE");
+            response = read_force_response(fd);
+        });
 
     EXPECT_EQ("FORCEREADY", response.header);
     EXPECT_EQ(0, result.exit_code);
@@ -533,10 +531,13 @@ TEST(SocketDriverTest, EnergyAndForceFrameAdvertisesOnlyForce)
 TEST(SocketDriverTest, EnergyForceAndStressFrameAdvertisesBothDerivatives)
 {
     ForceResponse response;
-    const DriverResult result = run_driver_frame(true, true, true, [&](const int fd) {
-        send_header(fd, "GETFORCE");
-        response = read_force_response(fd);
-    });
+    const DriverResult result = run_driver_frame(
+        true, true, true,
+        [&](const int fd)
+        {
+            send_header(fd, "GETFORCE");
+            response = read_force_response(fd);
+        });
 
     EXPECT_EQ("FORCEREADY", response.header);
     EXPECT_EQ(0, result.exit_code);
@@ -549,13 +550,16 @@ TEST(SocketDriverTest, EnergyForceAndStressFrameAdvertisesBothDerivatives)
 TEST(SocketDriverTest, ConsecutiveFramesKeepGeometryResultsAndConvergenceTogether)
 {
     ForceResponse first, second;
-    const DriverResult result = run_driver_frame(true, true, true, [&](const int fd) {
-        send_header(fd, "GETFORCE");
-        first = read_force_response(fd);
-        send_positions(fd, 0.25);
-        send_header(fd, "GETFORCE");
-        second = read_force_response(fd);
-    });
+    const DriverResult result = run_driver_frame(
+        true, true, true,
+        [&](const int fd)
+        {
+            send_header(fd, "GETFORCE");
+            first = read_force_response(fd);
+            send_positions(fd, 0.25);
+            send_header(fd, "GETFORCE");
+            second = read_force_response(fd);
+        });
     EXPECT_EQ(0, result.exit_code);
     EXPECT_DOUBLE_EQ(2.0, first.energy_hartree);
     EXPECT_DOUBLE_EQ(2.125, second.energy_hartree);
@@ -569,29 +573,35 @@ TEST(SocketDriverTest, ConsecutiveFramesKeepGeometryResultsAndConvergenceTogethe
 
 TEST(SocketDriverTest, ConsumedFrameCannotBeReturnedTwice)
 {
-    const DriverResult result = run_driver_frame(true, true, false, [&](const int fd) {
-        send_header(fd, "GETFORCE");
-        read_force_response(fd);
-        send_header(fd, "GETFORCE");
-        EXPECT_EQ("", read_header_or_close(fd));
-    });
+    const DriverResult result = run_driver_frame(
+        true, true, false,
+        [&](const int fd)
+        {
+            send_header(fd, "GETFORCE");
+            read_force_response(fd);
+            send_header(fd, "GETFORCE");
+            EXPECT_EQ("", read_header_or_close(fd));
+        });
     EXPECT_NE(0, result.exit_code);
     EXPECT_THAT(result.diagnostic, testing::HasSubstr("GETFORCE requires HAVEDATA"));
 }
 
 TEST(SocketDriverTest, InvalidNextFrameCannotReturnPreviousResults)
 {
-    const DriverResult result = run_driver_frame(true, true, false, [&](const int fd) {
-        send_header(fd, "GETFORCE");
-        read_force_response(fd);
-        send_positions(fd, std::numeric_limits<double>::quiet_NaN());
-        EXPECT_EQ("", read_header_or_close(fd));
-    });
+    const DriverResult result = run_driver_frame(
+        true, true, false,
+        [&](const int fd)
+        {
+            send_header(fd, "GETFORCE");
+            read_force_response(fd);
+            send_positions(fd, std::numeric_limits<double>::quiet_NaN());
+            EXPECT_EQ("", read_header_or_close(fd));
+        });
     EXPECT_NE(0, result.exit_code);
     EXPECT_THAT(result.diagnostic, testing::HasSubstr("finite"));
 }
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
     MPI_Init(&argc, &argv);
     testing::InitGoogleTest(&argc, argv);

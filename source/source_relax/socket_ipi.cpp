@@ -19,12 +19,9 @@ namespace
 {
 constexpr std::size_t kIpiHeaderLen = 12;
 
-std::string errno_message(const std::string& prefix)
-{
-    return prefix + ": " + std::strerror(errno);
-}
+std::string errno_message(const std::string &prefix) { return prefix + ": " + std::strerror(errno); }
 
-std::string trim_header(const char* data)
+std::string trim_header(const char *data)
 {
     std::string value(data, kIpiHeaderLen);
     while (!value.empty() && value.back() == ' ')
@@ -34,7 +31,7 @@ std::string trim_header(const char* data)
     return value;
 }
 
-std::string padded_header(const std::string& header)
+std::string padded_header(const std::string &header)
 {
     if (header.size() > kIpiHeaderLen)
     {
@@ -55,16 +52,11 @@ std::size_t checked_double_bytes(std::size_t n)
 }
 } // namespace
 
-IpiSocketClosed::IpiSocketClosed(const std::string& message) : std::runtime_error(message)
-{
-}
+IpiSocketClosed::IpiSocketClosed(const std::string &message) : std::runtime_error(message) {}
 
-IpiSocket::~IpiSocket()
-{
-    this->close();
-}
+IpiSocket::~IpiSocket() { this->close(); }
 
-void IpiSocket::connect(const std::string& address)
+void IpiSocket::connect(const std::string &address)
 {
     this->close();
     const std::size_t colon = address.rfind(':');
@@ -91,7 +83,7 @@ void IpiSocket::connect(const std::string& address)
             throw std::runtime_error("UNIX socket path too long: " + host);
         }
         std::strncpy(addr.sun_path, host.c_str(), sizeof(addr.sun_path) - 1);
-        if (::connect(fd_, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) != 0)
+        if (::connect(fd_, reinterpret_cast<sockaddr *>(&addr), sizeof(addr)) != 0)
         {
             const std::string msg = errno_message("failed to connect UNIX i-PI socket " + host);
             this->close();
@@ -105,7 +97,7 @@ void IpiSocket::connect(const std::string& address)
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
 
-    addrinfo* result = nullptr;
+    addrinfo *result = nullptr;
     const int gai = ::getaddrinfo(host.c_str(), service.c_str(), &hints, &result);
     if (gai != 0)
     {
@@ -113,7 +105,7 @@ void IpiSocket::connect(const std::string& address)
     }
 
     std::string last_error;
-    for (addrinfo* rp = result; rp != nullptr; rp = rp->ai_next)
+    for (addrinfo *rp = result; rp != nullptr; rp = rp->ai_next)
     {
         fd_ = ::socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
         if (fd_ < 0)
@@ -174,7 +166,7 @@ std::string IpiSocket::read_header()
     return trim_header(header);
 }
 
-void IpiSocket::write_header(const std::string& header)
+void IpiSocket::write_header(const std::string &header)
 {
     const std::string padded = padded_header(header);
     this->write_exact(padded.data(), padded.size());
@@ -187,10 +179,7 @@ std::int32_t IpiSocket::read_int32()
     return value;
 }
 
-void IpiSocket::write_int32(std::int32_t value)
-{
-    this->write_exact(&value, sizeof(value));
-}
+void IpiSocket::write_int32(std::int32_t value) { this->write_exact(&value, sizeof(value)); }
 
 double IpiSocket::read_double()
 {
@@ -199,10 +188,7 @@ double IpiSocket::read_double()
     return value;
 }
 
-void IpiSocket::write_double(double value)
-{
-    this->write_exact(&value, sizeof(value));
-}
+void IpiSocket::write_double(double value) { this->write_exact(&value, sizeof(value)); }
 
 std::vector<double> IpiSocket::read_doubles(std::size_t n)
 {
@@ -215,7 +201,7 @@ std::vector<double> IpiSocket::read_doubles(std::size_t n)
     return values;
 }
 
-void IpiSocket::write_doubles(const std::vector<double>& values)
+void IpiSocket::write_doubles(const std::vector<double> &values)
 {
     const std::size_t nbytes = checked_double_bytes(values.size());
     if (!values.empty())
@@ -234,7 +220,7 @@ std::string IpiSocket::read_string(std::size_t nbytes)
     return value;
 }
 
-void IpiSocket::write_string(const std::string& value)
+void IpiSocket::write_string(const std::string &value)
 {
     if (!value.empty())
     {
@@ -242,9 +228,9 @@ void IpiSocket::write_string(const std::string& value)
     }
 }
 
-void IpiSocket::read_exact(void* data, std::size_t nbytes)
+void IpiSocket::read_exact(void *data, std::size_t nbytes)
 {
-    char* cursor = static_cast<char*>(data);
+    char *cursor = static_cast<char *>(data);
     std::size_t done = 0;
     while (done < nbytes)
     {
@@ -265,9 +251,9 @@ void IpiSocket::read_exact(void* data, std::size_t nbytes)
     }
 }
 
-void IpiSocket::write_exact(const void* data, std::size_t nbytes)
+void IpiSocket::write_exact(const void *data, std::size_t nbytes)
 {
-    const char* cursor = static_cast<const char*>(data);
+    const char *cursor = static_cast<const char *>(data);
     std::size_t done = 0;
     while (done < nbytes)
     {

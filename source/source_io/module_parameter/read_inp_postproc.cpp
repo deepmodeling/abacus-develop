@@ -453,6 +453,32 @@ void ReadInput::item_postprocess()
         this->add_item(item);
     }
     {
+        Input_Item item("out_wannier_spn");
+        item.annotation = "write Wannier90 spin matrices";
+        item.category = "Berry phase and wannier90 interface";
+        item.type = "Boolean";
+        item.description = "Write <seedname>.spn with the x, y, z Pauli matrix elements. "
+                           "Set spinors=true and spn_formatted=true in the Wannier90 input.";
+        item.default_value = "1 when the output requirements are met, 0 otherwise";
+        item.domain.add_requirement("out_wannier_spn==true",
+                                    "towannier90==true and calculation==nscf and basis_type==lcao "
+                                    "and wannier_method==2 and nspin==4");
+        read_sync_bool(input.out_wannier_spn);
+        item.reset_value = [this](const Input_Item& item, Parameter& para) {
+            if (!item.is_read())
+            {
+                // The basis_type reset has already mapped lcao_in_pw to lcao for Wannier90.
+                const bool lcao = std::any_of(readvalue_items.begin(), readvalue_items.end(), [](const Input_Item* input) {
+                    return input->label == "basis_type" && input->str_values.front() == "lcao";
+                });
+                const auto& inp = para.inp;
+                para.input.out_wannier_spn = inp.towannier90 && inp.calculation == "nscf" && lcao
+                                             && inp.wannier_method == 2 && inp.nspin == 4;
+            }
+        };
+        this->add_item(item);
+    }
+    {
         Input_Item item("out_wannier_unk");
         item.annotation = "output UNK. file or not";
         item.category = "Berry phase and wannier90 interface";

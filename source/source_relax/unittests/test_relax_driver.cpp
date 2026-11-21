@@ -1,8 +1,8 @@
+#include "for_test.h"
 #include "source_cell/cell_tools.h"
 #include "source_cell/print_cell.h"
 #include "source_cell/update_cell.h"
 #include "source_esolver/esolver.h"
-#include "for_test.h"
 #include "source_relax/relax_driver.h"
 #include "source_relax/relax_stru_io.h"
 #include "source_relax/socket_driver.h"
@@ -19,17 +19,16 @@ namespace unitcell
 {
 bool allow_cell_change = false;
 
-bool if_atoms_can_move(const Atom*, const int)
-{
-    return true;
-}
+bool if_atoms_can_move(const Atom *, const int) { return true; }
 
-bool if_cell_can_change(const std::vector<int>&)
-{
-    return allow_cell_change;
-}
+bool if_cell_can_change(const std::vector<int> &) { return allow_cell_change; }
 
-void update_pos_tau(const Lattice& lat, const double* pos, const int ntype, const int nat, Atom* atoms)
+void update_pos_tau(
+    const Lattice &lat,
+    const double *pos,
+    const int ntype,
+    const int nat,
+    Atom *atoms)
 {
     int iat = 0;
     for (int it = 0; it < ntype; ++it)
@@ -46,67 +45,74 @@ void update_pos_tau(const Lattice& lat, const double* pos, const int ntype, cons
     EXPECT_EQ(iat, nat);
 }
 
-void update_pos_taud(const Lattice&, const double*, const int, const int, Atom*)
+void update_pos_taud(
+    const Lattice &,
+    const double *,
+    const int,
+    const int,
+    Atom *)
 {
 }
 
-void setup_cell_after_vc(UnitCell& ucell, std::ofstream&, const int)
+void setup_cell_after_vc(UnitCell &ucell, std::ofstream &, const int)
 {
     ucell.omega = std::abs(ucell.latvec.Det()) * ucell.lat0 * ucell.lat0 * ucell.lat0;
 }
 
-void remake_cell(Lattice&)
-{
-}
+void remake_cell(Lattice &) {}
 
-void print_tau(Atom*, const std::string&, const int, const double, std::ofstream&)
+void print_tau(
+    Atom *,
+    const std::string &,
+    const int,
+    const double,
+    std::ofstream &)
 {
 }
 } // namespace unitcell
 
 namespace ModuleIO
 {
-void print_screen(const int&, const int&, const int&)
-{
-}
+void print_screen(const int &, const int &, const int &) {}
 
-void output_after_relax(const bool, const bool, std::ofstream&)
-{
-}
+void output_after_relax(const bool, const bool, std::ofstream &) {}
 } // namespace ModuleIO
 
 namespace relax_stru_io
 {
-std::string build_stru_header(const int,
-                              const double,
-                              const ModuleBase::matrix&,
-                              const Input_para&,
-                              const bool,
-                              const bool)
+std::string build_stru_header(
+    const int,
+    const double,
+    const ModuleBase::matrix &,
+    const Input_para &,
+    const bool,
+    const bool)
 {
     return std::string();
 }
 
-bool need_orbital(const Input_para&)
-{
-    return false;
-}
+bool need_orbital(const Input_para &) { return false; }
 
-void write_stru(UnitCell&,
-                const Input_para&,
-                const std::string&,
-                const std::string&,
-                const ModuleBase::matrix&,
-                const bool,
-                const bool,
-                const int,
-                const bool,
-                const bool)
+void write_stru(
+    UnitCell &,
+    const Input_para &,
+    const std::string &,
+    const std::string &,
+    const ModuleBase::matrix &,
+    const bool,
+    const bool,
+    const int,
+    const bool,
+    const bool)
 {
 }
 } // namespace relax_stru_io
 
-void Socket_Driver::socket_driver(ModuleESolver::ESolver*, UnitCell&, const Input_para&, std::ofstream&)
+void Socket_Driver::socket_driver(
+    ModuleESolver::ESolver *,
+    UnitCell &,
+    const Input_para &,
+    std::ofstream &)
 {
 }
 
@@ -116,40 +122,33 @@ namespace
 class DriverTestESolver : public ModuleESolver::ESolver
 {
   public:
-    explicit DriverTestESolver(const double force_x) : force_x_(force_x)
-    {
-    }
+    explicit DriverTestESolver(const double force_x) : force_x_(force_x) {}
 
-    void before_all_runners(BaseCell&, const Input_para&) override
-    {
-    }
+    void before_all_runners(BaseCell &, const Input_para &) override {}
 
-    void runner(BaseCell& cell, const int) override
+    void runner(BaseCell &cell, const int) override
     {
         ++runner_count;
         runner_omega = cell.omega();
         runner_latvec_e11 = cell.latvec().e11;
     }
 
-    void after_all_runners(BaseCell& cell) override
+    void after_all_runners(BaseCell &cell) override
     {
         ++after_all_count;
         after_all_omega = cell.omega();
         after_all_latvec_e11 = cell.latvec().e11;
     }
 
-    double cal_energy() override
-    {
-        return 0.0;
-    }
+    double cal_energy() override { return 0.0; }
 
-    void cal_force(BaseCell&, ModuleBase::matrix& force) override
+    void cal_force(BaseCell &, ModuleBase::matrix &force) override
     {
         force.zero_out();
         force(0, 0) = force_x_;
     }
 
-    void cal_stress(BaseCell&, ModuleBase::matrix& stress) override
+    void cal_stress(BaseCell &, ModuleBase::matrix &stress) override
     {
         stress.zero_out();
         stress(0, 0) = stress_x_;
@@ -157,10 +156,7 @@ class DriverTestESolver : public ModuleESolver::ESolver
         stress(2, 2) = stress_x_;
     }
 
-    void set_stress(const double stress_x)
-    {
-        stress_x_ = stress_x;
-    }
+    void set_stress(const double stress_x) { stress_x_ = stress_x; }
 
     int runner_count = 0;
     int after_all_count = 0;
@@ -177,12 +173,9 @@ class DriverTestESolver : public ModuleESolver::ESolver
 class RelaxDriverTest : public ::testing::Test
 {
   protected:
-    void SetUp() override
-    {
-        log_file_ = testing::TempDir() + "running.log";
-    }
+    void SetUp() override { log_file_ = testing::TempDir() + "running.log"; }
 
-    static void make_cell(UnitCell& ucell)
+    static void make_cell(UnitCell &ucell)
     {
         ucell.ntype = 1;
         ucell.nat = 1;
