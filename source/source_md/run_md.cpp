@@ -123,9 +123,57 @@ void md_line(MDCell& mdcell,
         }
     }
 
+    /// Write one STRU frame for `current_step`. Cadence frames and the final
+    /// frame share the same naming/append rules, so both call sites use this
+    /// lambda. `current_step == 0` marks the first frame of a fresh run, which
+    /// truncates the fixed-name file instead of appending to it.
+    auto write_stru_frame = [&](const int current_step) {
+        if (mdcell.has_backing_unitcell())
+        {
+            const bool positions_updated = false;
+            mdcell.sync_backing_unitcell(positions_updated);
+        }
+        // Mode-2 STRUC/ subdirectory is created lazily at write time.
+        ModuleBase::ensure_directory(stru_out_dir);
+        const int stru_step = current_step + 1;
+        // File-name selection and append/truncate are two independent
+        // decisions. The file name is fixed to "STRU" whenever mode 1
+        // accumulation is allowed (and no legacy STRU/ directory is in
+        // the way); modes 0/2 keep the numbered STRU{stru_step} files.
+        // Whether to append depends on whether this is the very first
+        // step of a fresh (non-restart) run: a fresh first frame
+        // truncates the fixed-name file so it does not keep frames
+        // from a previous run, while later steps and restarted runs
+        // append one frame each, introduced by a one-based
+        // "# MD step N" comment line.
+        const bool use_fixed_name = append_stru_allowed && !has_legacy_stru_dir;
+        const bool is_first_step_of_fresh_run = (current_step == 0);
+        const bool append_stru = use_fixed_name && !is_first_step_of_fresh_run;
+        const std::string frame_comment = use_fixed_name
+            ? "# MD step " + std::to_string(stru_step) + "\n\n"
+            : "";
+        std::stringstream file;
+        file << stru_out_dir << "STRU";
+        if (!use_fixed_name)
+        {
+            file << stru_step;
+        }
+        mdcell::print_stru_file(mdcell, mdcell.stru_meta(), file.str(), frame_comment, append_stru);
+    };
+
+    /// md cycle, mohan update 2026-01-04, change '<=' to '<'
+    int last_processed_step = -1;
     while ((mdrun->step_ + mdrun->step_rst_) < param_in.mdp.md_nstep && !mdrun->stop)
     {
         const int md_step = mdrun->step_ + mdrun->step_rst_;
+        /// Mark the final ionic step on the cell passed to the solver. The
+        /// output module then writes the final snapshot even when this step is
+        /// off the out_freq_ion cadence or its SCF did not converge.
+        const bool is_final_step = is_last_step(md_step, param_in.mdp.md_nstep);
+        if (mdcell.has_backing_unitcell())
+        {
+            mdcell.backing_unitcell().last_ion_step = is_final_step;
+        }
         bool print_thermo = param_in.mdp.md_thermo_freq > 0
                             && md_step % param_in.mdp.md_thermo_freq == 0;
 #ifdef __JSON
@@ -234,28 +282,9 @@ void md_line(MDCell& mdcell,
         // A step on both cadences writes only one frame.
         if (write_any_frame)
         {
-            if (mdcell.has_backing_unitcell())
-            {
-                const bool positions_updated = false;
-                mdcell.sync_backing_unitcell(positions_updated);
-            }
-            ModuleBase::ensure_directory(stru_out_dir);
-            const int stru_step = current_step + 1;
-            // A fresh run truncates the fixed-name STRU; later frames append.
-            const bool use_fixed_name = append_stru_allowed && !has_legacy_stru_dir;
-            const bool is_first_step_of_fresh_run = (mdrun->step_ == 0) && (mdrun->step_rst_ == 0);
-            const bool append_stru = use_fixed_name && !is_first_step_of_fresh_run;
-            const std::string frame_comment = use_fixed_name
-                ? "# MD step " + std::to_string(stru_step) + "\n\n"
-                : "";
-            std::stringstream file;
-            file << stru_out_dir << "STRU";
-            if (!use_fixed_name)
-            {
-                file << stru_step;
-            }
-            mdcell::print_stru_file(mdcell, mdcell.stru_meta(), file.str(), frame_comment, append_stru);
+            write_stru_frame(current_step);
         }
+        last_processed_step = current_step;
 
         if (do_restart_step)
         {
@@ -265,6 +294,22 @@ void md_line(MDCell& mdcell,
         mdrun->step_++;
     }
 
+    /// Supplementary final frame. When the last step is off both the output
+    /// and the restart cadences the loop above never writes its STRU, so write
+    /// it here to guarantee the final geometry is persisted. Steps already
+    /// covered by a cadence are not written twice. out_stru=0 keeps the
+    /// existing contract of silencing regular per-step geometry output, so the
+    /// final frame is skipped as well.
+    if (last_processed_step >= 0 && param_in.inp.out_stru > 0
+        && !is_frame_write_step(last_processed_step,
+                                param_in.inp.out_freq_ion,
+                                restart_freq,
+                                true))
+    {
+        write_stru_frame(last_processed_step);
+    }
+
+    /// flush the COLVAR and other PLUMED output files
     plumed.finalize();
 
     delete mdrun;

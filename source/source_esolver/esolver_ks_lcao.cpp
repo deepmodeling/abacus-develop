@@ -32,6 +32,7 @@
 #include "source_io/module_ctrl/ctrl_runner_lcao.h"  // use ctrl_runner_lcao()
 #include "source_io/module_ctrl/ctrl_scf_lcao.h"     // use ctrl_scf_lcao()
 #include "source_io/module_output/print_info.h"
+#include "source_io/module_output/write_orb_info.h"
 #include "source_io/module_parameter/input_parameter.h"
 #include "source_io/module_restart/restart.h" // GlobalC::restart for load_exx_flag
 #include "source_lcao/lcao_set.h"             // mohan add 20251111
@@ -126,7 +127,15 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(BaseCell& basecell, const Input
                                  orb_);
     this->basis_index_ = make_basis_flattened_indexing(ucell, this->orb_);
 
-    // 6) generate matrices for optimized auxiliary basis functions when requested
+    // 6) write the NAO orbital table once; it depends only on the basis set and
+    // is shared by the PDOS, projected-band and Mulliken population outputs.
+    const bool need_orb_info = inp.out_dos > 0 || inp.out_mul || inp.out_proj_band;
+    if (need_orb_info && GlobalV::MY_RANK == 0)
+    {
+        ModuleIO::write_orb_info(&ucell, GlobalV::ofs_running);
+    }
+
+    // 7) generate matrices for optimized auxiliary basis functions when requested
     if (inp.calculation == "gen_opt_abfs")
     {
 #ifdef __EXX
@@ -306,7 +315,11 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep, const
                                          this->dmat,
                                          ucell,
                                          &(this->pv),
-                                         this->pelec->charge);
+                                         this->pelec->charge,
+                                         this->kv,
+                                         istep,
+                                         this->inp_->out_app_flag,
+                                         this->inp_->ks_solver);
         }
         if (this->inp_->init_chg == "hr")
         {
@@ -843,6 +856,12 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
     ESolver_KS::after_scf(ucell, istep, conv_esolver);
 
     //! 2) write LCAO output using the applicable ionic or RT-TDDFT electronic step
+    //! The outer ionic driver marks the final ionic step on the cell so the
+    //! output gate can always persist the final snapshot. In RT-TDDFT one ionic
+    //! step spans several electronic substeps, so the override is limited to the
+    //! substep the solver flagged as the final one; otherwise every substep of
+    //! the final ionic step would bypass out_freq_ion.
+    const bool is_final_step = ucell.last_ion_step && this->final_electronic_step_;
     ModuleIO::ctrl_scf_lcao<TK, TR>(ucell,
                                     *this->inp_,
                                     this->kv,
@@ -868,6 +887,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
                                     this->exx_info_,
                                     conv_esolver,
                                     this->scf_nmax_flag,
+                                    is_final_step,
                                     istep,
                                     GlobalV::ofs_running);
 

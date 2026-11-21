@@ -32,13 +32,13 @@ std::string build_stru_header(
     if (geometry_evaluated)
     {
         header = FmtCore::format(
-            "# ABACUS version: %s\n# Written at %s\n# RELAX STEP %d%s, Energy: %.8f eV\n", VERSION, time_buf, istep + 1,
+            "# ABACUS version: %s\n# Written at %s\n# Ionic_Step %d%s, Energy: %.8f eV\n", VERSION, time_buf, istep + 1,
             final_tag, etot_ev);
     }
     else
     {
         header = FmtCore::format(
-            "# ABACUS version: %s\n# Written at %s\n# RELAX STEP %d%s, Energy: N/A\n", VERSION, time_buf, istep + 1,
+            "# ABACUS version: %s\n# Written at %s\n# Ionic_Step %d%s, Energy: N/A\n", VERSION, time_buf, istep + 1,
             final_tag);
     }
 

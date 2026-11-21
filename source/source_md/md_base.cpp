@@ -1,5 +1,6 @@
 #include "md_base.h"
 #include "md_func.h"
+#include "run_md.h"
 #include "source_base/parallel_cell.h"
 #include "source_cell/unitcell.h"
 #include "source_io/module_output/print_info.h"
@@ -72,6 +73,15 @@ void MD_base::setup(ModuleESolver::ESolver* p_esolver, const std::string& global
     // must not advance the charge-extrapolation history -- even on restart
     // (step_rst_ > 0), where the extrapolation state starts degenerate.
     const bool positions_updated = false;
+    // step_rst_ is only known after restart(), so re-evaluate the final-step
+    // flag here: the initial (restarted) force evaluation can itself be the
+    // last ionic step of the run.
+    const int global_step = step_ + step_rst_;
+    const bool is_final_step = Run_MD::is_last_step(global_step, mdp.md_nstep);
+    if (mdcell.has_backing_unitcell())
+    {
+        mdcell.backing_unitcell().last_ion_step = is_final_step;
+    }
     MD_func::force_virial(p_esolver, step_, positions_updated, mdcell, decomp, potential, cal_stress, virial);
     MD_func::compute_stress(mdcell, cal_stress, virial, stress);
     if (mdcell.has_backing_unitcell())

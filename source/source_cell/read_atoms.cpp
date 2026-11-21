@@ -148,10 +148,11 @@ bool unitcell::read_atom_positions(UnitCell& ucell,
             // explicitly magnetized STRU.
             if (unitcell::is_magnetization_all_zero(ucell))
             {
-                ofs_running << "\n WARNING: initial magmom is all zero and symmetry=1; "
-                            << "autoset magnetism is SKIPPED to preserve the symmetry of the initial (nonmagnetic) structure.\n"
-                            << "          If spontaneous magnetism is expected, set magmom explicitly "
-                            << "in STRU, or use symmetry = 0 or -1." << std::endl;
+                ofs_running << "\n WARNING: initial magmom is all zero and symmetry = 1." << std::endl;
+                ofs_running << "          Autoset magnetism is skipped to preserve the symmetry" << std::endl;
+                ofs_running << "          of the initial nonmagnetic structure." << std::endl;
+                ofs_running << "          If spontaneous magnetism is expected, set magmom" << std::endl;
+                ofs_running << "          explicitly in STRU, or use symmetry = 0 or -1." << std::endl;
             }
         }
         else

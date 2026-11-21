@@ -364,7 +364,7 @@ void Symmetry::lattice_type(
         if(convert_atoms)
         {
             GlobalV::ofs_running <<std::endl;
-            GlobalV::ofs_running <<" The lattice vectors have been changed (STRU_SIMPLE.cif)"<<std::endl;
+            GlobalV::ofs_running <<" The lattice vectors have been changed; atomic positions were converted accordingly."<<std::endl;
             GlobalV::ofs_running <<std::endl;
             int at=0;
             for (int it = 0; it < this->ntype; ++it)

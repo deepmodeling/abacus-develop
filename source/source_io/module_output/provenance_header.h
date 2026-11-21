@@ -34,6 +34,24 @@ inline std::string provenance_header(const std::string& time_stamp)
                            time_stamp.c_str());
 }
 
+/// Two provenance lines followed by the unified "# Ionic_Step N" marker.
+inline std::string prov_step(const int istep_one_based, const std::string& time_stamp)
+{
+    return FmtCore::format("# ABACUS version: %s\n# Written at %s\n# Ionic_Step %d\n",
+                           VERSION,
+                           time_stamp.c_str(),
+                           istep_one_based);
+}
+
+/// Inline provenance for formats such as Cube that reserve a fixed number of
+/// header lines. Callers append this to an existing comment line.
+inline std::string prov_inline(const std::string& time_stamp)
+{
+    return FmtCore::format("  # ABACUS version: %s  # Written at %s",
+                           VERSION,
+                           time_stamp.c_str());
+}
+
 } // namespace ModuleIO
 
 #endif // MODULEIO_PROVENANCE_HEADER_H

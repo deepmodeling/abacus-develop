@@ -191,6 +191,12 @@ addtest(
   LIBS parameter psi device
   SOURCES test_langevin.cpp ../md_base.cpp ../langevin.cpp ${depend_files})
 
+# Header-only MD loop predicates (is_last_step / is_frame_write_step). Kept in
+# its own translation unit so this target links without the heavy MD/cell stack.
+addtest(
+  TARGET MODULE_MD_final_step
+  SOURCES test_run_md_final_step.cpp)
+
 if(ENABLE_MPI)
   addtest(
     TARGET MODULE_MD_lj_forcefield_mpi

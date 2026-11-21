@@ -3,6 +3,8 @@
 
 #include "gtest/gtest.h"
 
+#include <cstdio>
+#include <fstream>
 #include <sstream>
 #include <iomanip>
 #include <stdexcept>
@@ -31,7 +33,8 @@ std::string eig_occ(int nspin)
 {
     const auto headers = source_headers(nspin);
     std::ostringstream out;
-    out << "1 # ionic step\n Electronic state energy (eV) and occupations\n Spin number " << nspin << '\n';
+    out << "# ABACUS version: test\n# Written at 2026-01-01 00:00:00\n# Ionic_Step 1\n"
+        << " Electronic state energy (eV) and occupations\n Spin number " << nspin << '\n';
     for (int iq = 0; iq < headers.size(); ++iq)
     {
         const auto& header = headers[iq];
@@ -144,4 +147,121 @@ TEST(PWHybridSource, ReadsExistingBinaryWavefunctionHeader)
     saved[0] = 0;
     std::istringstream invalid(saved, std::ios::binary);
     EXPECT_THROW(pw::read_exx_source_header(invalid), std::runtime_error);
+}
+
+namespace
+{
+/**
+ * @brief Create an empty placeholder file for a resolver test.
+ */
+void touch(const std::string& path)
+{
+    std::ofstream out(path.c_str(), std::ios::binary);
+    out << "source";
+}
+
+/**
+ * @brief Resolve a name inside the gtest temporary directory.
+ */
+std::string temp_path(const std::string& name)
+{
+    return testing::TempDir() + name;
+}
+} // namespace
+
+TEST(PWHybridSource, ResolverPrefersFixedName)
+{
+    const std::string fixed = temp_path("resolver_fixed.txt");
+    const std::string numbered = temp_path("resolver_fixedg2.txt");
+    touch(fixed);
+    touch(numbered);
+    const std::vector<std::string> directories(1, testing::TempDir());
+    EXPECT_EQ(pw::resolve_source_file(directories, "resolver_fixed.txt", ".txt", false), fixed);
+    std::remove(fixed.c_str());
+    std::remove(numbered.c_str());
+}
+
+TEST(PWHybridSource, ResolverSelectsLatestIonicStep)
+{
+    const std::vector<std::string> directories(1, testing::TempDir());
+    const std::string g1 = temp_path("resolver_stepg1.txt");
+    const std::string g3 = temp_path("resolver_stepg3.txt");
+    touch(g3);
+    touch(g1);
+    EXPECT_EQ(pw::resolve_source_file(directories, "resolver_step.txt", ".txt", false), g3);
+    std::remove(g1.c_str());
+    std::remove(g3.c_str());
+}
+
+TEST(PWHybridSource, ResolverSelectsLatestElectronicStepWithinLatestIonicStep)
+{
+    const std::vector<std::string> directories(1, testing::TempDir());
+    const std::string g1e7 = temp_path("resolver_wfg1e7_pw.dat");
+    const std::string g2e3 = temp_path("resolver_wfg2e3_pw.dat");
+    const std::string g2e5 = temp_path("resolver_wfg2e5_pw.dat");
+    touch(g1e7);
+    touch(g2e3);
+    touch(g2e5);
+    EXPECT_EQ(pw::resolve_source_file(directories, "resolver_wf_pw.dat", "_pw.dat", true), g2e5);
+    std::remove(g1e7.c_str());
+    std::remove(g2e3.c_str());
+    std::remove(g2e5.c_str());
+}
+
+TEST(PWHybridSource, ResolverReportsSnapshotTokens)
+{
+    const std::vector<std::string> directories(1, testing::TempDir());
+    // Fixed (step-less) name reports -1/-1 so callers can lock any snapshot.
+    const std::string fixed = temp_path("resolver_snap.txt");
+    touch(fixed);
+    int ionic_step = 0;
+    int electronic_step = 0;
+    EXPECT_EQ(pw::resolve_source_file(directories, "resolver_snap.txt", ".txt", false,
+                                      &ionic_step, &electronic_step), fixed);
+    EXPECT_EQ(ionic_step, -1);
+    EXPECT_EQ(electronic_step, -1);
+    std::remove(fixed.c_str());
+    // g{step}e{iter} names report both tokens of the selected variant.
+    const std::string g2e5 = temp_path("resolver_snapg2e5_pw.dat");
+    const std::string g2e3 = temp_path("resolver_snapg2e3_pw.dat");
+    touch(g2e3);
+    touch(g2e5);
+    EXPECT_EQ(pw::resolve_source_file(directories, "resolver_snap_pw.dat", "_pw.dat", true,
+                                      &ionic_step, &electronic_step), g2e5);
+    EXPECT_EQ(ionic_step, 2);
+    EXPECT_EQ(electronic_step, 5);
+    std::remove(g2e3.c_str());
+    std::remove(g2e5.c_str());
+    // Without an electronic suffix the electronic token stays -1.
+    const std::string g3 = temp_path("resolver_snapg3.txt");
+    touch(g3);
+    EXPECT_EQ(pw::resolve_source_file(directories, "resolver_snap.txt", ".txt", false,
+                                      &ionic_step, &electronic_step), g3);
+    EXPECT_EQ(ionic_step, 3);
+    EXPECT_EQ(electronic_step, -1);
+    std::remove(g3.c_str());
+    // Null outputs keep the previous call signature working.
+    EXPECT_THROW(pw::resolve_source_file(directories, "resolver_snap.txt", ".txt", false),
+                 std::runtime_error);
+}
+
+TEST(PWHybridSource, ResolverFallsBackToTheSecondDirectory)
+{
+    const std::vector<std::string> directories = {temp_path("resolver_absent/"), testing::TempDir()};
+    const std::string g1 = temp_path("resolver_psig1.txt");
+    touch(g1);
+    EXPECT_EQ(pw::resolve_source_file(directories, "resolver_psi.txt", ".txt", false), g1);
+    std::remove(g1.c_str());
+}
+
+TEST(PWHybridSource, ResolverRejectsMissingAndElectronicSuffixWhenDisallowed)
+{
+    const std::vector<std::string> directories(1, testing::TempDir());
+    EXPECT_THROW(pw::resolve_source_file(directories, "resolver_missing.txt", ".txt", false),
+                 std::runtime_error);
+    const std::string electronic = temp_path("resolver_occeig_occg1e2.txt");
+    touch(electronic);
+    EXPECT_THROW(pw::resolve_source_file(directories, "resolver_occeig_occ.txt", ".txt", false),
+                 std::runtime_error);
+    std::remove(electronic.c_str());
 }

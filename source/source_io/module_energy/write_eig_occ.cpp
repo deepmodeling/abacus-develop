@@ -7,6 +7,8 @@
 #include "source_base/global_variable.h"
 #include "source_base/timer.h"
 #include "source_base/parallel_comm.h" // use POOL_WORLD
+#include "source_io/module_output/provenance_header.h"
+#include "source_io/module_output/write_notice.h"
 
 #ifdef __MPI
 #include <mpi.h> // use MPI_Barrier
@@ -170,7 +172,8 @@ void ModuleIO::write_eig_file(const ModuleBase::matrix &ekb,
         const int nbands,
         const int nspin,
         const std::string& out_dir,
-        const int istep)
+        const int istep,
+        const int out_app_flag)
 {
     ModuleBase::TITLE("ModuleIO","write_eig_file");
     ModuleBase::timer::start("ModuleIO", "write_eig_file");
@@ -221,16 +224,28 @@ void ModuleIO::write_eig_file(const ModuleBase::matrix &ekb,
 #endif    
 
     // file name to store eigenvalues
-    std::string filename = out_dir + "eig_occ.txt";
+    // Modes 0 and 1 reuse the fixed filename (mode 0 overwrites, mode 1 appends
+    // each written step); only mode 2 embeds the one-based step number.
+    std::string filename = out_dir + "eig_occ";
+    if (out_app_flag == 2)
+    {
+        filename += "g" + std::to_string(istep + 1);
+    }
+    filename += ".txt";
 
-    GlobalV::ofs_running << " Write eigenvalues and occupations to file: " << filename << std::endl;
+    ModuleIO::write_notice(GlobalV::ofs_running, "Eigenvalues and occupations", filename);
+
+    const std::string time_stamp = ModuleIO::local_timestamp();
+    const int istep_one_based = istep + 1;
 
     if (GlobalV::MY_RANK == 0)
     {
         std::ofstream ofs_eig0;
         const auto& inp = PARAM.inp;
-        const bool append = istep > 0
-                            || (inp.calculation == "md" && inp.mdp.md_restart);
+        // A restart of an MD run keeps the records of the previous run in
+        // mode 1; every other first-step write truncates the fixed file.
+        const bool restart_append = (inp.calculation == "md" && inp.mdp.md_restart);
+        const bool append = (out_app_flag == 1) && (istep > 0 || restart_append);
 
         if (append)
         {
@@ -241,7 +256,7 @@ void ModuleIO::write_eig_file(const ModuleBase::matrix &ekb,
             ofs_eig0.open(filename.c_str());
         }
        
-        ofs_eig0 << istep+1 << "     # ionic step" << std::endl;
+        ofs_eig0 << ModuleIO::prov_step(istep_one_based, time_stamp);
         ofs_eig0 << " Electronic state energy (eV) and occupations" << std::endl;
         ofs_eig0 << " Spin number " << nspin << std::endl;
         ofs_eig0.close();

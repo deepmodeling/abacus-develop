@@ -10,6 +10,7 @@
 #include "source_base/tool_title.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/module_out/filename.h"
+#include "source_io/module_output/write_notice.h"
 
 void ModuleIO::write_wfc_pw(
         const int istep,
@@ -59,8 +60,7 @@ void ModuleIO::write_wfc_pw(
                     ik_local,kv.ik2iktot,nspin,nkstot,
                     out_wfc_pw,out_app_flag,gamma_only,istep,iter);
 
-            ofs_running << " Write G-space wave functions to file: "
-                << fn << std::endl;
+            ModuleIO::write_notice(ofs_running, "G-space wave functions", fn);
 
             wfilename[ik_local] = fn;
 

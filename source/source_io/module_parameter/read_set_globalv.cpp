@@ -159,6 +159,7 @@ void ReadInput::set_global_dir(const Input_para& inp, System_para& sys)
         sys.global_dos_dir = sys.global_out_dir + "DOS/";
         sys.global_dip_dir = sys.global_out_dir + "DIP/";
         sys.global_mat_dir = sys.global_out_dir + "MAT/";
+        sys.global_band_dir = sys.global_out_dir + "BANDS/";
     }
     else
     {
@@ -170,6 +171,7 @@ void ReadInput::set_global_dir(const Input_para& inp, System_para& sys)
         sys.global_dos_dir = sys.global_out_dir;
         sys.global_dip_dir = sys.global_out_dir;
         sys.global_mat_dir = sys.global_out_dir;
+        sys.global_band_dir = sys.global_out_dir;
     }
 
     /// Map legacy directory names to new unified names
@@ -271,6 +273,7 @@ void ReadInput::set_global_dir(const Input_para& inp, System_para& sys)
     Parallel_Common::bcast_string(sys.global_dos_dir);
     Parallel_Common::bcast_string(sys.global_dip_dir);
     Parallel_Common::bcast_string(sys.global_mat_dir);
+    Parallel_Common::bcast_string(sys.global_band_dir);
     Parallel_Common::bcast_string(sys.global_in_stru);
 #endif
 }
