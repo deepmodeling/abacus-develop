@@ -217,6 +217,12 @@ class UnitCell : public BaseCell {
         = false; ///< whether the ionic position has been updated
     bool cell_parameter_updated
         = false; ///< whether the cell parameters are updated
+    /// @brief whether the current runner call is the last ionic step of the run.
+    /// @details Set by the outer ionic driver (source_md) right before calling
+    /// ESolver::runner, so the output layer can write the final ionic step even
+    /// when it does not sit on the out_freq_ion cadence or its SCF did not
+    /// converge. It is not a user input and stays false for single-shot runs.
+    bool last_ion_step = false;
     /// @}
 
     /// @name Nonlocal info

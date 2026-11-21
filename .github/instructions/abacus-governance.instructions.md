@@ -18,8 +18,9 @@ Apply these instructions when reviewing or changing ABACUS code:
   Prefer explicit dependencies or narrow local interfaces.
 - Flag new default arguments in existing header interfaces. Prefer explicit
   call-site updates, overloads, or a clearer configuration object.
-- Review header include growth and `.hpp` propagation carefully. These are
-  usually warnings unless the PR records a narrow reason.
+- Review header include growth and `.hpp` propagation carefully. Do not ask
+  authors to replace explicit `#include` directives with forward declarations
+  solely to avoid header include warnings.
 - Require LF line endings for text files. `.bat` and `.cmd` files are the CRLF
   exceptions.
 - Flag new `#pragma once` in header files as a blocker-level governance issue.

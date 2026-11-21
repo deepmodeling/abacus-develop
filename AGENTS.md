@@ -15,7 +15,9 @@ rules. Read the complete governance document before making or reviewing changes:
      explain the remaining global usage.
   2. Do not hide workflow switches in mutable member variables that can be
      changed from multiple places.
-  3. Keep header dependencies minimal.
+  3. Keep header dependencies clean and explicit; avoid unnecessary includes,
+     and do not replace `#include` directives with forward declarations just to
+     avoid header include warnings.
   4. Avoid adding `.hpp` implementation headers or propagating them through
      other headers unless there is a narrow reason.
   5. Do not add default arguments to existing interfaces; update call sites or
@@ -230,7 +232,7 @@ full mixed-line-ending hook only for intentional repository-wide normalization.
 
 - Confirm the PR body states exact commands run, whether they passed or failed,
   and why any expected check could not be run.
-- Keep warning rationales concrete. For example, a header include warning can be
-  acceptable when the header owns a value member that requires the complete type.
+- Keep warning rationales concrete. For example, a header include warning is
+  acceptable when the header uses types declared in that header directly.
 - Keep historical-debt notes separate from new deterministic errors introduced
   by the PR.

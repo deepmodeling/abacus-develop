@@ -77,6 +77,24 @@ void SparseMatrix<T>::printToCSR(std::ostream& ofs, int precision)
 }
 
 /**
+ * @brief Write the CSR-format description banner used by every text CSR
+ *        output (H(R)/S(R), DM(R), dH/dR, r(R), T(R), Vxc(R), L(R)).
+ * @param ofs Output stream.
+ */
+void write_csr_banner(std::ostream& ofs)
+{
+    ofs << " #----------------------------------------------------------------------#" << std::endl;
+    ofs << " #                               CSR Format                             #" << std::endl;
+    ofs << " # The outer loop corresponds to the number of Bravais lattice vectors. #" << std::endl;
+    ofs << " # The first line contains the index of the Bravais lattice vector      #" << std::endl;
+    ofs << " # (Rx, Ry, Rz), followed by the number of non-zero elements.           #" << std::endl;
+    ofs << " # The subsequent lines consist of three blocks of data, which are      #" << std::endl;
+    ofs << " # values, column indices, row pointers.                                #" << std::endl;
+    ofs << " #----------------------------------------------------------------------#" << std::endl;
+    ofs << std::endl;
+}
+
+/**
  * @brief Read CSR data from arrays
  */
 template <typename T>
