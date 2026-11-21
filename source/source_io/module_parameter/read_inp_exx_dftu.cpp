@@ -245,9 +245,9 @@ void ReadInput::item_exx()
         item.description = R"(Selects the LibRI tensor-contraction device for LCAO Kohn-Sham exact exchange.
 * cpu: retain CPU contractions, including when device=gpu.
 * gpu: use the experimental GPU backend; requires ENABLE_LIBRI_GPU=ON and device=gpu.
-With symmetry=1, GPU contractions require exx_symmetry_realspace=0 because
-LibRI v0.3.0.0 GPU real-space symmetry fails HSE numerical validation.
-K-point symmetry reduction remains available.
+GPU contractions temporarily reject symmetry=1, regardless of
+exx_symmetry_realspace, pending a validated LibRI GPU symmetry fix.
+Use symmetry=0 (time reversal only) or symmetry=-1 (no symmetry).
 Independent LR and RDMFT exchange engines retain CPU contractions. LR inherits
 this selection only when it reuses the Kohn-Sham exchange object.
 For GPU contractions, all MPI ranks on a node must see the same allocated GPU
@@ -270,11 +270,11 @@ masking is unsupported.)";
 #ifndef __GPU_RI
                 ModuleBase::WARNING_QUIT("ReadInput", "device_exx=gpu requires a build with ENABLE_LIBRI_GPU=ON");
 #else
-                if (para.input.symmetry == "1" && para.input.exx_symmetry_realspace)
+                if (para.input.symmetry == "1")
                 {
                     ModuleBase::WARNING_QUIT(
-                        "ReadInput", "LibRI GPU real-space symmetry fails numerical validation; "
-                                     "set exx_symmetry_realspace=0 when using device_exx=gpu with symmetry=1");
+                        "ReadInput", "device_exx=gpu does not support symmetry=1 until LibRI GPU symmetry is fixed; "
+                                     "use symmetry=0 or symmetry=-1, or device_exx=cpu");
                 }
 #endif
             }
@@ -658,7 +658,7 @@ Use the same scheme for consistent SCF and NSCF bands. A source configuration mi
             R"(* False: only rotate k-space density matrix D(k) from irreducible k-points to accelerate diagonalization
 * True: rotate both D(k) and Hexx(R) to accelerate both diagonalization and EXX calculation
 For multi-k calculations, D(k) is averaged over the unitary little group of each irreducible k point before star expansion, for either setting.
-With device_exx=gpu and symmetry=1, only False is currently supported because LibRI v0.3.0.0 GPU real-space symmetry fails HSE numerical validation.)";
+device_exx=gpu currently rejects symmetry=1 for either setting, pending a validated LibRI GPU symmetry fix.)";
         item.default_value = "True";
         item.unit = "";
         item.set_availability("symmetry==1 and (dft_functional in [hse, hf, pbe0, scan0] or (basis_type==lcao and rpa==true))");
