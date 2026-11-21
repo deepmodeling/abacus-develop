@@ -310,7 +310,7 @@ namespace ModuleESolver
                                 this->pelec->wg,
                                 PARAM.globalv.gamma_only_local,
                                 global_mat_dir,
-                                this->inp_->out_ndigits,
+                                this->inp_->out_mat_xc[1],
                                 this->inp_->ks_solver,
                                 cal_exx,
                                 hybrid_alpha
