@@ -182,11 +182,17 @@ void RPA_LRI<T, Tdata>::output_ewald_coulomb(const UnitCell& ucell, const K_Vect
         {
             throw std::runtime_error("Failed to write " + filename);
         }
-        std::cout << "Wrote strict 2D Coulomb head normalization to " << filename
-                  << ": A_lambda=" << std::setprecision(17)
-                  << normalization.raw_head_coefficient
-                  << ", sheet_to_raw_scale=" << normalization.sheet_to_raw_scale
-                  << std::endl;
+        // The file-output convention requires a confirmation in the running
+        // log, not only on stdout.
+        const std::array<std::ostream*, 2> announce_to = {&std::cout, &this->runtime.log};
+        for (std::ostream* announce : announce_to)
+        {
+            *announce << "Wrote strict 2D Coulomb head normalization to " << filename
+                      << ": A_lambda=" << std::setprecision(17)
+                      << normalization.raw_head_coefficient
+                      << ", sheet_to_raw_scale=" << normalization.sheet_to_raw_scale
+                      << std::endl;
+        }
     };
 
     const bool use_direct_2d_coulomb

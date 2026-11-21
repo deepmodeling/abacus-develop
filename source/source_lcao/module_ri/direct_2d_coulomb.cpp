@@ -79,6 +79,29 @@ std::complex<double> minus_i_to_power(const int l)
     }
 }
 
+// Reject an out-of-range momentum before any parallel region: the same
+// check interpolate_radial performs, hoisted so the failure surfaces on the
+// caller's thread with an exception it can handle.
+inline void validate_radial_range(const std::vector<BasisFunction>& basis,
+                                  const ReciprocalPoint& point)
+{
+    for (const BasisFunction& function : basis)
+    {
+        const RadialTable& radial = function.radial;
+        if (radial.l < 0 || radial.dk <= 0.0 || radial.values == nullptr || radial.size < 4)
+        {
+            throw std::invalid_argument(
+                "Direct G-sum Coulomb received an invalid auxiliary radial table.");
+        }
+        const double last_supported = radial.dk * static_cast<double>(radial.size - 4);
+        if (point.k_bohr < -1.0e-14 || point.k_bohr > last_supported + 1.0e-12)
+        {
+            throw std::out_of_range(
+                "Direct G-sum cutoff exceeds the auxiliary reciprocal radial table.");
+        }
+    }
+}
+
 // Four-point cubic interpolation of the auxiliary radial table on its
 // uniform dk grid. Requests outside the tabulated range are rejected
 // (fail-closed) because the direct route must not silently truncate the
@@ -643,6 +666,15 @@ Result build_coulomb_matrix(const std::vector<BasisFunction>& basis,
             || ng > static_cast<std::size_t>(std::numeric_limits<int>::max()))
         {
             throw std::overflow_error("Direct G-sum matrix dimensions exceed the BLAS integer range.");
+        }
+        // interpolate_radial throws when a momentum falls outside the
+        // auxiliary radial table, and that table is sized from lcao_ecut /
+        // lcao_dk rather than from the cutoff requested here. Validate every
+        // regular point before entering the parallel region: an exception
+        // raised inside it could not propagate safely to the caller.
+        for (const ReciprocalPoint* point : regular_points)
+        {
+            validate_radial_range(basis, *point);
         }
         std::vector<std::complex<double>> gram_rows(dimension * ng, {0.0, 0.0});
 #ifdef _OPENMP
