@@ -12,7 +12,7 @@ namespace LR
         const std::string& spin_type,
         const std::string& in_dir,
         const bool openshell,
-        const std::string& zvec_solver)
+        const std::string& zvec_solver, const std::vector<std::vector<ct::Tensor>>& window_density)
     {
         const int& nspin = inputs.nspin;
         const int& naos = inputs.nbasis;
@@ -61,7 +61,7 @@ namespace LR
                 exx_lri, exx_alpha,
 #endif
                 pot_hxc_gs, kv, px, pc, pmat, dft_functional, nk, nloc_per_band, global_dimension);
-            build_and_solve_zeq(ops_R, ops_L, /*nspin_x=*/2, X, R, Z, nloc_per_band, nstates, zvec_solver, test_force);
+            build_and_solve_zeq(ops_R, ops_L, /*nspin_x=*/2, X, R, Z, nloc_per_band, nstates, zvec_solver, test_force, window_density);
         }
         else
         {
@@ -77,9 +77,9 @@ namespace LR
                 exx_lri, exx_alpha,
 #endif
                 pot_hxc_gs, kv, px, pc, pmat, spin_type, in_dir, out_dir, dft_functional);
-            build_and_solve_zeq(ops_R, ops_L, /*nspin_x=*/1, X, R, Z, nloc_per_band, nstates, zvec_solver, test_force);
+            build_and_solve_zeq(ops_R, ops_L, /*nspin_x=*/1, X, R, Z, nloc_per_band, nstates, zvec_solver, test_force, window_density);
         }
     }
-template void Z_vector_equation<double>(const GradientInputs<double>&, const double* const, double* const, const int&, std::weak_ptr<PotHxcLR>, const std::string&, const std::string&, const bool, const std::string&);
-template void Z_vector_equation<std::complex<double>>(const GradientInputs<std::complex<double>>&, const std::complex<double>* const, std::complex<double>* const, const int&, std::weak_ptr<PotHxcLR>, const std::string&, const std::string&, const bool, const std::string&);
+template void Z_vector_equation<double>(const GradientInputs<double>&, const double* const, double* const, const int&, std::weak_ptr<PotHxcLR>, const std::string&, const std::string&, const bool, const std::string&, const std::vector<std::vector<ct::Tensor>>&);
+template void Z_vector_equation<std::complex<double>>(const GradientInputs<std::complex<double>>&, const std::complex<double>* const, std::complex<double>* const, const int&, std::weak_ptr<PotHxcLR>, const std::string&, const std::string&, const bool, const std::string&, const std::vector<std::vector<ct::Tensor>>&);
 }

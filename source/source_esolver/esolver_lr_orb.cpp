@@ -8,6 +8,7 @@
 #include "source_base/module_parallel/para_bridge.h"
 #include "source_base/module_external/scalapack_connector.h"
 #include <algorithm>
+#include <type_traits>
 
 using namespace LR;
 
@@ -278,8 +279,13 @@ void ModuleESolver::ESolver_LR<T, TR>::fill_z_window_(const int* desc_src)
     // the same windows. Diagnose once, without changing the truncated eigenproblem.
     if (!this->ks_initialized_)
     {
+        // Real-Gamma forces include the virtual-window response for both spin formulations.
+        // Retain diagnostics for missing occupied orbitals and uncomputed bands.
+        const bool virtual_response = std::is_same<T, double>::value
+            && this->nk == 1 && start_band == 0;
+        const auto& diagnosed_virtuals = virtual_response ? this->nvirt_z_ : this->nvirt;
         const std::string warning = LR_Util::force_window_warning(this->nbasis,
-            this->eig_ks_all.nc, start_band, this->nvirt, this->nvirt_z_);
+            this->eig_ks_all.nc, start_band, diagnosed_virtuals, this->nvirt_z_);
         if (!warning.empty())
         {
             this->ofs_running_ << warning << std::endl;

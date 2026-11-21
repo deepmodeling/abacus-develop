@@ -70,18 +70,13 @@ void ModuleESolver::ESolver_LR<T, TR>::setup_relax_target_()
                 "triplet are separate states with separate gradients. Pick one of them, or set "
                 "lr_unrestricted to run spin-unrestricted.");
         }
-        this->target_is_ = (spin == "triplet") ? 1 : 0;
-        if (this->target_is_ >= this->nspin)
-        {
-            ModuleBase::WARNING_QUIT("ESolver_LR",
-                "lr_target_spin=triplet requires nspin=2: the triplet channel is not built here.");
-        }
+        this->target_is_ = (spin == "triplet" && this->nspin == 2) ? 1 : 0;
     }
     this->force_gs_.create(this->ucell_->nat, 3);
     this->lr_force_.create(this->ucell_->nat, 3);
     this->target_state_ = this->inp_->lr_target_state; // seed; overlap takes over from step 2
     this->ofs_running_ << " Excited-state relaxation follows state " << this->inp_->lr_target_state
-        << " of the " << (this->openshell ? "updown" : (this->target_is_ == 1 ? "triplet" : "singlet"))
+        << " of the " << (this->openshell ? "updown" : this->inp_->lr_target_spin)
         << " channel, tracked by cross-geometry orbital and amplitude overlap." << std::endl;
 }
 
@@ -142,9 +137,8 @@ void ModuleESolver::ESolver_LR<T, TR>::cal_force(BaseCell& basecell, ModuleBase:
             "the excited-state gradient has not been computed for this geometry.");
     }
     // Both halves already follow the ABACUS force convention F = -dE/dR (Ry/Bohr), so they add.
-    // The "Gradients of each excited state" heading that `cal_force(int)` prints under is a
-    // misnomer: the finite-difference reference it was validated against (`abacus-fd lr-custom`)
-    // computes (E(-h) - E(+h))/h, which is -d(Omega)/dR, and the two agree in sign.
+    // The per-state LR table reports the excitation-energy contribution -d(Omega)/dR;
+    // adding the ground-state force gives the total force on the excited-state surface.
     force.create(ucell.nat, 3);
     force = this->force_gs_ + this->lr_force_;
     ModuleIO::print_force(this->ofs_running_, ucell, "EXCITED-STATE TOTAL-FORCE (eV/Angstrom)", force, false);

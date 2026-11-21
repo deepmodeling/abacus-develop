@@ -4,6 +4,7 @@
 #include "source_lcao/module_lr/potentials/pot_hxc_lrtd.h"
 namespace LR
 {
+template <typename T> struct WindowResponse;
 // Explicit, borrowed inputs for one gradient evaluation. No solver ownership or caches.
 template <typename T>
 struct GradientInputs
@@ -44,12 +45,14 @@ std::vector<ModuleBase::matrix> evaluate_closed_shell_force(
     const GradientInputs<T>& inputs, LR_Force<T>& force_terms,
     const module_dm::DensityMatrix<T, double>& dm_gs,
     const ct::Tensor& Xz, const ct::Tensor& Z,
-    const std::vector<double>& omega, int label_begin, int ispin);
+    const std::vector<double>& omega, int label_begin, int ispin,
+    const WindowResponse<T>& window);
 template <typename T>
 std::vector<ModuleBase::matrix> evaluate_open_shell_force(
     const GradientInputs<T>& inputs, LR_Force<T>& force_terms,
     const module_dm::DensityMatrix<T, double>& dm_gs,
     const ct::Tensor& Xz, const ct::Tensor& Z,
-    const std::vector<double>& omega, int label_begin);
+    const std::vector<double>& omega, int label_begin,
+    const WindowResponse<T>& window);
 }
 #endif

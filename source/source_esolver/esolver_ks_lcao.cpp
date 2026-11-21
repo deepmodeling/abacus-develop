@@ -378,6 +378,13 @@ double ESolver_KS_LCAO<TK, TR>::cal_energy()
 template <typename TK, typename TR>
 void ESolver_KS_LCAO<TK, TR>::cal_force(BaseCell& basecell, ModuleBase::matrix& force)
 {
+    this->cal_force(basecell, force, "TOTAL-FORCE (eV/Angstrom)");
+}
+
+template <typename TK, typename TR>
+void ESolver_KS_LCAO<TK, TR>::cal_force(BaseCell& basecell, ModuleBase::matrix& force,
+                                     const std::string& force_title)
+{
     basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
     UnitCell& ucell = static_cast<UnitCell&>(basecell);
 
@@ -426,6 +433,7 @@ void ESolver_KS_LCAO<TK, TR>::cal_force(BaseCell& basecell, ModuleBase::matrix& 
                        &ucell.symm,
                        this->exx_info_,
                        fs_cfg,
+                       force_title,
                        this->get_td_info(),
                        static_cast<hamilt::Hamilt<TK>*>(this->p_hamilt));
 

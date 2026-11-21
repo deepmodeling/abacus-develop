@@ -1,4 +1,5 @@
 #include "gradient_inputs.h"
+#include "source_lcao/module_lr/window_response.h"
 #include "gradient_output.h"
 #include "gradient_checks.h"
 #include "cal_edm.h"
@@ -13,7 +14,8 @@ std::vector<ModuleBase::matrix> evaluate_closed_shell_force(
     const GradientInputs<T>& inputs, LR_Force<T>& lr_force,
     const module_dm::DensityMatrix<T, double>& dm_gs,
     const ct::Tensor& Xz, const ct::Tensor& Z,
-    const std::vector<double>& omega, const int label_begin, const int ispin)
+    const std::vector<double>& omega, const int label_begin, const int ispin,
+    const WindowResponse<T>& window)
 {
     ModuleBase::timer::start("LR", "evaluate_closed_shell_force");
     // for each block, calculate dm_trans, dm_relaxed_diff, edm and force
@@ -105,7 +107,11 @@ std::vector<ModuleBase::matrix> evaluate_closed_shell_force(
         // std::cout << "dm_relaxed_k Z(k) after symmetrization, istate " + std::to_string(istate) << std::endl;
         // LR_Util::print_value(dm_relaxed_k[0].data<T>(), inputs.pmat.get_col_size(), inputs.pmat.get_row_size());
         // relaxed difference density matrix
-        const std::vector<ct::Tensor>& relaxed_diff_dm_k = dm_diff_k + dm_relaxed_k;
+        std::vector<ct::Tensor> relaxed_diff_dm_k = dm_diff_k + dm_relaxed_k;
+        if (!window.density.empty())
+        {
+            relaxed_diff_dm_k = relaxed_diff_dm_k + window.density[istate - ist_begin];
+        }
         const module_dm::DensityMatrix<T, T>& diff_dm =
             LR_Util::build_dm_from_dmk<T, T>(dm_diff_k,
                 inputs.pmat, inputs.nk, inputs.kv.kvec_d, inputs.ucell, inputs.gd, inputs.orb_cutoff);
@@ -135,9 +141,13 @@ std::vector<ModuleBase::matrix> evaluate_closed_shell_force(
         const T* const x_istate = Xz.data<T>() + offset;
         const T* const z_istate = Z.template data<T>() + zoffset;
         const double omega_istate = omega[istate - ist_begin];
-        const std::vector<ct::Tensor>& edm_k = cal_edm_from_XZ_istate(
+        std::vector<ct::Tensor> edm_k = cal_edm_from_XZ_istate(
             inputs, x_istate, z_istate, omega_istate, inputs.eig_ks.c,
-            dm_trans, c, pot_weak, inputs.spin_types[ispin]);
+            dm_trans, c, pot_weak, inputs.spin_types[ispin], relaxed_diff_dm_k);
+        if (!window.direct_edm.empty())
+        {
+            edm_k = edm_k + window.direct_edm[istate - ist_begin];
+        }
         if (inputs.test_force && inputs.nocc[0] == 1 && nvirt_g[0] == 1)
         {
 #ifdef __MPI
@@ -176,8 +186,9 @@ std::vector<ModuleBase::matrix> evaluate_closed_shell_force(
             // The density dependence of K[D^X]D^X belongs to the LR functional.
             const std::shared_ptr<PotHxcLR>& pot_lr = inputs.pot[ispin];
             const bool triplet = inputs.spin_types[ispin] == "triplet";
+            const int kernel_nspin = pot_lr->xc_kernel_components().nspin();
             PotGradXCLR pot_grad(pot_lr->xc_kernel_components(), pot_lr->get_rho_basis(),
-                inputs.ucell, pot_lr->nrxx, inputs.nspin, triplet);
+                inputs.ucell, pot_lr->nrxx, kernel_nspin, triplet);
             ModuleBase::matrix force_gxc_dmtrans = lr_force.cal_force_gxc_dmtrans(dm_trans_real, dm_gs, pot_grad);
             if (inputs.test_force)
                 ModuleIO::print_force(inputs.ofs, inputs.ucell, "GXC DMTRANS FORCE (eV/Angstrom)", force_gxc_dmtrans, false);
@@ -252,6 +263,6 @@ std::vector<ModuleBase::matrix> evaluate_closed_shell_force(
 }
 
 
-template std::vector<ModuleBase::matrix> evaluate_closed_shell_force<double>(const GradientInputs<double>&, LR_Force<double>&, const module_dm::DensityMatrix<double, double>&, const ct::Tensor&, const ct::Tensor&, const std::vector<double>&, int, int);
-template std::vector<ModuleBase::matrix> evaluate_closed_shell_force<std::complex<double>>(const GradientInputs<std::complex<double>>&, LR_Force<std::complex<double>>&, const module_dm::DensityMatrix<std::complex<double>, double>&, const ct::Tensor&, const ct::Tensor&, const std::vector<double>&, int, int);
+template std::vector<ModuleBase::matrix> evaluate_closed_shell_force<double>(const GradientInputs<double>&, LR_Force<double>&, const module_dm::DensityMatrix<double, double>&, const ct::Tensor&, const ct::Tensor&, const std::vector<double>&, int, int, const WindowResponse<double>&);
+template std::vector<ModuleBase::matrix> evaluate_closed_shell_force<std::complex<double>>(const GradientInputs<std::complex<double>>&, LR_Force<std::complex<double>>&, const module_dm::DensityMatrix<std::complex<double>, double>&, const ct::Tensor&, const ct::Tensor&, const std::vector<double>&, int, int, const WindowResponse<std::complex<double>>&);
 }

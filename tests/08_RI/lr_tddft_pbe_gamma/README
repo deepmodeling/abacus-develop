@@ -1,1 +1,6 @@
 LR-TDDFT PBE on H2O, gamma_only, nspin=2, lr_nstates=2, lr_solver=dav.
+All INPUT settings are retained, including scf_thr=1e-3. The force references
+follow closed-shell scalar XC coefficient reuse. A small local spin-density
+residual at this loose SCF tolerance makes the spin-symmetry coefficient
+identities only approximate; paired tight-SCF checks recover identical forces.
+Excitation-energy references and force tolerances are unchanged.
