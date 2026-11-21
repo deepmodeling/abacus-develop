@@ -109,8 +109,9 @@ CUDA_VISIBLE_DEVICES=0,1 mpirun -np 2 abacus
 ```
 
 [LibRI v0.3.0.0](https://github.com/abacusmodeling/LibRI/releases/tag/v0.3.0.0)
-is the minimum GPU release. It includes the accumulation, OpenMP, atom-list,
-symmetry and DDLA adapter fixes. Earlier LibRI versions remain usable for CPU RI.
+is the minimum GPU release. It includes the accumulation, OpenMP, atom-list
+and DDLA adapter fixes, but GPU symmetry validation still fails; the restriction
+above remains necessary. Earlier LibRI versions remain usable for CPU RI.
 
 DDLA must provide its installed `LibDDLAConfig.cmake` package and `ddla::ddla`
 target, `DDLA_HAS_GPU`, and the handle-selected `gemmVbatched` and
@@ -133,9 +134,10 @@ DDLA's include paths, backend definitions and link dependencies; separate
 `DDLA_INCLUDE_DIR` and `DDLA_LIBRARY` overrides are no longer used.
 A configure-time compile/link check
 rejects incompatible GPU APIs, but does not validate numerical correctness.
-The standalone tests in `tests/lcao_hse_gpu/cmake` additionally accept
-`ENABLE_LIBRI_GPU_TESTS=ON` with `ENABLE_LIBRI_GPU=ON` to check real and complex
-GPU contractions with signed accumulation. This optional CTest requires one GPU.
+The standalone consumer in `tests/lcao_hse_gpu/cmake` checks that `LibRI::LibRI`
+provides its compile and link dependencies with `ENABLE_LIBRI_GPU=OFF` or `ON`.
+Numerical contraction regressions belong to LibRI's upstream tests; ABACUS HSE
+comparisons validate application-level results.
 This experimental backend has additional GPU memory requirements; its temporary
 buffer limit is not a bound on total GPU memory.
 
