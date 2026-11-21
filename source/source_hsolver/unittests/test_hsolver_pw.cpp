@@ -125,6 +125,13 @@ template void PW_Basis_K::real_to_recip<double, base_device::DEVICE_CPU>(
 class TestHSolverPW : public ::testing::Test
 {
   public:
+    void SetUp() override
+    {
+        // WARNING_QUIT is exercised after OpenMP/runtime state has been initialized
+        // by earlier tests; re-exec death tests avoid inheriting those threads.
+        ::testing::FLAGS_gtest_death_test_style = "threadsafe";
+    }
+
     // HSolverPW declares this fixture a friend, but a TEST_F body lives in a
     // class derived from it and friendship is not inherited, so the call into
     // the protected hamiltSolvePsiK() is routed through here.
