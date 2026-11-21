@@ -28,6 +28,11 @@
  *       check alone is not enough for these branches
  *   - ValidHexagonalWithParams / ValidSmWithParams
  *     - a hexagonal lattice with c/a given still reads normally
+ *   - SoRangeOverflowRejected / StRangeOverflowRejected
+ *     - an out-of-range value such as 1e999 sets failbit but stores
+ *       DBL_MAX, leaving a finite nonzero-volume cell that the determinant
+ *       check alone would accept; every LATTICE_PARAMETERS extraction is
+ *       therefore validated directly
  *   - CubicScNeedsNoParams
  *     - cubic lattice names do not need LATTICE_PARAMETERS
  *   - DegenerateLatticeVectorsRejected
@@ -172,6 +177,35 @@ TEST_F(ReadLatticeValidationTest, ValidSmWithParams)
     EXPECT_DOUBLE_EQ(lat.latvec.e21, 2.0 * 0.5);
     EXPECT_DOUBLE_EQ(lat.latvec.e33, 3.0);
     EXPECT_GT(lat.latvec.Det(), 0.0);
+    ifa.close();
+}
+
+TEST_F(ReadLatticeValidationTest, SoRangeOverflowRejected)
+{
+    // "1 1e999": the out-of-range read sets failbit but stores DBL_MAX,
+    // leaving det = DBL_MAX (finite and nonzero), so the determinant check
+    // alone would accept this malformed input
+    const std::string stru =
+        write_stru_file("so_range_overflow.stru", "LATTICE_CONSTANT\n4.0\nLATTICE_PARAMETERS\n1 1e999\n");
+    lat.latName = "so";
+    std::ifstream ifa(stru);
+    testing::internal::CaptureStdout();
+    EXPECT_EXIT(unitcell::read_lattice_constant(ifa, ofs_running, lat), ::testing::ExitedWithCode(1), "");
+    const std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_THAT(output, testing::HasSubstr("invalid LATTICE_PARAMETERS for lattice type so"));
+    ifa.close();
+}
+
+TEST_F(ReadLatticeValidationTest, StRangeOverflowRejected)
+{
+    const std::string stru =
+        write_stru_file("st_range_overflow.stru", "LATTICE_CONSTANT\n4.0\nLATTICE_PARAMETERS\n1e999\n");
+    lat.latName = "st";
+    std::ifstream ifa(stru);
+    testing::internal::CaptureStdout();
+    EXPECT_EXIT(unitcell::read_lattice_constant(ifa, ofs_running, lat), ::testing::ExitedWithCode(1), "");
+    const std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_THAT(output, testing::HasSubstr("invalid LATTICE_PARAMETERS for lattice type st"));
     ifa.close();
 }
 
