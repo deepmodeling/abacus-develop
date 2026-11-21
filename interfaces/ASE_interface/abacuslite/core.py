@@ -1,8 +1,7 @@
 # fmt: off
 
 '''
-here the ase-abacus implementation is pasted and modified. 
-Source:
+Adapted from the ase-abacus implementation:
 https://gitlab.com/1041176461/ase-abacus/-/blob/master/ase/calculators/abacus.py
 
 This module defines an ASE interface to ABACUS.
@@ -26,7 +25,7 @@ Modified on Wed Jun 20 15:00:00 2018
 Modified on Wed Jun 03 23:00:00 2022
 @author: Ji Yu-yang
 
-Refactored from Sun Dec 07 21:41 2025
+Refactored on 2025-12-07
 @author: Huang Yi-ke
 '''
 
@@ -36,6 +35,7 @@ import re
 import shutil
 import tempfile
 import unittest
+from copy import copy
 from pathlib import Path
 from typing import Dict, Optional, List
 
@@ -52,37 +52,59 @@ from ase.dft.kpoints import BandPath
 from ase.io import read
 
 from abacuslite.io.generalio import (
+    _write_ase_stru,
+    _write_kpt,
     file_safe_backup,
     read_input,
     read_stru,
     read_kpt,
     species_group_indices,
     write_input,
-    write_stru,
-    write_kpt
 )
 
 __LEGACYIO__ = True
+SOCKET_METADATA_SCHEMA = 'abacus.socket.properties.v1'
+
+
+def _schema_compatible_properties(results):
+    """Project calculator results through ASE's installed Properties schema."""
+    from ase.calculators.calculator import Properties, all_outputs
+
+    exported = {}
+    for name, value in results.items():
+        if name not in all_outputs:
+            continue
+        candidate = {**exported, name: value}
+        try:
+            Properties(candidate)
+        except (KeyError, TypeError, ValueError):
+            continue
+        exported[name] = value
+    return Properties(exported)
+
+
+def _uses_legacy_io(version: str) -> bool:
+    """Resolve a format without mutating another calculator's reader."""
+    match = re.match(
+        r'^v(\d+)\.(\d+)\.(\d+)(\.\d+|-(alpha|beta|rc)\.?\d+)?(?:\+[A-Za-z0-9.-]+)?$',
+        version,
+    )
+    assert match, f'Invalid ABACUS version: {version}'
+    assert int(match.group(1)) >= 3, 'ABACUS v2.x is not supported'
+    minor = int(match.group(2))
+    return not (minor >= 11 or (minor == 9 and match.group(4) is not None))
+
+
 def switch_io_backend_version(version: str) -> bool:
-    '''determine if the i/o is in legacy format by the version number,
-    for detailed discussion, see issue #7260
-    '''
+    """Set the compatibility default for subsequently created templates.
+
+    Existing calculators retain the format selected from their own profile.
+    Explicit io.legacyio/io.latestio functions are unaffected by this helper.
+    """
     global __LEGACYIO__
-    m = re.match(r'^v(\d+)\.(\d+)\.(\d+)(\.\d+|\-(alpha|beta|rc)\.\d+|\-(alpha|beta|rc)\d+)?$', version)
-    assert m, f'Invalid format of version number, please check file version.h'
-    assert int(m.group(1)) >= 3, f'ABACUS v2.x is not supported'
-    if int(m.group(2)) >= 11:
-        __LEGACYIO__ = False
-    elif int(m.group(2)) == 9:
-        if m.group(4) is not None:
-            # it is also possible to divide the version more carefully,
-            # but because 3.9.0.x are all on the develop branch, up to
-            # now, there is no user submit issue to request such a careful
-            # division
-            __LEGACYIO__ = False
-    else:
-        __LEGACYIO__ = True
+    __LEGACYIO__ = _uses_legacy_io(version)
     return __LEGACYIO__
+
 
 class AbacusProfile(BaseProfile):
     '''AbacusProfile for interacting the ASE with ABACUS that installed in
@@ -105,10 +127,14 @@ class AbacusProfile(BaseProfile):
             `OMP_NUM_THREADS=1 mpirun -np X abacus`. Here please do not set
             the number of omp threads in `command`, instead, use `nomp=1`.
         pseudo_dir : str or Path, optional
-            The directory containing pseudopotential files.
+            The directory containing pseudopotential files. If ``None`` (the
+            default), ``ABACUS_PP_PATH`` is used when set; an explicit value,
+            including an empty string, is preserved.
         orbital_dir : str or Path, optional
             The directory containing orbital basis files. This is only necessary
-            for an ABACUS-LCAO calculation
+            for an ABACUS-LCAO calculation. If ``None`` (the default),
+            ``ABACUS_ORB_PATH`` is used when set; an explicit value, including
+            an empty string, is preserved.
         omp_num_threads : int, optional
             The number of omp threads to use.
         '''
@@ -116,8 +142,14 @@ class AbacusProfile(BaseProfile):
         # further validation on the command will be in the __init__ of
         # the base class
         super().__init__(command, **kwargs)
-        self.pseudo_dir  = pseudo_dir
-        self.orbital_dir = orbital_dir
+        # These two community conventions are the only environment fallbacks
+        # in this package; explicit arguments always take precedence. Only an
+        # omitted (None) argument falls back, so an explicit empty string is
+        # preserved instead of being replaced by the environment.
+        self.pseudo_dir = (pseudo_dir if pseudo_dir is not None
+                           else (os.environ.get("ABACUS_PP_PATH") or None))
+        self.orbital_dir = (orbital_dir if orbital_dir is not None
+                            else (os.environ.get("ABACUS_ORB_PATH") or None))
 
         if omp_num_threads is not None:
             # set the number of omp threads for the present process
@@ -160,6 +192,7 @@ class AbacusProfile(BaseProfile):
         cmd_ = [*self._split_command, '--version']
         return AbacusProfile.parse_version(read_stdout(cmd_))
 
+
 class AbacusTemplate(CalculatorTemplate):
     
     implemented_properties = [
@@ -168,6 +201,7 @@ class AbacusTemplate(CalculatorTemplate):
     _label = 'abacus'
 
     def __init__(self):
+        self._legacyio = __LEGACYIO__
         super().__init__(
             'abacus',
             self.implemented_properties
@@ -287,25 +321,23 @@ class AbacusTemplate(CalculatorTemplate):
 
         # copy the `parameters` because later we will modify it
         parameters = parameters.copy()
+        stru_file = parameters.get('stru_file', 'STRU') or 'STRU'
 
         # STRU
-        _ = file_safe_backup(directory / parameters.get('stru_file', 'STRU'))
-        # group atoms by first-occurrence species order. Keep the reverse map
-        # so that we will recover the order in function read_results()
+        # group atoms by first-occurrence species order. Keep the reverse map so
+        # that we will recover the order in function read_results()
         ind = species_group_indices(atoms.get_chemical_symbols())
         self.atomorder = sorted(range(len(atoms)), key=lambda i: ind[i]) # revmap
         # then we write
-        _ = write_stru(atoms[ind], 
-                       outdir=directory, 
-                       pp_file=parameters.get('pseudopotentials'),
-                       orb_file=parameters.get('basissets'),
-                       fname=parameters.get('stru_file', 'STRU'))
+        _write_ase_stru(atoms[ind], directory,
+                        parameters.get('pseudopotentials'),
+                        parameters.get('basissets'),
+                        stru_file, backup=True)
 
         # KPT, if needed
         if 'kpts' in parameters:
-            _ = file_safe_backup(directory / parameters.get('kpoint_file', 'KPT'))
-            _ = write_kpt(parameters['kpts'], 
-                          directory / parameters.get('kpoint_file', 'KPT'))
+            kpt_file = directory / (parameters.get('kpoint_file', 'KPT') or 'KPT')
+            _write_kpt(parameters['kpts'], kpt_file, backup=True)
         # should this function be responsible for checking the integrity
         # of information provided by the user? There may be the case that
         # user provides incomplete information, such that the ABACUS cannot
@@ -334,7 +366,7 @@ class AbacusTemplate(CalculatorTemplate):
         # remove possible key-value pairs whose value is None
         parameters = {k: v for k, v in parameters.items() if v is not None}
 
-        # FIXME: only support the ksdft esolver_type presently
+        # Limitation: only the ksdft esolver is supported.
         if parameters.get('esolver_type', 'ksdft') != 'ksdft':
             raise NotImplementedError(
                 'ABACUS Lite only supports the ksdft esolver_type presently, '
@@ -404,21 +436,47 @@ class AbacusTemplate(CalculatorTemplate):
 
     def read_results(self, directory) -> Dict:
         '''the function that returns the desired properties in dict'''
-        read_abacus_out = lambda fn: None
-        global __LEGACYIO__
-        if __LEGACYIO__:
+        if self._legacyio:
             from abacuslite.io.legacyio import read_abacus_out
         else:
             from abacuslite.io.latestio import read_abacus_out
 
+        directory = Path(directory)
         outdir = directory / f'OUT.{self.suffix}'
-        # only the last frame
-        atoms: Optional[Atoms] = read_abacus_out(
-            outdir / f'running_{self.calculation}.log',
-            sort_atoms_with=self.atomorder)[-1]
+        log = outdir / f'running_{self.calculation}.log'
+        frames = read_abacus_out(log, sort_atoms_with=self.atomorder)
+        if not frames:
+            raise RuntimeError(f"no ABACUS running-log frames in {log}")
+        atoms = frames[-1]
         assert atoms is not None
 
-        return dict(atoms.calc.properties())
+        # ASE's Properties schema accepts scalar magnetic moments only,
+        # although SinglePointDFTCalculator supports vector moments. Project
+        # other properties through ASE and retain vectors as result metadata,
+        # without changing ASE's process-global output definitions.
+        singlepoint = atoms.calc
+        vector_moments = {
+            name: singlepoint.results[name]
+            for name, shape in (('magmom', (3,)), ('magmoms', (len(atoms), 3)))
+            if name in singlepoint.results
+            and np.shape(singlepoint.results[name]) == shape
+        }
+        if vector_moments:
+            singlepoint = copy(singlepoint)
+            singlepoint.results = {
+                name: value for name, value in singlepoint.results.items()
+                if name not in vector_moments
+            }
+        results = dict(singlepoint.properties())
+        results.update(vector_moments)
+        if vector_moments:
+            results.setdefault('natoms', len(atoms))
+        if 'energy_without_entropy' in atoms.info:
+            results['energy_without_entropy'] = atoms.info['energy_without_entropy']
+        # Keep the existing result alias alongside ASE's standard property.
+        if 'fermi_level' in results:
+            results['efermi'] = results['fermi_level']
+        return results
 
     def load_profile(self, cfg, **kwargs):
         return AbacusProfile.from_config(cfg, self.name, **kwargs)
@@ -467,20 +525,19 @@ class Abacus(GenericFileIOCalculator):
         **kwargs:
             Other parameters to be passed to the ABACUS calculator.
         '''
-        # not recommended :(
+        # Fallback profile for callers that do not provide one.
         profile = AbacusProfile('abacus') if profile is None else profile
 
         # to be compatible with both the legacy and latest format of i/o, the
         # switch is needed. 
-        _ = switch_io_backend_version(profile.version())
+        template = AbacusTemplate()
+        template._legacyio = _uses_legacy_io(profile.version())
 
-        # because ABACUS run job in folders, based on the assumption that
-        # there is only one job in the folder. Therefore once there are already
-        # files in the folder, will try to create a new one...(seriously?)
+        # Optional ABACUS INPUT parameters, merged with calculator keywords.
         inp = kwargs.pop('inp', {})
 
         super().__init__(
-            template=AbacusTemplate(),
+            template=template,
             profile=profile,
             parameters=kwargs | inp,
             directory=directory,
@@ -497,14 +554,21 @@ class Abacus(GenericFileIOCalculator):
             properties=properties,
         )
 
+    def export_properties(self):
+        """Export only values accepted by ASE's versioned Properties schema."""
+        return _schema_compatible_properties(self.results)
+
     @classmethod
     def restart(cls, profile=None, directory='.', **kwargs):
         '''instantiate one ABACUS calculator from an existing job directory,
         optionally overwrite some keywords'''
         directory = Path(directory)
         inp_read = read_input(directory / 'INPUT')
+        inp = inp_read | kwargs.pop('inp', {})
 
-        pporb_read = read_stru(directory / 'STRU')['species']
+        # The old INPUT names the files to read; overrides apply to the next run.
+        stru_file = directory / (inp_read.get('stru_file', 'STRU') or 'STRU')
+        pporb_read = read_stru(stru_file)['species']
         pseudopotentials = kwargs.get(
             'pseudopotentials',
             {pporb['symbol']: pporb['pp_file'] for pporb in pporb_read}
@@ -522,19 +586,32 @@ class Abacus(GenericFileIOCalculator):
             basissets = {}
         assert all([forb is not None for forb in basissets.values()])
 
-        kpts = kwargs.get('kpts', read_kpt(directory / inp_read.get('kpoint_file', 'KPT')))
         if 'kpts' in kwargs:
-            del kwargs['kpts']
-
-        inp = inp_read | kwargs.get('inp', {})
-        if 'inp' in kwargs:
-            del kwargs['inp']
+            kpts_kwargs = {'kpts': kwargs.pop('kpts')}
+        else:
+            kpt_file = directory / (inp_read.get('kpoint_file', 'KPT') or 'KPT')
+            if kpt_file.is_file():
+                kpts_kwargs = {'kpts': read_kpt(kpt_file)}
+            else:
+                gamma_only = str(inp.get('gamma_only', '')).strip().lower() in (
+                    '1', 'true', 't', '.true.')
+                raw_spacing = inp.get('kspacing', '')
+                spacing = (raw_spacing if isinstance(raw_spacing, (list, tuple))
+                           else str(raw_spacing).split())
+                try:
+                    implicit_kpts = gamma_only or bool(spacing) and all(
+                        float(value) > 0 for value in spacing)
+                except ValueError:
+                    implicit_kpts = gamma_only
+                if not implicit_kpts:
+                    read_kpt(kpt_file)  # preserve the missing/invalid KPT error
+                kpts_kwargs = {}
 
         return cls(profile=profile, 
                    directory=directory,
                    pseudopotentials=pseudopotentials,
                    basissets=basissets,
-                   kpts=kpts,
+                   **kpts_kwargs,
                    inp=inp,
                    **kwargs)
 
@@ -578,13 +655,17 @@ class Abacus(GenericFileIOCalculator):
         # we should overwrite the 'calculation' to 'nscf', and 'init_chg' to 'file'
         assert symmetry == 'off'
         
-        kwargs.setdefault('inp', {}).update({'calculation': 'nscf',
-                                             'init_chg': 'file',
-                                             'symmetry': 0,
-                                             'out_band': 1,
-                                             'kspacing': 0.0,       # overwrite
-                                             'gamma_only': False,
-                                             'read_file_dir': 'OUT.ABACUS'})  # overwrite
+        inp = kwargs.get('inp', {}).copy()
+        inp.update({'calculation': 'nscf',
+                    'init_chg': 'file',
+                    'symmetry': 0,
+                    'out_band': 1,
+                    'kspacing': 0.0,       # overwrite
+                    'gamma_only': False})
+        source_suffix = getattr(self, 'parameters', {}).get('suffix', 'ABACUS')
+        if inp.get('read_file_dir') is None:
+            inp['read_file_dir'] = f'OUT.{source_suffix}'
+        kwargs['inp'] = inp
 
         profile = self.profile if profile is None else profile
 
@@ -860,7 +941,7 @@ class AbacusSocketIO(SocketIOCalculator):
             raise ValueError('ABACUS socket extras are not valid UTF-8 JSON') from error
         if not isinstance(metadata, dict):
             raise ValueError('ABACUS socket extras must be a JSON object')
-        if metadata.get('schema') != 'abacus.socket.properties.v1':
+        if metadata.get('schema') != SOCKET_METADATA_SCHEMA:
             raise ValueError('unsupported ABACUS socket extras schema')
         present = metadata.get('present')
         if not isinstance(present, list):
@@ -955,7 +1036,6 @@ class AbacusSocketIO(SocketIOCalculator):
         for sorted_index, original_index in enumerate(order):
             reordered[original_index] = forces[sorted_index]
         return reordered
-
 
 class TestAbacusCalculator(unittest.TestCase):
 

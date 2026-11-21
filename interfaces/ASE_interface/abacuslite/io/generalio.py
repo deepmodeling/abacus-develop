@@ -5,8 +5,8 @@ import os
 import tempfile
 import unittest
 from pathlib import Path
-from io import TextIOWrapper
-from typing import Optional, Dict, List, Any
+from io import StringIO
+from typing import Optional, Dict, List, Any, Mapping, TextIO
 
 import numpy as np
 from ase.atoms import Atoms
@@ -14,6 +14,40 @@ from ase.build import bulk
 from ase.constraints import FixAtoms, FixCartesian
 from ase.data import chemical_symbols, atomic_masses
 ATOM_MASS = dict(zip(chemical_symbols, atomic_masses.tolist()))
+
+
+def _running_log_geometry(record):
+    """Convert a running-log geometry record to Cartesian Angstrom."""
+    positions = np.asarray(record['coords'], dtype=float)
+    cell = np.asarray(record['cell'], dtype=float)
+    coordinate = record['coordinate']
+    if coordinate == 'Direct':
+        positions = positions @ cell
+    elif coordinate == 'Cartesian':
+        positions = positions * record['alat_in_angstrom']
+    else:
+        raise ValueError(f'Unknown coordinate system: {coordinate}')
+    return positions, cell
+
+
+def _energy_without_entropy_metadata(ener: Mapping[str, float]) -> Dict[str, float]:
+    """Return the no-entropy energy as metadata when the log reports -TS.
+
+    ``E_KohnSham`` already includes ``E_entropy(-TS)`` and remains the
+    force-consistent ASE energy. The separate no-entropy value is metadata,
+    not an ASE ``free_energy`` replacement. Missing entropy stays unknown.
+
+    Args:
+        ener: Frame-local ABACUS energies in eV.
+
+    Returns:
+        The no-entropy energy in eV when its entropy term is available.
+    """
+    if 'E_entropy(-TS)' not in ener:
+        return {}
+    return {
+        'energy_without_entropy': float(ener['E_KohnSham']) - float(ener['E_entropy(-TS)']),
+    }
 
 def load_pseudo(pseudo_dir: str) -> Dict[str, str]:
     '''load the pseudopotential mapping from the pseudo_dir'''
@@ -232,9 +266,14 @@ def write_stru(stru: Atoms,
     str
         The path to the written STRU file.
     '''
+    return _write_ase_stru(stru, outdir, pp_file, orb_file, fname, backup=False)
+
+
+def _write_ase_stru(stru, outdir, pp_file, orb_file, fname, *, backup):
     from ase.units import (
         Bohr as __BOHR__, 
-        Angstrom as __ANGSTROM__
+        Angstrom as __ANGSTROM__,
+        AUT as __AUT__,
     )
     assert isinstance(stru, Atoms)
     pp_file = pp_file or {} # can be None, for those non-ESolver_KS cases
@@ -246,6 +285,11 @@ def write_stru(stru: Atoms,
     ind = species_group_indices(elem)
     coords = stru.get_positions()[ind]
     mobility = _constraint_mobility(stru)[ind]
+    # ASE velocities are Angstrom / ASE time; STRU v is Bohr / atomic time.
+    # ABACUS MD writes v / (ANGSTROM_AU * AU_to_FS) as Angstrom/fs.
+    velocities = (stru.get_velocities()[ind] * __AUT__ / __BOHR__
+                  if stru.has('momenta') else np.zeros((len(stru), 3)))
+    masses = stru.get_masses()[ind]
     elem = [elem[i] for i in ind]
 
     # handle the atomic magnetic moment (issue #6516)
@@ -255,6 +299,15 @@ def write_stru(stru: Atoms,
                for m in magmoms]
     elem_uniq = list(dict.fromkeys(elem))
     nat = np.array([elem.count(e) for e in elem_uniq])
+    species_masses = []
+    start = 0
+    for symbol, count in zip(elem_uniq, nat):
+        values = masses[start:start + count]
+        if not np.all(values == values[0]):
+            raise ValueError(f'Different masses for species {symbol} cannot be '
+                             'represented by one ABACUS STRU species entry')
+        species_masses.append(float(values[0]))
+        start += count
     stru_dict = {
         'coord_type': 'Cartesian',
         'lat': {
@@ -264,7 +317,7 @@ def write_stru(stru: Atoms,
         'species': [
             {
                 'symbol': e,
-                'mass': ATOM_MASS[e],
+                'mass': species_masses[i],
                 'pp_file': pp_file.get(e, ''),
                 'pp_type': '',
                 'natom': n,
@@ -273,7 +326,7 @@ def write_stru(stru: Atoms,
                     magmoms[j] | {
                         'coord': coords[j].tolist(), # coordinate
                         'm': mobility[j].tolist(), # mobility
-                        'v': [0.0, 0.0, 0.0], # velocity
+                        'v': velocities[j].tolist(), # atomic units of velocity
                     } for j in range(np.sum(nat[:i]), np.sum(nat[:i+1]))
                 ]
             }
@@ -283,10 +336,12 @@ def write_stru(stru: Atoms,
     if orb_file is not None:
         for s in stru_dict['species']:
             s['orb_file'] = orb_file[s['symbol']]
-    
+    path = Path(outdir) / fname
+    if backup:
+        file_safe_backup(path)
     _write_stru(outdir, stru_dict, fname)
 
-    return (Path(outdir) / fname).resolve().as_posix()
+    return path.resolve().as_posix()
 
 def write_input(data: Dict[str, Any], fn: str) -> str:
     '''
@@ -313,7 +368,7 @@ def write_input(data: Dict[str, Any], fn: str) -> str:
 
     return str(Path(fn).resolve())
 
-def _write_kline(data: Dict[str, Any], f: TextIOWrapper):
+def _write_kline(data: Dict[str, Any], f: TextIO):
     '''
     write the k-point file whose mode is "Line"
     '''
@@ -324,7 +379,7 @@ def _write_kline(data: Dict[str, Any], f: TextIOWrapper):
     for k, nk in zip(data['kpoints'], data['nkinterpl']):
         f.write(f"{k[0]} {k[1]} {k[2]} {nk}\n")
 
-def _write_ksampl_mp(data: Dict[str, Any], f: TextIOWrapper):
+def _write_ksampl_mp(data: Dict[str, Any], f: TextIO):
     '''
     write the k-point file whose mode is automatically sampling with Monkhorst-Pack
     '''
@@ -334,16 +389,21 @@ def _write_ksampl_mp(data: Dict[str, Any], f: TextIOWrapper):
     f.write(f"{data['nk'][0]} {data['nk'][1]} {data['nk'][2]} "
             f"{data['kshift'][0]} {data['kshift'][1]} {data['kshift'][2]}\n")
     
-def _write_kpoint(data: Dict[str, Any], f: TextIOWrapper):
+def _write_kpoint(data: Dict[str, Any], f: TextIO):
     '''
     write the k-point file whose mode is specifying kpoints one-by-one
     '''
+    kpoints = data['kpoints']
+    weights = data.get('weights')
+    if weights is None:
+        weights = data.get('nkinterpl', [1] * len(kpoints))
+    if len(kpoints) != data['nk'] or len(weights) != len(kpoints):
+        raise ValueError('Explicit KPT requires one weight per declared k point')
     f.write('K_POINTS\n')
     f.write(f"{data['nk']}\n")
     f.write(f"{data['coordinate'].capitalize()}\n")
-    nkinterpl = data.get('nkinterpl', [1 for _ in data['kpoints']])
-    for k, nk in zip(data['kpoints'], data.get('nkinterpl', nkinterpl)):
-        f.write(f"{k[0]} {k[1]} {k[2]} {nk}\n")
+    for (x, y, z), weight in zip(kpoints, weights):
+        f.write(f"{x} {y} {z} {weight}\n")
 
 def read_kpoint_from_running_log(fn: str) -> Dict[str, Any]:
     '''Read the k-point information from the ABACUS running log file.'''
@@ -366,6 +426,10 @@ def write_kpt(data: Dict[str, Any], fn: str) -> str:
     str
         the absolute path of the written KPT file
     '''
+    return _write_kpt(data, fn, backup=False)
+
+
+def _write_kpt(data, fn, *, backup):
     assert 'mode' in data, 'KPT data must contain "mode" key'
     mywriter = {
          # 'line': _write_kline,
@@ -375,10 +439,16 @@ def write_kpt(data: Dict[str, Any], fn: str) -> str:
     assert data['mode'] in mywriter, \
            f'Invalid KPT mode {data["mode"]}, must be one of ' \
            f'{list(mywriter.keys())}'
-    with open(fn, 'w') as f:
+    # Validate and format before touching the previous KPT.
+    with StringIO() as f:
         mywriter[data['mode']](data, f)
+        content = f.getvalue()
 
-    return str(Path(fn).resolve())
+    path = Path(fn)
+    if backup:
+        file_safe_backup(path)
+    path.write_text(content)
+    return str(path.resolve())
 
 def _parse_coord_line(line):
     '''
@@ -399,43 +469,64 @@ def _parse_coord_line(line):
 
     '''
     fields = line.split()
-    result = { 'coord' : [float(x) for x in fields[0:3]] }
-
+    if len(fields) < 3:
+        raise ValueError('An atom record requires three coordinate values')
+    result = {'coord': list(map(float, fields[:3]))}
+    aliases = {'m': 'm', 'v': 'v', 'vel': 'v', 'velocity': 'v',
+               'mag': 'mag', 'magmom': 'mag', 'angle1': 'angle1',
+               'angle2': 'angle2'}
+    options = {}
     idx = 3
     while idx < len(fields):
-        if fields[idx].isdigit(): # no keyword, 0/1 -> frozen atom
-            result['m'] = [int(x) for x in fields[idx:idx+3]]
-            idx += 3
-        elif fields[idx] == 'm': # frozen atom
-            result['m'] = [int(x) for x in fields[idx+1:idx+4]]
-            idx += 4
-        elif fields[idx] in ['v', 'vel', 'velocity']: # initial velocity
-            result['v'] = [float(x) for x in fields[idx+1:idx+4]]
-            idx += 4
-        elif fields[idx] in ['mag', 'magmom']:
-            '''
-            here we assume that frozen atom info cannot be placed after
-            a collinear mag info without a keyword
-            i.e., the following coordinate line
-                0.0 0.0 0.0 mag 1.0 0 0 0
-            is not allowed; one must explicitly specify 'm' in this case:
-                0.0 0.0 0.0 mag 1.0 m 0 0 0
+        token = fields[idx]
+        if token in ('0', '1'):
+            # Mobility may omit its keyword after a complete property, too.
 
-            '''
-            if idx + 2 < len(fields) and fields[idx+2] == 'angle1':
-                result['mag'] = ('Spherical',
-                                 list(map(float, fields[idx+1:idx+6:2])))
-                idx += 6
-            elif idx + 2 < len(fields) and fields[idx+2][0].isdigit():
-                result['mag'] = ('Cartesian',
-                                 list(map(float, fields[idx+1:idx+4])))
-                idx += 4
-            else: # collinear
-                result['mag'] = float(fields[idx+1])
-                idx += 2
+            keyword = 'm'
         else:
-            raise ValueError('Error: unknown keyword %s'%fields[idx])
+            if token not in aliases:
+                raise ValueError(f'Unknown atom keyword: {token}')
+            keyword = aliases[token]
+            idx += 1
+        if keyword in options:
+            raise ValueError(f'Duplicate atom keyword: {keyword}')
+        start = idx
+        while idx < len(fields) and fields[idx] not in aliases:
+            idx += 1
+        values = fields[start:idx]
+        if keyword == 'mag':
+            expected = (1, 3)
+        elif keyword in ('angle1', 'angle2'):
+            expected = (1,)
+        else:
+            expected = (3,)
+        # A complete property may be followed by the legacy bare triplet.
+        # For mag, use its vector width so scalar-plus-flags stays ambiguous.
+        if len(values) == max(expected) + 3 and values[-3] in ('0', '1'):
+            values = values[:-3]
+            idx -= 3
+        if len(values) not in expected:
+            raise ValueError(f'{keyword} requires {expected} values, got {len(values)}')
+        if keyword == 'm':
+            flags = list(map(int, values))
+            if any(flag not in (0, 1) for flag in flags):
+                raise ValueError('Mobility flags must be 0 or 1')
+            options[keyword] = flags
+        else:
+            options[keyword] = list(map(float, values))
 
+    for keyword in ('m', 'v'):
+        if keyword in options:
+            result[keyword] = options[keyword]
+    angles = [key in options for key in ('angle1', 'angle2')]
+    if any(angles):
+        if not all(angles) or len(options.get('mag', [])) != 1:
+            raise ValueError('Spherical moments require mag, angle1 and angle2')
+        result['mag'] = ('Spherical',
+                         options['mag'] + options['angle1'] + options['angle2'])
+    elif 'mag' in options:
+        values = options['mag']
+        result['mag'] = values[0] if len(values) == 1 else ('Cartesian', values)
     return result
 
 def _atomic_positions_gen(lines):
@@ -602,19 +693,27 @@ def _read_kpoint(raw: List[str]) -> Dict[str, Any]:
     assert raw[2].lower() in ['direct', 'cartesian'], \
              f'Invalid KPT file, expected "Direct" or "Cartesian" in the third line, ' \
              f'got {raw[2]}'
-    mymatch = [re.match(r'^(-?\d+(\.\d+)?)\s+(-?\d+(\.\d+)?)\s+(-?\d+(\.\d+)?)\s*'
-                        r'(\d+).*', l) 
-              for l in raw[3:]]
-    assert all(m for m in mymatch), \
-             'Invalid KPT file, expected the k-points to be in the format ' \
-             '"x y z n # comment"'
-
+    points = []
+    weights = []
+    for line_number, line in enumerate(raw[3:], start=4):
+        fields = re.split(r'#|//|!', line, maxsplit=1)[0].split()
+        try:
+            # ABACUS consumes the first four values and ignores any row label.
+            x, y, z, weight = map(float, fields[:4])
+        except ValueError as exc:
+            raise ValueError(
+                f'Invalid explicit KPT row {line_number}: expected x y z weight'
+            ) from exc
+        if not np.isfinite([x, y, z, weight]).all():
+            raise ValueError(f'Invalid explicit KPT row {line_number}: non-finite value')
+        points.append((x, y, z))
+        weights.append(weight)
     return {
         'mode': 'point',
         'coordinate': 'Cartesian' if raw[2].lower() == 'cartesian' else 'Direct',
         'nk': int(raw[1]),
-        'kpoints': [tuple(map(float, m.groups()[:3])) for m in mymatch],
-        'weights': [int(m.groups()[6]) for m in mymatch]
+        'kpoints': points,
+        'weights': weights,
     }
 
 def read_kpt(fn: str) -> Dict[str, Any]:
