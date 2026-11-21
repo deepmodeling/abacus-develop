@@ -37,4 +37,7 @@ addtest(
 addtest(
   TARGET MODULE_CELL_klist_validation_test
   LIBS parameter base device cell domain_decomposition neighbor symmetry
-  SOURCES test_klist.cpp)
+  SOURCES test_klist.cpp
+          ../module_neighlist/neighbor_search.cpp
+          ../module_neighlist/bin_manager.cpp
+          ../module_neighlist/page_allocator.cpp)
