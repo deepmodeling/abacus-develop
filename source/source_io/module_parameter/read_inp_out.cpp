@@ -1649,18 +1649,6 @@ For more information, refer to the documentation of out_mat_r, out_hsr, out_mat_
         this->add_item(item);
     }
     {
-        Input_Item item("out_ndigits");
-        item.annotation = "the length of decimal part of output data";
-        item.category = "Output information";
-        item.type = "Integer";
-        item.description = "Controls the length of decimal part of output data, such as charge density, Hamiltonian matrix, Overlap matrix and so on.";
-        item.default_value = "8";
-        item.unit = "";
-        item.set_availability("basis_type==lcao and out_hsk==1");
-        read_sync_int(input.out_ndigits);
-        this->add_item(item);
-    }
-    {
         Input_Item item("out_element_info");
         item.annotation = "output (projected) wavefunction of each element";
         item.category = "Output information";

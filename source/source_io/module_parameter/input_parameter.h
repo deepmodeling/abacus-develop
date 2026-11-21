@@ -516,7 +516,6 @@ struct Input_para
                                             ///< 1: append to the same fixed file; 2: write to subdirectory
                                             ///< (PSI/, CHG/, POT/, ELF/, DOS/, DIP/, MAT/) with a g{step} suffix
                                             ///< liuyu 2023-03-20, modified 2025-10-16
-    int out_ndigits = 8;                     ///< Assuming 8 digits precision is needed for matrices output
     std::vector<int> out_mat_t = {0, 8};     ///< output T(R) matrix with precision
     bool out_element_info = false;           ///< output information of all elements
     std::vector<int> out_mat_r = {0, 8};     ///< output r(R) matrix with precision
