@@ -1,3 +1,4 @@
+#include <cstdlib>
 #include <fstream>
 #include <sstream>
 #include <string>
@@ -177,6 +178,39 @@ TEST_F(WritePdosTextTest, SpinPolarized)
     remove("./pdoss2.txt");
     GlobalV::ofs_running.close();
     remove("test_write_pdos_text.log");
+}
+
+TEST_F(WritePdosTextTest, NpySumsZetasAndSpinorsBeforeThreshold)
+{
+    Atom& atom = ucell->atoms[0];
+    atom.nwl = 1;
+    atom.nw = 7;
+    atom.l_nchi = {1, 2};
+    atom.iw2l = {0, 1, 1, 1, 1, 1, 1};
+    atom.iw2m = {0, 0, 1, 2, 0, 1, 2};
+    ucell->set_iat2iwt_for_test({0}, 2);
+    std::vector<ModuleBase::matrix> pdos(1);
+    const int nrows = 2 * atom.nw;
+    pdos[0].create(nrows, 3, true);
+    for (int iw = 0; iw < nrows; ++iw)
+    {
+        pdos[0](iw, 0) = iw + 1;
+        pdos[0](iw, 1) = 0.3e-6;
+        pdos[0](iw, 2) = 0.1e-6;
+    }
+    const char* fixture_path = std::getenv("ABACUS_TEST_PDOS_NPY");
+    const std::string path = fixture_path ? fixture_path : testing::TempDir() + "abacus_pdos_spinor.npy";
+    ModuleIO::write_pdos_npy(*ucell, pdos, 4, -1.0, 0.5, path);
+    std::ifstream file(path, std::ios::binary);
+    // The last p channel combines both zetas and both spinor components.
+    double spectrum[3];
+    file.seekg(-static_cast<std::streamoff>(sizeof(spectrum)), std::ios::end);
+    ASSERT_TRUE(file.read(reinterpret_cast<char*>(spectrum), sizeof(spectrum)));
+    EXPECT_DOUBLE_EQ(spectrum[0], 42.0);
+    EXPECT_DOUBLE_EQ(spectrum[1], 1.2e-6);
+    EXPECT_DOUBLE_EQ(spectrum[2], 0.0);
+    file.close();
+    if (!fixture_path) { std::remove(path.c_str()); }
 }
 
 // ---------------------------------------------------------------------------

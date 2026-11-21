@@ -28,3 +28,7 @@ mixing_beta       0.4
 mixing_beta_mag   0.4
 
 out_dos           1
+pdos_format       npy
+dos_emin_ev       -60
+dos_emax_ev       30
+dos_edelta_ev     0.0625

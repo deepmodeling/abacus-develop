@@ -156,6 +156,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
         const std::string global_dos_dir = PARAM.globalv.global_dos_dir;
         // Mode-2 DOS/ subdirectory is created lazily at write time.
         ModuleBase::ensure_directory(global_dos_dir);
+        const bool pdos_npy = inp.pdos_format == "npy";
         ModuleIO::write_dos_lcao(psi,
                                  p_hamilt,
                                  pv,
@@ -168,6 +169,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                                  inp.dos_edelta_ev,
                                  inp.dos_scale,
                                  inp.dos_sigma,
+                                 pdos_npy,
                                  out_app_flag,
                                  istep,
                                  inp.nspin,

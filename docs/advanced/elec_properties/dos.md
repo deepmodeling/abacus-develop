@@ -97,3 +97,22 @@ The PDOS file uses a plain-text format. Each row corresponds to one energy point
 The `# istep:` line is only present for geometry-optimization (istep) output. Within each angular momentum `l`, the `2l+1` columns follow the magnetic-quantum-number order `m = 0, +1, -1, +2, -2, ...`.
 
 For nspin=2, two files are written (pdoss1* and pdoss2*), one per spin channel. For nspin=4, the two spinor components are summed into a single file. The unit of PDOS is also `(number of states)/(eV * unitcell)`.
+
+For a single-point LCAO SCF or NSCF calculation, set `out_dos 1` and
+`pdos_format npy` to write `pdos.npy`. The default is `pdos_format text`.
+Total DOS still goes to `doss{spin}.txt`. If the output directory contains
+both formats, set `pdosfile` to the desired file in the `abacus-plot -d -p`
+configuration. You can also open the binary file with NumPy:
+
+```python
+import numpy as np
+
+rows = np.load("pdos.npy", mmap_mode="r")
+spectrum = rows["pdos"][0]  # (spin channel, energy point), in 1/eV
+energy_eV = rows["energy_min_eV"][0] + np.arange(spectrum.shape[1]) * rows["energy_step_eV"][0]
+```
+
+Each row identifies one channel by `atom_index` (one-based), `species`, `l`
+and signed `m`. `nspin` is the input spin mode. Modes 1 and 4 store one
+spectrum per row, and mode 2 stores spin-up and spin-down. The array uses
+binary64 and the same zeta sums and zero threshold as text.

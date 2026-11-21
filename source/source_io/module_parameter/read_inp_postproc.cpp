@@ -10,6 +10,27 @@ void ReadInput::item_postprocess()
     // in the generated documentation (docs/advanced/input_files/input-main.md).
     // Please preserve this ordering when adding new parameters.
     {
+        Input_Item item("pdos_format");
+        item.domain.set_choices({"text", "npy"});
+        item.annotation = "file format for LCAO projected DOS";
+        item.category = "Density of states";
+        item.type = "String";
+        item.description = "With out_dos = 1, select per-spin text files or a single pdos.npy "
+                           "for projected DOS. NumPy output is available for single-point LCAO SCF and NSCF.";
+        item.default_value = "text";
+        read_sync_string(input.pdos_format);
+        item.check_value = [](const Input_Item&, const Parameter& para) {
+            const auto& in = para.input;
+            if (in.out_dos && in.pdos_format == "npy"
+                && (in.basis_type != "lcao" || in.esolver_type != "ksdft"
+                    || (in.calculation != "scf" && in.calculation != "nscf")))
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "pdos_format npy requires a single-point LCAO KSDFT SCF or NSCF calculation.");
+            }
+        };
+        this->add_item(item);
+    }
+    {
         Input_Item item("dos_edelta_ev");
         item.annotation = "delta energy for dos";
         item.category = "Density of states";
