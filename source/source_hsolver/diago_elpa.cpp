@@ -78,12 +78,12 @@ void DiagoElpa<std::complex<double>>::diag(
                    (const int)h_mat.row,
                    (const int)h_mat.col,
                    (const int*)h_mat.desc);
-    this->DecomposedState
+    this->overlap_factor
         = 0; // for k pointer, the decomposed s_mat can not be reused
     ModuleBase::timer::start("DiagoElpa", "elpa_solve");
     es.generalized_eigenvector(h_mat.p,
                                s_mat.p,
-                               this->DecomposedState,
+                               this->overlap_factor,
                                eigen.data(),
                                psi.get_pointer());
     ModuleBase::timer::end("DiagoElpa", "elpa_solve");
@@ -117,7 +117,7 @@ void DiagoElpa<double>::diag(ModuleBase::MatrixBlock<double>& h_mat,
     ModuleBase::timer::start("DiagoElpa", "elpa_solve");
     es.generalized_eigenvector(h_mat.p,
                                s_mat.p,
-                               this->DecomposedState,
+                               this->overlap_factor,
                                eigen.data(),
                                psi.get_pointer());
     ModuleBase::timer::end("DiagoElpa", "elpa_solve");
@@ -148,12 +148,12 @@ void DiagoElpa<std::complex<double>>::diag_pool(ModuleBase::MatrixBlock<std::com
                    (const int)h_mat.row,
                    (const int)h_mat.col,
                    (const int*)h_mat.desc);
-    this->DecomposedState
+    this->overlap_factor
         = 0; // for k pointer, the decomposed s_mat can not be reused
     ModuleBase::timer::start("DiagoElpa", "elpa_solve");
     es.generalized_eigenvector(h_mat.p,
                                s_mat.p,
-                               this->DecomposedState,
+                               this->overlap_factor,
                                eigen.data(),
                                psi.get_pointer());
     ModuleBase::timer::end("DiagoElpa", "elpa_solve");
@@ -181,7 +181,7 @@ void DiagoElpa<double>::diag_pool(ModuleBase::MatrixBlock<double>& h_mat,
     ModuleBase::timer::start("DiagoElpa", "elpa_solve");
     es.generalized_eigenvector(h_mat.p,
                                s_mat.p,
-                               this->DecomposedState,
+                               this->overlap_factor,
                                eigen.data(),
                                psi.get_pointer());
     ModuleBase::timer::end("DiagoElpa", "elpa_solve");

@@ -16,11 +16,9 @@ list(
   diago_params.cpp)
 
 if(ENABLE_LCAO)
+  list(APPEND objects hsolver_lcao.cpp diag_lcao.cpp diag_sk_cut.cpp diago_lapack.cpp)
   if(ENABLE_MPI)
-    list(APPEND objects hsolver_lcao.cpp diago_scalapack.cpp parallel_k2d.cpp
-         diago_lapack.cpp)
-  else()
-    list(APPEND objects hsolver_lcao.cpp diago_lapack.cpp)
+    list(APPEND objects diago_scalapack.cpp parallel_k2d.cpp)
   endif()
   if(ENABLE_ELPA)
     list(APPEND objects diago_elpa.cpp diago_elpa_native.cpp)
