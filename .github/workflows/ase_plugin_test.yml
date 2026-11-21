@@ -13,6 +13,10 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/deepmodeling/abacus-gnu
+    env:
+      # OpenBLAS 0.3.20 Cooperlake DSYMM corrupts the Si density.
+      # Keep this baseline kernel until the GNU image has a verified fix.
+      OPENBLAS_CORETYPE: Prescott
 
     steps:
       - name: Checkout code
