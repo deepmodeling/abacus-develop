@@ -30,6 +30,15 @@ if(ENABLE_MPI)
 endif()
 
 addtest(
+  TARGET MODULE_CELL_read_orb_boundary_test
+  LIBS base device
+  SOURCES test_read_orb.cpp
+          ../read_orb.cpp
+          ../atom_spec.cpp
+          ../atom_pseudo.cpp
+          ../pseudo.cpp)
+
+addtest(
   TARGET MODULE_CELL_index_test
   LIBS base device
   SOURCES test_cell_index.cpp ../cell_index.cpp)
