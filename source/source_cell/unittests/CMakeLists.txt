@@ -33,3 +33,10 @@ addtest(
   TARGET MODULE_CELL_index_test
   LIBS base device
   SOURCES test_cell_index.cpp ../cell_index.cpp)
+
+addtest(
+  TARGET MODULE_CELL_read_lattice_validation_test
+  LIBS base device
+  SOURCES test_read_atom_species.cpp
+          ../read_atom_species.cpp
+          ../basecell.cpp)

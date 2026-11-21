@@ -1,5 +1,6 @@
 #include "read_stru.h"
 
+#include <cmath>
 #include <sstream>
 
 #include "source_base/tool_title.h"
@@ -198,6 +199,19 @@ bool read_lattice_constant(std::ifstream& ifa,
             ModuleBase::WARNING_QUIT("unitcell::read_lattice_constant",
             "do not use LATTICE_VECTORS along with explicit specification of lattice type");
         }
+        // Non-cubic named lattices cannot be constructed without the shape
+        // parameters in LATTICE_PARAMETERS; without them the shape variables
+        // stay zero and produce a zero-volume or NaN cell.
+        if(latName != "sc" && latName != "fcc" && latName != "bcc")
+        {
+            const bool has_params =
+                ModuleBase::GlobalFunc::SCAN_LINE_BEGIN(ifa, "LATTICE_PARAMETERS", true, false);
+            if (!has_params)
+            {
+                const std::string msg = "LATTICE_PARAMETERS is required for lattice type " + latName;
+                ModuleBase::WARNING_QUIT("unitcell::read_lattice_constant", msg);
+            }
+        }
         if(latName=="sc")
         {//simple-cubic, ibrav = 1
             latvec.e11 = 1.0; latvec.e12 = 0.0; latvec.e13 = 0.0;
@@ -377,6 +391,15 @@ bool read_lattice_constant(std::ifstream& ifa,
         { 
             ModuleBase::WARNING_QUIT("unitcell::read_lattice_constant","latname not supported!");
         }
+    }
+
+    // Reject degenerate (zero-volume) or non-finite lattice vectors, whether
+    // they came from LATTICE_VECTORS or from a named lattice.
+    const double latvec_det = latvec.Det();
+    if (!std::isfinite(latvec_det) || latvec_det == 0.0)
+    {
+        ModuleBase::WARNING_QUIT("unitcell::read_lattice_constant",
+                                 "the lattice vectors form a zero-volume or non-finite cell");
     }
 
     // lattice vectors in another form.
