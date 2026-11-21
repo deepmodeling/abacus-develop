@@ -169,7 +169,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     //------------------------------------------------------------------
     //! 1) print out density of states (DOS)
     //------------------------------------------------------------------
-    if (inp.out_dos)
+    if (inp.out_dos[0] != 0)
     {
         const std::string global_dos_dir = PARAM.globalv.global_dos_dir;
         // Mode-2 DOS/ subdirectory is created lazily at write time.
@@ -187,6 +187,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                                  inp.dos_scale,
                                  inp.dos_sigma,
                                  out_app_flag,
+                                 inp.out_dos[1],
                                  istep,
                                  inp.nspin,
                                  PARAM.globalv.nlocal,

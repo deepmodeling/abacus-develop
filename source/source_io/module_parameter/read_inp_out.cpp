@@ -373,7 +373,7 @@ Also controled by out_freq_ion and out_app_flag.
         Input_Item item("out_dos");
         item.annotation = "output energy and dos";
         item.category = "Output information";
-        item.type = "Integer";
+        item.type = R"(Integer \[Integer\](optional))";
         item.description = R"(Whether to output the density of states (DOS) and projected density of states (PDOS). For more information, refer to the dos.md.
 * 0: no output
 * 1: output the density of states (DOS) and projected density of states (PDOS, LCAO only)
@@ -381,24 +381,44 @@ Also controled by out_freq_ion and out_app_flag.
  * With out_app_flag = 1: the same fixed-name files are reused; the first written step truncates them and later steps append one record per step (prefixed with a `# Ionic_Step N` header, one-based).
  * With out_app_flag = 2: per-step files are named `doss{s}g{geom}.txt` and `pdoss{s}g{geom}.txt` where `{geom}` is the one-based geometry index (e.g. `doss1g3.txt` for the third ionic step).
  * nspin=1 or 4: one spin channel (`s1`). nspin=2: two channels (`s1`, `s2`). PW and LCAO use the same naming.
-Note: values 2 and 3 are no longer supported. Setting out_dos to 2 or 3 will raise an error.)";
-        item.default_value = "0";
+Note: values 2 and 3 are no longer supported. Setting out_dos to 2 or 3 will raise an error.
+The optional second integer controls the number of decimal places of the DOS and PDOS values in `doss{s}.txt` and `pdoss{s}.txt`, and defaults to 6.)";
+        item.default_value = "0 6";
         item.unit = "";
-        read_sync_int(input.out_dos);
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            const size_t count = item.get_size();
+            if (count < 1)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "out_dos needs at least 1 value");
+            }
+            try
+            {
+                para.input.out_dos[0] = std::stoi(item.str_values[0]);
+                para.input.out_dos[1] = 6;
+                if (count >= 2) try { para.input.out_dos[1] = std::stoi(item.str_values[1]); }
+                catch (const std::invalid_argument& e) {
+                    ModuleBase::WARNING("Input", "out_dos precision must be an integer, using default 6");
+                }
+            }
+            catch (const std::invalid_argument& e) {
+                ModuleBase::WARNING("Input", "out_dos must be an integer, using default 0");
+            }
+        };
+        sync_intvec(input.out_dos, 2, 6);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.calculation == "get_wf" || para.input.calculation == "get_pchg")
             {
-                para.input.out_dos = 0;
+                para.input.out_dos[0] = 0;
             }
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.out_dos == 2)
+            if (para.input.out_dos[0] == 2)
             {
                 ModuleBase::WARNING_QUIT("ReadInput",
                                          "out_dos = 2 has been deprecated. "
                                          "PDOS is now written automatically with out_dos = 1.");
             }
-            if (para.input.out_dos == 3)
+            if (para.input.out_dos[0] == 3)
             {
                 ModuleBase::WARNING_QUIT("ReadInput",
                                          "out_dos = 3 (Fermi surface output) has been removed. "

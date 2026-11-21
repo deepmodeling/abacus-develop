@@ -110,6 +110,7 @@ bool ModuleIO::cal_dos(const int& is,  // index for spin
         const ModuleBase::matrix& wg,  // weight of k-points and bands
         const int istep, // ionic step
         const int out_app_flag,
+        const int precision,
         const int bndpar)
 {
     ModuleBase::TITLE("ModuleIO", "cal_dos");
@@ -158,7 +159,7 @@ bool ModuleIO::cal_dos(const int& is,  // index for spin
     if (GlobalV::MY_RANK == 0)
     {
         ofs_dos << npoints << " # number of points" << std::endl;
-        ofs_dos << std::fixed << std::setprecision(6);
+        ofs_dos << std::fixed << std::setprecision(precision);
         ofs_dos << "#" << std::setw(12) << "energy(eV)"
                  << std::setw(12) << "dos"
                  << std::setw(12) << "dos_int"

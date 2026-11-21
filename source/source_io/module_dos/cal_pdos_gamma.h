@@ -27,6 +27,7 @@ namespace ModuleIO
             const double& bcoeff,
             const int istep,
             const int out_app_flag,
+            const int precision,
             const int nlocal,
             const int nspin,
             const std::string& global_out_dir,

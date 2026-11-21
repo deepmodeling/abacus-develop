@@ -203,7 +203,8 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.inp.out_sol[0], 0);
     EXPECT_EQ(param.inp.out_sol[1], 6);
     EXPECT_EQ(param.inp.out_wfc_pw, 0);
-    EXPECT_EQ(param.inp.out_dos, 0);
+    EXPECT_EQ(param.inp.out_dos[0], 0);
+    EXPECT_EQ(param.inp.out_dos[1], 6);
     EXPECT_EQ(param.inp.out_ldos[0], 1);
     EXPECT_EQ(param.inp.out_ldos[1], 3);
     EXPECT_EQ(param.inp.out_band[0], 0);
