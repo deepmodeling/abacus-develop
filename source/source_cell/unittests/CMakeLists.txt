@@ -33,3 +33,8 @@ addtest(
   TARGET MODULE_CELL_index_test
   LIBS base device
   SOURCES test_cell_index.cpp ../cell_index.cpp)
+
+addtest(
+  TARGET MODULE_CELL_klist_validation_test
+  LIBS parameter base device cell domain_decomposition neighbor symmetry
+  SOURCES test_klist.cpp)
