@@ -37,3 +37,8 @@ addtest(
           ../atom_spec.cpp
           ../atom_pseudo.cpp
           ../pseudo.cpp)
+
+addtest(
+  TARGET MODULE_CELL_index_test
+  LIBS base device
+  SOURCES test_cell_index.cpp ../cell_index.cpp)

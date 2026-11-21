@@ -208,31 +208,31 @@ void ESolver_GetS::runner(BaseCell& basecell, const int istep)
         }
     }
 
-    const std::string fn = PARAM.globalv.global_out_dir + "sr_nao.csr";
     const std::string global_matrix_dir = PARAM.globalv.global_matrix_dir;
+
+    // Mode-2 MAT/ subdirectory is created lazily at write time.
+    ModuleBase::ensure_directory(global_matrix_dir);
 
     auto* hamilt_ptr = static_cast<hamilt::Hamilt<std::complex<double>>*>(this->p_hamilt);
     const bool binary = false;
     const double sparse_threshold = 1e-10;
     const int precision = 16;
-    ModuleIO::output_SR(pv,
+    ModuleIO::output_SR(ucell,
+                        pv,
                         gd,
                         hamilt_ptr,
-                        fn,
                         binary,
                         sparse_threshold,
                         precision,
-                        PARAM.globalv.global_out_dir,
                         global_matrix_dir,
                         PARAM.inp.calculation,
                         PARAM.inp.out_app_flag,
                         PARAM.inp.nspin,
+                        istep,
                         GlobalV::ofs_running);
 
     if (this->inp_->out_mat_r[0])
     {
-        // Mode-2 MAT/ subdirectory is created lazily at write time.
-        ModuleBase::ensure_directory(global_matrix_dir);
         Position_op r_matrix;
         const bool cal_force = PARAM.inp.cal_force;
         const int nlocal = PARAM.globalv.nlocal;
@@ -252,8 +252,6 @@ void ESolver_GetS::runner(BaseCell& basecell, const int istep)
 
     if (this->inp_->out_mat_ds[0])
     {
-        // Mode-2 MAT/ subdirectory is created lazily at write time.
-        ModuleBase::ensure_directory(global_matrix_dir);
         LCAO_HS_Arrays HS_Arrays; // store sparse arrays
         ModuleIO::MatROutputOptions mat_R_options;
         mat_R_options.binary = binary;

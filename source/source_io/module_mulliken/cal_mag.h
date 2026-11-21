@@ -32,6 +32,7 @@ void cal_mag(Parallel_Orbitals* pv,
              UnitCell& ucell,
              const Grid_Driver& gd,
              const int istep,
+             const int out_app_flag,
              const bool print)
 {
     if (PARAM.inp.out_mul)
@@ -49,8 +50,7 @@ void cal_mag(Parallel_Orbitals* pv,
         ucell.atom_mulliken = mulp.get_atom_mulliken(atom_chg);
         if (print && GlobalV::MY_RANK == 0)
         {
-            cell_index.write_orb_info(PARAM.globalv.global_out_dir);
-            mulp.write(istep, PARAM.globalv.global_out_dir);
+            mulp.write(istep, out_app_flag, PARAM.globalv.global_out_dir, GlobalV::ofs_running);
             mulp.print_atom_mag(atom_chg, GlobalV::ofs_running);
         }
     }
