@@ -368,6 +368,64 @@ void hegvx(const int itype, const char jobz, const char range, const char uplo, 
 }
 
 
+// Explicit-count overloads: existing by-value callers keep their original contract.
+static inline
+void hegvx(const int itype, const char jobz, const char range, const char uplo, const int n,
+            float* a, const int lda, float* b, const int ldb,
+            const float vl, const float vu, const int il, const int iu, const float abstol,
+            int* m, float* w, float* z, const int ldz,
+            float* work, const int lwork, float* rwork, int* iwork, int* ifail, int& info)
+{
+    ssygvx_(&itype, &jobz, &range, &uplo, &n,
+            a, &lda, b, &ldb,
+            &vl, &vu, &il, &iu,
+            &abstol, m, w, z, &ldz,
+            work, &lwork, iwork, ifail, &info);
+}
+
+static inline
+void hegvx(const int itype, const char jobz, const char range, const char uplo, const int n,
+            double* a, const int lda, double* b, const int ldb,
+            const double vl, const double vu, const int il, const int iu, const double abstol,
+            int* m, double* w, double* z, const int ldz,
+            double* work, const int lwork, double* rwork, int* iwork, int* ifail, int& info)
+{
+    dsygvx_(&itype, &jobz, &range, &uplo, &n,
+            a, &lda, b, &ldb,
+            &vl, &vu, &il, &iu,
+            &abstol, m, w, z, &ldz,
+            work, &lwork, iwork, ifail, &info);
+}
+
+static inline
+void hegvx(const int itype, const char jobz, const char range, const char uplo, const int n,
+            std::complex<float>* a, const int lda, std::complex<float>* b, const int ldb,
+            const float vl, const float vu, const int il, const int iu, const float abstol,
+            int* m, float* w, std::complex<float>* z, const int ldz,
+            std::complex<float>* work, const int lwork, float* rwork, int* iwork, int* ifail, int& info)
+{
+    chegvx_(&itype, &jobz, &range, &uplo, &n,
+            a, &lda, b, &ldb,
+            &vl, &vu, &il, &iu,
+            &abstol, m, w, z, &ldz,
+            work, &lwork, rwork, iwork, ifail, &info);
+}
+
+static inline
+void hegvx(const int itype, const char jobz, const char range, const char uplo, const int n,
+            std::complex<double>* a, const int lda, std::complex<double>* b, const int ldb,
+            const double vl, const double vu, const int il, const int iu, const double abstol,
+            int* m, double* w, std::complex<double>* z, const int ldz,
+            std::complex<double>* work, const int lwork, double* rwork, int* iwork, int* ifail, int& info)
+{
+    zhegvx_(&itype, &jobz, &range, &uplo, &n,
+            a, &lda, b, &ldb,
+            &vl, &vu, &il, &iu,
+            &abstol, m, w, z, &ldz,
+            work, &lwork, rwork, iwork, ifail, &info);
+}
+
+
 // Column-major general eigenproblems; preserve the supplied workspace/query policy.
 static inline
 void geev(const char jobvl, const char jobvr, const int n, double* a, const int lda,

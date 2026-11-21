@@ -6,6 +6,10 @@ list(
   diago_david.cpp
   diago_dav_subspace.cpp
   diago_bpcg.cpp
+  diago_lobpcg.cpp
+  lobpcg_subspace.cpp
+  lobpcg_recovery.cpp
+  rr_solver.cpp
   para_lin_tf.cpp
   hsolver_pw.cpp
   hsolver_lcaopw.cpp

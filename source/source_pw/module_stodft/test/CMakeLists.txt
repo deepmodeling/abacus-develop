@@ -24,11 +24,18 @@ addtest(
   TARGET MODULE_PW_Sto_HSolver_UTs
   LIBS parameter psi device base container MPI::MPI_CXX
   SOURCES
-    test_sto_hsolver_pw.cpp
+    ../unittests/test_sto_hsolver_pw.cpp
     ../sto_hsolver_pw.cpp
     ../../../source_hsolver/hsolver_pw.cpp
     ../../../source_hsolver/diago_bpcg.cpp
     ../../../source_hsolver/diago_dav_subspace.cpp
+    ../../../source_hsolver/diago_lobpcg.cpp
+    ../../../source_hsolver/lobpcg_subspace.cpp
+    ../../../source_hsolver/lobpcg_recovery.cpp
+    ../../../source_hsolver/rr_solver.cpp
+    ../../../source_hsolver/module_linalg/linear_algebra.cpp
+    ../../../source_hsolver/diag_hs_para.cpp
+    ../../../source_hsolver/diago_pxxxgvx.cpp
     ../../../source_hsolver/diag_const_nums.cpp
     ../../../source_hsolver/diago_iter_assist.cpp
     ../../../source_hsolver/para_lin_tf.cpp
@@ -39,3 +46,7 @@ addtest(
     # This test calls MPI_Init in main() and its mocks take MPI_Comm arguments
     # unconditionally, so it must keep __MPI even though this directory disables it.
   KEEP_FEATURE_DEFINITIONS __MPI)
+
+if(TARGET ELPA::ELPA)
+  target_link_libraries(MODULE_PW_Sto_HSolver_UTs PRIVATE ELPA::ELPA genelpa)
+endif()

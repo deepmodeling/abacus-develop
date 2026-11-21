@@ -6,12 +6,15 @@
 #include "hsolver_pw_sup.h"
 #include "hsolver_supplementary_mock.h"
 #include "source_hsolver/diag_comm_info.h"
+#include "source_base/parallel_global.h"
 #include "source_hsolver/hs_operator.h"
 #include "source_hsolver/hsolver_lcaopw.h"
 #include "source_hsolver/hsolver_pw.h"
 
 #include <algorithm>
 #include <complex>
+#include <cmath>
+#include <cstdlib>
 
 /// H = S = identity: the simplest operator the solvers can be handed
 template <typename T> class IdentityHSOperator : public hsolver::HSOperator<T, base_device::DEVICE_CPU>
@@ -119,68 +122,6 @@ template void PW_Basis_K::real_to_recip<double, base_device::DEVICE_CPU>(
  *      - lcao_in_pw specific implementation
  */
 
-// mock diago_hs_para
-namespace hsolver
-{
-template <typename T>
-void diago_hs_para(
-    T *h,
-    T *s,
-    const int lda,
-    const int nband,
-    typename GetTypeReal<T>::type *const ekb,
-    T *const wfc,
-    const MPI_Comm &comm,
-    const int diag_subspace,
-    const int block_size = 0)
-{
-}
-template void diago_hs_para<double>(
-    double *h,
-    double *s,
-    const int lda,
-    const int nband,
-    typename GetTypeReal<double>::type *const ekb,
-    double *const wfc,
-    const MPI_Comm &comm,
-    const int diag_subspace,
-    const int block_size);
-
-template void diago_hs_para<std::complex<double>>(
-    std::complex<double> *h,
-    std::complex<double> *s,
-    const int lda,
-    const int nband,
-    typename GetTypeReal<std::complex<double>>::type *const ekb,
-    std::complex<double> *const wfc,
-    const MPI_Comm &comm,
-    const int diag_subspace,
-    const int block_size);
-
-template void diago_hs_para<float>(
-    float *h,
-    float *s,
-    const int lda,
-    const int nband,
-    typename GetTypeReal<float>::type *const ekb,
-    float *const wfc,
-    const MPI_Comm &comm,
-    const int diag_subspace,
-    const int block_size);
-
-template void diago_hs_para<std::complex<float>>(
-    std::complex<float> *h,
-    std::complex<float> *s,
-    const int lda,
-    const int nband,
-    typename GetTypeReal<std::complex<float>>::type *const ekb,
-    std::complex<float> *const wfc,
-    const MPI_Comm &comm,
-    const int diag_subspace,
-    const int block_size);
-
-} // namespace hsolver
-
 class TestHSolverPW : public ::testing::Test
 {
   public:
@@ -205,40 +146,13 @@ class TestHSolverPW : public ::testing::Test
     }
 
     ModulePW::PW_Basis_K pwbk;
-    hsolver::HSolverPW<std::complex<float>, base_device::DEVICE_CPU> hs_f =
-        hsolver::HSolverPW<std::complex<float>, base_device::DEVICE_CPU>(
-            &pwbk,
-            "scf",
-            "pw",
-            "cg",
-            false,
-            1,
-            hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::SCF_ITER,
-            hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::PW_DIAG_NMAX,
-            hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::PW_DIAG_THR,
-            hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::need_subspace,
-            0,
-            false,
-            4,
-            0,
-            0);
-    hsolver::HSolverPW<std::complex<double>, base_device::DEVICE_CPU> hs_d =
-        hsolver::HSolverPW<std::complex<double>, base_device::DEVICE_CPU>(
-            &pwbk,
-            "scf",
-            "pw",
-            "cg",
-            false,
-            1,
-            hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::SCF_ITER,
-            hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::PW_DIAG_NMAX,
-            hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::PW_DIAG_THR,
-            hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::need_subspace,
-            0,
-            false,
-            4,
-            0,
-            0);
+    using Assist = hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>;
+    hsolver::HSolverPW<std::complex<float>, base_device::DEVICE_CPU> hs_f{
+        &pwbk, "scf", "pw", "cg", false, 1, Assist::SCF_ITER, Assist::PW_DIAG_NMAX,
+        Assist::PW_DIAG_THR, Assist::need_subspace, 0, false, 4, 0, "hard", 0, 0};
+    hsolver::HSolverPW<std::complex<double>, base_device::DEVICE_CPU> hs_d{
+        &pwbk, "scf", "pw", "cg", false, 1, Assist::SCF_ITER, Assist::PW_DIAG_NMAX,
+        Assist::PW_DIAG_THR, Assist::need_subspace, 0, false, 4, 0, "hard", 0, 0};
 
     IdentityHSOperator<std::complex<double>> hamilt_test_d;
     IdentityHSOperator<std::complex<float>> hamilt_test_f;
@@ -253,6 +167,48 @@ class TestHSolverPW : public ::testing::Test
     std::vector<float> ekb_f;
 
     std::ofstream temp_ofs;
+
+    void run_lobpcg_failure(const bool dependent)
+    {
+        std::cout.rdbuf(std::cerr.rdbuf());
+#ifdef __MPI
+        int size = 1;
+        int threads = 1;
+        int rank = 0;
+        Parallel_Global::read_pal_param(0, nullptr, size, threads, rank);
+        POOL_WORLD = MPI_COMM_SELF;
+#endif
+        using C = std::complex<double>;
+        class DiagonalOperator : public IdentityHSOperator<C>
+        {
+          public:
+            void hpsi(const C* x, C* hx, const int ld, const int count) const override
+            {
+                for (int j = 0; j < count; ++j)
+                {
+                    for (int i = 0; i < ld; ++i) { hx[i + j * ld] = double(i + 1) * x[i + j * ld]; }
+                }
+            }
+        } diagonal;
+        psi::Psi<C> ps;
+        ps.resize(1, 4, 40);
+        for (int j = 0; j < 4; ++j)
+        {
+            for (int i = 0; i < 40; ++i)
+            {
+                ps.get_pointer()[i + j * 40] = dependent ? C(.3, .1) : C(std::sin(.17 * (i + 1) * (j + 2)), .1);
+            }
+        }
+        std::vector<double> prec(40, 1);
+        std::vector<double> eig(4);
+        const std::string calculation = dependent ? "scf" : "nscf";
+        const hsolver::HSOperator<C>& op = dependent ? hamilt_test_d : diagonal;
+        hsolver::HSolverPW<C> solver(&pwbk, calculation, "pw", "lobpcg", false,
+                                    1, 1, 1, 1e-12, false, 4, false, 4, 0, "hard", 0, 0);
+        hamiltSolvePsiK(solver, op, ps, prec, eig.data(), 1);
+        std::exit(0);
+    }
+
 };
 
 // TEST_F(TestHSolverPW, solve) {
@@ -512,4 +468,16 @@ TEST_F(TestHSolverPW, NpwxLessThanNbandsDeath)
             eigenvalues.data(),
             1),
         ::testing::ExitedWithCode(1), ".*");
+}
+
+// Exercise the actual caller: NSCF budget exhaustion and a failed initial GV.
+TEST_F(TestHSolverPW, LobpcgNscfBudgetReportsError)
+{
+    EXPECT_EXIT(run_lobpcg_failure(false), ::testing::ExitedWithCode(1),
+                "LOBPCG iteration budget exhausted outside SCF");
+}
+
+TEST_F(TestHSolverPW, LobpcgNumericalFailureReportsBackendInfo)
+{
+    EXPECT_EXIT(run_lobpcg_failure(true), ::testing::ExitedWithCode(1), "Serial HEGVX failed, info=");
 }

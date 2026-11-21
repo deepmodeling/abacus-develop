@@ -1,0 +1,481 @@
+#include "source_hsolver/module_linalg/linear_algebra.h"
+#include "source_base/parallel_cell.h"
+#include "source_base/parallel_device.h"
+#include "source_base/kernels/math_kernel_op.h"
+#include <algorithm>
+#include <cmath>
+#include <complex>
+#include <gtest/gtest.h>
+#include <limits>
+#include <vector>
+
+namespace
+{
+using Wide = std::complex<double>;
+
+hsolver::diag_comm_info local_comm()
+{
+#ifdef __MPI
+    return hsolver::diag_comm_info(MPI_COMM_SELF, 0, 1);
+#else
+    return hsolver::diag_comm_info(0, 1);
+#endif
+}
+
+// Tests keep independent host references; only transfer/check plumbing is shared.
+template <typename T, typename Device>
+ct::Tensor upload(const std::vector<T>& values)
+{
+    const auto type = ct::DataTypeToEnum<T>::value;
+    const auto device = ct::DeviceTypeToEnum<Device>::value;
+    const int count = values.size();
+    ct::Tensor result(type, device, {count});
+    base_device::memory::synchronize_memory_op<T, Device, base_device::DEVICE_CPU>()(
+        result.data<T>(), values.data(), count);
+    return result;
+}
+
+template <typename T, typename Device>
+void check_output(const ct::Tensor& output, const std::vector<T>& expected)
+{
+    std::vector<T> actual(expected.size());
+    base_device::memory::synchronize_memory_op<T, base_device::DEVICE_CPU, Device>()(
+        actual.data(), output.template data<T>(), actual.size());
+    const double tolerance = sizeof(T) == sizeof(std::complex<float>) ? 2e-6 : 1e-12;
+    for (std::size_t i = 0; i < actual.size(); ++i)
+    {
+        EXPECT_LT(std::abs(actual[i] - expected[i]), tolerance);
+    }
+}
+
+template <typename T>
+Wide overlap(const int rows, const T* x, const T* y)
+{
+    Wide result(0);
+    for (int k = 0; k < rows; ++k) { result += std::conj(Wide(x[k])) * Wide(y[k]); }
+    return result;
+}
+
+template <typename T, typename Device>
+void check_prepared_coefficients()
+{
+    const int dim = 5;
+    const int ld = 7;
+    const int nx = 3;
+    const int ny = 2;
+    const auto comm = local_comm();
+    hsolver::LinearAlgebra<T, Device> algebra(comm);
+    std::vector<Wide> coefficients = {{0.7, -0.2}, {0.1, 0.3}, {-0.4, 0.5},
+                                      {0.2, 0.4}, {-0.3, 0.1}, {0.6, -0.2}};
+    std::vector<Wide> transient(coefficients);
+    const int64_t count = transient.size();
+    const T* prepared = algebra.prepare_coefficients(transient.data(), count);
+    // Prepared storage must remain owned by algebra after the caller changes
+    // or destroys its input, including when no precision conversion is needed.
+    std::fill(transient.begin(), transient.end(), Wide(999, -999));
+    transient.clear();
+    transient.shrink_to_fit();
+    for (int image = 0; image < 3; ++image)
+    {
+        std::vector<T> x(ld * nx, T(77, 9));
+        std::vector<T> expected(ld * ny, T(-3, 4));
+        for (int j = 0; j < nx; ++j)
+        {
+            for (int row = 0; row < dim; ++row)
+            {
+                x[row + j * ld] = T(0.1 * (row + image + 1), 0.2 * (j - row));
+            }
+        }
+        auto input = upload<T, Device>(x);
+        auto output = upload<T, Device>(expected);
+        const T beta(0.2, -0.1);
+        algebra.expand_prepared(ld, dim, nx, ny, input.template data<T>(), prepared, output.template data<T>(), beta);
+        for (int j = 0; j < ny; ++j)
+        {
+            for (int row = 0; row < dim; ++row)
+            {
+                T value = beta * expected[row + j * ld];
+                for (int k = 0; k < nx; ++k)
+                {
+                    value += x[row + k * ld] * T(coefficients[k + j * nx]);
+                }
+                expected[row + j * ld] = value;
+            }
+        }
+        check_output<T, Device>(output, expected);
+        // The prepared coefficients remain usable across zero-sized operations.
+        algebra.expand_prepared(ld, 0, nx, ny, nullptr, nullptr, nullptr, beta);
+    }
+    EXPECT_EQ(algebra.prepare_coefficients(nullptr, 0), nullptr);
+}
+
+#if !defined(__CUDA) && !defined(__ROCM)
+TEST(LinearAlgebra, ReusePreparedCoefficients)
+{
+    check_prepared_coefficients<std::complex<double>, base_device::DEVICE_CPU>();
+    check_prepared_coefficients<std::complex<float>, base_device::DEVICE_CPU>();
+}
+#endif
+
+template <typename T, typename Device>
+void check_padded_products()
+{
+    const int dim = 5;
+    const int ld = 8;
+    const int nx = 3;
+    const int ny = 2;
+    const auto comm = local_comm();
+    hsolver::LinearAlgebra<T, Device> algebra(comm);
+    const double nan = std::numeric_limits<double>::quiet_NaN();
+    const T padding(nan, nan);
+    std::vector<T> x(ld * nx, padding);
+    std::vector<T> y(ld * ny, padding);
+    for (int j = 0; j < nx; ++j)
+    {
+        for (int i = 0; i < dim; ++i)
+        {
+            x[i + j * ld] = T(0.2 * (i + 1), 0.3 * (j - i));
+        }
+    }
+    for (int j = 0; j < ny; ++j)
+    {
+        for (int i = 0; i < dim; ++i)
+        {
+            y[i + j * ld] = T(0.3 * (j + i), -0.2 * (i + 2));
+        }
+    }
+    auto dx = upload<T, Device>(x);
+    auto dy = upload<T, Device>(y);
+    const auto gram = algebra.gram(ld, dim, nx, dx.template data<T>());
+    const auto cross = algebra.cross(ld, dim, nx, ny, dx.template data<T>(), dy.template data<T>());
+    const auto gram_tensor = algebra.gram_tensor(ld, dim, nx, dx.template data<T>());
+    const auto cross_tensor = algebra.cross_tensor(ld, dim, nx, ny, dx.template data<T>(), dy.template data<T>());
+    ASSERT_EQ(gram_tensor.device_type(), ct::DeviceType::CpuDevice);
+    ASSERT_EQ(cross_tensor.data_type(), ct::DataType::DT_COMPLEX_DOUBLE);
+    // The caller may supply an offset output with sentinel padding on both sides.
+    ct::Tensor target(ct::DataType::DT_COMPLEX_DOUBLE, ct::DeviceType::CpuDevice, {nx * ny + 2});
+    target.data<Wide>()[0] = Wide(777, -555);
+    target.data<Wide>()[nx * ny + 1] = Wide(-333, 222);
+    Wide* offset = target.data<Wide>() + 1;
+    algebra.cross_into(ld, dim, nx, ny, dx.template data<T>(), dy.template data<T>(), offset);
+    for (int j = 0; j < nx; ++j)
+    {
+        for (int i = 0; i < nx; ++i)
+        {
+            const Wide expected = overlap(dim, x.data() + i * ld, x.data() + j * ld);
+            EXPECT_LT(std::abs(gram[i + j * nx] - expected), 1e-12);
+            EXPECT_LT(std::abs(gram_tensor.template data<Wide>()[i + j * nx] - expected), 1e-12);
+        }
+    }
+    for (int j = 0; j < ny; ++j)
+    {
+        for (int i = 0; i < nx; ++i)
+        {
+            const Wide expected = overlap(dim, x.data() + i * ld, y.data() + j * ld);
+            EXPECT_LT(std::abs(cross[i + j * nx] - expected), 1e-12);
+            EXPECT_LT(std::abs(cross_tensor.template data<Wide>()[i + j * nx] - expected), 1e-12);
+            EXPECT_LT(std::abs(offset[i + j * nx] - expected), 1e-12);
+        }
+    }
+    // Empty local rows must still return a correctly sized zero contribution.
+    const auto empty = algebra.cross(ld, 0, nx, ny, nullptr, nullptr);
+    ASSERT_EQ(empty.size(), nx * ny);
+    for (const Wide& value : empty)
+    {
+        EXPECT_EQ(value, Wide(0));
+    }
+    EXPECT_EQ(target.data<Wide>()[0], Wide(777, -555));
+    EXPECT_EQ(target.data<Wide>()[nx * ny + 1], Wide(-333, 222));
+    algebra.cross_into(ld, 0, nx, ny, nullptr, nullptr, offset);
+    for (int i = 0; i < nx * ny; ++i)
+    {
+        EXPECT_EQ(offset[i], Wide(0));
+    }
+}
+
+#if !defined(__CUDA) && !defined(__ROCM)
+TEST(LinearAlgebra, PaddedGramAndCross)
+{
+    check_padded_products<std::complex<double>, base_device::DEVICE_CPU>();
+    check_padded_products<std::complex<float>, base_device::DEVICE_CPU>();
+}
+
+TEST(LinearAlgebra, RootProjectionWithEmptyLocalRows)
+{
+    const auto domain = ModuleBase::world_comm_domain();
+    const int rank = domain.rank();
+    const int ranks = domain.size();
+#ifdef __MPI
+    const auto communicator = domain.communicator();
+    const hsolver::diag_comm_info comm(communicator, rank, ranks);
+#else
+    const hsolver::diag_comm_info comm(0, 1);
+#endif
+    const int rows = rank == ranks - 1 ? 3 : 0;
+    const int ld = 5;
+    const int columns = 2;
+    const double nan = std::numeric_limits<double>::quiet_NaN();
+    std::vector<Wide> x(ld * columns, Wide(nan, nan));
+    for (int j = 0; j < columns; ++j)
+    {
+        for (int i = 0; i < rows; ++i)
+        {
+            x[i + j * ld] = Wide(i + 1, j + 1);
+        }
+    }
+    hsolver::LinearAlgebra<Wide, base_device::DEVICE_CPU> algebra(comm);
+    const auto cross = algebra.cross_root_tensor(ld, rows, columns, columns, x.data(), x.data());
+    const auto gram = algebra.gram_root_tensor(ld, rows, columns, x.data());
+    if (rank != 0)
+    {
+        EXPECT_EQ(cross.NumElements(), 0);
+        EXPECT_EQ(gram.NumElements(), 0);
+        EXPECT_EQ(cross.buffer().GetAllocatedBytes(), 0U);
+        EXPECT_EQ(gram.buffer().GetAllocatedBytes(), 0U);
+        return;
+    }
+    ASSERT_EQ(cross.NumElements(), 4);
+    ASSERT_EQ(gram.NumElements(), 4);
+    for (int j = 0; j < columns; ++j)
+    {
+        for (int i = 0; i < columns; ++i)
+        {
+            Wide expected(0);
+            for (int k = 0; k < 3; ++k)
+            {
+                expected += std::conj(Wide(k + 1, i + 1)) * Wide(k + 1, j + 1);
+            }
+            EXPECT_NEAR(std::abs(cross.data<Wide>()[i + j * columns] - expected), 0.0, 1e-12);
+            EXPECT_NEAR(std::abs(gram.data<Wide>()[i + j * columns] - expected), 0.0, 1e-12);
+        }
+    }
+}
+
+#ifdef __MPI
+TEST(LinearAlgebra, RootReductionSupportsOtherRootAndSelfCommunicator)
+{
+    const auto domain = ModuleBase::world_comm_domain();
+    const auto communicator = domain.communicator();
+    const int rank = domain.rank();
+    const int size = domain.size();
+    const int root = size - 1;
+    Wide value(rank + 1, -rank);
+    const Wide before = value;
+    Parallel_Common::reduce_data_to_root(&value, 1, communicator, root);
+    if (rank == root)
+    {
+        const Wide expected(size * (size + 1) / 2.0, -size * (size - 1) / 2.0);
+        EXPECT_EQ(value, expected);
+    }
+    else
+    {
+        EXPECT_EQ(value, before);
+    }
+    const auto self = local_comm();
+    value = before;
+    Parallel_Common::reduce_data_to_root(&value, 1, self.comm, 0);
+    EXPECT_EQ(value, before);
+    Parallel_Common::reduce_data_to_root(&value, 0, communicator, root);
+    EXPECT_EQ(value, before);
+}
+#endif
+#endif
+
+#if defined(__CUDA) || defined(__ROCM)
+TEST(LinearAlgebraGpu, ReusePreparedCoefficients)
+{
+    check_prepared_coefficients<std::complex<double>, base_device::DEVICE_GPU>();
+    check_prepared_coefficients<std::complex<float>, base_device::DEVICE_GPU>();
+}
+
+TEST(LinearAlgebraGpu, PaddedGramAndCross)
+{
+    check_padded_products<std::complex<double>, base_device::DEVICE_GPU>();
+    check_padded_products<std::complex<float>, base_device::DEVICE_GPU>();
+}
+#endif
+#if !defined(__CUDA) && !defined(__ROCM)
+template <typename T, typename Device>
+void verify_herk_gram(const hsolver::diag_comm_info& comm)
+{
+    using ToDevice = base_device::memory::synchronize_memory_op<T, Device, base_device::DEVICE_CPU>;
+    const int dim = 7;
+    const int ld = 10;
+    const int max_bands = 5;
+    const double nan = std::numeric_limits<double>::quiet_NaN();
+    const auto device = ct::DeviceTypeToEnum<Device>::value;
+    const auto type = ct::DataTypeToEnum<T>::value;
+    ct::Tensor input(type, device, {ld, max_bands});
+    hsolver::LinearAlgebra<T, Device> algebra(comm);
+    for (const int bands : {5, 2, 0})
+    {
+        std::vector<T> x(ld * max_bands, T(nan, nan));
+        std::vector<Wide> wide(ld * max_bands, Wide(nan, nan));
+        for (int j = 0; j < bands; ++j)
+        {
+            for (int i = 0; i < dim; ++i)
+            {
+                x[i + j * ld] = T(0.2 * (i + 1), 0.3 * (j - i));
+                wide[i + j * ld] = Wide(x[i + j * ld]);
+            }
+        }
+        ToDevice()(input.template data<T>(), x.data(), x.size());
+        // Poison both halves: beta=0 must overwrite the upper half without
+        // reading it, and the low-level kernel must leave the lower half.
+        std::vector<Wide> raw(max_bands * max_bands, Wide(nan, nan));
+        if (bands > 0)
+        {
+            ModuleBase::gram_herk_cpu(ld, dim, bands, wide.data(), raw.data());
+            for (int j = 0; j < bands; ++j)
+            {
+                EXPECT_EQ(raw[j + j * bands].imag(), 0.0);
+                for (int i = j + 1; i < bands; ++i)
+                {
+                    EXPECT_TRUE(std::isnan(raw[i + j * bands].real()));
+                }
+            }
+        }
+        // MPI rank0 contributes no rows. The remaining ranks use the same
+        // input, so expected global products are known without MPI calls.
+        const bool empty_rank = comm.nproc > 1 && comm.rank == 0;
+        const int local_dim = empty_rank ? 0 : dim;
+        const T* local_input = empty_rank ? nullptr : input.template data<T>();
+        const int contributions = comm.nproc > 1 ? comm.nproc - 1 : 1;
+        const auto actual = algebra.gram_tensor(ld, local_dim, bands, local_input);
+        ASSERT_EQ(actual.NumElements(), bands * bands);
+        const Wide* values = actual.template data<Wide>();
+        for (int j = 0; j < bands; ++j)
+        {
+            EXPECT_LT(std::abs(values[j + j * bands].imag()), 1e-12);
+            for (int i = 0; i < bands; ++i)
+            {
+                const Wide local = overlap(dim, wide.data() + i * ld, wide.data() + j * ld);
+                const Wide expected = double(contributions) * local;
+                EXPECT_LT(std::abs(values[i + j * bands] - expected), 1e-11);
+                if (i <= j)
+                {
+                    EXPECT_LT(std::abs(raw[i + j * bands] - local), 1e-11);
+                }
+            }
+        }
+    }
+    const auto empty = algebra.gram(ld, 0, max_bands, nullptr);
+    for (const Wide& value : empty)
+    {
+        EXPECT_EQ(value, Wide(0));
+    }
+}
+#endif
+
+template <typename T, typename Device>
+void verify_triangular_apply(const char side, const char uplo, const char trans, const char diag, const T alpha)
+{
+    SCOPED_TRACE(::testing::Message() << side << uplo << trans << diag << " alpha=" << alpha);
+    const int m = 7;
+    const int n = 4;
+    const int ldb = 10;
+    const int order = side == 'L' ? m : n;
+    const int lda = order + 2;
+    const T poison(73, -41);
+    const double nan = std::numeric_limits<double>::quiet_NaN();
+    std::vector<T> triangle(lda * order, T(nan, nan));
+    std::vector<Wide> dense(order * order, Wide(0));
+    for (int j = 0; j < order; ++j)
+    {
+        for (int i = 0; i < order; ++i)
+        {
+            if (diag == 'U' && i == j)
+            {
+                dense[i + j * order] = 1; // The stored unit diagonal stays NaN.
+            }
+            else if ((uplo == 'U' && i <= j) || (uplo == 'L' && i >= j))
+            {
+                const T value(0.1 * (i + 1), 0.05 * (j - i));
+                triangle[i + j * lda] = value;
+                dense[i + j * order] = Wide(value);
+            }
+        }
+    }
+    std::vector<T> input(ldb * n, poison);
+    for (int j = 0; j < n; ++j)
+    {
+        for (int i = 0; i < m; ++i)
+        {
+            input[i + j * ldb] = T(0.1 * (i + j + 1), 0.07 * (i - j));
+        }
+    }
+    const auto entry = [&](int i, int j) {
+        const Wide value = trans == 'N' ? dense[i + j * order] : dense[j + i * order];
+        return trans == 'C' ? std::conj(value) : value;
+    };
+    std::vector<T> expected(input);
+    for (int j = 0; j < n; ++j)
+    {
+        for (int i = 0; i < m; ++i)
+        {
+            Wide sum(0);
+            for (int k = 0; k < order; ++k)
+            {
+                sum += side == 'L' ? entry(i, k) * Wide(input[k + j * ldb])
+                                   : Wide(input[i + k * ldb]) * entry(k, j);
+            }
+            expected[i + j * ldb] = T(Wide(alpha) * sum);
+        }
+    }
+    auto a = upload<T, Device>(triangle);
+    auto b = upload<T, Device>(input);
+    ModuleBase::trmm_op<T, Device>()(side, uplo, trans, diag, m, n, &alpha,
+                                   a.template data<T>(), lda, b.template data<T>(), ldb);
+    check_output<T, Device>(b, expected);
+}
+
+
+template <typename Device>
+void check_kernels()
+{
+#if !defined(__CUDA) && !defined(__ROCM)
+    const auto world = ModuleBase::world_comm_domain();
+#ifdef __MPI
+    const hsolver::diag_comm_info comm(world.communicator(), world.rank(), world.size());
+#else
+    const hsolver::diag_comm_info comm(0, 1);
+#endif
+    verify_herk_gram<std::complex<double>, Device>(comm);
+    verify_herk_gram<std::complex<float>, Device>(comm);
+#endif
+    for (const char side : {'L', 'R'})
+    for (const char uplo : {'U', 'L'})
+    for (const char trans : {'N', 'T', 'C'})
+    for (const char diag : {'N', 'U'})
+    {
+        const Wide alpha(0.7, -0.2);
+        const std::complex<float> alpha_float(alpha);
+        verify_triangular_apply<std::complex<double>, Device>(side, uplo, trans, diag, alpha);
+        verify_triangular_apply<std::complex<float>, Device>(side, uplo, trans, diag, alpha_float);
+    }
+    // Scaling and empty matrices are independent of the triangle selectors.
+    for (const Wide alpha : {Wide(1), Wide(0)})
+    {
+        const std::complex<float> alpha_float(alpha);
+        verify_triangular_apply<std::complex<double>, Device>('R', 'U', 'N', 'N', alpha);
+        verify_triangular_apply<std::complex<float>, Device>('R', 'U', 'N', 'N', alpha_float);
+    }
+    ModuleBase::trmm_op<Wide, Device>()('R', 'U', 'N', 'N', 0, 4, nullptr, nullptr, 4, nullptr, 10);
+    ModuleBase::trmm_op<Wide, Device>()('R', 'U', 'N', 'N', 7, 0, nullptr, nullptr, 1, nullptr, 10);
+    using Single = std::complex<float>;
+    ModuleBase::trmm_op<Single, Device>()('R', 'U', 'N', 'N', 0, 4, nullptr, nullptr, 4, nullptr, 10);
+    ModuleBase::trmm_op<Single, Device>()('R', 'U', 'N', 'N', 7, 0, nullptr, nullptr, 1, nullptr, 10);
+}
+#if !defined(__CUDA) && !defined(__ROCM)
+TEST(LinearAlgebra, HerkTriangleAndTriangularApply)
+{
+    check_kernels<base_device::DEVICE_CPU>();
+}
+#endif
+#if defined(__CUDA) || defined(__ROCM)
+TEST(LinearAlgebraGpu, TriangularApply)
+{
+    check_kernels<base_device::DEVICE_GPU>();
+}
+#endif
+} // namespace

@@ -49,6 +49,11 @@ addtest(
   SOURCES ../unittests/test_read_input_item.cpp test_read_inp_sccs.cpp)
 
 addtest(
+  TARGET MODULE_IO_lobpcg_input
+  LIBS parameter base device io_input_serial
+  SOURCES ../unittests/test_read_inp_estruc.cpp)
+
+addtest(
   TARGET MODULE_IO_input_domain_reader
   LIBS parameter base device io_input_serial
   SOURCES ../unittests/test_input_domain_reader.cpp ../input_help.cpp)

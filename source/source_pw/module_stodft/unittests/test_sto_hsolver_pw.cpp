@@ -41,59 +41,6 @@ void Stochastic_WF<T, Device>::init(K_Vectors* p_kv, const int npwx_in)
 {
 }
 
-// mock diago_hs_para
-namespace hsolver {
-template <typename T>
-void diago_hs_para(T* h,
-                   T* s,
-                   const int lda,
-                   const int nband,
-                   typename GetTypeReal<T>::type* const ekb,
-                   T* const wfc,
-                   const MPI_Comm& comm,
-                   const int diag_subspace,
-                   const int block_size = 0)
-{}
-template void diago_hs_para<double>(double* h,
-                                    double* s,
-                                    const int lda,
-                                    const int nband,
-                                    typename GetTypeReal<double>::type* const ekb,
-                                    double* const wfc,
-                                    const MPI_Comm& comm,
-                                    const int diag_subspace,
-                                    const int block_size);
-template void diago_hs_para<std::complex<double>>(std::complex<double>* h,
-                                                  std::complex<double>* s,
-                                                  const int lda,
-                                                  const int nband,
-                                                  typename GetTypeReal<std::complex<double>>::type* const ekb,
-                                                  std::complex<double>* const wfc,
-                                                  const MPI_Comm& comm,
-                                                  const int diag_subspace,
-                                                  const int block_size);
-template void diago_hs_para<float>(float* h,
-                                   float* s,
-                                   const int lda,
-                                   const int nband,
-                                   typename GetTypeReal<float>::type* const ekb,
-                                   float* const wfc,
-                                   const MPI_Comm& comm,
-                                   const int diag_subspace,
-                                   const int block_size);          
-template void diago_hs_para<std::complex<float>>(std::complex<float>* h,
-                                                 std::complex<float>* s,
-                                                 const int lda,
-                                                 const int nband,
-                                                 typename GetTypeReal<std::complex<float>>::type* const ekb,
-                                                 std::complex<float>* const wfc,
-                                                 const MPI_Comm& comm,
-                                                 const int diag_subspace,
-                                                 const int block_size);
-
-}
-
-
 template<>
 void elecstate::ElecStatePW<std::complex<double>, base_device::DEVICE_CPU>::init_rho_data() 
 {
@@ -280,30 +227,31 @@ class TestStoHSolverPW : public ::testing::Test
     K_Vectors kv;
     StoChe<double> stoche;
     StoHamiltPW<std::complex<double>>* p_hamilt_sto = nullptr;
-    StoHSolverPW<std::complex<double>, base_device::DEVICE_CPU> hs_d
-        = StoHSolverPW<std::complex<double>, base_device::DEVICE_CPU>(
-            &kv,
-            &pwbk,
-            stowf,
-            stoche,
-            p_hamilt_sto,
-            "scf",
-            "pw",
-            "cg",
-            false,
-            1,
-            hsolver::DiagoIterAssist<std::complex<double>>::SCF_ITER,
-            hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_NMAX,
-            hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_THR,
-            hsolver::DiagoIterAssist<std::complex<double>>::need_subspace,
-            0,
-            false,
-            4,
-            0,
-            0,
-            false,
-            true,
-            1);
+    StoHSolverPW<std::complex<double>, base_device::DEVICE_CPU> hs_d{
+        &kv,
+        &pwbk,
+        stowf,
+        stoche,
+        p_hamilt_sto,
+        "scf",
+        "pw",
+        "cg",
+        false,
+        1,
+        hsolver::DiagoIterAssist<std::complex<double>>::SCF_ITER,
+        hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_NMAX,
+        hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_THR,
+        hsolver::DiagoIterAssist<std::complex<double>>::need_subspace,
+        0,
+        false,
+        4,
+        0,
+        "hard",
+        0,
+        0,
+        false,
+        true,
+        1};
 
     hamilt::Hamilt<std::complex<double>> hamilt_test_d;
 

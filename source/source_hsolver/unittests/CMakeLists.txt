@@ -23,6 +23,96 @@ if(ENABLE_MPI)
   set_tests_properties(MODULE_HSOLVER_dav_subspace_parallel PROPERTIES PROCESSORS 2 TIMEOUT 120)
 endif()
 
+set(LOBPCG_TEST_SOURCES
+    ../diago_lobpcg.cpp
+    ../lobpcg_subspace.cpp
+    ../lobpcg_recovery.cpp
+    ../rr_solver.cpp
+    ../module_linalg/linear_algebra.cpp)
+set(LOBPCG_TEST_LIBS parameter base psi device container)
+if(ENABLE_MPI)
+  list(APPEND LOBPCG_TEST_SOURCES ../diag_hs_para.cpp ../diago_pxxxgvx.cpp ../diago_scalapack.cpp)
+  if(TARGET ELPA::ELPA)
+    list(APPEND LOBPCG_TEST_SOURCES ../diago_elpa.cpp)
+    list(APPEND LOBPCG_TEST_LIBS genelpa ELPA::ELPA)
+  endif()
+endif()
+addtest(
+  TARGET MODULE_HSOLVER_lobpcg
+  LIBS ${LOBPCG_TEST_LIBS}
+  SOURCES test_diago_lobpcg.cpp test_rr_solver.cpp ${LOBPCG_TEST_SOURCES} ../../source_basis/module_pw/test/test_tool.cpp)
+addtest(
+  TARGET MODULE_HSOLVER_lobpcg_float
+  LIBS ${LOBPCG_TEST_LIBS}
+  SOURCES test_diago_lobpcg_float.cpp ${LOBPCG_TEST_SOURCES}
+          ../../source_basis/module_pw/test/test_tool.cpp)
+set_tests_properties(MODULE_HSOLVER_lobpcg MODULE_HSOLVER_lobpcg_float PROPERTIES
+  TIMEOUT 180 ENVIRONMENT "OMP_NUM_THREADS=1;OPENBLAS_NUM_THREADS=1;MKL_NUM_THREADS=1")
+
+# These are solver unit checks, not ABACUS integration drivers: each fresh
+# process must terminate through WARNING_QUIT, including all ranks after RR.
+foreach(device IN ITEMS cpu gpu)
+  if(device STREQUAL "gpu" AND NOT (USE_CUDA OR USE_ROCM))
+    continue()
+  endif()
+  if(device STREQUAL "gpu")
+    set(exit_target MODULE_HSOLVER_lobpcg_gpu)
+    set(exit_gpu ON)
+  else()
+    set(exit_target MODULE_HSOLVER_lobpcg)
+    set(exit_gpu OFF)
+  endif()
+  set(exit_ranks 1)
+  if(ENABLE_MPI)
+    list(APPEND exit_ranks 2)
+  endif()
+  foreach(ranks IN LISTS exit_ranks)
+    set(exit_name MODULE_HSOLVER_lobpcg_exit_${device}_${ranks})
+    add_test(NAME ${exit_name}
+      COMMAND ${CMAKE_COMMAND} "-DBINARY=$<TARGET_FILE:${exit_target}>"
+              "-DOUTPUT_DIR=${CMAKE_CURRENT_BINARY_DIR}/${exit_name}"
+              "-DRANKS=${ranks}" "-DGPU=${exit_gpu}"
+              "-DELPA_AVAILABLE=${ENABLE_ELPA}" "-DMPIEXEC=${MPIEXEC_EXECUTABLE}"
+              "-DMPI_NUMPROC_FLAG=${MPIEXEC_NUMPROC_FLAG}"
+              "-DMPI_PREFLAGS=${MPIEXEC_PREFLAGS}" "-DMPI_POSTFLAGS=${MPIEXEC_POSTFLAGS}"
+              -P "${CMAKE_CURRENT_SOURCE_DIR}/test_diago_lobpcg_exit.cmake")
+    set_tests_properties(${exit_name} PROPERTIES PROCESSORS ${ranks} TIMEOUT 240
+      ENVIRONMENT "OMP_NUM_THREADS=1;OPENBLAS_NUM_THREADS=1;MKL_NUM_THREADS=1"
+      SKIP_REGULAR_EXPRESSION "SKIP: no usable GPU for LOBPCG exit checks")
+  endforeach()
+endforeach()
+if(ENABLE_MPI)
+  foreach(precision IN ITEMS lobpcg lobpcg_float)
+    add_test(NAME MODULE_HSOLVER_${precision}_mpi2
+      COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2 ${MPIEXEC_PREFLAGS}
+        $<TARGET_FILE:MODULE_HSOLVER_${precision}> ${MPIEXEC_POSTFLAGS})
+    set_tests_properties(MODULE_HSOLVER_${precision}_mpi2 PROPERTIES
+      PROCESSORS 2 TIMEOUT 180
+      ENVIRONMENT "OMP_NUM_THREADS=1;OPENBLAS_NUM_THREADS=1;MKL_NUM_THREADS=1")
+  endforeach()
+endif()
+
+if(USE_CUDA OR USE_ROCM)
+  addtest(
+    TARGET MODULE_HSOLVER_lobpcg_gpu
+    KEEP_FEATURE_DEFINITIONS __CUDA __ROCM
+    LIBS ${LOBPCG_TEST_LIBS}
+    SOURCES test_diago_lobpcg.cpp ${LOBPCG_TEST_SOURCES} test_rr_solver.cpp
+            ../module_linalg/unittests/test_linear_algebra.cpp
+            ../../source_basis/module_pw/test/test_tool.cpp)
+  set_tests_properties(MODULE_HSOLVER_lobpcg_gpu PROPERTIES
+    SKIP_RETURN_CODE 77 ENVIRONMENT "OMP_NUM_THREADS=1;OPENBLAS_NUM_THREADS=1;MKL_NUM_THREADS=1")
+  if(ENABLE_MPI)
+    add_test(NAME MODULE_HSOLVER_lobpcg_gpu_mpi2
+      COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2 ${MPIEXEC_PREFLAGS}
+        $<TARGET_FILE:MODULE_HSOLVER_lobpcg_gpu> ${MPIEXEC_POSTFLAGS}
+        --gtest_filter=LockingModes/Lobpcg.DistributedRitz*:LockingModes/Lobpcg.BudgetAndReuse*:LobpcgSubspace.*:LinearAlgebraGpu.*)
+    set_tests_properties(MODULE_HSOLVER_lobpcg_gpu_mpi2 PROPERTIES
+      PROCESSORS 2 TIMEOUT 180 SKIP_RETURN_CODE 77
+      ENVIRONMENT "OMP_NUM_THREADS=1;OPENBLAS_NUM_THREADS=1;MKL_NUM_THREADS=1")
+  endif()
+endif()
+
 if(USE_CUDA OR USE_ROCM)
   AddTest(
     TARGET MODULE_HSOLVER_dav_subspace_gpu
@@ -97,6 +187,11 @@ if(ENABLE_MPI)
             ../hsolver_lcaopw.cpp
             ../diago_bpcg.cpp
             ../diago_dav_subspace.cpp
+            ../diago_lobpcg.cpp
+            ../lobpcg_subspace.cpp
+            ../lobpcg_recovery.cpp
+            ../rr_solver.cpp
+            ../module_linalg/linear_algebra.cpp
             ../diag_const_nums.cpp
             ../diago_iter_assist.cpp
             ../para_lin_tf.cpp
@@ -108,6 +203,11 @@ if(ENABLE_MPI)
             ../../source_cell/klist_io.cpp
             ../../source_cell/parallel_kpoints.cpp
             ../../source_cell/reciprocal_grid.cpp)
+
+  target_sources(MODULE_HSOLVER_pw PRIVATE ../diag_hs_para.cpp ../diago_pxxxgvx.cpp)
+  if(TARGET ELPA::ELPA)
+    target_link_libraries(MODULE_HSOLVER_pw PRIVATE ELPA::ELPA genelpa)
+  endif()
 
   if(ENABLE_LCAO)
     # DSP build without C_PACK: diago_lapack.cpp then needs the zhegvx_
