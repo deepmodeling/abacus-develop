@@ -18,6 +18,9 @@
  *     - read_lattice_constant(): non-cubic named lattices require
  *       LATTICE_PARAMETERS; without it the shape variables stayed zero and
  *       produced a zero-volume or NaN cell (issue #8354)
+ *   - TrigonalMalformedParamRejected
+ *     - a failed cos(alpha) extraction must not silently become the
+ *       simple-cubic (alpha = 90 degree) special case
  *   - ValidHexagonalWithParams
  *     - a hexagonal lattice with c/a given still reads normally
  *   - CubicScNeedsNoParams
@@ -82,6 +85,21 @@ TEST_F(ReadLatticeValidationTest, TrigonalMissingParamsRejected)
     EXPECT_EXIT(unitcell::read_lattice_constant(ifa, ofs_running, lat), ::testing::ExitedWithCode(1), "");
     const std::string output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("LATTICE_PARAMETERS is required for lattice type trigonal"));
+    ifa.close();
+}
+
+TEST_F(ReadLatticeValidationTest, TrigonalMalformedParamRejected)
+{
+    // a failed cos(alpha) read must not silently become the simple-cubic
+    // (alpha = 90 degree) special case
+    const std::string stru =
+        write_stru_file("trigonal_bad_param.stru", "LATTICE_CONSTANT\n4.0\nLATTICE_PARAMETERS\nabc\n");
+    lat.latName = "trigonal";
+    std::ifstream ifa(stru);
+    testing::internal::CaptureStdout();
+    EXPECT_EXIT(unitcell::read_lattice_constant(ifa, ofs_running, lat), ::testing::ExitedWithCode(1), "");
+    const std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_THAT(output, testing::HasSubstr("invalid cos(alpha)"));
     ifa.close();
 }
 

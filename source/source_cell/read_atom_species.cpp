@@ -248,7 +248,16 @@ bool read_lattice_constant(std::ifstream& ifa,
             if( ModuleBase::GlobalFunc::SCAN_LINE_BEGIN(ifa, "LATTICE_PARAMETERS") )
             {
                 double cosab=0.0;
-                ModuleBase::GlobalFunc::READ_VALUE(ifa, cosab);
+                // READ_VALUE would hide an extraction failure here: a failed
+                // read leaves cosab = 0, silently building the simple-cubic
+                // (alpha = 90 degree) special case instead of the intended
+                // trigonal cell.
+                ifa >> cosab;
+                if (ifa.fail())
+                {
+                    ModuleBase::WARNING_QUIT("unitcell::read_lattice_constant",
+                                             "invalid cos(alpha) in LATTICE_PARAMETERS for lattice type trigonal");
+                }
                 t1 = sqrt(1.0 + 2.0*cosab);
                 t2 = sqrt(1.0 - cosab);
             }
