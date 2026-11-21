@@ -19,14 +19,16 @@
  *       instead of falling through both the nkstot==0 and nkstot>0 branches
  *   - ZeroMpDimensionRejected / NonNumericMpDimensionRejected
  *     / NegativeMpDimensionRejected / TwoNegativeMpDimensionsRejected
- *     / MpGridProductOverflowRejected
+ *     / MpGridProductOverflowRejected / MpGridProductOverflowInt64Rejected
  *     - K_Vectors::read_mp_mesh(): malformed Monkhorst-Pack grid dimensions
  *       (zero, non-numeric, negative, or overflowing int) must be rejected;
  *       a negative dimension previously crashed in renew() with an uncaught
- *       std::length_error, and a negative pair has a positive product
+ *       std::length_error, and a negative pair has a positive product;
+ *       2097152^3 = 2^63 overflows even a 64-bit product, so the guard must
+ *       compare before multiplying
  *   - ValidMpGridAccepted
  *     - a well-formed 2x2x2 Gamma grid still works (8 k-points)
- *   - QptNegativeMpDimensionRejected
+ *   - QptNegativeMpDimensionRejected / QptMpGridProductOverflowInt64Rejected
  *     - QList::read_from_file(): a malformed MP grid resets the q-point count
  *       following its existing warning-and-reset error style
  */
@@ -126,6 +128,14 @@ TEST_F(KptValidationTest, MpGridProductOverflowRejected)
     EXPECT_FALSE(result);
 }
 
+TEST_F(KptValidationTest, MpGridProductOverflowInt64Rejected)
+{
+    // 2097152^3 = 2^63 overflows even a 64-bit signed product, so the guard
+    // must reject by comparing before multiplying
+    const bool result = read_kpt("K_POINTS\n0\nGamma\n2097152 2097152 2097152 0 0 0\n");
+    EXPECT_FALSE(result);
+}
+
 TEST_F(KptValidationTest, ValidMpGridAccepted)
 {
     const bool result = read_kpt("K_POINTS\n0\nGamma\n2 2 2 0 0 0\n");
@@ -137,6 +147,16 @@ TEST_F(KptValidationTest, QptNegativeMpDimensionRejected)
     // discriminating case: the old code crashed on a negative dimension
     // (renew(-4) threw), the new one resets the q-point count instead
     std::string qpt = write_kpt_file("case.qpt", "Q_POINTS\n0\nGamma\n-1 4 4 0 0 0\n");
+    ModuleCell::QList ql;
+    ql.read_from_file(qpt, ucell);
+    EXPECT_EQ(ql.nkstot, 0);
+}
+
+TEST_F(KptValidationTest, QptMpGridProductOverflowInt64Rejected)
+{
+    // 2097152^3 = 2^63 overflows even a 64-bit signed product, so the guard
+    // must reject by comparing before multiplying
+    std::string qpt = write_kpt_file("case.qpt", "Q_POINTS\n0\nGamma\n2097152 2097152 2097152 0 0 0\n");
     ModuleCell::QList ql;
     ql.read_from_file(qpt, ucell);
     EXPECT_EQ(ql.nkstot, 0);
