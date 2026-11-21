@@ -504,8 +504,8 @@ struct Input_para
     std::vector<int> out_mat_dh_vh = {0, 8};  ///< output Hartree dH/dR (dV^H/dR) matrices
     std::vector<int> out_mat_dh_vxc = {0, 8}; ///< output XC dH/dR (dV^XC/dR) matrices
     std::vector<int> out_mat_ds = {0, 8};     ///< output dS/dR matrices with precision
-    bool out_mat_xc = false;                  ///< output exchange-correlation matrix in
-                                              ///< KS-orbital representation.
+    std::vector<int> out_mat_xc = {0, 8};     ///< output exchange-correlation matrix in
+                                              ///< KS-orbital representation: [enable, precision]
     std::vector<int> out_mat_xc2 = {0, 8};    ///< output Vxc(R) matrix with precision
     bool out_eband = false;                   ///< output the band energy terms separately
     bool out_eband_terms_compat = false;      ///< legacy alias out_eband_terms for out_eband

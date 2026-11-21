@@ -2841,6 +2841,18 @@ TEST_F(InputTest, Item_test_out_mat_vec)
         EXPECT_EQ(TestParameters::input(param).out_mat_r[0], 1);
         EXPECT_EQ(TestParameters::input(param).out_mat_r[1], 6);
     }
+    { // out_mat_xc
+        auto it = find_label("out_mat_xc", readinput.input_lists);
+        it->second.str_values = {"1"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(TestParameters::input(param).out_mat_xc[0], 1);
+        EXPECT_EQ(TestParameters::input(param).out_mat_xc[1], 8);
+
+        it->second.str_values = {"1", "10"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(TestParameters::input(param).out_mat_xc[0], 1);
+        EXPECT_EQ(TestParameters::input(param).out_mat_xc[1], 10);
+    }
     { // out_mat_xc2
         auto it = find_label("out_mat_xc2", readinput.input_lists);
         it->second.str_values = {"1"};

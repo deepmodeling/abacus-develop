@@ -276,7 +276,8 @@ namespace ModuleESolver
         ESolver_KS_PW<T>::after_all_runners(basecell);
 
 #ifdef __LCAO
-        if (this->inp_->out_mat_xc)
+        const bool out_mat_xc_on = (this->inp_->out_mat_xc[0] != 0);
+        if (out_mat_xc_on)
         {
             const std::string global_mat_dir = PARAM.globalv.global_mat_dir;
             // Mode-2 MAT/ subdirectory is created lazily at write time.

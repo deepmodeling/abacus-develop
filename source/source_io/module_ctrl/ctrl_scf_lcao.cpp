@@ -683,12 +683,13 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     //------------------------------------------------------------------
     //! 8b) Output exchange-correlation potential and band-decomposed energies
     //------------------------------------------------------------------
+    const bool out_mat_xc_on = (inp.out_mat_xc[0] != 0);
     // Both run on the out_freq_ion rhythm: the MO-basis matrices only when
     // out_mat_xc is on, the eband_vxc* files for either switch.
-    if (inp.out_mat_xc || inp.out_eband)
+    if (out_mat_xc_on || inp.out_eband)
     {
         const Charge& chg = *pelec->charge;
-        if (inp.out_mat_xc)
+        if (out_mat_xc_on)
         {
             // Mode-2 MAT/ subdirectory is created lazily at write time.
             ModuleBase::ensure_directory(global_mat_dir);
@@ -719,7 +720,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                                     gd,
                                     inp.dft_plus_u,
                                     gamma_only,
-                                    inp.out_mat_xc,
+                                    out_mat_xc_on,
                                     out_app_flag,
                                     global_mat_dir,
                                     global_out_dir,
