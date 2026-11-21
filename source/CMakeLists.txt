@@ -486,6 +486,17 @@ define_property(
     "abacus_disable_feature_definitions(). Used by tests that genuinely need a "
     "feature (e.g. __MPI) inside a directory that otherwise disables it.")
 
+define_property(
+  TARGET
+  PROPERTY ABACUS_DROPPED_FEATURE_DEFINITIONS
+  BRIEF_DOCS
+    "Feature definitions this target drops despite the directory keeping them"
+  FULL_DOCS
+    "Feature definitions to strip from this target although its source "
+    "directory does not disable them. Used by a test that links an object "
+    "library compiled without the feature, so the test source must see the "
+    "same configuration as the code it exercises.")
+
 function(abacus_disable_feature_definitions)
   abacus_normalize_definitions(_defs ${ARGN})
   set_property(
@@ -528,10 +539,16 @@ function(abacus_apply_build_options target)
     DIRECTORY "${_source_dir}"
     PROPERTY ABACUS_LOCAL_FEATURE_DEFINITIONS)
   get_target_property(_kept "${target}" ABACUS_KEPT_FEATURE_DEFINITIONS)
+  get_target_property(_dropped "${target}" ABACUS_DROPPED_FEATURE_DEFINITIONS)
 
   if(_kept)
     # A target may opt back into definitions its directory disables.
     list(REMOVE_ITEM _disabled ${_kept})
+  endif()
+  if(_dropped)
+    # A target may drop definitions its directory keeps, so the test source
+    # matches the object library it exercises.
+    list(APPEND _disabled ${_dropped})
   endif()
   if(_disabled)
     # Filter after conditional definitions have been evaluated.

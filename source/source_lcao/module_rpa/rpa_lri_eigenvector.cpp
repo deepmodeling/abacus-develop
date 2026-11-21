@@ -2,6 +2,7 @@
 #include "rpa_lri.h"
 #include "rpa_lri_detail.h"
 #include "source_base/global_function.h"
+#include "source_base/parallel_reduce.h"
 #include "source_basis/module_ao/elem_basis_idx_orb.h"
 #include "source_estate/elecstate_lcao.h"
 #include "source_io/module_parameter/input_parameter.h"
@@ -39,9 +40,9 @@ void RPA_LRI<T, Tdata>::out_eigen_vector_legacy(const Parallel_Orbitals& parav, 
         = parav.para_2d().irproc() * parav.para_2d().ncproc() + parav.para_2d().icproc();
     const int mpi_size = parav.para_2d().nrproc() * parav.para_2d().ncproc();
     const auto check_mpi = [mpi_comm](const int local_error, const std::string& context) {
-        const int local_failed = local_error == MPI_SUCCESS ? 0 : 1;
-        int any_failed = 0;
-        if (MPI_Allreduce(&local_failed, &any_failed, 1, MPI_INT, MPI_MAX, mpi_comm) != MPI_SUCCESS || any_failed != 0)
+        int any_failed = local_error == MPI_SUCCESS ? 0 : 1;
+        Parallel_Reduce::reduce_max(mpi_comm, any_failed);
+        if (any_failed != 0)
         {
             throw std::runtime_error(context);
         }

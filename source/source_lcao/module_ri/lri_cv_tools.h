@@ -8,7 +8,7 @@
 
 #include "invmat_ri.h"
 #include "source_cell/unitcell.h"
-#include "abfs_vector3_order.h"
+#include "source_lcao/module_ri/abfs_vector3_order.h"
 #include "source_lcao/module_ri/abfs.h"
 
 #include <RI/global/Array_Operator.h>
@@ -92,6 +92,10 @@ inline std::map<TkeyA, std::map<TkeyB, std::array<Tvalue, N>>> minus(
 template <typename TkeyA, typename TkeyB, typename Tvalue>
 extern std::map<TkeyA, std::map<TkeyB, Tvalue>> minus(std::map<TkeyA, std::map<TkeyB, Tvalue>>& v1,
                                                       std::map<TkeyA, std::map<TkeyB, Tvalue>>& v2);
+template <typename TkeyA, typename TkeyB, typename Tvalue>
+extern std::map<TkeyA, std::map<TkeyB, Tvalue>> minus_common_keys(
+    const std::map<TkeyA, std::map<TkeyB, Tvalue>>& v1,
+    const std::map<TkeyA, std::map<TkeyB, Tvalue>>& v2);
 
 template <typename T, std::size_t N>
 extern std::vector<std::array<T, N>> add(const std::vector<std::array<T, N>>& v1,
@@ -154,8 +158,6 @@ template <typename T>
 using TLRI = std::map<int, std::map<TAC, RI::Tensor<T>>>;
 template <typename T>
 TLRI<T> read_Cs_ao(const std::string& file_path, const double& threshold = 1e-10);
-template <typename T>
-TLRI<T> read_Cs_ao_all(const std::string& path, const double& threshold = 1e-10);
 template <typename T>
 void write_Cs_ao(const TLRI<T>& Vs, const std::string& file_path);
 template <typename T>

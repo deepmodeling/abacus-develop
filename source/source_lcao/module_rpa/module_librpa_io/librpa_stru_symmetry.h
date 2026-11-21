@@ -13,6 +13,11 @@ template <typename T>
 class Vector3;
 }
 
+namespace ModuleSymmetry
+{
+class Symmetry;
+}
+
 namespace RpaLriDetail
 {
 struct LibRpaSymmetryOperation
@@ -45,6 +50,14 @@ void write_librpa_spin_symmetry(std::ostream& output,
                                 int grey_group,
                                 int spin_source,
                                 const std::vector<LibRpaSpinSymmetryOperation>& operations);
+
+// Serialize the complete symmetry block used by RPA_LRI::out_struc. Keeping the
+// production assembly here makes the SOC/magnetic ordering testable without
+// constructing the full RPA driver or running an electronic-structure job.
+void write_librpa_symmetry_block(std::ostream& output,
+                                 const ModuleBase::Matrix3& latvec,
+                                 const ModuleSymmetry::Symmetry& symmetry,
+                                 int nspin);
 } // namespace RpaLriDetail
 
 #endif

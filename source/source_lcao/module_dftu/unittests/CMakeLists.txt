@@ -113,7 +113,7 @@ if(ENABLE_MPI)
         ../../../source_hamilt/module_hcontainer/atom_pair.cpp
         ../../../source_basis/module_ao/parallel_orbitals.cpp
         ../../../source_basis/module_ao/orb_atomic_lm.cpp
-        ../../module_operator_lcao/test/tmp_mocks.cpp
+        ../../module_operator_lcao/unittests/test_tmp_mocks.cpp
         ../../../source_hamilt/operator.cpp
         # This test calls MPI_Init in main() and drives ScaLAPACK distribution,
         # so it must keep __MPI even though this directory disables it.
@@ -129,7 +129,7 @@ if(ENABLE_MPI)
               ../../../source_hamilt/module_hcontainer/atom_pair.cpp
               ../../../source_basis/module_ao/parallel_orbitals.cpp
               ../../../source_basis/module_ao/orb_atomic_lm.cpp
-              ../../module_operator_lcao/test/tmp_mocks.cpp
+              ../../module_operator_lcao/unittests/test_tmp_mocks.cpp
               ../../../source_hamilt/operator.cpp
       KEEP_FEATURE_DEFINITIONS __MPI)
 
@@ -167,7 +167,7 @@ if(ENABLE_MPI)
         ../../../source_hamilt/module_hcontainer/atom_pair.cpp
         ../../../source_basis/module_ao/parallel_orbitals.cpp
         ../../../source_basis/module_ao/orb_atomic_lm.cpp
-        ../../module_operator_lcao/test/tmp_mocks.cpp
+        ../../module_operator_lcao/unittests/test_tmp_mocks.cpp
         ../../../source_hamilt/operator.cpp
         # Reuse the proven MODULE_DFTU_op link closure; MPI-built base/parallel
         # objects must see __MPI across TUs.

@@ -49,7 +49,7 @@ public:
     /// @brief  Constructor for Exx_LRI_Interface
     Exx_LRI_Interface(const Exx_Info_RI& info_ri, const Exx_Info_Global& info_global)
     {
-        this->exx_ptr = std::make_shared<Exx_LRI<Tdata>>(info_ri);
+        this->exx_ptr = std::make_shared<Exx_LRI<Tdata>>(info_ri, make_exx_lri_runtime());
         this->info_global = info_global;
         this->hybrid_step_ = info_global.hybrid_step;
     }
@@ -153,7 +153,7 @@ public:
     /// >0: not the first outer loop. contributeHk will do enerything normally.
     int two_level_step = 0;
     double etot_last_outer_loop = 0.0;
-    module_dm::DensityMatrix<T, double>* dm_last_step;
+    module_dm::DensityMatrix<T, double>* dm_last_step = nullptr;
 
     size_t hybrid_step() const { return hybrid_step_; }
     void set_hybrid_step(size_t s) { hybrid_step_ = s; }
@@ -161,7 +161,6 @@ public:
     std::shared_ptr<Exx_LRI<Tdata>> exx_ptr;
 
 private:
-
     Mix_DMk_2D<T> mix_DMk_2D;
     Mix_DMk_2D<std::complex<double>> mix_common_density_;
     RI_2D_Comm::HybridDensityLayout common_density_layout_;
