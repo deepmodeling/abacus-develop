@@ -142,8 +142,13 @@ void QList::read_from_file(const std::string& filename, UnitCell& ucell) {
         }
 
         ifq >> this->nmp[0] >> this->nmp[1] >> this->nmp[2];
-        const long long nmp_product = 1LL * this->nmp[0] * this->nmp[1] * this->nmp[2];
-        if (!ifq || nmp_product <= 0 || nmp_product > std::numeric_limits<int>::max())
+        // Check each dimension before multiplying: a negative pair has a
+        // positive product, and the product itself can overflow even in 64-bit.
+        const bool dims_positive = this->nmp[0] > 0 && this->nmp[1] > 0 && this->nmp[2] > 0;
+        const bool product_fits_int =
+            dims_positive && this->nmp[0] <= std::numeric_limits<int>::max() / this->nmp[1]
+            && this->nmp[0] * this->nmp[1] <= std::numeric_limits<int>::max() / this->nmp[2];
+        if (!ifq || !dims_positive || !product_fits_int)
         {
             ModuleBase::WARNING("QList::read_from_file",
                                 "invalid Monkhorst-Pack grid dimensions in the q-points file.");

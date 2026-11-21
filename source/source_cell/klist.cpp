@@ -339,8 +339,12 @@ bool K_Vectors::read_mp_mesh(std::ifstream& ifk,
     }
 
     ifk >> nmp[0] >> nmp[1] >> nmp[2];
-    const long long nmp_product = 1LL * nmp[0] * nmp[1] * nmp[2];
-    if (!ifk || nmp_product <= 0 || nmp_product > std::numeric_limits<int>::max())
+    // Check each dimension before multiplying: a negative pair has a positive
+    // product, and the product itself can overflow even in 64-bit.
+    const bool dims_positive = nmp[0] > 0 && nmp[1] > 0 && nmp[2] > 0;
+    const bool product_fits_int = dims_positive && nmp[0] <= std::numeric_limits<int>::max() / nmp[1]
+                                  && nmp[0] * nmp[1] <= std::numeric_limits<int>::max() / nmp[2];
+    if (!ifk || !dims_positive || !product_fits_int)
     {
         ofs_warning << " Error: invalid Monkhorst-Pack grid dimensions in the k-points file." << std::endl;
         return false;

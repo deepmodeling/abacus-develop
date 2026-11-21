@@ -18,15 +18,16 @@
  *     - K_Vectors::parse_kfile(): a negative k-point count must be rejected
  *       instead of falling through both the nkstot==0 and nkstot>0 branches
  *   - ZeroMpDimensionRejected / NonNumericMpDimensionRejected
- *     / NegativeMpDimensionRejected / MpGridProductOverflowRejected
+ *     / NegativeMpDimensionRejected / TwoNegativeMpDimensionsRejected
+ *     / MpGridProductOverflowRejected
  *     - K_Vectors::read_mp_mesh(): malformed Monkhorst-Pack grid dimensions
  *       (zero, non-numeric, negative, or overflowing int) must be rejected;
  *       a negative dimension previously crashed in renew() with an uncaught
- *       std::length_error
+ *       std::length_error, and a negative pair has a positive product
  *   - ValidMpGridAccepted
  *     - a well-formed 2x2x2 Gamma grid still works (8 k-points)
- *   - QptZeroMpDimensionRejected
- *     - QList::read_from_file(): malformed MP grid resets the q-point count
+ *   - QptNegativeMpDimensionRejected
+ *     - QList::read_from_file(): a malformed MP grid resets the q-point count
  *       following its existing warning-and-reset error style
  */
 
@@ -112,6 +113,13 @@ TEST_F(KptValidationTest, NegativeMpDimensionRejected)
     EXPECT_FALSE(result);
 }
 
+TEST_F(KptValidationTest, TwoNegativeMpDimensionsRejected)
+{
+    // a negative pair has a positive product; each dimension must be checked
+    const bool result = read_kpt("K_POINTS\n0\nGamma\n-1 -1 4 0 0 0\n");
+    EXPECT_FALSE(result);
+}
+
 TEST_F(KptValidationTest, MpGridProductOverflowRejected)
 {
     const bool result = read_kpt("K_POINTS\n0\nGamma\n2000 2000 2000 0 0 0\n");
@@ -124,9 +132,11 @@ TEST_F(KptValidationTest, ValidMpGridAccepted)
     EXPECT_TRUE(result);
 }
 
-TEST_F(KptValidationTest, QptZeroMpDimensionRejected)
+TEST_F(KptValidationTest, QptNegativeMpDimensionRejected)
 {
-    std::string qpt = write_kpt_file("case.qpt", "Q_POINTS\n0\nGamma\n0 4 4 0 0 0\n");
+    // discriminating case: the old code crashed on a negative dimension
+    // (renew(-4) threw), the new one resets the q-point count instead
+    std::string qpt = write_kpt_file("case.qpt", "Q_POINTS\n0\nGamma\n-1 4 4 0 0 0\n");
     ModuleCell::QList ql;
     ql.read_from_file(qpt, ucell);
     EXPECT_EQ(ql.nkstot, 0);
