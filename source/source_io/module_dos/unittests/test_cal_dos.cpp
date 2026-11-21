@@ -38,6 +38,7 @@ TEST_F(DosTest,Dos)
 
     const int istep = 1;
     const int out_app_flag = 0;
+    const int precision = 6;
     const int bndpar = 1;
 	ModuleIO::cal_dos(dosp.is,
 			dosp.fa,
@@ -54,6 +55,7 @@ TEST_F(DosTest,Dos)
 			dosp.wg,
 			istep,
 			out_app_flag,
+			precision,
 			bndpar);
 
 #ifdef __MPI
@@ -137,6 +139,7 @@ TEST_F(DosTest,DosW1)
 
     const int istep = 1;
     const int out_app_flag = 0;
+    const int precision = 6;
     const int bndpar = 1;
 	EXPECT_NO_THROW(ModuleIO::cal_dos(dosp.is,
 			dosp.fa,
@@ -153,6 +156,7 @@ TEST_F(DosTest,DosW1)
 			dosp.wg,
 			istep,
 			out_app_flag,
+			precision,
 			bndpar));
 	GlobalV::ofs_warning.close();
 #ifdef __MPI
@@ -184,6 +188,7 @@ TEST_F(DosTest,DosW2)
 
     const int istep = 1;
     const int out_app_flag = 0;
+    const int precision = 6;
     const int bndpar = 1;
 	EXPECT_NO_THROW(ModuleIO::cal_dos(dosp.is,
 			dosp.fa,
@@ -200,6 +205,7 @@ TEST_F(DosTest,DosW2)
 			dosp.wg,
 			istep,
 			out_app_flag,
+			precision,
 			bndpar));
 
 	GlobalV::ofs_warning.close();
@@ -232,18 +238,19 @@ TEST_F(DosTest, Mode1Appends)
     dosp.set_istate_info();
 
     const int out_app_flag = 1;
+    const int precision = 6;
     const int bndpar = 1;
 
     // First call: istep=0 -> "# Ionic_Step 1".
     ModuleIO::cal_dos(dosp.is, dosp.fa, dosp.de_ev, dosp.emax_ev, dosp.emin_ev,
                       dosp.bcoeff, dosp.nks, dosp.nkstot, dosp.wk, dosp.isk,
                       dosp.nbands, dosp.ekb, dosp.wg,
-                      /*istep=*/0, out_app_flag, bndpar);
+                      /*istep=*/0, out_app_flag, precision, bndpar);
     // Second call: istep=1 -> "# Ionic_Step 2", appended.
     ModuleIO::cal_dos(dosp.is, dosp.fa, dosp.de_ev, dosp.emax_ev, dosp.emin_ev,
                       dosp.bcoeff, dosp.nks, dosp.nkstot, dosp.wk, dosp.isk,
                       dosp.nbands, dosp.ekb, dosp.wg,
-                      /*istep=*/1, out_app_flag, bndpar);
+                      /*istep=*/1, out_app_flag, precision, bndpar);
 
 #ifdef __MPI
     if (GlobalV::MY_RANK == 0)
@@ -274,17 +281,18 @@ TEST_F(DosTest, Mode2Overwrites)
     dosp.set_istate_info();
 
     const int out_app_flag = 2;
+    const int precision = 6;
     const int bndpar = 1;
 
     // First call writes istep 1, second overwrites with istep 2.
     ModuleIO::cal_dos(dosp.is, dosp.fa, dosp.de_ev, dosp.emax_ev, dosp.emin_ev,
                       dosp.bcoeff, dosp.nks, dosp.nkstot, dosp.wk, dosp.isk,
                       dosp.nbands, dosp.ekb, dosp.wg,
-                      /*istep=*/0, out_app_flag, bndpar);
+                      /*istep=*/0, out_app_flag, precision, bndpar);
     ModuleIO::cal_dos(dosp.is, dosp.fa, dosp.de_ev, dosp.emax_ev, dosp.emin_ev,
                       dosp.bcoeff, dosp.nks, dosp.nkstot, dosp.wk, dosp.isk,
                       dosp.nbands, dosp.ekb, dosp.wg,
-                      /*istep=*/1, out_app_flag, bndpar);
+                      /*istep=*/1, out_app_flag, precision, bndpar);
 
 #ifdef __MPI
     if (GlobalV::MY_RANK == 0)
@@ -303,6 +311,44 @@ TEST_F(DosTest, Mode2Overwrites)
         EXPECT_THAT(str, testing::Not(testing::HasSubstr("\n# Ionic_Step 1")));
         remove(fname.c_str());
     }
+}
+
+// ---------------------------------------------------------------------------
+// The precision argument controls the number of decimals in the DOS table.
+// ---------------------------------------------------------------------------
+TEST_F(DosTest, PrecisionControlsDecimals)
+{
+    const std::string fname = "doss1_precision.txt";
+    DosPrepare dosp(0, fname, 0.005, 18, -6, 0.07,
+                    dos_test_data::nks, dos_test_data::nkstot, dos_test_data::nbands);
+    dosp.set_isk();
+    dosp.set_wk();
+    dosp.set_istate_info();
+
+    const int istep = 0;
+    const int out_app_flag = 0;
+    const int precision = 4;
+    const int bndpar = 1;
+
+    ModuleIO::cal_dos(dosp.is, dosp.fa, dosp.de_ev, dosp.emax_ev, dosp.emin_ev,
+                      dosp.bcoeff, dosp.nks, dosp.nkstot, dosp.wk, dosp.isk,
+                      dosp.nbands, dosp.ekb, dosp.wg,
+                      istep, out_app_flag, precision, bndpar);
+
+#ifdef __MPI
+    if (GlobalV::MY_RANK == 0)
+    {
+#endif
+        std::ifstream ifs(fname.c_str());
+        std::string str((std::istreambuf_iterator<char>(ifs)),
+                        std::istreambuf_iterator<char>());
+        EXPECT_THAT(str, testing::HasSubstr("-5.0000"));
+        EXPECT_THAT(str, testing::HasSubstr("0.5000"));
+        EXPECT_THAT(str, testing::Not(testing::HasSubstr("-5.000000")));
+        EXPECT_THAT(str, testing::Not(testing::HasSubstr("0.500000")));
+#ifdef __MPI
+    }
+#endif
 }
 
 #ifdef __MPI

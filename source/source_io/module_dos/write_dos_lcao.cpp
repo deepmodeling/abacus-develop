@@ -23,6 +23,7 @@ void write_dos_lcao(
         const double& dos_scale,
         const double& bcoeff,
         const int out_app_flag,
+        const int precision,
         const int istep,
         const int nspin,
         const int nlocal,
@@ -88,6 +89,7 @@ void write_dos_lcao(
                 wg,
                 istep,
                 out_app_flag,
+                precision,
                 bndpar);
 
         if (GlobalV::MY_RANK == 0)
@@ -112,6 +114,7 @@ void write_dos_lcao(
             bcoeff,
             istep,
             out_app_flag,
+            precision,
             nlocal,
             nspin,
             global_out_dir,
@@ -137,6 +140,7 @@ template void write_dos_lcao(
         const double& dos_scale,
         const double& bcoeff,
         const int out_app_flag,
+        const int precision,
         const int istep,
         const int nspin,
         const int nlocal,
@@ -164,6 +168,7 @@ template void write_dos_lcao(
         const double& dos_scale,
         const double& bcoeff,
         const int out_app_flag,
+        const int precision,
         const int istep,
         const int nspin,
         const int nlocal,

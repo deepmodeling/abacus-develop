@@ -23,6 +23,7 @@ void ModuleIO::cal_pdos(
 		const double& bcoeff,
 		const int istep,
 		const int out_app_flag,
+		const int precision,
 		const int nlocal,
 		const int nspin,
 		const std::string& global_out_dir,
@@ -190,6 +191,6 @@ void ModuleIO::cal_pdos(
     if (GlobalV::MY_RANK == 0)
     {
         write_pdos_text(ucell, pdos.data(), nspin, nlocal, npoints,
-                        emin, dos_edelta_ev, global_out_dir, istep, out_app_flag, ofs_running);
+                        emin, dos_edelta_ev, global_out_dir, istep, out_app_flag, precision, ofs_running);
     }
 }
