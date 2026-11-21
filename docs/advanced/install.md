@@ -87,8 +87,11 @@ build of DDLA. Like other dependent
 options, GPU RI is disabled when its LibRI/CUDA prerequisites are disabled.
 INPUT `device_exx` defaults to `cpu`, retaining CPU contractions even with
 `device gpu`. To use GPU contractions, set both `device gpu` and `device_exx gpu`.
-The latter requires GPU RI to be compiled in. Real-space EXX symmetry reduction
-is supported with `symmetry 1` and `exx_symmetry_realspace 1`.
+The latter requires GPU RI to be compiled in. With `symmetry 1`, set
+`exx_symmetry_realspace 0`: LibRI v0.3.0.0 GPU real-space symmetry fails HSE
+energy/stress validation, so ABACUS rejects that combination. K-point symmetry
+reduction is available with real-space EXX symmetry disabled. CPU RI supports
+real-space EXX symmetry.
 
 The selector applies to the LCAO Kohn-Sham exchange engine. Independent LR and
 RDMFT exchange engines retain CPU contractions; LR inherits the selected backend

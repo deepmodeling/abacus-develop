@@ -60,7 +60,7 @@ TEST(DeviceExxInput, SelectionAndValidation)
     input.device = "gpu";
 
 #ifdef __GPU_RI
-    it->second.check_value(it->second, param);
+    expect_rejected("LibRI GPU real-space symmetry fails numerical validation");
     EXPECT_EQ(input.device_exx, "gpu");
     EXPECT_EQ(input.symmetry, "1");
     EXPECT_TRUE(input.exx_symmetry_realspace);
@@ -68,6 +68,8 @@ TEST(DeviceExxInput, SelectionAndValidation)
     it->second.check_value(it->second, param);
     input.exx_symmetry_realspace = true;
     input.symmetry = "0";
+    it->second.check_value(it->second, param);
+    input.symmetry = "-1";
     it->second.check_value(it->second, param);
 #else
     expect_rejected("device_exx=gpu requires a build with ENABLE_LIBRI_GPU=ON");
