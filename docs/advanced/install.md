@@ -87,11 +87,13 @@ build of DDLA. Like other dependent
 options, GPU RI is disabled when its LibRI/CUDA prerequisites are disabled.
 INPUT `device_exx` defaults to `cpu`, retaining CPU contractions even with
 `device gpu`. To use GPU contractions, set both `device gpu` and `device_exx gpu`.
-The latter requires GPU RI to be compiled in. GPU RI temporarily rejects
-`symmetry 1`, regardless of `exx_symmetry_realspace`, pending a validated LibRI
-GPU symmetry fix. Use `symmetry 0` (time reversal only) or `symmetry -1` (no
-symmetry), or select CPU RI when symmetry is needed. The INPUT checker reports
-an error instead of changing the requested settings.
+The latter requires GPU RI to be compiled in. After normal INPUT processing,
+GPU RI temporarily rejects an effective `symmetry 1`, regardless of
+`exx_symmetry_realspace`, pending a validated LibRI GPU symmetry fix. This GPU
+EXX check reports an error without modifying parameter values itself. Existing
+INPUT resets still apply; for example, `calculation md` sets `symmetry` to `0`
+before this check. Use `symmetry 0` (time reversal only) or `symmetry -1` (no
+symmetry), or select CPU RI when spatial symmetry is needed.
 
 The selector applies to the LCAO Kohn-Sham exchange engine. Independent LR and
 RDMFT exchange engines retain CPU contractions; LR inherits the selected backend
