@@ -150,7 +150,8 @@ TEST_F(ElecStatePrintTest, PrintEtot)
     }
 
     // iteration of different ks_solver
-    std::vector<std::string> ks_solvers = {"cg", "lapack", "genelpa", "dav", "scalapack_gvx", "cusolver"};
+    std::vector<std::string> ks_solvers
+        = {"cg", "lapack", "genelpa", "dav", "scalapack_gvx", "cusolver", "ppcg"};
     for (int i = 0; i < ks_solvers.size(); i++)
     {
         inp.ks_solver = ks_solvers[i];
@@ -183,6 +184,10 @@ TEST_F(ElecStatePrintTest, PrintEtot)
         else if (inp.ks_solver == "cusolver")
         {
             EXPECT_THAT(output, testing::HasSubstr("CU"));
+        }
+        else if (inp.ks_solver == "ppcg")
+        {
+            EXPECT_THAT(output, testing::HasSubstr("PP"));
         }
     }
     GlobalV::ofs_running.close();

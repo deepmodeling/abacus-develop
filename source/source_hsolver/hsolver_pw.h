@@ -74,7 +74,8 @@ class HSolverPW
                          psi::Psi<T, Device>& psi,
                          std::vector<Real>& pre_condition,
                          Real* eigenvalue,
-                         const int& nk_nums);
+                         const int& nk_nums,
+                         std::ostream& log);
 
     // calculate the precondition array for diagonalization in PW base
     void update_precondition(std::vector<Real>& h_diag, const int ik, const int npw, const Real vl_of_0);
