@@ -230,18 +230,6 @@ bool read_lattice_constant(std::ifstream& ifa,
             ModuleBase::WARNING_QUIT("unitcell::read_lattice_constant",
             "do not use LATTICE_VECTORS along with explicit specification of lattice type");
         }
-        // Non-cubic named lattices cannot be constructed without the shape
-        // parameters in LATTICE_PARAMETERS; without them the shape variables
-        // stay zero and produce a zero-volume or NaN cell.
-        if(latName != "sc" && latName != "fcc" && latName != "bcc")
-        {
-            const bool has_params = scan_lattice_section(ifa, "LATTICE_PARAMETERS");
-            if (!has_params)
-            {
-                const std::string msg = "LATTICE_PARAMETERS is required for lattice type " + latName;
-                ModuleBase::WARNING_QUIT("unitcell::read_lattice_constant", msg);
-            }
-        }
         if(latName=="sc")
         {//simple-cubic, ibrav = 1
             latvec.e11 = 1.0; latvec.e12 = 0.0; latvec.e13 = 0.0;
@@ -470,8 +458,21 @@ bool read_lattice_constant(std::ifstream& ifa,
             latvec.e33 = cba * term;
         }
         else
-        { 
+        {
             ModuleBase::WARNING_QUIT("unitcell::read_lattice_constant","latname not supported!");
+        }
+        // Non-cubic named lattices cannot be constructed without the shape
+        // parameters in LATTICE_PARAMETERS; without them the shape variables
+        // stay zero and produce a zero-volume or NaN cell. The check comes
+        // after the branches so an unsupported latName reports itself first.
+        if(latName != "sc" && latName != "fcc" && latName != "bcc")
+        {
+            const bool has_params = scan_lattice_section(ifa, "LATTICE_PARAMETERS");
+            if (!has_params)
+            {
+                const std::string msg = "LATTICE_PARAMETERS is required for lattice type " + latName;
+                ModuleBase::WARNING_QUIT("unitcell::read_lattice_constant", msg);
+            }
         }
     }
 
