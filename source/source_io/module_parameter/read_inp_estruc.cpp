@@ -293,9 +293,9 @@ The other way is only available when compiling with LIBXC, and it allows for sup
         this->add_item(item);
     }
     {
-        Input_Item item("xc_device");
+        Input_Item item("device_xc");
         item.domain.set_choices({"cpu", "gpu"});
-        item.domain.add_requirement("xc_device==gpu", "device==gpu");
+        item.domain.add_requirement("device_xc==gpu", "device==gpu");
         item.annotation = "device for Libxc LDA/GGA potential evaluation";
         item.category = "Electronic structure";
         item.type = "String";
@@ -304,12 +304,12 @@ The other way is only available when compiling with LIBXC, and it allows for sup
                            "built with ENABLE_CUDA=ON. Built-in functionals, meta-GGA, response kernels and "
                            "separate force/stress evaluations retain their CPU implementation.";
         item.default_value = "cpu";
-        read_sync_string(input.xc_device);
+        read_sync_string(input.device_xc);
 #if !defined(ABACUS_LIBXC_CUDA) || !defined(__CUDA)
         item.check_value = [](const Input_Item&, const Parameter& para) {
-            if (para.input.xc_device == "gpu")
+            if (para.input.device_xc == "gpu")
             {
-                ModuleBase::WARNING_QUIT("ReadInput", "xc_device gpu requires CUDA-enabled ABACUS and Libxc >= 7.1.0 built with ENABLE_CUDA=ON.");
+                ModuleBase::WARNING_QUIT("ReadInput", "device_xc gpu requires CUDA-enabled ABACUS and Libxc >= 7.1.0 built with ENABLE_CUDA=ON.");
             }
         };
 #endif

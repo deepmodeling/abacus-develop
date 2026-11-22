@@ -56,7 +56,7 @@ PotBase* Potential::get_pot_type(const std::string& pot_type, const Input_para& 
     }
     else if (pot_type == "xc")
     {
-        const bool xc_gpu = input.xc_device == "gpu";
+        const bool xc_gpu = input.device_xc == "gpu";
         return new PotXC(PARAM.globalv.domag, PARAM.globalv.domag_z, input.gga_grad, xc_gpu,
                          this->rho_basis_, this->etxc_, this->vtxc_, &(this->vofk_eff));
     }

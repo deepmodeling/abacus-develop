@@ -303,7 +303,7 @@ XC_Functional_Libxc::init_func(const std::vector<int>& func_id,
     if (use_gpu)
     {
         ModuleBase::WARNING_QUIT("XC_Functional_Libxc::init_func",
-                                "xc_device gpu requires CUDA-enabled ABACUS and Libxc >= 7.1 with ENABLE_CUDA=ON.");
+                                "device_xc gpu requires CUDA-enabled ABACUS and Libxc >= 7.1 with ENABLE_CUDA=ON.");
     }
 #endif
     std::vector<xc_func_type> funcs;

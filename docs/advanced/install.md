@@ -26,7 +26,7 @@ cmake -B build -DENABLE_LIBXC=ON
 For CUDA evaluation of the Libxc LDA/GGA potential (including the semilocal part
 of HSE), build Libxc 7.1.0 or later with `-DENABLE_CUDA=ON`. Configure ABACUS with
 `-DUSE_CUDA=ON -DENABLE_LIBXC=ON -DLibxc_DIR=<prefix>/lib/cmake/Libxc`, then set
-`device gpu` and `xc_device gpu` in INPUT. `xc_device` defaults to `cpu`, which
+`device gpu` and `device_xc gpu` in INPUT. `device_xc` defaults to `cpu`, which
 also works with a CUDA-enabled Libxc. Built-in functionals, meta-GGA, response
 kernels and separate force/stress evaluations continue to use the CPU. This
 option does not select the exact-exchange backend.

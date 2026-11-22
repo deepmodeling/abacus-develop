@@ -6,7 +6,7 @@ TEST(LibxcDeviceInput, DefaultAndAllowedDevices)
     ModuleIO::ReadInput schema(0);
     for (const auto& entry : schema.get_input_lists())
     {
-        if (entry.first == "xc_device")
+        if (entry.first == "device_xc")
         {
             const auto& domain = entry.second.domain;
             const Parameter defaults;
@@ -16,12 +16,12 @@ TEST(LibxcDeviceInput, DefaultAndAllowedDevices)
 
             const ModuleIO::InputValue gpu(std::string{"gpu"});
             const ModuleIO::InputValue cpu(std::string{"cpu"});
-            ModuleIO::InputValues values = {{"xc_device", gpu}, {"device", cpu}};
+            ModuleIO::InputValues values = {{"device_xc", gpu}, {"device", cpu}};
             EXPECT_FALSE(domain.validate_requirements(entry.first, values).empty());
             values["device"] = gpu;
             EXPECT_TRUE(domain.validate_requirements(entry.first, values).empty());
             return;
         }
     }
-    FAIL() << "xc_device is missing from the INPUT schema";
+    FAIL() << "device_xc is missing from the INPUT schema";
 }
