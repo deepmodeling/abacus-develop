@@ -122,9 +122,10 @@ run_basic_props() {
   if ! test -z "$has_dos" && [ $has_dos == 1 ]; then
     total_dos=$(cat OUT.autotest/dos*.txt | awk 'END {print}' | awk '{print $3}')
     echo "totaldosref $total_dos" >>$props_result_file
-  fi
-  if [ -f pdos.ref.json ]; then
-    python3 "$PROPS_TOOLS_DIR/check_pdos_npy.py" OUT.autotest/pdos.npy pdos.ref.json || return 1
+  elif [ "$has_dos" = 2 ]; then
+    local dos_dir=OUT.autotest
+    if [ "$out_app_flag" = 2 ]; then dos_dir+=/DOS; fi
+    python3 "$PROPS_TOOLS_DIR/check_dos_npy.py" "$dos_dir" "${nspin:-1}" dos.ref.json >> "$props_result_file" || return 1
   fi
 
   #-------------------------------

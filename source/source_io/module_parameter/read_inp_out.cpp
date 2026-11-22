@@ -381,22 +381,24 @@ Also controled by out_freq_ion and out_app_flag.
  * With out_app_flag = 1: the same fixed-name files are reused; the first written step truncates them and later steps append one record per step (prefixed with a `# Ionic_Step N` header, one-based).
  * With out_app_flag = 2: per-step files are named `doss{s}g{geom}.txt` and `pdoss{s}g{geom}.txt` where `{geom}` is the one-based geometry index (e.g. `doss1g3.txt` for the third ionic step).
  * nspin=1 or 4: one spin channel (`s1`). nspin=2: two channels (`s1`, `s2`). PW and LCAO use the same naming.
-Note: values 2 and 3 are no longer supported. Setting out_dos to 2 or 3 will raise an error.)";
+* 2: write total DOS (`doss1.npy` and, for nspin=2, `doss2.npy`) and projected DOS (`pdos.npy`) as NumPy arrays for a single-point LCAO KSDFT SCF or NSCF calculation. Older versions used 2 to request text PDOS; use 1 for text.
+* 3: Fermi surface output has been removed.)";
         item.default_value = "0";
         item.unit = "";
         read_sync_int(input.out_dos);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.calculation == "get_wf" || para.input.calculation == "get_pchg")
+            if (para.input.out_dos != 2 && (para.input.calculation == "get_wf" || para.input.calculation == "get_pchg"))
             {
                 para.input.out_dos = 0;
             }
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.out_dos == 2)
+            const auto& in = para.input;
+            if (in.out_dos == 2 && (in.basis_type != "lcao" || in.esolver_type != "ksdft"
+                                    || (in.calculation != "scf" && in.calculation != "nscf")))
             {
                 ModuleBase::WARNING_QUIT("ReadInput",
-                                         "out_dos = 2 has been deprecated. "
-                                         "PDOS is now written automatically with out_dos = 1.");
+                                         "out_dos = 2 requires a single-point LCAO KSDFT SCF or NSCF calculation.");
             }
             if (para.input.out_dos == 3)
             {

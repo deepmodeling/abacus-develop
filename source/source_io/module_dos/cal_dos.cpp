@@ -1,4 +1,5 @@
 #include "cal_dos.h"
+#include "dos_npy_header.h"
 
 #include "source_base/constants.h"
 #include "source_base/global_function.h"
@@ -115,8 +116,9 @@ bool ModuleIO::cal_dos(const int& is,  // index for spin
     ModuleBase::TITLE("ModuleIO", "cal_dos");
 
     std::ofstream ofs_dos;
-
-    if (GlobalV::MY_RANK == 0)
+    const bool npy = fn.size() >= 4 && fn.compare(fn.size() - 4, 4, ".npy") == 0;
+    const bool root = GlobalV::MY_RANK == 0;
+    if (root && !npy)
     {
         const std::string time_stamp = ModuleIO::local_timestamp();
         const int istep_one_based = istep + 1;
@@ -155,7 +157,13 @@ bool ModuleIO::cal_dos(const int& is,  // index for spin
         ModuleBase::WARNING("ModuleIO::cal_dos", "npoints <= 0");
         return false;
     }
-    if (GlobalV::MY_RANK == 0)
+    if (root && npy)
+    {
+        ofs_dos.open(fn, std::ios::binary | std::ios::trunc);
+        write_dos_npy_header(ofs_dos, "('energy_eV','=f8'),('dos','=f8'),('dos_int','=f8'),"
+                                      "('dos_smear','=f8'),('dos_smear_int','=f8')", npoints);
+    }
+    else if (root)
     {
         ofs_dos << npoints << " # number of points" << std::endl;
         ofs_dos << std::fixed << std::setprecision(6);
@@ -222,7 +230,7 @@ bool ModuleIO::cal_dos(const int& is,  // index for spin
     double sum2 = 0.0;
     const double dos_thr = 1.0e-12;
 
-    if (GlobalV::MY_RANK == 0)
+    if (root)
     {
         for (int n = 0; n < npoints; ++n)
         {
@@ -236,21 +244,23 @@ bool ModuleIO::cal_dos(const int& is,  // index for spin
             }
             sum2 += dos_smear[n] * de_ev;
 
+            if (npy)
+            {
+                const double row[] = {ene[n], dos[n], sum_elec[n], dos_smear[n], sum2};
+                ofs_dos.write(reinterpret_cast<const char*>(row), sizeof(row));
+                continue;
+            }
             ofs_dos << std::setw(13) << ene[n]
                  << " " << std::setw(12) << dos[n]
                  << " " << std::setw(12) << sum_elec[n]
                  << " " << std::setw(14) << dos_smear[n]
                  << " " << std::setw(14) << sum2 << std::endl;
         }
-    }
-
-    if (GlobalV::MY_RANK == 0)
-    {
         ofs_dos.close();
     }
 
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Number of bands", nbands);
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Total electronic states from DOS", sum);
 
-    return true;
+    return !npy || !root || ofs_dos.good();
 }

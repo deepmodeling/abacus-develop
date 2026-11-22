@@ -98,21 +98,32 @@ The `# Ionic_Step` line is only present for geometry-optimization (istep) output
 
 For nspin=2, two files are written (pdoss1* and pdoss2*), one per spin channel. For nspin=4, the two spinor components are summed into a single file. The unit of PDOS is also `(number of states)/(eV * unitcell)`.
 
-For a single-point LCAO SCF or NSCF calculation, set `out_dos 1` and
-`pdos_format npy` to write `pdos.npy`. The default is `pdos_format text`.
-Total DOS still goes to `doss{spin}.txt`. If the output directory contains
-both formats, set `pdosfile` to the desired file in the `abacus-plot -d -p`
-configuration. You can also open the binary file with NumPy:
+### NumPy output
+
+For a single-point LCAO KSDFT SCF or NSCF calculation, set `out_dos 2`
+to write both total and projected DOS as NumPy arrays. Use `out_dos 1`
+for text output or `out_dos 0` (the default) to disable DOS output.
+Older releases used `out_dos 2` to request text PDOS.
+
+Total DOS uses one record per energy point in `doss1.npy`, plus `doss2.npy`
+for spin-polarized calculations (`nspin=2`). Its five binary64 fields are
+`energy_eV`, `dos`, `dos_int`, `dos_smear` and `dos_smear_int`, in the
+same order and units as the text columns. Projected DOS is in `pdos.npy`.
+With `out_app_flag 2`, these files are in the `DOS/` output subdirectory.
+For plotting, set `tdosfile` or `pdosfile` in the `abacus-plot` config.
+Use an explicit file path when the directory contains both formats.
 
 ```python
 import numpy as np
 
+total = np.load("doss1.npy", mmap_mode="r")
+dos_per_eV = total["dos_smear"]
 rows = np.load("pdos.npy", mmap_mode="r")
 spectrum = rows["pdos"][0]  # (spin channel, energy point), in 1/eV
 energy_eV = rows["energy_min_eV"][0] + np.arange(spectrum.shape[1]) * rows["energy_step_eV"][0]
 ```
 
-Each row identifies one channel by `atom_index` (one-based), `species`, `l`
+Each PDOS row identifies one channel by `atom_index` (one-based), `species`, `l`
 and signed `m`. `nspin` is the input spin mode. Modes 1 and 4 store one
 spectrum per row, and mode 2 stores spin-up and spin-down. The array uses
 binary64 and the same zeta sums and zero threshold as text.

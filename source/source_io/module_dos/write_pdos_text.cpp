@@ -1,4 +1,5 @@
 #include "write_pdos_text.h"
+#include "dos_npy_header.h"
 
 #include "source_base/global_variable.h"
 #include "source_io/module_output/provenance_header.h"
@@ -154,28 +155,15 @@ void ModuleIO::write_pdos_npy(const UnitCell& cell, const std::vector<ModuleBase
     fields << "('nspin','=i4'),('atom_index','=i4'),('l','=i4'),('m','=i4'),"
            << "('energy_min_eV','=f8'),('energy_step_eV','=f8'),('species','|S" << width
            << "'),('pdos','=f8',(" << pdos.size() << "," << ne << "))";
-    // NPY v1 stores a little-endian header length and an explicit byte order for the payload.
-    static_assert(sizeof(double) == 8 && std::numeric_limits<double>::is_iec559, "PDOS requires binary64");
-    const std::uint16_t one = 1;
-    const char endian = *reinterpret_cast<const unsigned char*>(&one) ? '<' : '>';
-    std::string header = "{'descr': [" + fields.str() + "], 'fortran_order': False, 'shape': ("
-                       + std::to_string(count) + ",), }";
-    std::replace(header.begin(), header.end(), '=', endian);
-    header.append((64 - (11 + header.size()) % 64) % 64, ' ');
-    header += '\n';
     const std::uint64_t row_bytes = 32 + width + sizeof(double) * static_cast<std::uint64_t>(ne) * pdos.size();
-    if (header.size() > 65535 || row_bytes > std::numeric_limits<std::int32_t>::max())
+    if (row_bytes > std::numeric_limits<std::int32_t>::max())
     {
         throw std::runtime_error("PDOS array exceeds NumPy v1 dtype limits");
     }
-    const unsigned char length[] = {static_cast<unsigned char>(header.size()),
-                                    static_cast<unsigned char>(header.size() >> 8)};
     std::ofstream out;
     out.exceptions(std::ios::badbit | std::ios::failbit);
     out.open(path, std::ios::binary | std::ios::trunc);
-    out.write("\x93NUMPY\x01\x00", 8);
-    out.write(reinterpret_cast<const char*>(length), sizeof(length));
-    out.write(header.data(), header.size());
+    write_dos_npy_header(out, fields.str(), count);
     const double grid[] = {emin, de};
     const bool spinor = nspin == 4;
     for (int iat = 0; iat < cell.nat; ++iat)

@@ -176,8 +176,8 @@ class TDOS(DOS):
     """Parse total DOS data
 
     ``tdosfile`` may be a single TDOS file, a list of one or two per-spin
-    files, or a directory containing them. ABACUS writes one 5-column text
-    file per spin channel (``doss1*``/``doss2*``; legacy PW names
+    files, or a directory containing them. ABACUS writes one five-column
+    text or NPY file per spin channel (``doss1*``/``doss2*``; legacy PW names
     ``dos1.txt``/``dos2.txt``). A single spin-channel file is paired with
     its counterpart when present, searching in both directions, so passing
     either spin file works. For nspin=4 ABACUS writes a single
@@ -198,6 +198,8 @@ class TDOS(DOS):
                     f"tdosfile accepts 1 or 2 files, got {len(files)}")
             # canonicalize spin order: the spin-1 channel always comes first
             if len(files) == 2:
+                if (Path(files[0]).suffix == ".npy") != (Path(files[1]).suffix == ".npy"):
+                    raise ValueError("Both TDOS spin files must have the same format")
                 first, second = Path(files[0]).name, Path(files[1]).name
                 if ("doss2" in first or "dos2" in first) and \
                    ("doss1" in second or "dos1" in second):
@@ -211,21 +213,15 @@ class TDOS(DOS):
                 matches1 = sorted(glob.glob(str(path / "dos1.txt")))
             if not matches1 and (path / "dos.txt").is_file():
                 matches1 = [str(path / "dos.txt")]  # legacy PW nspin=1 name
+            binary = path / "doss1.npy"
+            if binary.is_file():
+                if matches1:
+                    raise ValueError(f"Both text and NPY TDOS found in '{path}'. Pass a specific TDOS file.")
+                matches1 = [str(binary)]
             if not matches1:
                 raise FileNotFoundError(
                     f"No TDOS file found in directory '{path}'")
-            spin1 = Path(matches1[0])
-            candidates = [str(spin1)]
-            # pair with the spin-2 file carrying the same name suffix, e.g.
-            # doss1g1.txt -> doss2g1.txt, so different geometry steps are
-            # never mixed
-            for one, two in (("doss1", "doss2"), ("dos1", "dos2")):
-                if one in spin1.name:
-                    spin2 = spin1.parent / spin1.name.replace(one, two)
-                    if spin2.is_file():
-                        candidates.append(str(spin2))
-                    break
-            return candidates
+            path = Path(matches1[0])
 
         if path.is_file():
             name = path.name
@@ -246,6 +242,16 @@ class TDOS(DOS):
         channels stored in this file (None where the column is absent, e.g.
         the legacy 2/3-column formats carry no smeared DOS).
         """
+        if Path(fname).suffix == ".npy":
+            rows = np.load(fname, mmap_mode="r", allow_pickle=False)
+            names = ("energy_eV", "dos", "dos_int", "dos_smear", "dos_smear_int")
+            if (rows.ndim != 1 or not rows.size or rows.dtype.names != names
+                    or any(rows[name].dtype.kind != "f" or rows[name].dtype.itemsize != 8 for name in names)):
+                raise ValueError(f"Invalid TDOS NPY array: {fname}")
+            data = {name: rows[name][:, None] for name in names[1:]}
+            data["energy"] = rows["energy_eV"][:, None]
+            return data
+
         rows = []
         with open(fname) as f:
             for line in f:

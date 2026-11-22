@@ -28,7 +28,7 @@ void write_dos_lcao(
         const double& dos_edelta_ev,
         const double& dos_scale,
         const double& bcoeff,
-        const bool pdos_npy,
+        const bool dos_npy,
         const int out_app_flag,
         const int istep,
         const int nspin,
@@ -71,16 +71,15 @@ void write_dos_lcao(
 
         ss << global_out_dir << "doss" << is + 1;
 
-        // Modes 0 and 1 reuse the fixed name (mode 0 overwrites, mode 1 appends
-        // a new DOS block per written step); only mode 2 keeps the g{N} suffix.
-        if(istep>=0 && out_app_flag==2)
+        // Only per-step text output carries the g{N} suffix.
+        if (!dos_npy && istep >= 0 && out_app_flag == 2)
         {
             ss << "g" << istep+1;
         }
 
-        ss << ".txt";
+        ss << (dos_npy ? ".npy" : ".txt");
 
-        ModuleIO::cal_dos(is,
+        bool written = ModuleIO::cal_dos(is,
                 ss.str(),
                 dos_edelta_ev,
                 emax,
@@ -97,6 +96,14 @@ void write_dos_lcao(
                 out_app_flag,
                 bndpar);
 
+        if (dos_npy)
+        {
+            Parallel_Common::bcast_bool(written);
+            if (!written)
+            {
+                ModuleBase::WARNING_QUIT("write_dos_lcao", "Failed to write " + ss.str());
+            }
+        }
         if (GlobalV::MY_RANK == 0)
         {
             ModuleIO::write_notice(ofs_running, "DOS", is, nspin, ss.str());
@@ -122,7 +129,7 @@ void write_dos_lcao(
     std::string error;
     if (GlobalV::MY_RANK == 0)
     {
-        if (pdos_npy)
+        if (dos_npy)
         {
             const std::string path = global_out_dir + "pdos.npy";
             try
@@ -141,7 +148,7 @@ void write_dos_lcao(
                             emin, dos_edelta_ev, global_out_dir, istep, out_app_flag, ofs_running);
         }
     }
-    if (pdos_npy)
+    if (dos_npy)
     {
         Parallel_Common::bcast_string(error);
         if (!error.empty()) { ModuleBase::WARNING_QUIT("write_dos_lcao", error); }
@@ -166,7 +173,7 @@ template void write_dos_lcao(
         const double& dos_edelta_ev,
         const double& dos_scale,
         const double& bcoeff,
-        const bool pdos_npy,
+        const bool dos_npy,
         const int out_app_flag,
         const int istep,
         const int nspin,
@@ -194,7 +201,7 @@ template void write_dos_lcao(
         const double& dos_edelta_ev,
         const double& dos_scale,
         const double& bcoeff,
-        const bool pdos_npy,
+        const bool dos_npy,
         const int out_app_flag,
         const int istep,
         const int nspin,

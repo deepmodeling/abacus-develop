@@ -68,7 +68,6 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.inp.npart_sto, 1);
     EXPECT_FALSE(param.inp.cal_cond);
     EXPECT_EQ(param.inp.dos_nche, 100);
-    EXPECT_EQ(param.inp.pdos_format, "text");
     EXPECT_DOUBLE_EQ(param.inp.cond_che_thr, 1e-8);
     EXPECT_DOUBLE_EQ(param.inp.cond_dw, 0.1);
     EXPECT_DOUBLE_EQ(param.inp.cond_wcut, 10);
@@ -779,7 +778,7 @@ TEST_F(InputParaTest, RemovedElpaZSolverIsRejected)
     EXPECT_EXIT(item.check_value(item, param), testing::ExitedWithCode(1), "");
 }
 
-TEST_F(InputParaTest, PdosFormat)
+TEST_F(InputParaTest, OutDosNpy)
 {
     ModuleIO::ReadInput reader(0);
     const auto& entries = reader.get_input_lists();
@@ -790,32 +789,27 @@ TEST_F(InputParaTest, PdosFormat)
         item.str_values = {value};
         item.read_value(item, param);
     };
-    const auto& format = items.at("pdos_format");
-    EXPECT_FALSE(format.domain.validate_explicit("pdos_format", {"invalid"}).empty());
-    for (const auto* token : {"text", "npy"})
-    {
-        EXPECT_TRUE(format.domain.validate_explicit("pdos_format", {token}).empty());
-    }
+    const auto& output = items.at("out_dos");
+    EXPECT_EQ(param.inp.out_dos, 0);
 
     set("basis_type", "lcao");
-    set("pdos_format", "npy");
-    ASSERT_EQ(param.inp.pdos_format, "npy");
-    set("out_dos", "1");
+    set("out_dos", "2");
+    ASSERT_EQ(param.inp.out_dos, 2);
     for (const auto* calculation : {"scf", "nscf"})
     {
         set("calculation", calculation);
-        format.check_value(format, param);
+        output.check_value(output, param);
     }
     set("calculation", "md");
-    EXPECT_EXIT(format.check_value(format, param), testing::ExitedWithCode(1), "");
+    EXPECT_EXIT(output.check_value(output, param), testing::ExitedWithCode(1), "");
     set("calculation", "scf");
     set("esolver_type", "lr");
-    EXPECT_EXIT(format.check_value(format, param), testing::ExitedWithCode(1), "");
+    EXPECT_EXIT(output.check_value(output, param), testing::ExitedWithCode(1), "");
     set("esolver_type", "ksdft");
     set("basis_type", "pw");
-    EXPECT_EXIT(format.check_value(format, param), testing::ExitedWithCode(1), "");
-    set("out_dos", "0");
-    format.check_value(format, param);
+    EXPECT_EXIT(output.check_value(output, param), testing::ExitedWithCode(1), "");
+    set("out_dos", "1");
+    output.check_value(output, param);
 }
 
 

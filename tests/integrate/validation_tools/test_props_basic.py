@@ -131,11 +131,10 @@ class PdosCollectionTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as scratch:
             case = Path(scratch)
             shutil.copy(fixture / "INPUT", case)
-            shutil.copy(fixture / "pdos.ref.json", case)
+            shutil.copy(fixture / "dos.ref.json", case)
             out = case / "OUT.autotest"
             out.mkdir()
             (out / "running_scf.log").write_text(" TOTAL ATOM NUMBER = 2\nETOT_ -1.0\n", encoding="utf-8")
-            (out / "doss1.txt").write_text("0.0 0.0 20.0\n", encoding="utf-8")
 
             for contents, error in ((None, "FileNotFoundError"), (b"invalid NPY", "ValueError")):
                 with self.subTest(error=error):

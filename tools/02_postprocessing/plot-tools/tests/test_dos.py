@@ -113,6 +113,23 @@ class TDOSTest(unittest.TestCase):
             down = self.write_spin("doss2g1.txt", other, 7.)
             self.assertEqual(TDOS([up, down]).nspin, 2)
 
+    def test_numpy_spin_files_and_text_agree(self):
+        dtype = [(key, "f8") for key in ("energy_eV", "dos", "dos_int", "dos_smear", "dos_smear_int")]
+        for spin in (1, 2):
+            text = self.write_spin(f"doss{spin}.txt", self.energy, spin)
+            values = np.loadtxt(text, skiprows=2)
+            np.save(text.with_suffix(".npy"), np.array([tuple(row) for row in values], dtype=dtype))
+        reference = TDOS(text)
+        with self.assertRaisesRegex(ValueError, "Pass a specific TDOS file"):
+            TDOS(self.root)
+        for path in self.root.glob("*.txt"):
+            path.unlink()
+        for source in (self.root, self.root / "doss2.npy"):
+            result = TDOS(source)
+            self.assertEqual(result.nspin, 2)
+            for name in ("energy", "dos", "dos_int", "dos_smear", "dos_smear_int"):
+                np.testing.assert_array_equal(getattr(result, name), getattr(reference, name))
+
     def test_plain_axes_and_missing_subplot_apis(self):
         fig = plt.figure()
         plain = fig.add_axes([0.1, 0.1, 0.8, 0.8])
