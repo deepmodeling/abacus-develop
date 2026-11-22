@@ -1,9 +1,9 @@
+#include "lj_test_solver.h"
 #include "source_cell/dom_decomp.h"
+#include "source_md/unittests/setcell.h"
+#include "source_md/verlet.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "source_md/unittests/setcell.h"
-#include "lj_test_solver.h"
-#include "source_md/verlet.h"
 
 #include <fstream>
 #define doublethreshold 1e-12
@@ -36,12 +36,12 @@
 class Verlet_test : public testing::Test
 {
   protected:
-    MD_base* mdrun;
+    MD_base *mdrun;
     UnitCell ucell;
     MDCell mdcell;
     DomainDecomposition decomp;
     Input_para inp;
-    ModuleESolver::ESolver* p_esolver;
+    ModuleESolver::ESolver *p_esolver;
     /// the md writers take the directory explicitly, so the test owns it
     const std::string out_dir = "./";
     const std::string readin_dir = "./";

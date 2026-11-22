@@ -8,12 +8,13 @@ namespace ModuleMD
 {
 namespace DPDetail
 {
-std::vector<double> arrange_aparam(const std::vector<double>& input,
-                                   const std::vector<LocalAtom>& owned,
-                                   const std::vector<LocalAtom>& ghost,
-                                   const std::vector<std::int64_t>& type_counts,
-                                   int dimension,
-                                   bool include_ghost)
+std::vector<double> arrange_aparam(
+    const std::vector<double> &input,
+    const std::vector<LocalAtom> &owned,
+    const std::vector<LocalAtom> &ghost,
+    const std::vector<std::int64_t> &type_counts,
+    int dimension,
+    bool include_ghost)
 {
     if (dimension < 0)
     {
@@ -48,15 +49,13 @@ std::vector<double> arrange_aparam(const std::vector<double>& input,
     std::vector<double> output(output_size, 0.0);
     for (std::size_t iat = 0; iat < count; ++iat)
     {
-        const LocalAtom& atom = iat < owned.size() ? owned[iat] : ghost[iat - owned.size()];
-        if (atom.type < 0 || static_cast<std::size_t>(atom.type) >= type_counts.size()
-            || atom.type_index < 0
-            || atom.type_index >= type_counts[atom.type])
+        const LocalAtom &atom = iat < owned.size() ? owned[iat] : ghost[iat - owned.size()];
+        if (atom.type < 0 || static_cast<std::size_t>(atom.type) >= type_counts.size() || atom.type_index < 0 ||
+            atom.type_index >= type_counts[atom.type])
         {
             throw std::invalid_argument("MDCell atomic parameter identity is invalid.");
         }
-        const std::size_t global_index = offsets[atom.type]
-                                         + static_cast<std::size_t>(atom.type_index);
+        const std::size_t global_index = offsets[atom.type] + static_cast<std::size_t>(atom.type_index);
         const std::size_t source = input.size() == width ? 0 : global_index * width;
         for (std::size_t component = 0; component < width; ++component)
         {
@@ -65,5 +64,5 @@ std::vector<double> arrange_aparam(const std::vector<double>& input,
     }
     return output;
 }
-}
-}
+} // namespace DPDetail
+} // namespace ModuleMD
