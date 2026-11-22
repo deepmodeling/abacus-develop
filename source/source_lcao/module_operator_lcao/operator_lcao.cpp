@@ -14,6 +14,8 @@
 #include "source_lcao/module_rt/td_info.h"
 #include "source_lcao/module_rt/td_folding.h"
 
+#include <algorithm>
+
 namespace hamilt {
 
 template <typename TK, typename TR>
@@ -41,8 +43,11 @@ void OperatorLCAO<double, double>::get_hs_pointers() {
             this->smatrix_k = new double[this->hsk->get_size()];
             this->allocated_smatrix = true;
         }
-        const int inc = 1;
-        BlasConnector::copy(this->hsk->get_size(), this->hsk->get_sk(), inc, this->smatrix_k, inc);
+        // get_size() is size_t; std::copy avoids narrowing it to the int
+        // length used by BLAS for a >INT_MAX local block (issue #8342).
+        std::copy(this->hsk->get_sk(),
+                  this->hsk->get_sk() + this->hsk->get_size(),
+                  this->smatrix_k);
 #ifdef __ELPA
         // DecomposedState may be changed after diagnolization, with smatrix_k changed too
         // for example, when DecomposedState equals 1, smatrix_k is an identity matrix, different from the original this->hsk->get_sk()

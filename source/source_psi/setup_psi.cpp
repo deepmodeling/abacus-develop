@@ -34,6 +34,9 @@ void Setup_Psi<T>::allocate_psi(psi::Psi<T>*& psi,
             if (inp.ks_solver == "genelpa" || inp.ks_solver == "elpa" || inp.ks_solver == "lapack"
                 || inp.ks_solver == "pexsi" || inp.ks_solver == "cusolver" || inp.ks_solver == "cusolvermp")
             {
+                // Gamma-only direct solvers keep a full N x N block here, not
+                // N x NBANDS.  Psi::resize computes its element count in
+                // size_t, so this is safe for the issue #8342 dimensions.
                 ncol = para_orb.para_2d().ncloc();
             }
         }
