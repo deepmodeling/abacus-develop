@@ -528,7 +528,7 @@ def check_header_include_warnings(findings: List[Finding], lines: Iterable[DiffL
                 line.path,
                 line.line,
                 "Header diff adds an include dependency.",
-                "Confirm the declaration requires this include; prefer forward declarations where practical.",
+                "Confirm this include is needed by the header and does not introduce unnecessary or cyclic dependencies.",
             )
 
 
