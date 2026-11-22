@@ -59,7 +59,8 @@ try
     this->init(mpi_comm_in, kv, orb.cutoffs());
     this->out_bands(pelec);
     this->out_eigen_vector(parav, psi);
-    this->out_struc(ucell);
+    // stru_out.txt is no longer produced: taesc-prep derives the structure
+    // from the run's own STRU / STRU_FINAL and KPT.info.
     if (this->runtime.input.out_librpa_ver == 1)
     {
         this->out_bz_sampling(ucell);

@@ -50,6 +50,18 @@ namespace ModuleSymmetry
                 }
             }
             }
+        // Magnetic nspin=4 runs also carry antiunitary elements Theta*g. Their
+        // spatial parts are what a spinor exchange needs, and the general
+        // symmetry block above holds only the unitary ones. Append them as an
+        // labelled trailer so existing readers of the unitary block keep
+        // working unchanged.
+        const int n_anti = symm.magnetic_nspin4 ? symm.nrotk_anti : 0;
+        ofs << "Antiunitary operations: " << n_anti << "\n";
+        for (int isym = 0; isym < n_anti; ++isym)
+        {
+            ofs << isym << "\n" << mat3_fmt(symm.gmatrix_anti[isym]) << "\n"
+                << vec3_fmt(symm.gtrans_anti[isym]) << "\n";
+        }
         ofs.close();
     }
 

@@ -8,6 +8,7 @@
 #include "source_lcao/module_lr/utils/spectrum_mo.h"
 #include "source_lcao/module_lr/utils/lr_util.h"
 #include "source_lcao/module_ri/module_exx_symmetry/symm_rotation.h"
+#include "librpa_output_names.h"
 
 #include <algorithm>
 #include <cmath>
@@ -71,7 +72,7 @@ void RPA_LRI<T, Tdata>::out_velocity(const UnitCell& ucell,
     if (this->runtime.rank == 0)
     {
         LR_Util::output_spectrum_mo_librpa(velocity_mo,
-                                           this->runtime.input.rpa_outdir + "velocity_matrix.txt",
+                                           RpaLriDetail::librpa_output_path(this->runtime.input.rpa_outdir, "velocity_matrix.txt"),
                                            nk,
                                            nspin_tmp,
                                            nbands,

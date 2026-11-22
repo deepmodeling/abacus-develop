@@ -7,6 +7,7 @@
 #include "source_estate/elecstate_lcao.h"
 #include "source_io/module_parameter/input_parameter.h"
 #include "source_lcao/module_ri/module_exx_symmetry/symm_rotation.h"
+#include "librpa_output_names.h"
 
 #include <algorithm>
 #include <cmath>
@@ -159,7 +160,8 @@ void RPA_LRI<T, Tdata>::out_eigen_vector_legacy(const Parallel_Orbitals& parav, 
     constexpr std::size_t output_line_bytes = 61;
     output_buffer.reserve(local_size * output_line_bytes + 32);
 
-    const std::string filename = this->runtime.input.rpa_outdir + "KS_eigenvector.txt";
+    const std::string filename
+        = RpaLriDetail::librpa_output_path(this->runtime.input.rpa_outdir, "KS_eigenvector.txt");
 #ifdef __MPI
     MPI_File file = MPI_FILE_NULL;
     unsigned long long total_file_bytes = 0;

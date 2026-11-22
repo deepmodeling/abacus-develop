@@ -6,6 +6,7 @@
 #include "source_estate/elecstate_lcao.h"
 #include "source_io/module_parameter/input_parameter.h"
 #include "source_lcao/module_ri/module_exx_symmetry/symm_rotation.h"
+#include "librpa_output_names.h"
 
 #include <algorithm>
 #include <cmath>
@@ -197,7 +198,8 @@ try
 
     const auto wfc_l_nchi = RpaLriDetail::collect_wfc_l_nchi(ucell);
     const auto aux_l_nchi = RpaLriDetail::collect_abfs_l_nchi(exx_lri->abfs);
-    const std::string wfc_filename = this->runtime.input.rpa_outdir + "wfc_basis.txt";
+    const std::string wfc_filename = RpaLriDetail::librpa_output_path(
+        this->runtime.input.rpa_outdir, "wfc_basis.txt");
     const std::string aux_output_filename = this->runtime.input.rpa_outdir + aux_filename;
     const std::string legacy_output_filename = this->runtime.input.rpa_outdir + legacy_filename;
     if (write_wfc_basis)

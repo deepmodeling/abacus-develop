@@ -1678,8 +1678,10 @@ If EXX(exact exchange) is calculated (i.e. dft_fuctional==hse/hf/pbe0/scan0 or r
         item.category = "Output information";
         item.type = "Boolean";
         item.description = "Generate output files used in rpa calculations."
-                          "\n\n[NOTE] If symmetry is set to 1, stru_out.txt also contains the spatial and, for nspin=4, "
-                          "magnetic symmetry operations consumed by the subsequent LibRPA calculation.";
+                          "\n\n[NOTE] Every file written for the subsequent LibRPA calculation carries the "
+                          "librpa_ prefix. If symmetry is set to 1, symrot_R.txt also contains the spatial and, "
+                          "for nspin=4, magnetic symmetry operations. stru_out.txt is not written; taesc-prep "
+                          "derives the structure file from STRU/STRU_FINAL, KPT.info and symrot_R.txt.";
         item.default_value = "False";
         item.unit = "";
         item.set_availability("basis_type==lcao");

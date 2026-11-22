@@ -6,6 +6,7 @@
 #include "source_estate/elecstate_lcao.h"
 #include "source_io/module_parameter/input_parameter.h"
 #include "source_lcao/module_ri/module_exx_symmetry/symm_rotation.h"
+#include "librpa_output_names.h"
 
 #include <complex>
 
@@ -36,7 +37,7 @@ void RPA_LRI<T, Tdata>::out_eigen_vector_v1(const Parallel_Orbitals& parav, cons
                                               this->runtime.input.nspin,
                                               this->runtime.input.nbands,
                                               this->runtime.nlocal,
-                                              this->runtime.input.rpa_outdir + "KS_wfc_0.dat");
+                                              RpaLriDetail::librpa_output_path(this->runtime.input.rpa_outdir, "KS_wfc_0.dat"));
     ModuleBase::timer::end("RPA_LRI", "out_eigen_vector_v1_mpi_io");
 #endif
 }

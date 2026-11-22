@@ -63,7 +63,7 @@ void RPA_LRI<T, Tdata>::output_cut_coulomb_cs(const UnitCell& ucell, Exx_LRI<dou
     this->Vs_period = RI::RI_Tools::cal_period(Vs_cut_IJ, period);
     if (this->runtime.input.out_librpa_ver == 1)
     {
-        this->out_coulomb_k_v1(ucell, this->Vs_period, "V_cut_", exx_lri_rpa);
+        this->out_coulomb_k_v1(ucell, this->Vs_period, "librpa_V_cut_", exx_lri_rpa);
     }
     else
     {
@@ -79,19 +79,19 @@ void RPA_LRI<T, Tdata>::output_cut_coulomb_cs(const UnitCell& ucell, Exx_LRI<dou
     {
         if (this->info.shrink_abfs_pca_thr >= 0.0)
         {
-            this->out_Cs_v1(ucell, this->Cs_period, "Cs_shrink_");
+            this->out_Cs_v1(ucell, this->Cs_period, "librpa_Cs_shrink_");
         }
         else
         {
-            this->out_Cs_v1(ucell, this->Cs_period, "Cs_");
+            this->out_Cs_v1(ucell, this->Cs_period, "librpa_Cs_");
         }
     }
     else
     {
         if (this->info.shrink_abfs_pca_thr >= 0.0)
-            this->out_Cs(ucell, this->Cs_period, "Cs_shrinked_data_");
+            this->out_Cs(ucell, this->Cs_period, "librpa_Cs_shrinked_data_");
         else
-            this->out_Cs(ucell, this->Cs_period, "Cs_data_");
+            this->out_Cs(ucell, this->Cs_period, "librpa_Cs_data_");
     }
     Cs_period.clear();
     Cs_period.swap(tmp);
@@ -213,8 +213,8 @@ void RPA_LRI<T, Tdata>::output_ewald_coulomb(const UnitCell& ucell, const K_Vect
         }
 
         const bool use_shrink = this->info.shrink_abfs_pca_thr >= 0.0;
-        const std::string aux_filename = use_shrink ? "aux_basis_s.txt" : "aux_basis.txt";
-        const std::string legacy_filename = use_shrink ? "" : "basis_map.txt";
+        const std::string aux_filename = use_shrink ? "librpa_aux_basis_s.txt" : "librpa_aux_basis.txt";
+        const std::string legacy_filename = use_shrink ? "" : "librpa_basis_map.txt";
         this->out_librpa_basis_v1(ucell, exx_full_coulomb.get(), aux_filename, legacy_filename, !use_shrink);
         const auto ewald_object
             = exx_full_coulomb->exx_objs.find(Conv_Coulomb_Pot_K::Coulomb_Method::Ewald);
@@ -279,12 +279,12 @@ void RPA_LRI<T, Tdata>::output_ewald_coulomb(const UnitCell& ucell, const K_Vect
     if (this->runtime.input.out_librpa_ver == 1)
     {
         const bool use_shrink = this->info.shrink_abfs_pca_thr >= 0.0;
-        const std::string aux_filename = use_shrink ? "aux_basis_s.txt" : "aux_basis.txt";
-        const std::string legacy_filename = use_shrink ? "" : "basis_map.txt";
+        const std::string aux_filename = use_shrink ? "librpa_aux_basis_s.txt" : "librpa_aux_basis.txt";
+        const std::string legacy_filename = use_shrink ? "" : "librpa_basis_map.txt";
         // With shrink enabled, cal_large_Cs emits wfc_basis.txt once and this
         // call emits only the reduced auxiliary basis.
         this->out_librpa_basis_v1(ucell, exx_full_coulomb.get(), aux_filename, legacy_filename, !use_shrink);
-        this->out_coulomb_k_v1(ucell, this->Vs_period, "V_full_", exx_full_coulomb.get());
+        this->out_coulomb_k_v1(ucell, this->Vs_period, "librpa_V_full_", exx_full_coulomb.get());
         write_strict_2d_coulomb_head_sidecar();
     }
     else

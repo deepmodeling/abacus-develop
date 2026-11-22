@@ -2,7 +2,7 @@
 #include "rpa_lri.h"
 #include "rpa_lri_band_io.h"
 #include "rpa_lri_detail.h"
-#include "librpa_stru_units.h"
+#include "librpa_output_names.h"
 #include "source_base/global_function.h"
 #include "source_basis/module_ao/elem_basis_idx_orb.h"
 #include "source_estate/elecstate_lcao.h"
@@ -25,83 +25,6 @@
 #include <string>
 #include <vector>
 
-template <typename T, typename Tdata>
-void RPA_LRI<T, Tdata>::out_struc(const UnitCell& ucell)
-try
-{
-    if (this->runtime.rank != 0)
-    {
-        return;
-    }
-    ModuleBase::TITLE("DFT_RPA_interface", "out_struc");
-    const int nks_tot = this->runtime.input.nspin == 2 ? (int)p_kv->get_nks() / 2 : p_kv->get_nks();
-    const auto unit_scales = RpaLriDetail::librpa_stru_unit_scales(ucell.lat0);
-    const ModuleBase::Matrix3 lat = ucell.latvec * unit_scales.real_space_bohr;
-    const ModuleBase::Matrix3 G_RPA = ucell.G * unit_scales.reciprocal_space_bohr_inv;
-    std::ofstream ofs;
-    ofs.open(this->runtime.input.rpa_outdir + "stru_out.txt", std::ios::out);
-    if (!ofs.good()) throw std::runtime_error("Failed to open stru_out.txt");
-    ofs << std::fixed << std::setprecision(9);
-    ofs << lat.e11 << std::setw(15) << lat.e12 << std::setw(15) << lat.e13 << std::endl;
-    ofs << lat.e21 << std::setw(15) << lat.e22 << std::setw(15) << lat.e23 << std::endl;
-    ofs << lat.e31 << std::setw(15) << lat.e32 << std::setw(15) << lat.e33 << std::endl;
-
-    ofs << G_RPA.e11 << std::setw(15) << G_RPA.e12 << std::setw(15) << G_RPA.e13 << std::endl;
-    ofs << G_RPA.e21 << std::setw(15) << G_RPA.e22 << std::setw(15) << G_RPA.e23 << std::endl;
-    ofs << G_RPA.e31 << std::setw(15) << G_RPA.e32 << std::setw(15) << G_RPA.e33 << std::endl;
-
-    ofs << ucell.nat << std::endl;
-    for (int it = 0; it < ucell.ntype; it++)
-    {
-        for (int ia = 0; ia < ucell.atoms[it].na; ia++)
-        {
-            const ModuleBase::Vector3<double> position = ucell.atoms[it].tau[ia] * unit_scales.real_space_bohr;
-            ofs << std::setw(15) << position.x << std::setw(15) << position.y << std::setw(15) << position.z
-                << std::setw(15) << it + 1 << std::endl;
-        }
-    }
-
-    // Reader-v1 stores k-point sampling in bz_sample.txt. Keep the legacy
-    // k-point block in stru_out.txt for reader-v0 consumers.
-    if (this->runtime.input.out_librpa_ver != 1)
-    {
-        ofs << p_kv->nmp[0] << std::setw(6) << p_kv->nmp[1] << std::setw(6) << p_kv->nmp[2] << std::setw(6)
-            << std::endl;
-
-        for (int ik = 0; ik != nks_tot; ik++)
-        {
-            const ModuleBase::Vector3<double> kpoint
-                = p_kv->kvec_c[ik] * (ModuleBase::TWO_PI / ucell.lat0); // in unit of 1/Bohr
-            ofs << std::setw(15) << kpoint.x << std::setw(15) << kpoint.y << std::setw(15) << kpoint.z << std::endl;
-        }
-        if (this->runtime.input.symmetry == "-1")
-        {
-            for (int ik = 0; ik != nks_tot; ++ik)
-            {
-                ofs << (ik + 1) << std::endl;
-            }
-        }
-    }
-    // LibRPA reconstructs spatial k-stars and auxiliary-basis rotations from
-    // the operations in the input cell's fractional row-vector convention.
-    // This block belongs only to the reader-v1 structure contract; v0 keeps
-    // the historical stru_out layout unchanged.
-    if (this->runtime.input.out_librpa_ver == 1 && this->runtime.input.symmetry == "1")
-    {
-        RpaLriDetail::write_stru_sym(ofs, ucell, *p_kv, this->runtime.input.nspin);
-    }
-    ofs.close();
-    if (!ofs.good()) throw std::runtime_error("Failed to write stru_out.txt");
-    return;
-}
-catch (const std::exception& error)
-{
-    RpaLriDetail::abort_output(this->mpi_comm, error.what());
-}
-catch (...)
-{
-    RpaLriDetail::abort_output(this->mpi_comm, "Unknown exception in out_struc");
-}
 
 template <typename T, typename Tdata>
 void RPA_LRI<T, Tdata>::out_bands(const elecstate::ElecState* pelec)
@@ -135,7 +58,9 @@ try
             }
         }
     }
-    std::ofstream ofs(this->runtime.input.rpa_outdir + "band_out.txt", std::ios::out | std::ios::trunc);
+    std::ofstream ofs(
+        RpaLriDetail::librpa_output_path(this->runtime.input.rpa_outdir, "band_out.txt"),
+        std::ios::out | std::ios::trunc);
     if (!ofs.good())
     {
         throw std::runtime_error("Failed to open band_out.txt");
@@ -156,7 +81,5 @@ catch (...)
     RpaLriDetail::abort_output(this->mpi_comm, "Unknown exception in out_bands");
 }
 
-template void RPA_LRI<double, double>::out_struc(const UnitCell& ucell);
-template void RPA_LRI<std::complex<double>, double>::out_struc(const UnitCell& ucell);
 template void RPA_LRI<double, double>::out_bands(const elecstate::ElecState* pelec);
 template void RPA_LRI<std::complex<double>, double>::out_bands(const elecstate::ElecState* pelec);

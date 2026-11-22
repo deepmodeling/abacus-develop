@@ -8,6 +8,7 @@
 #include "source_estate/elecstate_lcao.h"
 #include "source_io/module_parameter/input_parameter.h"
 #include "source_lcao/module_ri/module_exx_symmetry/symm_rotation.h"
+#include "librpa_output_names.h"
 
 #include <algorithm>
 #include <cmath>
@@ -690,7 +691,8 @@ void RPA_LRI<T, Tdata>::out_abfs_overlap_raw_v1(
         {
             continue;
         }
-        const std::string out_name = this->runtime.input.rpa_outdir + "v1_abf_overlap_active_iq_" + std::to_string(ik + 1) + ".dat";
+        const std::string out_name = RpaLriDetail::librpa_output_path(
+        this->runtime.input.rpa_outdir, "v1_abf_overlap_active_iq_" + std::to_string(ik + 1) + ".dat");
         const std::string tmp_name = out_name + ".tmp";
         std::ofstream ofs(tmp_name.c_str(), std::ios::out | std::ios::binary | std::ios::trunc);
         if (!ofs.good())

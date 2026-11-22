@@ -37,8 +37,6 @@ static_assert(sizeof(std::complex<double>) == 2 * sizeof(double),
               "LibRPA v1 binary output expects complex<double> as two doubles.");
 
 void trim_malloc_cache();
-void write_stru_sym(std::ostream& output, const UnitCell& cell, const K_Vectors& kv, const int nspin);
-
 bool debug_dump_exx_ao_enabled();
 
 std::size_t coulomb_atom_pair_index(const std::size_t I, const std::size_t J, const std::size_t natoms);

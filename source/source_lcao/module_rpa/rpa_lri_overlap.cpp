@@ -132,12 +132,16 @@ void RPA_LRI<T, Tdata>::cal_large_Cs(const UnitCell& ucell, const LCAO_Orbitals&
     {
         // The large auxiliary basis and the canonical fallback map are emitted
         // here; the final Ewald output adds only aux_basis_s.txt.
-        this->out_librpa_basis_v1(ucell, exx_cut_coulomb.get(), "aux_basis.txt", "basis_map.txt", true);
-        this->out_Cs_v1(ucell, this->Cs_period, "Cs_");
+        this->out_librpa_basis_v1(ucell,
+                                  exx_cut_coulomb.get(),
+                                  "librpa_aux_basis.txt",
+                                  "librpa_basis_map.txt",
+                                  true);
+        this->out_Cs_v1(ucell, this->Cs_period, "librpa_Cs_");
     }
     else
     {
-        this->out_Cs(ucell, this->Cs_period, "Cs_data_");
+        this->out_Cs(ucell, this->Cs_period, "librpa_Cs_data_");
     }
     ModuleBase::GlobalFunc::DONE(this->runtime.log, "out_large_Cs");
     this->Cs_period.clear();
@@ -306,7 +310,7 @@ void RPA_LRI<T, Tdata>::cal_abfs_overlap(const UnitCell& ucell, const LCAO_Orbit
 
     if (this->runtime.input.out_librpa_ver == 1)
     {
-        out_abfs_overlap_v1(ucell, overlap_abfs_abfs_IJ, overlap_abfs_abf_IJ, "sinvS_", index_abfs_s, index_abfs);
+        out_abfs_overlap_v1(ucell, overlap_abfs_abfs_IJ, overlap_abfs_abf_IJ, "librpa_sinvS_", index_abfs_s, index_abfs);
     }
     else
     {

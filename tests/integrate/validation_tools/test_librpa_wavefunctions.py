@@ -76,20 +76,15 @@ class WavefunctionContractTests(unittest.TestCase):
         output.mkdir()
         values = (1, 0.5, 2, -0.5, 3, 0.25, 4, -0.25,
                   5, 0.125, 6, -0.125, 7, 0.75, 8, -0.75)
-        output.joinpath("KS_wfc_0.dat").write_bytes(
+        output.joinpath("librpa_KS_wfc_0.dat").write_bytes(
             struct.pack("<6iiq", -12345679, 28, 1, 1, 2, 4, 1, 36)
             + struct.pack("<16d", *values)
         )
-        output.joinpath("band_out.txt").write_text("1\n1\n2\n4\n0\n")
-        output.joinpath("stru_out.txt").write_text(
-            "1 0 0\n0 1 0\n0 0 1\n1 0 0\n0 1 0\n0 0 1\n"
-            "1\n0 0 0 0\n2 row\n"
-            "1 0 0 0 1 0 0 0 1 0 0 0\n"
-            "1 0 0 0 1 0 0 0 1 0 0 0\n"
-            "spin_symmetry 0 1\n"
-            "0 1 0 0 0 0 0 0 1\n"
-            "1 1 0 0 0 0 0 0 1\n"
-        )
+        output.joinpath("librpa_band_out.txt").write_text("1\n1\n2\n4\n0\n")
+        # ABACUS no longer emits stru_out.txt; the producer contract now
+        # covers the files it still writes.
+        output.joinpath("librpa_bz_sample.txt").write_text("1 1 1\n1 1\n"
+                                                           "1 1.0 0 0 0 0 0 0 1 1\n")
         nao = self.root / "OUT.autotest"
         nao.mkdir()
         nao.joinpath("wfk1s4_nao.txt").write_text(
@@ -102,18 +97,15 @@ class WavefunctionContractTests(unittest.TestCase):
         manifest = {
             "output_dir": "OUT.librpa",
             "required": [
-                {"pattern": "stru_out.txt", "kind": "stru", "symmetry_rows": 2,
-                 "spin_symmetry_rows": 2},
-                {"pattern": "band_out.txt", "kind": "band"},
-                {"pattern": "KS_wfc_0.dat", "kind": "ks_wfc_v1", "nao_dir": "OUT.autotest",
-                 "spinor": True},
+                {"pattern": "librpa_bz_sample.txt", "kind": "presence"},
+                {"pattern": "librpa_band_out.txt", "kind": "band"},
+                {"pattern": "librpa_KS_wfc_0.dat", "kind": "ks_wfc_v1",
+                 "nao_dir": "OUT.autotest", "spinor": True},
             ],
         }
         check_manifest(self.root, manifest)
-        output.joinpath("stru_out.txt").write_text(
-            output.joinpath("stru_out.txt").read_text().split("spin_symmetry", 1)[0]
-        )
-        with self.assertRaisesRegex(ProducerContractError, "spin_symmetry"):
+        output.joinpath("librpa_bz_sample.txt").unlink()
+        with self.assertRaisesRegex(ProducerContractError, "librpa_bz_sample"):
             check_manifest(self.root, manifest)
 
     def test_truncated_header_and_payload(self):
