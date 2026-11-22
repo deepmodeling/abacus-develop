@@ -99,7 +99,7 @@ if(USE_CUDA OR USE_ROCM)
     add_test(NAME MODULE_HSOLVER_lobpcg_gpu_mpi2
       COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2 ${MPIEXEC_PREFLAGS}
         $<TARGET_FILE:MODULE_HSOLVER_lobpcg_gpu> ${MPIEXEC_POSTFLAGS}
-        --gtest_filter=LockingModes/Lobpcg.DistributedRitz*:LockingModes/Lobpcg.BudgetAndReuse*:LobpcgSubspace.*:LinearAlgebraGpu.*)
+        --gtest_filter=LockingModes/Lobpcg.DistributedRitz*:LockingModes/Lobpcg.BudgetAndReuse*:LockingModes/Lobpcg.EigenvectorsMatchEigenvalues*:LobpcgSubspace.*:LinearAlgebraGpu.*)
     set_tests_properties(MODULE_HSOLVER_lobpcg_gpu_mpi2 PROPERTIES
       PROCESSORS 2 TIMEOUT 180 SKIP_RETURN_CODE 77
       ENVIRONMENT "OMP_NUM_THREADS=1;OPENBLAS_NUM_THREADS=1;MKL_NUM_THREADS=1")

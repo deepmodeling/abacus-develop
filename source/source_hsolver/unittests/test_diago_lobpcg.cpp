@@ -287,6 +287,52 @@ void check_case(const Options& options, const Locking locking)
     if (gpu_rr) { EXPECT_GT(p.gpu.storage_bytes(), 0U); }
     else { EXPECT_EQ(p.gpu.storage_bytes(), 0U); }
 }
+
+template <typename T>
+void check_eigenpair_identity(const Locking locking)
+{
+    Options o;
+    o.n = 40;
+    o.bands = 4;
+    o.npol = 1;
+    Problem<T> p(o, locking, comm_info());
+    std::fill(p.h.begin(), p.h.end(), Z(0));
+    std::fill(p.s.begin(), p.s.end(), Z(0));
+    for (int i = 0; i < o.n; ++i)
+    {
+        const double metric = 1 + .05 * i;
+        p.s[i + i * o.n] = metric;
+        p.h[i + i * o.n] = (i + 1) * metric;
+    }
+    const bool single = sizeof(T) == sizeof(std::complex<float>);
+    const double tolerance = single ? 1e-5 : 1e-11;
+    ASSERT_TRUE(p.solve(tolerance, {}));
+    EXPECT_GT(p.solver->iterations(), 0); // Exercise iterative output, not the exact-initial-state exit.
+    const double eig_tol = single ? 2e-4 : 1e-8;
+    const int elements = p.dim * o.bands;
+    const auto x = download(p.psi.template data<T>(), elements);
+    // Exact pairs are (j+1, e_j/sqrt(S_jj)), with unit gaps. Compare columns
+    // up to phase to detect permutations and mixing of distinct eigenvectors.
+    // Bounds are O(sqrt(eig_tol/gap)), allowing ordinary float/double roundoff.
+    const double vector_tol = single ? 2e-2 : 2e-4;
+    for (int j = 0; j < o.bands; ++j)
+    {
+        const double expected_eigenvalue = j + 1;
+        EXPECT_NEAR(p.eigenvalues[j], expected_eigenvalue, eig_tol);
+        double error_squared = 0;
+        for (int row = 0; row < p.dim; ++row)
+        {
+            if (!p.physical(row)) { continue; }
+            const int i = p.global_row(row);
+            const double expected = i == j ? 1 : 0;
+            const double amplitude = std::sqrt(1 + .05 * i) * std::abs(x[row + j * p.dim]);
+            const double error = amplitude - expected;
+            error_squared += error * error;
+        }
+        sum(&error_squared, 1);
+        EXPECT_LT(std::sqrt(error_squared), vector_tol) << "band=" << j << ", single=" << single;
+    }
+}
 } // namespace
 
 namespace hsolver
@@ -651,6 +697,11 @@ TEST_P(Lobpcg, SinglePrecision)
         o.extra = cluster ? 2 : 0;
         check_case<std::complex<float>>(o, GetParam());
     }
+}
+TEST_P(Lobpcg, EigenvectorsMatchEigenvalues)
+{
+    check_eigenpair_identity<Z>(GetParam());
+    check_eigenpair_identity<std::complex<float>>(GetParam());
 }
 TEST_P(Lobpcg, DistributedRitzAndEmptyRank)
 {
