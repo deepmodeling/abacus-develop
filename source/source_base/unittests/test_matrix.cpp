@@ -42,3 +42,29 @@ TEST(MatrixIndex, RowMajorOrder)
     EXPECT_EQ(ModuleBase::matrix_index(0, 3, 4), 3u);
     EXPECT_EQ(ModuleBase::matrix_index(2, 1, 4), 9u);
 }
+
+TEST(Matrix, ElementAccessUsesSizeTIndex)
+{
+    ModuleBase::matrix m(3, 4, true);
+    m(2, 3) = 5.0;
+    EXPECT_DOUBLE_EQ(m(2, 3), 5.0);
+}
+
+TEST(Matrix, NegativeConstructorThrows)
+{
+    EXPECT_THROW(ModuleBase::matrix m(-1, 4), std::length_error);
+}
+
+TEST(Matrix, CreateNegativeThrows)
+{
+    ModuleBase::matrix m;
+    EXPECT_THROW(m.create(-1, 4), std::length_error);
+}
+
+TEST(Matrix, EmptyMatrixHasNoStorage)
+{
+    ModuleBase::matrix m(0, 4);
+    EXPECT_EQ(m.nr, 0);
+    EXPECT_EQ(m.nc, 4);
+    EXPECT_EQ(m.c, nullptr);
+}

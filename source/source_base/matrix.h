@@ -74,13 +74,13 @@ public:
     double &operator()(const int ir,const int ic)
     {
         assert(ir>=0);	assert(ir<nr);	assert(ic>=0);	assert(ic<nc);
-        return c[ir*nc+ic];
+        return c[matrix_index(ir, ic, nc)];
     }
 
     const double &operator()(const int ir,const int ic) const
     {
         assert(ir>=0);	assert(ir<nr);	assert(ic>=0);	assert(ic<nc);
-        return c[ir*nc+ic];
+        return c[matrix_index(ir, ic, nc)];
     }
 
 //	inline double &operator()(int i,int j) const
