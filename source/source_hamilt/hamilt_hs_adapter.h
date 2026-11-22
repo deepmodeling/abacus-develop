@@ -22,9 +22,7 @@ template <typename T, typename Device = base_device::DEVICE_CPU>
 class HamiltHSOperator : public hsolver::HSOperator<T, Device>
 {
   public:
-    HamiltHSOperator(Hamilt<T, Device>* hm, const ModulePW::PW_Basis_K* wfc_basis) : hm_(hm), wfc_basis_(wfc_basis)
-    {
-    }
+    HamiltHSOperator(Hamilt<T, Device> *hm, const ModulePW::PW_Basis_K *wfc_basis) : hm_(hm), wfc_basis_(wfc_basis) {}
 
     void update_k(const int ik) override
     {
@@ -33,26 +31,34 @@ class HamiltHSOperator : public hsolver::HSOperator<T, Device>
         npw_ = wfc_basis_->npwk[ik];
     }
 
-    void hpsi(const T* x, T* hx, const int ld, const int nvec) const override
+    void hpsi(
+        const T *x,
+        T *hx,
+        const int ld,
+        const int nvec) const override
     {
         if (hm_->ops == nullptr)
         {
             ModuleBase::WARNING_QUIT("HamiltHSOperator::hpsi", "Operators in Hamilt are not allocated yet");
         }
         // non-owning view of x: one k point, nvec bands, leading dimension ld, npw valid rows
-        psi::Psi<T, Device> x_view(const_cast<T*>(x), 1, nvec, ld, npw_);
+        psi::Psi<T, Device> x_view(const_cast<T *>(x), 1, nvec, ld, npw_);
         typename Operator<T, Device>::hpsi_info info(&x_view, psi::Range(true, 0, 0, nvec - 1), hx);
         hm_->ops->hPsi(info);
     }
 
-    void spsi(const T* x, T* sx, const int ld, const int nvec) const override
+    void spsi(
+        const T *x,
+        T *sx,
+        const int ld,
+        const int nvec) const override
     {
         hm_->sPsi(x, sx, ld, npw_, nvec);
     }
 
   protected:
-    Hamilt<T, Device>* hm_ = nullptr;
-    const ModulePW::PW_Basis_K* wfc_basis_ = nullptr;
+    Hamilt<T, Device> *hm_ = nullptr;
+    const ModulePW::PW_Basis_K *wfc_basis_ = nullptr;
     int ik_ = 0;  ///< k point set by the last update_k()
     int npw_ = 0; ///< number of plane waves of that k point (without npol)
 };
@@ -65,18 +71,16 @@ template <typename T>
 class HamiltHSMatrix : public hsolver::HSMatrix<T>
 {
   public:
-    explicit HamiltHSMatrix(Hamilt<T>* hm) : hm_(hm)
-    {
-    }
+    explicit HamiltHSMatrix(Hamilt<T> *hm) : hm_(hm) {}
 
-    void hs_at_k(const int ik, ModuleBase::MatrixBlock<T>& hk, ModuleBase::MatrixBlock<T>& sk) override
+    void hs_at_k(const int ik, ModuleBase::MatrixBlock<T> &hk, ModuleBase::MatrixBlock<T> &sk) override
     {
         hm_->updateHk(ik);
         hm_->matrix(hk, sk);
     }
 
   private:
-    Hamilt<T>* hm_ = nullptr;
+    Hamilt<T> *hm_ = nullptr;
 };
 
 } // namespace hamilt

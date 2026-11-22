@@ -14,7 +14,7 @@
 namespace vdw
 {
 
-void Vdwd2::evaluate_impl(const VdwRequest& request, VdwResult& result)
+void Vdwd2::evaluate_impl(const VdwRequest &request, VdwResult &result)
 {
     ModuleBase::TITLE("Vdwd2", "evaluate");
     ModuleBase::timer::start("Vdwd2", "evaluate");
@@ -31,14 +31,9 @@ void Vdwd2::evaluate_impl(const VdwRequest& request, VdwResult& result)
     }
 
     const bool need_derivatives = request.force || request.stress;
-    auto evaluate_pair = [&](double r,
-                             double R0_sum,
-                             double C6_product,
-                             double r_sqr,
-                             int it1,
-                             int ia1,
-                             const ModuleBase::Vector3<double>& tau1,
-                             const ModuleBase::Vector3<double>& tau2) {
+    auto evaluate_pair = [&](double r, double R0_sum, double C6_product, double r_sqr, int it1, int ia1,
+                             const ModuleBase::Vector3<double> &tau1, const ModuleBase::Vector3<double> &tau2)
+    {
         const double tmp_exp = exp(-para_.damping() * (r / R0_sum - 1));
         const double tmp_damp_recip = 1.0 + tmp_exp;
 
@@ -49,8 +44,8 @@ void Vdwd2::evaluate_impl(const VdwRequest& request, VdwResult& result)
             return;
         }
 
-        const double tmp_factor = C6_product / pow(r_sqr, 3) / r / tmp_damp_recip
-                                  * (-6.0 / r + tmp_exp / tmp_damp_recip * para_.damping() / R0_sum);
+        const double tmp_factor = C6_product / pow(r_sqr, 3) / r / tmp_damp_recip *
+                                  (-6.0 / r + tmp_exp / tmp_damp_recip * para_.damping() / R0_sum);
 
         if (request.force)
         {
@@ -60,16 +55,10 @@ void Vdwd2::evaluate_impl(const VdwRequest& request, VdwResult& result)
         if (request.stress)
         {
             const ModuleBase::Vector3<double> dr = tau2 - tau1;
-            result.stress += tmp_factor / 2.0
-                             * ModuleBase::Matrix3(dr.x * dr.x,
-                                                   dr.x * dr.y,
-                                                   dr.x * dr.z,
-                                                   dr.y * dr.x,
-                                                   dr.y * dr.y,
-                                                   dr.y * dr.z,
-                                                   dr.z * dr.x,
-                                                   dr.z * dr.y,
-                                                   dr.z * dr.z);
+            result.stress += tmp_factor / 2.0 *
+                             ModuleBase::Matrix3(
+                                 dr.x * dr.x, dr.x * dr.y, dr.x * dr.z, dr.y * dr.x, dr.y * dr.y, dr.y * dr.z,
+                                 dr.z * dr.x, dr.z * dr.y, dr.z * dr.z);
         }
     };
 
@@ -79,9 +68,9 @@ void Vdwd2::evaluate_impl(const VdwRequest& request, VdwResult& result)
 
     if (request.force)
     {
-        std::for_each(result.force.begin(), result.force.end(), [&](ModuleBase::Vector3<double>& force) {
-            force *= para_.scaling() / ucell_.lat0;
-        });
+        std::for_each(
+            result.force.begin(), result.force.end(),
+            [&](ModuleBase::Vector3<double> &force) { force *= para_.scaling() / ucell_.lat0; });
         result.has_force = true;
     }
 

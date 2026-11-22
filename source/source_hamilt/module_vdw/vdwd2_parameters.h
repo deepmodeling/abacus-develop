@@ -31,10 +31,10 @@ class Vdwd2Parameters : public VdwParameters
 
     ~Vdwd2Parameters() = default;
 
-    void C6_input(const std::string& file, const std::string& unit);
-    void R0_input(const std::string& file, const std::string& unit);
+    void C6_input(const std::string &file, const std::string &unit);
+    void R0_input(const std::string &file, const std::string &unit);
 
-    void initset(const UnitCell& ucell); // init sets of vdwd2 once this
+    void initset(const UnitCell &ucell); // init sets of vdwd2 once this
                                          // correction is called
 
     /**
@@ -44,29 +44,14 @@ class Vdwd2Parameters : public VdwParameters
      * @param plog optional, for logging the parameter setting process (not
      * implemented)
      */
-    void initial_parameters(const Input_para& input, std::ofstream* plog = nullptr);
+    void initial_parameters(const Input_para &input, std::ofstream *plog = nullptr);
 
-    inline const std::map<std::string, double> C6() const
-    {
-        return C6_;
-    }
-    inline const std::map<std::string, double> R0() const
-    {
-        return R0_;
-    }
-    inline double damping() const
-    {
-        return damping_;
-    }
-    inline double scaling() const
-    {
-        return scaling_;
-    }
+    inline const std::map<std::string, double> C6() const { return C6_; }
+    inline const std::map<std::string, double> R0() const { return R0_; }
+    inline double damping() const { return damping_; }
+    inline double scaling() const { return scaling_; }
     /// @brief cutoff radius of the D2 summation, in Bohr
-    inline double radius() const
-    {
-        return radius_;
-    }
+    inline double radius() const { return radius_; }
 
   private:
     double scaling_;
