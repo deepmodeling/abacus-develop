@@ -422,13 +422,25 @@ bool parse_atom_properties(std::ifstream& ifpos,
                           bool& set_element_mag_zero)
 {
     std::string tmpid;
-    tmpid = ifpos.get();
-
-    if( (int)tmpid[0] < 0 )
+    if (ifpos.fail())
     {
+        // the coordinate triplet itself failed to extract: fewer coordinate
+        // lines than the declared atom count
         std::cout << "read_atom_positions, mismatch in atom number for atom type: "
                   << atom.label << std::endl;
         exit(1);
+    }
+    const int next_char = ifpos.get();
+    if (next_char == std::char_traits<char>::eof())
+    {
+        // a complete final triplet ending exactly at EOF has no optional
+        // properties; treat the clean EOF as end-of-line instead of a
+        // mismatch (the legacy signed-char check was also non-portable)
+        tmpid = "\n";
+    }
+    else
+    {
+        tmpid = std::string(1, static_cast<char>(next_char));
     }
 
     // read if catch goodbit before "\n" and "#"

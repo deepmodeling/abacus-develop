@@ -3,7 +3,10 @@
 
 #include <cstdio>
 #include <fstream>
+#include <iostream>
+#include <memory>
 #include <string>
+#include <vector>
 
 #include "source_cell/read_stru.h"
 #include "source_cell/unitcell.h"
@@ -35,14 +38,18 @@ class ReadSpeciesMalformedTest : public ::testing::Test
     UnitCell ucell;
     std::ofstream ofs_running;
     std::string log_path;
-    std::string stru_path;
+    std::vector<std::string> stru_paths;
+    std::unique_ptr<Atom[]> owned_atoms;
 
     void SetUp() override
     {
         log_path = testing::TempDir() + "read_species_malformed.log";
         ofs_running.open(log_path);
         ucell.ntype = 1;
-        ucell.atoms = new Atom[1];
+        // UnitCell::~UnitCell() deletes atoms only when set_atom_flag is
+        // true; keep ownership here instead of relying on that flag
+        owned_atoms.reset(new Atom[1]);
+        ucell.atoms = owned_atoms.get();
         ucell.pseudo_fn.resize(1);
         ucell.pseudo_type.resize(1);
         ucell.orbital_fn.resize(1);
@@ -52,27 +59,36 @@ class ReadSpeciesMalformedTest : public ::testing::Test
     {
         ofs_running.close();
         std::remove(log_path.c_str());
-        if (!stru_path.empty())
+        for (const std::string& path : stru_paths)
         {
-            std::remove(stru_path.c_str());
+            std::remove(path.c_str());
         }
     }
 
     std::string write_stru_file(const std::string& name, const std::string& content)
     {
-        stru_path = testing::TempDir() + name;
-        std::ofstream ofs(stru_path);
+        const std::string path = testing::TempDir() + name;
+        std::ofstream ofs(path);
         ofs << content;
         ofs.close();
-        ofs_running << "created test STRU file: " << stru_path << std::endl;
-        return stru_path;
+        stru_paths.push_back(path);
+        ofs_running << "created test STRU file: " << path << std::endl;
+        return path;
+    }
+
+    std::ifstream open_stru_file(const std::string& path)
+    {
+        const std::string msg = "reading test STRU file: " + path;
+        std::cout << msg << std::endl;
+        ofs_running << msg << std::endl;
+        return std::ifstream(path);
     }
 };
 
 TEST_F(ReadSpeciesMalformedTest, SpeciesMissingMassRejected)
 {
     const std::string stru = write_stru_file("species_no_mass.stru", "ATOMIC_SPECIES\nH\n");
-    std::ifstream ifa(stru);
+    std::ifstream ifa = open_stru_file(stru);
     testing::internal::CaptureStdout();
     EXPECT_EXIT(unitcell::read_atom_species(ifa, ofs_running, ucell, "pw", "", "atomic", 0.0, false, false),
                 ::testing::ExitedWithCode(1),
@@ -87,7 +103,7 @@ TEST_F(ReadSpeciesMalformedTest, PartialLatticeVectorsRejected)
     const std::string stru = write_stru_file("latvec_partial.stru",
                                              "LATTICE_CONSTANT\n4.0\nLATTICE_VECTORS\n1 0 0\n0 1 0\n");
     ucell.latName = "user_defined_lattice";
-    std::ifstream ifa(stru);
+    std::ifstream ifa = open_stru_file(stru);
     testing::internal::CaptureStdout();
     EXPECT_EXIT(unitcell::read_lattice_constant(ifa, ofs_running, ucell.lat),
                 ::testing::ExitedWithCode(1),
@@ -100,7 +116,7 @@ TEST_F(ReadSpeciesMalformedTest, PartialLatticeVectorsRejected)
 TEST_F(ReadSpeciesMalformedTest, ValidSpeciesAndVectors)
 {
     const std::string stru = write_stru_file("species_ok.stru", "ATOMIC_SPECIES\nH 1.008 H.upf\n");
-    std::ifstream ifa(stru);
+    std::ifstream ifa = open_stru_file(stru);
     EXPECT_TRUE(unitcell::read_atom_species(ifa, ofs_running, ucell, "pw", "", "atomic", 0.0, false, false));
     EXPECT_DOUBLE_EQ(ucell.atoms[0].mass, 1.008);
     ifa.close();
@@ -108,7 +124,7 @@ TEST_F(ReadSpeciesMalformedTest, ValidSpeciesAndVectors)
     const std::string stru2 = write_stru_file("latvec_ok.stru",
                                               "LATTICE_CONSTANT\n4.0\nLATTICE_VECTORS\n1 0 0\n0 1 0\n0 0 1\n");
     ucell.latName = "user_defined_lattice";
-    std::ifstream ifa2(stru2);
+    std::ifstream ifa2 = open_stru_file(stru2);
     EXPECT_TRUE(unitcell::read_lattice_constant(ifa2, ofs_running, ucell.lat));
     EXPECT_DOUBLE_EQ(ucell.lat.latvec.e33, 1.0);
     ifa2.close();
@@ -125,7 +141,7 @@ TEST_F(ReadSpeciesMalformedTest, LatticeVectorsWithInlineCommentsAccepted)
                                              "0 1 0  # Lattice vector 2\n"
                                              "0 0 1  # Lattice vector 3\n");
     ucell.latName = "user_defined_lattice";
-    std::ifstream ifa(stru);
+    std::ifstream ifa = open_stru_file(stru);
     EXPECT_TRUE(unitcell::read_lattice_constant(ifa, ofs_running, ucell.lat));
     EXPECT_DOUBLE_EQ(ucell.lat.latvec.e33, 1.0);
     ifa.close();
