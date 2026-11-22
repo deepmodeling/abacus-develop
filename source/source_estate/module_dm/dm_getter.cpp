@@ -47,7 +47,7 @@ TK DensityMatrix<TK, TR>::get_dmk(const int ispin, const int ik, const int i, co
     assert(ispin > 0 && ispin <= this->spin_mult);
 #endif
     // consider transpose col=>row
-    return this->dmk[ik + this->_nk * (ispin - 1)][i * this->pv->para_2d().nrloc() + j];
+    return this->dmk[ik + this->_nk * (ispin - 1)][dmk_index(i, j, this->pv->para_2d().nrloc())];
 }
 
 // get dmk nks, nrow, ncol

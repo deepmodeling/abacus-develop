@@ -2,6 +2,7 @@
 #define DENSITY_MATRIX_H
 
 #include <complex>
+#include <cstddef>
 #include <map>
 #include <string>
 #include <vector>
@@ -34,6 +35,31 @@ struct ShiftRealComplex<std::complex<double>>
 {
     using type = double;
 };
+
+/**
+ * @brief Number of local elements in one DMK matrix.
+ *
+ * nrloc*ncloc is about 2.55e9 for NLOCAL = 377884 on 56 ranks, which is
+ * larger than INT_MAX (issue #8342).  Computing it in int overflows and
+ * makes vector::resize throw std::length_error.
+ */
+inline std::size_t dmk_element_count(const Parallel_Orbitals* pv)
+{
+    return static_cast<std::size_t>(pv->para_2d().nrloc())
+         * static_cast<std::size_t>(pv->para_2d().ncloc());
+}
+
+/**
+ * @brief Row-major index inside one local DMK matrix.
+ *
+ * The caller must ensure that i/j are in range.  i*nrloc overflows int for
+ * large LCAO bases even when the local element count still fits in int.
+ */
+inline std::size_t dmk_index(const int i, const int j, const int nrows)
+{
+    return static_cast<std::size_t>(i) * static_cast<std::size_t>(nrows)
+         + static_cast<std::size_t>(j);
+}
 
 /**
  * @brief DensityMatrix Class

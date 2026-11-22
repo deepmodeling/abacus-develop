@@ -89,6 +89,22 @@ class DMTest : public testing::Test
 #endif
 };
 
+TEST_F(DMTest, DmkElementCountUsesSizeT)
+{
+    // Issue #8342: the local block can exceed INT_MAX elements even when
+    // nrloc() and ncloc() themselves fit in int.
+    const std::size_t expected = static_cast<std::size_t>(paraV->para_2d().nrloc())
+                               * static_cast<std::size_t>(paraV->para_2d().ncloc());
+    EXPECT_EQ(module_dm::dmk_element_count(paraV), expected);
+}
+
+TEST_F(DMTest, DmkIndexUsesSizeT)
+{
+    const std::size_t index = module_dm::dmk_index(100000, 200000, 377884);
+    const std::size_t expected = static_cast<std::size_t>(100000) * 377884 + 200000;
+    EXPECT_EQ(index, expected);
+}
+
 TEST_F(DMTest, DMConstructor_GammaOnly)
 {
     // construct DM
