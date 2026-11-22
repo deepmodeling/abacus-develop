@@ -196,6 +196,22 @@ TEST_F(ReadLatticeValidationTest, TrigonalImpossibleAngleRejected)
     ifa.close();
 }
 
+TEST_F(ReadLatticeValidationTest, UnsupportedLatNameReportsItself)
+{
+    // an unsupported lattice name must report "latname not supported", not
+    // be asked for LATTICE_PARAMETERS: the presence guard runs after the
+    // name cascade. The legacy Warning5 fixture contains LATTICE_PARAMETERS,
+    // so it passes with either guard order and cannot pin this ordering.
+    const std::string stru = write_stru_file("arbitrary_no_param.stru", "LATTICE_CONSTANT\n4.0\n");
+    lat.latName = "arbitrary";
+    std::ifstream ifa = open_stru_file(stru);
+    testing::internal::CaptureStdout();
+    EXPECT_EXIT(unitcell::read_lattice_constant(ifa, ofs_running, lat), ::testing::ExitedWithCode(1), "");
+    const std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_THAT(output, testing::HasSubstr("latname not supported"));
+    ifa.close();
+}
+
 TEST_F(ReadLatticeValidationTest, ValidHexagonalWithParams)
 {
     const std::string stru =
