@@ -80,7 +80,8 @@ def main():
                 raise RuntimeError("{} producer contract failed: {}".format(case, error))
         for case in cases:
             out = work / case / "OUT.librpa"
-            if not (out / "Cs_1.dat").is_file() or not list(out.glob("V_full_*_r1.dat")):
+            if not (out / "librpa_Cs_1.dat").is_file() or not list(
+                    out.glob("librpa_V_full_*_r1.dat")):
                 raise RuntimeError("{} did not produce rank-1 output".format(case))
 
         invalid_kpt = work / "invalid_kpt_reader_v1"
@@ -98,7 +99,7 @@ def main():
 
         # Inject a rank-0-only and a rank-1-only file-open failure. Both must
         # terminate the MPI job promptly, instead of hanging in a collective.
-        for name in ("bz_sample.txt", "Cs_1.dat"):
+        for name in ("librpa_bz_sample.txt", "librpa_Cs_1.dat"):
             case = root / ("failure_" + name.replace(".", "_"))
             shutil.copytree(source / cases[0], case, ignore=ignore_outputs)
             use_mpi_solver(case)

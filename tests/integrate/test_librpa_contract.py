@@ -55,11 +55,11 @@ class ProducerRejectionTests(unittest.TestCase):
 
     def test_lri_payload_mismatch_is_rejected(self):
         (self.root / "reference").mkdir()
-        self._write_lri(self.root / "reference" / "Cs_0.dat", payload=1.0)
-        self._write_lri(self.root / "Cs_0.dat", payload=3.0)
+        self._write_lri(self.root / "reference" / "librpa_Cs_0.dat", payload=1.0)
+        self._write_lri(self.root / "librpa_Cs_0.dat", payload=3.0)
         manifest = _manifest(
             self.root,
-            [{"pattern": "Cs_*.dat", "kind": "lri_coeff_v1", "reference": True, "abs_tol": 1.0e-8}],
+            [{"pattern": "librpa_Cs_*.dat", "kind": "lri_coeff_v1", "reference": True, "abs_tol": 1.0e-8}],
         )
         with self.assertRaisesRegex(ProducerContractError, "payload value differs"):
             check_manifest(self.root, manifest)
