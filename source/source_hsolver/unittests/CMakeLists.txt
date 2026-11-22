@@ -30,13 +30,6 @@ set(LOBPCG_TEST_SOURCES
     ../rr_solver.cpp
     ../module_linalg/linear_algebra.cpp)
 set(LOBPCG_TEST_LIBS parameter base psi device container)
-if(ENABLE_MPI)
-  list(APPEND LOBPCG_TEST_SOURCES ../diag_hs_para.cpp ../diago_pxxxgvx.cpp ../diago_scalapack.cpp)
-  if(TARGET ELPA::ELPA)
-    list(APPEND LOBPCG_TEST_SOURCES ../diago_elpa.cpp)
-    list(APPEND LOBPCG_TEST_LIBS genelpa ELPA::ELPA)
-  endif()
-endif()
 addtest(
   TARGET MODULE_HSOLVER_lobpcg
   LIBS ${LOBPCG_TEST_LIBS}
@@ -72,7 +65,7 @@ foreach(device IN ITEMS cpu gpu)
       COMMAND ${CMAKE_COMMAND} "-DBINARY=$<TARGET_FILE:${exit_target}>"
               "-DOUTPUT_DIR=${CMAKE_CURRENT_BINARY_DIR}/${exit_name}"
               "-DRANKS=${ranks}" "-DGPU=${exit_gpu}"
-              "-DELPA_AVAILABLE=${ENABLE_ELPA}" "-DMPIEXEC=${MPIEXEC_EXECUTABLE}"
+              "-DMPIEXEC=${MPIEXEC_EXECUTABLE}"
               "-DMPI_NUMPROC_FLAG=${MPIEXEC_NUMPROC_FLAG}"
               "-DMPI_PREFLAGS=${MPIEXEC_PREFLAGS}" "-DMPI_POSTFLAGS=${MPIEXEC_POSTFLAGS}"
               -P "${CMAKE_CURRENT_SOURCE_DIR}/test_diago_lobpcg_exit.cmake")

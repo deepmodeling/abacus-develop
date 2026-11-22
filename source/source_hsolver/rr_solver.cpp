@@ -7,9 +7,6 @@
 #include "source_base/module_external/scalapack_connector.h"
 #include "source_base/parallel_blkcyc.h"
 #endif
-#if defined(__MPI) && defined(__ELPA)
-#include "diag_hs_para.h"
-#endif
 #ifdef __CUDA
 #include <cuda_runtime_api.h>
 #include <cusolverDn.h>
@@ -702,35 +699,6 @@ bool GpuRREigensolver::solve_generalized(const std::complex<double>* matrix,
     throw std::runtime_error("GPU generalized RR requires a CUDA build.");
 #endif
 }
-
-#if defined(__MPI) && defined(__ELPA)
-void solve_elpa(const ct::Tensor& h,
-    const ct::Tensor& s,
-    const int dimension,
-    const int wanted,
-    double* values,
-    std::complex<double>* vectors,
-    const MPI_Comm& comm,
-    const int block_size)
-{
-    using Wide = std::complex<double>;
-    ct::Tensor matrix(h);
-    ct::Tensor metric(s);
-    const int64_t elements = static_cast<int64_t>(dimension) * dimension;
-    ct::Tensor full_vectors(ct::DataType::DT_COMPLEX_DOUBLE, ct::DeviceType::CpuDevice, {elements});
-    full_vectors.zero();
-    diago_hs_para(matrix.data<Wide>(),
-        metric.data<Wide>(),
-        dimension,
-        wanted,
-        values,
-        full_vectors.data<Wide>(),
-        comm,
-        1,
-        block_size);
-    std::copy_n(full_vectors.data<Wide>(), dimension * wanted, vectors);
-}
-#endif
 
 } // namespace rr
 } // namespace hsolver

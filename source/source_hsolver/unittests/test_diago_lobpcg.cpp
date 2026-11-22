@@ -568,7 +568,7 @@ class LobpcgProjectionTest
         o.bands = 4;
         o.npol = 1;
         o.extra = scenario == "block" ? -1 : 0;
-        o.backend = scenario == "missing_backend" ? 1 : 0;
+        o.backend = scenario == "unsupported_backend" ? 1 : 0;
         o.overlap = scenario == "overlap_negative" || scenario == "overlap_zero";
         if (scenario == "reused_invalid")
         {
@@ -664,16 +664,6 @@ TEST_P(Lobpcg, DistributedRitzAndEmptyRank)
         check_case<Z>(o, GetParam());
         if (!empty) { check_case<std::complex<float>>(o, GetParam()); }
     }
-}
-TEST_P(Lobpcg, Elpa)
-{
-#if defined(__MPI) && defined(__ELPA)
-    Options o;
-    o.backend = 1;
-    check_case<Z>(o, GetParam());
-#else
-    GTEST_SKIP() << "Requires MPI and ELPA";
-#endif
 }
 TEST_P(Lobpcg, BudgetAndReuse)
 {

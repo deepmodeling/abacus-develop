@@ -117,7 +117,7 @@ class DiagoLOBPCG
 
     const LobpcgBasisLayout layout_; ///< Physical rows and spinor count within each stored column.
     const diag_comm_info comm_; ///< Communicator/rank for distributed rows of one eigensolve.
-    const int para_rr_method_ = 0; ///< RR backend: local (0), ELPA (1), or ScaLAPACK (2).
+    const int para_rr_method_ = 0; ///< RR backend: local (0) or ScaLAPACK (2).
     const int para_rr_bs_ = 0; ///< Distributed RR block size; zero selects automatically.
     const bool use_overlap_; ///< Store and apply explicit S images instead of S = I.
     const LobpcgLocking locking_; ///< Hard freezes the converged prefix; soft retains all X in RR.

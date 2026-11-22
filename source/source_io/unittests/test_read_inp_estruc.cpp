@@ -120,3 +120,23 @@ TEST_F(LobpcgInputTest, LobpcgDeviceSupport)
         check_item(item->second, param);
     }
 }
+
+TEST_F(LobpcgInputTest, LobpcgSubspaceBackends)
+{
+    ModuleIO::ReadInput reader(0);
+    auto items = reader.get_input_lists();
+    auto item = find_label("diag_subspace", items);
+    ASSERT_NE(item, items.end());
+    ModuleIO::InputValues values;
+    for (const std::string method : {"lobpcg", "dav_subspace"})
+    {
+        values["ks_solver"] = ModuleIO::InputValue(method);
+        for (const int backend : {0, 1, 2})
+        {
+            values["diag_subspace"] = ModuleIO::InputValue(backend);
+            const bool supported = method == "dav_subspace" || backend != 1;
+            EXPECT_EQ(item->second.domain.validate_requirements("diag_subspace", values).empty(), supported)
+                << method << ": " << backend;
+        }
+    }
+}

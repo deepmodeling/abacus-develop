@@ -1,9 +1,6 @@
 # Unit-level fatal-path checks. Run each in a fresh process/MPI job so that
 # exit(1), the diagnostic and collective completion are checked together.
-set(cases block dimension search dependent overlap_negative overlap_zero)
-if(NOT ELPA_AVAILABLE)
-  list(APPEND cases missing_backend)
-endif()
+set(cases block dimension search dependent overlap_negative overlap_zero unsupported_backend)
 if(NOT GPU)
   list(APPEND cases reused_invalid)
 endif()
@@ -13,7 +10,7 @@ set(message_search "Nonfinite LOBPCG search direction")
 set(message_dependent "overlap|HEGVX failed")
 set(message_overlap_negative "overlap|HEGVX failed")
 set(message_overlap_zero "overlap|HEGVX failed")
-set(message_missing_backend "ELPA LOBPCG RR requires MPI and ELPA support")
+set(message_unsupported_backend "LOBPCG supports diag_subspace=0 or 2")
 set(message_reused_invalid "HEGVX failed")
 
 foreach(case IN LISTS cases)

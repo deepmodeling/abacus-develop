@@ -111,17 +111,6 @@ class GpuRREigensolver
     std::unique_ptr<Impl> impl_;
 };
 
-#if defined(__MPI) && defined(__ELPA)
-void solve_elpa(const ct::Tensor& h,
-    const ct::Tensor& s,
-    int dimension,
-    int wanted,
-    double* values,
-    std::complex<double>* vectors,
-    const MPI_Comm& comm,
-    int block_size);
-#endif
-
 } // namespace rr
 } // namespace hsolver
 #endif

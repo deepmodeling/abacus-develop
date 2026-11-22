@@ -200,12 +200,7 @@ bool DiagoLOBPCG<T, Device>::solve_projected(const ct::Tensor& k,
         }
         else
         {
-#if defined(__MPI) && defined(__ELPA)
-            rr::solve_elpa(
-                k, g, dimension, wanted, values.data<double>(), coefficients.data<Wide>(), comm_.comm, para_rr_bs_);
-#else
-            ModuleBase::WARNING_QUIT("DiagoLOBPCG::solve_projected", "ELPA LOBPCG RR requires MPI and ELPA support.");
-#endif
+            ModuleBase::WARNING_QUIT("DiagoLOBPCG::solve_projected", "LOBPCG supports diag_subspace=0 or 2. Please select 0 or 2.");
         }
     }
     catch (const std::exception& error)
