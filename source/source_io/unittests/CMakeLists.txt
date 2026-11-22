@@ -22,7 +22,7 @@ addtest(TARGET MODULE_IO_spin_tag SOURCES test_spin_tag.cpp)
 
 addtest(
   TARGET MODULE_IO_dftu_dc_check
-  SOURCES test_dftu_dc_check.cpp ../module_parameter/dftu_dc_check.cpp)
+  SOURCES test_dftu_dc_check.cpp ../../source_lcao/module_dftu/dftu_dc_check.cpp)
 
 addtest(
   TARGET MODULE_IO_libxc_r_suffix

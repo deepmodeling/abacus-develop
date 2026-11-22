@@ -1,12 +1,12 @@
 #include "dftu_dc_check.h"
-#include "input_parameter.h"
+#include "source_io/module_parameter/input_parameter.h"
 
 #include <algorithm>
 #include <cctype>
 #include <cmath>
 #include <stdexcept>
 
-namespace ModuleIO
+namespace DFTU_LCAO
 {
 double parse_dftu_alpha(const std::string& token)
 {
@@ -113,4 +113,4 @@ std::string dftu_dc_error(const Input_para& input, const bool alpha_was_read, co
     }
     return {};
 }
-} // namespace ModuleIO
+} // namespace DFTU_LCAO

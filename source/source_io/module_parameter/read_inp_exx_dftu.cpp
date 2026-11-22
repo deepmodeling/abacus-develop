@@ -2,7 +2,7 @@
 #include "source_base/tool_quit.h"
 #include "read_input.h"
 #include "read_input_tool.h"
-#include "dftu_dc_check.h"
+#include "source_lcao/module_dftu/dftu_dc_check.h"
 #include <iomanip>
 #include <limits>
 namespace ModuleIO
@@ -753,7 +753,8 @@ SOC, spin constraints, force/stress, restart, EXX, U ramping, Yukawa U, occupati
         item.domain.scalar();
         item.domain.set_rule("value>=0 and value<=1");
         item.read_value = [](const Input_Item& item, Parameter& para) {
-            para.input.dftu_alpha = parse_dftu_alpha(item.str_values.at(0));
+            const std::string& token = item.str_values.at(0);
+            para.input.dftu_alpha = DFTU_LCAO::parse_dftu_alpha(token);
         };
         sync_double(input.dftu_alpha);
         item.get_final_value = [](Input_Item& item, const Parameter& para) {
@@ -763,7 +764,7 @@ SOC, spin constraints, force/stress, restart, EXX, U ramping, Yukawa U, occupati
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             const bool was_read = item.is_read();
-            const std::string error = dftu_dc_error(para.inp, was_read, para.sys.kpar_lcao);
+            const std::string error = DFTU_LCAO::dftu_dc_error(para.inp, was_read, para.sys.kpar_lcao);
             if (!error.empty())
             {
                 ModuleBase::WARNING_QUIT("ReadInput", error);

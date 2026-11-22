@@ -1,4 +1,5 @@
-# All sources in this module are LCAO-specific (the DFTU_LCAO operators).
+# The operators below are LCAO-specific. dftu_dc_check.cpp is compiled by
+# io_input so INPUT validation remains available in builds without LCAO.
 # The Plus_U_Base class lives in source_pw/module_pwdft/dftu_base.* and is
 # compiled unconditionally there.
 if(ENABLE_LCAO)

@@ -1,4 +1,4 @@
-#include "source_io/module_parameter/dftu_dc_check.h"
+#include "source_lcao/module_dftu/dftu_dc_check.h"
 #include "source_io/module_parameter/input_parameter.h"
 #include <gtest/gtest.h>
 
@@ -28,7 +28,7 @@ TEST(DftuDcCheck, LegacyDefaultsHaveNoNewScopeRestrictions)
 {
     Input_para input;
     EXPECT_EQ(input.dftu_dc, "fll");
-    EXPECT_TRUE(ModuleIO::dftu_dc_error(input, false, 4).empty());
+    EXPECT_TRUE(DFTU_LCAO::dftu_dc_error(input, false, 4).empty());
     input.dft_plus_u = 2;
     input.nspin = 4;
     input.lspinorb = true;
@@ -37,41 +37,41 @@ TEST(DftuDcCheck, LegacyDefaultsHaveNoNewScopeRestrictions)
     input.device = "gpu";
     input.restart_load = true;
     input.mixing_dftu = true;
-    EXPECT_TRUE(ModuleIO::dftu_dc_error(input, false, 4).empty());
+    EXPECT_TRUE(DFTU_LCAO::dftu_dc_error(input, false, 4).empty());
 }
 
 TEST(DftuDcCheck, ExplicitAlphaAndModeValidation)
 {
     auto input = supported_input();
-    EXPECT_FALSE(ModuleIO::dftu_dc_error(input, false, 1).empty());
-    EXPECT_TRUE(ModuleIO::dftu_dc_error(input, true, 1).empty());
+    EXPECT_FALSE(DFTU_LCAO::dftu_dc_error(input, false, 1).empty());
+    EXPECT_TRUE(DFTU_LCAO::dftu_dc_error(input, true, 1).empty());
     for (double alpha : {0.0, 0.5, 1.0})
     {
         input.dftu_alpha = alpha;
-        EXPECT_TRUE(ModuleIO::dftu_dc_error(input, true, 1).empty());
+        EXPECT_TRUE(DFTU_LCAO::dftu_dc_error(input, true, 1).empty());
     }
     for (double alpha : {-0.1, 1.1, std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::infinity()})
     {
         input.dftu_alpha = alpha;
-        EXPECT_FALSE(ModuleIO::dftu_dc_error(input, true, 1).empty());
+        EXPECT_FALSE(DFTU_LCAO::dftu_dc_error(input, true, 1).empty());
     }
     input.dftu_dc = "amf";
-    EXPECT_FALSE(ModuleIO::dftu_dc_error(input, true, 1).empty());
-    EXPECT_TRUE(ModuleIO::dftu_dc_error(input, false, 1).empty());
+    EXPECT_FALSE(DFTU_LCAO::dftu_dc_error(input, true, 1).empty());
+    EXPECT_TRUE(DFTU_LCAO::dftu_dc_error(input, false, 1).empty());
     input.dftu_dc = "fll";
-    EXPECT_FALSE(ModuleIO::dftu_dc_error(input, true, 1).empty());
+    EXPECT_FALSE(DFTU_LCAO::dftu_dc_error(input, true, 1).empty());
     input.dftu_dc = "AMF";
-    EXPECT_FALSE(ModuleIO::dftu_dc_error(input, false, 1).empty());
+    EXPECT_FALSE(DFTU_LCAO::dftu_dc_error(input, false, 1).empty());
 }
 
 TEST(DftuDcCheck, ParserRejectsTrailingGarbageAndNonfiniteValues)
 {
-    EXPECT_DOUBLE_EQ(ModuleIO::parse_dftu_alpha("0"), 0.0);
-    EXPECT_DOUBLE_EQ(ModuleIO::parse_dftu_alpha("1"), 1.0);
-    EXPECT_DOUBLE_EQ(ModuleIO::parse_dftu_alpha("2.5e-1"), 0.25);
+    EXPECT_DOUBLE_EQ(DFTU_LCAO::parse_dftu_alpha("0"), 0.0);
+    EXPECT_DOUBLE_EQ(DFTU_LCAO::parse_dftu_alpha("1"), 1.0);
+    EXPECT_DOUBLE_EQ(DFTU_LCAO::parse_dftu_alpha("2.5e-1"), 0.25);
     for (const std::string token : {"", "nan", "inf", "-inf", "0.5junk", "0.5 0.2", "-0.01", "1.01", "1e9999"})
     {
-        EXPECT_THROW(ModuleIO::parse_dftu_alpha(token), std::exception) << token;
+        EXPECT_THROW(DFTU_LCAO::parse_dftu_alpha(token), std::exception) << token;
     }
 }
 
@@ -141,15 +141,15 @@ TEST(DftuDcCheck, ScopeGuardsApplyToMixedEndpointsButNeverLegacyFll)
         for (double alpha : {0.0, 0.5, 1.0})
         {
             input.dftu_alpha = alpha;
-            EXPECT_FALSE(ModuleIO::dftu_dc_error(input, true, 1).empty());
+            EXPECT_FALSE(DFTU_LCAO::dftu_dc_error(input, true, 1).empty());
         }
         input.dftu_dc = "amf";
-        EXPECT_FALSE(ModuleIO::dftu_dc_error(input, false, 1).empty());
+        EXPECT_FALSE(DFTU_LCAO::dftu_dc_error(input, false, 1).empty());
         input.dftu_dc = "fll";
-        EXPECT_TRUE(ModuleIO::dftu_dc_error(input, false, 1).empty());
+        EXPECT_TRUE(DFTU_LCAO::dftu_dc_error(input, false, 1).empty());
     }
     auto input = supported_input();
-    EXPECT_FALSE(ModuleIO::dftu_dc_error(input, true, 2).empty());
+    EXPECT_FALSE(DFTU_LCAO::dftu_dc_error(input, true, 2).empty());
 }
 
 TEST(DftuDcCheck, CollinearSpinAndTimeReversalOptions)
@@ -161,7 +161,7 @@ TEST(DftuDcCheck, CollinearSpinAndTimeReversalOptions)
         for (const std::string symmetry : {"0", "-1"})
         {
             input.symmetry = symmetry;
-            EXPECT_TRUE(ModuleIO::dftu_dc_error(input, true, 1).empty());
+            EXPECT_TRUE(DFTU_LCAO::dftu_dc_error(input, true, 1).empty());
         }
     }
 }
