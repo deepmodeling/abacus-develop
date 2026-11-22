@@ -43,9 +43,11 @@ The regular `Abacus` calculator runs one ABACUS calculation for each ASE propert
 
 The ASE calculator uses the final parsed frame for SCF, native relaxation, and
 native MD. The readers restore ASE atom order using the mapping created when
-the calculator writes STRU. The legacy reader can use MD_dump when present,
-and the develop reader reads native MD from MD_dump. Each calculator retains
-its own LTS/develop reader.
+the calculator writes STRU. Each calculator retains its own LTS/develop reader.
+For native MD, geometry, energy and electronic results must cover the same
+steps. Use `md_dumpfreq=1` and keep `MD_dump` with `running_md.log` (and
+`eig_occ.txt` for develop). The readers do not align sparse dumps. Older LTS
+logs that already contain every geometry can be read without `MD_dump`.
 
 Both output readers accept paths or named text streams, using the log filename
 to locate companion output files. Caller-owned streams remain open and are read
@@ -64,9 +66,13 @@ Result parsing does **not read abacus.json**. Missing or malformed JSON does not
 affect collection. Writing new input leaves existing JSON files untouched.
 
 Both ASE `energy` and `free_energy` retain ABACUS's force-consistent
-`E_KohnSham`. When an entropy term is present, `energy_without_entropy` is
-provided separately; a missing term remains unknown. Noncollinear vector
-moments are retained without modifying ASE's global property definitions.
+`E_KohnSham`. When the log reports `E_entropy(-TS)`, abacuslite also provides
+`energy_without_entropy = E_KohnSham - E_entropy(-TS)` in `Atoms.info` on
+parsed frames and in calculator results. This is not an ASE property or
+ABACUS's `E_KS(sigma->0)`. The Fermi level uses ASE's `fermi_level` property;
+`efermi` is a compatibility alias in the calculator results dictionary only.
+Noncollinear vector moments are retained without modifying ASE's global
+property definitions.
 STRU writing preserves representable species masses and converts ASE
 velocities to atomic units. Different masses within one ABACUS species are
 rejected because one species entry cannot represent them.

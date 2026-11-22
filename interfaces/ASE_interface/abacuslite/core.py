@@ -25,7 +25,7 @@ Modified on Wed Jun 20 15:00:00 2018
 Modified on Wed Jun 03 23:00:00 2022
 @author: Ji Yu-yang
 
-Refactored on 2025-12-07
+Refactored from Sun Dec 07 21:41 2025
 @author: Huang Yi-ke
 '''
 
@@ -52,14 +52,17 @@ from ase.dft.kpoints import BandPath
 from ase.io import read
 
 from abacuslite.io.generalio import (
-    _write_ase_stru,
+    _read_stru_species,
     _write_kpt,
+    _write_stru_from_atoms,
     file_safe_backup,
     read_input,
     read_stru,
     read_kpt,
     species_group_indices,
     write_input,
+    write_stru,
+    write_kpt,
 )
 
 __LEGACYIO__ = True
@@ -329,10 +332,10 @@ class AbacusTemplate(CalculatorTemplate):
         ind = species_group_indices(atoms.get_chemical_symbols())
         self.atomorder = sorted(range(len(atoms)), key=lambda i: ind[i]) # revmap
         # then we write
-        _write_ase_stru(atoms[ind], directory,
-                        parameters.get('pseudopotentials'),
-                        parameters.get('basissets'),
-                        stru_file, backup=True)
+        _write_stru_from_atoms(atoms[ind], directory,
+                               parameters.get('pseudopotentials'),
+                               parameters.get('basissets'),
+                               stru_file, backup=True)
 
         # KPT, if needed
         if 'kpts' in parameters:
@@ -366,7 +369,7 @@ class AbacusTemplate(CalculatorTemplate):
         # remove possible key-value pairs whose value is None
         parameters = {k: v for k, v in parameters.items() if v is not None}
 
-        # Limitation: only the ksdft esolver is supported.
+        # FIXME: only support the ksdft esolver_type presently
         if parameters.get('esolver_type', 'ksdft') != 'ksdft':
             raise NotImplementedError(
                 'ABACUS Lite only supports the ksdft esolver_type presently, '
@@ -454,26 +457,26 @@ class AbacusTemplate(CalculatorTemplate):
         # although SinglePointDFTCalculator supports vector moments. Project
         # other properties through ASE and retain vectors as result metadata,
         # without changing ASE's process-global output definitions.
-        singlepoint = atoms.calc
-        vector_moments = {
-            name: singlepoint.results[name]
+        spcalc = atoms.calc
+        noncollinear_moments = {
+            name: spcalc.results[name]
             for name, shape in (('magmom', (3,)), ('magmoms', (len(atoms), 3)))
-            if name in singlepoint.results
-            and np.shape(singlepoint.results[name]) == shape
+            if name in spcalc.results
+            and np.shape(spcalc.results[name]) == shape
         }
-        if vector_moments:
-            singlepoint = copy(singlepoint)
-            singlepoint.results = {
-                name: value for name, value in singlepoint.results.items()
-                if name not in vector_moments
+        if noncollinear_moments:
+            spcalc = copy(spcalc)
+            spcalc.results = {
+                name: value for name, value in spcalc.results.items()
+                if name not in noncollinear_moments
             }
-        results = dict(singlepoint.properties())
-        results.update(vector_moments)
-        if vector_moments:
+        results = dict(spcalc.properties())
+        results.update(noncollinear_moments)
+        if noncollinear_moments:
             results.setdefault('natoms', len(atoms))
         if 'energy_without_entropy' in atoms.info:
             results['energy_without_entropy'] = atoms.info['energy_without_entropy']
-        # Keep the existing result alias alongside ASE's standard property.
+        # Standalone abacuslite callers also use the efermi result alias.
         if 'fermi_level' in results:
             results['efermi'] = results['fermi_level']
         return results
@@ -497,7 +500,8 @@ class Abacus(GenericFileIOCalculator):
         profile: AbacusProfile
             the interface that interacts with the ABACUS executable.
         directory: str or Path
-            the working directory to store the input files.
+            Working directory for the ABACUS input and output files.
+            Concurrent calculations must use separate directories.
         pseudopotentials: dict
             A mapping from the element to the pseudopotential file name,
             e.g. ``{'O': 'O_ONCV_PBE-1.0.upf', 'H': 'H.upf'}``.
@@ -533,7 +537,6 @@ class Abacus(GenericFileIOCalculator):
         template = AbacusTemplate()
         template._legacyio = _uses_legacy_io(profile.version())
 
-        # Optional ABACUS INPUT parameters, merged with calculator keywords.
         inp = kwargs.pop('inp', {})
 
         super().__init__(
@@ -568,7 +571,7 @@ class Abacus(GenericFileIOCalculator):
 
         # The old INPUT names the files to read; overrides apply to the next run.
         stru_file = directory / (inp_read.get('stru_file', 'STRU') or 'STRU')
-        pporb_read = read_stru(stru_file)['species']
+        pporb_read = _read_stru_species(stru_file)
         pseudopotentials = kwargs.get(
             'pseudopotentials',
             {pporb['symbol']: pporb['pp_file'] for pporb in pporb_read}
