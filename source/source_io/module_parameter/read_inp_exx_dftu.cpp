@@ -751,6 +751,7 @@ SOC, spin constraints, force/stress, restart, EXX, U ramping, Yukawa U, occupati
         item.unit = "";
         item.description = "Explicit finite weight in [0,1] for dftu_dc=mixed. Zero gives AMF and one gives FLL. Not accepted for other DC modes. This weight is fixed, not determined self-consistently.";
         item.domain.scalar();
+        item.domain.set_rule("value>=0 and value<=1");
         item.read_value = [](const Input_Item& item, Parameter& para) {
             para.input.dftu_alpha = parse_dftu_alpha(item.str_values.at(0));
         };

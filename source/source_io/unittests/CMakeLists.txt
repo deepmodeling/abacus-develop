@@ -62,6 +62,10 @@ foreach(
         dftu_mixed0
         dftu_mixed05
         dftu_mixed1
+        dftu_alpha_below_zero
+        dftu_alpha_above_one
+        dftu_alpha_nonfinite
+        dftu_alpha_trailing
         out_dmk_zero_precision
         out_hsk_zero_precision
         out_mat_tk_zero_precision

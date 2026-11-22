@@ -31,8 +31,9 @@ FullDcEnergy evaluate_full_dc(const std::vector<T>& occupation,
         {
             const T nij = occupation[i * dimension + j];
             const T nji = occupation[j * dimension + i];
+            const auto hermiticity_residual = nij - std::conj(nji);
             if (!std::isfinite(std::real(nij)) || !std::isfinite(std::imag(nij))
-                || std::abs(nij - std::conj(nji)) > 1.0e-10)
+                || std::abs(hermiticity_residual) > 1.0e-10)
             {
                 throw std::invalid_argument("Full DFT+U requires a finite Hermitian occupation matrix");
             }
