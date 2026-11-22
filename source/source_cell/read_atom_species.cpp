@@ -7,6 +7,29 @@
 
 namespace unitcell
 {
+namespace
+{
+// SCAN_LINE_BEGIN matches the keyword as any token in a line, including
+// tokens after '#'; a lattice section header must be the first token of its
+// line, otherwise a comment mention of the keyword is taken as the section.
+bool scan_lattice_section(std::ifstream& ifs, const std::string& name)
+{
+    ifs.clear();
+    ifs.seekg(0);
+    std::string line;
+    while (std::getline(ifs, line))
+    {
+        std::istringstream iss(line);
+        std::string first_token;
+        if (iss >> first_token && first_token == name)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+} // namespace
+
 bool read_atom_species(std::ifstream& ifa,
                       std::ofstream& ofs_running,
                       UnitCell& ucell,
@@ -36,6 +59,11 @@ bool read_atom_species(std::ifstream& ifa,
             std::stringstream ss;
             ss << one_line;
             ss >> ucell.atoms[i].label >> ucell.atoms[i].mass;
+            if (ss.fail())
+            {
+                ModuleBase::WARNING_QUIT("read_atom_species",
+                                         "invalid ATOMIC_SPECIES line: failed to read element label and mass");
+            }
             ucell.pseudo_fn[i] = "auto";
             ucell.pseudo_type[i] = "auto";
 
@@ -161,10 +189,7 @@ bool read_lattice_constant(std::ifstream& ifa,
     if(latName=="user_defined_lattice")
     {
         // check the existence of keyword "LATTICE_PARAMETERS"
-        if (ModuleBase::GlobalFunc::SCAN_LINE_BEGIN(ifa,
-                                               "LATTICE_PARAMETERS",
-                                               true,
-                                               false)) 
+        if (scan_lattice_section(ifa, "LATTICE_PARAMETERS"))
         {
             ModuleBase::WARNING_QUIT("unitcell::read_lattice_constant",
             "do not use LATTICE_PARAMETERS without explicit specification of lattice type");
@@ -181,12 +206,18 @@ bool read_lattice_constant(std::ifstream& ifa,
             // Reading lattice vectors. notice
             // here that only one cpu read these
             // parameters.
-            ifa >> latvec.e11 >> latvec.e12;
-            ModuleBase::GlobalFunc::READ_VALUE(ifa, latvec.e13);
-            ifa >> latvec.e21 >> latvec.e22;
-            ModuleBase::GlobalFunc::READ_VALUE(ifa, latvec.e23);
-            ifa >> latvec.e31 >> latvec.e32;
-            ModuleBase::GlobalFunc::READ_VALUE(ifa, latvec.e33);
+            std::string latvec_line_rest;
+            ifa >> latvec.e11 >> latvec.e12 >> latvec.e13;
+            std::getline(ifa, latvec_line_rest); // swallow inline comments after each row
+            ifa >> latvec.e21 >> latvec.e22 >> latvec.e23;
+            std::getline(ifa, latvec_line_rest);
+            ifa >> latvec.e31 >> latvec.e32 >> latvec.e33;
+            if (ifa.fail())
+            {
+                ModuleBase::WARNING_QUIT("unitcell::read_lattice_constant",
+                                         "invalid LATTICE_VECTORS: failed to read 9 lattice vector components");
+            }
+            std::getline(ifa, latvec_line_rest);
         }
     }//supply lattice vectors
     else
@@ -204,8 +235,7 @@ bool read_lattice_constant(std::ifstream& ifa,
         // stay zero and produce a zero-volume or NaN cell.
         if(latName != "sc" && latName != "fcc" && latName != "bcc")
         {
-            const bool has_params =
-                ModuleBase::GlobalFunc::SCAN_LINE_BEGIN(ifa, "LATTICE_PARAMETERS", true, false);
+            const bool has_params = scan_lattice_section(ifa, "LATTICE_PARAMETERS");
             if (!has_params)
             {
                 const std::string msg = "LATTICE_PARAMETERS is required for lattice type " + latName;
@@ -236,7 +266,7 @@ bool read_lattice_constant(std::ifstream& ifa,
             latvec.e11 = 1.0; latvec.e12 = 0.0; latvec.e13 = 0.0;
             latvec.e21 =-0.5; latvec.e22 = e22; latvec.e23 = 0.0;
             latvec.e31 = 0.0; latvec.e32 = 0.0; latvec.e33 = 0.0;
-            if( ModuleBase::GlobalFunc::SCAN_LINE_BEGIN(ifa, "LATTICE_PARAMETERS") )
+            if( scan_lattice_section(ifa, "LATTICE_PARAMETERS") )
             {
                 ifa >> latvec.e33;
                 if (ifa.fail())
@@ -250,7 +280,7 @@ bool read_lattice_constant(std::ifstream& ifa,
         {//trigonal, ibrav = 5
             double t1 = 0.0;
             double t2 = 0.0;
-            if( ModuleBase::GlobalFunc::SCAN_LINE_BEGIN(ifa, "LATTICE_PARAMETERS") )
+            if( scan_lattice_section(ifa, "LATTICE_PARAMETERS") )
             {
                 double cosab=0.0;
                 // READ_VALUE would hide an extraction failure here: a failed
@@ -279,7 +309,7 @@ bool read_lattice_constant(std::ifstream& ifa,
             latvec.e11 = 1.0; latvec.e12 = 0.0; latvec.e13 = 0.0;
             latvec.e21 = 0.0; latvec.e22 = 1.0; latvec.e23 = 0.0;
             latvec.e31 = 0.0; latvec.e32 = 0.0; latvec.e33 = 0.0;
-            if( ModuleBase::GlobalFunc::SCAN_LINE_BEGIN(ifa, "LATTICE_PARAMETERS") )
+            if( scan_lattice_section(ifa, "LATTICE_PARAMETERS") )
             {
                 ifa >> latvec.e33;
                 if (ifa.fail())
@@ -292,7 +322,7 @@ bool read_lattice_constant(std::ifstream& ifa,
         else if(latName=="bct")
         {//body-centered tetragonal, ibrav = 7
             double cba = 0.0;
-            if( ModuleBase::GlobalFunc::SCAN_LINE_BEGIN(ifa, "LATTICE_PARAMETERS") )
+            if( scan_lattice_section(ifa, "LATTICE_PARAMETERS") )
             {
                 ifa >> cba;
                 if (ifa.fail())
@@ -311,7 +341,7 @@ bool read_lattice_constant(std::ifstream& ifa,
             latvec.e11 = 1.0; latvec.e12 = 0.0; latvec.e13 = 0.0;
             latvec.e21 = 0.0; latvec.e22 = 0.0; latvec.e23 = 0.0;
             latvec.e31 = 0.0; latvec.e32 = 0.0; latvec.e33 = 0.0;
-            if( ModuleBase::GlobalFunc::SCAN_LINE_BEGIN(ifa, "LATTICE_PARAMETERS") )
+            if( scan_lattice_section(ifa, "LATTICE_PARAMETERS") )
             {
                 ifa >> latvec.e22 >> latvec.e33;
                 if (ifa.fail())
@@ -326,7 +356,7 @@ bool read_lattice_constant(std::ifstream& ifa,
             latvec.e11 = 0.5; latvec.e12 = 0.0; latvec.e13 = 0.0;
             latvec.e21 =-0.5; latvec.e22 = 0.0; latvec.e23 = 0.0;
             latvec.e31 = 0.0; latvec.e32 = 0.0; latvec.e33 = 0.0;
-            if( ModuleBase::GlobalFunc::SCAN_LINE_BEGIN(ifa, "LATTICE_PARAMETERS") )
+            if( scan_lattice_section(ifa, "LATTICE_PARAMETERS") )
             {
                 ifa >> latvec.e12 >> latvec.e33;
                 if (ifa.fail())
@@ -341,7 +371,7 @@ bool read_lattice_constant(std::ifstream& ifa,
         else if(latName=="fco")
         {//face-centered orthorhombic, ibrav = 10
             double bba = 0.0; double cba = 0.0;
-            if( ModuleBase::GlobalFunc::SCAN_LINE_BEGIN(ifa, "LATTICE_PARAMETERS") )
+            if( scan_lattice_section(ifa, "LATTICE_PARAMETERS") )
             {
                 ifa >> bba >> cba;
                 if (ifa.fail())
@@ -358,7 +388,7 @@ bool read_lattice_constant(std::ifstream& ifa,
         else if(latName=="bco")
         {//body-centered orthorhombic, ibrav = 11
             double bba = 0.0; double cba = 0.0;
-            if( ModuleBase::GlobalFunc::SCAN_LINE_BEGIN(ifa, "LATTICE_PARAMETERS") )
+            if( scan_lattice_section(ifa, "LATTICE_PARAMETERS") )
             {
                 ifa >> bba >> cba;
                 if (ifa.fail())
@@ -377,7 +407,7 @@ bool read_lattice_constant(std::ifstream& ifa,
             double bba = 0.0; double cba = 0.0;
             double cosab = 0.0;
             double e21 = 0.0; double e22 = 0.0;
-            if( ModuleBase::GlobalFunc::SCAN_LINE_BEGIN(ifa, "LATTICE_PARAMETERS") )
+            if( scan_lattice_section(ifa, "LATTICE_PARAMETERS") )
             {
                 ifa >> bba >> cba >> cosab;
                 if (ifa.fail())
@@ -397,7 +427,7 @@ bool read_lattice_constant(std::ifstream& ifa,
             double bba = 0.0; double cba = 0.0;
             double cosab = 0.0;
             double e21 = 0.0; double e22 = 0.0;
-            if( ModuleBase::GlobalFunc::SCAN_LINE_BEGIN(ifa, "LATTICE_PARAMETERS") )
+            if( scan_lattice_section(ifa, "LATTICE_PARAMETERS") )
             {
                 ifa >> bba >> cba >> cosab;
                 if (ifa.fail())
@@ -422,7 +452,7 @@ bool read_lattice_constant(std::ifstream& ifa,
             double cosbc = 0.0; 
             double sinab = 0.0;
             double term = 0.0;
-            if( ModuleBase::GlobalFunc::SCAN_LINE_BEGIN(ifa, "LATTICE_PARAMETERS") )
+            if( scan_lattice_section(ifa, "LATTICE_PARAMETERS") )
             {
                 ifa >> bba >> cba >> cosab >> cosac >> cosbc;
                 if (ifa.fail())
