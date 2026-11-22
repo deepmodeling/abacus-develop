@@ -227,8 +227,8 @@ void hamilt::DFTU_onsite<hamilt::OperatorLCAO<TK, TR>>::contribute_hubbard_atoms
         {
             const double weight = (dc_ == "amf") ? 0.0 : alpha_;
             std::vector<double> potential;
-            const DFTU_LCAO::FullDcEnergy energy
-                = DFTU_LCAO::evaluate_full_dc(occ, tlp1, u_value, weight, potential);
+            double band_correction = 0.0;
+            DFTU_LCAO::evaluate_full_dc(occ, tlp1, u_value, weight, potential, band_correction);
             // Match the existing Full projector contraction's transposed layout.
             for (int m = 0; m < tlp1; ++m)
             {
@@ -237,7 +237,7 @@ void hamilt::DFTU_onsite<hamilt::OperatorLCAO<TK, TR>>::contribute_hubbard_atoms
                     pot_onsite_tmp[m * tlp1 + n] = potential[n * tlp1 + m];
                 }
             }
-            u_energy += energy.band_correction;
+            u_energy += band_correction;
         }
         this->dftu->set_energy(u_energy);
 

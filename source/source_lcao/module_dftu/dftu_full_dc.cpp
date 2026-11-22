@@ -6,11 +6,12 @@
 namespace DFTU_LCAO
 {
 template <typename T>
-FullDcEnergy evaluate_full_dc(const std::vector<T>& occupation,
-                             const int dimension,
-                             const double u_eff,
-                             const double alpha,
-                             std::vector<T>& potential)
+double evaluate_full_dc(const std::vector<T>& occupation,
+                        const int dimension,
+                        const double u_eff,
+                        const double alpha,
+                        std::vector<T>& potential,
+                        double& band_correction)
 {
     if (dimension <= 0 || occupation.size() / dimension != static_cast<std::size_t>(dimension)
         || occupation.size() % dimension != 0)
@@ -55,12 +56,13 @@ FullDcEnergy evaluate_full_dc(const std::vector<T>& occupation,
     const double energy = 0.5 * u_eff * (alpha * trace + (1.0 - alpha) * trace * mean - square_trace);
     const double correction = 0.5 * u_eff * (square_trace - (1.0 - alpha) * trace * mean);
     potential.swap(result);
-    return FullDcEnergy{energy, correction};
+    band_correction = correction;
+    return energy;
 }
 
-template FullDcEnergy evaluate_full_dc<double>(const std::vector<double>&,
-                                              int, double, double, std::vector<double>&);
-template FullDcEnergy evaluate_full_dc<std::complex<double>>(
+template double evaluate_full_dc<double>(
+    const std::vector<double>&, int, double, double, std::vector<double>&, double&);
+template double evaluate_full_dc<std::complex<double>>(
     const std::vector<std::complex<double>>&, int, double, double,
-    std::vector<std::complex<double>>&);
+    std::vector<std::complex<double>>&, double&);
 } // namespace DFTU_LCAO

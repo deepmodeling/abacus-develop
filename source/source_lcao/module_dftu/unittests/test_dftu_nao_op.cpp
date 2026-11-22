@@ -499,7 +499,8 @@ TEST_F(DFTUTest, FullDcConjugateKDensityAndHamiltonian)
     {
         SCOPED_TRACE(alpha);
         std::vector<double> potential;
-        const auto energy = DFTU_LCAO::evaluate_full_dc(occupation, shell, U_test, alpha, potential);
+        double energy_correction = 0.0;
+        const double energy = DFTU_LCAO::evaluate_full_dc(occupation, shell, U_test, alpha, potential, energy_correction);
         const double shift = alpha * 0.5 + (1.0 - alpha) * trace / shell;
         const double interaction = 0.5 * U_test
             * (alpha * trace + (1.0 - alpha) * trace * trace / shell - square_trace);
@@ -516,8 +517,8 @@ TEST_F(DFTUTest, FullDcConjugateKDensityAndHamiltonian)
             }
         }
         const double correction = interaction - shell_trace;
-        EXPECT_NEAR(energy.interaction, interaction, 1e-11);
-        EXPECT_NEAR(energy.band_correction, correction, 1e-11);
+        EXPECT_NEAR(energy, interaction, 1e-11);
+        EXPECT_NEAR(energy_correction, correction, 1e-11);
         // Reset/rebuild, rather than adding twice to an already built H(R).
         for (int rebuild = 0; rebuild < 2; ++rebuild)
         {
