@@ -23,3 +23,9 @@ AddTest(
   LIBS parameter base device
   SOURCES test_complexmatrix.cpp
 )
+
+AddTest(
+  TARGET MODULE_BASE_memory_budget
+  LIBS parameter base device
+  SOURCES test_memory_budget.cpp
+)
