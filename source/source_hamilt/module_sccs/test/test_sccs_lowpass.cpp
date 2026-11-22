@@ -1,28 +1,27 @@
-#include "sccs_test.h"
-#include "../sccs_lowpass.h"
 #include "../sccs_cav_deriv.h"
-#include "../sccs_functional.h"
-#include "../sccs_parameters.h"
 #include "../sccs_coul_0d.h"
 #include "../sccs_coul_2d.h"
+#include "../sccs_functional.h"
+#include "../sccs_lowpass.h"
+#include "../sccs_parameters.h"
 #include "../sccs_response.h"
 #include "../sccs_sa.h"
+#include "sccs_test.h"
 
 #include "source_base/parallel_reduce.h"
 #include "source_basis/module_pw/pw_grid_geometry.h"
 
-
 class SccsLowpassTest : public SccsTest::PwTest
 {
-protected:
-    void check_electron_derivative(ModuleSccs::CoulombOperator& coulomb, ModuleSccs::Boundary boundary)
+  protected:
+    void check_electron_derivative(ModuleSccs::CoulombOperator &coulomb, ModuleSccs::Boundary boundary)
     {
         const bool filled = false;
         check_derivative(coulomb, boundary, filled);
     }
 
     // A filled cavity puts the solvent-aware adjoint between dE/ds_sa and dE/dn.
-    void check_derivative(ModuleSccs::CoulombOperator& coulomb, ModuleSccs::Boundary boundary, bool filled)
+    void check_derivative(ModuleSccs::CoulombOperator &coulomb, ModuleSccs::Boundary boundary, bool filled)
     {
         ModuleSccs::SccsConfig config = ModuleSccs::preset_config(ModuleSccs::Preset::WaterNeutral);
         config.boundary = boundary;
@@ -58,16 +57,15 @@ protected:
         }
         const std::vector<double> cold;
         ModuleSccs::SccsResponse center_response;
-        ModuleSccs::solve_response(density, charge, config.cavity, probe_kernel, solver, cold,
-                                   basis, tpiba, coulomb, center_response);
+        ModuleSccs::solve_response(
+            density, charge, config.cavity, probe_kernel, solver, cold, basis, tpiba, coulomb, center_response);
         EXPECT_TRUE(center_response.polarization.gradient.empty());
         if (filled)
         {
             EXPECT_GT(center_response.solvent_aware.volume, 50.0);
         }
         ModuleSccs::FunctionalResult center;
-        ModuleSccs::eval_functional(charge, center_response, config, probe_kernel, basis,
-                                    tpiba, coulomb, center);
+        ModuleSccs::eval_functional(charge, center_response, config, probe_kernel, basis, tpiba, coulomb, center);
         double predicted = 0.0;
         for (int ir = 0; ir < basis.nrxx; ++ir)
         {
@@ -91,12 +89,12 @@ protected:
                     displaced_charge[ir] = charge[ir] - change;
                 }
                 ModuleSccs::SccsResponse response;
-                ModuleSccs::solve_response(displaced_density, displaced_charge,
-                                           config.cavity, probe_kernel, solver, cold, basis, tpiba, coulomb,
-                                           response);
+                ModuleSccs::solve_response(
+                    displaced_density, displaced_charge, config.cavity, probe_kernel, solver, cold, basis, tpiba,
+                    coulomb, response);
                 ModuleSccs::FunctionalResult functional;
-                ModuleSccs::eval_functional(displaced_charge, response, config, probe_kernel,
-                                            basis, tpiba, coulomb, functional);
+                ModuleSccs::eval_functional(
+                    displaced_charge, response, config, probe_kernel, basis, tpiba, coulomb, functional);
                 energies[side] = functional.reaction_energy;
             }
             const double finite_difference = (energies[0] - energies[1]) / (2.0 * step);
@@ -112,7 +110,7 @@ protected:
         ModulePW::grid_positions(basis, lattice, length, positions);
         const double half_length = 0.5 * length;
         const ModuleBase::Vector3<double> center(half_length, half_length, half_length);
-        for (ModuleBase::Vector3<double>& position : positions)
+        for (ModuleBase::Vector3<double> &position : positions)
         {
             position -= center;
         }
@@ -131,7 +129,7 @@ TEST_F(SccsLowpassTest, PccElectronPotentialDifferentiatesDiscreteEnergy)
     slab.length = length;
     slab.area = length * length;
     std::vector<ModuleBase::Vector3<double>> projected = centered_positions();
-    for (ModuleBase::Vector3<double>& position : projected)
+    for (ModuleBase::Vector3<double> &position : projected)
     {
         position.x = 0.0;
         position.y = 0.0;

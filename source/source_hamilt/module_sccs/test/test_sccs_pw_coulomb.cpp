@@ -1,5 +1,5 @@
-#include "sccs_test.h"
 #include "../sccs_pw_coulomb.h"
+#include "sccs_test.h"
 
 #include "source_base/parallel_global.h"
 
@@ -7,7 +7,7 @@ namespace SccsTest
 {
 int pool_size = 1;
 int pool_rank = 0;
-}
+} // namespace SccsTest
 
 using SccsPwCoulombTest = SccsTest::PwTest;
 
@@ -15,7 +15,7 @@ TEST_F(SccsPwCoulombTest, FourierModeAndConstantBackground)
 {
     const std::vector<double> mode = cosine_mode(0);
     std::vector<double> charge = mode;
-    for (double& value : charge)
+    for (double &value : charge)
     {
         value += 0.3;
     }
@@ -51,7 +51,7 @@ TEST_F(SccsPwCoulombTest, FftCountsFollowTheApplications)
     }
 }
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
     int threads = 1;
     Parallel_Global::read_pal_param(argc, argv, SccsTest::pool_size, threads, SccsTest::pool_rank);
@@ -63,16 +63,9 @@ int main(int argc, char** argv)
     // These tests create only pool/band groups, not diagonalization/grid groups.
     GRID_WORLD = MPI_COMM_NULL;
     DIAG_WORLD = MPI_COMM_NULL;
-    Parallel_Global::init_pools(SccsTest::pool_size,
-                                SccsTest::pool_rank,
-                                1,
-                                1,
-                                band_size,
-                                band_rank,
-                                band_group,
-                                SccsTest::pool_size,
-                                SccsTest::pool_rank,
-                                pool);
+    Parallel_Global::init_pools(
+        SccsTest::pool_size, SccsTest::pool_rank, 1, 1, band_size, band_rank, band_group, SccsTest::pool_size,
+        SccsTest::pool_rank, pool);
 #endif
     testing::InitGoogleTest(&argc, argv);
     // A forked death-test child would inherit the OpenMP thread pool and

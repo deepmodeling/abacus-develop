@@ -4,26 +4,26 @@
 #ifndef SETCELL_H
 #define SETCELL_H
 
+#include "source_base/parallel_grid.h"
 #include "source_cell/module_neighbor/sltk_atom_arrange.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
-#include "source_cell/unitcell.h"
-#include "source_base/parallel_grid.h"
 #include "source_cell/stru_fac.h"
+#include "source_cell/unitcell.h"
 
-UnitCell::UnitCell(){};
-UnitCell::~UnitCell(){};
+UnitCell::UnitCell() {};
+UnitCell::~UnitCell() {};
 
-Magnetism::Magnetism(){};
-Magnetism::~Magnetism(){};
+Magnetism::Magnetism() {};
+Magnetism::~Magnetism() {};
 
-Atom::Atom(){};
-Atom::~Atom(){};
-Atom_pseudo::Atom_pseudo(){};
-Atom_pseudo::~Atom_pseudo(){};
-pseudo::pseudo(){};
-pseudo::~pseudo(){};
-SepPot::SepPot(){}
-SepPot::~SepPot(){}
+Atom::Atom() {};
+Atom::~Atom() {};
+Atom_pseudo::Atom_pseudo() {};
+Atom_pseudo::~Atom_pseudo() {};
+pseudo::pseudo() {};
+pseudo::~pseudo() {};
+SepPot::SepPot() {}
+SepPot::~SepPot() {}
 Sep_Cell::Sep_Cell() noexcept {}
 Sep_Cell::~Sep_Cell() noexcept {}
 /*
@@ -80,7 +80,6 @@ class Setcell
         ucell.atoms[1].ncpp.zv = 6;
 
         ucell.omega = std::abs(ucell.latvec.Det()) * ucell.lat0 * ucell.lat0 * ucell.lat0;
-
     };
 };
 

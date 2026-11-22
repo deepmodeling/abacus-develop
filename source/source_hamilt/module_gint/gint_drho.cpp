@@ -1,7 +1,7 @@
-#include "source_base/global_function.h"
 #include "gint_drho.h"
 #include "gint_common.h"
 #include "phi_operator.h"
+#include "source_base/global_function.h"
 
 namespace ModuleGint
 {
@@ -26,7 +26,7 @@ std::vector<HContainer<double>> Gint_drho::init_dm_gint_() const
     return dm_gint_vec;
 }
 
-void Gint_drho::cal_drho_(const std::vector<HContainer<double>>& dm_gint_vec) const
+void Gint_drho::cal_drho_(const std::vector<HContainer<double>> &dm_gint_vec) const
 {
 #pragma omp parallel
     {
@@ -39,7 +39,7 @@ void Gint_drho::cal_drho_(const std::vector<HContainer<double>>& dm_gint_vec) co
 #pragma omp for schedule(dynamic)
         for (int i = 0; i < gint_info_->get_bgrids_num(); i++)
         {
-            const auto& biggrid = gint_info_->get_biggrids()[i];
+            const auto &biggrid = gint_info_->get_biggrids()[i];
             if (biggrid->get_atoms().empty())
             {
                 continue;
@@ -74,4 +74,4 @@ void Gint_drho::cal_drho_(const std::vector<HContainer<double>>& dm_gint_vec) co
     }
 }
 
-}
+} // namespace ModuleGint

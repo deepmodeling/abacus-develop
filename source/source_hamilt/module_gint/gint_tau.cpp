@@ -1,7 +1,7 @@
-#include "source_base/global_function.h"
 #include "gint_tau.h"
 #include "gint_common.h"
 #include "phi_operator.h"
+#include "source_base/global_function.h"
 
 namespace ModuleGint
 {
@@ -39,8 +39,8 @@ void Gint_tau::cal_tau_()
 #pragma omp for schedule(dynamic)
         for (int i = 0; i < gint_info_->get_bgrids_num(); i++)
         {
-            const auto& biggrid = gint_info_->get_biggrids()[i];
-            if(biggrid->get_atoms().size() == 0)
+            const auto &biggrid = gint_info_->get_biggrids()[i];
+            if (biggrid->get_atoms().size() == 0)
             {
                 continue;
             }
@@ -66,4 +66,4 @@ void Gint_tau::cal_tau_()
     }
 }
 
-}
+} // namespace ModuleGint
