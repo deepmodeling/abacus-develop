@@ -22,10 +22,10 @@ class ESolver_KS_PW_TDDFT : public ESolver_KS_PW<T, Device>
     ~ESolver_KS_PW_TDDFT() override = default;
 
     /** @brief Initialize the field, propagation solver and time-step history. */
-    void before_all_runners(BaseCell& basecell, const Input_para& inp) override;
+    void before_all_runners(BaseCell &basecell, const Input_para &inp) override;
 
     /** @brief Run the electronic steps belonging to the current MD step. */
-    void runner(BaseCell& basecell, const int istep) override;
+    void runner(BaseCell &basecell, const int istep) override;
 
   protected:
     /** @brief Use independent iteration limits for initial-state SCF and propagation. */
@@ -37,23 +37,27 @@ class ESolver_KS_PW_TDDFT : public ESolver_KS_PW<T, Device>
     ESolver_KS::DensityStage density_stage(const int istep, const int iter) const override;
     bool defer_iter_output(const int istep) const override;
 
-    void before_scf(UnitCell& ucell, const int istep) override;
+    void before_scf(UnitCell &ucell, const int istep) override;
 
     /** @brief Cover shifted projectors and bind endpoint A before the first Hamiltonian application. */
-    void prepare_init_hamilt(const UnitCell& ucell) override;
+    void prepare_init_hamilt(const UnitCell &ucell) override;
 
     /** @brief Print the TDDFT iteration header and initialize the PW iteration. */
-    void iter_init(UnitCell& ucell, const int istep, const int iter) override;
+    void iter_init(UnitCell &ucell, const int istep, const int iter) override;
 
     /** @brief Switch between ground-state diagonalization and real-time propagation. */
-    void hamilt2rho_single(UnitCell& ucell, const int istep, const int iter, const double ethr) override;
+    void hamilt2rho_single(
+        UnitCell &ucell,
+        const int istep,
+        const int iter,
+        const double ethr) override;
 
     /** @brief Save the converged or iteration-limited endpoint for the next propagation step. */
-    void after_scf(UnitCell& ucell, const int istep, const bool conv_esolver) override;
+    void after_scf(UnitCell &ucell, const int istep, const bool conv_esolver) override;
 
   private:
     using Real = typename GetTypeReal<T>::type;
-    std::ofstream& log_;
+    std::ofstream &log_;
     std::unique_ptr<pw::TDPropPW<T, Device>> td_prop_;
 
     std::shared_ptr<elecstate::TDFieldManager> td_field_manager_;
@@ -65,14 +69,15 @@ class ESolver_KS_PW_TDDFT : public ESolver_KS_PW<T, Device>
     double initial_wave_electrons_ = 0.0;
     double initial_rho_electrons_ = 0.0;
 
-    void run_prop(UnitCell& cell, int step);
-    bool advance_interval(UnitCell& cell,
-                          int step,
-                          int index,
-                          int depth,
-                          const elecstate::TDFieldState& full,
-                          pw::TDElecSnap& accepted,
-                          hsolver::TDOrthStats& stats);
+    void run_prop(UnitCell &cell, int step);
+    bool advance_interval(
+        UnitCell &cell,
+        int step,
+        int index,
+        int depth,
+        const elecstate::TDFieldState &full,
+        pw::TDElecSnap &accepted,
+        hsolver::TDOrthStats &stats);
     void output_field(int step) const;
     /** @brief Print the one-based electronic step header. */
     void print_step(const int istep) const;

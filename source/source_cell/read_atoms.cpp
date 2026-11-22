@@ -84,6 +84,15 @@ bool unitcell::read_atom_positions(UnitCell& ucell,
                     ModuleBase::Vector3<double> v;
                     ModuleBase::Vector3<int> mv;
                     ifpos >> v.x >> v.y >> v.z;
+                    // An EOF failure means fewer coordinate lines than the
+                    // declared atom count; leave that to the existing
+                    // mismatch-in-atom-number exit in parse_atom_properties.
+                    if (ifpos.fail() && !ifpos.eof())
+                    {
+                        ofs_warning << " Error: failed to read the coordinate triplet of atom "
+                                    << ia + 1 << " for atom type " << ucell.atoms[it].label << std::endl;
+                        return false;
+                    }
                     mv.x = true ;
                     mv.y = true ;
                     mv.z = true ;

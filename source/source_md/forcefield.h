@@ -16,11 +16,12 @@ class ForceField
 {
   public:
     virtual ~ForceField() {}
-    virtual void initialize(BaseCell& cell, const Input_para& inp) = 0;
-    virtual void compute(BaseCell& cell,
-                         double& energy,
-                         ModuleBase::matrix& force,
-                         ModuleBase::matrix& stress) = 0;
+    virtual void initialize(BaseCell &cell, const Input_para &inp) = 0;
+    virtual void compute(
+        BaseCell &cell,
+        double &energy,
+        ModuleBase::matrix &force,
+        ModuleBase::matrix &stress) = 0;
 };
 } // namespace ModuleMD
 

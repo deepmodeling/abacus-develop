@@ -1,12 +1,12 @@
 #ifndef MD_TEST_FIXTURE_H
 #define MD_TEST_FIXTURE_H
 
-#include "gtest/gtest.h"
-#include "source_md/unittests/lj_test_solver.h"
+#include "setcell.h"
+#include "source_cell/dom_decomp.h"
 #include "source_io/module_parameter/input_parameter.h"
 #include "source_md/md_base.h"
-#include "source_cell/dom_decomp.h"
-#include "setcell.h"
+#include "source_md/unittests/lj_test_solver.h"
+#include "gtest/gtest.h"
 
 #include <memory>
 #include <string>
@@ -59,11 +59,11 @@ class MdFuncTestFixture : public testing::Test
     std::vector<ModuleBase::Vector3<double>> vel_store;
     std::vector<ModuleBase::Vector3<int>> ionmbl_store;
     std::vector<ModuleBase::Vector3<double>> force_store;
-    double* allmass = nullptr;
-    ModuleBase::Vector3<double>* pos = nullptr;
-    ModuleBase::Vector3<double>* vel = nullptr;
-    ModuleBase::Vector3<int>* ionmbl = nullptr;
-    ModuleBase::Vector3<double>* force = nullptr;
+    double *allmass = nullptr;
+    ModuleBase::Vector3<double> *pos = nullptr;
+    ModuleBase::Vector3<double> *vel = nullptr;
+    ModuleBase::Vector3<int> *ionmbl = nullptr;
+    ModuleBase::Vector3<double> *force = nullptr;
     ModuleBase::matrix virial;
     ModuleBase::matrix stress;
     double potential = 0.0;
@@ -96,7 +96,7 @@ class LjPotTestFixture : public testing::Test
 {
   protected:
     std::vector<ModuleBase::Vector3<double>> force_store;
-    ModuleBase::Vector3<double>* force = nullptr;
+    ModuleBase::Vector3<double> *force = nullptr;
     ModuleBase::matrix stress;
     double potential = 0.0;
     int natom = 0;
