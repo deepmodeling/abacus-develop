@@ -124,6 +124,15 @@ if(ENABLE_MPI)
         # so it must keep __MPI even though this directory disables it.
       KEEP_FEATURE_DEFINITIONS __MPI)
 
+    add_test(
+      NAME MODULE_DFTU_op_conjugate_k_mpi4
+      COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 4 ${MPIEXEC_PREFLAGS}
+              $<TARGET_FILE:MODULE_DFTU_op> ${MPIEXEC_POSTFLAGS}
+              --gtest_filter=DFTUTest.FullDcConjugateKDensityAndHamiltonian
+      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+    set_tests_properties(MODULE_DFTU_op_conjugate_k_mpi4
+      PROPERTIES PROCESSORS 4 TIMEOUT 120 ENVIRONMENT "OMP_NUM_THREADS=1")
+
     addtest(
       TARGET MODULE_DFTU_ijr
       LIBS parameter psi base device container
