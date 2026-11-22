@@ -28,22 +28,25 @@ set(LOBPCG_TEST_SOURCES
     ../lobpcg_subspace.cpp
     ../lobpcg_recovery.cpp
     ../rr_solver.cpp
-    ../module_linalg/linear_algebra.cpp)
+    ../module_linalg/linear_algebra.cpp
+    ../../source_basis/module_pw/test/test_tool.cpp)
 set(LOBPCG_TEST_LIBS parameter base psi device container)
 addtest(
   TARGET MODULE_HSOLVER_lobpcg
   LIBS ${LOBPCG_TEST_LIBS}
-  SOURCES test_diago_lobpcg.cpp test_rr_solver.cpp ${LOBPCG_TEST_SOURCES} ../../source_basis/module_pw/test/test_tool.cpp)
+  SOURCES test_diago_lobpcg.cpp test_rr_solver.cpp ${LOBPCG_TEST_SOURCES})
 addtest(
   TARGET MODULE_HSOLVER_lobpcg_float
   LIBS ${LOBPCG_TEST_LIBS}
-  SOURCES test_diago_lobpcg_float.cpp ${LOBPCG_TEST_SOURCES}
-          ../../source_basis/module_pw/test/test_tool.cpp)
-set_tests_properties(MODULE_HSOLVER_lobpcg MODULE_HSOLVER_lobpcg_float PROPERTIES
-  TIMEOUT 180 ENVIRONMENT "OMP_NUM_THREADS=1;OPENBLAS_NUM_THREADS=1;MKL_NUM_THREADS=1")
+  SOURCES test_diago_lobpcg_float.cpp ${LOBPCG_TEST_SOURCES})
+set_tests_properties(MODULE_HSOLVER_lobpcg MODULE_HSOLVER_lobpcg_float PROPERTIES TIMEOUT 180)
 
 # These are solver unit checks, not ABACUS integration drivers: each fresh
 # process must terminate through WARNING_QUIT, including all ranks after RR.
+set(exit_ranks 1)
+if(ENABLE_MPI)
+  list(APPEND exit_ranks 2)
+endif()
 foreach(device IN ITEMS cpu gpu)
   if(device STREQUAL "gpu" AND NOT (USE_CUDA OR USE_ROCM))
     continue()
@@ -54,10 +57,6 @@ foreach(device IN ITEMS cpu gpu)
   else()
     set(exit_target MODULE_HSOLVER_lobpcg)
     set(exit_gpu OFF)
-  endif()
-  set(exit_ranks 1)
-  if(ENABLE_MPI)
-    list(APPEND exit_ranks 2)
   endif()
   foreach(ranks IN LISTS exit_ranks)
     set(exit_name MODULE_HSOLVER_lobpcg_exit_${device}_${ranks})
@@ -70,7 +69,6 @@ foreach(device IN ITEMS cpu gpu)
               "-DMPI_PREFLAGS=${MPIEXEC_PREFLAGS}" "-DMPI_POSTFLAGS=${MPIEXEC_POSTFLAGS}"
               -P "${CMAKE_CURRENT_SOURCE_DIR}/test_diago_lobpcg_exit.cmake")
     set_tests_properties(${exit_name} PROPERTIES PROCESSORS ${ranks} TIMEOUT 240
-      ENVIRONMENT "OMP_NUM_THREADS=1;OPENBLAS_NUM_THREADS=1;MKL_NUM_THREADS=1"
       SKIP_REGULAR_EXPRESSION "SKIP: no usable GPU for LOBPCG exit checks")
   endforeach()
 endforeach()
@@ -80,8 +78,7 @@ if(ENABLE_MPI)
       COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2 ${MPIEXEC_PREFLAGS}
         $<TARGET_FILE:MODULE_HSOLVER_${precision}> ${MPIEXEC_POSTFLAGS})
     set_tests_properties(MODULE_HSOLVER_${precision}_mpi2 PROPERTIES
-      PROCESSORS 2 TIMEOUT 180
-      ENVIRONMENT "OMP_NUM_THREADS=1;OPENBLAS_NUM_THREADS=1;MKL_NUM_THREADS=1")
+      PROCESSORS 2 TIMEOUT 180)
   endforeach()
 endif()
 
@@ -91,20 +88,23 @@ if(USE_CUDA OR USE_ROCM)
     KEEP_FEATURE_DEFINITIONS __CUDA __ROCM
     LIBS ${LOBPCG_TEST_LIBS}
     SOURCES test_diago_lobpcg.cpp ${LOBPCG_TEST_SOURCES} test_rr_solver.cpp
-            ../module_linalg/unittests/test_linear_algebra.cpp
-            ../../source_basis/module_pw/test/test_tool.cpp)
-  set_tests_properties(MODULE_HSOLVER_lobpcg_gpu PROPERTIES
-    SKIP_RETURN_CODE 77 ENVIRONMENT "OMP_NUM_THREADS=1;OPENBLAS_NUM_THREADS=1;MKL_NUM_THREADS=1")
+            ../module_linalg/unittests/test_linear_algebra.cpp)
+  set_tests_properties(MODULE_HSOLVER_lobpcg_gpu PROPERTIES SKIP_RETURN_CODE 77)
   if(ENABLE_MPI)
     add_test(NAME MODULE_HSOLVER_lobpcg_gpu_mpi2
       COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2 ${MPIEXEC_PREFLAGS}
         $<TARGET_FILE:MODULE_HSOLVER_lobpcg_gpu> ${MPIEXEC_POSTFLAGS}
         --gtest_filter=LockingModes/Lobpcg.DistributedRitz*:LockingModes/Lobpcg.BudgetAndReuse*:LockingModes/Lobpcg.EigenvectorsMatchEigenvalues*:LobpcgSubspace.*:LinearAlgebraGpu.*)
     set_tests_properties(MODULE_HSOLVER_lobpcg_gpu_mpi2 PROPERTIES
-      PROCESSORS 2 TIMEOUT 180 SKIP_RETURN_CODE 77
-      ENVIRONMENT "OMP_NUM_THREADS=1;OPENBLAS_NUM_THREADS=1;MKL_NUM_THREADS=1")
+      PROCESSORS 2 TIMEOUT 180 SKIP_RETURN_CODE 77)
   endif()
 endif()
+
+# Apply the same thread limits to all LOBPCG unit and exit tests.
+get_property(lobpcg_tests DIRECTORY PROPERTY TESTS)
+list(FILTER lobpcg_tests INCLUDE REGEX "^MODULE_HSOLVER_lobpcg(_|$)")
+set_tests_properties(${lobpcg_tests} PROPERTIES
+  ENVIRONMENT "OMP_NUM_THREADS=1;OPENBLAS_NUM_THREADS=1;MKL_NUM_THREADS=1")
 
 if(USE_CUDA OR USE_ROCM)
   AddTest(
