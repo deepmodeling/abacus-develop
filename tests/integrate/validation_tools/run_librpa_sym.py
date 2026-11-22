@@ -27,7 +27,8 @@ def read_symrot_operations(text):
     lines = [line.strip() for line in text.splitlines() if line.strip()]
     lmax = [int(re.search(r"Lmax of " + label + r":\s*(\d+)", text).group(1))
             for label in ("AOs", "ABFs")]
-    orbital_rows = (max(lmax) + 1) ** 2
+    # nspin=4 writes the operations only; it has no orbital rotations to emit.
+    orbital_rows = 0 if "Spatial-only export" in text else (max(lmax) + 1) ** 2
     start = next(i for i, line in enumerate(lines) if line == "0")
 
     def one_block(cursor):
