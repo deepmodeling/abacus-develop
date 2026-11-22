@@ -10,6 +10,7 @@
 #include "source_hsolver/hs_operator.h"
 #include "source_hsolver/hsolver_lcaopw.h"
 #include "source_hsolver/hsolver_pw.h"
+#include "source_hsolver/diago_params.h"
 
 #include <algorithm>
 #include <complex>
@@ -175,7 +176,7 @@ class TestHSolverPW : public ::testing::Test
 
     std::ofstream temp_ofs;
 
-    void run_lobpcg_failure(const bool dependent)
+    void run_lobpcg_case(const std::string& calculation, const bool dependent)
     {
         std::cout.rdbuf(std::cerr.rdbuf());
 #ifdef __MPI
@@ -208,7 +209,6 @@ class TestHSolverPW : public ::testing::Test
         }
         std::vector<double> prec(40, 1);
         std::vector<double> eig(4);
-        const std::string calculation = dependent ? "scf" : "nscf";
         const hsolver::HSOperator<C>& op = dependent ? hamilt_test_d : diagonal;
         hsolver::HSolverPW<C> solver(&pwbk, calculation, "pw", "lobpcg", false,
                                     1, 1, 1, 1e-12, false, 4, false, 4, 0, "hard", 0, 0);
@@ -480,11 +480,38 @@ TEST_F(TestHSolverPW, NpwxLessThanNbandsDeath)
 // Exercise the actual caller: NSCF budget exhaustion and a failed initial GV.
 TEST_F(TestHSolverPW, LobpcgNscfBudgetReportsError)
 {
-    EXPECT_EXIT(run_lobpcg_failure(false), ::testing::ExitedWithCode(1),
-                "LOBPCG iteration budget exhausted outside SCF");
+    EXPECT_EXIT(run_lobpcg_case("nscf", false), ::testing::ExitedWithCode(1),
+                "LOBPCG iteration budget exhausted in NSCF");
+}
+
+TEST_F(TestHSolverPW, LobpcgBudgetContinuesOuterLoops)
+{
+    for (const auto& calculation : {"scf", "relax", "cell-relax", "md"})
+    {
+        EXPECT_EXIT(run_lobpcg_case(calculation, false), ::testing::ExitedWithCode(0), ".*");
+    }
 }
 
 TEST_F(TestHSolverPW, LobpcgNumericalFailureReportsBackendInfo)
 {
-    EXPECT_EXIT(run_lobpcg_failure(true), ::testing::ExitedWithCode(1), "Serial HEGVX failed, info=");
+    EXPECT_EXIT(run_lobpcg_case("scf", true), ::testing::ExitedWithCode(1), "Serial HEGVX failed, info=");
+}
+
+TEST_F(TestHSolverPW, PwUsesInputIterationBudget)
+{
+    Input_para input;
+    input.pw_diag_nmax = 37;
+    const int previous = Assist::PW_DIAG_NMAX;
+    for (const auto& calculation : {"scf", "nscf", "relax", "cell-relax", "md"})
+    {
+        input.calculation = calculation;
+        for (const auto& method : {"cg", "dav", "dav_subspace", "bpcg", "lobpcg"})
+        {
+            input.ks_solver = method;
+            Assist::PW_DIAG_NMAX = 30;
+            hsolver::setup_diago_params_pw<std::complex<double>, base_device::DEVICE_CPU>(0, 1, 1e-8, input);
+            EXPECT_EQ(Assist::PW_DIAG_NMAX, 37) << calculation << ": " << method;
+        }
+    }
+    Assist::PW_DIAG_NMAX = previous;
 }

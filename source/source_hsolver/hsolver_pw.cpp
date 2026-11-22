@@ -374,9 +374,11 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(const HSOperator<T, Device>& op,
                                            this->diag_iter_max, lobpcg_ethr);
         if (!converged)
         {
-            if (this->calculation_type != "scf")
+            // SCF, relax, cell-relax and MD can refine approximate Ritz pairs
+            // in later electronic steps; NSCF has no such outer update.
+            if (this->calculation_type == "nscf")
             {
-                ModuleBase::WARNING_QUIT("HSolverPW::hamiltSolvePsiK", "LOBPCG iteration budget exhausted outside SCF.");
+                ModuleBase::WARNING_QUIT("HSolverPW::hamiltSolvePsiK", "LOBPCG iteration budget exhausted in NSCF.");
             }
             const int kpoint = psi.get_current_k() + 1;
             std::ostringstream message;

@@ -78,6 +78,27 @@ TEST_F(LobpcgInputTest, LobpcgExtraBands)
                  [](const Parameter& p) { return std::to_string(p.inp.lobpcg_extra_bands); });
 }
 
+TEST_F(LobpcgInputTest, PwDiagNmaxMustBePositive)
+{
+    ModuleIO::ReadInput reader(0);
+    auto items = reader.get_input_lists();
+    auto item = find_label("pw_diag_nmax", items);
+    ASSERT_NE(item, items.end());
+    auto& option = item->second;
+    EXPECT_EQ(option.default_value, "50");
+    EXPECT_EQ(option.type, "Integer");
+    for (const auto& token : {"1", "37", "50"})
+    {
+        SCOPED_TRACE(token);
+        EXPECT_TRUE(option.domain.validate_explicit(option.label, {token}).empty());
+    }
+    for (const auto& token : {"0", "-1", "-20"})
+    {
+        SCOPED_TRACE(token);
+        EXPECT_FALSE(option.domain.validate_explicit(option.label, {token}).empty());
+    }
+}
+
 TEST_F(LobpcgInputTest, LobpcgLocking)
 {
     check_option("lobpcg_locking", "hard", "String", {"hard", "soft"}, {"auto", "none", "1"},

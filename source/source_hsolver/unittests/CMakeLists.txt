@@ -191,6 +191,7 @@ if(ENABLE_MPI)
             ../lobpcg_subspace.cpp
             ../lobpcg_recovery.cpp
             ../rr_solver.cpp
+            ../diago_params.cpp
             ../module_linalg/linear_algebra.cpp
             ../diag_const_nums.cpp
             ../diago_iter_assist.cpp

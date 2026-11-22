@@ -1050,6 +1050,7 @@ Use case: When experimental or high-level theoretical results suggest that the S
         item.type = "Integer";
         item.description = "Maximum number of iterations per diagonalization attempt.";
         item.default_value = "50";
+        item.domain.set_rule("value>0");
         item.unit = "";
         item.set_availability("basis_type==pw and ks_solver in [cg, dav, dav_subspace, bpcg, lobpcg]");
         read_sync_int(input.pw_diag_nmax);
