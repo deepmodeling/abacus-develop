@@ -18,6 +18,7 @@
 #include <iostream>
 #include <cmath>
 #include <complex>
+#include <cstddef>
 #include <fstream>
 #include <sstream>
 #include <algorithm>
@@ -125,15 +126,21 @@ void RDMFT<TK, TR>::init(Parallel_Orbitals& ParaV_in,
     hsk_dft_XC = new hamilt::HS_Matrix_K<TK>(ParaV, true);
     hsk_exx_XC = new hamilt::HS_Matrix_K<TK>(ParaV, true);
 
-    HK_XC.resize( ParaV->para_2d().nrloc()*ParaV->para_2d().ncloc() );
+    // Local RDMFT matrices can exceed INT_MAX elements (issue #8342), so keep
+    // the nrloc*ncloc product in size_t.
+    const std::size_t local_size = static_cast<std::size_t>(ParaV->para_2d().nrloc())
+                                 * static_cast<std::size_t>(ParaV->para_2d().ncloc());
+    HK_XC.resize( local_size );
     // HK_RDMFT_pass.resize(nk_total, ParaV->get_row_size(), ParaV->get_col_size());
     // HK_XC_pass.resize(nk_total, ParaV->get_row_size(), ParaV->get_col_size());
 
 
-    Eij_TV.resize( para_Eij.nrloc()*para_Eij.ncloc() );
-    Eij_hartree.resize( para_Eij.nrloc()*para_Eij.ncloc() );
-    Eij_XC.resize( para_Eij.nrloc()*para_Eij.ncloc() );
-    Eij_exx_XC.resize( para_Eij.nrloc()*para_Eij.ncloc() );
+    const std::size_t eij_size = static_cast<std::size_t>(para_Eij.nrloc())
+                               * static_cast<std::size_t>(para_Eij.ncloc());
+    Eij_TV.resize( eij_size );
+    Eij_hartree.resize( eij_size );
+    Eij_XC.resize( eij_size );
+    Eij_exx_XC.resize( eij_size );
 
     // 
     HR_TV = new hamilt::HContainer<TR>(*ucell, ParaV);
@@ -239,7 +246,7 @@ void RDMFT<TK, TR>::cal_Hk_Hpsi()
             cal_bra_op_ket( ParaV, para_Eij, wfc(ik, 0, 0), H_wfc_exx_XC(ik, 0, 0), Eij_exx_XC );
             _diagonal_in_serial( para_Eij, Eij_exx_XC, &(wfcHwfc_exx_XC(ik, 0)) );
             
-            for(int iloc=0; iloc<HK_XC.size(); ++iloc) HK_XC[iloc] += hsk_exx_XC->get_hk()[iloc];
+            for(std::size_t iloc=0; iloc<HK_XC.size(); ++iloc) HK_XC[iloc] += hsk_exx_XC->get_hk()[iloc];
         }
 #endif
         if( !only_exx_type )
@@ -251,7 +258,7 @@ void RDMFT<TK, TR>::cal_Hk_Hpsi()
             cal_bra_op_ket( ParaV, para_Eij, wfc(ik, 0, 0), H_wfc_dft_XC(ik, 0, 0), Eij_XC );
             _diagonal_in_serial( para_Eij, Eij_XC, &(wfcHwfc_dft_XC(ik, 0)) );
             
-            for(int iloc=0; iloc<HK_XC.size(); ++iloc) HK_XC[iloc] += hsk_dft_XC->get_hk()[iloc];
+            for(std::size_t iloc=0; iloc<HK_XC.size(); ++iloc) HK_XC[iloc] += hsk_dft_XC->get_hk()[iloc];
         }
 
         // // store HK_RDMFT
@@ -429,7 +436,7 @@ double RDMFT<TK, TR>::run(ModuleBase::matrix& E_gradient_occNum, psi::Psi<TK>& E
     
     TK* pwfc = &occNum_HamiltWfc(0, 0, 0);
     TK* pwfc_out = &E_gradient_wfc(0, 0, 0);
-    for(int i=0; i<wfc.size(); ++i) { pwfc_out[i] = pwfc[i]; }
+    for(std::size_t i=0; i<wfc.size(); ++i) { pwfc_out[i] = pwfc[i]; }
 
     ModuleBase::timer::end("RDMFT", "E_Egradient");
     // return E_RDMFT[3];

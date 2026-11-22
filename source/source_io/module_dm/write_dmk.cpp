@@ -226,9 +226,14 @@ bool ModuleIO::read_dmk(const int nspin,
 
     const int nlocal = pv.nrglb();
     const bool gamma_only = std::is_same<double, T>::value;
-    std::vector<T> dmk_global(my_rank == 0 ? nlocal * nlocal : 0);
+    // nlocal*nlocal is the global N^2 matrix and overflows int for large
+    // LCAO bases (issue #8342).
+    const std::size_t nlocal2 = static_cast<std::size_t>(nlocal)
+                              * static_cast<std::size_t>(nlocal);
+    std::vector<T> dmk_global(my_rank == 0 ? nlocal2 : 0);
     std::vector<std::vector<T>> dmk_read(
-        nspin * nk, std::vector<T>(pv.nrloc() * pv.ncloc(), T(0)));
+        nspin * nk,
+        std::vector<T>(static_cast<std::size_t>(pv.nrloc()) * static_cast<std::size_t>(pv.ncloc()), T(0)));
 
     // write_dmk emits an optional "Ionic_Step" frame marker followed by
     // eleven header lines: nspin, spin index, nkstot_nospin, nkstot, ik,
@@ -561,13 +566,16 @@ void ModuleIO::write_dmk(const std::vector<std::vector<T>>& dmk,
     assert(nspin > 0);
     const int nk = dmk.size() / nspin;
 
-    if (nk * nspin != dmk.size())
+    if (static_cast<std::size_t>(nk) * static_cast<std::size_t>(nspin) != dmk.size())
     {
         ModuleBase::WARNING_QUIT("ModuleIO::write_dmk", "The size of dmk is not consistent with nspin and nk.");
     }
 
     Parallel_Blkcyclic pv_glb;
-    std::vector<T> dmk_global(my_rank == 0 ? nlocal * nlocal : 0);
+    // The gathered matrix is global N^2; keep its size in size_t (issue #8342).
+    const std::size_t nlocal2 = static_cast<std::size_t>(nlocal)
+                              * static_cast<std::size_t>(nlocal);
+    std::vector<T> dmk_global(my_rank == 0 ? nlocal2 : 0);
 
     for (int ispin = 0; ispin < nspin; ispin++)
     {
