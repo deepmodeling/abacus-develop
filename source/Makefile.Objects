@@ -183,6 +183,7 @@ OBJS_BASE=assoc_laguerre.o\
     matrix2d_collective.o\
     matrix2d_lapack.o\
     matrix2d_linalg.o\
+    matrix2d_mpi.o\
     matrix2d_reduction.o\
     matrix2d_scalapack.o\
     matrix3.o\

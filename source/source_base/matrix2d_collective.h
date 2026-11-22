@@ -1,6 +1,14 @@
 #ifndef ABACUS_SOURCE_SOURCE_BASE_MATRIX2D_COLLECTIVE_H
 #define ABACUS_SOURCE_SOURCE_BASE_MATRIX2D_COLLECTIVE_H
 
+/**
+ * @file matrix2d_collective.h
+ * @internal
+ * @brief Matrix2d collective backend declarations.
+ *
+ * Callers should include `source_base/matrix2d.h` instead of this header.
+ */
+
 #include "source_base/matrix2d.h"
 
 #include <memory>

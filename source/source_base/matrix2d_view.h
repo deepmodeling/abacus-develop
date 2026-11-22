@@ -138,12 +138,21 @@ class Matrix2dView
     }
 
     /**
-     * @brief Return whether a distribution handle is attached.
+     * @brief Return whether a frozen distribution handle is attached.
      *
-     * This includes serial frozen distributions; it does not imply that more
-     * than one MPI rank participates.
+     * This includes the serial one-by-one layout. Use `is_active()` when only
+     * a non-serial MPI distribution should take the distributed code path.
      */
-    bool is_distributed() const { return distrib_ != nullptr; }
+    bool has_distribution() const { return distrib_ != nullptr; }
+    /**
+     * @brief Return whether an active non-serial MPI distribution is attached.
+     *
+     * A serial one-by-one frozen distribution has a handle but is not active.
+     */
+    bool is_active() const
+    {
+        return distrib_ != nullptr && !distrib_->is_serial();
+    }
     /**
      * @brief Return the attached distribution, or null for a host view.
      *

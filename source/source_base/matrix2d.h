@@ -53,9 +53,9 @@ class NDArray<T, 2> final
             const int ncglb,
             const MPI_Comm comm)
     {
-        const std::shared_ptr<const Parallel_Blkcyclic> distrib // distribution, not distance
+        std::shared_ptr<const Parallel_Blkcyclic> distrib // distribution, not distance
             = make_frozen_distribution(nrglb, ncglb, 1, comm);
-        initialize_distributed_storage(distrib);
+        initialize_distributed_storage(std::move(distrib));
     }
 
     NDArray(const int nrglb,
@@ -63,9 +63,9 @@ class NDArray<T, 2> final
             const int nb,
             const MPI_Comm comm)
     {
-        const std::shared_ptr<const Parallel_Blkcyclic> distrib
+        std::shared_ptr<const Parallel_Blkcyclic> distrib
             = make_frozen_distribution(nrglb, ncglb, nb, comm);
-        initialize_distributed_storage(distrib);
+        initialize_distributed_storage(std::move(distrib));
     }
 
     NDArray(const int nrglb,
@@ -75,9 +75,9 @@ class NDArray<T, 2> final
             const int nb,
             const MPI_Comm comm)
     {
-        const std::shared_ptr<const Parallel_Blkcyclic> distrib
+        std::shared_ptr<const Parallel_Blkcyclic> distrib
             = make_frozen_distribution(nrglb, ncglb, nrproc, ncproc, nb, comm);
-        initialize_distributed_storage(distrib);
+        initialize_distributed_storage(std::move(distrib));
     }
 #endif
 
@@ -305,10 +305,19 @@ class NDArray<T, 2> final
     /**
      * @brief Return whether a frozen distribution handle is attached.
      *
-     * A serial one-by-one distribution also returns true. This predicate does
-     * not mean that an active multi-rank distribution is present.
+     * This includes the serial one-by-one layout. Use `is_active()` when only
+     * a non-serial MPI distribution should take the distributed code path.
      */
-    bool is_distributed() const { return distrib_ != nullptr; }
+    bool has_distribution() const { return distrib_ != nullptr; }
+    /**
+     * @brief Return whether an active non-serial MPI distribution is attached.
+     *
+     * A serial one-by-one frozen distribution has a handle but is not active.
+     */
+    bool is_active() const
+    {
+        return distrib_ != nullptr && !distrib_->is_serial();
+    }
 
     Matrix2dView<T> view();
     Matrix2dView<const T> view() const;
@@ -328,50 +337,16 @@ class NDArray<T, 2> final
     {
     }
 
-    template <typename U>
-    void assert_compatible_layout(const NDArray<U, 2>& other) const
-    {
-        if (nrglb() != other.nrglb()
-            || ncglb() != other.ncglb())
-        {
-            throw std::invalid_argument("matrix global shapes are incompatible");
-        }
-
-        const bool distributed = distrib_ != nullptr;
-        const bool distributed_ = other.distribution() != nullptr;
-        if (distributed != distributed_)
-        {
-            throw std::invalid_argument("host and distributed matrices are incompatible");
-        }
-
-        if (!distributed)
-        {
-            return;
-        }
-
-        if (distrib_->nb() != other.distribution()->nb())
-        {
-            throw std::invalid_argument("matrix block sizes are incompatible");
-        }
-        if (distrib_->nrproc() != other.distribution()->nrproc()
-            || distrib_->ncproc() != other.distribution()->ncproc())
-        {
-            throw std::invalid_argument("matrix process grids are incompatible");
-        }
-        if (distrib_ != other.distribution())
-        {
-            throw std::invalid_argument("matrix distribution handles are incompatible");
-        }
-    }
+    void assert_compatible_layout(const NDArray& other) const;
 
     void initialize_distributed_storage(
-        const std::shared_ptr<const Parallel_Blkcyclic>& distrib)
+        std::shared_ptr<const Parallel_Blkcyclic> distrib)
     {
         if (distrib == nullptr)
         {
             throw std::invalid_argument("distribution must not be null");
         }
-        distrib_ = distrib;
+        distrib_ = std::move(distrib);
         initialize_distributed_storage();
     }
 

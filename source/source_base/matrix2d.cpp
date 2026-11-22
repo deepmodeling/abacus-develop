@@ -103,6 +103,43 @@ void matmul(Matrix2dView<T> result,
 } // namespace matrix2d_impl
 
 template <typename T>
+void NDArray<T, 2>::assert_compatible_layout(
+    const NDArray<T, 2>& other) const
+{
+    if (nrglb() != other.nrglb()
+        || ncglb() != other.ncglb())
+    {
+        throw std::invalid_argument("matrix global shapes are incompatible");
+    }
+
+    const bool distributed = has_distribution();
+    const bool distributed_ = other.has_distribution();
+    if (distributed != distributed_)
+    {
+        throw std::invalid_argument("host and distributed matrices are incompatible");
+    }
+
+    if (!distributed)
+    {
+        return;
+    }
+
+    if (distrib_->nb() != other.distribution()->nb())
+    {
+        throw std::invalid_argument("matrix block sizes are incompatible");
+    }
+    if (distrib_->nrproc() != other.distribution()->nrproc()
+        || distrib_->ncproc() != other.distribution()->ncproc())
+    {
+        throw std::invalid_argument("matrix process grids are incompatible");
+    }
+    if (distrib_ != other.distribution())
+    {
+        throw std::invalid_argument("matrix distribution handles are incompatible");
+    }
+}
+
+template <typename T>
 Matrix2dView<T> NDArray<T, 2>::view()
 {
     if (distrib_ != nullptr)
@@ -250,7 +287,7 @@ NDArray<T, 2>& NDArray<T, 2>::conjugate()
 template <typename T>
 NDArray<T, 2> NDArray<T, 2>::transpose() const
 {
-    if (distrib_ == nullptr || distrib_->is_serial())
+    if (!is_active())
     {
         // Serial degenerate path: a serial frozen distribution owns the full
         // matrix on one rank with column-major local layout; treat it like the
@@ -286,7 +323,7 @@ NDArray<T, 2> NDArray<T, 2>::transpose() const
 template <typename T>
 NDArray<T, 2> NDArray<T, 2>::dagger() const
 {
-    if (distrib_ == nullptr || distrib_->is_serial())
+    if (!is_active())
     {
         Matrix2d<T> result(ncloc_, nrloc_);
 #ifdef _OPENMP
@@ -331,10 +368,8 @@ NDArray<T, 2> NDArray<T, 2>::matmul(const NDArray<T, 2>& other) const
         }
     }
 
-    const bool serial
-        = distrib_ == nullptr || distrib_->is_serial();
-    const bool serial_
-        = other.distribution() == nullptr || other.distribution()->is_serial();
+    const bool serial = !is_active();
+    const bool serial_ = !other.is_active();
     if (serial != serial_)
     {
         throw std::invalid_argument("host and distributed matrices are incompatible");
@@ -394,7 +429,7 @@ NDArray<T, 2> NDArray<T, 2>::matmul(const NDArray<T, 2>& other) const
 template <typename T>
 NDArray<double, 2> NDArray<T, 2>::real() const
 {
-    Matrix2d<double> result = is_distributed()
+    Matrix2d<double> result = has_distribution()
         ? Matrix2d<double>(distribution())
         : Matrix2d<double>(nrglb(), ncglb());
     const int nrloc = this->nrloc();
@@ -415,7 +450,7 @@ NDArray<double, 2> NDArray<T, 2>::real() const
 template <typename T>
 NDArray<double, 2> NDArray<T, 2>::imag() const
 {
-    Matrix2d<double> result = is_distributed()
+    Matrix2d<double> result = has_distribution()
         ? Matrix2d<double>(distribution())
         : Matrix2d<double>(nrglb(), ncglb());
     const int nrloc = this->nrloc();
@@ -550,7 +585,7 @@ void NDArray<T, 2>::scatter(const NDArray<T, 2>& matglb)
 {
     if (distrib_ == nullptr)
     {
-        if (matglb.is_distributed())
+        if (matglb.has_distribution())
         {
             throw std::invalid_argument("host scatter requires a host global matrix");
         }
@@ -565,7 +600,7 @@ void NDArray<T, 2>::scatter(const NDArray<T, 2>& matglb)
 
     if (distrib_->is_serial())
     {
-        if (matglb.is_distributed())
+        if (matglb.has_distribution())
         {
             throw std::invalid_argument("scatter requires a host global matrix");
         }

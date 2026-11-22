@@ -1,6 +1,14 @@
 #ifndef ABACUS_SOURCE_SOURCE_BASE_MATRIX2D_REDUCTION_H
 #define ABACUS_SOURCE_SOURCE_BASE_MATRIX2D_REDUCTION_H
 
+/**
+ * @file matrix2d_reduction.h
+ * @internal
+ * @brief Matrix2d reduction backend declarations.
+ *
+ * Callers should include `source_base/matrix2d.h` instead of this header.
+ */
+
 #include "source_base/matrix2d.h"
 
 namespace matrix2d_impl

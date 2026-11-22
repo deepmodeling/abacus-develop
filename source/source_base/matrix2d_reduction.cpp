@@ -1,12 +1,14 @@
 #include "source_base/matrix2d_reduction.h"
 
 #include "source_base/parallel_common.h"
+#ifdef __MPI
+#include "source_base/matrix2d_mpi.h"
+#endif
 
 #include <algorithm>
 #include <cmath>
 #include <cstring>
 #include <complex>
-#include <limits>
 #include <stdexcept>
 #include <utility>
 #include <vector>
@@ -19,6 +21,10 @@ namespace
 {
 // Width in bytes of a native int in the homogeneous diagonal wire format.
 constexpr int W_INT = sizeof(int);
+
+#ifdef __MPI
+namespace mpi = matrix2d_impl::mpi;
+#endif
 
 namespace elementwise
 {
@@ -103,50 +109,6 @@ void reduce_max_over_processes(double& value, const Matrix2d<T>& matrix)
 #endif
 }
 
-int checked_mpi_count(const std::size_t nbytes)
-{
-    if (nbytes > static_cast<std::size_t>(std::numeric_limits<int>::max()))
-    {
-        throw std::invalid_argument(
-            "Matrix2d diagonal data buffer exceeds MPI count range");
-    }
-    return static_cast<int>(nbytes);
-}
-
-std::vector<int> make_byte_displs(const std::vector<int>& nbytes)
-{
-    std::vector<int> displs(nbytes.size(), 0);
-    int offset = 0;
-    for (std::size_t ip = 0; ip < nbytes.size(); ++ip)
-    {
-        displs[ip] = offset;
-        if (nbytes[ip] > std::numeric_limits<int>::max() - offset)
-        {
-            throw std::invalid_argument(
-                "Matrix2d diagonal data buffer size overflow");
-        }
-        offset += nbytes[ip];
-    }
-    return displs;
-}
-
-#ifdef __MPI
-std::vector<int> gather_nbytes(const int nbytes_local, const MPI_Comm comm)
-{
-    const int nproc = Parallel_Common::comm_size(comm);
-    const std::vector<int> nbytes_recv(static_cast<std::size_t>(nproc), W_INT);
-    const std::vector<int> rdispls
-        = make_byte_displs(nbytes_recv);
-    std::vector<int> nbytes(static_cast<std::size_t>(nproc), 0);
-    Parallel_Common::allgatherv_bytes(&nbytes_local,
-                                      W_INT,
-                                      nbytes.data(),
-                                      nbytes_recv.data(),
-                                      rdispls.data(),
-                                      comm);
-    return nbytes;
-}
-#endif
 } // namespace
 
 namespace matrix2d_impl
@@ -302,7 +264,8 @@ std::vector<T> diagonal(const Matrix2d<T>& matrix)
             const std::size_t nbytes_local
                 = W_INT + local_entries.size() * nbytes_entry;
             std::vector<unsigned char> local_diagonal_buffer(nbytes_local);
-            const int nentry_local = checked_mpi_count(local_entries.size());
+            const int nentry_local
+                = mpi::checked_mpi_count(local_entries.size());
             std::memcpy(local_diagonal_buffer.data(),
                         &nentry_local,
                         W_INT);
@@ -319,11 +282,12 @@ std::vector<T> diagonal(const Matrix2d<T>& matrix)
                 offset += sizeof(entry.second);
             }
 
-            const int nbytes_local_mpi = checked_mpi_count(nbytes_local);
+            const int nbytes_local_mpi
+                = mpi::checked_mpi_count(nbytes_local);
             const std::vector<int> nbytes_recv
-                = gather_nbytes(nbytes_local_mpi, comm);
+                = mpi::allgather_nbytes(nbytes_local_mpi, comm);
             const std::vector<int> rdispls
-                = make_byte_displs(nbytes_recv);
+                = mpi::make_byte_offsets(nbytes_recv);
             const int total_bytes
                 = rdispls.back() + nbytes_recv.back();
             std::vector<unsigned char> received(

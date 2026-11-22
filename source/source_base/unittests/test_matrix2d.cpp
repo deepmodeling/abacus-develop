@@ -3,11 +3,10 @@
 #endif
 
 #include "source_base/matrix2d.h"
+#include "source_base/matrix2d_view.h"
 
 #ifdef __MPI
 #include "source_base/parallel_common.h"
-#else
-#include "source_base/matrix2d_view.h"
 #endif
 
 #include "gtest/gtest.h"
@@ -125,7 +124,8 @@ void check_host_layout()
 {
     Matrix2d<double> matrix(2, 3);
 
-    EXPECT_FALSE(matrix.is_distributed());
+    EXPECT_FALSE(matrix.has_distribution());
+    EXPECT_FALSE(matrix.is_active());
     EXPECT_EQ(matrix.distribution(), nullptr);
     EXPECT_EQ(matrix.nrglb(), 2);
     EXPECT_EQ(matrix.ncglb(), 3);
@@ -176,6 +176,11 @@ void check_distribution_layout(Matrix2d<double>& matrix,
     const std::shared_ptr<const Parallel_Blkcyclic>& distrib
         = matrix.distribution();
     ASSERT_NE(distrib, nullptr);
+    EXPECT_TRUE(matrix.has_distribution());
+    EXPECT_EQ(matrix.is_active(), !distrib->is_serial());
+    const Matrix2dView<double> matrix_view = matrix.view();
+    EXPECT_TRUE(matrix_view.has_distribution());
+    EXPECT_EQ(matrix_view.is_active(), matrix.is_active());
     EXPECT_EQ(matrix.nrglb(), nrglb);
     EXPECT_EQ(matrix.ncglb(), ncglb);
     EXPECT_EQ(matrix.nrloc(), distrib->nrloc());
@@ -401,7 +406,8 @@ Matrix2d<T> make_host_reference(const int nr,
 template <typename T>
 void verify_global_matrix(const Matrix2d<T>& actual, const Matrix2d<T>& expected)
 {
-    ASSERT_FALSE(actual.is_distributed());
+    ASSERT_FALSE(actual.has_distribution());
+    ASSERT_FALSE(actual.is_active());
     ASSERT_EQ(actual.nrglb(), expected.nrglb());
     ASSERT_EQ(actual.ncglb(), expected.ncglb());
     for (int ir = 0; ir < expected.nrglb(); ++ir)
@@ -593,7 +599,8 @@ void check_gather_scatter(Matrix2d<T>& matrix)
         EXPECT_EQ(root_result.ncglb(), 0);
         EXPECT_EQ(root_result.size(), 0);
         EXPECT_EQ(root_result.lld(), 0);
-        EXPECT_FALSE(root_result.is_distributed());
+        EXPECT_FALSE(root_result.has_distribution());
+        EXPECT_FALSE(root_result.is_active());
     }
 #endif
 
@@ -772,8 +779,10 @@ void check_host_transpose(const int nr, const int nc)
 
     verify_global_matrix(transposed, expected_transpose);
     verify_global_matrix(dagger, expected_dagger);
-    EXPECT_FALSE(transposed.is_distributed());
-    EXPECT_FALSE(dagger.is_distributed());
+    EXPECT_FALSE(transposed.has_distribution());
+    EXPECT_FALSE(dagger.has_distribution());
+    EXPECT_FALSE(transposed.is_active());
+    EXPECT_FALSE(dagger.is_active());
     EXPECT_EQ(transposed.nrglb(), nc);
     EXPECT_EQ(transposed.ncglb(), nr);
     EXPECT_EQ(dagger.nrglb(), nc);
@@ -791,7 +800,8 @@ void check_host_matmul(const int m,
     const Matrix2d<T> expected = make_matmul_reference(left, right);
 
     verify_global_matrix(product, expected);
-    EXPECT_FALSE(product.is_distributed());
+    EXPECT_FALSE(product.has_distribution());
+    EXPECT_FALSE(product.is_active());
 }
 
 #ifdef __MPI
@@ -836,8 +846,10 @@ void check_distributed_transpose(const int nr,
     const int* const desc_res = transposed.desc();
     const int* const desc_dag = dagger.desc();
 
-    ASSERT_TRUE(transposed.is_distributed());
-    ASSERT_TRUE(dagger.is_distributed());
+    ASSERT_TRUE(transposed.has_distribution());
+    ASSERT_TRUE(dagger.has_distribution());
+    ASSERT_TRUE(transposed.is_active());
+    ASSERT_TRUE(dagger.is_active());
     EXPECT_EQ(desc_src1, desc_src0);
     EXPECT_NE(desc_res, nullptr);
     EXPECT_NE(desc_dag, nullptr);
@@ -902,7 +914,8 @@ void check_distributed_matmul(const int m,
     const int* const desc_rhs1 = right.desc();
     const int* const desc_res = product.desc();
 
-    ASSERT_TRUE(product.is_distributed());
+    ASSERT_TRUE(product.has_distribution());
+    ASSERT_TRUE(product.is_active());
     EXPECT_EQ(desc_lhs1, desc_lhs0);
     EXPECT_EQ(desc_rhs1, desc_rhs0);
     EXPECT_NE(desc_res, nullptr);
@@ -1018,7 +1031,8 @@ TEST(Matrix2dTest, DistributedResultRetainsBlacsContext)
     const Matrix2d<double> transposed
         = make_transpose_without_source<double>(5, 3, nrproc, ncproc, 3);
 
-    ASSERT_TRUE(transposed.is_distributed());
+    ASSERT_TRUE(transposed.has_distribution());
+    ASSERT_TRUE(transposed.is_active());
     ASSERT_NE(transposed.distribution(), nullptr);
     EXPECT_NE(transposed.distribution()->comm(), MPI_COMM_NULL);
     verify_global_matrix(transposed.gather(),
@@ -1205,7 +1219,8 @@ TEST(Matrix2dTest, SerialDistributionHandleUsesColumnMajorLayout)
         = make_frozen_distribution(3, 2);
     Matrix2d<double> matrix(distrib);
 
-    EXPECT_TRUE(matrix.is_distributed());
+    EXPECT_TRUE(matrix.has_distribution());
+    EXPECT_FALSE(matrix.is_active());
     EXPECT_EQ(matrix.distribution().get(), distrib.get());
     EXPECT_EQ(matrix.ictxt(), -1);
     check_distribution_layout(matrix, 3, 2);
@@ -1238,7 +1253,8 @@ TEST(Matrix2dTest, SerialDistributionViewMatchesColumnMajorStorageWithoutMpi)
     fill_global_values(matrix);
 
     Matrix2dView<double> matrix_view = matrix.view();
-    ASSERT_TRUE(matrix_view.is_distributed());
+    ASSERT_TRUE(matrix_view.has_distribution());
+    ASSERT_FALSE(matrix_view.is_active());
     EXPECT_EQ(matrix_view.nrglb(), matrix.nrglb());
     EXPECT_EQ(matrix_view.ncglb(), matrix.ncglb());
     EXPECT_EQ(matrix_view.nrloc(), matrix.nrloc());
@@ -1405,11 +1421,13 @@ TEST(Matrix2dTest, SerialDistributionGatherReturnsHostRowMajorCopy)
     fill_global_values(matrix);
 
     const Matrix2d<double> gathered = matrix.gather();
-    EXPECT_FALSE(gathered.is_distributed());
+    EXPECT_FALSE(gathered.has_distribution());
+    EXPECT_FALSE(gathered.is_active());
     verify_global_matrix(gathered, make_host_reference<double>(3, 2));
 
     const Matrix2d<double> root_gathered = matrix.gather_on_root(0);
-    EXPECT_FALSE(root_gathered.is_distributed());
+    EXPECT_FALSE(root_gathered.has_distribution());
+    EXPECT_FALSE(root_gathered.is_active());
     verify_global_matrix(root_gathered, make_host_reference<double>(3, 2));
 }
 

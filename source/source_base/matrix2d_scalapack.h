@@ -1,6 +1,15 @@
 #ifndef ABACUS_SOURCE_SOURCE_BASE_MATRIX2D_SCALAPACK_H
 #define ABACUS_SOURCE_SOURCE_BASE_MATRIX2D_SCALAPACK_H
 
+/**
+ * @file matrix2d_scalapack.h
+ * @internal
+ * @brief Matrix2d ScaLAPACK backend declarations.
+ *
+ * Callers should include `source_base/matrix2d_linalg.h` instead of this
+ * header.
+ */
+
 #include <complex>
 
 template <typename T>
@@ -11,6 +20,8 @@ namespace matrix2d_impl
 {
 namespace scalapack
 {
+void assert_compatible_layout(const int* left_desc, const int* right_desc);
+
 void transpose(Matrix2dView<double> result,
                Matrix2dView<const double> source);
 void transpose(Matrix2dView<std::complex<double>> result,

@@ -36,6 +36,7 @@ add_library(
     matrix2d_collective.cpp
     matrix2d_lapack.cpp
     matrix2d_linalg.cpp
+    matrix2d_mpi.cpp
     matrix2d_reduction.cpp
     matrix2d_scalapack.cpp
     matrix3.cpp

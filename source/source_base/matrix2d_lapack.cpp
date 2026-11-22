@@ -4,6 +4,7 @@
 #include "source_base/matrix2d_view.h"
 
 #include <complex>
+#include <cstddef>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -12,7 +13,7 @@ namespace
 {
 void assert_host_layout(const Matrix2dView<double>& matrix)
 {
-    if (matrix.is_distributed() && !matrix.distribution()->is_serial())
+    if (matrix.is_active())
     {
         throw std::invalid_argument("LAPACK requires a host matrix view");
     }
@@ -20,7 +21,7 @@ void assert_host_layout(const Matrix2dView<double>& matrix)
 
 void assert_host_layout(const Matrix2dView<std::complex<double>>& matrix)
 {
-    if (matrix.is_distributed() && !matrix.distribution()->is_serial())
+    if (matrix.is_active())
     {
         throw std::invalid_argument("LAPACK requires a host matrix view");
     }
@@ -69,9 +70,10 @@ void inv(Matrix2dView<double> matrix)
     assert_host_layout(matrix);
     const int n = matrix.nrglb();
     assert_inverse_dimensions(n, matrix.ncglb());
+    const std::size_t n_ = static_cast<std::size_t>(n);
 
     const int lda = matrix.lld();
-    std::vector<int> ipiv(static_cast<std::size_t>(n));
+    std::vector<int> ipiv(n_);
     int info = 0;
     container::lapackConnector::getrf(
         /* m= */ n,
@@ -94,7 +96,8 @@ void inv(Matrix2dView<double> matrix)
         /* info= */ info);
     throw_lapack_error("LAPACK getri workspace query", info);
     lws = static_cast<int>(ws[0]);
-    ws.resize(static_cast<std::size_t>(lws));
+    const std::size_t lws_ = static_cast<std::size_t>(lws);
+    ws.resize(lws_);
     container::lapackConnector::getri(
         /* n= */ n,
         /* a= */ matrix.data(),
@@ -111,9 +114,10 @@ void inv(Matrix2dView<std::complex<double>> matrix)
     assert_host_layout(matrix);
     const int n = matrix.nrglb();
     assert_inverse_dimensions(n, matrix.ncglb());
+    const std::size_t n_ = static_cast<std::size_t>(n);
 
     const int lda = matrix.lld();
-    std::vector<int> ipiv(static_cast<std::size_t>(n));
+    std::vector<int> ipiv(n_);
     int info = 0;
     container::lapackConnector::getrf(
         /* m= */ n,
@@ -136,7 +140,8 @@ void inv(Matrix2dView<std::complex<double>> matrix)
         /* info= */ info);
     throw_lapack_error("LAPACK getri workspace query", info);
     lws = static_cast<int>(ws[0].real());
-    ws.resize(static_cast<std::size_t>(lws));
+    const std::size_t lws_ = static_cast<std::size_t>(lws);
+    ws.resize(lws_);
     container::lapackConnector::getri(
         /* n= */ n,
         /* a= */ matrix.data(),
@@ -156,9 +161,11 @@ void solve(Matrix2dView<double> matrix,
     const int n = matrix.nrglb();
     const int nrhs = rhs.ncglb();
     assert_solve_dimensions(n, matrix.ncglb(), rhs.nrglb());
+    const std::size_t n_ = static_cast<std::size_t>(n);
+    const std::size_t nrhs_ = static_cast<std::size_t>(nrhs);
 
     const int lda = matrix.lld();
-    std::vector<int> ipiv(static_cast<std::size_t>(n));
+    std::vector<int> ipiv(n_);
     int info = 0;
     container::lapackConnector::getrf(
         /* m= */ n,
@@ -170,19 +177,18 @@ void solve(Matrix2dView<double> matrix,
     throw_lapack_error("LAPACK getrf", info);
 
     // Column-major LAPACK right-hand side for A * X = B.
-    std::vector<double> b(
-        static_cast<std::size_t>(n) * static_cast<std::size_t>(nrhs));
+    std::vector<double> b(n_ * nrhs_);
     for (int i = 0; i < n; ++i)
     {
+        const std::size_t i_ = static_cast<std::size_t>(i);
         for (int j = 0; j < nrhs; ++j)
         {
-            b[static_cast<std::size_t>(i)
-              + static_cast<std::size_t>(j) * static_cast<std::size_t>(n)]
-                = rhs.atloc(i, j);
+            const std::size_t j_ = static_cast<std::size_t>(j);
+            b[i_ + j_ * n_] = rhs.atloc(i, j);
         }
     }
 
-    const char trans = matrix.is_distributed() ? 'N' : 'T';
+    const char trans = matrix.has_distribution() ? 'N' : 'T';
     container::lapackConnector::getrs(
         /* trans= */ trans,
         /* n= */ n,
@@ -197,11 +203,11 @@ void solve(Matrix2dView<double> matrix,
 
     for (int i = 0; i < n; ++i)
     {
+        const std::size_t i_ = static_cast<std::size_t>(i);
         for (int j = 0; j < nrhs; ++j)
         {
-            rhs.atloc(i, j)
-                = b[static_cast<std::size_t>(i)
-                    + static_cast<std::size_t>(j) * static_cast<std::size_t>(n)];
+            const std::size_t j_ = static_cast<std::size_t>(j);
+            rhs.atloc(i, j) = b[i_ + j_ * n_];
         }
     }
 }
@@ -214,9 +220,11 @@ void solve(Matrix2dView<std::complex<double>> matrix,
     const int n = matrix.nrglb();
     const int nrhs = rhs.ncglb();
     assert_solve_dimensions(n, matrix.ncglb(), rhs.nrglb());
+    const std::size_t n_ = static_cast<std::size_t>(n);
+    const std::size_t nrhs_ = static_cast<std::size_t>(nrhs);
 
     const int lda = matrix.lld();
-    std::vector<int> ipiv(static_cast<std::size_t>(n));
+    std::vector<int> ipiv(n_);
     int info = 0;
     container::lapackConnector::getrf(
         /* m= */ n,
@@ -228,19 +236,18 @@ void solve(Matrix2dView<std::complex<double>> matrix,
     throw_lapack_error("LAPACK getrf", info);
 
     // Column-major LAPACK right-hand side for A * X = B.
-    std::vector<std::complex<double>> b(
-        static_cast<std::size_t>(n) * static_cast<std::size_t>(nrhs));
+    std::vector<std::complex<double>> b(n_ * nrhs_);
     for (int i = 0; i < n; ++i)
     {
+        const std::size_t i_ = static_cast<std::size_t>(i);
         for (int j = 0; j < nrhs; ++j)
         {
-            b[static_cast<std::size_t>(i)
-              + static_cast<std::size_t>(j) * static_cast<std::size_t>(n)]
-                = rhs.atloc(i, j);
+            const std::size_t j_ = static_cast<std::size_t>(j);
+            b[i_ + j_ * n_] = rhs.atloc(i, j);
         }
     }
 
-    const char trans = matrix.is_distributed() ? 'N' : 'T';
+    const char trans = matrix.has_distribution() ? 'N' : 'T';
     container::lapackConnector::getrs(
         /* trans= */ trans,
         /* n= */ n,
@@ -255,11 +262,11 @@ void solve(Matrix2dView<std::complex<double>> matrix,
 
     for (int i = 0; i < n; ++i)
     {
+        const std::size_t i_ = static_cast<std::size_t>(i);
         for (int j = 0; j < nrhs; ++j)
         {
-            rhs.atloc(i, j)
-                = b[static_cast<std::size_t>(i)
-                    + static_cast<std::size_t>(j) * static_cast<std::size_t>(n)];
+            const std::size_t j_ = static_cast<std::size_t>(j);
+            rhs.atloc(i, j) = b[i_ + j_ * n_];
         }
     }
 }

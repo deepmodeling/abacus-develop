@@ -13,6 +13,22 @@ namespace matrix2d_impl
 {
 namespace scalapack
 {
+void assert_compatible_layout(const int* left_desc,
+                              const int* right_desc)
+{
+    if (left_desc == nullptr
+        || right_desc == nullptr
+        || left_desc[1] != right_desc[1]
+        || left_desc[4] != right_desc[4]
+        || left_desc[5] != right_desc[5]
+        || left_desc[6] != right_desc[6]
+        || left_desc[7] != right_desc[7])
+    {
+        throw std::invalid_argument(
+            "matrix operations require compatible ScaLAPACK descriptors");
+    }
+}
+
 void transpose(Matrix2dView<double> result,
                Matrix2dView<const double> source)
 {

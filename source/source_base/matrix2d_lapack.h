@@ -1,6 +1,15 @@
 #ifndef ABACUS_SOURCE_SOURCE_BASE_MATRIX2D_LAPACK_H
 #define ABACUS_SOURCE_SOURCE_BASE_MATRIX2D_LAPACK_H
 
+/**
+ * @file matrix2d_lapack.h
+ * @internal
+ * @brief Matrix2d LAPACK backend declarations.
+ *
+ * Callers should include `source_base/matrix2d_linalg.h` instead of this
+ * header.
+ */
+
 #include <complex>
 
 template <typename T>

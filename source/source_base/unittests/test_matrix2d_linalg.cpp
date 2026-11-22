@@ -395,6 +395,24 @@ TEST(Matrix2dLinalgTest, RejectsSingularAndMismatchedMatrices)
                  std::invalid_argument);
 }
 
+TEST(Matrix2dLinalgTest, RejectsSerialDistributionAgainstHostLayout)
+{
+    const std::shared_ptr<const Parallel_Blkcyclic> distrib
+        = make_frozen_distribution(2, 2);
+    Matrix2d<double> distributed(distrib);
+    Matrix2d<double> host(2, 2);
+
+    ASSERT_TRUE(distributed.has_distribution());
+    ASSERT_FALSE(distributed.is_active());
+    EXPECT_THROW(
+        matrix2d_linalg::axpby(host.view(),
+                               1.0,
+                               distributed.view(),
+                               0.0,
+                               host.view()),
+        std::invalid_argument);
+}
+
 #ifdef __MPI
 TEST(Matrix2dLinalgTest, DistributedRealAndComplexSolve)
 {

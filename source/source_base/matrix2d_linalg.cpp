@@ -20,7 +20,7 @@ namespace
 template <typename T>
 bool distribution_is_active(const Matrix2dView<T>& matrix)
 {
-    return matrix.is_distributed() && !matrix.distribution()->is_serial();
+    return matrix.is_active();
 }
 
 /**
@@ -30,7 +30,7 @@ bool distribution_is_active(const Matrix2dView<T>& matrix)
 template <typename T>
 bool distribution_is_serial(const Matrix2dView<T>& matrix)
 {
-    return matrix.is_distributed() && matrix.distribution()->is_serial();
+    return matrix.has_distribution() && matrix.distribution()->is_serial();
 }
 
 template <typename T, typename U>
@@ -47,12 +47,12 @@ template <typename T, typename U>
 void assert_compatible_layout(const Matrix2dView<T>& left,
                               const Matrix2dView<U>& right)
 {
-    if (left.is_distributed() != right.is_distributed())
+    if (left.has_distribution() != right.has_distribution())
     {
         throw std::invalid_argument(
             "matrix operations require matching host or distributed layouts");
     }
-    if (!left.is_distributed())
+    if (!left.has_distribution())
     {
         return;
     }
@@ -67,17 +67,13 @@ void assert_compatible_layout(const Matrix2dView<T>& left,
     {
         return;
     }
-    if (left.desc() == nullptr
-        || right.desc() == nullptr
-        || left.desc()[1] != right.desc()[1]
-        || left.desc()[4] != right.desc()[4]
-        || left.desc()[5] != right.desc()[5]
-        || left.desc()[6] != right.desc()[6]
-        || left.desc()[7] != right.desc()[7])
-    {
-        throw std::invalid_argument(
-            "matrix operations require compatible distributed layouts");
-    }
+#ifdef __MPI
+    matrix2d_impl::scalapack::assert_compatible_layout(left.desc(),
+                                                       right.desc());
+#else
+    throw std::invalid_argument(
+        "matrix operations require MPI-compatible distributed layouts");
+#endif
 }
 
 template <typename T>
@@ -125,6 +121,9 @@ void axpby_impl(Matrix2dView<T> result,
     assert_same_shape(result, right);
     assert_compatible_layout(result, left);
     assert_compatible_layout(result, right);
+#ifdef _OPENMP
+#pragma omp parallel for collapse(2) schedule(static)
+#endif
     for (int i = 0; i < result.nrloc(); ++i)
     {
         for (int j = 0; j < result.ncloc(); ++j)
@@ -138,6 +137,9 @@ void axpby_impl(Matrix2dView<T> result,
 template <typename T>
 void scale_impl(Matrix2dView<T> matrix, const T factor)
 {
+#ifdef _OPENMP
+#pragma omp parallel for collapse(2) schedule(static)
+#endif
     for (int i = 0; i < matrix.nrloc(); ++i)
     {
         for (int j = 0; j < matrix.ncloc(); ++j)
@@ -193,7 +195,7 @@ void assert_solve_views(const Matrix2dView<double>& matrix,
         throw std::invalid_argument(
             "linear solve requires a square matrix and matching right-hand side");
     }
-    if (matrix.is_distributed() != rhs.is_distributed())
+    if (matrix.has_distribution() != rhs.has_distribution())
     {
         throw std::invalid_argument(
             "linear solve requires matching host or distributed layouts");
@@ -207,18 +209,17 @@ void assert_solve_views(const Matrix2dView<double>& matrix,
     {
         return;
     }
-    if (matrix.is_distributed()
-        && (matrix.desc() == nullptr
-            || rhs.desc() == nullptr
-            || matrix.desc()[1] != rhs.desc()[1]
-            || matrix.desc()[4] != rhs.desc()[4]
-            || matrix.desc()[5] != rhs.desc()[5]
-            || matrix.desc()[6] != rhs.desc()[6]
-            || matrix.desc()[7] != rhs.desc()[7]))
+    if (!matrix.has_distribution())
     {
-        throw std::invalid_argument(
-            "linear solve requires compatible distributed layouts");
+        return;
     }
+#ifdef __MPI
+    matrix2d_impl::scalapack::assert_compatible_layout(matrix.desc(),
+                                                       rhs.desc());
+#else
+    throw std::invalid_argument(
+        "linear solve requires MPI-compatible distributed layouts");
+#endif
 }
 
 void assert_solve_views(const Matrix2dView<std::complex<double>>& matrix,
@@ -231,7 +232,7 @@ void assert_solve_views(const Matrix2dView<std::complex<double>>& matrix,
         throw std::invalid_argument(
             "linear solve requires a square matrix and matching right-hand side");
     }
-    if (matrix.is_distributed() != rhs.is_distributed())
+    if (matrix.has_distribution() != rhs.has_distribution())
     {
         throw std::invalid_argument(
             "linear solve requires matching host or distributed layouts");
@@ -245,18 +246,17 @@ void assert_solve_views(const Matrix2dView<std::complex<double>>& matrix,
     {
         return;
     }
-    if (matrix.is_distributed()
-        && (matrix.desc() == nullptr
-            || rhs.desc() == nullptr
-            || matrix.desc()[1] != rhs.desc()[1]
-            || matrix.desc()[4] != rhs.desc()[4]
-            || matrix.desc()[5] != rhs.desc()[5]
-            || matrix.desc()[6] != rhs.desc()[6]
-            || matrix.desc()[7] != rhs.desc()[7]))
+    if (!matrix.has_distribution())
     {
-        throw std::invalid_argument(
-            "linear solve requires compatible distributed layouts");
+        return;
     }
+#ifdef __MPI
+    matrix2d_impl::scalapack::assert_compatible_layout(matrix.desc(),
+                                                       rhs.desc());
+#else
+    throw std::invalid_argument(
+        "linear solve requires MPI-compatible distributed layouts");
+#endif
 }
 } // namespace
 
