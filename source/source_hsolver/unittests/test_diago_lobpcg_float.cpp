@@ -42,7 +42,7 @@ class DenseOperator : public hsolver::HSOperator<Complex>
             {
                 for (int i = 0; i < local_; ++i)
                 {
-                    full[j] += h_[i + j * local_] * x[i + band * ld];
+                    full[j] += std::conj(h_[i + j * local_]) * x[i + band * ld];
                 }
             }
 #ifdef __MPI
@@ -78,6 +78,27 @@ hsolver::diag_comm_info comm_info()
 #else
     return hsolver::diag_comm_info(0, 1);
 #endif
+}
+
+TEST(LobpcgFloatOperator, AppliesHermitianMatrix)
+{
+    const auto comm = comm_info();
+    const int n = 2;
+    ASSERT_EQ(n % comm.nproc, 0);
+    const int local = n / comm.nproc;
+    const int first = comm.rank * local;
+    // Column-major H = [[1, 2+3i], [2-3i, 4]]; x = [1, 2i].
+    const std::vector<Complex> h = {Complex(1, 0), Complex(2, -3), Complex(2, 3), Complex(4, 0)};
+    const std::vector<Complex> x = {Complex(1, 0), Complex(0, 2)};
+    const std::vector<Complex> expected = {Complex(-5, 4), Complex(2, 5)};
+    DenseOperator op(h, n, comm);
+    std::vector<Complex> hx(local);
+    const Complex* local_x = x.data() + first;
+    op.hpsi(local_x, hx.data(), local, 1);
+    for (int i = 0; i < local; ++i)
+    {
+        EXPECT_EQ(hx[i], expected[first + i]);
+    }
 }
 
 TEST_P(LobpcgFloat, ConvergesAndMatchesLapack)
