@@ -31,7 +31,14 @@ def read_symrot_operations(text):
     start = next(i for i, line in enumerate(lines) if line == "0")
 
     def one_block(cursor):
-        rotation = [int(x) for row in lines[cursor + 1:cursor + 4] for x in row.split()]
+        # ABACUS prints these through std::to_string, so "-1" arrives as
+        # "-1.000000"; the rotations are integers only up to the print format.
+        values = [float(x) for row in lines[cursor + 1:cursor + 4] for x in row.split()]
+        assert len(values) == 9, "Expected a 3x3 rotation in {}".format(lines[cursor:cursor + 5])
+        rotation = []
+        for value in values:
+            assert abs(value - round(value)) < 1e-8, "Noninteger symmetry rotation: {}".format(value)
+            rotation.append(int(round(value)))
         translation = lines[cursor + 4]
         assert translation.startswith("(") and translation.endswith(")")
         return rotation

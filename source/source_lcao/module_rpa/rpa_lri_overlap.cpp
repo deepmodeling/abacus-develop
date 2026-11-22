@@ -119,7 +119,7 @@ void RPA_LRI<T, Tdata>::cal_large_Cs(const UnitCell& ucell, const LCAO_Orbitals&
         ModuleBase::GlobalFunc::DONE(this->runtime.log, "Vs_period_comm");
 
         Exx_LRI<double>* cut_coulomb = exx_cut_coulomb.get();
-        this->out_coulomb_k(ucell, this->Vs_period, "coulomb_unshrinked_cut_", cut_coulomb);
+        this->out_coulomb_k(ucell, this->Vs_period, "librpa_coulomb_unshrinked_cut_", cut_coulomb);
         ModuleBase::GlobalFunc::DONE(this->runtime.log, "out_large_Vs");
         this->Vs_period.clear();
         this->Vs_period.swap(tmp);
@@ -314,7 +314,7 @@ void RPA_LRI<T, Tdata>::cal_abfs_overlap(const UnitCell& ucell, const LCAO_Orbit
     }
     else
     {
-        out_abfs_overlap(ucell, overlap_abfs_abfs_IJ, overlap_abfs_abf_IJ, "shrink_sinvS_", index_abfs_s, index_abfs);
+        out_abfs_overlap(ucell, overlap_abfs_abfs_IJ, overlap_abfs_abf_IJ, "librpa_shrink_sinvS_", index_abfs_s, index_abfs);
     }
 }
 

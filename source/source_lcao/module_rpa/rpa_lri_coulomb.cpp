@@ -67,7 +67,7 @@ void RPA_LRI<T, Tdata>::output_cut_coulomb_cs(const UnitCell& ucell, Exx_LRI<dou
     }
     else
     {
-        this->out_coulomb_k(ucell, this->Vs_period, "coulomb_cut_", exx_lri_rpa);
+        this->out_coulomb_k(ucell, this->Vs_period, "librpa_coulomb_cut_", exx_lri_rpa);
     }
     Vs_period.clear();
     Vs_period.swap(tmp);
@@ -289,7 +289,7 @@ void RPA_LRI<T, Tdata>::output_ewald_coulomb(const UnitCell& ucell, const K_Vect
     }
     else
     {
-        this->out_coulomb_k(ucell, this->Vs_period, "coulomb_mat_", exx_full_coulomb.get());
+        this->out_coulomb_k(ucell, this->Vs_period, "librpa_coulomb_mat_", exx_full_coulomb.get());
     }
     Vs_period.clear();
     Vs_period.swap(tmp);
