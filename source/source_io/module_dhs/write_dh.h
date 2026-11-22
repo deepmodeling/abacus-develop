@@ -66,8 +66,11 @@ inline std::vector<int> dh_atom_filter(const std::vector<int>& param)
 }
 
 // Shared writer for the per-atom-I dH terms. For every differentiated atom I it writes:
-//   - dH(R) in CSR real-space format  ({rprefix}{x,y,z}_iat{I}...)
-//   - dH(k) dense matrices            ({kprefix}{x,y,z}_iat{I}...) folded like H(k),
+//   - dH(R) in CSR real-space format  ({rprefix}{x,y,z}_ia{I}s{spin}[g{step}].csr,
+//     via dhr_gen_fname; spin suffix always present)
+//   - dH(k) dense matrices            ({kprefix}{k}{x,y,z}_ia{I}[s{spin}][g{step}]_nao.txt,
+//     via dhk_gen_fname; k is the 1-based k-point index and is always present, the spin
+//     suffix only appears when nspin = 2) folded like H(k),
 //     so they can be compared directly with the H(k) term matrices (*_nao.txt).
 // g[d] are nat per-I HContainers for direction d=0..2 (already filled by an operator's cal_dH).
 // atom_filter: if non-empty, only the listed 0-based atom indices are written; empty = all atoms.

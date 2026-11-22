@@ -36,6 +36,7 @@ void bcast_bool(bool& object);
 
 #ifdef __MPI
 //(3) bcast single on an explicit communicator, from the communicator's rank 0
+void bcast_bool(bool& object, const MPI_Comm& comm);
 void bcast_mpi_offset(MPI_Offset& object, const MPI_Comm& comm);
 #endif
 

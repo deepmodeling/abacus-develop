@@ -44,10 +44,15 @@ The regular `Abacus` calculator runs one ABACUS calculation for each ASE propert
 The ASE calculator uses the final parsed frame for SCF, native relaxation, and
 native MD. The readers restore ASE atom order using the mapping created when
 the calculator writes STRU. Each calculator retains its own LTS/develop reader.
-For native MD, geometry, energy and electronic results must cover the same
-steps. Use `md_dumpfreq=1` and keep `MD_dump` with `running_md.log` (and
-`eig_occ.txt` for develop). The readers do not align sparse dumps. Older LTS
-logs that already contain every geometry can be read without `MD_dump`.
+For native MD, the geometry in `MD_dump` must cover the steps in
+`running_md.log`; use `md_dumpfreq=1`. The readers do not align sparse
+geometry dumps. Older LTS logs with complete geometry can be read without
+`MD_dump`.
+
+For the develop reader, keep any `eig_occ.txt` or `eig_occg{N}.txt` files
+with the log. Eigenvalues and occupations are matched by ionic step. If
+no spectrum was written for a step, its energy and forces can still be
+read, but its eigenvalues and occupations are unavailable.
 
 Both output readers accept paths or named text streams, using the log filename
 to locate companion output files. Caller-owned streams remain open and are read

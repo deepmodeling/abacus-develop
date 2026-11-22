@@ -43,7 +43,7 @@ void ModuleIO::ctrl_iter_pw(const int istep,
     int istep_in = -1;
     int iter_in = -1;
     bool out_wfc_flag = false;
-    const int output_frequency = inp.esolver_type == "tddft" ? inp.out_freq_td : inp.out_freq_ion;
+    const int output_frequency = inp.out_freq_ion;
     if (output_frequency > 0)
     {
         if (istep % output_frequency == 0)
@@ -125,7 +125,7 @@ void ModuleIO::ctrl_scf_pw(const int istep,
     ModuleBase::TITLE("ModuleIO", "ctrl_scf_pw");
     ModuleBase::timer::start("ModuleIO", "ctrl_scf_pw");
 
-    const int output_frequency = inp.esolver_type == "tddft" ? inp.out_freq_td : inp.out_freq_ion;
+    const int output_frequency = inp.out_freq_ion;
     const bool selected_step = output_frequency == 0 || (output_frequency > 0 && istep % output_frequency == 0);
     const bool output_td_state = inp.esolver_type != "tddft" || selected_step;
 
@@ -304,6 +304,7 @@ void ModuleIO::ctrl_runner_pw(UnitCell& ucell,
                               pseudopot_cell_vnl& ppcell,
                               surchem& solvent,
                               Parallel_Grid& para_grid,
+                              const int istep,
                               const Input_para& inp,
                               std::ofstream& ofs_running)
 {
@@ -330,6 +331,7 @@ void ModuleIO::ctrl_runner_pw(UnitCell& ucell,
                               inp.out_ldos,
                               inp.stm_bias,
                               inp.nspin,
+                              istep,
                               global_dos_dir,
                               PARAM.globalv.two_fermi,
                               inp.nbands,
@@ -498,6 +500,7 @@ template void ModuleIO::ctrl_runner_pw<std::complex<float>, base_device::DEVICE_
                                                                                      pseudopot_cell_vnl& ppcell,
                                                                                      surchem& solvent,
                                                                                      Parallel_Grid& para_grid,
+                                                                                     const int istep,
                                                                                      const Input_para& inp,
                                                                                      std::ofstream& ofs_running);
 
@@ -514,6 +517,7 @@ template void ModuleIO::ctrl_runner_pw<std::complex<double>, base_device::DEVICE
                                                                                       pseudopot_cell_vnl& ppcell,
                                                                                       surchem& solvent,
                                                                                       Parallel_Grid& para_grid,
+                                                                                      const int istep,
                                                                                       const Input_para& inp,
                                                                                       std::ofstream& ofs_running);
 
@@ -531,6 +535,7 @@ template void ModuleIO::ctrl_runner_pw<std::complex<float>, base_device::DEVICE_
                                                                                      pseudopot_cell_vnl& ppcell,
                                                                                      surchem& solvent,
                                                                                      Parallel_Grid& para_grid,
+                                                                                     const int istep,
                                                                                      const Input_para& inp,
                                                                                      std::ofstream& ofs_running);
 
@@ -547,6 +552,7 @@ template void ModuleIO::ctrl_runner_pw<std::complex<double>, base_device::DEVICE
                                                                                       pseudopot_cell_vnl& ppcell,
                                                                                       surchem& solvent,
                                                                                       Parallel_Grid& para_grid,
+                                                                                      const int istep,
                                                                                       const Input_para& inp,
                                                                                       std::ofstream& ofs_running);
 #endif

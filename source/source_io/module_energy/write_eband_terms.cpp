@@ -2,6 +2,7 @@
 
 #include "source_io/module_hs/vxc_op_tools.h"
 #include "source_io/module_output/provenance_header.h"
+#include "source_io/module_output/write_notice.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_lcao/module_operator_lcao/ekinetic.h"
 #include "source_lcao/module_operator_lcao/nonlocal.h"
@@ -29,6 +30,7 @@ namespace ModuleIO
 template <typename TK, typename TR>
 void write_eband_terms(const int nspin,
                        const int istep,
+                       const int out_app_flag,
                        const double etot,
                        const int my_rank,
                        const int nbasis,
@@ -46,7 +48,8 @@ void write_eband_terms(const int nspin,
                        Grid_Driver& gd,
                        const std::vector<double>& orb_cutoff,
                        const LCAO_Orbitals& orb,
-                       const TwoCenterBundle& two_center_bundle
+                       const TwoCenterBundle& two_center_bundle,
+                       std::ofstream& ofs_running
 )
     {
         // 0. prepare
@@ -71,7 +74,7 @@ void write_eband_terms(const int nspin,
 
         // Only rank 0 writes; the orbital energies above are reduced on all ranks.
         auto write_term = [&](const std::vector<std::vector<double>>& e_orb,
-                              const std::string& out_name,
+                              const std::string& out_stem,
                               const std::string& term_symbol)
         {
             if (my_rank != 0)
@@ -80,7 +83,14 @@ void write_eband_terms(const int nspin,
             }
             const std::string header = build_eband_header(istep, etot_eV, term_symbol, time_stamp);
             const std::string& out_dir = PARAM.globalv.global_out_dir;
-            write_orb_energy(kv, nspin0, nbands, e_orb, out_name, header, out_dir);
+            const std::string out_name = eband_filename(out_stem, istep, out_app_flag);
+            // Mode 1 appends the frames written after the first ionic step;
+            // modes 0 and 2 truncate (mode 2 writes a separate g{step} file).
+            const bool append = (out_app_flag == 1) && (istep > 0);
+            write_orb_energy(kv, nspin0, nbands, e_orb, out_name, header, out_dir, append);
+            const std::string property = "Band-decomposed " + term_symbol + " energy";
+            const std::string out_path = out_dir + out_name;
+            ModuleIO::write_notice(ofs_running, property, out_path);
         };
 
         auto all_band_energy = [&wg](const int ik, const std::vector<double>& e_orb)->double
@@ -128,7 +138,7 @@ void write_eband_terms(const int nspin,
                     cVc(kinetic_k_ao.get_hk(), &psi(ik, 0, 0), nbasis, nbands, *pv, p2d), p2d));
             }
 
-            write_term(e_orb_kinetic, "eband_kin.txt", "T");
+            write_term(e_orb_kinetic, "eband_kin", "T");
         }
 
         // 2. pp: local
@@ -160,7 +170,7 @@ void write_eband_terms(const int nspin,
                 e_orb_pp_local.emplace_back(orbital_energy(ik, nbands,
                     cVc(v_pp_local_k_ao.get_hk(), &psi(ik, 0, 0), nbasis, nbands, *pv, p2d), p2d));
             }
-            write_term(e_orb_pp_local, "eband_vl.txt", "V_loc");
+            write_term(e_orb_pp_local, "eband_vl", "V_loc");
         }
 
         // 3. pp: nonlocal
@@ -180,7 +190,7 @@ void write_eband_terms(const int nspin,
                 e_orb_pp_nonlocal.emplace_back(orbital_energy(ik, nbands,
                     cVc(v_pp_nonlocal_k_ao.get_hk(), &psi(ik, 0, 0), nbasis, nbands, *pv, p2d), p2d));
             }
-            write_term(e_orb_pp_nonlocal, "eband_vnl.txt", "V_nonlocal");
+            write_term(e_orb_pp_nonlocal, "eband_vnl", "V_nonlocal");
         }
 
         // 4. hartree
@@ -213,33 +223,33 @@ void write_eband_terms(const int nspin,
                     cVc(v_hartree_k_ao.get_hk(), &psi(ik, 0, 0), nbasis, nbands, *pv, p2d), p2d));
             }
             for (auto& op : v_hartree_op) { delete op; }
-            write_term(e_orb_hartree, "eband_hart.txt", "V_H");
+            write_term(e_orb_hartree, "eband_hart", "V_H");
         }
         // NOTE: the XC term (eband_vxc.txt etc.) is written by write_Vxc from
-        // ctrl_runner_lcao.cpp for both out_mat_xc and out_eband,
+        // ctrl_scf_lcao.cpp for both out_mat_xc and out_eband,
         // so it is intentionally not handled here.
     }
 
 // Explicit template instantiations
 template void write_eband_terms<double, double>(
-    const int, const int, const double, const int, const int, const Parallel_Orbitals*, const psi::Psi<double>&,
+    const int, const int, const int, const double, const int, const int, const Parallel_Orbitals*, const psi::Psi<double>&,
     const UnitCell&, Structure_Factor&, surchem&, const ModulePW::PW_Basis&, const ModulePW::PW_Basis&,
     const ModuleBase::matrix&, const Charge&, const K_Vectors&, const ModuleBase::matrix&, Grid_Driver&,
-    const std::vector<double>&, const LCAO_Orbitals&, const TwoCenterBundle&
+    const std::vector<double>&, const LCAO_Orbitals&, const TwoCenterBundle&, std::ofstream&
 );
 
 template void write_eband_terms<std::complex<double>, double>(
-    const int, const int, const double, const int, const int, const Parallel_Orbitals*, const psi::Psi<std::complex<double>>&,
+    const int, const int, const int, const double, const int, const int, const Parallel_Orbitals*, const psi::Psi<std::complex<double>>&,
     const UnitCell&, Structure_Factor&, surchem&, const ModulePW::PW_Basis&, const ModulePW::PW_Basis&,
     const ModuleBase::matrix&, const Charge&, const K_Vectors&, const ModuleBase::matrix&, Grid_Driver&,
-    const std::vector<double>&, const LCAO_Orbitals&, const TwoCenterBundle&
+    const std::vector<double>&, const LCAO_Orbitals&, const TwoCenterBundle&, std::ofstream&
 );
 
 template void write_eband_terms<std::complex<double>, std::complex<double>>(
-    const int, const int, const double, const int, const int, const Parallel_Orbitals*, const psi::Psi<std::complex<double>>&,
+    const int, const int, const int, const double, const int, const int, const Parallel_Orbitals*, const psi::Psi<std::complex<double>>&,
     const UnitCell&, Structure_Factor&, surchem&, const ModulePW::PW_Basis&, const ModulePW::PW_Basis&,
     const ModuleBase::matrix&, const Charge&, const K_Vectors&, const ModuleBase::matrix&, Grid_Driver&,
-    const std::vector<double>&, const LCAO_Orbitals&, const TwoCenterBundle&
+    const std::vector<double>&, const LCAO_Orbitals&, const TwoCenterBundle&, std::ofstream&
 );
 
 } // namespace ModuleIO
