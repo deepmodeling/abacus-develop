@@ -68,3 +68,30 @@ TEST(Matrix, EmptyMatrixHasNoStorage)
     EXPECT_EQ(m.nc, 4);
     EXPECT_EQ(m.c, nullptr);
 }
+
+// Squaring 1e200 overflows and squaring 1e-200 underflows to zero, so the
+// norm must be accumulated without forming the squares directly.
+TEST(MatrixNorm, LargeMagnitudeDoesNotOverflow)
+{
+    ModuleBase::matrix m(1, 1, true);
+    m(0, 0) = 1.0e200;
+
+    EXPECT_DOUBLE_EQ(m.norm(), 1.0e200);
+}
+
+TEST(MatrixNorm, SmallMagnitudeDoesNotUnderflow)
+{
+    ModuleBase::matrix m(1, 1, true);
+    m(0, 0) = 1.0e-200;
+
+    EXPECT_DOUBLE_EQ(m.norm(), 1.0e-200);
+}
+
+TEST(MatrixNorm, MixedMagnitudesKeepTheLargerOne)
+{
+    ModuleBase::matrix m(1, 2, true);
+    m(0, 0) = 1.0e200;
+    m(0, 1) = 1.0e-200;
+
+    EXPECT_DOUBLE_EQ(m.norm(), 1.0e200);
+}

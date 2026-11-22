@@ -138,8 +138,8 @@ struct NL_elem
  */
 void single_overlap(const ST_env& env,
                     const ST_elem& e,
-                    int& nnr,       // output value
-                    int& total_nnr, // output value
+                    std::size_t& nnr,       // output value
+                    std::size_t& total_nnr, // output value
                     double* olm,    // output value
                     double* HSloc); // output value
 
@@ -149,8 +149,8 @@ void single_overlap(const ST_env& env,
 void single_deriv(const ST_env& env,
                   const ST_elem& e,
                   ForceStressArrays& fsr,
-                  int& nnr,       // output value
-                  int& total_nnr, // output value
+                  std::size_t& nnr,       // output value
+                  std::size_t& total_nnr, // output value
                   double* olm);   // output value
 
 /**

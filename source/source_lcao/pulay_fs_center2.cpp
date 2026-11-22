@@ -31,7 +31,9 @@ void PulayForceStress::cal_pulay_fs(
 
             if (mu >= 0 && nu >= 0)
             {
-                const int index = mu * pv.para_2d().ncloc() + nu;
+                const std::size_t index = static_cast<std::size_t>(mu)
+                                        * static_cast<std::size_t>(pv.para_2d().ncloc())
+                                        + static_cast<std::size_t>(nu);
                 double sum = 0.0;
                 for (int is = 0; is < nspin; ++is) 
                 { 
@@ -90,7 +92,7 @@ void PulayForceStress::cal_pulay_fs(
             const double** dHSx, 
             const double** dHSxy, 
             const double* dtau, 
-            const int& irr)
+            const std::size_t& irr)
     {
         int ij = 0;
         for (int i = 0; i < 3; ++i) 
@@ -127,7 +129,7 @@ void PulayForceStress::cal_pulay_fs(
             const double** dHSx, 
             const double** dHSxy, 
             const double* dtau, 
-            const int& irr)
+            const std::size_t& irr)
     {
         for (int i = 0; i < 3; ++i) 
         { 

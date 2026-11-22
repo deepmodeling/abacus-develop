@@ -449,15 +449,38 @@ double matrix::norm() const
 // mohan add 2021-04-25, no tests.
     const std::size_t size = matrix_size(nr, nc);
 #ifdef  __NORMAL
-    double nn = 0.0;
+    // Scale the sum of squares so extreme magnitudes neither overflow
+    // (1e200 * 1e200) nor underflow (1e-200 * 1e-200) to a wrong result.
+    double scale = 0.0;
+    double ssq = 1.0;
     for(std::size_t i=0; i<size; ++i)
     {
-        nn += c[i]*c[i];
-    }	
-    return sqrt(nn);
+        const double ax = std::abs(c[i]);
+        if (ax == 0.0)
+        {
+            continue;
+        }
+        if (scale < ax)
+        {
+            const double ratio = scale / ax;
+            ssq = 1.0 + ssq * ratio * ratio;
+            scale = ax;
+        }
+        else
+        {
+            const double ratio = ax / scale;
+            ssq += ratio * ratio;
+        }
+    }
+    if (scale == 0.0)
+    {
+        return 0.0;
+    }
+    return scale * std::sqrt(ssq);
 #else
     // BLAS takes an int length.  Chunk the vector so a matrix with more than
-    // INT_MAX elements is never passed as a negative or wrapped length.
+    // INT_MAX elements is never passed as a negative or wrapped length, and
+    // combine the chunk norms with hypot() instead of squaring them.
     double nn = 0.0;
     const std::size_t chunk_limit = static_cast<std::size_t>(1) << 30;
     for (std::size_t offset = 0; offset < size; offset += chunk_limit)
@@ -466,9 +489,9 @@ double matrix::norm() const
         const std::size_t chunk_size = remaining > chunk_limit ? chunk_limit : remaining;
         const int chunk = static_cast<int>(chunk_size);
         const double partial = BlasConnector::nrm2(chunk, c + offset, 1);
-        nn += partial * partial;
+        nn = std::hypot(nn, partial);
     }
-    return sqrt(nn);
+    return nn;
 #endif
 }
 
