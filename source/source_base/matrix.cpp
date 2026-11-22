@@ -164,7 +164,7 @@ matrix operator+(const matrix &m1, const matrix &m2)
 
     matrix tm(m1);
     const std::size_t size = matrix_size(m1.nr, m1.nc);
-    for (std::size_t i = 0; i < size; i++) 
+    for (std::size_t i = 0; i < size; i++)
     {
         tm.c[i] += m2.c[i];
     }
@@ -179,7 +179,7 @@ matrix operator-(const matrix &m1, const matrix &m2)
 
     matrix tm(m1);
     const std::size_t size = matrix_size(m1.nr, m1.nc);
-    for(std::size_t i = 0; i < size; i++) 
+    for(std::size_t i = 0; i < size; i++)
     {
         tm.c[i] -= m2.c[i];
     }
@@ -229,7 +229,7 @@ matrix operator*(const double &s, const matrix &m)
 {
     matrix sm(m);
     const std::size_t size = matrix_size(m.nr, m.nc);
-    for (std::size_t i = 0; i < size; i++) 
+    for (std::size_t i = 0; i < size; i++)
     {
         sm.c[i] *= s;
     }
@@ -252,7 +252,7 @@ matrix operator*(const matrix &m,const double &s)
 void matrix::operator*=(const double &s)
 {
     const std::size_t size = matrix_size(nr, nc);
-    for (std::size_t i = 0; i < size; i++) 
+    for (std::size_t i = 0; i < size; i++)
         c[i] *= s;
 }
 
@@ -267,7 +267,7 @@ void matrix::operator+=(const matrix & m)
     assert( nc==m.nc );
     const std::size_t size = matrix_size(nr, nc);
     const double * const c_in = m.c;
-    for( std::size_t i = 0; i < size; ++i ) 
+    for( std::size_t i = 0; i < size; ++i )
     {
         c[i] += c_in[i];
     }
@@ -285,7 +285,7 @@ void matrix::operator-=(const matrix & m)
     assert( nc==m.nc );
     const std::size_t size = matrix_size(nr, nc);
     const double * const c_in = m.c;
-    for( std::size_t i = 0; i < size; ++i ) 
+    for( std::size_t i = 0; i < size; ++i )
     {
         c[i] -= c_in[i];
     }

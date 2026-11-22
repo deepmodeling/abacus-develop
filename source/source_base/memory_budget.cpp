@@ -250,9 +250,10 @@ LcaoDenseEstimate estimate_lcao_dense(const std::size_t nrloc,
         estimate.elpa_work_bytes = matrix_bytes;
     }
 
-    estimate.per_rank_total_bytes = saturating_add(
-        saturating_add(saturating_add(estimate.hk_bytes, estimate.sk_bytes), estimate.dmk_bytes),
-        saturating_add(estimate.psi_bytes, estimate.elpa_work_bytes));
+    const std::size_t hs_bytes = saturating_add(estimate.hk_bytes, estimate.sk_bytes);
+    const std::size_t hsdmk_bytes = saturating_add(hs_bytes, estimate.dmk_bytes);
+    const std::size_t psi_elpa_bytes = saturating_add(estimate.psi_bytes, estimate.elpa_work_bytes);
+    estimate.per_rank_total_bytes = saturating_add(hsdmk_bytes, psi_elpa_bytes);
     return estimate;
 }
 
