@@ -4,6 +4,8 @@
 
 #include "qlist.h"
 
+#include <limits>
+
 #include "module_symmetry/symmetry.h"
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
@@ -140,6 +142,19 @@ void QList::read_from_file(const std::string& filename, UnitCell& ucell) {
         }
 
         ifq >> this->nmp[0] >> this->nmp[1] >> this->nmp[2];
+        // Check each dimension before multiplying: a negative pair has a
+        // positive product, and the product itself can overflow even in 64-bit.
+        const bool dims_positive = this->nmp[0] > 0 && this->nmp[1] > 0 && this->nmp[2] > 0;
+        const bool product_fits_int =
+            dims_positive && this->nmp[0] <= std::numeric_limits<int>::max() / this->nmp[1]
+            && this->nmp[0] * this->nmp[1] <= std::numeric_limits<int>::max() / this->nmp[2];
+        if (!ifq || !dims_positive || !product_fits_int)
+        {
+            ModuleBase::WARNING("QList::read_from_file",
+                                "invalid Monkhorst-Pack grid dimensions in the q-points file.");
+            this->nkstot = this->nks = 0;
+            return;
+        }
         double koffset[3] = {0.0, 0.0, 0.0};
         if (!(ifq >> koffset[0] >> koffset[1] >> koffset[2]))
         {

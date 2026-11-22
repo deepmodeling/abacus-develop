@@ -35,6 +35,11 @@ bool read_atom_species(std::ifstream& ifa,
             std::stringstream ss;
             ss << one_line;
             ss >> ucell.atoms[i].label >> ucell.atoms[i].mass;
+            if (ss.fail())
+            {
+                ModuleBase::WARNING_QUIT("read_atom_species",
+                                         "invalid ATOMIC_SPECIES line: failed to read element label and mass");
+            }
             ucell.pseudo_fn[i] = "auto";
             ucell.pseudo_type[i] = "auto";
 
@@ -180,12 +185,18 @@ bool read_lattice_constant(std::ifstream& ifa,
             // Reading lattice vectors. notice
             // here that only one cpu read these
             // parameters.
-            ifa >> latvec.e11 >> latvec.e12;
-            ModuleBase::GlobalFunc::READ_VALUE(ifa, latvec.e13);
-            ifa >> latvec.e21 >> latvec.e22;
-            ModuleBase::GlobalFunc::READ_VALUE(ifa, latvec.e23);
-            ifa >> latvec.e31 >> latvec.e32;
-            ModuleBase::GlobalFunc::READ_VALUE(ifa, latvec.e33);
+            std::string latvec_line_rest;
+            ifa >> latvec.e11 >> latvec.e12 >> latvec.e13;
+            std::getline(ifa, latvec_line_rest); // swallow inline comments after each row
+            ifa >> latvec.e21 >> latvec.e22 >> latvec.e23;
+            std::getline(ifa, latvec_line_rest);
+            ifa >> latvec.e31 >> latvec.e32 >> latvec.e33;
+            if (ifa.fail())
+            {
+                ModuleBase::WARNING_QUIT("unitcell::read_lattice_constant",
+                                         "invalid LATTICE_VECTORS: failed to read 9 lattice vector components");
+            }
+            std::getline(ifa, latvec_line_rest);
         }
     }//supply lattice vectors
     else

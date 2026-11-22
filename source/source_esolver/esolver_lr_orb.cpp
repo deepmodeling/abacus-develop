@@ -1,18 +1,18 @@
 // LR orbital distributions, excitation amplitudes, and ground-state file input.
 #include "esolver_lr_lcao_tddft.h"
-#include "source_lcao/module_lr/utils/lr_util.h"
-#include "source_lcao/module_lr/ri_benchmark/ri_benchmark.h"
-#include "source_io/module_wf/read_wfc_nao.h"
-#include "source_io/module_output/cube_io.h"
-#include "source_estate/module_charge/chg_rhog_io.h"
-#include "source_base/module_parallel/para_bridge.h"
 #include "source_base/module_external/scalapack_connector.h"
+#include "source_base/module_parallel/para_bridge.h"
+#include "source_estate/module_charge/chg_rhog_io.h"
+#include "source_io/module_output/cube_io.h"
+#include "source_io/module_wf/read_wfc_nao.h"
+#include "source_lcao/module_lr/ri_benchmark/ri_benchmark.h"
+#include "source_lcao/module_lr/utils/lr_util.h"
 #include <algorithm>
 
 using namespace LR;
 
-template<typename T, typename TR>
-void ModuleESolver::ESolver_LR<T, TR>::set_parallel_orbitals_band(Parallel_Orbitals& pmat, const int nbands_in)
+template <typename T, typename TR>
+void ModuleESolver::ESolver_LR<T, TR>::set_parallel_orbitals_band(Parallel_Orbitals &pmat, const int nbands_in)
 {
 #ifdef __MPI
     pmat.set_wfc_and_mo_layouts(this->nbasis, nbands_in);
@@ -39,7 +39,7 @@ void ModuleESolver::ESolver_LR<T, TR>::set_parallel_orbitals_band(Parallel_Orbit
 #endif
 }
 
-template<typename T, typename TR>
+template <typename T, typename TR>
 void ModuleESolver::ESolver_LR<T, TR>::setup_eigenvectors_X()
 {
     ModuleBase::TITLE("ESolver_LR", "setup_eigenvectors_X");
@@ -47,20 +47,22 @@ void ModuleESolver::ESolver_LR<T, TR>::setup_eigenvectors_X()
     // so without this reset a second ionic step would double its size
     this->paraX_.clear();
     const int block_size = this->paraC_.nb();
-    for (int is = 0;is < nspin;++is)
+    for (int is = 0; is < nspin; ++is)
     {
         Parallel_Blkcyclic px;
-        LR_Util::setup_2d_division(px, block_size, this->nvirt[is], this->nocc[is]
+        LR_Util::setup_2d_division(
+            px, block_size, this->nvirt[is], this->nocc[is]
 #ifdef __MPI
-            , this->paraC_.ictxt()
+            ,
+            this->paraC_.ictxt()
 #endif
-        );//nvirt - row, nocc - col
+        ); // nvirt - row, nocc - col
         this->paraX_.emplace_back(std::move(px));
     }
     this->nloc_per_state = nk * (openshell ? paraX_[0].size() + paraX_[1].size() : paraX_[0].size());
 
-    this->X.resize(openshell ? 1 : nspin, LR_Util::newTensor<T>({ nstates, nloc_per_state }));
-    for (auto& x: X)
+    this->X.resize(openshell ? 1 : nspin, LR_Util::newTensor<T>({nstates, nloc_per_state}));
+    for (auto &x : X)
     {
         x.zero();
     }
@@ -72,21 +74,21 @@ void ModuleESolver::ESolver_LR<T, TR>::setup_eigenvectors_X()
     }
 }
 
-template<typename T, typename TR>
+template <typename T, typename TR>
 void ModuleESolver::ESolver_LR<T, TR>::set_X_initial_guess()
 {
     // set the initial guess of X
-    for (int is = 0;is < this->nspin;++is)
+    for (int is = 0; is < this->nspin; ++is)
     {
-        const int& no = this->nocc[is];
-        const int& nv = this->nvirt[is];
-        const int& np = this->npairs[is];
-        const Parallel_Blkcyclic& px = this->paraX_[is];
+        const int &no = this->nocc[is];
+        const int &nv = this->nvirt[is];
+        const int &np = this->npairs[is];
+        const Parallel_Blkcyclic &px = this->paraX_[is];
 
         // if (E_{lumo}-E_{homo-1} < E_{lumo+1}-E{homo}), mode = 0, else 1(smaller first)
-        bool ix_mode = false;   //default
-        if (this->eig_ks.nc > no + 1 && no >= 2
-            && eig_ks(is, no) - eig_ks(is, no - 2) - 1e-5 > eig_ks(is, no + 1) - eig_ks(is, no - 1))
+        bool ix_mode = false; // default
+        if (this->eig_ks.nc > no + 1 && no >= 2 &&
+            eig_ks(is, no) - eig_ks(is, no - 2) - 1e-5 > eig_ks(is, no + 1) - eig_ks(is, no - 1))
         {
             ix_mode = true;
         }
@@ -113,12 +115,13 @@ void ModuleESolver::ESolver_LR<T, TR>::set_X_initial_guess()
         for (int ib = 0; ib < nstates; ++ib)
         {
             const int ipair = ib % np;
-            const int occ_global = std::get<0>(ix2ioiv[ipair]);   // occ
-            const int virt_global = std::get<1>(ix2ioiv[ipair]);   // virt
+            const int occ_global = std::get<0>(ix2ioiv[ipair]);  // occ
+            const int virt_global = std::get<1>(ix2ioiv[ipair]); // virt
             const int ik = ib / np;
-            const int xstart_b = ib * nloc_per_state;    //start index of band ib
-            const int xstart_bs = (openshell && is == 1) ? xstart_b + nk * paraX_[0].size() : xstart_b;  // start index of band ib, spin is
-            const int is_in_x = openshell ? 0 : is;     // if openshell, spin-up and spin-down are put together
+            const int xstart_b = ib * nloc_per_state; // start index of band ib
+            const int xstart_bs =
+                (openshell && is == 1) ? xstart_b + nk * paraX_[0].size() : xstart_b; // start index of band ib, spin is
+            const int is_in_x = openshell ? 0 : is; // if openshell, spin-up and spin-down are put together
             if (px.in_this_processor(virt_global, occ_global))
             {
                 const int xstart_pair = ik * px.size();
@@ -129,18 +132,20 @@ void ModuleESolver::ESolver_LR<T, TR>::set_X_initial_guess()
     }
 }
 
-template<typename T, typename TR>
+template <typename T, typename TR>
 void ModuleESolver::ESolver_LR<T, TR>::read_ks_wfc()
 {
     assert(this->psi_ks != nullptr);
     this->eig_ks.create(this->kv.get_nks(), this->nbands);
     this->wg_ks.create(this->kv.get_nks(), this->nbands);
-    if (this->inp_->ri_hartree_benchmark == "aims")        // for aims benchmark
+    if (this->inp_->ri_hartree_benchmark == "aims") // for aims benchmark
     {
 #ifdef __EXX
         int ncore = 0;
-        std::vector<double> eig_ks_vec = RI_Benchmark::read_aims_ebands<double>(this->in_dir + "band_out", nocc_in, nvirt_in, ncore);
-        std::cout << "ncore=" << ncore << ", nocc=" << nocc_in << ", nvirt=" << nvirt_in << ", nbands=" << this->nbands << std::endl;
+        std::vector<double> eig_ks_vec =
+            RI_Benchmark::read_aims_ebands<double>(this->in_dir + "band_out", nocc_in, nvirt_in, ncore);
+        std::cout << "ncore=" << ncore << ", nocc=" << nocc_in << ", nvirt=" << nvirt_in << ", nbands=" << this->nbands
+                  << std::endl;
         std::cout << "eig_ks_vec.size()=" << eig_ks_vec.size() << std::endl;
         if (eig_ks_vec.size() != this->nbands)
         {
@@ -150,35 +155,30 @@ void ModuleESolver::ESolver_LR<T, TR>::read_ks_wfc()
         {
             this->eig_ks(0, i) = eig_ks_vec[i];
         }
-        RI_Benchmark::read_aims_eigenvectors<T>(*this->psi_ks, this->in_dir + "KS_eigenvectors.out", ncore, nbands, nbasis);
+        RI_Benchmark::read_aims_eigenvectors<T>(
+            *this->psi_ks, this->in_dir + "KS_eigenvectors.out", ncore, nbands, nbasis);
 #else
         ModuleBase::WARNING_QUIT("ESolver_LR", "RI benchmark is only supported when compile with LibRI.");
 #endif
     }
-    else if (!ModuleIO::read_wfc_nao(this->in_dir, this->paraMat_, *this->psi_ks,
-                this->eig_ks,
-                this->wg_ks,
-                this->kv.ik2iktot,
-                this->kv.get_nkstot(),
-                this->inp_->nspin,
-                this->inp_->init_wfc_file_format == "binary",
-                /*skip_bands=*/this->nocc_max - this->nocc_in)) {
+    else if (!ModuleIO::read_wfc_nao(
+                 this->in_dir, this->paraMat_, *this->psi_ks, this->eig_ks, this->wg_ks, this->kv.ik2iktot,
+                 this->kv.get_nkstot(), this->inp_->nspin, this->inp_->init_wfc_file_format == "binary",
+                 /*skip_bands=*/this->nocc_max - this->nocc_in))
+    {
         ModuleBase::WARNING_QUIT("ESolver_LR", "read ground-state wavefunction failed.");
     }
 
     if (this->inp_->cal_force)
-    {    // allocate psi_ks_all and eig_ks_all to read all the bands
-        this->psi_ks_all_own_.reset(new psi::Psi<T>(this->kv.get_nks(), paraMat_all_.ncol_bands, paraMat_all_.para_2d().nrloc(), this->kv.ngk, true));
+    { // allocate psi_ks_all and eig_ks_all to read all the bands
+        this->psi_ks_all_own_.reset(new psi::Psi<T>(
+            this->kv.get_nks(), paraMat_all_.ncol_bands, paraMat_all_.para_2d().nrloc(), this->kv.ngk, true));
         this->psi_ks_all_ = this->psi_ks_all_own_.get();
         this->eig_ks_all.create(this->kv.get_nks(), this->inp_->nbands);
         this->wg_ks_all.create(this->kv.get_nks(), this->inp_->nbands);
-        if (!ModuleIO::read_wfc_nao(this->in_dir, paraMat_all_, *this->psi_ks_all_,
-                this->eig_ks_all,
-                this->wg_ks_all,
-                this->kv.ik2iktot,
-                this->kv.get_nkstot(),
-                this->inp_->nspin,
-                this->inp_->init_wfc_file_format == "binary",
+        if (!ModuleIO::read_wfc_nao(
+                this->in_dir, paraMat_all_, *this->psi_ks_all_, this->eig_ks_all, this->wg_ks_all, this->kv.ik2iktot,
+                this->kv.get_nkstot(), this->inp_->nspin, this->inp_->init_wfc_file_format == "binary",
                 /*skip_bands=*/0))
         {
             ModuleBase::WARNING_QUIT("ESolver_LR", "read all ground-state wavefunctions for force calculation failed.");
@@ -187,8 +187,8 @@ void ModuleESolver::ESolver_LR<T, TR>::read_ks_wfc()
     }
 }
 
-template<typename T, typename TR>
-void ModuleESolver::ESolver_LR<T, TR>::fill_z_window_(const int* desc_src)
+template <typename T, typename TR>
+void ModuleESolver::ESolver_LR<T, TR>::fill_z_window_(const int *desc_src)
 {
     ModuleBase::TITLE("ESolver_LR", "fill_z_window_");
     if (!this->inp_->cal_force || this->psi_ks_all_ == nullptr)
@@ -203,7 +203,7 @@ void ModuleESolver::ESolver_LR<T, TR>::fill_z_window_(const int* desc_src)
     // file path it was read with `skip_bands = 0`.
     this->nbands_z_ = this->eig_ks_all.nc - start_band;
     if (this->nbands_z_ <= this->nbands)
-    {   // nothing to widen: nbands was already at (or below) the X window
+    { // nothing to widen: nbands was already at (or below) the X window
         this->nbands_z_ = this->nbands;
     }
     this->nvirt_z_.assign(this->nspin, 0);
@@ -213,18 +213,22 @@ void ModuleESolver::ESolver_LR<T, TR>::fill_z_window_(const int* desc_src)
     }
 
     const int block_size = this->paraC_.nb();
-    LR_Util::setup_2d_division(this->paraC_z_, block_size, this->nbasis, this->nbands_z_
+    LR_Util::setup_2d_division(
+        this->paraC_z_, block_size, this->nbasis, this->nbands_z_
 #ifdef __MPI
-        , this->paraMat_.para_2d().ictxt()
+        ,
+        this->paraMat_.para_2d().ictxt()
 #endif
     );
     this->paraX_z_.clear();
     for (int is = 0; is < this->nspin; ++is)
     {
         Parallel_Blkcyclic px;
-        LR_Util::setup_2d_division(px, block_size, this->nvirt_z_[is], this->nocc[is]
+        LR_Util::setup_2d_division(
+            px, block_size, this->nvirt_z_[is], this->nocc[is]
 #ifdef __MPI
-            , this->paraC_z_.ictxt()
+            ,
+            this->paraC_z_.ictxt()
 #endif
         );
         this->paraX_z_.emplace_back(std::move(px));
@@ -233,13 +237,12 @@ void ModuleESolver::ESolver_LR<T, TR>::fill_z_window_(const int* desc_src)
     // state's block is as long as both channels together; the closed-shell singlet/triplet
     // algorithm carries a single channel. (Same rule as `nloc_per_state` in
     // `setup_eigenvectors_X`, applied to the widened windows.)
-    this->nloc_per_state_z_ = this->nk * (this->openshell
-        ? this->paraX_z_[0].size() + this->paraX_z_[1].size()
-        : this->paraX_z_[0].size());
+    this->nloc_per_state_z_ =
+        this->nk * (this->openshell ? this->paraX_z_[0].size() + this->paraX_z_[1].size() : this->paraX_z_[0].size());
 
 #ifdef __MPI
-    this->psi_ks_z_.reset(new psi::Psi<T>(this->kv.get_nks(), this->paraC_z_.ncloc(),
-        this->paraC_z_.nrloc(), this->kv.ngk, true));
+    this->psi_ks_z_.reset(
+        new psi::Psi<T>(this->kv.get_nks(), this->paraC_z_.ncloc(), this->paraC_z_.nrloc(), this->kv.ngk, true));
 #else
     this->psi_ks_z_.reset(new psi::Psi<T>(this->kv.get_nks(), this->nbands_z_, this->nbasis, this->kv.ngk, true));
 #endif
@@ -252,13 +255,13 @@ void ModuleESolver::ESolver_LR<T, TR>::fill_z_window_(const int* desc_src)
         this->psi_ks_all_->fix_k(ik);
         this->psi_ks_z_->fix_k(ik);
         const int first_band = start_band + 1;
-        Cpxgemr2d(this->nbasis, this->nbands_z_, this->psi_ks_all_->get_pointer(), 1, first_band,
-            const_cast<int*>(desc_src), this->psi_ks_z_->get_pointer(), 1, 1,
-            const_cast<int*>(this->paraC_z_.desc()), this->paraC_z_.ictxt());
+        Cpxgemr2d(
+            this->nbasis, this->nbands_z_, this->psi_ks_all_->get_pointer(), 1, first_band, const_cast<int *>(desc_src),
+            this->psi_ks_z_->get_pointer(), 1, 1, const_cast<int *>(this->paraC_z_.desc()), this->paraC_z_.ictxt());
 #else
         for (int ib = 0; ib < this->nbands_z_; ++ib)
         {
-            const auto* start = &(*this->psi_ks_all_)(ik, start_band + ib, 0);
+            const auto *start = &(*this->psi_ks_all_)(ik, start_band + ib, 0);
             std::copy(start, start + this->nbasis, &(*this->psi_ks_z_)(ik, ib, 0));
         }
 #endif
@@ -267,8 +270,8 @@ void ModuleESolver::ESolver_LR<T, TR>::fill_z_window_(const int* desc_src)
             this->eig_ks_z_(ik, ib) = this->eig_ks_all(ik, start_band + ib);
         }
     }
-    this->ofs_running_ << "Z-vector window: nbands = " << this->nbands_z_
-        << " (X window: " << this->nbands << "), nvirt =";
+    this->ofs_running_ << "Z-vector window: nbands = " << this->nbands_z_ << " (X window: " << this->nbands
+                       << "), nvirt =";
     for (int is = 0; is < this->nspin; ++is)
     {
         this->ofs_running_ << " " << this->nvirt_z_[is] << "(X window: " << this->nvirt[is] << ")";
@@ -278,8 +281,8 @@ void ModuleESolver::ESolver_LR<T, TR>::fill_z_window_(const int* desc_src)
     // the same windows. Diagnose once, without changing the truncated eigenproblem.
     if (!this->ks_initialized_)
     {
-        const std::string warning = LR_Util::force_window_warning(this->nbasis,
-            this->eig_ks_all.nc, start_band, this->nvirt, this->nvirt_z_);
+        const std::string warning =
+            LR_Util::force_window_warning(this->nbasis, this->eig_ks_all.nc, start_band, this->nvirt, this->nvirt_z_);
         if (!warning.empty())
         {
             this->ofs_running_ << warning << std::endl;
@@ -287,8 +290,8 @@ void ModuleESolver::ESolver_LR<T, TR>::fill_z_window_(const int* desc_src)
     }
 }
 
-template<typename T, typename TR>
-void ModuleESolver::ESolver_LR<T, TR>::read_ks_chg(Charge& chg_gs)
+template <typename T, typename TR>
+void ModuleESolver::ESolver_LR<T, TR>::read_ks_chg(Charge &chg_gs)
 {
     chg_gs.set_rhopw(this->pw_rho);
     const bool kin_den = XC_Functional::get_ked_flag() || (this->inp_->out_elf[0] > 0); // mohan add 20251202
@@ -300,8 +303,8 @@ void ModuleESolver::ESolver_LR<T, TR>::read_ks_chg(Charge& chg_gs)
     if (!have_cubes)
     {
         const std::string density_file = this->in_dir + this->inp_->suffix + "-CHARGE-DENSITY.restart";
-        const bool loaded = module_charge::read_rho_from_binary(density_file, *this->pw_rho, this->nspin,
-            chg_gs.rhog, chg_gs.rho, world, this->ofs_running_);
+        const bool loaded = module_charge::read_rho_from_binary(
+            density_file, *this->pw_rho, this->nspin, chg_gs.rhog, chg_gs.rho, world, this->ofs_running_);
         if (!loaded)
         {
             const std::string message = "No complete charge cube set or readable density restart in " + this->in_dir;
@@ -322,13 +325,11 @@ void ModuleESolver::ESolver_LR<T, TR>::read_ks_chg(Charge& chg_gs)
             ssc << this->in_dir << "chgs" << is + 1 << ".cube";
         }
         this->ofs_running_ << ssc.str() << std::endl;
-        if (ModuleIO::read_vdata_palgrid(pgrid(),
-            this->my_rank_,
-            this->ofs_running_,
-            ssc.str(),
-            chg_gs.rho[is],
-            this->ucell_->nat))
-        this->ofs_running_ << " Read in the charge density: " << ssc.str() << std::endl;
+        if (ModuleIO::read_vdata_palgrid(
+                pgrid(), this->my_rank_, this->ofs_running_, ssc.str(), chg_gs.rho[is], this->ucell_->nat))
+        {
+            this->ofs_running_ << " Read in the charge density: " << ssc.str() << std::endl;
+        }
     }
 }
 template class ModuleESolver::ESolver_LR<double, double>;
