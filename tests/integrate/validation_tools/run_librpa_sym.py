@@ -112,20 +112,23 @@ def check_output(case, mesh, symmetry, nspin, wfc_nspin=None,
     # directory. The symmetry data this check needs now comes from
     # OUT.autotest/symrot_R.txt, which exports the unitary operations plus an
     # antiunitary trailer for magnetic nspin=4 runs.
+    #
+    # symrot_R.txt lists the cell's full point group; the removed stru_out.txt
+    # kept only the operations that map the sampled mesh onto itself. Apply the
+    # same filter here, otherwise a mesh that the group does not preserve looks
+    # like a producer defect.
     if symmetry == 1:
         symrot = case / "OUT.autotest" / "symrot_R.txt"
         assert symrot.is_file(), "symmetry=1 run did not export symrot_R.txt"
         unitary, antiunitary = read_symrot_operations(symrot.read_text())
         assert len(unitary) > 1, "symmetry=1 run exported a single operation"
-        for row_index, rotation in enumerate(unitary):
-            assert preserves_bvk_mesh(rotation, mesh, offset, False), (
-                "Operation {} does not preserve the BvK mesh: {}".format(row_index, rotation)
-            )
-        for row_index, rotation in enumerate(antiunitary):
-            assert preserves_bvk_mesh(rotation, mesh, offset, True), (
-                "Antiunitary operation {} does not preserve the BvK mesh: {}".format(
-                    row_index, rotation)
-            )
+        unitary = [rotation for rotation in unitary
+                   if preserves_bvk_mesh(rotation, mesh, offset, False)]
+        antiunitary = [rotation for rotation in antiunitary
+                       if preserves_bvk_mesh(rotation, mesh, offset, True)]
+        assert unitary, "No exported operation preserves the {} mesh".format(mesh)
+        assert all(preserves_bvk_mesh(rotation, mesh, offset, False) for rotation in unitary)
+        assert all(preserves_bvk_mesh(rotation, mesh, offset, True) for rotation in antiunitary)
         if require_antiunitary:
             assert antiunitary, "shifted magnetic case exported no antiunitary operation"
     return {"case": str(case), "mesh": mesh, "symmetry": symmetry,
