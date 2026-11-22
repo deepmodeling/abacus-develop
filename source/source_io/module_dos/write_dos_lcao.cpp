@@ -6,7 +6,7 @@
 #include "source_base/global_variable.h"
 #include "source_base/parallel_common.h"
 #include "source_base/tool_quit.h"
-#include "source_io/module_output/write_orb_info.h"
+#include "source_io/module_output/write_notice.h"
 
 #include <exception>
 #include <sstream>
@@ -96,6 +96,11 @@ void write_dos_lcao(
                 istep,
                 out_app_flag,
                 bndpar);
+
+        if (GlobalV::MY_RANK == 0)
+        {
+            ModuleIO::write_notice(ofs_running, "DOS", is, nspin, ss.str());
+        }
     }
 
 
@@ -123,7 +128,7 @@ void write_dos_lcao(
             try
             {
                 write_pdos_npy(ucell, pdos, nspin, emin, dos_edelta_ev, path);
-                ofs_running << " Wrote projected DOS to " << path << '\n';
+                ModuleIO::write_notice(ofs_running, "PDOS", path);
             }
             catch (const std::exception& e)
             {
@@ -133,9 +138,8 @@ void write_dos_lcao(
         else
         {
             write_pdos_text(ucell, pdos.data(), nspin, nlocal, pdos.front().nc,
-                            emin, dos_edelta_ev, global_out_dir, istep, out_app_flag);
+                            emin, dos_edelta_ev, global_out_dir, istep, out_app_flag, ofs_running);
         }
-        if (error.empty()) { write_orb_info(&ucell); }
     }
     if (pdos_npy)
     {
@@ -143,7 +147,7 @@ void write_dos_lcao(
         if (!error.empty()) { ModuleBase::WARNING_QUIT("write_dos_lcao", error); }
     }
 
-    ofs_running << " #DOS CALCULATION ENDS# " << std::endl;
+    ofs_running << " #DOS CALCULATION ENDS#" << std::endl;
 
     return;
 }

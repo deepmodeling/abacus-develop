@@ -94,6 +94,7 @@ addtest(
           ../../../source_cell/read_pp_upf100.cpp
           ../../../source_cell/read_pp_vwr.cpp
           ../../../source_cell/read_pp_blps.cpp
+          ../../../source_cell/ucell_io.cpp
           ../../../source_io/module_hs/pos_op_mat.cpp
           ../../../source_io/module_hs/pos_op_basis.cpp
           ../../../source_io/module_hs/pos_op_calc.cpp

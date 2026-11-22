@@ -28,3 +28,8 @@ if(ENABLE_MPI)
   set_tests_properties(MODULE_CELL_mdcell_adapter_np4
                        PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=1" TIMEOUT 60)
 endif()
+
+addtest(
+  TARGET MODULE_CELL_index_test
+  LIBS base device
+  SOURCES test_cell_index.cpp ../cell_index.cpp)
