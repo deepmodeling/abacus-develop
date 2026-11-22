@@ -54,10 +54,11 @@ void DensityMatrix<double, double>::cal_dmr(const int ik_in)
 #endif
             // k index
             constexpr TK kphase = 1;
-            // transpose DMK col=>row
+            // transpose DMK col=>row.  col_ap is a global block column, so
+            // col_ap * ld_hk exceeds INT_MAX for large LCAO bases.
             const TK* DMK_mat_ptr
                 = this->dmk[0 + ik_begin].data()
-                  + col_ap * this->pv->para_2d().nrloc() + row_ap;
+                  + dmk_index(col_ap, row_ap, ld_hk);
             // set DMR element
             TR* target_DMR_ptr = target_mat->get_pointer();
             for (int mu = 0; mu < row_size; ++mu)

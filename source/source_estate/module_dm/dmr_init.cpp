@@ -156,7 +156,12 @@ void DensityMatrix<TK, TR>::init_dmr(const hamilt::HContainer<TRShift>& DMR_in)
             this->dmr.push_back(tmp_DMR1.release());
         }
     }
-    ModuleBase::Memory::record("DensityMatrix::DMR", this->dmr.size() * this->dmr[0]->get_memory_size());
+    if (!this->dmr.empty())
+    {
+        // An empty DMR_in leaves this->dmr empty; touching dmr[0] only for the
+        // memory record would be an out-of-bounds access.
+        ModuleBase::Memory::record("DensityMatrix::DMR", this->dmr.size() * this->dmr[0]->get_memory_size());
+    }
 }
 
 // T of HContainer can be double or std::complex<double>

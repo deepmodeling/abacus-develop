@@ -129,7 +129,8 @@ void transpose_dmk_block(
     {
         for (int irow = 0; irow < block.nrows; ++irow)
         {
-            dmk_row[irow * block.ncols + icol] = dmk_col_major[icol * ld_hk + irow];
+            // ld_hk is the global row stride; keep the offset in size_t.
+            dmk_row[irow * block.ncols + icol] = dmk_col_major[dmk_index(icol, irow, ld_hk)];
         }
     }
 }
@@ -149,7 +150,7 @@ void add_dmr_real(
     if (ik_in >= 0)
     {
         // single k-point
-        const TK* const dmk_col = dm.dmk[ik_in + ik_begin].data() + block.col0 * ld_hk + block.row0;
+        const TK* const dmk_col = dm.dmk[ik_in + ik_begin].data() + dmk_index(block.col0, block.row0, ld_hk);
         transpose_dmk_block(dmk_col, ld_hk, block, dmk_row.data());
         for (int iR = 0; iR < R_size; ++iR)
         {
@@ -161,7 +162,7 @@ void add_dmr_real(
         // all k-points
         for (int ik = 0; ik < dm._nk; ++ik)
         {
-            const TK* const dmk_col = dm.dmk[ik + ik_begin].data() + block.col0 * ld_hk + block.row0;
+            const TK* const dmk_col = dm.dmk[ik + ik_begin].data() + dmk_index(block.col0, block.row0, ld_hk);
             transpose_dmk_block(dmk_col, ld_hk, block, dmk_row.data());
             for (int iR = 0; iR < R_size; ++iR)
             {
@@ -191,7 +192,7 @@ void add_dmr_soc(
     if (ik_in >= 0)
     {
         // single k-point
-        const TK* const dmk_col = dm.dmk[ik_in + ik_begin].data() + block.col0 * ld_hk + block.row0;
+        const TK* const dmk_col = dm.dmk[ik_in + ik_begin].data() + dmk_index(block.col0, block.row0, ld_hk);
         transpose_dmk_block(dmk_col, ld_hk, block, dmk_row.data());
         for (int iR = 0; iR < R_size; ++iR)
         {
@@ -208,7 +209,7 @@ void add_dmr_soc(
         // all k-points
         for (int ik = 0; ik < dm._nk; ++ik)
         {
-            const TK* const dmk_col = dm.dmk[ik + ik_begin].data() + block.col0 * ld_hk + block.row0;
+            const TK* const dmk_col = dm.dmk[ik + ik_begin].data() + dmk_index(block.col0, block.row0, ld_hk);
             transpose_dmk_block(dmk_col, ld_hk, block, dmk_row.data());
             for (int iR = 0; iR < R_size; ++iR)
             {
