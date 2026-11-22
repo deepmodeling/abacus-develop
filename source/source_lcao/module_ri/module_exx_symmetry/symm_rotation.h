@@ -130,6 +130,9 @@ namespace ModuleSymmetry
         const K_Vectors& kv, const UnitCell& ucell);
     void print_symrot_info_R(const Symmetry_rotation& symrot, const Symmetry& symm,
         const int lmax_ao, const std::vector<TC>& Rs);
+    /// Spatial operations only, for cells whose orbital rotations are unavailable
+    /// (nspin=4, where the collinear EXX symmetry setup does not run).
+    void print_symrot_info_R_spatial(const Symmetry& symm, const int lmax_ao, const int lmax_abfs);
 }
 
 #include "symm_rotation_r.hpp"

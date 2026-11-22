@@ -65,6 +65,41 @@ namespace ModuleSymmetry
         ofs.close();
     }
 
+    // Spatial operations of a non-collinear (nspin=4) cell.
+    //
+    // The general writer above needs the orbital rotation matrices T, which
+    // only exist after the collinear EXX symmetry setup runs; that setup is
+    // skipped for nspin=4, so no symrot_R.txt was written for SOC at all. A
+    // spinor exchange needs only the spatial parts, so emit those alone and
+    // mark the file by writing zero orbital rows.
+    void print_symrot_info_R_spatial(const Symmetry& symm, const int lmax_ao, const int lmax_abfs)
+    {
+        ModuleBase::TITLE("ModuleSymmetry", "print_symrot_info_R_spatial");
+        std::ofstream ofs(PARAM.globalv.global_out_dir + "symrot_R.txt");
+        ofs << "Number of irreducible sector: 1\n";
+        ofs << "Lmax of AOs: " << lmax_ao << "\n";
+        ofs << "Lmax of ABFs: " << lmax_abfs << "\n";
+        ofs << "Format:\n"
+            << "The index of the symmetry operation\n"
+            << "The rotation matrix of this symmetry operation (3*3)\n"
+            << "(The translation vector of this symmetry operation)\n"
+            << "Orbital rotation matrix (T) of each angular momentum with size ((2l + 1) * (2l + 1))\n"
+            << "Spatial-only export: no orbital rotation matrices are written.\n\n";
+        for (int isym = 0; isym < symm.nrotk; ++isym)
+        {
+            ofs << isym << "\n" << mat3_fmt(symm.gmatrix[isym]) << "\n"
+                << vec3_fmt(symm.gtrans[isym]) << "\n";
+        }
+        const int n_anti = symm.magnetic_nspin4 ? symm.nrotk_anti : 0;
+        ofs << "Antiunitary operations: " << n_anti << "\n";
+        for (int isym = 0; isym < n_anti; ++isym)
+        {
+            ofs << isym << "\n" << mat3_fmt(symm.gmatrix_anti[isym]) << "\n"
+                << vec3_fmt(symm.gtrans_anti[isym]) << "\n";
+        }
+        ofs.close();
+    }
+
     void print_symrot_info_k(const Symmetry_rotation& symrot, const K_Vectors& kv, const UnitCell& ucell)
     {
         ModuleBase::TITLE("Symmetry_rotation", "print_symrot_info_k");

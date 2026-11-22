@@ -238,6 +238,15 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const module_dm::DensityMatrix<T, Tdata>
     else
     {
         mix_DMk_2D.mix(dm.get_dmk_vec(), true);
+        // The collinear EXX symmetry path is what writes symrot_R.txt, and it
+        // is skipped for nspin=4. A spinor exchange still needs the spatial
+        // operations, so export them without the orbital rotations.
+        if (this->runtime.input.nspin == 4 && ModuleSymmetry::Symmetry::symm_flag == 1)
+        {
+            ModuleSymmetry::print_symrot_info_R_spatial(ucell.symm,
+                                                        ucell.lmax,
+                                                        Exx_Abfs::Construct_Orbs::get_Lmax(abfs_for_lmax));
+        }
     }
 
     const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> Ds
