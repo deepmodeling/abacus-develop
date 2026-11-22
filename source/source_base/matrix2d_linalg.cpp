@@ -9,17 +9,26 @@
 
 #include <complex>
 #include <stdexcept>
+#include <type_traits>
 
 namespace
 {
+/**
+ * @brief Return true when a distribution handle exists and is not the serial
+ * one-by-one layout.
+ */
 template <typename T>
-bool has_active_distribution(const Matrix2dView<T>& matrix)
+bool distribution_is_active(const Matrix2dView<T>& matrix)
 {
     return matrix.is_distributed() && !matrix.distribution()->is_serial();
 }
 
+/**
+ * @brief Return true when a distribution handle exists and describes the
+ * serial one-by-one layout.
+ */
 template <typename T>
-bool has_serial_distribution(const Matrix2dView<T>& matrix)
+bool distribution_is_serial(const Matrix2dView<T>& matrix)
 {
     return matrix.is_distributed() && matrix.distribution()->is_serial();
 }
@@ -47,8 +56,8 @@ void assert_compatible_layout(const Matrix2dView<T>& left,
     {
         return;
     }
-    const bool serial = has_serial_distribution(left);
-    const bool serial_ = has_serial_distribution(right);
+    const bool serial = distribution_is_serial(left);
+    const bool serial_ = distribution_is_serial(right);
     if (serial != serial_)
     {
         throw std::invalid_argument(
@@ -106,11 +115,11 @@ void matmul_host(Matrix2dView<T> result,
 }
 
 template <typename T>
-void linear_combination_impl(Matrix2dView<T> result,
-                             const T alpha,
-                             Matrix2dView<const T> left,
-                             const T beta,
-                             Matrix2dView<const T> right)
+void axpby_impl(Matrix2dView<T> result,
+                const T alpha,
+                Matrix2dView<const T> left,
+                const T beta,
+                Matrix2dView<const T> right)
 {
     assert_same_shape(result, left);
     assert_same_shape(result, right);
@@ -189,12 +198,12 @@ void assert_solve_views(const Matrix2dView<double>& matrix,
         throw std::invalid_argument(
             "linear solve requires matching host or distributed layouts");
     }
-    if (has_serial_distribution(matrix) != has_serial_distribution(rhs))
+    if (distribution_is_serial(matrix) != distribution_is_serial(rhs))
     {
         throw std::invalid_argument(
             "linear solve requires matching serial or parallel distributions");
     }
-    if (has_serial_distribution(matrix))
+    if (distribution_is_serial(matrix))
     {
         return;
     }
@@ -227,12 +236,12 @@ void assert_solve_views(const Matrix2dView<std::complex<double>>& matrix,
         throw std::invalid_argument(
             "linear solve requires matching host or distributed layouts");
     }
-    if (has_serial_distribution(matrix) != has_serial_distribution(rhs))
+    if (distribution_is_serial(matrix) != distribution_is_serial(rhs))
     {
         throw std::invalid_argument(
             "linear solve requires matching serial or parallel distributions");
     }
-    if (has_serial_distribution(matrix))
+    if (distribution_is_serial(matrix))
     {
         return;
     }
@@ -256,7 +265,7 @@ namespace matrix2d_linalg
 void inv(Matrix2dView<double> matrix)
 {
     assert_inverse_view(matrix);
-    if (has_active_distribution(matrix))
+    if (distribution_is_active(matrix))
     {
 #ifdef __MPI
         matrix2d_impl::scalapack::inv(matrix);
@@ -271,7 +280,7 @@ void inv(Matrix2dView<double> matrix)
 void inv(Matrix2dView<std::complex<double>> matrix)
 {
     assert_inverse_view(matrix);
-    if (has_active_distribution(matrix))
+    if (distribution_is_active(matrix))
     {
 #ifdef __MPI
         matrix2d_impl::scalapack::inv(matrix);
@@ -287,7 +296,7 @@ void solve(Matrix2dView<double> matrix,
            Matrix2dView<double> rhs)
 {
     assert_solve_views(matrix, rhs);
-    if (has_active_distribution(matrix))
+    if (distribution_is_active(matrix))
     {
 #ifdef __MPI
         matrix2d_impl::scalapack::solve(matrix, rhs);
@@ -303,7 +312,7 @@ void solve(Matrix2dView<std::complex<double>> matrix,
            Matrix2dView<std::complex<double>> rhs)
 {
     assert_solve_views(matrix, rhs);
-    if (has_active_distribution(matrix))
+    if (distribution_is_active(matrix))
     {
 #ifdef __MPI
         matrix2d_impl::scalapack::solve(matrix, rhs);
@@ -320,7 +329,7 @@ void matmul(Matrix2dView<double> result,
             Matrix2dView<const double> right)
 {
     assert_matmul_views(result, left, right);
-    if (has_active_distribution(result))
+    if (distribution_is_active(result))
     {
 #ifdef __MPI
         matrix2d_impl::scalapack::matmul(result, left, right);
@@ -337,7 +346,7 @@ void matmul(Matrix2dView<std::complex<double>> result,
             Matrix2dView<const std::complex<double>> right)
 {
     assert_matmul_views(result, left, right);
-    if (has_active_distribution(result))
+    if (distribution_is_active(result))
     {
 #ifdef __MPI
         matrix2d_impl::scalapack::matmul(result, left, right);
@@ -349,23 +358,23 @@ void matmul(Matrix2dView<std::complex<double>> result,
     matmul_host(result, left, right);
 }
 
-void linear_combination(Matrix2dView<double> result,
-                        const double alpha,
-                        Matrix2dView<const double> left,
-                        const double beta,
-                        Matrix2dView<const double> right)
+void axpby(Matrix2dView<double> result,
+           const double alpha,
+           Matrix2dView<const double> left,
+           const double beta,
+           Matrix2dView<const double> right)
 {
-    linear_combination_impl(result, alpha, left, beta, right);
+    axpby_impl(result, alpha, left, beta, right);
 }
 
-void linear_combination(
+void axpby(
     Matrix2dView<std::complex<double>> result,
     const std::complex<double> alpha,
     Matrix2dView<const std::complex<double>> left,
     const std::complex<double> beta,
     Matrix2dView<const std::complex<double>> right)
 {
-    linear_combination_impl(result, alpha, left, beta, right);
+    axpby_impl(result, alpha, left, beta, right);
 }
 
 void scale(Matrix2dView<double> matrix, const double factor)
@@ -388,4 +397,18 @@ void set_identity(Matrix2dView<std::complex<double>> matrix)
 {
     set_identity_impl(matrix);
 }
+
+template <typename T>
+Matrix2d<T> eye(const int n)
+{
+    static_assert(std::is_same<T, double>::value
+                      || std::is_same<T, std::complex<double>>::value,
+                  "eye supports double and std::complex<double>");
+    Matrix2d<T> matrix(n, n);
+    set_identity_impl(matrix.view());
+    return matrix;
+}
+
+template Matrix2d<double> eye<double>(const int n);
+template Matrix2d<std::complex<double>> eye<std::complex<double>>(const int n);
 } // namespace matrix2d_linalg

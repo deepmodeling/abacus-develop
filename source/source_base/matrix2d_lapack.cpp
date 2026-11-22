@@ -82,26 +82,26 @@ void inv(Matrix2dView<double> matrix)
         /* info= */ info);
     throw_lapack_error("LAPACK getrf", info);
 
-    int lwork = -1;
-    std::vector<double> work(1);
+    int lws = -1;
+    std::vector<double> ws(1);
     container::lapackConnector::getri(
         /* n= */ n,
         /* a= */ matrix.data(),
         /* lda= */ lda,
         /* ipiv= */ ipiv.data(),
-        /* work= */ work.data(),
-        /* lwork= */ lwork,
+        /* work= */ ws.data(),
+        /* lwork= */ lws,
         /* info= */ info);
     throw_lapack_error("LAPACK getri workspace query", info);
-    lwork = static_cast<int>(work[0]);
-    work.resize(static_cast<std::size_t>(lwork));
+    lws = static_cast<int>(ws[0]);
+    ws.resize(static_cast<std::size_t>(lws));
     container::lapackConnector::getri(
         /* n= */ n,
         /* a= */ matrix.data(),
         /* lda= */ lda,
         /* ipiv= */ ipiv.data(),
-        /* work= */ work.data(),
-        /* lwork= */ lwork,
+        /* work= */ ws.data(),
+        /* lwork= */ lws,
         /* info= */ info);
     throw_lapack_error("LAPACK getri", info);
 }
@@ -124,26 +124,26 @@ void inv(Matrix2dView<std::complex<double>> matrix)
         /* info= */ info);
     throw_lapack_error("LAPACK getrf", info);
 
-    int lwork = -1;
-    std::vector<std::complex<double>> work(1);
+    int lws = -1;
+    std::vector<std::complex<double>> ws(1);
     container::lapackConnector::getri(
         /* n= */ n,
         /* a= */ matrix.data(),
         /* lda= */ lda,
         /* ipiv= */ ipiv.data(),
-        /* work= */ work.data(),
-        /* lwork= */ lwork,
+        /* work= */ ws.data(),
+        /* lwork= */ lws,
         /* info= */ info);
     throw_lapack_error("LAPACK getri workspace query", info);
-    lwork = static_cast<int>(work[0].real());
-    work.resize(static_cast<std::size_t>(lwork));
+    lws = static_cast<int>(ws[0].real());
+    ws.resize(static_cast<std::size_t>(lws));
     container::lapackConnector::getri(
         /* n= */ n,
         /* a= */ matrix.data(),
         /* lda= */ lda,
         /* ipiv= */ ipiv.data(),
-        /* work= */ work.data(),
-        /* lwork= */ lwork,
+        /* work= */ ws.data(),
+        /* lwork= */ lws,
         /* info= */ info);
     throw_lapack_error("LAPACK getri", info);
 }
@@ -169,15 +169,15 @@ void solve(Matrix2dView<double> matrix,
         /* info= */ info);
     throw_lapack_error("LAPACK getrf", info);
 
-    std::vector<double> rhs_column_major(
+    // Column-major LAPACK right-hand side for A * X = B.
+    std::vector<double> b(
         static_cast<std::size_t>(n) * static_cast<std::size_t>(nrhs));
     for (int i = 0; i < n; ++i)
     {
         for (int j = 0; j < nrhs; ++j)
         {
-            rhs_column_major[static_cast<std::size_t>(i)
-                             + static_cast<std::size_t>(j)
-                                 * static_cast<std::size_t>(n)]
+            b[static_cast<std::size_t>(i)
+              + static_cast<std::size_t>(j) * static_cast<std::size_t>(n)]
                 = rhs.atloc(i, j);
         }
     }
@@ -190,7 +190,7 @@ void solve(Matrix2dView<double> matrix,
         /* a= */ matrix.data(),
         /* lda= */ lda,
         /* ipiv= */ ipiv.data(),
-        /* b= */ rhs_column_major.data(),
+        /* b= */ b.data(),
         /* ldb= */ n,
         /* info= */ info);
     throw_lapack_error("LAPACK getrs", info);
@@ -200,9 +200,8 @@ void solve(Matrix2dView<double> matrix,
         for (int j = 0; j < nrhs; ++j)
         {
             rhs.atloc(i, j)
-                = rhs_column_major[static_cast<std::size_t>(i)
-                                   + static_cast<std::size_t>(j)
-                                       * static_cast<std::size_t>(n)];
+                = b[static_cast<std::size_t>(i)
+                    + static_cast<std::size_t>(j) * static_cast<std::size_t>(n)];
         }
     }
 }
@@ -228,15 +227,15 @@ void solve(Matrix2dView<std::complex<double>> matrix,
         /* info= */ info);
     throw_lapack_error("LAPACK getrf", info);
 
-    std::vector<std::complex<double>> rhs_column_major(
+    // Column-major LAPACK right-hand side for A * X = B.
+    std::vector<std::complex<double>> b(
         static_cast<std::size_t>(n) * static_cast<std::size_t>(nrhs));
     for (int i = 0; i < n; ++i)
     {
         for (int j = 0; j < nrhs; ++j)
         {
-            rhs_column_major[static_cast<std::size_t>(i)
-                             + static_cast<std::size_t>(j)
-                                 * static_cast<std::size_t>(n)]
+            b[static_cast<std::size_t>(i)
+              + static_cast<std::size_t>(j) * static_cast<std::size_t>(n)]
                 = rhs.atloc(i, j);
         }
     }
@@ -249,7 +248,7 @@ void solve(Matrix2dView<std::complex<double>> matrix,
         /* a= */ matrix.data(),
         /* lda= */ lda,
         /* ipiv= */ ipiv.data(),
-        /* b= */ rhs_column_major.data(),
+        /* b= */ b.data(),
         /* ldb= */ n,
         /* info= */ info);
     throw_lapack_error("LAPACK getrs", info);
@@ -259,9 +258,8 @@ void solve(Matrix2dView<std::complex<double>> matrix,
         for (int j = 0; j < nrhs; ++j)
         {
             rhs.atloc(i, j)
-                = rhs_column_major[static_cast<std::size_t>(i)
-                                   + static_cast<std::size_t>(j)
-                                       * static_cast<std::size_t>(n)];
+                = b[static_cast<std::size_t>(i)
+                    + static_cast<std::size_t>(j) * static_cast<std::size_t>(n)];
         }
     }
 }

@@ -604,18 +604,16 @@ void check_gather_scatter(Matrix2d<T>& matrix)
 template <typename T>
 std::size_t expected_local_storage_size(const Matrix2d<T>& matrix)
 {
-    const int lld_distrib = matrix.lld();
-    const int lld = std::max(lld_distrib, 1);
-    const std::size_t column_major_elements
+    const int lld = std::max(matrix.lld(), 1);
+    const std::size_t ncolmajor
         = static_cast<std::size_t>(lld)
             * static_cast<std::size_t>(matrix.ncloc());
-    const std::size_t row_major_elements
+    const std::size_t nrowmajor
         = static_cast<std::size_t>(matrix.nrloc())
             * static_cast<std::size_t>(matrix.ncloc());
-    const std::size_t logical_extent
-        = std::max(column_major_elements, row_major_elements);
-    const std::size_t empty_rank_minimum = 1;
-    return std::max(logical_extent, empty_rank_minimum);
+    const std::size_t nextent = std::max(ncolmajor, nrowmajor);
+    const std::size_t nstor_min = 1;
+    return std::max(nextent, nstor_min);
 }
 
 template <typename T>
@@ -624,10 +622,9 @@ std::vector<std::size_t> set_padding_sentinel(Matrix2d<T>& matrix,
 {
     const int nrloc = matrix.nrloc();
     const int ncloc = matrix.ncloc();
-    const int lld_distrib = matrix.lld();
-    const std::size_t lld = static_cast<std::size_t>(lld_distrib);
-    const std::size_t storage_elements = expected_local_storage_size(matrix);
-    std::vector<unsigned char> is_logical(storage_elements, 0);
+    const std::size_t lld = static_cast<std::size_t>(matrix.lld());
+    const std::size_t nstor = expected_local_storage_size(matrix);
+    std::vector<unsigned char> is_logical(nstor, 0);
     std::vector<std::size_t> padding_indices;
     for (int icloc = 0; icloc < ncloc; ++icloc)
     {
@@ -639,7 +636,7 @@ std::vector<std::size_t> set_padding_sentinel(Matrix2d<T>& matrix,
             is_logical[index] = 1;
         }
     }
-    for (std::size_t index = 0; index < storage_elements; ++index)
+    for (std::size_t index = 0; index < nstor; ++index)
     {
         if (is_logical[index] == 0)
         {
@@ -1222,14 +1219,14 @@ TEST(Matrix2dTest, SerialDistributionTallSkinnyStorageUsesColumnExtent)
         = make_frozen_distribution(nrglb, ncglb);
     Matrix2d<double> matrix(distrib);
 
-    const std::size_t expected_storage_elements
+    const std::size_t nstor_expected
         = static_cast<std::size_t>(nrglb)
             * static_cast<std::size_t>(ncglb);
-    const std::size_t row_major_elements
+    const std::size_t nrowmajor
         = static_cast<std::size_t>(matrix.nrloc())
             * static_cast<std::size_t>(matrix.ncloc());
-    EXPECT_EQ(matrix.local_storage_size(), expected_storage_elements);
-    EXPECT_LE(row_major_elements, matrix.local_storage_size());
+    EXPECT_EQ(matrix.local_storage_size(), nstor_expected);
+    EXPECT_LE(nrowmajor, matrix.local_storage_size());
 }
 
 #ifndef __MPI
@@ -1484,18 +1481,18 @@ TEST(Matrix2dTest, TallSkinnyPaddingDoesNotAffectOperatorsOrGather)
     fill_global_values(other, 10.0);
 
     const double sentinel = -98765.25;
-    const std::size_t expected_storage_elements
+    const std::size_t nstor_expected
         = expected_local_storage_size(matrix);
-    const std::size_t logical_elements
+    const std::size_t nlogical
         = static_cast<std::size_t>(matrix.nrloc())
             * static_cast<std::size_t>(matrix.ncloc());
-    EXPECT_EQ(matrix.local_storage_size(), expected_storage_elements);
-    EXPECT_LE(logical_elements, matrix.local_storage_size());
+    EXPECT_EQ(matrix.local_storage_size(), nstor_expected);
+    EXPECT_LE(nlogical, matrix.local_storage_size());
     const std::vector<std::size_t> padding_indices
         = set_padding_sentinel(matrix, sentinel);
-    const std::size_t expected_padding_elements
-        = expected_storage_elements - logical_elements;
-    EXPECT_EQ(padding_indices.size(), expected_padding_elements);
+    const std::size_t npadding_expected
+        = nstor_expected - nlogical;
+    EXPECT_EQ(padding_indices.size(), npadding_expected);
     if (nproc > 1)
     {
         if (matrix.icproc() == 0)

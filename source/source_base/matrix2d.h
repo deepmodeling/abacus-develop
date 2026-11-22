@@ -17,6 +17,14 @@
 template <typename T>
 class Matrix2dView;
 
+/**
+ * @brief Rank-two matrix specialization with host or frozen-distribution
+ * storage.
+ *
+ * The `final` specifier prevents further derivation from this specialization.
+ * Deriving a matrix type would make slicing and rank-two specializations
+ * ambiguous, while composition is sufficient for all supported matrix usage.
+ */
 template <typename T>
 class NDArray<T, 2> final
 {
@@ -294,12 +302,24 @@ class NDArray<T, 2> final
     }
 
     const std::shared_ptr<const Parallel_Blkcyclic>& distribution() const { return distrib_; }
+    /**
+     * @brief Return whether a frozen distribution handle is attached.
+     *
+     * A serial one-by-one distribution also returns true. This predicate does
+     * not mean that an active multi-rank distribution is present.
+     */
     bool is_distributed() const { return distrib_ != nullptr; }
 
     Matrix2dView<T> view();
     Matrix2dView<const T> view() const;
 
   private:
+    /**
+     * @brief Internal construction tag for an empty host matrix placeholder.
+     *
+     * `gather_on_root()` uses this tag on non-root ranks to construct the
+     * documented 0 x 0 result without running a public matrix constructor.
+     */
     struct EmptyMatrixTag
     {
     };
@@ -362,22 +382,20 @@ class NDArray<T, 2> final
         assert(nrloc_ >= 0);
         assert(ncloc_ >= 0);
 
-        const int lld_distrib = distrib_->lld();
-        const int lld = std::max(lld_distrib, 1);
-        const std::size_t ld = static_cast<std::size_t>(lld);
-        // The actual BLACS/LAPACK buffer is column-major. The row-major extent
-        // is kept in the maximum as a guard for local logical accesses.
-        const std::size_t column_major_elements
-            = ld * static_cast<std::size_t>(ncloc_);
-        const std::size_t row_major_elements
+        const int lld = std::max(distrib_->lld(), 1);
+        // BLACS/LAPACK storage is column-major and may contain leading-dimension
+        // padding. The row-major extent is retained as a guard for local logical
+        // accesses.
+        const std::size_t ncolmajor
+            = static_cast<std::size_t>(lld)
+                * static_cast<std::size_t>(ncloc_);
+        const std::size_t nrowmajor
             = static_cast<std::size_t>(nrloc_)
                 * static_cast<std::size_t>(ncloc_);
-        const std::size_t logical_extent
-            = std::max(column_major_elements, row_major_elements);
-        const std::size_t empty_rank_minimum = 1;
-        const std::size_t storage_elements
-            = std::max(logical_extent, empty_rank_minimum);
-        storage_.resize(storage_elements);
+        const std::size_t nextent = std::max(ncolmajor, nrowmajor);
+        const std::size_t nstor_min = 1;
+        const std::size_t nstor = std::max(nextent, nstor_min);
+        storage_.resize(nstor);
     }
 
     int nrloc_ = 0;

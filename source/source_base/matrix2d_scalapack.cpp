@@ -157,36 +157,36 @@ void inv(Matrix2dView<double> matrix)
                               &info);
     throw_scalapack_error("ScaLAPACK getrf", info);
 
-    int lwork = -1;
-    int liwork = -1;
-    std::vector<double> work(1);
-    std::vector<int> iwork(1);
+    int lws = -1;
+    int liws = -1;
+    std::vector<double> ws(1);
+    std::vector<int> iws(1);
     ScalapackConnector::getri(n,
                               matrix.data(),
                               ia,
                               ja,
                               desc,
                               ipiv.data(),
-                              work.data(),
-                              &lwork,
-                              iwork.data(),
-                              &liwork,
+                              ws.data(),
+                              &lws,
+                              iws.data(),
+                              &liws,
                               &info);
     throw_scalapack_error("ScaLAPACK getri workspace query", info);
-    lwork = queried_workspace_size(work[0]);
-    liwork = iwork[0];
-    work.resize(static_cast<std::size_t>(lwork));
-    iwork.resize(static_cast<std::size_t>(liwork));
+    lws = queried_workspace_size(ws[0]);
+    liws = iws[0];
+    ws.resize(static_cast<std::size_t>(lws));
+    iws.resize(static_cast<std::size_t>(liws));
     ScalapackConnector::getri(n,
                               matrix.data(),
                               ia,
                               ja,
                               desc,
                               ipiv.data(),
-                              work.data(),
-                              &lwork,
-                              iwork.data(),
-                              &liwork,
+                              ws.data(),
+                              &lws,
+                              iws.data(),
+                              &liws,
                               &info);
     throw_scalapack_error("ScaLAPACK getri", info);
 }
@@ -210,36 +210,36 @@ void inv(Matrix2dView<std::complex<double>> matrix)
                               &info);
     throw_scalapack_error("ScaLAPACK getrf", info);
 
-    int lwork = -1;
-    int liwork = -1;
-    std::vector<std::complex<double>> work(1);
-    std::vector<int> iwork(1);
+    int lws = -1;
+    int liws = -1;
+    std::vector<std::complex<double>> ws(1);
+    std::vector<int> iws(1);
     ScalapackConnector::getri(n,
                               matrix.data(),
                               ia,
                               ja,
                               desc,
                               ipiv.data(),
-                              work.data(),
-                              &lwork,
-                              iwork.data(),
-                              &liwork,
+                              ws.data(),
+                              &lws,
+                              iws.data(),
+                              &liws,
                               &info);
     throw_scalapack_error("ScaLAPACK getri workspace query", info);
-    lwork = queried_workspace_size(work[0]);
-    liwork = iwork[0];
-    work.resize(static_cast<std::size_t>(lwork));
-    iwork.resize(static_cast<std::size_t>(liwork));
+    lws = queried_workspace_size(ws[0]);
+    liws = iws[0];
+    ws.resize(static_cast<std::size_t>(lws));
+    iws.resize(static_cast<std::size_t>(liws));
     ScalapackConnector::getri(n,
                               matrix.data(),
                               ia,
                               ja,
                               desc,
                               ipiv.data(),
-                              work.data(),
-                              &lwork,
-                              iwork.data(),
-                              &liwork,
+                              ws.data(),
+                              &lws,
+                              iws.data(),
+                              &liws,
                               &info);
     throw_scalapack_error("ScaLAPACK getri", info);
 }

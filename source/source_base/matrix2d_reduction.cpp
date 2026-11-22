@@ -17,6 +17,9 @@
 
 namespace
 {
+// Width in bytes of a native int in the homogeneous diagonal wire format.
+constexpr int W_INT = sizeof(int);
+
 namespace elementwise
 {
 template <typename T>
@@ -100,17 +103,13 @@ void reduce_max_over_processes(double& value, const Matrix2d<T>& matrix)
 #endif
 }
 
-void assert_valid_mpi_count(const std::size_t nbytes)
+int checked_mpi_count(const std::size_t nbytes)
 {
     if (nbytes > static_cast<std::size_t>(std::numeric_limits<int>::max()))
     {
         throw std::invalid_argument(
             "Matrix2d diagonal data buffer exceeds MPI count range");
     }
-}
-
-int mpi_count(const std::size_t nbytes)
-{
     return static_cast<int>(nbytes);
 }
 
@@ -135,16 +134,14 @@ std::vector<int> make_byte_displs(const std::vector<int>& nbytes)
 std::vector<int> gather_nbytes(const int nbytes_local, const MPI_Comm comm)
 {
     const int nproc = Parallel_Common::comm_size(comm);
-    const int nbytes_int = static_cast<int>(sizeof(int));
-    const std::vector<int> recvcounts(static_cast<std::size_t>(nproc),
-                                      nbytes_int);
+    const std::vector<int> nbytes_recv(static_cast<std::size_t>(nproc), W_INT);
     const std::vector<int> rdispls
-        = make_byte_displs(recvcounts);
+        = make_byte_displs(nbytes_recv);
     std::vector<int> nbytes(static_cast<std::size_t>(nproc), 0);
     Parallel_Common::allgatherv_bytes(&nbytes_local,
-                                      nbytes_int,
+                                      W_INT,
                                       nbytes.data(),
-                                      recvcounts.data(),
+                                      nbytes_recv.data(),
                                       rdispls.data(),
                                       comm);
     return nbytes;
@@ -301,16 +298,15 @@ std::vector<T> diagonal(const Matrix2d<T>& matrix)
         const MPI_Comm comm = distrib->comm();
         if (comm != MPI_COMM_NULL)
         {
-            const std::size_t nbytes_entry = sizeof(int) + sizeof(T);
+            const std::size_t nbytes_entry = W_INT + sizeof(T);
             const std::size_t nbytes_local
-                = sizeof(int) + local_entries.size() * nbytes_entry;
+                = W_INT + local_entries.size() * nbytes_entry;
             std::vector<unsigned char> local_diagonal_buffer(nbytes_local);
-            assert_valid_mpi_count(local_entries.size());
-            const int nentry_local = mpi_count(local_entries.size());
+            const int nentry_local = checked_mpi_count(local_entries.size());
             std::memcpy(local_diagonal_buffer.data(),
                         &nentry_local,
-                        sizeof(nentry_local));
-            std::size_t offset = sizeof(nentry_local);
+                        W_INT);
+            std::size_t offset = W_INT;
             for (const std::pair<int, T>& entry : local_entries)
             {
                 std::memcpy(local_diagonal_buffer.data() + offset,
@@ -323,30 +319,29 @@ std::vector<T> diagonal(const Matrix2d<T>& matrix)
                 offset += sizeof(entry.second);
             }
 
-            assert_valid_mpi_count(nbytes_local);
-            const int nbytes_local_mpi = mpi_count(nbytes_local);
-            const std::vector<int> recvcounts
+            const int nbytes_local_mpi = checked_mpi_count(nbytes_local);
+            const std::vector<int> nbytes_recv
                 = gather_nbytes(nbytes_local_mpi, comm);
             const std::vector<int> rdispls
-                = make_byte_displs(recvcounts);
+                = make_byte_displs(nbytes_recv);
             const int total_bytes
-                = rdispls.back() + recvcounts.back();
+                = rdispls.back() + nbytes_recv.back();
             std::vector<unsigned char> received(
                 static_cast<std::size_t>(total_bytes));
             Parallel_Common::allgatherv_bytes(local_diagonal_buffer.data(),
                                               nbytes_local_mpi,
                                               received.data(),
-                                              recvcounts.data(),
+                                              nbytes_recv.data(),
                                               rdispls.data(),
                                               comm);
 
-            for (std::size_t ip = 0; ip < recvcounts.size(); ++ip)
+            for (std::size_t ip = 0; ip < nbytes_recv.size(); ++ip)
             {
                 const std::size_t begin
                     = static_cast<std::size_t>(rdispls[ip]);
                 const std::size_t end
-                    = begin + static_cast<std::size_t>(recvcounts[ip]);
-                if (end - begin < sizeof(int))
+                    = begin + static_cast<std::size_t>(nbytes_recv[ip]);
+                if (end - begin < W_INT)
                 {
                     throw std::runtime_error(
                         "Matrix2d diagonal data buffer is truncated");
@@ -355,10 +350,10 @@ std::vector<T> diagonal(const Matrix2d<T>& matrix)
                 std::memcpy(&nentry,
                             received.data() + begin,
                             sizeof(nentry));
-                const std::size_t expected_bytes
+                const std::size_t nbytes_expected
                     = static_cast<std::size_t>(nentry) * nbytes_entry;
                 if (nentry < 0
-                    || end - begin != sizeof(int) + expected_bytes)
+                    || end - begin != W_INT + nbytes_expected)
                 {
                     throw std::runtime_error(
                         "Matrix2d diagonal data buffer has an invalid size");
@@ -370,8 +365,8 @@ std::vector<T> diagonal(const Matrix2d<T>& matrix)
                     T value = T();
                     std::memcpy(&irglb,
                                 received.data() + entry_offset,
-                                sizeof(irglb));
-                    entry_offset += sizeof(irglb);
+                                W_INT);
+                    entry_offset += W_INT;
                     std::memcpy(&value,
                                 received.data() + entry_offset,
                                 sizeof(value));

@@ -335,7 +335,7 @@ TEST(Matrix2dLinalgTest, ExternalBufferViewDoesNotCopy)
     EXPECT_EQ(matrix.data(), values.data());
 }
 
-TEST(Matrix2dLinalgTest, HostViewMatmulAndLinearCombination)
+TEST(Matrix2dLinalgTest, HostViewMatmulAndAxpby)
 {
     const Matrix2d<double> left = make_real_system();
     const Matrix2d<double> right = make_real_inverse_reference();
@@ -344,7 +344,7 @@ TEST(Matrix2dLinalgTest, HostViewMatmulAndLinearCombination)
     expect_host_matrices_near(product, left.matmul(right));
 
     Matrix2d<double> combined(2, 2);
-    matrix2d_linalg::linear_combination(
+    matrix2d_linalg::axpby(
         combined.view(), 2.0, left.view(), -0.5, right.view());
     Matrix2d<double> combined_reference(2, 2);
     for (int i = 0; i < 2; ++i)
@@ -360,6 +360,10 @@ TEST(Matrix2dLinalgTest, HostViewMatmulAndLinearCombination)
 
     matrix2d_linalg::scale(combined.view(), 3.0);
     matrix2d_linalg::set_identity(product.view());
+    const Matrix2d<double> generated_identity
+        = matrix2d_linalg::eye<double>(2);
+    const Matrix2d<std::complex<double>> generated_complex_identity
+        = matrix2d_linalg::eye<std::complex<double>>(2);
     for (int i = 0; i < 2; ++i)
     {
         for (int j = 0; j < 2; ++j)
@@ -368,6 +372,10 @@ TEST(Matrix2dLinalgTest, HostViewMatmulAndLinearCombination)
             expect_near(combined.atloc(i, j),
                         3.0 * combined_reference.atloc(i, j));
             expect_near(product.atloc(i, j), identity_value);
+            expect_near(generated_identity.atloc(i, j), identity_value);
+            expect_near(generated_complex_identity.atloc(i, j).real(),
+                        identity_value);
+            expect_near(generated_complex_identity.atloc(i, j).imag(), 0.0);
         }
     }
 }
@@ -443,7 +451,7 @@ TEST(Matrix2dLinalgTest, DistributedRealAndComplexInverse)
     }
 }
 
-TEST(Matrix2dLinalgTest, DistributedIdentityAndLinearCombination)
+TEST(Matrix2dLinalgTest, DistributedIdentityAndAxpby)
 {
     const int size = 5;
     const int nrblks[] = {2, 3};
@@ -467,11 +475,11 @@ TEST(Matrix2dLinalgTest, DistributedIdentityAndLinearCombination)
             Matrix2d<double> left(identity.distribution());
             Matrix2d<double> combined(identity.distribution());
             left.scatter(host_left);
-            matrix2d_linalg::linear_combination(combined.view(),
-                                                2.0,
-                                                left.view(),
-                                                0.5,
-                                                identity.view());
+            matrix2d_linalg::axpby(combined.view(),
+                                   2.0,
+                                   left.view(),
+                                   0.5,
+                                   identity.view());
             Matrix2d<double> combined_expected(size, size);
             for (int i = 0; i < size; ++i)
             {
