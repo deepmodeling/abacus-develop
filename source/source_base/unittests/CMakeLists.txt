@@ -11,3 +11,9 @@ AddTest(
   LIBS parameter base device
   SOURCES test_filename.cpp
 )
+
+AddTest(
+  TARGET MODULE_BASE_matrix_overflow
+  LIBS parameter base device
+  SOURCES test_matrix.cpp
+)
