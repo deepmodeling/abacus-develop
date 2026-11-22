@@ -482,13 +482,13 @@ T NDArray<T, 2>::dot(const NDArray<T, 2>& other) const
 }
 
 template <typename T>
-double NDArray<T, 2>::norm() const
+real_type<T> NDArray<T, 2>::norm() const
 {
     return matrix2d_impl::norm(*this);
 }
 
 template <typename T>
-double NDArray<T, 2>::max_abs() const
+real_type<T> NDArray<T, 2>::max_abs() const
 {
     return matrix2d_impl::max_abs(*this);
 }

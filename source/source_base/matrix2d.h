@@ -18,6 +18,49 @@ template <typename T>
 class Matrix2dView;
 
 /**
+ * @brief Select the real scalar type used by Matrix2d numerical reductions.
+ *
+ * Integer matrices map to double so that absolute values and squared
+ * magnitudes do not overflow in int. Floating-point matrices preserve their
+ * real precision, including complex matrices.
+ */
+template <typename T>
+struct Matrix2dRealType;
+
+template <>
+struct Matrix2dRealType<int>
+{
+    using type = double;
+};
+
+template <>
+struct Matrix2dRealType<float>
+{
+    using type = float;
+};
+
+template <>
+struct Matrix2dRealType<double>
+{
+    using type = double;
+};
+
+template <>
+struct Matrix2dRealType<std::complex<float>>
+{
+    using type = float;
+};
+
+template <>
+struct Matrix2dRealType<std::complex<double>>
+{
+    using type = double;
+};
+
+template <typename T>
+using real_type = typename Matrix2dRealType<T>::type;
+
+/**
  * @brief Rank-two matrix specialization with host or frozen-distribution
  * storage.
  *
@@ -117,8 +160,9 @@ class NDArray<T, 2> final
     T sum() const;
     T dot(const NDArray& other) const;
     /** Return the Frobenius norm sqrt(sum_ij |a_ij|^2). */
-    double norm() const;
-    double max_abs() const;
+    real_type<T> norm() const;
+    /** Return max_ij |a_ij|. */
+    real_type<T> max_abs() const;
     std::vector<T> diagonal() const;
 
     NDArray gather() const;

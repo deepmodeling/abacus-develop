@@ -271,6 +271,33 @@ TEST(Matrix2dLinalgTest, HostRealInverseAndSolve)
     expect_host_matrices_near(rhs, expected);
 }
 
+TEST(Matrix2dLinalgTest, ExplicitInverseSatisfiesInverseIdentity)
+{
+    const Matrix2d<double> real_matrix = make_real_system();
+    Matrix2d<double> real_inverse = real_matrix;
+    Matrix2dView<double> real_inverse_view = real_inverse.view();
+    matrix2d_linalg::inv(real_inverse_view);
+    Matrix2d<double> real_identity(2, 2);
+    Matrix2dView<double> real_identity_view = real_identity.view();
+    matrix2d_linalg::set_identity(real_identity_view);
+    const Matrix2d<double> real_product = real_matrix.matmul(real_inverse);
+    expect_host_matrices_near(real_product, real_identity);
+
+    const Matrix2d<std::complex<double>> complex_matrix
+        = make_complex_system();
+    Matrix2d<std::complex<double>> complex_inverse = complex_matrix;
+    Matrix2dView<std::complex<double>> complex_inverse_view
+        = complex_inverse.view();
+    matrix2d_linalg::inv(complex_inverse_view);
+    Matrix2d<std::complex<double>> complex_identity(2, 2);
+    Matrix2dView<std::complex<double>> complex_identity_view
+        = complex_identity.view();
+    matrix2d_linalg::set_identity(complex_identity_view);
+    const Matrix2d<std::complex<double>> complex_product
+        = complex_matrix.matmul(complex_inverse);
+    expect_host_matrices_near(complex_product, complex_identity);
+}
+
 TEST(Matrix2dLinalgTest, HostComplexSolve)
 {
     Matrix2d<std::complex<double>> matrix = make_complex_system();

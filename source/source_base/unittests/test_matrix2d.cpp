@@ -41,6 +41,24 @@ static_assert(std::is_nothrow_move_constructible<Matrix2d<double>>::value,
               "Matrix2d move construction must be noexcept");
 static_assert(std::is_nothrow_move_assignable<Matrix2d<double>>::value,
               "Matrix2d move assignment must be noexcept");
+static_assert(std::is_same<real_type<int>, double>::value,
+              "Integer Matrix2d real scalar type must be double");
+static_assert(std::is_same<real_type<float>, float>::value,
+              "Float Matrix2d real scalar type must be float");
+static_assert(std::is_same<real_type<double>, double>::value,
+              "Double Matrix2d real scalar type must be double");
+static_assert(std::is_same<real_type<std::complex<float>>, float>::value,
+              "Complex float Matrix2d real scalar type must be float");
+static_assert(std::is_same<real_type<std::complex<double>>, double>::value,
+              "Complex double Matrix2d real scalar type must be double");
+static_assert(
+    std::is_same<decltype(std::declval<const Matrix2d<float>&>().norm()),
+                 float>::value,
+    "Matrix2d<float>::norm() must return float");
+static_assert(
+    std::is_same<decltype(std::declval<const Matrix2d<float>&>().max_abs()),
+                 float>::value,
+    "Matrix2d<float>::max_abs() must return float");
 
 namespace
 {
@@ -560,6 +578,22 @@ void check_reductions(Matrix2d<T>& matrix, Matrix2d<T>& other)
         expect_scalar_near(diagonal[static_cast<std::size_t>(i)],
                            matrix_reference.atloc(i, i));
     }
+}
+
+template <typename T>
+void check_reduction_scalar_type(const T& first,
+                                 const T& second,
+                                 const real_type<T>& expected_norm,
+                                 const real_type<T>& expected_max_abs)
+{
+    Matrix2d<T> matrix(1, 2);
+    matrix.atloc(0, 0) = first;
+    matrix.atloc(0, 1) = second;
+
+    const real_type<T> norm = matrix.norm();
+    const real_type<T> max_abs = matrix.max_abs();
+    EXPECT_EQ(norm, expected_norm);
+    EXPECT_EQ(max_abs, expected_max_abs);
 }
 
 template <typename T>
@@ -1411,6 +1445,35 @@ TEST(Matrix2dTest, MaxAbsWidensIntegerBeforeTakingAbsoluteValue)
         = static_cast<double>(std::numeric_limits<int>::min());
     const double expected = -int_min_as_double;
     EXPECT_DOUBLE_EQ(matrix.max_abs(), expected);
+}
+
+TEST(Matrix2dTest, NormWidensIntegerBeforeSquaring)
+{
+    Matrix2d<int> matrix(1, 1);
+    matrix.atloc(0, 0) = std::numeric_limits<int>::min();
+    const double expected = 2147483648.0;
+    EXPECT_DOUBLE_EQ(matrix.norm(), expected);
+}
+
+TEST(Matrix2dTest, ReductionsUseTheMatrixRealType)
+{
+    const std::complex<float> complex_float_first(3.0f, 4.0f);
+    const std::complex<float> complex_float_second(0.0f, 0.0f);
+    const std::complex<double> complex_double_first(3.0, 4.0);
+    const std::complex<double> complex_double_second(0.0, 0.0);
+    check_reduction_scalar_type<int>(3, 4, 5.0, 4.0);
+    check_reduction_scalar_type<float>(3.0f, 4.0f, 5.0f, 4.0f);
+    check_reduction_scalar_type<double>(3.0, 4.0, 5.0, 4.0);
+    check_reduction_scalar_type<std::complex<float>>(
+        complex_float_first,
+        complex_float_second,
+        5.0f,
+        5.0f);
+    check_reduction_scalar_type<std::complex<double>>(
+        complex_double_first,
+        complex_double_second,
+        5.0,
+        5.0);
 }
 
 TEST(Matrix2dTest, SerialDistributionGatherReturnsHostRowMajorCopy)

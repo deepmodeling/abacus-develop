@@ -8,7 +8,15 @@
 
 namespace matrix2d_linalg
 {
+/**
+ * @brief Invert a square matrix in place using an explicit matrix inverse.
+ *
+ * @warning Explicit inversion has poorer numerical stability than solving a
+ * linear system directly. Use this function only when the inverse matrix
+ * itself is required. When solving `A * X = B`, call `solve()` instead.
+ */
 void inv(Matrix2dView<double> matrix);
+/** @copydoc inv(Matrix2dView<double>) */
 void inv(Matrix2dView<std::complex<double>> matrix);
 
 void solve(Matrix2dView<double> matrix,

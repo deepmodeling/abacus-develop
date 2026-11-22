@@ -31,7 +31,16 @@ void conjugate_transpose(Matrix2dView<double> result,
 void conjugate_transpose(
     Matrix2dView<std::complex<double>> result,
     Matrix2dView<const std::complex<double>> source);
+/**
+ * @brief Invert a square distributed matrix in place with P?GETRF and
+ * P?GETRI.
+ *
+ * @warning Explicit inversion has poorer numerical stability than solving a
+ * linear system directly. Use this function only when the inverse matrix
+ * itself is required. When solving `A * X = B`, call `solve()` instead.
+ */
 void inv(Matrix2dView<double> matrix);
+/** @copydoc inv(Matrix2dView<double>) */
 void inv(Matrix2dView<std::complex<double>> matrix);
 void solve(Matrix2dView<double> matrix,
            Matrix2dView<double> rhs);

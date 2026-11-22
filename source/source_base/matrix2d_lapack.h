@@ -19,7 +19,15 @@ namespace matrix2d_impl
 {
 namespace lapack
 {
+/**
+ * @brief Invert a square host matrix in place with GETRF and GETRI.
+ *
+ * @warning Explicit inversion has poorer numerical stability than solving a
+ * linear system directly. Use this function only when the inverse matrix
+ * itself is required. When solving `A * X = B`, call `solve()` instead.
+ */
 void inv(Matrix2dView<double> matrix);
+/** @copydoc inv(Matrix2dView<double>) */
 void inv(Matrix2dView<std::complex<double>> matrix);
 
 void solve(Matrix2dView<double> matrix,

@@ -20,10 +20,10 @@ template <typename T>
 T dot(const Matrix2d<T>& left, const Matrix2d<T>& right);
 
 template <typename T>
-double norm(const Matrix2d<T>& matrix);
+real_type<T> norm(const Matrix2d<T>& matrix);
 
 template <typename T>
-double max_abs(const Matrix2d<T>& matrix);
+real_type<T> max_abs(const Matrix2d<T>& matrix);
 
 template <typename T>
 std::vector<T> diagonal(const Matrix2d<T>& matrix);

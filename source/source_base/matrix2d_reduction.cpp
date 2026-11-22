@@ -42,31 +42,32 @@ std::complex<T> conj(const std::complex<T>& value)
 } // namespace elementwise
 
 template <typename T>
-double absolute_square(const T& value)
+real_type<T> abs2(const T& value)
 {
-    const double real_value = static_cast<double>(value);
+    const real_type<T> real_value = static_cast<real_type<T>>(value);
     return real_value * real_value;
 }
 
 template <typename T>
-double absolute_square(const std::complex<T>& value)
+real_type<std::complex<T>> abs2(const std::complex<T>& value)
 {
-    const double real = static_cast<double>(value.real());
-    const double imag = static_cast<double>(value.imag());
+    using Real = real_type<std::complex<T>>;
+    const Real real = static_cast<Real>(value.real());
+    const Real imag = static_cast<Real>(value.imag());
     return real * real + imag * imag;
 }
 
 template <typename T>
-double absolute_value(const T& value)
+real_type<T> absolute_value(const T& value)
 {
-    const double widened_value = static_cast<double>(value);
+    const real_type<T> widened_value = static_cast<real_type<T>>(value);
     return std::abs(widened_value);
 }
 
 template <typename T>
-double absolute_value(const std::complex<T>& value)
+real_type<std::complex<T>> absolute_value(const std::complex<T>& value)
 {
-    return static_cast<double>(std::abs(value));
+    return static_cast<real_type<std::complex<T>>>(std::abs(value));
 }
 
 template <typename Value, typename Element>
@@ -90,7 +91,7 @@ void reduce_sum_over_processes(Value& value, const Matrix2d<Element>& matrix)
 }
 
 template <typename T>
-void reduce_max_over_processes(double& value, const Matrix2d<T>& matrix)
+void reduce_max_over_processes(real_type<T>& value, const Matrix2d<T>& matrix)
 {
 #ifdef __MPI
     const std::shared_ptr<const Parallel_Blkcyclic> distrib
@@ -100,7 +101,11 @@ void reduce_max_over_processes(double& value, const Matrix2d<T>& matrix)
         const MPI_Comm comm = distrib->comm();
         if (comm != MPI_COMM_NULL)
         {
-            Parallel_Common::allreduce_max(value, comm);
+            // The guarded wrapper currently exposes only double. Widening the
+            // collective value does not change the maximum or the public type.
+            double collective_value = value;
+            Parallel_Common::allreduce_max(collective_value, comm);
+            value = static_cast<real_type<T>>(collective_value);
         }
     }
 #else
@@ -151,9 +156,9 @@ T sum(const Matrix2d<T>& matrix)
 }
 
 template <typename T>
-double norm(const Matrix2d<T>& matrix)
+real_type<T> norm(const Matrix2d<T>& matrix)
 {
-    double value = 0.0;
+    real_type<T> value = real_type<T>();
     const int nrloc = matrix.nrloc();
     const int ncloc = matrix.ncloc();
 #ifdef _OPENMP
@@ -163,7 +168,8 @@ double norm(const Matrix2d<T>& matrix)
     {
         for (int j = 0; j < ncloc; ++j)
         {
-            value += absolute_square(matrix.atloc(i, j));
+            const T& element = matrix.atloc(i, j);
+            value += abs2(element);
         }
     }
     reduce_sum_over_processes(value, matrix);
@@ -210,9 +216,9 @@ T dot(const Matrix2d<T>& left, const Matrix2d<T>& right)
 }
 
 template <typename T>
-double max_abs(const Matrix2d<T>& matrix)
+real_type<T> max_abs(const Matrix2d<T>& matrix)
 {
-    double max_value = 0.0;
+    real_type<T> max_value = real_type<T>();
     const int nrloc = matrix.nrloc();
     const int ncloc = matrix.ncloc();
 #ifdef _OPENMP
@@ -223,7 +229,7 @@ double max_abs(const Matrix2d<T>& matrix)
         for (int j = 0; j < ncloc; ++j)
         {
             const T& element = matrix.atloc(i, j);
-            const double element_abs = absolute_value(element);
+            const real_type<T> element_abs = absolute_value(element);
             max_value = std::max(max_value, element_abs);
         }
     }
@@ -376,20 +382,20 @@ template std::complex<double> dot<std::complex<double>>(
     const Matrix2d<std::complex<double>>& left,
     const Matrix2d<std::complex<double>>& right);
 
-template double norm<int>(const Matrix2d<int>& matrix);
-template double norm<float>(const Matrix2d<float>& matrix);
-template double norm<double>(const Matrix2d<double>& matrix);
-template double norm<std::complex<float>>(
+template real_type<int> norm<int>(const Matrix2d<int>& matrix);
+template real_type<float> norm<float>(const Matrix2d<float>& matrix);
+template real_type<double> norm<double>(const Matrix2d<double>& matrix);
+template real_type<std::complex<float>> norm<std::complex<float>>(
     const Matrix2d<std::complex<float>>& matrix);
-template double norm<std::complex<double>>(
+template real_type<std::complex<double>> norm<std::complex<double>>(
     const Matrix2d<std::complex<double>>& matrix);
 
-template double max_abs<int>(const Matrix2d<int>& matrix);
-template double max_abs<float>(const Matrix2d<float>& matrix);
-template double max_abs<double>(const Matrix2d<double>& matrix);
-template double max_abs<std::complex<float>>(
+template real_type<int> max_abs<int>(const Matrix2d<int>& matrix);
+template real_type<float> max_abs<float>(const Matrix2d<float>& matrix);
+template real_type<double> max_abs<double>(const Matrix2d<double>& matrix);
+template real_type<std::complex<float>> max_abs<std::complex<float>>(
     const Matrix2d<std::complex<float>>& matrix);
-template double max_abs<std::complex<double>>(
+template real_type<std::complex<double>> max_abs<std::complex<double>>(
     const Matrix2d<std::complex<double>>& matrix);
 
 template std::vector<int> diagonal<int>(const Matrix2d<int>& matrix);
