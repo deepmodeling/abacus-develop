@@ -24,10 +24,11 @@
  * - Beyond max_full, only the first and last keep entries are shown, with an
  *   omission marker in between, so very long runs stay readable.
  */
-inline std::string format_relax_history(const std::vector<double>& hist,
-                                        const int per_line = 5,
-                                        const int max_full = 100,
-                                        const int keep = 10)
+inline std::string format_relax_history(
+    const std::vector<double> &hist,
+    const int per_line = 5,
+    const int max_full = 100,
+    const int keep = 10)
 {
     std::ostringstream out;
     out << std::scientific << std::setprecision(3);
@@ -37,7 +38,8 @@ inline std::string format_relax_history(const std::vector<double>& hist,
     const int head = truncate ? keep : n;
 
     int printed = 0;
-    auto print_one = [&out, &printed, per_line](const double value) {
+    auto print_one = [&out, &printed, per_line](const double value)
+    {
         if (printed % per_line == 0)
         {
             out << "\n  ";

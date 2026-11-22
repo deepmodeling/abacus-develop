@@ -61,6 +61,7 @@ struct System_para
     std::string global_dos_dir = "";        ///< DOS directory (DOS/)
     std::string global_dip_dir = "";        ///< dipole directory (DIP/)
     std::string global_mat_dir = "";        ///< matrix directory (MAT/)
+    std::string global_band_dir = "";       ///< band structure directory (BANDS/)
     std::string global_mlkedf_descriptor_dir = ""; ///< global ML KEDF descriptor directory
     std::string global_deepks_label_elec_dir = ""; ///< global directory for DeePKS labels during electronic steps
     std::string log_file = "log";           ///< log file name

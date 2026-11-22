@@ -44,7 +44,9 @@ TEST_F(IstateInfoTest, OutIstateInfoS1)
     GlobalV::KPAR = 1;
     const int nbands = 4;
     const int nspin = 1;
-    const std::string out_dir = "./";
+    const std::string out_dir = testing::TempDir();
+    const std::string fixed_file = out_dir + "eig_occ.txt";
+    const std::string step2_file = out_dir + "eig_occg2.txt";
     // Mirrors the Input_para default (bndpar = 1) so the test does not depend on it.
     const int bndpar = 1;
 
@@ -96,27 +98,48 @@ TEST_F(IstateInfoTest, OutIstateInfoS1)
     }
    
     {
-        std::ofstream stale_file("eig_occ.txt");
+        std::ofstream stale_file(fixed_file);
         stale_file << "stale calculation" << std::endl;
     }
 
     // A new calculation truncates stale output, then later ionic steps append.
-    ModuleIO::write_eig_file(ekb, wg, *kv, nbands, nspin, out_dir, 0);
-    ModuleIO::write_eig_file(ekb, wg, *kv, nbands, nspin, out_dir, 1);
+    ModuleIO::write_eig_file(ekb, wg, *kv, nbands, nspin, out_dir, 0, 1);
+    ModuleIO::write_eig_file(ekb, wg, *kv, nbands, nspin, out_dir, 1, 1);
 
     // check the output files
     std::ifstream ifs;
-    ifs.open("eig_occ.txt");
+    ifs.open(fixed_file);
     std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     EXPECT_THAT(str, testing::HasSubstr("Electronic state energy (eV) and occupations"));
     EXPECT_THAT(str, testing::HasSubstr("spin=1 k-point=1/10 Cartesian=0.0000000 0.0000000 0.0000000 (299 plane wave)"));
     EXPECT_THAT(str, testing::HasSubstr("1 2.040854700000000 0.000000000000000"));
     EXPECT_THAT(str, testing::Not(testing::HasSubstr("stale calculation")));
-    EXPECT_THAT(str, testing::HasSubstr("1     # ionic step"));
-    EXPECT_THAT(str, testing::HasSubstr("2     # ionic step"));
+    EXPECT_THAT(str, testing::HasSubstr("# ABACUS version:"));
+    EXPECT_THAT(str, testing::HasSubstr("# Written at "));
+    EXPECT_THAT(str, testing::HasSubstr("# Ionic_Step 1"));
+    EXPECT_THAT(str, testing::HasSubstr("# Ionic_Step 2"));
     ifs.close();
 
-    remove("eig_occ.txt");
+    remove(fixed_file.c_str());
+
+    // Mode 0: every write truncates the fixed file, so only the last frame remains.
+    ModuleIO::write_eig_file(ekb, wg, *kv, nbands, nspin, out_dir, 0, 0);
+    ModuleIO::write_eig_file(ekb, wg, *kv, nbands, nspin, out_dir, 1, 0);
+    ifs.open(fixed_file);
+    std::string mode0((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
+    EXPECT_THAT(mode0, testing::HasSubstr("# Ionic_Step 2"));
+    EXPECT_THAT(mode0, testing::Not(testing::HasSubstr("# Ionic_Step 1")));
+    ifs.close();
+    remove(fixed_file.c_str());
+
+    // Mode 2: one g{step} file per written step.
+    ModuleIO::write_eig_file(ekb, wg, *kv, nbands, nspin, out_dir, 1, 2);
+    ifs.open(step2_file);
+    ASSERT_TRUE(ifs.is_open());
+    std::string mode2((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
+    EXPECT_THAT(mode2, testing::HasSubstr("# Ionic_Step 2"));
+    ifs.close();
+    remove(step2_file.c_str());
 }
 
 #ifdef __MPI

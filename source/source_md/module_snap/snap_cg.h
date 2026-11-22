@@ -21,7 +21,13 @@ class ClebschGordanTable
   public:
     explicit ClebschGordanTable(int twojmax);
 
-    double coefficient(int j1, int m1, int j2, int m2, int j, int m) const;
+    double coefficient(
+        int j1,
+        int m1,
+        int j2,
+        int m2,
+        int j,
+        int m) const;
 
   private:
     struct Entry
@@ -35,10 +41,28 @@ class ClebschGordanTable
         double value;
     };
 
-    static bool allowed(int j1, int m1, int j2, int m2, int j, int m);
-    static double coefficient_uncached(int j1, int m1, int j2, int m2, int j, int m);
+    static bool allowed(
+        int j1,
+        int m1,
+        int j2,
+        int m2,
+        int j,
+        int m);
+    static double coefficient_uncached(
+        int j1,
+        int m1,
+        int j2,
+        int m2,
+        int j,
+        int m);
     static double factorial(int value);
-    const Entry* find(int j1, int m1, int j2, int m2, int j, int m) const;
+    const Entry *find(
+        int j1,
+        int m1,
+        int j2,
+        int m2,
+        int j,
+        int m) const;
 
     int max_j_;
     std::vector<Entry> entries_;

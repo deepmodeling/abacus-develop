@@ -362,7 +362,7 @@ StruMeta make_stru_meta(const UnitCell& ucell)
     metadata.species.resize(static_cast<std::size_t>(ucell.ntype));
     for (int it = 0; it < ucell.ntype; ++it)
     {
-        StruSpecies& species = metadata.species[static_cast<std::size_t>(it)];
+        StruSpecies& species = metadata.species[it];
         if (static_cast<std::size_t>(it) < ucell.pseudo_fn.size()) species.pseudo_file = ucell.pseudo_fn[it];
         if (static_cast<std::size_t>(it) < ucell.pseudo_type.size()) species.pseudo_type = ucell.pseudo_type[it];
         if (static_cast<std::size_t>(it) < ucell.orbital_fn.size()) species.orbital_file = ucell.orbital_fn[it];

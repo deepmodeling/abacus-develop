@@ -199,7 +199,7 @@ void write_elf(
                 + std::to_string(is + 1) + geom_block + ".cube";
 
             // nspin==4 never reaches this branch (only elftot is written), the magnetic label is a placeholder.
-            const std::string desc_elf = ModuleIO::make_data_desc("electron localization function", "electron localization function magnetization m", is, nspin);
+            const std::string desc_elf = ModuleIO::make_data_desc("Electron localization function", "Electron localization function magnetization m", is, nspin);
 
             ModuleIO::write_vdata_palgrid(pgrid,
                 elf[is].data(),

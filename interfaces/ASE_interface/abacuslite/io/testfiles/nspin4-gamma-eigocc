@@ -1,4 +1,6 @@
-1     # ionic step
+# ABACUS version: 3.10.0
+# Written at 2026-11-09 15:18:58
+# Ionic_Step 1
  Electronic state energy (eV) and occupations
  Spin number 4
  spin=1 k-point=1/1 Cartesian=0.0000000 0.0000000 0.0000000 (1837 plane wave)
@@ -38,7 +40,9 @@
  34 18.41424567719280 0.000000000000000
  35 18.43990861265023 0.000000000000000
 
-2     # ionic step
+# ABACUS version: 3.10.0
+# Written at 2026-11-09 15:19:01
+# Ionic_Step 2
  Electronic state energy (eV) and occupations
  Spin number 4
  spin=1 k-point=1/1 Cartesian=0.0000000 0.0000000 0.0000000 (1837 plane wave)
