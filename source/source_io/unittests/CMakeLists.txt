@@ -3,9 +3,6 @@ abacus_disable_feature_definitions(__CUDA)
 abacus_disable_feature_definitions(__ROCM)
 abacus_disable_feature_definitions(__EXX)
 
-# test_read_inp_estruc.cpp is registered as MODULE_IO_lobpcg_input from
-# ../test_serial/CMakeLists.txt to share the non-MPI io_input_serial build.
-
 addtest(
   TARGET MODULE_IO_write_bands
   LIBS parameter base device symmetry

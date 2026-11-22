@@ -1,7 +1,7 @@
 # Unit-level fatal-path checks. Run each in a fresh process/MPI job so that
 # exit(1), the diagnostic and collective completion are checked together.
 set(cases block dimension search dependent overlap_negative overlap_zero unsupported_backend)
-if(NOT GPU)
+if(DEVICE STREQUAL "cpu")
   list(APPEND cases reused_invalid)
 endif()
 set(message_block "LOBPCG block must contain all requested bands")
@@ -13,6 +13,13 @@ set(message_overlap_zero "overlap|HEGVX failed")
 set(message_unsupported_backend "LOBPCG supports diag_subspace=0 or 2")
 set(message_reused_invalid "HEGVX failed")
 
+set(command "${BINARY}")
+set(postflags)
+if(RANKS GREATER 1)
+  set(command "${MPIEXEC}" "${MPI_NUMPROC_FLAG}" "${RANKS}" ${MPI_PREFLAGS} "${BINARY}")
+  set(postflags ${MPI_POSTFLAGS})
+endif()
+
 foreach(case IN LISTS cases)
   # Entry failures precede locking; reuse after an actual solve covers both modes.
   set(locking_modes hard)
@@ -22,16 +29,11 @@ foreach(case IN LISTS cases)
   foreach(locking IN LISTS locking_modes)
     set(directory "${OUTPUT_DIR}/${locking}_${case}")
     file(MAKE_DIRECTORY "${directory}")
-    if(RANKS GREATER 1)
-      set(command "${MPIEXEC}" "${MPI_NUMPROC_FLAG}" "${RANKS}" ${MPI_PREFLAGS}
-                  "${BINARY}" --lobpcg-fatal "${case}" "${locking}" ${MPI_POSTFLAGS})
-    else()
-      set(command "${BINARY}" --lobpcg-fatal "${case}" "${locking}")
-    endif()
-    execute_process(COMMAND ${command} WORKING_DIRECTORY "${directory}"
+    execute_process(COMMAND ${command} --lobpcg-fatal "${case}" "${locking}" ${postflags}
+                    WORKING_DIRECTORY "${directory}"
                     RESULT_VARIABLE result OUTPUT_VARIABLE output ERROR_VARIABLE errors TIMEOUT 30)
     file(WRITE "${directory}/output.log" "${output}\n${errors}")
-    if(GPU AND "${result}" STREQUAL "77")
+    if(DEVICE STREQUAL "gpu" AND "${result}" STREQUAL "77")
       message("SKIP: no usable GPU for LOBPCG exit checks")
       return()
     endif()

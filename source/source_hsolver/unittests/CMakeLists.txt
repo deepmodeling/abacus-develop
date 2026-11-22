@@ -23,6 +23,27 @@ if(ENABLE_MPI)
   set_tests_properties(MODULE_HSOLVER_dav_subspace_parallel PROPERTIES PROCESSORS 2 TIMEOUT 120)
 endif()
 
+# Check WARNING_QUIT in fresh processes, including collective MPI termination.
+function(add_lobpcg_exit_tests target device)
+  set(exit_ranks 1)
+  if(ENABLE_MPI)
+    list(APPEND exit_ranks 2)
+  endif()
+  foreach(ranks IN LISTS exit_ranks)
+    set(exit_name MODULE_HSOLVER_lobpcg_exit_${device}_${ranks})
+    add_test(NAME ${exit_name}
+      COMMAND ${CMAKE_COMMAND} "-DBINARY=$<TARGET_FILE:${target}>"
+              "-DOUTPUT_DIR=${CMAKE_CURRENT_BINARY_DIR}/${exit_name}"
+              "-DRANKS=${ranks}" "-DDEVICE=${device}"
+              "-DMPIEXEC=${MPIEXEC_EXECUTABLE}"
+              "-DMPI_NUMPROC_FLAG=${MPIEXEC_NUMPROC_FLAG}"
+              "-DMPI_PREFLAGS=${MPIEXEC_PREFLAGS}" "-DMPI_POSTFLAGS=${MPIEXEC_POSTFLAGS}"
+              -P "${CMAKE_CURRENT_SOURCE_DIR}/test_diago_lobpcg_exit.cmake")
+    set_tests_properties(${exit_name} PROPERTIES PROCESSORS ${ranks} TIMEOUT 240
+      SKIP_REGULAR_EXPRESSION "SKIP: no usable GPU for LOBPCG exit checks")
+  endforeach()
+endfunction()
+
 set(LOBPCG_TEST_SOURCES
     ../diago_lobpcg.cpp
     ../lobpcg_subspace.cpp
@@ -40,45 +61,14 @@ addtest(
   LIBS ${LOBPCG_TEST_LIBS}
   SOURCES test_diago_lobpcg_float.cpp ${LOBPCG_TEST_SOURCES})
 set_tests_properties(MODULE_HSOLVER_lobpcg MODULE_HSOLVER_lobpcg_float PROPERTIES TIMEOUT 180)
+add_lobpcg_exit_tests(MODULE_HSOLVER_lobpcg cpu)
 
-# These are solver unit checks, not ABACUS integration drivers: each fresh
-# process must terminate through WARNING_QUIT, including all ranks after RR.
-set(exit_ranks 1)
 if(ENABLE_MPI)
-  list(APPEND exit_ranks 2)
-endif()
-foreach(device IN ITEMS cpu gpu)
-  if(device STREQUAL "gpu" AND NOT (USE_CUDA OR USE_ROCM))
-    continue()
-  endif()
-  if(device STREQUAL "gpu")
-    set(exit_target MODULE_HSOLVER_lobpcg_gpu)
-    set(exit_gpu ON)
-  else()
-    set(exit_target MODULE_HSOLVER_lobpcg)
-    set(exit_gpu OFF)
-  endif()
-  foreach(ranks IN LISTS exit_ranks)
-    set(exit_name MODULE_HSOLVER_lobpcg_exit_${device}_${ranks})
-    add_test(NAME ${exit_name}
-      COMMAND ${CMAKE_COMMAND} "-DBINARY=$<TARGET_FILE:${exit_target}>"
-              "-DOUTPUT_DIR=${CMAKE_CURRENT_BINARY_DIR}/${exit_name}"
-              "-DRANKS=${ranks}" "-DGPU=${exit_gpu}"
-              "-DMPIEXEC=${MPIEXEC_EXECUTABLE}"
-              "-DMPI_NUMPROC_FLAG=${MPIEXEC_NUMPROC_FLAG}"
-              "-DMPI_PREFLAGS=${MPIEXEC_PREFLAGS}" "-DMPI_POSTFLAGS=${MPIEXEC_POSTFLAGS}"
-              -P "${CMAKE_CURRENT_SOURCE_DIR}/test_diago_lobpcg_exit.cmake")
-    set_tests_properties(${exit_name} PROPERTIES PROCESSORS ${ranks} TIMEOUT 240
-      SKIP_REGULAR_EXPRESSION "SKIP: no usable GPU for LOBPCG exit checks")
-  endforeach()
-endforeach()
-if(ENABLE_MPI)
-  foreach(precision IN ITEMS lobpcg lobpcg_float)
-    add_test(NAME MODULE_HSOLVER_${precision}_mpi2
+  foreach(target IN ITEMS MODULE_HSOLVER_lobpcg MODULE_HSOLVER_lobpcg_float)
+    add_test(NAME ${target}_mpi2
       COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2 ${MPIEXEC_PREFLAGS}
-        $<TARGET_FILE:MODULE_HSOLVER_${precision}> ${MPIEXEC_POSTFLAGS})
-    set_tests_properties(MODULE_HSOLVER_${precision}_mpi2 PROPERTIES
-      PROCESSORS 2 TIMEOUT 180)
+        $<TARGET_FILE:${target}> ${MPIEXEC_POSTFLAGS})
+    set_tests_properties(${target}_mpi2 PROPERTIES PROCESSORS 2 TIMEOUT 180)
   endforeach()
 endif()
 
@@ -90,23 +80,14 @@ if(USE_CUDA OR USE_ROCM)
     SOURCES test_diago_lobpcg.cpp ${LOBPCG_TEST_SOURCES} test_rr_solver.cpp
             ../module_linalg/unittests/test_linear_algebra.cpp)
   set_tests_properties(MODULE_HSOLVER_lobpcg_gpu PROPERTIES SKIP_RETURN_CODE 77)
+  add_lobpcg_exit_tests(MODULE_HSOLVER_lobpcg_gpu gpu)
   if(ENABLE_MPI)
     add_test(NAME MODULE_HSOLVER_lobpcg_gpu_mpi2
       COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2 ${MPIEXEC_PREFLAGS}
-        $<TARGET_FILE:MODULE_HSOLVER_lobpcg_gpu> ${MPIEXEC_POSTFLAGS}
-        --gtest_filter=LockingModes/Lobpcg.DistributedRitz*:LockingModes/Lobpcg.BudgetAndReuse*:LockingModes/Lobpcg.EigenvectorsMatchEigenvalues*:LobpcgSubspace.*:LinearAlgebraGpu.*)
+        $<TARGET_FILE:MODULE_HSOLVER_lobpcg_gpu> ${MPIEXEC_POSTFLAGS})
     set_tests_properties(MODULE_HSOLVER_lobpcg_gpu_mpi2 PROPERTIES
       PROCESSORS 2 TIMEOUT 180 SKIP_RETURN_CODE 77)
   endif()
-endif()
-
-# Apply the same thread limits to all LOBPCG unit and exit tests.
-get_property(lobpcg_tests DIRECTORY PROPERTY TESTS)
-list(FILTER lobpcg_tests INCLUDE REGEX "^MODULE_HSOLVER_lobpcg(_|$)")
-set_tests_properties(${lobpcg_tests} PROPERTIES
-  ENVIRONMENT "OMP_NUM_THREADS=1;OPENBLAS_NUM_THREADS=1;MKL_NUM_THREADS=1")
-
-if(USE_CUDA OR USE_ROCM)
   AddTest(
     TARGET MODULE_HSOLVER_dav_subspace_gpu
     LIBS ${DAV_SUBSPACE_TEST_LIBS}
@@ -185,6 +166,8 @@ if(ENABLE_MPI)
             ../lobpcg_recovery.cpp
             ../rr_solver.cpp
             ../diago_params.cpp
+            ../diag_hs_para.cpp
+            ../diago_pxxxgvx.cpp
             ../module_linalg/linear_algebra.cpp
             ../diag_const_nums.cpp
             ../diago_iter_assist.cpp
@@ -198,7 +181,6 @@ if(ENABLE_MPI)
             ../../source_cell/parallel_kpoints.cpp
             ../../source_cell/reciprocal_grid.cpp)
 
-  target_sources(MODULE_HSOLVER_pw PRIVATE ../diag_hs_para.cpp ../diago_pxxxgvx.cpp)
   if(TARGET ELPA::ELPA)
     target_link_libraries(MODULE_HSOLVER_pw PRIVATE ELPA::ELPA genelpa)
   endif()
