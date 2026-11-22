@@ -2,6 +2,8 @@
 #include "source_lcao/lcao_domain.h"
 #include "source_io/module_parameter/parameter.h"
 
+#include <cstddef>
+
 namespace LCAO_domain
 {
 
@@ -321,7 +323,7 @@ static void build_psi_beta(
 static int accum_nlm_block(
     const NL_env& env,
     const NL_pair& pair,
-    const int nnr,
+    const std::size_t nnr,
     std::vector<std::map<key_tuple, std::unordered_map<int, std::vector<double>>>>& nlm_tot,
     std::vector<std::map<key_tuple, std::unordered_map<int, std::vector<std::vector<double>>>>>& nlm_tot1,
     double* NLloc,
@@ -444,7 +446,7 @@ void build_Nonlocal_mu_new(const Parallel_Orbitals& pv,
     // calculate sum_(L0,M0) beta<psi_i|beta><beta|psi_j>
     // and accumulate the value to Hloc_fixedR(i,j)
     //=======================================================
-    int total_nnr = 0;
+    std::size_t total_nnr = 0;
 #ifdef _OPENMP
 #pragma omp parallel reduction(+ : total_nnr)
     {
@@ -475,7 +477,7 @@ void build_Nonlocal_mu_new(const Parallel_Orbitals& pv,
                 GridD->Find_atom(ucell, atom1->tau[I1], T1, I1, &adjs);
                 const int start1 = ucell.itiaiw2iwt(T1, I1, 0);
                 // Record_adj.for_2d() may not called in some case
-                int nnr = 0;
+                std::size_t nnr = 0;
                 if (!pv.nlocstart.empty())
                 {
                     nnr = pv.nlocstart[iat1];
