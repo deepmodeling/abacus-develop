@@ -24,6 +24,9 @@
  *   - ValidSpeciesAndVectors
  *     - a well-formed species line and a full 3x3 LATTICE_VECTORS block still
  *       read normally
+ *   - LatticeVectorsWithInlineCommentsAccepted
+ *     - vector rows annotated with trailing comments ("0.5 0.5 0.0  # a3"),
+ *       common in real STRU files, must still be accepted
  */
 
 class ReadSpeciesMalformedTest : public ::testing::Test
@@ -109,4 +112,21 @@ TEST_F(ReadSpeciesMalformedTest, ValidSpeciesAndVectors)
     EXPECT_TRUE(unitcell::read_lattice_constant(ifa2, ofs_running, ucell.lat));
     EXPECT_DOUBLE_EQ(ucell.lat.latvec.e33, 1.0);
     ifa2.close();
+}
+
+TEST_F(ReadSpeciesMalformedTest, LatticeVectorsWithInlineCommentsAccepted)
+{
+    // real STRU files annotate vector rows with trailing comments
+    // (e.g. "0.5 0.5 0.0  # a3"); the reader must swallow the rest of
+    // each row like the old READ_VALUE-based code did
+    const std::string stru = write_stru_file("latvec_comments.stru",
+                                             "LATTICE_CONSTANT\n4.0\nLATTICE_VECTORS\n"
+                                             "1 0 0  # Lattice vector 1\n"
+                                             "0 1 0  # Lattice vector 2\n"
+                                             "0 0 1  # Lattice vector 3\n");
+    ucell.latName = "user_defined_lattice";
+    std::ifstream ifa(stru);
+    EXPECT_TRUE(unitcell::read_lattice_constant(ifa, ofs_running, ucell.lat));
+    EXPECT_DOUBLE_EQ(ucell.lat.latvec.e33, 1.0);
+    ifa.close();
 }

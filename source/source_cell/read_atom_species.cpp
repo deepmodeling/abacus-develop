@@ -185,14 +185,18 @@ bool read_lattice_constant(std::ifstream& ifa,
             // Reading lattice vectors. notice
             // here that only one cpu read these
             // parameters.
-            ifa >> latvec.e11 >> latvec.e12 >> latvec.e13
-                >> latvec.e21 >> latvec.e22 >> latvec.e23
-                >> latvec.e31 >> latvec.e32 >> latvec.e33;
+            std::string latvec_line_rest;
+            ifa >> latvec.e11 >> latvec.e12 >> latvec.e13;
+            std::getline(ifa, latvec_line_rest); // swallow inline comments after each row
+            ifa >> latvec.e21 >> latvec.e22 >> latvec.e23;
+            std::getline(ifa, latvec_line_rest);
+            ifa >> latvec.e31 >> latvec.e32 >> latvec.e33;
             if (ifa.fail())
             {
                 ModuleBase::WARNING_QUIT("unitcell::read_lattice_constant",
                                          "invalid LATTICE_VECTORS: failed to read 9 lattice vector components");
             }
+            std::getline(ifa, latvec_line_rest);
         }
     }//supply lattice vectors
     else

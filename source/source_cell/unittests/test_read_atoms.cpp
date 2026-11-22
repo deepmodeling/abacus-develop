@@ -14,11 +14,11 @@
 
 /**
  * - Tested Functions:
- *   - TruncatedCoordinateRejected
- *     - read_atom_positions(): a coordinate line with fewer than three numbers
- *       was previously caught deep in parse_atom_properties() with the
- *       misleading "mismatch in atom number" message plus exit(1); it is now
- *       rejected at the extraction point (issue #8356)
+ *   - NonNumericCoordinateRejected
+ *     - read_atom_positions(): a coordinate line with non-numeric content
+ *       (e.g. "1.0 1.0 x") is now rejected at the extraction point; a line
+ *       truncated at EOF still goes to the existing mismatch-in-atom-number
+ *       exit in parse_atom_properties() (issue #8356)
  *   - NonNumericAtomCountRejected
  *     - read_atom_type_header(): a non-numeric atom count left na = 0 and
  *       triggered the "atom number is 0" banner for the wrong reason; it is
@@ -93,9 +93,9 @@ class ReadAtomsMalformedTest : public ::testing::Test
     }
 };
 
-TEST_F(ReadAtomsMalformedTest, TruncatedCoordinateRejected)
+TEST_F(ReadAtomsMalformedTest, NonNumericCoordinateRejected)
 {
-    const bool result = read_positions("ATOMIC_POSITIONS\nCartesian\nH\n0.0\n2\n0.0 0.0 0.0\n1.0 1.0\n");
+    const bool result = read_positions("ATOMIC_POSITIONS\nCartesian\nH\n0.0\n2\n0.0 0.0 0.0\n1.0 1.0 x\n");
     EXPECT_FALSE(result);
 }
 
