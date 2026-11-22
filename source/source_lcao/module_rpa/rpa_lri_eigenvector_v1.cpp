@@ -29,6 +29,8 @@ void RPA_LRI<T, Tdata>::out_eigen_vector_v1(const Parallel_Orbitals& parav, cons
     RpaLriDetail::collective_require(io_comm,
                                      communicator_relation == MPI_IDENT || communicator_relation == MPI_CONGRUENT,
                                      "KS eigenvector wavefunction and RPA communicators are inconsistent");
+    const std::string wfc_filename
+        = RpaLriDetail::librpa_output_path(this->runtime.input.rpa_outdir, "KS_wfc_0.dat");
     RpaLriDetail::write_ks_eigenvector_v1_mpi(io_comm,
                                               parav,
                                               psi,
@@ -37,7 +39,7 @@ void RPA_LRI<T, Tdata>::out_eigen_vector_v1(const Parallel_Orbitals& parav, cons
                                               this->runtime.input.nspin,
                                               this->runtime.input.nbands,
                                               this->runtime.nlocal,
-                                              RpaLriDetail::librpa_output_path(this->runtime.input.rpa_outdir, "KS_wfc_0.dat"));
+                                              wfc_filename);
     ModuleBase::timer::end("RPA_LRI", "out_eigen_vector_v1_mpi_io");
 #endif
 }

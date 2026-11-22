@@ -40,8 +40,9 @@ try
         data.full_cartesian[ik] = {{kcart.x, kcart.y, kcart.z}};
     }
     data.full_map = p_kv->ibz_index;
-    RpaLriDetail::write_bz_sample(
-        RpaLriDetail::librpa_output_path(this->runtime.input.rpa_outdir, "bz_sample.txt"), data);
+    const std::string bz_filename
+        = RpaLriDetail::librpa_output_path(this->runtime.input.rpa_outdir, "bz_sample.txt");
+    RpaLriDetail::write_bz_sample(bz_filename, data);
 }
 catch (const std::exception& error)
 {

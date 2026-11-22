@@ -243,9 +243,15 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const module_dm::DensityMatrix<T, Tdata>
         // operations, so export them without the orbital rotations.
         if (this->runtime.input.nspin == 4 && ModuleSymmetry::Symmetry::symm_flag == 1)
         {
-            ModuleSymmetry::print_symrot_info_R_spatial(ucell.symm,
-                                                        ucell.lmax,
-                                                        Exx_Abfs::Construct_Orbs::get_Lmax(abfs_for_lmax));
+            const int abfs_lmax = Exx_Abfs::Construct_Orbs::get_Lmax(abfs_for_lmax);
+            try
+            {
+                ModuleSymmetry::print_symrot_info_R_spatial(ucell.symm, ucell.lmax, abfs_lmax);
+            }
+            catch (const std::exception& error)
+            {
+                RpaLriDetail::abort_output(this->mpi_comm, error.what());
+            }
         }
     }
 

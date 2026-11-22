@@ -71,8 +71,11 @@ void RPA_LRI<T, Tdata>::out_velocity(const UnitCell& ucell,
                                                                                    nvirt);
     if (this->runtime.rank == 0)
     {
+        const std::string velocity_filename
+            = RpaLriDetail::librpa_output_path(this->runtime.input.rpa_outdir,
+                                               "velocity_matrix.txt");
         LR_Util::output_spectrum_mo_librpa(velocity_mo,
-                                           RpaLriDetail::librpa_output_path(this->runtime.input.rpa_outdir, "velocity_matrix.txt"),
+                                           velocity_filename,
                                            nk,
                                            nspin_tmp,
                                            nbands,

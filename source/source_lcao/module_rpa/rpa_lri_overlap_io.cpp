@@ -691,8 +691,9 @@ void RPA_LRI<T, Tdata>::out_abfs_overlap_raw_v1(
         {
             continue;
         }
+        const std::string iq_suffix = std::to_string(ik + 1) + ".dat";
         const std::string out_name = RpaLriDetail::librpa_output_path(
-        this->runtime.input.rpa_outdir, "v1_abf_overlap_active_iq_" + std::to_string(ik + 1) + ".dat");
+            this->runtime.input.rpa_outdir, "v1_abf_overlap_active_iq_" + iq_suffix);
         const std::string tmp_name = out_name + ".tmp";
         std::ofstream ofs(tmp_name.c_str(), std::ios::out | std::ios::binary | std::ios::trunc);
         if (!ofs.good())

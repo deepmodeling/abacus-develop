@@ -103,7 +103,7 @@ namespace LRI_CV_Tools
         dir = opendir(path.c_str());
         while ((ptr = readdir(dir)) != NULL){// read all the files in the directory
             std::string fm(ptr->d_name);
-            if (fm.find("Cs_data_") == 0)// find file Cs_data_xxx
+            if (fm.find("Cs_data_") == 0 || fm.find("librpa_Cs_data_") == 0)
             {
                 ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "found Cs file: " + fm + ", start reading...");
                 std::ifstream infile(path + fm);

@@ -75,7 +75,14 @@ namespace ModuleSymmetry
     void print_symrot_info_R_spatial(const Symmetry& symm, const int lmax_ao, const int lmax_abfs)
     {
         ModuleBase::TITLE("ModuleSymmetry", "print_symrot_info_R_spatial");
-        std::ofstream ofs(PARAM.globalv.global_out_dir + "symrot_R.txt");
+        const std::string filename = PARAM.globalv.global_out_dir + "symrot_R.txt";
+        std::ofstream ofs(filename);
+        if (!ofs.good())
+        {
+            // A silently missing symmetry export would leave postSCF without
+            // the data its LibRPA preprocessing consumes, so fail loudly.
+            throw std::runtime_error("Failed to open " + filename);
+        }
         ofs << "Number of irreducible sector: 1\n";
         ofs << "Lmax of AOs: " << lmax_ao << "\n";
         ofs << "Lmax of ABFs: " << lmax_abfs << "\n";
@@ -98,6 +105,12 @@ namespace ModuleSymmetry
                 << vec3_fmt(symm.gtrans_anti[isym]) << "\n";
         }
         ofs.close();
+        if (!ofs.good())
+        {
+            throw std::runtime_error("Failed to write " + filename);
+        }
+        // Rule 16: a created file is announced in the running log.
+        GlobalV::ofs_running << "Wrote spatial symmetry operations to " << filename << std::endl;
     }
 
     void print_symrot_info_k(const Symmetry_rotation& symrot, const K_Vectors& kv, const UnitCell& ucell)

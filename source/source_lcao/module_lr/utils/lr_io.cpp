@@ -241,7 +241,7 @@ void read_librpa_eigenvectors(psi::Psi<TK>& wfc_ks,
 
         while ((ptr = readdir(dir)) != NULL){// read all the files in the directory
             std::string fm(ptr->d_name);
-            if (fm.find("KS_eigenvector") == 0)// find file KS_eigenvectorXXX
+            if (fm.find("KS_eigenvector") == 0 || fm.find("librpa_KS_eigenvector") == 0)
             {
                 //std::cout << "found librpa_eigenvector file:" << fm << std::endl;
                 std::ifstream file_librpa_ks(in_dir + fm);
@@ -458,6 +458,7 @@ TLRI<TVs> read_coulomb_mat_k(const std::string& in_dir, const TLRI<TCs>& Cs, LR_
     struct dirent *ptr;
     DIR *dir;
     bool has_unshrinked = false;
+    bool has_librpa_prefix = false;
     dir = opendir(in_dir.c_str());
     if (!dir)
     {
@@ -466,14 +467,25 @@ TLRI<TVs> read_coulomb_mat_k(const std::string& in_dir, const TLRI<TCs>& Cs, LR_
     while ((ptr = readdir(dir)) != nullptr)
     {
         std::string fm(ptr->d_name);
-        if (fm.find("coulomb_unshrinked_cut_") == 0)
+        if (fm.find("librpa_coulomb_unshrinked_cut_") == 0
+            || fm.find("librpa_coulomb_cut_") == 0)
+        {
+            has_librpa_prefix = true;
+        }
+        if (fm.find("coulomb_unshrinked_cut_") == 0
+            || fm.find("librpa_coulomb_unshrinked_cut_") == 0)
         {
             has_unshrinked = true;
-            break;
         }
     }
     rewinddir(dir);
-    const std::string prefix = has_unshrinked ? "coulomb_unshrinked_cut_" : "coulomb_cut_";
+    // The producer prefixes every file with librpa_ so users can tell its
+    // outputs apart; accept both spellings while older run directories
+    // remain in circulation.
+    const std::string prefix
+        = has_unshrinked ? (has_librpa_prefix ? "librpa_coulomb_unshrinked_cut_"
+                                             : "coulomb_unshrinked_cut_")
+                         : (has_librpa_prefix ? "librpa_coulomb_cut_" : "coulomb_cut_");
     std::cout << "read_coulomb_mat_k: using prefix \"" << prefix << "\" in directory \"" << in_dir << "\"" << std::endl;
 
     size_t nk = 0, nabf = 0, istart = 0, jstart = 0, iend = 0, jend = 0;
@@ -590,6 +602,7 @@ TLRI<TVs> read_coulomb_mat_general_k(const std::string& in_dir, const TLRI<TCs>&
     struct dirent *ptr;
     DIR *dir;
     bool has_unshrinked = false;
+    bool has_librpa_prefix = false;
     dir = opendir(in_dir.c_str());
     if (!dir)
     {
@@ -598,14 +611,22 @@ TLRI<TVs> read_coulomb_mat_general_k(const std::string& in_dir, const TLRI<TCs>&
     while ((ptr = readdir(dir)) != nullptr)
     {
         std::string fm(ptr->d_name);
-        if (fm.find("coulomb_unshrinked_cut_") == 0)
+        if (fm.find("librpa_coulomb_unshrinked_cut_") == 0
+            || fm.find("librpa_coulomb_cut_") == 0)
+        {
+            has_librpa_prefix = true;
+        }
+        if (fm.find("coulomb_unshrinked_cut_") == 0
+            || fm.find("librpa_coulomb_unshrinked_cut_") == 0)
         {
             has_unshrinked = true;
-            break;
         }
     }
     rewinddir(dir);
-    const std::string prefix = has_unshrinked ? "coulomb_unshrinked_cut_" : "coulomb_cut_";
+    const std::string prefix
+        = has_unshrinked ? (has_librpa_prefix ? "librpa_coulomb_unshrinked_cut_"
+                                             : "coulomb_unshrinked_cut_")
+                         : (has_librpa_prefix ? "librpa_coulomb_cut_" : "coulomb_cut_");
     std::cout << "read_coulomb_mat_k: using prefix \"" << prefix << "\" in directory \"" << in_dir << "\"" << std::endl;
     
     TLRI<TVs> Vs;
