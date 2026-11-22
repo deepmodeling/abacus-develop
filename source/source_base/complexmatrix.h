@@ -14,7 +14,9 @@ public:
 
     int nr=0;
     int nc=0;
-    int size=0;
+    /// Element count.  Kept in size_t because an LCAO matrix can exceed
+    /// INT_MAX elements (issue #8342: NLOCAL = 377884 gives ~1.4e11).
+    std::size_t size=0;
     std::complex<double> *c=nullptr;
 
     ComplexMatrix(): nr(0), nc(0), size(0), c(nullptr){}
@@ -34,12 +36,12 @@ public:
     std::complex<double> &operator()(const int ir,const int ic)
     {
         assert(ir>=0);	assert(ir<nr);	assert(ic>=0);	assert(ic<nc);
-        return c[ir*nc+ic];//mohan modify in-line 2007-10-1
+        return c[matrix_index(ir, ic, nc)];//mohan modify in-line 2007-10-1
     }
     const std::complex<double> &operator()(const int ir,const int ic)const
     {
         assert(ir>=0);	assert(ir<nr);	assert(ic>=0);	assert(ic<nc);
-        return c[ir*nc+ic];//mohan modify in-line 2007-10-13
+        return c[matrix_index(ir, ic, nc)];//mohan modify in-line 2007-10-13
     }
     
     ComplexMatrix& operator*=(const std::complex<double> &s);

@@ -16,9 +16,10 @@ namespace ModuleBase
 ComplexMatrix::ComplexMatrix(const int nrows, const int ncols, const bool flag_zero)
     :nr(nrows),
      nc(ncols),
-     size(nrows*ncols),
+     size(0),
      c(nullptr)
 {
+    size = matrix_size(nr, nc);
     if( size )
     {
         c = new std::complex<double>[size];
@@ -29,7 +30,7 @@ ComplexMatrix::ComplexMatrix(const int nrows, const int ncols, const bool flag_z
 // zero out the ComplexMatrix
 void ComplexMatrix::zero_out(void)
 {
-    for (int i=0; i<size; i++) c[i] = std::complex<double>(0.0,0.0);
+    for (std::size_t i=0; i<size; i++) c[i] = std::complex<double>(0.0,0.0);
 }
 
 /*
@@ -69,13 +70,14 @@ ComplexMatrix::ComplexMatrix( ComplexMatrix && m1 )
 ComplexMatrix::ComplexMatrix(const matrix &m)
     :nr(m.nr),
      nc(m.nc),
-     size(m.nr*m.nc),
+     size(0),
      c(nullptr)
 {
+    size = matrix_size(nr, nc);
     if( size )
     {
         c = new std::complex<double>[size];
-        for( int i=0; i<size; ++i)
+        for( std::size_t i=0; i<size; ++i)
         {
             c[i] = m.c[i];
         }
@@ -95,35 +97,30 @@ ComplexMatrix::~ComplexMatrix()
 // reallocate memory for Complex Matrix
 void ComplexMatrix::create(const int nr_in, const int nc_in, const bool flag_zero)
 {
-    if( nr_in && nc_in )
-    {
-        if(c)
-        {
-            const int size_in=nr_in*nc_in;
-            if( size_in!=nr*nc )
-            {
-                delete[] c;
-                c = new std::complex<double>[size_in];
-            }
-        }
-        else
-        {
-            c = new std::complex<double>[nr_in * nc_in];
-        }
-
-        nr = nr_in;
-        nc = nc_in;
-        size = nr*nc;
-        if(flag_zero)	zero_out();
-    }
-    else
+    const std::size_t new_size = matrix_size(nr_in, nc_in);
+    if( new_size == 0 )
     {
         if(c)	delete[] c;
         c = nullptr;
         nr = nr_in;
         nc = nc_in;
-        size = nr*nc;
+        size = 0;
+        return;
     }
+
+    if( c == nullptr || new_size != size )
+    {
+        // Allocate before releasing the old buffer so a bad_alloc leaves the
+        // matrix unchanged and the caller can still report the failure.
+        std::complex<double>* new_data = new std::complex<double>[new_size];
+        delete[] c;
+        c = new_data;
+    }
+
+    nr = nr_in;
+    nc = nc_in;
+    size = new_size;
+    if(flag_zero)	zero_out();
 }
 
 void ComplexMatrix::set_as_identity_matrix(void)
@@ -132,8 +129,8 @@ void ComplexMatrix::set_as_identity_matrix(void)
     {
         for(int j=0; j<nc; j++)
         {
-            if(i==j) c[nc * i + j] = std::complex<double>(1.0, 0.0);
-            else c[nc * i + j] = std::complex<double>(0.0, 0.0);
+            if(i==j) c[matrix_index(i, j, nc)] = std::complex<double>(1.0, 0.0);
+            else c[matrix_index(i, j, nc)] = std::complex<double>(0.0, 0.0);
         }
     }
     return;
@@ -197,7 +194,7 @@ ComplexMatrix operator*(const ComplexMatrix &m1, const ComplexMatrix &m2)
 ComplexMatrix operator*(const std::complex<double> &c,const ComplexMatrix &m)
 {
     ComplexMatrix sm(m);
-    for (int i=0 ;i<m.size; i++) sm.c[i] *= c;
+    for (std::size_t i=0 ;i<m.size; i++) sm.c[i] *= c;
     return sm;
 }
 
@@ -205,28 +202,31 @@ ComplexMatrix operator*(const std::complex<double> &c,const ComplexMatrix &m)
 ComplexMatrix operator*(const ComplexMatrix &m,const std::complex<double> &c)
 {
     ComplexMatrix sm(m);
-    for (int i = 0;i < m.size;i++) sm.c[i] *= c;
+    for (std::size_t i = 0;i < m.size;i++) sm.c[i] *= c;
     return sm;
 }
 
 ComplexMatrix operator*(const double &r,const ComplexMatrix &m)
 {
     ComplexMatrix sm(m);
-    for(int i=0; i<m.size; i++) sm.c[i]*= r;
+    for(std::size_t i=0; i<m.size; i++) sm.c[i]*= r;
     return sm;
 }
 
 ComplexMatrix operator*(const ComplexMatrix &m,const double &r)
 {
     ComplexMatrix sm(m);
-    for (int i=0; i<m.size; i++) sm.c[i] *= r;
+    for (std::size_t i=0; i<m.size; i++) sm.c[i] *= r;
     return sm;
 }
 
 ComplexMatrix& ComplexMatrix::operator=(const ComplexMatrix &m)
 {
     this->create(m.nr, m.nc, false);
-    memcpy( c, m.c, size*sizeof(std::complex<double>) );
+    if( size )
+    {
+        memcpy( c, m.c, size*sizeof(std::complex<double>) );
+    }
     return *this;
 }
 
@@ -243,21 +243,21 @@ ComplexMatrix& ComplexMatrix::operator=( ComplexMatrix && m )
 
 ComplexMatrix& ComplexMatrix::operator*=(const std::complex<double> &s)
 {
-    for (int i = 0;i < this->size;i++) c[i] *= s;
+    for (std::size_t i = 0;i < this->size;i++) c[i] *= s;
     return *this;
 }
 
 // Accumulate to a ComplexMatrix in place
 ComplexMatrix& ComplexMatrix::operator+=(const ComplexMatrix &m)
 {
-    for(int i=0; i<size; i++) this->c[i] += m.c[i];
+    for(std::size_t i=0; i<size; i++) this->c[i] += m.c[i];
     return *this;
 }
 
 // decumulate to a ComplexMatrix in place
 ComplexMatrix& ComplexMatrix::operator-=(const ComplexMatrix &m)
 {
-    for(int i=0; i<size; i++) this->c[i] -= m.c[i];
+    for(std::size_t i=0; i<size; i++) this->c[i] -= m.c[i];
     return *this;
 }
 
@@ -265,7 +265,7 @@ ComplexMatrix& ComplexMatrix::operator-=(const ComplexMatrix &m)
 matrix ComplexMatrix::real() const
 {
     matrix m(nr,nc,false);
-    for( int i=0; i<this->size; ++i) m.c[i] = c[i].real();
+    for( std::size_t i=0; i<this->size; ++i) m.c[i] = c[i].real();
     return m;
 }
 
@@ -285,7 +285,7 @@ void scale_accumulate(const std::complex<double> &s,
 {
     assert(min.nr == mout.nr);
     assert(min.nc == mout.nc);
-    for (int j=0; j<min.size; j++)
+    for (std::size_t j=0; j<min.size; j++)
     {
         mout.c[j] += s * min.c[j];
     }
@@ -318,7 +318,7 @@ void scaled_sum(const std::complex<double> &s1,
     assert(m1.nc == m2.nc);
     assert(m1.nc == mout.nc);
 
-    for(int i=0; i<m1.size; i++)
+    for(std::size_t i=0; i<m1.size; i++)
     {
         mout.c[i] = s1 * m1.c[i] + s2 * m2.c[i];
     }
@@ -348,7 +348,7 @@ double abs2_row(const ComplexMatrix &m,const int ir)
     std::complex<double> z;
     for(int ic=0;ic<m.nc;ic++)
     {
-        z = m.c[ m.nc*ir + ic];
+        z = m.c[ matrix_index(ir, ic, m.nc) ];
         r += z.real()*z.real() + z.imag()*z.imag();
     }
     return r;
@@ -360,7 +360,7 @@ double abs2_column(const ComplexMatrix &m,const int ic)
     std::complex<double> z;
     for(int ir=0;ir<m.nr;ir++)
     {
-        z = m.c[ m.nc*ir + ic ];
+        z = m.c[ matrix_index(ir, ic, m.nc) ];
         r += z.real()*z.real() + z.imag()*z.imag();
     }
     return r;
@@ -372,7 +372,7 @@ double abs2(const ComplexMatrix &m)
     double r=0.0;
     std::complex<double> z;
 
-    for (int i = 0;i < m.size;i++)
+    for (std::size_t i = 0;i < m.size;i++)
     {
         z = m.c[i];
         r += z.real() * z.real() + z.imag() * z.imag();
@@ -408,7 +408,7 @@ ComplexMatrix transpose(const ComplexMatrix &m, const bool &conjugate)
 ComplexMatrix conj(const ComplexMatrix &m)
 {
     ComplexMatrix cm( m.nr, m.nc, false );
-    for(int i=0; i!=m.size; ++i)
+    for(std::size_t i=0; i!=m.size; ++i)
         cm.c[i] = conj(m.c[i]);
     return cm;
 }
