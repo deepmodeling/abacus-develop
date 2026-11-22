@@ -46,7 +46,7 @@ UnitCell::UnitCell()
 
     for (int it = 0; it < ntype; it++)
     {
-        Atom* atom = &atoms[it];
+        Atom *atom = &atoms[it];
         for (int ia = 0; ia < atom->na; ia++)
         {
             for (int ik = 0; ik < 3; ++ik)
@@ -57,15 +57,9 @@ UnitCell::UnitCell()
         }
     }
 }
-UnitCell::~UnitCell()
-{
-}
-Magnetism::Magnetism()
-{
-}
-Magnetism::~Magnetism()
-{
-}
+UnitCell::~UnitCell() {}
+Magnetism::Magnetism() {}
+Magnetism::~Magnetism() {}
 Atom::Atom()
 {
     na = 2;
@@ -76,43 +70,21 @@ Atom::Atom()
     vel.resize(na);
     taud.resize(na);
 }
-Atom::~Atom()
-{
-}
+Atom::~Atom() {}
 #ifdef __MPI
-void Atom::bcast_atom()
-{
-}
-void Atom::bcast_atom2()
-{
-}
+void Atom::bcast_atom() {}
+void Atom::bcast_atom2() {}
 #endif
-Atom_pseudo::Atom_pseudo()
-{
-}
-Atom_pseudo::~Atom_pseudo()
-{
-}
-pseudo::pseudo()
-{
-}
-pseudo::~pseudo()
-{
-}
-SepPot::SepPot()
-{
-}
-SepPot::~SepPot()
-{
-}
-Sep_Cell::Sep_Cell() noexcept
-{
-}
-Sep_Cell::~Sep_Cell() noexcept
-{
-}
+Atom_pseudo::Atom_pseudo() {}
+Atom_pseudo::~Atom_pseudo() {}
+pseudo::pseudo() {}
+pseudo::~pseudo() {}
+SepPot::SepPot() {}
+SepPot::~SepPot() {}
+Sep_Cell::Sep_Cell() noexcept {}
+Sep_Cell::~Sep_Cell() noexcept {}
 int ModuleSymmetry::Symmetry::symm_flag = 0;
-void ModuleSymmetry::Symmetry::symmetrize_mat3(ModuleBase::matrix& sigma, const Lattice& lat) const {};
-void ModuleSymmetry::Symmetry::symmetrize_vec3_nat(double* v) const {};
+void ModuleSymmetry::Symmetry::symmetrize_mat3(ModuleBase::matrix &sigma, const Lattice &lat) const {};
+void ModuleSymmetry::Symmetry::symmetrize_vec3_nat(double *v) const {};
 
 #endif

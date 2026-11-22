@@ -202,6 +202,7 @@ void ESolver_KS_LCAO<TK, TR>::others(BaseCell& basecell, const int istep)
                                  this->Pgrid,
                                  this->gd,
                                  this->inp_->out_pchg,
+                                 istep,
                                  global_out_dir,
                                  GlobalV::ofs_running);
         }
@@ -214,6 +215,7 @@ void ESolver_KS_LCAO<TK, TR>::others(BaseCell& basecell, const int istep)
                              this->kv,
                              this->inp_->out_pchg,
                              this->inp_->if_separate_k,
+                             istep,
                              global_out_dir,
                              GlobalV::ofs_running);
         }

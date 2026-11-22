@@ -3,6 +3,8 @@
 #include "source_io/module_mulliken/output_sk.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/formatter.h"
+#include "source_io/module_output/provenance_header.h"
+#include "source_io/module_output/write_notice.h"
 #include "source_base/name_angular.h"
 #include "source_base/module_external/scalapack_connector.h"
 #include "source_base/tool_quit.h"
@@ -91,21 +93,31 @@ Output_Mulliken<TK>::Output_Mulliken(Output_Sk<TK>* output_sk,
 }
 
 template <typename TK>
-void Output_Mulliken<TK>::write(int istep, std::string out_dir)
+void Output_Mulliken<TK>::write(int istep, int out_app_flag, std::string out_dir, std::ofstream& ofs_running)
 {
     std::vector<double> tot_chg = this->get_tot_chg();
     std::vector<std::vector<double>> atom_chg = this->get_atom_chg();
     std::map<std::vector<int>, double> orb_chg = this->get_orb_chg();
     std::stringstream as;
-    as << out_dir << "mulliken.txt";
-    std::ofstream os;
-    if (istep == 0)
+    as << out_dir << "mulliken";
+    // Modes 0 and 1 reuse the fixed filename (mode 0 overwrites, mode 1 appends
+    // each written step); only mode 2 embeds the one-based step number.
+    if (out_app_flag == 2)
     {
-        os.open(as.str(), std::ios::out);
+        as << "g" << istep + 1;
     }
-    else
+    as << ".txt";
+    std::ios_base::openmode mode = std::ios::out;
+    const bool append_step = (out_app_flag == 1) && (istep > 0);
+    if (append_step)
     {
-        os.open(as.str(), std::ios::app);
+        mode |= std::ios::app;
+    }
+    std::ofstream os;
+    os.open(as.str(), mode);
+    if (!os.is_open())
+    {
+        ModuleBase::WARNING_QUIT("Output_Mulliken::write", "Cannot open file: " + as.str());
     }
     if (this->nspin_ == 1)
     {
@@ -124,6 +136,8 @@ void Output_Mulliken<TK>::write(int istep, std::string out_dir)
         ModuleBase::WARNING_QUIT("Output_Mulliken::write", "nspin must be 1, 2 or 4");
     }
     os.close();
+
+    ModuleIO::write_notice(ofs_running, "Mulliken population", as.str());
 }
 
 template <typename TK>
@@ -135,7 +149,9 @@ void Output_Mulliken<TK>::write_mulliken_nspin1(int istep,
 {
     os << std::setprecision(4);
     /// step info
-    os << " --- Ionic Step " << istep+1 << " ---" << std::endl;
+    const std::string time_stamp = ModuleIO::local_timestamp();
+    const int istep_one_based = istep + 1;
+    os << ModuleIO::prov_step(istep_one_based, time_stamp);
     os << " Total charge " << tot_chg[0] << std::endl;
     /// orbital decomposed mulliken populations
     FmtCore fmt_of_chg("%10.4f");
@@ -206,7 +222,9 @@ void Output_Mulliken<TK>::write_mulliken_nspin2(int istep,
 {
     os << std::setprecision(4);
     /// step info
-    os << " --- Ionic Step " << istep+1 << " ---" << std::endl;
+    const std::string time_stamp = ModuleIO::local_timestamp();
+    const int istep_one_based = istep + 1;
+    os << ModuleIO::prov_step(istep_one_based, time_stamp);
     os << " Total charge " << tot_chg[0] + tot_chg[1] << std::endl;
     os << " Total charge of spin1 " << tot_chg[0] << std::endl;
     os << " Total charge of spin2 " << tot_chg[1] << std::endl;
@@ -299,7 +317,9 @@ void Output_Mulliken<TK>::write_mulliken_nspin4(int istep,
 {
     os << std::setprecision(4);
     /// step info
-    os << " --- Ionic Step " << istep+1 << " ---" << std::endl;
+    const std::string time_stamp = ModuleIO::local_timestamp();
+    const int istep_one_based = istep + 1;
+    os << ModuleIO::prov_step(istep_one_based, time_stamp);
     os << " Total charge " << tot_chg[0] << std::endl;
     /// orbital decomposed mulliken populations
     FmtCore fmt_of_chg("%10.4f");

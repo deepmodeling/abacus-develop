@@ -462,7 +462,7 @@ struct Input_para
     int out_freq_elec = 0;                    ///< the frequency of electronic iter to output charge and wavefunction
     int out_freq_ion = 0;                     ///< the frequency ( >= 0 ) of ionic step to output charge density;
                                               ///< 0: output only when ion steps are finished
-    int out_freq_td = 0;                      ///< output interval in RT-TDDFT
+    int out_freq_td_compat = 0;               ///< legacy alias out_freq_td for out_freq_ion in RT-TDDFT
     std::vector<int> out_chg = {0, 3};        ///< output charge density. 0: no; 1: yes
     bool out_occ_mat = true;                  ///< output DFT+U occupation matrices;
                                               ///< frequency controlled by out_freq_ion/out_freq_elec
@@ -580,6 +580,7 @@ struct Input_para
     bool out_wannier_amn = true;            ///< output .amn file or not
     bool out_wannier_unk = false;           ///< output UNK. file or not
     bool out_wannier_eig = true;            ///< output .eig file or not
+    bool out_wannier_spn = false;           ///< output formatted spin matrices for Wannier90
     bool out_wannier_wvfn_formatted = true; ///< output UNK. file in text format or in binary format
 
     // ==============   #Parameters (13.Model) ===========================

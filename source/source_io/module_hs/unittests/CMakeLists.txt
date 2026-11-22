@@ -1,8 +1,14 @@
 addtest(
   TARGET MODULE_IO_hsk_writer_test
-  LIBS parameter base device
+  LIBS parameter base device symmetry
   SOURCES test_hsk_writer.cpp ../hsk_writer.cpp ../hs_dense_io.cpp
-          ../../../source_basis/module_ao/parallel_orbitals.cpp)
+          ../dense_text_body.cpp
+          ../../../source_basis/module_ao/parallel_orbitals.cpp
+          ../../../source_cell/klist.cpp
+          ../../../source_cell/klist_io.cpp
+          ../../../source_cell/reciprocal_grid.cpp
+          ../../../source_cell/parallel_kpoints.cpp
+          ../../../source_cell/ucell_io.cpp)
 
 add_test(
   NAME MODULE_IO_hsk_writer_test_parallel
@@ -10,18 +16,27 @@ add_test(
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 
 addtest(
+  TARGET MODULE_IO_dense_text_body_test
+  SOURCES test_dense_text_body.cpp ../dense_text_body.cpp)
+
+addtest(
   TARGET MODULE_IO_lat_r_csr_test
   LIBS parameter
-  SOURCES test_lat_r_csr.cpp ../lat_r_csr.cpp
-  ../../../source_base/parallel_blkcyc.cpp
-  ../../../source_base/tool_title.cpp
-	../../../source_base/global_variable.cpp
-	../../../source_base/parallel_reduce.cpp
-	../../../source_base/parallel_common.cpp
-	../../../source_base/parallel_global.cpp
-  ../../../source_base/parallel_comm.cpp
-  ../../../source_base/tool_quit.cpp ../../../source_base/global_file.cpp ../../../source_base/global_function.cpp ../../../source_base/memory_recorder.cpp ../../../source_base/timer.cpp
-)
+  SOURCES test_lat_r_csr.cpp
+          ../lat_r_csr.cpp
+          ../../../source_base/parallel_blkcyc.cpp
+          ../../../source_base/tool_title.cpp
+          ../../../source_base/global_variable.cpp
+          ../../../source_base/parallel_reduce.cpp
+          ../../../source_base/parallel_common.cpp
+          ../../../source_base/parallel_global.cpp
+          ../../../source_base/parallel_comm.cpp
+          ../../../source_base/tool_quit.cpp
+          ../../../source_base/global_file.cpp
+          ../../../source_base/global_function.cpp
+          ../../../source_base/memory_recorder.cpp
+          ../../../source_base/module_out/sparse_matrix.cpp
+          ../../../source_base/timer.cpp)
 
 if(ENABLE_LCAO)
   addtest(
@@ -43,6 +58,8 @@ AddTest(
   ../../../source_base/parallel_common.cpp
   ../../../source_base/parallel_global.cpp
   ../../../source_base/parallel_comm.cpp
+  ../../../source_base/module_parallel/para_world.cpp
+  ../../../source_base/module_parallel/para_mpi_func.cpp
   ../../../source_base/tool_quit.cpp
   ../../../source_base/tool_title.cpp
   ../../../source_base/global_file.cpp
@@ -66,7 +83,7 @@ AddTest(
             ../../../source_estate/fp_energy.cpp
             ../../../source_cell/ucell_io.cpp
             ../../../source_basis/module_ao/parallel_orbitals.cpp
-            ../../../source_hamilt/module_hcontainer/test/tmp_mocks.cpp)
+           )
 
   add_test(
     NAME MODULE_IO_hsr_writer_test_parallel
@@ -77,9 +94,13 @@ AddTest(
 
   addtest(
     TARGET MODULE_IO_angmom_op_mat_test
-    LIBS parameter base device neighbor
+    LIBS parameter base device neighbor hcontainer
     SOURCES test_angmom_op_mat.cpp
             ../angmom_op_mat.cpp
+            ../hs_sparse_io.cpp
+            ../lat_r_csr.cpp
+            ../../../source_cell/ucell_io.cpp
+            ../../../source_basis/module_ao/parallel_orbitals.cpp
             ../../../source_basis/module_ao/orb_atomic_lm.cpp
             ../../../source_basis/module_ao/orb_atomic.cpp
             ../../../source_basis/module_nao/radial_set.cpp
@@ -97,15 +118,21 @@ AddTest(
 
   addtest(
     TARGET MODULE_IO_pos_op_csr_test
-    LIBS parameter base device
-    SOURCES test_pos_op_csr.cpp ../pos_op_csr.cpp)
+    LIBS parameter base device hcontainer
+    SOURCES test_pos_op_csr.cpp
+            ../pos_op_csr.cpp
+            ../lat_r_csr.cpp
+            ../../../source_cell/ucell_io.cpp
+            ../../../source_basis/module_ao/parallel_orbitals.cpp
+           )
 
   addtest(
     TARGET MODULE_IO_hs_sparse_io_test
     LIBS parameter base device hcontainer
     SOURCES test_hs_sparse_io.cpp ../hs_sparse_io.cpp ../lat_r_csr.cpp
+            ../../../source_cell/ucell_io.cpp
             ../../../source_basis/module_ao/parallel_orbitals.cpp
-            ../../../source_hamilt/module_hcontainer/test/tmp_mocks.cpp)
+           )
 
   addtest(
     TARGET MODULE_IO_dhs_sparse_writer_test
@@ -115,7 +142,8 @@ AddTest(
             ../hs_sparse_io.cpp
             ../lat_r_csr.cpp
             ../../../source_basis/module_ao/parallel_orbitals.cpp
-            ../../../source_hamilt/module_hcontainer/test/tmp_mocks.cpp)
+            ../../../source_cell/ucell_io.cpp
+           )
 
   addtest(
     TARGET MODULE_IO_output_mat_sparse_test

@@ -96,6 +96,9 @@ class toW90_LCAO : public toW90
 
     void cal_Amn(const UnitCell& ucell, const K_Vectors& kv, const psi::Psi<std::complex<double>>& psi);
     void cal_Mmn(const UnitCell& ucell, const K_Vectors& kv, const psi::Psi<std::complex<double>>& psi);
+    template <typename TK, typename TR>
+    void write_spn(const psi::Psi<TK>& psi, const hamilt::HContainer<TR>& sr, const K_Vectors& kv,
+                   const std::string& out_dir, std::ostream& log) const;
     void out_unk(const psi::Psi<std::complex<double>>& psi);
 
   protected:

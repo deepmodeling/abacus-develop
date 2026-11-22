@@ -3,7 +3,7 @@
 // to cube files in real space. It is part of the module_io package.
 //
 // Output files are named according to the following convention:
-//   - Frequency is out_freq_td for RT-TDDFT and out_freq_ion otherwise.
+//   - Frequency is out_freq_ion; in RT-TDDFT it counts electronic evolution steps.
 //   - Frequency = 0: chg_ini.cube/pot_ini.cube, chgs1_ini.cube/chgs2_ini.cube
 //   - Frequency > 0: chgg{#}_ini.cube/potg{#}_ini.cube, chgs{#}g{#}_ini.cube
 //     (modes 0/1 keep the fixed names without the g{#} index; only mode 2 numbers them)
@@ -78,7 +78,7 @@ void ModuleIO::write_chg_init(const UnitCell& ucell,
 
     if (inp.out_chg[0] == 2)
     {
-        const int output_frequency = inp.esolver_type == "tddft" ? inp.out_freq_td : inp.out_freq_ion;
+        const int output_frequency = inp.out_freq_ion;
         const bool should_output = output_frequency == 0 || (output_frequency > 0 && istep % output_frequency == 0);
 
         if (should_output)
@@ -110,7 +110,7 @@ void ModuleIO::write_chg_init(const UnitCell& ucell,
                     }
                 }
 
-                const std::string desc_chg = ModuleIO::make_data_desc("charge density", "magnetization density m", is, nspin);
+                const std::string desc_chg = ModuleIO::make_data_desc("Charge density", "Magnetization density m", is, nspin);
 
                 ModuleIO::write_vdata_palgrid(para_grid,
                                               chr.rho[is],
@@ -152,7 +152,7 @@ void ModuleIO::write_pot_init(const UnitCell& ucell,
 
     if (inp.out_pot[0] == 3)
     {
-        const int output_frequency = inp.esolver_type == "tddft" ? inp.out_freq_td : inp.out_freq_ion;
+        const int output_frequency = inp.out_freq_ion;
         const bool should_output = output_frequency == 0 || (output_frequency > 0 && istep % output_frequency == 0);
 
         if (should_output)
@@ -167,7 +167,7 @@ void ModuleIO::write_pot_init(const UnitCell& ucell,
             {
                 std::string filename = gen_ini_filename("pot", out_dir, nspin, is, istep, include_geom_step);
 
-                const std::string desc_pot = ModuleIO::make_data_desc("effective potential", "effective magnetic field b", is, nspin);
+                const std::string desc_pot = ModuleIO::make_data_desc("Effective potential", "Effective magnetic field b", is, nspin);
 
                 ModuleIO::write_vdata_palgrid(para_grid,
                                               pelec->pot->get_eff_v(is),

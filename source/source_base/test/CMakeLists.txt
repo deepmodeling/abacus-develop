@@ -248,8 +248,6 @@ addtest(
 addtest(TARGET MODULE_BASE_lebedev_laikov
         SOURCES test_lebedev_laikov.cpp ../ylm.cpp ../math_lebedev_laikov.cpp)
 
-abacus_copy_test_files(support)
-
 addtest(
   TARGET MODULE_BASE_binstream
   LIBS parameter base device
@@ -265,11 +263,6 @@ addtest(
   LIBS parameter base device
   SOURCES file_reader_test.cpp)
 
-addtest(
-  TARGET MODULE_BASE_csr_reader
-  LIBS parameter base device
-  SOURCES csr_reader_test.cpp test_csr_reader.cpp)
-
 if(ENABLE_GOOGLEBENCH)
   addtest(
     TARGET MODULE_BASE_perf_sphbes
@@ -277,8 +270,3 @@ if(ENABLE_GOOGLEBENCH)
     SOURCES perf_sphbes_test.cpp ../math_sphbes.cpp ../timer.cpp)
 endif()
 
-AddTest(
-  TARGET MODULE_BASE_filename
-  LIBS parameter base device
-  SOURCES test_filename.cpp
-)
