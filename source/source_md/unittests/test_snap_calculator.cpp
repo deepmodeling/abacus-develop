@@ -72,10 +72,8 @@ ModuleMD::SNAP::ModelData make_angular_quadratic_model()
     ModuleMD::SNAP::ModelData model = make_model();
     model.parameters.twojmax = 2;
     model.parameters.quadratic_flag = true;
-    model.coefficients[0] = {0.2, 0.3, -0.1, 0.5, 0.2, -0.4,
-                             0.25, 0.0, 0.0, 0.0, -0.15,
-                             0.0, 0.0, 0.0, 0.0, 0.0,
-                             0.0, 0.0, 0.0, 0.0, 0.0};
+    model.coefficients[0] = {
+        0.2, 0.3, -0.1, 0.5, 0.2, -0.4, 0.25, 0.0, 0.0, 0.0, -0.15, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
     return model;
 }
 
@@ -86,8 +84,8 @@ struct SmallCellResult
     std::array<std::array<double, 3>, 3> forces = {};
 };
 
-SmallCellResult evaluate_small_cell(const ModuleMD::SNAP::Calculator& calculator,
-                                    const std::array<std::array<double, 3>, 3>& positions)
+SmallCellResult evaluate_small_cell(
+    const ModuleMD::SNAP::Calculator &calculator, const std::array<std::array<double, 3>, 3> &positions)
 {
     SmallCellResult total;
     ModuleMD::SNAP::CellAccumulator accumulator(positions.size());
@@ -159,19 +157,15 @@ TEST(SnapCalculator, SupportsChemicalChannels)
     const std::vector<ModuleMD::SNAP::Neighbor> neighbors = {silicon, carbon};
 
     const ModuleMD::SNAP::ForceResult analytic = calculator.compute_with_analytic_force(neighbors, 0);
-    const ModuleMD::SNAP::ForceResult finite_difference
-        = calculator.compute_with_finite_difference_force(neighbors, 0, 1.0e-6);
+    const ModuleMD::SNAP::ForceResult finite_difference =
+        calculator.compute_with_finite_difference_force(neighbors, 0, 1.0e-6);
 
     EXPECT_EQ(analytic.energy.descriptor.size(), static_cast<std::size_t>(8));
     EXPECT_NEAR(analytic.energy.energy, finite_difference.energy.energy, 1.0e-12);
     for (int direction = 0; direction < 3; ++direction)
     {
-        EXPECT_NEAR(analytic.center_force[direction],
-                    finite_difference.center_force[direction],
-                    1.0e-5);
-        EXPECT_NEAR(analytic.neighbor_forces[0][direction],
-                    finite_difference.neighbor_forces[0][direction],
-                    1.0e-5);
+        EXPECT_NEAR(analytic.center_force[direction], finite_difference.center_force[direction], 1.0e-5);
+        EXPECT_NEAR(analytic.neighbor_forces[0][direction], finite_difference.neighbor_forces[0][direction], 1.0e-5);
     }
 }
 
@@ -220,8 +214,8 @@ TEST(SnapCalculator, ChemicalAngularChannelsFollowElementOrder)
     silicon.element_index = 1;
     carbon.element_index = 0;
     const std::vector<ModuleMD::SNAP::Neighbor> reordered_neighbors = {silicon, carbon};
-    const ModuleMD::SNAP::ForceResult permuted
-        = reordered_calculator.compute_with_analytic_force(reordered_neighbors, 1);
+    const ModuleMD::SNAP::ForceResult permuted =
+        reordered_calculator.compute_with_analytic_force(reordered_neighbors, 1);
 
     EXPECT_NEAR(original.energy.energy, permuted.energy.energy, 1.0e-10);
     for (std::size_t atom = 0; atom < neighbors.size(); ++atom)
@@ -248,7 +242,7 @@ TEST(SnapCalculator, RejectsMismatchedCoefficientCount)
         const ModuleMD::SNAP::Calculator calculator(model);
         FAIL() << "Expected a coefficient-count error";
     }
-    catch (const std::invalid_argument& error)
+    catch (const std::invalid_argument &error)
     {
         EXPECT_NE(std::string(error.what()).find("expected 2, found 3"), std::string::npos);
     }
@@ -307,14 +301,12 @@ TEST(SnapCalculator, FiniteDifferenceForcesConservePairContribution)
     const ModuleMD::SNAP::Calculator calculator(make_model());
     ModuleMD::SNAP::Neighbor neighbor;
     neighbor.x = 1.0;
-    const ModuleMD::SNAP::ForceResult result = calculator.compute_with_finite_difference_force(
-        std::vector<ModuleMD::SNAP::Neighbor>(1, neighbor), 0, 1.0e-5);
+    const ModuleMD::SNAP::ForceResult result =
+        calculator.compute_with_finite_difference_force(std::vector<ModuleMD::SNAP::Neighbor>(1, neighbor), 0, 1.0e-5);
 
     for (int direction = 0; direction < 3; ++direction)
     {
-        EXPECT_DOUBLE_EQ(result.center_force[direction]
-                             + result.neighbor_forces[0][direction],
-                         0.0);
+        EXPECT_DOUBLE_EQ(result.center_force[direction] + result.neighbor_forces[0][direction], 0.0);
     }
 }
 
@@ -330,9 +322,7 @@ TEST(SnapCalculator, AnalyticForceMatchesFiniteDifference)
     const ModuleMD::SNAP::ForceResult finite = calculator.compute_with_finite_difference_force(neighbors, 0, 1.0e-6);
     for (int direction = 0; direction < 3; ++direction)
     {
-        EXPECT_NEAR(analytic.neighbor_forces[0][direction],
-                    finite.neighbor_forces[0][direction],
-                    1.0e-6);
+        EXPECT_NEAR(analytic.neighbor_forces[0][direction], finite.neighbor_forces[0][direction], 1.0e-6);
     }
 }
 
@@ -362,8 +352,7 @@ TEST(SnapCalculator, InnerSwitchMatchesFiniteDifference)
     {
         for (int direction = 0; direction < 3; ++direction)
         {
-            EXPECT_NEAR(analytic.neighbor_forces[i][direction],
-                        finite.neighbor_forces[i][direction], 1.0e-5);
+            EXPECT_NEAR(analytic.neighbor_forces[i][direction], finite.neighbor_forces[i][direction], 1.0e-5);
         }
     }
 
@@ -373,13 +362,15 @@ TEST(SnapCalculator, InnerSwitchMatchesFiniteDifference)
     model.coefficients[0][10] = -0.15;
     const ModuleMD::SNAP::Calculator quadratic(model);
     const ModuleMD::SNAP::ForceResult quadratic_analytic = quadratic.compute_with_analytic_force(neighbors, 0);
-    const ModuleMD::SNAP::ForceResult quadratic_finite = quadratic.compute_with_finite_difference_force(neighbors, 0, 1.0e-6);
+    const ModuleMD::SNAP::ForceResult quadratic_finite =
+        quadratic.compute_with_finite_difference_force(neighbors, 0, 1.0e-6);
     for (std::size_t i = 0; i < neighbors.size(); ++i)
     {
         for (int direction = 0; direction < 3; ++direction)
         {
-            EXPECT_NEAR(quadratic_analytic.neighbor_forces[i][direction],
-                        quadratic_finite.neighbor_forces[i][direction], 1.0e-5);
+            EXPECT_NEAR(
+                quadratic_analytic.neighbor_forces[i][direction], quadratic_finite.neighbor_forces[i][direction],
+                1.0e-5);
         }
     }
 }
@@ -410,13 +401,13 @@ TEST(SnapCalculator, InnerSwitchSkipsSingularRadius)
     neighbor.y = 0.12;
     const std::vector<ModuleMD::SNAP::Neighbor> near_neighbors(1, neighbor);
     const ModuleMD::SNAP::ForceResult near_analytic = angular.compute_with_analytic_force(near_neighbors, 0);
-    const ModuleMD::SNAP::ForceResult near_finite = angular.compute_with_finite_difference_force(near_neighbors, 0, 1.0e-6);
+    const ModuleMD::SNAP::ForceResult near_finite =
+        angular.compute_with_finite_difference_force(near_neighbors, 0, 1.0e-6);
     EXPECT_TRUE(std::isfinite(near_analytic.energy.energy));
     for (int direction = 0; direction < 3; ++direction)
     {
         EXPECT_TRUE(std::isfinite(near_analytic.neighbor_forces[0][direction]));
-        EXPECT_NEAR(near_analytic.neighbor_forces[0][direction],
-                    near_finite.neighbor_forces[0][direction], 1.0e-4);
+        EXPECT_NEAR(near_analytic.neighbor_forces[0][direction], near_finite.neighbor_forces[0][direction], 1.0e-4);
     }
 }
 
@@ -447,9 +438,8 @@ TEST(SnapCalculator, ZeroWeightSkipsInvalidRadius)
 TEST(SnapCalculator, AngularQuadraticForcesMatchEnergyGradientAndStrain)
 {
     const ModuleMD::SNAP::Calculator calculator(make_angular_quadratic_model());
-    const std::array<std::array<double, 3>, 3> positions = {{{0.0, 0.0, 0.0},
-                                                              {1.058354, 0.0, 0.0},
-                                                              {0.2645885, 1.3229425, 0.0}}};
+    const std::array<std::array<double, 3>, 3> positions = {
+        {{0.0, 0.0, 0.0}, {1.058354, 0.0, 0.0}, {0.2645885, 1.3229425, 0.0}}};
     const SmallCellResult result = evaluate_small_cell(calculator, positions);
     const double displacement = 1.0e-6;
     for (std::size_t atom = 0; atom < positions.size(); ++atom)
@@ -460,11 +450,10 @@ TEST(SnapCalculator, AngularQuadraticForcesMatchEnergyGradientAndStrain)
             std::array<std::array<double, 3>, 3> minus = positions;
             plus[atom][direction] += displacement;
             minus[atom][direction] -= displacement;
-            const double energy_gradient = (evaluate_small_cell(calculator, plus).energy
-                                            - evaluate_small_cell(calculator, minus).energy)
-                                           / (2.0 * displacement);
-            EXPECT_NEAR(result.forces[atom][direction],
-                        -energy_gradient, 1.0e-4);
+            const double energy_gradient =
+                (evaluate_small_cell(calculator, plus).energy - evaluate_small_cell(calculator, minus).energy) /
+                (2.0 * displacement);
+            EXPECT_NEAR(result.forces[atom][direction], -energy_gradient, 1.0e-4);
         }
     }
 
