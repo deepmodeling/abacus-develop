@@ -633,9 +633,6 @@ endfunction()
 
 if(ENABLE_LIBRI)
   set_if_higher(CMAKE_CXX_STANDARD 14)
-  if(ENABLE_LIBRI_GPU)
-    set_if_higher(CMAKE_CXX_STANDARD 17)
-  endif()
   find_package(LibRI REQUIRED)
 endif()
 

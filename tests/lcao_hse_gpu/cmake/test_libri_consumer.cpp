@@ -1,11 +1,11 @@
 #include <RI/ri/LRI.h>
 
 #if defined(EXPECT_LIBRI_GPU)
-#if !defined(__GPU_RI) || !defined(__DDLA_RI) || !defined(DDLA_USE_CUDA)
+#if !defined(__GPU_RI) || !defined(__DDLA_RI) || !DDLA_HAS_GPU
 #error "LibRI GPU usage requirements did not reach the consumer"
 #endif
 #else
-#if defined(__GPU_RI) || defined(__DDLA_RI) || defined(DDLA_USE_CUDA)
+#if defined(__GPU_RI) || defined(__DDLA_RI)
 #error "CPU LibRI consumer unexpectedly requires a GPU backend"
 #endif
 #endif

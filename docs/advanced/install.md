@@ -82,8 +82,8 @@ The new EXX implementation directly depends on [LibRI](https://github.com/abacus
 ```
 
 Experimental LCAO GPU contractions additionally require `ENABLE_LIBRI_GPU=ON`
-(default OFF), `USE_CUDA=ON`, LibRI v0.3.0.0 or newer, and a compatible CUDA
-build of DDLA. Like other dependent
+(default OFF), `USE_CUDA=ON`, LibRI v0.3.0.0 or newer, and a CUDA
+build of DDLA v0.0.7 or newer. Like other dependent
 options, GPU RI is disabled when its LibRI/CUDA prerequisites are disabled.
 INPUT `device_exx` defaults to `cpu`, retaining CPU contractions even with
 `device gpu`. To use GPU contractions, set both `device gpu` and `device_exx gpu`.
@@ -110,13 +110,11 @@ is the minimum GPU release. Use the release tagged at
 it includes the GPU symmetry, accumulation, OpenMP, atom-list and DDLA adapter
 fixes. Earlier LibRI versions remain usable for CPU RI.
 
-DDLA must provide its installed `LibDDLAConfig.cmake` package and `ddla::ddla`
-target, `DDLA_HAS_GPU`, and the handle-selected `gemmVbatched` and
-`gemmVbatched2s` APIs. Use
-[DDLA commit 7c0ca08b4349a527cec2a0c0af7d1a1082bd38c7](https://github.com/userchba/LibDDLA/commit/7c0ca08b4349a527cec2a0c0af7d1a1082bd38c7)
-or a later compatible revision, built with CUDA support. The original DDLA
-`v0.0.6` release has an incompatible API; its version number alone does not
-establish compatibility. GPU RI requires C++17.
+Use [DDLA v0.0.7](https://github.com/userchba/LibDDLA/releases/tag/v0.0.7)
+or a newer compatible release, built with CUDA support. ABACUS consumes its
+installed `LibDDLAConfig.cmake` package, `ddla::ddla` target and public
+`DDLA_HAS_GPU` capability. Building DDLA itself requires C++17; ABACUS with
+either CPU or GPU RI requires C++14.
 GPU mode requires an explicitly supplied, compatible LibRI installation;
 the default CPU dependency download is unchanged.
 
