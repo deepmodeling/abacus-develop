@@ -3,6 +3,8 @@ abacus_disable_feature_definitions(__CUDA)
 abacus_disable_feature_definitions(__ROCM)
 abacus_disable_feature_definitions(__EXX)
 
+# test_read_inp_estruc.cpp uses io_input_serial via ../test_serial/CMakeLists.txt.
+
 addtest(
   TARGET MODULE_IO_write_bands
   LIBS parameter base device symmetry
