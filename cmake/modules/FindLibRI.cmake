@@ -40,7 +40,7 @@ if(LibRI_FOUND AND NOT TARGET LibRI::LibRI)
     PROPERTIES INTERFACE_INCLUDE_DIRECTORIES
                "${LIBRI_DIR}/include;${LIBCOMM_DIR}/include"
                INTERFACE_COMPILE_FEATURES cxx_std_14
-               INTERFACE_LINK_LIBRARIES "MPI::MPI_CXX;cereal::cereal")
+               INTERFACE_LINK_LIBRARIES "LibComm::LibComm;MPI::MPI_CXX;cereal::cereal")
   if(ENABLE_OPENMP)
     target_link_libraries(LibRI::LibRI INTERFACE OpenMP::OpenMP_CXX)
   endif()
