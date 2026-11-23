@@ -57,13 +57,15 @@ module_dm::DensityMatrix<double, double> sparse_density(
  * @brief Contract the antisymmetric moving-AO connection for an auxiliary state pair.
  * @param[in] inputs Borrowed current geometry and validated parallel AO layout.
  * @param[in] density Local interstate AO coefficient tensor, including spin factors.
- * @param[in] geometry Borrowed overlap derivatives for this geometry.
+ * @param[in] overlap_derivatives Borrowed overlap derivatives for this geometry.
  * @return Owned atom-major nat-by-3 connection in bohr^-1.
  * @details Contracts the antisymmetric density with the bra-center overlap
  * derivative; the symmetric metric-response term is handled separately.
  */
 ModuleBase::matrix antisymmetric_ao_connection(
-    const LR::GradientInputs<double> &inputs, const container::Tensor &density, const LR::ForceGeometry &geometry);
+    const GradientInputs<double> &inputs,
+    const container::Tensor &density,
+    const std::vector<hamilt::HContainer<double>> &overlap_derivatives);
 } // namespace LR
 
 #endif

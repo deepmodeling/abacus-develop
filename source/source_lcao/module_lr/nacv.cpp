@@ -5,7 +5,6 @@
 #include "nacv_ao.h"
 #include "nacv_response.h"
 #include "cal_edm.h"
-#include "cal_hs_grad.h"
 #include "gradient_inputs.h"
 #include "hamilt_casida.h"
 #include "hamilt_ulr.h"
@@ -24,95 +23,6 @@
 #include <string>
 #include <utility>
 #include <vector>
-
-namespace LR
-{
-template <typename T> struct NacvInputs;
-/**
- * @brief Own geometry-fixed force intermediates for one NAC request batch.
- * @details The reference and parallel layouts are borrowed for the batch lifetime.
- * Potentials and derivative matrices are built lazily, including on empty MPI ranks.
- */
-class NacvForce final : public LR_Force<double>
-{
-  public:
-    /**
-     * @param[in] data Geometry-local reference, density and integration dependencies.
-     * @param[in] settings Resolved force switches, with no global configuration reads.
-     */
-    NacvForce(const NacvInputs<double> &data, const ForceSettings &settings);
-    /** @return Immutable geometry intermediates, prepared on their first use. */
-    const ForceGeometry &geometry();
-
-  private:
-    const NacvInputs<double> &data_;
-    std::vector<hamilt::HContainer<double>> overlap_;
-    std::vector<hamilt::HContainer<double>> kinetic_;
-    std::unique_ptr<elecstate::Potential> local_;
-    std::unique_ptr<elecstate::Potential> ground_;
-    std::unique_ptr<ForceGeometry> geometry_;
-    const ForceGeometry *geometry_terms() override;
-    void prepare_geometry();
-};
-} // namespace LR
-
-namespace LR
-{
-NacvForce::NacvForce(const NacvInputs<double> &data, const ForceSettings &settings)
-    : LR_Force<double>(
-          data.gradient.ucell,
-          data.gradient.kv.kvec_d,
-          data.gradient.pmat,
-          data.density_basis,
-          data.smooth_basis,
-          data.local_potential,
-          data.structure_factor,
-          data.gradient.gd,
-          data.two_center_bundle,
-          settings,
-          data.gradient.ofs
-#ifdef __EXX
-          ,
-          data.gradient.exx_lri,
-          data.gradient.hybrid_alpha
-#endif
-          ),
-      data_(data)
-{
-}
-const ForceGeometry &NacvForce::geometry() { return *geometry_terms(); }
-const ForceGeometry *NacvForce::geometry_terms()
-{
-    if (!geometry_)
-    {
-        prepare_geometry();
-    }
-    return geometry_.get();
-}
-void NacvForce::prepare_geometry()
-{
-    const NacvTimerScope timer("NacvForce", "prepare_geometry");
-    const auto &g = data_.gradient;
-    overlap_ = cal_hs_grad(
-        'S',
-        g.ucell,
-        g.pmat,
-        g.gd,
-        data_.two_center_bundle);
-    kinetic_ = cal_hs_grad(
-        'T',
-        g.ucell,
-        g.pmat,
-        g.gd,
-        data_.two_center_bundle);
-    local_ = local_potential();
-    ground_ = dm_to_hxc_potential(data_.ground_density);
-    geometry_.reset(new ForceGeometry{overlap_,
-        kinetic_,
-        *local_,
-        *ground_});
-}
-} // namespace LR
 
 namespace
 {
@@ -198,7 +108,7 @@ namespace LR
  */
 NacvResult evaluate_aux_tda_nac(
     const GradientInputs<double> &inputs,
-    NacvForce &force_terms,
+    LR_Force<double> &force_terms,
     const module_dm::DensityMatrix<double, double> &ground_density,
     int spin_channel,
     bool bra_ground,
@@ -241,6 +151,7 @@ NacvResult evaluate_aux_tda_nac(
             ket_energy_ry,
             open_shell,
             response_context);
+        force_terms.prepare_force_batch(ground_density);
         ct::Tensor zero_amplitudes = LR_Util::newTensor<double>({1, inputs.nloc});
         zero_amplitudes.zero();
         const std::vector<double> energy{ket_energy_ry};
@@ -300,6 +211,7 @@ NacvResult evaluate_aux_tda_nac(
         ct::Tensor response = LR_Util::newTensor<double>({2, inputs.nloc});
         const int pair_count = 2;
         response_context.solve_polarized(combinations.data<double>(), response.data<double>(), pair_count);
+        force_terms.prepare_force_batch(ground_density);
         // Both polarized amplitudes have the same Rayleigh quotient. Using it in
         // both forces gives the symmetric metric term at the mean energy.
         // The negative force half-difference yields the ETF numerator; the AO connection is added separately.
@@ -333,7 +245,8 @@ NacvResult evaluate_aux_tda_nac(
         }
         pair_force = (forces[0] - forces[1]) * 0.5;
     }
-    result.ao_connection = antisymmetric_ao_connection(inputs, density, force_terms.geometry());
+    const auto &overlap_derivatives = force_terms.batch_overlap_derivatives();
+    result.ao_connection = antisymmetric_ao_connection(inputs, density, overlap_derivatives);
     assemble_nacv_result(result, pair_force, gap_resolution_ry);
     return result;
 }
@@ -365,7 +278,7 @@ NacvResult evaluate_nac_pair(
     int,
     int,
     int,
-    NacvForce &,
+    LR_Force<double> &,
     NacvResponse &);
 void validate_nac_data(const NacvInputs<double> &);
 } // namespace
@@ -424,7 +337,24 @@ template <> void run_nac_requests<double>(const NacvInputs<double> &data, int io
         request.local_potential,
         request.hartree_potential,
         data.gradient.dft_functional};
-    NacvForce force_terms(data, settings);
+    LR_Force<double> force_terms(
+        data.gradient.ucell,
+        data.gradient.kv.kvec_d,
+        data.gradient.pmat,
+        data.density_basis,
+        data.smooth_basis,
+        data.local_potential,
+        data.structure_factor,
+        data.gradient.gd,
+        data.two_center_bundle,
+        settings,
+        data.gradient.ofs
+#ifdef __EXX
+        ,
+        data.gradient.exx_lri,
+        data.gradient.hybrid_alpha
+#endif
+    );
     const NacvResponseControls controls{request.response_tolerance, request.response_max_iterations};
     NacvResponse response_context(
         data.gradient,
@@ -553,7 +483,7 @@ NacvResult evaluate_nac_pair(
     int bra_state,
     int ket_state,
     int spin_channel,
-    NacvForce &force_terms,
+    LR_Force<double> &force_terms,
     NacvResponse &response_context)
 {
     const bool reverse = bra_state > ket_state;

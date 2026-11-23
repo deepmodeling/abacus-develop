@@ -31,20 +31,6 @@ inline double gs_dm_channel_factor(const int& nspin)
         std::string dft_functional;
     };
 
-    /**
-     * @brief Borrowed geometry-fixed inputs for repeated analytic force contractions.
-     * @details Derivatives are Cartesian x/y/z HContainers in the existing distributed
-     * AO layout. Potentials retain their normal ground-state XC definition.
-     * The owner keeps every referenced object alive for the complete force batch.
-     */
-    struct ForceGeometry
-    {
-        const std::vector<hamilt::HContainer<double>> &overlap;
-        const std::vector<hamilt::HContainer<double>> &kinetic;
-        const elecstate::Potential &local;
-        const elecstate::Potential &ground;
-    };
-
     template<typename TK>
     class LR_Force
     {
@@ -76,7 +62,20 @@ inline double gs_dm_channel_factor(const int& nspin)
         {
         }
 
-        virtual ~LR_Force() = default;
+        /**
+         * @brief Prepare geometry-fixed force terms once for repeated contractions.
+         * @param[in] ground_density Converged reference density in the force convention.
+         * @pre All ranks enter collectively. This force object and its reference density
+         * belong to one fixed geometry for the entire batch.
+         */
+        void prepare_force_batch(const module_dm::DensityMatrix<TK, double>& ground_density);
+
+        /**
+         * @brief Read the batch overlap derivatives for the moving-AO connection.
+         * @return Borrowed Cartesian derivative blocks in the force object's parallel AO layout.
+         * @pre The fixed-geometry batch has been prepared.
+         */
+        const std::vector<hamilt::HContainer<double>>& batch_overlap_derivatives() const;
 
         /// 1. $Tr[H_{GS}^x * (T+D^Z)]$, where GS=groud state and $(T+D^Z)$ is the relaxed difference density matrix
         ModuleBase::matrix cal_force_hamilt_gs_dm_relaxed_diff(const module_dm::DensityMatrix<TK, double>& relaxed_diff_dm,
@@ -125,12 +124,6 @@ inline double gs_dm_channel_factor(const int& nspin)
             const elecstate::Potential& pot_gs);
 
     protected:
-      /**
-       * @brief Supply optional geometry-fixed intermediates without changing force formulas.
-       * @return Borrowed view valid for this batch, or nullptr for the ordinary LR path.
-       */
-      virtual const ForceGeometry *geometry_terms() { return nullptr; }
-
       const UnitCell &ucell_;
       const std::vector<ModuleBase::Vector3<double>> &kvec_d_;
       const Parallel_Orbitals &pv_;
@@ -159,6 +152,17 @@ inline double gs_dm_channel_factor(const int& nspin)
         void dm_to_charge(const module_dm::DensityMatrix<TK, double>& dm, Charge& chr_out);
         std::unique_ptr<elecstate::Potential> dm_to_hxc_potential(const module_dm::DensityMatrix<TK, double>& dm);
         std::unique_ptr<elecstate::Potential> local_potential();
+
+    private:
+        /// Fixed Cartesian AO derivatives and potentials owned for one reference batch.
+        struct ForceGeometry
+        {
+            std::vector<hamilt::HContainer<double>> overlap;
+            std::vector<hamilt::HContainer<double>> kinetic;
+            std::unique_ptr<elecstate::Potential> local;
+            std::unique_ptr<elecstate::Potential> ground;
+        };
+        std::unique_ptr<ForceGeometry> geometry_;
     };
 }
 

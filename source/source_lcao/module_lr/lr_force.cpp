@@ -5,14 +5,38 @@
 #include "source_hamilt/module_gint/gint_interface.h"
 #include "source_lcao/module_lr/utils/lr_util.h"
 #include "source_hamilt/module_xc/xc_functional.h"
+#include <utility>
 // #include "source_lcao/module_lr/utils/lr_util_hcontainer.h"
 namespace LR
 {
     template<typename TK>
+    void LR_Force<TK>::prepare_force_batch(const module_dm::DensityMatrix<TK, double>& ground_density)
+    {
+        if (geometry_)
+        {
+            return;
+        }
+        ModuleBase::timer::start("LR_Force", "prepare_force_batch");
+        std::unique_ptr<ForceGeometry> geometry(new ForceGeometry);
+        geometry->overlap = cal_hs_grad('S', ucell_, pv_, gd_, two_center_bundle_);
+        geometry->kinetic = cal_hs_grad('T', ucell_, pv_, gd_, two_center_bundle_);
+        geometry->local = local_potential();
+        geometry->ground = dm_to_hxc_potential(ground_density);
+        geometry_ = std::move(geometry);
+        ModuleBase::timer::end("LR_Force", "prepare_force_batch");
+    }
+
+    template<typename TK>
+    const std::vector<hamilt::HContainer<double>>& LR_Force<TK>::batch_overlap_derivatives() const
+    {
+        return geometry_->overlap;
+    }
+
+    template<typename TK>
     ModuleBase::matrix LR_Force<TK>::cal_force_overlap_edm(const module_dm::DensityMatrix<TK, double>& edm)
     {
         // const double* dS[3] = { dSloc_x,  dSloc_y,  dSloc_z };
-        const ForceGeometry *geometry = geometry_terms();
+        const ForceGeometry* geometry = geometry_.get();
         std::vector<hamilt::HContainer<double>> local_derivatives;
         if (geometry == nullptr)
         {
@@ -98,7 +122,7 @@ namespace LR
         const bool reproduce_gs,
         const PotHxcLR* pot_hxc_gs)
     {
-        const ForceGeometry *geometry = geometry_terms();
+        const ForceGeometry* geometry = geometry_.get();
         const bool with_ewald = reproduce_gs;
         // Two independent spin channels in `relax_diff_dm` <=> open-shell (spin-unrestricted) LR.
         // The closed-shell singlet/triplet algorithm always builds a single-channel LR density
@@ -130,7 +154,7 @@ namespace LR
         {
             owned_local = this->local_potential();
         }
-        const elecstate::Potential *pot_loc = geometry == nullptr ? owned_local.get() : &geometry->local;
+        const elecstate::Potential *pot_loc = geometry == nullptr ? owned_local.get() : geometry->local.get();
         PulayForceStress::cal_pulay_fs(
             relax_diff_dm.get_dmr_vec().size() /*nspin*/,
             fvl_dphi,
@@ -159,7 +183,7 @@ namespace LR
         {
             owned_ground = this->dm_to_hxc_potential(dm_gs);
         }
-        const elecstate::Potential *pot_hxc = geometry == nullptr ? owned_ground.get() : &geometry->ground;
+        const elecstate::Potential *pot_hxc = geometry == nullptr ? owned_ground.get() : geometry->ground.get();
         // `cal_pulay_fs` calculates 1*Pulay-term.
         // For ground-state DFT, Pulay term = Hellmann-Feynman term, F = 1/2(Pulay + H-F) = Pulay, so directly call it once gives correct result.
         PulayForceStress::cal_pulay_fs(
