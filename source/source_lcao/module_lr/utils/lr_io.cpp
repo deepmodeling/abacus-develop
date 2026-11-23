@@ -214,7 +214,6 @@ std::vector<double> read_energy_qp_from_band_files(const K_Vectors& kv,
     return eig_info;
 }
 
-#ifdef __EXX
 namespace
 {
 // Eigenvectors come either prefixed (current producer) or unprefixed (older
@@ -246,6 +245,7 @@ bool uses_prefixed_eigenvector(const std::string& in_dir)
     return prefixed;
 }
 
+#ifdef __EXX
 // Coulomb files come either prefixed (current producer) or unprefixed
 // (older run directories). Return the complete prefix that exists, checking
 // the unshrinked variant first because it wins when both are written.
@@ -283,9 +283,8 @@ std::string select_coulomb_prefix(const std::string& in_dir)
     }
     throw std::runtime_error("No Coulomb output found in " + in_dir);
 }
+#endif // __EXX
 } // namespace
-
-#endif
 
 template <typename TK>
 void read_librpa_eigenvectors(psi::Psi<TK>& wfc_ks,
