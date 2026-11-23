@@ -28,11 +28,11 @@ When [md_type](./input_files/input-main.md#md_type) is set to npt, [md_pmode](./
 
 Furthermore, ABACUS also provides a [list of keywords](./input_files/input-main.md#molecular-dynamics) to control relevant parmeters used in MD simulations.
 
-The MD output information will be written into the file `MD_dump`， in which the atomic forces, atomic velocities, and lattice virial are controlled by keyword [dump_force](./input_files/input-main.md#dump_force), [dump_vel](./input_files/input-main.md#dump_vel), and [dump_virial](./input_files/input-main.md#dump_virial), respectively.
+MD structure output is controlled by [`out_stru`](./input_files/input-main.md#out_stru), [`out_freq_ion`](./input_files/input-main.md#out_freq_ion), and [`out_app_flag`](./input_files/input-main.md#out_app_flag). Set `out_stru 1`, `out_freq_ion 1`, and `out_app_flag 1` to keep every MD step in the appended `STRU` trajectory. With `out_freq_ion 0`, only `STRU_FINAL` is written. Mode 0 overwrites the periodic `STRU`; mode 2 writes numbered files and `STRU_FINAL` under `STRUC/`.
 
 Use `md_thermo_freq` to set the output interval for MD step, energy, temperature, and pressure information in `running_md.log` and on screen. The default is 1; set it to 0 to disable this thermodynamic output. The interval counts MD steps from 0, so a value of 10 selects steps 0, 10, 20, and so on, including after a restart.
 
-The `md_out_force` INPUT keyword has been removed. An INPUT file that still contains it will fail to parse. For MDCell simulations, per-atom forces are no longer printed in `running_md.log`; use `dump_force 1` to include them in `MD_dump`, and use `md_dumpfreq` to set the trajectory output interval.
+For MDCell simulations, per-atom forces are in ordinary STRU frames rather than `running_md.log`. The `md_out_force`, `md_dumpfreq`, `dump_force`, `dump_vel`, and `dump_virial` INPUT keywords have been removed; an INPUT file using them will fail to parse.
 
 MDCell structure output (`STRU`, `STRU_FINAL`, and `STRU_restart`) lists atoms by element and then by their original index within that element. This order remains stable when atoms migrate between MPI processes. In an appended `STRU` trajectory, the same row within each element therefore refers to the same atom in every frame.
 

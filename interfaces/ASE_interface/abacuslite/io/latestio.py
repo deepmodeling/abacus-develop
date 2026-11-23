@@ -26,6 +26,77 @@ from abacuslite.io.legacyio import (
 )
 
 
+def read_traj_from_md_stru(directory: Path,
+                           running_log_lines: Optional[List[str]] = None) -> List[Dict[str, np.ndarray]]:
+    """Read MD frames from appended, numbered, or final STRU output."""
+    periodic = directory / 'STRU'
+    numbered = sorted((directory / 'STRUC').glob('STRU[0-9]*'),
+                      key=lambda path: int(path.name[4:]))
+    sources = [periodic] if periodic.is_file() else numbered
+    final = directory / 'STRU_FINAL'
+    if not final.is_file():
+        final = directory / 'STRUC' / 'STRU_FINAL'
+    if final.is_file():
+        sources.append(final)
+    if running_log_lines is not None:
+        announced = []
+        for line in running_log_lines:
+            match = re.search(r'Write file:\s+(.+?)\s*$', line)
+            if match is None:
+                continue
+            path = Path(match.group(1))
+            if path.name in ('STRU', 'STRU_FINAL') or re.fullmatch(r'STRU[0-9]+', path.name):
+                path = directory / 'STRUC' / path.name if path.parent.name == 'STRUC' else directory / path.name
+                if path.is_file() and path not in announced:
+                    announced.append(path)
+        if announced:
+            sources = announced
+    frames = {}
+    for source in sources:
+        step = None
+        lines = []
+        for raw in source.read_text().splitlines() + ['# MD step END']:
+            if raw.startswith('# MD step '):
+                if step is not None:
+                    data = [line.split('#', 1)[0].strip() for line in lines]
+                    data = [line for line in data if line]
+                    lat0 = float(data[data.index('LATTICE_CONSTANT') + 1])
+                    lattice_index = data.index('LATTICE_VECTORS') + 1
+                    cell = np.array([list(map(float, row.split()))
+                                     for row in data[lattice_index:lattice_index + 3]])
+                    cell *= lat0 * 0.529177
+                    index = data.index('ATOMIC_POSITIONS') + 1
+                    coordinate = data[index]
+                    assert coordinate == 'Cartesian_angstrom', coordinate
+                    index += 1
+                    labels = []
+                    coords = []
+                    forces = []
+                    while index < len(data):
+                        label = data[index]
+                        count = int(data[index + 2])
+                        index += 3
+                        for atom in data[index:index + count]:
+                            fields = atom.split()
+                            labels.append(label)
+                            coords.append([float(value) for value in fields[:3]])
+                            if 'f' in fields:
+                                force_index = fields.index('f')
+                                forces.append([float(value) for value in fields[force_index + 1:force_index + 4]])
+                        index += count
+                    frames[step] = {'step': step, 'coordinate': coordinate,
+                                    'cell': cell, 'elem': labels, 'coords': np.array(coords),
+                                    'forces': np.array(forces) if len(forces) == len(labels) else None}
+                if raw != '# MD step END':
+                    step = int(raw.split()[3])
+                    lines = []
+                else:
+                    step = None
+            elif step is not None:
+                lines.append(raw)
+    return [frames[step] for step in sorted(frames)]
+
+
 def find_eig_occ_files(directory: Path,
                        running_log_lines: Optional[List[str]] = None) -> List[Path]:
     '''Discover eigenvalue/occupation files in the output directory.
@@ -125,7 +196,7 @@ def read_esolver_type_from_running_log(src: str | Path | List[str]) \
     ----------
     fn : str
         The path to the ABACUS running log file.
-    
+
     Returns
     -------
     str
@@ -561,12 +632,22 @@ def read_abacus_out(fileobj,
     # FIXME: implement read_ksdft_esolver_out instead of read_abacus_out to
     # make flexible esolver support
 
-    # read the structure, with the cell, elem, etc. (nframe)
-    # if it is MD run, the trajectories will be in the file MD_dump, instead
-    # of the running log
-    trajectory = read_traj_from_running_log(abacus_lines) \
-        if fileobj.name != 'running_md.log' else \
-        read_traj_from_md_dump(fileobj.parent / 'MD_dump')
+    # New MD output uses STRU frames. Keep the legacy reader for existing
+    # calculation directories written by older ABACUS versions.
+    announced_structure = any(re.search(r'Write file: .*[/\\]STRU(?:_FINAL|[0-9]+)?\s*$', line)
+                              for line in abacus_lines)
+    has_stru_files = ((fileobj.parent / 'STRU').is_file()
+                      or (fileobj.parent / 'STRU_FINAL').is_file()
+                      or (fileobj.parent / 'STRUC' / 'STRU_FINAL').is_file()
+                      or any((fileobj.parent / 'STRUC').glob('STRU[0-9]*')))
+    new_md_output = (fileobj.name == 'running_md.log' and
+                     (announced_structure or (has_stru_files and not (fileobj.parent / 'MD_dump').is_file())))
+    if new_md_output:
+        trajectory = read_traj_from_md_stru(fileobj.parent, abacus_lines)
+    elif fileobj.name == 'running_md.log':
+        trajectory = read_traj_from_md_dump(fileobj.parent / 'MD_dump')
+    else:
+        trajectory = read_traj_from_running_log(abacus_lines)
 
     # read the eigenvalues (nframe, nk, nbnd) written by the current run
     eig_files = find_eig_occ_files(fileobj.parent, abacus_lines)
@@ -582,7 +663,9 @@ def read_abacus_out(fileobj,
     for ion_move, _ in iter_header:
         if ion_move not in step_ids:
             step_ids.append(ion_move)
-    if len(step_ids) != len(trajectory):
+    if new_md_output:
+        step_ids = [frame['step'] for frame in trajectory]
+    elif len(step_ids) != len(trajectory):
         step_ids = list(range(1, len(trajectory) + 1))
     elecstate = align_eig_frames(elecstate, step_ids)
 
@@ -608,9 +691,25 @@ def read_abacus_out(fileobj,
         read_energies_from_running_log(abacus_lines)[1],
         iter_header
     )
-    
-    # read the magmom
     magmom = read_magmom_from_running_log(abacus_lines)
+
+    if new_md_output:
+        log_steps = []
+        for ion_move, _ in iter_header:
+            if ion_move not in log_steps:
+                log_steps.append(ion_move)
+        if len(log_steps) != len(energies):
+            log_steps = list(range(1, len(energies) + 1))
+        selected = [log_steps.index(step) for step in step_ids]
+        energies = [energies[i] for i in selected]
+        if len(forces) == len(log_steps):
+            forces = [forces[i] for i in selected]
+        if len(stress) == len(log_steps):
+            stress = [stress[i] for i in selected]
+        if len(magmom) == len(log_steps):
+            magmom = [magmom[i] for i in selected]
+        if all(frame['forces'] is not None for frame in trajectory):
+            forces = [frame['forces'] for frame in trajectory]
 
     # roughly check the integrity of data from their length consistency
     assert len(trajectory) == len(energies), \
@@ -671,6 +770,67 @@ class TestLatestIO(unittest.TestCase):
     '''
     here = Path(__file__).parent
     testfiles = here / 'testfiles'
+
+    def test_read_md_stru_frames_and_force(self):
+        import tempfile
+
+        def frame(step, position, force):
+            return (f'# MD step {step}\n\nATOMIC_SPECIES\nH 1.0 auto auto\n'
+                    'LATTICE_CONSTANT\n1.8897270000\nLATTICE_VECTORS\n'
+                    '4 0 0\n0 4 0\n0 0 4\nATOMIC_POSITIONS\nCartesian_angstrom\n'
+                    f'H\n0.0\n1\n{position} 0 0 m 1 1 1 v 0.1 0 0 f {force} 0 0\n')
+
+        with tempfile.TemporaryDirectory() as scratch:
+            directory = Path(scratch)
+            (directory / 'STRU').write_text(frame(1, 1.0, 2.0) + frame(2, 1.5, 3.0))
+            (directory / 'STRU_FINAL').write_text(frame(2, 1.5, 3.0))
+            trajectory = read_traj_from_md_stru(directory)
+            self.assertEqual([item['step'] for item in trajectory], [1, 2])
+            self.assertTrue(np.allclose(trajectory[1]['coords'], [[1.5, 0, 0]]))
+            self.assertTrue(np.allclose(trajectory[1]['forces'], [[3.0, 0, 0]]))
+            self.assertTrue(np.allclose(trajectory[1]['cell'], np.eye(3) * 4.0, atol=1e-5))
+
+            (directory / 'STRU').unlink()
+            numbered = directory / 'STRUC'
+            numbered.mkdir()
+            (numbered / 'STRU1').write_text(frame(1, 1.0, 2.0))
+            (numbered / 'STRU3').write_text(frame(3, 1.8, 4.0))
+            (directory / 'STRU_FINAL').unlink()
+            (numbered / 'STRU_FINAL').write_text(frame(4, 2.0, 5.0))
+            self.assertEqual([item['step'] for item in read_traj_from_md_stru(directory)], [1, 3, 4])
+            (directory / 'STRU').write_text(frame(99, 9.0, 9.0))
+            announcements = [f'Write file: {numbered / name}'
+                             for name in ('STRU1', 'STRU3', 'STRU_FINAL')]
+            self.assertEqual([item['step'] for item in read_traj_from_md_stru(directory, announcements)],
+                             [1, 3, 4])
+            (directory / 'STRU').unlink()
+            (numbered / 'STRU1').unlink()
+            (numbered / 'STRU3').unlink()
+            self.assertEqual([item['step'] for item in read_traj_from_md_stru(directory)], [4])
+
+    def test_read_abacus_out_from_new_md_stru(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as scratch:
+            directory = Path(scratch)
+            shutil.copy(self.testfiles / 'pw-symm0-nspin4-gamma-md', directory / 'running_md.log')
+            shutil.copy(self.testfiles / 'nspin4-gamma-eigocc', directory / 'eig_occ.txt')
+            header = ('ATOMIC_SPECIES\nAs 1 auto auto\nGa 1 auto auto\n'
+                      'LATTICE_CONSTANT\n1.8897270000\nLATTICE_VECTORS\n'
+                      '4 0 0\n0 4 0\n0 0 4\nATOMIC_POSITIONS\nCartesian_angstrom\n')
+            def frame(step, x, force):
+                return (f'# MD step {step}\n' + header
+                        + f'As\n0.0\n1\n1 1 1 m 1 1 1 v 0 0 0 f {force} 0 0\n'
+                        + f'Ga\n0.0\n1\n{x} 0 0 m 1 1 1 v 0 0 0 f {-force} 0 0\n')
+            (directory / 'STRU').write_text(frame(1, 0.0, 1.0) + frame(2, 0.1, 2.0))
+            (directory / 'STRU_FINAL').write_text(frame(2, 0.1, 2.0))
+            images = read_abacus_out(directory / 'running_md.log')
+            (directory / 'STRU').unlink()
+            final_only = read_abacus_out(directory / 'running_md.log')
+        self.assertEqual(len(images), 2)
+        self.assertTrue(np.allclose(images[-1].get_forces(), [[2.0, 0, 0], [-2.0, 0, 0]]))
+        self.assertEqual(len(final_only), 1)
+        self.assertTrue(np.allclose(final_only[0].get_forces(), [[2.0, 0, 0], [-2.0, 0, 0]]))
 
     def test_read_abacus_out_reorders_calculator_magmoms(self):
         import tempfile

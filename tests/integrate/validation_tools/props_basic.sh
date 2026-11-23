@@ -52,11 +52,16 @@ run_basic_props() {
       echo "[ERROR] Invalid atom count for force collection: $natom" >&2
       return 1
     fi
-    # MDCell forces are in MD_dump; older MD and non-MD logs may still
-    # contain a TOTAL-FORCE table. Both paths require a complete last frame.
-    if [ "$calculation" = "md" ] && [ -f OUT.autotest/MD_dump ]; then
-      force_source=OUT.autotest/MD_dump
-      force_format=dump
+    # The final MD structure contains the evaluated force on every atom.
+    if [ "$calculation" = "md" ]; then
+      force_source=$(awk '/Write file: .*STRU_FINAL$/ {sub(/^.*Write file: /, ""); path=$0} END {print path}' "$running_path")
+      if [ -z "$force_source" ] || [ ! -f "$force_source" ]; then
+        force_source=OUT.autotest/STRU_FINAL
+        if [ ! -f "$force_source" ] && [ -f OUT.autotest/STRUC/STRU_FINAL ]; then
+          force_source=OUT.autotest/STRUC/STRU_FINAL
+        fi
+      fi
+      force_format=stru
     else
       force_source=$running_path
       force_format=log
@@ -73,16 +78,25 @@ run_basic_props() {
         delete force_y
         delete force_z
       }
-      format == "dump" && /^MDSTEP:/ { reset_frame(); next }
-      format == "dump" && /^INDEX[[:space:]]+LABEL[[:space:]]+POSITION.*FORCE/ {
-        in_atoms = 1
-        next
-      }
+      format == "stru" && /^ATOMIC_POSITIONS/ { reset_frame(); in_atoms = 1; next }
       format == "log" && /TOTAL-FORCE/ { reset_frame(); in_atoms = 1; next }
-      in_atoms && ((format == "dump" && $1 ~ /^[0-9]+$/ && NF >= 8) || (format == "log" && NF == 4 && $1 != "Atoms")) {
-        x = format == "dump" ? $6 : $2
-        y = format == "dump" ? $7 : $3
-        z = format == "dump" ? $8 : $4
+      in_atoms && ((format == "stru" && NF >= 3 && number($1) && number($2) && number($3)) || (format == "log" && NF == 4 && $1 != "Atoms")) {
+        x = $2
+        y = $3
+        z = $4
+        if (format == "stru") {
+          found_force = 0
+          for (field = 4; field <= NF; ++field) {
+            if ($field == "f") {
+              found_force = 1
+              x = $(field + 1)
+              y = $(field + 2)
+              z = $(field + 3)
+              break
+            }
+          }
+          if (!found_force) invalid = 1
+        }
         if (!number(x) || !number(y) || !number(z)) invalid = 1
         atom_count++
         force_x[atom_count] = x

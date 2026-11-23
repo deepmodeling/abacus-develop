@@ -19,6 +19,7 @@
 #include <mpi.h>
 #include <set>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <type_traits>
 
@@ -45,7 +46,7 @@ void write_cartesian_stru_case(const std::string& stru_file)
     ofs << "He\n";
     ofs << "0.0\n";
     ofs << "4\n";
-    ofs << "0.40 0.40 0.40 m 1 1 1 v 0.01 0.00 0.00\n";
+    ofs << "0.40 0.40 0.40 m 1 1 1 v 0.01 0.00 0.00 f 1.0 2.0 3.0\n";
     ofs << "2.40 0.40 0.40 m 1 0 1 v 0.02 0.00 0.00\n";
     ofs << "0.40 2.40 0.40 m 0 1 1 v 0.03 0.00 0.00\n";
     ofs << "2.40 2.40 0.40 m 1 1 0 v 0.04 0.00 0.00\n";
@@ -710,6 +711,22 @@ TEST(MDCellReaderTest, STRUAtomOrderStaysStableAcrossOwnerChanges)
         EXPECT_EQ(frames, 2);
         std::remove(filename.c_str());
     }
+}
+
+TEST(MDCellReaderTest, STRUTextGatherRejectsOversizedBatchesCollectively)
+{
+    const ModuleBase::CommunicationDomain domain = ModuleBase::world_comm_domain();
+    const int local_bytes = domain.rank() == 0 ? 17 : 0;
+    const std::string oversized(local_bytes, 'x');
+    EXPECT_THROW(domain.gather_text(oversized, 16), std::length_error);
+    if (domain.size() > 2)
+    {
+        const std::string local(8, 'x');
+        EXPECT_THROW(domain.gather_text(local, 16), std::length_error);
+    }
+    const std::string empty;
+    const std::string gathered = domain.gather_text(empty, 1);
+    EXPECT_TRUE(gathered.empty());
 }
 
 int main(int argc, char** argv)

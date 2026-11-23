@@ -15,6 +15,7 @@ def run_case(executable, fixture, out_stru, out_freq_ion, out_app_flag, expected
         input_text = input_text.replace("out_stru 0", "out_stru " + str(out_stru))
         input_text = input_text.replace("out_freq_ion 2", "out_freq_ion " + str(out_freq_ion))
         input_text = input_text.replace("out_app_flag 0", "out_app_flag " + str(out_app_flag))
+        input_text += "\ncal_stress 1\n"
         (work / "INPUT").write_text(input_text)
         result = subprocess.run(
             [executable], cwd=str(work), stdout=subprocess.PIPE,
@@ -24,6 +25,11 @@ def run_case(executable, fixture, out_stru, out_freq_ion, out_app_flag, expected
             raise AssertionError("ABACUS failed:\n" + result.stdout)
 
         output = work / "OUT.cadence"
+        if (output / "MD_dump").exists():
+            raise AssertionError("Removed MD_dump was written")
+        running_log = (output / "running_md.log").read_text()
+        if running_log.count("VIRIAL (kbar):") != 5:
+            raise AssertionError("Expected one virial matrix for each MD thermodynamic step")
         structure_dir = output / "STRUC" if out_app_flag == 2 else output
         frames = {path.name for path in structure_dir.glob("STRU*")}
         frames.discard("STRU_restart")

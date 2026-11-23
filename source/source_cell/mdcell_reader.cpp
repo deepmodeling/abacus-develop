@@ -290,6 +290,17 @@ std::vector<LocalAtom> read_owned_atoms(std::ifstream& ifs,
                             parse_double(vy, "velocity y"),
                             parse_double(vz, "velocity z"));
                 }
+                else if (token == "f" || token == "force" || token == "forces")
+                {
+                    std::string fx;
+                    std::string fy;
+                    std::string fz;
+                    iss >> fx >> fy >> fz;
+                    if (!iss) throw std::runtime_error("Invalid force record in STRU.");
+                    parse_double(fx, "force x");
+                    parse_double(fy, "force y");
+                    parse_double(fz, "force z");
+                }
             }
 
             for (int ix = begin[0]; ix < end[0]; ++ix)

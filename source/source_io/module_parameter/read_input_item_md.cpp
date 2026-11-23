@@ -183,22 +183,11 @@ A structure frame with velocities is required for {istep}. New runs write it to 
         this->add_item(item);
     }
     {
-        Input_Item item("md_dumpfreq");
-        item.annotation = "The period to dump MD information";
-        item.category = "Molecular dynamics";
-        item.type = "Integer";
-        item.description = "The output frequency of OUT.${suffix}/MD_dump in molecular dynamics calculations, which includes lattice and atomic information. Set to 0 to disable MD_dump output.";
-        item.default_value = "1";
-        item.unit = "";
-        read_sync_int(input.mdp.md_dumpfreq);
-        this->add_item(item);
-    }
-    {
         Input_Item item("md_thermo_freq");
         item.annotation = "The period to output MD thermodynamic information";
         item.category = "Molecular dynamics";
         item.type = "Integer";
-        item.description = "The output frequency of MD step, energy, temperature, and pressure information in OUT.${suffix}/running_md.log and on screen. Set to 0 to disable this output.";
+        item.description = "The output frequency of MD step, energy, temperature, and pressure information in OUT.${suffix}/running_md.log and on screen. When cal_stress is enabled, the running log also contains the complete 3-by-3 virial tensor in kbar at this frequency. Set to 0 to disable this output.";
         item.default_value = "1";
         item.unit = "";
         read_sync_int(input.mdp.md_thermo_freq);
@@ -216,39 +205,6 @@ A structure frame with velocities is required for {istep}. New runs write it to 
         item.default_value = "0.0";
         item.unit = "Angstrom";
         read_sync_double(input.mdp.md_neighbor_skin);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("dump_force");
-        item.annotation = "output atomic forces into the file MD_dump or not";
-        item.category = "Molecular dynamics";
-        item.type = "Boolean";
-        item.description = "Whether to output atomic forces into the file OUT.${suffix}/MD_dump.";
-        item.default_value = "True";
-        item.unit = "";
-        read_sync_bool(input.mdp.dump_force);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("dump_vel");
-        item.annotation = "output atomic velocities into the file MD_dump or not";
-        item.category = "Molecular dynamics";
-        item.type = "Boolean";
-        item.description = "Whether to output atomic velocities into the file OUT.${suffix}/MD_dump.";
-        item.default_value = "True";
-        item.unit = "";
-        read_sync_bool(input.mdp.dump_vel);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("dump_virial");
-        item.annotation = "output lattice virial into the file MD_dump or not";
-        item.category = "Molecular dynamics";
-        item.type = "Boolean";
-        item.description = "Whether to output lattice virials into the file OUT.${suffix}/MD_dump.";
-        item.default_value = "True";
-        item.unit = "";
-        read_sync_bool(input.mdp.dump_virial);
         this->add_item(item);
     }
     {

@@ -138,37 +138,6 @@ void compute_stress(
 void print_stress(std::ofstream &ofs, const ModuleBase::matrix &virial, const ModuleBase::matrix &stress);
 
 /**
- * @brief dump the md information
- *
- * including md step, lattice constant, lattice vectors, lattice virial tensor, ion index, ion positions,
- * ion velocities, ion forces
- *
- * @param step current md step
- * @param global_out_dir directory of output files
- * @param mdcell MD cell information
- * @param mdp the md input parameters
- * @param cal_stress whether stress is calculated
- * @param virial lattice virial tensor
- */
-void dump_info(
-    const int &step,
-    const std::string &global_out_dir,
-    const MDCell &mdcell,
-    const MD_para &mdp,
-    const bool cal_stress,
-    const ModuleBase::matrix &virial);
-
-/// Explicit buffer budget for bounded dump collectives; one row is the minimum batch.
-void dump_info(
-    const int &step,
-    const std::string &global_out_dir,
-    const MDCell &mdcell,
-    const MD_para &mdp,
-    const bool cal_stress,
-    const ModuleBase::matrix &virial,
-    const int max_batch_bytes);
-
-/**
  * @brief obtain the atomic mass and whether the freedom is fixed
  *
  * @param unit_in unitcell information

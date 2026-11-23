@@ -224,12 +224,6 @@ void md_line(
         {
             mdrun->print_md(GlobalV::ofs_running, param_in.inp.cal_stress);
         }
-        if (param_in.mdp.md_dumpfreq > 0 && (mdrun->step_ + mdrun->step_rst_) % param_in.mdp.md_dumpfreq == 0)
-        {
-            const int dump_step = mdrun->step_ + mdrun->step_rst_;
-            MD_func::dump_info(dump_step, param_in.globalv.global_out_dir, mdcell, mdp, cal_stress, mdrun->virial);
-        }
-
         const int current_step = mdrun->step_ + mdrun->step_rst_;
         const bool do_output_step = is_structure_output_step(current_step, output_freq, param_in.inp.out_stru > 0);
         const bool do_restart_step = is_cadence_step(current_step, restart_freq);
