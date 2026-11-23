@@ -57,15 +57,22 @@ else()
   # separate LR runs, which the single-invocation Autotest cases cannot express.
   find_program(LR_ABSORPTION_PYTHON python3)
   if(ENABLE_MPI AND ENABLE_LCAO AND ENABLE_LIBRI AND ENABLE_LIBXC AND LR_ABSORPTION_PYTHON)
-    add_test(
-      NAME 08_RI_lr_absorption_csr
-      COMMAND
-        ${LR_ABSORPTION_PYTHON}
-        ${ABACUS_TEST_DIR}/integrate/validation_tools/check_lr_absorption_csr.py
-        --abacus ${ABACUS_BIN_PATH}
-        --case ${ABACUS_TEST_DIR}/08_RI/lr_tddft_velocity_commutator
-        --mpiexec ${MPIEXEC_EXECUTABLE} --mpi-np-flag=${MPIEXEC_NUMPROC_FLAG}
-        ${MPI_LAUNCHER_FLAGS})
-    set_tests_properties(08_RI_lr_absorption_csr PROPERTIES PROCESSORS 4 TIMEOUT 180)
+    foreach(spin_count IN ITEMS 1 2)
+      set(spectrum_test 08_RI_lr_absorption_csr)
+      if(spin_count EQUAL 2)
+        string(APPEND spectrum_test "_spin2")
+      endif()
+      add_test(
+        NAME ${spectrum_test}
+        COMMAND
+          ${LR_ABSORPTION_PYTHON}
+          ${ABACUS_TEST_DIR}/integrate/validation_tools/check_lr_absorption_csr.py
+          --abacus ${ABACUS_BIN_PATH}
+          --case ${ABACUS_TEST_DIR}/08_RI/lr_tddft_velocity_commutator
+          --nspin ${spin_count}
+          --mpiexec ${MPIEXEC_EXECUTABLE} --mpi-np-flag=${MPIEXEC_NUMPROC_FLAG}
+          ${MPI_LAUNCHER_FLAGS})
+      set_tests_properties(${spectrum_test} PROPERTIES PROCESSORS 4 TIMEOUT 180)
+    endforeach()
   endif()
 endif()

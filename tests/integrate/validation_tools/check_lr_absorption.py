@@ -7,6 +7,13 @@ from pathlib import Path
 
 HEADER = "Frequency (eV) | wave length(nm) | Absorption (a.u.)"
 SPECTRUM_POINTS = 100
+# Keep the grid on an absolute scale. A separate floor for the intensities
+# permits roundoff near zero without masking small spectral features.
+COLUMN_TOLERANCES = (
+    (1e-4, 0.0),   # frequency (eV)
+    (1e-4, 0.0),   # wavelength (nm)
+    (1e-8, 1e-4),  # absorption
+)
 
 
 def read_spectrum(path):
@@ -31,12 +38,13 @@ def read_spectrum(path):
     return values
 
 
-def compare_spectra(reference, output, tolerance=1e-4):
+def compare_spectra(reference, output):
     reference_rows = read_spectrum(reference)
     output_rows = read_spectrum(output)
     for line, (expected, actual) in enumerate(zip(reference_rows, output_rows), start=2):
-        for column, (expected_value, actual_value) in enumerate(zip(expected, actual), start=1):
-            if abs(expected_value - actual_value) > tolerance:
+        columns = zip(expected, actual, COLUMN_TOLERANCES)
+        for column, (expected_value, actual_value, (absolute, relative)) in enumerate(columns, start=1):
+            if not math.isclose(expected_value, actual_value, abs_tol=absolute, rel_tol=relative):
                 raise ValueError(
                     f"{output}:{line}: column {column} is {actual_value}, "
                     f"expected {expected_value} from {reference}"

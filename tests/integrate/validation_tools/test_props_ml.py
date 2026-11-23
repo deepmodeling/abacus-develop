@@ -82,6 +82,23 @@ Forces (-gradients) of each excited state:
                     result = self.collect('', reference=reference, spectrum=invalid_spectrum)
                     self.assertEqual(result, 'CompareLRAbsorption_pass 1\n')
 
+    def test_absorption_preserves_weak_intensity(self):
+        reference = SPECTRUM.replace('2.5', '2.5e-6')
+        nearby = reference.replace('2.5e-6', '2.505e-6', 1)
+        zeroed = reference.replace('2.5e-6', '0', 1)
+        self.assertEqual(self.collect('', reference=reference, spectrum=nearby),
+                         'CompareLRAbsorption_pass 0\n')
+        self.assertEqual(self.collect('', reference=reference, spectrum=zeroed),
+                         'CompareLRAbsorption_pass 1\n')
+
+    def test_absorption_keeps_absolute_tolerances_on_both_grid_columns(self):
+        changed_frequency = SPECTRUM.replace('3.00', '3.0002', 1)
+        changed_wavelength = SPECTRUM.replace('413.28', '413.2802', 1)
+        for spectrum in (changed_frequency, changed_wavelength):
+            with self.subTest(spectrum_row=spectrum.splitlines()[1]):
+                result = self.collect('', reference=SPECTRUM, spectrum=spectrum)
+                self.assertEqual(result, 'CompareLRAbsorption_pass 1\n')
+
     def test_absorption_rejects_wrong_columns_and_changed_values(self):
         wrong_columns = SPECTRUM.replace('3.00 413.28 2.5', '3.00 413.28', 1)
         changed = SPECTRUM.replace('3.00 413.28 2.5', '3.00 413.28 2.6', 1)

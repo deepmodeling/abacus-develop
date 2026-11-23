@@ -30,16 +30,25 @@ def compare_workflows(args, root):
     orbitals = fixture.parent.parent / "PP_ORB"
     parameters = dict(line.split(maxsplit=1) for line in (fixture / "INPUT").read_text().splitlines()
                       if len(line.split(maxsplit=1)) == 2)
-    parameters.update(pseudo_dir=orbitals, orbital_dir=orbitals)
+    parameters.update(pseudo_dir=orbitals, orbital_dir=orbitals, nspin=args.nspin)
     launch = [args.mpiexec, args.mpi_np_flag, "4", *args.mpi_preflag,
               str(args.abacus.resolve()), *args.mpi_postflag]
 
     producer = dict(parameters, out_hsr="1 16", out_chg="1 16",
                     out_wfc_lcao=1, out_app_flag=0)
     ks_out = run_case(root / "in-memory", fixture, launch, producer)
+    reference = fixture / "absorption.dat.ref"
+    compare_spectra(reference, ks_out / "absorption.dat")
     consumer = dict(parameters, calculation="nscf", esolver_type="lr",
                     init_chg="file", init_wfc="file", read_file_dir=ks_out)
     csr_out = run_case(root / "standalone", fixture, launch, consumer)
+    log = (csr_out / "running_nscf.log").read_text()
+    # In a closed-shell spin-two case the two blocks can be equal. Verify that
+    # standalone LR actually obtains both blocks from their separate CSR files.
+    for spin in range(1, args.nspin + 1):
+        matrix_file = ks_out / f"hrs{spin}_nao.csr"
+        if f"Reading optical matrix from {matrix_file}" not in log:
+            raise ValueError(f"Standalone LR did not read {matrix_file}")
     compare_spectra(ks_out / "absorption.dat", csr_out / "absorption.dat")
 
     direct_inputs = dict(consumer, abs_gauge="velocity")
@@ -52,13 +61,15 @@ def compare_workflows(args, root):
     difference = max(abs(full[2] - bare[2]) for full, bare in zip(commutator, direct))
     if peak <= 0 or difference <= 0.05 * peak:
         raise ValueError("The HSE commutator spectrum must differ from direct velocity by over 5% of peak height.")
-    print(f"In-memory and CSR spectra agree. Direct velocity differs by {difference / peak:.1%} of peak height.")
+    print(f"nspin={args.nspin}: in-memory and CSR spectra agree. "
+          f"Direct velocity differs by {difference / peak:.1%} of peak height.")
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--abacus", type=Path, required=True)
     parser.add_argument("--case", type=Path, required=True)
+    parser.add_argument("--nspin", type=int, choices=(1, 2), default=1)
     parser.add_argument("--mpiexec", required=True)
     parser.add_argument("--mpi-np-flag", required=True)
     parser.add_argument("--mpi-preflag", action="append", default=[])
