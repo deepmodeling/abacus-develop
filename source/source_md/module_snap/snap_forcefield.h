@@ -15,23 +15,25 @@ namespace ModuleMD
 class SnapPotential : public ForceField
 {
   public:
-    SnapPotential(const std::string& coefficient_file,
-                 const std::string& parameter_file,
-                 std::ofstream& running_log,
-                 int rank);
+    SnapPotential(
+        const std::string &coefficient_file,
+        const std::string &parameter_file,
+        std::ofstream &running_log,
+        int rank);
 
-    void initialize(BaseCell& cell, const Input_para& inp) override;
-    void compute(BaseCell& cell,
-                 double& energy,
-                 ModuleBase::matrix& force,
-                 ModuleBase::matrix& stress) override;
+    void initialize(BaseCell &cell, const Input_para &inp) override;
+    void compute(
+        BaseCell &cell,
+        double &energy,
+        ModuleBase::matrix &force,
+        ModuleBase::matrix &stress) override;
 
   private:
-    void initialize(const std::vector<std::string>& labels);
+    void initialize(const std::vector<std::string> &labels);
 
     std::string coefficient_file_;
     std::string parameter_file_;
-    std::ofstream& running_log_;
+    std::ofstream &running_log_;
     const int rank_;
     ModuleMD::SNAP::ModelData model_;
     std::unique_ptr<ModuleMD::SNAP::Calculator> calculator_;

@@ -1,9 +1,9 @@
+#include "lj_test_solver.h"
 #include "source_cell/dom_decomp.h"
+#include "source_md/fire.h"
+#include "source_md/unittests/setcell.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "source_md/unittests/setcell.h"
-#include "lj_test_solver.h"
-#include "source_md/fire.h"
 #define doublethreshold 1e-12
 
 /************************************************
@@ -34,12 +34,12 @@
 class FIREtest : public testing::Test
 {
   protected:
-    MD_base* mdrun;
+    MD_base *mdrun;
     UnitCell ucell;
     MDCell mdcell;
     DomainDecomposition decomp;
     Input_para inp;
-    ModuleESolver::ESolver* p_esolver;
+    ModuleESolver::ESolver *p_esolver;
     /// the md writers take the directory explicitly, so the test owns it
     const std::string out_dir = "./";
     const std::string readin_dir = "./";
@@ -169,7 +169,7 @@ TEST_F(FIREtest, Restart)
     mdrun->restart(readin_dir);
     remove("Restart_md.txt");
 
-    FIRE* fire = dynamic_cast<FIRE*>(mdrun);
+    FIRE *fire = dynamic_cast<FIRE *>(mdrun);
     EXPECT_EQ(mdrun->step_rst_, 3);
     EXPECT_EQ(fire->get_alpha(), 0.1);
     EXPECT_EQ(fire->get_negative_count(), 0);

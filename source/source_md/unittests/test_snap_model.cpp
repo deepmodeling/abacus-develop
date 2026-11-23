@@ -269,11 +269,8 @@ TEST(SnapModel, RejectsExtraCoefficientFileData)
         std::ofstream output(parameter_file.c_str());
         output << "rcutfac 1.0\ntwojmax 0\n";
     }
-    const std::vector<std::string> contents = {
-        "1 2 extra\nSi 2.0 1.0\n0.0\n1.0\n",
-        "1 2\nSi 2.0 1.0 extra\n0.0\n1.0\n",
-        "1 2\nSi 2.0 1.0\n0.0 extra\n1.0\n",
-        "1 2\nSi 2.0 1.0\n0.0\n1.0\nextra\n"};
+    const std::vector<std::string> contents = {"1 2 extra\nSi 2.0 1.0\n0.0\n1.0\n", "1 2\nSi 2.0 1.0 extra\n0.0\n1.0\n",
+        "1 2\nSi 2.0 1.0\n0.0 extra\n1.0\n", "1 2\nSi 2.0 1.0\n0.0\n1.0\nextra\n"};
     const std::vector<std::string> expected = {
         "header", "element line", "coefficient value", "after the SNAP coefficient blocks"};
     for (std::size_t i = 0; i < contents.size(); ++i)
