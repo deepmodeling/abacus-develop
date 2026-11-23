@@ -55,8 +55,6 @@ DiagoLOBPCG<T, Device>::DiagoLOBPCG(const Real* precondition,
 template <typename T, typename Device>
 DiagoLOBPCG<T, Device>::~DiagoLOBPCG()
 {
-    // Register owned capacity before algebra_ releases its buffers, including
-    // early returns and exceptional exits from diag().
     const std::size_t host_bytes = algebra_.storage_bytes(ct::DeviceType::CpuDevice);
     ModuleBase::Memory::record("LOBPCG::algebra", host_bytes, false);
 #if defined(__CUDA) || defined(__ROCM)
@@ -98,8 +96,7 @@ bool DiagoLOBPCG<T, Device>::diag(const HSOperator<T, Device>& op,
         allocate_workspace();
     }
 
-    // Pools can skip different iteration/recovery stages. Reserve only their
-    // optional labels here; ordinary storage is recorded where it is used.
+    // Register optional labels in a common order across pools with different iteration paths.
     const char* optional_work[] = {"LOBPCG::Cp",
         "LOBPCG::retained",
         "LOBPCG::cache_work",
@@ -249,12 +246,9 @@ bool DiagoLOBPCG<T, Device>::diag(const HSOperator<T, Device>& op,
         ModuleBase::Memory::record("LOBPCG::Cx", coefficients.buffer().GetAllocatedBytes(), false);
         // Rotate X/SX now; only the needed HX columns are rotated below.
         const VectorImages ritz_source = {rr.x, nullptr, rr.sx};
-        // Valid through HX rotation: lock_converged does not touch the
-        // algebra coefficient buffer. P prepares a distinct buffer later.
+        // Share the prepared coefficients across X/SX and HX rotations.
         const T* prepared = prepare_rotation_coefficients(coefficients);
         rotate_images(ritz_source, rr_dim, x_columns, prepared, active, nullptr);
-        // Generalized RR supplies the Ritz vectors; actual GV breakdown
-        // recovery remains separate from ordinary convergence decisions.
 
         if (lock_converged(eig_prev, tol_band, first_active))
         {
@@ -265,8 +259,7 @@ bool DiagoLOBPCG<T, Device>::diag(const HSOperator<T, Device>& op,
         const int active_columns = n_max_ - first_active;
         if (iter + 1 == max_iter)
         {
-            // No next RR will consume P/W, their images, or a retained block.
-            // The common budget exit below still checks the returned spectrum.
+            // Return the current Ritz pairs when the iteration budget is exhausted.
             break;
         }
         // 5. Form the active residual, rotating only the required HX.
@@ -326,7 +319,6 @@ bool DiagoLOBPCG<T, Device>::diag(const HSOperator<T, Device>& op,
         working_columns = n_max_ + n_p + n_w;
     }
     iterations_ = max_iter;
-    // Keep finite-spectrum validation separate from normal budget exhaustion.
     for (int i = 0; i < n_band_; ++i)
     {
         if (!std::isfinite(eig_.data<Real>()[i]))
@@ -445,7 +437,6 @@ bool DiagoLOBPCG<T, Device>::lock_converged(ct::Tensor& eig_prev, const ct::Tens
     return locked >= n_band_;
 }
 
-// Construct the next history block from the non-X Ritz coefficients.
 /// Form P from the non-X Ritz coefficients, removing new locked components before normalization.
 template <typename T, typename Device>
 int DiagoLOBPCG<T, Device>::build_direction(const VectorImages& basis,
@@ -609,8 +600,7 @@ int DiagoLOBPCG<T, Device>::normalize_columns(
     }
     else
     {
-        // Corresponding-column dots form only O(columns) numbers, not a Gram.
-        // dots() already includes the distributed sum; do not reduce twice.
+        // dots_tensor returns globally reduced products for corresponding columns.
         const int stride = n * columns;
         const auto dots = algebra_.dots_tensor(n, n, columns, 1, stride, block.x, block.x);
         for (int j = 0; j < columns; ++j)
@@ -641,7 +631,7 @@ int DiagoLOBPCG<T, Device>::normalize_columns(
             const T* source = image + j * n;
             if (std::is_same<Device, base_device::DEVICE_CPU>::value)
             {
-                // Keep the plain loop: the CPU vector kernel starts an OMP region.
+                // A serial loop avoids the vector kernel's per-column OpenMP overhead.
                 for (int i = 0; i < n; ++i)
                 {
                     target[i] = source[i] * scale;

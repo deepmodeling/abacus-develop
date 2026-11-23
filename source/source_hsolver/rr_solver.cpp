@@ -374,9 +374,7 @@ struct ParallelRREigensolver::Impl
         {
             nb = bands > 500 ? 32 : 16;
         }
-        // Handle identity is deliberate: even congruent but distinct borrowed
-        // communicators get a fresh grid. A caller must not free/recycle a handle
-        // while this context still uses it.
+        // Each communicator handle gets its own BLACS grid.
         if (comm != communicator || n != dimension || nb != block)
         {
             if (comm != communicator)
@@ -403,7 +401,7 @@ struct ParallelRREigensolver::Impl
 
     void scatter(const Z* input, Z* output)
     {
-        // GEMR2D only reads its source; the legacy connector lacks const.
+        // GEMR2D only reads its source; the connector accepts a mutable pointer.
         Z* source = const_cast<Z*>(input);
         Cpxgemr2d(dimension, dimension, source, 1, 1, root.desc(), output, 1, 1, local.desc(), local.ictxt());
     }
@@ -529,7 +527,6 @@ struct GpuRREigensolver::Impl
 
 GpuRREigensolver::GpuRREigensolver() = default;
 GpuRREigensolver::~GpuRREigensolver() = default;
-GpuRREigensolver::GpuRREigensolver(GpuRREigensolver&&) noexcept = default;
 
 bool GpuRREigensolver::available()
 {

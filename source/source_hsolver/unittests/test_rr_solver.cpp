@@ -7,7 +7,6 @@
 #include <complex>
 #include <random>
 #include <stdexcept>
-#include <utility>
 #include <vector>
 
 namespace
@@ -32,7 +31,7 @@ struct Pencil
     }
 };
 
-// Check every backend against the original pencil, without using its BLAS path.
+// Verify eigenpairs against the input H/S matrices using explicit host sums.
 template <typename Solve>
 void check_pairs(Pencil& p, const int wanted, const double eigen_error,
                  const double vector_error, const bool owns_output, Solve solve)
@@ -232,11 +231,8 @@ TEST(GpuRREigensolver, QueryInvalidationAndFailureReuse)
     p.s[0] = -1.0;
     EXPECT_FALSE(solver.solve_generalized(p.h.data(), p.s.data(), 4, 4, values.data(), vectors.data()));
     const std::size_t capacity = solver.storage_bytes();
-    hsolver::rr::GpuRREigensolver moved(std::move(solver));
-    EXPECT_EQ(solver.storage_bytes(), 0);
-    EXPECT_EQ(moved.storage_bytes(), capacity);
-    check_gpu(moved, 16, 5);
-    EXPECT_EQ(moved.storage_bytes(), capacity);
+    check_gpu(solver, 16, 5);
+    EXPECT_EQ(solver.storage_bytes(), capacity);
 }
 #endif
 

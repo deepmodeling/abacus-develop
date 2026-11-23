@@ -290,23 +290,15 @@ template <typename T, typename Device>
 ct::Tensor LinearAlgebra<T, Device>::dots_tensor(int ld, int dim, int bands, int count,
                                                int stride, const T* basis, const T* x)
 {
+    ModuleBase::timer::Scope function_timer("LinearAlgebra", "dots_tensor");
     const int size = bands * count;
     ct::Tensor result(ct::DataType::DT_COMPLEX_DOUBLE, ct::DeviceType::CpuDevice, {size});
-    dots_into(ld, dim, bands, count, stride, basis, x, result.data<Wide>());
-    return result;
-}
-
-template <typename T, typename Device>
-void LinearAlgebra<T, Device>::dots_into(int ld, int dim, int bands, int count,
-                                       int stride, const T* basis, const T* x, Wide* result)
-{
-    ModuleBase::timer::Scope function_timer("LinearAlgebra", "dots_into");
-    const int size = bands * count;
     linear_buffer<Wide, Device>(&products_, size);
     linear_op<T, Device>().wide_dots(ld, dim, bands, count, stride, basis, x, products_.template data<Wide>());
     base_device::memory::synchronize_memory_op<Wide, base_device::DEVICE_CPU, Device>()(
-        result, products_.template data<Wide>(), size);
-    reduce(result, size);
+        result.data<Wide>(), products_.template data<Wide>(), size);
+    reduce(result.data<Wide>(), size);
+    return result;
 }
 
 template <typename T, typename Device>
@@ -357,19 +349,12 @@ std::vector<std::complex<double>> LinearAlgebra<T, Device>::cross(int ld, int di
 template <typename T, typename Device>
 ct::Tensor LinearAlgebra<T, Device>::cross_tensor(int ld, int dim, int nx, int ny, const T* x, const T* y)
 {
+    ModuleBase::timer::Scope function_timer("LinearAlgebra", "cross_tensor");
     const int64_t count = static_cast<int64_t>(nx) * ny;
     ct::Tensor result(ct::DataType::DT_COMPLEX_DOUBLE, ct::DeviceType::CpuDevice, {count});
-    cross_into(ld, dim, nx, ny, x, y, result.data<Wide>());
+    cross_local_into(ld, dim, nx, ny, x, y, result.data<Wide>());
+    reduce(result.data<Wide>(), count);
     return result;
-}
-
-template <typename T, typename Device>
-void LinearAlgebra<T, Device>::cross_into(int ld, int dim, int nx, int ny, const T* x, const T* y, Wide* result)
-{
-    ModuleBase::timer::Scope function_timer("LinearAlgebra", "cross_into");
-    cross_local_into(ld, dim, nx, ny, x, y, result);
-    const int64_t count = static_cast<int64_t>(nx) * ny;
-    reduce(result, count);
 }
 
 template <typename T, typename Device>
@@ -501,19 +486,12 @@ std::vector<std::complex<double>> LinearAlgebra<T, Device>::gram(int ld, int dim
 template <typename T, typename Device>
 ct::Tensor LinearAlgebra<T, Device>::gram_tensor(int ld, int dim, int bands, const T* input)
 {
+    ModuleBase::timer::Scope function_timer("LinearAlgebra", "gram_tensor");
     const int64_t count = static_cast<int64_t>(bands) * bands;
     ct::Tensor result(ct::DataType::DT_COMPLEX_DOUBLE, ct::DeviceType::CpuDevice, {count});
-    gram_into(ld, dim, bands, input, result.data<Wide>());
+    gram_local_into(ld, dim, bands, input, result.data<Wide>());
+    reduce(result.data<Wide>(), count);
     return result;
-}
-
-template <typename T, typename Device>
-void LinearAlgebra<T, Device>::gram_into(int ld, int dim, int bands, const T* input, Wide* result)
-{
-    ModuleBase::timer::Scope function_timer("LinearAlgebra", "gram_into");
-    gram_local_into(ld, dim, bands, input, result);
-    const int64_t count = static_cast<int64_t>(bands) * bands;
-    reduce(result, count);
 }
 
 template <typename T, typename Device>
@@ -560,7 +538,7 @@ void LinearAlgebra<T, Device>::gram_local_into(int ld, int dim, int bands, const
             const int64_t input_elements = static_cast<int64_t>(ld) * bands;
             linear_buffer<Wide, Device>(&left_, input_elements);
             Wide* converted = left_.template data<Wide>();
-            // The existing conversion kernels use int indices, even though their wrappers accept size_t.
+            // Conversion kernels use int indices, although their wrappers accept size_t.
             if (ld == dim && input_elements <= std::numeric_limits<int>::max())
             {
                 base_device::memory::cast_memory_op<Wide, T, Device, Device>()(converted, input, input_elements);

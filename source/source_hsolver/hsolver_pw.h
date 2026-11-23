@@ -103,7 +103,7 @@ class HSolverPW
     const bool diago_smooth_ethr;  // use a band-wise smoothed threshold for all iter methods
     const int pw_diag_ndim;        // dimension of the workspace for Davidson-type methods
     const int lobpcg_extra_bands;  // internal columns beyond the requested LOBPCG bands
-    const std::string lobpcg_locking; // immutable, explicitly passed INPUT policy
+    const std::string lobpcg_locking; // hard or soft locking of converged LOBPCG bands
     const int diag_subspace;       // subspace eigensolver for dav_subspace and lobpcg: 0 Lapack, 1 elpa, 2 scalapack
     const int nb2d;                // 2d block size used by the distributed subspace eigensolvers
 

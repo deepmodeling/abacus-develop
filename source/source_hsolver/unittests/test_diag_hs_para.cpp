@@ -439,9 +439,6 @@ void test_performance(
 // test_diago_hs(int lda, int nb, int random_seed, int nbands, int diag_type, MPI_Comm comm)
 TEST(DiagoPxxxgvxElpaTest, Double)
 {
-#ifndef __ELPA
-    GTEST_SKIP() << "Requires an ELPA build.";
-#endif
     test_diago_hs<double>(
         16,
         4,
@@ -460,9 +457,6 @@ TEST(DiagoPxxxgvxElpaTest, Double)
 
 TEST(DiagoPxxxgvxElpaTest, ComplexDouble)
 {
-#ifndef __ELPA
-    GTEST_SKIP() << "Requires an ELPA build.";
-#endif
     test_diago_hs<std::complex<double>>(
         16,
         6,

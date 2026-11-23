@@ -22,7 +22,6 @@ hsolver::diag_comm_info local_comm()
 #endif
 }
 
-// Tests keep independent host references; only transfer/check plumbing is shared.
 template <typename T, typename Device>
 ct::Tensor upload(const std::vector<T>& values)
 {
@@ -70,8 +69,7 @@ void check_prepared_coefficients()
     std::vector<Wide> transient(coefficients);
     const int64_t count = transient.size();
     const T* prepared = algebra.prepare_coefficients(transient.data(), count);
-    // Prepared storage must remain owned by algebra after the caller changes
-    // or destroys its input, including when no precision conversion is needed.
+    // Exercise coefficient ownership by releasing the source before rotation.
     std::fill(transient.begin(), transient.end(), Wide(999, -999));
     transient.clear();
     transient.shrink_to_fit();
@@ -146,24 +144,15 @@ void check_padded_products()
     }
     auto dx = upload<T, Device>(x);
     auto dy = upload<T, Device>(y);
-    const auto gram = algebra.gram(ld, dim, nx, dx.template data<T>());
-    const auto cross = algebra.cross(ld, dim, nx, ny, dx.template data<T>(), dy.template data<T>());
     const auto gram_tensor = algebra.gram_tensor(ld, dim, nx, dx.template data<T>());
     const auto cross_tensor = algebra.cross_tensor(ld, dim, nx, ny, dx.template data<T>(), dy.template data<T>());
     ASSERT_EQ(gram_tensor.device_type(), ct::DeviceType::CpuDevice);
     ASSERT_EQ(cross_tensor.data_type(), ct::DataType::DT_COMPLEX_DOUBLE);
-    // The caller may supply an offset output with sentinel padding on both sides.
-    ct::Tensor target(ct::DataType::DT_COMPLEX_DOUBLE, ct::DeviceType::CpuDevice, {nx * ny + 2});
-    target.data<Wide>()[0] = Wide(777, -555);
-    target.data<Wide>()[nx * ny + 1] = Wide(-333, 222);
-    Wide* offset = target.data<Wide>() + 1;
-    algebra.cross_into(ld, dim, nx, ny, dx.template data<T>(), dy.template data<T>(), offset);
     for (int j = 0; j < nx; ++j)
     {
         for (int i = 0; i < nx; ++i)
         {
             const Wide expected = overlap(dim, x.data() + i * ld, x.data() + j * ld);
-            EXPECT_LT(std::abs(gram[i + j * nx] - expected), 1e-12);
             EXPECT_LT(std::abs(gram_tensor.template data<Wide>()[i + j * nx] - expected), 1e-12);
         }
     }
@@ -172,24 +161,15 @@ void check_padded_products()
         for (int i = 0; i < nx; ++i)
         {
             const Wide expected = overlap(dim, x.data() + i * ld, y.data() + j * ld);
-            EXPECT_LT(std::abs(cross[i + j * nx] - expected), 1e-12);
             EXPECT_LT(std::abs(cross_tensor.template data<Wide>()[i + j * nx] - expected), 1e-12);
-            EXPECT_LT(std::abs(offset[i + j * nx] - expected), 1e-12);
         }
     }
-    // Empty local rows must still return a correctly sized zero contribution.
-    const auto empty = algebra.cross(ld, 0, nx, ny, nullptr, nullptr);
-    ASSERT_EQ(empty.size(), nx * ny);
-    for (const Wide& value : empty)
-    {
-        EXPECT_EQ(value, Wide(0));
-    }
-    EXPECT_EQ(target.data<Wide>()[0], Wide(777, -555));
-    EXPECT_EQ(target.data<Wide>()[nx * ny + 1], Wide(-333, 222));
-    algebra.cross_into(ld, 0, nx, ny, nullptr, nullptr, offset);
+    // Empty local partitions contribute a zero matrix with nx*ny entries.
+    const auto empty = algebra.cross_tensor(ld, 0, nx, ny, nullptr, nullptr);
+    ASSERT_EQ(empty.NumElements(), nx * ny);
     for (int i = 0; i < nx * ny; ++i)
     {
-        EXPECT_EQ(offset[i], Wide(0));
+        EXPECT_EQ(empty.template data<Wide>()[i], Wide(0));
     }
 }
 
@@ -359,10 +339,11 @@ void verify_herk_gram(const hsolver::diag_comm_info& comm)
             }
         }
     }
-    const auto empty = algebra.gram(ld, 0, max_bands, nullptr);
-    for (const Wide& value : empty)
+    const auto empty = algebra.gram_tensor(ld, 0, max_bands, nullptr);
+    ASSERT_EQ(empty.NumElements(), max_bands * max_bands);
+    for (int i = 0; i < max_bands * max_bands; ++i)
     {
-        EXPECT_EQ(value, Wide(0));
+        EXPECT_EQ(empty.template data<Wide>()[i], Wide(0));
     }
 }
 #endif

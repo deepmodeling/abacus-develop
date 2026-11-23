@@ -62,9 +62,7 @@ class LinearAlgebra
 
     void reduce(std::vector<Wide>* values) const;
     void reduce(Wide* values, const int64_t count) const;
-    void dots_into(int ld, int dim, int bands, int count, int stride, const T* basis, const T* x, Wide* result);
     void cross_local_into(int ld, int dim, int nx, int ny, const T* x, const T* y, Wide* result);
-    void gram_into(int ld, int dim, int bands, const T* input, Wide* result);
     void gram_local_into(int ld, int dim, int bands, const T* input, Wide* result);
 
   public:
@@ -89,8 +87,6 @@ class LinearAlgebra
     std::vector<Wide> cross(int ld, int dim, int nx, int ny, const T* x, const T* y);
     /** Host Tensor result; uses direct output storage for block projections. */
     ct::Tensor cross_tensor(int ld, int dim, int nx, int ny, const T* x, const T* y);
-    /** Write the column-major nx*ny result directly into caller-owned host storage. */
-    void cross_into(int ld, int dim, int nx, int ny, const T* x, const T* y, Wide* result);
     ct::Tensor cross_root_tensor(int ld, int dim, int nx, int ny, const T* x, const T* y);
 
     /** @brief Global X-adjoint times X, reusing one FP64 conversion of the valid rows. */

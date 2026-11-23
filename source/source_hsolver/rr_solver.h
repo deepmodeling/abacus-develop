@@ -14,10 +14,9 @@ namespace hsolver
 {
 namespace rr
 {
-// Generalized Hermitian Rayleigh–Ritz backends, independent of the outer solver.
-// Callers supply 1 <= wanted <= dimension and valid column-major buffers:
-// dimension^2 input entries, dimension values and dimension*wanted vectors.
-// Dimensions and storage sizes must fit the backend integer and allocation types.
+// Generalized Hermitian Rayleigh–Ritz solvers, with 1 <= wanted <= dimension.
+// Column-major buffers hold dimension^2 input entries, dimension values
+// and dimension*wanted eigenvector coefficients.
 // Root-local HEGVX scratch; reuse one instance across consecutive RR solves.
 struct SerialGvWorkspace
 {
@@ -38,12 +37,11 @@ struct SerialGvWorkspace
     std::vector<int> failures_;
 };
 
-/** Explicit CPU RR resources. The communicator is borrowed and must stay alive
- * until this object is destroyed or rebound. Calls are collective. Matrix data
- * are read from rank zero and vectors returned there, with no implicit broadcast.
- * The caller supplies a valid communicator and block_size >= 0 (0 selects automatically).
- * One current layout/query plus high-water buffers bounds memory independently
- * of the number of different tail dimensions seen during SCF.
+/** ScaLAPACK generalized RR with reusable block-cyclic storage and workspace.
+ * Calls are collective; rank zero supplies the matrices and receives eigenvectors.
+ * The borrowed communicator stays alive until this object is destroyed or rebound.
+ * A positive block_size sets the block width; zero selects it automatically.
+ * Buffers retain their largest allocated capacity across solves.
  */
 class ParallelRREigensolver
 {
@@ -73,29 +71,28 @@ class ParallelRREigensolver
 #endif
 };
 
-/** CUDA generalized Hermitian RR with caller-owned, capacity-reused resources.
- * Inputs and outputs are host, column-major complex<double>. Only the first
- * wanted eigenpairs are returned, with vector leading dimension n. The input
- * is preserved; the upper triangle defines the Hermitian matrix. Resources
- * are created lazily, so CPU/ROCm callers can own an unused instance safely.
- * The caller keeps the same CUDA device current throughout the instance's use
- * and destruction, and must not use it concurrently.
+/** CUDA generalized Hermitian RR with reusable cuSOLVER resources.
+ * Inputs and outputs are host, column-major complex<double>. The first wanted
+ * eigenpairs are returned, with vector leading dimension n. The upper triangle
+ * defines each input matrix, whose contents are preserved.
+ * Resources are allocated on the first solve and reused across subsequent calls.
+ * Calls on an instance are serialized on one CUDA device, which remains current
+ * through destruction.
  */
 class GpuRREigensolver
 {
   public:
     GpuRREigensolver();
     ~GpuRREigensolver();
-    GpuRREigensolver(GpuRREigensolver&&) noexcept;
     GpuRREigensolver(const GpuRREigensolver&) = delete;
     GpuRREigensolver& operator=(const GpuRREigensolver&) = delete;
 
     static bool available();
 
-    // Type-1 generalized Hermitian RR, with the same host layout and ownership.
+    // Solve H C = S C Lambda (type 1).
     // Use HEGVDX for a partial spectrum, HEGVD for the full spectrum.
     // False means the overlap is not positive definite; other numerical or
-    // API failures throw. Inputs are preserved.
+    // API failures throw.
     bool solve_generalized(const std::complex<double>* matrix,
         const std::complex<double>* metric,
         const int n,

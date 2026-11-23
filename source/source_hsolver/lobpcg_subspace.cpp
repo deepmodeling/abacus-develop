@@ -65,7 +65,7 @@ void DiagoLOBPCG<T, Device>::form_projected_matrices(
         ct::Tensor panel = host_tensor<Wide>(0, Wide(0));
         if (nc_gram)
         {
-            // Preserve HERK for W^H W and one reduction for the entire new panel.
+            // Compute W^H W with HERK, then reduce the entire new panel once.
             const int n = n_dim_;
             const int64_t basis_elements = static_cast<int64_t>(n) * columns;
             const ct::Tensor basis_wide = host_tensor_cast_or_view<Wide>(basis.x, basis_elements);
@@ -133,8 +133,7 @@ bool DiagoLOBPCG<T, Device>::solve_projected(const ct::Tensor& k,
     ct::Tensor coefficients(ct::DataType::DT_COMPLEX_DOUBLE, ct::DeviceType::CpuDevice, {0});
     if (std::is_same<T, Wide>::value)
     {
-        // ritz_coefficients_ is unused until this solve completes. Gather/broadcast
-        // directly into it instead of a second full coefficient matrix.
+        // Reuse ritz_coefficients_ as the solve and gather/broadcast output buffer.
         coefficients = host_tensor_cast_or_view<Wide>(ritz_coefficients_.data<T>(), coefficient_count);
     }
     else
@@ -358,7 +357,7 @@ void DiagoLOBPCG<T, Device>::retain_pair(const ct::Tensor& k,
             const Wide zero(0);
             const Wide* panel = matrix_data + zero_prefix * rows;
             const Wide* cp = coefficients + x_columns * rows + zero_prefix;
-            // Same product order and dimensions on both devices: Q C_P, then C^H (Q C_P).
+            // Form Q C_P, then C^H (Q C_P).
             ModuleBase::gemm_op<Wide, Device>()(
                 'N', 'N', rows, p_columns, nonzero_rows, &one, panel, rows, cp, rows, &zero, product, rows);
             ModuleBase::gemm_op<Wide, Device>()(

@@ -46,9 +46,8 @@ class DiagoLOBPCG
     using CtDevice = typename ct::PsiToContainer<Device>::type;
 
   public:
-    // Caller supplies positive nband/ndim, precondition[ndim], and an INPUT-validated
-    // RR method. Layout has npol > 0 dividing ndim and 0 <= npw <= ndim / npol.
-    // The internal block relation nmax >= nband is checked here.
+    // Internal block: nmax >= nband > 0. Vectors and preconditioner have ndim entries.
+    // Layout has npol > 0 dividing ndim and 0 <= npw <= ndim / npol.
     DiagoLOBPCG(const Real* precondition,
         const int nband,
         const int ndim,
@@ -63,10 +62,8 @@ class DiagoLOBPCG
         rr::GpuRREigensolver& gpu_rr_solver);
     ~DiagoLOBPCG();
 
-    // Caller supplies a full-rank initial guess and valid psi/eigenvalue storage for n_band_ columns,
-    // ld_psi >= n_dim_, a positive max_iter and tolerance.
-    // LOBPCG-specific constraints and fatal numerical failures use WARNING_QUIT.
-    // False means the iteration budget was exhausted with finite target Ritz values.
+    // Start from a full-rank block of n_band_ vectors with ld_psi >= n_dim_.
+    // max_iter and tolerance are positive; false indicates iteration-budget exhaustion.
     bool diag(const HSOperator<T, Device>& op,
         T* psi_in,
         const int ld_psi,
@@ -76,14 +73,12 @@ class DiagoLOBPCG
         const std::vector<double>& ethr_band);
 
     int iterations() const { return iterations_; }
-    // Internal recovery diagnostic; empty after success or ordinary budget exit.
-    const std::string& error_message() const { return error_message_; }
 
   private:
     // Non-owning Device views; sx is null for the identity metric.
     struct VectorImages
     {
-        T* x;  ///< Borrowed column block on Device; no allocation or ownership.
+        T* x;  ///< Borrowed column block on Device.
         T* hx; ///< Matching H images; null when a transformation does not need them.
         T* sx; ///< Matching S images; null denotes S = I.
     };
@@ -91,7 +86,7 @@ class DiagoLOBPCG
     using SerialGvWorkspace = rr::SerialGvWorkspace;
 
     // One diag lifetime: root-owned K/G of retained [X,P] and reusable scratch.
-    // Nonroot ranks still need columns when assembling the new W panel.
+    // All ranks need columns when assembling the new W panel.
     struct ProjectionCache
     {
         int columns = 0; ///< Width of the retained [X,P] block, also known on nonroot ranks.
@@ -133,7 +128,7 @@ class DiagoLOBPCG
     // and lock state reside on CPU on both backends.
     ct::Tensor eig_; ///< Host Ritz values for all n_max_ columns, including locked columns.
     ct::Tensor eig_device_; ///< Active Ritz values on Device for preconditioning.
-    ct::Tensor evec_; ///< Device rotation scratch, n_dim_ by n_max_; not projected eigenvectors.
+    ct::Tensor evec_; ///< Device rotation scratch, n_dim_ by n_max_.
     ct::Tensor space_; ///< Device basis [X,P,W], capacity n_dim_ by 3*n_max_.
     ct::Tensor hspace_; ///< H images matching the columns of space_.
     ct::Tensor sspace_; ///< Explicit S images matching space_; unused for S = I.

@@ -33,8 +33,8 @@ bool finite_projection(const ct::Tensor& matrix)
 
 // For G = U^H U, ||G||_1 bounds lambda_max and
 // 1 / (||U^-1||_1 ||U^-1||_inf) bounds lambda_min from below.
-// Accept only well-conditioned full-rank blocks; otherwise retain EVD's
-// spectral rank decision. The caller still checks the transformed block.
+// Use Cholesky for well-conditioned full-rank blocks; otherwise use EVD
+// to determine the rank. The caller checks the transformed block.
 bool cholesky_rank_transform(const ct::Tensor& gram, const int m, const double relative, ct::Tensor& transform)
 {
     using C = std::complex<double>;
@@ -90,7 +90,6 @@ bool cholesky_rank_transform(const ct::Tensor& gram, const int m, const double r
 
 } // namespace
 
-// Entered only after a recoverable failure of the main-loop generalized RR.
 /// After GV metric failure, refresh true H/S images and retry; if needed, repair only the increments.
 template <typename T, typename Device>
 bool DiagoLOBPCG<T, Device>::recover_projected(const HSOperator<T, Device>& op,
@@ -105,7 +104,7 @@ bool DiagoLOBPCG<T, Device>::recover_projected(const HSOperator<T, Device>& op,
     const int offset = n_max_ - wanted;
     int columns = working_columns - offset;
     // Reapply the physical operators: independently rotated images can lose
-    // accuracy when trial directions nearly cancel. No routine precheck.
+    // accuracy when trial directions nearly cancel.
     op.hpsi(basis.x, basis.hx, n_dim_, columns);
     project_padding(basis.hx, columns);
     if (use_overlap_)
@@ -149,9 +148,7 @@ int DiagoLOBPCG<T, Device>::repair_basis(const HSOperator<T, Device>& op, const 
         op.spsi(reference.x, reference.sx, n_dim_, reference_columns);
         project_padding(reference.sx, reference_columns);
     }
-    // A successful earlier GV need not leave X exactly S-orthonormal in
-    // finite precision. Project with its actual metric, keeping X and
-    // the hard-locked prefix unchanged. This work is recovery-only.
+    // Use the actual metric M = X^H S X for projection in finite precision.
     ct::Tensor reference_factor =
         reference.sx == nullptr
             ? algebra_.gram_tensor(n, n, reference_columns, reference.x)
@@ -283,10 +280,9 @@ int DiagoLOBPCG<T, Device>::rank_orthonormalize(const int m, T* x, T* sx)
         sx == nullptr ? algebra_.gram_tensor(n_dim_, n_dim_, m, x) : algebra_.cross_tensor(n_dim_, n_dim_, m, m, x, sx);
     ct::Tensor transform = host_tensor<Wide>(0, Wide(0));
     const double eps = std::numeric_limits<Real>::epsilon();
-    // Physical search vectors and their H/S images are maintained in Real.
-    // Wide Gram accumulation does not recover that lost precision. Drop
-    // directions below this accuracy before rank scaling amplifies them;
-    // explicit S images can also introduce O(eps) negative Gram eigenvalues.
+    // Set the rank cutoff by wavefunction precision before inverse-square-root
+    // scaling amplifies roundoff. Explicit S images can introduce O(eps)
+    // negative Gram eigenvalues.
     const double relative = 64 * std::max(std::numeric_limits<double>::epsilon(), eps);
     int rank = -1;
     bool triangular = false;
@@ -371,7 +367,7 @@ int DiagoLOBPCG<T, Device>::rank_orthonormalize(const int m, T* x, T* sx)
         }
     }
     ModuleBase::Memory::record("LOBPCG::ortho_work", orthogonal_work, false);
-    // Full rank alone does not identify Cholesky: EVD can also be full rank.
+    // Broadcast rank and transform type to select TRMM or GEMM on every rank.
     double metadata[2] = {static_cast<double>(rank), static_cast<double>(triangular)};
     broadcast(metadata, 2);
     rank = static_cast<int>(metadata[0]);

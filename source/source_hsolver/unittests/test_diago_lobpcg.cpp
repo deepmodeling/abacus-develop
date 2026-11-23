@@ -79,8 +79,7 @@ struct Options
     bool empty_rank = false;
 };
 
-// Independent dense H=L^H D L, S=L^H L; the same fixture runs on CPU/GPU.
-// Only this test operator stages vectors on host. Production receives device pointers.
+// Reference problem H=L^H D L, S=L^H L; apply the dense operators on host for CPU/GPU tests.
 template <typename T>
 class Problem : public hsolver::HSOperator<T, Device>
 {
@@ -198,7 +197,7 @@ class Problem : public hsolver::HSOperator<T, Device>
     {
         const int elements = ld * count;
         const auto local = download(x, elements);
-        std::vector<T> output(elements, T(91, -13)); // Operators need not clear output padding.
+        std::vector<T> output(elements, T(91, -13)); // Sentinel padding outside physical rows.
         for (int band = 0; band < count; ++band)
         {
             std::vector<Z> full(options.n, Z(0));
@@ -307,7 +306,7 @@ void check_eigenpair_identity(const Locking locking)
     const bool single = sizeof(T) == sizeof(std::complex<float>);
     const double tolerance = single ? 1e-5 : 1e-11;
     ASSERT_TRUE(p.solve(tolerance, {}));
-    EXPECT_GT(p.solver->iterations(), 0); // Exercise iterative output, not the exact-initial-state exit.
+    EXPECT_GT(p.solver->iterations(), 0); // Exercise the iterative solve path.
     const double eig_tol = single ? 2e-4 : 1e-8;
     const int elements = p.dim * o.bands;
     const auto x = download(p.psi.template data<T>(), elements);
@@ -337,7 +336,6 @@ void check_eigenpair_identity(const Locking locking)
 
 namespace hsolver
 {
-// Only locking, projection-cache and recovery contracts require private access.
 class LobpcgProjectionTest
 {
   public:
@@ -553,11 +551,11 @@ class LobpcgProjectionTest
         if (p.comm.rank == 0) { g.data<Z>()[0] = -1; }
         rr::SerialGvWorkspace work;
         EXPECT_FALSE(solver.solve_projected(k, g, 7, 4, work));
-        EXPECT_NE(solver.error_message().find("dimension=7"), std::string::npos);
-        EXPECT_NE(solver.error_message().find("wanted=4"), std::string::npos);
+        EXPECT_NE(solver.error_message_.find("dimension=7"), std::string::npos);
+        EXPECT_NE(solver.error_message_.find("wanted=4"), std::string::npos);
         int columns = 7;
         ASSERT_TRUE(solver.recover_projected(p, basis, columns, 4, k, g, work));
-        EXPECT_TRUE(solver.error_message().empty());
+        EXPECT_TRUE(solver.error_message_.empty());
         // Exercise rank repair independently; the preceding recovery may have compacted the basis.
         upload(basis.x, x);
         p.hpsi(basis.x, basis.hx, p.dim, 7);
