@@ -30,19 +30,19 @@ struct ModelParameters
     std::vector<double> sinner;
     std::vector<double> dinner;
 
-    bool valid(std::string& error) const;
+    bool valid(std::string &error) const;
 };
 
 struct ModelData
 {
     ModelParameters parameters;
-    std::vector<std::vector<double> > coefficients;
+    std::vector<std::vector<double>> coefficients;
 
-    bool load(const std::string& coefficient_file,
-              const std::string& parameter_file,
-              const std::vector<std::string>& requested_elements,
-              std::string& error);
-
+    bool load(
+        const std::string &coefficient_file,
+        const std::string &parameter_file,
+        const std::vector<std::string> &requested_elements,
+        std::string &error);
 };
 
 } // namespace SNAP
