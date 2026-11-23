@@ -16,12 +16,14 @@ AddTest(
   TARGET MODULE_BASE_matrix2d
   LIBS parameter base device container
   SOURCES test_matrix2d.cpp
+  KEEP_FEATURE_DEFINITIONS __MPI
 )
 
 AddTest(
   TARGET MODULE_BASE_matrix2d_linalg
   LIBS parameter base device container
   SOURCES test_matrix2d_linalg.cpp
+  KEEP_FEATURE_DEFINITIONS __MPI
 )
 
 set_tests_properties(
@@ -32,6 +34,21 @@ set_tests_properties(
 )
 
 if(ENABLE_MPI)
+  foreach(matrix2d_target IN ITEMS
+          MODULE_BASE_matrix2d
+          MODULE_BASE_matrix2d_linalg)
+    get_target_property(
+      matrix2d_kept_feature_definitions
+      ${matrix2d_target}
+      ABACUS_KEPT_FEATURE_DEFINITIONS)
+    list(FIND matrix2d_kept_feature_definitions "__MPI" mpi_feature_index)
+    if(mpi_feature_index EQUAL -1)
+      message(
+        FATAL_ERROR
+        "${matrix2d_target} must keep __MPI to match the linked base library")
+    endif()
+  endforeach()
+
   add_test(
     NAME MODULE_BASE_matrix2d_2ranks
     COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2
