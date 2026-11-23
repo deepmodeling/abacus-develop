@@ -9,6 +9,10 @@
 
 namespace ModuleIO
 {
+    /// @param ucell Unit cell
+    /// @param p_ham Hamiltonian used to build the projection overlaps
+    /// @param istep Zero-based ionic step index; written one-based
+    /// @param out_app_flag Output mode: 2 writes pbands{spin}g{step}.xml
     template <typename TK>
     void write_proj_band_lcao(
         const psi::Psi<TK>* psi,
@@ -16,7 +20,9 @@ namespace ModuleIO
         const elecstate::ElecState* pelec,
         const K_Vectors& kv,
         const UnitCell &ucell, 
-        hamilt::Hamilt<TK>* p_ham);
+        hamilt::Hamilt<TK>* p_ham,
+        const int istep,
+        const int out_app_flag);
 }
 
 #endif

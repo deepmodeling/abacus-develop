@@ -40,22 +40,25 @@ addtest(
           ../../source_base/module_device/device.cpp
           ../../source_base/module_device/output_device.cpp)
 
+# The serial-reader targets stay in this directory, which disables __MPI for
+# their translation units, while their sources live in the sibling
+# `unittests/` directory required by the test layout rule.
 addtest(
   TARGET MODULE_IO_read_item_serial
   LIBS parameter base device io_input_serial
-  SOURCES read_input_item_test.cpp test_read_inp_sccs.cpp)
+  SOURCES ../unittests/test_read_input_item.cpp test_read_inp_sccs.cpp)
 
 addtest(
   TARGET MODULE_IO_input_domain_reader
   LIBS parameter base device io_input_serial
-  SOURCES test_read_input.cpp ../input_help.cpp)
+  SOURCES ../unittests/test_input_domain_reader.cpp ../input_help.cpp)
 
 addtest(TARGET MODULE_IO_read_input_tool SOURCES read_input_tool_test.cpp)
 
 addtest(
   TARGET MODULE_IO_rho_io
   LIBS parameter base device cell_info
-  SOURCES rho_io_test.cpp ../module_output/read_cube.cpp
+  SOURCES ../unittests/test_rho_io.cpp ../module_output/read_cube.cpp
           ../module_output/write_cube.cpp)
 
 addtest(
@@ -66,4 +69,4 @@ addtest(
 addtest(
   TARGET MODULE_IO_system_variable_test
   LIBS parameter base device io_input_serial
-  SOURCES io_sys_var_test.cpp)
+  SOURCES ../unittests/test_io_sys_var.cpp)

@@ -286,11 +286,6 @@ add_test(
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 
 addtest(
-  TARGET MODULE_CELL_index_test
-  LIBS base device
-  SOURCES cell_index_test.cpp ../cell_index.cpp)
-
-addtest(
   TARGET MODULE_CELL_SEP_TEST
   LIBS base device
   SOURCES test_read_sep.cpp ../sep.cpp)

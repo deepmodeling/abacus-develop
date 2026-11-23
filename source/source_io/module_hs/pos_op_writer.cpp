@@ -1,17 +1,22 @@
 #include "pos_op_writer.h"
 
+#include "source_base/parallel_blkcyc.h"
 #include "source_base/global_variable.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
+#include "source_io/module_hs/hs_sparse_io_detail.h"
 #include "source_io/module_hs/lat_r_csr.h"
 #include "source_io/module_hs/pos_op_csr.h"
+#include "source_io/module_output/write_notice.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 
 #include <cstdio>
 #include <sstream>
 
-PosOpWriter::PosOpWriter(const PosOpBasis& basis, const PosOpCalc& calc, const Parallel_Orbitals& pv)
-    : basis_(basis), calc_(calc), pv_(pv)
+PosOpWriter::PosOpWriter(const PosOpBasis& basis,
+                         const PosOpCalc& calc,
+                         const Parallel_Blkcyclic& layout)
+    : basis_(basis), calc_(calc), layout_(layout)
 {
 }
 
@@ -65,23 +70,29 @@ void PosOpWriter::out_lat_r(const UnitCell& ucell,
     lat_r_options.precision = precision;
     lat_r_options.reduce = true;
 
-    std::stringstream tem1;
-    tem1 << global_out_dir << "tmp-rr_nao.txt";
-    std::ofstream ofs_tem1;
+    // One temporary payload per Cartesian component; the final files are
+    // assembled after the R loop, once the total block count is known.
+    const char axis_label[3] = {'x', 'y', 'z'};
+    std::stringstream tem[3];
+    std::ofstream ofs_tem[3];
 
     if (GlobalV::DRANK == 0)
     {
-        if (binary)
+        for (int direction = 0; direction < 3; ++direction)
         {
-            ofs_tem1.open(tem1.str().c_str(), std::ios::binary);
-        }
-        else
-        {
-            ofs_tem1.open(tem1.str().c_str());
-        }
-        if (!ofs_tem1.is_open())
-        {
-            ModuleBase::WARNING_QUIT("PosOpWriter::out_lat_r", "Cannot open temporary sparse matrix file: " + tem1.str());
+            tem[direction] << global_out_dir << "tmp-rr" << axis_label[direction] << "_nao.txt";
+            std::ios_base::openmode mode = std::ios::out;
+            if (binary)
+            {
+                mode |= std::ios::binary;
+            }
+            const std::string temp_name = tem[direction].str();
+            ofs_tem[direction].open(temp_name.c_str(), mode);
+            if (!ofs_tem[direction].is_open())
+            {
+                const std::string message = "Cannot open temporary sparse matrix file: " + temp_name;
+                ModuleBase::WARNING_QUIT("PosOpWriter::out_lat_r", message);
+            }
         }
     }
 
@@ -98,12 +109,12 @@ void PosOpWriter::out_lat_r(const UnitCell& ucell,
         int ir, ic;
         for (int iw1 = 0; iw1 < nlocal; iw1++)
         {
-            ir = pv_.para_2d().irloc(iw1);
+            ir = layout_.irloc(iw1);
             if (ir >= 0)
             {
                 for (int iw2 = 0; iw2 < nlocal; iw2++)
                 {
-                    ic = pv_.para_2d().icloc(iw2);
+                    ic = layout_.icloc(iw2);
                     if (ic >= 0)
                     {
                         int orb_index_row = iw1 / npol;
@@ -173,78 +184,97 @@ void PosOpWriter::out_lat_r(const UnitCell& ucell,
         {
             output_R_number++;
 
-            if (GlobalV::DRANK == 0)
-            {
-                if (binary)
-                {
-                    ofs_tem1.write(reinterpret_cast<char*>(&dRx), sizeof(int));
-                    ofs_tem1.write(reinterpret_cast<char*>(&dRy), sizeof(int));
-                    ofs_tem1.write(reinterpret_cast<char*>(&dRz), sizeof(int));
-                }
-                else
-                {
-                    ofs_tem1 << dRx << " " << dRy << " " << dRz << std::endl;
-                }
-            }
-
             for (int direction = 0; direction < 3; ++direction)
             {
+                const int nnz = rR_nonzero_num[direction];
                 if (GlobalV::DRANK == 0)
                 {
                     if (binary)
                     {
-                        ofs_tem1.write(reinterpret_cast<char*>(&rR_nonzero_num[direction]), sizeof(int));
+                        ofs_tem[direction].write(reinterpret_cast<char*>(&dRx), sizeof(int));
+                        ofs_tem[direction].write(reinterpret_cast<char*>(&dRy), sizeof(int));
+                        ofs_tem[direction].write(reinterpret_cast<char*>(&dRz), sizeof(int));
+                        ofs_tem[direction].write(reinterpret_cast<char*>(&rR_nonzero_num[direction]),
+                                                 sizeof(int));
                     }
                     else
                     {
-                        ofs_tem1 << rR_nonzero_num[direction] << std::endl;
+                        ofs_tem[direction] << dRx << " " << dRy << " " << dRz << " " << nnz << std::endl;
                     }
                 }
 
-                if (rR_nonzero_num[direction])
+                if (binary)
                 {
-                    ModuleIO::save_lat_r(ofs_tem1, psi_r_psi_sparse[direction], pv_, lat_r_options);
+                    if (nnz > 0)
+                    {
+                        ModuleIO::save_lat_r(ofs_tem[direction],
+                                             psi_r_psi_sparse[direction],
+                                             layout_,
+                                             lat_r_options);
+                    }
+                }
+                else if (nnz == 0)
+                {
+                    // A globally empty component still needs its zero block to
+                    // match the shared R count, but it needs no row-wise
+                    // reductions: print the empty CSR block directly.
+                    ModuleIO::save_lat_r_empty_csr<double>(ofs_tem[direction],
+                                                           layout_.nrglb(),
+                                                           lat_r_options);
                 }
                 else
                 {
-                    // do nothing
+                    // Text output always emits the three CSR sections so that
+                    // a non-empty block carries its values, column indices and
+                    // row pointers in the shared CSR layout.
+                    ModuleIO::save_lat_r_csr(ofs_tem[direction],
+                                             psi_r_psi_sparse[direction],
+                                             layout_,
+                                             lat_r_options);
                 }
             }
         }
     }
 
+    // Append from the second ionic step onward in append mode; the first
+    // step (step == 0) truncates so a rerun does not retain prior frames.
+    // Single-point SCF passes step = -1 and also starts a fresh file.
+    const bool open_in_append = (out_app_flag == 1) && (step > 0);
+    // ionic step printed one-based per governance rule 22
+    const int header_step = std::max(step, 0) + 1;
+
     if (GlobalV::DRANK == 0)
     {
-        std::stringstream ssr;
-        // Modes 0 and 1 keep the fixed filename (mode 0 overwrites, mode 1
-        // appends all ionic steps); only mode 2 embeds the one-based step.
-        if (step >= 0 && out_app_flag == 2)
+        for (int direction = 0; direction < 3; ++direction)
         {
-            ssr << global_matrix_dir << "rrg" << (step + 1) << "_nao.txt";
-        }
-        else
-        {
-            ssr << global_matrix_dir << "rr_nao.txt";
-        }
+            // Modes 0 and 1 keep the fixed filename (mode 0 overwrites, mode 1
+            // appends all ionic steps); only mode 2 embeds the one-based step.
+            const std::string axis(1, axis_label[direction]);
+            const std::string prefix = "rr" + axis;
+            const bool numbered = (step >= 0) && (out_app_flag == 2);
+            const std::string name = ModuleIO::detail::make_sparse_R_filename(prefix,
+                                                                             "",
+                                                                             numbered,
+                                                                             step,
+                                                                             ".csr");
+            const std::string output_name = global_matrix_dir + name;
+            const std::string payload_name = tem[direction].str();
 
-        ofs_tem1.close();
-        // Append from the second ionic step onward in append mode; the first
-        // step (step == 0) truncates so a rerun does not retain prior frames.
-        // Single-point SCF passes step = -1 and also starts a fresh file.
-        const bool open_in_append = (out_app_flag == 1) && (step > 0);
-        // ionic step printed one-based per governance rule 22
-        const int header_step = std::max(step, 0) + 1;
-        ModuleIO::detail::assemble_csr(ssr.str(),
-                                       tem1.str(),
-                                       header_step,
-                                       nlocal,
-                                       output_R_number,
-                                       binary,
-                                       open_in_append,
-                                       "PosOpWriter::out_lat_r");
-        ofs_running << " Write r(R) matrix in NAO basis to file: " << ssr.str() << std::endl;
+            ofs_tem[direction].close();
+            ModuleIO::detail::assemble_csr(output_name,
+                                           payload_name,
+                                           header_step,
+                                           nlocal,
+                                           output_R_number,
+                                           binary,
+                                           open_in_append,
+                                           axis,
+                                           &ucell,
+                                           "PosOpWriter::out_lat_r");
+            ModuleIO::write_matrix_notice(ofs_running, "r(R)", output_name);
 
-        std::remove(tem1.str().c_str());
+            std::remove(payload_name.c_str());
+        }
     }
 
     ModuleBase::timer::end("PosOpWriter", "out_lat_r");

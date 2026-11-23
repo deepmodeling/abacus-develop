@@ -12,6 +12,8 @@
 #include "source_lcao/module_rt/td_folding.h"
 #include "source_lcao/module_rt/td_info.h"
 #include "td_current_io.h"
+#include <memory>
+#include <utility>
 #ifdef __EXX
 #include "source_lcao/module_operator_lcao/op_exx_lcao.h"
 #include "source_lcao/module_ri/exx_lri.h"
@@ -257,7 +259,7 @@ void ModuleIO::cal_velocity_basis_k(const UnitCell& ucell,
                                     const K_Vectors& kv,
                                     const ModuleBase::Vector3<hamilt::HContainer<double>*>& rR,
                                     const hamilt::HContainer<TR>& sR,
-                                    const hamilt::HContainer<std::complex<double>>& hR,
+                                    const std::vector<const hamilt::HContainer<std::complex<double>>*>& spin_hR,
                                     std::vector<ModuleBase::Vector3<std::complex<double>*>>& velocity_basis_k)
 {
     ModuleBase::TITLE("ModuleIO", "cal_velocity_basis_k");
@@ -284,6 +286,7 @@ void ModuleIO::cal_velocity_basis_k(const UnitCell& ucell,
 
     for (size_t ik = 0; ik != kv.get_nks(); ++ik)
     {
+        const hamilt::HContainer<std::complex<double>>& hR = *spin_hR[kv.isk[ik]];
         // set H(k), S(k)
         // 1.1 set H(k)
         ModuleBase::GlobalFunc::ZEROS(hk, pv->para_2d().size());
@@ -532,7 +535,7 @@ void ModuleIO::cal_velocity_matrix(const psi::Psi<std::complex<double>>* psi,
     const std::complex<double> zero_complex = ModuleBase::ZERO;
     const int nlocal = PARAM.globalv.nlocal;
     const int nbands = PARAM.inp.nbands;
-    std::complex<double>* vk_c = new std::complex<double>[pv->ncol_bands * pv->nrow_bands]; // local one
+    std::complex<double>* vk_c = new std::complex<double>[pv->mo_repr_layout().size()]; // local one
     std::complex<double>* v_c = new std::complex<double>[pv->nloc_wfc];
 
     for (int ik = 0; ik < kv.get_nks(); ik++)
@@ -542,7 +545,7 @@ void ModuleIO::cal_velocity_matrix(const psi::Psi<std::complex<double>>* psi,
         // 2. set <\Psi_{n,\mu}|v_{\mu,\nu}|\Psi_{m,\nu}> = C^\dagger_{n,\mu} * v_{\mu,\nu} * C_{\nu,m}
         for (size_t i_alpha = 0; i_alpha != 3; ++i_alpha)
         {
-            ModuleBase::GlobalFunc::ZEROS(vk_c, pv->ncol_bands * pv->nrow_bands);
+            ModuleBase::GlobalFunc::ZEROS(vk_c, pv->mo_repr_layout().size());
             ModuleBase::GlobalFunc::ZEROS(v_c, pv->nloc_wfc);
             // v_c_{\mu,m} = v_{\mu,\nu} * C_{\nu,m}
             ScalapackConnector::gemm(N_char,
@@ -583,18 +586,18 @@ void ModuleIO::cal_velocity_matrix(const psi::Psi<std::complex<double>>* psi,
                                      vk_c,
                                      1,
                                      1,
-                                     pv->desc_Eij);
+                                     pv->mo_repr_layout().desc());
 
             for (int ir = 0; ir < PARAM.inp.nbands; ++ir)
             {
                 for (int ic = 0; ic < PARAM.inp.nbands; ++ic)
                 {
-                    if (pv->para_2d().in_this_processor(ir, ic))
+                    if (pv->mo_repr_layout().in_this_processor(ir, ic))
                     {
-                        // Taoni fix 2026-07-12: vk_c follows the local block-cyclic layout described by desc_Eij.
-                        const int local_row = pv->para_2d().irloc(ir);
-                        const int local_col = pv->para_2d().icloc(ic);
-                        const int irc = local_col * pv->para_2d().nrloc() + local_row;
+                        // Taoni fix 2026-07-12: vk_c follows the local block-cyclic layout described by mo_repr_layout().
+                        const int local_row = pv->mo_repr_layout().irloc(ir);
+                        const int local_col = pv->mo_repr_layout().icloc(ic);
+                        const int irc = local_col * pv->mo_repr_layout().nrloc() + local_row;
                         velocity_k[ik][i_alpha](ir, ic) = vk_c[irc];
                     }
                 }
@@ -615,7 +618,7 @@ void ModuleIO::cal_current_comm_k(const UnitCell& ucell,
                                   const K_Vectors& kv,
                                   TD_info* td_p,
                                   const hamilt::HContainer<TR>& sR,
-                                  const hamilt::HContainer<std::complex<double>>& hR,
+                                  const std::vector<const hamilt::HContainer<std::complex<double>>*>& spin_hR,
                                   const psi::Psi<std::complex<double>>* psi,
                                   const elecstate::ElecState* pelec,
                                   std::vector<ModuleBase::Vector3<double>>& current_k)
@@ -642,9 +645,9 @@ void ModuleIO::cal_current_comm_k(const UnitCell& ucell,
         }
     }
     // set rR
-    set_rR_from_hR(ucell, GridD, orb, pv, td_p->r_calculator, &hR, rR);
+    set_rR_from_hR(ucell, GridD, orb, pv, td_p->r_calculator, spin_hR.front(), rR);
     // set velocity_basis_k
-    cal_velocity_basis_k(ucell, td_p, orb, pv, kv, rR, sR, hR, velocity_basis_k);
+    cal_velocity_basis_k(ucell, td_p, orb, pv, kv, rR, sR, spin_hR, velocity_basis_k);
     // set velocity_k
     cal_velocity_matrix(psi, pv, kv, velocity_basis_k, velocity_k);
 
@@ -689,7 +692,7 @@ void ModuleIO::write_current(const UnitCell& ucell,
                              const LCAO_Orbitals& orb,
                              TD_info* td_p,
                              const hamilt::HContainer<TR>* sR,
-                             const hamilt::HContainer<TR>* hR,
+                             const std::vector<hamilt::HContainer<TR>*>& spin_hR,
                              const Exx_NAO<std::complex<double>>& exx_nao,
                              const Exx_Info& exx_info)
 {
@@ -700,12 +703,19 @@ void ModuleIO::write_current(const UnitCell& ucell,
     double omega = ucell.omega;
 
     std::vector<ModuleBase::Vector3<double>> current_k;
-    hamilt::HContainer<std::complex<double>>* full_hR;
-    full_hR = new hamilt::HContainer<std::complex<double>>(pv);
+    std::vector<std::unique_ptr<hamilt::HContainer<std::complex<double>>>> full_hR;
+    std::vector<const hamilt::HContainer<std::complex<double>>*> current_hR;
+    for (const hamilt::HContainer<TR>* hR : spin_hR)
+    {
+        std::unique_ptr<hamilt::HContainer<std::complex<double>>> matrix(
+            new hamilt::HContainer<std::complex<double>>(pv));
+        hamilt::HContainer<std::complex<double>>* matrix_ptr = matrix.get();
+        sum_HR(ucell, *pv, kv, hR, matrix_ptr, exx_nao, exx_info, *td_p);
+        current_hR.push_back(matrix_ptr);
+        full_hR.push_back(std::move(matrix));
+    }
     current_k.resize(kv.get_nks());
-    sum_HR(ucell, *pv, kv, hR, full_hR, exx_nao, exx_info, *td_p);
-    cal_current_comm_k(ucell, GridD, orb, pv, kv, td_p, *sR, *full_hR, psi, pelec, current_k);
-    delete full_hR;
+    cal_current_comm_k(ucell, GridD, orb, pv, kv, td_p, *sR, current_hR, psi, pelec, current_k);
 
     int nspin0 = 1;
     if (PARAM.inp.nspin == 2)
@@ -772,7 +782,7 @@ template void ModuleIO::write_current<double>(const UnitCell& ucell,
                                               const LCAO_Orbitals& orb,
                                               TD_info* td_p,
                                               const hamilt::HContainer<double>* sR,
-                                              const hamilt::HContainer<double>* hR,
+                                              const std::vector<hamilt::HContainer<double>*>& spin_hR,
                                               const Exx_NAO<std::complex<double>>& exx_nao,
                                               const Exx_Info& exx_info);
 
@@ -786,7 +796,7 @@ template void ModuleIO::write_current<std::complex<double>>(const UnitCell& ucel
                                                             const LCAO_Orbitals& orb,
                                                             TD_info* td_p,
                                                             const hamilt::HContainer<std::complex<double>>* sR,
-                                                            const hamilt::HContainer<std::complex<double>>* hR,
+                                                            const std::vector<hamilt::HContainer<std::complex<double>>*>& spin_hR,
                                                             const Exx_NAO<std::complex<double>>& exx_nao,
                                                             const Exx_Info& exx_info);
 #endif //__LCAO

@@ -32,7 +32,7 @@ TEST(NormPsiTest, testNormPsi)
     ASSERT_EQ(pv->para_2d().set(nlocal, nlocal, 1, ictxt), 0);
     pv->nloc_wfc = nlocal * nband;
     pv->ncol_bands = nband;
-    pv->set_desc_wfc_Eij(nlocal, nband, pv->para_2d().nrloc());
+    pv->set_wfc_and_mo_layouts(nlocal, nband);
 
     // Initialize data
     Stmp = new std::complex<double>[nlocal * nlocal];
@@ -65,7 +65,15 @@ TEST(NormPsiTest, testNormPsi)
     psi_k[11] = 1.0;
 
     // Call the function
-    module_rt::norm_psi(pv, nband, nlocal, Stmp, psi_k, GlobalV::ofs_running, print_matrix);
+    module_rt::norm_psi(pv->para_2d(),
+                        pv->wfc_layout(),
+                        pv->mo_repr_layout(),
+                        nband,
+                        nlocal,
+                        Stmp,
+                        psi_k,
+                        GlobalV::ofs_running,
+                        print_matrix);
 
     // Check the results
     EXPECT_NEAR(psi_k[0].real(), 0.577350269189626, doublethreshold);
@@ -107,7 +115,7 @@ TEST(NormPsiTest, EndpointMetricDiffersFromPropagationMetric)
     ASSERT_EQ(pv.para_2d().set(nlocal, nlocal, 1, ictxt), 0);
     pv.nloc_wfc = 2;
     pv.ncol_bands = 1;
-    pv.set_desc_wfc_Eij(nlocal, nband, pv.para_2d().nrloc());
+    pv.set_wfc_and_mo_layouts(nlocal, nband);
     std::complex<double> endpoint[4] = {2.0, {0.0, -0.4}, {0.0, 0.4}, 1.0};
     std::complex<double> midpoint[4] = {1.5, {0.0, -0.2}, {0.0, 0.2}, 1.0};
     std::complex<double> right[2] = {1.0, {0.0, 0.5}};
@@ -117,8 +125,24 @@ TEST(NormPsiTest, EndpointMetricDiffersFromPropagationMetric)
               + std::conj(psi[1]) * (endpoint[1]*psi[0] + endpoint[3]*psi[1])).real();
     };
     std::ofstream log;
-    module_rt::norm_psi(&pv, nband, nlocal, endpoint, right, log, 0);
-    module_rt::norm_psi(&pv, nband, nlocal, midpoint, wrong, log, 0);
+    module_rt::norm_psi(pv.para_2d(),
+                        pv.wfc_layout(),
+                        pv.mo_repr_layout(),
+                        nband,
+                        nlocal,
+                        endpoint,
+                        right,
+                        log,
+                        0);
+    module_rt::norm_psi(pv.para_2d(),
+                        pv.wfc_layout(),
+                        pv.mo_repr_layout(),
+                        nband,
+                        nlocal,
+                        midpoint,
+                        wrong,
+                        log,
+                        0);
     EXPECT_NEAR(norm(right), 1.0, 1e-12);
     EXPECT_GT(std::abs(norm(wrong)-1.0), 0.1);
 }

@@ -38,44 +38,44 @@ namespace LR
 #ifdef __MPI
     void CvX(
         const double* C,
-        const BlockCyclicDistribution& pc,
+        const Parallel_Blkcyclic& pc,
         const double* X,
-        const BlockCyclicDistribution& px,
+        const Parallel_Blkcyclic& px,
         const int& naos,
         const int& nocc,
         const int& nvirt,
         double* CvX,
-        const BlockCyclicDistribution& pcx);
+        const Parallel_Blkcyclic& pcx);
     void CvX(
         const std::complex<double>* C,
-        const BlockCyclicDistribution& pc,
+        const Parallel_Blkcyclic& pc,
         const std::complex<double>* X,
-        const BlockCyclicDistribution& px,
+        const Parallel_Blkcyclic& px,
         const int& naos,
         const int& nocc,
         const int& nvirt,
         std::complex<double>* CvX,
-        const BlockCyclicDistribution& pcx);
+        const Parallel_Blkcyclic& pcx);
     void CoXT(
         const double* C,
-        const BlockCyclicDistribution& pc,
+        const Parallel_Blkcyclic& pc,
         const double* X,
-        const BlockCyclicDistribution& px,
+        const Parallel_Blkcyclic& px,
         const int& naos,
         const int& nocc,
         const int& nvirt,
         double* CoXT,
-        const BlockCyclicDistribution& pcxt);
+        const Parallel_Blkcyclic& pcxt);
     void CoXT(
         const std::complex<double>* C,
-        const BlockCyclicDistribution& pc,
+        const Parallel_Blkcyclic& pc,
         const std::complex<double>* X,
-        const BlockCyclicDistribution& px,
+        const Parallel_Blkcyclic& px,
         const int& naos,
         const int& nocc,
         const int& nvirt,
         std::complex<double>* CoXT,
-        const BlockCyclicDistribution& pcxt);
+        const Parallel_Blkcyclic& pcxt);
 #endif
     // use templates in the future.
 #ifdef __MPI
@@ -84,13 +84,13 @@ namespace LR
     template<typename T>
     std::vector<container::Tensor> cal_dm_diff_pblas(
         const T* const X_istate,
-        const BlockCyclicDistribution& px,
+        const Parallel_Blkcyclic& px,
         const psi::Psi<T, base_device::DEVICE_CPU>& c,
-        const BlockCyclicDistribution& pc,
+        const Parallel_Blkcyclic& pc,
         const int& naos,
         const int& nocc,
         const int& nvirt,
-        const BlockCyclicDistribution& pmat,
+        const Parallel_Blkcyclic& pmat,
         const bool renorm_k = true,
         const int nspin = 1);
 #endif

@@ -1,5 +1,6 @@
 #include "hamilt_ulr.h"
 #include "dm_trans/dm_trans.h"
+#include "source_base/parallel_blkcyc.h"
 #include "source_hamilt/hamilt.h"
 #include "source_estate/module_dm/density_matrix.h"
 #include "source_lcao/module_lr/operator_casida/operator_lr_diag.h"
@@ -30,8 +31,8 @@ HamiltULR<T>::HamiltULR(const std::string& xc_kernel,
 #endif
     std::vector<std::shared_ptr<PotHxcLR>>& pot_in,
     const K_Vectors& kv_in,
-    const std::vector<BlockCyclicDistribution>& pX_in,   ///< {up, down}
-    const BlockCyclicDistribution& pc_in,
+    const std::vector<Parallel_Blkcyclic>& pX_in,   ///< {up, down}
+    const Parallel_Blkcyclic& pc_in,
     const Parallel_Orbitals& pmat_in) :nocc(nocc), nvirt(nvirt), pX(pX_in)
 {
     nk = kv_in.get_nks() / nspin;

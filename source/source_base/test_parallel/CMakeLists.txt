@@ -96,8 +96,6 @@ add_test(
   COMMAND mpirun -np 4 "$<TARGET_FILE:MODULE_BASE_parallel_domain_grid>"
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 
-find_program(BASH bash)
-
 # Select the same ScaLAPACK/BLACS provider as the main build.
 if(MKL_FOUND)
   set(BLACS_LIB ${MKL_LIBRARIES})

@@ -155,7 +155,7 @@ void write_Vxc_LIP(int nspin,
     std::vector<std::vector<FPTYPE>> e_orb_locxc; // orbital energy (local XC)
     std::vector<std::vector<FPTYPE>> e_orb_tot;   // orbital energy (total)
     std::vector<std::vector<FPTYPE>> e_orb_exx;   // orbital energy (EXX)
-    BlockCyclicDistribution p2d_serial;
+    Parallel_Blkcyclic p2d_serial;
     p2d_serial.set_serial(nbands, nbands);
 
     for (int ik = 0; ik < kv.get_nks(); ++ik)
@@ -199,15 +199,14 @@ void write_Vxc_LIP(int nspin,
 #endif
 
         // add-up and write
-        const int istep_mat = -1;
         const int out_label = 1; // 1 means .txt while 2 means .dat
         const int out_app_flag = 0;
         std::string vxc_file = ModuleIO::filename_output(
             global_out_dir,
             "vxc", "nao", ik, kv.ik2iktot, nspin, kv.get_nkstot(),
-            out_label, out_app_flag, gamma_only, istep_mat);
+            out_label, out_app_flag, gamma_only, istep);
 
-        ModuleIO::save_mat(istep_mat, vxc_tot_k_mo.data(), nbands,
+        ModuleIO::save_mat(istep, vxc_tot_k_mo.data(), nbands,
             false, out_ndigits, true,
             out_app_flag, vxc_file,
             p2d_serial, drank, ks_solver, false);

@@ -15,7 +15,9 @@ rules. Read the complete governance document before making or reviewing changes:
      explain the remaining global usage.
   2. Do not hide workflow switches in mutable member variables that can be
      changed from multiple places.
-  3. Keep header dependencies minimal.
+  3. Keep header dependencies clean and explicit; avoid unnecessary includes,
+     and do not replace `#include` directives with forward declarations just to
+     avoid header include warnings.
   4. Avoid adding `.hpp` implementation headers or propagating them through
      other headers unless there is a narrow reason.
   5. Do not add default arguments to existing interfaces; update call sites or
@@ -36,11 +38,25 @@ rules. Read the complete governance document before making or reviewing changes:
       arguments (see `Relax_Criteria` and `K_Vectors::read_kpoints`). Where the
       test genuinely needs internal state, add a public `const` observer, or an
       explicit `friend class XxxTest;` on the class under test.
-  11. New unit test source files shall be named `test_<module_name>.cpp`,
-      matching the source file they exercise. For example, the test for
-      `rhog_io.cpp` shall be `test_rhog_io.cpp`. This naming keeps the
-      file-to-test relationship discoverable and consistent across the
-      repository. Historical tests are not required to be renamed.
+  11. Unit tests under `source/` live in a directory named `unittests/`, and
+      their source files are named `test_<module_name>.cpp`, matching the
+      source file they exercise. For example, the test for `rhog_io.cpp`
+      shall be `unittests/test_rhog_io.cpp`. The governance checker
+      **blocks**:
+      - adding any file (tests, headers, data, `CMakeLists.txt`) to a legacy
+        test directory such as `test/`, `tests/`, `test_serial/`,
+        `test_parallel/`, `test_gpu/`; modifying a `.cpp`/`.cu` there blocks
+        too, so a touched legacy test must be migrated into `unittests/`.
+        Deleting files and editing a legacy `CMakeLists.txt`, header, or data
+        file stays allowed, so legacy directories can shrink;
+      - a `.c`/`.cc`/`.cpp`/`.cxx`/`.cu` file added or modified directly in
+        `unittests/` whose name does not start with `test_`. Headers
+        (`.h`/`.hpp`/`.cuh`) are free-named, so mocks and shared helpers go
+        into headers;
+      - any code file (sources or headers) in a subdirectory of `unittests/`.
+        Subdirectories, with any name and depth, hold test data only.
+      Whether the name after `test_` matches the file under test is checked
+      in review, not by the checker.
   12. Place `ModuleBase::timer::start`/`end` at the beginning and end of a
       function, not around isolated statements inside the function body. Use
       the enclosing function name (or constructor name) as the timer label so
@@ -82,6 +98,10 @@ rules. Read the complete governance document before making or reviewing changes:
   22. Print ionic-step indices one-based (starting from 1) in user-facing
       output files, matching the `g{N}` filename suffix convention; do not
       write zero-based step counters such as `STEP: 0` into output files.
+  23. Use Autotest cases for integration tests. Standalone `add_test()` drivers
+      require a check Autotest cannot express, a PR rationale, and compliance
+      with "Integration Test Drivers" in the governance document. Autotest
+      helpers are unaffected.
 - Use LF line endings for text files. Only `.bat` and `.cmd` files may use CRLF.
 - Keep source file additions deterministic: update the relevant `CMakeLists.txt`
   or explain why the file is generated or included indirectly.
@@ -212,7 +232,7 @@ full mixed-line-ending hook only for intentional repository-wide normalization.
 
 - Confirm the PR body states exact commands run, whether they passed or failed,
   and why any expected check could not be run.
-- Keep warning rationales concrete. For example, a header include warning can be
-  acceptable when the header owns a value member that requires the complete type.
+- Keep warning rationales concrete. For example, a header include warning is
+  acceptable when the header uses types declared in that header directly.
 - Keep historical-debt notes separate from new deterministic errors introduced
   by the PR.

@@ -7,11 +7,12 @@
 #endif
 #include "source_base/timer.h"
 
-MSST::MSST(const MD_para& mdp_in,
-           const bool cal_stress_in,
-           const bool init_vel,
-           const int my_rank_in,
-           MDCell& mdcell_in)
+MSST::MSST(
+    const MD_para &mdp_in,
+    const bool cal_stress_in,
+    const bool init_vel,
+    const int my_rank_in,
+    MDCell &mdcell_in)
     : MD_base(mdp_in, cal_stress_in, init_vel, my_rank_in, mdcell_in)
 {
     msst_qmass = mdp.msst_qmass / pow(ModuleBase::ANGSTROM_AU, 4) / pow(ModuleBase::AU_to_MASS, 2);
@@ -29,17 +30,18 @@ MSST::MSST(const MD_para& mdp_in,
     lag_pos = 0;
     vsum = 0;
 
-    for (const LocalAtom& atom : mdcell.owned_atoms()) totmass += atom.mass;
+    for (const LocalAtom &atom : mdcell.owned_atoms())
+    {
+        totmass += atom.mass;
+    }
 #ifdef __MPI
     MPI_Allreduce(MPI_IN_PLACE, &totmass, 1, MPI_DOUBLE, MPI_SUM, mdcell.communicator());
 #endif
 }
 
-MSST::~MSST()
-{
-}
+MSST::~MSST() {}
 
-void MSST::setup(ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir, DomainDecomposition& decomp)
+void MSST::setup(ModuleESolver::ESolver *p_esolver, const std::string &global_readin_dir, DomainDecomposition &decomp)
 {
     ModuleBase::TITLE("MSST", "setup");
     ModuleBase::timer::start("MSST", "setup");
@@ -67,7 +69,10 @@ void MSST::setup(ModuleESolver::ESolver* p_esolver, const std::string& global_re
 
             std::cout << "initial strain rate = " << fac2 << "    msst_tscale = " << mdp.msst_tscale << std::endl;
 
-            for (LocalAtom& atom : mdcell.owned_atoms()) atom.vel *= sqrt(1.0 - mdp.msst_tscale);
+            for (LocalAtom &atom : mdcell.owned_atoms())
+            {
+                atom.vel *= sqrt(1.0 - mdp.msst_tscale);
+            }
         }
 
         MD_func::compute_stress(mdcell, cal_stress, virial, stress);
@@ -79,7 +84,7 @@ void MSST::setup(ModuleESolver::ESolver* p_esolver, const std::string& global_re
     return;
 }
 
-void MSST::first_half(std::ofstream& ofs)
+void MSST::first_half(std::ofstream &ofs)
 {
     ModuleBase::TITLE("MSST", "first_half");
     ModuleBase::timer::start("MSST", "first_half");
@@ -98,7 +103,7 @@ void MSST::first_half(std::ofstream& ofs)
     old_v.resize(mdcell.owned_atoms().size());
     for (int i = 0; i < mdcell.owned_atoms().size(); ++i)
     {
-        old_v[static_cast<std::size_t>(i)] = mdcell.owned_atoms()[static_cast<std::size_t>(i)].vel;
+        old_v[i] = mdcell.owned_atoms()[i].vel;
     }
 
     /// propagate velocity sum 1/2 step by temporarily propagating the velocities
@@ -109,7 +114,7 @@ void MSST::first_half(std::ofstream& ofs)
     /// reset the velocities
     for (int i = 0; i < mdcell.owned_atoms().size(); ++i)
     {
-        mdcell.owned_atoms()[static_cast<std::size_t>(i)].vel = old_v[static_cast<std::size_t>(i)];
+        mdcell.owned_atoms()[i].vel = old_v[i];
     }
 
     /// propagate velocities 1/2 step using the new velocity sum
@@ -162,15 +167,14 @@ void MSST::second_half()
     return;
 }
 
-
-void MSST::print_md(std::ofstream& ofs, const bool& cal_stress)
+void MSST::print_md(std::ofstream &ofs, const bool &cal_stress)
 {
     MD_base::print_md(ofs, cal_stress);
 
     return;
 }
 
-void MSST::write_restart(const std::string& global_out_dir)
+void MSST::write_restart(const std::string &global_out_dir)
 {
     if (!my_rank)
     {
@@ -195,8 +199,7 @@ void MSST::write_restart(const std::string& global_out_dir)
     return;
 }
 
-
-void MSST::restart(const std::string& global_readin_dir)
+void MSST::restart(const std::string &global_readin_dir)
 {
     bool ok = true;
 
@@ -214,7 +217,7 @@ void MSST::restart(const std::string& global_readin_dir)
         if (ok)
         {
             file >> step_rst_ >> md_tfirst >> omega[mdp.msst_direction] >> e0 >> v0 >> p0 >> lag_pos;
-            if(!file)
+            if (!file)
             {
                 ok = false;
             }
@@ -248,14 +251,17 @@ double MSST::vel_sum() const
 {
     double vsum = 0;
 
-    for (const LocalAtom& atom : mdcell.owned_atoms()) vsum += atom.vel.norm2();
+    for (const LocalAtom &atom : mdcell.owned_atoms())
+    {
+        vsum += atom.vel.norm2();
+    }
 #ifdef __MPI
     MPI_Allreduce(MPI_IN_PLACE, &vsum, 1, MPI_DOUBLE, MPI_SUM, mdcell.communicator());
 #endif
     return vsum;
 }
 
-void MSST::rescale(std::ofstream& ofs, const double& volume)
+void MSST::rescale(std::ofstream &ofs, const double &volume)
 {
     int sd = mdp.msst_direction;
 
@@ -266,14 +272,17 @@ void MSST::rescale(std::ofstream& ofs, const double& volume)
     latvec.e11 *= dilation[0];
     latvec.e22 *= dilation[1];
     latvec.e33 *= dilation[2];
-    mdcell.set_lattice_vectors(latvec);
+    const double lat0 = mdcell.lat0();
+    mdcell.set_lattice_geometry(latvec, lat0);
     mdcell.refresh_cart_from_frac();
 
     /// rescale velocity
-    for (LocalAtom& atom : mdcell.owned_atoms()) atom.vel[sd] *= dilation[sd];
+    for (LocalAtom &atom : mdcell.owned_atoms())
+    {
+        atom.vel[sd] *= dilation[sd];
+    }
     static_cast<void>(ofs);
 }
-
 
 void MSST::propagate_vel()
 {
@@ -281,7 +290,7 @@ void MSST::propagate_vel()
     const double dthalf = 0.5 * md_dt;
     const double fac = msst_vis * pow(omega[sd], 2) / (vsum * mdcell.omega());
 
-    for (LocalAtom& atom : mdcell.owned_atoms())
+    for (LocalAtom &atom : mdcell.owned_atoms())
     {
         ModuleBase::Vector3<double> const_C = atom.force / atom.mass;
         ModuleBase::Vector3<double> const_D;
@@ -297,15 +306,14 @@ void MSST::propagate_vel()
             }
             else
             {
-                atom.vel[k]
-                    += (const_C[k] + const_D[k] * atom.vel[k]) * dthalf
-                       + 0.5 * (const_D[k] * const_D[k] * atom.vel[k] + const_C[k] * const_D[k]) * dthalf * dthalf;
+                atom.vel[k] +=
+                    (const_C[k] + const_D[k] * atom.vel[k]) * dthalf +
+                    0.5 * (const_D[k] * const_D[k] * atom.vel[k] + const_C[k] * const_D[k]) * dthalf * dthalf;
             }
         }
     }
     return;
 }
-
 
 void MSST::propagate_voldot()
 {
@@ -330,8 +338,8 @@ void MSST::propagate_voldot()
     }
     else
     {
-        omega[sd] += (const_A - const_B * omega[sd]) * dthalf
-                     + 0.5 * (const_B * const_B * omega[sd] - const_A * const_B) * dthalf * dthalf;
+        omega[sd] += (const_A - const_B * omega[sd]) * dthalf +
+                     0.5 * (const_B * const_B * omega[sd] - const_A * const_B) * dthalf * dthalf;
     }
 
     return;

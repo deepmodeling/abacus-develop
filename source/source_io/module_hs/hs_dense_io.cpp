@@ -5,6 +5,7 @@
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"
 #include "source_base/global_function.h"
+#include "source_io/module_output/provenance_header.h"
 
 #include <complex>
 #include <cstdio>
@@ -24,7 +25,7 @@ void gather_row(const T* mat,
                 const int dim,
                 const int i,
                 const bool tri,
-                const BlockCyclicDistribution& pv,
+                const Parallel_Blkcyclic& pv,
                 const std::string& ks_solver,
                 std::vector<T>& line)
 {
@@ -73,7 +74,7 @@ void ModuleIO::save_mat(const int istep,
     const bool tri,
     const bool app,
     const std::string& filename,
-    const BlockCyclicDistribution& pv,
+    const Parallel_Blkcyclic& pv,
     const int drank,
     const std::string& ks_solver,
     const bool reduce)
@@ -160,8 +161,10 @@ void ModuleIO::save_mat(const int istep,
             {
                 ModuleBase::WARNING_QUIT("ModuleIO::save_mat", "Cannot open matrix file: " + filename);
             }
+            const std::string time_stamp = ModuleIO::local_timestamp();
+            const int istep_one_based = istep + 1;
             out_matrix << "#------------------------------------------------------------------------" << std::endl;
-            out_matrix << "# ionic step " << istep+1 << std::endl; // istep starts from 0
+            out_matrix << ModuleIO::prov_step(istep_one_based, time_stamp);
             out_matrix << "# filename " << filename << std::endl;
             out_matrix << "# gamma only " << gamma_only << std::endl;
             out_matrix << "# rows " << dim << std::endl;
@@ -241,14 +244,14 @@ void ModuleIO::save_mat(const int istep,
 
 // Explicit instantiations
 template void ModuleIO::save_mat<double>(const int, const double*, const int, const bool,
-    const int, const bool, const bool, const std::string&, const BlockCyclicDistribution&,
+    const int, const bool, const bool, const std::string&, const Parallel_Blkcyclic&,
     const int, const std::string&, const bool);
 template void ModuleIO::save_mat<std::complex<double>>(const int, const std::complex<double>*, const int,
-    const bool, const int, const bool, const bool, const std::string&, const BlockCyclicDistribution&,
+    const bool, const int, const bool, const bool, const std::string&, const Parallel_Blkcyclic&,
     const int, const std::string&, const bool);
 template void ModuleIO::save_mat<float>(const int, const float*, const int, const bool,
-    const int, const bool, const bool, const std::string&, const BlockCyclicDistribution&,
+    const int, const bool, const bool, const std::string&, const Parallel_Blkcyclic&,
     const int, const std::string&, const bool);
 template void ModuleIO::save_mat<std::complex<float>>(const int, const std::complex<float>*, const int,
-    const bool, const int, const bool, const bool, const std::string&, const BlockCyclicDistribution&,
+    const bool, const int, const bool, const bool, const std::string&, const Parallel_Blkcyclic&,
     const int, const std::string&, const bool);

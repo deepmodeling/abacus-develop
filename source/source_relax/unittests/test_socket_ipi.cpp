@@ -19,14 +19,11 @@ namespace
 {
 constexpr std::size_t kIpiHeaderLen = 12;
 
-std::string errno_message(const std::string& prefix)
-{
-    return prefix + ": " + std::strerror(errno);
-}
+std::string errno_message(const std::string &prefix) { return prefix + ": " + std::strerror(errno); }
 
-void send_all(int fd, const void* data, std::size_t nbytes)
+void send_all(int fd, const void *data, std::size_t nbytes)
 {
-    const char* cursor = static_cast<const char*>(data);
+    const char *cursor = static_cast<const char *>(data);
     std::size_t done = 0;
     while (done < nbytes)
     {
@@ -47,9 +44,9 @@ void send_all(int fd, const void* data, std::size_t nbytes)
     }
 }
 
-void recv_all(int fd, void* data, std::size_t nbytes)
+void recv_all(int fd, void *data, std::size_t nbytes)
 {
-    char* cursor = static_cast<char*>(data);
+    char *cursor = static_cast<char *>(data);
     std::size_t done = 0;
     while (done < nbytes)
     {
@@ -70,7 +67,7 @@ void recv_all(int fd, void* data, std::size_t nbytes)
     }
 }
 
-std::string padded_header(const std::string& header)
+std::string padded_header(const std::string &header)
 {
     std::string padded = header;
     padded.resize(kIpiHeaderLen, ' ');
@@ -83,7 +80,7 @@ class UnixSocketServer
     UnixSocketServer()
     {
         char dir_template[] = "/tmp/abacus_socket_ipi_test_XXXXXX";
-        char* made_dir = ::mkdtemp(dir_template);
+        char *made_dir = ::mkdtemp(dir_template);
         if (made_dir == nullptr)
         {
             throw std::runtime_error(errno_message("mkdtemp failed"));
@@ -101,7 +98,7 @@ class UnixSocketServer
         std::memset(&addr, 0, sizeof(addr));
         addr.sun_family = AF_UNIX;
         std::strncpy(addr.sun_path, path_.c_str(), sizeof(addr.sun_path) - 1);
-        if (::bind(listen_fd_, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) != 0)
+        if (::bind(listen_fd_, reinterpret_cast<sockaddr *>(&addr), sizeof(addr)) != 0)
         {
             throw std::runtime_error(errno_message("bind failed"));
         }
@@ -127,13 +124,10 @@ class UnixSocketServer
         }
     }
 
-    UnixSocketServer(const UnixSocketServer&) = delete;
-    UnixSocketServer& operator=(const UnixSocketServer&) = delete;
+    UnixSocketServer(const UnixSocketServer &) = delete;
+    UnixSocketServer &operator=(const UnixSocketServer &) = delete;
 
-    std::string address() const
-    {
-        return path_ + ":UNIX";
-    }
+    std::string address() const { return path_ + ":UNIX"; }
 
     int accept_once()
     {
@@ -151,7 +145,7 @@ class UnixSocketServer
     std::string path_;
 };
 
-void rethrow_thread_error(const std::exception_ptr& thread_error)
+void rethrow_thread_error(const std::exception_ptr &thread_error)
 {
     if (thread_error)
     {
@@ -165,20 +159,22 @@ TEST(IpiSocketTest, WriteHeaderPadsToTwelveBytes)
     UnixSocketServer server;
     std::string received;
     std::exception_ptr thread_error;
-    std::thread peer([&]() {
-        try
+    std::thread peer(
+        [&]()
         {
-            const int fd = server.accept_once();
-            char buffer[kIpiHeaderLen];
-            recv_all(fd, buffer, sizeof(buffer));
-            received.assign(buffer, sizeof(buffer));
-            ::close(fd);
-        }
-        catch (...)
-        {
-            thread_error = std::current_exception();
-        }
-    });
+            try
+            {
+                const int fd = server.accept_once();
+                char buffer[kIpiHeaderLen];
+                recv_all(fd, buffer, sizeof(buffer));
+                received.assign(buffer, sizeof(buffer));
+                ::close(fd);
+            }
+            catch (...)
+            {
+                thread_error = std::current_exception();
+            }
+        });
 
     IpiSocket socket;
     socket.connect(server.address());
@@ -194,19 +190,21 @@ TEST(IpiSocketTest, CleanPeerCloseBeforeNextHeaderThrowsDedicatedSignal)
 {
     UnixSocketServer server;
     std::exception_ptr thread_error;
-    std::thread peer([&]() {
-        try
+    std::thread peer(
+        [&]()
         {
-            const int fd = server.accept_once();
-            const std::string header = padded_header("STATUS");
-            send_all(fd, header.data(), header.size());
-            ::close(fd);
-        }
-        catch (...)
-        {
-            thread_error = std::current_exception();
-        }
-    });
+            try
+            {
+                const int fd = server.accept_once();
+                const std::string header = padded_header("STATUS");
+                send_all(fd, header.data(), header.size());
+                ::close(fd);
+            }
+            catch (...)
+            {
+                thread_error = std::current_exception();
+            }
+        });
 
     IpiSocket socket;
     socket.connect(server.address());
@@ -222,19 +220,21 @@ TEST(IpiSocketTest, PartialHeaderCloseStaysRuntimeError)
 {
     UnixSocketServer server;
     std::exception_ptr thread_error;
-    std::thread peer([&]() {
-        try
+    std::thread peer(
+        [&]()
         {
-            const int fd = server.accept_once();
-            const std::string partial = "STAT";
-            send_all(fd, partial.data(), partial.size());
-            ::close(fd);
-        }
-        catch (...)
-        {
-            thread_error = std::current_exception();
-        }
-    });
+            try
+            {
+                const int fd = server.accept_once();
+                const std::string partial = "STAT";
+                send_all(fd, partial.data(), partial.size());
+                ::close(fd);
+            }
+            catch (...)
+            {
+                thread_error = std::current_exception();
+            }
+        });
 
     IpiSocket socket;
     socket.connect(server.address());
@@ -243,11 +243,11 @@ TEST(IpiSocketTest, PartialHeaderCloseStaysRuntimeError)
         static_cast<void>(socket.read_header());
         FAIL() << "partial header EOF should throw";
     }
-    catch (const IpiSocketClosed&)
+    catch (const IpiSocketClosed &)
     {
         FAIL() << "partial header EOF must not be treated as clean peer close";
     }
-    catch (const std::runtime_error& exc)
+    catch (const std::runtime_error &exc)
     {
         EXPECT_NE(std::string::npos, std::string(exc.what()).find("closed while reading header"));
     }
@@ -263,18 +263,20 @@ TEST(IpiSocketTest, Int32UsesExactlyFourNativeEndianBytes)
     const std::int32_t expected = INT32_C(0x12345678);
     std::vector<char> received(4);
     std::exception_ptr thread_error;
-    std::thread peer([&]() {
-        try
+    std::thread peer(
+        [&]()
         {
-            const int fd = server.accept_once();
-            recv_all(fd, received.data(), received.size());
-            ::close(fd);
-        }
-        catch (...)
-        {
-            thread_error = std::current_exception();
-        }
-    });
+            try
+            {
+                const int fd = server.accept_once();
+                recv_all(fd, received.data(), received.size());
+                ::close(fd);
+            }
+            catch (...)
+            {
+                thread_error = std::current_exception();
+            }
+        });
 
     IpiSocket socket;
     socket.connect(server.address());
@@ -292,18 +294,20 @@ TEST(IpiSocketTest, DoubleUsesExactlyEightNativeEndianBytes)
     const double expected = -1234.5;
     std::vector<char> received(8);
     std::exception_ptr thread_error;
-    std::thread peer([&]() {
-        try
+    std::thread peer(
+        [&]()
         {
-            const int fd = server.accept_once();
-            recv_all(fd, received.data(), received.size());
-            ::close(fd);
-        }
-        catch (...)
-        {
-            thread_error = std::current_exception();
-        }
-    });
+            try
+            {
+                const int fd = server.accept_once();
+                recv_all(fd, received.data(), received.size());
+                ::close(fd);
+            }
+            catch (...)
+            {
+                thread_error = std::current_exception();
+            }
+        });
 
     IpiSocket socket;
     socket.connect(server.address());
@@ -320,20 +324,22 @@ TEST(IpiSocketTest, ReadInt32HandlesSplitPayload)
     UnixSocketServer server;
     const std::int32_t expected = INT32_C(0x12345678);
     std::exception_ptr thread_error;
-    std::thread peer([&]() {
-        try
+    std::thread peer(
+        [&]()
         {
-            const int fd = server.accept_once();
-            const char* bytes = reinterpret_cast<const char*>(&expected);
-            send_all(fd, bytes, 2);
-            send_all(fd, bytes + 2, 2);
-            ::close(fd);
-        }
-        catch (...)
-        {
-            thread_error = std::current_exception();
-        }
-    });
+            try
+            {
+                const int fd = server.accept_once();
+                const char *bytes = reinterpret_cast<const char *>(&expected);
+                send_all(fd, bytes, 2);
+                send_all(fd, bytes + 2, 2);
+                ::close(fd);
+            }
+            catch (...)
+            {
+                thread_error = std::current_exception();
+            }
+        });
 
     IpiSocket socket;
     socket.connect(server.address());
@@ -349,18 +355,20 @@ TEST(IpiSocketTest, ReadInt32RejectsMidPayloadClose)
     UnixSocketServer server;
     const std::int32_t value = INT32_C(0x12345678);
     std::exception_ptr thread_error;
-    std::thread peer([&]() {
-        try
+    std::thread peer(
+        [&]()
         {
-            const int fd = server.accept_once();
-            send_all(fd, &value, 2);
-            ::close(fd);
-        }
-        catch (...)
-        {
-            thread_error = std::current_exception();
-        }
-    });
+            try
+            {
+                const int fd = server.accept_once();
+                send_all(fd, &value, 2);
+                ::close(fd);
+            }
+            catch (...)
+            {
+                thread_error = std::current_exception();
+            }
+        });
 
     IpiSocket socket;
     socket.connect(server.address());
@@ -381,37 +389,39 @@ TEST(IpiSocketTest, WriteDoublesCompletesLargePayloadWithSmallPeerReads)
     }
     std::vector<char> received(expected.size() * sizeof(double));
     std::exception_ptr thread_error;
-    std::thread peer([&]() {
-        try
+    std::thread peer(
+        [&]()
         {
-            const int fd = server.accept_once();
-            std::size_t done = 0;
-            while (done < received.size())
+            try
             {
-                const std::size_t remaining = received.size() - done;
-                const std::size_t chunk = remaining < 37 ? remaining : 37;
-                const ssize_t nread = ::recv(fd, received.data() + done, chunk, 0);
-                if (nread < 0)
+                const int fd = server.accept_once();
+                std::size_t done = 0;
+                while (done < received.size())
                 {
-                    if (errno == EINTR)
+                    const std::size_t remaining = received.size() - done;
+                    const std::size_t chunk = remaining < 37 ? remaining : 37;
+                    const ssize_t nread = ::recv(fd, received.data() + done, chunk, 0);
+                    if (nread < 0)
                     {
-                        continue;
+                        if (errno == EINTR)
+                        {
+                            continue;
+                        }
+                        throw std::runtime_error(errno_message("recv failed"));
                     }
-                    throw std::runtime_error(errno_message("recv failed"));
+                    if (nread == 0)
+                    {
+                        throw std::runtime_error("socket closed while receiving large payload");
+                    }
+                    done += static_cast<std::size_t>(nread);
                 }
-                if (nread == 0)
-                {
-                    throw std::runtime_error("socket closed while receiving large payload");
-                }
-                done += static_cast<std::size_t>(nread);
+                ::close(fd);
             }
-            ::close(fd);
-        }
-        catch (...)
-        {
-            thread_error = std::current_exception();
-        }
-    });
+            catch (...)
+            {
+                thread_error = std::current_exception();
+            }
+        });
 
     IpiSocket socket;
     socket.connect(server.address());
@@ -433,7 +443,7 @@ TEST(IpiSocketTest, ReadDoublesRejectsByteCountOverflow)
         static_cast<void>(socket.read_doubles(count));
         FAIL() << "overflowing double payload size should throw";
     }
-    catch (const std::overflow_error& exc)
+    catch (const std::overflow_error &exc)
     {
         EXPECT_NE(std::string::npos, std::string(exc.what()).find(std::to_string(count)));
     }
@@ -449,18 +459,20 @@ TEST(IpiSocketTest, WriteStringSendsExactBytesWithoutTerminator)
     const std::string expected = "{\"scf_converged\":false}";
     std::vector<char> received(expected.size());
     std::exception_ptr thread_error;
-    std::thread peer([&]() {
-        try
+    std::thread peer(
+        [&]()
         {
-            const int fd = server.accept_once();
-            recv_all(fd, received.data(), received.size());
-            ::close(fd);
-        }
-        catch (...)
-        {
-            thread_error = std::current_exception();
-        }
-    });
+            try
+            {
+                const int fd = server.accept_once();
+                recv_all(fd, received.data(), received.size());
+                ::close(fd);
+            }
+            catch (...)
+            {
+                thread_error = std::current_exception();
+            }
+        });
 
     IpiSocket socket;
     socket.connect(server.address());

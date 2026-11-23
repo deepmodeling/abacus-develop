@@ -1,7 +1,7 @@
 #ifndef HSR_WRITER_H
 #define HSR_WRITER_H
 
-#include "source_base/block_cyclic_distribution.h"
+#include "source_base/parallel_blkcyc.h"
 
 #include <complex>
 #include <string>
@@ -49,12 +49,25 @@ std::string dhr_gen_fname(const std::string& prefix,
                           const bool numbered,
                           const int istep);
 
+/// Generate filename for the k-space derivative matrices (dH(k), dT(k), ...).
+/// A spin suffix is added only for nspin == 2 so the two spin channels do not
+/// overwrite each other; a single spin channel keeps the bare name.
+/// @param numbered whether the ionic step is embedded as a g{step} suffix (out_app_flag == 2)
+std::string dhk_gen_fname(const std::string& prefix,
+                          const int ispin,
+                          const int nspin,
+                          const bool numbered,
+                          const int istep);
+
 /// Write a single HContainer to CSR file with header.
 /// @param append whether to append to an existing file; the first written step (istep <= 0) truncates
 /// @param efermi_eV the Fermi energy in eV for this spin channel
 /// @param has_efermi whether to append the Fermi energy to the spin-index line
+/// @return true only if the whole record was written and the stream closed
+///         cleanly; callers must not announce the file in the running log
+///         when this returns false.
 template <typename TR>
-void write_hcontainer_csr(const std::string& fname,
+bool write_hcontainer_csr(const std::string& fname,
                           const UnitCell* ucell,
                           const int precision,
                           hamilt::HContainer<TR>* mat_serial,
@@ -83,7 +96,7 @@ void write_hsr(const std::vector<hamilt::HContainer<TR>*>& hr_vec,
                const UnitCell* ucell,
                const int out_type,
                const int precision,
-               const BlockCyclicDistribution& paraV,
+               const Parallel_Blkcyclic& paraV,
                const int out_app_flag,
                const bool gamma_only,
                const int* iat2iwt,

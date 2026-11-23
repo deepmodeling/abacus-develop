@@ -104,7 +104,7 @@ namespace LR_Util
         }
     }
     template<typename T>
-    bool is_hermitian(const T* mat, const BlockCyclicDistribution& pmat, const double threshold, const int my_rank){
+    bool is_hermitian(const T* mat, const Parallel_Blkcyclic& pmat, const double threshold, const int my_rank){
         bool is_herm = true;
         int n = pmat.nrglb();
         assert(n == pmat.ncglb());
@@ -169,7 +169,7 @@ namespace LR_Util
     }
 
     template<typename T>
-    bool is_symmetric(const T* mat, const BlockCyclicDistribution& pmat, const double threshold, const int my_rank){
+    bool is_symmetric(const T* mat, const Parallel_Blkcyclic& pmat, const double threshold, const int my_rank){
         bool is_sym = true;
         int n = pmat.nrglb();
         assert(n == pmat.ncglb());
@@ -290,7 +290,7 @@ namespace LR_Util
     /// @todo this function is a merge version of HamiltULR::global2local and HamiltLR::global2local, they should be replaced
     template <typename T>
     void global2local_X(T* local_X, const T* global_X, const int nband, const int nk, 
-        const std::vector<int>& nocc, const std::vector<int>& nvirt, const std::vector<BlockCyclicDistribution>& pX,
+        const std::vector<int>& nocc, const std::vector<int>& nvirt, const std::vector<Parallel_Blkcyclic>& pX,
         const bool openshell)
     {
         const int nspin_X = openshell ? 2 : 1;
@@ -366,7 +366,7 @@ namespace LR_Util
     template <typename T>
     void pA2pX(T* X_pX, const T* X_pA, const int nband, const int nk, 
         const std::vector<int>& nocc, const std::vector<int>& nvirt,
-        const std::vector<BlockCyclicDistribution>& pX, const BlockCyclicDistribution& pA,
+        const std::vector<Parallel_Blkcyclic>& pX, const Parallel_Blkcyclic& pA,
         const int row_offset, const int col_offset, const bool openshell,
         const int my_rank, const int nproc)
     {
@@ -568,7 +568,7 @@ namespace LR_Util
     }
 
     template <typename T>
-    void gather_2d_to_full(const BlockCyclicDistribution& pv, const T* submat, T* fullmat,
+    void gather_2d_to_full(const Parallel_Blkcyclic& pv, const T* submat, T* fullmat,
         const bool row_major, const std::size_t global_nrow, const std::size_t global_ncol)
     {
         assert(pv.nrglb() == global_nrow);
@@ -590,7 +590,7 @@ namespace LR_Util
     };
 
     template <typename T>
-    void scatter_full_to_2d(const BlockCyclicDistribution& pv, const T* fullmat, T* submat, const bool col_first)
+    void scatter_full_to_2d(const Parallel_Blkcyclic& pv, const T* fullmat, T* submat, const bool col_first)
     {
         ModuleBase::TITLE("LR_Util", "scatter_full_to_2d");
         const int global_nrow = pv.nrglb();

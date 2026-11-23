@@ -9,14 +9,14 @@ namespace LR
 {
     void CvX(
         const double* C,
-        const BlockCyclicDistribution& pc,
+        const Parallel_Blkcyclic& pc,
         const double* X,
-        const BlockCyclicDistribution& px,
+        const Parallel_Blkcyclic& px,
         const int& naos,
         const int& nocc,
         const int& nvirt,
         double* CvX,
-        const BlockCyclicDistribution& pcx)
+        const Parallel_Blkcyclic& pcx)
     {
         const int i1 = 1;
         const int ivirt = nocc + 1;
@@ -46,14 +46,14 @@ namespace LR
     }
     void CvX(
         const std::complex<double>* C,
-        const BlockCyclicDistribution& pc,
+        const Parallel_Blkcyclic& pc,
         const std::complex<double>* X,
-        const BlockCyclicDistribution& px,
+        const Parallel_Blkcyclic& px,
         const int& naos,
         const int& nocc,
         const int& nvirt,
         std::complex<double>* CvX,
-        const BlockCyclicDistribution& pcx)
+        const Parallel_Blkcyclic& pcx)
     {
         const int i1 = 1;
         const int ivirt = nocc + 1;
@@ -84,14 +84,14 @@ namespace LR
 
     void CoXT(
         const double* C,
-        const BlockCyclicDistribution& pc,
+        const Parallel_Blkcyclic& pc,
         const double* X,
-        const BlockCyclicDistribution& px,
+        const Parallel_Blkcyclic& px,
         const int& naos,
         const int& nocc,
         const int& nvirt,
         double* CoXT,
-        const BlockCyclicDistribution& pcxt)
+        const Parallel_Blkcyclic& pcxt)
     {
         const int i1 = 1;
         char transa = 'N';
@@ -120,14 +120,14 @@ namespace LR
     }
     void CoXT(
         const std::complex<double>* C,
-        const BlockCyclicDistribution& pc,
+        const Parallel_Blkcyclic& pc,
         const std::complex<double>* X,
-        const BlockCyclicDistribution& px,
+        const Parallel_Blkcyclic& px,
         const int& naos,
         const int& nocc,
         const int& nvirt,
         std::complex<double>* CoXT,
-        const BlockCyclicDistribution& pcxt)
+        const Parallel_Blkcyclic& pcxt)
     {
         const int i1 = 1;
         char transa = 'N';
@@ -157,11 +157,11 @@ namespace LR
 
     void AAT(
         const double* A,
-        const BlockCyclicDistribution& pa,
+        const Parallel_Blkcyclic& pa,
         const int& nrow,
         const int& ncol,
         double* C,
-        const BlockCyclicDistribution& pc,
+        const Parallel_Blkcyclic& pc,
         const bool add = false,
         const double& alpha = 1.0)
     {
@@ -191,11 +191,11 @@ namespace LR
     }
     void AAT(
         const std::complex<double>* A,
-        const BlockCyclicDistribution& pa,
+        const Parallel_Blkcyclic& pa,
         const int& nrow,
         const int& ncol,
         std::complex<double>* C,
-        const BlockCyclicDistribution& pc,
+        const Parallel_Blkcyclic& pc,
         const bool add = false,
         const std::complex<double>& alpha = std::complex<double>(1.0, 0.0))
     {
@@ -234,13 +234,13 @@ namespace LR
     template<typename T>
     std::vector<ct::Tensor> cal_dm_diff_pblas(
         const T* const X_istate,
-        const BlockCyclicDistribution& px,
+        const Parallel_Blkcyclic& px,
         const psi::Psi<T, base_device::DEVICE_CPU>& c,
-        const BlockCyclicDistribution& pc,
+        const Parallel_Blkcyclic& pc,
         const int& naos,
         const int& nocc,
         const int& nvirt,
-        const BlockCyclicDistribution& pmat,
+        const Parallel_Blkcyclic& pmat,
         const bool renorm_k,
         const int nspin)
     {
@@ -252,10 +252,10 @@ namespace LR
         const int nks = c.get_nk();
         const int nk = nks / nspin;
 
-        BlockCyclicDistribution pcx;
+        Parallel_Blkcyclic pcx;
         LR_Util::setup_2d_division(pcx, px.nb(), naos, nocc, px.ictxt());
         ct::Tensor cvx(ct::DataTypeToEnum<T>::value, DEV::CpuDevice, { pcx.ncloc(), pcx.nrloc() });
-        BlockCyclicDistribution pcxt;
+        Parallel_Blkcyclic pcxt;
         LR_Util::setup_2d_division(pcxt, px.nb(), naos, nvirt, px.ictxt());
         ct::Tensor coxt(ct::DataTypeToEnum<T>::value, DEV::CpuDevice, { pcxt.ncloc(), pcxt.nrloc() });
         std::vector<ct::Tensor> dm_diff(nks, ct::Tensor(ct::DataTypeToEnum<T>::value, DEV::CpuDevice, { pmat.ncloc(), pmat.nrloc() }));
@@ -279,8 +279,8 @@ namespace LR
         }
         return dm_diff;
     }
-template std::vector<container::Tensor> cal_dm_diff_pblas<double>(const double* const, const BlockCyclicDistribution&, const psi::Psi<double, base_device::DEVICE_CPU>&, const BlockCyclicDistribution&, const int&, const int&, const int&, const BlockCyclicDistribution&, const bool, const int);
-template std::vector<container::Tensor> cal_dm_diff_pblas<std::complex<double>>(const std::complex<double>* const, const BlockCyclicDistribution&, const psi::Psi<std::complex<double>, base_device::DEVICE_CPU>&, const BlockCyclicDistribution&, const int&, const int&, const int&, const BlockCyclicDistribution&, const bool, const int);
+template std::vector<container::Tensor> cal_dm_diff_pblas<double>(const double* const, const Parallel_Blkcyclic&, const psi::Psi<double, base_device::DEVICE_CPU>&, const Parallel_Blkcyclic&, const int&, const int&, const int&, const Parallel_Blkcyclic&, const bool, const int);
+template std::vector<container::Tensor> cal_dm_diff_pblas<std::complex<double>>(const std::complex<double>* const, const Parallel_Blkcyclic&, const psi::Psi<std::complex<double>, base_device::DEVICE_CPU>&, const Parallel_Blkcyclic&, const int&, const int&, const int&, const Parallel_Blkcyclic&, const bool, const int);
 
 }
 #endif

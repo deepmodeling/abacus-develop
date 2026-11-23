@@ -5,7 +5,7 @@
 #include <ostream>
 class UnitCell;
 class Parallel_Orbitals;
-class BlockCyclicDistribution;
+class Parallel_Blkcyclic; // Defined in source/source_base/parallel_blkcyc.h
 class TwoCenterIntegrator;
 namespace base_device
 {
@@ -46,9 +46,9 @@ struct RootInputs
     const std::vector<double>& cutoff;
     const TwoCenterIntegrator& integrator;
     const psi::Psi<T, base_device::DEVICE_CPU>& orbitals;
-    const BlockCyclicDistribution& pc;
+    const Parallel_Blkcyclic& pc;
     const Parallel_Orbitals& pmat;
-    const std::vector<BlockCyclicDistribution>& px;
+    const std::vector<Parallel_Blkcyclic>& px;
     const std::vector<int>& nocc;
     const std::vector<int>& nvirt;
     bool openshell;

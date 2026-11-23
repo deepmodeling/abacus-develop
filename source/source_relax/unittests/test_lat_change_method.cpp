@@ -1,6 +1,6 @@
 #include "for_test.h"
-#include "mock_remake_cell.h"
 #include "source_relax/lat_change_method.h"
+#include "test_mock_remake_cell.h"
 
 #include "gtest/gtest.h"
 #include <fstream>
@@ -17,20 +17,17 @@
  *   - Lattice_Change_Methods::get_largest_grad()
  */
 
-Lattice_Change_CG::Lattice_Change_CG()
-{
-}
+Lattice_Change_CG::Lattice_Change_CG() {}
 
-void Lattice_Change_CG::allocate(void)
-{
-}
+void Lattice_Change_CG::allocate(void) {}
 
-bool Lattice_Change_CG::start(UnitCell& ucell,
-                              const ModuleBase::matrix& stress_in,
-                              const double& etot_in,
-                              std::ofstream& ofs,
-                              std::vector<double>& etot_info,
-                              const Relax_Criteria& criteria)
+bool Lattice_Change_CG::start(
+    UnitCell &ucell,
+    const ModuleBase::matrix &stress_in,
+    const double &etot_in,
+    std::ofstream &ofs,
+    std::vector<double> &etot_info,
+    const Relax_Criteria &criteria)
 {
     return false;
 }

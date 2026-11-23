@@ -10,18 +10,19 @@
 namespace relax_stru_io
 {
 
-std::string build_stru_header(const int istep,
-                              const double etot,
-                              const ModuleBase::matrix& stress,
-                              const Input_para& inp,
-                              const bool is_final,
-                              const bool geometry_evaluated)
+std::string build_stru_header(
+    const int istep,
+    const double etot,
+    const ModuleBase::matrix &stress,
+    const Input_para &inp,
+    const bool is_final,
+    const bool geometry_evaluated)
 {
     std::time_t now = std::time(nullptr);
     char time_buf[64];
     std::strftime(time_buf, sizeof(time_buf), "%Y-%m-%d %H:%M:%S", std::localtime(&now));
 
-    const char* final_tag = is_final ? " (FINAL)" : "";
+    const char *final_tag = is_final ? " (FINAL)" : "";
     const double etot_ev = etot * ModuleBase::Ry_to_eV;
     // Line 3 is labeled with an energy value only when that energy belongs
     // to the geometry written below. When the optimizer proposed the final
@@ -30,37 +31,31 @@ std::string build_stru_header(const int istep,
     std::string header;
     if (geometry_evaluated)
     {
-        header = FmtCore::format("# ABACUS version: %s\n# Written at %s\n# RELAX STEP %d%s, Energy: %.8f eV\n",
-                                 VERSION,
-                                 time_buf,
-                                 istep + 1,
-                                 final_tag,
-                                 etot_ev);
+        header = FmtCore::format(
+            "# ABACUS version: %s\n# Written at %s\n# Ionic_Step %d%s, Energy: %.8f eV\n", VERSION, time_buf, istep + 1,
+            final_tag, etot_ev);
     }
     else
     {
-        header = FmtCore::format("# ABACUS version: %s\n# Written at %s\n# RELAX STEP %d%s, Energy: N/A\n",
-                                 VERSION,
-                                 time_buf,
-                                 istep + 1,
-                                 final_tag);
+        header = FmtCore::format(
+            "# ABACUS version: %s\n# Written at %s\n# Ionic_Step %d%s, Energy: N/A\n", VERSION, time_buf, istep + 1,
+            final_tag);
     }
 
     // stress in kbar: Ry/Bohr^3 -> kbar, always exactly 3 lines for
     // downstream parsers. N/A marks uncomputed stress; no inline comment is
     // appended so that every stress line has the same token count.
-    const double stress_transform
-        = ModuleBase::RYDBERG_SI
-          / (ModuleBase::BOHR_RADIUS_SI * ModuleBase::BOHR_RADIUS_SI * ModuleBase::BOHR_RADIUS_SI) * 1.0e-8;
+    const double stress_transform =
+        ModuleBase::RYDBERG_SI /
+        (ModuleBase::BOHR_RADIUS_SI * ModuleBase::BOHR_RADIUS_SI * ModuleBase::BOHR_RADIUS_SI) * 1.0e-8;
     const bool stress_valid = inp.cal_stress && geometry_evaluated;
     if (stress_valid)
     {
         for (int i = 0; i < 3; i++)
         {
-            header += FmtCore::format("# Stress (kbar): %.6f %.6f %.6f\n",
-                                      stress(i, 0) * stress_transform,
-                                      stress(i, 1) * stress_transform,
-                                      stress(i, 2) * stress_transform);
+            header += FmtCore::format(
+                "# Stress (kbar): %.6f %.6f %.6f\n", stress(i, 0) * stress_transform, stress(i, 1) * stress_transform,
+                stress(i, 2) * stress_transform);
         }
     }
     else
@@ -100,7 +95,7 @@ std::string build_stru_header(const int istep,
     return header;
 }
 
-bool need_orbital(const Input_para& inp)
+bool need_orbital(const Input_para &inp)
 {
     bool need_orb = inp.basis_type == "pw";
     need_orb = need_orb && inp.init_wfc.substr(0, 3) == "nao";
@@ -109,33 +104,23 @@ bool need_orbital(const Input_para& inp)
     return need_orb;
 }
 
-void write_stru(UnitCell& ucell,
-                const Input_para& inp,
-                const std::string& filename,
-                const std::string& header,
-                const ModuleBase::matrix& force,
-                const bool need_orb,
-                const bool deepks_setorb,
-                const int my_rank,
-                const bool has_force,
-                const bool append)
+void write_stru(
+    UnitCell &ucell,
+    const Input_para &inp,
+    const std::string &filename,
+    const std::string &header,
+    const ModuleBase::matrix &force,
+    const bool need_orb,
+    const bool deepks_setorb,
+    const int my_rank,
+    const bool has_force,
+    const bool append)
 {
     if (inp.out_stru == 1)
     {
-        unitcell::print_stru_file(ucell,
-                                  ucell.atoms,
-                                  ucell.latvec,
-                                  filename,
-                                  header,
-                                  inp.nspin,
-                                  inp.calculation == "md",
-                                  inp.out_mul,
-                                  need_orb,
-                                  deepks_setorb,
-                                  my_rank,
-                                  force,
-                                  has_force,
-                                  append);
+        unitcell::print_stru_file(
+            ucell, ucell.atoms, ucell.latvec, filename, header, inp.nspin, inp.calculation == "md", inp.out_mul,
+            need_orb, deepks_setorb, my_rank, force, has_force, append);
     }
     else if (inp.out_stru == 2)
     {
