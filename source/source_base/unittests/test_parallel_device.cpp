@@ -2,7 +2,6 @@
 #include "source_base/parallel_device.h"
 
 #include "source_base/parallel_cell.h"
-#include "source_base/parallel_comm.h"
 
 #include "gtest/gtest.h"
 #include <vector>
@@ -10,10 +9,9 @@
 TEST(ParallelDevice, AlltoallvExchangesUnevenBlocks)
 {
     const ModuleBase::CommunicationDomain domain = ModuleBase::world_comm_domain();
-    MPI_Comm communicator = domain.communicator();
+    const MPI_Comm communicator = domain.communicator();
     const int rank = domain.rank();
-    MPICommGroup world_group(communicator);
-    const int size = world_group.gsize;
+    const int size = domain.size();
     // rank r sends (r + p) % 2 + 1 copies of 100 r + p to rank p
     std::vector<int> send_counts(size);
     std::vector<int> send_offsets(size);
@@ -32,13 +30,9 @@ TEST(ParallelDevice, AlltoallvExchangesUnevenBlocks)
         received_total += recv_counts[peer];
     }
     std::vector<double> received(received_total);
-    Parallel_Common::alltoallv_data(sent.data(),
-                                    send_counts.data(),
-                                    send_offsets.data(),
-                                    received.data(),
-                                    recv_counts.data(),
-                                    recv_offsets.data(),
-                                    communicator);
+    Parallel_Common::alltoallv_data(
+        sent.data(), send_counts.data(), send_offsets.data(), received.data(), recv_counts.data(), recv_offsets.data(),
+        communicator);
     for (int peer = 0; peer < size; ++peer)
     {
         const double expected = 100.0 * peer + rank;

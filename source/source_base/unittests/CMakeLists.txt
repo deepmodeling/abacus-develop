@@ -12,6 +12,7 @@ AddTest(
   SOURCES test_filename.cpp
 )
 
+# alltoallv_data is an MPI wrapper, so this target keeps __MPI.
 addtest(
   TARGET MODULE_BASE_test_parallel_device
   LIBS MPI::MPI_CXX base device parameter
@@ -21,7 +22,6 @@ addtest(
 add_test(
   NAME MODULE_BASE_test_parallel_device_np4
   COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 4 ${MPIEXEC_PREFLAGS}
-          $<TARGET_FILE:MODULE_BASE_test_parallel_device> ${MPIEXEC_POSTFLAGS}
-  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+          $<TARGET_FILE:MODULE_BASE_test_parallel_device> ${MPIEXEC_POSTFLAGS})
 set_tests_properties(MODULE_BASE_test_parallel_device_np4
                      PROPERTIES PROCESSORS 4 TIMEOUT 120)
