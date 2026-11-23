@@ -1,14 +1,14 @@
-#include "sccs_test.h"
-#include "../sccs_ion_force.h"
-#include "../sccs_ion_charge.h"
-#include "../sccs_response.h"
-#include "../sccs_parameters.h"
 #include "../sccs_functional.h"
+#include "../sccs_ion_charge.h"
+#include "../sccs_ion_force.h"
+#include "../sccs_parameters.h"
+#include "../sccs_response.h"
 #include "../sccs_sa.h"
+#include "sccs_test.h"
 
-#include "source_cell/cell_tools.h"
-#include "source_basis/module_pw/pw_grid_geometry.h"
 #include "../sccs_coul_0d.h"
+#include "source_basis/module_pw/pw_grid_geometry.h"
+#include "source_cell/cell_tools.h"
 
 using SccsIonicForceTest = SccsTest::PwTest;
 
@@ -27,7 +27,10 @@ TEST_F(SccsIonicForceTest, AnalyticFourierForceAndGaugeInvariance)
     EXPECT_NEAR(forces[0].y, 0.0, 1e-12);
     EXPECT_NEAR(forces[0].z, 0.0, 1e-12);
     atoms[0].position.x += length;
-    for (double& value : potential) { value += 4.0; }
+    for (double &value : potential)
+    {
+        value += 4.0;
+    }
     ModuleSccs::gauss_ion_force(atoms, potential, basis, tpiba, spread, forces);
     EXPECT_NEAR(forces[0].x, expected, 1e-12);
     potential.assign(basis.nrxx, 3.0);
@@ -45,7 +48,10 @@ TEST_F(SccsIonicForceTest, ReactionEnergyFiniteDifferenceAtFixedNonuniformCavity
     atoms[1].valence_charge = 1.0;
     atoms[1].position = ModuleBase::Vector3<double>(6.4, 5.1, 2.7);
     std::vector<double> density = cosine_mode(0);
-    for (double& value : density) { value = (2.0 / basis.omega) * (1.0 + 0.1 * value); }
+    for (double &value : density)
+    {
+        value = (2.0 / basis.omega) * (1.0 + 0.1 * value);
+    }
     ModuleSccs::SccsConfig config;
     config.cavity.density_min = 1e-3;
     config.cavity.density_max = 3e-3;
@@ -56,11 +62,14 @@ TEST_F(SccsIonicForceTest, ReactionEnergyFiniteDifferenceAtFixedNonuniformCavity
     solver.tolerance_max = 1e-12;
     const double spread = ModuleSccs::gaussian_ion_spread;
     const std::vector<double> cold_start;
-    auto evaluate = [&](const std::vector<unitcell::AtomData>& displaced,
-                        ModuleSccs::FunctionalResult& functional) {
+    auto evaluate = [&](const std::vector<unitcell::AtomData> &displaced, ModuleSccs::FunctionalResult &functional)
+    {
         std::vector<double> charge;
         ModuleSccs::gauss_ion_rho(displaced, basis, tpiba, spread, charge);
-        for (int ir = 0; ir < basis.nrxx; ++ir) { charge[ir] -= density[ir]; }
+        for (int ir = 0; ir < basis.nrxx; ++ir)
+        {
+            charge[ir] -= density[ir];
+        }
         ModuleSccs::SccsResponse response;
         ModuleSccs::solve_response(density, charge, config.cavity, solver, cold_start, basis, tpiba, response);
         ModuleSccs::eval_functional(charge, response, config, basis, tpiba, functional);
@@ -68,8 +77,7 @@ TEST_F(SccsIonicForceTest, ReactionEnergyFiniteDifferenceAtFixedNonuniformCavity
     ModuleSccs::FunctionalResult baseline;
     evaluate(atoms, baseline);
     std::vector<ModuleBase::Vector3<double>> forces;
-    ModuleSccs::gauss_ion_force(atoms, baseline.reaction_potential, basis,
-                                tpiba, spread, forces);
+    ModuleSccs::gauss_ion_force(atoms, baseline.reaction_potential, basis, tpiba, spread, forces);
     const double step = 1e-4;
     for (std::size_t ia = 0; ia < atoms.size(); ++ia)
     {
@@ -89,9 +97,8 @@ TEST_F(SccsIonicForceTest, ReactionEnergyFiniteDifferenceAtFixedNonuniformCavity
     }
     config.cavity.epsilon_bulk = 1.0;
     evaluate(atoms, baseline);
-    ModuleSccs::gauss_ion_force(atoms, baseline.reaction_potential, basis,
-                                tpiba, spread, forces);
-    for (const ModuleBase::Vector3<double>& force : forces)
+    ModuleSccs::gauss_ion_force(atoms, baseline.reaction_potential, basis, tpiba, spread, forces);
+    for (const ModuleBase::Vector3<double> &force : forces)
     {
         EXPECT_NEAR(force.x, 0.0, 1e-12);
         EXPECT_NEAR(force.y, 0.0, 1e-12);
@@ -105,7 +112,7 @@ TEST_F(SccsIonicForceTest, CoreForceSelection)
     std::vector<unitcell::AtomData> atoms(2);
     atoms[0].valence_charge = 6.0;
     atoms[1].valence_charge = 1.0;
-    for (unitcell::AtomData& atom : atoms)
+    for (unitcell::AtomData &atom : atoms)
     {
         atom.position.x = length / 4.0;
     }
@@ -131,7 +138,7 @@ TEST_F(SccsIonicForceTest, CoreForceSelection)
     known[0].valence_charge = 6.0;
     known[1].atomic_number = 1;
     known[1].valence_charge = 1.0;
-    for (unitcell::AtomData& atom : known)
+    for (unitcell::AtomData &atom : known)
     {
         atom.position.x = length / 4.0;
     }
@@ -159,7 +166,7 @@ TEST_F(SccsIonicForceTest, FullCavityPccLowpassTotalCorrectionForceFiniteDiffere
     ModulePW::grid_positions(basis, lattice, length, positions);
     const double half = 0.5 * length;
     const ModuleBase::Vector3<double> center(half, half, half);
-    for (ModuleBase::Vector3<double>& position : positions)
+    for (ModuleBase::Vector3<double> &position : positions)
     {
         position -= center;
     }
@@ -182,8 +189,8 @@ TEST_F(SccsIonicForceTest, FullCavityPccLowpassTotalCorrectionForceFiniteDiffere
     solver.tolerance_rms = 1e-13;
     solver.tolerance_max = 1e-13;
     const std::vector<double> cold;
-    auto evaluate = [&](const std::vector<unitcell::AtomData>& displaced,
-                        ModuleSccs::FunctionalResult& functional) {
+    auto evaluate = [&](const std::vector<unitcell::AtomData> &displaced, ModuleSccs::FunctionalResult &functional)
+    {
         std::vector<double> ions;
         std::vector<double> core;
         ModuleSccs::gauss_ion_rho(displaced, basis, tpiba, ModuleSccs::gaussian_ion_spread, ions);
@@ -196,18 +203,17 @@ TEST_F(SccsIonicForceTest, FullCavityPccLowpassTotalCorrectionForceFiniteDiffere
             ions[ir] -= electron_density;
         }
         ModuleSccs::SccsResponse response;
-        ModuleSccs::solve_response(cavity_density, ions, config.cavity, SccsTest::no_probe, solver, cold, basis,
-                                   tpiba, coulomb, response);
+        ModuleSccs::solve_response(
+            cavity_density, ions, config.cavity, SccsTest::no_probe, solver, cold, basis, tpiba, coulomb, response);
         ModuleSccs::eval_functional(ions, response, config, SccsTest::no_probe, basis, tpiba, coulomb, functional);
     };
     ModuleSccs::FunctionalResult baseline;
     evaluate(atoms, baseline);
     std::vector<ModuleBase::Vector3<double>> ionic;
     std::vector<ModuleBase::Vector3<double>> core;
-    ModuleSccs::gauss_ion_force(atoms, baseline.reaction_potential, basis,
-                                tpiba, ModuleSccs::gaussian_ion_spread, ionic);
-    ModuleSccs::gauss_core_frc(atoms, baseline.cavity_potential, basis,
-                               tpiba, config.core_spreads, core);
+    ModuleSccs::gauss_ion_force(
+        atoms, baseline.reaction_potential, basis, tpiba, ModuleSccs::gaussian_ion_spread, ionic);
+    ModuleSccs::gauss_core_frc(atoms, baseline.cavity_potential, basis, tpiba, config.core_spreads, core);
     const double step = 1e-4;
     for (std::size_t ia = 0; ia < atoms.size(); ++ia)
     {
@@ -243,7 +249,7 @@ TEST_F(SccsIonicForceTest, FilledFullCavityPccLowpassTotalCorrectionForceFiniteD
     ModulePW::grid_positions(basis, lattice, length, positions);
     const double half = 0.5 * length;
     const ModuleBase::Vector3<double> center(half, half, half);
-    for (ModuleBase::Vector3<double>& position : positions)
+    for (ModuleBase::Vector3<double> &position : positions)
     {
         position -= center;
     }
@@ -267,15 +273,15 @@ TEST_F(SccsIonicForceTest, FilledFullCavityPccLowpassTotalCorrectionForceFiniteD
     config.cavity.solvent_aware.solvent_radius = 1.0;
     config.cavity.solvent_aware.filling_thr = 0.93;
     config.cavity.solvent_aware.filling_spread = 0.05;
-    const std::vector<double> probe_kernel = ModuleSccs::sa_probe_kernel(basis, lattice, length,
-                                                                         config.cavity.solvent_aware);
+    const std::vector<double> probe_kernel =
+        ModuleSccs::sa_probe_kernel(basis, lattice, length, config.cavity.solvent_aware);
     ModuleSccs::PolarizationSolverParameters solver;
     solver.tolerance_rms = 1e-13;
     solver.tolerance_max = 1e-13;
     const std::vector<double> cold;
     double filled_volume = 0.0;
-    auto evaluate = [&](const std::vector<unitcell::AtomData>& displaced,
-                        ModuleSccs::FunctionalResult& functional) {
+    auto evaluate = [&](const std::vector<unitcell::AtomData> &displaced, ModuleSccs::FunctionalResult &functional)
+    {
         std::vector<double> ions;
         std::vector<double> core;
         ModuleSccs::gauss_ion_rho(displaced, basis, tpiba, ModuleSccs::gaussian_ion_spread, ions);
@@ -288,8 +294,8 @@ TEST_F(SccsIonicForceTest, FilledFullCavityPccLowpassTotalCorrectionForceFiniteD
             ions[ir] -= electron_density;
         }
         ModuleSccs::SccsResponse response;
-        ModuleSccs::solve_response(cavity_density, ions, config.cavity, probe_kernel, solver, cold, basis, tpiba,
-                                   coulomb, response);
+        ModuleSccs::solve_response(
+            cavity_density, ions, config.cavity, probe_kernel, solver, cold, basis, tpiba, coulomb, response);
         ModuleSccs::eval_functional(ions, response, config, probe_kernel, basis, tpiba, coulomb, functional);
         filled_volume = response.solvent_aware.volume;
     };
@@ -298,10 +304,9 @@ TEST_F(SccsIonicForceTest, FilledFullCavityPccLowpassTotalCorrectionForceFiniteD
     EXPECT_GT(filled_volume, 1e-3);
     std::vector<ModuleBase::Vector3<double>> ionic;
     std::vector<ModuleBase::Vector3<double>> core;
-    ModuleSccs::gauss_ion_force(atoms, baseline.reaction_potential, basis,
-                                tpiba, ModuleSccs::gaussian_ion_spread, ionic);
-    ModuleSccs::gauss_core_frc(atoms, baseline.cavity_potential, basis,
-                               tpiba, config.core_spreads, core);
+    ModuleSccs::gauss_ion_force(
+        atoms, baseline.reaction_potential, basis, tpiba, ModuleSccs::gaussian_ion_spread, ionic);
+    ModuleSccs::gauss_core_frc(atoms, baseline.cavity_potential, basis, tpiba, config.core_spreads, core);
     const double step = 1e-4;
     for (std::size_t ia = 0; ia < atoms.size(); ++ia)
     {

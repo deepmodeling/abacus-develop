@@ -1,9 +1,9 @@
 #include <algorithm>
 
 #include "gint_common.h"
+#include "gint_helper.h"
 #include "gint_vl.h"
 #include "phi_operator.h"
-#include "gint_helper.h"
 
 namespace ModuleGint
 {
@@ -33,24 +33,23 @@ void Gint_vl::cal_gint()
 // The double overload is preferred by overload resolution when Real=double;
 // the template overload handles all other types (e.g. float).
 
-inline const double* get_vr_eff_data_(const double* vr_eff, int /*local_mgrid_num*/,
-                                      std::vector<double>& /*vr_eff_buffer*/)
+inline const double *get_vr_eff_data_(
+    const double *vr_eff, int /*local_mgrid_num*/, std::vector<double> & /*vr_eff_buffer*/)
 {
     return vr_eff;
 }
 
-template<typename Real>
-const Real* get_vr_eff_data_(const double* vr_eff, int local_mgrid_num,
-                             std::vector<Real>& vr_eff_buffer)
+template <typename Real>
+const Real *get_vr_eff_data_(const double *vr_eff, int local_mgrid_num, std::vector<Real> &vr_eff_buffer)
 {
     vr_eff_buffer.resize(local_mgrid_num);
-    std::transform(vr_eff, vr_eff + local_mgrid_num, vr_eff_buffer.begin(), [](const double value) {
-        return static_cast<Real>(value);
-    });
+    std::transform(
+        vr_eff, vr_eff + local_mgrid_num, vr_eff_buffer.begin(),
+        [](const double value) { return static_cast<Real>(value); });
     return vr_eff_buffer.data();
 }
 
-template<typename Real>
+template <typename Real>
 void Gint_vl::cal_gint_impl_()
 {
     // hr_gint is always allocated as HContainer<double>: when Real=float, the
@@ -58,8 +57,7 @@ void Gint_vl::cal_gint_impl_()
     // catastrophic precision loss in the global reduction.
     HContainer<double> hr_gint = gint_info_->get_hr<double>();
     std::vector<Real> vr_eff_buffer;
-    const Real* vr_eff = get_vr_eff_data_(
-        vr_eff_, gint_info_->get_local_mgrid_num(), vr_eff_buffer);
+    const Real *vr_eff = get_vr_eff_data_(vr_eff_, gint_info_->get_local_mgrid_num(), vr_eff_buffer);
 
 #pragma omp parallel
     {
@@ -69,7 +67,7 @@ void Gint_vl::cal_gint_impl_()
 #pragma omp for schedule(dynamic)
         for (int i = 0; i < gint_info_->get_bgrids_num(); i++)
         {
-            const auto& biggrid = gint_info_->get_biggrids()[i];
+            const auto &biggrid = gint_info_->get_biggrids()[i];
             if (biggrid->get_atoms().empty())
             {
                 continue;

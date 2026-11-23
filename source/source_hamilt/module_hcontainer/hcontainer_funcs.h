@@ -1,7 +1,6 @@
 #ifndef ABACUS_SOURCE_HAMILT_MODULE_HCONTAINER_HCONTAINER_FUNCS_H
 #define ABACUS_SOURCE_HAMILT_MODULE_HCONTAINER_HCONTAINER_FUNCS_H
 
-
 #include "source_hamilt/module_hcontainer/hcontainer.h"
 
 namespace hamilt
@@ -11,10 +10,11 @@ namespace hamilt
  * New blocks of the inactive spin are zero until its operators assemble them.
  */
 template <typename T>
-void resize_spin_storage(HContainer<T>& current,
-                         const HContainer<T>& stored_layout,
-                         std::vector<T>& storage,
-                         const int current_spin);
+void resize_spin_storage(
+    HContainer<T> &current,
+    const HContainer<T> &stored_layout,
+    std::vector<T> &storage,
+    const int current_spin);
 
 /**
  * @brief calculate the Hk matrix with specific k vector
@@ -23,19 +23,21 @@ void resize_spin_storage(HContainer<T>& current,
  * @param kvec_d_in the k vector in Direct coordinate
  * @param hk_ld the leading dimension number of hk, ncol for row-major, nrow for column-major
  * @param hk_type the data-type of hk, 0 is row-major, 1 is column-major
-*/
-template<typename TR>
-void folding_HR(const hamilt::HContainer<TR>& hR,
-                std::complex<double>* hk,
-                const ModuleBase::Vector3<double>& kvec_d_in,
-                const int hk_ld,
-                const int hk_type);
+ */
+template <typename TR>
+void folding_HR(
+    const hamilt::HContainer<TR> &hR,
+    std::complex<double> *hk,
+    const ModuleBase::Vector3<double> &kvec_d_in,
+    const int hk_ld,
+    const int hk_type);
 
-void folding_HR(const hamilt::HContainer<double>& hR,
-                double* hk,
-                const ModuleBase::Vector3<double>& kvec_d_in,
-                const int hk_ld,
-                const int hk_type);
+void folding_HR(
+    const hamilt::HContainer<double> &hR,
+    double *hk,
+    const ModuleBase::Vector3<double> &kvec_d_in,
+    const int hk_ld,
+    const int hk_type);
 
 #ifdef __MPI
 /**
@@ -43,39 +45,33 @@ void folding_HR(const hamilt::HContainer<double>& hR,
  * @param hR_s the HContainer of <I,J,R> atom pairs in serial object
  * @param hR_p the HContainer of <I,J,R> atom pairs in parallel object
  * @param my_rank the rank of current process
-*/
-template<typename TR>
-void transferSerial2Parallels(const hamilt::HContainer<TR>& hR_s,
-                             hamilt::HContainer<TR>* hR_p,
-                             const int serial_rank);
+ */
+template <typename TR>
+void transferSerial2Parallels(const hamilt::HContainer<TR> &hR_s, hamilt::HContainer<TR> *hR_p, const int serial_rank);
 /**
  * @brief transfer the HContainer from parallel object to serial object
  * @param hR_p the HContainer of <I,J,R> atom pairs in parallel object
  * @param hR_s the HContainer of <I,J,R> atom pairs in serial object
  * @param my_rank the rank of current process
-*/
-template<typename TR>
-void transferParallels2Serial(const hamilt::HContainer<TR>& hR_p,
-                             hamilt::HContainer<TR>* hR_s,
-                             const int serial_rank);
+ */
+template <typename TR>
+void transferParallels2Serial(const hamilt::HContainer<TR> &hR_p, hamilt::HContainer<TR> *hR_s, const int serial_rank);
 
 /**
  * @brief transfer the HContainer from all serial objects to all parallel objects
  * @param hR_s the HContainer of <I,J,R> atom pairs in serial object
  * @param hR_p the HContainer of <I,J,R> atom pairs in parallel object
-*/
-template<typename TR>
-void transferSerials2Parallels(const hamilt::HContainer<TR>& hR_s,
-                             hamilt::HContainer<TR>* hR_p);
+ */
+template <typename TR>
+void transferSerials2Parallels(const hamilt::HContainer<TR> &hR_s, hamilt::HContainer<TR> *hR_p);
 
 /**
  * @brief transfer the HContainer from all serial objects to all parallel objects
  * @param hR_p the HContainer of <I,J,R> atom pairs in parallel object
  * @param hR_s the HContainer of <I,J,R> atom pairs in serial object
-*/
-template<typename TR>
-void transferParallels2Serials(const hamilt::HContainer<TR>& hR_p,
-                             hamilt::HContainer<TR>* hR_s);
+ */
+template <typename TR>
+void transferParallels2Serials(const hamilt::HContainer<TR> &hR_p, hamilt::HContainer<TR> *hR_s);
 
 /**
  * @brief gather the HContainer from all parallel objects to target serial object
@@ -83,11 +79,9 @@ void transferParallels2Serials(const hamilt::HContainer<TR>& hR_p,
  * @param hR_p the HContainer of <I,J,R> atom pairs in parallel object
  * @param hR_s the empty HContainer of <I,J,R> atom pairs in serial object
  * @param serial_rank the rank of target serial object
-*/
-template<typename TR>
-void gatherParallels(const hamilt::HContainer<TR>& hR_p,
-                     hamilt::HContainer<TR>* hR_s,
-                     const int serial_rank);
+ */
+template <typename TR>
+void gatherParallels(const hamilt::HContainer<TR> &hR_p, hamilt::HContainer<TR> *hR_s, const int serial_rank);
 
 #endif // __MPI
 

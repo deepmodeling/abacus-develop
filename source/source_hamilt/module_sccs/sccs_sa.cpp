@@ -32,20 +32,22 @@ double folded_fraction(int index, int count)
 
 // Periodic images n with |r0 + n a_k| <= cutoff for r0 in the folded cell:
 // the cell height along a_k is the volume over the area of the other two.
-int image_count(double cutoff,
-                const ModuleBase::Vector3<double>& first,
-                const ModuleBase::Vector3<double>& second,
-                double volume)
+int image_count(
+    double cutoff,
+    const ModuleBase::Vector3<double> &first,
+    const ModuleBase::Vector3<double> &second,
+    double volume)
 {
     const double reach = cutoff * (first ^ second).norm() / volume + 0.5;
     return static_cast<int>(std::ceil(reach));
 }
 } // namespace
 
-std::vector<double> sa_probe_kernel(const ModulePW::PW_Basis& basis,
-                                    const ModuleBase::Matrix3& lattice,
-                                    double lattice_scale,
-                                    const SolventAwareParameters& parameters)
+std::vector<double> sa_probe_kernel(
+    const ModulePW::PW_Basis &basis,
+    const ModuleBase::Matrix3 &lattice,
+    double lattice_scale,
+    const SolventAwareParameters &parameters)
 {
     ModuleBase::timer::start("ModuleSccs", "sa_probe_kernel");
     const ModuleBase::Vector3<double> row1(lattice.e11, lattice.e12, lattice.e13);
@@ -72,9 +74,9 @@ std::vector<double> sa_probe_kernel(const ModulePW::PW_Basis& basis,
         const int ix = ir / (basis.ny * basis.nplane);
         const int iy = ir / basis.nplane - ix * basis.ny;
         const int iz = ir % basis.nplane + basis.startz_current;
-        const ModuleBase::Vector3<double> folded = a1 * folded_fraction(ix, basis.nx)
-                                                   + a2 * folded_fraction(iy, basis.ny)
-                                                   + a3 * folded_fraction(iz, basis.nz);
+        const ModuleBase::Vector3<double> folded = a1 * folded_fraction(ix, basis.nx) +
+                                                   a2 * folded_fraction(iy, basis.ny) +
+                                                   a3 * folded_fraction(iz, basis.nz);
         double value = 0.0;
         for (int n1 = -count_1; n1 <= count_1; ++n1)
         {
@@ -82,9 +84,9 @@ std::vector<double> sa_probe_kernel(const ModulePW::PW_Basis& basis,
             {
                 for (int n3 = -count_3; n3 <= count_3; ++n3)
                 {
-                    const ModuleBase::Vector3<double> image = folded + a1 * static_cast<double>(n1)
-                                                              + a2 * static_cast<double>(n2)
-                                                              + a3 * static_cast<double>(n3);
+                    const ModuleBase::Vector3<double> image = folded + a1 * static_cast<double>(n1) +
+                                                              a2 * static_cast<double>(n2) +
+                                                              a3 * static_cast<double>(n3);
                     const double distance = image.norm();
                     if (distance <= cutoff)
                     {
@@ -122,9 +124,8 @@ std::vector<double> sa_probe_kernel(const ModulePW::PW_Basis& basis,
     return kernel;
 }
 
-std::vector<double> convolve_probe(const std::vector<double>& kernel,
-                                   const ModulePW::PW_Basis& basis,
-                                   const std::vector<double>& values)
+std::vector<double> convolve_probe(
+    const std::vector<double> &kernel, const ModulePW::PW_Basis &basis, const std::vector<double> &values)
 {
     std::vector<std::complex<double>> values_g(basis.npw);
     basis.real2recip(values.data(), values_g.data());
@@ -141,9 +142,8 @@ std::vector<double> convolve_probe(const std::vector<double>& kernel,
 }
 
 std::vector<ModuleBase::Vector3<double>> convolve_grad(
-    const std::vector<double>& kernel,
-    const ModulePW::PW_Basis& basis,
-    const std::vector<ModuleBase::Vector3<double>>& gradient)
+    const std::vector<double> &kernel, const ModulePW::PW_Basis &basis,
+    const std::vector<ModuleBase::Vector3<double>> &gradient)
 {
     const std::size_t size = gradient.size();
     std::vector<double> component(size);
@@ -169,10 +169,11 @@ std::vector<ModuleBase::Vector3<double>> convolve_grad(
     return result;
 }
 
-SolventAwareBoundary sa_boundary(const std::vector<double>& local,
-                                 const std::vector<double>& kernel,
-                                 const SolventAwareParameters& parameters,
-                                 const ModulePW::PW_Basis& basis)
+SolventAwareBoundary sa_boundary(
+    const std::vector<double> &local,
+    const std::vector<double> &kernel,
+    const SolventAwareParameters &parameters,
+    const ModulePW::PW_Basis &basis)
 {
     SolventAwareBoundary filled;
     filled.fraction = convolve_probe(kernel, basis, local);
@@ -204,12 +205,13 @@ SolventAwareBoundary sa_boundary(const std::vector<double>& local,
     return filled;
 }
 
-void sa_chain_derivs(const std::vector<double>& local,
-                     const SolventAwareBoundary& filled,
-                     const std::vector<ModuleBase::Vector3<double>>& fraction_gradient,
-                     const std::vector<double>& fraction_laplacian,
-                     std::vector<ModuleBase::Vector3<double>>& gradient,
-                     std::vector<double>& laplacian)
+void sa_chain_derivs(
+    const std::vector<double> &local,
+    const SolventAwareBoundary &filled,
+    const std::vector<ModuleBase::Vector3<double>> &fraction_gradient,
+    const std::vector<double> &fraction_laplacian,
+    std::vector<ModuleBase::Vector3<double>> &gradient,
+    std::vector<double> &laplacian)
 {
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static)
@@ -219,28 +221,29 @@ void sa_chain_derivs(const std::vector<double>& local,
         const double empty = 1.0 - filled.filling[i];
         const double solvent = 1.0 - local[i];
         const double projection = gradient[i] * fraction_gradient[i];
-        laplacian[i] = laplacian[i] * empty - 2.0 * projection * filled.dfilling[i]
-                       + solvent * (filled.d2filling[i] * fraction_gradient[i].norm2()
-                                    + filled.dfilling[i] * fraction_laplacian[i]);
+        laplacian[i] =
+            laplacian[i] * empty - 2.0 * projection * filled.dfilling[i] +
+            solvent * (filled.d2filling[i] * fraction_gradient[i].norm2() + filled.dfilling[i] * fraction_laplacian[i]);
         gradient[i] = gradient[i] * empty + fraction_gradient[i] * (solvent * filled.dfilling[i]);
     }
 }
 
-SolventAwareNonelectrostatic sa_nonelec(const FilledCavity& cavity,
-                                        const std::vector<double>& dsolute_drho,
-                                        const std::vector<double>& kernel,
-                                        const ModulePW::PW_Basis& basis,
-                                        double tpiba,
-                                        double regularization,
-                                        double surface_tension,
-                                        double pressure)
+SolventAwareNonelectrostatic sa_nonelec(
+    const FilledCavity &cavity,
+    const std::vector<double> &dsolute_drho,
+    const std::vector<double> &kernel,
+    const ModulePW::PW_Basis &basis,
+    double tpiba,
+    double regularization,
+    double surface_tension,
+    double pressure)
 {
     ModuleBase::timer::start("ModuleSccs", "sa_nonelec");
-    const std::vector<double>& local = cavity.local;
-    const SolventAwareBoundary& filled = cavity.filling;
-    const std::vector<ModuleBase::Vector3<double>>& density_gradient = cavity.density_gradient;
-    const std::vector<double>& d2solute_drho2 = cavity.d2solute_drho2;
-    const std::vector<ModuleBase::Vector3<double>>& fraction_gradient = cavity.fraction_gradient;
+    const std::vector<double> &local = cavity.local;
+    const SolventAwareBoundary &filled = cavity.filling;
+    const std::vector<ModuleBase::Vector3<double>> &density_gradient = cavity.density_gradient;
+    const std::vector<double> &d2solute_drho2 = cavity.d2solute_drho2;
+    const std::vector<ModuleBase::Vector3<double>> &fraction_gradient = cavity.fraction_gradient;
     const std::size_t size = local.size();
     const double regularization_square = regularization * regularization;
     SolventAwareNonelectrostatic result;
@@ -268,15 +271,14 @@ SolventAwareNonelectrostatic sa_nonelec(const FilledCavity& cavity,
         fraction_part[i] = unit * fraction_weight;
         // gamma alpha + p (1 - s) f' and gamma beta + p (1 - f): the convolved
         // and pointwise coefficients of the variation of s.
-        const double alpha = -filled.dfilling[i] * local_projection
-                             + solvent * filled.d2filling[i] * fraction_projection;
+        const double alpha =
+            -filled.dfilling[i] * local_projection + solvent * filled.d2filling[i] * fraction_projection;
         const double beta = -filled.dfilling[i] * fraction_projection;
         convolved[i] = surface_tension * alpha + pressure * fraction_weight;
         pointwise[i] = surface_tension * beta + pressure * empty;
     }
     // A = (1 - f) u + p * ((1 - s) f' u): the coefficient of the variation of a.
-    const std::vector<ModuleBase::Vector3<double>> fraction_adjoint = convolve_grad(kernel, basis,
-                                                                                   fraction_part);
+    const std::vector<ModuleBase::Vector3<double>> fraction_adjoint = convolve_grad(kernel, basis, fraction_part);
     const std::vector<double> convolved_adjoint = convolve_probe(kernel, basis, convolved);
     std::vector<double> component(size);
     std::vector<std::complex<double>> component_g(basis.npw);
@@ -289,8 +291,8 @@ SolventAwareNonelectrostatic sa_nonelec(const FilledCavity& cavity,
     {
         filled_part[i] += fraction_adjoint[i];
         const double curvature = d2solute_drho2[i] * (filled_part[i] * density_gradient[i]);
-        result.density_potential[i] = dsolute_drho[i] * (pointwise[i] + convolved_adjoint[i])
-                                      + surface_tension * curvature;
+        result.density_potential[i] =
+            dsolute_drho[i] * (pointwise[i] + convolved_adjoint[i]) + surface_tension * curvature;
     }
     // a = s' D n with the spectral gradient D, whose transpose is -div.
     for (int d = 0; d < 3; ++d)
@@ -324,13 +326,14 @@ SolventAwareNonelectrostatic sa_nonelec(const FilledCavity& cavity,
     return result;
 }
 
-std::vector<double> sa_adjoint(const FilledCavity& cavity,
-                               const std::vector<double>& kernel,
-                               const ModulePW::PW_Basis& basis,
-                               const std::vector<double>& boundary_potential)
+std::vector<double> sa_adjoint(
+    const FilledCavity &cavity,
+    const std::vector<double> &kernel,
+    const ModulePW::PW_Basis &basis,
+    const std::vector<double> &boundary_potential)
 {
-    const std::vector<double>& local = cavity.local;
-    const SolventAwareBoundary& filled = cavity.filling;
+    const std::vector<double> &local = cavity.local;
+    const SolventAwareBoundary &filled = cavity.filling;
     const std::size_t size = local.size();
     std::vector<double> weighted(size);
 #ifdef _OPENMP

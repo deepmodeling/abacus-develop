@@ -1,7 +1,7 @@
-#include "source_base/global_function.h"
 #include "gint_rho.h"
 #include "gint_common.h"
 #include "phi_operator.h"
+#include "source_base/global_function.h"
 
 namespace ModuleGint
 {
@@ -23,12 +23,12 @@ void Gint_rho::cal_gint()
     ModuleBase::timer::end("Gint", "cal_gint_rho");
 }
 
-template<typename Real>
+template <typename Real>
 void Gint_rho::cal_gint_impl_()
 {
     std::vector<HContainer<Real>> dm_gint_vec = init_dm_gint_<Real>();
     // rho_[is] is always double; phi_dot_phi accumulates into it directly.
-    std::vector<double*> rho_data(nspin_);
+    std::vector<double *> rho_data(nspin_);
     for (int is = 0; is < nspin_; ++is)
     {
         rho_data[is] = rho_[is];
@@ -37,7 +37,7 @@ void Gint_rho::cal_gint_impl_()
     cal_rho_(dm_gint_vec, rho_data);
 }
 
-template<typename Real>
+template <typename Real>
 std::vector<HContainer<Real>> Gint_rho::init_dm_gint_() const
 {
     std::vector<HContainer<Real>> dm_gint_vec(nspin_);
@@ -48,10 +48,8 @@ std::vector<HContainer<Real>> Gint_rho::init_dm_gint_() const
     return dm_gint_vec;
 }
 
-template<typename Real>
-void Gint_rho::cal_rho_(
-    const std::vector<HContainer<Real>>& dm_gint_vec,
-    const std::vector<double*>& rho_data) const
+template <typename Real>
+void Gint_rho::cal_rho_(const std::vector<HContainer<Real>> &dm_gint_vec, const std::vector<double *> &rho_data) const
 {
 #pragma omp parallel
     {
@@ -64,7 +62,7 @@ void Gint_rho::cal_rho_(
 #pragma omp for schedule(dynamic)
         for (int i = 0; i < gint_info_->get_bgrids_num(); i++)
         {
-            const auto& biggrid = gint_info_->get_biggrids()[i];
+            const auto &biggrid = gint_info_->get_biggrids()[i];
             if (biggrid->get_atoms().empty())
             {
                 continue;
@@ -83,4 +81,4 @@ void Gint_rho::cal_rho_(
     }
 }
 
-}
+} // namespace ModuleGint
