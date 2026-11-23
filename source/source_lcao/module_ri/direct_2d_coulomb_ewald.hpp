@@ -199,7 +199,7 @@ void Ewald_Vq<Tdata>::output_direct_2d_coulomb(const UnitCell& ucell,
         Direct2dCoulomb::write_reader_v1(
             result.matrix, atom_naux, iq + 1, mpi_rank, "librpa_V_full_", rpa_outdir);
         std::ostringstream stem;
-        stem << rpa_outdir << "direct_2d_coulomb_iq" << iq;
+        stem << rpa_outdir << "librpa_direct_2d_coulomb_iq" << iq;
 #ifdef VERSION
         const std::string build_version = VERSION;
 #else
