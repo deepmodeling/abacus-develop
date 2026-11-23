@@ -10,12 +10,13 @@ namespace vdw
 namespace d3
 {
 
-std::string canonicalize_method_name(const std::string& input);
+std::string canonicalize_method_name(const std::string &input);
 
-bool lookup_parameters(const std::string& method,
-                       Damping damping,
-                       Parameters& parameters,
-                       std::string& canonical_method);
+bool lookup_parameters(
+    const std::string &method,
+    Damping damping,
+    Parameters &parameters,
+    std::string &canonical_method);
 
 } // namespace d3
 } // namespace vdw

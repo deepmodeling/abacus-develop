@@ -18,7 +18,7 @@ namespace vdw
 namespace
 {
 
-int atomic_number_from_symbol(const std::string& symbol)
+int atomic_number_from_symbol(const std::string &symbol)
 {
     for (std::size_t index = 0; index < ModuleBase::element_name.size(); ++index)
     {
@@ -30,7 +30,7 @@ int atomic_number_from_symbol(const std::string& symbol)
     ModuleBase::WARNING_QUIT("Vdwd3::atomic_number_from_symbol", "Unknown element symbol: " + symbol);
 }
 
-double length_to_bohr(double value, const std::string& unit)
+double length_to_bohr(double value, const std::string &unit)
 {
     if (unit == "Bohr")
     {
@@ -43,31 +43,29 @@ double length_to_bohr(double value, const std::string& unit)
     ModuleBase::WARNING_QUIT("Vdwd3::length_to_bohr", "Unsupported length unit: " + unit);
 }
 
-double cutoff_to_bohr(const std::string& value, const std::string& unit)
+double cutoff_to_bohr(const std::string &value, const std::string &unit)
 {
     return length_to_bohr(std::stod(value), unit);
 }
 
-d3::Vec3 to_d3_vector(const ModuleBase::Vector3<double>& value)
-{
-    return d3::Vec3(value.x, value.y, value.z);
-}
+d3::Vec3 to_d3_vector(const ModuleBase::Vector3<double> &value) { return d3::Vec3(value.x, value.y, value.z); }
 
-const char* damping_name(d3::Damping damping)
-{
-    return damping == d3::Damping::Rational ? "rational (BJ)" : "zero";
-}
+const char *damping_name(d3::Damping damping) { return damping == d3::Damping::Rational ? "rational (BJ)" : "zero"; }
 
 } // namespace
 
-Vdwd3::Vdwd3(const UnitCell& unit_in, const std::string& xc_name, const Input_para& input, std::ofstream* plog)
+Vdwd3::Vdwd3(
+    const UnitCell &unit_in,
+    const std::string &xc_name,
+    const Input_para &input,
+    std::ofstream *plog)
     : Vdw(unit_in)
 {
     if (input.vdw_cutoff_type != "radius")
     {
-        ModuleBase::WARNING_QUIT("Vdwd3::Vdwd3",
-                                 "DFT-D3 requires vdw_cutoff_type=radius; "
-                                 "the legacy period-count cutoff is no longer supported.");
+        ModuleBase::WARNING_QUIT(
+            "Vdwd3::Vdwd3", "DFT-D3 requires vdw_cutoff_type=radius; "
+                            "the legacy period-count cutoff is no longer supported.");
     }
 
     if (input.vdw_method == "d3_bj")
@@ -83,18 +81,18 @@ Vdwd3::Vdwd3(const UnitCell& unit_in, const std::string& xc_name, const Input_pa
         ModuleBase::WARNING_QUIT("Vdwd3::Vdwd3", "Unsupported DFT-D3 method: " + input.vdw_method);
     }
 
-    const bool all_custom = input.vdw_s6 != "default" && input.vdw_s8 != "default" && input.vdw_a1 != "default"
-                            && input.vdw_a2 != "default";
+    const bool all_custom = input.vdw_s6 != "default" && input.vdw_s8 != "default" && input.vdw_a1 != "default" &&
+                            input.vdw_a2 != "default";
     if (all_custom)
     {
         canonical_method_ = d3::canonicalize_method_name(xc_name);
     }
     else if (!d3::lookup_parameters(xc_name, parameters_.damping, parameters_, canonical_method_))
     {
-        ModuleBase::WARNING_QUIT("Vdwd3::Vdwd3",
-                                 "No s-dftd3 damping parameters found for XC functional '" + xc_name
-                                     + "'. Define vdw_s6, vdw_s8, vdw_a1 and vdw_a2 "
-                                       "together to use a fully custom parameter set.");
+        ModuleBase::WARNING_QUIT(
+            "Vdwd3::Vdwd3", "No s-dftd3 damping parameters found for XC functional '" + xc_name +
+                                "'. Define vdw_s6, vdw_s8, vdw_a1 and vdw_a2 "
+                                "together to use a fully custom parameter set.");
     }
 
     if (input.vdw_s6 != "default")
@@ -137,21 +135,21 @@ Vdwd3::Vdwd3(const UnitCell& unit_in, const std::string& xc_name, const Input_pa
 
     if (cutoffs_.width2 < 0.0 || cutoffs_.width2 > cutoffs_.disp2)
     {
-        ModuleBase::WARNING_QUIT("Vdwd3::Vdwd3",
-                                 "vdw_cutoff_width2 must satisfy "
-                                 "0 <= width <= two-body cutoff");
+        ModuleBase::WARNING_QUIT(
+            "Vdwd3::Vdwd3", "vdw_cutoff_width2 must satisfy "
+                            "0 <= width <= two-body cutoff");
     }
     if (cutoffs_.width3 < 0.0 || cutoffs_.width3 > cutoffs_.disp3)
     {
-        ModuleBase::WARNING_QUIT("Vdwd3::Vdwd3",
-                                 "vdw_cutoff_width3 must satisfy "
-                                 "0 <= width <= three-body cutoff");
+        ModuleBase::WARNING_QUIT(
+            "Vdwd3::Vdwd3", "vdw_cutoff_width3 must satisfy "
+                            "0 <= width <= three-body cutoff");
     }
 
     write_parameters(plog);
 }
 
-void Vdwd3::write_parameters(std::ofstream* plog) const
+void Vdwd3::write_parameters(std::ofstream *plog) const
 {
     if (plog == nullptr)
     {
@@ -174,7 +172,7 @@ void Vdwd3::write_parameters(std::ofstream* plog) const
           << " smooth_width_2b=" << cutoffs_.width2 << " smooth_width_3b=" << cutoffs_.width3 << std::endl;
 }
 
-d3::Structure Vdwd3::build_structure(std::vector<int>& atom_indices) const
+d3::Structure Vdwd3::build_structure(std::vector<int> &atom_indices) const
 {
     d3::Structure structure;
     atom_indices.clear();
@@ -201,14 +199,13 @@ d3::Structure Vdwd3::build_structure(std::vector<int>& atom_indices) const
         }
     }
 
-    structure.lattice = {{to_d3_vector(ucell_.a1 * ucell_.lat0),
-                          to_d3_vector(ucell_.a2 * ucell_.lat0),
-                          to_d3_vector(ucell_.a3 * ucell_.lat0)}};
+    structure.lattice = {{to_d3_vector(ucell_.a1 * ucell_.lat0), to_d3_vector(ucell_.a2 * ucell_.lat0),
+        to_d3_vector(ucell_.a3 * ucell_.lat0)}};
     structure.periodic = {{true, true, true}};
     return structure;
 }
 
-void Vdwd3::evaluate_impl(const VdwRequest& request, VdwResult& result)
+void Vdwd3::evaluate_impl(const VdwRequest &request, VdwResult &result)
 {
     ModuleBase::TITLE("Vdwd3", "evaluate");
     ModuleBase::timer::start("Vdwd3", "evaluate");
@@ -232,26 +229,21 @@ void Vdwd3::evaluate_impl(const VdwRequest& request, VdwResult& result)
         for (std::size_t index = 0; index < atom_indices.size(); ++index)
         {
             const int iat = atom_indices[index];
-            result.force[iat] = ModuleBase::Vector3<double>(-2.0 * d3_result.gradient[index].x,
-                                                            -2.0 * d3_result.gradient[index].y,
-                                                            -2.0 * d3_result.gradient[index].z);
+            result.force[iat] = ModuleBase::Vector3<double>(
+                -2.0 * d3_result.gradient[index].x, -2.0 * d3_result.gradient[index].y,
+                -2.0 * d3_result.gradient[index].z);
         }
         result.has_force = true;
     }
 
     if (request.stress)
     {
-        const d3::Matrix3& sigma = d3_result.virial;
-        result.stress = ModuleBase::Matrix3(2.0 * sigma.value[0][0],
-                                            2.0 * sigma.value[0][1],
-                                            2.0 * sigma.value[0][2],
-                                            2.0 * sigma.value[1][0],
-                                            2.0 * sigma.value[1][1],
-                                            2.0 * sigma.value[1][2],
-                                            2.0 * sigma.value[2][0],
-                                            2.0 * sigma.value[2][1],
-                                            2.0 * sigma.value[2][2])
-                        / ucell_.omega;
+        const d3::Matrix3 &sigma = d3_result.virial;
+        result.stress = ModuleBase::Matrix3(
+                            2.0 * sigma.value[0][0], 2.0 * sigma.value[0][1], 2.0 * sigma.value[0][2],
+                            2.0 * sigma.value[1][0], 2.0 * sigma.value[1][1], 2.0 * sigma.value[1][2],
+                            2.0 * sigma.value[2][0], 2.0 * sigma.value[2][1], 2.0 * sigma.value[2][2]) /
+                        ucell_.omega;
         result.has_stress = true;
     }
 

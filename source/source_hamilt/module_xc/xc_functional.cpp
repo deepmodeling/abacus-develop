@@ -1,16 +1,16 @@
 #include "xc_functional.h"
+#include "source_base/constants.h"
 #include "source_base/global_function.h"
 #include "source_base/tool_title.h"
-#include "source_base/constants.h"
 #include <cmath>
 
 #ifdef __LIBXC
 #include "libxc_abacus.h"
 #endif
 
-XC_Functional::XC_Functional(){}
+XC_Functional::XC_Functional() {}
 
-XC_Functional::~XC_Functional(){}
+XC_Functional::~XC_Functional() {}
 
 std::vector<int> XC_Functional::func_id(1);
 int XC_Functional::func_type = 0;
@@ -20,14 +20,13 @@ bool XC_Functional::use_libxc = true;
 double XC_Functional::hybrid_alpha = 0.25;
 double XC_Functional::hse_omega = 0.0;
 XCFunctionalParameters XC_Functional::runtime_parameters;
-std::map<int, double> XC_Functional::scaling_factor_xc = { {1, 1.0} }; // added by jghan, 2024-10-10
+std::map<int, double> XC_Functional::scaling_factor_xc = {{1, 1.0}}; // added by jghan, 2024-10-10
 
-XC_Functional::ScopedType::ScopedType(const std::string& functional)
-    : func_id_(XC_Functional::func_id), func_type_(XC_Functional::func_type),
-      ked_flag_(XC_Functional::ked_flag), need_laplacian_(XC_Functional::need_laplacian),
-      use_libxc_(XC_Functional::use_libxc), hybrid_alpha_(XC_Functional::hybrid_alpha),
-      hse_omega_(XC_Functional::hse_omega), runtime_parameters_(XC_Functional::runtime_parameters),
-      scaling_factor_xc_(XC_Functional::scaling_factor_xc)
+XC_Functional::ScopedType::ScopedType(const std::string &functional)
+    : func_id_(XC_Functional::func_id), func_type_(XC_Functional::func_type), ked_flag_(XC_Functional::ked_flag),
+      need_laplacian_(XC_Functional::need_laplacian), use_libxc_(XC_Functional::use_libxc),
+      hybrid_alpha_(XC_Functional::hybrid_alpha), hse_omega_(XC_Functional::hse_omega),
+      runtime_parameters_(XC_Functional::runtime_parameters), scaling_factor_xc_(XC_Functional::scaling_factor_xc)
 {
     try
     {
@@ -40,10 +39,7 @@ XC_Functional::ScopedType::ScopedType(const std::string& functional)
     }
 }
 
-XC_Functional::ScopedType::~ScopedType()
-{
-    restore();
-}
+XC_Functional::ScopedType::~ScopedType() { restore(); }
 
 void XC_Functional::ScopedType::restore() noexcept
 {
@@ -62,40 +58,35 @@ void XC_Functional::ScopedType::restore() noexcept
     XC_Functional::scaling_factor_xc.swap(scaling_factor_xc_);
 }
 
-void XC_Functional::set_hybrid_alpha(const double alpha_in)
-{
-    hybrid_alpha = alpha_in;
-}
+void XC_Functional::set_hybrid_alpha(const double alpha_in) { hybrid_alpha = alpha_in; }
 
-void XC_Functional::set_hse_omega(const double omega_in)
-{
-    hse_omega = omega_in;
-}
+void XC_Functional::set_hse_omega(const double omega_in) { hse_omega = omega_in; }
 
-void XC_Functional::set_runtime_parameters(const XCFunctionalParameters& parameters)
+void XC_Functional::set_runtime_parameters(const XCFunctionalParameters &parameters)
 {
     runtime_parameters = parameters;
 }
 
-void XC_Functional::set_xc_first_loop(const UnitCell& ucell)
+void XC_Functional::set_xc_first_loop(const UnitCell &ucell)
 {
     ModuleBase::TITLE("XC_Functional", "set_xc_first_loop");
     /** In the special "two-level" calculation case,
 the first scf iteration only calculate the functional without exact
 exchange. but in "nscf" calculation, there is no need of "two-level"
 method. */
-    if (ucell.atoms[0].ncpp.xc_func == "HF" || ucell.atoms[0].ncpp.xc_func == "PBE0" || ucell.atoms[0].ncpp.xc_func == "HSE")
+    if (ucell.atoms[0].ncpp.xc_func == "HF" || ucell.atoms[0].ncpp.xc_func == "PBE0" ||
+        ucell.atoms[0].ncpp.xc_func == "HSE")
     {
         XC_Functional::set_xc_type("pbe");
     }
-    else if ( ucell.atoms[0].ncpp.xc_func == "LC_PBE" || ucell.atoms[0].ncpp.xc_func == "LC_WPBE"
-        || ucell.atoms[0].ncpp.xc_func == "LRC_WPBEH" || ucell.atoms[0].ncpp.xc_func == "CAM_PBEH" )
+    else if (ucell.atoms[0].ncpp.xc_func == "LC_PBE" || ucell.atoms[0].ncpp.xc_func == "LC_WPBE" ||
+             ucell.atoms[0].ncpp.xc_func == "LRC_WPBEH" || ucell.atoms[0].ncpp.xc_func == "CAM_PBEH")
     {
         XC_Functional::set_xc_type("pbe");
     }
     // added by jghan, 2024-07-07
-    else if ( ucell.atoms[0].ncpp.xc_func == "MULLER" || ucell.atoms[0].ncpp.xc_func == "POWER"
-        || ucell.atoms[0].ncpp.xc_func == "WP22" || ucell.atoms[0].ncpp.xc_func == "CWP22" )
+    else if (ucell.atoms[0].ncpp.xc_func == "MULLER" || ucell.atoms[0].ncpp.xc_func == "POWER" ||
+             ucell.atoms[0].ncpp.xc_func == "WP22" || ucell.atoms[0].ncpp.xc_func == "CWP22")
     {
         XC_Functional::set_xc_type("pbe");
     }
@@ -114,18 +105,18 @@ method. */
 void XC_Functional::set_xc_type(const std::string xc_func_in)
 {
     ModuleBase::TITLE("XC_Functional", "set_xc_type");
-    //Note : due to the separation of gcx_spin and gcc_spin,
-    //when you are adding GGA functionals,
-    //please put exchange first, followed by correlation,
-    //such as for PBE we have:
-    //        func_id.push_back(XC_GGA_X_PBE);
-    //        func_id.push_back(XC_GGA_C_PBE);
+    // Note : due to the separation of gcx_spin and gcc_spin,
+    // when you are adding GGA functionals,
+    // please put exchange first, followed by correlation,
+    // such as for PBE we have:
+    //         func_id.push_back(XC_GGA_X_PBE);
+    //         func_id.push_back(XC_GGA_C_PBE);
 
     func_id.clear();
     scaling_factor_xc.clear(); // added by jghan, 2024-07-07
     std::string xc_func = xc_func_in;
     std::transform(xc_func.begin(), xc_func.end(), xc_func.begin(), (::toupper));
-    if( xc_func == "LDA" || xc_func == "PZ" || xc_func == "SLAPZNOGXNOGC") //SLA+PZ
+    if (xc_func == "LDA" || xc_func == "PZ" || xc_func == "SLAPZNOGXNOGC") // SLA+PZ
     {
         func_id.push_back(XC_LDA_X);
         func_id.push_back(XC_LDA_C_PZ);
@@ -139,63 +130,63 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
         func_type = 1;
         use_libxc = false;
     }
-    else if ( xc_func == "PBE" || xc_func == "SLAPWPBXPBC") //PBX+PBC
+    else if (xc_func == "PBE" || xc_func == "SLAPWPBXPBC") // PBX+PBC
     {
         func_id.push_back(XC_GGA_X_PBE);
         func_id.push_back(XC_GGA_C_PBE);
         func_type = 2;
         use_libxc = false;
     }
-    else if ( xc_func == "PBESOL") //PBX_S+PBC_S
+    else if (xc_func == "PBESOL") // PBX_S+PBC_S
     {
         func_id.push_back(XC_GGA_X_PBE_SOL);
         func_id.push_back(XC_GGA_C_PBE_SOL);
         func_type = 2;
         use_libxc = false;
     }
-    else if( xc_func == "REVPBE" ) //PBX_r+PBC
+    else if (xc_func == "REVPBE") // PBX_r+PBC
     {
         func_id.push_back(XC_GGA_X_PBE_R);
         func_id.push_back(XC_GGA_C_PBE);
         func_type = 2;
         use_libxc = false;
     }
-    else if ( xc_func == "WC") //WC+PBC
+    else if (xc_func == "WC") // WC+PBC
     {
         func_id.push_back(XC_GGA_X_WC);
         func_id.push_back(XC_GGA_C_PBE);
         func_type = 2;
         use_libxc = false;
     }
-    else if ( xc_func == "BLYP") //B88+LYP
+    else if (xc_func == "BLYP") // B88+LYP
     {
         func_id.push_back(XC_GGA_X_B88);
         func_id.push_back(XC_GGA_C_LYP);
         func_type = 2;
         use_libxc = false;
     }
-    else if ( xc_func == "BP") //B88+P86
+    else if (xc_func == "BP") // B88+P86
     {
         func_id.push_back(XC_GGA_X_B88);
         func_id.push_back(XC_GGA_C_P86);
         func_type = 2;
         use_libxc = false;
     }
-    else if ( xc_func == "PW91") //PW91_X+PW91_C
+    else if (xc_func == "PW91") // PW91_X+PW91_C
     {
         func_id.push_back(XC_GGA_X_PW91);
         func_id.push_back(XC_GGA_C_PW91);
         func_type = 2;
         use_libxc = false;
     }
-    else if ( xc_func == "HCTH") //HCTH_X+HCTH_C
+    else if (xc_func == "HCTH") // HCTH_X+HCTH_C
     {
         func_id.push_back(XC_GGA_X_HCTH_A);
         func_id.push_back(XC_GGA_C_HCTH_A);
         func_type = 2;
         use_libxc = false;
     }
-    else if ( xc_func == "OLYP") //OPTX+LYP
+    else if (xc_func == "OLYP") // OPTX+LYP
     {
         func_id.push_back(XC_GGA_X_OPTX);
         func_id.push_back(XC_GGA_C_LYP);
@@ -203,21 +194,21 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
         use_libxc = false;
     }
 #ifdef __LIBXC
-    else if ( xc_func == "SCAN")
+    else if (xc_func == "SCAN")
     {
         func_id.push_back(XC_MGGA_X_SCAN);
         func_id.push_back(XC_MGGA_C_SCAN);
         func_type = 3;
         use_libxc = true;
     }
-    else if ( xc_func == "SCAN0")
+    else if (xc_func == "SCAN0")
     {
         func_id.push_back(XC_MGGA_X_SCAN);
         func_id.push_back(XC_MGGA_C_SCAN);
         func_type = 5;
         use_libxc = true;
     }
-    else if ( xc_func == "SCANL")
+    else if (xc_func == "SCANL")
     {
         func_id.push_back(XC_MGGA_X_SCANL);
         func_id.push_back(XC_MGGA_C_SCANL);
@@ -226,82 +217,81 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
         std::cout << "\n WARNING: SCANL (SCAN-L) functional uses Laplacian of density (nabla^2 rho)."
                   << "\n This may require a higher energy cutoff (ecutwfc) for numerical stability."
                   << "\n For semiconductors: standard settings work well."
-                  << "\n For metals: k-grid >= 6x6x6, smearing_sigma <= 0.01 Ry, mixing_beta = 0.1-0.15"
-                  << std::endl;
+                  << "\n For metals: k-grid >= 6x6x6, smearing_sigma <= 0.01 Ry, mixing_beta = 0.1-0.15" << std::endl;
     }
-    else if( xc_func == "LC_PBE")
+    else if (xc_func == "LC_PBE")
     {
         func_id.push_back(XC_HYB_GGA_XC_LC_PBEOP);
         func_type = 4;
         use_libxc = true;
     }
-    else if( xc_func == "LC_WPBE")
+    else if (xc_func == "LC_WPBE")
     {
         func_id.push_back(XC_HYB_GGA_XC_LC_WPBE);
         func_type = 4;
         use_libxc = true;
     }
-    else if( xc_func == "LRC_WPBE")
+    else if (xc_func == "LRC_WPBE")
     {
         func_id.push_back(XC_HYB_GGA_XC_LRC_WPBE);
         func_type = 4;
         use_libxc = true;
     }
-    else if( xc_func == "LRC_WPBEH")
+    else if (xc_func == "LRC_WPBEH")
     {
         func_id.push_back(XC_HYB_GGA_XC_LRC_WPBEH);
         func_type = 4;
         use_libxc = true;
     }
-    else if( xc_func == "CAM_PBEH")
+    else if (xc_func == "CAM_PBEH")
     {
         func_id.push_back(XC_HYB_GGA_XC_CAM_PBEH);
         func_type = 4;
         use_libxc = true;
     }
 #endif
-    else if( xc_func == "HF")
+    else if (xc_func == "HF")
     {
         func_type = 4;
         use_libxc = false;
     }
-    else if( xc_func == "PBE0")
+    else if (xc_func == "PBE0")
     {
         func_id.push_back(XC_HYB_GGA_XC_PBEH);
         func_type = 4;
         use_libxc = false;
     }
-    else if( xc_func == "OPT_ORB" ||  xc_func == "NONE" || xc_func == "NOX+NOC")
+    else if (xc_func == "OPT_ORB" || xc_func == "NONE" || xc_func == "NOX+NOC")
     {
         // not doing anything
     }
-    else if( xc_func == "MULLER" || xc_func == "POWER" ) // added by jghan, 2024-07-06
+    else if (xc_func == "MULLER" || xc_func == "POWER") // added by jghan, 2024-07-06
     {
         func_type = 4;
         use_libxc = false;
     }
 #ifdef __LIBXC
-    else if( xc_func == "HSE")
+    else if (xc_func == "HSE")
     {
         func_id.push_back(XC_HYB_GGA_XC_HSE06);
         func_type = 4;
         use_libxc = true;
     }
     // added by jghan, 2024-07-06
-    else if( xc_func == "WP22")
+    else if (xc_func == "WP22")
     {
-        func_id.push_back(XC_GGA_X_ITYH);   // short-range of B88_X, id=529
-        func_id.push_back(XC_GGA_C_LYPR);   // short-range of LYP_C, id=624
+        func_id.push_back(XC_GGA_X_ITYH); // short-range of B88_X, id=529
+        func_id.push_back(XC_GGA_C_LYPR); // short-range of LYP_C, id=624
         func_type = 4;
         use_libxc = true;
     }
-    else if( xc_func == "CWP22")
+    else if (xc_func == "CWP22")
     {
         // BLYP_XC_lr = -BLYP_XC_sr + BLYP_XC, the realization of it is in v_xc_libxc() function, libxc_pot.cpp
-        func_id.push_back(XC_GGA_X_ITYH);   // short-range of B88_X, id=529
-        func_id.push_back(XC_GGA_C_LYPR);   // short-range of LYP_C, id=624
-        func_id.push_back(XC_GGA_X_B88);    // complete B88_X, id=106
-        func_id.push_back(XC_GGA_C_LYP);    // complete LYP_C, id=131
+        func_id.push_back(XC_GGA_X_ITYH); // short-range of B88_X, id=529
+        func_id.push_back(XC_GGA_C_LYPR); // short-range of LYP_C, id=624
+        func_id.push_back(XC_GGA_X_B88);  // complete B88_X, id=106
+        func_id.push_back(XC_GGA_C_LYP);  // complete LYP_C, id=131
 
         // the scaling factor of CWP22-functionals
         scaling_factor_xc[XC_GGA_X_ITYH] = -1.0;
@@ -312,13 +302,13 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
         func_type = 4;
         use_libxc = true;
     }
-    else if ( xc_func == "BLYP_LR")
+    else if (xc_func == "BLYP_LR")
     {
         // BLYP_XC_lr = -BLYP_XC_sr + BLYP_XC, the realization of it is in v_xc_libxc() function, libxc_pot.cpp
-        func_id.push_back(XC_GGA_X_ITYH);   // short-range of B88_X, id=529
-        func_id.push_back(XC_GGA_C_LYPR);   // short-range of LYP_C, id=624
-        func_id.push_back(XC_GGA_X_B88);    // complete B88_X, id=106
-        func_id.push_back(XC_GGA_C_LYP);    // complete LYP_C, id=131
+        func_id.push_back(XC_GGA_X_ITYH); // short-range of B88_X, id=529
+        func_id.push_back(XC_GGA_C_LYPR); // short-range of LYP_C, id=624
+        func_id.push_back(XC_GGA_X_B88);  // complete B88_X, id=106
+        func_id.push_back(XC_GGA_C_LYP);  // complete LYP_C, id=131
 
         // the scaling factor of BLYP_LR-functionals
         scaling_factor_xc[XC_GGA_X_ITYH] = -1.0;
@@ -339,17 +329,18 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
     else
     {
 #ifdef __LIBXC
-        //see if it matches libxc functionals
+        // see if it matches libxc functionals
         const std::pair<int, std::vector<int>> type_id = XC_Functional_Libxc::set_xc_type_libxc(xc_func);
         func_type = std::get<0>(type_id);
         func_id = std::get<1>(type_id);
         use_libxc = true;
 #else
-        std::string message = "Unrecognized exchange-correlation functional '"+ xc_func +"'.\n"
+        std::string message = "Unrecognized exchange-correlation functional '" + xc_func +
+                              "'.\n"
                               " Possible source: Pseudopotential file or dft_functional parameter.\n"
                               " Please explicitly set dft_functional in INPUT,\n"
                               " or verify the functional name is supported.";
-        ModuleBase::WARNING_QUIT("xc_functional.cpp",message);
+        ModuleBase::WARNING_QUIT("xc_functional.cpp", message);
 #endif
     }
 
@@ -367,7 +358,7 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
     {
         std::vector<xc_func_type> check_funcs = XC_Functional_Libxc::init_func(func_id, XC_UNPOLARIZED, 0.0, 0.0);
         need_laplacian = false;
-        for (auto& f : check_funcs)
+        for (auto &f : check_funcs)
         {
             if (f.info->flags & XC_FLAGS_NEEDS_LAPLACIAN)
             {
@@ -404,41 +395,42 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
     // #endif
 
 #ifndef __LIBXC
-    if(xc_func == "SCAN" || xc_func == "HSE" || xc_func == "SCAN0" 
-        || xc_func == "MULLER" || xc_func == "POWER" || xc_func == "WP22" || xc_func == "CWP22" ||
-        xc_func == "LC_PBE" || xc_func == "LC_WPBE" || xc_func == "LRC_WPBE" ||
-        xc_func == "LRC_PBEH" || xc_func == "CAM_PBEH")
+    if (xc_func == "SCAN" || xc_func == "HSE" || xc_func == "SCAN0" || xc_func == "MULLER" || xc_func == "POWER" ||
+        xc_func == "WP22" || xc_func == "CWP22" || xc_func == "LC_PBE" || xc_func == "LC_WPBE" ||
+        xc_func == "LRC_WPBE" || xc_func == "LRC_PBEH" || xc_func == "CAM_PBEH")
     {
-        ModuleBase::WARNING_QUIT("set_xc_type","to use SCAN, SCAN0, HSE, long-range corrected (LC_PBE, LC_WPBE...) or CAM_PBEH LIBXC is required");
+        ModuleBase::WARNING_QUIT(
+            "set_xc_type",
+            "to use SCAN, SCAN0, HSE, long-range corrected (LC_PBE, LC_WPBE...) or CAM_PBEH LIBXC is required");
     }
     use_libxc = false;
 #endif
-
 }
 
 std::string XC_Functional::output_info()
 {
     ModuleBase::TITLE("XC_Functional", "output_info");
 #ifdef __LIBXC
-    if(use_libxc)
+    if (use_libxc)
     {
         std::stringstream ss;
-        ss<<" Libxc v"<<xc_version_string()<<std::endl;
-        ss<<"\t"<<xc_reference()<<std::endl;
+        ss << " Libxc v" << xc_version_string() << std::endl;
+        ss << "\t" << xc_reference() << std::endl;
 
         double hybrid_alpha = 0.0;
         double hse_omega = 0.0;
-        std::vector<xc_func_type> funcs = XC_Functional_Libxc::init_func(func_id, XC_UNPOLARIZED, hybrid_alpha, hse_omega);
-        for(const auto &func : funcs)
+        std::vector<xc_func_type> funcs =
+            XC_Functional_Libxc::init_func(func_id, XC_UNPOLARIZED, hybrid_alpha, hse_omega);
+        for (const auto &func : funcs)
         {
             const xc_func_info_type *info = xc_func_get_info(&func);
-            ss<<" XC: "<<xc_func_info_get_name(info)<<std::endl;
-            for(int i=0; i<XC_MAX_REFERENCES; ++i)
+            ss << " XC: " << xc_func_info_get_name(info) << std::endl;
+            for (int i = 0; i < XC_MAX_REFERENCES; ++i)
             {
                 const func_reference_type *ref = xc_func_info_get_references(func.info, i);
-                if(ref)
+                if (ref)
                 {
-                    ss<<"\t"<<xc_func_reference_get_ref(ref)<<std::endl;
+                    ss << "\t" << xc_func_reference_get_ref(ref) << std::endl;
                 }
             }
         }
@@ -448,17 +440,17 @@ std::string XC_Functional::output_info()
     else
     {
         std::string s = " XC:\t";
-        for(const auto &id: func_id)
+        for (const auto &id : func_id)
         {
-            s += std::string(xc_functional_get_name(id))+"\t";
+            s += std::string(xc_functional_get_name(id)) + "\t";
         }
         return s;
     }
 #else
     std::string s = " XC:\t";
-    for(const auto &id: func_id)
+    for (const auto &id : func_id)
     {
-        s += std::to_string(id)+"\t";
+        s += std::to_string(id) + "\t";
     }
     return s;
 #endif

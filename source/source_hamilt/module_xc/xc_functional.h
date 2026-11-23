@@ -9,18 +9,17 @@
 #include <xc.h>
 #else
 #include "xc_ids.h"
-#endif	// ifdef __LIBXC
-#include "source_base/macros.h"
+#endif // ifdef __LIBXC
 #include "source_base/global_function.h"
-#include "source_base/vector3.h"
+#include "source_base/macros.h"
 #include "source_base/matrix.h"
+#include "source_base/vector3.h"
 #include "source_basis/module_pw/pw_basis_k.h"
-#include "source_estate/module_charge/charge.h"
 #include "source_cell/unitcell.h"
+#include "source_estate/module_charge/charge.h"
 
 #include <map> // added by jghan, 2024-10-10
 #include <vector>
-
 
 /**
  * @brief LibXC runtime settings, injected once at the ESolver boundary.
@@ -43,31 +42,30 @@ struct XCFunctionalParameters
 
 class XC_Functional
 {
-    public:
-
+  public:
     XC_Functional();
     ~XC_Functional();
 
-//-------------------
-// subroutines, grouped according to the file they are in:
-//-------------------
+    //-------------------
+    // subroutines, grouped according to the file they are in:
+    //-------------------
 
-//-------------------
-//  xc_pot.cpp
-//-------------------
+    //-------------------
+    //  xc_pot.cpp
+    //-------------------
 
-// This file contains interface to the xc_functional class
-// it includes 3 subroutines:
-// 1. v_xc : which takes rho as input, and [etxc, vtxc, v_xc] as output
-// 2. v_xc_libxc : which does the same thing as v_xc, but calling libxc
-// NOTE : it is only used for nspin = 1 and 2, the nspin = 4 case is treated in v_xc
-// 3. v_xc_meta : which takes rho and tau as input, and v_xc as output
+    // This file contains interface to the xc_functional class
+    // it includes 3 subroutines:
+    // 1. v_xc : which takes rho as input, and [etxc, vtxc, v_xc] as output
+    // 2. v_xc_libxc : which does the same thing as v_xc, but calling libxc
+    // NOTE : it is only used for nspin = 1 and 2, the nspin = 4 case is treated in v_xc
+    // 3. v_xc_meta : which takes rho and tau as input, and v_xc as output
 
-    // compute the exchange-correlation energy 
+    // compute the exchange-correlation energy
     // [etxc, vtxc, v] = v_xc(...)
     static std::tuple<double, double, ModuleBase::matrix> v_xc(
         const int &nrxx, // number of real-space grid
-        const Charge* const chr,
+        const Charge *const chr,
         const UnitCell *ucell, // charge density
         const int nspin,
         const bool domag,
@@ -76,31 +74,25 @@ class XC_Functional
         const double hybrid_alpha,
         const double hse_omega);
 
-//-------------------
-//  xc_functional.cpp
-//-------------------
+    //-------------------
+    //  xc_functional.cpp
+    //-------------------
 
-// This file contains subroutines for setting the functional
-// it includes 4 subroutines:
-// 1. get_func_type : which returns the type of functional (func_type):
-//      0 = none; 1 = lda; 2 = gga; 3 = mgga; 4 = hybrid lda/gga; 5 = hybrid mgga
-// 2. set_xc_type : sets the value of:
-//      func_id, which is the LIBXC id of functional
-//      func_type, which is as specified in get_func_type
-//      use_libxc, whether to use LIBXC. The rule is to NOT use it for functionals that we already have.
+    // This file contains subroutines for setting the functional
+    // it includes 4 subroutines:
+    // 1. get_func_type : which returns the type of functional (func_type):
+    //      0 = none; 1 = lda; 2 = gga; 3 = mgga; 4 = hybrid lda/gga; 5 = hybrid mgga
+    // 2. set_xc_type : sets the value of:
+    //      func_id, which is the LIBXC id of functional
+    //      func_type, which is as specified in get_func_type
+    //      use_libxc, whether to use LIBXC. The rule is to NOT use it for functionals that we already have.
 
-    static int get_func_type()
-    {
-        return func_type;
-    };
+    static int get_func_type() { return func_type; };
 
     /// @brief Set the functional class directly. set_xc_type() derives this from
     ///        a functional name and is what production code uses; this is for
     ///        callers that need to select a branch without configuring libxc.
-    static void set_func_type(const int func_type_in)
-    {
-        func_type = func_type_in;
-    };
+    static void set_func_type(const int func_type_in) { func_type = func_type_in; };
 
     static void set_xc_type(const std::string xc_func_in);
 
@@ -110,10 +102,10 @@ class XC_Functional
     class ScopedType
     {
       public:
-        explicit ScopedType(const std::string& functional);
+        explicit ScopedType(const std::string &functional);
         ~ScopedType();
-        ScopedType(const ScopedType&) = delete;
-        ScopedType& operator=(const ScopedType&) = delete;
+        ScopedType(const ScopedType &) = delete;
+        ScopedType &operator=(const ScopedType &) = delete;
 
       private:
         void restore() noexcept;
@@ -131,52 +123,33 @@ class XC_Functional
     // For hybrid functional
     static void set_hybrid_alpha(const double alpha_in);
 
-    static double get_hybrid_alpha()
-    {
-        return hybrid_alpha;
-    };
+    static double get_hybrid_alpha() { return hybrid_alpha; };
 
     static void set_hse_omega(const double omega_in);
 
-    static void set_runtime_parameters(const XCFunctionalParameters& parameters);
+    static void set_runtime_parameters(const XCFunctionalParameters &parameters);
 
-    static const XCFunctionalParameters& get_runtime_parameters()
-    {
-        return runtime_parameters;
-    };
+    static const XCFunctionalParameters &get_runtime_parameters() { return runtime_parameters; };
 
-    static double get_hse_omega()
-    {
-        return hse_omega;
-    };
+    static double get_hse_omega() { return hse_omega; };
 
-    static bool get_ked_flag()
-    {
-        return ked_flag;
-    };
+    static bool get_ked_flag() { return ked_flag; };
 
     /// @brief Set whether the functional needs the kinetic energy density.
-    static void set_ked_flag(const bool ked_flag_in)
-    {
-        ked_flag = ked_flag_in;
-    };
+    static void set_ked_flag(const bool ked_flag_in) { ked_flag = ked_flag_in; };
 
-    static bool get_need_laplacian()
-    {
-        return need_laplacian;
-    };
+    static bool get_need_laplacian() { return need_laplacian; };
 
     /// Usually in exx caculation, the first SCF loop should be converged with PBE
-    static void set_xc_first_loop(const UnitCell& ucell);
+    static void set_xc_first_loop(const UnitCell &ucell);
 
     static std::string output_info();
 
-    private:
-
+  private:
     static std::vector<int> func_id; // libxc id of functional
-    static int func_type; //0:none, 1:lda, 2:gga, 3:mgga, 4:hybrid lda/gga, 5:hybrid mgga
-    static bool ked_flag; // whether the functional has kinetic energy density
-    static bool need_laplacian; // whether any functional needs Laplacian of density
+    static int func_type;            // 0:none, 1:lda, 2:gga, 3:mgga, 4:hybrid lda/gga, 5:hybrid mgga
+    static bool ked_flag;            // whether the functional has kinetic energy density
+    static bool need_laplacian;      // whether any functional needs Laplacian of density
     static bool use_libxc;
     // exx_hybrid_alpha for mixing exx in hybrid functional:
     static double hybrid_alpha;
@@ -190,7 +163,7 @@ class XC_Functional
     // as a scaling factor for different xc-functionals
     static std::map<int, double> scaling_factor_xc;
 
-    public:
+  public:
     static std::vector<int> get_func_id() { return func_id; }
 
     /// signed combination weight of a functional component id (1.0 when
@@ -202,32 +175,31 @@ class XC_Functional
         return it != scaling_factor_xc.end() ? it->second : 1.0;
     }
 
-//-------------------
-//  xc_lda_wrap.cpp
-//-------------------
+    //-------------------
+    //  xc_lda_wrap.cpp
+    //-------------------
 
-// This file contains wrapper for the LDA functionals
-// it includes 3 subroutines:
-// 1. xc, which is the wrapper of LDA part
-// (i.e. LDA functional and LDA part of GGA functional)
-// 2. xc_spin, which is the spin polarized counterpart of xc
-// 3. xc_spin_libxc, which is the wrapper for LDA functional, spin polarized
+    // This file contains wrapper for the LDA functionals
+    // it includes 3 subroutines:
+    // 1. xc, which is the wrapper of LDA part
+    // (i.e. LDA functional and LDA part of GGA functional)
+    // 2. xc_spin, which is the spin polarized counterpart of xc
+    // 3. xc_spin_libxc, which is the wrapper for LDA functional, spin polarized
 
-// NOTE : In our own realization of GGA functional, the LDA part
-// and gradient correction are calculated separately.
-// The LDA part is provided in xc, while the gradient correction is 
-// provided in gradcorr through gcxc/gcx_spin+gcc_spin.
-// While in LIBXC, the entire GGA functional is provided.
-// As a result, xc/xc_spin and xc_spin_libxc are different for GGA,
-// the former gives nonzero result, while the latter returns 0.
-// Furthermore, the reason for not having xc_libxc is that something like
-// xc_libxc which evaluates functional for individual grid points
-// is not efficient. For nspin = 1 and 2, v_xc_libxc evaluates potential
-// on the entire grid. I'm having xc_spin_libxc because v_xc_libxc
-// does not support nspin = 4.
+    // NOTE : In our own realization of GGA functional, the LDA part
+    // and gradient correction are calculated separately.
+    // The LDA part is provided in xc, while the gradient correction is
+    // provided in gradcorr through gcxc/gcx_spin+gcc_spin.
+    // While in LIBXC, the entire GGA functional is provided.
+    // As a result, xc/xc_spin and xc_spin_libxc are different for GGA,
+    // the former gives nonzero result, while the latter returns 0.
+    // Furthermore, the reason for not having xc_libxc is that something like
+    // xc_libxc which evaluates functional for individual grid points
+    // is not efficient. For nspin = 1 and 2, v_xc_libxc evaluates potential
+    // on the entire grid. I'm having xc_spin_libxc because v_xc_libxc
+    // does not support nspin = 4.
 
-    public:
-
+  public:
     // LDA
     static void xc(const double &rho, double &exc, double &vxc);
 
@@ -239,19 +211,19 @@ class XC_Functional
         double &vxcup,
         double &vxcdw);
 
-//-------------------
-//  xc_gga_wrap.cpp
-//-------------------
+    //-------------------
+    //  xc_gga_wrap.cpp
+    //-------------------
 
-// This file contains wrapper for the GGA functionals
-// it includes 4 subroutines:
-// 1. gcxc, which is the wrapper for gradient correction part
-// 2. gcx_spin, spin polarized, exchange only
-// 3. gcc_spin, spin polarized, correlation only
+    // This file contains wrapper for the GGA functionals
+    // it includes 4 subroutines:
+    // 1. gcxc, which is the wrapper for gradient correction part
+    // 2. gcx_spin, spin polarized, exchange only
+    // 3. gcc_spin, spin polarized, correlation only
 
-// The difference between our realization (gcxc/gcx_spin/gcc_spin) and
-// LIBXC, and the reason for not having gcxc_libxc is explained
-// in the NOTE in the comment for xc_gga_wrap.cpp part
+    // The difference between our realization (gcxc/gcx_spin/gcc_spin) and
+    // LIBXC, and the reason for not having gcxc_libxc is explained
+    // in the NOTE in the comment for xc_gga_wrap.cpp part
 
     // GGA
     static void gcxc(
@@ -282,30 +254,30 @@ class XC_Functional
         double &v1cdw,
         double &v2c);
 
-//-------------------
-//  xc_grad*.cpp
-//-------------------
+    //-------------------
+    //  xc_grad*.cpp
+    //-------------------
 
-// The gradient correction is a pipeline: XC_Functional::gradcorr is the
-// public entry point declared below, and its three internal stage
-// functions (gradcorr_prepare_rho / gradcorr_xc_kernel /
-// gradcorr_assemble_vxc) are declared in xc_grad_internal.h.
-// This file group also provides:
-// 1. grad_wfc, which calculates gradient of wavefunction
-//      it is used in stress_func_mgga.cpp
-// 2. grad_rho, which calculates gradient of density
-// 3. grad_dot, which calculates divergence of something
-// 4. noncolin_rho, which diagonalizes the spin density matrix
-//  and gives the spin up and spin down components of the charge.
+    // The gradient correction is a pipeline: XC_Functional::gradcorr is the
+    // public entry point declared below, and its three internal stage
+    // functions (gradcorr_prepare_rho / gradcorr_xc_kernel /
+    // gradcorr_assemble_vxc) are declared in xc_grad_internal.h.
+    // This file group also provides:
+    // 1. grad_wfc, which calculates gradient of wavefunction
+    //      it is used in stress_func_mgga.cpp
+    // 2. grad_rho, which calculates gradient of density
+    // 3. grad_dot, which calculates divergence of something
+    // 4. noncolin_rho, which diagonalizes the spin density matrix
+    //  and gives the spin up and spin down components of the charge.
 
     static void gradcorr(
-        double& etxc,
-        double& vtxc,
-        ModuleBase::matrix& v,
-        const Charge* const chr,
-        ModulePW::PW_Basis* rhopw,
-        const UnitCell* ucell,
-        std::vector<double>& stress_gga,
+        double &etxc,
+        double &vtxc,
+        ModuleBase::matrix &v,
+        const Charge *const chr,
+        ModulePW::PW_Basis *rhopw,
+        const UnitCell *ucell,
+        std::vector<double> &stress_gga,
         const bool is_stress,
         const int nspin,
         const bool domag,
@@ -314,53 +286,51 @@ class XC_Functional
         const double hybrid_alpha,
         const double hse_omega);
 
-    template <typename T, typename Device,
-              typename Real = typename GetTypeReal<T>::type>
+    template <typename T, typename Device, typename Real = typename GetTypeReal<T>::type>
 
     static void grad_wfc(
         const int ik,
         const Real tpiba,
-        const ModulePW::PW_Basis_K* wfc_basis,
-        const T* rhog,
-        T* grad);
+        const ModulePW::PW_Basis_K *wfc_basis,
+        const T *rhog,
+        T *grad);
 
     // Overload with precomputed precision-matched gcar/kvec_c device buffers.
-    template <typename T, typename Device,
-              typename Real = typename GetTypeReal<T>::type>
+    template <typename T, typename Device, typename Real = typename GetTypeReal<T>::type>
     static void grad_wfc(
         const int ik,
         const Real tpiba,
-        const ModulePW::PW_Basis_K* wfc_basis,
-        const Real* gcar,
-        const Real* kvec_c,
-        const T* rhog,
-        T* grad);
+        const ModulePW::PW_Basis_K *wfc_basis,
+        const Real *gcar,
+        const Real *kvec_c,
+        const T *rhog,
+        T *grad);
 
     static void grad_rho(
-        const std::complex<double>* rhog,
-        ModuleBase::Vector3<double>* gdr,
-        const ModulePW::PW_Basis* rho_basis,
+        const std::complex<double> *rhog,
+        ModuleBase::Vector3<double> *gdr,
+        const ModulePW::PW_Basis *rho_basis,
         const double tpiba);
 
     static void grad_dot(
-        const ModuleBase::Vector3<double>* h,
-        double* dh,
-        const ModulePW::PW_Basis* rho_basis,
+        const ModuleBase::Vector3<double> *h,
+        double *dh,
+        const ModulePW::PW_Basis *rho_basis,
         const double tpiba);
 
     static void laplacian_rho(
-        const std::complex<double>* rhog,
-        double* lapl,
-        const ModulePW::PW_Basis* rho_basis,
+        const std::complex<double> *rhog,
+        double *lapl,
+        const ModulePW::PW_Basis *rho_basis,
         const double tpiba);
 
     static void noncolin_rho(
-        double* rhoout1,
-        double* rhoout2,
-        double* seg,
-        const double* const* const rho,
+        double *rhoout1,
+        double *rhoout2,
+        double *seg,
+        const double *const *const rho,
         const int nrxx,
-        const double* ux_,
+        const double *ux_,
         const bool lsign_);
 
     //-------------------
@@ -402,26 +372,34 @@ class XC_Functional
         double &vxup,
         double &vxdw);
 
-//-------------------
-//  xc_lda_corr.cpp
-//-------------------
+    //-------------------
+    //  xc_lda_corr.cpp
+    //-------------------
 
-// This file contains realization of LDA correlation functionals
-// Spin unpolarized ones:
-//  1. pw : Perdew-Wang LDA correlation
-//  2. pz : Perdew-Zunger LDA correlation
-//  3. lyp : Lee-Yang-Parr correlation
-//  4. vwn : Vosko-Wilk-Nusair LDA correlation
-//  5. wigner : Wigner
-//  6. hl : Hedin-Lunqvist
-//  7. gl : Gunnarson-Lunqvist
-// And some of their spin polarized counterparts:
-//  1. pw_spin
-//  2. pz_spin, which calls pz_polarized
+    // This file contains realization of LDA correlation functionals
+    // Spin unpolarized ones:
+    //  1. pw : Perdew-Wang LDA correlation
+    //  2. pz : Perdew-Zunger LDA correlation
+    //  3. lyp : Lee-Yang-Parr correlation
+    //  4. vwn : Vosko-Wilk-Nusair LDA correlation
+    //  5. wigner : Wigner
+    //  6. hl : Hedin-Lunqvist
+    //  7. gl : Gunnarson-Lunqvist
+    // And some of their spin polarized counterparts:
+    //  1. pw_spin
+    //  2. pz_spin, which calls pz_polarized
 
     // For LDA correlation energy
-    static void pw(const double &rs, const int &iflag, double &ec, double &vc);
-    static void pz(const double &rs, const int &iflag, double &ec, double &vc);
+    static void pw(
+        const double &rs,
+        const int &iflag,
+        double &ec,
+        double &vc);
+    static void pz(
+        const double &rs,
+        const int &iflag,
+        double &ec,
+        double &vc);
     static void lyp(const double &rs, double &ec, double &vc);
     static void vwn(const double &rs, double &ec, double &vc);
     static void wigner(const double &rs, double &ec, double &vc);
@@ -445,19 +423,19 @@ class XC_Functional
 
     static void pz_polarized(const double &rs, double &ec, double &vc);
 
-//-------------------
-//  xc_gga_exch.cpp
-//-------------------
+    //-------------------
+    //  xc_gga_exch.cpp
+    //-------------------
 
-// This file contains realizations of gradient correction to exchange part
-// Spin unpolarized ones:
-//  1. becke88 : Becke88 exchange
-//  2. ggax : PW91 exchange
-//  3. pbex : PBE exchange (and revPBE)
-//  4. optx : OPTX, Handy et al.
-//  5. wcx : Wu-Cohen exchange
-// And some of their spin polarized counterparts:
-//  1. becke88_spin
+    // This file contains realizations of gradient correction to exchange part
+    // Spin unpolarized ones:
+    //  1. becke88 : Becke88 exchange
+    //  2. ggax : PW91 exchange
+    //  3. pbex : PBE exchange (and revPBE)
+    //  4. optx : OPTX, Handy et al.
+    //  5. wcx : Wu-Cohen exchange
+    // And some of their spin polarized counterparts:
+    //  1. becke88_spin
 
     static void becke88(
         const double &rho,
@@ -481,7 +459,12 @@ class XC_Functional
         double &v1x,
         double &v2x);
 
-    static void optx(const double rho, const double grho, double &sx, double &v1x, double &v2x);
+    static void optx(
+        const double rho,
+        const double grho,
+        double &sx,
+        double &v1x,
+        double &v2x);
 
     static void wcx(
         const double &rho,
@@ -497,22 +480,27 @@ class XC_Functional
         double &v1x,
         double &v2x);
 
-//-------------------
-//  xc_gga_corr.cpp
-//-------------------
+    //-------------------
+    //  xc_gga_corr.cpp
+    //-------------------
 
-// This file contains realizations of gradient correction to correlation part
-// Spin unpolarized ones:
-//  1. perdew86 : P86
-//  2. ggac : PW91
-//  3. pbec
-//  4. glyp
-// And some of their spin polarized counterparts:
-//  1. perdew86_spin
-//  2. ggac_spin
-//  3. pbec_spin
+    // This file contains realizations of gradient correction to correlation part
+    // Spin unpolarized ones:
+    //  1. perdew86 : P86
+    //  2. ggac : PW91
+    //  3. pbec
+    //  4. glyp
+    // And some of their spin polarized counterparts:
+    //  1. perdew86_spin
+    //  2. ggac_spin
+    //  3. pbec_spin
 
-    static void perdew86(const double rho, const double grho, double &sc, double &v1c, double &v2c);
+    static void perdew86(
+        const double rho,
+        const double grho,
+        double &sc,
+        double &v1c,
+        double &v2c);
 
     static void ggac(
         const double &rho,
@@ -545,8 +533,8 @@ class XC_Functional
         double &v1cdw,
         double &v2c);
 
-    //static void ggac_spin(double rho, double zeta, double grho, double &sc,
-    //  double &v1cup, double &v1cdw, double &v2c);
+    // static void ggac_spin(double rho, double zeta, double grho, double &sc,
+    //   double &v1cup, double &v1cdw, double &v2c);
 
     static void pbec_spin(
         double rho,
@@ -558,16 +546,24 @@ class XC_Functional
         double &v1cdw,
         double &v2c);
 
-//-------------------
-//  xc_funct_hcth.cpp
-//-------------------
-// This file contains realizations of the HCTH GGA functional
-// hcth calls pwcorr
+    //-------------------
+    //  xc_funct_hcth.cpp
+    //-------------------
+    // This file contains realizations of the HCTH GGA functional
+    // hcth calls pwcorr
 
-    static void hcth(const double rho, const double grho, double &sx, double &v1x, double &v2x);
+    static void hcth(
+        const double rho,
+        const double grho,
+        double &sx,
+        double &v1x,
+        double &v2x);
 
-    static void pwcorr(const double r, const double c[], double &g, double &dg);
-
+    static void pwcorr(
+        const double r,
+        const double c[],
+        double &g,
+        double &dg);
 };
 
-#endif //XC_FUNCTION_H
+#endif // XC_FUNCTION_H

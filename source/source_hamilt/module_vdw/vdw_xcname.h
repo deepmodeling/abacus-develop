@@ -23,7 +23,7 @@ namespace vdw
  * Semantic aliases (for example revPBE or damping-specific wB97X aliases)
  * belong to the dispersion-model parameter layer rather than here.
  */
-std::string normalize_xc_name(const std::string& input);
+std::string normalize_xc_name(const std::string &input);
 
 } // namespace vdw
 
