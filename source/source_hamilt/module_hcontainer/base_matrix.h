@@ -1,9 +1,9 @@
 #ifndef BASE_MATRIX_H
 #define BASE_MATRIX_H
 
+#include <cassert>
 #include <iostream>
 #include <mutex>
-#include <cassert>
 
 namespace hamilt
 {
@@ -20,11 +20,11 @@ class BaseMatrix
 {
   public:
     // Constructor of class BaseMatrix
-    BaseMatrix(const int& nrow_, const int& ncol_, T* data_existed = nullptr);
+    BaseMatrix(const int &nrow_, const int &ncol_, T *data_existed = nullptr);
     // copy constructor
-    BaseMatrix(const BaseMatrix<T>& matrix);
+    BaseMatrix(const BaseMatrix<T> &matrix);
     // move constructor
-    BaseMatrix(BaseMatrix<T>&& matrix);
+    BaseMatrix(BaseMatrix<T> &&matrix);
     // Destructor of class BaseMatrix
     ~BaseMatrix();
 
@@ -32,12 +32,12 @@ class BaseMatrix
      * @brief allocate memory for the matrix
      * if this->value_begin is not nullptr, it will be neglected
      * if this->value_begin is nullptr, it will allocate memory with size nrow_local * ncol_local
-    */
-    void allocate(T* data_array = nullptr, bool if_zero = false);
+     */
+    void allocate(T *data_array = nullptr, bool if_zero = false);
 
     /**
      * @brief set value in the matrix to zero
-    */
+     */
     void set_zero();
 
     /**
@@ -45,7 +45,7 @@ class BaseMatrix
      *
      * @param array array to be added
      */
-    void add_array(T* array);
+    void add_array(T *array);
 
     /**
      * @brief add a single element to the matrix
@@ -54,13 +54,13 @@ class BaseMatrix
      * @param nu column index
      * @param value value to be added
      */
-    void add_element(int mu, int nu, const T& value)
+    void add_element(int mu, int nu, const T &value)
     {
-        #ifdef __DEBUG
+#ifdef __DEBUG
         assert(this->value_begin != nullptr);
-        #endif
-            int index = mu * this->ncol_local + nu;
-            value_begin[index] += value;
+#endif
+        int index = mu * this->ncol_local + nu;
+        value_begin[index] += value;
     };
 
     // for inside matrix
@@ -71,45 +71,45 @@ class BaseMatrix
      * @param j_col column index
      * @return T&
      */
-    T& get_value(const size_t& i_row, const size_t& j_col) const
+    T &get_value(const size_t &i_row, const size_t &j_col) const
     {
-        #ifdef __DEBUG
+#ifdef __DEBUG
         assert(this->value_begin != nullptr);
-        #endif
-            int index = i_row * this->ncol_local + j_col;
-            return value_begin[index];
+#endif
+        int index = i_row * this->ncol_local + j_col;
+        return value_begin[index];
     };
 
     /**
      * @brief get pointer of value from a submatrix
      */
-    T* get_pointer() const { return value_begin; };
+    T *get_pointer() const { return value_begin; };
 
     // operator= for copy assignment
-    BaseMatrix& operator=(const BaseMatrix& other);
+    BaseMatrix &operator=(const BaseMatrix &other);
 
     // operator= for move assignment
-    BaseMatrix& operator=(BaseMatrix&& other) noexcept;
+    BaseMatrix &operator=(BaseMatrix &&other) noexcept;
 
     /**
      * @brief get total memory size of BaseMatrix
-    */
+     */
     size_t get_memory_size() const;
 
     /**
      * @brief get col_size for this matrix
-    */
-    int get_col_size() const {return ncol_local;};
+     */
+    int get_col_size() const { return ncol_local; };
     /**
      * @brief get row_size for this matrix
-    */
-    int get_row_size() const {return nrow_local;};
+     */
+    int get_row_size() const { return nrow_local; };
     /**
      * @brief set col_size and row_size
-    */
-    void set_size(const int& col_size_in, const int& row_size_in);
+     */
+    void set_size(const int &col_size_in, const int &row_size_in);
 
-    void add_array_ts(T* array)
+    void add_array_ts(T *array)
     {
         std::lock_guard<std::mutex> lock(mtx);
         const int size = nrow_local * ncol_local;
@@ -123,7 +123,7 @@ class BaseMatrix
     // Selected by overload resolution only when TSrc != T (the non-template
     // overload is preferred when types match).
     template <typename TSrc>
-    void add_array_ts(const TSrc* array)
+    void add_array_ts(const TSrc *array)
     {
         std::lock_guard<std::mutex> lock(mtx);
         const int size = nrow_local * ncol_local;
@@ -140,7 +140,7 @@ class BaseMatrix
     // two ways to arrange data:
     // 1. allocate data itself
     // 2. only access data but be arranged by RealSparseHamiltonian
-    T* value_begin = nullptr;
+    T *value_begin = nullptr;
 
     // int current_multiple = 0;
 

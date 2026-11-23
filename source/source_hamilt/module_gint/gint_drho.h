@@ -1,11 +1,10 @@
 #ifndef ABACUS_SOURCE_HAMILT_MODULE_GINT_GINT_DRHO_H
 #define ABACUS_SOURCE_HAMILT_MODULE_GINT_GINT_DRHO_H
 
-
-#include <vector>
-#include "source_hamilt/module_hcontainer/hcontainer.h"
 #include "gint.h"
 #include "gint_info.h"
+#include "source_hamilt/module_hcontainer/hcontainer.h"
+#include <vector>
 
 namespace ModuleGint
 {
@@ -24,33 +23,34 @@ namespace ModuleGint
 // must zero-initialize drho_{x,y,z}[is] (each of length nrxx) before calling cal_gint().
 class Gint_drho : public Gint
 {
-    public:
+  public:
     Gint_drho(
-        const std::vector<HContainer<double>*>& dm_vec,
+        const std::vector<HContainer<double> *> &dm_vec,
         const int nspin,
-        double** drho_x,
-        double** drho_y,
-        double** drho_z)
-        : dm_vec_(dm_vec), nspin_(nspin),
-          drho_x_(drho_x), drho_y_(drho_y), drho_z_(drho_z) {}
+        double **drho_x,
+        double **drho_y,
+        double **drho_z)
+        : dm_vec_(dm_vec), nspin_(nspin), drho_x_(drho_x), drho_y_(drho_y), drho_z_(drho_z)
+    {
+    }
 
     void cal_gint();
 
-    private:
+  private:
     std::vector<HContainer<double>> init_dm_gint_() const;
 
-    void cal_drho_(const std::vector<HContainer<double>>& dm_gint_vec) const;
+    void cal_drho_(const std::vector<HContainer<double>> &dm_gint_vec) const;
 
     // input
-    const std::vector<HContainer<double>*> dm_vec_;
+    const std::vector<HContainer<double> *> dm_vec_;
     const int nspin_;
 
     // output: [grad rho]_{x,y,z}[is](ir), accumulated
-    double** drho_x_ = nullptr;
-    double** drho_y_ = nullptr;
-    double** drho_z_ = nullptr;
+    double **drho_x_ = nullptr;
+    double **drho_y_ = nullptr;
+    double **drho_z_ = nullptr;
 };
 
-}
+} // namespace ModuleGint
 
 #endif // ABACUS_SOURCE_HAMILT_MODULE_GINT_GINT_DRHO_H

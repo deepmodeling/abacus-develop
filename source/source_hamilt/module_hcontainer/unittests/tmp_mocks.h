@@ -8,40 +8,20 @@
 // include them without dragging in source_cell; the real implementations are
 // linked by the production binary.
 
-inline Atom::Atom()
-{
-}
-inline Atom::~Atom()
-{
-}
+inline Atom::Atom() {}
+inline Atom::~Atom() {}
 
-inline Atom_pseudo::Atom_pseudo()
-{
-}
-inline Atom_pseudo::~Atom_pseudo()
-{
-}
+inline Atom_pseudo::Atom_pseudo() {}
+inline Atom_pseudo::~Atom_pseudo() {}
 
-inline Magnetism::Magnetism()
-{
-}
-inline Magnetism::~Magnetism()
-{
-}
+inline Magnetism::Magnetism() {}
+inline Magnetism::~Magnetism() {}
 
-inline pseudo::pseudo()
-{
-}
-inline pseudo::~pseudo()
-{
-}
+inline pseudo::pseudo() {}
+inline pseudo::~pseudo() {}
 
-inline UnitCell::UnitCell()
-{
-}
-inline UnitCell::~UnitCell()
-{
-}
+inline UnitCell::UnitCell() {}
+inline UnitCell::~UnitCell() {}
 
 inline SepPot::SepPot() {}
 inline SepPot::~SepPot() {}
@@ -82,7 +62,7 @@ inline void UnitCell::set_iat2itia()
     }
 }
 
-inline void UnitCell::set_iat2iwt(const int& npol_in)
+inline void UnitCell::set_iat2iwt(const int &npol_in)
 {
     this->iat2iwt.resize(this->nat);
     this->npol = npol_in;
