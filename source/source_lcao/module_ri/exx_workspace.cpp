@@ -66,7 +66,10 @@ template<typename Tdata>
 std::shared_ptr<Exx_LRI<Tdata>> Exx_LRI<Tdata>::make_lr_workspace(const UnitCell& ucell,
                                                               const K_Vectors& kv) const
 {
-    auto workspace = std::make_shared<Exx_LRI<Tdata>>(this->info);
+    // The workspace inherits the owning solver's runtime rather than re-reading
+    // the global input through the factory, so it always tracks the Exx_LRI
+    // that created it (mirroring the field copies below).
+    auto workspace = std::make_shared<Exx_LRI<Tdata>>(this->info, this->runtime);
     workspace->mpi_comm = this->mpi_comm;
     workspace->p_kv = &kv;
     workspace->abfs_Lmax_ = this->abfs_Lmax_;

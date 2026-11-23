@@ -38,7 +38,7 @@ run_ml_rpa_props() {
     fi
     rpa_outdir=${rpa_outdir%/}
     shopt -s nullglob
-    rpa_ref_files=(refcoulomb_*.txt refCs_*.txt refshrink_sinvS_*.txt)
+    rpa_ref_files=(reflibrpa_*.txt)
     if [ ${#rpa_ref_files[@]} -gt 0 ]; then
       IFS=$'\n' rpa_ref_files=($(printf '%s\n' "${rpa_ref_files[@]}" | LC_ALL=C sort))
       unset IFS

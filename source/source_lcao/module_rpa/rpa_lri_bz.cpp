@@ -6,6 +6,7 @@
 #include "source_cell/klist.h"
 #include "source_cell/unitcell.h"
 #include "source_io/module_parameter/input_parameter.h"
+#include "librpa_output_names.h"
 
 #include <array>
 #include <complex>
@@ -39,7 +40,9 @@ try
         data.full_cartesian[ik] = {{kcart.x, kcart.y, kcart.z}};
     }
     data.full_map = p_kv->ibz_index;
-    RpaLriDetail::write_bz_sample(this->runtime.input.rpa_outdir + "bz_sample.txt", data);
+    const std::string bz_filename
+        = RpaLriDetail::librpa_output_path(this->runtime.input.rpa_outdir, "bz_sample.txt");
+    RpaLriDetail::write_bz_sample(bz_filename, data);
 }
 catch (const std::exception& error)
 {

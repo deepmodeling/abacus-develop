@@ -6,7 +6,7 @@ if(ENABLE_LCAO)
     LIBS parameter psi base device container
     SOURCES test_ovlp_block.cpp
             ../ovlp_block.cpp
-            tmp_mocks.cpp
+            test_tmp_mocks.cpp
             ../../../source_basis/module_ao/parallel_orbitals.cpp
             ../../../source_basis/module_ao/orb_atomic_lm.cpp
             ../../../source_hamilt/operator.cpp
@@ -32,7 +32,7 @@ if(ENABLE_LCAO)
             ../../../source_hamilt/module_hcontainer/transfer.cpp
             ../../../source_basis/module_ao/parallel_orbitals.cpp
             ../../../source_basis/module_ao/orb_atomic_lm.cpp
-            tmp_mocks.cpp
+            test_tmp_mocks.cpp
             ../../../source_hamilt/operator.cpp
             ../../module_rt/td_folding.cpp)
 
@@ -53,7 +53,7 @@ if(ENABLE_LCAO)
             ../../../source_hamilt/module_hcontainer/transfer.cpp
             ../../../source_basis/module_ao/parallel_orbitals.cpp
             ../../../source_basis/module_ao/orb_atomic_lm.cpp
-            tmp_mocks.cpp
+            test_tmp_mocks.cpp
             ../../../source_hamilt/operator.cpp
             ../../module_rt/td_folding.cpp)
 
@@ -74,7 +74,7 @@ if(ENABLE_LCAO)
             ../../../source_hamilt/module_hcontainer/transfer.cpp
             ../../../source_basis/module_ao/parallel_orbitals.cpp
             ../../../source_basis/module_ao/orb_atomic_lm.cpp
-            tmp_mocks.cpp
+            test_tmp_mocks.cpp
             ../../../source_hamilt/operator.cpp
             ../../module_rt/td_folding.cpp)
 
@@ -92,7 +92,7 @@ if(ENABLE_LCAO)
             ../../../source_hamilt/module_hcontainer/atom_pair.cpp
             ../../../source_basis/module_ao/parallel_orbitals.cpp
             ../../../source_basis/module_ao/orb_atomic_lm.cpp
-            tmp_mocks.cpp
+            test_tmp_mocks.cpp
             ../../../source_hamilt/operator.cpp)
 
   addtest(
@@ -109,7 +109,7 @@ if(ENABLE_LCAO)
             ../../../source_hamilt/module_hcontainer/atom_pair.cpp
             ../../../source_basis/module_ao/parallel_orbitals.cpp
             ../../../source_basis/module_ao/orb_atomic_lm.cpp
-            tmp_mocks.cpp
+            test_tmp_mocks.cpp
             ../../../source_hamilt/operator.cpp)
 
   addtest(
@@ -126,7 +126,7 @@ if(ENABLE_LCAO)
             ../../../source_hamilt/module_hcontainer/atom_pair.cpp
             ../../../source_basis/module_ao/parallel_orbitals.cpp
             ../../../source_basis/module_ao/orb_atomic_lm.cpp
-            tmp_mocks.cpp
+            test_tmp_mocks.cpp
             ../../../source_hamilt/operator.cpp)
 
   addtest(
@@ -146,8 +146,59 @@ if(ENABLE_LCAO)
             ../../../source_hamilt/module_hcontainer/atom_pair.cpp
             ../../../source_basis/module_ao/parallel_orbitals.cpp
             ../../../source_basis/module_ao/orb_atomic_lm.cpp
-            tmp_mocks.cpp
+            test_tmp_mocks.cpp
             ../../../source_hamilt/operator.cpp)
+
+  if(ENABLE_LIBRI)
+    addtest(
+      TARGET
+      MODULE_LCAO_op_exx_nscf_nearest_test
+      LIBS
+      parameter
+      psi
+      base
+      device
+      container
+      cereal::cereal
+      SOURCES
+      test_op_exx_nscf_nearest.cpp
+      # op_exx_lcao.cpp is needed for init_cell_nearest and
+      # reallocate_hcontainer; it also instantiates the OperatorEXX members
+      # this fixture never runs. test_tmp_mocks.cpp supplies the
+      # Exx_LRI_Interface entry points those members reference, so the target
+      # does not have to link module_ri, elecstate or module_exx_symmetry.
+      ../op_exx_lcao.cpp
+      ../../../source_hamilt/module_hcontainer/func_folding.cpp
+      ../../../source_hamilt/module_hcontainer/base_matrix.cpp
+      ../../../source_hamilt/module_hcontainer/hcontainer.cpp
+      ../../../source_hamilt/module_hcontainer/atom_pair.cpp
+      ../../../source_hamilt/module_hcontainer/read_hcontainer.cpp
+      ../../../source_basis/module_ao/parallel_orbitals.cpp
+      ../../../source_basis/module_ao/orb_atomic_lm.cpp
+      ../../../source_basis/module_ao/orb_gaunt_table.cpp
+      ../../lcao_set_mat2d.cpp
+      ../../center2orb.cpp
+      ../../center2orb_orb11.cpp
+      ../../center2orb_orb21.cpp
+      ../../center2orb_orb22.cpp
+      ../../../source_basis/module_ao/orb_read.cpp
+      ../../../source_basis/module_ao/elem_basis_idx_orb.cpp
+      ../../../source_io/module_hs/hs_sparse_io.cpp
+      ../../../source_io/module_hs/lat_r_csr.cpp
+      ../../../source_hamilt/module_hcontainer/func_transfer.cpp
+      ../../../source_hamilt/module_hcontainer/transfer.cpp
+      ../../../source_io/module_restart/restart.cpp
+      ../../../source_io/module_restart/restart_exx_csr.cpp
+      ../../../source_cell/ucell_io.cpp
+      # op_exx_lcao.cpp calls RI_2D_Comm::add_HexxR and dm_container_to_Ds.
+      # Compile just that translation unit rather than the whole ri object
+      # library: the latter also pulls in Exx_LRI_Interface, which needs
+      # elecstate and module_exx_symmetry symbols this focused test does not
+      # link.
+      ../../module_ri/ri_2d_comm.cpp
+      test_tmp_mocks.cpp
+      ../../../source_hamilt/operator.cpp)
+  endif()
 
   abacus_copy_test_files(parallel_operator_tests.sh)
   find_program(BASH bash)

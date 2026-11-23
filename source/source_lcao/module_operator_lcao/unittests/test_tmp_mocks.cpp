@@ -193,15 +193,8 @@ void TwoCenterIntegrator::snap(const int itype1,
     }
 }
 
-#include "source_basis/module_ao/orb_read.h"
-LCAO_Orbitals::LCAO_Orbitals()
-{
-    this->Phi = new Numerical_Orbital[1];
-}
-LCAO_Orbitals::~LCAO_Orbitals()
-{
-    delete[] Phi;
-}
+// LCAO_Orbitals ctor/dtor/cutoffs come from the real orb_read.cpp, which is
+// in this target's source list; do not stub them here.
 
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 // mock find_atom() function
@@ -290,7 +283,117 @@ const ModuleBase::Vector3<double>& TD_info::endpoint_A() const
     return value;
 }
 
+// OperatorEXX::contributeHR calls this for a td_stype=2 hybrid run. The
+// fixture never builds a TD context, so a no-op keeps the linker satisfied
+// without pulling module_rt's TD implementation into this focused test.
+template <typename TR>
+void TD_info::initialize_phase_hybrid(const UnitCell& ucell, const hamilt::HContainer<TR>* hR)
+{
+    (void)ucell;
+    (void)hR;
+}
+template void TD_info::initialize_phase_hybrid<double>(const UnitCell&, const hamilt::HContainer<double>*);
+template void TD_info::initialize_phase_hybrid<std::complex<double>>(const UnitCell&,
+                                                                    const hamilt::HContainer<std::complex<double>>*);
+
 int elecstate::TDFieldManager::gauge() const
 {
     return gauge_;
 }
+
+// Restart (including the GlobalC::restart instance and the out-of-line
+// read_file2) comes from the real module_io restart.cpp, which is in this
+// target's source list; do not stub it here.
+
+// op_exx_lcao.cpp reads the global XC functional type inside OperatorEXX
+// member functions that the cell-nearest test never enters; satisfy the
+// linker without module_xc's PW-dependent objects. The same stubs also
+// stand in for the EXX hybrid paths that resolve the runtime functional and
+// enter the first SCF loop, so the fixture needs no real module_xc source (a
+// real xc_functional.cpp would duplicate func_type and set_xc_type here).
+#include "source_hamilt/module_xc/xc_functional.h"
+int XC_Functional::func_type = 0;
+void XC_Functional::set_xc_type(const std::string xc_func_in)
+{
+    (void)xc_func_in;
+}
+void XC_Functional::set_xc_first_loop(const UnitCell& ucell)
+{
+    (void)ucell;
+}
+std::string XC_Functional::resolve_runtime_xc_type(const std::string& input_xc_func,
+                                                   const std::string& pseudo_xc_func)
+{
+    (void)pseudo_xc_func;
+    return input_xc_func;
+}
+std::string XC_Functional::resolve_runtime_xc_type(const std::string& input_functional,
+                                                   const UnitCell& ucell)
+{
+    (void)ucell;
+    return input_functional;
+}
+
+// op_exx_lcao.cpp defines the OperatorEXX members the EXX fixture compiles
+// but never runs. Their contributeHR/cal_dH paths call Exx_LRI_Interface,
+// whose implementation lives in module_ri and would drag in elecstate and
+// module_exx_symmetry. Provide the instantiations that op_exx_lcao.cpp
+// references; the fixture never reaches them.
+//
+// This file is shared with the operator, DFTU and LR fixtures, which also
+// build with ENABLE_LIBRI=OFF. LibRI's headers only exist when that option
+// is on, so everything below has to stay behind __EXX; those other targets
+// never compile op_exx_lcao.cpp and therefore need none of these stubs.
+#ifdef __EXX
+#include "source_lcao/module_ri/exx_lri_interface.h"
+
+namespace
+{
+template <typename TK, typename TD>
+using ExxDMap = std::vector<std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<TD>>>>;
+
+} // namespace
+
+template <>
+void Exx_LRI_Interface<double, double>::cal_exx_elec(const ExxDMap<double, double>&, const UnitCell&,
+                                                     const Parallel_Orbitals&,
+                                                     const ModuleSymmetry::Symmetry_rotation*)
+{
+}
+template <>
+void Exx_LRI_Interface<double, std::complex<double>>::cal_exx_elec(
+    const ExxDMap<double, std::complex<double>>&, const UnitCell&, const Parallel_Orbitals&,
+    const ModuleSymmetry::Symmetry_rotation*)
+{
+}
+template <>
+void Exx_LRI_Interface<std::complex<double>, double>::cal_exx_elec(
+    const ExxDMap<std::complex<double>, double>&, const UnitCell&, const Parallel_Orbitals&,
+    const ModuleSymmetry::Symmetry_rotation*)
+{
+}
+template <>
+void Exx_LRI_Interface<std::complex<double>, std::complex<double>>::cal_exx_elec(
+    const ExxDMap<std::complex<double>, std::complex<double>>&, const UnitCell&,
+    const Parallel_Orbitals&, const ModuleSymmetry::Symmetry_rotation*)
+{
+}
+
+template <>
+void Exx_LRI_Interface<double, double>::cal_exx_ions(const UnitCell&, const bool)
+{
+}
+template <>
+void Exx_LRI_Interface<double, std::complex<double>>::cal_exx_ions(const UnitCell&, const bool)
+{
+}
+template <>
+void Exx_LRI_Interface<std::complex<double>, double>::cal_exx_ions(const UnitCell&, const bool)
+{
+}
+template <>
+void Exx_LRI_Interface<std::complex<double>, std::complex<double>>::cal_exx_ions(const UnitCell&,
+                                                                               const bool)
+{
+}
+#endif // __EXX

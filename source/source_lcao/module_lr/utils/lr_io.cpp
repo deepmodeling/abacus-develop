@@ -214,6 +214,78 @@ std::vector<double> read_energy_qp_from_band_files(const K_Vectors& kv,
     return eig_info;
 }
 
+namespace
+{
+// Eigenvectors come either prefixed (current producer) or unprefixed (older
+// run directories). Pick one family; reading both would trip the duplicate-k
+// assertion or overwrite values when assertions are off.
+bool uses_prefixed_eigenvector(const std::string& in_dir)
+{
+    DIR* dir = opendir(in_dir.c_str());
+    if (!dir)
+    {
+        return false;
+    }
+    bool prefixed = false;
+    struct dirent* ptr = nullptr;
+    while ((ptr = readdir(dir)) != nullptr)
+    {
+        const std::string fm(ptr->d_name);
+        if (fm.find("librpa_KS_eigenvector") == 0)
+        {
+            prefixed = true;
+            break;
+        }
+        if (fm.find("KS_eigenvector") == 0)
+        {
+            break;
+        }
+    }
+    closedir(dir);
+    return prefixed;
+}
+
+#ifdef __EXX
+// Coulomb files come either prefixed (current producer) or unprefixed
+// (older run directories). Return the complete prefix that exists, checking
+// the unshrinked variant first because it wins when both are written.
+std::string select_coulomb_prefix(const std::string& in_dir)
+{
+    const char* candidates[] = {"librpa_coulomb_unshrinked_cut_",
+                                "coulomb_unshrinked_cut_",
+                                "librpa_coulomb_cut_",
+                                "coulomb_cut_"};
+    DIR* dir = opendir(in_dir.c_str());
+    if (!dir)
+    {
+        throw std::runtime_error("Cannot open directory: " + in_dir);
+    }
+    bool present[4] = {false, false, false, false};
+    struct dirent* ptr = nullptr;
+    while ((ptr = readdir(dir)) != nullptr)
+    {
+        const std::string fm(ptr->d_name);
+        for (int index = 0; index < 4; ++index)
+        {
+            if (!present[index] && fm.find(candidates[index]) == 0)
+            {
+                present[index] = true;
+            }
+        }
+    }
+    closedir(dir);
+    for (int index = 0; index < 4; ++index)
+    {
+        if (present[index])
+        {
+            return candidates[index];
+        }
+    }
+    throw std::runtime_error("No Coulomb output found in " + in_dir);
+}
+#endif // __EXX
+} // namespace
+
 template <typename TK>
 void read_librpa_eigenvectors(psi::Psi<TK>& wfc_ks,
                               psi::Psi<TK>& wfc_ks_global,
@@ -237,11 +309,13 @@ void read_librpa_eigenvectors(psi::Psi<TK>& wfc_ks,
         struct dirent *ptr;
         DIR *dir;
         dir = opendir(in_dir.c_str());
+        const bool use_prefixed_eigenvector
+            = uses_prefixed_eigenvector(in_dir);
         std::vector<bool> readen_k(nk, false);
 
         while ((ptr = readdir(dir)) != NULL){// read all the files in the directory
             std::string fm(ptr->d_name);
-            if (fm.find("KS_eigenvector") == 0)// find file KS_eigenvectorXXX
+            if (fm.find(use_prefixed_eigenvector ? "librpa_KS_eigenvector" : "KS_eigenvector") == 0)
             {
                 //std::cout << "found librpa_eigenvector file:" << fm << std::endl;
                 std::ifstream file_librpa_ks(in_dir + fm);
@@ -457,24 +531,17 @@ TLRI<TVs> read_coulomb_mat_k(const std::string& in_dir, const TLRI<TCs>& Cs, LR_
 {
     struct dirent *ptr;
     DIR *dir;
-    bool has_unshrinked = false;
+    // The producer now writes librpa_-prefixed names, but a directory may
+    // still hold an older unprefixed set. Select the complete prefix that is
+    // actually present; reading a mixture would leave Vq empty or overwrite
+    // values in directory order.
+    const std::string prefix = select_coulomb_prefix(in_dir);
+    std::cout << "read_coulomb_mat_k: using prefix \"" << prefix << "\" in directory \"" << in_dir << "\"" << std::endl;
     dir = opendir(in_dir.c_str());
     if (!dir)
     {
         throw std::runtime_error("Cannot open directory: " + in_dir);
     }
-    while ((ptr = readdir(dir)) != nullptr)
-    {
-        std::string fm(ptr->d_name);
-        if (fm.find("coulomb_unshrinked_cut_") == 0)
-        {
-            has_unshrinked = true;
-            break;
-        }
-    }
-    rewinddir(dir);
-    const std::string prefix = has_unshrinked ? "coulomb_unshrinked_cut_" : "coulomb_cut_";
-    std::cout << "read_coulomb_mat_k: using prefix \"" << prefix << "\" in directory \"" << in_dir << "\"" << std::endl;
 
     size_t nk = 0, nabf = 0, istart = 0, jstart = 0, iend = 0, jend = 0;
 
@@ -589,24 +656,17 @@ TLRI<TVs> read_coulomb_mat_general_k(const std::string& in_dir, const TLRI<TCs>&
 {
     struct dirent *ptr;
     DIR *dir;
-    bool has_unshrinked = false;
+    // The producer now writes librpa_-prefixed names, but a directory may
+    // still hold an older unprefixed set. Select the complete prefix that is
+    // actually present; reading a mixture would leave Vq empty or overwrite
+    // values in directory order.
+    const std::string prefix = select_coulomb_prefix(in_dir);
+    std::cout << "read_coulomb_mat_k: using prefix \"" << prefix << "\" in directory \"" << in_dir << "\"" << std::endl;
     dir = opendir(in_dir.c_str());
     if (!dir)
     {
         throw std::runtime_error("Cannot open directory: " + in_dir);
     }
-    while ((ptr = readdir(dir)) != nullptr)
-    {
-        std::string fm(ptr->d_name);
-        if (fm.find("coulomb_unshrinked_cut_") == 0)
-        {
-            has_unshrinked = true;
-            break;
-        }
-    }
-    rewinddir(dir);
-    const std::string prefix = has_unshrinked ? "coulomb_unshrinked_cut_" : "coulomb_cut_";
-    std::cout << "read_coulomb_mat_k: using prefix \"" << prefix << "\" in directory \"" << in_dir << "\"" << std::endl;
     
     TLRI<TVs> Vs;
     std::map<int, std::map<std::pair<int,int>, RI::Tensor<std::complex<double>>>> Vq; // <iat1, <<iat2,ik>, T>>

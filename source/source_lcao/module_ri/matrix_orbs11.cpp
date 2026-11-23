@@ -36,7 +36,7 @@ void Matrix_Orbs11::init(
 
     const double dr = orb.get_dR();
     const double dk = orb.get_dk();
-    const int kmesh = orb.get_kmesh() * kmesh_times + 1;
+    const int kmesh = static_cast<int>(orb.get_kmesh() * kmesh_times) | 1;
     const double rmax
         = Exx_Abfs::Construct_Orbs::get_Rmax(orb_A)
         + Exx_Abfs::Construct_Orbs::get_Rmax(orb_B);

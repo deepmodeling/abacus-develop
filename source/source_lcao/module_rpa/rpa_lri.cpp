@@ -1,12 +1,13 @@
 #include "rpa_lri.h"
 
 #include "exx_lri.h"
+#include "rpa_abfs_preorth.h"
 #include "rpa_lri_detail.h"
 #include "source_base/global_function.h"
 #include "source_basis/module_ao/elem_basis_idx_orb.h"
+#include "source_cell/unitcell.h"
 #include "source_estate/elecstate_lcao.h"
 #include "source_io/module_parameter/input_parameter.h"
-#include "source_cell/unitcell.h"
 #include "source_lcao/module_ri/module_exx_symmetry/symm_rotation.h"
 
 #include <algorithm>
@@ -45,13 +46,21 @@ try
     ModuleBase::timer::start("RPA_LRI", "postSCF");
     ModuleBase::GlobalFunc::MAKE_DIR(this->runtime.input.rpa_outdir);
     this->ccp_rmesh_times_cut = this->runtime.input.rpa_ccp_rmesh_times;
-    this->ccp_rmesh_times_ewald = this->info.ccp_rmesh_times; // should be `exx_ccp_rmesh_times`
+    this->ccp_rmesh_times_ewald = this->info.ccp_rmesh_times;
+    if (this->runtime.input.out_abf_overlap
+        && (!this->runtime.input.rpa || this->runtime.input.out_librpa_ver != 1
+            || this->info.shrink_abfs_pca_thr < 0.0))
+    {
+        throw std::runtime_error("out_abf_overlap requires rpa=true, "
+                                 "out_librpa_ver=1, and shrink ABFs.");
+    } // should be `exx_ccp_rmesh_times`
 
     this->cal_postSCF_exx(dm, mpi_comm_in, ucell, kv, orb, parav);
     this->init(mpi_comm_in, kv, orb.cutoffs());
     this->out_bands(pelec);
     this->out_eigen_vector(parav, psi);
-    this->out_struc(ucell);
+    // stru_out.txt is no longer produced: taesc-prep derives the structure
+    // from the run's own STRU / STRU_FINAL and KPT.info.
     if (this->runtime.input.out_librpa_ver == 1)
     {
         this->out_bz_sampling(ucell);
@@ -180,6 +189,17 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const module_dm::DensityMatrix<T, Tdata>
         }
     }
 
+    // Coulomb-metric preorthogonalization of the auxiliary basis before any
+    // consumer: the symmetry-rotation Lmax below, the cut-Coulomb C/V through
+    // init_spencer, and every later RPA producer output all reuse
+    // abfs_for_lmax. mode=none (the default) leaves the basis untouched.
+    const ModuleRI::PreorthReport preorth
+        = ModuleRI::preorth_from_input(abfs_for_lmax, this->runtime.input, this->runtime.input.cal_force);
+    if (this->runtime.rank == 0 && preorth.mode != "none")
+    {
+        std::cout << ModuleRI::preorth_report(preorth);
+    }
+
     ModuleSymmetry::Symmetry_rotation symrot;
     if (exx_spacegroup_symmetry)
     {
@@ -218,6 +238,21 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const module_dm::DensityMatrix<T, Tdata>
     else
     {
         mix_DMk_2D.mix(dm.get_dmk_vec(), true);
+        // The collinear EXX symmetry path is what writes symrot_R.txt, and it
+        // is skipped for nspin=4. A spinor exchange still needs the spatial
+        // operations, so export them without the orbital rotations.
+        if (this->runtime.input.nspin == 4 && ModuleSymmetry::Symmetry::symm_flag == 1)
+        {
+            const int abfs_lmax = Exx_Abfs::Construct_Orbs::get_Lmax(abfs_for_lmax);
+            try
+            {
+                ModuleSymmetry::print_symrot_info_R_spatial(ucell.symm, ucell.lmax, abfs_lmax);
+            }
+            catch (const std::exception& error)
+            {
+                RpaLriDetail::abort_output(this->mpi_comm, error.what());
+            }
+        }
     }
 
     const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> Ds
@@ -232,7 +267,7 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const module_dm::DensityMatrix<T, Tdata>
     {
         Exx_Info_RI local_info = this->info;
         local_info.ccp_rmesh_times = this->ccp_rmesh_times_cut;
-        Exx_LRI<double>* new_exx = new Exx_LRI<double>(local_info);
+        Exx_LRI<double>* new_exx = new Exx_LRI<double>(local_info, make_exx_lri_runtime());
         exx_cut_coulomb.reset(new_exx);
     }
 

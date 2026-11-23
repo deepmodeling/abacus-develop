@@ -32,7 +32,7 @@ void RPA_LRI<T, Tdata>::cal_large_Cs(const UnitCell& ucell, const LCAO_Orbitals&
     {
         Exx_Info_RI local_info = this->info;
         local_info.ccp_rmesh_times = this->ccp_rmesh_times_cut;
-        Exx_LRI<double>* new_exx = new Exx_LRI<double>(local_info);
+        Exx_LRI<double>* new_exx = new Exx_LRI<double>(local_info, make_exx_lri_runtime());
         exx_cut_coulomb.reset(new_exx);
     }
     exx_cut_coulomb->init_spencer(this->mpi_comm, ucell, kv, orb);
@@ -66,6 +66,7 @@ void RPA_LRI<T, Tdata>::cal_large_Cs(const UnitCell& ucell, const LCAO_Orbitals&
         this->info.kmesh_times,
         this->MGT, // get MGT from exx_cut_coulomb and used in `cal_abfs_overlap`
         true,
+        ModuleBase::Element_Basis_Index::IndexPermutation{},
         false);
 
     const std::array<Tcell, Ndim> period_Vs
@@ -118,7 +119,7 @@ void RPA_LRI<T, Tdata>::cal_large_Cs(const UnitCell& ucell, const LCAO_Orbitals&
         ModuleBase::GlobalFunc::DONE(this->runtime.log, "Vs_period_comm");
 
         Exx_LRI<double>* cut_coulomb = exx_cut_coulomb.get();
-        this->out_coulomb_k(ucell, this->Vs_period, "coulomb_unshrinked_cut_", cut_coulomb);
+        this->out_coulomb_k(ucell, this->Vs_period, "librpa_coulomb_unshrinked_cut_", cut_coulomb);
         ModuleBase::GlobalFunc::DONE(this->runtime.log, "out_large_Vs");
         this->Vs_period.clear();
         this->Vs_period.swap(tmp);
@@ -131,12 +132,16 @@ void RPA_LRI<T, Tdata>::cal_large_Cs(const UnitCell& ucell, const LCAO_Orbitals&
     {
         // The large auxiliary basis and the canonical fallback map are emitted
         // here; the final Ewald output adds only aux_basis_s.txt.
-        this->out_librpa_basis_v1(ucell, exx_cut_coulomb.get(), "aux_basis.txt", "basis_map.txt", true);
-        this->out_Cs_v1(ucell, this->Cs_period, "Cs_");
+        this->out_librpa_basis_v1(ucell,
+                                  exx_cut_coulomb.get(),
+                                  "librpa_aux_basis.txt",
+                                  "librpa_basis_map.txt",
+                                  true);
+        this->out_Cs_v1(ucell, this->Cs_period, "librpa_Cs_");
     }
     else
     {
-        this->out_Cs(ucell, this->Cs_period, "Cs_data_");
+        this->out_Cs(ucell, this->Cs_period, "librpa_Cs_data_");
     }
     ModuleBase::GlobalFunc::DONE(this->runtime.log, "out_large_Cs");
     this->Cs_period.clear();
@@ -305,11 +310,11 @@ void RPA_LRI<T, Tdata>::cal_abfs_overlap(const UnitCell& ucell, const LCAO_Orbit
 
     if (this->runtime.input.out_librpa_ver == 1)
     {
-        out_abfs_overlap_v1(ucell, overlap_abfs_abfs_IJ, overlap_abfs_abf_IJ, "sinvS_", index_abfs_s, index_abfs);
+        out_abfs_overlap_v1(ucell, overlap_abfs_abfs_IJ, overlap_abfs_abf_IJ, "librpa_sinvS_", index_abfs_s, index_abfs);
     }
     else
     {
-        out_abfs_overlap(ucell, overlap_abfs_abfs_IJ, overlap_abfs_abf_IJ, "shrink_sinvS_", index_abfs_s, index_abfs);
+        out_abfs_overlap(ucell, overlap_abfs_abfs_IJ, overlap_abfs_abf_IJ, "librpa_shrink_sinvS_", index_abfs_s, index_abfs);
     }
 }
 

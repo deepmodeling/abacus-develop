@@ -17,11 +17,53 @@ from librpa_symmetry import preserves_bvk_mesh
 from run_librpa_mpi import ignore_outputs, mpi_command, use_mpi_solver
 
 
+def read_symrot_operations(text):
+    """Return the (unitary, antiunitary) spatial operations of symrot_R.txt.
+
+    Each operation is a flattened row-major integer rotation. The antiunitary
+    block is the optional ``Antiunitary operations: N`` trailer that ABACUS
+    writes for magnetic nspin=4 runs.
+    """
+    lines = [line.strip() for line in text.splitlines() if line.strip()]
+    lmax = [int(re.search(r"Lmax of " + label + r":\s*(\d+)", text).group(1))
+            for label in ("AOs", "ABFs")]
+    # nspin=4 writes the operations only; it has no orbital rotations to emit.
+    orbital_rows = 0 if "Spatial-only export" in text else (max(lmax) + 1) ** 2
+    start = next(i for i, line in enumerate(lines) if line == "0")
+
+    def one_block(cursor):
+        # ABACUS prints these through std::to_string, so "-1" arrives as
+        # "-1.000000"; the rotations are integers only up to the print format.
+        values = [float(x) for row in lines[cursor + 1:cursor + 4] for x in row.split()]
+        assert len(values) == 9, "Expected a 3x3 rotation in {}".format(lines[cursor:cursor + 5])
+        rotation = []
+        for value in values:
+            assert abs(value - round(value)) < 1e-8, "Noninteger symmetry rotation: {}".format(value)
+            rotation.append(int(round(value)))
+        translation = lines[cursor + 4]
+        assert translation.startswith("(") and translation.endswith(")")
+        return rotation
+
+    unitary = []
+    pos = start
+    while pos < len(lines) and not lines[pos].startswith("Antiunitary operations:"):
+        unitary.append(one_block(pos))
+        pos += 5 + orbital_rows
+    antiunitary = []
+    if pos < len(lines):
+        count = int(lines[pos].split(":", 1)[1])
+        cursor = pos + 1
+        for _ in range(count):
+            antiunitary.append(one_block(cursor))
+            cursor += 5
+    return unitary, antiunitary
+
+
 def check_output(case, mesh, symmetry, nspin, wfc_nspin=None,
                  require_spin_symmetry=False, require_antiunitary=False, spinor=False,
                  offset=(0.0, 0.0, 0.0)):
     out = case / "OUT.librpa"
-    rows = [line.split() for line in (out / "bz_sample.txt").read_text().splitlines()]
+    rows = [line.split() for line in (out / "librpa_bz_sample.txt").read_text().splitlines()]
     assert tuple(map(int, rows[0])) == mesh
     nk, nq = map(int, rows[1])
     full = mesh[0] * mesh[1] * mesh[2]
@@ -54,55 +96,56 @@ def check_output(case, mesh, symmetry, nspin, wfc_nspin=None,
         assert nk < full, "The test must exercise an actual reduction"
     if wfc_nspin is None:
         wfc_nspin = nspin
-    dims, _ = read_ks_wfc(out / "KS_wfc_0.dat")
-    bands = (out / "band_out.txt").read_text().split()
+    dims, _ = read_ks_wfc(out / "librpa_KS_wfc_0.dat")
+    bands = (out / "librpa_band_out.txt").read_text().split()
     assert dims[:2] == (nk, wfc_nspin)
     assert tuple(map(int, bands[:4])) == (nk, nspin, dims[2], dims[3])
     manifest = json.loads((case / "librpa_producer_manifest.json").read_text())
     tolerance = next(entry["abs_tol"] for entry in manifest["required"] if entry["kind"] == "ks_wfc_v1")
-    check_ks_nao(out / "KS_wfc_0.dat", case / "OUT.autotest", tolerance, spinor=spinor)
+    check_ks_nao(out / "librpa_KS_wfc_0.dat", case / "OUT.autotest", tolerance, spinor=spinor)
     for iq in range(1, nq + 1):
         for rank in (0, 1):
-            data = (out / "V_full_{}_r{}.dat".format(iq, rank)).read_bytes()
+            data = (out / "librpa_V_full_{}_r{}.dat".format(iq, rank)).read_bytes()
             header = struct.unpack_from("<6i", data)
             assert header[0] == -20129433 and header[1] == iq and header[3] == 1
-    assert (out / "Cs_1.dat").is_file()
-    stru = (out / "stru_out.txt").read_text().splitlines()
+    assert (out / "librpa_Cs_1.dat").is_file()
+    # ABACUS no longer writes stru_out.txt: taesc-prep builds it from the run
+    # directory. The symmetry data this check needs now comes from
+    # OUT.autotest/symrot_R.txt, which exports the unitary operations plus an
+    # antiunitary trailer for magnetic nspin=4 runs.
+    #
+    # symrot_R.txt lists the cell's full point group; the removed stru_out.txt
+    # kept only the operations that map the sampled mesh onto itself. Apply the
+    # same filter here, otherwise a mesh that the group does not preserve looks
+    # like a producer defect.
     if symmetry == 1:
-        begin = 7 + int(stru[6])
-        count, convention = stru[begin].split()
-        assert int(count) > 1 and convention == "row"
-        row_end = begin + 1 + int(count)
-        assert len(stru) >= row_end
-        assert all(len(row.split()) == 12 for row in stru[begin + 1:row_end])
-        spin_start = row_end
-        antiunitary = [False] * int(count)
-        if require_spin_symmetry or spin_start < len(stru):
-            assert spin_start < len(stru), "SOC stru_out has no spin_symmetry block"
-            header = stru[spin_start].split()
-            assert header[:1] == ["spin_symmetry"] and len(header) == 3
-            assert int(header[1]) in (0, 1)
-            spin_source = int(header[2])
-            assert spin_source in (0, 1)
-            spin_rows = stru[spin_start + 1:]
-            assert len(spin_rows) == int(count)
-            expected_fields = 9 if spin_source == 1 else 1
-            antiunitary = []
-            for row in spin_rows:
-                fields = row.split()
-                assert len(fields) == expected_fields and int(fields[0]) in (0, 1)
-                antiunitary.append(int(fields[0]) == 1)
-                for value in fields[1:]:
-                    assert math.isfinite(float(value))
-            if require_antiunitary:
-                assert any(antiunitary), "shifted magnetic case has no antiunitary operation"
-        for row_index, row in enumerate(stru[begin + 1:row_end]):
-            rotation = list(map(int, row.split()[:9]))
-            assert preserves_bvk_mesh(rotation, mesh, offset, antiunitary[row_index]), (
-                "Operation {} does not preserve the BvK mesh: {}".format(row_index, rotation)
-            )
+        symrot = case / "OUT.autotest" / "symrot_R.txt"
+        assert symrot.is_file(), "symmetry=1 run did not export symrot_R.txt"
+        unitary, antiunitary = read_symrot_operations(symrot.read_text())
+        assert len(unitary) > 1, "symmetry=1 run exported a single operation"
+        unitary = [rotation for rotation in unitary
+                   if preserves_bvk_mesh(rotation, mesh, offset, False)]
+        antiunitary = [rotation for rotation in antiunitary
+                       if preserves_bvk_mesh(rotation, mesh, offset, True)]
+        assert unitary, "No exported operation preserves the {} mesh".format(mesh)
+        assert all(preserves_bvk_mesh(rotation, mesh, offset, False) for rotation in unitary)
+        assert all(preserves_bvk_mesh(rotation, mesh, offset, True) for rotation in antiunitary)
+        if require_antiunitary:
+            assert antiunitary, "shifted magnetic case exported no antiunitary operation"
     return {"case": str(case), "mesh": mesh, "symmetry": symmetry,
             "nspin": nspin, "nspin_wfc": wfc_nspin, "nk_full": full, "nk_scf": nk, "nq": nq}
+
+
+def mesh_variants(input_text):
+    """Mesh variants for a producer case, honoring its dimensionality.
+
+    The strict-2D Coulomb path (exx_ewald_dimension 2) requires a single kz
+    layer, so its symmetry variants must stay in-plane; the generic 3D
+    variants would trip the nkz = 1 guard in Ewald_Vq::init.
+    """
+    if re.search(r"(?m)^exx_ewald_dimension\s+2\b", input_text):
+        return ((1, 3, 1), (2, 2, 1))
+    return ((1, 1, 3), (2, 2, 2))
 
 
 def run(args, root):
@@ -119,8 +162,12 @@ def run(args, root):
                ABACUS_MPIEXEC_PREFLAGS=" ".join(args.mpi_preflag),
                ABACUS_MPIEXEC_POSTFLAGS=" ".join(args.mpi_postflag))
     cases = (source / "CASES_LIBRPA_PRODUCER.txt").read_text().split()
-    for name, nspin in zip(cases[:2], (1, 2)):
-        for mesh in ((1, 1, 3), (2, 2, 2)):
+    for name in cases:
+        input_text = (source / name / "INPUT").read_text()
+        meshes = mesh_variants(input_text)
+        nspin_match = re.search(r"(?m)^nspin\s+(\d+)", input_text)
+        nspin = int(nspin_match.group(1)) if nspin_match else 1
+        for mesh in meshes:
             for symmetry in (-1, 0, 1):
                 case = work / "{}_{}_s{}".format(name, "".join(map(str, mesh)), symmetry)
                 shutil.copytree(source / name, case, ignore=ignore_outputs)
@@ -197,7 +244,7 @@ def run(args, root):
     results.append(magnetic_result)
     print(json.dumps(magnetic_result), flush=True)
     (root / "summary.json").write_text(json.dumps(results, indent=2) + "\n")
-    print("Symmetry producer checks: PASS (12 baseline runs and two SOC runs)")
+    print("Symmetry producer checks: PASS ({} baseline runs and two SOC runs)".format(len(results) - 2))
 
 
 def main():

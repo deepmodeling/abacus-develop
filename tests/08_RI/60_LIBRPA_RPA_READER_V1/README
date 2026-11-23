@@ -3,13 +3,49 @@ preprocessor input (`KPT.info`, `eband_vxc.txt`, and text LCAO wavefunctions),
 for a compact two-atom H `1x1x2` solid.
 
 For symmetry-reduced grids, reader-v1 appends the actual full-to-SCF mapping
-to bz_sample.txt and writes spatial operations in stru_out.txt. These fixed
-references use the full grid; temporary variants check symmetry 0 and 1.
-The established `velocity_matrix.txt` protocol name is retained
-for both versions, including its exception to the new 15-character naming
-preference.
+to `librpa_bz_sample.txt` and writes spatial operations to
+`OUT.<suffix>/symrot_R.txt`. These fixed references use the full grid;
+temporary variants check symmetry 0 and 1.
+
+Every file the RPA producer writes carries a `librpa_` prefix so users can
+tell the LibRPA inputs apart from the rest of the OUT.* tree.
+`stru_out.txt` is no longer produced: taesc-prep derives an equivalent
+structure file from STRU/STRU_FINAL, `KPT.info` and `symrot_R.txt`.
 
 The serial run compares stable producer references. The two-rank test checks
 rank-owned output and compares KS binary assembly with independent text
 wavefunctions from the same run, avoiding gauge-dependent historical data.
 It also injects root-only and non-root file-open failures to check MPI abort.
+
+## Preparing the LibRPA inputs
+
+ABACUS no longer writes `stru_out.txt`. Run taesc-prep on the calculation
+directory to produce it from `STRU`/`STRU_FINAL`, `KPT.info` and
+`symrot_R.txt`:
+
+```
+taesc-prep /path/to/calculation
+```
+
+Requires taesc-prep `master` at or after the spatial-only symmetry-export
+support (AESM-Group/taesc-prep#3), which is what makes `nspin 4` exports
+readable. The command writes `stru_out.txt` and `bz_sample.txt` next to the
+calculation inputs.
+
+The converted directory must carry, before LibRPA reads it: the geometry
+with its lattice vectors and Cartesian positions in Bohr, the reciprocal
+lattice with 2*pi, every translation vector of the symmetry operations, and
+for `nspin 4` the `spin_symmetry` block. `librpa_producer_manifest.json`
+lists the remaining files this case requires and the tolerance each
+comparison uses.
+
+### Shifted k-grids
+
+The converter must filter the exported operations against the actual sampled
+points, not against an assumed Gamma-centred mesh. ABACUS exports the crystal
+operations, so an operation can map the mesh onto itself when the grid is
+unshifted and fail when the same mesh is sampled with an offset: inversion on
+a `2x1x1` Gamma grid maps `{1/8, 5/8}` to `{7/8, 3/8}` only when the shift is
+zero. taesc-prep derives the shift from the full-grid coordinates in
+`KPT.info`; a converter that keeps only the mesh dimensions must reject
+shifted grids rather than emit an over-permissive symmetry set.

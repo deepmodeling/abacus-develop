@@ -5,6 +5,11 @@ The checker deliberately separates stable producer data from gauge-dependent
 wavefunction data.  It validates names, headers, dimensions, finite values,
 and optional tolerant references; it does not require KS eigenvector or
 velocity-matrix values to be byte-identical.
+
+A manifest entry marked ``reference`` looks up its stored file by mirroring the
+produced path under ``reference_dir``.  An entry may set ``reference_path``
+instead, relative to ``reference_dir``, for outputs whose produced directory
+name cannot be used for the stored copy.
 """
 
 import argparse
@@ -96,62 +101,6 @@ def _compare_text(actual, reference, tolerance):
                 )
 
 
-def _check_stru(path, minimum_symmetry_rows, spin_symmetry_rows=None):
-    lines = path.read_text().splitlines()
-    if len(lines) < 8:
-        raise ProducerContractError("{} is too short for stru_out".format(path))
-    for line in lines[:6]:
-        if len(line.split()) != 3:
-            raise ProducerContractError("{} has an invalid lattice block".format(path))
-        for token in line.split():
-            _number(token)
-    try:
-        natom = int(lines[6].split()[0])
-    except (IndexError, ValueError):
-        raise ProducerContractError("{} has an invalid atom count".format(path))
-    if natom <= 0 or len(lines) < 7 + natom:
-        raise ProducerContractError("{} has an invalid atom block".format(path))
-    for line in lines[7 : 7 + natom]:
-        if len(line.split()) != 4:
-            raise ProducerContractError("{} has an invalid atom row".format(path))
-        for token in line.split()[:3]:
-            _number(token)
-        try:
-            int(line.split()[3])
-        except ValueError:
-            raise ProducerContractError("{} has an invalid atom type".format(path))
-    row_match = None
-    row_index = None
-    for index, line in enumerate(lines[7 + natom :], 7 + natom):
-        match = re.match(r"^\s*(\d+)\s+row\s*$", line)
-        if match:
-            row_match = int(match.group(1))
-            row_index = index
-            break
-    if minimum_symmetry_rows is not None:
-        if row_match is None or row_match < int(minimum_symmetry_rows):
-            raise ProducerContractError("{} has too few symmetry rows".format(path))
-    symmetry_end = None
-    if row_match is not None:
-        if len(lines) < row_index + 1 + row_match:
-            raise ProducerContractError("{} symmetry block is truncated".format(path))
-        for line in lines[row_index + 1 : row_index + 1 + row_match]:
-            tokens = line.split()
-            if len(tokens) != 12:
-                raise ProducerContractError("{} has an invalid symmetry row".format(path))
-            for token in tokens[:9]:
-                try:
-                    int(token)
-                except ValueError:
-                    raise ProducerContractError("{} has a non-integer symmetry rotation".format(path))
-            for token in tokens[9:]:
-                _number(token)
-        symmetry_end = row_index + 1 + row_match
-    if spin_symmetry_rows is not None:
-        try:
-            check_spin_symmetry(lines, symmetry_end, path, int(spin_symmetry_rows), row_match)
-        except ValueError as error:
-            raise ProducerContractError(str(error))
 def _check_wfc_nao(path):
     """Validate the text LCAO wavefunction format consumed by GW preprocessing."""
     # ignore provenance comment lines starting with '#'
@@ -219,6 +168,38 @@ def _check_wfc_nao(path):
                     path, iband, len(coefficients), expected_coefficients
                 )
             )
+
+
+def _check_strict_2d_head(path):
+    """Validate the reader-v1 strict-2D Coulomb-head metadata sidecar."""
+    values = {}
+    for line_number, line in enumerate(path.read_text().splitlines(), 1):
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        if "=" not in stripped:
+            raise ProducerContractError("{} line {} is not a key/value record".format(path, line_number))
+        key, value = (part.strip() for part in stripped.split("=", 1))
+        if not key or key in values:
+            raise ProducerContractError("{} line {} has an invalid or duplicate key".format(path, line_number))
+        values[key] = value
+    required = {
+        "version",
+        "area_parallel_bohr2",
+        "multipole_norm_squared",
+        "strict_2d_coulomb_head_coefficient",
+        "strict_2d_sheet_to_raw_scale",
+    }
+    if set(values) != required:
+        raise ProducerContractError(
+            "{} has metadata keys {}; expected {}".format(path, sorted(values), sorted(required))
+        )
+    if values["version"] != "1":
+        raise ProducerContractError("{} has unsupported metadata version {}".format(path, values["version"]))
+    for key in sorted(required - {"version"}):
+        value = _required_number(path, values[key], key)
+        if value <= 0.0:
+            raise ProducerContractError("{} has non-positive {}".format(path, key))
 
 
 def _upper_pair(pair_index, natom):
@@ -397,8 +378,8 @@ def _check_file(path, entry):
         raise ProducerContractError("required producer file is missing or empty: {}".format(path))
     if kind == "gauge" or kind == "presence":
         return
-    if kind == "stru":
-        _check_stru(path, entry.get("symmetry_rows"), entry.get("spin_symmetry_rows"))
+    if kind == "strict_2d_head":
+        _check_strict_2d_head(path)
     elif kind == "wfc_nao":
         _check_wfc_nao(path)
     elif kind == "ks_wfc_v1":
@@ -467,7 +448,10 @@ def check_manifest(root, manifest):
             if entry.get("reference"):
                 if reference_root is None:
                     raise ProducerContractError("reference requested without reference_dir")
-                reference = reference_root / path.relative_to(entry_root)
+                # ``reference_path`` decouples the stored reference name from
+                # the produced one, for outputs whose directory name is
+                # reserved by the build harness (``OUT.*`` is gitignored).
+                reference = reference_root / entry.get("reference_path", path.relative_to(entry_root))
                 if not reference.is_file():
                     raise ProducerContractError("missing producer reference: {}".format(reference))
                 tolerance = float(entry.get("abs_tol", 1.0e-8))
