@@ -10,6 +10,7 @@
 #include <complex>
 #include <stdexcept>
 #include <type_traits>
+#include <utility>
 
 namespace
 {
@@ -258,11 +259,51 @@ void assert_solve_views(const Matrix2dView<std::complex<double>>& matrix,
         "linear solve requires MPI-compatible distributed layouts");
 #endif
 }
+
+template <typename T>
+void assert_supported_linalg_type()
+{
+    static_assert(std::is_same<T, double>::value
+                      || std::is_same<T, std::complex<double>>::value,
+                  "linear algebra supports double and std::complex<double>");
+}
+
+template <typename T>
+Matrix2d<T> make_matrix_like(const Matrix2d<T>& source,
+                             const int nrglb,
+                             const int ncglb)
+{
+    if (!source.has_distribution())
+    {
+        return Matrix2d<T>(nrglb, ncglb);
+    }
+    if (!source.is_active())
+    {
+        return Matrix2d<T>(make_frozen_distribution(nrglb, ncglb));
+    }
+#ifdef __MPI
+    if (source.nrglb() == nrglb && source.ncglb() == ncglb)
+    {
+        return Matrix2d<T>(source.distribution());
+    }
+    const int nb = source.distribution()->nb();
+    const std::shared_ptr<const Parallel_Blkcyclic> result_distribution
+        = make_borrowed_distribution(nrglb,
+                                     ncglb,
+                                     nb,
+                                     source.distribution());
+    return Matrix2d<T>(result_distribution);
+#else
+    static_cast<void>(nrglb);
+    static_cast<void>(ncglb);
+    throw std::invalid_argument("distributed matrices require MPI support");
+#endif
+}
 } // namespace
 
 namespace matrix2d_linalg
 {
-void inv(Matrix2dView<double> matrix)
+void inv_inplace(Matrix2dView<double> matrix)
 {
     assert_inverse_view(matrix);
     if (distribution_is_active(matrix))
@@ -277,7 +318,7 @@ void inv(Matrix2dView<double> matrix)
     matrix2d_impl::lapack::inv(matrix);
 }
 
-void inv(Matrix2dView<std::complex<double>> matrix)
+void inv_inplace(Matrix2dView<std::complex<double>> matrix)
 {
     assert_inverse_view(matrix);
     if (distribution_is_active(matrix))
@@ -292,8 +333,8 @@ void inv(Matrix2dView<std::complex<double>> matrix)
     matrix2d_impl::lapack::inv(matrix);
 }
 
-void solve(Matrix2dView<double> matrix,
-           Matrix2dView<double> rhs)
+void solve_inplace(Matrix2dView<double> matrix,
+                   Matrix2dView<double> rhs)
 {
     assert_solve_views(matrix, rhs);
     if (distribution_is_active(matrix))
@@ -308,8 +349,8 @@ void solve(Matrix2dView<double> matrix,
     matrix2d_impl::lapack::solve(matrix, rhs);
 }
 
-void solve(Matrix2dView<std::complex<double>> matrix,
-           Matrix2dView<std::complex<double>> rhs)
+void solve_inplace(Matrix2dView<std::complex<double>> matrix,
+                   Matrix2dView<std::complex<double>> rhs)
 {
     assert_solve_views(matrix, rhs);
     if (distribution_is_active(matrix))
@@ -324,9 +365,9 @@ void solve(Matrix2dView<std::complex<double>> matrix,
     matrix2d_impl::lapack::solve(matrix, rhs);
 }
 
-void matmul(Matrix2dView<double> result,
-            Matrix2dView<const double> left,
-            Matrix2dView<const double> right)
+void matmul_inplace(Matrix2dView<double> result,
+                    Matrix2dView<const double> left,
+                    Matrix2dView<const double> right)
 {
     assert_matmul_views(result, left, right);
     if (distribution_is_active(result))
@@ -341,9 +382,9 @@ void matmul(Matrix2dView<double> result,
     matmul_host(result, left, right);
 }
 
-void matmul(Matrix2dView<std::complex<double>> result,
-            Matrix2dView<const std::complex<double>> left,
-            Matrix2dView<const std::complex<double>> right)
+void matmul_inplace(Matrix2dView<std::complex<double>> result,
+                    Matrix2dView<const std::complex<double>> left,
+                    Matrix2dView<const std::complex<double>> right)
 {
     assert_matmul_views(result, left, right);
     if (distribution_is_active(result))
@@ -358,16 +399,16 @@ void matmul(Matrix2dView<std::complex<double>> result,
     matmul_host(result, left, right);
 }
 
-void axpby(Matrix2dView<double> result,
-           const double alpha,
-           Matrix2dView<const double> left,
-           const double beta,
-           Matrix2dView<const double> right)
+void axpby_inplace(Matrix2dView<double> result,
+                   const double alpha,
+                   Matrix2dView<const double> left,
+                   const double beta,
+                   Matrix2dView<const double> right)
 {
     axpby_impl(result, alpha, left, beta, right);
 }
 
-void axpby(
+void axpby_inplace(
     Matrix2dView<std::complex<double>> result,
     const std::complex<double> alpha,
     Matrix2dView<const std::complex<double>> left,
@@ -377,25 +418,130 @@ void axpby(
     axpby_impl(result, alpha, left, beta, right);
 }
 
-void scale(Matrix2dView<double> matrix, const double factor)
+void scale_inplace(Matrix2dView<double> matrix, const double factor)
 {
     scale_impl(matrix, factor);
 }
 
-void scale(Matrix2dView<std::complex<double>> matrix,
-           const std::complex<double> factor)
+void scale_inplace(Matrix2dView<std::complex<double>> matrix,
+                   const std::complex<double> factor)
 {
     scale_impl(matrix, factor);
 }
 
-void set_identity(Matrix2dView<double> matrix)
+void set_identity_inplace(Matrix2dView<double> matrix)
 {
     set_identity_impl(matrix);
 }
 
-void set_identity(Matrix2dView<std::complex<double>> matrix)
+void set_identity_inplace(Matrix2dView<std::complex<double>> matrix)
 {
     set_identity_impl(matrix);
+}
+
+template <typename T>
+Matrix2d<T> inv(const Matrix2d<T>& matrix)
+{
+    assert_supported_linalg_type<T>();
+    Matrix2d<T> inverse = matrix;
+    inv_inplace(inverse.view());
+    return inverse;
+}
+
+template <typename T>
+void inv(const Matrix2d<T>& matrix, Matrix2d<T>& inverse)
+{
+    Matrix2d<T> inverse_result = inv(matrix);
+    inverse = std::move(inverse_result);
+}
+
+template <typename T>
+Matrix2d<T> solve(const Matrix2d<T>& matrix,
+                  const Matrix2d<T>& rhs)
+{
+    assert_supported_linalg_type<T>();
+    Matrix2d<T> matrix_copy = matrix;
+    Matrix2d<T> solution = rhs;
+    solve_inplace(matrix_copy.view(), solution.view());
+    return solution;
+}
+
+template <typename T>
+void solve(const Matrix2d<T>& matrix,
+           const Matrix2d<T>& rhs,
+           Matrix2d<T>& solution)
+{
+    Matrix2d<T> solution_result = solve(matrix, rhs);
+    solution = std::move(solution_result);
+}
+
+template <typename T>
+Matrix2d<T> matmul(const Matrix2d<T>& left,
+                   const Matrix2d<T>& right)
+{
+    assert_supported_linalg_type<T>();
+    const int nrglb = left.nrglb();
+    const int ncglb = right.ncglb();
+    Matrix2d<T> result = make_matrix_like(left, nrglb, ncglb);
+    matmul_inplace(result.view(), left.view(), right.view());
+    return result;
+}
+
+template <typename T>
+void matmul(const Matrix2d<T>& left,
+            const Matrix2d<T>& right,
+            Matrix2d<T>& result)
+{
+    Matrix2d<T> product = matmul(left, right);
+    result = std::move(product);
+}
+
+template <typename T>
+Matrix2d<T> axpby(const T alpha,
+                  const Matrix2d<T>& left,
+                  const T beta,
+                  const Matrix2d<T>& right)
+{
+    assert_supported_linalg_type<T>();
+    const int nrglb = left.nrglb();
+    const int ncglb = left.ncglb();
+    Matrix2d<T> result
+        = make_matrix_like(left, nrglb, ncglb);
+    axpby_inplace(result.view(),
+                  alpha,
+                  left.view(),
+                  beta,
+                  right.view());
+    return result;
+}
+
+template <typename T>
+void axpby(const T alpha,
+           const Matrix2d<T>& left,
+           const T beta,
+           const Matrix2d<T>& right,
+           Matrix2d<T>& result)
+{
+    Matrix2d<T> combination = axpby(alpha, left, beta, right);
+    result = std::move(combination);
+}
+
+template <typename T>
+Matrix2d<T> scale(const Matrix2d<T>& matrix, const T factor)
+{
+    assert_supported_linalg_type<T>();
+    Matrix2d<T> result = matrix;
+    scale_inplace(result.view(), factor);
+    return result;
+}
+
+template <typename T>
+void scale(const Matrix2d<T>& matrix,
+           const T factor,
+           Matrix2d<T>& result)
+{
+    Matrix2d<T> scaled = scale(matrix, factor);
+    result = std::move(scaled);
 }
 
 template <typename T>
@@ -405,10 +551,97 @@ Matrix2d<T> eye(const int n)
                       || std::is_same<T, std::complex<double>>::value,
                   "eye supports double and std::complex<double>");
     Matrix2d<T> matrix(n, n);
-    set_identity_impl(matrix.view());
+    set_identity_inplace(matrix.view());
     return matrix;
 }
 
+template <typename T>
+Matrix2d<T> transpose(const Matrix2d<T>& matrix)
+{
+    return matrix.transpose();
+}
+
+template <typename T>
+Matrix2d<T> dagger(const Matrix2d<T>& matrix)
+{
+    return matrix.dagger();
+}
+
+template Matrix2d<double> inv<double>(const Matrix2d<double>& matrix);
+template void inv<double>(const Matrix2d<double>& matrix,
+                          Matrix2d<double>& inverse);
+template Matrix2d<std::complex<double>> inv<std::complex<double>>(
+    const Matrix2d<std::complex<double>>& matrix);
+template void inv<std::complex<double>>(
+    const Matrix2d<std::complex<double>>& matrix,
+    Matrix2d<std::complex<double>>& inverse);
+
+template Matrix2d<double> solve<double>(const Matrix2d<double>& matrix,
+                                        const Matrix2d<double>& rhs);
+template void solve<double>(const Matrix2d<double>& matrix,
+                            const Matrix2d<double>& rhs,
+                            Matrix2d<double>& solution);
+template Matrix2d<std::complex<double>> solve<std::complex<double>>(
+    const Matrix2d<std::complex<double>>& matrix,
+    const Matrix2d<std::complex<double>>& rhs);
+template void solve<std::complex<double>>(
+    const Matrix2d<std::complex<double>>& matrix,
+    const Matrix2d<std::complex<double>>& rhs,
+    Matrix2d<std::complex<double>>& solution);
+
+template Matrix2d<double> matmul<double>(const Matrix2d<double>& left,
+                                         const Matrix2d<double>& right);
+template void matmul<double>(const Matrix2d<double>& left,
+                             const Matrix2d<double>& right,
+                             Matrix2d<double>& result);
+template Matrix2d<std::complex<double>> matmul<std::complex<double>>(
+    const Matrix2d<std::complex<double>>& left,
+    const Matrix2d<std::complex<double>>& right);
+template void matmul<std::complex<double>>(
+    const Matrix2d<std::complex<double>>& left,
+    const Matrix2d<std::complex<double>>& right,
+    Matrix2d<std::complex<double>>& result);
+
+template Matrix2d<double> axpby<double>(const double alpha,
+                                        const Matrix2d<double>& left,
+                                        const double beta,
+                                        const Matrix2d<double>& right);
+template void axpby<double>(const double alpha,
+                            const Matrix2d<double>& left,
+                            const double beta,
+                            const Matrix2d<double>& right,
+                            Matrix2d<double>& result);
+template Matrix2d<std::complex<double>> axpby<std::complex<double>>(
+    const std::complex<double> alpha,
+    const Matrix2d<std::complex<double>>& left,
+    const std::complex<double> beta,
+    const Matrix2d<std::complex<double>>& right);
+template void axpby<std::complex<double>>(
+    const std::complex<double> alpha,
+    const Matrix2d<std::complex<double>>& left,
+    const std::complex<double> beta,
+    const Matrix2d<std::complex<double>>& right,
+    Matrix2d<std::complex<double>>& result);
+
+template Matrix2d<double> scale<double>(const Matrix2d<double>& matrix,
+                                        const double factor);
+template void scale<double>(const Matrix2d<double>& matrix,
+                            const double factor,
+                            Matrix2d<double>& result);
+template Matrix2d<std::complex<double>> scale<std::complex<double>>(
+    const Matrix2d<std::complex<double>>& matrix,
+    const std::complex<double> factor);
+template void scale<std::complex<double>>(
+    const Matrix2d<std::complex<double>>& matrix,
+    const std::complex<double> factor,
+    Matrix2d<std::complex<double>>& result);
+
 template Matrix2d<double> eye<double>(const int n);
 template Matrix2d<std::complex<double>> eye<std::complex<double>>(const int n);
+template Matrix2d<double> transpose<double>(const Matrix2d<double>& matrix);
+template Matrix2d<std::complex<double>> transpose<std::complex<double>>(
+    const Matrix2d<std::complex<double>>& matrix);
+template Matrix2d<double> dagger<double>(const Matrix2d<double>& matrix);
+template Matrix2d<std::complex<double>> dagger<std::complex<double>>(
+    const Matrix2d<std::complex<double>>& matrix);
 } // namespace matrix2d_linalg
