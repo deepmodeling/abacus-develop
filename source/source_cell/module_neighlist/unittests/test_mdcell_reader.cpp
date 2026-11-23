@@ -350,7 +350,7 @@ TEST(MDCellReaderTest, RestartStruPreservesAtomRecordsAcrossRanks)
     StruMeta metadata;
     metadata.species.resize(2);
     const std::string output_file = "distributed_mdcell_restart.STRU";
-    mdcell::print_stru_file(mdcell, metadata, output_file, "", false, true);
+    mdcell::print_stru_file(mdcell, metadata, output_file, "", false, true, false);
 
     DomainDecomposition reader_decomp;
     MDCell round_trip = MDCellReader::read_stru(output_file,
@@ -489,12 +489,12 @@ TEST(MDCellReaderTest, STRUAppendWithFrameComment)
 
     // First frame: append=false, frame comment set.
     mdcell::print_stru_file(mdcell, metadata, output_file,
-                            "# MD step 1\n\n", /*append=*/false, /*include_velocity=*/true);
+                            "# MD step 1\n\n", /*append=*/false, /*include_velocity=*/true, /*include_force=*/false);
     // Second frame: append=true with a different comment.
     mdcell::print_stru_file(mdcell, metadata, output_file,
-                            "# MD step 2\n\n", /*append=*/true, /*include_velocity=*/true);
+                            "# MD step 2\n\n", /*append=*/true, /*include_velocity=*/true, /*include_force=*/false);
     mdcell::print_stru_file(mdcell, metadata, ordinary_file,
-                            "# MD step 2\n\n", /*append=*/false, /*include_velocity=*/false);
+                            "# MD step 2\n\n", /*append=*/false, /*include_velocity=*/false, /*include_force=*/false);
 
     if (rank == 0)
     {
@@ -574,9 +574,9 @@ TEST(MDCellReaderTest, STRUFreshRunTruncatesPreviousFrames)
 
     // Previous run: frames 1 and 2 accumulate.
     mdcell::print_stru_file(mdcell, metadata, output_file,
-                            "# MD step 1\n\n", /*append=*/false, /*include_velocity=*/true);
+                            "# MD step 1\n\n", /*append=*/false, /*include_velocity=*/true, /*include_force=*/false);
     mdcell::print_stru_file(mdcell, metadata, output_file,
-                            "# MD step 2\n\n", /*append=*/true, /*include_velocity=*/true);
+                            "# MD step 2\n\n", /*append=*/true, /*include_velocity=*/true, /*include_force=*/false);
 
     // The extraction runs on rank zero only; broadcast its result so every
     // rank takes the same (collective-safe) return decision. Later
@@ -601,7 +601,7 @@ TEST(MDCellReaderTest, STRUFreshRunTruncatesPreviousFrames)
     // Fresh run: the first frame truncates the fixed-name file (append=false)
     // and starts numbering from step 1 again.
     mdcell::print_stru_file(mdcell, metadata, output_file,
-                            "# MD step 1\n\n", /*append=*/false, /*include_velocity=*/true);
+                            "# MD step 1\n\n", /*append=*/false, /*include_velocity=*/true, /*include_force=*/false);
 
     if (rank == 0)
     {
@@ -650,7 +650,7 @@ TEST(MDCellReaderTest, STRUAtomOrderStaysStableAcrossOwnerChanges)
         const ModuleBase::Vector3<double> cart(position, 0.0, 0.0);
         const ModuleBase::Vector3<double> frac(fractional_position, 0.0, 0.0);
         const ModuleBase::Vector3<double> vel(velocity, 0.0, 0.0);
-        const ModuleBase::Vector3<double> force(0.0, 0.0, 0.0);
+        const ModuleBase::Vector3<double> force(index + 0.25, 0.0, 0.0);
         const ModuleBase::Vector3<int> move(1, 1, 1);
         std::vector<LocalAtom> atoms;
         atoms.push_back(LocalAtom(cart, frac, vel, force, move, 1.0, 0, index, world.rank()));
@@ -659,8 +659,9 @@ TEST(MDCellReaderTest, STRUAtomOrderStaysStableAcrossOwnerChanges)
                                          atoms, std::vector<std::string>{"A"},
                                          std::vector<double>{1.0}, std::vector<std::int64_t>{4},
                                          0.0, world);
+        cell.owned_atoms()[0].force = force;
         const bool append = frame != 0;
-        mdcell::print_stru_file(cell, metadata, filename, "", append, true);
+        mdcell::print_stru_file(cell, metadata, filename, "", append, true, true);
     }
 
     if (world.rank() == 0)
@@ -693,10 +694,17 @@ TEST(MDCellReaderTest, STRUAtomOrderStaysStableAcrossOwnerChanges)
                 double vx = 0.0;
                 double vy = 0.0;
                 double vz = 0.0;
+                double fx = 0.0;
+                double fy = 0.0;
+                double fz = 0.0;
                 record >> x >> y >> z >> marker >> mx >> my >> mz >> marker >> vx >> vy >> vz;
+                record >> marker >> fx >> fy >> fz;
                 ASSERT_FALSE(record.fail());
                 EXPECT_NEAR(x, (index + 1.0) * ModuleBase::BOHR_TO_A, 1.0e-9);
                 EXPECT_DOUBLE_EQ(vx, index + 0.125);
+                const double expected_force = (index + 0.25) * ModuleBase::Hartree_to_eV
+                                              * ModuleBase::ANGSTROM_AU;
+                EXPECT_NEAR(fx, expected_force, 1.0e-9);
             }
         }
         EXPECT_EQ(frames, 2);

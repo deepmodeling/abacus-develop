@@ -561,6 +561,7 @@ TEST_F(MD_func_test, print_stress)
 {
     const std::string log_path = testing::TempDir() + "abacus-md-print-stress.log";
     std::ofstream running_log(log_path.c_str());
+    virial(0, 1) = 1.0;
     MD_func::print_stress(running_log, virial, stress);
     running_log.close();
 
@@ -572,6 +573,20 @@ TEST_F(MD_func_test, print_stress)
     EXPECT_THAT(output_str, testing::HasSubstr("IONIC (KINETIC) PART OF STRESS: 0 kbar"));
     getline(ifs, output_str);
     EXPECT_THAT(output_str, testing::HasSubstr("MD PRESSURE (ELECTRONS+IONS)  : 0 kbar"));
+    getline(ifs, output_str);
+    EXPECT_EQ(output_str, " VIRIAL (kbar):");
+    getline(ifs, output_str);
+    std::istringstream first_virial_row(output_str);
+    double vxx = 0.0;
+    double vxy = 0.0;
+    double vxz = 0.0;
+    first_virial_row >> vxx >> vxy >> vxz;
+    ASSERT_FALSE(first_virial_row.fail());
+    const double kbar_per_atomic_unit = ModuleBase::HARTREE_SI
+                                        / std::pow(ModuleBase::BOHR_RADIUS_SI, 3) * 1.0e-8;
+    EXPECT_DOUBLE_EQ(vxx, 0.0);
+    EXPECT_NEAR(vxy, kbar_per_atomic_unit, 1.0e-7);
+    EXPECT_DOUBLE_EQ(vxz, 0.0);
     /*
         getline(ifs, output_str);
         getline(ifs, output_str);

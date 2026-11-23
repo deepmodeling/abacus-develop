@@ -41,12 +41,12 @@ def run_case(executable, fixture, out_stru, out_freq_ion, out_app_flag, expected
         if not checkpoint.is_file():
             raise AssertionError("Missing STRU_restart")
         checkpoint_text = checkpoint.read_text()
-        if "# MD step 4" not in checkpoint_text or " v " not in checkpoint_text:
+        if "# MD step 4" not in checkpoint_text or " v " not in checkpoint_text or " f " in checkpoint_text:
             raise AssertionError("Restart structure lacks matching step or velocities")
         for filename in expected:
             frame_text = (structure_dir / filename).read_text()
-            if "Cartesian_angstrom" not in frame_text or " v " in frame_text:
-                raise AssertionError("Ordinary structure has wrong coordinates or velocities: " + filename)
+            if "Cartesian_angstrom" not in frame_text or " v " not in frame_text or " f " not in frame_text:
+                raise AssertionError("Ordinary structure lacks coordinates, velocities or forces: " + filename)
 
         if out_stru == 0:
             restart_input = input_text.replace("md_nstep 5", "md_nstep 7")

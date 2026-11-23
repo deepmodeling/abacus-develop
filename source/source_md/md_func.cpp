@@ -445,6 +445,15 @@ void print_stress(std::ofstream &ofs, const ModuleBase::matrix &virial, const Mo
         << std::endl;
     ofs << " MD PRESSURE (ELECTRONS+IONS)  : " << stress_scalar * unit_transform << " kbar" << std::endl;
 
+    ofs << " VIRIAL (kbar):" << std::endl;
+    ofs << std::setprecision(12);
+    for (int i = 0; i < 3; ++i)
+    {
+        ofs << " " << virial(i, 0) * unit_transform << " " << virial(i, 1) * unit_transform
+            << " " << virial(i, 2) * unit_transform << std::endl;
+    }
+    ofs << std::setprecision(8);
+
     // one should use 'print_stress' function in ../source/source_io/output_log.cpp
     /*
         ofs.unsetf(std::ios::fixed);

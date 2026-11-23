@@ -232,6 +232,8 @@ void MD_base::print_md(std::ofstream &ofs, const bool &cal_stress)
 
     if (cal_stress)
     {
+        const int output_step = step_ + step_rst_ + 1;
+        ofs << " MD STEP: " << output_step << std::endl;
         MD_func::print_stress(ofs, virial, stress);
         ofs << std::endl;
     }
