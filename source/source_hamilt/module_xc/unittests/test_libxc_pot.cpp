@@ -95,11 +95,15 @@ TEST_P(LibxcCudaPotential, MatchesHostAcrossBatchBoundaries)
                                         exc_device_data, vrho_device_data, vsigma_device_data);
     for (std::size_t i = 0; i < exc_host.size(); ++i)
     {
+        ASSERT_TRUE(std::isfinite(exc_host[i])) << i;
+        ASSERT_TRUE(std::isfinite(exc_device[i])) << i;
         const double tolerance = 2.0e-11 * std::max(1.0, std::abs(exc_host[i]));
         ASSERT_NEAR(exc_device[i], exc_host[i], tolerance) << i;
     }
     for (std::size_t i = 0; i < vrho_host.size(); ++i)
     {
+        ASSERT_TRUE(std::isfinite(vrho_host[i])) << i;
+        ASSERT_TRUE(std::isfinite(vrho_device[i])) << i;
         const double tolerance = 2.0e-10 * std::max(1.0, std::abs(vrho_host[i]));
         ASSERT_NEAR(vrho_device[i], vrho_host[i], tolerance) << i;
     }
@@ -107,6 +111,8 @@ TEST_P(LibxcCudaPotential, MatchesHostAcrossBatchBoundaries)
     {
         for (std::size_t i = 0; i < vsigma_host.size(); ++i)
         {
+            ASSERT_TRUE(std::isfinite(vsigma_host[i])) << i;
+            ASSERT_TRUE(std::isfinite(vsigma_device[i])) << i;
             const double tolerance = 2.0e-10 * std::max(1.0, std::abs(vsigma_host[i]));
             ASSERT_NEAR(vsigma_device[i], vsigma_host[i], tolerance) << i;
         }
