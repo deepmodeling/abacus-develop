@@ -33,11 +33,11 @@ struct General_Exx_Info
     size_t hybrid_step = 1;
 
     // PW EXX operator configuration:
-    bool exxace = false;              // ACE acceleration of the EXX operator (INPUT exxace)
-    bool gamma_extrapolation = true;  // INPUT exx_gamma_extra
-    double ecut_exx = 0.0;            // resolved EXX cutoff (Ry): ecutexx when set, else ecutrho
-    bool ecutexx_user_set = false;    // ecutexx explicitly set (controls small-grid fallback warnings)
-    int exx_batch_size = 0;           // band chunk width of the batched EXX path; 0 = all bands
+    bool exxace = false;             // ACE acceleration of the EXX operator (INPUT exxace)
+    bool gamma_extrapolation = true; // INPUT exx_gamma_extra
+    double ecut_exx = 0.0;           // resolved EXX cutoff (Ry): ecutexx when set, else ecutrho
+    bool ecutexx_user_set = false;   // ecutexx explicitly set (controls small-grid fallback warnings)
+    int exx_batch_size = 0;          // band chunk width of the batched EXX path; 0 = all bands
 };
 
 /// Forward declaration for Input_para (full definition in input_parameter.h)
@@ -45,6 +45,6 @@ struct Input_para;
 
 /// Initialize General_Exx_Info from input parameters.
 /// Returns true if opt_orb mode is requested (generate_opt_orb).
-bool init_general_exx_info(General_Exx_Info& info, const Input_para& inp);
+bool init_general_exx_info(General_Exx_Info &info, const Input_para &inp);
 
 #endif // GENERAL_EXX_INFO_H

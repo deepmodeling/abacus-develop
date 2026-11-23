@@ -1,4 +1,7 @@
 #include "source_lcao/lcao_set.h"
+#include "source_base/global_function.h"
+#include "source_base/parallel_common.h"
+#include "source_io/module_dm/write_dmk.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_psi/setup_psi.h" // use Setup_Psi
 #include "source_io/module_wf/read_wfc_nao.h" // use read_wfc_nao
@@ -72,6 +75,12 @@ void LCAO_domain::set_pot(
     //! 1) init local pseudopotentials
     locpp.init_vloc(ucell, &pw_rho);
     locpp.print_vloc(ucell, &pw_rho, inp.out_element_info, PARAM.globalv.global_out_dir);
+    if (inp.out_element_info && GlobalV::MY_RANK == 0)
+    {
+        GlobalV::ofs_running << " Write element information to directory: "
+                             << PARAM.globalv.global_out_dir
+                             << " (" << ucell.ntype << " element type(s))" << std::endl;
+    }
 
     //! 2) init potentials
     if (pelec->pot == nullptr)
@@ -93,6 +102,8 @@ void LCAO_domain::set_pot(
             ModuleBase::WARNING_QUIT("LCAO_domain::set_pot",
                                      "Global row and column dimensions do not match");
         }
+        const DFTU_BASE::OccmatSocLayout occmat_soc_layout
+            = DFTU_BASE::lcao_soc_layout(inp.dft_plus_u);
         dftu.init_base(ucell,
                        PARAM.globalv.npol,
                        inp.nspin,
@@ -107,7 +118,7 @@ void LCAO_domain::set_pot(
                        PARAM.globalv.uramping,
                        inp.init_occ_mat,
                        inp.mixing_dftu,
-                       DFTU_BASE::SOC_LAYOUT_SPIN_BASIS_REAL);
+                       occmat_soc_layout);
     }
 
     //! 4) init exact exchange calculations
@@ -161,15 +172,69 @@ void LCAO_domain::init_chg_dm(
     module_dm::Setup_DM<TK>& dmat,
     const UnitCell& ucell,
     const Parallel_Orbitals* pv,
-    Charge* chr)
+    Charge* chr,
+    const K_Vectors& kv,
+    const int istep,
+    const int out_app_flag,
+    const std::string& ks_solver)
 {
     ModuleBase::TITLE("LCAO_domain", "init_chg_dm");
 
-    // Step 1: Read density matrix from file
-    LCAO_domain::init_dm_from_file<TK>(readin_dir, nspin, dmat, ucell, pv);
+    const int nspin_dm = (nspin == 2) ? 2 : 1;
+    bool dmr_found = false;
+    // Rank 0 probes the DMR files and broadcasts the decision so every rank
+    // takes the same communication path (DMR distribution vs DM(k) broadcast);
+    // a rank-local decision could deadlock the two mismatched collectives.
+    if (GlobalV::MY_RANK == 0)
+    {
+        for (int is = 0; is < nspin_dm; ++is)
+        {
+            const std::string dmfile = readin_dir + "dmrs" + std::to_string(is + 1) + "_nao.csr";
+            std::ifstream ifs(dmfile.c_str());
+            if (ifs.good())
+            {
+                dmr_found = true;
+                break;
+            }
+        }
+    }
+    Parallel_Common::bcast_bool(dmr_found);
 
-    // Step 2: Convert density matrix to charge density
-    // skip_normalize=true here (loaded DM is already normalized), so omega is unused.
+    // Preserve the established DMR restart path. Only when no DMR file exists
+    // do we interpret init_chg=dm as a request to restart from dense DM(k).
+    // An incomplete DMR set is not silently replaced by a different format.
+    if (dmr_found)
+    {
+        LCAO_domain::init_dm_from_file<TK>(readin_dir, nspin, dmat, ucell, pv);
+    }
+    else
+    {
+        const int nk = kv.get_nks() / nspin_dm;
+        const bool column_major = ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(ks_solver);
+        const std::string dmk_dir = (out_app_flag == 2) ? readin_dir + "MAT/" : readin_dir;
+        std::vector<std::vector<TK>>& dmk = dmat.dm->get_dmk_vec();
+        const bool read_success = ModuleIO::read_dmk(nspin_dm,
+                                                     nk,
+                                                     kv,
+                                                     pv->para_2d(),
+                                                     column_major,
+                                                     dmk_dir,
+                                                     istep,
+                                                     out_app_flag,
+                                                     dmk,
+                                                     GlobalV::ofs_running);
+        if (!read_success)
+        {
+            ModuleBase::WARNING_QUIT(
+                "LCAO_domain::init_chg_dm",
+                "Failed to initialize the density: no usable DMR CSR or DM(k) files were found in "
+                    + readin_dir);
+        }
+        dmat.dm->cal_dmr(-1);
+    }
+
+    // Convert density matrix to charge density. The loaded DM is already
+    // normalized, so omega is unused when skip_normalize is true.
     LCAO_domain::dm2rho(dmat.dm->get_dmr_vec(), nspin, chr, PARAM.inp.nelec, ucell.omega, true);
 
     return;
@@ -339,14 +404,22 @@ template void LCAO_domain::init_chg_dm<double>(
     module_dm::Setup_DM<double>& dmat,
     const UnitCell& ucell,
     const Parallel_Orbitals* pv,
-    Charge* chr);
+    Charge* chr,
+    const K_Vectors& kv,
+    const int istep,
+    const int out_app_flag,
+    const std::string& ks_solver);
 template void LCAO_domain::init_chg_dm<std::complex<double>>(
     const std::string& readin_dir,
     const int nspin,
     module_dm::Setup_DM<std::complex<double>>& dmat,
     const UnitCell& ucell,
     const Parallel_Orbitals* pv,
-    Charge* chr);
+    Charge* chr,
+    const K_Vectors& kv,
+    const int istep,
+    const int out_app_flag,
+    const std::string& ks_solver);
 
 template void LCAO_domain::init_hr_from_file<double>(
     const std::string hrfile,

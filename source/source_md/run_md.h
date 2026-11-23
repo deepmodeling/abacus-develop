@@ -3,7 +3,6 @@
 
 class MDCell;
 class DomainDecomposition;
-class UnitCell;
 struct Parameter;
 
 namespace ModuleESolver
@@ -21,7 +20,7 @@ namespace Run_MD
 /// fire at `current_step`. A frequency <= 0 disables the action (never
 /// fires). Keeping output and restart cadences behind this predicate makes
 /// their independence directly unit-testable.
-bool is_cadence_step(int current_step, int freq);
+inline bool is_cadence_step(const int current_step, const int freq) { return freq > 0 && current_step % freq == 0; }
 
 /// Returns true when the MD loop should write a STRU frame at
 /// `current_step`. A frame is produced on every md_restartfreq step (so
@@ -30,11 +29,28 @@ bool is_cadence_step(int current_step, int freq);
 /// frequency follows out_freq_ion with md_restartfreq fallback, matching
 /// md_line(). This predicate exists so the "checkpoint frame tracks
 /// Restart_md.txt" invariant stays unit-testable.
-bool is_frame_write_step(int current_step, int out_freq_ion, int md_restartfreq, bool out_stru);
+inline bool is_frame_write_step(
+    const int current_step,
+    const int out_freq_ion,
+    const int md_restartfreq,
+    const bool out_stru)
+{
+    const int eff_output_freq = (out_freq_ion > 0) ? out_freq_ion : md_restartfreq;
+    const bool do_output_step = is_cadence_step(current_step, eff_output_freq);
+    const bool do_restart_step = is_cadence_step(current_step, md_restartfreq);
+    const bool want_output_frame = do_output_step && out_stru;
+    const bool want_checkpoint_frame = do_restart_step;
+    return want_output_frame || want_checkpoint_frame;
+}
 
-void prepare_mdcell(MDCell& mdcell, const Parameter& param_in, DomainDecomposition& decomp);
-
-void prepare_mdcell(MDCell& mdcell, UnitCell& ucell, DomainDecomposition& decomp);
+/// Returns true when `current_step` is the final ionic step of the run.
+/// current_step is the global step (local step + restart offset); md_nstep is
+/// the global step count, so the last processed step is md_nstep - 1. The
+/// final step is always written even if it does not sit on the output cadence.
+inline bool is_last_step(const int current_step, const int md_nstep)
+{
+    return md_nstep > 0 && current_step == md_nstep - 1;
+}
 
 /**
  * @brief the md loop line
@@ -43,10 +59,11 @@ void prepare_mdcell(MDCell& mdcell, UnitCell& ucell, DomainDecomposition& decomp
  * @param p_esolver energy solver
  * @param md_para input parameters used in md
  */
-void md_line(MDCell& mdcell,
-             ModuleESolver::ESolver* p_esolver,
-             const Parameter& param_in,
-             DomainDecomposition& decomp);
+void md_line(
+    MDCell &mdcell,
+    ModuleESolver::ESolver *p_esolver,
+    const Parameter &param_in,
+    DomainDecomposition &decomp);
 } // namespace Run_MD
 
 #endif

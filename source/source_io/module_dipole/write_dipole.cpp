@@ -1,5 +1,6 @@
 #include "source_base/parallel_reduce.h"
 #include "source_io/module_dipole/dipole_io.h"
+#include "source_io/module_output/write_notice.h"
 
 #include <iomanip>
 
@@ -67,7 +68,7 @@ void write_dipole(const UnitCell& ucell,
         }
     }
 
-    ofs_running << " Write dipole data to file: " << fn << std::endl;
+    ModuleIO::write_notice(ofs_running, "Dipole data", fn);
 
     // Empty local FFT partitions contribute zero but must still join the subsequent reduction.
     // Do NOT reject nplane == 0 alone: some MPI ranks legitimately hold zero

@@ -7,10 +7,8 @@ namespace ModuleMD
 namespace SNAP
 {
 
-Calculator::Calculator(const ModelData& model)
-    : model_(model),
-      descriptor_evaluator_(model.parameters),
-      descriptor_size_(0)
+Calculator::Calculator(const ModelData &model)
+    : model_(model), descriptor_evaluator_(model.parameters), descriptor_size_(0)
 {
     const std::size_t channels = descriptor_evaluator_.channel_count();
     descriptor_size_ = descriptor_evaluator_.bispectrum_size() * channels * channels * channels;
@@ -18,18 +16,16 @@ Calculator::Calculator(const ModelData& model)
     {
         throw std::invalid_argument("SNAP coefficient blocks do not match the element list.");
     }
-    const std::size_t expected_count = descriptor_size_ + 1
-                                       + (model_.parameters.quadratic_flag
-                                              ? descriptor_size_ * (descriptor_size_ + 1) / 2
-                                              : 0);
+    const std::size_t expected_count =
+        descriptor_size_ + 1 + (model_.parameters.quadratic_flag ? descriptor_size_ * (descriptor_size_ + 1) / 2 : 0);
     for (std::size_t element = 0; element < model_.coefficients.size(); ++element)
     {
         if (model_.coefficients[element].size() != expected_count)
         {
-            const std::string message = "SNAP coefficient count for element " + model_.parameters.elements[element]
-                                        + " does not match the descriptor size: expected "
-                                        + std::to_string(expected_count) + ", found "
-                                        + std::to_string(model_.coefficients[element].size()) + ".";
+            const std::string message = "SNAP coefficient count for element " + model_.parameters.elements[element] +
+                                        " does not match the descriptor size: expected " +
+                                        std::to_string(expected_count) + ", found " +
+                                        std::to_string(model_.coefficients[element].size()) + ".";
             throw std::invalid_argument(message);
         }
     }
@@ -39,27 +35,27 @@ Calculator::Calculator(const ModelData& model)
         self_spectra_.reserve(model_.coefficients.size());
         for (std::size_t element = 0; element < model_.coefficients.size(); ++element)
         {
-            const std::vector<std::complex<double> > self_u
-                = descriptor_evaluator_.accumulate_u(empty_neighbors, element);
+            const std::vector<std::complex<double>> self_u =
+                descriptor_evaluator_.accumulate_u(empty_neighbors, element);
             const std::vector<double> self_bispectrum = descriptor_evaluator_.compute_bispectrum(self_u);
             self_spectra_.push_back(self_bispectrum);
         }
     }
 }
 
-EnergyResult Calculator::compute(const std::vector<Neighbor>& neighbors, const std::size_t central_element) const
+EnergyResult Calculator::compute(const std::vector<Neighbor> &neighbors, const std::size_t central_element) const
 {
     if (central_element >= model_.coefficients.size())
     {
         throw std::out_of_range("SNAP central element index is outside the model.");
     }
 
-    const std::vector<std::complex<double> > u = descriptor_evaluator_.accumulate_u(neighbors, central_element);
+    const std::vector<std::complex<double>> u = descriptor_evaluator_.accumulate_u(neighbors, central_element);
     return compute_from_u(u, central_element);
 }
 
-EnergyResult Calculator::compute_from_u(const std::vector<std::complex<double> >& u,
-                                        const std::size_t central_element) const
+EnergyResult Calculator::compute_from_u(
+    const std::vector<std::complex<double>> &u, const std::size_t central_element) const
 {
     EnergyResult result;
     result.descriptor = descriptor_evaluator_.compute_bispectrum(u);
@@ -70,7 +66,7 @@ EnergyResult Calculator::compute_from_u(const std::vector<std::complex<double> >
             result.descriptor[index] -= self_spectra_[central_element][index];
         }
     }
-    const std::vector<double>& coefficients = model_.coefficients[central_element];
+    const std::vector<double> &coefficients = model_.coefficients[central_element];
     result.energy = coefficients[0];
     for (std::size_t index = 0; index < result.descriptor.size(); ++index)
     {
@@ -83,27 +79,27 @@ EnergyResult Calculator::compute_from_u(const std::vector<std::complex<double> >
         {
             for (std::size_t j = i; j < result.descriptor.size(); ++j)
             {
-                result.energy += coefficients[coefficient++] * result.descriptor[i] * result.descriptor[j]
-                                 * (i == j ? 0.5 : 1.0);
+                result.energy +=
+                    coefficients[coefficient++] * result.descriptor[i] * result.descriptor[j] * (i == j ? 0.5 : 1.0);
             }
         }
     }
     return result;
 }
 
-ForceResult Calculator::compute_with_analytic_force(const std::vector<Neighbor>& neighbors,
-                                                    const std::size_t central_element) const
+ForceResult Calculator::compute_with_analytic_force(
+    const std::vector<Neighbor> &neighbors, const std::size_t central_element) const
 {
     if (central_element >= model_.coefficients.size())
     {
         throw std::out_of_range("SNAP central element index is outside the model.");
     }
     ForceResult result;
-    const std::vector<std::complex<double> > u = descriptor_evaluator_.accumulate_u(neighbors, central_element);
+    const std::vector<std::complex<double>> u = descriptor_evaluator_.accumulate_u(neighbors, central_element);
     result.energy = compute_from_u(u, central_element);
     result.center_force.assign(3, 0.0);
     result.neighbor_forces.assign(neighbors.size(), std::vector<double>(3, 0.0));
-    const std::vector<double>& coefficients = model_.coefficients[central_element];
+    const std::vector<double> &coefficients = model_.coefficients[central_element];
     std::vector<double> force_coefficients(result.energy.descriptor.size(), 0.0);
     for (std::size_t i = 0; i < force_coefficients.size(); ++i)
     {
@@ -135,12 +131,11 @@ ForceResult Calculator::compute_with_analytic_force(const std::vector<Neighbor>&
         {
             const UWithDerivative u_derivative =
                 descriptor_evaluator_.compute_u_with_derivative(neighbors[neighbor_index], direction);
-            std::vector<std::complex<double> > du(u.size(), std::complex<double>(0.0, 0.0));
-            const std::size_t derivative_offset = model_.parameters.chem_flag
-                                                       ? neighbors[neighbor_index].element_index
-                                                             * descriptor_evaluator_.u_size()
-                                                       : 0;
-            const std::vector<std::complex<double> >& one_neighbor_derivative = u_derivative.derivatives;
+            std::vector<std::complex<double>> du(u.size(), std::complex<double>(0.0, 0.0));
+            const std::size_t derivative_offset =
+                model_.parameters.chem_flag ? neighbors[neighbor_index].element_index * descriptor_evaluator_.u_size()
+                                            : 0;
+            const std::vector<std::complex<double>> &one_neighbor_derivative = u_derivative.derivatives;
             for (std::size_t index = 0; index < one_neighbor_derivative.size(); ++index)
             {
                 du[derivative_offset + index] = one_neighbor_derivative[index];
@@ -151,16 +146,15 @@ ForceResult Calculator::compute_with_analytic_force(const std::vector<Neighbor>&
             {
                 derivative += force_coefficients[index] * db[index];
             }
-            result.center_force[static_cast<std::size_t>(direction)] += derivative;
-            result.neighbor_forces[neighbor_index][static_cast<std::size_t>(direction)] = -derivative;
+            result.center_force[direction] += derivative;
+            result.neighbor_forces[neighbor_index][direction] = -derivative;
         }
     }
     return result;
 }
 
-ForceResult Calculator::compute_with_finite_difference_force(const std::vector<Neighbor>& neighbors,
-                                                             const std::size_t central_element,
-                                                             const double displacement) const
+ForceResult Calculator::compute_with_finite_difference_force(
+    const std::vector<Neighbor> &neighbors, const std::size_t central_element, const double displacement) const
 {
     if (displacement <= 0.0)
     {
@@ -194,8 +188,8 @@ ForceResult Calculator::compute_with_finite_difference_force(const std::vector<N
             }
             const double derivative =
                 (compute(plus, central_element).energy - compute(minus, central_element).energy) / (2.0 * displacement);
-            result.center_force[static_cast<std::size_t>(direction)] += derivative;
-            result.neighbor_forces[neighbor_index][static_cast<std::size_t>(direction)] -= derivative;
+            result.center_force[direction] += derivative;
+            result.neighbor_forces[neighbor_index][direction] -= derivative;
         }
     }
     return result;
@@ -210,13 +204,14 @@ CellAccumulator::CellAccumulator(const std::size_t atom_count) : forces_(atom_co
     virial_.fill(0.0);
 }
 
-void CellAccumulator::add(const std::size_t center_index,
-                          const std::vector<std::size_t>& neighbor_indices,
-                          const std::vector<Neighbor>& neighbors,
-                          const ForceResult& result)
+void CellAccumulator::add(
+    const std::size_t center_index,
+    const std::vector<std::size_t> &neighbor_indices,
+    const std::vector<Neighbor> &neighbors,
+    const ForceResult &result)
 {
-    if (center_index >= forces_.size() || neighbor_indices.size() != neighbors.size()
-        || result.neighbor_forces.size() != neighbors.size() || result.center_force.size() != 3)
+    if (center_index >= forces_.size() || neighbor_indices.size() != neighbors.size() ||
+        result.neighbor_forces.size() != neighbors.size() || result.center_force.size() != 3)
     {
         throw std::invalid_argument("SNAP cell contribution has inconsistent atom or force indices.");
     }
@@ -231,44 +226,32 @@ void CellAccumulator::add(const std::size_t center_index,
     energy_ += result.energy.energy;
     for (int direction = 0; direction < 3; ++direction)
     {
-        forces_[center_index][static_cast<std::size_t>(direction)] +=
-            result.center_force[static_cast<std::size_t>(direction)];
+        forces_[center_index][direction] += result.center_force[direction];
     }
     for (std::size_t index = 0; index < neighbors.size(); ++index)
     {
-        const Neighbor& neighbor = neighbors[index];
+        const Neighbor &neighbor = neighbors[index];
         const double displacement[3] = {neighbor.x, neighbor.y, neighbor.z};
         const std::size_t atom = neighbor_indices[index];
         for (int direction = 0; direction < 3; ++direction)
         {
-            forces_[atom][static_cast<std::size_t>(direction)] +=
-                result.neighbor_forces[index][static_cast<std::size_t>(direction)];
+            forces_[atom][direction] += result.neighbor_forces[index][direction];
         }
         for (int row = 0; row < 3; ++row)
         {
             for (int column = 0; column < 3; ++column)
             {
-                virial_[static_cast<std::size_t>(3 * row + column)] +=
-                    displacement[row] * result.neighbor_forces[index][static_cast<std::size_t>(column)];
+                virial_[3 * row + column] += displacement[row] * result.neighbor_forces[index][column];
             }
         }
     }
 }
 
-double CellAccumulator::energy() const
-{
-    return energy_;
-}
+double CellAccumulator::energy() const { return energy_; }
 
-const std::vector<std::array<double, 3> >& CellAccumulator::forces() const
-{
-    return forces_;
-}
+const std::vector<std::array<double, 3>> &CellAccumulator::forces() const { return forces_; }
 
-const std::array<double, 9>& CellAccumulator::virial() const
-{
-    return virial_;
-}
+const std::array<double, 9> &CellAccumulator::virial() const { return virial_; }
 
 } // namespace SNAP
 } // namespace ModuleMD

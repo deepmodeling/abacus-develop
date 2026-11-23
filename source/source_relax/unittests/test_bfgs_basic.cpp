@@ -72,8 +72,8 @@ TEST_F(BFGSBasicTest, UpdateInverseHessianCase1)
     bfgs.update_inverse_hessian_for_testing(lat0, ofs);
     ofs.close();
 
-    std::string expected_output
-        = " WARINIG: unexpected behaviour in update_inverse_hessian\n Resetting bfgs history \n";
+    std::string expected_output =
+        " WARINIG: unexpected behaviour in update_inverse_hessian\n Resetting bfgs history \n";
     std::ifstream ifs("test_log_update_inverse_hessian_case1.log");
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     ifs.close();
@@ -122,13 +122,13 @@ TEST_F(BFGSBasicTest, CheckWolfeConditions)
     bfgs.check_wolfe_conditions_for_testing(ofs, etot_info);
     ofs.close();
 
-    std::string expected_output
-        = "                            etot - etot_p = 10\n                    relax_bfgs_w1 * dot_p = -0\n            "
-          "                          dot = 0\n                    relax_bfgs_w2 * dot_p = -0\n                         "
-          "   relax_bfgs_w1 = -1\n                            relax_bfgs_w2 = -1\n                                   "
-          "wolfe1 = 0\n                                   wolfe2 = 0\n                            etot - etot_p = 10\n "
-          "                   relax_bfgs_w1 * dot_p = -0\n                                   wolfe1 = 0\n              "
-          "                     wolfe2 = 0\n                wolfe condition satisfied = 0\n";
+    std::string expected_output =
+        "                            etot - etot_p = 10\n                    relax_bfgs_w1 * dot_p = -0\n            "
+        "                          dot = 0\n                    relax_bfgs_w2 * dot_p = -0\n                         "
+        "   relax_bfgs_w1 = -1\n                            relax_bfgs_w2 = -1\n                                   "
+        "wolfe1 = 0\n                                   wolfe2 = 0\n                            etot - etot_p = 10\n "
+        "                   relax_bfgs_w1 * dot_p = -0\n                                   wolfe1 = 0\n              "
+        "                     wolfe2 = 0\n                wolfe condition satisfied = 0\n";
 
     std::ifstream ifs("test_log_check_wolfe_conditions.log");
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
@@ -261,9 +261,9 @@ TEST_F(BFGSBasicTest, NewStepWarningQuit)
     std::vector<double> etot_info(2, 0.0);
 
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(bfgs.new_step_for_testing(lat0, update_iter, ofs, etot_info, test_relax_method),
-                ::testing::ExitedWithCode(1),
-                "");
+    EXPECT_EXIT(
+        bfgs.new_step_for_testing(lat0, update_iter, ofs, etot_info, test_relax_method), ::testing::ExitedWithCode(1),
+        "");
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("bfgs_ndim > 1 not implemented yet"));
 }
@@ -351,9 +351,8 @@ TEST_F(BFGSBasicTest, ComputeTrustRadiusWarningQuit)
 
     std::ofstream ofs("test_log.log");
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(bfgs.compute_trust_radius_for_testing(ofs, etot_info, test_relax_method),
-                ::testing::ExitedWithCode(1),
-                "");
+    EXPECT_EXIT(
+        bfgs.compute_trust_radius_for_testing(ofs, etot_info, test_relax_method), ::testing::ExitedWithCode(1), "");
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("bfgs history already reset at previous step, we got trapped!"));
 }

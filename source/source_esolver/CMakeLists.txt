@@ -8,10 +8,7 @@ list(
   esolver_ks_pw_tddft.cpp
   esolver_ks_lcaopw.cpp
   esolver_sdft_pw.cpp
-  esolver_lj.cpp
-  esolver_dp.cpp
-  esolver_nep.cpp
-  esolver_snap.cpp
+  esolver_forcefields.cpp
   esolver_of.cpp
   esolver_of_tddft.cpp
   esolver_of_interface.cpp
@@ -47,6 +44,7 @@ if(ENABLE_COVERAGE)
 endif()
 
 if(BUILD_TESTING)
+  add_subdirectory(unittests)
   if(ENABLE_MPI)
     add_subdirectory(test)
   endif()

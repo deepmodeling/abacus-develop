@@ -1,0 +1,181 @@
+//==========================================================
+// Used to genarate ucell
+//==========================================================
+#ifndef SETCELL_H
+#define SETCELL_H
+
+#include "source_base/constants.h"
+#include "source_base/parallel_cell.h"
+#include "source_cell/mdcell.h"
+#include "source_cell/module_neighbor/sltk_atom_arrange.h"
+#include "source_cell/module_neighbor/sltk_grid_driver.h"
+#include "source_cell/unitcell.h"
+#include "source_io/module_parameter/input_parameter.h"
+
+#include <cmath>
+#include <cstdint>
+#include <string>
+#include <vector>
+
+Magnetism::Magnetism()
+{
+    this->tot_mag = 0.0;
+    this->abs_mag = 0.0;
+}
+Magnetism::~Magnetism() {}
+
+class Setcell
+{
+  public:
+    static void setupcell(UnitCell &ucell)
+    {
+        ucell.ntype = 1;
+
+        ucell.atoms = new Atom[ucell.ntype];
+        ucell.set_atom_flag = true;
+
+        ucell.atoms[0].mass = 39.948;
+        ucell.atoms[0].label = "Ar";
+
+        ucell.lat0 = 1;
+        ucell.lat0_angstrom = ucell.lat0 * ModuleBase::BOHR_TO_A;
+        ucell.tpiba = ModuleBase::TWO_PI / ucell.lat0;
+        ucell.tpiba2 = ucell.tpiba * ucell.tpiba;
+
+        ucell.latvec.e11 = ucell.latvec.e22 = ucell.latvec.e33 = 10;
+        ucell.latvec.e12 = ucell.latvec.e13 = ucell.latvec.e23 = 0;
+        ucell.latvec.e21 = ucell.latvec.e31 = ucell.latvec.e32 = 0;
+
+        ucell.a1.x = ucell.latvec.e11;
+        ucell.a1.y = ucell.latvec.e12;
+        ucell.a1.z = ucell.latvec.e13;
+
+        ucell.a2.x = ucell.latvec.e21;
+        ucell.a2.y = ucell.latvec.e22;
+        ucell.a2.z = ucell.latvec.e23;
+
+        ucell.a3.x = ucell.latvec.e31;
+        ucell.a3.y = ucell.latvec.e32;
+        ucell.a3.z = ucell.latvec.e33;
+
+        ucell.nat = 4;
+        ucell.atoms[0].na = 4;
+        ucell.init_vel = true;
+
+        ucell.atoms[0].tau.resize(4);
+        ucell.atoms[0].dis.resize(4);
+        ucell.atoms[0].taud.resize(4);
+        ucell.atoms[0].vel.resize(4);
+        ucell.atoms[0].mbl.resize(4);
+
+        ucell.atoms[0].angle1.resize(4);
+        ucell.atoms[0].angle2.resize(4);
+        ucell.atoms[0].m_loc_.resize(4);
+
+        ucell.atoms[0].taud[0].set(0.0, 0.0, 0.0);
+        ucell.atoms[0].taud[1].set(0.52, 0.52, 0.0);
+        ucell.atoms[0].taud[2].set(0.51, 0.0, 0.5);
+        ucell.atoms[0].taud[3].set(0.0, 0.53, 0.5);
+        ucell.atoms[0].vel[0].set(-0.000132080736364, 7.13429429835e-05, -1.40179977966e-05);
+        ucell.atoms[0].vel[1].set(0.000153039878532, -0.000146533266608, 9.64491480698e-05);
+        ucell.atoms[0].vel[2].set(-0.000133789480226, -3.0451038112e-06, -5.40998380137e-05);
+        ucell.atoms[0].vel[3].set(0.000112830338059, 7.82354274358e-05, -2.83313122596e-05);
+        for (int ia = 0; ia < 4; ++ia)
+        {
+            ucell.atoms[0].tau[ia] = ucell.atoms[0].taud[ia] * ucell.latvec;
+            ucell.atoms[0].mbl[ia].set(1, 1, 1);
+        }
+
+        ucell.omega = std::abs(ucell.latvec.Det()) * ucell.lat0 * ucell.lat0 * ucell.lat0;
+
+        ucell.GT = ucell.latvec.Inverse();
+        ucell.G = ucell.GT.Transpose();
+        ucell.GGT = ucell.G * ucell.GT;
+        ucell.invGGT = ucell.GGT.Inverse();
+
+        ucell.set_iat2itia();
+    };
+
+    /// @brief fill an Input_para with the settings the md tests share.
+    ///        Only the passed-in object is touched: no source compiled by any
+    ///        MODULE_MD target reads esolver_type, search_radius or cal_stress
+    ///        from the global parameter singleton, and the output/readin
+    ///        directories are passed explicitly to setup(), write_restart()
+    ///        and restart().
+    static void parameters(Input_para &input)
+    {
+        input.search_radius = 8.5 * ModuleBase::ANGSTROM_AU;
+        input.esolver_type = "lj";
+
+        input.mdp.dump_virial = true;
+        input.mdp.dump_force = true;
+        input.mdp.dump_vel = true;
+        input.cal_stress = true;
+
+        input.mdp.md_restart = false;
+        input.init_vel = true;
+        input.mdp.md_dt = 1;
+        input.mdp.md_tfirst = input.mdp.md_tlast = 300;
+
+        input.mdp.lj_rcut = {8.5};
+        input.mdp.lj_epsilon = {0.01032};
+        input.mdp.lj_sigma = {3.405};
+
+        input.mdp.msst_direction = 2;
+        input.mdp.msst_qmass = 1;
+        input.mdp.msst_vel = 0;
+        input.mdp.msst_vis = 0;
+        input.mdp.msst_tscale = 0.01;
+
+        input.mdp.md_tfreq = 1;
+        input.mdp.md_tchain = 4;
+        input.mdp.md_pfreq = 1;
+        input.mdp.md_pchain = 4;
+
+        input.mdp.md_damp = 1;
+
+        input.mdp.md_nraise = 2;
+        input.mdp.md_tolerance = 0;
+    };
+
+    static MDCell setup_mdcell(UnitCell &ucell)
+    {
+        std::vector<LocalAtom> owned_atoms;
+        std::vector<std::string> type_labels;
+        std::vector<double> type_masses;
+        std::vector<std::int64_t> type_atom_counts;
+        for (int it = 0; it < ucell.ntype; ++it)
+        {
+            type_labels.push_back(ucell.atoms[it].label);
+            type_masses.push_back(ucell.atoms[it].mass);
+            type_atom_counts.push_back(ucell.atoms[it].na);
+            for (int ia = 0; ia < ucell.atoms[it].na; ++ia)
+            {
+                owned_atoms.push_back(LocalAtom(
+                    ucell.atoms[it].tau[ia], ucell.atoms[it].taud[ia], ucell.atoms[it].vel[ia],
+                    ModuleBase::Vector3<double>(0.0, 0.0, 0.0), ucell.atoms[it].mbl[ia],
+                    ucell.atoms[it].mass / ModuleBase::AU_to_MASS, it, ia, 0));
+            }
+        }
+
+        MDCell mdcell;
+        mdcell.initialize_from_owned_atoms(
+            ucell.latvec, ucell.GT, ucell.lat0, ucell.omega, ucell.nat, owned_atoms, type_labels, type_masses,
+            type_atom_counts, 0.0, ModuleBase::world_comm_domain());
+        return mdcell;
+    }
+
+    static ModuleBase::Vector3<double> fractional_displacement(const LocalAtom &atom)
+    {
+        const ModuleBase::Vector3<double> initial_frac[] = {ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
+            ModuleBase::Vector3<double>(0.52, 0.52, 0.0), ModuleBase::Vector3<double>(0.51, 0.0, 0.5),
+            ModuleBase::Vector3<double>(0.0, 0.53, 0.5)};
+        ModuleBase::Vector3<double> displacement = atom.frac - initial_frac[atom.type_index];
+        displacement.x -= std::floor(displacement.x + 0.5);
+        displacement.y -= std::floor(displacement.y + 0.5);
+        displacement.z -= std::floor(displacement.z + 0.5);
+        return displacement;
+    }
+};
+
+#endif

@@ -14,15 +14,9 @@ namespace
 
 #include "data/d3_reference.inc"
 
-inline std::size_t pair_index(int high, int low)
-{
-    return static_cast<std::size_t>(high * (high - 1) / 2 + low - 1);
-}
+inline std::size_t pair_index(int high, int low) { return static_cast<std::size_t>(high * (high - 1) / 2 + low - 1); }
 
-inline void check_atomic_number(int atomic_number)
-{
-    assert(atomic_number > 0 && atomic_number <= max_element);
-}
+inline void check_atomic_number(int atomic_number) { assert(atomic_number > 0 && atomic_number <= max_element); }
 
 } // namespace
 
@@ -39,7 +33,11 @@ double reference_cn(int atomic_number, int reference)
     return kReferenceCn[atomic_number * max_reference + reference];
 }
 
-double reference_c6(int atomic_number_i, int reference_i, int atomic_number_j, int reference_j)
+double reference_c6(
+    int atomic_number_i,
+    int reference_i,
+    int atomic_number_j,
+    int reference_j)
 {
     check_atomic_number(atomic_number_i);
     check_atomic_number(atomic_number_j);

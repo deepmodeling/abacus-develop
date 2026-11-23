@@ -38,6 +38,24 @@ class ABACUSWannier90:
         self.work_dir = Path(self.work_dir)
         self.scf_dir = Path(self.scf_dir)
 
+    def _output_enabled(self, name: str, default: bool) -> bool:
+        params = self._abacus_input.params if self._abacus_input else {}
+        return str(params.get(name, default)).strip().lower() in (
+            "1", "true", "t", "yes", "y", "on", ".true."
+        )
+
+    def _spn_enabled(self) -> bool:
+        params = self._abacus_input.params if self._abacus_input else {}
+        if "out_wannier_spn" in params:
+            return self._output_enabled("out_wannier_spn", default=False)
+        return (
+            self._output_enabled("towannier90", default=False)
+            and str(params.get("calculation", "")).strip() == "nscf"
+            and str(params.get("basis_type", "")).strip() == "lcao"
+            and int(params.get("wannier_method", 1)) == 2
+            and int(params.get("nspin", 1)) == 4
+        )
+
     # ----------------------------------------------------------------
     # Public API: Configuration
     # ----------------------------------------------------------------
@@ -159,6 +177,7 @@ class ABACUSWannier90:
             "out_wannier_mmn",
             "out_wannier_amn",
             "out_wannier_eig",
+            "out_wannier_spn",
             "out_wannier_unk",
         }
         scf_params = {
@@ -322,6 +341,9 @@ class ABACUSWannier90:
         self.work_dir.mkdir(parents=True, exist_ok=True)
         win_file = self.work_dir / "wannier90.win"
         self._wannier_input.write(win_file, self.structure)
+        if self._spn_enabled():
+            with win_file.open("a") as stream:
+                stream.write("\nspn_formatted = true\n")
         print(f"    Written: {win_file}")
 
         cmd = f"{self.wannier90_exe} -pp wannier90"
@@ -373,7 +395,21 @@ class ABACUSWannier90:
         self._copy_dep_files(self.work_dir)
 
     def step3_run_abacus(self):
-        """Run ABACUS to generate mmn, amn, eig."""
+        """Run NSCF and collect the requested Wannier90 files."""
+        out_dir = self.work_dir / "OUT.ABACUS"
+        extensions = ["mmn", "amn", "eig"]
+        search_dirs = [self.work_dir, out_dir]
+        if self._spn_enabled():
+            # All four files must use the band gauge of the same NSCF run.
+            for ext in extensions:
+                flag = f"out_wannier_{ext}"
+                if not self._output_enabled(flag, default=True):
+                    raise ValueError(
+                        f"out_wannier_spn requires {flag} to be enabled in this workflow"
+                    )
+            extensions.append("spn")
+            search_dirs = [out_dir]
+
         print(">>> Step 3: Running ABACUS to generate overlap matrices...")
         cmd = self.abacus_exe
         log_file = self.work_dir / "abacus_nscf.log"
@@ -381,10 +417,8 @@ class ABACUSWannier90:
             cmd, cwd=str(self.work_dir), log_file=str(log_file), label="abacus_nscf"
         )
 
-        out_dir = self.work_dir / "OUT.ABACUS"
-        search_dirs = [self.work_dir, out_dir]
-
-        for fname in ["wannier90.mmn", "wannier90.amn", "wannier90.eig"]:
+        for ext in extensions:
+            fname = f"wannier90.{ext}"
             found = False
             for d in search_dirs:
                 src = d / fname
@@ -397,7 +431,7 @@ class ABACUSWannier90:
                     break
             if not found:
                 runner.check_file_exists(
-                    self.work_dir / fname,
+                    search_dirs[0] / fname,
                     hint=f"ABACUS did not produce {fname}. Check abacus_nscf.log.",
                 )
         print("    ABACUS calculation finished. Matrix elements generated.")

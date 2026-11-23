@@ -308,7 +308,7 @@ void Get_wf_lcao::prepare_get_wf(std::ofstream& ofs_running)
     ofs_running << " | The |psi(i,r)|, Re[psi(i,r)], Im[psi(i,r)] are printed out using   |" << std::endl;
     ofs_running << " | numerical atomic orbitals as basis set.                            |" << std::endl;
     ofs_running << " |                                                                    |" << std::endl;
-    ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
+    ofs_running << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << std::endl;
 
     ofs_running << "\n\n";
 

@@ -1,0 +1,52 @@
+name: README metadata
+
+# pytest.yml ignores docs and markdown-only changes, which also skips
+# README edits even though the Python packages declare those files as
+# their package readme. Keep a lightweight check on that path.
+
+on:
+  pull_request:
+    paths:
+      - '**/README.md'
+      - '**/pyproject.toml'
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  metadata:
+    name: Package readme metadata
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+            python-version: 3.8
+      - name: Validate readme declarations
+        run: |
+          python - <<'EOF'
+          import pathlib
+          import re
+          import sys
+
+          failures = []
+          for pyproject in sorted(pathlib.Path(".").rglob("pyproject.toml")):
+              text = pyproject.read_text(encoding="utf-8")
+              match = re.search(r'^\s*readme\s*=\s*["\']([^"\']+)["\']', text, re.M)
+              if match is None:
+                  continue
+              readme = pyproject.parent / match.group(1)
+              if not readme.is_file():
+                  failures.append(f"{pyproject}: declared readme {match.group(1)} does not exist")
+              elif readme.stat().st_size == 0:
+                  failures.append(f"{pyproject}: declared readme {match.group(1)} is empty")
+              else:
+                  print(f"ok: {pyproject} -> {match.group(1)}")
+
+          for failure in failures:
+              print(f"error: {failure}")
+          sys.exit(1 if failures else 0)
+          EOF

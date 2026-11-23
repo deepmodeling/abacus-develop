@@ -42,11 +42,13 @@ list(
   module_efield/td_efield_io.cpp
   module_efield/td_vecpot_io.cpp
   module_chgpot/write_libxc_r.cpp
+  module_chgpot/libxc_r_suffix.cpp
   module_output/output_log.cpp
   module_output/td_conserv_io.cpp
   module_json/para_json.cpp
   parse_args.cpp
   input_help.cpp
+  parse_command_line.cpp
   module_chgpot/get_pchg_pw.cpp
   module_wf/get_wf_pw.cpp)
 
@@ -101,6 +103,7 @@ if(ENABLE_LCAO)
     module_hs/hs_sparse_io.cpp
     module_hs/dhs_sparse_writer.cpp
     module_hs/hsk_writer.cpp
+    module_hs/dense_text_body.cpp
     module_hs/hsr_writer.cpp
     module_hs/hsr_legacy.cpp
     module_hs/hterm_writer.cpp

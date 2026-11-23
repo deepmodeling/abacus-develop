@@ -1,31 +1,29 @@
 #ifndef ABACUS_SOURCE_HAMILT_MODULE_GINT_GINT_TAU_GPU_H
 #define ABACUS_SOURCE_HAMILT_MODULE_GINT_GINT_TAU_GPU_H
 
-
-#include <memory>
-#include <vector>
-#include "source_hamilt/module_hcontainer/hcontainer.h"
 #include "gint.h"
 #include "gint_info.h"
 #include "source_hamilt/module_gint/kernel/cuda_mem_wrapper.h"
+#include "source_hamilt/module_hcontainer/hcontainer.h"
+#include <memory>
+#include <vector>
 
 namespace ModuleGint
 {
 
 class Gint_tau_gpu : public Gint
 {
-    public:
-    Gint_tau_gpu(
-        const std::vector<HContainer<double>*>& dm_vec,
-        const int nspin,
-        double** tau)
-        : dm_vec_(dm_vec), nspin_(nspin), kin_(tau) {}
-    
+  public:
+    Gint_tau_gpu(const std::vector<HContainer<double> *> &dm_vec, const int nspin, double **tau)
+        : dm_vec_(dm_vec), nspin_(nspin), kin_(tau)
+    {
+    }
+
     void cal_gint();
-    
-    private:
+
+  private:
     void init_dm_gint_();
-    
+
     void transfer_cpu_to_gpu_();
 
     void transfer_gpu_to_cpu_();
@@ -33,11 +31,11 @@ class Gint_tau_gpu : public Gint
     void cal_tau_();
 
     // input
-    const std::vector<HContainer<double>*> dm_vec_;
+    const std::vector<HContainer<double> *> dm_vec_;
     const int nspin_;
 
     // output
-    double ** kin_ = nullptr;
+    double **kin_ = nullptr;
 
     // Intermediate variables
     std::vector<HContainer<double>> dm_gint_vec_;
@@ -46,6 +44,6 @@ class Gint_tau_gpu : public Gint
     std::vector<CudaMemWrapper<double>> kin_d_vec_;
 };
 
-}
+} // namespace ModuleGint
 
 #endif // ABACUS_SOURCE_HAMILT_MODULE_GINT_GINT_TAU_GPU_H

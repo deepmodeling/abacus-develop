@@ -6,8 +6,8 @@
 #include "source_estate/elecstate_lcao.h"
 #include "source_io/module_ml/io_npz.h"
 #include "source_io/module_output/cube_io.h"
-#include "source_lcao/lcao_domain.h"
 #include "source_lcao/hamilt_lcao.h"
+#include "source_lcao/lcao_domain.h"
 #include "source_lcao/module_operator_lcao/operator_lcao.h"
 #include "source_lcao/rho_tau_lcao.h" // mohan add 2025-10-24
 
@@ -27,10 +27,10 @@ ESolver_DM2rho<TK, TR>::~ESolver_DM2rho()
 }
 
 template <typename TK, typename TR>
-void ESolver_DM2rho<TK, TR>::before_all_runners(BaseCell& basecell, const Input_para& inp)
+void ESolver_DM2rho<TK, TR>::before_all_runners(BaseCell &basecell, const Input_para &inp)
 {
     basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
-    UnitCell& ucell = static_cast<UnitCell&>(basecell);
+    UnitCell &ucell = static_cast<UnitCell &>(basecell);
 
     ModuleBase::TITLE("ESolver_DM2rho", "before_all_runners");
     ModuleBase::timer::start("ESolver_DM2rho", "before_all_runners");
@@ -41,10 +41,10 @@ void ESolver_DM2rho<TK, TR>::before_all_runners(BaseCell& basecell, const Input_
 }
 
 template <typename TK, typename TR>
-void ESolver_DM2rho<TK, TR>::runner(BaseCell& basecell, const int istep)
+void ESolver_DM2rho<TK, TR>::runner(BaseCell &basecell, const int istep)
 {
     basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
-    UnitCell& ucell = static_cast<UnitCell&>(basecell);
+    UnitCell &ucell = static_cast<UnitCell &>(basecell);
 
     ModuleBase::TITLE("ESolver_DM2rho", "runner");
     ModuleBase::timer::start("ESolver_DM2rho", "runner");
@@ -66,7 +66,8 @@ void ESolver_DM2rho<TK, TR>::runner(BaseCell& basecell, const int istep)
 
     // it's dangerous to design psiToRho function like this, mohan note 20251024
     // this->pelec->psiToRho(*this->psi);
-    LCAO_domain::dm2rho(this->dmat.dm->get_dmr_vec(), this->inp_->nspin, &this->chr, this->inp_->nelec, ucell.omega, false);
+    LCAO_domain::dm2rho(
+        this->dmat.dm->get_dmr_vec(), this->inp_->nspin, &this->chr, this->inp_->nelec, ucell.omega, false);
 
     // Write every density channel (rho[0..3] for nspin=4) so the file set
     // matches ctrl_output_fp: the init_chg=file reader reads chgs1..chgs<nspin>
@@ -85,33 +86,21 @@ void ESolver_DM2rho<TK, TR>::runner(BaseCell& basecell, const int istep)
         fn += ".cube";
 
         // write electron density
-        const std::string desc_chg = ModuleIO::make_data_desc("charge density", "magnetization density m", is, nspin);
+        const std::string desc_chg = ModuleIO::make_data_desc("Charge density", "Magnetization density m", is, nspin);
 
-        ModuleIO::write_vdata_palgrid(this->Pgrid,
-                                      this->chr.rho[is],
-                                      is,
-                                      nspin,
-                                      istep,
-                                      fn,
-                                      this->pelec->eferm.get_efval(is),
-                                      &(ucell),
-                                      3,
-                                      1,
-                                      PARAM.globalv.two_fermi,
-                                      false,
-                                      false,
-                                      GlobalV::ofs_running,
-                                      desc_chg);
+        ModuleIO::write_vdata_palgrid(
+            this->Pgrid, this->chr.rho[is], is, nspin, istep, fn, this->pelec->eferm.get_efval(is), &(ucell), 3, 1,
+            PARAM.globalv.two_fermi, false, false, GlobalV::ofs_running, desc_chg);
     }
 
     ModuleBase::timer::end("ESolver_DM2rho", "runner");
 }
 
 template <typename TK, typename TR>
-void ESolver_DM2rho<TK, TR>::after_all_runners(BaseCell& basecell)
+void ESolver_DM2rho<TK, TR>::after_all_runners(BaseCell &basecell)
 {
     basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
-    UnitCell& ucell = static_cast<UnitCell&>(basecell);
+    UnitCell &ucell = static_cast<UnitCell &>(basecell);
 
     ModuleBase::TITLE("ESolver_DM2rho", "after_all_runners");
     ModuleBase::timer::start("ESolver_DM2rho", "after_all_runners");

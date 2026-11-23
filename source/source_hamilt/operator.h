@@ -50,7 +50,7 @@ class Operator
     /// - std::get<0>: pointer to psi::Psi<T, Device> (input wavefunction)
     /// - std::get<1>: psi::Range specifying which bands to operate on
     /// - std::get<2>: T* pointer to output hpsi buffer (can equal psi_in for in-place)
-    typedef std::tuple<const psi::Psi<T, Device>*, const psi::Range, T*> hpsi_info;
+    typedef std::tuple<const psi::Psi<T, Device> *, const psi::Range, T *> hpsi_info;
 
     /// @brief Core hot-path: compute H|psi> by traversing the operator chain.
     /// @details
@@ -80,54 +80,44 @@ class Operator
     /// @note For PW calculations, each act() call may involve FFT transforms (Veff),
     ///       BLAS3 gemm operations (Nonlocal), or element-wise vector ops (Ekinetic).
     /// @see Operator::act(), HamiltPW, DiagoCG::diag()
-    virtual hpsi_info hPsi(hpsi_info& input) const;
+    virtual hpsi_info hPsi(hpsi_info &input) const;
 
     virtual void init(const int ik_in);
 
-    virtual void add(Operator* next);
+    virtual void add(Operator *next);
 
-    virtual int get_ik() const
-    {
-        return this->ik;
-    }
+    virtual int get_ik() const { return this->ik; }
 
     /// do operation : |hpsi_choosed> = V|psi_choosed>
     /// V is the target operator act on choosed psi, the consequence should be added to choosed hpsi
     ///  interface type 1: pointer-only (default)
     ///  @note PW: nbasis = max_npw * npol, nbands = nband * npol, npol = npol. Strange but PAY ATTENTION!!!
-    virtual void act(const int nbands,
-                     const int nbasis,
-                     const int npol,
-                     const T* tmpsi_in,
-                     T* tmhpsi,
-                     const int ngk_ik = 0,
-                     const bool is_first_node = false) const {};
+    virtual void act(
+        const int nbands,
+        const int nbasis,
+        const int npol,
+        const T *tmpsi_in,
+        T *tmhpsi,
+        const int ngk_ik = 0,
+        const bool is_first_node = false) const {};
 
     /// developer-friendly interfaces for act() function
     /// interface type 2: input and change the Psi-type HPsi
     // virtual void act(const psi::Psi<T, Device>& psi_in, psi::Psi<T, Device>& psi_out) const {};
-    virtual void act(const psi::Psi<T, Device>& psi_in, 
-            psi::Psi<T, Device>& psi_out, 
-            const int nbands) const {};
+    virtual void act(const psi::Psi<T, Device> &psi_in, psi::Psi<T, Device> &psi_out, const int nbands) const {};
 
     /// interface type 3: return a Psi-type HPsi
     // virtual psi::Psi<T> act(const psi::Psi<T,Device>& psi_in) const { return psi_in; };
 
-    Operator* next_op = nullptr;
+    Operator *next_op = nullptr;
 
     /// type 1 (default): pointer-only
     ///         act(const T* psi_in, T* psi_out)
     /// type 2: use the `Psi`class
     ///         act(const Psi& psi_in, Psi& psi_out)
-    int get_act_type() const
-    {
-        return this->act_type;
-    }
+    int get_act_type() const { return this->act_type; }
 
-    calculation_type get_cal_type() const
-    {
-        return this->cal_type;
-    }
+    calculation_type get_cal_type() const { return this->cal_type; }
 
   protected:
     int ik = 0;
@@ -137,11 +127,11 @@ class Operator
 
     // calculation type, only different type can be in main chain table
     enum calculation_type cal_type;
-    Operator* next_sub_op = nullptr;
+    Operator *next_sub_op = nullptr;
     bool is_first_node = true;
 
     // if this Operator is first node in chain table, hpsi would not be empty
-    mutable psi::Psi<T, Device>* hpsi = nullptr;
+    mutable psi::Psi<T, Device> *hpsi = nullptr;
 
     /*This function would analyze hpsi_info and choose how to arrange hpsi storage
     In hpsi_info, if the third parameter hpsi_pointer is set, which indicates memory of hpsi is arranged by developer;
@@ -151,9 +141,9 @@ class Operator
     memory
     2. hpsi_pointer != nullptr && psi_pointer != hpsi_pointer , this is the commonly case
     */
-    T* get_hpsi(const hpsi_info& info) const;
+    T *get_hpsi(const hpsi_info &info) const;
 
-    Device* ctx = {};
+    Device *ctx = {};
     using set_memory_op = base_device::memory::set_memory_op<T, Device>;
 };
 

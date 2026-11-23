@@ -1,11 +1,11 @@
 #ifdef __LIBXC
 
-#include "xc_functional.h"
 #include "libxc_abacus.h"
-#include "source_estate/module_charge/charge.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
+#include "source_estate/module_charge/charge.h"
+#include "xc_functional.h"
 #ifdef __EXX
 #include "source_hamilt/module_xc/exx_info.h"
 #endif
@@ -13,24 +13,25 @@
 
 #include <xc.h>
 
-#include <vector>
 #include <complex>
+#include <vector>
 
-void XC_Functional_Libxc::gradcorr_ncgga_sf_libxc(const std::vector<int>& func_id,
-                                                  const std::size_t nrxx,
-                                                  const double tpiba,
-                                                  const Charge* const chr,
-                                                  const std::map<int, double>* scaling_factor,
-                                                  const double hybrid_alpha,
-                                                  const double hse_omega,
-                                                  std::vector<double>& stress_gga)
+void XC_Functional_Libxc::gradcorr_ncgga_sf_libxc(
+    const std::vector<int> &func_id,
+    const std::size_t nrxx,
+    const double tpiba,
+    const Charge *const chr,
+    const std::map<int, double> *scaling_factor,
+    const double hybrid_alpha,
+    const double hse_omega,
+    std::vector<double> &stress_gga)
 {
     constexpr int nspin = 2;
     stress_gga.assign(9, 0.0);
 
     std::vector<xc_func_type> funcs = XC_Functional_Libxc::init_func(func_id, XC_POLARIZED, hybrid_alpha, hse_omega);
     bool has_gga = false;
-    for (const xc_func_type& func: funcs)
+    for (const xc_func_type &func : funcs)
     {
         has_gga = has_gga || func.info->family == XC_FAMILY_GGA || func.info->family == XC_FAMILY_HYB_GGA;
     }
@@ -43,13 +44,13 @@ void XC_Functional_Libxc::gradcorr_ncgga_sf_libxc(const std::vector<int>& func_i
     // This is the same forward graph used by v_xc_libxc: the local spin map,
     // FFT gradients of the mapped densities, and the sigma invariants are constructed
     // once and shared by all Libxc components.
-    const XC_Functional_Libxc::NclSfDiscreteData sf_data
-        = XC_Functional_Libxc::make_ncl_sf_discrete_data(nrxx, tpiba, chr, true);
-    const std::vector<double>& rho = sf_data.rho;
+    const XC_Functional_Libxc::NclSfDiscreteData sf_data =
+        XC_Functional_Libxc::make_ncl_sf_discrete_data(nrxx, tpiba, chr, true);
+    const std::vector<double> &rho = sf_data.rho;
     const std::vector<double> sigma = XC_Functional_Libxc::convert_sigma(sf_data.spin_gradient);
     std::vector<double> aggregate_dsigma(3 * nrxx, 0.0);
 
-    for (xc_func_type& func: funcs)
+    for (xc_func_type &func : funcs)
     {
         if (func.info->family != XC_FAMILY_GGA && func.info->family != XC_FAMILY_HYB_GGA)
         {
@@ -59,8 +60,8 @@ void XC_Functional_Libxc::gradcorr_ncgga_sf_libxc(const std::vector<int>& func_i
         constexpr double rho_threshold = 1.0e-6;
         constexpr double grho_threshold = 1.0e-10;
         xc_func_set_dens_threshold(&func, rho_threshold);
-        const std::vector<double> sgn
-            = XC_Functional_Libxc::cal_sgn(rho_threshold, grho_threshold, func, nspin, nrxx, rho, sigma);
+        const std::vector<double> sgn =
+            XC_Functional_Libxc::cal_sgn(rho_threshold, grho_threshold, func, nspin, nrxx, rho, sigma);
         std::vector<double> exc(nrxx);
         std::vector<double> vrho(nspin * nrxx);
         std::vector<double> vsigma(3 * nrxx);
@@ -72,13 +73,9 @@ void XC_Functional_Libxc::gradcorr_ncgga_sf_libxc(const std::vector<int>& func_i
         {
             const int ir_end = std::min(ir_start + nr_batch_size, static_cast<int>(nrxx));
             const int nrxx_thread = ir_end - ir_start;
-            xc_gga_exc_vxc(&func,
-                           nrxx_thread,
-                           rho.data() + ir_start * nspin,
-                           sigma.data() + ir_start * 3,
-                           exc.data() + ir_start,
-                           vrho.data() + ir_start * nspin,
-                           vsigma.data() + ir_start * 3);
+            xc_gga_exc_vxc(
+                &func, nrxx_thread, rho.data() + ir_start * nspin, sigma.data() + ir_start * 3, exc.data() + ir_start,
+                vrho.data() + ir_start * nspin, vsigma.data() + ir_start * 3);
         }
 
         double factor = 1.0;
@@ -90,16 +87,8 @@ void XC_Functional_Libxc::gradcorr_ncgga_sf_libxc(const std::vector<int>& func_i
                 factor = entry->second;
             }
         }
-        const XC_Functional_Libxc::LibxcWeightedDerivatives weighted
-            = XC_Functional_Libxc::make_libxc_weighted_derivatives(func,
-                                                                   nspin,
-                                                                   nrxx,
-                                                                   sgn,
-                                                                   rho,
-                                                                   sigma,
-                                                                   exc,
-                                                                   vrho,
-                                                                   vsigma);
+        const XC_Functional_Libxc::LibxcWeightedDerivatives weighted =
+            XC_Functional_Libxc::make_libxc_weighted_derivatives(func, nspin, nrxx, sgn, rho, sigma, exc, vrho, vsigma);
         for (std::size_t index = 0; index < aggregate_dsigma.size(); ++index)
         {
             aggregate_dsigma[index] += factor * weighted.dsigma[index];
@@ -119,14 +108,14 @@ void XC_Functional_Libxc::gradcorr_ncgga_sf_libxc(const std::vector<int>& func_i
         for (std::size_t ir = 0; ir < nrxx; ++ir)
         {
             const std::size_t sigma_index = 3 * ir;
-            const ModuleBase::Vector3<double>& grad_up = sf_data.spin_gradient[0][ir];
-            const ModuleBase::Vector3<double>& grad_down = sf_data.spin_gradient[1][ir];
-            const ModuleBase::Vector3<double> h_up
-                = ModuleBase::e2
-                  * (2.0 * aggregate_dsigma[sigma_index] * grad_up + aggregate_dsigma[sigma_index + 1] * grad_down);
-            const ModuleBase::Vector3<double> h_down
-                = ModuleBase::e2
-                  * (2.0 * aggregate_dsigma[sigma_index + 2] * grad_down + aggregate_dsigma[sigma_index + 1] * grad_up);
+            const ModuleBase::Vector3<double> &grad_up = sf_data.spin_gradient[0][ir];
+            const ModuleBase::Vector3<double> &grad_down = sf_data.spin_gradient[1][ir];
+            const ModuleBase::Vector3<double> h_up =
+                ModuleBase::e2 *
+                (2.0 * aggregate_dsigma[sigma_index] * grad_up + aggregate_dsigma[sigma_index + 1] * grad_down);
+            const ModuleBase::Vector3<double> h_down =
+                ModuleBase::e2 *
+                (2.0 * aggregate_dsigma[sigma_index + 2] * grad_down + aggregate_dsigma[sigma_index + 1] * grad_up);
             const double grad_up_component[3] = {grad_up.x, grad_up.y, grad_up.z};
             const double grad_down_component[3] = {grad_down.x, grad_down.y, grad_down.z};
             const double h_up_component[3] = {h_up.x, h_up.y, h_up.z};
@@ -135,8 +124,8 @@ void XC_Functional_Libxc::gradcorr_ncgga_sf_libxc(const std::vector<int>& func_i
             {
                 for (int m = 0; m <= l; ++m)
                 {
-                    local_stress[l * 3 + m]
-                        += h_up_component[l] * grad_up_component[m] + h_down_component[l] * grad_down_component[m];
+                    local_stress[l * 3 + m] +=
+                        h_up_component[l] * grad_up_component[m] + h_down_component[l] * grad_down_component[m];
                 }
             }
         }
@@ -155,14 +144,13 @@ void XC_Functional_Libxc::gradcorr_ncgga_sf_libxc(const std::vector<int>& func_i
     for (std::size_t ir = 0; ir < nrxx; ++ir)
     {
         const std::size_t sigma_index = 3 * ir;
-        const ModuleBase::Vector3<double>& grad_up = sf_data.spin_gradient[0][ir];
-        const ModuleBase::Vector3<double>& grad_down = sf_data.spin_gradient[1][ir];
-        const ModuleBase::Vector3<double> h_up
-            = ModuleBase::e2
-              * (2.0 * aggregate_dsigma[sigma_index] * grad_up + aggregate_dsigma[sigma_index + 1] * grad_down);
-        const ModuleBase::Vector3<double> h_down
-            = ModuleBase::e2
-              * (2.0 * aggregate_dsigma[sigma_index + 2] * grad_down + aggregate_dsigma[sigma_index + 1] * grad_up);
+        const ModuleBase::Vector3<double> &grad_up = sf_data.spin_gradient[0][ir];
+        const ModuleBase::Vector3<double> &grad_down = sf_data.spin_gradient[1][ir];
+        const ModuleBase::Vector3<double> h_up = ModuleBase::e2 * (2.0 * aggregate_dsigma[sigma_index] * grad_up +
+                                                                      aggregate_dsigma[sigma_index + 1] * grad_down);
+        const ModuleBase::Vector3<double> h_down =
+            ModuleBase::e2 *
+            (2.0 * aggregate_dsigma[sigma_index + 2] * grad_down + aggregate_dsigma[sigma_index + 1] * grad_up);
         const double grad_up_component[3] = {grad_up.x, grad_up.y, grad_up.z};
         const double grad_down_component[3] = {grad_down.x, grad_down.y, grad_down.z};
         const double h_up_component[3] = {h_up.x, h_up.y, h_up.z};
@@ -171,8 +159,8 @@ void XC_Functional_Libxc::gradcorr_ncgga_sf_libxc(const std::vector<int>& func_i
         {
             for (int m = 0; m <= l; ++m)
             {
-                stress_gga[l * 3 + m]
-                    += h_up_component[l] * grad_up_component[m] + h_down_component[l] * grad_down_component[m];
+                stress_gga[l * 3 + m] +=
+                    h_up_component[l] * grad_up_component[m] + h_down_component[l] * grad_down_component[m];
             }
         }
     }
@@ -220,8 +208,9 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc( 
         /* hybrid_alpha = */ hybrid_alpha,
         /* hse_omega = */ hse_omega);
 
-    const bool is_gga = [&funcs]() {
-        for (xc_func_type& func: funcs)
+    const bool is_gga = [&funcs]()
+    {
+        for (xc_func_type &func : funcs)
         {
             switch (func.info->family)
             {
@@ -255,8 +244,8 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc( 
     }
     else
     {
-        std::tuple<std::vector<double>, std::vector<double>> rho_amag
-            = XC_Functional_Libxc::convert_rho_amag_nspin4(nspin, nrxx, chr);
+        std::tuple<std::vector<double>, std::vector<double>> rho_amag =
+            XC_Functional_Libxc::convert_rho_amag_nspin4(nspin, nrxx, chr);
         rho = std::get<0>(std::move(rho_amag));
         amag = std::get<1>(std::move(rho_amag));
     }
@@ -270,7 +259,9 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc( 
             gdr = sf_data.spin_gradient;
         }
         else
+        {
             gdr = XC_Functional_Libxc::cal_gdr(nspin, nrxx, rho, tpiba, chr);
+        }
 
         sigma = XC_Functional_Libxc::convert_sigma(gdr);
     }
@@ -289,7 +280,7 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc( 
         }
     }
 
-    for (xc_func_type& func: funcs)
+    for (xc_func_type &func : funcs)
     {
         // thresholds: same convention as Quantum ESPRESSO's libxc interface
         // (XClib/xc_wrapper_gga.f90): exc and vrho are evaluated down to
@@ -304,11 +295,11 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc( 
         xc_func_set_dens_threshold(&func, use_lca ? rho_threshold_gga : rho_threshold_lda);
 
         // sgn for threshold masks
-        const std::pair<std::vector<double>,std::vector<double>> sgn = XC_Functional_Libxc::cal_sgn_vxc(
+        const std::pair<std::vector<double>, std::vector<double>> sgn = XC_Functional_Libxc::cal_sgn_vxc(
             rho_threshold_lda, rho_threshold_gga, grho_threshold_gga, func, nspin, nrxx, rho, sigma);
-        const std::vector<double> energy_mask = use_lca
-            ? XC_Functional_Libxc::cal_sgn(rho_threshold_gga, grho_threshold_gga, func, nspin, nrxx, rho, sigma)
-            : sgn.first;
+        const std::vector<double> energy_mask =
+            use_lca ? XC_Functional_Libxc::cal_sgn(rho_threshold_gga, grho_threshold_gga, func, nspin, nrxx, rho, sigma)
+                    : sgn.first;
 
         std::vector<double> exc(nrxx);
         std::vector<double> vrho(nrxx * nspin);
@@ -317,7 +308,8 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc( 
         ModuleBase::timer::start("Libxc", "xc_lda/gga_exc_vxc");
         switch (func.info->family)
         {
-        case XC_FAMILY_LDA: {
+        case XC_FAMILY_LDA:
+        {
             constexpr int nr_batch_size = 1024;
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static)
@@ -326,16 +318,15 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc( 
             {
                 const int ir_end = std::min(ir_start + nr_batch_size, nrxx);
                 const int nrxx_thread = ir_end - ir_start;
-                xc_lda_exc_vxc(&func,
-                               nrxx_thread,
-                               rho.data() + ir_start * nspin,
-                               exc.data() + ir_start,
-                               vrho.data() + ir_start * nspin);
+                xc_lda_exc_vxc(
+                    &func, nrxx_thread, rho.data() + ir_start * nspin, exc.data() + ir_start,
+                    vrho.data() + ir_start * nspin);
             }
             break;
         }
         case XC_FAMILY_GGA:
-        case XC_FAMILY_HYB_GGA: {
+        case XC_FAMILY_HYB_GGA:
+        {
             constexpr int nr_batch_size = 1024;
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static)
@@ -344,19 +335,18 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc( 
             {
                 const int ir_end = std::min(ir_start + nr_batch_size, nrxx);
                 const int nrxx_thread = ir_end - ir_start;
-                xc_gga_exc_vxc(&func,
-                               nrxx_thread,
-                               rho.data() + ir_start * nspin,
-                               sigma.data() + ir_start * ((1 == nspin) ? 1 : 3),
-                               exc.data() + ir_start,
-                               vrho.data() + ir_start * nspin,
-                               vsigma.data() + ir_start * ((1 == nspin) ? 1 : 3));
+                xc_gga_exc_vxc(
+                    &func, nrxx_thread, rho.data() + ir_start * nspin, sigma.data() + ir_start * ((1 == nspin) ? 1 : 3),
+                    exc.data() + ir_start, vrho.data() + ir_start * nspin,
+                    vsigma.data() + ir_start * ((1 == nspin) ? 1 : 3));
             }
             break;
         }
-        default: {
-            throw std::domain_error("func.info->family =" + std::to_string(func.info->family) + " unfinished in "
-                                    + std::string(__FILE__) + " line " + std::to_string(__LINE__));
+        default:
+        {
+            throw std::domain_error(
+                "func.info->family =" + std::to_string(func.info->family) + " unfinished in " + std::string(__FILE__) +
+                " line " + std::to_string(__LINE__));
         }
         }
         ModuleBase::timer::end("Libxc", "xc_lda/gga_exc_vxc");
@@ -378,16 +368,9 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc( 
         etxc += XC_Functional_Libxc::convert_etxc(nspin, nrxx, energy_mask, rho, exc) * factor;
         if (use_lca)
         {
-            const XC_Functional_Libxc::LibxcWeightedDerivatives weighted
-                = XC_Functional_Libxc::make_libxc_weighted_derivatives(func,
-                                                                       nspin,
-                                                                       nrxx,
-                                                                       energy_mask,
-                                                                       rho,
-                                                                       sigma,
-                                                                       exc,
-                                                                       vrho,
-                                                                       vsigma);
+            const XC_Functional_Libxc::LibxcWeightedDerivatives weighted =
+                XC_Functional_Libxc::make_libxc_weighted_derivatives(
+                    func, nspin, nrxx, energy_mask, rho, sigma, exc, vrho, vsigma);
             for (std::size_t index = 0; index < sf_weighted.drho.size(); ++index)
             {
                 sf_weighted.drho[index] += factor * weighted.drho[index];
@@ -399,8 +382,8 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc( 
         }
         else
         {
-            const std::pair<double, ModuleBase::matrix> vtxc_v
-                = XC_Functional_Libxc::convert_vtxc_v(func, nspin, nrxx, sgn.first, sgn.second, rho, gdr, vrho, vsigma, tpiba, chr);
+            const std::pair<double, ModuleBase::matrix> vtxc_v = XC_Functional_Libxc::convert_vtxc_v(
+                func, nspin, nrxx, sgn.first, sgn.second, rho, gdr, vrho, vsigma, tpiba, chr);
             vtxc += std::get<0>(vtxc_v) * factor;
             v += std::get<1>(vtxc_v) * factor;
         }
@@ -408,12 +391,8 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc( 
 
     if (use_lca)
     {
-        v = XC_Functional_Libxc::reverse_ncl_sf_discrete(nrxx,
-                                                         sf_data,
-                                                         sf_weighted.drho,
-                                                         sf_weighted.dsigma,
-                                                         tpiba,
-                                                         chr);
+        v = XC_Functional_Libxc::reverse_ncl_sf_discrete(
+            nrxx, sf_data, sf_weighted.drho, sf_weighted.dsigma, tpiba, chr);
     }
 
     if (4 == nspin_in && !use_lca)
@@ -458,41 +437,42 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc( 
 
     XC_Functional_Libxc::finish_func(funcs);
 
-    ModuleBase::timer::end("XC_Functional_Libxc","v_xc_libxc");
-    return std::make_tuple( etxc, vtxc, std::move(v) );
+    ModuleBase::timer::end("XC_Functional_Libxc", "v_xc_libxc");
+    return std::make_tuple(etxc, vtxc, std::move(v));
 }
 
-//the interface to libxc xc_mgga_exc_vxc(xc_func,n,rho,grho,laplrho,tau,e,v1,v2,v3,v4)
-//xc_func : LIBXC data type, contains information on xc functional
-//n: size of array, nspin*nnr
-//rho,grho,laplrho: electron density, its gradient and laplacian
-//tau(kin_r): kinetic energy density
-//e: energy density
-//v1-v4: derivative of energy density w.r.t rho, gradient, laplacian and tau
-//v1 and v2 are combined to give v; v4 goes into vofk
+// the interface to libxc xc_mgga_exc_vxc(xc_func,n,rho,grho,laplrho,tau,e,v1,v2,v3,v4)
+// xc_func : LIBXC data type, contains information on xc functional
+// n: size of array, nspin*nnr
+// rho,grho,laplrho: electron density, its gradient and laplacian
+// tau(kin_r): kinetic energy density
+// e: energy density
+// v1-v4: derivative of energy density w.r.t rho, gradient, laplacian and tau
+// v1 and v2 are combined to give v; v4 goes into vofk
 
-//XC_POLARIZED, XC_UNPOLARIZED: internal flags used in LIBXC, denote the polarized(nspin=1) or unpolarized(nspin=2) calculations, definition can be found in xc.h from LIBXC
+// XC_POLARIZED, XC_UNPOLARIZED: internal flags used in LIBXC, denote the polarized(nspin=1) or unpolarized(nspin=2)
+// calculations, definition can be found in xc.h from LIBXC
 
 // [etxc, vtxc, v, vofk] = XC_Functional::v_xc(...)
-std::tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional_Libxc::v_xc_meta(
+std::tuple<double, double, ModuleBase::matrix, ModuleBase::matrix> XC_Functional_Libxc::v_xc_meta(
     const std::vector<int> &func_id,
-    const int &nrxx, // number of real-space grid
+    const int &nrxx,     // number of real-space grid
     const double &omega, // volume of cell
     const double tpiba,
-    const Charge* const chr,
+    const Charge *const chr,
     const int nspin,
     const double hybrid_alpha,
     const double hse_omega)
 {
-    ModuleBase::TITLE("XC_Functional_Libxc","v_xc_meta");
-    ModuleBase::timer::start("XC_Functional_Libxc","v_xc_meta");
+    ModuleBase::TITLE("XC_Functional_Libxc", "v_xc_meta");
+    ModuleBase::timer::start("XC_Functional_Libxc", "v_xc_meta");
 
-    //output of the subroutine
+    // output of the subroutine
     double etxc = 0.0;
     double vtxc = 0.0;
-    ModuleBase::matrix v(nspin,nrxx);
-    ModuleBase::matrix vofk(nspin,nrxx);
-    ModuleBase::matrix voflapl(nspin,nrxx);
+    ModuleBase::matrix v(nspin, nrxx);
+    ModuleBase::matrix vofk(nspin, nrxx);
+    ModuleBase::matrix voflapl(nspin, nrxx);
 
     //----------------------------------------------------------
     // xc_func_type is defined in Libxc package
@@ -502,7 +482,7 @@ std::tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional_Li
     //----------------------------------------------------------
     std::vector<xc_func_type> funcs = XC_Functional_Libxc::init_func(
         /* func_id = */ func_id,
-        /* xc_polarized = */ (1==nspin) ? XC_UNPOLARIZED:XC_POLARIZED,
+        /* xc_polarized = */ (1 == nspin) ? XC_UNPOLARIZED : XC_POLARIZED,
         /* hybrid_alpha = */ hybrid_alpha,
         /* hse_omega = */ hse_omega);
 
@@ -513,47 +493,47 @@ std::tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional_Li
     XC_Functional_Libxc::cal_gdr_and_lapl(nspin, nrxx, rho, tpiba, chr, gdr, lapl, need_laplacian);
     const std::vector<double> sigma = XC_Functional_Libxc::convert_sigma(gdr);
 
-    //converting kin_r
+    // converting kin_r
     std::vector<double> kin_r;
-    kin_r.resize(nrxx*nspin);
+    kin_r.resize(nrxx * nspin);
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2) schedule(static, 1024)
 #endif
-    for( int is=0; is<nspin; ++is )
+    for (int is = 0; is < nspin; ++is)
     {
-        for( int ir=0; ir<nrxx; ++ir )
+        for (int ir = 0; ir < nrxx; ++ir)
         {
-            kin_r[ir*nspin+is] = chr->kin_r[is][ir] / 2.0;
+            kin_r[ir * nspin + is] = chr->kin_r[is][ir] / 2.0;
         }
     }
 
-    std::vector<double> exc    ( nrxx                    );
-    std::vector<double> vrho   ( nrxx * nspin            );
-    std::vector<double> vsigma ( nrxx * ((1==nspin)?1:3) );
-    std::vector<double> vtau   ( nrxx * nspin            );
-    std::vector<double> vlapl  ( nrxx * nspin            );
+    std::vector<double> exc(nrxx);
+    std::vector<double> vrho(nrxx * nspin);
+    std::vector<double> vsigma(nrxx * ((1 == nspin) ? 1 : 3));
+    std::vector<double> vtau(nrxx * nspin);
+    std::vector<double> vlapl(nrxx * nspin);
 
-    constexpr double rho_th  = 1e-8;
+    constexpr double rho_th = 1e-8;
     constexpr double grho_th = 1e-12;
-    constexpr double tau_th  = 1e-8;
+    constexpr double tau_th = 1e-8;
     // sgn for threshold mask
-    std::vector<double> sgn( nrxx * nspin);
+    std::vector<double> sgn(nrxx * nspin);
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 1024)
 #endif
-    for(int i = 0; i < nrxx * nspin; ++i)
+    for (int i = 0; i < nrxx * nspin; ++i)
     {
         sgn[i] = 1.0;
     }
 
-    if(nspin == 1)
+    if (nspin == 1)
     {
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 1024)
 #endif
-        for( int ir=0; ir<nrxx; ++ir )
+        for (int ir = 0; ir < nrxx; ++ir)
         {
-            if ( rho[ir]<rho_th || sqrt(std::abs(sigma[ir]))<grho_th || std::abs(kin_r[ir])<tau_th)
+            if (rho[ir] < rho_th || sqrt(std::abs(sigma[ir])) < grho_th || std::abs(kin_r[ir]) < tau_th)
             {
                 sgn[ir] = 0.0;
             }
@@ -564,50 +544,48 @@ std::tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional_Li
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 512)
 #endif
-        for( int ir=0; ir<nrxx; ++ir )
+        for (int ir = 0; ir < nrxx; ++ir)
         {
-            if ( rho[ir*2]<rho_th || sqrt(std::abs(sigma[ir*3]))<grho_th || std::abs(kin_r[ir*2])<tau_th)
-                { sgn[ir*2] = 0.0; }
-            if ( rho[ir*2+1]<rho_th || sqrt(std::abs(sigma[ir*3+2]))<grho_th || std::abs(kin_r[ir*2+1])<tau_th)
-                { sgn[ir*2+1] = 0.0; }
+            if (rho[ir * 2] < rho_th || sqrt(std::abs(sigma[ir * 3])) < grho_th || std::abs(kin_r[ir * 2]) < tau_th)
+            {
+                sgn[ir * 2] = 0.0;
+            }
+            if (rho[ir * 2 + 1] < rho_th || sqrt(std::abs(sigma[ir * 3 + 2])) < grho_th ||
+                std::abs(kin_r[ir * 2 + 1]) < tau_th)
+            {
+                sgn[ir * 2 + 1] = 0.0;
+            }
         }
     }
 
-    for ( xc_func_type &func : funcs )
+    for (xc_func_type &func : funcs)
     {
         assert(func.info->family == XC_FAMILY_MGGA);
 
-        ModuleBase::timer::start("Libxc","xc_mgga_exc_vxc");
+        ModuleBase::timer::start("Libxc", "xc_mgga_exc_vxc");
         constexpr int nr_batch_size = 1024;
-        #ifdef _OPENMP
-        #pragma omp parallel for schedule(static)
-        #endif
-        for( int ir_start = 0; ir_start < nrxx; ir_start += nr_batch_size )
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static)
+#endif
+        for (int ir_start = 0; ir_start < nrxx; ir_start += nr_batch_size)
         {
             const int ir_end = std::min(ir_start + nr_batch_size, nrxx);
             const int nrxx_thread = ir_end - ir_start;
             xc_mgga_exc_vxc(
-                &func,
-                nrxx_thread,
-                rho.data() + ir_start * nspin,
-                sigma.data() + ir_start * ((1==nspin)?1:3),
-                lapl.data() + ir_start * nspin,
-                kin_r.data() + ir_start * nspin,
-                exc.data() + ir_start,
-                vrho.data() + ir_start * nspin,
-                vsigma.data() + ir_start * ((1==nspin)?1:3),
-                vlapl.data() + ir_start * nspin,
-                vtau.data() + ir_start * nspin);
+                &func, nrxx_thread, rho.data() + ir_start * nspin, sigma.data() + ir_start * ((1 == nspin) ? 1 : 3),
+                lapl.data() + ir_start * nspin, kin_r.data() + ir_start * nspin, exc.data() + ir_start,
+                vrho.data() + ir_start * nspin, vsigma.data() + ir_start * ((1 == nspin) ? 1 : 3),
+                vlapl.data() + ir_start * nspin, vtau.data() + ir_start * nspin);
         }
-        ModuleBase::timer::end("Libxc","xc_mgga_exc_vxc");
+        ModuleBase::timer::end("Libxc", "xc_mgga_exc_vxc");
 
-        //process etxc
-        for( int is=0; is!=nspin; ++is )
+        // process etxc
+        for (int is = 0; is != nspin; ++is)
         {
 #ifdef _OPENMP
-#pragma omp parallel for reduction(+:etxc) schedule(static, 256)
+#pragma omp parallel for reduction(+ : etxc) schedule(static, 256)
 #endif
-            for( int ir=0; ir< nrxx; ++ir )
+            for (int ir = 0; ir < nrxx; ++ir)
             {
 #ifdef __EXX
                 if (func.info->number == XC_MGGA_X_SCAN && XC_Functional::get_func_type() == 5)
@@ -615,40 +593,38 @@ std::tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional_Li
                     exc[ir] *= (1.0 - XC_Functional::get_hybrid_alpha());
                 }
 #endif
-                etxc += ModuleBase::e2 * exc[ir] * rho[ir*nspin+is]  * sgn[ir*nspin+is];
+                etxc += ModuleBase::e2 * exc[ir] * rho[ir * nspin + is] * sgn[ir * nspin + is];
             }
         }
 
-        //process vtxc
+        // process vtxc
 #ifdef _OPENMP
-#pragma omp parallel for collapse(2) reduction(+:vtxc) schedule(static, 256)
+#pragma omp parallel for collapse(2) reduction(+ : vtxc) schedule(static, 256)
 #endif
-        for( int is=0; is<nspin; ++is )
+        for (int is = 0; is < nspin; ++is)
         {
-            for( int ir=0; ir< nrxx; ++ir )
+            for (int ir = 0; ir < nrxx; ++ir)
             {
 #ifdef __EXX
                 if (func.info->number == XC_MGGA_X_SCAN && XC_Functional::get_func_type() == 5)
                 {
-                    vrho[ir*nspin+is] *= (1.0 - XC_Functional::get_hybrid_alpha());
+                    vrho[ir * nspin + is] *= (1.0 - XC_Functional::get_hybrid_alpha());
                 }
 #endif
-                const double v_tmp = ModuleBase::e2 * vrho[ir*nspin+is]  * sgn[ir*nspin+is];
-                v(is,ir) += v_tmp;
+                const double v_tmp = ModuleBase::e2 * vrho[ir * nspin + is] * sgn[ir * nspin + is];
+                v(is, ir) += v_tmp;
                 vtxc += v_tmp * chr->rho[is][ir];
             }
         }
 
-        //process vsigma
-        std::vector<std::vector<ModuleBase::Vector3<double>>> h(
-            nspin,
-            std::vector<ModuleBase::Vector3<double>>(nrxx) );
-        if( 1==nspin )
+        // process vsigma
+        std::vector<std::vector<ModuleBase::Vector3<double>>> h(nspin, std::vector<ModuleBase::Vector3<double>>(nrxx));
+        if (1 == nspin)
         {
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 1024)
 #endif
-            for( int ir=0; ir< nrxx; ++ir )
+            for (int ir = 0; ir < nrxx; ++ir)
             {
 #ifdef __EXX
                 if (func.info->number == XC_MGGA_X_SCAN && XC_Functional::get_func_type() == 5)
@@ -664,39 +640,37 @@ std::tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional_Li
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 64)
 #endif
-            for( int ir=0; ir< nrxx; ++ir )
+            for (int ir = 0; ir < nrxx; ++ir)
             {
 #ifdef __EXX
                 if (func.info->number == XC_MGGA_X_SCAN && XC_Functional::get_func_type() == 5)
                 {
-                    vsigma[ir*3]   *= (1.0 - XC_Functional::get_hybrid_alpha());
-                    vsigma[ir*3+1] *= (1.0 - XC_Functional::get_hybrid_alpha());
-                    vsigma[ir*3+2] *= (1.0 - XC_Functional::get_hybrid_alpha());
+                    vsigma[ir * 3] *= (1.0 - XC_Functional::get_hybrid_alpha());
+                    vsigma[ir * 3 + 1] *= (1.0 - XC_Functional::get_hybrid_alpha());
+                    vsigma[ir * 3 + 2] *= (1.0 - XC_Functional::get_hybrid_alpha());
                 }
 #endif
-                h[0][ir] = 2.0 * (gdr[0][ir] * vsigma[ir*3  ] * sgn[ir*2  ] * 2.0
-                                + gdr[1][ir] * vsigma[ir*3+1] * sgn[ir*2]   * sgn[ir*2+1]);
-                h[1][ir] = 2.0 * (gdr[1][ir] * vsigma[ir*3+2] * sgn[ir*2+1] * 2.0
-                                + gdr[0][ir] * vsigma[ir*3+1] * sgn[ir*2]   * sgn[ir*2+1]);
+                h[0][ir] = 2.0 * (gdr[0][ir] * vsigma[ir * 3] * sgn[ir * 2] * 2.0 +
+                                     gdr[1][ir] * vsigma[ir * 3 + 1] * sgn[ir * 2] * sgn[ir * 2 + 1]);
+                h[1][ir] = 2.0 * (gdr[1][ir] * vsigma[ir * 3 + 2] * sgn[ir * 2 + 1] * 2.0 +
+                                     gdr[0][ir] * vsigma[ir * 3 + 1] * sgn[ir * 2] * sgn[ir * 2 + 1]);
             }
         }
 
         // define two dimensional array dh [ nspin, nrxx ]
-        std::vector<std::vector<double>> dh(nspin, std::vector<double>( nrxx));
-        for( int is=0; is!=nspin; ++is )
+        std::vector<std::vector<double>> dh(nspin, std::vector<double>(nrxx));
+        for (int is = 0; is != nspin; ++is)
         {
-            XC_Functional::grad_dot( h[is].data(),
-                dh[is].data(), chr->rhopw,
-                tpiba);
+            XC_Functional::grad_dot(h[is].data(), dh[is].data(), chr->rhopw, tpiba);
         }
 
         double rvtxc = 0.0;
 #ifdef _OPENMP
-#pragma omp parallel for collapse(2) reduction(+:rvtxc) schedule(static, 256)
+#pragma omp parallel for collapse(2) reduction(+ : rvtxc) schedule(static, 256)
 #endif
-        for( int is=0; is<nspin; ++is )
+        for (int is = 0; is < nspin; ++is)
         {
-            for( int ir=0; ir< nrxx; ++ir )
+            for (int ir = 0; ir < nrxx; ++ir)
             {
                 // Use valence-only density (chr->rho), not the total density
                 // (rho, which includes the NLCC core charge). vtxc must be
@@ -705,28 +679,28 @@ std::tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional_Li
                 // the core charge here double-counts the core contribution
                 // in the diagonal analytical stress.
                 rvtxc += dh[is][ir] * chr->rho[is][ir];
-                v(is,ir) -= dh[is][ir];
+                v(is, ir) -= dh[is][ir];
             }
         }
         vtxc -= rvtxc;
 
-        //process vtau and vlapl
+        // process vtau and vlapl
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2) schedule(static, 1024)
 #endif
-        for( int is=0; is<nspin; ++is )
+        for (int is = 0; is < nspin; ++is)
         {
-            for( int ir=0; ir< nrxx; ++ir )
+            for (int ir = 0; ir < nrxx; ++ir)
             {
 #ifdef __EXX
                 if (func.info->number == XC_MGGA_X_SCAN && XC_Functional::get_func_type() == 5)
                 {
-                    vtau[ir*nspin+is] *= (1.0 - XC_Functional::get_hybrid_alpha());
-                    vlapl[ir*nspin+is] *= (1.0 - XC_Functional::get_hybrid_alpha());
+                    vtau[ir * nspin + is] *= (1.0 - XC_Functional::get_hybrid_alpha());
+                    vlapl[ir * nspin + is] *= (1.0 - XC_Functional::get_hybrid_alpha());
                 }
 #endif
-                vofk(is,ir) += vtau[ir*nspin+is]  * sgn[ir*nspin+is];
-                voflapl(is,ir) += vlapl[ir*nspin+is] * sgn[ir*nspin+is];
+                vofk(is, ir) += vtau[ir * nspin + is] * sgn[ir * nspin + is];
+                voflapl(is, ir) += vlapl[ir * nspin + is] * sgn[ir * nspin + is];
             }
         }
     }
@@ -782,8 +756,8 @@ std::tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional_Li
 
     XC_Functional_Libxc::finish_func(funcs);
 
-    ModuleBase::timer::end("XC_Functional_Libxc","v_xc_meta");
-    return std::make_tuple( etxc, vtxc, std::move(v), std::move(vofk) );
+    ModuleBase::timer::end("XC_Functional_Libxc", "v_xc_meta");
+    return std::make_tuple(etxc, vtxc, std::move(v), std::move(vofk));
 }
 
 #endif

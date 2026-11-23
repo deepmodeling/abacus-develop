@@ -10,11 +10,8 @@
 
 #include "xc_functional.h"
 
-//Slater exchange with alpha=2/3
-void XC_Functional::slater(
-    const double &rs,
-    double &ex,
-    double &vx)
+// Slater exchange with alpha=2/3
+void XC_Functional::slater(const double &rs, double &ex, double &vx)
 {
     // f = -9/8*(3/2pi)^(2/3)
     const double f = -0.687247939924714e0;
@@ -24,12 +21,9 @@ void XC_Functional::slater(
     return;
 }
 
-//Slater exchange with alpha=1, corresponding to -1.374/r_s Ry
-//used to recover old results
-void XC_Functional::slater1(
-    const double &rs,
-    double &ex,
-    double &vx)
+// Slater exchange with alpha=1, corresponding to -1.374/r_s Ry
+// used to recover old results
+void XC_Functional::slater1(const double &rs, double &ex, double &vx)
 {
     const double f = -0.687247939924714e0;
     const double alpha = 1.0;
@@ -39,14 +33,11 @@ void XC_Functional::slater1(
 }
 
 // Slater exchange with alpha=2/3 and Relativistic exchange
-void XC_Functional::slater_rxc(
-    const double &rs,
-    double &ex,
-    double &vx)
+void XC_Functional::slater_rxc(const double &rs, double &ex, double &vx)
 {
     const double trd = 1.0 / 3.0;
-    //const double ftrd = 4.0 / 3.0;
-    //const double tftm = pow(2.0, ftrd) - 2.0;
+    // const double ftrd = 4.0 / 3.0;
+    // const double tftm = pow(2.0, ftrd) - 2.0;
     const double a0 = pow((4.0 / (9.0 * ModuleBase::PI)), trd);
     // X-alpha parameter:
     const double alp = 2 * trd;
@@ -72,7 +63,7 @@ void XC_Functional::slater_spin(
     double &vxup,
     double &vxdw)
 {
-    const double f = - 1.107838149573033610;
+    const double f = -1.107838149573033610;
     const double alpha = 2.00 / 3.00;
     // f = -9/8*(3/pi)^(1/3)
     const double third = 1.0 / 3.0;
@@ -97,7 +88,7 @@ void XC_Functional::slater1_spin(
     double &vxup,
     double &vxdw)
 {
-    const double f = - 1.107838149573033610;
+    const double f = -1.107838149573033610;
     const double alpha = 1.00;
     const double third = 1.0 / 3.0;
     const double p43 = 4.0 / 3.0;
@@ -148,8 +139,7 @@ void XC_Functional::slater_rxc_spin(
     double sb = sqrt(1 + beta * beta);
     double alb = log(beta + sb);
     vxp = vxp * (-0.5 + 1.5 * alb / (beta * sb));
-    exp = exp * (1.0- 1.5*( (beta*sb-alb) / (beta*beta) )
-                * 1.5*( (beta*sb-alb) / (beta*beta) ));
+    exp = exp * (1.0 - 1.5 * ((beta * sb - alb) / (beta * beta)) * 1.5 * ((beta * sb - alb) / (beta * beta)));
 
     double x = (beta * sb - alb) / (beta * beta);
 
@@ -159,11 +149,11 @@ void XC_Functional::slater_rxc_spin(
 
     double exf = pow(2.0, trd) * exp;
 
-    vxup  = vxp + fz * (vxf - vxp) + (1 - z) * fzp * (exf - exp);
+    vxup = vxp + fz * (vxf - vxp) + (1 - z) * fzp * (exf - exp);
 
-    vxdw  = vxp + fz * (vxf - vxp) - (1 + z) * fzp * (exf - exp);
+    vxdw = vxp + fz * (vxf - vxp) - (1 + z) * fzp * (exf - exp);
 
-    ex    = exp + fz * (exf - exp);
+    ex = exp + fz * (exf - exp);
 
     return;
 }

@@ -83,7 +83,7 @@ void output_mat_sparse(const MatSparseOutputOptions& options,
                    nlocal,
                    ofs_running);
     }
-    //! generate a file containing the derivatives of the overlap matrix (in Ry/Bohr)
+    //! generate a file containing the derivatives of the overlap matrix (in 1/Bohr)
     if (options.out_mat_ds)
     {
         mat_R_options.precision = options.ds_precision;

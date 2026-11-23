@@ -25,7 +25,7 @@ struct NcggaRadialPoint
 //   r,                                  r >= eta.
 // The splice is C2 at both r = 0 and r = eta.  Eta is explicit so this
 // mathematical primitive does not choose policy for any XC mode.
-NcggaRadialPoint make_ncgga_radial_point(const std::array<double, 3>& magnetization, const double eta);
+NcggaRadialPoint make_ncgga_radial_point(const std::array<double, 3> &magnetization, const double eta);
 
 // The C2 regularization scale is part of the gga_grad=2 LCA functional, not a
 // divide-by-zero guard.  Other noncollinear modes do not inherit this policy.
@@ -53,7 +53,7 @@ struct NcggaSpinMapPoint
 // The Jacobian follows that exact graph. At the abs kink t=0 it selects zero;
 // at the clipping kink radial.value=a it selects the saturated branch. Eta and
 // the radial policy remain explicit in make_ncgga_radial_point.
-NcggaSpinMapPoint make_ncgga_spin_map_point(const double total_density, const NcggaRadialPoint& radial);
+NcggaSpinMapPoint make_ncgga_spin_map_point(const double total_density, const NcggaRadialPoint &radial);
 
 } // namespace ModuleXC
 

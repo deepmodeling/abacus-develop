@@ -1,19 +1,18 @@
 #ifndef ABACUS_SOURCE_HAMILT_MODULE_GINT_GINT_INFO_H
 #define ABACUS_SOURCE_HAMILT_MODULE_GINT_GINT_INFO_H
 
-
-#include <memory>
-#include <vector>
+#include "big_grid.h"
+#include "divide_info.h"
+#include "gint_atom.h"
+#include "gint_helper.h"
+#include "localcell_info.h"
+#include "source_cell/atom_spec.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_cell/unitcell.h"
-#include "source_cell/atom_spec.h"
 #include "source_hamilt/module_hcontainer/hcontainer.h"
-#include "gint_helper.h"
-#include "big_grid.h"
-#include "gint_atom.h"
 #include "unitcell_info.h"
-#include "localcell_info.h"
-#include "divide_info.h"
+#include <memory>
+#include <vector>
 
 #ifdef __CUDA
 #include "batch_biggrid.h"
@@ -25,20 +24,33 @@ namespace ModuleGint
 
 class GintInfo
 {
-    public:
+  public:
     // constructor
     GintInfo(
-        int nbx, int nby, int nbz,
-        int nmx, int nmy, int nmz,
-        int startidx_bx, int startidx_by, int startidx_bz,
-        int nbx_local, int nby_local, int nbz_local,
-        const Numerical_Orbital* Phi,
-        const UnitCell& ucell, Grid_Driver& gd,
-        int nspin, bool gamma_only, bool domag, bool use_gpu, int nstream);
+        int nbx,
+        int nby,
+        int nbz,
+        int nmx,
+        int nmy,
+        int nmz,
+        int startidx_bx,
+        int startidx_by,
+        int startidx_bz,
+        int nbx_local,
+        int nby_local,
+        int nbz_local,
+        const Numerical_Orbital *Phi,
+        const UnitCell &ucell,
+        Grid_Driver &gd,
+        int nspin,
+        bool gamma_only,
+        bool domag,
+        bool use_gpu,
+        int nstream);
 
     ~GintInfo();
 
-    static GintInfo make_test_instance(const UnitCell& ucell, std::vector<int> ijr_info)
+    static GintInfo make_test_instance(const UnitCell &ucell, std::vector<int> ijr_info)
     {
         GintInfo info;
         info.ucell_ = &ucell;
@@ -46,22 +58,22 @@ class GintInfo
         return info;
     }
 
-    static GintInfo* make_test_instance_ptr(const UnitCell& ucell, std::vector<int> ijr_info)
+    static GintInfo *make_test_instance_ptr(const UnitCell &ucell, std::vector<int> ijr_info)
     {
-        GintInfo* info = new GintInfo();
+        GintInfo *info = new GintInfo();
         info->ucell_ = &ucell;
         info->ijr_info_ = std::move(ijr_info);
         return info;
     }
 
     // getter functions
-    const std::vector<std::shared_ptr<BigGrid>>& get_biggrids() { return biggrids_; }
+    const std::vector<std::shared_ptr<BigGrid>> &get_biggrids() { return biggrids_; }
     int get_bgrids_num() const { return static_cast<int>(biggrids_.size()); }
-    const std::vector<int>& get_trace_lo() const{ return trace_lo_; }
+    const std::vector<int> &get_trace_lo() const { return trace_lo_; }
     int get_lgd() const { return lgd_; }
-    int get_nat() const { return ucell_->nat; }        // return the number of atoms in the unitcell
-    const UnitCell* get_ucell() const { return ucell_; }
-    const std::vector<int>& get_ijr_info() const {return ijr_info_;}
+    int get_nat() const { return ucell_->nat; } // return the number of atoms in the unitcell
+    const UnitCell *get_ucell() const { return ucell_; }
+    const std::vector<int> &get_ijr_info() const { return ijr_info_; }
     int get_local_mgrid_num() const { return localcell_info_->get_mgrids_num(); }
     double get_mgrid_volume() const { return meshgrid_info_->get_volume(); }
     GintPrecision get_exec_precision() const { return exec_precision_; }
@@ -77,7 +89,7 @@ class GintInfo
     HContainer<T> get_hr(int npol = 1) const
     {
         auto hr = HContainer<T>(ucell_->nat);
-        if(gamma_only_)
+        if (gamma_only_)
         {
             hr.fix_gamma();
         }
@@ -85,20 +97,20 @@ class GintInfo
         hr.allocate(nullptr, true);
         return hr;
     }
-    
-    private:
+
+  private:
     GintInfo() = default;
 
     // initialize the atoms
-    void init_atoms_(int ntype, const Atom* atoms, const Numerical_Orbital* Phi);
+    void init_atoms_(int ntype, const Atom *atoms, const Numerical_Orbital *Phi);
 
     // initialize trace_lo_ and lgd_
-    void init_trace_lo_(const UnitCell& ucell, const int nspin);
+    void init_trace_lo_(const UnitCell &ucell, const int nspin);
 
     // initialize the ijr_info
-    void init_ijr_info_(const UnitCell& ucell, Grid_Driver& gd);
+    void init_ijr_info_(const UnitCell &ucell, Grid_Driver &gd);
 
-    const UnitCell* ucell_ = nullptr;
+    const UnitCell *ucell_ = nullptr;
 
     // the unitcell information
     std::shared_ptr<const UnitCellInfo> unitcell_info_;
@@ -132,7 +144,7 @@ class GintInfo
 
     // map the global index of atomic orbitals to local index
     std::vector<int> trace_lo_;
-    
+
     // store the information about Numerical orbitals
     std::vector<Numerical_Orbital> orbs_;
 
@@ -145,21 +157,21 @@ class GintInfo
     bool domag_ = false;
     bool use_gpu_ = false;
 
-    #ifdef __CUDA
-    public:
-    std::vector<std::shared_ptr<BatchBigGrid>>& get_bgrid_batches() { return bgrid_batches_; };
+#ifdef __CUDA
+  public:
+    std::vector<std::shared_ptr<BatchBigGrid>> &get_bgrid_batches() { return bgrid_batches_; };
     int get_bgrid_batches_num() const { return static_cast<int>(bgrid_batches_.size()); };
     std::shared_ptr<const GintGpuVars> get_gpu_vars() const { return gpu_vars_; };
     int get_dev_id() const { return gpu_vars_->dev_id_; };
     int get_streams_num() const { return streams_num_; };
-    
-    private:
+
+  private:
     void init_bgrid_batches_(int batch_size);
     std::vector<std::shared_ptr<BatchBigGrid>> bgrid_batches_;
     std::shared_ptr<const GintGpuVars> gpu_vars_;
     // More streams can improve parallelism and may speed up grid integration, at the cost of higher GPU memory usage.
     int streams_num_;
-    #endif
+#endif
 };
 
 } // namespace ModuleGint

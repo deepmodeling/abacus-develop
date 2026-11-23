@@ -3,6 +3,7 @@
 #include "source_base/parallel_reduce.h"
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
+#include "source_base/module_out/sparse_matrix.h"
 
 #include <complex>
 #include <cstdio>
@@ -130,4 +131,98 @@ template void ModuleIO::save_lat_r<double>(std::ofstream& ofs,
 template void ModuleIO::save_lat_r<std::complex<double>>(std::ofstream& ofs,
     const SparseRBlock<std::complex<double>>& XR,
     const Parallel_Blkcyclic& layout,
+    const SparseWriteOptions& options);
+
+template <typename T>
+void ModuleIO::save_lat_r_csr(std::ofstream& ofs,
+    const SparseRBlock<T>& XR,
+    const Parallel_Blkcyclic& layout,
+    const SparseWriteOptions& options)
+{
+    const int nlocal = layout.nrglb();
+    if (nlocal <= 0)
+    {
+        ModuleBase::WARNING_QUIT("ModuleIO::save_lat_r_csr",
+                                 "Block-cyclic global row size must be positive.");
+    }
+
+    ModuleIO::SparseMatrix<T> sparse_matrix(nlocal, nlocal);
+    sparse_matrix.setSparseThreshold(options.threshold);
+
+    std::vector<T> line(nlocal);
+    for (int row = 0; row < nlocal; ++row)
+    {
+        ModuleBase::GlobalFunc::ZEROS(line.data(), nlocal);
+
+        if (!options.reduce || layout.irloc(row) >= 0)
+        {
+            auto iter = XR.find(row);
+            if (iter != XR.end())
+            {
+                for (const auto& value: iter->second)
+                {
+                    if (value.first >= static_cast<size_t>(nlocal))
+                    {
+                        ModuleBase::WARNING_QUIT("ModuleIO::save_lat_r_csr",
+                                                 "Sparse column index out of range.");
+                    }
+                    line[value.first] = value.second;
+                }
+            }
+        }
+
+        if (options.reduce)
+        {
+            Parallel_Reduce::reduce_all(line.data(), nlocal);
+        }
+
+        if (!options.reduce || ofs.is_open())
+        {
+            for (int col = 0; col < nlocal; ++col)
+            {
+                sparse_matrix.insert(row, col, line[col]);
+            }
+        }
+    }
+
+    if (!options.reduce || ofs.is_open())
+    {
+        sparse_matrix.printToCSR(ofs, options.precision);
+    }
+}
+
+template void ModuleIO::save_lat_r_csr<double>(std::ofstream& ofs,
+    const SparseRBlock<double>& XR,
+    const Parallel_Blkcyclic& layout,
+    const SparseWriteOptions& options);
+
+template void ModuleIO::save_lat_r_csr<std::complex<double>>(std::ofstream& ofs,
+    const SparseRBlock<std::complex<double>>& XR,
+    const Parallel_Blkcyclic& layout,
+    const SparseWriteOptions& options);
+
+template <typename T>
+void ModuleIO::save_lat_r_empty_csr(std::ofstream& ofs,
+    const int nlocal,
+    const SparseWriteOptions& options)
+{
+    if (nlocal <= 0)
+    {
+        ModuleBase::WARNING_QUIT("ModuleIO::save_lat_r_empty_csr",
+                                 "Block-cyclic global row size must be positive.");
+    }
+
+    if (!options.reduce || ofs.is_open())
+    {
+        ModuleIO::SparseMatrix<T> sparse_matrix(nlocal, nlocal);
+        sparse_matrix.printToCSR(ofs, options.precision);
+    }
+}
+
+template void ModuleIO::save_lat_r_empty_csr<double>(std::ofstream& ofs,
+    int nlocal,
+    const SparseWriteOptions& options);
+
+template void ModuleIO::save_lat_r_empty_csr<std::complex<double>>(std::ofstream& ofs,
+    int nlocal,
     const SparseWriteOptions& options);

@@ -11,7 +11,7 @@
 namespace
 {
 
-double dot(const std::array<double, 3>& left, const std::array<double, 3>& right)
+double dot(const std::array<double, 3> &left, const std::array<double, 3> &right)
 {
     double result = 0.0;
     for (int component = 0; component < 3; ++component)
@@ -21,9 +21,8 @@ double dot(const std::array<double, 3>& left, const std::array<double, 3>& right
     return result;
 }
 
-std::array<double, 3> shifted(const std::array<double, 3>& point,
-                              const std::array<double, 3>& direction,
-                              const double step)
+std::array<double, 3> shifted(
+    const std::array<double, 3> &point, const std::array<double, 3> &direction, const double step)
 {
     std::array<double, 3> result = point;
     for (int component = 0; component < 3; ++component)
@@ -33,7 +32,7 @@ std::array<double, 3> shifted(const std::array<double, 3>& point,
     return result;
 }
 
-double directional_hessian(const ModuleXC::NcggaRadialPoint& point, const std::array<double, 3>& direction)
+double directional_hessian(const ModuleXC::NcggaRadialPoint &point, const std::array<double, 3> &direction)
 {
     double result = 0.0;
     for (int row = 0; row < 3; ++row)
@@ -46,7 +45,7 @@ double directional_hessian(const ModuleXC::NcggaRadialPoint& point, const std::a
     return result;
 }
 
-ModuleXC::NcggaSpinMapPoint make_spin_map(const std::array<double, 4>& state, const double eta)
+ModuleXC::NcggaSpinMapPoint make_spin_map(const std::array<double, 4> &state, const double eta)
 {
     const std::array<double, 3> magnetization = {{state[1], state[2], state[3]}};
     return ModuleXC::make_ncgga_spin_map_point(state[0], ModuleXC::make_ncgga_radial_point(magnetization, eta));
@@ -103,10 +102,10 @@ TEST(NcggaRadial, CompactBranchConvergesC2AtJoin)
     const double eta = 0.5;
     const double coarse_delta = 1.0e-3;
     const double fine_delta = 0.5 * coarse_delta;
-    const ModuleXC::NcggaRadialPoint coarse
-        = ModuleXC::make_ncgga_radial_point({{eta * (1.0 - coarse_delta), 0.0, 0.0}}, eta);
-    const ModuleXC::NcggaRadialPoint fine
-        = ModuleXC::make_ncgga_radial_point({{eta * (1.0 - fine_delta), 0.0, 0.0}}, eta);
+    const ModuleXC::NcggaRadialPoint coarse =
+        ModuleXC::make_ncgga_radial_point({{eta * (1.0 - coarse_delta), 0.0, 0.0}}, eta);
+    const ModuleXC::NcggaRadialPoint fine =
+        ModuleXC::make_ncgga_radial_point({{eta * (1.0 - fine_delta), 0.0, 0.0}}, eta);
 
     EXPECT_LE(std::abs(fine.value - eta), 0.51 * std::abs(coarse.value - eta));
     EXPECT_LE(std::abs(fine.gradient[0] - 1.0), 0.26 * std::abs(coarse.gradient[0] - 1.0));
@@ -141,10 +140,10 @@ TEST(NcggaRadial, GradientMatchesCentralFiniteDifference)
     for (std::size_t sample = 0; sample < points.size(); ++sample)
     {
         const ModuleXC::NcggaRadialPoint point = ModuleXC::make_ncgga_radial_point(points[sample], eta);
-        const double finite_difference
-            = (ModuleXC::make_ncgga_radial_point(shifted(points[sample], direction, step), eta).value
-               - ModuleXC::make_ncgga_radial_point(shifted(points[sample], direction, -step), eta).value)
-              / (2.0 * step);
+        const double finite_difference =
+            (ModuleXC::make_ncgga_radial_point(shifted(points[sample], direction, step), eta).value -
+                ModuleXC::make_ncgga_radial_point(shifted(points[sample], direction, -step), eta).value) /
+            (2.0 * step);
         EXPECT_NEAR(finite_difference, dot(point.gradient, direction), 2.0e-10);
     }
 }
@@ -161,10 +160,10 @@ TEST(NcggaRadial, JacobianMatchesGradientFiniteDifference)
     for (std::size_t sample = 0; sample < points.size(); ++sample)
     {
         const ModuleXC::NcggaRadialPoint point = ModuleXC::make_ncgga_radial_point(points[sample], eta);
-        const ModuleXC::NcggaRadialPoint plus
-            = ModuleXC::make_ncgga_radial_point(shifted(points[sample], direction, step), eta);
-        const ModuleXC::NcggaRadialPoint minus
-            = ModuleXC::make_ncgga_radial_point(shifted(points[sample], direction, -step), eta);
+        const ModuleXC::NcggaRadialPoint plus =
+            ModuleXC::make_ncgga_radial_point(shifted(points[sample], direction, step), eta);
+        const ModuleXC::NcggaRadialPoint minus =
+            ModuleXC::make_ncgga_radial_point(shifted(points[sample], direction, -step), eta);
         for (int row = 0; row < 3; ++row)
         {
             double analytic = 0.0;
@@ -202,11 +201,8 @@ TEST(NcggaRadial, SpinDensityMapJacobianMatchesFiniteDifferenceInEachBranch)
 {
     const double eta = 0.5;
     const double step = 2.0e-7;
-    const std::array<std::array<double, 4>, 5> states = {{{{1.20, 0.30, -0.20, 0.10}},
-                                                          {{-1.20, 0.30, -0.20, 0.10}},
-                                                          {{0.20, 0.42, -0.31, 0.16}},
-                                                          {{-0.20, 0.42, -0.31, 0.16}},
-                                                          {{0.90, 0.12, -0.08, 0.05}}}};
+    const std::array<std::array<double, 4>, 5> states = {{{{1.20, 0.30, -0.20, 0.10}}, {{-1.20, 0.30, -0.20, 0.10}},
+        {{0.20, 0.42, -0.31, 0.16}}, {{-0.20, 0.42, -0.31, 0.16}}, {{0.90, 0.12, -0.08, 0.05}}}};
 
     for (std::size_t sample = 0; sample < states.size(); ++sample)
     {

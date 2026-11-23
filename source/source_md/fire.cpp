@@ -6,12 +6,13 @@
 #endif
 #include "source_base/timer.h"
 
-FIRE::FIRE(const MD_para& mdp_in,
-           const bool cal_stress_in,
-           const bool init_vel,
-           const int my_rank_in,
-           const double force_thr_in,
-           MDCell& mdcell_in)
+FIRE::FIRE(
+    const MD_para &mdp_in,
+    const bool cal_stress_in,
+    const bool init_vel,
+    const int my_rank_in,
+    const double force_thr_in,
+    MDCell &mdcell_in)
     : MD_base(mdp_in, cal_stress_in, init_vel, my_rank_in, mdcell_in)
 {
     force_thr = force_thr_in;
@@ -32,11 +33,9 @@ FIRE::FIRE(const MD_para& mdp_in,
     // force_thr = 1e-3;
 }
 
-FIRE::~FIRE()
-{
-}
+FIRE::~FIRE() {}
 
-void FIRE::setup(ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir, DomainDecomposition& decomp)
+void FIRE::setup(ModuleESolver::ESolver *p_esolver, const std::string &global_readin_dir, DomainDecomposition &decomp)
 {
     ModuleBase::TITLE("FIRE", "setup");
     ModuleBase::timer::start("FIRE", "setup");
@@ -50,7 +49,7 @@ void FIRE::setup(ModuleESolver::ESolver* p_esolver, const std::string& global_re
     return;
 }
 
-void FIRE::first_half(std::ofstream& ofs)
+void FIRE::first_half(std::ofstream &ofs)
 {
     ModuleBase::TITLE("FIRE", "first_half");
     ModuleBase::timer::start("FIRE", "first_half");
@@ -66,7 +65,6 @@ void FIRE::first_half(std::ofstream& ofs)
     return;
 }
 
-
 void FIRE::second_half(void)
 {
     ModuleBase::TITLE("FIRE", "second_half");
@@ -81,8 +79,7 @@ void FIRE::second_half(void)
     return;
 }
 
-
-void FIRE::print_md(std::ofstream& ofs, const bool& cal_stress)
+void FIRE::print_md(std::ofstream &ofs, const bool &cal_stress)
 {
     MD_base::print_md(ofs, cal_stress);
 
@@ -94,8 +91,7 @@ void FIRE::print_md(std::ofstream& ofs, const bool& cal_stress)
     return;
 }
 
-
-void FIRE::write_restart(const std::string& global_out_dir)
+void FIRE::write_restart(const std::string &global_out_dir)
 {
     if (!my_rank)
     {
@@ -118,8 +114,7 @@ void FIRE::write_restart(const std::string& global_out_dir)
     return;
 }
 
-
-void FIRE::restart(const std::string& global_readin_dir)
+void FIRE::restart(const std::string &global_readin_dir)
 {
     bool ok = true;
 
@@ -137,10 +132,10 @@ void FIRE::restart(const std::string& global_readin_dir)
         if (ok)
         {
             file >> step_rst_ >> md_tfirst >> alpha >> negative_count >> dt_max >> md_dt;
-            if(!file)
+            if (!file)
             {
                 ok = false;
-            }    
+            }
             file.close();
         }
     }
@@ -172,7 +167,7 @@ void FIRE::check_force(void)
 
     std::int64_t movable_dof = 0;
 
-    for (const LocalAtom& atom : mdcell.owned_atoms())
+    for (const LocalAtom &atom : mdcell.owned_atoms())
     {
         for (int j = 0; j < 3; ++j)
         {
@@ -197,7 +192,7 @@ void FIRE::check_force(void)
         }
     }
 
- #ifdef __MPI
+#ifdef __MPI
     if (mdcell.mpi_size() > 1)
     {
         double global_max = 0.0;
@@ -224,7 +219,6 @@ void FIRE::check_force(void)
     return;
 }
 
-
 void FIRE::check_fire(void)
 {
     double P = 0.0;
@@ -242,7 +236,7 @@ void FIRE::check_fire(void)
     // Compute P, |F| and |v| only on movable degrees of freedom.
     // Fixed atoms/directions may have non-zero raw forces, but they should not
     // affect the FIRE velocity projection or adaptive time-step control.
-    for (LocalAtom& atom : mdcell.owned_atoms())
+    for (LocalAtom &atom : mdcell.owned_atoms())
     {
         for (int j = 0; j < 3; ++j)
         {
@@ -261,7 +255,7 @@ void FIRE::check_fire(void)
         }
     }
 
- #ifdef __MPI
+#ifdef __MPI
     if (mdcell.mpi_size() > 1)
     {
         double local_values[3] = {P, sumforce, normvel};
@@ -289,7 +283,7 @@ void FIRE::check_fire(void)
     // Avoid 0/0. In a truly converged case check_force() should stop the run.
     if (sumforce > 0.0 && normvel > 0.0)
     {
-        for (LocalAtom& atom : mdcell.owned_atoms())
+        for (LocalAtom &atom : mdcell.owned_atoms())
         {
             for (int j = 0; j < 3; ++j)
             {
@@ -299,8 +293,7 @@ void FIRE::check_fire(void)
                     continue;
                 }
 
-                atom.vel[j] = (1.0 - alpha) * atom.vel[j]
-                            + alpha * atom.force[j] / sumforce * normvel;
+                atom.vel[j] = (1.0 - alpha) * atom.vel[j] + alpha * atom.force[j] / sumforce * normvel;
             }
         }
     }
@@ -319,7 +312,7 @@ void FIRE::check_fire(void)
         md_dt *= fdec;
         negative_count = 0;
 
-        for (LocalAtom& atom : mdcell.owned_atoms())
+        for (LocalAtom &atom : mdcell.owned_atoms())
         {
             for (int j = 0; j < 3; ++j)
             {

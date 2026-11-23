@@ -13,22 +13,22 @@
 // subroutines: grad_wfc, grad_rho, grad_dot, laplacian_rho and
 // noncolin_rho.
 
+#include "source_base/timer.h"
 #include "xc_functional.h"
 #include "xc_functional_ncgga_sf.h"
 #include "xc_grad_internal.h"
-#include "source_base/timer.h"
 
 #ifdef __LIBXC
-#include <xc_funcs.h>
 #include "libxc_abacus.h"
+#include <xc_funcs.h>
 #endif
 
 void XC_Functional::gradcorr(
     double &etxc,
     double &vtxc,
     ModuleBase::matrix &v,
-    const Charge* const chr,
-    ModulePW::PW_Basis* rhopw,
+    const Charge *const chr,
+    ModulePW::PW_Basis *rhopw,
     const UnitCell *ucell,
     std::vector<double> &stress_gga,
     const bool is_stress,
@@ -39,27 +39,28 @@ void XC_Functional::gradcorr(
     const double hybrid_alpha_in,
     const double hse_omega_in)
 {
-    ModuleBase::TITLE("XC_Functional","gradcorr");
+    ModuleBase::TITLE("XC_Functional", "gradcorr");
 
-    if((func_type == 3 || func_type == 5) && nspin==4)
+    if ((func_type == 3 || func_type == 5) && nspin == 4)
     {
-        ModuleBase::WARNING_QUIT("gradcorr","meta-GGA has not been implemented for nspin = 4 yet");
+        ModuleBase::WARNING_QUIT("gradcorr", "meta-GGA has not been implemented for nspin = 4 yet");
     }
 
-    if(func_type == 0 || func_type == 1)
+    if (func_type == 0 || func_type == 1)
     {
         return;
     }
 
     // No (semi-)local functional at all. `set_xc_type("HF")` sets func_type = 4 but leaves func_id empty,
     // Without this block, it will read back whatever the previous functional left in the cleared-but-not-freed
-    // buffer (PBE, from set_xc_first_loop), producing a phantom XC energy and potential. (issue deepmodeling/abacus-develop#5404)
-    if(func_id.empty())
+    // buffer (PBE, from set_xc_first_loop), producing a phantom XC energy and potential. (issue
+    // deepmodeling/abacus-develop#5404)
+    if (func_id.empty())
     {
         // `Stress_Func::stress_gga` only guards on func_type (0/1) and unconditionally reads
         // stress_gga[0..8] afterwards, so hand back an explicit zero tensor rather than an
         // untouched (empty) vector.
-        if(is_stress)
+        if (is_stress)
         {
             stress_gga.assign(9, 0.0);
         }
@@ -68,57 +69,46 @@ void XC_Functional::gradcorr(
 
     if (is_stress && !use_libxc && nspin == 4 && (domag || domag_z) && gga_grad == 2)
     {
-        ModuleXC::NCGGA_SF_Builtin::gradcorr_ncgga_lca_builtin(
-            chr, rhopw, ucell->tpiba, stress_gga);
+        ModuleXC::NCGGA_SF_Builtin::gradcorr_ncgga_lca_builtin(chr, rhopw, ucell->tpiba, stress_gga);
         return;
     }
 
-
-
 #ifdef __LIBXC
-    if (is_stress && use_libxc && nspin == 4 && (domag || domag_z)
-        && gga_grad == 2)
+    if (is_stress && use_libxc && nspin == 4 && (domag || domag_z) && gga_grad == 2)
     {
         XC_Functional_Libxc::gradcorr_ncgga_sf_libxc(
-            func_id,
-            rhopw->nrxx,
-            ucell->tpiba,
-            chr,
-            &scaling_factor_xc,
-            hybrid_alpha_in,
-            hse_omega_in,
-            stress_gga);
+            func_id, rhopw->nrxx, ucell->tpiba, chr, &scaling_factor_xc, hybrid_alpha_in, hse_omega_in, stress_gga);
         return;
     }
 #endif
 
     bool igcc_is_lyp = false;
     // func_id may hold a single entry (e.g. PBE0 -> {XC_HYB_GGA_XC_PBEH}), so guard the index.
-    if( func_id.size() > 1 && func_id[1] == XC_GGA_C_LYP)
+    if (func_id.size() > 1 && func_id[1] == XC_GGA_C_LYP)
     {
         igcc_is_lyp = true;
     }
 
     int nspin0 = nspin;
-    if(nspin==4)
+    if (nspin == 4)
     {
-        nspin0 =1;
+        nspin0 = 1;
     }
-    if(nspin==4&&(domag||domag_z))
+    if (nspin == 4 && (domag || domag_z))
     {
         nspin0 = 2;
     }
 
-    assert(nspin0>0);
-    const double fac = 1.0/ nspin0;
+    assert(nspin0 > 0);
+    const double fac = 1.0 / nspin0;
 
     // Use cached need_laplacian from set_xc_type
     bool need_laplacian = XC_Functional::get_need_laplacian();
 
-    if(is_stress)
+    if (is_stress)
     {
         stress_gga.resize(9);
-        for(int i=0;i<9;i++)
+        for (int i = 0; i < 9; i++)
         {
             stress_gga[i] = 0.0;
         }

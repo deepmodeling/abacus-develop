@@ -11,23 +11,25 @@
 
 namespace ModuleSccs
 {
-void gauss_ion_force(const std::vector<unitcell::AtomData>& atoms,
-                     const std::vector<double>& reaction_potential,
-                     const ModulePW::PW_Basis& basis,
-                     double tpiba,
-                     double spread,
-                     std::vector<ModuleBase::Vector3<double>>& forces)
+void gauss_ion_force(
+    const std::vector<unitcell::AtomData> &atoms,
+    const std::vector<double> &reaction_potential,
+    const ModulePW::PW_Basis &basis,
+    double tpiba,
+    double spread,
+    std::vector<ModuleBase::Vector3<double>> &forces)
 {
     const std::vector<double> spreads(atoms.size(), spread);
     gauss_ion_force(atoms, reaction_potential, basis, tpiba, spreads, forces);
 }
 
-void gauss_ion_force(const std::vector<unitcell::AtomData>& atoms,
-                     const std::vector<double>& reaction_potential,
-                     const ModulePW::PW_Basis& basis,
-                     double tpiba,
-                     const std::vector<double>& spreads,
-                     std::vector<ModuleBase::Vector3<double>>& forces)
+void gauss_ion_force(
+    const std::vector<unitcell::AtomData> &atoms,
+    const std::vector<double> &reaction_potential,
+    const ModulePW::PW_Basis &basis,
+    double tpiba,
+    const std::vector<double> &spreads,
+    std::vector<ModuleBase::Vector3<double>> &forces)
 {
     std::vector<std::complex<double>> potential_g(basis.npw);
     basis.real2recip(reaction_potential.data(), potential_g.data());
@@ -37,7 +39,7 @@ void gauss_ion_force(const std::vector<unitcell::AtomData>& atoms,
     // The cell volume cancels the Z/omega in the Gaussian charge coefficients.
     for (std::size_t ia = 0; ia < atoms.size(); ++ia)
     {
-        const unitcell::AtomData& atom = atoms[ia];
+        const unitcell::AtomData &atom = atoms[ia];
         const double spread = spreads[ia];
         for (int ig = 0; ig < basis.npw; ++ig)
         {
@@ -56,12 +58,13 @@ void gauss_ion_force(const std::vector<unitcell::AtomData>& atoms,
     }
 }
 
-void gauss_core_frc(const std::vector<unitcell::AtomData>& atoms,
-                    const std::vector<double>& reaction_potential,
-                    const ModulePW::PW_Basis& basis,
-                    double tpiba,
-                    const std::vector<double>& atom_spreads,
-                    std::vector<ModuleBase::Vector3<double>>& forces)
+void gauss_core_frc(
+    const std::vector<unitcell::AtomData> &atoms,
+    const std::vector<double> &reaction_potential,
+    const ModulePW::PW_Basis &basis,
+    double tpiba,
+    const std::vector<double> &atom_spreads,
+    std::vector<ModuleBase::Vector3<double>> &forces)
 {
     std::vector<unitcell::AtomData> core_atoms;
     std::vector<double> widths;

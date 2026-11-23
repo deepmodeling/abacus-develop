@@ -196,17 +196,16 @@ void HSolverPW<T, Device>::solve(HSOperator<T, Device>& op,
         eigenvalues.data(),
         this->wfc_basis->nks * psi.get_nbands());
 
-    auto _pes_pw = reinterpret_cast<elecstate::ElecStatePW<T>*>(pes);
-    elecstate::calculate_weights(_pes_pw->ekb,
-                                 _pes_pw->wg,
-                                 _pes_pw->klist,
-                                 _pes_pw->eferm,
-                                 _pes_pw->f_en,
-                                 _pes_pw->nelec_spin,
+    elecstate::calculate_weights(pes->ekb,
+                                 pes->wg,
+                                 pes->klist,
+                                 pes->eferm,
+                                 pes->f_en,
+                                 pes->nelec_spin,
                                  this->nbands,
-                                 _pes_pw->skip_weights);
+                                 pes->skip_weights);
 
-    elecstate::calEBand(_pes_pw->ekb,_pes_pw->wg,_pes_pw->f_en);
+    elecstate::calEBand(pes->ekb, pes->wg, pes->f_en);
     if (skip_charge)
     {
         if (this->use_uspp)
@@ -216,7 +215,7 @@ void HSolverPW<T, Device>::solve(HSOperator<T, Device>& op,
     }
     else
     {
-        reinterpret_cast<elecstate::ElecStatePW<T, Device>*>(pes)->psiToRho(psi);
+        pes->psiToRho(psi);
     }
 
     ModuleBase::timer::end("HSolverPW", "solve");

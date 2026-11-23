@@ -1,15 +1,15 @@
 #include "exx_info.h"
 #include "general_exx_info.h"
 
-#include "source_io/module_parameter/input_parameter.h"
 #include "source_base/global_function.h"
 #include "source_base/tool_quit.h"
+#include "source_io/module_parameter/input_parameter.h"
 
 #include <algorithm>
 #include <cassert>
-#include <string>
 #include <sstream>
 #include <stdexcept>
+#include <string>
 #include <vector>
 
 //----------------------------------------------------------
@@ -18,106 +18,102 @@
 // a lightweight config without depending on Exx_Info.
 // Peize Lin add 2018-06-20, refactored 2026.
 //----------------------------------------------------------
-bool init_general_exx_info(General_Exx_Info& info, const Input_para& inp)
+bool init_general_exx_info(General_Exx_Info &info, const Input_para &inp)
 {
     std::string dft_functional_lower = inp.dft_functional;
-    std::transform(inp.dft_functional.begin(),
-                   inp.dft_functional.end(),
-                   dft_functional_lower.begin(),
-                   tolower);
+    std::transform(inp.dft_functional.begin(), inp.dft_functional.end(), dft_functional_lower.begin(), tolower);
     bool generate_opt_orb = false;
-    if (dft_functional_lower == "hf"
-    || dft_functional_lower == "pbe0" || dft_functional_lower == "b3lyp" || dft_functional_lower == "hse"
-    || dft_functional_lower == "scan0"
-    || dft_functional_lower == "muller" || dft_functional_lower == "power"
-    || dft_functional_lower == "cwp22" || dft_functional_lower == "wp22"
-    || dft_functional_lower == "lc_pbe"
-    || dft_functional_lower == "lc_wpbe"
-    || dft_functional_lower == "lrc_wpbe"
-    || dft_functional_lower == "lrc_wpbeh"
-    || dft_functional_lower == "cam_pbeh")
+    if (dft_functional_lower == "hf" || dft_functional_lower == "pbe0" || dft_functional_lower == "b3lyp" ||
+        dft_functional_lower == "hse" || dft_functional_lower == "scan0" || dft_functional_lower == "muller" ||
+        dft_functional_lower == "power" || dft_functional_lower == "cwp22" || dft_functional_lower == "wp22" ||
+        dft_functional_lower == "lc_pbe" || dft_functional_lower == "lc_wpbe" || dft_functional_lower == "lrc_wpbe" ||
+        dft_functional_lower == "lrc_wpbeh" || dft_functional_lower == "cam_pbeh")
     {
         info.cal_exx = true;
 
         info.hybrid_alpha = 0;
         std::vector<double> fock_alpha(inp.exx_fock_alpha.size());
-        for(std::size_t i=0; i<fock_alpha.size(); ++i)
+        for (std::size_t i = 0; i < fock_alpha.size(); ++i)
         {
             fock_alpha[i] = std::stod(inp.exx_fock_alpha[i]);
             info.hybrid_alpha = std::max(std::abs(fock_alpha[i]), info.hybrid_alpha);
         }
         std::vector<double> erfc_alpha(inp.exx_erfc_alpha.size());
-        for(std::size_t i=0; i<erfc_alpha.size(); ++i)
+        for (std::size_t i = 0; i < erfc_alpha.size(); ++i)
         {
             erfc_alpha[i] = std::stod(inp.exx_erfc_alpha[i]);
             info.hybrid_alpha = std::max(std::abs(erfc_alpha[i]), info.hybrid_alpha);
         }
-        assert(info.hybrid_alpha>0);
-        for(std::size_t i=0; i<fock_alpha.size(); ++i)
-            { fock_alpha[i] /= info.hybrid_alpha; }
-        for(std::size_t i=0; i<erfc_alpha.size(); ++i)
-            { erfc_alpha[i] /= info.hybrid_alpha; }
-
-        if(!fock_alpha.empty())
+        assert(info.hybrid_alpha > 0);
+        for (std::size_t i = 0; i < fock_alpha.size(); ++i)
         {
-            if(inp.basis_type == "lcao")
+            fock_alpha[i] /= info.hybrid_alpha;
+        }
+        for (std::size_t i = 0; i < erfc_alpha.size(); ++i)
+        {
+            erfc_alpha[i] /= info.hybrid_alpha;
+        }
+
+        if (!fock_alpha.empty())
+        {
+            if (inp.basis_type == "lcao")
             {
                 info.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Fock].resize(fock_alpha.size());
-                for(std::size_t i=0; i<fock_alpha.size(); ++i)
+                for (std::size_t i = 0; i < fock_alpha.size(); ++i)
                 {
-                    info.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Fock] = {{
-                        {"alpha", ModuleBase::GlobalFunc::TO_STRING(fock_alpha[i])},
-                        {"singularity_correction", inp.exx_singularity_correction} }};
+                    info.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Fock] = {
+                        {{"alpha", ModuleBase::GlobalFunc::TO_STRING(fock_alpha[i])},
+                            {"singularity_correction", inp.exx_singularity_correction}}};
                 }
             }
-            else if(inp.basis_type == "lcao_in_pw")
+            else if (inp.basis_type == "lcao_in_pw")
             {
                 assert(fock_alpha.size() == inp.exx_fock_lambda.size());
                 info.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Fock].resize(fock_alpha.size());
-                for(std::size_t i=0; i<fock_alpha.size(); ++i)
+                for (std::size_t i = 0; i < fock_alpha.size(); ++i)
                 {
-                    info.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Fock] = {{
-                        {"alpha", ModuleBase::GlobalFunc::TO_STRING(fock_alpha[i])},
-                        {"lambda", inp.exx_fock_lambda[i]} }};
+                    info.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Fock] = {
+                        {{"alpha", ModuleBase::GlobalFunc::TO_STRING(fock_alpha[i])},
+                            {"lambda", inp.exx_fock_lambda[i]}}};
                 }
             }
-            else if(inp.basis_type == "pw")
+            else if (inp.basis_type == "pw")
             {
                 info.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Fock].resize(fock_alpha.size());
-                for(std::size_t i=0; i<fock_alpha.size(); ++i)
+                for (std::size_t i = 0; i < fock_alpha.size(); ++i)
                 {
-                    info.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Fock] = {{
-                        {"alpha", ModuleBase::GlobalFunc::TO_STRING(fock_alpha[i])} }};
+                    info.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Fock] = {
+                        {{"alpha", ModuleBase::GlobalFunc::TO_STRING(fock_alpha[i])}}};
                 }
             }
             else
             {
-                throw std::invalid_argument(std::string(__FILE__)+" line "+std::to_string(__LINE__));
+                throw std::invalid_argument(std::string(__FILE__) + " line " + std::to_string(__LINE__));
             }
         }
-        if(!erfc_alpha.empty())
+        if (!erfc_alpha.empty())
         {
             assert(erfc_alpha.size() == inp.exx_erfc_omega.size());
-            if(inp.basis_type == "lcao")
+            if (inp.basis_type == "lcao")
             {
                 info.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Erfc].resize(erfc_alpha.size());
-                for(std::size_t i=0; i<erfc_alpha.size(); ++i)
+                for (std::size_t i = 0; i < erfc_alpha.size(); ++i)
                 {
-                    info.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Erfc] = {{
-                        {"alpha", ModuleBase::GlobalFunc::TO_STRING(erfc_alpha[i])},
-                        {"omega", ModuleBase::GlobalFunc::TO_STRING(inp.exx_erfc_omega[i])},
-                        {"singularity_correction", inp.exx_singularity_correction} }};
+                    info.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Erfc] = {
+                        {{"alpha", ModuleBase::GlobalFunc::TO_STRING(erfc_alpha[i])},
+                            {"omega", ModuleBase::GlobalFunc::TO_STRING(inp.exx_erfc_omega[i])},
+                            {"singularity_correction", inp.exx_singularity_correction}}};
                 }
             }
-            else if(inp.basis_type == "pw" || inp.basis_type == "lcao_in_pw")
+            else if (inp.basis_type == "pw" || inp.basis_type == "lcao_in_pw")
             {
                 info.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Erfc].resize(erfc_alpha.size());
-                for(std::size_t i=0; i<erfc_alpha.size(); ++i)
+                for (std::size_t i = 0; i < erfc_alpha.size(); ++i)
                 {
-                    info.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Erfc] = {{
-                        {"alpha", ModuleBase::GlobalFunc::TO_STRING(erfc_alpha[i])},
-                        {"omega", ModuleBase::GlobalFunc::TO_STRING(inp.exx_erfc_omega[i])},
-                        {"singularity_correction", inp.exx_singularity_correction} }};
+                    info.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Erfc] = {
+                        {{"alpha", ModuleBase::GlobalFunc::TO_STRING(erfc_alpha[i])},
+                            {"omega", ModuleBase::GlobalFunc::TO_STRING(inp.exx_erfc_omega[i])},
+                            {"singularity_correction", inp.exx_singularity_correction}}};
                 }
             }
         }
@@ -138,46 +134,43 @@ bool init_general_exx_info(General_Exx_Info& info, const Input_para& inp)
     {
         if (inp.basis_type != "lcao")
         {
-            throw std::invalid_argument("RPA currently expects basis_type=lcao when initializing RI Coulomb parameters.");
+            throw std::invalid_argument(
+                "RPA currently expects basis_type=lcao when initializing RI Coulomb parameters.");
         }
         info.hybrid_alpha = 1.0;
         info.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Hf;
-        info.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Fock] = {{
-            {"alpha", "1"},
-            {"singularity_correction", inp.exx_singularity_correction}
-        }};
+        info.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Fock] = {
+            {{"alpha", "1"}, {"singularity_correction", inp.exx_singularity_correction}}};
     }
 
     // ccp_type will be removed in the future. these codes for pw and lcao_in_pw temporarily
-    if (dft_functional_lower == "hf"
-     || dft_functional_lower == "pbe0" || dft_functional_lower == "b3lyp"
-     || dft_functional_lower == "scan0"
-     || dft_functional_lower == "muller" || dft_functional_lower == "power")
+    if (dft_functional_lower == "hf" || dft_functional_lower == "pbe0" || dft_functional_lower == "b3lyp" ||
+        dft_functional_lower == "scan0" || dft_functional_lower == "muller" || dft_functional_lower == "power")
     {
         info.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Hf;
     }
     // use the error function erf(w|r-r'|), exx just has the short-range part
-    else if (dft_functional_lower == "hse"
-          || dft_functional_lower == "cwp22")
+    else if (dft_functional_lower == "hse" || dft_functional_lower == "cwp22")
     {
         info.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Erfc;
     }
     // use the error function erf(w|r-r'|), exx just has the long-range part
-    else if ( dft_functional_lower == "wp22" )
+    else if (dft_functional_lower == "wp22")
     {
         info.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Erf;
     }
 
     if (info.cal_exx
 #ifdef __EXX
-        || generate_opt_orb
-        || inp.rpa
+        || generate_opt_orb || inp.rpa
 #endif
-        )
+    )
     {
         // EXX case, convert all EXX related variables
-        if(!inp.exx_erfc_omega.empty())
-            { info.hse_omega = std::stod(inp.exx_erfc_omega[0]); }
+        if (!inp.exx_erfc_omega.empty())
+        {
+            info.hse_omega = std::stod(inp.exx_erfc_omega[0]);
+        }
         info.separate_loop = inp.exx_separate_loop;
         info.hybrid_step = inp.exx_hybrid_step;
         info.mixing_beta_for_loop1 = inp.exx_mixing_beta;
@@ -206,37 +199,38 @@ bool init_general_exx_info(General_Exx_Info& info, const Input_para& inp)
 // fills LCAO-specific sub-structures (info_ri, info_opt_abfs, info_lip).
 // Peize Lin add 2018-06-20, refactored 2026.
 //----------------------------------------------------------
-bool init_exx_info(Exx_Info& exx_info, const Input_para& inp)
+bool init_exx_info(Exx_Info &exx_info, const Input_para &inp)
 {
     bool generate_opt_orb = init_general_exx_info(exx_info.info_global, inp);
 
     if (exx_info.info_global.cal_exx
 #ifdef __EXX
-        || generate_opt_orb
-        || inp.rpa
+        || generate_opt_orb || inp.rpa
 #endif
-        )
+    )
     {
-        if(!inp.exx_fock_lambda.empty())
-            { exx_info.info_lip.lambda = std::stod(inp.exx_fock_lambda[0]); }
+        if (!inp.exx_fock_lambda.empty())
+        {
+            exx_info.info_lip.lambda = std::stod(inp.exx_fock_lambda[0]);
+        }
 
         exx_info.info_ri.real_number = std::stoi(inp.exx_real_number);
         // Preserve actual images for all direct (Center2) RI kernels.
         // Ewald preperiodizes its integrals and retains its existing treatment.
-        const CoulombParam& kernels = exx_info.info_global.coulomb_param;
+        const CoulombParam &kernels = exx_info.info_global.coulomb_param;
         const bool has_fock = kernels.count(Conv_Coulomb_Pot_K::Coulomb_Type::Fock) != 0;
-        const bool direct_fock = inp.exx_singularity_correction == "spencer"
-            || inp.exx_singularity_correction == "revised_spencer"
-            || inp.exx_singularity_correction == "limits";
+        const bool direct_fock = inp.exx_singularity_correction == "spencer" ||
+                                 inp.exx_singularity_correction == "revised_spencer" ||
+                                 inp.exx_singularity_correction == "limits";
         const bool direct_integrals = !has_fock || direct_fock;
-        exx_info.info_ri.unfold_hybrid_images = exx_info.info_global.cal_exx && inp.basis_type == "lcao"
-            && inp.esolver_type == "tddft" && inp.td_stype == 2 && direct_integrals;
+        exx_info.info_ri.unfold_hybrid_images = exx_info.info_global.cal_exx && inp.basis_type == "lcao" &&
+                                                inp.esolver_type == "tddft" && inp.td_stype == 2 && direct_integrals;
         if (exx_info.info_ri.unfold_hybrid_images && inp.kpar != 1)
         {
             throw std::invalid_argument("Unfolded hybrid RI validation currently requires kpar=1");
         }
-        if (exx_info.info_global.cal_exx && inp.basis_type == "lcao"
-            && inp.esolver_type == "tddft" && inp.td_stype == 2 && exx_info.info_ri.real_number)
+        if (exx_info.info_global.cal_exx && inp.basis_type == "lcao" && inp.esolver_type == "tddft" &&
+            inp.td_stype == 2 && exx_info.info_ri.real_number)
         {
             throw std::invalid_argument("td_stype=2 EXX requires exx_real_number=0");
         }
@@ -270,17 +264,19 @@ bool init_exx_info(Exx_Info& exx_info, const Input_para& inp)
         if (inp.rpa)
         {
             const bool cut_nondefault = inp.rpa_cut_coulomb != "hard" || inp.rpa_cut_radius != "legacy";
-            if (cut_nondefault
-                && exx_info.info_ri.coulomb_param.count(Conv_Coulomb_Pot_K::Coulomb_Type::Fock) == 0)
+            if (cut_nondefault && exx_info.info_ri.coulomb_param.count(Conv_Coulomb_Pot_K::Coulomb_Type::Fock) == 0)
             {
                 throw std::invalid_argument(
                     "Non-default rpa_cut_coulomb/rpa_cut_radius requires a Fock Coulomb component; "
                     "Erfc-only configurations such as default HSE are unsupported.");
             }
-            for (auto& cut_family : exx_info.info_ri.coulomb_param)
+            for (auto &cut_family : exx_info.info_ri.coulomb_param)
             {
-                if (cut_family.first != Conv_Coulomb_Pot_K::Coulomb_Type::Fock) { continue; }
-                for (auto& cut_parameter : cut_family.second)
+                if (cut_family.first != Conv_Coulomb_Pot_K::Coulomb_Type::Fock)
+                {
+                    continue;
+                }
+                for (auto &cut_parameter : cut_family.second)
                 {
                     cut_parameter["rpa_cut_coulomb"] = inp.rpa_cut_coulomb;
                     cut_parameter["rpa_cut_radius"] = inp.rpa_cut_radius;

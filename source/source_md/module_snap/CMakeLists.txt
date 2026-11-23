@@ -6,8 +6,5 @@ target_sources(
     snap_derivative.cpp
     snap_model.cpp
     snap_cg.cpp
+    snap_forcefield.cpp
 )
-
-if(BUILD_TESTING)
-  add_subdirectory(unittest)
-endif()

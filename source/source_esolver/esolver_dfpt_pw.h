@@ -12,7 +12,8 @@
 #include "esolver_ks_pw.h"
 #include "source_pw/module_dfpt/dfpt_pw.h"
 
-namespace ModuleDFPT {
+namespace ModuleDFPT
+{
 class XC_First_Order;
 }
 
@@ -25,16 +26,16 @@ class ESolver_DFPT_PW : public ESolver_KS_PW<std::complex<double>, base_device::
     ESolver_DFPT_PW();
     ~ESolver_DFPT_PW();
 
-    void before_all_runners(BaseCell& basecell, const Input_para& inp) override;
-    void runner(BaseCell& basecell, const int istep) override;
-    void after_all_runners(BaseCell& basecell) override;
+    void before_all_runners(BaseCell &basecell, const Input_para &inp) override;
+    void runner(BaseCell &basecell, const int istep) override;
+    void after_all_runners(BaseCell &basecell) override;
 
   protected:
-    ModuleDFPT::DFPT_PW* dfpt_ = nullptr;
+    ModuleDFPT::DFPT_PW *dfpt_ = nullptr;
 
     ///< first-order XC kernel adapter over elecstate::PotXC_FDM (C7),
     ///< owned here so module_dfpt stays free of pot_xc_fdm.h dependencies
-    ModuleDFPT::XC_First_Order* xc_adapter_ = nullptr;
+    ModuleDFPT::XC_First_Order *xc_adapter_ = nullptr;
 
     bool gs_done_ = false;
 
@@ -58,14 +59,14 @@ class ESolver_DFPT_PW : public ESolver_KS_PW<std::complex<double>, base_device::
 
     bool domag_z_ = false;
 
-    void run_gs(UnitCell& ucell);
+    void run_gs(UnitCell &ucell);
 
     /// wires DFPT_PW with the converged ground state; called after run_gs
     /// (the injected veff/XC reference data only exist once the GS SCF is
     /// done)
-    void init_dfpt(UnitCell& ucell);
+    void init_dfpt(UnitCell &ucell);
 
-    void run_post_process(UnitCell& ucell);
+    void run_post_process(UnitCell &ucell);
 };
 
 } // namespace ModuleESolver
