@@ -25,9 +25,9 @@ void Stress_Func<FPTYPE, Device>::stress_kin_cuda(ModuleBase::matrix& sigma, con
     ct::Tensor partial(ct::DataType::DT_DOUBLE, ct::DeviceType::GpuDevice, {max_blocks, 6});
     std::vector<double> host_partial(6 * max_blocks);
     double sums[6] = {};
-    for (int ik = 0; ik < kpoints->get_nks(); ++ik)
+    for (int ik = 0; ik < basis->nks; ++ik)
     {
-        const int npw = kpoints->ngk[ik];
+        const int npw = basis->npwk[ik];
         if (npw == 0) { continue; }
         const int blocks = hamilt::kinetic_stress_blocks_gpu(npw);
         hamilt::kinetic_stress_gpu(npw, npwx, PARAM.inp.nbands, npol, tpiba,
