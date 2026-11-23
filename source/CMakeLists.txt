@@ -66,13 +66,10 @@ set(_abacus_feature_definitions
     $<$<BOOL:${ENABLE_LIBRI}>:TEST_EXX_LCAO=0>
     $<$<BOOL:${ENABLE_LIBRI}>:TEST_EXX_RADIAL=1>
     $<$<BOOL:${ENABLE_LIBXC}>:__LIBXC>
+    $<$<BOOL:${ENABLE_LIBXC_CUDA}>:ABACUS_LIBXC_CUDA>
+    $<$<BOOL:${_libxc_requires_host_flag}>:ABACUS_LIBXC_REQUIRES_HOST_FLAG>
     $<$<BOOL:${ENABLE_DFTD4}>:__DFTD4>
     $<$<BOOL:${MATH_INFO}>:GATHER_INFO>)
-
-if(USE_CUDA AND ENABLE_LIBXC AND Libxc_ENABLE_CUDA AND
-   Libxc_VERSION VERSION_GREATER_EQUAL "7.1.0")
-  list(APPEND _abacus_feature_definitions ABACUS_LIBXC_CUDA)
-endif()
 
 if(ABACUS_COMMIT_INFO_INCLUDE_DIR)
   list(APPEND _abacus_feature_definitions COMMIT_INFO)

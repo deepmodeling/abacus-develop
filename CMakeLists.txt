@@ -90,6 +90,9 @@ cmake_dependent_option(ENABLE_GOOGLEBENCH "Enable GOOGLE-benchmark usage" OFF
                        "BUILD_TESTING" OFF)
 
 # Options requiring CUDA
+cmake_dependent_option(
+  ENABLE_LIBXC_CUDA "Enable CUDA evaluation of Libxc potentials" OFF
+  "USE_CUDA;ENABLE_LIBXC" OFF)
 cmake_dependent_option(USE_CUDA_MPI "Enable CUDA-aware MPI" OFF
                        "USE_CUDA;ENABLE_MPI" OFF)
 cmake_dependent_option(ENABLE_CUSOLVERMP "Enable cuSOLVERMp" OFF
@@ -637,7 +640,16 @@ endif()
 
 if(ENABLE_LIBXC)
   find_package(Libxc CONFIG REQUIRED)
-  if(Libxc_VERSION VERSION_LESS "5.1.7")
+  if(Libxc_ENABLE_CUDA AND Libxc_VERSION VERSION_GREATER_EQUAL "7.1.0")
+    # CUDA Libxc needs explicit host initialization even when offload is disabled.
+    set(_libxc_requires_host_flag ON)
+  elseif(ENABLE_LIBXC_CUDA)
+    message(
+      FATAL_ERROR
+        "ENABLE_LIBXC_CUDA requires Libxc >= 7.1.0 built with -DENABLE_CUDA=ON. "
+        "Found Libxc ${Libxc_VERSION} (Libxc_ENABLE_CUDA=${Libxc_ENABLE_CUDA})."
+    )
+  elseif(Libxc_VERSION VERSION_LESS "5.1.7")
     message(
       FATAL_ERROR "Libxc >= 5.1.7 is required; found version ${Libxc_VERSION}")
   endif()

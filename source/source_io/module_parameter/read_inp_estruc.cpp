@@ -300,8 +300,8 @@ The other way is only available when compiling with LIBXC, and it allows for sup
         item.category = "Electronic structure";
         item.type = "String";
         item.description = "Selects CPU or CUDA evaluation of the Libxc LDA/GGA potential, including the "
-                           "semilocal part of HSE. GPU evaluation requires CUDA-enabled ABACUS and Libxc >= 7.1 "
-                           "built with ENABLE_CUDA=ON. Built-in functionals, meta-GGA, response kernels and "
+                           "semilocal part of HSE. GPU evaluation requires ABACUS built with ENABLE_LIBXC_CUDA=ON "
+                           "and CUDA-enabled Libxc >= 7.1.0. Built-in functionals, meta-GGA, response kernels and "
                            "separate force/stress evaluations retain their CPU implementation.";
         item.default_value = "cpu";
         read_sync_string(input.device_xc);
@@ -309,7 +309,7 @@ The other way is only available when compiling with LIBXC, and it allows for sup
         item.check_value = [](const Input_Item&, const Parameter& para) {
             if (para.input.device_xc == "gpu")
             {
-                ModuleBase::WARNING_QUIT("ReadInput", "device_xc gpu requires CUDA-enabled ABACUS and Libxc >= 7.1.0 built with ENABLE_CUDA=ON.");
+                ModuleBase::WARNING_QUIT("ReadInput", "device_xc gpu requires ABACUS built with -DENABLE_LIBXC_CUDA=ON.");
             }
         };
 #endif
