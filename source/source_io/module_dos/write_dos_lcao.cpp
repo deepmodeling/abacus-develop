@@ -67,7 +67,7 @@ void write_dos_lcao(
         const double& dos_edelta_ev,
         const double& dos_scale,
         const double& bcoeff,
-        const bool dos_npy,
+        const int out_dos,
         const int out_app_flag,
         const int istep,
         const int nspin,
@@ -103,18 +103,25 @@ void write_dos_lcao(
             dos_emin_ev,
             two_fermi);
 
-    const int buffered_spins = dos_npy ? nspin0 : 0;
-    std::vector<DosSpectrum> total_dos(buffered_spins);
+    std::vector<DosSpectrum> total_dos;
+    if (out_dos == 2)
+    {
+        total_dos.resize(nspin0);
+    }
     for (int is = 0; is < nspin0; ++is)
     {
         std::stringstream ss;
-        if (!dos_npy)
+        DosSpectrum* spectrum = nullptr;
+        if (out_dos == 2)
+        {
+            spectrum = &total_dos[is];
+        }
+        else
         {
             ss << global_out_dir << "doss" << is + 1;
             if (istep >= 0 && out_app_flag == 2) { ss << "g" << istep + 1; }
             ss << ".txt";
         }
-        DosSpectrum* spectrum = dos_npy ? &total_dos[is] : nullptr;
         const bool calculated = ModuleIO::cal_dos(is,
                 ss.str(),
                 dos_edelta_ev,
@@ -133,11 +140,11 @@ void write_dos_lcao(
                 bndpar,
                 spectrum);
 
-        if (dos_npy && !calculated)
+        if (out_dos == 2 && !calculated)
         {
             ModuleBase::WARNING_QUIT("write_dos_lcao", "Cannot calculate total DOS for dos.npy");
         }
-        if (!dos_npy && GlobalV::MY_RANK == 0)
+        if (out_dos != 2 && GlobalV::MY_RANK == 0)
         {
             ModuleIO::write_notice(ofs_running, "DOS", is, nspin, ss.str());
         }
@@ -162,7 +169,7 @@ void write_dos_lcao(
     std::string error;
     if (GlobalV::MY_RANK == 0)
     {
-        if (dos_npy)
+        if (out_dos == 2)
         {
             std::string path = global_out_dir + "dos.npy";
             try
@@ -184,7 +191,7 @@ void write_dos_lcao(
                             emin, dos_edelta_ev, global_out_dir, istep, out_app_flag, ofs_running);
         }
     }
-    if (dos_npy)
+    if (out_dos == 2)
     {
         Parallel_Common::bcast_string(error);
         if (!error.empty()) { ModuleBase::WARNING_QUIT("write_dos_lcao", error); }
@@ -209,7 +216,7 @@ template void write_dos_lcao(
         const double& dos_edelta_ev,
         const double& dos_scale,
         const double& bcoeff,
-        const bool dos_npy,
+        const int out_dos,
         const int out_app_flag,
         const int istep,
         const int nspin,
@@ -237,7 +244,7 @@ template void write_dos_lcao(
         const double& dos_edelta_ev,
         const double& dos_scale,
         const double& bcoeff,
-        const bool dos_npy,
+        const int out_dos,
         const int out_app_flag,
         const int istep,
         const int nspin,
