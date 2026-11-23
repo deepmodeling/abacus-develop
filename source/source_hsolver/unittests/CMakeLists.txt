@@ -166,8 +166,6 @@ if(ENABLE_MPI)
             ../lobpcg_recovery.cpp
             ../rr_solver.cpp
             ../diago_params.cpp
-            ../diag_hs_para.cpp
-            ../diago_pxxxgvx.cpp
             ../module_linalg/linear_algebra.cpp
             ../diag_const_nums.cpp
             ../diago_iter_assist.cpp
@@ -181,9 +179,6 @@ if(ENABLE_MPI)
             ../../source_cell/parallel_kpoints.cpp
             ../../source_cell/reciprocal_grid.cpp)
 
-  if(TARGET ELPA::ELPA)
-    target_link_libraries(MODULE_HSOLVER_pw PRIVATE ELPA::ELPA genelpa)
-  endif()
 
   if(ENABLE_LCAO)
     # DSP build without C_PACK: diago_lapack.cpp then needs the zhegvx_

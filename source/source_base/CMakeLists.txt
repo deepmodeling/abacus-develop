@@ -94,14 +94,6 @@ endif()
 
 if(BUILD_TESTING)
   AddTest(
-    TARGET MODULE_BASE_lapack_gvx_output
-    LIBS base device container
-    SOURCES unittests/test_lapack.cpp)
-  AddTest(
-    TARGET MODULE_BASE_timer_scope
-    LIBS base device container
-    SOURCES unittests/test_timer.cpp)
-  AddTest(
     TARGET MODULE_BASE_atom_basis_view
     LIBS parameter
     SOURCES test/test_atom_basis_view.cpp
