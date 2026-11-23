@@ -239,20 +239,18 @@ TEST_F(InputTest, DeviceExxGpuScfSymmetry)
     // The serial reader needs an explicit LAPACK solver; its default GPU
     // eigensolver requires MPI, independently of the EXX device selection.
     const std::string input = "basis_type lcao\ndft_functional hse\nks_solver lapack\ndevice gpu\ndevice_exx gpu\n";
-    const std::string diagnostic = "\n device_exx=gpu does not support symmetry=1 until LibRI GPU symmetry is fixed; "
-                                   "use symmetry=0 or symmetry=-1, or device_exx=cpu\n";
-    for (const std::string symmetry : {"", "symmetry 1\nexx_symmetry_realspace 0\n"})
+    for (const std::string symmetry :
+        {"", "symmetry 1\n", "symmetry 1\nexx_symmetry_realspace 0\n", "symmetry 1\nexx_symmetry_realspace 1\n"})
     {
         SCOPED_TRACE(symmetry);
         Parameter param;
         const std::string parameters = input + symmetry;
-        testing::internal::CaptureStdout();
-        EXPECT_THROW(read_parameters(filename, parameters, param), std::runtime_error);
-        const std::string output = testing::internal::GetCapturedStdout();
-        EXPECT_THAT(output, testing::HasSubstr(diagnostic));
+        ASSERT_NO_THROW(read_parameters(filename, parameters, param));
         EXPECT_EQ(param.inp.calculation, "scf");
         EXPECT_EQ(param.inp.device_exx, "gpu");
         EXPECT_EQ(param.inp.symmetry, "1");
+        const bool realspace = symmetry.find("exx_symmetry_realspace 0") == std::string::npos;
+        EXPECT_EQ(param.inp.exx_symmetry_realspace, realspace);
     }
     for (const std::string symmetry : {"0", "-1"})
     {

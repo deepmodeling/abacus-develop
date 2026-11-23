@@ -87,13 +87,9 @@ build of DDLA. Like other dependent
 options, GPU RI is disabled when its LibRI/CUDA prerequisites are disabled.
 INPUT `device_exx` defaults to `cpu`, retaining CPU contractions even with
 `device gpu`. To use GPU contractions, set both `device gpu` and `device_exx gpu`.
-The latter requires GPU RI to be compiled in. After normal INPUT processing,
-GPU RI temporarily rejects an effective `symmetry 1`, regardless of
-`exx_symmetry_realspace`, pending a validated LibRI GPU symmetry fix. This GPU
-EXX check reports an error without modifying parameter values itself. Existing
-INPUT resets still apply; for example, `calculation md` sets `symmetry` to `0`
-before this check. Use `symmetry 0` (time reversal only) or `symmetry -1` (no
-symmetry), or select CPU RI when spatial symmetry is needed.
+The latter requires GPU RI to be compiled in. GPU contractions support
+`symmetry 1`, including real-space EXX reduction with
+`exx_symmetry_realspace 1`.
 
 The selector applies to the LCAO Kohn-Sham exchange engine. LR and RDMFT exchange
 engines retain CPU contractions, including when LR reuses Kohn-Sham exchange
@@ -109,9 +105,10 @@ CUDA_VISIBLE_DEVICES=0,1 mpirun -np 2 abacus
 ```
 
 [LibRI v0.3.0.0](https://github.com/abacusmodeling/LibRI/releases/tag/v0.3.0.0)
-is the minimum GPU release. It includes the accumulation, OpenMP, atom-list
-and DDLA adapter fixes, but GPU symmetry validation still fails; the restriction
-above remains necessary. Earlier LibRI versions remain usable for CPU RI.
+is the minimum GPU release. Use the release tagged at
+`589f6f8c6df3916575a1ba41e840de919d40d345` or a newer compatible release;
+it includes the GPU symmetry, accumulation, OpenMP, atom-list and DDLA adapter
+fixes. Earlier LibRI versions remain usable for CPU RI.
 
 DDLA must provide its installed `LibDDLAConfig.cmake` package and `ddla::ddla`
 target, `DDLA_HAS_GPU`, and the handle-selected `gemmVbatched` and

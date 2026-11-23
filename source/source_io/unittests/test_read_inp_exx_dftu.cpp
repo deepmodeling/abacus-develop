@@ -60,19 +60,18 @@ TEST(DeviceExxInput, SelectionAndValidation)
     input.device = "gpu";
 
 #ifdef __GPU_RI
-    expect_rejected("device_exx=gpu does not support symmetry=1");
-    EXPECT_EQ(input.device_exx, "gpu");
-    EXPECT_EQ(input.symmetry, "1");
-    EXPECT_TRUE(input.exx_symmetry_realspace);
-    input.exx_symmetry_realspace = false;
-    expect_rejected("device_exx=gpu does not support symmetry=1");
-    EXPECT_EQ(input.symmetry, "1");
-    EXPECT_FALSE(input.exx_symmetry_realspace);
-    input.exx_symmetry_realspace = true;
-    input.symmetry = "0";
-    it->second.check_value(it->second, param);
-    input.symmetry = "-1";
-    it->second.check_value(it->second, param);
+    for (const std::string symmetry : {"1", "0", "-1"})
+    {
+        for (const bool realspace : {false, true})
+        {
+            input.symmetry = symmetry;
+            input.exx_symmetry_realspace = realspace;
+            EXPECT_NO_THROW(it->second.check_value(it->second, param));
+            EXPECT_EQ(input.device_exx, "gpu");
+            EXPECT_EQ(input.symmetry, symmetry);
+            EXPECT_EQ(input.exx_symmetry_realspace, realspace);
+        }
+    }
 #else
     expect_rejected("device_exx=gpu requires a build with ENABLE_LIBRI_GPU=ON");
 #endif
