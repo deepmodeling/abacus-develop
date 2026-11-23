@@ -135,6 +135,10 @@ namespace LRI_CV_Tools
         struct dirent *ptr;
         DIR *dir;
         dir = opendir(path.c_str());
+        if (dir == nullptr)
+        {
+            throw std::runtime_error("Cannot open directory: " + path);
+        }
         const bool use_prefixed = has_prefixed_family(path, "librpa_Cs_data_", "Cs_data_");
         while ((ptr = readdir(dir)) != NULL){// read all the files in the directory
             std::string fm(ptr->d_name);

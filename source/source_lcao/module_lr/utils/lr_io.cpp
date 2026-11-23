@@ -537,6 +537,11 @@ TLRI<TVs> read_coulomb_mat_k(const std::string& in_dir, const TLRI<TCs>& Cs, LR_
     // values in directory order.
     const std::string prefix = select_coulomb_prefix(in_dir);
     std::cout << "read_coulomb_mat_k: using prefix \"" << prefix << "\" in directory \"" << in_dir << "\"" << std::endl;
+    dir = opendir(in_dir.c_str());
+    if (!dir)
+    {
+        throw std::runtime_error("Cannot open directory: " + in_dir);
+    }
 
     size_t nk = 0, nabf = 0, istart = 0, jstart = 0, iend = 0, jend = 0;
 
@@ -657,6 +662,11 @@ TLRI<TVs> read_coulomb_mat_general_k(const std::string& in_dir, const TLRI<TCs>&
     // values in directory order.
     const std::string prefix = select_coulomb_prefix(in_dir);
     std::cout << "read_coulomb_mat_k: using prefix \"" << prefix << "\" in directory \"" << in_dir << "\"" << std::endl;
+    dir = opendir(in_dir.c_str());
+    if (!dir)
+    {
+        throw std::runtime_error("Cannot open directory: " + in_dir);
+    }
     
     TLRI<TVs> Vs;
     std::map<int, std::map<std::pair<int,int>, RI::Tensor<std::complex<double>>>> Vq; // <iat1, <<iat2,ik>, T>>
