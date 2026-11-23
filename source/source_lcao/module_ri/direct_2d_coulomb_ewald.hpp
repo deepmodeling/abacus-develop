@@ -197,7 +197,7 @@ void Ewald_Vq<Tdata>::output_direct_2d_coulomb(const UnitCell& ucell,
         // out_coulomb_k_v1 writes, so downstream LibRPA readers consume the
         // direct output without any path special case.
         Direct2dCoulomb::write_reader_v1(
-            result.matrix, atom_naux, iq + 1, mpi_rank, "V_full_", rpa_outdir);
+            result.matrix, atom_naux, iq + 1, mpi_rank, "librpa_V_full_", rpa_outdir);
         std::ostringstream stem;
         stem << rpa_outdir << "direct_2d_coulomb_iq" << iq;
 #ifdef VERSION
