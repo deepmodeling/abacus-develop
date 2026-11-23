@@ -107,7 +107,7 @@ if(MKLROOT)
   include_directories(${MKL_INCLUDE} ${MKL_INCLUDE}/fftw)
 
   if(NOT ENABLE_MLALGO)
-    list(APPEND math_libs IntelMKL::MKL)
+    list(APPEND math_libs abacus::mkl)
   endif()
 
   if(CMAKE_CXX_COMPILER_ID MATCHES Intel)
