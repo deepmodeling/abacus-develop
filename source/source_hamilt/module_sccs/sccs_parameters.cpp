@@ -15,17 +15,32 @@ double dyn_cm_to_au(double value)
 double gpa_to_au(double value)
 {
     const double pascal = value * 1e9;
-    return pascal * ModuleBase::BOHR_RADIUS_SI * ModuleBase::BOHR_RADIUS_SI * ModuleBase::BOHR_RADIUS_SI
-           / ModuleBase::HARTREE_SI;
+    return pascal * ModuleBase::BOHR_RADIUS_SI * ModuleBase::BOHR_RADIUS_SI * ModuleBase::BOHR_RADIUS_SI /
+           ModuleBase::HARTREE_SI;
 }
 
-Preset parse_preset(const std::string& name)
+Preset parse_preset(const std::string &name)
 {
-    if (name == "custom") { return Preset::Custom; }
-    if (name == "vacuum") { return Preset::Vacuum; }
-    if (name == "water-neutral") { return Preset::WaterNeutral; }
-    if (name == "water-cation") { return Preset::WaterCation; }
-    if (name == "water-anion") { return Preset::WaterAnion; }
+    if (name == "custom")
+    {
+        return Preset::Custom;
+    }
+    if (name == "vacuum")
+    {
+        return Preset::Vacuum;
+    }
+    if (name == "water-neutral")
+    {
+        return Preset::WaterNeutral;
+    }
+    if (name == "water-cation")
+    {
+        return Preset::WaterCation;
+    }
+    if (name == "water-anion")
+    {
+        return Preset::WaterAnion;
+    }
     const std::string message = "Unknown SCCS preset: " + name;
     ModuleBase::WARNING_QUIT("ModuleSccs::parse_preset", message);
 }
@@ -34,8 +49,7 @@ SccsConfig preset_config(Preset preset)
 {
     if (preset == Preset::Custom)
     {
-        ModuleBase::WARNING_QUIT("ModuleSccs::preset_config",
-                                 "SCCS custom configurations must be supplied explicitly");
+        ModuleBase::WARNING_QUIT("ModuleSccs::preset_config", "SCCS custom configurations must be supplied explicitly");
     }
     SccsConfig config;
     config.cavity.epsilon_bulk = 78.3;

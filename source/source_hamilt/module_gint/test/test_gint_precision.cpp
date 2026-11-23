@@ -5,7 +5,7 @@
 TEST(GintPrecisionTest, GintInfoStoresExecPrecision)
 {
     UnitCell ucell;
-    ModuleGint::GintInfo* info = ModuleGint::GintInfo::make_test_instance_ptr(ucell, {});
+    ModuleGint::GintInfo *info = ModuleGint::GintInfo::make_test_instance_ptr(ucell, {});
 
     ASSERT_NE(info, nullptr);
     EXPECT_EQ(info->get_exec_precision(), ModuleGint::GintPrecision::fp64);

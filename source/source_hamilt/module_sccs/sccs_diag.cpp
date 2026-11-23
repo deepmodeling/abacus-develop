@@ -9,11 +9,12 @@
 
 namespace ModuleSccs
 {
-void cont_pol_charge(const std::vector<double>& charge,
-                     const SccsResponse& response,
-                     const ModulePW::PW_Basis& basis,
-                     double tpiba,
-                     std::vector<double>& density)
+void cont_pol_charge(
+    const std::vector<double> &charge,
+    const SccsResponse &response,
+    const ModulePW::PW_Basis &basis,
+    double tpiba,
+    std::vector<double> &density)
 {
     std::vector<std::complex<double>> potential_g(basis.npw);
     basis.real2recip(response.polarization.potential.data(), potential_g.data());

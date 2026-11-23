@@ -1,7 +1,7 @@
 #include "gint_rho_gpu.h"
+#include "batch_biggrid.h"
 #include "gint_common.h"
 #include "gint_helper.h"
-#include "batch_biggrid.h"
 #include "kernel/phi_operator_gpu.h"
 #include "source_base/module_device/device_check.h"
 
@@ -25,7 +25,7 @@ void Gint_rho_gpu::cal_gint()
     ModuleBase::timer::end("Gint", "cal_gint_rho");
 }
 
-template<typename Real>
+template <typename Real>
 void Gint_rho_gpu::cal_gint_impl_()
 {
     // 1. Initialize dm_gint as HContainer<Real>
@@ -46,8 +46,9 @@ void Gint_rho_gpu::cal_gint_impl_()
     {
         dm_gint_d_vec[is] = CudaMemWrapper<Real>(dm_gint_vec[is].get_nnr(), 0, false);
         rho_d_vec[is] = CudaMemWrapper<double>(gint_info_->get_local_mgrid_num(), 0, false);
-        CHECK_CUDA(cudaMemcpy(dm_gint_d_vec[is].get_device_ptr(), dm_gint_vec[is].get_wrapper(),
-            dm_gint_vec[is].get_nnr() * sizeof(Real), cudaMemcpyHostToDevice));
+        CHECK_CUDA(cudaMemcpy(
+            dm_gint_d_vec[is].get_device_ptr(), dm_gint_vec[is].get_wrapper(), dm_gint_vec[is].get_nnr() * sizeof(Real),
+            cudaMemcpyHostToDevice));
     }
 
     // 4. Calculate rho on GPU
@@ -63,34 +64,35 @@ void Gint_rho_gpu::cal_gint_impl_()
         // phi_dm is always double: the gemm_nn_vbatch kernel accumulates fp32
         // multiplies into a fp64 register, then atomicAdd's into phi_dm.
         CudaMemWrapper<double> phi_dm(BatchBigGrid::get_max_phi_len(), stream, false);
-        #pragma omp for schedule(dynamic)
+#pragma omp for schedule(dynamic)
         for (int i = 0; i < gint_info_->get_bgrid_batches_num(); ++i)
         {
-            const auto& bgrid_batch = gint_info_->get_bgrid_batches()[i];
-            if(bgrid_batch->empty())
+            const auto &bgrid_batch = gint_info_->get_bgrid_batches()[i];
+            if (bgrid_batch->empty())
             {
                 continue;
             }
             phi_op.set_bgrid_batch(bgrid_batch);
             phi_op.set_phi(phi.get_device_ptr());
-            for(int is = 0; is < nspin_; is++)
+            for (int is = 0; is < nspin_; is++)
             {
-                phi_op.phi_mul_dm(phi.get_device_ptr(), dm_gint_d_vec[is].get_device_ptr(), dm_gint_vec[is],
-                                  is_dm_symm_, phi_dm.get_device_ptr());
+                phi_op.phi_mul_dm(
+                    phi.get_device_ptr(), dm_gint_d_vec[is].get_device_ptr(), dm_gint_vec[is], is_dm_symm_,
+                    phi_dm.get_device_ptr());
                 phi_op.phi_dot_phi(phi.get_device_ptr(), phi_dm.get_device_ptr(), rho_d_vec[is].get_device_ptr());
             }
-       }
-       CHECK_CUDA(cudaStreamSynchronize(stream));
-       CHECK_CUDA(cudaStreamDestroy(stream));
+        }
+        CHECK_CUDA(cudaStreamSynchronize(stream));
+        CHECK_CUDA(cudaStreamDestroy(stream));
     }
 
     // 5. Transfer rho back to CPU (already double — copy straight into rho_[is])
     const int local_mgrid_num = gint_info_->get_local_mgrid_num();
     for (int is = 0; is < nspin_; is++)
     {
-        CHECK_CUDA(cudaMemcpy(rho_[is], rho_d_vec[is].get_device_ptr(),
-            local_mgrid_num * sizeof(double), cudaMemcpyDeviceToHost));
+        CHECK_CUDA(cudaMemcpy(
+            rho_[is], rho_d_vec[is].get_device_ptr(), local_mgrid_num * sizeof(double), cudaMemcpyDeviceToHost));
     }
 }
 
-}  // namespace ModuleGint
+} // namespace ModuleGint

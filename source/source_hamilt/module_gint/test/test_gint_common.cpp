@@ -26,22 +26,16 @@ class GintCommonTest : public ::testing::Test
         ucell_.set_iat2iwt(1);
 
         // 2 atom-pairs, each with a single R = (0, 0, 0)
-        ijr_info_ = {
-            2,
-            0, 0, 1, 0, 0, 0,
-            0, 1, 1, 0, 0, 0
-        };
+        ijr_info_ = {2, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0};
         gint_info_ = ModuleGint::GintInfo::make_test_instance_ptr(ucell_, ijr_info_);
     }
 
-    void TearDown() override
-    {
-    }
+    void TearDown() override {}
 
-    template<typename T>
-    static void fill_values(hamilt::HContainer<T>& hr)
+    template <typename T>
+    static void fill_values(hamilt::HContainer<T> &hr)
     {
-        T* values = hr.get_wrapper();
+        T *values = hr.get_wrapper();
         ASSERT_NE(values, nullptr);
         for (size_t i = 0; i < hr.get_nnr(); ++i)
         {
@@ -51,7 +45,7 @@ class GintCommonTest : public ::testing::Test
 
     UnitCell ucell_;
     std::vector<int> ijr_info_;
-    ModuleGint::GintInfo* gint_info_ = nullptr;
+    ModuleGint::GintInfo *gint_info_ = nullptr;
 };
 
 TEST_F(GintCommonTest, GetHrFloatBuildsExpectedShape)
@@ -101,7 +95,7 @@ TEST_F(GintCommonTest, TransferDm2dToGintSupportsDoubleToFloat)
     auto dm = gint_info_->get_hr<double>();
     fill_values(dm);
 
-    std::vector<hamilt::HContainer<double>*> dm_vec{&dm};
+    std::vector<hamilt::HContainer<double> *> dm_vec{&dm};
     std::vector<hamilt::HContainer<float>> dm_gint;
     dm_gint.push_back(gint_info_->get_hr<float>());
 
