@@ -328,7 +328,7 @@ Available options are:
         item.category = "vdW correction";
         item.type = "Real";
         item.description
-            = R"(Parameter b of rVV10, which sets the short-range damping and depends on dft_functional. Published values are 6.3 for rPW86 exchange with PBE correlation (dft_functional GGA_X_RPW86+GGA_C_PBE, the original rVV10), 15.7 for SCAN and 11.95 for r2SCAN. If not set, ABACUS uses 15.7 for dft_functional scan or MGGA_X_SCAN+MGGA_C_SCAN, 11.95 for MGGA_X_R2SCAN+MGGA_C_R2SCAN and 6.3 otherwise, with a warning for functionals other than GGA_X_RPW86+GGA_C_PBE.)";
+            = R"(Parameter b of rVV10, which sets the short-range damping and depends on dft_functional. If not set, ABACUS uses 15.7 for dft_functional scan or MGGA_X_SCAN+MGGA_C_SCAN, 11.95 for MGGA_X_R2SCAN+MGGA_C_R2SCAN and otherwise 6.3, the value of the original rVV10 (GGA_X_RPW86+GGA_C_PBE), with a warning for any other functional.)";
         item.default_value = "6.3";
         item.unit = "";
         item.set_availability("vdw_method==rvv10");
@@ -340,27 +340,21 @@ Available options are:
             }
             const double rvv10_b_scan = 15.7;
             const double rvv10_b_r2scan = 11.95;
-            std::string functional = para.input.dft_functional;
-            std::transform(functional.begin(), functional.end(), functional.begin(), ::toupper);
-            if (functional == "SCAN" || functional == "MGGA_X_SCAN+MGGA_C_SCAN")
+            const std::string& dft_functional = para.input.dft_functional;
+            std::string dft_functional_lower = dft_functional;
+            std::transform(dft_functional.begin(), dft_functional.end(), dft_functional_lower.begin(), ::tolower);
+            if (dft_functional_lower == "scan" || dft_functional_lower == "mgga_x_scan+mgga_c_scan")
             {
                 para.input.vdw_rvv10_b = rvv10_b_scan;
             }
-            else if (functional == "MGGA_X_R2SCAN+MGGA_C_R2SCAN")
+            else if (dft_functional_lower == "mgga_x_r2scan+mgga_c_r2scan")
             {
                 para.input.vdw_rvv10_b = rvv10_b_r2scan;
             }
-            else if (functional == "DEFAULT")
-            {
-                ModuleBase::WARNING("ReadInput",
-                                    "vdw_rvv10_b is not set and dft_functional comes from the pseudopotential: "
-                                    "the rPW86-PBE value 6.3 is used; set vdw_rvv10_b unless that is the functional");
-            }
-            else if (functional != "GGA_X_RPW86+GGA_C_PBE")
+            else if (dft_functional_lower != "gga_x_rpw86+gga_c_pbe")
             {
                 const std::string message
-                    = "vdw_rvv10_b is not set: the rPW86-PBE value 6.3 is used with dft_functional "
-                      + para.input.dft_functional;
+                    = "vdw_rvv10_b is not set: the rPW86-PBE value 6.3 is used with dft_functional " + dft_functional;
                 ModuleBase::WARNING("ReadInput", message);
             }
         };

@@ -108,13 +108,14 @@ cmake -S libvdwxc -B build-libvdwxc -DBUILD_SHARED_LIBS=ON -DVDWXC_ENABLE_MPI=ON
 cmake --build build-libvdwxc && cmake --install build-libvdwxc
 ```
 
-Then pass `-DENABLE_LIBVDWXC=ON` to CMake for ABACUS and add `/path/to/libvdwxc` to `CMAKE_PREFIX_PATH`. rVV10 works with the built-in functionals; functionals such as rPW86 (`GGA_X_RPW86+GGA_C_PBE`) or SCAN also need `-DENABLE_LIBXC=ON`. ABACUS hands each k-point pool's density to libvdwxc's distributed interface, so the nonlocal convolution and its memory are shared by the processes of the pool; libvdwxc keeps about 25 doubles (200 bytes) per grid point of a process's slab; the adapter keeps 5 more between calls and uses 7 more per grid point of the process during an evaluation, so the memory per process falls as the pool grows. libvdwxc's MPI build plans its FFTs with FFTW-MPI, so an MPI build of ABACUS with libvdwxc must use FFTW3 rather than the FFTW interface of MKL or KML; CMake stops otherwise. The legacy Makefile does not build this feature.
+Then pass `-DENABLE_LIBVDWXC=ON` to CMake for ABACUS and add `/path/to/libvdwxc` to `CMAKE_PREFIX_PATH`. rVV10 works with the built-in functionals; functionals such as rPW86 (`GGA_X_RPW86+GGA_C_PBE`) or SCAN also need `-DENABLE_LIBXC=ON`. Each k-point pool evaluates the nonlocal convolution with libvdwxc's distributed interface; an evaluation needs about 300 bytes per grid point, shared by the processes of the pool and released afterwards. libvdwxc's MPI build plans its FFTs with FFTW-MPI, so an MPI build of ABACUS with libvdwxc must use FFTW3 rather than the FFTW interface of MKL or KML; CMake stops otherwise. The legacy Makefile does not build this feature.
 
 In the input file:
 
 ```text
+dft_functional GGA_X_RPW86+GGA_C_PBE
 vdw_method rvv10
-dft_functional scan   # b follows dft_functional unless vdw_rvv10_b is set: 15.7 for scan or MGGA_X_SCAN+MGGA_C_SCAN, 11.95 for MGGA_X_R2SCAN+MGGA_C_R2SCAN, else 6.3
+vdw_rvv10_b 6.3    # optional; the default follows dft_functional for rPW86-PBE, SCAN and r2SCAN
 ```
 
 ## Build with JSON support
