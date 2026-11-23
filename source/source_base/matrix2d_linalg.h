@@ -27,8 +27,9 @@ void solve(Matrix2dView<std::complex<double>> matrix,
 /**
  * @brief Multiply two matrix views into result.
  *
- * The result view must not overlap either input view. The host implementation
- * writes result while still reading left and right.
+ * The result storage must not overlap either input. Exact alias as well as
+ * shifted or partial overlap is unsupported because the implementation writes
+ * result while still reading left and right.
  */
 void matmul(Matrix2dView<double> result,
             Matrix2dView<const double> left,
@@ -44,8 +45,11 @@ void matmul(Matrix2dView<std::complex<double>> result,
  * @brief Compute `result = alpha * left + beta * right`.
  *
  * All views must have the same global shape and compatible host or distributed
- * layouts. The result may overlap either input because each element is read
- * before it is written.
+ * layouts. The result may alias either input only when the aliased views use
+ * the same element mapping for every logical coordinate, including a fully
+ * in-place call such as `result == left`. Shifted and partial overlap are
+ * unsupported because a write may invalidate an input read by another element
+ * or OpenMP thread.
  */
 void axpby(Matrix2dView<double> result,
            const double alpha,

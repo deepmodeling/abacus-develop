@@ -144,7 +144,10 @@ void pack_rank_values(const Matrix2d<T>& matglb,
                     * static_cast<std::size_t>(view.ncloc)
                 + static_cast<std::size_t>(icloc);
             const T& value = matglb.atloc(irglb, icglb);
-            std::memcpy(destination + idx * sizeof(T), &value, sizeof(T));
+            const std::size_t destination_offset = idx * sizeof(T);
+            unsigned char* const destination_offset_ptr
+                = destination + destination_offset;
+            std::memcpy(destination_offset_ptr, &value, sizeof(T));
         }
     }
 }
@@ -267,8 +270,11 @@ Matrix2d<T> rebuild_global(
                     = static_cast<std::size_t>(irloc)
                         * static_cast<std::size_t>(view.ncloc)
                     + static_cast<std::size_t>(icloc);
+                const std::size_t source_offset = idx * sizeof(T);
+                const unsigned char* const source
+                    = view.data + source_offset;
                 T value;
-                std::memcpy(&value, view.data + idx * sizeof(T), sizeof(T));
+                std::memcpy(&value, source, sizeof(T));
                 result.atloc(irglb, icglb) = value;
             }
         }

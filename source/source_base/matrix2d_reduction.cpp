@@ -42,32 +42,33 @@ std::complex<T> conj(const std::complex<T>& value)
 } // namespace elementwise
 
 template <typename T>
-real_type<T> abs2(const T& value)
+double abs2(const T& value)
 {
-    const real_type<T> real_value = static_cast<real_type<T>>(value);
+    const double real_value = static_cast<double>(value);
     return real_value * real_value;
 }
 
 template <typename T>
-real_type<std::complex<T>> abs2(const std::complex<T>& value)
+double abs2(const std::complex<T>& value)
 {
-    using Real = real_type<std::complex<T>>;
-    const Real real = static_cast<Real>(value.real());
-    const Real imag = static_cast<Real>(value.imag());
+    const double real = static_cast<double>(value.real());
+    const double imag = static_cast<double>(value.imag());
     return real * real + imag * imag;
 }
 
 template <typename T>
-real_type<T> absolute_value(const T& value)
+double absolute_value(const T& value)
 {
-    const real_type<T> widened_value = static_cast<real_type<T>>(value);
+    const double widened_value = static_cast<double>(value);
     return std::abs(widened_value);
 }
 
 template <typename T>
-real_type<std::complex<T>> absolute_value(const std::complex<T>& value)
+double absolute_value(const std::complex<T>& value)
 {
-    return static_cast<real_type<std::complex<T>>>(std::abs(value));
+    const double real = static_cast<double>(value.real());
+    const double imag = static_cast<double>(value.imag());
+    return std::hypot(real, imag);
 }
 
 template <typename Value, typename Element>
@@ -91,7 +92,7 @@ void reduce_sum_over_processes(Value& value, const Matrix2d<Element>& matrix)
 }
 
 template <typename T>
-void reduce_max_over_processes(real_type<T>& value, const Matrix2d<T>& matrix)
+void reduce_max_over_processes(double& value, const Matrix2d<T>& matrix)
 {
 #ifdef __MPI
     const std::shared_ptr<const Parallel_Blkcyclic> distrib
@@ -101,11 +102,7 @@ void reduce_max_over_processes(real_type<T>& value, const Matrix2d<T>& matrix)
         const MPI_Comm comm = distrib->comm();
         if (comm != MPI_COMM_NULL)
         {
-            // The guarded wrapper currently exposes only double. Widening the
-            // collective value does not change the maximum or the public type.
-            double collective_value = value;
-            Parallel_Common::allreduce_max(collective_value, comm);
-            value = static_cast<real_type<T>>(collective_value);
+            Parallel_Common::allreduce_max(value, comm);
         }
     }
 #else
@@ -158,7 +155,7 @@ T sum(const Matrix2d<T>& matrix)
 template <typename T>
 real_type<T> norm(const Matrix2d<T>& matrix)
 {
-    real_type<T> value = real_type<T>();
+    double value = 0.0;
     const int nrloc = matrix.nrloc();
     const int ncloc = matrix.ncloc();
 #ifdef _OPENMP
@@ -173,7 +170,8 @@ real_type<T> norm(const Matrix2d<T>& matrix)
         }
     }
     reduce_sum_over_processes(value, matrix);
-    return std::sqrt(value);
+    const real_type<T> result = static_cast<real_type<T>>(std::sqrt(value));
+    return result;
 }
 
 template <typename T>
@@ -218,7 +216,7 @@ T dot(const Matrix2d<T>& left, const Matrix2d<T>& right)
 template <typename T>
 real_type<T> max_abs(const Matrix2d<T>& matrix)
 {
-    real_type<T> max_value = real_type<T>();
+    double max_value = 0.0;
     const int nrloc = matrix.nrloc();
     const int ncloc = matrix.ncloc();
 #ifdef _OPENMP
@@ -229,12 +227,13 @@ real_type<T> max_abs(const Matrix2d<T>& matrix)
         for (int j = 0; j < ncloc; ++j)
         {
             const T& element = matrix.atloc(i, j);
-            const real_type<T> element_abs = absolute_value(element);
+            const double element_abs = absolute_value(element);
             max_value = std::max(max_value, element_abs);
         }
     }
     reduce_max_over_processes(max_value, matrix);
-    return max_value;
+    const real_type<T> result = static_cast<real_type<T>>(max_value);
+    return result;
 }
 
 template <typename T>

@@ -385,6 +385,26 @@ TEST(Matrix2dLinalgTest, HostViewMatmulAndAxpby)
     }
     expect_host_matrices_near(combined, combined_reference);
 
+    Matrix2d<double> in_place = left;
+    const Matrix2d<double> in_place_original = in_place;
+    const Matrix2d<double>& in_place_input = in_place;
+    matrix2d_linalg::axpby(in_place.view(),
+                           2.0,
+                           in_place_input.view(),
+                           -0.5,
+                           right.view());
+    Matrix2d<double> in_place_reference(2, 2);
+    for (int i = 0; i < 2; ++i)
+    {
+        for (int j = 0; j < 2; ++j)
+        {
+            in_place_reference.atloc(i, j)
+                = 2.0 * in_place_original.atloc(i, j)
+                    - 0.5 * right.atloc(i, j);
+        }
+    }
+    expect_host_matrices_near(in_place, in_place_reference);
+
     matrix2d_linalg::scale(combined.view(), 3.0);
     matrix2d_linalg::set_identity(product.view());
     const Matrix2d<double> generated_identity

@@ -597,6 +597,18 @@ void check_reduction_scalar_type(const T& first,
 }
 
 template <typename T>
+void check_float_reduction_range(const T& value, const float expected)
+{
+    Matrix2d<T> matrix(1, 1);
+    matrix.atloc(0, 0) = value;
+
+    const float norm = matrix.norm();
+    const float max_abs = matrix.max_abs();
+    EXPECT_FLOAT_EQ(norm, expected);
+    EXPECT_FLOAT_EQ(max_abs, expected);
+}
+
+template <typename T>
 void check_gather_scatter(Matrix2d<T>& matrix)
 {
     const int nr = matrix.nrglb();
@@ -1459,6 +1471,8 @@ TEST(Matrix2dTest, ReductionsUseTheMatrixRealType)
 {
     const std::complex<float> complex_float_first(3.0f, 4.0f);
     const std::complex<float> complex_float_second(0.0f, 0.0f);
+    const std::complex<float> complex_float_large(1.0e20f, 0.0f);
+    const std::complex<float> complex_float_small(1.0e-30f, 0.0f);
     const std::complex<double> complex_double_first(3.0, 4.0);
     const std::complex<double> complex_double_second(0.0, 0.0);
     check_reduction_scalar_type<int>(3, 4, 5.0, 4.0);
@@ -1474,6 +1488,10 @@ TEST(Matrix2dTest, ReductionsUseTheMatrixRealType)
         complex_double_second,
         5.0,
         5.0);
+    check_float_reduction_range(1.0e20f, 1.0e20f);
+    check_float_reduction_range(1.0e-30f, 1.0e-30f);
+    check_float_reduction_range(complex_float_large, 1.0e20f);
+    check_float_reduction_range(complex_float_small, 1.0e-30f);
 }
 
 TEST(Matrix2dTest, SerialDistributionGatherReturnsHostRowMajorCopy)
