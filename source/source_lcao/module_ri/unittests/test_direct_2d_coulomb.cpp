@@ -185,22 +185,31 @@ int main()
         require(mkdtemp(temporary_directory) != nullptr,
                 "could not create the temporary output directory");
         const std::string nondefault_directory = std::string(temporary_directory) + "/";
+        // One definition of the generated name, shared by the cleanup guard
+        // and the assertions, so a rename cannot leave a file behind and make
+        // rmdir fail.
+        const std::string output_prefix = "librpa_V_full_";
+        const int output_iq = 1;
+        const int output_rank = 0;
+        const std::string produced_filename
+            = output_prefix + std::to_string(output_iq) + "_r" + std::to_string(output_rank) + ".dat";
         struct DirectoryCleanup
         {
-            const char* path;
+            std::string path;
+            std::string filename;
             ~DirectoryCleanup()
             {
-                std::remove((std::string(path) + "/V_full_1_r0.dat").c_str());
-                rmdir(path);
+                std::remove((path + "/" + filename).c_str());
+                rmdir(path.c_str());
             }
         };
-        DirectoryCleanup cleanup{temporary_directory};
+        DirectoryCleanup cleanup{temporary_directory, produced_filename};
         Direct2dCoulomb::DenseMatrix produced;
         produced.dimension = 2;
         produced.values = {{1.0, 0.0}, {0.25, -0.5}, {0.25, 0.5}, {2.0, 0.0}};
         Direct2dCoulomb::write_reader_v1(
-            produced, {1, 1}, 1, 0, "librpa_V_full_", nondefault_directory);
-        const std::string produced_path = nondefault_directory + "librpa_V_full_1_r0.dat";
+            produced, {1, 1}, output_iq, output_rank, output_prefix, nondefault_directory);
+        const std::string produced_path = nondefault_directory + produced_filename;
         {
             std::ifstream probe(produced_path, std::ios::in | std::ios::binary);
             require(probe.good(), "reader-v1 output is not in the requested non-default directory");
@@ -223,9 +232,10 @@ int main()
             require(natoms == 2, "reader-v1 output lost its atom count");
             require(nblocks == 3, "reader-v1 output lost its atom-pair block count");
         }
-        for (const std::string& stray : {"librpa_V_full_1_r0.dat",
-                                         "v1_coulomb_full_iq_1_rank0.dat",
-                                         "v1_coulomb_full_iq_1_r0.dat"})
+        const std::vector<std::string> stray_names{produced_filename,
+                                                   "v1_coulomb_full_iq_1_rank0.dat",
+                                                   "v1_coulomb_full_iq_1_r0.dat"};
+        for (const std::string& stray : stray_names)
         {
             std::ifstream probe(stray, std::ios::in | std::ios::binary);
             require(!probe.good(),
