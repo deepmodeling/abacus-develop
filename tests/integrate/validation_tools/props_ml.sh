@@ -69,8 +69,10 @@ run_ml_lr_props() {
       cat "${lr_files[@]}" | awk '/Excitation Energy/{p=1; next} p && /^[[:space:]]*[0-9]+[[:space:]]/{printf "excitationenergyref%d %.6f\n", ++n, $2} /Occupied orbital/{p=0}' >>$props_result_file
     fi
     if [ -f absorption.dat.ref ]; then
-      record_compare_result "$props_result_file" "CompareLRAbsorption_pass" \
-        absorption.dat.ref OUT.autotest/absorption.dat 4
+      local absorption_status=0
+      python3 "$PROPS_TOOLS_DIR/check_lr_absorption.py" absorption.dat.ref OUT.autotest/absorption.dat \
+        || absorption_status=$?
+      echo "CompareLRAbsorption_pass $absorption_status" >>"$props_result_file"
     fi
     shopt -u nullglob
   fi

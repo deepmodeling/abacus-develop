@@ -1,36 +1,27 @@
 INPUT_PARAMETERS
-#Parameters (1.General)
-suffix            autotest
-pseudo_dir        ../../../tests/PP_ORB
-orbital_dir       ../../../tests/PP_ORB
-calculation       scf
-nbands            6
-symmetry          -1
-nspin             2
+suffix                     autotest
+pseudo_dir                 ../../PP_ORB
+orbital_dir                ../../PP_ORB
+calculation                scf
+esolver_type               ks-lr
+basis_type                 lcao
+gamma_only                 0
+symmetry                   -1
+nspin                      1
+nbands                     2
+ks_solver                  scalapack_gvx
 
-#Parameters (2.Iteration)
-ecutwfc           10
-scf_thr           1e-6
-scf_nmax          20
+dft_functional             hse
+exx_singularity_correction limits
+ecutwfc                    24
+scf_thr                    1e-9
+scf_nmax                   80
+mixing_type                broyden
+mixing_beta                0.5
 
-#Parameters (3.Basis)
-basis_type        lcao
-gamma_only        0
-
-#Parameters (4.Smearing)
-smearing_method   gaussian
-smearing_sigma    0.02
-
-#Parameters (5.Mixing)
-mixing_type       pulay
-mixing_beta       0.4
-
-lr_nstates        2
-xc_kernel         lda
-lr_solver         lapack
-
-esolver_type      ks-lr
-
-nvirt             2
-abs_wavelen_range  200 600
-abs_gauge         velocity_commutator
+xc_kernel                  rpa
+nocc                       1
+nvirt                      1
+lr_nstates                 2
+lr_solver                  lapack
+abs_wavelen_range          40 300

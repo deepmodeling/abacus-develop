@@ -1,0 +1,8 @@
+H2 with two k points, HSE orbitals, nspin=1, and an RPA response kernel.
+Both LCAO bands are included. The default optical velocity includes
+the ground-state Fock commutator, checked at all 100 spectrum points.
+
+The 08_RI_lr_absorption_csr test exports the same calculation's density,
+orbitals and text H(R)/S(R) in scratch directories and compares the
+in-memory and standalone spectra. It also evaluates direct velocity
+using the same standalone inputs.
