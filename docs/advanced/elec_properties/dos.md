@@ -105,10 +105,12 @@ to write both total and projected DOS as NumPy arrays. Use `out_dos 1`
 for text output or `out_dos 0` (the default) to disable DOS output.
 Older releases used `out_dos 2` to request text PDOS.
 
-Total DOS uses one record per energy point in `doss1.npy`, plus `doss2.npy`
-for spin-polarized calculations (`nspin=2`). Its five binary64 fields are
-`energy_eV`, `dos`, `dos_int`, `dos_smear` and `dos_smear_int`, in the
-same order and units as the text columns. Projected DOS is in `pdos.npy`.
+Total DOS is in `dos.npy`, with one record per energy point. The shared
+`energy_eV` field has shape `(npoints,)`. The four spectrum fields,
+`dos`, `dos_int`, `dos_smear` and `dos_smear_int`, each have shape
+`(npoints, 2)` for `nspin=2` (spin up, then spin down) or `(npoints, 1)`
+for `nspin=1` or `4`. All five fields use binary64 and the same units as
+the text columns. Projected DOS is in `pdos.npy`.
 With `out_app_flag 2`, these files are in the `DOS/` output subdirectory.
 For plotting, set `tdosfile` or `pdosfile` in the `abacus-plot` config.
 Use an explicit file path when the directory contains both formats.
@@ -116,7 +118,7 @@ Use an explicit file path when the directory contains both formats.
 ```python
 import numpy as np
 
-total = np.load("doss1.npy", mmap_mode="r")
+total = np.load("dos.npy", mmap_mode="r")
 dos_per_eV = total["dos_smear"]
 rows = np.load("pdos.npy", mmap_mode="r")
 spectrum = rows["pdos"][0]  # (spin channel, energy point), in 1/eV

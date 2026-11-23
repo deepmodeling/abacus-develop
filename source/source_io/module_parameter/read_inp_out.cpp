@@ -381,7 +381,7 @@ Also controled by out_freq_ion and out_app_flag.
  * With out_app_flag = 1: the same fixed-name files are reused; the first written step truncates them and later steps append one record per step (prefixed with a `# Ionic_Step N` header, one-based).
  * With out_app_flag = 2: per-step files are named `doss{s}g{geom}.txt` and `pdoss{s}g{geom}.txt` where `{geom}` is the one-based geometry index (e.g. `doss1g3.txt` for the third ionic step).
  * nspin=1 or 4: one spin channel (`s1`). nspin=2: two channels (`s1`, `s2`). PW and LCAO use the same naming.
-* 2: write total DOS (`doss1.npy` and, for nspin=2, `doss2.npy`) and projected DOS (`pdos.npy`) as NumPy arrays for a single-point LCAO KSDFT SCF or NSCF calculation. Older versions used 2 to request text PDOS; use 1 for text.
+* 2: write total DOS (`dos.npy`) and projected DOS (`pdos.npy`) as NumPy arrays for a single-point LCAO KSDFT SCF or NSCF calculation. Both spin channels for nspin=2 share the same files. Older versions used 2 to request text PDOS; use 1 for text.
 * 3: Fermi surface output has been removed.)";
         item.default_value = "0";
         item.unit = "";

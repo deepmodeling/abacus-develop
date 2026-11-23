@@ -54,7 +54,7 @@ TEST_F(DosTest,Dos)
 			dosp.wg,
 			istep,
 			out_app_flag,
-			bndpar);
+			bndpar, nullptr);
 
 #ifdef __MPI
 	if(GlobalV::MY_RANK==0)
@@ -153,7 +153,7 @@ TEST_F(DosTest,DosW1)
 			dosp.wg,
 			istep,
 			out_app_flag,
-			bndpar));
+			bndpar, nullptr));
 	GlobalV::ofs_warning.close();
 #ifdef __MPI
 	if(GlobalV::MY_RANK==0)
@@ -200,7 +200,7 @@ TEST_F(DosTest,DosW2)
 			dosp.wg,
 			istep,
 			out_app_flag,
-			bndpar));
+			bndpar, nullptr));
 
 	GlobalV::ofs_warning.close();
 #ifdef __MPI
@@ -238,12 +238,12 @@ TEST_F(DosTest, Mode1Appends)
     ModuleIO::cal_dos(dosp.is, dosp.fa, dosp.de_ev, dosp.emax_ev, dosp.emin_ev,
                       dosp.bcoeff, dosp.nks, dosp.nkstot, dosp.wk, dosp.isk,
                       dosp.nbands, dosp.ekb, dosp.wg,
-                      /*istep=*/0, out_app_flag, bndpar);
+                      /*istep=*/0, out_app_flag, bndpar, nullptr);
     // Second call: istep=1 -> "# Ionic_Step 2", appended.
     ModuleIO::cal_dos(dosp.is, dosp.fa, dosp.de_ev, dosp.emax_ev, dosp.emin_ev,
                       dosp.bcoeff, dosp.nks, dosp.nkstot, dosp.wk, dosp.isk,
                       dosp.nbands, dosp.ekb, dosp.wg,
-                      /*istep=*/1, out_app_flag, bndpar);
+                      /*istep=*/1, out_app_flag, bndpar, nullptr);
 
 #ifdef __MPI
     if (GlobalV::MY_RANK == 0)
@@ -280,11 +280,11 @@ TEST_F(DosTest, Mode2Overwrites)
     ModuleIO::cal_dos(dosp.is, dosp.fa, dosp.de_ev, dosp.emax_ev, dosp.emin_ev,
                       dosp.bcoeff, dosp.nks, dosp.nkstot, dosp.wk, dosp.isk,
                       dosp.nbands, dosp.ekb, dosp.wg,
-                      /*istep=*/0, out_app_flag, bndpar);
+                      /*istep=*/0, out_app_flag, bndpar, nullptr);
     ModuleIO::cal_dos(dosp.is, dosp.fa, dosp.de_ev, dosp.emax_ev, dosp.emin_ev,
                       dosp.bcoeff, dosp.nks, dosp.nkstot, dosp.wk, dosp.isk,
                       dosp.nbands, dosp.ekb, dosp.wg,
-                      /*istep=*/1, out_app_flag, bndpar);
+                      /*istep=*/1, out_app_flag, bndpar, nullptr);
 
 #ifdef __MPI
     if (GlobalV::MY_RANK == 0)

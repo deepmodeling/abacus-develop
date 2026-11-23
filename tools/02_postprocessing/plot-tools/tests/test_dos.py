@@ -130,6 +130,36 @@ class TDOSTest(unittest.TestCase):
             for name in ("energy", "dos", "dos_int", "dos_smear", "dos_smear_int"):
                 np.testing.assert_array_equal(getattr(result, name), getattr(reference, name))
 
+    def test_combined_numpy_spectra_match_text(self):
+        fields = ("dos", "dos_int", "dos_smear", "dos_smear_int")
+        path = self.root / "dos.npy"
+        for spins in (1, 2):
+            with self.subTest(spins=spins):
+                text = self.write_spin(f"doss{spins}.txt", self.energy, spins)
+                reference = TDOS(text)
+                dtype = [("energy_eV", "f8")] + [(field, "f8", (spins,)) for field in fields]
+                rows = np.empty(len(self.energy), dtype=dtype)
+                rows["energy_eV"] = self.energy
+                for field in fields:
+                    rows[field] = getattr(reference, field)
+                np.save(path, rows)
+                with self.assertRaisesRegex(ValueError, "Pass a specific TDOS file"):
+                    TDOS(self.root)
+                result = TDOS(path)
+                self.assertEqual(result.nspin, spins)
+                for field in ("energy", *fields):
+                    np.testing.assert_array_equal(getattr(result, field), getattr(reference, field))
+        for text in self.root.glob("*.txt"):
+            text.unlink()
+        np.testing.assert_array_equal(TDOS(self.root).dos_smear, rows["dos_smear"])
+
+    def test_combined_numpy_rejects_inconsistent_spins(self):
+        dtype = [("energy_eV", "f8"), ("dos", "f8", (2,)), ("dos_int", "f8", (1,)),
+                 ("dos_smear", "f8", (2,)), ("dos_smear_int", "f8", (2,))]
+        np.save(self.root / "dos.npy", np.zeros(3, dtype=dtype))
+        with self.assertRaisesRegex(ValueError, "spin dimensions"):
+            TDOS(self.root)
+
     def test_plain_axes_and_missing_subplot_apis(self):
         fig = plt.figure()
         plain = fig.add_axes([0.1, 0.1, 0.8, 0.8])

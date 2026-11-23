@@ -176,9 +176,10 @@ class TDOS(DOS):
     """Parse total DOS data
 
     ``tdosfile`` may be a single TDOS file, a list of one or two per-spin
-    files, or a directory containing them. ABACUS writes one five-column
-    text or NPY file per spin channel (``doss1*``/``doss2*``; legacy PW names
-    ``dos1.txt``/``dos2.txt``). A single spin-channel file is paired with
+    files, or a directory containing them. ABACUS writes all spin channels
+    in ``dos.npy`` or one five-column text file per spin channel
+    (``doss1*``/``doss2*``; legacy PW names ``dos1.txt``/``dos2.txt``).
+    A single spin-channel file is paired with
     its counterpart when present, searching in both directions, so passing
     either spin file works. For nspin=4 ABACUS writes a single
     spinor-summed file, which is handled like nspin=1.
@@ -213,11 +214,11 @@ class TDOS(DOS):
                 matches1 = sorted(glob.glob(str(path / "dos1.txt")))
             if not matches1 and (path / "dos.txt").is_file():
                 matches1 = [str(path / "dos.txt")]  # legacy PW nspin=1 name
-            binary = path / "doss1.npy"
-            if binary.is_file():
-                if matches1:
-                    raise ValueError(f"Both text and NPY TDOS found in '{path}'. Pass a specific TDOS file.")
-                matches1 = [str(binary)]
+            binary = [path / name for name in ("dos.npy", "doss1.npy") if (path / name).is_file()]
+            if binary:
+                if matches1 or len(binary) > 1:
+                    raise ValueError(f"Multiple TDOS formats found in '{path}'. Pass a specific TDOS file.")
+                matches1 = [str(binary[0])]
             if not matches1:
                 raise FileNotFoundError(
                     f"No TDOS file found in directory '{path}'")
@@ -248,7 +249,12 @@ class TDOS(DOS):
             if (rows.ndim != 1 or not rows.size or rows.dtype.names != names
                     or any(rows[name].dtype.kind != "f" or rows[name].dtype.itemsize != 8 for name in names)):
                 raise ValueError(f"Invalid TDOS NPY array: {fname}")
-            data = {name: rows[name][:, None] for name in names[1:]}
+            spin_shape = rows["dos"].shape[1:]
+            # Older per-spin NPY files have scalar spectrum fields.
+            if (rows["energy_eV"].ndim != 1 or spin_shape not in ((), (1,), (2,))
+                    or any(rows[name].shape[1:] != spin_shape for name in names[1:])):
+                raise ValueError(f"Invalid TDOS spin dimensions: {fname}")
+            data = {name: rows[name].reshape(rows.size, -1) for name in names[1:]}
             data["energy"] = rows["energy_eV"][:, None]
             return data
 

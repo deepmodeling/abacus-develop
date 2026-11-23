@@ -2,6 +2,7 @@
 #include "cal_dos.h"
 #include "cal_pdos_gamma.h"
 #include "cal_pdos_multik.h"
+#include "dos_npy_header.h"
 #include "write_pdos_text.h"
 #include "source_base/global_variable.h"
 #include "source_base/parallel_common.h"
@@ -9,10 +10,48 @@
 #include "source_io/module_output/write_notice.h"
 
 #include <exception>
+#include <fstream>
 #include <sstream>
 
 namespace ModuleIO
 {
+
+namespace
+{
+void write_dos_npy(const std::string& path, const std::vector<DosSpectrum>& spectra)
+{
+    const auto npoints = spectra.front().size();
+    const auto spins = spectra.size();
+    const std::string field_type = "','=f8',(" + std::to_string(spins) + ",))";
+    std::string fields = "('energy_eV','=f8')";
+    for (const char* name : {"dos", "dos_int", "dos_smear", "dos_smear_int"})
+    {
+        fields += std::string(",('") + name + field_type;
+    }
+
+    std::ofstream out;
+    out.exceptions(std::ios::badbit | std::ios::failbit);
+    out.open(path, std::ios::binary | std::ios::trunc);
+    write_dos_npy_header(out, fields, npoints);
+    // One shared energy, followed by all spin channels of each quantity.
+    const auto record_width = 1 + 4 * spins;
+    std::vector<double> record(record_width);
+    const auto bytes = record.size() * sizeof(double);
+    for (std::size_t n = 0; n < npoints; ++n)
+    {
+        record[0] = spectra.front()[n][0];
+        for (std::size_t field = 0; field < 4; ++field)
+        {
+            for (std::size_t is = 0; is < spins; ++is)
+            {
+                record[1 + field * spins + is] = spectra[is][n][1 + field];
+            }
+        }
+        out.write(reinterpret_cast<const char*>(record.data()), bytes);
+    }
+    out.close();
+}
+}
 
 template <typename T>
 void write_dos_lcao(
@@ -64,22 +103,19 @@ void write_dos_lcao(
             dos_emin_ev,
             two_fermi);
 
-    // output the DOS file.
+    const int buffered_spins = dos_npy ? nspin0 : 0;
+    std::vector<DosSpectrum> total_dos(buffered_spins);
     for (int is = 0; is < nspin0; ++is)
     {
         std::stringstream ss;
-
-        ss << global_out_dir << "doss" << is + 1;
-
-        // Only per-step text output carries the g{N} suffix.
-        if (!dos_npy && istep >= 0 && out_app_flag == 2)
+        if (!dos_npy)
         {
-            ss << "g" << istep+1;
+            ss << global_out_dir << "doss" << is + 1;
+            if (istep >= 0 && out_app_flag == 2) { ss << "g" << istep + 1; }
+            ss << ".txt";
         }
-
-        ss << (dos_npy ? ".npy" : ".txt");
-
-        bool written = ModuleIO::cal_dos(is,
+        DosSpectrum* spectrum = dos_npy ? &total_dos[is] : nullptr;
+        const bool calculated = ModuleIO::cal_dos(is,
                 ss.str(),
                 dos_edelta_ev,
                 emax,
@@ -94,17 +130,14 @@ void write_dos_lcao(
                 wg,
                 istep,
                 out_app_flag,
-                bndpar);
+                bndpar,
+                spectrum);
 
-        if (dos_npy)
+        if (dos_npy && !calculated)
         {
-            Parallel_Common::bcast_bool(written);
-            if (!written)
-            {
-                ModuleBase::WARNING_QUIT("write_dos_lcao", "Failed to write " + ss.str());
-            }
+            ModuleBase::WARNING_QUIT("write_dos_lcao", "Cannot calculate total DOS for dos.npy");
         }
-        if (GlobalV::MY_RANK == 0)
+        if (!dos_npy && GlobalV::MY_RANK == 0)
         {
             ModuleIO::write_notice(ofs_running, "DOS", is, nspin, ss.str());
         }
@@ -131,9 +164,12 @@ void write_dos_lcao(
     {
         if (dos_npy)
         {
-            const std::string path = global_out_dir + "pdos.npy";
+            std::string path = global_out_dir + "dos.npy";
             try
             {
+                write_dos_npy(path, total_dos);
+                ModuleIO::write_notice(ofs_running, "DOS", path);
+                path = global_out_dir + "pdos.npy";
                 write_pdos_npy(ucell, pdos, nspin, emin, dos_edelta_ev, path);
                 ModuleIO::write_notice(ofs_running, "PDOS", path);
             }

@@ -38,23 +38,22 @@ def collect_dos(directory, nspin, reference):
         np.testing.assert_equal(nspin, ref["nspin"])
         check_pdos(directory / "pdos.npy", ref)
 
-    fields = ("energy_eV", "dos", "dos_int", "dos_smear", "dos_smear_int")
-    dtype = np.dtype([(field, "f8") for field in fields])
+    fields = ("dos", "dos_int", "dos_smear", "dos_smear_int")
     spins = 2 if nspin == 2 else 1
-    for spin in range(spins):
-        rows = np.load(directory / f"doss{spin + 1}.npy", mmap_mode="r", allow_pickle=False)
-        np.testing.assert_equal(rows.dtype, dtype)
-        if rows.ndim != 1 or not rows.size:
-            raise ValueError("Expected one total DOS record per energy point")
-        if ref:
-            grid = ref["energy_min_eV"] + np.arange(ref["npoints"]) * ref["energy_step_eV"]
-            np.testing.assert_allclose(rows["energy_eV"], grid, atol=5e-7, rtol=0)
-            for sample in ref["total_samples"]:
-                row = rows[sample["energy_index"]]
-                np.testing.assert_allclose([row[name] for name in fields[1:]],
-                                           sample["spins"][spin], rtol=1e-3, atol=5e-5)
-    # The text collector takes the last bin from the last spin file.
-    return rows["dos_int"][-1]
+    dtype = np.dtype([("energy_eV", "f8")] + [(name, "f8", (spins,)) for name in fields])
+    rows = np.load(directory / "dos.npy", mmap_mode="r", allow_pickle=False)
+    np.testing.assert_equal(rows.dtype, dtype)
+    if rows.ndim != 1 or not rows.size:
+        raise ValueError("Expected one total DOS record per energy point")
+    if ref:
+        grid = ref["energy_min_eV"] + np.arange(ref["npoints"]) * ref["energy_step_eV"]
+        np.testing.assert_allclose(rows["energy_eV"], grid, atol=5e-7, rtol=0)
+        for sample in ref["total_samples"]:
+            row = rows[sample["energy_index"]]
+            values = np.column_stack([row[name] for name in fields])
+            np.testing.assert_allclose(values, sample["spins"], rtol=1e-3, atol=5e-5)
+    # Match the last bin and last spin used by the text collector.
+    return rows["dos_int"][-1, -1]
 
 
 if __name__ == "__main__":
