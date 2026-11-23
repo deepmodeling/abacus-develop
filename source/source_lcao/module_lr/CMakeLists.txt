@@ -42,6 +42,9 @@ if(ENABLE_LCAO)
     potentials/xc_kernel.cpp
     potentials/xc_kxc.cpp
     nacv.cpp
+    nacv_ao.cpp
+    nacv_response.cpp
+    nacv_solver.cpp
     nacv_tools.cpp
     gradient_output.cpp
     lr_grad_cs.cpp
