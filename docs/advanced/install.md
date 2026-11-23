@@ -125,8 +125,7 @@ cmake -B build -DENABLE_LIBRI=ON -DUSE_CUDA=ON -DENABLE_LIBRI_GPU=ON \
 
 `CMAKE_PREFIX_PATH` can also name the DDLA installation prefix, or `LibDDLA_DIR`
 can point to the directory containing `LibDDLAConfig.cmake`. The package supplies
-DDLA's include paths, backend definitions and link dependencies; separate
-`DDLA_INCLUDE_DIR` and `DDLA_LIBRARY` overrides are no longer used.
+DDLA's include paths, backend definitions and link dependencies.
 A configure-time compile/link check
 rejects incompatible GPU APIs, but does not validate numerical correctness.
 The standalone consumer in `tests/lcao_hse_gpu/cmake` checks that `LibRI::LibRI`
