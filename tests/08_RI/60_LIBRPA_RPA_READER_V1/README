@@ -38,3 +38,14 @@ lattice with 2*pi, every translation vector of the symmetry operations, and
 for `nspin 4` the `spin_symmetry` block. `librpa_producer_manifest.json`
 lists the remaining files this case requires and the tolerance each
 comparison uses.
+
+### Shifted k-grids
+
+The converter must filter the exported operations against the actual sampled
+points, not against an assumed Gamma-centred mesh. ABACUS exports the crystal
+operations, so an operation can map the mesh onto itself when the grid is
+unshifted and fail when the same mesh is sampled with an offset: inversion on
+a `2x1x1` Gamma grid maps `{1/8, 5/8}` to `{7/8, 3/8}` only when the shift is
+zero. taesc-prep derives the shift from the full-grid coordinates in
+`KPT.info`; a converter that keeps only the mesh dimensions must reject
+shifted grids rather than emit an over-permissive symmetry set.

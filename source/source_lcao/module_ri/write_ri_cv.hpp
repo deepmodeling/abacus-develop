@@ -14,6 +14,40 @@ namespace LRI_CV_Tools
     template <typename T>
     using TLRI = std::map<int, std::map<TAC, RI::Tensor<T>>>;;
 
+    /// Choose between the prefixed and the legacy file family in one directory.
+    ///
+    /// The producer now writes librpa_-prefixed names, but a directory may
+    /// still hold an older unprefixed set. Reading both would silently
+    /// overwrite tensors in directory order, so pick the family that is
+    /// actually present and prefer the prefixed one when both are.
+    inline bool has_prefixed_family(const std::string& path,
+                                    const std::string& prefixed,
+                                    const std::string& legacy)
+    {
+        DIR* dir = opendir(path.c_str());
+        if (dir == nullptr)
+        {
+            return false;
+        }
+        bool found_prefixed = false;
+        struct dirent* ptr = nullptr;
+        while ((ptr = readdir(dir)) != nullptr)
+        {
+            const std::string fm(ptr->d_name);
+            if (fm.find(prefixed) == 0)
+            {
+                found_prefixed = true;
+                break;
+            }
+            if (fm.find(legacy) == 0)
+            {
+                break;
+            }
+        }
+        closedir(dir);
+        return found_prefixed;
+    }
+
     template<typename T>
     inline double absmax(const RI::Tensor<T>& t)
     {
@@ -101,9 +135,10 @@ namespace LRI_CV_Tools
         struct dirent *ptr;
         DIR *dir;
         dir = opendir(path.c_str());
+        const bool use_prefixed = has_prefixed_family(path, "librpa_Cs_data_", "Cs_data_");
         while ((ptr = readdir(dir)) != NULL){// read all the files in the directory
             std::string fm(ptr->d_name);
-            if (fm.find("Cs_data_") == 0 || fm.find("librpa_Cs_data_") == 0)
+            if (fm.find(use_prefixed ? "librpa_Cs_data_" : "Cs_data_") == 0)
             {
                 ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "found Cs file: " + fm + ", start reading...");
                 std::ifstream infile(path + fm);
