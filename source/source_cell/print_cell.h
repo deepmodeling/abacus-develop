@@ -92,12 +92,15 @@ namespace mdcell
  *        (e.g. "# MD step N\n\n"); pass an empty string for no marker [in]
  * @param append true to append the frame to an existing file
  *        (out_app_flag == 1 multi-step runs); false truncates [in]
+ * @param include_velocity true for a restart checkpoint; ordinary structure
+ *        output contains geometry without MD velocities [in]
  */
 void print_stru_file(const MDCell& mdcell,
                      const StruMeta& stru_meta,
                      const std::string& fn,
                      const std::string& frame_comment,
-                     const bool append);
+                     const bool append,
+                     const bool include_velocity);
 }
 
 #endif

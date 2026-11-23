@@ -159,8 +159,8 @@ Note that md_tlast is only used in NVT/NPT simulations. If md_tlast is unset or 
         item.category = "Molecular dynamics";
         item.type = "Boolean";
         item.description = R"(Control whether to restart molecular dynamics calculations and time-dependent density functional theory calculations.
-* True: ABACUS will read in {md_step}, then read in the corresponding structure file automatically (STRU{istep} from the STRUC/ output directory when out_app_flag=2; older releases wrote STRU_MD_{istep} into a STRU/ subdirectory, which is still recognized). For tddft, ABACUS will also read in the LCAO wavefunction file of the last step (OUT.{suffix}/PSI/wf{k-point index}{spin?}g{step}_nao.txt). You need to set out_wfc_lcao=1 and out_app_flag=2 to obtain this per-step snapshot (modes 0 and 1 write fixed-name files without a step suffix, which cannot be mapped to a specific restart step and are therefore not accepted for istep>0).
-A structure frame is required for {istep}. Because out_freq_ion sets the structure-frame cadence independently of md_restartfreq, keep out_freq_ion unset (0) or equal to md_restartfreq when you intend to restart, and make sure out_stru is positive.
+* True: ABACUS reads the step in Restart_md.txt and the matching structure from STRU_restart in read_file_dir. If STRU_restart is absent, legacy numbered or cumulative MD STRU frames with velocities are accepted when the recorded step matches. For tddft, ABACUS will also read in the LCAO wavefunction file of the last step (OUT.{suffix}/PSI/wf{k-point index}{spin?}g{step}_nao.txt). You need to set out_wfc_lcao=1 and out_app_flag=2 to obtain this per-step wavefunction snapshot (modes 0 and 1 write fixed-name files without a step suffix, which cannot be mapped to a specific restart step and are therefore not accepted for istep>0).
+A structure frame with velocities is required for {istep}. New runs write it to STRU_restart whenever Restart_md.txt is updated, regardless of out_stru and out_freq_ion. Older outputs using cumulative or numbered STRU frames are still accepted when the matching frame exists.
 * False: ABACUS will start molecular dynamics calculations normally from the first step.)";
         item.default_value = "False";
         item.unit = "";
@@ -174,10 +174,9 @@ A structure frame is required for {istep}. Because out_freq_ion sets the structu
         item.type = "Integer";
         item.description = "The period (in ionic steps) of writing the MD restart file "
                            "(Restart_md.txt). This cadence is independent of out_freq_ion: "
-                           "restart files are written every md_restartfreq steps regardless of "
-                           "the STRU output cadence. Set to 0 to disable restart-file output. "
-                           "When out_freq_ion is not set (0), it also falls back to md_restartfreq "
-                           "as the STRU output frequency for backward compatibility.";
+                           "Restart_md.txt and STRU_restart are overwritten every md_restartfreq steps "
+                           "regardless of out_stru and out_freq_ion. STRU_restart contains the atomic "
+                           "velocities needed to resume MD. Set to 0 to disable checkpoint output.";
         item.default_value = "5";
         item.unit = "";
         read_sync_int(input.mdp.md_restartfreq);

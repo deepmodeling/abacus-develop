@@ -295,12 +295,14 @@ std::string mdcell_stru_header(const MDCell& cell, const StruMeta& metadata)
             output << metadata.species[it].orbital_file << "\n";
     }
     if (!metadata.descriptor_file.empty()) output << "\nNUMERICAL_DESCRIPTOR\n" << metadata.descriptor_file << "\n";
-    output << "\nLATTICE_CONSTANT\n" << cell.lat0() << "\n\nLATTICE_VECTORS\n";
+    const double lat0_angstrom = 1.0 / ModuleBase::BOHR_TO_A;
+    const double lat_scale = cell.lat0() * ModuleBase::BOHR_TO_A;
+    output << "\nLATTICE_CONSTANT\n" << lat0_angstrom << "\n\nLATTICE_VECTORS\n";
     const ModuleBase::Matrix3& lattice = cell.latvec();
-    output << lattice.e11 << " " << lattice.e12 << " " << lattice.e13 << "\n";
-    output << lattice.e21 << " " << lattice.e22 << " " << lattice.e23 << "\n";
-    output << lattice.e31 << " " << lattice.e32 << " " << lattice.e33 << "\n";
-    output << "\nATOMIC_POSITIONS\nCartesian\n";
+    output << lattice.e11 * lat_scale << " " << lattice.e12 * lat_scale << " " << lattice.e13 * lat_scale << "\n";
+    output << lattice.e21 * lat_scale << " " << lattice.e22 * lat_scale << " " << lattice.e23 * lat_scale << "\n";
+    output << lattice.e31 * lat_scale << " " << lattice.e32 * lat_scale << " " << lattice.e33 * lat_scale << "\n";
+    output << "\nATOMIC_POSITIONS\nCartesian_angstrom\n";
     return output.str();
 }
 
@@ -314,7 +316,7 @@ std::string mdcell_type_header(const MDCell& cell, const StruMeta& metadata, con
     return output.str();
 }
 
-std::string local_mdcell_atoms(const MDCell& cell, const std::size_t type)
+std::string local_mdcell_atoms(const MDCell& cell, const std::size_t type, const bool include_velocity)
 {
     std::string output;
     for (std::size_t iat = 0; iat < cell.owned_atoms().size(); ++iat)
@@ -323,10 +325,16 @@ std::string local_mdcell_atoms(const MDCell& cell, const std::size_t type)
         if (atom.type == static_cast<int>(type))
         {
             std::ostringstream atom_output;
+            const double position_scale = cell.lat0() * ModuleBase::BOHR_TO_A;
             atom_output << std::fixed << std::setprecision(10)
-                        << atom.cart.x << " " << atom.cart.y << " " << atom.cart.z
-                        << " m " << atom.mbl.x << " " << atom.mbl.y << " " << atom.mbl.z
-                        << " v " << atom.vel.x << " " << atom.vel.y << " " << atom.vel.z << "\n";
+                        << atom.cart.x * position_scale << " " << atom.cart.y * position_scale << " "
+                        << atom.cart.z * position_scale
+                        << " m " << atom.mbl.x << " " << atom.mbl.y << " " << atom.mbl.z;
+            if (include_velocity)
+            {
+                atom_output << " v " << atom.vel.x << " " << atom.vel.y << " " << atom.vel.z;
+            }
+            atom_output << "\n";
             output += atom_output.str();
         }
     }
@@ -376,7 +384,7 @@ StruMeta make_stru_meta(const UnitCell& ucell)
 namespace mdcell
 {
 void print_stru_file(const MDCell& cell, const StruMeta& stru_meta, const std::string& fn,
-                     const std::string& frame_comment, const bool append)
+                     const std::string& frame_comment, const bool append, const bool include_velocity)
 {
     if (stru_meta.species.size() != cell.type_labels().size()
         || stru_meta.species.size() != cell.type_masses().size()
@@ -454,7 +462,7 @@ void print_stru_file(const MDCell& cell, const StruMeta& stru_meta, const std::s
             throw std::runtime_error("Unable to write MDCell restart STRU type header: " + fn + ": " + std::strerror(errno));
         }
         offset += static_cast<MPI_Offset>(type_header.size());
-        const std::string local_atoms = local_mdcell_atoms(cell, it);
+        const std::string local_atoms = local_mdcell_atoms(cell, it, include_velocity);
         const MPI_Offset local_size = static_cast<MPI_Offset>(local_atoms.size());
         MPI_Offset type_size = 0;
         MPI_Offset rank_offset = 0;
@@ -489,7 +497,7 @@ void print_stru_file(const MDCell& cell, const StruMeta& stru_meta, const std::s
     std::ofstream output(fn.c_str(), mode);
     output << header;
     for (std::size_t it = 0; it < stru_meta.species.size(); ++it)
-        output << mdcell_type_header(cell, stru_meta, it) << local_mdcell_atoms(cell, it);
+        output << mdcell_type_header(cell, stru_meta, it) << local_mdcell_atoms(cell, it, include_velocity);
 #endif
 }
 }

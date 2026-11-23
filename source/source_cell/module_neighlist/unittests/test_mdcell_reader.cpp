@@ -10,6 +10,8 @@
 #include "source_base/parallel_cell.h"
 #include "source_base/global_variable.h"
 
+#include <algorithm>
+#include <cmath>
 #include <cstdio>
 #include <cstdint>
 #include <fstream>
@@ -348,13 +350,14 @@ TEST(MDCellReaderTest, RestartStruPreservesAtomRecordsAcrossRanks)
     StruMeta metadata;
     metadata.species.resize(2);
     const std::string output_file = "distributed_mdcell_restart.STRU";
-    mdcell::print_stru_file(mdcell, metadata, output_file, "", false);
+    mdcell::print_stru_file(mdcell, metadata, output_file, "", false, true);
 
     DomainDecomposition reader_decomp;
     MDCell round_trip = MDCellReader::read_stru(output_file,
                                                  std::vector<int>{1, 1, 1},
                                                  0.0,
                                                  ModuleBase::world_comm_domain(), reader_decomp);
+    EXPECT_NEAR(round_trip.lat0() * round_trip.latvec().e11, 20.0, 1.0e-8);
     double local_positions[4] = {0.0, 0.0, 0.0, 0.0};
     double local_velocities[4] = {0.0, 0.0, 0.0, 0.0};
     int local_mbl_x[4] = {0, 0, 0, 0};
@@ -362,9 +365,10 @@ TEST(MDCellReaderTest, RestartStruPreservesAtomRecordsAcrossRanks)
     for (std::size_t iat = 0; iat < round_trip.owned_atoms().size(); ++iat)
     {
         const LocalAtom& atom = round_trip.owned_atoms()[iat];
-        const int index = atom.type == 0 ? static_cast<int>(atom.cart.x)
-                                         : 2 + static_cast<int>(atom.cart.x) - 10;
-        local_positions[index] = atom.cart.x;
+        const double position_bohr = atom.cart.x * round_trip.lat0();
+        const int index = atom.type == 0 ? static_cast<int>(std::lround(position_bohr))
+                                         : 2 + static_cast<int>(std::lround(position_bohr)) - 10;
+        local_positions[index] = position_bohr;
         local_velocities[index] = atom.vel.x;
         local_mbl_x[index] = atom.mbl.x;
         local_owners[index] = 1;
@@ -379,9 +383,9 @@ TEST(MDCellReaderTest, RestartStruPreservesAtomRecordsAcrossRanks)
     MPI_Allreduce(local_owners, global_owners, 4, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
     for (int iat = 0; iat < 4; ++iat) EXPECT_EQ(global_owners[iat], 1);
     EXPECT_DOUBLE_EQ(global_positions[0], 0.0);
-    EXPECT_DOUBLE_EQ(global_positions[1], 1.0);
-    EXPECT_DOUBLE_EQ(global_positions[2], 10.0);
-    EXPECT_DOUBLE_EQ(global_positions[3], 11.0);
+    EXPECT_NEAR(global_positions[1], 1.0, 1.0e-8);
+    EXPECT_NEAR(global_positions[2], 10.0, 1.0e-8);
+    EXPECT_NEAR(global_positions[3], 11.0, 1.0e-8);
     EXPECT_DOUBLE_EQ(global_velocities[0], 0.0);
     EXPECT_DOUBLE_EQ(global_velocities[1], 0.01);
     EXPECT_DOUBLE_EQ(global_velocities[2], 0.10);
@@ -431,10 +435,13 @@ TEST(MDCellReaderTest, RestartStruPreservesAtomRecordsAcrossRanks)
         }
         ASSERT_EQ(coordinates_a.size(), 2U);
         ASSERT_EQ(coordinates_b.size(), 2U);
-        std::set<double> expected_a = {0.0, 1.0};
-        std::set<double> expected_b = {10.0, 11.0};
-        EXPECT_EQ(std::set<double>(coordinates_a.begin(), coordinates_a.end()), expected_a);
-        EXPECT_EQ(std::set<double>(coordinates_b.begin(), coordinates_b.end()), expected_b);
+        std::sort(coordinates_a.begin(), coordinates_a.end());
+        std::sort(coordinates_b.begin(), coordinates_b.end());
+        const double scale = ModuleBase::BOHR_TO_A;
+        EXPECT_NEAR(coordinates_a[0], 0.0, 1.0e-8);
+        EXPECT_NEAR(coordinates_a[1], scale, 1.0e-8);
+        EXPECT_NEAR(coordinates_b[0], 10.0 * scale, 1.0e-8);
+        EXPECT_NEAR(coordinates_b[1], 11.0 * scale, 1.0e-8);
     }
     MPI_Barrier(MPI_COMM_WORLD);
     if (rank == 0) std::remove(output_file.c_str());
@@ -474,14 +481,17 @@ TEST(MDCellReaderTest, STRUAppendWithFrameComment)
                   ModuleBase::world_comm_domain());
     StruMeta metadata;
     metadata.species.resize(1);
-    const std::string output_file = "mdcell_append_test.STRU";
+    const std::string output_file = testing::TempDir() + "mdcell_append_test.STRU";
+    const std::string ordinary_file = testing::TempDir() + "mdcell_ordinary_test.STRU";
 
     // First frame: append=false, frame comment set.
     mdcell::print_stru_file(mdcell, metadata, output_file,
-                            "# MD step 1\n\n", /*append=*/false);
+                            "# MD step 1\n\n", /*append=*/false, /*include_velocity=*/true);
     // Second frame: append=true with a different comment.
     mdcell::print_stru_file(mdcell, metadata, output_file,
-                            "# MD step 2\n\n", /*append=*/true);
+                            "# MD step 2\n\n", /*append=*/true, /*include_velocity=*/true);
+    mdcell::print_stru_file(mdcell, metadata, ordinary_file,
+                            "# MD step 2\n\n", /*append=*/false, /*include_velocity=*/false);
 
     if (rank == 0)
     {
@@ -501,7 +511,15 @@ TEST(MDCellReaderTest, STRUAppendWithFrameComment)
             pos += 14;
         }
         EXPECT_EQ(occurrences, 2);
+        EXPECT_THAT(str, testing::HasSubstr("Cartesian_angstrom"));
+        EXPECT_THAT(str, testing::HasSubstr(" v "));
+        std::ifstream ordinary_input(ordinary_file.c_str());
+        const std::string ordinary((std::istreambuf_iterator<char>(ordinary_input)),
+                                   std::istreambuf_iterator<char>());
+        EXPECT_THAT(ordinary, testing::HasSubstr("Cartesian_angstrom"));
+        EXPECT_THAT(ordinary, testing::Not(testing::HasSubstr(" v ")));
         std::remove(output_file.c_str());
+        std::remove(ordinary_file.c_str());
     }
 }
 
@@ -550,9 +568,9 @@ TEST(MDCellReaderTest, STRUFreshRunTruncatesPreviousFrames)
 
     // Previous run: frames 1 and 2 accumulate.
     mdcell::print_stru_file(mdcell, metadata, output_file,
-                            "# MD step 1\n\n", /*append=*/false);
+                            "# MD step 1\n\n", /*append=*/false, /*include_velocity=*/true);
     mdcell::print_stru_file(mdcell, metadata, output_file,
-                            "# MD step 2\n\n", /*append=*/true);
+                            "# MD step 2\n\n", /*append=*/true, /*include_velocity=*/true);
 
     // The extraction runs on rank zero only; broadcast its result so every
     // rank takes the same (collective-safe) return decision. Later
@@ -577,7 +595,7 @@ TEST(MDCellReaderTest, STRUFreshRunTruncatesPreviousFrames)
     // Fresh run: the first frame truncates the fixed-name file (append=false)
     // and starts numbering from step 1 again.
     mdcell::print_stru_file(mdcell, metadata, output_file,
-                            "# MD step 1\n\n", /*append=*/false);
+                            "# MD step 1\n\n", /*append=*/false, /*include_velocity=*/true);
 
     if (rank == 0)
     {

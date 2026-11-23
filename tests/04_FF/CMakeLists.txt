@@ -13,8 +13,8 @@ else()
     WORKING_DIRECTORY ${ABACUS_TEST_DIR}/04_FF)
 endif()
 
-# Autotest checks numerical results but cannot assert the exact frame inventory
-# for independent output and restart cadences.
+# Autotest checks numerical results; this existing driver also asserts the
+# structure-file inventory for independent output and restart cadences.
 find_program(ABACUS_CADENCE_PYTHON python3)
 if(ABACUS_CADENCE_PYTHON AND NOT ENABLE_ASAN)
   add_test(
