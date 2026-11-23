@@ -456,7 +456,9 @@ TEST(MDCellReaderTest, STRUAppendWithFrameComment)
     const int rank = world_domain.rank();
 
     std::vector<LocalAtom> owned_atoms;
-    owned_atoms.push_back(LocalAtom(ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
+    if (rank == 0)
+    {
+        owned_atoms.push_back(LocalAtom(ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
                                     ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
                                     ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
                                     ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
@@ -465,6 +467,7 @@ TEST(MDCellReaderTest, STRUAppendWithFrameComment)
                                     0,
                                     0,
                                     rank));
+    }
 
     ModuleBase::Matrix3 lattice = make_lattice();
     MDCell mdcell;
@@ -534,7 +537,9 @@ TEST(MDCellReaderTest, STRUFreshRunTruncatesPreviousFrames)
     const int rank = world_domain.rank();
 
     std::vector<LocalAtom> owned_atoms;
-    owned_atoms.push_back(LocalAtom(ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
+    if (rank == 0)
+    {
+        owned_atoms.push_back(LocalAtom(ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
                                     ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
                                     ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
                                     ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
@@ -543,6 +548,7 @@ TEST(MDCellReaderTest, STRUFreshRunTruncatesPreviousFrames)
                                     0,
                                     0,
                                     rank));
+    }
 
     ModuleBase::Matrix3 lattice = make_lattice();
     const ModuleBase::Matrix3 inverse = lattice.Inverse();
@@ -617,6 +623,84 @@ TEST(MDCellReaderTest, STRUFreshRunTruncatesPreviousFrames)
         EXPECT_THAT(str, testing::Not(testing::HasSubstr("# MD step 2")));
         std::remove(output_file.c_str());
         std::remove(frame_file.c_str());
+    }
+}
+
+TEST(MDCellReaderTest, STRUAtomOrderStaysStableAcrossOwnerChanges)
+{
+    const ModuleBase::CommunicationDomain world = ModuleBase::world_comm_domain();
+    if (world.size() != 4)
+    {
+        GTEST_SKIP() << "This test requires four MPI ranks.";
+    }
+
+    ModuleBase::Matrix3 lattice = make_lattice();
+    lattice.e11 = 20.0;
+    lattice.e22 = 20.0;
+    lattice.e33 = 20.0;
+    StruMeta metadata;
+    metadata.species.resize(1);
+    const std::string filename = testing::TempDir() + "mdcell_stable_order.STRU";
+    for (int frame = 0; frame < 2; ++frame)
+    {
+        const int index = frame == 0 ? 3 - world.rank() : world.rank();
+        const double position = index + 1.0;
+        const double fractional_position = position / 20.0;
+        const double velocity = index + 0.125;
+        const ModuleBase::Vector3<double> cart(position, 0.0, 0.0);
+        const ModuleBase::Vector3<double> frac(fractional_position, 0.0, 0.0);
+        const ModuleBase::Vector3<double> vel(velocity, 0.0, 0.0);
+        const ModuleBase::Vector3<double> force(0.0, 0.0, 0.0);
+        const ModuleBase::Vector3<int> move(1, 1, 1);
+        std::vector<LocalAtom> atoms;
+        atoms.push_back(LocalAtom(cart, frac, vel, force, move, 1.0, 0, index, world.rank()));
+        MDCell cell;
+        cell.initialize_from_owned_atoms(lattice, lattice.Inverse(), 1.0, 1.0, 4,
+                                         atoms, std::vector<std::string>{"A"},
+                                         std::vector<double>{1.0}, std::vector<std::int64_t>{4},
+                                         0.0, world);
+        const bool append = frame != 0;
+        mdcell::print_stru_file(cell, metadata, filename, "", append, true);
+    }
+
+    if (world.rank() == 0)
+    {
+        std::ifstream input(filename.c_str());
+        std::string line;
+        int frames = 0;
+        while (std::getline(input, line))
+        {
+            if (line != "Cartesian_angstrom")
+            {
+                continue;
+            }
+            ++frames;
+            for (int header_line = 0; header_line < 4; ++header_line)
+            {
+                ASSERT_TRUE(static_cast<bool>(std::getline(input, line)));
+            }
+            for (int index = 0; index < 4; ++index)
+            {
+                ASSERT_TRUE(static_cast<bool>(std::getline(input, line)));
+                std::istringstream record(line);
+                double x = 0.0;
+                double y = 0.0;
+                double z = 0.0;
+                std::string marker;
+                int mx = 0;
+                int my = 0;
+                int mz = 0;
+                double vx = 0.0;
+                double vy = 0.0;
+                double vz = 0.0;
+                record >> x >> y >> z >> marker >> mx >> my >> mz >> marker >> vx >> vy >> vz;
+                ASSERT_FALSE(record.fail());
+                EXPECT_NEAR(x, (index + 1.0) * ModuleBase::BOHR_TO_A, 1.0e-9);
+                EXPECT_DOUBLE_EQ(vx, index + 0.125);
+            }
+        }
+        EXPECT_EQ(frames, 2);
+        std::remove(filename.c_str());
     }
 }
 

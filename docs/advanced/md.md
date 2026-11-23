@@ -34,6 +34,8 @@ Use `md_thermo_freq` to set the output interval for MD step, energy, temperature
 
 The `md_out_force` INPUT keyword has been removed. An INPUT file that still contains it will fail to parse. For MDCell simulations, per-atom forces are no longer printed in `running_md.log`; use `dump_force 1` to include them in `MD_dump`, and use `md_dumpfreq` to set the trajectory output interval.
 
+MDCell structure output (`STRU`, `STRU_FINAL`, and `STRU_restart`) lists atoms by element and then by their original index within that element. This order remains stable when atoms migrate between MPI processes. In an appended `STRU` trajectory, the same row within each element therefore refers to the same atom in every frame.
+
 [Examples](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/18_md/01_LCAO_NVE_Si8) of MD simulations are also provided.
 There are eight INPUT files corresponding to eight different MD evolution methods in the directory.
 For examlpe, `INPUT_0` shows how to employ the NVE simulation.
