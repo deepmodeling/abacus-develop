@@ -5,8 +5,6 @@
 #define ABACUS_LR_NACV_TOOLS_H
 
 #include "source_base/matrix.h"
-#include <algorithm>
-#include <cctype>
 #include <complex>
 #include <functional>
 #include <iosfwd>
@@ -287,44 +285,6 @@ void write_nac_states(
     std::ostream &output);
 } // namespace LR
 
-namespace LR
-{
-namespace NacvXC
-{
-/**
- * @brief Resolve built-in ground-state aliases before selecting a response kernel.
- * @param[in] name Case-insensitive functional name from INPUT or a pseudopotential.
- * @return Lowercase canonical name; unknown names are only converted to lowercase.
- * @details This maps names, not physical approximations: NONE does not become RPA.
- */
-inline std::string canonical_xc_name(const std::string &name)
-{
-    std::string canonical = name;
-    std::transform(
-        canonical.begin(),
-        canonical.end(),
-        canonical.begin(),
-        [](unsigned char character)
-        {
-            return static_cast<char>(std::tolower(character));
-        });
-    if (canonical == "pz" || canonical == "slapznogxnogc")
-    {
-        return "lda";
-    }
-    if (canonical == "slapwpbxpbc")
-    {
-        return "pbe";
-    }
-    if (canonical == "nox+noc")
-    {
-        return "none";
-    }
-    return canonical;
-}
-
-} // namespace NacvXC
-} // namespace LR
 namespace LR
 {
 /** @brief Time a complete NACV operation, including exceptional exits. */

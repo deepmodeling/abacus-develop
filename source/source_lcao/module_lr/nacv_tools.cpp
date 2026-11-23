@@ -432,8 +432,8 @@ void validate_nac_occupations(const ModuleBase::matrix &weights, const std::vect
 
 void validate_nac_functionals(const std::string &reference_xc, const std::string &response_xc)
 {
-    const std::string reference = NacvXC::canonical_xc_name(reference_xc);
-    const std::string response = NacvXC::canonical_xc_name(response_xc);
+    const std::string reference = LR_Util::canonical_xc_name(reference_xc);
+    const std::string response = LR_Util::canonical_xc_name(response_xc);
     const bool reference_supported = LR_Util::has_local_xc(reference) || reference == "hf" || reference == "none";
     const bool response_supported = LR_Util::has_local_xc(response) || response == "hf" || response == "rpa";
     if (!reference_supported || !response_supported)

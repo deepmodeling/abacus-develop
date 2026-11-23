@@ -705,6 +705,9 @@ NacvResult evaluate_aux_tda_nac(
         ct::Tensor response = LR_Util::newTensor<double>({2, inputs.nloc});
         const int pair_count = 2;
         response_context.solve_polarized(combinations.data<double>(), response.data<double>(), pair_count);
+        // Both polarized amplitudes have the same Rayleigh quotient. Using it in
+        // both forces gives the symmetric metric term at the mean energy.
+        // The negative force half-difference yields the ETF numerator; the AO connection is added separately.
         const double mean_energy = 0.5 * (bra_energy_ry + ket_energy_ry);
         const std::vector<double> energies{mean_energy, mean_energy};
         std::vector<ModuleBase::matrix> forces;

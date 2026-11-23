@@ -3,6 +3,7 @@
 
 #include <cstddef>
 #include <complex>
+#include <string>
 #include <vector>
 #include <utility>
 #include "source_base/matrix.h"
@@ -56,6 +57,14 @@ namespace LR_Util
             "cam_pbeh", "lc_pbe", "lc_wpbe", "lrc_wpbe", "lrc_wpbeh" };
         return l;
     }
+
+    /**
+     * @brief Resolve built-in ground-state aliases before selecting a response kernel.
+     * @param[in] name Case-insensitive functional name from INPUT or a pseudopotential.
+     * @return Lowercase canonical name; unknown names are only converted to lowercase.
+     * @details This maps names, not physical approximations: NONE does not become RPA.
+     */
+    std::string canonical_xc_name(const std::string &name);
 
     /// @brief check if the xc functional has local xc kernel
     inline bool has_local_xc(const std::string& name)

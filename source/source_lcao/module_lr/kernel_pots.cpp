@@ -1,5 +1,4 @@
 #include "kernel_pots.h"
-#include "nacv_tools.h"
 #include "potentials/pot_hxc_lrtd.h"
 #include "source_cell/unitcell.h"
 #include "source_io/module_parameter/input_parameter.h"
@@ -60,7 +59,7 @@ std::shared_ptr<PotHxcLR> prepare_gs_potential(const Input_para& input, const st
     // or constructing a separate GS kernel.
     const std::string resolved_gs = (input.dft_functional == "default") ? LR_Util::tolower(ucell.atoms[0].ncpp.xc_func)
                                                                         : LR_Util::tolower(input.dft_functional);
-    const std::string xc_kernel_gs = NacvXC::canonical_xc_name(resolved_gs);
+    const std::string xc_kernel_gs = LR_Util::canonical_xc_name(resolved_gs);
     // `ST::S1` is only correct when nspin=1. `KernelXC` is built with
     // the input `nspin`, so at nspin=2 the kernel arrays carry 3 spin components per grid point
     // while the S1 integrand indexes them as if there were 1 -- it does not even read a

@@ -3,12 +3,39 @@
 #include "source_base/parallel_reduce.h"
 #include "source_cell/unitcell.h"
 #include <algorithm>
+#include <cctype>
 #include <cmath>
 #include <stdexcept>
 #include "source_base/module_container/base/third_party/lapack.h"
 #include "source_base/module_external/scalapack_connector.h"
 namespace LR_Util
 {
+    std::string canonical_xc_name(const std::string &name)
+    {
+        std::string canonical = name;
+        std::transform(
+            canonical.begin(),
+            canonical.end(),
+            canonical.begin(),
+            [](unsigned char character)
+            {
+                return static_cast<char>(std::tolower(character));
+            });
+        if (canonical == "pz" || canonical == "slapznogxnogc")
+        {
+            return "lda";
+        }
+        if (canonical == "slapwpbxpbc")
+        {
+            return "pbe";
+        }
+        if (canonical == "nox+noc")
+        {
+            return "none";
+        }
+        return canonical;
+    }
+
     int spin_population_difference(const ModuleBase::matrix& wg, const int kpar, const int rank_in_pool)
     {   // only for nspin=2
         const int nk = wg.nr / 2;
