@@ -47,6 +47,26 @@ TEST_P(LibxcCudaPotential, MatchesHostAcrossBatchBoundaries)
             sigma[i * nsigma + j] = density * density * (j == 1 ? 0.1 : 0.3);
         }
     }
+    if (id == XC_HYB_GGA_XC_HSE06 && points >= 2)
+    {
+        // Exercise the WPBEH small-gradient limit above the density cutoff.
+        if (spin == XC_UNPOLARIZED)
+        {
+            rho[0] = 0.1;
+            rho[1] = 0.1;
+            sigma[0] = 0.0;
+            sigma[1] = 1.0e-16;
+        }
+        else
+        {
+            // Parallel spin gradients split 60:40 give a total sigma of 1e-6.
+            rho[0] = 0.03;
+            rho[1] = 0.02;
+            sigma[0] = 0.36e-6;
+            sigma[1] = 0.24e-6;
+            sigma[2] = 0.16e-6;
+        }
+    }
     std::vector<double> exc_host(points, 23.0);
     std::vector<double> vrho_host(rho_size, 23.0);
     std::vector<double> vsigma_host(sigma_size, 23.0);
