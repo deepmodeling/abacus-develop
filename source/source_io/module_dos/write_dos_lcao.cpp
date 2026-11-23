@@ -30,7 +30,8 @@ void write_dos_npy(const std::string& path, const std::vector<DosSpectrum>& spec
     }
 
     std::ofstream out;
-    out.exceptions(std::ios::badbit | std::ios::failbit);
+    const auto exception_mask = std::ios::badbit | std::ios::failbit;
+    out.exceptions(exception_mask);
     out.open(path, std::ios::binary | std::ios::trunc);
     write_dos_npy_header(out, fields, npoints);
     // One shared energy, followed by all spin channels of each quantity.

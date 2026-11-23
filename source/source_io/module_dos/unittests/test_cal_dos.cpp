@@ -1,9 +1,13 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 #include "../cal_dos.h"
+#include "source_base/constants.h"
 #include "source_base/global_variable.h"
+#include <cmath>
+#include <fstream>
 #include <string>
 #include <sstream>
+#include <unistd.h>
 #ifdef __MPI
 #include "mpi.h"
 #endif
@@ -123,6 +127,39 @@ TEST_F(DosTest,Dos)
 }
 
 
+
+TEST_F(DosTest, CapturesSpectrumWithoutTextOutput)
+{
+    const auto pid = getpid();
+    const std::string text_path = testing::TempDir() + "abacus_cal_dos_capture_" + std::to_string(pid) + ".txt";
+    const double step = 0.5;
+    const double sigma = 0.5;
+    ModuleBase::matrix eigenvalues(1, 1);
+    eigenvalues(0, 0) = 0.0;
+    ModuleBase::matrix occupations(1, 1);
+    occupations(0, 0) = 1.0;
+    ModuleIO::DosSpectrum spectrum;
+    const bool calculated = ModuleIO::cal_dos(0, text_path, step, 0.5, 0.0, sigma,
+                                              1, 1, {1.0}, {0}, 1, eigenvalues, occupations,
+                                              /*istep=*/-1, /*out_app_flag=*/0, /*bndpar=*/1, &spectrum);
+    ASSERT_TRUE(calculated);
+    const std::ifstream text_output(text_path);
+    EXPECT_FALSE(text_output.is_open());
+
+    // One state at 0 eV, sampled at the Gaussian peak and one sigma above it.
+    const double peak = 1.0 / (sigma * std::sqrt(ModuleBase::TWO_PI));
+    const double shoulder = peak * std::exp(-0.5);
+    const ModuleIO::DosSpectrum expected = {
+        {0.0, 1.0, 1.0, peak, step * peak},
+        {0.5, 0.0, 1.0, shoulder, step * (peak + shoulder)}
+    };
+    ASSERT_EQ(spectrum.size(), expected.size());
+    const auto near = testing::DoubleNear(1e-12);
+    for (size_t row = 0; row < expected.size(); ++row)
+    {
+        EXPECT_THAT(spectrum[row], testing::Pointwise(near, expected[row])) << "row " << row;
+    }
+}
 
 TEST_F(DosTest,DosW1)
 {
