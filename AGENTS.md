@@ -199,6 +199,9 @@ When splitting a function into a new `.cpp`, if its callers span LCAO and PW, pu
 - Keep MD geometry output separate from restart checkpoints. A restart STRU
   must retain atomic velocities and a step marker matching Restart_md.txt;
   ordinary STRU files may omit velocities.
+- Sort distributed trajectory output by stable atom identity, not MPI rank or
+  local storage order; check for duplicate and missing atom indices before
+  writing each frame.
 
 ## Local Commands
 
