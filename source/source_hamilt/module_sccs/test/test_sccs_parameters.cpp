@@ -18,9 +18,8 @@ TEST(SccsParameters, ExactPresetNamesOnly)
 // GPa conversions, and the vacuum preset.
 TEST(SccsParameters, PresetValues)
 {
-    const ModuleSccs::Preset presets[] = {ModuleSccs::Preset::WaterNeutral,
-                                         ModuleSccs::Preset::WaterCation,
-                                         ModuleSccs::Preset::WaterAnion};
+    const ModuleSccs::Preset presets[] = {
+        ModuleSccs::Preset::WaterNeutral, ModuleSccs::Preset::WaterCation, ModuleSccs::Preset::WaterAnion};
     const double minima[] = {1e-4, 2e-4, 2.4e-3};
     const double maxima[] = {5e-3, 3.5e-3, 1.55e-2};
     const double tensions[] = {3.076638359192053e-5, 3.211522295607572e-6, 0.0};

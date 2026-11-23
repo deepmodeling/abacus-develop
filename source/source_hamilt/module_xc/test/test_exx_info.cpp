@@ -49,7 +49,7 @@ TEST(RpaCutoffConfig, PbeRiInitializationMatchesLibriAvailability)
 #ifdef __EXX
     // ENABLE_LIBRI defines __EXX and enables PBE RPA initialization of info_ri.
     ASSERT_EQ(cut_pbe_info.info_ri.coulomb_param.count(Conv_Coulomb_Pot_K::Coulomb_Type::Fock), 1);
-    const auto& cut_fock = cut_pbe_info.info_ri.coulomb_param.at(Conv_Coulomb_Pot_K::Coulomb_Type::Fock);
+    const auto &cut_fock = cut_pbe_info.info_ri.coulomb_param.at(Conv_Coulomb_Pot_K::Coulomb_Type::Fock);
     ASSERT_EQ(cut_fock.size(), 1);
     EXPECT_EQ(cut_fock.front().at("rpa_cut_coulomb"), "log_erfc");
     EXPECT_EQ(cut_fock.front().at("rpa_cut_radius"), "inscribed");

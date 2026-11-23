@@ -1,42 +1,41 @@
 #ifndef ABACUS_SOURCE_HAMILT_MODULE_GINT_GINT_VL_MGGA_N4_GPU_H
 #define ABACUS_SOURCE_HAMILT_MODULE_GINT_GINT_VL_MGGA_N4_GPU_H
 
-
-#include <memory>
-#include <vector>
-#include "source_hamilt/module_hcontainer/hcontainer.h"
 #include "gint.h"
 #include "gint_info.h"
 #include "source_hamilt/module_gint/kernel/cuda_mem_wrapper.h"
+#include "source_hamilt/module_hcontainer/hcontainer.h"
+#include <memory>
+#include <vector>
 
 namespace ModuleGint
 {
 
 class Gint_vl_metagga_nspin4_gpu : public Gint
 {
-    public:
+  public:
     Gint_vl_metagga_nspin4_gpu(
-        std::vector<const double*> vr_eff,
-        std::vector<const double*> vofk,
-        HContainer<std::complex<double>>* hR)
-        : vr_eff_(vr_eff), vofk_(vofk), hR_(hR), dr3_(gint_info_->get_mgrid_volume()) {}
-    
+        std::vector<const double *> vr_eff, std::vector<const double *> vofk, HContainer<std::complex<double>> *hR)
+        : vr_eff_(vr_eff), vofk_(vofk), hR_(hR), dr3_(gint_info_->get_mgrid_volume())
+    {
+    }
+
     void cal_gint();
 
-    private:
+  private:
     void init_hr_gint_();
 
     void transfer_cpu_to_gpu_();
 
     void transfer_gpu_to_cpu_();
-    
+
     void cal_hr_gint_();
 
     // input
-    std::vector<const double*> vr_eff_;
-    std::vector<const double*> vofk_;
+    std::vector<const double *> vr_eff_;
+    std::vector<const double *> vofk_;
     // output
-    HContainer<std::complex<double>>* hR_;
+    HContainer<std::complex<double>> *hR_;
 
     // Intermediate variables
     const double dr3_;
@@ -44,12 +43,12 @@ class Gint_vl_metagga_nspin4_gpu : public Gint
     const int nspin_ = 4;
 
     std::vector<HContainer<double>> hr_gint_part_;
-    
+
     std::vector<CudaMemWrapper<double>> vr_eff_d_;
     std::vector<CudaMemWrapper<double>> vofk_d_;
     std::vector<CudaMemWrapper<double>> hr_gint_part_d_;
 };
 
-}
+} // namespace ModuleGint
 
 #endif // ABACUS_SOURCE_HAMILT_MODULE_GINT_GINT_VL_MGGA_N4_GPU_H

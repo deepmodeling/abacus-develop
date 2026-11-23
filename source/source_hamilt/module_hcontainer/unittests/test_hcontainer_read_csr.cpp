@@ -1,8 +1,8 @@
-#include "tmp_mocks.h"
+#include "prepare_unitcell.h"
+#include "source_base/module_out/csr_reader.h"
 #include "source_hamilt/module_hcontainer/hcontainer.h"
 #include "source_hamilt/module_hcontainer/output_hcontainer.h"
-#include "source_base/module_out/csr_reader.h"
-#include "prepare_unitcell.h"
+#include "tmp_mocks.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -15,9 +15,7 @@ Magnetism::Magnetism()
     this->tot_mag = 0.0;
     this->abs_mag = 0.0;
 }
-Magnetism::~Magnetism()
-{
-}
+Magnetism::~Magnetism() {}
 // mocke functions
 
 /************************************************
@@ -34,16 +32,13 @@ Magnetism::~Magnetism()
 class ReadHContainerTest : public testing::Test
 {
   protected:
-    UnitCell* ucell;
+    UnitCell *ucell;
     UcellTestPrepare utp = UcellTestLib["Si"];
     // nw is the number of orbitals of each atom
     // it should container ucell.nat elements
     std::vector<int> nw = {13};
     int nlocal;
-    void SetUp() override
-    {
-        ucell = utp.SetUcellInfo(nw, nlocal);
-    }
+    void SetUp() override { ucell = utp.SetUcellInfo(nw, nlocal); }
 };
 
 TEST_F(ReadHContainerTest, ReadAndOutputHContainer)
@@ -86,7 +81,7 @@ TEST_F(ReadHContainerTest, ReadAndOutputHContainer)
                 hamilt::BaseMatrix<double> tmp_matrix(numberofRow, numberofCol);
                 tmp_matrix.allocate(nullptr, true);
                 int nnz = 0;
-                for (const auto& element: sparse_matrix.getElements())
+                for (const auto &element : sparse_matrix.getElements())
                 {
                     int row = element.first.first;
                     int col = element.first.second;
@@ -138,7 +133,7 @@ TEST_F(ReadHContainerTest, ReadAndOutputHContainer)
             {
                 ModuleIO::SparseMatrix<double> sparse_matrix_out = csr_out.getMatrix(j);
                 EXPECT_EQ(sparse_matrix.getElements().size(), sparse_matrix_out.getElements().size());
-                for (const auto& element: sparse_matrix.getElements())
+                for (const auto &element : sparse_matrix.getElements())
                 {
                     int row = element.first.first;
                     int col = element.first.second;

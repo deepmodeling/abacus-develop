@@ -5,20 +5,22 @@
 #include "source_base/timer.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "surchem.h"
-// Changing the interface to use an explicit output parameter clarifies lifetime management and avoids hidden allocations.
-void surchem::v_correction(const UnitCell& cell,
-                           const Parallel_Grid& pgrid,
-                           const ModulePW::PW_Basis* rho_basis,
-                           const int& nspin,
-                           const double* const* const rho,
-                           const double* vlocal,
-                           Structure_Factor* sf,
-                           ModuleBase::matrix& v)
+// Changing the interface to use an explicit output parameter clarifies lifetime management and avoids hidden
+// allocations.
+void surchem::v_correction(
+    const UnitCell &cell,
+    const Parallel_Grid &pgrid,
+    const ModulePW::PW_Basis *rho_basis,
+    const int &nspin,
+    const double *const *const rho,
+    const double *vlocal,
+    Structure_Factor *sf,
+    ModuleBase::matrix &v)
 {
     ModuleBase::TITLE("surchem", "v_cor");
     ModuleBase::timer::start("surchem", "v_cor");
 
-    double* porter = new double[rho_basis->nrxx];
+    double *porter = new double[rho_basis->nrxx];
     for (int i = 0; i < rho_basis->nrxx; i++)
     {
         porter[i] = 0.0;
@@ -32,14 +34,14 @@ void surchem::v_correction(const UnitCell& cell,
         }
     }
 
-    std::complex<double>* porter_g = new std::complex<double>[rho_basis->npw];
+    std::complex<double> *porter_g = new std::complex<double>[rho_basis->npw];
     ModuleBase::GlobalFunc::ZEROS(porter_g, rho_basis->npw);
 
     rho_basis->real2recip(porter, porter_g);
 
-    std::complex<double>* n = new std::complex<double>[rho_basis->npw];
-    std::complex<double>* total_n = new std::complex<double>[rho_basis->npw];
-    std::complex<double>* ps_totn = new std::complex<double>[rho_basis->npw];
+    std::complex<double> *n = new std::complex<double>[rho_basis->npw];
+    std::complex<double> *total_n = new std::complex<double>[rho_basis->npw];
+    std::complex<double> *ps_totn = new std::complex<double>[rho_basis->npw];
 
     cal_totn(cell, rho_basis, porter_g, n, total_n, vlocal);
 

@@ -15,11 +15,11 @@ struct CoulombTransformCounts
 // are collective over the PW pool.
 class CoulombOperator
 {
-public:
+  public:
     virtual ~CoulombOperator() {}
     virtual bool has_correction() const = 0;
     virtual CoulombTransformCounts fft_counts() const { return {}; }
-    virtual void apply_potential(const std::vector<double>& charge, std::vector<double>& potential) = 0;
+    virtual void apply_potential(const std::vector<double> &charge, std::vector<double> &potential) = 0;
 };
 } // namespace ModuleSccs
 

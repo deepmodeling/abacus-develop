@@ -1,7 +1,7 @@
-#include "tmp_mocks.h"
+#include "source_cell/unitcell.h"
 #include "source_hamilt/module_hcontainer/hcontainer.h"
 #include "source_hamilt/module_hcontainer/output_hcontainer.h"
-#include "source_cell/unitcell.h"
+#include "tmp_mocks.h"
 #include <complex>
 #include <sstream>
 #include <vector>
@@ -57,10 +57,7 @@ class OutputHContainerTest : public testing::Test
         ucell.iwt2iw[2] = 0;
         ucell.iwt2iw[3] = 1;
     }
-    void TearDown() override
-    {
-        delete[] ucell.atoms;
-    }
+    void TearDown() override { delete[] ucell.atoms; }
 };
 
 TEST_F(OutputHContainerTest, Write)
@@ -102,9 +99,12 @@ TEST_F(OutputHContainerTest, Write)
         // std::cout << "rx = " << rx << " ry = " << ry << " rz = " << rz << std::endl;
         for (int iap = 0; iap < HR.size_atom_pairs(); ++iap)
         {
-            hamilt::AtomPair<double>& tmp_ap = HR.get_atom_pair(iap);
+            hamilt::AtomPair<double> &tmp_ap = HR.get_atom_pair(iap);
             const int r_index = tmp_ap.find_R(rx, ry, rz);
-            if (r_index < 0) continue;
+            if (r_index < 0)
+            {
+                continue;
+            }
             if (rx == 0 && ry == 1 && rz == 1)
             {
                 EXPECT_DOUBLE_EQ(tmp_ap.get_value(r_index, 0, 0), 0);
@@ -186,12 +186,12 @@ TYPED_TEST(OutputHContainerPreservationTest, RepeatedWritesPreserveAllRBlocksAnd
     matrix.insert_pair(hamilt::AtomPair<TypeParam>(0, 0, 1, 0, 0, &para, first.data()));
     matrix.insert_pair(hamilt::AtomPair<TypeParam>(0, 0, -1, 0, 0, &para, second.data()));
     matrix.insert_pair(hamilt::AtomPair<TypeParam>(1, 1, 0, 0, 0, &para, empty.data()));
-    auto* pair = matrix.find_pair(0, 0);
+    auto *pair = matrix.find_pair(0, 0);
     ASSERT_NE(pair, nullptr);
     const auto first_r = pair->get_R_index(0);
     const auto second_r = pair->get_R_index(1);
-    const auto* first_pointer = pair->get_pointer(0);
-    const auto* second_pointer = pair->get_pointer(1);
+    const auto *first_pointer = pair->get_pointer(0);
+    const auto *second_pointer = pair->get_pointer(1);
 
     std::ostringstream once;
     hamilt::Output_HContainer<TypeParam> writer(&matrix, once, 1e-10, 8);
@@ -228,8 +228,7 @@ TYPED_TEST(OutputHContainerPreservationTest, RepeatedWritesPreserveAllRBlocksAnd
     EXPECT_EQ(matrix.size_R_loop(), 1);
     for (int element = 0; element < 4; ++element)
     {
-        EXPECT_EQ(matrix.find_pair(0, 0)->get_pointer(0)[element],
-                  first_before[element] + second_before[element]);
+        EXPECT_EQ(matrix.find_pair(0, 0)->get_pointer(0)[element], first_before[element] + second_before[element]);
     }
     std::ostringstream gamma;
     hamilt::Output_HContainer<TypeParam> gamma_writer(&matrix, gamma, 1e-10, 8);

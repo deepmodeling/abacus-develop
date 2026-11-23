@@ -1,15 +1,15 @@
-#include "tmp_mocks.h"
-#include "gtest/gtest.h"
 #include "source_base/atom_basis_view.h"
 #include "source_base/basis_flattened_indexing.h"
 #include "source_base/element_basis_index.h"
-#include "source_hamilt/module_hcontainer/transfer.h"
 #include "source_hamilt/module_hcontainer/hcontainer.h"
+#include "source_hamilt/module_hcontainer/transfer.h"
+#include "tmp_mocks.h"
+#include "gtest/gtest.h"
 #include <chrono>
 #include <vector>
 #ifdef __MPI
-#include <mpi.h>
 #include "source_hamilt/module_hcontainer/hcontainer_funcs.h"
+#include <mpi.h>
 #endif
 
 // test_size is the number of atoms in the unitcell
@@ -68,12 +68,11 @@ class TransferTest : public ::testing::Test
         paraV->set_atomic_trace(ucell.get_iat2iwt(), test_size, global_row);
     }
 #else
-    void init_parav()
-    {}
+    void init_parav() {}
 #endif
 
     UnitCell ucell;
-    hamilt::HContainer<double>* HR_para = nullptr;
+    hamilt::HContainer<double> *HR_para = nullptr;
     Parallel_Orbitals *paraV;
 
     int dsize;
@@ -85,9 +84,9 @@ TEST_F(TransferTest, serialToPara)
 // get rank of process
 #ifdef __MPI
 
-    hamilt::HContainer<double>* HR_serial = nullptr;
+    hamilt::HContainer<double> *HR_serial = nullptr;
 
-// initialize HR_serial
+    // initialize HR_serial
     std::chrono::high_resolution_clock::time_point start_time = std::chrono::high_resolution_clock::now();
     // if the master process, calculate the value of HR_serial and send to other processes
     if (my_rank == 0)
@@ -96,17 +95,18 @@ TEST_F(TransferTest, serialToPara)
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
-        for(int i = 0; i < HR_serial->size_atom_pairs(); i++)
+        for (int i = 0; i < HR_serial->size_atom_pairs(); i++)
         {
-            hamilt::AtomPair<double>& atom_pair = HR_serial->get_atom_pair(i);
+            hamilt::AtomPair<double> &atom_pair = HR_serial->get_atom_pair(i);
             int atom_i = atom_pair.get_atom_i();
             int atom_j = atom_pair.get_atom_j();
-            //lambda function to calculate value of array: (atom_i*test_size+atom_j+k)*test_nw + l
-            auto value = [&](int k, int l) -> double {return ((double(atom_i*test_nw+k)*test_size+atom_j)*test_nw + l);};
-            double* data = atom_pair.get_pointer(0);
-            for(int k = 0; k < test_nw; k++)
+            // lambda function to calculate value of array: (atom_i*test_size+atom_j+k)*test_nw + l
+            auto value = [&](int k, int l) -> double
+            { return ((double(atom_i * test_nw + k) * test_size + atom_j) * test_nw + l); };
+            double *data = atom_pair.get_pointer(0);
+            for (int k = 0; k < test_nw; k++)
             {
-                for(int l = 0; l < test_nw; l++)
+                for (int l = 0; l < test_nw; l++)
                 {
                     *data = value(k, l);
                     ++data;
@@ -115,30 +115,33 @@ TEST_F(TransferTest, serialToPara)
         }
     }
     std::chrono::high_resolution_clock::time_point end_time = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> elapsed_time0 = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
+    std::chrono::duration<double> elapsed_time0 =
+        std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
     start_time = std::chrono::high_resolution_clock::now();
     hamilt::transferSerial2Parallels(*HR_serial, HR_para, 0);
     end_time = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> elapsed_time1 = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
-    
+    std::chrono::duration<double> elapsed_time1 =
+        std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
+
     start_time = std::chrono::high_resolution_clock::now();
     // check data in HR_para
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
-    for(int i = 0; i < HR_para->size_atom_pairs(); i++)
+    for (int i = 0; i < HR_para->size_atom_pairs(); i++)
     {
-        hamilt::AtomPair<double>& atom_pair = HR_para->get_atom_pair(i);
+        hamilt::AtomPair<double> &atom_pair = HR_para->get_atom_pair(i);
         int atom_i = atom_pair.get_atom_i();
         int atom_j = atom_pair.get_atom_j();
-        //lambda function to calculate value of array: (atom_i*test_size+atom_j+k)*test_nw + l
-        auto value = [&](int k, int l) -> double {return ((double(atom_i*test_nw+k)*test_size+atom_j)*test_nw + l);};
-        double* data = atom_pair.get_pointer(0);
+        // lambda function to calculate value of array: (atom_i*test_size+atom_j+k)*test_nw + l
+        auto value = [&](int k, int l) -> double
+        { return ((double(atom_i * test_nw + k) * test_size + atom_j) * test_nw + l); };
+        double *data = atom_pair.get_pointer(0);
         auto row_indexes = paraV->get_indexes_row(atom_i);
         auto col_indexes = paraV->get_indexes_col(atom_j);
-        for(int k = 0; k < row_indexes.size(); k++)
+        for (int k = 0; k < row_indexes.size(); k++)
         {
-            for(int l = 0; l < col_indexes.size(); l++)
+            for (int l = 0; l < col_indexes.size(); l++)
             {
                 EXPECT_NEAR(*data, value(row_indexes[k], col_indexes[l]), 1e-10);
                 ++data;
@@ -146,13 +149,16 @@ TEST_F(TransferTest, serialToPara)
         }
     }
     end_time = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> elapsed_time2 = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
-    if(my_rank == 0)
+    std::chrono::duration<double> elapsed_time2 =
+        std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
+    if (my_rank == 0)
     {
         delete HR_serial;
     }
 
-    std::cout <<"rank: "<<my_rank<< " HR init time: " << elapsed_time0.count()<<" transfer_s2p time: "<<elapsed_time1.count()<<" check time: "<<elapsed_time2.count()<<" seconds." << std::endl;
+    std::cout << "rank: " << my_rank << " HR init time: " << elapsed_time0.count()
+              << " transfer_s2p time: " << elapsed_time1.count() << " check time: " << elapsed_time2.count()
+              << " seconds." << std::endl;
 #endif
 }
 
@@ -165,8 +171,7 @@ TEST_F(TransferTest, BasisFlattenedLayoutMatchesParallelOrbitals)
     range[0][0].M = 1;
     range[0][1].N = 3;
     range[0][1].M = 3;
-    const ModuleBase::Element_Basis_Index::IndexLNM hierarchy =
-        ModuleBase::Element_Basis_Index::construct_index(range);
+    const ModuleBase::Element_Basis_Index::IndexLNM hierarchy = ModuleBase::Element_Basis_Index::construct_index(range);
     const std::vector<int> atom_types(test_size, 0);
     const BasisFlattenedIndexing basis(hierarchy, atom_types, 1);
 
@@ -203,9 +208,9 @@ TEST_F(TransferTest, BasisFlattenedLayoutMatchesParallelOrbitals)
     EXPECT_EQ(from_basis.get_nbasis(), HR_para->get_nbasis());
     for (int iap = 0; iap < from_basis.size_atom_pairs(); ++iap)
     {
-        const hamilt::AtomPair<double>& basis_pair = from_basis.get_atom_pair(iap);
-        const hamilt::AtomPair<double>* orbital_pair
-            = HR_para->find_pair(basis_pair.get_atom_i(), basis_pair.get_atom_j());
+        const hamilt::AtomPair<double> &basis_pair = from_basis.get_atom_pair(iap);
+        const hamilt::AtomPair<double> *orbital_pair =
+            HR_para->find_pair(basis_pair.get_atom_i(), basis_pair.get_atom_j());
         ASSERT_NE(orbital_pair, nullptr);
         EXPECT_EQ(basis_pair.get_begin_row(), orbital_pair->get_begin_row());
         EXPECT_EQ(basis_pair.get_begin_col(), orbital_pair->get_begin_col());
@@ -230,9 +235,9 @@ TEST_F(TransferTest, BasisFlattenedLayoutMatchesParallelOrbitals)
     EXPECT_EQ(from_sparse.get_nbasis(), HR_para->get_nbasis());
     for (int iap = 0; iap < from_sparse.size_atom_pairs(); ++iap)
     {
-        const hamilt::AtomPair<double>& basis_pair = from_sparse.get_atom_pair(iap);
-        const hamilt::AtomPair<double>* orbital_pair
-            = HR_para->find_pair(basis_pair.get_atom_i(), basis_pair.get_atom_j());
+        const hamilt::AtomPair<double> &basis_pair = from_sparse.get_atom_pair(iap);
+        const hamilt::AtomPair<double> *orbital_pair =
+            HR_para->find_pair(basis_pair.get_atom_i(), basis_pair.get_atom_j());
         ASSERT_NE(orbital_pair, nullptr);
         EXPECT_EQ(basis_pair.get_begin_row(), orbital_pair->get_begin_row());
         EXPECT_EQ(basis_pair.get_begin_col(), orbital_pair->get_begin_col());
@@ -248,26 +253,27 @@ TEST_F(TransferTest, paraToSerial)
     // get rank of process
 #ifdef __MPI
 
-    hamilt::HContainer<double>* HR_serial = nullptr;
+    hamilt::HContainer<double> *HR_serial = nullptr;
 
     std::chrono::high_resolution_clock::time_point start_time = std::chrono::high_resolution_clock::now();
     // initialize HR_para
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
-    for(int i = 0; i < HR_para->size_atom_pairs(); i++)
+    for (int i = 0; i < HR_para->size_atom_pairs(); i++)
     {
-        hamilt::AtomPair<double>& atom_pair = HR_para->get_atom_pair(i);
+        hamilt::AtomPair<double> &atom_pair = HR_para->get_atom_pair(i);
         int atom_i = atom_pair.get_atom_i();
         int atom_j = atom_pair.get_atom_j();
-        //lambda function to calculate value of array: (atom_i*test_size+atom_j+k)*test_nw + l
-        auto value = [&](int k, int l) -> double {return (((atom_i*test_nw+k)*test_size+atom_j)*test_nw + l);};
-        double* data = atom_pair.get_pointer(0);
+        // lambda function to calculate value of array: (atom_i*test_size+atom_j+k)*test_nw + l
+        auto value = [&](int k, int l) -> double
+        { return (((atom_i * test_nw + k) * test_size + atom_j) * test_nw + l); };
+        double *data = atom_pair.get_pointer(0);
         auto row_indexes = paraV->get_indexes_row(atom_i);
         auto col_indexes = paraV->get_indexes_col(atom_j);
-        for(int k = 0; k < row_indexes.size(); k++)
+        for (int k = 0; k < row_indexes.size(); k++)
         {
-            for(int l = 0; l < col_indexes.size(); l++)
+            for (int l = 0; l < col_indexes.size(); l++)
             {
                 *data = value(row_indexes[k], col_indexes[l]);
                 ++data;
@@ -282,32 +288,35 @@ TEST_F(TransferTest, paraToSerial)
         HR_serial = new hamilt::HContainer<double>(ucell);
     }
     std::chrono::high_resolution_clock::time_point end_time = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> elapsed_time0 = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
+    std::chrono::duration<double> elapsed_time0 =
+        std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
     start_time = std::chrono::high_resolution_clock::now();
     hamilt::transferParallels2Serial(*HR_para, HR_serial, 0);
     end_time = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> elapsed_time1 = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
+    std::chrono::duration<double> elapsed_time1 =
+        std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
 
     start_time = std::chrono::high_resolution_clock::now();
     // check data in HR_serial
-    if(my_rank == 0)
+    if (my_rank == 0)
     {
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
-        for(int i = 0; i < HR_serial->size_atom_pairs(); i++)
+        for (int i = 0; i < HR_serial->size_atom_pairs(); i++)
         {
-            hamilt::AtomPair<double>& atom_pair = HR_serial->get_atom_pair(i);
+            hamilt::AtomPair<double> &atom_pair = HR_serial->get_atom_pair(i);
             int atom_i = atom_pair.get_atom_i();
             int atom_j = atom_pair.get_atom_j();
-            //lambda function to calculate value of array: (atom_i*test_size+atom_j+k)*test_nw + l
-            auto value = [&](int k, int l) -> double {return (((atom_i*test_nw+k)*test_size+atom_j)*test_nw + l);};
-            double* data = atom_pair.get_pointer(0);
-            for(int k = 0; k < test_nw; k++)
+            // lambda function to calculate value of array: (atom_i*test_size+atom_j+k)*test_nw + l
+            auto value = [&](int k, int l) -> double
+            { return (((atom_i * test_nw + k) * test_size + atom_j) * test_nw + l); };
+            double *data = atom_pair.get_pointer(0);
+            for (int k = 0; k < test_nw; k++)
             {
-                for(int l = 0; l < test_nw; l++)
+                for (int l = 0; l < test_nw; l++)
                 {
-                    EXPECT_NEAR(*data , value(k, l), 1e-10);
+                    EXPECT_NEAR(*data, value(k, l), 1e-10);
                     ++data;
                 }
             }
@@ -315,38 +324,42 @@ TEST_F(TransferTest, paraToSerial)
         delete HR_serial;
     }
     end_time = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> elapsed_time2 = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
-    std::cout <<"rank: "<<my_rank<< " HR init time: " << elapsed_time0.count()<<" transfer_p2s time: "<<elapsed_time1.count()<<" check time: "<<elapsed_time2.count()<<" seconds." << std::endl;
+    std::chrono::duration<double> elapsed_time2 =
+        std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
+    std::cout << "rank: " << my_rank << " HR init time: " << elapsed_time0.count()
+              << " transfer_p2s time: " << elapsed_time1.count() << " check time: " << elapsed_time2.count()
+              << " seconds." << std::endl;
 
     // now assume the HR_serial is empty and do the same test
     Parallel_Orbitals serialV;
     std::ofstream ofs("test.log");
-    serialV.para_2d().set_serial(test_size*test_nw, test_size*test_nw);
-    serialV.set_atomic_trace(ucell.get_iat2iwt(), test_size, test_size*test_nw);
-    hamilt::HContainer<double>* HR_serial2;
-    if(my_rank == 0)
+    serialV.para_2d().set_serial(test_size * test_nw, test_size * test_nw);
+    serialV.set_atomic_trace(ucell.get_iat2iwt(), test_size, test_size * test_nw);
+    hamilt::HContainer<double> *HR_serial2;
+    if (my_rank == 0)
     {
         HR_serial2 = new hamilt::HContainer<double>(&serialV);
     }
     hamilt::gatherParallels(*HR_para, HR_serial2, 0);
-    if(my_rank == 0)
+    if (my_rank == 0)
     {
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
-        for(int i = 0; i < HR_serial2->size_atom_pairs(); i++)
+        for (int i = 0; i < HR_serial2->size_atom_pairs(); i++)
         {
-            hamilt::AtomPair<double>& atom_pair = HR_serial2->get_atom_pair(i);
+            hamilt::AtomPair<double> &atom_pair = HR_serial2->get_atom_pair(i);
             int atom_i = atom_pair.get_atom_i();
             int atom_j = atom_pair.get_atom_j();
-            //lambda function to calculate value of array: (atom_i*test_size+atom_j+k)*test_nw + l
-            auto value = [&](int k, int l) -> double {return (((atom_i*test_nw+k)*test_size+atom_j)*test_nw + l);};
-            double* data = atom_pair.get_pointer(0);
-            for(int k = 0; k < test_nw; k++)
+            // lambda function to calculate value of array: (atom_i*test_size+atom_j+k)*test_nw + l
+            auto value = [&](int k, int l) -> double
+            { return (((atom_i * test_nw + k) * test_size + atom_j) * test_nw + l); };
+            double *data = atom_pair.get_pointer(0);
+            for (int k = 0; k < test_nw; k++)
             {
-                for(int l = 0; l < test_nw; l++)
+                for (int l = 0; l < test_nw; l++)
                 {
-                    EXPECT_NEAR(*data , value(k, l), 1e-10);
+                    EXPECT_NEAR(*data, value(k, l), 1e-10);
                     ++data;
                 }
             }
@@ -361,24 +374,25 @@ TEST_F(TransferTest, serialAllToParaAll)
 // get rank of process
 #ifdef __MPI
 
-// initialize HR_serial
+    // initialize HR_serial
     std::chrono::high_resolution_clock::time_point start_time = std::chrono::high_resolution_clock::now();
     // for each process, calculate the value of HR_serial and send to other processes
     hamilt::HContainer<double> HR_serial(ucell);
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
-    for(int i = 0; i < HR_serial.size_atom_pairs(); i++)
+    for (int i = 0; i < HR_serial.size_atom_pairs(); i++)
     {
-        hamilt::AtomPair<double>& atom_pair = HR_serial.get_atom_pair(i);
+        hamilt::AtomPair<double> &atom_pair = HR_serial.get_atom_pair(i);
         int atom_i = atom_pair.get_atom_i();
         int atom_j = atom_pair.get_atom_j();
-        //lambda function to calculate value of array: (atom_i*test_size+atom_j+k)*test_nw + l
-        auto value = [&](int k, int l) -> double {return ((double(atom_i*test_nw+k)*test_size+atom_j)*test_nw + l);};
-        double* data = atom_pair.get_pointer(0);
-        for(int k = 0; k < test_nw; k++)
+        // lambda function to calculate value of array: (atom_i*test_size+atom_j+k)*test_nw + l
+        auto value = [&](int k, int l) -> double
+        { return ((double(atom_i * test_nw + k) * test_size + atom_j) * test_nw + l); };
+        double *data = atom_pair.get_pointer(0);
+        for (int k = 0; k < test_nw; k++)
         {
-            for(int l = 0; l < test_nw; l++)
+            for (int l = 0; l < test_nw; l++)
             {
                 *data = value(k, l);
                 ++data;
@@ -386,30 +400,33 @@ TEST_F(TransferTest, serialAllToParaAll)
         }
     }
     std::chrono::high_resolution_clock::time_point end_time = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> elapsed_time0 = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
+    std::chrono::duration<double> elapsed_time0 =
+        std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
     start_time = std::chrono::high_resolution_clock::now();
     hamilt::transferSerials2Parallels(HR_serial, HR_para);
     end_time = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> elapsed_time1 = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
-    
+    std::chrono::duration<double> elapsed_time1 =
+        std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
+
     start_time = std::chrono::high_resolution_clock::now();
     // check data in HR_para
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
-    for(int i = 0; i < HR_para->size_atom_pairs(); i++)
+    for (int i = 0; i < HR_para->size_atom_pairs(); i++)
     {
-        hamilt::AtomPair<double>& atom_pair = HR_para->get_atom_pair(i);
+        hamilt::AtomPair<double> &atom_pair = HR_para->get_atom_pair(i);
         int atom_i = atom_pair.get_atom_i();
         int atom_j = atom_pair.get_atom_j();
-        //lambda function to calculate value of array: (atom_i*test_size+atom_j+k)*test_nw + l
-        auto value = [&](int k, int l) -> double {return ((double(atom_i*test_nw+k)*test_size+atom_j)*test_nw + l)*dsize;};
-        double* data = atom_pair.get_pointer(0);
+        // lambda function to calculate value of array: (atom_i*test_size+atom_j+k)*test_nw + l
+        auto value = [&](int k, int l) -> double
+        { return ((double(atom_i * test_nw + k) * test_size + atom_j) * test_nw + l) * dsize; };
+        double *data = atom_pair.get_pointer(0);
         auto row_indexes = paraV->get_indexes_row(atom_i);
         auto col_indexes = paraV->get_indexes_col(atom_j);
-        for(int k = 0; k < row_indexes.size(); k++)
+        for (int k = 0; k < row_indexes.size(); k++)
         {
-            for(int l = 0; l < col_indexes.size(); l++)
+            for (int l = 0; l < col_indexes.size(); l++)
             {
                 EXPECT_NEAR(*data, value(row_indexes[k], col_indexes[l]), 1e-10);
                 ++data;
@@ -417,9 +434,12 @@ TEST_F(TransferTest, serialAllToParaAll)
         }
     }
     end_time = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> elapsed_time2 = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
+    std::chrono::duration<double> elapsed_time2 =
+        std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
 
-    std::cout <<"rank: "<<my_rank<< " HR init time: " << elapsed_time0.count()<<" transfer_sa2pa time: "<<elapsed_time1.count()<<" check time: "<<elapsed_time2.count()<<" seconds." << std::endl;
+    std::cout << "rank: " << my_rank << " HR init time: " << elapsed_time0.count()
+              << " transfer_sa2pa time: " << elapsed_time1.count() << " check time: " << elapsed_time2.count()
+              << " seconds." << std::endl;
 #endif
 }
 
@@ -433,19 +453,20 @@ TEST_F(TransferTest, paraAllToserialAll)
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
-    for(int i = 0; i < HR_para->size_atom_pairs(); i++)
+    for (int i = 0; i < HR_para->size_atom_pairs(); i++)
     {
-        hamilt::AtomPair<double>& atom_pair = HR_para->get_atom_pair(i);
+        hamilt::AtomPair<double> &atom_pair = HR_para->get_atom_pair(i);
         int atom_i = atom_pair.get_atom_i();
         int atom_j = atom_pair.get_atom_j();
-        //lambda function to calculate value of array: (atom_i*test_size+atom_j+k)*test_nw + l
-        auto value = [&](int k, int l) -> double {return ((double(atom_i*test_nw+k)*test_size+atom_j)*test_nw + l);};
-        double* data = atom_pair.get_pointer(0);
+        // lambda function to calculate value of array: (atom_i*test_size+atom_j+k)*test_nw + l
+        auto value = [&](int k, int l) -> double
+        { return ((double(atom_i * test_nw + k) * test_size + atom_j) * test_nw + l); };
+        double *data = atom_pair.get_pointer(0);
         auto row_indexes = paraV->get_indexes_row(atom_i);
         auto col_indexes = paraV->get_indexes_col(atom_j);
-        for(int k = 0; k < row_indexes.size(); k++)
+        for (int k = 0; k < row_indexes.size(); k++)
         {
-            for(int l = 0; l < col_indexes.size(); l++)
+            for (int l = 0; l < col_indexes.size(); l++)
             {
                 *data = value(row_indexes[k], col_indexes[l]);
                 ++data;
@@ -455,43 +476,49 @@ TEST_F(TransferTest, paraAllToserialAll)
     // prepare memory for HR_serial
     hamilt::HContainer<double> HR_serial(ucell);
     std::chrono::high_resolution_clock::time_point end_time = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> elapsed_time0 = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
-    
+    std::chrono::duration<double> elapsed_time0 =
+        std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
+
     start_time = std::chrono::high_resolution_clock::now();
     hamilt::transferParallels2Serials(*HR_para, &HR_serial);
     end_time = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> elapsed_time1 = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
-    
+    std::chrono::duration<double> elapsed_time1 =
+        std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
+
     start_time = std::chrono::high_resolution_clock::now();
     // check data in HR_serial
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
-    for(int i = 0; i < HR_serial.size_atom_pairs(); i++)
+    for (int i = 0; i < HR_serial.size_atom_pairs(); i++)
     {
-        hamilt::AtomPair<double>& atom_pair = HR_serial.get_atom_pair(i);
+        hamilt::AtomPair<double> &atom_pair = HR_serial.get_atom_pair(i);
         int atom_i = atom_pair.get_atom_i();
         int atom_j = atom_pair.get_atom_j();
-        //lambda function to calculate value of array: (atom_i*test_size+atom_j+k)*test_nw + l
-        auto value = [&](int k, int l) -> double {return ((double(atom_i*test_nw+k)*test_size+atom_j)*test_nw + l);};
-        double* data = atom_pair.get_pointer(0);
-        for(int k = 0; k < test_nw; k++)
+        // lambda function to calculate value of array: (atom_i*test_size+atom_j+k)*test_nw + l
+        auto value = [&](int k, int l) -> double
+        { return ((double(atom_i * test_nw + k) * test_size + atom_j) * test_nw + l); };
+        double *data = atom_pair.get_pointer(0);
+        for (int k = 0; k < test_nw; k++)
         {
-            for(int l = 0; l < test_nw; l++)
+            for (int l = 0; l < test_nw; l++)
             {
-                EXPECT_NEAR(*data , value(k, l), 1e-10);
+                EXPECT_NEAR(*data, value(k, l), 1e-10);
                 ++data;
             }
         }
     }
     end_time = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> elapsed_time2 = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
+    std::chrono::duration<double> elapsed_time2 =
+        std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
 
-    std::cout <<"rank: "<<my_rank<< " HR init time: " << elapsed_time0.count()<<" transfer_pa2sa time: "<<elapsed_time1.count()<<" check time: "<<elapsed_time2.count()<<" seconds." << std::endl;
+    std::cout << "rank: " << my_rank << " HR init time: " << elapsed_time0.count()
+              << " transfer_pa2sa time: " << elapsed_time1.count() << " check time: " << elapsed_time2.count()
+              << " seconds." << std::endl;
 #endif
 }
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
 #ifdef __MPI
     MPI_Init(&argc, &argv);

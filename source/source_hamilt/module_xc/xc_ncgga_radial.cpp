@@ -13,7 +13,7 @@ double NcggaRadialPoint::jacobian(const int row, const int column) const
     return transverse_hessian * identity + (radial_hessian - transverse_hessian) * direction[row] * direction[column];
 }
 
-NcggaRadialPoint make_ncgga_radial_point(const std::array<double, 3>& magnetization, const double eta)
+NcggaRadialPoint make_ncgga_radial_point(const std::array<double, 3> &magnetization, const double eta)
 {
     if (!(eta > 0.0))
     {
@@ -21,8 +21,9 @@ NcggaRadialPoint make_ncgga_radial_point(const std::array<double, 3>& magnetizat
     }
 
     NcggaRadialPoint point;
-    const double magnitude = std::sqrt(magnetization[0] * magnetization[0] + magnetization[1] * magnetization[1]
-                                       + magnetization[2] * magnetization[2]);
+    const double magnitude = std::sqrt(
+        magnetization[0] * magnetization[0] + magnetization[1] * magnetization[1] +
+        magnetization[2] * magnetization[2]);
     if (magnitude == 0.0)
     {
         return point;
@@ -56,10 +57,7 @@ NcggaRadialPoint make_ncgga_radial_point(const std::array<double, 3>& magnetizat
     return point;
 }
 
-double ncgga_lca_radial_eta()
-{
-    return 1.0e-3;
-}
+double ncgga_lca_radial_eta() { return 1.0e-3; }
 
 double NcggaSpinMapPoint::jacobian(const int spin, const int channel) const
 {
@@ -79,7 +77,7 @@ double NcggaSpinMapPoint::jacobian(const int spin, const int channel) const
     return spin_sign * radial.gradient[channel - 1];
 }
 
-NcggaSpinMapPoint make_ncgga_spin_map_point(const double total_density, const NcggaRadialPoint& radial)
+NcggaSpinMapPoint make_ncgga_spin_map_point(const double total_density, const NcggaRadialPoint &radial)
 {
     NcggaSpinMapPoint point;
     point.radial = radial;

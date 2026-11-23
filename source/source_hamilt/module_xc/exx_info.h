@@ -3,8 +3,8 @@
 
 #include "exx_info_global.h"
 #include "exx_info_lip.h"
-#include "exx_info_ri.h"
 #include "exx_info_opt_abfs.h"
+#include "exx_info_ri.h"
 
 struct Exx_Info
 {
@@ -26,6 +26,6 @@ struct Input_para;
 
 /// Initialize an Exx_Info object from input parameters.
 /// Returns true if opt_orb mode is requested (generate_opt_orb).
-bool init_exx_info(Exx_Info& exx_info, const Input_para& inp);
+bool init_exx_info(Exx_Info &exx_info, const Input_para &inp);
 
 #endif

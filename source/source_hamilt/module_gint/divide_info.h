@@ -1,31 +1,35 @@
 #ifndef ABACUS_SOURCE_HAMILT_MODULE_GINT_DIVIDE_INFO_H
 #define ABACUS_SOURCE_HAMILT_MODULE_GINT_DIVIDE_INFO_H
 
-
 #include "biggrid_info.h"
-#include "unitcell_info.h"
 #include "localcell_info.h"
+#include "unitcell_info.h"
 
 namespace ModuleGint
 {
 
 class DivideInfo
 {
-    public:
+  public:
     // constructor
     DivideInfo(
-        int startidx_bx_old, int startidx_by_old, int startidx_bz_old,
-        int nbx_old, int nby_old, int nbz_old,
-        std::shared_ptr<const UnitCellInfo> unitcell_info, bool is_redivided = false);
-    
+        int startidx_bx_old,
+        int startidx_by_old,
+        int startidx_bz_old,
+        int nbx_old,
+        int nby_old,
+        int nbz_old,
+        std::shared_ptr<const UnitCellInfo> unitcell_info,
+        bool is_redivided = false);
+
     // getter functions
     std::shared_ptr<const LocalCellInfo> get_localcell_info() const { return localcell_info_; }
     bool get_is_redivided() const { return is_redivided_; }
-    
-    private:
+
+  private:
     // if the grid is redivided, is_redeiided_ is true
     bool is_redivided_;
-    
+
     // the old start index of the local cell
     int startidx_bx_old_;
     int startidx_by_old_;
@@ -53,6 +57,6 @@ class DivideInfo
     std::shared_ptr<const LocalCellInfo> localcell_info_;
 };
 
-}
+} // namespace ModuleGint
 
 #endif // ABACUS_SOURCE_HAMILT_MODULE_GINT_DIVIDE_INFO_H
