@@ -2,9 +2,10 @@
 
 This file is the entry point for AI agents, automated review tools, and human
 contributors who want the short operational version of the ABACUS development
-rules. Read the complete governance document before making or reviewing changes:
+rules. Read the complete governance documents before making or reviewing changes:
 
 - `docs/developers_guide/agent_governance.md`
+- `docs/developers_guide/cmake_guidelines.md`
 
 ## Required Baseline
 
@@ -102,6 +103,19 @@ rules. Read the complete governance document before making or reviewing changes:
       require a check Autotest cannot express, a PR rationale, and compliance
       with "Integration Test Drivers" in the governance document. Autotest
       helpers are unaffected.
+  24. Follow `docs/developers_guide/cmake_guidelines.md` for all CMake edits:
+      format changed CMake files with `cmake-format` (enforced on PR diffs by
+      CI); do not introduce removed variables/macros (`${math_libs}`,
+      `USE_LIBXC`, `ENABLE_RAPIDJSON`, `ENABLE_LIBCOMM`) or
+      `remove_definitions()`; do not add directory-scoped commands
+      (`add_definitions`, `add_compile_definitions`, `add_compile_options`,
+      `include_directories`, `link_directories`, `link_libraries`) or package
+      discovery (`find_package`, `find_library`) under `source/`; stage
+      unit-test scripts/data with `abacus_copy_test_files()` instead of
+      `install()` or `file(COPY ...)`; and keep `_abacus_feature_definitions`,
+      `abacus_add_target_compile_requirements()`, and
+      `cmake/CollectBuildInfoVars.cmake` in sync when adding options or
+      external dependencies.
 - Use LF line endings for text files. Only `.bat` and `.cmd` files may use CRLF.
 - Keep source file additions deterministic: update the relevant `CMakeLists.txt`
   or explain why the file is generated or included indirectly.

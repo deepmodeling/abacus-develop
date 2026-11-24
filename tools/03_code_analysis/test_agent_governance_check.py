@@ -870,6 +870,181 @@ class AgentGovernanceCheckTest(unittest.TestCase):
 
         self.assert_blocked_by(result, "Unit test directory layout")
 
+    def test_blocks_deprecated_cmake_patterns(self):
+        cases = (
+            ("source/source_base/unittests/CMakeLists.txt", "AddTest(TARGET t LIBS base ${math_libs} SOURCES test_a.cpp)\n"),
+            ("source/source_base/unittests/CMakeLists.txt", "remove_definitions(-D__LIBXC)\n"),
+            ("source/source_base/CMakeLists.txt", "target_compile_definitions(base PRIVATE USE_LIBXC)\n"),
+            ("CMakeLists.txt", "if(ENABLE_RAPIDJSON)\nendif()\n"),
+            ("CMakeLists.txt", "if(ENABLE_LIBCOMM)\nendif()\n"),
+        )
+        for path, content in cases:
+            with self.subTest(path=path, content=content.strip()):
+                self.write(path, content)
+                head = self.commit_change()
+
+                result = self.run_checker("--base", self.base, "--head", head)
+
+                self.assert_blocked_by(result, "CMake deprecated patterns")
+                self.git("reset", "--hard", self.base)
+
+    def test_allows_cmake_comments_messages_and_pyabacus_for_deprecated_patterns(self):
+        self.write(
+            "source/source_base/unittests/CMakeLists.txt",
+            "# Replaced ${math_libs}, USE_LIBXC, and remove_definitions(-DUSE_LIBXC).\n"
+            "abacus_disable_feature_definitions(__LIBXC)\n"
+            "AddTest(TARGET t LIBS base SOURCES test_a.cpp)\n",
+        )
+        self.write(
+            "CMakeLists.txt",
+            'message(FATAL_ERROR "ENABLE_RAPIDJSON and ENABLE_LIBCOMM were removed.")\n'
+            "message(\n"
+            '  WARNING\n'
+            '  "USE_LIBXC was renamed to __LIBXC."\n'
+            ")\n",
+        )
+        self.write(
+            "python/pyabacus/CMakeLists.txt",
+            "target_link_libraries(pyabacus PRIVATE ${math_libs})\n",
+        )
+        head = self.commit_change()
+
+        result = self.run_checker("--base", self.base, "--head", head)
+
+        self.assertNotIn("CMake deprecated patterns", result.stdout)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_blocks_directory_scoped_and_discovery_cmake_commands_under_source(self):
+        for line in (
+            "add_definitions(-DFOO)\n",
+            "add_compile_definitions(FOO)\n",
+            "add_compile_options(-O2)\n",
+            "include_directories(${CMAKE_CURRENT_SOURCE_DIR})\n",
+            "link_directories(/opt/lib)\n",
+            "link_libraries(foo)\n",
+            "find_package(Foo REQUIRED)\n",
+            "find_library(FOO_LIB foo)\n",
+        ):
+            with self.subTest(line=line.strip()):
+                self.write("source/source_base/CMakeLists.txt", line)
+                head = self.commit_change()
+
+                result = self.run_checker("--base", self.base, "--head", head)
+
+                self.assert_blocked_by(result, "CMake directory-scoped commands under source/")
+                self.git("reset", "--hard", self.base)
+
+    def test_allows_target_scoped_commands_under_source_and_find_in_root_and_modules(self):
+        self.write(
+            "source/source_base/CMakeLists.txt",
+            "# Do not call include_directories() or find_library() here.\n"
+            "add_library(demo OBJECT demo.cpp)\n"
+            "target_include_directories(demo PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})\n"
+            "target_compile_definitions(demo PRIVATE DEMO_FLAG)\n"
+            "target_compile_options(demo PRIVATE -Wall)\n",
+        )
+        self.write("CMakeLists.txt", "find_package(Foo REQUIRED)\n")
+        self.write("cmake/modules/FindFoo.cmake", "find_library(FOO_LIB NAMES foo)\n")
+        self.write("cmake/CollectBuildInfoVars.cmake", "set(ABACUS_FOO_SUPPORT yes)\n")
+        head = self.commit_change()
+
+        result = self.run_checker("--base", self.base, "--head", head)
+
+        self.assertNotIn("CMake directory-scoped commands under source/", result.stdout)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_blocks_legacy_test_file_staging_in_unittest_cmake(self):
+        for content in (
+            "install(FILES run.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})\n",
+            "file(COPY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})\n",
+        ):
+            with self.subTest(content=content.strip()):
+                self.write("source/source_md/unittests/CMakeLists.txt", content)
+                head = self.commit_change()
+
+                result = self.run_checker("--base", self.base, "--head", head)
+
+                self.assert_blocked_by(result, "CMake test file preparation")
+                self.git("reset", "--hard", self.base)
+
+    def test_allows_abacus_copy_test_files_and_top_level_source_install(self):
+        self.write(
+            "source/source_md/unittests/CMakeLists.txt",
+            "# Migrated from install() and file(COPY ...)\n"
+            "abacus_copy_test_files(support run.sh)\n",
+        )
+        self.write(
+            "source/CMakeLists.txt",
+            "install(PROGRAMS ${ABACUS_BIN_PATH} TYPE BIN)\n",
+        )
+        head = self.commit_change()
+
+        result = self.run_checker("--base", self.base, "--head", head)
+
+        self.assertNotIn("CMake test file preparation", result.stdout)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_warns_when_new_cmake_option_or_module_omits_build_info_update(self):
+        self.write("CMakeLists.txt", 'option(ENABLE_FOO "Enable Foo" OFF)\n')
+        head = self.commit_change()
+
+        result = self.run_checker("--base", self.base, "--head", head)
+
+        self.assert_warns_with_success(result, "CMake option and dependency sync")
+
+        self.git("reset", "--hard", self.base)
+        self.write(
+            "CMakeLists.txt",
+            'cmake_dependent_option(\n  ENABLE_BAR "Enable Bar" OFF "ENABLE_MPI" OFF)\n',
+        )
+        self.write("cmake/modules/FindBar.cmake", "find_library(BAR_LIB NAMES bar)\n")
+        head = self.commit_change()
+
+        result = self.run_checker("--base", self.base, "--head", head)
+
+        self.assert_warns_with_success(result, "CMake option and dependency sync")
+        self.assertIn("FindBar.cmake", result.stdout)
+
+    def test_no_option_sync_warning_when_collect_build_info_updated(self):
+        self.write("CMakeLists.txt", 'option(ENABLE_FOO "Enable Foo" OFF)\n')
+        self.write("cmake/modules/FindFoo.cmake", "find_library(FOO_LIB NAMES foo)\n")
+        self.write("cmake/CollectBuildInfoVars.cmake", "set(ABACUS_FOO_SUPPORT yes)\n")
+        head = self.commit_change()
+
+        result = self.run_checker("--base", self.base, "--head", head)
+
+        self.assertNotIn("CMake option and dependency sync", result.stdout)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_no_option_sync_warning_when_reordering_existing_options(self):
+        base = self.commit_baseline(
+            {
+                "CMakeLists.txt": (
+                    'option(ENABLE_A "A" OFF)\n'
+                    'option(ENABLE_B "B" OFF)\n'
+                )
+            }
+        )
+        self.write(
+            "CMakeLists.txt",
+            'option(ENABLE_B "B" OFF)\n'
+            'option(ENABLE_A "A" OFF)\n',
+        )
+        head = self.commit_change()
+
+        result = self.run_checker("--base", base, "--head", head)
+
+        self.assertNotIn("CMake option and dependency sync", result.stdout)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_staged_mode_blocks_cmake_governance_violations(self):
+        self.write("source/source_md/unittests/CMakeLists.txt", "include_directories(/tmp)\n")
+        self.git("add", ".")
+
+        result = self.run_checker("--staged")
+
+        self.assert_blocked_by(result, "CMake directory-scoped commands under source/")
+
 
 if __name__ == "__main__":
     unittest.main()

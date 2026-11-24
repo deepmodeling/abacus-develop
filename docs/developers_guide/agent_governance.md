@@ -74,6 +74,15 @@ focused cleanup.
   `test_gpu/`, ...) accept no new files, and a test source modified there must
   be migrated into `unittests/`; deleting files, and editing a legacy
   `CMakeLists.txt`, header, or data file, stays allowed.
+- Follow `docs/developers_guide/cmake_guidelines.md` for CMake edits: format
+  changed CMake files with `cmake-format`; do not reintroduce removed legacy
+  symbols (`${math_libs}`, `USE_LIBXC`, `ENABLE_RAPIDJSON`, `ENABLE_LIBCOMM`)
+  or `remove_definitions()`; keep package discovery (`find_package`,
+  `find_library`) and directory-scoped compile/include/link commands out of
+  `source/`; stage unit-test files with `abacus_copy_test_files()` instead of
+  `install()` or `file(COPY ...)`; and keep `cmake/CollectBuildInfoVars.cmake`
+  and `source/CMakeLists.txt` synchronized when adding options or external
+  dependencies.
 
 AI agents have additional workflow obligations:
 
@@ -101,6 +110,11 @@ decisions.
 | Member variable workflow switch | Key flow state hidden as mutable member state | AI review + human confirmation | AI + human review | high | human confirmation | semantic review | Static matching is unreliable |
 | Timer placement | `timer::start`/`end` wrap a whole function body | AI review | AI + human review | low | warn | semantic review | Mechanical matching is unreliable for scopes; label should name the enclosing function |
 | Module path and build linkage | New source path and `CMakeLists.txt` linkage | phase-one mechanical | CI | medium | block | new source files and build-script diff | Deterministic path/build check only |
+| CMake formatting | Changed CMake files pass `cmake-format` | phase-one mechanical | hook + CI | medium | block | PR-changed `CMakeLists.txt` and `*.cmake` files | Enforced via the diff-scoped `cmake-format` job in `.github/workflows/precommit.yml` |
+| CMake deprecated patterns | No new `${math_libs}`, `USE_LIBXC`, `ENABLE_RAPIDJSON`, `ENABLE_LIBCOMM`, or `remove_definitions()` | phase-one mechanical | hook + CI | high | block | added non-comment lines in main-build CMake files | Excludes standalone `python/pyabacus/`; use `abacus::linalg_libs`, `__LIBXC`, `ENABLE_JSON`, `ENABLE_LIBRI`, and `abacus_disable_feature_definitions()` |
+| CMake directory-scoped commands under `source/` | No new `add_definitions`, `add_compile_definitions`, `add_compile_options`, `include_directories`, `link_directories`, `link_libraries`, `find_package`, or `find_library` under `source/` | phase-one mechanical | hook + CI | high | block | added non-comment lines in `source/` CMake files | Use target-scoped `target_*()` commands, `cmake/CompilerConfiguration.cmake`, `source/CMakeLists.txt` `_abacus_feature_definitions`, and `cmake/modules/Find*.cmake` |
+| CMake test file preparation | Unit-test CMake files use `abacus_copy_test_files()`, not `install()` or `file(COPY ...)` | phase-one mechanical | hook + CI | medium | block | added non-comment lines in unit-test CMake files under `source/` | Configure-time staging keeps tests runnable without `make install` |
+| CMake option and dependency sync | New root `option`/`cmake_dependent_option` or `cmake/modules/` module updates `cmake/CollectBuildInfoVars.cmake` | phase-one mechanical warning + AI review | hook + CI + AI review | medium | warn | root `CMakeLists.txt` diff and new `cmake/modules/*.cmake` files | Reviewers also check `_abacus_feature_definitions` (`__XXX`) and `abacus_add_target_compile_requirements()` in `source/CMakeLists.txt` |
 | Unit test directory layout | New unit tests go in a flat `unittests/`; legacy test directories accept no new files | phase-one mechanical | hook + CI | high | block | added, renamed, copied, and modified paths under `source/` | Added files in legacy test directories block; modified `.c`/`.cc`/`.cpp`/`.cxx`/`.cu` there block; code files in `unittests/` subdirectories block; deletions never block |
 | Unit test file naming | Sources in `unittests/` start with `test_` | phase-one mechanical + AI review | hook + CI + AI review | medium | block | added, renamed, copied, and modified sources directly in `unittests/` | Headers are exempt; reviewers confirm the rest of the name matches the file under test |
 | Module semantic ownership | Best module/submodule placement | AI review + human confirmation | AI + human review | medium | human confirmation | semantic review | Final call belongs to maintainers |

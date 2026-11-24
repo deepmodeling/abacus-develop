@@ -589,6 +589,247 @@ def check_cmake_linkage(findings: List[Finding], statuses: Dict[str, str], chang
             )
 
 
+# CMake governance checks. See AGENTS.md rule 24 and docs/developers_guide/cmake_guidelines.md.
+CMAKE_MATH_LIBS_RE = re.compile(r"\$\{\s*math_libs\s*\}")
+CMAKE_REMOVE_DEFINITIONS_RE = re.compile(r"^\s*remove_definitions\s*\(", re.IGNORECASE)
+CMAKE_DEPRECATED_SYMBOL_PATTERNS = (
+    (re.compile(r"\bUSE_LIBXC\b"), "USE_LIBXC", "Use `__LIBXC` instead of the renamed `USE_LIBXC` macro."),
+    (
+        re.compile(r"\b(?:ENABLE|USE)_RAPIDJSON\b"),
+        "ENABLE_RAPIDJSON/USE_RAPIDJSON",
+        "Use `ENABLE_JSON` (`__JSON`, backed by nlohmann_json) instead of removed RapidJSON options/macros.",
+    ),
+    (
+        re.compile(r"\bENABLE_LIBCOMM\b"),
+        "ENABLE_LIBCOMM",
+        "Use `ENABLE_LIBRI` instead; LibComm is no longer a standalone ABACUS option.",
+    ),
+)
+CMAKE_MESSAGE_CMD_RE = re.compile(r"^\s*message\s*\(", re.IGNORECASE)
+CMAKE_PURE_STRING_LINE_RE = re.compile(r'^\s*"(?:[^"\\]|\\.)*"\s*\)?\s*$')
+CMAKE_SOURCE_FORBIDDEN_CMD_RE = re.compile(
+    r"^\s*(add_definitions|add_compile_definitions|add_compile_options|"
+    r"include_directories|link_directories|link_libraries|find_package|find_library)\s*\(",
+    re.IGNORECASE,
+)
+CMAKE_TEST_LEGACY_STAGING_RE = re.compile(
+    r"^\s*(install\s*\(|file\s*\(\s*COPY\b)",
+    re.IGNORECASE,
+)
+CMAKE_OPTION_DECL_RE = re.compile(
+    r"^\s*(?:option|cmake_dependent_option)\s*\(\s*([A-Za-z_][A-Za-z0-9_]*)?",
+    re.IGNORECASE,
+)
+
+
+def is_cmake_file(path: str) -> bool:
+    p = Path(path)
+    return p.name == "CMakeLists.txt" or p.suffix.lower() == ".cmake"
+
+
+def is_main_cmake_path(path: str) -> bool:
+    """Main ABACUS build tree CMake files (excludes standalone subprojects like python/pyabacus)."""
+    if not is_cmake_file(path):
+        return False
+    return path == "CMakeLists.txt" or path.startswith(("cmake/", "source/", "tests/"))
+
+
+def is_source_cmake_path(path: str) -> bool:
+    return is_cmake_file(path) and path.startswith("source/")
+
+
+def is_source_unittest_cmake_path(path: str) -> bool:
+    if not is_source_cmake_path(path):
+        return False
+    dirs = Path(path).parts[1:-1]
+    return any(d == UNITTEST_DIR or is_legacy_test_dir(d) for d in dirs)
+
+
+def _strip_cmake_comment(line: str) -> str:
+    """Return the portion of a CMake line before any unquoted `#` comment."""
+    in_quotes = False
+    escaped = False
+    for index, ch in enumerate(line):
+        if escaped:
+            escaped = False
+            continue
+        if in_quotes:
+            if ch == "\\":
+                escaped = True
+            elif ch == '"':
+                in_quotes = False
+            continue
+        if ch == '"':
+            in_quotes = True
+        elif ch == "#":
+            return line[:index]
+    return line
+
+
+def check_cmake_deprecated_patterns(findings: List[Finding], added_lines: Iterable[DiffLine]) -> None:
+    """Block newly added removed CMake variables, macros, and `remove_definitions()`."""
+    for line in added_lines:
+        if not is_main_cmake_path(line.path):
+            continue
+        code = _strip_cmake_comment(line.content)
+        if not code.strip():
+            continue
+        if CMAKE_MATH_LIBS_RE.search(code):
+            add_finding(
+                findings,
+                "CMake deprecated patterns",
+                BLOCK,
+                line.path,
+                line.line,
+                "Added CMake line references removed `${math_libs}` variable.",
+                "Remove `${math_libs}`; `AddTest()` links `abacus::linalg_libs` automatically and "
+                "`source/CMakeLists.txt` owns the executable link closure.",
+            )
+        if CMAKE_REMOVE_DEFINITIONS_RE.match(code):
+            add_finding(
+                findings,
+                "CMake deprecated patterns",
+                BLOCK,
+                line.path,
+                line.line,
+                "Added CMake line uses `remove_definitions()`, which does not strip target-scoped feature definitions.",
+                "Use `abacus_disable_feature_definitions(...)` instead (see docs/developers_guide/cmake_guidelines.md).",
+            )
+        if CMAKE_MESSAGE_CMD_RE.match(code) or CMAKE_PURE_STRING_LINE_RE.match(code):
+            continue
+        for pattern, label, suggestion in CMAKE_DEPRECATED_SYMBOL_PATTERNS:
+            if pattern.search(code):
+                add_finding(
+                    findings,
+                    "CMake deprecated patterns",
+                    BLOCK,
+                    line.path,
+                    line.line,
+                    f"Added CMake line references deprecated or removed symbol `{label}`.",
+                    suggestion,
+                )
+
+
+def check_cmake_source_commands(findings: List[Finding], added_lines: Iterable[DiffLine]) -> None:
+    """Block directory-scoped compile/include/link and package-discovery commands under source/."""
+    for line in added_lines:
+        if not is_source_cmake_path(line.path):
+            continue
+        code = _strip_cmake_comment(line.content)
+        match = CMAKE_SOURCE_FORBIDDEN_CMD_RE.match(code)
+        if not match:
+            continue
+        cmd = match.group(1)
+        lowered = cmd.lower()
+        if lowered in {"find_package", "find_library"}:
+            suggestion = (
+                "Move package/library discovery to root `CMakeLists.txt` and `cmake/modules/Find<Pkg>.cmake` "
+                "(exporting an IMPORTED target), or `cmake/Testing.cmake` for test-only packages."
+            )
+        else:
+            suggestion = (
+                "Use target-scoped `target_*()` commands, `cmake/CompilerConfiguration.cmake`, or "
+                "`_abacus_feature_definitions` / `abacus_compile_requirements` in `source/CMakeLists.txt`."
+            )
+        add_finding(
+            findings,
+            "CMake directory-scoped commands under source/",
+            BLOCK,
+            line.path,
+            line.line,
+            f"Added `{cmd}()` under `source/`.",
+            suggestion,
+        )
+
+
+def check_cmake_test_file_preparation(findings: List[Finding], added_lines: Iterable[DiffLine]) -> None:
+    """Block legacy `install()` and `file(COPY ...)` test data staging in unit-test CMake files."""
+    for line in added_lines:
+        if not is_source_unittest_cmake_path(line.path):
+            continue
+        code = _strip_cmake_comment(line.content)
+        match = CMAKE_TEST_LEGACY_STAGING_RE.match(code)
+        if not match:
+            continue
+        cmd = "install()" if match.group(1).lower().startswith("install") else "file(COPY ...)"
+        add_finding(
+            findings,
+            "CMake test file preparation",
+            BLOCK,
+            line.path,
+            line.line,
+            f"Unit-test CMake file uses `{cmd}` to stage test files.",
+            "Use `abacus_copy_test_files(...)` from `cmake/Testing.cmake` so test scripts and data are "
+            "prepared at configure time.",
+        )
+
+
+def check_cmake_option_and_dep_sync(
+    findings: List[Finding],
+    statuses: Dict[str, str],
+    changed: Sequence[str],
+    added_lines: Iterable[DiffLine],
+    removed_lines: Iterable[DiffLine],
+) -> None:
+    """Warn when new root CMake options or cmake/modules/ files omit CollectBuildInfoVars.cmake."""
+    if "cmake/CollectBuildInfoVars.cmake" in changed:
+        return
+    removed_names = set()
+    removed_decls = 0
+    for line in removed_lines:
+        if line.path != "CMakeLists.txt":
+            continue
+        match = CMAKE_OPTION_DECL_RE.match(_strip_cmake_comment(line.content))
+        if match:
+            removed_decls += 1
+            if match.group(1):
+                removed_names.add(match.group(1))
+
+    added_option_lines: List[Tuple[DiffLine, Optional[str]]] = []
+    for line in added_lines:
+        if line.path != "CMakeLists.txt":
+            continue
+        match = CMAKE_OPTION_DECL_RE.match(_strip_cmake_comment(line.content))
+        if match:
+            added_option_lines.append((line, match.group(1)))
+
+    new_option_line: Optional[DiffLine] = None
+    for line, name in added_option_lines:
+        if name and name not in removed_names:
+            new_option_line = line
+            break
+    if new_option_line is None and len(added_option_lines) > removed_decls:
+        new_option_line = added_option_lines[0][0]
+
+    if new_option_line is not None:
+        add_finding(
+            findings,
+            "CMake option and dependency sync",
+            WARN,
+            new_option_line.path,
+            new_option_line.line,
+            "Root `CMakeLists.txt` adds an option without updating `cmake/CollectBuildInfoVars.cmake`.",
+            "Update `cmake/CollectBuildInfoVars.cmake` (and `_abacus_feature_definitions` / "
+            "`abacus_add_target_compile_requirements()` in `source/CMakeLists.txt` for external "
+            "dependencies), or explain why the build summary does not need this option.",
+        )
+    for path, status in statuses.items():
+        if not status.startswith("A"):
+            continue
+        if path.startswith("cmake/modules/") and Path(path).suffix.lower() == ".cmake":
+            add_finding(
+                findings,
+                "CMake option and dependency sync",
+                WARN,
+                path,
+                None,
+                "New CMake discovery module added without updating `cmake/CollectBuildInfoVars.cmake`.",
+                "Record the new dependency in `cmake/CollectBuildInfoVars.cmake` and wire its IMPORTED "
+                "target into `source/CMakeLists.txt` (`_abacus_feature_libs` and "
+                "`abacus_add_target_compile_requirements()`), or explain why no summary update is needed.",
+            )
+
+
 # Unit test layout under source/. See AGENTS.md rule 11.
 UNITTEST_DIR = "unittests"
 LEGACY_TEST_DIR_NAMES = {"test", "tests", "unittest", "unit_test", "unit_tests"}
@@ -949,6 +1190,10 @@ def collect_findings(root: Path, args: argparse.Namespace) -> List[Finding]:
     check_hpp_warnings(findings, statuses, lines)
     check_header_include_warnings(findings, lines)
     check_cmake_linkage(findings, statuses, changed)
+    check_cmake_deprecated_patterns(findings, lines)
+    check_cmake_source_commands(findings, lines)
+    check_cmake_test_file_preparation(findings, lines)
+    check_cmake_option_and_dep_sync(findings, statuses, changed, lines, removed_lines)
     check_unittest_layout(findings, statuses)
     check_pr_metadata(findings, body)
     check_test_evidence_warning(findings, changed, body_text)
