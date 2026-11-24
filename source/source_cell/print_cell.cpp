@@ -316,8 +316,7 @@ std::string mdcell_type_header(const MDCell& cell, const StruMeta& metadata, con
     return output.str();
 }
 
-std::string format_mdcell_atom(const MDCell& cell, const LocalAtom& atom,
-                               const bool include_velocity, const bool include_force)
+std::string format_mdcell_atom(const MDCell& cell, const LocalAtom& atom, const bool include_force)
 {
     std::ostringstream output;
     const double position_scale = cell.lat0() * ModuleBase::BOHR_TO_A;
@@ -325,10 +324,7 @@ std::string format_mdcell_atom(const MDCell& cell, const LocalAtom& atom,
            << atom.cart.x * position_scale << " " << atom.cart.y * position_scale << " "
            << atom.cart.z * position_scale
            << " m " << atom.mbl.x << " " << atom.mbl.y << " " << atom.mbl.z;
-    if (include_velocity)
-    {
-        output << " v " << atom.vel.x << " " << atom.vel.y << " " << atom.vel.z;
-    }
+    output << " v " << atom.vel.x << " " << atom.vel.y << " " << atom.vel.z;
     if (include_force)
     {
         const double force_scale = ModuleBase::Hartree_to_eV * ModuleBase::ANGSTROM_AU;
@@ -391,8 +387,7 @@ StruMeta make_stru_meta(const UnitCell& ucell)
 namespace mdcell
 {
 void print_stru_file(const MDCell& cell, const StruMeta& stru_meta, const std::string& fn,
-                     const std::string& frame_comment, const bool append,
-                     const bool include_velocity, const bool include_force)
+                     const std::string& frame_comment, const bool append, const bool include_force)
 {
     if (stru_meta.species.size() != cell.type_labels().size()
         || stru_meta.species.size() != cell.type_masses().size()
@@ -417,7 +412,7 @@ void print_stru_file(const MDCell& cell, const StruMeta& stru_meta, const std::s
             continue;
         }
         const std::string row = std::to_string(atom.type_index) + "\t"
-                                + format_mdcell_atom(cell, atom, include_velocity, include_force) + "\n";
+                                + format_mdcell_atom(cell, atom, include_force) + "\n";
         if (row.size() > static_cast<std::size_t>(std::numeric_limits<int>::max()))
         {
             invalid_identity = 1;

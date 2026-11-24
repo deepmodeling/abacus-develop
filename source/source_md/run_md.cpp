@@ -122,7 +122,7 @@ void md_line(
     };
 
     auto write_stru_frame = [&](const int current_step, const std::string &filename, const bool append,
-                                const bool include_velocity, const bool include_force)
+                                const bool include_force)
     {
         if (mdcell.has_backing_unitcell())
         {
@@ -132,7 +132,7 @@ void md_line(
         const int stru_step = current_step + 1;
         const std::string frame_comment = "# MD step " + std::to_string(stru_step) + "\n\n";
         mdcell::print_stru_file(mdcell, mdcell.stru_meta(), filename, frame_comment,
-                                append, include_velocity, include_force);
+                                append, include_force);
         log_written_file(filename);
     };
 
@@ -234,18 +234,16 @@ void md_line(
             const std::string filename = ModuleIO::stru_frame_filename(
                 stru_out_dir, param_in.inp.out_app_flag, current_step);
             const bool append = ModuleIO::frame_appends(param_in.inp.out_app_flag, current_step);
-            const bool include_velocity = true;
             const bool include_force = true;
-            write_stru_frame(current_step, filename, append, include_velocity, include_force);
+            write_stru_frame(current_step, filename, append, include_force);
         }
         last_processed_step = current_step;
 
         if (do_restart_step)
         {
             const bool append = false;
-            const bool include_velocity = true;
             const bool include_force = false;
-            write_stru_frame(current_step, restart_stru, append, include_velocity, include_force);
+            write_stru_frame(current_step, restart_stru, append, include_force);
             mdrun->write_restart(param_in.globalv.global_out_dir);
             const std::string restart_metadata = param_in.globalv.global_out_dir + "Restart_md.txt";
             log_written_file(restart_metadata);
@@ -261,9 +259,8 @@ void md_line(
         ModuleBase::ensure_directory(stru_out_dir);
         const std::string filename = stru_out_dir + "STRU_FINAL";
         const bool append = false;
-        const bool include_velocity = true;
         const bool include_force = true;
-        write_stru_frame(last_processed_step, filename, append, include_velocity, include_force);
+        write_stru_frame(last_processed_step, filename, append, include_force);
     }
 
     /// flush the COLVAR and other PLUMED output files

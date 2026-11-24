@@ -351,7 +351,7 @@ TEST(MDCellReaderTest, RestartStruPreservesAtomRecordsAcrossRanks)
     StruMeta metadata;
     metadata.species.resize(2);
     const std::string output_file = "distributed_mdcell_restart.STRU";
-    mdcell::print_stru_file(mdcell, metadata, output_file, "", false, true, false);
+    mdcell::print_stru_file(mdcell, metadata, output_file, "", false, false);
 
     DomainDecomposition reader_decomp;
     MDCell round_trip = MDCellReader::read_stru(output_file,
@@ -486,16 +486,13 @@ TEST(MDCellReaderTest, STRUAppendWithFrameComment)
     StruMeta metadata;
     metadata.species.resize(1);
     const std::string output_file = testing::TempDir() + "mdcell_append_test.STRU";
-    const std::string ordinary_file = testing::TempDir() + "mdcell_ordinary_test.STRU";
 
     // First frame: append=false, frame comment set.
     mdcell::print_stru_file(mdcell, metadata, output_file,
-                            "# MD step 1\n\n", /*append=*/false, /*include_velocity=*/true, /*include_force=*/false);
+                            "# MD step 1\n\n", /*append=*/false, /*include_force=*/false);
     // Second frame: append=true with a different comment.
     mdcell::print_stru_file(mdcell, metadata, output_file,
-                            "# MD step 2\n\n", /*append=*/true, /*include_velocity=*/true, /*include_force=*/false);
-    mdcell::print_stru_file(mdcell, metadata, ordinary_file,
-                            "# MD step 2\n\n", /*append=*/false, /*include_velocity=*/false, /*include_force=*/false);
+                            "# MD step 2\n\n", /*append=*/true, /*include_force=*/false);
 
     if (rank == 0)
     {
@@ -517,13 +514,7 @@ TEST(MDCellReaderTest, STRUAppendWithFrameComment)
         EXPECT_EQ(occurrences, 2);
         EXPECT_THAT(str, testing::HasSubstr("Cartesian_angstrom"));
         EXPECT_THAT(str, testing::HasSubstr(" v "));
-        std::ifstream ordinary_input(ordinary_file.c_str());
-        const std::string ordinary((std::istreambuf_iterator<char>(ordinary_input)),
-                                   std::istreambuf_iterator<char>());
-        EXPECT_THAT(ordinary, testing::HasSubstr("Cartesian_angstrom"));
-        EXPECT_THAT(ordinary, testing::Not(testing::HasSubstr(" v ")));
         std::remove(output_file.c_str());
-        std::remove(ordinary_file.c_str());
     }
 }
 
@@ -575,9 +566,9 @@ TEST(MDCellReaderTest, STRUFreshRunTruncatesPreviousFrames)
 
     // Previous run: frames 1 and 2 accumulate.
     mdcell::print_stru_file(mdcell, metadata, output_file,
-                            "# MD step 1\n\n", /*append=*/false, /*include_velocity=*/true, /*include_force=*/false);
+                            "# MD step 1\n\n", /*append=*/false, /*include_force=*/false);
     mdcell::print_stru_file(mdcell, metadata, output_file,
-                            "# MD step 2\n\n", /*append=*/true, /*include_velocity=*/true, /*include_force=*/false);
+                            "# MD step 2\n\n", /*append=*/true, /*include_force=*/false);
 
     // The extraction runs on rank zero only; broadcast its result so every
     // rank takes the same (collective-safe) return decision. Later
@@ -602,7 +593,7 @@ TEST(MDCellReaderTest, STRUFreshRunTruncatesPreviousFrames)
     // Fresh run: the first frame truncates the fixed-name file (append=false)
     // and starts numbering from step 1 again.
     mdcell::print_stru_file(mdcell, metadata, output_file,
-                            "# MD step 1\n\n", /*append=*/false, /*include_velocity=*/true, /*include_force=*/false);
+                            "# MD step 1\n\n", /*append=*/false, /*include_force=*/false);
 
     if (rank == 0)
     {
@@ -662,7 +653,7 @@ TEST(MDCellReaderTest, STRUAtomOrderStaysStableAcrossOwnerChanges)
                                          0.0, world);
         cell.owned_atoms()[0].force = force;
         const bool append = frame != 0;
-        mdcell::print_stru_file(cell, metadata, filename, "", append, true, true);
+        mdcell::print_stru_file(cell, metadata, filename, "", append, true);
     }
 
     if (world.rank() == 0)
