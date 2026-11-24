@@ -245,10 +245,6 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
         this->pw_wfc->initparameters(false, PARAM.inp.ecutwfc, this->kv.get_nks(), this->kv.kvec_d.data());
 
         this->pw_wfc->collect_local_pw(PARAM.inp.erf_ecut, PARAM.inp.erf_height, PARAM.inp.erf_sigma);
-        for (int ik = 0; ik < this->pw_wfc->nks; ++ik)
-        {
-            this->kv.ngk[ik] = this->pw_wfc->npwk[ik];
-        }
 
         this->p_psi_init->prepare_init(PARAM.inp.pw_seed);
     }
