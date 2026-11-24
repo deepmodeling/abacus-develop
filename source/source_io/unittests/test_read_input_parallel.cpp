@@ -854,28 +854,3 @@ TEST_F(InputParaTest, OpticalGaugeDefaultsToCommutatorForGroundStateExactExchang
         EXPECT_EQ(parameter.inp.abs_gauge, gauge);
     }
 }
-
-TEST_F(InputParaTest, LrEnergyPrecision)
-{
-    ModuleIO::ReadInput reader(0);
-    const auto& list = reader.get_input_lists();
-    const std::map<std::string, ModuleIO::Input_Item> items(list.begin(), list.end());
-    Parameter parameter;
-    EXPECT_EQ(parameter.inp.lr_energy_precision, 8);
-    EXPECT_EQ(parameter.inp.out_band[0], 0);
-    EXPECT_FALSE(parameter.inp.out_wfc_lr);
-    auto item = items.at("lr_energy_precision");
-    for (const int digits : {0, 1, 8, 17})
-    {
-        item.str_values = {std::to_string(digits)};
-        item.read_value(item, parameter);
-        EXPECT_EQ(parameter.inp.lr_energy_precision, digits);
-        EXPECT_NO_THROW(item.check_value(item, parameter));
-    }
-    for (const int digits : {-1, 18})
-    {
-        item.str_values = {std::to_string(digits)};
-        item.read_value(item, parameter);
-        EXPECT_EXIT(item.check_value(item, parameter), testing::ExitedWithCode(1), "");
-    }
-}

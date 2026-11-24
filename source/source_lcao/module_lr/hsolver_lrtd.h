@@ -26,8 +26,7 @@ namespace HSolver
             const std::string method,
             const Real<T>& diag_ethr, ///< threshold for diagonalization
             const std::vector<Real<T>>& precondition,
-            const bool hermitian,
-            const int energy_precision);
+            const bool hermitian);
 }
 }
 #endif

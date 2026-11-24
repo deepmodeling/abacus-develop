@@ -9,6 +9,8 @@
 #include "source_lcao/module_rt/velocity_op.h"
 #include "source_lcao/module_lr/utils/spectrum_mo.h"
 
+#include <iosfwd>
+
 namespace LR
 {
     template<typename T>
@@ -49,7 +51,8 @@ namespace LR
             this->oscillator_strength();
         }
         /// @brief calculate the optical absorption spectrum with $Im[1/[(w+i\eta)^2-\Omega_S^2]]$
-        void optical_absorption_method1(const std::vector<double>& freq, const double eta);
+        void optical_absorption_method1(const std::vector<double>& freq, const double eta,
+                                        const int ionic_step, std::ofstream& running_log);
         /// @brief calculate the optical absorption spectrum with lorentzian delta function
         void optical_absorption_method2(const std::vector<double>& freq, const double eta);
         /// @brief print out the transition dipole moment and the main contributions to the transition amplitude

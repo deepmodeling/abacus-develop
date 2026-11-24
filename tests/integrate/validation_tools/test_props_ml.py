@@ -9,7 +9,9 @@ import unittest
 from check_lr_absorption import HEADER, SPECTRUM_POINTS
 
 
-SPECTRUM = HEADER + '\n' + '3.00 413.28 2.5\n' * SPECTRUM_POINTS
+REFERENCE = (f'# Ionic_Step 1\n# {SPECTRUM_POINTS} # number of points\n'
+             + HEADER + '\n' + '3.00 413.28 2.5\n' * SPECTRUM_POINTS)
+SPECTRUM = '# ABACUS version: test\n# Written at 2026-01-01 00:00:00\n' + REFERENCE
 
 
 class LREnergyCollectorTest(unittest.TestCase):
@@ -62,8 +64,17 @@ Forces (-gradients) of each excited state:
         self.assertEqual(self.collect(log, analysis), 'excitationenergyref1 1.531730\n')
 
     def test_absorption_accepts_complete_finite_table(self):
-        result = self.collect('', reference=SPECTRUM, spectrum=SPECTRUM)
+        result = self.collect('', reference=REFERENCE, spectrum=SPECTRUM)
         self.assertEqual(result, 'CompareLRAbsorption_pass 0\n')
+
+    def test_absorption_checks_provenance_step_and_point_count(self):
+        no_timestamp = SPECTRUM.replace('# Written at 2026-01-01 00:00:00\n', '')
+        wrong_step = SPECTRUM.replace('Ionic_Step 1', 'Ionic_Step 0')
+        wrong_count = SPECTRUM.replace('# 100 # number of points', '# 99 # number of points')
+        for spectrum in (REFERENCE, no_timestamp, wrong_step, wrong_count):
+            with self.subTest(metadata=spectrum.splitlines()[:5]):
+                result = self.collect('', reference=REFERENCE, spectrum=spectrum)
+                self.assertEqual(result, 'CompareLRAbsorption_pass 1\n')
 
     def test_absorption_rejects_empty_and_incomplete_table(self):
         truncated = '\n'.join(SPECTRUM.splitlines()[:-1]) + '\n'
@@ -95,7 +106,7 @@ Forces (-gradients) of each excited state:
         changed_frequency = SPECTRUM.replace('3.00', '3.0002', 1)
         changed_wavelength = SPECTRUM.replace('413.28', '413.2802', 1)
         for spectrum in (changed_frequency, changed_wavelength):
-            with self.subTest(spectrum_row=spectrum.splitlines()[1]):
+            with self.subTest(spectrum_row=spectrum.splitlines()[5]):
                 result = self.collect('', reference=SPECTRUM, spectrum=spectrum)
                 self.assertEqual(result, 'CompareLRAbsorption_pass 1\n')
 
@@ -103,7 +114,7 @@ Forces (-gradients) of each excited state:
         wrong_columns = SPECTRUM.replace('3.00 413.28 2.5', '3.00 413.28', 1)
         changed = SPECTRUM.replace('3.00 413.28 2.5', '3.00 413.28 2.6', 1)
         for spectrum in (wrong_columns, changed):
-            with self.subTest(spectrum_row=spectrum.splitlines()[1]):
+            with self.subTest(spectrum_row=spectrum.splitlines()[5]):
                 result = self.collect('', reference=SPECTRUM, spectrum=spectrum)
                 self.assertEqual(result, 'CompareLRAbsorption_pass 1\n')
 

@@ -3,6 +3,9 @@
 #include "source_base/global_variable.h"
 #include "source_lcao/module_lr/dm_trans/dm_trans.h"
 #include "source_base/parallel_reduce.h"
+#include "source_base/tool_quit.h"
+#include "source_io/module_output/provenance_header.h"
+#include "source_io/module_output/write_notice.h"
 #include "source_lcao/module_lr/utils/lr_util.h"
 #include "source_lcao/module_lr/utils/lr_util_hcontainer.h"
 #include "source_lcao/module_lr/utils/lr_util_print.h"
@@ -176,7 +179,8 @@ void LR::LR_Spectrum<T>::oscillator_strength()
 }
 
 template<typename T>
-void LR::LR_Spectrum<T>::optical_absorption_method1(const std::vector<double>& freq, const double eta)
+void LR::LR_Spectrum<T>::optical_absorption_method1(const std::vector<double>& freq, const double eta,
+                                                    const int ionic_step, std::ofstream& running_log)
 {
     // ============test dipole================
     // this->cal_transition_dipoles_length();
@@ -194,9 +198,17 @@ void LR::LR_Spectrum<T>::optical_absorption_method1(const std::vector<double>& f
     // = -8*pi*Omega_S/V * mean_squared_dipole * Im[1/[(w+i\eta)^2-\Omega_S^2]]
     // = -4*pi/V * oscilator_strength * Im[1/[(w+i\eta)^2-\Omega_S^2]]
     std::vector<double>& osc = this->oscillator_strength_;
-    std::ofstream ofs(this->out_dir + "absorption.dat");
-
-    ofs << "Frequency (eV) | wave length(nm) | Absorption (a.u.)" << std::endl;
+    const std::string filename = this->out_dir + "absorption.dat";
+    std::ofstream ofs(filename);
+    if (!ofs)
+    {
+        const std::string message = "Cannot write " + filename;
+        ModuleBase::WARNING_QUIT("optical_absorption_method1", message);
+    }
+    const std::string timestamp = ModuleIO::local_timestamp();
+    ofs << ModuleIO::prov_step(ionic_step, timestamp);
+    ofs << "# " << freq.size() << " # number of points\n";
+    ofs << "# Frequency (eV) | wave length(nm) | Absorption (a.u.)\n";
 
     double FourPI_div_c = ModuleBase::FOUR_PI / 137.036;
     double fac = 4 * M_PI / ucell.omega * ModuleBase::e2 / this->nk;   // e2 for Ry to Hartree in the denominator
@@ -210,6 +222,7 @@ void LR::LR_Spectrum<T>::optical_absorption_method1(const std::vector<double>& f
         ofs << freq[f] * ModuleBase::Ry_to_eV << '\t' << 91.126664 / freq[f] << '\t' << std::abs(abs) << '\n';
     }
     ofs.close();
+    ModuleIO::write_notice(running_log, "LR absorption spectrum", filename);
 }
 
 template<typename T>

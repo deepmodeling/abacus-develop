@@ -403,6 +403,7 @@ void ESolver_BSE<T, TR>::after_all_runners(BaseCell &basecell)
     }
     if (this->inp_->lr_solver == "spectrum" || this->inp_->lr_solver == "elpa")
     {
+        const int legacy_energy_precision = 0;
         const std::string gauge = LR_Util::tolower(this->inp_->abs_gauge);
         if (gauge == "none")
         {
@@ -412,7 +413,7 @@ void ESolver_BSE<T, TR>::after_all_runners(BaseCell &basecell)
                 {
                     const double *const energies = &this->tda_ene[is * this->nstates];
                     const std::string channel = this->inp_->bse_spin_types[is] + "_tda";
-                    LR_Util::print_excitation_energies(this->ofs_running_, energies, this->nstates, channel, 0);
+                    LR_Util::print_excitation_energies(this->ofs_running_, energies, this->nstates, channel, legacy_energy_precision);
                 }
             }
             if (this->inp_->bse_tda == "both" || this->inp_->bse_tda == "full")
@@ -421,7 +422,7 @@ void ESolver_BSE<T, TR>::after_all_runners(BaseCell &basecell)
                 {
                     const double *const energies = &this->full_ene[is * this->nstates];
                     const std::string channel = this->inp_->bse_spin_types[is] + "_full";
-                    LR_Util::print_excitation_energies(this->ofs_running_, energies, this->nstates, channel, 0);
+                    LR_Util::print_excitation_energies(this->ofs_running_, energies, this->nstates, channel, legacy_energy_precision);
                 }
             }
         }
@@ -451,11 +452,11 @@ void ESolver_BSE<T, TR>::after_all_runners(BaseCell &basecell)
                     }
                     spectrum.cal_spectrum();
                     const std::string channel = this->inp_->bse_spin_types[is] + "_tda";
-                    spectrum.transition_analysis(channel, 0);
+                    spectrum.transition_analysis(channel, legacy_energy_precision);
                     if (this->inp_->bse_spin_types[is] != "triplet")        // triplets has no transition dipole and no contribution to the spectrum
                     {
                         const std::string dipole_filename = output_dir + "trans_dipole_" + channel + ".dat";
-                        spectrum.write_transition_dipole(dipole_filename, 0);
+                        spectrum.write_transition_dipole(dipole_filename, legacy_energy_precision);
                         // ============================== for test ==============================
                         if (LR_Util::tolower(this->inp_->abs_gauge) == "velocity")
                         { //// TEST the formula v/omega rather than v/(e_a-e_i)
@@ -485,11 +486,11 @@ void ESolver_BSE<T, TR>::after_all_runners(BaseCell &basecell)
                     spectrum.set_full(true);
                     spectrum.cal_spectrum();
                     const std::string channel = this->inp_->bse_spin_types[is] + "_full";
-                    spectrum.transition_analysis(channel, 0);
+                    spectrum.transition_analysis(channel, legacy_energy_precision);
                     if (this->inp_->bse_spin_types[is] != "triplet")        // triplets has no transition dipole and no contribution to the spectrum
                     {
                         const std::string dipole_filename = output_dir + "trans_dipole_" + channel + ".dat";
-                        spectrum.write_transition_dipole(dipole_filename, 0);
+                        spectrum.write_transition_dipole(dipole_filename, legacy_energy_precision);
                     }
                 }
             }

@@ -38,6 +38,7 @@ void ModuleESolver::ESolver_LR<T, TR>::runner(BaseCell &basecell, const int iste
     basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
     UnitCell &ucell = static_cast<UnitCell &>(basecell);
 
+    this->last_ionic_step_ = istep + 1;
     ModuleBase::TITLE("ESolver_LR", "runner");
     ModuleBase::timer::start("ESolver_LR", "runner");
 
@@ -91,14 +92,13 @@ void ModuleESolver::ESolver_LR<T, TR>::runner(BaseCell &basecell, const int iste
     }
     else if (this->inp_->lr_solver != "spectrum")
     {
-        const int energy_precision = this->inp_->lr_energy_precision;
-        auto write_states = [this, &efile_out, &vfile_out, energy_precision](
+        auto write_states = [this, &efile_out, &vfile_out](
             const std::string& label, const Real<T>* e, const T* v, const int dim, const int nst)
         {
             if (this->my_rank_ == 0)
             {
                 const std::string energy_file = efile_out(label);
-                if (!LR_Util::write_excitation_energy_file(energy_file, e, nst, energy_precision))
+                if (!LR_Util::write_excitation_energy_file(energy_file, e, nst))
                 {
                     ModuleBase::WARNING_QUIT("ESolver_LR", "Failed to write " + energy_file);
                 }
@@ -137,7 +137,7 @@ void ModuleESolver::ESolver_LR<T, TR>::runner(BaseCell &basecell, const int iste
                 this->pot, this->kv, this->paraX_, this->paraC_, this->paraMat_);
             LR::HSolver::solve(
                 hulr, this->X[0].template data<T>(), nloc_per_state, nstates, this->nk, this->nocc, this->nvirt,
-                this->paraX_, this->pelec->ekb.c, this->inp_->lr_solver, this->inp_->lr_thr, precondition, true, energy_precision);
+                this->paraX_, this->pelec->ekb.c, this->inp_->lr_solver, this->inp_->lr_thr, precondition, true);
             if (this->inp_->out_wfc_lr)
             {
                 write_states("openshell", this->pelec->ekb.c, this->X[0].template data<T>(), nloc_per_state, nstates);
@@ -167,7 +167,7 @@ void ModuleESolver::ESolver_LR<T, TR>::runner(BaseCell &basecell, const int iste
                 LR::HSolver::solve(
                     hlr, this->X[is].template data<T>(), nloc_per_state, nstates, this->nk, this->nocc, this->nvirt,
                     this->paraX_, this->pelec->ekb.c + is * nstates, this->inp_->lr_solver, this->inp_->lr_thr,
-                    precondition, true, energy_precision);
+                    precondition, true);
                 if (this->inp_->out_wfc_lr)
                 {
                     write_states(
@@ -355,7 +355,7 @@ void ModuleESolver::ESolver_LR<T, TR>::after_all_runners(BaseCell &basecell)
             freq[i] = 91.126664 / (lambda_min + 0.01 * static_cast<double>(i + 1) * lambda_diff);
         }
     }
-    const int energy_precision = this->inp_->lr_energy_precision;
+    const int energy_precision = LR_Util::lr_excitation_energy_digits;
     for (int is = 0; is < this->X.size(); ++is)
     {
         if (!calculate_spectrum)
@@ -379,7 +379,8 @@ void ModuleESolver::ESolver_LR<T, TR>::after_all_runners(BaseCell &basecell)
             spectrum.transition_analysis(channel, energy_precision);
             if (spin_types[is] != "triplet")        // triplets has no transition dipole and no contribution to the spectrum
             {
-                spectrum.optical_absorption_method1(freq, this->inp_->abs_broadening);
+                spectrum.optical_absorption_method1(
+                    freq, this->inp_->abs_broadening, this->last_ionic_step_, this->ofs_running_);
                 const std::string dipole_filename = this->out_dir + "trans_dipole_" + channel + ".dat";
                 spectrum.write_transition_dipole(dipole_filename, energy_precision);
                 // =============================================== for test ====================================================

@@ -2,9 +2,7 @@ H2 with two k points, HSE orbitals, nspin=1, and an RPA response kernel.
 Both LCAO bands are included. The default optical velocity includes
 the ground-state Fock commutator, checked at all 100 spectrum points.
 
-The 08_RI_lr_absorption_csr and 08_RI_lr_absorption_csr_spin2 tests
-run this fixture with one and two spin channels. They export density,
-orbitals and text H(R)/S(R) in scratch directories, compare the in-memory
-and standalone spectra, check the closed-shell spectrum against the
-same reference, and evaluate direct velocity on the standalone inputs.
-The two-spin test checks the read of both CSR spin blocks.
+The 08_RI_lr_absorption_workflow test runs this fixture with one and two
+spin channels. It compares the text absorption.dat tables produced using
+H(R)/S(R) in memory or read from CSR, and evaluates direct velocity on
+the same standalone inputs. The two-spin run checks both CSR H(R) inputs.

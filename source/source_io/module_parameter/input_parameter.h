@@ -413,7 +413,6 @@ struct Input_para
     std::string xc_kernel = "LDA";              ///< exchange correlation (XC) kernel for LR-TDDFT
     std::string lr_solver = "dav";              ///< the eigensolver for LR-TDDFT
     double lr_thr = 1e-2;                       ///< convergence threshold of the LR-TDDFT eigensolver
-    int lr_energy_precision = 8;                 ///< significant digits in LR excitation-energy output
     bool out_wfc_lr = false;                    ///< whether to output the eigenvectors (excitation amplitudes) in the particle-hole basis
     bool lr_unrestricted = false;               ///< whether to use the unrestricted construction for LR-TDDFT
     std::vector<double> abs_wavelen_range = {}; ///< the range of wavelength(nm) to output the absorption spectrum

@@ -109,13 +109,9 @@ Place `hrs1_nao.csr` and `sr_nao.csr` in the LR `read_file_dir` alongside the ma
 
 For local and semilocal functionals without exact exchange, use `abs_gauge velocity`. Its direct momentum and nonlocal pseudopotential integrals avoid the additional finite-AO projection used to form the full commutator.
 
-For finite differences of LR-TDDFT excitation energies, set
-[`lr_energy_precision 17`](../input_files/input-main.md#lr_energy_precision).
-The number refers to significant digits in the excitation-energy output.
-Set `abs_gauge none` to report energies without evaluating optical matrix
-elements. The precision setting works independently of `out_band` and
-`out_wfc_lr`. The default is eight significant digits. Set
-`lr_energy_precision 0` to use the legacy output formats.
+LR-TDDFT reports excitation energies with 17 significant digits. Use
+`abs_gauge none` to report energies without evaluating optical matrix
+elements. The absorption spectrum is a text table in `absorption.dat`.
 
 ### Native Binary CSR Format
 

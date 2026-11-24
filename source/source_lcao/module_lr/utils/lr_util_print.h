@@ -4,6 +4,7 @@
 #include <ATen/tensor.h>
 #include "source_base/constants.h"
 #include <iomanip>
+#include <limits>
 #include <ostream>
 #include "source_psi/psi.h"
 #ifdef __EXX
@@ -11,6 +12,8 @@
 #endif
 namespace LR_Util
 {
+    constexpr int lr_excitation_energy_digits = std::numeric_limits<double>::max_digits10;
+
     /// Report selected excitation energies without evaluating optical matrix elements.
     inline void print_excitation_energies(std::ostream& log, const double* energies,
                                          const int nstates, const std::string& channel,
@@ -89,14 +92,10 @@ namespace LR_Util
         return res;
     }
     inline bool write_excitation_energy_file(const std::string& file, const double* energies,
-                                             const int nstates, const int energy_precision)
+                                             const int nstates)
     {
-        if (energy_precision == 0)
-        {
-            return write_value(file, 8, energies, nstates) == nstates;
-        }
         std::ofstream ofs(file);
-        const int decimals = energy_precision - 1;
+        const int decimals = lr_excitation_energy_digits - 1;
         ofs << std::scientific << std::setprecision(decimals);
         for (int state = 0; state < nstates; ++state)
         {

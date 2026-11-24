@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compare HSE LR spectra from in-memory and exported optical matrices."""
+"""Compare text HSE LR absorption spectra using in-memory and exported H(R)/S(R)."""
 import argparse
 import os
 from pathlib import Path
@@ -25,12 +25,12 @@ def run_case(directory, fixture, launch, parameters):
     return directory / "OUT.autotest"
 
 
-def compare_workflows(args, root):
+def compare_workflow(args, root, nspin):
     fixture = args.case.resolve()
     orbitals = fixture.parent.parent / "PP_ORB"
     parameters = dict(line.split(maxsplit=1) for line in (fixture / "INPUT").read_text().splitlines()
                       if len(line.split(maxsplit=1)) == 2)
-    parameters.update(pseudo_dir=orbitals, orbital_dir=orbitals, nspin=args.nspin)
+    parameters.update(pseudo_dir=orbitals, orbital_dir=orbitals, nspin=nspin)
     launch = [args.mpiexec, args.mpi_np_flag, "4", *args.mpi_preflag,
               str(args.abacus.resolve()), *args.mpi_postflag]
 
@@ -45,7 +45,7 @@ def compare_workflows(args, root):
     log = (csr_out / "running_nscf.log").read_text()
     # In a closed-shell spin-two case the two blocks can be equal. Verify that
     # standalone LR actually obtains both blocks from their separate CSR files.
-    for spin in range(1, args.nspin + 1):
+    for spin in range(1, nspin + 1):
         matrix_file = ks_out / f"hrs{spin}_nao.csr"
         if f"Reading optical matrix from {matrix_file}" not in log:
             raise ValueError(f"Standalone LR did not read {matrix_file}")
@@ -53,15 +53,15 @@ def compare_workflows(args, root):
 
     direct_inputs = dict(consumer, abs_gauge="velocity")
     direct_out = run_case(root / "direct", fixture, launch, direct_inputs)
-    commutator = read_spectrum(csr_out / "absorption.dat")
-    direct = read_spectrum(direct_out / "absorption.dat")
+    commutator = read_spectrum(csr_out / "absorption.dat", require_provenance=True)
+    direct = read_spectrum(direct_out / "absorption.dat", require_provenance=True)
     if any(full[:2] != bare[:2] for full, bare in zip(commutator, direct)):
         raise ValueError("The commutator and direct velocity spectra use different grids.")
     peak = max(row[2] for row in commutator)
     difference = max(abs(full[2] - bare[2]) for full, bare in zip(commutator, direct))
     if peak <= 0 or difference <= 0.05 * peak:
         raise ValueError("The HSE commutator spectrum must differ from direct velocity by over 5% of peak height.")
-    print(f"nspin={args.nspin}: in-memory and CSR spectra agree. "
+    print(f"nspin={nspin}: spectra from in-memory and CSR matrix inputs agree. "
           f"Direct velocity differs by {difference / peak:.1%} of peak height.")
 
 
@@ -69,7 +69,6 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--abacus", type=Path, required=True)
     parser.add_argument("--case", type=Path, required=True)
-    parser.add_argument("--nspin", type=int, choices=(1, 2), default=1)
     parser.add_argument("--mpiexec", required=True)
     parser.add_argument("--mpi-np-flag", required=True)
     parser.add_argument("--mpi-preflag", action="append", default=[])
@@ -77,7 +76,10 @@ def main():
     args = parser.parse_args()
     try:
         with tempfile.TemporaryDirectory(prefix="abacus-lr-absorption-") as directory:
-            compare_workflows(args, Path(directory))
+            for nspin in (1, 2):
+                spin_dir = Path(directory) / f"spin{nspin}"
+                spin_dir.mkdir()
+                compare_workflow(args, spin_dir, nspin)
     except (OSError, ValueError) as error:
         parser.exit(1, f"{error}\n")
 

@@ -1,4 +1,6 @@
-Frequency (eV) | wave length(nm) | Absorption (a.u.)
+# Ionic_Step 1
+# 100 # number of points
+# Frequency (eV) | wave length(nm) | Absorption (a.u.)
 29.1043	42.6	0.0147588
 27.4301	45.2	0.00225836
 25.9381	47.8	0.00094464
