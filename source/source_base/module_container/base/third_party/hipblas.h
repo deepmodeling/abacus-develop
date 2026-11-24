@@ -1,6 +1,8 @@
 #ifndef BASE_THIRD_PARTY_HIPBLAS_H_
 #define BASE_THIRD_PARTY_HIPBLAS_H_
 
+#include <cstdint>
+
 #include <hip/hip_runtime.h>
 #include <hipblas/hipblas.h>
 #include <base/macros/rocm.h>
@@ -117,8 +119,8 @@ void gemv_batched(hipblasHandle_t& handle, const char& trans, const int& m, cons
 template <typename T>
 static inline
 void gemv_batched_strided(hipblasHandle_t& handle, const char& transa, const int& m, const int& n,
-          const T& alpha, const T* A, const int& lda, const int& stride_a, const T* x, const int& incx, const int& stride_x,
-          const T& beta, T* y, const int& incy, const int& stride_y, const int& batch_size)
+          const T& alpha, const T* A, const int& lda, const int64_t& stride_a, const T* x, const int& incx, const int64_t& stride_x,
+          const T& beta, T* y, const int& incy, const int64_t& stride_y, const int& batch_size)
 {
     for (int ii = 0; ii < batch_size; ii++) {
         // Call the single GEMV for each pair of matrix A[ii] and vector x[ii]

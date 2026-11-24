@@ -55,13 +55,7 @@ import re
 import sys
 from pathlib import Path
 
-
-FINGERPRINT_SKETCHES = 8
-UINT64_MASK = (1 << 64) - 1
-SPLITMIX_GOLDEN = 0x9E3779B97F4A7C15
-SPLITMIX_MIX1 = 0xBF58476D1CE4E5B9
-SPLITMIX_MIX2 = 0x94D049BB133111EB
-FINGERPRINT_WEIGHTS = (1.0 + 0.0j, -1.0 + 0.0j, 0.0 + 1.0j, 0.0 - 1.0j)
+from collect_wfc_props import wfc_projections
 
 
 def read_cube(path):
@@ -183,13 +177,6 @@ def integrate_last_cube(path):
     return sum(values) * volume
 
 
-def splitmix64(value):
-    value = (value + SPLITMIX_GOLDEN) & UINT64_MASK
-    value = ((value ^ (value >> 30)) * SPLITMIX_MIX1) & UINT64_MASK
-    value = ((value ^ (value >> 27)) * SPLITMIX_MIX2) & UINT64_MASK
-    return value ^ (value >> 31)
-
-
 def read_wfc_components(paths):
     if len(paths) == 0 or len(paths) % 2 != 0:
         raise ValueError("expected one or more RE IM cube path pairs")
@@ -232,42 +219,16 @@ def read_wfc_components(paths):
 def wfc_fingerprint(paths):
     shape, volume, components = read_wfc_components(paths)
     point_count = sum(len(component) for component in components)
-    energy = sum(
-        value.real * value.real + value.imag * value.imag
-        for component in components
-        for value in component
-    )
-    if not math.isfinite(energy) or energy == 0.0:
-        raise ValueError("wavefunction has zero or non-finite norm")
-
-    projections = [0.0j] * FINGERPRINT_SKETCHES
-    flat_index = 0
-    for component in components:
-        for value in component:
-            for sketch in range(FINGERPRINT_SKETCHES):
-                weight_index = splitmix64(flat_index + sketch * SPLITMIX_GOLDEN) & 3
-                projections[sketch] += FINGERPRINT_WEIGHTS[weight_index] * value
-            flat_index += 1
-
-    norm = math.sqrt(energy)
-    normalized = [projection / norm for projection in projections]
+    norm2, products = wfc_projections(components)
     metrics = [
         ("components", len(components)),
         ("nx", shape[0]),
         ("ny", shape[1]),
         ("nz", shape[2]),
         ("voxel", volume),
-        ("rms", math.sqrt(energy / point_count)),
+        ("rms", math.sqrt(norm2 / point_count)),
     ]
-    metrics.extend(
-        (f"power_{sketch}", abs(normalized[sketch]) ** 2)
-        for sketch in range(FINGERPRINT_SKETCHES)
-    )
-    for sketch in range(FINGERPRINT_SKETCHES):
-        next_sketch = (sketch + 1) % FINGERPRINT_SKETCHES
-        cross = normalized[sketch] * normalized[next_sketch].conjugate()
-        metrics.append((f"cross_{sketch}_re", cross.real))
-        metrics.append((f"cross_{sketch}_im", cross.imag))
+    metrics.extend(products)
 
     if any(not math.isfinite(float(value)) for _, value in metrics):
         raise ValueError("wavefunction fingerprint contains a non-finite value")
