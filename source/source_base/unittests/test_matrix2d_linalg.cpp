@@ -354,8 +354,8 @@ void check_distributed_inverse(const Matrix2d<T>& host_matrix,
                                const int ncproc,
                                const int nrblk)
 {
-    const Matrix2d<T> expected = matrix2d_linalg::inv(host_matrix);
     const Matrix2d<T> host_matrix_original = host_matrix;
+    const Matrix2d<T> expected = matrix2d_linalg::inv(host_matrix);
     expect_host_matrices_near(host_matrix, host_matrix_original);
 
     Matrix2d<T> matrix(host_matrix.nrglb(),
@@ -560,6 +560,24 @@ TEST(Matrix2dLinalgTest, SerialDistributionUsesLocalBackend)
     expect_host_matrices_near(inverse, inverse_reference);
     EXPECT_EQ(inverse.distribution(), matrix.distribution());
     expect_host_matrices_near(matrix, matrix_original);
+
+    const Matrix2d<double> combination
+        = matrix2d_linalg::axpby(1.0, matrix, 0.0, matrix);
+    EXPECT_EQ(combination.distribution(), matrix.distribution());
+    expect_near(combination.dot(matrix), matrix.dot(matrix));
+
+    Matrix2d<double> accumulated = combination;
+    accumulated += matrix;
+    Matrix2d<double> accumulated_reference(2, 2);
+    for (int i = 0; i < 2; ++i)
+    {
+        for (int j = 0; j < 2; ++j)
+        {
+            accumulated_reference.atloc(i, j)
+                = 2.0 * matrix_original.atloc(i, j);
+        }
+    }
+    expect_host_matrices_near(accumulated.gather(), accumulated_reference);
 }
 
 TEST(Matrix2dLinalgTest, ExternalBufferViewDoesNotCopy)

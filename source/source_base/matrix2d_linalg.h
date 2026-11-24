@@ -199,11 +199,19 @@ void axpby_inplace(
     const std::complex<double> beta,
     Matrix2dView<const std::complex<double>> right);
 
-/** @brief Return a newly allocated copy of `matrix` scaled by `factor`. */
+/**
+ * @brief Return a newly allocated copy of `matrix` scaled by `factor`.
+ *
+ * @tparam T Either `double` or `std::complex<double>`.
+ */
 template <typename T>
 Matrix2d<T> scale(const Matrix2d<T>& matrix, const T factor);
 
-/** @brief Write a scaled copy of `matrix` into `result`. */
+/**
+ * @brief Write a scaled copy of `matrix` into `result`.
+ *
+ * @tparam T Either `double` or `std::complex<double>`.
+ */
 template <typename T>
 void scale(const Matrix2d<T>& matrix,
            const T factor,
@@ -243,11 +251,19 @@ void set_identity_inplace(Matrix2dView<std::complex<double>> matrix);
 template <typename T>
 Matrix2d<T> eye(const int n);
 
-/** @brief Return the non-conjugate transpose of `matrix`. */
+/**
+ * @brief Return the non-conjugate transpose of `matrix`.
+ *
+ * @tparam T Either `double` or `std::complex<double>`.
+ */
 template <typename T>
 Matrix2d<T> transpose(const Matrix2d<T>& matrix);
 
-/** @brief Return the conjugate transpose of `matrix`. */
+/**
+ * @brief Return the conjugate transpose of `matrix`.
+ *
+ * @tparam T Either `double` or `std::complex<double>`.
+ */
 template <typename T>
 Matrix2d<T> dagger(const Matrix2d<T>& matrix);
 } // namespace matrix2d_linalg

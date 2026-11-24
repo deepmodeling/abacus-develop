@@ -277,15 +277,15 @@ Matrix2d<T> make_matrix_like(const Matrix2d<T>& source,
     {
         return Matrix2d<T>(nrglb, ncglb);
     }
+    if (source.nrglb() == nrglb && source.ncglb() == ncglb)
+    {
+        return Matrix2d<T>(source.distribution());
+    }
     if (!source.is_active())
     {
         return Matrix2d<T>(make_frozen_distribution(nrglb, ncglb));
     }
 #ifdef __MPI
-    if (source.nrglb() == nrglb && source.ncglb() == ncglb)
-    {
-        return Matrix2d<T>(source.distribution());
-    }
     const int nb = source.distribution()->nb();
     const std::shared_ptr<const Parallel_Blkcyclic> result_distribution
         = make_borrowed_distribution(nrglb,
