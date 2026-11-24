@@ -127,7 +127,7 @@ Some of these packages can be installed with popular package management system v
 sudo apt update && sudo apt install -y libopenmpi-dev libopenblas-openmp-dev libscalapack-openmpi-dev libelpa-dev libfftw3-dev libcereal-dev libxc-dev nlohmann-json3-dev g++ make cmake bc git pkgconf
 ```
 
-> Installing ELPA by apt only matches requirements on Ubuntu 22.04. For earlier linux distributions, you should build ELPA from source.
+> Installing ELPA by apt only matches requirements since Ubuntu 22.04. For earlier linux distributions, you should build ELPA from source.
 
 You can also use [Intel® oneAPI toolkit](https://www.intel.com/content/www/us/en/developer/tools/oneapi/oneapi-toolkit.html) (former Intel® Parallel Studio) as toolchain. The [Intel® oneAPI Base Toolkit](https://software.intel.com/content/www/us/en/develop/tools/oneapi/all-toolkits.html#base-kit) contains Intel® oneAPI Math Kernel Library (aka `MKL`), including `BLAS`, `LAPACK`, `ScaLAPACK` and `FFTW3`. The [Intel® oneAPI HPC Toolkit](https://software.intel.com/content/www/us/en/develop/tools/oneapi/all-toolkits.html#hpc-kit) contains Intel® MPI Library, and C++ compiler (including MPI compiler). (Note: Since version 2026.0.0, the two toolkits has been merged into a single [Intel® oneAPI toolkits](https://www.intel.com/content/www/us/en/developer/tools/oneapi/oneapi-toolkit.html))
 
