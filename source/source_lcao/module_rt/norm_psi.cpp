@@ -8,6 +8,7 @@
 #include "source_base/timer.h"
 
 #ifdef __CUBLASMP
+#include <cuComplex.h>
 #include "kernels/cuda/norm_psi_kernel.cuh"
 #endif
 
@@ -269,8 +270,8 @@ void norm_psi_tensor(const Parallel_Blkcyclic& matrix_layout,
 
     cudaMemsetAsync(d_mo_ovlp, 0, cij_elems * sizeof(std::complex<double>), cublas_res.stream);
 
-    std::complex<double> alpha = {1.0, 0.0};
-    std::complex<double> beta = {0.0, 0.0};
+    const cuDoubleComplex alpha = make_cuDoubleComplex(1.0, 0.0);
+    const cuDoubleComplex beta = make_cuDoubleComplex(0.0, 0.0);
 
     cublasMpMatrixDescriptor_t desc_S, desc_Psi, desc_mo_ovlp;
 

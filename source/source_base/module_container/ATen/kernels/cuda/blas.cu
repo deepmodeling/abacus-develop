@@ -6,29 +6,92 @@
 #include <cublas_v2.h>
 
 #include <algorithm>
+#include <cstdint>
 #include <stdexcept>
 #include <string>
+#include <type_traits>
 #include <vector>
 
 namespace container {
 namespace kernels {
 
 static cublasHandle_t cublas_handle = nullptr;
+static cublasHandle_t device_dot_handle = nullptr;
 
 void createGpuBlasHandle() {
     if (cublas_handle == nullptr) {
         CHECK_CUBLAS(cublasCreate(&cublas_handle));
+        // Both handles use the default stream. Only dot writes scalar results on the device.
+        CHECK_CUBLAS(cublasCreate(&device_dot_handle));
+        CHECK_CUBLAS(cublasSetPointerMode(device_dot_handle, CUBLAS_POINTER_MODE_DEVICE));
     }
 }
 
 void destroyGpuBlasHandle() {
     if (cublas_handle != nullptr) {
         CHECK_CUBLAS(cublasDestroy(cublas_handle));
+        CHECK_CUBLAS(cublasDestroy(device_dot_handle));
+        device_dot_handle = nullptr;
         cublas_handle = nullptr;
     }
 }
 
 namespace {
+bool device_result_ptr(const void* result)
+{
+    cudaPointerAttributes attr{};
+    const cudaError_t err = cudaPointerGetAttributes(&attr, result);
+#if CUDART_VERSION < 11000
+    // Older runtimes report ordinary host memory as an unregistered pointer error.
+    if (err == cudaErrorInvalidValue)
+    {
+        cudaGetLastError();
+        return false;
+    }
+#endif
+    CHECK_CUDA(err);
+#if CUDART_VERSION >= 10000
+    return attr.type == cudaMemoryTypeDevice || attr.type == cudaMemoryTypeManaged;
+#else
+    return attr.memoryType == cudaMemoryTypeDevice || attr.isManaged;
+#endif
+}
+
+template <typename T>
+void dot_result(int n, const T* x, int incx, const T* y, int incy, T* result)
+{
+    cublasHandle_t handle = device_result_ptr(result) ? device_dot_handle : cublas_handle;
+    cuBlasConnector::dot(handle, n, x, incx, y, incy, result);
+}
+
+template <typename Real>
+void dot_result(int n, const std::complex<Real>* x, int incx, const std::complex<Real>* y, int incy,
+                std::complex<Real>* result)
+{
+    using Native = typename std::conditional<std::is_same<Real, float>::value, cuComplex, cuDoubleComplex>::type;
+    if (!device_result_ptr(result))
+    {
+        Native value{};
+        cuBlasConnector::dot(cublas_handle, n, x, incx, y, incy, &value);
+        *result = std::complex<Real>(value.x, value.y);
+        return;
+    }
+    if (reinterpret_cast<std::uintptr_t>(result) % alignof(Native) == 0)
+    {
+        cuBlasConnector::dot(device_dot_handle, n, x, incx, y, incy, reinterpret_cast<Native*>(result));
+        return;
+    }
+
+    // A complex member of a device struct can have only the alignment of Real.
+    Tensor temp(DataTypeToEnum<std::complex<Real>>::value, DeviceType::GpuDevice, {1});
+    Native* value = reinterpret_cast<Native*>(temp.data());
+    cudaStream_t stream = nullptr;
+    CHECK_CUBLAS(cublasGetStream(device_dot_handle, &stream));
+    cuBlasConnector::dot(device_dot_handle, n, x, incx, y, incy, value);
+    CHECK_CUDA(cudaMemcpyAsync(result, value, sizeof(Native), cudaMemcpyDeviceToDevice, stream));
+    CHECK_CUDA(cudaStreamSynchronize(stream));
+}
+
 template <typename T>
 __global__ void set_identity(T* matrix, const int n)
 {
@@ -145,7 +208,7 @@ struct blas_dot<T, DEVICE_GPU> {
         const int& incy,
         T* result)
     {
-        cuBlasConnector::dot(cublas_handle, n, x, incx, y, incy, result);
+        dot_result(n, x, incx, y, incy, result);
     }
 };
 
