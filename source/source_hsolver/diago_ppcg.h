@@ -13,6 +13,12 @@ namespace hsolver {
 template <typename T, typename Device>
 class HSOperator;
 
+struct PPCGTraceContext
+{
+    int scf_iteration;
+    int kpoint;
+};
+
 // -----------------------------------------------------------------------------
 // DiagoPPCG: Projection Preconditioned solver
 // -----------------------------------------------------------------------------
@@ -67,7 +73,8 @@ public:
                 Real* eigenvalue_in,
                 const std::vector<double>& ethr_band,
                 const Real* prec,
-                std::ostream& log);
+                std::ostream& log,
+                const PPCGTraceContext& trace_context);
 
     bool converged() const
     {

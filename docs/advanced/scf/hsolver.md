@@ -12,7 +12,7 @@ PPCG uses `pw_diag_ndim` as its block size and `ppcg_rr_step` (positive integer,
 
 PPCG is unavailable for `calculation = nscf`; INPUT validation rejects this combination before diagonalization. It uses the same iteration-budget setup as the other PW solvers. If PPCG reaches `pw_diag_nmax` before satisfying its residual criterion, the running log reports the active-band count and maximum residual, and SCF continues to its next electronic iteration with a warning. A non-finite residual is an error.
 
-For diagnostics, `ABACUS_PPCG_RESIDUAL_TRACE` selects an optional CSV trace. Only the MPI world root writes this file, and its resolved full path is recorded in the running log each time the file is created or overwritten.
+For diagnostics, `ABACUS_PPCG_RESIDUAL_TRACE` selects an optional CSV trace. Only the MPI world root writes this file, and its resolved full path is recorded in the running log. Successive solves append records, preserving earlier k-points and SCF steps. Each record includes the SCF iteration, the one-based pool-local k-point index, and a unique `solve_id` within that file (the append offset), which also distinguishes ionic steps and repeated launches. Standalone solver tests use zero for the SCF/k-point context. Use a fresh trace path when changing the number of bands. Other MPI pools do not write this diagnostic trace.
 
 When "basis_type = lcao", `ks_solver` can be `genelpa` or `scalapack_gvx`. The default setting `genelpa` is recommended, which is based on ELPA (EIGENVALUE SOLVERS FOR PETAFLOP APPLICATIONS) (https://elpa.mpcdf.mpg.de/) and the kernel is auto choosed by GENELPA(https://github.com/pplab/GenELPA), usually faster than the setting of "scalapack_gvx", which is based on ScaLAPACK(Scalable Linear Algebra PACKage)  
 

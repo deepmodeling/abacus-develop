@@ -56,7 +56,8 @@ double diagonalize(hsolver::DiagoPPCG<Scalar, base_device::DEVICE_CPU>& solver,
                    std::ostream& log = std::clog)
 {
     const CallbackHSOperator<Scalar> op(h, s);
-    return solver.diag(op, ld, bands, dimension, psi, eigenvalues, thresholds, preconditioner, log);
+    const hsolver::PPCGTraceContext context = {0, 0};
+    return solver.diag(op, ld, bands, dimension, psi, eigenvalues, thresholds, preconditioner, log, context);
 }
 } // namespace ppcg_test
 

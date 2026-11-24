@@ -54,6 +54,7 @@ PPCGRunResult run_ppcg_pw(const HSOperator<T, Device>& op,
                           const int pw_diag_ndim,
                           const int rr_step,
                           std::ostream& log,
+                          const PPCGTraceContext& trace_context,
                           std::true_type)
 {
     const int sbsize = std::max(1, std::min(nband, pw_diag_ndim));
@@ -69,7 +70,8 @@ PPCGRunResult run_ppcg_pw(const HSOperator<T, Device>& op,
                                           eigenvalue,
                                           ethr_band,
                                           pre_condition,
-                                          log);
+                                          log,
+                                          trace_context);
     result.converged = ppcg.converged();
     result.active_band_count = ppcg.active_band_count();
     result.iteration_limit_reached = ppcg.iteration_limit_reached();
@@ -91,6 +93,7 @@ PPCGRunResult run_ppcg_pw(const HSOperator<T, Device>& op,
                           const int pw_diag_ndim,
                           const int rr_step,
                           std::ostream& log,
+                          const PPCGTraceContext& trace_context,
                           std::false_type)
 {
     throw std::invalid_argument("PPCG is supported only on CPU. Select a GPU-native solver for device=gpu.");
@@ -441,6 +444,8 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(const HSOperator<T, Device>& op,
         const int dim = psi.get_current_ngk();
         T* psi_pointer = psi.get_pointer();
         const Real* precondition_pointer = pre_condition.data();
+        const int kpoint = psi.get_current_k() + 1;
+        const PPCGTraceContext trace_context = {this->scf_iter, kpoint};
         try
         {
             const PPCGRunResult ppcg_result = run_ppcg_pw<T, Device, Real>(
@@ -457,6 +462,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(const HSOperator<T, Device>& op,
                 this->pw_diag_ndim,
                 this->ppcg_rr_step,
                 log,
+                trace_context,
                 cpu_path);
             if (!ppcg_result.converged)
             {

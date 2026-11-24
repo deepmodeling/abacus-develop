@@ -545,9 +545,9 @@ TEST_F(DiagoPPCGTridiagTest, ResidualTraceWritesCsv)
     std::getline(trace, first_record);
     EXPECT_EQ(header,
               "iteration,stage,max_residual,eigenvalue_0,eigenvalue_1,eigenvalue_2,"
-              "local_overlap_min,local_overlap_max,local_overlap_condition");
+              "local_overlap_min,local_overlap_max,local_overlap_condition,scf_iteration,kpoint,solve_id");
     EXPECT_NE(first_record.find("initial_rr"), std::string::npos);
-    EXPECT_EQ(std::count(first_record.begin(), first_record.end(), ','), nband + 5);
+    EXPECT_EQ(std::count(first_record.begin(), first_record.end(), ','), nband + 8);
 
     double previous_max_error = std::numeric_limits<double>::max();
     std::string record = first_record;
@@ -574,5 +574,36 @@ TEST_F(DiagoPPCGTridiagTest, ResidualTraceWritesCsv)
     } while (std::getline(trace, record));
 
     trace.close();
+
+    std::ifstream previous_trace(trace_path);
+    std::ostringstream previous_contents;
+    previous_contents << previous_trace.rdbuf();
+    const std::string first_solve = previous_contents.str();
+    previous_trace.close();
+    ASSERT_EQ(::setenv(env_name, trace_path.c_str(), 1), 0);
+    psi_run = psi;
+    const ppcg_test::CallbackHSOperator<T> op(h_op, nullptr);
+    const hsolver::PPCGTraceContext second_context = {3, 2};
+    solver.diag(op, ld, nband, n_dim, psi_run.data(), eval.data(), ethr, prec.data(), running_log, second_context);
+    if (had_old_env)
+    {
+        ASSERT_EQ(::setenv(env_name, old_env_value.c_str(), 1), 0);
+    }
+    else
+    {
+        ASSERT_EQ(::unsetenv(env_name), 0);
+    }
+    std::ifstream appended_trace(trace_path);
+    std::ostringstream appended_contents;
+    appended_contents << appended_trace.rdbuf();
+    const std::string both_solves = appended_contents.str();
+    EXPECT_EQ(both_solves.substr(0, first_solve.size()), first_solve);
+    const std::string second_solve = both_solves.substr(first_solve.size());
+    EXPECT_NE(second_solve.find(",initial_rr,"), std::string::npos);
+    EXPECT_NE(second_solve.find(",final,"), std::string::npos);
+    EXPECT_EQ(second_solve.find("iteration,stage,max_residual"), std::string::npos);
+    const std::string expected_context = ",3,2," + std::to_string(first_solve.size()) + "\n";
+    EXPECT_NE(second_solve.find(expected_context), std::string::npos);
+    appended_trace.close();
     std::remove(trace_path.c_str());
 }

@@ -1934,7 +1934,8 @@ double DiagoPPCG<T, Device>::diag(const HSOperator<T, Device>& op,
                                   Real* eigenvalue_in,
                                   const std::vector<double>& ethr_band,
                                   const Real* prec,
-                                  std::ostream& log)
+                                  std::ostream& log,
+                                  const PPCGTraceContext& trace_context)
 {
     const PPCGFunctionTimer timer("diag");
     ld_psi_ = ld_psi;
@@ -1979,6 +1980,7 @@ double DiagoPPCG<T, Device>::diag(const HSOperator<T, Device>& op,
     active_cols.reserve(ncol);
 
     std::ofstream residual_trace;
+    std::streamoff trace_id = 0;
     const char* residual_trace_path = std::getenv("ABACUS_PPCG_RESIDUAL_TRACE");
     bool trace_writer = false;
     if (residual_trace_path != nullptr)
@@ -1990,7 +1992,11 @@ double DiagoPPCG<T, Device>::diag(const HSOperator<T, Device>& op,
     {
         // A single writer avoids file corruption when several MPI pools solve
         // different k-points concurrently.
-        residual_trace.open(residual_trace_path);
+        residual_trace.open(residual_trace_path, std::ios::out | std::ios::app | std::ios::ate);
+        if (residual_trace.is_open())
+        {
+            trace_id = residual_trace.tellp();
+        }
         if (residual_trace)
         {
 #ifdef _WIN32
@@ -2010,14 +2016,18 @@ double DiagoPPCG<T, Device>::diag(const HSOperator<T, Device>& op,
                     << residual_trace_path << std::endl;
             }
             residual_trace << std::setprecision(std::numeric_limits<Real>::max_digits10);
-            residual_trace << "iteration,stage,max_residual";
-            // Test-side tools compare these Ritz values with analytical or
-            // LAPACK reference eigenvalues without coupling them to the solver.
-            for (int ib = 0; ib < ncol; ++ib)
+            // Preserve earlier k-points and SCF/ionic steps. The append offset
+            // identifies this solve without a global counter or persistent state.
+            if (trace_id == 0)
             {
-                residual_trace << ",eigenvalue_" << ib;
+                residual_trace << "iteration,stage,max_residual";
+                for (int ib = 0; ib < ncol; ++ib)
+                {
+                    residual_trace << ",eigenvalue_" << ib;
+                }
+                residual_trace << ",local_overlap_min,local_overlap_max,local_overlap_condition"
+                               << ",scf_iteration,kpoint,solve_id\n";
             }
-            residual_trace << ",local_overlap_min,local_overlap_max,local_overlap_condition\n";
         }
     }
     const bool write_residual_trace = residual_trace.is_open() && residual_trace.good();
@@ -2050,6 +2060,9 @@ double DiagoPPCG<T, Device>::diag(const HSOperator<T, Device>& op,
         residual_trace << ',' << local_overlap_min
                        << ',' << local_overlap_max
                        << ',' << local_overlap_condition
+                       << ',' << trace_context.scf_iteration
+                       << ',' << trace_context.kpoint
+                       << ',' << trace_id
                        << '\n';
     };
 
