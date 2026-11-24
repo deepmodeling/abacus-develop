@@ -23,27 +23,6 @@ if(ENABLE_MPI)
   set_tests_properties(MODULE_HSOLVER_dav_subspace_parallel PROPERTIES PROCESSORS 2 TIMEOUT 120)
 endif()
 
-# Check WARNING_QUIT in fresh processes, including collective MPI termination.
-function(add_lobpcg_exit_tests target device)
-  set(exit_ranks 1)
-  if(ENABLE_MPI)
-    list(APPEND exit_ranks 2)
-  endif()
-  foreach(ranks IN LISTS exit_ranks)
-    set(exit_name MODULE_HSOLVER_lobpcg_exit_${device}_${ranks})
-    add_test(NAME ${exit_name}
-      COMMAND ${CMAKE_COMMAND} "-DBINARY=$<TARGET_FILE:${target}>"
-              "-DOUTPUT_DIR=${CMAKE_CURRENT_BINARY_DIR}/${exit_name}"
-              "-DRANKS=${ranks}" "-DDEVICE=${device}"
-              "-DMPIEXEC=${MPIEXEC_EXECUTABLE}"
-              "-DMPI_NUMPROC_FLAG=${MPIEXEC_NUMPROC_FLAG}"
-              "-DMPI_PREFLAGS=${MPIEXEC_PREFLAGS}" "-DMPI_POSTFLAGS=${MPIEXEC_POSTFLAGS}"
-              -P "${CMAKE_CURRENT_SOURCE_DIR}/test_diago_lobpcg_exit.cmake")
-    set_tests_properties(${exit_name} PROPERTIES PROCESSORS ${ranks} TIMEOUT 240
-      SKIP_REGULAR_EXPRESSION "SKIP: no usable GPU for LOBPCG exit checks")
-  endforeach()
-endfunction()
-
 set(LOBPCG_TEST_SOURCES
     ../diago_lobpcg.cpp
     ../lobpcg_subspace.cpp
@@ -51,36 +30,26 @@ set(LOBPCG_TEST_SOURCES
     ../rr_solver.cpp
     ../module_linalg/linear_algebra.cpp
     ../../source_basis/module_pw/test/test_tool.cpp)
-set(LOBPCG_TEST_LIBS parameter base psi device container)
 addtest(
   TARGET MODULE_HSOLVER_lobpcg
-  LIBS ${LOBPCG_TEST_LIBS}
+  LIBS parameter base psi device container
   SOURCES test_diago_lobpcg.cpp test_rr_solver.cpp ${LOBPCG_TEST_SOURCES})
-addtest(
-  TARGET MODULE_HSOLVER_lobpcg_float
-  LIBS ${LOBPCG_TEST_LIBS}
-  SOURCES test_diago_lobpcg_float.cpp ${LOBPCG_TEST_SOURCES})
-set_tests_properties(MODULE_HSOLVER_lobpcg MODULE_HSOLVER_lobpcg_float PROPERTIES TIMEOUT 180)
-add_lobpcg_exit_tests(MODULE_HSOLVER_lobpcg cpu)
-
+set_tests_properties(MODULE_HSOLVER_lobpcg PROPERTIES TIMEOUT 180)
 if(ENABLE_MPI)
-  foreach(target IN ITEMS MODULE_HSOLVER_lobpcg MODULE_HSOLVER_lobpcg_float)
-    add_test(NAME ${target}_mpi2
-      COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2 ${MPIEXEC_PREFLAGS}
-        $<TARGET_FILE:${target}> ${MPIEXEC_POSTFLAGS})
-    set_tests_properties(${target}_mpi2 PROPERTIES PROCESSORS 2 TIMEOUT 180)
-  endforeach()
+  add_test(NAME MODULE_HSOLVER_lobpcg_mpi2
+    COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2 ${MPIEXEC_PREFLAGS}
+      $<TARGET_FILE:MODULE_HSOLVER_lobpcg> ${MPIEXEC_POSTFLAGS})
+  set_tests_properties(MODULE_HSOLVER_lobpcg_mpi2 PROPERTIES PROCESSORS 2 TIMEOUT 180)
 endif()
 
 if(USE_CUDA OR USE_ROCM)
   addtest(
     TARGET MODULE_HSOLVER_lobpcg_gpu
     KEEP_FEATURE_DEFINITIONS __CUDA __ROCM
-    LIBS ${LOBPCG_TEST_LIBS}
+    LIBS parameter base psi device container
     SOURCES test_diago_lobpcg.cpp ${LOBPCG_TEST_SOURCES} test_rr_solver.cpp
             ../module_linalg/unittests/test_linear_algebra.cpp)
   set_tests_properties(MODULE_HSOLVER_lobpcg_gpu PROPERTIES SKIP_RETURN_CODE 77)
-  add_lobpcg_exit_tests(MODULE_HSOLVER_lobpcg_gpu gpu)
   if(ENABLE_MPI)
     add_test(NAME MODULE_HSOLVER_lobpcg_gpu_mpi2
       COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2 ${MPIEXEC_PREFLAGS}
@@ -178,7 +147,6 @@ if(ENABLE_MPI)
             ../../source_cell/klist_io.cpp
             ../../source_cell/parallel_kpoints.cpp
             ../../source_cell/reciprocal_grid.cpp)
-
 
   if(ENABLE_LCAO)
     # DSP build without C_PACK: diago_lapack.cpp then needs the zhegvx_

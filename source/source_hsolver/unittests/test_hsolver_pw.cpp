@@ -11,6 +11,7 @@
 #include "source_hsolver/hsolver_lcaopw.h"
 #include "source_hsolver/hsolver_pw.h"
 #include "source_hsolver/diago_params.h"
+#include "source_hsolver/diago_lobpcg.h"
 
 #include <algorithm>
 #include <complex>
@@ -237,6 +238,27 @@ class TestHSolverPW : public ::testing::Test
     std::vector<float> ekb_f;
 
     std::ofstream temp_ofs;
+
+    void run_lobpcg_entry(const int dim, const int block, const int backend)
+    {
+        std::cout.rdbuf(std::cerr.rdbuf());
+        int size = 1;
+        int threads = 1;
+        int rank = 0;
+        Parallel_Global::read_pal_param(0, nullptr, size, threads, rank);
+        const hsolver::diag_comm_info comm(MPI_COMM_SELF, 0, 1);
+        const hsolver::LobpcgBasisLayout layout = {dim, 1};
+        std::vector<double> prec(dim, 1);
+        std::vector<double> values(4);
+        std::vector<std::complex<double>> x(dim * 4, 0);
+        for (int i = 0; i < 4; ++i) { x[i + i * dim] = 1; }
+        hsolver::rr::ParallelRREigensolver parallel;
+        hsolver::rr::GpuRREigensolver gpu;
+        hsolver::DiagoLOBPCG<std::complex<double>> solver(
+            prec.data(), 4, dim, block, layout, comm, backend, 0, false,
+            hsolver::LobpcgLocking::Hard, parallel, gpu);
+        solver.diag(hamilt_test_d, x.data(), dim, values.data(), 1e-8, 50, {});
+    }
 
     void run_lobpcg_case(const std::string& calculation, const bool dependent)
     {
@@ -537,6 +559,24 @@ TEST_F(TestHSolverPW, NpwxLessThanNbandsDeath)
             eigenvalues.data(),
             1),
         ::testing::ExitedWithCode(1), ".*");
+}
+
+TEST_F(TestHSolverPW, LobpcgBlockMustContainRequestedBands)
+{
+    EXPECT_EXIT(run_lobpcg_entry(40, 3, 0), testing::ExitedWithCode(1),
+                "LOBPCG block must contain all requested bands");
+}
+
+TEST_F(TestHSolverPW, LobpcgNeedsFullRankSearchSpace)
+{
+    EXPECT_EXIT(run_lobpcg_entry(8, 4, 0), testing::ExitedWithCode(1),
+                "The requested bands cannot form a full-rank LOBPCG space");
+}
+
+TEST_F(TestHSolverPW, LobpcgRejectsUnsupportedBackend)
+{
+    EXPECT_EXIT(run_lobpcg_entry(40, 4, 1), testing::ExitedWithCode(1),
+                "LOBPCG supports diag_subspace=0 or 2");
 }
 
 // Exercise the actual caller: NSCF budget exhaustion and a failed initial GV.

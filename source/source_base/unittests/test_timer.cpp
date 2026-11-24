@@ -25,7 +25,7 @@ void timed_exception()
 TEST(TimerScope, EarlyReturnClosesAndAllowsReuse)
 {
     EXPECT_EQ(timed_return(true), 1);
-    const auto& timer = ModuleBase::timer::timer_pool.at("TimerScopeTest").at("timed_return");
+    const ModuleBase::timer::Timer_One& timer = ModuleBase::timer::timer_pool.at("TimerScopeTest").at("timed_return");
     EXPECT_TRUE(timer.start_flag);
     EXPECT_EQ(timer.calls, 1U);
     EXPECT_EQ(timed_return(false), 2);
@@ -37,7 +37,7 @@ TEST(TimerScope, EarlyReturnClosesAndAllowsReuse)
 TEST(TimerScope, ExceptionClosesAndAllowsReuse)
 {
     EXPECT_THROW(timed_exception(), std::runtime_error);
-    const auto& timer = ModuleBase::timer::timer_pool.at("TimerScopeTest").at("timed_exception");
+    const ModuleBase::timer::Timer_One& timer = ModuleBase::timer::timer_pool.at("TimerScopeTest").at("timed_exception");
     EXPECT_TRUE(timer.start_flag);
     EXPECT_EQ(timer.calls, 1U);
     EXPECT_THROW(timed_exception(), std::runtime_error);

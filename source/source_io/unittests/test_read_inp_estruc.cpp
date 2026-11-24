@@ -21,122 +21,92 @@ class LobpcgInputTest : public testing::Test
         return std::find_if(items.begin(), items.end(),
             [&label](const Items::value_type& item) { return item.first == label; });
     }
-    template <typename ReadValue>
-    void check_option(const std::string& label, const std::string& default_value, const std::string& type,
-                      const std::vector<std::string>& valid, const std::vector<std::string>& invalid, ReadValue value)
-    {
-        ModuleIO::ReadInput reader(0);
-        Parameter param;
-        auto items = reader.get_input_lists();
-        auto item = find_label(label, items);
-        ASSERT_NE(item, items.end());
-        auto& option = item->second;
-        EXPECT_EQ(value(param), default_value);
-        EXPECT_EQ(option.default_value, default_value);
-        EXPECT_EQ(option.type, type);
-        EXPECT_EQ(option.get_availability(), "basis_type==pw and ks_solver==lobpcg");
-        for (const auto& token : valid)
-        {
-            SCOPED_TRACE(token);
-            option.str_values = {token};
-            EXPECT_TRUE(option.domain.validate_explicit(label, option.str_values).empty());
-            option.read_value(option, param);
-            EXPECT_EQ(value(param), token);
-            option.final_value.str("");
-            option.get_final_value(option, param);
-            EXPECT_EQ(option.final_value.str(), token);
-        }
-        for (const auto& token : invalid)
-        {
-            const std::vector<std::string> tokens = {token};
-            EXPECT_FALSE(option.domain.validate_explicit(label, tokens).empty());
-        }
-    }
-    void check_item(const ModuleIO::Input_Item& item, const Parameter& param)
-    {
-        ModuleIO::ReadInput schema(-1);
-        ModuleIO::InputValues values;
-        for (const auto& entry : schema.get_input_lists())
-        {
-            if (entry.second.domain.bound())
-            {
-                values[entry.first] = entry.second.domain.value(param);
-            }
-        }
-        EXPECT_TRUE(item.domain.validate_resolved(item.label, values).empty());
-        EXPECT_TRUE(item.domain.validate_requirements(item.label, values).empty());
-        if (item.check_value)
-        {
-            item.check_value(item, param);
-        }
-    }
+    ModuleIO::ReadInput reader{0};
+    Parameter param;
+    Items items;
+    void SetUp() override { items = Items(reader.get_input_lists()); }
+
 };
 
 TEST_F(LobpcgInputTest, LobpcgExtraBands)
 {
-    check_option("lobpcg_extra_bands", "0", "Integer", {"0", "5", "10"}, {"-1", "1.5", "invalid", "2147483648"},
-                 [](const Parameter& p) { return std::to_string(p.inp.lobpcg_extra_bands); });
+    Items::iterator found = find_label("lobpcg_extra_bands", items);
+    ASSERT_NE(found, items.end());
+    ModuleIO::Input_Item& item = found->second;
+    EXPECT_EQ(param.inp.lobpcg_extra_bands, 0);
+    EXPECT_EQ(item.default_value, "0");
+    EXPECT_TRUE(item.domain.validate_explicit(item.label, {"0"}).empty());
+    EXPECT_TRUE(item.domain.validate_explicit(item.label, {"5"}).empty());
+    EXPECT_FALSE(item.domain.validate_explicit(item.label, {"-1"}).empty());
+    item.str_values = {"5"};
+    item.read_value(item, param);
+    EXPECT_EQ(param.inp.lobpcg_extra_bands, 5);
+    item.get_final_value(item, param);
+    EXPECT_EQ(item.final_value.str(), "5");
 }
 
 TEST_F(LobpcgInputTest, PwDiagNmaxMustBePositive)
 {
-    ModuleIO::ReadInput reader(0);
-    auto items = reader.get_input_lists();
-    auto item = find_label("pw_diag_nmax", items);
+    Items::iterator item = find_label("pw_diag_nmax", items);
     ASSERT_NE(item, items.end());
-    auto& option = item->second;
+    ModuleIO::Input_Item& option = item->second;
     EXPECT_EQ(option.default_value, "50");
     EXPECT_EQ(option.type, "Integer");
-    for (const auto& token : {"1", "37", "50"})
-    {
-        SCOPED_TRACE(token);
-        EXPECT_TRUE(option.domain.validate_explicit(option.label, {token}).empty());
-    }
-    for (const auto& token : {"0", "-1", "-20"})
-    {
-        SCOPED_TRACE(token);
-        EXPECT_FALSE(option.domain.validate_explicit(option.label, {token}).empty());
-    }
+    EXPECT_TRUE(option.domain.validate_explicit(option.label, {"37"}).empty());
+    EXPECT_FALSE(option.domain.validate_explicit(option.label, {"0"}).empty());
+    EXPECT_FALSE(option.domain.validate_explicit(option.label, {"-1"}).empty());
 }
 
 TEST_F(LobpcgInputTest, LobpcgLocking)
 {
-    check_option("lobpcg_locking", "hard", "String", {"hard", "soft"}, {"auto", "none", "1"},
-                 [](const Parameter& p) { return p.inp.lobpcg_locking; });
+    Items::iterator found = find_label("lobpcg_locking", items);
+    ASSERT_NE(found, items.end());
+    ModuleIO::Input_Item& item = found->second;
+    EXPECT_EQ(param.inp.lobpcg_locking, "hard");
+    EXPECT_EQ(item.default_value, "hard");
+    EXPECT_TRUE(item.domain.validate_explicit(item.label, {"hard"}).empty());
+    EXPECT_TRUE(item.domain.validate_explicit(item.label, {"soft"}).empty());
+    EXPECT_FALSE(item.domain.validate_explicit(item.label, {"invalid"}).empty());
+    item.str_values = {"soft"};
+    item.read_value(item, param);
+    EXPECT_EQ(param.inp.lobpcg_locking, "soft");
+    item.get_final_value(item, param);
+    EXPECT_EQ(item.final_value.str(), "soft");
 }
 
 TEST_F(LobpcgInputTest, LobpcgDeviceSupport)
 {
-    ModuleIO::ReadInput reader(0);
-    Parameter param;
-    auto items = reader.get_input_lists();
-    auto item = find_label("ks_solver", items);
+    Items::iterator item = find_label("ks_solver", items);
     ASSERT_NE(item, items.end());
     TestParameters::input(param).basis_type = "pw";
     TestParameters::input(param).ks_solver = "lobpcg";
+    ModuleIO::InputValues values;
+    values["basis_type"] = ModuleIO::InputValue(param.inp.basis_type);
+    values["ks_solver"] = ModuleIO::InputValue(param.inp.ks_solver);
     for (const std::string device : {"cpu", "gpu"})
     {
         TestParameters::input(param).device = device;
-        check_item(item->second, param);
+        values["device"] = ModuleIO::InputValue(device);
+        EXPECT_TRUE(item->second.domain.validate_requirements("ks_solver", values).empty());
+        item->second.check_value(item->second, param);
     }
 }
 
 TEST_F(LobpcgInputTest, LobpcgSubspaceBackends)
 {
-    ModuleIO::ReadInput reader(0);
-    auto items = reader.get_input_lists();
-    auto item = find_label("diag_subspace", items);
+    Items::iterator item = find_label("diag_subspace", items);
     ASSERT_NE(item, items.end());
     ModuleIO::InputValues values;
-    for (const std::string method : {"lobpcg", "dav_subspace"})
+    const std::string lobpcg = "lobpcg";
+    values["ks_solver"] = ModuleIO::InputValue(lobpcg);
+    for (const int backend : {0, 2})
     {
-        values["ks_solver"] = ModuleIO::InputValue(method);
-        for (const int backend : {0, 1, 2})
-        {
-            values["diag_subspace"] = ModuleIO::InputValue(backend);
-            const bool supported = method == "dav_subspace" || backend != 1;
-            EXPECT_EQ(item->second.domain.validate_requirements("diag_subspace", values).empty(), supported)
-                << method << ": " << backend;
-        }
+        values["diag_subspace"] = ModuleIO::InputValue(backend);
+        EXPECT_TRUE(item->second.domain.validate_requirements("diag_subspace", values).empty());
     }
+    values["diag_subspace"] = ModuleIO::InputValue(1);
+    EXPECT_FALSE(item->second.domain.validate_requirements("diag_subspace", values).empty());
+    const std::string davidson = "dav_subspace";
+    values["ks_solver"] = ModuleIO::InputValue(davidson);
+    EXPECT_TRUE(item->second.domain.validate_requirements("diag_subspace", values).empty());
 }

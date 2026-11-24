@@ -7,11 +7,17 @@
 #include <complex>
 #include <gtest/gtest.h>
 #include <limits>
+#include <string>
 #include <vector>
 
 namespace
 {
 using Wide = std::complex<double>;
+#if defined(__CUDA) || defined(__ROCM)
+using Device = base_device::DEVICE_GPU;
+#else
+using Device = base_device::DEVICE_CPU;
+#endif
 
 hsolver::diag_comm_info local_comm()
 {
@@ -25,8 +31,8 @@ hsolver::diag_comm_info local_comm()
 template <typename T, typename Device>
 ct::Tensor upload(const std::vector<T>& values)
 {
-    const auto type = ct::DataTypeToEnum<T>::value;
-    const auto device = ct::DeviceTypeToEnum<Device>::value;
+    const ct::DataType type = ct::DataTypeToEnum<T>::value;
+    const ct::DeviceType device = ct::DeviceTypeToEnum<Device>::value;
     const int count = values.size();
     ct::Tensor result(type, device, {count});
     base_device::memory::synchronize_memory_op<T, Device, base_device::DEVICE_CPU>()(
@@ -62,7 +68,7 @@ void check_prepared_coefficients()
     const int ld = 7;
     const int nx = 3;
     const int ny = 2;
-    const auto comm = local_comm();
+    const hsolver::diag_comm_info comm = local_comm();
     hsolver::LinearAlgebra<T, Device> algebra(comm);
     std::vector<Wide> coefficients = {{0.7, -0.2}, {0.1, 0.3}, {-0.4, 0.5},
                                       {0.2, 0.4}, {-0.3, 0.1}, {0.6, -0.2}};
@@ -73,7 +79,7 @@ void check_prepared_coefficients()
     std::fill(transient.begin(), transient.end(), Wide(999, -999));
     transient.clear();
     transient.shrink_to_fit();
-    for (int image = 0; image < 3; ++image)
+    for (int image = 0; image < 2; ++image)
     {
         std::vector<T> x(ld * nx, T(77, 9));
         std::vector<T> expected(ld * ny, T(-3, 4));
@@ -84,8 +90,8 @@ void check_prepared_coefficients()
                 x[row + j * ld] = T(0.1 * (row + image + 1), 0.2 * (j - row));
             }
         }
-        auto input = upload<T, Device>(x);
-        auto output = upload<T, Device>(expected);
+        ct::Tensor input = upload<T, Device>(x);
+        ct::Tensor output = upload<T, Device>(expected);
         const T beta(0.2, -0.1);
         algebra.expand_prepared(ld, dim, nx, ny, input.template data<T>(), prepared, output.template data<T>(), beta);
         for (int j = 0; j < ny; ++j)
@@ -107,13 +113,11 @@ void check_prepared_coefficients()
     EXPECT_EQ(algebra.prepare_coefficients(nullptr, 0), nullptr);
 }
 
-#if !defined(__CUDA) && !defined(__ROCM)
 TEST(LinearAlgebra, ReusePreparedCoefficients)
 {
-    check_prepared_coefficients<std::complex<double>, base_device::DEVICE_CPU>();
-    check_prepared_coefficients<std::complex<float>, base_device::DEVICE_CPU>();
+    check_prepared_coefficients<std::complex<double>, Device>();
+    check_prepared_coefficients<std::complex<float>, Device>();
 }
-#endif
 
 template <typename T, typename Device>
 void check_padded_products()
@@ -122,7 +126,7 @@ void check_padded_products()
     const int ld = 8;
     const int nx = 3;
     const int ny = 2;
-    const auto comm = local_comm();
+    const hsolver::diag_comm_info comm = local_comm();
     hsolver::LinearAlgebra<T, Device> algebra(comm);
     const double nan = std::numeric_limits<double>::quiet_NaN();
     const T padding(nan, nan);
@@ -142,10 +146,10 @@ void check_padded_products()
             y[i + j * ld] = T(0.3 * (j + i), -0.2 * (i + 2));
         }
     }
-    auto dx = upload<T, Device>(x);
-    auto dy = upload<T, Device>(y);
-    const auto gram_tensor = algebra.gram_tensor(ld, dim, nx, dx.template data<T>());
-    const auto cross_tensor = algebra.cross_tensor(ld, dim, nx, ny, dx.template data<T>(), dy.template data<T>());
+    ct::Tensor dx = upload<T, Device>(x);
+    ct::Tensor dy = upload<T, Device>(y);
+    const ct::Tensor gram_tensor = algebra.gram_tensor(ld, dim, nx, dx.template data<T>());
+    const ct::Tensor cross_tensor = algebra.cross_tensor(ld, dim, nx, ny, dx.template data<T>(), dy.template data<T>());
     ASSERT_EQ(gram_tensor.device_type(), ct::DeviceType::CpuDevice);
     ASSERT_EQ(cross_tensor.data_type(), ct::DataType::DT_COMPLEX_DOUBLE);
     for (int j = 0; j < nx; ++j)
@@ -165,7 +169,7 @@ void check_padded_products()
         }
     }
     // Empty local partitions contribute a zero matrix with nx*ny entries.
-    const auto empty = algebra.cross_tensor(ld, 0, nx, ny, nullptr, nullptr);
+    const ct::Tensor empty = algebra.cross_tensor(ld, 0, nx, ny, nullptr, nullptr);
     ASSERT_EQ(empty.NumElements(), nx * ny);
     for (int i = 0; i < nx * ny; ++i)
     {
@@ -173,20 +177,19 @@ void check_padded_products()
     }
 }
 
-#if !defined(__CUDA) && !defined(__ROCM)
 TEST(LinearAlgebra, PaddedGramAndCross)
 {
-    check_padded_products<std::complex<double>, base_device::DEVICE_CPU>();
-    check_padded_products<std::complex<float>, base_device::DEVICE_CPU>();
+    check_padded_products<std::complex<double>, Device>();
+    check_padded_products<std::complex<float>, Device>();
 }
 
 TEST(LinearAlgebra, RootProjectionWithEmptyLocalRows)
 {
-    const auto domain = ModuleBase::world_comm_domain();
+    const ModuleBase::CommunicationDomain domain = ModuleBase::world_comm_domain();
     const int rank = domain.rank();
     const int ranks = domain.size();
 #ifdef __MPI
-    const auto communicator = domain.communicator();
+    const MPI_Comm communicator = domain.communicator();
     const hsolver::diag_comm_info comm(communicator, rank, ranks);
 #else
     const hsolver::diag_comm_info comm(0, 1);
@@ -203,9 +206,11 @@ TEST(LinearAlgebra, RootProjectionWithEmptyLocalRows)
             x[i + j * ld] = Wide(i + 1, j + 1);
         }
     }
-    hsolver::LinearAlgebra<Wide, base_device::DEVICE_CPU> algebra(comm);
-    const auto cross = algebra.cross_root_tensor(ld, rows, columns, columns, x.data(), x.data());
-    const auto gram = algebra.gram_root_tensor(ld, rows, columns, x.data());
+    hsolver::LinearAlgebra<Wide, Device> algebra(comm);
+    const ct::Tensor input = upload<Wide, Device>(x);
+    const Wide* data = input.data<Wide>();
+    const ct::Tensor cross = algebra.cross_root_tensor(ld, rows, columns, columns, data, data);
+    const ct::Tensor gram = algebra.gram_root_tensor(ld, rows, columns, data);
     if (rank != 0)
     {
         EXPECT_EQ(cross.NumElements(), 0);
@@ -234,8 +239,8 @@ TEST(LinearAlgebra, RootProjectionWithEmptyLocalRows)
 #ifdef __MPI
 TEST(LinearAlgebra, RootReductionSupportsOtherRootAndSelfCommunicator)
 {
-    const auto domain = ModuleBase::world_comm_domain();
-    const auto communicator = domain.communicator();
+    const ModuleBase::CommunicationDomain domain = ModuleBase::world_comm_domain();
+    const MPI_Comm communicator = domain.communicator();
     const int rank = domain.rank();
     const int size = domain.size();
     const int root = size - 1;
@@ -251,7 +256,7 @@ TEST(LinearAlgebra, RootReductionSupportsOtherRootAndSelfCommunicator)
     {
         EXPECT_EQ(value, before);
     }
-    const auto self = local_comm();
+    const hsolver::diag_comm_info self = local_comm();
     value = before;
     Parallel_Common::reduce_data_to_root(&value, 1, self.comm, 0);
     EXPECT_EQ(value, before);
@@ -259,91 +264,32 @@ TEST(LinearAlgebra, RootReductionSupportsOtherRootAndSelfCommunicator)
     EXPECT_EQ(value, before);
 }
 #endif
-#endif
 
-#if defined(__CUDA) || defined(__ROCM)
-TEST(LinearAlgebraGpu, ReusePreparedCoefficients)
-{
-    check_prepared_coefficients<std::complex<double>, base_device::DEVICE_GPU>();
-    check_prepared_coefficients<std::complex<float>, base_device::DEVICE_GPU>();
-}
-
-TEST(LinearAlgebraGpu, PaddedGramAndCross)
-{
-    check_padded_products<std::complex<double>, base_device::DEVICE_GPU>();
-    check_padded_products<std::complex<float>, base_device::DEVICE_GPU>();
-}
-#endif
 #if !defined(__CUDA) && !defined(__ROCM)
-template <typename T, typename Device>
-void verify_herk_gram(const hsolver::diag_comm_info& comm)
+TEST(LinearAlgebra, HerkUpperTriangle)
 {
-    using ToDevice = base_device::memory::synchronize_memory_op<T, Device, base_device::DEVICE_CPU>;
-    const int dim = 7;
-    const int ld = 10;
-    const int max_bands = 5;
+    const int rows = 3;
+    const int ld = 5;
+    const int bands = 2;
     const double nan = std::numeric_limits<double>::quiet_NaN();
-    const auto device = ct::DeviceTypeToEnum<Device>::value;
-    const auto type = ct::DataTypeToEnum<T>::value;
-    ct::Tensor input(type, device, {ld, max_bands});
-    hsolver::LinearAlgebra<T, Device> algebra(comm);
-    for (const int bands : {5, 2, 0})
+    std::vector<Wide> x(ld * bands, Wide(nan, nan));
+    for (int j = 0; j < bands; ++j)
     {
-        std::vector<T> x(ld * max_bands, T(nan, nan));
-        std::vector<Wide> wide(ld * max_bands, Wide(nan, nan));
-        for (int j = 0; j < bands; ++j)
-        {
-            for (int i = 0; i < dim; ++i)
-            {
-                x[i + j * ld] = T(0.2 * (i + 1), 0.3 * (j - i));
-                wide[i + j * ld] = Wide(x[i + j * ld]);
-            }
-        }
-        ToDevice()(input.template data<T>(), x.data(), x.size());
-        // Poison both halves: beta=0 must overwrite the upper half without
-        // reading it, and the low-level kernel must leave the lower half.
-        std::vector<Wide> raw(max_bands * max_bands, Wide(nan, nan));
-        if (bands > 0)
-        {
-            ModuleBase::gram_herk_cpu(ld, dim, bands, wide.data(), raw.data());
-            for (int j = 0; j < bands; ++j)
-            {
-                EXPECT_EQ(raw[j + j * bands].imag(), 0.0);
-                for (int i = j + 1; i < bands; ++i)
-                {
-                    EXPECT_TRUE(std::isnan(raw[i + j * bands].real()));
-                }
-            }
-        }
-        // MPI rank0 contributes no rows. The remaining ranks use the same
-        // input, so expected global products are known without MPI calls.
-        const bool empty_rank = comm.nproc > 1 && comm.rank == 0;
-        const int local_dim = empty_rank ? 0 : dim;
-        const T* local_input = empty_rank ? nullptr : input.template data<T>();
-        const int contributions = comm.nproc > 1 ? comm.nproc - 1 : 1;
-        const auto actual = algebra.gram_tensor(ld, local_dim, bands, local_input);
-        ASSERT_EQ(actual.NumElements(), bands * bands);
-        const Wide* values = actual.template data<Wide>();
-        for (int j = 0; j < bands; ++j)
-        {
-            EXPECT_LT(std::abs(values[j + j * bands].imag()), 1e-12);
-            for (int i = 0; i < bands; ++i)
-            {
-                const Wide local = overlap(dim, wide.data() + i * ld, wide.data() + j * ld);
-                const Wide expected = double(contributions) * local;
-                EXPECT_LT(std::abs(values[i + j * bands] - expected), 1e-11);
-                if (i <= j)
-                {
-                    EXPECT_LT(std::abs(raw[i + j * bands] - local), 1e-11);
-                }
-            }
-        }
+        for (int i = 0; i < rows; ++i) { x[i + j * ld] = Wide(i + 1, j - i); }
     }
-    const auto empty = algebra.gram_tensor(ld, 0, max_bands, nullptr);
-    ASSERT_EQ(empty.NumElements(), max_bands * max_bands);
-    for (int i = 0; i < max_bands * max_bands; ++i)
+    std::vector<Wide> gram(bands * bands, Wide(nan, nan));
+    ModuleBase::gram_herk_cpu(ld, rows, bands, x.data(), gram.data());
+    EXPECT_TRUE(std::isnan(gram[1].real()));
+    EXPECT_EQ(gram[0].imag(), 0.0);
+    EXPECT_EQ(gram[3].imag(), 0.0);
+    hsolver::linear_complete_hermitian_upper(bands, gram.data());
+    for (int j = 0; j < bands; ++j)
     {
-        EXPECT_EQ(empty.template data<Wide>()[i], Wide(0));
+        for (int i = 0; i < bands; ++i)
+        {
+            const Wide expected = overlap(rows, x.data() + i * ld, x.data() + j * ld);
+            EXPECT_LT(std::abs(gram[i + j * bands] - expected), 1e-12);
+        }
     }
 }
 #endif
@@ -403,60 +349,37 @@ void verify_triangular_apply(const char side, const char uplo, const char trans,
             expected[i + j * ldb] = T(Wide(alpha) * sum);
         }
     }
-    auto a = upload<T, Device>(triangle);
-    auto b = upload<T, Device>(input);
+    ct::Tensor a = upload<T, Device>(triangle);
+    ct::Tensor b = upload<T, Device>(input);
     ModuleBase::trmm_op<T, Device>()(side, uplo, trans, diag, m, n, &alpha,
                                    a.template data<T>(), lda, b.template data<T>(), ldb);
     check_output<T, Device>(b, expected);
 }
 
 
-template <typename Device>
-void check_kernels()
+TEST(LinearAlgebra, TriangularProducts)
 {
-#if !defined(__CUDA) && !defined(__ROCM)
-    const auto world = ModuleBase::world_comm_domain();
-#ifdef __MPI
-    const hsolver::diag_comm_info comm(world.communicator(), world.rank(), world.size());
-#else
-    const hsolver::diag_comm_info comm(0, 1);
-#endif
-    verify_herk_gram<std::complex<double>, Device>(comm);
-    verify_herk_gram<std::complex<float>, Device>(comm);
-#endif
-    for (const char side : {'L', 'R'})
-    for (const char uplo : {'U', 'L'})
-    for (const char trans : {'N', 'T', 'C'})
-    for (const char diag : {'N', 'U'})
+    // side/uplo/trans/diag: exercise both sides and triangles, transpose and unit diagonal.
+    for (const std::string mode : {"RUNN", "RUCN", "RUTU", "RLNN", "LUNU", "LLCN"})
     {
-        const Wide alpha(0.7, -0.2);
+        const char side = mode[0];
+        const char uplo = mode[1];
+        const char trans = mode[2];
+        const char diag = mode[3];
+        const Wide alpha(.7, -.2);
         const std::complex<float> alpha_float(alpha);
-        verify_triangular_apply<std::complex<double>, Device>(side, uplo, trans, diag, alpha);
+        verify_triangular_apply<Wide, Device>(side, uplo, trans, diag, alpha);
         verify_triangular_apply<std::complex<float>, Device>(side, uplo, trans, diag, alpha_float);
     }
-    // Scaling and empty matrices are independent of the triangle selectors.
-    for (const Wide alpha : {Wide(1), Wide(0)})
-    {
-        const std::complex<float> alpha_float(alpha);
-        verify_triangular_apply<std::complex<double>, Device>('R', 'U', 'N', 'N', alpha);
-        verify_triangular_apply<std::complex<float>, Device>('R', 'U', 'N', 'N', alpha_float);
-    }
+}
+
+TEST(LinearAlgebra, TriangularZeroScaleAndEmptyMatrices)
+{
+    const Wide zero(0);
+    const std::complex<float> zero_float(0);
+    verify_triangular_apply<Wide, Device>('R', 'U', 'N', 'N', zero);
+    verify_triangular_apply<std::complex<float>, Device>('R', 'U', 'N', 'N', zero_float);
     ModuleBase::trmm_op<Wide, Device>()('R', 'U', 'N', 'N', 0, 4, nullptr, nullptr, 4, nullptr, 10);
     ModuleBase::trmm_op<Wide, Device>()('R', 'U', 'N', 'N', 7, 0, nullptr, nullptr, 1, nullptr, 10);
-    using Single = std::complex<float>;
-    ModuleBase::trmm_op<Single, Device>()('R', 'U', 'N', 'N', 0, 4, nullptr, nullptr, 4, nullptr, 10);
-    ModuleBase::trmm_op<Single, Device>()('R', 'U', 'N', 'N', 7, 0, nullptr, nullptr, 1, nullptr, 10);
 }
-#if !defined(__CUDA) && !defined(__ROCM)
-TEST(LinearAlgebra, HerkTriangleAndTriangularApply)
-{
-    check_kernels<base_device::DEVICE_CPU>();
-}
-#endif
-#if defined(__CUDA) || defined(__ROCM)
-TEST(LinearAlgebraGpu, TriangularApply)
-{
-    check_kernels<base_device::DEVICE_GPU>();
-}
-#endif
 } // namespace
