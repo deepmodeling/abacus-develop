@@ -26,10 +26,10 @@ find_package_handle_standard_args(LibComm DEFAULT_MSG LIBCOMM_DIR)
 
 if(LibComm_FOUND)
   if(NOT TARGET LibComm::LibComm)
-    add_library(LibComm::LibComm UNKNOWN IMPORTED)
+    add_library(LibComm::LibComm INTERFACE IMPORTED)
     set_target_properties(
-      LibComm::LibComm
-      PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "${LIBCOMM_DIR}/include")
+      LibComm::LibComm PROPERTIES INTERFACE_INCLUDE_DIRECTORIES
+                                  "${LIBCOMM_DIR}/include")
   endif()
 endif()
 

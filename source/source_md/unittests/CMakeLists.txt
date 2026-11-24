@@ -124,12 +124,8 @@ addtest(
           ${depend_files})
 
 set(_md_dp_test_libs parameter psi device)
-if(DEFINED DeePMD_DIR)
-  if(DeePMDC_FOUND)
-    list(APPEND _md_dp_test_libs DeePMD::deepmd_c)
-  else()
-    list(APPEND _md_dp_test_libs DeePMD::deepmd_cc)
-  endif()
+if(ENABLE_DEEPMD)
+  list(APPEND _md_dp_test_libs ${ABACUS_DEEPMD_TARGET})
 endif()
 
 addtest(
