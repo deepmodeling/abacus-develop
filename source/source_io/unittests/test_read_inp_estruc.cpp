@@ -64,6 +64,39 @@ TEST_F(PPCGInputTest, AcceptsScfAndPreservesOtherNscfSolvers)
         reader.read_parameters(input, filename);
         EXPECT_EQ(input.inp.ks_solver, solver);
         EXPECT_EQ(input.inp.calculation, calculation);
+        EXPECT_EQ(input.inp.ppcg_rr_step, 1);
+    }
+}
+
+TEST_F(PPCGInputTest, ReadsPositiveRitzInterval)
+{
+    write_input("ppcg", "scf");
+    std::ofstream out(filename, std::ios::app);
+    out << "ppcg_rr_step 4\n";
+    out.close();
+    ModuleIO::ReadInput reader(0);
+    reader.check_ntype_flag = false;
+    Parameter input;
+    reader.read_parameters(input, filename);
+    EXPECT_EQ(input.inp.ppcg_rr_step, 4);
+}
+
+TEST_F(PPCGInputTest, RejectsNonpositiveRitzInterval)
+{
+    for (const int interval : {0, -1})
+    {
+        write_input("ppcg", "scf");
+        std::ofstream out(filename, std::ios::app);
+        out << "ppcg_rr_step " << interval << '\n';
+        out.close();
+        ModuleIO::ReadInput reader(0);
+        reader.check_ntype_flag = false;
+        Parameter input;
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(reader.read_parameters(input, filename), testing::ExitedWithCode(1), "");
+        const std::string output = testing::internal::GetCapturedStdout();
+        EXPECT_NE(output.find("ppcg_rr_step"), std::string::npos);
+        EXPECT_NE(output.find("value>=1"), std::string::npos);
     }
 }
 } // namespace

@@ -96,6 +96,7 @@ struct Input_para
     int pw_diag_nmax = 50;
     double pw_diag_thr = 0.01;      ///< solver-dependent threshold for iterative PW solvers
     bool diago_smooth_ethr = false; ///< smooth ethr for iter methods
+    int ppcg_rr_step = 1;           ///< full PPCG Rayleigh-Ritz interval
     int pw_diag_ndim = 4;           ///< dimension of workspace for Davidson diagonalization
     int diago_cg_prec = 1;          ///< mohan add 2012-03-31
     int diag_subspace = 0;          // 0: Lapack, 1: elpa, 2: scalapack

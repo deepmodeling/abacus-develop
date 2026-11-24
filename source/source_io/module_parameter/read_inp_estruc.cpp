@@ -1070,6 +1070,18 @@ Use case: When experimental or high-level theoretical results suggest that the S
         this->add_item(item);
     }
     {
+        Input_Item item("ppcg_rr_step");
+        item.domain.set_rule("value>=1");
+        item.annotation = "PPCG full Rayleigh-Ritz interval";
+        item.category = "Plane wave related variables";
+        item.type = "Integer";
+        item.description = "Number of PPCG block sweeps between scheduled full Rayleigh-Ritz solves. The conservative default of 1 performs a full solve each sweep. Larger values reduce global subspace work but may require more iterations; tune with accuracy and timing checks for the system of interest. Initial, convergence-certifying and recovery solves, and operator-cache refreshes, are independent of this interval.";
+        item.default_value = "1";
+        item.set_availability("basis_type==pw and ks_solver==ppcg");
+        read_sync_int(input.ppcg_rr_step);
+        this->add_item(item);
+    }
+    {
         Input_Item item("diago_cg_prec");
         item.annotation = "diago_cg_prec";
         item.category = "Plane wave related variables";

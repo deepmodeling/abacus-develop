@@ -296,6 +296,7 @@ class TestHSolverPW : public ::testing::Test
             2,
             false,
             1,
+            1,
             0,
             0);
         if (calculation != "nscf")
@@ -340,6 +341,7 @@ class TestHSolverPW : public ::testing::Test
             0,
             false,
             4,
+            1,
             0,
             0);
     hsolver::HSolverPW<std::complex<double>, base_device::DEVICE_CPU> hs_d =
@@ -357,6 +359,7 @@ class TestHSolverPW : public ::testing::Test
             0,
             false,
             4,
+            1,
             0,
             0);
 

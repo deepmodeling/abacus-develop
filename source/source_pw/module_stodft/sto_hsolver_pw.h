@@ -45,6 +45,7 @@ class StoHSolverPW : public hsolver::HSolverPW<T, Device>
                                         nbands_in,
                                         diago_smooth_ethr_in,
                                         pw_diag_ndim_in,
+                                        1,
                                         diag_subspace_in,
                                         nb2d_in),
           ks_run(ks_run_in), all_ks_run(all_ks_run_in), bndpar(bndpar_in)

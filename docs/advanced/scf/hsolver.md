@@ -8,7 +8,7 @@ When "basis_type = pw", `ks_solver` can be `cg`, `bpcg`, `dav`, `dav_subspace`, 
 
 The `ppcg` setting uses the projection preconditioned conjugate-gradient method, a restarted block method with bounded workspace. It is optimized and validated for CPU plane-wave calculations; non-CPU devices use a transitional host/device bridge. PPCG is unavailable for `esolver_type = sdft`, including mixed stochastic-deterministic calculations.
 
-PPCG uses `pw_diag_ndim` as its block size and performs the conservative full Rayleigh--Ritz correction on every iteration. Cached Hamiltonian and overlap images are refreshed independently, with additional refreshes when numerical cancellation threatens the residual.
+PPCG uses `pw_diag_ndim` as its block size and `ppcg_rr_step` (positive integer, default 1) as the interval between scheduled full Rayleigh--Ritz corrections. The default corrects every iteration. Larger intervals can reduce global subspace work, but should be tuned against convergence and timing for the target system. Initial, final certification and recovery solves remain independent of this setting. Cached Hamiltonian and overlap images are refreshed independently, with additional refreshes when numerical cancellation threatens the residual.
 
 PPCG is unavailable for `calculation = nscf`; INPUT validation rejects this combination before diagonalization. It uses the same iteration-budget setup as the other PW solvers. If PPCG reaches `pw_diag_nmax` before satisfying its residual criterion, the running log reports the active-band count and maximum residual, and SCF continues to its next electronic iteration with a warning. A non-finite residual is an error.
 

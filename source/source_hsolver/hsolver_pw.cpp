@@ -545,7 +545,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(const HSOperator<T, Device>& op,
                 this->diag_thr,
                 this->diag_iter_max,
                 this->pw_diag_ndim,
-                1,
+                this->ppcg_rr_step,
                 log,
                 cpu_path);
             if (!ppcg_result.converged)
