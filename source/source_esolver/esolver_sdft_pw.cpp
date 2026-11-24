@@ -7,6 +7,7 @@
 #include "source_hsolver/diago_iter_assist.h"
 #include "source_hsolver/diago_params.h"
 #include "source_io/module_parameter/parameter.h"
+#include "source_lcao/module_deltaspin/spin_constrain.h"
 #include "source_pw/module_stodft/sto_dos.h"
 #include "source_pw/module_stodft/sto_elecond.h"
 #include "source_pw/module_stodft/sto_forces.h"
@@ -117,6 +118,12 @@ void ESolver_SDFT_PW<T, Device>::iter_finish(
     bool &conv_esolver)
 {
     // call iter_finish() of ESolver_KS
+    if (this->inp_->sc_mag_switch)
+    {
+        auto& sc = spinconstrain::SpinConstrain<std::complex<double>>::getScInstance();
+        const double escon = sc.cal_escon();
+        this->pelec->set_spin_constrain_energy(escon);
+    }
     ESolver_KS::iter_finish(ucell, istep, iter, conv_esolver);
 }
 

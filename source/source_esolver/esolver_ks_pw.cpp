@@ -306,6 +306,12 @@ void ESolver_KS_PW<T, Device>::iter_finish(
     this->pelec->f_en.deband = this->pelec->cal_delta_eband(ucell);
 
     // Call iter_finish() of ESolver_KS
+    if (this->inp_->sc_mag_switch)
+    {
+        auto& sc = spinconstrain::SpinConstrain<std::complex<double>>::getScInstance();
+        const double escon = sc.cal_escon();
+        this->pelec->set_spin_constrain_energy(escon);
+    }
     ESolver_KS::iter_finish(ucell, istep, iter, conv_esolver);
 
     // D in USPP needs vloc, thus needs update when veff updated

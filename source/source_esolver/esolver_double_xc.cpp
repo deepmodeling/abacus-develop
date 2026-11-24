@@ -264,6 +264,7 @@ void ESolver_DoubleXC<TK, TR>::iter_finish(
         this->pelec_base->f_en.deband = this->pelec->f_en.deband;
         this->pelec_base->f_en.demet = this->pelec->f_en.demet;
         this->pelec_base->f_en.descf = 0.0; // set descf to 0
+        this->pelec_base->set_spin_constrain_energy(this->pelec->f_en.escon);
         this->pelec_base->cal_energies(
             2, this->inp_->imp_sol, this->inp_->sc_mag_switch, this->inp_->dft_plus_u,
             this->inp_->assume_isolated); // 2 means Kohn-Sham functional
