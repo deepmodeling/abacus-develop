@@ -2,7 +2,6 @@
 #define HSOLVER_PPCG_WORKSPACE_H
 
 #include "source_base/module_device/memory_op.h"
-#include <algorithm>
 #include <stdexcept>
 #include <utility>
 #include <vector>
