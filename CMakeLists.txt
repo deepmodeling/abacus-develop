@@ -516,30 +516,10 @@ if(ENABLE_ASAN)
   add_link_options(-fsanitize=address)
 endif()
 
-set(_enable_torch FALSE)
 if(ENABLE_MLALGO)
   find_package(Libnpy REQUIRED)
-  set(_enable_torch TRUE)
-endif()
-
-if(ENABLE_DEEPMD)
-  set(DEEPMD_BACKEND
-      "Torch"
-      CACHE STRING "DeePMD backend")
-  set_property(CACHE DEEPMD_BACKEND PROPERTY STRINGS Torch TensorFlow)
-  if(DEEPMD_BACKEND STREQUAL "Torch")
-    set(_enable_torch TRUE)
-  elseif(DEEPMD_BACKEND STREQUAL "TensorFlow")
-    find_package(TensorFlow REQUIRED)
-  else()
-    message(FATAL_ERROR "DEEPMD_BACKEND must be Torch or TensorFlow.")
-  endif()
-endif()
-
-# Torch uses outdated components to detect CUDA arch, causing failure on
-# latest CUDA kits. Set CMake variable TORCH_CUDA_ARCH_LIST in the form of
-# "major.minor" if required.
-if(_enable_torch)
+  # Torch's CUDA architecture detection may need TORCH_CUDA_ARCH_LIST on
+  # recent CUDA toolkits.
   find_package(Torch REQUIRED)
   if(NOT Torch_VERSION VERSION_LESS "2.1.0")
     set_if_higher(CMAKE_CXX_STANDARD 17)
@@ -575,7 +555,8 @@ if(ENABLE_LIBXC)
 endif()
 
 if(ENABLE_DEEPMD)
-  find_package(DeePMD REQUIRED)
+  find_package(DeePMD CONFIG REQUIRED)
+  include(SetupDeePMD)
 endif()
 
 if(ENABLE_NEP)

@@ -300,10 +300,6 @@ set(_abacus_feature_libs
     $<$<BOOL:${ENABLE_MLALGO}>:libnpy::npy>)
 set(_abacus_feature_include_dirs)
 
-if(ENABLE_DEEPMD AND DEEPMD_BACKEND STREQUAL "TensorFlow")
-  list(APPEND _abacus_feature_libs TensorFlow::tensorflow_cc)
-endif()
-
 if(USE_DSP)
   list(APPEND _abacus_feature_libs ${OMPI_LIBRARY1}
        ${MT_HOST_DIR}/hthreads/lib/libhthread_device.a
@@ -358,12 +354,6 @@ endif()
 
 target_link_libraries(abacus_feature_libs INTERFACE ${_abacus_feature_libs})
 
-if(ENABLE_DEEPMD
-   AND UNIX
-   AND NOT APPLE)
-  target_link_options(abacus_feature_libs INTERFACE "LINKER:--no-as-needed")
-endif()
-
 target_include_directories(abacus_compile_requirements
                            INTERFACE ${_abacus_feature_include_dirs})
 
@@ -384,7 +374,6 @@ foreach(
         dftd4::dftd4
         ${ABACUS_DEEPMD_TARGET}
         nep::nep_cpu
-        TensorFlow::tensorflow_cc
         ZLIB::ZLIB
         PEXSI::PEXSI
         NCCL::NCCL
@@ -398,6 +387,12 @@ foreach(
         roc::hipsolver)
   abacus_add_target_compile_requirements(${_abacus_feature_target})
 endforeach()
+
+# The C++ API inherits its ABI definition from the core library. The C wrapper
+# does not impose the core library's C++ ABI on ABACUS.
+if(ABACUS_DEEPMD_TARGET STREQUAL "DeePMD::deepmd_cc")
+  abacus_add_target_compile_requirements(DeePMD::deepmd)
+endif()
 
 # ------------------------------------------------------------------------------
 # Per-target feature definitions and common compile usage requirements
@@ -811,7 +806,7 @@ endif()
 target_link_libraries(${ABACUS_BIN_NAME} PRIVATE abacus::link_libs)
 
 # Torch includes some LAPACK routines, but with floating-point exceptions.
-if(_enable_torch)
+if(ENABLE_MLALGO)
   target_link_libraries(${ABACUS_BIN_NAME} PRIVATE ${TORCH_LIBRARIES})
 endif()
 
