@@ -1,0 +1,7 @@
+CUDA PPCG regression using the structure, numerical settings and reference of
+CPU Autotest case 822_PW_PPCG_USPP_NaCl. Only device=gpu and explicit
+double precision are added; the standard acceptance tolerances are unchanged.
+
+The reference was computed independently with BPCG. At the deliberately strict
+SCF threshold, eigensolver iteration-limit warnings near the residual roundoff
+floor remain visible; the energy, force and stress checks are independent.

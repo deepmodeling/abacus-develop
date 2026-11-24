@@ -96,7 +96,7 @@ PPCGRunResult run_ppcg_pw(const HSOperator<T, Device>& op,
                           const PPCGTraceContext& trace_context,
                           std::false_type)
 {
-    throw std::invalid_argument("PPCG is supported only on CPU. Select a GPU-native solver for device=gpu.");
+    throw std::invalid_argument("GPU PPCG requires a CUDA build. Select another solver for this backend.");
 }
 
 } // namespace
@@ -437,7 +437,6 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(const HSOperator<T, Device>& op,
         {
             ModuleBase::WARNING_QUIT("HSolverPW::solve_psik", "PPCG is not supported for NSCF calculations.");
         }
-        const std::is_same<Device, base_device::DEVICE_CPU> cpu_path;
         const int ld_psi = psi.get_nbasis();
         const int nband = psi.get_nbands();
         const int dim = psi.get_current_ngk();
@@ -447,6 +446,11 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(const HSOperator<T, Device>& op,
         const PPCGTraceContext trace_context = {this->scf_iter, kpoint};
         try
         {
+#ifdef __CUDA
+            using PPCGDeviceSupported = std::true_type;
+#else
+            using PPCGDeviceSupported = std::is_same<Device, base_device::DEVICE_CPU>;
+#endif
             const PPCGRunResult ppcg_result = run_ppcg_pw<T, Device, Real>(
                 op,
                 ld_psi,
@@ -462,7 +466,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(const HSOperator<T, Device>& op,
                 this->ppcg_rr_step,
                 log,
                 trace_context,
-                cpu_path);
+                PPCGDeviceSupported());
             if (!ppcg_result.converged)
             {
                 std::ostringstream message;

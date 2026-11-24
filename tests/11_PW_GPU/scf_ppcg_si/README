@@ -1,0 +1,3 @@
+CUDA PPCG regression using the structure, numerical settings and reference of
+CPU Autotest case 818_PW_PPCG_Si. Only device=gpu and explicit
+double precision are added; the standard acceptance tolerances are unchanged.

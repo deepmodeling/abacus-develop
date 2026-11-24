@@ -19,5 +19,18 @@ struct PPCGVectorOps
     static void scale_columns(int dim, int ld, int count, const double* scales, T* x, T* sx, T* hx);
 };
 
+#if defined(__CUDA) || defined(__UT_USE_CUDA)
+template <typename T>
+struct PPCGVectorOps<T, base_device::DEVICE_GPU>
+{
+    using Real = typename T::value_type;
+    static void column_products(int dim, int ld, int count, const T* x, const T* y, double* host_products);
+    static void residual(int dim, int ld, int count, const T* hx, const T* sx, const Real* eigenvalues, T* output);
+    static void precondition(int dim, int ld, int count, const Real* diagonal, T* values);
+    static void scale_columns(int dim, int ld, int count, const double* scales, T* x, T* sx, T* hx);
+};
+
+#endif
+
 } // namespace hsolver
 #endif

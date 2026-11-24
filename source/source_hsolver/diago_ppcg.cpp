@@ -2326,5 +2326,9 @@ namespace hsolver {
 
 template class DiagoPPCG<std::complex<float>, base_device::DEVICE_CPU>;
 template class DiagoPPCG<std::complex<double>, base_device::DEVICE_CPU>;
+#ifdef __CUDA
+template class DiagoPPCG<std::complex<float>, base_device::DEVICE_GPU>;
+template class DiagoPPCG<std::complex<double>, base_device::DEVICE_GPU>;
+#endif
 
 } // namespace hsolver
