@@ -180,7 +180,7 @@ class SlabExchange
  * @param parameters  the rVV10 parameters b and C
  * @param rho         total density on the nrxx points of this process
  * @param sigma       |grad rho|^2 on the same points
- * @param dedn        dE/dn on the same points
+ * @param dedn        dE/dn on the same points, or nullptr when it is not needed; the choice is collective
  * @param dedsigma    dE/dsigma on the same points
  * @param stress      with stress != nullptr also the explicit strain derivative, 9 Cartesian components
  *                    (Ha, not divided by the volume)
@@ -191,7 +191,7 @@ double evaluate_libvdwxc(
     const XCFunctionalParameters &parameters,
     const std::vector<double> &rho,
     const std::vector<double> &sigma,
-    std::vector<double> &dedn,
+    std::vector<double> *dedn,
     std::vector<double> &dedsigma,
     double *stress)
 {
@@ -239,7 +239,10 @@ double evaluate_libvdwxc(
         energy = vdwxc_stress(data, stress, slab_rho.data(), slab_sigma.data(), slab_dedn.data(), slab_dedsigma.data());
     }
     vdwxc_finalize(&data);
-    exchange.to_grid(slab_dedn, dedn);
+    if (dedn != nullptr)
+    {
+        exchange.to_grid(slab_dedn, *dedn);
+    }
     exchange.to_grid(slab_dedsigma, dedsigma);
 #ifdef __MPI
     // the distributed backend returns the contribution of this process
@@ -257,14 +260,14 @@ double evaluate_libvdwxc(
 }
 
 /// rVV10 energy (Ha) of the total density of chr (valence plus core), with the plane-wave gradient of that
-/// density (a copy of total_gradient when that is given), dE/dn, dE/dsigma for sigma = |grad n|^2 and, with
-/// stress != nullptr, the explicit strain derivative.
+/// density (a copy of total_gradient when that is given), dE/dn (unless dedn is nullptr), dE/dsigma for
+/// sigma = |grad n|^2 and, with stress != nullptr, the explicit strain derivative.
 double evaluate_total_density(
     const XCFunctionalParameters &parameters,
     const Charge &chr,
     const std::vector<ModuleBase::Vector3<double>> *total_gradient,
     std::vector<ModuleBase::Vector3<double>> &grad,
-    std::vector<double> &dedn,
+    std::vector<double> *dedn,
     std::vector<double> &dedsigma,
     double *stress)
 {
@@ -305,7 +308,10 @@ double evaluate_total_density(
     {
         sigma[ir] = grad[ir].norm2();
     }
-    dedn.resize(nrxx);
+    if (dedn != nullptr)
+    {
+        dedn->resize(nrxx);
+    }
     dedsigma.resize(nrxx);
     return evaluate_libvdwxc(pw, parameters, rho, sigma, dedn, dedsigma, stress);
 }
@@ -330,7 +336,7 @@ void add_rvv10(
     std::vector<ModuleBase::Vector3<double>> grad;
     std::vector<double> dedn;
     std::vector<double> dedsigma;
-    const double energy = evaluate_total_density(parameters, chr, total_gradient, grad, dedn, dedsigma, nullptr);
+    const double energy = evaluate_total_density(parameters, chr, total_gradient, grad, &dedn, dedsigma, nullptr);
     // v = dE/dn - div(2 dE/dsigma grad n), Hartree to Ry by e2
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 1024)
@@ -373,10 +379,10 @@ void add_rvv10_stress(const XCFunctionalParameters &parameters, const Charge &ch
     const ModulePW::PW_Basis &pw = *chr.rhopw;
     const int nrxx = chr.nrxx;
     std::vector<ModuleBase::Vector3<double>> grad;
-    std::vector<double> dedn;
     std::vector<double> dedsigma;
     double explicit_stress[stress_components] = {0.0};
-    const double energy = evaluate_total_density(parameters, chr, nullptr, grad, dedn, dedsigma, explicit_stress);
+    // the stress needs dE/dsigma only
+    const double energy = evaluate_total_density(parameters, chr, nullptr, grad, nullptr, dedsigma, explicit_stress);
     // integral of dE/dsigma d_a n d_b n, in units of the volume element
     double gradient_term[stress_components] = {0.0};
     for (int ir = 0; ir < nrxx; ++ir)
