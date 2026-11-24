@@ -194,16 +194,6 @@ A structure frame with velocities is required for {istep}. New runs write it to 
         this->add_item(item);
     }
     {
-        Input_Item item("md_thermo_freq");
-        item.annotation = "Deprecated alias of out_thermo_freq";
-        item.category = "Molecular dynamics";
-        item.type = "Integer";
-        item.description = "Deprecated MD-only alias of out_thermo_freq. Do not set both names in one INPUT file.";
-        item.default_value = "1";
-        read_sync_int(input.mdp.out_thermo_freq);
-        this->add_item(item);
-    }
-    {
         Input_Item item("md_neighbor_skin");
         item.annotation = "extra MDCell neighbor-list radius";
         item.category = "Molecular dynamics";

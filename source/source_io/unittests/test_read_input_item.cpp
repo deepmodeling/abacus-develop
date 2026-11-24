@@ -129,6 +129,23 @@ TEST_F(InputTest, InvalidExplicitDomainDoesNotReachReadOrResetHooks)
     EXPECT_FALSE(reset_called);
 }
 
+TEST_F(InputTest, MdThermoFrequencyUsesOnlyOutName)
+{
+    ModuleIO::ReadInput reader(0);
+    EXPECT_NE(find_label("out_thermo_freq", reader.input_lists), reader.input_lists.end());
+    EXPECT_EQ(find_label("md_thermo_freq", reader.input_lists), reader.input_lists.end());
+
+    const std::string filename = testing::TempDir() + "abacus_md_thermo_frequency_INPUT";
+    {
+        std::ofstream input(filename.c_str());
+        input << "INPUT_PARAMETERS\nmd_thermo_freq 2\n";
+    }
+    Parameter param;
+    const std::string error = reader.read_txt_input(param, filename);
+    EXPECT_THAT(error, testing::HasSubstr("Unknown INPUT parameter 'md_thermo_freq'"));
+    std::remove(filename.c_str());
+}
+
 TEST_F(InputTest, RelaxMethod)
 {
     ModuleIO::ReadInput readinput(0);

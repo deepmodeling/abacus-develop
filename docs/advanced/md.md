@@ -30,7 +30,7 @@ Furthermore, ABACUS also provides a [list of keywords](./input_files/input-main.
 
 MD structure output is controlled by [`out_stru`](./input_files/input-main.md#out_stru), [`out_freq_ion`](./input_files/input-main.md#out_freq_ion), and [`out_app_flag`](./input_files/input-main.md#out_app_flag). Set `out_stru 1`, `out_freq_ion 1`, and `out_app_flag 1` to keep every MD step in the appended `STRU` trajectory. With `out_freq_ion 0`, only `STRU_FINAL` is written. Mode 0 overwrites the periodic `STRU`; mode 2 writes numbered files and `STRU_FINAL` under `STRUC/`.
 
-Use `out_thermo_freq` to set the output interval for MD step, energy, temperature, and pressure information in `running_md.log` and on screen. The default is 1; set it to 0 to disable this thermodynamic output. The interval counts MD steps from 0, so a value of 10 selects steps 0, 10, 20, and so on, including after a restart. The old `md_thermo_freq` spelling remains accepted as an alias; specify only one name.
+Use `out_thermo_freq` to set the output interval for MD step, energy, temperature, and pressure information in `running_md.log` and on screen. The default is 1; set it to 0 to disable this thermodynamic output. The interval counts MD steps from 0, so a value of 10 selects steps 0, 10, 20, and so on, including after a restart.
 
 For MDCell simulations, per-atom forces are in ordinary STRU frames rather than `running_md.log`. The `md_out_force`, `md_dumpfreq`, `dump_force`, `dump_vel`, and `dump_virial` INPUT keywords have been removed; an INPUT file using them will fail to parse.
 

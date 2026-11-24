@@ -450,17 +450,6 @@ std::string ReadInput::prepare_input(Parameter& param)
     // Validate original tokens before any reader or default hook can discard
     // an invalid value. In particular, std::stoi alone accepts numeric prefixes.
     std::string errors;
-    bool new_thermo_frequency = false;
-    bool old_thermo_frequency = false;
-    for (const auto* item : this->readvalue_items)
-    {
-        new_thermo_frequency = new_thermo_frequency || item->label == "out_thermo_freq";
-        old_thermo_frequency = old_thermo_frequency || item->label == "md_thermo_freq";
-    }
-    if (new_thermo_frequency && old_thermo_frequency)
-    {
-        errors += "Set only one of out_thermo_freq and md_thermo_freq.\n";
-    }
     for (const auto* item : this->readvalue_items)
     {
         errors += item->domain.validate_explicit(item->label, item->str_values);
