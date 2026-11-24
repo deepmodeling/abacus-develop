@@ -16,6 +16,7 @@
 #ifdef __DEEPKS
 
 #include "LCAO_deepks.h"
+#include "deepks_einsum.h"
 #include "LCAO_deepks_io.h" // mohan add 2024-07-22
 #include "module_base/blas_connector.h"
 #include "module_base/constants.h"
@@ -80,7 +81,7 @@ void LCAO_Deepks::cal_gvepsl(const int nat, const std::vector<torch::Tensor>& ge
         std::vector<torch::Tensor> gvepsl_vector;
         for (int nl = 0; nl < nlmax; ++nl)
         {
-            gvepsl_vector.push_back(at::einsum("bamn, avmn->bav", {this->gdmepsl_vector[nl], gevdm[nl]}));
+            gvepsl_vector.push_back(deepks::einsum_bamn_avmn(this->gdmepsl_vector[nl], gevdm[nl]));
         }
 
         // cat nv-> \sum_nl(nv) = \sum_nl(nm_nl)=des_per_atom

@@ -682,6 +682,10 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
               };
         bool scf = this->calculation_type == "nscf" ? false : true;
 
+        auto spsi_func = [hm](T* psi_in, T* spsi_out, const int ld_psi, const int nvec) {
+            hm->sPsi(psi_in, spsi_out, ld_psi, ld_psi, nvec);
+        };
+
         if (!davidson)
         {
             davidson.reset(new Diago_DavSubspace<T, Device>(pre_condition,
@@ -714,6 +718,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
             };
         }
         const int ntry_return = davidson->diag(hpsi_func,
+                                               spsi_func,
                                                psi.get_pointer(),
                                                psi.get_nbasis(),
                                                eigenvalue,

@@ -1,6 +1,7 @@
 #ifndef PYTHON_PYABACUS_SRC_PY_DIAGO_DAV_SUBSPACE_HPP
 #define PYTHON_PYABACUS_SRC_PY_DIAGO_DAV_SUBSPACE_HPP
 
+#include <algorithm>
 #include <complex>
 #include <functional>
 
@@ -141,7 +142,16 @@ public:
             comm_info
         );
 
-        return obj->diag(hpsi_func, psi, nbasis, eigenvalue, diag_ethr, scf_type);
+        auto spsi_func = [](
+            std::complex<double>* psi_in,
+            std::complex<double>* spsi_out,
+            const int ld_psi,
+            const int nvec
+        ) {
+            std::copy(psi_in, psi_in + nvec * ld_psi, spsi_out);
+        };
+
+        return obj->diag(hpsi_func, spsi_func, psi, nbasis, eigenvalue, diag_ethr, scf_type);
     }
 
 private:

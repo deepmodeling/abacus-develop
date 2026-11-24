@@ -41,6 +41,7 @@ class Diago_DavSubspace
     using BasisRotationFunc = std::function<void(int, const T*, int, bool)>;
 
     int diag(const HPsiFunc& hpsi_func,
+             const HPsiFunc& spsi_func,
              T* psi_in,
              const int psi_in_dmax,
              Real* eigenvalue_in,
@@ -85,6 +86,9 @@ class Diago_DavSubspace
     /// the product of H and psi in the reduced basis set
     T* hphi = nullptr;
 
+    /// the product of S and psi in the reduced basis set
+    T* sphi = nullptr;
+
     /// Hamiltonian on the reduced basis
     T* hcc = nullptr;
 
@@ -102,17 +106,26 @@ class Diago_DavSubspace
     base_device::AbacusDevice_t device = {};
 
     void cal_grad(const HPsiFunc& hpsi_func,
+                  const HPsiFunc& spsi_func,
                   const int& dim,
                   const int& nbase,
                   const int& notconv,
                   T* psi_iter,
                   T* hphi,
+                  T* spsi,
                   T* vcc,
                   const int* unconv,
                   std::vector<Real>* eigenvalue_iter,
                   bool basis_is_rotated);
 
-    void cal_elem(const int& dim, int& nbase, const int& notconv, const T* psi_iter, const T* hphi, T* hcc, T* scc);
+    void cal_elem(const int& dim,
+                  int& nbase,
+                  const int& notconv,
+                  const T* psi_iter,
+                  const T* spsi,
+                  const T* hphi,
+                  T* hcc,
+                  T* scc);
 
     void refresh(const int& dim,
                  const int& nband,
@@ -120,6 +133,7 @@ class Diago_DavSubspace
                  const Real* eigenvalue,
                  T* psi_iter,
                  T* hphi,
+                 T* sphi,
                  T* hcc,
                  T* scc,
                  T* vcc);
@@ -141,6 +155,7 @@ class Diago_DavSubspace
                      T* vcc);
 
     int diag_once(const HPsiFunc& hpsi_func,
+                  const HPsiFunc& spsi_func,
                   T* psi_in,
                   const int psi_in_dmax,
                   Real* eigenvalue_in,

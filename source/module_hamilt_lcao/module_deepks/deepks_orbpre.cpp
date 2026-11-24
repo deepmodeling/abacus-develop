@@ -5,6 +5,7 @@
 ///                       orbital_pdm[nks,Inl,nm,nm] = dm_hl * overlap * overlap
 
 #include "deepks_orbpre.h"
+#include "deepks_einsum.h"
 
 #include "LCAO_deepks_io.h" // mohan add 2024-07-22
 #include "module_base/blas_connector.h"
@@ -342,7 +343,7 @@ void DeePKS_domain::cal_orbital_precalc(const std::vector<TH>& dm_hl,
     std::vector<torch::Tensor> orbital_precalc_vector;
     for (int nl = 0; nl < nlmax; ++nl)
     {
-        orbital_precalc_vector.push_back(at::einsum("kamn, avmn->kav", {orbital_pdm_vector[nl], gevdm[nl]}));
+        orbital_precalc_vector.push_back(deepks::einsum_kamn_avmn(orbital_pdm_vector[nl], gevdm[nl]));
     }
 
     orbital_precalc = torch::cat(orbital_precalc_vector, -1);

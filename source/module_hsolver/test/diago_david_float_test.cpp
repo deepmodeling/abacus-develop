@@ -3,6 +3,7 @@
 #include"module_hamilt_pw/hamilt_pwdft/hamilt_pw.h"
 #include"diago_mock.h"
 #include "module_psi/psi.h"
+#include <algorithm>
 #include"gtest/gtest.h"
 #include "module_base/inverse_matrix.h"
 #include "module_base/lapack_connector.h"
@@ -119,10 +120,12 @@ public:
                         hpsi_info info(&psi_iter_wrapper, bands_range, hpsi_out);
                         phm->ops->hPsi(info);
                     };
-        auto spsi_func = [phm](const std::complex<float>* psi_in,
-                               std::complex<float>* spsi_out,
-                               const int ld_psi,
-                               const int nbands) { phm->sPsi(psi_in, spsi_out, ld_psi, ld_psi, nbands); };
+        auto spsi_func = [](const std::complex<float>* psi_in,
+                            std::complex<float>* spsi_out,
+                            const int ld_psi,
+                            const int nbands) {
+            std::copy(psi_in, psi_in + nbands * ld_psi, spsi_out);
+        };
         std::vector<double> ethr_band(phi.get_nbands(), eps);
 		dav.diag(hpsi_func,spsi_func, ld_psi, phi.get_pointer(), en, ethr_band, maxiter);
 
