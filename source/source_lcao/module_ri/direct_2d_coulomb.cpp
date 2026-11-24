@@ -30,7 +30,7 @@
 // kz nodes come from a tan-mapped Gauss-Legendre rule; the singular Gamma
 // line is replaced by an in-plane cell quadrature constrained to the Massidda
 // 1/q cell average. The route is opt-in
-// (out_v2d_method = direct_mixed_fourier) and converges in the
+// (exx_v2d_method = direct_mixed_fourier) and converges in the
 // reciprocal cutoff plus two quadrature orders rather than cutoff alone.
 namespace Direct2dCoulomb
 {

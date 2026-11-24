@@ -14,7 +14,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-TOOLS = Path(__file__).resolve().parent / "validation_tools"
+TOOLS = Path(__file__).resolve().parent.parent / "integrate" / "validation_tools"
 sys.path.insert(0, str(TOOLS))
 
 from check_librpa_producer import ProducerContractError, check_manifest  # noqa: E402

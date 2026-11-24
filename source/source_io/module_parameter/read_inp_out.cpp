@@ -1729,7 +1729,7 @@ If EXX(exact exchange) is calculated (i.e. dft_fuctional==hse/hf/pbe0/scan0 or r
         this->add_item(item);
     }
     {
-        Input_Item item("out_v2d_method");
+        Input_Item item("exx_v2d_method");
         item.annotation = "strict-2D full Coulomb construction used by LibRPA reader-v1 output";
         item.category = "Output information";
         item.type = "String";
@@ -1739,9 +1739,9 @@ If EXX(exact exchange) is calculated (i.e. dft_fuctional==hse/hf/pbe0/scan0 or r
         item.default_value = "ewald";
         item.unit = "";
         item.set_availability("basis_type==lcao and rpa==true and out_librpa_ver==1 and exx_ewald_dimension==2");
-        read_sync_string(input.out_v2d_method);
+        read_sync_string(input.exx_v2d_method);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            const auto& method = para.input.out_v2d_method;
+            const auto& method = para.input.exx_v2d_method;
             if (method != "ewald" && method != "direct_mixed_fourier")
             {
                 ModuleBase::WARNING_QUIT("ReadInput",
@@ -1757,16 +1757,16 @@ If EXX(exact exchange) is calculated (i.e. dft_fuctional==hse/hf/pbe0/scan0 or r
                         item.label + "=direct_mixed_fourier requires rpa=1, "
                                      "out_librpa_ver=1, and exx_ewald_dimension=2.");
                 }
-                if (!(para.input.out_v2d_ecut > 0.0)
-                    || para.input.out_v2d_kz <= 0
-                    || para.input.out_v2d_gamma <= 0
-                    || para.input.out_v2d_gamma % 2 != 0)
+                if (!(para.input.exx_v2d_ecut > 0.0)
+                    || para.input.exx_v2d_kz <= 0
+                    || para.input.exx_v2d_gamma <= 0
+                    || para.input.exx_v2d_gamma % 2 != 0)
                 {
                     ModuleBase::WARNING_QUIT(
                         "ReadInput",
-                        item.label + "=direct_mixed_fourier requires positive out_v2d_ecut, "
-                                     "positive out_v2d_kz, and a positive even "
-                                     "out_v2d_gamma.");
+                        item.label + "=direct_mixed_fourier requires positive exx_v2d_ecut, "
+                                     "positive exx_v2d_kz, and a positive even "
+                                     "exx_v2d_gamma.");
                 }
             }
         };
@@ -1775,22 +1775,22 @@ If EXX(exact exchange) is calculated (i.e. dft_fuctional==hse/hf/pbe0/scan0 or r
     {
     }
     {
-        Input_Item item("out_v2d_ecut");
+        Input_Item item("exx_v2d_ecut");
         item.annotation = "reciprocal cutoff for direct mixed-Fourier strict-2D Coulomb output";
         item.category = "Output information";
         item.type = "Real";
-        item.description = "Reciprocal cutoff in Ry for out_v2d_method=direct_mixed_fourier. "
+        item.description = "Reciprocal cutoff in Ry for exx_v2d_method=direct_mixed_fourier. "
                            "This value must be converged for each auxiliary basis.";
         item.default_value = "0";
         item.unit = "Ry";
-        item.set_availability("basis_type==lcao and rpa==true and out_librpa_ver==1 and exx_ewald_dimension==2 and out_v2d_method==direct_mixed_fourier");
-        read_sync_double(input.out_v2d_ecut);
+        item.set_availability("basis_type==lcao and rpa==true and out_librpa_ver==1 and exx_ewald_dimension==2 and exx_v2d_method==direct_mixed_fourier");
+        read_sync_double(input.exx_v2d_ecut);
         this->add_item(item);
     }
     {
     }
     {
-        Input_Item item("out_v2d_kz");
+        Input_Item item("exx_v2d_kz");
         item.annotation = "kz quadrature order for direct mixed-Fourier strict-2D Coulomb output";
         item.category = "Output information";
         item.type = "Integer";
@@ -1798,14 +1798,14 @@ If EXX(exact exchange) is calculated (i.e. dft_fuctional==hse/hf/pbe0/scan0 or r
                            "It must be converged independently of the reciprocal cutoff.";
         item.default_value = "0";
         item.unit = "";
-        item.set_availability("basis_type==lcao and rpa==true and out_librpa_ver==1 and exx_ewald_dimension==2 and out_v2d_method==direct_mixed_fourier");
-        read_sync_int(input.out_v2d_kz);
+        item.set_availability("basis_type==lcao and rpa==true and out_librpa_ver==1 and exx_ewald_dimension==2 and exx_v2d_method==direct_mixed_fourier");
+        read_sync_int(input.exx_v2d_kz);
         this->add_item(item);
     }
     {
     }
     {
-        Input_Item item("out_v2d_gamma");
+        Input_Item item("exx_v2d_gamma");
         item.annotation = "Gamma-plane quadrature order for direct mixed-Fourier strict-2D Coulomb output";
         item.category = "Output information";
         item.type = "Integer";
@@ -1814,14 +1814,14 @@ If EXX(exact exchange) is calculated (i.e. dft_fuctional==hse/hf/pbe0/scan0 or r
                            "reciprocal cutoff.";
         item.default_value = "8";
         item.unit = "";
-        item.set_availability("basis_type==lcao and rpa==true and out_librpa_ver==1 and exx_ewald_dimension==2 and out_v2d_method==direct_mixed_fourier");
-        read_sync_int(input.out_v2d_gamma);
+        item.set_availability("basis_type==lcao and rpa==true and out_librpa_ver==1 and exx_ewald_dimension==2 and exx_v2d_method==direct_mixed_fourier");
+        read_sync_int(input.exx_v2d_gamma);
         this->add_item(item);
     }
     {
     }
     {
-        Input_Item item("out_v3d_method");
+        Input_Item item("exx_v3d_method");
         item.annotation = "3D full Coulomb construction used by LibRPA reader-v1 output";
         item.category = "Output information";
         item.type = "String";
@@ -1831,9 +1831,9 @@ If EXX(exact exchange) is calculated (i.e. dft_fuctional==hse/hf/pbe0/scan0 or r
         item.default_value = "ewald";
         item.unit = "";
         item.set_availability("basis_type==lcao and rpa==true and out_librpa_ver==1 and exx_ewald_dimension==3");
-        read_sync_string(input.out_v3d_method);
+        read_sync_string(input.exx_v3d_method);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            const auto& method = para.input.out_v3d_method;
+            const auto& method = para.input.exx_v3d_method;
             if (method != "ewald" && method != "direct_reciprocal")
             {
                 ModuleBase::WARNING_QUIT("ReadInput",
@@ -1849,11 +1849,11 @@ If EXX(exact exchange) is calculated (i.e. dft_fuctional==hse/hf/pbe0/scan0 or r
                         item.label + "=direct_reciprocal requires rpa=1, "
                                      "out_librpa_ver=1, and exx_ewald_dimension=3.");
                 }
-                if (!(para.input.out_v3d_ecut > 0.0))
+                if (!(para.input.exx_v3d_ecut > 0.0))
                 {
                     ModuleBase::WARNING_QUIT(
                         "ReadInput",
-                        item.label + "=direct_reciprocal requires positive out_v3d_ecut.");
+                        item.label + "=direct_reciprocal requires positive exx_v3d_ecut.");
                 }
             }
         };
@@ -1862,17 +1862,17 @@ If EXX(exact exchange) is calculated (i.e. dft_fuctional==hse/hf/pbe0/scan0 or r
     {
     }
     {
-        Input_Item item("out_v3d_ecut");
+        Input_Item item("exx_v3d_ecut");
         item.annotation = "reciprocal cutoff for direct 3D Coulomb output";
         item.category = "Output information";
         item.type = "Real";
         item.description = "Reciprocal cutoff in Ry for "
-                           "out_v3d_method=direct_reciprocal. "
+                           "exx_v3d_method=direct_reciprocal. "
                            "This value must be converged for each auxiliary basis.";
         item.default_value = "0";
         item.unit = "Ry";
-        item.set_availability("basis_type==lcao and rpa==true and out_librpa_ver==1 and exx_ewald_dimension==3 and out_v3d_method==direct_reciprocal");
-        read_sync_double(input.out_v3d_ecut);
+        item.set_availability("basis_type==lcao and rpa==true and out_librpa_ver==1 and exx_ewald_dimension==3 and exx_v3d_method==direct_reciprocal");
+        read_sync_double(input.exx_v3d_ecut);
         this->add_item(item);
     }
     {

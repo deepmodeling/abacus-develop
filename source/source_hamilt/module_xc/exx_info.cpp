@@ -244,7 +244,7 @@ bool init_exx_info(Exx_Info& exx_info, const Input_para& inp)
         exx_info.info_ri.C_threshold = inp.exx_c_threshold;
         exx_info.info_ri.V_threshold = inp.exx_v_threshold;
         exx_info.info_ri.V_threshold_long = inp.exx_v_long_thr;
-        exx_info.info_ri.V_cd_threshold = inp.exx_vcd_threshold;
+        exx_info.info_ri.V_cd_threshold = inp.exx_vcd_thr;
         exx_info.info_ri.V_cd_stats_only = inp.exx_vcd_stats;
         exx_info.info_ri.V_cd_short_only = inp.exx_vcd_short;
         exx_info.info_ri.dm_threshold = inp.exx_dm_threshold;

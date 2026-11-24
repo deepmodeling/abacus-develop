@@ -296,7 +296,7 @@ void ReadInput::item_exx()
         this->add_item(item);
     }
     {
-        Input_Item item("exx_vcd_threshold");
+        Input_Item item("exx_vcd_thr");
         item.annotation = "dynamic C/D-weighted threshold for merged-short EXX";
         item.category = "Exact Exchange (LCAO)";
         item.type = "Real";
@@ -304,7 +304,7 @@ void ReadInput::item_exx()
             = "Optional second-stage screen applied during EXX short-channel contractions. A positive value enables dynamic path screening using current-step C/D/V block magnitudes. Non-positive values disable this feature and preserve the current behavior.";
         item.default_value = "-1";
         item.unit = "";
-        read_sync_double(input.exx_vcd_threshold);
+        read_sync_double(input.exx_vcd_thr);
         this->add_item(item);
     }
     {

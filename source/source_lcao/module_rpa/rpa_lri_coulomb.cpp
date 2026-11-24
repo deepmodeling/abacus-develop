@@ -196,9 +196,9 @@ void RPA_LRI<T, Tdata>::output_ewald_coulomb(const UnitCell& ucell, const K_Vect
     };
 
     const bool use_direct_2d_coulomb
-        = this->runtime.input.out_v2d_method == "direct_mixed_fourier";
+        = this->runtime.input.exx_v2d_method == "direct_mixed_fourier";
     const bool use_direct_3d_coulomb
-        = this->runtime.input.out_v3d_method == "direct_reciprocal";
+        = this->runtime.input.exx_v3d_method == "direct_reciprocal";
     if (use_direct_2d_coulomb || use_direct_3d_coulomb)
     {
         if (this->runtime.input.out_librpa_ver != 1)
@@ -227,16 +227,16 @@ void RPA_LRI<T, Tdata>::output_ewald_coulomb(const UnitCell& ucell, const K_Vect
         {
             ewald_object->second.evq.output_direct_2d_coulomb(
                 ucell,
-                this->runtime.input.out_v2d_ecut,
-                this->runtime.input.out_v2d_kz,
-                this->runtime.input.out_v2d_gamma,
+                this->runtime.input.exx_v2d_ecut,
+                this->runtime.input.exx_v2d_kz,
+                this->runtime.input.exx_v2d_gamma,
                 this->runtime.input.rpa_outdir);
             write_strict_2d_coulomb_head_sidecar();
         }
         else
         {
             ewald_object->second.evq.output_direct_3d_coulomb(
-                ucell, this->runtime.input.out_v3d_ecut, this->runtime.input.rpa_outdir);
+                ucell, this->runtime.input.exx_v3d_ecut, this->runtime.input.rpa_outdir);
         }
 
         exx_full_coulomb.reset();
