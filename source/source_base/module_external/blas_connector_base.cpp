@@ -27,51 +27,27 @@ namespace BlasUtils{
     }
 
 
-    cublasOperation_t judge_trans(bool is_complex, const char& trans, const char* name)
+    cublasOperation_t judge_trans(bool is_complex, const char& trans, const char*)
     {
-        if (trans == 'N')
-        {
-            return CUBLAS_OP_N;
-        }
-        else if(trans == 'T')
-        {
-            return CUBLAS_OP_T;
-        }
-        else if(is_complex && trans == 'C')
-        {
-            return CUBLAS_OP_C;
-        }
-        return CUBLAS_OP_N;
+        return GetCublasOperation(trans, is_complex);
     }
 
-    cublasSideMode_t judge_side(const char& trans)
+    cublasSideMode_t judge_side(const char& side)
     {
-        if (trans == 'L')
+        if (side == 'L' || side == 'l')
         {
             return CUBLAS_SIDE_LEFT;
         }
-        else if (trans == 'R')
+        else if (side == 'R' || side == 'r')
         {
             return CUBLAS_SIDE_RIGHT;
         }
-        return CUBLAS_SIDE_LEFT;
+        throw std::invalid_argument(std::string("Invalid BLAS side: ") + side);
     }
 
-    cublasFillMode_t judge_fill(const char& trans)
+    cublasFillMode_t judge_fill(const char& uplo)
     {
-        if (trans == 'F')
-        {
-            return CUBLAS_FILL_MODE_FULL;
-        }
-        else if (trans == 'U')
-        {
-            return CUBLAS_FILL_MODE_UPPER;
-        }
-        else if (trans == 'D')
-        {
-            return CUBLAS_FILL_MODE_LOWER;
-        }
-        return CUBLAS_FILL_MODE_FULL;
+        return cublas_fill_mode(uplo);
     }
 
 } // namespace BlasUtils

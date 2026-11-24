@@ -126,19 +126,7 @@ run_cube_props() {
       echo "Can't find file $full_path"
       exit 1
     fi
-    awk 'BEGIN {max=0;read=0;band=1}
-	{
-		if(read==0 && $2 == "Band" && $3 == band){read=1}
-		else if(read==1 && $2 == "Band" && $3 == band)
-			{printf"Max_wfc_%d %.4f\n",band,max;read =0;band+=1;max=0}
-		else if(read==1)
-			{
-				for(i=1;i<=NF;i++)
-				{
-					if(sqrt($i*$i)>max) {max=sqrt($i*$i)}
-				}
-			}
-	}' "$full_path" >>"$props_result_file"
+    python3 "$PROPS_TOOLS_DIR/collect_wfc_props.py" "$full_path" >>"$props_result_file" || exit 1
   fi
 
   #--------------------------------------------

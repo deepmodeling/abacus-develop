@@ -1,1 +1,1 @@
-GPU version / test the output of wfc_pw, and verify the maximum absolute coefficient
+Check the norms and phase-invariant fingerprints of the bands in wfk1_pw.txt.
