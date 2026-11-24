@@ -42,6 +42,7 @@ void ReadInput::item_elec_stru()
         item.domain.add_requirement("basis_type==lcao", "ks_solver in [genelpa, elpa, lapack, scalapack_gvx, cusolver, cusolvermp, pexsi]");
         item.domain.add_requirement("ks_solver==ppcg", "esolver_type!=sdft");
         item.domain.add_requirement("ks_solver==ppcg", "calculation!=nscf");
+        item.domain.add_requirement("ks_solver==ppcg", "device==cpu");
         item.domain.add_requirement("ks_solver==genelpa", "device==cpu");
         item.annotation = "cg; dav; bpcg; dav_subspace; ppcg; lapack; genelpa; elpa; scalapack_gvx; cusolver";
         item.category = "Electronic structure";
@@ -53,7 +54,7 @@ For plane-wave basis,
 * cg: The conjugate-gradient (CG) method.
 * dav: The Davidson algorithm.
 * dav_subspace: The Davidson algorithm without orthogonalization operation, this method is the most recommended for efficiency. `pw_diag_ndim` can be set to 2 for this method.
-* ppcg: The projection preconditioned conjugate-gradient method. It is optimized and validated for CPU plane-wave calculations; non-CPU devices use a transitional host/device bridge. It is not supported for calculation=nscf or esolver_type=sdft, including mixed stochastic-deterministic calculations.
+* ppcg: The projection preconditioned conjugate-gradient method. It supports CPU plane-wave calculations. GPU execution is not supported. It is not supported for calculation=nscf or esolver_type=sdft, including mixed stochastic-deterministic calculations.
 * bpcg: The BPCG method, which is a block-parallel Conjugate Gradient (CG) method, typically exhibits higher acceleration in a GPU environment. The BPCG method is currently under testing and is not recommended for use.
 
 For numerical atomic orbitals basis,

@@ -19,10 +19,10 @@
 #include <algorithm>
 #include <cmath>
 #include <exception>
-#include <functional>
 #include <iostream>
 #include <ostream>
 #include <sstream>
+#include <stdexcept>
 #include <type_traits>
 #include <vector>
 
@@ -93,106 +93,9 @@ PPCGRunResult run_ppcg_pw(const HSOperator<T, Device>& op,
                           std::ostream& log,
                           std::false_type)
 {
-    const int sbsize = std::max(1, std::min(nband, pw_diag_ndim));
-    const int rr_step_safe = std::max(1, rr_step);
-    const bool valid_dimensions = ppcg_workspace_dimensions_valid(ld_psi, nband, dim, sbsize);
-    int invalid_dimensions = valid_dimensions ? 0 : 1;
-    Parallel_Reduce::reduce_pool(&invalid_dimensions, 1);
-    if (invalid_dimensions != 0)
-    {
-        ModuleBase::WARNING_QUIT("PPCG GPU bridge", "Invalid or oversized workspace dimensions on a pool rank.");
-    }
-    const int nelem = ld_psi * nband;
-    const Real solver_diag_thr = static_cast<Real>(diag_thr);
-    struct DeviceBuffer
-    {
-        T* ptr = nullptr;
-        explicit DeviceBuffer(const int size)
-        {
-            base_device::memory::resize_memory_op<T, Device>()(ptr, size, "PPCG device bridge");
-        }
-        ~DeviceBuffer()
-        {
-            if (ptr != nullptr)
-            {
-                base_device::memory::delete_memory_op<T, Device>()(ptr);
-            }
-        }
-        DeviceBuffer(const DeviceBuffer&) = delete;
-        DeviceBuffer& operator=(const DeviceBuffer&) = delete;
-    };
-    std::vector<T> psi_host(nelem, T(0));
-    T* psi_host_ptr = psi_host.data();
-    base_device::memory::synchronize_memory_op<T, base_device::DEVICE_CPU, Device>()(psi_host_ptr, psi, nelem);
-    DeviceBuffer psi_dev(nelem);
-    DeviceBuffer out_dev(nelem);
-    const auto copy_to_device = [&](T* host_ptr, const int ld, const int nvec) {
-        int invalid_block = ld <= 0 || nvec <= 0 || nvec > nelem / ld ? 1 : 0;
-        Parallel_Reduce::reduce_pool(&invalid_block, 1);
-        if (invalid_block != 0)
-        {
-            ModuleBase::WARNING_QUIT("PPCG GPU bridge", "Input block exceeds allocated workspace on a pool rank.");
-        }
-        const int count = ld * nvec;
-        base_device::memory::synchronize_memory_op<T, Device, base_device::DEVICE_CPU>()(
-            psi_dev.ptr, host_ptr, count);
-    };
-    const auto copy_from_device = [&](T* host_ptr, const int ld, const int nvec) {
-        int invalid_block = ld <= 0 || nvec <= 0 || nvec > nelem / ld ? 1 : 0;
-        Parallel_Reduce::reduce_pool(&invalid_block, 1);
-        if (invalid_block != 0)
-        {
-            ModuleBase::WARNING_QUIT("PPCG GPU bridge", "Output block exceeds allocated workspace on a pool rank.");
-        }
-        const int count = ld * nvec;
-        base_device::memory::synchronize_memory_op<T, base_device::DEVICE_CPU, Device>()(
-            host_ptr, out_dev.ptr, count);
-    };
-    const auto bridge_hpsi = [&](T* psi_in, T* hpsi_out, const int ld, const int nvec) {
-        copy_to_device(psi_in, ld, nvec);
-        op.hpsi(psi_dev.ptr, out_dev.ptr, ld, nvec);
-        copy_from_device(hpsi_out, ld, nvec);
-    };
-    const auto bridge_spsi = [&](T* psi_in, T* spsi_out, const int ld, const int nvec) {
-        copy_to_device(psi_in, ld, nvec);
-        op.spsi(psi_dev.ptr, out_dev.ptr, ld, nvec);
-        copy_from_device(spsi_out, ld, nvec);
-    };
-    struct HostOperator : HSOperator<T, base_device::DEVICE_CPU>
-    {
-        using Function = std::function<void(T*, T*, int, int)>;
-        HostOperator(const Function& h, const Function& overlap) : h_(h), s_(overlap) {}
-        void update_k(const int) override {}
-        void hpsi(const T* in, T* out, const int ld, const int nvec) const override
-        {
-            h_(const_cast<T*>(in), out, ld, nvec);
-        }
-        void spsi(const T* in, T* out, const int ld, const int nvec) const override
-        {
-            s_(const_cast<T*>(in), out, ld, nvec);
-        }
-        Function h_;
-        Function s_;
-    };
-    const HostOperator host_operator(bridge_hpsi, bridge_spsi);
-    DiagoPPCG<T, base_device::DEVICE_CPU> ppcg(solver_diag_thr, diag_iter_max, sbsize, rr_step_safe);
-    PPCGRunResult result;
-    result.average_iterations = ppcg.diag(host_operator,
-                                          ld_psi,
-                                          nband,
-                                          dim,
-                                          psi_host_ptr,
-                                          eigenvalue,
-                                          ethr_band,
-                                          pre_condition,
-                                          log);
-    result.converged = ppcg.converged();
-    result.active_band_count = ppcg.active_band_count();
-    result.iteration_limit_reached = ppcg.iteration_limit_reached();
-    result.max_residual = double(ppcg.max_residual());
-    base_device::memory::synchronize_memory_op<T, Device, base_device::DEVICE_CPU>()(psi, psi_host_ptr, nelem);
-    return result;
+    throw std::invalid_argument("PPCG is supported only on CPU. Select a GPU-native solver for device=gpu.");
 }
+
 } // namespace
 
 template <typename T, typename Device>

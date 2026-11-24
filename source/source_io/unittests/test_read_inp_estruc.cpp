@@ -81,6 +81,32 @@ TEST_F(PPCGInputTest, ReadsPositiveRitzInterval)
     EXPECT_EQ(input.inp.ppcg_rr_step, 4);
 }
 
+TEST_F(PPCGInputTest, RejectsGpuWithoutHostDeviceFallback)
+{
+    // Exercise the registered support rule without requiring a GPU runtime.
+    // A CPU-only reader rejects GPU hardware before checking dependencies.
+    ModuleIO::ReadInput reader(0);
+    ModuleIO::InputValues values = {
+        {"basis_type", ModuleIO::InputValue(std::string("pw"))},
+        {"ks_solver", ModuleIO::InputValue(std::string("ppcg"))},
+        {"esolver_type", ModuleIO::InputValue(std::string("ksdft"))},
+        {"calculation", ModuleIO::InputValue(std::string("scf"))},
+        {"device", ModuleIO::InputValue(std::string("gpu"))}};
+    bool found_solver = false;
+    for (const auto& entry : reader.get_input_lists())
+    {
+        if (entry.first == "ks_solver")
+        {
+            found_solver = true;
+            const std::string rejected = entry.second.domain.validate_requirements(entry.first, values);
+            EXPECT_NE(rejected.find("device==cpu"), std::string::npos);
+            values["device"] = ModuleIO::InputValue(std::string("cpu"));
+            EXPECT_TRUE(entry.second.domain.validate_requirements(entry.first, values).empty());
+        }
+    }
+    EXPECT_TRUE(found_solver);
+}
+
 TEST_F(PPCGInputTest, RejectsNonpositiveRitzInterval)
 {
     for (const int interval : {0, -1})
