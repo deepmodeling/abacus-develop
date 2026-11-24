@@ -6,6 +6,7 @@
 #ifdef __DEEPKS
 
 #include "LCAO_deepks.h"
+#include "deepks_einsum.h"
 #include "LCAO_deepks_io.h" // mohan add 2024-07-22
 #include "module_base/blas_connector.h"
 #include "module_base/constants.h"
@@ -267,13 +268,13 @@ void LCAO_Deepks::cal_v_delta_precalc(const int nlocal,
         if constexpr (std::is_same<TK, double>::value)
         {
             v_delta_precalc_vector.push_back(
-                at::einsum("kxyamn, avmn->kxyav", {v_delta_pdm_shell_vector[nl], gevdm[nl]}));
+                deepks::einsum_kxyamn_avmn(v_delta_pdm_shell_vector[nl], gevdm[nl]));
         }
         else
         {
             torch::Tensor gevdm_complex = gevdm[nl].to(torch::kComplexDouble);
             v_delta_precalc_vector.push_back(
-                at::einsum("kxyamn, avmn->kxyav", {v_delta_pdm_shell_vector[nl], gevdm_complex}));
+                deepks::einsum_kxyamn_avmn(v_delta_pdm_shell_vector[nl], gevdm_complex));
         }
     }
 

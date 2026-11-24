@@ -6,6 +6,7 @@
 #ifdef __DEEPKS
 
 #include "LCAO_deepks.h"
+#include "deepks_einsum.h"
 #include "LCAO_deepks_io.h" // mohan add 2024-07-22
 #include "module_base/blas_connector.h"
 #include "module_base/constants.h"
@@ -85,7 +86,7 @@ void LCAO_Deepks::cal_gvx(const int nat, const std::vector<torch::Tensor>& gevdm
         std::vector<torch::Tensor> gvx_vector;
         for (int nl = 0; nl < nlmax; ++nl)
         {
-            gvx_vector.push_back(at::einsum("bxamn, avmn->bxav", {this->gdmr_vector[nl], gevdm[nl]}));
+            gvx_vector.push_back(deepks::einsum_bxamn_avmn(this->gdmr_vector[nl], gevdm[nl]));
         }
 
         // cat nv-> \sum_nl(nv) = \sum_nl(nm_nl)=des_per_atom
