@@ -43,6 +43,24 @@ out_wfc_pw 0
 out_chg 0
 ```
 
+### Source file discovery
+
+`read_file_dir` may point to an output directory produced with any
+`out_app_flag`; the source files do not have to be renamed. Fixed names take
+precedence:
+
+| Source directory content | File used |
+|---|---|
+| `eig_occ.txt`, `wfk*_pw.dat` | The fixed names (modes 0 and 1) |
+| Only numbered names | The latest written ionic step `g{step}`, and within it the latest electronic iteration `e{iter}`, for wavefunctions |
+
+When fixed names are absent, occupations are searched in `read_file_dir` and
+wavefunctions in `read_file_dir` followed by its `PSI/` subdirectory, which is
+where `out_app_flag 2` stores them. For a multi-step source the last written
+step is selected automatically; use a single-step SCF source when a specific
+snapshot is required. A fixed-name file produced with `out_app_flag 1` must
+contain a single SCF snapshot, since appended multi-frame files are rejected.
+
 Supports CPU/CUDA and `nspin 1/2`; use one MPI rank for CUDA. ACE, SOC,
 unscreened exchange, forces and stress are unsupported in this workflow.
 Set `symmetry -1`: input `0` is accepted but PW EXX resets it to `-1` at runtime.

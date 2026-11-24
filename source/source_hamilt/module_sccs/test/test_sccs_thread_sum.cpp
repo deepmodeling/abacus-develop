@@ -18,7 +18,7 @@ namespace
 // the other tests of the binary keep OMP_NUM_THREADS and OMP_DYNAMIC.
 class ThreadCount
 {
-public:
+  public:
     explicit ThreadCount(int count)
     {
 #ifdef _OPENMP
@@ -39,7 +39,7 @@ public:
 #endif
     }
 
-private:
+  private:
     int previous_ = 1;
     int previous_dynamic_ = 0;
 };
@@ -53,7 +53,8 @@ TEST(SccsThreadSum, UnevenSharesMatchTheSerialSumAndRepeat)
     const ThreadCount team(3);
     const std::size_t size = 1001;
     std::vector<int> owner(size, 0);
-    const auto add_terms = [&owner](std::size_t i, std::array<double, 2>& sum) {
+    const auto add_terms = [&owner](std::size_t i, std::array<double, 2> &sum)
+    {
 #ifdef _OPENMP
         owner[i] = omp_get_thread_num();
 #endif
@@ -87,7 +88,8 @@ TEST(SccsThreadSum, UnevenSharesMatchTheSerialSumAndRepeat)
 TEST(SccsThreadSum, ThreadsWithoutPointsAddZero)
 {
     const ThreadCount team(4);
-    const auto add_point = [](std::size_t i, std::array<double, 1>& sum) {
+    const auto add_point = [](std::size_t i, std::array<double, 1> &sum)
+    {
         const double index = static_cast<double>(i);
         sum[0] += 0.25 + index;
     };

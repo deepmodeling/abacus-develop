@@ -38,103 +38,62 @@ class BFGS_Basic
     //====================================================================
 
     /// @brief 3N coordinates of the system ( x )
-    std::vector<double>& get_pos()
-    {
-        return pos;
-    }
+    std::vector<double> &get_pos() { return pos; }
     /// @brief 3N components of ( grad( V(x) ) )
-    std::vector<double>& get_grad()
-    {
-        return grad;
-    }
+    std::vector<double> &get_grad() { return grad; }
     /// @brief the step taken, pos = pos_p + move
-    std::vector<double>& get_move()
-    {
-        return move;
-    }
+    std::vector<double> &get_move() { return move; }
     /// @brief coordinates of the previous step
-    std::vector<double>& get_pos_p()
-    {
-        return pos_p;
-    }
+    std::vector<double> &get_pos_p() { return pos_p; }
     /// @brief gradient of the previous step
-    std::vector<double>& get_grad_p()
-    {
-        return grad_p;
-    }
+    std::vector<double> &get_grad_p() { return grad_p; }
     /// @brief step taken at the previous step
-    std::vector<double>& get_move_p()
-    {
-        return move_p;
-    }
+    std::vector<double> &get_move_p() { return move_p; }
     /// @brief whether a bfgs state has been saved
-    bool& get_save_flag()
-    {
-        return save_flag;
-    }
+    bool &get_save_flag() { return save_flag; }
     /// @brief whether the trust radius already hit its minimum last step
-    bool& get_tr_min_hit()
-    {
-        return tr_min_hit;
-    }
+    bool &get_tr_min_hit() { return tr_min_hit; }
     /// @brief whether the Wolfe conditions were satisfied
-    bool& get_wolfe_flag()
-    {
-        return wolfe_flag;
-    }
+    bool &get_wolfe_flag() { return wolfe_flag; }
     /// @brief the inverse Hessian of the BFGS update
-    ModuleBase::matrix& get_inv_hess()
-    {
-        return inv_hess;
-    }
+    ModuleBase::matrix &get_inv_hess() { return inv_hess; }
     /// @brief number of previous steps kept by the BFGS update
-    int& get_bfgs_ndim()
-    {
-        return bfgs_ndim;
-    }
+    int &get_bfgs_ndim() { return bfgs_ndim; }
 
-    void allocate_basic_for_testing()
-    {
-        allocate_basic();
-    }
-    void new_step_for_testing(const double& lat0,
-                              int& update_iter,
-                              std::ofstream& ofs,
-                              std::vector<double>& etot_info,
-                              const int test_relax_method)
+    void allocate_basic_for_testing() { allocate_basic(); }
+    void new_step_for_testing(
+        const double &lat0,
+        int &update_iter,
+        std::ofstream &ofs,
+        std::vector<double> &etot_info,
+        const int test_relax_method)
     {
         new_step(lat0, update_iter, ofs, etot_info, test_relax_method);
     }
-    void reset_hessian_for_testing()
-    {
-        reset_hessian();
-    }
-    void save_bfgs_for_testing()
-    {
-        save_bfgs();
-    }
-    void update_inverse_hessian_for_testing(const double& lat0, std::ofstream& ofs)
+    void reset_hessian_for_testing() { reset_hessian(); }
+    void save_bfgs_for_testing() { save_bfgs(); }
+    void update_inverse_hessian_for_testing(const double &lat0, std::ofstream &ofs)
     {
         update_inverse_hessian(lat0, ofs);
     }
-    void check_wolfe_conditions_for_testing(std::ofstream& ofs, std::vector<double>& etot_info)
+    void check_wolfe_conditions_for_testing(std::ofstream &ofs, std::vector<double> &etot_info)
     {
         check_wolfe_conditions(ofs, etot_info);
     }
-    void compute_trust_radius_for_testing(std::ofstream& ofs,
-                                          std::vector<double>& etot_info,
-                                          const int test_relax_method)
+    void compute_trust_radius_for_testing(
+        std::ofstream &ofs, std::vector<double> &etot_info, const int test_relax_method)
     {
         compute_trust_radius(ofs, etot_info, test_relax_method);
     }
 
   protected:
     void allocate_basic(void);
-    void new_step(const double& lat0,
-                  int& update_iter,
-                  std::ofstream& ofs,
-                  std::vector<double>& etot_info,
-                  const int test_relax_method);
+    void new_step(
+        const double &lat0,
+        int &update_iter,
+        std::ofstream &ofs,
+        std::vector<double> &etot_info,
+        const int test_relax_method);
     void reset_hessian(void);
     void save_bfgs(void);
 
@@ -156,7 +115,7 @@ class BFGS_Basic
                              // to the minimum value at the previous step
 
     // mohan add 2010-07-27
-    double check_move(const double& lat0, const double& pos, const double& pos_p);
+    double check_move(const double &lat0, const double &pos, const double &pos_p);
 
   private:
     bool wolfe_flag = false;
@@ -164,9 +123,9 @@ class BFGS_Basic
 
     int bfgs_ndim;
 
-    void update_inverse_hessian(const double& lat0, std::ofstream& ofs);
-    void check_wolfe_conditions(std::ofstream& ofs, std::vector<double>& etot_info);
-    void compute_trust_radius(std::ofstream& ofs, std::vector<double>& etot_info, const int test_relax_method);
+    void update_inverse_hessian(const double &lat0, std::ofstream &ofs);
+    void check_wolfe_conditions(std::ofstream &ofs, std::vector<double> &etot_info);
+    void compute_trust_radius(std::ofstream &ofs, std::vector<double> &etot_info, const int test_relax_method);
 };
 
 #endif

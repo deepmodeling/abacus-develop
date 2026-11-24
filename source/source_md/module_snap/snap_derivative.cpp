@@ -17,96 +17,71 @@ struct Dual
     double value;
     double derivative;
 
-    Dual(const double value_in = 0.0, const double derivative_in = 0.0)
-        : value(value_in), derivative(derivative_in)
-    {
-    }
+    Dual(const double value_in = 0.0, const double derivative_in = 0.0) : value(value_in), derivative(derivative_in) {}
 };
 
-Dual operator+(const Dual& left, const Dual& right)
+Dual operator+(const Dual &left, const Dual &right)
 {
     return Dual(left.value + right.value, left.derivative + right.derivative);
 }
 
-Dual operator-(const Dual& left, const Dual& right)
+Dual operator-(const Dual &left, const Dual &right)
 {
     return Dual(left.value - right.value, left.derivative - right.derivative);
 }
 
-Dual operator-(const Dual& value)
+Dual operator-(const Dual &value) { return Dual(-value.value, -value.derivative); }
+
+Dual operator*(const Dual &left, const Dual &right)
 {
-    return Dual(-value.value, -value.derivative);
+    return Dual(left.value * right.value, left.derivative * right.value + left.value * right.derivative);
 }
 
-Dual operator*(const Dual& left, const Dual& right)
-{
-    return Dual(left.value * right.value,
-                left.derivative * right.value + left.value * right.derivative);
-}
-
-Dual operator/(const Dual& left, const Dual& right)
+Dual operator/(const Dual &left, const Dual &right)
 {
     const double inverse = 1.0 / right.value;
-    return Dual(left.value * inverse,
-                (left.derivative * right.value - left.value * right.derivative) * inverse * inverse);
+    return Dual(
+        left.value * inverse, (left.derivative * right.value - left.value * right.derivative) * inverse * inverse);
 }
 
-Dual operator+(const Dual& left, const double right)
-{
-    return left + Dual(right);
-}
+Dual operator+(const Dual &left, const double right) { return left + Dual(right); }
 
-Dual operator-(const Dual& left, const double right)
-{
-    return left - Dual(right);
-}
+Dual operator-(const Dual &left, const double right) { return left - Dual(right); }
 
-Dual operator*(const Dual& left, const double right)
-{
-    return left * Dual(right);
-}
+Dual operator*(const Dual &left, const double right) { return left * Dual(right); }
 
-Dual operator*(const double left, const Dual& right)
-{
-    return Dual(left) * right;
-}
+Dual operator*(const double left, const Dual &right) { return Dual(left) * right; }
 
-Dual operator/(const Dual& left, const double right)
-{
-    return left / Dual(right);
-}
+Dual operator/(const Dual &left, const double right) { return left / Dual(right); }
 
-Dual operator/(const double left, const Dual& right)
-{
-    return Dual(left) / right;
-}
+Dual operator/(const double left, const Dual &right) { return Dual(left) / right; }
 
-Dual& operator*=(Dual& left, const Dual& right)
+Dual &operator*=(Dual &left, const Dual &right)
 {
     left = left * right;
     return left;
 }
 
-Dual& operator+=(Dual& left, const Dual& right)
+Dual &operator+=(Dual &left, const Dual &right)
 {
     left = left + right;
     return left;
 }
 
-Dual dual_sqrt(const Dual& value)
+Dual dual_sqrt(const Dual &value)
 {
     const double root = std::sqrt(value.value);
     return Dual(root, value.derivative / (2.0 * root));
 }
 
-Dual dual_tan(const Dual& value)
+Dual dual_tan(const Dual &value)
 {
     const double cosine = std::cos(value.value);
     return Dual(std::tan(value.value), value.derivative / (cosine * cosine));
 }
-}
+} // namespace
 
-UWithDerivative DescriptorEvaluator::compute_u_with_derivative(const Neighbor& neighbor, const int direction) const
+UWithDerivative DescriptorEvaluator::compute_u_with_derivative(const Neighbor &neighbor, const int direction) const
 {
     if (direction < 0 || direction > 2)
     {
@@ -144,15 +119,15 @@ UWithDerivative DescriptorEvaluator::compute_u_with_derivative(const Neighbor& n
     const double scale_derivative = switch_value.derivative * distance.derivative * neighbor.weight;
     const Dual scale(scale_value, scale_derivative);
 
-    const Dual theta0 = (distance - parameters_.rmin) * parameters_.rfac0 * ModuleBase::PI
-                        / (cutoff_radius - parameters_.rmin);
+    const Dual theta0 =
+        (distance - parameters_.rmin) * parameters_.rfac0 * ModuleBase::PI / (cutoff_radius - parameters_.rmin);
     const Dual z0 = distance / dual_tan(theta0);
     const Dual r0inv = 1.0 / dual_sqrt(rsq + z0 * z0);
     const Dual ar = r0inv * z0;
     const Dual ai = -r0inv * z;
     const Dual br = r0inv * y;
     const Dual bi = -r0inv * x;
-    std::vector<std::complex<Dual> > raw(u_size_, std::complex<Dual>(Dual(0.0), Dual(0.0)));
+    std::vector<std::complex<Dual>> raw(u_size_, std::complex<Dual>(Dual(0.0), Dual(0.0)));
     raw[0] = std::complex<Dual>(Dual(1.0), Dual(0.0));
     const int dimension = parameters_.twojmax + 1;
     for (int j = 1; j <= parameters_.twojmax; ++j)
@@ -164,8 +139,8 @@ UWithDerivative DescriptorEvaluator::compute_u_with_derivative(const Neighbor& n
             {
                 const std::size_t current = u_index(j, ma, mb);
                 const std::size_t previous = u_index(j - 1, ma, mb);
-                const double first_root = root_factors_[static_cast<std::size_t>((j - ma) * dimension + (j - mb))];
-                const double second_root = root_factors_[static_cast<std::size_t>((ma + 1) * dimension + (j - mb))];
+                const double first_root = root_factors_[(j - ma) * dimension + (j - mb)];
+                const double second_root = root_factors_[(ma + 1) * dimension + (j - mb)];
                 raw[current] += Dual(first_root) * std::complex<Dual>(ar, -ai) * raw[previous];
                 raw[current + 1] = Dual(-second_root) * std::complex<Dual>(br, -bi) * raw[previous];
             }

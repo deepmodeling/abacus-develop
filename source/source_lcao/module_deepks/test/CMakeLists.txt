@@ -38,6 +38,7 @@ set(DEEPKS_UNIT_COMMON_SOURCES
     ../../../source_cell/sep_cell.cpp
     ../../../source_cell/soc.cpp
     ../../../source_cell/read_pp_ucell.cpp
+    ../../../source_cell/ucell_io.cpp
     ../../../source_estate/param_update.cpp
     ../../../source_cell/cal_wfc.cpp
     ../../../source_cell/read_orb.cpp

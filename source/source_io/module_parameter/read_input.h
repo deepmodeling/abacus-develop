@@ -95,6 +95,15 @@ class ReadInput
      */
     void normalize_out_eband_alias(Parameter& param);
     /**
+     * @brief Resolve out_freq_td, the legacy RT-TDDFT alias of out_freq_ion.
+     *
+     * This is called after all INPUT values have been read so that the result
+     * does not depend on the order of keywords in the INPUT file.
+     *
+     * @param param parameters of ABACUS
+     */
+    void normalize_td_output_frequency(Parameter& param);
+    /**
      * @brief write INPUT file of txt format
      *
      * @param param parameters of ABACUS

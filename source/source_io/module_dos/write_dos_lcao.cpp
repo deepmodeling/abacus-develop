@@ -2,6 +2,8 @@
 #include "cal_dos.h"
 #include "cal_pdos_gamma.h"
 #include "cal_pdos_multik.h"
+#include "source_base/global_variable.h"
+#include "source_io/module_output/write_notice.h"
 
 namespace ModuleIO
 {
@@ -87,6 +89,11 @@ void write_dos_lcao(
                 istep,
                 out_app_flag,
                 bndpar);
+
+        if (GlobalV::MY_RANK == 0)
+        {
+            ModuleIO::write_notice(ofs_running, "DOS", is, nspin, ss.str());
+        }
     }
 
 
@@ -107,9 +114,10 @@ void write_dos_lcao(
             out_app_flag,
             nlocal,
             nspin,
-            global_out_dir);
+            global_out_dir,
+            ofs_running);
 
-    ofs_running << " #DOS CALCULATION ENDS# " << std::endl;
+    ofs_running << " #DOS CALCULATION ENDS#" << std::endl;
 
     return;
 }

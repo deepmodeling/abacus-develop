@@ -3,11 +3,15 @@
 #include "source_base/matrix.h"
 
 #include <algorithm>
+#include <cctype>
 #include <cmath>
 #include <cstdio>
+#include <dirent.h>
+#include <fstream>
 #include <sstream>
 #include <istream>
 #include <stdexcept>
+#include <string>
 
 namespace
 {
@@ -86,11 +90,23 @@ void pw::read_exx_source_occupations(std::istream& in,
         throw std::runtime_error("Invalid EXX source occupation dimensions");
     }
     std::string line;
-    std::getline(in, line);
-    std::getline(in, line);
-    std::getline(in, line);
     int saved_spin = 0;
-    if (std::sscanf(line.c_str(), " Spin number %d", &saved_spin) != 1 || saved_spin != nspin)
+    bool spin_found = false;
+    // The header may carry provenance comments and the ionic-step marker before
+    // the "Spin number" line, so scan until the spin line is located.
+    while (std::getline(in, line))
+    {
+        if (std::sscanf(line.c_str(), " Spin number %d", &saved_spin) == 1)
+        {
+            spin_found = true;
+            break;
+        }
+        if (line.find(" spin=") != std::string::npos)
+        {
+            break;
+        }
+    }
+    if (!spin_found || saved_spin != nspin)
     {
         throw std::runtime_error("Missing or incompatible EXX source eig_occ.txt");
     }
@@ -165,4 +181,190 @@ void pw::read_exx_source_occupations(std::istream& in,
     {
         throw std::runtime_error("Unexpected trailing EXX source eig_occ.txt data; use a single SCF snapshot");
     }
+}
+
+namespace
+{
+/**
+ * @brief Parse the optional "g{step}" and "e{iter}" tokens between the file
+ *        stem and the fixed suffix.
+ * @param tokens Candidate token string, e.g. "g2" or "g2e17".
+ * @param ionic_step Parsed one-based ionic step, or -1.
+ * @param electronic_step Parsed one-based electronic iteration, or -1.
+ * @return True when the token string is a valid g/e combination.
+ */
+bool parse_step_tokens(const std::string& tokens, int& ionic_step, int& electronic_step)
+{
+    ionic_step = -1;
+    electronic_step = -1;
+    if (tokens.empty() || tokens[0] != 'g')
+    {
+        return false;
+    }
+    size_t position = 1;
+    const size_t ionic_begin = position;
+    while (position < tokens.size()
+           && std::isdigit(static_cast<unsigned char>(tokens[position])) != 0)
+    {
+        ++position;
+    }
+    if (position == ionic_begin)
+    {
+        return false;
+    }
+    ionic_step = std::stoi(tokens.substr(ionic_begin, position - ionic_begin));
+    if (position == tokens.size())
+    {
+        return true;
+    }
+    if (tokens[position] != 'e')
+    {
+        return false;
+    }
+    ++position;
+    const size_t electronic_begin = position;
+    while (position < tokens.size()
+           && std::isdigit(static_cast<unsigned char>(tokens[position])) != 0)
+    {
+        ++position;
+    }
+    if (position == electronic_begin || position != tokens.size())
+    {
+        return false;
+    }
+    electronic_step = std::stoi(tokens.substr(electronic_begin, position - electronic_begin));
+    return true;
+}
+
+/**
+ * @brief Find one source file inside a single directory.
+ * @return Full path, or an empty string when no candidate exists.
+ */
+std::string find_in_directory(const std::string& directory,
+                              const std::string& fixed_name,
+                              const std::string& tail,
+                              const bool allow_electronic_suffix,
+                              int* ionic_step,
+                              int* electronic_step)
+{
+    const std::string fixed_path = directory + fixed_name;
+    std::ifstream fixed_stream(fixed_path.c_str(), std::ios::binary);
+    if (fixed_stream.is_open())
+    {
+        if (ionic_step != nullptr)
+        {
+            *ionic_step = -1;
+        }
+        if (electronic_step != nullptr)
+        {
+            *electronic_step = -1;
+        }
+        return fixed_path;
+    }
+
+    const std::string stem = fixed_name.substr(0, fixed_name.size() - tail.size());
+    DIR* directory_stream = opendir(directory.c_str());
+    if (directory_stream == nullptr)
+    {
+        return std::string();
+    }
+
+    std::string best_name;
+    int best_ionic_step = -1;
+    int best_electronic_step = -1;
+    while (const dirent* entry = readdir(directory_stream))
+    {
+        const std::string name(entry->d_name);
+        const size_t minimum_size = stem.size() + tail.size() + 2; // at least "g1"
+        if (name.size() < minimum_size)
+        {
+            continue;
+        }
+        if (name.compare(0, stem.size(), stem) != 0)
+        {
+            continue;
+        }
+        if (name.compare(name.size() - tail.size(), tail.size(), tail) != 0)
+        {
+            continue;
+        }
+        const std::string tokens = name.substr(stem.size(),
+                                               name.size() - stem.size() - tail.size());
+        int ionic_step = -1;
+        int electronic_step = -1;
+        if (!parse_step_tokens(tokens, ionic_step, electronic_step))
+        {
+            continue;
+        }
+        if (ionic_step < 1)
+        {
+            continue;
+        }
+        if (!allow_electronic_suffix && electronic_step >= 0)
+        {
+            continue;
+        }
+        if (ionic_step > best_ionic_step
+            || (ionic_step == best_ionic_step && electronic_step > best_electronic_step))
+        {
+            best_ionic_step = ionic_step;
+            best_electronic_step = electronic_step;
+            best_name = name;
+        }
+    }
+    closedir(directory_stream);
+
+    if (best_name.empty())
+    {
+        return std::string();
+    }
+    if (ionic_step != nullptr)
+    {
+        *ionic_step = best_ionic_step;
+    }
+    if (electronic_step != nullptr)
+    {
+        *electronic_step = best_electronic_step;
+    }
+    return directory + best_name;
+}
+} // namespace
+
+std::string pw::resolve_source_file(const std::vector<std::string>& directories,
+                                    const std::string& fixed_name,
+                                    const std::string& tail,
+                                    const bool allow_electronic_suffix,
+                                    int* ionic_step,
+                                    int* electronic_step)
+{
+    if (directories.empty() || fixed_name.empty() || tail.empty())
+    {
+        throw std::runtime_error("Invalid EXX source file request");
+    }
+    if (fixed_name.size() <= tail.size()
+        || fixed_name.compare(fixed_name.size() - tail.size(), tail.size(), tail) != 0)
+    {
+        throw std::runtime_error("EXX source fixed name does not end with the expected suffix");
+    }
+
+    for (const auto& directory : directories)
+    {
+        if (directory.empty())
+        {
+            continue;
+        }
+        const std::string found = find_in_directory(directory,
+                                                    fixed_name,
+                                                    tail,
+                                                    allow_electronic_suffix,
+                                                    ionic_step,
+                                                    electronic_step);
+        if (!found.empty())
+        {
+            return found;
+        }
+    }
+
+    throw std::runtime_error("Missing or incompatible EXX source file: " + fixed_name
+                             + " (expected the fixed name or a g{step} variant)");
 }

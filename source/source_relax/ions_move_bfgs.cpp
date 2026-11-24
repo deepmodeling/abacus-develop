@@ -58,14 +58,15 @@ void Ions_Move_BFGS::reset()
     Ions_Move_Basic::trust_radius_old = 0.0;
 }
 
-bool Ions_Move_BFGS::start(UnitCell& ucell,
-                           const ModuleBase::matrix& force,
-                           const double& energy_in,
-                           const int istep,
-                           int& update_iter,
-                           std::ofstream& ofs,
-                           std::vector<double>& etot_info,
-                           const Relax_Criteria& criteria)
+bool Ions_Move_BFGS::start(
+    UnitCell &ucell,
+    const ModuleBase::matrix &force,
+    const double &energy_in,
+    const int istep,
+    int &update_iter,
+    std::ofstream &ofs,
+    std::vector<double> &etot_info,
+    const Relax_Criteria &criteria)
 {
     ModuleBase::TITLE("Ions_Move_BFGS", "start");
 
@@ -80,15 +81,9 @@ bool Ions_Move_BFGS::start(UnitCell& ucell,
         Ions_Move_Basic::setup_gradient(ucell, force, pos_tmp.data(), this->grad.data(), ofs);
     }
     Ions_Move_Basic::setup_etot(energy_in, istep, etot_info);
-    bool converged = Ions_Move_Basic::check_converged(ucell,
-                                                      this->grad.data(),
-                                                      update_iter,
-                                                      ofs,
-                                                      etot_info,
-                                                      criteria.force_thr,
-                                                      criteria.force_thr_ev,
-                                                      criteria.out_level,
-                                                      criteria.test_relax_method);
+    bool converged = Ions_Move_Basic::check_converged(
+        ucell, this->grad.data(), update_iter, ofs, etot_info, criteria.force_thr, criteria.force_thr_ev,
+        criteria.out_level, criteria.test_relax_method);
 
     if (converged)
     {
@@ -98,13 +93,8 @@ bool Ions_Move_BFGS::start(UnitCell& ucell,
     else
     {
         this->restart_bfgs(ucell.lat0, update_iter, ofs, criteria.test_relax_method);
-        this->bfgs_routine(ucell.lat0,
-                           istep,
-                           update_iter,
-                           ofs,
-                           etot_info,
-                           criteria.out_level,
-                           criteria.test_relax_method);
+        this->bfgs_routine(
+            ucell.lat0, istep, update_iter, ofs, etot_info, criteria.out_level, criteria.test_relax_method);
         this->save_bfgs();
 
         Ions_Move_Basic::move_atoms(ucell, move.data(), pos.data(), ofs, criteria.test_relax_method);
@@ -112,7 +102,11 @@ bool Ions_Move_BFGS::start(UnitCell& ucell,
     }
 }
 
-void Ions_Move_BFGS::restart_bfgs(const double& lat0, int& update_iter, std::ofstream& ofs, const int test_relax_method)
+void Ions_Move_BFGS::restart_bfgs(
+    const double &lat0,
+    int &update_iter,
+    std::ofstream &ofs,
+    const int test_relax_method)
 {
     ModuleBase::TITLE("Ions_Move_BFGS", "restart_bfgs");
 
@@ -188,13 +182,14 @@ void Ions_Move_BFGS::restart_bfgs(const double& lat0, int& update_iter, std::ofs
     return;
 }
 
-void Ions_Move_BFGS::bfgs_routine(const double& lat0,
-                                  const int istep,
-                                  int& update_iter,
-                                  std::ofstream& ofs,
-                                  std::vector<double>& etot_info,
-                                  const std::string& out_level,
-                                  const int test_relax_method)
+void Ions_Move_BFGS::bfgs_routine(
+    const double &lat0,
+    const int istep,
+    int &update_iter,
+    std::ofstream &ofs,
+    std::vector<double> &etot_info,
+    const std::string &out_level,
+    const int test_relax_method)
 {
     ModuleBase::TITLE("Ions_Move_BFGS", "bfgs_routine");
     using namespace Ions_Move_Basic;

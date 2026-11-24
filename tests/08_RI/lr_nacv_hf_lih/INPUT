@@ -35,8 +35,6 @@ cal_stress 0
 kpar 1
 nb2d 1
 lr_grad_solver lapack
-lr_grad_thr 1e-10
-lr_grad_maxiter 800
 exx_separate_loop 0
 exx_dm_threshold 0
 exx_c_threshold 1e-10
@@ -45,4 +43,3 @@ exx_cs_inv_thr 1e-5
 exx_c_grad_threshold 1e-10
 exx_v_grad_threshold 1e-10
 lr_nac_pairs 0 1 1 4
-lr_nac_spin singlet

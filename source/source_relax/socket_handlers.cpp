@@ -46,7 +46,7 @@ using SocketUtils::throw_if_any_rank_failed;
 using SocketUtils::unchanged_cell_tolerance;
 using SocketUtils::vector_from_matrix9;
 
-std::string read_header_bcast(IpiSocket& socket, const DriverState state)
+std::string read_header_bcast(IpiSocket &socket, const DriverState state)
 {
     std::string header;
     int io_failed = 0;
@@ -57,7 +57,7 @@ std::string read_header_bcast(IpiSocket& socket, const DriverState state)
         {
             header = socket.read_header();
         }
-        catch (const IpiSocketClosed&)
+        catch (const IpiSocketClosed &)
         {
             if (state == DriverState::HasData)
             {
@@ -65,7 +65,7 @@ std::string read_header_bcast(IpiSocket& socket, const DriverState state)
                 io_message = "i-PI peer closed while a computed frame was pending";
             }
         }
-        catch (const std::exception& exc)
+        catch (const std::exception &exc)
         {
             io_failed = 1;
             io_message = exc.what();
@@ -75,7 +75,7 @@ std::string read_header_bcast(IpiSocket& socket, const DriverState state)
     return bcast_header(header);
 }
 
-void handle_status(IpiSocket& socket, const DriverState state)
+void handle_status(IpiSocket &socket, const DriverState state)
 {
     int io_failed = 0;
     std::string io_message;
@@ -96,7 +96,7 @@ void handle_status(IpiSocket& socket, const DriverState state)
                 socket.write_header("NEEDINIT");
             }
         }
-        catch (const std::exception& exc)
+        catch (const std::exception &exc)
         {
             io_failed = 1;
             io_message = exc.what();
@@ -105,7 +105,7 @@ void handle_status(IpiSocket& socket, const DriverState state)
     quit_if_root_failed(io_failed, io_message);
 }
 
-void handle_init(IpiSocket& socket, DriverContext& context, std::ofstream& ofs_running)
+void handle_init(IpiSocket &socket, DriverContext &context, std::ofstream &ofs_running)
 {
     std::int32_t rid = 0;
     std::int32_t nbytes = 0;
@@ -140,7 +140,7 @@ void handle_init(IpiSocket& socket, DriverContext& context, std::ofstream& ofs_r
                     params = socket.read_string(static_cast<std::size_t>(nbytes));
                 }
             }
-            catch (const std::exception& exc)
+            catch (const std::exception &exc)
             {
                 io_failed = 1;
                 io_message = exc.what();
@@ -177,7 +177,7 @@ struct PosdataPayload
 // passes through the single quit_if_root_failed collective sequence below;
 // a root-only early quit outside would deadlock if any collective were
 // added ahead of it.
-PosdataPayload read_posdata(IpiSocket& socket, const UnitCell& ucell, const DriverState state)
+PosdataPayload read_posdata(IpiSocket &socket, const UnitCell &ucell, const DriverState state)
 {
     PosdataPayload payload;
     int io_failed = 0;
@@ -198,23 +198,17 @@ PosdataPayload read_posdata(IpiSocket& socket, const UnitCell& ucell, const Driv
                 std::copy(cell_values.begin(), cell_values.end(), payload.cell.begin());
                 std::copy(inverse_values.begin(), inverse_values.end(), payload.inv_cell.begin());
                 payload.nat_socket = socket.read_int32();
-                const SocketFrame::CellValidation validation
-                    = SocketFrame::validate_ipi_cell(payload.cell,
-                                                     payload.inv_cell,
-                                                     kMaxCellCondition,
-                                                     kInverseAbsoluteTolerance,
-                                                     kInverseRelativeTolerance);
+                const SocketFrame::CellValidation validation = SocketFrame::validate_ipi_cell(
+                    payload.cell, payload.inv_cell, kMaxCellCondition, kInverseAbsoluteTolerance,
+                    kInverseRelativeTolerance);
                 if (!validation.ok)
                 {
                     io_failed = 1;
                     io_message = "invalid POSDATA cell: " + validation.message;
                 }
                 std::size_t coordinate_count = 0;
-                if (io_failed == 0
-                    && !SocketFrame::checked_position_count(payload.nat_socket,
-                                                            ucell.nat,
-                                                            coordinate_count,
-                                                            io_message))
+                if (io_failed == 0 &&
+                    !SocketFrame::checked_position_count(payload.nat_socket, ucell.nat, coordinate_count, io_message))
                 {
                     io_failed = 1;
                 }
@@ -227,7 +221,7 @@ PosdataPayload read_posdata(IpiSocket& socket, const UnitCell& ucell, const Driv
                     }
                 }
             }
-            catch (const std::exception& exc)
+            catch (const std::exception &exc)
             {
                 io_failed = 1;
                 io_message = exc.what();
@@ -238,7 +232,7 @@ PosdataPayload read_posdata(IpiSocket& socket, const UnitCell& ucell, const Driv
     return payload;
 }
 
-void bcast_posdata(PosdataPayload& payload)
+void bcast_posdata(PosdataPayload &payload)
 {
     bcast_int32(payload.nat_socket);
     std::vector<double> cell_values(payload.cell.begin(), payload.cell.end());
@@ -259,10 +253,10 @@ void bcast_posdata(PosdataPayload& payload)
     bcast_double_vector(payload.positions);
 }
 
-void check_posdata_geometry(const DriverContext& context, const PosdataPayload& payload, DriverContext& mutable_context)
+void check_posdata_geometry(const DriverContext &context, const PosdataPayload &payload, DriverContext &mutable_context)
 {
-    const double max_cell_delta_bohr
-        = max_abs_delta(std::vector<double>(payload.cell.begin(), payload.cell.end()), context.reference_cell);
+    const double max_cell_delta_bohr =
+        max_abs_delta(std::vector<double>(payload.cell.begin(), payload.cell.end()), context.reference_cell);
     if (max_cell_delta_bohr > unchanged_cell_tolerance(payload.cell))
     {
         ModuleBase::WARNING_QUIT("ABACUS socket", "variable-cell socket updates are not supported yet.");
@@ -272,24 +266,25 @@ void check_posdata_geometry(const DriverContext& context, const PosdataPayload& 
         mutable_context.checked_initial_positions = true;
         if (max_wrapped_direct_delta_from_unitcell(*context.ucell, payload.positions) > 1.0e-5 && is_root())
         {
-            ModuleBase::WARNING("ABACUS socket",
-                                "first POSDATA positions are not PBC-equivalent to STRU atom order; "
-                                "i-PI POSDATA carries no species, so the client atoms should use the same atom order "
-                                "as STRU.");
+            ModuleBase::WARNING(
+                "ABACUS socket", "first POSDATA positions are not PBC-equivalent to STRU atom order; "
+                                 "i-PI POSDATA carries no species, so the client atoms should use the same atom order "
+                                 "as STRU.");
         }
     }
 }
 
-void run_esolver_for_positions(UnitCell& ucell,
-                               ModuleESolver::ESolver* esolver,
-                               const std::vector<double>& positions,
-                               const int istep)
+void run_esolver_for_positions(
+    UnitCell &ucell,
+    ModuleESolver::ESolver *esolver,
+    const std::vector<double> &positions,
+    const int istep)
 {
     try
     {
         set_positions_from_ipi_bohr(ucell, positions);
     }
-    catch (const std::exception& exc)
+    catch (const std::exception &exc)
     {
         fail_during_collective_stage("set_positions", exc.what());
     }
@@ -301,7 +296,7 @@ void run_esolver_for_positions(UnitCell& ucell,
     {
         esolver->runner(ucell, istep);
     }
-    catch (const std::exception& exc)
+    catch (const std::exception &exc)
     {
         fail_during_collective_stage("runner", exc.what());
     }
@@ -311,14 +306,14 @@ void run_esolver_for_positions(UnitCell& ucell,
     }
 }
 
-void compute_energy_hartree(ModuleESolver::ESolver* esolver, ComputedFrame& computed, std::ofstream& ofs_running)
+void compute_energy_hartree(ModuleESolver::ESolver *esolver, ComputedFrame &computed, std::ofstream &ofs_running)
 {
     double energy_ry = 0.0;
     try
     {
         energy_ry = esolver->cal_energy();
     }
-    catch (const std::exception& exc)
+    catch (const std::exception &exc)
     {
         fail_during_collective_stage("cal_energy", exc.what());
     }
@@ -340,14 +335,14 @@ void compute_energy_hartree(ModuleESolver::ESolver* esolver, ComputedFrame& comp
     }
 }
 
-void compute_forces(UnitCell& ucell, ModuleESolver::ESolver* esolver, ComputedFrame& computed)
+void compute_forces(UnitCell &ucell, ModuleESolver::ESolver *esolver, ComputedFrame &computed)
 {
     ModuleBase::matrix force;
     try
     {
         esolver->cal_force(ucell, force);
     }
-    catch (const std::exception& exc)
+    catch (const std::exception &exc)
     {
         fail_during_collective_stage("cal_force", exc.what());
     }
@@ -361,7 +356,7 @@ void compute_forces(UnitCell& ucell, ModuleESolver::ESolver* esolver, ComputedFr
     {
         computed.forces_hartree_per_bohr = flatten_forces_hartree_per_bohr(force, ucell.nat);
     }
-    catch (const std::exception& exc)
+    catch (const std::exception &exc)
     {
         local_failed = 1;
         local_message = exc.what();
@@ -375,14 +370,14 @@ void compute_forces(UnitCell& ucell, ModuleESolver::ESolver* esolver, ComputedFr
     computed.forces_present = true;
 }
 
-void compute_stress(UnitCell& ucell, ModuleESolver::ESolver* esolver, ComputedFrame& computed)
+void compute_stress(UnitCell &ucell, ModuleESolver::ESolver *esolver, ComputedFrame &computed)
 {
     ModuleBase::matrix stress;
     try
     {
         esolver->cal_stress(ucell, stress);
     }
-    catch (const std::exception& exc)
+    catch (const std::exception &exc)
     {
         fail_during_collective_stage("cal_stress", exc.what());
     }
@@ -394,17 +389,15 @@ void compute_stress(UnitCell& ucell, ModuleESolver::ESolver* esolver, ComputedFr
     std::string local_message;
     try
     {
-        const SocketFrame::VirialConversion virial = SocketFrame::make_ipi_virial(matrix9_from_stress(stress),
-                                                                                  ucell.omega,
-                                                                                  kStressAbsoluteTolerance,
-                                                                                  kStressRelativeTolerance);
+        const SocketFrame::VirialConversion virial = SocketFrame::make_ipi_virial(
+            matrix9_from_stress(stress), ucell.omega, kStressAbsoluteTolerance, kStressRelativeTolerance);
         if (!virial.ok)
         {
             throw std::runtime_error(virial.message);
         }
         computed.virial_wire_hartree = virial.wire_virial_hartree;
     }
-    catch (const std::exception& exc)
+    catch (const std::exception &exc)
     {
         local_failed = 1;
         local_message = exc.what();
@@ -419,7 +412,7 @@ void compute_stress(UnitCell& ucell, ModuleESolver::ESolver* esolver, ComputedFr
 }
 } // namespace
 
-void handle_posdata(IpiSocket& socket, DriverContext& context, std::ofstream& ofs_running)
+void handle_posdata(IpiSocket &socket, DriverContext &context, std::ofstream &ofs_running)
 {
     PosdataPayload payload = read_posdata(socket, *context.ucell, context.state);
     bcast_posdata(payload);
@@ -434,8 +427,8 @@ void handle_posdata(IpiSocket& socket, DriverContext& context, std::ofstream& of
     computed.scf_converged = all_ranks_converged(context.esolver->conv_esolver);
     if (!computed.scf_converged && is_root())
     {
-        ModuleBase::WARNING("ABACUS socket",
-                            "SCF did not converge; returning the available frame and marking it in i-PI extras.");
+        ModuleBase::WARNING(
+            "ABACUS socket", "SCF did not converge; returning the available frame and marking it in i-PI extras.");
     }
     compute_energy_hartree(context.esolver, computed, ofs_running);
     if (context.inp->cal_force)
@@ -452,7 +445,7 @@ void handle_posdata(IpiSocket& socket, DriverContext& context, std::ofstream& of
     context.state = DriverState::HasData;
 }
 
-void handle_getforce(IpiSocket& socket, DriverContext& context)
+void handle_getforce(IpiSocket &socket, DriverContext &context)
 {
     int io_failed = 0;
     std::string io_message;
@@ -467,10 +460,10 @@ void handle_getforce(IpiSocket& socket, DriverContext& context)
             socket.write_header("FORCEREADY");
             socket.write_double(context.published.energy_hartree);
             socket.write_int32(static_cast<std::int32_t>(context.nat_return));
-            const std::vector<double> forces
-                = context.published.forces_present
-                      ? context.published.forces_hartree_per_bohr
-                      : std::vector<double>(static_cast<std::size_t>(3 * context.nat_return), 0.0);
+            const std::vector<double> forces =
+                context.published.forces_present
+                    ? context.published.forces_hartree_per_bohr
+                    : std::vector<double>(static_cast<std::size_t>(3 * context.nat_return), 0.0);
             socket.write_doubles(forces);
             socket.write_doubles(vector_from_matrix9(context.published.virial_wire_hartree));
             const std::string extra = properties_extra(context.published);
@@ -481,7 +474,7 @@ void handle_getforce(IpiSocket& socket, DriverContext& context)
             socket.write_int32(static_cast<std::int32_t>(extra.size()));
             socket.write_string(extra);
         }
-        catch (const std::exception& exc)
+        catch (const std::exception &exc)
         {
             io_failed = 1;
             io_message = exc.what();
@@ -492,7 +485,7 @@ void handle_getforce(IpiSocket& socket, DriverContext& context)
     context.state = DriverState::Ready;
 }
 
-void handle_exit(std::ofstream& ofs_running)
+void handle_exit(std::ofstream &ofs_running)
 {
     if (is_root())
     {

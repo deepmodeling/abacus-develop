@@ -7,13 +7,13 @@
 #include "source_md/forcefield.h"
 
 #include <cmath>
-#include <iomanip>
 #include <fstream>
+#include <iomanip>
 #include <utility>
 
 namespace ModuleESolver
 {
-esolver_forcefields::esolver_forcefields(std::unique_ptr<ModuleMD::ForceField> potential, std::ofstream& running_log)
+esolver_forcefields::esolver_forcefields(std::unique_ptr<ModuleMD::ForceField> potential, std::ofstream &running_log)
     : potential_(std::move(potential)), running_log_(running_log)
 {
     classname = "esolver_forcefields";
@@ -21,14 +21,14 @@ esolver_forcefields::esolver_forcefields(std::unique_ptr<ModuleMD::ForceField> p
 
 esolver_forcefields::~esolver_forcefields() = default;
 
-void esolver_forcefields::before_all_runners(BaseCell& cell, const Input_para& inp)
+void esolver_forcefields::before_all_runners(BaseCell &cell, const Input_para &inp)
 {
     inp_ = &inp;
     stress_.create(3, 3);
     potential_->initialize(cell, inp);
 }
 
-void esolver_forcefields::runner(BaseCell& cell, int istep)
+void esolver_forcefields::runner(BaseCell &cell, int istep)
 {
     static_cast<void>(istep);
     energy_ = 0.0;
@@ -36,22 +36,19 @@ void esolver_forcefields::runner(BaseCell& cell, int istep)
     potential_->compute(cell, energy_, force_, stress_);
     if (cell.kind() == BaseCell::Kind::unitcell)
     {
-        running_log_ << " #TOTAL ENERGY# " << std::setprecision(11) << energy_ * ModuleBase::Ry_to_eV
-                     << " eV" << std::endl;
+        running_log_ << " #TOTAL ENERGY# " << std::setprecision(11) << energy_ * ModuleBase::Ry_to_eV << " eV"
+                     << std::endl;
     }
 }
 
-double esolver_forcefields::cal_energy()
-{
-    return energy_;
-}
+double esolver_forcefields::cal_energy() { return energy_; }
 
-void esolver_forcefields::cal_force(BaseCell& cell, ModuleBase::matrix& force)
+void esolver_forcefields::cal_force(BaseCell &cell, ModuleBase::matrix &force)
 {
     if (cell.kind() == BaseCell::Kind::mdcell)
     {
-        const MDCell& mdcell = static_cast<const MDCell&>(cell);
-        const std::vector<LocalAtom>& atoms = mdcell.owned_atoms();
+        const MDCell &mdcell = static_cast<const MDCell &>(cell);
+        const std::vector<LocalAtom> &atoms = mdcell.owned_atoms();
         force.create(atoms.size(), 3);
         for (std::size_t i = 0; i < atoms.size(); ++i)
         {
@@ -62,17 +59,17 @@ void esolver_forcefields::cal_force(BaseCell& cell, ModuleBase::matrix& force)
         return;
     }
     force = force_;
-    ModuleIO::print_force(running_log_, static_cast<UnitCell&>(cell), "TOTAL-FORCE (eV/Angstrom)", force, false);
+    ModuleIO::print_force(running_log_, static_cast<UnitCell &>(cell), "TOTAL-FORCE (eV/Angstrom)", force, false);
 }
 
-void esolver_forcefields::cal_stress(BaseCell& cell, ModuleBase::matrix& stress)
+void esolver_forcefields::cal_stress(BaseCell &cell, ModuleBase::matrix &stress)
 {
     stress = stress_;
     bool print_stress = true;
 #ifdef __MPI
     if (cell.kind() == BaseCell::Kind::mdcell)
     {
-        print_stress = static_cast<MDCell&>(cell).mpi_rank() == 0;
+        print_stress = static_cast<MDCell &>(cell).mpi_rank() == 0;
     }
 #endif
     if (print_stress)
@@ -85,7 +82,7 @@ void esolver_forcefields::cal_stress(BaseCell& cell, ModuleBase::matrix& stress)
     stress(2, 2) -= inp_->press3 / unit_transform;
 }
 
-void esolver_forcefields::after_all_runners(BaseCell& cell)
+void esolver_forcefields::after_all_runners(BaseCell &cell)
 {
     static_cast<void>(cell);
     running_log_ << "\n --------------------------------------------" << std::endl;

@@ -18,21 +18,22 @@ gamma_only     1
 cal_force      1
 lr_nstates     3
 lr_nac_pairs   0 1 1 2
-lr_nac_spin    singlet
-lr_grad_solver cg
-lr_grad_thr    1e-10
-lr_grad_maxiter 800
 ```
 
 Surface zero denotes the ground state. Excited-state indices are one-based.
 The default empty `lr_nac_pairs` disables NAC calculations. When `lr_nstates`
 is automatic (nonpositive), requested surfaces are checked against the resolved
-number of LR roots before any state is accessed. The configuration
-above illustrates a tighter response solve; the defaults remain `1e-6` Ry and
-100 iterations. These two controls apply only to iterative CG orbital response for NAC;
-direct response solvers do not use them. A failed certified response solve is an
-error, rather than a silently accepted coupling. See the generated INPUT help
-for the authoritative parameter defaults, allowed values and restrictions.
+number of LR roots before any state is accessed. For the default closed-shell singlet, the pair list is the only
+NAC-specific input needed. To tighten the default CG response tolerance of
+`1e-6` Ry or raise the limit of 100 iterations, specify, for example:
+
+```text
+lr_grad_thr     1e-10
+lr_grad_maxiter 800
+```
+
+These controls apply to NAC CG orbital response. A direct response solver
+such as `lr_grad_solver lapack` ignores them.
 If the recursive CG residual converges before the explicitly reapplied residual,
 the solver retains its accumulated solution and restarts a correction equation
 with the true residual. All correction updates count toward the same limit;

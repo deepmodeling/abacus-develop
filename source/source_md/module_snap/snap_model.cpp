@@ -6,7 +6,7 @@
 
 namespace
 {
-bool next_data_line(std::istream& input, std::string& line)
+bool next_data_line(std::istream &input, std::string &line)
 {
     while (std::getline(input, line))
     {
@@ -26,7 +26,11 @@ bool next_data_line(std::istream& input, std::string& line)
 }
 
 template <typename T>
-bool read_parameter_value(std::istringstream& words, T& value, const std::string& keyword, std::string& error)
+bool read_parameter_value(
+    std::istringstream &words,
+    T &value,
+    const std::string &keyword,
+    std::string &error)
 {
     if (!(words >> value) || words.fail())
     {
@@ -36,7 +40,7 @@ bool read_parameter_value(std::istringstream& words, T& value, const std::string
     return true;
 }
 
-bool validate_inner(const ModuleMD::SNAP::ModelParameters& parameters, std::string& error)
+bool validate_inner(const ModuleMD::SNAP::ModelParameters &parameters, std::string &error)
 {
     if (!parameters.switchinner_flag)
     {
@@ -50,8 +54,7 @@ bool validate_inner(const ModuleMD::SNAP::ModelParameters& parameters, std::stri
     }
     for (std::size_t i = 0; i < count; ++i)
     {
-        if (!std::isfinite(parameters.sinner[i]) || !std::isfinite(parameters.dinner[i])
-            || parameters.dinner[i] <= 0.0)
+        if (!std::isfinite(parameters.sinner[i]) || !std::isfinite(parameters.dinner[i]) || parameters.dinner[i] <= 0.0)
         {
             error = "SNAP sinner must be finite and dinner must be finite and positive.";
             return false;
@@ -60,7 +63,7 @@ bool validate_inner(const ModuleMD::SNAP::ModelParameters& parameters, std::stri
     return true;
 }
 
-bool validate_cutoff(const ModuleMD::SNAP::ModelParameters& parameters, std::string& error)
+bool validate_cutoff(const ModuleMD::SNAP::ModelParameters &parameters, std::string &error)
 {
     if (!std::isfinite(parameters.rcut) || parameters.rcut <= 0.0)
     {
@@ -75,32 +78,31 @@ bool validate_cutoff(const ModuleMD::SNAP::ModelParameters& parameters, std::str
     return true;
 }
 
-bool validate_pair_cutoffs(const ModuleMD::SNAP::ModelParameters& parameters, std::string& error)
+bool validate_pair_cutoffs(const ModuleMD::SNAP::ModelParameters &parameters, std::string &error)
 {
     for (std::size_t i = 0; i < parameters.element_radii.size(); ++i)
     {
         for (std::size_t j = i; j < parameters.element_radii.size(); ++j)
         {
-            const double pair_cutoff = (parameters.element_radii[i] + parameters.element_radii[j])
-                                       * parameters.rcutfac;
+            const double pair_cutoff = (parameters.element_radii[i] + parameters.element_radii[j]) * parameters.rcutfac;
             if (!std::isfinite(pair_cutoff) || parameters.rmin >= pair_cutoff)
             {
-                error = "SNAP rmin0 must be smaller than the cutoff for element pair "
-                        + parameters.elements[i] + "-" + parameters.elements[j] + ".";
+                error = "SNAP rmin0 must be smaller than the cutoff for element pair " + parameters.elements[i] + "-" +
+                        parameters.elements[j] + ".";
                 return false;
             }
         }
     }
     return true;
 }
-}
+} // namespace
 
 namespace ModuleMD
 {
 namespace SNAP
 {
 
-bool ModelParameters::valid(std::string& error) const
+bool ModelParameters::valid(std::string &error) const
 {
     if (!validate_cutoff(*this, error))
     {
@@ -155,10 +157,11 @@ bool ModelParameters::valid(std::string& error) const
     return true;
 }
 
-bool ModelData::load(const std::string& coefficient_file,
-                     const std::string& parameter_file,
-                     const std::vector<std::string>& requested_elements,
-                     std::string& error)
+bool ModelData::load(
+    const std::string &coefficient_file,
+    const std::string &parameter_file,
+    const std::vector<std::string> &requested_elements,
+    std::string &error)
 {
     error.clear();
     parameters = ModelParameters();
@@ -242,12 +245,12 @@ bool ModelData::load(const std::string& coefficient_file,
                 return false;
             }
             std::istringstream value_line(line);
-            if (!(value_line >> values[static_cast<std::size_t>(coefficient)]))
+            if (!(value_line >> values[coefficient]))
             {
                 error = "Invalid SNAP coefficient value.";
                 return false;
             }
-            if (!std::isfinite(values[static_cast<std::size_t>(coefficient)]) || value_line >> extra)
+            if (!std::isfinite(values[coefficient]) || value_line >> extra)
             {
                 error = "Invalid or extra SNAP coefficient value for element: " + element;
                 return false;
@@ -395,7 +398,7 @@ bool ModelData::load(const std::string& coefficient_file,
         }
         else if (keyword == "sinner" || keyword == "dinner")
         {
-            std::vector<double>& values = keyword == "sinner" ? parameters.sinner : parameters.dinner;
+            std::vector<double> &values = keyword == "sinner" ? parameters.sinner : parameters.dinner;
             values.resize(parameters.elements.size());
             for (std::size_t i = 0; i < values.size(); ++i)
             {

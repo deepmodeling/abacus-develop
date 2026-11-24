@@ -98,6 +98,8 @@
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_cell/module_neighbor/sltk_atom_arrange.h"
 
+class Parallel_Orbitals;
+
 namespace ModuleIO
 {
     /**
@@ -175,17 +177,14 @@ namespace ModuleIO
         const int jt, const int ja, const int jl, const int jz, const int jm,
         const ModuleBase::Vector3<double>& vR);
     
-    // the calculation of <phi_i|Lx/Ly/Lz|phi_j> matrix elements will be outputted
-    // in the way that indexed by:
-    // it, ia, il, iz, im, iRx, iRy, iRz, jt, ja, jl, jz, jm, in which the
-    // iRx, iRy, iRz are the indices of the supercell in which the two-center-integral
-    // it and jt are indexes of atomtypes,
-    // ia and ja are indexes of atoms within the atomtypes,
-    // il and jl are indexes of the angular momentum,
-    // iz and jz are indexes of the zeta functions
-    // im and jm are indexes of the magnetic quantum numbers.
-    // The output is a complex number, which is the value of the matrix element.
-    // Always the matrix is quite large, so direct print to file.
+    // The calculation of <phi_i|Lx/Ly/Lz|phi_j> matrix elements is written to
+    // three real CSR files, lx_nao.csr, ly_nao.csr and lz_nao.csr (or
+    // lxg{istep+1}_nao.csr etc. when out_app_flag = 2). Each R block follows the
+    // same self-describing header and CSR layout as the H(R)/S(R) output, so
+    // the values are indexed by the global NAO orbital index (row) and column
+    // index instead of the (it, ia, il, iz, im ...) tuple. Because the NAO
+    // basis is real, every matrix element is purely imaginary; the files store
+    // only the imaginary part, and the real part is identically zero.
     class Angmom_op
     {
         public:
@@ -223,20 +222,24 @@ namespace ModuleIO
              * @brief Calculate and write <phi_i|Lx/Ly/Lz|phi_j> matrix elements.
              *
              * @param prefix the suffix of the output files (currently unused;
-             *               filenames are fixed as l{x,y,z}[g{step}]_nao.txt)
+             *               filenames are fixed as l{x,y,z}[g{step+1}]_nao.csr)
              * @param outdir the output directory
              * @param ucell the unit cell object
+             * @param pv the parallel orbital distribution, used for the global
+             *           basis size of the CSR output
              * @param precision the precision of the output
              * @param rank the MPI rank
              * @param istep the ionic step index; -1 for single-point runs
              * @param out_app_flag append mode: with 1 the fixed filename
-             *              l{x,y,z}_nao.txt is reused and each step appends;
-             *              with 0 or 2 the filename carries `g{istep+1}`
-             *              (e.g., lxg1_nao.txt)
+             *              l{x,y,z}_nao.csr is reused and each step appends;
+             *              with 2 the filename carries `g{istep+1}`
+             *              (e.g., lxg1_nao.csr); with 0 the fixed filename is
+             *              overwritten at every write
              */
             void calculate(const std::string& prefix,
                            const std::string& outdir,
                            const UnitCell& ucell,
+                           const Parallel_Orbitals& pv,
                            const int precision,
                            const int rank,
                            const int istep,
@@ -255,22 +258,6 @@ namespace ModuleIO
 
             // neighboring searcher
             std::unique_ptr<Grid_Driver> neighbor_searcher_;
-
-            /**
-             * @brief calculate the <phi_i|Lx/Ly/Lz|phi_j> matrix elements. Due to
-             * the large size of the matrix, the result will be printed to file
-             * directly.
-             * 
-             * @param ofs pointer to the ofstream object for printing, if nullptr,
-             *            the result will not be printed
-             * @param ucell the unit cell object
-             * @param dir the direction of the angular momentum operator, 'x', 'y' or 'z'
-             * @param precision the precision of the output, default is 10
-             */
-            void kernel(std::ofstream* ofs, 
-                        const UnitCell& ucell, 
-                        const char dir = 'x',
-                        const int precision = 10);
     };
 } // namespace ModuleIO
 

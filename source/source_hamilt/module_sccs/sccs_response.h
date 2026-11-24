@@ -24,7 +24,7 @@ struct PolarizationResult
     double residual_rms = 0.0;
     double residual_max = 0.0;
     bool warm_started = false;
-    std::vector<double> potential; // Hartree; zero mean only for periodic cells
+    std::vector<double> potential;                     // Hartree; zero mean only for periodic cells
     std::vector<ModuleBase::Vector3<double>> gradient; // Hartree/Bohr; empty with lowpass
 };
 
@@ -45,18 +45,19 @@ struct SccsResponse
     std::vector<double> boundary_potential;
     // Hartree: the same derivative with respect to the cavity density.
     std::vector<double> cavity_potential;
-    std::vector<double> restart_potential; // unshifted solution for explicit warm starts
+    std::vector<double> restart_potential;      // unshifted solution for explicit warm starts
     double far_field_polarization_charge = 0.0; // open-boundary screened charge minus solute charge
 };
 
 // Chain a derivative with respect to the boundary to the cavity density,
 // through the solvent-aware adjoint when the boundary is filled; probe_kernel
 // is the one the response was solved with.
-void boundary_to_rho(const SccsResponse& response,
-                     const std::vector<double>& probe_kernel,
-                     const ModulePW::PW_Basis& basis,
-                     const std::vector<double>& boundary_potential,
-                     std::vector<double>& density_potential);
+void boundary_to_rho(
+    const SccsResponse &response,
+    const std::vector<double> &probe_kernel,
+    const ModulePW::PW_Basis &basis,
+    const std::vector<double> &boundary_potential,
+    std::vector<double> &density_potential);
 
 // Periodic sqrt-CG response with chain-rule cavity derivatives, as Environ's
 // CG solver with the sqrt preconditioner, without the solvent-aware filling;
@@ -65,29 +66,31 @@ void boundary_to_rho(const SccsResponse& response,
 // initial_potential is empty on all ranks for a cold start, otherwise a local grid.
 // A solver breakdown or missed tolerance stops the run with WARNING_QUIT.
 // No state or INPUT globals are read or retained.
-void solve_response(const std::vector<double>& cavity_density,
-                    const std::vector<double>& solute_charge,
-                    const CavityParameters& cavity,
-                    const PolarizationSolverParameters& solver,
-                    const std::vector<double>& initial_potential,
-                    const ModulePW::PW_Basis& basis,
-                    double tpiba,
-                    SccsResponse& result);
+void solve_response(
+    const std::vector<double> &cavity_density,
+    const std::vector<double> &solute_charge,
+    const CavityParameters &cavity,
+    const PolarizationSolverParameters &solver,
+    const std::vector<double> &initial_potential,
+    const ModulePW::PW_Basis &basis,
+    double tpiba,
+    SccsResponse &result);
 
 // Use the same operator for the dielectric response and vacuum subtraction.
 // cavity.solvent_aware decides on every pool rank whether the cavity is
 // filled; probe_kernel is then its sa_probe_kernel, and is unused (may be
 // empty) without the filling.
-void solve_response(const std::vector<double>& cavity_density,
-                    const std::vector<double>& solute_charge,
-                    const CavityParameters& cavity,
-                    const std::vector<double>& probe_kernel,
-                    const PolarizationSolverParameters& solver,
-                    const std::vector<double>& initial_potential,
-                    const ModulePW::PW_Basis& basis,
-                    double tpiba,
-                    CoulombOperator& coulomb,
-                    SccsResponse& result);
+void solve_response(
+    const std::vector<double> &cavity_density,
+    const std::vector<double> &solute_charge,
+    const CavityParameters &cavity,
+    const std::vector<double> &probe_kernel,
+    const PolarizationSolverParameters &solver,
+    const std::vector<double> &initial_potential,
+    const ModulePW::PW_Basis &basis,
+    double tpiba,
+    CoulombOperator &coulomb,
+    SccsResponse &result);
 } // namespace ModuleSccs
 
 #endif

@@ -11,17 +11,18 @@ namespace ModuleSccs
 // the host's point-ion PCC energy must not be added here.
 class Pcc0dCoulombOperator : public CoulombOperator
 {
-public:
-    Pcc0dCoulombOperator(const ModulePW::PW_Basis& basis,
-                         double tpiba,
-                         const std::vector<ModuleBase::Vector3<double>>& relative_positions,
-                         const elecstate::Pcc0dParameters& parameters);
+  public:
+    Pcc0dCoulombOperator(
+        const ModulePW::PW_Basis &basis,
+        double tpiba,
+        const std::vector<ModuleBase::Vector3<double>> &relative_positions,
+        const elecstate::Pcc0dParameters &parameters);
     bool has_correction() const override;
     CoulombTransformCounts fft_counts() const override { return periodic_.fft_counts(); }
-    void apply_potential(const std::vector<double>& charge, std::vector<double>& potential) override;
+    void apply_potential(const std::vector<double> &charge, std::vector<double> &potential) override;
 
-private:
-    const ModulePW::PW_Basis& basis_;
+  private:
+    const ModulePW::PW_Basis &basis_;
     PeriodicCoulombOperator periodic_;
     const std::vector<ModuleBase::Vector3<double>> relative_positions_;
     const elecstate::Pcc0dParameters parameters_;

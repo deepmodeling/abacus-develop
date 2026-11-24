@@ -24,11 +24,21 @@ public:
     static void write_ucell(std::ofstream& ofs, const UnitCell* ucell);
 
     /**
-     * @brief Reads the unit cell information lines in a file.
+     * @brief Skips the UnitCell block that follows the DMK header.
      *
-     * @param ifs The input file stream.
+     * The function consumes the latName, lat0, three lattice vectors, atom
+     * labels, per-type atom counts, the "Direct" marker, and every coordinate
+     * line in order. On success the stream is positioned at the first line of
+     * the trailing matrix body.
+     *
+     * @param ifs The input file stream positioned at the start of the block.
+     * @return true when the full block is consumed without parse errors;
+     *         false when any mandatory line cannot be read, or when the atom
+     *         count line yields no positive integer (leaving the stream at
+     *         the coordinates, which would otherwise be misinterpreted as
+     *         the matrix body by the caller).
      */
-    static void read_ucell(std::ifstream& ifs);
+    static bool read_ucell(std::ifstream& ifs);
 };
 
 } // namespace ModuleIO

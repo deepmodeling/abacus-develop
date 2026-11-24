@@ -1,5 +1,7 @@
 #include "klist.h"
 
+#include <limits>
+
 #include "klist_io.h"
 #include "source_base/formatter.h"
 #include "source_base/parallel_common.h"
@@ -124,6 +126,7 @@ void K_Vectors::set(const UnitCell& ucell,
         std::ofstream ofkpt(skpt.str().c_str()); // clear kpoints
         ofkpt << skpt2 << skpt1;
         ofkpt.close();
+        ofs << " Write K-point information to file: " << skpt.str() << std::endl;
     }
 
     int deg = (nspin_in == 1) ? 2 : 1;
@@ -283,9 +286,9 @@ bool K_Vectors::parse_kfile(const std::string& fn, std::ofstream& ofs_running, s
 
     // mohan update 2021-02-22
     const int max_kpoints = 100000;
-    if (nkstot > max_kpoints)
+    if (nkstot < 0 || nkstot > max_kpoints)
     {
-        ofs_warning << " nkstot > MAX_KPOINTS" << std::endl;
+        ofs_warning << " nkstot < 0 or nkstot > MAX_KPOINTS" << std::endl;
         return false;
     }
 
@@ -336,6 +339,16 @@ bool K_Vectors::read_mp_mesh(std::ifstream& ifk,
     }
 
     ifk >> nmp[0] >> nmp[1] >> nmp[2];
+    // Check each dimension before multiplying: a negative pair has a positive
+    // product, and the product itself can overflow even in 64-bit.
+    const bool dims_positive = nmp[0] > 0 && nmp[1] > 0 && nmp[2] > 0;
+    const bool product_fits_int = dims_positive && nmp[0] <= std::numeric_limits<int>::max() / nmp[1]
+                                  && nmp[0] * nmp[1] <= std::numeric_limits<int>::max() / nmp[2];
+    if (!ifk || !dims_positive || !product_fits_int)
+    {
+        ofs_warning << " Error: invalid Monkhorst-Pack grid dimensions in the k-points file." << std::endl;
+        return false;
+    }
 
     this->koffset[0] = 0;
     this->koffset[1] = 0;

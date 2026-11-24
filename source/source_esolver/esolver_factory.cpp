@@ -1,10 +1,10 @@
 #include "esolver_factory.h"
 
 #include "esolver.h"
-#include "esolver_ks_pw.h"
 #include "esolver_dfpt_pw.h"
-#include "esolver_sdft_pw.h"
+#include "esolver_ks_pw.h"
 #include "esolver_ks_pw_tddft.h"
+#include "esolver_sdft_pw.h"
 #include "source_base/global_variable.h"
 #include "source_base/module_device/device.h"
 #include "source_hamilt/module_xc/general_exx_info.h"
@@ -22,13 +22,13 @@
 #endif
 #include "source_base/module_external/blacs_connector.h"
 #endif
-#include "source_md/module_dp/dp.h"
-#include "source_md/module_nep/nep_potential.h"
-#include "source_md/module_snap/snap_potential.h"
 #include "esolver_forcefields.h"
-#include "source_md/module_lj/lj.h"
 #include "esolver_of.h"
 #include "esolver_of_tddft.h"
+#include "source_md/module_dp/dp_forcefield.h"
+#include "source_md/module_lj/lj_forcefield.h"
+#include "source_md/module_nep/nep_forcefield.h"
+#include "source_md/module_snap/snap_forcefield.h"
 
 #include <sstream>
 #include <stdexcept>
@@ -36,7 +36,7 @@
 namespace ModuleESolver
 {
 
-std::string determine_type(const Input_para& inp)
+std::string determine_type(const Input_para &inp)
 {
     std::string esolver_type = "none";
     if (inp.basis_type == "pw")
@@ -126,12 +126,12 @@ std::string determine_type(const Input_para& inp)
         ModuleBase::WARNING_QUIT("ESolver", "No such esolver_type combined with basis_type");
     }
 
-    std::ostream& running_log = GlobalV::ofs_running;
+    std::ostream &running_log = GlobalV::ofs_running;
     running_log << "\n #ENERGY SOLVER# " << esolver_type << std::endl;
 
     auto device_info = inp.device;
 
-    for (char& c: device_info)
+    for (char &c : device_info)
     {
         if (std::islower(c))
         {
@@ -153,7 +153,7 @@ std::string determine_type(const Input_para& inp)
 }
 
 // Some API to operate E_Solver
-ESolver* init_esolver(const Input_para& inp)
+ESolver *init_esolver(const Input_para &inp)
 {
     // determine type of esolver based on INPUT information
     const std::string esolver_type = determine_type(inp);
@@ -341,8 +341,8 @@ ESolver* init_esolver(const Input_para& inp)
     }
     else if (esolver_type == "lr_lcao")
     {
-        const std::string& in_dir = PARAM.globalv.global_readin_dir;
-        const std::string& out_dir = PARAM.globalv.global_out_dir;
+        const std::string &in_dir = PARAM.globalv.global_readin_dir;
+        const std::string &out_dir = PARAM.globalv.global_out_dir;
         if (inp.xc_kernel != "bse")
         {
             if (gamma_only)
@@ -373,8 +373,8 @@ ESolver* init_esolver(const Input_para& inp)
     }
     else if (esolver_type == "ksdft_lr_lcao")
     {
-        const std::string& in_dir = PARAM.globalv.global_readin_dir;
-        const std::string& out_dir = PARAM.globalv.global_out_dir;
+        const std::string &in_dir = PARAM.globalv.global_readin_dir;
+        const std::string &out_dir = PARAM.globalv.global_out_dir;
         if (gamma_only)
         {
             return new ModuleESolver::ESolver_LR<double, double>(inp, in_dir, out_dir, lr_runtime);
@@ -395,21 +395,20 @@ ESolver* init_esolver(const Input_para& inp)
     }
     else if (esolver_type == "lj_pot")
     {
-        std::ofstream& running_log = GlobalV::ofs_running;
-        std::unique_ptr<ModuleMD::ForceField> potential(
-            new ModuleMD::LJ(PARAM.globalv.global_out_dir, running_log));
+        std::ofstream &running_log = GlobalV::ofs_running;
+        std::unique_ptr<ModuleMD::ForceField> potential(new ModuleMD::LJ(PARAM.globalv.global_out_dir, running_log));
         return new esolver_forcefields(std::move(potential), running_log);
     }
     else if (esolver_type == "dp_pot")
     {
-        std::ofstream& running_log = GlobalV::ofs_running;
+        std::ofstream &running_log = GlobalV::ofs_running;
         std::unique_ptr<ModuleMD::ForceField> potential(
             new ModuleMD::DP(inp.mdp.pot_file, PARAM.globalv.global_out_dir, running_log));
         return new esolver_forcefields(std::move(potential), running_log);
     }
     else if (esolver_type == "nep_pot")
     {
-        std::ofstream& running_log = GlobalV::ofs_running;
+        std::ofstream &running_log = GlobalV::ofs_running;
         std::unique_ptr<ModuleMD::ForceField> potential(
             new ModuleMD::NEPPotential(inp.mdp.pot_file, PARAM.globalv.global_out_dir, running_log));
         return new esolver_forcefields(std::move(potential), running_log);
@@ -417,13 +416,14 @@ ESolver* init_esolver(const Input_para& inp)
     else if (esolver_type == "snap_pot")
     {
         const int rank = GlobalV::MY_RANK;
-        std::ofstream& running_log = GlobalV::ofs_running;
+        std::ofstream &running_log = GlobalV::ofs_running;
         std::unique_ptr<ModuleMD::ForceField> potential(
             new ModuleMD::SnapPotential(inp.mdp.pot_file, inp.mdp.snap_param_file, running_log, rank));
         return new esolver_forcefields(std::move(potential), running_log);
     }
-    throw std::invalid_argument("esolver_type = " + std::string(esolver_type) + ". Wrong in " + std::string(__FILE__)
-                                + " line " + std::to_string(__LINE__));
+    throw std::invalid_argument(
+        "esolver_type = " + std::string(esolver_type) + ". Wrong in " + std::string(__FILE__) + " line " +
+        std::to_string(__LINE__));
 }
 
 } // namespace ModuleESolver

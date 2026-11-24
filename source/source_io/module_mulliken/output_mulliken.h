@@ -5,6 +5,7 @@
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_cell/cell_index.h"
 
+#include <iosfwd>
 #include <map>
 #include <vector>
 
@@ -51,7 +52,13 @@ class Output_Mulliken
                     const std::vector<int>& isk,
                     int nspin);
     /// the outer interface to write the Mulliken population charges
-    void write(int istep, std::string out_dir);
+    /// @param istep zero-based ionic step index; printed one-based and used for
+    ///        the g{step} filename suffix in out_app_flag mode 2
+    /// @param out_app_flag output mode: 0 overwrites, 1 appends, 2 writes one
+    ///        numbered file per written step
+    /// @param out_dir directory that receives mulliken.txt
+    /// @param ofs_running running log stream, open on the writing rank only
+    void write(int istep, int out_app_flag, std::string out_dir, std::ofstream& ofs_running);
     /// print atom mag to running log file
     void print_atom_mag(const std::vector<std::vector<double>>& atom_chg, std::ostream& os);
     /// get total charge

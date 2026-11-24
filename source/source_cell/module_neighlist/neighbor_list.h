@@ -41,7 +41,7 @@ public:
         firstneigh_[i] = allocator_.allocate(numneigh_[i]);
         for (int j = 0; j < numneigh_[i]; ++j)
         {
-            firstneigh_[i][j] = neighbors[static_cast<std::size_t>(j)];
+            firstneigh_[i][j] = neighbors[j];
         }
     }
 

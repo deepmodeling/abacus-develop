@@ -1,8 +1,8 @@
 #include "for_test.h"
-#include "mock_remake_cell.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_relax/lattice_change_basic.h"
 #include "source_relax/relax_data.h"
+#include "test_mock_remake_cell.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -807,7 +807,9 @@ TEST_F(LatticeChangeBasicTest, ChangeLatticeFixedIbravFCC)
 
     // Apply a small move
     for (int i = 0; i < 9; i++)
+    {
         move[i] = 0.01 * ucell.lat0;
+    }
 
     fixed_ibrav = true;
     Lattice_Change_Basic::fixed_axes = "None";
@@ -824,12 +826,15 @@ TEST_F(LatticeChangeBasicTest, ChangeLatticeFixedIbravFCC)
     // Check that lattice maintains FCC structure
     // For FCC: a1 = (-a, 0, a), a2 = (0, a, a), a3 = (-a, a, 0)
     // All should have same magnitude
-    double mag1 = std::sqrt(ucell.latvec.e11 * ucell.latvec.e11 + ucell.latvec.e12 * ucell.latvec.e12
-                            + ucell.latvec.e13 * ucell.latvec.e13);
-    double mag2 = std::sqrt(ucell.latvec.e21 * ucell.latvec.e21 + ucell.latvec.e22 * ucell.latvec.e22
-                            + ucell.latvec.e23 * ucell.latvec.e23);
-    double mag3 = std::sqrt(ucell.latvec.e31 * ucell.latvec.e31 + ucell.latvec.e32 * ucell.latvec.e32
-                            + ucell.latvec.e33 * ucell.latvec.e33);
+    double mag1 = std::sqrt(
+        ucell.latvec.e11 * ucell.latvec.e11 + ucell.latvec.e12 * ucell.latvec.e12 +
+        ucell.latvec.e13 * ucell.latvec.e13);
+    double mag2 = std::sqrt(
+        ucell.latvec.e21 * ucell.latvec.e21 + ucell.latvec.e22 * ucell.latvec.e22 +
+        ucell.latvec.e23 * ucell.latvec.e23);
+    double mag3 = std::sqrt(
+        ucell.latvec.e31 * ucell.latvec.e31 + ucell.latvec.e32 * ucell.latvec.e32 +
+        ucell.latvec.e33 * ucell.latvec.e33);
 
     EXPECT_NEAR(mag1, mag2, 1e-10);
     EXPECT_NEAR(mag2, mag3, 1e-10);

@@ -10,12 +10,14 @@
 #include "source_io/module_json/output_info.h"
 #include "source_io/module_output/output_log.h"
 #include "source_io/module_output/print_info.h"
+#include "source_io/module_output/write_notice.h"
 #include "source_io/module_parameter/parameter.h"
 
-void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver,
-                                UnitCell& ucell,
-                                const Input_para& inp,
-                                std::ofstream& ofs_running)
+void Relax_Driver::relax_driver(
+    ModuleESolver::ESolver *p_esolver,
+    UnitCell &ucell,
+    const Input_para &inp,
+    std::ofstream &ofs_running)
 {
     ModuleBase::TITLE("Relax_Driver", "relax_driver");
     ModuleBase::timer::start("Relax_Driver", "relax_driver");
@@ -66,7 +68,7 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver,
         this->iter_info(steps, inp);
         this->esolve(steps[0], p_esolver, ucell, inp, force, stress, etot);
         geometry_evaluated = true;
-        this->stru_out(steps[0], ucell, inp, etot, stress, force);
+        this->stru_out(steps[0], ucell, inp, etot, stress, force, ofs_running);
         this->json_out(p_esolver, ucell, inp, force, stress);
 
         if (ModuleIO::read_exit_file(my_rank_, "EXIT", ofs_running))
@@ -76,8 +78,7 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver,
         }
 
         const bool laststep =
-            (inp.calculation == "relax" || inp.calculation == "cell-relax")
-            && steps[0] + 1 == inp.relax_nmax;
+            (inp.calculation == "relax" || inp.calculation == "cell-relax") && steps[0] + 1 == inp.relax_nmax;
         if (laststep)
         {
             p_esolver->after_all_runners(ucell);
@@ -125,7 +126,7 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver,
     return;
 }
 
-void Relax_Driver::init_relax(const int nat, const Input_para& inp)
+void Relax_Driver::init_relax(const int nat, const Input_para &inp)
 {
     if (inp.calculation == "relax" || inp.calculation == "cell-relax")
     {
@@ -140,12 +141,12 @@ void Relax_Driver::init_relax(const int nat, const Input_para& inp)
     }
 }
 
-void Relax_Driver::iter_info(const std::vector<int>& steps, const Input_para& inp)
+void Relax_Driver::iter_info(const std::vector<int> &steps, const Input_para &inp)
 {
-    if (inp.out_level == "ie"
-        && (inp.calculation == "relax" || inp.calculation == "cell-relax" || inp.calculation == "scf"
-            || inp.calculation == "nscf")
-        && (inp.esolver_type != "lr"))
+    if (inp.out_level == "ie" &&
+        (inp.calculation == "relax" || inp.calculation == "cell-relax" || inp.calculation == "scf" ||
+            inp.calculation == "nscf") &&
+        (inp.esolver_type != "lr"))
     {
         ModuleIO::print_screen(steps[2], steps[1], steps[0] + 1);
     }
@@ -160,13 +161,14 @@ void Relax_Driver::iter_info(const std::vector<int>& steps, const Input_para& in
 #endif
 }
 
-void Relax_Driver::esolve(const int istep,
-                          ModuleESolver::ESolver* p_esolver,
-                          UnitCell& ucell,
-                          const Input_para& inp,
-                          ModuleBase::matrix& force,
-                          ModuleBase::matrix& stress,
-                          double& etot)
+void Relax_Driver::esolve(
+    const int istep,
+    ModuleESolver::ESolver *p_esolver,
+    UnitCell &ucell,
+    const Input_para &inp,
+    ModuleBase::matrix &force,
+    ModuleBase::matrix &stress,
+    double &etot)
 {
     p_esolver->runner(ucell, istep);
 
@@ -183,14 +185,15 @@ void Relax_Driver::esolve(const int istep,
     }
 }
 
-bool Relax_Driver::relax_step(std::vector<int>& steps,
-                              ModuleESolver::ESolver* p_esolver,
-                              UnitCell& ucell,
-                              const Input_para& inp,
-                              const ModuleBase::matrix& force,
-                              const ModuleBase::matrix& stress,
-                              const double etot,
-                              std::ofstream& ofs_running)
+bool Relax_Driver::relax_step(
+    std::vector<int> &steps,
+    ModuleESolver::ESolver *p_esolver,
+    UnitCell &ucell,
+    const Input_para &inp,
+    const ModuleBase::matrix &force,
+    const ModuleBase::matrix &stress,
+    const double etot,
+    std::ofstream &ofs_running)
 {
     // Guard: For non-relaxation calculations (scf, nscf, etc.), return true immediately
     // to ensure the main loop exits after one iteration. This provides robustness
@@ -220,16 +223,18 @@ bool Relax_Driver::relax_step(std::vector<int>& steps,
     return converged;
 }
 
-void Relax_Driver::stru_out(const int istep,
-                            UnitCell& ucell,
-                            const Input_para& inp,
-                            const double etot,
-                            const ModuleBase::matrix& stress,
-                            const ModuleBase::matrix& force)
+void Relax_Driver::stru_out(
+    const int istep,
+    UnitCell &ucell,
+    const Input_para &inp,
+    const double etot,
+    const ModuleBase::matrix &stress,
+    const ModuleBase::matrix &force,
+    std::ofstream &ofs_running)
 {
     // out_stru is effective for scf/nscf/relax/cell-relax; md handles STRU output in run_md.cpp
-    if (inp.calculation != "relax" && inp.calculation != "cell-relax" && inp.calculation != "scf"
-        && inp.calculation != "nscf")
+    if (inp.calculation != "relax" && inp.calculation != "cell-relax" && inp.calculation != "scf" &&
+        inp.calculation != "nscf")
     {
         return;
     }
@@ -258,16 +263,12 @@ void Relax_Driver::stru_out(const int istep,
         // Mode-2 STRUC/ subdirectory is created lazily at write time.
         ModuleBase::ensure_directory(out_dir_);
         const std::string now_file = out_dir_ + (inp.out_stru == 1 ? "STRU_NOW" : "STRU_NOW.cif");
-        relax_stru_io::write_stru(ucell,
-                                  inp,
-                                  now_file,
-                                  header,
-                                  force,
-                                  need_orb,
-                                  deepks_setorb_,
-                                  my_rank_,
-                                  inp.cal_force,
-                                  false);
+        relax_stru_io::write_stru(
+            ucell, inp, now_file, header, force, need_orb, deepks_setorb_, my_rank_, inp.cal_force, false);
+        if (my_rank_ == 0)
+        {
+            ModuleIO::write_notice(ofs_running, "Structure at current step", now_file);
+        }
     }
 
     // Numbered files per out_freq_ion: only meaningful for relaxation calculations
@@ -278,27 +279,24 @@ void Relax_Driver::stru_out(const int istep,
         // numbered STRU{istep+1} files. Mode 0 only writes STRU_NOW, which is
         // already overwritten each step above.
         const bool append_stru = (inp.out_app_flag == 1) && (inp.out_stru == 1) && (istep > 0);
-        const std::string step_file = (inp.out_app_flag == 1)
-            ? out_dir_ + (inp.out_stru == 1 ? "STRU" : "STRU.cif")
-            : out_dir_ + "STRU" + std::to_string(istep + 1) + (inp.out_stru == 1 ? "" : ".cif");
-        relax_stru_io::write_stru(ucell,
-                                  inp,
-                                  step_file,
-                                  header,
-                                  force,
-                                  need_orb,
-                                  deepks_setorb_,
-                                  my_rank_,
-                                  inp.cal_force,
-                                  append_stru);
+        const std::string step_file =
+            (inp.out_app_flag == 1) ? out_dir_ + (inp.out_stru == 1 ? "STRU" : "STRU.cif")
+                                    : out_dir_ + "STRU" + std::to_string(istep + 1) + (inp.out_stru == 1 ? "" : ".cif");
+        relax_stru_io::write_stru(
+            ucell, inp, step_file, header, force, need_orb, deepks_setorb_, my_rank_, inp.cal_force, append_stru);
+        if (my_rank_ == 0)
+        {
+            ModuleIO::write_notice(ofs_running, "Structure at current step", step_file);
+        }
     }
 }
 
-void Relax_Driver::json_out(ModuleESolver::ESolver* p_esolver,
-                            UnitCell& ucell,
-                            const Input_para& inp,
-                            const ModuleBase::matrix& force,
-                            const ModuleBase::matrix& stress)
+void Relax_Driver::json_out(
+    ModuleESolver::ESolver *p_esolver,
+    UnitCell &ucell,
+    const Input_para &inp,
+    const ModuleBase::matrix &force,
+    const ModuleBase::matrix &stress)
 {
 #ifdef __JSON
     Json::add_output_energy(p_esolver->cal_energy() * ModuleBase::Ry_to_eV);
@@ -309,15 +307,16 @@ void Relax_Driver::json_out(ModuleESolver::ESolver* p_esolver,
 #endif
 }
 
-void Relax_Driver::final_out(const int istep,
-                             const RelaxStopReason stop_reason,
-                             UnitCell& ucell,
-                             const Input_para& inp,
-                             const double etot,
-                             const ModuleBase::matrix& stress,
-                             const ModuleBase::matrix& force,
-                             const bool geometry_evaluated,
-                             std::ofstream& ofs_running)
+void Relax_Driver::final_out(
+    const int istep,
+    const RelaxStopReason stop_reason,
+    UnitCell &ucell,
+    const Input_para &inp,
+    const double etot,
+    const ModuleBase::matrix &stress,
+    const ModuleBase::matrix &force,
+    const bool geometry_evaluated,
+    std::ofstream &ofs_running)
 {
     int ionic_steps = istep + 1;
     if (stop_reason == RelaxStopReason::DryRun)
@@ -342,16 +341,12 @@ void Relax_Driver::final_out(const int istep,
         // Only write forces when they were actually computed and belong
         // to the geometry being written.
         const bool write_force = inp.cal_force && geometry_evaluated;
-        relax_stru_io::write_stru(ucell,
-                                  inp,
-                                  final_file,
-                                  header,
-                                  force,
-                                  need_orb,
-                                  deepks_setorb_,
-                                  my_rank_,
-                                  write_force,
-                                  false);
+        relax_stru_io::write_stru(
+            ucell, inp, final_file, header, force, need_orb, deepks_setorb_, my_rank_, write_force, false);
+        if (my_rank_ == 0)
+        {
+            ModuleIO::write_notice(ofs_running, "Final structure", final_file);
+        }
     }
 
     if (stop_reason == RelaxStopReason::MaxSteps)
@@ -371,10 +366,8 @@ void Relax_Driver::final_out(const int istep,
     }
     else if (stop_reason == RelaxStopReason::UserExit)
     {
-        ofs_running << " Geometry relaxation stopped by EXIT after "
-                    << ionic_steps << " ionic step(s)." << std::endl;
-        std::cout << " Geometry relaxation stopped by EXIT after "
-                  << ionic_steps << " ionic step(s)." << std::endl;
+        ofs_running << " Geometry relaxation stopped by EXIT after " << ionic_steps << " ionic step(s)." << std::endl;
+        std::cout << " Geometry relaxation stopped by EXIT after " << ionic_steps << " ionic step(s)." << std::endl;
     }
     else if (stop_reason == RelaxStopReason::DryRun)
     {
@@ -382,17 +375,16 @@ void Relax_Driver::final_out(const int istep,
     }
 }
 
-void Relax_Driver::print_not_converged_summary(const int ionic_steps,
-                                               const Input_para& inp,
-                                               std::ofstream& ofs_running) const
+void Relax_Driver::print_not_converged_summary(
+    const int ionic_steps, const Input_para &inp, std::ofstream &ofs_running) const
 {
     // Unified not-converged summary for both relaxation paths so ASE and
     // users can read the method, the actual number of steps taken, and
     // the per-step force / stress history from the running log.
-    const std::vector<double>& force_hist
-        = inp.uses_simultaneous_relaxation() ? rl.get_max_force_history() : rl_old.get_max_force_history();
-    const std::vector<double>& stress_hist
-        = inp.uses_simultaneous_relaxation() ? rl.get_max_stress_history() : rl_old.get_max_stress_history();
+    const std::vector<double> &force_hist =
+        inp.uses_simultaneous_relaxation() ? rl.get_max_force_history() : rl_old.get_max_force_history();
+    const std::vector<double> &stress_hist =
+        inp.uses_simultaneous_relaxation() ? rl.get_max_stress_history() : rl_old.get_max_stress_history();
     const std::string method = inp.relax_method.empty() ? "unknown" : inp.relax_method;
     ofs_running << " Relaxation method: " << method << std::endl;
     ofs_running << " Relaxation stopped after " << ionic_steps << " ionic step(s) (relax_nmax = " << inp.relax_nmax

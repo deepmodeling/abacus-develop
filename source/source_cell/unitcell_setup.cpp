@@ -74,7 +74,7 @@ void UnitCell::setup_cell(const std::string& fn, std::ofstream& log, const doubl
             log << " |                                                                    |" << std::endl;
             log << " |                        #Setup Unitcell#                            |" << std::endl;
             log << " | From the input file and the structure file we know the number of   |" << std::endl;
-            log << " | different elments in this unitcell, then we list the detail        |" << std::endl;
+            log << " | different elements in this unitcell, then we list the detail       |" << std::endl;
             log << " | information for each element, especially the zeta and polar atomic |" << std::endl;
             log << " | orbital number for each element. The total atom number is counted. |" << std::endl;
             log << " | We calculate the nearest atom distance for each atom and show the  |" << std::endl;
@@ -89,12 +89,15 @@ void UnitCell::setup_cell(const std::string& fn, std::ofstream& log, const doubl
             //========================
             // call read_atom_species
             //========================
-            const bool read_atom_species = unitcell::read_atom_species(ifa, log, *this,
+            ok = unitcell::read_atom_species(ifa, log, *this,
                 basis_type, orbital_dir, init_wfc, onsite_radius, deepks_setorb, rpa);
             //========================
             // call read_lattice_constant
             //========================
-            const bool read_lattice_constant = unitcell::read_lattice_constant(ifa, log ,this->lat);
+            if (ok)
+            {
+                ok = unitcell::read_lattice_constant(ifa, log, this->lat);
+            }
             //==========================
             // readl sep potential, currently using the pseudopotential folder (pseudo_dir in INPUT)
             //==========================

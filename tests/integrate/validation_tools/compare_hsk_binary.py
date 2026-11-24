@@ -5,19 +5,74 @@ import struct
 import sys
 
 
-def read_reference(filename, value_type):
-    values = []
-    complex_pattern = re.compile(r"\(([^,]+),([^\)]+)\)")
-    with open(filename, "r", encoding="utf-8") as stream:
-        for line in stream:
-            stripped = line.strip()
-            if not stripped or stripped.startswith("#") or stripped.startswith("Row "):
-                continue
-            if value_type == "complex":
-                values.extend(complex(float(real), float(imag)) for real, imag in complex_pattern.findall(stripped))
+FRAME_PATTERN = re.compile(r"^\s*#?\s*Ionic[ _]Step\b", re.IGNORECASE)
+DIMENSION_PATTERN = re.compile(r"^\s*(\d+)\s+\d+\s+#\s*size of this matrix", re.IGNORECASE)
+COMPLEX_PATTERN = re.compile(r"\(\s*([-+0-9.eE]+)\s*,\s*([-+0-9.eE]+)\s*\)")
+REAL_PATTERN = re.compile(r"[-+]?(?:\d+\.\d*|\.\d+|\d+)(?:[eE][-+]?\d+)?")
+
+
+def select_first_frame(lines):
+    """Return the lines of the first ionic-step record of a text reference."""
+    start = None
+    for index, line in enumerate(lines):
+        if FRAME_PATTERN.match(line):
+            if start is None:
+                start = index
             else:
-                values.extend(float(token) for token in stripped.split())
+                return lines[start:index]
+    if start is None:
+        return lines
+    return lines[start:]
+
+
+def dense_dimension(lines):
+    """Read N from the '# size of this matrix' line of a dense text record."""
+    for line in lines:
+        match = DIMENSION_PATTERN.match(line)
+        if match:
+            return int(match.group(1))
+    return None
+
+
+def packed_from_dense(values, dim):
+    """Select the row-major upper triangle from a dense row-major matrix."""
+    return [values[i * dim + j] for i in range(dim) for j in range(i, dim)]
+
+
+def read_packed_reference(lines, value_type):
+    """Read a legacy reference that stores only the upper triangle."""
+    values = []
+    for line in lines:
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#") or stripped.startswith("Row "):
+            continue
+        if value_type == "complex":
+            values.extend(complex(float(real), float(imag)) for real, imag in COMPLEX_PATTERN.findall(stripped))
+        else:
+            values.extend(float(token) for token in stripped.split())
     return values
+
+
+def read_reference(filename, value_type):
+    with open(filename, "r", encoding="utf-8") as stream:
+        lines = stream.readlines()
+
+    frame = select_first_frame(lines)
+    dim = dense_dimension(frame)
+    if dim is None:
+        return read_packed_reference(frame, value_type)
+
+    text = "".join(frame)
+    if value_type == "complex":
+        values = [complex(float(real), float(imag)) for real, imag in COMPLEX_PATTERN.findall(text)]
+    else:
+        values = [float(token) for token in REAL_PATTERN.findall(text)]
+    # The dense matrix body is the final N*N values of the record; any earlier
+    # numbers belong to the metadata and UnitCell blocks.
+    values = values[-dim * dim:]
+    if len(values) != dim * dim:
+        raise ValueError("dense reference does not contain a full {}x{} matrix".format(dim, dim))
+    return packed_from_dense(values, dim)
 
 
 def read_binary(filename, value_type):

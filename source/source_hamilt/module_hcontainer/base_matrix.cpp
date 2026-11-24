@@ -8,7 +8,7 @@ namespace hamilt
 {
 
 template <typename T>
-BaseMatrix<T>::BaseMatrix(const int& nrow_, const int& ncol_, T* data_existed)
+BaseMatrix<T>::BaseMatrix(const int &nrow_, const int &ncol_, T *data_existed)
 {
     nrow_local = nrow_;
     ncol_local = ncol_;
@@ -18,7 +18,7 @@ BaseMatrix<T>::BaseMatrix(const int& nrow_, const int& ncol_, T* data_existed)
 
 // move constructor
 template <typename T>
-BaseMatrix<T>::BaseMatrix(BaseMatrix<T>&& matrix)
+BaseMatrix<T>::BaseMatrix(BaseMatrix<T> &&matrix)
 {
     this->nrow_local = matrix.nrow_local;
     this->ncol_local = matrix.ncol_local;
@@ -33,7 +33,7 @@ BaseMatrix<T>::BaseMatrix(BaseMatrix<T>&& matrix)
 
 // copy constructor
 template <typename T>
-BaseMatrix<T>::BaseMatrix(const BaseMatrix<T>& matrix)
+BaseMatrix<T>::BaseMatrix(const BaseMatrix<T> &matrix)
 {
     this->nrow_local = matrix.nrow_local;
     this->ncol_local = matrix.ncol_local;
@@ -65,22 +65,22 @@ BaseMatrix<T>::~BaseMatrix()
 
 // allocate
 template <typename T>
-void BaseMatrix<T>::allocate(T* data_array, bool if_zero)
+void BaseMatrix<T>::allocate(T *data_array, bool if_zero)
 {
 #ifdef __DEBUG
-assert(nrow_local*ncol_local>0);
+    assert(nrow_local * ncol_local > 0);
 #endif
-    if(data_array != nullptr && !this->allocated)
+    if (data_array != nullptr && !this->allocated)
     {
         this->value_begin = data_array;
     }
-    else if(data_array != nullptr && this->allocated)
+    else if (data_array != nullptr && this->allocated)
     {
         delete[] this->value_begin;
         this->value_begin = data_array;
         this->allocated = false;
     }
-    else if(data_array == nullptr && !this->allocated)
+    else if (data_array == nullptr && !this->allocated)
     {
         this->value_begin = new T[nrow_local * ncol_local];
         this->allocated = true;
@@ -89,7 +89,7 @@ assert(nrow_local*ncol_local>0);
     {
         // do nothing
     }
-    if(if_zero) 
+    if (if_zero)
     {
         this->set_zero();
     }
@@ -100,17 +100,17 @@ template <typename T>
 void BaseMatrix<T>::set_zero()
 {
 #ifdef __DEBUG
-assert(this->value_begin != nullptr);
+    assert(this->value_begin != nullptr);
 #endif
     ModuleBase::GlobalFunc::ZEROS(this->value_begin, nrow_local * ncol_local);
 }
 
 // add_array
 template <typename T>
-void BaseMatrix<T>::add_array(T* array)
+void BaseMatrix<T>::add_array(T *array)
 {
 #ifdef __DEBUG
-assert(this->value_begin != nullptr);
+    assert(this->value_begin != nullptr);
 #endif
     // if allocated, add data from array into matrix
     // if whole matrix and 2d-block format, add data from array into matrix either
@@ -122,7 +122,7 @@ assert(this->value_begin != nullptr);
 
 // operator= for copy assignment
 template <typename T>
-BaseMatrix<T>& BaseMatrix<T>::operator=(const BaseMatrix<T>& other)
+BaseMatrix<T> &BaseMatrix<T>::operator=(const BaseMatrix<T> &other)
 {
     if (this != &other)
     {
@@ -155,7 +155,7 @@ BaseMatrix<T>& BaseMatrix<T>::operator=(const BaseMatrix<T>& other)
 
 // operator= for move assignment
 template <typename T>
-BaseMatrix<T>& BaseMatrix<T>::operator=(BaseMatrix<T>&& other) noexcept
+BaseMatrix<T> &BaseMatrix<T>::operator=(BaseMatrix<T> &&other) noexcept
 {
     if (this != &other)
     {
@@ -183,7 +183,7 @@ template <typename T>
 size_t BaseMatrix<T>::get_memory_size() const
 {
     size_t memory_size = sizeof(*this);
-    if(this->allocated)
+    if (this->allocated)
     {
         memory_size += nrow_local * ncol_local * sizeof(T);
     }
@@ -192,7 +192,7 @@ size_t BaseMatrix<T>::get_memory_size() const
 
 // set size
 template <typename T>
-void BaseMatrix<T>::set_size(const int& nrow, const int& ncol)
+void BaseMatrix<T>::set_size(const int &nrow, const int &ncol)
 {
     this->nrow_local = nrow;
     this->ncol_local = ncol;
