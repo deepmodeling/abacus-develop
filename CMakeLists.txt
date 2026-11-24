@@ -549,20 +549,7 @@ if(_enable_torch)
 endif()
 
 if(ENABLE_CNPY)
-  find_path(cnpy_SOURCE_DIR cnpy.h HINTS ${libnpy_INCLUDE_DIR})
-  if(NOT cnpy_SOURCE_DIR)
-    include(FetchContent)
-    FetchContent_Declare(
-      cnpy
-      GIT_REPOSITORY https://github.com/rogersce/cnpy.git
-      GIT_PROGRESS TRUE)
-    FetchContent_MakeAvailable(cnpy)
-  else()
-
-  endif()
-
-  # find ZLIB and link
-  find_package(ZLIB REQUIRED)
+  find_package(CNPY REQUIRED)
 endif()
 
 function(git_submodule_update)

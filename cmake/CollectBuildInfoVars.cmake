@@ -386,7 +386,7 @@ else()
 endif()
 
 if(ENABLE_CNPY)
-  set(ABACUS_CNPY_VERSION "yes (path: ${cnpy_SOURCE_DIR})")
+  set(ABACUS_CNPY_VERSION "yes (path: ${CNPY_INCLUDE_DIR})")
 else()
   set(ABACUS_CNPY_VERSION "no")
 endif()

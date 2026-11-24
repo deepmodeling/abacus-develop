@@ -293,8 +293,7 @@ set(_abacus_feature_libs
     $<$<BOOL:${ENABLE_JSON}>:nlohmann_json::nlohmann_json>
     $<$<BOOL:${ENABLE_ELPA}>:ELPA::ELPA>
     $<$<BOOL:${ENABLE_PEXSI}>:PEXSI::PEXSI>
-    $<$<BOOL:${ENABLE_CNPY}>:cnpy>
-    $<$<BOOL:${ENABLE_CNPY}>:ZLIB::ZLIB>
+    $<$<BOOL:${ENABLE_CNPY}>:CNPY::cnpy>
     $<$<BOOL:${ENABLE_LIBRI}>:LibRI::LibRI>
     $<$<BOOL:${ENABLE_LIBXC}>:Libxc::xc>
     $<$<BOOL:${ENABLE_PLUMED}>:PLUMED::plumed>
@@ -305,15 +304,6 @@ set(_abacus_feature_include_dirs)
 
 if(ENABLE_ELPA)
   list(APPEND _abacus_feature_include_dirs ${ELPA_INCLUDE_DIR})
-endif()
-
-if(ENABLE_CNPY)
-  if(cnpy_INCLUDE_DIR)
-    list(APPEND _abacus_feature_include_dirs ${cnpy_INCLUDE_DIR})
-  endif()
-  if(cnpy_SOURCE_DIR)
-    list(APPEND _abacus_feature_include_dirs ${cnpy_SOURCE_DIR})
-  endif()
 endif()
 
 if(ENABLE_DEEPMD AND DEEPMD_BACKEND STREQUAL "TensorFlow")
@@ -393,6 +383,7 @@ foreach(
         LibRI::LibRI
         LibComm::LibComm
         libnpy::npy
+        CNPY::cnpy
         torch
         ELPA::ELPA
         Libxc::xc
