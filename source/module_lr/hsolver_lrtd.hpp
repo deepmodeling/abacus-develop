@@ -105,7 +105,7 @@ namespace LR
                     std::vector<double> ethr_band(nband, diag_ethr);
                     hsolver::DiagoIterAssist<T>::avg_iter
                         += static_cast<double>(dav_subspace.diag(
-                            hpsi_func, psi,
+                            hpsi_func, spsi_func, psi,
                             dim,
                             eigenvalue.data(),
                             ethr_band,
