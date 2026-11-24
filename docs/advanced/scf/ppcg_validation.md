@@ -121,11 +121,15 @@ The six `tests/11_PW_GPU/scf_ppcg_*` Autotest fixtures use the CPU fixtures' geo
 | GaAs | 8 | 6.06555e-7 | 0 | — |
 | Si | 7 | 1.44325e-7 | 0 | — |
 | Al | 14 | 7.91835e-11 | 0 | — |
-| Fe (USPP) | 26 | 6.09993e-17 | 7 | 1.63674e-14 |
+| Fe (USPP) | 26 | 6.09993e-17 | 9 | 1.63674e-14 |
 | NaCl (USPP) | 35 | 4.70540e-17 | 0 | — |
-| HCl (mixed NCPP/USPP) | 20 | 3.08266e-17 | 12 | 2.21592e-14 |
+| HCl (mixed NCPP/USPP) | 20 | 3.08266e-17 | 24 | 2.21592e-14 |
 
-The deliberately strict USPP fixtures retain their roundoff-level eigensolver warnings; passing observable checks does not certify those eigenpairs at an unattainable residual threshold. An initial batch exceeded the local harness's 300-second aggregate limit. A fresh complete batch passed with a 900-second harness limit; numerical thresholds, iteration budgets and references were unchanged.
+Warning counts above include stderr from both MPI ranks, rather than only the world-root running log.
+
+In the CUDA CI run of `11e39d8f3` on an NVIDIA L20 with CUDA 12.9, all six fixtures also passed their reference-observable checks. Fe emitted 12 iteration-limit warnings with a maximum residual of `4.81339e-9`; HCl emitted 24 with a maximum of `2.15364e-14`. These individual diagonalization calls did not satisfy their requested thresholds. Observable agreement does not certify those eigenpairs, and the larger Fe warnings are not classified as roundoff-level convergence. The local RTX 3090 table and these CI observations are reported separately.
+
+The deliberately strict local USPP fixtures retain their roundoff-level eigensolver warnings; passing observable checks does not certify those eigenpairs at an unattainable residual threshold. An initial batch exceeded the local harness's 300-second aggregate limit. A fresh complete batch passed with a 900-second harness limit; numerical thresholds, iteration budgets and references were unchanged.
 
 A separate GaAs calculation with `ppcg_rr_step=4`, two ranks and two k-point pools converged without PPCG warnings. The world-root trace preserved all eight of its solves across eight SCF iterations, including initial/final records and block sweeps. Other pools intentionally do not write that shared trace. GPU CLI help/version and valid `--check-input` checks passed; RR interval 0 and NSCF were rejected, with NSCF also rejected during actual startup. A four-rank probe was rejected by the existing k-point setup because this fixture has only two k points; the successful probe uses two ranks.
 
@@ -167,3 +171,5 @@ The CUDA CI workflow now explicitly runs the GPU unit target, and its existing `
 On 2026-11-25, a formatting-only cleanup applied the repository's configured tools to new files and modified regions. All 16 new C++/CUDA source/header files passed `clang-format 23.1.3 --dry-run --Werror`. The MPI shell helper uses the exact shfmt output from CI and passes `bash -n`. CPU and CUDA applications were rebuilt; focused CPU MPI CTest passed 6/6, non-MPI CTest passed 3/3, and the GPU target passed all six cases again. Numerical settings, references and iteration budgets were unchanged.
 
 The repository-wide pre-commit job is advisory (`continue-on-error: true`). Its raw clang-format, cmake-format and shfmt hooks failed even though GitHub displayed a successful job. The log included formatting changes in 2,475 files outside this PR and unsupported JSON-language configuration errors. A green job result therefore does not certify repository-wide formatting; the focused checks above describe this PR's validation. Existing files were formatted only in the modified regions to avoid an unrelated repository-wide rewrite.
+
+A subsequent raw CI formatter audit of `71e6ab31a` changed no newly added PR file. Repository-wide formatter failures remained in existing files; the non-blocking workflow status is still not a full formatting pass.
