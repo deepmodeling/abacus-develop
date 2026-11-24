@@ -3,6 +3,7 @@
 #ifdef __MPI
 #include "source_base/module_parallel/para_mpi_func.h"
 #include "source_base/module_parallel/para_world.h"
+#include "source_base/parallel_common.h"
 
 #include <limits>
 #include <stdexcept>
@@ -22,6 +23,21 @@ int checked_mpi_count(const std::size_t nbytes)
             "Matrix2d MPI buffer exceeds the native int count range");
     }
     return static_cast<int>(nbytes);
+}
+
+int checked_mpi_count_collective(const std::size_t nbytes,
+                                 const MPI_Comm comm)
+{
+    const std::size_t max_count
+        = static_cast<std::size_t>(std::numeric_limits<int>::max());
+    int has_overflow = nbytes > max_count ? 1 : 0;
+    Parallel_Common::allreduce_sum(has_overflow, comm);
+    if (has_overflow != 0)
+    {
+        throw std::invalid_argument(
+            "Matrix2d MPI buffer exceeds the native int count range");
+    }
+    return checked_mpi_count(nbytes);
 }
 
 std::vector<int> make_byte_offsets(const std::vector<int>& nbytes)

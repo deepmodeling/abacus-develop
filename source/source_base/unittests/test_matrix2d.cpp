@@ -6,6 +6,7 @@
 #include "source_base/matrix2d_view.h"
 
 #ifdef __MPI
+#include "source_base/matrix2d_mpi.h"
 #include "source_base/parallel_common.h"
 #endif
 
@@ -976,6 +977,28 @@ void check_distributed_matmul(const int m,
     EXPECT_EQ(right.desc(), desc_rhs1);
     EXPECT_EQ(product.desc(), desc_res);
 }
+
+template <typename T>
+void check_distributed_float_reduction_range(const T& value,
+                                             const float expected)
+{
+    const int nproc = Parallel_Common::comm_size(MPI_COMM_WORLD);
+    Matrix2d<T> matrix(1,
+                       1,
+                       1,
+                       nproc,
+                       1,
+                       MPI_COMM_WORLD);
+    ASSERT_TRUE(matrix.has_distribution());
+    ASSERT_TRUE(matrix.is_active());
+    if (matrix.in_this_processor(0, 0))
+    {
+        matrix.atglb(0, 0) = value;
+    }
+
+    EXPECT_FLOAT_EQ(matrix.norm(), expected);
+    EXPECT_FLOAT_EQ(matrix.max_abs(), expected);
+}
 #endif
 } // namespace
 
@@ -1561,6 +1584,28 @@ TEST(Matrix2dTest, DistributedComplexAcrossBlocksAndProcessGrids)
             check_gather_scatter(matrix);
         }
     }
+}
+
+TEST(Matrix2dTest, DistributedFloatReductionsUseWidenedAccumulator)
+{
+    const std::complex<float> complex_float_large(1.0e20f, 0.0f);
+    const std::complex<float> complex_float_small(1.0e-30f, 0.0f);
+    check_distributed_float_reduction_range(1.0e20f, 1.0e20f);
+    check_distributed_float_reduction_range(1.0e-30f, 1.0e-30f);
+    check_distributed_float_reduction_range(complex_float_large, 1.0e20f);
+    check_distributed_float_reduction_range(complex_float_small, 1.0e-30f);
+}
+
+TEST(Matrix2dTest, MpiCountOverflowIsReportedCollectively)
+{
+    const int rank = Parallel_Common::comm_rank(MPI_COMM_WORLD);
+    const std::size_t max_count
+        = static_cast<std::size_t>(std::numeric_limits<int>::max());
+    const std::size_t local_nbytes = rank == 0 ? max_count + 1 : 1;
+    EXPECT_THROW(
+        matrix2d_impl::mpi::checked_mpi_count_collective(local_nbytes,
+                                                         MPI_COMM_WORLD),
+        std::invalid_argument);
 }
 
 TEST(Matrix2dTest, TallSkinnyPaddingDoesNotAffectOperatorsOrGather)

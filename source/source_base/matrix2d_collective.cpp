@@ -290,7 +290,8 @@ template <typename T>
 Matrix2d<T> allgather(const Matrix2d<T>& matrix, const MPI_Comm comm)
 {
     const std::vector<unsigned char> locbuf = make_local_buffer(matrix);
-    const int nbytes_local_mpi = mpi::checked_mpi_count(locbuf.size());
+    const int nbytes_local_mpi
+        = mpi::checked_mpi_count_collective(locbuf.size(), comm);
     const std::vector<int> nbytes_recv
         = mpi::allgather_nbytes(nbytes_local_mpi, comm);
     const std::vector<int> rdispls = mpi::make_byte_offsets(nbytes_recv);
@@ -321,7 +322,8 @@ std::unique_ptr<Matrix2d<T>> gather_on_root(const Matrix2d<T>& matrix,
     }
 
     const std::vector<unsigned char> locbuf = make_local_buffer(matrix);
-    const int nbytes_local_mpi = mpi::checked_mpi_count(locbuf.size());
+    const int nbytes_local_mpi
+        = mpi::checked_mpi_count_collective(locbuf.size(), comm);
     const std::vector<int> nbytes_recv
         = mpi::allgather_nbytes(nbytes_local_mpi, comm);
     const std::vector<int> rdispls = mpi::make_byte_offsets(nbytes_recv);
@@ -370,7 +372,8 @@ void scatter_from_host(const Matrix2d<T>& matglb, Matrix2d<T>& matloc)
     const std::vector<int> metadata = make_local_metadata(matloc);
     const std::size_t nmeta = metadata.size();
     const std::size_t nbytes_meta = nmeta * W_INT;
-    const int nmeta_mpi = mpi::checked_mpi_count(nbytes_meta);
+    const int nmeta_mpi
+        = mpi::checked_mpi_count_collective(nbytes_meta, comm);
     const std::vector<int> metacounts
         = mpi::allgather_nbytes(nmeta_mpi, comm);
     const std::vector<int> metadispls
@@ -467,7 +470,8 @@ void scatter_from_host(const Matrix2d<T>& matglb, Matrix2d<T>& matloc)
         * static_cast<std::size_t>(matloc.ncloc());
     const std::size_t nbytes_recv = nelem_recv * sizeof(T);
     std::vector<unsigned char> recvbuf(nbytes_recv);
-    const int recv = mpi::checked_mpi_count(nbytes_recv);
+    const int recv
+        = mpi::checked_mpi_count_collective(nbytes_recv, comm);
     const unsigned char* receive_source = ip == 0 ? sendbuf.data() : nullptr;
     Parallel_Common::scatterv_bytes(receive_source,
                                     sendcounts.data(),
