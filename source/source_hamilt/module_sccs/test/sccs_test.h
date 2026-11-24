@@ -34,19 +34,17 @@ const std::vector<double> no_probe;
 
 class PwTest : public testing::Test
 {
-protected:
+  protected:
     PwTest() : basis("cpu", "double") {}
 
     void SetUp() override
     {
-        const ModuleBase::Matrix3 lattice(1.0, 0.0, 0.0,
-                                          0.0, 1.0, 0.0,
-                                          0.0, 0.0, 1.0);
+        const ModuleBase::Matrix3 lattice(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
         set_up_basis(lattice);
     }
 
     // Rows of lattice in units of length; ecut 20 Ry.
-    void set_up_basis(const ModuleBase::Matrix3& lattice)
+    void set_up_basis(const ModuleBase::Matrix3 &lattice)
     {
 #ifdef __MPI
         basis.initmpi(pool_size, pool_rank, POOL_WORLD);
@@ -57,7 +55,11 @@ protected:
 
     // Explicit FFT grid. A pool with more ranks than nz leaves ranks without
     // real-space grid points (nrxx == 0); they still own G vectors.
-    void set_up_grid(const ModuleBase::Matrix3& lattice, int nx, int ny, int nz)
+    void set_up_grid(
+        const ModuleBase::Matrix3 &lattice,
+        int nx,
+        int ny,
+        int nz)
     {
 #ifdef __MPI
         basis.initmpi(pool_size, pool_rank, POOL_WORLD);
@@ -99,15 +101,10 @@ protected:
 // third owns no z plane, while the G sphere keeps sticks for every rank.
 class EmptyPartitionTest : public PwTest
 {
-protected:
-    void SetUp() override
-    {
-        set_up_grid(lattice, 12, 12, 2);
-    }
+  protected:
+    void SetUp() override { set_up_grid(lattice, 12, 12, 2); }
 
-    const ModuleBase::Matrix3 lattice = ModuleBase::Matrix3(1.0, 0.0, 0.0,
-                                                            0.0, 1.0, 0.0,
-                                                            0.0, 0.0, 0.25);
+    const ModuleBase::Matrix3 lattice = ModuleBase::Matrix3(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.25);
 };
 } // namespace SccsTest
 

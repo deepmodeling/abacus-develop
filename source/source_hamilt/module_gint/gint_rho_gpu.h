@@ -1,34 +1,35 @@
 #ifndef ABACUS_SOURCE_HAMILT_MODULE_GINT_GINT_RHO_GPU_H
 #define ABACUS_SOURCE_HAMILT_MODULE_GINT_GINT_RHO_GPU_H
 
-
-#include <memory>
-#include <vector>
-#include "source_hamilt/module_hcontainer/hcontainer.h"
 #include "gint.h"
 #include "gint_info.h"
+#include "source_hamilt/module_hcontainer/hcontainer.h"
+#include <memory>
+#include <vector>
 
 namespace ModuleGint
 {
 
-class Gint_rho_gpu: public Gint
+class Gint_rho_gpu : public Gint
 {
-    public:
+  public:
     Gint_rho_gpu(
-        const std::vector<HContainer<double>*>& dm_vec,
+        const std::vector<HContainer<double> *> &dm_vec,
         const int nspin,
         double **rho,
         bool is_dm_symm = true)
-        : dm_vec_(dm_vec), nspin_(nspin), rho_(rho), is_dm_symm_(is_dm_symm) {}
-    
+        : dm_vec_(dm_vec), nspin_(nspin), rho_(rho), is_dm_symm_(is_dm_symm)
+    {
+    }
+
     void cal_gint();
 
-    private:
-    template<typename Real>
+  private:
+    template <typename Real>
     void cal_gint_impl_();
 
     // input
-    const std::vector<HContainer<double>*> dm_vec_;
+    const std::vector<HContainer<double> *> dm_vec_;
     const int nspin_;
 
     // if true, it means the DMR matrix is symmetric,
@@ -36,9 +37,9 @@ class Gint_rho_gpu: public Gint
     const bool is_dm_symm_;
 
     // output
-    double ** rho_ = nullptr;
+    double **rho_ = nullptr;
 };
 
-}
+} // namespace ModuleGint
 
 #endif // ABACUS_SOURCE_HAMILT_MODULE_GINT_GINT_RHO_GPU_H

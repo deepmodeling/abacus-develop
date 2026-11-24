@@ -180,6 +180,7 @@ class WriteWfcLcaoTest : public testing::Test
     std::vector<int> ik2iktot = {0,1};
     int nkstot = 2;
     int out_app_flag = 1;
+    std::ofstream ofs_running;
 
     void SetUp() override
     {
@@ -253,7 +254,7 @@ TEST_F(WriteWfcLcaoTest, WriteWfcLcao)
     psi::Psi<double> my_psi(psi_local_double.data(), nk, nbands_local, nbasis_local, nbasis_local, true);
 
 	ModuleIO::write_wfc_nao(out_type, out_app_flag, my_psi, ekb, wg, kvec_c, 
-			ik2iktot, nkstot, pv, nspin, istep);
+			ik2iktot, nkstot, pv, nspin, ofs_running, istep);
 
     // check the output file
     if (GlobalV::MY_RANK == 0)
@@ -296,7 +297,7 @@ TEST_F(WriteWfcLcaoTest, WriteWfcLcaoComplex)
     psi::Psi<std::complex<double>> my_psi(psi_local_complex.data(), nk, nbands_local, nbasis_local, true);
 
 	ModuleIO::write_wfc_nao(out_type, out_app_flag, my_psi, ekb, wg, kvec_c, 
-			ik2iktot, nkstot, pv, nspin, istep);
+			ik2iktot, nkstot, pv, nspin, ofs_running, istep);
 
     // check the output file
     if (GlobalV::MY_RANK == 0)
@@ -340,7 +341,7 @@ TEST_F(WriteWfcLcaoTest, WriteWfcLcaoTextHeader)
     psi::Psi<double> my_psi(psi_local_double.data(), nk, nbands_local, nbasis_local, nbasis_local, true);
 
     ModuleIO::write_wfc_nao(out_type, out_app_flag, my_psi, ekb, wg, kvec_c,
-            ik2iktot, nkstot, pv, nspin, istep);
+            ik2iktot, nkstot, pv, nspin, ofs_running, istep);
 
     if (GlobalV::MY_RANK == 0)
     {
@@ -356,7 +357,7 @@ TEST_F(WriteWfcLcaoTest, WriteWfcLcaoTextHeader)
         std::getline(file1, first_line);
         EXPECT_THAT(first_line, testing::HasSubstr("# ABACUS version:"));
         std::string rest((std::istreambuf_iterator<char>(file1)), std::istreambuf_iterator<char>());
-        EXPECT_THAT(rest, testing::HasSubstr("# IONIC STEP 1 (spin up)"));
+        EXPECT_THAT(rest, testing::HasSubstr("# Ionic_Step 1 (spin up)"));
         EXPECT_THAT(rest, testing::HasSubstr("(number of bands)"));
         file1.close();
 
@@ -439,7 +440,7 @@ TEST(ModuleIOTest, WriteWfcNaoHeader)
 
         const std::string header = "# ABACUS version: test\n"
                                    "# Written at 2026-01-01 00:00:00\n"
-                                   "# IONIC STEP 1 (spin up)\n";
+                                   "# Ionic_Step 1 (spin up)\n";
 
         // Call the function to be tested
         ModuleIO::wfc_nao_write2file(filename, ctot.data(), TestParameters::sys().nlocal, 0, ekb, wg, false, false, header);
@@ -449,7 +450,7 @@ TEST(ModuleIOTest, WriteWfcNaoHeader)
         std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
         EXPECT_THAT(str, testing::HasSubstr("# ABACUS version: test\n"));
         EXPECT_THAT(str, testing::HasSubstr("# Written at 2026-01-01 00:00:00\n"));
-        EXPECT_THAT(str, testing::HasSubstr("# IONIC STEP 1 (spin up)\n"));
+        EXPECT_THAT(str, testing::HasSubstr("# Ionic_Step 1 (spin up)\n"));
         EXPECT_THAT(str, testing::HasSubstr("2 (number of bands)"));
         EXPECT_THAT(str, testing::HasSubstr("1.00000000e-01 2.00000000e-01"));
         ifs.close();

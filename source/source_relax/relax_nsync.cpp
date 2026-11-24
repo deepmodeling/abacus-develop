@@ -6,9 +6,8 @@
 #include "source_cell/cell_tools.h"
 #include "source_cell/update_cell.h"
 
-void IonCellOptimizer::print_converged_summary(const int istep,
-                                               const bool with_stress,
-                                               std::ofstream& ofs_running) const
+void IonCellOptimizer::print_converged_summary(
+    const int istep, const bool with_stress, std::ofstream &ofs_running) const
 {
     ofs_running << " Relaxation method: " << inp_->relax_method << std::endl;
     ofs_running << " Relaxation converged in " << istep << " step(s)." << std::endl;
@@ -33,7 +32,7 @@ void IonCellOptimizer::print_converged_summary(const int istep,
  *
  * @param natom Number of atoms in the system
  */
-void IonCellOptimizer::init_relax(const int& natom, const Input_para& inp)
+void IonCellOptimizer::init_relax(const int &natom, const Input_para &inp)
 {
     inp_ = &inp;
     max_force_history_.clear();
@@ -71,14 +70,15 @@ void IonCellOptimizer::init_relax(const int& natom, const Input_para& inp)
  * @param stress_step Current step counter for stress-based relaxation (output)
  * @return true if relaxation is converged, false otherwise
  */
-bool IonCellOptimizer::relax_step(const int& istep,
-                                  const double& energy,
-                                  UnitCell& ucell,
-                                  ModuleBase::matrix force,
-                                  ModuleBase::matrix stress,
-                                  int& force_step,
-                                  int& stress_step,
-                                  std::ofstream& ofs_running)
+bool IonCellOptimizer::relax_step(
+    const int &istep,
+    const double &energy,
+    UnitCell &ucell,
+    ModuleBase::matrix force,
+    ModuleBase::matrix stress,
+    int &force_step,
+    int &stress_step,
+    std::ofstream &ofs_running)
 {
     ModuleBase::TITLE("IonCellOptimizer", "relax_step");
 

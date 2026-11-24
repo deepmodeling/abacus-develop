@@ -46,8 +46,9 @@ focused cleanup.
   `PARAM`. Prefer explicit parameters or narrow local interfaces.
 - Do not store workflow switches in mutable member variables that can be changed
   implicitly from multiple places.
-- Keep header dependencies minimal; avoid adding includes to headers unless the
-  declaration truly requires them.
+- Keep header dependencies clean and explicit; avoid unnecessary includes in
+  headers, and do not replace `#include` directives with forward declarations
+  just to silence header include warnings.
 - Avoid adding `.hpp` implementation headers and avoid including `.hpp` files
   from other headers unless the PR explains why header-only implementation is
   needed.
@@ -122,8 +123,9 @@ Deterministic errors require a code or documentation fix before merge unless a
 maintainer-approved exception is recorded. Deterministic warnings require a
 reviewable rationale or cleanup, but they do not become blockers without an
 explicit governance change. For header include warnings, the rationale should
-state whether the header needs a complete type, for example because it owns a
-value member rather than a pointer or reference.
+confirm that the included header is actually used and does not introduce
+unnecessary or circular dependencies; explicit `#include` directives are
+preferred over replacing them with forward declarations.
 
 For global dependencies, the mechanical checker uses a PR-level budget during
 the legacy migration period. A PR blocks only when the number of code references

@@ -1,14 +1,14 @@
-#include "sccs_test.h"
 #include "../sccs_functional.h"
 #include "../sccs_parameters.h"
-#include "../sccs_response.h"
 #include "../sccs_pw_coulomb.h"
+#include "../sccs_response.h"
 #include "../sccs_sa.h"
+#include "sccs_test.h"
 #include "source_base/parallel_reduce.h"
 
 class SccsFunctionalTest : public SccsTest::PwTest
 {
-protected:
+  protected:
     // cos(2 pi x/L + 0.3) along x, whose flat planes miss the grid.
     std::vector<double> shifted_mode() const
     {
@@ -25,11 +25,12 @@ protected:
     // Directional derivative of the non-electrostatic energy of a filled
     // cavity in vacuum along a density cosine: electron-potential projection
     // and central difference of the evaluated energy.
-    void filled_non_electrostatic_derivative(double surface_tension,
-                                             double pressure,
-                                             double& predicted,
-                                             double& finite_difference,
-                                             double& filled_volume)
+    void filled_non_electrostatic_derivative(
+        double surface_tension,
+        double pressure,
+        double &predicted,
+        double &finite_difference,
+        double &filled_volume)
     {
         ModuleSccs::SccsConfig config = ModuleSccs::preset_config(ModuleSccs::Preset::Vacuum);
         config.surface_tension = surface_tension;
@@ -40,21 +41,22 @@ protected:
         config.cavity.solvent_aware.filling_thr = 0.67;
         config.cavity.solvent_aware.filling_spread = 0.1;
         const ModuleBase::Matrix3 lattice;
-        const std::vector<double> kernel = ModuleSccs::sa_probe_kernel(basis, lattice, length,
-                                                                       config.cavity.solvent_aware);
+        const std::vector<double> kernel =
+            ModuleSccs::sa_probe_kernel(basis, lattice, length, config.cavity.solvent_aware);
         const std::vector<double> mode = shifted_mode();
         const std::vector<double> charge(basis.nrxx, 0.0);
         const std::vector<double> cold;
         ModuleSccs::PolarizationSolverParameters solver;
         ModuleSccs::PeriodicCoulombOperator coulomb(basis, tpiba);
-        auto evaluate = [&](double step, ModuleSccs::SccsResponse& response, ModuleSccs::FunctionalResult& result) {
+        auto evaluate = [&](double step, ModuleSccs::SccsResponse &response, ModuleSccs::FunctionalResult &result)
+        {
             std::vector<double> density(basis.nrxx);
             for (int ir = 0; ir < basis.nrxx; ++ir)
             {
                 density[ir] = 1e-3 * (1.0 + 0.3 * mode[ir]) + step * mode[ir];
             }
-            ModuleSccs::solve_response(density, charge, config.cavity, kernel, solver, cold, basis, tpiba, coulomb,
-                                       response);
+            ModuleSccs::solve_response(
+                density, charge, config.cavity, kernel, solver, cold, basis, tpiba, coulomb, response);
             ModuleSccs::eval_functional(charge, response, config, kernel, basis, tpiba, coulomb, result);
         };
         ModuleSccs::SccsResponse center_response;
@@ -84,7 +86,7 @@ TEST_F(SccsFunctionalTest, UniformDielectricEnergyAndElectronDerivative)
 {
     const std::vector<double> mode = cosine_mode(0);
     std::vector<double> charge = mode;
-    for (double& value : charge)
+    for (double &value : charge)
     {
         value *= 1e-3;
     }
@@ -97,8 +99,7 @@ TEST_F(SccsFunctionalTest, UniformDielectricEnergyAndElectronDerivative)
     const std::vector<double> density(basis.nrxx, 0.0);
     const std::vector<double> cold;
     ModuleSccs::SccsResponse response;
-    ModuleSccs::solve_response(density, charge, config.cavity, solver, cold,
-                               basis, tpiba, response);
+    ModuleSccs::solve_response(density, charge, config.cavity, solver, cold, basis, tpiba, response);
     ModuleSccs::FunctionalResult result;
     ModuleSccs::eval_functional(charge, response, config, basis, tpiba, result);
     const double kernel = ModuleBase::FOUR_PI / (tpiba * tpiba);
@@ -150,8 +151,8 @@ TEST_F(SccsFunctionalTest, NonElectrostaticDiscreteEnergyDerivative)
         response.solute[ir] -= 2.0 * step * mode[ir];
     }
     ModuleSccs::eval_functional(charge, response, config, basis, tpiba, minus);
-    const double fd = (plus.surface_energy + plus.volume_energy - minus.surface_energy - minus.volume_energy)
-                      / (2.0 * step);
+    const double fd =
+        (plus.surface_energy + plus.volume_energy - minus.surface_energy - minus.volume_energy) / (2.0 * step);
     EXPECT_NEAR(fd, predicted, 1e-8);
     const double expected_volume = 0.5 * basis.omega;
     EXPECT_NEAR(center.volume, expected_volume, 1e-10);
@@ -172,22 +173,20 @@ TEST_F(SccsFunctionalTest, ExplicitPeriodicOperatorPreservesResponseAndFunctiona
     const std::vector<double> cold;
     ModuleSccs::SccsResponse legacy;
     ModuleSccs::SccsResponse explicit_response;
-    ModuleSccs::solve_response(density, charge, config.cavity, solver, cold,
-                               basis, tpiba, legacy);
+    ModuleSccs::solve_response(density, charge, config.cavity, solver, cold, basis, tpiba, legacy);
     ModuleSccs::PeriodicCoulombOperator coulomb(basis, tpiba);
     EXPECT_FALSE(coulomb.has_correction());
-    ModuleSccs::solve_response(density, charge, config.cavity, SccsTest::no_probe, solver, cold,
-                               basis, tpiba, coulomb, explicit_response);
+    ModuleSccs::solve_response(
+        density, charge, config.cavity, SccsTest::no_probe, solver, cold, basis, tpiba, coulomb, explicit_response);
     EXPECT_EQ(legacy.polarization.iterations, explicit_response.polarization.iterations);
     EXPECT_EQ(legacy.polarization.potential, explicit_response.polarization.potential);
     EXPECT_EQ(legacy.cavity_potential, explicit_response.cavity_potential);
     EXPECT_EQ(legacy.restart_potential, explicit_response.restart_potential);
     ModuleSccs::FunctionalResult legacy_result;
     ModuleSccs::FunctionalResult explicit_result;
-    ModuleSccs::eval_functional(charge, legacy, config, basis, tpiba,
-                                legacy_result);
-    ModuleSccs::eval_functional(charge, explicit_response, config, SccsTest::no_probe, basis, tpiba,
-                                coulomb, explicit_result);
+    ModuleSccs::eval_functional(charge, legacy, config, basis, tpiba, legacy_result);
+    ModuleSccs::eval_functional(
+        charge, explicit_response, config, SccsTest::no_probe, basis, tpiba, coulomb, explicit_result);
     EXPECT_DOUBLE_EQ(legacy_result.reaction_energy, explicit_result.reaction_energy);
     EXPECT_DOUBLE_EQ(legacy_result.surface_energy, explicit_result.surface_energy);
     EXPECT_DOUBLE_EQ(legacy_result.volume_energy, explicit_result.volume_energy);
@@ -217,8 +216,7 @@ TEST_F(SccsFunctionalTest, CavityDensityDerivativeOnlyForTheFullCavity)
     ModuleSccs::PolarizationSolverParameters solver;
     const std::vector<double> cold;
     ModuleSccs::SccsResponse response;
-    ModuleSccs::solve_response(density, charge, config.cavity, solver, cold,
-                               basis, tpiba, response);
+    ModuleSccs::solve_response(density, charge, config.cavity, solver, cold, basis, tpiba, response);
     ModuleSccs::FunctionalResult electronic;
     ModuleSccs::eval_functional(charge, response, config, basis, tpiba, electronic);
     EXPECT_TRUE(electronic.cavity_potential.empty());

@@ -6,12 +6,12 @@ namespace ModuleGint
 {
 
 Gint_env_gamma::Gint_env_gamma(
-    const double* psid,
-    const Parallel_Orbitals* pv,
+    const double *psid,
+    const Parallel_Orbitals *pv,
     const int nbands,
     const int nlocal,
-    double* rho)
-    :rho_(rho)
+    double *rho)
+    : rho_(rho)
 {
     wfc_gint_.resize(nbands * gint_info_->get_lgd());
     wfc_2d_to_gint(psid, nbands, nlocal, *pv, wfc_gint_.data(), *gint_info_);
@@ -22,7 +22,7 @@ void Gint_env_gamma::cal_env_band(const int iband)
     ModuleBase::TITLE("Gint", "cal_gint_env");
     ModuleBase::timer::start("Gint", "cal_gint_env");
     ModuleBase::GlobalFunc::ZEROS(rho_, gint_info_->get_local_mgrid_num());
-    const double* wfc_gint_band = &wfc_gint_[iband * gint_info_->get_lgd()];
+    const double *wfc_gint_band = &wfc_gint_[iband * gint_info_->get_lgd()];
 #pragma omp parallel
     {
         PhiOperator phi_op;
@@ -30,8 +30,8 @@ void Gint_env_gamma::cal_env_band(const int iband)
 #pragma omp for schedule(dynamic)
         for (int i = 0; i < gint_info_->get_bgrids_num(); i++)
         {
-            const auto& biggrid = gint_info_->get_biggrids()[i];
-            if(biggrid->get_atoms().size() == 0)
+            const auto &biggrid = gint_info_->get_biggrids()[i];
+            if (biggrid->get_atoms().size() == 0)
             {
                 continue;
             }
@@ -45,5 +45,4 @@ void Gint_env_gamma::cal_env_band(const int iband)
     ModuleBase::timer::end("Gint", "cal_gint_env");
 }
 
-
-}
+} // namespace ModuleGint

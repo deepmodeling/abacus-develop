@@ -1,7 +1,7 @@
-#include "gint_common.h"
 #include "gint_vl_metagga.h"
-#include "phi_operator.h"
+#include "gint_common.h"
 #include "gint_helper.h"
+#include "phi_operator.h"
 
 namespace ModuleGint
 {
@@ -21,10 +21,7 @@ void Gint_vl_metagga::cal_gint()
 // Private functions
 //========================
 
-void Gint_vl_metagga::init_hr_gint_()
-{
-    hr_gint_ = gint_info_->get_hr<double>();
-}
+void Gint_vl_metagga::init_hr_gint_() { hr_gint_ = gint_info_->get_hr<double>(); }
 
 void Gint_vl_metagga::cal_hr_gint_()
 {
@@ -42,8 +39,8 @@ void Gint_vl_metagga::cal_hr_gint_()
 #pragma omp for schedule(dynamic)
         for (int i = 0; i < gint_info_->get_bgrids_num(); i++)
         {
-            const auto& biggrid = gint_info_->get_biggrids()[i];
-            if(biggrid->get_atoms().size() == 0)
+            const auto &biggrid = gint_info_->get_biggrids()[i];
+            if (biggrid->get_atoms().size() == 0)
             {
                 continue;
             }
@@ -70,4 +67,4 @@ void Gint_vl_metagga::cal_hr_gint_()
     }
 }
 
-}
+} // namespace ModuleGint

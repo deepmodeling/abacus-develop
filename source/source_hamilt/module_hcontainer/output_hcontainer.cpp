@@ -12,10 +12,11 @@ namespace hamilt
  * @attention ofs should be open outside of this interface
  */
 template <typename T>
-Output_HContainer<T>::Output_HContainer(hamilt::HContainer<T>* hcontainer,
-                                        std::ostream& ofs,
-                                        double sparse_threshold,
-                                        int precision)
+Output_HContainer<T>::Output_HContainer(
+    hamilt::HContainer<T> *hcontainer,
+    std::ostream &ofs,
+    double sparse_threshold,
+    int precision)
     : _hcontainer(hcontainer), _ofs(ofs), _sparse_threshold(sparse_threshold), _precision(precision)
 {
     if (this->_sparse_threshold == -1)
@@ -31,20 +32,12 @@ Output_HContainer<T>::Output_HContainer(hamilt::HContainer<T>* hcontainer,
 template <typename T>
 void Output_HContainer<T>::write(bool write_empty)
 {
-    _ofs << " #----------------------------------------------------------------------#" << std::endl;
-    _ofs << " #                               CSR Format                             #" << std::endl;
-    _ofs << " # The outer loop corresponds to the number of Bravais lattice vectors. #" << std::endl;
-    _ofs << " # The first line contains the index of the Bravais lattice vector      #" << std::endl; 
-    _ofs << " # (Rx, Ry, Rz), followed by the number of non-zero elements.           #" << std::endl;
-    _ofs << " # The subsequent lines consist of three blocks of data, which are      #" << std::endl;
-    _ofs << " # values, column indices, row pointers.                                #" << std::endl;
-    _ofs << " #----------------------------------------------------------------------#" << std::endl;
-    _ofs << std::endl;
+    ModuleIO::write_csr_banner(_ofs);
 
     int size_for_loop_R = this->_hcontainer->size_R_loop();
-    int rx=0;
-    int ry=0;
-    int rz=0;
+    int rx = 0;
+    int ry = 0;
+    int rz = 0;
     int R_range[2] = {0, 0};
     // find the range of R
     for (int iR = 0; iR < size_for_loop_R; iR++)
@@ -76,7 +69,6 @@ void Output_HContainer<T>::write(bool write_empty)
                 {
                     _ofs << " " << ix << " " << iy << " " << iz << " 0" << std::endl;
                 }
-                
             }
         }
     }
@@ -86,9 +78,9 @@ template <typename T>
 void Output_HContainer<T>::write(int rx_in, int ry_in, int rz_in)
 {
     int size_for_loop_R = this->_hcontainer->size_R_loop();
-    int rx=0;
-    int ry=0;
-    int rz=0;
+    int rx = 0;
+    int ry = 0;
+    int rz = 0;
     int find_R = 0;
     for (int iR = 0; iR < size_for_loop_R; iR++)
     {
@@ -115,20 +107,23 @@ void Output_HContainer<T>::write_single_R(int rx, int ry, int rz)
     }
     this->_hcontainer->fix_R(rx, ry, rz);
 
-    ModuleIO::SparseMatrix<T> sparse_matrix
-        = ModuleIO::SparseMatrix<T>(_hcontainer->get_nbasis(), _hcontainer->get_nbasis());
-    assert(_hcontainer->get_nbasis()>0);
+    ModuleIO::SparseMatrix<T> sparse_matrix =
+        ModuleIO::SparseMatrix<T>(_hcontainer->get_nbasis(), _hcontainer->get_nbasis());
+    assert(_hcontainer->get_nbasis() > 0);
 
     sparse_matrix.setSparseThreshold(this->_sparse_threshold);
 
     for (int iap = 0; iap < this->_hcontainer->size_atom_pairs(); ++iap)
     {
-        const auto& atom_pair = this->_hcontainer->get_atom_pair(iap);
+        const auto &atom_pair = this->_hcontainer->get_atom_pair(iap);
         const int r_index = atom_pair.find_R(rx, ry, rz);
-        if (r_index < 0) continue;
+        if (r_index < 0)
+        {
+            continue;
+        }
         auto tmp_matrix_info = atom_pair.get_matrix_values(r_index);
-        int* tmp_index = std::get<0>(tmp_matrix_info).data();
-        T* tmp_data = std::get<1>(tmp_matrix_info);
+        int *tmp_index = std::get<0>(tmp_matrix_info).data();
+        T *tmp_data = std::get<1>(tmp_matrix_info);
         for (int irow = tmp_index[0]; irow < tmp_index[0] + tmp_index[1]; ++irow)
         {
             for (int icol = tmp_index[2]; icol < tmp_index[2] + tmp_index[3]; ++icol)

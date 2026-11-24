@@ -90,6 +90,50 @@ TEST(ModuleIOTest, SaveLatR)
     std::remove("test_save_lat_r_0.dat");
 }
 
+TEST(ModuleIOTest, SaveLatREmptyCsrMatchesZeroBlock)
+{
+    const std::string reference_name = testing::TempDir() + "test_lat_r_empty_reference.dat";
+    const std::string direct_name = testing::TempDir() + "test_lat_r_empty_direct.dat";
+    std::remove(reference_name.c_str());
+    std::remove(direct_name.c_str());
+
+    GlobalV::DRANK = 0;
+    Parallel_Blkcyclic layout;
+    layout.set_serial(5, 5);
+    ModuleIO::SparseWriteOptions options;
+    options.threshold = 1e-8;
+    options.binary = false;
+    options.precision = 8;
+    options.reduce = false;
+
+    const ModuleIO::SparseRBlock<double> empty_block;
+    std::ofstream reference(reference_name);
+    ASSERT_TRUE(reference.is_open());
+    ModuleIO::save_lat_r_csr(reference, empty_block, layout, options);
+    reference.close();
+
+    std::ofstream direct(direct_name);
+    ASSERT_TRUE(direct.is_open());
+    ModuleIO::save_lat_r_empty_csr<double>(direct, 5, options);
+    direct.close();
+
+    std::ifstream reference_in(reference_name);
+    std::ifstream direct_in(direct_name);
+    ASSERT_TRUE(reference_in.is_open());
+    ASSERT_TRUE(direct_in.is_open());
+    const std::string reference_output((std::istreambuf_iterator<char>(reference_in)),
+                                       std::istreambuf_iterator<char>());
+    const std::string direct_output((std::istreambuf_iterator<char>(direct_in)),
+                                    std::istreambuf_iterator<char>());
+    EXPECT_EQ(direct_output, reference_output);
+    EXPECT_THAT(direct_output,
+                testing::HasSubstr(" # CSR values\n # CSR column indices\n"
+                                   " # CSR row pointers\n 0 0 0 0 0 0\n"));
+
+    std::remove(reference_name.c_str());
+    std::remove(direct_name.c_str());
+}
+
 TEST(ModuleIOTest, SaveLatRComplexKeepsHighPrecision)
 {
     const std::string filename = "test_save_lat_r_complex.dat";

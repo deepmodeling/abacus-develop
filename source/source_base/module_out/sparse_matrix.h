@@ -99,6 +99,13 @@ class SparseMatrix
     double _sparse_threshold = 1.0e-10;
 }; // class SparseMatrix
 
+/**
+ * @brief Write the CSR-format description banner used by every text CSR
+ *        output (H(R)/S(R), DM(R), dH/dR, r(R), T(R), Vxc(R), L(R)).
+ * @param ofs Output stream.
+ */
+void write_csr_banner(std::ostream& ofs);
+
 } // namespace ModuleIO
 
 #endif // SPARSE_MATRIX_H

@@ -17,7 +17,7 @@ namespace
 
 struct DampingParameterRecord
 {
-    const char* method_id;
+    const char *method_id;
     Damping damping;
     double s6;
     double s8;
@@ -31,8 +31,8 @@ struct DampingParameterRecord
 
 struct MethodAlias
 {
-    const char* alias;
-    const char* method_id;
+    const char *alias;
+    const char *method_id;
 };
 
 #include "data/d3_damping_parameters.inc"
@@ -40,9 +40,9 @@ struct MethodAlias
 
 std::string lower_ascii(std::string value)
 {
-    std::transform(value.begin(), value.end(), value.begin(), [](unsigned char character) {
-        return static_cast<char>(std::tolower(character));
-    });
+    std::transform(
+        value.begin(), value.end(), value.begin(),
+        [](unsigned char character) { return static_cast<char>(std::tolower(character)); });
     return value;
 }
 
@@ -51,7 +51,7 @@ std::string normalized(std::string value)
     value = lower_ascii(value);
     std::string result;
     result.reserve(value.size());
-    for (unsigned char character: value)
+    for (unsigned char character : value)
     {
         if (std::isalnum(character) || character == '/')
         {
@@ -61,7 +61,7 @@ std::string normalized(std::string value)
     return result;
 }
 
-std::string libxc_component(const std::string& component, const std::string& marker)
+std::string libxc_component(const std::string &component, const std::string &marker)
 {
     const std::string lower = lower_ascii(component);
     const std::size_t position = lower.find(marker);
@@ -72,7 +72,7 @@ std::string libxc_component(const std::string& component, const std::string& mar
     return normalized(component.substr(position + marker.size()));
 }
 
-std::string canonicalize_libxc_pair(const std::string& input)
+std::string canonicalize_libxc_pair(const std::string &input)
 {
     const std::size_t separator = input.find(':');
     std::string first = input.substr(0, separator);
@@ -112,7 +112,7 @@ std::string canonicalize_libxc_pair(const std::string& input)
 
 } // namespace
 
-std::string canonicalize_method_name(const std::string& input)
+std::string canonicalize_method_name(const std::string &input)
 {
     const std::string xc_name = normalize_xc_name(input);
     std::string canonical;
@@ -141,10 +141,11 @@ std::string canonicalize_method_name(const std::string& input)
     return canonical;
 }
 
-bool lookup_parameters(const std::string& method,
-                       Damping damping,
-                       Parameters& parameters,
-                       std::string& canonical_method)
+bool lookup_parameters(
+    const std::string &method,
+    Damping damping,
+    Parameters &parameters,
+    std::string &canonical_method)
 {
     canonical_method = canonicalize_method_name(method);
 
@@ -163,8 +164,8 @@ bool lookup_parameters(const std::string& method,
         lookup_method = "wb97x";
     }
 
-    const char* method_id = nullptr;
-    for (const MethodAlias& alias: kMethodAliases)
+    const char *method_id = nullptr;
+    for (const MethodAlias &alias : kMethodAliases)
     {
         if (normalized(alias.alias) == lookup_method)
         {
@@ -177,7 +178,7 @@ bool lookup_parameters(const std::string& method,
         return false;
     }
 
-    for (const DampingParameterRecord& record: kDampingParameters)
+    for (const DampingParameterRecord &record : kDampingParameters)
     {
         if (record.damping == damping && std::string(record.method_id) == method_id)
         {

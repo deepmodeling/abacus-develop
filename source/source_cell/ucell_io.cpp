@@ -35,26 +35,54 @@ void UcellIO::write_ucell(std::ofstream& ofs, const UnitCell* ucell)
     }
 }
 
-void UcellIO::read_ucell(std::ifstream& ifs)
+bool UcellIO::read_ucell(std::ifstream& ifs)
 {
     std::string tmp;
-    for (int i = 0; i < 6; i++)
-    {
-        std::getline(ifs, tmp); // latName + lat0 + latvec + atom label
-    }
-    std::getline(ifs, tmp); // atom number of each type
 
+    // --- six metadata lines: latName + lat0 + three lattice vectors + atom labels ---
+    for (int i = 0; i < 6; ++i)
+    {
+        if (!std::getline(ifs, tmp))
+        {
+            return false;
+        }
+    }
+
+    // --- per-type atom counts, must yield at least one positive integer ---
+    if (!std::getline(ifs, tmp))
+    {
+        return false;
+    }
     std::istringstream iss(tmp);
     int natom = 0;
     int total_natom = 0;
     while (iss >> natom)
     {
+        if (natom < 0)
+        {
+            // Negative counts make the block size indeterminate.
+            return false;
+        }
         total_natom += natom;
     }
-    for (int i = 0; i < total_natom + 1; i++)
+    if (total_natom <= 0)
     {
-        std::getline(ifs, tmp); // Direct + atom coordinates
+        // A malformed count line leaves total_natom at zero; the stream would
+        // then be sitting on the coordinate rows, and a subsequent small-matrix
+        // read could happily consume them as density-matrix entries. Reject
+        // this case explicitly so the caller can abort with a clean diagnostic.
+        return false;
     }
+
+    // --- "Direct" marker + total_natom coordinate lines ---
+    for (int i = 0; i < total_natom + 1; ++i)
+    {
+        if (!std::getline(ifs, tmp))
+        {
+            return false;
+        }
+    }
+    return true;
 }
 
 } // namespace ModuleIO

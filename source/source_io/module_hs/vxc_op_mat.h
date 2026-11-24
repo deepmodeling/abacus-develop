@@ -11,6 +11,7 @@
 #include "source_io/module_hs/vxc_op_tools.h"
 
 #include <complex>
+#include <iosfwd>
 #include <map>
 #include <string>
 #include <vector>
@@ -32,9 +33,12 @@ namespace ModuleIO
 /// including terms: local/semi-local XC, EXX, DFTU.
 /// The band-decomposed diagonal energies (eband_vxc.txt and, with EXX,
 /// eband_vxc_local.txt and eband_vxc_exx.txt) are always written to
-/// global_out_dir; the full MO-basis matrices (vxc_nao.txt / vxck*_nao.txt)
-/// are written to mat_dir only when out_mat is true.
+/// global_out_dir; the full MO-basis matrices (vxcmok*_nao.txt) are written to
+/// mat_dir only when out_mat is true. The MO-basis name keeps the "vxcmo"
+/// property so that it never collides with the NAO-basis "vxck*_nao.txt"
+/// produced by out_mat_vxck.
 /// @param istep Zero-based ionic step index; written one-based in the header
+/// @param out_app_flag Output mode: 0 overwrites, 1 appends, 2 adds g{step}
 /// @param etot Total energy of the current frame in Ry
 /// @tparam TK K-point data type (double or std::complex<double>)
 /// @tparam TR Real-space data type (double or std::complex<double>)
@@ -60,12 +64,14 @@ void write_Vxc(const int nspin,
                const bool dft_plus_u,
                const bool gamma_only,
                const bool out_mat,
+               const int out_app_flag,
                const std::string& mat_dir,
                const std::string& global_out_dir,
                const int out_ndigits,
                const std::string& ks_solver,
                bool cal_exx,
-               const Exx_Info& exx_info
+               const Exx_Info& exx_info,
+               std::ofstream& ofs_running
 #ifdef __EXX
                ,
                std::vector<std::map<int, std::map<hamilt::TAC, RI::Tensor<double>>>>* Hexxd,

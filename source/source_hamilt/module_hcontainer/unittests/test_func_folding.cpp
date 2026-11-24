@@ -1,0 +1,265 @@
+#include "source_hamilt/module_hcontainer/hcontainer.h"
+#include "source_hamilt/module_hcontainer/hcontainer_funcs.h"
+#include "tmp_mocks.h"
+#include "gtest/gtest.h"
+#include <chrono>
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+
+// test_size is the number of atoms in the unitcell
+// modify test_size to test different size of unitcell
+int test_size = 10;
+int test_nw = 30;
+
+/**
+ * Unit test of folding_HR function
+ * folding_HR is a function to calculate the Hk matrix with specific k vector
+ * in this test, we test the correctness and time consuming of the function.
+ */
+class FoldingTest : public ::testing::Test
+{
+  protected:
+    void SetUp() override
+    {
+        // set up a unitcell, with one element and three atoms, each atom has 2 orbitals
+        ucell.ntype = 1;
+        ucell.nat = test_size;
+        ucell.atoms = new Atom[ucell.ntype];
+        ucell.iat2it.resize(ucell.nat);
+        for (int iat = 0; iat < ucell.nat; iat++)
+        {
+            ucell.iat2it[iat] = 0;
+        }
+        ucell.atoms[0].nw = test_nw;
+    }
+
+    void TearDown() override { delete[] ucell.atoms; }
+
+    UnitCell ucell;
+};
+
+// using TEST_F to test folding_HR with std::complex<double> HR and std::complex<double> hk
+TEST_F(FoldingTest, folding_HR_cd2cd)
+{
+    hamilt::HContainer<std::complex<double>> *HR;
+    // set up a HContainer with ucell
+    std::chrono::high_resolution_clock::time_point start_time = std::chrono::high_resolution_clock::now();
+    HR = new hamilt::HContainer<std::complex<double>>(ucell);
+    std::chrono::high_resolution_clock::time_point end_time = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed_time0 =
+        std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
+    srand((unsigned)time(NULL));
+    // fill HR with constant value
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+    for (int i = 0; i < HR->size_atom_pairs(); i++)
+    {
+        std::complex<double> *ptr1 = HR->get_atom_pair(i).get_HR_values(1, 1, 1).get_pointer();
+        std::complex<double> *ptr = HR->get_atom_pair(i).get_HR_values(0, 0, 0).get_pointer();
+        for (int j = 0; j < HR->get_atom_pair(i).get_size(); j++)
+        {
+            ptr[j] = std::complex<double>(1.0, 1.0);
+            ptr1[j] = std::complex<double>(2.0, 2.0);
+        }
+    }
+    std::vector<std::complex<double>> hk(test_size * test_nw * test_size * test_nw, std::complex<double>(0.0, 0.0));
+    // std::cout<<"memory of hk: "<<hk.size()*sizeof(std::complex<double>)/1024.0/1024.0<<" MB"<<std::endl;
+    // std::cout<<"memory of HR: "<<HR->get_memory_size() /1024.0/1024.0 <<" MB"<<std::endl;
+    std::cout << "memory of HR / memory of hk: "
+              << double(HR->get_memory_size()) / sizeof(std::complex<double>) / hk.size() / 2 << std::endl;
+    ModuleBase::Vector3<double> kvec_d_in(0.1, 0.2, 0.3);
+    start_time = std::chrono::high_resolution_clock::now();
+    hamilt::folding_HR(*HR, hk.data(), kvec_d_in, test_size * test_nw, 0);
+    end_time = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed_time =
+        std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+    for (int i = 0; i < test_size * test_nw * test_size * test_nw; i++)
+    {
+        EXPECT_NEAR(hk[i].real(), 0.55753651583505226, 1e-10);
+        EXPECT_NEAR(hk[i].imag(), -1.7936044933348412, 1e-10);
+        // std::cout<<__FILE__<<__LINE__<<" hk["<<i<<"] = "<<hk[i]<<std::endl;
+    }
+    std::cout << "HR init time: " << elapsed_time0.count() << " folding time: " << elapsed_time.count() << " seconds."
+              << std::endl;
+
+    delete HR;
+}
+
+// using TEST_F to test folding_HR with double HR and std::complex<double> hk
+TEST_F(FoldingTest, folding_HR_d2cd)
+{
+    std::chrono::high_resolution_clock::time_point start_time = std::chrono::high_resolution_clock::now();
+    hamilt::HContainer<double> *HR;
+    // set up a HContainer with ucell
+    HR = new hamilt::HContainer<double>(ucell);
+    std::chrono::high_resolution_clock::time_point end_time = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed_time0 =
+        std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
+
+    srand((unsigned)time(NULL));
+    // fill HR with constant value
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+    for (int i = 0; i < HR->size_atom_pairs(); i++)
+    {
+        double *ptr1 = HR->get_atom_pair(i).get_HR_values(1, 1, 1).get_pointer();
+        double *ptr = HR->get_atom_pair(i).get_HR_values(0, 0, 0).get_pointer();
+        for (int j = 0; j < HR->get_atom_pair(i).get_size(); j++)
+        {
+            ptr[j] = double(1.0);
+            ptr1[j] = double(2.0);
+        }
+    }
+    std::vector<std::complex<double>> hk(test_size * test_nw * test_size * test_nw, std::complex<double>(0.0, 0.0));
+    // std::cout<<"memory of hk: "<<hk.size()*sizeof(std::complex<double>)/1024.0/1024.0<<" MB"<<std::endl;
+    // std::cout<<"memory of HR: "<<HR->get_memory_size() /1024.0/1024.0 <<" MB"<<std::endl;
+    std::cout << "memory of HR / memory of hk: "
+              << double(HR->get_memory_size()) / sizeof(std::complex<double>) / hk.size() / 2 << std::endl;
+    ModuleBase::Vector3<double> kvec_d_in(0.1, 0.2, 0.3);
+    start_time = std::chrono::high_resolution_clock::now();
+    hamilt::folding_HR(*HR, hk.data(), kvec_d_in, test_size * test_nw, 0);
+    end_time = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed_time =
+        std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+    for (int i = 0; i < test_size * test_nw * test_size * test_nw; i++)
+    {
+        EXPECT_NEAR(hk[i].real(), -0.61803398874989446, 1e-10);
+        EXPECT_NEAR(hk[i].imag(), -1.1755705045849467, 1e-10);
+        // std::cout<<__FILE__<<__LINE__<<" hk["<<i<<"] = "<<hk[i]<<std::endl;
+    }
+    hk.assign(hk.size(), std::complex<double>(0.0, 0.0));
+    start_time = std::chrono::high_resolution_clock::now();
+    hamilt::folding_HR(*HR, hk.data(), kvec_d_in, test_size * test_nw, 1);
+    end_time = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed_time1 =
+        std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+    for (int i = 0; i < test_size * test_nw * test_size * test_nw; i++)
+    {
+        EXPECT_NEAR(hk[i].real(), -0.61803398874989446, 1e-10);
+        EXPECT_NEAR(hk[i].imag(), -1.1755705045849467, 1e-10);
+        // std::cout<<__FILE__<<__LINE__<<" hk["<<i<<"] = "<<hk[i]<<std::endl;
+    }
+    std::cout << "HR init time: " << elapsed_time0.count() << " folding time: " << elapsed_time.count() << " and "
+              << elapsed_time1.count() << " seconds." << std::endl;
+
+    delete HR;
+}
+
+// using TEST_F to test folding_HR with double HR and double hk
+TEST_F(FoldingTest, folding_HR_d2d)
+{
+    hamilt::HContainer<double> *HR;
+    // set up a HContainer with ucell
+    std::chrono::high_resolution_clock::time_point start_time = std::chrono::high_resolution_clock::now();
+    HR = new hamilt::HContainer<double>(ucell);
+    std::chrono::high_resolution_clock::time_point end_time = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed_time0 =
+        std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
+
+    srand((unsigned)time(NULL));
+    // fill HR with constant value
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+    for (int i = 0; i < HR->size_atom_pairs(); i++)
+    {
+        double *ptr1 = HR->get_atom_pair(i).get_HR_values(1, 1, 1).get_pointer();
+        double *ptr = HR->get_atom_pair(i).get_HR_values(0, 0, 0).get_pointer();
+        for (int j = 0; j < HR->get_atom_pair(i).get_size(); j++)
+        {
+            ptr[j] = double(1.0);
+            ptr1[j] = double(2.0);
+        }
+    }
+    start_time = std::chrono::high_resolution_clock::now();
+    HR->fix_gamma();
+    end_time = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> fix_gamma_time =
+        std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
+    std::vector<double> hk(test_size * test_nw * test_size * test_nw, double(0.0));
+    // std::cout<<"memory of hk: "<<hk.size()*sizeof(double)/1024.0/1024.0<<" MB"<<std::endl;
+    // std::cout<<"memory of HR: "<<HR->get_memory_size() /1024.0/1024.0 <<" MB"<<std::endl;
+    std::cout << "memory of HR / memory of hk: " << double(HR->get_memory_size()) / sizeof(double) / hk.size()
+              << std::endl;
+    ModuleBase::Vector3<double> kvec_d_in(0.1, 0.2, 0.3);
+    start_time = std::chrono::high_resolution_clock::now();
+    hamilt::folding_HR(*HR, hk.data(), kvec_d_in, test_size * test_nw, 0);
+    end_time = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed_time =
+        std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+    for (int i = 0; i < test_size * test_nw * test_size * test_nw; i++)
+    {
+        EXPECT_NEAR(hk[i], 3.0, 1e-10);
+        // std::cout<<__FILE__<<__LINE__<<" hk["<<i<<"] = "<<hk[i]<<std::endl;
+    }
+    kvec_d_in = ModuleBase::Vector3<double>(0.0, 0.0, 0.0);
+    // collumn-major hk
+    start_time = std::chrono::high_resolution_clock::now();
+    hamilt::folding_HR(*HR, hk.data(), kvec_d_in, test_size * test_nw, 1);
+    end_time = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed_time1 =
+        std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
+    for (int i = 0; i < test_size * test_nw * test_size * test_nw; i++)
+    {
+        EXPECT_NEAR(hk[i], 6.0, 1e-10);
+        // std::cout<<__FILE__<<__LINE__<<" hk["<<i<<"] = "<<hk[i]<<std::endl;
+    }
+    std::cout << "HR init time: " << elapsed_time0.count() << " fix_gamma time: " << fix_gamma_time.count()
+              << " folding time: " << elapsed_time.count() << " and " << elapsed_time1.count() << " seconds."
+              << std::endl;
+
+    delete HR;
+}
+// Cross-geometry overlaps are ordered and nonsymmetric, including after Fourier folding.
+TEST(CrossOverlapFolding, PreservesOrderedPairsAndAllImages)
+{
+    Parallel_Orbitals distribution;
+    distribution.para_2d().set_serial(2, 2);
+    const int atom_offsets[] = {0, 1, 2};
+    distribution.set_atomic_trace(atom_offsets, 2, 2);
+    hamilt::HContainer<double> overlap(&distribution);
+    const ModuleBase::Vector3<int> minus(-1, 0, 0);
+    const ModuleBase::Vector3<int> center(0, 0, 0);
+    const ModuleBase::Vector3<int> plus(1, 0, 0);
+    const hamilt::AtomPair<double> forward_minus(0, 1, minus, &distribution);
+    const hamilt::AtomPair<double> forward_center(0, 1, center, &distribution);
+    const hamilt::AtomPair<double> forward_plus(0, 1, plus, &distribution);
+    const hamilt::AtomPair<double> reverse(1, 0, center, &distribution);
+    overlap.insert_pair(forward_minus);
+    overlap.insert_pair(forward_center);
+    overlap.insert_pair(forward_plus);
+    overlap.insert_pair(reverse);
+    overlap.allocate(nullptr, true);
+    auto *forward = overlap.find_pair(0, 1);
+    forward->get_HR_values(-1, 0, 0).get_pointer()[0] = 2.0;
+    forward->get_HR_values(0, 0, 0).get_pointer()[0] = 3.0;
+    forward->get_HR_values(1, 0, 0).get_pointer()[0] = 5.0;
+    overlap.find_pair(1, 0)->get_pointer(0)[0] = 7.0;
+    const std::complex<double> zero(0.0, 0.0);
+    std::vector<std::complex<double>> gamma_matrix(4, zero);
+    const ModuleBase::Vector3<double> gamma(0.0, 0.0, 0.0);
+    hamilt::folding_HR(overlap, gamma_matrix.data(), gamma, 2, 0);
+    EXPECT_EQ(gamma_matrix[1], std::complex<double>(10.0, 0.0));
+    EXPECT_EQ(gamma_matrix[2], std::complex<double>(7.0, 0.0));
+    std::vector<std::complex<double>> k_matrix(4, zero);
+    const ModuleBase::Vector3<double> k(0.25, 0.0, 0.0);
+    hamilt::folding_HR(overlap, k_matrix.data(), k, 2, 0);
+    EXPECT_NEAR(k_matrix[1].real(), 3.0, 1e-14);
+    EXPECT_NEAR(k_matrix[1].imag(), 3.0, 1e-14);
+    EXPECT_EQ(k_matrix[2], std::complex<double>(7.0, 0.0));
+}

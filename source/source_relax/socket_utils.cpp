@@ -50,7 +50,7 @@ void throw_if_any_rank_failed(int local_failed, std::string local_message)
 /// no collective: the exception propagates to Socket_Driver::socket_driver,
 /// which reports a clean WARNING_QUIT into the log. Do not replace the
 /// serial throw with abort(); serial builds are user-facing.
-[[noreturn]] void fail_during_collective_stage(const char* stage, const std::string& message)
+[[noreturn]] void fail_during_collective_stage(const char *stage, const std::string &message)
 {
 #ifdef __MPI
     int rank = -1;
@@ -65,7 +65,7 @@ void throw_if_any_rank_failed(int local_failed, std::string local_message)
 #endif
 }
 
-std::string properties_extra(const ComputedFrame& frame)
+std::string properties_extra(const ComputedFrame &frame)
 {
     std::ostringstream extra;
     extra << "{\"schema\":\"abacus.socket.properties.v1\",\"present\":[\"energy\"";
@@ -90,7 +90,7 @@ bool is_root()
     return rank == kIpiRankRoot;
 }
 
-void bcast_double_vector(std::vector<double>& values)
+void bcast_double_vector(std::vector<double> &values)
 {
     if (!values.empty())
     {
@@ -98,24 +98,18 @@ void bcast_double_vector(std::vector<double>& values)
     }
 }
 
-void bcast_int(int& value)
-{
-    Parallel_Common::bcast_int(value);
-}
+void bcast_int(int &value) { Parallel_Common::bcast_int(value); }
 
-void bcast_int32(std::int32_t& value)
+void bcast_int32(std::int32_t &value)
 {
     int tmp = static_cast<int>(value);
     Parallel_Common::bcast_int(tmp);
     value = static_cast<std::int32_t>(tmp);
 }
 
-void bcast_chars(char* value, const int size)
-{
-    Parallel_Common::bcast_char(value, size);
-}
+void bcast_chars(char *value, const int size) { Parallel_Common::bcast_char(value, size); }
 
-void bcast_string(std::string& value)
+void bcast_string(std::string &value)
 {
     int size = static_cast<int>(value.size());
     bcast_int(size);
@@ -147,7 +141,7 @@ std::string bcast_header(std::string header)
 
 std::string address()
 {
-    const char* env = std::getenv("ABACUS_SOCKET_ADDRESS");
+    const char *env = std::getenv("ABACUS_SOCKET_ADDRESS");
     if (env == nullptr || std::string(env).empty())
     {
         return "localhost:31415";
@@ -155,7 +149,7 @@ std::string address()
     return std::string(env);
 }
 
-std::vector<double> ipi_cell_bohr_from_unitcell(const UnitCell& ucell)
+std::vector<double> ipi_cell_bohr_from_unitcell(const UnitCell &ucell)
 {
     const double lat0 = ucell.lat0;
     // ASE/i-PI sends POSDATA cell as cell.T in C order. ABACUS stores
@@ -173,7 +167,7 @@ std::vector<double> ipi_cell_bohr_from_unitcell(const UnitCell& ucell)
     };
 }
 
-double max_wrapped_direct_delta_from_unitcell(const UnitCell& ucell, const std::vector<double>& positions_bohr)
+double max_wrapped_direct_delta_from_unitcell(const UnitCell &ucell, const std::vector<double> &positions_bohr)
 {
     if (positions_bohr.size() != static_cast<std::size_t>(3 * ucell.nat))
     {
@@ -184,7 +178,7 @@ double max_wrapped_direct_delta_from_unitcell(const UnitCell& ucell, const std::
     int iat = 0;
     for (int it = 0; it < ucell.ntype; ++it)
     {
-        const Atom* atom = &ucell.atoms[it];
+        const Atom *atom = &ucell.atoms[it];
         for (int ia = 0; ia < atom->na; ++ia)
         {
             const double tau_x = positions_bohr[3 * iat + 0] / ucell.lat0;
@@ -194,21 +188,9 @@ double max_wrapped_direct_delta_from_unitcell(const UnitCell& ucell, const std::
             double dx = 0.0;
             double dy = 0.0;
             double dz = 0.0;
-            ModuleBase::Mathzone::Cartesian_to_Direct(tau_x,
-                                                      tau_y,
-                                                      tau_z,
-                                                      ucell.latvec.e11,
-                                                      ucell.latvec.e12,
-                                                      ucell.latvec.e13,
-                                                      ucell.latvec.e21,
-                                                      ucell.latvec.e22,
-                                                      ucell.latvec.e23,
-                                                      ucell.latvec.e31,
-                                                      ucell.latvec.e32,
-                                                      ucell.latvec.e33,
-                                                      dx,
-                                                      dy,
-                                                      dz);
+            ModuleBase::Mathzone::Cartesian_to_Direct(
+                tau_x, tau_y, tau_z, ucell.latvec.e11, ucell.latvec.e12, ucell.latvec.e13, ucell.latvec.e21,
+                ucell.latvec.e22, ucell.latvec.e23, ucell.latvec.e31, ucell.latvec.e32, ucell.latvec.e33, dx, dy, dz);
 
             double ddx = dx - atom->taud[ia].x;
             double ddy = dy - atom->taud[ia].y;
@@ -225,7 +207,7 @@ double max_wrapped_direct_delta_from_unitcell(const UnitCell& ucell, const std::
     return out;
 }
 
-double max_abs_delta(const std::vector<double>& a, const std::vector<double>& b)
+double max_abs_delta(const std::vector<double> &a, const std::vector<double> &b)
 {
     if (a.size() != b.size())
     {
@@ -239,7 +221,7 @@ double max_abs_delta(const std::vector<double>& a, const std::vector<double>& b)
     return out;
 }
 
-double unchanged_cell_tolerance(const SocketFrame::Matrix9& cell)
+double unchanged_cell_tolerance(const SocketFrame::Matrix9 &cell)
 {
     double maximum = 0.0;
     for (std::size_t index = 0; index < cell.size(); ++index)
@@ -249,7 +231,7 @@ double unchanged_cell_tolerance(const SocketFrame::Matrix9& cell)
     return 32.0 * std::numeric_limits<double>::epsilon() * std::max(1.0, maximum);
 }
 
-void set_positions_from_ipi_bohr(UnitCell& ucell, const std::vector<double>& positions_bohr)
+void set_positions_from_ipi_bohr(UnitCell &ucell, const std::vector<double> &positions_bohr)
 {
     if (positions_bohr.size() != static_cast<std::size_t>(3 * ucell.nat))
     {
@@ -259,7 +241,7 @@ void set_positions_from_ipi_bohr(UnitCell& ucell, const std::vector<double>& pos
     int iat = 0;
     for (int it = 0; it < ucell.ntype; ++it)
     {
-        Atom* atom = &ucell.atoms[it];
+        Atom *atom = &ucell.atoms[it];
         for (int ia = 0; ia < atom->na; ++ia)
         {
             const double tau_x = positions_bohr[3 * iat + 0] / ucell.lat0;
@@ -269,21 +251,9 @@ void set_positions_from_ipi_bohr(UnitCell& ucell, const std::vector<double>& pos
             double dx = 0.0;
             double dy = 0.0;
             double dz = 0.0;
-            ModuleBase::Mathzone::Cartesian_to_Direct(tau_x,
-                                                      tau_y,
-                                                      tau_z,
-                                                      ucell.latvec.e11,
-                                                      ucell.latvec.e12,
-                                                      ucell.latvec.e13,
-                                                      ucell.latvec.e21,
-                                                      ucell.latvec.e22,
-                                                      ucell.latvec.e23,
-                                                      ucell.latvec.e31,
-                                                      ucell.latvec.e32,
-                                                      ucell.latvec.e33,
-                                                      dx,
-                                                      dy,
-                                                      dz);
+            ModuleBase::Mathzone::Cartesian_to_Direct(
+                tau_x, tau_y, tau_z, ucell.latvec.e11, ucell.latvec.e12, ucell.latvec.e13, ucell.latvec.e21,
+                ucell.latvec.e22, ucell.latvec.e23, ucell.latvec.e31, ucell.latvec.e32, ucell.latvec.e33, dx, dy, dz);
 
             atom->dis[ia].x = dx - atom->taud[ia].x;
             atom->dis[ia].y = dy - atom->taud[ia].y;
@@ -302,7 +272,7 @@ void set_positions_from_ipi_bohr(UnitCell& ucell, const std::vector<double>& pos
     ucell.cell_parameter_updated = false;
 }
 
-std::vector<double> flatten_forces_hartree_per_bohr(const ModuleBase::matrix& force, const int nat)
+std::vector<double> flatten_forces_hartree_per_bohr(const ModuleBase::matrix &force, const int nat)
 {
     if (nat < 0 || force.nr != nat || force.nc != 3)
     {
@@ -324,7 +294,7 @@ std::vector<double> flatten_forces_hartree_per_bohr(const ModuleBase::matrix& fo
     return out;
 }
 
-SocketFrame::Matrix9 matrix9_from_stress(const ModuleBase::matrix& stress)
+SocketFrame::Matrix9 matrix9_from_stress(const ModuleBase::matrix &stress)
 {
     if (stress.nr != 3 || stress.nc != 3)
     {
@@ -341,7 +311,7 @@ SocketFrame::Matrix9 matrix9_from_stress(const ModuleBase::matrix& stress)
     return values;
 }
 
-std::vector<double> vector_from_matrix9(const SocketFrame::Matrix9& values)
+std::vector<double> vector_from_matrix9(const SocketFrame::Matrix9 &values)
 {
     return std::vector<double>(values.begin(), values.end());
 }

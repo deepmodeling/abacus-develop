@@ -1,4 +1,4 @@
-FROM intel/oneapi-hpckit:2025.2.2-0-devel-ubuntu22.04
+FROM intel/oneapi-toolkit:2026.2.0-devel-ubuntu24.04
 
 RUN apt-get update && apt-get install -y \
     bc cmake git gnupg gcc g++ python3-numpy sudo wget vim unzip \
@@ -12,7 +12,7 @@ ENV FC="mpiifx"
 
 # https://elpa.mpcdf.mpg.de/software/tarball-archive/ELPA_TARBALL_ARCHIVE.html
 RUN cd /tmp && \
-    ELPA_VER=2022.11.001 && \
+    ELPA_VER=2024.05.001 && \
     wget -q https://elpa.mpcdf.mpg.de/software/tarball-archive/Releases/$ELPA_VER/elpa-$ELPA_VER.tar.gz && \
     tar xzf elpa-$ELPA_VER.tar.gz  && rm elpa-$ELPA_VER.tar.gz && \
     cd elpa-$ELPA_VER && mkdir build && cd build && \

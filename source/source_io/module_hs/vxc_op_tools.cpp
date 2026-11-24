@@ -133,6 +133,20 @@ void write_orb_energy(const K_Vectors& kv,
     }
 }
 
+std::string eband_filename(const std::string& stem,
+                           const int istep,
+                           const int out_app_flag)
+{
+    std::string name = stem;
+    // Modes 0 and 1 reuse the fixed name; only mode 2 numbers the frames.
+    if (out_app_flag == 2)
+    {
+        name += "g" + std::to_string(istep + 1);
+    }
+    name += ".txt";
+    return name;
+}
+
 std::string build_eband_header(const int istep,
                                const double etot_eV,
                                const std::string& term_symbol,
@@ -140,7 +154,7 @@ std::string build_eband_header(const int istep,
 {
     const int istep_one_based = istep + 1;
     const std::string step_lines = FmtCore::format(
-        "# RELAX STEP %d, Energy: %.8f eV\n"
+        "# Ionic_Step %d, Energy: %.8f eV\n"
         "# e_{ikn} = <psi_{ikn} | %s | psi_{ikn}> in the KS orbital basis\n"
         "# units: columns are e/2 in Hartree and e in eV; data rows follow nk, nspin0, nbands\n",
         istep_one_based,

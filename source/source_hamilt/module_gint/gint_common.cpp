@@ -1,7 +1,7 @@
 #include "gint_common.h"
+#include "source_base/tool_quit.h"
 #include "source_hamilt/module_hcontainer/hcontainer.h"
 #include "source_hamilt/module_hcontainer/hcontainer_funcs.h"
-#include "source_base/tool_quit.h"
 #include <cassert>
 #include <type_traits>
 
@@ -13,18 +13,17 @@
 namespace ModuleGint
 {
 
-template<typename Tout, typename Tin>
-void cast_hcontainer_values(const HContainer<Tin>& src, HContainer<Tout>& dst)
+template <typename Tout, typename Tin>
+void cast_hcontainer_values(const HContainer<Tin> &src, HContainer<Tout> &dst)
 {
-    if (src.get_ijr_info() != dst.get_ijr_info()
-        || src.is_gamma_only() != dst.is_gamma_only()
-        || src.get_nnr() != dst.get_nnr())
+    if (src.get_ijr_info() != dst.get_ijr_info() || src.is_gamma_only() != dst.is_gamma_only() ||
+        src.get_nnr() != dst.get_nnr())
     {
         ModuleBase::WARNING_QUIT("cast_hcontainer_values", "Source and destination HContainer shapes do not match.");
     }
 
-    const Tin* src_values = src.get_wrapper();
-    Tout* dst_values = dst.get_wrapper();
+    const Tin *src_values = src.get_wrapper();
+    Tout *dst_values = dst.get_wrapper();
     if (src_values == nullptr || dst_values == nullptr)
     {
         ModuleBase::WARNING_QUIT("cast_hcontainer_values", "HContainer data buffer is not allocated.");
@@ -37,8 +36,8 @@ void cast_hcontainer_values(const HContainer<Tin>& src, HContainer<Tout>& dst)
     }
 }
 
-template<typename Tout, typename Tin>
-HContainer<Tout> make_cast_hcontainer(const HContainer<Tin>& src)
+template <typename Tout, typename Tin>
+HContainer<Tout> make_cast_hcontainer(const HContainer<Tin> &src)
 {
     const auto ijr_info = src.get_ijr_info();
 
@@ -60,7 +59,7 @@ HContainer<Tout> make_cast_hcontainer(const HContainer<Tin>& src)
     }
     for (int iap = 0; iap < src.size_atom_pairs(); ++iap)
     {
-        const auto& src_ap = src.get_atom_pair(iap);
+        const auto &src_ap = src.get_atom_pair(iap);
         hamilt::AtomPair<Tout> dst_ap(src_ap.get_atom_i(), src_ap.get_atom_j());
         dst_ap.set_size(src_ap.get_col_size(), src_ap.get_row_size());
         for (int ir = 0; ir < src_ap.get_R_size(); ++ir)
@@ -75,22 +74,22 @@ HContainer<Tout> make_cast_hcontainer(const HContainer<Tin>& src)
     return dst;
 }
 
-template<typename T>
-void compose_hr_gint(HContainer<T>& hr_gint)
+template <typename T>
+void compose_hr_gint(HContainer<T> &hr_gint)
 {
     ModuleBase::TITLE("Gint", "compose_hr_gint");
     ModuleBase::timer::start("Gint", "compose_hr_gint");
     for (int iap = 0; iap < hr_gint.size_atom_pairs(); iap++)
     {
-        auto& ap = hr_gint.get_atom_pair(iap);
+        auto &ap = hr_gint.get_atom_pair(iap);
         const int iat1 = ap.get_atom_i();
         const int iat2 = ap.get_atom_j();
         if (iat1 > iat2)
         {
             // fill lower triangle matrix with upper triangle matrix
             // the upper <IJR> is <iat2, iat1>
-            const hamilt::AtomPair<T>* upper_ap = hr_gint.find_pair(iat2, iat1);
-            const hamilt::AtomPair<T>* lower_ap = hr_gint.find_pair(iat1, iat2);
+            const hamilt::AtomPair<T> *upper_ap = hr_gint.find_pair(iat2, iat1);
+            const hamilt::AtomPair<T> *lower_ap = hr_gint.find_pair(iat1, iat2);
 #ifdef __DEBUG
             assert(upper_ap != nullptr);
 #endif
@@ -113,7 +112,7 @@ void compose_hr_gint(HContainer<T>& hr_gint)
 }
 
 template <typename T>
-void hr_gint_to_hR(const HContainer<T>& hr_gint, HContainer<T>& hR)
+void hr_gint_to_hR(const HContainer<T> &hr_gint, HContainer<T> &hR)
 {
     ModuleBase::TITLE("Gint", "hr_gint_to_hR");
     ModuleBase::timer::start("Gint", "hr_gint_to_hR");
@@ -134,25 +133,25 @@ void hr_gint_to_hR(const HContainer<T>& hr_gint, HContainer<T>& hR)
     ModuleBase::timer::end("Gint", "hr_gint_to_hR");
 }
 
-
-void merge_hr_part_to_hR(const std::vector<hamilt::HContainer<double>>& hr_gint_tmp ,
-                         hamilt::HContainer<std::complex<double>>* hR,
-                         const GintInfo& gint_info){
+void merge_hr_part_to_hR(
+    const std::vector<hamilt::HContainer<double>> &hr_gint_tmp, hamilt::HContainer<std::complex<double>> *hR,
+    const GintInfo &gint_info)
+{
     ModuleBase::TITLE("Gint_k", "transfer_pvpR");
     ModuleBase::timer::start("Gint_k", "transfer_pvpR");
 
-    const UnitCell* ucell_in = gint_info.get_ucell();
-    int mg = hR->get_paraV()->para_2d().nrglb()/2;
-    int ng = hR->get_paraV()->para_2d().ncglb()/2;
-    int nb = hR->get_paraV()->para_2d().nb()/2;
-    hamilt::HContainer<std::complex<double>>* hR_tmp;
-
+    const UnitCell *ucell_in = gint_info.get_ucell();
+    int mg = hR->get_paraV()->para_2d().nrglb() / 2;
+    int ng = hR->get_paraV()->para_2d().ncglb() / 2;
+    int nb = hR->get_paraV()->para_2d().nb() / 2;
+    hamilt::HContainer<std::complex<double>> *hR_tmp;
 
 #ifdef __MPI
     int blacs_ctxt = hR->get_paraV()->para_2d().ictxt();
     std::vector<int> iat2iwt(ucell_in->nat);
-    for (int iat = 0; iat < ucell_in->nat; iat++) {
-        iat2iwt[iat] = ucell_in->get_iat2iwt()[iat]/2;
+    for (int iat = 0; iat < ucell_in->nat; iat++)
+    {
+        iat2iwt[iat] = ucell_in->get_iat2iwt()[iat] / 2;
     }
     Parallel_Orbitals *pv = new Parallel_Orbitals();
     pv->para_2d().set(mg, ng, nb, blacs_ctxt);
@@ -161,42 +160,47 @@ void merge_hr_part_to_hR(const std::vector<hamilt::HContainer<double>>& hr_gint_
     hR_tmp = new hamilt::HContainer<std::complex<double>>(pv, nullptr, &ijr_info);
 #endif
 
-    //select hr_gint_tmp 
+    // select hr_gint_tmp
     std::vector<int> first = {0, 1, 1, 0};
-    std::vector<int> second= {3, 2, 2, 3};
-    //select position in the big matrix
+    std::vector<int> second = {3, 2, 2, 3};
+    // select position in the big matrix
     std::vector<int> row_set = {0, 0, 1, 1};
     std::vector<int> col_set = {0, 1, 0, 1};
-    //construct complex matrix
-    // Pauli-to-spinor conversion: H = V_0*I + B_x*sigma_x + B_y*sigma_y + B_z*sigma_z
-    // sigma_y = [[0,-i],[i,0]], so H_{up,down} = B_x - i*B_y, H_{down,up} = B_x + i*B_y
-    // coefficient = clx_i + i*clx_j for each Pauli channel:
-    //   is=0 (up,up):   V_0 + B_z   => coeff on B_z = +1  => clx_i=1,  clx_j=0
-    //   is=1 (up,down): B_x - i*B_y => coeff on B_y = -i  => clx_i=0,  clx_j=-1
-    //   is=2 (down,up): B_x + i*B_y => coeff on B_y = +i  => clx_i=0,  clx_j=+1
-    //   is=3 (down,down): -(V_0 - B_z) => coeff on V_0 = -1 => clx_i=-1, clx_j=0
+    // construct complex matrix
+    //  Pauli-to-spinor conversion: H = V_0*I + B_x*sigma_x + B_y*sigma_y + B_z*sigma_z
+    //  sigma_y = [[0,-i],[i,0]], so H_{up,down} = B_x - i*B_y, H_{down,up} = B_x + i*B_y
+    //  coefficient = clx_i + i*clx_j for each Pauli channel:
+    //    is=0 (up,up):   V_0 + B_z   => coeff on B_z = +1  => clx_i=1,  clx_j=0
+    //    is=1 (up,down): B_x - i*B_y => coeff on B_y = -i  => clx_i=0,  clx_j=-1
+    //    is=2 (down,up): B_x + i*B_y => coeff on B_y = +i  => clx_i=0,  clx_j=+1
+    //    is=3 (down,down): -(V_0 - B_z) => coeff on V_0 = -1 => clx_i=-1, clx_j=0
     std::vector<int> clx_i = {1, 0, 0, -1};
     std::vector<int> clx_j = {0, -1, 1, 0};
-    for (int is = 0; is < 4; is++){
-        if(!gint_info.get_domag() && (is==1 || is==2)) continue;
+    for (int is = 0; is < 4; is++)
+    {
+        if (!gint_info.get_domag() && (is == 1 || is == 2))
+        {
+            continue;
+        }
         hR_tmp->set_zero();
-        hamilt::HContainer<std::complex<double>>* hRGint_tmpCd = new hamilt::HContainer<std::complex<double>>(ucell_in->nat);
-        hRGint_tmpCd->insert_ijrs( &(gint_info.get_ijr_info()), *(ucell_in));
+        hamilt::HContainer<std::complex<double>> *hRGint_tmpCd =
+            new hamilt::HContainer<std::complex<double>>(ucell_in->nat);
+        hRGint_tmpCd->insert_ijrs(&(gint_info.get_ijr_info()), *(ucell_in));
         hRGint_tmpCd->allocate(nullptr, true);
         hRGint_tmpCd->set_zero();
         for (int iap = 0; iap < hRGint_tmpCd->size_atom_pairs(); iap++)
         {
-            auto* ap = &hRGint_tmpCd->get_atom_pair(iap);
+            auto *ap = &hRGint_tmpCd->get_atom_pair(iap);
             const int iat1 = ap->get_atom_i();
             const int iat2 = ap->get_atom_j();
             if (iat1 <= iat2)
             {
-                hamilt::AtomPair<std::complex<double>>* upper_ap = ap;
-                hamilt::AtomPair<std::complex<double>>* lower_ap = hRGint_tmpCd->find_pair(iat2, iat1);
-                const hamilt::AtomPair<double>* ap_nspin1 = hr_gint_tmp [first[is]].find_pair(iat1, iat2);
-                const hamilt::AtomPair<double>* ap_nspin2 = hr_gint_tmp [second[is]].find_pair(iat1, iat2);
+                hamilt::AtomPair<std::complex<double>> *upper_ap = ap;
+                hamilt::AtomPair<std::complex<double>> *lower_ap = hRGint_tmpCd->find_pair(iat2, iat1);
+                const hamilt::AtomPair<double> *ap_nspin1 = hr_gint_tmp[first[is]].find_pair(iat1, iat2);
+                const hamilt::AtomPair<double> *ap_nspin2 = hr_gint_tmp[second[is]].find_pair(iat1, iat2);
                 for (int ir = 0; ir < upper_ap->get_R_size(); ir++)
-                {   
+                {
                     const auto R_index = upper_ap->get_R_index(ir);
                     auto upper_mat = upper_ap->find_matrix(R_index);
                     auto mat_nspin1 = ap_nspin1->find_matrix(R_index);
@@ -206,8 +210,9 @@ void merge_hr_part_to_hR(const std::vector<hamilt::HContainer<double>>& hr_gint_
                     {
                         for (int icol = 0; icol < mat_nspin1->get_col_size(); ++icol)
                         {
-                            upper_mat->get_value(irow, icol) = mat_nspin1->get_value(irow, icol) 
-                            + std::complex<double>(clx_i[is], clx_j[is]) * mat_nspin2->get_value(irow, icol);
+                            upper_mat->get_value(irow, icol) =
+                                mat_nspin1->get_value(irow, icol) +
+                                std::complex<double>(clx_i[is], clx_j[is]) * mat_nspin2->get_value(irow, icol);
                         }
                     }
                     // Transpose only the spatial indices within this fixed spin block.
@@ -225,25 +230,24 @@ void merge_hr_part_to_hR(const std::vector<hamilt::HContainer<double>>& hr_gint_
                             }
                         }
                     }
-
                 }
             }
         }
         // transfer hRGint_tmpCd to parallel hR_tmp
 #ifdef __MPI
-        hamilt::transferSerials2Parallels( *hRGint_tmpCd, hR_tmp);
+        hamilt::transferSerials2Parallels(*hRGint_tmpCd, hR_tmp);
 #else
         hR_tmp = hRGint_tmpCd;
 #endif
         // merge hR_tmp to hR
         for (int iap = 0; iap < hR->size_atom_pairs(); iap++)
         {
-            auto* ap = &hR->get_atom_pair(iap);
+            auto *ap = &hR->get_atom_pair(iap);
             const int iat1 = ap->get_atom_i();
             const int iat2 = ap->get_atom_j();
-            auto* ap_nspin = hR_tmp ->find_pair(iat1, iat2);
+            auto *ap_nspin = hR_tmp->find_pair(iat1, iat2);
             for (int ir = 0; ir < ap->get_R_size(); ir++)
-            {   
+            {
                 const auto R_index = ap->get_R_index(ir);
                 auto upper_mat = ap->find_matrix(R_index);
                 auto mat_nspin = ap_nspin->find_matrix(R_index);
@@ -252,8 +256,8 @@ void merge_hr_part_to_hR(const std::vector<hamilt::HContainer<double>>& hr_gint_
                 {
                     for (int icol = 0; icol < mat_nspin->get_col_size(); ++icol)
                     {
-                        upper_mat->get_value(2*irow+row_set[is], 2*icol+col_set[is]) = 
-                        mat_nspin->get_value(irow, icol);
+                        upper_mat->get_value(2 * irow + row_set[is], 2 * icol + col_set[is]) =
+                            mat_nspin->get_value(irow, icol);
                     }
                 }
             }
@@ -264,16 +268,13 @@ void merge_hr_part_to_hR(const std::vector<hamilt::HContainer<double>>& hr_gint_
     return;
 }
 
-
-
 // C++11-compatible helpers for dm_2d_to_gint:
 // SFINAE (enable_if) to select same-type vs cross-type code paths at compile time.
 
 // Same-type path (TGint == TDM): transfer directly
-template<typename TGint, typename TDM>
-typename std::enable_if<std::is_same<TGint, TDM>::value>::type
-gather_dm(const HContainer<TDM>& dm_src, HContainer<TGint>& dm_dst,
-          const GintInfo& /*gint_info*/)
+template <typename TGint, typename TDM>
+typename std::enable_if<std::is_same<TGint, TDM>::value>::type gather_dm(
+    const HContainer<TDM> &dm_src, HContainer<TGint> &dm_dst, const GintInfo & /*gint_info*/)
 {
 #ifdef __MPI
     hamilt::transferParallels2Serials(dm_src, &dm_dst);
@@ -284,10 +285,9 @@ gather_dm(const HContainer<TDM>& dm_src, HContainer<TGint>& dm_dst,
 }
 
 // Cross-type path (TGint != TDM): gather into a temp of TDM, then cast
-template<typename TGint, typename TDM>
-typename std::enable_if<!std::is_same<TGint, TDM>::value>::type
-gather_dm(const HContainer<TDM>& dm_src, HContainer<TGint>& dm_dst,
-          const GintInfo& gint_info)
+template <typename TGint, typename TDM>
+typename std::enable_if<!std::is_same<TGint, TDM>::value>::type gather_dm(
+    const HContainer<TDM> &dm_src, HContainer<TGint> &dm_dst, const GintInfo &gint_info)
 {
     HContainer<TDM> dm_tmp = gint_info.get_hr<TDM>();
 #ifdef __MPI
@@ -301,11 +301,9 @@ gather_dm(const HContainer<TDM>& dm_src, HContainer<TGint>& dm_dst,
 
 // gint_info should not have been a parameter, but it was added to initialize dm_gint_full
 // In the future, we might try to remove the gint_info parameter
-template<typename TGint, typename TDM>
+template <typename TGint, typename TDM>
 void dm_2d_to_gint(
-    const GintInfo& gint_info,
-    const std::vector<HContainer<TDM>*>& dm,
-    std::vector<HContainer<TGint>>& dm_gint)
+    const GintInfo &gint_info, const std::vector<HContainer<TDM> *> &dm, std::vector<HContainer<TGint>> &dm_gint)
 {
     ModuleBase::TITLE("Gint", "dm_2d_to_gint");
     ModuleBase::timer::start("Gint", "dm_2d_to_gint");
@@ -318,49 +316,56 @@ void dm_2d_to_gint(
         {
             gather_dm(*dm[is], dm_gint[is], gint_info);
         }
-    } else  // NSPIN=4 case
+    }
+    else // NSPIN=4 case
     {
 
         // is=0:↑↑, 1:↑↓, 2:↓↑, 3:↓↓
         const int row_set[4] = {0, 0, 1, 1};
         const int col_set[4] = {0, 1, 0, 1};
-        int mg = dm[0]->get_paraV()->para_2d().nrglb()/2;
-        int ng = dm[0]->get_paraV()->para_2d().ncglb()/2;
-        int nb = dm[0]->get_paraV()->para_2d().nb()/2;
-        const UnitCell* ucell = gint_info.get_ucell();
+        int mg = dm[0]->get_paraV()->para_2d().nrglb() / 2;
+        int ng = dm[0]->get_paraV()->para_2d().ncglb() / 2;
+        int nb = dm[0]->get_paraV()->para_2d().nb() / 2;
+        const UnitCell *ucell = gint_info.get_ucell();
         auto ijr_info = dm[0]->get_ijr_info();
 #ifdef __MPI
         int blacs_ctxt = dm[0]->get_paraV()->para_2d().ictxt();
         std::vector<int> iat2iwt(ucell->nat);
-        for (int iat = 0; iat < ucell->nat; iat++) {
-            iat2iwt[iat] = ucell->get_iat2iwt()[iat]/2;
+        for (int iat = 0; iat < ucell->nat; iat++)
+        {
+            iat2iwt[iat] = ucell->get_iat2iwt()[iat] / 2;
         }
         Parallel_Orbitals pv{};
         pv.para_2d().set(mg, ng, nb, blacs_ctxt);
         pv.set_atomic_trace(iat2iwt.data(), ucell->nat, mg);
         HContainer<TDM> dm2d_tmp(&pv, nullptr, &ijr_info);
 #else
-        auto* dm2d_tmp = new hamilt::HContainer<TDM>(ucell->nat);
-        dm2d_tmp -> insert_ijrs(&ijr_info, *ucell);
-        dm2d_tmp -> allocate(nullptr, true);
+        auto *dm2d_tmp = new hamilt::HContainer<TDM>(ucell->nat);
+        dm2d_tmp->insert_ijrs(&ijr_info, *ucell);
+        dm2d_tmp->allocate(nullptr, true);
 #endif
-         for (int is = 0; is < 4; is++){
-            for (int iap = 0; iap < dm[0]->size_atom_pairs(); ++iap) {
-                auto& ap = dm[0]->get_atom_pair(iap);
+        for (int is = 0; is < 4; is++)
+        {
+            for (int iap = 0; iap < dm[0]->size_atom_pairs(); ++iap)
+            {
+                auto &ap = dm[0]->get_atom_pair(iap);
                 int iat1 = ap.get_atom_i();
                 int iat2 = ap.get_atom_j();
-                for (int ir = 0; ir < ap.get_R_size(); ++ir) {
+                for (int ir = 0; ir < ap.get_R_size(); ++ir)
+                {
                     const ModuleBase::Vector3<int> r_index = ap.get_R_index(ir);
 #ifdef __MPI
-                    TDM* matrix_out = dm2d_tmp.find_matrix(iat1, iat2, r_index)->get_pointer();
+                    TDM *matrix_out = dm2d_tmp.find_matrix(iat1, iat2, r_index)->get_pointer();
 #else
-                    TDM* matrix_out = dm2d_tmp->find_matrix(iat1, iat2, r_index)->get_pointer();
+                    TDM *matrix_out = dm2d_tmp->find_matrix(iat1, iat2, r_index)->get_pointer();
 #endif
-                    TDM* matrix_in = ap.get_pointer(ir);
-                    for (int irow = 0; irow < ap.get_row_size()/2; irow ++) {
-                        for (int icol = 0; icol < ap.get_col_size()/2; icol ++) {
-                            int index_i = irow* ap.get_col_size()/2 + icol;
-                            int index_j = (irow*2+row_set[is]) * ap.get_col_size() + icol*2+col_set[is];
+                    TDM *matrix_in = ap.get_pointer(ir);
+                    for (int irow = 0; irow < ap.get_row_size() / 2; irow++)
+                    {
+                        for (int icol = 0; icol < ap.get_col_size() / 2; icol++)
+                        {
+                            int index_i = irow * ap.get_col_size() / 2 + icol;
+                            int index_j = (irow * 2 + row_set[is]) * ap.get_col_size() + icol * 2 + col_set[is];
                             matrix_out[index_i] = matrix_in[index_j];
                         }
                     }
@@ -371,7 +376,7 @@ void dm_2d_to_gint(
 #else
             gather_dm(*dm2d_tmp, dm_gint[is], gint_info);
 #endif
-        }//is=4
+        } // is=4
 #ifndef __MPI
         delete dm2d_tmp;
 #endif
@@ -379,26 +384,35 @@ void dm_2d_to_gint(
     ModuleBase::timer::end("Gint", "dm_2d_to_gint");
 }
 
-int globalIndex(int localindex, int nblk, int nprocs, int myproc)
+int globalIndex(
+    int localindex,
+    int nblk,
+    int nprocs,
+    int myproc)
 {
     const int iblock = localindex / nblk;
     const int gIndex = (iblock * nprocs + myproc) * nblk + localindex % nblk;
     return gIndex;
 }
 
-int localIndex(int globalindex, int nblk, int nprocs, int& myproc)
+int localIndex(
+    int globalindex,
+    int nblk,
+    int nprocs,
+    int &myproc)
 {
     myproc = int((globalindex % (nblk * nprocs)) / nblk);
     return int(globalindex / (nblk * nprocs)) * nblk + globalindex % nblk;
 }
 
 template <typename T>
-void wfc_2d_to_gint(const T* wfc_2d,
-                    int nbands,  // needed if MPI is disabled
-                    int nlocal,  // needed if MPI is disabled
-                    const Parallel_Orbitals& pv,
-                    T* wfc_gint,
-                    const GintInfo& gint_info)
+void wfc_2d_to_gint(
+    const T *wfc_2d,
+    int nbands, // needed if MPI is disabled
+    int nlocal, // needed if MPI is disabled
+    const Parallel_Orbitals &pv,
+    T *wfc_gint,
+    const GintInfo &gint_info)
 {
     ModuleBase::TITLE("Gint", "wfc_2d_to_gint");
     ModuleBase::timer::start("Gint", "wfc_2d_to_gint");
@@ -409,7 +423,7 @@ void wfc_2d_to_gint(const T* wfc_2d,
     nlocal = pv.desc_wfc[2];
     nbands = pv.desc_wfc[3];
 
-    const std::vector<int>& trace_lo = gint_info.get_trace_lo();
+    const std::vector<int> &trace_lo = gint_info.get_trace_lo();
     const int lgd = gint_info.get_lgd();
 
     // MPI and memory related
@@ -489,46 +503,33 @@ void wfc_2d_to_gint(const T* wfc_2d,
     ModuleBase::timer::end("Gint", "wfc_2d_to_gint");
 }
 
-template void compose_hr_gint(HContainer<double>& hr_gint);
-template void compose_hr_gint(HContainer<float>& hr_gint);
-template void hr_gint_to_hR(
-    const HContainer<double>& hr_gint,
-    HContainer<double>& hR);
-template void hr_gint_to_hR(
-    const HContainer<std::complex<double>>& hr_gint,
-    HContainer<std::complex<double>>& hR);
-template void cast_hcontainer_values(
-    const HContainer<double>& src,
-    HContainer<float>& dst);
-template void cast_hcontainer_values(
-    const HContainer<float>& src,
-    HContainer<double>& dst);
-template HContainer<float> make_cast_hcontainer(const HContainer<double>& src);
-template HContainer<double> make_cast_hcontainer(const HContainer<float>& src);
+template void compose_hr_gint(HContainer<double> &hr_gint);
+template void compose_hr_gint(HContainer<float> &hr_gint);
+template void hr_gint_to_hR(const HContainer<double> &hr_gint, HContainer<double> &hR);
+template void hr_gint_to_hR(const HContainer<std::complex<double>> &hr_gint, HContainer<std::complex<double>> &hR);
+template void cast_hcontainer_values(const HContainer<double> &src, HContainer<float> &dst);
+template void cast_hcontainer_values(const HContainer<float> &src, HContainer<double> &dst);
+template HContainer<float> make_cast_hcontainer(const HContainer<double> &src);
+template HContainer<double> make_cast_hcontainer(const HContainer<float> &src);
 template void dm_2d_to_gint(
-    const GintInfo& gint_info,
-    const std::vector<HContainer<double>*>& dm,
-    std::vector<HContainer<double>>& dm_gint);
+    const GintInfo &gint_info, const std::vector<HContainer<double> *> &dm, std::vector<HContainer<double>> &dm_gint);
 template void dm_2d_to_gint(
-    const GintInfo& gint_info,
-    const std::vector<HContainer<double>*>& dm,
-    std::vector<HContainer<float>>& dm_gint);
+    const GintInfo &gint_info, const std::vector<HContainer<double> *> &dm, std::vector<HContainer<float>> &dm_gint);
 template void dm_2d_to_gint(
-    const GintInfo& gint_info,
-    const std::vector<HContainer<std::complex<double>>*>& dm,
-    std::vector<HContainer<std::complex<double>>>& dm_gint);
+    const GintInfo &gint_info, const std::vector<HContainer<std::complex<double>> *> &dm,
+    std::vector<HContainer<std::complex<double>>> &dm_gint);
 template void wfc_2d_to_gint(
-    const double* wfc_2d,
+    const double *wfc_2d,
     int nbands,
     int nlocal,
-    const Parallel_Orbitals& pv,
-    double* wfc_grid,
-    const GintInfo& gint_info);
+    const Parallel_Orbitals &pv,
+    double *wfc_grid,
+    const GintInfo &gint_info);
 template void wfc_2d_to_gint(
-    const std::complex<double>* wfc_2d,
+    const std::complex<double> *wfc_2d,
     int nbands,
     int nlocal,
-    const Parallel_Orbitals& pv,
-    std::complex<double>* wfc_grid,
-    const GintInfo& gint_info);
-}
+    const Parallel_Orbitals &pv,
+    std::complex<double> *wfc_grid,
+    const GintInfo &gint_info);
+} // namespace ModuleGint
