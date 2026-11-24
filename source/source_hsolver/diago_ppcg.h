@@ -2,6 +2,7 @@
 #define DIAGO_PPCG_H
 
 #include "source_base/module_device/types.h"
+#include "ppcg_workspace.h"
 
 #include <complex>
 #include <iosfwd>
@@ -31,7 +32,7 @@ struct PPCGTraceContext
 
 namespace base_device = ::base_device;
 
-// Check CPU workspace sizes before allocating. Dense kernels and pool
+// Check workspace sizes before allocating. Dense kernels and pool
 // reductions use int element counts.
 bool ppcg_workspace_dimensions_valid(int ld_psi, int nband, int dim, int sbsize);
 
@@ -45,6 +46,8 @@ public:
     using Real = typename std::conditional<
         std::is_same<T, std::complex<double>>::value, double,
         float>::type;
+
+    using Workspace = typename PPCGWorkspaceType<T, Device>::type;
 
     // -------------------------------------------------------------------------
     // Constructor
@@ -140,17 +143,18 @@ private:
     int root_recovery_count_ = 0;
 
     // Working storage (column-major: ld_psi_ rows, n_band_ columns).
-    std::vector<T> hpsi_;
-    std::vector<T> spsi_;
-    std::vector<T> w_;       // residual / preconditioned residual
-    std::vector<T> sw_;      // S * w
-    std::vector<T> hw_;      // H * w
-    std::vector<T> p_;       // previous search direction (LOBPCG)
-    std::vector<T> sp_;      // S * p
-    std::vector<T> hp_;      // H * p
+    Workspace hpsi_;
+    Workspace spsi_;
+    Workspace w_;       // residual / preconditioned residual
+    Workspace sw_;      // S * w
+    Workspace hw_;      // H * w
+    Workspace p_;       // previous search direction (LOBPCG)
+    Workspace sp_;      // S * p
+    Workspace hp_;      // H * p
     std::vector<T> rr_hsub_;
     std::vector<T> rr_ssub_;
     std::vector<Real> rr_eval_;
+    typename PPCGWorkspaceType<Real, Device>::type device_prec_;
 
     // -------------------------------------------------------------------------
     // Internal helpers
@@ -180,14 +184,14 @@ private:
 
     // Gather / scatter columns.
     void copy_cols(const T* src, const std::vector<int>& cols,
-                   std::vector<T>& dst) const;
+                   Workspace& dst) const;
     void scatter_cols(T* dst, const std::vector<int>& cols,
-                      const std::vector<T>& src) const;
+                      const Workspace& src) const;
 
     // Project x onto vectors orthogonal to the S-orthonormal basis.
     void project_against(const T* basis, const T* sbasis, const T* hbasis,
                          const std::vector<int>& basis_cols,
-                         std::vector<T>& x, std::vector<T>& sx, std::vector<T>* hx,
+                         Workspace& x, Workspace& sx, Workspace* hx,
                          const std::vector<int>& x_cols) const;
 
     void project_search_directions(const HSOperator<T, Device>& op, const T* psi,
@@ -197,7 +201,7 @@ private:
     // x[c] /= max(prec, eps)  for each active column c.
     void divide_by_preconditioner(const std::vector<int>& active_cols,
                                   const Real* prec,
-                                  std::vector<T>& x) const;
+                                  Workspace& x) const;
 
     // -------------------------------------------------------------------------
     // Block-subspace strategy helpers (File 1 style)
@@ -207,38 +211,38 @@ private:
         std::vector<T> k;        // K matrix (projected H)
         std::vector<T> m;        // M matrix (projected S)
         std::vector<Real> eval;  // eigenvalues
-        std::vector<T> psi_l;
-        std::vector<T> spsi_l;
-        std::vector<T> hpsi_l;
-        std::vector<T> w_l;
-        std::vector<T> sw_l;
-        std::vector<T> hw_l;
-        std::vector<T> p_l;
-        std::vector<T> sp_l;
-        std::vector<T> hp_l;
-        std::vector<T> basis;
-        std::vector<T> hbasis;
-        std::vector<T> sbasis;
+        Workspace psi_l;
+        Workspace spsi_l;
+        Workspace hpsi_l;
+        Workspace w_l;
+        Workspace sw_l;
+        Workspace hw_l;
+        Workspace p_l;
+        Workspace sp_l;
+        Workspace hp_l;
+        Workspace basis;
+        Workspace hbasis;
+        Workspace sbasis;
         std::vector<T> coeff_state;
         std::vector<T> coeff_p;
-        std::vector<T> psi_new;
-        std::vector<T> spsi_new;
-        std::vector<T> hpsi_new;
-        std::vector<T> p_new;
-        std::vector<T> sp_new;
-        std::vector<T> hp_new;
+        Workspace psi_new;
+        Workspace spsi_new;
+        Workspace hpsi_new;
+        Workspace p_new;
+        Workspace sp_new;
+        Workspace hp_new;
     };
 
     struct OperatorBlock
     {
-        std::vector<T> vectors;
-        std::vector<T> hvectors;
-        std::vector<T> svectors;
+        Workspace vectors;
+        Workspace hvectors;
+        Workspace svectors;
     };
 
-    void scale_to_unit_snorm(std::vector<T>& x,
-                             std::vector<T>& sx,
-                             std::vector<T>& hx,
+    void scale_to_unit_snorm(Workspace& x,
+                             Workspace& sx,
+                             Workspace& hx,
                              int ncols) const;
 
     void hermitize_projected(std::vector<T>& matrix, int dim) const;
@@ -254,20 +258,20 @@ private:
                                    std::vector<T>& workspace) const;
 
     void build_startup_global_subspace(const T* psi,
-                                       std::vector<T>& w_active,
-                                       std::vector<T>& sw_active,
-                                       std::vector<T>& hw_active,
+                                       Workspace& w_active,
+                                       Workspace& sw_active,
+                                       Workspace& hw_active,
                                        int active_count,
                                        SmallSubspace& subspace);
 
     void update_startup_global_subspace(T* psi,
-                                        const std::vector<T>& w_active,
-                                        const std::vector<T>& sw_active,
-                                        const std::vector<T>& hw_active,
+                                        const Workspace& w_active,
+                                        const Workspace& sw_active,
+                                        const Workspace& hw_active,
                                         int active_count,
                                         const SmallSubspace& subspace);
 
-    void lock_epairs(const std::vector<T>& residual,
+    void lock_epairs(const Workspace& residual,
                      const std::vector<double>& ethr_band,
                      std::vector<int>& active_cols);
 

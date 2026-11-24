@@ -656,6 +656,7 @@ list(
   source_basis/module_pw/kernels/pw_op.cpp
   source_hsolver/kernels/hegvd_op.cpp
   source_hsolver/kernels/bpcg_kernel_op.cpp
+  source_hsolver/kernels/ppcg_kernel_op.cpp
   source_hsolver/module_linalg/kernels/linear_op.cpp
   source_estate/kernels/elecstate_op.cpp
   source_base/module_device/device.cpp

@@ -531,6 +531,7 @@ OBJS_HSOLVER=diago_cg.o\
     diago_iter_assist.o\
     hegvd_op.o\
     bpcg_kernel_op.o\
+    ppcg_kernel_op.o\
     diag_const_nums.o\
     diag_hs_para.o\
     diago_pxxxgvx.o\
