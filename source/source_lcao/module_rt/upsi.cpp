@@ -5,6 +5,10 @@
 #include "source_base/module_external/scalapack_connector.h"
 #include "source_base/timer.h"
 
+#ifdef __CUBLASMP
+#include <cuComplex.h>
+#endif
+
 #include <cassert>
 #include <complex>
 #include <iostream>
@@ -148,8 +152,8 @@ void upsi_tensor(const Parallel_Blkcyclic& matrix_layout,
                                    &desc_Psi);
 
     // 5. Query workspace size for GEMM: Psi_k = 1.0 * U * Psi_old + 0.0 * Psi_k
-    std::complex<double> alpha = {1.0, 0.0};
-    std::complex<double> beta = {0.0, 0.0};
+    const cuDoubleComplex alpha = make_cuDoubleComplex(1.0, 0.0);
+    const cuDoubleComplex beta = make_cuDoubleComplex(0.0, 0.0);
     size_t ws_gemm_dev = 0;
     size_t ws_gemm_host = 0;
 

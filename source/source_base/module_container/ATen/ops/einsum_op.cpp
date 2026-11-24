@@ -789,7 +789,20 @@ static void DoContract(
         Tensor& out_z)
 {
     const T alpha = static_cast<T>(option.alpha);
-    const T beta  = static_cast<T>(option.beta);
+    const T beta = option.out ? static_cast<T>(option.beta) : T(0);
+    if (out_z.NumElements() == 1)
+    {
+        // Each contiguous operand can be viewed as a row or a column to conjugate it independently.
+        const int k = in_x.shape().dim_size(trans_x ? 1 : 2);
+        const char op_x = option.conj_x ? 'C' : 'N';
+        const char op_y = option.conj_y ? 'C' : 'N';
+        const int lda = option.conj_x ? k : 1;
+        const int ldb = option.conj_y ? 1 : k;
+        kernels::blas_gemm<T, Device>()(op_x, op_y, 1, 1, k, &alpha, in_x.data<T>(), lda,
+                                        in_y.data<T>(), ldb, &beta, out_z.data<T>(), 1);
+        return;
+    }
+
     const int m = in_x.shape().dim_size(option.conj_x || trans_x ? 2 : 1);
     const int k = in_x.shape().dim_size(option.conj_x || trans_x ? 1 : 2);
     const int n = in_y.shape().dim_size(option.conj_y || trans_y ? 1 : 2);
@@ -851,14 +864,8 @@ static void DoContract(
     // We want the output to be in row-major, so we can compute
     // C' = B' x A', where ' stands for transpose (not adjoint).
     if (batch_size == 1) {
-        // Dot product
-        if (m == 1 && n == 1 && option.conj_x != true && option.conj_y != true) {
-            // Dot product
-            // TODO: implement the Conjugate version of Dot product.
-            kernels::blas_dot<T, Device>()(k, x_device_memory_ptrs[0], 1, y_device_memory_ptrs[0], 1, z_device_memory_ptrs[0]);
-        }
         // Gemv
-        else if (n == 1 && option.conj_x != true) {
+        if (n == 1 && option.conj_x != true) {
             // This is a matrix*vector multiply so use GEMV to compute A * x.
             // Here we are multiplying in the natural order, so we have to flip
             // the transposition flag to compensate for the tensor being stored
@@ -954,8 +961,16 @@ bool ContractOperands(
     else {
         CopyFromWithAllocate(inputs[0], output_shape, &output);
     }
+    if (output.NumElements() == 0) {
+        return true;
+    }
     if (lhs.NumElements() == 0 || rhs.NumElements() == 0) {
-        output.zero();
+        if (option.out == nullptr || option.beta == 0.0f) {
+            output.zero();
+        } else if (option.beta != 1.0f) {
+            TEMPLATE_BLAS_2(output.data_type(), output.device_type(),
+                op::mul_op()(static_cast<T_>(option.beta), output, output))
+        }
         return true;
     }
 
