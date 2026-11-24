@@ -50,6 +50,12 @@ struct MPI_Type<long long>
 {
     static const MPI_Datatype value;
 };
+
+template <>
+struct MPI_Type<unsigned long long>
+{
+    static const MPI_Datatype value;
+};
 #endif
 
 /// reduce in all process
@@ -81,6 +87,32 @@ void reduce_double_allpool(const int& npool, const int& nproc_in_pool, double& o
 void reduce_double_allpool(const int& npool, const int& nproc_in_pool, double* object, const int n);
 
 void gather_int_all(int& v, int* all);
+
+#ifdef __MPI
+/// Communicator-aware counterparts of the MPI_COMM_WORLD-bound helpers above.
+/// The RI and RPA stages run on caller-provided sub-communicators, which those
+/// helpers cannot express; route every reduction on such a communicator
+/// through these overloads so the raw MPI calls stay centralized here.
+template <typename T>
+void reduce_all(const MPI_Comm mpi_comm, T& object);
+template <typename T>
+void reduce_all(const MPI_Comm mpi_comm, T* object, const int n);
+template <typename T>
+void reduce_max(const MPI_Comm mpi_comm, T& object);
+template <typename T>
+void reduce_min(const MPI_Comm mpi_comm, T& object);
+/// @brief Largest value together with the rank that supplied it (MPI_MAXLOC).
+void reduce_max_loc(const MPI_Comm mpi_comm, double& value, int& rank);
+/// @brief Allgather one int per rank on an arbitrary communicator.
+void gather_int_all(const MPI_Comm mpi_comm, int& v, int* all);
+/// @brief Allgatherv with per-rank counts and displacements on an arbitrary communicator.
+void gatherv_int_all(const MPI_Comm mpi_comm,
+                     const int* send_buffer,
+                     const int send_count,
+                     int* receive_buffer,
+                     const int* receive_counts,
+                     const int* receive_displacements);
+#endif
 
 } // namespace Parallel_Reduce
 
