@@ -293,9 +293,8 @@ void print_force(std::ofstream& ofs_running,
 void print_stress(const std::string& name, const ModuleBase::matrix& scs, 
   const bool screen, const bool ry, std::ofstream &ofs)
 {
-    const auto& input = PARAM.inp;
     // MD prints virial and total stress on the thermodynamic cadence.
-    if (input.calculation == "md")
+    if (PARAM.inp.calculation == "md")
     {
         return;
     }
@@ -344,7 +343,7 @@ void print_stress(const std::string& name, const ModuleBase::matrix& scs,
     fmt << stress_x << stress_y << stress_z;
     table = fmt.str();
     ofs << table;
-    if (name == "TOTAL-STRESS" && input.calculation != "md")
+    if (name == "TOTAL-STRESS")
     {
         ofs << " #TOTAL-PRESSURE# (EXCLUDE KINETIC PART OF IONS): " << std::fixed 
                              << std::setprecision(6) << pressure << unit
