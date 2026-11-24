@@ -53,6 +53,10 @@ addtest(
 addtest(TARGET MODULE_IO_read_input_tool SOURCES read_input_tool_test.cpp)
 
 addtest(
+  TARGET MODULE_IO_ppcg_input
+  LIBS parameter base device io_input_serial)
+
+addtest(
   TARGET MODULE_IO_rho_io
   LIBS parameter base device cell_info
   SOURCES rho_io_test.cpp ../module_output/read_cube.cpp

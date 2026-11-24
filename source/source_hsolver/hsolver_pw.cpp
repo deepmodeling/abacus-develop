@@ -514,6 +514,10 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(const HSOperator<T, Device>& op,
     }
     else if (this->method == "ppcg")
     {
+        if (this->calculation_type == "nscf")
+        {
+            ModuleBase::WARNING_QUIT("HSolverPW::solve_psik", "PPCG is not supported for NSCF calculations.");
+        }
         const auto hpsi_func = [&op](T* psi_in, T* hpsi_out, const int ld, const int nvec) {
             op.hpsi(psi_in, hpsi_out, ld, nvec);
         };
@@ -560,7 +564,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(const HSOperator<T, Device>& op,
                     // Other k-point pools may not own an open running log.
                     std::cerr << "WARNING: " << diagnostic << std::endl;
                 }
-                if (this->calculation_type == "nscf" || !std::isfinite(ppcg_result.max_residual))
+                if (!std::isfinite(ppcg_result.max_residual))
                 {
                     ModuleBase::WARNING_QUIT("HSolverPW::hamiltSolvePsiK", diagnostic);
                 }

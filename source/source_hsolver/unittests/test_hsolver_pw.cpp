@@ -290,7 +290,7 @@ class TestHSolverPW : public ::testing::Test
             false,
             1,
             DiagoAssist::SCF_ITER,
-            inp.pw_diag_nmax,
+            DiagoAssist::PW_DIAG_NMAX,
             DiagoAssist::PW_DIAG_THR,
             DiagoAssist::need_subspace,
             2,
@@ -298,7 +298,10 @@ class TestHSolverPW : public ::testing::Test
             1,
             0,
             0);
-        EXPECT_EQ(hs.diag_iter_max, iteration_budget);
+        if (calculation != "nscf")
+        {
+            EXPECT_EQ(hs.diag_iter_max, iteration_budget);
+        }
         const std::vector<double> diagonal = {1.0, 2.0, 4.0};
         DiagonalHSOperator op(diagonal);
         psi::Psi<std::complex<double>> ps;
@@ -654,13 +657,16 @@ TEST_F(TestHSolverPW, PPCGScfDispatchReportsExhaustedBudget)
     }
 }
 
-TEST_F(TestHSolverPW, PPCGNscfDispatchRejectsExhaustedBudget)
+TEST_F(TestHSolverPW, PPCGNscfDispatchIsRejected)
 {
     std::ostringstream log;
+    testing::internal::CaptureStdout();
     EXPECT_EXIT(
         run_ppcg_dispatch("nscf", false, 0, log),
         ::testing::ExitedWithCode(1),
-        "PPCG did not converge.*iteration limit reached");
+        "");
+    const std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_NE(output.find("PPCG is not supported for NSCF"), std::string::npos);
 }
 
 TEST_F(TestHSolverPW, PPCGConvergedDispatchHasNoWarning)
@@ -672,15 +678,17 @@ TEST_F(TestHSolverPW, PPCGConvergedDispatchHasNoWarning)
     EXPECT_NEAR(eigenvalues[1], 2.0, 1.0e-12);
 }
 
-TEST_F(TestHSolverPW, PPCGNscfDispatchUsesExplicitBudget)
+TEST_F(TestHSolverPW, PPCGNscfDispatchRejectsEvenExactEigenvectors)
 {
     DiagoAssist::PW_DIAG_NMAX = 30;
     std::ostringstream log;
-    const std::vector<double> eigenvalues = run_ppcg_dispatch("nscf", false, 77, log);
-    EXPECT_EQ(DiagoAssist::PW_DIAG_NMAX, 30);
-    EXPECT_EQ(log.str().find("PPCG did not converge"), std::string::npos);
-    EXPECT_NEAR(eigenvalues[0], 1.0, 1.0e-12);
-    EXPECT_NEAR(eigenvalues[1], 2.0, 1.0e-12);
+    testing::internal::CaptureStdout();
+    EXPECT_EXIT(
+        run_ppcg_dispatch("nscf", true, 77, log),
+        ::testing::ExitedWithCode(1),
+        "");
+    const std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_NE(output.find("PPCG is not supported for NSCF"), std::string::npos);
 }
 
 TEST_F(TestHSolverPW, DiagoParamsPreservesNscfSolverBudgets)
