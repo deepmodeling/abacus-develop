@@ -8,7 +8,6 @@
 #include "source_base/module_external/lapack_connector.h"
 #include "source_base/module_external/scalapack_connector.h"
 #include "source_lcao/module_rt/gather_mat.h"
-#include "source_lcao/module_rt/propagator.h"
 
 namespace module_dm
 {
@@ -129,7 +128,14 @@ void edm_tddft_lapack(Parallel_Orbitals& pv,
                                                                          ipiv_dev.template data<int>());
 
             // 2. Solve S * Sinv = I
-            ct::Tensor Sinv_dev = module_rt::create_identity_matrix<std::complex<double>>(nlocal, ct_device_type);
+            ct::Tensor Sinv_dev(ct::DataType::DT_COMPLEX_DOUBLE, ct_device_type, ct::TensorShape({nlocal, nlocal}));
+            Sinv_dev.zero();
+            const std::complex<double> diagonal_value = {1.0, 0.0};
+            for (int i = 0; i < nlocal; ++i)
+            {
+                auto* diagonal = Sinv_dev.template data<std::complex<double>>() + i * nlocal + i;
+                ct::kernels::set_memory<std::complex<double>, ct_Device>()(diagonal, diagonal_value, 1);
+            }
 
             ct::kernels::lapack_getrs<std::complex<double>, ct_Device>()('N',
                                                                          nlocal,
