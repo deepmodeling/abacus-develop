@@ -161,6 +161,16 @@ install(FILES parallel_k2d_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 
 
+# Some hsolver unit tests read reference matrices by relative path.
+# Run them from the source directory so the data is always available,
+# independent of whether the install step has copied it into build/.
+if(TARGET HSolver_dav_real)
+  set_tests_properties(HSolver_dav_real PROPERTIES WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
+endif()
+if(TARGET HSolver_LCAO)
+  set_tests_properties(HSolver_LCAO PROPERTIES WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
+endif()
+
 find_program(BASH bash)
 if (ENABLE_MPI)
   add_test(NAME HSolver_cg_parallel
