@@ -74,14 +74,12 @@ TEST_F(SccsSolventAware, ChainDerivativesMatchSpectralDerivativesOfTheFilledBoun
     const ModuleSccs::SolventAwareBoundary filled = fill(local);
     std::vector<ModuleBase::Vector3<double>> gradient = spectral_gradient(local, basis, tpiba);
     std::vector<double> laplacian = spectral_laplacian(local, basis, tpiba);
-    const std::vector<ModuleBase::Vector3<double>> fraction_gradient
-        = ModuleSccs::convolve_grad(kernel, basis, gradient);
+    const std::vector<ModuleBase::Vector3<double>> fraction_gradient =
+        ModuleSccs::convolve_grad(kernel, basis, gradient);
     const std::vector<double> fraction_laplacian = ModuleSccs::convolve_probe(kernel, basis, laplacian);
-    ModuleSccs::sa_chain_derivs(local, filled, fraction_gradient, fraction_laplacian, gradient,
-                                laplacian);
+    ModuleSccs::sa_chain_derivs(local, filled, fraction_gradient, fraction_laplacian, gradient, laplacian);
 
-    const std::vector<ModuleBase::Vector3<double>> expected_gradient = spectral_gradient(filled.boundary, basis,
-                                                                                         tpiba);
+    const std::vector<ModuleBase::Vector3<double>> expected_gradient = spectral_gradient(filled.boundary, basis, tpiba);
     const std::vector<double> expected_laplacian = spectral_laplacian(filled.boundary, basis, tpiba);
     double gradient_error = 0.0;
     double gradient_scale = 0.0;

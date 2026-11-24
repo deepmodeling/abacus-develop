@@ -9,27 +9,29 @@
 
 namespace ModuleSccs
 {
-void gauss_ion_rho(const std::vector<unitcell::AtomData>& atoms,
-                   const ModulePW::PW_Basis& basis,
-                   double tpiba,
-                   double spread,
-                   std::vector<double>& density)
+void gauss_ion_rho(
+    const std::vector<unitcell::AtomData> &atoms,
+    const ModulePW::PW_Basis &basis,
+    double tpiba,
+    double spread,
+    std::vector<double> &density)
 {
     const std::vector<double> spreads(atoms.size(), spread);
     gauss_ion_rho(atoms, basis, tpiba, spreads, density);
 }
 
-void gauss_ion_rho(const std::vector<unitcell::AtomData>& atoms,
-                   const ModulePW::PW_Basis& basis,
-                   double tpiba,
-                   const std::vector<double>& spreads,
-                   std::vector<double>& density)
+void gauss_ion_rho(
+    const std::vector<unitcell::AtomData> &atoms,
+    const ModulePW::PW_Basis &basis,
+    double tpiba,
+    const std::vector<double> &spreads,
+    std::vector<double> &density)
 {
     std::vector<std::complex<double>> charge(basis.npw, 0.0);
     const double tpiba2 = tpiba * tpiba;
     for (std::size_t ia = 0; ia < atoms.size(); ++ia)
     {
-        const unitcell::AtomData& atom = atoms[ia];
+        const unitcell::AtomData &atom = atoms[ia];
         const double spread = spreads[ia];
         for (int ig = 0; ig < basis.npw; ++ig)
         {
@@ -43,10 +45,11 @@ void gauss_ion_rho(const std::vector<unitcell::AtomData>& atoms,
     basis.recip2real(charge.data(), density.data());
 }
 
-void prep_core_gauss(const std::vector<unitcell::AtomData>& atoms,
-                     const std::vector<double>& atom_spreads,
-                     std::vector<unitcell::AtomData>& core_atoms,
-                     std::vector<double>& widths)
+void prep_core_gauss(
+    const std::vector<unitcell::AtomData> &atoms,
+    const std::vector<double> &atom_spreads,
+    std::vector<unitcell::AtomData> &core_atoms,
+    std::vector<double> &widths)
 {
     core_atoms = atoms;
     widths.assign(atoms.size(), gaussian_ion_spread);
@@ -70,11 +73,12 @@ void prep_core_gauss(const std::vector<unitcell::AtomData>& atoms,
     }
 }
 
-void gauss_core_rho(const std::vector<unitcell::AtomData>& atoms,
-                    const ModulePW::PW_Basis& basis,
-                    double tpiba,
-                    const std::vector<double>& atom_spreads,
-                    std::vector<double>& density)
+void gauss_core_rho(
+    const std::vector<unitcell::AtomData> &atoms,
+    const ModulePW::PW_Basis &basis,
+    double tpiba,
+    const std::vector<double> &atom_spreads,
+    std::vector<double> &density)
 {
     std::vector<unitcell::AtomData> core_atoms;
     std::vector<double> widths;

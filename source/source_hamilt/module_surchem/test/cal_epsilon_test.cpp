@@ -93,14 +93,14 @@ TEST_F(cal_epsilon_test, cal_epsilon)
         return;
     }
 
-    double* PS_TOTN_real = new double[nrxx];
+    double *PS_TOTN_real = new double[nrxx];
     for (int i = 0; i < nrxx; i++)
     {
         fin >> PS_TOTN_real[i];
     }
 
-    double* epsilon = new double[nrxx];
-    double* epsilon0 = new double[nrxx];
+    double *epsilon = new double[nrxx];
+    double *epsilon0 = new double[nrxx];
 
     solvent_model.cal_epsilon(&pwtest, PS_TOTN_real, epsilon, epsilon0);
 
@@ -123,7 +123,7 @@ TEST_F(cal_epsilon_test, cal_epsilon)
     delete[] epsilon0;
 }
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
 #ifdef __MPI
     MPI_Init(&argc, &argv);

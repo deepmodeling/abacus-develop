@@ -1,8 +1,8 @@
-#include "gtest/gtest.h"
-#include "gmock/gmock.h"
-#include "../module_ewald/h_ewald_pw.h"
 #include "../module_ewald/dnrm2.h"
+#include "../module_ewald/h_ewald_pw.h"
 #include "source_base/matrix3.h"
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 #include <vector>
 
 /************************************************
@@ -117,11 +117,17 @@ TEST_F(RgenTest, LargeRmaxExceedsOriginalLimit)
 
     // Replicate the dynamic mxr computation from compute_ewald()
     double bg1[3];
-    bg1[0] = G.e11; bg1[1] = G.e12; bg1[2] = G.e13;
+    bg1[0] = G.e11;
+    bg1[1] = G.e12;
+    bg1[2] = G.e13;
     int nm1 = (int)(dnrm2(3, bg1, 1) * rmax + 2);
-    bg1[0] = G.e21; bg1[1] = G.e22; bg1[2] = G.e23;
+    bg1[0] = G.e21;
+    bg1[1] = G.e22;
+    bg1[2] = G.e23;
     int nm2 = (int)(dnrm2(3, bg1, 1) * rmax + 2);
-    bg1[0] = G.e31; bg1[1] = G.e32; bg1[2] = G.e33;
+    bg1[0] = G.e31;
+    bg1[1] = G.e32;
+    bg1[2] = G.e33;
     int nm3 = (int)(dnrm2(3, bg1, 1) * rmax + 2);
     const int mxr_test = (2 * nm1 + 1) * (2 * nm2 + 1) * (2 * nm3 + 1);
 

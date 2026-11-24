@@ -1,5 +1,5 @@
-#include "sccs_test.h"
 #include "../sccs_ion_charge.h"
+#include "sccs_test.h"
 
 #include "source_base/parallel_reduce.h"
 #include "source_cell/cell_tools.h"
@@ -32,7 +32,7 @@ TEST_F(SccsIonicChargeTest, ValenceNormalizationAndFourierPhase)
     double selected = 0.0;
     for (int ig = 0; ig < basis.npw; ++ig)
     {
-        const ModuleBase::Vector3<double>& g = basis.gdirect[ig];
+        const ModuleBase::Vector3<double> &g = basis.gdirect[ig];
         if (g.x == 1.0 && g.y == 0.0 && g.z == 0.0)
         {
             selected = 1.0;
@@ -64,7 +64,8 @@ TEST_F(SccsIonicChargeTest, CoreGaussianSelection)
     atoms[0].position.x = length / 4.0;
     std::vector<double> widths = {0.5};
     std::vector<double> density;
-    auto integral = [&]() {
+    auto integral = [&]()
+    {
         double sum = 0.0;
         for (double value : density)
         {

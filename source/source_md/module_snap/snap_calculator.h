@@ -22,31 +22,28 @@ struct ForceResult
 {
     EnergyResult energy;
     std::vector<double> center_force;
-    std::vector<std::vector<double> > neighbor_forces;
+    std::vector<std::vector<double>> neighbor_forces;
 };
 
 class Calculator
 {
   public:
-    explicit Calculator(const ModelData& model);
+    explicit Calculator(const ModelData &model);
 
-    EnergyResult compute(const std::vector<Neighbor>& neighbors, std::size_t central_element) const;
+    EnergyResult compute(const std::vector<Neighbor> &neighbors, std::size_t central_element) const;
 
-    ForceResult compute_with_analytic_force(const std::vector<Neighbor>& neighbors,
-                                             std::size_t central_element) const;
+    ForceResult compute_with_analytic_force(const std::vector<Neighbor> &neighbors, std::size_t central_element) const;
 
-    ForceResult compute_with_finite_difference_force(const std::vector<Neighbor>& neighbors,
-                                                     std::size_t central_element,
-                                                     double displacement) const;
+    ForceResult compute_with_finite_difference_force(
+        const std::vector<Neighbor> &neighbors, std::size_t central_element, double displacement) const;
 
   private:
-    EnergyResult compute_from_u(const std::vector<std::complex<double> >& u,
-                                std::size_t central_element) const;
+    EnergyResult compute_from_u(const std::vector<std::complex<double>> &u, std::size_t central_element) const;
 
     ModelData model_;
     DescriptorEvaluator descriptor_evaluator_;
     std::size_t descriptor_size_;
-    std::vector<std::vector<double> > self_spectra_;
+    std::vector<std::vector<double>> self_spectra_;
 };
 
 class CellAccumulator
@@ -54,18 +51,19 @@ class CellAccumulator
   public:
     explicit CellAccumulator(std::size_t atom_count);
 
-    void add(std::size_t center_index,
-             const std::vector<std::size_t>& neighbor_indices,
-             const std::vector<Neighbor>& neighbors,
-             const ForceResult& result);
+    void add(
+        std::size_t center_index,
+        const std::vector<std::size_t> &neighbor_indices,
+        const std::vector<Neighbor> &neighbors,
+        const ForceResult &result);
 
     double energy() const;
-    const std::vector<std::array<double, 3> >& forces() const;
-    const std::array<double, 9>& virial() const;
+    const std::vector<std::array<double, 3>> &forces() const;
+    const std::array<double, 9> &virial() const;
 
   private:
     double energy_ = 0.0;
-    std::vector<std::array<double, 3> > forces_;
+    std::vector<std::array<double, 3>> forces_;
     std::array<double, 9> virial_;
 };
 

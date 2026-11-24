@@ -1,9 +1,9 @@
-#include "gtest/gtest.h"
-#include "xctest.h"
-#include "../xc_functional.h"
 #include "../exx_info.h"
-#include "xc3_mock.h"
+#include "../xc_functional.h"
 #include "source_base/matrix.h"
+#include "xc3_mock.h"
+#include "xctest.h"
+#include "gtest/gtest.h"
 
 class XCTest_LaplacianAnalytical : public XCTest
 {
@@ -21,13 +21,12 @@ class XCTest_LaplacianAnalytical : public XCTest
         rhopw.nmaxgr = nmaxgr;
         rhopw.gcar = new ModuleBase::Vector3<double>[npw];
         for (int ig = 0; ig < npw; ig++)
+        {
             rhopw.gcar[ig] = ModuleBase::Vector3<double>(1.0, 1.0, 1.0);
+        }
     }
 
-    void TearDown() override
-    {
-        delete[] rhopw.gcar;
-    }
+    void TearDown() override { delete[] rhopw.gcar; }
 };
 
 TEST_F(XCTest_LaplacianAnalytical, zero_input)
@@ -36,20 +35,26 @@ TEST_F(XCTest_LaplacianAnalytical, zero_input)
     std::vector<double> lapl(nrxx, -1.0);
     XC_Functional::laplacian_rho(rhog.data(), lapl.data(), &rhopw, tpiba);
     for (int ir = 0; ir < nrxx; ir++)
+    {
         EXPECT_DOUBLE_EQ(lapl[ir], 0.0);
+    }
 }
 
 TEST_F(XCTest_LaplacianAnalytical, imaginary_rhog_constant)
 {
     std::vector<std::complex<double>> rhog(npw);
     for (int ig = 0; ig < npw; ig++)
+    {
         rhog[ig] = std::complex<double>(0.0, 1.0);
+    }
     std::vector<double> lapl(nrxx);
     XC_Functional::laplacian_rho(rhog.data(), lapl.data(), &rhopw, tpiba);
     double g2 = 3.0;
     double expected = -g2 * tpiba * tpiba;
     for (int ir = 0; ir < nrxx; ir++)
+    {
         EXPECT_NEAR(lapl[ir], expected, 1e-14);
+    }
 }
 
 TEST_F(XCTest_LaplacianAnalytical, linearity)
@@ -70,7 +75,9 @@ TEST_F(XCTest_LaplacianAnalytical, linearity)
     XC_Functional::laplacian_rho(rhog_sum.data(), lapl_sum.data(), &rhopw, tpiba);
 
     for (int ir = 0; ir < nrxx; ir++)
+    {
         EXPECT_NEAR(lapl_sum[ir], lapl_a[ir] + lapl_b[ir], 1e-14);
+    }
 }
 
 TEST_F(XCTest_LaplacianAnalytical, single_plane_wave)
@@ -82,16 +89,20 @@ TEST_F(XCTest_LaplacianAnalytical, single_plane_wave)
     delete[] rhopw.gcar;
     rhopw.gcar = new ModuleBase::Vector3<double>[n];
     for (int ig = 0; ig < n; ig++)
+    {
         rhopw.gcar[ig] = ModuleBase::Vector3<double>(static_cast<double>(ig), 0.0, 0.0);
+    }
 
     std::vector<std::complex<double>> rhog(n, 0.0);
-    rhog[1] = std::complex<double>(0.0, 1.0);  // non-zero at gcar[1]=(1,0,0)
+    rhog[1] = std::complex<double>(0.0, 1.0); // non-zero at gcar[1]=(1,0,0)
     std::vector<double> lapl(n);
     XC_Functional::laplacian_rho(rhog.data(), lapl.data(), &rhopw, tpiba);
 
     double g2 = 0.0;
     for (int i = 0; i < 3; i++)
+    {
         g2 += rhopw.gcar[1][i] * rhopw.gcar[1][i];
+    }
     double expected = -g2 * tpiba * tpiba;
     EXPECT_NEAR(lapl[1], expected, 1e-14);
     EXPECT_DOUBLE_EQ(lapl[0], 0.0);

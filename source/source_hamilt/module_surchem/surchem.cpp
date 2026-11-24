@@ -13,7 +13,7 @@ surchem::surchem()
     qs = 0;
 }
 
-void surchem::set_parameters(const SurchemParameters& parameters)
+void surchem::set_parameters(const SurchemParameters &parameters)
 {
     this->parameters_ = parameters;
     this->parameters_set_ = true;
@@ -57,11 +57,8 @@ void surchem::clear()
     this->delta_phi = nullptr;
     this->epspot = nullptr;
 
-    this->Vcav.create(0, 0); 
+    this->Vcav.create(0, 0);
     this->Vel.create(0, 0);
 }
 
-surchem::~surchem()
-{
-    this->clear();
-}
+surchem::~surchem() { this->clear(); }

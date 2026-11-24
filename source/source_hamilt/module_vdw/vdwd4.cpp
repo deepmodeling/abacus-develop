@@ -31,13 +31,12 @@ namespace
 
 std::string to_lower(std::string value)
 {
-    std::transform(value.begin(), value.end(), value.begin(), [](unsigned char c) {
-        return static_cast<char>(std::tolower(c));
-    });
+    std::transform(
+        value.begin(), value.end(), value.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
     return value;
 }
 
-void check_dftd4_error(dftd4_error error, const std::string& where)
+void check_dftd4_error(dftd4_error error, const std::string &where)
 {
     if (dftd4_check_error(error))
     {
@@ -50,7 +49,7 @@ void check_dftd4_error(dftd4_error error, const std::string& where)
     }
 }
 
-int atomic_number_from_symbol(const std::string& symbol)
+int atomic_number_from_symbol(const std::string &symbol)
 {
     for (int i = 0; i < static_cast<int>(ModuleBase::element_name.size()); ++i)
     {
@@ -64,7 +63,7 @@ int atomic_number_from_symbol(const std::string& symbol)
     return 0;
 }
 
-double length_to_bohr(double value, const std::string& unit)
+double length_to_bohr(double value, const std::string &unit)
 {
     if (unit == "A")
     {
@@ -79,14 +78,14 @@ double length_to_bohr(double value, const std::string& unit)
     return value;
 }
 
-double cutoff_to_bohr(const std::string& value, const std::string& unit)
+double cutoff_to_bohr(const std::string &value, const std::string &unit)
 {
     return length_to_bohr(std::stod(value), unit);
 }
 
 } // namespace
 
-Vdwd4::Vdwd4(const UnitCell& unit_in, const std::string& xc_name, const Input_para& input)
+Vdwd4::Vdwd4(const UnitCell &unit_in, const std::string &xc_name, const Input_para &input)
     : Vdw(unit_in), xc_name_(normalize_xc_name(xc_name)), model_name_(to_lower(input.vdw_d4_model))
 {
     cutoff_disp2_ = cutoff_to_bohr(input.vdw_cutoff_radius, input.vdw_radius_unit);
@@ -116,11 +115,12 @@ Vdwd4::Vdwd4(const UnitCell& unit_in, const std::string& xc_name, const Input_pa
     total_charge_ = valence_charge - input.nelec;
 }
 
-void Vdwd4::build_structure(std::vector<int>& numbers,
-                            std::vector<double>& positions,
-                            std::vector<double>& lattice,
-                            std::array<bool, 3>& periodic,
-                            std::vector<int>& atom_indices) const
+void Vdwd4::build_structure(
+    std::vector<int> &numbers,
+    std::vector<double> &positions,
+    std::vector<double> &lattice,
+    std::array<bool, 3> &periodic,
+    std::vector<int> &atom_indices) const
 {
     numbers.clear();
     positions.clear();
@@ -176,10 +176,11 @@ void Vdwd4::build_structure(std::vector<int>& numbers,
     periodic = {{true, true, true}};
 }
 
-void Vdwd4::compute(double& energy_ha,
-                    std::vector<double>* gradient_ha_bohr,
-                    std::array<double, 9>* sigma_ha,
-                    std::vector<int>& atom_indices)
+void Vdwd4::compute(
+    double &energy_ha,
+    std::vector<double> *gradient_ha_bohr,
+    std::array<double, 9> *sigma_ha,
+    std::vector<int> &atom_indices)
 {
 #ifdef __DFTD4
     std::vector<int> numbers;
@@ -198,13 +199,9 @@ void Vdwd4::compute(double& energy_ha,
     // remain valid until all DFT-D4 handles created below are deleted.
     dftd4_error error = dftd4_new_error();
 
-    dftd4_structure mol = dftd4_new_structure(error,
-                                              static_cast<int>(numbers.size()),
-                                              numbers.data(),
-                                              positions.data(),
-                                              &total_charge_,
-                                              lattice.data(),
-                                              periodic.data());
+    dftd4_structure mol = dftd4_new_structure(
+        error, static_cast<int>(numbers.size()), numbers.data(), positions.data(), &total_charge_, lattice.data(),
+        periodic.data());
     check_dftd4_error(error, "dftd4_new_structure");
 
     dftd4_model model = nullptr;
@@ -223,13 +220,8 @@ void Vdwd4::compute(double& energy_ha,
         ModuleBase::WARNING_QUIT("Vdwd4::compute", "Unsupported DFT-D4 model: " + model_name_);
     }
 
-    dftd4_set_model_realspace_cutoff_smooth(error,
-                                            model,
-                                            cutoff_disp2_,
-                                            cutoff_disp3_,
-                                            cutoff_cn_,
-                                            smooth_width_2b_,
-                                            smooth_width_3b_);
+    dftd4_set_model_realspace_cutoff_smooth(
+        error, model, cutoff_disp2_, cutoff_disp3_, cutoff_cn_, smooth_width_2b_, smooth_width_3b_);
     check_dftd4_error(error, "dftd4_set_model_realspace_cutoff_smooth");
 
 #ifdef __MPI
@@ -252,8 +244,8 @@ void Vdwd4::compute(double& energy_ha,
     check_dftd4_error(error, "dftd4_load_rational_damping");
 
     // These are borrowed output buffers for this synchronous C API call only.
-    double* gradient = gradient_ha_bohr ? gradient_ha_bohr->data() : nullptr;
-    double* sigma = sigma_ha ? sigma_ha->data() : nullptr;
+    double *gradient = gradient_ha_bohr ? gradient_ha_bohr->data() : nullptr;
+    double *sigma = sigma_ha ? sigma_ha->data() : nullptr;
 
     dftd4_get_dispersion(error, mol, model, param, &energy_ha, gradient, sigma);
     check_dftd4_error(error, "dftd4_get_dispersion");
@@ -279,9 +271,8 @@ void Vdwd4::compute(double& energy_ha,
 #endif
 }
 
-void Vdwd4::set_force_from_gradient(const std::vector<double>& gradient_ha_bohr,
-                                    const std::vector<int>& atom_indices,
-                                    VdwResult& result) const
+void Vdwd4::set_force_from_gradient(
+    const std::vector<double> &gradient_ha_bohr, const std::vector<int> &atom_indices, VdwResult &result) const
 {
     result.force.assign(ucell_.nat, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
 
@@ -297,25 +288,19 @@ void Vdwd4::set_force_from_gradient(const std::vector<double>& gradient_ha_bohr,
     result.has_force = true;
 }
 
-void Vdwd4::set_stress_from_sigma(const std::array<double, 9>& sigma_ha, VdwResult& result) const
+void Vdwd4::set_stress_from_sigma(const std::array<double, 9> &sigma_ha, VdwResult &result) const
 {
     // Tentative mapping consistent with the current D3 convention.
     // Confirm sign, transposition and volume normalization by finite-strain
     // tests.
-    result.stress = ModuleBase::Matrix3(2.0 * sigma_ha[0],
-                                        2.0 * sigma_ha[1],
-                                        2.0 * sigma_ha[2],
-                                        2.0 * sigma_ha[3],
-                                        2.0 * sigma_ha[4],
-                                        2.0 * sigma_ha[5],
-                                        2.0 * sigma_ha[6],
-                                        2.0 * sigma_ha[7],
-                                        2.0 * sigma_ha[8])
-                    / ucell_.omega;
+    result.stress = ModuleBase::Matrix3(
+                        2.0 * sigma_ha[0], 2.0 * sigma_ha[1], 2.0 * sigma_ha[2], 2.0 * sigma_ha[3], 2.0 * sigma_ha[4],
+                        2.0 * sigma_ha[5], 2.0 * sigma_ha[6], 2.0 * sigma_ha[7], 2.0 * sigma_ha[8]) /
+                    ucell_.omega;
     result.has_stress = true;
 }
 
-void Vdwd4::evaluate_impl(const VdwRequest& request, VdwResult& result)
+void Vdwd4::evaluate_impl(const VdwRequest &request, VdwResult &result)
 {
     ModuleBase::TITLE("Vdwd4", "evaluate");
     ModuleBase::timer::start("Vdwd4", "evaluate");

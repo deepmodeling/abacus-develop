@@ -17,12 +17,11 @@
 #endif
 #endif
 
-
 // [etxc, vtxc, v] = XC_Functional::v_xc(...)
 std::tuple<double, double, ModuleBase::matrix> XC_Functional::v_xc(
-    const int& nrxx,
-    const Charge* const chr,
-    const UnitCell* ucell,
+    const int &nrxx,
+    const Charge *const chr,
+    const UnitCell *ucell,
     const int nspin,
     const bool domag,
     const bool domag_z,
@@ -32,22 +31,12 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional::v_xc(
 {
     ModuleBase::TITLE("XC_Functional", "v_xc");
 
-
     if (use_libxc)
     {
 #ifdef __LIBXC
-        return XC_Functional_Libxc::v_xc_libxc(XC_Functional::get_func_id(),
-                                               nrxx,
-                                               ucell->omega,
-                                               ucell->tpiba,
-                                               chr,
-                                               nspin,
-                                               domag,
-                                               domag_z,
-                                               gga_grad,
-                                               &(scaling_factor_xc),
-                                               hybrid_alpha,
-                                               hse_omega);
+        return XC_Functional_Libxc::v_xc_libxc(
+            XC_Functional::get_func_id(), nrxx, ucell->omega, ucell->tpiba, chr, nspin, domag, domag_z, gga_grad,
+            &(scaling_factor_xc), hybrid_alpha, hse_omega);
 #else
         ModuleBase::WARNING_QUIT("v_xc", "compile with LIBXC");
 #endif
@@ -61,7 +50,7 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional::v_xc(
 
     ModuleBase::timer::start("XC_Functional", "v_xc");
 
-    //Exchange-Correlation potential Vxc(r) from n(r)
+    // Exchange-Correlation potential Vxc(r) from n(r)
     double etxc = 0.0;
     double vtxc = 0.0;
     ModuleBase::matrix v(nspin, nrxx);
@@ -71,13 +60,13 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional::v_xc(
     double e2 = 2.0;
     double vanishing_charge = 1.0e-10;
 
-    if (nspin == 1 || ( nspin ==4 && !domag && !domag_z))
+    if (nspin == 1 || (nspin == 4 && !domag && !domag_z))
     {
         // spin-unpolarized case
 #ifdef _OPENMP
-#pragma omp parallel for reduction(+:etxc) reduction(+:vtxc)
+#pragma omp parallel for reduction(+ : etxc) reduction(+ : vtxc)
 #endif
-        for (int ir = 0;ir < nrxx;ir++)
+        for (int ir = 0; ir < nrxx; ir++)
         {
             // total electron charge density
             double rhox = chr->rho[0][ir] + chr->rho_core[ir];
@@ -87,21 +76,21 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional::v_xc(
                 double exc = 0.0;
                 double vxc = 0.0;
                 XC_Functional::xc(arhox, exc, vxc);
-                v(0,ir) = e2 * vxc;
+                v(0, ir) = e2 * vxc;
                 // consider the total charge density
                 etxc += e2 * exc * rhox;
                 // only consider chr->rho
                 vtxc += v(0, ir) * chr->rho[0][ir];
             } // endif
-        } //enddo
+        } // enddo
     }
-    else if(nspin ==2)
+    else if (nspin == 2)
     {
         // spin-polarized case
 #ifdef _OPENMP
-#pragma omp parallel for reduction(+:etxc) reduction(+:vtxc)
+#pragma omp parallel for reduction(+ : etxc) reduction(+ : vtxc)
 #endif
-        for (int ir = 0;ir < nrxx;ir++)
+        for (int ir = 0; ir < nrxx; ir++)
         {
             double rhox = chr->rho[0][ir] + chr->rho[1][ir] + chr->rho_core[ir];
             double arhox = std::abs(rhox);
@@ -110,18 +99,18 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional::v_xc(
             {
                 double zeta = (chr->rho[0][ir] - chr->rho[1][ir]) / arhox;
 
-                if (std::abs(zeta)  > 1.0)
+                if (std::abs(zeta) > 1.0)
                 {
                     zeta = (zeta > 0.0) ? 1.0 : (-1.0);
                 }
 
-                double rhoup = arhox * (1.0+zeta) / 2.0;
-                double rhodw = arhox * (1.0-zeta) / 2.0;
+                double rhoup = arhox * (1.0 + zeta) / 2.0;
+                double rhodw = arhox * (1.0 - zeta) / 2.0;
                 double exc = 0.0;
                 double vxc[2];
                 XC_Functional::xc_spin(arhox, zeta, exc, vxc[0], vxc[1]);
 
-                for (int is = 0;is < nspin;is++)
+                for (int is = 0; is < nspin; is++)
                 {
                     v(is, ir) = e2 * vxc[is];
                 }
@@ -131,57 +120,58 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional::v_xc(
             }
         }
     }
-    else if(nspin == 4)
+    else if (nspin == 4)
     {
 #ifdef _OPENMP
-#pragma omp parallel for reduction(+:etxc) reduction(+:vtxc)
+#pragma omp parallel for reduction(+ : etxc) reduction(+ : vtxc)
 #endif
-        for(int ir = 0;ir<nrxx; ir++)
+        for (int ir = 0; ir < nrxx; ir++)
         {
-            double amag = sqrt( pow(chr->rho[1][ir],2) + pow(chr->rho[2][ir],2) + pow(chr->rho[3][ir],2) );
+            double amag = sqrt(pow(chr->rho[1][ir], 2) + pow(chr->rho[2][ir], 2) + pow(chr->rho[3][ir], 2));
             double rhox = chr->rho[0][ir] + chr->rho_core[ir];
-            double arhox = std::abs( rhox );
+            double arhox = std::abs(rhox);
 
-            if ( arhox > vanishing_charge )
+            if (arhox > vanishing_charge)
             {
                 double zeta = amag / arhox;
                 double exc = 0.0;
                 double vxc[2];
 
-                if ( std::abs( zeta ) > 1.0 )
+                if (std::abs(zeta) > 1.0)
                 {
                     zeta = (zeta > 0.0) ? 1.0 : (-1.0);
                 }
 
-                if(use_libxc)
+                if (use_libxc)
                 {
 #ifdef __LIBXC
-                    double rhoup = arhox * (1.0+zeta) / 2.0;
-                    double rhodw = arhox * (1.0-zeta) / 2.0;
-                    XC_Functional_Libxc::xc_spin_libxc(XC_Functional::get_func_id(), rhoup, rhodw, exc, vxc[0], vxc[1], hybrid_alpha, hse_omega);
+                    double rhoup = arhox * (1.0 + zeta) / 2.0;
+                    double rhodw = arhox * (1.0 - zeta) / 2.0;
+                    XC_Functional_Libxc::xc_spin_libxc(
+                        XC_Functional::get_func_id(), rhoup, rhodw, exc, vxc[0], vxc[1], hybrid_alpha, hse_omega);
 #else
                     ModuleBase::WARNING_QUIT("v_xc", "compile with LIBXC");
 #endif
                 }
                 else
                 {
-                    double rhoup = arhox * (1.0+zeta) / 2.0;
-                    double rhodw = arhox * (1.0-zeta) / 2.0;
+                    double rhoup = arhox * (1.0 + zeta) / 2.0;
+                    double rhodw = arhox * (1.0 - zeta) / 2.0;
                     XC_Functional::xc_spin(arhox, zeta, exc, vxc[0], vxc[1]);
                 }
 
                 etxc += e2 * exc * rhox;
 
-                v(0, ir) = e2*( 0.5 * ( vxc[0] + vxc[1]) );
-                vtxc += v(0,ir) * chr->rho[0][ir];
+                v(0, ir) = e2 * (0.5 * (vxc[0] + vxc[1]));
+                vtxc += v(0, ir) * chr->rho[0][ir];
 
-                double vs = 0.5 * ( vxc[0] - vxc[1] );
-                if ( amag > vanishing_charge )
+                double vs = 0.5 * (vxc[0] - vxc[1]);
+                if (amag > vanishing_charge)
                 {
-                    for(int ipol = 1;ipol< 4;ipol++)
+                    for (int ipol = 1; ipol < 4; ipol++)
                     {
                         v(ipol, ir) = e2 * vs * chr->rho[ipol][ir] / amag;
-                        vtxc += v(ipol,ir) * chr->rho[ipol][ir];
+                        vtxc += v(ipol, ir) * chr->rho[ipol][ir];
                     }
                 }
             }
@@ -195,7 +185,8 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional::v_xc(
     // the dummy variable dum contains gradient correction to stress
     // which is not used here
     std::vector<double> dum;
-    gradcorr(etxc, vtxc, v, chr, chr->rhopw, ucell, dum, false, nspin, domag, domag_z, gga_grad, hybrid_alpha, hse_omega);
+    gradcorr(
+        etxc, vtxc, v, chr, chr->rhopw, ucell, dum, false, nspin, domag, domag_z, gga_grad, hybrid_alpha, hse_omega);
 
     // parallel code : collect vtxc,etxc
     // mohan add 2008-06-01

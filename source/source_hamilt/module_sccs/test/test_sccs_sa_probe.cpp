@@ -35,12 +35,12 @@ double isolated_probe_transform(double g, double width, double spread)
 }
 
 // Kernel entry of G = (fx, fy, fz) in units of 2 pi/a, from whichever rank holds it.
-double kernel_entry(const ModulePW::PW_Basis& basis, const std::vector<double>& kernel, double fx)
+double kernel_entry(const ModulePW::PW_Basis &basis, const std::vector<double> &kernel, double fx)
 {
     double values[2] = {0.0, 0.0};
     for (int ig = 0; ig < basis.npw; ++ig)
     {
-        const ModuleBase::Vector3<double>& g = basis.gdirect[ig];
+        const ModuleBase::Vector3<double> &g = basis.gdirect[ig];
         if (std::abs(g.x - fx) < 1.0e-12 && std::abs(g.y) < 1.0e-12 && std::abs(g.z) < 1.0e-12)
         {
             values[0] += kernel[ig];
@@ -54,11 +54,12 @@ double kernel_entry(const ModulePW::PW_Basis& basis, const std::vector<double>& 
 
 // Largest deviation of the kernel from the isolated-probe transform over the
 // G vectors with |G| <= maximum_g (Bohr^-1).
-double oblique_probe_error(const ModuleBase::Matrix3& lattice,
-                           double scale,
-                           const ModuleSccs::SolventAwareParameters& parameters,
-                           double maximum_g,
-                           double& compared)
+double oblique_probe_error(
+    const ModuleBase::Matrix3 &lattice,
+    double scale,
+    const ModuleSccs::SolventAwareParameters &parameters,
+    double maximum_g,
+    double &compared)
 {
     ModulePW::PW_Basis basis("cpu", "double");
     setup_basis(basis, scale, lattice, 120.0);
@@ -147,15 +148,11 @@ TEST_F(SccsSolventAware, WideCellProbeMatchesEnvironMinimumImageProbe)
 TEST_F(SccsSolventAware, ObliqueCellProbeSumsPeriodicImages)
 {
     const double sqrt3_half = 0.5 * std::sqrt(3.0);
-    const ModuleBase::Matrix3 hexagonal(1.0, 0.0, 0.0,
-                                        -0.5, sqrt3_half, 0.0,
-                                        0.0, 0.0, 1.2);
+    const ModuleBase::Matrix3 hexagonal(1.0, 0.0, 0.0, -0.5, sqrt3_half, 0.0, 0.0, 0.0, 1.2);
     const double shear_angle = 10.0 * ModuleBase::PI / 180.0;
     const double shear_cos = std::cos(shear_angle);
     const double shear_sin = std::sin(shear_angle);
-    const ModuleBase::Matrix3 sheared(1.0, 0.0, 0.0,
-                                      shear_cos, shear_sin, 0.0,
-                                      0.0, 0.0, 1.0);
+    const ModuleBase::Matrix3 sheared(1.0, 0.0, 0.0, shear_cos, shear_sin, 0.0, 0.0, 0.0, 1.0);
     const ModuleSccs::SolventAwareParameters probe = probe_parameters(3.0);
     double hexagonal_count = 0.0;
     const double hexagonal_error = oblique_probe_error(hexagonal, 9.0, probe, 1.5, hexagonal_count);

@@ -1,8 +1,8 @@
-#include "sccs_test.h"
 #include "../sccs_cav_deriv.h"
 #include "../sccs_cavity.h"
 #include "../sccs_response.h"
 #include "../sccs_sa.h"
+#include "sccs_test.h"
 
 #include "source_hamilt/module_xc/xc_functional.h"
 
@@ -12,10 +12,11 @@ using SccsCavityDerivativesTest = SccsTest::PwTest;
 
 namespace
 {
-std::vector<ModuleBase::Vector3<double>> fft_gradient(const std::vector<double>& values,
-                                                      const std::vector<double>& filter,
-                                                      const ModulePW::PW_Basis& basis,
-                                                      double tpiba)
+std::vector<ModuleBase::Vector3<double>> fft_gradient(
+    const std::vector<double> &values,
+    const std::vector<double> &filter,
+    const ModulePW::PW_Basis &basis,
+    double tpiba)
 {
     std::vector<std::complex<double>> values_g(basis.npw);
     basis.real2recip(values.data(), values_g.data());
@@ -29,13 +30,13 @@ std::vector<ModuleBase::Vector3<double>> fft_gradient(const std::vector<double>&
 }
 
 // grad s_sa = (1 - f) grad s + (1 - s) f' p * grad s for a given grad s.
-std::vector<ModuleBase::Vector3<double>> filled_gradient(const ModuleSccs::SccsResponse& response,
-                                                         const std::vector<double>& kernel,
-                                                         const ModulePW::PW_Basis& basis,
-                                                         const std::vector<ModuleBase::Vector3<double>>& local)
+std::vector<ModuleBase::Vector3<double>> filled_gradient(
+    const ModuleSccs::SccsResponse &response,
+    const std::vector<double> &kernel,
+    const ModulePW::PW_Basis &basis,
+    const std::vector<ModuleBase::Vector3<double>> &local)
 {
-    const std::vector<ModuleBase::Vector3<double>> fraction = ModuleSccs::convolve_grad(kernel, basis,
-                                                                                         local);
+    const std::vector<ModuleBase::Vector3<double>> fraction = ModuleSccs::convolve_grad(kernel, basis, local);
     std::vector<ModuleBase::Vector3<double>> gradient(local.size());
     for (std::size_t i = 0; i < local.size(); ++i)
     {
@@ -81,9 +82,9 @@ TEST_F(SccsCavityDerivativesTest, OpenBoundaryCoefficientUsesSwitchingFunctionFf
     const bool open_boundary = true;
     ModuleSccs::SccsResponse response;
     ModuleSccs::CavityDerivatives derivatives;
-    const std::vector<double>& coefficient = derivatives.coefficient;
-    ModuleSccs::make_cav_derivs(density, cavity, SccsTest::no_probe, basis, tpiba, open_boundary,
-                                response, derivatives);
+    const std::vector<double> &coefficient = derivatives.coefficient;
+    ModuleSccs::make_cav_derivs(
+        density, cavity, SccsTest::no_probe, basis, tpiba, open_boundary, response, derivatives);
     const double log_bulk = std::log(cavity.epsilon_bulk);
     for (int ir = 0; ir < basis.nrxx; ++ir)
     {
@@ -94,9 +95,9 @@ TEST_F(SccsCavityDerivativesTest, OpenBoundaryCoefficientUsesSwitchingFunctionFf
         const double epsilon = std::exp(log_epsilon);
         const double gradient = -amplitude * tpiba * std::sin(angle);
         const double laplacian = -amplitude * tpiba * tpiba * mode[ir];
-        const double expected = epsilon * (-0.5 * log_bulk * laplacian
-                                           + 0.25 * log_bulk * log_bulk * gradient * gradient)
-                                / ModuleBase::FOUR_PI;
+        const double expected = epsilon *
+                                (-0.5 * log_bulk * laplacian + 0.25 * log_bulk * log_bulk * gradient * gradient) /
+                                ModuleBase::FOUR_PI;
         EXPECT_NEAR(response.solute[ir], solute, 1e-14);
         EXPECT_NEAR(coefficient[ir], expected, 1e-12);
         const double expected_gradient = -log_bulk * gradient;
@@ -107,9 +108,9 @@ TEST_F(SccsCavityDerivativesTest, OpenBoundaryCoefficientUsesSwitchingFunctionFf
     const bool periodic_boundary = false;
     ModuleSccs::SccsResponse periodic;
     ModuleSccs::CavityDerivatives periodic_derivatives;
-    const std::vector<double>& periodic_coefficient = periodic_derivatives.coefficient;
-    ModuleSccs::make_cav_derivs(density, cavity, SccsTest::no_probe, basis, tpiba, periodic_boundary,
-                                periodic, periodic_derivatives);
+    const std::vector<double> &periodic_coefficient = periodic_derivatives.coefficient;
+    ModuleSccs::make_cav_derivs(
+        density, cavity, SccsTest::no_probe, basis, tpiba, periodic_boundary, periodic, periodic_derivatives);
     double difference = 0.0;
     for (int ir = 0; ir < basis.nrxx; ++ir)
     {
@@ -122,16 +123,14 @@ TEST_F(SccsCavityDerivativesTest, OpenBoundaryCoefficientUsesSwitchingFunctionFf
     }
     Parallel_Reduce::reduce_max_pool(basis.poolnproc, difference);
     EXPECT_GT(difference, 1e-8);
-
 }
 
 namespace
 {
 // Density whose switching function is 0.5 + amplitude * mode, found by
 // bisection of the cavity function at every grid point.
-std::vector<double> shell_density(const ModuleSccs::CavityParameters& cavity,
-                                  const std::vector<double>& mode,
-                                  double amplitude)
+std::vector<double> shell_density(
+    const ModuleSccs::CavityParameters &cavity, const std::vector<double> &mode, double amplitude)
 {
     std::vector<double> density(mode.size());
     for (std::size_t ir = 0; ir < mode.size(); ++ir)
@@ -174,8 +173,8 @@ TEST_F(SccsCavityDerivativesTest, OpenBoundaryLowpassFiltersSwitchingFunctionDer
     const bool open_boundary = true;
     ModuleSccs::SccsResponse response;
     ModuleSccs::CavityDerivatives derivatives;
-    ModuleSccs::make_cav_derivs(density, cavity, SccsTest::no_probe, basis, tpiba, open_boundary,
-                                response, derivatives);
+    ModuleSccs::make_cav_derivs(
+        density, cavity, SccsTest::no_probe, basis, tpiba, open_boundary, response, derivatives);
     const double log_bulk = std::log(cavity.epsilon_bulk);
     const double weight = 0.5 * std::erfc(0.5);
     for (int ir = 0; ir < basis.nrxx; ++ir)
@@ -184,9 +183,9 @@ TEST_F(SccsCavityDerivativesTest, OpenBoundaryLowpassFiltersSwitchingFunctionDer
         const double angle = ModuleBase::TWO_PI * ix / basis.nx;
         const double gradient = -amplitude * tpiba * std::sin(angle) * weight;
         const double laplacian = -amplitude * tpiba * tpiba * mode[ir] * weight;
-        const double expected = response.epsilon[ir] * (-0.5 * log_bulk * laplacian
-                                      + 0.25 * log_bulk * log_bulk * gradient * gradient)
-                                / ModuleBase::FOUR_PI;
+        const double expected = response.epsilon[ir] *
+                                (-0.5 * log_bulk * laplacian + 0.25 * log_bulk * log_bulk * gradient * gradient) /
+                                ModuleBase::FOUR_PI;
         EXPECT_NEAR(derivatives.coefficient[ir], expected, 1e-12);
         EXPECT_NEAR(derivatives.gradient[ir].x, gradient, 1e-12);
     }
@@ -222,8 +221,7 @@ TEST_F(SccsCavityDerivativesTest, FilledDielectricPathsFollowBoundaryAndLowpass)
         cavity.lowpass_p2 = lowpass ? 0.5 : -1.0;
         ModuleSccs::SccsResponse response;
         ModuleSccs::CavityDerivatives derivatives;
-        ModuleSccs::make_cav_derivs(density, cavity, kernel, basis, tpiba, open_boundary, response,
-                                    derivatives);
+        ModuleSccs::make_cav_derivs(density, cavity, kernel, basis, tpiba, open_boundary, response, derivatives);
         double filled_volume = response.solvent_aware.volume;
         EXPECT_GT(filled_volume, 50.0);
         std::vector<ModuleBase::Vector3<double>> expected;
@@ -233,8 +231,8 @@ TEST_F(SccsCavityDerivativesTest, FilledDielectricPathsFollowBoundaryAndLowpass)
         }
         else if (open_boundary)
         {
-            const std::vector<ModuleBase::Vector3<double>> local = fft_gradient(response.solvent_aware.local, no_filter,
-                                                                                basis, tpiba);
+            const std::vector<ModuleBase::Vector3<double>> local =
+                fft_gradient(response.solvent_aware.local, no_filter, basis, tpiba);
             expected = filled_gradient(response, kernel, basis, local);
         }
         else
@@ -299,12 +297,12 @@ TEST_F(SccsCavityDerivativesTest, SolventAwareParametersWithoutARadiusLeaveTheCa
         parameters_only.lowpass_p2 = p2;
         ModuleSccs::SccsResponse expected;
         ModuleSccs::CavityDerivatives expected_derivatives;
-        ModuleSccs::make_cav_derivs(density, plain, SccsTest::no_probe, basis, tpiba, open_boundary,
-                                    expected, expected_derivatives);
+        ModuleSccs::make_cav_derivs(
+            density, plain, SccsTest::no_probe, basis, tpiba, open_boundary, expected, expected_derivatives);
         ModuleSccs::SccsResponse response;
         ModuleSccs::CavityDerivatives derivatives;
-        ModuleSccs::make_cav_derivs(density, parameters_only, SccsTest::no_probe, basis, tpiba,
-                                    open_boundary, response, derivatives);
+        ModuleSccs::make_cav_derivs(
+            density, parameters_only, SccsTest::no_probe, basis, tpiba, open_boundary, response, derivatives);
         EXPECT_FALSE(response.solvent_aware.enabled());
         EXPECT_EQ(response.solute, expected.solute);
         EXPECT_EQ(derivatives.coefficient, expected_derivatives.coefficient);
@@ -330,8 +328,9 @@ TEST_F(SccsCavityDerivativesTest, SolventAwareCavityWithoutAProbeKernelStops)
     ModuleSccs::SccsResponse response;
     ModuleSccs::CavityDerivatives derivatives;
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(ModuleSccs::make_cav_derivs(density, cavity, SccsTest::no_probe, basis, tpiba, open_boundary,
-                                            response, derivatives),
-                ::testing::ExitedWithCode(1), "");
+    EXPECT_EXIT(
+        ModuleSccs::make_cav_derivs(
+            density, cavity, SccsTest::no_probe, basis, tpiba, open_boundary, response, derivatives),
+        ::testing::ExitedWithCode(1), "");
     testing::internal::GetCapturedStdout();
 }

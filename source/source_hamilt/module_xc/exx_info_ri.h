@@ -3,9 +3,9 @@
 
 #include "coulomb_config.h"
 
-#include <vector>
-#include <string>
 #include <map>
+#include <string>
+#include <vector>
 
 struct Exx_Info_RI
 {
