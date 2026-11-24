@@ -229,11 +229,11 @@ void MD_base::print_md(std::ofstream &ofs, const bool &cal_stress)
     // running_log output
     ofs.unsetf(std::ios::fixed);
     ofs << std::setprecision(8);
+    const int output_step = step_ + step_rst_ + 1;
+    ofs << " MD STEP: " << output_step << std::endl;
 
     if (cal_stress)
     {
-        const int output_step = step_ + step_rst_ + 1;
-        ofs << " MD STEP: " << output_step << std::endl;
         MD_func::print_stress(ofs, virial, stress);
         ofs << std::endl;
     }
