@@ -56,6 +56,7 @@ option(ENABLE_PLUMED "Enable using the PLUMED enhanced-sampling library" OFF)
 option(ENABLE_JSON "Enable JSON output" OFF)
 option(ENABLE_CNPY "Enable cnpy usage" OFF)
 option(ENABLE_NEP "Enable NEP_CPU" OFF)
+option(ENABLE_DEEPMD "Enable DeePMD-kit" OFF)
 
 option(DEBUG_INFO "Print message to debug" OFF)
 option(COMMIT_INFO "Print commit information in log" ON)
@@ -515,6 +516,7 @@ if(ENABLE_ASAN)
   add_link_options(-fsanitize=address)
 endif()
 
+set(_enable_torch FALSE)
 if(ENABLE_MLALGO)
   find_path(libnpy_SOURCE_DIR npy.hpp HINTS ${libnpy_INCLUDE_DIR})
   if(NOT libnpy_SOURCE_DIR)
@@ -525,15 +527,24 @@ if(ENABLE_MLALGO)
       GIT_SHALLOW TRUE
       GIT_PROGRESS TRUE)
     FetchContent_MakeAvailable(libnpy)
-  else()
+  endif()
+  set(_enable_torch TRUE)
+endif()
 
+if(ENABLE_DEEPMD)
+  set(DEEPMD_BACKEND "Torch" CACHE STRING "DeePMD backend")
+  set_property(CACHE DEEPMD_BACKEND PROPERTY STRINGS Torch TensorFlow)
+  if(DEEPMD_BACKEND STREQUAL "Torch")
+    set(_enable_torch TRUE)
+  elseif(DEEPMD_BACKEND STREQUAL "TensorFlow")
+    find_package(TensorFlow REQUIRED)
   endif()
 endif()
 
 # Torch uses outdated components to detect CUDA arch, causing failure on
 # latest CUDA kits. Set CMake variable TORCH_CUDA_ARCH_LIST in the form of
 # "major.minor" if required.
-if(ENABLE_MLALGO OR DEFINED Torch_DIR)
+if(_enable_torch)
   find_package(Torch REQUIRED)
   if(NOT Torch_VERSION VERSION_LESS "2.1.0")
     set_if_higher(CMAKE_CXX_STANDARD 17)
@@ -605,16 +616,12 @@ if(ENABLE_LIBXC)
   endif()
 endif()
 
-if(DEFINED DeePMD_DIR)
-  find_package(DeePMD REQUIRED)
+if(ENABLE_DEEPMD)
+  find_package(DeePMD REQUIRED CONFIG)
 endif()
 
 if(ENABLE_NEP)
   find_package(NEP_CPU CONFIG REQUIRED)
-endif()
-
-if(DEFINED TensorFlow_DIR)
-  find_package(TensorFlow REQUIRED)
 endif()
 
 if(ENABLE_PLUMED)

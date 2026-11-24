@@ -172,9 +172,10 @@ if(USE_DSP)
     endif()
     list(APPEND _abacus_linalg_libs ${_abacus_cpack_library})
   else()
-    message(STATUS
-      "USE_DSP without MT_CPACK_DIR: C_PACK disabled, the serial generalized "
-      "eigensolver falls back to the configured LAPACK provider (zhegvx).")
+    message(
+      STATUS
+        "USE_DSP without MT_CPACK_DIR: C_PACK disabled, the serial generalized "
+        "eigensolver falls back to the configured LAPACK provider (zhegvx).")
   endif()
 endif()
 
@@ -297,7 +298,9 @@ set(_abacus_feature_libs
     $<$<BOOL:${ENABLE_LIBRI}>:LibRI::LibRI>
     $<$<BOOL:${ENABLE_LIBXC}>:Libxc::xc>
     $<$<BOOL:${ENABLE_PLUMED}>:PLUMED::plumed>
-    $<$<BOOL:${ENABLE_NEP}>:nep::nep_cpu>)
+    $<$<BOOL:${ENABLE_DEEPMD}>:DeePMD::deepmd>
+    $<$<BOOL:${ENABLE_NEP}>:nep::nep_cpu>
+    $<$<BOOL:${_enable_torch}>:${TORCH_LIBRARIES}>)
 set(_abacus_feature_include_dirs)
 set(_abacus_feature_compile_options)
 
@@ -314,11 +317,6 @@ if(ENABLE_MLALGO)
   endif()
 endif()
 
-if(ENABLE_MLALGO OR DEFINED Torch_DIR)
-  list(APPEND _abacus_feature_include_dirs ${TORCH_INCLUDE_DIRS})
-  list(APPEND _abacus_feature_compile_options ${ABACUS_TORCH_CXX_FLAGS})
-endif()
-
 if(ENABLE_CNPY)
   if(cnpy_INCLUDE_DIR)
     list(APPEND _abacus_feature_include_dirs ${cnpy_INCLUDE_DIR})
@@ -328,16 +326,12 @@ if(ENABLE_CNPY)
   endif()
 endif()
 
-if(DEFINED DeePMD_DIR)
-  if(DeePMDC_FOUND)
-    list(APPEND _abacus_feature_libs DeePMD::deepmd_c)
-  else()
-    list(APPEND _abacus_feature_libs DeePMD::deepmd_cc)
-  endif()
-  list(APPEND _abacus_feature_include_dirs ${DeePMD_DIR}/include)
+if(ENABLE_LIBRI)
+  list(APPEND _abacus_feature_include_dirs ${LIBRI_DIR}/include
+       ${LIBCOMM_DIR}/include)
 endif()
 
-if(DEFINED TensorFlow_DIR AND TensorFlow_FOUND)
+if(ENABLE_DEEPMD AND DEEPMD_BACKEND STREQUAL "TensorFlow")
   list(APPEND _abacus_feature_libs TensorFlow::tensorflow_cc)
   list(APPEND _abacus_feature_include_dirs ${TensorFlow_DIR}/include)
 endif()
