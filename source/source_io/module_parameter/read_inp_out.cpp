@@ -396,7 +396,7 @@ Also controled by out_freq_ion and out_app_flag.
             }
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            const auto& in = para.input;
+            const Input_para& in = para.input;
             if (in.out_dos == 2 && (in.basis_type != "lcao" || in.esolver_type != "ksdft"
                                     || (in.calculation != "scf" && in.calculation != "nscf")))
             {

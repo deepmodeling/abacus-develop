@@ -781,21 +781,22 @@ TEST_F(InputParaTest, RemovedElpaZSolverIsRejected)
 TEST_F(InputParaTest, OutDosNpy)
 {
     ModuleIO::ReadInput reader(0);
-    const auto& entries = reader.get_input_lists();
+    const std::vector<std::pair<std::string, ModuleIO::Input_Item>>& entries = reader.get_input_lists();
     std::map<std::string, ModuleIO::Input_Item> items(entries.begin(), entries.end());
     Parameter param;
-    auto set = [&](const std::string& key, const std::string& value) {
-        auto& item = items.at(key);
+    std::function<void(const std::string&, const std::string&)> set = [&](const std::string& key,
+                                                                         const std::string& value) {
+        ModuleIO::Input_Item& item = items.at(key);
         item.str_values = {value};
         item.read_value(item, param);
     };
-    const auto& output = items.at("out_dos");
+    const ModuleIO::Input_Item& output = items.at("out_dos");
     EXPECT_EQ(param.inp.out_dos, 0);
 
     set("basis_type", "lcao");
     set("out_dos", "2");
     ASSERT_EQ(param.inp.out_dos, 2);
-    for (const auto* calculation : {"scf", "nscf"})
+    for (const char* calculation : {"scf", "nscf"})
     {
         set("calculation", calculation);
         output.check_value(output, param);

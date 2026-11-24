@@ -20,8 +20,8 @@ namespace
 {
 void write_dos_npy(const std::string& path, const std::vector<DosSpectrum>& spectra)
 {
-    const auto npoints = spectra.front().size();
-    const auto spins = spectra.size();
+    const std::size_t npoints = spectra.front().size();
+    const std::size_t spins = spectra.size();
     const std::string field_type = "','=f8',(" + std::to_string(spins) + ",))";
     std::string fields = "('energy_eV','=f8')";
     for (const char* name : {"dos", "dos_int", "dos_smear", "dos_smear_int"})
@@ -30,14 +30,14 @@ void write_dos_npy(const std::string& path, const std::vector<DosSpectrum>& spec
     }
 
     std::ofstream out;
-    const auto exception_mask = std::ios::badbit | std::ios::failbit;
+    const std::ios_base::iostate exception_mask = std::ios::badbit | std::ios::failbit;
     out.exceptions(exception_mask);
     out.open(path, std::ios::binary | std::ios::trunc);
     write_dos_npy_header(out, fields, npoints);
     // One shared energy, followed by all spin channels of each quantity.
-    const auto record_width = 1 + 4 * spins;
+    const std::size_t record_width = 1 + 4 * spins;
     std::vector<double> record(record_width);
-    const auto bytes = record.size() * sizeof(double);
+    const std::size_t bytes = record.size() * sizeof(double);
     for (std::size_t n = 0; n < npoints; ++n)
     {
         record[0] = spectra.front()[n][0];
@@ -153,7 +153,7 @@ void write_dos_lcao(
 
 
     // out_dos >= 1: always compute PDOS alongside DOS (LCAO only)
-    const auto pdos = cal_pdos(psi,
+    const std::vector<ModuleBase::matrix> pdos = cal_pdos(psi,
             p_ham,
             pv,
             kv,

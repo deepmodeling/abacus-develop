@@ -30,7 +30,7 @@ PdosBlock atom_pdos(const UnitCell& cell, int iat, const ModuleBase::matrix* pdo
     PdosBlock block;
     for (int iw = 0; iw < atom.nw; ++iw)
     {
-        auto& channel = block[{atom.iw2l[iw], atom.iw2m[iw]}];
+        std::vector<double>& channel = block[{atom.iw2l[iw], atom.iw2m[iw]}];
         if (channel.empty()) { channel.resize(static_cast<size_t>(spins) * ne); }
         const int row = first + npol * iw;
         for (int is = 0; is < spins; ++is)
@@ -42,7 +42,7 @@ PdosBlock atom_pdos(const UnitCell& cell, int iat, const ModuleBase::matrix* pdo
             }
         }
     }
-    for (auto& channel : block)
+    for (PdosBlock::value_type& channel : block)
     {
         for (double& value : channel.second)
         {
@@ -109,8 +109,8 @@ void ModuleIO::write_pdos_text(
         {
             const int it = ucell.iat2it[iat];
             const bool spinor = nspin == 4;
-            const auto* spin_pdos = pdos + is;
-            const auto channels = atom_pdos(ucell, iat, spin_pdos, 1, spinor);
+            const ModuleBase::matrix* spin_pdos = pdos + is;
+            const PdosBlock channels = atom_pdos(ucell, iat, spin_pdos, 1, spinor);
 
             for (int n = 0; n < npoints; ++n)
             {
@@ -120,7 +120,7 @@ void ModuleIO::write_pdos_text(
                     << "  " << std::setw(3) << iat + 1
                     << "  " << std::setw(4) << ucell.atoms[it].label;
 
-                for (const auto& channel : channels)
+                for (const PdosBlock::value_type& channel : channels)
                 {
                     ofs << "  " << std::setw(8) << std::fixed << std::setprecision(6) << channel.second[n];
                 }
@@ -170,8 +170,8 @@ void ModuleIO::write_pdos_npy(const UnitCell& cell, const std::vector<ModuleBase
     {
         std::string label = cell.atoms[cell.iat2it[iat]].label;
         label.resize(width, '\0');
-        const auto channels = atom_pdos(cell, iat, pdos.data(), pdos.size(), spinor);
-        for (const auto& channel : channels)
+        const PdosBlock channels = atom_pdos(cell, iat, pdos.data(), pdos.size(), spinor);
+        for (const PdosBlock::value_type& channel : channels)
         {
             const int col = channel.first.second;
             const int m = col % 2 == 0 ? -col / 2 : (col + 1) / 2;
@@ -179,7 +179,7 @@ void ModuleIO::write_pdos_npy(const UnitCell& cell, const std::vector<ModuleBase
             out.write(reinterpret_cast<const char*>(attrs), sizeof(attrs));
             out.write(reinterpret_cast<const char*>(grid), sizeof(grid));
             out.write(label.data(), label.size());
-            const auto spectrum_bytes = channel.second.size() * sizeof(double);
+            const std::size_t spectrum_bytes = channel.second.size() * sizeof(double);
             out.write(reinterpret_cast<const char*>(channel.second.data()), spectrum_bytes);
         }
     }

@@ -130,7 +130,7 @@ TEST_F(DosTest,Dos)
 
 TEST_F(DosTest, CapturesSpectrumWithoutTextOutput)
 {
-    const auto pid = getpid();
+    const pid_t pid = getpid();
     const std::string text_path = testing::TempDir() + "abacus_cal_dos_capture_" + std::to_string(pid) + ".txt";
     const double step = 0.5;
     const double sigma = 0.5;
@@ -154,10 +154,12 @@ TEST_F(DosTest, CapturesSpectrumWithoutTextOutput)
         {0.5, 0.0, 1.0, shoulder, step * (peak + shoulder)}
     };
     ASSERT_EQ(spectrum.size(), expected.size());
-    const auto near = testing::DoubleNear(1e-12);
     for (size_t row = 0; row < expected.size(); ++row)
     {
-        EXPECT_THAT(spectrum[row], testing::Pointwise(near, expected[row])) << "row " << row;
+        for (std::size_t col = 0; col < expected[row].size(); ++col)
+        {
+            EXPECT_NEAR(spectrum[row][col], expected[row][col], 1e-12) << "row " << row << ", column " << col;
+        }
     }
 }
 
