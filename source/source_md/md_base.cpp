@@ -57,7 +57,7 @@ void MD_base::setup(
     }
 
     const int md_step = step_ + step_rst_;
-    const bool print_thermo = mdp.md_thermo_freq > 0 && md_step % mdp.md_thermo_freq == 0;
+    const bool print_thermo = mdp.out_thermo_freq > 0 && md_step % mdp.out_thermo_freq == 0;
     if (print_thermo)
     {
         const int stress_step = 0;

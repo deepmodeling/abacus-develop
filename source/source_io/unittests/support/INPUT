@@ -186,7 +186,7 @@ md_dt                          1 #time step
 md_tchain                      1 #number of Nose-Hoover chains
 md_tfirst                      -1 #temperature first
 md_tlast                       -1 #temperature last
-md_thermo_freq                 1 #The period to output MD thermodynamic information
+out_thermo_freq                1 #The period to output MD thermodynamic information
 md_restartfreq                 5 #The period to output MD restart information
 md_seed                        -1 #random seed for MD
 md_prec_level                  2 #precision level for vc-md

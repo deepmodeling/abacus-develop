@@ -18,7 +18,7 @@ struct MD_para
     double md_dt = 1.0;                ///< Time increment (hbar/E_hartree)
     double md_tfirst = -1.0;           ///< Temperature (in Hartree, 1 Hartree ~ 3E5 K)
     double md_tlast = -1.0;            ///< Target temperature
-    int md_thermo_freq = 1;            ///< The period to output MD thermodynamic information
+    int out_thermo_freq = 1;           ///< The period to output MD thermodynamic information
     double md_neighbor_skin = 0.0;     ///< Extra neighbor-list radius in Angstrom for MDCell solvers
     int md_restartfreq = 5;            ///< The period to output MD restart information
     int md_seed = -1;                  ///< random seed for MD

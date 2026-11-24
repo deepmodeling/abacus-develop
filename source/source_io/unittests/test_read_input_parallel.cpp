@@ -404,7 +404,7 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_NEAR(param.inp.mdp.lj_sigma[0], 3.405, 1e-7);
     EXPECT_EQ(param.inp.mdp.md_damp, 1);
     EXPECT_EQ(param.inp.mdp.md_dt, 1);
-    EXPECT_EQ(param.inp.mdp.md_thermo_freq, 1);
+    EXPECT_EQ(param.inp.mdp.out_thermo_freq, 1);
     EXPECT_EQ(param.inp.mdp.md_nraise, 1);
     EXPECT_EQ(param.inp.cal_syns[0], 0);
     EXPECT_EQ(param.inp.cal_syns[1], 8);

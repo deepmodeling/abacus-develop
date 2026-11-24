@@ -14,7 +14,8 @@ INTEGRATE = TOOLS.parent
 
 class ForceCollectionTest(unittest.TestCase):
     def run_collector(self, calculation, atom_count, stru=None, log_force="", mode2=False,
-                      stale_stru=None):
+                      stale_stru=None, log_stress="", has_force=1, has_stress=0,
+                      input_text="INPUT_PARAMETERS\n"):
         with tempfile.TemporaryDirectory(prefix="abacus-force-collector-") as scratch:
             case = Path(scratch)
             (case / "OUT.autotest").mkdir()
@@ -24,19 +25,47 @@ class ForceCollectionTest(unittest.TestCase):
                 (structure_dir / "STRU_FINAL").write_text(stru, encoding="utf-8")
             if stale_stru is not None:
                 (case / "OUT.autotest/STRU_FINAL").write_text(stale_stru, encoding="utf-8")
-            (case / "running.log").write_text("ETOT_ 1.0\n" + log_force, encoding="utf-8")
+            (case / "running.log").write_text("ETOT_ 1.0\n" + log_force + log_stress, encoding="utf-8")
+            (case / "INPUT").write_text(input_text, encoding="utf-8")
             command = (
                 'source "$1"; source "$2"; calculation="$3"; natom="$4"; '
-                'is_lr=0; has_force=1; nspin=1; running_path=running.log; '
+                'is_lr=0; has_force="$5"; has_stress="$6"; esolver_type="$7"; '
+                'nspin=1; running_path=running.log; '
                 'props_result_file=result.out; run_basic_props'
             )
             result = subprocess.run(
                 ["bash", "-c", command, "force-test", str(TOOLS / "props_common.sh"),
-                 str(TOOLS / "props_basic.sh"), calculation, str(atom_count)],
+                 str(TOOLS / "props_basic.sh"), calculation, str(atom_count),
+                 str(has_force), str(has_stress),
+                 "ofdft" if "esolver_type ofdft" in input_text else ""],
                 cwd=case, capture_output=True, text=True, check=False,
             )
             output = (case / "result.out").read_text(encoding="utf-8") if (case / "result.out").exists() else ""
             return result, output
+
+    def test_md_stress_uses_virial_and_restores_external_pressure(self):
+        virial = " VIRIAL (kbar):\n 1 2 3\n 4 5 6\n 7 8 9\n"
+        result, output = self.run_collector(
+            "md", 2, log_stress=virial, has_force=0, has_stress=1,
+            input_text="INPUT_PARAMETERS\npress1 10\npress2 20\npress3 30\n")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("totalstressref 105.000000", output)
+
+        result, output = self.run_collector(
+            "md", 2, log_stress=virial, has_force=0, has_stress=1,
+            input_text="INPUT_PARAMETERS\nesolver_type ofdft\npress1 10\npress2 20\npress3 30\n")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("totalstressref 45.000000", output)
+
+        result, output = self.run_collector("md", 2, has_force=0, has_stress=1)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertNotIn("totalstressref", output)
+
+    def test_non_md_stress_still_uses_total_stress(self):
+        table = "#TOTAL-STRESS (kbar)#\nStress_x Stress_y Stress_z\n1 2 3\n4 5 6\n7 8 9\n"
+        result, output = self.run_collector("scf", 2, log_stress=table, has_force=0, has_stress=1)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("totalstressref 45.000000", output)
 
     def test_final_stru_requires_all_force_rows(self):
         good = (

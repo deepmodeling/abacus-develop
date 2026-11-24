@@ -149,7 +149,7 @@ void md_line(
         {
             mdcell.backing_unitcell().last_ion_step = is_final_step;
         }
-        bool print_thermo = param_in.mdp.md_thermo_freq > 0 && md_step % param_in.mdp.md_thermo_freq == 0;
+        bool print_thermo = param_in.mdp.out_thermo_freq > 0 && md_step % param_in.mdp.out_thermo_freq == 0;
 #ifdef __JSON
         // Start the UnitCell-backed JSON record before the solver writes SCF data.
         if (mdcell.has_backing_unitcell())
@@ -164,7 +164,7 @@ void md_line(
 
             // setup() may change step_rst_ when resuming a run.
             const int restart_step = mdrun->step_ + mdrun->step_rst_;
-            print_thermo = param_in.mdp.md_thermo_freq > 0 && restart_step % param_in.mdp.md_thermo_freq == 0;
+            print_thermo = param_in.mdp.out_thermo_freq > 0 && restart_step % param_in.mdp.out_thermo_freq == 0;
 
             if (param_in.mdp.plumed)
             {

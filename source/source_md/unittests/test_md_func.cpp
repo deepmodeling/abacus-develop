@@ -153,6 +153,7 @@ TEST_F(MD_func_test, print_stress)
     const std::string log_path = testing::TempDir() + "abacus-md-print-stress.log";
     std::ofstream running_log(log_path.c_str());
     virial(0, 1) = 1.0;
+    stress(0, 1) = 2.0;
     MD_func::print_stress(running_log, virial, stress);
     running_log.close();
 
@@ -178,6 +179,21 @@ TEST_F(MD_func_test, print_stress)
     EXPECT_DOUBLE_EQ(vxx, 0.0);
     EXPECT_NEAR(vxy, kbar_per_atomic_unit, 1.0e-6);
     EXPECT_DOUBLE_EQ(vxz, 0.0);
+    getline(ifs, output_str);
+    getline(ifs, output_str);
+    getline(ifs, output_str);
+    EXPECT_EQ(output_str, " MD TOTAL STRESS (kbar):");
+    getline(ifs, output_str);
+    std::istringstream first_stress_row(output_str);
+    double sxx = 0.0;
+    double sxy = 0.0;
+    double sxz = 0.0;
+    first_stress_row >> sxx >> sxy >> sxz;
+    ASSERT_FALSE(first_stress_row.fail());
+    EXPECT_DOUBLE_EQ(sxx, 0.0);
+    const double expected_sxy = 2.0 * kbar_per_atomic_unit;
+    EXPECT_NEAR(sxy, expected_sxy, 1.0e-6);
+    EXPECT_DOUBLE_EQ(sxz, 0.0);
     /*
         getline(ifs, output_str);
         getline(ifs, output_str);

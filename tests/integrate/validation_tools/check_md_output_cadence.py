@@ -7,7 +7,7 @@ import subprocess
 import tempfile
 
 
-def run_case(executable, fixture, out_stru, out_freq_ion, out_app_flag, expected):
+def run_case(executable, fixture, out_stru, out_freq_ion, out_app_flag, expected, thermo_freq=1):
     with tempfile.TemporaryDirectory(prefix="abacus-md-cadence-") as scratch:
         work = Path(scratch)
         shutil.copyfile(fixture / "STRU", work / "STRU")
@@ -16,6 +16,7 @@ def run_case(executable, fixture, out_stru, out_freq_ion, out_app_flag, expected
         input_text = input_text.replace("out_freq_ion 2", "out_freq_ion " + str(out_freq_ion))
         input_text = input_text.replace("out_app_flag 0", "out_app_flag " + str(out_app_flag))
         input_text += "\ncal_stress 1\n"
+        input_text += "out_thermo_freq {}\n".format(thermo_freq)
         (work / "INPUT").write_text(input_text)
         result = subprocess.run(
             [executable], cwd=str(work), stdout=subprocess.PIPE,
@@ -28,8 +29,13 @@ def run_case(executable, fixture, out_stru, out_freq_ion, out_app_flag, expected
         if (output / "MD_dump").exists():
             raise AssertionError("Removed MD_dump was written")
         running_log = (output / "running_md.log").read_text()
-        if running_log.count("VIRIAL (kbar):") != 5:
-            raise AssertionError("Expected one virial matrix for each MD thermodynamic step")
+        expected_thermo = 0 if thermo_freq == 0 else len(range(0, 5, thermo_freq))
+        if running_log.count("VIRIAL (kbar):") != expected_thermo:
+            raise AssertionError("Unexpected virial output cadence")
+        if running_log.count("MD TOTAL STRESS (kbar):") != expected_thermo:
+            raise AssertionError("Unexpected total stress output cadence")
+        if "#TOTAL-STRESS" in running_log or "#TOTAL-FORCE" in running_log:
+            raise AssertionError("Solver wrote per-step force or stress outside MD output")
         structure_dir = output / "STRUC" if out_app_flag == 2 else output
         frames = {path.name for path in structure_dir.glob("STRU*")}
         frames.discard("STRU_restart")
@@ -83,6 +89,8 @@ def main():
     run_case(args.executable, args.fixture, 1, 2, 0, {"STRU", "STRU_FINAL"})
     run_case(args.executable, args.fixture, 1, 2, 1, {"STRU", "STRU_FINAL"})
     run_case(args.executable, args.fixture, 1, 2, 2, {"STRU1", "STRU3", "STRU5", "STRU_FINAL"})
+    run_case(args.executable, args.fixture, 1, 2, 1, {"STRU", "STRU_FINAL"}, thermo_freq=3)
+    run_case(args.executable, args.fixture, 1, 2, 1, {"STRU", "STRU_FINAL"}, thermo_freq=0)
 
 
 if __name__ == "__main__":

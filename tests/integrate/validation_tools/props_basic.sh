@@ -124,7 +124,45 @@ run_basic_props() {
   # stress information
   #-------------------------------
   if ! test -z "$has_stress" && [ $has_stress == 1 ]; then
-    grep -A6 "TOTAL-STRESS" $running_path | awk 'NF==3' | tail -3 >stress.txt
+    if [ "$calculation" = "md" ]; then
+      # The MD virial is the electronic stress after external pressure is
+      # subtracted. Reconstruct the solver's former TOTAL-STRESS value so
+      # existing reference data continue to compare the same quantity.
+      press1=$(get_input_key_value press1 INPUT)
+      press2=$(get_input_key_value press2 INPUT)
+      press3=$(get_input_key_value press3 INPUT)
+      if [ "$esolver_type" = "ofdft" ] || [ "$esolver_type" = "sdft" ]; then
+        # These solvers return their electronic stress without subtracting
+        # the requested external pressure.
+        press1=0
+        press2=0
+        press3=0
+      fi
+      if ! awk -v p1="$press1" -v p2="$press2" -v p3="$press3" '
+        /VIRIAL \(kbar\):/ { rows = 3; count = 0; next }
+        rows > 0 {
+          if (NF != 3) exit 1
+          count++
+          value[count] = $1 " " $2 " " $3
+          rows--
+        }
+        END {
+          if (count != 3 || rows != 0) exit 1
+          split(value[1], first)
+          split(value[2], second)
+          split(value[3], third)
+          print first[1] + p1, first[2], first[3]
+          print second[1], second[2] + p2, second[3]
+          print third[1], third[2], third[3] + p3
+        }
+      ' "$running_path" >stress.txt; then
+        echo "[ERROR] Failed to extract the MD virial from $running_path" >&2
+        rm -f stress.txt
+        return 1
+      fi
+    else
+      grep -A6 "TOTAL-STRESS" "$running_path" | awk 'NF==3' | tail -3 >stress.txt
+    fi
     total_stress=$(sum_file stress.txt)
     rm stress.txt
     echo "totalstressref $total_stress" >>$props_result_file

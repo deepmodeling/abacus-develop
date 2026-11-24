@@ -183,14 +183,24 @@ A structure frame with velocities is required for {istep}. New runs write it to 
         this->add_item(item);
     }
     {
-        Input_Item item("md_thermo_freq");
+        Input_Item item("out_thermo_freq");
         item.annotation = "The period to output MD thermodynamic information";
         item.category = "Molecular dynamics";
         item.type = "Integer";
-        item.description = "The output frequency of MD step, energy, temperature, and pressure information in OUT.${suffix}/running_md.log and on screen. When cal_stress is enabled, the running log also contains the complete 3-by-3 virial tensor in kbar at this frequency. Set to 0 to disable this output.";
+        item.description = "The output frequency of MD step, energy, temperature, and pressure information in OUT.${suffix}/running_md.log and on screen. When cal_stress is enabled, the virial and total stress tensors are written to the running log at this frequency. This parameter only affects MD. Set to 0 to disable these summaries; force and stress calculations continue every step.";
         item.default_value = "1";
         item.unit = "";
-        read_sync_int(input.mdp.md_thermo_freq);
+        read_sync_int(input.mdp.out_thermo_freq);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("md_thermo_freq");
+        item.annotation = "Deprecated alias of out_thermo_freq";
+        item.category = "Molecular dynamics";
+        item.type = "Integer";
+        item.description = "Deprecated MD-only alias of out_thermo_freq. Do not set both names in one INPUT file.";
+        item.default_value = "1";
+        read_sync_int(input.mdp.out_thermo_freq);
         this->add_item(item);
     }
     {
