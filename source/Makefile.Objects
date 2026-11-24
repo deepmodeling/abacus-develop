@@ -1200,7 +1200,12 @@ OBJS_LR_GRAD=lr_force.o\
     state_ovlp.o\
     grad_jt.o\
     gradient_output.o\
-    lr_grad_cs.o nacv.o nacv_tools.o\
+    lr_grad_cs.o\
+    nacv.o\
+    nacv_ao.o\
+    nacv_response.o\
+    nacv_solver.o\
+    nacv_tools.o\
     lr_grad_os.o\
     exx_proj.o\
     cvcx_serial.o\

@@ -1,5 +1,6 @@
 #include "lr_force.h"
 #include "cal_hs_grad.h"
+#include "nacv_tools.h"
 #include "pulay_hc.h"
 #include "source_lcao/pulay_fs.h"   // only for gint terms
 #include "source_hamilt/module_gint/gint_interface.h"
@@ -12,18 +13,17 @@ namespace LR
     template<typename TK>
     void LR_Force<TK>::prepare_force_batch(const module_dm::DensityMatrix<TK, double>& ground_density)
     {
+        const NacvTimerScope timer("LR_Force", "prepare_force_batch");
         if (geometry_)
         {
             return;
         }
-        ModuleBase::timer::start("LR_Force", "prepare_force_batch");
         std::unique_ptr<ForceGeometry> geometry(new ForceGeometry);
         geometry->overlap = cal_hs_grad('S', ucell_, pv_, gd_, two_center_bundle_);
         geometry->kinetic = cal_hs_grad('T', ucell_, pv_, gd_, two_center_bundle_);
         geometry->local = local_potential();
         geometry->ground = dm_to_hxc_potential(ground_density);
         geometry_ = std::move(geometry);
-        ModuleBase::timer::end("LR_Force", "prepare_force_batch");
     }
 
     template<typename TK>

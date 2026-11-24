@@ -178,7 +178,7 @@ AddTest(
 addtest(
   TARGET MODULE_LR_nacv_tools
   LIBS base parameter device container psi
-  SOURCES test_nacv_tools.cpp test_nacv_solver.cpp test_lr_util_xc.cpp
+  SOURCES test_nacv_tools.cpp test_nacv_solver.cpp
           ../nacv_tools.cpp ../nacv_solver.cpp ../utils/lr_util.cpp ${lr_mpi_test_main})
 # State serialization must also execute with assertions disabled.
 target_compile_definitions(MODULE_LR_nacv_tools PRIVATE NDEBUG)
