@@ -20,6 +20,11 @@
 namespace hsolver {
 namespace {
 
+#ifdef _OPENMP
+// Shared scheduling cutoff; an enumerator has no mutable or allocated storage.
+enum { openmp_work_threshold = 4096 };
+#endif
+
 // A whole-function timer also closes correctly on early return or exception.
 class PPCGFunctionTimer
 {
@@ -78,7 +83,6 @@ Real max_generalized_residual(
     Real max_res = 0;
     std::vector<double> nrm2_all(ncol, 0.0);
 #ifdef _OPENMP
-    const int openmp_work_threshold = 4096;
 #pragma omp parallel for schedule(static) if (n_dim * ncol > openmp_work_threshold)
 #endif
     for (int j = 0; j < ncol; ++j)
@@ -109,7 +113,6 @@ void set_zero(std::vector<T>& x)
 {
     const int n = int(x.size());
 #ifdef _OPENMP
-    const int openmp_work_threshold = 4096;
 #pragma omp parallel for schedule(static) if (n > openmp_work_threshold)
 #endif
     for (int i = 0; i < n; ++i)
@@ -384,7 +387,6 @@ void DiagoPPCG<T, Device>::copy_cols(const T* src,
     }
 
 #ifdef _OPENMP
-    const int openmp_work_threshold = 4096;
 #pragma omp parallel for schedule(static) if (ld_psi_ * ncols > openmp_work_threshold)
 #endif
     for (int j = 0; j < ncols; ++j)
@@ -420,7 +422,6 @@ void DiagoPPCG<T, Device>::scatter_cols(
     }
 
 #ifdef _OPENMP
-    const int openmp_work_threshold = 4096;
 #pragma omp parallel for schedule(static) if (ld_psi_ * ncols > openmp_work_threshold)
 #endif
     for (int j = 0; j < ncols; ++j)
@@ -637,7 +638,6 @@ void DiagoPPCG<T, Device>::divide_by_preconditioner(
     const int ncols = int(active_cols.size());
     const Real minimum_preconditioner = Real(1.0e-12);
 #ifdef _OPENMP
-    const int openmp_work_threshold = 4096;
 #pragma omp parallel for schedule(static) if (n_dim_ * ncols > openmp_work_threshold)
 #endif
     for (int j = 0; j < ncols; ++j)
@@ -677,7 +677,6 @@ void DiagoPPCG<T, Device>::lock_epairs(
     active_cols.reserve(n_band_);
     std::vector<double> nrm2_all(n_band_, 0.0);
 #ifdef _OPENMP
-    const int openmp_work_threshold = 4096;
 #pragma omp parallel for schedule(static) if (n_dim_ * n_band_ > openmp_work_threshold)
 #endif
     for (int j = 0; j < n_band_; ++j)
@@ -725,7 +724,6 @@ void DiagoPPCG<T, Device>::scale_to_unit_snorm(std::vector<T>& x,
     const Real minimum_snorm = Real(1.0e-15);
     std::vector<double> inverse_snorm(ncols, 0.0);
 #ifdef _OPENMP
-    const int openmp_work_threshold = 4096;
 #pragma omp parallel for schedule(static) if (n_dim_ * ncols > openmp_work_threshold)
 #endif
     for (int j = 0; j < ncols; ++j)
@@ -1041,7 +1039,6 @@ void DiagoPPCG<T, Device>::build_small_subspace(
                           std::vector<T>& dst)
     {
 #ifdef _OPENMP
-        const int openmp_work_threshold = 4096;
 #pragma omp parallel for schedule(static) if (ld_psi_ * l > openmp_work_threshold)
 #endif
         for (int j = 0; j < l; ++j)
@@ -1568,7 +1565,6 @@ void DiagoPPCG<T, Device>::update_one_block(
     subspace.coeff_state.resize(dim * l);
     subspace.coeff_p.resize(dim * l);
 #ifdef _OPENMP
-    const int openmp_work_threshold = 4096;
 #pragma omp parallel for schedule(static) if (l * l > openmp_work_threshold)
 #endif
     for (int j = 0; j < l; ++j)
@@ -1806,7 +1802,6 @@ void DiagoPPCG<T, Device>::compute_eigenpair_residual(const Real* eigenvalue)
     const PPCGFunctionTimer timer("compute_eigenpair_residual");
     set_zero(w_);
 #ifdef _OPENMP
-    const int openmp_work_threshold = 4096;
 #pragma omp parallel for collapse(2) schedule(static) if (n_dim_ * n_band_ > openmp_work_threshold)
 #endif
     for (int j = 0; j < n_band_; ++j)
