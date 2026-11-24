@@ -20,7 +20,7 @@ namespace
 {
 bool finite_projection(const ct::Tensor& matrix)
 {
-    const auto* values = matrix.data<std::complex<double>>();
+    const std::complex<double>* values = matrix.data<std::complex<double>>();
     for (int64_t i = 0; i < matrix.NumElements(); ++i)
     {
         if (!std::isfinite(values[i].real()) || !std::isfinite(values[i].imag()))
@@ -137,8 +137,8 @@ int DiagoLOBPCG<T, Device>::repair_basis(const HSOperator<T, Device>& op, const 
     ModuleBase::timer::Scope function_timer("DiagoLOBPCG", "repair_basis");
     const int n = n_dim_;
     const int reference_columns = n_max_;
-    const auto reference = basis_images(0);
-    const auto increments = basis_images(reference_columns);
+    const VectorImages reference = basis_images(0);
+    const VectorImages increments = basis_images(reference_columns);
     const double epsilon = std::numeric_limits<Real>::epsilon();
     const Real tolerance = std::max(static_cast<Real>(1e-10), static_cast<Real>(100 * epsilon));
     const T minus_one(-1);
@@ -182,7 +182,7 @@ int DiagoLOBPCG<T, Device>::repair_basis(const HSOperator<T, Device>& op, const 
     for (int pass = 0; pass < 3 && kept > 0; ++pass)
     {
         const T* metric_image = increments.sx != nullptr ? increments.sx : increments.x;
-        auto cross = algebra_.cross_tensor(n, n, reference_columns, kept, reference.x, metric_image);
+        ct::Tensor cross = algebra_.cross_tensor(n, n, reference_columns, kept, reference.x, metric_image);
         if (comm_.rank == 0)
         {
             // M = R^H R: solve M C = X^H S D without forming an inverse.
@@ -234,7 +234,7 @@ int DiagoLOBPCG<T, Device>::repair_basis(const HSOperator<T, Device>& op, const 
             project_padding(increments.sx, kept);
         }
         metric_image = increments.sx != nullptr ? increments.sx : increments.x;
-        const auto overlap = algebra_.cross_tensor(n, n, reference_columns, kept, reference.x, metric_image);
+        const ct::Tensor overlap = algebra_.cross_tensor(n, n, reference_columns, kept, reference.x, metric_image);
         double coupling = 0.0;
         for (int64_t i = 0; i < overlap.NumElements(); ++i)
         {

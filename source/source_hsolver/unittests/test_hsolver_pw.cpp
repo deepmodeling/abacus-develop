@@ -588,7 +588,7 @@ TEST_F(TestHSolverPW, LobpcgNscfBudgetReportsError)
 
 TEST_F(TestHSolverPW, LobpcgBudgetContinuesOuterLoops)
 {
-    for (const auto& calculation : {"scf", "relax", "cell-relax", "md"})
+    for (const char* calculation : {"scf", "relax", "cell-relax", "md"})
     {
         EXPECT_EXIT(run_lobpcg_case(calculation, false), ::testing::ExitedWithCode(0), ".*");
     }
@@ -604,10 +604,10 @@ TEST_F(TestHSolverPW, PwUsesInputIterationBudget)
     Input_para input;
     input.pw_diag_nmax = 37;
     const int previous = Assist::PW_DIAG_NMAX;
-    for (const auto& calculation : {"scf", "nscf", "relax", "cell-relax", "md"})
+    for (const char* calculation : {"scf", "nscf", "relax", "cell-relax", "md"})
     {
         input.calculation = calculation;
-        for (const auto& method : {"cg", "dav", "dav_subspace", "bpcg", "lobpcg"})
+        for (const char* method : {"cg", "dav", "dav_subspace", "bpcg", "lobpcg"})
         {
             input.ks_solver = method;
             Assist::PW_DIAG_NMAX = 30;

@@ -331,10 +331,6 @@ void verify_triangular_apply(const char side, const char uplo, const char trans,
             input[i + j * ldb] = T(0.1 * (i + j + 1), 0.07 * (i - j));
         }
     }
-    const auto entry = [&](int i, int j) {
-        const Wide value = trans == 'N' ? dense[i + j * order] : dense[j + i * order];
-        return trans == 'C' ? std::conj(value) : value;
-    };
     std::vector<T> expected(input);
     for (int j = 0; j < n; ++j)
     {
@@ -343,8 +339,12 @@ void verify_triangular_apply(const char side, const char uplo, const char trans,
             Wide sum(0);
             for (int k = 0; k < order; ++k)
             {
-                sum += side == 'L' ? entry(i, k) * Wide(input[k + j * ldb])
-                                   : Wide(input[i + k * ldb]) * entry(k, j);
+                const int row = side == 'L' ? i : k;
+                const int column = side == 'L' ? k : j;
+                const Wide value = trans == 'N' ? dense[row + column * order] : dense[column + row * order];
+                const Wide factor = trans == 'C' ? std::conj(value) : value;
+                sum += side == 'L' ? factor * Wide(input[k + j * ldb])
+                                   : Wide(input[i + k * ldb]) * factor;
             }
             expected[i + j * ldb] = T(Wide(alpha) * sum);
         }

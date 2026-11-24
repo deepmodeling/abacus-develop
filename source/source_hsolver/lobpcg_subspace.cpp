@@ -241,7 +241,7 @@ bool DiagoLOBPCG<T, Device>::solve_projected(const ct::Tensor& k,
 #ifdef __MPI
         if (para_rr_method_ == 0 && comm_.nproc > 1)
         {
-            const auto world = Parallel::ParaWorld::make_mpi("lobpcg_rr", comm_.comm);
+            const Parallel::ParaWorld world = Parallel::ParaWorld::make_mpi("lobpcg_rr", comm_.comm);
             Parallel::bcast_string(error_message_, world, 0);
         }
 #endif

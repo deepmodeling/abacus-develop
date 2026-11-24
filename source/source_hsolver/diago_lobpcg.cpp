@@ -384,7 +384,7 @@ int DiagoLOBPCG<T, Device>::build_search(
 {
     ModuleBase::timer::Scope function_timer("DiagoLOBPCG", "build_search");
     const int n = n_dim_;
-    const auto block = basis_images(first_w);
+    const VectorImages block = basis_images(first_w);
     const T* residual = residual_.data<T>() + locked * n;
     const Real* values = eig_.data<Real>() + locked;
     const int elements = n * count;
@@ -399,9 +399,9 @@ int DiagoLOBPCG<T, Device>::build_search(
     }
     if (locked > 0)
     {
-        const auto reference = basis_images(0);
+        const VectorImages reference = basis_images(0);
         const T* metric = block.sx == nullptr ? block.x : block.sx;
-        const auto cross = algebra_.cross_tensor(n, n, locked, count, reference.x, metric);
+        const ct::Tensor cross = algebra_.cross_tensor(n, n, locked, count, reference.x, metric);
         const T* prepared = prepare_rotation_coefficients(cross);
         const T minus_one(-1);
         algebra_.expand_prepared(n, n, locked, count, reference.x, prepared, block.x, minus_one);
@@ -602,7 +602,7 @@ int DiagoLOBPCG<T, Device>::normalize_columns(
     {
         // dots_tensor returns globally reduced products for corresponding columns.
         const int stride = n * columns;
-        const auto dots = algebra_.dots_tensor(n, n, columns, 1, stride, block.x, block.x);
+        const ct::Tensor dots = algebra_.dots_tensor(n, n, columns, 1, stride, block.x, block.x);
         for (int j = 0; j < columns; ++j)
         {
             norms.data<double>()[j] = dots.template data<Wide>()[j].real();
@@ -744,7 +744,7 @@ void DiagoLOBPCG<T, Device>::allocate_workspace()
         {"LOBPCG::sx_new", &sx_new_},
         {"LOBPCG::residual", &residual_},
         {"LOBPCG::u_p", &u_p_}};
-    for (const auto& allocation : allocations)
+    for (const std::pair<const char*, const ct::Tensor*>& allocation : allocations)
     {
         const std::size_t bytes = allocation.second->buffer().GetAllocatedBytes();
         if (allocation.second->device_type() == ct::DeviceType::CpuDevice)

@@ -359,7 +359,7 @@ void update_psi_charge_pw_cpu(ScState& state,
     {
         // Full PW diagonalization: subspace rotation provides a good initial guess,
         // then HSolverPW iteratively refines psi in the full plane-wave space and calls psiToRho.
-        const auto& solver_input = PARAM.inp;
+        const Input_para& solver_input = PARAM.inp;
         hsolver::HSolverPW<std::complex<double>, base_device::DEVICE_CPU> hsolver_pw_obj(
             pw_wfc,
             solver_input.calculation,
@@ -475,7 +475,7 @@ void update_psi_charge_pw_gpu(ScState& state,
     // STAGE 2: Full-space update (GPU)
     if (pw_solve)
     {
-        const auto& solver_input = PARAM.inp;
+        const Input_para& solver_input = PARAM.inp;
         hsolver::HSolverPW<std::complex<double>, base_device::DEVICE_GPU> hsolver_pw_obj(
             pw_wfc,
             solver_input.calculation,
