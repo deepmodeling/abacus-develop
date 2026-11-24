@@ -150,8 +150,7 @@ TEST_F(ElecStatePrintTest, PrintEtot)
     }
 
     // iteration of different ks_solver
-    std::vector<std::string> ks_solvers
-        = {"cg", "lapack", "genelpa", "dav", "scalapack_gvx", "cusolver", "ppcg"};
+    std::vector<std::string> ks_solvers = {"cg", "lapack", "genelpa", "dav", "scalapack_gvx", "cusolver", "ppcg"};
     for (int i = 0; i < ks_solvers.size(); i++)
     {
         inp.ks_solver = ks_solvers[i];

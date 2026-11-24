@@ -37,7 +37,9 @@ void ReadInput::item_elec_stru()
     // Electronic Structure
     {
         Input_Item item("ks_solver");
-        item.domain.set_choices({"cg", "dav", "bpcg", "dav_subspace", "ppcg", "genelpa", "elpa", "lapack", "scalapack_gvx", "cusolver", "cusolvermp", "pexsi"});
+        item.domain.set_choices(
+            {"cg", "dav", "bpcg", "dav_subspace", "ppcg", "genelpa", "elpa", "lapack", "scalapack_gvx", "cusolver",
+                "cusolvermp", "pexsi"});
         item.domain.add_requirement("basis_type==pw", "ks_solver in [cg, dav, bpcg, dav_subspace, ppcg]");
         item.domain.add_requirement("basis_type==lcao", "ks_solver in [genelpa, elpa, lapack, scalapack_gvx, cusolver, cusolvermp, pexsi]");
         item.domain.add_requirement("ks_solver==ppcg", "esolver_type!=sdft");
@@ -49,7 +51,8 @@ void ReadInput::item_elec_stru()
         item.annotation = "cg; dav; bpcg; dav_subspace; ppcg; lapack; genelpa; elpa; scalapack_gvx; cusolver";
         item.category = "Electronic structure";
         item.type = "String";
-        item.description = R"(Choose the diagonalization methods for the Hamiltonian matrix expanded in a certain basis set.
+        item.description =
+            R"(Choose the diagonalization methods for the Hamiltonian matrix expanded in a certain basis set.
 
 For plane-wave basis,
 
@@ -1009,7 +1012,15 @@ Use case: When experimental or high-level theoretical results suggest that the S
         item.annotation = "threshold for iterative PW diagonalization";
         item.category = "Plane wave related variables";
         item.type = "Real";
-        item.description = "Only used when you use ks_solver = cg/dav/dav_subspace/bpcg/ppcg. It indicates the threshold for the first electronic iteration, from the second iteration the pw_diag_thr will be updated automatically. The stopping criterion is solver-dependent: CG and Davidson methods compare eigenvalue changes against the threshold, whereas PPCG requires the norm of H psi - epsilon S psi to be at most max(ethr_band, ethr, 1e-14). The same numerical threshold therefore does not imply the same accuracy or cost across these methods. PPCG uses a direct residual tolerance; it does not convert an eigenvalue-difference tolerance by taking its square root. Validate total energies, forces and stresses for the system and SCF settings of interest. For nscf calculations with planewave basis set, pw_diag_thr should be <= 1e-3.";
+        item.description =
+            "Only used when you use ks_solver = cg/dav/dav_subspace/bpcg/ppcg. It indicates the threshold for the "
+            "first electronic iteration, from the second iteration the pw_diag_thr will be updated automatically. The "
+            "stopping criterion is solver-dependent: CG and Davidson methods compare eigenvalue changes against the "
+            "threshold, whereas PPCG requires the norm of H psi - epsilon S psi to be at most max(ethr_band, ethr, "
+            "1e-14). The same numerical threshold therefore does not imply the same accuracy or cost across these "
+            "methods. PPCG uses a direct residual tolerance; it does not convert an eigenvalue-difference tolerance by "
+            "taking its square root. Validate total energies, forces and stresses for the system and SCF settings of "
+            "interest. For nscf calculations with planewave basis set, pw_diag_thr should be <= 1e-3.";
         item.default_value = "0.01";
         item.unit = "";
         read_sync_double(input.pw_diag_thr);
@@ -1053,7 +1064,11 @@ Use case: When experimental or high-level theoretical results suggest that the S
         item.annotation = "maximum iteration count for iterative PW diagonalization";
         item.category = "Plane wave related variables";
         item.type = "Integer";
-        item.description = "Sets the maximum number of iterations for the selected iterative PW diagonalization method. It is used by CG, Davidson, Davidson-subspace, and PPCG; the value is a solver-specific iteration limit and does not define a common number of operator applications or a convergence tolerance. Increasing it does not guarantee convergence. BPCG currently does not use this parameter.";
+        item.description =
+            "Sets the maximum number of iterations for the selected iterative PW diagonalization method. It is used by "
+            "CG, Davidson, Davidson-subspace, and PPCG; the value is a solver-specific iteration limit and does not "
+            "define a common number of operator applications or a convergence tolerance. Increasing it does not "
+            "guarantee convergence. BPCG currently does not use this parameter.";
         item.default_value = "50";
         item.unit = "";
         item.set_availability("basis_type==pw and ks_solver in [cg, dav, dav_subspace, bpcg, ppcg]");
@@ -1065,7 +1080,11 @@ Use case: When experimental or high-level theoretical results suggest that the S
         item.annotation = "dimension of workspace for iterative PW diagonalization";
         item.category = "Plane wave related variables";
         item.type = "Integer";
-        item.description = "Only useful when you use ks_solver = dav, dav_subspace, or ppcg. It indicates dimension of workspace(number of wavefunction packets, at least 2 needed) for the Davidson method, and the block size for the PPCG method. A larger value may yield a smaller number of iterations in the algorithm but uses more memory and more CPU time in subspace diagonalization.";
+        item.description =
+            "Only useful when you use ks_solver = dav, dav_subspace, or ppcg. It indicates dimension of "
+            "workspace(number of wavefunction packets, at least 2 needed) for the Davidson method, and the block size "
+            "for the PPCG method. A larger value may yield a smaller number of iterations in the algorithm but uses "
+            "more memory and more CPU time in subspace diagonalization.";
         item.default_value = "4";
         item.unit = "";
         item.set_availability("basis_type==pw and ks_solver in [dav, dav_subspace, ppcg]");
@@ -1078,7 +1097,11 @@ Use case: When experimental or high-level theoretical results suggest that the S
         item.annotation = "PPCG full Rayleigh-Ritz interval";
         item.category = "Plane wave related variables";
         item.type = "Integer";
-        item.description = "Number of PPCG block sweeps between scheduled full Rayleigh-Ritz solves. The conservative default of 1 performs a full solve each sweep. Larger values reduce global subspace work but may require more iterations; tune with accuracy and timing checks for the system of interest. Initial, convergence-certifying and recovery solves, and operator-cache refreshes, are independent of this interval.";
+        item.description = "Number of PPCG block sweeps between scheduled full Rayleigh-Ritz solves. The conservative "
+                           "default of 1 performs a full solve each sweep. Larger values reduce global subspace work "
+                           "but may require more iterations; tune with accuracy and timing checks for the system of "
+                           "interest. Initial, convergence-certifying and recovery solves, and operator-cache "
+                           "refreshes, are independent of this interval.";
         item.default_value = "1";
         item.set_availability("basis_type==pw and ks_solver==ppcg");
         read_sync_int(input.ppcg_rr_step);

@@ -5,11 +5,11 @@
 #include <limits>
 #include <stdexcept>
 
+using ppcg_test::dense_h_multiply;
 using ppcg_test::DiagoPPCGMatrixTest;
+using ppcg_test::initialize_vectors;
 using ppcg_test::Real;
 using ppcg_test::T;
-using ppcg_test::dense_h_multiply;
-using ppcg_test::initialize_vectors;
 
 namespace hsolver
 {
@@ -18,15 +18,14 @@ namespace hsolver
 // relying on a particular sequence of LAPACK rotations in an end-to-end solve.
 class DiagoPPCGProjectionTest : public ::testing::Test
 {
-protected:
+  protected:
     void check_direction_rotation(const bool ritz)
     {
         const int dimension = 3;
         const int leading_dimension = 4;
         const int bands = 2;
         const int size = leading_dimension * bands;
-        const std::vector<T> h = {T(1), T(0, -0.4), T(0),
-                                  T(0, 0.4), T(4), T(0), T(0), T(0), T(10)};
+        const std::vector<T> h = {T(1), T(0, -0.4), T(0), T(0, 0.4), T(4), T(0), T(0), T(0), T(10)};
         const std::vector<T> s = {T(1), T(0), T(0), T(0), T(2), T(0), T(0), T(0), T(3)};
         std::vector<T> x(size, T(0));
         x[0] = T(1);
@@ -137,8 +136,8 @@ protected:
                 for (int inner = 0; inner < dimension; ++inner)
                 {
                     const int offset = row + inner * dimension;
-                    residual += (hamiltonian[offset] - subspace.eval[column] * overlap[offset])
-                                * subspace.k[inner + column * dimension];
+                    residual += (hamiltonian[offset] - subspace.eval[column] * overlap[offset]) *
+                                subspace.k[inner + column * dimension];
                 }
                 residual_squared += std::norm(residual);
             }
@@ -149,8 +148,8 @@ protected:
                 T inner_product(0);
                 for (int row = 0; row < rank; ++row)
                 {
-                    inner_product += std::conj(subspace.k[row + column * dimension])
-                                     * (row + 1.0) * subspace.k[row + other * dimension];
+                    inner_product += std::conj(subspace.k[row + column * dimension]) * (row + 1.0) *
+                                     subspace.k[row + other * dimension];
                 }
                 const T expected = column == other ? T(1) : T(0);
                 const double error = std::abs(inner_product - expected);
@@ -197,7 +196,8 @@ protected:
         }
         int h_calls = 0;
         int s_calls = 0;
-        const auto h_op = [&h_calls, &h_diagonal, dimension](const T* in, T* out, int ld, int ncol) {
+        const auto h_op = [&h_calls, &h_diagonal, dimension](const T *in, T *out, int ld, int ncol)
+        {
             ++h_calls;
             for (int j = 0; j < ncol; ++j)
             {
@@ -207,7 +207,8 @@ protected:
                 }
             }
         };
-        const auto s_op = [&s_calls, &s_diagonal, dimension](const T* in, T* out, int ld, int ncol) {
+        const auto s_op = [&s_calls, &s_diagonal, dimension](const T *in, T *out, int ld, int ncol)
+        {
             ++s_calls;
             for (int j = 0; j < ncol; ++j)
             {
@@ -249,30 +250,15 @@ protected:
     }
 };
 
-TEST_F(DiagoPPCGProjectionTest, RefreshesImagesAfterSevereProjectionCancellation)
-{
-    check_projection(true, false);
-}
+TEST_F(DiagoPPCGProjectionTest, RefreshesImagesAfterSevereProjectionCancellation) { check_projection(true, false); }
 
-TEST_F(DiagoPPCGProjectionTest, RitzRotationPreservesDirectionColumnAssociation)
-{
-    check_direction_rotation(true);
-}
+TEST_F(DiagoPPCGProjectionTest, RitzRotationPreservesDirectionColumnAssociation) { check_direction_rotation(true); }
 
-TEST_F(DiagoPPCGProjectionTest, OrthonormalizationRotatesDirectionImagesTogether)
-{
-    check_direction_rotation(false);
-}
+TEST_F(DiagoPPCGProjectionTest, OrthonormalizationRotatesDirectionImagesTogether) { check_direction_rotation(false); }
 
-TEST_F(DiagoPPCGProjectionTest, ReusesImagesForWellSeparatedDirection)
-{
-    check_projection(false, false);
-}
+TEST_F(DiagoPPCGProjectionTest, ReusesImagesForWellSeparatedDirection) { check_projection(false, false); }
 
-TEST_F(DiagoPPCGProjectionTest, ClearsStaleImagesForZeroDirection)
-{
-    check_projection(false, true);
-}
+TEST_F(DiagoPPCGProjectionTest, ClearsStaleImagesForZeroDirection) { check_projection(false, true); }
 
 TEST_F(DiagoPPCGProjectionTest, RankTruncationExportsKeptAndDiscardedRitzVectors)
 {
@@ -305,10 +291,7 @@ class DiagoPPCGDiagonalTest : public DiagoPPCGMatrixTest
     }
 };
 
-TEST_F(DiagoPPCGDiagonalTest, BlockSubspace)
-{
-    check_eigenvalues(1e-12, 50, 3, 3, 1e-8);
-}
+TEST_F(DiagoPPCGDiagonalTest, BlockSubspace) { check_eigenvalues(1e-12, 50, 3, 3, 1e-8); }
 
 TEST(DiagoPPCGRankTruncationTest, ComplexHermitianStartupSubspace)
 {
@@ -339,9 +322,8 @@ TEST(DiagoPPCGRankTruncationTest, ComplexHermitianStartupSubspace)
         {
             for (int row = 0; row < n_dim; ++row)
             {
-                h_mat[row + col * n_dim] += unitary[row + state * n_dim]
-                                            * eigenvalues[state]
-                                            * std::conj(unitary[col + state * n_dim]);
+                h_mat[row + col * n_dim] +=
+                    unitary[row + state * n_dim] * eigenvalues[state] * std::conj(unitary[col + state * n_dim]);
             }
         }
     }
@@ -374,12 +356,11 @@ TEST(DiagoPPCGRankTruncationTest, ComplexHermitianStartupSubspace)
         /* sbsize   = */ 2,
         /* rr_step  = */ 4);
 
-    auto h_op = [&h_mat, n_dim](const T* in, T* out, int ld_in, int ncol) {
-        dense_h_multiply(h_mat.data(), n_dim, in, out, ld_in, ncol);
-    };
+    auto h_op = [&h_mat, n_dim](const T *in, T *out, int ld_in, int ncol)
+    { dense_h_multiply(h_mat.data(), n_dim, in, out, ld_in, ncol); };
 
-    const double avg_iter = ppcg_test::diagonalize(solver,
-        h_op, nullptr, ld, nband, n_dim, psi.data(), eval.data(), ethr, prec.data());
+    const double avg_iter =
+        ppcg_test::diagonalize(solver, h_op, nullptr, ld, nband, n_dim, psi.data(), eval.data(), ethr, prec.data());
     for (int i = 0; i < nband; ++i)
     {
         EXPECT_NEAR(eval[i], Real(i + 1), 1e-10) << "root[" << i << "] mismatch";
@@ -399,10 +380,12 @@ TEST_F(DiagoPPCGDiagonalTest, NullWavefunctionThrows)
         /* sbsize   = */ 3,
         /* rr_step  = */ 3);
 
-    const auto h_op = [](const T*, T*, int, int) {};
-    T* missing_wavefunction = nullptr;
-    EXPECT_THROW(ppcg_test::diagonalize(solver, h_op, nullptr, ld, nband, n_dim, missing_wavefunction, eval.data(), ethr, prec.data()),
-                 std::invalid_argument);
+    const auto h_op = [](const T *, T *, int, int) {};
+    T *missing_wavefunction = nullptr;
+    EXPECT_THROW(
+        ppcg_test::diagonalize(
+            solver, h_op, nullptr, ld, nband, n_dim, missing_wavefunction, eval.data(), ethr, prec.data()),
+        std::invalid_argument);
 }
 
 TEST_F(DiagoPPCGDiagonalTest, NonFiniteInputThrows)
@@ -416,26 +399,29 @@ TEST_F(DiagoPPCGDiagonalTest, NonFiniteInputThrows)
         /* sbsize   = */ 3,
         /* rr_step  = */ 3);
 
-    auto h_op = [this](const T* in, T* out, int ld_in, int ncol) {
-        dense_h_multiply(H_mat.data(), n_dim, in, out, ld_in, ncol);
-    };
+    auto h_op = [this](const T *in, T *out, int ld_in, int ncol)
+    { dense_h_multiply(H_mat.data(), n_dim, in, out, ld_in, ncol); };
 
     std::vector<double> bad_ethr = ethr;
     bad_ethr[0] = std::numeric_limits<double>::quiet_NaN();
-    EXPECT_THROW(ppcg_test::diagonalize(solver, h_op, nullptr, ld, nband, n_dim, psi_run.data(), eval.data(), bad_ethr, prec.data()),
-                 std::invalid_argument);
+    EXPECT_THROW(
+        ppcg_test::diagonalize(
+            solver, h_op, nullptr, ld, nband, n_dim, psi_run.data(), eval.data(), bad_ethr, prec.data()),
+        std::invalid_argument);
 
     std::vector<Real> bad_prec = prec;
     bad_prec[0] = std::numeric_limits<Real>::infinity();
-    EXPECT_THROW(ppcg_test::diagonalize(solver, h_op, nullptr, ld, nband, n_dim, psi_run.data(), eval.data(), ethr, bad_prec.data()),
-                 std::invalid_argument);
+    EXPECT_THROW(
+        ppcg_test::diagonalize(
+            solver, h_op, nullptr, ld, nband, n_dim, psi_run.data(), eval.data(), ethr, bad_prec.data()),
+        std::invalid_argument);
 }
 
 TEST(DiagoPPCGWorkspaceTest, RejectsOversizedWorkspacesBeforeUsingInputBuffers)
 {
     struct Shape
     {
-        const char* description;
+        const char *description;
         int leading_dimension;
         int bands;
     };
@@ -448,7 +434,7 @@ TEST(DiagoPPCGWorkspaceTest, RejectsOversizedWorkspacesBeforeUsingInputBuffers)
         {"root recovery workspace", 1, 12000},
     };
 
-    for (const Shape& shape : shapes)
+    for (const Shape &shape : shapes)
     {
         SCOPED_TRACE(shape.description);
         T psi_value(1.0, 0.0);
@@ -460,24 +446,18 @@ TEST(DiagoPPCGWorkspaceTest, RejectsOversizedWorkspacesBeforeUsingInputBuffers)
         const std::vector<double> thresholds;
         int h_calls = 0;
         int s_calls = 0;
-        const auto h_op = [&h_calls](const T*, T*, int, int) { ++h_calls; };
-        const auto s_op = [&s_calls](const T*, T*, int, int) { ++s_calls; };
+        const auto h_op = [&h_calls](const T *, T *, int, int) { ++h_calls; };
+        const auto s_op = [&s_calls](const T *, T *, int, int) { ++s_calls; };
         hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(1e-12, 1, 1, 1);
 
         try
         {
-            ppcg_test::diagonalize(solver, h_op,
-                        s_op,
-                        shape.leading_dimension,
-                        shape.bands,
-                        1,
-                        &psi_value,
-                        &eigenvalue,
-                        thresholds,
-                        &preconditioner);
+            ppcg_test::diagonalize(
+                solver, h_op, s_op, shape.leading_dimension, shape.bands, 1, &psi_value, &eigenvalue, thresholds,
+                &preconditioner);
             FAIL() << "Oversized PPCG workspace was accepted";
         }
-        catch (const std::invalid_argument& error)
+        catch (const std::invalid_argument &error)
         {
             EXPECT_STREQ(error.what(), "PPCG: workspace dimensions exceed integer indexing or LAPACK limits.");
         }
@@ -494,9 +474,8 @@ TEST_F(DiagoPPCGDiagonalTest, HandlesSubblockSizeAboveBandCount)
     std::vector<Real> eval(nband, 0.0);
     const int subblock_size = std::numeric_limits<int>::max();
     hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(1e-12, 100, subblock_size, 3);
-    const auto h_op = [this](const T* in, T* out, int ld_in, int ncol) {
-        dense_h_multiply(H_mat.data(), n_dim, in, out, ld_in, ncol);
-    };
+    const auto h_op = [this](const T *in, T *out, int ld_in, int ncol)
+    { dense_h_multiply(H_mat.data(), n_dim, in, out, ld_in, ncol); };
 
     ppcg_test::diagonalize(solver, h_op, nullptr, ld, nband, n_dim, psi_run.data(), eval.data(), ethr, prec.data());
 
@@ -549,9 +528,8 @@ TEST(DiagoPPCGComplexHermitianTest, DefaultKeepsImaginaryProjection)
         /* sbsize   = */ 2,
         /* rr_step  = */ 1);
 
-    auto h_op = [&H_mat, n_dim](const T* in, T* out, int ld_in, int ncol) {
-        dense_h_multiply(H_mat.data(), n_dim, in, out, ld_in, ncol);
-    };
+    auto h_op = [&H_mat, n_dim](const T *in, T *out, int ld_in, int ncol)
+    { dense_h_multiply(H_mat.data(), n_dim, in, out, ld_in, ncol); };
 
     ppcg_test::diagonalize(solver, h_op, nullptr, ld, nband, n_dim, psi.data(), eval.data(), ethr, prec.data());
 
@@ -584,17 +562,15 @@ TEST(DiagoPPCGComplexHermitianTest, ExactImaginaryLeadingCoefficientNeedsNoProje
     std::vector<Real> eval(nband, Real(0));
     const std::vector<double> ethr(nband, 1e-12);
     const std::vector<Real> prec(n_dim, Real(1));
-    const auto h_op = [&h_mat, n_dim](const T* in, T* out, int ld_in, int ncol) {
-        dense_h_multiply(h_mat.data(), n_dim, in, out, ld_in, ncol);
-    };
+    const auto h_op = [&h_mat, n_dim](const T *in, T *out, int ld_in, int ncol)
+    { dense_h_multiply(h_mat.data(), n_dim, in, out, ld_in, ncol); };
     hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(
         /* diag_thr = */ 1e-12,
         /* max_iter = */ 0,
         /* sbsize   = */ 1,
         /* rr_step  = */ 4);
 
-    ppcg_test::diagonalize(solver,
-        h_op, nullptr, ld, nband, n_dim, psi.data(), eval.data(), ethr, prec.data());
+    ppcg_test::diagonalize(solver, h_op, nullptr, ld, nband, n_dim, psi.data(), eval.data(), ethr, prec.data());
 
     Real norm_squared = Real(0);
     Real residual_squared = Real(0);

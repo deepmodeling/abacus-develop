@@ -8,12 +8,18 @@ namespace hsolver
 {
 namespace
 {
-enum { block_threads = 256 };
+enum
+{
+    block_threads = 256
+};
 
 template <typename Real>
-__global__ void column_products_kernel(const int dim, const int ld,
-                                       const thrust::complex<Real>* x,
-                                       const thrust::complex<Real>* y, double* products)
+__global__ void column_products_kernel(
+    const int dim,
+    const int ld,
+    const thrust::complex<Real> *x,
+    const thrust::complex<Real> *y,
+    double *products)
 {
     __shared__ double sums[block_threads];
     const int column = blockIdx.x;
@@ -41,9 +47,14 @@ __global__ void column_products_kernel(const int dim, const int ld,
 }
 
 template <typename Real>
-__global__ void residual_kernel(const int dim, const int ld, const int count,
-                                const thrust::complex<Real>* hx, const thrust::complex<Real>* sx,
-                                const Real* eigenvalues, thrust::complex<Real>* output)
+__global__ void residual_kernel(
+    const int dim,
+    const int ld,
+    const int count,
+    const thrust::complex<Real> *hx,
+    const thrust::complex<Real> *sx,
+    const Real *eigenvalues,
+    thrust::complex<Real> *output)
 {
     const int index = blockIdx.x * blockDim.x + threadIdx.x;
     if (index < dim * count)
@@ -56,8 +67,12 @@ __global__ void residual_kernel(const int dim, const int ld, const int count,
 }
 
 template <typename Real>
-__global__ void precondition_kernel(const int dim, const int ld, const int count,
-                                    const Real* diagonal, thrust::complex<Real>* values)
+__global__ void precondition_kernel(
+    const int dim,
+    const int ld,
+    const int count,
+    const Real *diagonal,
+    thrust::complex<Real> *values)
 {
     const int index = blockIdx.x * blockDim.x + threadIdx.x;
     if (index < dim * count)
@@ -71,9 +86,14 @@ __global__ void precondition_kernel(const int dim, const int ld, const int count
 }
 
 template <typename Real>
-__global__ void scale_columns_kernel(const int dim, const int ld, const int count,
-                                     const double* scales, thrust::complex<Real>* x,
-                                     thrust::complex<Real>* sx, thrust::complex<Real>* hx)
+__global__ void scale_columns_kernel(
+    const int dim,
+    const int ld,
+    const int count,
+    const double *scales,
+    thrust::complex<Real> *x,
+    thrust::complex<Real> *sx,
+    thrust::complex<Real> *hx)
 {
     const int index = blockIdx.x * blockDim.x + threadIdx.x;
     if (index < dim * count)
@@ -91,15 +111,20 @@ __global__ void scale_columns_kernel(const int dim, const int ld, const int coun
 
 template <typename T>
 void PPCGVectorOps<T, base_device::DEVICE_GPU>::column_products(
-    const int dim, const int ld, const int count, const T* x, const T* y, double* host_products)
+    const int dim,
+    const int ld,
+    const int count,
+    const T *x,
+    const T *y,
+    double *host_products)
 {
     if (count == 0)
     {
         return;
     }
     PPCGDeviceBuffer<double> products(count, 0.0);
-    const auto* device_x = reinterpret_cast<const thrust::complex<Real>*>(x);
-    const auto* device_y = reinterpret_cast<const thrust::complex<Real>*>(y);
+    const auto *device_x = reinterpret_cast<const thrust::complex<Real> *>(x);
+    const auto *device_y = reinterpret_cast<const thrust::complex<Real> *>(y);
     column_products_kernel<<<count, block_threads>>>(dim, ld, device_x, device_y, products.data());
     CHECK_CUDA(cudaGetLastError());
     base_device::memory::synchronize_memory_op<double, base_device::DEVICE_CPU, base_device::DEVICE_GPU>()(
@@ -108,46 +133,62 @@ void PPCGVectorOps<T, base_device::DEVICE_GPU>::column_products(
 
 template <typename T>
 void PPCGVectorOps<T, base_device::DEVICE_GPU>::residual(
-    const int dim, const int ld, const int count, const T* hx, const T* sx, const Real* eigenvalues, T* output)
+    const int dim,
+    const int ld,
+    const int count,
+    const T *hx,
+    const T *sx,
+    const Real *eigenvalues,
+    T *output)
 {
     if (count == 0)
     {
         return;
     }
     const int blocks = 1 + (dim * count - 1) / block_threads;
-    const auto* device_hx = reinterpret_cast<const thrust::complex<Real>*>(hx);
-    const auto* device_sx = reinterpret_cast<const thrust::complex<Real>*>(sx);
-    auto* device_output = reinterpret_cast<thrust::complex<Real>*>(output);
+    const auto *device_hx = reinterpret_cast<const thrust::complex<Real> *>(hx);
+    const auto *device_sx = reinterpret_cast<const thrust::complex<Real> *>(sx);
+    auto *device_output = reinterpret_cast<thrust::complex<Real> *>(output);
     residual_kernel<<<blocks, block_threads>>>(dim, ld, count, device_hx, device_sx, eigenvalues, device_output);
     CHECK_CUDA(cudaGetLastError());
 }
 
 template <typename T>
 void PPCGVectorOps<T, base_device::DEVICE_GPU>::precondition(
-    const int dim, const int ld, const int count, const Real* diagonal, T* values)
+    const int dim,
+    const int ld,
+    const int count,
+    const Real *diagonal,
+    T *values)
 {
     if (count == 0)
     {
         return;
     }
     const int blocks = 1 + (dim * count - 1) / block_threads;
-    auto* device_values = reinterpret_cast<thrust::complex<Real>*>(values);
+    auto *device_values = reinterpret_cast<thrust::complex<Real> *>(values);
     precondition_kernel<<<blocks, block_threads>>>(dim, ld, count, diagonal, device_values);
     CHECK_CUDA(cudaGetLastError());
 }
 
 template <typename T>
 void PPCGVectorOps<T, base_device::DEVICE_GPU>::scale_columns(
-    const int dim, const int ld, const int count, const double* scales, T* x, T* sx, T* hx)
+    const int dim,
+    const int ld,
+    const int count,
+    const double *scales,
+    T *x,
+    T *sx,
+    T *hx)
 {
     if (count == 0)
     {
         return;
     }
     const int blocks = 1 + (dim * count - 1) / block_threads;
-    auto* device_x = reinterpret_cast<thrust::complex<Real>*>(x);
-    auto* device_sx = reinterpret_cast<thrust::complex<Real>*>(sx);
-    auto* device_hx = reinterpret_cast<thrust::complex<Real>*>(hx);
+    auto *device_x = reinterpret_cast<thrust::complex<Real> *>(x);
+    auto *device_sx = reinterpret_cast<thrust::complex<Real> *>(sx);
+    auto *device_hx = reinterpret_cast<thrust::complex<Real> *>(hx);
     scale_columns_kernel<<<blocks, block_threads>>>(dim, ld, count, scales, device_x, device_sx, device_hx);
     CHECK_CUDA(cudaGetLastError());
 }

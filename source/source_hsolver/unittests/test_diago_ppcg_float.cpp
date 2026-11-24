@@ -13,21 +13,26 @@
 #include "source_basis/module_pw/test/test_tool.h"
 #endif
 
-#include <gtest/gtest.h>
 #include <cmath>
 #include <complex>
+#include <gtest/gtest.h>
 #include <limits>
 #include <random>
 #include <vector>
 
-using T    = std::complex<float>;
+using T = std::complex<float>;
 using Real = float;
 
 // -----------------------------------------------------------------------------
 // Helper: dense H-matrix times a set of column vectors (column-major H).
 // -----------------------------------------------------------------------------
-static void dense_h_multiply(const T* H_data, int n_dim,
-                             const T* in, T* out, int ld, int ncol)
+static void dense_h_multiply(
+    const T *H_data,
+    int n_dim,
+    const T *in,
+    T *out,
+    int ld,
+    int ncol)
 {
     for (int j = 0; j < ncol; ++j)
     {
@@ -44,7 +49,11 @@ static void dense_h_multiply(const T* H_data, int n_dim,
 }
 
 // Orthonormalize columns of psi in-place (S = I).
-static void gram_schmidt(std::vector<T>& psi, int ld, int n_dim, int nband)
+static void gram_schmidt(
+    std::vector<T> &psi,
+    int ld,
+    int n_dim,
+    int nband)
 {
     for (int j = 0; j < nband; ++j)
     {
@@ -121,12 +130,11 @@ TEST(DiagoPPCGFloatTest, DiagonalBlockSubspace)
         /* sbsize   = */ 3,
         /* rr_step  = */ 3);
 
-    auto h_op = [&](const T* in, T* out, int ld_in, int ncol) {
-        dense_h_multiply(H_mat.data(), n_dim, in, out, ld_in, ncol);
-    };
+    auto h_op = [&](const T *in, T *out, int ld_in, int ncol)
+    { dense_h_multiply(H_mat.data(), n_dim, in, out, ld_in, ncol); };
 
-    double avg_iter = ppcg_test::diagonalize(solver, h_op, nullptr, ld, nband, n_dim,
-                                  psi_run.data(), eval.data(), ethr, prec.data());
+    double avg_iter =
+        ppcg_test::diagonalize(solver, h_op, nullptr, ld, nband, n_dim, psi_run.data(), eval.data(), ethr, prec.data());
 
     for (int i = 0; i < nband; ++i)
     {
@@ -164,8 +172,7 @@ TEST(DiagoPPCGFloatTest, TridiagonalBlockSubspace)
     std::vector<Real> exact(nband);
     for (int k = 0; k < nband; ++k)
     {
-        exact[k] = 2.0f - 2.0f * std::cos(Real(k + 1) * pi
-                                           / Real(n_dim + 1));
+        exact[k] = 2.0f - 2.0f * std::cos(Real(k + 1) * pi / Real(n_dim + 1));
     }
     std::vector<double> ethr(nband, 1e-4);
 
@@ -190,12 +197,11 @@ TEST(DiagoPPCGFloatTest, TridiagonalBlockSubspace)
         /* sbsize   = */ 4,
         /* rr_step  = */ 4);
 
-    auto h_op = [&](const T* in, T* out, int ld_in, int ncol) {
-        dense_h_multiply(H_mat.data(), n_dim, in, out, ld_in, ncol);
-    };
+    auto h_op = [&](const T *in, T *out, int ld_in, int ncol)
+    { dense_h_multiply(H_mat.data(), n_dim, in, out, ld_in, ncol); };
 
-    double avg_iter = ppcg_test::diagonalize(solver, h_op, nullptr, ld, nband, n_dim,
-                                  psi_run.data(), eval.data(), ethr, prec.data());
+    double avg_iter =
+        ppcg_test::diagonalize(solver, h_op, nullptr, ld, nband, n_dim, psi_run.data(), eval.data(), ethr, prec.data());
 
     for (int i = 0; i < nband; ++i)
     {
@@ -228,21 +234,20 @@ TEST(DiagoPPCGFloatTest, NonFiniteInputThrows)
     hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(
         /* diag_thr = */ 1e-5f, 100, 3, 3);
 
-    auto h_op = [&](const T* in, T* out, int ld_in, int ncol) {
-        dense_h_multiply(H_mat.data(), n_dim, in, out, ld_in, ncol);
-    };
+    auto h_op = [&](const T *in, T *out, int ld_in, int ncol)
+    { dense_h_multiply(H_mat.data(), n_dim, in, out, ld_in, ncol); };
 
     std::vector<double> bad_ethr = ethr;
     bad_ethr[0] = std::numeric_limits<double>::quiet_NaN();
-    EXPECT_THROW(ppcg_test::diagonalize(solver, h_op, nullptr, ld, nband, n_dim,
-                             psi.data(), eval.data(), bad_ethr, prec.data()),
-                 std::invalid_argument);
+    EXPECT_THROW(
+        ppcg_test::diagonalize(solver, h_op, nullptr, ld, nband, n_dim, psi.data(), eval.data(), bad_ethr, prec.data()),
+        std::invalid_argument);
 
     std::vector<Real> bad_prec = prec;
     bad_prec[0] = std::numeric_limits<Real>::quiet_NaN();
-    EXPECT_THROW(ppcg_test::diagonalize(solver, h_op, nullptr, ld, nband, n_dim,
-                             psi.data(), eval.data(), ethr, bad_prec.data()),
-                 std::invalid_argument);
+    EXPECT_THROW(
+        ppcg_test::diagonalize(solver, h_op, nullptr, ld, nband, n_dim, psi.data(), eval.data(), ethr, bad_prec.data()),
+        std::invalid_argument);
 }
 
 TEST(DiagoPPCGFloatTest, RankDeficientStartupSubspace)
@@ -266,24 +271,22 @@ TEST(DiagoPPCGFloatTest, RankDeficientStartupSubspace)
     psi[3 + ld] = T(1, 0);
     std::vector<Real> eval(nband, Real(0));
     const std::vector<double> ethr(nband, 1e-4);
-    const auto h_op = [&h_mat, n_dim](const T* in, T* out, int ld_in, int ncol) {
-        dense_h_multiply(h_mat.data(), n_dim, in, out, ld_in, ncol);
-    };
+    const auto h_op = [&h_mat, n_dim](const T *in, T *out, int ld_in, int ncol)
+    { dense_h_multiply(h_mat.data(), n_dim, in, out, ld_in, ncol); };
     hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(
         /* diag_thr = */ 1e-5f,
         /* max_iter = */ 20,
         /* sbsize   = */ 1,
         /* rr_step  = */ 2);
 
-    ppcg_test::diagonalize(solver, h_op, nullptr, ld, nband, n_dim,
-                psi.data(), eval.data(), ethr, prec.data());
+    ppcg_test::diagonalize(solver, h_op, nullptr, ld, nband, n_dim, psi.data(), eval.data(), ethr, prec.data());
 
     EXPECT_NEAR(eval[0], Real(1), Real(2e-4));
     EXPECT_NEAR(eval[1], Real(2), Real(2e-4));
     EXPECT_TRUE(solver.converged());
 }
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
 #ifdef __MPI
     int nproc = 1;

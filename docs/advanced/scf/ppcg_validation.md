@@ -161,3 +161,9 @@ ABACUS_MPIEXEC_PREFLAGS='--bind-to core --map-by core' \
 ```
 
 The CUDA CI workflow now explicitly runs the GPU unit target, and its existing `11_PW_GPU` run includes all six new application fixtures. Local logs, the transfer audit, executable hashes and the failed-probe diagnostics are archived in `/mnt/data/Cheerly/ppcg-review-20261124/gpu-port/`.
+
+## Formatting follow-up
+
+On 2026-11-25, a formatting-only cleanup applied the repository's configured tools to new files and modified regions. All 16 new C++/CUDA source/header files passed `clang-format 23.1.3 --dry-run --Werror`. The MPI shell helper uses the exact shfmt output from CI and passes `bash -n`. CPU and CUDA applications were rebuilt; focused CPU MPI CTest passed 6/6, non-MPI CTest passed 3/3, and the GPU target passed all six cases again. Numerical settings, references and iteration budgets were unchanged.
+
+The repository-wide pre-commit job is advisory (`continue-on-error: true`). Its raw clang-format, cmake-format and shfmt hooks failed even though GitHub displayed a successful job. The log included formatting changes in 2,475 files outside this PR and unsupported JSON-language configuration errors. A green job result therefore does not certify repository-wide formatting; the focused checks above describe this PR's validation. Existing files were formatted only in the modified regions to avoid an unrelated repository-wide rewrite.

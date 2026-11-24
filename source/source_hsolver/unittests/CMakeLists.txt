@@ -153,22 +153,19 @@ endif()
 addtest(
   TARGET MODULE_HSOLVER_ppcg
   LIBS parameter base psi device container
-  SOURCES test_diago_ppcg.cpp
-          test_diago_ppcg_iteration.cpp
-          test_diago_ppcg_roots.cpp
-          test_diago_ppcg_subspace.cpp
-          ../diago_ppcg.cpp
-          ../../source_basis/module_pw/test/test_tool.cpp)
+  SOURCES test_diago_ppcg.cpp test_diago_ppcg_iteration.cpp
+          test_diago_ppcg_roots.cpp test_diago_ppcg_subspace.cpp
+          ../diago_ppcg.cpp ../../source_basis/module_pw/test/test_tool.cpp)
 
 if(USE_CUDA)
-  AddTest(
+  addtest(
     TARGET MODULE_HSOLVER_ppcg_gpu
     LIBS parameter base psi device container
     SOURCES test_diago_ppcg_gpu.cpp ../diago_ppcg.cpp
             ../../source_basis/module_pw/test/test_tool.cpp
-    KEEP_FEATURE_DEFINITIONS __CUDA
-  )
-  set_tests_properties(MODULE_HSOLVER_ppcg_gpu PROPERTIES LABELS "GPU" TIMEOUT 180)
+    KEEP_FEATURE_DEFINITIONS __CUDA)
+  set_tests_properties(MODULE_HSOLVER_ppcg_gpu PROPERTIES LABELS "GPU" TIMEOUT
+                                                          180)
 endif()
 
 addtest(

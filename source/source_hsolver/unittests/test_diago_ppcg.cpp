@@ -7,24 +7,30 @@
 #include "source_basis/module_pw/test/test_tool.h"
 #endif
 
-#include <gtest/gtest.h>
 #include <algorithm>
 #include <cmath>
+#include <complex>
+#include <gtest/gtest.h>
 #include <ostream>
 #include <random>
 #include <vector>
-#include <complex>
 
+using ppcg_test::dense_h_multiply;
 using ppcg_test::DiagoPPCGMatrixTest;
+using ppcg_test::initialize_vectors;
 using ppcg_test::Real;
 using ppcg_test::T;
-using ppcg_test::dense_h_multiply;
-using ppcg_test::initialize_vectors;
 
 namespace ppcg_test
 {
 
-void dense_h_multiply(const T* H_data, int n_dim, const T* in, T* out, int ld, int ncol)
+void dense_h_multiply(
+    const T *H_data,
+    int n_dim,
+    const T *in,
+    T *out,
+    int ld,
+    int ncol)
 {
     for (int j = 0; j < ncol; ++j)
     {
@@ -40,7 +46,12 @@ void dense_h_multiply(const T* H_data, int n_dim, const T* in, T* out, int ld, i
     }
 }
 
-void initialize_vectors(std::vector<T>& psi, int n_dim, int nband, int ld, unsigned seed)
+void initialize_vectors(
+    std::vector<T> &psi,
+    int n_dim,
+    int nband,
+    int ld,
+    unsigned seed)
 {
     std::mt19937 rng(seed);
     std::uniform_real_distribution<Real> dist(-1.0, 1.0);
@@ -85,7 +96,7 @@ void initialize_vectors(std::vector<T>& psi, int n_dim, int nband, int ld, unsig
 // Like the CG test's preparation table, each row describes one complete solve.
 struct PPCGLaplacianCase
 {
-    const char* name;
+    const char *name;
     int dimension;
     int bands;
     unsigned seed;
@@ -98,43 +109,42 @@ struct PPCGLaplacianCase
     double eigenvalue_tolerance;
 };
 
-static void PrintTo(const PPCGLaplacianCase& config, std::ostream* out)
-{
-    *out << config.name;
-}
+static void PrintTo(const PPCGLaplacianCase &config, std::ostream *out) { *out << config.name; }
 
-class DiagoPPCGLaplacianTest : public DiagoPPCGMatrixTest,
-                               public ::testing::WithParamInterface<PPCGLaplacianCase>
+class DiagoPPCGLaplacianTest : public DiagoPPCGMatrixTest, public ::testing::WithParamInterface<PPCGLaplacianCase>
 {
 };
 
 TEST_P(DiagoPPCGLaplacianTest, MatchesAnalyticalEigenvalues)
 {
-    const PPCGLaplacianCase& config = GetParam();
+    const PPCGLaplacianCase &config = GetParam();
     initialize(config.dimension, config.bands, config.seed, config.band_threshold);
     set_laplacian(config.matrix_scale);
-    check_eigenvalues(config.diag_threshold, config.max_iterations, config.block_size,
-                      config.ritz_interval, config.eigenvalue_tolerance);
+    check_eigenvalues(
+        config.diag_threshold, config.max_iterations, config.block_size, config.ritz_interval,
+        config.eigenvalue_tolerance);
 }
 
 INSTANTIATE_TEST_SUITE_P(
     Laplacians,
     DiagoPPCGLaplacianTest,
-    ([] {
-        const PPCGLaplacianCase laplacian_cases[] = {
-            // name, dimension, bands, seed, band threshold, scale, diag threshold, budget, block, Ritz interval, tolerance
-            {"Tridiagonal10", 10, 3, 42, 1e-10, 1.0, 1e-12, 100, 4, 4, 1e-8},
-            {"SingleBand", 5, 1, 42, 1e-10, 1.0, 1e-12, 50, 1, 1, 1e-8},
-            {"AllBands", 3, 3, 101, 1e-10, 1.0, 1e-12, 100, 3, 3, 1e-8},
-            {"Laplacian15", 15, 4, 202, 1e-10, 1.0, 1e-12, 120, 4, 4, 1e-8},
-            {"Laplacian20", 20, 5, 789, 1e-10, 1.0, 1e-12, 150, 5, 5, 1e-8},
-            {"ScaledLaplacian", 8, 3, 808, 1e-8, 100.0, 1e-10, 120, 4, 4, 1e-6},
-            {"ManyBands", 12, 4, 909, 1e-10, 1.0, 1e-12, 150, 4, 4, 1e-8},
-            {"RitzEveryIteration", 8, 3, 111, 1e-10, 1.0, 1e-12, 100, 3, 1, 1e-8},
-            {"TightThreshold", 6, 2, 333, 1e-14, 1.0, 1e-14, 200, 3, 3, 1e-8}};
-        return ::testing::ValuesIn(laplacian_cases);
-    }()),
-    [](const ::testing::TestParamInfo<PPCGLaplacianCase>& info) { return info.param.name; });
+    (
+        []
+        {
+            const PPCGLaplacianCase laplacian_cases[] = {// name, dimension, bands, seed, band threshold, scale, diag
+                                                         // threshold, budget, block, Ritz interval, tolerance
+                {"Tridiagonal10", 10, 3, 42, 1e-10, 1.0, 1e-12, 100, 4, 4, 1e-8},
+                {"SingleBand", 5, 1, 42, 1e-10, 1.0, 1e-12, 50, 1, 1, 1e-8},
+                {"AllBands", 3, 3, 101, 1e-10, 1.0, 1e-12, 100, 3, 3, 1e-8},
+                {"Laplacian15", 15, 4, 202, 1e-10, 1.0, 1e-12, 120, 4, 4, 1e-8},
+                {"Laplacian20", 20, 5, 789, 1e-10, 1.0, 1e-12, 150, 5, 5, 1e-8},
+                {"ScaledLaplacian", 8, 3, 808, 1e-8, 100.0, 1e-10, 120, 4, 4, 1e-6},
+                {"ManyBands", 12, 4, 909, 1e-10, 1.0, 1e-12, 150, 4, 4, 1e-8},
+                {"RitzEveryIteration", 8, 3, 111, 1e-10, 1.0, 1e-12, 100, 3, 1, 1e-8},
+                {"TightThreshold", 6, 2, 333, 1e-14, 1.0, 1e-14, 200, 3, 3, 1e-8}};
+            return ::testing::ValuesIn(laplacian_cases);
+        }()),
+    [](const ::testing::TestParamInfo<PPCGLaplacianCase> &info) { return info.param.name; });
 
 // Test fixture: 2×2 matrix — smallest non-trivial case
 // H = [[2, 1], [1, 2]], eigenvalues: 1, 3
@@ -197,7 +207,8 @@ TEST_F(DiagoPPCGMatrixTest, DenseKnownSpectrum)
 
     // Apply several Givens rotations to make it dense while preserving
     // eigenvalues. Each rotation: A' = G(i,j,θ)^T * A * G(i,j,θ)
-    auto apply_givens = [&](int p, int q, Real theta) {
+    auto apply_givens = [&](int p, int q, Real theta)
+    {
         Real c = std::cos(theta);
         Real s = std::sin(theta);
         // Apply to columns
@@ -258,7 +269,7 @@ TEST_F(DiagoPPCGMatrixTest, DenseKnownSpectrum)
 }
 
 // Euclidean column norm for independent residual checks
-static Real column_norm(const T* x, int n_dim)
+static Real column_norm(const T *x, int n_dim)
 {
     Real nrm = 0;
     for (int i = 0; i < n_dim; ++i)
@@ -270,7 +281,7 @@ static Real column_norm(const T* x, int n_dim)
 
 struct PPCGOverlapCase
 {
-    const char* name;
+    const char *name;
     unsigned seed;
     int bands;
     int leading_dimension;
@@ -279,20 +290,16 @@ struct PPCGOverlapCase
     double residual_threshold;
 };
 
-static void PrintTo(const PPCGOverlapCase& config, std::ostream* out)
-{
-    *out << config.name;
-}
+static void PrintTo(const PPCGOverlapCase &config, std::ostream *out) { *out << config.name; }
 
 // H is the six-dimensional Laplacian. Diagonal S also exercises padded vectors;
 // tridiagonal S shares H's sine eigenvectors and has analytical eigenvalues.
-class DiagoPPCGGeneralizedTest : public DiagoPPCGMatrixTest,
-                                 public ::testing::WithParamInterface<PPCGOverlapCase>
+class DiagoPPCGGeneralizedTest : public DiagoPPCGMatrixTest, public ::testing::WithParamInterface<PPCGOverlapCase>
 {
   protected:
     void SetUp() override
     {
-        const PPCGOverlapCase& config = GetParam();
+        const PPCGOverlapCase &config = GetParam();
         n_dim = 6;
         nband = config.bands;
         ld = config.leading_dimension;
@@ -337,10 +344,10 @@ class DiagoPPCGGeneralizedTest : public DiagoPPCGMatrixTest,
         std::vector<T> s_column(n_dim);
         for (int j = 0; j < nband; ++j)
         {
-            T* column = psi.data() + j * ld;
+            T *column = psi.data() + j * ld;
             for (int k = 0; k < j; ++k)
             {
-                const T* previous = psi.data() + k * ld;
+                const T *previous = psi.data() + k * ld;
                 dense_h_multiply(S_mat.data(), n_dim, previous, s_column.data(), n_dim, 1);
                 T overlap = 0;
                 for (int i = 0; i < n_dim; ++i)
@@ -368,7 +375,11 @@ class DiagoPPCGGeneralizedTest : public DiagoPPCGMatrixTest,
         }
     }
 
-    void apply_overlap(const T* in, T* out, int leading_dimension, int columns) const
+    void apply_overlap(
+        const T *in,
+        T *out,
+        int leading_dimension,
+        int columns) const
     {
         const bool tridiagonal = GetParam().tridiagonal;
         for (int j = 0; j < columns; ++j)
@@ -395,17 +406,14 @@ class DiagoPPCGGeneralizedTest : public DiagoPPCGMatrixTest,
 
 TEST_P(DiagoPPCGGeneralizedTest, EigenpairsAndSOrthogonality)
 {
-    const PPCGOverlapCase& config = GetParam();
+    const PPCGOverlapCase &config = GetParam();
     std::vector<Real> eval(nband, 0.0);
     hsolver::DiagoPPCG<T, base_device::DEVICE_CPU> solver(1e-10, config.max_iterations, 3, 3);
-    const auto h_op = [this](const T* in, T* out, int stride, int columns) {
-        dense_h_multiply(H_mat.data(), n_dim, in, out, stride, columns);
-    };
-    const auto s_op = [this](const T* in, T* out, int stride, int columns) {
-        apply_overlap(in, out, stride, columns);
-    };
-    const double iterations = ppcg_test::diagonalize(solver,
-        h_op, s_op, ld, nband, n_dim, psi.data(), eval.data(), ethr, prec.data());
+    const auto h_op = [this](const T *in, T *out, int stride, int columns)
+    { dense_h_multiply(H_mat.data(), n_dim, in, out, stride, columns); };
+    const auto s_op = [this](const T *in, T *out, int stride, int columns) { apply_overlap(in, out, stride, columns); };
+    const double iterations =
+        ppcg_test::diagonalize(solver, h_op, s_op, ld, nband, n_dim, psi.data(), eval.data(), ethr, prec.data());
     if (config.tridiagonal)
     {
         EXPECT_TRUE(solver.converged());
@@ -458,14 +466,15 @@ TEST_P(DiagoPPCGGeneralizedTest, EigenpairsAndSOrthogonality)
 INSTANTIATE_TEST_SUITE_P(
     OverlapOperators,
     DiagoPPCGGeneralizedTest,
-    ([] {
-        const PPCGOverlapCase generalized_overlap_cases[] = {
-            // name, seed, bands, leading dimension, iteration budget, tridiagonal, residual tolerance
-            {"Diagonal", 333, 3, 8, 100, false, 1e-6},
-            {"Tridiagonal", 444, 2, 6, 150, true, 1e-8}};
-        return ::testing::ValuesIn(generalized_overlap_cases);
-    }()),
-    [](const ::testing::TestParamInfo<PPCGOverlapCase>& info) { return info.param.name; });
+    (
+        []
+        {
+            const PPCGOverlapCase generalized_overlap_cases[] = {
+                // name, seed, bands, leading dimension, iteration budget, tridiagonal, residual tolerance
+                {"Diagonal", 333, 3, 8, 100, false, 1e-6}, {"Tridiagonal", 444, 2, 6, 150, true, 1e-8}};
+            return ::testing::ValuesIn(generalized_overlap_cases);
+        }()),
+    [](const ::testing::TestParamInfo<PPCGOverlapCase> &info) { return info.param.name; });
 
 // Test fixture: eigenvector quality — verify Hψ ≈ εψ and ψ^H ψ = I
 // Uses the 10×10 tridiagonal Laplacian. After convergence, check:
@@ -647,19 +656,18 @@ TEST(DiagoPPCGRandomMatrixTest, ConvergesWithDiagonalPreconditioner)
     initialize_vectors(psi, n_dim, nband, n_dim, 42);
     std::vector<Real> eval(nband, 0.0);
     const std::vector<double> ethr(nband, 1e-4);
-    const auto h_op = [&h, n_dim](const T* in, T* out, int ld, int ncol) {
-        dense_h_multiply(h.data(), n_dim, in, out, ld, ncol);
-    };
+    const auto h_op = [&h, n_dim](const T *in, T *out, int ld, int ncol)
+    { dense_h_multiply(h.data(), n_dim, in, out, ld, ncol); };
     hsolver::DiagoPPCG<T, base_device::DEVICE_CPU> solver(1e-8, 500, nband, 4);
-    const double iterations = ppcg_test::diagonalize(solver, h_op, nullptr, n_dim, nband, n_dim,
-                                          psi.data(), eval.data(), ethr, prec.data());
+    const double iterations =
+        ppcg_test::diagonalize(solver, h_op, nullptr, n_dim, nband, n_dim, psi.data(), eval.data(), ethr, prec.data());
     EXPECT_TRUE(solver.converged());
     EXPECT_TRUE(std::isfinite(solver.max_residual()));
     EXPECT_LE(solver.max_residual(), 1e-4);
     EXPECT_LE(iterations, 500.0);
 }
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
 #ifdef __MPI
     int nproc = 1;

@@ -1,65 +1,67 @@
 #include "diago_ppcg.h"
 #include "hs_operator.h"
 #include "kernels/ppcg_kernel_op.h"
+#include "source_base/kernels/math_kernel_op.h"
 #include "source_base/parallel_cell.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
+#include <ATen/kernels/lapack.h>
 #include <algorithm>
 #include <cmath>
-#include <vector>
-#include <ATen/kernels/lapack.h>
-#include <stdexcept>
-#include "source_base/kernels/math_kernel_op.h"
 #include <cstdlib>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <limits>
 #include <numeric>
+#include <stdexcept>
 #include <utility>
+#include <vector>
 
-namespace hsolver {
-namespace {
+namespace hsolver
+{
+namespace
+{
 
 #ifdef _OPENMP
 // Shared scheduling cutoff; an enumerator has no mutable or allocated storage.
-enum { openmp_work_threshold = 4096 };
+enum
+{
+    openmp_work_threshold = 4096
+};
 #endif
 
 // A whole-function timer also closes correctly on early return or exception.
 class PPCGFunctionTimer
 {
-public:
-    explicit PPCGFunctionTimer(const char* function) : function_(function)
+  public:
+    explicit PPCGFunctionTimer(const char *function) : function_(function)
     {
         ModuleBase::timer::start("DiagoPPCG", function_);
     }
 
-    ~PPCGFunctionTimer()
-    {
-        ModuleBase::timer::end("DiagoPPCG", function_);
-    }
+    ~PPCGFunctionTimer() { ModuleBase::timer::end("DiagoPPCG", function_); }
 
-private:
-    const char* function_;
+  private:
+    const char *function_;
 };
 
 } // namespace
 } // namespace hsolver
 
-
-
-namespace hsolver {
-namespace {
+namespace hsolver
+{
+namespace
+{
 
 template <typename Value>
-void reduce_pool_values(Value& value)
+void reduce_pool_values(Value &value)
 {
     Parallel_Reduce::reduce_pool(value);
 }
 
 template <typename Value>
-void reduce_pool_values(Value* value, const int n)
+void reduce_pool_values(Value *value, const int n)
 {
     Parallel_Reduce::reduce_pool(value, n);
 }
@@ -73,9 +75,9 @@ bool all_pool_operations_succeeded(const bool local_success)
 
 template <typename T, typename Device, typename Real>
 Real max_generalized_residual(
-    const T* hpsi,
-    const T* spsi,
-    const Real* eigenvalue,
+    const T *hpsi,
+    const T *spsi,
+    const Real *eigenvalue,
     int ld,
     int n_dim,
     int ncol)
@@ -103,7 +105,7 @@ Real max_generalized_residual(
 }
 
 template <typename T, typename Device>
-void copy_values(const T* source, const int count, T* destination)
+void copy_values(const T *source, const int count, T *destination)
 {
     if (count > 0)
     {
@@ -112,7 +114,7 @@ void copy_values(const T* source, const int count, T* destination)
 }
 
 template <typename T, typename Device>
-void zero_values(T* destination, const int count)
+void zero_values(T *destination, const int count)
 {
     if (count > 0)
     {
@@ -121,19 +123,18 @@ void zero_values(T* destination, const int count)
 }
 
 template <typename T, typename Device, typename Buffer>
-void set_zero(Buffer& values)
+void set_zero(Buffer &values)
 {
     zero_values<T, Device>(values.data(), int(values.size()));
 }
 
 template <typename T, typename Device>
-typename PPCGWorkspaceType<T, Device>::type upload_values(const T* values, const int count)
+typename PPCGWorkspaceType<T, Device>::type upload_values(const T *values, const int count)
 {
     typename PPCGWorkspaceType<T, Device>::type result(count, T(0));
     if (count > 0)
     {
-        base_device::memory::synchronize_memory_op<T, Device, base_device::DEVICE_CPU>()(
-            result.data(), values, count);
+        base_device::memory::synchronize_memory_op<T, Device, base_device::DEVICE_CPU>()(result.data(), values, count);
     }
     return result;
 }
@@ -141,10 +142,10 @@ typename PPCGWorkspaceType<T, Device>::type upload_values(const T* values, const
 } // anonymous namespace
 } // namespace hsolver
 
-
-
-namespace hsolver {
-namespace {
+namespace hsolver
+{
+namespace
+{
 
 template <typename Scalar>
 struct HermitianLapack
@@ -152,11 +153,14 @@ struct HermitianLapack
     using Real = typename container::GetTypeReal<Scalar>::type;
     using Device = container::DEVICE_CPU;
 
-    static void sygvd(int n, Scalar* a, Scalar* b, Real* w)
+    static void sygvd(
+        int n,
+        Scalar *a,
+        Scalar *b,
+        Real *w)
     {
         std::vector<Scalar> eigenvectors(n * n);
-        container::kernels::lapack_hegvd<Scalar, Device>()(
-            n, n, a, b, w, eigenvectors.data());
+        container::kernels::lapack_hegvd<Scalar, Device>()(n, n, a, b, w, eigenvectors.data());
         std::copy(eigenvectors.begin(), eigenvectors.end(), a);
     }
 };
@@ -164,12 +168,12 @@ struct HermitianLapack
 } // anonymous namespace
 } // namespace hsolver
 
+namespace hsolver
+{
+namespace
+{
 
-
-namespace hsolver {
-namespace {
-
-bool ppcg_contiguous_cols(const std::vector<int>& cols, int& first)
+bool ppcg_contiguous_cols(const std::vector<int> &cols, int &first)
 {
     if (cols.empty())
     {
@@ -189,10 +193,11 @@ bool ppcg_contiguous_cols(const std::vector<int>& cols, int& first)
 
 } // anonymous namespace
 
-bool ppcg_workspace_dimensions_valid(const int ld_psi,
-                                     const int nband,
-                                     const int dim,
-                                     const int sbsize)
+bool ppcg_workspace_dimensions_valid(
+    const int ld_psi,
+    const int nband,
+    const int dim,
+    const int sbsize)
 {
     if (ld_psi <= 0 || nband <= 0 || dim <= 0 || dim > ld_psi)
     {
@@ -234,14 +239,12 @@ bool ppcg_workspace_dimensions_valid(const int ld_psi,
 // Constructor
 // =============================================================================
 template <typename T, typename Device>
-DiagoPPCG<T, Device>::DiagoPPCG(const Real& diag_thr,
-                                 const int& diag_iter_max,
-                                 const int& sbsize,
-                                 const int& rr_step)
-    : maxiter_(diag_iter_max),
-      sbsize_(sbsize),
-      rr_step_(rr_step),
-      diag_thr_(diag_thr)
+DiagoPPCG<T, Device>::DiagoPPCG(
+    const Real &diag_thr,
+    const int &diag_iter_max,
+    const int &sbsize,
+    const int &rr_step)
+    : maxiter_(diag_iter_max), sbsize_(sbsize), rr_step_(rr_step), diag_thr_(diag_thr)
 {
     sbsize_ = std::max(1, sbsize_);
     rr_step_ = std::max(1, rr_step_);
@@ -254,10 +257,10 @@ DiagoPPCG<T, Device>::DiagoPPCG(const Real& diag_thr,
 // =============================================================================
 template <typename T, typename Device>
 void DiagoPPCG<T, Device>::validate_input(
-    const T* psi_in,
-    const Real* eigenvalue_in,
-    const std::vector<double>& ethr_band,
-    const Real* prec) const
+    const T *psi_in,
+    const Real *eigenvalue_in,
+    const std::vector<double> &ethr_band,
+    const Real *prec) const
 {
     std::string local_error;
     try
@@ -301,7 +304,7 @@ void DiagoPPCG<T, Device>::validate_input(
             }
         }
     }
-    catch (const std::invalid_argument& error)
+    catch (const std::invalid_argument &error)
     {
         local_error = error.what();
     }
@@ -322,17 +325,22 @@ void DiagoPPCG<T, Device>::validate_input(
 // Operator application
 // =============================================================================
 template <typename T, typename Device>
-void DiagoPPCG<T, Device>::apply_h(const HSOperator<T, Device>& op,
-                                    T* psi_in, T* hpsi_out,
-                                    int ncol) const
+void DiagoPPCG<T, Device>::apply_h(
+    const HSOperator<T, Device> &op,
+    T *psi_in,
+    T *hpsi_out,
+    int ncol) const
 {
     const PPCGFunctionTimer timer("apply_h");
     op.hpsi(psi_in, hpsi_out, ld_psi_, ncol);
 }
 
 template <typename T, typename Device>
-void DiagoPPCG<T, Device>::apply_s(const HSOperator<T, Device>& op,
-                                 T* psi_in, T* spsi_out, int ncol) const
+void DiagoPPCG<T, Device>::apply_s(
+    const HSOperator<T, Device> &op,
+    T *psi_in,
+    T *spsi_out,
+    int ncol) const
 {
     const PPCGFunctionTimer timer("apply_s");
     op.spsi(psi_in, spsi_out, ld_psi_, ncol);
@@ -342,8 +350,7 @@ void DiagoPPCG<T, Device>::apply_s(const HSOperator<T, Device>& op,
 // Inner product <x|y> (real part only, for Hermitian operators)
 // =============================================================================
 template <typename T, typename Device>
-typename DiagoPPCG<T, Device>::Real
-DiagoPPCG<T, Device>::gamma_dot(const T* x, const T* y) const
+typename DiagoPPCG<T, Device>::Real DiagoPPCG<T, Device>::gamma_dot(const T *x, const T *y) const
 {
     Real result = ModuleBase::dot_real_op<T, Device>()(n_dim_, x, y, false);
     reduce_pool_values(result);
@@ -354,29 +361,21 @@ DiagoPPCG<T, Device>::gamma_dot(const T* x, const T* y) const
 // Gram matrix: out[i, j] = <a_i | b_j>
 // =============================================================================
 template <typename T, typename Device>
-void DiagoPPCG<T, Device>::gram(const T* mat_a, const T* mat_b,
-                                 int ncol_a, int ncol_b,
-                                 std::vector<T>& out,
-                                 int ld_out) const
+void DiagoPPCG<T, Device>::gram(
+    const T *mat_a,
+    const T *mat_b,
+    int ncol_a,
+    int ncol_b,
+    std::vector<T> &out,
+    int ld_out) const
 {
     const int reduction_count = ld_out * ncol_b;
     out.resize(reduction_count);
     Workspace projected(reduction_count, T(0));
     const T one = T(1);
     const T zero = T(0);
-    ModuleBase::gemm_op<T, Device>()('C',
-                                     'N',
-                                     ncol_a,
-                                     ncol_b,
-                                     n_dim_,
-                                     &one,
-                                     mat_a,
-                                     ld_psi_,
-                                     mat_b,
-                                     ld_psi_,
-                                     &zero,
-                                     projected.data(),
-                                     ld_out);
+    ModuleBase::gemm_op<T, Device>()(
+        'C', 'N', ncol_a, ncol_b, n_dim_, &one, mat_a, ld_psi_, mat_b, ld_psi_, &zero, projected.data(), ld_out);
     base_device::memory::synchronize_memory_op<T, base_device::DEVICE_CPU, Device>()(
         out.data(), projected.data(), reduction_count);
     reduce_pool_values(out.data(), reduction_count);
@@ -386,9 +385,7 @@ void DiagoPPCG<T, Device>::gram(const T* mat_a, const T* mat_b,
 // Column gather: extract selected columns into contiguous storage
 // =============================================================================
 template <typename T, typename Device>
-void DiagoPPCG<T, Device>::copy_cols(const T* src,
-                                      const std::vector<int>& cols,
-                                      Workspace& dst) const
+void DiagoPPCG<T, Device>::copy_cols(const T *src, const std::vector<int> &cols, Workspace &dst) const
 {
     const int ncols = int(cols.size());
     dst.resize(ld_psi_ * ncols);
@@ -399,15 +396,15 @@ void DiagoPPCG<T, Device>::copy_cols(const T* src,
     int first = 0;
     if (ppcg_contiguous_cols(cols, first))
     {
-        const T* source = src + first * ld_psi_;
+        const T *source = src + first * ld_psi_;
         const int count = ld_psi_ * ncols;
         copy_values<T, Device>(source, count, dst.data());
         return;
     }
     for (int j = 0; j < ncols; ++j)
     {
-        const T* source = src + cols[j] * ld_psi_;
-        T* destination = dst.data() + j * ld_psi_;
+        const T *source = src + cols[j] * ld_psi_;
+        T *destination = dst.data() + j * ld_psi_;
         copy_values<T, Device>(source, ld_psi_, destination);
     }
 }
@@ -416,10 +413,7 @@ void DiagoPPCG<T, Device>::copy_cols(const T* src,
 // Column scatter: write contiguous storage back into selected columns
 // =============================================================================
 template <typename T, typename Device>
-void DiagoPPCG<T, Device>::scatter_cols(
-    T* dst,
-    const std::vector<int>& cols,
-    const Workspace& src) const
+void DiagoPPCG<T, Device>::scatter_cols(T *dst, const std::vector<int> &cols, const Workspace &src) const
 {
     const int ncols = int(cols.size());
     if (ncols == 0)
@@ -429,15 +423,15 @@ void DiagoPPCG<T, Device>::scatter_cols(
     int first = 0;
     if (ppcg_contiguous_cols(cols, first))
     {
-        T* destination = dst + first * ld_psi_;
+        T *destination = dst + first * ld_psi_;
         const int count = ld_psi_ * ncols;
         copy_values<T, Device>(src.data(), count, destination);
         return;
     }
     for (int j = 0; j < ncols; ++j)
     {
-        const T* source = src.data() + j * ld_psi_;
-        T* destination = dst + cols[j] * ld_psi_;
+        const T *source = src.data() + j * ld_psi_;
+        T *destination = dst + cols[j] * ld_psi_;
         copy_values<T, Device>(source, ld_psi_, destination);
     }
 }
@@ -447,10 +441,14 @@ void DiagoPPCG<T, Device>::scatter_cols(
 // =============================================================================
 template <typename T, typename Device>
 void DiagoPPCG<T, Device>::project_against(
-    const T* basis, const T* sbasis, const T* hbasis,
-    const std::vector<int>& basis_cols,
-    Workspace& x, Workspace& sx, Workspace* hx,
-    const std::vector<int>& x_cols) const
+    const T *basis,
+    const T *sbasis,
+    const T *hbasis,
+    const std::vector<int> &basis_cols,
+    Workspace &x,
+    Workspace &sx,
+    Workspace *hx,
+    const std::vector<int> &x_cols) const
 {
     const PPCGFunctionTimer timer("project_against");
     if (basis_cols.empty() || x_cols.empty())
@@ -467,9 +465,9 @@ void DiagoPPCG<T, Device>::project_against(
     Workspace x_l;
     Workspace sx_l;
     Workspace hx_l;
-    T* x_data = x.data() + x_first * ld_psi_;
-    T* sx_data = sx.data() + x_first * ld_psi_;
-    T* hx_data = hx == nullptr ? nullptr : hx->data() + x_first * ld_psi_;
+    T *x_data = x.data() + x_first * ld_psi_;
+    T *sx_data = sx.data() + x_first * ld_psi_;
+    T *hx_data = hx == nullptr ? nullptr : hx->data() + x_first * ld_psi_;
     if (!contiguous_x)
     {
         x_l.reserve(ld_psi_ * nx);
@@ -486,15 +484,14 @@ void DiagoPPCG<T, Device>::project_against(
     }
 
     int basis_first = 0;
-    const bool contiguous_basis =
-        ppcg_contiguous_cols(basis_cols, basis_first);
+    const bool contiguous_basis = ppcg_contiguous_cols(basis_cols, basis_first);
 
     Workspace basis_l;
     Workspace sbasis_l;
     Workspace hbasis_l;
-    const T* basis_data = basis + basis_first * ld_psi_;
-    const T* sbasis_data = sbasis + basis_first * ld_psi_;
-    const T* hbasis_data = hbasis == nullptr ? nullptr : hbasis + basis_first * ld_psi_;
+    const T *basis_data = basis + basis_first * ld_psi_;
+    const T *sbasis_data = sbasis + basis_first * ld_psi_;
+    const T *hbasis_data = hbasis == nullptr ? nullptr : hbasis + basis_first * ld_psi_;
     if (!contiguous_basis)
     {
         basis_l.reserve(ld_psi_ * nbasis);
@@ -517,48 +514,18 @@ void DiagoPPCG<T, Device>::project_against(
     auto device_coeff = upload_values<T, Device>(coeff.data(), coefficient_count);
     const T minus_one = T(-1);
     const T one = T(1);
-    ModuleBase::gemm_op<T, Device>()('N',
-                                     'N',
-                                     n_dim_,
-                                     nx,
-                                     nbasis,
-                                     &minus_one,
-                                     basis_data,
-                                     ld_psi_,
-                                     device_coeff.data(),
-                                     nbasis,
-                                     &one,
-                                     x_data,
-                                     ld_psi_);
-    ModuleBase::gemm_op<T, Device>()('N',
-                                     'N',
-                                     n_dim_,
-                                     nx,
-                                     nbasis,
-                                     &minus_one,
-                                     sbasis_data,
-                                     ld_psi_,
-                                     device_coeff.data(),
-                                     nbasis,
-                                     &one,
-                                     sx_data,
-                                     ld_psi_);
+    ModuleBase::gemm_op<T, Device>()(
+        'N', 'N', n_dim_, nx, nbasis, &minus_one, basis_data, ld_psi_, device_coeff.data(), nbasis, &one, x_data,
+        ld_psi_);
+    ModuleBase::gemm_op<T, Device>()(
+        'N', 'N', n_dim_, nx, nbasis, &minus_one, sbasis_data, ld_psi_, device_coeff.data(), nbasis, &one, sx_data,
+        ld_psi_);
     if (hx != nullptr)
     {
         // H(x-X*C) = Hx-HX*C; the same coefficients update all three images.
-        ModuleBase::gemm_op<T, Device>()('N',
-                                         'N',
-                                         n_dim_,
-                                         nx,
-                                         nbasis,
-                                         &minus_one,
-                                         hbasis_data,
-                                         ld_psi_,
-                                         device_coeff.data(),
-                                         nbasis,
-                                         &one,
-                                         hx_data,
-                                         ld_psi_);
+        ModuleBase::gemm_op<T, Device>()(
+            'N', 'N', n_dim_, nx, nbasis, &minus_one, hbasis_data, ld_psi_, device_coeff.data(), nbasis, &one, hx_data,
+            ld_psi_);
     }
 
     if (!contiguous_x)
@@ -577,17 +544,17 @@ void DiagoPPCG<T, Device>::project_against(
 // =============================================================================
 template <typename T, typename Device>
 void DiagoPPCG<T, Device>::project_search_directions(
-    const HSOperator<T, Device>& op,
-    const T* psi,
-    const std::vector<int>& all_cols,
-    const std::vector<int>& active_cols)
+    const HSOperator<T, Device> &op,
+    const T *psi,
+    const std::vector<int> &all_cols,
+    const std::vector<int> &active_cols)
 {
     const PPCGFunctionTimer timer("project_search_directions");
     const int nactive = int(active_cols.size());
     std::vector<double> norms(2 * n_band_, 0.0);
     PPCGVectorOps<T, Device>::column_products(n_dim_, ld_psi_, n_band_, p_.data(), p_.data(), norms.data());
     project_against(psi, spsi_.data(), hpsi_.data(), all_cols, p_, sp_, &hp_, active_cols);
-    double* projected_norms = norms.data() + n_band_;
+    double *projected_norms = norms.data() + n_band_;
     PPCGVectorOps<T, Device>::column_products(n_dim_, ld_psi_, n_band_, p_.data(), p_.data(), projected_norms);
     const int norm_count = int(norms.size());
     reduce_pool_values(norms.data(), norm_count);
@@ -598,11 +565,11 @@ void DiagoPPCG<T, Device>::project_search_directions(
         if (norms[column] == 0.0 || norms[n_band_ + column] == 0.0)
         {
             const int offset = active_cols[j] * ld_psi_;
-            T* p_column = p_.data() + offset;
+            T *p_column = p_.data() + offset;
             zero_values<T, Device>(p_column, ld_psi_);
-            T* sp_column = sp_.data() + offset;
+            T *sp_column = sp_.data() + offset;
             zero_values<T, Device>(sp_column, ld_psi_);
-            T* hp_column = hp_.data() + offset;
+            T *hp_column = hp_.data() + offset;
             zero_values<T, Device>(hp_column, ld_psi_);
             continue;
         }
@@ -633,9 +600,7 @@ void DiagoPPCG<T, Device>::project_search_directions(
 // =============================================================================
 template <typename T, typename Device>
 void DiagoPPCG<T, Device>::divide_by_preconditioner(
-    const std::vector<int>& active_cols,
-    const Real* prec,
-    Workspace& x) const
+    const std::vector<int> &active_cols, const Real *prec, Workspace &x) const
 {
     const int ncols = int(active_cols.size());
     if (ncols == 0)
@@ -645,21 +610,21 @@ void DiagoPPCG<T, Device>::divide_by_preconditioner(
     int first = 0;
     if (ppcg_contiguous_cols(active_cols, first))
     {
-        T* values = x.data() + first * ld_psi_;
+        T *values = x.data() + first * ld_psi_;
         PPCGVectorOps<T, Device>::precondition(n_dim_, ld_psi_, ncols, prec, values);
         return;
     }
     for (const int column : active_cols)
     {
-        T* values = x.data() + column * ld_psi_;
+        T *values = x.data() + column * ld_psi_;
         PPCGVectorOps<T, Device>::precondition(n_dim_, ld_psi_, 1, prec, values);
     }
 }
 
 } // namespace hsolver
 
-
-namespace hsolver {
+namespace hsolver
+{
 
 //==============================================================================
 // BLOCK_SUBSPACE STRATEGY
@@ -674,9 +639,7 @@ namespace hsolver {
 // ---------------------------------------------------------------------------
 template <typename T, typename Device>
 void DiagoPPCG<T, Device>::lock_epairs(
-    const Workspace& residual,
-    const std::vector<double>& ethr_band,
-    std::vector<int>& active_cols)
+    const Workspace &residual, const std::vector<double> &ethr_band, std::vector<int> &active_cols)
 {
     active_cols.clear();
     active_cols.reserve(n_band_);
@@ -710,10 +673,11 @@ void DiagoPPCG<T, Device>::lock_epairs(
 }
 
 template <typename T, typename Device>
-void DiagoPPCG<T, Device>::scale_to_unit_snorm(Workspace& x,
-                                                Workspace& sx,
-                                                Workspace& hx,
-                                                const int ncols) const
+void DiagoPPCG<T, Device>::scale_to_unit_snorm(
+    Workspace &x,
+    Workspace &sx,
+    Workspace &hx,
+    const int ncols) const
 {
     const Real squared_snorm_floor = Real(1.0e-30);
     const Real minimum_snorm = Real(1.0e-15);
@@ -730,17 +694,14 @@ void DiagoPPCG<T, Device>::scale_to_unit_snorm(Workspace& x,
 }
 
 template <typename T, typename Device>
-void DiagoPPCG<T, Device>::hermitize_projected(std::vector<T>& matrix,
-                                                const int dim) const
+void DiagoPPCG<T, Device>::hermitize_projected(std::vector<T> &matrix, const int dim) const
 {
     for (int j = 0; j < dim; ++j)
     {
         matrix[j + j * dim] = T(std::real(matrix[j + j * dim]), 0);
         for (int i = j + 1; i < dim; ++i)
         {
-            const T value = (matrix[i + j * dim]
-                             + std::conj(matrix[j + i * dim]))
-                            * Real(0.5);
+            const T value = (matrix[i + j * dim] + std::conj(matrix[j + i * dim])) * Real(0.5);
             matrix[i + j * dim] = value;
             matrix[j + i * dim] = std::conj(value);
         }
@@ -749,23 +710,22 @@ void DiagoPPCG<T, Device>::hermitize_projected(std::vector<T>& matrix,
 
 template <typename T, typename Device>
 void DiagoPPCG<T, Device>::insert_startup_gram_block(
-    const T* left,
-    const T* right,
+    const T *left,
+    const T *right,
     const int row_count,
     const int column_count,
     const int row_offset,
     const int column_offset,
     const int matrix_dim,
-    std::vector<T>& matrix,
-    std::vector<T>& workspace) const
+    std::vector<T> &matrix,
+    std::vector<T> &workspace) const
 {
     gram(left, right, row_count, column_count, workspace, row_count);
     for (int j = 0; j < column_count; ++j)
     {
         for (int i = 0; i < row_count; ++i)
         {
-            const int matrix_index = row_offset + i
-                                     + (column_offset + j) * matrix_dim;
+            const int matrix_index = row_offset + i + (column_offset + j) * matrix_dim;
             matrix[matrix_index] = workspace[i + j * row_count];
         }
     }
@@ -773,12 +733,12 @@ void DiagoPPCG<T, Device>::insert_startup_gram_block(
 
 template <typename T, typename Device>
 void DiagoPPCG<T, Device>::build_startup_global_subspace(
-    const T* psi,
-    Workspace& w_active,
-    Workspace& sw_active,
-    Workspace& hw_active,
+    const T *psi,
+    Workspace &w_active,
+    Workspace &sw_active,
+    Workspace &hw_active,
     const int active_count,
-    SmallSubspace& subspace)
+    SmallSubspace &subspace)
 {
     scale_to_unit_snorm(w_active, sw_active, hw_active, active_count);
 
@@ -791,78 +751,24 @@ void DiagoPPCG<T, Device>::build_startup_global_subspace(
     subspace.eval.resize(local_dim);
     std::vector<T> gram_workspace;
 
-    insert_startup_gram_block(psi,
-                              hpsi_.data(),
-                              state_count,
-                              state_count,
-                              0,
-                              0,
-                              local_dim,
-                              subspace.k,
-                              gram_workspace);
-    insert_startup_gram_block(psi,
-                              hw_active.data(),
-                              state_count,
-                              active_count,
-                              0,
-                              correction_offset,
-                              local_dim,
-                              subspace.k,
-                              gram_workspace);
-    insert_startup_gram_block(w_active.data(),
-                              hpsi_.data(),
-                              active_count,
-                              state_count,
-                              correction_offset,
-                              0,
-                              local_dim,
-                              subspace.k,
-                              gram_workspace);
-    insert_startup_gram_block(w_active.data(),
-                              hw_active.data(),
-                              active_count,
-                              active_count,
-                              correction_offset,
-                              correction_offset,
-                              local_dim,
-                              subspace.k,
-                              gram_workspace);
-    insert_startup_gram_block(psi,
-                              spsi_.data(),
-                              state_count,
-                              state_count,
-                              0,
-                              0,
-                              local_dim,
-                              subspace.m,
-                              gram_workspace);
-    insert_startup_gram_block(psi,
-                              sw_active.data(),
-                              state_count,
-                              active_count,
-                              0,
-                              correction_offset,
-                              local_dim,
-                              subspace.m,
-                              gram_workspace);
-    insert_startup_gram_block(w_active.data(),
-                              spsi_.data(),
-                              active_count,
-                              state_count,
-                              correction_offset,
-                              0,
-                              local_dim,
-                              subspace.m,
-                              gram_workspace);
-    insert_startup_gram_block(w_active.data(),
-                              sw_active.data(),
-                              active_count,
-                              active_count,
-                              correction_offset,
-                              correction_offset,
-                              local_dim,
-                              subspace.m,
-                              gram_workspace);
+    insert_startup_gram_block(psi, hpsi_.data(), state_count, state_count, 0, 0, local_dim, subspace.k, gram_workspace);
+    insert_startup_gram_block(
+        psi, hw_active.data(), state_count, active_count, 0, correction_offset, local_dim, subspace.k, gram_workspace);
+    insert_startup_gram_block(
+        w_active.data(), hpsi_.data(), active_count, state_count, correction_offset, 0, local_dim, subspace.k,
+        gram_workspace);
+    insert_startup_gram_block(
+        w_active.data(), hw_active.data(), active_count, active_count, correction_offset, correction_offset, local_dim,
+        subspace.k, gram_workspace);
+    insert_startup_gram_block(psi, spsi_.data(), state_count, state_count, 0, 0, local_dim, subspace.m, gram_workspace);
+    insert_startup_gram_block(
+        psi, sw_active.data(), state_count, active_count, 0, correction_offset, local_dim, subspace.m, gram_workspace);
+    insert_startup_gram_block(
+        w_active.data(), spsi_.data(), active_count, state_count, correction_offset, 0, local_dim, subspace.m,
+        gram_workspace);
+    insert_startup_gram_block(
+        w_active.data(), sw_active.data(), active_count, active_count, correction_offset, correction_offset, local_dim,
+        subspace.m, gram_workspace);
 
     hermitize_projected(subspace.k, local_dim);
     hermitize_projected(subspace.m, local_dim);
@@ -870,18 +776,18 @@ void DiagoPPCG<T, Device>::build_startup_global_subspace(
 
 template <typename T, typename Device>
 void DiagoPPCG<T, Device>::update_startup_global_subspace(
-    T* psi,
-    const Workspace& w_active,
-    const Workspace& sw_active,
-    const Workspace& hw_active,
+    T *psi,
+    const Workspace &w_active,
+    const Workspace &sw_active,
+    const Workspace &hw_active,
     const int active_count,
-    const SmallSubspace& subspace)
+    const SmallSubspace &subspace)
 {
     const int local_dim = n_band_ + active_count;
     const int coefficient_count = local_dim * n_band_;
     auto device_coeff = upload_values<T, Device>(subspace.k.data(), coefficient_count);
-    const T* state_coefficients = device_coeff.data();
-    const T* correction_coefficients = state_coefficients + n_band_;
+    const T *state_coefficients = device_coeff.data();
+    const T *correction_coefficients = state_coefficients + n_band_;
     const T one = T(1);
     const T zero = T(0);
 
@@ -892,52 +798,20 @@ void DiagoPPCG<T, Device>::update_startup_global_subspace(
     set_zero<T, Device>(sp_);
     set_zero<T, Device>(hp_);
 
-    auto combine_state = [&](const T* state,
-                             const T* correction,
-                             T* output)
+    auto combine_state = [&](const T *state, const T *correction, T *output)
     {
-        ModuleBase::gemm_op<T, Device>()('N',
-                                         'N',
-                                         n_dim_,
-                                         n_band_,
-                                         n_band_,
-                                         &one,
-                                         state,
-                                         ld_psi_,
-                                         state_coefficients,
-                                         local_dim,
-                                         &zero,
-                                         output,
-                                         ld_psi_);
-        ModuleBase::gemm_op<T, Device>()('N',
-                                         'N',
-                                         n_dim_,
-                                         n_band_,
-                                         active_count,
-                                         &one,
-                                         correction,
-                                         ld_psi_,
-                                         correction_coefficients,
-                                         local_dim,
-                                         &one,
-                                         output,
-                                         ld_psi_);
+        ModuleBase::gemm_op<T, Device>()(
+            'N', 'N', n_dim_, n_band_, n_band_, &one, state, ld_psi_, state_coefficients, local_dim, &zero, output,
+            ld_psi_);
+        ModuleBase::gemm_op<T, Device>()(
+            'N', 'N', n_dim_, n_band_, active_count, &one, correction, ld_psi_, correction_coefficients, local_dim,
+            &one, output, ld_psi_);
     };
-    auto combine_direction = [&](const T* correction, T* output)
+    auto combine_direction = [&](const T *correction, T *output)
     {
-        ModuleBase::gemm_op<T, Device>()('N',
-                                         'N',
-                                         n_dim_,
-                                         n_band_,
-                                         active_count,
-                                         &one,
-                                         correction,
-                                         ld_psi_,
-                                         correction_coefficients,
-                                         local_dim,
-                                         &zero,
-                                         output,
-                                         ld_psi_);
+        ModuleBase::gemm_op<T, Device>()(
+            'N', 'N', n_dim_, n_band_, active_count, &one, correction, ld_psi_, correction_coefficients, local_dim,
+            &zero, output, ld_psi_);
     };
 
     combine_state(psi, w_active.data(), w_.data());
@@ -957,10 +831,10 @@ void DiagoPPCG<T, Device>::update_startup_global_subspace(
 // ---------------------------------------------------------------------------
 template <typename T, typename Device>
 void DiagoPPCG<T, Device>::build_small_subspace(
-    const T* psi,
-    const std::vector<int>& cols,
+    const T *psi,
+    const std::vector<int> &cols,
     int nblk,
-    SmallSubspace& subspace) const
+    SmallSubspace &subspace) const
 {
     const PPCGFunctionTimer timer("build_small_subspace");
     const int l = int(cols.size());
@@ -992,21 +866,15 @@ void DiagoPPCG<T, Device>::build_small_subspace(
     // Scaling to unit S-norm keeps M well-conditioned (diagonal ~1) without
     // changing the subspace. The same scaled basis is reused in update_one_block.
     // ---------------------------------------------------------------------------
-    scale_to_unit_snorm(subspace.w_l,
-                        subspace.sw_l,
-                        subspace.hw_l,
-                        l);
+    scale_to_unit_snorm(subspace.w_l, subspace.sw_l, subspace.hw_l, l);
     if (nblk >= 3)
     {
-        scale_to_unit_snorm(subspace.p_l,
-                            subspace.sp_l,
-                            subspace.hp_l,
-                            l);
+        scale_to_unit_snorm(subspace.p_l, subspace.sp_l, subspace.hp_l, l);
     }
 
-    auto copy_block = [&](const Workspace& src, const int col0, Workspace& dst)
+    auto copy_block = [&](const Workspace &src, const int col0, Workspace &dst)
     {
-        T* destination = dst.data() + col0 * ld_psi_;
+        T *destination = dst.data() + col0 * ld_psi_;
         const int count = ld_psi_ * l;
         copy_values<T, Device>(src.data(), count, destination);
     };
@@ -1039,10 +907,7 @@ void DiagoPPCG<T, Device>::build_small_subspace(
 // Solve K v = λ M v (small generalized eigenvalue problem)
 // ---------------------------------------------------------------------------
 template <typename T, typename Device>
-int DiagoPPCG<T, Device>::solve_small_generalized(
-    const int dim,
-    const int nstates,
-    SmallSubspace& subspace) const
+int DiagoPPCG<T, Device>::solve_small_generalized(const int dim, const int nstates, SmallSubspace &subspace) const
 {
     const PPCGFunctionTimer timer("solve_small_generalized");
     const std::vector<T> k0 = subspace.k;
@@ -1058,18 +923,14 @@ int DiagoPPCG<T, Device>::solve_small_generalized(
     try
     {
         container::kernels::lapack_heevd<T, container::DEVICE_CPU>()(
-            dim,
-            overlap_eigenvectors.data(),
-            dim,
-            overlap_eigenvalues.data());
+            dim, overlap_eigenvectors.data(), dim, overlap_eigenvalues.data());
 
         const Real largest_overlap_eigenvalue = std::max(overlap_eigenvalues.back(), Real(0));
         const Real precision_floor = Real(10) * std::numeric_limits<Real>::epsilon();
         // Discard numerically dependent directions in the local overlap spectrum.
         const Real minimum_relative_overlap = Real(1.0e-8);
         const Real relative_rank_threshold = std::max(minimum_relative_overlap, precision_floor);
-        const Real overlap_cutoff = largest_overlap_eigenvalue
-                                    * relative_rank_threshold;
+        const Real overlap_cutoff = largest_overlap_eigenvalue * relative_rank_threshold;
         std::vector<int> retained_indices;
         retained_indices.reserve(dim);
         for (int i = 0; i < dim; ++i)
@@ -1087,12 +948,10 @@ int DiagoPPCG<T, Device>::solve_small_generalized(
             for (int j = 0; j < retained_dim; ++j)
             {
                 const int source_index = retained_indices[j];
-                const Real scale = Real(1)
-                                   / std::sqrt(overlap_eigenvalues[source_index]);
+                const Real scale = Real(1) / std::sqrt(overlap_eigenvalues[source_index]);
                 for (int row = 0; row < dim; ++row)
                 {
-                    retained_basis[row + j * dim] = overlap_eigenvectors[row + source_index * dim]
-                                                      * scale;
+                    retained_basis[row + j * dim] = overlap_eigenvectors[row + source_index * dim] * scale;
                 }
             }
 
@@ -1104,43 +963,21 @@ int DiagoPPCG<T, Device>::solve_small_generalized(
             const T one = T(1);
             const T zero = T(0);
             std::vector<T> projected_hamiltonian(dim * retained_dim, T(0));
-            ModuleBase::gemm_op<T, base_device::DEVICE_CPU>()('N',
-                                             'N',
-                                             dim,
-                                             retained_dim,
-                                             dim,
-                                             &one,
-                                             k0.data(),
-                                             dim,
-                                             retained_basis.data(),
-                                             dim,
-                                             &zero,
-                                             projected_hamiltonian.data(),
-                                             dim);
+            ModuleBase::gemm_op<T, base_device::DEVICE_CPU>()(
+                'N', 'N', dim, retained_dim, dim, &one, k0.data(), dim, retained_basis.data(), dim, &zero,
+                projected_hamiltonian.data(), dim);
             std::vector<T> reduced_hamiltonian(retained_dim * retained_dim, T(0));
-            ModuleBase::gemm_op<T, base_device::DEVICE_CPU>()('C',
-                                             'N',
-                                             retained_dim,
-                                             retained_dim,
-                                             dim,
-                                             &one,
-                                             retained_basis.data(),
-                                             dim,
-                                             projected_hamiltonian.data(),
-                                             dim,
-                                             &zero,
-                                             reduced_hamiltonian.data(),
-                                             retained_dim);
+            ModuleBase::gemm_op<T, base_device::DEVICE_CPU>()(
+                'C', 'N', retained_dim, retained_dim, dim, &one, retained_basis.data(), dim,
+                projected_hamiltonian.data(), dim, &zero, reduced_hamiltonian.data(), retained_dim);
             for (int j = 0; j < retained_dim; ++j)
             {
-                const Real diagonal_value = std::real(
-                    reduced_hamiltonian[j + j * retained_dim]);
+                const Real diagonal_value = std::real(reduced_hamiltonian[j + j * retained_dim]);
                 reduced_hamiltonian[j + j * retained_dim] = T(diagonal_value, Real(0));
                 for (int i = 0; i < j; ++i)
                 {
-                    const T value = Real(0.5) * (
-                        reduced_hamiltonian[i + j * retained_dim]
-                        + std::conj(reduced_hamiltonian[j + i * retained_dim]));
+                    const T value = Real(0.5) * (reduced_hamiltonian[i + j * retained_dim] +
+                                                    std::conj(reduced_hamiltonian[j + i * retained_dim]));
                     reduced_hamiltonian[i + j * retained_dim] = value;
                     reduced_hamiltonian[j + i * retained_dim] = std::conj(value);
                 }
@@ -1148,34 +985,21 @@ int DiagoPPCG<T, Device>::solve_small_generalized(
 
             std::vector<Real> reduced_eigenvalues(retained_dim);
             container::kernels::lapack_heevd<T, container::DEVICE_CPU>()(
-                retained_dim,
-                reduced_hamiltonian.data(),
-                retained_dim,
-                reduced_eigenvalues.data());
+                retained_dim, reduced_hamiltonian.data(), retained_dim, reduced_eigenvalues.data());
 
             std::fill(subspace.k.begin(), subspace.k.end(), T(0));
             for (int state = 0; state < retained_dim; ++state)
             {
                 subspace.eval[state] = reduced_eigenvalues[state];
             }
-            ModuleBase::gemm_op<T, base_device::DEVICE_CPU>()('N',
-                                             'N',
-                                             dim,
-                                             retained_dim,
-                                             retained_dim,
-                                             &one,
-                                             retained_basis.data(),
-                                             dim,
-                                             reduced_hamiltonian.data(),
-                                             retained_dim,
-                                             &zero,
-                                             subspace.k.data(),
-                                             dim);
+            ModuleBase::gemm_op<T, base_device::DEVICE_CPU>()(
+                'N', 'N', dim, retained_dim, retained_dim, &one, retained_basis.data(), dim, reduced_hamiltonian.data(),
+                retained_dim, &zero, subspace.k.data(), dim);
             local_rank_truncation_succeeded = true;
             retained_count = retained_dim;
         }
     }
-    catch (const std::runtime_error&)
+    catch (const std::runtime_error &)
     {
         // The shifted generalized solve below remains the fallback.
     }
@@ -1200,12 +1024,10 @@ int DiagoPPCG<T, Device>::solve_small_generalized(
         bool local_sygvd_succeeded = false;
         try
         {
-            HermitianLapack<T>::sygvd(dim, subspace.k.data(),
-                                      subspace.m.data(),
-                                      subspace.eval.data());
+            HermitianLapack<T>::sygvd(dim, subspace.k.data(), subspace.m.data(), subspace.eval.data());
             local_sygvd_succeeded = true;
         }
-        catch (const std::runtime_error&)
+        catch (const std::runtime_error &)
         {
             // Try the next diagonal shift.
         }
@@ -1220,9 +1042,8 @@ int DiagoPPCG<T, Device>::solve_small_generalized(
     for (int i = 0; i < dim; ++i)
     {
         subspace.k[i + i * dim] = T(1);
-        subspace.eval[i] = Real(std::real(k0[i + i * dim]))
-                         / std::max(Real(std::real(m0[i + i * dim])),
-                                    minimum_overlap);
+        subspace.eval[i] =
+            Real(std::real(k0[i + i * dim])) / std::max(Real(std::real(m0[i + i * dim])), minimum_overlap);
     }
     return 0;
 }
@@ -1230,10 +1051,10 @@ int DiagoPPCG<T, Device>::solve_small_generalized(
 // Keep valid local Ritz directions that a block-size restriction would discard.
 template <typename T, typename Device>
 void DiagoPPCG<T, Device>::collect_discarded_ritz(
-    const SmallSubspace& subspace,
+    const SmallSubspace &subspace,
     const int kept_count,
     const int valid_count,
-    OperatorBlock& candidates) const
+    OperatorBlock &candidates) const
 {
     const PPCGFunctionTimer timer("collect_discarded_ritz");
     const int count = valid_count - kept_count;
@@ -1243,18 +1064,18 @@ void DiagoPPCG<T, Device>::collect_discarded_ritz(
     }
     const int dim = int(subspace.eval.size());
     const int offset = int(candidates.vectors.size());
-    const T* host_coefficients = subspace.k.data() + kept_count * dim;
+    const T *host_coefficients = subspace.k.data() + kept_count * dim;
     const int coefficient_count = dim * count;
     auto device_coeff = upload_values<T, Device>(host_coefficients, coefficient_count);
-    const T* coefficients = device_coeff.data();
+    const T *coefficients = device_coeff.data();
     const T one(1);
     const T zero(0);
-    const auto append = [&](const Workspace& basis, Workspace& output) {
+    const auto append = [&](const Workspace &basis, Workspace &output)
+    {
         output.resize(offset + ld_psi_ * count, T(0));
-        T* destination = output.data() + offset;
-        ModuleBase::gemm_op<T, Device>()('N', 'N', n_dim_, count, dim,
-                                         &one, basis.data(), ld_psi_, coefficients, dim,
-                                         &zero, destination, ld_psi_);
+        T *destination = output.data() + offset;
+        ModuleBase::gemm_op<T, Device>()(
+            'N', 'N', n_dim_, count, dim, &one, basis.data(), ld_psi_, coefficients, dim, &zero, destination, ld_psi_);
     };
     append(subspace.basis, candidates.vectors);
     append(subspace.hbasis, candidates.hvectors);
@@ -1264,7 +1085,7 @@ void DiagoPPCG<T, Device>::collect_discarded_ritz(
 // Preserve X exactly as a subspace: rank decisions apply only to its complement.
 template <typename T, typename Device>
 void DiagoPPCG<T, Device>::project_candidate_complement(
-    const HSOperator<T, Device>& op, const T* psi, OperatorBlock& candidates) const
+    const HSOperator<T, Device> &op, const T *psi, OperatorBlock &candidates) const
 {
     const PPCGFunctionTimer timer("project_candidate_complement");
     const int count = int(candidates.vectors.size()) / ld_psi_;
@@ -1278,10 +1099,11 @@ void DiagoPPCG<T, Device>::project_candidate_complement(
     // Two passes suppress overlap left by cancellation against the retained X.
     for (int pass = 0; pass < 2; ++pass)
     {
-        project_against(psi, spsi_.data(), hpsi_.data(), basis_cols,
-                        candidates.vectors, candidates.svectors, &candidates.hvectors, candidate_cols);
+        project_against(
+            psi, spsi_.data(), hpsi_.data(), basis_cols, candidates.vectors, candidates.svectors, &candidates.hvectors,
+            candidate_cols);
     }
-    double* projected_norms = norms.data() + count;
+    double *projected_norms = norms.data() + count;
     PPCGVectorOps<T, Device>::column_products(
         n_dim_, ld_psi_, count, candidates.vectors.data(), candidates.vectors.data(), projected_norms);
     const int norm_count = int(norms.size());
@@ -1329,9 +1151,13 @@ void DiagoPPCG<T, Device>::project_candidate_complement(
 
 template <typename T, typename Device>
 bool DiagoPPCG<T, Device>::recover_competing_ritz(
-    const HSOperator<T, Device>& op, T* psi, Real* eigenvalue,
-    const bool ordered_ritz, std::vector<int>& active_cols,
-    const std::vector<double>& ethr_band, OperatorBlock& candidates)
+    const HSOperator<T, Device> &op,
+    T *psi,
+    Real *eigenvalue,
+    const bool ordered_ritz,
+    std::vector<int> &active_cols,
+    const std::vector<double> &ethr_band,
+    OperatorBlock &candidates)
 {
     const PPCGFunctionTimer timer("recover_competing_ritz");
     if (candidates.vectors.empty())
@@ -1366,7 +1192,7 @@ bool DiagoPPCG<T, Device>::recover_competing_ritz(
     std::vector<double> moments(2 * count, 0.0);
     PPCGVectorOps<T, Device>::column_products(
         n_dim_, ld_psi_, count, candidates.vectors.data(), candidates.svectors.data(), moments.data());
-    double* energies = moments.data() + count;
+    double *energies = moments.data() + count;
     PPCGVectorOps<T, Device>::column_products(
         n_dim_, ld_psi_, count, candidates.vectors.data(), candidates.hvectors.data(), energies);
     const int moment_count = int(moments.size());
@@ -1403,8 +1229,7 @@ bool DiagoPPCG<T, Device>::recover_competing_ritz(
     const int selected_count = int(competing.size());
     scale_to_unit_snorm(selected.vectors, selected.svectors, selected.hvectors, selected_count);
     std::vector<T> overlap;
-    gram(selected.vectors.data(), selected.svectors.data(), selected_count, selected_count,
-         overlap, selected_count);
+    gram(selected.vectors.data(), selected.svectors.data(), selected_count, selected_count, overlap, selected_count);
     hermitize_projected(overlap, selected_count);
     std::vector<Real> norms(selected_count);
     bool local_success = false;
@@ -1414,7 +1239,7 @@ bool DiagoPPCG<T, Device>::recover_competing_ritz(
             selected_count, overlap.data(), selected_count, norms.data());
         local_success = true;
     }
-    catch (const std::runtime_error&)
+    catch (const std::runtime_error &)
     {
     }
     if (!all_pool_operations_succeeded(local_success))
@@ -1448,19 +1273,20 @@ bool DiagoPPCG<T, Device>::recover_competing_ritz(
     OperatorBlock orthogonal;
     const T one(1);
     const T zero(0);
-    const auto transform = [&](const Workspace& input, Workspace& output) {
+    const auto transform = [&](const Workspace &input, Workspace &output)
+    {
         output.assign(ld_psi_ * retained_count, T(0));
-        ModuleBase::gemm_op<T, Device>()('N', 'N', n_dim_, retained_count, selected_count,
-                                         &one, input.data(), ld_psi_, device_coeff.data(), selected_count,
-                                         &zero, output.data(), ld_psi_);
+        ModuleBase::gemm_op<T, Device>()(
+            'N', 'N', n_dim_, retained_count, selected_count, &one, input.data(), ld_psi_, device_coeff.data(),
+            selected_count, &zero, output.data(), ld_psi_);
     };
     transform(selected.vectors, orthogonal.vectors);
     transform(selected.hvectors, orthogonal.hvectors);
     transform(selected.svectors, orthogonal.svectors);
     selected = OperatorBlock{};
     SmallSubspace expanded;
-    build_startup_global_subspace(psi, orthogonal.vectors, orthogonal.svectors,
-                                  orthogonal.hvectors, retained_count, expanded);
+    build_startup_global_subspace(
+        psi, orthogonal.vectors, orthogonal.svectors, orthogonal.hvectors, retained_count, expanded);
     const int expanded_dim = n_band_ + retained_count;
     local_success = false;
     try
@@ -1470,15 +1296,15 @@ bool DiagoPPCG<T, Device>::recover_competing_ritz(
         HermitianLapack<T>::sygvd(expanded_dim, expanded.k.data(), expanded.m.data(), expanded.eval.data());
         local_success = true;
     }
-    catch (const std::runtime_error&)
+    catch (const std::runtime_error &)
     {
     }
     if (!all_pool_operations_succeeded(local_success))
     {
         throw std::runtime_error("PPCG: competing-direction Rayleigh-Ritz solve failed.");
     }
-    update_startup_global_subspace(psi, orthogonal.vectors, orthogonal.svectors,
-                                   orthogonal.hvectors, retained_count, expanded);
+    update_startup_global_subspace(
+        psi, orthogonal.vectors, orthogonal.svectors, orthogonal.hvectors, retained_count, expanded);
     std::copy(expanded.eval.begin(), expanded.eval.begin() + n_band_, eigenvalue);
     set_zero<T, Device>(p_);
     set_zero<T, Device>(sp_);
@@ -1495,15 +1321,15 @@ bool DiagoPPCG<T, Device>::recover_competing_ritz(
 // ---------------------------------------------------------------------------
 template <typename T, typename Device>
 void DiagoPPCG<T, Device>::update_one_block(
-    T* psi,
-    const std::vector<int>& cols,
+    T *psi,
+    const std::vector<int> &cols,
     int l,
     int nblk,
-    SmallSubspace& subspace)
+    SmallSubspace &subspace)
 {
     const PPCGFunctionTimer timer("update_one_block");
     const int dim = nblk * l;
-    const T* eigvec = subspace.k.data();
+    const T *eigvec = subspace.k.data();
 
     subspace.psi_new.assign(ld_psi_ * l, T(0));
     subspace.spsi_new.assign(ld_psi_ * l, T(0));
@@ -1538,39 +1364,26 @@ void DiagoPPCG<T, Device>::update_one_block(
         }
     }
 
-    auto fill_basis = [&](const Workspace& a, const Workspace& b, const Workspace& c, Workspace& basis)
+    auto fill_basis = [&](const Workspace &a, const Workspace &b, const Workspace &c, Workspace &basis)
     {
         const int count = ld_psi_ * l;
         basis.resize(ld_psi_ * dim);
-        T* second = basis.data() + count;
+        T *second = basis.data() + count;
         copy_values<T, Device>(a.data(), count, basis.data());
         copy_values<T, Device>(b.data(), count, second);
         if (nblk >= 3)
         {
-            T* third = basis.data() + 2 * count;
+            T *third = basis.data() + 2 * count;
             copy_values<T, Device>(c.data(), count, third);
         }
     };
 
-    auto combine = [&](const Workspace& basis,
-                       const Workspace& coeff,
-                       Workspace& out)
+    auto combine = [&](const Workspace &basis, const Workspace &coeff, Workspace &out)
     {
         const T one = T(1);
         const T zero = T(0);
-        ModuleBase::gemm_op<T, Device>()('N',
-                                         'N',
-                                         n_dim_,
-                                         l,
-                                         dim,
-                                         &one,
-                                         basis.data(),
-                                         ld_psi_,
-                                         coeff.data(),
-                                         dim,
-                                         &zero,
-                                         out.data(),
-                                         ld_psi_);
+        ModuleBase::gemm_op<T, Device>()(
+            'N', 'N', n_dim_, l, dim, &one, basis.data(), ld_psi_, coeff.data(), dim, &zero, out.data(), ld_psi_);
     };
 
     fill_basis(subspace.psi_l, subspace.w_l, subspace.p_l, subspace.basis);
@@ -1601,9 +1414,10 @@ void DiagoPPCG<T, Device>::update_one_block(
 // ---------------------------------------------------------------------------
 template <typename T, typename Device>
 bool DiagoPPCG<T, Device>::rayleigh_ritz(
-    T* psi, Real* eigenvalue,
-    std::vector<int>& active_cols,
-    const std::vector<double>& ethr_band)
+    T *psi,
+    Real *eigenvalue,
+    std::vector<int> &active_cols,
+    const std::vector<double> &ethr_band)
 {
     const PPCGFunctionTimer timer("rayleigh_ritz");
     ++rayleigh_ritz_count_;
@@ -1613,11 +1427,10 @@ bool DiagoPPCG<T, Device>::rayleigh_ritz(
     bool local_sygvd_ok = false;
     try
     {
-        HermitianLapack<T>::sygvd(n_band_, rr_hsub_.data(), rr_ssub_.data(),
-                                  rr_eval_.data());
+        HermitianLapack<T>::sygvd(n_band_, rr_hsub_.data(), rr_ssub_.data(), rr_eval_.data());
         local_sygvd_ok = true;
     }
-    catch (const std::runtime_error&)
+    catch (const std::runtime_error &)
     {
         // The collective result below selects one common fallback on all ranks.
     }
@@ -1631,10 +1444,8 @@ bool DiagoPPCG<T, Device>::rayleigh_ritz(
         gram(psi, spsi_.data(), n_band_, n_band_, rr_ssub_, n_band_);
         for (int ii = 0; ii < n_band_; ++ii)
         {
-            rr_eval_[ii] = Real(std::real(rr_hsub_[ii + ii * n_band_]))
-                     / std::max(Real(
-                                    std::real(rr_ssub_[ii + ii * n_band_])),
-                                minimum_overlap);
+            rr_eval_[ii] = Real(std::real(rr_hsub_[ii + ii * n_band_])) /
+                           std::max(Real(std::real(rr_ssub_[ii + ii * n_band_])), minimum_overlap);
         }
     }
 
@@ -1653,45 +1464,15 @@ bool DiagoPPCG<T, Device>::rayleigh_ritz(
 
         const T one = T(1);
         const T zero = T(0);
-        ModuleBase::gemm_op<T, Device>()('N',
-                                         'N',
-                                         n_dim_,
-                                         n_band_,
-                                         n_band_,
-                                         &one,
-                                         w_.data(),
-                                         ld_psi_,
-                                         device_coeff.data(),
-                                         n_band_,
-                                         &zero,
-                                         psi,
-                                         ld_psi_);
-        ModuleBase::gemm_op<T, Device>()('N',
-                                         'N',
-                                         n_dim_,
-                                         n_band_,
-                                         n_band_,
-                                         &one,
-                                         sw_.data(),
-                                         ld_psi_,
-                                         device_coeff.data(),
-                                         n_band_,
-                                         &zero,
-                                         spsi_.data(),
-                                         ld_psi_);
-        ModuleBase::gemm_op<T, Device>()('N',
-                                         'N',
-                                         n_dim_,
-                                         n_band_,
-                                         n_band_,
-                                         &one,
-                                         hw_.data(),
-                                         ld_psi_,
-                                         device_coeff.data(),
-                                         n_band_,
-                                         &zero,
-                                         hpsi_.data(),
-                                         ld_psi_);
+        ModuleBase::gemm_op<T, Device>()(
+            'N', 'N', n_dim_, n_band_, n_band_, &one, w_.data(), ld_psi_, device_coeff.data(), n_band_, &zero, psi,
+            ld_psi_);
+        ModuleBase::gemm_op<T, Device>()(
+            'N', 'N', n_dim_, n_band_, n_band_, &one, sw_.data(), ld_psi_, device_coeff.data(), n_band_, &zero,
+            spsi_.data(), ld_psi_);
+        ModuleBase::gemm_op<T, Device>()(
+            'N', 'N', n_dim_, n_band_, n_band_, &one, hw_.data(), ld_psi_, device_coeff.data(), n_band_, &zero,
+            hpsi_.data(), ld_psi_);
 
         for (int j = 0; j < n_band_; ++j)
         {
@@ -1699,12 +1480,13 @@ bool DiagoPPCG<T, Device>::rayleigh_ritz(
         }
         // Keep each conjugate direction attached to the same Ritz column
         // when the global solve mixes or permutes the retained states.
-        const auto rotate_direction = [&](Workspace& values) {
+        const auto rotate_direction = [&](Workspace &values)
+        {
             copy_values<T, Device>(values.data(), int(values.size()), w_.data());
             set_zero<T, Device>(values);
-            ModuleBase::gemm_op<T, Device>()('N', 'N', n_dim_, n_band_, n_band_,
-                                             &one, w_.data(), ld_psi_, device_coeff.data(), n_band_,
-                                             &zero, values.data(), ld_psi_);
+            ModuleBase::gemm_op<T, Device>()(
+                'N', 'N', n_dim_, n_band_, n_band_, &one, w_.data(), ld_psi_, device_coeff.data(), n_band_, &zero,
+                values.data(), ld_psi_);
         };
         rotate_direction(p_);
         rotate_direction(sp_);
@@ -1732,41 +1514,34 @@ bool DiagoPPCG<T, Device>::rayleigh_ritz(
         // arbitrary column based on its residual alone.
         active_cols.resize(n_band_);
         std::iota(active_cols.begin(), active_cols.end(), 0);
-        max_residual_ = max_generalized_residual<T, Device>(hpsi_.data(),
-                                                spsi_.data(),
-                                                eigenvalue,
-                                                ld_psi_,
-                                                n_dim_,
-                                                n_band_);
+        max_residual_ =
+            max_generalized_residual<T, Device>(hpsi_.data(), spsi_.data(), eigenvalue, ld_psi_, n_dim_, n_band_);
     }
     return sygvd_ok;
 }
 
 template <typename T, typename Device>
-void DiagoPPCG<T, Device>::compute_eigenpair_residual(const Real* eigenvalue)
+void DiagoPPCG<T, Device>::compute_eigenpair_residual(const Real *eigenvalue)
 {
     const PPCGFunctionTimer timer("compute_eigenpair_residual");
     set_zero<T, Device>(w_);
     auto values = upload_values<Real, Device>(eigenvalue, n_band_);
-    PPCGVectorOps<T, Device>::residual(
-        n_dim_, ld_psi_, n_band_, hpsi_.data(), spsi_.data(), values.data(), w_.data());
+    PPCGVectorOps<T, Device>::residual(n_dim_, ld_psi_, n_band_, hpsi_.data(), spsi_.data(), values.data(), w_.data());
 }
 
 template <typename T, typename Device>
-bool DiagoPPCG<T, Device>::orthonormalize(T* psi)
+bool DiagoPPCG<T, Device>::orthonormalize(T *psi)
 {
     const PPCGFunctionTimer timer("orthonormalize");
     gram(psi, spsi_.data(), n_band_, n_band_, rr_ssub_, n_band_);
     bool local_success = false;
     try
     {
-        container::kernels::lapack_potrf<T, container::DEVICE_CPU>()(
-            'U', n_band_, rr_ssub_.data(), n_band_);
-        container::kernels::lapack_trtri<T, container::DEVICE_CPU>()(
-            'U', 'N', n_band_, rr_ssub_.data(), n_band_);
+        container::kernels::lapack_potrf<T, container::DEVICE_CPU>()('U', n_band_, rr_ssub_.data(), n_band_);
+        container::kernels::lapack_trtri<T, container::DEVICE_CPU>()('U', 'N', n_band_, rr_ssub_.data(), n_band_);
         local_success = true;
     }
-    catch (const std::runtime_error&)
+    catch (const std::runtime_error &)
     {
         // The caller performs a common Rayleigh-Ritz fallback on all ranks.
     }
@@ -1788,22 +1563,13 @@ bool DiagoPPCG<T, Device>::orthonormalize(T* psi)
     const int size = ld_psi_ * n_band_;
     const T one = T(1);
     const T zero = T(0);
-    const auto rotate = [&](T* values) {
+    const auto rotate = [&](T *values)
+    {
         copy_values<T, Device>(values, size, w_.data());
         zero_values<T, Device>(values, size);
-        ModuleBase::gemm_op<T, Device>()('N',
-                                         'N',
-                                         n_dim_,
-                                         n_band_,
-                                         n_band_,
-                                         &one,
-                                         w_.data(),
-                                         ld_psi_,
-                                         device_coeff.data(),
-                                         n_band_,
-                                         &zero,
-                                         values,
-                                         ld_psi_);
+        ModuleBase::gemm_op<T, Device>()(
+            'N', 'N', n_dim_, n_band_, n_band_, &one, w_.data(), ld_psi_, device_coeff.data(), n_band_, &zero, values,
+            ld_psi_);
     };
     rotate(psi);
     rotate(hpsi_.data());
@@ -1817,10 +1583,7 @@ bool DiagoPPCG<T, Device>::orthonormalize(T* psi)
 }
 
 template <typename T, typename Device>
-bool DiagoPPCG<T, Device>::update_block_gradient(
-    const T* psi,
-    Real* eigenvalue,
-    const std::vector<double>& ethr_band)
+bool DiagoPPCG<T, Device>::update_block_gradient(const T *psi, Real *eigenvalue, const std::vector<double> &ethr_band)
 {
     const PPCGFunctionTimer timer("update_block_gradient");
     gram(psi, hpsi_.data(), n_band_, n_band_, rr_hsub_, n_band_);
@@ -1835,19 +1598,9 @@ bool DiagoPPCG<T, Device>::update_block_gradient(
     auto device_coeff = upload_values<T, Device>(rr_hsub_.data(), coefficient_count);
     const T minus_one = T(-1);
     const T one = T(1);
-    ModuleBase::gemm_op<T, Device>()('N',
-                                     'N',
-                                     n_dim_,
-                                     n_band_,
-                                     n_band_,
-                                     &minus_one,
-                                     spsi_.data(),
-                                     ld_psi_,
-                                     device_coeff.data(),
-                                     n_band_,
-                                     &one,
-                                     w_.data(),
-                                     ld_psi_);
+    ModuleBase::gemm_op<T, Device>()(
+        'N', 'N', n_dim_, n_band_, n_band_, &minus_one, spsi_.data(), ld_psi_, device_coeff.data(), n_band_, &one,
+        w_.data(), ld_psi_);
     std::vector<int> candidates;
     lock_epairs(w_, ethr_band, candidates);
     // Do not change the actual locked prefix without a successful Ritz solve.
@@ -1856,23 +1609,24 @@ bool DiagoPPCG<T, Device>::update_block_gradient(
 
 } // namespace hsolver
 
-
-namespace hsolver {
+namespace hsolver
+{
 
 //==============================================================================
 // MAIN DIAGONALIZATION ROUTINE
 //==============================================================================
 template <typename T, typename Device>
-double DiagoPPCG<T, Device>::diag(const HSOperator<T, Device>& op,
-                                  int ld_psi,
-                                  int nband,
-                                  int dim,
-                                  T* psi_in,
-                                  Real* eigenvalue_in,
-                                  const std::vector<double>& ethr_band,
-                                  const Real* prec,
-                                  std::ostream& log,
-                                  const PPCGTraceContext& trace_context)
+double DiagoPPCG<T, Device>::diag(
+    const HSOperator<T, Device> &op,
+    int ld_psi,
+    int nband,
+    int dim,
+    T *psi_in,
+    Real *eigenvalue_in,
+    const std::vector<double> &ethr_band,
+    const Real *prec,
+    std::ostream &log,
+    const PPCGTraceContext &trace_context)
 {
     const PPCGFunctionTimer timer("diag");
     ld_psi_ = ld_psi;
@@ -1920,7 +1674,7 @@ double DiagoPPCG<T, Device>::diag(const HSOperator<T, Device>& op,
 
     std::ofstream residual_trace;
     std::streamoff trace_id = 0;
-    const char* residual_trace_path = std::getenv("ABACUS_PPCG_RESIDUAL_TRACE");
+    const char *residual_trace_path = std::getenv("ABACUS_PPCG_RESIDUAL_TRACE");
     bool trace_writer = false;
     if (residual_trace_path != nullptr)
     {
@@ -1939,9 +1693,9 @@ double DiagoPPCG<T, Device>::diag(const HSOperator<T, Device>& op,
         if (residual_trace)
         {
 #ifdef _WIN32
-            char* full_path = ::_fullpath(nullptr, residual_trace_path, 0);
+            char *full_path = ::_fullpath(nullptr, residual_trace_path, 0);
 #else
-            char* full_path = ::realpath(residual_trace_path, nullptr);
+            char *full_path = ::realpath(residual_trace_path, nullptr);
 #endif
             if (full_path != nullptr)
             {
@@ -1976,17 +1730,14 @@ double DiagoPPCG<T, Device>::diag(const HSOperator<T, Device>& op,
     Real local_overlap_min = std::numeric_limits<Real>::quiet_NaN();
     Real local_overlap_max = std::numeric_limits<Real>::quiet_NaN();
     Real local_overlap_condition = std::numeric_limits<Real>::quiet_NaN();
-    auto record_residual = [&](int iteration, const char* stage) {
+    auto record_residual = [&](int iteration, const char *stage)
+    {
         if (!residual_trace_enabled)
         {
             return;
         }
-        const Real max_residual = max_generalized_residual<T, Device>(hpsi_.data(),
-                                                            spsi_.data(),
-                                                            eigenvalue_in,
-                                                            ld_psi_,
-                                                            n_dim_,
-                                                            ncol);
+        const Real max_residual =
+            max_generalized_residual<T, Device>(hpsi_.data(), spsi_.data(), eigenvalue_in, ld_psi_, n_dim_, ncol);
         if (!write_residual_trace)
         {
             return;
@@ -1996,17 +1747,12 @@ double DiagoPPCG<T, Device>::diag(const HSOperator<T, Device>& op,
         {
             residual_trace << ',' << eigenvalue_in[ib];
         }
-        residual_trace << ',' << local_overlap_min
-                       << ',' << local_overlap_max
-                       << ',' << local_overlap_condition
-                       << ',' << trace_context.scf_iteration
-                       << ',' << trace_context.kpoint
-                       << ',' << trace_id
-                       << '\n';
+        residual_trace << ',' << local_overlap_min << ',' << local_overlap_max << ',' << local_overlap_condition << ','
+                       << trace_context.scf_iteration << ',' << trace_context.kpoint << ',' << trace_id << '\n';
     };
 
-    auto measure_local_overlap = [&](const SmallSubspace& local_subspace,
-                                     const int local_dim) {
+    auto measure_local_overlap = [&](const SmallSubspace &local_subspace, const int local_dim)
+    {
         if (!write_residual_trace)
         {
             return;
@@ -2016,12 +1762,9 @@ double DiagoPPCG<T, Device>::diag(const HSOperator<T, Device>& op,
         try
         {
             container::kernels::lapack_heevd<T, container::DEVICE_CPU>()(
-                local_dim,
-                overlap.data(),
-                local_dim,
-                overlap_eigenvalues.data());
+                local_dim, overlap.data(), local_dim, overlap_eigenvalues.data());
         }
-        catch (const std::exception&)
+        catch (const std::exception &)
         {
             // Trace diagnostics must not change the solver's MPI control flow.
             local_overlap_min = std::numeric_limits<Real>::quiet_NaN();
@@ -2043,10 +1786,8 @@ double DiagoPPCG<T, Device>::diag(const HSOperator<T, Device>& op,
     };
 
     // Initialize with Rayleigh-Ritz.
-    bool last_rr_succeeded = rayleigh_ritz(
-        psi_in, eigenvalue_in, active_cols, ethr_band);
-    const bool needs_startup_global_correction = !active_cols.empty()
-                                                 && sbsize_ < ncol;
+    bool last_rr_succeeded = rayleigh_ritz(psi_in, eigenvalue_in, active_cols, ethr_band);
+    const bool needs_startup_global_correction = !active_cols.empty() && sbsize_ < ncol;
     // The Ritz transformation updates X, HX and SX with identical coefficients.
     record_residual(0, "initial_rr");
 
@@ -2056,10 +1797,10 @@ double DiagoPPCG<T, Device>::diag(const HSOperator<T, Device>& op,
     std::vector<int> cols;
     cols.reserve(std::min(sbsize_, ncol));
     SmallSubspace subspace;
-    bool use_p = false;  // previous search direction becomes available after
-                         // the first block update.
-    Real best_res = std::numeric_limits<Real>::max();  // best residual seen
-    int no_improve = 0;  // iterations since the residual last decreased
+    bool use_p = false;                               // previous search direction becomes available after
+                                                      // the first block update.
+    Real best_res = std::numeric_limits<Real>::max(); // best residual seen
+    int no_improve = 0;                               // iterations since the residual last decreased
 
     while (!active_cols.empty() && iter <= maxiter_)
     {
@@ -2074,8 +1815,7 @@ double DiagoPPCG<T, Device>::diag(const HSOperator<T, Device>& op,
         {
             spectral_scale = std::max(spectral_scale, std::abs(eigenvalue_in[ib]));
         }
-        const Real reliable_update_threshold = std::sqrt(std::numeric_limits<Real>::epsilon())
-                                               * spectral_scale;
+        const Real reliable_update_threshold = std::sqrt(std::numeric_limits<Real>::epsilon()) * spectral_scale;
         const bool near_precision = max_residual_ <= reliable_update_threshold;
         if (near_precision)
         {
@@ -2143,20 +1883,10 @@ double DiagoPPCG<T, Device>::diag(const HSOperator<T, Device>& op,
         if (startup_correction)
         {
             const int local_dim = ncol + nact;
-            build_startup_global_subspace(psi_in,
-                                          active_vector,
-                                          s_active_vector,
-                                          h_active_vector,
-                                          nact,
-                                          subspace);
+            build_startup_global_subspace(psi_in, active_vector, s_active_vector, h_active_vector, nact, subspace);
             measure_local_overlap(subspace, local_dim);
             solve_small_generalized(local_dim, ncol, subspace);
-            update_startup_global_subspace(psi_in,
-                                           active_vector,
-                                           s_active_vector,
-                                           h_active_vector,
-                                           nact,
-                                           subspace);
+            update_startup_global_subspace(psi_in, active_vector, s_active_vector, h_active_vector, nact, subspace);
         }
         else
         {
@@ -2169,8 +1899,7 @@ double DiagoPPCG<T, Device>::diag(const HSOperator<T, Device>& op,
                 {
                     ++l;
                 }
-                cols.assign(active_cols.begin() + i0,
-                            active_cols.begin() + i0 + l);
+                cols.assign(active_cols.begin() + i0, active_cols.begin() + i0 + l);
 
                 build_small_subspace(psi_in, cols, nblk, subspace);
                 const int local_dim = nblk * l;
@@ -2189,8 +1918,7 @@ double DiagoPPCG<T, Device>::diag(const HSOperator<T, Device>& op,
         // the full projected Hamiltonian.
         const bool scheduled_rr = (iter % rr_step_) == 0;
         const int operator_refresh_interval = 16;
-        const bool refresh_operators = (iter % operator_refresh_interval) == 0
-                                       && !near_precision;
+        const bool refresh_operators = (iter % operator_refresh_interval) == 0 && !near_precision;
         if (refresh_operators)
         {
             apply_h(op, psi_in, hpsi_.data(), ncol);
@@ -2212,17 +1940,15 @@ double DiagoPPCG<T, Device>::diag(const HSOperator<T, Device>& op,
         last_rr_succeeded = false;
         if (perform_rr)
         {
-            last_rr_succeeded = rayleigh_ritz(
-                psi_in, eigenvalue_in, active_cols, ethr_band);
+            last_rr_succeeded = rayleigh_ritz(psi_in, eigenvalue_in, active_cols, ethr_band);
         }
         // A residual only certifies the retained eigenpairs, not that no lower
         // state was discarded by another local block. Inspect those available
         // directions before accepting a newly converged set of columns.
         if (!perform_rr || last_rr_succeeded)
         {
-            const bool recovered = recover_competing_ritz(op, psi_in, eigenvalue_in,
-                                                           last_rr_succeeded, active_cols,
-                                                           ethr_band, discarded);
+            const bool recovered =
+                recover_competing_ritz(op, psi_in, eigenvalue_in, last_rr_succeeded, active_cols, ethr_band, discarded);
             if (recovered)
             {
                 last_rr_succeeded = true;
@@ -2274,7 +2000,7 @@ double DiagoPPCG<T, Device>::diag(const HSOperator<T, Device>& op,
                 best_res = cur_res;
             }
         }
-        const char* stage = perform_rr ? "rayleigh_ritz" : "block_sweep";
+        const char *stage = perform_rr ? "rayleigh_ritz" : "block_sweep";
         record_residual(iter, stage);
 
         ++iter;
@@ -2293,27 +2019,20 @@ double DiagoPPCG<T, Device>::diag(const HSOperator<T, Device>& op,
     else
     {
         active_cols = all_cols;
-        max_residual_ = max_generalized_residual<T, Device>(hpsi_.data(),
-                                                  spsi_.data(),
-                                                  eigenvalue_in,
-                                                  ld_psi_,
-                                                  n_dim_,
-                                                  ncol);
+        max_residual_ =
+            max_generalized_residual<T, Device>(hpsi_.data(), spsi_.data(), eigenvalue_in, ld_psi_, n_dim_, ncol);
     }
     active_band_count_ = int(active_cols.size());
     if (!active_cols.empty())
     {
         first_active_band_ = active_cols.front();
-        first_active_threshold_ = std::max(Real(ethr_band[first_active_band_]),
-                                           diag_thr_);
+        first_active_threshold_ = std::max(Real(ethr_band[first_active_band_]), diag_thr_);
     }
     converged_ = last_rr_succeeded && active_cols.empty();
     iteration_limit_reached_ = !converged_ && iter > maxiter_;
     if (!active_cols.empty())
     {
-        const char* failure_stage = iteration_limit_reached_
-                                    ? "max_iterations"
-                                    : "final_residual_failure";
+        const char *failure_stage = iteration_limit_reached_ ? "max_iterations" : "final_residual_failure";
         record_residual(iter - 1, failure_stage);
     }
     record_residual(iter - 1, "final");
@@ -2322,7 +2041,8 @@ double DiagoPPCG<T, Device>::diag(const HSOperator<T, Device>& op,
 
 } // namespace hsolver
 
-namespace hsolver {
+namespace hsolver
+{
 
 template class DiagoPPCG<std::complex<float>, base_device::DEVICE_CPU>;
 template class DiagoPPCG<std::complex<double>, base_device::DEVICE_CPU>;

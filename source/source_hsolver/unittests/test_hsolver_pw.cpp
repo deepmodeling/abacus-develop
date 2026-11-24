@@ -44,14 +44,15 @@ template <typename T> class IdentityHSOperator : public hsolver::HSOperator<T, b
 class DiagonalHSOperator : public hsolver::HSOperator<std::complex<double>, base_device::DEVICE_CPU>
 {
   public:
-    explicit DiagonalHSOperator(const std::vector<double>& diagonal) : diagonal_(diagonal) {}
+    explicit DiagonalHSOperator(const std::vector<double> &diagonal) : diagonal_(diagonal) {}
 
     void update_k(const int ik) override {}
 
-    void hpsi(const std::complex<double>* x,
-              std::complex<double>* hx,
-              const int ld,
-              const int nvec) const override
+    void hpsi(
+        const std::complex<double> *x,
+        std::complex<double> *hx,
+        const int ld,
+        const int nvec) const override
     {
         for (int column = 0; column < nvec; ++column)
         {
@@ -62,13 +63,14 @@ class DiagonalHSOperator : public hsolver::HSOperator<std::complex<double>, base
         }
     }
 
-    void spsi(const std::complex<double>* x,
-              std::complex<double>* sx,
-              const int ld,
-              const int nvec) const override
+    void spsi(
+        const std::complex<double> *x,
+        std::complex<double> *sx,
+        const int ld,
+        const int nvec) const override
     {
         const size_t count = static_cast<size_t>(ld) * nvec;
-        const std::complex<double>* end = x + count;
+        const std::complex<double> *end = x + count;
         std::copy(x, end, sx);
     }
 
@@ -255,27 +257,22 @@ class TestHSolverPW : public ::testing::Test
         std::vector<typename GetTypeReal<T>::type> &pre,
         typename GetTypeReal<T>::type *eig,
         const int ntry,
-        std::ostream& log)
+        std::ostream &log)
     {
-        hs.hamiltSolvePsiK(
-            op,
-            ps,
-            pre,
-            eig,
-            ntry,
-            log);
+        hs.hamiltSolvePsiK(op, ps, pre, eig, ntry, log);
     }
 
     template <typename T, typename Device>
-    static void set_ethr_band(hsolver::HSolverPW<T, Device>& hs, const int count, const double value)
+    static void set_ethr_band(hsolver::HSolverPW<T, Device> &hs, const int count, const double value)
     {
         hs.ethr_band.assign(count, value);
     }
 
-    std::vector<double> run_ppcg_dispatch(const std::string& calculation,
-                                         const bool exact_vectors,
-                                         const int iteration_budget,
-                                         std::ostream& log)
+    std::vector<double> run_ppcg_dispatch(
+        const std::string &calculation,
+        const bool exact_vectors,
+        const int iteration_budget,
+        std::ostream &log)
     {
         Input_para inp;
         inp.calculation = calculation;
@@ -283,22 +280,8 @@ class TestHSolverPW : public ::testing::Test
         inp.pw_diag_nmax = iteration_budget;
         hsolver::setup_diago_params_pw<std::complex<double>, base_device::DEVICE_CPU>(0, 1, 1.0e-12, inp);
         hsolver::HSolverPW<std::complex<double>, base_device::DEVICE_CPU> hs(
-            &pwbk,
-            calculation,
-            "pw",
-            "ppcg",
-            false,
-            1,
-            DiagoAssist::SCF_ITER,
-            DiagoAssist::PW_DIAG_NMAX,
-            DiagoAssist::PW_DIAG_THR,
-            DiagoAssist::need_subspace,
-            2,
-            false,
-            1,
-            1,
-            0,
-            0);
+            &pwbk, calculation, "pw", "ppcg", false, 1, DiagoAssist::SCF_ITER, DiagoAssist::PW_DIAG_NMAX,
+            DiagoAssist::PW_DIAG_THR, DiagoAssist::need_subspace, 2, false, 1, 1, 0, 0);
         if (calculation != "nscf")
         {
             EXPECT_EQ(hs.diag_iter_max, iteration_budget);
@@ -307,8 +290,8 @@ class TestHSolverPW : public ::testing::Test
         DiagonalHSOperator op(diagonal);
         psi::Psi<std::complex<double>> ps;
         ps.resize(1, 2, 3);
-        std::complex<double>* vectors = ps.get_pointer();
-        std::complex<double>* end = vectors + 6;
+        std::complex<double> *vectors = ps.get_pointer();
+        std::complex<double> *end = vectors + 6;
         const std::complex<double> zero(0.0, 0.0);
         std::fill(vectors, end, zero);
         vectors[0] = std::complex<double>(1.0, 0.0);
@@ -328,39 +311,19 @@ class TestHSolverPW : public ::testing::Test
     ModulePW::PW_Basis_K pwbk;
     hsolver::HSolverPW<std::complex<float>, base_device::DEVICE_CPU> hs_f =
         hsolver::HSolverPW<std::complex<float>, base_device::DEVICE_CPU>(
-            &pwbk,
-            "scf",
-            "pw",
-            "cg",
-            false,
-            1,
+            &pwbk, "scf", "pw", "cg", false, 1,
             hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::SCF_ITER,
             hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::PW_DIAG_NMAX,
             hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::PW_DIAG_THR,
-            hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::need_subspace,
-            0,
-            false,
-            4,
-            1,
-            0,
+            hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::need_subspace, 0, false, 4, 1, 0,
             0);
     hsolver::HSolverPW<std::complex<double>, base_device::DEVICE_CPU> hs_d =
         hsolver::HSolverPW<std::complex<double>, base_device::DEVICE_CPU>(
-            &pwbk,
-            "scf",
-            "pw",
-            "cg",
-            false,
-            1,
+            &pwbk, "scf", "pw", "cg", false, 1,
             hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::SCF_ITER,
             hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::PW_DIAG_NMAX,
             hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::PW_DIAG_THR,
-            hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::need_subspace,
-            0,
-            false,
-            4,
-            1,
-            0,
+            hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::need_subspace, 0, false, 4, 1, 0,
             0);
 
     IdentityHSOperator<std::complex<double>> hamilt_test_d;
@@ -635,14 +598,7 @@ TEST_F(TestHSolverPW, NpwxLessThanNbandsDeath)
     std::ostringstream log;
     // Expect death from WARNING_QUIT due to npwx < nbands
     EXPECT_EXIT(
-        hamiltSolvePsiK(
-            hs_d,
-            hamilt_test_d,
-            psi_test_cd,
-            precond,
-            eigenvalues.data(),
-            1,
-            log),
+        hamiltSolvePsiK(hs_d, hamilt_test_d, psi_test_cd, precond, eigenvalues.data(), 1, log),
         ::testing::ExitedWithCode(1), ".*");
 }
 
@@ -664,10 +620,7 @@ TEST_F(TestHSolverPW, PPCGNscfDispatchIsRejected)
 {
     std::ostringstream log;
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(
-        run_ppcg_dispatch("nscf", false, 0, log),
-        ::testing::ExitedWithCode(1),
-        "");
+    EXPECT_EXIT(run_ppcg_dispatch("nscf", false, 0, log), ::testing::ExitedWithCode(1), "");
     const std::string output = testing::internal::GetCapturedStdout();
     EXPECT_NE(output.find("PPCG is not supported for NSCF"), std::string::npos);
 }
@@ -686,10 +639,7 @@ TEST_F(TestHSolverPW, PPCGNscfDispatchRejectsEvenExactEigenvectors)
     DiagoAssist::PW_DIAG_NMAX = 30;
     std::ostringstream log;
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(
-        run_ppcg_dispatch("nscf", true, 77, log),
-        ::testing::ExitedWithCode(1),
-        "");
+    EXPECT_EXIT(run_ppcg_dispatch("nscf", true, 77, log), ::testing::ExitedWithCode(1), "");
     const std::string output = testing::internal::GetCapturedStdout();
     EXPECT_NE(output.find("PPCG is not supported for NSCF"), std::string::npos);
 }
@@ -724,7 +674,7 @@ TEST_F(TestHSolverPW, DiagoParamsSetsScfSolverBudgets)
     }
 }
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
     ::testing::InitGoogleTest(&argc, argv);
 #ifdef __MPI

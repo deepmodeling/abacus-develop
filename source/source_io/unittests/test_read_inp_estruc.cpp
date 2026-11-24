@@ -1,8 +1,8 @@
 #include "source_io/module_parameter/read_input.h"
 
-#include <gtest/gtest.h>
 #include <cstdio>
 #include <fstream>
+#include <gtest/gtest.h>
 #include <string>
 #include <unistd.h>
 #include <vector>
@@ -11,7 +11,7 @@ namespace
 {
 class PPCGInputTest : public testing::Test
 {
-protected:
+  protected:
     std::string filename;
 
     void SetUp() override
@@ -25,12 +25,9 @@ protected:
         filename = path.data();
     }
 
-    void TearDown() override
-    {
-        std::remove(filename.c_str());
-    }
+    void TearDown() override { std::remove(filename.c_str()); }
 
-    void write_input(const std::string& solver, const std::string& calculation)
+    void write_input(const std::string &solver, const std::string &calculation)
     {
         std::ofstream out(filename);
         out << "INPUT_PARAMETERS\nbasis_type pw\nntype 1\necutwfc 20\n"
@@ -86,14 +83,13 @@ TEST_F(PPCGInputTest, RejectsGpuWithoutHostDeviceFallback)
     // Exercise the registered support rule without requiring a GPU runtime.
     // A CPU-only reader rejects GPU hardware before checking dependencies.
     ModuleIO::ReadInput reader(0);
-    ModuleIO::InputValues values = {
-        {"basis_type", ModuleIO::InputValue(std::string("pw"))},
+    ModuleIO::InputValues values = {{"basis_type", ModuleIO::InputValue(std::string("pw"))},
         {"ks_solver", ModuleIO::InputValue(std::string("ppcg"))},
         {"esolver_type", ModuleIO::InputValue(std::string("ksdft"))},
         {"calculation", ModuleIO::InputValue(std::string("scf"))},
         {"device", ModuleIO::InputValue(std::string("gpu"))}};
     bool found_solver = false;
-    for (const auto& entry : reader.get_input_lists())
+    for (const auto &entry : reader.get_input_lists())
     {
         if (entry.first == "ks_solver")
         {

@@ -3,18 +3,18 @@
 #include "source_base/timer.h"
 
 #include <algorithm>
-#include <cstdlib>
 #include <cstdio>
+#include <cstdlib>
 #include <fstream>
 #include <limits>
 #include <random>
 #include <sstream>
 #include <string>
 
+using ppcg_test::dense_h_multiply;
 using ppcg_test::DiagoPPCGMatrixTest;
 using ppcg_test::Real;
 using ppcg_test::T;
-using ppcg_test::dense_h_multiply;
 
 // Test fixture: 1D particle-in-a-box (tridiagonal Laplacian)
 class DiagoPPCGTridiagTest : public DiagoPPCGMatrixTest
@@ -38,11 +38,11 @@ TEST_F(DiagoPPCGTridiagTest, ReportsIterationLimit)
         /* sbsize   = */ 3,
         /* rr_step  = */ 4);
 
-    auto h_op = [this](const T* in, T* out, int ld_in, int ncol) {
-        dense_h_multiply(H_mat.data(), n_dim, in, out, ld_in, ncol);
-    };
+    auto h_op = [this](const T *in, T *out, int ld_in, int ncol)
+    { dense_h_multiply(H_mat.data(), n_dim, in, out, ld_in, ncol); };
 
-    ppcg_test::diagonalize(solver, h_op, nullptr, ld, nband, n_dim, psi_run.data(), eval.data(), strict_ethr, prec.data());
+    ppcg_test::diagonalize(
+        solver, h_op, nullptr, ld, nband, n_dim, psi_run.data(), eval.data(), strict_ethr, prec.data());
 
     EXPECT_FALSE(solver.converged());
     EXPECT_GT(solver.active_band_count(), 0);
@@ -58,11 +58,13 @@ TEST_F(DiagoPPCGTridiagTest, ReusesProjectedOperatorImages)
     const std::vector<double> strict_ethr(nband, 1.0e-14);
     int h_calls = 0;
     int s_calls = 0;
-    const auto h_op = [this, &h_calls](const T* in, T* out, int ld_in, int ncol) {
+    const auto h_op = [this, &h_calls](const T *in, T *out, int ld_in, int ncol)
+    {
         ++h_calls;
         dense_h_multiply(H_mat.data(), n_dim, in, out, ld_in, ncol);
     };
-    const auto s_op = [this, &s_calls](const T* in, T* out, int ld_in, int ncol) {
+    const auto s_op = [this, &s_calls](const T *in, T *out, int ld_in, int ncol)
+    {
         ++s_calls;
         for (int j = 0; j < ncol; ++j)
         {
@@ -73,8 +75,7 @@ TEST_F(DiagoPPCGTridiagTest, ReusesProjectedOperatorImages)
         }
     };
     hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(1.0e-14, 2, 3, 16);
-    ppcg_test::diagonalize(solver, h_op, s_op, ld, nband, n_dim,
-                psi_run.data(), eval.data(), strict_ethr, prec.data());
+    ppcg_test::diagonalize(solver, h_op, s_op, ld, nband, n_dim, psi_run.data(), eval.data(), strict_ethr, prec.data());
 
     ASSERT_TRUE(solver.iteration_limit_reached());
     // Initial/final X applications, one W application per sweep, and one
@@ -115,7 +116,8 @@ TEST(DiagoPPCGReliableUpdateTest, RefreshesBeforeUsingNearPrecisionResidual)
         std::vector<T> psi = {T(1.0 / normalization), T(perturbation / normalization)};
         std::vector<Real> eigenvalues(1, 0.0);
         int h_calls = 0;
-        const auto h_op = [&h_calls](const T* in, T* out, int ld, int ncol) {
+        const auto h_op = [&h_calls](const T *in, T *out, int ld, int ncol)
+        {
             ++h_calls;
             for (int j = 0; j < ncol; ++j)
             {
@@ -123,10 +125,9 @@ TEST(DiagoPPCGReliableUpdateTest, RefreshesBeforeUsingNearPrecisionResidual)
                 out[1 + j * ld] = 3.0 * in[1 + j * ld];
             }
         };
-        hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(
-            1.0e-14, 1, 1, 1);
-        ppcg_test::diagonalize(solver, h_op, nullptr, dimension, 1, dimension,
-                    psi.data(), eigenvalues.data(), thresholds, prec.data());
+        hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(1.0e-14, 1, 1, 1);
+        ppcg_test::diagonalize(
+            solver, h_op, nullptr, dimension, 1, dimension, psi.data(), eigenvalues.data(), thresholds, prec.data());
         EXPECT_TRUE(solver.converged());
         EXPECT_LT(solver.max_residual(), 1.0e-14);
         EXPECT_NEAR(eigenvalues[0], 1.0, 1.0e-14);
@@ -148,7 +149,7 @@ TEST(DiagoPPCGPeriodicRitzTest, HonorsIntervalAndChecksFinalRitzResidual)
     std::mt19937 random(184);
     std::uniform_real_distribution<double> uniform(-1.0, 1.0);
     std::vector<T> initial(dimension * bands);
-    for (T& value : initial)
+    for (T &value : initial)
     {
         const double real = uniform(random);
         const double imaginary = uniform(random);
@@ -165,9 +166,8 @@ TEST(DiagoPPCGPeriodicRitzTest, HonorsIntervalAndChecksFinalRitzResidual)
     // Each configuration additionally encounters one projection cancellation.
     // Each run encounters one competing discarded direction and
     // therefore add one conditional expanded Ritz solve, without another H call.
-    const Configuration configurations[] = {{10, 1}, {10, 4}, {10, 16},
-                                             {18, 1}, {18, 4}, {18, 16}};
-    for (const Configuration& configuration : configurations)
+    const Configuration configurations[] = {{10, 1}, {10, 4}, {10, 16}, {18, 1}, {18, 4}, {18, 16}};
+    for (const Configuration &configuration : configurations)
     {
         const int sweeps = configuration.sweeps;
         const int interval = configuration.interval;
@@ -176,7 +176,8 @@ TEST(DiagoPPCGPeriodicRitzTest, HonorsIntervalAndChecksFinalRitzResidual)
         std::vector<T> psi = initial;
         std::vector<Real> eigenvalues(bands, 0.0);
         int applications = 0;
-        const auto h_op = [&applications, dimension](const T* in, T* out, int ld, int ncol) {
+        const auto h_op = [&applications, dimension](const T *in, T *out, int ld, int ncol)
+        {
             ++applications;
             for (int j = 0; j < ncol; ++j)
             {
@@ -195,10 +196,10 @@ TEST(DiagoPPCGPeriodicRitzTest, HonorsIntervalAndChecksFinalRitzResidual)
                 }
             }
         };
-        hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(
-            1.0e-14, sweeps, 2, interval);
-        ppcg_test::diagonalize(solver, h_op, nullptr, dimension, bands, dimension,
-                    psi.data(), eigenvalues.data(), thresholds, prec.data());
+        hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(1.0e-14, sweeps, 2, interval);
+        ppcg_test::diagonalize(
+            solver, h_op, nullptr, dimension, bands, dimension, psi.data(), eigenvalues.data(), thresholds,
+            prec.data());
         ASSERT_TRUE(solver.iteration_limit_reached());
         const int scheduled = sweeps / interval;
         const int final_extra = sweeps % interval == 0 ? 0 : 1;
@@ -207,8 +208,7 @@ TEST(DiagoPPCGPeriodicRitzTest, HonorsIntervalAndChecksFinalRitzResidual)
         const int expected_ritz = 1 + scheduled + final_extra + startup_extra + competing_extra;
         const int operator_refreshes = sweeps / 16;
         const int cancellation_refreshes = 1;
-        const int expected_applications = 2 + sweeps + 2 * operator_refreshes
-                                          + cancellation_refreshes;
+        const int expected_applications = 2 + sweeps + 2 * operator_refreshes + cancellation_refreshes;
         EXPECT_EQ(solver.root_recovery_count(), competing_extra);
         EXPECT_EQ(solver.rayleigh_ritz_count(), expected_ritz);
         EXPECT_EQ(applications, expected_applications);
@@ -258,7 +258,8 @@ TEST(DiagoPPCGPeriodicRitzTest, StartupReclassifiesDisplacedLockedPrefix)
     std::vector<Real> eigenvalues(bands, 0.0);
     const std::vector<Real> prec(dimension, 1.0);
     const std::vector<double> thresholds(bands, 1.0e-10);
-    const auto h_op = [dimension](const T* in, T* out, int ld, int ncol) {
+    const auto h_op = [dimension](const T *in, T *out, int ld, int ncol)
+    {
         for (int j = 0; j < ncol; ++j)
         {
             for (int i = 0; i < dimension; ++i)
@@ -268,8 +269,8 @@ TEST(DiagoPPCGPeriodicRitzTest, StartupReclassifiesDisplacedLockedPrefix)
         }
     };
     hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(1.0e-12, 5, 1, 16);
-    ppcg_test::diagonalize(solver, h_op, nullptr, dimension, bands, dimension,
-                psi.data(), eigenvalues.data(), thresholds, prec.data());
+    ppcg_test::diagonalize(
+        solver, h_op, nullptr, dimension, bands, dimension, psi.data(), eigenvalues.data(), thresholds, prec.data());
     EXPECT_TRUE(solver.converged());
     EXPECT_NEAR(eigenvalues[0], 1.0, 1.0e-10);
     EXPECT_NEAR(eigenvalues[1], 2.0, 1.0e-10);
@@ -310,7 +311,8 @@ TEST(DiagoPPCGPeriodicRitzTest, ClusteredGeneralizedSpectrumWithLockedPrefix)
             initial[i + j * dimension] = T(real, imaginary) / std::sqrt(overlap[i]);
         }
     }
-    const auto h_op = [&spectrum, &overlap, dimension](const T* in, T* out, int ld, int ncol) {
+    const auto h_op = [&spectrum, &overlap, dimension](const T *in, T *out, int ld, int ncol)
+    {
         for (int j = 0; j < ncol; ++j)
         {
             for (int i = 0; i < dimension; ++i)
@@ -319,7 +321,8 @@ TEST(DiagoPPCGPeriodicRitzTest, ClusteredGeneralizedSpectrumWithLockedPrefix)
             }
         }
     };
-    const auto s_op = [&overlap, dimension](const T* in, T* out, int ld, int ncol) {
+    const auto s_op = [&overlap, dimension](const T *in, T *out, int ld, int ncol)
+    {
         for (int j = 0; j < ncol; ++j)
         {
             for (int i = 0; i < dimension; ++i)
@@ -335,10 +338,9 @@ TEST(DiagoPPCGPeriodicRitzTest, ClusteredGeneralizedSpectrumWithLockedPrefix)
         SCOPED_TRACE(interval);
         std::vector<T> psi = initial;
         std::vector<Real> eigenvalues(bands, 0.0);
-        hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(
-            1.0e-12, 600, 2, interval);
-        ppcg_test::diagonalize(solver, h_op, s_op, dimension, bands, dimension,
-                    psi.data(), eigenvalues.data(), thresholds, prec.data());
+        hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(1.0e-12, 600, 2, interval);
+        ppcg_test::diagonalize(
+            solver, h_op, s_op, dimension, bands, dimension, psi.data(), eigenvalues.data(), thresholds, prec.data());
         EXPECT_TRUE(solver.converged());
         EXPECT_LE(solver.max_residual(), 1.0e-10);
         for (int j = 0; j < bands; ++j)
@@ -380,17 +382,15 @@ TEST(DiagoPPCGStatusTest, ReportsActiveTailStart)
     std::vector<Real> eval(nband, Real(0));
     const std::vector<double> ethr(nband, 1.0e-12);
     const std::vector<Real> prec = {1, 2, 3, 4};
-    const auto h_op = [&h_mat, n_dim](const T* in, T* out, int ld_in, int ncol) {
-        dense_h_multiply(h_mat.data(), n_dim, in, out, ld_in, ncol);
-    };
+    const auto h_op = [&h_mat, n_dim](const T *in, T *out, int ld_in, int ncol)
+    { dense_h_multiply(h_mat.data(), n_dim, in, out, ld_in, ncol); };
     hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(
         /* diag_thr = */ 1.0e-12,
         /* max_iter = */ 0,
         /* sbsize   = */ 3,
         /* rr_step  = */ 1);
 
-    ppcg_test::diagonalize(solver, h_op, nullptr, ld, nband, n_dim,
-                psi.data(), eval.data(), ethr, prec.data());
+    ppcg_test::diagonalize(solver, h_op, nullptr, ld, nband, n_dim, psi.data(), eval.data(), ethr, prec.data());
 
     EXPECT_FALSE(solver.converged());
     EXPECT_EQ(solver.first_active_band(), 2);
@@ -411,7 +411,8 @@ TEST(DiagoPPCGStatusTest, NonFiniteFinalResidualIsNotConverged)
     const std::vector<double> ethr(nband, 1e-12);
     const std::vector<Real> prec = {1, 2};
     int h_apply_count = 0;
-    const auto h_op = [&h_apply_count](const T* in, T* out, int ld_in, int ncol) {
+    const auto h_op = [&h_apply_count](const T *in, T *out, int ld_in, int ncol)
+    {
         ++h_apply_count;
         for (int j = 0; j < ncol; ++j)
         {
@@ -432,8 +433,7 @@ TEST(DiagoPPCGStatusTest, NonFiniteFinalResidualIsNotConverged)
         /* sbsize   = */ 2,
         /* rr_step  = */ 2);
 
-    ppcg_test::diagonalize(solver, h_op, nullptr, ld, nband, n_dim,
-                psi.data(), eval.data(), ethr, prec.data());
+    ppcg_test::diagonalize(solver, h_op, nullptr, ld, nband, n_dim, psi.data(), eval.data(), ethr, prec.data());
 
     EXPECT_FALSE(solver.converged());
     EXPECT_EQ(solver.active_band_count(), nband);
@@ -457,17 +457,15 @@ TEST(DiagoPPCGStatusTest, FailedRayleighRitzCannotCertifyLowestRoots)
     std::vector<Real> eval(nband, Real(0));
     const std::vector<double> ethr(nband, 1e-12);
     const std::vector<Real> prec = {1, 2, 3};
-    const auto h_op = [&h_mat, n_dim](const T* in, T* out, int ld_in, int ncol) {
-        dense_h_multiply(h_mat.data(), n_dim, in, out, ld_in, ncol);
-    };
+    const auto h_op = [&h_mat, n_dim](const T *in, T *out, int ld_in, int ncol)
+    { dense_h_multiply(h_mat.data(), n_dim, in, out, ld_in, ncol); };
     hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(
         /* diag_thr = */ 1e-12,
         /* max_iter = */ 0,
         /* sbsize   = */ 2,
         /* rr_step  = */ 2);
 
-    ppcg_test::diagonalize(solver, h_op, nullptr, ld, nband, n_dim,
-                psi.data(), eval.data(), ethr, prec.data());
+    ppcg_test::diagonalize(solver, h_op, nullptr, ld, nband, n_dim, psi.data(), eval.data(), ethr, prec.data());
 
     EXPECT_FALSE(solver.converged());
     EXPECT_EQ(solver.active_band_count(), nband);
@@ -476,8 +474,8 @@ TEST(DiagoPPCGStatusTest, FailedRayleighRitzCannotCertifyLowestRoots)
 
 TEST_F(DiagoPPCGTridiagTest, ResidualTraceWritesCsv)
 {
-    const char* env_name = "ABACUS_PPCG_RESIDUAL_TRACE";
-    const char* old_env = std::getenv(env_name);
+    const char *env_name = "ABACUS_PPCG_RESIDUAL_TRACE";
+    const char *old_env = std::getenv(env_name);
     const bool had_old_env = old_env != nullptr;
     const std::string old_env_value = had_old_env ? old_env : "";
     const std::string trace_path = testing::TempDir() + "./ppcg_residual_trace_test.csv";
@@ -491,15 +489,15 @@ TEST_F(DiagoPPCGTridiagTest, ResidualTraceWritesCsv)
         /* sbsize   = */ 4,
         /* rr_step  = */ 4);
 
-    auto h_op = [this](const T* in, T* out, int ld_in, int ncol) {
-        dense_h_multiply(H_mat.data(), n_dim, in, out, ld_in, ncol);
-    };
+    auto h_op = [this](const T *in, T *out, int ld_in, int ncol)
+    { dense_h_multiply(H_mat.data(), n_dim, in, out, ld_in, ncol); };
 
     std::ostringstream running_log;
-    auto& residual_timer = ModuleBase::timer::timer_pool["DiagoPPCG"]["max_generalized_residual"];
+    auto &residual_timer = ModuleBase::timer::timer_pool["DiagoPPCG"]["max_generalized_residual"];
     const size_t before_disabled = residual_timer.calls;
     ASSERT_EQ(::unsetenv(env_name), 0);
-    ppcg_test::diagonalize(solver, h_op, nullptr, ld, nband, n_dim, psi_run.data(), eval.data(), ethr, prec.data(), running_log);
+    ppcg_test::diagonalize(
+        solver, h_op, nullptr, ld, nband, n_dim, psi_run.data(), eval.data(), ethr, prec.data(), running_log);
     const size_t disabled_calls = residual_timer.calls - before_disabled;
     EXPECT_TRUE(solver.converged());
 
@@ -509,7 +507,8 @@ TEST_F(DiagoPPCGTridiagTest, ResidualTraceWritesCsv)
     ASSERT_EQ(::setenv(env_name, directory_path.c_str(), 1), 0);
     psi_run = psi;
     const size_t before_failed_open = residual_timer.calls;
-    ppcg_test::diagonalize(solver, h_op, nullptr, ld, nband, n_dim, psi_run.data(), eval.data(), ethr, prec.data(), running_log);
+    ppcg_test::diagonalize(
+        solver, h_op, nullptr, ld, nband, n_dim, psi_run.data(), eval.data(), ethr, prec.data(), running_log);
     const size_t failed_open_calls = residual_timer.calls - before_failed_open;
     EXPECT_EQ(disabled_calls, failed_open_calls);
     EXPECT_TRUE(solver.converged());
@@ -518,7 +517,8 @@ TEST_F(DiagoPPCGTridiagTest, ResidualTraceWritesCsv)
     ASSERT_EQ(::setenv(env_name, trace_path.c_str(), 1), 0);
     psi_run = psi;
     const size_t before_enabled = residual_timer.calls;
-    ppcg_test::diagonalize(solver, h_op, nullptr, ld, nband, n_dim, psi_run.data(), eval.data(), ethr, prec.data(), running_log);
+    ppcg_test::diagonalize(
+        solver, h_op, nullptr, ld, nband, n_dim, psi_run.data(), eval.data(), ethr, prec.data(), running_log);
     const size_t enabled_calls = residual_timer.calls - before_enabled;
     EXPECT_GT(enabled_calls, disabled_calls);
 
@@ -533,7 +533,7 @@ TEST_F(DiagoPPCGTridiagTest, ResidualTraceWritesCsv)
 
     std::ifstream trace(trace_path);
     ASSERT_TRUE(trace.good());
-    char* resolved_path = ::realpath(trace_path.c_str(), nullptr);
+    char *resolved_path = ::realpath(trace_path.c_str(), nullptr);
     ASSERT_NE(resolved_path, nullptr);
     const std::string full_path(resolved_path);
     std::free(resolved_path);
@@ -543,9 +543,9 @@ TEST_F(DiagoPPCGTridiagTest, ResidualTraceWritesCsv)
     std::string first_record;
     std::getline(trace, header);
     std::getline(trace, first_record);
-    EXPECT_EQ(header,
-              "iteration,stage,max_residual,eigenvalue_0,eigenvalue_1,eigenvalue_2,"
-              "local_overlap_min,local_overlap_max,local_overlap_condition,scf_iteration,kpoint,solve_id");
+    EXPECT_EQ(
+        header, "iteration,stage,max_residual,eigenvalue_0,eigenvalue_1,eigenvalue_2,"
+                "local_overlap_min,local_overlap_max,local_overlap_condition,scf_iteration,kpoint,solve_id");
     EXPECT_NE(first_record.find("initial_rr"), std::string::npos);
     EXPECT_EQ(std::count(first_record.begin(), first_record.end(), ','), nband + 8);
 

@@ -4,9 +4,9 @@
 #include "../diago_ppcg.h"
 #include "diago_ppcg_test_operator.h"
 
-#include <gtest/gtest.h>
 #include <cmath>
 #include <complex>
+#include <gtest/gtest.h>
 #include <vector>
 
 namespace ppcg_test
@@ -18,17 +18,32 @@ using Real = double;
 // Helper: dense H-matrix times a set of column vectors
 // H is stored column-major: H(row, col) = H_data[row + col * n_dim]
 // -----------------------------------------------------------------------------
-void dense_h_multiply(const T* H_data, int n_dim, const T* in, T* out, int ld, int ncol);
+void dense_h_multiply(
+    const T *H_data,
+    int n_dim,
+    const T *in,
+    T *out,
+    int ld,
+    int ncol);
 
 // Use the same seeded real initial vectors for the analytical matrix fixtures.
-void initialize_vectors(std::vector<T>& psi, int n_dim, int nband, int ld, unsigned seed);
+void initialize_vectors(
+    std::vector<T> &psi,
+    int n_dim,
+    int nband,
+    int ld,
+    unsigned seed);
 
 // Shared storage and independent checks for analytical matrix cases. Numerical
 // regressions supply their own deliberately constructed vectors and callbacks.
 class DiagoPPCGMatrixTest : public ::testing::Test
 {
   protected:
-    void initialize(int dimension, int bands, unsigned seed, double threshold)
+    void initialize(
+        int dimension,
+        int bands,
+        unsigned seed,
+        double threshold)
     {
         n_dim = dimension;
         nband = bands;
@@ -61,17 +76,21 @@ class DiagoPPCGMatrixTest : public ::testing::Test
         }
     }
 
-    double solve(hsolver::DiagoPPCG<T, base_device::DEVICE_CPU>& solver)
+    double solve(hsolver::DiagoPPCG<T, base_device::DEVICE_CPU> &solver)
     {
         eval.assign(nband, 0.0);
-        const auto h_op = [this](const T* in, T* out, int leading_dimension, int columns) {
-            dense_h_multiply(H_mat.data(), n_dim, in, out, leading_dimension, columns);
-        };
-        return ppcg_test::diagonalize(solver, h_op, nullptr, ld, nband, n_dim, psi.data(), eval.data(), ethr, prec.data());
+        const auto h_op = [this](const T *in, T *out, int leading_dimension, int columns)
+        { dense_h_multiply(H_mat.data(), n_dim, in, out, leading_dimension, columns); };
+        return ppcg_test::diagonalize(
+            solver, h_op, nullptr, ld, nband, n_dim, psi.data(), eval.data(), ethr, prec.data());
     }
 
-    void check_eigenvalues(double diag_threshold, int max_iterations, int block_size,
-                           int ritz_interval, double tolerance)
+    void check_eigenvalues(
+        double diag_threshold,
+        int max_iterations,
+        int block_size,
+        int ritz_interval,
+        double tolerance)
     {
         hsolver::DiagoPPCG<T, base_device::DEVICE_CPU> solver(
             diag_threshold, max_iterations, block_size, ritz_interval);

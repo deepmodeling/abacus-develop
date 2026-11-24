@@ -2,10 +2,10 @@
 #include "../hs_operator.h"
 #include "source_base/kernels/math_kernel_op.h"
 #include "source_basis/module_pw/test/test_tool.h"
-#include <cuda_runtime_api.h>
-#include <gtest/gtest.h>
 #include <cmath>
 #include <complex>
+#include <cuda_runtime_api.h>
+#include <gtest/gtest.h>
 #include <limits>
 #include <random>
 #include <sstream>
@@ -20,8 +20,7 @@ template <typename T>
 class DenseDeviceOperator : public hsolver::HSOperator<T, GPU>
 {
   public:
-    DenseDeviceOperator(const int dimension, const std::vector<T>& h, const std::vector<T>& s)
-        : dimension_(dimension)
+    DenseDeviceOperator(const int dimension, const std::vector<T> &h, const std::vector<T> &s) : dimension_(dimension)
     {
         h_.resize(h.size());
         s_.resize(s.size());
@@ -29,12 +28,20 @@ class DenseDeviceOperator : public hsolver::HSOperator<T, GPU>
         base_device::memory::synchronize_memory_op<T, GPU, CPU>()(s_.data(), s.data(), s.size());
     }
     void update_k(const int) override {}
-    void hpsi(const T* x, T* hx, const int ld, const int count) const override
+    void hpsi(
+        const T *x,
+        T *hx,
+        const int ld,
+        const int count) const override
     {
         multiply(h_.data(), x, hx, ld, count);
         ++h_calls;
     }
-    void spsi(const T* x, T* sx, const int ld, const int count) const override
+    void spsi(
+        const T *x,
+        T *sx,
+        const int ld,
+        const int count) const override
     {
         multiply(s_.data(), x, sx, ld, count);
         ++s_calls;
@@ -43,7 +50,12 @@ class DenseDeviceOperator : public hsolver::HSOperator<T, GPU>
     mutable int s_calls = 0;
 
   private:
-    void multiply(const T* matrix, const T* x, T* output, const int ld, const int count) const
+    void multiply(
+        const T *matrix,
+        const T *x,
+        T *output,
+        const int ld,
+        const int count) const
     {
         cudaPointerAttributes input_attributes{};
         cudaPointerAttributes output_attributes{};
@@ -55,8 +67,8 @@ class DenseDeviceOperator : public hsolver::HSOperator<T, GPU>
         base_device::memory::set_memory_op<T, GPU>()(output, 0, size);
         const T one(1);
         const T zero(0);
-        ModuleBase::gemm_op<T, GPU>()('N', 'N', dimension_, count, dimension_,
-                                    &one, matrix, dimension_, x, ld, &zero, output, ld);
+        ModuleBase::gemm_op<T, GPU>()(
+            'N', 'N', dimension_, count, dimension_, &one, matrix, dimension_, x, ld, &zero, output, ld);
     }
     int dimension_;
     hsolver::PPCGDeviceBuffer<T> h_;
@@ -66,7 +78,11 @@ class DenseDeviceOperator : public hsolver::HSOperator<T, GPU>
 // H = sqrt(S) Q Lambda Q^H sqrt(S), with a complex Fourier Q and
 // nonuniform diagonal S. Its generalized eigenvalues are known independently.
 template <typename Real>
-void check_problem(const bool generalized, const int rr_step, const bool exact_prefix, const int maxiter)
+void check_problem(
+    const bool generalized,
+    const int rr_step,
+    const bool exact_prefix,
+    const int maxiter)
 {
     using T = std::complex<Real>;
     const int dimension = 24;
@@ -133,8 +149,9 @@ void check_problem(const bool generalized, const int rr_step, const bool exact_p
     hsolver::DiagoPPCG<T, GPU> solver(solver_threshold, maxiter, 2, rr_step);
     const hsolver::PPCGTraceContext context = {1, 1};
     std::ostringstream log;
-    solver.diag(op, ld, bands, dimension, device_vectors.data(), eigenvalues.data(),
-                thresholds, preconditioner.data(), log, context);
+    solver.diag(
+        op, ld, bands, dimension, device_vectors.data(), eigenvalues.data(), thresholds, preconditioner.data(), log,
+        context);
     EXPECT_GT(op.h_calls, 0);
     EXPECT_GT(op.s_calls, 0);
     if (maxiter == 1)
@@ -157,8 +174,8 @@ void check_problem(const bool generalized, const int rr_step, const bool exact_p
             std::complex<double> hx(0);
             for (int column = 0; column < dimension; ++column)
             {
-                hx += std::complex<double>(h[row + column * dimension])
-                      * std::complex<double>(vectors[column + band * ld]);
+                hx += std::complex<double>(h[row + column * dimension]) *
+                      std::complex<double>(vectors[column + band * ld]);
             }
             const auto sx = double(overlap[row]) * std::complex<double>(vectors[row + band * ld]);
             residual_squared += std::norm(hx - double(eigenvalues[band]) * sx);
@@ -169,8 +186,8 @@ void check_problem(const bool generalized, const int rr_step, const bool exact_p
             std::complex<double> product(0);
             for (int row = 0; row < dimension; ++row)
             {
-                product += std::conj(std::complex<double>(vectors[row + other * ld]))
-                           * double(overlap[row]) * std::complex<double>(vectors[row + band * ld]);
+                product += std::conj(std::complex<double>(vectors[row + other * ld])) * double(overlap[row]) *
+                           std::complex<double>(vectors[row + band * ld]);
             }
             const double expected_overlap = band == other ? 1.0 : 0.0;
             EXPECT_NEAR(product.real(), expected_overlap, check_tolerance);
@@ -191,7 +208,7 @@ TEST(DiagoPPCGGPU, GeneralizedComplexFloat) { check_problem<float>(true, 4, fals
 TEST(DiagoPPCGGPU, ReportsIterationLimit) { check_problem<double>(true, 1, false, 1); }
 } // namespace
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
 #ifdef __MPI
     int nproc = 1;

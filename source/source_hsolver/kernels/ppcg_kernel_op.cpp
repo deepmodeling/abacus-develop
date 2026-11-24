@@ -6,13 +6,21 @@ namespace hsolver
 namespace
 {
 #ifdef _OPENMP
-enum { openmp_work_threshold = 4096 };
+enum
+{
+    openmp_work_threshold = 4096
+};
 #endif
-}
+} // namespace
 
 template <typename T, typename Device>
 void PPCGVectorOps<T, Device>::column_products(
-    const int dim, const int ld, const int count, const T* x, const T* y, double* host_products)
+    const int dim,
+    const int ld,
+    const int count,
+    const T *x,
+    const T *y,
+    double *host_products)
 {
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static) if (dim * count > openmp_work_threshold)
@@ -31,7 +39,13 @@ void PPCGVectorOps<T, Device>::column_products(
 
 template <typename T, typename Device>
 void PPCGVectorOps<T, Device>::residual(
-    const int dim, const int ld, const int count, const T* hx, const T* sx, const Real* eigenvalues, T* output)
+    const int dim,
+    const int ld,
+    const int count,
+    const T *hx,
+    const T *sx,
+    const Real *eigenvalues,
+    T *output)
 {
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2) schedule(static) if (dim * count > openmp_work_threshold)
@@ -48,7 +62,11 @@ void PPCGVectorOps<T, Device>::residual(
 
 template <typename T, typename Device>
 void PPCGVectorOps<T, Device>::precondition(
-    const int dim, const int ld, const int count, const Real* diagonal, T* values)
+    const int dim,
+    const int ld,
+    const int count,
+    const Real *diagonal,
+    T *values)
 {
     const Real minimum_preconditioner = Real(1.0e-12);
 #ifdef _OPENMP
@@ -65,7 +83,13 @@ void PPCGVectorOps<T, Device>::precondition(
 
 template <typename T, typename Device>
 void PPCGVectorOps<T, Device>::scale_columns(
-    const int dim, const int ld, const int count, const double* scales, T* x, T* sx, T* hx)
+    const int dim,
+    const int ld,
+    const int count,
+    const double *scales,
+    T *x,
+    T *sx,
+    T *hx)
 {
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2) schedule(static) if (dim * count > openmp_work_threshold)

@@ -20,8 +20,8 @@
 
 #include <gtest/gtest.h>
 
-#include <cmath>
 #include <climits>
+#include <cmath>
 #include <complex>
 #include <cstdio>
 #include <cstdlib>
@@ -73,7 +73,8 @@ static bool check_competing_roots(const int rank_in_pool, const int nproc_in_poo
         }
     }
     bool operator_capacity_ok = true;
-    const auto h_op = [&](const Scalar* in, Scalar* out, int ld, int ncol) {
+    const auto h_op = [&](const Scalar *in, Scalar *out, int ld, int ncol)
+    {
         operator_capacity_ok = operator_capacity_ok && ncol <= bands;
         for (int column = 0; column < ncol; ++column)
         {
@@ -85,8 +86,9 @@ static bool check_competing_roots(const int rank_in_pool, const int nproc_in_poo
     };
     hsolver::DiagoPPCG<Scalar, base_device::DEVICE_CPU> solver(1.0e-10, 80, 1, 4);
     std::vector<double> eigenvalues(bands);
-    ppcg_test::diagonalize(solver, h_op, nullptr, local_rows, bands, local_rows,
-                vectors.data(), eigenvalues.data(), thresholds, preconditioner.data());
+    ppcg_test::diagonalize(
+        solver, h_op, nullptr, local_rows, bands, local_rows, vectors.data(), eigenvalues.data(), thresholds,
+        preconditioner.data());
 
     std::vector<double> residuals(bands, 0.0);
     std::vector<Scalar> overlap(bands * bands, Scalar(0));
@@ -127,13 +129,14 @@ static bool check_competing_roots(const int rank_in_pool, const int nproc_in_poo
     }
     if (!correct)
     {
-        std::fprintf(stderr, "pool rank %d: competing-root regression returned %.12g, %.12g\n",
-                     rank_in_pool, eigenvalues[0], eigenvalues[1]);
+        std::fprintf(
+            stderr, "pool rank %d: competing-root regression returned %.12g, %.12g\n", rank_in_pool, eigenvalues[0],
+            eigenvalues[1]);
     }
     return correct;
 }
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
     int nproc = 1;
     int myrank = 0;
@@ -143,7 +146,7 @@ int main(int argc, char** argv)
     int kpar = 1;
     if (argc > 1 && argv[1][0] != '-')
     {
-        char* end = nullptr;
+        char *end = nullptr;
         const long parsed_kpar = std::strtol(argv[1], &end, 10);
         if (end != argv[1] && *end == '\0' && parsed_kpar > 0 && parsed_kpar <= INT_MAX)
         {
@@ -155,29 +158,29 @@ int main(int argc, char** argv)
     divide_pools(nproc, myrank, nproc_in_pool, kpar, mypool, rank_in_pool);
     BP_WORLD = MPI_COMM_WORLD;
 
-    using T    = std::complex<double>;
+    using T = std::complex<double>;
     using Real = double;
 
     const int nband = 3;
-    const int n_local = 2 * nband;  // each process owns this many rows
+    const int n_local = 2 * nband; // each process owns this many rows
     const int n_dim_total = nproc_in_pool * n_local;
 
     // With one pool, only rank zero requests a trace to exercise inconsistent
     // process environments. With multiple pools, every rank requests the same
     // path to verify that only the MPI world root writes it.
-    const char* trace_environment = "ABACUS_PPCG_RESIDUAL_TRACE";
+    const char *trace_environment = "ABACUS_PPCG_RESIDUAL_TRACE";
     std::string trace_path;
     bool trace_path_ok = true;
     if (myrank == 0)
     {
         std::string trace_template = testing::TempDir() + "ppcg_residual_trace_parallel_test_XXXXXX";
-        char* trace_template_data = &trace_template[0];
+        char *trace_template_data = &trace_template[0];
         const int trace_fd = ::mkstemp(trace_template_data);
         trace_path_ok = trace_fd >= 0;
         if (trace_path_ok)
         {
             const int close_status = ::close(trace_fd);
-            char* resolved_path = ::realpath(trace_template_data, nullptr);
+            char *resolved_path = ::realpath(trace_template_data, nullptr);
             trace_path_ok = close_status == 0 && resolved_path != nullptr;
             if (trace_path_ok)
             {
@@ -247,7 +250,8 @@ int main(int argc, char** argv)
         /* rr_step  = */ nband);
 
     int h_calls = 0;
-    auto h_op = [&](const T* in, T* out, int ld, int ncol) {
+    auto h_op = [&](const T *in, T *out, int ld, int ncol)
+    {
         ++h_calls;
         for (int j = 0; j < ncol; ++j)
         {
@@ -269,10 +273,10 @@ int main(int argc, char** argv)
     bool collective_validation_failed = false;
     try
     {
-        ppcg_test::diagonalize(solver, h_op, nullptr, n_local, nband, n_local,
-                    psi.data(), eval.data(), ethr, invalid_prec.data());
+        ppcg_test::diagonalize(
+            solver, h_op, nullptr, n_local, nband, n_local, psi.data(), eval.data(), ethr, invalid_prec.data());
     }
-    catch (const std::invalid_argument&)
+    catch (const std::invalid_argument &)
     {
         collective_validation_failed = true;
     }
@@ -289,28 +293,26 @@ int main(int argc, char** argv)
     bool collective_size_failed = false;
     try
     {
-        ppcg_test::diagonalize(solver, h_op, nullptr, checked_ld, nband, n_local,
-                    psi.data(), eval.data(), ethr, prec.data());
+        ppcg_test::diagonalize(
+            solver, h_op, nullptr, checked_ld, nband, n_local, psi.data(), eval.data(), ethr, prec.data());
     }
-    catch (const std::invalid_argument&)
+    catch (const std::invalid_argument &)
     {
         collective_size_failed = true;
     }
     const bool size_validation_before_operator = collective_size_failed && h_calls == 0;
 
     std::ostringstream running_log;
-    ppcg_test::diagonalize(solver, h_op, nullptr, n_local, nband, n_local,
-                psi.data(), eval.data(), ethr, prec.data(), running_log);
+    ppcg_test::diagonalize(
+        solver, h_op, nullptr, n_local, nband, n_local, psi.data(), eval.data(), ethr, prec.data(), running_log);
     const std::string trace_message = "PPCG residual trace written: " + trace_path;
     const bool wrote_trace = running_log.str().find(trace_message) != std::string::npos;
     const bool trace_writer_is_correct = wrote_trace == (myrank == 0);
 
     // The lowest nband eigenvalues of the global diagonal matrix are 1..nband.
     int ok = 1;
-    if (!trace_writer_is_correct
-        || !validation_before_operator
-        || !size_validation_before_operator
-        || trace_environment_ok != 1)
+    if (!trace_writer_is_correct || !validation_before_operator || !size_validation_before_operator ||
+        trace_environment_ok != 1)
     {
         ok = 0;
     }
@@ -326,21 +328,15 @@ int main(int argc, char** argv)
     {
         std::fprintf(stderr, "rank %d: workspace overflow was not rejected before operator calls\n", myrank);
     }
-    if (!solver.converged()
-        || solver.active_band_count() != 0
-        || solver.iteration_limit_reached()
-        || !std::isfinite(solver.max_residual())
-        || solver.max_residual() > 1.0e-8)
+    if (!solver.converged() || solver.active_band_count() != 0 || solver.iteration_limit_reached() ||
+        !std::isfinite(solver.max_residual()) || solver.max_residual() > 1.0e-8)
     {
         const int converged = solver.converged() ? 1 : 0;
         const int active_band_count = solver.active_band_count();
         const Real max_residual = solver.max_residual();
-        std::fprintf(stderr,
-                     "rank %d: solver status is inconsistent (converged=%d, active=%d, max_residual=%.12e)\n",
-                     myrank,
-                     converged,
-                     active_band_count,
-                     max_residual);
+        std::fprintf(
+            stderr, "rank %d: solver status is inconsistent (converged=%d, active=%d, max_residual=%.12e)\n", myrank,
+            converged, active_band_count, max_residual);
         ok = 0;
     }
     for (int i = 0; i < nband; ++i)
@@ -377,11 +373,9 @@ int main(int argc, char** argv)
         if (!trace.eof() || header_count != 1 || record_count == 0 || !has_final_record)
         {
             const int final_record = static_cast<int>(has_final_record);
-            std::fprintf(stderr,
-                         "rank 0: residual trace is incomplete (headers=%d, records=%d, final=%d)\n",
-                         header_count,
-                         record_count,
-                         final_record);
+            std::fprintf(
+                stderr, "rank 0: residual trace is incomplete (headers=%d, records=%d, final=%d)\n", header_count,
+                record_count, final_record);
             ok = 0;
         }
         std::remove(trace_path.c_str());
