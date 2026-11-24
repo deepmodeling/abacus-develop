@@ -3,6 +3,11 @@ remove_definitions(-D__ROCM)
 remove_definitions(-DUSE_PAW)
 remove_definitions(-D__EXX)
 
+file(GLOB _hsolver_test_data
+  "${CMAKE_CURRENT_SOURCE_DIR}/*.dat"
+  "${CMAKE_CURRENT_SOURCE_DIR}/*.sh")
+file(COPY ${_hsolver_test_data} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+
 if (ENABLE_MPI)
   AddTest(
     TARGET hsolver_parak2d_test
