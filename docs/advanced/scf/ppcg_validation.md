@@ -1,6 +1,8 @@
-# CPU PPCG validation
+# PPCG validation
 
-## Configuration
+The CPU timing study below uses the explicitly identified historical revision. Native CUDA implementation checks are recorded separately at the end of this report.
+
+## CPU configuration
 
 Validated on 2026-11-24 with GNU 13.3 Release, OpenMPI, OpenMP, OpenBLAS, and an Intel Xeon Gold 6242. LCAO and CUDA were disabled. Production sources are from `dd385365908b088333030b4623d72e3533b521a6`; the accompanying test-data/documentation additions do not change the executable.
 
@@ -80,7 +82,7 @@ OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 \
   -R '^(MODULE_HSOLVER_(pw|ppcg|ppcg_float|ppcg_parallel|ppcg_parallel_test)|MODULE_IO_ppcg_input)$'
 ```
 
-MPI CTest passed 6/6: 54 double-precision, four float, eight PW, and five INPUT cases, plus MPI runs with 2/3/6 ranks and two pools. A separate `ENABLE_MPI=OFF` build passed its three PPCG/float/INPUT CTest entries. INPUT checks cover NSCF rejection, CPU-only support, and RR interval validation. CLI `--check-input`, help and version checks passed for the supported inputs; NSCF was rejected during both checking and actual startup.
+MPI CTest passed 6/6: 54 double-precision, four float, eight PW, and five INPUT cases, plus MPI runs with 2/3/6 ranks and two pools. A separate `ENABLE_MPI=OFF` build passed its three PPCG/float/INPUT CTest entries. INPUT checks in the CPU-only build cover NSCF/GPU rejection and RR interval validation. CLI `--check-input`, help and version checks passed for the supported inputs; NSCF was rejected during both checking and actual startup.
 
 For each timing calculation, make a fresh copy of a listed fixture, apply the common overrides above, set only `ks_solver` differently within each group, resolve `pseudo_dir`, and run:
 
@@ -101,3 +103,61 @@ OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 \
 The six native cases passed 36/36 checks with two ranks; the three new USPP cases also passed 15/15 checks with four ranks. A separate traced GaAs run preserved all 16 solves across eight SCF iterations and two k points, with initial and final records for each solve. A Si run with `ppcg_rr_step=4` converged and produced block-sweep records, while interval 0 was rejected.
 
 Local raw logs, INPUT hashes, timing samples, failed probes, and JSON summaries are archived under `/mnt/data/Cheerly/ppcg-review-20261124/`. The tables above identify the usable data and do not mix failed probes into successful timing or accuracy samples.
+
+## Native CUDA validation
+
+The native CUDA implementation in `99950ee5a` was validated on 2026-11-24 with an NVIDIA GeForce RTX 3090 (24 GB), GNU 13.3, CUDA 13.5, OpenMPI and OpenBLAS. The Release build enabled MPI/OpenMP/testing and disabled LCAO. Runtime checks used `OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1`.
+
+Wavefunctions, residuals, search directions and H/S images remain in device memory. CUDA kernels compute residuals, preconditioning, column products and scaling; device BLAS performs Gram products and rotations. Only projected matrices, their coefficients and per-band convergence data cross to the host for LAPACK and the existing MPI reduction wrappers. The preconditioner is uploaded once per diagonalization. There is no full-wavefunction CPU callback bridge. ROCm is not implemented.
+
+The CUDA CTest target passed all six cases: standard/generalized complex double, infrequent RR with a locked prefix, standard/generalized complex float, and iteration-budget exhaustion. The generalized fixture has a known spectrum, complex dense Hamiltonian and nonuniform overlap. Checks independently evaluate eigenvalues, residuals, S-orthogonality and leading-dimension padding. Every H/S callback verifies that both operand pointers are device allocations. Compute Sanitizer reported **0 errors and 0 leaked bytes** across all six cases.
+
+### Application regression
+
+The six `tests/11_PW_GPU/scf_ppcg_*` Autotest fixtures use the CPU fixtures' geometry, pseudopotentials, references and acceptance tolerances. Only device selection and explicit double precision differ. All six SCF calculations converged and **36/36 checks passed** with two MPI ranks. The current GPU PW setup assigns one k-point pool per rank; this is k-point parallelism, not a distributed plane-wave-row GPU test.
+
+| Fixture | SCF iterations | Final density deviation | PPCG iteration-limit warnings | Largest warning residual |
+|---|---:|---:|---:|---:|
+| GaAs | 8 | 6.06555e-7 | 0 | — |
+| Si | 7 | 1.44325e-7 | 0 | — |
+| Al | 14 | 7.91835e-11 | 0 | — |
+| Fe (USPP) | 26 | 6.09993e-17 | 7 | 1.63674e-14 |
+| NaCl (USPP) | 35 | 4.70540e-17 | 0 | — |
+| HCl (mixed NCPP/USPP) | 20 | 3.08266e-17 | 12 | 2.21592e-14 |
+
+The deliberately strict USPP fixtures retain their roundoff-level eigensolver warnings; passing observable checks does not certify those eigenpairs at an unattainable residual threshold. An initial batch exceeded the local harness's 300-second aggregate limit. A fresh complete batch passed with a 900-second harness limit; numerical thresholds, iteration budgets and references were unchanged.
+
+A separate GaAs calculation with `ppcg_rr_step=4`, two ranks and two k-point pools converged without PPCG warnings. The world-root trace preserved all eight of its solves across eight SCF iterations, including initial/final records and block sweeps. Other pools intentionally do not write that shared trace. GPU CLI help/version and valid `--check-input` checks passed; RR interval 0 and NSCF were rejected, with NSCF also rejected during actual startup. A four-rank probe was rejected by the existing k-point setup because this fixture has only two k points; the successful probe uses two ranks.
+
+After the device-workspace refactor, the CPU focused MPI CTest suite passed **6/6** and the six CPU application regressions passed **36/36** again. These are correctness regressions; the earlier CPU timing table was not remeasured.
+
+### Transfer audit and reproduction
+
+Nsight Systems traced `DiagoPPCGGPU.GeneralizedComplexDouble` (24 active rows, leading dimension 31, five bands). Its full wavefunction occupies 2,480 bytes. Exactly one upload initializes the fixture and one download checks its final result. Between those transfers, the solver made 680 host-to-device transfers (128,480 bytes total) and 896 device-to-host transfers (181,352 bytes total), with a maximum of **800 bytes per transfer**. No complete wavefunction was transferred to or from the host during the solve. Device-to-device copies are excluded from these host-transfer counts.
+
+The GPU was shared with another workload, so these checks do not establish speedup. Small projected solves, synchronization and allocations still have overhead; no GPU performance advantage is claimed.
+
+```bash
+cmake -S . -B build-ppcg-gpu-20261124 -DCMAKE_BUILD_TYPE=Release \
+  -DENABLE_MPI=ON -DENABLE_OPENMP=ON -DENABLE_LCAO=OFF \
+  -DBUILD_TESTING=ON -DUSE_CUDA=ON -DCMAKE_CUDA_ARCHITECTURES=86 \
+  -DCMAKE_CUDA_COMPILER=/usr/local/cuda/bin/nvcc \
+  -DCMAKE_CXX_FLAGS=-I/usr/local/cuda/include/cccl \
+  -DCMAKE_CUDA_FLAGS=-I/usr/local/cuda/include/cccl
+cmake --build build-ppcg-gpu-20261124 -j8 \
+  --target abacus_pw_gpu MODULE_HSOLVER_ppcg_gpu
+export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1
+ctest --test-dir build-ppcg-gpu-20261124 -V -R '^MODULE_HSOLVER_ppcg_gpu$'
+```
+
+The extra CCCL include flags apply to this local CUDA 13.5 installation; they are not a repository-wide toolchain change. Run Compute Sanitizer with `--tool memcheck --leak-check full --error-exitcode 1` on the GPU test executable. Profile it with `nsys profile --trace=cuda --sample=none --cpuctxsw=none`, selecting `--gtest_filter=DiagoPPCGGPU.GeneralizedComplexDouble`, and export the report to SQLite to inspect `CUPTI_ACTIVITY_KIND_MEMCPY`.
+
+For application checks, create a temporary case list containing the six `scf_ppcg_*` fixtures and run from `tests/11_PW_GPU`:
+
+```bash
+ABACUS_MPIEXEC_PREFLAGS='--bind-to core --map-by core' \
+  bash ../integrate/Autotest.sh -a /absolute/path/to/abacus_pw_gpu \
+  -n 2 -o 1 -j 1 -f /absolute/path/to/selected_gpu_cases.txt
+```
+
+The CUDA CI workflow now explicitly runs the GPU unit target, and its existing `11_PW_GPU` run includes all six new application fixtures. Local logs, the transfer audit, executable hashes and the failed-probe diagnostics are archived in `/mnt/data/Cheerly/ppcg-review-20261124/gpu-port/`.
