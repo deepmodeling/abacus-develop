@@ -300,21 +300,13 @@ set(_abacus_feature_libs
     $<$<BOOL:${ENABLE_PLUMED}>:PLUMED::plumed>
     $<$<BOOL:${ENABLE_DEEPMD}>:DeePMD::deepmd>
     $<$<BOOL:${ENABLE_NEP}>:nep::nep_cpu>
+    $<$<BOOL:${ENABLE_MLALGO}>:libnpy::npy>
     $<$<BOOL:${_enable_torch}>:${TORCH_LIBRARIES}>)
 set(_abacus_feature_include_dirs)
 set(_abacus_feature_compile_options)
 
 if(ENABLE_ELPA)
   list(APPEND _abacus_feature_include_dirs ${ELPA_INCLUDE_DIR})
-endif()
-
-if(ENABLE_MLALGO)
-  if(libnpy_INCLUDE_DIR)
-    list(APPEND _abacus_feature_include_dirs ${libnpy_INCLUDE_DIR})
-  endif()
-  if(libnpy_SOURCE_DIR)
-    list(APPEND _abacus_feature_include_dirs ${libnpy_SOURCE_DIR}/include)
-  endif()
 endif()
 
 if(ENABLE_CNPY)

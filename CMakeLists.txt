@@ -518,16 +518,7 @@ endif()
 
 set(_enable_torch FALSE)
 if(ENABLE_MLALGO)
-  find_path(libnpy_SOURCE_DIR npy.hpp HINTS ${libnpy_INCLUDE_DIR})
-  if(NOT libnpy_SOURCE_DIR)
-    include(FetchContent)
-    FetchContent_Declare(
-      libnpy
-      GIT_REPOSITORY https://github.com/llohse/libnpy.git
-      GIT_SHALLOW TRUE
-      GIT_PROGRESS TRUE)
-    FetchContent_MakeAvailable(libnpy)
-  endif()
+  find_package(Libnpy REQUIRED)
   set(_enable_torch TRUE)
 endif()
 
