@@ -12,15 +12,18 @@ AddTest(
   SOURCES test_filename.cpp
 )
 
-# The sub-communicator helpers are MPI-only, so this target keeps __MPI even
-# though the directory disables it for the others, and the test is registered
-# only where real collectives are available.
+# The sub-communicator helpers need real collectives, so this target keeps
+# __MPI even though the directory disables it for the others. It is built
+# directly rather than through addtest(): that helper also registers a
+# single-process ctest entry, and this test requires four ranks.
 if(ENABLE_MPI)
-  addtest(
-    TARGET MODULE_BASE_parallel_common
-    LIBS parameter base device
-    KEEP_FEATURE_DEFINITIONS __MPI
-    SOURCES test_parallel_common.cpp)
+  add_executable(MODULE_BASE_parallel_common test_parallel_common.cpp)
+  # This test supplies its own main (MPI_Init then RUN_ALL_TESTS), so link the
+  # gtest/gmock libraries without their main-providing variants.
+  target_link_libraries(MODULE_BASE_parallel_common
+                        PRIVATE parameter base device GTest::gtest GTest::gmock
+                                abacus::linalg_libs)
+  target_compile_definitions(MODULE_BASE_parallel_common PRIVATE __MPI)
   add_test(
     NAME MODULE_BASE_parallel_common_4
     COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 4 ${MPIEXEC_PREFLAGS}
