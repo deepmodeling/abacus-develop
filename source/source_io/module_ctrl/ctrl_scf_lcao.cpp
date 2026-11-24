@@ -699,6 +699,10 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                                  orb);
 
             wan.calculate(ucell, gd, pelec->ekb, kv, *psi, &pv);
+            if (inp.out_wannier_spn)
+            {
+                wan.write_spn(*psi, *p_hamilt->getSR(), kv, global_out_dir, ofs_running);
+            }
         }
         std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "Wave function to Wannier90");
     }

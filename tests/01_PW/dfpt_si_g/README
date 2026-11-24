@@ -1,0 +1,1 @@
+dfpt_si_g: 2-atom Si (a=10.2612 Bohr), ONCV PBE, 8/32 Ry, Gamma-only k, Gamma-only q. Smoke test: verifies DFPT phonon frequency output (~4s).

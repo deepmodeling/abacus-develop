@@ -7,7 +7,10 @@
 class UnitCell;
 struct Input_para;
 struct System_para;
-namespace ModuleESolver { class ESolver; }
+namespace ModuleESolver
+{
+class ESolver;
+}
 
 namespace SocketCP
 {
@@ -30,27 +33,31 @@ struct Observables
 class ScopedElectronicStep
 {
   public:
-    ScopedElectronicStep(elecstate::ElectronicStep** slot, elecstate::ElectronicStep* step);
+    ScopedElectronicStep(elecstate::ElectronicStep **slot, elecstate::ElectronicStep *step);
     ~ScopedElectronicStep();
-    ScopedElectronicStep(const ScopedElectronicStep&) = delete;
-    ScopedElectronicStep& operator=(const ScopedElectronicStep&) = delete;
+    ScopedElectronicStep(const ScopedElectronicStep &) = delete;
+    ScopedElectronicStep &operator=(const ScopedElectronicStep &) = delete;
 
   private:
-    elecstate::ElectronicStep** slot_;
+    elecstate::ElectronicStep **slot_;
 };
 
 // Apply one external electron-number request and evaluate the current geometry.
-void run_electronic_step(ModuleESolver::ESolver& solver, UnitCell& cell,
-                         elecstate::ElectronicStep& step,
-                         const Input_para& input, const System_para& system,
-                         int functional_type, int istep);
+void run_electronic_step(
+    ModuleESolver::ESolver &solver,
+    UnitCell &cell,
+    elecstate::ElectronicStep &step,
+    const Input_para &input,
+    const System_para &system,
+    int functional_type,
+    int istep);
 
-Configuration parse_init(const std::string& parameters);
-elecstate::ElectronicControl make_control(const Configuration& config, double nelect, int flags);
+Configuration parse_init(const std::string &parameters);
+elecstate::ElectronicControl make_control(const Configuration &config, double nelect, int flags);
 // Converts only the physical result completed after this frame's force calculation.
-Observables collect_observables(const Configuration& config, const elecstate::ElectronicStep& step);
+Observables collect_observables(const Configuration &config, const elecstate::ElectronicStep &step);
 // Serializes only the completed frame, without calling the solver or MPI.
-std::string serialize_observables(const Observables& result);
-}
+std::string serialize_observables(const Observables &result);
+} // namespace SocketCP
 
 #endif

@@ -14,11 +14,6 @@
 #include <fstream>
 #include <memory>
 
-namespace elecstate
-{
-struct ElectronicStep;
-}
-
 namespace vdw
 {
 struct VdwResult;
@@ -45,10 +40,6 @@ class ESolver_FP : public ESolver
     virtual void before_all_runners(BaseCell& basecell, const Input_para& inp) override;
 
     virtual void after_all_runners(BaseCell& basecell) override;
-
-    // Non-owning, rank-local request bound only for one evaluation by the outer driver.
-    // The scoped binding is the sole writer; ordinary calculations leave this null.
-    elecstate::ElectronicStep* electronic_step = nullptr;
 
   protected:
     virtual void before_scf(UnitCell& ucell, const int istep);

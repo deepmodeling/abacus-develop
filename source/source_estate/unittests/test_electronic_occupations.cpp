@@ -25,6 +25,7 @@ ModuleBase::matrix fractional_weights()
 
 TEST(ElectronicOccupations, FractionalPopulationIncludesEveryLocalRowAndBand)
 {
+    // Every rank holds the same single-pool population; count its replicas only once.
     const ModuleBase::matrix weights = fractional_weights();
     EXPECT_NEAR(8.2, elecstate::checked_occupation_electron_count(weights, 8.2, 1, process_count), 1e-14);
 }
@@ -41,18 +42,18 @@ TEST(ElectronicOccupations, ReturnsOccupationSumInsteadOfEchoingNearbyRequest)
 TEST(ElectronicOccupations, RejectsPopulationMismatchOnEitherSide)
 {
     const ModuleBase::matrix weights = fractional_weights();
-    EXPECT_THROW(elecstate::checked_occupation_electron_count(weights, 8.2 + 2e-8, 1, process_count),
-                 std::runtime_error);
-    EXPECT_THROW(elecstate::checked_occupation_electron_count(weights, 8.2 - 2e-8, 1, process_count),
-                 std::runtime_error);
+    EXPECT_THROW(
+        elecstate::checked_occupation_electron_count(weights, 8.2 + 2e-8, 1, process_count), std::runtime_error);
+    EXPECT_THROW(
+        elecstate::checked_occupation_electron_count(weights, 8.2 - 2e-8, 1, process_count), std::runtime_error);
 }
 
 TEST(ElectronicOccupations, ToleranceIsAbsoluteEvenForLargeElectronCounts)
 {
     ModuleBase::matrix weights(1, 1);
     weights(0, 0) = 1e6;
-    EXPECT_THROW(elecstate::checked_occupation_electron_count(weights, 1e6 + 1e-6, 1, process_count),
-                 std::runtime_error);
+    EXPECT_THROW(
+        elecstate::checked_occupation_electron_count(weights, 1e6 + 1e-6, 1, process_count), std::runtime_error);
 }
 
 TEST(ElectronicOccupations, GeneralizedSmearingCanContainNegativeWeights)
@@ -71,8 +72,7 @@ TEST(ElectronicOccupations, RejectsNaNOnLastRankTogether)
     {
         weights(1, 2) = std::numeric_limits<double>::quiet_NaN();
     }
-    EXPECT_THROW(elecstate::checked_occupation_electron_count(weights, 8.2, 1, process_count),
-                 std::runtime_error);
+    EXPECT_THROW(elecstate::checked_occupation_electron_count(weights, 8.2, 1, process_count), std::runtime_error);
 }
 
 TEST(ElectronicOccupations, RejectsInfinityOnLastRankTogether)
@@ -82,8 +82,7 @@ TEST(ElectronicOccupations, RejectsInfinityOnLastRankTogether)
     {
         weights(1, 2) = std::numeric_limits<double>::infinity();
     }
-    EXPECT_THROW(elecstate::checked_occupation_electron_count(weights, 8.2, 1, process_count),
-                 std::runtime_error);
+    EXPECT_THROW(elecstate::checked_occupation_electron_count(weights, 8.2, 1, process_count), std::runtime_error);
 }
 
 TEST(ElectronicOccupations, RejectsLocalOverflowBeforePoolReduction)
@@ -91,16 +90,15 @@ TEST(ElectronicOccupations, RejectsLocalOverflowBeforePoolReduction)
     ModuleBase::matrix weights(1, 2);
     weights(0, 0) = std::numeric_limits<double>::max();
     weights(0, 1) = std::numeric_limits<double>::max();
-    EXPECT_THROW(elecstate::checked_occupation_electron_count(weights, 8.2, process_count, 1),
-                 std::runtime_error);
+    EXPECT_THROW(elecstate::checked_occupation_electron_count(weights, 8.2, process_count, 1), std::runtime_error);
 }
 
 TEST(ElectronicOccupations, RejectsInvalidRequestOnLastRankTogether)
 {
     const ModuleBase::matrix weights = fractional_weights();
     const double requested = process_rank == process_count - 1 ? std::numeric_limits<double>::quiet_NaN() : 8.2;
-    EXPECT_THROW(elecstate::checked_occupation_electron_count(weights, requested, 1, process_count),
-                 std::runtime_error);
+    EXPECT_THROW(
+        elecstate::checked_occupation_electron_count(weights, requested, 1, process_count), std::runtime_error);
 }
 
 TEST(ElectronicOccupations, RejectsInvalidPartitionOnLastRankTogether)
@@ -111,12 +109,6 @@ TEST(ElectronicOccupations, RejectsInvalidPartitionOnLastRankTogether)
     EXPECT_THROW(elecstate::checked_occupation_electron_count(weights, 8.2, 0, process_count), std::runtime_error);
 }
 
-TEST(ElectronicOccupations, SinglePoolDoesNotMultiplyReplicatedPopulationByRankCount)
-{
-    const ModuleBase::matrix weights = fractional_weights();
-    EXPECT_NEAR(8.2, elecstate::checked_occupation_electron_count(weights, 8.2, 1, process_count), 1e-14);
-}
-
 TEST(ElectronicOccupations, SinglePoolMismatchOnOneReplicaFailsEveryRank)
 {
     ModuleBase::matrix weights = fractional_weights();
@@ -124,8 +116,7 @@ TEST(ElectronicOccupations, SinglePoolMismatchOnOneReplicaFailsEveryRank)
     {
         weights(1, 1) += 0.125;
     }
-    EXPECT_THROW(elecstate::checked_occupation_electron_count(weights, 8.2, 1, process_count),
-                 std::runtime_error);
+    EXPECT_THROW(elecstate::checked_occupation_electron_count(weights, 8.2, 1, process_count), std::runtime_error);
 }
 
 TEST(ElectronicOccupations, KPointPoolsCombineDistinctRowsAndRemovePoolReplicas)
@@ -167,8 +158,7 @@ TEST(ElectronicOccupations, EmptyLocalBlocksStillParticipateInCollectives)
 TEST(ElectronicOccupations, EmptyPopulationCannotSatisfyPositiveRequest)
 {
     const ModuleBase::matrix weights;
-    EXPECT_THROW(elecstate::checked_occupation_electron_count(weights, 8.2, process_count, 1),
-                 std::runtime_error);
+    EXPECT_THROW(elecstate::checked_occupation_electron_count(weights, 8.2, process_count, 1), std::runtime_error);
 }
 
 TEST(ElectronicOccupations, UnequalPoolSizesRemoveTheirOwnReplicaCounts)
@@ -189,12 +179,11 @@ TEST(ElectronicOccupations, RemoteInvalidEntryCannotBeHiddenByAnEmptyRootBlock)
         weights.create(1, 1);
         weights(0, 0) = -std::numeric_limits<double>::infinity();
     }
-    EXPECT_THROW(elecstate::checked_occupation_electron_count(weights, 8.2, process_count, 1),
-                 std::runtime_error);
+    EXPECT_THROW(elecstate::checked_occupation_electron_count(weights, 8.2, process_count, 1), std::runtime_error);
 }
 } // namespace
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
     int thread_count = 1;
     Parallel_Global::read_pal_param(argc, argv, process_count, thread_count, process_rank);

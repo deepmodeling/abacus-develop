@@ -1,12 +1,12 @@
 #include "exx_helper.h"
-#include "source_io/module_parameter/parameter.h"
+#include "source_estate/elecstate_pw.h"               // use ElecStatePW
+#include "source_estate/module_charge/charge.h"       // use Charge
+#include "source_estate/update_pot.h"                 // use elecstate::update_pot
 #include "source_hamilt/module_xc/general_exx_info.h" // for General_Exx_Info type
-#include "source_hamilt/module_xc/xc_functional.h" // use XC_Functional
+#include "source_hamilt/module_xc/xc_functional.h"    // use XC_Functional
+#include "source_io/module_parameter/parameter.h"
 #include "source_pw/module_pwdft/hamilt_pw.h" // use HamiltPW
-#include "source_estate/update_pot.h" // use elecstate::update_pot
-#include "source_estate/elecstate_pw.h" // use ElecStatePW
-#include "source_estate/module_charge/charge.h" // use Charge
-#include <chrono> // for timing
+#include <chrono>                             // for timing
 #include <stdexcept>
 
 void validate_electronic_step_exx(int functional_type, bool cal_exx)
@@ -45,8 +45,21 @@ void Exx_Helper<T, Device>::init(const UnitCell& ucell, const Input_para& inp, c
 }
 
 template <typename T, typename Device>
-void Exx_Helper<T, Device>::before_scf(void* p_hamilt, void* psi, const Input_para& inp,
-                                       const General_Exx_Info& exx_info, bool electronic_step_active)
+void Exx_Helper<T, Device>::begin_electronic_step(bool active)
+{
+    strict_electronic_step = active;
+    if (active)
+    {
+        exx_iter = 0;
+    }
+}
+
+template <typename T, typename Device>
+void Exx_Helper<T, Device>::before_scf(
+    void *p_hamilt,
+    void *psi,
+    const Input_para &inp,
+    const General_Exx_Info &exx_info)
 {
     /// Return if not a valid calculation type
     if (inp.calculation != "scf" && inp.calculation != "relax"
@@ -59,12 +72,6 @@ void Exx_Helper<T, Device>::before_scf(void* p_hamilt, void* psi, const Input_pa
     if (!exx_info.cal_exx || inp.basis_type != "pw")
     {
         return;
-    }
-
-    strict_electronic_step = electronic_step_active;
-    if (electronic_step_active)
-    {
-        exx_iter = 0;
     }
 
     /// Set EXX helper to Hamiltonian
@@ -150,18 +157,22 @@ double Exx_Helper<T, Device>::cal_exx_energy(void* psi_)
 }
 
 template <typename T, typename Device>
-bool Exx_Helper<T, Device>::exx_after_converge(int iter, bool ene_conv, const Input_para& inp)
+bool Exx_Helper<T, Device>::exx_after_converge(int iter, bool ene_conv, const Input_para &inp)
 {
     if (strict_electronic_step && op_exx->separate_loop)
     {
         // A changed electron number must complete at least one EXX update.
         // Reaching the outer-loop budget is not a convergence criterion.
-        const bool outer_converged = exx_iter > 0
-            && ((inp.exx_thr_type == "energy" && ene_conv)
-                || (inp.exx_thr_type == "density" && iter == 1));
-        if (outer_converged) { return true; }
+        const bool outer_converged = exx_iter > 0 && ((inp.exx_thr_type == "energy" && ene_conv) ||
+                                                         (inp.exx_thr_type == "density" && iter == 1));
+        if (outer_converged)
+        {
+            return true;
+        }
         if (exx_iter >= inp.exx_hybrid_step)
-        { throw std::runtime_error("constant-potential EXX outer loop did not converge; increase exx_hybrid_step"); }
+        {
+            throw std::runtime_error("constant-potential EXX outer loop did not converge; increase exx_hybrid_step");
+        }
     }
     else if (op_exx->first_iter)
     {

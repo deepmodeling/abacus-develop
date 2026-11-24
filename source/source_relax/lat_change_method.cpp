@@ -2,12 +2,8 @@
 
 #include "source_base/global_function.h"
 
-Lattice_Change_Methods::Lattice_Change_Methods()
-{
-}
-Lattice_Change_Methods::~Lattice_Change_Methods()
-{
-}
+Lattice_Change_Methods::Lattice_Change_Methods() {}
+Lattice_Change_Methods::~Lattice_Change_Methods() {}
 
 void Lattice_Change_Methods::allocate()
 {
@@ -17,13 +13,14 @@ void Lattice_Change_Methods::allocate()
     return;
 }
 
-void Lattice_Change_Methods::cal_lattice_change(const int& istep,
-                                                const int& stress_step,
-                                                const ModuleBase::matrix& stress,
-                                                const double& etot,
-                                                UnitCell& ucell,
-                                                std::ofstream& ofs,
-                                                const Relax_Criteria& criteria)
+void Lattice_Change_Methods::cal_lattice_change(
+    const int &istep,
+    const int &stress_step,
+    const ModuleBase::matrix &stress,
+    const double &etot,
+    UnitCell &ucell,
+    std::ofstream &ofs,
+    const Relax_Criteria &criteria)
 {
     ModuleBase::TITLE("Lattice_Change_Methods", "lattice_change_init");
     Lattice_Change_Basic::stress_step = stress_step;

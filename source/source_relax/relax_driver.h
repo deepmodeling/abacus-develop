@@ -18,8 +18,6 @@
  * This class manages the main relaxation loop, including energy solving,
  * force/stress calculation, and structure optimization steps.
  */
-class Parameter;
-
 class Relax_Driver
 {
 
@@ -36,13 +34,14 @@ class Relax_Driver
      *
      * @param p_esolver Pointer to the energy solver.
      * @param ucell Reference to the unit cell to be relaxed.
-     * @param parameters Runtime input and electronic parameters.
+     * @param inp Input parameters for the calculation.
      * @param ofs_running Output stream for running log.
      */
-    void relax_driver(ModuleESolver::ESolver* p_esolver,
-                      UnitCell& ucell,
-                      Parameter& parameters,
-                      std::ofstream& ofs_running);
+    void relax_driver(
+        ModuleESolver::ESolver *p_esolver,
+        UnitCell &ucell,
+        const Input_para &inp,
+        std::ofstream &ofs_running);
 
   private:
     enum class RelaxStopReason
@@ -72,7 +71,7 @@ class Relax_Driver
      * @param nat Number of atoms in the unit cell.
      * @param inp Input parameters for the calculation.
      */
-    void init_relax(const int nat, const Input_para& inp);
+    void init_relax(const int nat, const Input_para &inp);
 
     /**
      * @brief Print iteration information to screen.
@@ -80,7 +79,7 @@ class Relax_Driver
      * @param steps Vector containing step counters: steps[0]=istep, steps[1]=force_step, steps[2]=stress_step.
      * @param inp Input parameters for the calculation.
      */
-    void iter_info(const std::vector<int>& steps, const Input_para& inp);
+    void iter_info(const std::vector<int> &steps, const Input_para &inp);
 
     /**
      * @brief Perform energy solving for the current step.
@@ -93,13 +92,14 @@ class Relax_Driver
      * @param stress Output matrix for calculated stress.
      * @param etot Output total energy.
      */
-    void esolve(const int istep,
-                ModuleESolver::ESolver* p_esolver,
-                UnitCell& ucell,
-                const Input_para& inp,
-                ModuleBase::matrix& force,
-                ModuleBase::matrix& stress,
-                double& etot);
+    void esolve(
+        const int istep,
+        ModuleESolver::ESolver *p_esolver,
+        UnitCell &ucell,
+        const Input_para &inp,
+        ModuleBase::matrix &force,
+        ModuleBase::matrix &stress,
+        double &etot);
 
     /**
      * @brief Perform one relaxation step.
@@ -115,14 +115,15 @@ class Relax_Driver
      * @param ofs_running Output stream for running log.
      * @return True if relaxation converged, false otherwise.
      */
-    bool relax_step(std::vector<int>& steps,
-                    ModuleESolver::ESolver* p_esolver,
-                    UnitCell& ucell,
-                    const Input_para& inp,
-                    const ModuleBase::matrix& force,
-                    const ModuleBase::matrix& stress,
-                    const double etot,
-                    std::ofstream& ofs_running);
+    bool relax_step(
+        std::vector<int> &steps,
+        ModuleESolver::ESolver *p_esolver,
+        UnitCell &ucell,
+        const Input_para &inp,
+        const ModuleBase::matrix &force,
+        const ModuleBase::matrix &stress,
+        const double etot,
+        std::ofstream &ofs_running);
 
     /**
      * @brief Output structure files before relaxation move.
@@ -133,12 +134,13 @@ class Relax_Driver
      * @param etot Total energy in Ry corresponding to this structure.
      * @param stress Stress matrix (3x3) in Ry/Bohr^3 corresponding to this structure.
      */
-    void stru_out(const int istep,
-                  UnitCell& ucell,
-                  const Input_para& inp,
-                  const double etot,
-                  const ModuleBase::matrix& stress,
-                  const ModuleBase::matrix& force);
+    void stru_out(
+        const int istep,
+        UnitCell &ucell,
+        const Input_para &inp,
+        const double etot,
+        const ModuleBase::matrix &stress,
+        const ModuleBase::matrix &force);
 
     /**
      * @brief Output JSON format results.
@@ -149,11 +151,12 @@ class Relax_Driver
      * @param force Matrix of calculated forces.
      * @param stress Matrix of calculated stress.
      */
-    void json_out(ModuleESolver::ESolver* p_esolver,
-                  UnitCell& ucell,
-                  const Input_para& inp,
-                  const ModuleBase::matrix& force,
-                  const ModuleBase::matrix& stress);
+    void json_out(
+        ModuleESolver::ESolver *p_esolver,
+        UnitCell &ucell,
+        const Input_para &inp,
+        const ModuleBase::matrix &force,
+        const ModuleBase::matrix &stress);
 
     /**
      * @brief Output final results after relaxation.
@@ -169,15 +172,16 @@ class Relax_Driver
      *        the optimizer but never evaluated; forces and stress are then
      *        omitted / marked N/A.
      */
-    void final_out(const int istep,
-                   const RelaxStopReason stop_reason,
-                   UnitCell& ucell,
-                   const Input_para& inp,
-                   const double etot,
-                   const ModuleBase::matrix& stress,
-                   const ModuleBase::matrix& force,
-                   const bool geometry_evaluated,
-                   std::ofstream& ofs_running);
+    void final_out(
+        const int istep,
+        const RelaxStopReason stop_reason,
+        UnitCell &ucell,
+        const Input_para &inp,
+        const double etot,
+        const ModuleBase::matrix &stress,
+        const ModuleBase::matrix &force,
+        const bool geometry_evaluated,
+        std::ofstream &ofs_running);
 
     /**
      * @brief Print the unified not-converged summary to the running log.
@@ -190,9 +194,7 @@ class Relax_Driver
      * @param inp Input parameters (selects the active optimizer and relax_nmax).
      * @param ofs_running Output stream for the running log.
      */
-    void print_not_converged_summary(const int ionic_steps,
-                                     const Input_para& inp,
-                                     std::ofstream& ofs_running) const;
+    void print_not_converged_summary(const int ionic_steps, const Input_para &inp, std::ofstream &ofs_running) const;
 
     /**
      * @brief Print the dry-run success message to screen.

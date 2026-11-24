@@ -9,13 +9,13 @@
 
 namespace elecstate
 {
-double checked_occupation_electron_count(const ModuleBase::matrix& weights,
-                                         double requested_nelect,
-                                         int npool,
-                                         int ranks_per_pool)
+double checked_occupation_electron_count(
+    const ModuleBase::matrix &weights,
+    double requested_nelect,
+    int npool,
+    int ranks_per_pool)
 {
-    int invalid = !std::isfinite(requested_nelect) || requested_nelect <= 0.0
-                  || npool <= 0 || ranks_per_pool <= 0;
+    int invalid = !std::isfinite(requested_nelect) || requested_nelect <= 0.0 || npool <= 0 || ranks_per_pool <= 0;
     double occupied = 0.0;
     double compensation = 0.0;
     for (int ik = 0; ik < weights.nr; ++ik)
@@ -36,21 +36,24 @@ double checked_occupation_electron_count(const ModuleBase::matrix& weights,
             occupied = next;
         }
     }
-    if (!std::isfinite(occupied)) { invalid = 1; }
+    if (!std::isfinite(occupied))
+    {
+        invalid = 1;
+    }
     // Synchronize failures before a rank can enter a different collective path.
     Parallel_Reduce::reduce_all(invalid);
     if (invalid)
     {
-        throw std::runtime_error("constant-potential electron count requires finite occupations "
-                                 "and a valid target/occupation partition");
+        throw std::runtime_error(
+            "constant-potential electron count requires finite occupations "
+            "and a valid target/occupation partition");
     }
 
     // Same distribution as the native band-energy sum: remove the replicated
     // copies inside each pool before combining KPAR and BNDPAR contributions.
     Parallel_Reduce::reduce_double_allpool(npool, ranks_per_pool, occupied);
     const double tolerance = 1.0e-8;
-    int mismatch = !std::isfinite(occupied) || occupied <= 0.0
-                   || std::abs(occupied - requested_nelect) > tolerance;
+    int mismatch = !std::isfinite(occupied) || occupied <= 0.0 || std::abs(occupied - requested_nelect) > tolerance;
     Parallel_Reduce::reduce_all(mismatch);
     if (mismatch)
     {
@@ -62,4 +65,4 @@ double checked_occupation_electron_count(const ModuleBase::matrix& weights,
     }
     return occupied;
 }
-}
+} // namespace elecstate

@@ -7,12 +7,12 @@
 #include <mpi.h>
 #endif
 #include "source_base/module_fft/fft_bundle.h"
+#include "source_basis/module_pw/pw_basis_big.h" // use PW_Basis_Big
 #include "source_estate/elecstate.h"
 #include "source_estate/elecstate_tools.h"
 #include "source_estate/electronic_control.h"
-#include "source_estate/module_pot/electrostatic_potential.h"
+#include "source_estate/module_pot/elpot.h"
 #include "source_estate/occupy.h"
-#include "source_basis/module_pw/pw_basis_big.h" // use PW_Basis_Big
 #include "source_io/module_parameter/parameter.h"
 
 #include <stdexcept>
@@ -44,18 +44,29 @@ elecstate::PotentialWindow reference_window;
 int reference_calls = 0;
 bool reference_available = false;
 constexpr double reference_value = -0.375;
-}
+} // namespace
 
 // Mock functions for testing elecstate.cpp
 namespace elecstate
 {
-std::pair<int, int> potential_window_planes(const UnitCell&, const ModulePW::PW_Basis&, int, double, double)
+std::pair<int, int> potential_window_planes(
+    const UnitCell &,
+    const ModulePW::PW_Basis &,
+    int,
+    double,
+    double)
 {
     throw std::runtime_error("empty window in electron-state fixture");
 }
 
-double electrostatic_reference(const UnitCell&, ModulePW::PW_Basis&, const Charge&, const Potential&,
-                               const surchem&, const Input_para&, const PotentialWindow& window)
+double electrostatic_reference(
+    const UnitCell &,
+    ModulePW::PW_Basis &,
+    const Charge &,
+    const Potential &,
+    const surchem &,
+    const Input_para &,
+    const PotentialWindow &window)
 {
     // Real grid/reference calculations have their own MPI unit and client tests.
     reference_window = window;
@@ -185,7 +196,7 @@ constexpr int GLOBAL_NBANDS = 6;
 class TestParameters
 {
   public:
-    static Input_para& input(Parameter& parameters) { return parameters.input; }
+    static Input_para &input(Parameter &parameters) { return parameters.input; }
 
     static void reset()
     {
@@ -279,7 +290,7 @@ TEST_F(ElecStateTest, ElectronicRequestUsesExplicitSpinState)
 TEST_F(ElecStateTest, ElectronicStepChecksInitializationBeforeUpdatingParameters)
 {
     Parameter parameters;
-    Input_para& input = TestParameters::input(parameters);
+    Input_para &input = TestParameters::input(parameters);
     input.nspin = 2;
     input.nupdown = 0.5;
     elecstate::ElectronicStep step;
@@ -332,20 +343,20 @@ TEST_F(ElecStateTest, ElectronicResultRequiresConvergenceAndMatchingOccupations)
     input.bndpar = 1;
     elecstate::ElectronicStep step;
     step.control.nelect = 8.25;
-    EXPECT_THROW(elecstate::complete_electronic_step(ucell, elecstate, &basis, solvent, input, true, step),
-                 std::runtime_error);
+    EXPECT_THROW(
+        elecstate::complete_electronic_step(ucell, elecstate, &basis, solvent, input, true, step), std::runtime_error);
     step.request_applied = true;
-    EXPECT_THROW(elecstate::complete_electronic_step(ucell, elecstate, &basis, solvent, input, false, step),
-                 std::runtime_error);
+    EXPECT_THROW(
+        elecstate::complete_electronic_step(ucell, elecstate, &basis, solvent, input, false, step), std::runtime_error);
     EXPECT_FALSE(step.result_ready);
     elecstate->wg(0, 1) = 4.0;
-    EXPECT_THROW(elecstate::complete_electronic_step(ucell, elecstate, &basis, solvent, input, true, step),
-                 std::runtime_error);
+    EXPECT_THROW(
+        elecstate::complete_electronic_step(ucell, elecstate, &basis, solvent, input, true, step), std::runtime_error);
     EXPECT_FALSE(step.result_ready);
     elecstate->wg(0, 1) = 4.125;
     step.window.axis = 2;
-    EXPECT_THROW(elecstate::complete_electronic_step(ucell, elecstate, &basis, solvent, input, true, step),
-                 std::runtime_error);
+    EXPECT_THROW(
+        elecstate::complete_electronic_step(ucell, elecstate, &basis, solvent, input, true, step), std::runtime_error);
     EXPECT_FALSE(step.result_ready);
     EXPECT_EQ(1, reference_calls);
     step.window.axis = -1;
@@ -355,8 +366,8 @@ TEST_F(ElecStateTest, ElectronicResultRequiresConvergenceAndMatchingOccupations)
     EXPECT_DOUBLE_EQ(-0.125, step.result.fermi_ry);
     EXPECT_DOUBLE_EQ(0.0, step.result.reference_ry);
     EXPECT_EQ(1, reference_calls);
-    EXPECT_THROW(elecstate::complete_electronic_step(ucell, elecstate, &basis, solvent, input, true, step),
-                 std::runtime_error);
+    EXPECT_THROW(
+        elecstate::complete_electronic_step(ucell, elecstate, &basis, solvent, input, true, step), std::runtime_error);
 }
 
 TEST_F(ElecStateTest, ElectronicResultForwardsPotentialWindow)
@@ -393,8 +404,9 @@ TEST_F(ElecStateTest, ElectronicResultForwardsPotentialWindow)
         EXPECT_DOUBLE_EQ(reference_value, step.result.reference_ry);
         EXPECT_DOUBLE_EQ(8.25, step.result.nelect);
         EXPECT_DOUBLE_EQ(-0.125, step.result.fermi_ry);
-        EXPECT_THROW(elecstate::complete_electronic_step(ucell, elecstate, &basis, solvent, input, true, step),
-                     std::runtime_error);
+        EXPECT_THROW(
+            elecstate::complete_electronic_step(ucell, elecstate, &basis, solvent, input, true, step),
+            std::runtime_error);
         EXPECT_EQ(axis + 1, reference_calls);
     }
 }

@@ -4,7 +4,7 @@
 #include "source_base/timer.h"
 #include "source_cell/unitcell.h"
 #include "source_esolver/esolver.h"
-#include "source_estate/module_pot/electrostatic_potential.h"
+#include "source_estate/module_pot/elpot.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_io/module_parameter/input_parameter.h"
 #include "source_io/module_parameter/system_parameter.h"
@@ -30,6 +30,7 @@ using SocketUtils::all_ranks_converged;
 using SocketUtils::bcast_double_vector;
 using SocketUtils::bcast_header;
 using SocketUtils::bcast_int32;
+using SocketUtils::bcast_string;
 using SocketUtils::ComputedFrame;
 using SocketUtils::DriverState;
 using SocketUtils::fail_during_collective_stage;
@@ -43,7 +44,6 @@ using SocketUtils::kMaxInitBytes;
 using SocketUtils::kRyToHartree;
 using SocketUtils::kStressAbsoluteTolerance;
 using SocketUtils::kStressRelativeTolerance;
-using SocketUtils::bcast_string;
 using SocketUtils::matrix9_from_stress;
 using SocketUtils::max_abs_delta;
 using SocketUtils::max_wrapped_direct_delta_from_unitcell;
@@ -56,7 +56,7 @@ using SocketUtils::vector_from_matrix9;
 
 namespace
 {
-void connect_on_root(IpiSocket& socket, std::ofstream& ofs_running)
+void connect_on_root(IpiSocket &socket, std::ofstream &ofs_running)
 {
     int io_failed = 0;
     std::string io_message;
@@ -68,7 +68,7 @@ void connect_on_root(IpiSocket& socket, std::ofstream& ofs_running)
             ofs_running << " ABACUS socket driver connecting to i-PI endpoint " << endpoint << std::endl;
             socket.connect(endpoint);
         }
-        catch (const std::exception& exc)
+        catch (const std::exception &exc)
         {
             io_failed = 1;
             io_message = exc.what();
@@ -77,7 +77,7 @@ void connect_on_root(IpiSocket& socket, std::ofstream& ofs_running)
     quit_if_root_failed(io_failed, io_message);
 }
 
-void log_peer_closed(std::ofstream& ofs_running)
+void log_peer_closed(std::ofstream &ofs_running)
 {
     if (is_root())
     {
@@ -86,13 +86,14 @@ void log_peer_closed(std::ofstream& ofs_running)
 }
 } // namespace
 
-bool run_socket_driver(ModuleESolver::ESolver* p_esolver,
-                       UnitCell& ucell,
-                       const Input_para& inp,
-                       Parameter* parameters,
-                       const System_para* system,
-                       elecstate::ElectronicStep** electronic_slot,
-                       std::ofstream& ofs_running)
+bool run_socket_driver(
+    ModuleESolver::ESolver *p_esolver,
+    UnitCell &ucell,
+    const Input_para &inp,
+    Parameter *parameters,
+    const System_para *system,
+    elecstate::ElectronicStep **electronic_slot,
+    std::ofstream &ofs_running)
 {
     ModuleBase::TITLE("Socket_Driver", "run_socket_driver");
     ModuleBase::timer::start("Socket_Driver", "run_socket_driver");
@@ -159,7 +160,7 @@ bool run_socket_driver(ModuleESolver::ESolver* p_esolver,
             }
         }
     }
-    catch (const std::exception& exc)
+    catch (const std::exception &exc)
     {
         ModuleBase::WARNING_QUIT("ABACUS socket", exc.what());
     }
@@ -173,7 +174,7 @@ bool run_socket_driver(ModuleESolver::ESolver* p_esolver,
     return context.istep > 0;
 }
 
-std::string read_header_bcast(IpiSocket& socket, const DriverContext& context)
+std::string read_header_bcast(IpiSocket &socket, const DriverContext &context)
 {
     std::string header;
     int io_failed = 0;
@@ -184,7 +185,7 @@ std::string read_header_bcast(IpiSocket& socket, const DriverContext& context)
         {
             header = socket.read_header();
         }
-        catch (const IpiSocketClosed&)
+        catch (const IpiSocketClosed &)
         {
             if (context.state == DriverState::HasData || context.charge_pending)
             {
@@ -192,7 +193,7 @@ std::string read_header_bcast(IpiSocket& socket, const DriverContext& context)
                 io_message = "i-PI peer closed while a computed frame was pending";
             }
         }
-        catch (const std::exception& exc)
+        catch (const std::exception &exc)
         {
             io_failed = 1;
             io_message = exc.what();
@@ -202,7 +203,7 @@ std::string read_header_bcast(IpiSocket& socket, const DriverContext& context)
     return bcast_header(header);
 }
 
-void handle_status(IpiSocket& socket, const DriverState state)
+void handle_status(IpiSocket &socket, const DriverState state)
 {
     int io_failed = 0;
     std::string io_message;
@@ -223,7 +224,7 @@ void handle_status(IpiSocket& socket, const DriverState state)
                 socket.write_header("NEEDINIT");
             }
         }
-        catch (const std::exception& exc)
+        catch (const std::exception &exc)
         {
             io_failed = 1;
             io_message = exc.what();
@@ -232,7 +233,7 @@ void handle_status(IpiSocket& socket, const DriverState state)
     quit_if_root_failed(io_failed, io_message);
 }
 
-void handle_init(IpiSocket& socket, DriverContext& context, std::ofstream& ofs_running)
+void handle_init(IpiSocket &socket, DriverContext &context, std::ofstream &ofs_running)
 {
     std::int32_t rid = 0;
     std::int32_t nbytes = 0;
@@ -267,7 +268,7 @@ void handle_init(IpiSocket& socket, DriverContext& context, std::ofstream& ofs_r
                     params = socket.read_string(static_cast<std::size_t>(nbytes));
                 }
             }
-            catch (const std::exception& exc)
+            catch (const std::exception &exc)
             {
                 io_failed = 1;
                 io_message = exc.what();
@@ -291,19 +292,21 @@ void handle_init(IpiSocket& socket, DriverContext& context, std::ofstream& ofs_r
         {
             throw std::runtime_error("constant-potential socket requires an electronic request slot");
         }
-        if (context.cp.enabled && (context.parameters == nullptr || context.system == nullptr || !context.inp->cal_force
-            || context.inp->cal_stress || (context.inp->symmetry != "0" && context.inp->symmetry != "-1")))
+        if (context.cp.enabled &&
+            (context.parameters == nullptr || context.system == nullptr || !context.inp->cal_force ||
+                context.inp->cal_stress || (context.inp->symmetry != "0" && context.inp->symmetry != "-1")))
         {
-            throw std::runtime_error("constant-potential socket requires runtime parameters, "
-                                     "cal_force=1, cal_stress=0 and symmetry=0/-1");
+            throw std::runtime_error(
+                "constant-potential socket requires runtime parameters, "
+                "cal_force=1, cal_stress=0 and symmetry=0/-1");
         }
         if (context.cp.window.axis >= 0)
         {
-            const auto& window = context.cp.window;
+            const elecstate::PotentialWindow &window = context.cp.window;
             elecstate::checked_window_height(*context.ucell, window.axis, window.minimum_A, window.maximum_A);
         }
     }
-    catch (const std::exception& exc)
+    catch (const std::exception &exc)
     {
         local_failed = 1;
         local_message = exc.what();
@@ -316,7 +319,7 @@ void handle_init(IpiSocket& socket, DriverContext& context, std::ofstream& ofs_r
     }
 }
 
-void handle_chgdata(IpiSocket& socket, DriverContext& context, std::ofstream& ofs_running)
+void handle_chgdata(IpiSocket &socket, DriverContext &context, std::ofstream &ofs_running)
 {
     std::vector<double> charge(1, 0.0);
     std::int32_t flags = 0;
@@ -333,7 +336,7 @@ void handle_chgdata(IpiSocket& socket, DriverContext& context, std::ofstream& of
             charge[0] = socket.read_double();
             flags = socket.read_int32();
         }
-        catch (const std::exception& exc)
+        catch (const std::exception &exc)
         {
             io_failed = 1;
             io_message = exc.what();
@@ -348,7 +351,7 @@ void handle_chgdata(IpiSocket& socket, DriverContext& context, std::ofstream& of
     {
         context.pending_control = SocketCP::make_control(context.cp, charge[0], flags);
     }
-    catch (const std::exception& exc)
+    catch (const std::exception &exc)
     {
         local_failed = 1;
         local_message = exc.what();
@@ -357,7 +360,7 @@ void handle_chgdata(IpiSocket& socket, DriverContext& context, std::ofstream& of
     context.charge_pending = true;
     if (is_root())
     {
-        const auto previous_precision = ofs_running.precision(17);
+        const std::streamsize previous_precision = ofs_running.precision(17);
         ofs_running << " @IPI DRIVER: CHGDATA nelect=" << charge[0] << " flag=" << flags << std::endl;
         ofs_running.precision(previous_precision);
     }
@@ -379,7 +382,7 @@ struct PosdataPayload
 // passes through the single quit_if_root_failed collective sequence below;
 // a root-only early quit outside would deadlock if any collective were
 // added ahead of it.
-PosdataPayload read_posdata(IpiSocket& socket, const DriverContext& context)
+PosdataPayload read_posdata(IpiSocket &socket, const DriverContext &context)
 {
     PosdataPayload payload;
     int io_failed = 0;
@@ -405,23 +408,17 @@ PosdataPayload read_posdata(IpiSocket& socket, const DriverContext& context)
                 std::copy(cell_values.begin(), cell_values.end(), payload.cell.begin());
                 std::copy(inverse_values.begin(), inverse_values.end(), payload.inv_cell.begin());
                 payload.nat_socket = socket.read_int32();
-                const SocketFrame::CellValidation validation
-                    = SocketFrame::validate_ipi_cell(payload.cell,
-                                                     payload.inv_cell,
-                                                     kMaxCellCondition,
-                                                     kInverseAbsoluteTolerance,
-                                                     kInverseRelativeTolerance);
+                const SocketFrame::CellValidation validation = SocketFrame::validate_ipi_cell(
+                    payload.cell, payload.inv_cell, kMaxCellCondition, kInverseAbsoluteTolerance,
+                    kInverseRelativeTolerance);
                 if (!validation.ok)
                 {
                     io_failed = 1;
                     io_message = "invalid POSDATA cell: " + validation.message;
                 }
                 std::size_t coordinate_count = 0;
-                if (io_failed == 0
-                    && !SocketFrame::checked_position_count(payload.nat_socket,
-                                                            context.ucell->nat,
-                                                            coordinate_count,
-                                                            io_message))
+                if (io_failed == 0 && !SocketFrame::checked_position_count(
+                                          payload.nat_socket, context.ucell->nat, coordinate_count, io_message))
                 {
                     io_failed = 1;
                 }
@@ -434,7 +431,7 @@ PosdataPayload read_posdata(IpiSocket& socket, const DriverContext& context)
                     }
                 }
             }
-            catch (const std::exception& exc)
+            catch (const std::exception &exc)
             {
                 io_failed = 1;
                 io_message = exc.what();
@@ -445,7 +442,7 @@ PosdataPayload read_posdata(IpiSocket& socket, const DriverContext& context)
     return payload;
 }
 
-void bcast_posdata(PosdataPayload& payload)
+void bcast_posdata(PosdataPayload &payload)
 {
     bcast_int32(payload.nat_socket);
     std::vector<double> cell_values(payload.cell.begin(), payload.cell.end());
@@ -466,46 +463,51 @@ void bcast_posdata(PosdataPayload& payload)
     bcast_double_vector(payload.positions);
 }
 
-void check_posdata_geometry(DriverContext& context, const PosdataPayload& payload)
+void check_posdata_geometry(DriverContext &context, const PosdataPayload &payload)
 {
     const std::vector<double> wire_cell(payload.cell.begin(), payload.cell.end());
-    const auto& expected_cell = context.cp.enabled && !context.cp_wire_cell.empty()
-                                    ? context.cp_wire_cell : context.reference_cell;
+    const std::vector<double> &expected_cell =
+        context.cp.enabled && !context.cp_wire_cell.empty() ? context.cp_wire_cell : context.reference_cell;
     double cell_tolerance = unchanged_cell_tolerance(payload.cell);
     if (context.cp.enabled && context.cp_wire_cell.empty())
     {
         // Allow the two applications' rounded length constants once; lock later wire cells.
         double scale = 1.0;
-        for (const double value : context.reference_cell) { scale = std::max(scale, std::abs(value)); }
+        for (const double value : context.reference_cell)
+        {
+            scale = std::max(scale, std::abs(value));
+        }
         cell_tolerance = 1.0e-6 * scale;
     }
     if (max_abs_delta(wire_cell, expected_cell) > cell_tolerance)
     {
         ModuleBase::WARNING_QUIT("ABACUS socket", "variable-cell socket updates are not supported yet.");
     }
-    if (context.cp.enabled && context.cp_wire_cell.empty()) { context.cp_wire_cell = wire_cell; }
+    if (context.cp.enabled && context.cp_wire_cell.empty())
+    {
+        context.cp_wire_cell = wire_cell;
+    }
     if (!context.checked_initial_positions)
     {
         context.checked_initial_positions = true;
-        if (max_wrapped_direct_delta_from_unitcell(*context.ucell, payload.positions) > 1.0e-5
-            && is_root())
+        if (max_wrapped_direct_delta_from_unitcell(*context.ucell, payload.positions) > 1.0e-5 && is_root())
         {
-            ModuleBase::WARNING("ABACUS socket",
-                                "first POSDATA positions are not PBC-equivalent to STRU atom order; "
-                                "i-PI POSDATA carries no species, so the client atoms should use the same atom order "
-                                "as STRU.");
+            ModuleBase::WARNING(
+                "ABACUS socket", "first POSDATA positions are not PBC-equivalent to STRU atom order; "
+                                 "i-PI POSDATA carries no species, so the client atoms should use the same atom order "
+                                 "as STRU.");
         }
     }
 }
 
-void run_esolver_for_positions(DriverContext& context, const std::vector<double>& positions,
-                               elecstate::ElectronicStep* step)
+void run_esolver_for_positions(
+    DriverContext &context, const std::vector<double> &positions, elecstate::ElectronicStep *step)
 {
     try
     {
         set_positions_from_ipi_bohr(*context.ucell, positions, context.cp.enabled);
     }
-    catch (const std::exception& exc)
+    catch (const std::exception &exc)
     {
         fail_during_collective_stage("set_positions", exc.what());
     }
@@ -519,16 +521,15 @@ void run_esolver_for_positions(DriverContext& context, const std::vector<double>
         {
             context.charge_pending = false;
             const int functional_type = XC_Functional::get_func_type();
-            SocketCP::run_electronic_step(*context.esolver, *context.ucell, *step,
-                                          *context.inp, *context.system,
-                                          functional_type, context.istep);
+            SocketCP::run_electronic_step(
+                *context.esolver, *context.ucell, *step, *context.inp, *context.system, functional_type, context.istep);
         }
         else
         {
             context.esolver->runner(*context.ucell, context.istep);
         }
     }
-    catch (const std::exception& exc)
+    catch (const std::exception &exc)
     {
         fail_during_collective_stage("runner", exc.what());
     }
@@ -538,14 +539,14 @@ void run_esolver_for_positions(DriverContext& context, const std::vector<double>
     }
 }
 
-void compute_energy_hartree(ModuleESolver::ESolver* esolver, ComputedFrame& computed, std::ofstream& ofs_running)
+void compute_energy_hartree(ModuleESolver::ESolver *esolver, ComputedFrame &computed, std::ofstream &ofs_running)
 {
     double energy_ry = 0.0;
     try
     {
         energy_ry = esolver->cal_energy();
     }
-    catch (const std::exception& exc)
+    catch (const std::exception &exc)
     {
         fail_during_collective_stage("cal_energy", exc.what());
     }
@@ -567,14 +568,14 @@ void compute_energy_hartree(ModuleESolver::ESolver* esolver, ComputedFrame& comp
     }
 }
 
-void compute_forces(UnitCell& ucell, ModuleESolver::ESolver* esolver, ComputedFrame& computed)
+void compute_forces(UnitCell &ucell, ModuleESolver::ESolver *esolver, ComputedFrame &computed)
 {
     ModuleBase::matrix force;
     try
     {
         esolver->cal_force(ucell, force);
     }
-    catch (const std::exception& exc)
+    catch (const std::exception &exc)
     {
         fail_during_collective_stage("cal_force", exc.what());
     }
@@ -588,7 +589,7 @@ void compute_forces(UnitCell& ucell, ModuleESolver::ESolver* esolver, ComputedFr
     {
         computed.forces_hartree_per_bohr = flatten_forces_hartree_per_bohr(force, ucell.nat);
     }
-    catch (const std::exception& exc)
+    catch (const std::exception &exc)
     {
         local_failed = 1;
         local_message = exc.what();
@@ -602,14 +603,14 @@ void compute_forces(UnitCell& ucell, ModuleESolver::ESolver* esolver, ComputedFr
     computed.forces_present = true;
 }
 
-void compute_stress(UnitCell& ucell, ModuleESolver::ESolver* esolver, ComputedFrame& computed)
+void compute_stress(UnitCell &ucell, ModuleESolver::ESolver *esolver, ComputedFrame &computed)
 {
     ModuleBase::matrix stress;
     try
     {
         esolver->cal_stress(ucell, stress);
     }
-    catch (const std::exception& exc)
+    catch (const std::exception &exc)
     {
         fail_during_collective_stage("cal_stress", exc.what());
     }
@@ -621,17 +622,15 @@ void compute_stress(UnitCell& ucell, ModuleESolver::ESolver* esolver, ComputedFr
     std::string local_message;
     try
     {
-        const SocketFrame::VirialConversion virial = SocketFrame::make_ipi_virial(matrix9_from_stress(stress),
-                                                                                  ucell.omega,
-                                                                                  kStressAbsoluteTolerance,
-                                                                                  kStressRelativeTolerance);
+        const SocketFrame::VirialConversion virial = SocketFrame::make_ipi_virial(
+            matrix9_from_stress(stress), ucell.omega, kStressAbsoluteTolerance, kStressRelativeTolerance);
         if (!virial.ok)
         {
             throw std::runtime_error(virial.message);
         }
         computed.virial_wire_hartree = virial.wire_virial_hartree;
     }
-    catch (const std::exception& exc)
+    catch (const std::exception &exc)
     {
         local_failed = 1;
         local_message = exc.what();
@@ -646,13 +645,13 @@ void compute_stress(UnitCell& ucell, ModuleESolver::ESolver* esolver, ComputedFr
 }
 } // namespace
 
-void handle_posdata(IpiSocket& socket, DriverContext& context, std::ofstream& ofs_running)
+void handle_posdata(IpiSocket &socket, DriverContext &context, std::ofstream &ofs_running)
 {
     PosdataPayload payload = read_posdata(socket, context);
     bcast_posdata(payload);
     check_posdata_geometry(context, payload);
     elecstate::ElectronicStep step;
-    elecstate::ElectronicStep* active_step = nullptr;
+    elecstate::ElectronicStep *active_step = nullptr;
     if (context.cp.enabled)
     {
         step.parameters = context.parameters;
@@ -676,8 +675,8 @@ void handle_posdata(IpiSocket& socket, DriverContext& context, std::ofstream& of
     }
     if (!computed.scf_converged && is_root())
     {
-        ModuleBase::WARNING("ABACUS socket",
-                            "SCF did not converge; returning the available frame and marking it in i-PI extras.");
+        ModuleBase::WARNING(
+            "ABACUS socket", "SCF did not converge; returning the available frame and marking it in i-PI extras.");
     }
     compute_energy_hartree(context.esolver, computed, ofs_running);
     if (context.inp->cal_force)
@@ -694,7 +693,7 @@ void handle_posdata(IpiSocket& socket, DriverContext& context, std::ofstream& of
         {
             computed.electronic = SocketCP::collect_observables(context.cp, step);
         }
-        catch (const std::exception& exc)
+        catch (const std::exception &exc)
         {
             fail_during_collective_stage("electronic_observables", exc.what());
         }
@@ -710,7 +709,7 @@ void handle_posdata(IpiSocket& socket, DriverContext& context, std::ofstream& of
     context.state = DriverState::HasData;
 }
 
-void handle_getforce(IpiSocket& socket, DriverContext& context, std::ofstream& ofs_running)
+void handle_getforce(IpiSocket &socket, DriverContext &context, std::ofstream &ofs_running)
 {
     int io_failed = 0;
     std::string io_message;
@@ -725,10 +724,10 @@ void handle_getforce(IpiSocket& socket, DriverContext& context, std::ofstream& o
             socket.write_header("FORCEREADY");
             socket.write_double(context.published.energy_hartree);
             socket.write_int32(static_cast<std::int32_t>(context.nat_return));
-            const std::vector<double> forces
-                = context.published.forces_present
-                      ? context.published.forces_hartree_per_bohr
-                      : std::vector<double>(static_cast<std::size_t>(3 * context.nat_return), 0.0);
+            const std::vector<double> forces =
+                context.published.forces_present
+                    ? context.published.forces_hartree_per_bohr
+                    : std::vector<double>(static_cast<std::size_t>(3 * context.nat_return), 0.0);
             socket.write_doubles(forces);
             socket.write_doubles(vector_from_matrix9(context.published.virial_wire_hartree));
             const std::string extra = properties_extra(context.published);
@@ -743,7 +742,7 @@ void handle_getforce(IpiSocket& socket, DriverContext& context, std::ofstream& o
                 ofs_running << " @IPI DRIVER: Sending extras JSON = " << extra << std::endl;
             }
         }
-        catch (const std::exception& exc)
+        catch (const std::exception &exc)
         {
             io_failed = 1;
             io_message = exc.what();
@@ -754,7 +753,7 @@ void handle_getforce(IpiSocket& socket, DriverContext& context, std::ofstream& o
     context.state = DriverState::Ready;
 }
 
-void handle_exit(const DriverContext& context, std::ofstream& ofs_running)
+void handle_exit(const DriverContext &context, std::ofstream &ofs_running)
 {
     if (context.cp.enabled)
     {

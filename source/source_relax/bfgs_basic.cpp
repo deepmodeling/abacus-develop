@@ -11,10 +11,7 @@ using namespace Ions_Move_Basic;
 double BFGS_Basic::relax_bfgs_w1 = -1.0; // default is 0.01
 double BFGS_Basic::relax_bfgs_w2 = -1.0; // defalut is 0.05
 
-BFGS_Basic::BFGS_Basic()
-{
-    bfgs_ndim = 1;
-}
+BFGS_Basic::BFGS_Basic() { bfgs_ndim = 1; }
 
 void BFGS_Basic::allocate_basic(void)
 {
@@ -33,7 +30,7 @@ void BFGS_Basic::allocate_basic(void)
     return;
 }
 
-void BFGS_Basic::update_inverse_hessian(const double& lat0, std::ofstream& ofs)
+void BFGS_Basic::update_inverse_hessian(const double &lat0, std::ofstream &ofs)
 {
     //  ModuleBase::TITLE("Ions_Move_BFGS","update_inverse_hessian");
     assert(dim > 0);
@@ -89,15 +86,15 @@ void BFGS_Basic::update_inverse_hessian(const double& lat0, std::ofstream& ofs)
     {
         for (int j = 0; j < dim; j++)
         {
-            this->inv_hess(i, j)
-                += 1.0 / sdoty * ((1.0 + ydotHy / sdoty) * s[i] * s[j] - (s[i] * yH[j] + Hy[i] * s[j]));
+            this->inv_hess(i, j) +=
+                1.0 / sdoty * ((1.0 + ydotHy / sdoty) * s[i] * s[j] - (s[i] * yH[j] + Hy[i] * s[j]));
         }
     }
 
     return;
 }
 
-void BFGS_Basic::check_wolfe_conditions(std::ofstream& ofs, std::vector<double>& etot_info)
+void BFGS_Basic::check_wolfe_conditions(std::ofstream &ofs, std::vector<double> &etot_info)
 {
     double dot_p = dot_func(grad_p.data(), move_p.data(), dim);
     double dot = dot_func(grad.data(), move_p.data(), dim);
@@ -136,9 +133,13 @@ void BFGS_Basic::reset_hessian(void)
         for (int j = 0; j < dim; j++)
         {
             if (i == j)
+            {
                 inv_hess(i, j) = 1.0;
+            }
             else
+            {
                 inv_hess(i, j) = 0.0;
+            }
         }
     }
     return;
@@ -159,11 +160,12 @@ void BFGS_Basic::save_bfgs(void)
 // a new bfgs step is done
 // we have already done well in the previous direction
 // we should get a new direction in this case
-void BFGS_Basic::new_step(const double& lat0,
-                          int& update_iter,
-                          std::ofstream& ofs,
-                          std::vector<double>& etot_info,
-                          const int test_relax_method)
+void BFGS_Basic::new_step(
+    const double &lat0,
+    int &update_iter,
+    std::ofstream &ofs,
+    std::vector<double> &etot_info,
+    const int test_relax_method)
 {
     ModuleBase::TITLE("BFGS_Basic", "new_step");
 
@@ -186,8 +188,8 @@ void BFGS_Basic::new_step(const double& lat0,
 
         // std::cout << "best_xxx=" << " " << best_xxx <<std::endl;
 
-        relax_bfgs_init
-            = std::min(Ions_Move_Basic::best_xxx, relax_bfgs_init); // cg to bfgs initial trust_radius   13-8-10 pengfei
+        relax_bfgs_init =
+            std::min(Ions_Move_Basic::best_xxx, relax_bfgs_init); // cg to bfgs initial trust_radius   13-8-10 pengfei
     }
     else if (update_iter > 1)
     {
@@ -261,7 +263,7 @@ void BFGS_Basic::new_step(const double& lat0,
 
 // trust radius is computed in this function
 // trust radius determine the step length
-void BFGS_Basic::compute_trust_radius(std::ofstream& ofs, std::vector<double>& etot_info, const int test_relax_method)
+void BFGS_Basic::compute_trust_radius(std::ofstream &ofs, std::vector<double> &etot_info, const int test_relax_method)
 {
     ModuleBase::TITLE("BFGS_Basic", "compute_trust_radius");
 
@@ -347,7 +349,7 @@ void BFGS_Basic::compute_trust_radius(std::ofstream& ofs, std::vector<double>& e
     return;
 }
 
-double BFGS_Basic::check_move(const double& lat0, const double& pos, const double& pos_p)
+double BFGS_Basic::check_move(const double &lat0, const double &pos, const double &pos_p)
 {
     // this must be careful.
     // unit is ucell.lat0.

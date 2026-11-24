@@ -22,8 +22,12 @@ struct Exx_Helper : public Exx_HelperBase
 
     void init(const UnitCell& ucell, const Input_para& inp, const ModuleBase::matrix& wg, const General_Exx_Info& exx_info) override;
 
-    void before_scf(void* p_hamilt, void* psi, const Input_para& inp,
-                    const General_Exx_Info& exx_info, bool electronic_step_active) override;
+    void begin_electronic_step(bool active) override;
+    void before_scf(
+        void *p_hamilt,
+        void *psi,
+        const Input_para &inp,
+        const General_Exx_Info &exx_info) override;
 
     bool iter_finish(void* p_elec, Charge* p_charge, void* psi,
                      UnitCell& ucell, const Input_para& inp,
@@ -42,7 +46,7 @@ struct Exx_Helper : public Exx_HelperBase
         set_psi(psi);
     }
 
-    bool exx_after_converge(int iter, bool ene_conv, const Input_para& inp) override;
+    bool exx_after_converge(int iter, bool ene_conv, const Input_para &inp) override;
 
     double cal_exx_energy(void* psi_) override;
 
@@ -56,6 +60,5 @@ struct Exx_Helper : public Exx_HelperBase
     const ModuleBase::matrix *wg = nullptr;
     int exx_iter = 0;
     bool strict_electronic_step = false;
-
 };
 #endif // EXX_HELPER_H

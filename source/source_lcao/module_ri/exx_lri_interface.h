@@ -163,41 +163,50 @@ public:
     std::shared_ptr<Exx_LRI<Tdata>> exx_ptr;
 
 private:
+  bool strict_electronic_step_ = false;
+  Mix_DMk_2D<T> mix_DMk_2D;
+  Mix_DMk_2D<std::complex<double>> mix_common_density_;
+  RI_2D_Comm::HybridDensityLayout common_density_layout_;
 
-    bool strict_electronic_step_ = false;
-    Mix_DMk_2D<T> mix_DMk_2D;
-    Mix_DMk_2D<std::complex<double>> mix_common_density_;
-    RI_2D_Comm::HybridDensityLayout common_density_layout_;
+  std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> prepare_exx_density(
+      const std::vector<std::vector<T>> &dmk,
+      const UnitCell &ucell,
+      const K_Vectors &kv,
+      const Parallel_Orbitals &pv,
+      const int nspin,
+      const bool restart,
+      const ModuleBase::Vector3<double> *source_A);
+  void mix_common_density(
+      RI_2D_Comm::HybridGaugeComplexDensity &density,
+      const UnitCell &ucell,
+      const ModuleBase::Vector3<double> &source_A,
+      const bool restart);
+  void mix_common_density(
+      std::vector<std::map<TA, std::map<TAC, RI::Tensor<double>>>> &density,
+      const UnitCell &ucell,
+      const ModuleBase::Vector3<double> &source_A,
+      const bool restart);
 
-    std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> prepare_exx_density(
-        const std::vector<std::vector<T>>& dmk, const UnitCell& ucell,
-        const K_Vectors& kv, const Parallel_Orbitals& pv, const int nspin,
-        const bool restart, const ModuleBase::Vector3<double>* source_A);
-    void mix_common_density(RI_2D_Comm::HybridGaugeComplexDensity& density,
-        const UnitCell& ucell, const ModuleBase::Vector3<double>& source_A, const bool restart);
-    void mix_common_density(std::vector<std::map<TA, std::map<TAC, RI::Tensor<double>>>>& density,
-        const UnitCell& ucell, const ModuleBase::Vector3<double>& source_A, const bool restart);
+  Exx_Info_Global info_global;
+  size_t hybrid_step_ = 1;
+  // non-owning ptr to Charge_Mixing captured in exx_beforescf, used to refresh the
+  // borrowed mixing pointer in exx_eachiterinit (mixing_restart reallocates it via init_mixing)
+  const Charge_Mixing *p_chgmix_ = nullptr;
+  // identity of the last borrowed mixing engine; a change means init_mixing() reallocated it
+  // (mixing_restart fired), so the DM mixer must also restart to keep engine+history consistent
+  const void *last_borrowed_mixing_ = nullptr;
 
-    Exx_Info_Global info_global;
-    size_t hybrid_step_ = 1;
-    // non-owning ptr to Charge_Mixing captured in exx_beforescf, used to refresh the
-    // borrowed mixing pointer in exx_eachiterinit (mixing_restart reallocates it via init_mixing)
-    const Charge_Mixing* p_chgmix_ = nullptr;
-    // identity of the last borrowed mixing engine; a change means init_mixing() reallocated it
-    // (mixing_restart fired), so the DM mixer must also restart to keep engine+history consistent
-    const void* last_borrowed_mixing_ = nullptr;
+  bool exx_spacegroup_symmetry = false;
+  ModuleSymmetry::Symmetry_rotation symrot_;
 
-    bool exx_spacegroup_symmetry = false;
-    ModuleSymmetry::Symmetry_rotation symrot_;
-
-    struct Flag_Finish
-    {
-        bool init = false;
-        bool ions = false;
-        bool elec = false;
-        bool force = false;
-        bool stress = false;
-    };
+  struct Flag_Finish
+  {
+      bool init = false;
+      bool ions = false;
+      bool elec = false;
+      bool force = false;
+      bool stress = false;
+  };
     Flag_Finish flag_finish;
 };
 

@@ -1,10 +1,13 @@
+#include "write_elecstat_pot.h"
 #include "source_base/element_name.h"
 #include "source_base/timer.h"
-#include "source_io/module_parameter/parameter.h"
-#include "source_estate/module_pot/electrostatic_potential.h"
+#include "source_base/tool_quit.h"
+#include "source_estate/module_pot/elpot.h"
 #include "source_io/module_output/cube_io.h"
 #include "source_io/module_output/output_log.h"
-#include "write_elecstat_pot.h"
+#include "source_io/module_parameter/parameter.h"
+
+#include <exception>
 
 namespace ModuleIO
 {
@@ -30,9 +33,16 @@ void write_elecstat_pot(
     ModuleBase::TITLE("ModuleIO", "write_elecstat_pot");
     ModuleBase::timer::start("ModuleIO", "write_elecstat_pot");
 
-    auto v_elecstat = elecstate::electrostatic_potential(*ucell, *rho_basis, *chr,
-                                                       v_eff, solvent, PARAM.inp,
-                                                       pcc_potential, solvent_potential);
+    std::vector<double> v_elecstat;
+    try
+    {
+        v_elecstat = elecstate::electrostatic_potential(
+            *ucell, *rho_basis, *chr, v_eff, solvent, PARAM.inp, pcc_potential, solvent_potential);
+    }
+    catch (const std::exception &error)
+    {
+        ModuleBase::WARNING_QUIT("write_elecstat_pot", error.what());
+    }
 
     //-------------------------------------------
     //! Get the vacuum level of the system
@@ -56,21 +66,9 @@ void write_elecstat_pot(
     double ef_tmp = 0.0;
     int out_fermi = 0;
 
-    ModuleIO::write_vdata_palgrid(*chr->pgrid,
-        v_elecstat.data(),
-        is,
-        PARAM.inp.nspin,
-        istep,
-        fn,
-        ef_tmp,
-        ucell,
-        precision,
-        out_fermi,
-        PARAM.globalv.two_fermi,
-        false,
-        append,
-        ofs_running,
-        "electrostatic potential");
+    ModuleIO::write_vdata_palgrid(
+        *chr->pgrid, v_elecstat.data(), is, PARAM.inp.nspin, istep, fn, ef_tmp, ucell, precision, out_fermi,
+        PARAM.globalv.two_fermi, false, append, ofs_running, "electrostatic potential");
 
     ModuleBase::timer::end("ModuleIO", "write_elecstat_pot");
     return;

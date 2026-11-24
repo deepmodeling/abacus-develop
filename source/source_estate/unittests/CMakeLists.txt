@@ -44,22 +44,19 @@ if(ENABLE_MPI)
     PROPERTIES TIMEOUT 30 PROCESSORS 4 ENVIRONMENT "OMP_NUM_THREADS=1")
 
   addtest(
-    TARGET MODULE_ESTATE_electrostatic_potential_test
+    TARGET MODULE_ESTATE_elpot_test
     LIBS parameter base device planewave MPI::MPI_CXX
     KEEP_FEATURE_DEFINITIONS __MPI
-    SOURCES test_electrostatic_potential.cpp
-            ../module_pot/electrostatic_potential.cpp)
-  set_tests_properties(MODULE_ESTATE_electrostatic_potential_test
+    SOURCES test_elpot.cpp ../module_pot/elpot.cpp)
+  set_tests_properties(MODULE_ESTATE_elpot_test
                        PROPERTIES TIMEOUT 30 ENVIRONMENT "OMP_NUM_THREADS=1")
   add_test(
-    NAME MODULE_ESTATE_electrostatic_potential_mpi4_test
-    COMMAND
-      ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 4 ${MPIEXEC_PREFLAGS}
-      $<TARGET_FILE:MODULE_ESTATE_electrostatic_potential_test>
-      ${MPIEXEC_POSTFLAGS})
+    NAME MODULE_ESTATE_elpot_mpi4_test
+    COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 4 ${MPIEXEC_PREFLAGS}
+            $<TARGET_FILE:MODULE_ESTATE_elpot_test> ${MPIEXEC_POSTFLAGS})
   set_tests_properties(
-    MODULE_ESTATE_electrostatic_potential_mpi4_test
-    PROPERTIES TIMEOUT 30 PROCESSORS 4 ENVIRONMENT "OMP_NUM_THREADS=1")
+    MODULE_ESTATE_elpot_mpi4_test PROPERTIES TIMEOUT 30 PROCESSORS 4
+                                             ENVIRONMENT "OMP_NUM_THREADS=1")
 
   set(pcc_test_sources
       ../module_pot/sccs_output.cpp

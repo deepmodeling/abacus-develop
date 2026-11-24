@@ -23,7 +23,7 @@ DescriptorEvaluator::DescriptorEvaluator(const ModelParameters& parameters)
     u_block_.resize(static_cast<std::size_t>(parameters_.twojmax + 1), 0);
     for (int j = 0; j <= parameters_.twojmax; ++j)
     {
-        u_block_[static_cast<std::size_t>(j)] = u_size_;
+        u_block_[j] = u_size_;
         u_size_ += static_cast<std::size_t>((j + 1) * (j + 1));
     }
     init_root_factors();
@@ -55,14 +55,14 @@ void DescriptorEvaluator::init_root_factors()
     {
         for (int q = 1; q <= parameters_.twojmax; ++q)
         {
-            root_factors_[static_cast<std::size_t>(p * dimension + q)] = std::sqrt(static_cast<double>(p) / q);
+            root_factors_[p * dimension + q] = std::sqrt(static_cast<double>(p) / q);
         }
     }
 }
 
 std::size_t DescriptorEvaluator::u_index(const int j, const int ma, const int mb) const
 {
-    return u_block_[static_cast<std::size_t>(j)] + static_cast<std::size_t>(mb * (j + 1) + ma);
+    return u_block_[j] + static_cast<std::size_t>(mb * (j + 1) + ma);
 }
 
 DescriptorEvaluator::SwitchValue DescriptorEvaluator::switching(const double distance,
@@ -141,8 +141,8 @@ std::vector<std::complex<double> > DescriptorEvaluator::compute_u(const Neighbor
             {
                 const std::size_t current = u_index(j, ma, mb);
                 const std::size_t previous = u_index(j - 1, ma, mb);
-                const double first_root = root_factors_[static_cast<std::size_t>((j - ma) * dimension + (j - mb))];
-                const double second_root = root_factors_[static_cast<std::size_t>((ma + 1) * dimension + (j - mb))];
+                const double first_root = root_factors_[(j - ma) * dimension + (j - mb)];
+                const double second_root = root_factors_[(ma + 1) * dimension + (j - mb)];
                 result[current] += first_root * std::complex<double>(ar, -ai) * result[previous];
                 result[current + 1] = -second_root * std::complex<double>(br, -bi) * result[previous];
             }

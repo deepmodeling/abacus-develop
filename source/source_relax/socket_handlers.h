@@ -22,12 +22,12 @@ namespace SocketHandlers
 {
 struct DriverContext
 {
-    ModuleESolver::ESolver* esolver = nullptr;
-    UnitCell* ucell = nullptr;
-    const Input_para* inp = nullptr;
-    Parameter* parameters = nullptr;
-    const System_para* system = nullptr;
-    elecstate::ElectronicStep** electronic_slot = nullptr;
+    ModuleESolver::ESolver *esolver = nullptr;
+    UnitCell *ucell = nullptr;
+    const Input_para *inp = nullptr;
+    Parameter *parameters = nullptr;
+    const System_para *system = nullptr;
+    elecstate::ElectronicStep **electronic_slot = nullptr;
     SocketUtils::DriverState state = SocketUtils::DriverState::NeedInit;
     int istep = 0;
     int nat_return = 0;
@@ -41,27 +41,31 @@ struct DriverContext
 };
 
 // Run one socket session with an optional, rank-local electronic request slot.
-bool run_socket_driver(ModuleESolver::ESolver* solver, UnitCell& cell,
-                       const Input_para& input, Parameter* parameters,
-                       const System_para* system, elecstate::ElectronicStep** electronic_slot,
-                       std::ofstream& log);
+bool run_socket_driver(
+    ModuleESolver::ESolver *solver,
+    UnitCell &cell,
+    const Input_para &input,
+    Parameter *parameters,
+    const System_para *system,
+    elecstate::ElectronicStep **electronic_slot,
+    std::ofstream &log);
 
 // Reads the next i-PI header on the root rank and broadcasts it to all ranks.
 // Returns an empty string when the peer closed the connection while no frame
 // is pending. Calls WARNING_QUIT on unrecoverable I/O failure.
-std::string read_header_bcast(IpiSocket& socket, const DriverContext& context);
+std::string read_header_bcast(IpiSocket &socket, const DriverContext &context);
 
-void handle_status(IpiSocket& socket, const SocketUtils::DriverState state);
+void handle_status(IpiSocket &socket, const SocketUtils::DriverState state);
 
-void handle_init(IpiSocket& socket, DriverContext& context, std::ofstream& ofs_running);
+void handle_init(IpiSocket &socket, DriverContext &context, std::ofstream &ofs_running);
 
-void handle_chgdata(IpiSocket& socket, DriverContext& context, std::ofstream& ofs_running);
+void handle_chgdata(IpiSocket &socket, DriverContext &context, std::ofstream &ofs_running);
 
-void handle_posdata(IpiSocket& socket, DriverContext& context, std::ofstream& ofs_running);
+void handle_posdata(IpiSocket &socket, DriverContext &context, std::ofstream &ofs_running);
 
-void handle_getforce(IpiSocket& socket, DriverContext& context, std::ofstream& ofs_running);
+void handle_getforce(IpiSocket &socket, DriverContext &context, std::ofstream &ofs_running);
 
-void handle_exit(const DriverContext& context, std::ofstream& ofs_running);
+void handle_exit(const DriverContext &context, std::ofstream &ofs_running);
 } // namespace SocketHandlers
 
 #endif

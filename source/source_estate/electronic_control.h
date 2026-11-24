@@ -5,7 +5,10 @@ class Parameter;
 class UnitCell;
 class surchem;
 struct Input_para;
-namespace ModulePW { class PW_Basis; }
+namespace ModulePW
+{
+class PW_Basis;
+}
 
 namespace elecstate
 {
@@ -36,7 +39,7 @@ struct ElectronicObservables
 // Each MPI rank has its own step. Only a completed result may be published.
 struct ElectronicStep
 {
-    Parameter* parameters = nullptr;
+    Parameter *parameters = nullptr;
     ElectronicControl control;
     PotentialWindow window;
     bool two_fermi = false;
@@ -45,14 +48,28 @@ struct ElectronicStep
     bool result_ready = false;
 };
 
-void prepare_electronic_step(const UnitCell& cell, ElecState* state, ElectronicStep& step, const Input_para& input);
+void prepare_electronic_step(
+    const UnitCell &cell,
+    ElecState *state,
+    ElectronicStep &step,
+    const Input_para &input);
 // Call after nuclear forces: constructing the reference updates electric-field state.
-void complete_electronic_step(const UnitCell& cell, ElecState* state, ModulePW::PW_Basis* basis,
-                              const surchem& solvent, const Input_para& input,
-                              bool converged, ElectronicStep& step);
+void complete_electronic_step(
+    const UnitCell &cell,
+    ElecState *state,
+    ModulePW::PW_Basis *basis,
+    const surchem &solvent,
+    const Input_para &input,
+    bool converged,
+    ElectronicStep &step);
 
-void update_electron_count(ElecState& state, double nelect, int nspin, double nupdown, bool two_fermi);
-double electronic_chemical_potential(const Efermi& fermi, bool two_fermi);
+void update_electron_count(
+    ElecState &state,
+    double nelect,
+    int nspin,
+    double nupdown,
+    bool two_fermi);
+double electronic_chemical_potential(const Efermi &fermi, bool two_fermi);
 } // namespace elecstate
 
 #endif

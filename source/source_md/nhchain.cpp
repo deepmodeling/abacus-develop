@@ -814,7 +814,8 @@ void Nose_Hoover::update_volume(std::ofstream& ofs)
         latvec.e31 *= factor;
     }
 
-    mdcell.set_lattice_vectors(latvec);
+    const double lat0 = mdcell.lat0();
+    mdcell.set_lattice_geometry(latvec, lat0);
     mdcell.refresh_cart_from_frac();
     static_cast<void>(ofs);
 }
