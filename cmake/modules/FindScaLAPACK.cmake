@@ -25,7 +25,6 @@ find_package_handle_standard_args(ScaLAPACK REQUIRED_VARS ScaLAPACK_LIBRARY)
 # Copy the results to the output variables and target.
 if(ScaLAPACK_FOUND)
   set(ScaLAPACK_LIBRARIES ${ScaLAPACK_LIBRARY})
-
   if(NOT TARGET ScaLAPACK::ScaLAPACK)
     add_library(ScaLAPACK::ScaLAPACK UNKNOWN IMPORTED)
     set_target_properties(ScaLAPACK::ScaLAPACK

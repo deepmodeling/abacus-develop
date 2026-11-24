@@ -186,7 +186,6 @@ if(USE_KML)
     list(APPEND _abacus_linalg_libs KML::LAPACK)
   endif()
   list(APPEND _abacus_linalg_libs KML::FFTW3)
-  list(APPEND _abacus_linalg_include_dirs ${KML_INCLUDE_DIRS})
   if(ENABLE_FLOAT_FFTW)
     list(APPEND _abacus_linalg_libs KML::FFTW3_FLOAT)
   endif()
@@ -214,7 +213,6 @@ else()
     list(APPEND _abacus_linalg_libs FFTW3::FFTW3_OMP)
   endif()
   list(APPEND _abacus_linalg_libs FFTW3::FFTW3 LAPACK::LAPACK BLAS::BLAS)
-  list(APPEND _abacus_linalg_include_dirs ${FFTW3_INCLUDE_DIRS})
   if(ENABLE_FLOAT_FFTW)
     list(APPEND _abacus_linalg_libs FFTW3::FFTW3_FLOAT)
   endif()
@@ -302,13 +300,8 @@ set(_abacus_feature_libs
     $<$<BOOL:${ENABLE_MLALGO}>:libnpy::npy>)
 set(_abacus_feature_include_dirs)
 
-if(ENABLE_ELPA)
-  list(APPEND _abacus_feature_include_dirs ${ELPA_INCLUDE_DIR})
-endif()
-
 if(ENABLE_DEEPMD AND DEEPMD_BACKEND STREQUAL "TensorFlow")
   list(APPEND _abacus_feature_libs TensorFlow::tensorflow_cc)
-  list(APPEND _abacus_feature_include_dirs ${TensorFlow_DIR}/include)
 endif()
 
 if(USE_DSP)
@@ -386,6 +379,7 @@ foreach(
         CNPY::cnpy
         torch
         ELPA::ELPA
+        PLUMED::plumed
         Libxc::xc
         dftd4::dftd4
         ${ABACUS_DEEPMD_TARGET}
