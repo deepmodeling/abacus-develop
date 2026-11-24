@@ -129,8 +129,13 @@ bool tensor_close(const RI::Tensor<Tdata>& a, const RI::Tensor<Tdata>& b, double
             return false;
     for (size_t i = 0; i < a.shape[0]; ++i)
         for (size_t j = 0; j < a.shape[1]; ++j)
-            if (std::abs(a(i, j) - b(i, j)) > tol)
+        {
+            const double difference = std::abs(a(i, j) - b(i, j));
+            // A NaN difference makes `> tol` false, which would let a
+            // non-finite result pass; require the bound to hold outright.
+            if (!(difference <= tol))
                 return false;
+        }
     return true;
 }
 } // namespace

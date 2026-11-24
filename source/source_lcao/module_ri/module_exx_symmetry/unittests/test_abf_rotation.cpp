@@ -4,6 +4,7 @@
 #include <array>
 #include <cmath>
 #include <complex>
+#include <limits>
 #include <cstdio>
 #include <fstream>
 #include <iomanip>
@@ -141,8 +142,13 @@ bool tensor_close(const RI::Tensor<Tdata>& a, const RI::Tensor<Tdata>& b, double
             return false;
     for (size_t i = 0; i < a.shape[0]; ++i)
         for (size_t j = 0; j < a.shape[1]; ++j)
-            if (std::abs(a(i, j) - b(i, j)) > tol)
+        {
+            const double difference = std::abs(a(i, j) - b(i, j));
+            // A NaN difference makes `> tol` false, which would let a
+            // non-finite result pass; require the bound to hold outright.
+            if (!(difference <= tol))
                 return false;
+        }
     return true;
 }
 } // namespace
@@ -176,6 +182,22 @@ TEST_F(AbfRotationTest, UnitaryRealTensor)
     RI::Tensor<double> A = make_A_real();
     RI::Tensor<double> TAT = ModuleSymmetry::SymmetryRotationTestAccess::rotate_atompair_abf(symrot, A, 0, 0, 0);
     EXPECT_TRUE(tensor_close(TAT, expected_unitary(), DOUBLETHRESHOLD));
+}
+
+TEST_F(AbfRotationTest, NonFiniteTensorIsRejected)
+{
+    // A NaN difference is neither > tol nor <= tol, so a comparator written
+    // as `if (diff > tol) return false;` would accept it. Guard against that.
+    RI::Tensor<double> finite = expected_unitary();
+    RI::Tensor<double> with_nan = expected_unitary();
+    with_nan(0, 0) = std::numeric_limits<double>::quiet_NaN();
+    EXPECT_TRUE(tensor_close(finite, expected_unitary(), DOUBLETHRESHOLD));
+    EXPECT_FALSE(tensor_close(with_nan, expected_unitary(), DOUBLETHRESHOLD));
+    EXPECT_FALSE(tensor_close(finite, with_nan, DOUBLETHRESHOLD));
+
+    RI::Tensor<double> with_inf = expected_unitary();
+    with_inf(1, 1) = std::numeric_limits<double>::infinity();
+    EXPECT_FALSE(tensor_close(with_inf, expected_unitary(), DOUBLETHRESHOLD));
 }
 
 TEST_F(AbfRotationTest, AntiunitaryRealTensor)

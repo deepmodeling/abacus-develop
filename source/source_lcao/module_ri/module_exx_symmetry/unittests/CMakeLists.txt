@@ -22,3 +22,8 @@ addtest(
   SOURCES test_nspin4_restore.cpp
           ../symm_rotation.cpp
           ../../../../source_basis/module_ao/parallel_orbitals.cpp)
+addtest(
+  TARGET MODULE_RI_EXX_SYMMETRY_symrot_writer
+  LIBS base device symmetry neighbor parameter
+  SOURCES test_symrot_writer.cpp
+          ../symm_rot_out.cpp)
