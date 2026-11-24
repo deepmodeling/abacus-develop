@@ -4,12 +4,14 @@
 #include "source_base/module_device/types.h"
 
 #include <complex>
-#include <functional>
 #include <iosfwd>
 #include <type_traits>
 #include <vector>
 
 namespace hsolver {
+
+template <typename T, typename Device>
+class HSOperator;
 
 // -----------------------------------------------------------------------------
 // DiagoPPCG: Projection Preconditioned solver
@@ -37,8 +39,6 @@ public:
     using Real = typename std::conditional<
         std::is_same<T, std::complex<double>>::value, double,
         float>::type;
-    using HPsiFunc = std::function<void(T*, T*, int, int)>;
-    using SPsiFunc = std::function<void(T*, T*, int, int)>;
 
     // -------------------------------------------------------------------------
     // Constructor
@@ -59,20 +59,7 @@ public:
     // block_sweep rows instead contain the current column Rayleigh quotients;
     // exclude those rows when plotting ordered eigenvalue errors.
     // -------------------------------------------------------------------------
-    double diag(const HPsiFunc& hpsi_func,
-                const SPsiFunc& spsi_func,
-                int ld_psi,
-                int nband,
-                int dim,
-                T* psi_in,
-                Real* eigenvalue_in,
-                const std::vector<double>& ethr_band,
-                const Real* prec);
-
-    // The PW caller supplies its running log; standalone callers of the
-    // overload above use std::clog for optional trace-file diagnostics.
-    double diag(const HPsiFunc& hpsi_func,
-                const SPsiFunc& spsi_func,
+    double diag(const HSOperator<T, Device>& op,
                 int ld_psi,
                 int nband,
                 int dim,
@@ -145,9 +132,6 @@ private:
     int rayleigh_ritz_count_ = 0;
     int root_recovery_count_ = 0;
 
-    // Cached S-operator (null if identity).
-    SPsiFunc spsi_func_;
-
     // Working storage (column-major: ld_psi_ rows, n_band_ columns).
     std::vector<T> hpsi_;
     std::vector<T> spsi_;
@@ -169,17 +153,15 @@ private:
         return row + col * ld;
     }
 
-    void validate_input(const HPsiFunc& hpsi_func,
-                        const T* psi_in, const Real* eigenvalue_in,
+    void validate_input(const T* psi_in, const Real* eigenvalue_in,
                         const std::vector<double>& ethr_band,
                         const Real* prec) const;
 
-    // S-application (identity fallback if spsi_func is null).
-    void apply_h(const HPsiFunc& hpsi_func, T* psi_in, T* hpsi_out,
+    // Apply the shared H/S operator to a block.
+    void apply_h(const HSOperator<T, Device>& op, T* psi_in, T* hpsi_out,
                  int ncol) const;
-    void apply_s(const SPsiFunc& spsi_func, T* psi_in, T* spsi_out,
+    void apply_s(const HSOperator<T, Device>& op, T* psi_in, T* spsi_out,
                  int ncol) const;
-    void apply_s_current(T* psi_in, T* spsi_out, int ncol) const;
 
     // Inner product <x|y> (real part only).
     Real gamma_dot(const T* x, const T* y) const;
@@ -201,7 +183,7 @@ private:
                          std::vector<T>& x, std::vector<T>& sx, std::vector<T>* hx,
                          const std::vector<int>& x_cols) const;
 
-    void project_search_directions(const HPsiFunc& hpsi_func, const T* psi,
+    void project_search_directions(const HSOperator<T, Device>& op, const T* psi,
                                     const std::vector<int>& all_cols,
                                     const std::vector<int>& active_cols);
 
@@ -297,10 +279,10 @@ private:
                                 int kept_count, int valid_count,
                                 OperatorBlock& candidates) const;
 
-    void project_candidate_complement(const HPsiFunc& hpsi_func,
+    void project_candidate_complement(const HSOperator<T, Device>& op,
                                       const T* psi, OperatorBlock& candidates) const;
 
-    bool recover_competing_ritz(const HPsiFunc& hpsi_func,
+    bool recover_competing_ritz(const HSOperator<T, Device>& op,
                                 T* psi, Real* eigenvalue,
                                 bool ordered_ritz,
                                 std::vector<int>& active_cols,

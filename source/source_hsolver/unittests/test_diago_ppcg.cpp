@@ -368,7 +368,7 @@ class DiagoPPCGGeneralizedTest : public DiagoPPCGMatrixTest,
         }
     }
 
-    void apply_overlap(T* in, T* out, int leading_dimension, int columns) const
+    void apply_overlap(const T* in, T* out, int leading_dimension, int columns) const
     {
         const bool tridiagonal = GetParam().tridiagonal;
         for (int j = 0; j < columns; ++j)
@@ -398,13 +398,13 @@ TEST_P(DiagoPPCGGeneralizedTest, EigenpairsAndSOrthogonality)
     const PPCGOverlapCase& config = GetParam();
     std::vector<Real> eval(nband, 0.0);
     hsolver::DiagoPPCG<T, base_device::DEVICE_CPU> solver(1e-10, config.max_iterations, 3, 3);
-    const auto h_op = [this](T* in, T* out, int stride, int columns) {
+    const auto h_op = [this](const T* in, T* out, int stride, int columns) {
         dense_h_multiply(H_mat.data(), n_dim, in, out, stride, columns);
     };
-    const auto s_op = [this](T* in, T* out, int stride, int columns) {
+    const auto s_op = [this](const T* in, T* out, int stride, int columns) {
         apply_overlap(in, out, stride, columns);
     };
-    const double iterations = solver.diag(
+    const double iterations = ppcg_test::diagonalize(solver,
         h_op, s_op, ld, nband, n_dim, psi.data(), eval.data(), ethr, prec.data());
     if (config.tridiagonal)
     {
@@ -647,11 +647,11 @@ TEST(DiagoPPCGRandomMatrixTest, ConvergesWithDiagonalPreconditioner)
     initialize_vectors(psi, n_dim, nband, n_dim, 42);
     std::vector<Real> eval(nband, 0.0);
     const std::vector<double> ethr(nband, 1e-4);
-    const auto h_op = [&h, n_dim](T* in, T* out, int ld, int ncol) {
+    const auto h_op = [&h, n_dim](const T* in, T* out, int ld, int ncol) {
         dense_h_multiply(h.data(), n_dim, in, out, ld, ncol);
     };
     hsolver::DiagoPPCG<T, base_device::DEVICE_CPU> solver(1e-8, 500, nband, 4);
-    const double iterations = solver.diag(h_op, nullptr, n_dim, nband, n_dim,
+    const double iterations = ppcg_test::diagonalize(solver, h_op, nullptr, n_dim, nband, n_dim,
                                           psi.data(), eval.data(), ethr, prec.data());
     EXPECT_TRUE(solver.converged());
     EXPECT_TRUE(std::isfinite(solver.max_residual()));

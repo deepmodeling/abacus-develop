@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <cmath>
 #include <exception>
+#include <functional>
 #include <iostream>
 #include <ostream>
 #include <sstream>
@@ -39,9 +40,8 @@ struct PPCGRunResult
     double max_residual;
 };
 
-template <typename T, typename Device, typename Real, typename HPsiFunc, typename SPsiFunc>
-PPCGRunResult run_ppcg_pw(const HPsiFunc& hpsi_func,
-                          const SPsiFunc& spsi_func,
+template <typename T, typename Device, typename Real>
+PPCGRunResult run_ppcg_pw(const HSOperator<T, Device>& op,
                           const int ld_psi,
                           const int nband,
                           const int dim,
@@ -61,8 +61,7 @@ PPCGRunResult run_ppcg_pw(const HPsiFunc& hpsi_func,
     const Real solver_diag_thr = static_cast<Real>(diag_thr);
     DiagoPPCG<T, Device> ppcg(solver_diag_thr, diag_iter_max, sbsize, rr_step_safe);
     PPCGRunResult result;
-    result.average_iterations = ppcg.diag(hpsi_func,
-                                          spsi_func,
+    result.average_iterations = ppcg.diag(op,
                                           ld_psi,
                                           nband,
                                           dim,
@@ -78,9 +77,8 @@ PPCGRunResult run_ppcg_pw(const HPsiFunc& hpsi_func,
     return result;
 }
 
-template <typename T, typename Device, typename Real, typename HPsiFunc, typename SPsiFunc>
-PPCGRunResult run_ppcg_pw(const HPsiFunc& hpsi_func,
-                          const SPsiFunc& spsi_func,
+template <typename T, typename Device, typename Real>
+PPCGRunResult run_ppcg_pw(const HSOperator<T, Device>& op,
                           const int ld_psi,
                           const int nband,
                           const int dim,
@@ -152,18 +150,34 @@ PPCGRunResult run_ppcg_pw(const HPsiFunc& hpsi_func,
     };
     const auto bridge_hpsi = [&](T* psi_in, T* hpsi_out, const int ld, const int nvec) {
         copy_to_device(psi_in, ld, nvec);
-        hpsi_func(psi_dev.ptr, out_dev.ptr, ld, nvec);
+        op.hpsi(psi_dev.ptr, out_dev.ptr, ld, nvec);
         copy_from_device(hpsi_out, ld, nvec);
     };
     const auto bridge_spsi = [&](T* psi_in, T* spsi_out, const int ld, const int nvec) {
         copy_to_device(psi_in, ld, nvec);
-        spsi_func(psi_dev.ptr, out_dev.ptr, ld, nvec);
+        op.spsi(psi_dev.ptr, out_dev.ptr, ld, nvec);
         copy_from_device(spsi_out, ld, nvec);
     };
+    struct HostOperator : HSOperator<T, base_device::DEVICE_CPU>
+    {
+        using Function = std::function<void(T*, T*, int, int)>;
+        HostOperator(const Function& h, const Function& overlap) : h_(h), s_(overlap) {}
+        void update_k(const int) override {}
+        void hpsi(const T* in, T* out, const int ld, const int nvec) const override
+        {
+            h_(const_cast<T*>(in), out, ld, nvec);
+        }
+        void spsi(const T* in, T* out, const int ld, const int nvec) const override
+        {
+            s_(const_cast<T*>(in), out, ld, nvec);
+        }
+        Function h_;
+        Function s_;
+    };
+    const HostOperator host_operator(bridge_hpsi, bridge_spsi);
     DiagoPPCG<T, base_device::DEVICE_CPU> ppcg(solver_diag_thr, diag_iter_max, sbsize, rr_step_safe);
     PPCGRunResult result;
-    result.average_iterations = ppcg.diag(bridge_hpsi,
-                                          bridge_spsi,
+    result.average_iterations = ppcg.diag(host_operator,
                                           ld_psi,
                                           nband,
                                           dim,
@@ -518,12 +532,6 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(const HSOperator<T, Device>& op,
         {
             ModuleBase::WARNING_QUIT("HSolverPW::solve_psik", "PPCG is not supported for NSCF calculations.");
         }
-        const auto hpsi_func = [&op](T* psi_in, T* hpsi_out, const int ld, const int nvec) {
-            op.hpsi(psi_in, hpsi_out, ld, nvec);
-        };
-        const auto spsi_func = [&op](T* psi_in, T* spsi_out, const int ld, const int nvec) {
-            op.spsi(psi_in, spsi_out, ld, nvec);
-        };
         const std::is_same<Device, base_device::DEVICE_CPU> cpu_path;
         const int ld_psi = psi.get_nbasis();
         const int nband = psi.get_nbands();
@@ -533,8 +541,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(const HSOperator<T, Device>& op,
         try
         {
             const PPCGRunResult ppcg_result = run_ppcg_pw<T, Device, Real>(
-                hpsi_func,
-                spsi_func,
+                op,
                 ld_psi,
                 nband,
                 dim,

@@ -1,4 +1,5 @@
 #include "diago_ppcg.h"
+#include "hs_operator.h"
 #include "source_base/parallel_cell.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
@@ -233,7 +234,6 @@ DiagoPPCG<T, Device>::DiagoPPCG(const Real& diag_thr,
 // =============================================================================
 template <typename T, typename Device>
 void DiagoPPCG<T, Device>::validate_input(
-    const HPsiFunc& hpsi_func,
     const T* psi_in,
     const Real* eigenvalue_in,
     const std::vector<double>& ethr_band,
@@ -242,10 +242,6 @@ void DiagoPPCG<T, Device>::validate_input(
     std::string local_error;
     try
     {
-        if (!hpsi_func)
-        {
-            throw std::invalid_argument("PPCG: H operator is empty.");
-        }
         if (psi_in == nullptr || eigenvalue_in == nullptr)
         {
             throw std::invalid_argument("PPCG: psi/eigenvalue pointer is null.");
@@ -306,43 +302,20 @@ void DiagoPPCG<T, Device>::validate_input(
 // Operator application
 // =============================================================================
 template <typename T, typename Device>
-void DiagoPPCG<T, Device>::apply_h(const HPsiFunc& hpsi_func,
+void DiagoPPCG<T, Device>::apply_h(const HSOperator<T, Device>& op,
                                     T* psi_in, T* hpsi_out,
                                     int ncol) const
 {
     const PPCGFunctionTimer timer("apply_h");
-    hpsi_func(psi_in, hpsi_out, ld_psi_, ncol);
+    op.hpsi(psi_in, hpsi_out, ld_psi_, ncol);
 }
 
 template <typename T, typename Device>
-void DiagoPPCG<T, Device>::apply_s(const SPsiFunc& spsi_func,
-                                    T* psi_in, T* spsi_out,
-                                    int ncol) const
+void DiagoPPCG<T, Device>::apply_s(const HSOperator<T, Device>& op,
+                                 T* psi_in, T* spsi_out, int ncol) const
 {
     const PPCGFunctionTimer timer("apply_s");
-    if (spsi_func)
-    {
-        spsi_func(psi_in, spsi_out, ld_psi_, ncol);
-    }
-    else
-    {
-#ifdef _OPENMP
-        const int openmp_work_threshold = 4096;
-#pragma omp parallel for schedule(static) if (ld_psi_ * ncol > openmp_work_threshold)
-#endif
-        for (int j = 0; j < ncol; ++j)
-        {
-            std::copy(psi_in + j * ld_psi_, psi_in + (j + 1) * ld_psi_,
-                      spsi_out + j * ld_psi_);
-        }
-    }
-}
-
-template <typename T, typename Device>
-void DiagoPPCG<T, Device>::apply_s_current(T* psi_in, T* spsi_out,
-                                            int ncol) const
-{
-    apply_s(spsi_func_, psi_in, spsi_out, ncol);
+    op.spsi(psi_in, spsi_out, ld_psi_, ncol);
 }
 
 // =============================================================================
@@ -592,7 +565,7 @@ void DiagoPPCG<T, Device>::project_against(
 // =============================================================================
 template <typename T, typename Device>
 void DiagoPPCG<T, Device>::project_search_directions(
-    const HPsiFunc& hpsi_func,
+    const HSOperator<T, Device>& op,
     const T* psi,
     const std::vector<int>& all_cols,
     const std::vector<int>& active_cols)
@@ -645,8 +618,8 @@ void DiagoPPCG<T, Device>::project_search_directions(
         std::vector<T> hprojected(projected.size(), T(0));
         std::vector<T> sprojected(projected.size(), T(0));
         const int refresh_count = int(refresh_cols.size());
-        apply_h(hpsi_func, projected.data(), hprojected.data(), refresh_count);
-        apply_s_current(projected.data(), sprojected.data(), refresh_count);
+        apply_h(op, projected.data(), hprojected.data(), refresh_count);
+        apply_s(op, projected.data(), sprojected.data(), refresh_count);
         scatter_cols(hp_.data(), refresh_cols, hprojected);
         scatter_cols(sp_.data(), refresh_cols, sprojected);
     }
@@ -1330,7 +1303,7 @@ void DiagoPPCG<T, Device>::collect_discarded_ritz(
 // Preserve X exactly as a subspace: rank decisions apply only to its complement.
 template <typename T, typename Device>
 void DiagoPPCG<T, Device>::project_candidate_complement(
-    const HPsiFunc& hpsi_func, const T* psi, OperatorBlock& candidates) const
+    const HSOperator<T, Device>& op, const T* psi, OperatorBlock& candidates) const
 {
     const PPCGFunctionTimer timer("project_candidate_complement");
     const int count = int(candidates.vectors.size()) / ld_psi_;
@@ -1390,8 +1363,8 @@ void DiagoPPCG<T, Device>::project_candidate_complement(
         std::vector<T> hvectors(vectors.size(), T(0));
         std::vector<T> svectors(vectors.size(), T(0));
         const int batch_count = int(columns.size());
-        apply_h(hpsi_func, vectors.data(), hvectors.data(), batch_count);
-        apply_s_current(vectors.data(), svectors.data(), batch_count);
+        apply_h(op, vectors.data(), hvectors.data(), batch_count);
+        apply_s(op, vectors.data(), svectors.data(), batch_count);
         scatter_cols(candidates.hvectors.data(), columns, hvectors);
         scatter_cols(candidates.svectors.data(), columns, svectors);
     }
@@ -1404,7 +1377,7 @@ void DiagoPPCG<T, Device>::project_candidate_complement(
 
 template <typename T, typename Device>
 bool DiagoPPCG<T, Device>::recover_competing_ritz(
-    const HPsiFunc& hpsi_func, T* psi, Real* eigenvalue,
+    const HSOperator<T, Device>& op, T* psi, Real* eigenvalue,
     const bool ordered_ritz, std::vector<int>& active_cols,
     const std::vector<double>& ethr_band, OperatorBlock& candidates)
 {
@@ -1432,7 +1405,7 @@ bool DiagoPPCG<T, Device>::recover_competing_ritz(
             upper_bound = std::max(upper_bound, row_bound);
         }
     }
-    project_candidate_complement(hpsi_func, psi, candidates);
+    project_candidate_complement(op, psi, candidates);
     const int count = int(candidates.vectors.size()) / ld_psi_;
     if (count == 0)
     {
@@ -1953,23 +1926,7 @@ namespace hsolver {
 // MAIN DIAGONALIZATION ROUTINE
 //==============================================================================
 template <typename T, typename Device>
-double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
-                                  const SPsiFunc& spsi_func,
-                                  int ld_psi,
-                                  int nband,
-                                  int dim,
-                                  T* psi_in,
-                                  Real* eigenvalue_in,
-                                  const std::vector<double>& ethr_band,
-                                  const Real* prec)
-{
-    return diag(hpsi_func, spsi_func, ld_psi, nband, dim,
-                psi_in, eigenvalue_in, ethr_band, prec, std::clog);
-}
-
-template <typename T, typename Device>
-double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
-                                  const SPsiFunc& spsi_func,
+double DiagoPPCG<T, Device>::diag(const HSOperator<T, Device>& op,
                                   int ld_psi,
                                   int nband,
                                   int dim,
@@ -1992,8 +1949,7 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
     rayleigh_ritz_count_ = 0;
     root_recovery_count_ = 0;
 
-    validate_input(hpsi_func, psi_in, eigenvalue_in, ethr_band, prec);
-    spsi_func_ = spsi_func;
+    validate_input(psi_in, eigenvalue_in, ethr_band, prec);
 
     // Allocate working storage.
     const int ncol = n_band_;
@@ -2014,8 +1970,8 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
     std::vector<int> all_cols(ncol);
     std::iota(all_cols.begin(), all_cols.end(), 0);
 
-    apply_h(hpsi_func, psi_in, hpsi_.data(), ncol);
-    apply_s_current(psi_in, spsi_.data(), ncol);
+    apply_h(op, psi_in, hpsi_.data(), ncol);
+    apply_s(op, psi_in, spsi_.data(), ncol);
 
     double avg_iter = 1.0;
     int iter = 1;
@@ -2171,10 +2127,10 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
         const bool near_precision = max_residual_ <= reliable_update_threshold;
         if (near_precision)
         {
-            apply_h(hpsi_func, psi_in, hpsi_.data(), ncol);
-            apply_s_current(psi_in, spsi_.data(), ncol);
-            apply_h(hpsi_func, p_.data(), hp_.data(), ncol);
-            apply_s_current(p_.data(), sp_.data(), ncol);
+            apply_h(op, psi_in, hpsi_.data(), ncol);
+            apply_s(op, psi_in, spsi_.data(), ncol);
+            apply_h(op, p_.data(), hp_.data(), ncol);
+            apply_s(op, p_.data(), sp_.data(), ncol);
             if (last_rr_succeeded)
             {
                 compute_eigenpair_residual(eigenvalue_in);
@@ -2200,7 +2156,7 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
         divide_by_preconditioner(active_cols, prec, w_);
         copy_cols(w_.data(), active_cols, active_vector);
         s_active_vector.assign(ld_psi_ * nact, T(0));
-        apply_s_current(active_vector.data(), s_active_vector.data(), nact);
+        apply_s(op, active_vector.data(), s_active_vector.data(), nact);
         scatter_cols(sw_.data(), active_cols, s_active_vector);
         project_against(psi_in, spsi_.data(), nullptr, all_cols, w_, sw_, nullptr, active_cols);
 
@@ -2208,7 +2164,7 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
         copy_cols(w_.data(), active_cols, active_vector);
         h_active_vector.assign(ld_psi_ * nact, T(0));
         copy_cols(sw_.data(), active_cols, s_active_vector);
-        apply_h(hpsi_func, active_vector.data(), h_active_vector.data(), nact);
+        apply_h(op, active_vector.data(), h_active_vector.data(), nact);
         scatter_cols(hw_.data(), active_cols, h_active_vector);
 
         // Project the cached P, SP and HP together. Linearity preserves their
@@ -2216,7 +2172,7 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
         // when strong cancellation requires a fresh image of selected columns.
         if (use_p)
         {
-            project_search_directions(hpsi_func, psi_in, all_cols, active_cols);
+            project_search_directions(op, psi_in, all_cols, active_cols);
         }
 
         avg_iter += double(nact) / double(ncol);
@@ -2285,10 +2241,10 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
                                        && !near_precision;
         if (refresh_operators)
         {
-            apply_h(hpsi_func, psi_in, hpsi_.data(), ncol);
-            apply_s_current(psi_in, spsi_.data(), ncol);
-            apply_h(hpsi_func, p_.data(), hp_.data(), ncol);
-            apply_s_current(p_.data(), sp_.data(), ncol);
+            apply_h(op, psi_in, hpsi_.data(), ncol);
+            apply_s(op, psi_in, spsi_.data(), ncol);
+            apply_h(op, p_.data(), hp_.data(), ncol);
+            apply_s(op, p_.data(), sp_.data(), ncol);
         }
         // The startup subspace can insert a newly discovered lower root into
         // an old locked prefix. Reclassify it before freezing any column.
@@ -2312,7 +2268,7 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
         // directions before accepting a newly converged set of columns.
         if (!perform_rr || last_rr_succeeded)
         {
-            const bool recovered = recover_competing_ritz(hpsi_func, psi_in, eigenvalue_in,
+            const bool recovered = recover_competing_ritz(op, psi_in, eigenvalue_in,
                                                            last_rr_succeeded, active_cols,
                                                            ethr_band, discarded);
             if (recovered)
@@ -2327,8 +2283,8 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
             // A small cached residual is only tentative. Refresh the
             // operator images before stopping, and keep iterating if
             // roundoff had made the cached criterion overly optimistic.
-            apply_h(hpsi_func, psi_in, hpsi_.data(), ncol);
-            apply_s_current(psi_in, spsi_.data(), ncol);
+            apply_h(op, psi_in, hpsi_.data(), ncol);
+            apply_s(op, psi_in, spsi_.data(), ncol);
             compute_eigenpair_residual(eigenvalue_in);
             lock_epairs(w_, ethr_band, active_cols);
             if (!active_cols.empty())
@@ -2375,8 +2331,8 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
     // Final consistency: ensure H|psi> and S|psi> match the returned vectors,
     // then classify convergence from those final residuals rather than from a
     // cached Rayleigh-Ritz state.
-    apply_h(hpsi_func, psi_in, hpsi_.data(), ncol);
-    apply_s_current(psi_in, spsi_.data(), ncol);
+    apply_h(op, psi_in, hpsi_.data(), ncol);
+    apply_s(op, psi_in, spsi_.data(), ncol);
     compute_eigenpair_residual(eigenvalue_in);
     if (last_rr_succeeded)
     {

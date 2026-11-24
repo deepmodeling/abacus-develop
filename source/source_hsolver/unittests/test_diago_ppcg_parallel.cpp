@@ -11,6 +11,7 @@
  */
 
 #include "../diago_ppcg.h"
+#include "diago_ppcg_test_operator.h"
 
 #include "source_base/parallel_comm.h"
 #include "source_base/parallel_common.h"
@@ -72,7 +73,7 @@ static bool check_competing_roots(const int rank_in_pool, const int nproc_in_poo
         }
     }
     bool operator_capacity_ok = true;
-    const auto h_op = [&](Scalar* in, Scalar* out, int ld, int ncol) {
+    const auto h_op = [&](const Scalar* in, Scalar* out, int ld, int ncol) {
         operator_capacity_ok = operator_capacity_ok && ncol <= bands;
         for (int column = 0; column < ncol; ++column)
         {
@@ -84,7 +85,7 @@ static bool check_competing_roots(const int rank_in_pool, const int nproc_in_poo
     };
     hsolver::DiagoPPCG<Scalar, base_device::DEVICE_CPU> solver(1.0e-10, 80, 1, 4);
     std::vector<double> eigenvalues(bands);
-    solver.diag(h_op, nullptr, local_rows, bands, local_rows,
+    ppcg_test::diagonalize(solver, h_op, nullptr, local_rows, bands, local_rows,
                 vectors.data(), eigenvalues.data(), thresholds, preconditioner.data());
 
     std::vector<double> residuals(bands, 0.0);
@@ -246,7 +247,7 @@ int main(int argc, char** argv)
         /* rr_step  = */ nband);
 
     int h_calls = 0;
-    auto h_op = [&](T* in, T* out, int ld, int ncol) {
+    auto h_op = [&](const T* in, T* out, int ld, int ncol) {
         ++h_calls;
         for (int j = 0; j < ncol; ++j)
         {
@@ -268,7 +269,7 @@ int main(int argc, char** argv)
     bool collective_validation_failed = false;
     try
     {
-        solver.diag(h_op, nullptr, n_local, nband, n_local,
+        ppcg_test::diagonalize(solver, h_op, nullptr, n_local, nband, n_local,
                     psi.data(), eval.data(), ethr, invalid_prec.data());
     }
     catch (const std::invalid_argument&)
@@ -288,7 +289,7 @@ int main(int argc, char** argv)
     bool collective_size_failed = false;
     try
     {
-        solver.diag(h_op, nullptr, checked_ld, nband, n_local,
+        ppcg_test::diagonalize(solver, h_op, nullptr, checked_ld, nband, n_local,
                     psi.data(), eval.data(), ethr, prec.data());
     }
     catch (const std::invalid_argument&)
@@ -298,7 +299,7 @@ int main(int argc, char** argv)
     const bool size_validation_before_operator = collective_size_failed && h_calls == 0;
 
     std::ostringstream running_log;
-    solver.diag(h_op, nullptr, n_local, nband, n_local,
+    ppcg_test::diagonalize(solver, h_op, nullptr, n_local, nband, n_local,
                 psi.data(), eval.data(), ethr, prec.data(), running_log);
     const std::string trace_message = "PPCG residual trace written: " + trace_path;
     const bool wrote_trace = running_log.str().find(trace_message) != std::string::npos;

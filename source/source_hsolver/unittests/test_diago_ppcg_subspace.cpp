@@ -197,7 +197,7 @@ protected:
         }
         int h_calls = 0;
         int s_calls = 0;
-        const auto h_op = [&h_calls, &h_diagonal, dimension](T* in, T* out, int ld, int ncol) {
+        const auto h_op = [&h_calls, &h_diagonal, dimension](const T* in, T* out, int ld, int ncol) {
             ++h_calls;
             for (int j = 0; j < ncol; ++j)
             {
@@ -207,7 +207,7 @@ protected:
                 }
             }
         };
-        solver.spsi_func_ = [&s_calls, &s_diagonal, dimension](T* in, T* out, int ld, int ncol) {
+        const auto s_op = [&s_calls, &s_diagonal, dimension](const T* in, T* out, int ld, int ncol) {
             ++s_calls;
             for (int j = 0; j < ncol; ++j)
             {
@@ -218,7 +218,8 @@ protected:
             }
         };
         const std::vector<int> columns = {0};
-        solver.project_search_directions(h_op, x.data(), columns, columns);
+        const ppcg_test::CallbackHSOperator<T> op(h_op, s_op);
+        solver.project_search_directions(op, x.data(), columns, columns);
         double direction_norm_squared = 0.0;
         double h_error_squared = 0.0;
         double s_error_squared = 0.0;
@@ -373,11 +374,11 @@ TEST(DiagoPPCGRankTruncationTest, ComplexHermitianStartupSubspace)
         /* sbsize   = */ 2,
         /* rr_step  = */ 4);
 
-    auto h_op = [&h_mat, n_dim](T* in, T* out, int ld_in, int ncol) {
+    auto h_op = [&h_mat, n_dim](const T* in, T* out, int ld_in, int ncol) {
         dense_h_multiply(h_mat.data(), n_dim, in, out, ld_in, ncol);
     };
 
-    const double avg_iter = solver.diag(
+    const double avg_iter = ppcg_test::diagonalize(solver,
         h_op, nullptr, ld, nband, n_dim, psi.data(), eval.data(), ethr, prec.data());
     for (int i = 0; i < nband; ++i)
     {
@@ -387,7 +388,7 @@ TEST(DiagoPPCGRankTruncationTest, ComplexHermitianStartupSubspace)
     EXPECT_LE(avg_iter, 30.0);
 }
 
-TEST_F(DiagoPPCGDiagonalTest, EmptyHOperatorThrows)
+TEST_F(DiagoPPCGDiagonalTest, NullWavefunctionThrows)
 {
     std::vector<T> psi_run = psi;
     std::vector<Real> eval(nband, 0.0);
@@ -398,8 +399,9 @@ TEST_F(DiagoPPCGDiagonalTest, EmptyHOperatorThrows)
         /* sbsize   = */ 3,
         /* rr_step  = */ 3);
 
-    hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU>::HPsiFunc h_op;
-    EXPECT_THROW(solver.diag(h_op, nullptr, ld, nband, n_dim, psi_run.data(), eval.data(), ethr, prec.data()),
+    const auto h_op = [](const T*, T*, int, int) {};
+    T* missing_wavefunction = nullptr;
+    EXPECT_THROW(ppcg_test::diagonalize(solver, h_op, nullptr, ld, nband, n_dim, missing_wavefunction, eval.data(), ethr, prec.data()),
                  std::invalid_argument);
 }
 
@@ -414,18 +416,18 @@ TEST_F(DiagoPPCGDiagonalTest, NonFiniteInputThrows)
         /* sbsize   = */ 3,
         /* rr_step  = */ 3);
 
-    auto h_op = [this](T* in, T* out, int ld_in, int ncol) {
+    auto h_op = [this](const T* in, T* out, int ld_in, int ncol) {
         dense_h_multiply(H_mat.data(), n_dim, in, out, ld_in, ncol);
     };
 
     std::vector<double> bad_ethr = ethr;
     bad_ethr[0] = std::numeric_limits<double>::quiet_NaN();
-    EXPECT_THROW(solver.diag(h_op, nullptr, ld, nband, n_dim, psi_run.data(), eval.data(), bad_ethr, prec.data()),
+    EXPECT_THROW(ppcg_test::diagonalize(solver, h_op, nullptr, ld, nband, n_dim, psi_run.data(), eval.data(), bad_ethr, prec.data()),
                  std::invalid_argument);
 
     std::vector<Real> bad_prec = prec;
     bad_prec[0] = std::numeric_limits<Real>::infinity();
-    EXPECT_THROW(solver.diag(h_op, nullptr, ld, nband, n_dim, psi_run.data(), eval.data(), ethr, bad_prec.data()),
+    EXPECT_THROW(ppcg_test::diagonalize(solver, h_op, nullptr, ld, nband, n_dim, psi_run.data(), eval.data(), ethr, bad_prec.data()),
                  std::invalid_argument);
 }
 
@@ -458,13 +460,13 @@ TEST(DiagoPPCGWorkspaceTest, RejectsOversizedWorkspacesBeforeUsingInputBuffers)
         const std::vector<double> thresholds;
         int h_calls = 0;
         int s_calls = 0;
-        const auto h_op = [&h_calls](T*, T*, int, int) { ++h_calls; };
-        const auto s_op = [&s_calls](T*, T*, int, int) { ++s_calls; };
+        const auto h_op = [&h_calls](const T*, T*, int, int) { ++h_calls; };
+        const auto s_op = [&s_calls](const T*, T*, int, int) { ++s_calls; };
         hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(1e-12, 1, 1, 1);
 
         try
         {
-            solver.diag(h_op,
+            ppcg_test::diagonalize(solver, h_op,
                         s_op,
                         shape.leading_dimension,
                         shape.bands,
@@ -492,11 +494,11 @@ TEST_F(DiagoPPCGDiagonalTest, HandlesSubblockSizeAboveBandCount)
     std::vector<Real> eval(nband, 0.0);
     const int subblock_size = std::numeric_limits<int>::max();
     hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(1e-12, 100, subblock_size, 3);
-    const auto h_op = [this](T* in, T* out, int ld_in, int ncol) {
+    const auto h_op = [this](const T* in, T* out, int ld_in, int ncol) {
         dense_h_multiply(H_mat.data(), n_dim, in, out, ld_in, ncol);
     };
 
-    solver.diag(h_op, nullptr, ld, nband, n_dim, psi_run.data(), eval.data(), ethr, prec.data());
+    ppcg_test::diagonalize(solver, h_op, nullptr, ld, nband, n_dim, psi_run.data(), eval.data(), ethr, prec.data());
 
     EXPECT_TRUE(solver.converged());
     for (int band = 0; band < nband; ++band)
@@ -547,11 +549,11 @@ TEST(DiagoPPCGComplexHermitianTest, DefaultKeepsImaginaryProjection)
         /* sbsize   = */ 2,
         /* rr_step  = */ 1);
 
-    auto h_op = [&H_mat, n_dim](T* in, T* out, int ld_in, int ncol) {
+    auto h_op = [&H_mat, n_dim](const T* in, T* out, int ld_in, int ncol) {
         dense_h_multiply(H_mat.data(), n_dim, in, out, ld_in, ncol);
     };
 
-    solver.diag(h_op, nullptr, ld, nband, n_dim, psi.data(), eval.data(), ethr, prec.data());
+    ppcg_test::diagonalize(solver, h_op, nullptr, ld, nband, n_dim, psi.data(), eval.data(), ethr, prec.data());
 
     EXPECT_TRUE(std::isfinite(eval[0]));
     EXPECT_TRUE(std::isfinite(eval[1]));
@@ -582,7 +584,7 @@ TEST(DiagoPPCGComplexHermitianTest, ExactImaginaryLeadingCoefficientNeedsNoProje
     std::vector<Real> eval(nband, Real(0));
     const std::vector<double> ethr(nband, 1e-12);
     const std::vector<Real> prec(n_dim, Real(1));
-    const auto h_op = [&h_mat, n_dim](T* in, T* out, int ld_in, int ncol) {
+    const auto h_op = [&h_mat, n_dim](const T* in, T* out, int ld_in, int ncol) {
         dense_h_multiply(h_mat.data(), n_dim, in, out, ld_in, ncol);
     };
     hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(
@@ -591,7 +593,7 @@ TEST(DiagoPPCGComplexHermitianTest, ExactImaginaryLeadingCoefficientNeedsNoProje
         /* sbsize   = */ 1,
         /* rr_step  = */ 4);
 
-    solver.diag(
+    ppcg_test::diagonalize(solver,
         h_op, nullptr, ld, nband, n_dim, psi.data(), eval.data(), ethr, prec.data());
 
     Real norm_squared = Real(0);

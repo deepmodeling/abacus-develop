@@ -2,6 +2,7 @@
 #define ABACUS_HSOLVER_UNITTESTS_DIAGO_PPCG_TEST_SUPPORT_H
 
 #include "../diago_ppcg.h"
+#include "diago_ppcg_test_operator.h"
 
 #include <gtest/gtest.h>
 #include <cmath>
@@ -63,10 +64,10 @@ class DiagoPPCGMatrixTest : public ::testing::Test
     double solve(hsolver::DiagoPPCG<T, base_device::DEVICE_CPU>& solver)
     {
         eval.assign(nband, 0.0);
-        const auto h_op = [this](T* in, T* out, int leading_dimension, int columns) {
+        const auto h_op = [this](const T* in, T* out, int leading_dimension, int columns) {
             dense_h_multiply(H_mat.data(), n_dim, in, out, leading_dimension, columns);
         };
-        return solver.diag(h_op, nullptr, ld, nband, n_dim, psi.data(), eval.data(), ethr, prec.data());
+        return ppcg_test::diagonalize(solver, h_op, nullptr, ld, nband, n_dim, psi.data(), eval.data(), ethr, prec.data());
     }
 
     void check_eigenvalues(double diag_threshold, int max_iterations, int block_size,
