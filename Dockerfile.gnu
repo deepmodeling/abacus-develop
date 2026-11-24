@@ -7,12 +7,12 @@
 # Docker images are aimed for evaluating ABACUS.
 # For production use, please compile ABACUS from source code and run in bare-metal for a better performace.
 
-FROM ubuntu:22.04
+FROM ubuntu:24.04
 RUN apt update && apt install -y --no-install-recommends \
     libopenblas-openmp-dev liblapack-dev libscalapack-mpi-dev libelpa-dev libfftw3-dev libcereal-dev \
     libxc-dev libgtest-dev libgmock-dev libbenchmark-dev python3-numpy nlohmann-json3-dev \
-    libmetis-dev libparmetis-dev libsuperlu-dist-dev \
-    bc cmake git g++ make time sudo unzip vim wget gfortran ca-certificates && \
+    bc cmake git g++ make time sudo unzip vim wget gfortran ca-certificates \
+    libmetis-dev libparmetis-dev && \
     rm -rf /var/lib/apt/lists/*
     # If you wish to use the LLVM compiler, replace 'g++' above with 'clang libomp-dev'.
 
@@ -30,6 +30,22 @@ RUN wget https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-wit
 
 ENV CMAKE_PREFIX_PATH=/opt/libtorch/share/cmake
 
+# SuperLU_dist
+ARG SuperLU_DIST_VERSION=7.2.0
+RUN wget --quiet https://github.com/xiaoyeli/superlu_dist/archive/refs/tags/v${SuperLU_DIST_VERSION}.tar.gz \
+        -O /tmp/superlu_dist.tar.gz && \
+    mkdir -p /tmp/superlu_dist && \
+    tar -xzf /tmp/superlu_dist.tar.gz -C /tmp/superlu_dist --strip-components=1 && \
+    cmake -S /tmp/superlu_dist -B /tmp/superlu_dist/build \
+        -Denable_openmp=ON \
+        -Denable_tests=OFF \
+        -Denable_examples=OFF \
+        -DTPL_ENABLE_INTERNAL_BLASLIB=OFF \
+        -DTPL_PARMETIS_LIBRARIES="/usr/lib/libparmetis.so" \
+        -DTPL_PARMETIS_INCLUDE_DIRS="/usr/include" && \
+    cmake --build /tmp/superlu_dist/build --target install -j $(nproc) && \
+    rm -rf /tmp/superlu_dist
+
 # PEXSI
 ARG PEXSI_VERSION=2.0.0
 RUN wget --quiet https://github.com/HPC-AI-Team/pexsi/archive/refs/tags/v${PEXSI_VERSION}.tar.gz \
@@ -37,8 +53,7 @@ RUN wget --quiet https://github.com/HPC-AI-Team/pexsi/archive/refs/tags/v${PEXSI
     mkdir -p /tmp/pexsi && \
     tar -xzf /tmp/pexsi.tar.gz -C /tmp/pexsi --strip-components=1 && \
     cmake -S /tmp/pexsi -B /tmp/pexsi/build \
-        -DPEXSI_ENABLE_OPENMP=ON \
-        -DSuperLU_DIST_INCLUDE_DIR=/usr/include/superlu-dist && \
+        -DPEXSI_ENABLE_OPENMP=ON && \
     cmake --build /tmp/pexsi/build --target install -j $(nproc) && \
     rm -rf /tmp/pexsi
 

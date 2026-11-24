@@ -7,6 +7,10 @@
 #include "source_base/module_external/scalapack_connector.h"
 #include "source_base/timer.h"
 
+#ifdef __CUBLASMP
+#include <cuComplex.h>
+#endif
+
 #include <cassert>
 #include <complex>
 #include <iostream>
@@ -126,8 +130,8 @@ void half_Hmatrix_tensor(const Parallel_Blkcyclic& layout,
                                    cublas_res.cublasmp_grid,
                                    &desc_mat);
 
-    std::complex<double> alpha = {0.5, 0.0};
-    std::complex<double> beta = {0.5, 0.0};
+    const cuDoubleComplex alpha = make_cuDoubleComplex(0.5, 0.0);
+    const cuDoubleComplex beta = make_cuDoubleComplex(0.5, 0.0);
 
     size_t ws_size_dev = 0;
     size_t ws_size_host = 0;
