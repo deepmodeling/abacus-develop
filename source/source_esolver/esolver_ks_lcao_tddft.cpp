@@ -503,15 +503,25 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::iter_finish(
     if (accept_state && last_endpoint && istep >= (this->inp_->init_wfc == "file" ? 0 : 1) && this->inp_->td_edm == 0 &&
         this->inp_->td_stype != 2)
     {
-        if (use_tensor && use_lapack)
+        auto* hamilt = static_cast<hamilt::Hamilt<std::complex<double>>*>(this->p_hamilt);
+        const auto& layout = this->pv.para_2d();
+        this->dmat.dm->edmk.resize(this->kv.get_nks());
+        for (int ik = 0; ik < this->kv.get_nks(); ++ik)
         {
-            module_dm::edm_tddft_lapack<Device>(
-                this->pv, this->dmat, this->kv, static_cast<hamilt::Hamilt<std::complex<double>> *>(this->p_hamilt));
-        }
-        else
-        {
-            module_dm::edm_tddft(
-                this->pv, this->dmat, this->kv, static_cast<hamilt::Hamilt<std::complex<double>> *>(this->p_hamilt));
+            hamilt->updateHk(ik);
+            ModuleBase::MatrixBlock<std::complex<double>> h_mat;
+            ModuleBase::MatrixBlock<std::complex<double>> s_mat;
+            hamilt->matrix(h_mat, s_mat);
+            auto* dmk = this->dmat.dm->get_dmk_ptr(ik);
+            auto& edmk = this->dmat.dm->edmk[ik];
+            if (use_tensor && use_lapack)
+            {
+                module_dm::edm_tddft_lapack<Device>(layout, h_mat, s_mat, dmk, edmk);
+            }
+            else
+            {
+                module_dm::edm_tddft(layout, h_mat, s_mat, dmk, edmk);
+            }
         }
     }
 }
