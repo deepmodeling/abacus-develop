@@ -47,7 +47,8 @@ addtest(
 addtest(
   TARGET MODULE_IO_read_item_serial
   LIBS parameter base device io_input_serial
-  SOURCES ../unittests/test_read_input_item.cpp test_read_inp_sccs.cpp)
+  SOURCES ../unittests/test_read_input_item.cpp ../unittests/test_nacv_input.cpp
+          test_read_inp_sccs.cpp)
 
 addtest(
   TARGET MODULE_IO_input_domain_reader

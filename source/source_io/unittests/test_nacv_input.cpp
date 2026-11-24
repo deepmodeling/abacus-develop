@@ -267,8 +267,13 @@ TEST(LrNacInput, RejectsRequestedLcaoPoolsAfterInputReset)
         "kpar", {"2"});
     const ModuleIO::Input_Item pools = nac_input_item(reader, "kpar");
     pools.reset_value(pools, parameter);
+#ifdef __LCAO
     ASSERT_EQ(parameter.inp.kpar, 1);
     ASSERT_EQ(parameter.globalv.kpar_lcao, 2);
+#else
+    ASSERT_EQ(parameter.inp.kpar, 2);
+    ASSERT_EQ(parameter.globalv.kpar_lcao, 1);
+#endif
     const ModuleIO::Input_Item pairs = nac_input_item(reader, "lr_nac_pairs");
     EXPECT_EXIT(pairs.check_value(pairs, parameter), ::testing::ExitedWithCode(1), "");
 }
