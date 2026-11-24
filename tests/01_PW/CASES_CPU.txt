@@ -125,6 +125,9 @@ relax_dftu_spin4
 817_PW_PPCG
 818_PW_PPCG_Si
 819_PW_PPCG_Al
+821_PW_PPCG_USPP_Fe
+822_PW_PPCG_USPP_NaCl
+823_PW_PPCG_USPP_HCl
 scf_deltaspin2
 scf_deltaspin4
 nscf_hse_same

@@ -14,6 +14,8 @@ PPCG is unavailable for `calculation = nscf`; INPUT validation rejects this comb
 
 For diagnostics, `ABACUS_PPCG_RESIDUAL_TRACE` selects an optional CSV trace. Only the MPI world root writes this file, and its resolved full path is recorded in the running log. Successive solves append records, preserving earlier k-points and SCF steps. Each record includes the SCF iteration, the one-based pool-local k-point index, and a unique `solve_id` within that file (the append offset), which also distinguishes ionic steps and repeated launches. Standalone solver tests use zero for the SCF/k-point context. Use a fresh trace path when changing the number of bands. Other MPI pools do not write this diagnostic trace.
 
+CPU correctness and efficiency measurements, including NCPP/USPP comparisons and the regression protocol, are recorded in [PPCG validation](ppcg_validation.md).
+
 When "basis_type = lcao", `ks_solver` can be `genelpa` or `scalapack_gvx`. The default setting `genelpa` is recommended, which is based on ELPA (EIGENVALUE SOLVERS FOR PETAFLOP APPLICATIONS) (https://elpa.mpcdf.mpg.de/) and the kernel is auto choosed by GENELPA(https://github.com/pplab/GenELPA), usually faster than the setting of "scalapack_gvx", which is based on ScaLAPACK(Scalable Linear Algebra PACKage)  
 
 ## Stochasic DFT
