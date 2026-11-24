@@ -147,6 +147,7 @@ addtest(
 set(_md_nep_test_libs parameter psi device)
 if(ENABLE_NEP)
   list(APPEND _md_nep_test_libs nep::nep_cpu)
+  configure_file("${ABACUS_TEST_DIR}/PP_ORB/nep_hfo2.txt" nep_hfo2.txt COPYONLY)
 endif()
 
 addtest(
