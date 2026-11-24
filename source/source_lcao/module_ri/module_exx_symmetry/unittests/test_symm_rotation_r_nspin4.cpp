@@ -13,7 +13,9 @@
 #include <string>
 #include <vector>
 #include "symm_rotation_test_access.h"
-#define DOUBLETHRESHOLD 1e-8
+#include "symm_test_mpi_main.h"
+// Rule 20: use a typed constant rather than a macro.
+constexpr double double_threshold = 1e-8;
 
 /*
 
@@ -199,7 +201,7 @@ TEST_F(Nspin4RestoreTest, FourChannelsIndependentForIdentitySU2)
     for (int is = 0; is < 4; ++is)
     {
         EXPECT_EQ(out[is].size(), 1u);
-        EXPECT_TRUE(tensor_close(out[is][0][{0, {0, 0, 0}}], expected_rotated(is + 1), DOUBLETHRESHOLD));
+        EXPECT_TRUE(tensor_close(out[is][0][{0, {0, 0, 0}}], expected_rotated(is + 1), double_threshold));
     }
 }
 
@@ -244,12 +246,12 @@ TEST_F(Nspin4RestoreTest, NonTrivialSU2Mixing)
     for (int i = 0; i < 3; ++i)
         for (int j = 0; j < 3; ++j)
             E00(i, j) = 0.5 * (G0(i, j) - G1(i, j) - G2(i, j) + G3(i, j));
-    EXPECT_TRUE(tensor_close(out[0][0][{0, {0, 0, 0}}], E00, DOUBLETHRESHOLD));
+    EXPECT_TRUE(tensor_close(out[0][0][{0, {0, 0, 0}}], E00, double_threshold));
     RI::Tensor<std::complex<double>> E01({3, 3});
     for (int i = 0; i < 3; ++i)
         for (int j = 0; j < 3; ++j)
             E01(i, j) = 0.5 * (G0(i, j) + G1(i, j) - G2(i, j) - G3(i, j));
-    EXPECT_TRUE(tensor_close(out[1][0][{0, {0, 0, 0}}], E01, DOUBLETHRESHOLD));
+    EXPECT_TRUE(tensor_close(out[1][0][{0, {0, 0, 0}}], E01, double_threshold));
 }
 
 TEST_F(Nspin4RestoreTest, AntiunitarySigmaYChannelRemap)
@@ -268,7 +270,7 @@ TEST_F(Nspin4RestoreTest, AntiunitarySigmaYChannelRemap)
 
     // member 0 (unitary): independent channels
     for (int is = 0; is < 4; ++is)
-        EXPECT_TRUE(tensor_close(out[is][0][{0, {0, 0, 0}}], expected_rotated(is + 1), DOUBLETHRESHOLD));
+        EXPECT_TRUE(tensor_close(out[is][0][{0, {0, 0, 0}}], expected_rotated(is + 1), double_threshold));
     // member 1 (antiunitary): sigma_y K remap, real input -> conjugation identity
     RI::Tensor<std::complex<double>> neg3 = expected_rotated(3);
     RI::Tensor<std::complex<double>> neg2 = expected_rotated(2);
@@ -278,10 +280,10 @@ TEST_F(Nspin4RestoreTest, AntiunitarySigmaYChannelRemap)
             neg3(i, j) = -neg3(i, j);
             neg2(i, j) = -neg2(i, j);
         }
-    EXPECT_TRUE(tensor_close(out[0][1][{1, {1, 0, 0}}], expected_rotated(4), DOUBLETHRESHOLD)); // 00 <- +conj(11)
-    EXPECT_TRUE(tensor_close(out[1][1][{1, {1, 0, 0}}], neg3, DOUBLETHRESHOLD));               // 01 <- -conj(10)
-    EXPECT_TRUE(tensor_close(out[2][1][{1, {1, 0, 0}}], neg2, DOUBLETHRESHOLD));               // 10 <- -conj(01)
-    EXPECT_TRUE(tensor_close(out[3][1][{1, {1, 0, 0}}], expected_rotated(1), DOUBLETHRESHOLD)); // 11 <- +conj(00)
+    EXPECT_TRUE(tensor_close(out[0][1][{1, {1, 0, 0}}], expected_rotated(4), double_threshold)); // 00 <- +conj(11)
+    EXPECT_TRUE(tensor_close(out[1][1][{1, {1, 0, 0}}], neg3, double_threshold));               // 01 <- -conj(10)
+    EXPECT_TRUE(tensor_close(out[2][1][{1, {1, 0, 0}}], neg2, double_threshold));               // 10 <- -conj(01)
+    EXPECT_TRUE(tensor_close(out[3][1][{1, {1, 0, 0}}], expected_rotated(1), double_threshold)); // 11 <- +conj(00)
 }
 
 TEST_F(Nspin4RestoreTest, AntiunitarySigmaYComplexInputs)
@@ -316,7 +318,7 @@ TEST_F(Nspin4RestoreTest, AntiunitarySigmaYComplexInputs)
         E(0, 0) = A(1, 1); E(0, 1) = -A(1, 0); E(0, 2) = A(1, 2);
         E(1, 0) = -A(0, 1); E(1, 1) = A(0, 0); E(1, 2) = -A(0, 2);
         E(2, 0) = A(2, 1); E(2, 1) = -A(2, 0); E(2, 2) = A(2, 2);
-        const bool ok_u = tensor_close(out[is][0][{0, {0, 0, 0}}], E, DOUBLETHRESHOLD);
+        const bool ok_u = tensor_close(out[is][0][{0, {0, 0, 0}}], E, double_threshold);
         EXPECT_TRUE(ok_u) << "unitary member channel " << is;
     }
     // antiunitary member (isym=1): conjugate + remap + sign
@@ -336,14 +338,14 @@ TEST_F(Nspin4RestoreTest, AntiunitarySigmaYComplexInputs)
         for (int i = 0; i < 3; ++i)
             for (int j = 0; j < 3; ++j)
                 E(i, j) = neg[is] ? -std::conj(rotc(i, j)) : std::conj(rotc(i, j));
-        const bool ok_a = tensor_close(out[is][1][{1, {1, 0, 0}}], E, DOUBLETHRESHOLD);
+        const bool ok_a = tensor_close(out[is][1][{1, {1, 0, 0}}], E, double_threshold);
         EXPECT_TRUE(ok_a) << "antiunitary member channel " << is;
     }
     // explicit sanity: out[3] <- +conj(rot(A0)) (src[3]=0, neg[3]=false).
     // rot(A0)(0,0) = A0(1,1) = 5 + 0.5i  ->  conj -> 5 - 0.5i
     const auto& out3 = out[3][1][{1, {1, 0, 0}}];
-    EXPECT_NEAR(out3(0, 0).real(), 5.0, DOUBLETHRESHOLD);
-    EXPECT_NEAR(out3(0, 0).imag(), -0.5, DOUBLETHRESHOLD);
+    EXPECT_NEAR(out3(0, 0).real(), 5.0, double_threshold);
+    EXPECT_NEAR(out3(0, 0).imag(), -0.5, double_threshold);
 }
 
 TEST_F(Nspin4RestoreTest, ShortAndLongRestoreOnceEach)
@@ -364,8 +366,8 @@ TEST_F(Nspin4RestoreTest, ShortAndLongRestoreOnceEach)
 
     for (int is = 0; is < 4; ++is)
     {
-        EXPECT_TRUE(tensor_close(out_short[is][0][{0, {0, 0, 0}}], expected_rotated(is + 1), DOUBLETHRESHOLD));
-        EXPECT_TRUE(tensor_close(out_long[is][0][{0, {0, 0, 0}}], expected_rotated(10 * (is + 1)), DOUBLETHRESHOLD));
+        EXPECT_TRUE(tensor_close(out_short[is][0][{0, {0, 0, 0}}], expected_rotated(is + 1), double_threshold));
+        EXPECT_TRUE(tensor_close(out_long[is][0][{0, {0, 0, 0}}], expected_rotated(10 * (is + 1)), double_threshold));
     }
 }
 
@@ -388,14 +390,10 @@ TEST_F(Nspin4RestoreTest, HermiticityPreservedForUnitaryMember)
     const auto& Hout = out[0][0][{0, {0, 0, 0}}];
     for (int i = 0; i < 3; ++i)
         for (int j = 0; j < 3; ++j)
-            EXPECT_NEAR(std::abs(Hout(i, j) - std::conj(Hout(j, i))), 0.0, DOUBLETHRESHOLD);
+            EXPECT_NEAR(std::abs(Hout(i, j) - std::conj(Hout(j, i))), 0.0, double_threshold);
 }
 
 int main(int argc, char** argv)
 {
-    MPI_Init(&argc, &argv);
-    testing::InitGoogleTest(&argc, argv);
-    int result = RUN_ALL_TESTS();
-    MPI_Finalize();
-    return result;
+    return ModuleSymmetryTest::run_all_tests(argc, argv);
 }

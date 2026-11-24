@@ -15,8 +15,10 @@
 #include <string>
 #include <vector>
 #include "symm_rotation_test_access.h"
+#include "symm_test_mpi_main.h"
 using namespace std::complex_literals; // for the `1i` literal used below
-#define DOUBLETHRESHOLD 1e-8
+// Rule 20: use a typed constant rather than a macro.
+constexpr double double_threshold = 1e-8;
 
 /*
 
@@ -83,8 +85,15 @@ ModuleBase::ComplexMatrix make_T_rot90()
     ModuleBase::ComplexMatrix T(3, 3);
     const double m[3][3] = {{0, -1, 0}, {1, 0, 0}, {0, 0, 1}};
     for (int i = 0; i < 3; ++i)
+    {
         for (int j = 0; j < 3; ++j)
-            T(i, j) = std::complex<double>(m[i][j], 0.0);
+        {
+            // Rule 14: name the parts instead of computing inside the call.
+            const double real_part = m[i][j];
+            const double imaginary_part = 0.0;
+            T(i, j) = std::complex<double>(real_part, imaginary_part);
+        }
+    }
     return T;
 }
 
@@ -181,7 +190,7 @@ TEST_F(AbfRotationTest, UnitaryRealTensor)
     // isym=0 < nsym_: TAT = T1^T * A * T2 (T real)
     RI::Tensor<double> A = make_A_real();
     RI::Tensor<double> TAT = ModuleSymmetry::SymmetryRotationTestAccess::rotate_atompair_abf(symrot, A, 0, 0, 0);
-    EXPECT_TRUE(tensor_close(TAT, expected_unitary(), DOUBLETHRESHOLD));
+    EXPECT_TRUE(tensor_close(TAT, expected_unitary(), double_threshold));
 }
 
 TEST_F(AbfRotationTest, NonFiniteTensorIsRejected)
@@ -191,13 +200,13 @@ TEST_F(AbfRotationTest, NonFiniteTensorIsRejected)
     RI::Tensor<double> finite = expected_unitary();
     RI::Tensor<double> with_nan = expected_unitary();
     with_nan(0, 0) = std::numeric_limits<double>::quiet_NaN();
-    EXPECT_TRUE(tensor_close(finite, expected_unitary(), DOUBLETHRESHOLD));
-    EXPECT_FALSE(tensor_close(with_nan, expected_unitary(), DOUBLETHRESHOLD));
-    EXPECT_FALSE(tensor_close(finite, with_nan, DOUBLETHRESHOLD));
+    EXPECT_TRUE(tensor_close(finite, expected_unitary(), double_threshold));
+    EXPECT_FALSE(tensor_close(with_nan, expected_unitary(), double_threshold));
+    EXPECT_FALSE(tensor_close(finite, with_nan, double_threshold));
 
     RI::Tensor<double> with_inf = expected_unitary();
     with_inf(1, 1) = std::numeric_limits<double>::infinity();
-    EXPECT_FALSE(tensor_close(with_inf, expected_unitary(), DOUBLETHRESHOLD));
+    EXPECT_FALSE(tensor_close(with_inf, expected_unitary(), double_threshold));
 }
 
 TEST_F(AbfRotationTest, AntiunitaryRealTensor)
@@ -207,7 +216,7 @@ TEST_F(AbfRotationTest, AntiunitaryRealTensor)
     // result must remain real, and must equal the manual expected matrix.
     RI::Tensor<double> A = make_A_real();
     RI::Tensor<double> TAT = ModuleSymmetry::SymmetryRotationTestAccess::rotate_atompair_abf(symrot, A, 1, 0, 0);
-    EXPECT_TRUE(tensor_close(TAT, expected_unitary(), DOUBLETHRESHOLD));
+    EXPECT_TRUE(tensor_close(TAT, expected_unitary(), double_threshold));
     // explicitly verify no stray imaginary part is introduced
     for (size_t i = 0; i < 3; ++i)
         for (size_t j = 0; j < 3; ++j)
@@ -220,7 +229,7 @@ TEST_F(AbfRotationTest, UnitaryComplexTensor)
     RI::Tensor<std::complex<double>> A = make_A_complex();
     RI::Tensor<std::complex<double>> TAT
         = ModuleSymmetry::SymmetryRotationTestAccess::rotate_atompair_abf(symrot, A, 0, 0, 0);
-    EXPECT_TRUE(tensor_close(TAT, expected_unitary_complex(), DOUBLETHRESHOLD));
+    EXPECT_TRUE(tensor_close(TAT, expected_unitary_complex(), double_threshold));
 }
 
 TEST_F(AbfRotationTest, AntiunitaryComplexTensor)
@@ -232,9 +241,9 @@ TEST_F(AbfRotationTest, AntiunitaryComplexTensor)
     RI::Tensor<std::complex<double>> E = expected_unitary_complex();
     for (size_t i = 0; i < 3; ++i)
         for (size_t j = 0; j < 3; ++j)
-            EXPECT_NEAR(std::abs(TAT(i, j) - std::conj(E(i, j))), 0.0, DOUBLETHRESHOLD);
+            EXPECT_NEAR(std::abs(TAT(i, j) - std::conj(E(i, j))), 0.0, double_threshold);
     // contrast with the non-conjugated result: entry (2,2) must flip sign of Im
-    EXPECT_NEAR(TAT(2, 2).imag(), -1.0, DOUBLETHRESHOLD);
+    EXPECT_NEAR(TAT(2, 2).imag(), -1.0, double_threshold);
 }
 
 TEST_F(AbfRotationTest, DifferentTypesT1T2)
@@ -245,9 +254,9 @@ TEST_F(AbfRotationTest, DifferentTypesT1T2)
     A(0, 0) = 1; A(1, 0) = 2; A(2, 0) = 3;
     RI::Tensor<double> TAT = ModuleSymmetry::SymmetryRotationTestAccess::rotate_atompair_abf(symrot, A, 0, 0, 1);
     // T^T * [1,2,3]^T = [2, -1, 3]^T
-    EXPECT_NEAR(TAT(0, 0), 2.0, DOUBLETHRESHOLD);
-    EXPECT_NEAR(TAT(1, 0), -1.0, DOUBLETHRESHOLD);
-    EXPECT_NEAR(TAT(2, 0), 3.0, DOUBLETHRESHOLD);
+    EXPECT_NEAR(TAT(0, 0), 2.0, double_threshold);
+    EXPECT_NEAR(TAT(1, 0), -1.0, double_threshold);
+    EXPECT_NEAR(TAT(2, 0), 3.0, double_threshold);
 }
 
 TEST_F(AbfRotationTest, RestoreHRAbfStarMapping)
@@ -272,9 +281,9 @@ TEST_F(AbfRotationTest, RestoreHRAbfStarMapping)
     auto HR_full = symrot.restore_HR_abf(symm, atoms, iat2it, HR_irr);
 
     // member 0: unitary -> T^T A T
-    EXPECT_TRUE(tensor_close(HR_full[0][{0, {0, 0, 0}}], expected_unitary(), DOUBLETHRESHOLD));
+    EXPECT_TRUE(tensor_close(HR_full[0][{0, {0, 0, 0}}], expected_unitary(), double_threshold));
     // member 1: antiunitary -> conj(T^T A T) == T^T A T (real)
-    EXPECT_TRUE(tensor_close(HR_full[1][{1, {1, 0, 0}}], expected_unitary(), DOUBLETHRESHOLD));
+    EXPECT_TRUE(tensor_close(HR_full[1][{1, {1, 0, 0}}], expected_unitary(), double_threshold));
     // no extra keys
     EXPECT_EQ(HR_full.size(), 2u);
     EXPECT_EQ(HR_full[0].size(), 1u);
@@ -320,9 +329,5 @@ TEST_F(AbfRotationTest, RestoreHRAbfDuplicateKeyThrows)
 
 int main(int argc, char** argv)
 {
-    MPI_Init(&argc, &argv);
-    testing::InitGoogleTest(&argc, argv);
-    int result = RUN_ALL_TESTS();
-    MPI_Finalize();
-    return result;
+    return ModuleSymmetryTest::run_all_tests(argc, argv);
 }

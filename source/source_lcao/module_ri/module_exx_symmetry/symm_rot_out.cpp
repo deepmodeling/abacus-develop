@@ -52,15 +52,18 @@ namespace ModuleSymmetry
             }
         // Magnetic nspin=4 runs also carry antiunitary elements Theta*g. Their
         // spatial parts are what a spinor exchange needs, and the general
-        // symmetry block above holds only the unitary ones. Append them as an
+        // symmetry block above holds only the unitary ones. Append them as a
         // labelled trailer so existing readers of the unitary block keep
-        // working unchanged.
-        const int n_anti = symm.magnetic_nspin4 ? symm.nrotk_anti : 0;
-        ofs << "Antiunitary operations: " << n_anti << "\n";
-        for (int isym = 0; isym < n_anti; ++isym)
+        // working. The trailer is written only when there is something in it,
+        // which keeps every non-magnetic export byte for byte unchanged.
+        if (symm.magnetic_nspin4 && symm.nrotk_anti > 0)
         {
-            ofs << isym << "\n" << mat3_fmt(symm.gmatrix_anti[isym]) << "\n"
-                << vec3_fmt(symm.gtrans_anti[isym]) << "\n";
+            ofs << "Antiunitary operations: " << symm.nrotk_anti << "\n";
+            for (int isym = 0; isym < symm.nrotk_anti; ++isym)
+            {
+                ofs << isym << "\n" << mat3_fmt(symm.gmatrix_anti[isym]) << "\n"
+                    << vec3_fmt(symm.gtrans_anti[isym]) << "\n";
+            }
         }
         ofs.close();
     }
@@ -101,12 +104,17 @@ namespace ModuleSymmetry
             ofs << isym << "\n" << mat3_fmt(symm.gmatrix[isym]) << "\n"
                 << vec3_fmt(symm.gtrans[isym]) << "\n";
         }
-        const int n_anti = symm.magnetic_nspin4 ? symm.nrotk_anti : 0;
-        ofs << "Antiunitary operations: " << n_anti << "\n";
-        for (int isym = 0; isym < n_anti; ++isym)
+        // The spatial-only variant exists for nspin=4, so the trailer appears
+        // whenever the cell carries antiunitary elements; the unitary block
+        // keeps its historic bytes when it does not.
+        if (symm.magnetic_nspin4 && symm.nrotk_anti > 0)
         {
-            ofs << isym << "\n" << mat3_fmt(symm.gmatrix_anti[isym]) << "\n"
-                << vec3_fmt(symm.gtrans_anti[isym]) << "\n";
+            ofs << "Antiunitary operations: " << symm.nrotk_anti << "\n";
+            for (int isym = 0; isym < symm.nrotk_anti; ++isym)
+            {
+                ofs << isym << "\n" << mat3_fmt(symm.gmatrix_anti[isym]) << "\n"
+                    << vec3_fmt(symm.gtrans_anti[isym]) << "\n";
+            }
         }
         ofs.close();
         if (!ofs.good())

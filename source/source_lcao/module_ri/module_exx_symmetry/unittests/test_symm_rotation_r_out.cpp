@@ -84,6 +84,11 @@ int main()
             }
         }
         require(has_marker, "the spatial export did not mark itself");
+        for (const std::string& line : lines)
+        {
+            require(line.rfind("Antiunitary operations:", 0) != 0,
+                    "a non-magnetic export must not carry an antiunitary trailer");
+        }
         require(log.str().find("symrot_R.txt") != std::string::npos,
                 "the writer did not announce its path in the log");
     }
