@@ -552,29 +552,6 @@ if(ENABLE_CNPY)
   find_package(CNPY REQUIRED)
 endif()
 
-function(git_submodule_update)
-  if(GIT_SUBMOD_RESULT EQUAL "0")
-    message(DEBUG "Submodule init'ed")
-  else()
-    find_package(Git REQUIRED)
-    if(NOT EXISTS "${PROJECT_SOURCE_DIR}/.git")
-      message(FATAL_ERROR "Not a git repository; cannot update submodules")
-    endif()
-
-    message(STATUS "Updating submodules")
-    execute_process(
-      COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive
-      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-      RESULT_VARIABLE GIT_SUBMOD_RESULT)
-    if(NOT GIT_SUBMOD_RESULT EQUAL "0")
-      message(
-        FATAL_ERROR
-          "git submodule update --init --recursive failed with ${GIT_SUBMOD_RESULT}."
-      )
-    endif()
-  endif()
-endfunction()
-
 if(ENABLE_LIBRI)
   set_if_higher(CMAKE_CXX_STANDARD 14)
   find_package(LibRI REQUIRED)
