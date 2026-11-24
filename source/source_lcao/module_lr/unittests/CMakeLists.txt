@@ -167,3 +167,7 @@ AddTest(
   TARGET MODULE_LR_spectrum_weights
   SOURCES test_spectrum_weights.cpp
 )
+
+AddTest(
+  TARGET MODULE_LR_util_print
+  SOURCES test_lr_util_print.cpp)
