@@ -308,7 +308,8 @@ void ESolver_KS_PW<T, Device>::iter_finish(
     // Call iter_finish() of ESolver_KS
     if (this->inp_->sc_mag_switch)
     {
-        auto& sc = spinconstrain::SpinConstrain<std::complex<double>>::getScInstance();
+        spinconstrain::SpinConstrain<std::complex<double>>& sc
+            = spinconstrain::SpinConstrain<std::complex<double>>::getScInstance();
         const double escon = sc.cal_escon();
         this->pelec->set_spin_constrain_energy(escon);
     }

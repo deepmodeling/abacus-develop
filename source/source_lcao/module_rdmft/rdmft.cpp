@@ -361,7 +361,7 @@ void RDMFT<TK, TR>::cal_Energy(const int cal_type)
         const bool sc_mag_switch = PARAM.inp.sc_mag_switch;
         if (sc_mag_switch)
         {
-            auto& sc = spinconstrain::SpinConstrain<TK>::getScInstance();
+            spinconstrain::SpinConstrain<TK>& sc = spinconstrain::SpinConstrain<TK>::getScInstance();
             const double escon = sc.cal_escon();
             this->pelec->set_spin_constrain_energy(escon);
         }

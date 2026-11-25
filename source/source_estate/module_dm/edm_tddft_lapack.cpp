@@ -126,7 +126,7 @@ void edm_tddft_lapack(const Parallel_Blkcyclic& layout,
         const std::complex<double> diagonal_value = {1.0, 0.0};
         for (int i = 0; i < nlocal; ++i)
         {
-            auto* diagonal = Sinv_dev.template data<std::complex<double>>() + i * nlocal + i;
+            std::complex<double>* diagonal = Sinv_dev.template data<std::complex<double>>() + i * nlocal + i;
             ct::kernels::set_memory<std::complex<double>, ct_Device>()(diagonal, diagonal_value, 1);
         }
 

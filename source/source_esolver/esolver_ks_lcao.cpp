@@ -620,7 +620,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(
     cal_mi_lcao_wrapper<TK>(iter, *this->inp_);
     if (this->inp_->sc_mag_switch)
     {
-        auto& sc = spinconstrain::SpinConstrain<TK>::getScInstance();
+        spinconstrain::SpinConstrain<TK>& sc = spinconstrain::SpinConstrain<TK>::getScInstance();
         const double escon = sc.cal_escon();
         this->pelec->set_spin_constrain_energy(escon);
     }
