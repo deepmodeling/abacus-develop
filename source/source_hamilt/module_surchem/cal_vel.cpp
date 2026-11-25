@@ -1,15 +1,16 @@
-#include "source_base/timer.h"
 #include "source_base/parallel_reduce.h"
+#include "source_base/timer.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "surchem.h"
 
 #include <cassert>
 
-void shape_gradn(const double* PS_TOTN_real,
-                 const ModulePW::PW_Basis* rho_basis,
-                 const double nc_k,
-                 const double sigma_k,
-                 double* eprime)
+void shape_gradn(
+    const double *PS_TOTN_real,
+    const ModulePW::PW_Basis *rho_basis,
+    const double nc_k,
+    const double sigma_k,
+    double *eprime)
 {
 
     double epr_c = 1.0 / sqrt(ModuleBase::TWO_PI) / sigma_k;
@@ -22,15 +23,16 @@ void shape_gradn(const double* PS_TOTN_real,
     }
 }
 
-void eps_pot(const double* PS_TOTN_real,
-             const double& tpiba,
-             const std::complex<double>* phi,
-             const ModulePW::PW_Basis* rho_basis,
-             const double nc_k,
-             const double sigma_k,
-             const double eb_k,
-             double* d_eps,
-             double* vwork)
+void eps_pot(
+    const double *PS_TOTN_real,
+    const double &tpiba,
+    const std::complex<double> *phi,
+    const ModulePW::PW_Basis *rho_basis,
+    const double nc_k,
+    const double sigma_k,
+    const double eb_k,
+    double *d_eps,
+    double *vwork)
 {
     double *eprime = new double[rho_basis->nrxx];
     ModuleBase::GlobalFunc::ZEROS(eprime, rho_basis->nrxx);
@@ -63,20 +65,20 @@ void eps_pot(const double* PS_TOTN_real,
     delete[] phisq;
 }
 
-//The interface is changed to use an explicit output parameter to
-//clarify lifetime management and avoid hidden allocations.
-void surchem::cal_vel(const UnitCell& cell,
-                      const ModulePW::PW_Basis* rho_basis,
-                      std::complex<double>* TOTN,
-                      std::complex<double>* PS_TOTN,
-                      int nspin,
-                      ModuleBase::matrix& v)
+// The interface is changed to use an explicit output parameter to
+// clarify lifetime management and avoid hidden allocations.
+void surchem::cal_vel(
+    const UnitCell &cell,
+    const ModulePW::PW_Basis *rho_basis,
+    std::complex<double> *TOTN,
+    std::complex<double> *PS_TOTN,
+    int nspin,
+    ModuleBase::matrix &v)
 {
     ModuleBase::TITLE("surchem", "cal_vel");
     ModuleBase::timer::start("surchem", "cal_vel");
 
-    assert(this->parameters_set_
-           && "surchem::set_parameters() must be called before using the solvent model");
+    assert(this->parameters_set_ && "surchem::set_parameters() must be called before using the solvent model");
 
     rho_basis->recip2real(TOTN, TOTN_real);
 
@@ -95,7 +97,7 @@ void surchem::cal_vel(const UnitCell& cell,
     double *epsilon = new double[rho_basis->nrxx];
     double *epsilon0 = new double[rho_basis->nrxx];
     cal_epsilon(rho_basis, PS_TOTN_real, epsilon, epsilon0);
-    double* epsilon_end = epsilon + rho_basis->nrxx;
+    double *epsilon_end = epsilon + rho_basis->nrxx;
     this->last_epsilon_.assign(epsilon, epsilon_end);
     this->last_epsilon_set_ = true;
 
@@ -137,15 +139,9 @@ void surchem::cal_vel(const UnitCell& cell,
     this->Ael *= cell.omega / rho_basis->nxyz;
 
     // the 2nd item of tmp_Vel
-    eps_pot(PS_TOTN_real,
-            cell.tpiba,
-            Sol_phi,
-            rho_basis,
-            this->parameters_.nc_k,
-            this->parameters_.sigma_k,
-            this->parameters_.eb_k,
-            epsilon,
-            epspot);
+    eps_pot(
+        PS_TOTN_real, cell.tpiba, Sol_phi, rho_basis, this->parameters_.nc_k, this->parameters_.sigma_k,
+        this->parameters_.eb_k, epsilon, epspot);
 
     for (int i = 0; i < rho_basis->nrxx; i++)
     {

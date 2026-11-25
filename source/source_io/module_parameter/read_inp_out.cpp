@@ -381,7 +381,11 @@ Also controled by out_freq_ion and out_app_flag.
  * With out_app_flag = 1: the same fixed-name files are reused; the first written step truncates them and later steps append one record per step (prefixed with a `# Ionic_Step N` header, one-based).
  * With out_app_flag = 2: per-step files are named `doss{s}g{geom}.txt` and `pdoss{s}g{geom}.txt` where `{geom}` is the one-based geometry index (e.g. `doss1g3.txt` for the third ionic step).
  * nspin=1 or 4: one spin channel (`s1`). nspin=2: two channels (`s1`, `s2`). PW and LCAO use the same naming.
-Note: values 2 and 3 are no longer supported. Setting out_dos to 2 or 3 will raise an error.
+* 2: write total DOS (`dos.npy`) and projected DOS (`pdos.npy`) as NumPy arrays for a single-point LCAO KSDFT SCF or NSCF calculation. Both spin channels for nspin=2 share the same files.
+    NumPy output preserves double-precision (`float64`) spectral values.
+    For large PDOS datasets, NumPy output can also reduce write time and file size.
+    If an older input uses `out_dos 2` for text PDOS, change it to `out_dos 1` to keep text output.
+* 3: Fermi surface output has been removed.
 The optional second integer controls the number of decimal places of the DOS and PDOS values in `doss{s}.txt` and `pdoss{s}.txt`, and defaults to 6.)";
         item.default_value = "0 6";
         item.unit = "";
@@ -406,17 +410,18 @@ The optional second integer controls the number of decimal places of the DOS and
         };
         sync_intvec(input.out_dos, 2, 6);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.calculation == "get_wf" || para.input.calculation == "get_pchg")
+            if (para.input.out_dos[0] != 2 && (para.input.calculation == "get_wf" || para.input.calculation == "get_pchg"))
             {
                 para.input.out_dos[0] = 0;
             }
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.out_dos[0] == 2)
+            const Input_para& in = para.input;
+            if (in.out_dos[0] == 2 && (in.basis_type != "lcao" || in.esolver_type != "ksdft"
+                                    || (in.calculation != "scf" && in.calculation != "nscf")))
             {
                 ModuleBase::WARNING_QUIT("ReadInput",
-                                         "out_dos = 2 has been deprecated. "
-                                         "PDOS is now written automatically with out_dos = 1.");
+                                         "out_dos = 2 requires a single-point LCAO KSDFT SCF or NSCF calculation.");
             }
             if (para.input.out_dos[0] == 3)
             {

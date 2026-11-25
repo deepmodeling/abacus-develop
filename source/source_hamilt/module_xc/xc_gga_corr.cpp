@@ -28,7 +28,7 @@ void XC_Functional::perdew86(
     double pc2 = 0.0025680;
     double pci = pc1 + pc2;
     double third = 1.0 / 3.0;
-    double pi34 = 0.62035049089940;  // pi34=(3/4pi)^(1/3)
+    double pi34 = 0.62035049089940; // pi34=(3/4pi)^(1/3)
     double rho13 = pow(rho, third);
     double rho43 = pow(rho13, 4);
     double rs = pi34 / rho13;
@@ -37,20 +37,19 @@ void XC_Functional::perdew86(
     double cna = pc2 + p1 * rs + p2 * rs2;
     double cnb = 1.0 + p3 * rs + p4 * rs2 + 1.e4 * p2 * rs3;
     double cn = pc1 + cna / cnb;
-    double drs = - third * pi34 / rho43;
+    double drs = -third * pi34 / rho43;
     double dcna = (p1 + 2.0 * p2 * rs) * drs;
     double dcnb = (p3 + 2.0 * p4 * rs + 3.e4 * p2 * rs2) * drs;
     double dcn = dcna / cnb - cna / (cnb * cnb) * dcnb;
-    double phi = 0.1920 * pci / cn * sqrt(grho) * pow(rho, (- 7.0 / 6.0));
+    double phi = 0.1920 * pci / cn * sqrt(grho) * pow(rho, (-7.0 / 6.0));
     // SdG: in the original paper 1.745*0.11=0.19195 is used
-    double ephi = exp(- phi);
+    double ephi = exp(-phi);
     sc = grho / rho43 * cn * ephi;
     v1c = sc * ((1.0 + phi) * dcn / cn - ((4.0 / 3.0) - (7.0 / 6.0) * phi) / rho);
     v2c = cn * ephi / rho43 * (2.0 - phi);
 
     return;
 }
-
 
 // Perdew-Wang GGA (PW91) correlation part
 void XC_Functional::ggac(
@@ -88,7 +87,7 @@ void XC_Functional::ggac(
     double kf = xkf / rs;
     double ks = xks * sqrt(kf);
     double t = sqrt(grho) / (2.0 * ks * rho);
-    double expe = exp(- 2.0 * al * ec / (be * be));
+    double expe = exp(-2.0 * al * ec / (be * be));
     double af = 2.0 * al / be * (1.0 / (expe - 1.0));
     double bf = expe * (vc - ec);
     double y = af * t * t;
@@ -98,11 +97,11 @@ void XC_Functional::ggac(
     double qy = y * y * (2.0 + y) / (x * x);
     double s1 = 1.0 + 2.0 * al / be * t * t * xy;
     double h0 = be * be / (2.0 * al) * log(s1);
-    double dh0 = be * t * t / s1 * (- 7.0 / 3.0 * xy - qy * (af * bf / be - 7.0 / 3.0));
+    double dh0 = be * t * t / s1 * (-7.0 / 3.0 * xy - qy * (af * bf / be - 7.0 / 3.0));
     double ddh0 = be / (2.0 * ks * ks * rho) * (xy - qy) / s1;
 
     x = ks / kf * t;
-    double ee = - 100.0 * (x * x);
+    double ee = -100.0 * (x * x);
     double cna = cxc0 + pa * rs + pb * rs2;
     double dcna = pa * rs + 2.0 * pb * rs2;
     double cnb = 1.0 + pc * rs + pd * rs2 + 1.e4 * pb * rs3;
@@ -110,7 +109,7 @@ void XC_Functional::ggac(
     double cn = cna / cnb - cx;
     double dcn = dcna / cnb - cna * dcnb / (cnb * cnb);
     double h1 = nu * (cn - cc0 - 3.0 / 7.0 * cx) * t * t * exp(ee);
-    double dh1 = - third * (h1 * (7.0 + 8.0 * ee) + nu * t * t * exp(ee) * dcn);
+    double dh1 = -third * (h1 * (7.0 + 8.0 * ee) + nu * t * t * exp(ee) * dcn);
     double ddh1 = 2.0 * h1 * (1.0 + ee) * rho / grho;
     sc = rho * (h0 + h1);
     v1c = h0 + h1 + dh0 + dh1;
@@ -149,7 +148,7 @@ void XC_Functional::pbec(
     const double kf = xkf / rs;
     const double ks = xks * sqrt(kf);
     const double t = sqrt(grho) / (2.0 * ks * rho);
-    const double expe = exp(- ec / ga);
+    const double expe = exp(-ec / ga);
     const double af = be[iflag] / ga * (1.0 / (expe - 1.0));
     const double bf = expe * (vc - ec);
     const double y = af * t * t;
@@ -159,7 +158,7 @@ void XC_Functional::pbec(
     const double qy = y * y * (2.0 + y) / (x * x);
     const double s1 = 1.0 + be[iflag] / ga * t * t * xy;
     const double h0 = ga * log(s1);
-    const double dh0 = be[iflag] * t * t / s1 * (- 7.0 / 3.0 * xy - qy * (af * bf /be[iflag] - 7.0 / 3.0));
+    const double dh0 = be[iflag] * t * t / s1 * (-7.0 / 3.0 * xy - qy * (af * bf / be[iflag] - 7.0 / 3.0));
     const double ddh0 = be[iflag] / (2.0 * ks * ks * rho) * (xy - qy) / s1;
 
     sc = rho * h0;
@@ -181,23 +180,22 @@ void XC_Functional::glyp(
     double b = 0.1320;
     double c = 0.25330;
     double d = 0.3490;
-    double rhom13 = pow(rho, (- 1.0 / 3.0));
-    double om = exp(- c * rhom13) / (1.0 + d * rhom13);
+    double rhom13 = pow(rho, (-1.0 / 3.0));
+    double om = exp(-c * rhom13) / (1.0 + d * rhom13);
     double xl = 1.0 + (7.0 / 3.0) * (c * rhom13 + d * rhom13 / (1.0 + d * rhom13));
     double ff = a * b * grho / 24.0;
     double rhom53 = pow(rhom13, 5);
     sc = ff * rhom53 * om * xl;
-    double dom = - om * (c + d + c * d * rhom13) / (1.0 + d * rhom13);
+    double dom = -om * (c + d + c * d * rhom13) / (1.0 + d * rhom13);
 
     double x = 1.0 + d * rhom13;
     double dxl = (7.0 / 3.0) * (c + d + 2.0 * c * d * rhom13 + c * d * d * rhom13 * rhom13) / (x * x);
     double rhom43 = pow(rhom13, 4);
-    v1c = - ff * rhom43 / 3.0 * (5.0 * rhom43 * om * xl + rhom53 * dom * xl + rhom53 * om * dxl);
+    v1c = -ff * rhom43 / 3.0 * (5.0 * rhom43 * om * xl + rhom53 * dom * xl + rhom53 * om * dxl);
     v2c = 2.0 * sc / grho;
 
     return;
-} 
-
+}
 
 // Perdew gradient correction on correlation: PRB 33, 8822 (1986)
 // spin-polarized case
@@ -229,29 +227,27 @@ void XC_Functional::perdew86_spin(
     double cna = pc2 + p1 * rs + p2 * rs2;
     double cnb = 1.0 + p3 * rs + p4 * rs2 + 1.e4 * p2 * rs3;
     double cn = pc1 + cna / cnb;
-    double drs = - third * pi34 / rho43;
+    double drs = -third * pi34 / rho43;
     double dcna = (p1 + 2.0 * p2 * rs) * drs;
     double dcnb = (p3 + 2.0 * p4 * rs + 3.e4 * p2 * rs2) * drs;
     double dcn = dcna / cnb - cna / (cnb * cnb) * dcnb;
-    double phi = 0.1920 * pci / cn * sqrt(grho) * pow(rho, (- 7.0 / 6.0));
+    double phi = 0.1920 * pci / cn * sqrt(grho) * pow(rho, (-7.0 / 6.0));
 
-    //SdG: in the original paper 1.745*0.11=0.19195 is used
-    double dd = pow((2.0) , third) * sqrt(pow(((1.0 + zeta) * 0.50) , (5.0 / 3.0)) 
-             + pow(((1.0 - zeta) * 0.50) , (5.0 / 3.0)));
-    double ddd = pow((2.0) , (- 4.0 / 3.0)) * 5.0 * (pow(((1.0 + zeta) * 0.50) , (2.0 / 3.0)) 
-            - pow(((1.0 - zeta) * 0.50) , (2.0 / 3.0))) / (3.0 * dd);
-    double ephi = exp(- phi);
+    // SdG: in the original paper 1.745*0.11=0.19195 is used
+    double dd =
+        pow((2.0), third) * sqrt(pow(((1.0 + zeta) * 0.50), (5.0 / 3.0)) + pow(((1.0 - zeta) * 0.50), (5.0 / 3.0)));
+    double ddd = pow((2.0), (-4.0 / 3.0)) * 5.0 *
+                 (pow(((1.0 + zeta) * 0.50), (2.0 / 3.0)) - pow(((1.0 - zeta) * 0.50), (2.0 / 3.0))) / (3.0 * dd);
+    double ephi = exp(-phi);
     sc = grho / rho43 * cn * ephi / dd;
-    v1cup = sc * ((1.0 + phi) * dcn / cn - ((4.0 / 3.0) -
-                                            (7.0 / 6.0) * phi) / rho) - sc * ddd / dd * (1.0 - zeta)
-            / rho;
-    v1cdw = sc * ((1.0 + phi) * dcn / cn - ((4.0 / 3.0) -
-                                            (7.0 / 6.0) * phi) / rho) + sc * ddd / dd * (1.0 + zeta)
-            / rho;
+    v1cup =
+        sc * ((1.0 + phi) * dcn / cn - ((4.0 / 3.0) - (7.0 / 6.0) * phi) / rho) - sc * ddd / dd * (1.0 - zeta) / rho;
+    v1cdw =
+        sc * ((1.0 + phi) * dcn / cn - ((4.0 / 3.0) - (7.0 / 6.0) * phi) / rho) + sc * ddd / dd * (1.0 + zeta) / rho;
     v2c = cn * ephi / rho43 * (2.0 - phi) / dd;
 
     return;
-} 
+}
 
 // There seems to be something wrong with it
 // lots of terms evaluates to inf / nan in unit test
@@ -351,8 +347,6 @@ void XC_Functional::ggac_spin(double rho, double zeta, double grho, double &sc,
 } // end subroutine ggac_spin
 */
 
-
-
 // PBE correlation (without LDA part) - spin-polarized
 // J.P.Perdew, K.Burke, M.Ernzerhof, PRL 77, 3865 (1996).
 void XC_Functional::pbec_spin(
@@ -366,7 +360,7 @@ void XC_Functional::pbec_spin(
     double &v2c)
 {
     double ga = 0.0310910;
-    double be[3] = {0.0, 0.06672455060314922, 0.0460000};//mohan add
+    double be[3] = {0.0, 0.06672455060314922, 0.0460000}; // mohan add
     // zhengdy add 2019-09-12, ensure same parameter with another dft code.
     double third = 1.0 / 3.0;
     double pi34 = 0.62035049089940;
@@ -378,36 +372,38 @@ void XC_Functional::pbec_spin(
     double vcup = 0.0;
     double vcdw = 0.0;
 
-    XC_Functional::pw_spin(rs, zeta, ec, vcup, vcdw); //mohan fix bug 2012-05-28
+    XC_Functional::pw_spin(rs, zeta, ec, vcup, vcdw); // mohan fix bug 2012-05-28
 
     double kf = xkf / rs;
     double ks = xks * sqrt(kf);
-    double fz = 0.50 * (pow((1.0 + zeta) , (2.0 / 3.0)) + pow((1.0 - zeta) , (2.0 / 3.0)));
+    double fz = 0.50 * (pow((1.0 + zeta), (2.0 / 3.0)) + pow((1.0 - zeta), (2.0 / 3.0)));
     double fz2 = fz * fz;
     double fz3 = fz2 * fz;
-    //fz4 = fz3 * fz;
-    double dfz = (pow((1.0 + zeta) , (- 1.0 / 3.0)) - pow((1.0 - zeta) , (- 1.0 / 3.0))) / 3.0;
+    // fz4 = fz3 * fz;
+    double dfz = (pow((1.0 + zeta), (-1.0 / 3.0)) - pow((1.0 - zeta), (-1.0 / 3.0))) / 3.0;
     double t = sqrt(grho) / (2.0 * fz * ks * rho);
-    double expe = exp(- ec / (fz3 * ga));
+    double expe = exp(-ec / (fz3 * ga));
     double af = be[iflag] / ga * (1.0 / (expe - 1.0));
     double bfup = expe * (vcup - ec) / fz3;
     double bfdw = expe * (vcdw - ec) / fz3;
     double y = af * t * t;
     double xy = (1.0 + y) / (1.0 + y + y * y);
-    double qy = y * y * (2.0 + y) / pow( (1.0 + y + y * y),2 );
-//    qy *= qy; //bug
+    double qy = y * y * (2.0 + y) / pow((1.0 + y + y * y), 2);
+    //    qy *= qy; //bug
     double s1 = 1.0 + be[iflag] / ga * t * t * xy;
     double h0 = fz3 * ga * log(s1);
-    double dh0up = be[iflag] * t * t * fz3 / s1 * (- 7.0 / 3.0 * xy - qy * (af * bfup / be[iflag] - 7.0 / 3.0));
-    double dh0dw = be[iflag] * t * t * fz3 / s1 * (- 7.0 / 3.0 * xy - qy * (af * bfdw / be[iflag] - 7.0 / 3.0));
-    double dh0zup = (3.0 * h0 / fz - be[iflag] * t * t * fz2 
-            / s1 * (2.0 * xy - qy * (3.0 * af * expe * ec / fz3 / be[iflag] + 2.0))) * dfz * (1.0 - zeta);
-    double dh0zdw = - (3.0 * h0 / fz - be[iflag] * t * t * fz2 
-            / s1 * (2.0 * xy - qy * (3.0 * af * expe * ec / fz3 / be[iflag] + 2.0))) * dfz * (1.0 + zeta);
+    double dh0up = be[iflag] * t * t * fz3 / s1 * (-7.0 / 3.0 * xy - qy * (af * bfup / be[iflag] - 7.0 / 3.0));
+    double dh0dw = be[iflag] * t * t * fz3 / s1 * (-7.0 / 3.0 * xy - qy * (af * bfdw / be[iflag] - 7.0 / 3.0));
+    double dh0zup = (3.0 * h0 / fz - be[iflag] * t * t * fz2 / s1 *
+                                         (2.0 * xy - qy * (3.0 * af * expe * ec / fz3 / be[iflag] + 2.0))) *
+                    dfz * (1.0 - zeta);
+    double dh0zdw = -(3.0 * h0 / fz - be[iflag] * t * t * fz2 / s1 *
+                                          (2.0 * xy - qy * (3.0 * af * expe * ec / fz3 / be[iflag] + 2.0))) *
+                    dfz * (1.0 + zeta);
     double ddh0 = be[iflag] * fz / (2.0 * ks * ks * rho) * (xy - qy) / s1;
     sc = rho * h0;
     v1cup = h0 + dh0up + dh0zup;
     v1cdw = h0 + dh0dw + dh0zdw;
     v2c = ddh0;
     return;
-} 
+}

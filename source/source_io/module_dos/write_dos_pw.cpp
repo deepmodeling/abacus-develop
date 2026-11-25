@@ -82,7 +82,8 @@ void ModuleIO::write_dos_pw(
                 istep_in,
                 out_app_flag,
                 precision,
-                bndpar);
+                bndpar,
+                nullptr);
     }
 
 

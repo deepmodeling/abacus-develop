@@ -7,6 +7,7 @@
 #include "source_base/module_external/scalapack_connector.h"
 
 #ifdef __CUBLASMP
+#include <cuComplex.h>
 #include "kernels/cuda/band_energy_kernel.cuh"
 #endif
 
@@ -163,8 +164,8 @@ void compute_ekb_tensor(const Parallel_Blkcyclic& matrix_layout,
                                          ct::TensorShape({static_cast<int64_t>(mo_hamilt_elems)}));
     void* d_mo_hamilt = static_cast<void*>(mo_hamilt_gpu.data<std::complex<double>>());
 
-    std::complex<double> alpha = {1.0, 0.0};
-    std::complex<double> beta = {0.0, 0.0};
+    const cuDoubleComplex alpha = make_cuDoubleComplex(1.0, 0.0);
+    const cuDoubleComplex beta = make_cuDoubleComplex(0.0, 0.0);
 
     // 3. Matrix Descriptors Creation
     cublasMpMatrixDescriptor_t desc_H, desc_Psi, desc_mo_hamilt;

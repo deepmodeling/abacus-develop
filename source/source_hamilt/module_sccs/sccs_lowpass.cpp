@@ -1,6 +1,6 @@
 #include "sccs_lowpass.h"
-#include "sccs_cavity.h"
 #include "sccs_cav_deriv.h"
+#include "sccs_cavity.h"
 #include "sccs_response.h"
 
 #include "source_base/constants.h"
@@ -12,7 +12,7 @@
 
 namespace ModuleSccs
 {
-std::vector<double> switch_filter(const CavityParameters& cavity, const ModulePW::PW_Basis& basis)
+std::vector<double> switch_filter(const CavityParameters &cavity, const ModulePW::PW_Basis &basis)
 {
     const bool lowpass = uses_lowpass(cavity);
     std::vector<double> filter;
@@ -32,16 +32,17 @@ std::vector<double> switch_filter(const CavityParameters& cavity, const ModulePW
     return filter;
 }
 
-void lowpass_bnd_pot(const std::vector<double>& charge,
-                     const CavityParameters& cavity,
-                     const CavityDerivatives& derivatives,
-                     const ModulePW::PW_Basis& basis,
-                     double tpiba,
-                     SccsResponse& response)
+void lowpass_bnd_pot(
+    const std::vector<double> &charge,
+    const CavityParameters &cavity,
+    const CavityDerivatives &derivatives,
+    const ModulePW::PW_Basis &basis,
+    double tpiba,
+    SccsResponse &response)
 {
     const std::size_t size = charge.size();
     const double log_bulk = std::log(cavity.epsilon_bulk);
-    const std::vector<double>& potential = response.polarization.potential;
+    const std::vector<double> &potential = response.polarization.potential;
     std::vector<double> weight(size);
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static)
@@ -79,8 +80,8 @@ void lowpass_bnd_pot(const std::vector<double>& charge,
 #endif
         for (int ig = 0; ig < basis.npw; ++ig)
         {
-            transpose_g[ig] += log_bulk * ModuleBase::IMAG_UNIT * tpiba * basis.gcar[ig][d]
-                               * component_g[ig] * derivatives.filter[ig];
+            transpose_g[ig] +=
+                log_bulk * ModuleBase::IMAG_UNIT * tpiba * basis.gcar[ig][d] * component_g[ig] * derivatives.filter[ig];
         }
     }
     std::vector<double> transpose(size);

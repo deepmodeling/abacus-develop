@@ -1,7 +1,7 @@
 #include "dnrm2.h"
 
-#include<math.h>
 #include <iostream>
+#include <math.h>
 
 double dnrm2(const int n, const double *x, const int incx)
 {
@@ -16,8 +16,8 @@ double dnrm2(const int n, const double *x, const int incx)
         return 0;
     }
 
-    double norm2=0.0;
-    for (int ix=0; ix<n; ix+=incx)
+    double norm2 = 0.0;
+    for (int ix = 0; ix < n; ix += incx)
     {
         norm2 += x[ix] * x[ix];
     }

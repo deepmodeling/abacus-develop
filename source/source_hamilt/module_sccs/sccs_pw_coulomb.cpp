@@ -5,17 +5,14 @@
 
 namespace ModuleSccs
 {
-PeriodicCoulombOperator::PeriodicCoulombOperator(const ModulePW::PW_Basis& basis, double tpiba)
+PeriodicCoulombOperator::PeriodicCoulombOperator(const ModulePW::PW_Basis &basis, double tpiba)
     : basis_(basis), tpiba_(tpiba)
 {
 }
 
-bool PeriodicCoulombOperator::has_correction() const
-{
-    return false;
-}
+bool PeriodicCoulombOperator::has_correction() const { return false; }
 
-void PeriodicCoulombOperator::apply_potential(const std::vector<double>& charge, std::vector<double>& potential)
+void PeriodicCoulombOperator::apply_potential(const std::vector<double> &charge, std::vector<double> &potential)
 {
     reciprocal_work_.resize(basis_.npw);
     basis_.real2recip(charge.data(), reciprocal_work_.data());

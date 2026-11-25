@@ -780,6 +780,41 @@ TEST_F(InputParaTest, RemovedElpaZSolverIsRejected)
     EXPECT_EXIT(item.check_value(item, param), testing::ExitedWithCode(1), "");
 }
 
+TEST_F(InputParaTest, OutDosNpy)
+{
+    ModuleIO::ReadInput reader(0);
+    const std::vector<std::pair<std::string, ModuleIO::Input_Item>>& entries = reader.get_input_lists();
+    std::map<std::string, ModuleIO::Input_Item> items(entries.begin(), entries.end());
+    Parameter param;
+    std::function<void(const std::string&, const std::string&)> set = [&](const std::string& key,
+                                                                         const std::string& value) {
+        ModuleIO::Input_Item& item = items.at(key);
+        item.str_values = {value};
+        item.read_value(item, param);
+    };
+    const ModuleIO::Input_Item& output = items.at("out_dos");
+    EXPECT_EQ(param.inp.out_dos[0], 0);
+
+    set("basis_type", "lcao");
+    set("out_dos", "2");
+    ASSERT_EQ(param.inp.out_dos[0], 2);
+    for (const char* calculation : {"scf", "nscf"})
+    {
+        set("calculation", calculation);
+        output.check_value(output, param);
+    }
+    set("calculation", "md");
+    EXPECT_EXIT(output.check_value(output, param), testing::ExitedWithCode(1), "");
+    set("calculation", "scf");
+    set("esolver_type", "lr");
+    EXPECT_EXIT(output.check_value(output, param), testing::ExitedWithCode(1), "");
+    set("esolver_type", "ksdft");
+    set("basis_type", "pw");
+    EXPECT_EXIT(output.check_value(output, param), testing::ExitedWithCode(1), "");
+    set("out_dos", "1");
+    output.check_value(output, param);
+}
+
 
 TEST_F(InputParaTest, OpticalGaugeCanDisableSpectrum)
 {

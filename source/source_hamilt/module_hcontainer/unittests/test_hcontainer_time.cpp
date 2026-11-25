@@ -1,6 +1,6 @@
+#include "source_hamilt/module_hcontainer/hcontainer.h"
 #include "tmp_mocks.h"
 #include "gtest/gtest.h"
-#include "source_hamilt/module_hcontainer/hcontainer.h"
 #include <ctime>
 
 // test_size is the number of atoms in the unitcell
@@ -43,7 +43,7 @@ class HContainerTest : public ::testing::Test
     }
 
     UnitCell ucell;
-    hamilt::HContainer<double>* HR;
+    hamilt::HContainer<double> *HR;
 };
 
 // using TEST to test HContainer::insert_pair
@@ -139,7 +139,7 @@ TEST_F(HContainerTest, find_pair)
     std::cout << "time: " << (double)(end - start) / CLOCKS_PER_SEC << std::endl;
 }
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
 #ifdef __MPI
     MPI_Init(&argc, &argv);

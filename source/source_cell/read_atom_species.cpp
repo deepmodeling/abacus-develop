@@ -1,11 +1,35 @@
 #include "read_stru.h"
 
+#include <cmath>
 #include <sstream>
 
 #include "source_base/tool_title.h"
 
 namespace unitcell
 {
+namespace
+{
+// SCAN_LINE_BEGIN matches the keyword as any token in a line, including
+// tokens after '#'; a lattice section header must be the first token of its
+// line, otherwise a comment mention of the keyword is taken as the section.
+bool scan_lattice_section(std::ifstream& ifs, const std::string& name)
+{
+    ifs.clear();
+    ifs.seekg(0);
+    std::string line;
+    while (std::getline(ifs, line))
+    {
+        std::istringstream iss(line);
+        std::string first_token;
+        if (iss >> first_token && first_token == name)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+} // namespace
+
 bool read_atom_species(std::ifstream& ifa,
                       std::ofstream& ofs_running,
                       UnitCell& ucell,
@@ -35,6 +59,11 @@ bool read_atom_species(std::ifstream& ifa,
             std::stringstream ss;
             ss << one_line;
             ss >> ucell.atoms[i].label >> ucell.atoms[i].mass;
+            if (ss.fail())
+            {
+                ModuleBase::WARNING_QUIT("read_atom_species",
+                                         "invalid ATOMIC_SPECIES line: failed to read element label and mass");
+            }
             ucell.pseudo_fn[i] = "auto";
             ucell.pseudo_type[i] = "auto";
 
@@ -160,10 +189,7 @@ bool read_lattice_constant(std::ifstream& ifa,
     if(latName=="user_defined_lattice")
     {
         // check the existence of keyword "LATTICE_PARAMETERS"
-        if (ModuleBase::GlobalFunc::SCAN_LINE_BEGIN(ifa,
-                                               "LATTICE_PARAMETERS",
-                                               true,
-                                               false)) 
+        if (scan_lattice_section(ifa, "LATTICE_PARAMETERS"))
         {
             ModuleBase::WARNING_QUIT("unitcell::read_lattice_constant",
             "do not use LATTICE_PARAMETERS without explicit specification of lattice type");
@@ -180,12 +206,18 @@ bool read_lattice_constant(std::ifstream& ifa,
             // Reading lattice vectors. notice
             // here that only one cpu read these
             // parameters.
-            ifa >> latvec.e11 >> latvec.e12;
-            ModuleBase::GlobalFunc::READ_VALUE(ifa, latvec.e13);
-            ifa >> latvec.e21 >> latvec.e22;
-            ModuleBase::GlobalFunc::READ_VALUE(ifa, latvec.e23);
-            ifa >> latvec.e31 >> latvec.e32;
-            ModuleBase::GlobalFunc::READ_VALUE(ifa, latvec.e33);
+            std::string latvec_line_rest;
+            ifa >> latvec.e11 >> latvec.e12 >> latvec.e13;
+            std::getline(ifa, latvec_line_rest); // swallow inline comments after each row
+            ifa >> latvec.e21 >> latvec.e22 >> latvec.e23;
+            std::getline(ifa, latvec_line_rest);
+            ifa >> latvec.e31 >> latvec.e32 >> latvec.e33;
+            if (ifa.fail())
+            {
+                ModuleBase::WARNING_QUIT("unitcell::read_lattice_constant",
+                                         "invalid LATTICE_VECTORS: failed to read 9 lattice vector components");
+            }
+            std::getline(ifa, latvec_line_rest);
         }
     }//supply lattice vectors
     else
@@ -222,19 +254,33 @@ bool read_lattice_constant(std::ifstream& ifa,
             latvec.e11 = 1.0; latvec.e12 = 0.0; latvec.e13 = 0.0;
             latvec.e21 =-0.5; latvec.e22 = e22; latvec.e23 = 0.0;
             latvec.e31 = 0.0; latvec.e32 = 0.0; latvec.e33 = 0.0;
-            if( ModuleBase::GlobalFunc::SCAN_LINE_BEGIN(ifa, "LATTICE_PARAMETERS") )
+            if( scan_lattice_section(ifa, "LATTICE_PARAMETERS") )
             {
-                ModuleBase::GlobalFunc::READ_VALUE(ifa, latvec.e33);
+                ifa >> latvec.e33;
+                if (ifa.fail())
+                {
+                    ModuleBase::WARNING_QUIT("unitcell::read_lattice_constant",
+                                             "invalid LATTICE_PARAMETERS for lattice type hexagonal");
+                }
             }
         }
         else if(latName=="trigonal")
         {//trigonal, ibrav = 5
             double t1 = 0.0;
             double t2 = 0.0;
-            if( ModuleBase::GlobalFunc::SCAN_LINE_BEGIN(ifa, "LATTICE_PARAMETERS") )
+            if( scan_lattice_section(ifa, "LATTICE_PARAMETERS") )
             {
                 double cosab=0.0;
-                ModuleBase::GlobalFunc::READ_VALUE(ifa, cosab);
+                // READ_VALUE would hide an extraction failure here: a failed
+                // read leaves cosab = 0, silently building the simple-cubic
+                // (alpha = 90 degree) special case instead of the intended
+                // trigonal cell.
+                ifa >> cosab;
+                if (ifa.fail())
+                {
+                    ModuleBase::WARNING_QUIT("unitcell::read_lattice_constant",
+                                             "invalid cos(alpha) in LATTICE_PARAMETERS for lattice type trigonal");
+                }
                 t1 = sqrt(1.0 + 2.0*cosab);
                 t2 = sqrt(1.0 - cosab);
             }
@@ -251,17 +297,27 @@ bool read_lattice_constant(std::ifstream& ifa,
             latvec.e11 = 1.0; latvec.e12 = 0.0; latvec.e13 = 0.0;
             latvec.e21 = 0.0; latvec.e22 = 1.0; latvec.e23 = 0.0;
             latvec.e31 = 0.0; latvec.e32 = 0.0; latvec.e33 = 0.0;
-            if( ModuleBase::GlobalFunc::SCAN_LINE_BEGIN(ifa, "LATTICE_PARAMETERS") )
+            if( scan_lattice_section(ifa, "LATTICE_PARAMETERS") )
             {
-                ModuleBase::GlobalFunc::READ_VALUE(ifa, latvec.e33);
+                ifa >> latvec.e33;
+                if (ifa.fail())
+                {
+                    ModuleBase::WARNING_QUIT("unitcell::read_lattice_constant",
+                                             "invalid LATTICE_PARAMETERS for lattice type st");
+                }
             }
         }
         else if(latName=="bct")
         {//body-centered tetragonal, ibrav = 7
             double cba = 0.0;
-            if( ModuleBase::GlobalFunc::SCAN_LINE_BEGIN(ifa, "LATTICE_PARAMETERS") )
+            if( scan_lattice_section(ifa, "LATTICE_PARAMETERS") )
             {
-                ModuleBase::GlobalFunc::READ_VALUE(ifa, cba);
+                ifa >> cba;
+                if (ifa.fail())
+                {
+                    ModuleBase::WARNING_QUIT("unitcell::read_lattice_constant",
+                                             "invalid LATTICE_PARAMETERS for lattice type bct");
+                }
                 cba = cba / 2.0;
             }
             latvec.e11 = 0.5; latvec.e12 =-0.5; latvec.e13 = cba;
@@ -273,10 +329,14 @@ bool read_lattice_constant(std::ifstream& ifa,
             latvec.e11 = 1.0; latvec.e12 = 0.0; latvec.e13 = 0.0;
             latvec.e21 = 0.0; latvec.e22 = 0.0; latvec.e23 = 0.0;
             latvec.e31 = 0.0; latvec.e32 = 0.0; latvec.e33 = 0.0;
-            if( ModuleBase::GlobalFunc::SCAN_LINE_BEGIN(ifa, "LATTICE_PARAMETERS") )
+            if( scan_lattice_section(ifa, "LATTICE_PARAMETERS") )
             {
-                ifa >> latvec.e22;
-                ModuleBase::GlobalFunc::READ_VALUE(ifa, latvec.e33);
+                ifa >> latvec.e22 >> latvec.e33;
+                if (ifa.fail())
+                {
+                    ModuleBase::WARNING_QUIT("unitcell::read_lattice_constant",
+                                             "invalid LATTICE_PARAMETERS for lattice type so");
+                }
             }
         }
         else if(latName=="baco")
@@ -284,21 +344,29 @@ bool read_lattice_constant(std::ifstream& ifa,
             latvec.e11 = 0.5; latvec.e12 = 0.0; latvec.e13 = 0.0;
             latvec.e21 =-0.5; latvec.e22 = 0.0; latvec.e23 = 0.0;
             latvec.e31 = 0.0; latvec.e32 = 0.0; latvec.e33 = 0.0;
-            if( ModuleBase::GlobalFunc::SCAN_LINE_BEGIN(ifa, "LATTICE_PARAMETERS") )
+            if( scan_lattice_section(ifa, "LATTICE_PARAMETERS") )
             {
-                ifa >> latvec.e12;
+                ifa >> latvec.e12 >> latvec.e33;
+                if (ifa.fail())
+                {
+                    ModuleBase::WARNING_QUIT("unitcell::read_lattice_constant",
+                                             "invalid LATTICE_PARAMETERS for lattice type baco");
+                }
                 latvec.e12 = latvec.e12 / 2.0;
                 latvec.e22 = latvec.e12;
-                ModuleBase::GlobalFunc::READ_VALUE(ifa, latvec.e33);
             }
         }
         else if(latName=="fco")
         {//face-centered orthorhombic, ibrav = 10
             double bba = 0.0; double cba = 0.0;
-            if( ModuleBase::GlobalFunc::SCAN_LINE_BEGIN(ifa, "LATTICE_PARAMETERS") )
+            if( scan_lattice_section(ifa, "LATTICE_PARAMETERS") )
             {
-                ifa >> bba;
-                ModuleBase::GlobalFunc::READ_VALUE(ifa, cba);
+                ifa >> bba >> cba;
+                if (ifa.fail())
+                {
+                    ModuleBase::WARNING_QUIT("unitcell::read_lattice_constant",
+                                             "invalid LATTICE_PARAMETERS for lattice type fco");
+                }
                 bba = bba / 2.0; cba = cba / 2.0;
             }
             latvec.e11 = 0.5; latvec.e12 = 0.0; latvec.e13 = cba;
@@ -308,10 +376,14 @@ bool read_lattice_constant(std::ifstream& ifa,
         else if(latName=="bco")
         {//body-centered orthorhombic, ibrav = 11
             double bba = 0.0; double cba = 0.0;
-            if( ModuleBase::GlobalFunc::SCAN_LINE_BEGIN(ifa, "LATTICE_PARAMETERS") )
+            if( scan_lattice_section(ifa, "LATTICE_PARAMETERS") )
             {
-                ifa >> bba;
-                ModuleBase::GlobalFunc::READ_VALUE(ifa, cba);
+                ifa >> bba >> cba;
+                if (ifa.fail())
+                {
+                    ModuleBase::WARNING_QUIT("unitcell::read_lattice_constant",
+                                             "invalid LATTICE_PARAMETERS for lattice type bco");
+                }
                 bba = bba / 2.0; cba = cba / 2.0;
             }
             latvec.e11 = 0.5; latvec.e12 = bba; latvec.e13 = cba;
@@ -323,10 +395,14 @@ bool read_lattice_constant(std::ifstream& ifa,
             double bba = 0.0; double cba = 0.0;
             double cosab = 0.0;
             double e21 = 0.0; double e22 = 0.0;
-            if( ModuleBase::GlobalFunc::SCAN_LINE_BEGIN(ifa, "LATTICE_PARAMETERS") )
+            if( scan_lattice_section(ifa, "LATTICE_PARAMETERS") )
             {
-                ifa >> bba >> cba;
-                ModuleBase::GlobalFunc::READ_VALUE(ifa, cosab);
+                ifa >> bba >> cba >> cosab;
+                if (ifa.fail())
+                {
+                    ModuleBase::WARNING_QUIT("unitcell::read_lattice_constant",
+                                             "invalid LATTICE_PARAMETERS for lattice type sm");
+                }
                 e21 = bba * cosab;
                 e22 = bba * sqrt(1.0-cosab*cosab);
             }
@@ -339,10 +415,14 @@ bool read_lattice_constant(std::ifstream& ifa,
             double bba = 0.0; double cba = 0.0;
             double cosab = 0.0;
             double e21 = 0.0; double e22 = 0.0;
-            if( ModuleBase::GlobalFunc::SCAN_LINE_BEGIN(ifa, "LATTICE_PARAMETERS") )
+            if( scan_lattice_section(ifa, "LATTICE_PARAMETERS") )
             {
-                ifa >> bba >> cba;
-                ModuleBase::GlobalFunc::READ_VALUE(ifa, cosab);
+                ifa >> bba >> cba >> cosab;
+                if (ifa.fail())
+                {
+                    ModuleBase::WARNING_QUIT("unitcell::read_lattice_constant",
+                                             "invalid LATTICE_PARAMETERS for lattice type bacm");
+                }
                 e21 = bba * cosab;
                 e22 = bba * sqrt(1.0-cosab*cosab);
                 cba = cba / 2.0;
@@ -360,10 +440,14 @@ bool read_lattice_constant(std::ifstream& ifa,
             double cosbc = 0.0; 
             double sinab = 0.0;
             double term = 0.0;
-            if( ModuleBase::GlobalFunc::SCAN_LINE_BEGIN(ifa, "LATTICE_PARAMETERS") )
+            if( scan_lattice_section(ifa, "LATTICE_PARAMETERS") )
             {
-                ifa >> bba >> cba >> cosab >> cosac;
-                ModuleBase::GlobalFunc::READ_VALUE(ifa, cosbc);
+                ifa >> bba >> cba >> cosab >> cosac >> cosbc;
+                if (ifa.fail())
+                {
+                    ModuleBase::WARNING_QUIT("unitcell::read_lattice_constant",
+                                             "invalid LATTICE_PARAMETERS for lattice type triclinic");
+                }
                 sinab = sqrt(1.0-cosab*cosab);
             }
             latvec.e11 = 1.0;         latvec.e12 = 0.0;         latvec.e13 = 0.0;
@@ -374,9 +458,31 @@ bool read_lattice_constant(std::ifstream& ifa,
             latvec.e33 = cba * term;
         }
         else
-        { 
+        {
             ModuleBase::WARNING_QUIT("unitcell::read_lattice_constant","latname not supported!");
         }
+        // Non-cubic named lattices cannot be constructed without the shape
+        // parameters in LATTICE_PARAMETERS; without them the shape variables
+        // stay zero and produce a zero-volume or NaN cell. The check comes
+        // after the branches so an unsupported latName reports itself first.
+        if(latName != "sc" && latName != "fcc" && latName != "bcc")
+        {
+            const bool has_params = scan_lattice_section(ifa, "LATTICE_PARAMETERS");
+            if (!has_params)
+            {
+                const std::string msg = "LATTICE_PARAMETERS is required for lattice type " + latName;
+                ModuleBase::WARNING_QUIT("unitcell::read_lattice_constant", msg);
+            }
+        }
+    }
+
+    // Reject degenerate (zero-volume) or non-finite lattice vectors, whether
+    // they came from LATTICE_VECTORS or from a named lattice.
+    const double latvec_det = latvec.Det();
+    if (!std::isfinite(latvec_det) || latvec_det == 0.0)
+    {
+        ModuleBase::WARNING_QUIT("unitcell::read_lattice_constant",
+                                 "the lattice vectors form a zero-volume or non-finite cell");
     }
 
     // lattice vectors in another form.
