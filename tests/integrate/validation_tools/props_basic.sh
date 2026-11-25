@@ -125,6 +125,25 @@ run_basic_props() {
   #-------------------------------
   if ! test -z "$has_stress" && [ $has_stress == 1 ]; then
     if [ "$calculation" = "md" ]; then
+      final_structure="OUT.autotest/STRU_FINAL"
+      if [ ! -f "$final_structure" ]; then
+        final_structure="OUT.autotest/STRUC/STRU_FINAL"
+      fi
+      if [ ! -f "$final_structure" ]; then
+        final_structure="OUT.autotest/STRU_FINAL.cif"
+      fi
+      if [ ! -f "$final_structure" ]; then
+        final_structure="OUT.autotest/STRUC/STRU_FINAL.cif"
+      fi
+      if [ ! -f "$final_structure" ]; then
+        echo "[ERROR] Cannot identify the final MD step without STRU_FINAL" >&2
+        return 1
+      fi
+      final_step=$(awk '/^# MD step [0-9]+/ { print $4; exit }' "$final_structure")
+      if [ -z "$final_step" ]; then
+        echo "[ERROR] Missing MD step marker in $final_structure" >&2
+        return 1
+      fi
       # The MD virial is the electronic stress after external pressure is
       # subtracted. Reconstruct the solver's former TOTAL-STRESS value so
       # existing reference data continue to compare the same quantity.
@@ -138,16 +157,17 @@ run_basic_props() {
         press2=0
         press3=0
       fi
-      if ! awk -v p1="$press1" -v p2="$press2" -v p3="$press3" '
-        /VIRIAL \(kbar\):/ { rows = 3; count = 0; next }
+      if ! awk -v p1="$press1" -v p2="$press2" -v p3="$press3" -v final="$final_step" '
+        /MD STEP:/ { step = $3 }
+        /VIRIAL \(kbar\):/ { rows = 3; count = 0; selected = (step == final); next }
         rows > 0 {
           if (NF != 3) exit 1
           count++
-          value[count] = $1 " " $2 " " $3
+          if (selected) value[count] = $1 " " $2 " " $3
           rows--
         }
         END {
-          if (count != 3 || rows != 0) exit 1
+          if (!selected || count != 3 || rows != 0) exit 1
           split(value[1], first)
           split(value[2], second)
           split(value[3], third)

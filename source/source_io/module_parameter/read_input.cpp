@@ -14,6 +14,7 @@
 #include <vector>
 #include <cassert>
 #include <cctype>
+#include <limits.h>
 #include <limits>
 #include <stdexcept>
 #include "source_base/formatter.h"
@@ -323,6 +324,18 @@ void ReadInput::create_directory(const Parameter& param)
                                           param.input.of_ml_gene_data,
                                           param.input.deepks_out_freq_elec > 0); // xiaohui add 2013-09-01
 
+    if (this->rank == 0 && param.input.calculation == "md" && param.mdp.md_restart
+        && !param.globalv.global_in_stru.empty())
+    {
+        char cwd[PATH_MAX];
+        std::string full_path = param.globalv.global_in_stru;
+        if (full_path[0] != '/' && getcwd(cwd, sizeof(cwd)) != nullptr)
+        {
+            full_path = std::string(cwd) + "/" + full_path;
+        }
+        GlobalV::ofs_running << "Read file: " << full_path << std::endl;
+    }
+
     // The unified subdirectories used when out_app_flag == 2 (STRUC/, PSI/,
     // CHG/, POT/, ELF/, DOS/, DIP/, MAT/) are NOT created here. Each output
     // writer creates its target directory lazily at write time via
@@ -487,13 +500,6 @@ std::string ReadInput::prepare_input(Parameter& param)
     this->normalize_out_eband_alias(param);
     this->normalize_td_output_frequency(param);
 
-    // The MD driver writes ABACUS STRU frames only, and the restart logic reads
-    // them back, so CIF output (out_stru = 2) is not available for MD. Reject it
-    // instead of silently writing STRU content under a CIF setting.
-    if (param.input.calculation == "md" && param.input.out_stru == 2)
-    {
-        errors += "Invalid INPUT parameter 'out_stru': value 2 (CIF) is not supported for calculation = md; use 0 or 1.\n";
-    }
     // The CSR angular-momentum writer indexes the scalar real-harmonic basis.
     // In nspin = 4 the spinor basis doubles nlocal and uses a different
     // magnetic-quantum-number ordering, so only the spin-up block could be

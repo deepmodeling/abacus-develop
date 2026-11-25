@@ -7,7 +7,8 @@ import subprocess
 import tempfile
 
 
-def run_case(executable, fixture, out_stru, out_freq_ion, out_app_flag, expected, thermo_freq=1):
+def run_case(executable, fixture, out_stru, out_freq_ion, out_app_flag, expected,
+             thermo_freq=1, legacy_stru_dir=False):
     with tempfile.TemporaryDirectory(prefix="abacus-md-cadence-") as scratch:
         work = Path(scratch)
         shutil.copyfile(fixture / "STRU", work / "STRU")
@@ -18,6 +19,8 @@ def run_case(executable, fixture, out_stru, out_freq_ion, out_app_flag, expected
         input_text += "\ncal_stress 1\n"
         input_text += "out_thermo_freq {}\n".format(thermo_freq)
         (work / "INPUT").write_text(input_text)
+        if legacy_stru_dir:
+            (work / "OUT.cadence" / "STRU").mkdir(parents=True)
         result = subprocess.run(
             [executable], cwd=str(work), stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT, universal_newlines=True, timeout=120,
@@ -37,7 +40,7 @@ def run_case(executable, fixture, out_stru, out_freq_ion, out_app_flag, expected
         if "#TOTAL-STRESS" in running_log or "#TOTAL-FORCE" in running_log:
             raise AssertionError("Solver wrote per-step force or stress outside MD output")
         structure_dir = output / "STRUC" if out_app_flag == 2 else output
-        frames = {path.name for path in structure_dir.glob("STRU*")}
+        frames = {path.name for path in structure_dir.glob("STRU*") if path.is_file()}
         frames.discard("STRU_restart")
         if frames != expected:
             raise AssertionError("out_stru={}, out_freq_ion={}, out_app_flag={} produced {}, expected {}\n{}".format(
@@ -57,8 +60,18 @@ def run_case(executable, fixture, out_stru, out_freq_ion, out_app_flag, expected
             raise AssertionError("Restart structure lacks matching step or velocities")
         for filename in expected:
             frame_text = (structure_dir / filename).read_text()
-            if "Cartesian_angstrom" not in frame_text or " v " not in frame_text or " f " not in frame_text:
+            if out_stru == 2:
+                if "_atom_site_fract_x" not in frame_text or "_cell_length_a" not in frame_text:
+                    raise AssertionError("CIF structure lacks cell or atomic positions: " + filename)
+                if " v " in frame_text or " f " in frame_text:
+                    raise AssertionError("CIF structure unexpectedly contains STRU atom fields: " + filename)
+            elif "Cartesian_angstrom" not in frame_text or " v " not in frame_text or " f " not in frame_text:
                 raise AssertionError("Ordinary structure lacks coordinates, velocities or forces: " + filename)
+
+        if legacy_stru_dir:
+            legacy_frame = output / "STRU" / "STRU"
+            if not legacy_frame.is_file() or "# MD step 5" not in legacy_frame.read_text():
+                raise AssertionError("Legacy STRU directory blocked periodic MD output")
 
         if out_stru == 0:
             restart_input = input_text.replace("md_nstep 5", "md_nstep 7")
@@ -77,6 +90,37 @@ def run_case(executable, fixture, out_stru, out_freq_ion, out_app_flag, expected
                 raise AssertionError("MD continuation did not update STRU_restart")
 
 
+def run_legacy_restart_case(executable, fixture):
+    with tempfile.TemporaryDirectory(prefix="abacus-md-legacy-restart-") as scratch:
+        work = Path(scratch)
+        shutil.copyfile(fixture / "STRU", work / "STRU")
+        input_text = (fixture / "INPUT").read_text()
+        (work / "INPUT").write_text(input_text)
+        initial = subprocess.run([executable], cwd=work, capture_output=True,
+                                 text=True, timeout=120, check=False)
+        if initial.returncode:
+            raise AssertionError("Initial MD run failed:\n" + initial.stdout + initial.stderr)
+        output = work / "OUT.cadence"
+        legacy_dir = output / "STRU"
+        legacy_dir.mkdir()
+        (output / "STRU_restart").rename(legacy_dir / "STRU_MD_3")
+        restart_input = input_text.replace("md_nstep 5", "md_nstep 7")
+        restart_input = restart_input.replace("init_vel 0", "init_vel 1")
+        restart_input = restart_input.replace("out_stru 0", "out_stru 1")
+        restart_input = restart_input.replace("out_app_flag 0", "out_app_flag 1")
+        restart_input += "\nmd_restart 1\n"
+        (work / "INPUT").write_text(restart_input)
+        continuation = subprocess.run([executable], cwd=work, capture_output=True,
+                                      text=True, timeout=120, check=False)
+        if continuation.returncode:
+            raise AssertionError("Legacy MD restart failed:\n" + continuation.stdout + continuation.stderr)
+        if not (legacy_dir / "STRU").is_file() or not (output / "STRU_FINAL").is_file():
+            raise AssertionError("Legacy STRU directory blocked current MD output")
+        running_log = (output / "running_md.log").read_text()
+        if "Read file: " not in running_log or "STRU_MD_3" not in running_log:
+            raise AssertionError("Restart source was not recorded in running_md.log")
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("executable")
@@ -91,6 +135,13 @@ def main():
     run_case(args.executable, args.fixture, 1, 2, 2, {"STRU1", "STRU3", "STRU5", "STRU_FINAL"})
     run_case(args.executable, args.fixture, 1, 2, 1, {"STRU", "STRU_FINAL"}, thermo_freq=3)
     run_case(args.executable, args.fixture, 1, 2, 1, {"STRU", "STRU_FINAL"}, thermo_freq=0)
+    run_case(args.executable, args.fixture, 1, 2, 1, {"STRU_FINAL"}, legacy_stru_dir=True)
+    run_case(args.executable, args.fixture, 2, 0, 1, {"STRU_FINAL.cif"})
+    run_case(args.executable, args.fixture, 2, 2, 0, {"STRU.cif", "STRU_FINAL.cif"})
+    run_case(args.executable, args.fixture, 2, 2, 1, {"STRU.cif", "STRU_FINAL.cif"})
+    run_case(args.executable, args.fixture, 2, 2, 2,
+             {"STRU1.cif", "STRU3.cif", "STRU5.cif", "STRU_FINAL.cif"})
+    run_legacy_restart_case(args.executable, args.fixture)
 
 
 if __name__ == "__main__":

@@ -431,7 +431,8 @@ void print_stru_file(const MDCell& cell, const StruMeta& stru_meta, const std::s
                   [](const std::pair<std::int64_t, std::string>& left,
                      const std::pair<std::int64_t, std::string>& right) { return left.first < right.first; });
     }
-    const int row_bytes = std::max(domain.max(local_row_bytes), 1);
+    const int largest_row_bytes = domain.max(local_row_bytes);
+    const int row_bytes = std::max(largest_row_bytes, 1);
     const int batch_bytes = std::max(1024 * 1024, row_bytes);
     const std::int64_t batch_atoms = batch_bytes / row_bytes;
     std::ofstream output;

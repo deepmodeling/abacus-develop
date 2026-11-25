@@ -704,6 +704,73 @@ TEST(MDCellReaderTest, STRUAtomOrderStaysStableAcrossOwnerChanges)
     }
 }
 
+TEST(MDCellReaderTest, STRUStableOrderCrossesGatherBatchesWithEmptyRank)
+{
+    const ModuleBase::CommunicationDomain world = ModuleBase::world_comm_domain();
+    if (world.size() != 4)
+    {
+        GTEST_SKIP() << "This test requires four MPI ranks.";
+    }
+
+    const int atom_count = 20000;
+    ModuleBase::Matrix3 lattice = make_lattice();
+    lattice.e11 = 20.0;
+    lattice.e22 = 20.0;
+    lattice.e33 = 20.0;
+    std::vector<LocalAtom> atoms;
+    for (int index = atom_count - 1; index >= 0; --index)
+    {
+        if (world.rank() != 0 && index % 3 == world.rank() - 1)
+        {
+            LocalAtom atom;
+            atom.type = 0;
+            atom.type_index = index;
+            atom.frac.set(static_cast<double>(index) / atom_count, 0.0, 0.0);
+            atom.cart.set(atom.frac.x * 20.0, 0.0, 0.0);
+            atoms.push_back(atom);
+        }
+    }
+    MDCell cell;
+    const std::vector<std::string> labels(1, "A");
+    const std::vector<double> masses(1, 1.0);
+    const std::vector<std::int64_t> counts(1, atom_count);
+    const ModuleBase::Matrix3 reciprocal = lattice.Inverse();
+    cell.initialize_from_owned_atoms(lattice, reciprocal, 1.0, 1.0, atom_count,
+                                     atoms, labels, masses, counts, 0.0, world);
+    StruMeta metadata;
+    metadata.species.resize(1);
+    const std::string filename = testing::TempDir() + "mdcell_batch_order.STRU";
+    const bool append = false;
+    const bool include_force = false;
+    mdcell::print_stru_file(cell, metadata, filename, "# MD step 1\n\n", append, include_force);
+
+    if (world.rank() == 0)
+    {
+        std::ifstream input(filename.c_str());
+        ASSERT_TRUE(input.good());
+        std::string line;
+        int rows = 0;
+        double previous_x = -1.0;
+        while (std::getline(input, line))
+        {
+            if (line.find(" m ") == std::string::npos)
+            {
+                continue;
+            }
+            std::istringstream row(line);
+            double x = 0.0;
+            double y = 0.0;
+            double z = 0.0;
+            ASSERT_TRUE(static_cast<bool>(row >> x >> y >> z));
+            EXPECT_GT(x, previous_x);
+            previous_x = x;
+            ++rows;
+        }
+        EXPECT_EQ(rows, atom_count);
+        std::remove(filename.c_str());
+    }
+}
+
 TEST(MDCellReaderTest, STRUTextGatherRejectsOversizedBatchesCollectively)
 {
     const ModuleBase::CommunicationDomain domain = ModuleBase::world_comm_domain();

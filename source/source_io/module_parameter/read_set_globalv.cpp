@@ -23,7 +23,6 @@ void log_read_file(const std::string& filename)
     }
     const std::string confirmation = "Read file: " + full_path;
     std::cout << confirmation << std::endl;
-    GlobalV::ofs_running << confirmation << std::endl;
 }
 
 bool has_md_velocities(const std::string& filename)

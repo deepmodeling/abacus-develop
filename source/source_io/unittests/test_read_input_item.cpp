@@ -3124,10 +3124,7 @@ TEST_F(InputTest, OutMatComponentPrecision)
     }
 }
 
-// MD writes ABACUS STRU frames only and the restart logic reads them back, so
-// CIF output (out_stru = 2) must be rejected instead of silently emitting
-// STRU content under the CIF setting.
-TEST_F(InputTest, OutStruCifRejectedForMd)
+TEST_F(InputTest, OutStruCifAcceptedForMd)
 {
     ModuleIO::ReadInput readinput(0);
     readinput.check_ntype_flag = false;
@@ -3135,8 +3132,7 @@ TEST_F(InputTest, OutStruCifRejectedForMd)
     TestParameters::input(param).calculation = "md";
     TestParameters::input(param).out_stru = 2;
     const std::string error = readinput.prepare_input(param);
-    EXPECT_THAT(error, testing::HasSubstr("out_stru"));
-    EXPECT_THAT(error, testing::HasSubstr("not supported for calculation = md"));
+    EXPECT_TRUE(error.empty()) << error;
 }
 
 TEST_F(InputTest, DfptMixTypeDomainContract)

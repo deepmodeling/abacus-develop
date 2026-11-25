@@ -457,7 +457,7 @@ struct Input_para
     int dfpt_broyden_ndim = 8;                ///< Broyden history depth (broyden variants)
 
     // ==============   #Parameters (11.Output) ===========================
-    int out_stru = 1;                         ///< output stru file each ion step
+    int out_stru = 1;                         ///< 0: none, 1: ABACUS STRU, 2: CIF geometry
                                               ///< 0: no output, 1: STRU format, 2: CIF format
     int out_freq_elec = 0;                    ///< the frequency of electronic iter to output charge and wavefunction
     int out_freq_ion = 0;                     ///< the frequency ( >= 0 ) of ionic step to output charge density;

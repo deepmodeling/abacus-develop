@@ -44,20 +44,26 @@ class ForceCollectionTest(unittest.TestCase):
             return result, output
 
     def test_md_stress_uses_virial_and_restores_external_pressure(self):
-        virial = " VIRIAL (kbar):\n 1 2 3\n 4 5 6\n 7 8 9\n"
+        virial = " MD STEP: 5\n VIRIAL (kbar):\n 1 2 3\n 4 5 6\n 7 8 9\n"
         result, output = self.run_collector(
-            "md", 2, log_stress=virial, has_force=0, has_stress=1,
+            "md", 2, stru="# MD step 5\n", log_stress=virial, has_force=0, has_stress=1,
             input_text="INPUT_PARAMETERS\npress1 10\npress2 20\npress3 30\n")
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("totalstressref 105.000000", output)
 
         result, output = self.run_collector(
-            "md", 2, log_stress=virial, has_force=0, has_stress=1,
+            "md", 2, stru="# MD step 5\n", log_stress=virial, has_force=0, has_stress=1,
             input_text="INPUT_PARAMETERS\nesolver_type ofdft\npress1 10\npress2 20\npress3 30\n")
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("totalstressref 45.000000", output)
 
         result, output = self.run_collector("md", 2, has_force=0, has_stress=1)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertNotIn("totalstressref", output)
+
+        earlier = virial.replace("MD STEP: 5", "MD STEP: 4")
+        result, output = self.run_collector(
+            "md", 2, stru="# MD step 5\n", log_stress=earlier, has_force=0, has_stress=1)
         self.assertNotEqual(result.returncode, 0)
         self.assertNotIn("totalstressref", output)
 
