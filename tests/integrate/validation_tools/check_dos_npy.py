@@ -1,10 +1,29 @@
 """Collect the integrated DOS and check LCAO spectra against a text reference."""
 
-import json
 from pathlib import Path
 import sys
 
 import numpy as np
+
+
+def read_reference(path):
+    ref = {}
+    for line in path.read_text().splitlines():
+        line = line.partition("#")[0].strip()
+        if line:
+            key, values = line.split(maxsplit=1)
+            if key in ("tdos", "pdos"):
+                ref.setdefault(key, []).append(values)
+            else:
+                ref[key] = float(values) if key in ("energy_min_eV", "energy_step_eV") else int(values)
+
+    spins = 2 if ref["nspin"] == 2 else 1
+    ref["total_samples"] = np.loadtxt(ref.pop("tdos"), ndmin=1,
+                                     dtype=[("energy_index", int), ("spins", float, (spins, 4))])
+    ref["samples"] = np.loadtxt(ref.pop("pdos"), ndmin=1, encoding="utf-8",
+                               dtype=[("atom_index", int), ("species", object), ("l", int), ("m", int),
+                                      ("energy_index", int), ("pdos", float, (spins,))])
+    return ref
 
 
 def check_pdos(path, ref):
@@ -34,7 +53,7 @@ def check_pdos(path, ref):
 def collect_dos(directory, nspin, reference):
     ref = None
     if reference.is_file():
-        ref = json.loads(reference.read_text())
+        ref = read_reference(reference)
         np.testing.assert_equal(nspin, ref["nspin"])
         check_pdos(directory / "pdos.npy", ref)
 

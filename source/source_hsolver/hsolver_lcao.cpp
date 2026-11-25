@@ -389,7 +389,7 @@ void HSolverLCAO<T>::parakSolve_cusolver(HSMatrix<T>& hs,
     mat_para_global.init(nrow, ncol, nb2d, MPI_COMM_WORLD, false);
     psi_para_global.init(nrow, nbands, nb2d, MPI_COMM_WORLD, false);
     mat_para_local.init(nrow, ncol, nb2d, self_comm, false);
-    psi_para_local.init(nrow, ncol, nb2d, self_comm, false);
+    psi_para_local.init(nrow, nbands, nb2d, self_comm, false);
 
     std::vector<T> hk_mat; // temporary storage for H(k) matrix collected from all processes
     std::vector<T> sk_mat; // temporary storage for S(k) matrix collected from all processes
@@ -437,7 +437,7 @@ void HSolverLCAO<T>::parakSolve_cusolver(HSMatrix<T>& hs,
         psi::Psi<T> psi_local{};
         if(kpt_assigned != -1)
         {
-            psi_local.resize(1, ncol, nrow);
+            psi_local.resize(1, nbands, nrow);
             DiagoCusolver<T> cu(this->nlocal, this->nbands);
             ModuleBase::MatrixBlock<T> hk_local = ModuleBase::MatrixBlock<T>{
                     hk_mat.data(), (size_t)nrow, (size_t)ncol,

@@ -21,6 +21,7 @@ void ModuleIO::write_dos_pw(
         const double dos_emin_ev,
         const bool two_fermi,
         const int out_app_flag,
+        const int precision,
         const int bndpar,
         const std::string& global_out_dir,
         std::ofstream& ofs_running)
@@ -80,6 +81,7 @@ void ModuleIO::write_dos_pw(
                 wg,
                 istep_in,
                 out_app_flag,
+                precision,
                 bndpar,
                 nullptr);
     }
