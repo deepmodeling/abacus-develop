@@ -204,18 +204,16 @@ changed and the PR explains why the new reference is correct.
 Use Autotest cases with `INPUT`, `STRU`, `KPT` (when needed) and `result.ref`,
 listed in `CASES_*.txt` and run by `Autotest.sh` through the suite's CTest entry.
 Autotest helpers are unaffected.
-Keep physics-specific setup and calculations in the case. Reserve
-`tests/integrate/validation_tools/` for comparing program output with stored
-references and reporting differences. Store references with the case, outside
-generated `OUT.*` directories. Prefer plain text for simple references such as
-`a.txt.ref`.
+
+Store references with the case, outside generated `OUT.*` directories. Prefer
+plain text for simple references such as `a.txt.ref`.
 
 Standalone `add_test()` drivers that launch ABACUS require a check Autotest
 cannot express (e.g., nonzero exits or per-rank stderr) and a PR rationale.
 Keep Autotest-compatible checks in cases. Drivers must:
 
-- Use a descriptive name such as `check_<feature>.py`. Reserve `test_*.py`
-  for tool unit tests.
+- Live in `tests/integrate/validation_tools/` with descriptive names
+  (e.g., `check_<feature>.py`); reserve `test_*.py` for tool unit tests.
 - Use dedicated fixtures; never rewrite another case's `INPUT` at run time.
 - Use `find_program` plus `if()` for optional interpreters; never `REQUIRED`.
 - For MPI, forward `MPIEXEC_NUMPROC_FLAG`, `MPIEXEC_PREFLAGS` and
