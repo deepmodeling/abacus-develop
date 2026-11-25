@@ -59,7 +59,8 @@ class SocketPW : public SocketKS<ModuleESolver::ESolver_KS_PW<std::complex<doubl
         if (active)
         {
             this->conv_esolver = false;
-            validate_electronic_step_exx(XC_Functional::get_func_type(), this->general_exx_info_.cal_exx);
+            const int functional_type = XC_Functional::get_func_type();
+            validate_electronic_step_exx(functional_type, this->general_exx_info_.cal_exx);
             elecstate::prepare_electronic_step(cell, this->pelec, *this->electronic_step, *this->inp_);
         }
         this->exx_helper->begin_electronic_step(active);
