@@ -30,6 +30,7 @@ namespace ModuleIO
         const double& bcoeff,
         const int out_dos,
         const int out_app_flag,
+        const int precision,                    // number of decimal places in doss/pdoss files
         const int istep,
         const int nspin,
         const int nlocal,

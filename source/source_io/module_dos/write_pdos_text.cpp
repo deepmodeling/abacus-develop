@@ -64,6 +64,7 @@ void ModuleIO::write_pdos_text(
         const std::string& out_dir,
         const int istep,
         const int out_app_flag,
+        const int precision,
         std::ofstream& ofs_running)
 {
     ModuleBase::TITLE("ModuleIO", "write_pdos_text");
@@ -116,13 +117,13 @@ void ModuleIO::write_pdos_text(
             {
                 const double en = emin + n * dos_edelta_ev;
 
-                ofs << std::setw(12) << std::fixed << std::setprecision(6) << en
+                ofs << std::setw(12) << std::fixed << std::setprecision(precision) << en
                     << "  " << std::setw(3) << iat + 1
                     << "  " << std::setw(4) << ucell.atoms[it].label;
 
                 for (const PdosBlock::value_type& channel : channels)
                 {
-                    ofs << "  " << std::setw(8) << std::fixed << std::setprecision(6) << channel.second[n];
+                    ofs << "  " << std::setw(8) << std::fixed << std::setprecision(precision) << channel.second[n];
                 }
                 ofs << std::endl;
             }

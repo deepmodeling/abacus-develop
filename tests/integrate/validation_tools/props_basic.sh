@@ -125,7 +125,7 @@ run_basic_props() {
   elif [ "$has_dos" = 2 ]; then
     local dos_dir=OUT.autotest
     if [ "$out_app_flag" = 2 ]; then dos_dir+=/DOS; fi
-    python3 "$PROPS_TOOLS_DIR/check_dos_npy.py" "$dos_dir" "${nspin:-1}" dos.ref.json >> "$props_result_file" || return 1
+    python3 "$PROPS_TOOLS_DIR/check_dos_npy.py" "$dos_dir" "${nspin:-1}" dos.ref >> "$props_result_file" || return 1
   fi
 
   #-------------------------------

@@ -69,6 +69,23 @@ extern std::vector<xc_func_type> init_func(
     const double hybrid_alpha,
     const double hse_omega);
 
+extern std::vector<xc_func_type> init_func(
+    const std::vector<int> &func_id,
+    const int xc_polarized,
+    const double hybrid_alpha,
+    const double hse_omega,
+    const bool use_gpu);
+
+// Host arrays in/out; the bounded CUDA workspace is released on return.
+void xc_cuda_exc_vxc(
+    xc_func_type &func,
+    const int nrxx,
+    const double *rho,
+    const double *sigma,
+    double *exc,
+    double *vrho,
+    double *vsigma);
+
 /**
  * @brief Per-component external parameters that init_func would apply.
  *
@@ -103,6 +120,21 @@ extern std::tuple<double, double, ModuleBase::matrix> v_xc_libxc(
     const std::map<int, double> *scaling_factor,
     const double hybrid_alpha,
     const double hse_omega);
+
+extern std::tuple<double, double, ModuleBase::matrix> v_xc_libxc(
+    const std::vector<int> &func_id,
+    const int &nrxx,     // number of real-space grid
+    const double &omega, // volume of cell
+    const double tpiba,
+    const Charge *const chr, // charge density
+    const int nspin,
+    const bool domag,
+    const bool domag_z,
+    const int gga_grad,
+    const std::map<int, double> *scaling_factor,
+    const double hybrid_alpha,
+    const double hse_omega,
+    const bool use_gpu);
 
 // Reciprocal-metric derivative of the exact gga_grad=2 Libxc energy
 // graph. The returned lower-triangular tensor is the unnormalized local

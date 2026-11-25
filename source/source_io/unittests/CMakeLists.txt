@@ -3,6 +3,20 @@ abacus_disable_feature_definitions(__CUDA)
 abacus_disable_feature_definitions(__ROCM)
 abacus_disable_feature_definitions(__EXX)
 
+# Keep the existing serial INPUT target and its compile definitions.
+target_sources(MODULE_IO_read_input_serial PRIVATE test_read_input_serial.cpp)
+target_sources(MODULE_IO_read_item_serial PRIVATE test_read_inp_exx_dftu.cpp)
+
+if(ENABLE_LIBRI_GPU)
+  # Exercise the real device probe while keeping DeviceContext free of MPI.
+  set_property(
+    SOURCE ${PROJECT_SOURCE_DIR}/source/source_base/module_device/device.cpp
+           TARGET_DIRECTORY MODULE_IO_read_input_serial
+    APPEND
+    PROPERTY COMPILE_DEFINITIONS __CUDA)
+  target_link_libraries(MODULE_IO_read_input_serial PRIVATE CUDA::cudart)
+endif()
+
 addtest(
   TARGET MODULE_IO_write_bands
   LIBS parameter base device symmetry
@@ -34,7 +48,8 @@ if(NOT ENABLE_MPI)
 endif()
 
 add_executable(
-  MODULE_IO_input_error_mpi test_read_input.cpp
+  MODULE_IO_input_error_mpi
+  test_read_input.cpp
   # io_input references stru_frame_io::extract_last_frame without linking cell.
   ../../source_cell/stru_frame_io.cpp)
 target_link_libraries(
@@ -52,10 +67,14 @@ foreach(
         duplicate_string_eof
         invalid_value
         invalid_dependency
+        unsupported_libxc_cuda
         out_dmk_zero_precision
         out_hsk_zero_precision
         out_mat_tk_zero_precision
         valid)
+  if(input_case STREQUAL "unsupported_libxc_cuda" AND ENABLE_LIBXC_CUDA)
+    continue()
+  endif()
   add_test(
     NAME MODULE_IO_input_error_mpi_${input_case}
     COMMAND
@@ -84,9 +103,10 @@ abacus_copy_test_files(support INPUTs)
 addtest(
   TARGET MODULE_IO_input_test_para
   LIBS parameter base device io_input
-  SOURCES test_read_input_parallel.cpp
-          # io_input references stru_frame_io::extract_last_frame without linking cell.
-          ../../source_cell/stru_frame_io.cpp)
+  SOURCES
+    test_read_input_parallel.cpp
+    # io_input references stru_frame_io::extract_last_frame without linking cell.
+    ../../source_cell/stru_frame_io.cpp)
 
 add_test(
   NAME MODULE_IO_input_test_para_4

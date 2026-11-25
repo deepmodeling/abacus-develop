@@ -70,6 +70,7 @@ void write_dos_lcao(
         const double& bcoeff,
         const int out_dos,
         const int out_app_flag,
+        const int precision,
         const int istep,
         const int nspin,
         const int nlocal,
@@ -138,6 +139,7 @@ void write_dos_lcao(
                 wg,
                 istep,
                 out_app_flag,
+                precision,
                 bndpar,
                 spectrum);
 
@@ -189,7 +191,7 @@ void write_dos_lcao(
         else
         {
             write_pdos_text(ucell, pdos.data(), nspin, nlocal, pdos.front().nc,
-                            emin, dos_edelta_ev, global_out_dir, istep, out_app_flag, ofs_running);
+                            emin, dos_edelta_ev, global_out_dir, istep, out_app_flag, precision, ofs_running);
         }
     }
     if (out_dos == 2)
@@ -219,6 +221,7 @@ template void write_dos_lcao(
         const double& bcoeff,
         const int out_dos,
         const int out_app_flag,
+        const int precision,
         const int istep,
         const int nspin,
         const int nlocal,
@@ -247,6 +250,7 @@ template void write_dos_lcao(
         const double& bcoeff,
         const int out_dos,
         const int out_app_flag,
+        const int precision,
         const int istep,
         const int nspin,
         const int nlocal,

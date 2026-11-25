@@ -11,11 +11,7 @@
 
 TEST(NEPPotential, UnitCellCalculationOrMissingBackend)
 {
-    const std::string source_file = __FILE__;
-    const std::string marker = "/source/source_md/";
-    const std::size_t marker_pos = source_file.find(marker);
-    ASSERT_NE(marker_pos, std::string::npos);
-    const std::string model_file = source_file.substr(0, marker_pos) + "/tests/PP_ORB/nep_hfo2.txt";
+    const std::string model_file = "nep_hfo2.txt";
 
     UnitCell cell;
     Setcell::setupcell(cell);

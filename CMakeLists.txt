@@ -55,6 +55,7 @@ option(ENABLE_DFTD4 "Enable DFT-D4 dispersion correction" OFF)
 option(ENABLE_PLUMED "Enable using the PLUMED enhanced-sampling library" OFF)
 option(ENABLE_JSON "Enable JSON output" OFF)
 option(ENABLE_CNPY "Enable cnpy usage" OFF)
+option(ENABLE_NEP "Enable NEP_CPU" OFF)
 
 option(DEBUG_INFO "Print message to debug" OFF)
 option(COMMIT_INFO "Print commit information in log" ON)
@@ -74,6 +75,9 @@ cmake_dependent_option(ENABLE_ELPA "Enable ELPA eigensolver" ON "ENABLE_MPI"
                        OFF)
 cmake_dependent_option(ENABLE_LIBRI "Enable LibRI for hybrid functional" OFF
                        "ENABLE_LCAO;ENABLE_MPI" OFF)
+cmake_dependent_option(
+  ENABLE_LIBRI_GPU "Enable experimental LibRI CUDA contractions through DDLA"
+  OFF "ENABLE_LIBRI;USE_CUDA" OFF)
 cmake_dependent_option(ENABLE_PEXSI "Enable PEXSI for LCAO" OFF
                        "ENABLE_LCAO;ENABLE_MPI" OFF)
 cmake_dependent_option(ENABLE_MLALGO "Enable the machine learning algorithms"
@@ -89,6 +93,9 @@ cmake_dependent_option(ENABLE_GOOGLEBENCH "Enable GOOGLE-benchmark usage" OFF
                        "BUILD_TESTING" OFF)
 
 # Options requiring CUDA
+cmake_dependent_option(
+  ENABLE_LIBXC_CUDA "Enable CUDA evaluation of Libxc potentials" OFF
+  "USE_CUDA;ENABLE_LIBXC" OFF)
 cmake_dependent_option(USE_CUDA_MPI "Enable CUDA-aware MPI" OFF
                        "USE_CUDA;ENABLE_MPI" OFF)
 cmake_dependent_option(ENABLE_CUSOLVERMP "Enable cuSOLVERMp" OFF
@@ -579,13 +586,20 @@ endfunction()
 if(ENABLE_LIBRI)
   set_if_higher(CMAKE_CXX_STANDARD 14)
   find_package(LibRI REQUIRED)
-  find_package(LibComm REQUIRED)
-  find_package(cereal REQUIRED CONFIG)
 endif()
 
 if(ENABLE_LIBXC)
   find_package(Libxc CONFIG REQUIRED)
-  if(Libxc_VERSION VERSION_LESS "5.1.7")
+  if(Libxc_ENABLE_CUDA AND Libxc_VERSION VERSION_GREATER_EQUAL "7.1.0")
+    # CUDA Libxc needs explicit host initialization even when offload is disabled.
+    set(_libxc_requires_host_flag ON)
+  elseif(ENABLE_LIBXC_CUDA)
+    message(
+      FATAL_ERROR
+        "ENABLE_LIBXC_CUDA requires Libxc >= 7.1.0 built with -DENABLE_CUDA=ON. "
+        "Found Libxc ${Libxc_VERSION} (Libxc_ENABLE_CUDA=${Libxc_ENABLE_CUDA})."
+    )
+  elseif(Libxc_VERSION VERSION_LESS "5.1.7")
     message(
       FATAL_ERROR "Libxc >= 5.1.7 is required; found version ${Libxc_VERSION}")
   endif()
@@ -595,8 +609,8 @@ if(DEFINED DeePMD_DIR)
   find_package(DeePMD REQUIRED)
 endif()
 
-if(DEFINED NEP_DIR)
-  find_package(NEP REQUIRED)
+if(ENABLE_NEP)
+  find_package(NEP_CPU CONFIG REQUIRED)
 endif()
 
 if(DEFINED TensorFlow_DIR)

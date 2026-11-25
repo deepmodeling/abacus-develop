@@ -42,6 +42,7 @@ namespace ModuleIO
         const ModuleBase::matrix &wg, //weight of (kpoint,bands))
         const int istep_in, // ionic_step
         const int out_app_flag, // 0: no append, 1: append, 2: subdirectory
+        const int precision, // number of decimal places in the DOS file
         const int bndpar, // number of band parallel groups
         DosSpectrum* spectrum); // collect rank-zero rows for NPY output when supplied
 

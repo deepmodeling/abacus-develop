@@ -96,7 +96,7 @@ TEST_F(WritePdosTextTest, BasicOutput)
     }
 
     ModuleIO::write_pdos_text(*ucell, &pdos, nspin, nlocal, npoints,
-                              emin, dos_edelta_ev, out_dir, istep, 0, log);
+                              emin, dos_edelta_ev, out_dir, istep, 0, 6, log);
 
     const std::string str = read_file("./pdoss1.txt");
 
@@ -131,7 +131,7 @@ TEST_F(WritePdosTextTest, Mode0FixedNameWithStep)
     pdos.zero_out();
 
     ModuleIO::write_pdos_text(*ucell, &pdos, nspin, nlocal, npoints,
-                              emin, dos_edelta_ev, "./", 2, 0, log);
+                              emin, dos_edelta_ev, "./", 2, 0, 6, log);
 
     const std::string str = read_file("./pdoss1.txt");
     EXPECT_THAT(str, testing::HasSubstr("# Ionic_Step 3"));
@@ -167,7 +167,7 @@ TEST_F(WritePdosTextTest, SpinPolarized)
     }
 
     ModuleIO::write_pdos_text(*ucell, pdos_arr, nspin, nlocal, npoints,
-                              emin, dos_edelta_ev, "./", -1, 0, log);
+                              emin, dos_edelta_ev, "./", -1, 0, 6, log);
 
     const std::string s1 = read_file("./pdoss1.txt");
     const std::string s2 = read_file("./pdoss2.txt");
@@ -234,10 +234,10 @@ TEST_F(WritePdosTextTest, Mode1FixedNameAppend)
 
     // First call: istep=0, mode 1 -> fixed name pdoss1.txt.
     ModuleIO::write_pdos_text(*ucell, &pdos, nspin, nlocal, npoints,
-                              emin, dos_edelta_ev, "./", /*istep=*/0, out_app_flag, log);
+                              emin, dos_edelta_ev, "./", /*istep=*/0, out_app_flag, 6, log);
     // Second call: istep=1, mode 1 -> append to same file.
     ModuleIO::write_pdos_text(*ucell, &pdos, nspin, nlocal, npoints,
-                              emin, dos_edelta_ev, "./", /*istep=*/1, out_app_flag, log);
+                              emin, dos_edelta_ev, "./", /*istep=*/1, out_app_flag, 6, log);
 
     const std::string str = read_file("./pdoss1.txt");
     // Two Ionic_Step headers present -> two appended records.
@@ -269,7 +269,7 @@ TEST_F(WritePdosTextTest, Mode2PerStepFile)
     pdos.zero_out();
 
     ModuleIO::write_pdos_text(*ucell, &pdos, nspin, nlocal, npoints,
-                              emin, dos_edelta_ev, "./", 3, out_app_flag, log);
+                              emin, dos_edelta_ev, "./", 3, out_app_flag, 6, log);
 
     const std::string str = read_file("./pdoss1g4.txt");
     EXPECT_THAT(str, testing::HasSubstr("# Ionic_Step 4"));
