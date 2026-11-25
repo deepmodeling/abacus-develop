@@ -29,6 +29,21 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional::v_xc(
     const double hybrid_alpha,
     const double hse_omega)
 {
+    return v_xc(nrxx, chr, ucell, nspin, domag, domag_z, gga_grad, hybrid_alpha, hse_omega, false);
+}
+
+std::tuple<double, double, ModuleBase::matrix> XC_Functional::v_xc(
+    const int &nrxx,
+    const Charge *const chr,
+    const UnitCell *ucell,
+    const int nspin,
+    const bool domag,
+    const bool domag_z,
+    const int gga_grad,
+    const double hybrid_alpha,
+    const double hse_omega,
+    const bool use_gpu)
+{
     ModuleBase::TITLE("XC_Functional", "v_xc");
 
     if (use_libxc)
@@ -36,7 +51,7 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional::v_xc(
 #ifdef __LIBXC
         return XC_Functional_Libxc::v_xc_libxc(
             XC_Functional::get_func_id(), nrxx, ucell->omega, ucell->tpiba, chr, nspin, domag, domag_z, gga_grad,
-            &(scaling_factor_xc), hybrid_alpha, hse_omega);
+            &(scaling_factor_xc), hybrid_alpha, hse_omega, use_gpu);
 #else
         ModuleBase::WARNING_QUIT("v_xc", "compile with LIBXC");
 #endif
