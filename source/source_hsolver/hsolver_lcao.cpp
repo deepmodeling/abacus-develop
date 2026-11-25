@@ -36,191 +36,13 @@
 #include "source_hsolver/parallel_k2d.h"
 
 #ifdef ABACUS_DM_DIRECT_PILOT
-#include "source_base/module_external/blacs_connector.h"
-#include <algorithm>
-#include <chrono>
-#include <cmath>
-#include <cstdio>
+#include "dm_direct_pilot.h"
 #include <cstdlib>
-#include <cstring>
-#include <memory>
 #endif
 
 namespace hsolver
 {
 
-#ifdef ABACUS_DM_DIRECT_PILOT
-namespace
-{
-void direct_sync(const int context)
-{
-    int token = 1;
-    char scope = 'A';
-    char topology = ' ';
-    Cigsum2d(context, &scope, &topology, 1, 1, &token, 1, -1, -1);
-}
-
-double direct_elapsed(const std::chrono::steady_clock::time_point& started)
-{
-    const std::chrono::steady_clock::time_point finished = std::chrono::steady_clock::now();
-    return std::chrono::duration<double>(finished - started).count();
-}
-
-template <typename T>
-bool direct_gamma(HSMatrix<T>&, psi::Psi<T>&, elecstate::ElecState*,
-                  module_dm::DensityMatrix<T, double>&, const Parallel_Orbitals*,
-                  const int, const bool, const char*)
-{
-    return false;
-}
-
-bool direct_gamma(HSMatrix<double>& hs, psi::Psi<double>& wave, elecstate::ElecState* state,
-                  module_dm::DensityMatrix<double, double>& density, const Parallel_Orbitals* orbitals,
-                  const int bands, const bool supported, const char* mode)
-{
-    if (!supported || mode == nullptr || std::strcmp(mode, "cpu") == 0)
-    {
-        return false;
-    }
-    const bool verify = std::strcmp(mode, "verify") == 0;
-    if (!verify && std::strcmp(mode, "direct") != 0) return false;
-    const Parallel_Blkcyclic& layout = orbitals->para_2d();
-    const int n = layout.nrglb();
-    const int context = layout.ictxt();
-    const bool root = layout.irproc() == 0 && layout.icproc() == 0;
-    const std::size_t matrix_size = static_cast<std::size_t>(n) * n;
-    const std::size_t wave_size = static_cast<std::size_t>(n) * bands;
-    const std::size_t matrix_bytes = matrix_size * sizeof(double);
-    const std::size_t hs_bytes = 2 * matrix_bytes;
-    const std::size_t wave_bytes = wave_size * sizeof(double);
-    const std::size_t root_matrix_size = root ? matrix_size : 1;
-    const std::size_t root_wave_size = root ? wave_size : 1;
-    std::vector<double> h(root_matrix_size);
-    std::vector<double> s(root_matrix_size);
-    std::vector<double> host_wave(root_wave_size);
-    std::vector<double> eigenvalues(n);
-    std::vector<double> host_dm(root_matrix_size);
-    const int leading_dimension = layout.irproc() == 0 ? n : 1;
-    int full_desc[9] = {1, context, n, n, n, n, 0, 0, leading_dimension};
-    int wave_desc[9] = {1, context, n, bands, n, bands, 0, 0, leading_dimension};
-    int distributed_desc[9];
-    int distributed_wave_desc[9];
-    std::copy(layout.desc(), layout.desc() + 9, distributed_desc);
-    std::copy(orbitals->desc_wfc, orbitals->desc_wfc + 9, distributed_wave_desc);
-    const std::chrono::steady_clock::time_point gather_start = std::chrono::steady_clock::now();
-    ModuleBase::MatrixBlock<double> hk;
-    ModuleBase::MatrixBlock<double> sk;
-    hs.hs_at_k(0, hk, sk);
-    Cpdgemr2d(n, n, hk.p, 1, 1, distributed_desc, h.data(), 1, 1, full_desc, context);
-    Cpdgemr2d(n, n, sk.p, 1, 1, distributed_desc, s.data(), 1, 1, full_desc, context);
-    direct_sync(context);
-    const double gather_seconds = direct_elapsed(gather_start);
-    const std::chrono::steady_clock::time_point diagonal_start = std::chrono::steady_clock::now();
-    std::unique_ptr<Diag_Cusolver_gvd> solver;
-    if (root)
-    {
-        solver.reset(new Diag_Cusolver_gvd());
-        solver->Dngvd_double_retained(n, h.data(), s.data(), eigenvalues.data(), host_wave.data(), bands);
-    }
-    direct_sync(context);
-    const double diagonal_seconds = direct_elapsed(diagonal_start);
-    const std::chrono::steady_clock::time_point psi_start = std::chrono::steady_clock::now();
-    char scope = 'A';
-    char topology = ' ';
-    if (root) Cdgebs2d(context, &scope, &topology, bands, 1, eigenvalues.data(), bands);
-    else Cdgebr2d(context, &scope, &topology, bands, 1, eigenvalues.data(), bands, 0, 0);
-    for (int band = 0; band < bands; ++band) state->ekb(0, band) = eigenvalues[band];
-    wave.fix_k(0);
-    double* wave_pointer = wave.get_pointer();
-    Cpdgemr2d(n, bands, host_wave.data(), 1, 1, wave_desc,
-              wave_pointer, 1, 1, distributed_wave_desc, context);
-    direct_sync(context);
-    const double psi_seconds = direct_elapsed(psi_start);
-    // The owning solver remains alive through ABACUS's actual occupation code.
-    const std::chrono::steady_clock::time_point occupation_start = std::chrono::steady_clock::now();
-    elecstate::calculate_weights(state->ekb, state->wg, state->klist, state->eferm,
-                                 state->f_en, state->nelec_spin, bands, state->skip_weights);
-    elecstate::calEBand(state->ekb, state->wg, state->f_en);
-    direct_sync(context);
-    const double occupation_seconds = direct_elapsed(occupation_start);
-    const std::chrono::steady_clock::time_point dm_start = std::chrono::steady_clock::now();
-    int success = 1;
-    if (root)
-    {
-        const double* weights = &state->wg(0, 0);
-        success = solver->density_from_retained(bands, weights, host_dm.data());
-    }
-    if (root) Cigebs2d(context, &scope, &topology, 1, 1, &success, 1);
-    else Cigebr2d(context, &scope, &topology, 1, 1, &success, 1, 0, 0);
-    const double device_dm_seconds = direct_elapsed(dm_start);
-    const std::chrono::steady_clock::time_point scatter_start = std::chrono::steady_clock::now();
-    double* dm_pointer = density.get_dmk_ptr(0);
-    if (success)
-    {
-        Cpdgemr2d(n, n, host_dm.data(), 1, 1, full_desc,
-                  dm_pointer, 1, 1, distributed_desc, context);
-    }
-    else
-    {
-        // Host psi remains valid even when the optional DM allocation fails.
-        module_dm::dm_from_psi(orbitals, state->wg, wave, density);
-        if (root) std::printf("DM_DIRECT_FALLBACK reason=device_dm_failure\n");
-    }
-    direct_sync(context);
-    const double scatter_seconds = direct_elapsed(scatter_start);
-    if (root)
-    {
-        std::printf("DM_DIRECT_PHASE mode=%s n=%d bands=%d gather_hs=%.9e diagonal=%.9e psi_redistribute=%.9e occupations=%.9e device_dm=%.9e dm_redistribute=%.9e hs_redistributions=2 hs_logical_bytes=%zu psi_redistributions=1 psi_logical_bytes=%zu dm_redistributions=%d dm_logical_bytes=%zu\n",
-                    mode, n, bands, gather_seconds, diagonal_seconds, psi_seconds, occupation_seconds,
-                    device_dm_seconds, scatter_seconds, hs_bytes, wave_bytes, success, matrix_bytes);
-    }
-    if (verify && success)
-    {
-        if (root)
-        {
-            double trace = 0.0;
-            double electrons = 0.0;
-            for (int band = 0; band < bands; ++band) electrons += state->wg(0, band);
-            for (int col = 0; col < n; ++col)
-            {
-                for (int row = 0; row <= col; ++row)
-                {
-                    const std::size_t index = static_cast<std::size_t>(col) * n + row;
-                    const double multiplicity = row == col ? 1.0 : 2.0;
-                    trace += multiplicity * host_dm[index] * s[index];
-                }
-            }
-            const double error = std::abs(trace - electrons);
-            std::printf("DM_DIRECT_TRACE trace_ds=%.17e electrons=%.17e abs_error=%.17e\n", trace, electrons, error);
-            if (!std::isfinite(trace) || error > 1.0e-7)
-                ModuleBase::WARNING_QUIT("direct_gamma", "Tr(DS) failed the 1e-7 electron tolerance");
-        }
-        const std::size_t count = layout.size();
-        std::vector<double> gpu(dm_pointer, dm_pointer + count);
-        module_dm::dm_from_psi(orbitals, state->wg, wave, density);
-        double max_error = 0.0;
-        double error2 = 0.0;
-        double reference2 = 0.0;
-        for (std::size_t index = 0; index < count; ++index)
-        {
-            const double error = gpu[index] - dm_pointer[index];
-            const double absolute = std::abs(error);
-            max_error = std::max(max_error, absolute);
-            error2 += error * error;
-            reference2 += dm_pointer[index] * dm_pointer[index];
-            if (!std::isfinite(error) || absolute > 1.0e-10)
-                ModuleBase::WARNING_QUIT("direct_gamma", "GPU DM failed the 1e-10 element tolerance");
-        }
-        const int row = layout.irproc();
-        const int col = layout.icproc();
-        std::printf("DM_DIRECT_VERIFY row=%d col=%d count=%zu max_abs=%.17e error2=%.17e reference2=%.17e\n",
-                    row, col, count, max_error, error2, reference2);
-        std::copy(gpu.begin(), gpu.end(), dm_pointer);
-    }
-    return true;
-}
-}
-#endif
 
 template <typename TK>
 void HSolverLCAO<TK>::solve(HSMatrix<TK>& hs,
@@ -244,20 +66,12 @@ void HSolverLCAO<TK>::solve(HSMatrix<TK>& hs,
         const bool trial_root = trial_layout.irproc() == 0 && trial_layout.icproc() == 0;
         direct_sync(trial_context);
         const std::chrono::steady_clock::time_point combined_start = std::chrono::steady_clock::now();
-        const base_device::DeviceContext& device_context = base_device::DeviceContext::instance();
-        int unsupported_rank = device_context.get_device_count() != 1
-                               || device_context.get_local_rank() != this->world_rank;
-        char scope = 'A';
-        char topology = ' ';
-        Cigsum2d(trial_context, &scope, &topology, 1, 1, &unsupported_rank, 1, -1, -1);
-        const bool supported = this->method == "cusolver" && this->kpar_lcao == 1
-                               && nspin == 1 && psi.get_nk() == 1 && !skip_charge
-                               && unsupported_rank == 0 && this->world_nproc > 1;
-        const bool direct_done = direct_gamma(hs, psi, pes, dm, this->ParaV, this->nbands, supported, trial_mode);
+        const DirectConfig trial_config = {this->method, this->kpar_lcao, nspin, skip_charge,
+                                           this->world_rank, this->world_nproc, this->nbands, trial_mode};
+        const bool direct_done = direct_gamma(hs, psi, pes, dm, this->ParaV, trial_config);
         if (!direct_done)
         {
-            if (trial_root && trial_mode != nullptr && std::strcmp(trial_mode, "cpu") != 0)
-                std::printf("DM_DIRECT_FALLBACK reason=unsupported_scope\n");
+            direct_report_fallback(trial_root, trial_mode);
 #endif
     #ifdef __MPI
     #ifdef __CUDA
@@ -309,14 +123,9 @@ void HSolverLCAO<TK>::solve(HSMatrix<TK>& hs,
 #endif
         module_dm::dm_from_psi(this->ParaV, pes->wg, psi, dm);
 #ifdef ABACUS_DM_DIRECT_PILOT
-        direct_sync(trial_context);
-        const double cpu_dm_seconds = direct_elapsed(cpu_dm_start);
-        if (trial_root) std::printf("DM_DIRECT_CPU_DM seconds=%.9e\n", cpu_dm_seconds);
+        direct_report_cpu(trial_root, trial_context, cpu_dm_start);
         }
-        direct_sync(trial_context);
-        const double combined_seconds = direct_elapsed(combined_start);
-        if (trial_root && trial_mode != nullptr)
-            std::printf("DM_DIRECT_COMBINED mode=%s direct=%d seconds=%.9e\n", trial_mode, direct_done, combined_seconds);
+        direct_report_combined(trial_root, trial_context, trial_mode, direct_done, combined_start);
 #endif
         dm.cal_dmr(-1);
 
@@ -714,14 +523,8 @@ void HSolverLCAO<T>::parakSolve_cusolver(HSMatrix<T>& hs,
 #ifdef ABACUS_DM_DIRECT_PILOT
         direct_sync(mat_para_global.ictxt());
         const double psi_seconds = direct_elapsed(scatter_start);
-        if (world_rank == 0)
-        {
-            const std::size_t matrix_bytes = sizeof(T) * static_cast<std::size_t>(nrow) * nrow;
-            const std::size_t wave_bytes = sizeof(T) * static_cast<std::size_t>(nrow) * nbands;
-            const std::size_t hs_bytes = 2 * matrix_bytes;
-            std::printf("DM_DIRECT_PHASE mode=cpu n=%d bands=%d gather_hs=%.9e diagonal=%.9e psi_redistribute=%.9e hs_redistributions=2 hs_logical_bytes=%zu psi_redistributions=1 psi_logical_bytes=%zu dm_redistributions=0 dm_logical_bytes=0\n",
-                        nrow, nbands, gather_seconds, diagonal_seconds, psi_seconds, hs_bytes, wave_bytes);
-        }
+        const std::size_t scalar_bytes = sizeof(T);
+        direct_report_phase(world_rank, nrow, nbands, scalar_bytes, gather_seconds, diagonal_seconds, psi_seconds);
 #endif
     }
 

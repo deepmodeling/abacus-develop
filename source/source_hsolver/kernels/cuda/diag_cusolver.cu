@@ -80,6 +80,11 @@ void Diag_Cusolver_gvd::Dngvd_double_retained(int N, double* A, double* B,
 {
     const int M = N;
     const std::chrono::steady_clock::time_point started = std::chrono::steady_clock::now();
+    if (host_columns <= 0 || host_columns > N)
+    {
+        std::fprintf(stderr, "Invalid retained cuSOLVER host column count: %d of %d\n", host_columns, N);
+        std::exit(EXIT_FAILURE);
+    }
 #endif
 
     // copy A, B to the GPU
@@ -146,6 +151,13 @@ void Diag_Cusolver_gvd::Dngvd_double_retained(int N, double* A, double* B,
         CHECK_CUDA( cudaMemcpy(V, d_A, sizeof(double)*lda*m, cudaMemcpyDeviceToHost) );
 #endif
         CHECK_CUDA( cudaMemcpy(&info_gpu, devInfo, sizeof(int), cudaMemcpyDeviceToHost) );
+#ifdef ABACUS_DM_DIRECT_PILOT
+        if (info_gpu != 0)
+        {
+            std::fprintf(stderr, "FP64 cuSOLVER failed: n=%d info=%d\n", N, info_gpu);
+            std::exit(EXIT_FAILURE);
+        }
+#endif
         assert(0 == info_gpu);
     // free the buffer
         if (d_work ) CHECK_CUDA( cudaFree(d_work) );
@@ -190,11 +202,20 @@ bool Diag_Cusolver_gvd::density_from_retained(int bands, const double* weights, 
     double* device_density = nullptr;
     double* device_weights = nullptr;
     cublasHandle_t handle = nullptr;
+    int weight_calls = 0;
+    int density_calls = 0;
+    std::size_t transferred_weights = 0;
+    std::size_t transferred_density = 0;
     bool success = cudaMalloc(&device_density, matrix_bytes) == cudaSuccess;
     if (success) success = cudaMalloc(&device_weights, weight_bytes) == cudaSuccess;
     if (success) success = cublasCreate(&handle) == CUBLAS_STATUS_SUCCESS;
     if (success) success = cublasSetMathMode(handle, CUBLAS_DEFAULT_MATH) == CUBLAS_STATUS_SUCCESS;
-    if (success) success = cudaMemcpy(device_weights, weights, weight_bytes, cudaMemcpyHostToDevice) == cudaSuccess;
+    if (success)
+    {
+        ++weight_calls;
+        success = cudaMemcpy(device_weights, weights, weight_bytes, cudaMemcpyHostToDevice) == cudaSuccess;
+        if (success) transferred_weights = weight_bytes;
+    }
     if (success)
     {
         const std::size_t count = static_cast<std::size_t>(m) * bands;
@@ -210,15 +231,21 @@ bool Diag_Cusolver_gvd::density_from_retained(int bands, const double* weights, 
         success = cublasDgemm(handle, CUBLAS_OP_N, CUBLAS_OP_T, m, m, bands,
                               &alpha, d_B, lda, d_A, lda, &beta, device_density, lda) == CUBLAS_STATUS_SUCCESS;
     }
-    if (success) success = cudaMemcpy(density, device_density, matrix_bytes, cudaMemcpyDeviceToHost) == cudaSuccess;
+    if (success)
+    {
+        ++density_calls;
+        success = cudaMemcpy(density, device_density, matrix_bytes, cudaMemcpyDeviceToHost) == cudaSuccess;
+        if (success) transferred_density = matrix_bytes;
+    }
     if (success) success = cudaDeviceSynchronize() == cudaSuccess;
     if (device_density != nullptr) success = (cudaFree(device_density) == cudaSuccess) && success;
     if (device_weights != nullptr) success = (cudaFree(device_weights) == cudaSuccess) && success;
     if (handle != nullptr) success = (cublasDestroy(handle) == CUBLAS_STATUS_SUCCESS) && success;
     const std::chrono::steady_clock::time_point finished = std::chrono::steady_clock::now();
     const double seconds = std::chrono::duration<double>(finished - started).count();
-    std::printf("DM_DIRECT_DEVICE n=%d bands=%d seconds=%.9e success=%d psi_h2d_calls=0 psi_h2d_bytes=0 weights_h2d_calls=1 weights_h2d_bytes=%zu dm_d2h_calls=1 dm_d2h_bytes=%zu\n",
-                m, bands, seconds, success, weight_bytes, matrix_bytes);
+    std::printf("DM_DIRECT_DEVICE n=%d bands=%d seconds=%.9e success=%d psi_h2d_calls=0 psi_h2d_bytes=0 "
+                "weights_h2d_calls=%d weights_h2d_bytes=%zu dm_d2h_calls=%d dm_d2h_bytes=%zu\n",
+                m, bands, seconds, success, weight_calls, transferred_weights, density_calls, transferred_density);
     return success;
 }
 #endif

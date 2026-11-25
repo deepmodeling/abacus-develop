@@ -62,6 +62,8 @@ if(ABACUS_DM_DIRECT_PILOT)
     message(FATAL_ERROR "ABACUS_DM_DIRECT_PILOT requires CUDA, MPI and LCAO")
   endif()
   target_compile_definitions(hsolver PRIVATE ABACUS_DM_DIRECT_PILOT)
+  # Private CMake trial only; legacy Makefile/pyabacus do not enable this switch.
+  target_sources(hsolver PRIVATE dm_direct_pilot.cpp)
   target_compile_definitions(diag_cusolver PRIVATE ABACUS_DM_DIRECT_PILOT)
 endif()
 
