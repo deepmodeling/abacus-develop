@@ -58,10 +58,10 @@ TEST(ExxProjection, AllFourModesPreserveNonsymmetricProbeContraction)
             h[col * naos + row] = 0.17 * row + 0.32 * col + 0.09 * row * col;
         }
     }
-    const auto co = coefficients(nocc, 0.3);
-    const auto cv = coefficients(nvirt, -0.2);
-    const auto cvx = coefficients(nocc, 0.7);
-    const auto coxt = coefficients(nvirt, -0.5);
+    const std::vector<double> co = coefficients(nocc, 0.3);
+    const std::vector<double> cv = coefficients(nvirt, -0.2);
+    const std::vector<double> cvx = coefficients(nocc, 0.7);
+    const std::vector<double> coxt = coefficients(nvirt, -0.5);
     const double factor = 0.5;
     const double minus_factor = -factor;
     for (int mode = 0; mode < 4; ++mode)
@@ -72,7 +72,7 @@ TEST(ExxProjection, AllFourModesPreserveNonsymmetricProbeContraction)
         std::vector<double> expected;
         if (mode == 0 || mode == 1)
         {
-            const auto& right = mode == 1 ? co : cv;
+            const std::vector<double>& right = mode == 1 ? co : cv;
             LR::project_exx(h.data(), co.data(), right.data(), naos, nocc, nright,
                             factor, scratch.data(), result.data());
             expected = reference(h, co, right, nright, factor);
@@ -84,7 +84,7 @@ TEST(ExxProjection, AllFourModesPreserveNonsymmetricProbeContraction)
             LR::project_exx(h.data(), co.data(), coxt.data(), naos, nocc, nvirt,
                             minus_factor, scratch.data(), result.data());
             expected = reference(h, cvx, cv, nvirt, factor);
-            const auto occ = reference(h, co, coxt, nvirt, minus_factor);
+            const std::vector<double> occ = reference(h, co, coxt, nvirt, minus_factor);
             for (std::size_t i = 0; i < expected.size(); ++i)
             {
                 expected[i] += occ[i];
@@ -154,8 +154,8 @@ TEST(ExxProjection, ComplexBlochPhasesAndAllFourProbeModes)
         for (int mode = 0; mode < 4; ++mode)
         {
             const int nright = mode == 1 ? nocc : nvirt;
-            const auto& left = mode == 2 ? cvx : co;
-            const auto& right = mode == 1 ? co : (mode == 3 ? coxt : cv);
+            const std::vector<Complex>& left = mode == 2 ? cvx : co;
+            const std::vector<Complex>& right = mode == 1 ? co : (mode == 3 ? coxt : cv);
             const Complex initial(1.25, -0.3);
             std::vector<Complex> result(nocc * nright, initial);
             std::vector<Complex> scratch(naos * nocc);
@@ -232,8 +232,8 @@ TEST(ExxProjection, BenchmarkMappedIndicesPreserveProbeContraction)
             folded_complex[mapped] += original_complex[index];
         }
     }
-    const auto co = coefficients(nocc, 0.3);
-    const auto cv = coefficients(nvirt, -0.2);
+    const std::vector<double> co = coefficients(nocc, 0.3);
+    const std::vector<double> cv = coefficients(nvirt, -0.2);
     std::vector<Complex> co_complex(co.begin(), co.end());
     std::vector<Complex> cv_complex(cv.begin(), cv.end());
     for (int i = 0; i < naos * nocc; ++i)
@@ -293,14 +293,14 @@ TEST(ExxProjection, TransposedResponseMatchesSwappedCxcOProbe)
             transposed[mu * naos + nu] = value;
         }
     }
-    const auto co = coefficients(nocc, 0.3);
-    const auto coxt = coefficients(nvirt, -0.5);
+    const std::vector<double> co = coefficients(nocc, 0.3);
+    const std::vector<double> coxt = coefficients(nvirt, -0.5);
     const double factor = 0.5;
     std::vector<double> result(nocc * nvirt, 0.0);
     std::vector<double> scratch(naos * nocc);
     LR::project_exx(transposed.data(), co.data(), coxt.data(), naos, nocc, nvirt,
                     factor, scratch.data(), result.data());
-    const auto normal = reference(h, co, coxt, nvirt, factor);
+    const std::vector<double> normal = reference(h, co, coxt, nvirt, factor);
     double difference = 0.0;
     for (int io = 0; io < nocc; ++io)
     {

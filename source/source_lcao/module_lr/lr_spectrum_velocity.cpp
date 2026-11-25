@@ -18,7 +18,7 @@ namespace LR
     {
         // convert the orbital object to the old class for Velocity_op
         LCAO_Orbitals orb;
-        const auto& inp = PARAM.inp;
+        const Input_para& inp = PARAM.inp;
         two_center_bundle.to_LCAO_Orbitals(orb, inp.lcao_ecut, inp.lcao_dk, inp.lcao_dr, inp.lcao_rmax,
                                            inp.out_element_info, inp.cal_force);
         const ModuleBase::Element_Basis_Index::Range range =

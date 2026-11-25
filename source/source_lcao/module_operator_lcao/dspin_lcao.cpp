@@ -60,7 +60,7 @@ inline void cal_coeff_lambda(const std::vector<double>& current_lambda, std::vec
 inline void cal_coeff_lambda(const std::vector<double>& current_lambda, std::vector<std::complex<double>>& coefficients)
 {
     const ModuleBase::Vector3<double> lambda(current_lambda[0], current_lambda[1], current_lambda[2]);
-    const auto spinor = spinconstrain::pauli_vector_to_spinor(lambda);
+    const std::array<std::complex<double>, 4> spinor = spinconstrain::pauli_vector_to_spinor(lambda);
     for (int is = 0; is < 4; ++is)
     {
         coefficients[is] = spinor[is];

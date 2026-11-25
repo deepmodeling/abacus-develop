@@ -34,7 +34,7 @@ void sparse_format::sync_all_R_coor(std::set<Abfs::Vector3_Order<int>>& all_R_co
     // Step 3: Gather the raw data of all R coordinates (each R coordinate is stored as 3 integers)
     std::vector<int> local_R_data;
     local_R_data.reserve(local_size * 3);
-    for (const auto& R: all_R_coor)
+    for (const Abfs::Vector3_Order<int>& R: all_R_coor)
     {
         local_R_data.push_back(R.x);
         local_R_data.push_back(R.y);
