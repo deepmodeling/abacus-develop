@@ -21,6 +21,10 @@ addTest(
 addtest(TARGET MODULE_IO_spin_tag SOURCES test_spin_tag.cpp)
 
 addtest(
+  TARGET MODULE_IO_dftu_dc_check
+  SOURCES test_dftu_dc_check.cpp ../../source_lcao/module_dftu/dftu_dc_check.cpp)
+
+addtest(
   TARGET MODULE_IO_libxc_r_suffix
   SOURCES test_libxc_r_suffix.cpp
           ../module_chgpot/libxc_r_suffix.cpp)
@@ -52,6 +56,16 @@ foreach(
         duplicate_string_eof
         invalid_value
         invalid_dependency
+        dftu_default
+        dftu_fll
+        dftu_amf
+        dftu_mixed0
+        dftu_mixed05
+        dftu_mixed1
+        dftu_alpha_below_zero
+        dftu_alpha_above_one
+        dftu_alpha_nonfinite
+        dftu_alpha_trailing
         out_dmk_zero_precision
         out_hsk_zero_precision
         out_mat_tk_zero_precision

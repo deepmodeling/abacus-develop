@@ -80,3 +80,84 @@ Conventional functionals, e.g., L(S)DA and GGAs, encounter failures in strongly 
 Now the DFT+*U* method is accessible in ABACUS. The details of the DFT+*U* method could be found in this [paper](https://doi.org/10.1063/5.0090122). It should be noted that the DFT+*U* works only within the NAO scheme, which means that the value of the keyword `basis_type` must be lcao when DFT+*U* is called. To turn on DFT+*U*, users need to set the value of the `dft_plus_u` keyword in the `INPUT` file to be 1. All relevant parmeters used in DFT+*U* calculations are listed in the [DFT+*U* correction](../input_files/input-main.md#dftu-correction) part of the [list of keywords](../input_files/input-main.md).
 
 Examples of DFT+*U* calculations are provided in this [directory](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/19_dftu).
+
+### Full-projector double counting
+
+Here **Full** names the existing radius-adjustable localized projection
+(`dft_plus_u=1`, controlled by `onsite_radius`) implemented by `DFTU_onsite`.
+It does **not** mean a full anisotropic $U/J$ interaction. The input
+`hubbard_u` is the simplified $U_{\rm eff}=U-J$; no separate Hund's $J$ or
+Slater-integral tensor is introduced. Retaining `DFTU_onsite` is not the
+addition of a new On-site/projector-3 method.
+
+For this projector, `dftu_dc` selects `fll` (default),
+`amf`, or `mixed`. Omitting the new parameters or explicitly selecting `fll`
+keeps the existing FLL potential and energy path. This extension does not
+change Dual (`dft_plus_u=2`) or add another projector.
+
+For fixed-weight interpolation, specify both parameters:
+
+```text
+dftu_dc     mixed
+dftu_alpha  0.5
+```
+
+`dftu_alpha` must be explicitly supplied, finite and in [0,1] for `mixed`;
+it is rejected for other modes. Zero gives AMF and one gives FLL. The mixing
+is applied to the local interaction energy and its potential, not to two
+separate SCF results. This is a fixed input weight, not a self-consistently
+determined interpolation parameter.
+
+For each atom and spin channel $\sigma$, let $n^\sigma$ be the existing
+projected Hermitian occupation matrix of dimension $M=2l+1$ and
+$N_\sigma=\mathrm{Tr}(n^\sigma)$. AMF subtracts the orbital average
+$\bar n_\sigma=N_\sigma/M$ **within each spin channel**, not the common
+spin average $(N_\uparrow+N_\downarrow)/(2M)$. No additional trace
+normalization or rescaling of the existing projected occupation is applied.
+Suppressing the atom/spin labels, the isotropic effective-$U$ convention is
+
+$$
+E_\alpha=\frac{U_{\rm eff}}{2}
+\left[\alpha N+(1-\alpha)\frac{N^2}{M}-\mathrm{Tr}(n^2)\right],
+\qquad
+V_\alpha=U_{\rm eff}\left[
+\left(\frac{\alpha}{2}+(1-\alpha)\frac{N}{M}\right)I-n\right].
+$$
+
+In particular, $E_{\rm AMF}=-U_{\rm eff}\mathrm{Tr}[(n-\bar n I)^2]/2$.
+Thus a uniform shell in either spin channel has zero AMF correction, even
+when the two spin channels have different occupations. Both the functional
+and its derivative are interpolated at the **same** occupation and a fixed
+input $\alpha$, not at occupations from separate converged calculations.
+
+Here $\delta E=\mathrm{Re}\,\mathrm{Tr}(V\delta n)$. Energies are summed over
+atoms and spin channels. For `nspin=1`, the existing Full occupation builder
+halves the spin-summed density; the resulting shell energy is doubled, but
+the potential is not. The Full operator's band-energy correction is
+$E_\alpha-\mathrm{Re}\,\mathrm{Tr}(V_\alpha n)$, evaluated with the **same**
+occupation as the potential. This extension retains that existing update
+timing; it does not implement a different post-diagonalization energy ledger.
+Equivalently, for a spin-summed matrix $D$ in `nspin=1`,
+$E_{\rm total}(D)=2E_\alpha(D/2)$ and
+$\delta E_{\rm total}=\mathrm{Re}\,\mathrm{Tr}[V_\alpha(D/2)\delta D]$.
+The factor two in the energy cancels the one-half from differentiating the
+occupation, so doubling the potential would be incorrect. With `nspin=2`,
+the two shell energies and band corrections are accumulated once each.
+
+AMF and mixed requests, including both endpoints, currently require explicit
+PBE, double-precision CPU LCAO, fixed-structure KS SCF, collinear `nspin=1/2`,
+`symmetry=0` or `-1`, one k pool and atomic cold start. The supported solver
+choices are `genelpa`, `elpa`, `lapack` and `scalapack_gvx`. Gamma and multi-k
+representations use the same local-shell formulas. SOC/spin constraints,
+force/stress requests even during fixed-structure SCF, restart/occupation
+files, U ramping, Yukawa U, occupation/DMR
+mixing, EXX and matrix/Wannier/QO exports are rejected. These new restrictions
+do **not** apply to legacy FLL requests. Charge and Mulliken output remain
+available.
+
+For context on FLL, AMF and interpolation, see
+[Dudarev et al., Phys. Rev. B 57, 1505 (1998)](https://doi.org/10.1103/PhysRevB.57.1505),
+[Czyzyk and Sawatzky, Phys. Rev. B 49, 14211 (1994)](https://doi.org/10.1103/PhysRevB.49.14211), and
+[Petukhov et al., Phys. Rev. B 67, 153106 (2003)](https://doi.org/10.1103/PhysRevB.67.153106).
+The equations above specify the convention implemented here; this is not a
+general Slater-integral or self-consistent-alpha implementation.

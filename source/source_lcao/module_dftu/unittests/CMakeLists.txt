@@ -7,6 +7,10 @@ abacus_disable_feature_definitions(__ROCM)
 abacus_disable_feature_definitions(__MLALGO)
 abacus_disable_feature_definitions(_OPENMP)
 
+addtest(
+  TARGET MODULE_DFTU_full_dc
+  SOURCES test_dftu_full_dc.cpp ../dftu_full_dc.cpp)
+
 if(ENABLE_MPI)
 
   addtest(
@@ -87,6 +91,7 @@ if(ENABLE_MPI)
         ../dftu_nao_op.cpp
         ../dftu_nao_adj.cpp
         ../dftu_nao_pots.cpp
+        ../dftu_full_dc.cpp
         ../dftu_nao_fs_r.cpp
         ../dftu_nao_fs_reduce.cpp
         ../dftu_nao_for_r.cpp
@@ -119,6 +124,15 @@ if(ENABLE_MPI)
         # so it must keep __MPI even though this directory disables it.
       KEEP_FEATURE_DEFINITIONS __MPI)
 
+    add_test(
+      NAME MODULE_DFTU_op_conjugate_k_mpi4
+      COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 4 ${MPIEXEC_PREFLAGS}
+              $<TARGET_FILE:MODULE_DFTU_op> ${MPIEXEC_POSTFLAGS}
+              --gtest_filter=DFTUTest.FullDcConjugateKDensityAndHamiltonian
+      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+    set_tests_properties(MODULE_DFTU_op_conjugate_k_mpi4
+      PROPERTIES PROCESSORS 4 TIMEOUT 120 ENVIRONMENT "OMP_NUM_THREADS=1")
+
     addtest(
       TARGET MODULE_DFTU_ijr
       LIBS parameter psi base device container
@@ -141,6 +155,7 @@ if(ENABLE_MPI)
         ../dftu_nao_op.cpp
         ../dftu_nao_adj.cpp
         ../dftu_nao_pots.cpp
+        ../dftu_full_dc.cpp
         ../dftu_nao_fs_r.cpp
         ../dftu_nao_fs_reduce.cpp
         ../dftu_nao_for_r.cpp

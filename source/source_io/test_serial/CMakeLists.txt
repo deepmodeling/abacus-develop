@@ -20,6 +20,7 @@ add_library(
   ../module_parameter/sccs_inp_check.cpp
   ../module_parameter/read_inp_postproc.cpp
   ../module_parameter/read_inp_exx_dftu.cpp
+  ../../source_lcao/module_dftu/dftu_dc_check.cpp
   ../module_parameter/read_inp_other.cpp
   ../module_parameter/read_inp_out.cpp
   ../module_parameter/read_input.cpp
@@ -54,6 +55,11 @@ addtest(
   SOURCES ../unittests/test_input_domain_reader.cpp ../input_help.cpp)
 
 addtest(TARGET MODULE_IO_read_input_tool SOURCES read_input_tool_test.cpp)
+
+addtest(
+  TARGET MODULE_IO_read_inp_exx_dftu
+  LIBS parameter base device io_input_serial
+  SOURCES ../unittests/test_read_inp_exx_dftu.cpp)
 
 addtest(
   TARGET MODULE_IO_rho_io
