@@ -126,20 +126,25 @@ int main(int argc, char** argv)
                 "gather_int_all lost a rank's value");
     }
 
-    // reduce_max_loc: the rank supplying the maximum comes back with it. On a
+    // reduce_max_with_rank: the rank supplying the maximum comes back with it. On a
     // tie MPI may report any contributing rank, so only check the value there.
     const double local_value = (sub_rank == 0 || sub_rank == 1) ? 9.5 : 1.0;
     const int local_rank = sub_rank;
     double best_value = local_value;
     int best_rank = local_rank;
-    Parallel_Reduce::reduce_max_loc(sub, best_value, best_rank);
-    require(best_value == 9.5, "reduce_max_loc lost the maximum value");
+    Parallel_Reduce::reduce_max_with_rank(sub, best_value, best_rank);
+    require(best_value == 9.5, "reduce_max_with_rank lost the maximum value");
     const bool tied = sub_size > 1;
     if (tied)
     {
         require(best_rank == 0 || best_rank == 1,
-                "reduce_max_loc reported a rank that did not hold the maximum");
+                "reduce_max_with_rank reported a rank that did not hold the maximum");
     }
+
+    // The interface must also exist in a serial build. The header keeps its
+    // declarations unconditional, so this call compiles whether or not __MPI
+    // is defined; only the implementation behind it changes.
+    require(Parallel_Common::nproc(sub) >= 1, "nproc must report at least one rank");
 
     Parallel_Common::barrier(sub);
     MPI_Comm_free(&sub);

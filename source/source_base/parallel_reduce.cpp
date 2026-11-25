@@ -152,15 +152,17 @@ void Parallel_Reduce::reduce_min(const MPI_Comm mpi_comm, T& object)
     MPI_Allreduce(MPI_IN_PLACE, &object, 1, MPI_Type<T>::value, MPI_MIN, mpi_comm);
 }
 
-void Parallel_Reduce::reduce_max_loc(const MPI_Comm mpi_comm, double& value, int& rank)
+void Parallel_Reduce::reduce_max_with_rank(const MPI_Comm mpi_comm, double& value, int& rank)
 {
-    struct MaxLoc
+    // MPI_MAXLOC pairs a value with its source rank; name the pair after what
+    // it holds rather than after the MPI operation code.
+    struct ValueAndSourceRank
     {
         double value;
         int rank;
     };
-    MaxLoc local{value, rank};
-    MaxLoc global{};
+    ValueAndSourceRank local{value, rank};
+    ValueAndSourceRank global{};
     MPI_Allreduce(&local, &global, 1, MPI_DOUBLE_INT, MPI_MAXLOC, mpi_comm);
     value = global.value;
     rank = global.rank;
@@ -203,6 +205,73 @@ void Parallel_Reduce::gatherv_int_all(const MPI_Comm mpi_comm,
                    MPI_INT, mpi_comm);
 }
 
+#else
+// Serial counterparts: one rank owns all the data, so a "reduce" over a
+// communicator is the identity and a gather writes exactly one entry. They
+// exist so the declarations stay usable instead of being compiled away.
+template <typename T>
+void Parallel_Reduce::reduce_all(const MPI_Comm mpi_comm, T& object)
+{
+    (void)mpi_comm;
+    (void)object;
+}
+
+template <typename T>
+void Parallel_Reduce::reduce_all(const MPI_Comm mpi_comm, T* object, const int n)
+{
+    (void)mpi_comm;
+    (void)object;
+    (void)n;
+}
+
+template <typename T>
+void Parallel_Reduce::reduce_max(const MPI_Comm mpi_comm, T& object)
+{
+    (void)mpi_comm;
+    (void)object;
+}
+
+template <typename T>
+void Parallel_Reduce::reduce_min(const MPI_Comm mpi_comm, T& object)
+{
+    (void)mpi_comm;
+    (void)object;
+}
+
+void Parallel_Reduce::reduce_max_with_rank(const MPI_Comm mpi_comm, double& value, int& rank)
+{
+    (void)mpi_comm;
+    (void)value;
+    rank = 0;
+}
+
+void Parallel_Reduce::gather_int_all(const MPI_Comm mpi_comm, int& v, int* all)
+{
+    (void)mpi_comm;
+    assert(all != nullptr);
+    all[0] = v;
+}
+
+void Parallel_Reduce::gatherv_int_all(const MPI_Comm mpi_comm,
+                                      const int* send_buffer,
+                                      const int send_count,
+                                      int* receive_buffer,
+                                      const int* receive_counts,
+                                      const int* receive_displacements)
+{
+    (void)mpi_comm;
+    (void)receive_counts;
+    (void)receive_displacements;
+    assert(send_count == 0 || (send_buffer != nullptr && receive_buffer != nullptr));
+    for (int i = 0; i < send_count; ++i)
+    {
+        receive_buffer[i] = send_buffer[i];
+    }
+}
+#endif
+
+// The instantiations apply to whichever implementation the branch above
+// compiled, so they sit outside the conditional.
 template void Parallel_Reduce::reduce_all<int>(const MPI_Comm, int&);
 template void Parallel_Reduce::reduce_all<double>(const MPI_Comm, double&);
 template void Parallel_Reduce::reduce_all<unsigned long long>(const MPI_Comm, unsigned long long&);
@@ -218,7 +287,6 @@ template void Parallel_Reduce::reduce_max<unsigned long long>(const MPI_Comm, un
 template void Parallel_Reduce::reduce_min<int>(const MPI_Comm, int&);
 template void Parallel_Reduce::reduce_min<double>(const MPI_Comm, double&);
 template void Parallel_Reduce::reduce_min<unsigned long long>(const MPI_Comm, unsigned long long&);
-#endif
 
 
 void Parallel_Reduce::reduce_double_grid(double* object, const int n)
