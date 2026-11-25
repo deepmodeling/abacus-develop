@@ -7,7 +7,7 @@ abacus_disable_feature_definitions(__ROCM)
 addtest(
   TARGET MODULE_PW_Sto_Tool_UTs
   LIBS parameter psi base device
-  SOURCES ../sto_tool.cpp test_sto_tool.cpp)
+  SOURCES ../sto_tool.cpp ../sto_dos_quality.cpp test_sto_tool.cpp)
 
 addtest(
   TARGET MODULE_PW_Sto_Hamilt_UTs

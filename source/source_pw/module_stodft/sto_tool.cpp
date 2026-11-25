@@ -1,3 +1,4 @@
+#include "sto_dos_quality.h"
 #include "sto_tool.h"
 
 #include <sstream>
@@ -132,34 +133,24 @@ void check_che_op<FPTYPE, Device>::operator()(const int& nche_in,
             // numerical result bit for bit.
             // Only an automatically determined bound may be repaired: a positive
             // emin_sto given by the user (or a genuinely positive spectrum) is a
-            // valid interval and must be preserved.
+            // valid interval and must be preserved.  The repair itself is the
+            // pure, unit-tested sanitiser from module sto_dos_quality.
             const bool emin_is_automatic = (PARAM.inp.emin_sto == 0.0);
-            if (emin_is_automatic && (!std::isfinite(*p_hamilt_sto->emin) || *p_hamilt_sto->emin > 0))
+            if (emin_is_automatic)
             {
-                const double positive_emin = *p_hamilt_sto->emin;
-                const double emax_abs = std::abs(*p_hamilt_sto->emax);
-                const double fallback_span = std::max(5.0, 0.01 * emax_abs);
-                const double safe_emin = -fallback_span;
-                std::ostringstream range_msg;
-                range_msg << " WARNING: positive automatic Chebyshev Emin " << positive_emin << " Ry is reset to "
-                          << safe_emin << " Ry";
-                *p_hamilt_sto->emin = safe_emin;
-                // The pathological path that produced a positive Emin also
-                // tends to underestimate Emax.  The highest plane-wave
-                // eigenvalue is bounded by roughly ecutwfc; use it as a floor.
-                const double ecutwfc = PARAM.inp.ecutwfc;
-                const double ecut_floor = 1.05 * ecutwfc;
-                if (ecutwfc > 0 && *p_hamilt_sto->emax < ecut_floor)
+                const std::vector<double> no_eigs;
+                const ModuleIO::CheRange fixed
+                    = ModuleIO::sanitize_che_range(*p_hamilt_sto->emin, *p_hamilt_sto->emax, PARAM.inp.ecutwfc, no_eigs);
+                if (fixed.emin_repaired || fixed.emax_repaired || fixed.degenerate)
                 {
-                    range_msg << "; Chebyshev Emax " << *p_hamilt_sto->emax
-                              << " Ry is raised to the ecutwfc-based floor " << ecut_floor << " Ry";
-                    *p_hamilt_sto->emax = ecut_floor;
+                    std::ostringstream range_msg;
+                    range_msg << " WARNING: Chebyshev range repaired from [" << *p_hamilt_sto->emin << ", "
+                              << *p_hamilt_sto->emax << "] to [" << fixed.emin << ", " << fixed.emax << "] Ry";
+                    GlobalV::ofs_running << range_msg.str() << std::endl;
                 }
-                GlobalV::ofs_running << range_msg.str() << std::endl;
+                *p_hamilt_sto->emin = fixed.emin;
+                *p_hamilt_sto->emax = fixed.emax;
             }
-            GlobalV::ofs_running << "New Emax " << *p_hamilt_sto->emax << " Ry; new Emin " << *p_hamilt_sto->emin
-                                 << " Ry" << std::endl;
-            change = false;
         }
     }
 }

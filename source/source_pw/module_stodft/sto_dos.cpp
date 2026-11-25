@@ -5,6 +5,7 @@
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
 #include "source_io/module_parameter/parameter.h"
+#include "sto_dos_quality.h"
 #include "sto_tool.h"
 
 #include <algorithm>
@@ -97,54 +98,40 @@ void Sto_DOS<FPTYPE, Device>::decide_param(const int& dos_nche,
         reinterpret_cast<Stochastic_WF<std::complex<FPTYPE>, Device>*>(this->p_stowf),
         reinterpret_cast<StoHamiltPW<std::complex<FPTYPE>, Device>*>(this->p_hamilt_sto));
 
-    // The stochastic range check learns only the high-energy end reliably.
-    // The lowest deterministic KS eigenvalue is a much safer lower bound; if
-    // the automatic Emin lies above it, the Chebyshev interval would exclude
-    // occupied states and T_n(H) would grow exponentially outside [-1,1].
-    // Extending the interval below the lowest eigenvalue is always harmless.
-    double det_emin = std::numeric_limits<double>::max();
-    bool has_det_emin = false;
-    if (this->p_elec != nullptr)
+    // The range determined by the SCF check only learns the high-energy end
+    // reliably.  Run the pure, unit-tested sanitiser (module
+    // sto_dos_quality): it covers the known deterministic eigenvalues and the
+    // plane-wave spectrum top, so an occupied state outside the interval (T_n
+    // grows exponentially there) and an underestimated upper bound are both
+    // removed.  Healthy ranges are returned bit for bit unchanged.
     {
-        const auto& ekb = this->p_elec->ekb;
-        for (int ik = 0; ik < ekb.nr; ++ik)
+        std::vector<double> det_eigs;
+        if (this->p_elec != nullptr)
         {
-            for (int ib = 0; ib < ekb.nc; ++ib)
+            const auto& ekb = this->p_elec->ekb;
+            for (int ik = 0; ik < ekb.nr; ++ik)
             {
-                const double e = ekb(ik, ib);
-                if (std::isfinite(e))
+                for (int ib = 0; ib < ekb.nc; ++ib)
                 {
-                    det_emin = std::min(det_emin, e);
-                    has_det_emin = true;
+                    const double e = ekb(ik, ib);
+                    if (std::isfinite(e))
+                    {
+                        det_eigs.push_back(e);
+                    }
                 }
             }
         }
-    }
-#ifdef __MPI
-    double global_det_emin = has_det_emin ? det_emin : std::numeric_limits<double>::max();
-    Parallel_Reduce::reduce_min(global_det_emin);
-    if (global_det_emin < std::numeric_limits<double>::max())
-    {
-        det_emin = global_det_emin;
-        has_det_emin = true;
-    }
-#endif
-    if (has_det_emin)
-    {
-        const double margin_ry = 1.0e-3;
-        const double safe_emin = det_emin - margin_ry;
-        if (safe_emin < *p_hamilt_sto->emin)
+        const ModuleIO::CheRange fixed
+            = ModuleIO::sanitize_che_range(*p_hamilt_sto->emin, *p_hamilt_sto->emax, PARAM.inp.ecutwfc, det_eigs);
+        if (fixed.emin_repaired || fixed.emax_repaired || fixed.degenerate)
         {
-            std::ostringstream reset_msg;
-            reset_msg << " DOS: reset Chebyshev Emin from " << *p_hamilt_sto->emin << " Ry to " << safe_emin
-                      << " Ry (lowest KS eigenvalue = " << det_emin << " Ry)";
-            dos_log(reset_msg.str(), false);
-            *p_hamilt_sto->emin = safe_emin;
+            std::ostringstream range_msg;
+            range_msg << " DOS: Chebyshev range repaired from [" << *p_hamilt_sto->emin << ", " << *p_hamilt_sto->emax
+                      << "] to [" << fixed.emin << ", " << fixed.emax << "] Ry";
+            dos_log(range_msg.str(), false);
         }
-    }
-    if (!std::isfinite(*p_hamilt_sto->emax) || *p_hamilt_sto->emax <= *p_hamilt_sto->emin)
-    {
-        *p_hamilt_sto->emax = *p_hamilt_sto->emin + 1.0;
+        *p_hamilt_sto->emin = fixed.emin;
+        *p_hamilt_sto->emax = fixed.emax;
     }
 
     if (dos_setemax)
@@ -322,26 +309,16 @@ void Sto_DOS<FPTYPE, Device>::caldos(const double sigmain, const double de, cons
     }
     this->stofunc.sigma = sigmain / ModuleBase::Ry_to_eV;
 
-    // Estimate the Chebyshev order needed to resolve a Gaussian of width
-    // sigmain over the actual spectral range.  Reporting this explicitly
-    // prevents a silently under-resolved DOS: with a large ecut and the
-    // default dos_sigma (0.07 eV) the required order can be thousands or more,
-    // while method 2 stores an nche x nche matrix and becomes prohibitively
-    // expensive.
-    const double range_ev = (*this->stofunc.Emax - *this->stofunc.Emin) * ModuleBase::Ry_to_eV;
-    const double sigma_ev = std::abs(sigmain);
-    if (sigma_ev > 0.0 && range_ev > 0.0)
+    // Report DOS settings that cannot resolve the curve: grid spacing versus
+    // Gaussian broadening, and Chebyshev order versus range/sigma.  The checks
+    // are pure functions (unittests/test_sto_dos_quality.cpp) and only report;
+    // a long run is never aborted by a quality suggestion.
     {
-        const double prefactor = std::sqrt(2.0 * std::log(1.0e6));
-        const double nche_needed = 0.5 * range_ev / sigma_ev * prefactor;
-        if (nche_needed > static_cast<double>(this->dos_nche))
+        const double range_ev = (*this->stofunc.Emax - *this->stofunc.Emin) * ModuleBase::Ry_to_eV;
+        const double sigma_ev = std::abs(sigmain);
+        for (const std::string& msg: ModuleIO::check_dos_parameters(range_ev, sigma_ev, de, this->dos_nche))
         {
-            std::ostringstream msg;
-            msg << "dos_sigma = " << sigma_ev << " eV is narrower than the Chebyshev expansion can resolve: "
-                << "range = " << range_ev << " eV, dos_nche = " << this->dos_nche
-                << ", estimated order needed ~ " << static_cast<long long>(std::ceil(nche_needed))
-                << ". Increase dos_nche (method 1 or method 2 with sufficient memory) or use a larger dos_sigma.";
-            dos_log(" WARNING: " + msg.str(), true);
+            dos_log(" WARNING: DOS: " + msg, true);
         }
     }
     ModuleBase::timer::end("Sto_DOS", "Tracepoly");
@@ -422,6 +399,7 @@ void Sto_DOS<FPTYPE, Device>::caldos(const double sigmain, const double de, cons
         ofsdos.open(dosfile.c_str());
         double maxerror = 0;
         double sum = 0;
+        double min_dos = std::numeric_limits<double>::max();
 
         ofsdos << ndos << " # number of points" << std::endl;
         ofsdos << "#" << std::setw(19) << "energy(eV)"
@@ -435,6 +413,7 @@ void Sto_DOS<FPTYPE, Device>::caldos(const double sigmain, const double de, cons
                 maxerror = tmperror;
             }
             double dos = 2.0 * (ks_dos[ie] + sto_dos[ie]) / ModuleBase::Ry_to_eV;
+            min_dos = std::min(min_dos, dos);
             sum += dos;
             ofsdos << std::setw(20) << emin + ie * de << std::setw(20) << dos << std::setw(20) << sum * de
                    << std::setw(20) << tmperror << std::endl;
@@ -443,6 +422,18 @@ void Sto_DOS<FPTYPE, Device>::caldos(const double sigmain, const double de, cons
         std::cout << "Finish DOS" << std::endl;
         std::cout << std::scientific << "DOS max absolute Chebyshev Error: " << maxerror << std::endl;
         ofsdos.close();
+
+        // Result-level checks: a curve that goes visibly negative, or an output
+        // energy outside the Chebyshev interval, means the printed numbers must
+        // not be used without changing dos_sigma / dos_nche / the window.
+        const double dE = *this->stofunc.Emax - *this->stofunc.Emin;
+        const double t_lo = (2.0 * this->emin / ModuleBase::Ry_to_eV - *this->stofunc.Emax - *this->stofunc.Emin) / dE;
+        const double t_hi = (2.0 * this->emax / ModuleBase::Ry_to_eV - *this->stofunc.Emax - *this->stofunc.Emin) / dE;
+        const double max_abs_t = std::max(std::fabs(t_lo), std::fabs(t_hi));
+        for (const std::string& msg: ModuleIO::check_dos_result(min_dos, max_abs_t))
+        {
+            dos_log(" WARNING: DOS: " + msg, true);
+        }
     }
     ModuleBase::timer::end("Sto_DOS", "DOS Loop");
     ModuleBase::timer::end("Sto_DOS", "caldos");
