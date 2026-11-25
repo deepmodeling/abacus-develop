@@ -23,6 +23,8 @@ namespace ModuleIO
  *               filename in mode 2 (out_app_flag == 2), and only when istep >= 0.
  * @param iter: index of the electronic step starting from 0. The step number is only embedded in
  *              the filename in mode 2 (out_app_flag == 2), and only when iter >= 0.
+ * @param tag: optional tag inserted after the property, used to write several independent dumps of
+ *             the same property in one run (e.g. the stochastic orbitals of an SDFT run).
  * @return The generated filename.
  */
 std::string filename_output(
@@ -37,7 +39,8 @@ std::string filename_output(
             const int out_app_flag,
             const bool gamma_only,
             const int istep=-1,
-            const int iter=-1);
+            const int iter=-1,
+            const std::string &tag="");
 
 }
 #endif

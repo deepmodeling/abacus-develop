@@ -30,7 +30,8 @@ void write_wfc_pw(
         const psi::Psi<std::complex<double>>& psi,
         const K_Vectors& kv,
         const ModulePW::PW_Basis_K* wfcpw,
-        std::ofstream &ofs_running);
+        std::ofstream &ofs_running,
+        const std::string& property_tag = "");
 
 }
 
