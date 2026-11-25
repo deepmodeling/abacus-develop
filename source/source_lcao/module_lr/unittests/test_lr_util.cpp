@@ -170,7 +170,7 @@ TEST_F(LRDMTest, LRExxAdapterIncludesBothSpinChannels)
     hamilt::HContainer<double> hr(paraV);
     hr.allocate(nullptr, true);
     dm.init_dmr(hr);
-    auto& dmk = dm.get_dmk_vec();
+    std::vector<std::vector<double>>& dmk = dm.get_dmk_vec();
     ASSERT_EQ(dmk.size(), 4U);
     for (std::size_t ik = 0; ik < dmk.size(); ++ik)
     {

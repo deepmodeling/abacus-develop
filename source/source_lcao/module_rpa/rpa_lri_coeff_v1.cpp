@@ -28,7 +28,7 @@ void write_lri_coef_v1(const std::string& filename,
         checked_mul_u64(static_cast<unsigned long long>(nblocks), record_bytes, "LibRPA v1 coefficient record table"),
         "LibRPA v1 coefficient data offset");
 
-    for (auto& block: blocks)
+    for (RpaLriDetail::LriCoefV1Block& block: blocks)
     {
         if (block.tensor == nullptr || block.nw1 <= 0 || block.nw2 <= 0 || block.naux <= 0
             || block.tensor->shape.size() != 3 || block.tensor->shape[0] != static_cast<std::size_t>(block.naux)
@@ -63,7 +63,7 @@ void write_lri_coef_v1(const std::string& filename,
     write_scalar(ofs, ncell, filename);
     write_scalar(ofs, nblocks, filename);
     write_scalar(ofs, nblocks, filename);
-    for (const auto& block: blocks)
+    for (const RpaLriDetail::LriCoefV1Block& block: blocks)
     {
         write_scalar(ofs, block.ia1, filename);
         write_scalar(ofs, block.ia2, filename);
@@ -74,7 +74,7 @@ void write_lri_coef_v1(const std::string& filename,
         write_scalar(ofs, block.max_abs, filename);
         write_scalar(ofs, block.offset, filename);
     }
-    for (const auto& block: blocks)
+    for (const RpaLriDetail::LriCoefV1Block& block: blocks)
     {
         for (int i = 0; i < block.nw1; ++i)
         {
