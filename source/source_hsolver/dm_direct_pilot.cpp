@@ -42,7 +42,8 @@ void direct_sync(const int context)
 double direct_elapsed(const std::chrono::steady_clock::time_point& started)
 {
     const std::chrono::steady_clock::time_point finished = std::chrono::steady_clock::now();
-    return std::chrono::duration<double>(finished - started).count();
+    const std::chrono::steady_clock::duration duration = finished - started;
+    return std::chrono::duration<double>(duration).count();
 }
 
 bool direct_gamma(HSMatrix<double>& hs, psi::Psi<double>& wave, elecstate::ElecState* state,
@@ -80,8 +81,12 @@ bool direct_gamma(HSMatrix<double>& hs, psi::Psi<double>& wave, elecstate::ElecS
     int wave_desc[9] = {1, context, n, bands, n, bands, 0, 0, leading_dimension};
     int distributed_desc[9];
     int distributed_wave_desc[9];
-    std::copy(layout.desc(), layout.desc() + 9, distributed_desc);
-    std::copy(orbitals->desc_wfc, orbitals->desc_wfc + 9, distributed_wave_desc);
+    const int* matrix_descriptor = layout.desc();
+    const int* matrix_descriptor_end = matrix_descriptor + 9;
+    const int* wave_descriptor = orbitals->desc_wfc;
+    const int* wave_descriptor_end = wave_descriptor + 9;
+    std::copy(matrix_descriptor, matrix_descriptor_end, distributed_desc);
+    std::copy(wave_descriptor, wave_descriptor_end, distributed_wave_desc);
     const std::chrono::steady_clock::time_point gather_start = std::chrono::steady_clock::now();
     ModuleBase::MatrixBlock<double> hk;
     ModuleBase::MatrixBlock<double> sk;
@@ -173,13 +178,16 @@ bool direct_gamma(HSMatrix<double>& hs, psi::Psi<double>& wave, elecstate::ElecS
                     trace += multiplicity * host_dm[index] * s[index];
                 }
             }
-            const double error = std::abs(trace - electrons);
+            const double trace_difference = trace - electrons;
+            const double error = std::abs(trace_difference);
             std::printf("DM_DIRECT_TRACE trace_ds=%.17e electrons=%.17e abs_error=%.17e\n", trace, electrons, error);
             if (!std::isfinite(trace) || error > 1.0e-7)
                 ModuleBase::WARNING_QUIT("direct_gamma", "Tr(DS) failed the 1e-7 electron tolerance");
         }
         const std::size_t count = layout.size();
-        std::vector<double> gpu(dm_pointer, dm_pointer + count);
+        const double* dm_begin = dm_pointer;
+        const double* dm_end = dm_begin + count;
+        std::vector<double> gpu(dm_begin, dm_end);
         module_dm::dm_from_psi(orbitals, state->wg, wave, density);
         double max_error = 0.0;
         double error2 = 0.0;

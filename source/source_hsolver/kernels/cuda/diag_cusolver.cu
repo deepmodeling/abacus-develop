@@ -164,7 +164,8 @@ void Diag_Cusolver_gvd::Dngvd_double_retained(int N, double* A, double* B,
 #ifdef ABACUS_DM_DIRECT_PILOT
         d_work = nullptr;
         const std::chrono::steady_clock::time_point finished = std::chrono::steady_clock::now();
-        const double seconds = std::chrono::duration<double>(finished - started).count();
+        const std::chrono::steady_clock::duration duration = finished - started;
+        const double seconds = std::chrono::duration<double>(duration).count();
         const std::size_t hs_bytes = 2 * matrix_bytes;
         const std::size_t eigenvalue_bytes = sizeof(double) * static_cast<std::size_t>(m);
         std::printf("DM_DIRECT_SOLVER n=%d host_columns=%d seconds=%.9e hs_h2d_calls=2 hs_h2d_bytes=%zu psi_d2h_calls=1 psi_d2h_bytes=%zu eigenvalue_d2h_calls=1 eigenvalue_d2h_bytes=%zu info_d2h_calls=1 info_d2h_bytes=4 info=%d\n",
@@ -219,7 +220,8 @@ bool Diag_Cusolver_gvd::density_from_retained(int bands, const double* weights, 
     if (success)
     {
         const std::size_t count = static_cast<std::size_t>(m) * bands;
-        const int blocks = static_cast<int>((count + 255) / 256);
+        const std::size_t block_count = (count + 255) / 256;
+        const int blocks = static_cast<int>(block_count);
         // d_B's Cholesky factor is dead after diagonalization; reuse its storage.
         weight_retained_columns<<<blocks, 256>>>(m, bands, d_A, device_weights, d_B);
         success = cudaGetLastError() == cudaSuccess;
@@ -242,7 +244,8 @@ bool Diag_Cusolver_gvd::density_from_retained(int bands, const double* weights, 
     if (device_weights != nullptr) success = (cudaFree(device_weights) == cudaSuccess) && success;
     if (handle != nullptr) success = (cublasDestroy(handle) == CUBLAS_STATUS_SUCCESS) && success;
     const std::chrono::steady_clock::time_point finished = std::chrono::steady_clock::now();
-    const double seconds = std::chrono::duration<double>(finished - started).count();
+    const std::chrono::steady_clock::duration duration = finished - started;
+    const double seconds = std::chrono::duration<double>(duration).count();
     std::printf("DM_DIRECT_DEVICE n=%d bands=%d seconds=%.9e success=%d psi_h2d_calls=0 psi_h2d_bytes=0 "
                 "weights_h2d_calls=%d weights_h2d_bytes=%zu dm_d2h_calls=%d dm_d2h_bytes=%zu\n",
                 m, bands, seconds, success, weight_calls, transferred_weights, density_calls, transferred_density);

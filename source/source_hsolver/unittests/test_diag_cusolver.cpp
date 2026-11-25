@@ -45,7 +45,8 @@ TEST(CusolverRetainedDm, FractionalSignedWeightsAfterHostMaterialization)
         weights[2] = 0.125;
         // The direct DM must not depend on the host eigenvector materialization.
         std::fill(host_wave.begin(), host_wave.end(), 0.0);
-        ASSERT_TRUE(retained.density_from_retained(bands, weights.data(), density.data()));
+        const bool ready = retained.density_from_retained(bands, weights.data(), density.data());
+        ASSERT_TRUE(ready);
         for (int col = 0; col < n; ++col)
         {
             for (int row = 0; row < n; ++row)
@@ -53,9 +54,11 @@ TEST(CusolverRetainedDm, FractionalSignedWeightsAfterHostMaterialization)
                 double reference = 0.0;
                 for (int band = 0; band < bands; ++band)
                     reference += weights[band] * legacy_wave[band * n + row] * legacy_wave[band * n + col];
-                EXPECT_NEAR(density[col * n + row], reference, 2.0e-12);
+                const int index = col * n + row;
+                EXPECT_NEAR(density[index], reference, 2.0e-12);
             }
         }
-        EXPECT_FALSE(retained.density_from_retained(0, weights.data(), density.data()));
+        const bool invalid = retained.density_from_retained(0, weights.data(), density.data());
+        EXPECT_FALSE(invalid);
     }
 }
