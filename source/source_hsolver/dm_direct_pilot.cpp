@@ -72,9 +72,9 @@ bool direct_gamma(HSMatrix<double>& hs, psi::Psi<double>& wave, elecstate::ElecS
     const std::size_t root_wave_size = root ? wave_size : 1;
     std::vector<double> h(root_matrix_size);
     std::vector<double> s(root_matrix_size);
-    std::vector<double> host_wave(root_wave_size);
+    std::vector<double> host_wave;
     std::vector<double> eigenvalues(n);
-    std::vector<double> host_dm(root_matrix_size);
+    std::vector<double> host_dm;
     const int leading_dimension = layout.irproc() == 0 ? n : 1;
     int full_desc[9] = {1, context, n, n, n, n, 0, 0, leading_dimension};
     int wave_desc[9] = {1, context, n, bands, n, bands, 0, 0, leading_dimension};
@@ -86,11 +86,16 @@ bool direct_gamma(HSMatrix<double>& hs, psi::Psi<double>& wave, elecstate::ElecS
     ModuleBase::MatrixBlock<double> hk;
     ModuleBase::MatrixBlock<double> sk;
     hs.hs_at_k(0, hk, sk);
+    direct_sync(context);
+    const std::chrono::steady_clock::time_point redistribution_start = std::chrono::steady_clock::now();
     Cpdgemr2d(n, n, hk.p, 1, 1, distributed_desc, h.data(), 1, 1, full_desc, context);
     Cpdgemr2d(n, n, sk.p, 1, 1, distributed_desc, s.data(), 1, 1, full_desc, context);
     direct_sync(context);
+    direct_report_redistribution(root, redistribution_start);
     const double gather_seconds = direct_elapsed(gather_start);
     const std::chrono::steady_clock::time_point diagonal_start = std::chrono::steady_clock::now();
+    direct_report_diagonal_start(root, diagonal_start);
+    host_wave.resize(root_wave_size);
     std::unique_ptr<Diag_Cusolver_gvd> solver;
     if (root)
     {
@@ -119,6 +124,7 @@ bool direct_gamma(HSMatrix<double>& hs, psi::Psi<double>& wave, elecstate::ElecS
     direct_sync(context);
     const double occupation_seconds = direct_elapsed(occupation_start);
     const std::chrono::steady_clock::time_point dm_start = std::chrono::steady_clock::now();
+    host_dm.resize(root_matrix_size);
     int success = 1;
     if (root)
     {
@@ -222,9 +228,26 @@ void direct_report_combined(const bool root, const int context, const char* mode
                              const std::chrono::steady_clock::time_point& started)
 {
     direct_sync(context);
-    const double seconds = direct_elapsed(started);
+    const std::chrono::steady_clock::time_point finished = std::chrono::steady_clock::now();
+    const std::chrono::steady_clock::duration duration = finished - started;
+    const std::chrono::steady_clock::duration epoch = finished.time_since_epoch();
+    const double seconds = std::chrono::duration<double>(duration).count();
+    const long long finish_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(epoch).count();
     if (root && mode != nullptr)
-        std::printf("DM_DIRECT_COMBINED mode=%s direct=%d seconds=%.9e\n", mode, direct, seconds);
+        std::printf("DM_DIRECT_COMBINED mode=%s direct=%d seconds=%.9e finish_ns=%lld\n", mode, direct, seconds, finish_ns);
+}
+
+void direct_report_diagonal_start(const bool root, const std::chrono::steady_clock::time_point& started)
+{
+    const std::chrono::steady_clock::duration epoch = started.time_since_epoch();
+    const long long start_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(epoch).count();
+    if (root) std::printf("DM_DIRECT_DIAGONAL_START ns=%lld\n", start_ns);
+}
+
+void direct_report_redistribution(const bool root, const std::chrono::steady_clock::time_point& started)
+{
+    const double seconds = direct_elapsed(started);
+    if (root) std::printf("DM_DIRECT_REDISTRIBUTION kind=hs seconds=%.9e\n", seconds);
 }
 
 void direct_report_phase(const int rank, const int rows, const int bands, const std::size_t scalar_bytes,

@@ -427,6 +427,7 @@ void HSolverLCAO<T>::parakSolve_cusolver(HSMatrix<T>& hs,
     for(int ik_start = 0; ik_start < nks; ik_start += total_active_ranks)
     {
 #ifdef ABACUS_DM_DIRECT_PILOT
+        const bool timing_root = world_rank == 0;
         const std::chrono::steady_clock::time_point gather_start = std::chrono::steady_clock::now();
 #endif
         int kpt_assigned = -1; // the k-point assigned to the current MPI process in this iteration
@@ -454,6 +455,10 @@ void HSolverLCAO<T>::parakSolve_cusolver(HSMatrix<T>& hs,
                 desc_tmp[DESCRIPTOR_BLACS_CONTEXT_INDEX] = -1;
             }
 
+#ifdef ABACUS_DM_DIRECT_PILOT
+            direct_sync(mat_para_global.ictxt());
+            const std::chrono::steady_clock::time_point redistribution_start = std::chrono::steady_clock::now();
+#endif
             Cpxgemr2d(nrow, ncol, hk_2D.p, 1, 1,
                       const_cast<int*>(mat_para_global.desc()),
                       hk_local_ptr, 1, 1, desc_tmp,
@@ -462,6 +467,10 @@ void HSolverLCAO<T>::parakSolve_cusolver(HSMatrix<T>& hs,
                       const_cast<int*>(mat_para_global.desc()),
                       sk_local_ptr, 1, 1, desc_tmp,
                       mat_para_global.ictxt());
+#ifdef ABACUS_DM_DIRECT_PILOT
+            direct_sync(mat_para_global.ictxt());
+            direct_report_redistribution(timing_root, redistribution_start);
+#endif
         }
 
         // diagonalize the Hamiltonian matrix using cusolver
@@ -469,6 +478,7 @@ void HSolverLCAO<T>::parakSolve_cusolver(HSMatrix<T>& hs,
         direct_sync(mat_para_global.ictxt());
         const double gather_seconds = direct_elapsed(gather_start);
         const std::chrono::steady_clock::time_point diagonal_start = std::chrono::steady_clock::now();
+        direct_report_diagonal_start(timing_root, diagonal_start);
 #endif
         psi::Psi<T> psi_local{};
         if(kpt_assigned != -1)

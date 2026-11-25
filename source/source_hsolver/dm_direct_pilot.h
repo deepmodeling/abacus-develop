@@ -36,6 +36,8 @@ bool direct_gamma(HSMatrix<std::complex<double>>& hs, psi::Psi<std::complex<doub
                   const Parallel_Orbitals* orbitals, const DirectConfig& config);
 void direct_report_fallback(bool root, const char* mode);
 void direct_report_cpu(bool root, int context, const std::chrono::steady_clock::time_point& started);
+void direct_report_diagonal_start(bool root, const std::chrono::steady_clock::time_point& started);
+void direct_report_redistribution(bool root, const std::chrono::steady_clock::time_point& started);
 void direct_report_combined(bool root, int context, const char* mode, bool direct,
                             const std::chrono::steady_clock::time_point& started);
 void direct_report_phase(int rank, int rows, int bands, std::size_t scalar_bytes,
