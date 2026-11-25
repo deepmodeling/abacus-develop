@@ -3,6 +3,7 @@
 #include "source_io/module_parameter/parameter.h"
 #include "source_relax/ions_move_basic.h" // for Ions_Move_Basic static members
 #include "source_relax/ions_move_bfgs2.h"
+#include "source_relax/relax_criteria.h"
 #include "source_relax/relax_data.h"
 
 #include "gmock/gmock.h"
@@ -32,99 +33,38 @@ class BFGSTest : public ::testing::Test
     // fixture itself) are reached through these forwarders. They all carry a
     // get_ / call_ prefix because several tests declare locals named pos,
     // force, size, steplength, dpos and maxstep.
-    const std::vector<std::vector<double>>& get_H() const
-    {
-        return bfgs.H;
-    }
-    const std::vector<ModuleBase::Vector3<double>>& get_pos() const
-    {
-        return bfgs.pos;
-    }
-    const std::vector<double>& get_pos0() const
-    {
-        return bfgs.pos0;
-    }
-    const std::vector<ModuleBase::Vector3<double>>& get_pos_taud() const
-    {
-        return bfgs.pos_taud;
-    }
-    const std::vector<double>& get_pos_taud0() const
-    {
-        return bfgs.pos_taud0;
-    }
-    const std::vector<ModuleBase::Vector3<double>>& get_force() const
-    {
-        return bfgs.force;
-    }
-    const std::vector<double>& get_force0() const
-    {
-        return bfgs.force0;
-    }
-    const std::vector<double>& get_steplength() const
-    {
-        return bfgs.steplength;
-    }
-    const std::vector<ModuleBase::Vector3<double>>& get_dpos() const
-    {
-        return bfgs.dpos;
-    }
-    int get_size() const
-    {
-        return bfgs.size;
-    }
-    double get_alpha() const
-    {
-        return bfgs.alpha;
-    }
-    double get_maxstep() const
-    {
-        return bfgs.maxstep;
-    }
-    bool get_sign() const
-    {
-        return bfgs.sign;
-    }
-    bool get_is_initialized() const
-    {
-        return bfgs.is_initialized;
-    }
+    const std::vector<std::vector<double>> &get_H() const { return bfgs.H; }
+    const std::vector<ModuleBase::Vector3<double>> &get_pos() const { return bfgs.pos; }
+    const std::vector<double> &get_pos0() const { return bfgs.pos0; }
+    const std::vector<ModuleBase::Vector3<double>> &get_pos_taud() const { return bfgs.pos_taud; }
+    const std::vector<double> &get_pos_taud0() const { return bfgs.pos_taud0; }
+    const std::vector<ModuleBase::Vector3<double>> &get_force() const { return bfgs.force; }
+    const std::vector<double> &get_force0() const { return bfgs.force0; }
+    const std::vector<double> &get_steplength() const { return bfgs.steplength; }
+    const std::vector<ModuleBase::Vector3<double>> &get_dpos() const { return bfgs.dpos; }
+    int get_size() const { return bfgs.size; }
+    double get_alpha() const { return bfgs.alpha; }
+    double get_maxstep() const { return bfgs.maxstep; }
+    bool get_sign() const { return bfgs.sign; }
+    bool get_is_initialized() const { return bfgs.is_initialized; }
 
-    void set_sign(const bool value)
-    {
-        bfgs.sign = value;
-    }
-    void set_is_initialized(const bool value)
-    {
-        bfgs.is_initialized = value;
-    }
-    void set_force0(const std::vector<double>& value)
-    {
-        bfgs.force0 = value;
-    }
-    void set_pos_taud_x(const int i, const double value)
-    {
-        bfgs.pos_taud[i].x = value;
-    }
+    void set_sign(const bool value) { bfgs.sign = value; }
+    void set_is_initialized(const bool value) { bfgs.is_initialized = value; }
+    void set_force0(const std::vector<double> &value) { bfgs.force0 = value; }
+    void set_pos_taud_x(const int i, const double value) { bfgs.pos_taud[i].x = value; }
 
-    void call_DetermineStep(std::vector<double>& steplength,
-                            std::vector<ModuleBase::Vector3<double>>& dpos,
-                            double& maxstep)
+    void call_DetermineStep(
+        std::vector<double> &steplength, std::vector<ModuleBase::Vector3<double>> &dpos, double &maxstep)
     {
         bfgs.DetermineStep(steplength, dpos, maxstep);
     }
-    void call_Update(std::vector<double>& pos, std::vector<double>& force, UnitCell& ucell)
+    void call_Update(std::vector<double> &pos, std::vector<double> &force, UnitCell &ucell)
     {
         bfgs.Update(pos, force, bfgs.H, ucell);
     }
-    void call_GetPos(UnitCell& ucell)
-    {
-        bfgs.GetPos(ucell, bfgs.pos);
-    }
-    void call_GetPostaud(UnitCell& ucell)
-    {
-        bfgs.GetPostaud(ucell, bfgs.pos_taud);
-    }
-    void call_CalculateLargestGrad(const ModuleBase::matrix& force, UnitCell& ucell)
+    void call_GetPos(UnitCell &ucell) { bfgs.GetPos(ucell, bfgs.pos); }
+    void call_GetPostaud(UnitCell &ucell) { bfgs.GetPostaud(ucell, bfgs.pos_taud); }
+    void call_CalculateLargestGrad(const ModuleBase::matrix &force, UnitCell &ucell)
     {
         bfgs.CalculateLargestGrad(force, ucell);
     }
@@ -183,10 +123,11 @@ TEST_F(BFGSTest, RelaxStepAutoInitialize)
     force(1, 2) = 0.0;
 
     std::ofstream ofs_running;
+    const Relax_Criteria criteria;
 
     // Before relax_step, is_initialized should be false
     EXPECT_FALSE(get_is_initialized());
-    bfgs.relax_step(force, ucell, ofs_running);
+    bfgs.relax_step(force, ucell, ofs_running, criteria);
     // After relax_step, is_initialized should be true
     EXPECT_TRUE(get_is_initialized());
 }
@@ -205,8 +146,8 @@ TEST_F(BFGSTest, DetermineStepScaling)
     bfgs.allocate(size);
 
     std::vector<double> steplength = {1.0, 0.1};
-    std::vector<ModuleBase::Vector3<double>> dpos
-        = {ModuleBase::Vector3<double>(1.0, 1.0, 1.0), ModuleBase::Vector3<double>(0.1, 0.1, 0.1)};
+    std::vector<ModuleBase::Vector3<double>> dpos = {
+        ModuleBase::Vector3<double>(1.0, 1.0, 1.0), ModuleBase::Vector3<double>(0.1, 0.1, 0.1)};
     double maxstep = 0.5;
     call_DetermineStep(steplength, dpos, maxstep);
 
@@ -387,8 +328,9 @@ TEST_F(BFGSTest, RelaxStepBasic)
     bfgs.allocate(ucell.nat);
 
     std::ofstream ofs_running;
+    const Relax_Criteria criteria;
 
-    bfgs.relax_step(force, ucell, ofs_running);
+    bfgs.relax_step(force, ucell, ofs_running, criteria);
     // Check that ionic_position_updated is true
     EXPECT_TRUE(ucell.ionic_position_updated);
     // Check that force values are set (converted units)
@@ -397,4 +339,39 @@ TEST_F(BFGSTest, RelaxStepBasic)
     // Check that positions are updated (not equal to initial)
     EXPECT_NEAR(get_pos()[0][0], 0.0, 1e-12);
     EXPECT_NE(get_pos()[1][0], 1.0);
+}
+
+TEST_F(BFGSTest, RelaxStepZeroForceReturnsBeforeStepConstruction)
+{
+    UnitCell ucell;
+    ucell.ntype = 1;
+    ucell.nat = 2;
+    ucell.lat0 = 1.0;
+    ucell.atoms = new Atom[ucell.ntype];
+    ucell.atoms[0].na = 2;
+    ucell.atoms[0].tau = std::vector<ModuleBase::Vector3<double>>(2);
+    ucell.atoms[0].taud = std::vector<ModuleBase::Vector3<double>>(2);
+    ucell.atoms[0].mbl = std::vector<ModuleBase::Vector3<int>>(2, {1, 1, 1});
+    ucell.iat2it.resize(ucell.nat);
+    ucell.iat2ia.resize(ucell.nat);
+    ucell.iat2it[0] = 0;
+    ucell.iat2it[1] = 0;
+    ucell.iat2ia[0] = 0;
+    ucell.iat2ia[1] = 1;
+    ucell.atoms[0].tau[0].x = 0.25;
+    ucell.atoms[0].tau[1].x = 0.75;
+
+    const double initial_tau0_x = ucell.atoms[0].tau[0].x;
+    const double initial_tau1_x = ucell.atoms[0].tau[1].x;
+    ModuleBase::matrix force(2, 3);
+    std::ofstream ofs_running;
+    Relax_Criteria criteria;
+    criteria.force_thr_ev = 1.0;
+
+    const bool converged = bfgs.relax_step(force, ucell, ofs_running, criteria);
+
+    EXPECT_TRUE(converged);
+    EXPECT_FALSE(ucell.ionic_position_updated);
+    EXPECT_NEAR(ucell.atoms[0].tau[0].x, initial_tau0_x, 1e-12);
+    EXPECT_NEAR(ucell.atoms[0].tau[1].x, initial_tau1_x, 1e-12);
 }

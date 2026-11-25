@@ -11,19 +11,16 @@ OMP_NUM_THREADS=${ABACUS_THREADS} mpirun -np ${ABACUS_NPROCS} ${ABACUS_PATH} | t
 
 rm INPUT
 
-if [[ ! -f scf.output ]] || 
-   [[ ! -f nscf.output ]] ||
-   [[ ! -f OUT.ABACUS/running_scf.log ]] ||
-   [[ ! -f OUT.ABACUS/running_nscf.log ]] ||
-   [[ ! -f OUT.ABACUS/BANDS_1.dat ]] ||
-   [[ ! ( "$(tail -1 OUT.ABACUS/running_scf.log)" == " Total  Time  :"* ) ]] ||
-   [[ ! ( "$(tail -1 OUT.ABACUS/running_nscf.log)" == " Total  Time  :"* ) ]]
-then
-	echo "job failed!"
-	exit 1
+if [[ ! -f scf.output ]] ||
+  [[ ! -f nscf.output ]] ||
+  [[ ! -f OUT.ABACUS/running_scf.log ]] ||
+  [[ ! -f OUT.ABACUS/running_nscf.log ]] ||
+  [[ ! -f OUT.ABACUS/BANDS_1.dat ]] ||
+  [[ ! ("$(tail -1 OUT.ABACUS/running_scf.log)" == " Total  Time  :"*) ]] ||
+  [[ ! ("$(tail -1 OUT.ABACUS/running_nscf.log)" == " Total  Time  :"*) ]]; then
+  echo "job failed!"
+  exit 1
 else
-	echo "job succeeded!"
-	exit 0
+  echo "job succeeded!"
+  exit 0
 fi
-
-

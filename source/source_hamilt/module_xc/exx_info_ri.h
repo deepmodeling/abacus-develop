@@ -1,17 +1,18 @@
 #ifndef EXX_INFO_RI_H
 #define EXX_INFO_RI_H
 
-#include "source_lcao/module_ri/conv_coulomb_pot_k.h"
+#include "coulomb_config.h"
 
-#include <vector>
-#include <string>
 #include <map>
+#include <string>
+#include <vector>
 
 struct Exx_Info_RI
 {
     std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string, std::string>>> coulomb_param;
 
     bool real_number = false;
+    bool unfold_hybrid_images = false;
     bool coul_moment = false;
     bool rotate_abfs = false;
 

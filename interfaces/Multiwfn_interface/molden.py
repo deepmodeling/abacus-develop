@@ -533,6 +533,10 @@ def read_abacus_lowf(flowf, pat=r'^(WFC_NAO_(K\d+|GAMMA\d+)(_ION\d+)?|wf((k\d+)?
     with open(flowf, 'r') as file:
         lines = file.readlines()
 
+    # ignore provenance comment lines (version/timestamp/ionic step) that
+    # ABACUS writes before the data block
+    lines = [line for line in lines if not line.lstrip().startswith('#')]
+
     if lines[0].endswith('(index of k points)\n'):
         # discard the first two lines
         lines = lines[2:]

@@ -28,6 +28,8 @@ void ModuleIO::write_current(const UnitCell& ucell,
 
     ModuleBase::TITLE("ModuleIO", "write_current");
     ModuleBase::timer::start("ModuleIO", "write_current");
+    // Restart replay is skipped by the caller, so only a fresh run writes step zero.
+    const std::ios::openmode mode = istep == 0 ? std::ios::out | std::ios::trunc : std::ios::app;
     if (td_p == nullptr)
     {
         ModuleBase::WARNING_QUIT("ModuleIO::write_current", "RT-TDDFT current requires an explicit TD context.");
@@ -163,11 +165,13 @@ void ModuleIO::write_current(const UnitCell& ucell,
     {
         std::string filename = PARAM.globalv.global_out_dir + "current_tot.txt";
         std::ofstream fout;
-        fout.open(filename, std::ios::app);
-        fout << std::setprecision(16);
-        fout << std::scientific;
-        fout << istep + 1 << " " << current_total[0] / omega << " " << current_total[1] / omega << " " << current_total[2] / omega
-             << std::endl;
+        fout.open(filename, mode);
+        fout << std::right << std::setw(6) << istep + 1 << std::scientific << std::setprecision(12);
+        for (int direction = 0; direction < 3; ++direction)
+        {
+            fout << "  " << std::setw(19) << current_total[direction] / omega;
+        }
+        fout << std::endl;
         fout.close();
     }
 
@@ -190,6 +194,8 @@ void ModuleIO::write_current_eachk(const UnitCell& ucell,
 
     ModuleBase::TITLE("ModuleIO", "write_current");
     ModuleBase::timer::start("ModuleIO", "write_current");
+    // Restart replay is skipped by the caller, so only a fresh run writes step zero.
+    const std::ios::openmode mode = istep == 0 ? std::ios::out | std::ios::trunc : std::ios::app;
     if (td_p == nullptr)
     {
         ModuleBase::WARNING_QUIT("ModuleIO::write_current", "RT-TDDFT current requires an explicit TD context.");
@@ -341,11 +347,13 @@ void ModuleIO::write_current_eachk(const UnitCell& ucell,
                 std::string filename
                     = PARAM.globalv.global_out_dir + "current_s" + std::to_string(is) + "k" + std::to_string(ik + 1) + ".txt";
                 std::ofstream fout;
-                fout.open(filename, std::ios::app);
-                fout << std::setprecision(16);
-                fout << std::scientific;
-                fout << istep + 1 << " " << current_ik[0] / omega << " " << current_ik[1] / omega << " " << current_ik[2] / omega
-                     << std::endl;
+                fout.open(filename, mode);
+                fout << std::right << std::setw(6) << istep + 1 << std::scientific << std::setprecision(12);
+                for (int direction = 0; direction < 3; ++direction)
+                {
+                    fout << "  " << std::setw(19) << current_ik[direction] / omega;
+                }
+                fout << std::endl;
                 fout.close();
             }
             // write end
@@ -355,11 +363,13 @@ void ModuleIO::write_current_eachk(const UnitCell& ucell,
     {
         std::string filename = PARAM.globalv.global_out_dir + "current_tot.txt";
         std::ofstream fout;
-        fout.open(filename, std::ios::app);
-        fout << std::setprecision(16);
-        fout << std::scientific;
-        fout << istep + 1 << " " << current_total[0] / omega << " " << current_total[1] / omega << " " << current_total[2] / omega
-             << std::endl;
+        fout.open(filename, mode);
+        fout << std::right << std::setw(6) << istep + 1 << std::scientific << std::setprecision(12);
+        for (int direction = 0; direction < 3; ++direction)
+        {
+            fout << "  " << std::setw(19) << current_total[direction] / omega;
+        }
+        fout << std::endl;
         fout.close();
     }
 

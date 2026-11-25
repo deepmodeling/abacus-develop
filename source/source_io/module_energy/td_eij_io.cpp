@@ -51,4 +51,5 @@ void print_eij(const std::complex<double>* eij,
     ofs.flags(original_flags);
     ofs.precision(original_precision);
 }
+
 } // namespace ModuleIO

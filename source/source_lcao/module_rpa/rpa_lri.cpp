@@ -208,12 +208,12 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const module_dm::DensityMatrix<T, Tdata>
                       ucell.nat,
                       ucell.iat2it,
                       ucell.iat2ia,
-                      parav,
+                      parav.para_2d(),
                       this->runtime.input.nspin);
         // output Ts (symrot_R.txt) and Ms (symrot_k.txt)
         ModuleSymmetry::print_symrot_info_R(symrot, ucell.symm, ucell.lmax, Rs);
         ModuleSymmetry::print_symrot_info_k(symrot, kv, ucell);
-        mix_DMk_2D.mix(symrot.restore_dm(kv, dm.get_dmk_vec(), parav), true);
+        mix_DMk_2D.mix(symrot.restore_dm(kv, dm.get_dmk_vec(), parav.para_2d()), true);
     }
     else
     {
@@ -224,7 +224,7 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const module_dm::DensityMatrix<T, Tdata>
         = RI_2D_Comm::split_m2D_ktoR<Tdata>(ucell,
                                             kv,
                                             mix_DMk_2D.get_DMk_out(),
-                                            parav,
+                                            parav.para_2d(),
                                             this->runtime.input.nspin,
                                             exx_spacegroup_symmetry);
 

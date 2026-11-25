@@ -30,9 +30,9 @@ class PW_Basis;
  */
 struct GradCorrParams
 {
-    const Charge* chr;
-    ModulePW::PW_Basis* rhopw;
-    const UnitCell* ucell;
+    const Charge *chr;
+    ModulePW::PW_Basis *rhopw;
+    const UnitCell *ucell;
     int nspin;
     int nspin0; // number of spin channels of the (rho, |grad rho|) pair
     double fac; // 1.0 / nspin0
@@ -79,32 +79,32 @@ struct GradCorrBuffers
  * @brief First stage: build the real- and reciprocal-space density
  *        buffers and their gradients for every spin channel.
  */
-void gradcorr_prepare_rho(const GradCorrParams& params,
-                          ModuleBase::matrix& v,
-                          GradCorrBuffers& buf);
+void gradcorr_prepare_rho(const GradCorrParams &params, ModuleBase::matrix &v, GradCorrBuffers &buf);
 
 /**
  * @brief Second stage: evaluate the GGA/meta-GGA kernel on every grid
  *        point and accumulate vtxcgc, etxcgc, stress_gga and v.
  */
-void gradcorr_xc_kernel(const GradCorrParams& params,
-                        double& vtxcgc,
-                        double& etxcgc,
-                        std::vector<double>& stress_gga,
-                        ModuleBase::matrix& v,
-                        GradCorrBuffers& buf);
+void gradcorr_xc_kernel(
+    const GradCorrParams &params,
+    double &vtxcgc,
+    double &etxcgc,
+    std::vector<double> &stress_gga,
+    ModuleBase::matrix &v,
+    GradCorrBuffers &buf);
 
 /**
  * @brief Final stage: assemble the gradient-correction contribution
  *        into vtxc/etxc/stress_gga/v and restore the nspin = 4 case.
  */
-void gradcorr_assemble_vxc(const GradCorrParams& params,
-                           double vtxcgc,
-                           double etxcgc,
-                           double& vtxc,
-                           double& etxc,
-                           std::vector<double>& stress_gga,
-                           ModuleBase::matrix& v,
-                           GradCorrBuffers& buf);
+void gradcorr_assemble_vxc(
+    const GradCorrParams &params,
+    double vtxcgc,
+    double etxcgc,
+    double &vtxc,
+    double &etxc,
+    std::vector<double> &stress_gga,
+    ModuleBase::matrix &v,
+    GradCorrBuffers &buf);
 
 #endif // XC_GRAD_INTERNAL_H

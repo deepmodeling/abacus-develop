@@ -1,1 +1,15 @@
 Func:LCAO/nbspline=10; Sys:AsGa; Ref:energy,force,stress
+
+The stress fingerprint uses the same order-10 interpolated structure factors
+as the Ewald energy. The previous fingerprint, 60277.381032 kbar, combined
+interpolated energy/force terms with Ewald stress from direct atomic phases.
+Reusing the interpolated SF changes the absolute-component stress sum to
+60277.308036 kbar. Energy, force, input and comparison tolerances are unchanged.
+
+The coarse 15x15x15 grid and As/Ga valence charges 15/13 give a maximum Ewald
+component difference of 0.02409268 kbar relative to direct SF. This case is
+an order-10 interpolation regression, not a direct-SF accuracy benchmark.
+MODULE_PW_stress_ewa includes a six-direction energy/strain derivative test
+for this exact cell, grid and order. At neighboring strain steps 3e-5/1e-5,
+the measured maximum errors are 3.74e-5/1.50e-5 kbar. These checks validate
+the reference change against the corresponding discrete Ewald energy.

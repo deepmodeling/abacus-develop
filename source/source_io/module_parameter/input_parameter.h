@@ -21,7 +21,7 @@ struct Input_para
                                         ///< "nscf" : non-self consistent calculation.
                                         ///< "relax" : cell relaxations
     bool socket_driver = false;         ///< run ABACUS as an i-PI socket client
-    std::string esolver_type = "ksdft"; ///< the energy solver: ksdft, sdft, ofdft, tddft, lj, dp
+    std::string esolver_type = "ksdft"; ///< the energy solver: ksdft, sdft, ofdft, tddft, lj, dp, nep, snap
     /* symmetry level:
       -1, no symmetry at all;
       0, only basic time reversal would be considered;
@@ -87,6 +87,7 @@ struct Input_para
     double nelec_delta = 0.0;          ///< change in the number of total electrons
     double nupdown = 0.0;
     std::string dft_functional = "default"; ///< input DFT functional.
+    std::string device_xc = "cpu"; ///< Device for Libxc LDA/GGA potential evaluation.
     int gga_grad = 0; ///< Noncollinear GGA: 0 original, 1 local axis, 2 regularized mapped-density LCA.
     double xc_temperature = 0.0;            ///< only relevant if finite temperature functional is used
     double pseudo_rcut = 15.0;              ///< cut-off radius for calculating msh
@@ -316,10 +317,15 @@ struct Input_para
 
     // ==============   #Parameters (9.rt-tddft) ===========================
     double td_dt = -1.0;       ///< time step for propagation
+    int td_max_halvings = 0;   ///< Maximum depth of PW real-time interval bisection; zero disables retries.
+    int td_scf_nmax = 100;     ///< SCF limit per real-time propagation attempt, independent of initial-state SCF.
     int estep_per_md = 1;      ///< number of electronic steps per MD step
     std::string lin_solver = "gmres"; ///< linear solver for real-time propagation
     std::string td_orthonormal = "cholesky"; ///< Orthonormalization for PW real-time propagation.
     bool td_out_stat = false; ///< Output PW real-time conservation diagnostics.
+    std::string td_out_mag = "voronoi"; ///< RT-TDDFT spinor magnetic moment partition.
+    bool td_out_torque = false; ///< Output XC and SOC spin angular momentum torques.
+    bool td_out_spincur = false; ///< Output the macroscopic spin angular momentum current.
     int lin_gmres_restart = 20; ///< Maximum Arnoldi steps per GMRES cycle.
     bool td_cn_init = true; ///< CN subspace initial guess and residual reuse.
     bool lin_reconstruct = true; ///< Explicit GMRES residual reconstruction with periodic audits.
@@ -335,6 +341,10 @@ struct Input_para
     double td_print_eij = -1.0;      ///< threshold to output Eij elements
     int td_edm = 0;                  ///< 0: new edm method   1: old edm method
     int propagator = 0;              ///< method of propagator
+    std::string td_exp_method = "lanczos"; ///< PW ETRS exponential backend.
+    int td_exp_order = 4; ///< Fixed Taylor polynomial order.
+    double td_exp_thr = 0.0; ///< Zero selects the precision-dependent exponential tolerance.
+    int td_exp_krylov_dim = 32; ///< Maximum Lanczos dimension before frozen-operator subdivision.
     int td_stype = 0;                ///< type of space domain  0 : length gauge  1: velocity gauge
     std::vector<int> td_ttype = {0}; ///< type of time domain
     ///<  0  Gauss type function.
@@ -435,11 +445,17 @@ struct Input_para
     std::vector<int> dfpt_qmesh = {1, 1, 1}; ///< Monkhorst-Pack q mesh for DFPT (gamma-centered)
     std::string dfpt_qfile = "";              ///< file containing the DFPT q-point list; empty means dfpt_qmesh
     bool dfpt_compute_q0 = false;             ///< compute epsilon_inf and Born effective charges at q = 0
-    bool dfpt_loto = false;                   ///< apply the LO-TO non-analytic correction at q = 0
+    bool dfpt_loto = false;                   ///< apply the LO-TO nonanalytic correction at q = 0
+    bool dfpt_out_dyn = false;                ///< write the raw (pre-ASR, pre-LO-TO) dynamical matrix in QE dyn format
     double dfpt_conv_thr = 1.0e-8;            ///< convergence threshold of the DFPT first-order density
     int dfpt_max_iter = 100;                  ///< max iterations of the DFPT first-order density mixing
+    double dfpt_lin_conv_thr = -1.0;          ///< Sternheimer linear-solver threshold; <=0 inherits dfpt_conv_thr
+    int dfpt_lin_max_iter = 0;                ///< Sternheimer linear-solver iteration cap; <=0 inherits dfpt_max_iter
     double dfpt_mix_beta = 0.4;               ///< mixing coefficient of the DFPT first-order density
     std::string dfpt_asr = "no";              ///< acoustic sum rule on the Gamma dynamical matrix: no | simple | crystal
+    std::string dfpt_mix_type = "v_sc_broyden"; ///< mixing scheme: rho_plain | rho_kerker | rho_broyden | v_sc_plain | v_sc_broyden
+    double dfpt_kerker_a2 = 1.0;              ///< Kerker screening parameter a^2 in 1/lat0^2 (kerker only)
+    int dfpt_broyden_ndim = 8;                ///< Broyden history depth (broyden variants)
 
     // ==============   #Parameters (11.Output) ===========================
     int out_stru = 1;                         ///< output stru file each ion step
@@ -447,15 +463,16 @@ struct Input_para
     int out_freq_elec = 0;                    ///< the frequency of electronic iter to output charge and wavefunction
     int out_freq_ion = 0;                     ///< the frequency ( >= 0 ) of ionic step to output charge density;
                                               ///< 0: output only when ion steps are finished
-    int out_freq_td = 0;                      ///< output interval in RT-TDDFT
+    int out_freq_td_compat = 0;               ///< legacy alias out_freq_td for out_freq_ion in RT-TDDFT
     std::vector<int> out_chg = {0, 3};        ///< output charge density. 0: no; 1: yes
     bool out_occ_mat = true;                  ///< output DFT+U occupation matrices;
                                               ///< frequency controlled by out_freq_ion/out_freq_elec
     std::vector<int> out_xc_r = {-1, 3};      ///< output xc(r). -1: no; >=0: output the order of xc(r)
     std::vector<int> out_pot = {0, 8};        ///< output potential
+    std::vector<int> out_sol = {0, 8};        ///< output the implicit-solvent dielectric function and cavity
     int out_wfc_pw = 0;                       ///< 0: no; 1: txt; 2: dat
     std::vector<int> out_band = {0, 8};       ///< band calculation pengfei 2014-10-13
-    int out_dos = 0;                          ///< dos calculation. mohan add 20090909
+    std::vector<int> out_dos = {0, 6};        ///< DOS/PDOS output: [enable, precision]
     std::vector<int> out_ldos = {0, 3};       ///< ldos calculation
     bool out_mul = false;                     ///< qifeng add 2019-9-10
     bool out_proj_band = false;               ///< projected band structure calculation jiyy add 2022-05-11
@@ -470,12 +487,17 @@ struct Input_para
     std::vector<int> out_mat_tk = {0, 8};     ///< output T(k) matrix in local basis.
     std::vector<int> out_mat_l = {0, 8};      ///< output L matrix in local basis.
     std::vector<int> out_mat_hs2 = {0, 8};    ///< legacy alias for text H(R) and S(R) output
-    std::vector<int> out_mat_h_t = {0, 8};    ///< output kinetic energy T(R) matrix
-    std::vector<int> out_mat_h_vnl = {0, 8};  ///< output nonlocal pseudopotential Vnl(R) matrix
-    std::vector<int> out_mat_h_vl = {0, 8};   ///< output local pseudopotential Vl(R) matrix
-    std::vector<int> out_mat_h_vh = {0, 8};   ///< output Hartree Vh(R) matrix
-    std::vector<int> out_mat_h_vxc = {0, 8};  ///< output XC Vxc(R) matrix
-    std::vector<int> out_mat_h_exx = {0, 8};  ///< output exact-exchange Vexx(R) matrix
+    std::vector<int> out_mat_h_t = {0, 8};    ///< legacy alias for out_mat_tk (kinetic T(k) matrix)
+    std::vector<int> out_mat_vnlk = {0, 8};   ///< output nonlocal pseudopotential Vnl(k) matrix
+    std::vector<int> out_mat_vlk = {0, 8};    ///< output local pseudopotential Vl(k) matrix
+    std::vector<int> out_mat_vhk = {0, 8};    ///< output Hartree Vh(k) matrix
+    std::vector<int> out_mat_vxck = {0, 8};   ///< output XC Vxc(k) matrix
+    std::vector<int> out_mat_exxk = {0, 8};   ///< output exact-exchange Vexx(k) matrix
+    std::vector<int> out_mat_h_vnl = {0, 8};  ///< legacy alias for out_mat_vnlk
+    std::vector<int> out_mat_h_vl = {0, 8};   ///< legacy alias for out_mat_vlk
+    std::vector<int> out_mat_h_vh = {0, 8};   ///< legacy alias for out_mat_vhk
+    std::vector<int> out_mat_h_vxc = {0, 8};  ///< legacy alias for out_mat_vxck
+    std::vector<int> out_mat_h_exx = {0, 8};  ///< legacy alias for out_mat_exxk
     std::vector<int> out_mat_dh = {0, 8};     ///< output dH/dR matrices with precision
     std::vector<int> out_mat_dh_t = {0, 8};   ///< output kinetic dH/dR (dT/dR) matrices
     std::vector<int> out_mat_dh_vl = {0, 8};  ///< output local pseudopotential dH/dR (dV^L/dR) matrices
@@ -483,16 +505,18 @@ struct Input_para
     std::vector<int> out_mat_dh_vh = {0, 8};  ///< output Hartree dH/dR (dV^H/dR) matrices
     std::vector<int> out_mat_dh_vxc = {0, 8}; ///< output XC dH/dR (dV^XC/dR) matrices
     std::vector<int> out_mat_ds = {0, 8};     ///< output dS/dR matrices with precision
-    bool out_mat_xc = false;                  ///< output exchange-correlation matrix in
-                                              ///< KS-orbital representation.
+    std::vector<int> out_mat_xc = {0, 8};     ///< output exchange-correlation matrix in
+                                              ///< KS-orbital representation: [enable, precision]
     std::vector<int> out_mat_xc2 = {0, 8};    ///< output Vxc(R) matrix with precision
-    bool out_eband_terms = false;             ///< output the band energy terms separately
+    bool out_eband = false;                   ///< output the band energy terms separately
+    bool out_eband_terms_compat = false;      ///< legacy alias out_eband_terms for out_eband
     bool out_hr_npz = false;                  ///< output H(R) matrix in npz format
     bool out_hsr_npz = false;                 ///< output H(R) and S(R) matrices in npz format
     bool out_dm_npz = false;                  ///< output DM(R) matrix in npz format
-    bool out_app_flag = true;                ///< whether output r(R), H(R), S(R), T(R), and dH(R) matrices
-                                             ///< in an append manner during MD liuyu 2023-03-20
-    int out_ndigits = 8;                     ///< Assuming 8 digits precision is needed for matrices output
+    int out_app_flag = 0;                   ///< 0: fixed filename, truncated and overwritten at every write;
+                                            ///< 1: append to the same fixed file; 2: write to subdirectory
+                                            ///< (PSI/, CHG/, POT/, ELF/, DOS/, DIP/, MAT/) with a g{step} suffix
+                                            ///< liuyu 2023-03-20, modified 2025-10-16
     std::vector<int> out_mat_t = {0, 8};     ///< output T(R) matrix with precision
     bool out_element_info = false;           ///< output information of all elements
     std::vector<int> out_mat_r = {0, 8};     ///< output r(R) matrix with precision
@@ -556,6 +580,7 @@ struct Input_para
     bool out_wannier_amn = true;            ///< output .amn file or not
     bool out_wannier_unk = false;           ///< output UNK. file or not
     bool out_wannier_eig = true;            ///< output .eig file or not
+    bool out_wannier_spn = false;           ///< output formatted spin matrices for Wannier90
     bool out_wannier_wvfn_formatted = true; ///< output UNK. file in text format or in binary format
 
     // ==============   #Parameters (13.Model) ===========================
@@ -598,6 +623,18 @@ struct Input_para
     double sccs_tol_rms = 1e-10;
     double sccs_tol_max = 1e-8;
     double sccs_surface_eta = 1e-8; // Bohr^-1
+    double sccs_lowpass_p1 = -1.0; // PCC switching-derivative filter slope
+    double sccs_lowpass_p2 = -1.0; // PCC switching-derivative filter offset
+    double sccs_start_drho = 0.0;
+    int sccs_start_nmax = 30;
+    int sccs_debug = 0; // 0: silent, 1: iteration summary, 2: full diagnostics
+    std::string sccs_solvent_mode = "electronic";
+    std::vector<double> sccs_corespread = {0.5}; // Bohr: one value or one per atom
+    double sccs_solvent_radius = 0.0; // Bohr: solvent-aware cavity, 0 is off
+    double sccs_radial_scale = 2.0; // solvent-aware probe radius over sccs_solvent_radius
+    double sccs_radial_spread = 0.5; // Bohr: erfc spread of the solvent-aware probe
+    double sccs_filling_thr = 0.825; // probe solute fraction that fills a point
+    double sccs_filling_spread = 0.02; // erfc width of the solvent-aware filling
 
     // ==============  #Parameters (14.vdW Correction) ===========================
     // ==========================================================
@@ -644,6 +681,7 @@ struct Input_para
                                                             ///< the evaluation of Fock exchange
     double exx_mixing_beta = 1.0;                           ///< mixing_beta for outer-loop when exx_separate_loop=1
     std::string exx_real_number = "default";                ///< exx calculated in real or complex
+    std::string device_exx = "cpu";                        ///< computing device for LCAO EXX tensor contractions
     double exx_pca_threshold = 0.0001;                      ///< threshold to screen on-site ABFs in exx
     double exx_c_threshold = 0.0001;                        ///< threshold to screen C matrix in exx
     double exx_v_threshold = 0.1;                           ///< threshold to screen C matrix in exx
@@ -661,6 +699,9 @@ struct Input_para
     bool exx_symmetry_realspace = true; ///< whether to reduce the real-space sector in when using symmetry=1 in EXX calculation
     double rpa_ccp_rmesh_times = 10.0;  ///< how many times larger the radial mesh required for
                                         ///< calculating Columb potential is to that of atomic orbitals
+    std::string rpa_cut_coulomb = "hard"; ///< post-SCF cut kernel: hard or log_erfc
+    std::string rpa_cut_radius = "legacy"; ///< legacy radius or BvK inscribed radius
+    double rpa_cut_width = 1.091868692359; ///< multiplicative log-erfc width
     double exx_cs_inv_thr = -1;         ///< threshold to inverse Vq in abfs for generating Cs
     double shrink_abfs_pca_thr = -1;    ///< threshold to shrink auxiliary basis for GW/RPA
     double shrink_LU_inv_thr = 1e-6; ///< threshold to get inverse of overlap matrix by LU decomposition in auxiliary basis representation

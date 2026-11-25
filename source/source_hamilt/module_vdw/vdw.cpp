@@ -11,7 +11,7 @@
 #include "vdwd4.h"
 #endif
 
-std::string parse_xcname(const std::string& xc_input, const std::vector<std::string>& xc_psp)
+std::string parse_xcname(const std::string &xc_input, const std::vector<std::string> &xc_psp)
 {
     if (xc_input != "default")
     {
@@ -20,9 +20,9 @@ std::string parse_xcname(const std::string& xc_input, const std::vector<std::str
 
     if (xc_psp.size() <= 0)
     {
-        ModuleBase::WARNING_QUIT("ModuleHamiltGeneral::ModuleVDW::parse_xcname",
-                                 "XC name automatic inference failed: no "
-                                 "pseudopotential files are found");
+        ModuleBase::WARNING_QUIT(
+            "ModuleHamiltGeneral::ModuleVDW::parse_xcname", "XC name automatic inference failed: no "
+                                                            "pseudopotential files are found");
     }
     std::vector<std::string> xc_psp_uniq = xc_psp;
     std::sort(xc_psp_uniq.begin(), xc_psp_uniq.end());
@@ -31,10 +31,10 @@ std::string parse_xcname(const std::string& xc_input, const std::vector<std::str
 
     if (xc_psp_uniq.size() > 1)
     {
-        ModuleBase::WARNING_QUIT("ModuleHamiltGeneral::ModuleVDW::parse_xcname",
-                                 "XC name automatic inference failed: "
-                                 "inconsistency in XC names is found"
-                                 " in the pseudopotential files");
+        ModuleBase::WARNING_QUIT(
+            "ModuleHamiltGeneral::ModuleVDW::parse_xcname", "XC name automatic inference failed: "
+                                                            "inconsistency in XC names is found"
+                                                            " in the pseudopotential files");
     }
     const std::string xc = xc_psp_uniq[0];
     std::cout << " ***WARNING*** ModuleHamiltGeneral::ModuleVDW::parse_xcname: "
@@ -45,7 +45,7 @@ std::string parse_xcname(const std::string& xc_input, const std::vector<std::str
 namespace vdw
 {
 
-std::unique_ptr<Vdw> make_vdw(const UnitCell& ucell, const Input_para& input, std::ofstream* plog)
+std::unique_ptr<Vdw> make_vdw(const UnitCell &ucell, const Input_para &input, std::ofstream *plog)
 {
     // NOTE: the following lines are incorrect!
     // NOTE: VDW interaction exists between images even if there is only one
@@ -89,15 +89,16 @@ std::unique_ptr<Vdw> make_vdw(const UnitCell& ucell, const Input_para& input, st
 
         return make_unique_compat<Vdwd4>(ucell, xc_name, input);
 #else
-        ModuleBase::WARNING_QUIT("ModuleHamiltGeneral::ModuleVDW::make_vdw",
-                                 "DFT-D4 support was not enabled at build time. "
-                                 "Rebuild ABACUS with -DENABLE_DFTD4=ON.");
+        ModuleBase::WARNING_QUIT(
+            "ModuleHamiltGeneral::ModuleVDW::make_vdw", "DFT-D4 support was not enabled at build time. "
+                                                        "Rebuild ABACUS with -DENABLE_DFTD4=ON.");
 #endif
     }
     else if (input.vdw_method != "none")
     {
-        ModuleBase::WARNING_QUIT("ModuleHamiltGeneral::ModuleVDW::make_vdw",
-                                 "Unrecognized Van der Waals correction method: " + input.vdw_method);
+        ModuleBase::WARNING_QUIT(
+            "ModuleHamiltGeneral::ModuleVDW::make_vdw",
+            "Unrecognized Van der Waals correction method: " + input.vdw_method);
         return nullptr;
     }
     return nullptr; // "none" method

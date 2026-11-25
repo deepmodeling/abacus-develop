@@ -1,19 +1,22 @@
 #include "md_base.h"
 #include "md_func.h"
+#include "run_md.h"
+#include "source_base/parallel_cell.h"
 #include "source_cell/unitcell.h"
+#include "source_io/module_output/print_info.h"
 #ifdef __MPI
 #include "mpi.h"
 #endif
-#include "source_io/module_output/print_info.h"
 #include <algorithm>
 #include <iomanip>
 
-MD_base::MD_base(const MD_para& mdp_in,
-                 const bool cal_stress_in,
-                 const bool init_vel,
-                 const int my_rank_in,
-                 MDCell& mdcell_in)
-: mdp(mdp_in), mdcell(mdcell_in)
+MD_base::MD_base(
+    const MD_para &mdp_in,
+    const bool cal_stress_in,
+    const bool init_vel,
+    const int my_rank_in,
+    MDCell &mdcell_in)
+    : mdp(mdp_in), mdcell(mdcell_in)
 {
 #ifdef __MPI
     my_rank = mdcell.mpi_rank();
@@ -28,8 +31,8 @@ MD_base::MD_base(const MD_para& mdp_in,
     virial.create(3, 3);
     stress.create(3, 3);
 
-    assert(ModuleBase::AU_to_FS!=0.0);
-    assert(ModuleBase::Hartree_to_K!=0.0);
+    assert(ModuleBase::AU_to_FS != 0.0);
+    assert(ModuleBase::Hartree_to_K != 0.0);
 
     /// convert to a.u. unit
     md_dt = mdp.md_dt / ModuleBase::AU_to_FS;
@@ -43,25 +46,43 @@ MD_base::MD_base(const MD_para& mdp_in,
     t_current = MD_func::current_temp(kinetic, mdcell, frozen_freedom_);
 }
 
-
 MD_base::~MD_base() {}
 
-
-void MD_base::setup(ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir, DomainDecomposition& decomp)
+void MD_base::setup(
+    ModuleESolver::ESolver *p_esolver, const std::string &global_readin_dir, DomainDecomposition &decomp)
 {
     if (mdp.md_restart)
     {
         restart(global_readin_dir);
     }
 
-    // mohan add 2026-01-04
-    const int stress_step = 0;
-    const int force_step = 0;
-    const int istep_print = step_ + step_rst_ + 1;
+    const int md_step = step_ + step_rst_;
+    const bool print_thermo = mdp.md_thermo_freq > 0 && md_step % mdp.md_thermo_freq == 0;
+    if (print_thermo)
+    {
+        const int stress_step = 0;
+        const int force_step = 0;
+        const int istep_print = md_step + 1;
+        ModuleIO::print_screen(stress_step, force_step, istep_print);
+    }
 
-	ModuleIO::print_screen(stress_step, force_step, istep_print);
-
-    MD_func::force_virial(p_esolver, step_, mdcell, decomp, potential, cal_stress, virial, mdp.md_out_force);
+    // The electronic solver interprets the step index as the local step of
+    // this run: istep == 0 enables its initialization branches (init_chg
+    // dm/hr, init_wfc file, PW need_subspace), so pass the local step here.
+    // The initial force evaluation of a run has no preceding MD drift, so it
+    // must not advance the charge-extrapolation history -- even on restart
+    // (step_rst_ > 0), where the extrapolation state starts degenerate.
+    const bool positions_updated = false;
+    // step_rst_ is only known after restart(), so re-evaluate the final-step
+    // flag here: the initial (restarted) force evaluation can itself be the
+    // last ionic step of the run.
+    const int global_step = step_ + step_rst_;
+    const bool is_final_step = Run_MD::is_last_step(global_step, mdp.md_nstep);
+    if (mdcell.has_backing_unitcell())
+    {
+        mdcell.backing_unitcell().last_ion_step = is_final_step;
+    }
+    MD_func::force_virial(p_esolver, step_, positions_updated, mdcell, decomp, potential, cal_stress, virial);
     MD_func::compute_stress(mdcell, cal_stress, virial, stress);
     if (mdcell.has_backing_unitcell())
     {
@@ -71,15 +92,13 @@ void MD_base::setup(ModuleESolver::ESolver* p_esolver, const std::string& global
     return;
 }
 
-
-void MD_base::first_half(std::ofstream& ofs)
+void MD_base::first_half(std::ofstream &ofs)
 {
     update_vel();
     update_pos();
 
     return;
 }
-
 
 void MD_base::second_half()
 {
@@ -88,13 +107,14 @@ void MD_base::second_half()
     return;
 }
 
-
 void MD_base::update_pos()
 {
-    std::vector<LocalAtom>& atoms = mdcell.owned_atoms();
+    std::vector<LocalAtom> &atoms = mdcell.owned_atoms();
+    int invalid_position = 0;
+    const double epsilon = 1.0e-12;
     for (std::size_t i = 0; i < atoms.size(); ++i)
     {
-        LocalAtom& atom = atoms[i];
+        LocalAtom &atom = atoms[i];
         ModuleBase::Vector3<double> pos;
         for (int k = 0; k < 3; ++k)
         {
@@ -108,23 +128,47 @@ void MD_base::update_pos()
             }
         }
         pos = pos * mdcell.GT();
+        atom.displacement = pos;
         atom.frac += pos;
-        atom.frac.x -= std::floor(atom.frac.x);
-        atom.frac.y -= std::floor(atom.frac.y);
-        atom.frac.z -= std::floor(atom.frac.z);
+        atom.boundary_shift.set(0, 0, 0);
+        for (int k = 0; k < 3; ++k)
+        {
+            if (atom.frac[k] < 0.0)
+            {
+                ++atom.boundary_shift[k];
+                atom.frac[k] += 1.0;
+            }
+            // Keep the legacy second check: a tiny negative can round to 1.0.
+            if (atom.frac[k] >= 1.0)
+            {
+                --atom.boundary_shift[k];
+                atom.frac[k] -= 1.0;
+            }
+            if (atom.frac[k] < -epsilon || atom.frac[k] >= 1.0 + epsilon)
+            {
+                invalid_position = 1;
+            }
+        }
         atom.cart = atom.frac * mdcell.latvec();
+    }
+    ModuleBase::CommunicationDomain domain = ModuleBase::world_comm_domain();
+#ifdef __MPI
+    domain.initialize(mdcell.communicator());
+#endif
+    if (domain.max(invalid_position) != 0)
+    {
+        ModuleBase::WARNING_QUIT("MD_base::update_pos", "Movement of atom is larger than the cell length");
     }
 
     return;
 }
 
-
 void MD_base::update_vel()
 {
-    std::vector<LocalAtom>& atoms = mdcell.owned_atoms();
+    std::vector<LocalAtom> &atoms = mdcell.owned_atoms();
     for (std::size_t i = 0; i < atoms.size(); ++i)
     {
-        LocalAtom& atom = atoms[i];
+        LocalAtom &atom = atoms[i];
         for (int k = 0; k < 3; ++k)
         {
             if (atom.mbl[k])
@@ -136,17 +180,16 @@ void MD_base::update_vel()
     return;
 }
 
-
-void MD_base::print_md(std::ofstream& ofs, const bool& cal_stress)
+void MD_base::print_md(std::ofstream &ofs, const bool &cal_stress)
 {
     t_current = MD_func::current_temp(kinetic, mdcell, frozen_freedom_);
 
-    if (my_rank!=0)
+    if (my_rank != 0)
     {
         return;
     }
 
-    assert(ModuleBase::BOHR_RADIUS_SI>0.0);
+    assert(ModuleBase::BOHR_RADIUS_SI > 0.0);
 
     const double unit_transform = ModuleBase::HARTREE_SI / pow(ModuleBase::BOHR_RADIUS_SI, 3) * 1.0e-8;
     double press = 0.0;
@@ -190,7 +233,7 @@ void MD_base::print_md(std::ofstream& ofs, const bool& cal_stress)
     if (cal_stress)
     {
         MD_func::print_stress(ofs, virial, stress);
-	    ofs << std::endl;
+        ofs << std::endl;
     }
 
     ofs << " ------------------------------------------------------------------------------------------------"
@@ -222,8 +265,7 @@ void MD_base::print_md(std::ofstream& ofs, const bool& cal_stress)
     return;
 }
 
-
-void MD_base::write_restart(const std::string& global_out_dir)
+void MD_base::write_restart(const std::string &global_out_dir)
 {
     if (!my_rank)
     {
@@ -242,8 +284,7 @@ void MD_base::write_restart(const std::string& global_out_dir)
     return;
 }
 
-
-void MD_base::restart(const std::string& global_readin_dir)
+void MD_base::restart(const std::string &global_readin_dir)
 {
     MD_func::current_md_info(mdcell, global_readin_dir, step_rst_, md_tfirst);
 

@@ -1,58 +1,65 @@
 #include "h_ewald_pw.h"
-#include "source_base/global_function.h"
-#include "source_base/parallel_comm.h"
-#include "source_base/mymath.h" // use heapsort
 #include "dnrm2.h"
-#include "source_base/parallel_reduce.h"
 #include "source_base/constants.h"
+#include "source_base/global_function.h"
+#include "source_base/mymath.h" // use heapsort
+#include "source_base/parallel_comm.h"
+#include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 
-double H_Ewald_pw::alpha=0.0;
+double H_Ewald_pw::alpha = 0.0;
 int H_Ewald_pw::mxr = 200;
-H_Ewald_pw::H_Ewald_pw(){};
-H_Ewald_pw::~H_Ewald_pw(){};
+H_Ewald_pw::H_Ewald_pw() {};
+H_Ewald_pw::~H_Ewald_pw() {};
 
 int H_Ewald_pw::estimate_mxr(const double &rmax, const ModuleBase::Matrix3 &bg)
 {
     double bg1[3];
-    bg1[0] = bg.e11; bg1[1] = bg.e12; bg1[2] = bg.e13;
+    bg1[0] = bg.e11;
+    bg1[1] = bg.e12;
+    bg1[2] = bg.e13;
     const int nm1 = (int)(dnrm2(3, bg1, 1) * rmax + 2);
-    bg1[0] = bg.e21; bg1[1] = bg.e22; bg1[2] = bg.e23;
+    bg1[0] = bg.e21;
+    bg1[1] = bg.e22;
+    bg1[2] = bg.e23;
     const int nm2 = (int)(dnrm2(3, bg1, 1) * rmax + 2);
-    bg1[0] = bg.e31; bg1[1] = bg.e32; bg1[2] = bg.e33;
+    bg1[0] = bg.e31;
+    bg1[1] = bg.e32;
+    bg1[2] = bg.e33;
     const int nm3 = (int)(dnrm2(3, bg1, 1) * rmax + 2);
     return (2 * nm1 + 1) * (2 * nm2 + 1) * (2 * nm3 + 1);
 }
 
-double H_Ewald_pw::compute_ewald(const UnitCell& cell,
-                                 const ModulePW::PW_Basis* rho_basis,
-                                 const ModuleBase::ComplexMatrix& strucFac,
-                                 const int test_energy,
-                                 std::ofstream& output_stream)
+double H_Ewald_pw::compute_ewald(
+    const UnitCell &cell,
+    const ModulePW::PW_Basis *rho_basis,
+    const ModuleBase::ComplexMatrix &strucFac,
+    const int test_energy,
+    std::ofstream &output_stream)
 {
-    ModuleBase::TITLE("H_Ewald_pw","compute_ewald");
-    ModuleBase::timer::start("H_Ewald_pw","compute_ewald");
+    ModuleBase::TITLE("H_Ewald_pw", "compute_ewald");
+    ModuleBase::timer::start("H_Ewald_pw", "compute_ewald");
 
-//----------------------------------------------------------
-// Calculates Ewald energy with both G- and R-space terms.
-// Determines optimal alpha. Should hopefully work for any structure.
-//----------------------------------------------------------
-    //int ng=0;
-    int nr=0;
-    int na=0;
-    int nb=0;
-    //int nt=0;
-    int nrm=0;
+    //----------------------------------------------------------
+    // Calculates Ewald energy with both G- and R-space terms.
+    // Determines optimal alpha. Should hopefully work for any structure.
+    //----------------------------------------------------------
+    // int ng=0;
+    int nr = 0;
+    int na = 0;
+    int nb = 0;
+    // int nt=0;
+    int nrm = 0;
 
-    double ewaldg=0.0;
-    double ewaldr=0.0;
-    double ewalds=0.0;
+    double ewaldg = 0.0;
+    double ewaldr = 0.0;
+    double ewalds = 0.0;
 
-    ModuleBase::Vector3<double> dtau ;
-    double rmax=0.0;
-    double rr=0.0;
-    double upperbound=0.0;
-    double fact=0;
+    ModuleBase::Vector3<double> dtau;
+    double rmax = 0.0;
+    double rr = 0.0;
+    double upperbound = 0.0;
+    double fact = 0;
     // total ionic charge in the cell
     // ewald energy computed in reciprocal space
     // ewald energy computed in real space
@@ -68,15 +75,15 @@ double H_Ewald_pw::compute_ewald(const UnitCell& cell,
 
     // (1) calculate total ionic charge
     double charge = 0.0;
-    for (int it = 0;it < cell.ntype;it++)
+    for (int it = 0; it < cell.ntype; it++)
     {
         {
-            charge += cell.atoms[it].na * cell.atoms[it].ncpp.zv;//mohan modify 2007-11-7
+            charge += cell.atoms[it].na * cell.atoms[it].ncpp.zv; // mohan modify 2007-11-7
         }
     }
-    if(test_energy)
+    if (test_energy)
     {
-        ModuleBase::GlobalFunc::OUT(output_stream,"Total ionic charge",charge);
+        ModuleBase::GlobalFunc::OUT(output_stream, "Total ionic charge", charge);
     }
 
     // (2) calculate the converged value: alpha
@@ -89,74 +96,74 @@ double H_Ewald_pw::compute_ewald(const UnitCell& cell,
 
         if (alpha <= 0.0)
         {
-            ModuleBase::WARNING_QUIT("ewald","Can't find optimal alpha.");
+            ModuleBase::WARNING_QUIT("ewald", "Can't find optimal alpha.");
         }
         upperbound = 2.0 * charge * charge * sqrt(2.0 * alpha / ModuleBase::TWO_PI) *
                      erfc(sqrt(cell.tpiba2 * rho_basis->ggecut / 4.0 / alpha));
-    }
-    while (upperbound > 1.0e-7);
-    if(test_energy)
+    } while (upperbound > 1.0e-7);
+    if (test_energy)
     {
-        ModuleBase::GlobalFunc::OUT(output_stream,"alpha",alpha);
-        ModuleBase::GlobalFunc::OUT(output_stream,"Upper bound",upperbound);
+        ModuleBase::GlobalFunc::OUT(output_stream, "alpha", alpha);
+        ModuleBase::GlobalFunc::OUT(output_stream, "Upper bound", upperbound);
     }
 
     // G-space sum here.
     // Determine if this processor contains G=0 and set the constant term
     if (rho_basis->ig_gge0 >= 0)
     {
-        ewaldg = - charge * charge / alpha / 4.0;
+        ewaldg = -charge * charge / alpha / 4.0;
     }
     else
     {
         ewaldg = 0.0;
     }
 
-    // in plane wave basis, only use k=0 point is not 
+    // in plane wave basis, only use k=0 point is not
     // called "gamma_only", only if the wave functions
-    // are stored as double type, the gamma_only = true. 
-    // I don't know why "gamma_only" in plane wave 
+    // are stored as double type, the gamma_only = true.
+    // I don't know why "gamma_only" in plane wave
     // makes the fact below is 2, that's a little complicated
     // to understand. I think that may because only half
-    // the G vectors are used. Unfortunately implement the 
+    // the G vectors are used. Unfortunately implement the
     // function hasn't in my plan list yet.
     //
-    // but that's not the term "gamma_only" I want to use in LCAO,  
+    // but that's not the term "gamma_only" I want to use in LCAO,
     fact = 1.0;
 
-    //output_stream << "\n pwb.gstart = " << pwb.gstart << std::endl;
+    // output_stream << "\n pwb.gstart = " << pwb.gstart << std::endl;
     const int ig0 = rho_basis->ig_gge0;
     for (int ig = 0; ig < rho_basis->npw; ig++)
     {
-        if(ig == ig0) 
-        { 
+        if (ig == ig0)
+        {
             continue;
         }
         std::complex<double> rhon = ModuleBase::ZERO;
-        for (int it=0; it<cell.ntype; it++)
+        for (int it = 0; it < cell.ntype; it++)
         {
             {
                 rhon += static_cast<double>(cell.atoms[it].ncpp.zv) * conj(strucFac(it, ig));
             }
         }
-        ewaldg += fact * std::abs(rhon) * std::abs(rhon)
-                  * exp(- rho_basis->gg[ig] * cell.tpiba2 / alpha / 4.0 ) / rho_basis->gg[ig] / cell.tpiba2;
+        ewaldg += fact * std::abs(rhon) * std::abs(rhon) * exp(-rho_basis->gg[ig] * cell.tpiba2 / alpha / 4.0) /
+                  rho_basis->gg[ig] / cell.tpiba2;
     }
 
     ewaldg = ModuleBase::FOUR_PI / cell.omega * ewaldg;
 
-//	std::cout << "\n ewaldg = " << ewaldg;
+    //	std::cout << "\n ewaldg = " << ewaldg;
 
     //  Here add the other constant term
     if (rho_basis->ig_gge0 >= 0)
     {
-        for (int it = 0; it < cell.ntype;it++)
+        for (int it = 0; it < cell.ntype; it++)
         {
             {
-                ewaldg = ewaldg - cell.atoms[it].na * cell.atoms[it].ncpp.zv * cell.atoms[it].ncpp.zv * sqrt(8.0 / ModuleBase::TWO_PI * alpha);
+                ewaldg = ewaldg - cell.atoms[it].na * cell.atoms[it].ncpp.zv * cell.atoms[it].ncpp.zv *
+                                      sqrt(8.0 / ModuleBase::TWO_PI * alpha);
             }
         }
-    }//mohan modify 2007-11-7, 2010-07-26
+    } // mohan modify 2007-11-7, 2010-07-26
 
     // R-space sum here (only done for the processor that contains G=0)
     ewaldr = 0.0;
@@ -166,21 +173,21 @@ double H_Ewald_pw::compute_ewald(const UnitCell& cell,
     rmax = 4.0 / sqrt(alpha) / cell.lat0;
     mxr = H_Ewald_pw::estimate_mxr(rmax, cell.G);
 
-    if(test_energy)
+    if (test_energy)
     {
-        ModuleBase::GlobalFunc::OUT(output_stream,"mxr",mxr);
+        ModuleBase::GlobalFunc::OUT(output_stream, "mxr", mxr);
     }
     std::vector<ModuleBase::Vector3<double>> vec_r(mxr);
     std::vector<double> vec_r2(mxr);
     std::vector<int> vec_irr(mxr);
-    int* irr = vec_irr.data();
-    ModuleBase::Vector3<double>* r = vec_r.data();
-    double* r2 = vec_r2.data();
+    int *irr = vec_irr.data();
+    ModuleBase::Vector3<double> *r = vec_r.data();
+    double *r2 = vec_r2.data();
 
 #ifdef __MPI
-    if(test_energy)
+    if (test_energy)
     {
-        ModuleBase::GlobalFunc::OUT(output_stream,"rmax(unit lat0)",rmax);
+        ModuleBase::GlobalFunc::OUT(output_stream, "rmax(unit lat0)", rmax);
     }
 
     int size = 0;
@@ -197,12 +204,12 @@ double H_Ewald_pw::compute_ewald(const UnitCell& cell,
     int ia1 = 0;
     int it2 = 0;
     int ia2 = 0;
-    for(int na1=ia_start; na1<cell.nat; na1+=ia_step)
+    for (int na1 = ia_start; na1 < cell.nat; na1 += ia_step)
     {
         it1 = cell.iat2it[na1];
         ia1 = cell.iat2ia[na1];
-    
-        for(int na2=0; na2<cell.nat; na2++)
+
+        for (int na2 = 0; na2 < cell.nat; na2++)
         {
             it2 = cell.iat2it[na2];
             ia2 = cell.iat2ia[na2];
@@ -214,34 +221,36 @@ double H_Ewald_pw::compute_ewald(const UnitCell& cell,
             // at-->cell.latvec, bg-->G
             // and sum to the real space part
 
-            if(test_energy>1)
+            if (test_energy > 1)
             {
-                ModuleBase::GlobalFunc::OUT("dtau.x",dtau.x);
-                ModuleBase::GlobalFunc::OUT("dtau.y",dtau.y);
-                ModuleBase::GlobalFunc::OUT("dtau.z",dtau.z);
-                ModuleBase::GlobalFunc::OUT("nrm",nrm);
+                ModuleBase::GlobalFunc::OUT("dtau.x", dtau.x);
+                ModuleBase::GlobalFunc::OUT("dtau.y", dtau.y);
+                ModuleBase::GlobalFunc::OUT("dtau.z", dtau.z);
+                ModuleBase::GlobalFunc::OUT("nrm", nrm);
             }
-            for(nr=0; nr<nrm; nr++)
+            for (nr = 0; nr < nrm; nr++)
             {
                 rr = sqrt(r2[nr]) * cell.lat0;
                 {
-                    ewaldr = ewaldr + cell.atoms[it1].ncpp.zv * cell.atoms[it2].ncpp.zv *
-                            erfc(sqrt(alpha) * rr) / rr;
+                    ewaldr = ewaldr + cell.atoms[it1].ncpp.zv * cell.atoms[it2].ncpp.zv * erfc(sqrt(alpha) * rr) / rr;
                 }
             }
-            if (test_energy>1)
+            if (test_energy > 1)
             {
-                ModuleBase::GlobalFunc::OUT("ewaldr",ewaldr);
+                ModuleBase::GlobalFunc::OUT("ewaldr", ewaldr);
             }
         }
     }
 #else
     if (rho_basis->ig_gge0 >= 0)
-    {	
-        if(test_energy) ModuleBase::GlobalFunc::OUT(output_stream,"rmax(unit lat0)",rmax);
+    {
+        if (test_energy)
+        {
+            ModuleBase::GlobalFunc::OUT(output_stream, "rmax(unit lat0)", rmax);
+        }
         // with this choice terms up to ZiZj*erfc(4) are counted (erfc(4)=2x10^-8
-        int nt1=0;
-        int nt2=0;
+        int nt1 = 0;
+        int nt2 = 0;
 
         for (nt1 = 0; nt1 < cell.ntype; nt1++)
         {
@@ -251,33 +260,36 @@ double H_Ewald_pw::compute_ewald(const UnitCell& cell,
                 {
                     for (nb = 0; nb < cell.atoms[nt2].na; nb++)
                     {
-                        //calculate tau[na]-tau[nb]
+                        // calculate tau[na]-tau[nb]
                         dtau = cell.atoms[nt1].tau[na] - cell.atoms[nt2].tau[nb];
-                        //generates nearest-neighbors shells
+                        // generates nearest-neighbors shells
                         H_Ewald_pw::rgen(dtau, rmax, irr, cell.latvec, cell.G, r, r2, mxr, nrm, test_energy);
                         // at-->cell.latvec, bg-->G
                         // and sum to the real space part
 
-                        if (test_energy>1)
+                        if (test_energy > 1)
                         {
-                            ModuleBase::GlobalFunc::OUT("dtau.x",dtau.x);
-                            ModuleBase::GlobalFunc::OUT("dtau.y",dtau.y);
-                            ModuleBase::GlobalFunc::OUT("dtau.z",dtau.z);
-                            ModuleBase::GlobalFunc::OUT("nrm",nrm);
+                            ModuleBase::GlobalFunc::OUT("dtau.x", dtau.x);
+                            ModuleBase::GlobalFunc::OUT("dtau.y", dtau.y);
+                            ModuleBase::GlobalFunc::OUT("dtau.z", dtau.z);
+                            ModuleBase::GlobalFunc::OUT("nrm", nrm);
                         }
-                        for (nr = 0;nr < nrm;nr++)
+                        for (nr = 0; nr < nrm; nr++)
                         {
-                            rr = sqrt(r2 [nr]) * cell.lat0;
+                            rr = sqrt(r2[nr]) * cell.lat0;
                             {
                                 ewaldr = ewaldr + cell.atoms[nt1].ncpp.zv * cell.atoms[nt2].ncpp.zv *
-                                        erfc(sqrt(alpha) * rr) / rr;
+                                                      erfc(sqrt(alpha) * rr) / rr;
                             }
                         } // enddo
-                        if (test_energy>1) ModuleBase::GlobalFunc::OUT("ewaldr",ewaldr);
+                        if (test_energy > 1)
+                        {
+                            ModuleBase::GlobalFunc::OUT("ewaldr", ewaldr);
+                        }
                     } // enddo
                 } // enddo
             } // nt2
-        }//nt1
+        } // nt1
     } // endif
 #endif
 
@@ -286,17 +298,16 @@ double H_Ewald_pw::compute_ewald(const UnitCell& cell,
     // mohan fix bug 2010-07-26
     Parallel_Reduce::reduce_pool(ewalds);
 
-    if (test_energy>1)
+    if (test_energy > 1)
     {
-        ModuleBase::GlobalFunc::OUT("ewaldg",ewaldg);
-        ModuleBase::GlobalFunc::OUT("ewaldr",ewaldr);
-        ModuleBase::GlobalFunc::OUT("ewalds",ewalds);
+        ModuleBase::GlobalFunc::OUT("ewaldg", ewaldg);
+        ModuleBase::GlobalFunc::OUT("ewaldr", ewaldr);
+        ModuleBase::GlobalFunc::OUT("ewalds", ewalds);
     }
 
-    ModuleBase::timer::end("H_Ewald_pw","compute_ewald");
+    ModuleBase::timer::end("H_Ewald_pw", "compute_ewald");
     return ewalds;
 } // end function ewald
-
 
 void H_Ewald_pw::rgen(
     const ModuleBase::Vector3<double> &dtau,
@@ -330,12 +341,12 @@ void H_Ewald_pw::rgen(
     // input: the radius of the sphere in real sp
     //    and here the local variables
 
-    int nm1=0;
-    int nm2=0;
-    int nm3=0;
-    int i=0;
-    int j=0;
-    int k=0;
+    int nm1 = 0;
+    int nm2 = 0;
+    int nm3 = 0;
+    int i = 0;
+    int j = 0;
+    int k = 0;
     // index on R vectors for order
     //  maximum values for trial vectors
     //  counters on trial vectors
@@ -346,8 +357,8 @@ void H_Ewald_pw::rgen(
 
     ModuleBase::Vector3<double> t;
     ModuleBase::Vector3<double> t1;
-    double tt=0.0;
-    double bg1[3]={0,0,0};
+    double tt = 0.0;
+    double bg1[3] = {0, 0, 0};
     // buffer contains the actual r
     // buffer cotains the modulus of actual r
     // used for swapping
@@ -379,11 +390,11 @@ void H_Ewald_pw::rgen(
 
     nm3 = (int)(dnrm2(3, bg1, 1) * rmax + 2);
 
-    if (test_energy>1)
+    if (test_energy > 1)
     {
-        ModuleBase::GlobalFunc::OUT("nm1",nm1);
-        ModuleBase::GlobalFunc::OUT("nm2",nm2);
-        ModuleBase::GlobalFunc::OUT("nm3",nm3);
+        ModuleBase::GlobalFunc::OUT("nm1", nm1);
+        ModuleBase::GlobalFunc::OUT("nm2", nm2);
+        ModuleBase::GlobalFunc::OUT("nm3", nm3);
     }
 
     for (i = -nm1; i <= nm1; i++) // mohan fix bug, add '='. 2009-02-27
@@ -392,13 +403,13 @@ void H_Ewald_pw::rgen(
         {
             for (k = -nm3; k <= nm3; k++)
             {
-                ModuleBase::Vector3<double> t1(i,j,k);
-//				out.printV3(t1);
+                ModuleBase::Vector3<double> t1(i, j, k);
+                //				out.printV3(t1);
                 t = t1 * latvec; // bug ! first '*latvec', second '-dtau'.
-                t = t - dtau; // bug ! t = t - dtau, not t1 = t1 -tau;
+                t = t - dtau;    // bug ! t = t - dtau, not t1 = t1 -tau;
 
-//				out.printV3(t);	// mohan fix 2bugs here, 2009-2-27
-//				out.printM3("latvec",latvec);
+                //				out.printV3(t);	// mohan fix 2bugs here, 2009-2-27
+                //				out.printM3("latvec",latvec);
 
                 tt = t.x * t.x + t.y * t.y + t.z * t.z;
 
@@ -406,8 +417,9 @@ void H_Ewald_pw::rgen(
                 {
                     if (nrm >= mxr)
                     {
-                        ModuleBase::WARNING_QUIT("rgen", "too many r-vectors (nrm=" + std::to_string(nrm)
-                                                 + ", mxr=" + std::to_string(mxr) + "). Please report this issue.");
+                        ModuleBase::WARNING_QUIT(
+                            "rgen", "too many r-vectors (nrm=" + std::to_string(nrm) + ", mxr=" + std::to_string(mxr) +
+                                        "). Please report this issue.");
                     }
                     r[nrm] = t;
                     r2[nrm] = tt;
@@ -426,34 +438,33 @@ void H_Ewald_pw::rgen(
     }
 
     // mohan fix bug 2011-06-07
-    for(int i=0; i<nrm; i++)
+    for (int i = 0; i < nrm; i++)
     {
-        back:
+    back:
         const int index = irr[i];
         // large index before 'i' should be eliminated.
         // according to change elements again and again.
-        if( index < i )
+        if (index < i)
         {
-            double swap_x = r[index].x;	
-            double swap_y = r[index].y;	
+            double swap_x = r[index].x;
+            double swap_y = r[index].y;
             double swap_z = r[index].z;
-            
-            r[index].x = r[ irr[index] ].x;	
-            r[index].y = r[ irr[index] ].y;			
-            r[index].z = r[ irr[index] ].z;			
-                
-            r[ irr[index] ].x = swap_x;
-            r[ irr[index] ].y = swap_y;
-            r[ irr[index] ].z = swap_z;
 
+            r[index].x = r[irr[index]].x;
+            r[index].y = r[irr[index]].y;
+            r[index].z = r[irr[index]].z;
+
+            r[irr[index]].x = swap_x;
+            r[irr[index]].y = swap_y;
+            r[irr[index]].z = swap_z;
 
             const int iswap = irr[i];
             irr[i] = irr[index];
             irr[index] = iswap;
 
             goto back;
-        }	
+        }
     }
 
     return;
-} //end subroutine rgen
+} // end subroutine rgen

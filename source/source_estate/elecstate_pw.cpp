@@ -1,5 +1,8 @@
 #include "elecstate_pw.h"
 
+#include <type_traits>
+#include <vector>
+
 #include "source_base/constants.h"
 #include "source_base/libm/libm.h"
 #include "source_base/module_device/device.h"
@@ -45,7 +48,7 @@ ElecStatePW<T, Device>::~ElecStatePW()
             delmem_complex_op()(this->rhog_data);
             delete[] this->rhog;
         }
-        if (XC_Functional::get_func_type() == 3 || PARAM.inp.out_elf[0] > 0)
+        if (XC_Functional::get_ked_flag() || PARAM.inp.out_elf[0] > 0)
         {
             delmem_var_op()(this->kin_r_data);
             delete[] this->kin_r;
@@ -87,7 +90,7 @@ void ElecStatePW<T, Device>::init_rho_data()
                 this->rhog[ii] = this->rhog_data + ii * this->charge->rhopw->npw;
             }
         }
-        if (XC_Functional::get_func_type() == 3 || PARAM.inp.out_elf[0] > 0)
+        if (XC_Functional::get_ked_flag() || PARAM.inp.out_elf[0] > 0)
         {
             this->kin_r = new Real*[this->charge->nspin];
             resmem_var_op()(this->kin_r_data, this->charge->nspin * this->charge->nrxx);
@@ -104,7 +107,7 @@ void ElecStatePW<T, Device>::init_rho_data()
         {
             this->rhog = reinterpret_cast<T**>(this->charge->rhog);
         }
-        if (XC_Functional::get_func_type() == 3 || PARAM.inp.out_elf[0] > 0)
+        if (XC_Functional::get_ked_flag() || PARAM.inp.out_elf[0] > 0)
         {
             this->kin_r = reinterpret_cast<Real**>(this->charge->kin_r);
         }
@@ -127,7 +130,7 @@ void ElecStatePW<T, Device>::psiToRho(const psi::Psi<T, Device>& psi)
         // denghui replaced at 20221110
         // ModuleBase::GlobalFunc::ZEROS(this->rho[is], this->charge->nrxx);
         setmem_var_op()(this->rho[is], 0, this->charge->nrxx);
-        if (XC_Functional::get_func_type() == 3)
+        if (XC_Functional::get_ked_flag())
         {
             // ModuleBase::GlobalFunc::ZEROS(this->charge->kin_r[is], this->charge->nrxx);
             setmem_var_op()(this->kin_r[is], 0, this->charge->nrxx);
@@ -139,18 +142,40 @@ void ElecStatePW<T, Device>::psiToRho(const psi::Psi<T, Device>& psi)
         }
     }
 
+    // Keep the FFTs in single precision, but sum k-point densities in double.
+    const bool sum_k_in_double = std::is_same<Real, float>::value
+                                 && std::is_same<Device, base_device::DEVICE_GPU>::value;
+    std::vector<double> buffer(sum_k_in_double ? this->charge->nrxx : 0);
+    const auto accumulate_k = [&](Real** source, double** target, const bool first)
+    {
+        for (int is = 0; is < this->charge->nspin; ++is)
+        {
+            castmem_var_d2h_op()(buffer.data(), source[is], this->charge->nrxx);
+            for (int ir = 0; ir < this->charge->nrxx; ++ir)
+                target[is][ir] = first ? buffer[ir] : target[is][ir] + buffer[ir];
+            setmem_var_op()(source[is], 0, this->charge->nrxx);
+        }
+    };
+
     for (int ik = 0; ik < psi.get_nk(); ++ik)
     {
         psi.fix_k(ik);
         this->updateRhoK(psi);
+        if (sum_k_in_double)
+        {
+            accumulate_k(this->rho, this->charge->rho, ik == 0);
+            if (XC_Functional::get_ked_flag())
+                accumulate_k(this->kin_r, this->charge->kin_r, ik == 0);
+        }
     }
 
-    if (PARAM.inp.device == "gpu" || PARAM.inp.precision == "single")
+    if ((!sum_k_in_double || psi.get_nk() == 0)
+        && (PARAM.inp.device == "gpu" || PARAM.inp.precision == "single"))
     {
         for (int ii = 0; ii < PARAM.inp.nspin; ii++)
         {
             castmem_var_d2h_op()(this->charge->rho[ii], this->rho[ii], this->charge->nrxx);
-            if (XC_Functional::get_func_type() == 3)
+            if (XC_Functional::get_ked_flag())
             {
                 castmem_var_d2h_op()(this->charge->kin_r[ii], this->kin_r[ii], this->charge->nrxx);
             }
@@ -254,7 +279,7 @@ void ElecStatePW<T, Device>::rhoBandK(const psi::Psi<T, Device>& psi)
             }
 
             // kinetic energy density
-            if (XC_Functional::get_func_type() == 3)
+            if (XC_Functional::get_ked_flag())
             {
                 for (int j = 0; j < 3; j++)
                 {

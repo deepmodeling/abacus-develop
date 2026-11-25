@@ -8,7 +8,7 @@ sum_file(){
 		colume=`echo ${#value_line[@]}`
 		for (( col=0 ; col<$colume ; col++ ));do
 			value=`echo ${value_line[$col]}`
-			sum=`awk 'BEGIN {x='$sum';y='$value';printf "%.6f\n",x+sqrt(y*y)}'` 
+			sum=`awk 'BEGIN {x='$sum';y='$value';printf "%.6f\n",x+sqrt(y*y)}'`
 		done
 	done
 	echo $sum
@@ -39,7 +39,7 @@ has_r=`grep -En '(^|[[:space:]])out_r($|[[:space:]])' INPUT | awk '{print $2}'`
 out_descriptor=`grep out_descriptor INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 #echo $running_path
 base=`grep -En '(^|[[:space:]])basis_type($|[[:space:]])' INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
-if [ $base == "pw" ]; then word="plane_wave_line" 
+if [ $base == "pw" ]; then word="plane_wave_line"
 else
 word="lcao_line"
 fi
@@ -89,10 +89,10 @@ fi
 
 #echo $total_charge
 if ! test -z "$has_dos"  && [  $has_dos -eq 1 ]; then
-	total_dos=`cat OUT.autotest/doss1g1.txt | awk 'END {print}' | awk '{print $3}'`
+	total_dos=`cat OUT.autotest/doss*.txt | awk 'END {print}' | awk '{print $3}'`
 	echo "totaldosref $total_dos" >> $1
 fi
-#	smearing_dos=`sum_file OUT.autotest/doss1g1.txt`
+#	smearing_dos=`sum_file OUT.autotest/doss*.txt`
 #	echo "totaldossmearing $smearing_dos" >> $1
 
 

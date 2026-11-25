@@ -36,11 +36,11 @@ void HkPsi<double>(const Parallel_Orbitals* ParaV,
     const char C_char = 'C';
 
 #ifdef __MPI
-    const int nbasis = ParaV->desc[2];
+    const int nbasis = ParaV->para_2d().desc()[2];
     const int nbands = ParaV->desc_wfc[3];
 
     //because wfc(bands, basis'), H(basis, basis'), we do wfc*H^T(in the perspective of cpp, not in fortran). And get H_wfc(bands, basis) is correct.
-    ScalapackConnector::gemm( C_char, N_char, nbasis, nbands, nbasis, one_double, &HK, 1, 1, ParaV->desc,
+    ScalapackConnector::gemm( C_char, N_char, nbasis, nbands, nbasis, one_double, &HK, 1, 1, ParaV->para_2d().desc(),
         &wfc, 1, 1, ParaV->desc_wfc, zero_double, &H_wfc, 1, 1, ParaV->desc_wfc );
 #endif
 
@@ -49,7 +49,7 @@ void HkPsi<double>(const Parallel_Orbitals* ParaV,
 
 template <>
 void cal_bra_op_ket<double>(const Parallel_Orbitals* ParaV, 
-                            const Parallel_2D& para_Eij_in,
+                            const Parallel_Blkcyclic& para_Eij_in,
                             const double& wfc, 
                             const double& H_wfc, 
                             std::vector<double>& Dmn)
@@ -60,15 +60,15 @@ void cal_bra_op_ket<double>(const Parallel_Orbitals* ParaV,
     const char N_char = 'N';
     const char T_char = 'T';
 
-    const int nrow_bands = para_Eij_in.get_row_size();
-    const int ncol_bands = para_Eij_in.get_col_size();
+    const int nrow_bands = para_Eij_in.nrloc();
+    const int ncol_bands = para_Eij_in.ncloc();
 
 #ifdef __MPI
-    const int nbasis = ParaV->desc[2];
+    const int nbasis = ParaV->para_2d().desc()[2];
     const int nbands = ParaV->desc_wfc[3];
 
     ScalapackConnector::gemm( T_char, N_char, nbands, nbands, nbasis, one_double, &wfc, 1, 1, ParaV->desc_wfc,
-            &H_wfc, 1, 1, ParaV->desc_wfc, zero_double, &Dmn[0], 1, 1, para_Eij_in.desc );
+            &H_wfc, 1, 1, ParaV->desc_wfc, zero_double, &Dmn[0], 1, 1, para_Eij_in.desc() );
 #endif
 }
 
@@ -278,7 +278,7 @@ void Veff_rdmft<std::complex<double>, double>::contributeHR()
         ModuleBase::matrix vofk = *vloc_;
         vofk.zero_out();
         ModuleBase::matrix v_matrix_XC(this->nspin, charge_->nrxx);
-        elecstate::PotXC potXC(PARAM.globalv.domag, PARAM.globalv.domag_z, PARAM.inp.gga_grad, rho_basis_, etxc, vtxc, &vofk);
+        elecstate::PotXC potXC(PARAM.globalv.domag, PARAM.globalv.domag_z, PARAM.inp.gga_grad, false, rho_basis_, etxc, vtxc, &vofk);
         potXC.cal_v_eff(charge_, ucell, v_matrix_XC);
 
         // if need meta-GGA, go to study veff_lcao.cpp and modify the code
@@ -360,7 +360,7 @@ void Veff_rdmft<double, double>::contributeHR()
         ModuleBase::matrix vofk = *vloc_;
         vofk.zero_out();
         ModuleBase::matrix v_matrix_XC(this->nspin, charge_->nrxx);
-        elecstate::PotXC potXC(PARAM.globalv.domag, PARAM.globalv.domag_z, PARAM.inp.gga_grad, rho_basis_, etxc, vtxc, &vofk);
+        elecstate::PotXC potXC(PARAM.globalv.domag, PARAM.globalv.domag_z, PARAM.inp.gga_grad, false, rho_basis_, etxc, vtxc, &vofk);
         potXC.cal_v_eff(charge_, ucell, v_matrix_XC);
         
         for(int is=0; is<this->nspin; ++is)

@@ -47,6 +47,18 @@ TEST_PATH_PREFIXES = ("tests/", "test/", "unit_test/", "examples/")
 TEST_NAME_PATTERNS = ("test", "tests", "unittest", "pytest", "ctest", "case")
 HETEROGENEOUS_MARKERS = ("/cuda/", "/rocm/", "/kernels/", "cuda/", "rocm/", "kernels/")
 PR_SECTION_RE = re.compile(r"^###\s+(.+?)\s*$", re.MULTILINE)
+EXCEPTION_SECTION = "Governance Exception"
+EXCEPTION_APPROVED_LABEL = "governance-exception-approved"
+EXCEPTION_FIELDS = (
+    "Rule",
+    "Reason",
+    "Scope",
+    "User or maintenance risk",
+    "Why the normal rule cannot be followed now",
+    "Follow-up cleanup plan",
+    "Requested approver",
+)
+EXCEPTION_FIELD_RE = re.compile(r"^[-*]\s*([^:]+):\s*(.*)$")
 
 
 @dataclass
@@ -516,7 +528,7 @@ def check_header_include_warnings(findings: List[Finding], lines: Iterable[DiffL
                 line.path,
                 line.line,
                 "Header diff adds an include dependency.",
-                "Confirm the declaration requires this include; prefer forward declarations where practical.",
+                "Confirm this include is needed by the header and does not introduce unnecessary or cyclic dependencies.",
             )
 
 
@@ -577,8 +589,87 @@ def check_cmake_linkage(findings: List[Finding], statuses: Dict[str, str], chang
             )
 
 
+# Unit test layout under source/. See AGENTS.md rule 11.
+UNITTEST_DIR = "unittests"
+LEGACY_TEST_DIR_NAMES = {"test", "tests", "unittest", "unit_test", "unit_tests"}
+UNITTEST_CODE_EXTENSIONS = SOURCE_EXTENSIONS | HEADER_EXTENSIONS | {".cuh"}
 
-def read_pr_body(event_path: Optional[str]) -> Optional[str]:
+
+def is_legacy_test_dir(name: str) -> bool:
+    """`test/`, `test_serial/`, `UnitTests/`, ... -- anything test-like but `unittests/`."""
+    if name == UNITTEST_DIR:
+        return False
+    lowered = name.lower()
+    return lowered in LEGACY_TEST_DIR_NAMES or lowered == UNITTEST_DIR or lowered.startswith("test_")
+
+
+def check_unittest_layout(findings: List[Finding], statuses: Dict[str, str]) -> None:
+    """Enforce the `unittests/` layout for unit tests under source/.
+
+    Added, renamed, and copied files are checked at their new path; modified
+    files are checked too, so touching a test means bringing it into the
+    layout. Deletions are always allowed, which is how legacy directories
+    shrink.
+    """
+    for path, status in statuses.items():
+        if not path.startswith("source/") or status.startswith("D"):
+            continue
+        added = status[:1] in {"A", "R", "C"}
+        p = Path(path)
+        suffix = p.suffix.lower()
+        dirs = p.parts[1:-1]
+        # Data subdirectories below unittests/ may use any name, `test/` included.
+        owners = dirs[:dirs.index(UNITTEST_DIR)] if UNITTEST_DIR in dirs else dirs
+        legacy = next((d for d in owners if is_legacy_test_dir(d)), None)
+        if legacy is not None:
+            if added:
+                reason = f"Adds a file to the legacy test directory `{legacy}/`."
+            elif suffix in SOURCE_EXTENSIONS:
+                reason = f"Modifies a unit test source in the legacy test directory `{legacy}/`."
+            else:
+                continue
+            add_finding(
+                findings,
+                "Unit test directory layout",
+                BLOCK,
+                path,
+                None,
+                reason,
+                "Move the test into a sibling `unittests/` directory (named test_<file>.cpp) "
+                "and wire it into that directory's CMakeLists.txt; legacy test directories "
+                "may only have files deleted or migrated out.",
+            )
+            continue
+        if UNITTEST_DIR not in dirs:
+            continue
+        below = dirs[dirs.index(UNITTEST_DIR) + 1:]
+        if below:
+            if suffix in UNITTEST_CODE_EXTENSIONS:
+                add_finding(
+                    findings,
+                    "Unit test directory layout",
+                    BLOCK,
+                    path,
+                    None,
+                    f"Code file inside the `unittests/{'/'.join(below)}/` subdirectory.",
+                    "Keep test sources and headers directly in `unittests/`; its subdirectories "
+                    "may hold test data only.",
+                )
+            continue
+        if suffix in SOURCE_EXTENSIONS and not p.name.startswith("test_"):
+            add_finding(
+                findings,
+                "Unit test file naming",
+                BLOCK,
+                path,
+                None,
+                f"Source file `{p.name}` in `unittests/` does not start with `test_`.",
+                "Name the test test_<file under test>.cpp; move mocks and shared helpers into a .h header.",
+            )
+
+
+
+def read_pull_request(event_path: Optional[str]) -> Optional[dict]:
     if not event_path:
         return None
     try:
@@ -588,10 +679,29 @@ def read_pr_body(event_path: Optional[str]) -> Optional[str]:
         return None
     if "pull_request" not in payload or not isinstance(payload["pull_request"], dict):
         return None
-    body = payload["pull_request"].get("body")
+    return payload["pull_request"]
+
+
+def read_pr_body(event_path: Optional[str]) -> Optional[str]:
+    pull_request = read_pull_request(event_path)
+    if pull_request is None:
+        return None
+    body = pull_request.get("body")
     if body is None:
         return ""
     return str(body)
+
+
+def read_pr_labels(event_path: Optional[str]) -> List[str]:
+    pull_request = read_pull_request(event_path)
+    if pull_request is None:
+        return []
+    labels = pull_request.get("labels") or []
+    return [
+        str(label.get("name", ""))
+        for label in labels
+        if isinstance(label, dict)
+    ]
 
 
 def pr_sections(body: str) -> Dict[str, str]:
@@ -751,11 +861,84 @@ def check_documentation_warning(findings: List[Finding], changed: Sequence[str],
         )
 
 
+def parse_governance_exception(body: str) -> Optional[Dict[str, str]]:
+    sections = pr_sections(body)
+    content = sections.get(EXCEPTION_SECTION)
+    if content is None:
+        return None
+    fields: Dict[str, str] = {}
+    for raw in content.splitlines():
+        match = EXCEPTION_FIELD_RE.match(raw.strip())
+        if match:
+            fields[match.group(1).strip().lower()] = match.group(2).strip()
+    return fields
+
+
+def apply_governance_exception(
+    findings: List[Finding],
+    body: Optional[str],
+    labels: Sequence[str],
+) -> None:
+    """Downgrade blocking findings covered by an approved Governance Exception.
+
+    The PR body records the exception; the maintainer-applied label is the
+    approval. Findings with allow_exception=False are never downgraded.
+    """
+    if body is None:
+        return
+    approved = EXCEPTION_APPROVED_LABEL in labels
+    fields = parse_governance_exception(body)
+    if fields is None or not any(fields.values()):
+        if approved:
+            add_finding(
+                findings,
+                "Governance exception record",
+                WARN,
+                "pull_request.body",
+                None,
+                f"PR carries the `{EXCEPTION_APPROVED_LABEL}` label but has no filled `### {EXCEPTION_SECTION}` section.",
+                "Record the exception with the template in docs/developers_guide/agent_governance.md, or remove the label.",
+            )
+        return
+    missing = [field for field in EXCEPTION_FIELDS if not fields.get(field.lower())]
+    if missing:
+        add_finding(
+            findings,
+            "Governance exception record",
+            WARN,
+            "pull_request.body",
+            None,
+            f"`### {EXCEPTION_SECTION}` section is incomplete; missing fields: " + ", ".join(missing) + ".",
+            "Fill every field of the exception template; incomplete exceptions do not downgrade blocking findings.",
+        )
+        return
+    if not approved:
+        add_finding(
+            findings,
+            "Governance exception record",
+            WARN,
+            "pull_request.body",
+            None,
+            f"Governance exception requested for: {fields['rule']}; awaiting maintainer approval.",
+            f"A maintainer approves the exception by applying the `{EXCEPTION_APPROVED_LABEL}` label.",
+        )
+        return
+    excepted_rules = fields["rule"].lower()
+    for finding in findings:
+        if finding.severity != BLOCK or not finding.allow_exception:
+            continue
+        if finding.rule.lower() not in excepted_rules:
+            continue
+        finding.severity = WARN
+        finding.reason += " Downgraded from error by the approved governance exception."
+
+
 def collect_findings(root: Path, args: argparse.Namespace) -> List[Finding]:
     findings: List[Finding] = []
     statuses, changed = changed_paths(root, args)
     lines, removed_lines = changed_lines(root, args)
     body = read_pr_body(args.event_path)
+    labels = read_pr_labels(args.event_path)
     body_text = body or ""
 
     check_line_endings(findings, root, changed, statuses, args)
@@ -766,10 +949,12 @@ def collect_findings(root: Path, args: argparse.Namespace) -> List[Finding]:
     check_hpp_warnings(findings, statuses, lines)
     check_header_include_warnings(findings, lines)
     check_cmake_linkage(findings, statuses, changed)
+    check_unittest_layout(findings, statuses)
     check_pr_metadata(findings, body)
     check_test_evidence_warning(findings, changed, body_text)
     check_heterogeneous_test_warning(findings, changed, body_text)
     check_documentation_warning(findings, changed, body_text)
+    apply_governance_exception(findings, body, labels)
     return findings
 
 

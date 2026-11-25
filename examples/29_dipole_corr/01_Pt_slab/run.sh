@@ -13,16 +13,15 @@ mv OUT.ABACUS/running_scf.log OUT.ABACUS/running_scf2.log
 
 rm INPUT KPT
 
-if [[ ! -f scf1.output ]] || 
-   [[ ! -f scf2.output ]] || 
-   [[ ! -f OUT.ABACUS/running_scf1.log ]] ||
-   [[ ! -f OUT.ABACUS/running_scf2.log ]] ||
-   [[ ! ( "$(tail -1 OUT.ABACUS/running_scf1.log)" == " Total  Time  :"* ) ]] ||
-   [[ ! ( "$(tail -1 OUT.ABACUS/running_scf2.log)" == " Total  Time  :"* ) ]]
-then
-	echo "job failed!"
-	exit 1
+if [[ ! -f scf1.output ]] ||
+  [[ ! -f scf2.output ]] ||
+  [[ ! -f OUT.ABACUS/running_scf1.log ]] ||
+  [[ ! -f OUT.ABACUS/running_scf2.log ]] ||
+  [[ ! ("$(tail -1 OUT.ABACUS/running_scf1.log)" == " Total  Time  :"*) ]] ||
+  [[ ! ("$(tail -1 OUT.ABACUS/running_scf2.log)" == " Total  Time  :"*) ]]; then
+  echo "job failed!"
+  exit 1
 else
-	echo "job succeeded!"
-	exit 0
+  echo "job succeeded!"
+  exit 0
 fi

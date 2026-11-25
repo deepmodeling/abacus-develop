@@ -18,6 +18,7 @@ void pw::setup_pot(const int istep,
         pseudopot_cell_vnl &ppcell, // non-local pseudopotentials
         VSep* vsep_cell, // U-1/2 method
         psi::Psi<T, Device>* kspw_psi, // electronic wave functions
+        psi::Psi<std::complex<double>, Device>* onsite_psi, // persistent double-precision mirror
         hamilt::HamiltBase* p_hamilt, // hamiltonian
         ModulePW::PW_Basis_K *pw_wfc,  // pw for wfc
         const ModulePW::PW_Basis *pw_rhod, // pw for rhod
@@ -67,12 +68,14 @@ void pw::setup_pot(const int istep,
     //----------------------------------------------------------
     //! 4) Onsite projectors
     //----------------------------------------------------------
-    if (inp.onsite_radius > 0)
+    const bool spinor_rt = inp.esolver_type == "tddft" && inp.nspin == 4;
+    // The RT observer owns endpoint projection setup, including spinor precision conversion.
+    if (inp.onsite_radius > 0 && !spinor_rt)
     {
         auto* onsite_p = projectors::OnsiteProjector<double, Device>::get_instance();
         onsite_p->init(inp.orbital_dir,
                 &ucell,
-                *(kspw_psi),
+                *onsite_psi,
                 kv,
                 *(pw_wfc),
                 sf,
@@ -125,6 +128,7 @@ template void pw::setup_pot<std::complex<float>, base_device::DEVICE_CPU>(
         pseudopot_cell_vnl &ppcell, // non-local pseudopotentials
         VSep* vsep_cell, // U-1/2 method
         psi::Psi<std::complex<float>, base_device::DEVICE_CPU>* kspw_psi, // electronic wave functions
+        psi::Psi<std::complex<double>, base_device::DEVICE_CPU>* onsite_psi,
         hamilt::HamiltBase* p_hamilt, // hamiltonian
         ModulePW::PW_Basis_K *pw_wfc,  // pw for wfc
         const ModulePW::PW_Basis *pw_rhod, // pw for rhod
@@ -144,6 +148,7 @@ template void pw::setup_pot<std::complex<double>, base_device::DEVICE_CPU>(
         pseudopot_cell_vnl &ppcell, // non-local pseudopotentials
         VSep* vsep_cell, // U-1/2 method
         psi::Psi<std::complex<double>, base_device::DEVICE_CPU>* kspw_psi, // electronic wave functions
+        psi::Psi<std::complex<double>, base_device::DEVICE_CPU>* onsite_psi,
         hamilt::HamiltBase* p_hamilt, // hamiltonian
         ModulePW::PW_Basis_K *pw_wfc,  // pw for wfc
         const ModulePW::PW_Basis *pw_rhod, // pw for rhod
@@ -164,6 +169,7 @@ template void pw::setup_pot<std::complex<float>, base_device::DEVICE_GPU>(
         pseudopot_cell_vnl &ppcell, // non-local pseudopotentials
         VSep* vsep_cell, // U-1/2 method
         psi::Psi<std::complex<float>, base_device::DEVICE_GPU>* kspw_psi, // electronic wave functions
+        psi::Psi<std::complex<double>, base_device::DEVICE_GPU>* onsite_psi,
         hamilt::HamiltBase* p_hamilt, // hamiltonian
         ModulePW::PW_Basis_K *pw_wfc,  // pw for wfc
         const ModulePW::PW_Basis *pw_rhod, // pw for rhod
@@ -182,6 +188,7 @@ template void pw::setup_pot<std::complex<double>, base_device::DEVICE_GPU>(
         pseudopot_cell_vnl &ppcell, // non-local pseudopotentials
         VSep* vsep_cell, // U-1/2 method
         psi::Psi<std::complex<double>, base_device::DEVICE_GPU>* kspw_psi, // electronic wave functions
+        psi::Psi<std::complex<double>, base_device::DEVICE_GPU>* onsite_psi,
         hamilt::HamiltBase* p_hamilt, // hamiltonian
         ModulePW::PW_Basis_K *pw_wfc,  // pw for wfc
         const ModulePW::PW_Basis *pw_rhod, // pw for rhod

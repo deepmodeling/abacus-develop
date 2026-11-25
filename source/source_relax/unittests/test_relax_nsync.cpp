@@ -1,6 +1,7 @@
 #include "source_base/global_variable.h"
 #include "source_cell/unitcell.h"
 #include "source_io/module_parameter/parameter.h"
+#include "source_relax/ions_move_bfgs2.h"
 #include "source_relax/lattice_change_basic.h"
 #include "source_relax/relax_nsync.h"
 
@@ -23,7 +24,6 @@
  *   Largest stress is ... kbar while threshold is ... kbar
  *   Relaxation is converged!
  *   Relaxation is not converged yet!
- *   Relaxation is not converged after reaching relax_nmax!
  * The markers are what the ASE interface greps for (issue #6546).
  */
 
@@ -31,13 +31,16 @@ namespace unitcell
 {
 // Stub: the real update_pos_tau performs lattice-vector algebra that needs a
 // fully built UnitCell; these tests only care about the log output.
-void update_pos_tau(const Lattice&, const double*, const int, const int, Atom*)
+void update_pos_tau(
+    const Lattice &,
+    const double *,
+    const int,
+    const int,
+    Atom *)
 {
 }
 // Stub: the real setup_cell_after_vc recomputes reciprocal lattice etc.
-void setup_cell_after_vc(UnitCell&, std::ofstream&, const int)
-{
-}
+void setup_cell_after_vc(UnitCell &, std::ofstream &, const int) {}
 } // namespace unitcell
 
 UnitCell::UnitCell()
@@ -55,15 +58,9 @@ UnitCell::UnitCell()
     set_atom_flag = true;
     atoms[0].label = "Si";
 }
-UnitCell::~UnitCell()
-{
-}
-Magnetism::Magnetism()
-{
-}
-Magnetism::~Magnetism()
-{
-}
+UnitCell::~UnitCell() {}
+Magnetism::Magnetism() {}
+Magnetism::~Magnetism() {}
 Atom::Atom()
 {
     na = 1;
@@ -75,58 +72,33 @@ Atom::Atom()
     taud.resize(na);
     mbl[0] = {1, 1, 1};
 }
-Atom::~Atom()
-{
-}
+Atom::~Atom() {}
 #ifdef __MPI
-void Atom::bcast_atom()
-{
-}
-void Atom::bcast_atom2()
-{
-}
+void Atom::bcast_atom() {}
+void Atom::bcast_atom2() {}
 #endif
-Atom_pseudo::Atom_pseudo()
-{
-}
-Atom_pseudo::~Atom_pseudo()
-{
-}
-pseudo::pseudo()
-{
-}
-pseudo::~pseudo()
-{
-}
-SepPot::SepPot()
-{
-}
-SepPot::~SepPot()
-{
-}
-Sep_Cell::Sep_Cell() noexcept
-{
-}
-Sep_Cell::~Sep_Cell() noexcept
-{
-}
+Atom_pseudo::Atom_pseudo() {}
+Atom_pseudo::~Atom_pseudo() {}
+pseudo::pseudo() {}
+pseudo::~pseudo() {}
+SepPot::SepPot() {}
+SepPot::~SepPot() {}
+Sep_Cell::Sep_Cell() noexcept {}
+Sep_Cell::~Sep_Cell() noexcept {}
 int ModuleSymmetry::Symmetry::symm_flag = 0;
-void ModuleSymmetry::Symmetry::symmetrize_mat3(ModuleBase::matrix& sigma, const Lattice& lat) const
-{
-}
-void ModuleSymmetry::Symmetry::symmetrize_vec3_nat(double* v) const
-{
-}
+void ModuleSymmetry::Symmetry::symmetrize_mat3(ModuleBase::matrix &sigma, const Lattice &lat) const {}
+void ModuleSymmetry::Symmetry::symmetrize_vec3_nat(double *v) const {}
 
 // Friend of Parameter; the only sanctioned way to write PARAM.input in tests.
 class TestParameters
 {
   public:
-    static void set_relax(const std::string& out_level,
-                          const double relax_bfgs_rmax,
-                          const double relax_bfgs_rmin,
-                          const double relax_bfgs_init,
-                          const std::string& fixed_axes)
+    static void set_relax(
+        const std::string &out_level,
+        const double relax_bfgs_rmax,
+        const double relax_bfgs_rmin,
+        const double relax_bfgs_init,
+        const std::string &fixed_axes)
     {
         PARAM.input.out_level = out_level;
         PARAM.input.relax_bfgs_rmax = relax_bfgs_rmax;
@@ -172,7 +144,7 @@ class IonCellOptimizerTest : public ::testing::Test
     }
 
     // UnitCell is non-copyable (unique_ptr member), so fill it in place.
-    void setup_ucell(UnitCell& ucell)
+    void setup_ucell(UnitCell &ucell)
     {
         ucell.lat_axis_free[0] = 1;
         ucell.lat_axis_free[1] = 1;
@@ -227,6 +199,27 @@ TEST_F(IonCellOptimizerTest, RelaxConverged)
     EXPECT_THAT(log, testing::HasSubstr(" Largest force per step (eV/Angstrom):"));
     EXPECT_THAT(log, testing::HasSubstr("\n Relaxation is converged!"));
     EXPECT_THAT(log, testing::Not(testing::HasSubstr("not converged")));
+    EXPECT_FALSE(ucell.ionic_position_updated);
+}
+
+TEST_F(IonCellOptimizerTest, BfgsTradConvergedBeforeMove)
+{
+    inp.relax_method = "bfgs_trad";
+    inp.relax_nmax = 2;
+    UnitCell ucell;
+    setup_ucell(ucell);
+    optimizer.init_relax(natom, inp);
+    ModuleBase::matrix force(natom, 3);
+    ModuleBase::matrix stress(3, 3);
+    int force_step = 1;
+    int stress_step = 1;
+    std::ofstream ofs(log_file);
+
+    const bool done = optimizer.relax_step(1, etot, ucell, force, stress, force_step, stress_step, ofs);
+    ofs.close();
+
+    EXPECT_TRUE(done);
+    EXPECT_FALSE(ucell.ionic_position_updated);
 }
 
 // relax + large force: not converged, and no ASE converged marker may appear.
@@ -252,13 +245,16 @@ TEST_F(IonCellOptimizerTest, RelaxNotConverged)
     EXPECT_THAT(log, testing::Not(testing::HasSubstr("Relaxation is converged!")));
 }
 
-// Reaching relax_nmax must terminate with an explicit not-converged marker.
-TEST_F(IonCellOptimizerTest, RelaxNmaxReached)
+// The last allowed ionic step still performs its optimizer move before the
+// driver reports that relax_nmax was reached.
+TEST_F(IonCellOptimizerTest, RelaxNmaxLastStepConverged)
 {
     UnitCell ucell;
     setup_ucell(ucell);
+    inp.relax_nmax = 1;
     optimizer.init_relax(natom, inp);
     ModuleBase::matrix force(natom, 3);
+    force(0, 0) = 1.0e-4;
     ModuleBase::matrix stress(3, 3);
     int force_step = 1;
     int stress_step = 1;
@@ -268,15 +264,35 @@ TEST_F(IonCellOptimizerTest, RelaxNmaxReached)
     ofs.close();
 
     EXPECT_TRUE(done);
-    // Key invariant: when relax_nmax terminates the loop, cal_movement is
-    // skipped and the geometry is NOT touched. The force/stress captured by
-    // the driver before relax_step are still consistent with ucell, so the
-    // driver's geometry_evaluated=true is honest.
-    EXPECT_FALSE(ucell.ionic_position_updated);
     const std::string log = read_log();
     EXPECT_THAT(log, testing::HasSubstr(" Relaxation method: lbfgs"));
-    EXPECT_THAT(log, testing::HasSubstr(" ionic step(s) (relax_nmax = 50 reached)."));
-    EXPECT_THAT(log, testing::HasSubstr(" Relaxation is not converged after reaching relax_nmax!"));
+    EXPECT_THAT(log, testing::HasSubstr(" Relaxation converged in 1 step(s)."));
+    EXPECT_THAT(log, testing::HasSubstr("\n Relaxation is converged!"));
+}
+
+// A non-converged last allowed step must return not-converged to the driver;
+// the driver, rather than IonCellOptimizer, owns the relax_nmax summary.
+TEST_F(IonCellOptimizerTest, RelaxNmaxLastStepNotConverged)
+{
+    UnitCell ucell;
+    setup_ucell(ucell);
+    inp.relax_nmax = 1;
+    optimizer.init_relax(natom, inp);
+    ModuleBase::matrix force(natom, 3);
+    force(0, 0) = 1.0;
+    ModuleBase::matrix stress(3, 3);
+    int force_step = 1;
+    int stress_step = 1;
+    std::ofstream ofs(log_file);
+
+    const bool done = optimizer.relax_step(inp.relax_nmax, etot, ucell, force, stress, force_step, stress_step, ofs);
+    ofs.close();
+
+    EXPECT_FALSE(done);
+    EXPECT_TRUE(ucell.ionic_position_updated);
+    const std::string log = read_log();
+    EXPECT_THAT(log, testing::HasSubstr(" Relaxation is not converged yet!"));
+    EXPECT_THAT(log, testing::Not(testing::HasSubstr(" relax_nmax = 1 reached.")));
     EXPECT_THAT(log, testing::Not(testing::HasSubstr("Relaxation is converged!")));
 }
 
@@ -315,6 +331,7 @@ TEST_F(IonCellOptimizerTest, CellRelaxConverged)
 TEST_F(IonCellOptimizerTest, CellRelaxNotConverged)
 {
     inp.calculation = "cell-relax";
+    inp.relax_nmax = 1;
     UnitCell ucell;
     setup_ucell(ucell);
     optimizer.init_relax(natom, inp);
@@ -330,6 +347,8 @@ TEST_F(IonCellOptimizerTest, CellRelaxNotConverged)
     ofs.close();
 
     EXPECT_FALSE(done);
+    EXPECT_FALSE(ucell.ionic_position_updated);
+    EXPECT_TRUE(ucell.cell_parameter_updated);
     const std::string log = read_log();
     EXPECT_THAT(log, testing::HasSubstr(" Largest stress is "));
     EXPECT_THAT(log, testing::HasSubstr("\n Relaxation is not converged yet!"));

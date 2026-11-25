@@ -8,6 +8,7 @@
 #include <gtest/gtest.h>
 
 #include <cmath>
+#include <vector>
 
 namespace SccsTest
 {
@@ -28,27 +29,47 @@ const double cavity_amplitude = 2e-5;
 
 extern int pool_size;
 extern int pool_rank;
+// Probe kernel of a cavity without the solvent-aware filling.
+const std::vector<double> no_probe;
 
 class PwTest : public testing::Test
 {
-protected:
+  protected:
     PwTest() : basis("cpu", "double") {}
 
     void SetUp() override
     {
-        const ModuleBase::Matrix3 lattice(1.0, 0.0, 0.0,
-                                          0.0, 1.0, 0.0,
-                                          0.0, 0.0, 1.0);
+        const ModuleBase::Matrix3 lattice(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
         set_up_basis(lattice);
     }
 
     // Rows of lattice in units of length; ecut 20 Ry.
-    void set_up_basis(const ModuleBase::Matrix3& lattice)
+    void set_up_basis(const ModuleBase::Matrix3 &lattice)
     {
 #ifdef __MPI
         basis.initmpi(pool_size, pool_rank, POOL_WORLD);
 #endif
         basis.initgrids(length, lattice, 20.0);
+        finish_basis();
+    }
+
+    // Explicit FFT grid. A pool with more ranks than nz leaves ranks without
+    // real-space grid points (nrxx == 0); they still own G vectors.
+    void set_up_grid(
+        const ModuleBase::Matrix3 &lattice,
+        int nx,
+        int ny,
+        int nz)
+    {
+#ifdef __MPI
+        basis.initmpi(pool_size, pool_rank, POOL_WORLD);
+#endif
+        basis.initgrids(length, lattice, nx, ny, nz);
+        finish_basis();
+    }
+
+    void finish_basis()
+    {
         basis.initparameters(false, 20.0, 1, false);
         basis.setuptransform();
         basis.collect_local_pw();
@@ -75,6 +96,15 @@ protected:
     double tpiba = 0.0;
     ModulePW::PW_Basis basis;
     std::string error;
+};
+// A cell short along c on a 12 x 12 x 2 grid: with three pool ranks the
+// third owns no z plane, while the G sphere keeps sticks for every rank.
+class EmptyPartitionTest : public PwTest
+{
+  protected:
+    void SetUp() override { set_up_grid(lattice, 12, 12, 2); }
+
+    const ModuleBase::Matrix3 lattice = ModuleBase::Matrix3(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.25);
 };
 } // namespace SccsTest
 

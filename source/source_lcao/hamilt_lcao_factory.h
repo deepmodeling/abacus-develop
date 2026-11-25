@@ -16,6 +16,9 @@
 #include <string>
 #include <vector>
 
+class BasisFlattenedIndexing; // Defined in source/source_base/basis_flattened_indexing.h
+class Parallel_Blkcyclic; // Defined in source/source_base/parallel_blkcyc.h
+
 namespace hamilt
 {
 
@@ -49,6 +52,8 @@ template <typename TK, typename TR>
 LcaoOpsBundle<TK, TR> build_gamma_ops(const UnitCell& ucell,
                                       const Grid_Driver& grid_d,
                                       const Parallel_Orbitals* paraV,
+                                      const BasisFlattenedIndexing& basis,
+                                      const Parallel_Blkcyclic& layout,
                                       elecstate::Potential* pot_in,
                                       const TwoCenterBundle& two_center_bundle,
                                       const LCAO_Orbitals& orb,
@@ -78,6 +83,8 @@ template <typename TK, typename TR>
 LcaoOpsBundle<TK, TR> build_multik_ops(const UnitCell& ucell,
                                        const Grid_Driver& grid_d,
                                        const Parallel_Orbitals* paraV,
+                                       const BasisFlattenedIndexing& basis,
+                                       const Parallel_Blkcyclic& layout,
                                        elecstate::Potential* pot_in,
                                        const TwoCenterBundle& two_center_bundle,
                                        const LCAO_Orbitals& orb,

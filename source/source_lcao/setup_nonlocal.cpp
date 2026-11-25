@@ -3,7 +3,7 @@
 #include "source_base/parallel_common.h"
 
 #ifdef __LCAO
-#include "source_pw/module_pwdft/soc.h"
+#include "source_cell/soc.h"
 #include "../source_base/complexmatrix.h"
 // mohan add 2013-08-02
 // In order to get rid of the read in file .NONLOCAL.

@@ -21,6 +21,7 @@ void ctrl_iter_pw(const int istep,
                   const K_Vectors& kv,
                   const ModulePW::PW_Basis_K* pw_wfc,
                   const Input_para& inp,
+                  bool final_output,
                   std::ofstream& ofs_running);
 
 // print out information in 'after_scf' in ESolver_KS_PW
@@ -54,6 +55,7 @@ void ctrl_runner_pw(UnitCell& ucell,
                     pseudopot_cell_vnl& ppcell,
                     surchem& solvent,
                     Parallel_Grid& para_grid,
+                    const int istep,
                     const Input_para& inp,
                     std::ofstream& ofs_running);
 

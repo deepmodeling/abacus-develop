@@ -1,0 +1,159 @@
+#include "source_base/global_variable.h"
+
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
+#include <streambuf>
+#ifdef __MPI
+#include "source_base/parallel_global.h"
+#include "source_cell/parallel_kpoints.h"
+#include "mpi.h"
+#endif
+#include "../module_energy/write_eig_occ.h"
+#include "for_testing_klist.h"
+
+/************************************************
+ *  unit test of write_eig_occ
+ ***********************************************/
+
+/**
+ * - Tested Functions:
+ *   - write_eig_occ()
+ *     - print out electronic eigen energies and
+ *     - occupation
+ */
+
+class IstateInfoTest : public ::testing::Test
+{
+  protected:
+    K_Vectors* kv = nullptr;
+    ModuleBase::matrix ekb;
+    ModuleBase::matrix wg;
+    void SetUp()
+    {
+        kv = new K_Vectors;
+    }
+    void TearDown()
+    {
+        delete kv;
+    }
+};
+
+TEST_F(IstateInfoTest, OutIstateInfoS1)
+{
+    // Global variables
+    GlobalV::KPAR = 1;
+    const int nbands = 4;
+    const int nspin = 1;
+    const std::string out_dir = testing::TempDir();
+    const std::string fixed_file = out_dir + "eig_occ.txt";
+    const std::string step2_file = out_dir + "eig_occg2.txt";
+    // Mirrors the Input_para default (bndpar = 1) so the test does not depend on it.
+    const int bndpar = 1;
+
+    // MPI setting
+    Parallel_Global::init_pools(GlobalV::NPROC,
+                                GlobalV::MY_RANK,
+                                bndpar,
+                                GlobalV::KPAR,
+                                GlobalV::NPROC_IN_BNDGROUP,
+                                GlobalV::RANK_IN_BPGROUP,
+                                GlobalV::MY_BNDGROUP,
+                                GlobalV::NPROC_IN_POOL,
+                                GlobalV::RANK_IN_POOL,
+                                GlobalV::MY_POOL);
+
+    const int nkstot_init = 10;
+    kv->set_nkstot(nkstot_init);
+    int nkstot = kv->get_nkstot();
+    kv->para_k.kinfo(nkstot, GlobalV::KPAR, GlobalV::MY_POOL, GlobalV::RANK_IN_POOL,
+    GlobalV::NPROC_IN_POOL, nspin);
+    kv->set_nks(kv->para_k.nks_pool[GlobalV::MY_POOL]);
+
+    // The number of plane waves for each k point
+    kv->ngk.resize(nkstot);
+    kv->ik2iktot.resize(nkstot);
+    for(int i=0; i<nkstot; ++i)
+    {
+        kv->ngk[i]=299;
+        kv->ik2iktot[i]=i;
+    }
+
+    // Initialize the number of bands
+    ekb.create(kv->get_nks(), nbands);
+    wg.create(kv->get_nks(), nbands);
+
+    // fill the eigenvalues
+    ekb.fill_out(0.15);
+    
+    // fill the weights
+    wg.fill_out(0.0);
+
+    // setup coordinates of k-points
+    kv->kvec_c.resize(kv->get_nkstot());
+    int i = 0;
+    for (auto& kd: kv->kvec_c)
+    {
+        kd.set(0.01 * i, 0.01 * i, 0.01 * i);
+        ++i;
+    }
+   
+    {
+        std::ofstream stale_file(fixed_file);
+        stale_file << "stale calculation" << std::endl;
+    }
+
+    // A new calculation truncates stale output, then later ionic steps append.
+    ModuleIO::write_eig_file(ekb, wg, *kv, nbands, nspin, out_dir, 0, 1);
+    ModuleIO::write_eig_file(ekb, wg, *kv, nbands, nspin, out_dir, 1, 1);
+
+    // check the output files
+    std::ifstream ifs;
+    ifs.open(fixed_file);
+    std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
+    EXPECT_THAT(str, testing::HasSubstr("Electronic state energy (eV) and occupations"));
+    EXPECT_THAT(str, testing::HasSubstr("spin=1 k-point=1/10 Cartesian=0.0000000 0.0000000 0.0000000 (299 plane wave)"));
+    EXPECT_THAT(str, testing::HasSubstr("1 2.040854700000000 0.000000000000000"));
+    EXPECT_THAT(str, testing::Not(testing::HasSubstr("stale calculation")));
+    EXPECT_THAT(str, testing::HasSubstr("# ABACUS version:"));
+    EXPECT_THAT(str, testing::HasSubstr("# Written at "));
+    EXPECT_THAT(str, testing::HasSubstr("# Ionic_Step 1"));
+    EXPECT_THAT(str, testing::HasSubstr("# Ionic_Step 2"));
+    ifs.close();
+
+    remove(fixed_file.c_str());
+
+    // Mode 0: every write truncates the fixed file, so only the last frame remains.
+    ModuleIO::write_eig_file(ekb, wg, *kv, nbands, nspin, out_dir, 0, 0);
+    ModuleIO::write_eig_file(ekb, wg, *kv, nbands, nspin, out_dir, 1, 0);
+    ifs.open(fixed_file);
+    std::string mode0((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
+    EXPECT_THAT(mode0, testing::HasSubstr("# Ionic_Step 2"));
+    EXPECT_THAT(mode0, testing::Not(testing::HasSubstr("# Ionic_Step 1")));
+    ifs.close();
+    remove(fixed_file.c_str());
+
+    // Mode 2: one g{step} file per written step.
+    ModuleIO::write_eig_file(ekb, wg, *kv, nbands, nspin, out_dir, 1, 2);
+    ifs.open(step2_file);
+    ASSERT_TRUE(ifs.is_open());
+    std::string mode2((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
+    EXPECT_THAT(mode2, testing::HasSubstr("# Ionic_Step 2"));
+    ifs.close();
+    remove(step2_file.c_str());
+}
+
+#ifdef __MPI
+int main(int argc, char** argv)
+{
+    MPI_Init(&argc, &argv);
+
+    testing::InitGoogleTest(&argc, argv);
+    MPI_Comm_size(MPI_COMM_WORLD, &GlobalV::NPROC);
+    MPI_Comm_rank(MPI_COMM_WORLD, &GlobalV::MY_RANK);
+    int result = RUN_ALL_TESTS();
+
+    MPI_Finalize();
+
+    return result;
+}
+#endif

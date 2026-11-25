@@ -47,6 +47,7 @@ template <typename T>
 void cal_exx_fs(const UnitCell& ucell,
                 const bool isforce,
                 const bool isstress,
+                const bool is_rt,
                 const Exx_Info& exx_info,
                 Exx_NAO<T>& exx_nao,
                 LCAOForceParts& parts,

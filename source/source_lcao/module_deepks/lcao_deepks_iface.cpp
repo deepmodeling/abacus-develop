@@ -528,7 +528,7 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
                 const int nbasis = hR_tot->get_nbasis();
 #ifdef __MPI
                 Parallel_Orbitals serialV;
-                serialV.set_serial(nbasis, nbasis);
+                serialV.para_2d().set_serial(nbasis, nbasis);
                 serialV.set_atomic_trace(ucell.get_iat2iwt(), ucell.nat, nbasis);
                 hamilt::HContainer<TR> hR_serial(&serialV);
                 hamilt::gatherParallels(*hR_tot, &hR_serial, 0);
@@ -808,7 +808,10 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
             }
             if (PARAM.inp.deepks_out_unittest)
             {
-                LCAO_deepks_io::print_dm(nks, PARAM.globalv.nlocal, ParaV->nrow, dm->get_dmk_vec());
+                LCAO_deepks_io::print_dm(nks,
+                                          PARAM.globalv.nlocal,
+                                          ParaV->para_2d().nrloc(),
+                                          dm->get_dmk_vec());
 
                 DeePKS_domain::check_gedm(deepks_param, ld->gedm);
 

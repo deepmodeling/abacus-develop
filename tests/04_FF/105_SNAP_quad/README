@@ -1,0 +1,13 @@
+CPU SNAP regression with three non-collinear atoms, twojmax=2, nonzero
+angular coefficients, and nonzero quadratic coefficients. The synthetic
+potential is for software testing only. Energy, force, and stress are
+cross-checked against LAMMPS SNAP using the same cell and coordinates.
+
+LAMMPS (30 Mar 2026 development build, c46bbef) gives total potential energy
+54.909561 eV, forces (eV/Angstrom) of (67.292804, 57.547644, 0),
+(-92.139945, 60.594450, 0), and (24.847141, -118.142093, 0), and Pxx
+-122909.08 bar. ABACUS reports stress in kbar. The calculator unit test
+checks each force component and compares virial with an energy strain derivative.
+
+Model files: ../../SIMULATION_MODELS/snap_105.coeff and
+../../SIMULATION_MODELS/snap_105.param.

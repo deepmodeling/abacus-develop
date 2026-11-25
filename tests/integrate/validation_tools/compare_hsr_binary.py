@@ -17,11 +17,34 @@ def read_native(stream, fmt, description):
     return struct.unpack(fmt, read_exact(stream, size, description))
 
 
+HSR_BINARY_MAGIC = 0x48535242
+HSR_BINARY_FORMAT_VERSION = 2
+
+
 def read_binary(filename, value_type):
     with open(filename, "rb") as stream:
-        step, nbasis, nr = read_native(stream, "@iii", "record header")
-        if step != 0:
-            raise ValueError("expected zero-based ionic step 0, found {}".format(step))
+        # The record header is versioned: magic 'HSRB' and the layout version
+        # precede the ionic step, so unversioned files from earlier builds
+        # (no magic, small first int) are rejected instead of silently
+        # misreading the step field.
+        magic = read_native(stream, "@i", "record header magic")[0]
+        if magic != HSR_BINARY_MAGIC:
+            raise ValueError(
+                "missing native binary H(R)/S(R) magic 0x{:X} (found 0x{:X}); "
+                "the file was written by an unversioned ABACUS build".format(
+                    HSR_BINARY_MAGIC, magic
+                )
+            )
+        version, step, nbasis, nr = read_native(stream, "@iiii", "record header")
+        if version != HSR_BINARY_FORMAT_VERSION:
+            raise ValueError(
+                "unsupported native binary H(R)/S(R) format version {} "
+                "(expected {})".format(version, HSR_BINARY_FORMAT_VERSION)
+            )
+        # The binary step field follows governance rule 22: the first ionic
+        # step is written one-based as 1.
+        if step != 1:
+            raise ValueError("expected one-based ionic step 1, found {}".format(step))
         if nbasis <= 0 or nr < 0:
             raise ValueError("invalid matrix dimensions nbasis={} nr={}".format(nbasis, nr))
 

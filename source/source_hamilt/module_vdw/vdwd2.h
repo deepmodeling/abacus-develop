@@ -17,28 +17,20 @@ class Vdwd2 : public Vdw
 {
 
   public:
-    Vdwd2(const UnitCell& unit_in) : Vdw(unit_in)
-    {
-    }
+    Vdwd2(const UnitCell &unit_in) : Vdw(unit_in) {}
 
     ~Vdwd2() = default;
 
-    Vdwd2Parameters& parameter()
-    {
-        return para_;
-    }
-    const Vdwd2Parameters& parameter() const
-    {
-        return para_;
-    }
+    Vdwd2Parameters &parameter() { return para_; }
+    const Vdwd2Parameters &parameter() const { return para_; }
 
   private:
     Vdwd2Parameters para_;
 
-    void evaluate_impl(const VdwRequest& request, VdwResult& result) override;
+    void evaluate_impl(const VdwRequest &request, VdwResult &result) override;
 
     template <typename F>
-    void index_loops(F&& f)
+    void index_loops(F &&f)
     {
         int xidx = para_.period().x / 2;
         int yidx = para_.period().y / 2;
@@ -56,12 +48,12 @@ class Vdwd2 : public Vdw
                 {
                     continue;
                 }
-                const double C6_product
-                    = sqrt(para_.C6().at(ucell_.atoms[it1].ncpp.psd) * para_.C6().at(ucell_.atoms[it2].ncpp.psd))
-                      / pow(ucell_.lat0, 6);
-                const double R0_sum
-                    = (para_.R0().at(ucell_.atoms[it1].ncpp.psd) + para_.R0().at(ucell_.atoms[it2].ncpp.psd))
-                      / ucell_.lat0;
+                const double C6_product =
+                    sqrt(para_.C6().at(ucell_.atoms[it1].ncpp.psd) * para_.C6().at(ucell_.atoms[it2].ncpp.psd)) /
+                    pow(ucell_.lat0, 6);
+                const double R0_sum =
+                    (para_.R0().at(ucell_.atoms[it1].ncpp.psd) + para_.R0().at(ucell_.atoms[it2].ncpp.psd)) /
+                    ucell_.lat0;
                 if (!R0_sum)
                 {
                     ModuleBase::WARNING_QUIT("Input", "R0_sum can not be 0");
@@ -82,8 +74,8 @@ class Vdwd2 : public Vdw
                                     {
                                         continue;
                                     }
-                                    const ModuleBase::Vector3<double> tau2
-                                        = ucell_.atoms[it2].tau[ia2] + ilat_loop * ucell_.latvec;
+                                    const ModuleBase::Vector3<double> tau2 =
+                                        ucell_.atoms[it2].tau[ia2] + ilat_loop * ucell_.latvec;
                                     const double r_sqr = (tau1 - tau2).norm2();
                                     const double r = sqrt(r_sqr);
                                     f(r, R0_sum, C6_product, r_sqr, it1, ia1, tau1, tau2);

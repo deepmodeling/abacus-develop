@@ -16,11 +16,9 @@ struct Vec3
     double z = 0.0;
 
     Vec3() = default;
-    Vec3(double x_in, double y_in, double z_in) : x(x_in), y(y_in), z(z_in)
-    {
-    }
+    Vec3(double x_in, double y_in, double z_in) : x(x_in), y(y_in), z(z_in) {}
 
-    Vec3& operator+=(const Vec3& rhs)
+    Vec3 &operator+=(const Vec3 &rhs)
     {
         x += rhs.x;
         y += rhs.y;
@@ -28,7 +26,7 @@ struct Vec3
         return *this;
     }
 
-    Vec3& operator-=(const Vec3& rhs)
+    Vec3 &operator-=(const Vec3 &rhs)
     {
         x -= rhs.x;
         y -= rhs.y;
@@ -37,37 +35,28 @@ struct Vec3
     }
 };
 
-inline Vec3 operator+(Vec3 lhs, const Vec3& rhs)
+inline Vec3 operator+(Vec3 lhs, const Vec3 &rhs)
 {
     lhs += rhs;
     return lhs;
 }
 
-inline Vec3 operator-(Vec3 lhs, const Vec3& rhs)
+inline Vec3 operator-(Vec3 lhs, const Vec3 &rhs)
 {
     lhs -= rhs;
     return lhs;
 }
 
-inline Vec3 operator-(const Vec3& value)
-{
-    return Vec3(-value.x, -value.y, -value.z);
-}
+inline Vec3 operator-(const Vec3 &value) { return Vec3(-value.x, -value.y, -value.z); }
 
-inline Vec3 operator*(const Vec3& value, double factor)
+inline Vec3 operator*(const Vec3 &value, double factor)
 {
     return Vec3(value.x * factor, value.y * factor, value.z * factor);
 }
 
-inline Vec3 operator*(double factor, const Vec3& value)
-{
-    return value * factor;
-}
+inline Vec3 operator*(double factor, const Vec3 &value) { return value * factor; }
 
-inline Vec3 operator/(const Vec3& value, double divisor)
-{
-    return value * (1.0 / divisor);
-}
+inline Vec3 operator/(const Vec3 &value, double divisor) { return value * (1.0 / divisor); }
 
 struct Matrix3
 {

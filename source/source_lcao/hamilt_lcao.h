@@ -32,6 +32,9 @@ struct Exx_Info;
 // Input_para forward declaration, full definition in input_parameter.h
 struct Input_para;
 
+class BasisFlattenedIndexing; // Defined in source/source_base/basis_flattened_indexing.h
+class Parallel_Blkcyclic; // Defined in source/source_base/parallel_blkcyc.h
+
 namespace hamilt
 {
 
@@ -55,6 +58,8 @@ class HamiltLCAO : public Hamilt<TK>
     HamiltLCAO(const UnitCell& ucell,
                const Grid_Driver& grid_d,
                const Parallel_Orbitals* paraV,
+               const BasisFlattenedIndexing& basis,
+               const Parallel_Blkcyclic& layout,
                elecstate::Potential* pot_in,
                const K_Vectors& kv_in,
                const TwoCenterBundle& two_center_bundle,
@@ -75,6 +80,8 @@ class HamiltLCAO : public Hamilt<TK>
     HamiltLCAO(const UnitCell& ucell,
                const Grid_Driver& grid_d,
                const Parallel_Orbitals* paraV,
+               const BasisFlattenedIndexing& basis,
+               const Parallel_Blkcyclic& layout,
                const K_Vectors& kv_in,
                const TwoCenterIntegrator& intor_overlap_orb,
                const std::vector<double>& orb_cutoff);
@@ -119,6 +126,16 @@ class HamiltLCAO : public Hamilt<TK>
         return this->sR.get();
     }
 
+    const BasisFlattenedIndexing& basis() const
+    {
+        return basis_;
+    }
+
+    const Parallel_Blkcyclic& layout() const
+    {
+        return layout_;
+    }
+
 #ifdef __MLALGO
     /// get V_delta_R pointer of *this->V_delta_R, which is a HContainer<TR> and contains V_delta(R)
     HContainer<TR>*& get_V_delta_R()
@@ -131,7 +148,7 @@ class HamiltLCAO : public Hamilt<TK>
     std::vector<TR>& getHRS2() { return this->hRS2; }
 
     /// Get HR as a vector of HContainer pointers (one per spin).
-    /// For nspin=2, returns pointers to internally managed per-spin wrappers over hRS2.
+    /// For nspin=2, vl_in_h=0 shares the active H(R), matching updateHk.
     /// Returned pointers are owned by this class; caller must NOT delete them.
     std::vector<HContainer<TR>*> getHR_vector();
 
@@ -157,6 +174,9 @@ class HamiltLCAO : public Hamilt<TK>
 
   private:
 
+    const BasisFlattenedIndexing& basis_;
+    const Parallel_Blkcyclic& layout_;
+
     const K_Vectors* kv = nullptr;
 
     //! Real space Hamiltonian H(R), where R is the Bravis lattice vector
@@ -177,9 +197,12 @@ class HamiltLCAO : public Hamilt<TK>
     std::vector<TR> hRS2;
 
     /// Per-spin HContainer wrappers for nspin=2 (owned by this class).
-    /// Rebuilt by getHR_vector() whenever hRS2 is resized.
+    /// Preserve the layout of hRS2 until an operator's HR growth is synchronized.
     std::unique_ptr<HContainer<TR>> hr_spin_up_;
     std::unique_ptr<HContainer<TR>> hr_spin_dn_;
+
+    /// Keep both spin channels aligned with dynamically added H(R) blocks.
+    void synchronize_spin_storage();
 
     int refresh_times = 1;
 

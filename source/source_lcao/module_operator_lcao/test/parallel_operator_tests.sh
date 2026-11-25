@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-np=`cat /proc/cpuinfo | grep "cpu cores" | uniq| awk '{print $NF}'`
+np=$(cat /proc/cpuinfo | grep "cpu cores" | uniq | awk '{print $NF}')
 echo "nprocs in this machine is $np"
 
 # Allow OpenMPI run as root
@@ -8,23 +8,23 @@ export OMPI_ALLOW_RUN_AS_ROOT=1
 export OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1
 
 for i in 2 3 4; do
-    if [[ $i -gt $np ]];then
-        continue
-    fi
-    echo "TEST in parallel, nprocs=$i"
-    mpirun -np $i "${1:-./MODULE_LCAO_operator_overlap_cd_test}"
-    e1=$?
-    mpirun -np $i "${2:-./MODULE_LCAO_operator_overlap_test}"
-    e2=$?
-    mpirun -np $i "${3:-./MODULE_LCAO_operator_ekinetic_test}"
-    e3=$?
-    mpirun -np $i "${4:-./MODULE_LCAO_operator_nonlocal_test}"
-    e4=$?
-    mpirun -np $i "${5:-./MODULE_LCAO_operator_T_NL_cd_test}"
-    e5=$?
-    if [[ $e1 -ne 0 || $e2 -ne 0 || $e3 -ne 0 || $e4 -ne 0 || $e5 -ne 0 ]]; then
-        echo -e "\e[1;33m [  FAILED  ] \e[0m"\
-			"execute UT with $i cores error."
-        exit 1
-    fi
+  if [[ $i -gt $np ]]; then
+    continue
+  fi
+  echo "TEST in parallel, nprocs=$i"
+  mpirun -np $i "${1:-./MODULE_LCAO_operator_overlap_cd_test}"
+  e1=$?
+  mpirun -np $i "${2:-./MODULE_LCAO_operator_overlap_test}"
+  e2=$?
+  mpirun -np $i "${3:-./MODULE_LCAO_operator_ekinetic_test}"
+  e3=$?
+  mpirun -np $i "${4:-./MODULE_LCAO_operator_nonlocal_test}"
+  e4=$?
+  mpirun -np $i "${5:-./MODULE_LCAO_operator_T_NL_cd_test}"
+  e5=$?
+  if [[ $e1 -ne 0 || $e2 -ne 0 || $e3 -ne 0 || $e4 -ne 0 || $e5 -ne 0 ]]; then
+    echo -e "\e[1;33m [  FAILED  ] \e[0m" \
+      "execute UT with $i cores error."
+    exit 1
+  fi
 done

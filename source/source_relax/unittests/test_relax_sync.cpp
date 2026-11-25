@@ -5,6 +5,7 @@
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include <cstdio>
 #include <fstream>
 #include <iomanip>
 
@@ -20,19 +21,81 @@ constexpr int kRelaxNforce = kRelaxSteps * kRelaxNat * 3; // 45
 constexpr int kRelaxNstress = kRelaxSteps * 3 * 3;        // 27
 
 const double kRelaxForces[kRelaxNforce] = {
-    4.56e-08,        -8.74e-08,      4.0671950e-03,  -5.59e-08,      1.479e-07,      1.81171376e-02, 2.942e-07,
-    -5.56e-08,       -1.7979905e-03, -1.691e-07,     1.612e-07,      -1.7977699e-03, -1.149e-07,     -1.660e-07,
-    -1.85885722e-02, 6.73e-08,       5.90e-08,       4.8608620e-03,  -1.632e-07,     -1.833e-07,     -2.24081615e-02,
-    4.93e-08,        1.246e-07,      -1.8938742e-03, 9.84e-08,       4.34e-08,       -1.8939930e-03, -5.19e-08,
-    -4.38e-08,       2.13351667e-02, 8.25e-08,       2.095e-07,      4.5297162e-03,  -5.19e-08,      3.57e-08,
-    -3.6659292e-03,  4.95e-08,       -1.654e-07,     -1.8863808e-03, 4.14e-08,       2.440e-07,      -1.8870376e-03,
-    -1.215e-07,      -3.239e-07,     2.9096315e-03,
+    4.56e-08,
+    -8.74e-08,
+    4.0671950e-03,
+    -5.59e-08,
+    1.479e-07,
+    1.81171376e-02,
+    2.942e-07,
+    -5.56e-08,
+    -1.7979905e-03,
+    -1.691e-07,
+    1.612e-07,
+    -1.7977699e-03,
+    -1.149e-07,
+    -1.660e-07,
+    -1.85885722e-02,
+    6.73e-08,
+    5.90e-08,
+    4.8608620e-03,
+    -1.632e-07,
+    -1.833e-07,
+    -2.24081615e-02,
+    4.93e-08,
+    1.246e-07,
+    -1.8938742e-03,
+    9.84e-08,
+    4.34e-08,
+    -1.8939930e-03,
+    -5.19e-08,
+    -4.38e-08,
+    2.13351667e-02,
+    8.25e-08,
+    2.095e-07,
+    4.5297162e-03,
+    -5.19e-08,
+    3.57e-08,
+    -3.6659292e-03,
+    4.95e-08,
+    -1.654e-07,
+    -1.8863808e-03,
+    4.14e-08,
+    2.440e-07,
+    -1.8870376e-03,
+    -1.215e-07,
+    -3.239e-07,
+    2.9096315e-03,
 };
 
 const double kRelaxStresses[kRelaxNstress] = {
-    4.79987e-05,  -2.0e-10, 6.0e-10,  -2.0e-10, 4.80038e-05,  -4.0e-10, 6.0e-10,  -4.0e-10, -2.751687e-04,
-    1.040725e-04, 2.0e-10,  -1.6e-09, 2.0e-10,  1.040682e-04, -7.0e-10, -1.6e-09, -7.0e-10, 1.982021e-04,
-    8.00586e-05,  1.0e-10,  -1.0e-09, 1.0e-10,  8.00526e-05,  2.8e-09,  -1.0e-09, 2.8e-09,  -6.4010e-06,
+    4.79987e-05,
+    -2.0e-10,
+    6.0e-10,
+    -2.0e-10,
+    4.80038e-05,
+    -4.0e-10,
+    6.0e-10,
+    -4.0e-10,
+    -2.751687e-04,
+    1.040725e-04,
+    2.0e-10,
+    -1.6e-09,
+    2.0e-10,
+    1.040682e-04,
+    -7.0e-10,
+    -1.6e-09,
+    -7.0e-10,
+    1.982021e-04,
+    8.00586e-05,
+    1.0e-10,
+    -1.0e-09,
+    1.0e-10,
+    8.00526e-05,
+    2.8e-09,
+    -1.0e-09,
+    2.8e-09,
+    -6.4010e-06,
 };
 
 const double kRelaxEnergies[kRelaxSteps] = {
@@ -184,55 +247,15 @@ class Test_SETGRAD : public testing::Test
 TEST_F(Test_SETGRAD, relax_new)
 {
     std::vector<double> result_ref = {
-        0,
-        0,
-        0.24293434145,
-        0,
-        0.242934341453,
-        0,
-        0,
-        0,
-        0,
+        0, 0, 0.24293434145, 0, 0.242934341453, 0, 0, 0, 0,
         // paramter for taud
-        1.2267616333,
-        0.2267616333,
-        0.22676163333,
-        0,
-        1.2267616333,
-        0.2267616333,
-        0,
-        0,
-        1.22676163333,
+        1.2267616333, 0.2267616333, 0.22676163333, 0, 1.2267616333, 0.2267616333, 0, 0, 1.22676163333,
         // paramter for fisrt time after relaxation
-        1.3677603495,
-        0,
-        0,
-        0,
-        1.36776034956,
-        0,
-        0,
-        0,
-        1.36776034956,
+        1.3677603495, 0, 0, 0, 1.36776034956, 0, 0, 0, 1.36776034956,
         // paramter for second time after relaxation
-        1.3677603495,
-        0.3633367476,
-        0.36333674766,
-        0,
-        1.3677603495,
-        0.36333674766,
-        0,
-        0,
-        1.3677603495,
+        1.3677603495, 0.3633367476, 0.36333674766, 0, 1.3677603495, 0.36333674766, 0, 0, 1.3677603495,
         // paramter for third time after relaxation
-        1,
-        0,
-        0,
-        0,
-        1,
-        0,
-        0,
-        0,
-        1
+        1, 0, 0, 0, 1, 0, 0, 0, 1
         // paramter for fourth time after relaxation
     };
     for (int i = 0; i < result.size(); i++)
@@ -387,83 +410,26 @@ TEST_F(Test_RELAX, relax_new)
     int size = 72;
     double tmp;
     std::vector<double> result_ref = {
-        0.5000000586,
-        0.4999998876,
-        0.009364595811,
-        0.9999999281,
-        1.901333279e-07,
-        0.5476035454,
-        3.782097706e-07,
-        0.4999999285,
-        0.4770375874,
-        0.4999997826,
-        2.072311863e-07,
-        0.477037871,
-        0.9999998523,
-        0.9999997866,
+        0.5000000586, 0.4999998876, 0.009364595811, 0.9999999281, 1.901333279e-07, 0.5476035454, 3.782097706e-07,
+        0.4999999285, 0.4770375874, 0.4999997826, 2.072311863e-07, 0.477037871, 0.9999998523, 0.9999997866,
         0.9349574003,
         // paramter for taud after first relaxation
-        4.006349654,
-        -1.93128788e-07,
-        5.793863639e-07,
-        -1.93128788e-07,
-        4.006354579,
-        -3.86257576e-07,
-        6.757962549e-07,
-        -4.505308366e-07,
-        3.966870038,
+        4.006349654, -1.93128788e-07, 5.793863639e-07, -1.93128788e-07, 4.006354579, -3.86257576e-07, 6.757962549e-07,
+        -4.505308366e-07, 3.966870038,
         // paramter for latvec after first relaxation
-        0.5000000566,
-        0.4999998916,
-        0.009177239183,
-        0.9999999308,
-        1.832935626e-07,
-        0.5467689737,
-        3.647769323e-07,
-        0.4999999311,
-        0.4771204124,
-        0.4999997903,
-        1.998879545e-07,
-        0.4771206859,
-        0.9999998574,
-        0.9999997943,
+        0.5000000566, 0.4999998916, 0.009177239183, 0.9999999308, 1.832935626e-07, 0.5467689737, 3.647769323e-07,
+        0.4999999311, 0.4771204124, 0.4999997903, 1.998879545e-07, 0.4771206859, 0.9999998574, 0.9999997943,
         0.9358136888,
         // paramter for taud after second relaxation
-        3.999761277,
-        -1.656764727e-07,
-        4.97029418e-07,
-        -1.656764727e-07,
-        3.999765501,
-        -3.313529453e-07,
-        5.797351131e-07,
-        -3.864900754e-07,
-        4.010925071,
+        3.999761277, -1.656764727e-07, 4.97029418e-07, -1.656764727e-07, 3.999765501, -3.313529453e-07, 5.797351131e-07,
+        -3.864900754e-07, 4.010925071,
         // paramter for latvec after second relaxation
-        0.500000082,
-        0.4999999574,
-        0.01057784352,
-        0.9999999149,
-        1.939640249e-07,
-        0.5455830599,
-        3.795967781e-07,
-        0.4999998795,
-        0.4765373919,
-        0.4999998037,
-        2.756298268e-07,
-        0.4765374602,
-        0.9999998196,
-        0.9999996936,
+        0.500000082, 0.4999999574, 0.01057784352, 0.9999999149, 1.939640249e-07, 0.5455830599, 3.795967781e-07,
+        0.4999998795, 0.4765373919, 0.4999998037, 2.756298268e-07, 0.4765374602, 0.9999998196, 0.9999996936,
         0.9367652445,
         // paramter for taud after third relaxation
-        4.017733155,
-        -1.420363309e-07,
-        2.637046077e-07,
-        -1.420364243e-07,
-        4.017735987,
-        3.126225134e-07,
-        3.479123171e-07,
-        2.578467568e-07,
-        4.011674933
+        4.017733155, -1.420363309e-07, 2.637046077e-07, -1.420364243e-07, 4.017735987, 3.126225134e-07, 3.479123171e-07,
+        2.578467568e-07, 4.011674933
         // paramter for latvec after third relaxation
     };
     for (int i = 0; i < size; i++)
@@ -678,7 +644,7 @@ namespace
 // Build a minimal 2-type, 3-atom cell with the given per-atom move flags.
 // Atom 0 is type 0 (1 atom), atoms 1-2 are type 1 (2 atoms). taud start at 0.
 // UnitCell is non-copyable, so the caller supplies the object to fill.
-void make_two_type_cell(UnitCell& ucell, const int mbl_flat[9])
+void make_two_type_cell(UnitCell &ucell, const int mbl_flat[9])
 {
     ucell.ntype = 2;
     ucell.nat = 3;
@@ -726,10 +692,7 @@ void make_two_type_cell(UnitCell& ucell, const int mbl_flat[9])
     ucell.lat_axis_free[2] = 1;
 }
 
-void free_two_type_cell(UnitCell& ucell)
-{
-    delete[] ucell.atoms;
-}
+void free_two_type_cell(UnitCell &ucell) { delete[] ucell.atoms; }
 } // namespace
 
 // fixed_axes="shape": only the hydrostatic part of the stress survives, so the
@@ -780,8 +743,7 @@ TEST(RelaxSyncCellMove, FixedShapeIsotropicScale)
 // ---------------------------------------------------------------------------
 // Max-step termination on the Relax (simultaneous) path.
 //
-// Unlike IonCellOptimizer::relax_step (which checks istep == relax_nmax and
-// returns true without moving), Relax::relax_step has no max-step guard.
+// Relax::relax_step has no max-step guard.
 // When the driver loop hits relax_nmax, the last relax_step still calls
 // move_cell_ions, so the geometry IS updated and the force/stress in the
 // driver become stale. The driver then sets geometry_evaluated=false.
@@ -837,6 +799,63 @@ TEST(RelaxSyncMaxStep, GeometryMovedAndNotConverged)
     // The geometry was moved: taud is no longer the initial value.
     EXPECT_NE(ucell.atoms[0].taud[0].x, 0.0);
     EXPECT_TRUE(ucell.ionic_position_updated);
+
+    delete[] ucell.atoms;
+}
+
+TEST(RelaxSyncConvergence, ClearsPreviousGeometryUpdate)
+{
+    const int nat = 1;
+    Input_para inp;
+    inp.calculation = "cell-relax";
+    inp.relax_method = "cg";
+    inp.force_thr = 0.01;
+    inp.force_thr_ev = 1.0;
+    inp.fixed_axes = "None";
+    inp.fixed_ibrav = false;
+
+    UnitCell ucell;
+    ucell.ntype = 1;
+    ucell.nat = nat;
+    ucell.atoms = new Atom[1];
+    ucell.atoms[0].na = nat;
+    ucell.atoms[0].label = "Si";
+    ucell.omega = 1.0;
+    ucell.lat0 = 1.0;
+    ucell.iat2it.resize(nat);
+    ucell.iat2ia.resize(nat);
+    ucell.iat2it[0] = 0;
+    ucell.iat2ia[0] = 0;
+    ucell.atoms[0].mbl.resize(nat);
+    ucell.atoms[0].taud.resize(nat);
+    ucell.atoms[0].tau.resize(nat);
+    ucell.atoms[0].dis.resize(nat);
+    ucell.atoms[0].mag.resize(nat);
+    ucell.atoms[0].vel.resize(nat);
+    ucell.atoms[0].mbl[0] = {1, 1, 1};
+    ucell.latvec.Identity();
+
+    ModuleBase::matrix moving_force(nat, 3);
+    moving_force(0, 0) = 0.1;
+    ModuleBase::matrix converged_force(nat, 3);
+    ModuleBase::matrix stress(3, 3);
+
+    Relax rl;
+    rl.init_relax(nat, inp);
+    const std::string log_file = testing::TempDir() + "running_relax_sync_flags.log";
+    std::ofstream ofs(log_file);
+    const bool first_done = rl.relax_step(ucell, moving_force, stress, 0.0, ofs);
+    EXPECT_FALSE(first_done);
+    EXPECT_TRUE(ucell.ionic_position_updated);
+    EXPECT_TRUE(ucell.cell_parameter_updated);
+
+    const bool second_done = rl.relax_step(ucell, converged_force, stress, 0.0, ofs);
+    ofs.close();
+    std::remove(log_file.c_str());
+
+    EXPECT_TRUE(second_done);
+    EXPECT_FALSE(ucell.ionic_position_updated);
+    EXPECT_FALSE(ucell.cell_parameter_updated);
 
     delete[] ucell.atoms;
 }

@@ -1,4 +1,5 @@
 #include "conv_coulomb_pot_k.h"
+#include "smooth_cut_coulomb.h"
 #include "source_base/constants.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_basis/module_ao/orb_atomic_lm.h"
@@ -162,11 +163,26 @@ namespace Conv_Coulomb_Pot_K
             case Conv_Coulomb_Pot_K::Coulomb_Type::Fock: {
                 for (const auto& param: param_list.second)
                 {
-                    psik2_ccp = psik2_ccp
-                                + std::stod(param.at("alpha"))
-                                      * cal_psi_fock_spencer(orbs.get_psif(),
-                                                             orbs.get_k_radial(),
-                                                             std::stod(param.at("Rcut")));
+                    const auto cut_mode = param.find("rpa_cut_coulomb");
+                    if (cut_mode != param.end() && cut_mode->second == "log_erfc")
+                    {
+                        const double cut_radius = std::stod(param.at("Rcut"));
+                        const double cut_width = std::stod(param.at("rpa_cut_width"));
+                        const double cut_alpha = std::stod(param.at("alpha"));
+                        for (size_t cut_ik = 0; cut_ik < psik2_ccp.size(); ++cut_ik)
+                        {
+                            psik2_ccp[cut_ik] += cut_alpha * ModuleBase::FOUR_PI * orbs.get_psif()[cut_ik]
+                                * log_erfc_cut_factor(orbs.get_k_radial()[cut_ik], cut_radius, cut_width);
+                        }
+                    }
+                    else
+                    {
+                        psik2_ccp = psik2_ccp
+                                    + std::stod(param.at("alpha"))
+                                          * cal_psi_fock_spencer(orbs.get_psif(),
+                                                                 orbs.get_k_radial(),
+                                                                 std::stod(param.at("Rcut")));
+                    }
                 }
                 break;
             }

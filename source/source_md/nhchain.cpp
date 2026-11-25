@@ -6,18 +6,19 @@
 #endif
 #include "source_base/timer.h"
 
-Nose_Hoover::Nose_Hoover(const MD_para& mdp_in,
-                         const bool cal_stress_in,
-                         const bool init_vel,
-                         const int my_rank_in,
-                         MDCell& mdcell_in)
+Nose_Hoover::Nose_Hoover(
+    const MD_para &mdp_in,
+    const bool cal_stress_in,
+    const bool init_vel,
+    const int my_rank_in,
+    MDCell &mdcell_in)
     : MD_base(mdp_in, cal_stress_in, init_vel, my_rank_in, mdcell_in)
 {
     const double unit_transform = ModuleBase::HARTREE_SI / pow(ModuleBase::BOHR_RADIUS_SI, 3) * 1.0e-8;
 
     md_tfreq = mdp.md_tfreq * ModuleBase::AU_to_FS;
 
-    assert(unit_transform>0.0);
+    assert(unit_transform > 0.0);
 
     md_pfirst = mdp.md_pfirst / unit_transform;
     md_plast = mdp.md_plast / unit_transform;
@@ -64,7 +65,7 @@ Nose_Hoover::Nose_Hoover(const MD_para& mdp_in,
          */
         else if (mdp.md_pmode == "tri")
         {
-            const ModuleBase::Matrix3& latvec = mdcell.latvec();
+            const ModuleBase::Matrix3 &latvec = mdcell.latvec();
             if (latvec.e12 || latvec.e13 || latvec.e23)
             {
                 ModuleBase::WARNING_QUIT("Nose_Hoover", "the lattice must be lower-triangular when md_pmode == tri!");
@@ -95,7 +96,7 @@ Nose_Hoover::Nose_Hoover(const MD_para& mdp_in,
 
     tdof = MD_func::global_dof(mdcell);
 
-    assert(mdp.md_tchain>0);
+    assert(mdp.md_tchain > 0);
 
     /// allocate thermostats coupled with particles
     mass_eta = new double[mdp.md_tchain];
@@ -159,7 +160,8 @@ Nose_Hoover::~Nose_Hoover()
     }
 }
 
-void Nose_Hoover::setup(ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir, DomainDecomposition& decomp)
+void Nose_Hoover::setup(
+    ModuleESolver::ESolver *p_esolver, const std::string &global_readin_dir, DomainDecomposition &decomp)
 {
     ModuleBase::TITLE("Nose_Hoover", "setup");
     ModuleBase::timer::start("Nose_Hoover", "setup");
@@ -214,7 +216,7 @@ void Nose_Hoover::setup(ModuleESolver::ESolver* p_esolver, const std::string& gl
     return;
 }
 
-void Nose_Hoover::first_half(std::ofstream& ofs)
+void Nose_Hoover::first_half(std::ofstream &ofs)
 {
     ModuleBase::TITLE("Nose_Hoover", "first_half");
     ModuleBase::timer::start("Nose_Hoover", "first_half");
@@ -273,7 +275,6 @@ void Nose_Hoover::first_half(std::ofstream& ofs)
     return;
 }
 
-
 void Nose_Hoover::second_half()
 {
     ModuleBase::TITLE("Nose_Hoover", "second_half");
@@ -317,13 +318,9 @@ void Nose_Hoover::second_half()
     return;
 }
 
+void Nose_Hoover::print_md(std::ofstream &ofs, const bool &cal_stress) { MD_base::print_md(ofs, cal_stress); }
 
-void Nose_Hoover::print_md(std::ofstream& ofs, const bool& cal_stress)
-{
-    MD_base::print_md(ofs, cal_stress);
-}
-
-void Nose_Hoover::write_restart(const std::string& global_out_dir)
+void Nose_Hoover::write_restart(const std::string &global_out_dir)
 {
     if (!my_rank)
     {
@@ -373,7 +370,7 @@ void Nose_Hoover::write_restart(const std::string& global_out_dir)
 #endif
 }
 
-void Nose_Hoover::restart(const std::string& global_readin_dir)
+void Nose_Hoover::restart(const std::string &global_readin_dir)
 {
     bool ok = true;
     bool ok2 = true;
@@ -555,7 +552,10 @@ void Nose_Hoover::particle_thermo()
     }
 
     /// rescale velocity due to thermostats
-    for (LocalAtom& atom : mdcell.owned_atoms()) atom.vel *= scale;
+    for (LocalAtom &atom : mdcell.owned_atoms())
+    {
+        atom.vel *= scale;
+    }
 }
 
 void Nose_Hoover::baro_thermo()
@@ -649,10 +649,16 @@ void Nose_Hoover::update_baro()
     else
     {
         ModuleBase::matrix t_vector(3, 3);
-        for (const LocalAtom& atom : mdcell.owned_atoms())
+        for (const LocalAtom &atom : mdcell.owned_atoms())
+        {
             for (int i = 0; i < 3; ++i)
+            {
                 for (int j = 0; j < 3; ++j)
+                {
                     t_vector(i, j) += atom.mass * atom.vel[i] * atom.vel[j];
+                }
+            }
+        }
 #ifdef __MPI
         MPI_Allreduce(MPI_IN_PLACE, t_vector.c, t_vector.nr * t_vector.nc, MPI_DOUBLE, MPI_SUM, mdcell.communicator());
 #endif
@@ -700,7 +706,7 @@ void Nose_Hoover::vel_baro()
         factor[i] = exp(-(v_omega[i] + mtk_term) * md_dt / 4);
     }
 
-    for (LocalAtom& atom : mdcell.owned_atoms())
+    for (LocalAtom &atom : mdcell.owned_atoms())
     {
         for (int j = 0; j < 3; ++j)
         {
@@ -724,7 +730,7 @@ void Nose_Hoover::vel_baro()
     }
 }
 
-void Nose_Hoover::update_volume(std::ofstream& ofs)
+void Nose_Hoover::update_volume(std::ofstream &ofs)
 {
     double factor = 0.0;
     ModuleBase::Matrix3 latvec = mdcell.latvec();
@@ -814,7 +820,8 @@ void Nose_Hoover::update_volume(std::ofstream& ofs)
         latvec.e31 *= factor;
     }
 
-    mdcell.set_lattice_vectors(latvec);
+    const double lat0 = mdcell.lat0();
+    mdcell.set_lattice_geometry(latvec, lat0);
     mdcell.refresh_cart_from_frac();
     static_cast<void>(ofs);
 }

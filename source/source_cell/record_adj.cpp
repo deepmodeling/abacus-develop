@@ -153,7 +153,7 @@ void Record_adj::count_adjacent(const UnitCell& ucell,
                     {
                         // the index of orbitals in this processor
                         const int iw1_all = start1 + ii;
-                        const int mu = pv.global2local_row(iw1_all);
+                        const int mu = pv.para_2d().irloc(iw1_all);
                         if (mu < 0)
                         {
                             continue;
@@ -162,7 +162,7 @@ void Record_adj::count_adjacent(const UnitCell& ucell,
                         for (int jj = 0; jj < ucell.atoms[T2].nw * npol; ++jj)
                         {
                             const int iw2_all = start2 + jj;
-                            const int nu = pv.global2local_col(iw2_all);
+                            const int nu = pv.para_2d().icloc(iw2_all);
                             if (nu < 0)
                             {
                                 continue;

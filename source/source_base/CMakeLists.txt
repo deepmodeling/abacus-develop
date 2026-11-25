@@ -1,21 +1,19 @@
-if (ENABLE_ABACUS_LIBM)
-list (APPEND LIBM_SRC
-  libm/branred.cpp
-  libm/cexp.cpp
-  libm/exp.cpp
-  libm/sincos.cpp
-)
+if(ENABLE_ABACUS_LIBM)
+  list(APPEND LIBM_SRC libm/branred.cpp libm/cexp.cpp libm/exp.cpp
+       libm/sincos.cpp)
 endif()
 add_library(
     base
     OBJECT
     assoc_laguerre.cpp
+    atom_basis_view.cpp
     module_external/blas_connector_base.cpp
     module_external/blas_connector_vector.cpp
     module_external/blas_connector_matrix.cpp
     clebsch_gordan_coeff.cpp
     complexarray.cpp
     complexmatrix.cpp
+    basis_flattened_indexing.cpp
     element_basis_index.cpp
     inverse_matrix.cpp
     gather_math_lib_info.cpp
@@ -59,7 +57,7 @@ add_library(
     parallel_grid.cpp
     sph_bessel_tf.cpp
     cubic_spline.cpp
-    parallel_2d.cpp
+    parallel_blkcyc.cpp
     module_out/binstream.cpp
     module_out/filename.cpp
     module_out/sparse_matrix.cpp
@@ -95,7 +93,39 @@ if(ENABLE_COVERAGE)
 endif()
 
 if(BUILD_TESTING)
-  if(ENABLE_MPI) #Zhang Xiaoyang: A temporary solution. Please classify the serial and parrallel tests later. 2024-7-8
+  AddTest(
+    TARGET MODULE_BASE_atom_basis_view
+    LIBS parameter
+    SOURCES test/test_atom_basis_view.cpp
+            atom_basis_view.cpp
+            basis_flattened_indexing.cpp
+            parallel_blkcyc.cpp
+            element_basis_index.cpp
+  )
+  AddTest(
+    TARGET MODULE_BASE_parallel_blkcyc
+    LIBS parameter base device container
+    SOURCES test/test_parallel_blkcyc.cpp
+  )
+  AddTest(
+    TARGET MODULE_BASE_basis_flattened_indexing
+    LIBS parameter
+    SOURCES test/test_basis_flattened_indexing.cpp
+            basis_flattened_indexing.cpp
+            parallel_blkcyc.cpp
+            element_basis_index.cpp
+  )
+  # TODO: classify the serial and parallel tests
+  if(ENABLE_MPI)
+    add_test(
+      NAME MODULE_BASE_parallel_blkcyc_mpi
+      COMMAND
+        ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 4
+        ${MPIEXEC_PREFLAGS}
+        $<TARGET_FILE:MODULE_BASE_parallel_blkcyc>
+        ${MPIEXEC_POSTFLAGS}
+    )
+    add_subdirectory(unittests)
     add_subdirectory(test)
     add_subdirectory(test_parallel)
     add_subdirectory(kernels/test)
@@ -103,7 +133,7 @@ if(BUILD_TESTING)
     add_subdirectory(module_device/test)
     add_subdirectory(module_grid/test)
     add_subdirectory(module_parallel/test)
-    if (ENABLE_ABACUS_LIBM)
+    if(ENABLE_ABACUS_LIBM)
       add_subdirectory(libm/test)
     endif()
   endif()

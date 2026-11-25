@@ -45,8 +45,6 @@ class CellIndex
     int get_nchi(int iat, int L) const;
     /// @brief get atom label of a given atom
     std::string get_atom_label(int iat, bool order = false) const;
-    /// @brief write orbital info into file
-    void write_orb_info(const std::string& out_dir) const;
 
   private:
     /// atomCounts is a vector used to store the number of atoms for each type

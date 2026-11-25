@@ -1,0 +1,7 @@
+UnitCell SNAP single-point regression using the same angular and quadratic
+model as case 105. The calculation enters the UnitCell solver path rather
+than the direct MDCell path. Energy, total force, and stress must match case
+105 and the LAMMPS reference described there.
+
+Model files: ../../SIMULATION_MODELS/snap_106.coeff and
+../../SIMULATION_MODELS/snap_106.param.

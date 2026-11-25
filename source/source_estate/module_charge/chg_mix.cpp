@@ -7,6 +7,7 @@
 
 #include <functional>
 #include <memory>
+#include <limits>
 
 #include "source_base/module_mixing/broyden_mixing.h"
 #include "source_base/module_mixing/pulay_mixing.h"
@@ -193,11 +194,29 @@ void Charge_Mixing::mix_reset()
 {
     this->mixing->reset();
     this->rho_mdata.reset();
+    // mix_dmr and mix_uom reuse the Pulay coefficients of the rho history, so
+    // the density-matrix and DFT+U occupation histories must restart with it.
+    this->dmr_mdata.reset();
+    this->uom_mdata.reset();
     // initailize tau_mdata
     if (cfg_.mixing_tau)
     {
         this->tau_mdata.reset();
     }
+}
+
+void Charge_Mixing::reset_scf_history(int iter_limit)
+{
+    this->_drho_history.assign(iter_limit, std::numeric_limits<double>::quiet_NaN());
+    this->mixing_restart_step = iter_limit + 1;
+    this->mixing_restart_last = 0;
+    this->mixing_restart_count = 0;
+}
+
+void Charge_Mixing::restart_for_new_model(const int iter)
+{
+    this->mix_reset();
+    this->mixing_restart_last = iter;
 }
 
 bool Charge_Mixing::if_scf_oscillate(const int iteration, const double drho,
@@ -213,15 +232,14 @@ bool Charge_Mixing::if_scf_oscillate(const int iteration, const double drho,
         ModuleBase::WARNING_QUIT("Charge_Mixing",
                                  "set_mixing must be called before if_scf_oscillate");
     }
-    if (iteration < 1 || iteration > this->cfg_.scf_nmax)
-    {
-        ModuleBase::WARNING_QUIT("Charge_Mixing",
-                                 "iteration must be within [1, scf_nmax]");
-    }
-
     if(this->_drho_history.size() == 0)
     {
         this->_drho_history.resize(this->cfg_.scf_nmax);
+    }
+    if (iteration < 1 || static_cast<std::size_t>(iteration) > this->_drho_history.size())
+    {
+        ModuleBase::WARNING_QUIT("Charge_Mixing",
+                                 "iteration must be within the active SCF history limit");
     }
 
     // add drho into history
@@ -246,6 +264,12 @@ bool Charge_Mixing::if_scf_oscillate(const int iteration, const double drho,
     double sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
     for (int i = iteration - iternum_used; i < iteration; i++)
     {
+        // A predictor does not enter mixing. Wait until the whole fitting
+        // window contains residuals from correctors in this trial.
+        if (std::isnan(this->_drho_history[i]))
+        {
+            return false;
+        }
         sumX += i;
         sumY += std::log10(this->_drho_history[i]);
         sumXY += i * std::log10(this->_drho_history[i]);

@@ -11,7 +11,7 @@
 #include "source_pw/module_pwdft/vl_pw.h"
 #include "source_base/kernels/math_kernel_op.h"
 #include "source_psi/psi.h"
-#include "stru_fac.h"
+#include "source_cell/stru_fac.h"
 #include "source_pw/module_pwdft/dftu_base.h"
 
 class pseudopot_cell_vnl;

@@ -36,8 +36,8 @@ namespace LR
 #endif
                std::weak_ptr<PotLRBase> pot_in,
                const K_Vectors& kv_in,
-               const std::vector<Parallel_2D>& pX_in,
-               const Parallel_2D& pc_in,
+               const std::vector<Parallel_Blkcyclic>& pX_in,
+               const Parallel_Blkcyclic& pc_in,
                const Parallel_Orbitals& pmat_in,
                const std::string& spin_type,
                const std::string& in_dir,
@@ -138,8 +138,8 @@ namespace LR
                 {
                     const auto psi_ks_is = LR_Util::get_psi_spin(psi_ks_in, is, nk);
 #ifdef __MPI
-                    std::vector<ct::Tensor>  dm_trans_2d = cal_dm_trans_pblas(X, pX[is], psi_ks_is, pc_in, naos, nocc[is], nvirt[is], pmat_in, (T)1.0 / (T)nk);
-                    if (this->tdm_sym) for (auto& t : dm_trans_2d) LR_Util::matsym(t.data<T>(), naos, pmat_in);
+                    std::vector<ct::Tensor>  dm_trans_2d = cal_dm_trans_pblas(X, pX[is], psi_ks_is, pc_in, naos, nocc[is], nvirt[is], pmat_in.para_2d(), (T)1.0 / (T)nk);
+                    if (this->tdm_sym) for (auto& t : dm_trans_2d) LR_Util::matsym(t.data<T>(), naos, pmat_in.para_2d());
 #else
                     std::vector<ct::Tensor>  dm_trans_2d = cal_dm_trans_blas(X, psi_ks_is, nocc[is], nvirt[is], (T)1.0 / (T)nk);
                     if (this->tdm_sym) for (auto& t : dm_trans_2d) LR_Util::matsym(t.data<T>(), naos);
@@ -155,7 +155,7 @@ namespace LR
 
         virtual void hPsi(const T* const psi_in, T* const hpsi, const int ld_psi, const int nband) const
         {
-            assert(ld_psi == nk * pX[0].get_local_size());
+            assert(ld_psi == nk * pX[0].size());
             for (int ib = 0;ib < nband;++ib)
             {
                 const int offset = ib * ld_psi;
@@ -174,18 +174,18 @@ namespace LR
         //     const int npairs = nocc[0] * nvirt[0];
         //     for (int ib = 0;ib < nband;++ib)
         //     {
-        //         const int loffset_b = ib * nk * pX[0].get_local_size();
+        //         const int loffset_b = ib * nk * pX[0].size();
         //         const int goffset_b = ib * nk * npairs;
         //         for (int ik = 0;ik < nk;++ik)
         //         {
-        //             const int loffset = loffset_b + ik * pX[0].get_local_size();
+        //             const int loffset = loffset_b + ik * pX[0].size();
         //             const int goffset = goffset_b + ik * npairs;
         //             for (int lo = 0;lo < pX[0].get_col_size();++lo)
         //             {
-        //                 const int go = pX[0].local2global_col(lo);
+        //                 const int go = pX[0].icglb(lo);
         //                 for (int lv = 0;lv < pX[0].get_row_size();++lv)
         //                 {
-        //                     const int gv = pX[0].local2global_row(lv);
+        //                     const int gv = pX[0].irglb(lv);
         //                     lvec[loffset + lo * pX[0].get_row_size() + lv] = gvec[goffset + go * nvirt[0] + gv];
         //                 }
         //             }
@@ -198,7 +198,7 @@ namespace LR
         const std::vector<int>& nvirt;
         const int nspin = 1;
         const int nk = 1;
-        const std::vector<Parallel_2D>& pX;
+        const std::vector<Parallel_Blkcyclic>& pX;
     protected:
         /// Initialize shared storage without constructing a Casida operator chain or
         /// installing its density callback. Z operators build their own chains directly.
@@ -206,7 +206,7 @@ namespace LR
         HamiltLR(const int& nspin_in,
                  const std::vector<int>& nocc_in,
                  const std::vector<int>& nvirt_in,
-                 const std::vector<Parallel_2D>& pX_in,
+                 const std::vector<Parallel_Blkcyclic>& pX_in,
                  const K_Vectors& kv_in,
                  const Parallel_Orbitals& pmat_in)
             : nocc(nocc_in), nvirt(nvirt_in), nspin(nspin_in),

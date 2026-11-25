@@ -6,6 +6,7 @@
 #include "source_cell/print_cell.h" // lanshuyue add 2025-06-19
 #include "source_cell/update_cell.h"
 #include "source_io/module_parameter/parameter.h"
+#include "source_relax/relax_criteria.h"
 
 //! initialize H0、H、pos0、force0、force
 void Ions_Move_BFGS2::allocate(const int _size)
@@ -33,12 +34,13 @@ void Ions_Move_BFGS2::allocate(const int _size)
     is_initialized = true;
 }
 
-void Ions_Move_BFGS2::reset()
-{
-    is_initialized = false;
-}
+void Ions_Move_BFGS2::reset() { is_initialized = false; }
 
-bool Ions_Move_BFGS2::relax_step(const ModuleBase::matrix& _force, UnitCell& ucell, std::ofstream& ofs_running)
+bool Ions_Move_BFGS2::relax_step(
+    const ModuleBase::matrix &_force,
+    UnitCell &ucell,
+    std::ofstream &ofs_running,
+    const Relax_Criteria &criteria)
 {
     if (!is_initialized)
     {
@@ -46,7 +48,6 @@ bool Ions_Move_BFGS2::relax_step(const ModuleBase::matrix& _force, UnitCell& uce
     }
     GetPos(ucell, pos);
     GetPostaud(ucell, pos_taud);
-    ucell.ionic_position_updated = true;
     assert(_force.nr == force.size() && _force.nc == 3);
     for (int i = 0; i < _force.nr; i++)
     {
@@ -79,17 +80,22 @@ bool Ions_Move_BFGS2::relax_step(const ModuleBase::matrix& _force, UnitCell& uce
         k += ucell.atoms[i].na;
     }
 
+    this->CalculateLargestGrad(_force, ucell);
+    if (this->IsRestrain(criteria.force_thr_ev))
+    {
+        return true;
+    }
+
     this->PrepareStep(force, pos, H, pos0, force0, steplength, dpos, size, ucell);
     this->DetermineStep(steplength, dpos, maxstep);
     this->UpdatePos(ucell);
-    this->CalculateLargestGrad(_force, ucell);
-    bool converged = this->IsRestrain();
+    ucell.ionic_position_updated = true;
     // print out geometry information during bfgs_trad relax
     unitcell::print_tau(ucell.atoms, ucell.Coordinate, ucell.ntype, ucell.lat0, ofs_running);
-    return converged;
+    return false;
 }
 
-void Ions_Move_BFGS2::GetPos(UnitCell& ucell, std::vector<ModuleBase::Vector3<double>>& pos)
+void Ions_Move_BFGS2::GetPos(UnitCell &ucell, std::vector<ModuleBase::Vector3<double>> &pos)
 {
     assert(pos.size() == ucell.nat);
     int iat = 0;
@@ -106,7 +112,7 @@ void Ions_Move_BFGS2::GetPos(UnitCell& ucell, std::vector<ModuleBase::Vector3<do
     }
 }
 
-void Ions_Move_BFGS2::GetPostaud(UnitCell& ucell, std::vector<ModuleBase::Vector3<double>>& pos_taud)
+void Ions_Move_BFGS2::GetPostaud(UnitCell &ucell, std::vector<ModuleBase::Vector3<double>> &pos_taud)
 {
     assert(pos_taud.size() == ucell.nat);
     int iat = 0;
@@ -122,15 +128,16 @@ void Ions_Move_BFGS2::GetPostaud(UnitCell& ucell, std::vector<ModuleBase::Vector
     }
 }
 
-void Ions_Move_BFGS2::PrepareStep(std::vector<ModuleBase::Vector3<double>>& force,
-                                  std::vector<ModuleBase::Vector3<double>>& pos,
-                                  std::vector<std::vector<double>>& H,
-                                  std::vector<double>& pos0,
-                                  std::vector<double>& force0,
-                                  std::vector<double>& steplength,
-                                  std::vector<ModuleBase::Vector3<double>>& dpos,
-                                  int& size,
-                                  UnitCell& ucell)
+void Ions_Move_BFGS2::PrepareStep(
+    std::vector<ModuleBase::Vector3<double>> &force,
+    std::vector<ModuleBase::Vector3<double>> &pos,
+    std::vector<std::vector<double>> &H,
+    std::vector<double> &pos0,
+    std::vector<double> &force0,
+    std::vector<double> &steplength,
+    std::vector<ModuleBase::Vector3<double>> &dpos,
+    int &size,
+    UnitCell &ucell)
 {
     std::vector<double> changedforce = ReshapeMToV(force);
     std::vector<double> changedpos = ReshapeMToV(pos);
@@ -143,13 +150,13 @@ void Ions_Move_BFGS2::PrepareStep(std::vector<ModuleBase::Vector3<double>>& forc
     int info = 0;
     std::vector<double> H_flat;
 
-    for (const auto& row: H)
+    for (const auto &row : H)
     {
         H_flat.insert(H_flat.end(), row.begin(), row.end());
     }
 
     int value = 3 * size;
-    int* ptr = &value;
+    int *ptr = &value;
     dsyev_("V", "U", ptr, H_flat.data(), ptr, omega.data(), work.data(), &lwork, &info);
     std::vector<std::vector<double>> V(3 * size, std::vector<double>(3 * size, 0.0));
     for (int i = 0; i < 3 * size; i++)
@@ -182,10 +189,11 @@ void Ions_Move_BFGS2::PrepareStep(std::vector<ModuleBase::Vector3<double>>& forc
     force0 = ReshapeMToV(force);
 }
 
-void Ions_Move_BFGS2::Update(std::vector<double>& pos,
-                             std::vector<double>& force,
-                             std::vector<std::vector<double>>& H,
-                             UnitCell& ucell)
+void Ions_Move_BFGS2::Update(
+    std::vector<double> &pos,
+    std::vector<double> &force,
+    std::vector<std::vector<double>> &H,
+    UnitCell &ucell)
 {
     if (sign)
     {
@@ -227,7 +235,7 @@ void Ions_Move_BFGS2::Update(std::vector<double>& pos,
         ModuleBase::Vector3<double> move_ion_dr = move_ion_cart * ucell.latvec;
         int it = ucell.iat2it[iat];
         int ia = ucell.iat2ia[iat];
-        Atom* atom = &ucell.atoms[it];
+        Atom *atom = &ucell.atoms[it];
         if (atom->mbl[ia].x == 1)
         {
             dpos[iat * 3] = move_ion_dr.x;
@@ -243,7 +251,7 @@ void Ions_Move_BFGS2::Update(std::vector<double>& pos,
     }
     double threshold = 1e-7;
     double max_abs_dpos = 0.0;
-    for (const double value: dpos)
+    for (const double value : dpos)
     {
         max_abs_dpos = std::max(max_abs_dpos, std::abs(value));
     }
@@ -263,9 +271,8 @@ void Ions_Move_BFGS2::Update(std::vector<double>& pos,
     H = MSubM(H, term4);
 }
 
-void Ions_Move_BFGS2::DetermineStep(std::vector<double>& steplength,
-                                    std::vector<ModuleBase::Vector3<double>>& dpos,
-                                    double& maxstep)
+void Ions_Move_BFGS2::DetermineStep(
+    std::vector<double> &steplength, std::vector<ModuleBase::Vector3<double>> &dpos, double &maxstep)
 {
     std::vector<double>::iterator maxsteplength = max_element(steplength.begin(), steplength.end());
     double a = *maxsteplength;
@@ -283,7 +290,7 @@ void Ions_Move_BFGS2::DetermineStep(std::vector<double>& steplength,
     }
 }
 
-void Ions_Move_BFGS2::UpdatePos(UnitCell& ucell)
+void Ions_Move_BFGS2::UpdatePos(UnitCell &ucell)
 {
     double a[3 * size];
     for (int i = 0; i < size; i++)
@@ -334,13 +341,13 @@ void Ions_Move_BFGS2::UpdatePos(UnitCell& ucell)
     pos = this->MAddM(pos, dpos);*/
 }
 
-void Ions_Move_BFGS2::CalculateLargestGrad(const ModuleBase::matrix& _force, UnitCell& ucell)
+void Ions_Move_BFGS2::CalculateLargestGrad(const ModuleBase::matrix &_force, UnitCell &ucell)
 {
     std::vector<double> grad = std::vector<double>(3 * size, 0.0);
     int iat = 0;
     for (int it = 0; it < ucell.ntype; it++)
     {
-        Atom* atom = &ucell.atoms[it];
+        Atom *atom = &ucell.atoms[it];
         for (int ia = 0; ia < ucell.atoms[it].na; ia++)
         {
             for (int ik = 0; ik < 3; ++ik)
@@ -370,7 +377,7 @@ void Ions_Move_BFGS2::CalculateLargestGrad(const ModuleBase::matrix& _force, Uni
     }
 }
 
-bool Ions_Move_BFGS2::IsRestrain()
+bool Ions_Move_BFGS2::IsRestrain(const double force_thr_ev)
 {
-    return Ions_Move_Basic::largest_grad * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A < PARAM.inp.force_thr_ev;
+    return Ions_Move_Basic::largest_grad * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A < force_thr_ev;
 }

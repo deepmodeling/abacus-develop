@@ -34,6 +34,17 @@ inline bool dfpt_band_occupied(const ModuleBase::matrix& wg, int ik, int ib)
     return wg(ik, ib) > 0.5 * wg(ik, 0);
 }
 
+/// Validate the q-point ordering for the polar (dfpt_compute_q0)
+/// pipeline: when compute_q0 is on, Gamma must be the FIRST q point
+/// (the E-field response, dielectric tensor and Born charges are
+/// computed at q index 0 and are only defined at Gamma) and no later
+/// q may duplicate Gamma (the polar tensors and LO-TO attach to the
+/// first Gamma entry only). Quits with an explicit diagnostic naming
+/// the offending index otherwise; a no-op when compute_q0 is off, so
+/// arbitrary orderings (e.g. an explicit [X, Gamma] file) stay legal
+/// for plain phonon runs.
+void validate_q_ordering(const ModuleCell::QList& qlist, bool compute_q0);
+
 class DFPT_PW_Data
 {
   public:
@@ -89,6 +100,13 @@ class DFPT_PW_Data
     /// through the LapackConnector::zheev wrapper.
     void set_dynmat(int q_idx, const ModuleBase::ComplexMatrix& dm);
     ModuleBase::ComplexMatrix get_dynmat(int q_idx) const;
+
+    /// stash the raw (pre-ASR, pre-LO-TO) dynamical matrix for the dyn
+    /// file output; the working dynmat_ is mutated in place by apply_asr
+    /// and add_loto at Gamma, so the file writer needs this untouched copy
+    void set_dynmat_raw(int q_idx, const ModuleBase::ComplexMatrix& dm);
+    ModuleBase::ComplexMatrix get_dynmat_raw(int q_idx) const;
+    bool has_dynmat_raw(int q_idx) const;
     void set_phon_freq(int q_idx, const std::vector<double>& freq);
     std::vector<double> get_phon_freq(int q_idx) const;
 
@@ -191,6 +209,27 @@ class DFPT_PW_Data
         return conv_thr_;
     }
 
+    /// Dedicated knobs of the inner Sternheimer linear solve. Both default
+    /// to the inherit sentinel: unless set explicitly they track the outer
+    /// mixing values (the historical single-knob behavior), so existing
+    /// INPUT files are unaffected.
+    void set_lin_max_iter(int iter)
+    {
+        lin_max_iter_ = iter;
+    }
+    int get_lin_max_iter() const
+    {
+        return lin_max_iter_ > 0 ? lin_max_iter_ : max_iter_;
+    }
+    void set_lin_conv_thr(double thr)
+    {
+        lin_conv_thr_ = thr;
+    }
+    double get_lin_conv_thr() const
+    {
+        return lin_conv_thr_ > 0.0 ? lin_conv_thr_ : conv_thr_;
+    }
+
     /// Per-(q, irrep) SCF convergence ledger (B4: sunk from the retired
     /// DFPT_IrrepData adapter). The irrep dimension is a stage-A slot:
     /// today the single fallback irrep 0 carries the full 3N displacement
@@ -234,6 +273,13 @@ class DFPT_PW_Data
     /// 2<dpsi^a|dV_ext^b + dV_sc^b|psi> (screening channel).
     void set_vsc_r(int atom_idx, int dir, const std::vector<std::complex<double>>& v);
     std::vector<std::complex<double>> get_vsc_r(int atom_idx, int dir) const;
+
+    /// converged first-order density response (G space) of displacement
+    /// (atom, dir): the two-pass 2n+1 accumulation needs it to rebuild the
+    /// nlcc kernel input f_xc.(drho_val + drhoc) per displacement, after
+    /// the working drho slots hold the last solved displacement
+    void set_drho_disp(int atom_idx, int dir, const std::vector<std::complex<double>>& rho);
+    std::vector<std::complex<double>> get_drho_disp(int atom_idx, int dir) const;
 
     /// converged dpsi of displacement (atom, dir), indexed [k][band]; the
     /// two-pass 2n+1 accumulation reads it back after all displacements of
@@ -281,6 +327,8 @@ class DFPT_PW_Data
     std::vector<std::vector<std::vector<std::complex<double>>>> dv_rc_;
 
     std::vector<ModuleBase::ComplexMatrix> dynmat_;
+    /// pre-ASR / pre-LO-TO copies for the dyn file output ([q])
+    std::vector<ModuleBase::ComplexMatrix> dynmat_raw_;
     std::vector<std::vector<double>> phon_freq_;
 
     bool compute_q0_ = false;
@@ -302,6 +350,9 @@ class DFPT_PW_Data
     /// converged v_sc per displacement (atom, dir): [3*nat] entries
     std::vector<std::vector<std::complex<double>>> vsc_r_;
 
+    /// converged first-order density per displacement (atom, dir): [3*nat]
+    std::vector<std::vector<std::complex<double>>> drho_disp_;
+
     /// converged dpsi per displacement (atom, dir): [3*nat][k][band] entries
     std::vector<std::vector<std::vector<std::vector<std::complex<double>>>>> dpsi_disp_;
 
@@ -314,6 +365,12 @@ class DFPT_PW_Data
 
     int max_iter_ = 100;
     double conv_thr_ = 1e-8;
+
+    /// inner Sternheimer knobs; <=0 / <=0.0 is the inherit sentinel
+    /// resolved at read time by the getters (keeps tracking the outer
+    /// values until set explicitly)
+    int lin_max_iter_ = 0;
+    double lin_conv_thr_ = -1.0;
 
     ///< per-(q, irrep) SCF ledger (B4: absorbed from DFPT_IrrepData)
     std::map<std::pair<int, int>, bool> converged_;

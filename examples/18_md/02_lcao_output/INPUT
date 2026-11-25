@@ -36,3 +36,5 @@ md_tchain              1
 
 dft_functional       hse
 restart_save           1
+
+out_app_flag          0

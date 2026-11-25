@@ -1,8 +1,13 @@
 #include "upsi.h"
 
+#include "source_base/parallel_blkcyc.h"
 #include "source_base/module_container/ATen/kernels/blas.h"
 #include "source_base/module_external/scalapack_connector.h"
 #include "source_base/timer.h"
+
+#ifdef __CUBLASMP
+#include <cuComplex.h>
+#endif
 
 #include <cassert>
 #include <complex>
@@ -11,7 +16,8 @@
 namespace module_rt
 {
 #ifdef __MPI
-void upsi(const Parallel_Orbitals* pv,
+void upsi(const Parallel_Blkcyclic& matrix_layout,
+          const Parallel_Blkcyclic& wfc_layout,
           const int nband,
           const int nlocal,
           const std::complex<double>* U_operator,
@@ -29,25 +35,25 @@ void upsi(const Parallel_Orbitals* pv,
                              U_operator,
                              1,
                              1,
-                             pv->desc,
+                             matrix_layout.desc(),
                              psi_k_laststep,
                              1,
                              1,
-                             pv->desc_wfc,
+                             wfc_layout.desc(),
                              0.0,
                              psi_k,
                              1,
                              1,
-                             pv->desc_wfc);
+                             wfc_layout.desc());
 
     if (print_matrix)
     {
         ofs_running << std::endl;
         ofs_running << " psi_k:" << std::endl;
-        for (int i = 0; i < pv->ncol_bands; i++)
+        for (int i = 0; i < wfc_layout.ncloc(); i++)
         {
-            const int in = i * pv->ncol;
-            for (int j = 0; j < pv->ncol; j++)
+            const int in = i * wfc_layout.nrloc();
+            for (int j = 0; j < wfc_layout.nrloc(); j++)
             {
                 double aa = psi_k[in + j].real();
                 double bb = psi_k[in + j].imag();
@@ -65,10 +71,10 @@ void upsi(const Parallel_Orbitals* pv,
         }
         ofs_running << std::endl;
         ofs_running << " psi_k_laststep:" << std::endl;
-        for (int i = 0; i < pv->ncol_bands; i++)
+        for (int i = 0; i < wfc_layout.ncloc(); i++)
         {
-            const int in = i * pv->ncol;
-            for (int j = 0; j < pv->ncol; j++)
+            const int in = i * wfc_layout.nrloc();
+            for (int j = 0; j < wfc_layout.nrloc(); j++)
             {
                 double aa = psi_k_laststep[in + j].real();
                 double bb = psi_k_laststep[in + j].imag();
@@ -88,7 +94,8 @@ void upsi(const Parallel_Orbitals* pv,
     }
 }
 
-void upsi_tensor(const Parallel_Orbitals* pv,
+void upsi_tensor(const Parallel_Blkcyclic& matrix_layout,
+                 const Parallel_Blkcyclic& wfc_layout,
                  const int nband,
                  const int nlocal,
                  const ct::Tensor& U_operator,
@@ -116,21 +123,21 @@ void upsi_tensor(const Parallel_Orbitals* pv,
     void* d_Psi_k = static_cast<void*>(psi_k.data<std::complex<double>>());
 
     // 3. Create matrix descriptor for U operator (N x N)
-    int64_t m_u = pv->desc[2];
-    int64_t n_u = pv->desc[3];
-    int64_t mb_u = pv->desc[4];
-    int64_t nb_u = pv->desc[5];
-    int64_t lld_u = pv->desc[8];
+    int64_t m_u = matrix_layout.desc()[2];
+    int64_t n_u = matrix_layout.desc()[3];
+    int64_t mb_u = matrix_layout.desc()[4];
+    int64_t nb_u = matrix_layout.desc()[5];
+    int64_t lld_u = matrix_layout.desc()[8];
 
     cublasMpMatrixDescriptor_t desc_U;
     cublasMpMatrixDescriptorCreate(m_u, n_u, mb_u, nb_u, 0, 0, lld_u, CUDA_C_64F, cublas_res.cublasmp_grid, &desc_U);
 
     // 4. Create matrix descriptor for Psi (N x nband)
-    int64_t m_psi = pv->desc_wfc[2];
-    int64_t n_psi = pv->desc_wfc[3];
-    int64_t mb_psi = pv->desc_wfc[4];
-    int64_t nb_psi = pv->desc_wfc[5];
-    int64_t lld_psi = pv->desc_wfc[8];
+    int64_t m_psi = wfc_layout.desc()[2];
+    int64_t n_psi = wfc_layout.desc()[3];
+    int64_t mb_psi = wfc_layout.desc()[4];
+    int64_t nb_psi = wfc_layout.desc()[5];
+    int64_t lld_psi = wfc_layout.desc()[8];
 
     cublasMpMatrixDescriptor_t desc_Psi;
     cublasMpMatrixDescriptorCreate(m_psi,
@@ -145,8 +152,8 @@ void upsi_tensor(const Parallel_Orbitals* pv,
                                    &desc_Psi);
 
     // 5. Query workspace size for GEMM: Psi_k = 1.0 * U * Psi_old + 0.0 * Psi_k
-    std::complex<double> alpha = {1.0, 0.0};
-    std::complex<double> beta = {0.0, 0.0};
+    const cuDoubleComplex alpha = make_cuDoubleComplex(1.0, 0.0);
+    const cuDoubleComplex beta = make_cuDoubleComplex(0.0, 0.0);
     size_t ws_gemm_dev = 0;
     size_t ws_gemm_host = 0;
 
@@ -218,8 +225,7 @@ void upsi_tensor(const Parallel_Orbitals* pv,
 }
 
 template <typename Device>
-void upsi_tensor_lapack(const Parallel_Orbitals* pv,
-                        const int nband,
+void upsi_tensor_lapack(const int nband,
                         const int nlocal,
                         const ct::Tensor& U_operator,
                         const ct::Tensor& psi_k_laststep,
@@ -252,8 +258,7 @@ void upsi_tensor_lapack(const Parallel_Orbitals* pv,
 }
 
 // Explicit instantiation of template functions
-template void upsi_tensor_lapack<base_device::DEVICE_CPU>(const Parallel_Orbitals* pv,
-                                                          const int nband,
+template void upsi_tensor_lapack<base_device::DEVICE_CPU>(const int nband,
                                                           const int nlocal,
                                                           const ct::Tensor& U_operator,
                                                           const ct::Tensor& psi_k_laststep,
@@ -261,8 +266,7 @@ template void upsi_tensor_lapack<base_device::DEVICE_CPU>(const Parallel_Orbital
                                                           std::ofstream& ofs_running,
                                                           const int print_matrix);
 #if ((defined __CUDA) /* || (defined __ROCM) */)
-template void upsi_tensor_lapack<base_device::DEVICE_GPU>(const Parallel_Orbitals* pv,
-                                                          const int nband,
+template void upsi_tensor_lapack<base_device::DEVICE_GPU>(const int nband,
                                                           const int nlocal,
                                                           const ct::Tensor& U_operator,
                                                           const ct::Tensor& psi_k_laststep,

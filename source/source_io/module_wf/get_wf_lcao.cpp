@@ -76,7 +76,7 @@ void Get_wf_lcao::begin_gamma(const UnitCell& ucell,
                 std::stringstream ss_out;
                 ss_out << global_out_dir << ss_file.str();
 
-                ModuleIO::write_vdata_palgrid(pgrid, wfc_norm.data(), is, nspin_, 0, ss_out.str(), 0.0, &ucell, precision, 0, false, false, ofs_running, desc_wfc_norm);
+                ModuleIO::write_vdata_palgrid(pgrid, wfc_norm.data(), is, nspin_, 0, ss_out.str(), 0.0, &ucell, precision, 0, false, false, false, ofs_running, desc_wfc_norm);
             }
 
             if (re_im_bands_picked[ib])
@@ -95,6 +95,7 @@ void Get_wf_lcao::begin_gamma(const UnitCell& ucell,
                                               0,
                                               false,
                                               false,
+                                              false,
                                               ofs_running,
                                               desc_wfc_real);
 
@@ -110,6 +111,7 @@ void Get_wf_lcao::begin_gamma(const UnitCell& ucell,
                                               &ucell,
                                               precision,
                                               0,
+                                              false,
                                               false,
                                               false,
                                               ofs_running,
@@ -199,6 +201,7 @@ void Get_wf_lcao::begin_k(const UnitCell& ucell,
                                               0,
                                               false,
                                               false,
+                                              false,
                                               ofs_running,
                                               desc_wfc_norm);
             }
@@ -235,6 +238,7 @@ void Get_wf_lcao::begin_k(const UnitCell& ucell,
                                                   0,
                                                   false,
                                                   false,
+                                                  false,
                                                   ofs_running,
                                                   desc_wfc_real);
 
@@ -250,6 +254,7 @@ void Get_wf_lcao::begin_k(const UnitCell& ucell,
                                                   &ucell,
                                                   precision,
                                                   0,
+                                                  false,
                                                   false,
                                                   false,
                                                   ofs_running,
@@ -303,7 +308,7 @@ void Get_wf_lcao::prepare_get_wf(std::ofstream& ofs_running)
     ofs_running << " | The |psi(i,r)|, Re[psi(i,r)], Im[psi(i,r)] are printed out using   |" << std::endl;
     ofs_running << " | numerical atomic orbitals as basis set.                            |" << std::endl;
     ofs_running << " |                                                                    |" << std::endl;
-    ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
+    ofs_running << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << std::endl;
 
     ofs_running << "\n\n";
 

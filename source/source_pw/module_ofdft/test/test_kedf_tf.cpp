@@ -77,3 +77,73 @@ TEST_F(TestKEDFTF, StressIsIsotropicAndScalesWithVolume)
         EXPECT_NEAR(kedf.stress(i, i), expected * 0.5, 1e-12);
     }
 }
+
+TEST_F(TestKEDFTF, WeightedEnergyMatchesPointwiseIntegralAndStress)
+{
+    const double density[] = {1.0, 8.0};
+    const double* rho[] = {density};
+    const double coefficient = 5.742468000376382;
+    const double dV = 0.25;
+    const double volume = 2.0 * dV;
+    const double weights[] = {0.0, 0.4, 1.0, 1.1};
+    for (const double weight : weights)
+    {
+        SCOPED_TRACE(weight);
+        kedf.set_para(2, dV, weight);
+        const double expected = weight * coefficient * 33.0 * dV;
+        const double energy = kedf.get_energy(rho);
+        EXPECT_NEAR(energy, expected, 1e-12);
+
+        double integral = 0.0;
+        for (int ir = 0; ir < 2; ++ir)
+        {
+            integral += kedf.get_energy_density(rho, 0, ir) * dV;
+        }
+        EXPECT_NEAR(energy, integral, 1e-12);
+
+        ModuleBase::matrix potential(1, 2);
+        kedf.tf_potential(rho, potential);
+        EXPECT_NEAR(kedf.tf_energy, expected, 1e-12);
+        kedf.get_stress(volume);
+        const double expected_stress = 2.0 * expected / (3.0 * volume);
+        for (int i = 0; i < 3; ++i)
+        {
+            EXPECT_NEAR(kedf.stress(i, i), expected_stress, 1e-12);
+        }
+    }
+}
+
+TEST_F(TestKEDFTF, WeightedPotentialMatchesConservedDensityDerivative)
+{
+    const double density[] = {1.0, 8.0};
+    const double direction[] = {1.0, -1.0};
+    const double* rho[] = {density};
+    const double dV = 0.25;
+    const double weights[] = {0.0, 0.4, 1.0, 1.1};
+    const double steps[] = {1e-3, 1e-4};
+    for (const double weight : weights)
+    {
+        SCOPED_TRACE(weight);
+        kedf.set_para(2, dV, weight);
+        ModuleBase::matrix potential(1, 2);
+        kedf.tf_potential(rho, potential);
+        const double product = dV * (potential(0, 0) - potential(0, 1));
+        for (const double step : steps)
+        {
+            SCOPED_TRACE(step);
+            double plus_density[2];
+            double minus_density[2];
+            for (int ir = 0; ir < 2; ++ir)
+            {
+                plus_density[ir] = density[ir] + step * direction[ir];
+                minus_density[ir] = density[ir] - step * direction[ir];
+            }
+            const double* plus_rho[] = {plus_density};
+            const double* minus_rho[] = {minus_density};
+            const double plus_energy = kedf.get_energy(plus_rho);
+            const double minus_energy = kedf.get_energy(minus_rho);
+            const double derivative = (plus_energy - minus_energy) / (2.0 * step);
+            EXPECT_NEAR(derivative, product, 1e-6);
+        }
+    }
+}

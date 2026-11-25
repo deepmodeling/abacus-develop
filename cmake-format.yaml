@@ -1,4 +1,13 @@
-# Do not prettify comments
 # Workaround due to cmake-format bug; should use "--enable-markup=false" in args instead
 markup:
   enable_markup: false
+
+# Make self-defined testing helper happy
+parse:
+  additional_commands:
+    addtest:
+      kwargs:
+        TARGET: 1
+        SOURCES: '+'
+        LIBS: '*'
+        KEEP_FEATURE_DEFINITIONS: '*'

@@ -12,6 +12,8 @@
 #include "source_lcao/module_rt/td_folding.h"
 #include "source_lcao/module_rt/td_info.h"
 #include "td_current_io.h"
+#include <memory>
+#include <utility>
 #ifdef __EXX
 #include "source_lcao/module_operator_lcao/op_exx_lcao.h"
 #include "source_lcao/module_ri/exx_lri.h"
@@ -257,7 +259,7 @@ void ModuleIO::cal_velocity_basis_k(const UnitCell& ucell,
                                     const K_Vectors& kv,
                                     const ModuleBase::Vector3<hamilt::HContainer<double>*>& rR,
                                     const hamilt::HContainer<TR>& sR,
-                                    const hamilt::HContainer<std::complex<double>>& hR,
+                                    const std::vector<const hamilt::HContainer<std::complex<double>>*>& spin_hR,
                                     std::vector<ModuleBase::Vector3<std::complex<double>*>>& velocity_basis_k)
 {
     ModuleBase::TITLE("ModuleIO", "cal_velocity_basis_k");
@@ -271,23 +273,24 @@ void ModuleIO::cal_velocity_basis_k(const UnitCell& ucell,
     const std::complex<double> neg_one_real = ModuleBase::NEG_ONE;
     const std::complex<double> zero_complex = ModuleBase::ZERO;
 
-    std::complex<double>* hk = new std::complex<double>[pv->nloc];
-    std::complex<double>* sk = new std::complex<double>[pv->nloc];
-    std::complex<double>* partial_hk = new std::complex<double>[pv->nloc];
-    std::complex<double>* partial_sk = new std::complex<double>[pv->nloc];
-    std::complex<double>* rk = new std::complex<double>[pv->nloc];
-    std::complex<double>* h_is = new std::complex<double>[pv->nloc];
-    std::complex<double>* h_is_r = new std::complex<double>[pv->nloc];
-    std::complex<double>* r_is = new std::complex<double>[pv->nloc];
-    std::complex<double>* r_is_h = new std::complex<double>[pv->nloc];
-    std::complex<double>* h_is_ps = new std::complex<double>[pv->nloc];
+    std::complex<double>* hk = new std::complex<double>[pv->para_2d().size()];
+    std::complex<double>* sk = new std::complex<double>[pv->para_2d().size()];
+    std::complex<double>* partial_hk = new std::complex<double>[pv->para_2d().size()];
+    std::complex<double>* partial_sk = new std::complex<double>[pv->para_2d().size()];
+    std::complex<double>* rk = new std::complex<double>[pv->para_2d().size()];
+    std::complex<double>* h_is = new std::complex<double>[pv->para_2d().size()];
+    std::complex<double>* h_is_r = new std::complex<double>[pv->para_2d().size()];
+    std::complex<double>* r_is = new std::complex<double>[pv->para_2d().size()];
+    std::complex<double>* r_is_h = new std::complex<double>[pv->para_2d().size()];
+    std::complex<double>* h_is_ps = new std::complex<double>[pv->para_2d().size()];
 
     for (size_t ik = 0; ik != kv.get_nks(); ++ik)
     {
+        const hamilt::HContainer<std::complex<double>>& hR = *spin_hR[kv.isk[ik]];
         // set H(k), S(k)
         // 1.1 set H(k)
-        ModuleBase::GlobalFunc::ZEROS(hk, pv->nloc);
-        const int nrow = pv->get_row_size();
+        ModuleBase::GlobalFunc::ZEROS(hk, pv->para_2d().size());
+        const int nrow = pv->para_2d().nrloc();
         if (td_p->field().gauge() == 2)
         {
             module_rt::folding_HR_td(hR, hk, kv.kvec_d[ik], td_p->endpoint_A(), td_p->get_phase_hybrid(), nrow, 1);
@@ -297,7 +300,7 @@ void ModuleIO::cal_velocity_basis_k(const UnitCell& ucell,
             hamilt::folding_HR(hR, hk, kv.kvec_d[ik], nrow, 1);
         }
         // 1.2 set S(k)
-        ModuleBase::GlobalFunc::ZEROS(sk, pv->nloc);
+        ModuleBase::GlobalFunc::ZEROS(sk, pv->para_2d().size());
         if (td_p->field().gauge() == 2)
         {
             module_rt::folding_HR_td(sR, sk, kv.kvec_d[ik], td_p->endpoint_A(), td_p->get_phase_hybrid(), nrow, 1);
@@ -307,16 +310,16 @@ void ModuleIO::cal_velocity_basis_k(const UnitCell& ucell,
             hamilt::folding_HR(sR, sk, kv.kvec_d[ik], nrow, 1);
         }
         // 2. set inverse S(k) -> sk will be changed to sk_inv
-        int* ipiv = new int[pv->nloc];
+        int* ipiv = new int[pv->para_2d().size()];
         int info = 0;
         // 2.1 compute ipiv
-        ScalapackConnector::getrf(nlocal, nlocal, sk, 1, 1, pv->desc, ipiv, &info);
+        ScalapackConnector::getrf(nlocal, nlocal, sk, 1, 1, pv->para_2d().desc(), ipiv, &info);
         int lwork = -1;
         int liwotk = -1;
         std::vector<std::complex<double>> work(1, 0);
         std::vector<int> iwork(1, 0);
         // 2.2 compute work
-        ScalapackConnector::getri(nlocal, sk, 1, 1, pv->desc, ipiv, work.data(), &lwork, iwork.data(), &liwotk, &info);
+        ScalapackConnector::getri(nlocal, sk, 1, 1, pv->para_2d().desc(), ipiv, work.data(), &lwork, iwork.data(), &liwotk, &info);
         lwork = work[0].real();
         work.resize(lwork, 0);
         liwotk = iwork[0];
@@ -326,7 +329,7 @@ void ModuleIO::cal_velocity_basis_k(const UnitCell& ucell,
                                   sk, // return sk^-1
                                   1,
                                   1,
-                                  pv->desc,
+                                  pv->para_2d().desc(),
                                   ipiv,
                                   work.data(),
                                   &lwork,
@@ -339,7 +342,7 @@ void ModuleIO::cal_velocity_basis_k(const UnitCell& ucell,
         {
             // 3. set partial_H(k), partial_S(k) and r(k)
             // 3.1 set partial_H(k)
-            ModuleBase::GlobalFunc::ZEROS(partial_hk, pv->nloc);
+            ModuleBase::GlobalFunc::ZEROS(partial_hk, pv->para_2d().size());
             if (td_p->field().gauge() == 2)
             {
                 module_rt::folding_partial_HR_td(ucell,
@@ -357,7 +360,7 @@ void ModuleIO::cal_velocity_basis_k(const UnitCell& ucell,
                 module_rt::folding_partial_HR(ucell, hR, partial_hk, kv.kvec_d[ik], i_alpha, nrow, 1);
             }
             // 3.2 set partial S(k)
-            ModuleBase::GlobalFunc::ZEROS(partial_sk, pv->nloc);
+            ModuleBase::GlobalFunc::ZEROS(partial_sk, pv->para_2d().size());
             if (td_p->field().gauge() == 2)
             {
                 module_rt::folding_partial_HR_td(ucell,
@@ -375,7 +378,7 @@ void ModuleIO::cal_velocity_basis_k(const UnitCell& ucell,
                 module_rt::folding_partial_HR(ucell, sR, partial_sk, kv.kvec_d[ik], i_alpha, nrow, 1);
             }
             // 3.3 set r(k)
-            ModuleBase::GlobalFunc::ZEROS(rk, pv->nloc);
+            ModuleBase::GlobalFunc::ZEROS(rk, pv->para_2d().size());
             // folding_rR(rR[i_alpha], partial_sk, rk, pv, kv.kvec_d[ik], nrow, 1);
             if (td_p->field().gauge() == 2)
             {
@@ -388,7 +391,7 @@ void ModuleIO::cal_velocity_basis_k(const UnitCell& ucell,
             // 4. calculate <\vu,k|v_a|\mu,k> = partial_Hk + IMAG_UNIT * (Hk * Sk_inv * rk) - IMAG_UNIT * (rk * Sk_inv *
             // Hk) - Hk * Sk_inv * partial_Sk
             // 4.1.1 Hk * Sk_inv (note 2.)
-            ModuleBase::GlobalFunc::ZEROS(h_is, pv->nloc);
+            ModuleBase::GlobalFunc::ZEROS(h_is, pv->para_2d().size());
             ScalapackConnector::gemm(N_char,
                                      N_char,
                                      nlocal,
@@ -398,18 +401,18 @@ void ModuleIO::cal_velocity_basis_k(const UnitCell& ucell,
                                      hk,
                                      1,
                                      1,
-                                     pv->desc,
+                                     pv->para_2d().desc(),
                                      sk,
                                      1,
                                      1,
-                                     pv->desc,
+                                     pv->para_2d().desc(),
                                      zero_complex,
                                      h_is,
                                      1,
                                      1,
-                                     pv->desc);
+                                     pv->para_2d().desc());
             // 4.1.2 (Hk * Sk_inv) * rk
-            ModuleBase::GlobalFunc::ZEROS(h_is_r, pv->nloc);
+            ModuleBase::GlobalFunc::ZEROS(h_is_r, pv->para_2d().size());
             ScalapackConnector::gemm(N_char,
                                      N_char,
                                      nlocal,
@@ -419,18 +422,18 @@ void ModuleIO::cal_velocity_basis_k(const UnitCell& ucell,
                                      h_is,
                                      1,
                                      1,
-                                     pv->desc,
+                                     pv->para_2d().desc(),
                                      rk,
                                      1,
                                      1,
-                                     pv->desc,
+                                     pv->para_2d().desc(),
                                      zero_complex,
                                      h_is_r,
                                      1,
                                      1,
-                                     pv->desc);
+                                     pv->para_2d().desc());
             // 4.2.1 rk * Sk_inv (note 2.)
-            ModuleBase::GlobalFunc::ZEROS(r_is, pv->nloc);
+            ModuleBase::GlobalFunc::ZEROS(r_is, pv->para_2d().size());
             ScalapackConnector::gemm(N_char,
                                      N_char,
                                      nlocal,
@@ -440,18 +443,18 @@ void ModuleIO::cal_velocity_basis_k(const UnitCell& ucell,
                                      rk,
                                      1,
                                      1,
-                                     pv->desc,
+                                     pv->para_2d().desc(),
                                      sk,
                                      1,
                                      1,
-                                     pv->desc,
+                                     pv->para_2d().desc(),
                                      zero_complex,
                                      r_is,
                                      1,
                                      1,
-                                     pv->desc);
+                                     pv->para_2d().desc());
             // 4.2.2 (rk * Sk_inv) * Hk
-            ModuleBase::GlobalFunc::ZEROS(r_is_h, pv->nloc);
+            ModuleBase::GlobalFunc::ZEROS(r_is_h, pv->para_2d().size());
             ScalapackConnector::gemm(N_char,
                                      N_char,
                                      nlocal,
@@ -461,18 +464,18 @@ void ModuleIO::cal_velocity_basis_k(const UnitCell& ucell,
                                      r_is,
                                      1,
                                      1,
-                                     pv->desc,
+                                     pv->para_2d().desc(),
                                      hk,
                                      1,
                                      1,
-                                     pv->desc,
+                                     pv->para_2d().desc(),
                                      zero_complex,
                                      r_is_h,
                                      1,
                                      1,
-                                     pv->desc);
+                                     pv->para_2d().desc());
             // 4.3.1 (Hk * Sk_inv) * partial_Sk
-            ModuleBase::GlobalFunc::ZEROS(h_is_ps, pv->nloc);
+            ModuleBase::GlobalFunc::ZEROS(h_is_ps, pv->para_2d().size());
             ScalapackConnector::gemm(N_char,
                                      N_char,
                                      nlocal,
@@ -482,24 +485,24 @@ void ModuleIO::cal_velocity_basis_k(const UnitCell& ucell,
                                      h_is,
                                      1,
                                      1,
-                                     pv->desc,
+                                     pv->para_2d().desc(),
                                      partial_sk,
                                      1,
                                      1,
-                                     pv->desc,
+                                     pv->para_2d().desc(),
                                      zero_complex,
                                      h_is_ps,
                                      1,
                                      1,
-                                     pv->desc);
+                                     pv->para_2d().desc());
             // 4.4 h_is_r will be changed to partial_Hk + IMAG_UNIT * (Hk * Sk_inv * rk)
-            ScalapackConnector::geadd('N', nlocal, nlocal, one_real, partial_hk, 1, 1, pv->desc, one_imag, h_is_r, 1, 1, pv->desc);
+            ScalapackConnector::geadd('N', nlocal, nlocal, one_real, partial_hk, 1, 1, pv->para_2d().desc(), one_imag, h_is_r, 1, 1, pv->para_2d().desc());
             // 4.5 r_is_h will be changed to h_is_r - IMAG_UNIT * (rk * Sk_inv * Hk)
-            ScalapackConnector::geadd('N', nlocal, nlocal, one_real, h_is_r, 1, 1, pv->desc, neg_one_imag, r_is_h, 1, 1, pv->desc);
+            ScalapackConnector::geadd('N', nlocal, nlocal, one_real, h_is_r, 1, 1, pv->para_2d().desc(), neg_one_imag, r_is_h, 1, 1, pv->para_2d().desc());
             // 4.6 h_is_ps will be changed to r_is_h - Hk * Sk_inv * partial_Sk
-            ScalapackConnector::geadd('N', nlocal, nlocal, one_real, r_is_h, 1, 1, pv->desc, neg_one_real, h_is_ps, 1, 1, pv->desc);
+            ScalapackConnector::geadd('N', nlocal, nlocal, one_real, r_is_h, 1, 1, pv->para_2d().desc(), neg_one_real, h_is_ps, 1, 1, pv->para_2d().desc());
             // 5. copy h_is_ps to velocity_basis_k[ik][i_alpha]
-            BlasConnector::copy(pv->nloc, h_is_ps, 1, velocity_basis_k[ik][i_alpha], 1);
+            BlasConnector::copy(pv->para_2d().size(), h_is_ps, 1, velocity_basis_k[ik][i_alpha], 1);
         }
     }
 
@@ -532,7 +535,7 @@ void ModuleIO::cal_velocity_matrix(const psi::Psi<std::complex<double>>* psi,
     const std::complex<double> zero_complex = ModuleBase::ZERO;
     const int nlocal = PARAM.globalv.nlocal;
     const int nbands = PARAM.inp.nbands;
-    std::complex<double>* vk_c = new std::complex<double>[pv->ncol_bands * pv->nrow_bands]; // local one
+    std::complex<double>* vk_c = new std::complex<double>[pv->mo_repr_layout().size()]; // local one
     std::complex<double>* v_c = new std::complex<double>[pv->nloc_wfc];
 
     for (int ik = 0; ik < kv.get_nks(); ik++)
@@ -542,7 +545,7 @@ void ModuleIO::cal_velocity_matrix(const psi::Psi<std::complex<double>>* psi,
         // 2. set <\Psi_{n,\mu}|v_{\mu,\nu}|\Psi_{m,\nu}> = C^\dagger_{n,\mu} * v_{\mu,\nu} * C_{\nu,m}
         for (size_t i_alpha = 0; i_alpha != 3; ++i_alpha)
         {
-            ModuleBase::GlobalFunc::ZEROS(vk_c, pv->ncol_bands * pv->nrow_bands);
+            ModuleBase::GlobalFunc::ZEROS(vk_c, pv->mo_repr_layout().size());
             ModuleBase::GlobalFunc::ZEROS(v_c, pv->nloc_wfc);
             // v_c_{\mu,m} = v_{\mu,\nu} * C_{\nu,m}
             ScalapackConnector::gemm(N_char,
@@ -554,7 +557,7 @@ void ModuleIO::cal_velocity_matrix(const psi::Psi<std::complex<double>>* psi,
                                      velocity_basis_k[ik][i_alpha],
                                      1,
                                      1,
-                                     pv->desc,
+                                     pv->para_2d().desc(),
                                      psi[0].get_pointer(),
                                      1,
                                      1,
@@ -583,18 +586,18 @@ void ModuleIO::cal_velocity_matrix(const psi::Psi<std::complex<double>>* psi,
                                      vk_c,
                                      1,
                                      1,
-                                     pv->desc_Eij);
+                                     pv->mo_repr_layout().desc());
 
             for (int ir = 0; ir < PARAM.inp.nbands; ++ir)
             {
                 for (int ic = 0; ic < PARAM.inp.nbands; ++ic)
                 {
-                    if (pv->in_this_processor(ir, ic))
+                    if (pv->mo_repr_layout().in_this_processor(ir, ic))
                     {
-                        // Taoni fix 2026-07-12: vk_c follows the local block-cyclic layout described by desc_Eij.
-                        const int local_row = pv->global2local_row(ir);
-                        const int local_col = pv->global2local_col(ic);
-                        const int irc = local_col * pv->nrow + local_row;
+                        // Taoni fix 2026-07-12: vk_c follows the local block-cyclic layout described by mo_repr_layout().
+                        const int local_row = pv->mo_repr_layout().irloc(ir);
+                        const int local_col = pv->mo_repr_layout().icloc(ic);
+                        const int irc = local_col * pv->mo_repr_layout().nrloc() + local_row;
                         velocity_k[ik][i_alpha](ir, ic) = vk_c[irc];
                     }
                 }
@@ -615,7 +618,7 @@ void ModuleIO::cal_current_comm_k(const UnitCell& ucell,
                                   const K_Vectors& kv,
                                   TD_info* td_p,
                                   const hamilt::HContainer<TR>& sR,
-                                  const hamilt::HContainer<std::complex<double>>& hR,
+                                  const std::vector<const hamilt::HContainer<std::complex<double>>*>& spin_hR,
                                   const psi::Psi<std::complex<double>>* psi,
                                   const elecstate::ElecState* pelec,
                                   std::vector<ModuleBase::Vector3<double>>& current_k)
@@ -636,15 +639,15 @@ void ModuleIO::cal_current_comm_k(const UnitCell& ucell,
         rR[i_alpha] = new hamilt::HContainer<double>(pv);
         for (int ik = 0; ik < kv.get_nks(); ik++)
         {
-            velocity_basis_k[ik][i_alpha] = new std::complex<double>[pv->nloc];
-            ModuleBase::GlobalFunc::ZEROS(velocity_basis_k[ik][i_alpha], pv->nloc);
+            velocity_basis_k[ik][i_alpha] = new std::complex<double>[pv->para_2d().size()];
+            ModuleBase::GlobalFunc::ZEROS(velocity_basis_k[ik][i_alpha], pv->para_2d().size());
             velocity_k[ik][i_alpha].create(nbands, nbands);
         }
     }
     // set rR
-    set_rR_from_hR(ucell, GridD, orb, pv, td_p->r_calculator, &hR, rR);
+    set_rR_from_hR(ucell, GridD, orb, pv, td_p->r_calculator, spin_hR.front(), rR);
     // set velocity_basis_k
-    cal_velocity_basis_k(ucell, td_p, orb, pv, kv, rR, sR, hR, velocity_basis_k);
+    cal_velocity_basis_k(ucell, td_p, orb, pv, kv, rR, sR, spin_hR, velocity_basis_k);
     // set velocity_k
     cal_velocity_matrix(psi, pv, kv, velocity_basis_k, velocity_k);
 
@@ -689,21 +692,30 @@ void ModuleIO::write_current(const UnitCell& ucell,
                              const LCAO_Orbitals& orb,
                              TD_info* td_p,
                              const hamilt::HContainer<TR>* sR,
-                             const hamilt::HContainer<TR>* hR,
+                             const std::vector<hamilt::HContainer<TR>*>& spin_hR,
                              const Exx_NAO<std::complex<double>>& exx_nao,
                              const Exx_Info& exx_info)
 {
     ModuleBase::TITLE("ModuleIO", "write_current");
     ModuleBase::timer::start("ModuleIO", "write_current");
+    // Restart replay is skipped by the caller, so only a fresh run writes step zero.
+    const std::ios::openmode mode = istep == 0 ? std::ios::out | std::ios::trunc : std::ios::app;
     double omega = ucell.omega;
 
     std::vector<ModuleBase::Vector3<double>> current_k;
-    hamilt::HContainer<std::complex<double>>* full_hR;
-    full_hR = new hamilt::HContainer<std::complex<double>>(pv);
+    std::vector<std::unique_ptr<hamilt::HContainer<std::complex<double>>>> full_hR;
+    std::vector<const hamilt::HContainer<std::complex<double>>*> current_hR;
+    for (const hamilt::HContainer<TR>* hR : spin_hR)
+    {
+        std::unique_ptr<hamilt::HContainer<std::complex<double>>> matrix(
+            new hamilt::HContainer<std::complex<double>>(pv));
+        hamilt::HContainer<std::complex<double>>* matrix_ptr = matrix.get();
+        sum_HR(ucell, *pv, kv, hR, matrix_ptr, exx_nao, exx_info, *td_p);
+        current_hR.push_back(matrix_ptr);
+        full_hR.push_back(std::move(matrix));
+    }
     current_k.resize(kv.get_nks());
-    sum_HR(ucell, *pv, kv, hR, full_hR, exx_nao, exx_info, *td_p);
-    cal_current_comm_k(ucell, GridD, orb, pv, kv, td_p, *sR, *full_hR, psi, pelec, current_k);
-    delete full_hR;
+    cal_current_comm_k(ucell, GridD, orb, pv, kv, td_p, *sR, current_hR, psi, pelec, current_k);
 
     int nspin0 = 1;
     if (PARAM.inp.nspin == 2)
@@ -723,11 +735,13 @@ void ModuleIO::write_current(const UnitCell& ucell,
                     std::string filename = PARAM.globalv.global_out_dir + "current_s" + std::to_string(is + 1) + "k"
                                            + std::to_string(kpoint_index) + "_comm.txt";
                     std::ofstream fout;
-                    fout.open(filename, std::ios::app);
-                    fout << std::setprecision(16);
-                    fout << std::scientific;
-                    fout << istep + 1 << " " << current_k[ik][0] / omega << " " << current_k[ik][1] / omega << " "
-                         << current_k[ik][2] / omega << std::endl;
+                    fout.open(filename, mode);
+                    fout << std::right << std::setw(6) << istep + 1 << std::scientific << std::setprecision(12);
+                    for (int direction = 0; direction < 3; ++direction)
+                    {
+                        fout << "  " << std::setw(19) << current_k[ik][direction] / omega;
+                    }
+                    fout << std::endl;
                     fout.close();
                 }
             }
@@ -746,11 +760,13 @@ void ModuleIO::write_current(const UnitCell& ucell,
     {
         std::string filename = PARAM.globalv.global_out_dir + "current_tot_comm.txt";
         std::ofstream fout;
-        fout.open(filename, std::ios::app);
-        fout << std::setprecision(16);
-        fout << std::scientific;
-        fout << istep + 1 << " " << current_total[0] / omega << " " << current_total[1] / omega << " " << current_total[2] / omega
-             << std::endl;
+        fout.open(filename, mode);
+        fout << std::right << std::setw(6) << istep + 1 << std::scientific << std::setprecision(12);
+        for (int direction = 0; direction < 3; ++direction)
+        {
+            fout << "  " << std::setw(19) << current_total[direction] / omega;
+        }
+        fout << std::endl;
         fout.close();
     }
 
@@ -766,7 +782,7 @@ template void ModuleIO::write_current<double>(const UnitCell& ucell,
                                               const LCAO_Orbitals& orb,
                                               TD_info* td_p,
                                               const hamilt::HContainer<double>* sR,
-                                              const hamilt::HContainer<double>* hR,
+                                              const std::vector<hamilt::HContainer<double>*>& spin_hR,
                                               const Exx_NAO<std::complex<double>>& exx_nao,
                                               const Exx_Info& exx_info);
 
@@ -780,7 +796,7 @@ template void ModuleIO::write_current<std::complex<double>>(const UnitCell& ucel
                                                             const LCAO_Orbitals& orb,
                                                             TD_info* td_p,
                                                             const hamilt::HContainer<std::complex<double>>* sR,
-                                                            const hamilt::HContainer<std::complex<double>>* hR,
+                                                            const std::vector<hamilt::HContainer<std::complex<double>>*>& spin_hR,
                                                             const Exx_NAO<std::complex<double>>& exx_nao,
                                                             const Exx_Info& exx_info);
 #endif //__LCAO

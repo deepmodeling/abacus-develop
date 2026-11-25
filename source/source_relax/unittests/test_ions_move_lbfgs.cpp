@@ -24,7 +24,12 @@ namespace unitcell
 {
 // Stub: the real update_pos_tau performs lattice-vector algebra that needs a
 // fully built UnitCell; these tests only care about the convergence decision.
-void update_pos_tau(const Lattice&, const double*, const int, const int, Atom*)
+void update_pos_tau(
+    const Lattice &,
+    const double *,
+    const int,
+    const int,
+    Atom *)
 {
 }
 } // namespace unitcell
@@ -44,15 +49,9 @@ UnitCell::UnitCell()
     set_atom_flag = true;
     atoms[0].label = "Si";
 }
-UnitCell::~UnitCell()
-{
-}
-Magnetism::Magnetism()
-{
-}
-Magnetism::~Magnetism()
-{
-}
+UnitCell::~UnitCell() {}
+Magnetism::Magnetism() {}
+Magnetism::~Magnetism() {}
 Atom::Atom()
 {
     na = 1;
@@ -64,48 +63,22 @@ Atom::Atom()
     taud.resize(na);
     mbl[0] = {1, 1, 1};
 }
-Atom::~Atom()
-{
-}
+Atom::~Atom() {}
 #ifdef __MPI
-void Atom::bcast_atom()
-{
-}
-void Atom::bcast_atom2()
-{
-}
+void Atom::bcast_atom() {}
+void Atom::bcast_atom2() {}
 #endif
-Atom_pseudo::Atom_pseudo()
-{
-}
-Atom_pseudo::~Atom_pseudo()
-{
-}
-pseudo::pseudo()
-{
-}
-pseudo::~pseudo()
-{
-}
-SepPot::SepPot()
-{
-}
-SepPot::~SepPot()
-{
-}
-Sep_Cell::Sep_Cell() noexcept
-{
-}
-Sep_Cell::~Sep_Cell() noexcept
-{
-}
+Atom_pseudo::Atom_pseudo() {}
+Atom_pseudo::~Atom_pseudo() {}
+pseudo::pseudo() {}
+pseudo::~pseudo() {}
+SepPot::SepPot() {}
+SepPot::~SepPot() {}
+Sep_Cell::Sep_Cell() noexcept {}
+Sep_Cell::~Sep_Cell() noexcept {}
 int ModuleSymmetry::Symmetry::symm_flag = 0;
-void ModuleSymmetry::Symmetry::symmetrize_mat3(ModuleBase::matrix& sigma, const Lattice& lat) const
-{
-}
-void ModuleSymmetry::Symmetry::symmetrize_vec3_nat(double* v) const
-{
-}
+void ModuleSymmetry::Symmetry::symmetrize_mat3(ModuleBase::matrix &sigma, const Lattice &lat) const {}
+void ModuleSymmetry::Symmetry::symmetrize_vec3_nat(double *v) const {}
 
 // Friend of Parameter; the only sanctioned way to write PARAM.input in tests.
 // Not needed anymore: allocate() takes relax_bfgs_rmax and out_level explicitly.
@@ -126,6 +99,7 @@ class IonsMoveLBFGSTest : public ::testing::Test
 TEST_F(IonsMoveLBFGSTest, RelaxStepConverged)
 {
     UnitCell ucell;
+    const double initial_tau_x = ucell.atoms[0].tau[0].x;
     ModuleBase::matrix force(natom, 3);
     force(0, 0) = 1.0e-4; // Ry/Bohr, ~0.005 eV/Angstrom
     const double etot = 0.0;
@@ -140,6 +114,8 @@ TEST_F(IonsMoveLBFGSTest, RelaxStepConverged)
     EXPECT_TRUE(converged);
     EXPECT_NEAR(Ions_Move_Basic::largest_grad, 1.0e-4, 1e-12); // Ry/Bohr, lat0 = 1
     EXPECT_LT(Ions_Move_Basic::largest_grad * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A, criteria.force_thr_ev);
+    EXPECT_NEAR(ucell.atoms[0].tau[0].x, initial_tau_x, 1e-12);
+    EXPECT_FALSE(ucell.ionic_position_updated);
 }
 
 // A force above force_thr_ev must be reported as not converged.

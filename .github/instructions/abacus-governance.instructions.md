@@ -18,8 +18,9 @@ Apply these instructions when reviewing or changing ABACUS code:
   Prefer explicit dependencies or narrow local interfaces.
 - Flag new default arguments in existing header interfaces. Prefer explicit
   call-site updates, overloads, or a clearer configuration object.
-- Review header include growth and `.hpp` propagation carefully. These are
-  usually warnings unless the PR records a narrow reason.
+- Review header include growth and `.hpp` propagation carefully. Do not ask
+  authors to replace explicit `#include` directives with forward declarations
+  solely to avoid header include warnings.
 - Require LF line endings for text files. `.bat` and `.cmd` files are the CRLF
   exceptions.
 - Flag new `#pragma once` in header files as a blocker-level governance issue.
@@ -29,6 +30,10 @@ Apply these instructions when reviewing or changing ABACUS code:
   generated YAML or Markdown documentation files to be committed.
 - Check that new source files are linked through the relevant `CMakeLists.txt`
   unless the PR explains generated or indirect inclusion.
+- Unit tests under `source/` belong in a flat `unittests/` directory, with
+  sources named `test_<file under test>.cpp`. The checker blocks the layout
+  and the `test_` prefix; confirm in review that the rest of the name matches
+  the file under test.
 - Keep default C++ changes compatible with the repository C++11 baseline.
 - Ask for focused tests or explicit test rationale for feature changes, bug
   fixes, INPUT behavior changes, heterogeneous kernels, and core-module

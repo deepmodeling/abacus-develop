@@ -465,12 +465,12 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::contributeHk(int ik)
 
     if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
     {
-        const int nrow = this->hsk->get_pv()->get_row_size();
+        const int nrow = this->hsk->get_pv()->para_2d().nrloc();
         hamilt::folding_HR(*this->V_delta_R, h_delta_k, this->kvec_d[ik], nrow, 1);
     }
     else
     {
-        const int ncol = this->hsk->get_pv()->get_col_size();
+        const int ncol = this->hsk->get_pv()->para_2d().ncloc();
         hamilt::folding_HR(*this->V_delta_R, h_delta_k, this->kvec_d[ik], ncol, 0);
     }
     ModuleBase::timer::end("DeePKS", "contributeHk");

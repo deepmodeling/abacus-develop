@@ -128,13 +128,13 @@ void ReadInput::item_system()
             }
             for (int i = 0; i < 3; ++i)
             {
-                para.input.cell_replica[static_cast<std::size_t>(i)] = std::stoi(item.str_values[static_cast<std::size_t>(i)]);
+                para.input.cell_replica[i] = std::stoi(item.str_values[i]);
             }
         };
         item.check_value = [](const Input_Item&, const Parameter& para) {
             for (int i = 0; i < 3; ++i)
             {
-                if (para.input.cell_replica[static_cast<std::size_t>(i)] <= 0)
+                if (para.input.cell_replica[i] <= 0)
                 {
                     ModuleBase::WARNING_QUIT("ReadInput", "cell_replica values must all be positive.");
                 }
@@ -247,6 +247,7 @@ Socket mode always computes energy. Force and stress extraction follows cal_forc
 * `lj`: Lennard-Jones potential.
 * `dp`: Deep Potential (DP) model.
 * `nep`: Neuroevolution potential (NEP).
+* `snap`: Spectral Neighbor Analysis Potential (SNAP).
 * `ks-lr`: Kohn-Sham density functional theory followed by linear-response time-dependent density functional theory (LR-TDDFT; under development).
 * `lr`: Linear-response time-dependent density functional theory (LR-TDDFT) using precomputed Kohn-Sham orbitals (under development).
 * `dfpt`: Density functional perturbation theory (DFPT; under development).
@@ -255,7 +256,7 @@ Socket mode always computes energy. Force and stress extraction follows cal_forc
         item.default_value = "ksdft";
         read_sync_string(input.esolver_type);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            const std::vector<std::string> esolver_types = { "ksdft", "sdft", "ofdft", "tdofdft", "tddft", "lj", "dp", "nep", "lr", "ks-lr", "dfpt" };
+            const std::vector<std::string> esolver_types = { "ksdft", "sdft", "ofdft", "tdofdft", "tddft", "lj", "dp", "nep", "snap", "lr", "ks-lr", "dfpt" };
             if (std::find(esolver_types.begin(), esolver_types.end(), para.input.esolver_type) == esolver_types.end())
             {
                 const std::string warningstr = nofound_str(esolver_types, "esolver_type");
@@ -265,11 +266,16 @@ Socket mode always computes energy. Force and stress extraction follows cal_forc
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "esolver_type=tddft requires calculation=md.");
             }
-            if (para.input.esolver_type == "dp" || para.input.esolver_type == "nep")
+            if (para.input.esolver_type == "dp" || para.input.esolver_type == "nep"
+                || para.input.esolver_type == "snap")
             {
                 if (access(para.input.mdp.pot_file.c_str(), 0) == -1)
                 {
                     ModuleBase::WARNING_QUIT("ReadInput", "Can not find `pot_file` !");
+                }
+                if (para.input.esolver_type == "snap" && access(para.input.mdp.snap_param_file.c_str(), 0) == -1)
+                {
+                    ModuleBase::WARNING_QUIT("ReadInput", "Can not find `snap_param_file` !");
                 }
             }
             // LR reads the ground state wave function from a separate SCF run,
@@ -371,6 +377,13 @@ Socket mode always computes energy. Force and stress extraction follows cal_forc
             {
                 para.input.symmetry = "-1"; // disable kpoint reduce
             }
+            // Per-atom SCCS cavity widths can differ between equivalent atoms,
+            // which the symmetry analysis does not see.
+            const bool sccs_full = para.input.imp_sol == 2 && para.input.sccs_solvent_mode == "full";
+            if (sccs_full && para.input.sccs_corespread.size() > 1 && para.input.symmetry == "1")
+            {
+                para.input.symmetry = "0";
+            }
         };
         this->add_item(item);
     }
@@ -445,7 +458,8 @@ In socket_driver mode, this flag controls whether the returned frame advertises 
         item.description = R"(Controls k-point parallelism. The value must be positive and should not exceed either the number of k-points or the number of MPI processes.
 * For PW calculations, divide all MPI processes into persistent k-point pools. Each pool stores and processes a subset of the k-points.
 * For LCAO calculations with lapack, genelpa, elpa, or scalapack_gvx, divide the diagonalization work into temporary k-point pools. After diagonalization, the eigenvalues and distributed wavefunctions are restored for all k-points before occupations, density matrices, and output are evaluated.
-* Multi-process LCAO cusolver uses its own active-GPU distribution and does not use this value to define its k-point layout. Other LCAO eigensolvers do not use the temporary k-point-pool implementation.)";
+* Multi-process LCAO cusolver uses its own active-GPU distribution and does not use this value to define its k-point layout. Other LCAO eigensolvers do not use the temporary k-point-pool implementation.
+* On DSP builds, the mtblas/C_PACK libraries require kpar (kpar_lcao for LCAO) times bndpar to equal the number of MPI processes exactly; ABACUS aborts at startup otherwise.)";
         item.default_value = "1";
         item.unit = "";
         read_sync_int(input.kpar);
@@ -471,6 +485,60 @@ In socket_driver mode, this flag controls whether the returned frame advertises 
             }
 #endif
         };
+#ifdef __DSP
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            // The mtblas/C_PACK libraries on DSP hardware require exactly one
+            // process per k-point pool: the effective pool count (kpar for PW,
+            // kpar_lcao for LCAO, the other being 1) times bndpar must equal
+            // the number of MPI processes. Other configurations make the vendor
+            // routines return inconsistent results across ranks and the SCF
+            // silently diverges, so reject them at input time. See issue #8228.
+            //
+            // Skip conditions:
+            //  1) bndpar <= 0 is rejected by the bndpar input check; skipping
+            //     here avoids a division by zero in the diagnostic below.
+            //  2) esolver_type = dp / nep never runs an eigensolver and never
+            //     touches mtblas/C_PACK, so the kpar/bndpar layout is not
+            //     consumed and must not trigger a diagnostic. See issue #8228.
+            if (para.input.bndpar <= 0)
+            {
+                return;
+            }
+            if (!ModuleIO::dsp_layout_check_needed(para.input.esolver_type))
+            {
+                return;
+            }
+            const int nproc = para.sys.nproc;
+            const bool layout_valid = ModuleIO::dsp_kpar_layout_valid(
+                nproc,
+                para.input.basis_type,
+                para.input.kpar,
+                para.sys.kpar_lcao,
+                para.input.bndpar,
+                para.input.esolver_type);
+            if (!layout_valid)
+            {
+                const int kpar_eff = ModuleIO::dsp_effective_kpar(
+                    para.input.basis_type, para.input.kpar, para.sys.kpar_lcao);
+                const std::string basis_str
+                    = (para.input.basis_type == "lcao") ? "kpar_lcao" : "kpar";
+                const std::string msg
+                    = "On DSP hardware with esolver_type=" + para.input.esolver_type
+                    + " and basis_type=" + para.input.basis_type
+                    + ", the mtblas/C_PACK libraries require " + basis_str
+                    + " * bndpar to equal the number of MPI processes, but got"
+                    + " NPROC=" + std::to_string(nproc)
+                    + ", " + basis_str + "=" + std::to_string(kpar_eff)
+                    + ", bndpar=" + std::to_string(para.input.bndpar)
+                    + ". Please set " + basis_str + "="
+                    + std::to_string(nproc / para.input.bndpar)
+                    + " or adjust the process count.";
+                std::cout << " === Note: kpar * bndpar != NPROC ===" << std::endl;
+                std::cout << msg << std::endl;
+                std::cout << "=== end ===" << std::endl;
+            }
+        };
+#endif
         this->add_item(item);
         add_int_bcast(sys.kpar_lcao);
     }
@@ -556,7 +624,7 @@ Available options are:
 * pcc_2d: self-consistent PCC correction for a slab, open along the lattice vector selected by pcc_2d_axis (default: the third) and periodic along the other two. The open vector must be perpendicular to the periodic plane (rewrite a tilted cell as the equivalent perpendicular one), and the k-point sampling along it must be Gamma only. The monopole term uses the open planar kernel that vanishes on the plane of the charge, -pi*Q*L/(3*A) with L the cell length along the open vector and A the periodic area, so the energy of a charged slab converges with the vacuum size; it is referenced to zero potential on the plane of the charge. ENVIRON uses -pi*Q/(3*L), so charged-slab energies agree with ENVIRON only for A = L^2.
 * makov-payne, m-p, mp: compute the Makov-Payne correction to the total energy and estimate a corrected vacuum level for eigenvalue alignment. This option is available only for cubic lattices (latname = sc, fcc, or bcc).
 
-pcc_0d and pcc_2d contribute to the energy, the potential and the fixed-cell forces; the correction energy is printed as E_pcc. They require CPU KS-DFT (esolver_type ksdft) with basis_type pw or lcao, calculation scf or relax, and nspin 1 or 2, without efield_flag, gate_flag, cal_stress, DFT-1/2, deepks output or dm_to_rho. With imp_sol=2, pcc_0d and pcc_2d support SCF energies and forces; imp_sol=1 is not supported.
+pcc_0d and pcc_2d contribute to the energy, the potential and the fixed-cell forces; the correction energy is printed as E_pcc. They require CPU KS-DFT (esolver_type ksdft) with basis_type pw or lcao, calculation scf or relax, and nspin 1 or 2, without efield_flag, gate_flag, cal_stress, DFT-1/2, deepks output or dm_to_rho. With imp_sol=2, pcc_0d and pcc_2d support SCF energies, forces and fixed-cell relax; imp_sol=1 is not supported.
 
 Theory: G. Makov and M. C. Payne, Phys. Rev. B 51, 4014 (1995); PCC: O. Andreussi and N. Marzari, Phys. Rev. B 90, 245101 (2014).)";
         item.default_value = "none";
@@ -712,7 +780,7 @@ For `basis_type=lcao_in_pw`, `init_wfc` is automatically set to `nao`.
 * atomic: the density is starting from the summation of the atomic density of single atoms.
 * file: the density will be read in from a binary file charge-density.dat first. If it does not exist, the charge density will be read in from cube files.
 * wfc: the density will be calculated by wavefunctions and occupations.
-* dm: the density will be calculated by real space density matrix(DMR) of LCAO base.
+* dm: the density will be calculated from the LCAO real-space density matrix (DMR) CSR files. If no DMR file exists, the dense k-space density matrix (DM(k)) files written by out_dmk are read instead and transformed to DMR.
 * dm_no_renormalize: same as dm, but the charge density is not renormalized to the number of electrons.
 * hr: the real space Hamiltonian matrix(HR) will be read in from file hrs1_nao.csr in directory read_file_dir.
 * auto: Abacus first attempts to read the density from a file; if not found, it defaults to using atomic density.)";
@@ -991,11 +1059,46 @@ Available options are:
         item.type = "String";
         item.description = R"(Specifies the precision when performing scf calculation.
 * single: single precision
-* double: double precision)";
+* double: double precision
+PW Kohn-Sham DFT+U and DeltaSpin onsite corrections require double precision.
+PW RT-TDDFT does not support DFT+U or spin constraints at any precision.)";
         item.default_value = "double";
         item.set_availability("basis_type==pw");
         read_sync_string(input.precision);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
+            const Input_para& inp = para.inp;
+            const bool pw_onsite_solver = inp.basis_type == "pw"
+                                          && (inp.esolver_type == "ksdft" || inp.esolver_type == "tddft");
+            if (pw_onsite_solver && inp.precision == "single")
+            {
+                if (inp.esolver_type == "tddft")
+                {
+                    if (inp.dft_plus_u != 0)
+                    {
+                        ModuleBase::WARNING_QUIT(
+                            "ReadInput",
+                            "PW RT-TDDFT does not support DFT+U at any precision; set dft_plus_u=0.");
+                    }
+                    if (inp.sc_mag_switch)
+                    {
+                        ModuleBase::WARNING_QUIT(
+                            "ReadInput",
+                            "PW RT-TDDFT does not support spin constraints at any precision; set sc_mag_switch=false.");
+                    }
+                }
+                if (inp.dft_plus_u != 0)
+                {
+                    ModuleBase::WARNING_QUIT(
+                        "ReadInput",
+                        "PW DFT+U requires precision = double; single precision onsite corrections are not supported.");
+                }
+                if (inp.sc_mag_switch)
+                {
+                    ModuleBase::WARNING_QUIT(
+                        "ReadInput",
+                        "PW DeltaSpin requires precision = double; single precision onsite corrections are not supported.");
+                }
+            }
             // cpu single precision is not supported while float_fftw lib is not available
             if (para.inp.device == "cpu" && para.inp.precision == "single")
             {
@@ -1503,7 +1606,11 @@ updates structures smoothly enough for second-order extrapolation.)";
         item.annotation = "directory of files for reading";
         item.category = "Input files";
         item.type = "String";
-        item.description = "Location of files, such as the electron density (chgs1.cube), required as a starting point.";
+        item.description = "Location of files, such as the electron density (chgs1.cube), required as a starting point. "
+                           "Standalone LR first reads the complete chg.cube/chgs*.cube set. If unavailable, it reads "
+                           "the binary density file {suffix}-CHARGE-DENSITY.restart and performs inverse FFT onto the current grid. "
+                           "The stored spin count must match the requested nspin exactly. "
+                           "This reads ground-state density only; it does not resume a previous calculation.";
         item.default_value = "OUT.$suffix";
         read_sync_string(input.read_file_dir);
         item.reset_value = [](const Input_Item& item, Parameter& para) {

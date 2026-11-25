@@ -80,7 +80,7 @@ class DMTest : public testing::Test
         int global_col = test_size * test_nw;
         std::ofstream ofs_running;
         paraV = new Parallel_Orbitals();
-        paraV->init(global_row, global_col, nb, MPI_COMM_WORLD);
+        paraV->para_2d().init(global_row, global_col, nb, MPI_COMM_WORLD, false);
         paraV->set_atomic_trace(ucell.get_iat2iwt(), test_size, global_row);
     }
 #else
@@ -102,8 +102,8 @@ TEST_F(DMTest, DMInit1)
     kv->kvec_d.resize(nks);
     kv->kvec_d[1].x = 0.5;
     // construct DM
-    std::cout << "dim0: " << paraV->dim0 << "    dim1:" << paraV->dim1 << std::endl;
-    std::cout << "nrow: " << paraV->nrow << "    ncol:" << paraV->ncol << std::endl;
+    std::cout << "dim0: " << paraV->para_2d().nrproc() << "    dim1:" << paraV->para_2d().ncproc() << std::endl;
+    std::cout << "nrow: " << paraV->para_2d().nrloc() << "    ncol:" << paraV->para_2d().ncloc() << std::endl;
     module_dm::DensityMatrix<double, double> DM(paraV, nspin, kv->kvec_d, nks);
     // initialize this->dmr
     Grid_Driver gd(0,0);
@@ -129,8 +129,8 @@ TEST_F(DMTest, DMInit2)
     kv->kvec_d.resize(nks);
     kv->kvec_d[1].x = 0.5;
     // construct DM
-    std::cout << "dim0: " << paraV->dim0 << "    dim1:" << paraV->dim1 << std::endl;
-    std::cout << "nrow: " << paraV->nrow << "    ncol:" << paraV->ncol << std::endl;
+    std::cout << "dim0: " << paraV->para_2d().nrproc() << "    dim1:" << paraV->para_2d().ncproc() << std::endl;
+    std::cout << "nrow: " << paraV->para_2d().nrloc() << "    ncol:" << paraV->para_2d().ncloc() << std::endl;
     module_dm::DensityMatrix<double, double> DM(paraV, nspin, kv->kvec_d, nks);
     // initialize Record_adj using Grid_Driver
     Grid_Driver gd(0,0);
@@ -194,7 +194,7 @@ TEST_F(DMTest, DMInit3)
     module_dm::DensityMatrix<std::complex<double>, double> DM(paraV, nspin, kv->kvec_d, kv->get_nks() / nspin);
     Grid_Driver gd(0, 0);
     DM.init_dmr(&gd, &ucell);
-    std::cout << "dim0: " << paraV->dim0 << "    dim1:" << paraV->dim1 << std::endl;
+    std::cout << "dim0: " << paraV->para_2d().nrproc() << "    dim1:" << paraV->para_2d().ncproc() << std::endl;
     // construct another DM
     module_dm::DensityMatrix<std::complex<double>, double> DM1(paraV, nspin, kv->kvec_d, kv->get_nks() / nspin);
     DM1.init_dmr(*DM.get_dmr_ptr(1));
@@ -251,7 +251,7 @@ TEST_F(DMTest, DMInit4)
     // construct a DM from this HContainer
     module_dm::DensityMatrix<std::complex<double>, double> DM(paraV, nspin, kv->kvec_d, kv->get_nks() / nspin);
     DM.init_dmr(*tmp_DMR);
-    std::cout << "dim0: " << paraV->dim0 << "    dim1:" << paraV->dim1 << std::endl;
+    std::cout << "dim0: " << paraV->para_2d().nrproc() << "    dim1:" << paraV->para_2d().ncproc() << std::endl;
     // compare
     EXPECT_EQ(DM.get_dmr_ptr(2)->size_atom_pairs(), test_size * test_size);
     EXPECT_EQ(DM.get_dmr_ptr(2)->get_atom_pair(2, 2).get_atom_i(), 2);

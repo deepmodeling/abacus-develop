@@ -49,9 +49,9 @@ int get_linear_index(const std::string& ks_solver,
 {
     if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(ks_solver))
     {
-        return mu + nu * pv.nrow;
+        return mu + nu * pv.para_2d().nrloc();
     }
-    return mu * pv.ncol + nu;
+    return mu * pv.para_2d().ncloc() + nu;
 }
 
 void fold_dSR_gamma(const FoldingCtx& ctx,
@@ -72,7 +72,7 @@ void fold_dSR_gamma(const FoldingCtx& ctx,
     const Parallel_Orbitals& pv = *ctx.pv;
     const Grid_Driver* gd = ctx.gd;
 
-    std::fill(dSR_gamma, dSR_gamma + pv.nloc, 0.0);
+    std::fill(dSR_gamma, dSR_gamma + pv.para_2d().size(), 0.0);
 
     double* dS_ptr = nullptr;
     if (dim1 == 0)
@@ -117,7 +117,7 @@ void fold_dSR_gamma(const FoldingCtx& ctx,
                 {
                     const int jj0 = jj / npol;
                     const int iw1_all = start1 + jj0;
-                    const int mu = pv.global2local_row(iw1_all);
+                    const int mu = pv.para_2d().irloc(iw1_all);
                     if (mu < 0)
                     {
                         continue;
@@ -127,7 +127,7 @@ void fold_dSR_gamma(const FoldingCtx& ctx,
                     {
                         const int kk0 = kk / npol;
                         const int iw2_all = start2 + kk0;
-                        const int nu = pv.global2local_col(iw2_all);
+                        const int nu = pv.para_2d().icloc(iw2_all);
                         if (nu < 0)
                         {
                             continue;
@@ -163,7 +163,7 @@ void folding_matrix_k(const FoldingCtx& ctx,
     const Parallel_Orbitals& pv = *ctx.pv;
     const Grid_Driver& gd = *ctx.gd;
 
-    std::fill(mat_k, mat_k + pv.nloc, std::complex<double>(0.0, 0.0));
+    std::fill(mat_k, mat_k + pv.para_2d().size(), std::complex<double>(0.0, 0.0));
 
     double* mat_ptr = nullptr;
     if (dim1 == 1 || dim1 == 4)
@@ -224,7 +224,7 @@ void folding_matrix_k(const FoldingCtx& ctx,
                 {
                     // the index of orbitals in this processor
                     const int iw1_all = start1 + ii;
-                    const int mu = pv.global2local_row(iw1_all);
+                    const int mu = pv.para_2d().irloc(iw1_all);
                     if (mu < 0)
                     {
                         continue;
@@ -233,7 +233,7 @@ void folding_matrix_k(const FoldingCtx& ctx,
                     for (int jj = 0; jj < atom2->nw * npol; jj++)
                     {
                         int iw2_all = start2 + jj;
-                        const int nu = pv.global2local_col(iw2_all);
+                        const int nu = pv.para_2d().icloc(iw2_all);
                         if (nu < 0)
                         {
                             continue;

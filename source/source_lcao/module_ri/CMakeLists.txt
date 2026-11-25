@@ -5,17 +5,23 @@ if(ENABLE_LIBRI)
   list(
     APPEND
     objects
+    invmat_ri.cpp
+    lri_cv_tools.cpp
     matrix_orbs11.cpp
     matrix_orbs21.cpp
     matrix_orbs22.cpp
     ri_2d_comm.cpp
-    mix_dmk_2d.cpp)
+    mix_dmk_2d.cpp
+    hybrid_gauge_phase.cpp
+    hybrid_image_domain.cpp)
 
   if(ENABLE_LCAO)
     list(
       APPEND
       objects
+      lri_cv.cpp
       conv_coulomb_pot_k.cpp
+      smooth_cut_coulomb.cpp
       exx_abfs_ctor_orbs.cpp
       exx_abfs_io.cpp
       exx_abfs_jle.cpp
@@ -24,6 +30,7 @@ if(ENABLE_LIBRI)
       exx_opt_orb.cpp
       gaussian_abfs.cpp
       singular_value.cpp
+      exx_lri_interface.cpp
       exx_lri_detail.cpp
       exx_workspace.cpp
       ri_util.cpp)

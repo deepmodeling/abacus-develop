@@ -10,25 +10,25 @@ source "$PROPS_SCRIPT_DIR/props_common.sh"
 props_result_file=$1
 props_reference_mode=0
 case "$props_result_file" in
-    result.ref|*/result.ref)
-        props_reference_mode=1
-        cleanup_failed_reference(){
-            reference_status=$?
-            trap - EXIT
-            if [ "$reference_status" -ne 0 ]; then
-                rm -f "$props_result_file"
-            fi
-            exit "$reference_status"
-        }
-        trap cleanup_failed_reference EXIT
-        set -e
-        ;;
+  result.ref | */result.ref | result.ref.new | */result.ref.new)
+    props_reference_mode=1
+    cleanup_failed_reference() {
+      reference_status=$?
+      trap - EXIT
+      if [ "$reference_status" -ne 0 ]; then
+        rm -f "$props_result_file"
+      fi
+      exit "$reference_status"
+    }
+    trap cleanup_failed_reference EXIT
+    set -e
+    ;;
 esac
 props_init "$props_result_file"
 
 source "$PROPS_SCRIPT_DIR/props_lr.sh"
 if run_lr_tracking_props; then
-    exit 0
+  exit 0
 fi
 
 source "$PROPS_SCRIPT_DIR/props_basic.sh"
@@ -37,13 +37,21 @@ source "$PROPS_SCRIPT_DIR/props_cube.sh"
 source "$PROPS_SCRIPT_DIR/props_ml.sh"
 source "$PROPS_SCRIPT_DIR/props_tddft.sh"
 source "$PROPS_SCRIPT_DIR/props_deepks.sh"
+source "$PROPS_SCRIPT_DIR/props_dfpt.sh"
 
 # Property collectors run in the same order as the original monolithic
 # script so result files stay byte-identical; props_finalize() writes the
 # trailing totaltimeref entry. Add a new category by dropping a
 # props_<cat>.sh next to the others and calling run_<cat>_props here.
 run_lr_force_props
-run_basic_props
+run_basic_props || exit 1
+
+#---------------------------------------
+# dfpt collectors (props_dfpt.sh): phonon frequencies per q point;
+# a DFPT case with no complete frequency block fails the collection
+# instead of passing on etot alone
+#---------------------------------------
+run_dfpt_props || exit 1
 
 #-------------------------------
 # matrix collectors: out_dm1 (props_mat.sh)
@@ -100,9 +108,12 @@ run_ml_rpa_props
 # entry point's errexit mode, so an early failure cannot be hidden by a later
 # successful command in the collector.
 if [ "$props_reference_mode" -eq 1 ]; then
-    run_deepks_props
+  run_deepks_props
 else
-    ( set +e; run_deepks_props ) || true
+  (
+    set +e
+    run_deepks_props
+  ) || true
 fi
 
 #--------------------------------------------

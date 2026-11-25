@@ -1,12 +1,16 @@
 #ifndef DOS_H
 #define DOS_H
 
-#include<vector>
+#include <array>
+#include <vector>
 #include "source_base/matrix.h"
 #include "source_estate/fp_energy.h"
 
 namespace ModuleIO
 {
+
+    // Per-energy rows in text column order for one spin channel.
+    using DosSpectrum = std::vector<std::array<double, 5>>;
 
     void prepare_dos(std::ofstream& ofs_running,
             const elecstate::Efermi &energy_fermi,
@@ -37,8 +41,10 @@ namespace ModuleIO
         const ModuleBase::matrix &ekb, //store energy for each k point and each band
         const ModuleBase::matrix &wg, //weight of (kpoint,bands))
         const int istep_in, // ionic_step
-        const bool out_app_flag, // whether to append output
-        const int bndpar); // number of band parallel groups
+        const int out_app_flag, // 0: no append, 1: append, 2: subdirectory
+        const int precision, // number of decimal places in the DOS file
+        const int bndpar, // number of band parallel groups
+        DosSpectrum* spectrum); // collect rank-zero rows for NPY output when supplied
 
 }
 

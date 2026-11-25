@@ -18,6 +18,7 @@ namespace ModuleIO
 template <typename TK, typename TR>
 void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
         const Input_para &inp,              // input
+        const int istep,                    // ionic step index, zero-based
 		K_Vectors &kv,                      // k-point
 		elecstate::ElecState* pelec,// electronic info
         const module_dm::Setup_DM<TK> &dmat, // mohan add 2025-11-02

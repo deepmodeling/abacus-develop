@@ -64,6 +64,20 @@ class CompareFileTest(unittest.TestCase):
 
         self.assertEqual(result.returncode, 0, result.stdout)
 
+    def test_provenance_and_step_normalization_preserve_strict_comparison(self):
+        reference = "STEP: 1\nvalue 1.0\n"
+        output = "# ABACUS version: test\n# Written at test time\n# Ionic_Step 1\nvalue 1.0\n"
+        self.assertEqual(self.run_compare(reference, output).returncode, 0)
+        self.assertEqual(self.run_compare(reference, output + "extra 2.0\n").returncode, 1)
+        self.assertEqual(self.run_compare(output + "extra 2.0\n", reference).returncode, 1)
+
+    def test_custom_tolerance_keeps_non_finite_and_row_count_checks(self):
+        arguments = ["-tol", "1e-4"]
+        self.assertEqual(self.run_compare("1.0\n", "1.00001\n", arguments).returncode, 0)
+        self.assertEqual(self.run_compare("1.0\n", "1.001\n", arguments).returncode, 1)
+        self.assertEqual(self.run_compare("1.0\n", "1.00001\n2.0\n", arguments).returncode, 1)
+        self.assertEqual(self.run_compare("nan\n", "nan\n", arguments).returncode, 1)
+
     def test_non_finite_numbers_fail(self):
         comparisons = (
             ("value nan\n", "value nan\n", []),

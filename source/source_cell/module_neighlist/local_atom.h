@@ -20,6 +20,8 @@ struct LocalAtom
     ModuleBase::Vector3<double> frac;
     ModuleBase::Vector3<double> vel;
     ModuleBase::Vector3<double> force;
+    ModuleBase::Vector3<double> displacement; ///< Unwrapped fractional displacement in the current MD step.
+    ModuleBase::Vector3<int> boundary_shift; ///< Lattice translation applied in the current MD step.
     ModuleBase::Vector3<int> mbl;
     double mass;
     int type;
@@ -31,6 +33,8 @@ struct LocalAtom
           frac(0.0, 0.0, 0.0),
           vel(0.0, 0.0, 0.0),
           force(0.0, 0.0, 0.0),
+          displacement(0.0, 0.0, 0.0),
+          boundary_shift(0, 0, 0),
           mbl(1, 1, 1),
           mass(1.0),
           type(0),
@@ -52,6 +56,8 @@ struct LocalAtom
           frac(frac_in),
           vel(vel_in),
           force(force_in),
+          displacement(0.0, 0.0, 0.0),
+          boundary_shift(0, 0, 0),
           mbl(mbl_in),
           mass(mass_in),
           type(type_in),

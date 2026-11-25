@@ -1,18 +1,20 @@
 #ifndef CHG_RHOG_IO_H
 #define CHG_RHOG_IO_H
 
-#include <string>
+#include "source_base/module_parallel/para_world.h"
+#include "source_basis/module_pw/pw_basis.h"
+#include "source_estate/module_charge/charge.h"
+
 #include <cassert>
 #include <ostream>
-#include "source_basis/module_pw/pw_basis.h"
-#include "source_base/module_parallel/para_world.h"
+#include <string>
 /**
  * I/O free function of rho(G) in binary format
  * Author: YuLiu98, Kirk0830
- * 
+ *
  * The designed foramt of the binary file is kept similar to the one in QuantumESPRESSO
  * Modules/io_base.f90, function write_rhog (non-HDF5):
- * 
+ *
  * /3/ /gammaonly/ /ngm_g/ /nspin/ /3/ ! bool, int, int. ngm_g is the global, total number of G-vectors
  * /9/ /b11/ /b12/ /b13/ /b21/ /b22/ /b23/ /b31/ /b32/ /b33/ /9/ ! 9 real numbers, the three lattice vectors
  * /ngm_g*3/
@@ -27,23 +29,42 @@
  * !/ngm_g/ ! ngm_g complex numbers, the rho(G) values for the second spin component
  * !/rhog(1)/ /rhog(2)/ /rhog(3)/ ...
  * !/ngm_g/ ! ngm_g complex numbers, the rho(G) values for the second spin component
- * 
+ *
  * There are some aspects needed to ensure:
  * 1. the correspondence between ABACUS PW and QuantumESPRESSO
  *                      ABACUS PW      QuantumESPRESSO
  *    bij              UnitCell::GT      b1, b2, b3
  *    miller index        ibox[*]           mill
  *    rho              Charge::rhog          rho
- * 
+ *
  * 2. the unit of each quantity
  *                      ABACUS PW      QuantumESPRESSO
  *    bij                                   a.u.
  *    miller index
- *    rho   
+ *    rho
  */
 
 namespace module_charge
 {
+
+/**
+ * @brief Write saved charge and optional kinetic-energy densities in reciprocal space.
+ *
+ * All pools participate in their density transforms; only the designated writer
+ * pool writes files. The caller selects the output time and supplies saved
+ * densities in rho_save and kin_r_save. rhog_save is updated by the transform.
+ */
+void write_density_restart(Charge& charge,
+                           ModulePW::PW_Basis& pw_rhod,
+                           const ModuleBase::Matrix3& reciprocal_lattice,
+                           const std::string& prefix,
+                           const int nspin,
+                           const bool enabled,
+                           const bool gamma_only,
+                           const bool write_tau,
+                           const bool writer_pool,
+                           const Parallel::ParaWorld& pw_world,
+                           std::ostream* warning);
 
 bool read_rhog(const std::string& filename,
                const ModulePW::PW_Basis* pw_rhod,
@@ -51,6 +72,23 @@ bool read_rhog(const std::string& filename,
                std::complex<double>** rhog,
                const Parallel::ParaWorld& pw_world,
                std::ostream* os_warning);
+
+/// Collectively select the complete cube set; partial sets fall back to restart.
+bool has_complete_charge_cubes(const std::string& directory, const int nspin,
+                               const Parallel::ParaWorld& world);
+
+/// Read binary reciprocal-space density and perform inverse FFT for every spin.
+/// Requires the stored spin count to match nspin exactly (no implicit conversion).
+/// Reads density only; does not restore calculation or solver state.
+/// Returns false for recoverable open/configuration failures, leaving rho unchanged.
+/// Malformed or truncated binary input can terminate via Binstream/ WARNING_QUIT.
+bool read_rho_from_binary(const std::string& filename,
+                      const ModulePW::PW_Basis& rhopw,
+                      const int nspin,
+                      std::complex<double>** rhog,
+                      double** rho,
+                      const Parallel::ParaWorld& pw_world,
+                      std::ostream& log);
 
 bool write_rhog(const std::string& fchg,
                 const bool gamma_only,

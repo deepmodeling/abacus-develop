@@ -1,17 +1,17 @@
-#include "source_base/module_out/binstream.h"
-#include "source_base/vector3.h"
-#include "source_base/module_parallel/para_mpi_func.h"
 #include "chg_rhog_io.h"
+
+#include "source_base/module_out/binstream.h"
+#include "source_base/module_parallel/para_mpi_func.h"
+#include "source_base/vector3.h"
+
 #include <algorithm>
 #include <numeric>
+#include <fstream>
 #include <unistd.h>
 
 namespace
 {
-inline void warn(std::ostream* os,
-                 const Parallel::ParaWorld& pw_world,
-                 const std::string& file,
-                 const std::string& desc)
+inline void warn(std::ostream* os, const Parallel::ParaWorld& pw_world, const std::string& file, const std::string& desc)
 {
     if (pw_world.rank() == 0 && os != nullptr)
     {
@@ -20,12 +20,59 @@ inline void warn(std::ostream* os,
 }
 } // namespace
 
-bool module_charge::read_rhog(const std::string& filename,
-                         const ModulePW::PW_Basis* pw_rhod,
-                         const int nspin,
-                         std::complex<double>** rhog,
-                         const Parallel::ParaWorld& pw_world,
-                         std::ostream* os_warning)
+void module_charge::write_density_restart(Charge& charge,
+                                          ModulePW::PW_Basis& pw_rhod,
+                                          const ModuleBase::Matrix3& reciprocal_lattice,
+                                          const std::string& prefix,
+                                          const int nspin,
+                                          const bool enabled,
+                                          const bool gamma_only,
+                                          const bool write_tau,
+                                          const bool writer_pool,
+                                          const Parallel::ParaWorld& pw_world,
+                                          std::ostream* warning)
+{
+    if (!enabled)
+    {
+        return;
+    }
+
+    for (int is = 0; is < nspin; ++is)
+    {
+        pw_rhod.real2recip(charge.rho_save[is], charge.rhog_save[is]);
+    }
+    if (writer_pool)
+    {
+        const std::string filename = prefix + "-CHARGE-DENSITY.restart";
+        write_rhog(filename, gamma_only, &pw_rhod, nspin, reciprocal_lattice, charge.rhog_save, pw_world, warning);
+    }
+
+    if (write_tau)
+    {
+        std::vector<std::complex<double>> kin_g_space(nspin * charge.ngmc, {0.0, 0.0});
+        std::vector<std::complex<double>*> kin_g;
+        for (int is = 0; is < nspin; ++is)
+        {
+            kin_g.push_back(kin_g_space.data() + is * charge.ngmc);
+            pw_rhod.real2recip(charge.kin_r_save[is], kin_g[is]);
+        }
+        if (writer_pool)
+        {
+            const std::string filename = prefix + "-TAU-DENSITY.restart";
+            write_rhog(filename, gamma_only, &pw_rhod, nspin, reciprocal_lattice, kin_g.data(), pw_world, warning);
+        }
+    }
+}
+
+namespace
+{
+bool read_rhog_impl(const std::string& filename,
+                    const ModulePW::PW_Basis* pw_rhod,
+                    const int nspin,
+                    std::complex<double>** rhog,
+                    const Parallel::ParaWorld& pw_world,
+                    std::ostream* os_warning,
+                    const bool require_same_spin)
 {
     if (pw_rhod == nullptr)
     {
@@ -96,6 +143,12 @@ bool module_charge::read_rhog(const std::string& filename,
         {
             warn(os_warning, pw_world, "module_charge::read_rhog", "some planewaves in file are missing");
         }
+        if ((nspin_in != 1 && nspin_in != 2 && nspin_in != 4) || nspin_in > nspin
+            || (require_same_spin && nspin_in != nspin))
+        {
+            warn(os_warning, pw_world, "module_charge::read_rhog", "unsupported spin channel count in restart");
+            error = true;
+        }
         if (nspin_in < nspin)
         {
             warn(os_warning, pw_world, "module_charge::read_rhog", "some spin channels in file are missing");
@@ -106,7 +159,10 @@ bool module_charge::read_rhog(const std::string& filename,
 
     if (error)
     {
-        warn(os_warning, pw_world, "module_charge::read_rhog", "gamma_only read from file is inconsistent with INPUT");
+        if (gamma_only_in != pw_rhod->gamma_only)
+        {
+            warn(os_warning, pw_world, "module_charge::read_rhog", "gamma_only read from file is inconsistent with INPUT");
+        }
         return false;
     }
 
@@ -127,7 +183,7 @@ bool module_charge::read_rhog(const std::string& filename,
         ifs >> size;
         for (int i = 0; i < npwtot_in; ++i) // loop over rows...
         {
-            ifs >> miller[i*3] >> miller[i*3+1] >> miller[i*3+2];
+            ifs >> miller[i * 3] >> miller[i * 3 + 1] >> miller[i * 3 + 2];
         }
         ifs >> size;
     }
@@ -187,7 +243,8 @@ bool module_charge::read_rhog(const std::string& filename,
             {
                 int fftixyz = iz + nz * fftixy;
                 int ig = fftixyz2ig[fftixyz];
-                rhog[is][ig] = rhog_in[i];
+                // An owned FFT stick can contain modes outside the current PW cutoff.
+                if (ig >= 0 && ig < pw_rhod->npw) { rhog[is][ig] = rhog_in[i]; }
             }
         }
 
@@ -209,14 +266,67 @@ bool module_charge::read_rhog(const std::string& filename,
     return true;
 }
 
+} // namespace
+
+bool module_charge::read_rhog(const std::string& filename,
+                              const ModulePW::PW_Basis* pw_rhod,
+                              const int nspin,
+                              std::complex<double>** rhog,
+                              const Parallel::ParaWorld& pw_world,
+                              std::ostream* os_warning)
+{
+    return read_rhog_impl(filename, pw_rhod, nspin, rhog, pw_world, os_warning, false);
+}
+
+bool module_charge::has_complete_charge_cubes(const std::string& directory, const int nspin,
+                                             const Parallel::ParaWorld& world)
+{
+    bool complete = nspin == 1 || nspin == 2 || nspin == 4;
+    if (world.rank() == 0)
+    {
+        for (int is = 0; is < nspin && complete; ++is)
+        {
+            const std::string name = nspin == 1 ? "chg.cube" : "chgs" + std::to_string(is + 1) + ".cube";
+            const std::string filename = directory + name;
+            complete = std::ifstream(filename).good();
+        }
+    }
+    Parallel::bcast_bool(complete, world);
+    return complete;
+}
+
+bool module_charge::read_rho_from_binary(const std::string& filename,
+                                      const ModulePW::PW_Basis& rhopw,
+                                      const int nspin,
+                                      std::complex<double>** rhog,
+                                      double** rho,
+                                      const Parallel::ParaWorld& pw_world,
+                                      std::ostream& log)
+{
+    if (rho == nullptr) { return false; }
+    const bool loaded = read_rhog_impl(filename, &rhopw, nspin, rhog, pw_world, &log, true);
+    if (!loaded) { return false; }
+    for (int is = 0; is < nspin; ++is)
+    {
+        rhopw.recip2real(rhog[is], rho[is]);
+    }
+    if (pw_world.rank() == 0)
+    {
+        const std::string message = " Read electron density from binary file and perform inverse FFT: " + filename;
+        log << message << std::endl;
+        std::cout << message << std::endl;
+    }
+    return true;
+}
+
 bool module_charge::write_rhog(const std::string& fchg,
-                          const bool gamma_only,
-                          const ModulePW::PW_Basis* pw_rho,
-                          const int nspin,
-                          const ModuleBase::Matrix3& GT,
-                          std::complex<double>** rhog,
-                          const Parallel::ParaWorld& pw_world,
-                          std::ostream* os_warning)
+                               const bool gamma_only,
+                               const ModulePW::PW_Basis* pw_rho,
+                               const int nspin,
+                               const ModuleBase::Matrix3& GT,
+                               std::complex<double>** rhog,
+                               const Parallel::ParaWorld& pw_world,
+                               std::ostream* os_warning)
 {
     if (pw_rho == nullptr)
     {

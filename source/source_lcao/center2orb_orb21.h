@@ -13,6 +13,7 @@
 #include "source_basis/module_ao/orb_gaunt_table.h"
 
 #include <map>
+#include <memory>
 #include <set>
 #include <vector>
 
@@ -26,7 +27,12 @@ class Center2_Orb::Orb21
           const ORB_gaunt_table& MGT_in);
 
     void init_radial_table();
+    /// Selective calls retain previously populated entries for the same orbitals.
     void init_radial_table(const std::set<size_t>& radials); // unit: Bohr/MOT.dr
+
+    static void init_radial_table(const std::vector<Orb21 *> &orbitals, const bool use_gpu);
+    /// Selective batches retain each orbital's previously populated entries.
+    static void init_radial_table(const std::vector<Orb21 *> &orbitals, const std::set<size_t> &radials);
 
     double cal_overlap(const ModuleBase::Vector3<double>& RA,
                        const ModuleBase::Vector3<double>& RB, // unit: Bohr
@@ -40,7 +46,18 @@ class Center2_Orb::Orb21
                                                  const int& mA2,
                                                  const int& mB) const;
 
+    /// All magnetic components, ordered as [mA1][mA2][mB].
+    std::vector<double> cal_overlap(const ModuleBase::Vector3<double> &RA, const ModuleBase::Vector3<double> &RB) const;
+    std::vector<ModuleBase::Vector3<double>> cal_grad_overlap(
+        const ModuleBase::Vector3<double> &RA, const ModuleBase::Vector3<double> &RB) const;
+
   private:
+    template <typename T>
+    std::vector<T> cal_magnetic_components(
+        const ModuleBase::Vector3<double> &RA, const ModuleBase::Vector3<double> &RB,
+        std::vector<T> (Orb11::*evaluate)(const ModuleBase::Vector3<double> &, const ModuleBase::Vector3<double> &)
+            const) const;
+
     const Numerical_Orbital_Lm& nA1;
     const Numerical_Orbital_Lm& nA2;
     const Numerical_Orbital_Lm& nB;
@@ -48,8 +65,13 @@ class Center2_Orb::Orb21
     const ModuleBase::Sph_Bessel_Recursive::D2* psb_ = nullptr;
     const ORB_gaunt_table& MGT;
 
-    std::map<int, Numerical_Orbital_Lm> nA;
+    using ProductOrbitals = std::map<int, Numerical_Orbital_Lm>;
+    std::shared_ptr<const ProductOrbitals> nA;
     std::map<int, Center2_Orb::Orb11> orb11s;
+
+    void prepare_radial_table();
+    void bind_product_orbitals();
+    static std::vector<Orb11 *> prepare_radial_tables(const std::vector<Orb21 *> &orbitals);
 };
 
 // this->orb11s[LA].Table_r[LAB][ir]

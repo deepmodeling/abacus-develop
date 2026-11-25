@@ -19,9 +19,9 @@ struct MD_para
     double md_tfirst = -1.0;           ///< Temperature (in Hartree, 1 Hartree ~ 3E5 K)
     double md_tlast = -1.0;            ///< Target temperature
     int md_dumpfreq = 1;               ///< The period to dump MD information
+    int md_thermo_freq = 1;            ///< The period to output MD thermodynamic information
     double md_neighbor_skin = 0.0;     ///< Extra neighbor-list radius in Angstrom for MDCell solvers
     int md_restartfreq = 5;            ///< The period to output MD restart information
-    bool md_out_force = true;          ///< output all atomic forces into running_md.log
     int md_seed = -1;                  ///< random seed for MD
     int md_prec_level = 0;             ///< precision level for vc-md
 
@@ -31,6 +31,7 @@ struct MD_para
     std::vector<double> lj_epsilon = {}; ///< the value of epsilon for LJ potential (eV)
     std::vector<double> lj_sigma = {};   ///< the value of sigma for LJ potential (\AA)
     std::string pot_file = "graph.pb";   ///< the filename of potential files for CMD such as DP
+    std::string snap_param_file = "snap.param"; ///< SNAP parameter file
     double dp_rescaling = 1.0;           ///< rescaling factor for DP model. Energy, force and stress will be multiplied by this factor.
     std::vector<double> dp_fparam
         = {}; ///< The frame parameter for dp potential. The array can be of size :

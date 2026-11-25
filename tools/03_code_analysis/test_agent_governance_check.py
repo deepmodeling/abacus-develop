@@ -521,6 +521,7 @@ class AgentGovernanceCheckTest(unittest.TestCase):
         result = self.run_checker("--base", self.base, "--head", head)
 
         self.assert_warns_with_success(result, "Header dependency review")
+        self.assertNotIn("forward declaration", result.stdout.lower())
 
     def test_merge_base_scoped_comparison_excludes_base_branch_only_changes(self):
         self.write("source/source_base/api.h", "void update_solver(int step = 0);\n")
@@ -622,6 +623,252 @@ class AgentGovernanceCheckTest(unittest.TestCase):
         result = self.run_checker("--base", base2, "--head", head)
 
         self.assertNotIn("No #pragma once", result.stdout)
+
+    def write_exception_event(self, rule, labels, approver="@maintainer"):
+        event = self.repo / "event.json"
+        body = "\n".join(
+            [
+                "### Governance Exception",
+                f"- Rule: {rule}",
+                "- Reason: file is consumed by a generated build list.",
+                "- Scope: source/source_base/generated.cpp only.",
+                "- User or maintenance risk: low.",
+                "- Why the normal rule cannot be followed now: generator lands in a follow-up PR.",
+                "- Follow-up cleanup plan: wire the file through CMakeLists.txt in the follow-up.",
+                f"- Requested approver: {approver}",
+            ]
+        )
+        event.write_text(
+            json.dumps(
+                {"pull_request": {"body": body, "labels": [{"name": name} for name in labels]}}
+            )
+        )
+        return event
+
+    def test_approved_exception_downgrades_covered_blocker(self):
+        self.write("source/source_base/generated.cpp", "int generated();\n")
+        head = self.commit_change()
+        event = self.write_exception_event(
+            "CMake linkage for new sources", ["governance-exception-approved"]
+        )
+
+        result = self.run_checker("--base", self.base, "--head", head, "--event-path", str(event))
+
+        self.assert_warns_with_success(result, "CMake linkage for new sources")
+        self.assertIn("Downgraded from error by the approved governance exception", result.stdout)
+
+    def test_unapproved_exception_keeps_blocker(self):
+        self.write("source/source_base/generated.cpp", "int generated();\n")
+        head = self.commit_change()
+        event = self.write_exception_event("CMake linkage for new sources", [])
+
+        result = self.run_checker("--base", self.base, "--head", head, "--event-path", str(event))
+
+        self.assert_blocked_by(result, "CMake linkage for new sources")
+        self.assertIn("awaiting maintainer approval", result.stdout)
+
+    def test_incomplete_exception_keeps_blocker_even_with_label(self):
+        self.write("source/source_base/generated.cpp", "int generated();\n")
+        head = self.commit_change()
+        event = self.write_exception_event(
+            "CMake linkage for new sources", ["governance-exception-approved"], approver=""
+        )
+
+        result = self.run_checker("--base", self.base, "--head", head, "--event-path", str(event))
+
+        self.assert_blocked_by(result, "CMake linkage for new sources")
+        self.assertIn("missing fields: Requested approver", result.stdout)
+
+    def test_approved_exception_does_not_downgrade_other_rules(self):
+        self.write("source/source_base/generated.cpp", "int generated();\n")
+        head = self.commit_change()
+        event = self.write_exception_event(
+            "Global dependency budget", ["governance-exception-approved"]
+        )
+
+        result = self.run_checker("--base", self.base, "--head", head, "--event-path", str(event))
+
+        self.assert_blocked_by(result, "CMake linkage for new sources")
+        self.assertNotIn("Downgraded from error", result.stdout)
+
+    def test_approved_exception_never_downgrades_non_exceptable_rule(self):
+        self.write("source/source_base/new_header.h", "#pragma once\n\nint foo();\n")
+        head = self.commit_change()
+        event = self.write_exception_event("No #pragma once", ["governance-exception-approved"])
+
+        result = self.run_checker("--base", self.base, "--head", head, "--event-path", str(event))
+
+        self.assert_blocked_by(result, "No #pragma once")
+        self.assertNotIn("Downgraded from error", result.stdout)
+
+    def test_warns_when_approval_label_has_no_exception_section(self):
+        event = self.repo / "event.json"
+        event.write_text(
+            json.dumps(
+                {
+                    "pull_request": {
+                        "body": "### What's changed?\n- Docs tweak.\n",
+                        "labels": [{"name": "governance-exception-approved"}],
+                    }
+                }
+            )
+        )
+
+        result = self.run_checker("--event-path", str(event))
+
+        self.assert_warns_with_success(result, "Governance exception record")
+
+    def commit_baseline(self, files):
+        for path, content in files.items():
+            self.write(path, content)
+        self.git("add", ".")
+        self.git("commit", "-m", "baseline tests")
+        return self.git("rev-parse", "HEAD").stdout.strip()
+
+    def test_allows_conforming_unittests_layout(self):
+        self.write("source/source_md/unittests/test_verlet.cpp", "TEST(A, B) {}\n")
+        self.write("source/source_md/unittests/test_verlet.cu", "int k();\n")
+        self.write("source/source_md/unittests/mock_cell.h", "int mock();\n")
+        self.write("source/source_md/unittests/mock_dev.cuh", "int dev();\n")
+        self.write("source/source_md/unittests/mock_impl.hpp", "int impl();\n")
+        self.write("source/source_md/unittests/CMakeLists.txt", "AddTest(test_verlet)\n")
+        self.write("source/source_md/unittests/support/STRU", "ATOMIC_SPECIES\n")
+        self.write("source/source_md/unittests/data/test/H2O/run.sh", "echo ok\n")
+        head = self.commit_change()
+
+        result = self.run_checker("--base", self.base, "--head", head)
+
+        self.assertNotIn("Unit test directory layout", result.stdout)
+        self.assertNotIn("Unit test file naming", result.stdout)
+
+    def test_blocks_any_file_added_to_legacy_test_directories(self):
+        for path in (
+            "source/source_md/test/verlet_test.cpp",
+            "source/source_md/test/support/STRU",
+            "source/source_md/test/CMakeLists.txt",
+            "source/source_io/test_serial/test_reader.cpp",
+            "source/source_pw/module_pwdft/tests/helper.h",
+            "source/source_md/UnitTests/test_verlet.cpp",
+            "source/source_md/test/unittests/test_verlet.cpp",
+        ):
+            with self.subTest(path=path):
+                self.write(path, "int x;\n")
+                head = self.commit_change()
+
+                result = self.run_checker("--base", self.base, "--head", head)
+
+                self.assert_blocked_by(result, "Unit test directory layout")
+                self.assertIn(path, result.stdout)
+                self.git("reset", "--hard", self.base)
+
+    def test_blocks_modified_test_source_in_legacy_directory(self):
+        base = self.commit_baseline({"source/source_md/test/verlet_test.cpp": "TEST(A, B) {}\n"})
+        self.write("source/source_md/test/verlet_test.cpp", "TEST(A, B) {}\nTEST(A, C) {}\n")
+        head = self.commit_change()
+
+        result = self.run_checker("--base", base, "--head", head)
+
+        self.assert_blocked_by(result, "Unit test directory layout")
+        self.assertIn("Modifies a unit test source", result.stdout)
+
+    def test_allows_cleanup_of_legacy_test_directories(self):
+        base = self.commit_baseline(
+            {
+                "source/source_md/test/verlet_test.cpp": "TEST(A, B) {}\n",
+                "source/source_md/test/old_test.cpp": "TEST(O, P) {}\n",
+                "source/source_md/test/helper.h": "int helper();\n",
+                "source/source_md/test/CMakeLists.txt": "AddTest(verlet_test)\nAddTest(old_test)\n",
+            }
+        )
+        self.git("rm", "-q", "source/source_md/test/old_test.cpp")
+        self.write("source/source_md/test/helper.h", "int helper(int);\n")
+        self.write("source/source_md/test/CMakeLists.txt", "AddTest(verlet_test)\n")
+        head = self.commit_change()
+
+        result = self.run_checker("--base", base, "--head", head)
+
+        self.assertNotIn("Unit test directory layout", result.stdout)
+
+    def test_allows_migrating_legacy_test_into_unittests(self):
+        body = "".join(f"TEST(Verlet, Case{i}) {{ EXPECT_EQ({i}, {i}); }}\n" for i in range(20))
+        base = self.commit_baseline({"source/source_md/test/verlet_test.cpp": body})
+        (self.repo / "source/source_md/unittests").mkdir()
+        self.git("mv", "source/source_md/test/verlet_test.cpp", "source/source_md/unittests/test_verlet.cpp")
+        head = self.commit_change()
+
+        result = self.run_checker("--base", base, "--head", head)
+
+        self.assertNotIn("Unit test directory layout", result.stdout)
+        self.assertNotIn("Unit test file naming", result.stdout)
+
+    def test_blocks_code_files_in_unittests_subdirectories(self):
+        for path in (
+            "source/source_md/unittests/support/helper.h",
+            "source/source_md/unittests/gpu/test_verlet.cu",
+            "source/source_md/unittests/data/deep/mock.cpp",
+            "source/source_md/unittests/support/dev.cuh",
+        ):
+            with self.subTest(path=path):
+                self.write(path, "int x;\n")
+                head = self.commit_change()
+
+                result = self.run_checker("--base", self.base, "--head", head)
+
+                self.assert_blocked_by(result, "Unit test directory layout")
+                self.assertIn(path, result.stdout)
+                self.git("reset", "--hard", self.base)
+
+    def test_blocks_unittests_source_without_test_prefix(self):
+        for path in (
+            "source/source_md/unittests/verlet_test.cpp",
+            "source/source_md/unittests/tmp_mocks.cpp",
+            "source/source_md/unittests/kernel.cu",
+            "source/source_md/unittests/Test_verlet.cpp",
+        ):
+            with self.subTest(path=path):
+                self.write(path, "int x;\n")
+                head = self.commit_change()
+
+                result = self.run_checker("--base", self.base, "--head", head)
+
+                self.assert_blocked_by(result, "Unit test file naming")
+                self.git("reset", "--hard", self.base)
+
+    def test_blocks_misnamed_unittests_source_when_modified_or_renamed(self):
+        body = "".join(f"int mock_{i}() {{ return {i}; }}\n" for i in range(20))
+        base = self.commit_baseline({"source/source_md/unittests/tmp_mocks.cpp": body})
+        self.write("source/source_md/unittests/tmp_mocks.cpp", body + "int extra() { return 0; }\n")
+        head = self.commit_change()
+
+        result = self.run_checker("--base", base, "--head", head)
+
+        self.assert_blocked_by(result, "Unit test file naming")
+
+        self.git("reset", "--hard", base)
+        self.git("mv", "source/source_md/unittests/tmp_mocks.cpp", "source/source_md/unittests/mocks.cpp")
+        head = self.commit_change()
+
+        result = self.run_checker("--base", base, "--head", head)
+
+        self.assert_blocked_by(result, "Unit test file naming")
+
+    def test_unittest_layout_ignores_paths_outside_source(self):
+        self.write("tests/01_PW/test/run.cpp", "int x;\n")
+        self.write("python/pyabacus/tests/helper.cpp", "int y;\n")
+        head = self.commit_change()
+
+        result = self.run_checker("--base", self.base, "--head", head)
+
+        self.assertNotIn("Unit test directory layout", result.stdout)
+        self.assertNotIn("Unit test file naming", result.stdout)
+
+    def test_staged_mode_blocks_new_file_in_legacy_test_directory(self):
+        self.write("source/source_md/test/verlet_test.cpp", "TEST(A, B) {}\n")
+        self.git("add", ".")
+
+        result = self.run_checker("--staged")
+
+        self.assert_blocked_by(result, "Unit test directory layout")
 
 
 if __name__ == "__main__":

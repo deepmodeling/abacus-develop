@@ -16,10 +16,10 @@ module_dm::DensityMatrix<T, T> LR::LR_Spectrum<T>::cal_transition_density_matrix
     module_dm::DensityMatrix<T, T> DM_trans(&this->pmat, this->nspin_x, this->kv.kvec_d, this->nk);
     for (int is = 0;is < this->nspin_x; ++is)
     {
-        const int offset_x = offset_b + is * nk * this->pX[0].get_local_size();
+        const int offset_x = offset_b + is * nk * this->pX[0].size();
         //1. transition density 
 #ifdef __MPI
-        std::vector<container::Tensor>  dm_trans_2d = cal_dm_trans_pblas(X + offset_x, this->pX[is], psi_ks_vec[is], this->pc, this->naos, this->nocc[is], this->nvirt[is], this->pmat, (T)1.0 / (T)nk);
+        std::vector<container::Tensor>  dm_trans_2d = cal_dm_trans_pblas(X + offset_x, this->pX[is], psi_ks_vec[is], this->pc, this->naos, this->nocc[is], this->nvirt[is], this->pmat.para_2d(), (T)1.0 / (T)nk);
         // if (this->tdm_sym) for (auto& t : dm_trans_2d) LR_Util::matsym(t.data<T>(), naos, pmat);
 #else
         std::vector<container::Tensor>  dm_trans_2d = cal_dm_trans_blas(X + offset_x, this->psi_ks_vec[is], this->nocc[is], this->nvirt[is], (T)1.0 / (T)nk);
@@ -277,25 +277,25 @@ void LR::LR_Spectrum<T>::transition_analysis(const std::string& spintype)
             const int goffset_b = (istate - istart) * gdim;
             for (int is = 0;is < nspin_x;++is)
             {
-                const int loffset_bs = loffset_b + is * nk * pX[0].get_local_size();
+                const int loffset_bs = loffset_b + is * nk * pX[0].size();
                 const int goffset_bs = goffset_b + is * nk * nocc[0] * nvirt[0];
                 const int goffset_v_s = is * 3 * nk * nbands * nbands;
                 const int eig_ks_spin_offset = is * nk * nbands;
                 for (int ik = 0;ik < nk;++ik)
                 {
-                    const int loffset_x = loffset_bs + ik * pX[is].get_local_size();
+                    const int loffset_x = loffset_bs + ik * pX[is].size();
                     const int goffset_x = goffset_bs + ik * nocc[is] * nvirt[is];
                     const int goffset_v_k = goffset_v_s + ik * nbands * nbands;
                     const int eig_ks_k_offset = eig_ks_spin_offset + ik * nbands;
-                    for (int io = 0; io < pX[is].get_col_size(); ++io)
+                    for (int io = 0; io < pX[is].ncloc(); ++io)
                     {
-                        const int iocc = pX[is].local2global_col(io);
-                        for (int iv = 0; iv < pX[is].get_row_size(); ++iv)
+                        const int iocc = pX[is].icglb(io);
+                        for (int iv = 0; iv < pX[is].nrloc(); ++iv)
                         {
-                            const int ivirt = pX[is].local2global_row(iv);
-                            amp_X = X[loffset_x + io * pX[is].get_row_size() + iv];
+                            const int ivirt = pX[is].irglb(iv);
+                            amp_X = X[loffset_x + io * pX[is].nrloc() + iv];
                             if (this->is_full && this->Y ) {
-                                amp_Y = Y[loffset_x + io * pX[is].get_row_size() + iv];
+                                amp_Y = Y[loffset_x + io * pX[is].nrloc() + iv];
                             }
                             local_k_weight[ik] += std::norm(amp_X) + std::norm(amp_Y);
                             if (use_td_weight)

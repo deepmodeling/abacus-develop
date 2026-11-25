@@ -1,4 +1,3 @@
-#include "source_base/parallel_2d.h"
 #include "source_base/macros.h"
 
 #ifdef __MPI
@@ -42,5 +41,4 @@ void diago_hs_para(T* h,
                    const int block_size = 0);
 #endif
 
-} // namespace hsolver                 
-              
+} // namespace hsolver

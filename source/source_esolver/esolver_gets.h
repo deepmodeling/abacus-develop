@@ -8,6 +8,8 @@
 
 #include <memory>
 
+class BasisFlattenedIndexing; // Defined in source/source_base/basis_flattened_indexing.h
+
 namespace ModuleESolver
 {
 
@@ -17,20 +19,20 @@ class ESolver_GetS : public ESolver_KS
     ESolver_GetS();
     ~ESolver_GetS();
 
-    void before_all_runners(BaseCell& basecell, const Input_para& inp) override;
+    void before_all_runners(BaseCell &basecell, const Input_para &inp) override;
 
-    void after_all_runners(BaseCell& basecell) override;
+    void after_all_runners(BaseCell &basecell) override;
 
-    void runner(BaseCell& basecell, const int istep) override;
+    void runner(BaseCell &basecell, const int istep) override;
 
     //! calculate total energy of a given system
     double cal_energy() override;
 
     //! calcualte forces for the atoms in the given cell
-    void cal_force(BaseCell& basecell, ModuleBase::matrix& force) override;
+    void cal_force(BaseCell &basecell, ModuleBase::matrix &force) override;
 
     //! calcualte stress of given cell
-    void cal_stress(BaseCell& basecell, ModuleBase::matrix& stress) override;
+    void cal_stress(BaseCell &basecell, ModuleBase::matrix &stress) override;
 
   protected:
     // 2d block - cyclic distribution info
@@ -40,6 +42,8 @@ class ESolver_GetS : public ESolver_KS
 
     // temporary introduced
     LCAO_Orbitals orb_;
+
+    std::unique_ptr<BasisFlattenedIndexing> basis_index_;
 };
 } // namespace ModuleESolver
 #endif

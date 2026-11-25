@@ -8,7 +8,7 @@
 #include <vector>
 
 class UnitCell;
-class Parallel_Orbitals;
+class Parallel_Blkcyclic; // Defined in source/source_base/parallel_blkcyc.h
 class LCAO_Orbitals;
 class Grid_Driver;
 class PosOpBasis;
@@ -29,12 +29,12 @@ class Position_op
     bool binary = false;
 
     void init(const UnitCell& ucell,
-              const Parallel_Orbitals& pv,
+              const Parallel_Blkcyclic& layout,
               const LCAO_Orbitals& orb,
               const bool cal_force,
               const int nlocal);
     void init_nonlocal(const UnitCell& ucell,
-                       const Parallel_Orbitals& pv,
+                       const Parallel_Blkcyclic& layout,
                        const LCAO_Orbitals& orb,
                        const bool cal_force,
                        const int nlocal);
@@ -76,7 +76,7 @@ class Position_op
                 const std::string& global_out_dir,
                 const std::string& global_matrix_dir,
                 const std::string& calculation,
-                const bool out_app_flag,
+                const int out_app_flag,
                 const int nlocal,
                 const int npol,
                 std::ofstream& ofs_running);

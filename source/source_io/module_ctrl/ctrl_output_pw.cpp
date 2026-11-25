@@ -8,6 +8,7 @@
 #include "../module_wannier/to_w90_pw.h" // wannier90 interface
 #include "../module_wf/write_wfc_pw.h"   // use write_wfc_pw
 #include "source_base/formatter.h"
+#include "source_base/fs_compat.h" // use ModuleBase::ensure_directory
 #include "source_io/module_chgpot/get_pchg_pw.h"
 #include "source_io/module_wf/get_wf_pw.h"
 #include "source_lcao/module_deltaspin/deltaspin_pw_mi.h"
@@ -27,6 +28,7 @@ void ModuleIO::ctrl_iter_pw(const int istep,
                             const K_Vectors& kv,
                             const ModulePW::PW_Basis_K* pw_wfc,
                             const Input_para& inp,
+                            bool final_output,
                             std::ofstream& ofs_running)
 {
     ModuleBase::TITLE("ModuleIO", "ctrl_iter_pw");
@@ -41,12 +43,22 @@ void ModuleIO::ctrl_iter_pw(const int istep,
     int istep_in = -1;
     int iter_in = -1;
     bool out_wfc_flag = false;
-    const int output_frequency = inp.esolver_type == "tddft" ? inp.out_freq_td : inp.out_freq_ion;
+    const int output_frequency = inp.out_freq_ion;
     if (output_frequency > 0)
     {
         if (istep % output_frequency == 0)
         {
-            if (iter % inp.out_freq_elec == 0 || iter == inp.scf_nmax || conv_esolver)
+            // In mode 1 the fixed-name file accumulates one frame per ionic
+            // step, so only the last electronic iteration of each selected
+            // step is written (out_freq_elec is ignored). In modes 0 and 2
+            // out_freq_elec still selects intermediate iterations.
+            const bool last_elec_iter = (iter == inp.scf_nmax || conv_esolver || final_output);
+            bool write_iter = last_elec_iter;
+            if (inp.out_app_flag != 1)
+            {
+                write_iter = write_iter || (iter % inp.out_freq_elec == 0);
+            }
+            if (write_iter)
             {
                 istep_in = istep;
                 iter_in = iter;
@@ -54,16 +66,24 @@ void ModuleIO::ctrl_iter_pw(const int istep,
             }
         }
     }
-    else if (iter == inp.scf_nmax || conv_esolver)
+    else if (iter == inp.scf_nmax || conv_esolver || final_output)
     {
         out_wfc_flag = true;
     }
 
     if (out_wfc_flag && (inp.out_wfc_pw == 1 || inp.out_wfc_pw == 2))
     {
+        const std::string global_psi_dir = PARAM.globalv.global_psi_dir;
+        // Mode-2 PSI/ subdirectory is created lazily at write time.
+        ModuleBase::ensure_directory(global_psi_dir);
         stp.sync_cpu();
+        // istep_in is only the filename sentinel (-1 omits the step suffix);
+        // pass the real ionic step separately so append mode keeps
+        // accumulating frames even when the filename carries no step.
+        const int append_step = istep;
         ModuleIO::write_wfc_pw(istep_in,
                                iter_in,
+                               append_step,
                                GlobalV::KPAR,
                                GlobalV::MY_POOL,
                                GlobalV::MY_RANK,
@@ -73,8 +93,9 @@ void ModuleIO::ctrl_iter_pw(const int istep,
                                GlobalV::RANK_IN_POOL,
                                GlobalV::NPROC_IN_POOL,
                                inp.out_wfc_pw,
+                               inp.out_app_flag,
                                inp.ecutwfc,
-                               PARAM.globalv.global_out_dir,
+                               global_psi_dir,
                                stp.psi_cpu[0],
                                kv,
                                pw_wfc,
@@ -104,7 +125,7 @@ void ModuleIO::ctrl_scf_pw(const int istep,
     ModuleBase::TITLE("ModuleIO", "ctrl_scf_pw");
     ModuleBase::timer::start("ModuleIO", "ctrl_scf_pw");
 
-    const int output_frequency = inp.esolver_type == "tddft" ? inp.out_freq_td : inp.out_freq_ion;
+    const int output_frequency = inp.out_freq_ion;
     const bool selected_step = output_frequency == 0 || (output_frequency > 0 && istep % output_frequency == 0);
     const bool output_td_state = inp.esolver_type != "tddft" || selected_step;
 
@@ -117,7 +138,7 @@ void ModuleIO::ctrl_scf_pw(const int istep,
     //----------------------------------------------------------
     //! 4) Compute density of states (DOS)
     //----------------------------------------------------------
-    if (inp.out_dos)
+    if (inp.out_dos[0] != 0)
     {
         bool out_dos_tmp = false;
 
@@ -155,6 +176,9 @@ void ModuleIO::ctrl_scf_pw(const int istep,
 
         if (out_dos_tmp)
         {
+            const std::string global_dos_dir = PARAM.globalv.global_dos_dir;
+            // Mode-2 DOS/ subdirectory is created lazily at write time.
+            ModuleBase::ensure_directory(global_dos_dir);
             ModuleIO::write_dos_pw(ucell,
                                    pelec->ekb,
                                    pelec->wg,
@@ -166,15 +190,16 @@ void ModuleIO::ctrl_scf_pw(const int istep,
                                    inp.dos_scale,
                                    inp.dos_sigma,
                                    inp.nspin,
-                                   inp.out_dos,
+                                   inp.out_dos[0],
                                    PARAM.globalv.dos_setemax,
                                    inp.dos_emax_ev,
                                    PARAM.globalv.dos_setemin,
                                    inp.dos_emin_ev,
                                    PARAM.globalv.two_fermi,
                                    inp.out_app_flag,
+                                   inp.out_dos[1],
                                    inp.bndpar,
-                                   PARAM.globalv.global_out_dir,
+                                   global_dos_dir,
                                    ofs_running);
         }
     }
@@ -185,17 +210,23 @@ void ModuleIO::ctrl_scf_pw(const int istep,
     //------------------------------------------------------------------
     if (inp.out_pchg.size() > 0 && output_td_state)
     {
+        const std::string global_chg_dir = PARAM.globalv.global_chg_dir;
+        // Mode-2 CHG/ subdirectory is created lazily at write time.
+        ModuleBase::ensure_directory(global_chg_dir);
         // Use the solver's native wavefunction precision for FFT and projector overlaps.
         ModuleIO::Get_pchg_pw<T, Device>
             output(*stp.template get_psi_t<T, Device>(), *pw_wfc, *pw_rho, *pw_rhod, ppcell, inp.nspin, inp.nbands);
-        output.begin(&ucell, para_grid, kv, inp.out_pchg, PARAM.globalv.global_out_dir, inp.if_separate_k, inp.noncolin, ofs_running);
+        output.begin(&ucell, para_grid, kv, inp.out_pchg, global_chg_dir, inp.if_separate_k, inp.noncolin, ofs_running);
     }
 
     if ((inp.out_wfc_norm.size() > 0 || inp.out_wfc_re_im.size() > 0) && output_td_state)
     {
+        const std::string global_psi_dir = PARAM.globalv.global_psi_dir;
+        // Mode-2 PSI/ subdirectory is created lazily at write time.
+        ModuleBase::ensure_directory(global_psi_dir);
         // Use the solver's native wavefunction precision for FFT.
         ModuleIO::Get_wf_pw<T, Device> output(*stp.template get_psi_t<T, Device>(), *pw_wfc, *pw_rho, *pw_rhod, inp.nspin, inp.nbands);
-        output.begin(ucell, para_grid, kv, inp.out_wfc_norm, inp.out_wfc_re_im, PARAM.globalv.global_out_dir, ofs_running);
+        output.begin(ucell, para_grid, kv, inp.out_wfc_norm, inp.out_wfc_re_im, global_psi_dir, ofs_running);
     }
 
     //------------------------------------------------------------------
@@ -246,10 +277,13 @@ void ModuleIO::ctrl_scf_pw(const int istep,
     //------------------------------------------------------------------
     // 9) write onsite occupations for charge and magnetizations
     //------------------------------------------------------------------
-    if (inp.onsite_radius > 0)
-    { // float type has not been implemented
+    const bool spinor_rt = inp.esolver_type == "tddft" && inp.nspin == 4;
+    // RT writes endpoint magnetic series instead of this static occupation report.
+    if (inp.onsite_radius > 0 && !spinor_rt)
+    {
+        stp.update_psi_d();
         auto* onsite_p = projectors::OnsiteProjector<double, Device>::get_instance();
-        onsite_p->cal_occupations(reinterpret_cast<psi::Psi<std::complex<double>, Device>*>(stp.template get_psi_t<T, Device>()),
+        onsite_p->cal_occupations(stp.template get_psi_d<T, Device>(),
                                   pelec->wg,
                                   inp.nspin);
     }
@@ -271,6 +305,7 @@ void ModuleIO::ctrl_runner_pw(UnitCell& ucell,
                               pseudopot_cell_vnl& ppcell,
                               surchem& solvent,
                               Parallel_Grid& para_grid,
+                              const int istep,
                               const Input_para& inp,
                               std::ofstream& ofs_running)
 {
@@ -285,6 +320,9 @@ void ModuleIO::ctrl_runner_pw(UnitCell& ucell,
     //----------------------------------------------------------
     if (inp.out_ldos[0])
     {
+        const std::string global_dos_dir = PARAM.globalv.global_dos_dir;
+        // Mode-2 DOS/ subdirectory is created lazily at write time.
+        ModuleBase::ensure_directory(global_dos_dir);
         stp.update_psi_d();
         ModuleIO::cal_ldos_pw(reinterpret_cast<elecstate::ElecStatePW<std::complex<double>>*>(pelec),
                               *stp.template get_psi_d<T, Device>(),
@@ -294,7 +332,8 @@ void ModuleIO::ctrl_runner_pw(UnitCell& ucell,
                               inp.out_ldos,
                               inp.stm_bias,
                               inp.nspin,
-                              PARAM.globalv.global_out_dir,
+                              istep,
+                              global_dos_dir,
                               PARAM.globalv.two_fermi,
                               inp.nbands,
                               inp.dos_edelta_ev,
@@ -462,6 +501,7 @@ template void ModuleIO::ctrl_runner_pw<std::complex<float>, base_device::DEVICE_
                                                                                      pseudopot_cell_vnl& ppcell,
                                                                                      surchem& solvent,
                                                                                      Parallel_Grid& para_grid,
+                                                                                     const int istep,
                                                                                      const Input_para& inp,
                                                                                      std::ofstream& ofs_running);
 
@@ -478,6 +518,7 @@ template void ModuleIO::ctrl_runner_pw<std::complex<double>, base_device::DEVICE
                                                                                       pseudopot_cell_vnl& ppcell,
                                                                                       surchem& solvent,
                                                                                       Parallel_Grid& para_grid,
+                                                                                      const int istep,
                                                                                       const Input_para& inp,
                                                                                       std::ofstream& ofs_running);
 
@@ -495,6 +536,7 @@ template void ModuleIO::ctrl_runner_pw<std::complex<float>, base_device::DEVICE_
                                                                                      pseudopot_cell_vnl& ppcell,
                                                                                      surchem& solvent,
                                                                                      Parallel_Grid& para_grid,
+                                                                                     const int istep,
                                                                                      const Input_para& inp,
                                                                                      std::ofstream& ofs_running);
 
@@ -511,6 +553,7 @@ template void ModuleIO::ctrl_runner_pw<std::complex<double>, base_device::DEVICE
                                                                                       pseudopot_cell_vnl& ppcell,
                                                                                       surchem& solvent,
                                                                                       Parallel_Grid& para_grid,
+                                                                                      const int istep,
                                                                                       const Input_para& inp,
                                                                                       std::ofstream& ofs_running);
 #endif

@@ -1,9 +1,12 @@
 abacus_disable_feature_definitions(__MPI)
 
-AddTest(
+addtest(
   TARGET MODULE_BASE_CONTAINER_Unittests
   LIBS parameter container base device
-  SOURCES tensor_test.cpp tensor_shape_test.cpp allocator_test.cpp
-  tensor_buffer_test.cpp tensor_map_test.cpp
-  tensor_utils_test.cpp tensor_accessor_test.cpp
-)
+  SOURCES tensor_test.cpp
+          tensor_shape_test.cpp
+          allocator_test.cpp
+          tensor_buffer_test.cpp
+          tensor_map_test.cpp
+          tensor_utils_test.cpp
+          tensor_accessor_test.cpp)

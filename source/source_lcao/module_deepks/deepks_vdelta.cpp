@@ -33,25 +33,26 @@ void DeePKS_domain::cal_e_delta_band(const std::vector<std::vector<TK>>& dm,
     {
         for (int j = 0; j < PARAM.globalv.nlocal; ++j)
         {
-            const int mu = pv->global2local_row(j);
-            const int nu = pv->global2local_col(i);
+            const int mu = pv->para_2d().irloc(j);
+            const int nu = pv->para_2d().icloc(i);
 
             if (mu >= 0 && nu >= 0)
             {
                 int iic = 0;
                 if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
                 {
-                    iic = mu + nu * pv->nrow;
+                    iic = mu + nu * pv->para_2d().nrloc();
                 }
                 else
                 {
-                    iic = mu * pv->ncol + nu;
+                    iic = mu * pv->para_2d().ncloc() + nu;
                 }
                 for (int is = 0; is < nspin; is++)
                 {
                     for (int ik = 0; ik < nks / nspin; ik++)
                     {
-                        e_delta_band_tmp += dm[ik + is * nks / nspin][nu * pv->nrow + mu] * V_delta[ik][iic];
+                        e_delta_band_tmp += dm[ik + is * nks / nspin][nu * pv->para_2d().nrloc() + mu]
+                                            * V_delta[ik][iic];
                     }
                 }
             }
@@ -85,23 +86,23 @@ void DeePKS_domain::collect_h_mat(const Parallel_Orbitals& pv,
         {
             std::vector<TK> lineH(nlocal - i, TK(0.0));
 
-            ir = pv.global2local_row(i);
+            ir = pv.para_2d().irloc(i);
             if (ir >= 0)
             {
                 // data collection
                 for (int j = i; j < nlocal; j++)
                 {
-                    ic = pv.global2local_col(j);
+                    ic = pv.para_2d().icloc(j);
                     if (ic >= 0)
                     {
                         int iic = 0;
                         if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
                         {
-                            iic = ir + ic * pv.nrow;
+                            iic = ir + ic * pv.para_2d().nrloc();
                         }
                         else
                         {
-                            iic = ir * pv.ncol + ic;
+                            iic = ir * pv.para_2d().ncloc() + ic;
                         }
                         lineH[j - i] = h_in[k][iic];
                     }
@@ -151,13 +152,13 @@ void DeePKS_domain::get_h_tot(const Parallel_Orbitals& pv,
     {
         throw std::invalid_argument("Invalid matrix_type. Use 'H' for H(k) or 'S' for S(k).");
     }
-    std::vector<std::vector<TK>> h_mat(nks, std::vector<TK>(pv.nloc));
+    std::vector<std::vector<TK>> h_mat(nks, std::vector<TK>(pv.para_2d().size()));
     for (int ik = 0; ik < nks; ik++)
     {
         h_tot[ik].create(nlocal, nlocal);
         p_ham->updateHk(ik);
         const TK* hk_ptr = (p_ham->*getMatrixFunc)();
-        for (int i = 0; i < pv.nloc; i++)
+        for (int i = 0; i < pv.para_2d().size(); i++)
         {
             h_mat[ik][i] = hk_ptr[i];
         }

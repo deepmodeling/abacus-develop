@@ -27,32 +27,33 @@ void Overlap<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
     // Use unified template with ForceSign=-1, StressSign=+1 for overlap operator
     OperatorForceStress::cal_force_stress_2center<TK, TR, decltype(integral_calc), -1, +1>(
         cal_force, cal_stress, dmR, this->ucell, this->gridD,
-        this->orb_cutoff_, dmR->get_paraV(), integral_calc, force, stress);
+        this->orb_cutoff_, this->basis_, this->para_layout_, integral_calc, force, stress);
 
     ModuleBase::timer::end("Overlap", "cal_force_stress");
 }
 
-// Dummy implementations for cal_force_IJR and cal_stress_IJR
-// These are not used in the simplified approach above
+// Pair-level hooks are retained for API continuity. Production force and
+// stress calculations use the unified cal_force_stress path above.
 template <typename TK, typename TR>
 void Overlap<OperatorLCAO<TK, TR>>::cal_force_IJR(
     const int& iat1,
     const int& iat2,
-    const Parallel_Orbitals* paraV,
+    const BasisFlattenedIndexing& basis,
+    const Parallel_Blkcyclic& para_layout,
     const std::unordered_map<int, std::vector<double>>& nlm1_all,
     const std::unordered_map<int, std::vector<double>>& nlm2_all,
     const hamilt::BaseMatrix<TR>* dmR_pointer,
     double* force1,
     double* force2)
 {
-    // Not used in current implementation
 }
 
 template <typename TK, typename TR>
 void Overlap<OperatorLCAO<TK, TR>>::cal_stress_IJR(
     const int& iat1,
     const int& iat2,
-    const Parallel_Orbitals* paraV,
+    const BasisFlattenedIndexing& basis,
+    const Parallel_Blkcyclic& para_layout,
     const std::unordered_map<int, std::vector<double>>& nlm1_all,
     const std::unordered_map<int, std::vector<double>>& nlm2_all,
     const hamilt::BaseMatrix<TR>* dmR_pointer,
@@ -60,7 +61,6 @@ void Overlap<OperatorLCAO<TK, TR>>::cal_stress_IJR(
     const ModuleBase::Vector3<double>& dis2,
     double* stress)
 {
-    // Not used in current implementation
 }
 
 // explicit member function instantiations
@@ -79,21 +79,24 @@ template void Overlap<OperatorLCAO<std::complex<double>, std::complex<double>>>:
 
 template void Overlap<OperatorLCAO<double, double>>::cal_force_IJR(
     const int& iat1, const int& iat2,
-    const Parallel_Orbitals* paraV,
+    const BasisFlattenedIndexing& basis,
+    const Parallel_Blkcyclic& para_layout,
     const std::unordered_map<int, std::vector<double>>& nlm1_all,
     const std::unordered_map<int, std::vector<double>>& nlm2_all,
     const hamilt::BaseMatrix<double>* dmR_pointer,
     double* force1, double* force2);
 template void Overlap<OperatorLCAO<std::complex<double>, double>>::cal_force_IJR(
     const int& iat1, const int& iat2,
-    const Parallel_Orbitals* paraV,
+    const BasisFlattenedIndexing& basis,
+    const Parallel_Blkcyclic& para_layout,
     const std::unordered_map<int, std::vector<double>>& nlm1_all,
     const std::unordered_map<int, std::vector<double>>& nlm2_all,
     const hamilt::BaseMatrix<double>* dmR_pointer,
     double* force1, double* force2);
 template void Overlap<OperatorLCAO<std::complex<double>, std::complex<double>>>::cal_force_IJR(
     const int& iat1, const int& iat2,
-    const Parallel_Orbitals* paraV,
+    const BasisFlattenedIndexing& basis,
+    const Parallel_Blkcyclic& para_layout,
     const std::unordered_map<int, std::vector<double>>& nlm1_all,
     const std::unordered_map<int, std::vector<double>>& nlm2_all,
     const hamilt::BaseMatrix<std::complex<double>>* dmR_pointer,
@@ -101,7 +104,8 @@ template void Overlap<OperatorLCAO<std::complex<double>, std::complex<double>>>:
 
 template void Overlap<OperatorLCAO<double, double>>::cal_stress_IJR(
     const int& iat1, const int& iat2,
-    const Parallel_Orbitals* paraV,
+    const BasisFlattenedIndexing& basis,
+    const Parallel_Blkcyclic& para_layout,
     const std::unordered_map<int, std::vector<double>>& nlm1_all,
     const std::unordered_map<int, std::vector<double>>& nlm2_all,
     const hamilt::BaseMatrix<double>* dmR_pointer,
@@ -110,7 +114,8 @@ template void Overlap<OperatorLCAO<double, double>>::cal_stress_IJR(
     double* stress);
 template void Overlap<OperatorLCAO<std::complex<double>, double>>::cal_stress_IJR(
     const int& iat1, const int& iat2,
-    const Parallel_Orbitals* paraV,
+    const BasisFlattenedIndexing& basis,
+    const Parallel_Blkcyclic& para_layout,
     const std::unordered_map<int, std::vector<double>>& nlm1_all,
     const std::unordered_map<int, std::vector<double>>& nlm2_all,
     const hamilt::BaseMatrix<double>* dmR_pointer,
@@ -119,7 +124,8 @@ template void Overlap<OperatorLCAO<std::complex<double>, double>>::cal_stress_IJ
     double* stress);
 template void Overlap<OperatorLCAO<std::complex<double>, std::complex<double>>>::cal_stress_IJR(
     const int& iat1, const int& iat2,
-    const Parallel_Orbitals* paraV,
+    const BasisFlattenedIndexing& basis,
+    const Parallel_Blkcyclic& para_layout,
     const std::unordered_map<int, std::vector<double>>& nlm1_all,
     const std::unordered_map<int, std::vector<double>>& nlm2_all,
     const hamilt::BaseMatrix<std::complex<double>>* dmR_pointer,

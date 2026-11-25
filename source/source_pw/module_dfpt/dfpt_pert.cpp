@@ -11,7 +11,7 @@
 #include "source_base/truncated_func.h"
 #include "source_cell/atom_pseudo.h"
 #include "source_cell/atom_spec.h"
-#include "source_pw/module_pwdft/stru_fac.h"
+#include "source_cell/stru_fac.h"
 
 #include <cmath>
 #include <complex>

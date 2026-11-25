@@ -1,0 +1,1 @@
+PW neutral water, fixed-cell relax with periodic SCCS, two ionic steps: SCCS starts with a delay in the first step, and the warm start and started state carry over to the rebuilt potential of the second step. out_sol 1 also checks the cavity volume integrated from sol_cavity.cube. ecutwfc 20 and ecutrho 240.

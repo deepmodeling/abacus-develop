@@ -64,7 +64,7 @@ void DFTU_LCAO::cal_pot_onsite(const Plus_U_Base& dftu,
                            T* pot_onsite)
 {
     ModuleBase::TITLE("DFTU_LCAO", "pot_onsite");
-    std::fill(pot_onsite, pot_onsite + pv->nloc, T(0));
+    std::fill(pot_onsite, pot_onsite + pv->para_2d().size(), T(0));
 
     const int npol = dftu.occmat().npol();
 
@@ -88,7 +88,7 @@ void DFTU_LCAO::cal_pot_onsite(const Plus_U_Base& dftu,
                 {
                     for (int ipol1 = 0; ipol1 < npol; ipol1++)
                     {
-                        const int mu = pv->global2local_row(dftu.occmat().corr_iwt(iat, L, m1, ipol1));
+                        const int mu = pv->para_2d().irloc(dftu.occmat().corr_iwt(iat, L, m1, ipol1));
                         if (mu < 0)
                         {
                             continue;
@@ -99,7 +99,7 @@ void DFTU_LCAO::cal_pot_onsite(const Plus_U_Base& dftu,
                             for (int ipol2 = 0; ipol2 < npol; ipol2++)
                             {
                                 const int nu
-                                    = pv->global2local_col(dftu.occmat().corr_iwt(iat, L, m2, ipol2));
+                                    = pv->para_2d().icloc(dftu.occmat().corr_iwt(iat, L, m2, ipol2));
                                 if (nu < 0)
                                 {
                                     continue;
@@ -108,7 +108,7 @@ void DFTU_LCAO::cal_pot_onsite(const Plus_U_Base& dftu,
                                 int m2_all = m2 + (2 * L + 1) * ipol2;
                                 double val = get_onsite_pot(dftu, it, iat, L, spin,
                                                             m1_all, m2_all, new_occ_mat);
-                                pot_onsite[nu * pv->nrow + mu] = static_cast<T>(val);
+                                pot_onsite[nu * pv->para_2d().nrloc() + mu] = static_cast<T>(val);
                             } // ipol2
                         } // m2
                     } // ipol1
@@ -145,8 +145,8 @@ void DFTU_LCAO::cal_pot_uterm(Plus_U_Base& dftu,
     ModuleBase::TITLE("DFTU_LCAO", "cal_pot_uterm");
     ModuleBase::timer::start("DFTU_LCAO", "cal_pot_uterm");
 
-    const int nlocal = pv->get_global_row_size();
-    std::fill(pot_uterm, pot_uterm + pv->nloc, T(0));
+    const int nlocal = pv->para_2d().nrglb();
+    std::fill(pot_uterm, pot_uterm + pv->para_2d().size(), T(0));
 
     //=============================================================
     //   PART2: call pblas to calculate effective potential matrix
@@ -158,20 +158,20 @@ void DFTU_LCAO::cal_pot_uterm(Plus_U_Base& dftu,
     const T one = static_cast<T>(1.0);
     const T zero = static_cast<T>(0.0);
 
-    std::vector<T> pot_onsite(pv->nloc);
+    std::vector<T> pot_onsite(pv->para_2d().size());
     DFTU_LCAO::cal_pot_onsite(dftu, ucell, pv, spin, true, &pot_onsite[0]);
 
 #ifdef __MPI
     ScalapackConnector::gemm(transN, transN,
             nlocal, nlocal, nlocal,
             half,
-            ModuleBase::GlobalFunc::VECTOR_TO_PTR(pot_onsite), one_int, one_int, pv->desc,
-            sk, one_int, one_int, pv->desc,
+            ModuleBase::GlobalFunc::VECTOR_TO_PTR(pot_onsite), one_int, one_int, pv->para_2d().desc(),
+            sk, one_int, one_int, pv->para_2d().desc(),
             zero,
-            pot_uterm, one_int, one_int, pv->desc);
+            pot_uterm, one_int, one_int, pv->para_2d().desc());
 #endif
 
-    for (int irc = 0; irc < pv->nloc; irc++)
+    for (int irc = 0; irc < pv->para_2d().size(); irc++)
     {
         pot_onsite[irc] = pot_uterm[irc];
     }
@@ -179,9 +179,9 @@ void DFTU_LCAO::cal_pot_uterm(Plus_U_Base& dftu,
 #ifdef __MPI
     ScalapackConnector::tranu(nlocal, nlocal,
             one,
-            &pot_onsite[0], one_int, one_int, pv->desc,
+            &pot_onsite[0], one_int, one_int, pv->para_2d().desc(),
             one,
-            pot_uterm, one_int, one_int, pv->desc);
+            pot_uterm, one_int, one_int, pv->para_2d().desc());
 #endif
 
     ModuleBase::timer::end("DFTU_LCAO", "cal_pot_uterm");

@@ -281,12 +281,8 @@ void Velocity<FPTYPE, Device>::act(const psi::Psi<std::complex<FPTYPE>, Device>*
         ModuleBase::gemm_op<Complex, Device>()('C', 'N', nkb3, n_npwx, npw, &one, gradvkb_d, max_npw, psi0, max_npw, &zero, becp2_, nkb3);
     }
 
-    if (npol != 1)
-    {
-        ModuleBase::WARNING_QUIT("Velocity", "Non-collinear velocity is not supported.");
-    }
     // deeq stores energies in Ry; velocity uses Hartree atomic units like p.
-    this->contraction_.contract(*this->ucell, *this->ppcell, this->isk[this->ik], n_npwx, FPTYPE(0.5), *this->wfcpw, becp1_);
+    this->contraction_.contract(*this->ucell, *this->ppcell, this->isk[this->ik], n_npwx, npol, FPTYPE(0.5), *this->wfcpw, becp1_);
 
     if (npw == 0)
     {

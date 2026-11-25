@@ -1,7 +1,6 @@
 #ifndef ABACUS_SOURCE_HAMILT_MODULE_GINT_KERNEL_DGEMM_VBATCH_H
 #define ABACUS_SOURCE_HAMILT_MODULE_GINT_KERNEL_DGEMM_VBATCH_H
 
-
 #include <cuda_runtime.h>
 
 // Shape-exact batched GEMM dispatchers.
@@ -20,23 +19,35 @@
 // double.
 
 // C(batch) = alpha * A(batch) * B(batch) + C(batch)
-template<typename T>
+template <typename T>
 void gemm_nn_vbatch(
-    int m, int n, int k,
-    const T* const* A_array_d, const int* lda_d,
-    const T* const* B_array_d, const int* ldb_d,
-    double** C_array_d, const int* ldc_d,
-    int batchCount, cudaStream_t stream,
-    const T* alpha = nullptr);
+    int m,
+    int n,
+    int k,
+    const T *const *A_array_d,
+    const int *lda_d,
+    const T *const *B_array_d,
+    const int *ldb_d,
+    double **C_array_d,
+    const int *ldc_d,
+    int batchCount,
+    cudaStream_t stream,
+    const T *alpha = nullptr);
 
 // C(batch) = alpha * A(batch)^T * B(batch) + C(batch)
-template<typename T>
+template <typename T>
 void gemm_tn_vbatch(
-    int m, int n, int k,
-    const T* const* A_array_d, const int* lda_d,
-    const T* const* B_array_d, const int* ldb_d,
-    double** C_array_d, const int* ldc_d,
-    int batchCount, cudaStream_t stream,
-    const T* alpha = nullptr);
+    int m,
+    int n,
+    int k,
+    const T *const *A_array_d,
+    const int *lda_d,
+    const T *const *B_array_d,
+    const int *ldb_d,
+    double **C_array_d,
+    const int *ldc_d,
+    int batchCount,
+    cudaStream_t stream,
+    const T *alpha = nullptr);
 
 #endif // ABACUS_SOURCE_HAMILT_MODULE_GINT_KERNEL_DGEMM_VBATCH_H

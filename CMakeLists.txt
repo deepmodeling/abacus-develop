@@ -37,44 +37,47 @@ project(
 
 option(ENABLE_MPI "Enable MPI" ON)
 option(ENABLE_OPENMP "Enable OpenMP" ON)
+
 option(USE_CUDA "Enable CUDA" OFF)
-cmake_dependent_option(
-  ENABLE_GPU_NEIGHBOR_LIST "Enable the CUDA GPU neighbor-list implementation"
-  OFF "USE_CUDA" OFF)
 option(USE_ROCM "Enable ROCm" OFF)
 option(USE_DSP "Enable DSP" OFF)
 option(USE_CUDA_ON_DCU "Enable CUDA on DCU" OFF)
 option(USE_KML "Enable Kunpeng Math Library" OFF)
 option(USE_SW "Enable SW Architecture" OFF)
 
-option(ENABLE_ABACUS_LIBM "Build libmath from source to speed up" OFF)
-option(ENABLE_LIBXC "Enable using the LibXC package" OFF)
+option(ENABLE_LCAO "Enable LCAO algorithm" ON)
+
+option(ENABLE_ABACUS_LIBM "Build libmath from source for old systems" OFF)
 option(ENABLE_FLOAT_FFTW "Enable using single-precision FFTW library." OFF)
 
-option(ENABLE_LCAO "Enable LCAO algorithm" ON)
+option(ENABLE_LIBXC "Enable using the LibXC package" OFF)
 option(ENABLE_DFTD4 "Enable DFT-D4 dispersion correction" OFF)
 option(ENABLE_PLUMED "Enable using the PLUMED enhanced-sampling library" OFF)
+option(ENABLE_JSON "Enable JSON output" OFF)
+option(ENABLE_CNPY "Enable cnpy usage" OFF)
+option(ENABLE_NEP "Enable NEP_CPU" OFF)
+
+option(DEBUG_INFO "Print message to debug" OFF)
+option(COMMIT_INFO "Print commit information in log" ON)
+option(MATH_INFO "Enable gathering math library information" OFF)
 
 option(BUILD_TESTING "Build unittests" OFF)
-option(DEBUG_INFO "Print message to debug" OFF)
+
 option(ENABLE_ASAN "Enable AddressSanitizer" OFF)
-option(MATH_INFO "Enable gathering math library information" OFF)
 option(ENABLE_COVERAGE "Enable coverage build" OFF)
-option(GIT_SUBMODULE "Check submodules during build" ON)
 
 # Do not enable it if generated code will run on different CPUs
 option(ENABLE_NATIVE_OPTIMIZATION
        "Enable compilation optimization for the native machine's CPU type" OFF)
-
-option(COMMIT_INFO "Print commit information in log" ON)
-option(ENABLE_JSON "Enable JSON output" OFF)
-option(ENABLE_CNPY "Enable cnpy usage" OFF)
 
 # Options requiring MPI and LCAO
 cmake_dependent_option(ENABLE_ELPA "Enable ELPA eigensolver" ON "ENABLE_MPI"
                        OFF)
 cmake_dependent_option(ENABLE_LIBRI "Enable LibRI for hybrid functional" OFF
                        "ENABLE_LCAO;ENABLE_MPI" OFF)
+cmake_dependent_option(
+  ENABLE_LIBRI_GPU "Enable experimental LibRI CUDA contractions through DDLA"
+  OFF "ENABLE_LIBRI;USE_CUDA" OFF)
 cmake_dependent_option(ENABLE_PEXSI "Enable PEXSI for LCAO" OFF
                        "ENABLE_LCAO;ENABLE_MPI" OFF)
 cmake_dependent_option(ENABLE_MLALGO "Enable the machine learning algorithms"
@@ -90,6 +93,9 @@ cmake_dependent_option(ENABLE_GOOGLEBENCH "Enable GOOGLE-benchmark usage" OFF
                        "BUILD_TESTING" OFF)
 
 # Options requiring CUDA
+cmake_dependent_option(
+  ENABLE_LIBXC_CUDA "Enable CUDA evaluation of Libxc potentials" OFF
+  "USE_CUDA;ENABLE_LIBXC" OFF)
 cmake_dependent_option(USE_CUDA_MPI "Enable CUDA-aware MPI" OFF
                        "USE_CUDA;ENABLE_MPI" OFF)
 cmake_dependent_option(ENABLE_CUSOLVERMP "Enable cuSOLVERMp" OFF
@@ -100,60 +106,9 @@ cmake_dependent_option(
   ENABLE_NCCL_PARALLEL_DEVICE
   "Enable NCCL-backed collectives in parallel_device; requires MPI" OFF
   "USE_CUDA;ENABLE_MPI" OFF)
-
-# ==============================================================================
-# Deprecated options (TODO: Remove this section in the future release)
-# ==============================================================================
-function(abacus_rename_option old_name new_name)
-  get_property(
-    _old_defined
-    CACHE "${old_name}"
-    PROPERTY TYPE
-    SET)
-  if(NOT _old_defined)
-    return()
-  endif()
-  message(DEPRECATION "${old_name} has been renamed to ${new_name}.")
-  get_property(
-    _type
-    CACHE "${new_name}"
-    PROPERTY TYPE)
-  get_property(
-    _help
-    CACHE "${new_name}"
-    PROPERTY HELPSTRING)
-  set("${new_name}"
-      "${${old_name}}"
-      CACHE "${_type}" "${_help}" FORCE)
-  unset("${old_name}" CACHE)
-endfunction()
-abacus_rename_option(USE_OPENMP ENABLE_OPENMP)
-abacus_rename_option(USE_ABACUS_LIBM ENABLE_ABACUS_LIBM)
-abacus_rename_option(INFO MATH_INFO)
-
-if(DEFINED CACHE{ENABLE_RAPIDJSON})
-  message(
-    FATAL_ERROR
-      "ENABLE_RAPIDJSON is no longer supported. "
-      "ABACUS now uses nlohmann-json as its JSON backend; "
-      "please use -DENABLE_JSON=ON instead.")
-endif()
-
-if(DEFINED CACHE{ENABLE_LIBCOMM})
-  message(
-    DEPRECATION
-      "Option ENABLE_LIBCOMM is deprecated and will be ignored in a future release. "
-      "LibComm is now treated as an implementation dependency of LibRI; "
-      "please use -DENABLE_LIBRI=ON instead.")
-  if(ENABLE_LIBCOMM AND NOT ENABLE_LIBRI)
-    message(
-      FATAL_ERROR
-        "ENABLE_LIBCOMM was set, but LibComm is not a standalone ABACUS feature. "
-        "Please use -DENABLE_LIBRI=ON instead.")
-  endif()
-  unset(ENABLE_LIBCOMM CACHE)
-endif()
-# ==============================================================================
+cmake_dependent_option(
+  ENABLE_GPU_NEIGHBOR_LIST "Enable the CUDA GPU neighbor-list implementation"
+  OFF "USE_CUDA" OFF)
 
 # CTest defines BUILD_TESTING when it is first included. Include it only after
 # ABACUS has declared its OFF-by-default option above.
@@ -207,12 +162,12 @@ endif()
 # Determine the ABACUS executable name.
 if(NOT ENABLE_LCAO)
   set(_abacus_bin_level "pw")
-  # TODO: Not well-defined now.
 elseif(ENABLE_LIBRI AND ENABLE_MLALGO)
+  # TODO: Not well-defined now.
   set(_abacus_bin_level "max")
 elseif(ENABLE_LIBRI)
-  set(_abacus_bin_level "std")
   # TODO: Not well-defined now.
+  set(_abacus_bin_level "std")
 elseif(ENABLE_MLALGO)
   set(_abacus_bin_level "ml")
 else()
@@ -377,7 +332,7 @@ if(USE_KML)
 elseif(MKLROOT OR MKL_ROOT)
   find_package(MKL REQUIRED)
 elseif(NOT USE_SW)
-  find_package(Lapack REQUIRED)
+  find_package(LAPACK REQUIRED)
   # ScaLAPACK is a distributed-memory library and is only needed for the
   # MPI build. A serial build (e.g. the native Windows serial version)
   # must not require it.
@@ -631,13 +586,20 @@ endfunction()
 if(ENABLE_LIBRI)
   set_if_higher(CMAKE_CXX_STANDARD 14)
   find_package(LibRI REQUIRED)
-  find_package(LibComm REQUIRED)
-  find_package(cereal REQUIRED CONFIG)
 endif()
 
 if(ENABLE_LIBXC)
   find_package(Libxc CONFIG REQUIRED)
-  if(Libxc_VERSION VERSION_LESS "5.1.7")
+  if(Libxc_ENABLE_CUDA AND Libxc_VERSION VERSION_GREATER_EQUAL "7.1.0")
+    # CUDA Libxc needs explicit host initialization even when offload is disabled.
+    set(_libxc_requires_host_flag ON)
+  elseif(ENABLE_LIBXC_CUDA)
+    message(
+      FATAL_ERROR
+        "ENABLE_LIBXC_CUDA requires Libxc >= 7.1.0 built with -DENABLE_CUDA=ON. "
+        "Found Libxc ${Libxc_VERSION} (Libxc_ENABLE_CUDA=${Libxc_ENABLE_CUDA})."
+    )
+  elseif(Libxc_VERSION VERSION_LESS "5.1.7")
     message(
       FATAL_ERROR "Libxc >= 5.1.7 is required; found version ${Libxc_VERSION}")
   endif()
@@ -647,8 +609,8 @@ if(DEFINED DeePMD_DIR)
   find_package(DeePMD REQUIRED)
 endif()
 
-if(DEFINED NEP_DIR)
-  find_package(NEP REQUIRED)
+if(ENABLE_NEP)
+  find_package(NEP_CPU CONFIG REQUIRED)
 endif()
 
 if(DEFINED TensorFlow_DIR)

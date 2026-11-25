@@ -46,8 +46,9 @@ focused cleanup.
   `PARAM`. Prefer explicit parameters or narrow local interfaces.
 - Do not store workflow switches in mutable member variables that can be changed
   implicitly from multiple places.
-- Keep header dependencies minimal; avoid adding includes to headers unless the
-  declaration truly requires them.
+- Keep header dependencies clean and explicit; avoid unnecessary includes in
+  headers, and do not replace `#include` directives with forward declarations
+  just to silence header include warnings.
 - Avoid adding `.hpp` implementation headers and avoid including `.hpp` files
   from other headers unless the PR explains why header-only implementation is
   needed.
@@ -58,6 +59,7 @@ focused cleanup.
 - Keep default and general-purpose C++ changes compatible with the repository
   C++11 baseline. Backend-specific or dependency-constrained paths may use the
   higher standard already selected by existing CMake configuration.
+- Prefer explicit types over `auto` in C++ declarations.
 - Use LF line endings for text files. `.bat` and `.cmd` are the CRLF exception.
 - Place `ModuleBase::timer::start`/`end` at the beginning and end of a function,
   not around isolated statements inside the function body. Use the enclosing
@@ -65,6 +67,14 @@ focused cleanup.
   the whole unit of work.
 - Do not use `#pragma once` in header files; use traditional
   `#ifndef`/`#define`/`#endif` include guards instead.
+- Put unit tests under `source/` in a flat `unittests/` directory and name each
+  test source `test_<file under test>.cpp` (`.cu` likewise). Headers there are
+  free-named; subdirectories of `unittests/` hold test data only and contain no
+  `.c`/`.cc`/`.cpp`/`.cxx`/`.cu`/`.h`/`.hh`/`.hpp`/`.hxx`/`.cuh` files. Legacy
+  test directories (`test/`, `tests/`, `test_serial/`, `test_parallel/`,
+  `test_gpu/`, ...) accept no new files, and a test source modified there must
+  be migrated into `unittests/`; deleting files, and editing a legacy
+  `CMakeLists.txt`, header, or data file, stays allowed.
 
 AI agents have additional workflow obligations:
 
@@ -86,22 +96,25 @@ decisions.
 | Header include guard | New `#pragma once` in a header | phase-one mechanical | hook + CI | high | block | added header lines (`.h`/`.hh`/`.hpp`/`.hxx`/`.cuh`) | Use `#ifndef`/`#define`/`#endif` guards; no exception allowed |
 | Language baseline | C++11 compatibility | build/toolchain | CI | high | block | build/static tooling | Actual compiler/toolchain result wins |
 | Global dependency budget | Net increase of `GlobalV`/`GlobalC`/`PARAM` references in code diff | phase-one mechanical + AI review | CI + AI review | high | block on net increase, warn on non-increasing added usage | added and removed code lines | Historical untouched usage and documentation mentions are not blocked; migration-neutral moves require reviewer rationale |
-| New default parameter | Header declaration adds a default argument | phase-one mechanical + AI review | CI + AI review | high | block | header diff | High misuse risk |
+| New default parameter | Header declaration adds a default argument | phase-one mechanical warning + AI review | CI + AI review | high | warn | header diff | High misuse risk; the single-line heuristic is not reliable enough to block, so AI and human review confirm |
 | `.hpp` propagation | New `.hpp` or header includes `.hpp` | phase-one mechanical warning | CI + AI review | medium | warn | new files and added includes | Exception can be recorded in PR |
 | Header dependency growth | Header diff adds includes | phase-one mechanical warning + AI review | CI + AI review | medium | warn | added header includes | Necessity is semantic and not mechanically decided |
 | Member variable workflow switch | Key flow state hidden as mutable member state | AI review + human confirmation | AI + human review | high | human confirmation | semantic review | Static matching is unreliable |
 | Timer placement | `timer::start`/`end` wrap a whole function body | AI review | AI + human review | low | warn | semantic review | Mechanical matching is unreliable for scopes; label should name the enclosing function |
 | Module path and build linkage | New source path and `CMakeLists.txt` linkage | phase-one mechanical | CI | medium | block | new source files and build-script diff | Deterministic path/build check only |
+| Unit test directory layout | New unit tests go in a flat `unittests/`; legacy test directories accept no new files | phase-one mechanical | hook + CI | high | block | added, renamed, copied, and modified paths under `source/` | Added files in legacy test directories block; modified `.c`/`.cc`/`.cpp`/`.cxx`/`.cu` there block; code files in `unittests/` subdirectories block; deletions never block |
+| Unit test file naming | Sources in `unittests/` start with `test_` | phase-one mechanical + AI review | hook + CI + AI review | medium | block | added, renamed, copied, and modified sources directly in `unittests/` | Headers are exempt; reviewers confirm the rest of the name matches the file under test |
 | Module semantic ownership | Best module/submodule placement | AI review + human confirmation | AI + human review | medium | human confirmation | semantic review | Final call belongs to maintainers |
 | Heterogeneous code linkage | CUDA/ROCM/kernel source and `CMakeLists.txt` linkage | phase-one mechanical | CI + AI review | medium | block | new heterogeneous files and linkage | Mechanical path/linkage only |
 | Heterogeneous test evidence | CUDA/ROCM/kernel change has test evidence or reason | phase-one mechanical warning + AI review | CI + AI review | high | warn | changed paths and PR body | Sufficiency is human-reviewed |
 | Test existence | Source change has test evidence or reason | phase-one mechanical warning + AI review | CI + AI review | high | warn | PR body and changed paths | Sufficiency is human-reviewed |
 | Test sufficiency | Tests cover important behavior | AI review + human confirmation | AI + human review | medium | human confirmation | semantic review | Not mechanically blocked |
+| Integration test driver | Integration test uses an Autotest case, not a standalone `add_test()` script | AI review + human confirmation | AI + human review | medium | human confirmation | `tests/**/CMakeLists.txt` and new scripts under `tests/` | Standalone drivers need a stated reason Autotest cannot express the check; see Integration Test Drivers |
 | INPUT behavior linkage | Parameter metadata/default/type/parser behavior updates YAML and docs | phase-one mechanical + AI review | CI + AI review | high | warn | behavior-field diff plus docs/PR body | Comment-only parameter-file changes are not blocked |
 | Documentation sync | Behavior/interface docs updated | phase-one mechanical warning + AI review | CI + AI review | medium | warn | changed paths and PR body | Major behavior changes escalate to reviewers |
 | PR metadata completeness | Issue, tests, behavior, INPUT, core impact, exceptions | phase-one mechanical | CI or GitHub bot | medium | warn | PR template fields | Not run by local hook |
 | AI workflow | Interface lookup, uncertainty, verification report | AI review | AI review | high | warn | review transcript/output | Applies to AI agents |
-| Exceptions | Reason, scope, risk, follow-up plan | human confirmation | human review + CI | high | human confirmation | PR exception section | CI checks presence, not approval |
+| Exceptions | Reason, scope, risk, follow-up plan | human confirmation | human review + CI | high | human confirmation | PR exception section + approval label | CI downgrades a covered blocker to a warning only when the section is complete and a maintainer applied the `governance-exception-approved` label |
 
 Implementations must use this matrix as the default baseline. Upgrading warnings
 to blockers or converting human-confirmation rules into mechanical blockers
@@ -111,8 +124,9 @@ Deterministic errors require a code or documentation fix before merge unless a
 maintainer-approved exception is recorded. Deterministic warnings require a
 reviewable rationale or cleanup, but they do not become blockers without an
 explicit governance change. For header include warnings, the rationale should
-state whether the header needs a complete type, for example because it owns a
-value member rather than a pointer or reference.
+confirm that the included header is actually used and does not introduce
+unnecessary or circular dependencies; explicit `#include` directives are
+preferred over replacing them with forward declarations.
 
 For global dependencies, the mechanical checker uses a PR-level budget during
 the legacy migration period. A PR blocks only when the number of code references
@@ -155,11 +169,17 @@ the repository:
 
 - CMake/CTest builds and test selection used by `.github/workflows/test.yml`,
   such as `ctest --test-dir build -V -R MODULE_MD` for MD-focused changes.
+  Reuse the module's CMake targets and test registration helpers. Keep
+  case-specific setup in the test case when the framework supports it.
 - Development containers and CI images based on `Dockerfile.gnu`,
   `Dockerfile.intel`, `Dockerfile.cuda`, and
   `ghcr.io/deepmodeling/abacus-*`.
 - Dependency and compiler setup under `toolchain/`, including the GNU, Intel,
   and CUDA variants already covered by workflow checks.
+
+When a change needs new code from an external library such as LibRI or LibRPA,
+use a tagged release that contains it. Test against that release and identify
+the tag in the PR.
 
 Do not add a new container recipe, toolchain path, or agent-specific skill for
 calculation tasks as part of governance-only work. If a future PR needs one, it
@@ -178,6 +198,27 @@ MPI-linked builds or runs should be treated as sandbox artifacts first, not as
 project regressions. Do not relax existing integration tests or reference files
 just to make a failure pass. Update references only when the intended behavior
 changed and the PR explains why the new reference is correct.
+
+## Integration Test Drivers
+
+Use Autotest cases with `INPUT`, `STRU`, `KPT` (when needed) and `result.ref`,
+listed in `CASES_*.txt` and run by `Autotest.sh` through the suite's CTest entry.
+Autotest helpers are unaffected.
+
+Store references with the case, outside generated `OUT.*` directories. Prefer
+plain text for simple references such as `a.txt.ref`.
+
+Standalone `add_test()` drivers that launch ABACUS require a check Autotest
+cannot express (e.g., nonzero exits or per-rank stderr) and a PR rationale.
+Keep Autotest-compatible checks in cases. Drivers must:
+
+- Live in `tests/integrate/validation_tools/` with descriptive names
+  (e.g., `check_<feature>.py`); reserve `test_*.py` for tool unit tests.
+- Use dedicated fixtures; never rewrite another case's `INPUT` at run time.
+- Use `find_program` plus `if()` for optional interpreters; never `REQUIRED`.
+- For MPI, forward `MPIEXEC_NUMPROC_FLAG`, `MPIEXEC_PREFLAGS` and
+  `MPIEXEC_POSTFLAGS`; set CTest `PROCESSORS` to the launched rank count.
+- Set `OMP_NUM_THREADS=1`, use temporary scratch space and a CTest `TIMEOUT`.
 
 ## CLI Verification
 
@@ -231,6 +272,14 @@ setup workflows and should be added only through a later governance change.
 
 ## INPUT Parameter Changes
 
+Reuse an existing INPUT option or a common default when possible. Explain in
+the PR why a new option is needed. Follow the naming of related options and
+aim for names of 15 characters or fewer with at most two underscores.
+
+For scalar INPUT parameters with a fixed set of choices, use
+[`item.domain.set_choices(...)`](input_validation.md) so validation errors list
+the allowed values in a consistent format.
+
 Changes to parameter metadata, default values, type, availability, description,
 or parsing behavior should update the corresponding C++ `Input_Item`
 registrations. The generated YAML and Markdown documentation are build artifacts
@@ -254,6 +303,10 @@ Before requesting review, check that the PR description matches the diff:
 - Exceptions include reason, scope, risk, why the normal rule cannot be followed
   now, a follow-up cleanup plan, and the requested approver.
 
+Reply to each review comment in its thread, including bot feedback. Link to the
+fix or explain why the existing behavior is appropriate. Resolve the thread
+once the discussion is settled.
+
 ## Exception Template
 
 Use this template in the PR when a rule must be bypassed temporarily:
@@ -268,6 +321,22 @@ Use this template in the PR when a rule must be bypassed temporarily:
 - Follow-up cleanup plan:
 - Requested approver:
 ```
+
+`Rule` names the checker rule(s) being excepted, using the exact rule names
+from the governance summary (for example `Global dependency budget` or
+`CMake linkage for new sources`). The CI checker handles the section as follows:
+
+- An incomplete section (any field empty) produces a warning and changes
+  nothing else.
+- A complete section without approval produces a warning that the exception is
+  awaiting approval; blocking findings still fail the check.
+- A complete section plus the `governance-exception-approved` label, applied by
+  a maintainer other than the PR author, downgrades the blocking findings whose
+  rule appears in `Rule` to warnings. Findings marked `Exception allowed: no`
+  (LF line endings, `#pragma once`) are never downgraded.
+
+Applying or removing the label re-runs the check. The local `--staged` hook has
+no PR body or labels and therefore never applies exceptions.
 
 ## AI Review Finding Format
 

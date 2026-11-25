@@ -22,20 +22,28 @@
 namespace elecstate
 {
 
-PotBase* Potential::make_sccs_pot(const Input_para& input)
+PotBase* Potential::make_sccs_pot(const Input_para& input, const SccsResume& resume)
 {
     ModuleSccs::SccsConfig config;
     ModuleSccs::PolarizationSolverParameters solver;
     sccs_cfg_input(input, config, solver);
     if (this->ucell_ != nullptr)
     {
-        const std::string warning = check_charge(config, *this->ucell_, input.nelec);
-        if (!warning.empty()) { ModuleBase::WARNING("Potential::make_sccs_pot", warning); }
+        const std::string structure_warning = check_sccs_cell(config, *this->ucell_);
+        if (!structure_warning.empty())
+        {
+            ModuleBase::WARNING("Potential::make_sccs_pot", structure_warning);
+        }
+        const std::string charge_warning = check_charge(config, *this->ucell_, input.nelec);
+        if (!charge_warning.empty())
+        {
+            ModuleBase::WARNING("Potential::make_sccs_pot", charge_warning);
+        }
     }
-    return new PotSccs(this->rho_basis_, config, solver, input.nelec);
+    return new PotSccs(this->rho_basis_, config, solver, input.nelec, resume);
 }
 
-PotBase* Potential::get_pot_type(const std::string& pot_type, const Input_para& input)
+PotBase* Potential::get_pot_type(const std::string& pot_type, const Input_para& input, const SccsResume& resume)
 {
     ModuleBase::TITLE("Potential", "get_pot_type");
     if (pot_type == "local")
@@ -48,7 +56,9 @@ PotBase* Potential::get_pot_type(const std::string& pot_type, const Input_para& 
     }
     else if (pot_type == "xc")
     {
-        return new PotXC(PARAM.globalv.domag, PARAM.globalv.domag_z, input.gga_grad, this->rho_basis_, this->etxc_, this->vtxc_, &(this->vofk_eff));
+        const bool xc_gpu = input.device_xc == "gpu";
+        return new PotXC(PARAM.globalv.domag, PARAM.globalv.domag_z, input.gga_grad, xc_gpu,
+                         this->rho_basis_, this->etxc_, this->vtxc_, &(this->vofk_eff));
     }
     else if (pot_type == "pcc" || pot_type == "pcc_2d")
     {
@@ -62,7 +72,7 @@ PotBase* Potential::get_pot_type(const std::string& pot_type, const Input_para& 
     }
     else if (pot_type == "sccs")
     {
-        return this->make_sccs_pot(input);
+        return this->make_sccs_pot(input, resume);
     }
     else if (pot_type == "surchem")
     {

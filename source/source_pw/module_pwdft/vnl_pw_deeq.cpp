@@ -1,14 +1,14 @@
-#include "vnl_pw.h"
-
-#include "source_io/module_parameter/parameter.h"
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
 #include "source_base/math_ylmreal.h"
-#include "source_base/timer.h"
-#include "source_base/module_external/blas_connector.h"
+#include "source_base/module_container/base/third_party/blas.h"
 #include "source_base/module_device/device.h"
+#include "source_base/module_external/blas_connector.h"
 #include "source_base/parallel_reduce.h"
+#include "source_base/timer.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_pw/module_pwdft/kernels/vnl_op.h"
+#include "vnl_pw.h"
 
 #include <cmath>
 
@@ -35,9 +35,7 @@
  * @param rho_basis plane-wave basis for charge density FFT
  * @param cell     unit cell (read-only, but passed by reference for compatibility)
  */
-void pseudopot_cell_vnl::cal_effective_D(const ModuleBase::matrix& veff,
-                                         const ModulePW::PW_Basis* rho_basis,
-                                         UnitCell& cell)
+void pseudopot_cell_vnl::cal_effective_D(const ModuleBase::matrix& veff, const ModulePW::PW_Basis* rho_basis, UnitCell& cell)
 {
     ModuleBase::TITLE("pseudopot_cell_vnl", "cal_effective_D");
 
@@ -144,33 +142,19 @@ void pseudopot_cell_vnl::cal_effective_D(const ModuleBase::matrix& veff,
     {
         if (PARAM.globalv.has_float_data)
         {
-            castmem_d2s_h2d_op()(this->s_deeq,
-                                 this->deeq.ptr,
-                                 PARAM.inp.nspin * cell.nat * this->nhm * this->nhm);
-            castmem_z2c_h2d_op()(this->c_deeq_nc,
-                                 this->deeq_nc.ptr,
-                                 PARAM.inp.nspin * cell.nat * this->nhm * this->nhm);
+            castmem_d2s_h2d_op()(this->s_deeq, this->deeq.ptr, PARAM.inp.nspin * cell.nat * this->nhm * this->nhm);
+            castmem_z2c_h2d_op()(this->c_deeq_nc, this->deeq_nc.ptr, PARAM.inp.nspin * cell.nat * this->nhm * this->nhm);
         }
-        if (PARAM.globalv.has_double_data)
-        {
-            syncmem_z2z_h2d_op()(this->z_deeq_nc,
-                                 this->deeq_nc.ptr,
-                                 PARAM.inp.nspin * cell.nat * this->nhm * this->nhm);
-        }
-        syncmem_d2d_h2d_op()(this->d_deeq,
-                             this->deeq.ptr,
-                             PARAM.inp.nspin * cell.nat * this->nhm * this->nhm);
+        // Keep the double-precision force view current in single-precision runs.
+        syncmem_z2z_h2d_op()(this->z_deeq_nc, this->deeq_nc.ptr, PARAM.inp.nspin * cell.nat * this->nhm * this->nhm);
+        syncmem_d2d_h2d_op()(this->d_deeq, this->deeq.ptr, PARAM.inp.nspin * cell.nat * this->nhm * this->nhm);
     }
     else
     {
         if (PARAM.globalv.has_float_data)
         {
-            castmem_d2s_h2h_op()(this->s_deeq,
-                                 this->deeq.ptr,
-                                 PARAM.inp.nspin * cell.nat * this->nhm * this->nhm);
-            castmem_z2c_h2h_op()(this->c_deeq_nc,
-                                 this->deeq_nc.ptr,
-                                 PARAM.inp.nspin * cell.nat * this->nhm * this->nhm);
+            castmem_d2s_h2h_op()(this->s_deeq, this->deeq.ptr, PARAM.inp.nspin * cell.nat * this->nhm * this->nhm);
+            castmem_z2c_h2h_op()(this->c_deeq_nc, this->deeq_nc.ptr, PARAM.inp.nspin * cell.nat * this->nhm * this->nhm);
         }
         // There's no need to synchronize double precision pointers while in a CPU environment.
     }
@@ -263,23 +247,23 @@ void pseudopot_cell_vnl::newq(const ModuleBase::matrix& veff, const ModulePW::PW
                 double* aux_ptr = reinterpret_cast<double*>(aux.c);
 
                 BlasConnector::gemm(transb,
-                       transa,
-                       natom,
-                       nij,
-                       complex_npw,
-                       fact,
-                       aux_ptr,
-                       complex_npw,
-                       qg_ptr,
-                       complex_npw,
-                       zero,
-                       deeaux.c,
-                       nij);
+                                    transa,
+                                    natom,
+                                    nij,
+                                    complex_npw,
+                                    fact,
+                                    aux_ptr,
+                                    complex_npw,
+                                    qg_ptr,
+                                    complex_npw,
+                                    zero,
+                                    deeaux.c,
+                                    nij);
                 // I'm not sure if this is correct for gamma_only
                 if (rho_basis->gamma_only && rho_basis->ig_gge0 >= 0)
                 {
                     const double neg = -1.0;
-                    dger_(&nij, &natom, &neg, qg_ptr, &complex_npw, aux_ptr, &complex_npw, deeaux.c, &nij);
+                    container::BlasConnector::ger(nij, natom, neg, qg_ptr, complex_npw, aux_ptr, complex_npw, deeaux.c, nij);
                 }
 
                 for (int ia = 0; ia < natom; ia++)
@@ -304,15 +288,15 @@ void pseudopot_cell_vnl::newq(const ModuleBase::matrix& veff, const ModulePW::PW
     }
 
 #ifdef __MPI
-    Parallel_Reduce::reduce_pool(deeq.ptr,deeq.getSize());
+    Parallel_Reduce::reduce_pool(deeq.ptr, deeq.getSize());
 #endif
 }
 
 /**
  * @brief Rotate deeq into deeq_nc for spin-orbit coupling case.
  *
- * Uses the SOC rotation coefficients soc.fcoef to transform
- * the spin-diagonal deeq into the full 2x2 spinor deeq_nc.
+ * Uses the SOC rotation coefficients soc.fcoef to transform the scalar
+ * and magnetic (x, y, z) components of deeq into the full 2x2 spinor deeq_nc.
  *
  * @param iat  atom index
  * @param cell unit cell
@@ -338,28 +322,24 @@ void pseudopot_cell_vnl::newd_so(const int& iat, UnitCell& cell)
                     {
                         for (int lh = 0; lh < upf->nh; lh++)
                         {
+                            const std::complex<double> spin_uu = soc.fcoef(it, is1, 0, ih, kh) * soc.fcoef(it, 0, is2, lh, jh);
+                            const std::complex<double> spin_dd = soc.fcoef(it, is1, 1, ih, kh) * soc.fcoef(it, 1, is2, lh, jh);
+                            const std::complex<double> scalar_term = deeq(0, iat, kh, lh) * (spin_uu + spin_dd);
+
                             if (PARAM.globalv.domag)
                             {
-                                deeq_nc(ijs, iat, ih, jh)
-                                    += deeq(0, iat, kh, lh)
-                                           * (soc.fcoef(it, is1, 0, ih, kh) * soc.fcoef(it, 0, is2, lh, jh)
-                                              + soc.fcoef(it, is1, 1, ih, kh) * soc.fcoef(it, 1, is2, lh, jh))
-                                       + deeq(1, iat, kh, lh)
-                                             * (soc.fcoef(it, is1, 0, ih, kh) * soc.fcoef(it, 1, is2, lh, jh)
-                                                + soc.fcoef(it, is1, 1, ih, kh) * soc.fcoef(it, 0, is2, lh, jh))
-                                       + ModuleBase::NEG_IMAG_UNIT * deeq(2, iat, kh, lh)
-                                             * (soc.fcoef(it, is1, 0, ih, kh) * soc.fcoef(it, 1, is2, lh, jh)
-                                                - soc.fcoef(it, is1, 1, ih, kh) * soc.fcoef(it, 0, is2, lh, jh))
-                                       + deeq(3, iat, kh, lh)
-                                             * (soc.fcoef(it, is1, 0, ih, kh) * soc.fcoef(it, 0, is2, lh, jh)
-                                                - soc.fcoef(it, is1, 1, ih, kh) * soc.fcoef(it, 1, is2, lh, jh));
+                                const std::complex<double> spin_ud = soc.fcoef(it, is1, 0, ih, kh) * soc.fcoef(it, 1, is2, lh, jh);
+                                const std::complex<double> spin_du = soc.fcoef(it, is1, 1, ih, kh) * soc.fcoef(it, 0, is2, lh, jh);
+                                const std::complex<double> mag_x_term = deeq(1, iat, kh, lh) * (spin_ud + spin_du);
+                                const std::complex<double> mag_y_term
+                                    = ModuleBase::NEG_IMAG_UNIT * deeq(2, iat, kh, lh) * (spin_ud - spin_du);
+                                const std::complex<double> mag_z_term = deeq(3, iat, kh, lh) * (spin_uu - spin_dd);
+
+                                deeq_nc(ijs, iat, ih, jh) += scalar_term + mag_x_term + mag_y_term + mag_z_term;
                             }
                             else
                             {
-                                deeq_nc(ijs, iat, ih, jh)
-                                    += deeq(0, iat, kh, lh)
-                                       * (soc.fcoef(it, is1, 0, ih, kh) * soc.fcoef(it, 0, is2, lh, jh)
-                                          + soc.fcoef(it, is1, 1, ih, kh) * soc.fcoef(it, 1, is2, lh, jh));
+                                deeq_nc(ijs, iat, ih, jh) += scalar_term;
                             }
                         }
                     }

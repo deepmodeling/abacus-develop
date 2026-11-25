@@ -41,12 +41,13 @@ struct WriteHParams
     int nat = 0;
     bool also_hR = false; // H(k) is always written; H(R) (CSR) only when this is true
     int nlocal = 0;
+    int precision = 8; // text precision of the H(k) component matrices (second INPUT value)
     bool gamma_only_local = false;
     int npol = 1;
     bool domag = false;
     bool domag_z = false;
     int gga_grad = 0; // used by the XC term
-    bool out_app_flag = false;
+    int out_app_flag = 0;
     std::string calculation;
     std::string global_out_dir;
     std::string global_matrix_dir;
@@ -65,11 +66,11 @@ struct WriteHParams
 #endif
 };
 
-// Individual Hamiltonian-term writers. write_h_t/vnl/vl/vh/vxc share a common
+// Individual Hamiltonian-term writers. write_h_vnl/vl/vh/vxc share a common
 // build -> write H(k) -> optionally write H(R) skeleton (see hterm_writer.cpp);
 // the term-specific part is only how hR_tmp is filled.
-void write_h_t(WriteHParams& params);
-
+// The kinetic T(k) output is handled by the out_mat_tk path in ctrl_scf_lcao,
+// so there is no write_h_t here.
 void write_h_vnl(WriteHParams& params);
 
 void write_h_vl(WriteHParams& params);

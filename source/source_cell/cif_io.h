@@ -65,7 +65,7 @@ namespace ModuleIO
  * ...
  * NOTE1: only keys in table will have value with length larger than 1, otherwise all words will be
  * saved in the only element in std::vector<std::string>. For example please see unittest of this
- * class at source/source_io/test/cif_io_test.cpp.
+ * class at source/source_cell/test/cif_io_test.cpp.
  * NOTE2: One should note that for some cif files, the number will be in the format like
  * "0.00000000(1)", which means the uncertainty of the number is 1 in the last digit.
  * In this case, user should be careful to convert the string to double by its own.

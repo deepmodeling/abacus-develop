@@ -21,7 +21,8 @@ namespace ModuleIO
 /// @param ucell_
 /// @param v_eff_fixed
 /// @param solvent: for solvation model
-/// #param precision: output precision
+/// @param precision: output precision
+/// @param append: append a frame to an existing cube file (out_app_flag == 1)
 void write_elecstat_pot(
 #ifdef __MPI
     const int& bz,
@@ -37,6 +38,7 @@ void write_elecstat_pot(
     const std::vector<double>* pcc_potential,
     const std::vector<double>* solvent_potential,
     const int precision,
+    const bool append,
     std::ofstream& ofs_running);
 
 } // namespace ModuleIO

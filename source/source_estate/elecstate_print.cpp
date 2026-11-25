@@ -172,6 +172,7 @@ void print_etot(const Magnetism& magnet,
                 const ElecState& elec,
                 const bool converged,
                 const int& iter_in,
+                const int iter_limit,
                 const double& scf_thr,
                 const double& scf_thr_kin,
                 const double& duration,
@@ -205,7 +206,7 @@ void print_etot(const Magnetism& magnet,
     // electronic step so E_plusU can be monitored. Charge-density and
     // wavefunction output remain gated by out_freq_elec elsewhere.
     const bool print_table = (iter % inp.out_freq_elec == 0) || converged
-                             || (iter == inp.scf_nmax) || inp.dft_plus_u;
+                             || (iter == iter_limit) || inp.dft_plus_u;
     if (print_table)
     {
         int n_order = std::max(0, Occupy::gaussian_type);

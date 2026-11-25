@@ -1,5 +1,5 @@
-#include "sccs_test.h"
 #include "../sccs_pw_coulomb.h"
+#include "sccs_test.h"
 
 #include "source_base/parallel_global.h"
 
@@ -7,7 +7,7 @@ namespace SccsTest
 {
 int pool_size = 1;
 int pool_rank = 0;
-}
+} // namespace SccsTest
 
 using SccsPwCoulombTest = SccsTest::PwTest;
 
@@ -15,7 +15,7 @@ TEST_F(SccsPwCoulombTest, FourierModeAndConstantBackground)
 {
     const std::vector<double> mode = cosine_mode(0);
     std::vector<double> charge = mode;
-    for (double& value : charge)
+    for (double &value : charge)
     {
         value += 0.3;
     }
@@ -36,7 +36,22 @@ TEST_F(SccsPwCoulombTest, FourierModeAndConstantBackground)
     }
 }
 
-int main(int argc, char** argv)
+// Each application is one forward and one inverse FFT, reported by sccs_debug 2.
+TEST_F(SccsPwCoulombTest, FftCountsFollowTheApplications)
+{
+    ModuleSccs::PeriodicCoulombOperator coulomb(basis, tpiba);
+    const std::vector<double> charge = cosine_mode(0);
+    std::vector<double> potential;
+    EXPECT_EQ(coulomb.fft_counts().forward_calls, 0);
+    for (int application = 1; application <= 2; ++application)
+    {
+        coulomb.apply_potential(charge, potential);
+        EXPECT_EQ(coulomb.fft_counts().forward_calls, application);
+        EXPECT_EQ(coulomb.fft_counts().inverse_calls, application);
+    }
+}
+
+int main(int argc, char **argv)
 {
     int threads = 1;
     Parallel_Global::read_pal_param(argc, argv, SccsTest::pool_size, threads, SccsTest::pool_rank);
@@ -48,18 +63,19 @@ int main(int argc, char** argv)
     // These tests create only pool/band groups, not diagonalization/grid groups.
     GRID_WORLD = MPI_COMM_NULL;
     DIAG_WORLD = MPI_COMM_NULL;
-    Parallel_Global::init_pools(SccsTest::pool_size,
-                                SccsTest::pool_rank,
-                                1,
-                                1,
-                                band_size,
-                                band_rank,
-                                band_group,
-                                SccsTest::pool_size,
-                                SccsTest::pool_rank,
-                                pool);
+    Parallel_Global::init_pools(
+        SccsTest::pool_size, SccsTest::pool_rank, 1, 1, band_size, band_rank, band_group, SccsTest::pool_size,
+        SccsTest::pool_rank, pool);
 #endif
     testing::InitGoogleTest(&argc, argv);
+    // A forked death-test child would inherit the OpenMP thread pool and
+    // deadlock in its first parallel region, so a single rank re-executes the
+    // binary instead. Under mpirun a re-executed child would join the MPI
+    // job; there the death tests that run OpenMP code are skipped.
+    if (SccsTest::pool_size == 1)
+    {
+        testing::GTEST_FLAG(death_test_style) = "threadsafe";
+    }
     const int status = RUN_ALL_TESTS();
 #ifdef __MPI
     Parallel_Global::finalize_mpi();

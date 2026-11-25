@@ -9,13 +9,14 @@
 
 namespace ModuleIO
 {
+/** @brief Write aligned electronic dipoles; precision counts significant digits. */
 void write_dipole(const UnitCell& ucell,
                   const double* rho,
                   const ModulePW::PW_Basis* rhopw,
                   const int& istep,
                   const std::string& fn,
                   std::ofstream& ofs_running,
-                  const int& precision = 11);
+                  const int& precision = 13);
 
 } // namespace ModuleIO
 

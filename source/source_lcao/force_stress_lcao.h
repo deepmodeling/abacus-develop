@@ -10,7 +10,7 @@
 #include "source_base/matrix.h"
 #include "source_pw/module_pwdft/force_pw.h"
 #include "source_pw/module_pwdft/stress_func.h"
-#include "source_pw/module_pwdft/stru_fac.h"
+#include "source_cell/stru_fac.h"
 #include "source_io/module_parameter/input_conv.h"
 #include "source_psi/psi.h"
 #ifdef __EXX
@@ -30,6 +30,7 @@ struct VdwResult;
 }
 
 class TwoCenterBundle;
+class BasisFlattenedIndexing; // Defined in source/source_base/basis_flattened_indexing.h
 
 // INPUT scalars that steer the force/stress kernels. Bundling them into one
 // aggregate keeps getForceStress and its helpers from each re-reading the
@@ -114,6 +115,7 @@ class Force_Stress_LCAO
                         const bool istests,
                         const Grid_Driver& gd,
                         Parallel_Orbitals& pv,
+                        const BasisFlattenedIndexing& basis,
                         const elecstate::ElecState* pelec,
                         module_dm::Setup_DM<T> &dmat, // mohan add 2025-11-03
                         const psi::Psi<T>* psi,
@@ -146,6 +148,7 @@ class Force_Stress_LCAO
     void cal_operator_fs(UnitCell& ucell,
                          const Grid_Driver& gd,
                          Parallel_Orbitals& pv,
+                         const BasisFlattenedIndexing& basis,
                          const elecstate::ElecState* pelec,
                          module_dm::Setup_DM<T>& dmat,
                          const psi::Psi<T>* psi,

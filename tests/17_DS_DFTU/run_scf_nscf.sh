@@ -47,20 +47,20 @@ echo "========================================"
 # Step 0: Check prerequisites
 # -------------------------------------------------------
 if [ ! -f "${TEST_DIR}/INPUT" ]; then
-    echo "ERROR: INPUT file not found in ${TEST_DIR}"
-    exit 1
+  echo "ERROR: INPUT file not found in ${TEST_DIR}"
+  exit 1
 fi
 
 if [ ! -f "${TEST_DIR}/STRU" ]; then
-    echo "ERROR: STRU file not found in ${TEST_DIR}"
-    exit 1
+  echo "ERROR: STRU file not found in ${TEST_DIR}"
+  exit 1
 fi
 
 # Check if this is a DFT+U test (needs occ_mat.txt handling)
 IS_DFTU=false
 if grep -q "dft_plus_u" "${TEST_DIR}/INPUT" 2>/dev/null; then
-    IS_DFTU=true
-    echo "DFT+U test detected: will handle occ_mat.txt files"
+  IS_DFTU=true
+  echo "DFT+U test detected: will handle occ_mat.txt files"
 fi
 
 # -------------------------------------------------------
@@ -74,18 +74,18 @@ cp "${TEST_DIR}/STRU" "${SCF_DIR}/STRU"
 
 # Copy KPT to SCF directory (if exists)
 if [ -f "${TEST_DIR}/KPT" ]; then
-    cp "${TEST_DIR}/KPT" "${SCF_DIR}/KPT"
+  cp "${TEST_DIR}/KPT" "${SCF_DIR}/KPT"
 fi
 
 # Generate SCF INPUT from NSCF INPUT
 # Key changes: calculation=scf, init_chg=atomic, remove nscf-specific params
 SCF_INPUT="${SCF_DIR}/INPUT"
 cat "${TEST_DIR}/INPUT" | sed \
-    -e 's/calculation\s*nscf/calculation    scf/' \
-    -e 's/init_chg\s*file/init_chg    atomic/' \
-    -e '/read_file_dir/d' \
-    -e '/out_band/d' \
-    > "${SCF_INPUT}"
+  -e 's/calculation\s*nscf/calculation    scf/' \
+  -e 's/init_chg\s*file/init_chg    atomic/' \
+  -e '/read_file_dir/d' \
+  -e '/out_band/d' \
+  >"${SCF_INPUT}"
 
 echo ""
 echo "--- SCF INPUT ---"
@@ -98,11 +98,11 @@ echo "-----------------"
 echo ""
 echo "[1/4] Running SCF calculation..."
 cd "${SCF_DIR}"
-mpirun -np ${MPI_NP} "${ABACUS}" > scf.log 2>&1 || {
-    echo "ERROR: SCF calculation failed!"
-    echo "Check ${SCF_DIR}/scf.log for details"
-    cd "${TEST_DIR}"
-    exit 1
+mpirun -np ${MPI_NP} "${ABACUS}" >scf.log 2>&1 || {
+  echo "ERROR: SCF calculation failed!"
+  echo "Check ${SCF_DIR}/scf.log for details"
+  cd "${TEST_DIR}"
+  exit 1
 }
 cd "${TEST_DIR}"
 
@@ -123,8 +123,8 @@ NSCF_SUFFIX=${NSCF_SUFFIX:-OUT}
 # Find charge density file (pattern: *-CHARGE-DENSITY.restart or *-CHARGE-DENSITY)
 CHG_FILE=$(find "${SCF_OUT}" -name "*CHARGE-DENSITY*" 2>/dev/null | head -1)
 if [ -z "${CHG_FILE}" ]; then
-    echo "ERROR: No charge density file found in ${SCF_OUT}"
-    exit 1
+  echo "ERROR: No charge density file found in ${SCF_OUT}"
+  exit 1
 fi
 
 CHG_BASENAME=$(basename "${CHG_FILE}")
@@ -138,23 +138,23 @@ echo "  Copied to: ${TEST_DIR}/${NSCF_CHG_FILE}"
 # For DFT+U tests, also copy occ_mat.txt if it exists.
 # occ_mat.txt is read from read_file_dir (global_readin_dir), same as charge density
 if [ "${IS_DFTU}" = true ]; then
-    ONSITE_FILE=$(find "${SCF_OUT}" -name "occ_mat.txt" 2>/dev/null | head -1)
-    if [ -n "${ONSITE_FILE}" ]; then
-        cp "${ONSITE_FILE}" "${TEST_DIR}/occ_mat.txt"
-        echo "  Copied occ_mat.txt to: ${TEST_DIR}/occ_mat.txt"
-    else
-        echo "  WARNING: occ_mat.txt not found in SCF output"
-    fi
+  ONSITE_FILE=$(find "${SCF_OUT}" -name "occ_mat.txt" 2>/dev/null | head -1)
+  if [ -n "${ONSITE_FILE}" ]; then
+    cp "${ONSITE_FILE}" "${TEST_DIR}/occ_mat.txt"
+    echo "  Copied occ_mat.txt to: ${TEST_DIR}/occ_mat.txt"
+  else
+    echo "  WARNING: occ_mat.txt not found in SCF output"
+  fi
 fi
 
 # -------------------------------------------------------
 # Step 4: Run NSCF calculation
 # -------------------------------------------------------
 echo "[3/4] Running NSCF calculation..."
-mpirun -np ${MPI_NP} "${ABACUS}" > nscf.log 2>&1 || {
-    echo "ERROR: NSCF calculation failed!"
-    echo "Check ${TEST_DIR}/nscf.log for details"
-    exit 1
+mpirun -np ${MPI_NP} "${ABACUS}" >nscf.log 2>&1 || {
+  echo "ERROR: NSCF calculation failed!"
+  echo "Check ${TEST_DIR}/nscf.log for details"
+  exit 1
 }
 
 # -------------------------------------------------------
@@ -166,8 +166,8 @@ NSF_OUT="${TEST_DIR}/${NSCF_SUFFIX}"
 
 # Check if output directory exists
 if [ ! -d "${NSF_OUT}" ]; then
-    echo "WARNING: Output directory ${NSF_OUT} not found"
-    exit 1
+  echo "WARNING: Output directory ${NSF_OUT} not found"
+  exit 1
 fi
 
 # Print summary
@@ -181,25 +181,25 @@ echo ""
 
 # Print energy from SCF
 if [ -f "${SCF_OUT}/running_scf.log" ]; then
-    echo "SCF final energy:"
-    grep "!FINAL ENERGY" "${SCF_OUT}/running_scf.log" | tail -1 || echo "  (not found)"
+  echo "SCF final energy:"
+  grep "!FINAL ENERGY" "${SCF_OUT}/running_scf.log" | tail -1 || echo "  (not found)"
 fi
 
 # Print magnetic moments from NSCF
 if [ -f "${NSF_OUT}/running_scf.log" ] || [ -f "${NSF_OUT}/running_nscf.log" ]; then
-    echo ""
-    echo "NSCF magnetic moments:"
-    grep -A 1 "TOTAL MAGNETISM" "${NSF_OUT}/running_scf.log" 2>/dev/null | tail -3 || \
-    grep -A 1 "TOTAL MAGNETISM" "${NSF_OUT}/running_nscf.log" 2>/dev/null | tail -3 || \
+  echo ""
+  echo "NSCF magnetic moments:"
+  grep -A 1 "TOTAL MAGNETISM" "${NSF_OUT}/running_scf.log" 2>/dev/null | tail -3 ||
+    grep -A 1 "TOTAL MAGNETISM" "${NSF_OUT}/running_nscf.log" 2>/dev/null | tail -3 ||
     echo "  (not found)"
 fi
 
 # Print lambda if DeltaSpin
 if grep -q "sc_mag_switch" "${TEST_DIR}/INPUT" 2>/dev/null; then
-    echo ""
-    echo "NSCF lambda values:"
-    grep "lambda" "${NSF_OUT}/running_scf.log" 2>/dev/null | tail -3 || \
-    grep "lambda" "${NSF_OUT}/running_nscf.log" 2>/dev/null | tail -3 || \
+  echo ""
+  echo "NSCF lambda values:"
+  grep "lambda" "${NSF_OUT}/running_scf.log" 2>/dev/null | tail -3 ||
+    grep "lambda" "${NSF_OUT}/running_nscf.log" 2>/dev/null | tail -3 ||
     echo "  (not found)"
 fi
 

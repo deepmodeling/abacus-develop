@@ -1,28 +1,25 @@
 #ifndef ABACUS_SOURCE_HAMILT_MODULE_GINT_GINT_H
 #define ABACUS_SOURCE_HAMILT_MODULE_GINT_GINT_H
 
-#include <cassert>
-#include <memory>
 #include "gint_info.h"
 #include "gint_type.h"
+#include <cassert>
+#include <memory>
 
 namespace ModuleGint
 {
 
 class Gint
 {
-    public:
+  public:
     Gint() = default;
     virtual ~Gint() = default;
 
     // note that gint_info_ is a static member variable
     // it is shared by all instances of Gint
-    static void set_gint_info(GintInfo* gint_info)
-    {
-        gint_info_ = gint_info;
-    }
+    static void set_gint_info(GintInfo *gint_info) { gint_info_ = gint_info; }
 
-    static const GintInfo& get_gint_info()
+    static const GintInfo &get_gint_info()
     {
         // set_gint_info() must have been called by the owning ESolver before any
         // grid integration runs; dereferencing a null gint_info_ here would be UB.
@@ -30,10 +27,10 @@ class Gint
         return *gint_info_;
     }
 
-    protected:
-    static GintInfo* gint_info_;
+  protected:
+    static GintInfo *gint_info_;
 };
 
-}
+} // namespace ModuleGint
 
 #endif // ABACUS_SOURCE_HAMILT_MODULE_GINT_GINT_H

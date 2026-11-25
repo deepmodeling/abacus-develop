@@ -8,6 +8,8 @@
 #include "../../lcao_nonlocal_info.h"
 
 #ifdef __CUDA
+#include "source_base/basis_flattened_indexing.h"
+#include "source_basis/module_ao/elem_basis_idx_orb.h"
 #include "source_lcao/module_rt/kernels/snap_psibeta_gpu.h"
 #include <cuda_runtime.h>
 #endif
@@ -207,6 +209,12 @@ void compare_cpu_and_gpu_overlap(const LCAO_Orbitals& orb,
 
     const auto* lcao_nl = dynamic_cast<const LCAONonlocalInfo*>(ucell.infoNL.get());
     ASSERT_NE(lcao_nl, nullptr);
+    const ModuleBase::Element_Basis_Index::Range range =
+        ModuleBase::Element_Basis_Index::construct_range(orb);
+    const ModuleBase::Element_Basis_Index::IndexLNM hierarchy =
+        ModuleBase::Element_Basis_Index::construct_index(range);
+    const std::vector<int> atom_types(ucell.nat, 0);
+    const BasisFlattenedIndexing basis(hierarchy, atom_types, ucell.get_npol());
     module_rt::gpu::init_snap_psibeta_gpu();
     module_rt::gpu::snap_psibeta_atom_batch_gpu(orb,
                                                 lcao_nl->get_nonlocal(),
@@ -215,7 +223,8 @@ void compare_cpu_and_gpu_overlap(const LCAO_Orbitals& orb,
                                                 vector_potential,
                                                 adjs,
                                                 &ucell,
-                                                &pv,
+                                                basis,
+                                                pv.para_2d(),
                                                 1,
                                                 nlm_dim,
                                                 gpu_nlm);
@@ -314,7 +323,7 @@ class SnapPsibetaHalfTddftTest : public ::testing::Test
         atom.set_index();
         ucell.itia2iat(0, 0) = 0;
         ucell.set_iat2iwt(1);
-        pv.set_serial(atom.nw, atom.nw);
+        pv.para_2d().set_serial(atom.nw, atom.nw);
         pv.set_atomic_trace(ucell.get_iat2iwt(), ucell.nat, atom.nw);
 
         Pseudopot_upf pseudo_reader;
@@ -356,7 +365,7 @@ class SnapPsibetaHalfTddftTest : public ::testing::Test
 
     void initialize_r_overlap_reference()
     {
-        r_calculator.init_nonlocal(ucell, pv, orb, false, ucell.atoms[0].nw);
+        r_calculator.init_nonlocal(ucell, pv.para_2d(), orb, false, ucell.atoms[0].nw);
     }
 
     ComparisonStats compare_zero_vector_potential(const int radial_grid_num, const int lebedev_grid_points)
@@ -405,7 +414,7 @@ class SnapPsibetaNonuniformHalfTddftTest : public ::testing::Test
         atom.set_index();
         ucell.itia2iat(0, 0) = 0;
         ucell.set_iat2iwt(1);
-        pv.set_serial(atom.nw, atom.nw);
+        pv.para_2d().set_serial(atom.nw, atom.nw);
         pv.set_atomic_trace(ucell.get_iat2iwt(), ucell.nat, atom.nw);
 
         Pseudopot_upf pseudo_reader;
@@ -438,7 +447,7 @@ class SnapPsibetaNonuniformHalfTddftTest : public ::testing::Test
         lcao_nl->get_nonlocal().set_rcutmax_Beta(lcao_nl->get_nonlocal().get_Beta(0).get_rcut_max());
         ucell.infoNL.reset(lcao_nl);
 
-        r_calculator.init_nonlocal(ucell, pv, orb, false, atom.nw);
+        r_calculator.init_nonlocal(ucell, pv.para_2d(), orb, false, atom.nw);
     }
 
     LCAO_Orbitals orb;

@@ -1,44 +1,40 @@
 #ifndef ABACUS_SOURCE_HAMILT_MODULE_GINT_KERNEL_GINT_GPU_VARS_H
 #define ABACUS_SOURCE_HAMILT_MODULE_GINT_KERNEL_GINT_GPU_VARS_H
 
-
-#include <cuda_runtime.h>
 #include "set_const_mem.cuh"
+#include "source_basis/module_ao/orb_atomic.h"
 #include "source_cell/unitcell.h"
 #include "source_hamilt/module_gint/biggrid_info.h"
-#include "source_basis/module_ao/orb_atomic.h"
+#include <cuda_runtime.h>
 
 namespace ModuleGint
 {
 
 class GintGpuVars
 {
-    public:
-    GintGpuVars(std::shared_ptr<const BigGridInfo> bgrid_info,
-                const UnitCell& ucell,
-                const Numerical_Orbital* Phi);
+  public:
+    GintGpuVars(std::shared_ptr<const BigGridInfo> bgrid_info, const UnitCell &ucell, const Numerical_Orbital *Phi);
     ~GintGpuVars();
-    
+
     int nwmax;
     double dr_uniform;
     double nr_max;
-    double* rcut_d = nullptr;
-    int* atom_nw_d = nullptr;
-    int* ucell_atom_nwl_d = nullptr;
-    bool* atom_iw2_new_d = nullptr;
-    int* atom_iw2_ylm_d = nullptr;
-    int* atom_iw2_l_d = nullptr;
-    double* psi_u_d = nullptr;
-    double* dpsi_u_d = nullptr;
-    double* d2psi_u_d = nullptr;
-    double3* mgrids_pos_d = nullptr;
-    int* iat2it_d = nullptr;
+    double *rcut_d = nullptr;
+    int *atom_nw_d = nullptr;
+    int *ucell_atom_nwl_d = nullptr;
+    bool *atom_iw2_new_d = nullptr;
+    int *atom_iw2_ylm_d = nullptr;
+    int *atom_iw2_l_d = nullptr;
+    double *psi_u_d = nullptr;
+    double *dpsi_u_d = nullptr;
+    double *d2psi_u_d = nullptr;
+    double3 *mgrids_pos_d = nullptr;
+    int *iat2it_d = nullptr;
 
     // the index of gpu device
     int dev_id_ = 0;
-
 };
 
-}
+} // namespace ModuleGint
 
 #endif // ABACUS_SOURCE_HAMILT_MODULE_GINT_KERNEL_GINT_GPU_VARS_H

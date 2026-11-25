@@ -3,6 +3,8 @@
 #include "source_io/module_mulliken/output_sk.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/formatter.h"
+#include "source_io/module_output/provenance_header.h"
+#include "source_io/module_output/write_notice.h"
 #include "source_base/name_angular.h"
 #include "source_base/module_external/scalapack_connector.h"
 #include "source_base/tool_quit.h"
@@ -11,6 +13,69 @@
 
 namespace ModuleIO
 {
+
+void collect_MW_nspin4(ModuleBase::matrix& MecMulP,
+                       const ModuleBase::ComplexMatrix& mud,
+                       int nw,
+                       const Parallel_Orbitals* pv)
+{
+    for (size_t i = 0; i < nw; ++i)
+    {
+        const int index = i % 2;
+        if (!index)
+        {
+            const int j = i / 2;
+            const int k1 = 2 * j;
+            const int k2 = 2 * j + 1;
+            if (pv->para_2d().in_this_processor(k1, k1))
+            {
+                const int ir = pv->para_2d().irloc(k1);
+                const int ic = pv->para_2d().icloc(k1);
+                MecMulP(0, j) += mud(ic, ir).real();
+                MecMulP(3, j) += mud(ic, ir).real();
+            }
+            // mud is DM*S^T with the conj-first density matrix built by
+            // dm_from_psi (DM_{ab} = sum_n w_n conj(c_{n,a}) c_{n,b}), i.e.
+            // DM = conj(P) for the physical one-body density matrix P. The
+            // up-down spin block therefore satisfies mud_{up,down} =
+            // conj(Q_{up,down}) for the physical Mulliken spin block Q, and
+            // the Pauli decomposition (see module_dm/dm_tools.cpp
+            // xyz_to_updown and module_deltaspin/mi_tools.h pauli_to_moment)
+            // reads
+            //   Mx = Re(mud_{up,down} + mud_{down,up})
+            //   My = Im(mud_{up,down} - mud_{down,up})
+            //   Mz = Re(mud_{up,up} - mud_{down,down}).
+            // Historically My was accumulated as
+            // -Im(mud_{up,down}) + Im(mud_{down,up}) = -My, i.e. with the
+            // wrong sign; that pre-existing flip is fixed here (see PR #7832,
+            // which documented it and deferred the fix to a separate PR).
+            if (pv->para_2d().in_this_processor(k1, k2))
+            {
+                const int ir = pv->para_2d().irloc(k1);
+                const int ic = pv->para_2d().icloc(k2);
+                // note that mud is column major
+                MecMulP(1, j) += mud(ic, ir).real();
+                // M_y = Im(mud_{up,down} - mud_{down,up})
+                MecMulP(2, j) += mud(ic, ir).imag();
+            }
+            if (pv->para_2d().in_this_processor(k2, k1))
+            {
+                const int ir = pv->para_2d().irloc(k2);
+                const int ic = pv->para_2d().icloc(k1);
+                MecMulP(1, j) += mud(ic, ir).real();
+                // M_y = Im(mud_{up,down} - mud_{down,up})
+                MecMulP(2, j) -= mud(ic, ir).imag();
+            }
+            if (pv->para_2d().in_this_processor(k2, k2))
+            {
+                const int ir = pv->para_2d().irloc(k2);
+                const int ic = pv->para_2d().icloc(k2);
+                MecMulP(0, j) += mud(ic, ir).real();
+                MecMulP(3, j) -= mud(ic, ir).real();
+            }
+        }
+    }
+}
 
 template <typename TK>
 Output_Mulliken<TK>::Output_Mulliken(Output_Sk<TK>* output_sk,
@@ -28,21 +93,31 @@ Output_Mulliken<TK>::Output_Mulliken(Output_Sk<TK>* output_sk,
 }
 
 template <typename TK>
-void Output_Mulliken<TK>::write(int istep, std::string out_dir)
+void Output_Mulliken<TK>::write(int istep, int out_app_flag, std::string out_dir, std::ofstream& ofs_running)
 {
     std::vector<double> tot_chg = this->get_tot_chg();
     std::vector<std::vector<double>> atom_chg = this->get_atom_chg();
     std::map<std::vector<int>, double> orb_chg = this->get_orb_chg();
     std::stringstream as;
-    as << out_dir << "mulliken.txt";
-    std::ofstream os;
-    if (istep == 0)
+    as << out_dir << "mulliken";
+    // Modes 0 and 1 reuse the fixed filename (mode 0 overwrites, mode 1 appends
+    // each written step); only mode 2 embeds the one-based step number.
+    if (out_app_flag == 2)
     {
-        os.open(as.str(), std::ios::out);
+        as << "g" << istep + 1;
     }
-    else
+    as << ".txt";
+    std::ios_base::openmode mode = std::ios::out;
+    const bool append_step = (out_app_flag == 1) && (istep > 0);
+    if (append_step)
     {
-        os.open(as.str(), std::ios::app);
+        mode |= std::ios::app;
+    }
+    std::ofstream os;
+    os.open(as.str(), mode);
+    if (!os.is_open())
+    {
+        ModuleBase::WARNING_QUIT("Output_Mulliken::write", "Cannot open file: " + as.str());
     }
     if (this->nspin_ == 1)
     {
@@ -61,6 +136,8 @@ void Output_Mulliken<TK>::write(int istep, std::string out_dir)
         ModuleBase::WARNING_QUIT("Output_Mulliken::write", "nspin must be 1, 2 or 4");
     }
     os.close();
+
+    ModuleIO::write_notice(ofs_running, "Mulliken population", as.str());
 }
 
 template <typename TK>
@@ -72,7 +149,9 @@ void Output_Mulliken<TK>::write_mulliken_nspin1(int istep,
 {
     os << std::setprecision(4);
     /// step info
-    os << " --- Ionic Step " << istep+1 << " ---" << std::endl;
+    const std::string time_stamp = ModuleIO::local_timestamp();
+    const int istep_one_based = istep + 1;
+    os << ModuleIO::prov_step(istep_one_based, time_stamp);
     os << " Total charge " << tot_chg[0] << std::endl;
     /// orbital decomposed mulliken populations
     FmtCore fmt_of_chg("%10.4f");
@@ -143,7 +222,9 @@ void Output_Mulliken<TK>::write_mulliken_nspin2(int istep,
 {
     os << std::setprecision(4);
     /// step info
-    os << " --- Ionic Step " << istep+1 << " ---" << std::endl;
+    const std::string time_stamp = ModuleIO::local_timestamp();
+    const int istep_one_based = istep + 1;
+    os << ModuleIO::prov_step(istep_one_based, time_stamp);
     os << " Total charge " << tot_chg[0] + tot_chg[1] << std::endl;
     os << " Total charge of spin1 " << tot_chg[0] << std::endl;
     os << " Total charge of spin2 " << tot_chg[1] << std::endl;
@@ -236,7 +317,9 @@ void Output_Mulliken<TK>::write_mulliken_nspin4(int istep,
 {
     os << std::setprecision(4);
     /// step info
-    os << " --- Ionic Step " << istep+1 << " ---" << std::endl;
+    const std::string time_stamp = ModuleIO::local_timestamp();
+    const int istep_one_based = istep + 1;
+    os << ModuleIO::prov_step(istep_one_based, time_stamp);
     os << " Total charge " << tot_chg[0] << std::endl;
     /// orbital decomposed mulliken populations
     FmtCore fmt_of_chg("%10.4f");
@@ -333,7 +416,7 @@ template <typename TK>
 void Output_Mulliken<TK>::set_ParaV(Parallel_Orbitals* ParaV_in)
 {
     this->ParaV_ = ParaV_in;
-    int nloc = this->ParaV_->nloc;
+    int nloc = this->ParaV_->para_2d().size();
     if (nloc <= 0)
     {
         ModuleBase::WARNING_QUIT("SpinConstrain::set_ParaV", "nloc <= 0");
@@ -413,62 +496,17 @@ void Output_Mulliken<TK>::collect_MW(ModuleBase::matrix& MecMulP, const ModuleBa
     {
         for (size_t i = 0; i < nw; ++i)
         {
-            if (this->ParaV_->in_this_processor(i, i))
+            if (this->ParaV_->para_2d().in_this_processor(i, i))
             {
-                const int ir = this->ParaV_->global2local_row(i);
-                const int ic = this->ParaV_->global2local_col(i);
+                const int ir = this->ParaV_->para_2d().irloc(i);
+                const int ic = this->ParaV_->para_2d().icloc(i);
                 MecMulP(isk, i) += mud(ic, ir).real();
             }
         }
     }
     else if (this->nspin_ == 4)
     {
-        for (size_t i = 0; i < nw; ++i)
-        {
-            const int index = i % 2;
-            if (!index)
-            {
-                const int j = i / 2;
-                const int k1 = 2 * j;
-                const int k2 = 2 * j + 1;
-                if (this->ParaV_->in_this_processor(k1, k1))
-                {
-                    const int ir = this->ParaV_->global2local_row(k1);
-                    const int ic = this->ParaV_->global2local_col(k1);
-                    MecMulP(0, j) += mud(ic, ir).real();
-                    MecMulP(3, j) += mud(ic, ir).real();
-                }
-                // WARNING (pre-existing, predates #7664, since 3.7.0 commit a339356): this M_y sign
-                // is suspect. mud is DM.S with the same conj-first DM convention as dm_from_psi, so the
-                // bare Im formula here likely yields -m_y. It must NOT be used as an oracle for the DM
-                // convention (it is probably why #7664's DM m_y flip went unnoticed). Fix + unit test
-                // should be a separate PR after verifying against a case with nonzero in-plane moment.
-                if (this->ParaV_->in_this_processor(k1, k2))
-                {
-                    const int ir = this->ParaV_->global2local_row(k1);
-                    const int ic = this->ParaV_->global2local_col(k2);
-                    // note that mud is column major
-                    MecMulP(1, j) += mud(ic, ir).real();
-                    // M_y = i(M_{up,down} - M_{down,up}) = -(M_{up,down} - M_{down,up}).imag()
-                    MecMulP(2, j) -= mud(ic, ir).imag();
-                }
-                if (this->ParaV_->in_this_processor(k2, k1))
-                {
-                    const int ir = this->ParaV_->global2local_row(k2);
-                    const int ic = this->ParaV_->global2local_col(k1);
-                    MecMulP(1, j) += mud(ic, ir).real();
-                    // M_y = i(M_{up,down} - M_{down,up}) = -(M_{up,down} - M_{down,up}).imag()
-                    MecMulP(2, j) += mud(ic, ir).imag();
-                }
-                if (this->ParaV_->in_this_processor(k2, k2))
-                {
-                    const int ir = this->ParaV_->global2local_row(k2);
-                    const int ic = this->ParaV_->global2local_col(k2);
-                    MecMulP(0, j) += mud(ic, ir).real();
-                    MecMulP(3, j) -= mud(ic, ir).real();
-                }
-            }
-        }
+        collect_MW_nspin4(MecMulP, mud, nw, this->ParaV_);
     }
 }
 
@@ -585,7 +623,7 @@ void Output_Mulliken<std::complex<double>>::cal_orbMulP()
     {
         auto p_Sk = this->output_sk_->get_Sk(ik);
         auto p_DMk = this->output_dmk_->get_dmk(ik);
-        ModuleBase::ComplexMatrix mud(this->ParaV_->ncol, this->ParaV_->nrow, true);
+        ModuleBase::ComplexMatrix mud(this->ParaV_->para_2d().ncloc(), this->ParaV_->para_2d().nrloc(), true);
 #ifdef __MPI
         const char T_char = 'T';
         const char N_char = 'N';
@@ -600,16 +638,16 @@ void Output_Mulliken<std::complex<double>>::cal_orbMulP()
                 p_DMk,
                 one_int,
                 one_int,
-                this->ParaV_->desc,
+                this->ParaV_->para_2d().desc(),
                 p_Sk,
                 one_int,
                 one_int,
-                this->ParaV_->desc,
+                this->ParaV_->para_2d().desc(),
                 zero_float,
                 mud.c,
                 one_int,
                 one_int,
-                this->ParaV_->desc);
+                this->ParaV_->para_2d().desc());
         this->collect_MW(MecMulP, mud, nw, this->isk_[ik]);
 #endif
     }
@@ -635,7 +673,7 @@ void Output_Mulliken<double>::cal_orbMulP()
         ModuleBase::matrix mud;
         auto p_Sk = this->output_sk_->get_Sk(is);
         auto p_DMk = this->output_dmk_->get_dmk(is);
-        mud.create(this->ParaV_->ncol, this->ParaV_->nrow);
+        mud.create(this->ParaV_->para_2d().ncloc(), this->ParaV_->para_2d().nrloc());
 #ifdef __MPI
         const char T_char = 'T';
         const char N_char = 'N';
@@ -650,23 +688,23 @@ void Output_Mulliken<double>::cal_orbMulP()
                 p_DMk,
                 one_int,
                 one_int,
-                this->ParaV_->desc,
+                this->ParaV_->para_2d().desc(),
                 p_Sk,
                 one_int,
                 one_int,
-                this->ParaV_->desc,
+                this->ParaV_->para_2d().desc(),
                 zero_float,
                 mud.c,
                 one_int,
                 one_int,
-                this->ParaV_->desc);
+                this->ParaV_->para_2d().desc());
         if (this->nspin_ == 1 || this->nspin_ == 2)
         {
             for (size_t i = 0; i != nw; ++i)
-                if (this->ParaV_->in_this_processor(i, i))
+                if (this->ParaV_->para_2d().in_this_processor(i, i))
                 {
-                    const int ir = this->ParaV_->global2local_row(i);
-                    const int ic = this->ParaV_->global2local_col(i);
+                    const int ir = this->ParaV_->para_2d().irloc(i);
+                    const int ic = this->ParaV_->para_2d().icloc(i);
                     MecMulP(is, i) += mud(ic, ir);
                 }
         }

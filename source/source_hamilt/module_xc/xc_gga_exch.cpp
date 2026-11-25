@@ -33,8 +33,8 @@ void XC_Functional::becke88(
     double dd = 1.00 + 6.00 * beta * xs * shm1;
     double dd2 = dd * dd;
     double ee = 6.00 * beta * xs2 / sa2b8 - 1.0;
-    sx = two13 * grho / rho43 * (- beta / dd);
-    v1x = - (4.0 / 3.0) / two13 * xs2 * beta * rho13 * ee / dd2;
+    sx = two13 * grho / rho43 * (-beta / dd);
+    v1x = -(4.0 / 3.0) / two13 * xs2 * beta * rho13 * ee / dd2;
     v2x = two13 * beta * (ee - dd) / (rho43 * dd2);
 
     return;
@@ -58,12 +58,12 @@ void XC_Functional::ggax(
     const double fp1 = -0.0192920212964260;
     const double fp2 = 0.1616204596739950;
     // fp1 = -3/(16 pi)*(3 pi^2)^(-1/3)
-    double rhom43 = pow(rho, (- 4.0 / 3.0));
+    double rhom43 = pow(rho, (-4.0 / 3.0));
     double s = fp2 * sqrt(grho) * rhom43;
     double s2 = s * s;
     double s3 = s2 * s;
     double s4 = s2 * s2;
-    double exps = f4 * exp(- 100.0 * s2);
+    double exps = f4 * exp(-100.0 * s2);
     double as = f3 - exps - f5 * s2;
     double sa2b8 = sqrt(1.00 + f2 * f2 * s2);
     double shm1 = log(f2 * s + sa2b8);
@@ -73,11 +73,11 @@ void XC_Functional::ggax(
     double dls = (das / as - dbs / bs);
 
     sx = fp1 * grho * rhom43 * as / bs;
-    v1x = - 4.0 / 3.0 * sx / rho * (1.0 + s * dls);
+    v1x = -4.0 / 3.0 * sx / rho * (1.0 + s * dls);
     v2x = fp1 * rhom43 * as / bs * (2.0 + s * dls);
 
     return;
-} //end subroutine ggax
+} // end subroutine ggax
 
 void XC_Functional::pbex(
     const double &rho,
@@ -109,22 +109,23 @@ void XC_Functional::pbex(
     const double c2 = 3.0936677262801360;
     const double c5 = 4.0 * third;
     // parameters of the functional
-    double k[3] = { 0.8040, 1.24500, 0.8040 };
-    const double mu[3] = {0.2195149727645171, 0.2195149727645171, 0.12345679012345679} ;//modified by zhengdy, to ensure the same parameters with another dft code.
+    double k[3] = {0.8040, 1.24500, 0.8040};
+    const double mu[3] = {0.2195149727645171, 0.2195149727645171,
+        0.12345679012345679}; // modified by zhengdy, to ensure the same parameters with another dft code.
 
     const double agrho = sqrt(grho);
     const double kf = c2 * pow(rho, third);
     const double dsg = 0.50 / kf;
     const double s1 = agrho * dsg / rho;
     const double s2 = s1 * s1;
-    const double ds = - c5 * s1;
+    const double ds = -c5 * s1;
 
     // Energy
-    const double f1 = s2 * mu[iflag] / k [iflag];
+    const double f1 = s2 * mu[iflag] / k[iflag];
     const double f2 = 1.0 + f1;
-    const double f3 = k [iflag] / f2;
-    const double fx = k [iflag] - f3;
-    const double exunif = - c1 * kf;
+    const double f3 = k[iflag] / f2;
+    const double fx = k[iflag] - f3;
+    const double exunif = -c1 * kf;
     sx = exunif * fx;
 
     // Potential
@@ -180,7 +181,7 @@ void XC_Functional::optx(
     }
     else
     {
-        double gr = (grho > smal2) ? grho : smal2;    //max()
+        double gr = (grho > smal2) ? grho : smal2; // max()
         double rho43 = pow(rho, o43);
         double xa = two13 * sqrt(gr) / rho43;
         double gamx2 = gam * xa * xa;
@@ -190,7 +191,7 @@ void XC_Functional::optx(
         sx = -rho43 * (a1cx + uu) / two13;
         v1x = o43 * (sx + two53 * uden) / rho;
         v2x = -two53 * uden / gr;
-    } //endif
+    } // endif
 
     return;
 } // end subroutine optx
@@ -203,7 +204,7 @@ void XC_Functional::wcx(
     double &v2x)
 {
     // numerical coefficients (NB: c2=(3 pi^2)^(1/3) )
-    const double third = 1.0/3.0;
+    const double third = 1.0 / 3.0;
     const double c1 = 0.75 / ModuleBase::PI;
     const double c2 = 3.093667726280136;
     const double c5 = 4.0 * third;
@@ -213,13 +214,13 @@ void XC_Functional::wcx(
     const double mu = 0.2195149727645171;
     const double cwc = 0.00793746933516;
 
-    const double agrho = sqrt (grho);
-    const double kf = c2 * pow(rho,third);
+    const double agrho = sqrt(grho);
+    const double kf = c2 * pow(rho, third);
     const double dsg = 0.5 / kf;
     const double s1 = agrho * dsg / rho;
     const double s2 = s1 * s1;
     const double es2 = exp(-s2);
-    const double ds = - c5 * s1;
+    const double ds = -c5 * s1;
     //
     //   Energy
     //
@@ -231,7 +232,7 @@ void XC_Functional::wcx(
     const double f2 = 1.0 + f1;
     const double f3 = k / f2;
     const double fx = k - f3;
-    const double exunif = - c1 * kf;
+    const double exunif = -c1 * kf;
     sx = exunif * fx;
     //
     //   Potential
@@ -240,7 +241,7 @@ void XC_Functional::wcx(
     const double dfx1 = f2 * f2;
     const double dxds1 = teneightyone;
     const double dxds2 = (mu - teneightyone) * es2 * (1.0 - s2);
-    const double dxds3 = 2.0 * cwc * s2 / (1.0 + cwc * s2 *s2);
+    const double dxds3 = 2.0 * cwc * s2 / (1.0 + cwc * s2 * s2);
     const double dfx = 2.0 * s1 * (dxds1 + dxds2 + dxds3) / dfx1;
     v1x = sx + dxunif * fx + exunif * dfx * ds;
     v2x = exunif * dfx * dsg / agrho;
@@ -279,9 +280,9 @@ void XC_Functional::becke88_spin(
     double dd = 1.00 + 6.00 * beta * xs * shm1;
     double dd2 = dd * dd;
     double ee = 6.00 * beta * xs2 / sa2b8 - 1.0;
-    sx = grho / rho43 * (- beta / dd);
-    v1x = - (4.0 / 3.0) * xs2 * beta * rho13 * ee / dd2;
+    sx = grho / rho43 * (-beta / dd);
+    v1x = -(4.0 / 3.0) * xs2 * beta * rho13 * ee / dd2;
     v2x = beta * (ee - dd) / (rho43 * dd2);
 
     return;
-} //end subroutine becke88_spin
+} // end subroutine becke88_spin

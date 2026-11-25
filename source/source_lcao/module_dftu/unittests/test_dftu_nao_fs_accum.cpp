@@ -30,7 +30,7 @@ class DftuFsAccumTest : public ::testing::Test
     void SetUp() override
     {
         // 2 atoms, 3x3 serial local block with identity local<->global map
-        pv.set_serial(3, 3);
+        pv.para_2d().set_serial(3, 3);
 
         // iwt2iat: orbital 0,1 -> atom 0; orbital 2 -> atom 1
         ucell.iwt2iat = {0, 0, 1};

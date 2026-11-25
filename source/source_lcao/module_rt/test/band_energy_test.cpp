@@ -27,11 +27,11 @@ class BandEnergyTest : public testing::Test
         // Reuse the existing test executable's 1x1 BLACS grid.
         ASSERT_EQ(nprow, 1);
         ASSERT_EQ(npcol, 1);
-        ASSERT_EQ(pv.set(nlocal, nlocal, 1, ictxt), 0);
+        ASSERT_EQ(pv.para_2d().set(nlocal, nlocal, 1, ictxt), 0);
         pv.ncol_bands = nband;
         pv.nrow_bands = nband;
         pv.nloc_wfc = nlocal * nband;
-        pv.set_desc_wfc_Eij(nlocal, nband, nlocal);
+        pv.set_wfc_and_mo_layouts(nlocal, nband);
 
         // Identity columns make Eij the leading 3x3 block of this column-major H.
         // The fourth basis function also exercises the LAPACK output stride.
@@ -86,13 +86,22 @@ class BandEnergyTest : public testing::Test
 
 TEST_F(BandEnergyTest, ComplexEijScalapack)
 {
-    module_rt::compute_ekb(&pv, nband, nlocal, h.data<Complex>(), psi.data<Complex>(), energies.data<double>(), output, output_info);
+    module_rt::compute_ekb(pv.para_2d(),
+                           pv.wfc_layout(),
+                           pv.mo_repr_layout(),
+                           nband,
+                           nlocal,
+                           h.data<Complex>(),
+                           psi.data<Complex>(),
+                           energies.data<double>(),
+                           output,
+                           output_info);
     check_result();
 }
 
 TEST_F(BandEnergyTest, ComplexEijLapack)
 {
-    module_rt::compute_ekb_tensor_lapack<base_device::DEVICE_CPU>(&pv, nband, nlocal, h, psi, energies, output, output_info);
+    module_rt::compute_ekb_tensor_lapack<base_device::DEVICE_CPU>(nband, nlocal, h, psi, energies, output, output_info);
     check_result();
 }
 } // namespace

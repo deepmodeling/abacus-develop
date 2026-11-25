@@ -1,7 +1,7 @@
-AddTest(
+addtest(
   TARGET MODULE_BASE_container_ops_uts
   LIBS parameter
-  SOURCES einsum_op_test.cpp linalg_op_test.cpp ../../kernels/lapack.cpp
-)
+  SOURCES einsum_op_test.cpp linalg_op_test.cpp ../../kernels/lapack.cpp)
 
-target_link_libraries(MODULE_BASE_container_ops_uts PRIVATE container base device)
+target_link_libraries(MODULE_BASE_container_ops_uts PRIVATE container base
+                                                            device)

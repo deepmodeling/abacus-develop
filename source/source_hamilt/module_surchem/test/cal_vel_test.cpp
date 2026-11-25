@@ -51,7 +51,7 @@ TEST_F(cal_vel_test, shape_gradn)
     double TWO_PI = 6.283;
     double sigma_k = 0.6;
     double nc_k = 3.7e-04;
-    double* PS_TOTN_real = new double[nrxx];
+    double *PS_TOTN_real = new double[nrxx];
     ModuleBase::GlobalFunc::ZEROS(PS_TOTN_real, nrxx);
 
     PS_TOTN_real[0] = 2.081e-03;
@@ -65,7 +65,7 @@ TEST_F(cal_vel_test, shape_gradn)
     double epr_c = 1.0 / sqrt(TWO_PI) / sigma_k;
     double epr_z = 0;
     double min = 1e-10;
-    double* eprime = new double[nrxx];
+    double *eprime = new double[nrxx];
 
     for (int ir = 0; ir < nrxx; ir++)
     {
@@ -115,9 +115,9 @@ TEST_F(cal_vel_test, eps_pot)
 
     const int npw = pwtest.npw;
     const int nrxx = pwtest.nrxx;
-    double* vwork = new double[nrxx];
-    double* eprime = new double[nrxx];
-    double* PS_TOTN_real = new double[nrxx];
+    double *vwork = new double[nrxx];
+    double *eprime = new double[nrxx];
+    double *PS_TOTN_real = new double[nrxx];
     ModuleBase::GlobalFunc::ZEROS(vwork, nrxx);
     ModuleBase::GlobalFunc::ZEROS(eprime, nrxx);
     ModuleBase::GlobalFunc::ZEROS(PS_TOTN_real, nrxx);
@@ -134,7 +134,7 @@ TEST_F(cal_vel_test, eps_pot)
         eprime[i] = 1;
     }
 
-    std::complex<double>* phi = new std::complex<double>[npw];
+    std::complex<double> *phi = new std::complex<double>[npw];
     phi[0] = {2.116e-05, -9.528e-05};
     phi[1] = {1.608e-04, -1.958e-06};
     phi[2] = {1.500e-05, 7.303e-05};
@@ -148,8 +148,8 @@ TEST_F(cal_vel_test, eps_pot)
         eprime[ir] = eprime[ir] * (80.0 - 1);
     }
 
-    ModuleBase::Vector3<double>* nabla_phi = new ModuleBase::Vector3<double>[nrxx];
-    double* phisq = new double[nrxx];
+    ModuleBase::Vector3<double> *nabla_phi = new ModuleBase::Vector3<double>[nrxx];
+    double *phisq = new double[nrxx];
 
     XC_Functional::grad_rho(phi, nabla_phi, &pwtest, ucell.tpiba);
 
@@ -183,7 +183,7 @@ TEST_F(cal_vel_test, cal_vel)
     device_flag = "cpu";
 
     ModulePW::PW_Basis pwtest(device_flag, precision_flag);
-    
+
     ModuleBase::Matrix3 latvec;
     int nx, ny, nz; // f*G
     double wfcecut;
@@ -212,8 +212,8 @@ TEST_F(cal_vel_test, cal_vel)
     const int npw = pwtest.npw;
     const int nrxx = pwtest.nrxx;
 
-    std::complex<double>* TOTN = new std::complex<double>[npw];
-    std::complex<double>* PS_TOTN = new std::complex<double>[npw];
+    std::complex<double> *TOTN = new std::complex<double>[npw];
+    std::complex<double> *PS_TOTN = new std::complex<double>[npw];
 
     for (int i = 0; i < npw; i++)
     {
@@ -235,11 +235,25 @@ TEST_F(cal_vel_test, cal_vel)
     EXPECT_NEAR(v_res(0, 0), 0.0532168705, 1e-10);
     EXPECT_NEAR(v_res(0, 1), 0.0447818244, 1e-10);
 
+    // out_sol: cal_vel keeps the dielectric function of this correction.
+    std::vector<double> ps_totn_real(nrxx);
+    pwtest.recip2real(PS_TOTN, ps_totn_real.data());
+    std::vector<double> epsilon(nrxx);
+    std::vector<double> epsilon0(nrxx);
+    solvent_model.cal_epsilon(&pwtest, ps_totn_real.data(), epsilon.data(), epsilon0.data());
+    const std::vector<double> &stored = solvent_model.last_epsilon();
+    ASSERT_EQ(stored.size(), static_cast<std::size_t>(nrxx));
+    for (int ir = 0; ir < nrxx; ++ir)
+    {
+        EXPECT_EQ(stored[ir], epsilon[ir]);
+    }
+    EXPECT_DOUBLE_EQ(solvent_model.bulk_epsilon(), 80.0);
+
     delete[] PS_TOTN;
     delete[] TOTN;
 }
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
 #ifdef __MPI
     MPI_Init(&argc, &argv);

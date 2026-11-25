@@ -28,6 +28,7 @@ class OnsiteProj<OperatorPW<T, Device>> : public OperatorPW<T, Device>
     OnsiteProj(const int* isk_in,
              const UnitCell* ucell_in,
              Plus_U_Base* p_dftu,
+             const int nspin_in,
              const bool cal_delta_spin,
              const bool cal_dftu);
 
@@ -66,6 +67,8 @@ class OnsiteProj<OperatorPW<T, Device>> : public OperatorPW<T, Device>
     const UnitCell* ucell = nullptr;
 
     Plus_U_Base* dftu = nullptr;
+
+    int nspin = 1;
 
     mutable int* ip_iat = nullptr;
     mutable T* lambda_coeff = nullptr;

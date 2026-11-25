@@ -56,7 +56,7 @@ void test_deepks<T>::preparation(const bool use_modern_orbital_reader)
     this->set_orbs(use_modern_orbital_reader);
     this->prep_neighbour();
 
-    this->ParaO.set_serial(this->nlocal, this->nlocal);
+    this->ParaO.para_2d().set_serial(this->nlocal, this->nlocal);
     this->ParaO.nrow_bands = this->nlocal;
     this->ParaO.ncol_bands = this->nbands;
 

@@ -4,6 +4,7 @@
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
 #include "source_base/parallel_reduce.h"
+#include "source_io/module_output/provenance_header.h"
 
 #include <cmath>
 
@@ -24,13 +25,13 @@ void ModuleIO::prepare_dos(std::ofstream& ofs_running,
 {
     ofs_running << "\n >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
     ofs_running << " |                                                                    |" << std::endl;
-    ofs_running << " |               #Calcualte Density of States (DOS)#                  |" << std::endl;                 
+    ofs_running << " |               #Calculate Density of States (DOS)#                  |" << std::endl;
     ofs_running << " | DOS stands for Density of States. It represents the number of      |" << std::endl;
     ofs_running << " | available electronic states per unit energy range.                 |" << std::endl;
     ofs_running << " | By analyzing the DOS, we can gain insights into how electrons are  |" << std::endl;
     ofs_running << " | distributed among different energy levels within the material.     |" << std::endl;
     ofs_running << " |                                                                    |" << std::endl;
-    ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
+    ofs_running << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << std::endl;
 
     ofs_running << std::setprecision(6);
 
@@ -43,9 +44,9 @@ void ModuleIO::prepare_dos(std::ofstream& ofs_running,
     }
     else
     {
-        ModuleBase::GlobalFunc::OUT(ofs_running, "Spin up, Fermi energy (Ry)",
+        ModuleBase::GlobalFunc::OUT(ofs_running, "Spin up, Fermi energy (eV)",
         energy_fermi.ef_up * ModuleBase::Ry_to_eV);
-        ModuleBase::GlobalFunc::OUT(ofs_running, "Spin dw, Fermi energy (Ry)",
+        ModuleBase::GlobalFunc::OUT(ofs_running, "Spin dw, Fermi energy (eV)",
         energy_fermi.ef_dw * ModuleBase::Ry_to_eV);
     }
 
@@ -108,16 +109,21 @@ bool ModuleIO::cal_dos(const int& is,  // index for spin
         const ModuleBase::matrix& ekb, // energy for each k point and each band
         const ModuleBase::matrix& wg,  // weight of k-points and bands
         const int istep, // ionic step
-        const bool out_app_flag,
-        const int bndpar)
+        const int out_app_flag,
+        const int precision,
+        const int bndpar,
+        DosSpectrum* spectrum)
 {
     ModuleBase::TITLE("ModuleIO", "cal_dos");
 
     std::ofstream ofs_dos;
-
-    if (GlobalV::MY_RANK == 0)
+    const bool root = GlobalV::MY_RANK == 0;
+    if (root && !spectrum)
     {
-        if(out_app_flag==true)
+        const std::string time_stamp = ModuleIO::local_timestamp();
+        const int istep_one_based = istep + 1;
+        const bool append_step = (out_app_flag == 1) && (istep > 0);
+        if (append_step)
         {
             ofs_dos.open(fn.c_str(), std::ios::app);
         }
@@ -125,7 +131,7 @@ bool ModuleIO::cal_dos(const int& is,  // index for spin
         {
             ofs_dos.open(fn.c_str());
         }
-        ofs_dos << istep+1 << "    # ionic step" << std::endl;
+        ofs_dos << ModuleIO::prov_step(istep_one_based, time_stamp);
     }
 
 #ifdef __MPI
@@ -151,10 +157,10 @@ bool ModuleIO::cal_dos(const int& is,  // index for spin
         ModuleBase::WARNING("ModuleIO::cal_dos", "npoints <= 0");
         return false;
     }
-    if (GlobalV::MY_RANK == 0)
+    if (root && !spectrum)
     {
         ofs_dos << npoints << " # number of points" << std::endl;
-        ofs_dos << std::fixed << std::setprecision(6);
+        ofs_dos << std::fixed << std::setprecision(precision);
         ofs_dos << "#" << std::setw(12) << "energy(eV)"
                  << std::setw(12) << "dos"
                  << std::setw(12) << "dos_int"
@@ -218,8 +224,9 @@ bool ModuleIO::cal_dos(const int& is,  // index for spin
     double sum2 = 0.0;
     const double dos_thr = 1.0e-12;
 
-    if (GlobalV::MY_RANK == 0)
+    if (root)
     {
+        if (spectrum) { spectrum->resize(npoints); }
         for (int n = 0; n < npoints; ++n)
         {
             dos[n] /= static_cast<double>(nkstot);
@@ -232,17 +239,18 @@ bool ModuleIO::cal_dos(const int& is,  // index for spin
             }
             sum2 += dos_smear[n] * de_ev;
 
+            if (spectrum)
+            {
+                (*spectrum)[n] = {ene[n], dos[n], sum_elec[n], dos_smear[n], sum2};
+                continue;
+            }
             ofs_dos << std::setw(13) << ene[n]
                  << " " << std::setw(12) << dos[n]
                  << " " << std::setw(12) << sum_elec[n]
                  << " " << std::setw(14) << dos_smear[n]
                  << " " << std::setw(14) << sum2 << std::endl;
         }
-    }
-
-    if (GlobalV::MY_RANK == 0)
-    {
-        ofs_dos.close();
+        if (!spectrum) { ofs_dos.close(); }
     }
 
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Number of bands", nbands);

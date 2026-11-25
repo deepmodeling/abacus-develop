@@ -113,6 +113,32 @@ TEST_F(ParaCommon, Bcast)
     }
 }
 
+/**
+ * bcast_mpi_offset broadcasts from the root of the communicator it is given,
+ * not from world rank 0. The MDCell STRU writer relies on this to share the
+ * write position within its own (possibly non-world) communicator.
+ */
+TEST_F(ParaCommon, BcastMPIOffsetOnCommunicator)
+{
+    const int rank = mpiContext.GetRank();
+    const int color = rank % 2;
+    MPI_Comm split_comm = MPI_COMM_NULL;
+    MPI_Comm_split(MPI_COMM_WORLD, color, rank, &split_comm);
+
+    int sub_rank = 0;
+    MPI_Comm_rank(split_comm, &sub_rank);
+    const MPI_Offset expected = static_cast<MPI_Offset>(100 * (color + 1));
+    MPI_Offset offset = 0;
+    if (sub_rank == 0)
+    {
+        offset = expected;
+    }
+    Parallel_Common::bcast_mpi_offset(offset, split_comm);
+    EXPECT_EQ(offset, expected);
+
+    MPI_Comm_free(&split_comm);
+}
+
 int main(int argc, char** argv)
 {
 

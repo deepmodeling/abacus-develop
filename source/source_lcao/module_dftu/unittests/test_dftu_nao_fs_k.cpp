@@ -32,10 +32,10 @@ UnitCell::~UnitCell() {}
  * see the same objects the caller passed in.
  *
  * Note: we allocate the dependency objects on the heap and never destroy
- * them, so the linker never sees references to their (heavy) constructors
- * or destructors. This keeps the test target free of BLACS / neighbor /
- * two-center linkage while still exercising the reference semantics of
- * DftuFsEnv.
+ * them, so the linker never sees references to their (heavy) destructors.
+ * The Parallel_Orbitals object is constructed normally: its default
+ * constructor initializes the distribution member, which a raw
+ * ::operator new allocation would skip.
  ***********************************************************************/
 
 namespace DFTU_LCAO
@@ -54,7 +54,7 @@ class DftuFsKTest : public ::testing::Test
         dftu = static_cast<Plus_U_Base*>(::operator new(sizeof(Plus_U_Base)));
         fsr = static_cast<ForceStressArrays*>(::operator new(sizeof(ForceStressArrays)));
         gd = static_cast<Grid_Driver*>(::operator new(sizeof(Grid_Driver)));
-        pv = static_cast<Parallel_Orbitals*>(::operator new(sizeof(Parallel_Orbitals)));
+        pv = new Parallel_Orbitals();
     }
 
     Plus_U_Base* dftu = nullptr;

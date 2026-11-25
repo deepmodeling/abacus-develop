@@ -1,7 +1,7 @@
-#include "sccs_test.h"
 #include "../sccs_functional.h"
-#include "../sccs_response.h"
 #include "../sccs_parameters.h"
+#include "../sccs_response.h"
+#include "sccs_test.h"
 
 #include "source_base/parallel_reduce.h"
 
@@ -27,8 +27,7 @@ TEST_F(SccsResponseTest, VacuumAndUniformDielectricAnalyticLimits)
     {
         cavity.epsilon_bulk = epsilon;
         ModuleSccs::SccsResponse response;
-        ModuleSccs::solve_response(density, charge, cavity, solver, cold_start,
-                                   basis, tpiba, response);
+        ModuleSccs::solve_response(density, charge, cavity, solver, cold_start, basis, tpiba, response);
         const double kernel = ModuleBase::FOUR_PI / (epsilon * tpiba * tpiba);
         EXPECT_EQ(response.polarization.iterations, 1);
         for (int ir = 0; ir < basis.nrxx; ++ir)
@@ -62,8 +61,7 @@ TEST_F(SccsResponseTest, ManufacturedNonuniformDielectricSolution)
     solver.tolerance_max = 1e-12;
     const std::vector<double> cold_start;
     ModuleSccs::SccsResponse response;
-    ModuleSccs::solve_response(density, charge, cavity, solver, cold_start,
-                               basis, tpiba, response);
+    ModuleSccs::solve_response(density, charge, cavity, solver, cold_start, basis, tpiba, response);
     double maximum_error = 0.0;
     for (int ir = 0; ir < basis.nrxx; ++ir)
     {
@@ -103,25 +101,23 @@ TEST_F(SccsResponseTest, ConvergenceFailureBothTolerancesAndExplicitWarmStart)
     {
         solver.max_iterations = 1;
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(ModuleSccs::solve_response(density, charge, cavity, solver, cold_start, basis, tpiba,
-                                               response),
-                    ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(
+            ModuleSccs::solve_response(density, charge, cavity, solver, cold_start, basis, tpiba, response),
+            ::testing::ExitedWithCode(1), "");
         testing::internal::GetCapturedStdout();
     }
     solver.max_iterations = 200;
     ModuleSccs::solve_response(density, charge, cavity, solver, cold_start, basis, tpiba, response);
     EXPECT_LE(response.polarization.residual_rms, solver.tolerance_rms);
     EXPECT_LE(response.polarization.residual_max, solver.tolerance_max);
-    for (double& value : density)
+    for (double &value : density)
     {
         value *= 1.001;
     }
     ModuleSccs::SccsResponse cold;
     ModuleSccs::SccsResponse warm;
-    ModuleSccs::solve_response(density, charge, cavity, solver, cold_start,
-                               basis, tpiba, cold);
-    ModuleSccs::solve_response(density, charge, cavity, solver, response.restart_potential,
-                               basis, tpiba, warm);
+    ModuleSccs::solve_response(density, charge, cavity, solver, cold_start, basis, tpiba, cold);
+    ModuleSccs::solve_response(density, charge, cavity, solver, response.restart_potential, basis, tpiba, warm);
     EXPECT_TRUE(warm.polarization.warm_started);
     EXPECT_LT(warm.polarization.iterations, cold.polarization.iterations);
     for (int ir = 0; ir < basis.nrxx; ++ir)
@@ -135,25 +131,71 @@ TEST_F(SccsResponseTest, ConvergenceFailureBothTolerancesAndExplicitWarmStart)
     ModuleSccs::SccsResponse loose;
     ModuleSccs::SccsResponse tight_maximum;
     ModuleSccs::SccsResponse tight_rms;
-    ModuleSccs::solve_response(density, charge, cavity, solver, cold_start,
-                               basis, tpiba, loose);
+    ModuleSccs::solve_response(density, charge, cavity, solver, cold_start, basis, tpiba, loose);
     solver.tolerance_max = 1e-11;
-    ModuleSccs::solve_response(density, charge, cavity, solver, cold_start,
-                               basis, tpiba, tight_maximum);
+    ModuleSccs::solve_response(density, charge, cavity, solver, cold_start, basis, tpiba, tight_maximum);
     solver.tolerance_rms = 1e-11;
     solver.tolerance_max = 1.0;
-    ModuleSccs::solve_response(density, charge, cavity, solver, cold_start,
-                               basis, tpiba, tight_rms);
+    ModuleSccs::solve_response(density, charge, cavity, solver, cold_start, basis, tpiba, tight_rms);
     EXPECT_LE(tight_maximum.polarization.residual_max, 1e-11);
     EXPECT_LE(tight_rms.polarization.residual_rms, 1e-11);
     EXPECT_GT(tight_maximum.polarization.iterations, loose.polarization.iterations);
     EXPECT_GT(tight_rms.polarization.iterations, loose.polarization.iterations);
 }
 
+// Two solves of the same problem with the same OpenMP team give the same bits:
+// thread_sums adds the per-thread partial sums in a fixed order, and the
+// sqrt-CG iteration count depends on the last bits of its inner products.
+// MODULE_HAMILT_sccs_poisson_omp4 runs this with four threads.
+TEST_F(SccsResponseTest, RepeatedSolveWithTheSameTeamIsBitIdentical)
+{
+    const std::vector<double> mode_x = cosine_mode(0);
+    std::vector<double> charge = cosine_mode(1);
+    std::vector<double> density(basis.nrxx);
+    for (int ir = 0; ir < basis.nrxx; ++ir)
+    {
+        density[ir] = 0.009 + 0.008 * mode_x[ir];
+        charge[ir] *= 1e-3;
+    }
+    ModuleSccs::SccsConfig config;
+    config.cavity.density_min = 0.0024;
+    config.cavity.density_max = 0.0155;
+    config.cavity.epsilon_bulk = 78.3;
+    config.surface_tension = 1e-2;
+    config.pressure = 1e-3;
+    ModuleSccs::PolarizationSolverParameters solver;
+    solver.tolerance_rms = 1e-11;
+    solver.tolerance_max = 1e-10;
+    const std::vector<double> cold_start;
+    ModuleSccs::SccsResponse first;
+    ModuleSccs::SccsResponse second;
+    ModuleSccs::solve_response(density, charge, config.cavity, solver, cold_start, basis, tpiba, first);
+    ModuleSccs::solve_response(density, charge, config.cavity, solver, cold_start, basis, tpiba, second);
+    ModuleSccs::FunctionalResult first_energy;
+    ModuleSccs::FunctionalResult second_energy;
+    ModuleSccs::eval_functional(charge, first, config, basis, tpiba, first_energy);
+    ModuleSccs::eval_functional(charge, second, config, basis, tpiba, second_energy);
+    EXPECT_GT(first.polarization.iterations, 1);
+    EXPECT_EQ(first.polarization.iterations, second.polarization.iterations);
+    EXPECT_EQ(first.polarization.residual_rms, second.polarization.residual_rms);
+    double difference = 0.0;
+    for (int ir = 0; ir < basis.nrxx; ++ir)
+    {
+        const double change = first.polarization.potential[ir] - second.polarization.potential[ir];
+        const double deviation = std::abs(change);
+        difference = std::max(difference, deviation);
+    }
+    Parallel_Reduce::reduce_max_pool(basis.poolnproc, difference);
+    EXPECT_EQ(difference, 0.0);
+    EXPECT_EQ(first_energy.reaction_energy, second_energy.reaction_energy);
+    EXPECT_EQ(first_energy.surface, second_energy.surface);
+    EXPECT_EQ(first_energy.volume, second_energy.volume);
+}
+
 namespace
 {
 // cos(2 pi harmonic x / L) on a basis' local real-space grid.
-std::vector<double> x_harmonic(const ModulePW::PW_Basis& basis, int harmonic)
+std::vector<double> x_harmonic(const ModulePW::PW_Basis &basis, int harmonic)
 {
     std::vector<double> values(basis.nrxx);
     for (int ir = 0; ir < basis.nrxx; ++ir)
@@ -178,9 +220,7 @@ TEST(SccsResponseRefinement, CavityDerivativeMatchesFiniteDifferenceOnAResolvedG
 #endif
     const double length = 10.0;
     const double gridecut = 80.0;
-    const ModuleBase::Matrix3 lattice(1.0, 0.0, 0.0,
-                                      0.0, 1.0, 0.0,
-                                      0.0, 0.0, 1.0);
+    const ModuleBase::Matrix3 lattice(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
     basis.initgrids(length, lattice, gridecut);
     basis.initparameters(false, gridecut, 1, false);
     basis.setuptransform();
@@ -210,7 +250,8 @@ TEST(SccsResponseRefinement, CavityDerivativeMatchesFiniteDifferenceOnAResolvedG
         direction[ir] = 1.0 + mode3[ir];
     }
     const std::vector<double> cold_start;
-    auto reaction_energy = [&](double step, ModuleSccs::SccsResponse& response) -> double {
+    auto reaction_energy = [&](double step, ModuleSccs::SccsResponse &response) -> double
+    {
         std::vector<double> density(basis.nrxx);
         for (int ir = 0; ir < basis.nrxx; ++ir)
         {

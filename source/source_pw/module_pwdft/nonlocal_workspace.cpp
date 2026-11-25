@@ -48,6 +48,7 @@ void NonlocalWorkspace<T, Device>::project(const T* vkb, const T* psi, const int
     const T zero(0, 0);
     if (npw == 0)
     {
+        // Empty PW partitions still supply zero coefficients to the collective projector reduction.
         const size_t count = static_cast<size_t>(nkb) * bands;
         Zero<T, Device>()(becp_, 0, count);
     }
@@ -115,6 +116,22 @@ void NonlocalWorkspace<T, Device>::apply(const UnitCell& cell, const pseudopot_c
         const size_t count = static_cast<size_t>(nbasis) * bands / npol;
         Zero<T, Device>()(hpsi, 0, count);
     }
+    // Here bands counts spin-component columns, while nbasis includes all components of one orbital.
+    project_contract(cell, pp, basis, spin, bands, nbasis, npol, npw, vkb, psi);
+    if (pp.nkb > 0 && bands > 0 && npw > 0)
+    {
+        this->back_project(vkb, hpsi, npw, pp.vkbnc, nbasis / npol, pp.nkb, bands);
+    }
+    ModuleBase::timer::end("NonlocalWorkspace", "apply");
+}
+
+
+template <typename T, typename Device>
+void NonlocalWorkspace<T, Device>::project_contract(const UnitCell& cell, const pseudopot_cell_vnl& pp,
+                                                   const ModulePW::PW_Basis_K& basis, int spin,
+                                                   int bands, int nbasis, int npol, int npw,
+                                                   const T* vkb, const T* psi)
+{
     if (pp.nkb > 0 && bands > 0)
     {
         const size_t count = static_cast<size_t>(pp.nkb) * bands;
@@ -144,15 +161,9 @@ void NonlocalWorkspace<T, Device>::apply(const UnitCell& cell, const pseudopot_c
             }
         }
 #endif
-        if (npw > 0)
-        {
-            this->contract(cell, pp, spin, npol, bands);
-            this->back_project(vkb, hpsi, npw, pp.vkbnc, nbasis / npol, pp.nkb, bands);
-        }
+        this->contract(cell, pp, spin, npol, bands);
     }
-    ModuleBase::timer::end("NonlocalWorkspace", "apply");
 }
-
 template class NonlocalWorkspace<std::complex<float>, base_device::DEVICE_CPU>;
 template class NonlocalWorkspace<std::complex<double>, base_device::DEVICE_CPU>;
 #if defined(__CUDA) || defined(__ROCM)

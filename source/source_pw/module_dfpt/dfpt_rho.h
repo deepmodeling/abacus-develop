@@ -15,6 +15,8 @@
 namespace Base_Mixing
 {
 class Plain_Mixing;
+class Broyden_Mixing;
+class Mixing_Data;
 }
 
 namespace ModuleDFPT
@@ -76,8 +78,8 @@ class XC_First_Order
  * mix_drho mixes the q-shifted coefficients:
  *   drho_in <- drho_in + beta_g (drho_out - drho_in)
  * through Base_Mixing::Plain_Mixing (no Charge_Mixing / Charge dependency).
- * With mix_type = "plain" beta_g = beta on every shell; with mix_type =
- * "kerker" beta_g = beta * f_g, the Kerker screen
+ * With mix_type = "rho_plain" beta_g = beta on every shell; with mix_type =
+ * "rho_kerker" beta_g = beta * f_g, the Kerker screen
  *   f_g = |G+q|^2 / (|G+q|^2 + a^2),
  * evaluated with the same q_shifted |G+q| = |gcar + q_cart * recip| (in
  * 1/lat0^2 units) convention as v_hartree_q, so the Coulomb-stiffness
@@ -100,9 +102,10 @@ class DFPT_Rho
         ModulePW::PW_Basis* pw_rho;
         ModulePW::PW_Basis_K* pw_wfc;
         ModuleBase::Matrix3 recip_matrix;
-        std::string mix_type; // "plain" or "kerker"
+        std::string mix_type; // "rho_plain", "rho_kerker" or "rho_broyden" (v_sc_* is handled at the solver)
         double mix_beta;
-        double kerker_a2; // Kerker screen a^2, 1/lat0^2 (kerker only)
+        double kerker_a2; // Kerker screen a^2, 1/lat0^2 (rho_kerker only)
+        int broyden_ndim; // Broyden history depth (rho_broyden only, must be >= 1; no C++11 aggregate default)
     };
 
     DFPT_Rho();
@@ -130,6 +133,17 @@ class DFPT_Rho
                        int dir,
                        int q_idx,
                        DFPT_PW_Data& data);
+
+    /// same first-order core-density amplitude as compute_drhoc, but pure:
+    /// takes the cartesian q explicitly and writes into a caller-owned
+    /// vector instead of the DFPT_PW_Data slot. Used by the 2n+1 nlcc
+    /// direct terms, which need the core response of EVERY displacement
+    /// while the data slot holds only the current one.
+    void compute_drhoc_g(const UnitCell& ucell,
+                         int iat,
+                         int dir,
+                         const ModuleBase::Vector3<double>& q_cart,
+                         std::vector<std::complex<double>>& drhoc_g) const;
 
     /// first-order occupation matrix (docc) for DFT+U (U0 reservation).
     void cal_docc(const psi::Psi<std::complex<double>>& psi,
@@ -186,12 +200,18 @@ class DFPT_Rho
     ///< reciprocal lattice matrix in 1/lat0 (UnitCell::G convention)
     ModuleBase::Matrix3 recip_matrix_;
     double mix_beta_ = 0.7;
-    ///< mixing algorithm: "plain" (beta only) or "kerker" (Kerker screen)
+    ///< mixing algorithm: rho_plain | rho_kerker | rho_broyden (v_sc_* at solver)
     std::string mix_type_;
     ///< Kerker screening parameter a^2 in 1/lat0^2 (same units as |G+q|^2)
     double kerker_a2_ = 0.0;
 
     std::unique_ptr<Base_Mixing::Plain_Mixing> mixer_;
+    ///< Broyden mixer for the broyden mix_type (separate from the plain
+    /// mixer because their interfaces differ: Broyden needs push_data +
+    /// cal_coef before each mix, with internal history state)
+    std::unique_ptr<Base_Mixing::Broyden_Mixing> broyden_mixer_;
+    ///< Broyden mixing data (per q, reset by reset_mixing)
+    std::vector<std::unique_ptr<Base_Mixing::Mixing_Data>> broyden_mdata_;
 
     /// mixing state, q-shifted coefficients on the rho grid, [q][spin]
     std::vector<std::vector<std::vector<std::complex<double>>>> drho_in_;

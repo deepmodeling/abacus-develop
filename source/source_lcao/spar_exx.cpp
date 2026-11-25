@@ -90,7 +90,7 @@ void cal_HR_exx(
                 for (size_t iw0 = 0; iw0 < Hexx.shape[0]; ++iw0)
                 {
                     const int iwt0 = RI_2D_Comm::get_iwt(ucell, iat0, iw0, is0_b);
-                    const int iwt0_local = pv.global2local_row(iwt0);
+                    const int iwt0_local = pv.para_2d().irloc(iwt0);
 
                     if (iwt0_local < 0)
                     {
@@ -100,7 +100,7 @@ void cal_HR_exx(
                     for (size_t iw1 = 0; iw1 < Hexx.shape[1]; ++iw1)
                     {
                         const int iwt1 = RI_2D_Comm::get_iwt(ucell, iat1, iw1, is1_b);
-                        const int iwt1_local = pv.global2local_col(iwt1);
+                        const int iwt1_local = pv.para_2d().icloc(iwt1);
 
                         if (iwt1_local < 0)
                         {

@@ -1,15 +1,7 @@
-list(APPEND objects_json
-    abacusjson.cpp
-    general_info.cpp
-    init_info.cpp
-    output_info.cpp
-)
+list(APPEND objects_json abacusjson.cpp general_info.cpp init_info.cpp
+     output_info.cpp)
 
-add_library(
-    json_output
-    OBJECT
-    ${objects_json}
-)
+add_library(json_output OBJECT ${objects_json})
 
 if(ENABLE_COVERAGE)
   add_coverage(json_output)

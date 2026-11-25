@@ -64,6 +64,31 @@ extern "C"
     void Cigsum2d(int ConTxt, char *scope, char *top, int m, int n, int *A, int lda, int rdest, int cdest);
 }
 
+class BlacsConnector
+{
+public:
+    static inline void get(int context, int what, int& value)
+    {
+        Cblacs_get(context, what, &value);
+    }
+
+    static inline void pinfo(int& rank, int& size)
+    {
+        Cblacs_pinfo(&rank, &size);
+    }
+
+    // BLACS reads usermap in column-major order with the supplied leading dimension.
+    static inline void gridmap(int& context, int* usermap, int ldumap, int nprow, int npcol)
+    {
+        Cblacs_gridmap(&context, usermap, ldumap, nprow, npcol);
+    }
+
+    static inline void gridinfo(int context, int& nprow, int& npcol, int& myprow, int& mypcol)
+    {
+        Cblacs_gridinfo(context, &nprow, &npcol, &myprow, &mypcol);
+    }
+};
+
 // unified interface for broadcast
 template <typename T>
 void Cxgebs2d(int ConTxt, char *scope, char *top, int m, int n, T *A, int lda)

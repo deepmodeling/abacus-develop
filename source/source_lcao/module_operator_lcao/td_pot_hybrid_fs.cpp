@@ -1,4 +1,5 @@
 #include "td_pot_hybrid.h"
+#include "source_base/atom_basis_view.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 #include "source_base/libm/libm.h"
@@ -15,7 +16,6 @@ void TD_pot_hybrid<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
         return;
     }
     Et = this->td_info_->field().efield_ha() * 2.0; // Hamiltonian and forces use Rydberg units.
-    const Parallel_Orbitals* paraV = dmR->get_paraV();
     #pragma omp parallel
     {
     ModuleBase::matrix force_local(force.nr, force.nc);
@@ -27,13 +27,15 @@ void TD_pot_hybrid<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
         ucell->iat2iait(iat1, &I1, &T1);
         AdjacentAtomInfo adjs;
         this->gridD->Find_atom(*ucell, tau1, T1, I1, &adjs);
+        const AtomBasisView rows = this->td_info_->row_basis(iat1);
         std::vector<bool> is_adj(adjs.adj_num + 1, false);
         for (int ad1 = 0; ad1 < adjs.adj_num + 1; ++ad1)
         {
             const int T2 = adjs.ntype[ad1];
             const int I2 = adjs.natom[ad1];
             const int iat2 = ucell->itia2iat(T2, I2);
-            if (paraV->get_nrow_atom(iat1) <= 0 || paraV->get_ncol_atom(iat2) <= 0)
+            const AtomBasisView cols = this->td_info_->col_basis(iat2);
+            if (rows.empty() || cols.empty())
             {
                 continue;
             }
@@ -67,7 +69,7 @@ void TD_pot_hybrid<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
             const BaseMatrix<TR>* tmp = dmR->find_matrix(iat1, iat2, R_index2);
             if (tmp != nullptr)
             {
-                this->cal_force_IJR(iat1, iat2, paraV, dtau, dR, tmp->get_pointer(), force_tmp1, force_tmp2);
+                this->cal_force_IJR(iat1, iat2, dtau, dR, tmp->get_pointer(), force_tmp1, force_tmp2);
             }
             else
             {
@@ -103,7 +105,6 @@ void TD_pot_hybrid<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
 template <>
 void TD_pot_hybrid<OperatorLCAO<std::complex<double>, std::complex<double>>>::cal_force_IJR(const int& iat1,
                                                                             const int& iat2,
-                                                                            const Parallel_Orbitals* paraV,
                                                                             const ModuleBase::Vector3<double>& dtau,
                                                                             const ModuleBase::Vector3<double>& dR,
                                                                             std::complex<double>* dmR_pointer,
@@ -115,7 +116,6 @@ void TD_pot_hybrid<OperatorLCAO<std::complex<double>, std::complex<double>>>::ca
 template <typename TK, typename TR>
 void TD_pot_hybrid<OperatorLCAO<TK, TR>>::cal_force_IJR(const int& iat1,
                                                         const int& iat2,
-                                                        const Parallel_Orbitals* paraV,
                                                         const ModuleBase::Vector3<double>& dtau,
                                                         const ModuleBase::Vector3<double>& dR,
                                                         TR* dmR_pointer,
@@ -143,22 +143,22 @@ void TD_pot_hybrid<OperatorLCAO<TK, TR>>::cal_force_IJR(const int& iat1,
     // calculate the Ekinetic matrix for each pair of orbitals
     // ---------------------------------------------
     double olm[3] = {0, 0, 0};
-    auto row_indexes = paraV->get_indexes_row(iat1);
-    auto col_indexes = paraV->get_indexes_col(iat2);
-    const int step_trace = col_indexes.size() + 1;
+    const AtomBasisView rows = this->td_info_->row_basis(iat1);
+    const AtomBasisView cols = this->td_info_->col_basis(iat2);
+    const int step_trace = cols.nloc() + 1;
     ModuleBase::Vector3<double> shift = {0.0, 0.0, 1.0};
     const ModuleBase::Vector3<double>& tau1 = this->ucell->get_tau(iat1);
     const ModuleBase::Vector3<double> tau2 = tau1 + dtau;
-    for (int iw1l = 0; iw1l < row_indexes.size(); iw1l++)
+    for (int iw1l = 0; iw1l < rows.nloc(); iw1l++)
     {
-        const int iw1 = row_indexes[iw1l];
+        const int iw1 = rows[iw1l];
         const int L1 = iw2l1[iw1];
         const int N1 = iw2n1[iw1];
         const int m1 = iw2m1[iw1];
 
-        for (int iw2l = 0; iw2l < col_indexes.size(); iw2l++)
+        for (int iw2l = 0; iw2l < cols.nloc(); iw2l++)
         {
-            const int iw2 = col_indexes[iw2l];
+            const int iw2 = cols[iw2l];
             const int L2 = iw2l2[iw2];
             const int N2 = iw2n2[iw2];
             const int m2 = iw2m2[iw2];
@@ -187,14 +187,12 @@ template void TD_pot_hybrid<OperatorLCAO<std::complex<double>, std::complex<doub
 // Note: <complex<double>,complex<double>> has a template<> specialization above
 template void TD_pot_hybrid<OperatorLCAO<double, double>>::cal_force_IJR(
     const int& iat1, const int& iat2,
-    const Parallel_Orbitals* paraV,
     const ModuleBase::Vector3<double>& dtau,
     const ModuleBase::Vector3<double>& dR,
     double* dmR_pointer,
     double* force1, double* force2);
 template void TD_pot_hybrid<OperatorLCAO<std::complex<double>, double>>::cal_force_IJR(
     const int& iat1, const int& iat2,
-    const Parallel_Orbitals* paraV,
     const ModuleBase::Vector3<double>& dtau,
     const ModuleBase::Vector3<double>& dR,
     double* dmR_pointer,

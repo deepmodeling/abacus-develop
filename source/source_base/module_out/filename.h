@@ -16,10 +16,13 @@ namespace ModuleIO
  * @param nspin: number of spin channels, 1,2 or 4 
  * @param nkstot: number of total k-points 
  * @param out_type: two types of output file format, 1 for .txt and 2 for .dat (binary)
- * @param out_app_flag: whether to append to existing file.
+ * @param out_app_flag: 0=fixed filename, overwritten at each write; 1=fixed filename, appended;
+ *                      2=subdirectory layout with a g{step} suffix.
  * @param gamma_only: gamma_only algorithm or not.
- * @param istep: index of the ion step starting from 0. If < 0, the step number is not included in the file name.
- * @param iter: index of the electronic step starting from 0. If < 0, the step number is not included in the file name. 
+ * @param istep: index of the ion step starting from 0. The step number is only embedded in the
+ *               filename in mode 2 (out_app_flag == 2), and only when istep >= 0.
+ * @param iter: index of the electronic step starting from 0. The step number is only embedded in
+ *              the filename in mode 2 (out_app_flag == 2), and only when iter >= 0.
  * @return The generated filename.
  */
 std::string filename_output(
@@ -31,7 +34,7 @@ std::string filename_output(
             const int nspin,
             const int nkstot,
             const int out_type,
-            const bool out_app_flag,
+            const int out_app_flag,
             const bool gamma_only,
             const int istep=-1,
             const int iter=-1);

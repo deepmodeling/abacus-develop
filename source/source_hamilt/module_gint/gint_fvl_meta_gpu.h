@@ -1,36 +1,36 @@
 #ifndef ABACUS_SOURCE_HAMILT_MODULE_GINT_GINT_FVL_META_GPU_H
 #define ABACUS_SOURCE_HAMILT_MODULE_GINT_GINT_FVL_META_GPU_H
 
-
-#include <memory>
-#include <vector>
-#include "source_hamilt/module_hcontainer/hcontainer.h"
-#include "source_base/matrix.h"
 #include "gint.h"
 #include "gint_info.h"
+#include "source_base/matrix.h"
 #include "source_hamilt/module_gint/kernel/cuda_mem_wrapper.h"
+#include "source_hamilt/module_hcontainer/hcontainer.h"
+#include <memory>
+#include <vector>
 
 namespace ModuleGint
 {
 class Gint_fvl_meta_gpu : public Gint
 {
-    public:
+  public:
     Gint_fvl_meta_gpu(
         const int nspin,
-        const std::vector<const double*>& vr_eff,
-        const std::vector<const double*>& vofk,
-        const std::vector<HContainer<double>*>& dm_vec,
+        const std::vector<const double *> &vr_eff,
+        const std::vector<const double *> &vofk,
+        const std::vector<HContainer<double> *> &dm_vec,
         const bool isforce,
         const bool isstress,
-        ModuleBase::matrix* fvl,
-        ModuleBase::matrix* svl)
-        : nspin_(nspin), vr_eff_(vr_eff), vofk_(vofk), dm_vec_(dm_vec),
-          isforce_(isforce), isstress_(isstress), fvl_(fvl), svl_(svl),
-          dr3_(gint_info_->get_mgrid_volume()) {}
+        ModuleBase::matrix *fvl,
+        ModuleBase::matrix *svl)
+        : nspin_(nspin), vr_eff_(vr_eff), vofk_(vofk), dm_vec_(dm_vec), isforce_(isforce), isstress_(isstress),
+          fvl_(fvl), svl_(svl), dr3_(gint_info_->get_mgrid_volume())
+    {
+    }
 
     void cal_gint();
 
-    private:
+  private:
     void init_dm_gint_();
 
     void transfer_cpu_to_gpu_();
@@ -41,15 +41,15 @@ class Gint_fvl_meta_gpu : public Gint
 
     // input
     const int nspin_;
-    std::vector<const double*> vr_eff_;
-    std::vector<const double*> vofk_;
-    std::vector<HContainer<double>*> dm_vec_;
+    std::vector<const double *> vr_eff_;
+    std::vector<const double *> vofk_;
+    std::vector<HContainer<double> *> dm_vec_;
     const bool isforce_;
     const bool isstress_;
 
     // output
-    ModuleBase::matrix* fvl_;
-    ModuleBase::matrix* svl_;
+    ModuleBase::matrix *fvl_;
+    ModuleBase::matrix *svl_;
 
     // intermediate variables
     std::vector<HContainer<double>> dm_gint_vec_;
