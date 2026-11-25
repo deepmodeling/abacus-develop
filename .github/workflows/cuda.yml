@@ -122,9 +122,22 @@ jobs:
           ctest --test-dir build -V --timeout 180 -R '^MODULE_HSOLVER_ppcg_gpu$'
 
       - name: Test 11_PW_GPU
+        env:
+          ABACUS_PPCG_RESIDUAL_TRACE: ppcg_residual.csv
         run: |
           cd tests/11_PW_GPU
           bash ../integrate/Autotest.sh -n 2 -j "$GPU_TEST_JOBS" -f CASES_GPU.txt
+
+      - name: Preserve PPCG convergence diagnostics
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: ppcg-cuda-convergence
+          path: |
+            tests/11_PW_GPU/scf_ppcg_*/ppcg_residual.csv
+            tests/11_PW_GPU/scf_ppcg_*/OUT.autotest/running_scf.log
+          if-no-files-found: warn
+          retention-days: 14
 
       - name: Test 02_NAO_Gamma on GPU
         run: |

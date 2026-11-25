@@ -38,6 +38,8 @@ struct PPCGRunResult
     int active_band_count;
     bool iteration_limit_reached;
     double max_residual;
+    int first_active_band;
+    double first_active_threshold;
 };
 
 template <typename T, typename Device, typename Real>
@@ -69,6 +71,8 @@ PPCGRunResult run_ppcg_pw(
     result.active_band_count = ppcg.active_band_count();
     result.iteration_limit_reached = ppcg.iteration_limit_reached();
     result.max_residual = double(ppcg.max_residual());
+    result.first_active_band = ppcg.first_active_band();
+    result.first_active_threshold = double(ppcg.first_active_threshold());
     return result;
 }
 
@@ -454,6 +458,10 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(
                 std::ostringstream message;
                 message << "PPCG did not converge: active bands=" << ppcg_result.active_band_count
                         << ", max residual=" << ppcg_result.max_residual;
+                const int first_active_band = ppcg_result.first_active_band + 1;
+                message << ", SCF iteration=" << trace_context.scf_iteration << ", k-point=" << kpoint
+                        << ", first active band=" << first_active_band
+                        << ", threshold=" << ppcg_result.first_active_threshold;
                 if (ppcg_result.iteration_limit_reached)
                 {
                     message << ", iteration limit reached (pw_diag_nmax=" << this->diag_iter_max << ")";

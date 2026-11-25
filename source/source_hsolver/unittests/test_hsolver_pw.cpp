@@ -609,6 +609,9 @@ TEST_F(TestHSolverPW, PPCGScfDispatchReportsExhaustedBudget)
     EXPECT_NE(log.str().find("PPCG did not converge"), std::string::npos);
     EXPECT_NE(log.str().find("active bands=2"), std::string::npos);
     EXPECT_NE(log.str().find("max residual="), std::string::npos);
+    EXPECT_NE(log.str().find("SCF iteration=1, k-point=1"), std::string::npos);
+    EXPECT_NE(log.str().find("first active band=1"), std::string::npos);
+    EXPECT_NE(log.str().find("threshold="), std::string::npos);
     EXPECT_NE(log.str().find("iteration limit reached"), std::string::npos);
     for (const double eigenvalue : eigenvalues)
     {
