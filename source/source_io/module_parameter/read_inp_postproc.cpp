@@ -82,7 +82,11 @@ void ReadInput::item_postprocess()
         item.annotation = "orders of Chebyshev expansions for dos";
         item.category = "Density of states";
         item.type = "Integer";
-        item.description = "The order of Chebyshev expansions when using Stochastic Density Functional Theory (SDFT) to calculate DOS.";
+        item.description = "The order of Chebyshev expansions when using Stochastic Density Functional Theory (SDFT) to calculate DOS."
+                          "\n\nIt must be at least 2. The order has to grow with the ratio between the spectral range and "
+                          "`dos_sigma`: resolving a Gaussian of width `dos_sigma` over a range of a few thousand eV can "
+                          "require an order of 1e5 or more, so a value that is too small gives an under-resolved curve. "
+                          "The code warns when the requested order cannot resolve `range/dos_sigma`.";
         item.default_value = "100";
         item.unit = "";
         read_sync_int(input.dos_nche);
