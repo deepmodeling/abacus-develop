@@ -41,7 +41,7 @@ class InputTest : public testing::Test
     {
         ModuleIO::ReadInput schema(-1);
         ModuleIO::InputValues values;
-        for (const auto& entry : schema.get_input_lists())
+        for (const std::pair<std::string, ModuleIO::Input_Item>& entry : schema.get_input_lists())
         {
             if (entry.second.domain.bound()) { values[entry.first] = entry.second.domain.value(param); }
         }
@@ -113,7 +113,8 @@ TEST_F(InputTest, PwOnsiteRequiresDoublePrecision)
 TEST_F(InputTest, InvalidExplicitDomainDoesNotReachReadOrResetHooks)
 {
     ModuleIO::ReadInput reader(0);
-    auto item = find_label("nspin", reader.input_lists);
+    std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator item
+        = find_label("nspin", reader.input_lists);
     ASSERT_NE(item, reader.input_lists.end());
     item->second.str_values = {"3"};
     bool reset_called = false;
@@ -2720,7 +2721,8 @@ TEST_F(InputTest, Item_test2)
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
     { // diag_subspace
-        auto it = find_label("diag_subspace", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it
+            = find_label("diag_subspace", readinput.input_lists);
         EXPECT_EQ(it->second.get_availability(), "basis_type==pw and ks_solver==dav_subspace");
     }
     { // md_nstep

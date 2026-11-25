@@ -105,7 +105,16 @@ bool direct_gamma(HSMatrix<double>& hs, psi::Psi<double>& wave, elecstate::ElecS
     if (root)
     {
         solver.reset(new Diag_Cusolver_gvd());
-        solver->Dngvd_double_retained(n, h.data(), s.data(), eigenvalues.data(), host_wave.data(), bands);
+        bool solved = false;
+        const bool subset = Diag_Cusolver_gvd::use_subset(n, bands);
+        if (subset)
+        {
+            solved = solver->solve_subset(n, bands, h.data(), s.data(), eigenvalues.data(), host_wave.data());
+        }
+        if (!solved)
+        {
+            solver->solve_full(n, bands, h.data(), s.data(), eigenvalues.data(), host_wave.data());
+        }
     }
     direct_sync(context);
     const double diagonal_seconds = direct_elapsed(diagonal_start);

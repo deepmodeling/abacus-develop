@@ -4,10 +4,13 @@
 #include <cmath>
 #include <vector>
 
-TEST(CusolverRetainedDm, FractionalSignedWeightsAfterHostMaterialization)
+namespace
 {
-    const int sizes[2] = {11, 67};
-    for (int size_index = 0; size_index < 2; ++size_index)
+void check_retained_density(const bool subset)
+{
+    const int sizes[3] = {11, 67, 11};
+    Diag_Cusolver_gvd retained;
+    for (int size_index = 0; size_index < 3; ++size_index)
     {
         const int n = sizes[size_index];
         const int bands = n - 3;
@@ -31,9 +34,16 @@ TEST(CusolverRetainedDm, FractionalSignedWeightsAfterHostMaterialization)
         std::vector<double> density(elements);
         std::vector<double> weights(bands);
         Diag_Cusolver_gvd legacy;
-        legacy.Dngvd_double(n, n, h.data(), s.data(), legacy_values.data(), legacy_wave.data());
-        Diag_Cusolver_gvd retained;
-        retained.Dngvd_double_retained(n, h.data(), s.data(), retained_values.data(), host_wave.data(), bands);
+        legacy.solve_full(n, n, h.data(), s.data(), legacy_values.data(), legacy_wave.data());
+        if (subset)
+        {
+            const bool solved = retained.solve_subset(n, bands, h.data(), s.data(), retained_values.data(), host_wave.data());
+            ASSERT_TRUE(solved);
+        }
+        else
+        {
+            retained.solve_full(n, bands, h.data(), s.data(), retained_values.data(), host_wave.data());
+        }
         for (int band = 0; band < bands; ++band)
         {
             const double phase = 0.37 * band;
@@ -61,4 +71,38 @@ TEST(CusolverRetainedDm, FractionalSignedWeightsAfterHostMaterialization)
         const bool invalid = retained.density_from_retained(0, weights.data(), density.data());
         EXPECT_FALSE(invalid);
     }
+}
+}
+
+TEST(CusolverRetainedDm, FractionalSignedWeightsAfterHostMaterialization)
+{
+    check_retained_density(false);
+}
+
+TEST(CusolverRetainedDm, SubsetFractionalSignedWeightsAfterHostMaterialization)
+{
+    check_retained_density(true);
+}
+
+TEST(CusolverRetainedDm, ComplexSolveInvalidatesRealEigenvectors)
+{
+    const int n = 2;
+    double h[4] = {1.0, 0.0, 0.0, 2.0};
+    double s[4] = {1.0, 0.0, 0.0, 1.0};
+    double values[2] = {};
+    double wave[4] = {};
+    double density[4] = {};
+    const double weights[2] = {2.0, 0.125};
+    Diag_Cusolver_gvd solver;
+    const bool empty = solver.density_from_retained(n, weights, density);
+    EXPECT_FALSE(empty);
+    solver.solve_full(n, n, h, s, values, wave);
+    const bool real = solver.density_from_retained(n, weights, density);
+    ASSERT_TRUE(real);
+    const std::complex<double> complex_h[4] = {1.0, 0.0, 0.0, 2.0};
+    const std::complex<double> complex_s[4] = {1.0, 0.0, 0.0, 1.0};
+    std::complex<double> complex_wave[4] = {};
+    solver.solve_full(n, n, complex_h, complex_s, values, complex_wave);
+    const bool stale = solver.density_from_retained(n, weights, density);
+    EXPECT_FALSE(stale);
 }
