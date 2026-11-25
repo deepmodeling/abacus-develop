@@ -7,16 +7,17 @@
 #include "dfpt_pw_impl.h"
 
 #include "dfpt_kq_basis.h"
+#include "dfpt_nscf.h"
 #include "dfpt_pert.h"
 #include "dfpt_phon.h"
 #include "dfpt_pw_data.h"
 #include "dfpt_q0.h"
 #include "dfpt_rho.h"
+#include "source_base/constants.h"
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
 #include <cmath>
 #include <cstdlib>
-#include <map>
 #include <memory>
 #include <sstream>
 #include <vector>
@@ -205,86 +206,20 @@ void DFPT_PW::init(const DFPT_PW_InitContext& ctx)
     ModuleBase::timer::end("DFPT_PW", "init");
 }
 
-int DFPT_PW::Impl::match_commensurate_kq(int ik,
-                                         const ModuleBase::Vector3<double>& q_frac,
-                                         double tol,
-                                         ModuleBase::Vector3<int>& dn_out) const
+int DFPT_PW::Impl::occupied_band_count(int ik) const
 {
-    // k+q folded into [0,1) direct coordinates must be a ground-state k
-    // point (DFPT q meshes are commensurate with the k mesh)
-    const ModuleBase::Vector3<double> target = pw_wfc_->kvec_d[ik] + q_frac;
-    const int nk = pw_wfc_->nks;
-    for (int j = 0; j < nk; ++j)
-    {
-        const ModuleBase::Vector3<double>& kj = pw_wfc_->kvec_d[j];
-        const double rx = std::round(kj.x - target.x);
-        const double ry = std::round(kj.y - target.y);
-        const double rz = std::round(kj.z - target.z);
-        if (std::abs(kj.x - target.x - rx) < tol && std::abs(kj.y - target.y - ry) < tol
-            && std::abs(kj.z - target.z - rz) < tol)
-        {
-            dn_out.x = static_cast<int>(rx);
-            dn_out.y = static_cast<int>(ry);
-            dn_out.z = static_cast<int>(rz);
-            return j;
-        }
-    }
-    std::ostringstream oss;
-    oss << "k+q is not a point of the ground-state k list: the DFPT "
-           "q mesh must be commensurate with the k mesh (and inside "
-           "the first Brillouin zone). ik="
-        << ik << " k_d=(" << pw_wfc_->kvec_d[ik].x << "," << pw_wfc_->kvec_d[ik].y << ","
-        << pw_wfc_->kvec_d[ik].z << ") q_d=(" << q_frac.x << "," << q_frac.y << "," << q_frac.z << ") k+q=("
-        << target.x << "," << target.y << "," << target.z << ") nk=" << nk;
-    ModuleBase::WARNING_QUIT("DFPT_PW::build_occ_kq", oss.str());
-}
-
-void DFPT_PW::Impl::copy_occ_state_ball(int ik,
-                                        int ikq,
-                                        const ModuleBase::Vector3<int>& dn,
-                                        const DFPT_KQ_Basis& kq,
-                                        const ModuleBase::Matrix3& ginv,
-                                        std::vector<std::vector<std::complex<double>>>& occ_ik) const
-{
-    // reciprocal-basis integer triple -> per-k index of the ikq ball
-    // (pw_wfc_ is a PW_Basis_K whose gcar holds a per-k ball layout,
-    // not the parent-class global-ig layout: read it through getgcar)
-    std::map<std::vector<int>, int> jgl_of_n;
-    for (int jgl = 0; jgl < pw_wfc_->npwk[ikq]; ++jgl)
-    {
-        const ModuleBase::Vector3<double> gf = pw_wfc_->getgcar(ikq, jgl) * ginv;
-        const std::vector<int> key = {static_cast<int>(std::round(gf.x)),
-                                      static_cast<int>(std::round(gf.y)),
-                                      static_cast<int>(std::round(gf.z))};
-        jgl_of_n[key] = jgl;
-    }
-
-    const int npw_kq = kq.get_npwk();
-    const int nbands = gs_psi_.get_nbands();
+    // insulator: the occupied-band count is k-independent; the metallic
+    // guard in init() has already rejected a cut Fermi surface
+    int nocc = 0;
+    const int nbands = wg_.nc;
     for (int m = 0; m < nbands; ++m)
     {
-        if (!dfpt_band_occupied(wg_, ikq, m))
+        if (dfpt_band_occupied(wg_, ik, m))
         {
-            continue; // empty at k+q: outside the P_c projector
+            nocc = m + 1;
         }
-        std::vector<std::complex<double>> state(npw_kq, std::complex<double>(0.0, 0.0));
-        for (int igl = 0; igl < npw_kq; ++igl)
-        {
-            const ModuleBase::Vector3<double> gf = kq.get_gcar(igl) * ginv;
-            // dn = k_d(ikq) - k_d(ik) - q (integer, reciprocal-basis coords).
-            // A k+q-ball vector G and an ikq-ball vector G' describe the same
-            // plane wave when G' + k_d(ikq) == G + k_d(ik) + q, i.e. G' = G - dn.
-            const std::vector<int> key = {static_cast<int>(std::round(gf.x)) - dn.x,
-                                          static_cast<int>(std::round(gf.y)) - dn.y,
-                                          static_cast<int>(std::round(gf.z)) - dn.z};
-            const auto it = jgl_of_n.find(key);
-            if (it != jgl_of_n.end())
-            {
-                state[igl] = gs_psi_(ikq, m, it->second);
-            }
-        }
-        occ_ik.push_back(std::move(state));
     }
+    return nocc;
 }
 
 void DFPT_PW::Impl::build_occ_kq(int q_idx)
@@ -293,20 +228,49 @@ void DFPT_PW::Impl::build_occ_kq(int q_idx)
     ModuleBase::timer::start("DFPT_PW", "build_occ_kq");
     const int nk = pw_wfc_->nks;
     occ_kq_.assign(nk, std::vector<std::vector<std::complex<double>>>());
-    ikq_of_k_.assign(nk, -1);
+    eig_kq_.assign(nk, std::vector<double>());
     const ModuleBase::Vector3<double> q_frac = data_.get_qvec(q_idx);
     const ModuleBase::Vector3<double> q_cart = q_frac * ucell_->G;
-    const double kmatch_tol = 1.0e-6; ///< empirical parameter: folded fractional k-list match tolerance
+    const int nocc = occupied_band_count(0);
+
+    // QE alignment: the k+q occupied states come from an nscf
+    // diagonalization of the full H(k+q) on the k+q ball (run_nscf ->
+    // non_scf_ph), not from any copy of the ground-state list. The
+    // block-Davidson runs on DFPT_HamiltShift with the shift zeroed; the
+    // per-band Sternheimer shift keeps using the ground-state eigenvalue
+    // eig_(ik, ib) of the coupled k band, so eig_ stays the source there.
+    const int lin_max = 200;           ///< empirical parameter: Davidson outer iterations per k+q ball
+    const double eig_tol = 1.0e-5;     ///< empirical parameter: residual norm target (Ry); occ_kq_ feeds the
+                                       ///< P_c projector only, whose leakage at this level stays far below
+                                       ///< the response convergence threshold
+    const double precond_floor = 0.1;  ///< empirical parameter: kinetic-preconditioner floor (1/lat0^2); small
+                                       ///< enough that the near-Gamma plane waves (which dominate the
+                                       ///< valence top) are not suppressed in the expansion directions
+    const double tpiba2 = ucell_->tpiba2;
     for (int ik = 0; ik < nk; ++ik)
     {
-        ModuleBase::Vector3<int> dn(0, 0, 0);
-        const int ikq = match_commensurate_kq(ik, q_frac, kmatch_tol, dn);
-        ikq_of_k_[ik] = ikq;
-
-        DFPT_KQ_Basis kq;
-        kq.init(pw_wfc_, pw_rho_, q_cart, ik);
-        const ModuleBase::Matrix3 ginv = pw_wfc_->G.Inverse();
-        copy_occ_state_ball(ik, ikq, dn, kq, ginv, occ_kq_[ik]);
+        hamilt_->set_context(q_cart, ik);
+        hamilt_->set_shift(0.0);
+        const DFPT_KQ_Basis& kq = hamilt_->basis();
+        const int npwk = kq.get_npwk();
+        std::vector<double> precond(npwk);
+        for (int igl = 0; igl < npwk; ++igl)
+        {
+            precond[igl] = kq.get_gk2(igl) * tpiba2 + precond_floor;
+        }
+        std::vector<std::vector<std::complex<double>>> occ_ik;
+        std::vector<double> eig_ik;
+        const int it = DFPT_NSCF::lowest_eigpairs(*hamilt_, precond, nocc, lin_max, eig_tol, occ_ik, eig_ik);
+        if (it != 0)
+        {
+            std::ostringstream oss;
+            oss << "the nscf diagonalization at k index " << ik << " did not reach the eigenvalue "
+                << "residual target within " << lin_max << " outer iterations (last pass " << it
+                << "); raise dfpt_conv_thr precision handling or inspect the spectrum";
+            ModuleBase::WARNING_QUIT("DFPT_PW::build_occ_kq", oss.str());
+        }
+        occ_kq_[ik] = std::move(occ_ik);
+        eig_kq_[ik] = std::move(eig_ik);
     }
     last_q_ = q_idx;
     last_ik_ = -1;

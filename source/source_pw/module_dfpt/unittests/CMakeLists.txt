@@ -73,6 +73,7 @@ addtest(
   TARGET MODULE_DFPT_phon_serial
   LIBS parameter dfpt_planewave_serial device base symmetry
   SOURCES test_dfpt_phon_ewald.cpp
+          test_dfpt_nscf.cpp
           test_dfpt_phon_elec.cpp
           test_dfpt_phon_asr.cpp
           test_dfpt_phon.cpp
@@ -80,6 +81,7 @@ addtest(
           ../dfpt_phon_asr.cpp
           ../dfpt_phon_ewald.cpp
           ../dfpt_phon_elec.cpp
+          ../dfpt_nscf.cpp
           ../dfpt_rho.cpp
           ../dfpt_rho_mix.cpp
           ../../../source_estate/module_charge/chg_tools.cpp
@@ -220,6 +222,7 @@ if(ENABLE_MPI)
             ../dfpt_pert_nl.cpp
             ../dfpt_kq_basis.cpp
             ../dfpt_stern.cpp
+            ../dfpt_nscf.cpp
             ../dfpt_rho.cpp
             ../dfpt_rho_mix.cpp
             ../../../source_estate/module_charge/chg_tools.cpp

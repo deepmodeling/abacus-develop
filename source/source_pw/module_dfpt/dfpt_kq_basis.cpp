@@ -2,11 +2,12 @@
 
 #include "source_base/global_function.h"
 #include "source_base/timer.h"
+#include "source_base/tool_quit.h"
 #include "source_base/tool_title.h"
 #include "source_basis/module_pw/pw_basis.h"
 #include "source_basis/module_pw/pw_basis_k.h"
 
-#include <set>
+#include <string>
 
 namespace ModuleDFPT
 {
@@ -73,68 +74,57 @@ void DFPT_KQ_Basis::init(const ModulePW::PW_Basis_K* pw_wfc,
         ig_of_cell[(ix * pw_rho->ny + iy) * pw_rho->nz + iz] = ig;
     }
 
-    std::set<int> taken;
-    auto try_push = [&](const int ix_in,
-                        const int iy_in,
-                        const int iz_in,
-                        const ModuleBase::Matrix3& gbase,
-                        const int ig_rho_hint) {
-        int ix = ix_in;
-        int iy = iy_in;
-        int iz = iz_in;
-        if (ix >= static_cast<int>(pw_wfc_->nx / 2) + 1)
-        {
-            ix -= pw_wfc_->nx;
-        }
-        if (iy >= static_cast<int>(pw_wfc_->ny / 2) + 1)
-        {
-            iy -= pw_wfc_->ny;
-        }
-        if (iz >= static_cast<int>(pw_wfc_->nz / 2) + 1)
-        {
-            iz -= pw_wfc_->nz;
-        }
-        const ModuleBase::Vector3<double> gcar = ModuleBase::Vector3<double>(ix, iy, iz) * gbase;
-        const ModuleBase::Vector3<double> gpluskq = gcar + kplusq_c_;
-        const double gk2 = gpluskq * gpluskq;
-        if (gk2 > pw_wfc_->gk_ecut)
-        {
-            return;
-        }
-        const int cell = ((ix_in * pw_wfc_->ny) + iy_in) * pw_wfc_->nz + iz_in;
-        if (!taken.insert(cell).second)
-        {
-            return;
-        }
-        gcar_.push_back(gcar);
-        gk2_.push_back(gk2);
-        ig_rho_.push_back(ig_rho_hint >= 0 ? ig_rho_hint : ig_of_cell[cell]);
-    };
-
-    // first reservoir: the wavefunction G grid (covers the ground-state
-    // k-mesh balls)
-    for (int ig = 0; ig < pw_wfc_->npw; ++ig)
+    // single-source enumeration over the full shared FFT cell: every integer
+    // G with |G + (k+q)|^2 <= gk_ecut is a member of the k+q ball, and each
+    // is carried by exactly one FFT cell (the half-space wrap makes the
+    // cell-to-G map bijective), so scanning the whole cell space counts the
+    // ball exactly -- no dependence on the ball layout of either
+    // ground-state grid. A member whose cell carries no local charge-grid G
+    // would break the veff convolution (kq2rho = -1); with ecutrho >= 4
+    // ecutwfc and q inside the first Brillouin zone the charge ball has
+    // twice the radius and carries every member, and the orphan counter
+    // turns any violation into an explicit quit instead of a silent
+    // coefficient zeroing.
+    int orphan = 0;
+    const double ball_cut2 = pw_wfc_->gk_ecut;
+    const int hw_x = static_cast<int>(pw_wfc_->nx / 2) + 1;
+    const int hw_y = static_cast<int>(pw_wfc_->ny / 2) + 1;
+    const int hw_z = static_cast<int>(pw_wfc_->nz / 2) + 1;
+    for (int ix = 0; ix < pw_wfc_->nx; ++ix)
     {
-        const int isz = pw_wfc_->ig2isz[ig];
-        const int iz = isz % pw_wfc_->nz;
-        const int is = isz / pw_wfc_->nz;
-        const int ixy = pw_wfc_->is2fftixy[is];
-        const int ix = ixy / pw_wfc_->fftny;
-        const int iy = ixy % pw_wfc_->fftny;
-        try_push(ix, iy, iz, pw_wfc_->G, -1);
+        const int wx = (ix >= hw_x) ? ix - pw_wfc_->nx : ix;
+        for (int iy = 0; iy < pw_wfc_->ny; ++iy)
+        {
+            const int wy = (iy >= hw_y) ? iy - pw_wfc_->ny : iy;
+            for (int iz = 0; iz < pw_wfc_->nz; ++iz)
+            {
+                const int wz = (iz >= hw_z) ? iz - pw_wfc_->nz : iz;
+                const ModuleBase::Vector3<double> gcar = ModuleBase::Vector3<double>(wx, wy, wz) * pw_rho->G;
+                const ModuleBase::Vector3<double> gpluskq = gcar + kplusq_c_;
+                const double gk2 = gpluskq * gpluskq;
+                if (gk2 > ball_cut2)
+                {
+                    continue;
+                }
+                const int ig = ig_of_cell[(ix * pw_wfc_->ny + iy) * pw_wfc_->nz + iz];
+                if (ig < 0)
+                {
+                    ++orphan;
+                    continue;
+                }
+                gcar_.push_back(gcar);
+                gk2_.push_back(gk2);
+                ig_rho_.push_back(ig);
+            }
+        }
     }
-    // completing reservoir: the charge G grid; its ball radius
-    // (2*sqrt(ecutwfc) by construction) covers every q-shifted ball for q
-    // inside the first Brillouin zone, which the wavefunction grid does not
-    for (int ig = 0; ig < pw_rho->npw; ++ig)
+    if (orphan > 0)
     {
-        const int isz = pw_rho->ig2isz[ig];
-        const int iz = isz % pw_rho->nz;
-        const int is = isz / pw_rho->nz;
-        const int ixy = pw_rho->is2fftixy[is];
-        const int ix = ixy / pw_rho->fftny;
-        const int iy = ixy % pw_rho->fftny;
-        try_push(ix, iy, iz, pw_rho->G, ig);
+        ModuleBase::WARNING_QUIT("DFPT_KQ_Basis::init",
+                                 "the k+q ball contains " + std::to_string(orphan)
+                                     + " plane waves whose FFT cell carries no charge-grid G; "
+                                       "increase ecutrho (>= 4 x ecutwfc covers any q inside the "
+                                       "first Brillouin zone).");
     }
     npwk_ = static_cast<int>(gcar_.size());
     ModuleBase::timer::end("DFPT_KQ_Basis", "init");
