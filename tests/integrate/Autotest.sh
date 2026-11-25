@@ -240,7 +240,7 @@ check_out() {
       compare_thr=$thr
       if [[ $key == ml_desc_mean_* ]]; then
         compare_thr=$descriptor_thr
-      elif [[ $key == wfi*.cube || $key == *_wfc_fp_rms || $key == *_wfc_fp_power_* || $key == *_wfc_fp_cross_* ]]; then
+      elif [[ $key == wfi*.cube || $key == *_wfc_fp_rms || $key == *_wfc_fp_norm2 || $key == *_wfc_fp_power_* || $key == *_wfc_fp_cross_* ]]; then
         compare_thr=$wfc_thr
       elif [[ $key == dfpt_freq_* || $key == dfpt_loto_* ]]; then
         # DFPT phonon frequencies (cm^-1): same-binary reruns reproduce

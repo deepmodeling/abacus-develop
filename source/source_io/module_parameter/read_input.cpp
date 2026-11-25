@@ -34,12 +34,42 @@ std::string longstring(const std::vector<std::string>& words)
     return FmtCore::join(" ", words);
 }
 
+namespace
+{
+const std::array<std::string, 7> true_literals = {"true", "1", "t", "yes", "y", "on", ".true."};
+const std::array<std::string, 7> false_literals = {"false", "0", "f", "no", "n", "off", ".false."};
+
+// A scalar token is only valid when it is consumed completely: std::stoi alone
+// accepts numeric prefixes such as "1junk" and throws std::out_of_range on an
+// overflowing value.
+bool is_integer_token(const std::string& token)
+{
+    size_t consumed = 0;
+    try
+    {
+        std::stoi(token, &consumed);
+    }
+    catch (const std::exception&)
+    {
+        return false;
+    }
+    return consumed == token.size();
+}
+
+bool is_boolean_token(const std::string& token)
+{
+    const std::string lower = FmtCore::lower(token);
+    return std::find(true_literals.begin(), true_literals.end(), lower) != true_literals.end()
+           || std::find(false_literals.begin(), false_literals.end(), lower) != false_literals.end();
+}
+} // namespace
+
 bool assume_as_boolean(const std::string& val)
 {
     const std::string val_ = FmtCore::lower(val);
 
-    const std::array<std::string, 7> t_ = {"true", "1", "t", "yes", "y", "on", ".true."};
-    const std::array<std::string, 7> f_ = {"false", "0", "f", "no", "n", "off", ".false."};
+    const std::array<std::string, 7>& t_ = true_literals;
+    const std::array<std::string, 7>& f_ = false_literals;
     // This will work because std::array<T, N>::size() is a constexpr function
     // Ouch it is of C++17 standard...
     // static_assert(t_.size() == f_.size(), "t_ and f_ must have the same lengths");
@@ -454,6 +484,35 @@ std::string ReadInput::prepare_input(Parameter& param)
     {
         errors += item->domain.validate_explicit(item->label, item->str_values);
     }
+
+    // out_dos and out_mat_xc take one or two tokens. Their vector domains skip the
+    // whole-token validation of the scalar readers, so check that every supplied
+    // token is a complete value before any read hook runs.
+    for (const auto* item : this->readvalue_items)
+    {
+        const bool starts_with_boolean = item->label == "out_mat_xc";
+        if (!starts_with_boolean && item->label != "out_dos")
+        {
+            continue;
+        }
+        bool valid = item->str_values.size() == 1 || item->str_values.size() == 2;
+        if (valid)
+        {
+            valid = starts_with_boolean ? is_boolean_token(item->str_values[0])
+                                        : is_integer_token(item->str_values[0]);
+        }
+        if (valid && item->str_values.size() == 2)
+        {
+            valid = is_integer_token(item->str_values[1]);
+        }
+        if (!valid)
+        {
+            errors += input_diagnostic(item->label, longstring(item->str_values), "supplied",
+                                       starts_with_boolean ? "Expected a Boolean and an optional Integer."
+                                                           : "Expected one Integer and an optional precision Integer.");
+        }
+    }
+
     if (!errors.empty())
     {
         return errors;
@@ -464,6 +523,15 @@ std::string ReadInput::prepare_input(Parameter& param)
     {
         readvalue_item->read_value(*readvalue_item, param);
     }
+
+#if !defined(ABACUS_LIBXC_CUDA) || !defined(__CUDA)
+    // Return a shared input error before the device reset hook probes rank 0 for a GPU.
+    if (param.inp.device == "gpu" && param.inp.device_xc == "gpu")
+    {
+        return "device_xc gpu requires ABACUS built with -DENABLE_LIBXC_CUDA=ON.\nSee "
+               + input_manual_link("device_xc") + "\n";
+    }
+#endif
 
     InputValues supplied_values;
     for (const auto* item : this->readvalue_items)

@@ -14,12 +14,13 @@ class PotXC : public PotBase
     PotXC(const bool domag,
           const bool domag_z,
           const int gga_grad,
+          const bool xc_gpu,
           const ModulePW::PW_Basis* rho_basis_in,
           double* etxc_in,
           double* vtxc_in,
           ModuleBase::matrix* vofk_in = nullptr)
         : vofk(vofk_in), etxc_(etxc_in), vtxc_(vtxc_in),
-          domag_(domag), domag_z_(domag_z), gga_grad_(gga_grad)
+          domag_(domag), domag_z_(domag_z), gga_grad_(gga_grad), xc_gpu_(xc_gpu)
     {
         this->rho_basis_ = rho_basis_in;
         this->dynamic_mode = true;
@@ -35,6 +36,7 @@ class PotXC : public PotBase
     const bool domag_;
     const bool domag_z_;
     const int gga_grad_;
+    const bool xc_gpu_;
 };
 
 } // namespace elecstate
