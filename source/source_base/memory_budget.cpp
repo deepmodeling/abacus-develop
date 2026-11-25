@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <fstream>
+#include <iomanip>
 #include <limits>
 #include <sstream>
 #include <string>
@@ -270,6 +271,41 @@ MemoryDecision decide_memory(const std::size_t required_lower_bytes,
         return MemoryDecision::Warn;
     }
     return MemoryDecision::Ok;
+}
+
+bool is_gamma_direct_ks_solver(const std::string& ks_solver)
+{
+    return ks_solver == "genelpa" || ks_solver == "elpa" || ks_solver == "lapack"
+           || ks_solver == "pexsi" || ks_solver == "cusolver" || ks_solver == "cusolvermp";
+}
+
+bool is_elpa_ks_solver(const std::string& ks_solver)
+{
+    return ks_solver == "genelpa" || ks_solver == "elpa";
+}
+
+std::size_t per_rank_memory_budget(const std::size_t available_node_bytes, const std::size_t ranks_per_node)
+{
+    if (ranks_per_node == 0)
+    {
+        return available_node_bytes;
+    }
+    return available_node_bytes / ranks_per_node;
+}
+
+std::string format_memory_bytes(const std::size_t bytes)
+{
+    static const char* units[] = {"B", "KB", "MB", "GB", "TB", "PB"};
+    double value = static_cast<double>(bytes);
+    int unit = 0;
+    while (value >= 1024.0 && unit < 5)
+    {
+        value /= 1024.0;
+        ++unit;
+    }
+    std::ostringstream oss;
+    oss << std::fixed << std::setprecision(2) << value << " " << units[unit];
+    return oss.str();
 }
 
 } // namespace ModuleBase

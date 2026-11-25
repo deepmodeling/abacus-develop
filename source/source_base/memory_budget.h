@@ -76,6 +76,26 @@ MemoryDecision decide_memory(std::size_t required_lower_bytes,
                              std::size_t required_projected_bytes,
                              std::size_t available_bytes);
 
+/// Return true when ks_solver is a gamma-only direct solver that keeps Psi as
+/// a full local N x N block (genelpa/elpa/lapack/pexsi/cusolver/cusolvermp).
+/// This only checks solver membership; the caller must also require gamma_only,
+/// matching the predicate in source_psi/setup_psi.cpp.
+bool is_gamma_direct_ks_solver(const std::string& ks_solver);
+
+/// Return true when ks_solver uses ELPA, which allocates an additional local
+/// work matrix of the same shape (genelpa/elpa).
+bool is_elpa_ks_solver(const std::string& ks_solver);
+
+/// Per-rank memory budget derived from a node-level available value.
+/// ranks_per_node == 0 (serial build before init) returns the node value
+/// unchanged; otherwise returns available / ranks_per_node.  Division cannot
+/// overflow, so this is safe for any input.
+std::size_t per_rank_memory_budget(std::size_t available_node_bytes, std::size_t ranks_per_node);
+
+/// Format a byte count as a human-readable string (B/KB/MB/GB/TB/PB) with
+/// two decimal places.
+std::string format_memory_bytes(std::size_t bytes);
+
 } // namespace ModuleBase
 
 #endif // MEMORY_BUDGET_H

@@ -138,3 +138,55 @@ TEST(MemoryBudget, DecideOkWhenProjectionFits)
     EXPECT_EQ(ModuleBase::decide_memory(500000000000ULL, 600000000000ULL, 1500000000000ULL),
               ModuleBase::MemoryDecision::Ok);
 }
+
+TEST(MemoryBudget, GammaDirectSolverSetMatchesSetupPsi)
+{
+    // Must match the predicate in source_psi/setup_psi.cpp exactly: these
+    // solvers keep Psi as a full local N x N block under gamma_only.
+    EXPECT_TRUE(ModuleBase::is_gamma_direct_ks_solver("genelpa"));
+    EXPECT_TRUE(ModuleBase::is_gamma_direct_ks_solver("elpa"));
+    EXPECT_TRUE(ModuleBase::is_gamma_direct_ks_solver("lapack"));
+    EXPECT_TRUE(ModuleBase::is_gamma_direct_ks_solver("pexsi"));
+    EXPECT_TRUE(ModuleBase::is_gamma_direct_ks_solver("cusolver"));
+    EXPECT_TRUE(ModuleBase::is_gamma_direct_ks_solver("cusolvermp"));
+    // scalapack_gvx / dav / cg keep Psi as N x NBANDS, so they are not
+    // gamma-direct even though scalapack_gvx is column-major.
+    EXPECT_FALSE(ModuleBase::is_gamma_direct_ks_solver("scalapack_gvx"));
+    EXPECT_FALSE(ModuleBase::is_gamma_direct_ks_solver("dav"));
+    EXPECT_FALSE(ModuleBase::is_gamma_direct_ks_solver("cg"));
+    EXPECT_FALSE(ModuleBase::is_gamma_direct_ks_solver(""));
+}
+
+TEST(MemoryBudget, ElpaSolverSet)
+{
+    EXPECT_TRUE(ModuleBase::is_elpa_ks_solver("genelpa"));
+    EXPECT_TRUE(ModuleBase::is_elpa_ks_solver("elpa"));
+    EXPECT_FALSE(ModuleBase::is_elpa_ks_solver("lapack"));
+    EXPECT_FALSE(ModuleBase::is_elpa_ks_solver("cusolvermp"));
+    EXPECT_FALSE(ModuleBase::is_elpa_ks_solver(""));
+}
+
+TEST(MemoryBudget, PerRankBudgetDividesByRanksPerNode)
+{
+    EXPECT_EQ(ModuleBase::per_rank_memory_budget(1500000000000ULL, 56), 1500000000000ULL / 56);
+    // ranks_per_node == 0 (serial build / before init) returns the node value.
+    EXPECT_EQ(ModuleBase::per_rank_memory_budget(1500000000000ULL, 0), 1500000000000ULL);
+    // zero available stays zero without dividing by zero.
+    EXPECT_EQ(ModuleBase::per_rank_memory_budget(0ULL, 56), 0ULL);
+    // division cannot overflow, even at SIZE_MAX.
+    EXPECT_EQ(ModuleBase::per_rank_memory_budget(std::numeric_limits<std::size_t>::max(), 1),
+              std::numeric_limits<std::size_t>::max());
+    EXPECT_EQ(ModuleBase::per_rank_memory_budget(std::numeric_limits<std::size_t>::max(), 0),
+              std::numeric_limits<std::size_t>::max());
+}
+
+TEST(MemoryBudget, FormatMemoryBytesScalesUnits)
+{
+    EXPECT_EQ(ModuleBase::format_memory_bytes(0), "0.00 B");
+    EXPECT_EQ(ModuleBase::format_memory_bytes(1023), "1023.00 B");
+    EXPECT_EQ(ModuleBase::format_memory_bytes(1024), "1.00 KB");
+    EXPECT_EQ(ModuleBase::format_memory_bytes(1536), "1.50 KB");
+    EXPECT_EQ(ModuleBase::format_memory_bytes(1024ULL * 1024), "1.00 MB");
+    EXPECT_EQ(ModuleBase::format_memory_bytes(1024ULL * 1024 * 1024), "1.00 GB");
+    EXPECT_EQ(ModuleBase::format_memory_bytes(1024ULL * 1024 * 1024 * 1024), "1.00 TB");
+}
