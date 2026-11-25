@@ -59,6 +59,9 @@ focused cleanup.
 - Keep default and general-purpose C++ changes compatible with the repository
   C++11 baseline. Backend-specific or dependency-constrained paths may use the
   higher standard already selected by existing CMake configuration.
+- Prefer explicit types; avoid `auto` in new or modified C++ code.
+  Preserve `const`, reference, and pointer qualifiers when spelling out a
+  deduced type so that value-copy and reference semantics stay unchanged.
 - Use LF line endings for text files. `.bat` and `.cmd` are the CRLF exception.
 - Place `ModuleBase::timer::start`/`end` at the beginning and end of a function,
   not around isolated statements inside the function body. Use the enclosing
@@ -94,6 +97,7 @@ decisions.
 | Basic text format | LF line endings | phase-one mechanical | hook + CI | medium | block | full changed text file | `.bat` and `.cmd` keep CRLF |
 | Header include guard | New `#pragma once` in a header | phase-one mechanical | hook + CI | high | block | added header lines (`.h`/`.hh`/`.hpp`/`.hxx`/`.cuh`) | Use `#ifndef`/`#define`/`#endif` guards; no exception allowed |
 | Language baseline | C++11 compatibility | build/toolchain | CI | high | block | build/static tooling | Actual compiler/toolchain result wins |
+| Explicit types | Prefer explicit types over `auto` | AI review | AI + human review | low | warn | new or modified C++ declarations | Preserve const/reference/pointer semantics; untouched historical uses are not a default blocker |
 | Global dependency budget | Net increase of `GlobalV`/`GlobalC`/`PARAM` references in code diff | phase-one mechanical + AI review | CI + AI review | high | block on net increase, warn on non-increasing added usage | added and removed code lines | Historical untouched usage and documentation mentions are not blocked; migration-neutral moves require reviewer rationale |
 | New default parameter | Header declaration adds a default argument | phase-one mechanical warning + AI review | CI + AI review | high | warn | header diff | High misuse risk; the single-line heuristic is not reliable enough to block, so AI and human review confirm |
 | `.hpp` propagation | New `.hpp` or header includes `.hpp` | phase-one mechanical warning | CI + AI review | medium | warn | new files and added includes | Exception can be recorded in PR |

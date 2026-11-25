@@ -8,7 +8,7 @@ rules. Read the complete governance document before making or reviewing changes:
 
 ## Required Baseline
 
-- Follow the nine ABACUS coding rules summarized from the project governance:
+- Follow the ABACUS coding rules summarized from the project governance:
   1. Do not increase cross-layer control through `GlobalV`, `GlobalC`, or
      `PARAM`; pass dependencies explicitly where practical. Migration-neutral
      moves must keep the PR-level global dependency budget non-increasing and
@@ -102,6 +102,9 @@ rules. Read the complete governance document before making or reviewing changes:
       require a check Autotest cannot express, a PR rationale, and compliance
       with "Integration Test Drivers" in the governance document. Autotest
       helpers are unaffected.
+  24. Prefer explicit types; avoid `auto` in new or modified C++ code.
+      Preserve `const`, reference, and pointer qualifiers when spelling out a
+      deduced type so that value-copy and reference semantics stay unchanged.
 - Use LF line endings for text files. Only `.bat` and `.cmd` files may use CRLF.
 - Keep source file additions deterministic: update the relevant `CMakeLists.txt`
   or explain why the file is generated or included indirectly.
