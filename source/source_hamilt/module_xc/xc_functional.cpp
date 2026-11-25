@@ -448,7 +448,7 @@ std::string XC_Functional::output_info()
     }
 #else
     std::string s = " XC:\t";
-    for (const auto &id : func_id)
+    for (const int& id : func_id)
     {
         s += std::to_string(id) + "\t";
     }
