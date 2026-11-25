@@ -21,7 +21,7 @@ using SocketUtils::quit_if_root_failed;
 
 namespace
 {
-void connect_on_root(IpiSocket& socket, std::ofstream& ofs_running)
+void connect_on_root(IpiSocket &socket, std::ofstream &ofs_running)
 {
     int io_failed = 0;
     std::string io_message;
@@ -33,7 +33,7 @@ void connect_on_root(IpiSocket& socket, std::ofstream& ofs_running)
             ofs_running << " ABACUS socket driver connecting to i-PI endpoint " << endpoint << std::endl;
             socket.connect(endpoint);
         }
-        catch (const std::exception& exc)
+        catch (const std::exception &exc)
         {
             io_failed = 1;
             io_message = exc.what();
@@ -42,7 +42,7 @@ void connect_on_root(IpiSocket& socket, std::ofstream& ofs_running)
     quit_if_root_failed(io_failed, io_message);
 }
 
-void log_peer_closed(std::ofstream& ofs_running)
+void log_peer_closed(std::ofstream &ofs_running)
 {
     if (is_root())
     {
@@ -51,10 +51,11 @@ void log_peer_closed(std::ofstream& ofs_running)
 }
 } // namespace
 
-void Socket_Driver::socket_driver(ModuleESolver::ESolver* p_esolver,
-                                  UnitCell& ucell,
-                                  const Input_para& inp,
-                                  std::ofstream& ofs_running)
+void Socket_Driver::socket_driver(
+    ModuleESolver::ESolver *p_esolver,
+    UnitCell &ucell,
+    const Input_para &inp,
+    std::ofstream &ofs_running)
 {
     ModuleBase::TITLE("Socket_Driver", "socket_driver");
     ModuleBase::timer::start("Socket_Driver", "socket_driver");
@@ -112,7 +113,7 @@ void Socket_Driver::socket_driver(ModuleESolver::ESolver* p_esolver,
             }
         }
     }
-    catch (const std::exception& exc)
+    catch (const std::exception &exc)
     {
         ModuleBase::WARNING_QUIT("ABACUS socket", exc.what());
     }

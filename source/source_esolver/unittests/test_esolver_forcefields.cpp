@@ -18,9 +18,13 @@ namespace
 class FixedStressField : public ModuleMD::ForceField
 {
   public:
-    void initialize(BaseCell&, const Input_para&) override {}
+    void initialize(BaseCell &, const Input_para &) override {}
 
-    void compute(BaseCell&, double& energy, ModuleBase::matrix& force, ModuleBase::matrix& stress) override
+    void compute(
+        BaseCell &,
+        double &energy,
+        ModuleBase::matrix &force,
+        ModuleBase::matrix &stress) override
     {
         energy = 6.0;
         force.create(0, 3);
@@ -32,7 +36,7 @@ class FixedStressField : public ModuleMD::ForceField
     }
 };
 
-void expect_external_pressure(BaseCell& cell)
+void expect_external_pressure(BaseCell &cell)
 {
     Input_para input;
     input.press1 = 1.0;

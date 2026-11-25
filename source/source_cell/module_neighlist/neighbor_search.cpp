@@ -90,9 +90,10 @@ void NeighborSearch::init_from_mdcell_(const MDCell& cell, double sr)
         ghost_atoms_.push_back(atom);
     }
 
-    const std::size_t page_size = ModuleNeighList::checked_size_product(all_atoms_.size(),
-                                                                        neighbor_reserve_factor,
-                                                                        "NeighborSearch page size");
+    const std::size_t requested_page_size = ModuleNeighList::checked_size_product(all_atoms_.size(),
+                                                                                  neighbor_reserve_factor,
+                                                                                  "NeighborSearch page size");
+    const std::size_t page_size = std::max<std::size_t>(1, requested_page_size);
     neighbor_list_.initialize(inside_atoms_.size(), page_size);
     candidate_neighbor_list_.initialize(inside_atoms_.size(), page_size);
 }
@@ -205,11 +206,11 @@ void NeighborSearch::filter_candidate_neighbors_(double cutoff, double lat0)
     for (int i = 0; i < candidate_neighbor_list_.get_ncentral_atoms(); ++i)
     {
         active.clear();
-        const NeighborAtom& center = all_atoms_[static_cast<std::size_t>(i)];
+        const NeighborAtom& center = all_atoms_[i];
         for (int j = 0; j < candidate_neighbor_list_.get_numneigh(i); ++j)
         {
             const int index = candidate_neighbor_list_.get_firstneigh(i)[j];
-            const NeighborAtom& neighbor = all_atoms_[static_cast<std::size_t>(index)];
+            const NeighborAtom& neighbor = all_atoms_[index];
             const double dx = (center.position_x - neighbor.position_x) * lat0;
             const double dy = (center.position_y - neighbor.position_y) * lat0;
             const double dz = (center.position_z - neighbor.position_z) * lat0;

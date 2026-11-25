@@ -1,19 +1,15 @@
 #include "cal_pdos_gamma.h"
-#include "write_pdos_text.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/module_external/blas_connector.h"
 #include "source_base/module_external/scalapack_connector.h"
 #include "source_base/global_function.h"
-#include "source_base/global_variable.h"
 #include "source_lcao/hamilt_lcao.h"
-#include "source_io/module_output/write_orb_info.h"
 
 
-void ModuleIO::cal_pdos(
+std::vector<ModuleBase::matrix> ModuleIO::cal_pdos(
 		const psi::Psi<double>* psi,
 		hamilt::Hamilt<double>* p_ham,
 		const Parallel_Orbitals& pv,
-		const UnitCell& ucell,
         const K_Vectors& kv,
 		const int nspin0,
         const int nbands,
@@ -22,11 +18,8 @@ void ModuleIO::cal_pdos(
 		const double& emin,
 		const double& dos_edelta_ev,
 		const double& bcoeff,
-		const int istep,
-		const int out_app_flag,
 		const int nlocal,
-		const int nspin,
-		const std::string& global_out_dir)
+		const int nspin)
 {
     ModuleBase::TITLE("ModuleIO", "cal_pdos_gamma");
 
@@ -146,10 +139,5 @@ void ModuleIO::cal_pdos(
 #endif
     } // is
 
-    if (GlobalV::MY_RANK == 0)
-    {
-        write_pdos_text(ucell, pdos.data(), nspin, nlocal, npoints,
-                        emin, dos_edelta_ev, global_out_dir, istep, out_app_flag);
-        ModuleIO::write_orb_info(&ucell);
-    }
+    return pdos;
 }

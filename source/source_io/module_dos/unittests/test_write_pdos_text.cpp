@@ -1,3 +1,4 @@
+#include <cstdlib>
 #include <fstream>
 #include <sstream>
 #include <string>
@@ -60,6 +61,8 @@ protected:
         delete ucell;
     }
 
+    std::ofstream log; // running log of the writer under test
+
     std::string read_file(const std::string& fname)
     {
         std::ifstream ifs(fname);
@@ -72,7 +75,7 @@ protected:
 // Spin-unpolarized: writes pdoss1.txt with s and 3 p columns.
 TEST_F(WritePdosTextTest, BasicOutput)
 {
-    GlobalV::ofs_running.open("test_write_pdos_text.log");
+    log.open("test_write_pdos_text.log");
 
     const int nspin = 1;
     const int nlocal = 4;
@@ -93,7 +96,7 @@ TEST_F(WritePdosTextTest, BasicOutput)
     }
 
     ModuleIO::write_pdos_text(*ucell, &pdos, nspin, nlocal, npoints,
-                              emin, dos_edelta_ev, out_dir, istep, 0);
+                              emin, dos_edelta_ev, out_dir, istep, 0, 6, log);
 
     const std::string str = read_file("./pdoss1.txt");
 
@@ -109,7 +112,7 @@ TEST_F(WritePdosTextTest, BasicOutput)
     EXPECT_THAT(str, testing::HasSubstr("    1.000000    1    Si  4.000000  104.000000  204.000000  304.000000"));
 
     remove("./pdoss1.txt");
-    GlobalV::ofs_running.close();
+    log.close();
     remove("test_write_pdos_text.log");
 }
 
@@ -117,7 +120,7 @@ TEST_F(WritePdosTextTest, BasicOutput)
 // the record header.
 TEST_F(WritePdosTextTest, Mode0FixedNameWithStep)
 {
-    GlobalV::ofs_running.open("test_write_pdos_text.log");
+    log.open("test_write_pdos_text.log");
 
     const int nspin = 1;
     const int nlocal = 4;
@@ -128,20 +131,20 @@ TEST_F(WritePdosTextTest, Mode0FixedNameWithStep)
     pdos.zero_out();
 
     ModuleIO::write_pdos_text(*ucell, &pdos, nspin, nlocal, npoints,
-                              emin, dos_edelta_ev, "./", 2, 0);
+                              emin, dos_edelta_ev, "./", 2, 0, 6, log);
 
     const std::string str = read_file("./pdoss1.txt");
-    EXPECT_THAT(str, testing::HasSubstr("# istep: 3"));
+    EXPECT_THAT(str, testing::HasSubstr("# Ionic_Step 3"));
 
     remove("./pdoss1.txt");
-    GlobalV::ofs_running.close();
+    log.close();
     remove("test_write_pdos_text.log");
 }
 
 // Spin-polarized (nspin=2): writes two files, pdos[is] per spin channel.
 TEST_F(WritePdosTextTest, SpinPolarized)
 {
-    GlobalV::ofs_running.open("test_write_pdos_text.log");
+    log.open("test_write_pdos_text.log");
 
     const int nspin = 2;
     const int nlocal = 4;
@@ -164,7 +167,7 @@ TEST_F(WritePdosTextTest, SpinPolarized)
     }
 
     ModuleIO::write_pdos_text(*ucell, pdos_arr, nspin, nlocal, npoints,
-                              emin, dos_edelta_ev, "./", -1, 0);
+                              emin, dos_edelta_ev, "./", -1, 0, 6, log);
 
     const std::string s1 = read_file("./pdoss1.txt");
     const std::string s2 = read_file("./pdoss2.txt");
@@ -175,8 +178,41 @@ TEST_F(WritePdosTextTest, SpinPolarized)
 
     remove("./pdoss1.txt");
     remove("./pdoss2.txt");
-    GlobalV::ofs_running.close();
+    log.close();
     remove("test_write_pdos_text.log");
+}
+
+TEST_F(WritePdosTextTest, NpySumsZetasAndSpinorsBeforeThreshold)
+{
+    Atom& atom = ucell->atoms[0];
+    atom.nwl = 1;
+    atom.nw = 7;
+    atom.l_nchi = {1, 2};
+    atom.iw2l = {0, 1, 1, 1, 1, 1, 1};
+    atom.iw2m = {0, 0, 1, 2, 0, 1, 2};
+    ucell->set_iat2iwt_for_test({0}, 2);
+    std::vector<ModuleBase::matrix> pdos(1);
+    const int nrows = 2 * atom.nw;
+    pdos[0].create(nrows, 3, true);
+    for (int iw = 0; iw < nrows; ++iw)
+    {
+        pdos[0](iw, 0) = iw + 1;
+        pdos[0](iw, 1) = 0.3e-6;
+        pdos[0](iw, 2) = 0.1e-6;
+    }
+    const char* fixture_path = std::getenv("ABACUS_TEST_PDOS_NPY");
+    const std::string path = fixture_path ? fixture_path : testing::TempDir() + "abacus_pdos_spinor.npy";
+    ModuleIO::write_pdos_npy(*ucell, pdos, 4, -1.0, 0.5, path);
+    std::ifstream file(path, std::ios::binary);
+    // The last p channel combines both zetas and both spinor components.
+    double spectrum[3];
+    file.seekg(-static_cast<std::streamoff>(sizeof(spectrum)), std::ios::end);
+    ASSERT_TRUE(file.read(reinterpret_cast<char*>(spectrum), sizeof(spectrum)));
+    EXPECT_DOUBLE_EQ(spectrum[0], 42.0);
+    EXPECT_DOUBLE_EQ(spectrum[1], 1.2e-6);
+    EXPECT_DOUBLE_EQ(spectrum[2], 0.0);
+    file.close();
+    if (!fixture_path) { std::remove(path.c_str()); }
 }
 
 // ---------------------------------------------------------------------------
@@ -184,7 +220,7 @@ TEST_F(WritePdosTextTest, SpinPolarized)
 // ---------------------------------------------------------------------------
 TEST_F(WritePdosTextTest, Mode1FixedNameAppend)
 {
-    GlobalV::ofs_running.open("test_write_pdos_text.log");
+    log.open("test_write_pdos_text.log");
 
     const int nspin = 1;
     const int nlocal = 4;
@@ -198,21 +234,21 @@ TEST_F(WritePdosTextTest, Mode1FixedNameAppend)
 
     // First call: istep=0, mode 1 -> fixed name pdoss1.txt.
     ModuleIO::write_pdos_text(*ucell, &pdos, nspin, nlocal, npoints,
-                              emin, dos_edelta_ev, "./", /*istep=*/0, out_app_flag);
+                              emin, dos_edelta_ev, "./", /*istep=*/0, out_app_flag, 6, log);
     // Second call: istep=1, mode 1 -> append to same file.
     ModuleIO::write_pdos_text(*ucell, &pdos, nspin, nlocal, npoints,
-                              emin, dos_edelta_ev, "./", /*istep=*/1, out_app_flag);
+                              emin, dos_edelta_ev, "./", /*istep=*/1, out_app_flag, 6, log);
 
     const std::string str = read_file("./pdoss1.txt");
-    // Two istep headers present -> two appended records.
-    EXPECT_THAT(str, testing::HasSubstr("# istep: 1"));
-    EXPECT_THAT(str, testing::HasSubstr("# istep: 2"));
+    // Two Ionic_Step headers present -> two appended records.
+    EXPECT_THAT(str, testing::HasSubstr("# Ionic_Step 1"));
+    EXPECT_THAT(str, testing::HasSubstr("# Ionic_Step 2"));
     // g-suffixed file must NOT exist.
     std::ifstream ifs("./pdoss1g1.txt");
     EXPECT_FALSE(ifs.good());
 
     remove("./pdoss1.txt");
-    GlobalV::ofs_running.close();
+    log.close();
     remove("test_write_pdos_text.log");
 }
 
@@ -221,7 +257,7 @@ TEST_F(WritePdosTextTest, Mode1FixedNameAppend)
 // ---------------------------------------------------------------------------
 TEST_F(WritePdosTextTest, Mode2PerStepFile)
 {
-    GlobalV::ofs_running.open("test_write_pdos_text.log");
+    log.open("test_write_pdos_text.log");
 
     const int nspin = 1;
     const int nlocal = 4;
@@ -233,12 +269,12 @@ TEST_F(WritePdosTextTest, Mode2PerStepFile)
     pdos.zero_out();
 
     ModuleIO::write_pdos_text(*ucell, &pdos, nspin, nlocal, npoints,
-                              emin, dos_edelta_ev, "./", 3, out_app_flag);
+                              emin, dos_edelta_ev, "./", 3, out_app_flag, 6, log);
 
     const std::string str = read_file("./pdoss1g4.txt");
-    EXPECT_THAT(str, testing::HasSubstr("# istep: 4"));
+    EXPECT_THAT(str, testing::HasSubstr("# Ionic_Step 4"));
 
     remove("./pdoss1g4.txt");
-    GlobalV::ofs_running.close();
+    log.close();
     remove("test_write_pdos_text.log");
 }

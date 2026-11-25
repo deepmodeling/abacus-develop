@@ -27,7 +27,7 @@ class Ions_Move_LBFGS
      * @param relax_bfgs_rmax Maximum allowed step length (from INPUT)
      * @param out_level Output verbosity level (from INPUT)
      */
-    void allocate(const int _size, const double relax_bfgs_rmax, const std::string& out_level);
+    void allocate(const int _size, const double relax_bfgs_rmax, const std::string &out_level);
 
     /**
      * @brief Perform one L-BFGS relaxation step
@@ -36,11 +36,12 @@ class Ions_Move_LBFGS
      * @param etot Current total energy
      * @param ofs_running Output stream for running log
      */
-    bool relax_step(const ModuleBase::matrix _force,
-                    UnitCell& ucell,
-                    const double& etot,
-                    std::ofstream& ofs_running,
-                    const Relax_Criteria& criteria);
+    bool relax_step(
+        const ModuleBase::matrix _force,
+        UnitCell &ucell,
+        const double &etot,
+        std::ofstream &ofs_running,
+        const Relax_Criteria &criteria);
 
   private:
     // LineSearch l_search;
@@ -54,7 +55,7 @@ class Ions_Move_LBFGS
     double alpha_k;        ///< Step size parameter
     std::string out_level; ///< Output verbosity level
 
-    ModuleESolver::ESolver* solver = nullptr; ///< Structure solver
+    ModuleESolver::ESolver *solver = nullptr; ///< Structure solver
     std::vector<double> steplength;           // the length of atoms displacement
     std::vector<std::vector<double>> H;       // Hessian matrix
     std::vector<double> force0;               // force in previous step
@@ -71,42 +72,43 @@ class Ions_Move_LBFGS
     /**
      * @brief Prepare optimization step parameters
      */
-    void prepare_step(std::vector<ModuleBase::Vector3<double>>& force,
-                      std::vector<ModuleBase::Vector3<double>>& pos,
-                      std::vector<std::vector<double>>& H,
-                      std::vector<double>& pos0,
-                      std::vector<double>& force0,
-                      std::vector<ModuleBase::Vector3<double>>& dpos,
-                      UnitCell& ucell,
-                      const double& etot);
+    void prepare_step(
+        std::vector<ModuleBase::Vector3<double>> &force,
+        std::vector<ModuleBase::Vector3<double>> &pos,
+        std::vector<std::vector<double>> &H,
+        std::vector<double> &pos0,
+        std::vector<double> &force0,
+        std::vector<ModuleBase::Vector3<double>> &dpos,
+        UnitCell &ucell,
+        const double &etot);
 
     /**
      * @brief Judge if the relaxation has converged
      * @param criteria Convergence thresholds passed from the driver
      * @return true if converged, false otherwise
      */
-    bool is_restrain(const Relax_Criteria& criteria);
+    bool is_restrain(const Relax_Criteria &criteria);
 
     /**
      * @brief Calculate maximum gradient component
      * @param _force Current force matrix
      * @param ucell Unit cell being optimized
      */
-    void calculate_largest_grad(const ModuleBase::matrix& _force, UnitCell& ucell);
+    void calculate_largest_grad(const ModuleBase::matrix &_force, UnitCell &ucell);
 
     /**
      * @brief Extract atomic positions from unit cell
      * @param ucell Unit cell to read
      * @param pos Output position vector
      */
-    void get_pos(UnitCell& ucell, std::vector<ModuleBase::Vector3<double>>& pos);
+    void get_pos(UnitCell &ucell, std::vector<ModuleBase::Vector3<double>> &pos);
 
     /**
      * @brief Get fractional positions from unit cell
      * @param ucell Unit cell to read
      * @param pos_taud Output fractional positions
      */
-    void get_pos_taud(UnitCell& ucell, std::vector<ModuleBase::Vector3<double>>& pos_taud);
+    void get_pos_taud(UnitCell &ucell, std::vector<ModuleBase::Vector3<double>> &pos_taud);
 
     /**
      * @brief Update L-BFGS history buffers
@@ -121,16 +123,17 @@ class Ions_Move_LBFGS
      * @param y Force differences buffer
      * @param rho Scalar products buffer
      */
-    void update(std::vector<ModuleBase::Vector3<double>>& pos_taud,
-                std::vector<double>& pos_taud0,
-                std::vector<double>& force,
-                std::vector<double>& force0,
-                UnitCell& ucell,
-                int iteration,
-                int memory,
-                std::vector<std::vector<double>>& s,
-                std::vector<std::vector<double>>& y,
-                std::vector<double>& rho);
+    void update(
+        std::vector<ModuleBase::Vector3<double>> &pos_taud,
+        std::vector<double> &pos_taud0,
+        std::vector<double> &force,
+        std::vector<double> &force0,
+        UnitCell &ucell,
+        int iteration,
+        int memory,
+        std::vector<std::vector<double>> &s,
+        std::vector<std::vector<double>> &y,
+        std::vector<double> &rho);
 
     /**
      * @brief Determine optimal step lengths
@@ -138,15 +141,14 @@ class Ions_Move_LBFGS
      * @param dpos Position displacements
      * @param maxstep Maximum allowed step length
      */
-    void determine_step(std::vector<double>& steplength,
-                        std::vector<ModuleBase::Vector3<double>>& dpos,
-                        double& maxstep);
+    void determine_step(
+        std::vector<double> &steplength, std::vector<ModuleBase::Vector3<double>> &dpos, double &maxstep);
 
     /**
      * @brief Update atomic positions in unit cell
      * @param ucell Unit cell to update
      */
-    void update_pos(UnitCell& ucell);
+    void update_pos(UnitCell &ucell);
 };
 
 #endif

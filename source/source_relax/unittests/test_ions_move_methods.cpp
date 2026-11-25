@@ -33,7 +33,7 @@ static bool remake_cell_called = false;
 static std::string remake_cell_latName;
 static ModuleBase::Matrix3 remake_cell_latvec;
 
-void remake_cell(Lattice& lat)
+void remake_cell(Lattice &lat)
 {
     remake_cell_called = true;
     remake_cell_latName = lat.latName;
@@ -42,8 +42,8 @@ void remake_cell(Lattice& lat)
     // Mock implementation: enforce simple cubic structure for "sc"
     if (lat.latName == "sc")
     {
-        double celldm = std::sqrt(lat.latvec.e11 * lat.latvec.e11 + lat.latvec.e12 * lat.latvec.e12
-                                  + lat.latvec.e13 * lat.latvec.e13);
+        double celldm = std::sqrt(
+            lat.latvec.e11 * lat.latvec.e11 + lat.latvec.e12 * lat.latvec.e12 + lat.latvec.e13 * lat.latvec.e13);
         lat.latvec.Zero();
         lat.latvec.e11 = celldm;
         lat.latvec.e22 = celldm;
@@ -52,9 +52,10 @@ void remake_cell(Lattice& lat)
     // Mock implementation: enforce FCC structure for "fcc"
     else if (lat.latName == "fcc")
     {
-        double celldm = std::sqrt(lat.latvec.e11 * lat.latvec.e11 + lat.latvec.e12 * lat.latvec.e12
-                                  + lat.latvec.e13 * lat.latvec.e13)
-                        / std::sqrt(2.0);
+        double celldm =
+            std::sqrt(
+                lat.latvec.e11 * lat.latvec.e11 + lat.latvec.e12 * lat.latvec.e12 + lat.latvec.e13 * lat.latvec.e13) /
+            std::sqrt(2.0);
         lat.latvec.e11 = -celldm;
         lat.latvec.e12 = 0.0;
         lat.latvec.e13 = celldm;
@@ -67,7 +68,12 @@ void remake_cell(Lattice& lat)
     }
 }
 
-void update_pos_tau(const Lattice&, const double*, const int, const int, Atom*)
+void update_pos_tau(
+    const Lattice &,
+    const double *,
+    const int,
+    const int,
+    Atom *)
 {
 }
 
@@ -80,10 +86,7 @@ void reset_remake_cell_mock()
 }
 
 // Helper function to check if remake_cell was called
-bool was_remake_cell_called()
-{
-    return remake_cell_called;
-}
+bool was_remake_cell_called() { return remake_cell_called; }
 } // namespace unitcell
 
 // Define a fixture for the tests
@@ -231,7 +234,7 @@ TEST_F(IonsMoveMethodsTest, ResetAfterCellChange)
     imm.set_converged(true);
     imm.set_update_iter(4);
     imm.get_etot_info() = {-1.0, -2.0};
-    Ions_Move_BFGS& bfgs = imm.get_bfgs();
+    Ions_Move_BFGS &bfgs = imm.get_bfgs();
     bfgs.get_first_step() = false;
     bfgs.get_save_flag() = true;
     bfgs.get_tr_min_hit() = true;

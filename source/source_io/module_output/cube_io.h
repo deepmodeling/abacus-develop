@@ -108,6 +108,33 @@ void write_cube(const std::string& file,
                 const bool append,
                 const int ndata_line = 6);
 
+/// write the two comment lines, the grid geometry and the atom list of a cube
+/// file, and leave the stream configured for the following scientific data block
+void write_cube_header(std::ofstream& ofs,
+                       const std::vector<std::string>& comment,
+                       const int& natom,
+                       const std::vector<double>& origin,
+                       const int& nx,
+                       const int& ny,
+                       const int& nz,
+                       const std::vector<double>& dx,
+                       const std::vector<double>& dy,
+                       const std::vector<double>& dz,
+                       const std::vector<int>& atom_type,
+                       const std::vector<double>& atom_charge,
+                       const std::vector<std::vector<double>>& atom_pos,
+                       const int precision);
+
+/// write a cube header for a volumetric field sampled on the ucell grid
+/// (grid spacings, atom types and Cartesian positions are derived from ucell)
+void write_cube_header_for_cell(std::ofstream& ofs,
+                                const UnitCell& ucell,
+                                const int nx,
+                                const int ny,
+                                const int nz,
+                                const std::vector<std::string>& comment,
+                                const int precision);
+
 /**
  * @brief The trilinear interpolation method
  *

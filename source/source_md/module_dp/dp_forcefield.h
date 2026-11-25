@@ -11,7 +11,7 @@ namespace hpp
 {
 class DeepPot;
 }
-}
+} // namespace deepmd
 #else
 namespace deepmd
 {
@@ -20,30 +20,33 @@ class DeepPot;
 #endif
 #endif
 
-#include <memory>
 #include <iosfwd>
+#include <memory>
 #include <string>
 #include <vector>
 
 class UnitCell;
+class MDCell;
+class DomainDecomposition;
 
 namespace ModuleMD
 {
 class DP : public ForceField
 {
   public:
-    DP(const std::string& pot_file, const std::string& output_dir, std::ofstream& running_log);
+    DP(const std::string &pot_file, const std::string &output_dir, std::ofstream &running_log);
     ~DP() override;
 
-    void initialize(BaseCell& cell, const Input_para& inp) override;
-    void compute(BaseCell& cell,
-                 double& energy,
-                 ModuleBase::matrix& force,
-                 ModuleBase::matrix& stress) override;
+    void initialize(BaseCell &cell, const Input_para &inp) override;
+    void compute(
+        BaseCell &cell,
+        double &energy,
+        ModuleBase::matrix &force,
+        ModuleBase::matrix &stress) override;
 
   private:
-    void type_map(const UnitCell& cell);
-    void initialize_type_map_(const std::vector<std::string>& type_labels);
+    void initialize_type_map_(const std::vector<std::string> &type_labels);
+    void compute_mdcell_(MDCell &cell, double &energy, ModuleBase::matrix &stress);
 
 #ifdef __DPMD
 #ifdef __DPMDC
@@ -54,11 +57,13 @@ class DP : public ForceField
 #endif
     std::string dp_file;
     std::string output_dir_;
-    std::ofstream& running_log_;
-    std::vector<int> atype;
+    std::ofstream &running_log_;
     std::vector<int> md_type_to_dp_type_;
     std::vector<double> fparam;
     std::vector<double> aparam;
+    std::unique_ptr<MDCell> distributed_cell_;
+    std::unique_ptr<DomainDecomposition> decomposition_;
+    bool aparam_nall_ = false;
     double rescaling = 1.0;
 };
 } // namespace ModuleMD

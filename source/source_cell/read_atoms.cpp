@@ -84,6 +84,15 @@ bool unitcell::read_atom_positions(UnitCell& ucell,
                     ModuleBase::Vector3<double> v;
                     ModuleBase::Vector3<int> mv;
                     ifpos >> v.x >> v.y >> v.z;
+                    // An EOF failure means fewer coordinate lines than the
+                    // declared atom count; leave that to the existing
+                    // mismatch-in-atom-number exit in parse_atom_properties.
+                    if (ifpos.fail() && !ifpos.eof())
+                    {
+                        ofs_warning << " Error: failed to read the coordinate triplet of atom "
+                                    << ia + 1 << " for atom type " << ucell.atoms[it].label << std::endl;
+                        return false;
+                    }
                     mv.x = true ;
                     mv.y = true ;
                     mv.z = true ;
@@ -148,10 +157,11 @@ bool unitcell::read_atom_positions(UnitCell& ucell,
             // explicitly magnetized STRU.
             if (unitcell::is_magnetization_all_zero(ucell))
             {
-                ofs_running << "\n WARNING: initial magmom is all zero and symmetry=1; "
-                            << "autoset magnetism is SKIPPED to preserve the symmetry of the initial (nonmagnetic) structure.\n"
-                            << "          If spontaneous magnetism is expected, set magmom explicitly "
-                            << "in STRU, or use symmetry = 0 or -1." << std::endl;
+                ofs_running << "\n WARNING: initial magmom is all zero and symmetry = 1." << std::endl;
+                ofs_running << "          Autoset magnetism is skipped to preserve the symmetry" << std::endl;
+                ofs_running << "          of the initial nonmagnetic structure." << std::endl;
+                ofs_running << "          If spontaneous magnetism is expected, set magmom" << std::endl;
+                ofs_running << "          explicitly in STRU, or use symmetry = 0 or -1." << std::endl;
             }
         }
         else

@@ -13,7 +13,11 @@ namespace vdw
 class Vdwd3 : public Vdw
 {
   public:
-    Vdwd3(const UnitCell& unit_in, const std::string& xc_name, const Input_para& input, std::ofstream* plog = nullptr);
+    Vdwd3(
+        const UnitCell &unit_in,
+        const std::string &xc_name,
+        const Input_para &input,
+        std::ofstream *plog = nullptr);
 
     ~Vdwd3() override = default;
 
@@ -22,9 +26,9 @@ class Vdwd3 : public Vdw
     d3::Cutoffs cutoffs_;
     std::string canonical_method_;
 
-    void evaluate_impl(const VdwRequest& request, VdwResult& result) override;
-    d3::Structure build_structure(std::vector<int>& atom_indices) const;
-    void write_parameters(std::ofstream* plog) const;
+    void evaluate_impl(const VdwRequest &request, VdwResult &result) override;
+    d3::Structure build_structure(std::vector<int> &atom_indices) const;
+    void write_parameters(std::ofstream *plog) const;
 };
 
 } // namespace vdw

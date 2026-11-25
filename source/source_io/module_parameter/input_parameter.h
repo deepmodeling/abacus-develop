@@ -462,7 +462,7 @@ struct Input_para
     int out_freq_elec = 0;                    ///< the frequency of electronic iter to output charge and wavefunction
     int out_freq_ion = 0;                     ///< the frequency ( >= 0 ) of ionic step to output charge density;
                                               ///< 0: output only when ion steps are finished
-    int out_freq_td = 0;                      ///< output interval in RT-TDDFT
+    int out_freq_td_compat = 0;               ///< legacy alias out_freq_td for out_freq_ion in RT-TDDFT
     std::vector<int> out_chg = {0, 3};        ///< output charge density. 0: no; 1: yes
     bool out_occ_mat = true;                  ///< output DFT+U occupation matrices;
                                               ///< frequency controlled by out_freq_ion/out_freq_elec
@@ -471,7 +471,7 @@ struct Input_para
     std::vector<int> out_sol = {0, 8};        ///< output the implicit-solvent dielectric function and cavity
     int out_wfc_pw = 0;                       ///< 0: no; 1: txt; 2: dat
     std::vector<int> out_band = {0, 8};       ///< band calculation pengfei 2014-10-13
-    int out_dos = 0;                          ///< dos calculation. mohan add 20090909
+    std::vector<int> out_dos = {0, 6};        ///< DOS/PDOS output: [enable, precision]
     std::vector<int> out_ldos = {0, 3};       ///< ldos calculation
     bool out_mul = false;                     ///< qifeng add 2019-9-10
     bool out_proj_band = false;               ///< projected band structure calculation jiyy add 2022-05-11
@@ -504,8 +504,8 @@ struct Input_para
     std::vector<int> out_mat_dh_vh = {0, 8};  ///< output Hartree dH/dR (dV^H/dR) matrices
     std::vector<int> out_mat_dh_vxc = {0, 8}; ///< output XC dH/dR (dV^XC/dR) matrices
     std::vector<int> out_mat_ds = {0, 8};     ///< output dS/dR matrices with precision
-    bool out_mat_xc = false;                  ///< output exchange-correlation matrix in
-                                              ///< KS-orbital representation.
+    std::vector<int> out_mat_xc = {0, 8};     ///< output exchange-correlation matrix in
+                                              ///< KS-orbital representation: [enable, precision]
     std::vector<int> out_mat_xc2 = {0, 8};    ///< output Vxc(R) matrix with precision
     bool out_eband = false;                   ///< output the band energy terms separately
     bool out_eband_terms_compat = false;      ///< legacy alias out_eband_terms for out_eband
@@ -516,7 +516,6 @@ struct Input_para
                                             ///< 1: append to the same fixed file; 2: write to subdirectory
                                             ///< (PSI/, CHG/, POT/, ELF/, DOS/, DIP/, MAT/) with a g{step} suffix
                                             ///< liuyu 2023-03-20, modified 2025-10-16
-    int out_ndigits = 8;                     ///< Assuming 8 digits precision is needed for matrices output
     std::vector<int> out_mat_t = {0, 8};     ///< output T(R) matrix with precision
     bool out_element_info = false;           ///< output information of all elements
     std::vector<int> out_mat_r = {0, 8};     ///< output r(R) matrix with precision
@@ -580,6 +579,7 @@ struct Input_para
     bool out_wannier_amn = true;            ///< output .amn file or not
     bool out_wannier_unk = false;           ///< output UNK. file or not
     bool out_wannier_eig = true;            ///< output .eig file or not
+    bool out_wannier_spn = false;           ///< output formatted spin matrices for Wannier90
     bool out_wannier_wvfn_formatted = true; ///< output UNK. file in text format or in binary format
 
     // ==============   #Parameters (13.Model) ===========================

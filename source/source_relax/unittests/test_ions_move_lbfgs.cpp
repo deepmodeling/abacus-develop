@@ -24,7 +24,12 @@ namespace unitcell
 {
 // Stub: the real update_pos_tau performs lattice-vector algebra that needs a
 // fully built UnitCell; these tests only care about the convergence decision.
-void update_pos_tau(const Lattice&, const double*, const int, const int, Atom*)
+void update_pos_tau(
+    const Lattice &,
+    const double *,
+    const int,
+    const int,
+    Atom *)
 {
 }
 } // namespace unitcell
@@ -44,15 +49,9 @@ UnitCell::UnitCell()
     set_atom_flag = true;
     atoms[0].label = "Si";
 }
-UnitCell::~UnitCell()
-{
-}
-Magnetism::Magnetism()
-{
-}
-Magnetism::~Magnetism()
-{
-}
+UnitCell::~UnitCell() {}
+Magnetism::Magnetism() {}
+Magnetism::~Magnetism() {}
 Atom::Atom()
 {
     na = 1;
@@ -64,48 +63,22 @@ Atom::Atom()
     taud.resize(na);
     mbl[0] = {1, 1, 1};
 }
-Atom::~Atom()
-{
-}
+Atom::~Atom() {}
 #ifdef __MPI
-void Atom::bcast_atom()
-{
-}
-void Atom::bcast_atom2()
-{
-}
+void Atom::bcast_atom() {}
+void Atom::bcast_atom2() {}
 #endif
-Atom_pseudo::Atom_pseudo()
-{
-}
-Atom_pseudo::~Atom_pseudo()
-{
-}
-pseudo::pseudo()
-{
-}
-pseudo::~pseudo()
-{
-}
-SepPot::SepPot()
-{
-}
-SepPot::~SepPot()
-{
-}
-Sep_Cell::Sep_Cell() noexcept
-{
-}
-Sep_Cell::~Sep_Cell() noexcept
-{
-}
+Atom_pseudo::Atom_pseudo() {}
+Atom_pseudo::~Atom_pseudo() {}
+pseudo::pseudo() {}
+pseudo::~pseudo() {}
+SepPot::SepPot() {}
+SepPot::~SepPot() {}
+Sep_Cell::Sep_Cell() noexcept {}
+Sep_Cell::~Sep_Cell() noexcept {}
 int ModuleSymmetry::Symmetry::symm_flag = 0;
-void ModuleSymmetry::Symmetry::symmetrize_mat3(ModuleBase::matrix& sigma, const Lattice& lat) const
-{
-}
-void ModuleSymmetry::Symmetry::symmetrize_vec3_nat(double* v) const
-{
-}
+void ModuleSymmetry::Symmetry::symmetrize_mat3(ModuleBase::matrix &sigma, const Lattice &lat) const {}
+void ModuleSymmetry::Symmetry::symmetrize_vec3_nat(double *v) const {}
 
 // Friend of Parameter; the only sanctioned way to write PARAM.input in tests.
 // Not needed anymore: allocate() takes relax_bfgs_rmax and out_level explicitly.

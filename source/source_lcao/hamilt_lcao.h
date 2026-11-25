@@ -148,7 +148,7 @@ class HamiltLCAO : public Hamilt<TK>
     std::vector<TR>& getHRS2() { return this->hRS2; }
 
     /// Get HR as a vector of HContainer pointers (one per spin).
-    /// For nspin=2, returns pointers to internally managed per-spin wrappers over hRS2.
+    /// For nspin=2, vl_in_h=0 shares the active H(R), matching updateHk.
     /// Returned pointers are owned by this class; caller must NOT delete them.
     std::vector<HContainer<TR>*> getHR_vector();
 

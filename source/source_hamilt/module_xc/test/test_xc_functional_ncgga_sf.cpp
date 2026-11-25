@@ -1,5 +1,5 @@
-#include "../xc_functional.h"
 #include "../libxc_abacus.h"
+#include "../xc_functional.h"
 #include "source_base/constants.h"
 #include "source_base/parallel_comm.h"
 #include "source_base/parallel_global.h"
@@ -8,10 +8,10 @@
 #include "source_cell/unitcell.h"
 #include "source_estate/module_charge/charge.h"
 #include "gtest/gtest.h"
-#include <mpi.h>
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <mpi.h>
 #include <tuple>
 #include <vector>
 
@@ -36,7 +36,13 @@ const int variational_gga = 2;
 const double hybrid_alpha = 0.0;
 const double hse_omega = 0.11;
 typedef std::tuple<double, double, ModuleBase::matrix> VxcResult;
-enum Branch { Smooth, Negative, Saturated, Radial };
+enum Branch
+{
+    Smooth,
+    Negative,
+    Saturated,
+    Radial
+};
 
 // Each branch runs through both the built-in and LibXC production dispatch.
 class RealPwNcgga : public testing::TestWithParam<std::tuple<bool, int>>
@@ -47,7 +53,7 @@ class RealPwNcgga : public testing::TestWithParam<std::tuple<bool, int>>
     Charge charge;
     std::array<std::vector<double>, 4> density;
     std::array<std::vector<double>, 4> direction;
-    std::array<double*, 4> pointers;
+    std::array<double *, 4> pointers;
     std::vector<double> core;
     std::vector<std::complex<double>> core_g;
 
@@ -100,11 +106,22 @@ class RealPwNcgga : public testing::TestWithParam<std::tuple<bool, int>>
             density[2][ir] = magnitude * std::sin(theta) * std::sin(phi);
             density[3][ir] = magnitude * std::cos(theta);
             core[ir] = 0.05 * totals[branch] * (1.0 + 0.1 * std::cos(3 * x + z));
-            if (branch == Negative) ASSERT_LT(density[0][ir] + core[ir], 0.0);
-            if (branch == Saturated) ASSERT_GT(magnitude, density[0][ir] + core[ir]);
-            if (branch == Radial) ASSERT_LT(magnitude, 1e-3);
+            if (branch == Negative)
+            {
+                ASSERT_LT(density[0][ir] + core[ir], 0.0);
+            }
+            if (branch == Saturated)
+            {
+                ASSERT_GT(magnitude, density[0][ir] + core[ir]);
+            }
+            if (branch == Radial)
+            {
+                ASSERT_LT(magnitude, 1e-3);
+            }
             for (int c = 0; c < noncollinear_spin; ++c)
+            {
                 direction[c][ir] = 0.1 + 0.2 * std::cos((c + 2) * x + y) + 0.1 * std::sin(z + c);
+            }
         }
         pw.real2recip(core.data(), core_g.data());
         XC_Functional::set_xc_type(std::get<0>(GetParam()) ? "GGA_X_PBE+GGA_C_PBE" : "PBE");
@@ -112,16 +129,20 @@ class RealPwNcgga : public testing::TestWithParam<std::tuple<bool, int>>
 
     VxcResult evaluate()
     {
-        return XC_Functional::v_xc(pw.nrxx, &charge, &cell, noncollinear_spin,
-                                   true, false, variational_gga, hybrid_alpha, hse_omega);
+        return XC_Functional::v_xc(
+            pw.nrxx, &charge, &cell, noncollinear_spin, true, false, variational_gga, hybrid_alpha, hse_omega);
     }
 
-    double inner(const ModuleBase::matrix& potential, const bool perturbation)
+    double inner(const ModuleBase::matrix &potential, const bool perturbation)
     {
         double value = 0.0;
         for (int c = 0; c < noncollinear_spin; ++c)
+        {
             for (int ir = 0; ir < pw.nrxx; ++ir)
+            {
                 value += potential(c, ir) * (perturbation ? direction[c][ir] : density[c][ir]);
+            }
+        }
         return sum(value) * pw.omega / pw.nxyz;
     }
 };
@@ -133,7 +154,9 @@ TEST_P(RealPwNcgga, GradientAndDivergenceAreAdjoints)
     std::vector<ModuleBase::Vector3<double>> gradient(pw.nrxx);
     std::vector<double> divergence(pw.nrxx);
     for (int ir = 0; ir < pw.nrxx; ++ir)
+    {
         field[ir] = ModuleBase::Vector3<double>(direction[1][ir], direction[2][ir], direction[3][ir]);
+    }
     pw.real2recip(direction[0].data(), reciprocal.data());
     XC_Functional::grad_rho(reciprocal.data(), gradient.data(), &pw, pw.tpiba);
     XC_Functional::grad_dot(field.data(), divergence.data(), &pw, pw.tpiba);
@@ -154,8 +177,9 @@ TEST_P(RealPwNcgga, GradientAndDivergenceAreAdjoints)
 TEST_P(RealPwNcgga, DensityAndCoreDerivatives)
 {
     const VxcResult reference = evaluate();
-    const ModuleBase::matrix& potential = std::get<2>(reference);
-    EXPECT_NEAR(std::get<1>(reference), inner(potential, false), 2e-12 * std::max(1.0, std::abs(std::get<1>(reference))));
+    const ModuleBase::matrix &potential = std::get<2>(reference);
+    EXPECT_NEAR(
+        std::get<1>(reference), inner(potential, false), 2e-12 * std::max(1.0, std::abs(std::get<1>(reference))));
     // Four independent spin channels plus a core-density perturbation.
     const bool radial = std::get<1>(GetParam()) == Radial;
     const double step = radial ? 2e-4 : 2e-3;
@@ -165,11 +189,13 @@ TEST_P(RealPwNcgga, DensityAndCoreDerivatives)
         SCOPED_TRACE(channel);
         const bool is_core = channel == noncollinear_spin;
         const int c = is_core ? 0 : channel;
-        std::vector<double>& values = is_core ? core : density[c];
+        std::vector<double> &values = is_core ? core : density[c];
         const std::vector<double> original = values;
         double analytic = 0.0;
         for (int ir = 0; ir < pw.nrxx; ++ir)
+        {
             analytic += potential(c, ir) * direction[c][ir];
+        }
         analytic = sum(analytic) * pw.omega / pw.nxyz;
         double previous = 0.0;
         double best = 1.0;
@@ -180,17 +206,31 @@ TEST_P(RealPwNcgga, DensityAndCoreDerivatives)
             for (int sign = 0; sign < 2; ++sign)
             {
                 for (int ir = 0; ir < pw.nrxx; ++ir)
+                {
                     values[ir] = original[ir] + (sign == 0 ? epsilon : -epsilon) * direction[c][ir];
-                if (is_core) pw.real2recip(core.data(), core_g.data());
+                }
+                if (is_core)
+                {
+                    pw.real2recip(core.data(), core_g.data());
+                }
                 energies[sign] = std::get<0>(evaluate());
             }
             std::copy(original.begin(), original.end(), values.begin());
-            if (is_core) pw.real2recip(core.data(), core_g.data());
+            if (is_core)
+            {
+                pw.real2recip(core.data(), core_g.data());
+            }
             const double error = std::abs((energies[0] - energies[1]) / (2 * epsilon) - analytic);
             const double scale = std::max(1.0, std::abs(analytic));
-            if (level > 0 && level <= 2) EXPECT_LE(error, 0.4 * previous + 5e-9 * scale);
+            if (level > 0 && level <= 2)
+            {
+                EXPECT_LE(error, 0.4 * previous + 5e-9 * scale);
+            }
             best = std::min(best, error);
-            if (level == refinements - 1) EXPECT_LE(best, 3e-8 * scale);
+            if (level == refinements - 1)
+            {
+                EXPECT_LE(best, 3e-8 * scale);
+            }
             previous = error;
         }
     }
@@ -202,11 +242,13 @@ TEST_P(RealPwNcgga, SixComponentStressDerivative)
     double vtxc = 0.0;
     ModuleBase::matrix potential;
     std::vector<double> stress;
-    XC_Functional::gradcorr(energy, vtxc, potential, &charge, &pw, &cell, stress,
-                            true, noncollinear_spin, true, false, variational_gga, hybrid_alpha, hse_omega);
+    XC_Functional::gradcorr(
+        energy, vtxc, potential, &charge, &pw, &cell, stress, true, noncollinear_spin, true, false, variational_gga,
+        hybrid_alpha, hse_omega);
     ASSERT_EQ(stress.size(), 9U);
     const std::vector<ModuleBase::Vector3<double>> original(pw.gcar, pw.gcar + pw.npw);
     for (int row = 0; row < 3; ++row)
+    {
         for (int column = 0; column <= row; ++column)
         {
             SCOPED_TRACE(row * 3 + column);
@@ -233,12 +275,18 @@ TEST_P(RealPwNcgga, SixComponentStressDerivative)
                 const double error = std::abs(-(energies[0] - energies[1]) / (2 * epsilon * pw.omega) - analytic);
                 const double tolerance = 3e-4 * std::max(1e-10, std::abs(analytic)) + 1e-11;
                 if (level > 0 && previous > 1e-10 && error > 1e-10)
+                {
                     EXPECT_LE(error, 0.4 * previous + tolerance);
+                }
                 best = std::min(best, error);
-                if (level == 3) EXPECT_LE(best, tolerance);
+                if (level == 3)
+                {
+                    EXPECT_LE(best, tolerance);
+                }
                 previous = error;
             }
         }
+    }
 }
 
 TEST_P(RealPwNcgga, SpinRotationAndInversion)
@@ -249,29 +297,46 @@ TEST_P(RealPwNcgga, SpinRotationAndInversion)
     {
         const std::array<std::vector<double>, 4> original = density;
         for (int c = 1; c < noncollinear_spin; ++c)
+        {
             for (int ir = 0; ir < pw.nrxx; ++ir)
+            {
                 density[c][ir] = (inversion == 0 ? 1 : -1) * original[c % 3 + 1][ir];
+            }
+        }
         const VxcResult rotated = evaluate();
         EXPECT_NEAR(std::get<0>(reference), std::get<0>(rotated), 1e-10);
         for (int c = 0; c < noncollinear_spin; ++c)
+        {
             for (int ir = 0; ir < pw.nrxx; ++ir)
-                EXPECT_NEAR(std::get<2>(rotated)(c, ir),
-                            (c == 0 ? 1 : (inversion == 0 ? 1 : -1))
-                                * std::get<2>(reference)(c == 0 ? 0 : c % 3 + 1, ir), 1e-11);
+            {
+                EXPECT_NEAR(
+                    std::get<2>(rotated)(c, ir),
+                    (c == 0 ? 1 : (inversion == 0 ? 1 : -1)) * std::get<2>(reference)(c == 0 ? 0 : c % 3 + 1, ir),
+                    1e-11);
+            }
+        }
         for (int c = 0; c < noncollinear_spin; ++c)
+        {
             std::copy(original[c].begin(), original[c].end(), density[c].begin());
+        }
     }
 }
 
 TEST_P(RealPwNcgga, ZeroMagnetizationIsFinite)
 {
     for (int c = 1; c < noncollinear_spin; ++c)
+    {
         std::fill(density[c].begin(), density[c].end(), 0.0);
+    }
     const VxcResult result = evaluate();
     EXPECT_TRUE(std::isfinite(std::get<0>(result)));
     for (int c = 1; c < noncollinear_spin; ++c)
+    {
         for (int ir = 0; ir < pw.nrxx; ++ir)
+        {
             EXPECT_NEAR(std::get<2>(result)(c, ir), 0.0, 1e-13);
+        }
+    }
 }
 
 // A local rotation preserves both mapped spin densities pointwise. This is
@@ -293,8 +358,8 @@ TEST_P(RealPwNcgga, LocalSpinRotationPreservesEnergyAndCovariesPotential)
     }
     const VxcResult rotated = evaluate();
     EXPECT_NEAR(std::get<0>(reference), std::get<0>(rotated), 1e-10);
-    const ModuleBase::matrix& before = std::get<2>(reference);
-    const ModuleBase::matrix& after = std::get<2>(rotated);
+    const ModuleBase::matrix &before = std::get<2>(reference);
+    const ModuleBase::matrix &after = std::get<2>(rotated);
     for (int ir = 0; ir < pw.nrxx; ++ir)
     {
         const double expected_x = cosine[ir] * before(1, ir) - sine[ir] * before(2, ir);
@@ -342,12 +407,12 @@ TEST_P(RealPwNcgga, ClippingBoundaryEnergyIsContinuous)
     }
 }
 
-
-INSTANTIATE_TEST_SUITE_P(ProductionBranches, RealPwNcgga,
-                        testing::Combine(testing::Bool(), testing::Values(Smooth, Negative, Saturated, Radial)));
+INSTANTIATE_TEST_SUITE_P(
+    ProductionBranches, RealPwNcgga,
+    testing::Combine(testing::Bool(), testing::Values(Smooth, Negative, Saturated, Radial)));
 } // namespace
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
     int threads = 1;
     Parallel_Global::read_pal_param(argc, argv, test_size, threads, test_rank);

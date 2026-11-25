@@ -2,6 +2,8 @@
 #define BASE_CORE_LOGGING_H_
 
 #include <base/macros/macros.h>
+#include <cstdio>
+#include <cstdlib>
 
 namespace base {
 namespace utils {

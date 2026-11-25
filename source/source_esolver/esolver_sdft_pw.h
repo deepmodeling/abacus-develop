@@ -2,8 +2,8 @@
 #define ESOLVER_SDFT_PW_H
 
 #include "esolver_ks_pw.h"
-#include "source_pw/module_stodft/sto_hamilt_pw.h"
 #include "source_pw/module_stodft/sto_che.h"
+#include "source_pw/module_stodft/sto_hamilt_pw.h"
 #include "source_pw/module_stodft/sto_iter.h"
 #include "source_pw/module_stodft/sto_wf.h"
 
@@ -20,29 +20,37 @@ class ESolver_SDFT_PW : public ESolver_KS_PW<T, Device>
     ESolver_SDFT_PW();
     ~ESolver_SDFT_PW();
 
-    void before_all_runners(BaseCell& basecell, const Input_para& inp) override;
+    void before_all_runners(BaseCell &basecell, const Input_para &inp) override;
 
     double cal_energy() override;
 
-    void cal_force(BaseCell& basecell, ModuleBase::matrix& force) override;
+    void cal_force(BaseCell &basecell, ModuleBase::matrix &force) override;
 
-    void cal_stress(BaseCell& basecell, ModuleBase::matrix& stress) override;
+    void cal_stress(BaseCell &basecell, ModuleBase::matrix &stress) override;
 
   public:
     Stochastic_WF<T, Device> stowf;
     StoChe<Real, Device> stoche;
-    StoHamiltPW<T, Device>* p_hamilt_sto = nullptr;
+    StoHamiltPW<T, Device> *p_hamilt_sto = nullptr;
 
   protected:
-    virtual void before_scf(UnitCell& ucell, const int istep) override;
+    virtual void before_scf(UnitCell &ucell, const int istep) override;
 
-    virtual void hamilt2rho_single(UnitCell& ucell, const int istep, const int iter, const double ethr) override;
+    virtual void hamilt2rho_single(
+        UnitCell &ucell,
+        const int istep,
+        const int iter,
+        const double ethr) override;
 
-    virtual void iter_finish(UnitCell& ucell, const int istep, int& iter, bool& conv_esolver) override;
+    virtual void iter_finish(
+        UnitCell &ucell,
+        const int istep,
+        int &iter,
+        bool &conv_esolver) override;
 
-    virtual void after_scf(UnitCell& ucell, const int istep, const bool conv_esolver) override;
+    virtual void after_scf(UnitCell &ucell, const int istep, const bool conv_esolver) override;
 
-    virtual void after_all_runners(BaseCell& basecell) override;
+    virtual void after_all_runners(BaseCell &basecell) override;
 
   private:
     int nche_sto;   ///< norder of Chebyshev

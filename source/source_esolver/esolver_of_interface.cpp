@@ -48,7 +48,7 @@ void ESolver_OF::init_opt()
     }
 }
 
-void ESolver_OF::cal_potential_wrapper(double* ptemp_phi, double* rdLdphi)
+void ESolver_OF::cal_potential_wrapper(double *ptemp_phi, double *rdLdphi)
 {
     this->bound_cal_potential_(ptemp_phi, rdLdphi);
 }
@@ -57,19 +57,16 @@ void ESolver_OF::cal_potential_wrapper(double* ptemp_phi, double* rdLdphi)
  * @brief [Interface to opt]
  * Call optimization methods to get the optimization direction
  */
-void ESolver_OF::get_direction(UnitCell& ucell)
+void ESolver_OF::get_direction(UnitCell &ucell)
 {
     for (int is = 0; is < this->inp_->nspin; ++is)
     {
         if (this->of_method_ == "tn")
         {
             this->tn_spin_flag_ = is;
-            opt_tn_->next_direct(this->pphi_[is],
-                                 this->pdLdphi_[is],
-                                 this->flag_,
-                                 this->pdirect_[is],
-                                 this,
-                                 &ESolver_OF::cal_potential_wrapper);
+            opt_tn_->next_direct(
+                this->pphi_[is], this->pdLdphi_[is], this->flag_, this->pdirect_[is], this,
+                &ESolver_OF::cal_potential_wrapper);
         }
         else if (this->of_method_ == "cg1")
         {
@@ -98,7 +95,7 @@ void ESolver_OF::get_direction(UnitCell& ucell)
  * @param ptemp_phi
  * @param ucell
  */
-void ESolver_OF::get_step_length(double* dEdtheta, double** ptemp_phi, UnitCell& ucell)
+void ESolver_OF::get_step_length(double *dEdtheta, double **ptemp_phi, UnitCell &ucell)
 {
     double temp_energy = 0.0;      // energy of temp_phi and temp_rho
     double kinetic_energy = 0.0;   // kinetic energy
@@ -111,17 +108,12 @@ void ESolver_OF::get_step_length(double* dEdtheta, double** ptemp_phi, UnitCell&
         while (true)
         {
             // update energy
-            this->pelec->cal_energies(2,
-                                      this->inp_->imp_sol,
-                                      this->inp_->sc_mag_switch,
-                                      this->inp_->dft_plus_u,
-                                      this->inp_->assume_isolated);
+            this->pelec->cal_energies(
+                2, this->inp_->imp_sol, this->inp_->sc_mag_switch, this->inp_->dft_plus_u, this->inp_->assume_isolated);
             temp_energy = this->pelec->f_en.etot;
             kinetic_energy = this->kedf_manager_->get_energy(); // kinetic energy
-            pseudopot_energy = this->inner_product(this->pelec->pot->get_fixed_v(),
-                                                   this->ptemp_rho_->rho[0],
-                                                   this->pw_rho->nrxx,
-                                                   this->dV_);
+            pseudopot_energy = this->inner_product(
+                this->pelec->pot->get_fixed_v(), this->ptemp_rho_->rho[0], this->pw_rho->nrxx, this->dV_);
             Parallel_Reduce::reduce_all(pseudopot_energy);
             temp_energy += kinetic_energy + pseudopot_energy;
 
@@ -135,8 +127,8 @@ void ESolver_OF::get_step_length(double* dEdtheta, double** ptemp_phi, UnitCell&
                 // update tempPhi and tempRho
                 for (int i = 0; i < this->pw_rho->nrxx; ++i)
                 {
-                    ptemp_phi[0][i]
-                        = this->pphi_[0][i] * cos(this->theta_[0]) + this->pdirect_[0][i] * sin(this->theta_[0]);
+                    ptemp_phi[0][i] =
+                        this->pphi_[0][i] * cos(this->theta_[0]) + this->pdirect_[0][i] * sin(this->theta_[0]);
                     this->ptemp_rho_->rho[0][i] = ptemp_phi[0][i] * ptemp_phi[0][i];
                 }
 

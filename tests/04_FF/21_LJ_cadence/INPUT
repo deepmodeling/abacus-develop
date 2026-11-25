@@ -1,0 +1,16 @@
+INPUT_PARAMETERS
+suffix cadence
+calculation md
+esolver_type lj
+lj_rcut 8.5
+lj_epsilon 0.01032
+lj_sigma 3.405
+md_type nve
+md_nstep 5
+md_dt 1
+md_tfirst 0
+md_restartfreq 3
+out_freq_ion 2
+out_app_flag 0
+out_stru 0
+init_vel 0

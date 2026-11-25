@@ -60,6 +60,8 @@ list(
   ../../source_cell/dom_migrate.cpp
   ../../source_cell/dom_force.cpp
   ../../source_cell/mdcell.cpp
+  ../../source_cell/mdcell_adapter.cpp
+  ../../source_cell/mdcell_reader.cpp
   ../../source_base/output.cpp
   ../../source_io/module_output/output_log.cpp
   ../../source_io/module_output/print_info.cpp
@@ -81,29 +83,6 @@ addtest(
   TARGET MODULE_MD_func
   LIBS parameter psi device
   SOURCES test_md_func.cpp ${depend_files})
-
-set(md_run_json_sources)
-if(ENABLE_JSON)
-  list(APPEND md_run_json_sources ../../source_io/module_json/abacusjson.cpp
-       ../../source_io/module_json/output_info.cpp)
-endif()
-
-addtest(
-  TARGET MODULE_MD_run
-  LIBS parameter psi device
-  SOURCES test_run_md.cpp
-          ../run_md.cpp
-          ../module_plumed/plumed_interface.cpp
-          ../md_base.cpp
-          ../fire.cpp
-          ../langevin.cpp
-          ../msst.cpp
-          ../nhchain.cpp
-          ../verlet.cpp
-          ../../source_cell/mdcell_reader.cpp
-          ../../source_cell/magnetism.cpp
-          ${md_run_json_sources}
-          ${depend_files})
 
 addtest(
   TARGET MODULE_MD_SNAP_model
@@ -157,12 +136,18 @@ addtest(
   TARGET MODULE_MD_dp_forcefield
   LIBS ${_md_dp_test_libs}
   SOURCES test_dp_forcefield.cpp ../module_dp/dp_forcefield.cpp
+          ../module_dp/dp_aparam.cpp
           ../../source_cell/module_neighlist/neighbor_list.cpp
           ${depend_files})
 
+addtest(
+  TARGET MODULE_MD_dp_aparam
+  SOURCES test_dp_aparam.cpp ../module_dp/dp_aparam.cpp)
+
 set(_md_nep_test_libs parameter psi device)
-if(DEFINED NEP_DIR AND NEP_FOUND)
-  list(APPEND _md_nep_test_libs NEP::nep)
+if(ENABLE_NEP)
+  list(APPEND _md_nep_test_libs nep::nep_cpu)
+  configure_file("${ABACUS_TEST_DIR}/PP_ORB/nep_hfo2.txt" nep_hfo2.txt COPYONLY)
 endif()
 
 addtest(
@@ -206,6 +191,12 @@ addtest(
   TARGET MODULE_MD_lgv
   LIBS parameter psi device
   SOURCES test_langevin.cpp ../md_base.cpp ../langevin.cpp ${depend_files})
+
+# Header-only MD loop predicates (is_last_step / is_frame_write_step). Kept in
+# its own translation unit so this target links without the heavy MD/cell stack.
+addtest(
+  TARGET MODULE_MD_final_step
+  SOURCES test_run_md_final_step.cpp)
 
 if(ENABLE_MPI)
   addtest(

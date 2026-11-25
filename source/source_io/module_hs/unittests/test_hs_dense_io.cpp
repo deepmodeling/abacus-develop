@@ -17,20 +17,32 @@
 #include "source_base/parallel_comm.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
 
+#include <algorithm>
 #include <complex>
 #include <cstdio>
+#include <cstdlib>
 #include <fstream>
 #include <sstream>
 #include <string>
 #include <vector>
 #ifdef __MPI
 #include <mpi.h>
+#include "source_base/module_parallel/para_mpi_func.h"
 #endif
 
 namespace
 {
 /// Rank in DIAG_WORLD; 0 without MPI.
 int test_rank = 0;
+
+#ifdef __MPI
+/// @brief Synchronize all ranks on DIAG_WORLD via the parallel helpers.
+void diag_barrier()
+{
+    const Parallel::ParaWorld world = Parallel::ParaWorld::make_mpi("test_hs_dense_io", DIAG_WORLD);
+    Parallel::barrier(world);
+}
+#endif
 
 /**
  * @brief Read the entire content of a text file into a string.
@@ -159,8 +171,52 @@ void remove_test_file(const std::string& filename)
         std::remove(filename.c_str());
     }
 #ifdef __MPI
-    MPI_Barrier(DIAG_WORLD);
+    diag_barrier();
 #endif
+}
+/**
+ * @brief Read one text record written by save_mat with triangle=true.
+ *
+ * Returns the packed upper-triangle values in write order, or an empty vector
+ * when the record header is missing.
+ */
+std::vector<double> read_text_record(const std::string& content, const size_t header_pos, const int dim)
+{
+    // Find the closing rule line of this frame's header.
+    const std::string rule = "#------------------------------------------------------------------------\n";
+    size_t pos = content.find(rule, header_pos);
+    if (pos == std::string::npos)
+    {
+        return {};
+    }
+    pos += rule.size();
+    // Stop before the next frame header, if any.
+    const size_t frame_end = content.find("#------------------------------------------------------------------------", pos);
+    const size_t search_end = (frame_end == std::string::npos) ? content.size() : frame_end;
+
+    std::vector<double> values;
+    values.reserve(dim * (dim + 1) / 2);
+    std::istringstream iss(content.substr(pos, search_end - pos));
+    std::string line;
+    while (std::getline(iss, line))
+    {
+        if (line.find("Row ") != 0)
+        {
+            continue;
+        }
+        // Read the numbers on the following line.
+        if (!std::getline(iss, line))
+        {
+            break;
+        }
+        std::istringstream num_iss(line);
+        double val;
+        while (num_iss >> val)
+        {
+            values.push_back(val);
+        }
+    }
+    return values;
 }
 } // namespace
 
@@ -178,7 +234,7 @@ TEST(HsDenseIoSaveMat, TextHeaderContainsStepAndDimension)
                                filename, pv, 0, "genelpa", false);
     const std::string content = read_text_file(filename);
     // MPI text path writes header lines starting with '#'
-    EXPECT_NE(content.find("ionic step"), std::string::npos);
+    EXPECT_NE(content.find("Ionic_Step"), std::string::npos);
     EXPECT_NE(content.find("1"), std::string::npos); // istep+1 = 1
     EXPECT_NE(content.find("gamma only"), std::string::npos);
     EXPECT_NE(content.find("rows"), std::string::npos);
@@ -195,8 +251,8 @@ TEST(HsDenseIoSaveMat, TextHeaderStepTwo)
     ModuleIO::save_mat<double>(1, mat.data(), dim, false, 8, false, false,
                                filename, pv, 0, "genelpa", false);
     const std::string content = read_text_file(filename);
-    // istep=1 -> "ionic step 2"
-    EXPECT_NE(content.find("ionic step 2"), std::string::npos);
+    // istep=1 -> "Ionic_Step 2"
+    EXPECT_NE(content.find("Ionic_Step 2"), std::string::npos);
     std::remove(filename.c_str());
 }
 
@@ -362,7 +418,7 @@ TEST(HsDenseIoSaveMat, BinaryAppendCompleteRecordsAndOverwrite)
     }
 
 #ifdef __MPI
-    MPI_Barrier(DIAG_WORLD);
+    diag_barrier();
 #endif
     ModuleIO::save_mat(2, replacement_local.data(), dim, true, 8, true, false,
                        filename, pv.para_2d(), test_rank, "cg");
@@ -374,6 +430,64 @@ TEST(HsDenseIoSaveMat, BinaryAppendCompleteRecordsAndOverwrite)
         // Exactly one record, containing the replacement values.
         EXPECT_EQ(read_record<double>(ifs, dim), upper_triangle(replacement, dim));
         EXPECT_EQ(ifs.peek(), std::ifstream::traits_type::eof());
+    }
+
+    remove_test_file(filename);
+}
+
+TEST(HsDenseIoSaveMat, TextAppendTwoStepsAndFirstStepTruncates)
+{
+    // The Vxc(MO) writer saves text triangle matrices with
+    // append = (out_app_flag == 1) && (istep > 0). Cover the same shape of
+    // call: a rerun's first step must truncate a stale frame left by a
+    // previous run, later steps must append, and only the new payloads remain.
+    const int dim = 2;
+    const std::string filename = testing::TempDir() + "/save_mat_vxcmo_append.txt";
+    remove_test_file(filename);
+
+    Parallel_Orbitals pv;
+    initialize_distribution(pv, dim);
+    const std::vector<double> stale = {1.0, 2.0, 3.0, 4.0};
+    const std::vector<double> first = {5.0, 6.0, 7.0, 8.0};
+    const std::vector<double> second = {9.0, 10.0, 11.0, 12.0};
+    const std::vector<double> stale_local = distribute_matrix(pv, stale, dim);
+    const std::vector<double> first_local = distribute_matrix(pv, first, dim);
+    const std::vector<double> second_local = distribute_matrix(pv, second, dim);
+
+    // A previous run left a stale frame in the file.
+    ModuleIO::save_mat(0, stale_local.data(), dim, false, 8, true, true,
+                       filename, pv.para_2d(), test_rank, "cg");
+#ifdef __MPI
+    diag_barrier();
+#endif
+    // A fresh run starts at istep 0 and must truncate the stale frame.
+    ModuleIO::save_mat(0, first_local.data(), dim, false, 8, true, false,
+                       filename, pv.para_2d(), test_rank, "cg");
+    // Second ionic step appends a new record.
+    ModuleIO::save_mat(1, second_local.data(), dim, false, 8, true, true,
+                       filename, pv.para_2d(), test_rank, "cg");
+
+    if (test_rank == 0)
+    {
+        const std::string content = read_text_file(filename);
+        // Exactly the two new frames remain; the stale frame was truncated.
+        const size_t first_step = content.find("Ionic_Step 1");
+        const size_t second_step = content.find("Ionic_Step 2");
+        ASSERT_NE(first_step, std::string::npos);
+        ASSERT_NE(second_step, std::string::npos);
+        EXPECT_LT(first_step, second_step);
+        EXPECT_EQ(content.find("Ionic_Step", second_step + 1), std::string::npos);
+
+        // Payloads carry the values of the two new frames, not the stale one.
+        const std::vector<double> first_values = read_text_record(content, first_step, dim);
+        const std::vector<double> second_values = read_text_record(content, second_step, dim);
+        EXPECT_EQ(first_values, upper_triangle(first, dim));
+        EXPECT_EQ(second_values, upper_triangle(second, dim));
+        for (const double value : upper_triangle(stale, dim))
+        {
+            EXPECT_EQ(std::find(first_values.begin(), first_values.end(), value), first_values.end());
+            EXPECT_EQ(std::find(second_values.begin(), second_values.end(), value), second_values.end());
+        }
     }
 
     remove_test_file(filename);

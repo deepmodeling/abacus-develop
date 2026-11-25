@@ -11,9 +11,27 @@
 // mohan note: this file holds the H(k)/S(k) writer
 // (formerly write_hsk in write_hs.h / write_hs.hpp).
 
+class K_Vectors;
+class UnitCell;
+
 namespace ModuleIO
 {
 
+/**
+ * @brief Write H(k) and S(k) matrices for each k-point to disk.
+ *
+ * Text output format is aligned with write_dmk: full metadata block
+ * (nspin, ik, k-point coords, weight, Fermi energy, basis count),
+ * followed by a UnitCell lattice block and then a flat matrix body
+ * (4 complex or 8 double values per line). Binary output continues
+ * to delegate to save_mat so its layout stays unchanged for callers
+ * that only consume binary files.
+ *
+ * @param kv          K-point container (coords, weights, counts).
+ * @param ucell       Pointer to the UnitCell for the lattice block;
+ *                    may be nullptr if the caller cannot provide one.
+ * @param efs         Fermi energies — one per spin channel.
+ */
 template <typename T>
 void write_hsk(const std::string& global_out_dir,
                const int nspin,
@@ -23,6 +41,9 @@ void write_hsk(const std::string& global_out_dir,
                const std::vector<int>& isk,
                hamilt::Hamilt<T>* p_hamilt,
                const Parallel_Orbitals& pv,
+               const K_Vectors& kv,
+               const UnitCell* ucell,
+               const std::vector<double>& efs,
                const bool gamma_only,
                const int out_app_flag,
                const int istep,

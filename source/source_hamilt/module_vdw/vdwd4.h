@@ -13,7 +13,7 @@ namespace vdw
 class Vdwd4 : public Vdw
 {
   public:
-    Vdwd4(const UnitCell& unit_in, const std::string& xc_name, const Input_para& input);
+    Vdwd4(const UnitCell &unit_in, const std::string &xc_name, const Input_para &input);
 
     ~Vdwd4() override = default;
 
@@ -27,25 +27,26 @@ class Vdwd4 : public Vdw
     double smooth_width_3b_ = 0.0; // Bohr, three-body cutoff smoothing width
     double total_charge_ = 0.0;    // e, total system charge (sum zv*na - nelec)
 
-    void evaluate_impl(const VdwRequest& request, VdwResult& result) override;
+    void evaluate_impl(const VdwRequest &request, VdwResult &result) override;
 
-    void set_force_from_gradient(const std::vector<double>& gradient_ha_bohr,
-                                 const std::vector<int>& atom_indices,
-                                 VdwResult& result) const;
-    void set_stress_from_sigma(const std::array<double, 9>& sigma_ha, VdwResult& result) const;
+    void set_force_from_gradient(
+        const std::vector<double> &gradient_ha_bohr, const std::vector<int> &atom_indices, VdwResult &result) const;
+    void set_stress_from_sigma(const std::array<double, 9> &sigma_ha, VdwResult &result) const;
 
-    void build_structure(std::vector<int>& numbers,
-                         std::vector<double>& positions,
-                         std::vector<double>& lattice,
-                         std::array<bool, 3>& periodic,
-                         std::vector<int>& atom_indices) const;
+    void build_structure(
+        std::vector<int> &numbers,
+        std::vector<double> &positions,
+        std::vector<double> &lattice,
+        std::array<bool, 3> &periodic,
+        std::vector<int> &atom_indices) const;
 
     // Optional output buffers are caller-owned and non-owning here.
     // Vdwd4 writes to them during compute() and never stores their pointers.
-    void compute(double& energy_ha,
-                 std::vector<double>* gradient_ha_bohr,
-                 std::array<double, 9>* sigma_ha,
-                 std::vector<int>& atom_indices);
+    void compute(
+        double &energy_ha,
+        std::vector<double> *gradient_ha_bohr,
+        std::array<double, 9> *sigma_ha,
+        std::vector<int> &atom_indices);
 };
 
 } // namespace vdw
