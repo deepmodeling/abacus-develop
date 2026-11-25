@@ -524,6 +524,15 @@ std::string ReadInput::prepare_input(Parameter& param)
         readvalue_item->read_value(*readvalue_item, param);
     }
 
+#if !defined(ABACUS_LIBXC_CUDA) || !defined(__CUDA)
+    // Return a shared input error before the device reset hook probes rank 0 for a GPU.
+    if (param.inp.device == "gpu" && param.inp.device_xc == "gpu")
+    {
+        return "device_xc gpu requires ABACUS built with -DENABLE_LIBXC_CUDA=ON.\nSee "
+               + input_manual_link("device_xc") + "\n";
+    }
+#endif
+
     InputValues supplied_values;
     for (const auto* item : this->readvalue_items)
     {
