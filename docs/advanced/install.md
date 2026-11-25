@@ -23,6 +23,21 @@ Dependency: [Libxc](https://tddft.org/programs/libxc/) >= 5.1.7 .
 cmake -B build -DENABLE_LIBXC=ON
 ```
 
+For CUDA evaluation of the Libxc LDA/GGA potential (including the semilocal part
+of HSE), build Libxc 7.1.0 or later with `-DENABLE_CUDA=ON`. The ABACUS option
+`ENABLE_LIBXC_CUDA` defaults to `OFF`. Configure ABACUS with
+`-DUSE_CUDA=ON -DENABLE_LIBXC=ON -DENABLE_LIBXC_CUDA=ON -DLibxc_DIR=<prefix>/lib/cmake/Libxc`, then set
+`device gpu` and `device_xc gpu` in INPUT. `device_xc` defaults to `cpu`, which
+also works with a CUDA-enabled Libxc. Built-in functionals, meta-GGA, response
+kernels and separate force/stress evaluations continue to use the CPU. This
+option does not select the exact-exchange backend.
+
+For HSE forces, Libxc 7.1.0 exceeded a host/device agreement tolerance of
+`1e-6 eV/Å` on a displaced Si64 cell. The WPBEH exchange term loses precision
+at small gradients. Its original logarithm is present in the 7.1.0 through
+7.1.2 releases. The Si64 forces agreed within `1.1e-10 eV/Å` using the
+[corrected Libxc development revision](https://gitlab.com/libxc/libxc/-/blob/0a70f0eab900537913f4fdf94077b55fa019c2c1/python/gga_exc/gga_x_wpbeh.py#L325).
+
 ## Build with ML-ALGO
 
 If machine learning algorithms, including DeePKS and machine learning based kinetic energy density functional (ML-KEDF) for OFDFT, is required for DFT calculation, the following prerequisites and steps are needed:

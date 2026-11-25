@@ -67,10 +67,14 @@ foreach(
         duplicate_string_eof
         invalid_value
         invalid_dependency
+        unsupported_libxc_cuda
         out_dmk_zero_precision
         out_hsk_zero_precision
         out_mat_tk_zero_precision
         valid)
+  if(input_case STREQUAL "unsupported_libxc_cuda" AND ENABLE_LIBXC_CUDA)
+    continue()
+  endif()
   add_test(
     NAME MODULE_IO_input_error_mpi_${input_case}
     COMMAND
