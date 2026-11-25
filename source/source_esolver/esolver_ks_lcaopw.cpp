@@ -271,7 +271,8 @@ void ESolver_KS_LIP<T>::after_all_runners(BaseCell &basecell)
     ESolver_KS_PW<T>::after_all_runners(basecell);
 
 #ifdef __LCAO
-    if (this->inp_->out_mat_xc)
+    const bool out_mat_xc_on = (this->inp_->out_mat_xc[0] != 0);
+    if (out_mat_xc_on)
     {
         const std::string global_mat_dir = PARAM.globalv.global_mat_dir;
         // Mode-2 MAT/ subdirectory is created lazily at write time.
@@ -290,7 +291,7 @@ void ESolver_KS_LIP<T>::after_all_runners(BaseCell &basecell)
             this->inp_->nspin, istep_xc, etot_xc, PARAM.globalv.nlocal, GlobalV::DRANK,
             *this->stp.template get_psi_t<T, base_device::DEVICE_CPU>(), ucell, this->sf, this->solvent, *this->pw_wfc,
             *this->pw_rho, *this->pw_rhod, this->locpp.vloc, this->chr, this->kv, this->pelec->wg,
-            PARAM.globalv.gamma_only_local, global_mat_dir, this->inp_->out_ndigits, this->inp_->ks_solver, cal_exx,
+            PARAM.globalv.gamma_only_local, global_mat_dir, this->inp_->out_mat_xc[1], this->inp_->ks_solver, cal_exx,
             hybrid_alpha
 #ifdef __EXX
             ,

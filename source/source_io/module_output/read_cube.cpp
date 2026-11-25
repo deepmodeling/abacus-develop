@@ -111,24 +111,22 @@ void ModuleIO::trilinear_interpolate(
         }
     }
 
+    // Cube values lie on lattice nodes: the first value is at the origin.
     for (int ix = 0; ix < nx; ix++)
     {
-        double fracx = 0.5 * (static_cast<double>(nx_read) / nx * (1.0 + 2.0 * ix) - 1.0);
-        fracx = std::fmod(fracx, nx_read);
+        const double fracx = static_cast<double>(ix) * nx_read / nx;
         int lowx = static_cast<int>(fracx);
         double dx = fracx - lowx;
         int highx = (lowx == nx_read - 1) ? 0 : lowx + 1; // the point nz_read is the same as 0
         for (int iy = 0; iy < ny; iy++)
         {
-            double fracy = 0.5 * (static_cast<double>(ny_read) / ny * (1.0 + 2.0 * iy) - 1.0);
-            fracy = std::fmod(fracy, ny_read);
+            const double fracy = static_cast<double>(iy) * ny_read / ny;
             int lowy = static_cast<int>(fracy);
             double dy = fracy - lowy;
             int highy = (lowy == ny_read - 1) ? 0 : lowy + 1;
             for (int iz = 0; iz < nz; iz++)
             {
-                double fracz = 0.5 * (static_cast<double>(nz_read) / nz * (1.0 + 2.0 * iz) - 1.0);
-                fracz = std::fmod(fracz, nz_read);
+                const double fracz = static_cast<double>(iz) * nz_read / nz;
                 int lowz = static_cast<int>(fracz);
                 double dz = fracz - lowz;
                 int highz = (lowz == nz_read - 1) ? 0 : lowz + 1;

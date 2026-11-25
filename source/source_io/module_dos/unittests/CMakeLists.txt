@@ -36,4 +36,13 @@ if(ENABLE_MPI)
             ../../../source_cell/magnetism.cpp
             ../../../source_cell/test/support/mock_unitcell.cpp)
 
+  find_package(Python3 QUIET COMPONENTS Interpreter)
+  if(Python3_Interpreter_FOUND)
+    add_test(
+      NAME MODULE_DOS_pdos_npy_roundtrip
+      COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/test_pdos_npy.py"
+              "$<TARGET_FILE:MODULE_DOS_write_pdos_text>")
+    set_tests_properties(MODULE_DOS_pdos_npy_roundtrip PROPERTIES SKIP_RETURN_CODE 77)
+  endif()
+
 endif()

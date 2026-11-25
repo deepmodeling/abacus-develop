@@ -176,9 +176,10 @@ class TDOS(DOS):
     """Parse total DOS data
 
     ``tdosfile`` may be a single TDOS file, a list of one or two per-spin
-    files, or a directory containing them. ABACUS writes one 5-column text
-    file per spin channel (``doss1*``/``doss2*``; legacy PW names
-    ``dos1.txt``/``dos2.txt``). A single spin-channel file is paired with
+    files, or a directory containing them. ABACUS writes all spin channels
+    in ``dos.npy`` or one five-column text file per spin channel
+    (``doss1*``/``doss2*``; legacy PW names ``dos1.txt``/``dos2.txt``).
+    A single spin-channel file is paired with
     its counterpart when present, searching in both directions, so passing
     either spin file works. For nspin=4 ABACUS writes a single
     spinor-summed file, which is handled like nspin=1.
@@ -198,6 +199,8 @@ class TDOS(DOS):
                     f"tdosfile accepts 1 or 2 files, got {len(files)}")
             # canonicalize spin order: the spin-1 channel always comes first
             if len(files) == 2:
+                if (Path(files[0]).suffix == ".npy") != (Path(files[1]).suffix == ".npy"):
+                    raise ValueError("Both TDOS spin files must have the same format")
                 first, second = Path(files[0]).name, Path(files[1]).name
                 if ("doss2" in first or "dos2" in first) and \
                    ("doss1" in second or "dos1" in second):
@@ -211,21 +214,15 @@ class TDOS(DOS):
                 matches1 = sorted(glob.glob(str(path / "dos1.txt")))
             if not matches1 and (path / "dos.txt").is_file():
                 matches1 = [str(path / "dos.txt")]  # legacy PW nspin=1 name
+            binary = [path / name for name in ("dos.npy", "doss1.npy") if (path / name).is_file()]
+            if binary:
+                if matches1 or len(binary) > 1:
+                    raise ValueError(f"Multiple TDOS formats found in '{path}'. Pass a specific TDOS file.")
+                matches1 = [str(binary[0])]
             if not matches1:
                 raise FileNotFoundError(
                     f"No TDOS file found in directory '{path}'")
-            spin1 = Path(matches1[0])
-            candidates = [str(spin1)]
-            # pair with the spin-2 file carrying the same name suffix, e.g.
-            # doss1g1.txt -> doss2g1.txt, so different geometry steps are
-            # never mixed
-            for one, two in (("doss1", "doss2"), ("dos1", "dos2")):
-                if one in spin1.name:
-                    spin2 = spin1.parent / spin1.name.replace(one, two)
-                    if spin2.is_file():
-                        candidates.append(str(spin2))
-                    break
-            return candidates
+            path = Path(matches1[0])
 
         if path.is_file():
             name = path.name
@@ -246,6 +243,21 @@ class TDOS(DOS):
         channels stored in this file (None where the column is absent, e.g.
         the legacy 2/3-column formats carry no smeared DOS).
         """
+        if Path(fname).suffix == ".npy":
+            rows = np.load(fname, mmap_mode="r", allow_pickle=False)
+            names = ("energy_eV", "dos", "dos_int", "dos_smear", "dos_smear_int")
+            if (rows.ndim != 1 or not rows.size or rows.dtype.names != names
+                    or any(rows[name].dtype.kind != "f" or rows[name].dtype.itemsize != 8 for name in names)):
+                raise ValueError(f"Invalid TDOS NPY array: {fname}")
+            spin_shape = rows["dos"].shape[1:]
+            # Older per-spin NPY files have scalar spectrum fields.
+            if (rows["energy_eV"].ndim != 1 or spin_shape not in ((), (1,), (2,))
+                    or any(rows[name].shape[1:] != spin_shape for name in names[1:])):
+                raise ValueError(f"Invalid TDOS spin dimensions: {fname}")
+            data = {name: rows[name].reshape(rows.size, -1) for name in names[1:]}
+            data["energy"] = rows["energy_eV"][:, None]
+            return data
+
         rows = []
         with open(fname) as f:
             for line in f:
@@ -350,7 +362,7 @@ class TDOS(DOS):
 
 
 class PDOS(DOS):
-    """Parse partial DOS data from the text PDOS files written by ABACUS.
+    """Parse projected DOS from ABACUS text files or a single pdos.npy.
 
     The text format (one file per spin channel) looks like::
 
@@ -391,6 +403,10 @@ class PDOS(DOS):
         Returns a list with one (nspin=1) or two (nspin=2) file paths.
         """
         path = Path(self.pdosfile)
+        if path.is_dir() and (path / "pdos.npy").is_file():
+            if any(path.glob("pdoss[12]*.txt")):
+                raise ValueError(f"Both text PDOS and pdos.npy found in {path}. Pass a specific PDOS file.")
+            return [str(path / "pdos.npy")]
         if path.is_file():
             name = path.name
             if name.startswith("pdoss"):
@@ -491,6 +507,30 @@ class PDOS(DOS):
 
         return energy, orbitals
 
+    def _read_npy(self, path):
+        rows = np.load(path, mmap_mode="r", allow_pickle=False)
+        fields = {"nspin", "atom_index", "l", "m", "species", "energy_min_eV", "energy_step_eV", "pdos"}
+        if rows.ndim != 1 or not rows.size or not fields.issubset(rows.dtype.names or ()):
+            raise ValueError(f"Expected an ABACUS PDOS array in {path}")
+        for field in ("nspin", "energy_min_eV", "energy_step_eV"):
+            if not np.all(rows[field] == rows[field][0]):
+                raise ValueError(f"Inconsistent {field} across PDOS records in {path}")
+        self.nspin = int(rows["nspin"][0])
+        values = rows["pdos"]
+        if self.nspin not in (1, 2, 4) or values.ndim != 3 or values.shape[1] != (2 if self.nspin == 2 else 1):
+            raise ValueError(f"Invalid PDOS spin dimensions in {path}")
+        emin = rows["energy_min_eV"][0]
+        step = rows["energy_step_eV"][0]
+        if not np.isfinite(emin) or not np.isfinite(step) or step <= 0:
+            raise ValueError(f"Invalid PDOS energy grid in {path}: expected finite energies and a positive step")
+        grid = emin + np.arange(values.shape[2]) * step
+        self.energy = grid[:, None]
+        self.orbitals = [
+            dict(index=i, atom_index=int(row["atom_index"]), species=row["species"].decode(),
+                 l=int(row["l"]), m=int(row["m"]), data=row["pdos"].T)
+            for i, row in enumerate(rows, 1)
+        ]
+
     def _read(self):
         """Read partial DOS data file(s)
 
@@ -499,6 +539,9 @@ class PDOS(DOS):
             ``pdoss1*``/``pdoss2*`` files.
         """
         spin_files = self._find_spin_files()
+        if Path(spin_files[0]).suffix == ".npy":
+            self._read_npy(spin_files[0])
+            return
         self.nspin = len(spin_files)
 
         energy, orbitals_up = self._read_one(spin_files[0])
