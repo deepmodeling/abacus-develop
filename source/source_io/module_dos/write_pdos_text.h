@@ -3,6 +3,7 @@
 
 #include "source_base/matrix.h"
 #include "source_cell/unitcell.h"
+#include <vector>
 
 #include <iosfwd>
 
@@ -25,6 +26,10 @@ void write_pdos_text(
         const int istep,
         const int out_app_flag,
         std::ofstream& ofs_running);
+
+/// Write one NPY array of atom- and orbital-projected spin spectra.
+void write_pdos_npy(const UnitCell& cell, const std::vector<ModuleBase::matrix>& pdos,
+                    int nspin, double emin, double de, const std::string& path);
 
 }
 
