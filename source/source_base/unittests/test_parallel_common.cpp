@@ -49,12 +49,19 @@ int main(int argc, char** argv)
 
     // A root other than zero, which is the case the RI and RPA stages need.
     const int root = sub_size - 1;
-    int scalar = sub_rank == root ? 41 : 0;
-    Parallel_Common::bcast_int(&scalar, 1, sub, root);
+    const int scalar_from_root = 41;
+    const int scalar_count = 1;
+    int scalar = sub_rank == root ? scalar_from_root : 0;
+    Parallel_Common::bcast_int(&scalar, scalar_count, sub, root);
     require(scalar == 41, "bcast_int did not reach every rank from a non-zero root");
 
-    std::vector<double> values(3, sub_rank == root ? 7.5 : -1.0);
-    Parallel_Common::bcast_double(values.data(), static_cast<int>(values.size()), sub, root);
+    // Rule 14: name the payload and the element count before the call.
+    const double root_value = 7.5;
+    const double other_value = -1.0;
+    const double initial_value = sub_rank == root ? root_value : other_value;
+    const int value_count = 3;
+    std::vector<double> values(static_cast<std::size_t>(value_count), initial_value);
+    Parallel_Common::bcast_double(values.data(), value_count, sub, root);
     for (const double value : values)
     {
         require(value == 7.5, "bcast_double did not reach every rank from a non-zero root");
@@ -65,7 +72,8 @@ int main(int argc, char** argv)
     std::vector<int> empty_receive;
     std::vector<int> zero_counts(static_cast<std::size_t>(sub_size), 0);
     std::vector<int> zero_displacements(static_cast<std::size_t>(sub_size), 0);
-    Parallel_Reduce::gatherv_int_all(sub, nullptr, 0, empty_receive.data(),
+    const int no_send_count = 0;
+    Parallel_Reduce::gatherv_int_all(sub, nullptr, no_send_count, empty_receive.data(),
                                      zero_counts.data(), zero_displacements.data());
     require(empty_receive.empty(), "all-empty gatherv produced data");
 
@@ -83,6 +91,54 @@ int main(int argc, char** argv)
     for (int irank = 0; irank < sub_size; ++irank)
     {
         require(receive[irank] == 100 + irank, "gatherv_int_all lost a rank's value");
+    }
+
+    // Uneven gather counts: rank 0 receives nothing, the others receive one.
+    const bool sends_one = sub_rank > 0;
+    const int uneven_send = sends_one ? 200 + sub_rank : 0;
+    const int uneven_send_count = sends_one ? 1 : 0;
+    std::vector<int> uneven_counts(static_cast<std::size_t>(sub_size), 0);
+    std::vector<int> uneven_displacements(static_cast<std::size_t>(sub_size), 0);
+    int running_offset = 0;
+    for (int irank = 0; irank < sub_size; ++irank)
+    {
+        uneven_counts[static_cast<std::size_t>(irank)] = irank > 0 ? 1 : 0;
+        uneven_displacements[static_cast<std::size_t>(irank)] = running_offset;
+        running_offset += uneven_counts[static_cast<std::size_t>(irank)];
+    }
+    std::vector<int> uneven_receive(static_cast<std::size_t>(running_offset), -1);
+    Parallel_Reduce::gatherv_int_all(sub, sends_one ? &uneven_send : nullptr,
+                                     uneven_send_count, uneven_receive.data(),
+                                     uneven_counts.data(), uneven_displacements.data());
+    for (int irank = 1; irank < sub_size; ++irank)
+    {
+        require(uneven_receive[static_cast<std::size_t>(irank - 1)] == 200 + irank,
+                "uneven gatherv misplaced a rank's value");
+    }
+
+    // gather_int_all on the same sub-communicator.
+    int one_per_rank = 300 + sub_rank;
+    std::vector<int> gathered(static_cast<std::size_t>(sub_size), 0);
+    Parallel_Reduce::gather_int_all(sub, one_per_rank, gathered.data());
+    for (int irank = 0; irank < sub_size; ++irank)
+    {
+        require(gathered[static_cast<std::size_t>(irank)] == 300 + irank,
+                "gather_int_all lost a rank's value");
+    }
+
+    // reduce_max_loc: the rank supplying the maximum comes back with it. On a
+    // tie MPI may report any contributing rank, so only check the value there.
+    const double local_value = (sub_rank == 0 || sub_rank == 1) ? 9.5 : 1.0;
+    const int local_rank = sub_rank;
+    double best_value = local_value;
+    int best_rank = local_rank;
+    Parallel_Reduce::reduce_max_loc(sub, best_value, best_rank);
+    require(best_value == 9.5, "reduce_max_loc lost the maximum value");
+    const bool tied = sub_size > 1;
+    if (tied)
+    {
+        require(best_rank == 0 || best_rank == 1,
+                "reduce_max_loc reported a rank that did not hold the maximum");
     }
 
     Parallel_Common::barrier(sub);

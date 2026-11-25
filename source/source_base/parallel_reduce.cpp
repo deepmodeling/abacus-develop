@@ -183,14 +183,22 @@ void Parallel_Reduce::gatherv_int_all(const MPI_Comm mpi_comm,
     // is zero (an empty std::vector's data() is null in that case), so only
     // demand one when there is something to receive. Every rank still enters
     // the collective regardless of its own receive counts.
-    int total_receive = 0;
+    //
+    // The test is "any count is positive" rather than a sum: two ranks may
+    // legitimately pass counts like {INT_MAX, 1}, whose sum overflows a signed
+    // int even though the receive buffer is valid.
     int nranks = 0;
     MPI_Comm_size(mpi_comm, &nranks);
+    bool has_received_data = false;
     for (int irank = 0; irank < nranks; ++irank)
     {
-        total_receive += receive_counts[irank];
+        if (receive_counts[irank] > 0)
+        {
+            has_received_data = true;
+            break;
+        }
     }
-    assert(total_receive == 0 || receive_buffer != nullptr);
+    assert(!has_received_data || receive_buffer != nullptr);
     MPI_Allgatherv(send_buffer, send_count, MPI_INT, receive_buffer, receive_counts, receive_displacements,
                    MPI_INT, mpi_comm);
 }
