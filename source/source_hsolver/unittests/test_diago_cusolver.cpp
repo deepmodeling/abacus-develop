@@ -11,6 +11,7 @@
 #endif
 #ifdef __CUDA
 #include "source_hsolver/diago_cusolver.h"
+#include <cuda_runtime_api.h>
 #endif
 #include "source_base/module_external/scalapack_connector.h"
 
@@ -425,6 +426,92 @@ INSTANTIATE_TEST_SUITE_P(
         // DiagoPrepare<std::complex<double>>(0, 0, 32, 0, "genelpa", "H-KPoints-Si64.dat", "S-KPoints-Si64.dat"),
         DiagoPrepare<std::complex<double>>(0, 0, 1, 0, "scalapack_gvx", "H-KPoints-Si2.dat", "S-KPoints-Si2.dat"),
         DiagoPrepare<std::complex<double>>(0, 0, 32, 0, "scalapack_gvx", "H-KPoints-Si64.dat", "S-KPoints-Si64.dat")));
+
+#if defined(__CUDA) && CUDART_VERSION >= 10010
+TEST(CusolverSubset, SelectsOnlyLargeLowBandProblems)
+{
+    EXPECT_FALSE(Diag_Cusolver_gvd::use_subset(4095, 1023));
+    EXPECT_FALSE(Diag_Cusolver_gvd::use_subset(4096, 0));
+    EXPECT_TRUE(Diag_Cusolver_gvd::use_subset(4096, 1024));
+    EXPECT_FALSE(Diag_Cusolver_gvd::use_subset(4096, 1025));
+    EXPECT_FALSE(Diag_Cusolver_gvd::use_subset(4096, 4096));
+    EXPECT_TRUE(Diag_Cusolver_gvd::use_subset(14092, 2602));
+}
+
+TEST(CusolverSubset, LowestEigenpairsRespectUpperTriangleAndOutputBounds)
+{
+    int n = 6;
+    const double sentinel = 1234.5;
+    const double tolerance = 1e-10;
+    std::vector<double> h(n * n, 0.0);
+    std::vector<double> s(n * n, 0.0);
+    for (int i = 0; i < n; ++i)
+    {
+        const auto diagonal = i + i * n;
+        s[diagonal] = 1.0 + 0.25 * i;
+        const double lambda = i < 2 ? 0.5 : 1.0 + i;
+        h[diagonal] = lambda * s[diagonal];
+        for (int j = i + 1; j < n; ++j)
+        {
+            h[j + i * n] = sentinel;
+            s[j + i * n] = sentinel;
+        }
+    }
+    h[3 + 4 * n] = 0.2;
+
+    std::vector<double> reference(n);
+    LCAO_DIAGO_TEST::lapack_diago(h.data(), s.data(), reference.data(), n);
+    ASSERT_NEAR(reference[0], reference[1], tolerance);
+    const auto input_h = h;
+    const auto input_s = s;
+
+    Diag_Cusolver_gvd solver;
+    for (const int nbands : {1, 4, 6})
+    {
+        SCOPED_TRACE(nbands);
+        const int vector_size = n * nbands;
+        std::vector<double> value(nbands + 1, sentinel);
+        std::vector<double> vector(vector_size + 1, sentinel);
+        if (nbands < n)
+        {
+            ASSERT_TRUE(solver.solve_subset(n, nbands, h.data(), s.data(), value.data(), vector.data()));
+        }
+        else
+        {
+            solver.solve_full(n, nbands, h.data(), s.data(), value.data(), vector.data());
+        }
+        EXPECT_EQ(h, input_h);
+        EXPECT_EQ(s, input_s);
+        EXPECT_EQ(value.back(), sentinel);
+        EXPECT_EQ(vector.back(), sentinel);
+
+        for (int j = 0; j < nbands; ++j)
+        {
+            EXPECT_NEAR(value[j], reference[j], tolerance);
+            for (int i = 0; i < n; ++i)
+            {
+                double residual = -value[j] * s[i + i * n] * vector[i + j * n];
+                for (int k = 0; k < n; ++k)
+                {
+                    const int upper = i <= k ? i + k * n : k + i * n;
+                    residual += h[upper] * vector[k + j * n];
+                }
+                EXPECT_NEAR(residual, 0.0, tolerance);
+            }
+            for (int k = 0; k <= j; ++k)
+            {
+                double overlap = 0.0;
+                for (int i = 0; i < n; ++i)
+                {
+                    overlap += vector[i + j * n] * s[i + i * n] * vector[i + k * n];
+                }
+                const double expected = k == j ? 1.0 : 0.0;
+                EXPECT_NEAR(overlap, expected, tolerance);
+            }
+        }
+    }
+}
+#endif
 
 int main(int argc, char **argv)
 {
