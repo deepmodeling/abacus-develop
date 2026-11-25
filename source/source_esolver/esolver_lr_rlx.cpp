@@ -128,6 +128,10 @@ void ModuleESolver::ESolver_LR<T, TR>::cal_force(BaseCell &basecell, ModuleBase:
 {
     basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
     const UnitCell &ucell = static_cast<const UnitCell &>(basecell);
+    if (this->ks_ && this->force_gs_.nr == ucell.nat)
+    {
+        ModuleIO::print_force(this->ofs_running_, ucell, "GROUND-STATE FORCE (eV/Angstrom)", this->force_gs_, false);
+    }
     if (!this->excited_relax_)
     { // single-point runs print the gradients of every state from `after_all_runners` instead
         return;

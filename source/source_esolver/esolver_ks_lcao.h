@@ -15,7 +15,6 @@
 
 #include <complex>
 #include <memory>
-#include <string>
 
 class BasisFlattenedIndexing; // Defined in source/source_base/basis_flattened_indexing.h
 
@@ -46,9 +45,6 @@ class ESolver_KS_LCAO : public ESolver_KS
 
     //! Calculate the requested forces and stress, caching the stress for cal_stress().
     void cal_force(BaseCell &basecell, ModuleBase::matrix &force) override;
-
-    //! Calculate forces with a caller-provided label for the printed force table.
-    void cal_force(BaseCell &basecell, ModuleBase::matrix &force, const std::string &force_title);
 
     //! Return the cached stress, calling cal_force() first when needed.
     void cal_stress(BaseCell &basecell, ModuleBase::matrix &stress) override;

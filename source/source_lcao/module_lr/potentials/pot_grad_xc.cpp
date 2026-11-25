@@ -190,7 +190,7 @@ namespace LR
         const std::vector<double>& v3r2s = kxc.v3rho2sigma;
         const std::vector<double>& v3rs2 = kxc.v3rhosigma2;
         const std::vector<double>& v3s3 = kxc.v3sigma3;
-        const auto& sigma_jacobian = kxc.sigma_jacobian();
+        const std::vector<double>& sigma_jacobian = kxc.sigma_jacobian();
 
         // Branch on THIS kernel's own GGA-ness, not the ground state's (see `cal_v_eff`).
         if (!kxc.is_gga())   // LDA: only $g^{\rho\rho\rho}$ survives

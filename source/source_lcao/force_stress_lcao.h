@@ -134,7 +134,6 @@ class Force_Stress_LCAO
                         ModuleSymmetry::Symmetry* symm,
                         const Exx_Info& exx_info,
                         const FSCalcConfig& cfg,
-                        const std::string& force_title,
                         TD_info* td_info,
                         hamilt::Hamilt<T>* p_hamilt);
 

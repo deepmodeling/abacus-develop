@@ -210,9 +210,8 @@ void ModuleESolver::ESolver_LR<T, TR>::runner(BaseCell &basecell, const int iste
     }
     if (this->ks_ && this->inp_->cal_force && !this->excited_relax_)
     {
-        // Single-point LR forces contain only -dOmega/dR. Report the KS part once,
-        // shared by all excited states, using the same KS force path as relaxation.
-        this->ks_->cal_force(ucell, this->force_gs_, "GROUND-STATE FORCE (eV/Angstrom)");
+        // Cache the KS force shared by all single-point excited states.
+        this->ks_->cal_force(ucell, this->force_gs_);
     }
     if (this->excited_relax_)
     {
@@ -222,7 +221,7 @@ void ModuleESolver::ESolver_LR<T, TR>::runner(BaseCell &basecell, const int iste
 
         // The LR terms only carry the Omega part of the force; the ground-state part is separate
         // and comes straight from the KS solver.
-        this->ks_->cal_force(ucell, this->force_gs_, "GROUND-STATE FORCE (eV/Angstrom)");
+        this->ks_->cal_force(ucell, this->force_gs_);
         this->lr_force_ = this->cal_lr_force_relax_(this->ofs_running_);
 
         // One line per ionic step with the two halves of the energy and of the gradient. Without

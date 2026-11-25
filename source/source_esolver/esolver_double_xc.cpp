@@ -395,7 +395,7 @@ void ESolver_DoubleXC<TK, TR>::cal_force(BaseCell &basecell, ModuleBase::matrix 
         this->dmat_base, // mohan add 2025-11-03
         this->psi, this->two_center_bundle_, this->orb_, force_base, stress_base, this->locpp, this->sf, this->kv,
         this->pw_rho, this->solvent, *this->dftu_, this->deepks, this->exx_nao, &ucell.symm, this->exx_info_, fs_cfg,
-        "TOTAL-FORCE (eV/Angstrom)", nullptr, nullptr);
+        nullptr, nullptr);
 
     // restore to original xc
     XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);

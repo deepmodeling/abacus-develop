@@ -242,9 +242,9 @@ void assemble_print_force(const UnitCell& ucell,
                           const std::string& dpks_out_type,
                           const LCAOForceParts& parts,
                           const double force_threshold,
-                          const std::string& force_title,
                           ModuleBase::matrix& fcs)
 {
+    const Input_para& input = PARAM.inp;
     const int nat = ucell.nat;
     //---------------------------------
     // sum all parts of force!
@@ -258,7 +258,7 @@ void assemble_print_force(const UnitCell& ucell,
         }
     }
 
-    if (PARAM.inp.gate_flag || PARAM.inp.efield_flag)
+    if (input.gate_flag || input.efield_flag)
     {
         GlobalV::ofs_running << "Atomic forces are not shifted if gate_flag or efield_flag == true!" << std::endl;
     }
@@ -284,13 +284,13 @@ void assemble_print_force(const UnitCell& ucell,
         }
         net_force[i] = sum;
     }
-    if (!(PARAM.inp.gate_flag || PARAM.inp.efield_flag))
+    if (!(input.gate_flag || input.efield_flag))
     {
         ModuleBase::remove_net_force(nat, fcs);
     }
 
     // compute forces using the DeePKS model
-    DeePKS_domain::write_forces(fcs, parts.fvnl_dalpha, dpks_out_type, PARAM.inp);
+    DeePKS_domain::write_forces(fcs, parts.fvnl_dalpha, dpks_out_type, input);
 
     if (istestf)
     {
@@ -299,8 +299,11 @@ void assemble_print_force(const UnitCell& ucell,
 
     GlobalV::ofs_running << std::setiosflags(std::ios::left);
 
-    // this->printforce_total(ry, istestf, fcs);
-    ModuleIO::print_force(GlobalV::ofs_running, ucell, force_title, fcs, false);
+    // The coupled LR solver reports the ground-state force with the LR forces.
+    if (input.esolver_type != "ks-lr")
+    {
+        ModuleIO::print_force(GlobalV::ofs_running, ucell, "TOTAL-FORCE (eV/Angstrom)", fcs, false);
+    }
     net_force*= ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A;
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Net force vector (eV/Ang)", net_force.x, net_force.y, net_force.z);
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Total drift (ev/Ang)", net_force.norm());

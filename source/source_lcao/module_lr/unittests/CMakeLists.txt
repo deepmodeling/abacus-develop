@@ -198,8 +198,7 @@ if(ENABLE_LIBXC)
       COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 4 ${MPIEXEC_PREFLAGS}
         $<TARGET_FILE:MODULE_LR_xc_kernel> ${MPIEXEC_POSTFLAGS}
         --gtest_filter=KernelXCTest.HseGroundResponseFallback*:KernelXCTest.HseGroundResponseRetry*)
-    set_tests_properties(MODULE_LR_xc_kernel_parallel PROPERTIES
-      PROCESSORS 4 TIMEOUT 120 ENVIRONMENT "OMP_NUM_THREADS=1;MKL_NUM_THREADS=1")
+    set_tests_properties(MODULE_LR_xc_kernel_parallel PROPERTIES PROCESSORS 4 TIMEOUT 120)
   endif()
 endif()
 

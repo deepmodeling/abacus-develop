@@ -302,12 +302,6 @@ double ESolver_KS_LCAO<TK, TR>::cal_energy()
 template <typename TK, typename TR>
 void ESolver_KS_LCAO<TK, TR>::cal_force(BaseCell &basecell, ModuleBase::matrix &force)
 {
-    this->cal_force(basecell, force, "TOTAL-FORCE (eV/Angstrom)");
-}
-
-template <typename TK, typename TR>
-void ESolver_KS_LCAO<TK, TR>::cal_force(BaseCell &basecell, ModuleBase::matrix &force, const std::string &force_title)
-{
     basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
     UnitCell &ucell = static_cast<UnitCell &>(basecell);
 
@@ -326,8 +320,8 @@ void ESolver_KS_LCAO<TK, TR>::cal_force(BaseCell &basecell, ModuleBase::matrix &
         ucell, this->get_vdw_result(), this->inp_->cal_force, this->inp_->cal_stress, this->inp_->test_force,
         this->inp_->test_stress, this->gd, this->pv, *(this->basis_index_), this->pelec, this->dmat, this->psi,
         two_center_bundle_, orb_, force, this->scs, this->locpp, this->sf, this->kv, this->pw_rho, this->solvent,
-        *this->dftu_, this->deepks, this->exx_nao, &ucell.symm, this->exx_info_, fs_cfg, force_title,
-        this->get_td_info(), static_cast<hamilt::Hamilt<TK> *>(this->p_hamilt));
+        *this->dftu_, this->deepks, this->exx_nao, &ucell.symm, this->exx_info_, fs_cfg, this->get_td_info(),
+        static_cast<hamilt::Hamilt<TK> *>(this->p_hamilt));
 
     // Release the adjacency records after the force/stress calculation.
     this->RA.delete_grid();

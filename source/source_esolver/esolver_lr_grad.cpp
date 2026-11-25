@@ -155,7 +155,8 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force_Xz(
     const int nst = static_cast<int>(omega.size());
     const int channel = ispin;
     const LR::GradientInputs<T> inputs = this->gradient_inputs_();
-    const auto window = LR::build_window_response(inputs, Xz, nst, this->nvirt[0], ispin, this->in_dir);
+    const LR::WindowResponse<T> window
+        = LR::build_window_response(inputs, Xz, nst, this->nvirt[0], ispin, this->in_dir);
     const ct::Tensor Z = this->solve_zvector_eqation(channel, nst, Xz, window.density);
     const auto dm_gs = this->cal_dm_gs();
     const LR::ForceSettings force_settings{
@@ -354,7 +355,7 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force_open
     const int nst = static_cast<int>(omega.size());
     const int channel = 0;
     const LR::GradientInputs<T> inputs = this->gradient_inputs_();
-    const auto window = LR::build_open_shell_window_response(inputs, Xz, nst, this->nvirt);
+    const LR::WindowResponse<T> window = LR::build_open_shell_window_response(inputs, Xz, nst, this->nvirt);
     const ct::Tensor Z = this->solve_zvector_eqation(channel, nst, Xz, window.density);
     const auto dm_gs = this->cal_dm_gs();
     const LR::ForceSettings force_settings{
