@@ -75,6 +75,14 @@ public:
     void Dngvd_double(int N, int M, double *A, double *B, double *W, double *V);
     void Dngvd_complex(int N, int M, std::complex<double> *A, std::complex<double> *B, double *W, std::complex<double> *V);
 
+#ifdef ABACUS_DM_DIRECT_PILOT
+    // Keep the owning solver alive until the real occupations are available.
+    // Only the requested columns are materialized on host for existing callers.
+    void Dngvd_double_retained(int N, double* A, double* B, double* W,
+                               double* V, int host_columns);
+    bool density_from_retained(int bands, const double* weights, double* density);
+#endif
+
     void Dngvd(int N, int M, double *A, double *B, double *W, double *V)
     {
         return Dngvd_double(N, M, A, B, W, V);

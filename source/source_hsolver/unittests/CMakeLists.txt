@@ -2,6 +2,15 @@ abacus_disable_feature_definitions(__CUDA)
 abacus_disable_feature_definitions(__ROCM)
 abacus_disable_feature_definitions(__EXX)
 
+if(ABACUS_DM_DIRECT_PILOT)
+  addtest(
+    TARGET MODULE_HSOLVER_direct_dm
+    LIBS CUDA::cudart CUDA::cublas CUDA::cusolver
+    SOURCES test_diag_cusolver.cpp ../kernels/cuda/diag_cusolver.cu
+    KEEP_FEATURE_DEFINITIONS __CUDA)
+  target_compile_definitions(MODULE_HSOLVER_direct_dm PRIVATE ABACUS_DM_DIRECT_PILOT)
+endif()
+
 set(DAV_SUBSPACE_TEST_SOURCES test_diago_dav_subspace.cpp ../diago_dav_subspace.cpp)
 set(DAV_SUBSPACE_TEST_LIBS parameter base device container psi)
 if(ENABLE_MPI)

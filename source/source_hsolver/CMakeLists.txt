@@ -56,6 +56,15 @@ endif()
 
 add_library(hsolver OBJECT ${objects})
 
+option(ABACUS_DM_DIRECT_PILOT "Private cuSOLVER to Gamma FP64 DM trial" OFF)
+if(ABACUS_DM_DIRECT_PILOT)
+  if(NOT USE_CUDA OR NOT ENABLE_MPI OR NOT ENABLE_LCAO)
+    message(FATAL_ERROR "ABACUS_DM_DIRECT_PILOT requires CUDA, MPI and LCAO")
+  endif()
+  target_compile_definitions(hsolver PRIVATE ABACUS_DM_DIRECT_PILOT)
+  target_compile_definitions(diag_cusolver PRIVATE ABACUS_DM_DIRECT_PILOT)
+endif()
+
 if(ENABLE_COVERAGE)
   add_coverage(hsolver)
 endif()
