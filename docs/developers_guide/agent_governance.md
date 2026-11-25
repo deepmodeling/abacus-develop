@@ -203,6 +203,7 @@ changed and the PR explains why the new reference is correct.
 
 Use Autotest cases with `INPUT`, `STRU`, `KPT` (when needed) and `result.ref`,
 listed in `CASES_*.txt` and run by `Autotest.sh` through the suite's CTest entry.
+Autotest helpers are unaffected.
 Keep physics-specific setup and calculations in the case. Reserve
 `tests/integrate/validation_tools/` for comparing program output with stored
 references and reporting differences. Store references with the case, outside
