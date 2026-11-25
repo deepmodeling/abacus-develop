@@ -56,7 +56,7 @@ void OnsiteProj<OperatorPW<T, Device>>::init(const int ik_in)
     ModuleBase::timer::start("OnsiteProj", "getvnl");
     this->ik = ik_in;
 
-    auto* onsite_p = projectors::OnsiteProjector<double, Device>::get_instance();
+    projectors::OnsiteProjector<double, Device>* onsite_p = projectors::OnsiteProjector<double, Device>::get_instance();
     onsite_p->tabulate_atomic(ik_in);
     this->tnp = onsite_p->get_tot_nproj();
 
@@ -76,7 +76,7 @@ void OnsiteProj<OperatorPW<T, Device>>::add_onsite_proj(T *hpsi_in, const int np
 {
     ModuleBase::timer::start("OnsiteProj", "add_onsite_proj");
 
-    auto* onsite_p = projectors::OnsiteProjector<double, Device>::get_instance();
+    projectors::OnsiteProjector<double, Device>* onsite_p = projectors::OnsiteProjector<double, Device>::get_instance();
     const std::complex<double>* tab_atomic = onsite_p->get_tab_atomic();
     const int npw = onsite_p->get_npw();
     // npwx passed as parameter
@@ -104,7 +104,7 @@ void OnsiteProj<OperatorPW<T, Device>>::add_onsite_proj(T *hpsi_in, const int np
 template<typename T, typename Device>
 void OnsiteProj<OperatorPW<T, Device>>::update_becp(const T *psi_in, const int npol, const int m, const int npwx) const
 {
-    auto* onsite_p = projectors::OnsiteProjector<double, Device>::get_instance();
+    projectors::OnsiteProjector<double, Device>* onsite_p = projectors::OnsiteProjector<double, Device>::get_instance();
     onsite_p->overlap_proj_psi(m, psi_in, npwx);
 }
 
@@ -113,7 +113,7 @@ void OnsiteProj<OperatorPW<T, Device>>::cal_ps_delta_spin(const int npol, const 
 {
     if(!this->has_delta_spin) return;
 
-    auto* onsite_p = projectors::OnsiteProjector<double, Device>::get_instance();
+    projectors::OnsiteProjector<double, Device>* onsite_p = projectors::OnsiteProjector<double, Device>::get_instance();
     const std::complex<double>* becp = onsite_p->get_becp();
 
     spinconstrain::SpinConstrain<std::complex<double>>& sc = spinconstrain::SpinConstrain<std::complex<double>>::getScInstance();
@@ -206,7 +206,7 @@ template<typename T, typename Device>
 void OnsiteProj<OperatorPW<T, Device>>::setup_pw_dftu_indices() const
 {
     this->init_dftu = true;
-    auto* onsite_p = projectors::OnsiteProjector<double, Device>::get_instance();
+    projectors::OnsiteProjector<double, Device>* onsite_p = projectors::OnsiteProjector<double, Device>::get_instance();
     const int npol = this->ucell->get_npol();
 
     resmem_int_op()(this->orb_l_iat, this->ucell->nat);
@@ -275,7 +275,7 @@ void OnsiteProj<OperatorPW<T, Device>>::cal_ps_dftu(
         return;
     }
 
-    auto* onsite_p = projectors::OnsiteProjector<double, Device>::get_instance();
+    projectors::OnsiteProjector<double, Device>* onsite_p = projectors::OnsiteProjector<double, Device>::get_instance();
     const std::complex<double>* becp = onsite_p->get_becp();
 
     if (this->nkb_m < m * tnp) {
