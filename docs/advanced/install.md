@@ -78,15 +78,8 @@ cmake -B build -DDeePMD_DIR=/dir_to_deepmd-kit -DTorch_DIR=/dir_to_pytorch
 ```
 
 ## Build with NEP
-This interface enables running MD simulations with the NEP model. It requires the [NEP_CPU](https://github.com/brucefan1983/NEP_CPU) library, which can be easily installed using toolchain as shown below:
-```bash
-./install_abacus_toolchain_new.sh --with-nep=install
-```
 
-To build ABACUS:
-```bash
-cmake -B build -DNEP_DIR=/path/to/nep_cpu
-```
+This interface enables running MD simulations with the NEP model. It requires the [NEP_CPU](https://github.com/brucefan1983/NEP_CPU) library version 1.5.1 or newer. To build ABACUS with NEP support, pass `-DENABLE_NEP=ON` to CMake.
 
 ## Build with LibRI support
 
