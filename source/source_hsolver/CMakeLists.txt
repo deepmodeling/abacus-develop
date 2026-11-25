@@ -9,7 +9,7 @@ list(
   diago_lobpcg.cpp
   lobpcg_subspace.cpp
   lobpcg_recovery.cpp
-  rr_solver.cpp
+  dense_eigensolver.cpp
   para_lin_tf.cpp
   hsolver_pw.cpp
   hsolver_lcaopw.cpp

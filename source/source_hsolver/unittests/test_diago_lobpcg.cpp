@@ -1,5 +1,5 @@
 #include "source_hsolver/diago_lobpcg.h"
-#include "source_hsolver/rr_solver.h"
+#include "source_hsolver/dense_eigensolver.h"
 #include "source_base/module_container/base/third_party/lapack.h"
 #include "source_base/module_device/device.h"
 #include "source_base/kernels/math_kernel_op.h"
@@ -95,8 +95,8 @@ class Problem : public hsolver::HSOperator<T, Device>
     std::vector<Real> prec;
     std::vector<Real> eigenvalues;
     ct::Tensor psi;
-    hsolver::rr::ParallelRREigensolver parallel;
-    hsolver::rr::GpuRREigensolver gpu;
+    hsolver::dense::ParallelDenseEigensolver parallel;
+    hsolver::dense::GpuDenseEigensolver gpu;
     std::unique_ptr<Solver> solver;
     mutable int h_calls = 0;
     mutable int s_calls = 0;
@@ -295,7 +295,7 @@ void check_case(const Options& options, const Locking locking)
     p.check(converged, eig_tol, gram_tol);
     if (options.overlap) { EXPECT_GT(p.s_calls, 0); }
     else { EXPECT_EQ(p.s_calls, 0); }
-    const bool gpu_rr = device == ct::DeviceType::GpuDevice && hsolver::rr::GpuRREigensolver::available()
+    const bool gpu_rr = device == ct::DeviceType::GpuDevice && hsolver::dense::GpuDenseEigensolver::available()
                         && p.comm.rank == 0 && options.backend == 0;
     if (gpu_rr) { EXPECT_GT(p.gpu.storage_bytes(), 0U); }
     else { EXPECT_EQ(p.gpu.storage_bytes(), 0U); }
@@ -502,7 +502,7 @@ class LobpcgProjectionTest
         ct::Tensor g;
         solver.form_projected_matrices(basis, 7, nullptr, k, g);
         if (p.comm.rank == 0) { g.data<Z>()[0] = -1; }
-        rr::SerialGvWorkspace work;
+        dense::SerialGvWorkspace work;
         EXPECT_FALSE(solver.solve_projected(k, g, 7, 4, work));
         int columns = 7;
         ASSERT_TRUE(solver.recover_projected(p, basis, columns, 4, k, g, work));

@@ -1,4 +1,4 @@
-#include "source_hsolver/rr_solver.h"
+#include "source_hsolver/dense_eigensolver.h"
 #include "source_base/parallel_cell.h"
 #include <gtest/gtest.h>
 #include <algorithm>
@@ -91,24 +91,24 @@ Pencil clustered_pencil()
 }
 
 #if !defined(__CUDA) && !defined(__ROCM)
-void solve_serial(hsolver::rr::SerialGvWorkspace& solver, Pencil& p, const int wanted)
+void solve_serial(hsolver::dense::SerialGvWorkspace& solver, Pencil& p, const int wanted)
 {
     const Pencil input(p);
     ASSERT_EQ(solver.solve(p.h.data(), p.s.data(), p.n, wanted, p.values.data(), p.vectors.data()), 0);
     check_pairs(input, p, wanted);
 }
 
-TEST(SerialRR, PartialAndFullSpectrum)
+TEST(SerialDenseEigensolver, PartialAndFullSpectrum)
 {
-    hsolver::rr::SerialGvWorkspace solver;
+    hsolver::dense::SerialGvWorkspace solver;
     Pencil p = clustered_pencil();
     solve_serial(solver, p, 6);
     solve_serial(solver, p, p.n);
 }
 
-TEST(SerialRR, ReusesWorkspace)
+TEST(SerialDenseEigensolver, ReusesWorkspace)
 {
-    hsolver::rr::SerialGvWorkspace solver;
+    hsolver::dense::SerialGvWorkspace solver;
     Pencil p(16);
     solve_serial(solver, p, 6);
     const std::size_t capacity = solver.storage_bytes();
@@ -119,9 +119,9 @@ TEST(SerialRR, ReusesWorkspace)
     EXPECT_EQ(solver.storage_bytes(), capacity);
 }
 
-TEST(SerialRR, InvalidMetricAndRetry)
+TEST(SerialDenseEigensolver, InvalidMetricAndRetry)
 {
-    hsolver::rr::SerialGvWorkspace solver;
+    hsolver::dense::SerialGvWorkspace solver;
     Pencil p(4);
     p.s[0] = -1;
     EXPECT_GT(solver.solve(p.h.data(), p.s.data(), p.n, 2, p.values.data(), p.vectors.data()), p.n);
@@ -131,7 +131,7 @@ TEST(SerialRR, InvalidMetricAndRetry)
 }
 
 #ifdef __MPI
-void solve_parallel(hsolver::rr::ParallelRREigensolver& solver, Pencil& p, const int wanted,
+void solve_parallel(hsolver::dense::ParallelDenseEigensolver& solver, Pencil& p, const int wanted,
                     const MPI_Comm comm, const int block)
 {
     const Pencil input(p);
@@ -142,15 +142,15 @@ void solve_parallel(hsolver::rr::ParallelRREigensolver& solver, Pencil& p, const
     if (domain.rank() == 0) { check_pairs(input, p, wanted); }
 }
 
-TEST(ParallelRR, PartialAndFullClusteredSpectrum)
+TEST(ParallelDenseEigensolver, PartialAndFullClusteredSpectrum)
 {
-    hsolver::rr::ParallelRREigensolver solver;
+    hsolver::dense::ParallelDenseEigensolver solver;
     Pencil p = clustered_pencil();
     solve_parallel(solver, p, 6, MPI_COMM_WORLD, 4); // Cuts a fourfold cluster.
     solve_parallel(solver, p, p.n, MPI_COMM_WORLD, 4);
 }
 
-TEST(ParallelRR, FullyDegenerateGeneralizedSpectrum)
+TEST(ParallelDenseEigensolver, FullyDegenerateGeneralizedSpectrum)
 {
     Pencil p(16);
     // A positive, nondiagonal S; H=2.5S gives a fully degenerate spectrum.
@@ -161,14 +161,14 @@ TEST(ParallelRR, FullyDegenerateGeneralizedSpectrum)
     }
     for (int i = 0; i < p.n * p.n; ++i) { p.h[i] = 2.5 * p.s[i]; }
     p.exact.assign(p.n, 2.5);
-    hsolver::rr::ParallelRREigensolver solver;
+    hsolver::dense::ParallelDenseEigensolver solver;
     solve_parallel(solver, p, 6, MPI_COMM_WORLD, 4);
     solve_parallel(solver, p, p.n, MPI_COMM_WORLD, 4);
 }
 
-TEST(ParallelRR, WorkspaceGrowthAndReuse)
+TEST(ParallelDenseEigensolver, WorkspaceGrowthAndReuse)
 {
-    hsolver::rr::ParallelRREigensolver solver;
+    hsolver::dense::ParallelDenseEigensolver solver;
     Pencil p(16);
     solve_parallel(solver, p, 6, MPI_COMM_WORLD, 4);
     const std::size_t capacity = solver.storage_bytes();
@@ -181,18 +181,18 @@ TEST(ParallelRR, WorkspaceGrowthAndReuse)
     solve_parallel(solver, tiny, 1, MPI_COMM_WORLD, 4);
 }
 
-TEST(ParallelRR, RebindsCommunicator)
+TEST(ParallelDenseEigensolver, RebindsCommunicator)
 {
-    hsolver::rr::ParallelRREigensolver solver;
+    hsolver::dense::ParallelDenseEigensolver solver;
     Pencil p(16);
     solve_parallel(solver, p, 6, MPI_COMM_WORLD, 4);
     solve_parallel(solver, p, 6, MPI_COMM_SELF, 4);
     solve_parallel(solver, p, 6, MPI_COMM_WORLD, 4);
 }
 
-TEST(ParallelRR, InvalidMetricAndRetry)
+TEST(ParallelDenseEigensolver, InvalidMetricAndRetry)
 {
-    hsolver::rr::ParallelRREigensolver solver;
+    hsolver::dense::ParallelDenseEigensolver solver;
     Pencil p(16);
     p.s[0] = -1;
     EXPECT_THROW(solver.solve_generalized(p.h.data(), p.s.data(), p.n, 6,
@@ -205,7 +205,7 @@ TEST(ParallelRR, InvalidMetricAndRetry)
 #endif
 
 #ifdef __CUDA
-void solve_gpu(hsolver::rr::GpuRREigensolver& solver, Pencil& p, const int wanted)
+void solve_gpu(hsolver::dense::GpuDenseEigensolver& solver, Pencil& p, const int wanted)
 {
     const Pencil input(p);
     ASSERT_TRUE(solver.solve_generalized(p.h.data(), p.s.data(), p.n, wanted,
@@ -213,17 +213,17 @@ void solve_gpu(hsolver::rr::GpuRREigensolver& solver, Pencil& p, const int wante
     check_pairs(input, p, wanted);
 }
 
-TEST(GpuRR, PartialAndFullClusteredSpectrum)
+TEST(GpuDenseEigensolver, PartialAndFullClusteredSpectrum)
 {
-    hsolver::rr::GpuRREigensolver solver;
+    hsolver::dense::GpuDenseEigensolver solver;
     Pencil p = clustered_pencil();
     solve_gpu(solver, p, 6);
     solve_gpu(solver, p, p.n);
 }
 
-TEST(GpuRR, WorkspaceGrowthAndReuse)
+TEST(GpuDenseEigensolver, WorkspaceGrowthAndReuse)
 {
-    hsolver::rr::GpuRREigensolver solver;
+    hsolver::dense::GpuDenseEigensolver solver;
     Pencil p(16);
     solve_gpu(solver, p, 6);
     const std::size_t capacity = solver.storage_bytes();
@@ -238,16 +238,16 @@ TEST(GpuRR, WorkspaceGrowthAndReuse)
     EXPECT_EQ(solver.storage_bytes(), grown);
 }
 
-TEST(GpuRR, SingleEigenpair)
+TEST(GpuDenseEigensolver, SingleEigenpair)
 {
-    hsolver::rr::GpuRREigensolver solver;
+    hsolver::dense::GpuDenseEigensolver solver;
     Pencil p(1);
     solve_gpu(solver, p, 1);
 }
 
-TEST(GpuRR, InvalidMetricAndRetry)
+TEST(GpuDenseEigensolver, InvalidMetricAndRetry)
 {
-    hsolver::rr::GpuRREigensolver solver;
+    hsolver::dense::GpuDenseEigensolver solver;
     Pencil p(16);
     solve_gpu(solver, p, 6);
     p.s[0] = -1;

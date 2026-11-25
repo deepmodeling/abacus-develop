@@ -15,12 +15,12 @@
 namespace hsolver
 {
 
-namespace rr
+namespace dense
 {
-class ParallelRREigensolver;
-class GpuRREigensolver;
+class ParallelDenseEigensolver;
+class GpuDenseEigensolver;
 struct SerialGvWorkspace;
-} // namespace rr
+} // namespace dense
 
 enum class LobpcgLocking
 {
@@ -58,8 +58,8 @@ class DiagoLOBPCG
         const int para_rr_block_size,
         const bool use_overlap,
         const LobpcgLocking locking,
-        rr::ParallelRREigensolver& rr_solver,
-        rr::GpuRREigensolver& gpu_rr_solver);
+        dense::ParallelDenseEigensolver& rr_solver,
+        dense::GpuDenseEigensolver& gpu_rr_solver);
     ~DiagoLOBPCG();
 
     // Start from a full-rank block of n_band_ vectors with ld_psi >= n_dim_.
@@ -83,7 +83,7 @@ class DiagoLOBPCG
         T* sx; ///< Matching S images; null denotes S = I.
     };
 
-    using SerialGvWorkspace = rr::SerialGvWorkspace;
+    using SerialGvWorkspace = dense::SerialGvWorkspace;
 
     // One diag lifetime: root-owned K/G of retained [X,P] and reusable scratch.
     // All ranks need columns when assembling the new W panel.
@@ -116,8 +116,8 @@ class DiagoLOBPCG
     const int para_rr_bs_ = 0; ///< Distributed RR block size; zero selects automatically.
     const bool use_overlap_; ///< Store and apply explicit S images instead of S = I.
     const LobpcgLocking locking_; ///< Hard freezes the converged prefix; soft retains all X in RR.
-    rr::ParallelRREigensolver& rr_solver_; ///< Borrowed, reusable distributed CPU RR resources.
-    rr::GpuRREigensolver& gpu_rr_solver_; ///< Borrowed, reusable CUDA RR resources.
+    dense::ParallelDenseEigensolver& rr_solver_; ///< Borrowed, reusable distributed CPU RR resources.
+    dense::GpuDenseEigensolver& gpu_rr_solver_; ///< Borrowed, reusable CUDA RR resources.
 
     ct::DataType r_type_ = ct::DataType::DT_INVALID; ///< Tensor element type corresponding to Real.
     ct::DataType t_type_ = ct::DataType::DT_INVALID; ///< Tensor element type corresponding to T.

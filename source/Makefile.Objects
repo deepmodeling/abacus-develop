@@ -518,7 +518,7 @@ OBJS_HSOLVER=diago_cg.o\
     diago_lobpcg.o\
     lobpcg_subspace.o\
     lobpcg_recovery.o\
-    rr_solver.o\
+    dense_eigensolver.o\
     para_lin_tf.o\
     hsolver.o\
     hsolver_pw.o\

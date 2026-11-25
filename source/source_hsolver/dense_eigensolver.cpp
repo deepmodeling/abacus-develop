@@ -1,4 +1,4 @@
-#include "rr_solver.h"
+#include "dense_eigensolver.h"
 #include "source_base/memory_recorder.h"
 #include "source_base/module_container/base/third_party/lapack.h"
 #include "source_base/timer.h"
@@ -21,7 +21,7 @@
 
 namespace hsolver
 {
-namespace rr
+namespace dense
 {
 std::size_t SerialGvWorkspace::storage_bytes() const
 {
@@ -354,7 +354,7 @@ void GvxWorkspace::solve(
 
 } // namespace
 
-struct ParallelRREigensolver::Impl
+struct ParallelDenseEigensolver::Impl
 {
     using Z = std::complex<double>;
     MPI_Comm communicator = MPI_COMM_NULL;
@@ -412,10 +412,10 @@ struct ParallelRREigensolver::Impl
     }
 };
 
-ParallelRREigensolver::ParallelRREigensolver() = default;
-ParallelRREigensolver::~ParallelRREigensolver() = default;
+ParallelDenseEigensolver::ParallelDenseEigensolver() = default;
+ParallelDenseEigensolver::~ParallelDenseEigensolver() = default;
 
-std::size_t ParallelRREigensolver::storage_bytes() const
+std::size_t ParallelDenseEigensolver::storage_bytes() const
 {
     if (!impl_)
     {
@@ -425,7 +425,7 @@ std::size_t ParallelRREigensolver::storage_bytes() const
     return sizeof(Impl::Z) * (p.h.capacity() + p.s.capacity() + p.vectors.capacity()) + p.gvx.storage_bytes();
 }
 
-void ParallelRREigensolver::solve_generalized(const std::complex<double>* h,
+void ParallelDenseEigensolver::solve_generalized(const std::complex<double>* h,
     const std::complex<double>* s,
     const int n,
     const int bands,
@@ -434,7 +434,7 @@ void ParallelRREigensolver::solve_generalized(const std::complex<double>* h,
     const MPI_Comm& comm,
     const int block_size)
 {
-    ModuleBase::timer::Scope timer("ParallelRREigensolver", "solve_generalized");
+    ModuleBase::timer::Scope timer("ParallelDenseEigensolver", "solve_generalized");
     ModuleBase::Memory::record("RR::parallel_stage", 0, false);
     if (!impl_)
     {
@@ -477,7 +477,7 @@ void check_solver(const cusolverStatus_t status, const char* operation)
 #endif
 } // namespace
 
-struct GpuRREigensolver::Impl
+struct GpuDenseEigensolver::Impl
 {
 #ifdef __CUDA
     cusolverDnHandle_t handle = nullptr;
@@ -525,10 +525,10 @@ struct GpuRREigensolver::Impl
 #endif
 };
 
-GpuRREigensolver::GpuRREigensolver() = default;
-GpuRREigensolver::~GpuRREigensolver() = default;
+GpuDenseEigensolver::GpuDenseEigensolver() = default;
+GpuDenseEigensolver::~GpuDenseEigensolver() = default;
 
-bool GpuRREigensolver::available()
+bool GpuDenseEigensolver::available()
 {
 #ifdef __CUDA
     return true;
@@ -537,7 +537,7 @@ bool GpuRREigensolver::available()
 #endif
 }
 
-std::size_t GpuRREigensolver::storage_bytes() const
+std::size_t GpuDenseEigensolver::storage_bytes() const
 {
 #ifdef __CUDA
     if (impl_)
@@ -548,14 +548,14 @@ std::size_t GpuRREigensolver::storage_bytes() const
     return 0;
 }
 
-bool GpuRREigensolver::solve_generalized(const std::complex<double>* matrix,
+bool GpuDenseEigensolver::solve_generalized(const std::complex<double>* matrix,
     const std::complex<double>* metric,
     const int n,
     const int wanted,
     double* values,
     std::complex<double>* vectors)
 {
-    ModuleBase::timer::Scope timer("GpuRREigensolver", "solve_generalized");
+    ModuleBase::timer::Scope timer("GpuDenseEigensolver", "solve_generalized");
 #ifdef __CUDA
     if (!impl_)
     {
@@ -697,5 +697,5 @@ bool GpuRREigensolver::solve_generalized(const std::complex<double>* matrix,
 #endif
 }
 
-} // namespace rr
+} // namespace dense
 } // namespace hsolver

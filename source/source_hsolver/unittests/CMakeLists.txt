@@ -27,13 +27,13 @@ set(LOBPCG_TEST_SOURCES
     ../diago_lobpcg.cpp
     ../lobpcg_subspace.cpp
     ../lobpcg_recovery.cpp
-    ../rr_solver.cpp
+    ../dense_eigensolver.cpp
     ../module_linalg/linear_algebra.cpp
     ../../source_basis/module_pw/test/test_tool.cpp)
 addtest(
   TARGET MODULE_HSOLVER_lobpcg
   LIBS parameter base psi device container
-  SOURCES test_diago_lobpcg.cpp test_rr_solver.cpp ${LOBPCG_TEST_SOURCES})
+  SOURCES test_diago_lobpcg.cpp test_dense_eigensolver.cpp ${LOBPCG_TEST_SOURCES})
 set_tests_properties(MODULE_HSOLVER_lobpcg PROPERTIES TIMEOUT 180)
 if(ENABLE_MPI)
   add_test(NAME MODULE_HSOLVER_lobpcg_mpi2
@@ -47,7 +47,7 @@ if(USE_CUDA OR USE_ROCM)
     TARGET MODULE_HSOLVER_lobpcg_gpu
     KEEP_FEATURE_DEFINITIONS __CUDA __ROCM
     LIBS parameter base psi device container
-    SOURCES test_diago_lobpcg.cpp ${LOBPCG_TEST_SOURCES} test_rr_solver.cpp
+    SOURCES test_diago_lobpcg.cpp ${LOBPCG_TEST_SOURCES} test_dense_eigensolver.cpp
             ../module_linalg/unittests/test_linear_algebra.cpp)
   set_tests_properties(MODULE_HSOLVER_lobpcg_gpu PROPERTIES SKIP_RETURN_CODE 77)
   if(ENABLE_MPI)
@@ -133,7 +133,7 @@ if(ENABLE_MPI)
             ../diago_lobpcg.cpp
             ../lobpcg_subspace.cpp
             ../lobpcg_recovery.cpp
-            ../rr_solver.cpp
+            ../dense_eigensolver.cpp
             ../diago_params.cpp
             ../module_linalg/linear_algebra.cpp
             ../diag_const_nums.cpp

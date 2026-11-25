@@ -1,6 +1,6 @@
 #include "diago_lobpcg.h"
 #include "lobpcg_internal.h"
-#include "rr_solver.h"
+#include "dense_eigensolver.h"
 #include "source_base/kernels/math_kernel_op.h"
 #include "source_base/memory_recorder.h"
 #include "source_base/module_container/ATen/kernels/memory.h"
@@ -32,8 +32,8 @@ DiagoLOBPCG<T, Device>::DiagoLOBPCG(const Real* precondition,
     const int para_rr_block_size,
     const bool use_overlap,
     const LobpcgLocking locking,
-    rr::ParallelRREigensolver& rr_solver,
-    rr::GpuRREigensolver& gpu_rr_solver)
+    dense::ParallelDenseEigensolver& rr_solver,
+    dense::GpuDenseEigensolver& gpu_rr_solver)
     : n_band_(nband), n_dim_(ndim), n_max_(nmax), layout_(layout), comm_(comm), para_rr_method_(para_rr_method),
       para_rr_bs_(para_rr_block_size), use_overlap_(use_overlap), locking_(locking), rr_solver_(rr_solver),
       gpu_rr_solver_(gpu_rr_solver), algebra_(comm)

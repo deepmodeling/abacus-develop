@@ -252,8 +252,8 @@ class TestHSolverPW : public ::testing::Test
         std::vector<double> values(4);
         std::vector<std::complex<double>> x(dim * 4, 0);
         for (int i = 0; i < 4; ++i) { x[i + i * dim] = 1; }
-        hsolver::rr::ParallelRREigensolver parallel;
-        hsolver::rr::GpuRREigensolver gpu;
+        hsolver::dense::ParallelDenseEigensolver parallel;
+        hsolver::dense::GpuDenseEigensolver gpu;
         hsolver::DiagoLOBPCG<std::complex<double>> solver(
             prec.data(), 4, dim, block, layout, comm, backend, 0, false,
             hsolver::LobpcgLocking::Hard, parallel, gpu);

@@ -1,5 +1,5 @@
-#ifndef HSOLVER_RR_SOLVER_H
-#define HSOLVER_RR_SOLVER_H
+#ifndef HSOLVER_DENSE_EIGENSOLVER_H
+#define HSOLVER_DENSE_EIGENSOLVER_H
 
 #include "source_base/module_container/ATen/core/tensor.h"
 #include <complex>
@@ -12,9 +12,9 @@
 
 namespace hsolver
 {
-namespace rr
+namespace dense
 {
-// Generalized Hermitian Rayleigh–Ritz solvers, with 1 <= wanted <= dimension.
+// Dense generalized Hermitian eigensolvers, with 1 <= wanted <= dimension.
 // Column-major buffers hold dimension^2 input entries, dimension values
 // and dimension*wanted eigenvector coefficients.
 // Root-local HEGVX scratch; reuse one instance across consecutive RR solves.
@@ -37,20 +37,20 @@ struct SerialGvWorkspace
     std::vector<int> failures_;
 };
 
-/** ScaLAPACK generalized RR with reusable block-cyclic storage and workspace.
+/** ScaLAPACK generalized eigensolver with reusable block-cyclic storage and workspace.
  * Calls are collective; rank zero supplies the matrices and receives eigenvectors.
  * The borrowed communicator stays alive until this object is destroyed or rebound.
  * A positive block_size sets the block width; zero selects it automatically.
  * Buffers retain their largest allocated capacity across solves.
  */
-class ParallelRREigensolver
+class ParallelDenseEigensolver
 {
   public:
 #ifdef __MPI
-    ParallelRREigensolver();
-    ~ParallelRREigensolver();
-    ParallelRREigensolver(const ParallelRREigensolver&) = delete;
-    ParallelRREigensolver& operator=(const ParallelRREigensolver&) = delete;
+    ParallelDenseEigensolver();
+    ~ParallelDenseEigensolver();
+    ParallelDenseEigensolver(const ParallelDenseEigensolver&) = delete;
+    ParallelDenseEigensolver& operator=(const ParallelDenseEigensolver&) = delete;
 
     // Returns wanted eigenvalues and n*wanted column-major coefficients on rank zero.
     void solve_generalized(const std::complex<double>* h,
@@ -71,7 +71,7 @@ class ParallelRREigensolver
 #endif
 };
 
-/** CUDA generalized Hermitian RR with reusable cuSOLVER resources.
+/** CUDA generalized Hermitian eigensolver with reusable cuSOLVER resources.
  * Inputs and outputs are host, column-major complex<double>. The first wanted
  * eigenpairs are returned, with vector leading dimension n. The upper triangle
  * defines each input matrix, whose contents are preserved.
@@ -79,13 +79,13 @@ class ParallelRREigensolver
  * Calls on an instance are serialized on one CUDA device, which remains current
  * through destruction.
  */
-class GpuRREigensolver
+class GpuDenseEigensolver
 {
   public:
-    GpuRREigensolver();
-    ~GpuRREigensolver();
-    GpuRREigensolver(const GpuRREigensolver&) = delete;
-    GpuRREigensolver& operator=(const GpuRREigensolver&) = delete;
+    GpuDenseEigensolver();
+    ~GpuDenseEigensolver();
+    GpuDenseEigensolver(const GpuDenseEigensolver&) = delete;
+    GpuDenseEigensolver& operator=(const GpuDenseEigensolver&) = delete;
 
     static bool available();
 
@@ -108,6 +108,6 @@ class GpuRREigensolver
     std::unique_ptr<Impl> impl_;
 };
 
-} // namespace rr
+} // namespace dense
 } // namespace hsolver
 #endif

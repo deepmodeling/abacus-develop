@@ -5,7 +5,7 @@
 #include "source_basis/module_pw/pw_basis_k.h"
 #include "source_estate/elecstate.h"
 #include "source_hsolver/hs_operator.h"
-#include "source_hsolver/rr_solver.h"
+#include "source_hsolver/dense_eigensolver.h"
 
 #include <iosfwd>
 #include <unordered_map>
@@ -118,8 +118,8 @@ class HSolverPW
     std::vector<double> ethr_band;
 
     // Reused across k/spin solves within this HSolverPW lifetime (one SCF step).
-    rr::ParallelRREigensolver rr_solver;
-    rr::GpuRREigensolver gpu_rr_solver;
+    dense::ParallelDenseEigensolver rr_solver;
+    dense::GpuDenseEigensolver gpu_rr_solver;
 
   private:
     /// @brief calculate the threshold for iterative-diagonalization for each band

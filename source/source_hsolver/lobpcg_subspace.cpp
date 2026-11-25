@@ -1,6 +1,6 @@
 #include "diago_lobpcg.h"
 #include "lobpcg_internal.h"
-#include "rr_solver.h"
+#include "dense_eigensolver.h"
 #include "source_base/kernels/math_kernel_op.h"
 #include "source_base/memory_recorder.h"
 #include "source_base/timer.h"
@@ -145,7 +145,7 @@ bool DiagoLOBPCG<T, Device>::solve_projected(const ct::Tensor& k,
     // Root-only backends publish one outcome before any rank returns/exits:
     // 1 = success, 0 = non-positive metric, -1 = fatal backend failure.
     double result = 1;
-    const bool gpu_rr = std::is_same<Device, base_device::DEVICE_GPU>::value && rr::GpuRREigensolver::available();
+    const bool gpu_rr = std::is_same<Device, base_device::DEVICE_GPU>::value && dense::GpuDenseEigensolver::available();
     try
     {
         if (para_rr_method_ == 0)
