@@ -311,7 +311,7 @@ void PhiOperator::phi_mul_dm(
     for (int i = 0; i < biggrid_->get_atoms_num(); ++i)
     {
         const auto atom_i = biggrid_->get_atom(i);
-        const auto r_i = atom_i->get_R();
+        const Vec3i r_i = atom_i->get_R();
 
         if (is_symm)
         {
@@ -328,7 +328,7 @@ void PhiOperator::phi_mul_dm(
         for (int j = start; j < biggrid_->get_atoms_num(); ++j)
         {
             const auto atom_j = biggrid_->get_atom(j);
-            const auto r_j = atom_j->get_R();
+            const Vec3i r_j = atom_j->get_R();
             const auto dm_mat = dm.find_matrix(atom_i->get_iat(), atom_j->get_iat(), r_i - r_j);
 
             if (dm_mat == nullptr)
@@ -387,14 +387,14 @@ void PhiOperator::phi_mul_phi(
     for (int i = 0; i < biggrid_->get_atoms_num(); ++i)
     {
         const auto atom_i = biggrid_->get_atom(i);
-        const auto &r_i = atom_i->get_R();
+        const Vec3i& r_i = atom_i->get_R();
         const int iat_i = atom_i->get_iat();
         const int n_i = atoms_phi_len_[i];
 
         for (int j = 0; j < biggrid_->get_atoms_num(); ++j)
         {
             const auto atom_j = biggrid_->get_atom(j);
-            const auto &r_j = atom_j->get_R();
+            const Vec3i& r_j = atom_j->get_R();
             const int iat_j = atom_j->get_iat();
             const int n_j = atoms_phi_len_[j];
 
