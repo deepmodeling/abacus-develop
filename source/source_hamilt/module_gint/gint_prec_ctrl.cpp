@@ -2,12 +2,9 @@
 
 #include <algorithm>
 
-void GintPrecisionController::set_mode(const std::string& precision_mode)
-{
-    this->mode_ = parse_mode_(precision_mode);
-}
+void GintPrecisionController::set_mode(const std::string &precision_mode) { this->mode_ = parse_mode_(precision_mode); }
 
-GintPrecisionController::PrecisionMode GintPrecisionController::parse_mode_(const std::string& precision_mode)
+GintPrecisionController::PrecisionMode GintPrecisionController::parse_mode_(const std::string &precision_mode)
 {
     if (precision_mode == "single")
     {
@@ -61,7 +58,4 @@ bool GintPrecisionController::update_after_iteration(double drho, double scf_thr
     return false;
 }
 
-ModuleGint::GintPrecision GintPrecisionController::current_precision() const
-{
-    return this->current_precision_;
-}
+ModuleGint::GintPrecision GintPrecisionController::current_precision() const { return this->current_precision_; }

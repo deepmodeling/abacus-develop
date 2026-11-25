@@ -17,10 +17,11 @@ namespace ModuleXC
 namespace NCGGA_SF_Builtin
 {
 
-std::tuple<double, double, ModuleBase::matrix> v_xc_ncgga_sf_builtin(const int& nrxx,
-                                                                     const double& omega,
-                                                                     const double tpiba,
-                                                                     const Charge* const chr)
+std::tuple<double, double, ModuleBase::matrix> v_xc_ncgga_sf_builtin(
+    const int &nrxx,
+    const double &omega,
+    const double tpiba,
+    const Charge *const chr)
 {
     ModuleBase::TITLE("XC_Functional", "v_xc_ncgga_sf_builtin");
     ModuleBase::timer::start("XC_Functional", "v_xc_ncgga_sf_builtin");
@@ -28,7 +29,7 @@ std::tuple<double, double, ModuleBase::matrix> v_xc_ncgga_sf_builtin(const int& 
     // Mapped local-collinear energy: rho_s = N_s(n + rho_core, m),
     // g_s = G_h(rho_s). Reverse the FFT gradient before the local Jacobian:
     // v_A = sum_s J_sA [f_rho_s - D_h(h_s)]. No discrete product rule is used.
-    ModulePW::PW_Basis* rhopw = chr->rhopw;
+    ModulePW::PW_Basis *rhopw = chr->rhopw;
     const int npw = rhopw->npw;
     const double e2 = ModuleBase::e2;
     constexpr double vanishing = 1e-10;
@@ -68,19 +69,23 @@ std::tuple<double, double, ModuleBase::matrix> v_xc_ncgga_sf_builtin(const int& 
     {
         const double arho = spin_map[ir].absolute_density;
         if (arho <= vanishing)
+        {
             continue;
+        }
 
         double zeta = spin_map[ir].clipped_magnitude / arho;
         if (std::abs(zeta) > 1.0)
+        {
             zeta = (zeta > 0) ? 1.0 : -1.0;
+        }
         double exc = 0;
         double vxc[2] = {0, 0};
         XC_Functional::xc_spin(arho, zeta, exc, vxc[0], vxc[1]);
 
         for (int channel = 0; channel < 4; ++channel)
         {
-            v(channel, ir)
-                = e2 * (spin_map[ir].jacobian(0, channel) * vxc[0] + spin_map[ir].jacobian(1, channel) * vxc[1]);
+            v(channel, ir) =
+                e2 * (spin_map[ir].jacobian(0, channel) * vxc[0] + spin_map[ir].jacobian(1, channel) * vxc[1]);
         }
 
         etxc += e2 * exc * arho;
@@ -146,8 +151,8 @@ std::tuple<double, double, ModuleBase::matrix> v_xc_ncgga_sf_builtin(const int& 
 
             for (int channel = 0; channel < 4; ++channel)
             {
-                v(channel, ir) += spin_map[ir].jacobian(0, channel) * vup_gga[ir]
-                                  + spin_map[ir].jacobian(1, channel) * vdw_gga[ir];
+                v(channel, ir) +=
+                    spin_map[ir].jacobian(0, channel) * vup_gga[ir] + spin_map[ir].jacobian(1, channel) * vdw_gga[ir];
             }
         }
 
@@ -159,8 +164,8 @@ std::tuple<double, double, ModuleBase::matrix> v_xc_ncgga_sf_builtin(const int& 
         {
             for (int channel = 0; channel < 4; ++channel)
             {
-                v(channel, ir) -= spin_map[ir].jacobian(0, channel) * divergence_up[ir]
-                                  + spin_map[ir].jacobian(1, channel) * divergence_down[ir];
+                v(channel, ir) -= spin_map[ir].jacobian(0, channel) * divergence_up[ir] +
+                                  spin_map[ir].jacobian(1, channel) * divergence_down[ir];
             }
         }
 
@@ -189,10 +194,11 @@ std::tuple<double, double, ModuleBase::matrix> v_xc_ncgga_sf_builtin(const int& 
     return std::make_tuple(etxc, vtxc, std::move(v));
 }
 
-void gradcorr_ncgga_lca_builtin(const Charge* const chr,
-                                ModulePW::PW_Basis* rhopw,
-                                const double tpiba,
-                                std::vector<double>& stress_gga)
+void gradcorr_ncgga_lca_builtin(
+    const Charge *const chr,
+    ModulePW::PW_Basis *rhopw,
+    const double tpiba,
+    std::vector<double> &stress_gga)
 {
     stress_gga.assign(9, 0.0);
 
@@ -206,8 +212,7 @@ void gradcorr_ncgga_lca_builtin(const Charge* const chr,
     std::vector<NcggaSpinMapPoint> spin_map(nrxx);
     for (int ir = 0; ir < nrxx; ++ir)
     {
-        const std::array<double, 3> magnetization
-            = {{chr->rho[1][ir], chr->rho[2][ir], chr->rho[3][ir]}};
+        const std::array<double, 3> magnetization = {{chr->rho[1][ir], chr->rho[2][ir], chr->rho[3][ir]}};
         const double eta = ncgga_lca_radial_eta();
         const NcggaRadialPoint radial = make_ncgga_radial_point(magnetization, eta);
         const double total_density = chr->rho[0][ir] + chr->rho_core[ir];
@@ -231,23 +236,16 @@ void gradcorr_ncgga_lca_builtin(const Charge* const chr,
     {
         const double rho_up = spin_map[ir].spin_density[0];
         const double rho_down = spin_map[ir].spin_density[1];
-        const ModuleBase::Vector3<double>& grad_up = spin_gradient[0][ir];
-        const ModuleBase::Vector3<double>& grad_down = spin_gradient[1][ir];
+        const ModuleBase::Vector3<double> &grad_up = spin_gradient[0][ir];
+        const ModuleBase::Vector3<double> &grad_down = spin_gradient[1][ir];
 
         double sx = 0.0;
         double v1xup = 0.0;
         double v1xdw = 0.0;
         double v2xup = 0.0;
         double v2xdw = 0.0;
-        XC_Functional::gcx_spin(rho_up,
-                                rho_down,
-                                grad_up * grad_up,
-                                grad_down * grad_down,
-                                sx,
-                                v1xup,
-                                v1xdw,
-                                v2xup,
-                                v2xdw);
+        XC_Functional::gcx_spin(
+            rho_up, rho_down, grad_up * grad_up, grad_down * grad_down, sx, v1xup, v1xdw, v2xup, v2xdw);
 
         double sc = 0.0;
         double v1cup = 0.0;
@@ -271,8 +269,8 @@ void gradcorr_ncgga_lca_builtin(const Charge* const chr,
         {
             for (int column = 0; column <= row; ++column)
             {
-                stress_gga[row * 3 + column] += h_up_component[row] * grad_up_component[column]
-                                                + h_down_component[row] * grad_down_component[column];
+                stress_gga[row * 3 + column] += h_up_component[row] * grad_up_component[column] +
+                                                h_down_component[row] * grad_down_component[column];
             }
         }
     }

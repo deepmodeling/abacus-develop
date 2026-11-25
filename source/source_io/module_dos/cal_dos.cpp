@@ -110,13 +110,15 @@ bool ModuleIO::cal_dos(const int& is,  // index for spin
         const ModuleBase::matrix& wg,  // weight of k-points and bands
         const int istep, // ionic step
         const int out_app_flag,
-        const int bndpar)
+        const int precision,
+        const int bndpar,
+        DosSpectrum* spectrum)
 {
     ModuleBase::TITLE("ModuleIO", "cal_dos");
 
     std::ofstream ofs_dos;
-
-    if (GlobalV::MY_RANK == 0)
+    const bool root = GlobalV::MY_RANK == 0;
+    if (root && !spectrum)
     {
         const std::string time_stamp = ModuleIO::local_timestamp();
         const int istep_one_based = istep + 1;
@@ -155,10 +157,10 @@ bool ModuleIO::cal_dos(const int& is,  // index for spin
         ModuleBase::WARNING("ModuleIO::cal_dos", "npoints <= 0");
         return false;
     }
-    if (GlobalV::MY_RANK == 0)
+    if (root && !spectrum)
     {
         ofs_dos << npoints << " # number of points" << std::endl;
-        ofs_dos << std::fixed << std::setprecision(6);
+        ofs_dos << std::fixed << std::setprecision(precision);
         ofs_dos << "#" << std::setw(12) << "energy(eV)"
                  << std::setw(12) << "dos"
                  << std::setw(12) << "dos_int"
@@ -222,8 +224,9 @@ bool ModuleIO::cal_dos(const int& is,  // index for spin
     double sum2 = 0.0;
     const double dos_thr = 1.0e-12;
 
-    if (GlobalV::MY_RANK == 0)
+    if (root)
     {
+        if (spectrum) { spectrum->resize(npoints); }
         for (int n = 0; n < npoints; ++n)
         {
             dos[n] /= static_cast<double>(nkstot);
@@ -236,17 +239,18 @@ bool ModuleIO::cal_dos(const int& is,  // index for spin
             }
             sum2 += dos_smear[n] * de_ev;
 
+            if (spectrum)
+            {
+                (*spectrum)[n] = {ene[n], dos[n], sum_elec[n], dos_smear[n], sum2};
+                continue;
+            }
             ofs_dos << std::setw(13) << ene[n]
                  << " " << std::setw(12) << dos[n]
                  << " " << std::setw(12) << sum_elec[n]
                  << " " << std::setw(14) << dos_smear[n]
                  << " " << std::setw(14) << sum2 << std::endl;
         }
-    }
-
-    if (GlobalV::MY_RANK == 0)
-    {
-        ofs_dos.close();
+        if (!spectrum) { ofs_dos.close(); }
     }
 
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Number of bands", nbands);

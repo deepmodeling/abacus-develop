@@ -19,7 +19,7 @@ using vdw::d3::Result;
 using vdw::d3::Structure;
 using vdw::d3::Vec3;
 
-double& coordinate(Vec3& vector, int component)
+double &coordinate(Vec3 &vector, int component)
 {
     if (component == 0)
     {
@@ -32,7 +32,7 @@ double& coordinate(Vec3& vector, int component)
     return vector.z;
 }
 
-double coordinate(const Vec3& vector, int component)
+double coordinate(const Vec3 &vector, int component)
 {
     if (component == 0)
     {
@@ -45,7 +45,7 @@ double coordinate(const Vec3& vector, int component)
     return vector.z;
 }
 
-double energy(const Structure& structure, const Parameters& parameters, const Cutoffs& cutoffs)
+double energy(const Structure &structure, const Parameters &parameters, const Cutoffs &cutoffs)
 {
     Result result;
     std::string error;
@@ -158,7 +158,38 @@ Structure x23_acetic()
 {
     Structure structure;
     structure.atomic_numbers = {
-        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 6, 6, 6, 6, 6, 6, 6, 6, 8, 8, 8, 8, 8, 8, 8, 8,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        8,
+        8,
+        8,
+        8,
+        8,
+        8,
+        8,
+        8,
     };
     structure.positions = {
         {7.90377778530531, 7.12936818903081, 9.56314593193451},
@@ -281,19 +312,19 @@ TEST(D3Data, ReferencePackingAndSymmetry)
         for (int atomic_number_j = 1; atomic_number_j <= atomic_number_i; ++atomic_number_j)
         {
             const int references_j = vdw::d3::data::reference_count(atomic_number_j);
-            EXPECT_DOUBLE_EQ(vdw::d3::data::vdw_radius(atomic_number_i, atomic_number_j),
-                             vdw::d3::data::vdw_radius(atomic_number_j, atomic_number_i));
+            EXPECT_DOUBLE_EQ(
+                vdw::d3::data::vdw_radius(atomic_number_i, atomic_number_j),
+                vdw::d3::data::vdw_radius(atomic_number_j, atomic_number_i));
             for (int reference_i = 0; reference_i < references_i; ++reference_i)
             {
                 for (int reference_j = 0; reference_j < references_j; ++reference_j)
                 {
-                    const double c6
-                        = vdw::d3::data::reference_c6(atomic_number_i, reference_i, atomic_number_j, reference_j);
+                    const double c6 =
+                        vdw::d3::data::reference_c6(atomic_number_i, reference_i, atomic_number_j, reference_j);
                     EXPECT_TRUE(std::isfinite(c6));
                     EXPECT_GE(c6, 0.0);
                     EXPECT_DOUBLE_EQ(
-                        c6,
-                        vdw::d3::data::reference_c6(atomic_number_j, reference_j, atomic_number_i, reference_i));
+                        c6, vdw::d3::data::reference_c6(atomic_number_j, reference_j, atomic_number_i, reference_i));
                 }
             }
         }
@@ -370,9 +401,8 @@ TEST(D3Evaluator, HighCoordinationMgGradientAndVirial)
     Structure structure;
     structure.atomic_numbers = {12, 12};
     structure.positions = {{0.0, 0.0, 0.0}, {0.06, half_diagonal - 0.09, half_diagonal + 0.13}};
-    structure.lattice = {{{0.0, 2.0 * half_diagonal, 2.0 * half_diagonal},
-                          {half_diagonal, 0.0, half_diagonal},
-                          {half_diagonal, half_diagonal, 0.0}}};
+    structure.lattice = {{{0.0, 2.0 * half_diagonal, 2.0 * half_diagonal}, {half_diagonal, 0.0, half_diagonal},
+        {half_diagonal, half_diagonal, 0.0}}};
     structure.periodic = {{true, true, true}};
 
     Parameters parameters;
@@ -388,7 +418,7 @@ TEST(D3Evaluator, HighCoordinationMgGradientAndVirial)
     std::string error;
     ASSERT_TRUE(vdw::d3::evaluate(structure, parameters, cutoffs, true, analytic, error)) << error;
     ASSERT_TRUE(std::isfinite(analytic.energy));
-    for (const Vec3& gradient: analytic.gradient)
+    for (const Vec3 &gradient : analytic.gradient)
     {
         const double magnitude = std::sqrt(gradient.x * gradient.x + gradient.y * gradient.y + gradient.z * gradient.z);
         EXPECT_TRUE(std::isfinite(magnitude));
@@ -404,8 +434,8 @@ TEST(D3Evaluator, HighCoordinationMgGradientAndVirial)
             Structure minus = structure;
             coordinate(plus.positions[atom], component) += step;
             coordinate(minus.positions[atom], component) -= step;
-            const double numerical
-                = (energy(plus, parameters, cutoffs) - energy(minus, parameters, cutoffs)) / (2.0 * step);
+            const double numerical =
+                (energy(plus, parameters, cutoffs) - energy(minus, parameters, cutoffs)) / (2.0 * step);
             EXPECT_NEAR(coordinate(analytic.gradient[atom], component), numerical, 1.0e-8);
         }
     }
@@ -424,8 +454,8 @@ TEST(D3Evaluator, HighCoordinationMgGradientAndVirial)
         plus.lattice[vector].x += displacement;
         minus.lattice[vector].x -= displacement;
     }
-    const double numerical_virial
-        = (energy(plus, parameters, cutoffs) - energy(minus, parameters, cutoffs)) / (2.0 * step);
+    const double numerical_virial =
+        (energy(plus, parameters, cutoffs) - energy(minus, parameters, cutoffs)) / (2.0 * step);
     EXPECT_NEAR(analytic.virial.value[0][0], numerical_virial, 1.0e-8);
 }
 
@@ -461,10 +491,10 @@ TEST(D3Evaluator, SmoothCutoffGradientAndVirial)
             Structure minus = structure;
             coordinate(plus.positions[atom], component) += step;
             coordinate(minus.positions[atom], component) -= step;
-            const double numerical
-                = (energy(plus, parameters, cutoffs) - energy(minus, parameters, cutoffs)) / (2.0 * step);
-            maximum_gradient_error = std::max(maximum_gradient_error,
-                                              std::abs(numerical - coordinate(analytic.gradient[atom], component)));
+            const double numerical =
+                (energy(plus, parameters, cutoffs) - energy(minus, parameters, cutoffs)) / (2.0 * step);
+            maximum_gradient_error =
+                std::max(maximum_gradient_error, std::abs(numerical - coordinate(analytic.gradient[atom], component)));
         }
     }
     EXPECT_LT(maximum_gradient_error, 1.0e-9);
@@ -482,10 +512,10 @@ TEST(D3Evaluator, SmoothCutoffGradientAndVirial)
                 coordinate(plus.positions[atom], strain_row) += displacement;
                 coordinate(minus.positions[atom], strain_row) -= displacement;
             }
-            const double numerical
-                = (energy(plus, parameters, cutoffs) - energy(minus, parameters, cutoffs)) / (2.0 * step);
-            maximum_virial_error = std::max(maximum_virial_error,
-                                            std::abs(numerical - analytic.virial.value[strain_row][strain_column]));
+            const double numerical =
+                (energy(plus, parameters, cutoffs) - energy(minus, parameters, cutoffs)) / (2.0 * step);
+            maximum_virial_error =
+                std::max(maximum_virial_error, std::abs(numerical - analytic.virial.value[strain_row][strain_column]));
         }
     }
     EXPECT_LT(maximum_virial_error, 1.0e-8);
@@ -525,10 +555,10 @@ TEST(D3Evaluator, PeriodicSmoothCutoffVirial)
             Structure minus = structure;
             coordinate(plus.positions[atom], component) += step;
             coordinate(minus.positions[atom], component) -= step;
-            const double numerical
-                = (energy(plus, parameters, cutoffs) - energy(minus, parameters, cutoffs)) / (2.0 * step);
-            maximum_gradient_error = std::max(maximum_gradient_error,
-                                              std::abs(numerical - coordinate(analytic.gradient[atom], component)));
+            const double numerical =
+                (energy(plus, parameters, cutoffs) - energy(minus, parameters, cutoffs)) / (2.0 * step);
+            maximum_gradient_error =
+                std::max(maximum_gradient_error, std::abs(numerical - coordinate(analytic.gradient[atom], component)));
         }
     }
     EXPECT_LT(maximum_gradient_error, 1.0e-8);
@@ -552,10 +582,10 @@ TEST(D3Evaluator, PeriodicSmoothCutoffVirial)
                 coordinate(plus.lattice[vector], strain_row) += displacement;
                 coordinate(minus.lattice[vector], strain_row) -= displacement;
             }
-            const double numerical
-                = (energy(plus, parameters, cutoffs) - energy(minus, parameters, cutoffs)) / (2.0 * step);
-            maximum_virial_error = std::max(maximum_virial_error,
-                                            std::abs(numerical - analytic.virial.value[strain_row][strain_column]));
+            const double numerical =
+                (energy(plus, parameters, cutoffs) - energy(minus, parameters, cutoffs)) / (2.0 * step);
+            maximum_virial_error =
+                std::max(maximum_virial_error, std::abs(numerical - analytic.virial.value[strain_row][strain_column]));
         }
     }
     EXPECT_LT(maximum_virial_error, 1.0e-8);

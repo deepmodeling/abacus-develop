@@ -9,6 +9,7 @@
 
 #ifdef __CUDA
 #include <base/macros/macros.h>
+#include <base/third_party/cublas.h>
 #include <cuda_runtime.h>
 #include "cublas_v2.h"
 #include "source_base/module_device/memory_op.h"
@@ -52,7 +53,7 @@ void BlasConnector::axpy( const int n, const std::complex<float> alpha, const st
     }
 #ifdef __CUDA
     else if (device_type == base_device::AbacusDevice_t::GpuDevice) {
-        CHECK_CUBLAS(cublasCaxpy(BlasUtils::cublas_handle, n, (float2*)&alpha, (float2*)X, incX, (float2*)Y, incY));
+        container::cuBlasConnector::axpy(BlasUtils::cublas_handle, n, alpha, X, incX, Y, incY);
     }
 #endif
     else {
@@ -67,7 +68,7 @@ void BlasConnector::axpy( const int n, const std::complex<double> alpha, const s
     }
 #ifdef __CUDA
     else if (device_type == base_device::AbacusDevice_t::GpuDevice) {
-        CHECK_CUBLAS(cublasZaxpy(BlasUtils::cublas_handle, n, (double2*)&alpha, (double2*)X, incX, (double2*)Y, incY));
+        container::cuBlasConnector::axpy(BlasUtils::cublas_handle, n, alpha, X, incX, Y, incY);
     }
 #endif
     else {
@@ -114,7 +115,7 @@ void BlasConnector::scal( const int n, const std::complex<float> alpha, std::com
     }
 #ifdef __CUDA
     else if (device_type == base_device::AbacusDevice_t::GpuDevice) {
-        CHECK_CUBLAS(cublasCscal(BlasUtils::cublas_handle, n, (float2*)&alpha, (float2*)X, incX));
+        container::cuBlasConnector::scal(BlasUtils::cublas_handle, n, alpha, X, incX);
     }
 #endif
     else {
@@ -129,7 +130,7 @@ void BlasConnector::scal( const int n, const std::complex<double> alpha, std::co
     }
 #ifdef __CUDA
     else if (device_type == base_device::AbacusDevice_t::GpuDevice) {
-        CHECK_CUBLAS(cublasZscal(BlasUtils::cublas_handle, n, (double2*)&alpha, (double2*)X, incX));
+        container::cuBlasConnector::scal(BlasUtils::cublas_handle, n, alpha, X, incX);
     }
 #endif
     else {

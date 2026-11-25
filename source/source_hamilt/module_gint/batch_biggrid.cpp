@@ -13,9 +13,9 @@ BatchBigGrid::BatchBigGrid(std::vector<std::shared_ptr<BigGrid>> biggrids)
     biggrids_ = biggrids;
     max_batch_size_ = std::max(max_batch_size_, (int)biggrids_.size());
     int atom_pairs_num = 0;
-    for(const auto& biggrid : biggrids_)
+    for (const auto &biggrid : biggrids_)
     {
-        for(const auto& atom: biggrid->get_atoms())
+        for (const auto &atom : biggrid->get_atoms())
         {
             max_nw_ = std::max(max_nw_, atom->get_nw());
         }
@@ -29,6 +29,4 @@ BatchBigGrid::BatchBigGrid(std::vector<std::shared_ptr<BigGrid>> biggrids)
     max_atom_pairs_ = std::max(max_atom_pairs_, atom_pairs_num);
 }
 
-
-
-}
+} // namespace ModuleGint

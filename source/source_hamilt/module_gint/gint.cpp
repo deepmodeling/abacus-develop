@@ -3,6 +3,6 @@
 namespace ModuleGint
 {
 
-GintInfo* Gint::gint_info_ = nullptr;
+GintInfo *Gint::gint_info_ = nullptr;
 
 }
