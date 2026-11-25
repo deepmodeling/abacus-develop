@@ -120,7 +120,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(BaseCell &basecell, const Input
 
     // 6) write the NAO orbital table once; it depends only on the basis set and
     // is shared by the PDOS, projected-band and Mulliken population outputs.
-    const bool need_orb_info = inp.out_dos > 0 || inp.out_mul || inp.out_proj_band;
+    const bool need_orb_info = inp.out_dos[0] > 0 || inp.out_mul || inp.out_proj_band;
     if (need_orb_info && GlobalV::MY_RANK == 0)
     {
         ModuleIO::write_orb_info(&ucell, GlobalV::ofs_running);

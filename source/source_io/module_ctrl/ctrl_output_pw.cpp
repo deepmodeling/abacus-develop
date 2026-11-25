@@ -138,7 +138,7 @@ void ModuleIO::ctrl_scf_pw(const int istep,
     //----------------------------------------------------------
     //! 4) Compute density of states (DOS)
     //----------------------------------------------------------
-    if (inp.out_dos)
+    if (inp.out_dos[0] != 0)
     {
         bool out_dos_tmp = false;
 
@@ -190,13 +190,14 @@ void ModuleIO::ctrl_scf_pw(const int istep,
                                    inp.dos_scale,
                                    inp.dos_sigma,
                                    inp.nspin,
-                                   inp.out_dos,
+                                   inp.out_dos[0],
                                    PARAM.globalv.dos_setemax,
                                    inp.dos_emax_ev,
                                    PARAM.globalv.dos_setemin,
                                    inp.dos_emin_ev,
                                    PARAM.globalv.two_fermi,
                                    inp.out_app_flag,
+                                   inp.out_dos[1],
                                    inp.bndpar,
                                    global_dos_dir,
                                    ofs_running);

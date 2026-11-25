@@ -55,6 +55,7 @@ option(ENABLE_DFTD4 "Enable DFT-D4 dispersion correction" OFF)
 option(ENABLE_PLUMED "Enable using the PLUMED enhanced-sampling library" OFF)
 option(ENABLE_JSON "Enable JSON output" OFF)
 option(ENABLE_CNPY "Enable cnpy usage" OFF)
+option(ENABLE_NEP "Enable NEP_CPU" OFF)
 
 option(DEBUG_INFO "Print message to debug" OFF)
 option(COMMIT_INFO "Print commit information in log" ON)
@@ -595,8 +596,8 @@ if(DEFINED DeePMD_DIR)
   find_package(DeePMD REQUIRED)
 endif()
 
-if(DEFINED NEP_DIR)
-  find_package(NEP REQUIRED)
+if(ENABLE_NEP)
+  find_package(NEP_CPU CONFIG REQUIRED)
 endif()
 
 if(DEFINED TensorFlow_DIR)
