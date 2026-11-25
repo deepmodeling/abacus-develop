@@ -591,7 +591,6 @@ def check_cmake_linkage(findings: List[Finding], statuses: Dict[str, str], chang
 
 # CMake governance checks. See AGENTS.md rule 24 and docs/developers_guide/cmake_guidelines.md.
 CMAKE_MATH_LIBS_RE = re.compile(r"\$\{\s*math_libs\s*\}")
-CMAKE_REMOVE_DEFINITIONS_RE = re.compile(r"^\s*remove_definitions\s*\(", re.IGNORECASE)
 CMAKE_DEPRECATED_SYMBOL_PATTERNS = (
     (re.compile(r"\bUSE_LIBXC\b"), "USE_LIBXC", "Use `__LIBXC` instead of the renamed `USE_LIBXC` macro."),
     (
@@ -605,21 +604,26 @@ CMAKE_DEPRECATED_SYMBOL_PATTERNS = (
         "Use `ENABLE_LIBRI` instead; LibComm is no longer a standalone ABACUS option.",
     ),
 )
-CMAKE_MESSAGE_CMD_RE = re.compile(r"^\s*message\s*\(", re.IGNORECASE)
-CMAKE_PURE_STRING_LINE_RE = re.compile(r'^\s*"(?:[^"\\]|\\.)*"\s*\)?\s*$')
-CMAKE_SOURCE_FORBIDDEN_CMD_RE = re.compile(
-    r"^\s*(add_definitions|add_compile_definitions|add_compile_options|"
-    r"include_directories|link_directories|link_libraries|find_package|find_library)\s*\(",
-    re.IGNORECASE,
-)
-CMAKE_TEST_LEGACY_STAGING_RE = re.compile(
-    r"^\s*(install\s*\(|file\s*\(\s*COPY\b)",
-    re.IGNORECASE,
-)
-CMAKE_OPTION_DECL_RE = re.compile(
-    r"^\s*(?:option|cmake_dependent_option)\s*\(\s*([A-Za-z_][A-Za-z0-9_]*)?",
-    re.IGNORECASE,
-)
+CMAKE_SOURCE_FORBIDDEN_COMMANDS = {
+    "add_definitions", "add_compile_definitions", "add_compile_options",
+    "include_directories", "link_directories", "link_libraries", "find_package", "find_library",
+}
+CMAKE_BRACKET_RE = re.compile(r"\[(=*)\[")
+
+
+@dataclass
+class CMakeToken:
+    content: str
+    line: int
+    kind: str
+    source: str
+
+
+@dataclass
+class CMakeCommand:
+    path: str
+    name: CMakeToken
+    arguments: List[CMakeToken]
 
 
 def is_cmake_file(path: str) -> bool:
@@ -645,83 +649,153 @@ def is_source_unittest_cmake_path(path: str) -> bool:
     return any(d == UNITTEST_DIR or is_legacy_test_dir(d) for d in dirs)
 
 
-def _strip_cmake_comment(line: str) -> str:
-    """Return the portion of a CMake line before any unquoted `#` comment."""
-    in_quotes = False
-    escaped = False
-    for index, ch in enumerate(line):
-        if escaped:
-            escaped = False
+def cmake_tokens(content: str) -> Iterable[CMakeToken]:
+    """Scan literal command syntax, retaining line spans and skipping all comments.
+
+    Quoted/bracket arguments are single tokens, so their parentheses and hashes
+    cannot become commands or comments. This does not evaluate CMake variables.
+    """
+    index = 0
+    line = 1
+    while index < len(content):
+        start = index
+        start_line = line
+        ch = content[index]
+        if ch.isspace():
+            line += ch == "\n"
+            index += 1
             continue
-        if in_quotes:
-            if ch == "\\":
-                escaped = True
+        is_comment = ch == "#"
+        bracket = CMAKE_BRACKET_RE.match(content, index + int(is_comment))
+        if bracket:
+            close = "]" + bracket.group(1) + "]"
+            end = content.find(close, bracket.end())
+            stop = len(content) if end < 0 else end
+            index = len(content) if end < 0 else end + len(close)
+            line += content[start:index].count("\n")
+            if not is_comment:
+                yield CMakeToken(content[bracket.end():stop], start_line, "argument", content[start:index])
+            continue
+        if is_comment:
+            end = content.find("\n", index)
+            index = len(content) if end < 0 else end
+            continue
+        if ch in "()":
+            index += 1
+            yield CMakeToken(ch, line, ch, ch)
+            continue
+        # Quotes may also appear within legacy unquoted arguments. Escaped
+        # delimiters and line continuations belong to the same argument.
+        value = []
+        quoted = False
+        while index < len(content):
+            ch = content[index]
+            if ch == "\\" and index + 1 < len(content):
+                escaped = content[index + 1]
+                line += escaped == "\n"
+                if escaped != "\n":
+                    value.append(escaped)
+                index += 2
             elif ch == '"':
-                in_quotes = False
+                quoted = not quoted
+                index += 1
+            elif not quoted and (ch.isspace() or ch in "()#"):
+                break
+            else:
+                value.append(ch)
+                line += ch == "\n"
+                index += 1
+        yield CMakeToken("".join(value), start_line, "argument", content[start:index])
+
+
+def cmake_commands(path: str, content: str) -> List[CMakeCommand]:
+    tokens = list(cmake_tokens(content))
+    commands = []
+    index = 0
+    while index + 1 < len(tokens):
+        name = tokens[index]
+        if name.kind != "argument" or tokens[index + 1].kind != "(":
+            index += 1
             continue
-        if ch == '"':
-            in_quotes = True
-        elif ch == "#":
-            return line[:index]
-    return line
+        index += 2
+        arguments = []
+        depth = 1
+        while index < len(tokens) and depth:
+            token = tokens[index]
+            if token.kind == "(":
+                depth += 1
+            elif token.kind == ")":
+                depth -= 1
+            if depth:
+                arguments.append(token)
+            index += 1
+        commands.append(CMakeCommand(path, name, arguments))
+    return commands
 
 
-def check_cmake_deprecated_patterns(findings: List[Finding], added_lines: Iterable[DiffLine]) -> None:
-    """Block newly added removed CMake variables, macros, and `remove_definitions()`."""
+def changed_cmake_commands(
+    root: Path, args: argparse.Namespace, added_lines: Sequence[DiffLine]
+) -> List[Tuple[CMakeCommand, List[DiffLine]]]:
+    """Read the index/head, not the worktree, before selecting added code tokens."""
+    added_by_path: Dict[str, set] = {}
     for line in added_lines:
-        if not is_main_cmake_path(line.path):
+        if is_main_cmake_path(line.path) and line.line is not None:
+            added_by_path.setdefault(line.path, set()).add(line.line)
+    changed = []
+    for path, added in added_by_path.items():
+        content = read_changed_file_bytes(root, path, args).decode("utf-8")
+        for command in cmake_commands(path, content):
+            tokens = [command.name, *command.arguments]
+            # Keep only added physical lines even when a quoted/bracket argument
+            # spans both old and new text. Searching the whole argument would
+            # report unchanged legacy symbols and point outside the diff.
+            touched = [
+                DiffLine(path, token.line + offset, text)
+                for token in tokens
+                for offset, text in enumerate(token.source.splitlines())
+                if token.line + offset in added
+            ]
+            if touched:
+                changed.append((command, touched))
+    return changed
+
+
+def check_cmake_deprecated_patterns(
+    findings: List[Finding], commands: Sequence[Tuple[CMakeCommand, List[DiffLine]]]
+) -> None:
+    for command, touched in commands:
+        if command.name.content.lower() == "message":
             continue
-        code = _strip_cmake_comment(line.content)
-        if not code.strip():
-            continue
-        if CMAKE_MATH_LIBS_RE.search(code):
+        if command.name.content.lower() == "remove_definitions":
             add_finding(
-                findings,
-                "CMake deprecated patterns",
-                BLOCK,
-                line.path,
-                line.line,
-                "Added CMake line references removed `${math_libs}` variable.",
-                "Remove `${math_libs}`; `AddTest()` links `abacus::linalg_libs` automatically and "
-                "`source/CMakeLists.txt` owns the executable link closure.",
-            )
-        if CMAKE_REMOVE_DEFINITIONS_RE.match(code):
-            add_finding(
-                findings,
-                "CMake deprecated patterns",
-                BLOCK,
-                line.path,
-                line.line,
-                "Added CMake line uses `remove_definitions()`, which does not strip target-scoped feature definitions.",
+                findings, "CMake deprecated patterns", BLOCK, command.path, touched[0].line,
+                "Added CMake code uses `remove_definitions()`, which does not strip target-scoped feature definitions.",
                 "Use `abacus_disable_feature_definitions(...)` instead (see docs/developers_guide/cmake_guidelines.md).",
             )
-        if CMAKE_MESSAGE_CMD_RE.match(code) or CMAKE_PURE_STRING_LINE_RE.match(code):
-            continue
-        for pattern, label, suggestion in CMAKE_DEPRECATED_SYMBOL_PATTERNS:
-            if pattern.search(code):
+        for token in touched:
+            if CMAKE_MATH_LIBS_RE.search(token.content):
                 add_finding(
-                    findings,
-                    "CMake deprecated patterns",
-                    BLOCK,
-                    line.path,
-                    line.line,
-                    f"Added CMake line references deprecated or removed symbol `{label}`.",
-                    suggestion,
+                    findings, "CMake deprecated patterns", BLOCK, command.path, token.line,
+                    "Added CMake argument references removed `${math_libs}` variable.",
+                    "Remove `${math_libs}`; `AddTest()` links `abacus::linalg_libs` automatically and "
+                    "`source/CMakeLists.txt` owns the executable link closure.",
                 )
+            for pattern, label, suggestion in CMAKE_DEPRECATED_SYMBOL_PATTERNS:
+                if pattern.search(token.content):
+                    add_finding(
+                        findings, "CMake deprecated patterns", BLOCK, command.path, token.line,
+                        f"Added CMake argument references deprecated or removed symbol `{label}`.", suggestion,
+                    )
 
 
-def check_cmake_source_commands(findings: List[Finding], added_lines: Iterable[DiffLine]) -> None:
-    """Block directory-scoped compile/include/link and package-discovery commands under source/."""
-    for line in added_lines:
-        if not is_source_cmake_path(line.path):
+def check_cmake_source_commands(
+    findings: List[Finding], commands: Sequence[Tuple[CMakeCommand, List[DiffLine]]]
+) -> None:
+    for command, touched in commands:
+        cmd = command.name.content.lower()
+        if not is_source_cmake_path(command.path) or cmd not in CMAKE_SOURCE_FORBIDDEN_COMMANDS:
             continue
-        code = _strip_cmake_comment(line.content)
-        match = CMAKE_SOURCE_FORBIDDEN_CMD_RE.match(code)
-        if not match:
-            continue
-        cmd = match.group(1)
-        lowered = cmd.lower()
-        if lowered in {"find_package", "find_library"}:
+        if cmd in {"find_package", "find_library"}:
             suggestion = (
                 "Move package/library discovery to root `CMakeLists.txt` and `cmake/modules/Find<Pkg>.cmake` "
                 "(exporting an IMPORTED target), or `cmake/Testing.cmake` for test-only packages."
@@ -732,33 +806,27 @@ def check_cmake_source_commands(findings: List[Finding], added_lines: Iterable[D
                 "`_abacus_feature_definitions` / `abacus_compile_requirements` in `source/CMakeLists.txt`."
             )
         add_finding(
-            findings,
-            "CMake directory-scoped commands under source/",
-            BLOCK,
-            line.path,
-            line.line,
-            f"Added `{cmd}()` under `source/`.",
-            suggestion,
+            findings, "CMake directory-scoped commands under source/", BLOCK, command.path, touched[0].line,
+            f"Added code in `{cmd}()` under `source/`.", suggestion,
         )
 
 
-def check_cmake_test_file_preparation(findings: List[Finding], added_lines: Iterable[DiffLine]) -> None:
-    """Block legacy `install()` and `file(COPY ...)` test data staging in unit-test CMake files."""
-    for line in added_lines:
-        if not is_source_unittest_cmake_path(line.path):
+def check_cmake_test_file_preparation(
+    findings: List[Finding], commands: Sequence[Tuple[CMakeCommand, List[DiffLine]]]
+) -> None:
+    for command, touched in commands:
+        if not is_source_unittest_cmake_path(command.path):
             continue
-        code = _strip_cmake_comment(line.content)
-        match = CMAKE_TEST_LEGACY_STAGING_RE.match(code)
-        if not match:
+        name = command.name.content.lower()
+        if name == "install":
+            label = "install()"
+        elif name == "file" and command.arguments and command.arguments[0].content.upper() == "COPY":
+            label = "file(COPY ...)"
+        else:
             continue
-        cmd = "install()" if match.group(1).lower().startswith("install") else "file(COPY ...)"
         add_finding(
-            findings,
-            "CMake test file preparation",
-            BLOCK,
-            line.path,
-            line.line,
-            f"Unit-test CMake file uses `{cmd}` to stage test files.",
+            findings, "CMake test file preparation", BLOCK, command.path, touched[0].line,
+            f"Unit-test CMake file uses `{label}` to stage test files.",
             "Use `abacus_copy_test_files(...)` from `cmake/Testing.cmake` so test scripts and data are "
             "prepared at configure time.",
         )
@@ -766,68 +834,51 @@ def check_cmake_test_file_preparation(findings: List[Finding], added_lines: Iter
 
 def check_cmake_option_and_dep_sync(
     findings: List[Finding],
+    root: Path,
+    args: argparse.Namespace,
     statuses: Dict[str, str],
     changed: Sequence[str],
-    added_lines: Iterable[DiffLine],
-    removed_lines: Iterable[DiffLine],
+    commands: Sequence[Tuple[CMakeCommand, List[DiffLine]]],
 ) -> None:
-    """Warn when new root CMake options or cmake/modules/ files omit CollectBuildInfoVars.cmake."""
     if "cmake/CollectBuildInfoVars.cmake" in changed:
         return
-    removed_names = set()
-    removed_decls = 0
-    for line in removed_lines:
-        if line.path != "CMakeLists.txt":
-            continue
-        match = CMAKE_OPTION_DECL_RE.match(_strip_cmake_comment(line.content))
-        if match:
-            removed_decls += 1
-            if match.group(1):
-                removed_names.add(match.group(1))
-
-    added_option_lines: List[Tuple[DiffLine, Optional[str]]] = []
-    for line in added_lines:
-        if line.path != "CMakeLists.txt":
-            continue
-        match = CMAKE_OPTION_DECL_RE.match(_strip_cmake_comment(line.content))
-        if match:
-            added_option_lines.append((line, match.group(1)))
-
-    new_option_line: Optional[DiffLine] = None
-    for line, name in added_option_lines:
-        if name and name not in removed_names:
-            new_option_line = line
-            break
-    if new_option_line is None and len(added_option_lines) > removed_decls:
-        new_option_line = added_option_lines[0][0]
-
-    if new_option_line is not None:
-        add_finding(
-            findings,
-            "CMake option and dependency sync",
-            WARN,
-            new_option_line.path,
-            new_option_line.line,
-            "Root `CMakeLists.txt` adds an option without updating `cmake/CollectBuildInfoVars.cmake`.",
-            "Update `cmake/CollectBuildInfoVars.cmake` (and `_abacus_feature_definitions` / "
-            "`abacus_add_target_compile_requirements()` in `source/CMakeLists.txt` for external "
-            "dependencies), or explain why the build summary does not need this option.",
-        )
-    for path, status in statuses.items():
-        if not status.startswith("A"):
-            continue
-        if path.startswith("cmake/modules/") and Path(path).suffix.lower() == ".cmake":
+    option_commands = [
+        (command, touched) for command, touched in commands
+        if command.path == "CMakeLists.txt"
+        and command.name.content.lower() in {"option", "cmake_dependent_option"}
+        and command.arguments
+    ]
+    if option_commands:
+        base = "HEAD" if args.staged else args.base
+        old_names = set()
+        if git(["ls-tree", "--name-only", base, "--", "CMakeLists.txt"], root).stdout.strip():
+            before = git(["show", f"{base}:CMakeLists.txt"], root).stdout
+            old_names = {
+                command.arguments[0].content for command in cmake_commands("CMakeLists.txt", before)
+                if command.name.content.lower() in {"option", "cmake_dependent_option"} and command.arguments
+            }
+        for command, touched in option_commands:
+            if command.arguments[0].content in old_names:
+                continue
             add_finding(
-                findings,
-                "CMake option and dependency sync",
-                WARN,
-                path,
-                None,
+                findings, "CMake option and dependency sync", WARN, command.path, touched[0].line,
+                "Root `CMakeLists.txt` adds an option without updating `cmake/CollectBuildInfoVars.cmake`.",
+                "Update `cmake/CollectBuildInfoVars.cmake` (and `_abacus_feature_definitions` / "
+                "`abacus_add_target_compile_requirements()` in `source/CMakeLists.txt` for external "
+                "dependencies), or explain why the build summary does not need this option.",
+            )
+            break
+    for path, status in statuses.items():
+        if status.startswith("A") and path.startswith("cmake/modules/") and Path(path).suffix.lower() == ".cmake":
+            add_finding(
+                findings, "CMake option and dependency sync", WARN, path, None,
                 "New CMake discovery module added without updating `cmake/CollectBuildInfoVars.cmake`.",
                 "Record the new dependency in `cmake/CollectBuildInfoVars.cmake` and wire its IMPORTED "
                 "target into `source/CMakeLists.txt` (`_abacus_feature_libs` and "
                 "`abacus_add_target_compile_requirements()`), or explain why no summary update is needed.",
             )
+
+
 
 
 # Unit test layout under source/. See AGENTS.md rule 11.
@@ -1190,10 +1241,11 @@ def collect_findings(root: Path, args: argparse.Namespace) -> List[Finding]:
     check_hpp_warnings(findings, statuses, lines)
     check_header_include_warnings(findings, lines)
     check_cmake_linkage(findings, statuses, changed)
-    check_cmake_deprecated_patterns(findings, lines)
-    check_cmake_source_commands(findings, lines)
-    check_cmake_test_file_preparation(findings, lines)
-    check_cmake_option_and_dep_sync(findings, statuses, changed, lines, removed_lines)
+    cmake_changes = changed_cmake_commands(root, args, lines)
+    check_cmake_deprecated_patterns(findings, cmake_changes)
+    check_cmake_source_commands(findings, cmake_changes)
+    check_cmake_test_file_preparation(findings, cmake_changes)
+    check_cmake_option_and_dep_sync(findings, root, args, statuses, changed, cmake_changes)
     check_unittest_layout(findings, statuses)
     check_pr_metadata(findings, body)
     check_test_evidence_warning(findings, changed, body_text)
