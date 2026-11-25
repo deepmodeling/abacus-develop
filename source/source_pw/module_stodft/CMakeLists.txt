@@ -5,6 +5,7 @@ list(
   sto_hsolver_pw.cpp
   sto_iter.cpp
   sto_che.cpp
+  sto_dos_quality.cpp
   sto_wf.cpp
   sto_func.cpp
   sto_forces.cpp
@@ -23,4 +24,5 @@ if(BUILD_TESTING)
   if(ENABLE_MPI)
     add_subdirectory(test)
   endif()
+  add_subdirectory(unittests)
 endif()

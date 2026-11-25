@@ -1,5 +1,7 @@
 #include "sto_iter.h"
 
+#include <sstream>
+
 #include "source_base/kernels/math_kernel_op.h"
 #include "source_base/para_gemm.h"
 #include "source_base/parallel_comm.h"
@@ -12,6 +14,9 @@
 #include "source_estate/occupy.h"
 #include "source_hsolver/para_lin_tf.h"
 #include "source_io/module_parameter/parameter.h"
+
+#include <algorithm>
+#include <cmath>
 
 template <typename T, typename Device>
 Stochastic_Iter<T, Device>::Stochastic_Iter()
@@ -29,9 +34,13 @@ Stochastic_Iter<T, Device>::~Stochastic_Iter()
 template <typename T, typename Device>
 void Stochastic_Iter<T, Device>::dot(const int& n, const Real* x, const int& incx, const Real* y, const int& incy, Real& result)
 {
+    // Use the arrays the caller passes: the previous implementation ignored x, incx, y and incy and
+    // always reduced p_che->coef_real against spolyv, so every caller that wanted a different
+    // contraction (for example the two staggered sums in checkemm) silently got the same number, and
+    // the reported Chebyshev "precision" of the stochastic trace was not the quantity it claimed.
     Real* result_device = nullptr;
     resmem_var_op()(result_device, 1);
-    container::kernels::blas_dot<Real, ct_Device>()(n, p_che->coef_real, 1, spolyv, 1, result_device);
+    container::kernels::blas_dot<Real, ct_Device>()(n, x, incx, y, incy, result_device);
     syncmem_var_d2h_op()(&result, result_device, 1);
     delmem_var_op()(result_device);
 }
@@ -211,6 +220,40 @@ void Stochastic_Iter<T, Device>::checkemm(const int& ik,
         Parallel_Reduce::reduce_min(*p_hamilt_sto->emin);
         MPI_Allreduce(MPI_IN_PLACE, &change, 1, MPI_CHAR, MPI_LOR, MPI_COMM_WORLD);
 #endif
+        // checkconverge() treats (0,0) as "unset" and can end with a
+        // positive Emin when the trial Rayleigh quotient is positive.  This
+        // removes all bound states from the Chebyshev interval and makes the
+        // Fermi-level search fail at high temperature.  Correct only that
+        // pathological final bound; negative bounds are left untouched so
+        // normal SDFT results do not change.
+        // A positive lower bound is only pathological when it came from the
+        // automatic search: a user-provided emin_sto (or a genuinely positive
+        // spectrum) is a valid interval, and moving it downwards would enlarge
+        // the interval and change the fixed-order occupation and entropy sums.
+        const bool emin_is_automatic = (PARAM.inp.emin_sto == 0.0);
+        if (emin_is_automatic && (!std::isfinite(*p_hamilt_sto->emin) || *p_hamilt_sto->emin > 0))
+        {
+            const double positive_emin = *p_hamilt_sto->emin;
+            const double emax_abs = std::abs(*p_hamilt_sto->emax);
+            const double fallback_span = std::max(5.0, 0.01 * emax_abs);
+            const double safe_emin = -fallback_span;
+            std::ostringstream range_msg;
+            range_msg << " WARNING: positive automatic Chebyshev Emin " << positive_emin << " Ry is reset to "
+                      << safe_emin << " Ry";
+            *p_hamilt_sto->emin = safe_emin;
+            // The same pathological Krylov path also underestimates the upper
+            // bound.  The highest plane-wave eigenvalue cannot exceed roughly
+            // ecutwfc, so use the cutoff as a safe floor.
+            const double ecutwfc = PARAM.inp.ecutwfc;
+            const double ecut_floor = 1.05 * ecutwfc;
+            if (ecutwfc > 0 && *p_hamilt_sto->emax < ecut_floor)
+            {
+                range_msg << "; Chebyshev Emax " << *p_hamilt_sto->emax << " Ry is raised to the ecutwfc-based floor "
+                          << ecut_floor << " Ry";
+                *p_hamilt_sto->emax = ecut_floor;
+            }
+            GlobalV::ofs_running << range_msg.str() << std::endl;
+        }
         if (change)
         {
             GlobalV::ofs_running << "New Emax Ry" << *p_hamilt_sto->emax << " ; new Emin " << *p_hamilt_sto->emin

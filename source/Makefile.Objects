@@ -1094,6 +1094,7 @@ OBJS_SRCPW=h_ewald_pw.o\
     elecond.o\
     sto_tool.o\
     sto_elecond.o\
+    sto_dos_quality.o\
     sto_dos.o\
     onsite_proj.o\
     onsite_proj_init.o\
