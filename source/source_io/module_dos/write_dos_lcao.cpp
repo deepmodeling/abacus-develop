@@ -2,11 +2,57 @@
 #include "cal_dos.h"
 #include "cal_pdos_gamma.h"
 #include "cal_pdos_multik.h"
+#include "dos_npy_header.h"
+#include "write_pdos_text.h"
 #include "source_base/global_variable.h"
+#include "source_base/parallel_common.h"
+#include "source_base/tool_quit.h"
 #include "source_io/module_output/write_notice.h"
+
+#include <exception>
+#include <fstream>
+#include <sstream>
 
 namespace ModuleIO
 {
+
+namespace
+{
+void write_dos_npy(const std::string& path, const std::vector<DosSpectrum>& spectra)
+{
+    const std::size_t npoints = spectra.front().size();
+    const std::size_t spins = spectra.size();
+    const std::string field_type = "','=f8',(" + std::to_string(spins) + ",))";
+    std::string fields = "('energy_eV','=f8')";
+    for (const char* name : {"dos", "dos_int", "dos_smear", "dos_smear_int"})
+    {
+        fields += std::string(",('") + name + field_type;
+    }
+
+    std::ofstream out;
+    const std::ios_base::iostate exception_mask = std::ios::badbit | std::ios::failbit;
+    out.exceptions(exception_mask);
+    out.open(path, std::ios::binary | std::ios::trunc);
+    write_dos_npy_header(out, fields, npoints);
+    // One shared energy, followed by all spin channels of each quantity.
+    const std::size_t record_width = 1 + 4 * spins;
+    std::vector<double> record(record_width);
+    const std::size_t bytes = record.size() * sizeof(double);
+    for (std::size_t n = 0; n < npoints; ++n)
+    {
+        record[0] = spectra.front()[n][0];
+        for (std::size_t field = 0; field < 4; ++field)
+        {
+            for (std::size_t is = 0; is < spins; ++is)
+            {
+                record[1 + field * spins + is] = spectra[is][n][1 + field];
+            }
+        }
+        out.write(reinterpret_cast<const char*>(record.data()), bytes);
+    }
+    out.close();
+}
+}
 
 template <typename T>
 void write_dos_lcao(
@@ -22,7 +68,9 @@ void write_dos_lcao(
         const double& dos_edelta_ev,
         const double& dos_scale,
         const double& bcoeff,
+        const int out_dos,
         const int out_app_flag,
+        const int precision,
         const int istep,
         const int nspin,
         const int nlocal,
@@ -57,23 +105,26 @@ void write_dos_lcao(
             dos_emin_ev,
             two_fermi);
 
-    // output the DOS file.
+    std::vector<DosSpectrum> total_dos;
+    if (out_dos == 2)
+    {
+        total_dos.resize(nspin0);
+    }
     for (int is = 0; is < nspin0; ++is)
     {
         std::stringstream ss;
-
-        ss << global_out_dir << "doss" << is + 1;
-
-        // Modes 0 and 1 reuse the fixed name (mode 0 overwrites, mode 1 appends
-        // a new DOS block per written step); only mode 2 keeps the g{N} suffix.
-        if(istep>=0 && out_app_flag==2)
+        DosSpectrum* spectrum = nullptr;
+        if (out_dos == 2)
         {
-            ss << "g" << istep+1;
+            spectrum = &total_dos[is];
         }
-
-        ss << ".txt";
-
-        ModuleIO::cal_dos(is,
+        else
+        {
+            ss << global_out_dir << "doss" << is + 1;
+            if (istep >= 0 && out_app_flag == 2) { ss << "g" << istep + 1; }
+            ss << ".txt";
+        }
+        const bool calculated = ModuleIO::cal_dos(is,
                 ss.str(),
                 dos_edelta_ev,
                 emax,
@@ -88,9 +139,15 @@ void write_dos_lcao(
                 wg,
                 istep,
                 out_app_flag,
-                bndpar);
+                precision,
+                bndpar,
+                spectrum);
 
-        if (GlobalV::MY_RANK == 0)
+        if (out_dos == 2 && !calculated)
+        {
+            ModuleBase::WARNING_QUIT("write_dos_lcao", "Cannot calculate total DOS for dos.npy");
+        }
+        if (out_dos != 2 && GlobalV::MY_RANK == 0)
         {
             ModuleIO::write_notice(ofs_running, "DOS", is, nspin, ss.str());
         }
@@ -98,10 +155,9 @@ void write_dos_lcao(
 
 
     // out_dos >= 1: always compute PDOS alongside DOS (LCAO only)
-    cal_pdos(psi,
+    const std::vector<ModuleBase::matrix> pdos = cal_pdos(psi,
             p_ham,
             pv,
-            ucell,
             kv,
             nspin0,
             nbands,
@@ -110,12 +166,39 @@ void write_dos_lcao(
             emin,
             dos_edelta_ev,
             bcoeff,
-            istep,
-            out_app_flag,
             nlocal,
-            nspin,
-            global_out_dir,
-            ofs_running);
+            nspin);
+
+    std::string error;
+    if (GlobalV::MY_RANK == 0)
+    {
+        if (out_dos == 2)
+        {
+            std::string path = global_out_dir + "dos.npy";
+            try
+            {
+                write_dos_npy(path, total_dos);
+                ModuleIO::write_notice(ofs_running, "DOS", path);
+                path = global_out_dir + "pdos.npy";
+                write_pdos_npy(ucell, pdos, nspin, emin, dos_edelta_ev, path);
+                ModuleIO::write_notice(ofs_running, "PDOS", path);
+            }
+            catch (const std::exception& e)
+            {
+                error = path + ": " + e.what();
+            }
+        }
+        else
+        {
+            write_pdos_text(ucell, pdos.data(), nspin, nlocal, pdos.front().nc,
+                            emin, dos_edelta_ev, global_out_dir, istep, out_app_flag, precision, ofs_running);
+        }
+    }
+    if (out_dos == 2)
+    {
+        Parallel_Common::bcast_string(error);
+        if (!error.empty()) { ModuleBase::WARNING_QUIT("write_dos_lcao", error); }
+    }
 
     ofs_running << " #DOS CALCULATION ENDS#" << std::endl;
 
@@ -136,7 +219,9 @@ template void write_dos_lcao(
         const double& dos_edelta_ev,
         const double& dos_scale,
         const double& bcoeff,
+        const int out_dos,
         const int out_app_flag,
+        const int precision,
         const int istep,
         const int nspin,
         const int nlocal,
@@ -163,7 +248,9 @@ template void write_dos_lcao(
         const double& dos_edelta_ev,
         const double& dos_scale,
         const double& bcoeff,
+        const int out_dos,
         const int out_app_flag,
+        const int precision,
         const int istep,
         const int nspin,
         const int nlocal,

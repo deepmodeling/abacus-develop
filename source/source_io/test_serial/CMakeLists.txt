@@ -36,7 +36,7 @@ abacus_copy_test_files(support)
 addtest(
   TARGET MODULE_IO_read_input_serial
   LIBS parameter io_input_serial
-  SOURCES read_input_test.cpp ../../source_base/test/tool_quit_no_exit.cpp
+  SOURCES ../../source_base/test/tool_quit_no_exit.cpp
           ../../source_base/module_device/device.cpp
           ../../source_base/module_device/output_device.cpp)
 
@@ -46,7 +46,8 @@ addtest(
 addtest(
   TARGET MODULE_IO_read_item_serial
   LIBS parameter base device io_input_serial
-  SOURCES ../unittests/test_read_input_item.cpp test_read_inp_sccs.cpp)
+  SOURCES ../unittests/test_read_input_item.cpp test_read_inp_sccs.cpp
+          ../module_parameter/unittests/test_read_inp_estruc.cpp)
 
 addtest(
   TARGET MODULE_IO_input_domain_reader

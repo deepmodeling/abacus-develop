@@ -1,0 +1,14 @@
+records         32
+nspin           2
+npoints         1441
+energy_min_eV   -60.0
+energy_step_eV  0.0625
+
+# TDOS: energy_index   dos dos_int dos_smear dos_smear_int (spin up, then down)
+tdos   381    2.0   7.5  15.127818   6.624421    0.0   2.0  0.000000   2.000000
+tdos  1261    0.0  19.0   8.825885  18.832640    0.5  17.0  5.439418  16.741209
+
+# PDOS: atom_index species  l   m  energy_index   spin_up   spin_down
+pdos    1          Fe       0   0           137   0.406277  2.817491
+pdos    2          Fe       1  -1           381   0.025894  0.000000
+pdos    2          Fe       2   0          1261   0.370396  1.864192

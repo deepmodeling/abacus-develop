@@ -238,6 +238,40 @@ void ReadInput::item_exx()
         this->add_item(item);
     }
     {
+        Input_Item item("device_exx");
+        item.annotation = "computing device for LCAO EXX tensor contractions";
+        item.category = "Exact Exchange (LCAO)";
+        item.type = "String";
+        item.description = R"(Selects the LibRI tensor-contraction device for LCAO Kohn-Sham exact exchange.
+* cpu: retain CPU contractions, including when device=gpu.
+* gpu: use the experimental GPU backend; requires ENABLE_LIBRI_GPU=ON and device=gpu.
+LR and RDMFT exchange engines retain CPU contractions, including when LR reuses
+Kohn-Sham exchange geometry.
+For GPU contractions, all MPI ranks on a node must see the same allocated GPU
+list, with at least as many visible GPUs as local ranks; per-rank single-GPU
+masking is unsupported.)";
+        item.default_value = "cpu";
+        item.set_availability("basis_type==lcao");
+        read_sync_string(input.device_exx);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.device_exx != "cpu" && para.input.device_exx != "gpu")
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "device_exx must be cpu or gpu");
+            }
+            if (para.input.device_exx == "gpu")
+            {
+                if (para.input.basis_type != "lcao" || para.input.device != "gpu")
+                {
+                    ModuleBase::WARNING_QUIT("ReadInput", "device_exx=gpu requires basis_type=lcao and device=gpu");
+                }
+#ifndef __GPU_RI
+                ModuleBase::WARNING_QUIT("ReadInput", "device_exx=gpu requires a build with ENABLE_LIBRI_GPU=ON");
+#endif
+            }
+        };
+        this->add_item(item);
+    }
+    {
         Input_Item item("exx_pca_threshold");
         item.annotation = "threshold to screen on-site ABFs in exx";
         item.category = "Exact Exchange (LCAO)";
@@ -611,7 +645,8 @@ Use the same scheme for consistent SCF and NSCF bands. A source configuration mi
         item.annotation = "whether to reduce real-space sector in Hexx calculation";
         item.category = "Exact Exchange (LCAO)";
         item.type = "Boolean";
-        item.description = R"(* False: only rotate k-space density matrix D(k) from irreducible k-points to accelerate diagonalization
+        item.description =
+            R"(* False: only rotate k-space density matrix D(k) from irreducible k-points to accelerate diagonalization
 * True: rotate both D(k) and Hexx(R) to accelerate both diagonalization and EXX calculation
 For multi-k calculations, D(k) is averaged over the unitary little group of each irreducible k point before star expansion, for either setting.)";
         item.default_value = "True";

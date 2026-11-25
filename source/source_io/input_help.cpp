@@ -519,7 +519,7 @@ void ParameterHelp::generate_yaml(std::ostream& os) {
 
         if (!item.domain.choices().empty()) {
             os << "    allowed_values: [";
-            const auto& choices = item.domain.choices();
+            const std::vector<std::string>& choices = item.domain.choices();
             for (size_t i = 0; i < choices.size(); ++i)
             {
                 if (i != 0) { os << ", "; }

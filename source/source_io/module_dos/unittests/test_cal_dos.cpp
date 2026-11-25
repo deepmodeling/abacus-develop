@@ -1,9 +1,13 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 #include "../cal_dos.h"
+#include "source_base/constants.h"
 #include "source_base/global_variable.h"
+#include <cmath>
+#include <fstream>
 #include <string>
 #include <sstream>
+#include <unistd.h>
 #ifdef __MPI
 #include "mpi.h"
 #endif
@@ -38,6 +42,7 @@ TEST_F(DosTest,Dos)
 
     const int istep = 1;
     const int out_app_flag = 0;
+    const int precision = 6;
     const int bndpar = 1;
 	ModuleIO::cal_dos(dosp.is,
 			dosp.fa,
@@ -54,7 +59,8 @@ TEST_F(DosTest,Dos)
 			dosp.wg,
 			istep,
 			out_app_flag,
-			bndpar);
+			precision,
+			bndpar, nullptr);
 
 #ifdef __MPI
 	if(GlobalV::MY_RANK==0)
@@ -124,6 +130,41 @@ TEST_F(DosTest,Dos)
 
 
 
+TEST_F(DosTest, CapturesSpectrumWithoutTextOutput)
+{
+    const pid_t pid = getpid();
+    const std::string text_path = testing::TempDir() + "abacus_cal_dos_capture_" + std::to_string(pid) + ".txt";
+    const double step = 0.5;
+    const double sigma = 0.5;
+    ModuleBase::matrix eigenvalues(1, 1);
+    eigenvalues(0, 0) = 0.0;
+    ModuleBase::matrix occupations(1, 1);
+    occupations(0, 0) = 1.0;
+    ModuleIO::DosSpectrum spectrum;
+    const bool calculated = ModuleIO::cal_dos(0, text_path, step, 0.5, 0.0, sigma,
+                                              1, 1, {1.0}, {0}, 1, eigenvalues, occupations,
+                                              /*istep=*/-1, /*out_app_flag=*/0, /*precision=*/6, /*bndpar=*/1, &spectrum);
+    ASSERT_TRUE(calculated);
+    const std::ifstream text_output(text_path);
+    EXPECT_FALSE(text_output.is_open());
+
+    // One state at 0 eV, sampled at the Gaussian peak and one sigma above it.
+    const double peak = 1.0 / (sigma * std::sqrt(ModuleBase::TWO_PI));
+    const double shoulder = peak * std::exp(-0.5);
+    const ModuleIO::DosSpectrum expected = {
+        {0.0, 1.0, 1.0, peak, step * peak},
+        {0.5, 0.0, 1.0, shoulder, step * (peak + shoulder)}
+    };
+    ASSERT_EQ(spectrum.size(), expected.size());
+    for (size_t row = 0; row < expected.size(); ++row)
+    {
+        for (std::size_t col = 0; col < expected[row].size(); ++col)
+        {
+            EXPECT_NEAR(spectrum[row][col], expected[row][col], 1e-12) << "row " << row << ", column " << col;
+        }
+    }
+}
+
 TEST_F(DosTest,DosW1)
 {
 	//is,fa,de_ev,emax_ev,emin_ev,bcoeff,nks,nkstot,nbands
@@ -137,6 +178,7 @@ TEST_F(DosTest,DosW1)
 
     const int istep = 1;
     const int out_app_flag = 0;
+    const int precision = 6;
     const int bndpar = 1;
 	EXPECT_NO_THROW(ModuleIO::cal_dos(dosp.is,
 			dosp.fa,
@@ -153,7 +195,8 @@ TEST_F(DosTest,DosW1)
 			dosp.wg,
 			istep,
 			out_app_flag,
-			bndpar));
+			precision,
+			bndpar, nullptr));
 	GlobalV::ofs_warning.close();
 #ifdef __MPI
 	if(GlobalV::MY_RANK==0)
@@ -184,6 +227,7 @@ TEST_F(DosTest,DosW2)
 
     const int istep = 1;
     const int out_app_flag = 0;
+    const int precision = 6;
     const int bndpar = 1;
 	EXPECT_NO_THROW(ModuleIO::cal_dos(dosp.is,
 			dosp.fa,
@@ -200,7 +244,8 @@ TEST_F(DosTest,DosW2)
 			dosp.wg,
 			istep,
 			out_app_flag,
-			bndpar));
+			precision,
+			bndpar, nullptr));
 
 	GlobalV::ofs_warning.close();
 #ifdef __MPI
@@ -232,18 +277,19 @@ TEST_F(DosTest, Mode1Appends)
     dosp.set_istate_info();
 
     const int out_app_flag = 1;
+    const int precision = 6;
     const int bndpar = 1;
 
     // First call: istep=0 -> "# Ionic_Step 1".
     ModuleIO::cal_dos(dosp.is, dosp.fa, dosp.de_ev, dosp.emax_ev, dosp.emin_ev,
                       dosp.bcoeff, dosp.nks, dosp.nkstot, dosp.wk, dosp.isk,
                       dosp.nbands, dosp.ekb, dosp.wg,
-                      /*istep=*/0, out_app_flag, bndpar);
+                      /*istep=*/0, out_app_flag, precision, bndpar, nullptr);
     // Second call: istep=1 -> "# Ionic_Step 2", appended.
     ModuleIO::cal_dos(dosp.is, dosp.fa, dosp.de_ev, dosp.emax_ev, dosp.emin_ev,
                       dosp.bcoeff, dosp.nks, dosp.nkstot, dosp.wk, dosp.isk,
                       dosp.nbands, dosp.ekb, dosp.wg,
-                      /*istep=*/1, out_app_flag, bndpar);
+                      /*istep=*/1, out_app_flag, precision, bndpar, nullptr);
 
 #ifdef __MPI
     if (GlobalV::MY_RANK == 0)
@@ -274,17 +320,18 @@ TEST_F(DosTest, Mode2Overwrites)
     dosp.set_istate_info();
 
     const int out_app_flag = 2;
+    const int precision = 6;
     const int bndpar = 1;
 
     // First call writes istep 1, second overwrites with istep 2.
     ModuleIO::cal_dos(dosp.is, dosp.fa, dosp.de_ev, dosp.emax_ev, dosp.emin_ev,
                       dosp.bcoeff, dosp.nks, dosp.nkstot, dosp.wk, dosp.isk,
                       dosp.nbands, dosp.ekb, dosp.wg,
-                      /*istep=*/0, out_app_flag, bndpar);
+                      /*istep=*/0, out_app_flag, precision, bndpar, nullptr);
     ModuleIO::cal_dos(dosp.is, dosp.fa, dosp.de_ev, dosp.emax_ev, dosp.emin_ev,
                       dosp.bcoeff, dosp.nks, dosp.nkstot, dosp.wk, dosp.isk,
                       dosp.nbands, dosp.ekb, dosp.wg,
-                      /*istep=*/1, out_app_flag, bndpar);
+                      /*istep=*/1, out_app_flag, precision, bndpar, nullptr);
 
 #ifdef __MPI
     if (GlobalV::MY_RANK == 0)
@@ -303,6 +350,57 @@ TEST_F(DosTest, Mode2Overwrites)
         EXPECT_THAT(str, testing::Not(testing::HasSubstr("\n# Ionic_Step 1")));
         remove(fname.c_str());
     }
+}
+
+// ---------------------------------------------------------------------------
+// The precision argument controls the number of decimals in the DOS table.
+// ---------------------------------------------------------------------------
+TEST_F(DosTest, PrecisionControlsDecimals)
+{
+    const std::string fname = testing::TempDir() + "doss1_precision.txt";
+    DosPrepare dosp(0, fname, 0.005, 18, -6, 0.07,
+                    dos_test_data::nks, dos_test_data::nkstot, dos_test_data::nbands);
+    dosp.set_isk();
+    dosp.set_wk();
+    dosp.set_istate_info();
+
+    const int istep = 0;
+    const int out_app_flag = 0;
+    const int precision = 4;
+    const int bndpar = 1;
+
+    ModuleIO::cal_dos(dosp.is, dosp.fa, dosp.de_ev, dosp.emax_ev, dosp.emin_ev,
+                      dosp.bcoeff, dosp.nks, dosp.nkstot, dosp.wk, dosp.isk,
+                      dosp.nbands, dosp.ekb, dosp.wg,
+                      istep, out_app_flag, precision, bndpar, nullptr);
+
+    std::ifstream ifs(fname);
+    ASSERT_TRUE(ifs.is_open());
+    int rows = 0;
+    std::string line;
+    while (std::getline(ifs, line))
+    {
+        std::vector<std::string> fields;
+        std::istringstream ls(line);
+        for (std::string token; ls >> token;)
+        {
+            fields.push_back(token);
+        }
+        if (line.find('#') != std::string::npos || fields.size() != 5)
+        {
+            continue; // provenance, column headers and the npoints line
+        }
+        ++rows;
+        // Every field must carry exactly four decimals; a substring check would
+        // also accept five-decimal fields such as -5.00000 or 0.50000.
+        for (const std::string& field : fields)
+        {
+            EXPECT_THAT(field, testing::MatchesRegex(R"(-?[0-9]+\.[0-9]{4})")) << line;
+        }
+    }
+    ifs.close();
+    remove(fname.c_str());
+    EXPECT_GT(rows, 0);
 }
 
 #ifdef __MPI

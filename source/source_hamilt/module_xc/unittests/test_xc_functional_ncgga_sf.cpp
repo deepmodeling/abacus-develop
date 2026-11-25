@@ -1,6 +1,7 @@
 #include "../libxc_abacus.h"
 #include "../xc_functional.h"
 #include "source_base/constants.h"
+#include "source_base/module_device/device.h"
 #include "source_base/parallel_comm.h"
 #include "source_base/parallel_global.h"
 #include "source_base/parallel_reduce.h"
@@ -410,6 +411,56 @@ TEST_P(RealPwNcgga, ClippingBoundaryEnergyIsContinuous)
 INSTANTIATE_TEST_SUITE_P(
     ProductionBranches, RealPwNcgga,
     testing::Combine(testing::Bool(), testing::Values(Smooth, Negative, Saturated, Radial)));
+
+#if defined(__CUDA) && defined(ABACUS_LIBXC_CUDA)
+class LibxcCudaNcgga : public RealPwNcgga
+{
+};
+
+void expect_finite_near(const double host, const double device, const double relative_tolerance)
+{
+    ASSERT_TRUE(std::isfinite(host));
+    ASSERT_TRUE(std::isfinite(device));
+    const double tolerance = relative_tolerance * std::max(1.0, std::abs(host));
+    EXPECT_NEAR(host, device, tolerance);
+}
+
+TEST_P(LibxcCudaNcgga, MatchesHostEnergyAndPotential)
+{
+    int available = base_device::information::probe_gpu_availability() ? 1 : 0;
+    Parallel_Reduce::reduce_min(available);
+    if (!available)
+    {
+        GTEST_SKIP() << "A CUDA device is required on every rank.";
+    }
+
+    const std::vector<int> ids = XC_Functional::get_func_id();
+    const VxcResult host = XC_Functional_Libxc::v_xc_libxc(
+        ids, pw.nrxx, cell.omega, cell.tpiba, &charge, noncollinear_spin, true, false, variational_gga, nullptr,
+        hybrid_alpha, hse_omega);
+    const VxcResult device = XC_Functional_Libxc::v_xc_libxc(
+        ids, pw.nrxx, cell.omega, cell.tpiba, &charge, noncollinear_spin, true, false, variational_gga, nullptr,
+        hybrid_alpha, hse_omega, true);
+    expect_finite_near(std::get<0>(host), std::get<0>(device), 2.0e-11);
+    expect_finite_near(std::get<1>(host), std::get<1>(device), 2.0e-10);
+    const ModuleBase::matrix &host_v = std::get<2>(host);
+    const ModuleBase::matrix &device_v = std::get<2>(device);
+    ASSERT_EQ(noncollinear_spin, host_v.nr);
+    ASSERT_EQ(noncollinear_spin, device_v.nr);
+    ASSERT_EQ(pw.nrxx, host_v.nc);
+    ASSERT_EQ(pw.nrxx, device_v.nc);
+    for (int c = 0; c < noncollinear_spin; ++c)
+    {
+        for (int ir = 0; ir < pw.nrxx; ++ir)
+        {
+            SCOPED_TRACE(testing::Message() << "channel=" << c << ", point=" << ir);
+            expect_finite_near(host_v(c, ir), device_v(c, ir), 2.0e-10);
+        }
+    }
+}
+
+INSTANTIATE_TEST_SUITE_P(SmoothPbe, LibxcCudaNcgga, testing::Values(std::make_tuple(true, Smooth)));
+#endif
 } // namespace
 
 int main(int argc, char **argv)

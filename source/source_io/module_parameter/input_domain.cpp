@@ -94,7 +94,7 @@ void validate_runtime_condition(const std::string& owner, const AvailabilityExpr
     validate_availability_expr(owner, expression, types);
     if (expression.is_leaf())
     {
-        const auto& condition = expression.condition;
+        const AvailabilityCondition& condition = expression.condition;
         if (condition.param.empty()) { return; }
         const Kind kind = types.at(condition.param);
         const Kind scalar_kind = element_kind(kind);
@@ -102,9 +102,9 @@ void validate_runtime_condition(const std::string& owner, const AvailabilityExpr
         {
             throw std::invalid_argument("Runtime INPUT vector conditions require contains: " + owner);
         }
-        for (const auto& literal : condition.values) { parse_scalar(scalar_kind, literal); }
+        for (const std::string& literal : condition.values) { parse_scalar(scalar_kind, literal); }
     }
-    for (const auto& child : expression.children) { validate_runtime_condition(owner, child, types); }
+    for (const AvailabilityExpr& child : expression.children) { validate_runtime_condition(owner, child, types); }
 }
 
 void collect_references(const AvailabilityExpr& expression, std::set<std::string>& references)
@@ -113,7 +113,7 @@ void collect_references(const AvailabilityExpr& expression, std::set<std::string
     {
         references.insert(expression.condition.param);
     }
-    for (const auto& child : expression.children) { collect_references(child, references); }
+    for (const AvailabilityExpr& child : expression.children) { collect_references(child, references); }
 }
 
 std::string describe_values(const InputValues& values, const InputRequirement& rule)
@@ -122,7 +122,7 @@ std::string describe_values(const InputValues& values, const InputRequirement& r
     collect_references(rule.when, references);
     collect_references(rule.require, references);
     std::vector<std::string> rendered;
-    for (const auto& name : references) { rendered.push_back(name + "=" + values.at(name).format()); }
+    for (const std::string& name : references) { rendered.push_back(name + "=" + values.at(name).format()); }
     return join(rendered, ", ");
 }
 } // namespace
@@ -162,16 +162,16 @@ bool evaluate_input_condition(const AvailabilityExpr& expression, const InputVal
 {
     if (expression.is_leaf())
     {
-        const auto& condition = expression.condition;
+        const AvailabilityCondition& condition = expression.condition;
         if (condition.param.empty()) { return true; }
-        const auto& actual = values.at(condition.param);
-        for (const auto& literal : condition.values)
+        const InputValue& actual = values.at(condition.param);
+        for (const std::string& literal : condition.values)
         {
             if (compare(actual, condition.op, literal)) { return true; }
         }
         return false;
     }
-    for (const auto& child : expression.children)
+    for (const AvailabilityExpr& child : expression.children)
     {
         const bool result = evaluate_input_condition(child, values);
         if (expression.op == "and" && !result) { return false; }
@@ -240,7 +240,7 @@ const std::vector<std::string>& InputDomain::choices() const { return choices_; 
 std::string InputDomain::format_requirements() const
 {
     std::vector<std::string> rendered;
-    for (const auto& rule : requirements_)
+    for (const InputRequirement& rule : requirements_)
     {
         const std::string when = rule.when.to_string();
         const std::string condition = rule.require.to_string();
@@ -257,12 +257,12 @@ void InputDomain::validate_schema(const std::string& label, const std::map<std::
         {
             throw std::invalid_argument("Missing scalar INPUT binding for " + label);
         }
-        for (const auto& choice : choices_) { parse_scalar(kind_, choice); }
+        for (const std::string& choice : choices_) { parse_scalar(kind_, choice); }
         const std::map<std::string, Kind> domain_types = {{"value", kind_}};
         validate_runtime_condition(label, rule_, domain_types);
     }
     validate_runtime_condition(label, active_when_, types);
-    for (const auto& rule : requirements_)
+    for (const InputRequirement& rule : requirements_)
     {
         validate_runtime_condition(label, rule.when, types);
         validate_runtime_condition(label, rule.require, types);
@@ -275,7 +275,7 @@ bool InputDomain::accepts(const InputValue& value) const
     if (!choices_.empty())
     {
         bool found = false;
-        for (const auto& choice : choices_) { found = found || compare(value, "==", choice); }
+        for (const std::string& choice : choices_) { found = found || compare(value, "==", choice); }
         if (!found) { return false; }
     }
     const InputValues values = {{"value", value}};
@@ -316,7 +316,7 @@ std::string InputDomain::validate_explicit(const std::string& label, const std::
 std::string InputDomain::validate_resolved(const std::string& label, const InputValues& values) const
 {
     if (empty() || !evaluate_input_condition(active_when_, values)) { return ""; }
-    const auto& actual = values.at(label);
+    const InputValue& actual = values.at(label);
     if (accepts(actual)) { return ""; }
     const std::string rendered = actual.format();
     const std::string requirement = expected();
@@ -326,7 +326,7 @@ std::string InputDomain::validate_resolved(const std::string& label, const Input
 std::string InputDomain::validate_requirements(const std::string& label, const InputValues& values) const
 {
     std::string errors;
-    for (const auto& rule : requirements_)
+    for (const InputRequirement& rule : requirements_)
     {
         if (evaluate_input_condition(rule.when, values) && !evaluate_input_condition(rule.require, values))
         {

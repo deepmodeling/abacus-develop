@@ -28,7 +28,9 @@ namespace ModuleIO
         const double& dos_edelta_ev,            // Delta energy
         const double& dos_scale,                
         const double& bcoeff,
+        const int out_dos,
         const int out_app_flag,
+        const int precision,                    // number of decimal places in doss/pdoss files
         const int istep,
         const int nspin,
         const int nlocal,

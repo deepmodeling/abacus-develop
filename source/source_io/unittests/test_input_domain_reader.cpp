@@ -313,7 +313,7 @@ TEST_F(InputDomainReaderTest, ChecksTypesRangesAndDependenciesThroughOnePath)
         {"symmetry 2", "symmetry"}, {"fft_mode 4", "fft-mode"},
         {"md_thermostat unknown", "md-thermostat"}, {"lin_maxiter 0", "lin-maxiter"},
         {"out_wfc_lcao 1", "out-wfc-lcao"}, {"dip_cor_flag true", "dip-cor-flag"}};
-    for (const auto& example : invalid)
+    for (const std::pair<std::string, std::string>& example : invalid)
     {
         const std::string output = reject_input(example.first + "\n");
         EXPECT_NE(output.find("Invalid INPUT parameter"), std::string::npos) << example.first;
@@ -353,7 +353,7 @@ TEST_F(InputDomainReaderTest, PreservesDisabledModesNegativePhysicsAndInactiveSw
 
 TEST(InputDomainHelp, ExportsTheRuntimeRules)
 {
-    const auto spin = ModuleIO::ParameterHelp::get_metadata("nspin");
+    const ModuleIO::ParameterMetadata spin = ModuleIO::ParameterHelp::get_metadata("nspin");
     EXPECT_EQ(spin.allowed_values, "1, 2, 4");
     std::ostringstream help;
     ASSERT_TRUE(ModuleIO::ParameterHelp::show_parameter_help("gga_grad", help));
@@ -366,7 +366,7 @@ TEST(InputDomainHelp, ExportsTheRuntimeRules)
     EXPECT_NE(dump.find("allowed_values: [\"-1\", \"0\", \"1\"]"), std::string::npos);
     EXPECT_NE(dump.find("value_rule:"), std::string::npos);
     EXPECT_NE(dump.find("requirements:"), std::string::npos);
-    const auto criterion = ModuleIO::ParameterHelp::get_metadata("scf_thr_type");
+    const ModuleIO::ParameterMetadata criterion = ModuleIO::ParameterHelp::get_metadata("scf_thr_type");
     EXPECT_EQ(criterion.allowed_values, "1, 2");
     EXPECT_NE(spin.requirements.find("nspin==4"), std::string::npos);
 }

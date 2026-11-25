@@ -66,7 +66,10 @@ set(_abacus_feature_definitions
     $<$<BOOL:${ENABLE_LIBRI}>:TEST_EXX_LCAO=0>
     $<$<BOOL:${ENABLE_LIBRI}>:TEST_EXX_RADIAL=1>
     $<$<BOOL:${ENABLE_LIBXC}>:__LIBXC>
+    $<$<BOOL:${ENABLE_LIBXC_CUDA}>:ABACUS_LIBXC_CUDA>
+    $<$<BOOL:${_libxc_requires_host_flag}>:ABACUS_LIBXC_REQUIRES_HOST_FLAG>
     $<$<BOOL:${ENABLE_DFTD4}>:__DFTD4>
+    $<$<BOOL:${ENABLE_NEP}>:__NEP>
     $<$<BOOL:${MATH_INFO}>:GATHER_INFO>)
 
 if(ABACUS_COMMIT_INFO_INCLUDE_DIR)
@@ -85,9 +88,6 @@ if(DEFINED DeePMD_DIR)
   if(DeePMDC_FOUND)
     list(APPEND _abacus_feature_definitions __DPMDC)
   endif()
-endif()
-if(DEFINED NEP_DIR AND NEP_FOUND)
-  list(APPEND _abacus_feature_definitions __NEP)
 endif()
 
 target_include_directories(
@@ -294,9 +294,10 @@ set(_abacus_feature_libs
     $<$<BOOL:${ENABLE_PEXSI}>:PEXSI::PEXSI>
     $<$<BOOL:${ENABLE_CNPY}>:cnpy>
     $<$<BOOL:${ENABLE_CNPY}>:ZLIB::ZLIB>
-    $<$<BOOL:${ENABLE_LIBRI}>:cereal::cereal>
+    $<$<BOOL:${ENABLE_LIBRI}>:LibRI::LibRI>
     $<$<BOOL:${ENABLE_LIBXC}>:Libxc::xc>
-    $<$<BOOL:${ENABLE_PLUMED}>:PLUMED::plumed>)
+    $<$<BOOL:${ENABLE_PLUMED}>:PLUMED::plumed>
+    $<$<BOOL:${ENABLE_NEP}>:nep::nep_cpu>)
 set(_abacus_feature_include_dirs)
 set(_abacus_feature_compile_options)
 
@@ -327,11 +328,6 @@ if(ENABLE_CNPY)
   endif()
 endif()
 
-if(ENABLE_LIBRI)
-  list(APPEND _abacus_feature_include_dirs ${LIBRI_DIR}/include
-       ${LIBCOMM_DIR}/include)
-endif()
-
 if(DEFINED DeePMD_DIR)
   if(DeePMDC_FOUND)
     list(APPEND _abacus_feature_libs DeePMD::deepmd_c)
@@ -339,10 +335,6 @@ if(DEFINED DeePMD_DIR)
     list(APPEND _abacus_feature_libs DeePMD::deepmd_cc)
   endif()
   list(APPEND _abacus_feature_include_dirs ${DeePMD_DIR}/include)
-endif()
-
-if(DEFINED NEP_DIR AND NEP_FOUND)
-  list(APPEND _abacus_feature_libs NEP::nep)
 endif()
 
 if(DEFINED TensorFlow_DIR AND TensorFlow_FOUND)
@@ -418,13 +410,15 @@ target_compile_options(abacus_compile_requirements
 foreach(
   _abacus_feature_target IN
   ITEMS nlohmann_json::nlohmann_json
+        LibRI::LibRI
+        ddla::ddla
         cereal::cereal
         ELPA::ELPA
         Libxc::xc
         dftd4::dftd4
         DeePMD::deepmd_c
         DeePMD::deepmd_cc
-        NEP::nep
+        nep::nep_cpu
         TensorFlow::tensorflow_cc
         ZLIB::ZLIB
         PEXSI::PEXSI
