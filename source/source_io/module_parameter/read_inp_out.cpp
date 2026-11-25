@@ -373,7 +373,7 @@ Also controled by out_freq_ion and out_app_flag.
         Input_Item item("out_dos");
         item.annotation = "output energy and dos";
         item.category = "Output information";
-        item.type = "Integer";
+        item.type = R"(Integer \[Integer\](optional))";
         item.description = R"(Whether to output the density of states (DOS) and projected density of states (PDOS). For more information, refer to the dos.md.
 * 0: no output
 * 1: output the density of states (DOS) and projected density of states (PDOS, LCAO only)
@@ -382,28 +382,48 @@ Also controled by out_freq_ion and out_app_flag.
  * With out_app_flag = 2: per-step files are named `doss{s}g{geom}.txt` and `pdoss{s}g{geom}.txt` where `{geom}` is the one-based geometry index (e.g. `doss1g3.txt` for the third ionic step).
  * nspin=1 or 4: one spin channel (`s1`). nspin=2: two channels (`s1`, `s2`). PW and LCAO use the same naming.
 * 2: write total DOS (`dos.npy`) and projected DOS (`pdos.npy`) as NumPy arrays for a single-point LCAO KSDFT SCF or NSCF calculation. Both spin channels for nspin=2 share the same files.
-    NumPy output preserves double-precision (`float64`) spectral values, while text output rounds them to six decimal places.
+    NumPy output preserves double-precision (`float64`) spectral values.
     For large PDOS datasets, NumPy output can also reduce write time and file size.
     If an older input uses `out_dos 2` for text PDOS, change it to `out_dos 1` to keep text output.
-* 3: Fermi surface output has been removed.)";
-        item.default_value = "0";
+* 3: Fermi surface output has been removed.
+The optional second integer controls the number of decimal places of the DOS and PDOS values in `doss{s}.txt` and `pdoss{s}.txt`, and defaults to 6.)";
+        item.default_value = "0 6";
         item.unit = "";
-        read_sync_int(input.out_dos);
-        item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.out_dos != 2 && (para.input.calculation == "get_wf" || para.input.calculation == "get_pchg"))
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            const size_t count = item.get_size();
+            if (count < 1)
             {
-                para.input.out_dos = 0;
+                ModuleBase::WARNING_QUIT("ReadInput", "out_dos needs at least 1 value");
+            }
+            try
+            {
+                para.input.out_dos[0] = std::stoi(item.str_values[0]);
+                para.input.out_dos[1] = 6;
+                if (count >= 2) try { para.input.out_dos[1] = std::stoi(item.str_values[1]); }
+                catch (const std::exception& e) {
+                    ModuleBase::WARNING("Input", "out_dos precision must be an integer, using default 6");
+                }
+            }
+            catch (const std::exception& e) {
+                ModuleBase::WARNING("Input", "out_dos must be an integer, using default 0");
+            }
+        };
+        sync_intvec(input.out_dos, 2, 6);
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            if (para.input.out_dos[0] != 2 && (para.input.calculation == "get_wf" || para.input.calculation == "get_pchg"))
+            {
+                para.input.out_dos[0] = 0;
             }
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             const Input_para& in = para.input;
-            if (in.out_dos == 2 && (in.basis_type != "lcao" || in.esolver_type != "ksdft"
+            if (in.out_dos[0] == 2 && (in.basis_type != "lcao" || in.esolver_type != "ksdft"
                                     || (in.calculation != "scf" && in.calculation != "nscf")))
             {
                 ModuleBase::WARNING_QUIT("ReadInput",
                                          "out_dos = 2 requires a single-point LCAO KSDFT SCF or NSCF calculation.");
             }
-            if (para.input.out_dos == 3)
+            if (para.input.out_dos[0] == 3)
             {
                 ModuleBase::WARNING_QUIT("ReadInput",
                                          "out_dos = 3 (Fermi surface output) has been removed. "
@@ -1370,13 +1390,32 @@ For binary output, each file uses the same basename as text output with a .dat s
         Input_Item item("out_mat_xc");
         item.annotation = "output exchange-correlation matrix in KS-orbital representation";
         item.category = "Output information";
-        item.type = "Boolean";
-        item.description = "Write exchange-correlation matrices in the Kohn-Sham orbital basis and their diagonal expectation values. The diagonal energies are saved in OUT.${suffix}/eband_vxc.txt. When out_app_flag = 2 the energy files carry a g{step} suffix (for example eband_vxcg2.txt) and the full matrices are written to OUT.${suffix}/MAT/, while modes 0/1 reuse the fixed names (mode 0 truncates, mode 1 appends one frame per written step). When EXX is calculated, its local and EXX contributions are also saved as eband_vxc_local.txt and eband_vxc_exx.txt in the same directory. The full MO-basis matrices are named vxcmok{ik}s{spin}_nao.txt, where ik is the one-based k-point index and spin is omitted for nspin = 1; with gamma_only the k-point index is dropped (vxcmo_nao.txt). With basis_type = lcao_in_pw the matrices and eband_vxc*.txt files are written once to the MAT directory (OUT.${suffix}/MAT/ when out_app_flag = 2, else OUT.${suffix}/), as fixed names without a g{step} suffix: vxc_nao.txt for Gamma-only, vxck{ik}_nao.txt for multi-k (spin-resolved as vxck{ik}s{spin}_nao.txt for nspin = 2). Each energy file begins with nk, nspin, and nbands, followed by nk*nspin*nbands rows of energies in Hartree and eV."
+        item.type = R"(Boolean \[Integer\](optional))";
+        item.description = "Write exchange-correlation matrices in the Kohn-Sham orbital basis and their diagonal expectation values. The diagonal energies are saved in OUT.${suffix}/eband_vxc.txt. When out_app_flag = 2 the energy files carry a g{step} suffix (for example eband_vxcg2.txt) and the full matrices are written to OUT.${suffix}/MAT/, while modes 0/1 reuse the fixed names (mode 0 truncates, mode 1 appends one frame per written step). When EXX is calculated, its local and EXX contributions are also saved as eband_vxc_local.txt and eband_vxc_exx.txt in the same directory. The full MO-basis matrices are named vxcmok{ik}s{spin}_nao.txt, where ik is the one-based k-point index and spin is omitted for nspin = 1; with gamma_only the k-point index is dropped (vxcmo_nao.txt). With basis_type = lcao_in_pw the matrices and eband_vxc*.txt files are written once to the MAT directory (OUT.${suffix}/MAT/ when out_app_flag = 2, else OUT.${suffix}/), as fixed names without a g{step} suffix: vxc_nao.txt for Gamma-only, vxck{ik}_nao.txt for multi-k (spin-resolved as vxck{ik}s{spin}_nao.txt for nspin = 2). Each energy file begins with nk, nspin, and nbands, followed by nk*nspin*nbands rows of energies in Hartree and eV. The optional second integer controls the precision of the MO-basis matrices (vxcmok*_nao.txt) and defaults to 8; the eband_vxc*.txt energy files keep their full precision."
                           "\n\n[NOTE] In the 3.10-LTS version, the file name is k-$k-Vxc and so on.";
-        item.default_value = "False";
+        item.default_value = "False 8";
         item.unit = "Ry";
         item.set_availability("basis_type in [lcao, lcao_in_pw]");
-        read_sync_bool(input.out_mat_xc);
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            const size_t count = item.get_size();
+            if (count < 1)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "out_mat_xc needs at least 1 value");
+            }
+            try
+            {
+                para.input.out_mat_xc[0] = assume_as_boolean(item.str_values[0]);
+                para.input.out_mat_xc[1] = 8;
+                if (count >= 2) try { para.input.out_mat_xc[1] = std::stoi(item.str_values[1]); }
+                catch (const std::exception& e) {
+                    ModuleBase::WARNING("Input", "out_mat_xc precision must be an integer, using default 8");
+                }
+            }
+            catch (const std::exception& e) {
+                ModuleBase::WARNING("Input", "out_mat_xc enable flag must be 0/1, using default 0");
+            }
+        };
+        sync_intvec(input.out_mat_xc, 2, 0);
         this->add_item(item);
     }
     {
@@ -1632,18 +1671,6 @@ For more information, refer to the documentation of out_mat_r, out_hsr, out_mat_
                 ModuleBase::WARNING_QUIT("ReadInput", "out_app_flag should be 0, 1, or 2");
             }
         };
-        this->add_item(item);
-    }
-    {
-        Input_Item item("out_ndigits");
-        item.annotation = "the length of decimal part of output data";
-        item.category = "Output information";
-        item.type = "Integer";
-        item.description = "Controls the length of decimal part of output data, such as charge density, Hamiltonian matrix, Overlap matrix and so on.";
-        item.default_value = "8";
-        item.unit = "";
-        item.set_availability("basis_type==lcao and out_hsk==1");
-        read_sync_int(input.out_ndigits);
         this->add_item(item);
     }
     {
