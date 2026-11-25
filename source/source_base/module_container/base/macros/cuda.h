@@ -5,6 +5,8 @@
 #include <cuda_runtime.h>
 #include <cusolverDn.h>
 #include <thrust/complex.h>
+#include <stdexcept>
+#include <string>
 
 #include "source_base/module_device/device_check.h"
 
@@ -28,22 +30,21 @@ struct GetTypeThrust<std::complex<double>>
     using type = thrust::complex<double>; /**< The return type specialization for std::complex<double>. */
 };
 
+//! Translate a BLAS transpose flag for the operand's scalar type.
+static inline cublasOperation_t GetCublasOperation(const char& trans, bool is_complex)
+{
+    switch (trans)
+    {
+        case 'N': case 'n': return CUBLAS_OP_N;
+        case 'T': case 't': return CUBLAS_OP_T;
+        case 'C': case 'c': return is_complex ? CUBLAS_OP_C : CUBLAS_OP_T;
+        default: throw std::invalid_argument(std::string("Invalid BLAS transpose flag: ") + trans);
+    }
+}
+
 static inline cublasOperation_t GetCublasOperation(const char& trans)
 {
-    cublasOperation_t cutrans = {};
-    if (trans == 'N')
-    {
-        cutrans = CUBLAS_OP_N;
-    }
-    else if (trans == 'T')
-    {
-        cutrans = CUBLAS_OP_T;
-    }
-    else if (trans == 'C')
-    {
-        cutrans = CUBLAS_OP_C;
-    }
-    return cutrans;
+    return GetCublasOperation(trans, true);
 }
 
 template <typename T>
@@ -92,7 +93,7 @@ static inline cublasFillMode_t cublas_fill_mode(const char& uplo)
     else if (uplo == 'L' || uplo == 'l')
         return CUBLAS_FILL_MODE_LOWER;
     else
-        throw std::runtime_error("cublas_fill_mode: unknown uplo");
+        throw std::runtime_error(std::string("Invalid BLAS triangle: ") + uplo);
 }
 
 static inline cublasDiagType_t cublas_diag_type(const char& diag)

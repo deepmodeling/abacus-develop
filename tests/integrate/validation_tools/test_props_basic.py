@@ -1,5 +1,6 @@
-"""Regression checks for MD force collection and its shell entry points."""
+"""Regression checks for basic property collection and its shell entry points."""
 
+from importlib.util import find_spec
 import os
 from pathlib import Path
 import shutil
@@ -121,6 +122,28 @@ class ForceCollectionTest(unittest.TestCase):
             self.assertIn("Reference generation failed", result.stdout)
             self.assertEqual((case / "result.ref").read_text(encoding="utf-8"), "original\n")
             self.assertFalse((case / "result.ref.new").exists())
+
+
+class PdosCollectionTest(unittest.TestCase):
+    @unittest.skipUnless(find_spec("numpy"), "PDOS validation requires NumPy")
+    def test_missing_or_corrupt_pdos_fails_through_shell_entry(self):
+        fixture = INTEGRATE.parent / "03_NAO_multik/scf_out_dos_spin2"
+        with tempfile.TemporaryDirectory() as scratch:
+            case = Path(scratch)
+            shutil.copy(fixture / "INPUT", case)
+            shutil.copy(fixture / "dos.ref.json", case)
+            out = case / "OUT.autotest"
+            out.mkdir()
+            (out / "running_scf.log").write_text(" TOTAL ATOM NUMBER = 2\nETOT_ -1.0\n", encoding="utf-8")
+
+            for contents, error in ((None, "FileNotFoundError"), (b"invalid NPY", "ValueError")):
+                with self.subTest(error=error):
+                    if contents is not None:
+                        (out / "pdos.npy").write_bytes(contents)
+                    result = subprocess.run(["bash", "-e", str(TOOLS / "catch_properties.sh"), "result.out"],
+                                            cwd=case, capture_output=True, text=True)
+                    self.assertIn(error, result.stderr)
+                    self.assertNotEqual(result.returncode, 0, result.stderr)
 
 
 if __name__ == "__main__":
