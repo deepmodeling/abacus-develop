@@ -221,13 +221,13 @@ ReadInput::ReadInput(const int& rank)
         std::map<std::string, AvailabilityValueKind> parameter_types;
         std::map<std::string, AvailabilityExpr> expressions;
         std::map<std::string, AvailabilityValueKind> bound_types;
-        for (const auto& entry : this->input_lists)
+        for (const std::pair<std::string, Input_Item>& entry : this->input_lists)
         {
             parameter_types[entry.first] = availability_value_kind(entry.second.type);
             expressions[entry.first] = entry.second.get_availability_expr();
             if (entry.second.domain.bound()) { bound_types[entry.first] = entry.second.domain.kind(); }
         }
-        for (const auto& entry : this->input_lists)
+        for (const std::pair<std::string, Input_Item>& entry : this->input_lists)
         {
             entry.second.domain.validate_schema(entry.first, bound_types);
             validate_availability_expr(entry.first,
@@ -480,7 +480,7 @@ std::string ReadInput::prepare_input(Parameter& param)
     // Validate original tokens before any reader or default hook can discard
     // an invalid value. In particular, std::stoi alone accepts numeric prefixes.
     std::string errors;
-    for (const auto* item : this->readvalue_items)
+    for (const Input_Item* item : this->readvalue_items)
     {
         errors += item->domain.validate_explicit(item->label, item->str_values);
     }
@@ -534,7 +534,7 @@ std::string ReadInput::prepare_input(Parameter& param)
 #endif
 
     InputValues supplied_values;
-    for (const auto* item : this->readvalue_items)
+    for (const Input_Item* item : this->readvalue_items)
     {
         if (item->domain.bound()) { supplied_values[item->label] = item->domain.value(param); }
     }
@@ -592,7 +592,7 @@ std::string ReadInput::prepare_input(Parameter& param)
 
     // Snapshot typed effective values once for shared domain and dependency checks.
     InputValues values;
-    for (const auto& entry : this->input_lists)
+    for (const std::pair<std::string, Input_Item>& entry : this->input_lists)
     {
         if (entry.second.domain.bound()) { values[entry.first] = entry.second.domain.value(param); }
     }
@@ -600,20 +600,23 @@ std::string ReadInput::prepare_input(Parameter& param)
     // Evaluate requirements with explicit values taking precedence over defaults,
     // so a reset cannot hide a conflicting user request.
     InputValues requested_values = values;
-    for (const auto& supplied : supplied_values) { requested_values[supplied.first] = supplied.second; }
-    for (const auto& entry : this->input_lists)
+    for (const InputValues::value_type& supplied : supplied_values)
+    {
+        requested_values[supplied.first] = supplied.second;
+    }
+    for (const std::pair<std::string, Input_Item>& entry : this->input_lists)
     {
         errors += entry.second.domain.validate_requirements(entry.first, requested_values);
     }
     if (!errors.empty()) { return errors; }
 
     // Check effective values, including defaults, through the same domains.
-    for (const auto& entry : this->input_lists)
+    for (const std::pair<std::string, Input_Item>& entry : this->input_lists)
     {
         errors += entry.second.domain.validate_resolved(entry.first, values);
     }
     if (!errors.empty()) { return errors; }
-    for (const auto& entry : this->input_lists)
+    for (const std::pair<std::string, Input_Item>& entry : this->input_lists)
     {
         errors += entry.second.domain.validate_requirements(entry.first, values);
     }

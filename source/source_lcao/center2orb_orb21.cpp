@@ -21,7 +21,7 @@ Center2_Orb::Orb21::Orb21(const Numerical_Orbital_Lm& nA1_in,
 
 void Center2_Orb::Orb21::prepare_radial_table()
 {
-    auto products = std::make_shared<ProductOrbitals>();
+    std::shared_ptr<ProductOrbitals> products = std::make_shared<ProductOrbitals>();
     const Numerical_Orbital_Lm& nA_short = (this->nA1.getNr() <= this->nA2.getNr()) ? this->nA1 : this->nA2;
 
     std::vector<double> nA_tmp(nA_short.getNr());
@@ -63,7 +63,7 @@ void Center2_Orb::Orb21::prepare_radial_table()
 void Center2_Orb::Orb21::bind_product_orbitals()
 {
     this->orb11s.clear();
-    for (const auto &product : *this->nA)
+    for (const ProductOrbitals::value_type &product : *this->nA)
     {
         this->orb11s.emplace(
             product.first, Orb11(
@@ -77,7 +77,7 @@ void Center2_Orb::Orb21::bind_product_orbitals()
 void Center2_Orb::Orb21::init_radial_table()
 {
     this->prepare_radial_table();
-    for (auto &orbital : this->orb11s)
+    for (std::pair<const int, Orb11> &orbital : this->orb11s)
     {
         orbital.second.init_radial_table();
     }
@@ -89,7 +89,7 @@ void Center2_Orb::Orb21::init_radial_table(const std::set<size_t>& radials)
     {
         this->prepare_radial_table();
     }
-    for (auto &orbital : this->orb11s)
+    for (std::pair<const int, Orb11> &orbital : this->orb11s)
     {
         orbital.second.init_radial_table(radials);
     }
@@ -97,7 +97,7 @@ void Center2_Orb::Orb21::init_radial_table(const std::set<size_t>& radials)
 
 void Center2_Orb::Orb21::init_radial_table(const std::vector<Orb21 *> &orbitals, const bool use_gpu)
 {
-    const auto pairs = prepare_radial_tables(orbitals);
+    const std::vector<Orb11 *> pairs = prepare_radial_tables(orbitals);
     Orb11::init_radial_table(pairs, use_gpu);
 }
 
@@ -129,7 +129,7 @@ std::vector<Center2_Orb::Orb11 *> Center2_Orb::Orb21::prepare_radial_tables(cons
     for (Orb21 *orbital : orbitals)
     {
         // Orbital transforms grow the shared Bessel cache, so prepare them serially.
-        auto &product = products[&orbital->nA1][&orbital->nA2];
+        std::shared_ptr<const ProductOrbitals> &product = products[&orbital->nA1][&orbital->nA2];
         if (!product)
         {
             orbital->prepare_radial_table();
@@ -140,7 +140,7 @@ std::vector<Center2_Orb::Orb11 *> Center2_Orb::Orb21::prepare_radial_tables(cons
             orbital->nA = product;
             orbital->bind_product_orbitals();
         }
-        for (auto &pair : orbital->orb11s)
+        for (std::pair<const int, Orb11> &pair : orbital->orb11s)
         {
             pairs.push_back(&pair.second);
         }
