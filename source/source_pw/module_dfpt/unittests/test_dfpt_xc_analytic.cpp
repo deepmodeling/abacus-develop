@@ -7,7 +7,7 @@
 #include "source_base/constants.h"
 #include "source_basis/module_pw/pw_basis.h"
 
-#include <xc.h>
+#include "source_hamilt/module_xc/libxc_host.h"
 #include <xc_funcs.h>
 
 #include <cmath>
@@ -137,7 +137,7 @@ void libxc_vxc(const std::vector<int>& func_id,
     for (size_t ifunc = 0; ifunc < func_id.size(); ++ifunc)
     {
         xc_func_type func;
-        ASSERT_EQ(xc_func_init(&func, func_id[ifunc], XC_UNPOLARIZED), 0);
+        ASSERT_EQ(XC_Functional_Libxc::init_func_host(&func, func_id[ifunc], XC_UNPOLARIZED), 0);
         std::vector<double> vr(n, 0.0);
         std::vector<double> vs(n, 0.0);
         std::vector<double> zk(n, 0.0);
@@ -182,7 +182,7 @@ TEST(DFPTXcAnalytic, LdaKernelMatchesVrhofiniteDifference)
     for (size_t ifunc = 0; ifunc < func_id.size(); ++ifunc)
     {
         xc_func_type func;
-        ASSERT_EQ(xc_func_init(&func, func_id[ifunc], XC_UNPOLARIZED), 0);
+        ASSERT_EQ(XC_Functional_Libxc::init_func_host(&func, func_id[ifunc], XC_UNPOLARIZED), 0);
         std::vector<double> zk(pw.nrxx, 0.0);
         std::vector<double> vxc(pw.nrxx, 0.0);
         xc_lda_exc_vxc(&func, pw.nrxx, rho_p.data(), zk.data(), vxc.data());
@@ -413,7 +413,7 @@ TEST(DFPTXcAnalytic, UniformDensityKeepsLocalGgaResponse)
     for (size_t ifunc = 0; ifunc < func_id.size(); ++ifunc)
     {
         xc_func_type func;
-        ASSERT_EQ(xc_func_init(&func, func_id[ifunc], XC_UNPOLARIZED), 0);
+        ASSERT_EQ(XC_Functional_Libxc::init_func_host(&func, func_id[ifunc], XC_UNPOLARIZED), 0);
         double rho = 0.1;
         double sig = 0.0;
         double v2rho2 = 0.0;
@@ -452,7 +452,7 @@ TEST(DFPTXcAnalytic, ConfiguredExtParamsDifferentiateTheConfiguredFunctional)
     kernel.apply(a, dvxc);
 
     xc_func_type func;
-    ASSERT_EQ(xc_func_init(&func, XC_LDA_XC_KSDT, XC_UNPOLARIZED), 0);
+    ASSERT_EQ(XC_Functional_Libxc::init_func_host(&func, XC_LDA_XC_KSDT, XC_UNPOLARIZED), 0);
     const double theta = 0.007;
     xc_func_set_ext_params(&func, &theta);
     double rho = 0.1;
@@ -493,7 +493,7 @@ TEST(DFPTXcAnalytic, SignedComponentWeightsEnterEveryKernelField)
     for (int i = 0; i < 2; ++i)
     {
         xc_func_type func;
-        ASSERT_EQ(xc_func_init(&func, ids_ref[i], XC_UNPOLARIZED), 0);
+        ASSERT_EQ(XC_Functional_Libxc::init_func_host(&func, ids_ref[i], XC_UNPOLARIZED), 0);
         double rho = 0.1;
         if (ids_ref[i] == XC_GGA_X_PBE)
         {

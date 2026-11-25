@@ -25,7 +25,7 @@ Magnetism::~Magnetism()
  * 1. mix_plain: occ = beta*occ + (1-beta)*occ_save on nested blocks
  *    (nspin=1 and nspin=2, including the uncorrelated-atom skip).
  * 2. flat buffer roundtrip: collect -> write_back reproduces the nested
- *    occupation matrix for the split (nspin=2) layout.
+ *    occupation matrix for the split (nspin=2) and spinor (nspin=4) layouts.
  *
  * A minimal UnitCell with one type, two atoms, a single correlated
  * d-orbital (l=2, one radial channel) is built in SetUp.
@@ -213,6 +213,50 @@ TEST_F(OccMatMixerTest, FlatRoundtripNspin2)
                 EXPECT_DOUBLE_EQ(occmat.data()[iat][l_corr][is].c[m],
                                  1000.0 * iat + 100.0 * is + m);
             }
+        }
+    }
+}
+
+TEST_F(OccMatMixerTest, FlatRoundtripNspin4AllPauliBlocks)
+{
+    const int nspin = 4;
+    const int npol = 2;
+    const int spinor_block = block * npol * npol;
+    const int flat_size = cell.nat * spinor_block;
+    flat_index[1] = spinor_block;
+
+    OccupationMatrix occmat;
+    occmat.init(cell, l_channel, nspin, npol);
+
+    OccMatMixer mixer;
+    mixer.init(&cell, &l_channel, &flat_index, nspin, flat_size);
+
+    for (int iat = 0; iat < cell.nat; iat++)
+    {
+        for (int m = 0; m < spinor_block; m++)
+        {
+            occmat.mat(iat, l_corr, 0).c[m] = 1000.0 * iat + m + 1.0;
+        }
+    }
+
+    mixer.collect(occmat);
+    for (int iat = 0; iat < cell.nat; iat++)
+    {
+        for (int m = 0; m < spinor_block; m++)
+        {
+            EXPECT_DOUBLE_EQ(mixer.uom()[flat_index[iat] + m],
+                             1000.0 * iat + m + 1.0);
+        }
+    }
+
+    occmat.zero(cell, l_channel);
+    mixer.write_back(occmat);
+    for (int iat = 0; iat < cell.nat; iat++)
+    {
+        for (int m = 0; m < spinor_block; m++)
+        {
+            EXPECT_DOUBLE_EQ(occmat.mat(iat, l_corr, 0).c[m],
+                             1000.0 * iat + m + 1.0);
         }
     }
 }

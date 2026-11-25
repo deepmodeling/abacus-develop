@@ -178,9 +178,9 @@ TEST_F(RhoIOTest, TrilinearInterpolate)
     std::vector<double> data(nxyz); // z > x > y
     ModuleIO::trilinear_interpolate(data_read.data(), nx_read, ny_read, nz_read, nx, ny, nz, data_xyz.data());
     permute_xyz2zxy(data_xyz.data(), data.data());
-    EXPECT_DOUBLE_EQ(data[0], 0.0010824725010374092);
-    EXPECT_DOUBLE_EQ(data[10], 0.058649850374240906);
-    EXPECT_DOUBLE_EQ(data[100], 0.018931708073604996);
+    EXPECT_DOUBLE_EQ(data[0], 0.0012702086394);
+    EXPECT_DOUBLE_EQ(data[10], 0.0577319585491);
+    EXPECT_DOUBLE_EQ(data[100], 0.0187538902948);
 }
 
 
@@ -321,4 +321,42 @@ TEST_F(CubeIOTest, WriteCubeAppendFrames)
     EXPECT_EQ(count_frames(), 1u);
 
     std::remove(fname.c_str());
+}
+
+TEST(CubeInterpolation, NodeAlignedPeriodicRefinement)
+{
+    const double input[4] = {0.0, 1.0, 0.0, 2.0};
+    const double expected[8] = {0.0, 0.5, 1.0, 0.5, 0.0, 1.0, 2.0, 1.0};
+    double output[8] = {};
+    for (int axis = 0; axis < 3; ++axis)
+    {
+        int input_shape[3] = {1, 1, 1};
+        int output_shape[3] = {1, 1, 1};
+        input_shape[axis] = 4;
+        output_shape[axis] = 8;
+        ModuleIO::trilinear_interpolate(input, input_shape[0], input_shape[1], input_shape[2],
+                                       output_shape[0], output_shape[1], output_shape[2], output);
+        for (int i = 0; i < 8; ++i)
+        {
+            EXPECT_DOUBLE_EQ(output[i], expected[i]);
+            EXPECT_GE(output[i], 0.0);
+        }
+    }
+}
+
+TEST(CubeInterpolation, SameGridAndCoarsening)
+{
+    const double input[8] = {0.0, 0.5, 1.0, 0.5, 0.0, 1.0, 2.0, 1.0};
+    double same[8] = {};
+    double coarse[4] = {};
+    ModuleIO::trilinear_interpolate(input, 8, 1, 1, 8, 1, 1, same);
+    ModuleIO::trilinear_interpolate(input, 8, 1, 1, 4, 1, 1, coarse);
+    for (int i = 0; i < 8; ++i)
+    {
+        EXPECT_DOUBLE_EQ(same[i], input[i]);
+    }
+    for (int i = 0; i < 4; ++i)
+    {
+        EXPECT_DOUBLE_EQ(coarse[i], input[2 * i]);
+    }
 }

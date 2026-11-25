@@ -237,7 +237,7 @@ void ESolver_SDFT_PW<T, Device>::after_all_runners(BaseCell &basecell)
     }
 
     // 3) write down DOS
-    if (this->inp_->out_dos)
+    if (this->inp_->out_dos[0] != 0)
     {
         if (!std::is_same<T, std::complex<double>>::value || !std::is_same<Device, base_device::DEVICE_CPU>::value)
         {
