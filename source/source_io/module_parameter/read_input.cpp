@@ -285,7 +285,7 @@ void ReadInput::read_parameters(Parameter& param, const std::string& filename_in
     // It must be after the set_globalv, because some parameters need to be checked according to param.sys
     if (this->rank == 0)
     {
-        for (auto& input_item: this->input_lists)
+        for (std::pair<std::string, ModuleIO::Input_Item>& input_item: this->input_lists)
         {
             Input_Item* checkvalue_item = &(input_item.second);
             if (checkvalue_item->check_value != nullptr)
@@ -519,7 +519,7 @@ std::string ReadInput::prepare_input(Parameter& param)
     }
 
     // 1) read the value of the parameters
-    for (auto& readvalue_item: this->readvalue_items)
+    for (ModuleIO::Input_Item*& readvalue_item: this->readvalue_items)
     {
         readvalue_item->read_value(*readvalue_item, param);
     }
@@ -541,7 +541,7 @@ std::string ReadInput::prepare_input(Parameter& param)
 
     // 2) reset this value when some conditions are met
     //    e.g. if (calulation_type == "nscf") then set "init_chg" to "file".
-    for (auto& input_item: this->input_lists)
+    for (std::pair<std::string, ModuleIO::Input_Item>& input_item: this->input_lists)
     {
         Input_Item* resetvalue_item = &(input_item.second);
         if (resetvalue_item->reset_value != nullptr) 
@@ -806,7 +806,7 @@ void ReadInput::write_txt_input(const Parameter& param, const std::string& filen
     ofs << std::setiosflags(std::ios::left);
 
     ofs << "#Parameters (1.System)" << std::endl;
-    for (auto& item: this->input_lists)
+    for (std::pair<std::string, ModuleIO::Input_Item>& item: this->input_lists)
     {
         Input_Item* p_item = &(item.second);
         // Do not serialize an inactive internal marker as a public INPUT value.

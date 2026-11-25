@@ -34,7 +34,7 @@ TYPED_TEST(OutputMullikenTest, nspin1)
     this->nrow = 13;
     this->ncol = 13;
     this->paraV.para_2d().init(this->nrow, this->ncol, 1, MPI_COMM_WORLD, 0);
-    auto cell_index = CellIndex(this->atomLabels, this->atomCounts, this->lnchiCounts, 1);
+    CellIndex cell_index = CellIndex(this->atomLabels, this->atomCounts, this->lnchiCounts, 1);
     auto out_s_k = ModuleIO::Output_Sk<TypeParam>(nullptr, &this->paraV, 1, 1);
     auto out_dm_k = ModuleIO::Output_DMK<TypeParam>(nullptr, &this->paraV, 1, 1);
     auto mulp = ModuleIO::Output_Mulliken<TypeParam>(&(out_s_k), &(out_dm_k), &(this->paraV), &(cell_index), {0}, 1);
@@ -53,7 +53,7 @@ TYPED_TEST(OutputMullikenTest, AppendModes)
     this->nrow = 13;
     this->ncol = 13;
     this->paraV.para_2d().init(this->nrow, this->ncol, 1, MPI_COMM_WORLD, 0);
-    auto cell_index = CellIndex(this->atomLabels, this->atomCounts, this->lnchiCounts, 1);
+    CellIndex cell_index = CellIndex(this->atomLabels, this->atomCounts, this->lnchiCounts, 1);
     auto out_s_k = ModuleIO::Output_Sk<TypeParam>(nullptr, &this->paraV, 1, 1);
     auto out_dm_k = ModuleIO::Output_DMK<TypeParam>(nullptr, &this->paraV, 1, 1);
     auto mulp = ModuleIO::Output_Mulliken<TypeParam>(&(out_s_k), &(out_dm_k), &(this->paraV), &(cell_index), {0}, 1);
@@ -96,7 +96,7 @@ TYPED_TEST(OutputMullikenTest, nspin2)
     this->nrow = 13;
     this->ncol = 13;
     this->paraV.para_2d().init(this->nrow, this->ncol, 1, MPI_COMM_WORLD, 0);
-    auto cell_index = CellIndex(this->atomLabels, this->atomCounts, this->lnchiCounts, 2);
+    CellIndex cell_index = CellIndex(this->atomLabels, this->atomCounts, this->lnchiCounts, 2);
     auto out_s_k = ModuleIO::Output_Sk<TypeParam>(nullptr, &this->paraV, 2, 1);
     auto out_dm_k = ModuleIO::Output_DMK<TypeParam>(nullptr, &this->paraV, 2, 1);
     auto mulp = ModuleIO::Output_Mulliken<TypeParam>(&(out_s_k), &(out_dm_k), &(this->paraV), &(cell_index), {0, 1}, 2);
@@ -119,10 +119,10 @@ TYPED_TEST(OutputMullikenTest, nspin4)
     this->nrow = 26;
     this->ncol = 26;
     this->paraV.para_2d().init(this->nrow, this->ncol, 1, MPI_COMM_WORLD, 0);
-    auto cell_index = CellIndex(this->atomLabels, this->atomCounts, this->lnchiCounts, 4);
-    auto out_s_k = ModuleIO::Output_Sk<std::complex<double>>(nullptr, &this->paraV, 4, 1);
-    auto out_dm_k = ModuleIO::Output_DMK<std::complex<double>>(nullptr, &this->paraV, 4, 1);
-    auto mulp
+    CellIndex cell_index = CellIndex(this->atomLabels, this->atomCounts, this->lnchiCounts, 4);
+    ModuleIO::Output_Sk<std::complex<double>> out_s_k = ModuleIO::Output_Sk<std::complex<double>>(nullptr, &this->paraV, 4, 1);
+    ModuleIO::Output_DMK<std::complex<double>> out_dm_k = ModuleIO::Output_DMK<std::complex<double>>(nullptr, &this->paraV, 4, 1);
+    ModuleIO::Output_Mulliken<std::complex<double>> mulp
         = ModuleIO::Output_Mulliken<std::complex<double>>(&(out_s_k), &(out_dm_k), &(this->paraV), &(cell_index), {0}, 4);
     mulp.write(0, 0, "./", this->ofs_running);
     std::vector<double> tot_chg = mulp.get_tot_chg();
