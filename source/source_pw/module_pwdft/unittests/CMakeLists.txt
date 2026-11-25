@@ -128,3 +128,5 @@ addtest(
   SOURCES test_op_pw_meta.cpp ../op_pw_meta.cpp ../op_pw.cpp
           ../../../source_hamilt/operator.cpp
           ../../../source_psi/psi.cpp)
+# Match planewave_serial's class layout without changing MPI-enabled sibling tests.
+target_compile_options(MODULE_PW_op_pw_meta PRIVATE -U__MPI)
