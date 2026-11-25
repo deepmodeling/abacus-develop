@@ -131,7 +131,7 @@ class PdosCollectionTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as scratch:
             case = Path(scratch)
             shutil.copy(fixture / "INPUT", case)
-            shutil.copy(fixture / "dos.ref.json", case)
+            shutil.copy(fixture / "dos.ref", case)
             out = case / "OUT.autotest"
             out.mkdir()
             (out / "running_scf.log").write_text(" TOTAL ATOM NUMBER = 2\nETOT_ -1.0\n", encoding="utf-8")

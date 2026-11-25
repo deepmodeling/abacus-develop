@@ -46,7 +46,7 @@ void Meta<OperatorPW<T, Device>>::act(
     const int ngk_ik,
     const bool is_first_node)const
 {
-    if (XC_Functional::get_func_type() != 3)
+    if (!XC_Functional::get_ked_flag())
     {
         return;
     }

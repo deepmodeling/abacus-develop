@@ -25,6 +25,7 @@ void write_pdos_text(
         const std::string& out_dir,
         const int istep,
         const int out_app_flag,
+        const int precision,
         std::ofstream& ofs_running);
 
 /// Write one NPY array of atom- and orbital-projected spin spectra.

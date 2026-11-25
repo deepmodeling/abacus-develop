@@ -1,4 +1,5 @@
 #include <string>
+#include <vector>
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -24,6 +25,7 @@ class TestParameters
 };
 // mock functions for testing
 int XC_Functional::func_type = 1;
+bool XC_Functional::ked_flag = false;
 namespace elecstate
 {
 void Potential::init_pot(Charge const*)
@@ -155,6 +157,8 @@ void Charge::renormalize_rho(const double, const double)
 
 void Set_GlobalV_Default()
 {
+    XC_Functional::set_func_type(1);
+    XC_Functional::set_ked_flag(false);
     TestParameters::input().device = "cpu";
     TestParameters::input().precision = "double";
     TestParameters::sys().domag = false;
@@ -273,6 +277,7 @@ TEST_F(ElecStatePWTest, ConstructorSingle)
 TEST_F(ElecStatePWTest, InitRhoDataDouble)
 {
     XC_Functional::set_func_type(3);
+    XC_Functional::set_ked_flag(true);
     chg->nrxx = 1000;
     elecstate_pw_d = new elecstate::ElecStatePW<std::complex<double>, base_device::DEVICE_CPU>(wfcpw,
                                                                                                chg,
@@ -291,6 +296,7 @@ TEST_F(ElecStatePWTest, InitRhoDataSingle)
 {
     TestParameters::input().precision = "single";
     XC_Functional::set_func_type(3);
+    XC_Functional::set_ked_flag(true);
     chg->nspin = TestParameters::input().nspin;
     chg->nrxx = 1000;
     elecstate_pw_s = new elecstate::ElecStatePW<std::complex<float>, base_device::DEVICE_CPU>(wfcpw,
@@ -304,6 +310,85 @@ TEST_F(ElecStatePWTest, InitRhoDataSingle)
     EXPECT_EQ(elecstate_pw_s->init_rho, true);
     EXPECT_NE(elecstate_pw_s->rho, nullptr);
     EXPECT_NE(elecstate_pw_s->kin_r, nullptr);
+}
+
+TEST_F(ElecStatePWTest, HybridMetaKineticDensityAllocation)
+{
+    TestParameters::input().precision = "single";
+    XC_Functional::set_func_type(5);
+    XC_Functional::set_ked_flag(true);
+    chg->nspin = TestParameters::input().nspin;
+    chg->nrxx = 12;
+    elecstate_pw_s = new elecstate::ElecStatePW<std::complex<float>, base_device::DEVICE_CPU>(
+        wfcpw, chg, klist, ucell, ppcell, rhopw, bigpw);
+    elecstate_pw_s->init_rho_data();
+    ASSERT_NE(elecstate_pw_s->kin_r, nullptr);
+    ASSERT_NE(elecstate_pw_s->kin_r[0], nullptr);
+    elecstate_pw_s->kin_r[0][11] = 2.5f;
+    elecstate_pw_s->init_rho_data();
+    EXPECT_FLOAT_EQ(elecstate_pw_s->kin_r[0][11], 2.5f);
+}
+
+TEST_F(ElecStatePWTest, ElfKineticDensityAllocationWithoutMetaGga)
+{
+    TestParameters::input().precision = "single";
+    TestParameters::input().out_elf[0] = 1;
+    chg->nspin = TestParameters::input().nspin;
+    chg->nrxx = 12;
+    elecstate_pw_s = new elecstate::ElecStatePW<std::complex<float>, base_device::DEVICE_CPU>(
+        wfcpw, chg, klist, ucell, ppcell, rhopw, bigpw);
+    elecstate_pw_s->init_rho_data();
+    EXPECT_NE(elecstate_pw_s->kin_r, nullptr);
+    delete elecstate_pw_s;
+    elecstate_pw_s = nullptr;
+    TestParameters::input().out_elf[0] = 0;
+}
+
+TEST_F(ElecStatePWTest, HybridMetaUpdatesKineticDensityFromWavefunctions)
+{
+    delete wfcpw;
+    wfcpw = new ModulePW::PW_Basis_K("cpu", "double");
+    const ModuleBase::Matrix3 lattice(1, 0, 0, 0, 1, 0, 0, 0, 1);
+    const ModuleBase::Vector3<double> kpoint(0.2, 0.1, 0.0);
+    wfcpw->initgrids(6.0, lattice, 6, 6, 6);
+    wfcpw->initparameters(false, 3.0, 1, &kpoint, 1, true);
+    wfcpw->setuptransform();
+    wfcpw->collect_local_pw();
+    klist->set_nks(1);
+    ucell->tpiba = wfcpw->tpiba;
+    chg->nspin = 1;
+    chg->nrxx = wfcpw->nrxx;
+    std::vector<double> density(chg->nrxx, 0.0);
+    std::vector<double> tau(chg->nrxx, 37.0);
+    double* density_channel = density.data();
+    double* tau_channel = tau.data();
+    chg->rho = &density_channel;
+    chg->kin_r = &tau_channel;
+    XC_Functional::set_func_type(5);
+    XC_Functional::set_ked_flag(true);
+    elecstate_pw_d = new elecstate::ElecStatePW<std::complex<double>, base_device::DEVICE_CPU>(
+        wfcpw, chg, klist, ucell, ppcell, rhopw, bigpw);
+    elecstate_pw_d->wg.create(1, 1);
+    elecstate_pw_d->wg(0, 0) = 1.0;
+    psi::Psi<std::complex<double>> wavefunction(1, 1, wfcpw->npwk_max, wfcpw->npwk[0], true);
+    wavefunction.zero_out();
+    wavefunction(0, 0) = 1.0;
+    const double expected = wfcpw->gk2[0] * ucell->tpiba * ucell->tpiba / ucell->omega;
+    ASSERT_GT(expected, 0.0);
+    for (int type = 5; type >= 3; type -= 2)
+    {
+        XC_Functional::set_func_type(type);
+        for (int amplitude = 1; amplitude <= 2; ++amplitude)
+        {
+            wavefunction(0, 0) = amplitude;
+            elecstate_pw_d->psiToRho(wavefunction);
+            const double expected_tau = amplitude * amplitude * expected;
+            for (int ir = 0; ir < chg->nrxx; ++ir)
+            {
+                ASSERT_NEAR(tau[ir], expected_tau, 1.0e-12);
+            }
+        }
+    }
 }
 
 TEST_F(ElecStatePWTest, ParallelKDouble)
