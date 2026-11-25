@@ -1,18 +1,20 @@
 #include "source_io/module_parameter/read_input.h"
 #include <gtest/gtest.h>
 
+#include <utility>
+
 TEST(LibxcDeviceInput, DefaultAndAllowedDevices)
 {
     ModuleIO::ReadInput schema(0);
-    for (const auto& entry : schema.get_input_lists())
+    for (const std::pair<std::string, ModuleIO::Input_Item>& entry : schema.get_input_lists())
     {
         if (entry.first == "device_xc")
         {
-            const auto& domain = entry.second.domain;
+            const ModuleIO::InputDomain& domain = entry.second.domain;
             const Parameter defaults;
             EXPECT_EQ(domain.value(defaults).format(), "cpu");
             EXPECT_TRUE(domain.validate_explicit(entry.first, {"gpu"}).empty());
-            EXPECT_FALSE(domain.validate_explicit(entry.first, {"invalid"}).empty());
+            EXPECT_FALSE(domain.validate_explicit(entry.first, {"auto"}).empty());
 
             const ModuleIO::InputValue gpu(std::string{"gpu"});
             const ModuleIO::InputValue cpu(std::string{"cpu"});

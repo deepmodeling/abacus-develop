@@ -305,14 +305,6 @@ The other way is only available when compiling with LIBXC, and it allows for sup
                            "separate force/stress evaluations retain their CPU implementation.";
         item.default_value = "cpu";
         read_sync_string(input.device_xc);
-#if !defined(ABACUS_LIBXC_CUDA) || !defined(__CUDA)
-        item.check_value = [](const Input_Item&, const Parameter& para) {
-            if (para.input.device_xc == "gpu")
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "device_xc gpu requires ABACUS built with -DENABLE_LIBXC_CUDA=ON.");
-            }
-        };
-#endif
         this->add_item(item);
     }
     {

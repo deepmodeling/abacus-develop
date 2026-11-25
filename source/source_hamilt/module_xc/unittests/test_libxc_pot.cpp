@@ -12,6 +12,15 @@ namespace
 {
 class LibxcCudaPotential : public testing::TestWithParam<std::tuple<int, int, int>>
 {
+  protected:
+    std::vector<xc_func_type> host;
+    std::vector<xc_func_type> device;
+
+    void TearDown() override
+    {
+        XC_Functional_Libxc::finish_func(host);
+        XC_Functional_Libxc::finish_func(device);
+    }
 };
 
 TEST_P(LibxcCudaPotential, MatchesHostAcrossBatchBoundaries)
@@ -26,8 +35,8 @@ TEST_P(LibxcCudaPotential, MatchesHostAcrossBatchBoundaries)
     const int points = std::get<2>(parameters);
     const int nsigma = spin == 1 ? 1 : 3;
     const std::vector<int> ids = {id};
-    std::vector<xc_func_type> host = XC_Functional_Libxc::init_func(ids, spin, 0.31, 0.09);
-    std::vector<xc_func_type> device = XC_Functional_Libxc::init_func(ids, spin, 0.31, 0.09, true);
+    host = XC_Functional_Libxc::init_func(ids, spin, 0.31, 0.09);
+    device = XC_Functional_Libxc::init_func(ids, spin, 0.31, 0.09, true);
     const bool is_lda = host[0].info->family == XC_FAMILY_LDA;
     const std::size_t rho_size = static_cast<std::size_t>(points) * spin;
     const std::size_t sigma_size = static_cast<std::size_t>(points) * nsigma;
@@ -117,8 +126,6 @@ TEST_P(LibxcCudaPotential, MatchesHostAcrossBatchBoundaries)
             ASSERT_NEAR(vsigma_device[i], vsigma_host[i], tolerance) << i;
         }
     }
-    XC_Functional_Libxc::finish_func(host);
-    XC_Functional_Libxc::finish_func(device);
 }
 
 INSTANTIATE_TEST_SUITE_P(LdaGgaHse,

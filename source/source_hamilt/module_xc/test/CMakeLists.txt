@@ -152,7 +152,7 @@ addtest(
        device
        container
        base
-  SOURCES test_xc_functional_ncgga_sf.cpp)
+  SOURCES ../unittests/test_xc_functional_ncgga_sf.cpp)
 set_tests_properties(MODULE_HAMILT_XCTest_NCGGA_DISCRETE_FD
                      PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=1")
 add_test(
