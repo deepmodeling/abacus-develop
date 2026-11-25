@@ -54,7 +54,7 @@ bool primitive_symmetry(const ModuleSymmetry::Symmetry& symmetry)
         }
     }
     const ModuleBase::Matrix3 identity;
-    for (const auto& translation : symmetry.ptrans)
+    for (const ModuleBase::Vector3<double>& translation : symmetry.ptrans)
     {
         const bool forbidden = fractional_translation(identity, translation);
         if (forbidden)
@@ -97,7 +97,7 @@ bool slab_symmetry_valid(const ModuleSymmetry::Symmetry& symmetry, const int axi
         if (!valid) { return false; }
     }
     const ModuleBase::Matrix3 identity;
-    for (const auto& translation : symmetry.ptrans)
+    for (const ModuleBase::Vector3<double>& translation : symmetry.ptrans)
     {
         const bool valid = slab_operation_valid(identity, translation, axis);
         if (!valid) { return false; }
