@@ -184,7 +184,7 @@ HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in,
     }
     if (exx_info && exx_info->cal_exx)
     {
-        auto exx = new OperatorEXXPW<T, Device>(isk,
+        OperatorEXXPW<T, Device>* exx = new OperatorEXXPW<T, Device>(isk,
                                                 wfc_basis,
                                                 pot_in->get_rho_basis(),
                                                 pkv,

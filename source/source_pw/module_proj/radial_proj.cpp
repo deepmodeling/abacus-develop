@@ -21,7 +21,7 @@ void RadialProjection::build_backward_map(const std::vector<std::vector<int>>& i
     int nproj_tot = 0; // count the total number of projectors (atom-position-irrelevant)
     for(int it = 0; it < ntype; it++) // for all types with projector...
     {
-        for(auto& iproj: it2iproj[it]) // for each projector, the projector is indexed with global iproj
+        for(const int& iproj: it2iproj[it]) // for each projector, the projector is indexed with global iproj
         {
             const int l = iproj2l[iproj]; // easily get the angular momentum of this projector
             nproj_tot += (2*l + 1); // add 2l+1 to the total number of projectors
@@ -60,7 +60,7 @@ void RadialProjection::build_forward_map(const std::vector<std::vector<int>>& it
     for(int it = 0; it < ntype; it++)
     {
         const int nproj = it2iproj[it].size();
-        for(auto& ia: it2ia[it]) // the index is from UnitCell, so it allows the case ia is not continuous
+        for(const int& ia: it2ia[it]) // the index is from UnitCell, so it allows the case ia is not continuous
         {
             for(int iproj = 0; iproj < nproj; iproj++)
             {
@@ -206,7 +206,7 @@ void RadialProjection::RadialProjector::sbtft(const std::vector<ModuleBase::Vect
 
     const int nrad = l_.size();
     int nchannel = 0;
-    for(auto l: l_) { nchannel += 2*l+1; }
+    for(int l: l_) { nchannel += 2*l+1; }
     out.resize(nchannel*npw);
 
     std::vector<double> qnorm(npw);
