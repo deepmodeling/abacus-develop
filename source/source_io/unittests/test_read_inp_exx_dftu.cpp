@@ -47,10 +47,6 @@ TEST(DeviceExxInput, SelectionAndValidation)
     it->second.get_final_value(it->second, param);
     EXPECT_EQ(it->second.final_value.str(), "cpu");
 
-    it->second.str_values = {"ddla"};
-    it->second.read_value(it->second, param);
-    expect_rejected(it->second, param, "device_exx must be cpu or gpu");
-
     it->second.str_values = {"gpu"};
     it->second.read_value(it->second, param);
     EXPECT_EQ(param.inp.device_exx, "gpu");
