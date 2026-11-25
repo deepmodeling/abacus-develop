@@ -108,6 +108,11 @@ void Stochastic_WF<T, Device>::allocate_chi0()
     }
 
     this->nchip_max = tmpnchip;
+    // Record that real stochastic orbitals have been allocated.  This member
+    // was previously left at its default value of zero, so downstream code
+    // (notably the DOS range check) mistakenly used random test vectors even
+    // when chi0/chiortho were available.
+    this->nchi = nchi;
     size_t size = this->nchip_max * npwx * nks;
     this->chi0_cpu = new psi::Psi<T>(nks, this->nchip_max, npwx, this->ngk, true);
     ModuleBase::Memory::record("SDFT::chi0_cpu", size * sizeof(T));
@@ -204,6 +209,10 @@ void Stochastic_WF<T, Device>::init_com_orbitals()
         this->nchip_max = std::max(tmpnchip, this->nchip_max);
         delete[] npwip;
     }
+    // In the complete-basis ("all") mode nbands_sto is zero, but chi0 still
+    // contains real orbitals.  Keep nchi nonzero so that consumers such as
+    // check_che_op know that actual orbitals are available.
+    this->nchi = this->nchip_max;
     size_t size = this->nchip_max * npwx * nks;
     this->chi0_cpu = new psi::Psi<std::complex<double>>(nks, this->nchip_max, npwx, this->ngk, true);
     this->chi0_cpu->zero_out();
@@ -277,6 +286,7 @@ void Stochastic_WF<T, Device>::init_com_orbitals()
             this->chi0_cpu->operator()(ik, ichi, ichi) = 1;
         }
     }
+    this->nchi = this->nchip_max;
 
     // allocate chi0
     Device* ctx = {};
