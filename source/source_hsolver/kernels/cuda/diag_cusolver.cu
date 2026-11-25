@@ -14,7 +14,7 @@ constexpr auto problem_type = CUSOLVER_EIG_TYPE_1;
 constexpr auto job = CUSOLVER_EIG_MODE_VECTOR;
 constexpr auto triangle = CUBLAS_FILL_MODE_UPPER;
 
-[[noreturn]] void solver_error(
+void solver_error(
     const char *mode,
     const int n,
     const int nbands,
