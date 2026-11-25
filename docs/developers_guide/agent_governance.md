@@ -277,8 +277,8 @@ the PR why a new option is needed. Follow the naming of related options and
 aim for names of 15 characters or fewer with at most two underscores.
 
 For scalar INPUT parameters with a fixed set of choices, use
-`item.domain.set_choices(...)` so validation errors list the allowed values in
-a consistent format.
+[`item.domain.set_choices(...)`](input_validation.md) so validation errors list
+the allowed values in a consistent format.
 
 Changes to parameter metadata, default values, type, availability, description,
 or parsing behavior should update the corresponding C++ `Input_Item`
