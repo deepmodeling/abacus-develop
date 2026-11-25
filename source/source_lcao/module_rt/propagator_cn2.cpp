@@ -10,6 +10,10 @@
 #include "source_base/timer.h"
 #include "source_io/module_parameter/parameter.h"
 
+#ifdef __CUBLASMP
+#include <cuComplex.h>
+#endif
+
 #include <cassert>
 #include <complex>
 #include <cstddef>
@@ -318,9 +322,9 @@ void Propagator::compute_propagator_cn2_tensor(const int nlocal,
                                lld);
 
     // 4. Construct A (Denominator) and B (Numerator) using Geadd
-    std::complex<double> one = {1.0, 0.0};
-    std::complex<double> coef_neg_i = {0.0, -0.25 * this->dt};
-    std::complex<double> coef_pos_i = {0.0, 0.25 * this->dt};
+    const cuDoubleComplex one = make_cuDoubleComplex(1.0, 0.0);
+    const cuDoubleComplex coef_neg_i = make_cuDoubleComplex(0.0, -0.25 * this->dt);
+    const cuDoubleComplex coef_pos_i = make_cuDoubleComplex(0.0, 0.25 * this->dt);
 
     cudaMemcpyAsync(d_Num, d_S, len_loc * sizeof(std::complex<double>), cudaMemcpyDeviceToDevice, cublas_res.stream);
     cudaMemcpyAsync(d_Den, d_S, len_loc * sizeof(std::complex<double>), cudaMemcpyDeviceToDevice, cublas_res.stream);
@@ -495,7 +499,7 @@ void Propagator::compute_propagator_cn2_tensor(const int nlocal,
 
     // 7. Solve Triangular System (TRSM)
     size_t ws_trsm_dev = 0, ws_trsm_host = 0;
-    std::complex<double> alpha_trsm = {1.0, 0.0};
+    const cuDoubleComplex alpha_trsm = make_cuDoubleComplex(1.0, 0.0);
 
     cublasMpTrsm_bufferSize(cublas_res.cublasmp_handle,
                             CUBLAS_SIDE_LEFT,

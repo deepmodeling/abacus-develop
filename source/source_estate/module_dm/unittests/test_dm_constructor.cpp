@@ -1,4 +1,5 @@
 #include <chrono>
+#include <limits>
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -92,10 +93,17 @@ class DMTest : public testing::Test
 TEST_F(DMTest, DmkElementCountUsesSizeT)
 {
     // Issue #8342: the local block can exceed INT_MAX elements even when
-    // nrloc() and ncloc() themselves fit in int.
-    const std::size_t expected = static_cast<std::size_t>(paraV->para_2d().nrloc())
-                               * static_cast<std::size_t>(paraV->para_2d().ncloc());
-    EXPECT_EQ(module_dm::dmk_element_count(paraV), expected);
+    // nrloc() and ncloc() themselves fit in int.  Use a metadata-only serial
+    // layout so the local product is above INT_MAX without allocating a
+    // density matrix.
+    const int nloc = 50000; // 50000 * 50000 = 2.5e9 > INT_MAX
+    Parallel_Orbitals large_pv;
+    large_pv.para_2d().set_serial(nloc, nloc);
+
+    const std::size_t count = module_dm::dmk_element_count(&large_pv);
+    const std::size_t expected = static_cast<std::size_t>(nloc) * static_cast<std::size_t>(nloc);
+    EXPECT_EQ(count, expected);
+    EXPECT_GT(count, static_cast<std::size_t>(std::numeric_limits<int>::max()));
 }
 
 TEST_F(DMTest, DmkIndexUsesSizeT)

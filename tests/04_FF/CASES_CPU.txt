@@ -19,7 +19,7 @@
 19_LJ_RE_stop
 20_LJ_dry_run
 #50_DP_Al
-#101_NEP_HfO2
+101_NEP_HfO2
 102_SNAP_base
 103_SNAP_pbc
 104_SNAP_inner

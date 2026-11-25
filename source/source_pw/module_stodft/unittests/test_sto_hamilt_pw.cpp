@@ -1,32 +1,37 @@
 #include "../sto_hamilt_pw.h"
-#include "source_pw/module_pwdft/dftu_base.h"
 #include "source_hamilt/operator.h"
+#include "source_pw/module_pwdft/dftu_base.h"
 
 #include "gtest/gtest.h"
 #include <vector>
 
-elecstate::Potential::~Potential(){}
-void elecstate::Potential::cal_v_eff(Charge const*, UnitCell const*, ModuleBase::matrix&){}
-void elecstate::Potential::cal_fixed_v(double*){}
+elecstate::Potential::~Potential() {}
+void elecstate::Potential::cal_v_eff(Charge const *, UnitCell const *, ModuleBase::matrix &) {}
+void elecstate::Potential::cal_fixed_v(double *) {}
 
 template <typename T, typename Device>
 hamilt::HamiltPW<T, Device>::HamiltPW(
-		elecstate::Potential* pot_in,
-		ModulePW::PW_Basis_K* wfc_basis,
-		K_Vectors* p_kv,
-		pseudopot_cell_vnl* ppcell,
-        Plus_U_Base* p_dftu,
-		const UnitCell* ucell,
-        const General_Exx_Info* exx_info){}
+    elecstate::Potential *pot_in,
+    ModulePW::PW_Basis_K *wfc_basis,
+    K_Vectors *p_kv,
+    pseudopot_cell_vnl *ppcell,
+    Plus_U_Base *p_dftu,
+    const UnitCell *ucell,
+    const General_Exx_Info *exx_info)
+{
+}
 
+template <typename T, typename Device> hamilt::HamiltPW<T, Device>::~HamiltPW() { delete this->ops; };
+template <typename T, typename Device> void hamilt::HamiltPW<T, Device>::updateHk(int) {}
 template <typename T, typename Device>
-hamilt::HamiltPW<T, Device>::~HamiltPW(){
-    delete this->ops;
-};
-template <typename T, typename Device>
-void hamilt::HamiltPW<T, Device>::updateHk(int){}
-template <typename T, typename Device>
-void hamilt::HamiltPW<T, Device>::sPsi(T const*, T*, const int, const int, const int) const{}
+void hamilt::HamiltPW<T, Device>::sPsi(
+    T const *,
+    T *,
+    const int,
+    const int,
+    const int) const
+{
+}
 
 template class hamilt::HamiltPW<std::complex<double>, base_device::DEVICE_CPU>;
 template class hamilt::HamiltPW<std::complex<float>, base_device::DEVICE_CPU>;
@@ -40,17 +45,17 @@ template class hamilt::HamiltPW<std::complex<float>, base_device::DEVICE_GPU>;
  *  - void hPsi_norm(const T* psi_in, T* hpsi, const int& nbands)
  ***********************************************/
 
-template <typename T, typename Device>
-class TestOp : public hamilt::Operator<T, Device>
+template <typename T, typename Device> class TestOp : public hamilt::Operator<T, Device>
 {
   public:
-    virtual void act(const int nbands,
-                     const int nbasis,
-                     const int npol,
-                     const T* tmpsi_in,
-                     T* tmhpsi,
-                     const int ngk_ik = 0,
-                     const bool is_first_node = false) const override
+    virtual void act(
+        const int nbands,
+        const int nbasis,
+        const int npol,
+        const T *tmpsi_in,
+        T *tmhpsi,
+        const int ngk_ik = 0,
+        const bool is_first_node = false) const override
     {
         for (int i = 0; i < nbands; i++)
         {
@@ -77,7 +82,15 @@ class TestHamiltSto : public ::testing::Test
         p_kv = new K_Vectors();
         std::vector<int> ngk = {2};
         p_kv->ngk = ngk;
-        hamilt_sto = new StoHamiltPW<std::complex<double>, base_device::DEVICE_CPU>(pot, wfc_basis, p_kv, nullptr, nullptr, npol, &emin, &emax);
+        hamilt_sto = new StoHamiltPW<std::complex<double>, base_device::DEVICE_CPU>(
+            pot,
+            wfc_basis,
+            p_kv,
+            nullptr,
+            nullptr,
+            npol,
+            &emin,
+            &emax);
         hamilt_sto->ops = new TestOp<std::complex<double>, base_device::DEVICE_CPU>();
     }
 
@@ -89,10 +102,10 @@ class TestHamiltSto : public ::testing::Test
         delete hamilt_sto;
     }
 
-    elecstate::Potential* pot;
-    ModulePW::PW_Basis_K* wfc_basis;
-    K_Vectors* p_kv;
-    StoHamiltPW<std::complex<double>, base_device::DEVICE_CPU>* hamilt_sto;
+    elecstate::Potential *pot;
+    ModulePW::PW_Basis_K *wfc_basis;
+    K_Vectors *p_kv;
+    StoHamiltPW<std::complex<double>, base_device::DEVICE_CPU> *hamilt_sto;
     double emin = -2.0;
     double emax = 2.0;
 };

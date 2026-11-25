@@ -1,18 +1,17 @@
-#include "sccs_test.h"
-#include "../sccs_coul_0d.h"
 #include "../sccs_cav_deriv.h"
+#include "../sccs_coul_0d.h"
 #include "../sccs_functional.h"
 #include "../sccs_parameters.h"
 #include "../sccs_response.h"
+#include "sccs_test.h"
 
 #include "source_base/parallel_reduce.h"
 #include "source_basis/module_pw/pw_grid_geometry.h"
 #include "source_cell/cell_geometry.h"
 
-
 class SccsPcc0dCoulombTest : public SccsTest::PwTest
 {
-protected:
+  protected:
     void SetUp() override
     {
         SccsTest::PwTest::SetUp();
@@ -24,13 +23,13 @@ protected:
         const double half_length = 0.5 * length;
         cell.origin = ModuleBase::Vector3<double>(half_length, half_length, half_length);
         ModulePW::grid_positions(basis, lattice, length, positions);
-        for (ModuleBase::Vector3<double>& position : positions)
+        for (ModuleBase::Vector3<double> &position : positions)
         {
             position = unitcell::relative_position(position, cell);
         }
     }
 
-    double integrate_product(const std::vector<double>& left, const std::vector<double>& right) const
+    double integrate_product(const std::vector<double> &left, const std::vector<double> &right) const
     {
         double value = 0.0;
         for (int ir = 0; ir < basis.nrxx; ++ir)
@@ -68,8 +67,8 @@ TEST_F(SccsPcc0dCoulombTest, CorrectionMatchesExistingPccEnergyAndIsSymmetric)
     EXPECT_NEAR(charge_direction, direction_charge, 1e-13);
 
     const double dv = basis.omega / basis.nxyz;
-    const double* charge_data = charge.data();
-    const ModuleBase::Vector3<double>* position_data = positions.data();
+    const double *charge_data = charge.data();
+    const ModuleBase::Vector3<double> *position_data = positions.data();
     elecstate::ChargeMoments moments = elecstate::charge_moments(charge_data, position_data, basis.nrxx, dv);
     Parallel_Reduce::reduce_pool(moments.charge);
     Parallel_Reduce::reduce_pool(moments.dipole.x);
@@ -113,15 +112,14 @@ TEST_F(SccsPcc0dCoulombTest, ChargedUniformDielectricPreservesGaugeAndVacuumSubt
         ModuleSccs::SccsConfig config = ModuleSccs::preset_config(ModuleSccs::Preset::Vacuum);
         config.cavity.epsilon_bulk = epsilon;
         ModuleSccs::SccsResponse response;
-        ModuleSccs::solve_response(density, charge, config.cavity, SccsTest::no_probe, solver, cold,
-                                   basis, tpiba, coulomb, response);
+        ModuleSccs::solve_response(
+            density, charge, config.cavity, SccsTest::no_probe, solver, cold, basis, tpiba, coulomb, response);
         EXPECT_EQ(response.polarization.iterations, 1);
         const double solute_sum = integrate_product(charge, ones);
         const double screening = (1.0 / epsilon - 1.0) * solute_sum;
         EXPECT_NEAR(response.far_field_polarization_charge, screening, 1e-13);
         ModuleSccs::FunctionalResult result;
-        ModuleSccs::eval_functional(charge, response, config, SccsTest::no_probe, basis, tpiba,
-                                    coulomb, result);
+        ModuleSccs::eval_functional(charge, response, config, SccsTest::no_probe, basis, tpiba, coulomb, result);
         for (int ir = 0; ir < basis.nrxx; ++ir)
         {
             const double dielectric_potential = vacuum[ir] / epsilon;
@@ -129,7 +127,7 @@ TEST_F(SccsPcc0dCoulombTest, ChargedUniformDielectricPreservesGaugeAndVacuumSubt
             EXPECT_NEAR(response.polarization.potential[ir], dielectric_potential, 1e-13);
             EXPECT_NEAR(result.reaction_potential[ir], reaction, 1e-13);
             const double expected_electron_potential = -reaction;
-        EXPECT_NEAR(result.electron_potential[ir], expected_electron_potential, 1e-13);
+            EXPECT_NEAR(result.electron_potential[ir], expected_electron_potential, 1e-13);
         }
         const double expected_energy = 0.5 * (1.0 / epsilon - 1.0) * integrate_product(charge, vacuum);
         EXPECT_NEAR(result.reaction_energy, expected_energy, 1e-13);
@@ -149,10 +147,11 @@ TEST_F(SccsPcc0dCoulombTest, ChargedUniformDielectricPreservesGaugeAndVacuumSubt
             }
             ModuleSccs::SccsResponse shifted_response;
             ModuleSccs::FunctionalResult shifted_result;
-            ModuleSccs::solve_response(density, shifted, config.cavity, SccsTest::no_probe, solver, cold,
-                                       basis, tpiba, coulomb, shifted_response);
-            ModuleSccs::eval_functional(shifted, shifted_response, config, SccsTest::no_probe, basis, tpiba,
-                                        coulomb, shifted_result);
+            ModuleSccs::solve_response(
+                density, shifted, config.cavity, SccsTest::no_probe, solver, cold, basis, tpiba, coulomb,
+                shifted_response);
+            ModuleSccs::eval_functional(
+                shifted, shifted_response, config, SccsTest::no_probe, basis, tpiba, coulomb, shifted_result);
             energy[index++] = shifted_result.reaction_energy;
         }
         const double derivative = (energy[1] - energy[0]) / (2.0 * step);
@@ -181,15 +180,15 @@ TEST_F(SccsPcc0dCoulombTest, NonuniformResponseSatisfiesFixedPointAndFarFieldCha
     solver.tolerance_max = 1e-12;
     const std::vector<double> cold;
     ModuleSccs::SccsResponse response;
-    ModuleSccs::solve_response(density, charge, cavity, SccsTest::no_probe, solver, cold,
-                               basis, tpiba, coulomb, response);
+    ModuleSccs::solve_response(
+        density, charge, cavity, SccsTest::no_probe, solver, cold, basis, tpiba, coulomb, response);
     EXPECT_GT(response.polarization.iterations, 1);
     const bool open_boundary = true;
     ModuleSccs::SccsResponse derivatives;
     ModuleSccs::CavityDerivatives cavity_derivatives;
-    const std::vector<double>& coefficient = cavity_derivatives.coefficient;
-    ModuleSccs::make_cav_derivs(density, cavity, SccsTest::no_probe, basis, tpiba, open_boundary,
-                                derivatives, cavity_derivatives);
+    const std::vector<double> &coefficient = cavity_derivatives.coefficient;
+    ModuleSccs::make_cav_derivs(
+        density, cavity, SccsTest::no_probe, basis, tpiba, open_boundary, derivatives, cavity_derivatives);
     std::vector<double> source(basis.nrxx);
     for (int ir = 0; ir < basis.nrxx; ++ir)
     {
@@ -209,8 +208,9 @@ TEST_F(SccsPcc0dCoulombTest, NonuniformResponseSatisfiesFixedPointAndFarFieldCha
     const double expected_screening = source_sum / std::sqrt(cavity.epsilon_bulk) - solute_sum;
     EXPECT_NEAR(response.far_field_polarization_charge, expected_screening, 1e-13);
     ModuleSccs::SccsResponse restarted;
-    ModuleSccs::solve_response(density, charge, cavity, SccsTest::no_probe, solver, response.restart_potential,
-                               basis, tpiba, coulomb, restarted);
+    ModuleSccs::solve_response(
+        density, charge, cavity, SccsTest::no_probe, solver, response.restart_potential, basis, tpiba, coulomb,
+        restarted);
     EXPECT_TRUE(restarted.polarization.warm_started);
     EXPECT_LT(restarted.polarization.iterations, response.polarization.iterations);
     EXPECT_NEAR(restarted.far_field_polarization_charge, response.far_field_polarization_charge, 1e-10);

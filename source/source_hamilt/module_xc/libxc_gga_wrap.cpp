@@ -5,8 +5,8 @@
 #include "source_hamilt/module_xc/exx_info.h"
 #endif
 
-#include <xc.h>
 #include <array>
+#include <xc.h>
 
 namespace
 {
@@ -20,12 +20,12 @@ bool gcxc_is_negligible(const double rho, const double grho)
 } // namespace
 
 void XC_Functional_Libxc::gcxc_libxc(
-    const std::vector<xc_func_type>& funcs,
-    const double& rho,
-    const double& grho,
-    double& sxc,
-    double& v1xc,
-    double& v2xc)
+    const std::vector<xc_func_type> &funcs,
+    const double &rho,
+    const double &grho,
+    double &sxc,
+    double &v1xc,
+    double &v2xc)
 {
     sxc = 0.0;
     v1xc = 0.0;
@@ -36,7 +36,7 @@ void XC_Functional_Libxc::gcxc_libxc(
         return;
     }
 
-    for (const xc_func_type& func : funcs)
+    for (const xc_func_type &func : funcs)
     {
         double s = 0.0;
         double v1 = 0.0;
@@ -49,12 +49,12 @@ void XC_Functional_Libxc::gcxc_libxc(
 }
 
 void XC_Functional_Libxc::gcxc_libxc(
-    const std::vector<int>& func_id,
-    const double& rho,
-    const double& grho,
-    double& sxc,
-    double& v1xc,
-    double& v2xc,
+    const std::vector<int> &func_id,
+    const double &rho,
+    const double &grho,
+    double &sxc,
+    double &v1xc,
+    double &v2xc,
     const double hybrid_alpha,
     const double hse_omega)
 {
@@ -78,20 +78,18 @@ void XC_Functional_Libxc::gcxc_libxc(
     XC_Functional_Libxc::finish_func(funcs);
 } // end subroutine gcxc_libxc
 
-
-
 void XC_Functional_Libxc::gcxc_spin_libxc(
-    const std::vector<xc_func_type>& funcs,
+    const std::vector<xc_func_type> &funcs,
     const double rhoup,
     const double rhodw,
     const ModuleBase::Vector3<double> gdr1,
     const ModuleBase::Vector3<double> gdr2,
-    double& sxc,
-    double& v1xcup,
-    double& v1xcdw,
-    double& v2xcup,
-    double& v2xcdw,
-    double& v2xcud)
+    double &sxc,
+    double &v1xcup,
+    double &v1xcdw,
+    double &v2xcup,
+    double &v2xcdw,
+    double &v2xcud)
 {
     sxc = 0.0;
     v1xcup = 0.0;
@@ -102,7 +100,7 @@ void XC_Functional_Libxc::gcxc_spin_libxc(
     const std::array<double, 2> rho = {rhoup, rhodw};
     const std::array<double, 3> grho = {gdr1.norm2(), gdr1 * gdr2, gdr2.norm2()};
 
-    for (const xc_func_type& func : funcs)
+    for (const xc_func_type &func : funcs)
     {
         if (func.info->family == XC_FAMILY_GGA || func.info->family == XC_FAMILY_HYB_GGA)
         {
@@ -137,17 +135,17 @@ void XC_Functional_Libxc::gcxc_spin_libxc(
 }
 
 void XC_Functional_Libxc::gcxc_spin_libxc(
-    const std::vector<int>& func_id,
+    const std::vector<int> &func_id,
     const double rhoup,
     const double rhodw,
     const ModuleBase::Vector3<double> gdr1,
     const ModuleBase::Vector3<double> gdr2,
-    double& sxc,
-    double& v1xcup,
-    double& v1xcdw,
-    double& v2xcup,
-    double& v2xcdw,
-    double& v2xcud,
+    double &sxc,
+    double &v1xcup,
+    double &v1xcdw,
+    double &v2xcup,
+    double &v2xcdw,
+    double &v2xcud,
     const double hybrid_alpha,
     const double hse_omega)
 {
@@ -157,8 +155,7 @@ void XC_Functional_Libxc::gcxc_spin_libxc(
         /* hybrid_alpha = */ hybrid_alpha,
         /* hse_omega = */ hse_omega);
 
-    gcxc_spin_libxc(funcs, rhoup, rhodw, gdr1, gdr2,
-                    sxc, v1xcup, v1xcdw, v2xcup, v2xcdw, v2xcud);
+    gcxc_spin_libxc(funcs, rhoup, rhodw, gdr1, gdr2, sxc, v1xcup, v1xcdw, v2xcup, v2xcdw, v2xcud);
 
     XC_Functional_Libxc::finish_func(funcs);
 }

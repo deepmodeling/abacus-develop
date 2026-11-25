@@ -521,6 +521,7 @@ class AgentGovernanceCheckTest(unittest.TestCase):
         result = self.run_checker("--base", self.base, "--head", head)
 
         self.assert_warns_with_success(result, "Header dependency review")
+        self.assertNotIn("forward declaration", result.stdout.lower())
 
     def test_merge_base_scoped_comparison_excludes_base_branch_only_changes(self):
         self.write("source/source_base/api.h", "void update_solver(int step = 0);\n")

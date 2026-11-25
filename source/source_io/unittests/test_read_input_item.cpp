@@ -41,7 +41,7 @@ class InputTest : public testing::Test
     {
         ModuleIO::ReadInput schema(-1);
         ModuleIO::InputValues values;
-        for (const auto& entry : schema.get_input_lists())
+        for (const std::pair<std::string, ModuleIO::Input_Item>& entry : schema.get_input_lists())
         {
             if (entry.second.domain.bound()) { values[entry.first] = entry.second.domain.value(param); }
         }
@@ -113,7 +113,8 @@ TEST_F(InputTest, PwOnsiteRequiresDoublePrecision)
 TEST_F(InputTest, InvalidExplicitDomainDoesNotReachReadOrResetHooks)
 {
     ModuleIO::ReadInput reader(0);
-    auto item = find_label("nspin", reader.input_lists);
+    std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator item
+        = find_label("nspin", reader.input_lists);
     ASSERT_NE(item, reader.input_lists.end());
     item->second.str_values = {"3"};
     bool reset_called = false;
@@ -127,6 +128,58 @@ TEST_F(InputTest, InvalidExplicitDomainDoesNotReachReadOrResetHooks)
     EXPECT_THAT(error, testing::HasSubstr("supplied '3'"));
     EXPECT_EQ(input.inp.nspin, 1);
     EXPECT_FALSE(reset_called);
+}
+
+TEST_F(InputTest, OutDosAndOutMatXcRejectMalformedTokens)
+{
+    // Both options are read as integer vectors, whose domain skips the
+    // whole-token validation of the scalar readers, so prepare_input must
+    // reject partial tokens and overflowing values before read_value runs.
+    auto prepare = [&](const std::string& label, const std::vector<std::string>& tokens) {
+        ModuleIO::ReadInput reader(0);
+        Parameter param;
+        auto item = find_label(label, reader.input_lists);
+        if (item == reader.input_lists.end())
+        {
+            return std::string("missing label ") + label;
+        }
+        item->second.str_values = tokens;
+        reader.readvalue_items.push_back(&item->second);
+        return reader.prepare_input(param);
+    };
+
+    for (const std::vector<std::string>& tokens : {
+             std::vector<std::string>{"1junk"},
+             std::vector<std::string>{"1", "6junk"},
+             std::vector<std::string>{"1", "6", "7"},
+             std::vector<std::string>{"99999999999"}})
+    {
+        const std::string error = prepare("out_dos", tokens);
+        EXPECT_THAT(error, testing::HasSubstr("Invalid INPUT parameter 'out_dos'")) << error;
+    }
+    for (const std::vector<std::string>& tokens : {
+             std::vector<std::string>{"maybe"},
+             std::vector<std::string>{"1", "8x"},
+             std::vector<std::string>{"1", "8", "9"}})
+    {
+        const std::string error = prepare("out_mat_xc", tokens);
+        EXPECT_THAT(error, testing::HasSubstr("Invalid INPUT parameter 'out_mat_xc'")) << error;
+    }
+
+    for (const std::vector<std::string>& tokens : {std::vector<std::string>{"1"},
+                                                   std::vector<std::string>{"2"},
+                                                   std::vector<std::string>{"1", "4"}})
+    {
+        const std::string error = prepare("out_dos", tokens);
+        EXPECT_THAT(error, testing::Not(testing::HasSubstr("out_dos"))) << error;
+    }
+    for (const std::vector<std::string>& tokens : {std::vector<std::string>{"true"},
+                                                   std::vector<std::string>{"1"},
+                                                   std::vector<std::string>{"1", "4"}})
+    {
+        const std::string error = prepare("out_mat_xc", tokens);
+        EXPECT_THAT(error, testing::Not(testing::HasSubstr("out_mat_xc"))) << error;
+    }
 }
 
 TEST_F(InputTest, RelaxMethod)
@@ -824,12 +877,22 @@ TEST_F(InputTest, Item_test)
     }
     { // out_dos
         auto it = find_label("out_dos", readinput.input_lists);
-        TestParameters::input(param).calculation = "get_wf";
-        TestParameters::input(param).out_dos = 1;
-        it->second.reset_value(it->second, param);
-        EXPECT_EQ(TestParameters::input(param).out_dos, 0);
+        it->second.str_values = {"1"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(TestParameters::input(param).out_dos[0], 1);
+        EXPECT_EQ(TestParameters::input(param).out_dos[1], 6);
 
-        TestParameters::input(param).out_dos = 3;
+        it->second.str_values = {"1", "10"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(TestParameters::input(param).out_dos[0], 1);
+        EXPECT_EQ(TestParameters::input(param).out_dos[1], 10);
+
+        TestParameters::input(param).calculation = "get_wf";
+        TestParameters::input(param).out_dos[0] = 1;
+        it->second.reset_value(it->second, param);
+        EXPECT_EQ(TestParameters::input(param).out_dos[0], 0);
+
+        TestParameters::input(param).out_dos[0] = 3;
         TestParameters::input(param).symmetry = "1";
         testing::internal::CaptureStdout();
         EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
@@ -837,7 +900,7 @@ TEST_F(InputTest, Item_test)
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
 
         TestParameters::input(param).basis_type = "pw";
-        TestParameters::input(param).out_dos = 3;
+        TestParameters::input(param).out_dos[0] = 3;
         testing::internal::CaptureStdout();
         EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
@@ -2658,7 +2721,8 @@ TEST_F(InputTest, Item_test2)
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
     { // diag_subspace
-        auto it = find_label("diag_subspace", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it
+            = find_label("diag_subspace", readinput.input_lists);
         EXPECT_EQ(it->second.get_availability(), "basis_type==pw and ks_solver==dav_subspace");
     }
     { // md_nstep
@@ -2840,6 +2904,18 @@ TEST_F(InputTest, Item_test_out_mat_vec)
         it->second.read_value(it->second, param);
         EXPECT_EQ(TestParameters::input(param).out_mat_r[0], 1);
         EXPECT_EQ(TestParameters::input(param).out_mat_r[1], 6);
+    }
+    { // out_mat_xc
+        auto it = find_label("out_mat_xc", readinput.input_lists);
+        it->second.str_values = {"1"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(TestParameters::input(param).out_mat_xc[0], 1);
+        EXPECT_EQ(TestParameters::input(param).out_mat_xc[1], 8);
+
+        it->second.str_values = {"1", "10"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(TestParameters::input(param).out_mat_xc[0], 1);
+        EXPECT_EQ(TestParameters::input(param).out_mat_xc[1], 10);
     }
     { // out_mat_xc2
         auto it = find_label("out_mat_xc2", readinput.input_lists);

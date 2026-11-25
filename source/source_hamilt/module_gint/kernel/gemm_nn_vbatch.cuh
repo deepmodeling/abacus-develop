@@ -7,10 +7,10 @@
 #include <stdio.h> // for fprintf and stderr
 
 #include "gint_helper.cuh"
-#include <functional>
 #include "source_base/module_device/device.h"
 #include "source_base/module_device/device_check.h"
 #include "source_base/module_device/kernel_compat.h"
+#include <functional>
 
 // Shared-memory tile layout (K-inner): both operands store the contraction
 // (K) axis contiguously so the inner loop can read VK consecutive K elements
@@ -23,36 +23,28 @@
 // the per-warp access so the strided shared-memory reads spread across banks.
 // The widest FP64 tiles (DIM_X=16) still take a few bank conflicts on the sA
 // read, but that is a net win over the scalar layout this replaces.
-#define sA(i, j) sA[(i)*slda + (j)]
-#define sB(i, j) sB[(j)*sldb + (i)]
+#define sA(i, j) sA[(i) * slda + (j)]
+#define sB(i, j) sB[(j) * sldb + (i)]
 #define fetch(A, m, n, bound) offs_d##A[min(n * LD##A + m, bound)]
 
-template <typename T,
-          int DIM_X,
-          int DIM_Y,
-          int BLK_M,
-          int BLK_N,
-          int BLK_K,
-          int DIM_XA,
-          int DIM_YA,
-          int DIM_XB,
-          int DIM_YB,
-          int THR_M,
-          int THR_N>
-static __device__ void vbatched_gemm_nn_device(int M,
-                                               int N,
-                                               int K,
-                                               const T* __restrict__ A,
-                                               int LDA,
-                                               const T* __restrict__ B,
-                                               int LDB,
-                                               double* __restrict__ C,
-                                               int LDC,
-                                               T*  sA,
-                                               int slda,
-                                               T*  sB,
-                                               int sldb,
-                                               T alpha)
+template <
+    typename T, int DIM_X, int DIM_Y, int BLK_M, int BLK_N, int BLK_K, int DIM_XA, int DIM_YA, int DIM_XB, int DIM_YB,
+    int THR_M, int THR_N>
+static __device__ void vbatched_gemm_nn_device(
+    int M,
+    int N,
+    int K,
+    const T *__restrict__ A,
+    int LDA,
+    const T *__restrict__ B,
+    int LDB,
+    double *__restrict__ C,
+    int LDC,
+    T *sA,
+    int slda,
+    T *sB,
+    int sldb,
+    T alpha)
 {
     using vec_t = typename gemm_vec_traits<T>::vec_t;
     constexpr int VK = gemm_vec_traits<T>::VK;
@@ -60,23 +52,20 @@ static __device__ void vbatched_gemm_nn_device(int M,
     // BLK_K must be a whole number of VK chunks so the vectorized FMA loop
     // below covers it exactly; the 16-byte alignment of the K-stride is
     // enforced separately at kernel scope.
-    static_assert(BLK_K % VK == 0,
-                  "BLK_K must be divisible by VK (16 / sizeof(T))");
+    static_assert(BLK_K % VK == 0, "BLK_K must be divisible by VK (16 / sizeof(T))");
 
     // Tile divisibility: every dev->shmem load loop assumes BLK_* is an exact
     // multiple of the matching DIM_*, and the per-thread fan-out THR_M/THR_N is
     // BLK_M/BLK_N divided by DIM_X/DIM_Y. A mis-specified instantiation would
     // silently load garbage, so surface it at compile time.
-    static_assert(BLK_M % DIM_X  == 0, "BLK_M must be divisible by DIM_X");
-    static_assert(BLK_N % DIM_Y  == 0, "BLK_N must be divisible by DIM_Y");
+    static_assert(BLK_M % DIM_X == 0, "BLK_M must be divisible by DIM_X");
+    static_assert(BLK_N % DIM_Y == 0, "BLK_N must be divisible by DIM_Y");
     static_assert(BLK_M % DIM_XA == 0, "BLK_M must be divisible by DIM_XA");
     static_assert(BLK_K % DIM_YA == 0, "BLK_K must be divisible by DIM_YA");
     static_assert(BLK_K % DIM_XB == 0, "BLK_K must be divisible by DIM_XB");
     static_assert(BLK_N % DIM_YB == 0, "BLK_N must be divisible by DIM_YB");
-    static_assert(DIM_XA * DIM_YA == DIM_X * DIM_Y,
-                  "A-loader thread grid must cover the whole block");
-    static_assert(DIM_XB * DIM_YB == DIM_X * DIM_Y,
-                  "B-loader thread grid must cover the whole block");
+    static_assert(DIM_XA * DIM_YA == DIM_X * DIM_Y, "A-loader thread grid must cover the whole block");
+    static_assert(DIM_XB * DIM_YB == DIM_X * DIM_Y, "B-loader thread grid must cover the whole block");
 
     int idx = threadIdx.x; // thread's m dimension
     int idy = threadIdx.y; // thread's n dimension
@@ -106,13 +95,11 @@ static __device__ void vbatched_gemm_nn_device(int M,
 
     // bound is the correction to offs_d in order to not get out of memory bound
     // so bound could be negative value since offs_d could be out of bound
-    const T* offs_dA = A + blx * BLK_M + idyA * LDA + idxA;
-    int boundA
-        = (LDA * (K - 1) + M) - (blx * BLK_M + idyA * LDA + idxA) - 1;
+    const T *offs_dA = A + blx * BLK_M + idyA * LDA + idxA;
+    int boundA = (LDA * (K - 1) + M) - (blx * BLK_M + idyA * LDA + idxA) - 1;
 
-    const T* offs_dB = B + bly * BLK_N * LDB + idyB * LDB + idxB;
-    int boundB
-        = (LDB * (N - 1) + K) - (bly * BLK_N * LDB + idyB * LDB + idxB) - 1;
+    const T *offs_dB = B + bly * BLK_N * LDB + idyB * LDB + idxB;
+    int boundB = (LDB * (N - 1) + K) - (bly * BLK_N * LDB + idyB * LDB + idxB) - 1;
 
     int m, n, k, kk;
 
@@ -192,8 +179,7 @@ static __device__ void vbatched_gemm_nn_device(int M,
 #pragma unroll
             for (m = 0; m < THR_M; m++)
             {
-                vec_t va = *reinterpret_cast<const vec_t*>(
-                    &sA(m * DIM_X + idx, k));
+                vec_t va = *reinterpret_cast<const vec_t *>(&sA(m * DIM_X + idx, k));
                 gemm_vec_traits<T>::unpack(va, rA[m]);
             }
 
@@ -201,8 +187,7 @@ static __device__ void vbatched_gemm_nn_device(int M,
 #pragma unroll
             for (n = 0; n < THR_N; n++)
             {
-                vec_t vb = *reinterpret_cast<const vec_t*>(
-                    &sB(k, n * DIM_Y + idy));
+                vec_t vb = *reinterpret_cast<const vec_t *>(&sB(k, n * DIM_Y + idy));
                 gemm_vec_traits<T>::unpack(vb, rB[n]);
             }
 
@@ -303,76 +288,47 @@ static __device__ void vbatched_gemm_nn_device(int M,
 }
 
 /******************************************************************************/
-template <typename T,
-          int DIM_X,
-          int DIM_Y,
-          int BLK_M,
-          int BLK_N,
-          int BLK_K,
-          int DIM_XA,
-          int DIM_YA,
-          int DIM_XB,
-          int DIM_YB>
-static __global__ void vbatched_gemm_nn_kernel(int M,
-                                              int N,
-                                              int K,
-                                              const T* const* global_A_array,
-                                              const int* global_lda,
-                                              const T* const* global_B_array,
-                                              const int* global_ldb,
-                                              double** global_C_array,
-                                              const int* global_ldc,
-                                              const T* alpha)
+template <
+    typename T, int DIM_X, int DIM_Y, int BLK_M, int BLK_N, int BLK_K, int DIM_XA, int DIM_YA, int DIM_XB, int DIM_YB>
+static __global__ void vbatched_gemm_nn_kernel(
+    int M,
+    int N,
+    int K,
+    const T *const *global_A_array,
+    const int *global_lda,
+    const T *const *global_B_array,
+    const int *global_ldb,
+    double **global_C_array,
+    const int *global_ldc,
+    const T *alpha)
 {
     // 16-byte align for vec_t (double2 / float4) loads.
     extern __shared__ __align__(16) unsigned char smem[];
-    T* shared_mem = reinterpret_cast<T*>(smem);
+    T *shared_mem = reinterpret_cast<T *>(smem);
 
     int batchid = blockIdx.z;
 
     constexpr int PAD = gemm_vec_traits<T>::PAD;
-    static_assert(((BLK_K + PAD) * sizeof(T)) % 16 == 0,
-                  "shmem K-stride * sizeof(T) must be 16-byte aligned for "
-                  "LDS.{64,128}");
-    static_assert(BLK_K % gemm_vec_traits<T>::VK == 0,
-                  "BLK_K must be divisible by VK = 16 / sizeof(T)");
+    static_assert(
+        ((BLK_K + PAD) * sizeof(T)) % 16 == 0, "shmem K-stride * sizeof(T) must be 16-byte aligned for "
+                                               "LDS.{64,128}");
+    static_assert(BLK_K % gemm_vec_traits<T>::VK == 0, "BLK_K must be divisible by VK = 16 / sizeof(T)");
 
     // K-inner layout: slda/sldb are the K-axis stride (BLK_K + PAD) for sA
     // (BLK_M rows) and sB (BLK_N columns) respectively.
     int shared_lda = BLK_K + PAD;
     int shared_ldb = BLK_K + PAD;
-    T* shared_A = (T*)shared_mem;
-    T* shared_B = shared_A + BLK_M * shared_lda;
+    T *shared_A = (T *)shared_mem;
+    T *shared_B = shared_A + BLK_M * shared_lda;
     T alpha_tmp = T(1.0);
     if (alpha != nullptr)
     {
         alpha_tmp = alpha[batchid];
     }
-    vbatched_gemm_nn_device<T,
-                           DIM_X,
-                           DIM_Y,
-                           BLK_M,
-                           BLK_N,
-                           BLK_K,
-                           DIM_XA,
-                           DIM_YA,
-                           DIM_XB,
-                           DIM_YB,
-                           (BLK_M / DIM_X),
-                           (BLK_N / DIM_Y)>(M,
-                                            N,
-                                            K,
-                                            global_A_array[batchid],
-                                            (int)global_lda[batchid],
-                                            global_B_array[batchid],
-                                            (int)global_ldb[batchid],
-                                            global_C_array[batchid],
-                                            (int)global_ldc[batchid],
-                                            shared_A,
-                                            shared_lda,
-                                            shared_B,
-                                            shared_ldb,
-                                            alpha_tmp);
+    vbatched_gemm_nn_device<
+        T, DIM_X, DIM_Y, BLK_M, BLK_N, BLK_K, DIM_XA, DIM_YA, DIM_XB, DIM_YB, (BLK_M / DIM_X), (BLK_N / DIM_Y)>(
+        M, N, K, global_A_array[batchid], (int)global_lda[batchid], global_B_array[batchid], (int)global_ldb[batchid],
+        global_C_array[batchid], (int)global_ldc[batchid], shared_A, shared_lda, shared_B, shared_ldb, alpha_tmp);
 }
 
 /**
@@ -409,28 +365,21 @@ static __global__ void vbatched_gemm_nn_kernel(int M,
  * @param alpha The scalar value to multiply the matrices by (optional, default
  * is nullptr).
  */
-template <typename T,
-          int DIM_X,
-          int DIM_Y,
-          int BLK_M,
-          int BLK_N,
-          int BLK_K,
-          int DIM_XA,
-          int DIM_YA,
-          int DIM_XB,
-          int DIM_YB>
-void vbatched_gemm_nn_impl(int m,
-                           int n,
-                           int k,
-                           const T* const* global_A_array,
-                           const int* global_lda,
-                           const T* const* global_B_array,
-                           const int* global_ldb,
-                           double** global_C_array,
-                           const int* global_ldc,
-                           int batchCount,
-                           cudaStream_t stream,
-                           const T* alpha = nullptr)
+template <
+    typename T, int DIM_X, int DIM_Y, int BLK_M, int BLK_N, int BLK_K, int DIM_XA, int DIM_YA, int DIM_XB, int DIM_YB>
+void vbatched_gemm_nn_impl(
+    int m,
+    int n,
+    int k,
+    const T *const *global_A_array,
+    const int *global_lda,
+    const T *const *global_B_array,
+    const int *global_ldb,
+    double **global_C_array,
+    const int *global_ldc,
+    int batchCount,
+    cudaStream_t stream,
+    const T *alpha = nullptr)
 {
     // The positions of A and B have been swapped here.
     // This is because vbatch_gemm_nn_kernel is column major,
@@ -449,31 +398,17 @@ void vbatched_gemm_nn_impl(int m,
     for (int i = 0; i < batchCount; i += max_batch_count)
     {
         const int ibatch = min(max_batch_count, batchCount - i);
-        dim3 dimGrid(ceil_div(n, BLK_M),
-                     ceil_div(m, BLK_N),
-                     ibatch);
-        const T* alpha_tmp = nullptr;
+        dim3 dimGrid(ceil_div(n, BLK_M), ceil_div(m, BLK_N), ibatch);
+        const T *alpha_tmp = nullptr;
         if (alpha != nullptr)
         {
             alpha_tmp = alpha + i;
         }
 
-        vbatched_gemm_nn_kernel<T,
-                                DIM_X,
-                                DIM_Y,
-                                BLK_M,
-                                BLK_N,
-                                BLK_K,
-                                DIM_XA,
-                                DIM_YA,
-                                DIM_XB,
-                                DIM_YB>
+        vbatched_gemm_nn_kernel<T, DIM_X, DIM_Y, BLK_M, BLK_N, BLK_K, DIM_XA, DIM_YA, DIM_XB, DIM_YB>
             <<<dimGrid, dimBlock, shared_mem_size, stream>>>(
-                n, m, k,
-                global_B_array + i, global_ldb + i,
-                global_A_array + i, global_lda + i,
-                global_C_array + i, global_ldc + i,
-                alpha_tmp);
+                n, m, k, global_B_array + i, global_ldb + i, global_A_array + i, global_lda + i, global_C_array + i,
+                global_ldc + i, alpha_tmp);
         CHECK_LAST_CUDA_ERROR("kernel launch");
     }
 }

@@ -18,7 +18,7 @@ namespace ModuleMD
 
 namespace
 {
-void fail(const std::string& message, const int rank)
+void fail(const std::string &message, const int rank)
 {
     if (rank != 0)
     {
@@ -27,9 +27,9 @@ void fail(const std::string& message, const int rank)
     ModuleBase::WARNING_QUIT("ESolver_SNAP", message);
 }
 
-std::string full_path(const std::string& path, const int rank)
+std::string full_path(const std::string &path, const int rank)
 {
-    char* resolved = ::realpath(path.c_str(), nullptr);
+    char *resolved = ::realpath(path.c_str(), nullptr);
     if (resolved == nullptr)
     {
         const std::string message = "Cannot resolve SNAP file path: " + path;
@@ -40,19 +40,19 @@ std::string full_path(const std::string& path, const int rank)
     return result;
 }
 
-ModuleMD::SNAP::Neighbor make_neighbor(const NeighborAtom& center,
-                                       const NeighborAtom& neighbor,
-                                       const double lat0,
-                                       const ModuleMD::SNAP::ModelParameters& parameters)
+ModuleMD::SNAP::Neighbor make_neighbor(
+    const NeighborAtom &center,
+    const NeighborAtom &neighbor,
+    const double lat0,
+    const ModuleMD::SNAP::ModelParameters &parameters)
 {
     ModuleMD::SNAP::Neighbor result;
     result.x = (neighbor.position_x - center.position_x) * lat0 * ModuleBase::BOHR_TO_A;
     result.y = (neighbor.position_y - center.position_y) * lat0 * ModuleBase::BOHR_TO_A;
     result.z = (neighbor.position_z - center.position_z) * lat0 * ModuleBase::BOHR_TO_A;
     result.weight = parameters.element_weights[neighbor.atom_type];
-    result.cutoff_radius = (parameters.element_radii[center.atom_type]
-                            + parameters.element_radii[neighbor.atom_type])
-                           * parameters.rcutfac;
+    result.cutoff_radius = (parameters.element_radii[center.atom_type] + parameters.element_radii[neighbor.atom_type]) *
+                           parameters.rcutfac;
     result.element_index = static_cast<std::size_t>(neighbor.atom_type);
     if (parameters.switchinner_flag)
     {
@@ -63,17 +63,18 @@ ModuleMD::SNAP::Neighbor make_neighbor(const NeighborAtom& center,
     }
     return result;
 }
-}
+} // namespace
 
-SnapPotential::SnapPotential(const std::string& coefficient_file,
-                           const std::string& parameter_file,
-                           std::ofstream& running_log,
-                           const int rank)
+SnapPotential::SnapPotential(
+    const std::string &coefficient_file,
+    const std::string &parameter_file,
+    std::ofstream &running_log,
+    const int rank)
     : coefficient_file_(coefficient_file), parameter_file_(parameter_file), running_log_(running_log), rank_(rank)
 {
 }
 
-void SnapPotential::initialize(const std::vector<std::string>& labels)
+void SnapPotential::initialize(const std::vector<std::string> &labels)
 {
     std::string error;
     if (!model_.load(coefficient_file_, parameter_file_, labels, error))
@@ -93,25 +94,25 @@ void SnapPotential::initialize(const std::vector<std::string>& labels)
     {
         calculator_.reset(new ModuleMD::SNAP::Calculator(model_));
     }
-    catch (const std::exception& error)
+    catch (const std::exception &error)
     {
         const std::string message = std::string("Invalid SNAP model: ") + error.what();
         fail(message, rank_);
     }
 }
 
-void SnapPotential::initialize(BaseCell& cell, const Input_para& inp)
+void SnapPotential::initialize(BaseCell &cell, const Input_para &inp)
 {
     static_cast<void>(inp);
     if (cell.kind() == BaseCell::Kind::mdcell)
     {
-        MDCell& mdcell = static_cast<MDCell&>(cell);
+        MDCell &mdcell = static_cast<MDCell &>(cell);
         initialize(mdcell.type_labels());
         mdcell.set_neighbor_cutoff(model_.parameters.rcut * ModuleBase::ANGSTROM_AU);
         return;
     }
 
-    UnitCell& ucell = static_cast<UnitCell&>(cell);
+    UnitCell &ucell = static_cast<UnitCell &>(cell);
     std::vector<std::string> labels;
     for (int it = 0; it < ucell.ntype; ++it)
     {
@@ -120,10 +121,12 @@ void SnapPotential::initialize(BaseCell& cell, const Input_para& inp)
     initialize(labels);
 }
 
-void SnapPotential::compute(BaseCell& cell,
-                            double& energy,
-                            ModuleBase::matrix& force,
-                            ModuleBase::matrix& stress) try
+void SnapPotential::compute(
+    BaseCell &cell,
+    double &energy,
+    ModuleBase::matrix &force,
+    ModuleBase::matrix &stress)
+try
 {
     if (!calculator_)
     {
@@ -134,31 +137,28 @@ void SnapPotential::compute(BaseCell& cell,
 
     if (cell.kind() == BaseCell::Kind::mdcell)
     {
-        MDCell& mdcell = static_cast<MDCell&>(cell);
+        MDCell &mdcell = static_cast<MDCell &>(cell);
         if (!mdcell.has_neighbor_search())
         {
             fail("MDCell neighbors must be prepared before SnapPotential::runner().", rank_);
         }
-        std::vector<LocalAtom>& owned_atoms = mdcell.owned_atoms();
-        const std::vector<NeighborAtom>& all_atoms = mdcell.neighbor_search().get_all_atoms();
-        const NeighborList& list = mdcell.neighbor_search().get_neighbor_list();
+        std::vector<LocalAtom> &owned_atoms = mdcell.owned_atoms();
+        const std::vector<NeighborAtom> &all_atoms = mdcell.neighbor_search().get_all_atoms();
+        const NeighborList &list = mdcell.neighbor_search().get_neighbor_list();
         const int nowned = static_cast<int>(owned_atoms.size());
         ModuleMD::SNAP::CellAccumulator contribution(all_atoms.size());
         for (int i = 0; i < nowned; ++i)
         {
-            const NeighborAtom center(owned_atoms[i].cart.x,
-                                      owned_atoms[i].cart.y,
-                                      owned_atoms[i].cart.z,
-                                      owned_atoms[i].type,
-                                      i,
-                                      i);
+            const NeighborAtom center(
+                owned_atoms[i].cart.x, owned_atoms[i].cart.y, owned_atoms[i].cart.z, owned_atoms[i].type, i, i);
             std::vector<ModuleMD::SNAP::Neighbor> neighbors;
             std::vector<std::size_t> neighbor_indices;
             for (int k = 0; k < list.get_numneigh(i); ++k)
             {
                 const int neighbor_index = list.get_firstneigh(i)[k];
-                const NeighborAtom& neighbor = all_atoms[neighbor_index];
-                if (neighbor.atom_type < 0 || static_cast<std::size_t>(neighbor.atom_type) >= model_.parameters.elements.size())
+                const NeighborAtom &neighbor = all_atoms[neighbor_index];
+                if (neighbor.atom_type < 0 ||
+                    static_cast<std::size_t>(neighbor.atom_type) >= model_.parameters.elements.size())
                 {
                     fail("MDCell atom type is outside the SNAP element map.", rank_);
                 }
@@ -166,7 +166,8 @@ void SnapPotential::compute(BaseCell& cell,
                 neighbor_indices.push_back(static_cast<std::size_t>(neighbor_index));
             }
             const std::size_t center_element = static_cast<std::size_t>(center.atom_type);
-            const ModuleMD::SNAP::ForceResult result = calculator_->compute_with_analytic_force(neighbors, center_element);
+            const ModuleMD::SNAP::ForceResult result =
+                calculator_->compute_with_analytic_force(neighbors, center_element);
             const std::size_t center_index = static_cast<std::size_t>(i);
             contribution.add(center_index, neighbor_indices, neighbors, result);
         }
@@ -183,7 +184,7 @@ void SnapPotential::compute(BaseCell& cell,
         const double force_scale = 1.0 / (ModuleBase::Ry_to_eV * ModuleBase::ANGSTROM_AU);
         for (std::size_t i = 0; i < mdcell.ghost_atoms().size(); ++i)
         {
-            const std::array<double, 3>& value = contribution.forces()[nowned + i];
+            const std::array<double, 3> &value = contribution.forces()[nowned + i];
             const double fx = value[0] * force_scale;
             const double fy = value[1] * force_scale;
             const double fz = value[2] * force_scale;
@@ -198,7 +199,7 @@ void SnapPotential::compute(BaseCell& cell,
         domain.sum(stress.c, 9);
         for (int i = 0; i < nowned; ++i)
         {
-            const std::array<double, 3>& value = contribution.forces()[i];
+            const std::array<double, 3> &value = contribution.forces()[i];
             const double fx = value[0] * force_scale;
             const double fy = value[1] * force_scale;
             const double fz = value[2] * force_scale;
@@ -207,13 +208,13 @@ void SnapPotential::compute(BaseCell& cell,
         return;
     }
 
-    UnitCell& ucell = static_cast<UnitCell&>(cell);
+    UnitCell &ucell = static_cast<UnitCell &>(cell);
     NeighborSearch search;
     search.init(ucell, model_.parameters.rcut * ModuleBase::ANGSTROM_AU);
     search.build_neighbors();
-    const NeighborList& list = search.get_neighbor_list();
-    const std::vector<NeighborAtom>& inside = search.get_inside_atoms();
-    const std::vector<NeighborAtom>& all = search.get_all_atoms();
+    const NeighborList &list = search.get_neighbor_list();
+    const std::vector<NeighborAtom> &inside = search.get_inside_atoms();
+    const std::vector<NeighborAtom> &all = search.get_all_atoms();
     force.create(ucell.nat, 3);
     force.zero_out();
     const std::size_t atom_count = static_cast<std::size_t>(ucell.nat);
@@ -225,12 +226,12 @@ void SnapPotential::compute(BaseCell& cell,
     }
     for (int local_i = 0; local_i < list.get_ncentral_atoms(); ++local_i)
     {
-        const NeighborAtom& center = inside[local_i];
+        const NeighborAtom &center = inside[local_i];
         std::vector<ModuleMD::SNAP::Neighbor> neighbors;
         std::vector<std::size_t> atom_indices;
         for (int k = 0; k < list.get_numneigh(local_i); ++k)
         {
-            const NeighborAtom& neighbor = all[list.get_firstneigh(local_i)[k]];
+            const NeighborAtom &neighbor = all[list.get_firstneigh(local_i)[k]];
             neighbors.push_back(make_neighbor(center, neighbor, ucell.lat0, model_.parameters));
             const int atom_index = offsets[neighbor.atom_type] + neighbor.atom_index;
             const std::size_t index = static_cast<std::size_t>(atom_index);
@@ -263,7 +264,7 @@ void SnapPotential::compute(BaseCell& cell,
         }
     }
 }
-catch (const std::exception& error)
+catch (const std::exception &error)
 {
     const std::string message = std::string("SNAP evaluation failed: ") + error.what();
     fail(message, rank_);

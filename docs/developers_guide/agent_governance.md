@@ -46,8 +46,9 @@ focused cleanup.
   `PARAM`. Prefer explicit parameters or narrow local interfaces.
 - Do not store workflow switches in mutable member variables that can be changed
   implicitly from multiple places.
-- Keep header dependencies minimal; avoid adding includes to headers unless the
-  declaration truly requires them.
+- Keep header dependencies clean and explicit; avoid unnecessary includes in
+  headers, and do not replace `#include` directives with forward declarations
+  just to silence header include warnings.
 - Avoid adding `.hpp` implementation headers and avoid including `.hpp` files
   from other headers unless the PR explains why header-only implementation is
   needed.
@@ -58,6 +59,7 @@ focused cleanup.
 - Keep default and general-purpose C++ changes compatible with the repository
   C++11 baseline. Backend-specific or dependency-constrained paths may use the
   higher standard already selected by existing CMake configuration.
+- Prefer explicit types over `auto` in C++ declarations.
 - Use LF line endings for text files. `.bat` and `.cmd` are the CRLF exception.
 - Place `ModuleBase::timer::start`/`end` at the beginning and end of a function,
   not around isolated statements inside the function body. Use the enclosing
@@ -122,8 +124,9 @@ Deterministic errors require a code or documentation fix before merge unless a
 maintainer-approved exception is recorded. Deterministic warnings require a
 reviewable rationale or cleanup, but they do not become blockers without an
 explicit governance change. For header include warnings, the rationale should
-state whether the header needs a complete type, for example because it owns a
-value member rather than a pointer or reference.
+confirm that the included header is actually used and does not introduce
+unnecessary or circular dependencies; explicit `#include` directives are
+preferred over replacing them with forward declarations.
 
 For global dependencies, the mechanical checker uses a PR-level budget during
 the legacy migration period. A PR blocks only when the number of code references
@@ -166,11 +169,17 @@ the repository:
 
 - CMake/CTest builds and test selection used by `.github/workflows/test.yml`,
   such as `ctest --test-dir build -V -R MODULE_MD` for MD-focused changes.
+  Reuse the module's CMake targets and test registration helpers. Keep
+  case-specific setup in the test case when the framework supports it.
 - Development containers and CI images based on `Dockerfile.gnu`,
   `Dockerfile.intel`, `Dockerfile.cuda`, and
   `ghcr.io/deepmodeling/abacus-*`.
 - Dependency and compiler setup under `toolchain/`, including the GNU, Intel,
   and CUDA variants already covered by workflow checks.
+
+When a change needs new code from an external library such as LibRI or LibRPA,
+use a tagged release that contains it. Test against that release and identify
+the tag in the PR.
 
 Do not add a new container recipe, toolchain path, or agent-specific skill for
 calculation tasks as part of governance-only work. If a future PR needs one, it
@@ -195,6 +204,9 @@ changed and the PR explains why the new reference is correct.
 Use Autotest cases with `INPUT`, `STRU`, `KPT` (when needed) and `result.ref`,
 listed in `CASES_*.txt` and run by `Autotest.sh` through the suite's CTest entry.
 Autotest helpers are unaffected.
+
+Store references with the case, outside generated `OUT.*` directories. Prefer
+plain text for simple references such as `a.txt.ref`.
 
 Standalone `add_test()` drivers that launch ABACUS require a check Autotest
 cannot express (e.g., nonzero exits or per-rank stderr) and a PR rationale.
@@ -260,6 +272,14 @@ setup workflows and should be added only through a later governance change.
 
 ## INPUT Parameter Changes
 
+Reuse an existing INPUT option or a common default when possible. Explain in
+the PR why a new option is needed. Follow the naming of related options and
+aim for names of 15 characters or fewer with at most two underscores.
+
+For scalar INPUT parameters with a fixed set of choices, use
+[`item.domain.set_choices(...)`](input_validation.md) so validation errors list
+the allowed values in a consistent format.
+
 Changes to parameter metadata, default values, type, availability, description,
 or parsing behavior should update the corresponding C++ `Input_Item`
 registrations. The generated YAML and Markdown documentation are build artifacts
@@ -282,6 +302,10 @@ Before requesting review, check that the PR description matches the diff:
   have either been fixed or have a rationale in the PR body.
 - Exceptions include reason, scope, risk, why the normal rule cannot be followed
   now, a follow-up cleanup plan, and the requested approver.
+
+Reply to each review comment in its thread, including bot feedback. Link to the
+fix or explain why the existing behavior is appropriate. Resolve the thread
+once the discussion is settled.
 
 ## Exception Template
 

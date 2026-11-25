@@ -6,7 +6,7 @@
 // if exponent is an integer between 0 and 5 (the most common cases in gint) and
 // and exp is a variable that cannot be determined at compile time (which means the compiler cannot optimize the code),
 // pow_int is much faster than std::pow
-template<typename T>
+template <typename T>
 __forceinline__ __device__ T pow_int(const T base, const int exp)
 {
     switch (exp)
@@ -29,7 +29,7 @@ __forceinline__ __device__ T pow_int(const T base, const int exp)
     }
 }
 
-template<typename T>
+template <typename T>
 __forceinline__ __device__ T warpReduceSum(T val)
 {
     val += __shfl_xor_sync(0xffffffff, val, 16, 32);
@@ -40,10 +40,7 @@ __forceinline__ __device__ T warpReduceSum(T val)
     return val;
 }
 
-inline int ceil_div(const int a, const int b)
-{
-    return a / b + (a % b != 0 && (a ^ b) > 0);
-}
+inline int ceil_div(const int a, const int b) { return a / b + (a % b != 0 && (a ^ b) > 0); }
 
 // ---------------------------------------------------------------------------
 // gemm_vec_traits<T> -- the wide-load primitive used by the GEMM inner loop,
@@ -61,29 +58,34 @@ inline int ceil_div(const int a, const int b)
 // deliberate: nvcc reliably vectorizes float4 but not double2, and writing
 // .x/.y(/.z/.w) by hand guarantees the wide load instruction is emitted.
 // ---------------------------------------------------------------------------
-template <typename T> struct gemm_vec_traits;
+template <typename T>
+struct gemm_vec_traits;
 
-template <> struct gemm_vec_traits<float>
+template <>
+struct gemm_vec_traits<float>
 {
     using vec_t = float4;
     static constexpr int VK = 4;
     static constexpr int PAD = 4;
-    __forceinline__ __device__
-    static void unpack(const vec_t& v, float* d)
+    __forceinline__ __device__ static void unpack(const vec_t &v, float *d)
     {
-        d[0] = v.x; d[1] = v.y; d[2] = v.z; d[3] = v.w;
+        d[0] = v.x;
+        d[1] = v.y;
+        d[2] = v.z;
+        d[3] = v.w;
     }
 };
 
-template <> struct gemm_vec_traits<double>
+template <>
+struct gemm_vec_traits<double>
 {
     using vec_t = double2;
     static constexpr int VK = 2;
     static constexpr int PAD = 2;
-    __forceinline__ __device__
-    static void unpack(const vec_t& v, double* d)
+    __forceinline__ __device__ static void unpack(const vec_t &v, double *d)
     {
-        d[0] = v.x; d[1] = v.y;
+        d[0] = v.x;
+        d[1] = v.y;
     }
 };
 

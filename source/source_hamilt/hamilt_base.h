@@ -44,7 +44,7 @@ class HamiltBase
      *
      * @return pointer to operator chain
      */
-    virtual void* get_ops() { return nullptr; }
+    virtual void *get_ops() { return nullptr; }
 };
 
 } // namespace hamilt

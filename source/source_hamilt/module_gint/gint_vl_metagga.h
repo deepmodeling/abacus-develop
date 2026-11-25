@@ -1,49 +1,45 @@
 #ifndef ABACUS_SOURCE_HAMILT_MODULE_GINT_GINT_VL_METAGGA_H
 #define ABACUS_SOURCE_HAMILT_MODULE_GINT_GINT_VL_METAGGA_H
 
-
-#include <memory>
-#include <vector>
-#include "source_hamilt/module_hcontainer/hcontainer.h"
 #include "gint.h"
 #include "gint_info.h"
+#include "source_hamilt/module_hcontainer/hcontainer.h"
+#include <memory>
+#include <vector>
 
 namespace ModuleGint
 {
 
 class Gint_vl_metagga : public Gint
 {
-    public:
-    Gint_vl_metagga(
-        const double* vr_eff,
-        const double* vofk,
-        HContainer<double>* hR)
-        : vr_eff_(vr_eff), vofk_(vofk), hR_(hR), dr3_(gint_info_->get_mgrid_volume()) {}
-    
+  public:
+    Gint_vl_metagga(const double *vr_eff, const double *vofk, HContainer<double> *hR)
+        : vr_eff_(vr_eff), vofk_(vofk), hR_(hR), dr3_(gint_info_->get_mgrid_volume())
+    {
+    }
+
     void cal_gint();
 
-    private:
-
+  private:
     void init_hr_gint_();
-    
+
     // note that only the upper triangle matrix of hR is calculated
     // that's why we need compose_hr_gint() to fill the lower triangle matrix.
     void cal_hr_gint_();
 
     // input
-    const double* vr_eff_ = nullptr;
-    const double* vofk_ = nullptr;
+    const double *vr_eff_ = nullptr;
+    const double *vofk_ = nullptr;
 
     // output
-    HContainer<double>* hR_;
+    HContainer<double> *hR_;
 
     // Intermediate variables
     double dr3_;
 
     HContainer<double> hr_gint_;
-
 };
 
-}
+} // namespace ModuleGint
 
 #endif // ABACUS_SOURCE_HAMILT_MODULE_GINT_GINT_VL_METAGGA_H

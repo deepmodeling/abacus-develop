@@ -68,7 +68,7 @@ TEST_F(cal_pseudo_test, gauss_charge)
 
     const int npw = pwtest.npw;
     const int nrxx = pwtest.nrxx;
-    std::complex<double>* N = new std::complex<double>[npw];
+    std::complex<double> *N = new std::complex<double>[npw];
     ModuleBase::GlobalFunc::ZEROS(N, npw);
 
     Structure_Factor sf;
@@ -126,14 +126,14 @@ TEST_F(cal_pseudo_test, cal_pseudo)
     sf.nbspline = -1;
     sf.setup(&ucell, pgrid, &pwtest, false); // sf.setup is moved to here
 
-    std::complex<double>* Porter_g = new std::complex<double>[npw];
+    std::complex<double> *Porter_g = new std::complex<double>[npw];
     ModuleBase::GlobalFunc::ZEROS(Porter_g, npw);
     for (int i = 0; i < npw; i++)
     {
         Porter_g[i] = 0.1;
     }
 
-    std::complex<double>* PS_TOTN = new std::complex<double>[npw];
+    std::complex<double> *PS_TOTN = new std::complex<double>[npw];
     solvent_model.cal_pseudo(ucell, pgrid, &pwtest, Porter_g, PS_TOTN, &sf);
 
     EXPECT_NEAR(PS_TOTN[16].real(), 0.098426466, 1e-9);
@@ -143,7 +143,7 @@ TEST_F(cal_pseudo_test, cal_pseudo)
     delete[] PS_TOTN;
 }
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
 #ifdef __MPI
     MPI_Init(&argc, &argv);
