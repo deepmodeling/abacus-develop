@@ -290,8 +290,8 @@ void test_performance(
                 h_mat,
                 s_mat);
         }
-        auto start = std::chrono::high_resolution_clock::now();
-        auto end = std::chrono::high_resolution_clock::now();
+        std::chrono::high_resolution_clock::time_point start = std::chrono::high_resolution_clock::now();
+        std::chrono::high_resolution_clock::time_point end = std::chrono::high_resolution_clock::now();
 #ifdef __ELPA
         // ELPA
         MPI_Barrier(comm);
