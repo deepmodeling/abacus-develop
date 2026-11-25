@@ -292,14 +292,13 @@ void assemble_print_force(const UnitCell& ucell,
     // compute forces using the DeePKS model
     DeePKS_domain::write_forces(fcs, parts.fvnl_dalpha, dpks_out_type, input);
 
-    if (istestf && input.calculation != "md")
-    {
-        print_force_parts(ucell, vdw_result, parts);
-    }
-
     if (input.calculation == "md")
     {
         return;
+    }
+    if (istestf)
+    {
+        print_force_parts(ucell, vdw_result, parts);
     }
     GlobalV::ofs_running << std::setiosflags(std::ios::left);
 

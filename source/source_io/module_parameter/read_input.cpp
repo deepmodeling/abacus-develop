@@ -18,6 +18,7 @@
 #include <limits>
 #include <stdexcept>
 #include "source_base/formatter.h"
+#include "source_base/fs_compat.h"
 #include "source_base/global_file.h"
 #include "source_base/global_function.h"
 #include "source_base/tool_quit.h"
@@ -327,12 +328,7 @@ void ReadInput::create_directory(const Parameter& param)
     if (this->rank == 0 && param.input.calculation == "md" && param.mdp.md_restart
         && !param.globalv.global_in_stru.empty())
     {
-        char cwd[PATH_MAX];
-        std::string full_path = param.globalv.global_in_stru;
-        if (full_path[0] != '/' && getcwd(cwd, sizeof(cwd)) != nullptr)
-        {
-            full_path = std::string(cwd) + "/" + full_path;
-        }
+        const std::string full_path = ModuleBase::absolute_path_for_log(param.globalv.global_in_stru);
         GlobalV::ofs_running << "Read file: " << full_path << std::endl;
     }
 

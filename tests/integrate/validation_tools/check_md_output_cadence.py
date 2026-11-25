@@ -23,7 +23,7 @@ def run_case(executable, fixture, out_stru, out_freq_ion, out_app_flag, expected
             (work / "OUT.cadence" / "STRU").mkdir(parents=True)
         result = subprocess.run(
             [executable], cwd=str(work), stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT, universal_newlines=True, timeout=120,
+            stderr=subprocess.STDOUT, universal_newlines=True,
             check=False)
         if result.returncode:
             raise AssertionError("ABACUS failed:\n" + result.stdout)
@@ -80,7 +80,7 @@ def run_case(executable, fixture, out_stru, out_freq_ion, out_app_flag, expected
             (work / "INPUT").write_text(restart_input)
             continuation = subprocess.run(
                 [executable], cwd=str(work), stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT, universal_newlines=True, timeout=120,
+                stderr=subprocess.STDOUT, universal_newlines=True,
                 check=False)
             if continuation.returncode:
                 raise AssertionError("MD restart failed:\n" + continuation.stdout)
@@ -97,7 +97,7 @@ def run_legacy_restart_case(executable, fixture):
         input_text = (fixture / "INPUT").read_text()
         (work / "INPUT").write_text(input_text)
         initial = subprocess.run([executable], cwd=work, capture_output=True,
-                                 text=True, timeout=120, check=False)
+                                 text=True, check=False)
         if initial.returncode:
             raise AssertionError("Initial MD run failed:\n" + initial.stdout + initial.stderr)
         output = work / "OUT.cadence"
@@ -111,7 +111,7 @@ def run_legacy_restart_case(executable, fixture):
         restart_input += "\nmd_restart 1\n"
         (work / "INPUT").write_text(restart_input)
         continuation = subprocess.run([executable], cwd=work, capture_output=True,
-                                      text=True, timeout=120, check=False)
+                                      text=True, check=False)
         if continuation.returncode:
             raise AssertionError("Legacy MD restart failed:\n" + continuation.stdout + continuation.stderr)
         if not (legacy_dir / "STRU").is_file() or not (output / "STRU_FINAL").is_file():

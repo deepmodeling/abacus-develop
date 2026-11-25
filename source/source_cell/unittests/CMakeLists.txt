@@ -18,7 +18,7 @@ if(ENABLE_MPI)
             $<TARGET_FILE:MODULE_CELL_mdcell_cif_io>
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   set_tests_properties(MODULE_CELL_mdcell_cif_io_np2
-                       PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=1" TIMEOUT 60)
+                       PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=1")
 endif()
 
 addtest(

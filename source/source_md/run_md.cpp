@@ -23,7 +23,6 @@
 #include "source_md/module_plumed/plumed_interface.h"
 #include "verlet.h"
 
-#include <limits.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <vector>
@@ -114,12 +113,7 @@ void md_line(
         {
             return;
         }
-        char cwd[PATH_MAX];
-        std::string full_path = filename;
-        if (!filename.empty() && filename[0] != '/' && getcwd(cwd, sizeof(cwd)) != nullptr)
-        {
-            full_path = std::string(cwd) + "/" + filename;
-        }
+        const std::string full_path = ModuleBase::absolute_path_for_log(filename);
         GlobalV::ofs_running << "Write file: " << full_path << '\n';
     };
 

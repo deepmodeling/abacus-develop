@@ -1,26 +1,20 @@
 #include "read_input.h"
 #include "read_input_tool.h"
 #include "source_base/global_variable.h"
+#include "source_base/fs_compat.h"
 #include "source_base/tool_quit.h"
 #include "source_cell/stru_frame_io.h"
 #include "source_io/module_parameter/parameter.h"
 
 #include <iostream>
-#include <limits.h>
 #include <sstream>
 #include <string>
-#include <unistd.h>
 
 namespace
 {
 void log_read_file(const std::string& filename)
 {
-    char cwd[PATH_MAX];
-    std::string full_path = filename;
-    if (!filename.empty() && filename[0] != '/' && getcwd(cwd, sizeof(cwd)) != nullptr)
-    {
-        full_path = std::string(cwd) + "/" + filename;
-    }
+    const std::string full_path = ModuleBase::absolute_path_for_log(filename);
     const std::string confirmation = "Read file: " + full_path;
     std::cout << confirmation << std::endl;
 }
