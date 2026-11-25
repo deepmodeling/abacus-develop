@@ -1,6 +1,7 @@
 #ifdef __LIBXC
 
 #include "libxc_abacus.h"
+#include "source_base/module_device/memory_op.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
@@ -13,7 +14,80 @@
 #include <xc.h>
 
 #include <complex>
+#include <memory>
 #include <vector>
+
+void XC_Functional_Libxc::xc_cuda_exc_vxc(
+    xc_func_type &func,
+    const int nrxx,
+    const double *rho,
+    const double *sigma,
+    double *exc,
+    double *vrho,
+    double *vsigma)
+{
+    ModuleBase::timer::start("Libxc", "xc_cuda_exc_vxc");
+#if defined(__CUDA) && defined(ABACUS_LIBXC_CUDA)
+    if (nrxx > 0)
+    {
+        const bool is_lda = func.info->family == XC_FAMILY_LDA;
+        const bool is_gga = func.info->family == XC_FAMILY_GGA || func.info->family == XC_FAMILY_HYB_GGA;
+        if (!is_lda && !is_gga)
+        {
+            throw std::domain_error("Libxc CUDA evaluation supports LDA and GGA potentials only.");
+        }
+        // At most 5.5 MiB per rank for polarized GGA; Libxc's mix workspace
+        // is also bounded by this batch size. No grid-sized cache is retained.
+        const int capacity = std::min(nrxx, 65536);
+        const int nspin = func.dim.rho;
+        const int nsigma = func.dim.sigma;
+        const std::size_t rho_count = static_cast<std::size_t>(capacity) * nspin;
+        const std::size_t sigma_count = static_cast<std::size_t>(capacity) * nsigma;
+        const std::size_t count = 2 * rho_count + 2 * sigma_count + capacity;
+        double *buffer = nullptr;
+        resmem_dd_op()(buffer, count);
+        std::unique_ptr<double, delmem_dd_op> workspace(buffer);
+        double *d_rho = buffer;
+        double *d_sigma = d_rho + rho_count;
+        double *d_exc = d_sigma + sigma_count;
+        double *d_vrho = d_exc + capacity;
+        double *d_vsigma = d_vrho + rho_count;
+        for (int start = 0; start < nrxx;)
+        {
+            const int remaining = nrxx - start;
+            const int points = std::min(capacity, remaining);
+            const std::size_t rho_offset = static_cast<std::size_t>(start) * nspin;
+            const std::size_t sigma_offset = static_cast<std::size_t>(start) * nsigma;
+            const std::size_t nrho = static_cast<std::size_t>(points) * nspin;
+            const std::size_t nsig = static_cast<std::size_t>(points) * nsigma;
+            const double *rho_in = rho + rho_offset;
+            double *exc_out = exc + start;
+            double *vrho_out = vrho + rho_offset;
+            syncmem_d2d_h2d_op()(d_rho, rho_in, nrho);
+            if (is_lda)
+            {
+                xc_lda_exc_vxc(&func, points, d_rho, d_exc, d_vrho);
+            }
+            else
+            {
+                const double *sigma_in = sigma + sigma_offset;
+                double *vsigma_out = vsigma + sigma_offset;
+                syncmem_d2d_h2d_op()(d_sigma, sigma_in, nsig);
+                xc_gga_exc_vxc(&func, points, d_rho, d_sigma, d_exc, d_vrho, d_vsigma);
+                syncmem_d2d_d2h_op()(vsigma_out, d_vsigma, nsig);
+            }
+            // Blocking copies complete Libxc's default-stream kernels before
+            // the host consumes derivatives or reuses the device workspace.
+            syncmem_d2d_d2h_op()(exc_out, d_exc, points);
+            syncmem_d2d_d2h_op()(vrho_out, d_vrho, nrho);
+            start += points;
+        }
+    }
+#else
+    throw std::domain_error("Libxc CUDA evaluation is unavailable in this build.");
+#endif
+    ModuleBase::timer::end("Libxc", "xc_cuda_exc_vxc");
+}
 
 void XC_Functional_Libxc::gradcorr_ncgga_sf_libxc(
     const std::vector<int> &func_id,
@@ -183,6 +257,27 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc( 
     const double hybrid_alpha,
     const double hse_omega)
 {
+    return v_xc_libxc(
+        func_id, nrxx, omega, tpiba, chr, nspin_in, domag, domag_z, gga_grad, scaling_factor, hybrid_alpha, hse_omega,
+        false);
+}
+
+std::tuple<double, double, ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc( // Peize Lin update for nspin==4 at
+                                                                                // 2023.01.14
+    const std::vector<int>& func_id,
+    const int& nrxx,     // number of real-space grid
+    const double& omega, // volume of cell
+    const double tpiba,
+    const Charge* const chr,
+    const int nspin_in,
+    const bool domag,
+    const bool domag_z,
+    const int gga_grad,
+    const std::map<int, double>* scaling_factor,
+    const double hybrid_alpha,
+    const double hse_omega,
+    const bool use_gpu)
+{
     ModuleBase::TITLE("XC_Functional_Libxc", "v_xc_libxc");
     ModuleBase::timer::start("XC_Functional_Libxc", "v_xc_libxc");
 
@@ -201,11 +296,12 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc( 
     // https://www.tddft.org/programs/libxc/manual/libxc-5.1.x/
     //----------------------------------------------------------
 
+    const int spin_mode = nspin == 1 ? XC_UNPOLARIZED : XC_POLARIZED;
     std::vector<xc_func_type> funcs = XC_Functional_Libxc::init_func(
         /* func_id = */ func_id,
-        /* xc_polarized = */ (1 == nspin) ? XC_UNPOLARIZED : XC_POLARIZED,
+        /* xc_polarized = */ spin_mode,
         /* hybrid_alpha = */ hybrid_alpha,
-        /* hse_omega = */ hse_omega);
+        /* hse_omega = */ hse_omega, use_gpu);
 
     const bool is_gga = [&funcs]()
     {
@@ -305,48 +401,60 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc( 
         std::vector<double> vsigma(nrxx * ((1 == nspin) ? 1 : 3));
 
         ModuleBase::timer::start("Libxc", "xc_lda/gga_exc_vxc");
-        switch (func.info->family)
+        if (use_gpu)
         {
-        case XC_FAMILY_LDA:
+            const double *rho_data = rho.data();
+            const double *sigma_data = sigma.data();
+            double *exc_data = exc.data();
+            double *vrho_data = vrho.data();
+            double *vsigma_data = vsigma.data();
+            xc_cuda_exc_vxc(func, nrxx, rho_data, sigma_data, exc_data, vrho_data, vsigma_data);
+        }
+        else
         {
-            constexpr int nr_batch_size = 1024;
+            switch (func.info->family)
+            {
+            case XC_FAMILY_LDA:
+            {
+                constexpr int nr_batch_size = 1024;
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static)
 #endif
-            for (int ir_start = 0; ir_start < nrxx; ir_start += nr_batch_size)
-            {
-                const int ir_end = std::min(ir_start + nr_batch_size, nrxx);
-                const int nrxx_thread = ir_end - ir_start;
-                xc_lda_exc_vxc(
-                    &func, nrxx_thread, rho.data() + ir_start * nspin, exc.data() + ir_start,
-                    vrho.data() + ir_start * nspin);
+                for (int ir_start = 0; ir_start < nrxx; ir_start += nr_batch_size)
+                {
+                    const int ir_end = std::min(ir_start + nr_batch_size, nrxx);
+                    const int nrxx_thread = ir_end - ir_start;
+                    xc_lda_exc_vxc(
+                        &func, nrxx_thread, rho.data() + ir_start * nspin, exc.data() + ir_start,
+                        vrho.data() + ir_start * nspin);
+                }
+                break;
             }
-            break;
-        }
-        case XC_FAMILY_GGA:
-        case XC_FAMILY_HYB_GGA:
-        {
-            constexpr int nr_batch_size = 1024;
+            case XC_FAMILY_GGA:
+            case XC_FAMILY_HYB_GGA:
+            {
+                constexpr int nr_batch_size = 1024;
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static)
 #endif
-            for (int ir_start = 0; ir_start < nrxx; ir_start += nr_batch_size)
-            {
-                const int ir_end = std::min(ir_start + nr_batch_size, nrxx);
-                const int nrxx_thread = ir_end - ir_start;
-                xc_gga_exc_vxc(
-                    &func, nrxx_thread, rho.data() + ir_start * nspin, sigma.data() + ir_start * ((1 == nspin) ? 1 : 3),
-                    exc.data() + ir_start, vrho.data() + ir_start * nspin,
-                    vsigma.data() + ir_start * ((1 == nspin) ? 1 : 3));
+                for (int ir_start = 0; ir_start < nrxx; ir_start += nr_batch_size)
+                {
+                    const int ir_end = std::min(ir_start + nr_batch_size, nrxx);
+                    const int nrxx_thread = ir_end - ir_start;
+                    xc_gga_exc_vxc(
+                        &func, nrxx_thread, rho.data() + ir_start * nspin,
+                        sigma.data() + ir_start * ((1 == nspin) ? 1 : 3), exc.data() + ir_start,
+                        vrho.data() + ir_start * nspin, vsigma.data() + ir_start * ((1 == nspin) ? 1 : 3));
+                }
+                break;
             }
-            break;
-        }
-        default:
-        {
-            throw std::domain_error(
-                "func.info->family =" + std::to_string(func.info->family) + " unfinished in " + std::string(__FILE__) +
-                " line " + std::to_string(__LINE__));
-        }
+            default:
+            {
+                throw std::domain_error(
+                    "func.info->family =" + std::to_string(func.info->family) + " unfinished in " +
+                    std::string(__FILE__) + " line " + std::to_string(__LINE__));
+            }
+            }
         }
         ModuleBase::timer::end("Libxc", "xc_lda/gga_exc_vxc");
 

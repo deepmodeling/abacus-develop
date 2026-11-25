@@ -1,4 +1,5 @@
 #include "../libxc_abacus.h"
+#include "../libxc_host.h"
 #include <functional>
 
 #include "gtest/gtest.h"
@@ -17,7 +18,7 @@ TEST(LibxcSanitizer, FullPolarizationUsesTheWeightedEnergyDerivative)
     for (std::size_t ifunc = 0; ifunc < functional_ids.size(); ++ifunc)
     {
         xc_func_type func;
-        ASSERT_EQ(xc_func_init(&func, functional_ids[ifunc], XC_POLARIZED), 0);
+        ASSERT_EQ(XC_Functional_Libxc::init_func_host(&func, functional_ids[ifunc], XC_POLARIZED), 0);
         xc_func_set_dens_threshold(&func, 1.0e-6);
 
         const std::function<double(double, double, XC_Functional_Libxc::LibxcWeightedDerivatives *)> evaluate =
@@ -74,7 +75,7 @@ TEST(LibxcSanitizer, FullPolarizationUsesTheWeightedEnergyDerivative)
 TEST(LibxcSanitizer, GgaSigmaReverseMatchesTheWeightedEnergy)
 {
     xc_func_type func;
-    ASSERT_EQ(xc_func_init(&func, XC_GGA_C_PBE, XC_POLARIZED), 0);
+    ASSERT_EQ(XC_Functional_Libxc::init_func_host(&func, XC_GGA_C_PBE, XC_POLARIZED), 0);
     xc_func_set_dens_threshold(&func, 1.0e-6);
     xc_func_set_sigma_threshold(&func, 1.0e-2);
 
@@ -159,7 +160,7 @@ TEST(LibxcSanitizer, GgaSigmaReverseMatchesTheWeightedEnergy)
 TEST(LibxcSanitizer, UnpolarizedSelfSigmaReverseMatchesTheWeightedEnergy)
 {
     xc_func_type func;
-    ASSERT_EQ(xc_func_init(&func, XC_GGA_C_PBE, XC_UNPOLARIZED), 0);
+    ASSERT_EQ(XC_Functional_Libxc::init_func_host(&func, XC_GGA_C_PBE, XC_UNPOLARIZED), 0);
     xc_func_set_dens_threshold(&func, 1.0e-6);
     xc_func_set_sigma_threshold(&func, 1.0e-2);
 
@@ -248,8 +249,8 @@ class LibxcToolsSgnVxcTest : public testing::Test
 
     void SetUp() override
     {
-        xc_func_init(&gga_func, XC_GGA_X_PBE, XC_UNPOLARIZED);
-        xc_func_init(&lda_func, XC_LDA_X, XC_UNPOLARIZED);
+        XC_Functional_Libxc::init_func_host(&gga_func, XC_GGA_X_PBE, XC_UNPOLARIZED);
+        XC_Functional_Libxc::init_func_host(&lda_func, XC_LDA_X, XC_UNPOLARIZED);
     }
 
     void TearDown() override

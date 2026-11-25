@@ -290,13 +290,14 @@ void Vdwd4::set_force_from_gradient(
 
 void Vdwd4::set_stress_from_sigma(const std::array<double, 9> &sigma_ha, VdwResult &result) const
 {
-    // Tentative mapping consistent with the current D3 convention.
-    // Confirm sign, transposition and volume normalization by finite-strain
-    // tests.
-    result.stress = ModuleBase::Matrix3(
-                        2.0 * sigma_ha[0], 2.0 * sigma_ha[1], 2.0 * sigma_ha[2], 2.0 * sigma_ha[3], 2.0 * sigma_ha[4],
-                        2.0 * sigma_ha[5], 2.0 * sigma_ha[6], 2.0 * sigma_ha[7], 2.0 * sigma_ha[8]) /
-                    ucell_.omega;
+    // DFT-D4 returns sigma as the strain derivative dE/d(epsilon) in Hartree.
+    // ABACUS stress is -(1/Omega) dE/d(epsilon) in Ry/Bohr^3 (positive under
+    // compression); the finite-strain unit tests check sign and normalization.
+    result.stress =
+        ModuleBase::Matrix3(
+            -2.0 * sigma_ha[0], -2.0 * sigma_ha[1], -2.0 * sigma_ha[2], -2.0 * sigma_ha[3], -2.0 * sigma_ha[4],
+            -2.0 * sigma_ha[5], -2.0 * sigma_ha[6], -2.0 * sigma_ha[7], -2.0 * sigma_ha[8]) /
+        ucell_.omega;
     result.has_stress = true;
 }
 

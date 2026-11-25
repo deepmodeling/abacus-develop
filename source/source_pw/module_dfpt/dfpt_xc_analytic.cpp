@@ -5,7 +5,7 @@
 #include "source_base/constants.h"
 #include "source_base/tool_quit.h"
 
-#include <xc.h>
+#include "source_hamilt/module_xc/libxc_host.h"
 
 #include <cmath>
 #include <complex>
@@ -122,7 +122,7 @@ void XC_First_Order_Analytic::init_kernel_fields_(const std::vector<double>& rho
     for (size_t ifunc = 0; ifunc < func_id_.size(); ++ifunc)
     {
         xc_func_type func;
-        if (xc_func_init(&func, func_id_[ifunc], XC_UNPOLARIZED) != 0)
+        if (XC_Functional_Libxc::init_func_host(&func, func_id_[ifunc], XC_UNPOLARIZED) != 0)
         {
             ModuleBase::WARNING_QUIT("XC_First_Order_Analytic", "xc_func_init failed");
         }

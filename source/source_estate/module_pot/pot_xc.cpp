@@ -57,7 +57,8 @@ void PotXC::cal_v_eff(const Charge*const chg, const UnitCell*const ucell, Module
                                   domag_z_,
                                   gga_grad_,
                                   hybrid_alpha,
-                                  hse_omega);
+                                  hse_omega,
+                                  xc_gpu_);
         *(this->etxc_) = std::get<0>(etxc_vtxc_v);
         *(this->vtxc_) = std::get<1>(etxc_vtxc_v);
         v_eff += std::get<2>(etxc_vtxc_v);

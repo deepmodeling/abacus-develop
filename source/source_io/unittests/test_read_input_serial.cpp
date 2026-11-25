@@ -1,5 +1,6 @@
 #include "source_io/module_parameter/read_input.h"
 
+#include "source_base/module_device/device.h"
 #include "source_base/tool_quit.h"
 #include "source_io/module_parameter/parameter.h"
 
@@ -210,6 +211,77 @@ TEST_F(InputTest, RejectAutoDevice)
     EXPECT_THROW(readinput.read_parameters(param, "./auto_device_INPUT"), std::runtime_error);
     EXPECT_TRUE(std::remove("./auto_device_INPUT") == 0);
 }
+
+TEST_F(InputTest, DeviceExxCpuSymmetry)
+{
+    const std::string filename = testing::TempDir() + "device_exx_cpu_INPUT";
+    const std::string input = "basis_type lcao\ndft_functional hse\nks_solver lapack\ndevice_exx cpu\n";
+    for (const std::string symmetry : {"", "symmetry 1\n"})
+    {
+        SCOPED_TRACE(symmetry);
+        Parameter param;
+        const std::string parameters = input + symmetry;
+        ASSERT_NO_THROW(read_parameters(filename, parameters, param));
+        EXPECT_EQ(param.inp.device_exx, "cpu");
+        EXPECT_EQ(param.inp.symmetry, "1");
+        EXPECT_TRUE(param.inp.exx_symmetry_realspace);
+    }
+}
+
+#ifdef __GPU_RI
+TEST_F(InputTest, DeviceExxGpuScfSymmetry)
+{
+    if (!base_device::information::probe_gpu_availability())
+    {
+        GTEST_SKIP() << "GPU EXX reader validation requires a visible GPU";
+    }
+    const std::string filename = testing::TempDir() + "device_exx_gpu_scf_INPUT";
+    // The serial reader needs an explicit LAPACK solver; its default GPU
+    // eigensolver requires MPI, independently of the EXX device selection.
+    const std::string input = "basis_type lcao\ndft_functional hse\nks_solver lapack\ndevice gpu\ndevice_exx gpu\n";
+    for (const std::string symmetry :
+        {"", "symmetry 1\n", "symmetry 1\nexx_symmetry_realspace 0\n", "symmetry 1\nexx_symmetry_realspace 1\n"})
+    {
+        SCOPED_TRACE(symmetry);
+        Parameter param;
+        const std::string parameters = input + symmetry;
+        ASSERT_NO_THROW(read_parameters(filename, parameters, param));
+        EXPECT_EQ(param.inp.calculation, "scf");
+        EXPECT_EQ(param.inp.device_exx, "gpu");
+        EXPECT_EQ(param.inp.symmetry, "1");
+        const bool realspace = symmetry.find("exx_symmetry_realspace 0") == std::string::npos;
+        EXPECT_EQ(param.inp.exx_symmetry_realspace, realspace);
+    }
+    for (const std::string symmetry : {"0", "-1"})
+    {
+        SCOPED_TRACE(symmetry);
+        Parameter param;
+        const std::string parameters = input + "symmetry " + symmetry + "\n";
+        ASSERT_NO_THROW(read_parameters(filename, parameters, param));
+        EXPECT_EQ(param.inp.device_exx, "gpu");
+        EXPECT_EQ(param.inp.symmetry, symmetry);
+        EXPECT_FALSE(param.inp.exx_symmetry_realspace);
+    }
+}
+
+TEST_F(InputTest, DeviceExxGpuMdEffectiveSymmetry)
+{
+    if (!base_device::information::probe_gpu_availability())
+    {
+        GTEST_SKIP() << "GPU EXX reader validation requires a visible GPU";
+    }
+    const std::string filename = testing::TempDir() + "device_exx_gpu_md_INPUT";
+    const std::string input = "basis_type lcao\ndft_functional hse\nks_solver lapack\ndevice gpu\ndevice_exx gpu\n"
+                              "calculation md\nmd_type nve\nmd_tfirst 300\nsymmetry 1\n";
+    Parameter param;
+    ASSERT_NO_THROW(read_parameters(filename, input, param));
+    EXPECT_EQ(param.inp.calculation, "md");
+    EXPECT_EQ(param.inp.device, "gpu");
+    EXPECT_EQ(param.inp.device_exx, "gpu");
+    EXPECT_EQ(param.inp.symmetry, "0");
+    EXPECT_FALSE(param.inp.exx_symmetry_realspace);
+}
+#endif
 
 TEST_F(InputTest, ValidateRelaxMethodScalar)
 {
