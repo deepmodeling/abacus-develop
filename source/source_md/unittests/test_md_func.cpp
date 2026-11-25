@@ -598,6 +598,74 @@ TEST_F(MD_func_test, print_stress)
     std::remove(log_path.c_str());
 }
 
+TEST_F(MD_func_test, init_vel_rejects_zero_stru_velocities_with_backing_unitcell)
+{
+    for (int it = 0; it < ucell.ntype; ++it)
+    {
+        for (int ia = 0; ia < ucell.atoms[it].na; ++ia)
+        {
+            ucell.atoms[it].vel[ia].set(0.0, 0.0, 0.0);
+        }
+    }
+    MDCell mdcell;
+    DomainDecomposition decomp;
+    initialize_mdcell_from_ucell(mdcell, ucell, decomp);
+    double temperature = 300.0 / ModuleBase::Hartree_to_K;
+    std::int64_t frozen_freedom = 0;
+    EXPECT_EXIT(
+        MD_func::init_vel(mdcell, true, false, temperature, frozen_freedom),
+        ::testing::ExitedWithCode(1),
+        "");
+}
+
+TEST_F(MD_func_test, init_vel_rejects_zero_stru_velocities_without_backing_unitcell)
+{
+    MDCell mdcell = Setcell::setup_mdcell(ucell);
+    for (LocalAtom &atom : mdcell.owned_atoms())
+    {
+        atom.vel.set(0.0, 0.0, 0.0);
+    }
+    double temperature = 300.0 / ModuleBase::Hartree_to_K;
+    std::int64_t frozen_freedom = 0;
+    EXPECT_EXIT(
+        MD_func::init_vel(mdcell, true, false, temperature, frozen_freedom),
+        ::testing::ExitedWithCode(1),
+        "");
+}
+
+TEST_F(MD_func_test, init_vel_restart_allows_zero_stru_velocities)
+{
+    for (int it = 0; it < ucell.ntype; ++it)
+    {
+        for (int ia = 0; ia < ucell.atoms[it].na; ++ia)
+        {
+            ucell.atoms[it].vel[ia].set(0.0, 0.0, 0.0);
+        }
+    }
+    MDCell mdcell;
+    DomainDecomposition decomp;
+    initialize_mdcell_from_ucell(mdcell, ucell, decomp);
+    double temperature = 300.0 / ModuleBase::Hartree_to_K;
+    std::int64_t frozen_freedom = 0;
+    // restart = true must not abort even when the STRU velocities are all zero,
+    // because the velocities will be restored from the restart file later.
+    MD_func::init_vel(mdcell, true, true, temperature, frozen_freedom);
+    SUCCEED();
+}
+
+TEST_F(MD_func_test, init_vel_scales_nonzero_stru_velocities_to_target_temperature)
+{
+    MDCell mdcell;
+    DomainDecomposition decomp;
+    initialize_mdcell_from_ucell(mdcell, ucell, decomp);
+    double temperature = 300.0 / ModuleBase::Hartree_to_K;
+    std::int64_t frozen_freedom = 0;
+    MD_func::init_vel(mdcell, true, false, temperature, frozen_freedom);
+    double kinetic = 0.0;
+    const double current = MD_func::current_temp(kinetic, mdcell, frozen_freedom);
+    EXPECT_NEAR(current, temperature, 1e-12);
+}
+
 TEST_F(MD_func_test, current_md_info_mdcell_accepts_step_only_restart)
 {
     const std::string restart_file = testing::TempDir() + "Restart_md.txt";

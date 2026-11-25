@@ -240,7 +240,14 @@ void init_vel(
             read_vel(unit, velocities.data());
             double kinetic = 0.0;
             const double current = current_temp(kinetic, unit.nat, frozen_freedom, masses.data(), velocities.data());
-            if (!restart && temperature >= 0.0 && current > 0.0)
+            if (!restart && current <= 0.0)
+            {
+                ModuleBase::WARNING_QUIT(
+                    "MD_func::init_vel",
+                    "init_vel is set to true, but no velocity information was found in the STRU file "
+                    "(all velocities are zero). Set init_vel to false to use random initial velocities.");
+            }
+            if (!restart && temperature >= 0.0)
             {
                 rescale_vel(unit.nat, temperature, masses.data(), frozen_freedom, velocities.data());
             }
@@ -308,7 +315,14 @@ void init_vel(
     {
         double kinetic = 0.0;
         const double current = current_temp(kinetic, mdcell, frozen_freedom);
-        if (!restart && current > 0.0 && temperature > 0.0)
+        if (!restart && current <= 0.0)
+        {
+            ModuleBase::WARNING_QUIT(
+                "MD_func::init_vel",
+                "init_vel is set to true, but no velocity information was found in the STRU file "
+                "(all velocities are zero). Set init_vel to false to use random initial velocities.");
+        }
+        if (!restart && temperature > 0.0)
         {
             const double factor = sqrt(temperature / current);
             for (LocalAtom &atom : atoms)
