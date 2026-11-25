@@ -300,7 +300,7 @@ void Grid::Construct_Adjacent_near_box(const FAtom& fatom)
         {
             for (int box_i_z_adj = 0; box_i_z_adj < glayerZ + glayerZ_minus; box_i_z_adj++)
             {
-                for (auto &fatom2 : this->atoms_in_box[box_i_x_adj][box_i_y_adj][box_i_z_adj])
+                for (FAtom& fatom2 : this->atoms_in_box[box_i_x_adj][box_i_y_adj][box_i_z_adj])
                 {
                     this->Construct_Adjacent_final(fatom, &fatom2);
                 }
