@@ -400,11 +400,11 @@ The optional second integer controls the number of decimal places of the DOS and
                 para.input.out_dos[0] = std::stoi(item.str_values[0]);
                 para.input.out_dos[1] = 6;
                 if (count >= 2) try { para.input.out_dos[1] = std::stoi(item.str_values[1]); }
-                catch (const std::invalid_argument& e) {
+                catch (const std::exception& e) {
                     ModuleBase::WARNING("Input", "out_dos precision must be an integer, using default 6");
                 }
             }
-            catch (const std::invalid_argument& e) {
+            catch (const std::exception& e) {
                 ModuleBase::WARNING("Input", "out_dos must be an integer, using default 0");
             }
         };
@@ -1407,11 +1407,11 @@ For binary output, each file uses the same basename as text output with a .dat s
                 para.input.out_mat_xc[0] = assume_as_boolean(item.str_values[0]);
                 para.input.out_mat_xc[1] = 8;
                 if (count >= 2) try { para.input.out_mat_xc[1] = std::stoi(item.str_values[1]); }
-                catch (const std::invalid_argument& e) {
+                catch (const std::exception& e) {
                     ModuleBase::WARNING("Input", "out_mat_xc precision must be an integer, using default 8");
                 }
             }
-            catch (const std::invalid_argument& e) {
+            catch (const std::exception& e) {
                 ModuleBase::WARNING("Input", "out_mat_xc enable flag must be 0/1, using default 0");
             }
         };

@@ -129,6 +129,58 @@ TEST_F(InputTest, InvalidExplicitDomainDoesNotReachReadOrResetHooks)
     EXPECT_FALSE(reset_called);
 }
 
+TEST_F(InputTest, OutDosAndOutMatXcRejectMalformedTokens)
+{
+    // Both options are read as integer vectors, whose domain skips the
+    // whole-token validation of the scalar readers, so prepare_input must
+    // reject partial tokens and overflowing values before read_value runs.
+    auto prepare = [&](const std::string& label, const std::vector<std::string>& tokens) {
+        ModuleIO::ReadInput reader(0);
+        Parameter param;
+        auto item = find_label(label, reader.input_lists);
+        if (item == reader.input_lists.end())
+        {
+            return std::string("missing label ") + label;
+        }
+        item->second.str_values = tokens;
+        reader.readvalue_items.push_back(&item->second);
+        return reader.prepare_input(param);
+    };
+
+    for (const std::vector<std::string>& tokens : {
+             std::vector<std::string>{"1junk"},
+             std::vector<std::string>{"1", "6junk"},
+             std::vector<std::string>{"1", "6", "7"},
+             std::vector<std::string>{"99999999999"}})
+    {
+        const std::string error = prepare("out_dos", tokens);
+        EXPECT_THAT(error, testing::HasSubstr("Invalid INPUT parameter 'out_dos'")) << error;
+    }
+    for (const std::vector<std::string>& tokens : {
+             std::vector<std::string>{"maybe"},
+             std::vector<std::string>{"1", "8x"},
+             std::vector<std::string>{"1", "8", "9"}})
+    {
+        const std::string error = prepare("out_mat_xc", tokens);
+        EXPECT_THAT(error, testing::HasSubstr("Invalid INPUT parameter 'out_mat_xc'")) << error;
+    }
+
+    for (const std::vector<std::string>& tokens : {std::vector<std::string>{"1"},
+                                                   std::vector<std::string>{"2"},
+                                                   std::vector<std::string>{"1", "4"}})
+    {
+        const std::string error = prepare("out_dos", tokens);
+        EXPECT_THAT(error, testing::Not(testing::HasSubstr("out_dos"))) << error;
+    }
+    for (const std::vector<std::string>& tokens : {std::vector<std::string>{"true"},
+                                                   std::vector<std::string>{"1"},
+                                                   std::vector<std::string>{"1", "4"}})
+    {
+        const std::string error = prepare("out_mat_xc", tokens);
+        EXPECT_THAT(error, testing::Not(testing::HasSubstr("out_mat_xc"))) << error;
+    }
+}
+
 TEST_F(InputTest, RelaxMethod)
 {
     ModuleIO::ReadInput readinput(0);
