@@ -4,7 +4,7 @@ This file is the entry point for AI agents, automated review tools, and human
 contributors who want the short operational version of the ABACUS development
 rules. Read the complete governance document before making or reviewing changes:
 
-- `docs/developers_guide/agent_governance.md`
+- [ABACUS Agent Governance](docs/developers_guide/agent_governance.md)
 
 ## Required Baseline
 

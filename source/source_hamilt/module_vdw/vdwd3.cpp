@@ -238,11 +238,13 @@ void Vdwd3::evaluate_impl(const VdwRequest &request, VdwResult &result)
 
     if (request.stress)
     {
+        // The virial is the strain derivative dE/d(epsilon) in Hartree, as in s-dftd3.
+        // ABACUS stress is -(1/Omega) dE/d(epsilon) in Ry/Bohr^3 (positive under compression).
         const d3::Matrix3 &sigma = d3_result.virial;
         result.stress = ModuleBase::Matrix3(
-                            2.0 * sigma.value[0][0], 2.0 * sigma.value[0][1], 2.0 * sigma.value[0][2],
-                            2.0 * sigma.value[1][0], 2.0 * sigma.value[1][1], 2.0 * sigma.value[1][2],
-                            2.0 * sigma.value[2][0], 2.0 * sigma.value[2][1], 2.0 * sigma.value[2][2]) /
+                            -2.0 * sigma.value[0][0], -2.0 * sigma.value[0][1], -2.0 * sigma.value[0][2],
+                            -2.0 * sigma.value[1][0], -2.0 * sigma.value[1][1], -2.0 * sigma.value[1][2],
+                            -2.0 * sigma.value[2][0], -2.0 * sigma.value[2][1], -2.0 * sigma.value[2][2]) /
                         ucell_.omega;
         result.has_stress = true;
     }

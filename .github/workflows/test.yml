@@ -77,7 +77,7 @@ jobs:
       - name: Install external tools from toolchain
         run: |
           cd toolchain
-          ./install_abacus_toolchain_new.sh --with-dftd4=install --dry-run -j8
+          ./install_abacus_toolchain_new.sh --with-dftd4 --with-nep --dry-run -j8
           ./scripts/stage4/install_stage4.sh
           cd ..
 
@@ -131,6 +131,7 @@ jobs:
             -DENABLE_FLOAT_FFTW=ON \
             -DENABLE_DFTD4=ON \
             -DENABLE_PEXSI=ON \
+            -DENABLE_NEP=ON \
             -Werror=dev
 
       - name: Build
