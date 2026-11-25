@@ -8,6 +8,8 @@
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+
+#include <unistd.h>
 #ifdef __DFTD4
 #include "source_hamilt/module_vdw/vdwd4.h"
 #endif
@@ -24,6 +26,8 @@
  *       Vdwd2 or Vdwd3 class, and do the initialization.
  *   - vdw::Vdw::evaluate():
  *       Calculate the requested vdW energy, force and stress in one evaluation.
+ *       The stress is checked against finite differences of the energy under
+ *       homogeneous strain of the cell and atoms.
  *   - Vdwd2Parameters::initial_parameters()
  *   - native s-dftd3-compatible D3 adapter
  */
@@ -164,15 +168,79 @@ void expect_empty_atoms_excluded(const vdw::VdwResult &reference, const vdw::Vdw
     }
 }
 
+// Deform the cell and the Cartesian atomic positions (lat0 units) by F = I + h e_row e_col^T.
+stru_ deform_structure(
+    const stru_ &base,
+    int row,
+    int col,
+    double h)
+{
+    stru_ deformed = base;
+    for (int k = 0; k < 3; ++k)
+    {
+        deformed.cell[3 * k + row] += h * base.cell[3 * k + col];
+    }
+    for (atomtype_ &type : deformed.all_type)
+    {
+        for (std::vector<double> &position : type.coordinate)
+        {
+            position[row] += h * position[col];
+        }
+    }
+    return deformed;
+}
+
+double vdw_energy(stru_ &structure, const Input_para &input)
+{
+    UnitCell cell;
+    construct_ucell(structure, cell);
+    cell.atoms[0].ncpp.zv = 4.0; // neutral Si cell for D4 (input.nelec = 8); D2 and D3 ignore it
+    auto vdw_solver = vdw::make_vdw(cell, input);
+    const vdw::VdwResult result = vdw_solver->evaluate(vdw::VdwRequest(false, false));
+    ClearUcell(cell);
+    return result.energy;
+}
+
+// ABACUS stress is -(1/Omega) dE/dF_{row,col}; compare with central differences of the vdW energy.
+void expect_stress_matches_finite_strain(const stru_ &base, const Input_para &input)
+{
+    stru_ reference = base;
+    UnitCell cell;
+    construct_ucell(reference, cell);
+    cell.atoms[0].ncpp.zv = 4.0;
+    auto vdw_solver = vdw::make_vdw(cell, input);
+    const vdw::VdwResult result = vdw_solver->evaluate(vdw::VdwRequest(true, true));
+    const double omega = cell.omega;
+    ClearUcell(cell);
+    ASSERT_TRUE(result.has_stress);
+
+    const double step = 1e-5;
+    const double minus_step = -step;
+    const int components[4][2] = {{0, 0}, {1, 1}, {1, 2}, {2, 1}};
+    const double analytic[4] = {result.stress.e11, result.stress.e22, result.stress.e23, result.stress.e32};
+    for (int ic = 0; ic < 4; ++ic)
+    {
+        const int row = components[ic][0];
+        const int col = components[ic][1];
+        stru_ plus = deform_structure(base, row, col, step);
+        stru_ minus = deform_structure(base, row, col, minus_step);
+        const double energy_plus = vdw_energy(plus, input);
+        const double energy_minus = vdw_energy(minus, input);
+        const double expected = -(energy_plus - energy_minus) / (2.0 * step * omega);
+        EXPECT_NEAR(analytic[ic], expected, 1e-9) << "stress component (" << row + 1 << ", " << col + 1 << ")";
+    }
+}
+
 class vdwd2Test : public testing::Test
 {
   protected:
     UnitCell ucell;
     Input_para input;
+    stru_ structure;
 
     void SetUp()
     {
-        stru_ structure{std::vector<double>{0.5, 0.5, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5, 0.5},
+        structure = stru_{std::vector<double>{0.5, 0.5, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5, 0.5},
             std::vector<atomtype_>{atomtype_{"Si", std::vector<std::vector<double>>{{0., 0., 0.}, {0.3, 0.25, 0.25}}}}};
         construct_ucell(structure, ucell);
 
@@ -219,8 +287,8 @@ TEST_F(vdwd2Test, WrongVdwType)
 
 TEST_F(vdwd2Test, D2ReadFile)
 {
-    input.vdw_C6_file = "c6.txt";
-    input.vdw_R0_file = "r0.txt";
+    input.vdw_C6_file = "support/c6.txt";
+    input.vdw_R0_file = "support/r0.txt";
     vdw::Vdwd2 vdwd2_test(ucell);
 
     vdwd2_test.parameter().initial_parameters(input);
@@ -303,7 +371,7 @@ TEST_F(vdwd2Test, D2R0ZeroQuit)
     vdwd2_test.parameter().initial_parameters(input);
     // r0_zero.txt sets R0 for Si to zero through the public reader, so that
     // Vdwd2::index_loops hits its "R0_sum can not be 0" guard.
-    vdwd2_test.parameter().R0_input("r0_zero.txt", "Bohr");
+    vdwd2_test.parameter().R0_input("support/r0_zero.txt", "Bohr");
 
     testing::internal::CaptureStdout();
     EXPECT_EXIT(vdwd2_test.evaluate(vdw::VdwRequest(false, false)), ::testing::ExitedWithCode(1), "");
@@ -353,6 +421,8 @@ TEST_F(vdwd2Test, D2GetStress)
     EXPECT_NEAR(stress.e33, -0.00020491799872060734, 1e-12);
 }
 
+TEST_F(vdwd2Test, D2StressMatchesFiniteStrain) { expect_stress_matches_finite_strain(structure, input); }
+
 TEST_F(vdwd2Test, EmptyAtomsAreExcluded)
 {
     const vdw::VdwResult reference = vdw::make_vdw(ucell, input)->evaluate(vdw::VdwRequest(true, true));
@@ -370,10 +440,11 @@ class vdwd3Test : public testing::Test
   protected:
     UnitCell ucell;
     Input_para input;
+    stru_ structure;
 
     void SetUp()
     {
-        stru_ structure{std::vector<double>{0.5, 0.5, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5, 0.5},
+        structure = stru_{std::vector<double>{0.5, 0.5, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5, 0.5},
             std::vector<atomtype_>{atomtype_{"Si", std::vector<std::vector<double>>{{0., 0., 0.}, {0.3, 0.25, 0.25}}}}};
         construct_ucell(structure, ucell);
 
@@ -457,15 +528,15 @@ TEST_F(vdwd3Test, D30GetStress)
     ASSERT_TRUE(result.has_force);
     ASSERT_TRUE(result.has_stress);
     const ModuleBase::Matrix3 &stress = result.stress;
-    EXPECT_NEAR(stress.e11, 3.719638454389264e-05, 1e-12);
+    EXPECT_NEAR(stress.e11, -3.719638454389264e-05, 1e-12);
     EXPECT_NEAR(stress.e12, 0.0, 1e-12);
     EXPECT_NEAR(stress.e13, 0.0, 1e-12);
     EXPECT_NEAR(stress.e21, 0.0, 1e-12);
-    EXPECT_NEAR(stress.e22, 4.5226077638555907e-05, 1e-12);
-    EXPECT_NEAR(stress.e23, -1.2732393110133044e-05, 1e-12);
+    EXPECT_NEAR(stress.e22, -4.5226077638555907e-05, 1e-12);
+    EXPECT_NEAR(stress.e23, 1.2732393110133044e-05, 1e-12);
     EXPECT_NEAR(stress.e31, 0.0, 1e-12);
-    EXPECT_NEAR(stress.e32, -1.2732393110133044e-05, 1e-12);
-    EXPECT_NEAR(stress.e33, 4.5226077638555961e-05, 1e-12);
+    EXPECT_NEAR(stress.e32, 1.2732393110133044e-05, 1e-12);
+    EXPECT_NEAR(stress.e33, -4.5226077638555961e-05, 1e-12);
 }
 
 TEST_F(vdwd3Test, EmptyAtomsAreExcluded)
@@ -516,15 +587,23 @@ TEST_F(vdwd3Test, D3bjGetStress)
     ASSERT_TRUE(result.has_force);
     ASSERT_TRUE(result.has_stress);
     const ModuleBase::Matrix3 &stress = result.stress;
-    EXPECT_NEAR(stress.e11, 0.00014355975918208151, 1e-12);
+    EXPECT_NEAR(stress.e11, -0.00014355975918208151, 1e-12);
     EXPECT_NEAR(stress.e12, 0.0, 1e-12);
     EXPECT_NEAR(stress.e13, 0.0, 1e-12);
     EXPECT_NEAR(stress.e21, 0.0, 1e-12);
-    EXPECT_NEAR(stress.e22, 0.00015345761663797616, 1e-12);
-    EXPECT_NEAR(stress.e23, -1.8098500191039634e-05, 1e-12);
+    EXPECT_NEAR(stress.e22, -0.00015345761663797616, 1e-12);
+    EXPECT_NEAR(stress.e23, 1.8098500191039634e-05, 1e-12);
     EXPECT_NEAR(stress.e31, 0.0, 1e-12);
-    EXPECT_NEAR(stress.e32, -1.8098500191039634e-05, 1e-12);
-    EXPECT_NEAR(stress.e33, 0.00015345761663797621, 1e-12);
+    EXPECT_NEAR(stress.e32, 1.8098500191039634e-05, 1e-12);
+    EXPECT_NEAR(stress.e33, -0.00015345761663797621, 1e-12);
+}
+
+TEST_F(vdwd3Test, D30StressMatchesFiniteStrain) { expect_stress_matches_finite_strain(structure, input); }
+
+TEST_F(vdwd3Test, D3bjStressMatchesFiniteStrain)
+{
+    input.vdw_method = "d3_bj";
+    expect_stress_matches_finite_strain(structure, input);
 }
 
 class vdwd3abcTest : public testing::Test
@@ -532,10 +611,11 @@ class vdwd3abcTest : public testing::Test
   protected:
     UnitCell ucell;
     Input_para input;
+    stru_ structure;
 
     void SetUp()
     {
-        stru_ structure{std::vector<double>{0.75, 0.75, 0.0, 0.75, 0.0, 0.75, 0.0, 0.75, 0.75},
+        structure = stru_{std::vector<double>{0.75, 0.75, 0.0, 0.75, 0.0, 0.75, 0.0, 0.75, 0.75},
             std::vector<atomtype_>{atomtype_{"Si", std::vector<std::vector<double>>{{0., 0., 0.}, {0.3, 0.25, 0.25}}},
                 atomtype_{"C", std::vector<std::vector<double>>{{0.5, 0.5, 0.5}}}}};
         construct_ucell(structure, ucell);
@@ -559,7 +639,13 @@ TEST_F(vdwd3abcTest, InconsistentPseudopotentialXcIsRejected)
     ucell.atoms[0].ncpp.xc_func = "PBE";
     ucell.atoms[1].ncpp.xc_func = "LDA";
 
-    EXPECT_EXIT(vdw::make_vdw(ucell, input), ::testing::ExitedWithCode(1), "XC name automatic inference failed");
+    EXPECT_EXIT(
+        {
+            // WARNING_QUIT prints to stdout; redirect it so that the message can be matched.
+            dup2(STDERR_FILENO, STDOUT_FILENO);
+            vdw::make_vdw(ucell, input);
+        },
+        ::testing::ExitedWithCode(1), "XC name automatic inference failed");
 }
 
 TEST_F(vdwd3abcTest, D30GetEnergy)
@@ -594,15 +680,15 @@ TEST_F(vdwd3abcTest, D30GetStress)
     ASSERT_TRUE(result.has_force);
     ASSERT_TRUE(result.has_stress);
     const ModuleBase::Matrix3 &stress = result.stress;
-    EXPECT_NEAR(stress.e11, 1.4721914168426608e-05, 1e-12);
-    EXPECT_NEAR(stress.e12, -1.0755730453993765e-06, 1e-12);
-    EXPECT_NEAR(stress.e13, -1.0755730453993653e-06, 1e-12);
-    EXPECT_NEAR(stress.e21, -1.075573045399377e-06, 1e-12);
-    EXPECT_NEAR(stress.e22, 1.4594782301730673e-05, 1e-12);
-    EXPECT_NEAR(stress.e23, 2.0893396123596713e-07, 1e-12);
-    EXPECT_NEAR(stress.e31, -1.0755730453993645e-06, 1e-12);
-    EXPECT_NEAR(stress.e32, 2.089339612359676e-07, 1e-12);
-    EXPECT_NEAR(stress.e33, 1.4594782301731136e-05, 1e-12);
+    EXPECT_NEAR(stress.e11, -1.4721914168426608e-05, 1e-12);
+    EXPECT_NEAR(stress.e12, 1.0755730453993765e-06, 1e-12);
+    EXPECT_NEAR(stress.e13, 1.0755730453993653e-06, 1e-12);
+    EXPECT_NEAR(stress.e21, 1.075573045399377e-06, 1e-12);
+    EXPECT_NEAR(stress.e22, -1.4594782301730673e-05, 1e-12);
+    EXPECT_NEAR(stress.e23, -2.0893396123596713e-07, 1e-12);
+    EXPECT_NEAR(stress.e31, 1.0755730453993645e-06, 1e-12);
+    EXPECT_NEAR(stress.e32, -2.089339612359676e-07, 1e-12);
+    EXPECT_NEAR(stress.e33, -1.4594782301731136e-05, 1e-12);
 }
 
 TEST_F(vdwd3abcTest, D3bjGetEnergy)
@@ -640,15 +726,23 @@ TEST_F(vdwd3abcTest, D3bjGetStress)
     ASSERT_TRUE(result.has_force);
     ASSERT_TRUE(result.has_stress);
     const ModuleBase::Matrix3 &stress = result.stress;
-    EXPECT_NEAR(stress.e11, 3.3773268956804165e-05, 1e-12);
-    EXPECT_NEAR(stress.e12, -5.1343672869104567e-06, 1e-12);
-    EXPECT_NEAR(stress.e13, -5.1343672869104609e-06, 1e-12);
-    EXPECT_NEAR(stress.e21, -5.1343672869104559e-06, 1e-12);
-    EXPECT_NEAR(stress.e22, 3.4293409389506296e-05, 1e-12);
-    EXPECT_NEAR(stress.e23, -4.3785438987372696e-06, 1e-12);
-    EXPECT_NEAR(stress.e31, -5.1343672869104626e-06, 1e-12);
-    EXPECT_NEAR(stress.e32, -4.3785438987372696e-06, 1e-12);
-    EXPECT_NEAR(stress.e33, 3.4293409389506207e-05, 1e-12);
+    EXPECT_NEAR(stress.e11, -3.3773268956804165e-05, 1e-12);
+    EXPECT_NEAR(stress.e12, 5.1343672869104567e-06, 1e-12);
+    EXPECT_NEAR(stress.e13, 5.1343672869104609e-06, 1e-12);
+    EXPECT_NEAR(stress.e21, 5.1343672869104559e-06, 1e-12);
+    EXPECT_NEAR(stress.e22, -3.4293409389506296e-05, 1e-12);
+    EXPECT_NEAR(stress.e23, 4.3785438987372696e-06, 1e-12);
+    EXPECT_NEAR(stress.e31, 5.1343672869104626e-06, 1e-12);
+    EXPECT_NEAR(stress.e32, 4.3785438987372696e-06, 1e-12);
+    EXPECT_NEAR(stress.e33, -3.4293409389506207e-05, 1e-12);
+}
+
+TEST_F(vdwd3abcTest, D30StressMatchesFiniteStrain) { expect_stress_matches_finite_strain(structure, input); }
+
+TEST_F(vdwd3abcTest, D3bjStressMatchesFiniteStrain)
+{
+    input.vdw_method = "d3_bj";
+    expect_stress_matches_finite_strain(structure, input);
 }
 
 TEST_F(vdwd3abcTest, EmptyAtomsAreExcludedWithThreeBodyTerm)
@@ -660,11 +754,11 @@ TEST_F(vdwd3abcTest, EmptyAtomsAreExcludedWithThreeBodyTerm)
         const vdw::VdwResult reference = vdw::make_vdw(ucell, input)->evaluate(vdw::VdwRequest(true, true));
 
         UnitCell ghost_ucell;
-        stru_ structure{std::vector<double>{0.75, 0.75, 0.0, 0.75, 0.0, 0.75, 0.0, 0.75, 0.75},
+        stru_ ghost_structure{std::vector<double>{0.75, 0.75, 0.0, 0.75, 0.0, 0.75, 0.0, 0.75, 0.75},
             std::vector<atomtype_>{atomtype_{"Si", std::vector<std::vector<double>>{{0., 0., 0.}, {0.3, 0.25, 0.25}}},
                 atomtype_{"C", std::vector<std::vector<double>>{{0.5, 0.5, 0.5}}},
                 atomtype_{"C_empty", std::vector<std::vector<double>>{{0.2, 0.2, 0.2}}}}};
-        construct_ucell(structure, ghost_ucell);
+        construct_ucell(ghost_structure, ghost_ucell);
         ghost_ucell.atoms[2].flag_empty_element = true;
         ghost_ucell.atoms[2].ncpp.psd = "C";
 
@@ -681,10 +775,11 @@ class vdwd4Test : public testing::Test
   protected:
     UnitCell ucell;
     Input_para input;
+    stru_ structure;
 
     void SetUp()
     {
-        stru_ structure{std::vector<double>{0.5, 0.5, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5, 0.5},
+        structure = stru_{std::vector<double>{0.5, 0.5, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5, 0.5},
             std::vector<atomtype_>{atomtype_{"Si", std::vector<std::vector<double>>{{0., 0., 0.}, {0.3, 0.25, 0.25}}}}};
         construct_ucell(structure, ucell);
         ucell.atoms[0].ncpp.zv = 4.0;
@@ -755,15 +850,15 @@ TEST_F(vdwd4Test, D4GetStress)
     ASSERT_TRUE(result.has_force);
     ASSERT_TRUE(result.has_stress);
     const ModuleBase::Matrix3 &stress = result.stress;
-    EXPECT_NEAR(stress.e11, 0.00015832021177652515, 1e-12);
+    EXPECT_NEAR(stress.e11, -0.00015832021177652515, 1e-12);
     EXPECT_NEAR(stress.e12, 0.0, 1e-12);
     EXPECT_NEAR(stress.e13, 0.0, 1e-12);
     EXPECT_NEAR(stress.e21, 0.0, 1e-12);
-    EXPECT_NEAR(stress.e22, 0.00016713814230248972, 1e-12);
-    EXPECT_NEAR(stress.e23, -1.540511821504431e-05, 1e-12);
+    EXPECT_NEAR(stress.e22, -0.00016713814230248972, 1e-12);
+    EXPECT_NEAR(stress.e23, 1.540511821504431e-05, 1e-12);
     EXPECT_NEAR(stress.e31, 0.0, 1e-12);
-    EXPECT_NEAR(stress.e32, -1.540511821504431e-05, 1e-12);
-    EXPECT_NEAR(stress.e33, 0.00016713814230248975, 1e-12);
+    EXPECT_NEAR(stress.e32, 1.540511821504431e-05, 1e-12);
+    EXPECT_NEAR(stress.e33, -0.00016713814230248975, 1e-12);
 }
 
 TEST_F(vdwd4Test, EmptyAtomsAreExcluded)
@@ -813,15 +908,23 @@ TEST_F(vdwd4Test, D4SGetStress)
     ASSERT_TRUE(result.has_force);
     ASSERT_TRUE(result.has_stress);
     const ModuleBase::Matrix3 &stress = result.stress;
-    EXPECT_NEAR(stress.e11, 0.00013832975319023958, 1e-12);
+    EXPECT_NEAR(stress.e11, -0.00013832975319023958, 1e-12);
     EXPECT_NEAR(stress.e12, 0.0, 1e-12);
     EXPECT_NEAR(stress.e13, 0.0, 1e-12);
     EXPECT_NEAR(stress.e21, 0.0, 1e-12);
-    EXPECT_NEAR(stress.e22, 0.00015791834475765548, 1e-12);
-    EXPECT_NEAR(stress.e23, -3.8521113344691535e-05, 1e-12);
+    EXPECT_NEAR(stress.e22, -0.00015791834475765548, 1e-12);
+    EXPECT_NEAR(stress.e23, 3.8521113344691535e-05, 1e-12);
     EXPECT_NEAR(stress.e31, 0.0, 1e-12);
-    EXPECT_NEAR(stress.e32, -3.8521113344691535e-05, 1e-12);
-    EXPECT_NEAR(stress.e33, 0.0001579183447576555, 1e-12);
+    EXPECT_NEAR(stress.e32, 3.8521113344691535e-05, 1e-12);
+    EXPECT_NEAR(stress.e33, -0.0001579183447576555, 1e-12);
+}
+
+TEST_F(vdwd4Test, D4StressMatchesFiniteStrain) { expect_stress_matches_finite_strain(structure, input); }
+
+TEST_F(vdwd4Test, D4SStressMatchesFiniteStrain)
+{
+    input.vdw_d4_model = "d4s";
+    expect_stress_matches_finite_strain(structure, input);
 }
 
 TEST_F(vdwd4Test, EmptyAtomsAreExcludedForD4S)
@@ -845,5 +948,5 @@ int main(int argc, char **argv)
     testing::InitGoogleTest(&argc, argv);
     int result = RUN_ALL_TESTS();
     MPI_Finalize();
-    return 0;
+    return result;
 }
