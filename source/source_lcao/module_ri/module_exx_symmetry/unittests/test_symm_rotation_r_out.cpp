@@ -3,6 +3,8 @@
 #include "source_cell/module_symmetry/symmetry.h"
 #include "source_lcao/module_ri/module_exx_symmetry/symm_rotation.h"
 
+#include "gtest/gtest.h"
+
 #include <cstdio>
 #include <cstdlib>
 #include <fstream>
@@ -23,10 +25,15 @@ void require(const bool condition, const char* message)
     }
 }
 
+// Rule 17: scratch files belong under testing::TempDir(), not a hard-coded
+// /tmp. mkdtemp needs a writable template, so copy that path into a buffer.
 std::string make_temp_directory()
 {
-    char pattern[] = "/tmp/abacus_symrot_writer_XXXXXX";
-    const char* created = mkdtemp(pattern);
+    const std::string base = testing::TempDir();
+    std::string pattern = base + "abacus_symrot_writer_XXXXXX";
+    std::vector<char> buffer(pattern.begin(), pattern.end());
+    buffer.push_back('\0');
+    const char* created = mkdtemp(buffer.data());
     require(created != nullptr, "could not create a temporary directory");
     return std::string(created) + "/";
 }

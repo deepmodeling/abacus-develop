@@ -8,6 +8,33 @@
 #include <RI/physics/symmetry/Symmetry_Rotation.h>
 namespace ModuleSymmetry
 {
+
+    /// Balance ModuleBase::timer for a scope that may exit by throwing.
+    ///
+    /// The restore helpers validate their input and throw on a malformed
+    /// tensor; without this the matching `timer::end` would be skipped and the
+    /// process-global entry would stay open, so the next `timer::start` on the
+    /// same name aborts.
+    class ScopedTimer
+    {
+      public:
+        ScopedTimer(const char* class_name, const char* name)
+            : class_name_(class_name), name_(name)
+        {
+            ModuleBase::timer::start(class_name_, name_);
+        }
+        ~ScopedTimer()
+        {
+            ModuleBase::timer::end(class_name_, name_);
+        }
+        ScopedTimer(const ScopedTimer&) = delete;
+        ScopedTimer& operator=(const ScopedTimer&) = delete;
+
+      private:
+        const char* class_name_;
+        const char* name_;
+    };
+
     /// rotmat_Slm_ (inherited from Symmetry_rotation_k, shared with the LibRI-free k-space
     /// restoration) is stored as ModuleBase::ComplexMatrix; convert to RI::Tensor here, at the
     /// boundary of the real-space (RI::Tensor atom-pair) rotation code that needs that type.
@@ -89,7 +116,7 @@ namespace ModuleSymmetry
         const std::map<int, std::map<std::pair<int, TC>, RI::Tensor<Tdata>>>& HR_irreducible) const
     {
         ModuleBase::TITLE("Symmetry_rotation", "restore_HR");
-        ModuleBase::timer::start("Symmetry_rotation", "restore_HR");
+        const ScopedTimer scoped_timer("Symmetry_rotation", "restore_HR");
         std::map<int, std::map<std::pair<int, TC>, RI::Tensor<Tdata>>> HR_full;
         // irreducile-to-full map ver.
         for (auto& tmp1 : HR_irreducible)
@@ -155,7 +182,6 @@ namespace ModuleSymmetry
         //         print_tensor(tmp2.second, "HR_full (" + std::to_string(a1) + ", " + std::to_string(a2) + "), R=(" + std::to_string(R[0]) + " " + std::to_string(R[1]) + " " + std::to_string(R[2]) + ")");
         //     }
         // }
-        ModuleBase::timer::end("Symmetry_rotation", "restore_HR");
         return HR_full;
     }
 
@@ -183,7 +209,7 @@ namespace ModuleSymmetry
         const std::array<std::map<int, std::map<std::pair<int, TC>, RI::Tensor<Tdata>>>, 4>& HR_irreducible_soc)const
     {
         ModuleBase::TITLE("Symmetry_rotation", "restore_HR_nspin4");
-        ModuleBase::timer::start("Symmetry_rotation", "restore_HR_nspin4");
+        const ScopedTimer scoped_timer("Symmetry_rotation", "restore_HR_nspin4");
         assert(mode == 'H' || mode == 'D');
         std::array<std::map<int, std::map<std::pair<int, TC>, RI::Tensor<Tdata>>>, 4> HR_full;
 
@@ -284,7 +310,6 @@ namespace ModuleSymmetry
                 }
             }
         }
-        ModuleBase::timer::end("Symmetry_rotation", "restore_HR_nspin4");
         return HR_full;
     }
 
@@ -339,7 +364,7 @@ namespace ModuleSymmetry
         (void)symm;
         (void)atoms;
         ModuleBase::TITLE("Symmetry_rotation", "restore_HR_abf");
-        ModuleBase::timer::start("Symmetry_rotation", "restore_HR_abf");
+        const ScopedTimer scoped_timer("Symmetry_rotation", "restore_HR_abf");
         assert(this->reduce_Cs_);
 
         std::map<int, std::map<std::pair<int, TC>, RI::Tensor<Tdata>>> HR_full;
@@ -392,7 +417,6 @@ namespace ModuleSymmetry
             }
         }
 
-        ModuleBase::timer::end("Symmetry_rotation", "restore_HR_abf");
         return HR_full;
     }
 

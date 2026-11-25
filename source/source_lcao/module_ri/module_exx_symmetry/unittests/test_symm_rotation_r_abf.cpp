@@ -324,7 +324,26 @@ TEST_F(AbfRotationTest, RestoreHRAbfDuplicateKeyThrows)
 
     ModuleSymmetry::Symmetry symm;
     Atom atoms[1];
-    EXPECT_THROW(symrot.restore_HR_abf(symm, atoms, iat2it, HR_irr), std::runtime_error);
+    // Check the message belongs to this validation, not to an unbalanced timer
+    // that leaked out of an earlier test.
+    try
+    {
+        symrot.restore_HR_abf(symm, atoms, iat2it, HR_irr);
+        FAIL() << "restore_HR_abf accepted a duplicate target key";
+    }
+    catch (const std::runtime_error& error)
+    {
+        const std::string message = error.what();
+        EXPECT_NE(message.find("duplicate target key"), std::string::npos) << message;
+        EXPECT_EQ(message.find("timer"), std::string::npos) << message;
+    }
+
+    // The timer must be balanced on the exceptional path: a clean retry has to
+    // succeed rather than abort because the previous call left the entry open.
+    ModuleSymmetry::SymmetryRotationTestAccess::sector_stars(symrot)[irapR] = {
+        {0, {{0, 0}, {0, 0, 0}}},
+    };
+    EXPECT_NO_THROW(symrot.restore_HR_abf(symm, atoms, iat2it, HR_irr));
 }
 
 int main(int argc, char** argv)
