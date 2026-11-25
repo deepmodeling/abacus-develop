@@ -121,3 +121,10 @@ addtest(
   TARGET MODULE_PW_pw_hybrid_source
   LIBS base device
   SOURCES test_pw_hybrid_source.cpp ../pw_hybrid_source.cpp)
+
+addtest(
+  TARGET MODULE_PW_op_pw_meta
+  LIBS base device planewave_serial
+  SOURCES test_op_pw_meta.cpp ../op_pw_meta.cpp ../op_pw.cpp
+          ../../../source_hamilt/operator.cpp
+          ../../../source_psi/psi.cpp)
