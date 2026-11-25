@@ -1,1 +1,2 @@
-pw basis for GaAs with ks_solver ppcg (projection preconditioned conjugate-gradient), multi k
+Tests CPU PPCG plane-wave SCF for GaAs with norm-conserving pseudopotentials.
+Checks total energy, forces, stress, symmetry and irreducible k-point count.

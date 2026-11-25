@@ -1,13 +1,2 @@
-CPU PPCG generalized-eigenproblem regression based on 008_PW_UPF201_USPP_NaCl.
-
-Geometry, pseudopotentials and k mesh are inherited from that fixture.
-SCF uses the PW reciprocal-space criterion with scf_thr=1e-16 to converge
-forces and stress; scf_nmax and pw_diag_nmax are 200. The initial
-pw_diag_thr and ppcg_rr_step retain their defaults.
-
-References were computed independently with BPCG using the same numerical
-inputs, then checked against PPCG. Existing Autotest tolerances are unchanged.
-At this deliberately tight SCF threshold, PPCG may report iteration-limit
-warnings for residuals near the 1e-14 numerical floor; these diagnostics
-remain visible. See docs/advanced/scf/ppcg_validation.md for the protocol,
-comparison results and limits of the accuracy claims.
+Tests CPU PPCG plane-wave SCF for NaCl with ultrasoft pseudopotentials.
+Checks total energy, forces, stress, symmetry and irreducible k-point count.

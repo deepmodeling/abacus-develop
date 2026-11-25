@@ -1,3 +1,2 @@
-CUDA PPCG regression using the structure, numerical settings and reference of
-CPU Autotest case 817_PW_PPCG. Only device=gpu and explicit
-double precision are added; the standard acceptance tolerances are unchanged.
+Tests CUDA PPCG plane-wave SCF for GaAs with norm-conserving pseudopotentials.
+Checks total energy, forces, stress, symmetry and irreducible k-point count.
