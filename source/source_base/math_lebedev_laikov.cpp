@@ -10,7 +10,7 @@ namespace ModuleBase
 
 Lebedev_laikov_grid::Lebedev_laikov_grid(int degree)
 {
-    auto it = allowed_degree.find(degree);
+    std::set<int>::iterator it = allowed_degree.find(degree);
     if (it == allowed_degree.end())
     {
         std::cerr << "In the Lebedev_laikov_grid class, the degree = " << degree << " is not within the allowed range."
