@@ -108,10 +108,17 @@ TEST(DiagoPPCGReliableUpdateTest, RefreshesBeforeUsingNearPrecisionResidual)
     const int dimension = 2;
     const std::vector<Real> prec(dimension, 1.0);
     const std::vector<double> thresholds(1, 1.0e-14);
-    const double perturbations[] = {1.0e-5, 1.0e-10, 1.0e-14};
-    for (const double perturbation : perturbations)
+    struct Configuration
     {
+        double perturbation;
+        int iterations;
+    };
+    const Configuration configurations[] = {{1.0e-5, 1}, {1.0e-10, 1}, {1.0e-14, 1}, {1.0e-14, 6}};
+    for (const Configuration &configuration : configurations)
+    {
+        const double perturbation = configuration.perturbation;
         SCOPED_TRACE(perturbation);
+        SCOPED_TRACE(configuration.iterations);
         const double normalization = std::sqrt(1.0 + perturbation * perturbation);
         std::vector<T> psi = {T(1.0 / normalization), T(perturbation / normalization)};
         std::vector<Real> eigenvalues(1, 0.0);
@@ -125,7 +132,7 @@ TEST(DiagoPPCGReliableUpdateTest, RefreshesBeforeUsingNearPrecisionResidual)
                 out[1 + j * ld] = 3.0 * in[1 + j * ld];
             }
         };
-        hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(1.0e-14, 1, 1, 1);
+        hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(1.0e-14, configuration.iterations, 1, 1);
         ppcg_test::diagonalize(
             solver, h_op, nullptr, dimension, 1, dimension, psi.data(), eigenvalues.data(), thresholds, prec.data());
         EXPECT_TRUE(solver.converged());
@@ -138,7 +145,8 @@ TEST(DiagoPPCGReliableUpdateTest, RefreshesBeforeUsingNearPrecisionResidual)
         // Initial X, W, tentative-convergence validation, and final validation.
         // The near-precision solve adds a reliable X/P refresh before W.
         // Within four stopping tolerances, refinement must run even with only
-        // one iteration available: X/P refresh, direction, candidate and
+        // one iteration available, or one correction plus the stagnation
+        // allowance remaining: X/P refresh, direction, candidate and
         // normalized candidate applications, followed by final certification.
         int expected_calls = perturbation < 1.0e-8 ? 6 : 4;
         if (perturbation == 1.0e-14)

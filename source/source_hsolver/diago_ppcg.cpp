@@ -2001,7 +2001,10 @@ double DiagoPPCG<T, Device>::diag(
         const bool startup_correction = iter == 1 && needs_startup_global_correction;
         const Real refinement_threshold = Real(4) * diag_thr_;
         const int refinement_stagnation = 5;
-        const bool final_refinement_window = maxiter_ - iter < refinement_stagnation;
+        // One correction updates one band. Leave room for a full retained
+        // set as well as the stagnation delay within the existing budget.
+        const int refinement_budget = ncol + refinement_stagnation;
+        const bool final_refinement_window = maxiter_ - iter < refinement_budget;
         if (!startup_correction && last_rr_succeeded && near_precision && max_residual_ <= refinement_threshold &&
             (no_improve >= refinement_stagnation || final_refinement_window))
         {

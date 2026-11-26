@@ -150,11 +150,12 @@ unchanged. The `residual_refinement` trace stage records these attempts.
 The subsequent L20/CUDA 12.9 CI run at `c865d82e6` passed all reference
 checks but retained one Fe warning: `1.43748e-14` at SCF step 23, k-point 1.
 Its trace entered the near-converged range at iteration 195, leaving too few
-steps for the five-iteration stagnation trigger. The follow-up allows refinement
-in the last five available iterations without that delay and prioritizes the
-worst unconverged pair. Startup correction for the lowest roots remains mandatory.
-A one-iteration regression checks prompt refinement and a fresh final residual;
-it fails with the previous trigger. CUDA CI now rejects residual warnings in
+steps for the five-iteration stagnation trigger. The follow-up starts the final
+refinement window using the retained-band count plus the stagnation allowance,
+because each attempt corrects only one band. It prioritizes the worst unconverged
+pair within the unchanged total budget. Startup correction for the lowest roots
+remains mandatory. Short-budget regressions check prompt refinement and a fresh
+final residual; they fail with the previous triggers. CUDA CI now rejects residual warnings in
 combined output from all MPI ranks and preserves that output as an artifact.
 
 The six original CPU fixtures and six original RTX 3090 CUDA fixtures passed
