@@ -128,8 +128,9 @@ template void Parallel_Reduce::reduce_min_pool<double>(const int&, double&);
 template void Parallel_Reduce::reduce_max_pool<double>(const int&, double&);
 
 #ifdef __MPI
-// The scalar bodies are generated from one macro-free list so the three
-// overloads stay identical apart from the reduction operator.
+// The scalar bodies are spelled out one per type rather than templated: see the
+// comment in the header for why. They are otherwise identical apart from the
+// reduction operator and the MPI type.
 void Parallel_Reduce::reduce_all(const MPI_Comm mpi_comm, int& object)
 {
     MPI_Allreduce(MPI_IN_PLACE, &object, 1, MPI_Type<int>::value, MPI_SUM, mpi_comm);
