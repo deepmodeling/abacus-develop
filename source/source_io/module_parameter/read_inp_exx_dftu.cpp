@@ -253,11 +253,8 @@ masking is unsupported.)";
         item.default_value = "cpu";
         item.set_availability("basis_type==lcao");
         read_sync_string(input.device_exx);
+        item.domain.set_choices({"cpu", "gpu"});
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.device_exx != "cpu" && para.input.device_exx != "gpu")
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "device_exx must be cpu or gpu");
-            }
             if (para.input.device_exx == "gpu")
             {
                 if (para.input.basis_type != "lcao" || para.input.device != "gpu")
