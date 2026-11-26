@@ -20,6 +20,7 @@
 #include "dfpt_phon.h"
 
 #include "source_base/constants.h"
+#include "source_base/parallel_reduce.h"
 #include "source_base/tool_quit.h"
 #include "source_base/truncated_func.h"
 #include "source_basis/module_pw/pw_basis.h"
@@ -40,31 +41,6 @@ namespace ModuleDFPT
 namespace
 {
 
-/// screening alpha of the Ewald split, searched so that the G-sum tail is
-/// bounded inside the rho grid (QE d2ionq: start 2.9, shrink 0.1, tail
-/// bound 1e-9)
-double ewald_alpha_search(double charge, double ggecut, double tpiba2)
-{
-    const double alpha_init = 2.9;         ///< empirical parameter: initial Ewald screening-alpha guess
-    const double alpha_step = 0.1;         ///< empirical parameter: per-iteration alpha shrink
-    const double ewald_tail_tol = 1.0e-9;  ///< empirical parameter: accepted G-sum tail bound
-    // ggecut counts |G_max|^2 in 1/lat0^2 units (pw_basis.h), so the bohr^2
-    // cutoff is ggecut * tpiba2
-    double alpha = alpha_init;
-    double upperbound = 0.0;
-    do
-    {
-        alpha -= alpha_step;
-        if (alpha <= 0.0)
-        {
-            ModuleBase::WARNING_QUIT("DFPT_Phon::ion_ion", "Can't find optimal Ewald alpha.");
-        }
-        upperbound = 2.0 * charge * charge * std::sqrt(2.0 * alpha / ModuleBase::TWO_PI)
-                     * ModuleBase::truncated_erfc(std::sqrt(ggecut * tpiba2 / 4.0 / alpha));
-    } while (upperbound > ewald_tail_tol);
-    return alpha;
-}
-
 /// signed frequencies helper is not needed here; the radial kernels below
 /// mirror QE d2ionq.f90: the second derivative of erfc(sqrt(a) r)/r splits
 /// into a traceless part d2f (contracted with r_i r_j) and an isotropic
@@ -79,6 +55,35 @@ void ewald_radial(double ar, double rr, double& d2f, double& df)
 }
 
 } // namespace
+
+/// screening alpha of the Ewald split, searched so that the G-sum tail is
+/// bounded inside the rho grid. Multiplicative shrinkage (the historical
+/// schedule) can continue below 0.1, where the fixed-decrement variant
+/// crosses zero and aborts even though a solution exists: for total
+/// charge 8 and ggecut*tpiba2 = 8, alpha = 0.08 satisfies the 1e-9 tail
+/// while alpha = 0.10 misses it.
+double ewald_alpha_search(double charge, double ggecut, double tpiba2)
+{
+    const double alpha_init = 1.1;        ///< empirical parameter: initial Ewald screening-alpha guess
+    const double alpha_shrink = 0.9;      ///< empirical parameter: per-iteration alpha shrink factor
+    const double alpha_min = 1.0e-4;      ///< empirical parameter: alpha floor of the search
+    const double ewald_tail_tol = 1.0e-9; ///< empirical parameter: accepted G-sum tail bound
+    // ggecut counts |G_max|^2 in 1/lat0^2 units (pw_basis.h), so the bohr^2
+    // cutoff is ggecut * tpiba2
+    double alpha = alpha_init;
+    double upperbound = 0.0;
+    do
+    {
+        alpha *= alpha_shrink;
+        if (alpha < alpha_min)
+        {
+            ModuleBase::WARNING_QUIT("DFPT_Phon::ion_ion", "Can't find optimal Ewald alpha.");
+        }
+        upperbound = 2.0 * charge * charge * std::sqrt(2.0 * alpha / ModuleBase::TWO_PI)
+                     * ModuleBase::truncated_erfc(std::sqrt(ggecut * tpiba2 / 4.0 / alpha));
+    } while (upperbound > ewald_tail_tol);
+    return alpha;
+}
 
 void DFPT_Phon::ion_ion(const ModuleBase::Vector3<double>& q_frac, ModuleBase::ComplexMatrix& dyn)
 {
@@ -103,6 +108,11 @@ void DFPT_Phon::ion_ion(const ModuleBase::Vector3<double>& q_frac, ModuleBase::C
     // rho grid; derive the real-space cutoff (QE: terms up to erfc(5) are
     // counted)
     ewald_alpha_ = ewald_alpha_search(charge, pw_rho_->ggecut, ucell_->tpiba2);
+    if (ewald_alpha_override_ > 0.0)
+    {
+        ewald_alpha_ = ewald_alpha_override_;
+        ewald_alpha_override_ = 0.0; // one-shot pin, production never touches it
+    }
     const double ewald_rcut_factor = 5.0; ///< empirical parameter: real-space cutoff in 1/sqrt(alpha)
     ewald_rcut_ = ewald_rcut_factor / std::sqrt(ewald_alpha_);
     const double rmax_lat0 = ewald_rcut_ / ucell_->lat0;
@@ -234,9 +244,12 @@ void DFPT_Phon::ion_ion(const ModuleBase::Vector3<double>& q_frac, ModuleBase::C
                     // (a_i . g_j = delta_ij in ABACUS, so n = R . G^T); the
                     // phase argument stays exact in the small integers
                     const ModuleBase::Vector3<double> R = r[nr] + dtau;
-                    const int n1 = static_cast<int>(std::lround(R.x * G.e11 + R.y * G.e12 + R.z * G.e13));
-                    const int n2 = static_cast<int>(std::lround(R.x * G.e21 + R.y * G.e22 + R.z * G.e23));
-                    const int n3 = static_cast<int>(std::lround(R.x * G.e31 + R.y * G.e32 + R.z * G.e33));
+                    const double proj1 = R.x * G.e11 + R.y * G.e12 + R.z * G.e13;
+                    const double proj2 = R.x * G.e21 + R.y * G.e22 + R.z * G.e23;
+                    const double proj3 = R.x * G.e31 + R.y * G.e32 + R.z * G.e33;
+                    const int n1 = static_cast<int>(std::lround(proj1));
+                    const int n2 = static_cast<int>(std::lround(proj2));
+                    const int n3 = static_cast<int>(std::lround(proj3));
                     const double ph_arg = ModuleBase::TWO_PI * (q_frac.x * n1 + q_frac.y * n2 + q_frac.z * n3);
                     const std::complex<double> phase(std::cos(ph_arg), std::sin(ph_arg));
                     // r in bohr (cartesian) for the tensor contraction
@@ -260,6 +273,22 @@ void DFPT_Phon::ion_ion(const ModuleBase::Vector3<double>& q_frac, ModuleBase::C
             }
         }
     }
+
+    // ---------------- pool reduction ----------------
+    // The G-space loops run over the local charge-grid G list and the
+    // real-space sum runs only on the rank owning G = 0, so each matrix
+    // is rank-local until reduced. The DFPT esolver currently runs
+    // single-rank (Autotest.sh convention), but the reduction keeps the
+    // ionic term correct under any future multi-rank run and matches the
+    // reduce_pool pattern of the electronic accumulation. The guard is
+    // compile-time: the serial test targets compile this file without
+    // __MPI, and the base-library reduce_pool wrapper is built with MPI,
+    // so an unguarded call would hit MPI_Allreduce outside MPI_Init.
+#ifdef __MPI
+    Parallel_Reduce::reduce_pool(dy1.c, dy1.size);
+    Parallel_Reduce::reduce_pool(dy2.c, dy2.size);
+    Parallel_Reduce::reduce_pool(dy3.c, dy3.size);
+#endif
 
     // ---------------- assemble ----------------
     // QE d2ionq: dyn = -(dy1 - dy2 + real-space)

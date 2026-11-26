@@ -233,25 +233,26 @@ TEST_F(DFPTPhonSerialTest, IonIonFccSiQHalfEwaldConsistency)
 {
     // fcc Si cell (2 atoms, quarter-diagonal basis) at the TR-invariant
     // q=(0.5,0,0): internal-consistency checks of the Ewald pair machinery
-    // -- Hermiticity, alpha independence (the ewald_alpha_ member is set
-    // by the internal search; independence is verified by comparing
-    // against a manually re-run ion_ion after perturbing nothing, i.e.
-    // determinism), the Gamma anchor value, and the acoustic sum rule.
+    // -- Hermiticity, the Gamma anchor value, alpha independence (two
+    // pinned alphas give the same matrix), and determinism (two identical
+    // calls give bit-equal matrices).
     // (A bare direct-sum reference for the off-diagonal blocks at this q
     // was attempted but its unoscillated cross-neighbor diagonal terms
     // are conditionally convergent and convention-dependent; the
     // element-exact agreement with a verbatim QE d2ionq transcription
     // was verified externally instead.)
-    const double a_edge = 10.0; // fcc cubic edge in lat0 units
-    ucell_.latvec = ModuleBase::Matrix3(0.0, 0.5 * a_edge, 0.5 * a_edge,
-                                        0.5 * a_edge, 0.0, 0.5 * a_edge,
-                                        0.5 * a_edge, 0.5 * a_edge, 0.0);
+    const double a_edge = 10.0;        // fcc cubic edge in lat0 units
+    const double half_edge = 0.5 * a_edge; // face-diagonal component of the fcc primitive vectors
+    const double quarter_edge = 0.25 * a_edge; // basis-atom offset along the cubic diagonal
+    ucell_.latvec = ModuleBase::Matrix3(0.0, half_edge, half_edge,
+                                        half_edge, 0.0, half_edge,
+                                        half_edge, half_edge, 0.0);
     ucell_.GT = ucell_.latvec.Inverse();
     ucell_.G = ucell_.GT.Transpose();
     ucell_.omega = a_edge * a_edge * a_edge * dfpt_test::lat0 * dfpt_test::lat0 * dfpt_test::lat0 / 4.0;
     dfpt_test::make_two_atom_cell(ucell_);
     ucell_.atoms[0].tau[0] = ModuleBase::Vector3<double>(0.0, 0.0, 0.0);
-    ucell_.atoms[1].tau[0] = ModuleBase::Vector3<double>(0.25 * a_edge, 0.25 * a_edge, 0.25 * a_edge);
+    ucell_.atoms[1].tau[0] = ModuleBase::Vector3<double>(quarter_edge, quarter_edge, quarter_edge);
     // same species (Si-like)
     ucell_.atoms[1].ncpp.zv = 4.0;
     ucell_.atoms[1].mass = 12.0;
@@ -292,4 +293,74 @@ TEST_F(DFPTPhonSerialTest, IonIonFccSiQHalfEwaldConsistency)
     EXPECT_NEAR(std::abs(dyn(0, 3)), 0.0, 1.0e-8 * max_elem);
     EXPECT_NEAR(dyn(0, 4).real(), -0.0110598, 5.0e-6);
     EXPECT_NEAR(dyn(1, 0).real(), -0.0057142, 5.0e-6);
+}
+
+TEST_F(DFPTPhonSerialTest, IonIonAlphaIndependenceAndDeterminism)
+{
+    // alpha independence: pinning two different screening alphas (each
+    // with its matching real-space radius) must give the same force
+    // constants -- the Ewald split is exact for any converged alpha.
+    // determinism: two identical calls must give bit-equal matrices.
+    // Same fcc Si cell as IonIonFccSiQHalfEwaldConsistency.
+    const double a_edge = 10.0;
+    const double half_edge = 0.5 * a_edge;
+    const double quarter_edge = 0.25 * a_edge;
+    ucell_.latvec = ModuleBase::Matrix3(0.0, half_edge, half_edge,
+                                        half_edge, 0.0, half_edge,
+                                        half_edge, half_edge, 0.0);
+    ucell_.GT = ucell_.latvec.Inverse();
+    ucell_.G = ucell_.GT.Transpose();
+    ucell_.omega = a_edge * a_edge * a_edge * dfpt_test::lat0 * dfpt_test::lat0 * dfpt_test::lat0 / 4.0;
+    dfpt_test::make_two_atom_cell(ucell_);
+    ucell_.atoms[0].tau[0] = ModuleBase::Vector3<double>(0.0, 0.0, 0.0);
+    ucell_.atoms[1].tau[0] = ModuleBase::Vector3<double>(quarter_edge, quarter_edge, quarter_edge);
+    ucell_.atoms[1].ncpp.zv = 4.0;
+    ucell_.atoms[1].mass = 12.0;
+    SetupPhon(k_d_, ModuleBase::Vector3<double>(0.5, 0.0, 0.0));
+
+    const ModuleBase::Vector3<double> q_f(0.5, 0.0, 0.0);
+    ModuleBase::ComplexMatrix dyn_ref(6, 6, true);
+    phon_.ion_ion(q_f, dyn_ref);
+
+    // alpha independence: pin two distinct alphas (the rcut follows the
+    // alpha through the ion_ion internals). Both values sit at or below
+    // the internal search solution, so the fixed test-grid G ball still
+    // bounds the reciprocal tail at the 1e-9 level; a larger alpha would
+    // need a correspondingly larger ecutwfc to keep that tail bounded.
+    ModuleBase::ComplexMatrix dyn_a(6, 6, true);
+    phon_.set_ewald_alpha_override(0.15);
+    phon_.ion_ion(q_f, dyn_a);
+    ModuleBase::ComplexMatrix dyn_b(6, 6, true);
+    phon_.set_ewald_alpha_override(0.30);
+    phon_.ion_ion(q_f, dyn_b);
+    for (int i = 0; i < 6; ++i)
+    {
+        for (int j = 0; j < 6; ++j)
+        {
+            EXPECT_NEAR(std::abs(dyn_a(i, j) - dyn_ref(i, j)), 0.0, 2.0e-6 * std::max(1.0, std::abs(dyn_ref(i, j))));
+            EXPECT_NEAR(std::abs(dyn_b(i, j) - dyn_ref(i, j)), 0.0, 2.0e-6 * std::max(1.0, std::abs(dyn_ref(i, j))));
+        }
+    }
+
+    // determinism: repeat the reference call, bit-equal
+    ModuleBase::ComplexMatrix dyn_rep(6, 6, true);
+    phon_.ion_ion(q_f, dyn_rep);
+    for (int i = 0; i < 6; ++i)
+    {
+        for (int j = 0; j < 6; ++j)
+        {
+            EXPECT_DOUBLE_EQ(dyn_rep(i, j).real(), dyn_ref(i, j).real());
+            EXPECT_DOUBLE_EQ(dyn_rep(i, j).imag(), dyn_ref(i, j).imag());
+        }
+    }
+}
+
+TEST_F(DFPTPhonSerialTest, EwaldAlphaSearchLowCutoffContinuesBelowDecade)
+{
+    // the multiplicative shrinkage must continue below alpha = 0.1: for
+    // charge 8 and ggecut*tpiba2 = 8 the 1e-9 tail bound is first met
+    // around alpha = 0.08, which a fixed-decrement search never reaches
+    const double alpha = ModuleDFPT::ewald_alpha_search(8.0, 8.0, 1.0);
+    EXPECT_GT(alpha, 0.0);
+    EXPECT_LT(alpha, 0.1);
 }
