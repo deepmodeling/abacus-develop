@@ -10,11 +10,13 @@
 #include "source_hsolver/diago_cg.h"
 #include "source_hsolver/diago_dav_subspace.h"
 #include "source_hsolver/diago_david.h"
+#include "source_hsolver/diago_lobpcg.h"
 #include "source_hsolver/diago_iter_assist.h"
 #include "source_psi/psi.h"
 
 #include <algorithm>
 #include <ostream>
+#include <sstream>
 #include <vector>
 
 namespace hsolver
@@ -79,7 +81,7 @@ void HSolverPW<T, Device>::solve(HSOperator<T, Device>& op,
     this->nproc_in_pool = nproc_in_pool_in;
 
     // report if the specified diagonalization method is not supported
-    const std::initializer_list<std::string> _methods = {"cg", "dav", "dav_subspace", "bpcg"};
+    const std::initializer_list<std::string> _methods = {"cg", "dav", "dav_subspace", "bpcg", "lobpcg"};
     if (std::find(std::begin(_methods), std::end(_methods), this->method) == std::end(_methods))
     {
         ModuleBase::WARNING_QUIT("HSolverPW::solve", "This type of eigensolver is not supported!");
@@ -346,6 +348,39 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(const HSOperator<T, Device>& op,
                         david_maxiter,
                         ntry_max,
                         notconv_max));
+    }
+    else if (this->method == "lobpcg")
+    {
+        const int dim = psi.get_current_ngk();
+        const int nband = psi.get_nbands();
+        const int ld_psi = psi.get_nbasis();
+        const double tolerance = this->diag_thr;
+        const std::vector<double> uniform_thresholds;
+        const std::vector<double>& lobpcg_ethr = this->diago_smooth_ethr ? this->ethr_band : uniform_thresholds;
+        const int npol = psi.get_npol();
+        const LobpcgBasisLayout layout = {cur_nbasis, npol};
+        const LobpcgLocking locking = this->lobpcg_locking == "soft" ? LobpcgLocking::Soft : LobpcgLocking::Hard;
+        DiagoLOBPCG<T, Device> lobpcg(pre_condition.data(), nband, dim, nband, layout, comm_info,
+                                      this->diag_subspace, this->nb2d, this->use_uspp, locking, this->rr_solver,
+                                      this->gpu_rr_solver);
+        const bool converged = lobpcg.diag(op, psi.get_pointer(), ld_psi, eigenvalue, tolerance,
+                                           this->diag_iter_max, lobpcg_ethr);
+        if (!converged)
+        {
+            // SCF, relax, cell-relax and MD can refine approximate Ritz pairs
+            // in later electronic steps; NSCF has no such outer update.
+            if (this->calculation_type == "nscf")
+            {
+                ModuleBase::WARNING_QUIT("HSolverPW::hamiltSolvePsiK", "LOBPCG iteration budget exhausted in NSCF.");
+            }
+            const int kpoint = psi.get_current_k() + 1;
+            std::ostringstream message;
+            message << "LOBPCG reached the iteration limit at SCF step " << this->scf_iter
+                    << ", k-point " << kpoint << " (" << lobpcg.iterations()
+                    << " iterations); continuing SCF with approximate Ritz pairs.";
+            ModuleBase::WARNING("HSolverPW::hamiltSolvePsiK", message.str());
+        }
+        DiagoIterAssist<T, Device>::avg_iter += static_cast<double>(lobpcg.iterations());
     }
     ModuleBase::timer::end("HSolverPW", "solve_psik");
     return;

@@ -17,6 +17,14 @@
 
 namespace ModuleBase {
 
+/** Compute the upper triangle of column-major X^H X in double precision.
+ * X has dim valid rows, bands columns and leading dimension ld. Output has
+ * leading dimension bands; its lower triangle is not read or written.
+ * Pointers belong to CPU. The caller completes the Hermitian matrix.
+ */
+void gram_herk_cpu(int ld, int dim, int bands, const std::complex<double>* x,
+                   std::complex<double>* output);
+
 //---------------------------------------------------------------------------------
 //-----------------------------0. Tool Functions-----------------------------------
 //---------------------------------------------------------------------------------
@@ -265,6 +273,25 @@ template <typename T, typename Device> struct gemv_op {
                   const int &n, const T *alpha, const T *A, const int &lda,
                   const T *X, const int &incx, const T *beta, T *Y,
                   const int &incy);
+};
+
+template <typename T, typename Device> struct trmm_op
+{
+    /// @brief In-place column-major B = alpha*op(A)*B or B = alpha*B*op(A).
+    /// @param side 'L' for left multiplication, 'R' for right multiplication.
+    /// @param uplo Stored triangle of A: 'U' or 'L'.
+    /// @param trans Operation on A: 'N', 'T' or 'C'.
+    /// @param diag 'U' for an implicit unit diagonal, 'N' for an explicit diagonal.
+    /// @param m Number of rows of B.
+    /// @param n Number of columns of B.
+    /// @param alpha Host scalar multiplying the product.
+    /// @param a Triangular matrix on Device, stored separately from B.
+    /// @param lda Leading dimension of A, whose order is m (left) or n (right).
+    /// @param b Input/output matrix on Device; row padding is preserved.
+    /// @param ldb Leading dimension of B. Empty matrices are no-ops.
+    void operator()(const char& side, const char& uplo, const char& trans, const char& diag,
+                    const int& m, const int& n, const T* alpha, const T* a, const int& lda,
+                    T* b, const int& ldb);
 };
 
 // compute C = alpha * op(A) * op(B) + beta * C
