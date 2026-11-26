@@ -129,11 +129,45 @@ Warning counts above include stderr from both MPI ranks, rather than only the wo
 
 In the CUDA CI run of `11e39d8f3` on an NVIDIA L20 with CUDA 12.9, all six fixtures also passed their reference-observable checks. Fe emitted 12 iteration-limit warnings with a maximum residual of `4.81339e-9`; HCl emitted 24 with a maximum of `2.15364e-14`. These individual diagonalization calls did not satisfy their requested thresholds. Observable agreement does not certify those eigenpairs, and the larger Fe warnings are not classified as roundoff-level convergence. The local RTX 3090 table and these CI observations are reported separately.
 
-The deliberately strict local USPP fixtures retain their roundoff-level eigensolver warnings; passing observable checks does not certify those eigenpairs at an unattainable residual threshold. An initial batch exceeded the local harness's 300-second aggregate limit. A fresh complete batch passed with a 900-second harness limit; numerical thresholds, iteration budgets and references were unchanged.
+Those historical strict USPP runs retained eigensolver warnings; passing observable checks did not certify those eigenpairs. The residual threshold was not established to be unattainable. An initial batch exceeded the local harness's 300-second aggregate limit. A fresh complete batch passed with a 900-second harness limit; numerical thresholds, iteration budgets and references were unchanged.
 
 A separate GaAs calculation with `ppcg_rr_step=4`, two ranks and two k-point pools converged without PPCG warnings. The world-root trace preserved all eight of its solves across eight SCF iterations, including initial/final records and block sweeps. Other pools intentionally do not write that shared trace. GPU CLI help/version and valid `--check-input` checks passed; RR interval 0 and NSCF were rejected, with NSCF also rejected during actual startup. A four-rank probe was rejected by the existing k-point setup because this fixture has only two k points; the successful probe uses two ranks.
 
 After the device-workspace refactor, the CPU focused MPI CTest suite passed **6/6** and the six CPU application regressions passed **36/36** again. These are correctness regressions; the earlier CPU timing table was not remeasured.
+
+### Strict-residual refinement (2026-11-26)
+
+When a successful Ritz solve stalls within four stopping tolerances, PPCG now
+cycles through retained pairs after five non-improving iterations. This also
+reduces errors in already converged neighbors that can constrain the remaining
+pair. The correction is projected against the retained states and the
+candidate is S-normalized. It is accepted only if a fresh H/S application
+confirms a smaller residual, without a resolved energy increase or reordering.
+A rejected candidate is restored. Each attempt consumes an iteration from the
+existing budget; the convergence criterion and final fresh-residual check are
+unchanged. The `residual_refinement` trace stage records these attempts.
+
+The six original CPU fixtures and six original RTX 3090 CUDA fixtures passed
+**72/72 reference checks** with **zero PPCG nonconvergence warnings across both
+MPI ranks**, including Fe and HCl on both backends. Their inputs, references and tolerances were
+unchanged; Fe retained `scf_thr=1e-16` and `pw_diag_nmax=200`.
+
+Both Fe calculations converged in 26 SCF steps, with total energy approximately
+`-2739.33531173184 eV` and final density deviation approximately `6.10e-17`. Its energy,
+force and stress checks passed against the existing independent reference.
+These local results do not by themselves reproduce or certify the older L20
+residual rebound described above; the updated branch requires fresh CI evidence.
+
+The CPU suite passed 61 tests in MPI and non-MPI builds. Seven new tests cover
+standard/generalized correction geometry, refinement of a converged neighbor,
+preservation of converged pairs, rejection of nonfinite directions, and exact
+float/double cancellation remainders. The CUDA target passed eight cases,
+including the two cancellation checks. Both residual kernels now use fused
+multiply-add: separate product rounding could otherwise turn a nonzero residual
+into zero. The MPI regression driver also passed its multi-rank configurations. The correction uses the existing device workspaces,
+vector kernels and H/S interface; no extended-precision solver or host
+wavefunction bridge was added. Local logs and executable hashes are retained in
+`/mnt/data/Cheerly/ppcg-fe-stability-20261126/`.
 
 ### Transfer audit and reproduction
 

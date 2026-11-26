@@ -67,8 +67,9 @@ class DiagoPPCG
     // Main entry point
     //
     // Returns average number of subspace iterations per band.
-    // Optional ABACUS_PPCG_RESIDUAL_TRACE CSV: initial_rr, rayleigh_ritz and
-    // final rows contain ordered Ritz values after a successful Ritz solve.
+    // Optional ABACUS_PPCG_RESIDUAL_TRACE CSV: initial_rr and rayleigh_ritz
+    // report global Ritz residuals. residual_refinement and final report the
+    // residuals of the current eigenpairs.
     // block_sweep rows instead contain the current column Rayleigh quotients;
     // exclude those rows when plotting ordered eigenvalue errors.
     // -------------------------------------------------------------------------
@@ -102,6 +103,7 @@ class DiagoPPCG
 
   private:
     friend class DiagoPPCGProjectionTest;
+    friend class DiagoPPCGRefinementTest;
     // -------------------------------------------------------------------------
     // Data members
     // -------------------------------------------------------------------------
@@ -309,6 +311,14 @@ class DiagoPPCG
         Real *eigenvalue,
         std::vector<int> &active_cols,
         const std::vector<double> &ethr_band);
+
+    bool refine_stalled_residual(
+        const HSOperator<T, Device> &op,
+        T *psi,
+        Real *eigenvalue,
+        const std::vector<double> &ethr_band,
+        const std::vector<int> &all_cols,
+        int band_hint);
 
     void compute_eigenpair_residual(const Real *eigenvalue);
 

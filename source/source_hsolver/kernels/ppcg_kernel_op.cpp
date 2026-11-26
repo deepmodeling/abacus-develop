@@ -1,5 +1,6 @@
 #include "ppcg_kernel_op.h"
 #include <algorithm>
+#include <cmath>
 
 namespace hsolver
 {
@@ -55,7 +56,9 @@ void PPCGVectorOps<T, Device>::residual(
         for (int i = 0; i < dim; ++i)
         {
             const int offset = i + j * ld;
-            output[offset] = hx[offset] - sx[offset] * eigenvalues[j];
+            const Real real_part = std::fma(-eigenvalues[j], std::real(sx[offset]), std::real(hx[offset]));
+            const Real imaginary_part = std::fma(-eigenvalues[j], std::imag(sx[offset]), std::imag(hx[offset]));
+            output[offset] = T(real_part, imaginary_part);
         }
     }
 }

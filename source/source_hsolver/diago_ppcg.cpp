@@ -1520,6 +1520,166 @@ bool DiagoPPCG<T, Device>::rayleigh_ritz(
     return sygvd_ok;
 }
 
+// Refine one retained pair during stagnation without rotating the other states.
+// The projected correction preserves S-orthogonality to the other columns.
+// A residual-minimizing step and eigenvalue correction solve a two-variable
+// least-squares problem. Only a normalized candidate with a smaller freshly
+// evaluated residual and no resolved energy increase replaces the original.
+template <typename T, typename Device>
+bool DiagoPPCG<T, Device>::refine_stalled_residual(
+    const HSOperator<T, Device> &op,
+    T *psi_in,
+    Real *eigenvalue_in,
+    const std::vector<double> &ethr_band,
+    const std::vector<int> &all_cols,
+    const int band_hint)
+{
+    const PPCGFunctionTimer timer("refine_stalled_residual");
+    const int ncol = n_band_;
+    const int sz = ld_psi_ * ncol;
+    std::vector<double> old_norms(ncol, 0);
+    PPCGVectorOps<T, Device>::column_products(n_dim_, ld_psi_, ncol, w_.data(), w_.data(), old_norms.data());
+    reduce_pool_values(old_norms.data(), ncol);
+    int selected = -1;
+    double largest_relative_residual = 1.0;
+    for (int band = 0; band < ncol; ++band)
+    {
+        const double threshold = std::max(double(diag_thr_), ethr_band[band]);
+        const double relative_residual = old_norms[band] / (threshold * threshold);
+        if (std::isfinite(relative_residual) && relative_residual > largest_relative_residual)
+        {
+            selected = band;
+            largest_relative_residual = relative_residual;
+        }
+    }
+    if (band_hint >= 0 && band_hint < ncol)
+    {
+        selected = band_hint;
+    }
+    if (selected < 0 || !std::isfinite(old_norms[selected]) || old_norms[selected] == 0.0)
+    {
+        return false;
+    }
+    const std::vector<int> selected_cols(1, selected);
+    Workspace original;
+    copy_cols(psi_in, selected_cols, original);
+    const Real original_value = eigenvalue_in[selected];
+    Workspace direction(sz, T(0));
+    copy_values<T, Device>(w_.data(), sz, direction.data());
+    divide_by_preconditioner(all_cols, device_prec_.data(), direction);
+    Workspace h_direction(sz, T(0));
+    Workspace s_direction(sz, T(0));
+    Workspace response(sz, T(0));
+    apply_s(op, direction.data(), s_direction.data(), ncol);
+    project_against(psi_in, spsi_.data(), nullptr, all_cols, direction, s_direction, nullptr, all_cols);
+    apply_h(op, direction.data(), h_direction.data(), ncol);
+    auto device_values = upload_values<Real, Device>(eigenvalue_in, ncol);
+    PPCGVectorOps<T, Device>::residual(
+        n_dim_, ld_psi_, ncol, h_direction.data(), s_direction.data(), device_values.data(), response.data());
+    const int moment_count = 5 * ncol;
+    std::vector<double> moments(moment_count, 0.0);
+    double *response_norms = moments.data() + ncol;
+    double *residual_overlaps = moments.data() + 2 * ncol;
+    double *response_overlaps = moments.data() + 3 * ncol;
+    double *overlap_norms = moments.data() + 4 * ncol;
+    PPCGVectorOps<T, Device>::column_products(n_dim_, ld_psi_, ncol, w_.data(), response.data(), moments.data());
+    PPCGVectorOps<T, Device>::column_products(n_dim_, ld_psi_, ncol, response.data(), response.data(), response_norms);
+    PPCGVectorOps<T, Device>::column_products(n_dim_, ld_psi_, ncol, w_.data(), spsi_.data(), residual_overlaps);
+    PPCGVectorOps<T, Device>::column_products(n_dim_, ld_psi_, ncol, response.data(), spsi_.data(), response_overlaps);
+    PPCGVectorOps<T, Device>::column_products(n_dim_, ld_psi_, ncol, spsi_.data(), spsi_.data(), overlap_norms);
+    reduce_pool_values(moments.data(), moment_count);
+    std::vector<double> steps(ncol, 0);
+    const double ss = overlap_norms[selected];
+    const double vs = response_overlaps[selected];
+    const double rs = residual_overlaps[selected];
+    if (!(ss > 0.0) || !std::isfinite(ss))
+    {
+        return false;
+    }
+    // Eliminate the eigenvalue correction from
+    // min ||r + step * (H - lambda S) d - delta_lambda * Sx||^2.
+    const double denominator = response_norms[selected] - vs * vs / ss;
+    if (!(denominator > 0.0) || !std::isfinite(denominator))
+    {
+        return false;
+    }
+    steps[selected] = -(moments[selected] - rs * vs / ss) / denominator;
+    if (!std::isfinite(steps[selected]))
+    {
+        return false;
+    }
+    auto device_steps = upload_values<double, Device>(steps.data(), ncol);
+    PPCGVectorOps<T, Device>::scale_columns(
+        n_dim_, ld_psi_, ncol, device_steps.data(), direction.data(), s_direction.data(), h_direction.data());
+    const T one(1);
+    const int selected_offset = selected * ld_psi_;
+    const T *selected_direction = direction.data() + selected_offset;
+    T *selected_state = psi_in + selected_offset;
+    ModuleBase::axpy_op<T, Device>()(ld_psi_, &one, selected_direction, 1, selected_state, 1);
+    apply_h(op, psi_in, hpsi_.data(), ncol);
+    apply_s(op, psi_in, spsi_.data(), ncol);
+    const int normalization_count = 4 * ncol;
+    std::vector<double> normalization(normalization_count, 0.0);
+    double *state_norms = normalization.data() + ncol;
+    double *candidate_residual_overlaps = normalization.data() + 2 * ncol;
+    double *candidate_overlap_norms = normalization.data() + 3 * ncol;
+    // Evaluate the Rayleigh correction from the small residual instead of
+    // subtracting nearly equal Rayleigh quotients after division.
+    PPCGVectorOps<T, Device>::residual(
+        n_dim_, ld_psi_, ncol, hpsi_.data(), spsi_.data(), device_values.data(), response.data());
+    PPCGVectorOps<T, Device>::column_products(n_dim_, ld_psi_, ncol, psi_in, response.data(), normalization.data());
+    PPCGVectorOps<T, Device>::column_products(n_dim_, ld_psi_, ncol, psi_in, spsi_.data(), state_norms);
+    PPCGVectorOps<T, Device>::column_products(
+        n_dim_, ld_psi_, ncol, spsi_.data(), response.data(), candidate_residual_overlaps);
+    PPCGVectorOps<T, Device>::column_products(
+        n_dim_, ld_psi_, ncol, spsi_.data(), spsi_.data(), candidate_overlap_norms);
+    reduce_pool_values(normalization.data(), normalization_count);
+    std::vector<double> scales(ncol, 1);
+    const double snorm = state_norms[selected];
+    const double overlap_image_norm = candidate_overlap_norms[selected];
+    Real candidate_energy = std::numeric_limits<Real>::quiet_NaN();
+    if (snorm > 0 && overlap_image_norm > 0)
+    {
+        scales[selected] = 1 / std::sqrt(snorm);
+        candidate_energy = original_value + Real(normalization[selected] / snorm);
+        // Minimize the unscaled generalized residual for the candidate vector.
+        // Keep its Rayleigh energy separately for the variational safeguard.
+        eigenvalue_in[selected] = original_value + Real(candidate_residual_overlaps[selected] / overlap_image_norm);
+    }
+    auto device_scales = upload_values<double, Device>(scales.data(), ncol);
+    PPCGVectorOps<T, Device>::scale_columns(
+        n_dim_, ld_psi_, ncol, device_scales.data(), psi_in, spsi_.data(), hpsi_.data());
+    apply_h(op, psi_in, hpsi_.data(), ncol);
+    apply_s(op, psi_in, spsi_.data(), ncol);
+    compute_eigenpair_residual(eigenvalue_in);
+    std::vector<double> new_norms(ncol, 0);
+    PPCGVectorOps<T, Device>::column_products(n_dim_, ld_psi_, ncol, w_.data(), w_.data(), new_norms.data());
+    reduce_pool_values(new_norms.data(), ncol);
+    const Real margin = Real(16) * std::numeric_limits<Real>::epsilon() * std::max(Real(1), std::abs(original_value));
+    bool ordered = true;
+    if (selected > 0)
+    {
+        ordered = eigenvalue_in[selected] >= eigenvalue_in[selected - 1] - margin;
+    }
+    if (selected + 1 < ncol)
+    {
+        ordered = ordered && eigenvalue_in[selected] <= eigenvalue_in[selected + 1] + margin;
+    }
+    const bool accepted = ordered && snorm > 0.0 && std::isfinite(snorm) && std::isfinite(new_norms[selected]) &&
+                          new_norms[selected] < old_norms[selected] &&
+                          eigenvalue_in[selected] <= original_value + margin &&
+                          candidate_energy <= original_value + margin;
+    if (!accepted)
+    {
+        scatter_cols(psi_in, selected_cols, original);
+        eigenvalue_in[selected] = original_value;
+        apply_h(op, psi_in, hpsi_.data(), ncol);
+        apply_s(op, psi_in, spsi_.data(), ncol);
+        compute_eigenpair_residual(eigenvalue_in);
+    }
+    return accepted;
+}
+
 template <typename T, typename Device>
 void DiagoPPCG<T, Device>::compute_eigenpair_residual(const Real *eigenvalue)
 {
@@ -1831,6 +1991,33 @@ double DiagoPPCG<T, Device>::diag(
             {
                 update_block_gradient(psi_in, eigenvalue_in, ethr_band);
             }
+        }
+        // At stagnation within a few stopping tolerances, another global
+        // Ritz rotation can perturb already accurate vectors. Try a single
+        // normalized residual correction before resuming the block iteration.
+        const Real refinement_threshold = Real(4) * diag_thr_;
+        const int refinement_stagnation = 5;
+        if (last_rr_succeeded && near_precision && max_residual_ <= refinement_threshold &&
+            no_improve >= refinement_stagnation)
+        {
+            // Cycle through the retained states: errors in an already locked
+            // neighbor can limit the attainable residual of the remaining pair.
+            const int refinement_band = iter % ncol;
+            const bool accepted =
+                refine_stalled_residual(op, psi_in, eigenvalue_in, ethr_band, all_cols, refinement_band);
+            if (!accepted && refinement_band == 0)
+            {
+                no_improve = 0;
+            }
+            lock_epairs(w_, ethr_band, active_cols);
+            record_residual(iter, "residual_refinement");
+            set_zero<T, Device>(p_);
+            set_zero<T, Device>(sp_);
+            set_zero<T, Device>(hp_);
+            use_p = false;
+            avg_iter += 1.0 / double(ncol);
+            ++iter;
+            continue;
         }
         local_overlap_min = std::numeric_limits<Real>::quiet_NaN();
         local_overlap_max = std::numeric_limits<Real>::quiet_NaN();

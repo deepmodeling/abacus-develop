@@ -62,7 +62,9 @@ __global__ void residual_kernel(
         const int row = index % dim;
         const int column = index / dim;
         const int offset = row + column * ld;
-        output[offset] = hx[offset] - sx[offset] * eigenvalues[column];
+        const Real real_part = fma(-eigenvalues[column], sx[offset].real(), hx[offset].real());
+        const Real imaginary_part = fma(-eigenvalues[column], sx[offset].imag(), hx[offset].imag());
+        output[offset] = thrust::complex<Real>(real_part, imaginary_part);
     }
 }
 
