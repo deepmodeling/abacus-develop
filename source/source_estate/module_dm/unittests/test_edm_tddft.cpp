@@ -47,9 +47,9 @@ void check_edm(const MPI_Comm comm,
     const std::size_t cols = ncol;
     const ModuleBase::MatrixBlock<Complex> h_mat{h.data(), rows, cols, layout.desc()};
     const ModuleBase::MatrixBlock<Complex> s_mat{s.data(), rows, cols, layout.desc()};
-    ModuleBase::ComplexMatrix edmk;
     for (const bool tensor_lapack : {false, true})
     {
+        ModuleBase::ComplexMatrix edmk(ncol, nrow, true);
         const char* kernel = tensor_lapack ? "Tensor/LAPACK" : "ScaLAPACK";
         SCOPED_TRACE(kernel);
         if (tensor_lapack)
