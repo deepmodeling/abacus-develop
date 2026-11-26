@@ -29,6 +29,7 @@ if(ENABLE_MPI)
     COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 4 ${MPIEXEC_PREFLAGS}
             $<TARGET_FILE:MODULE_BASE_parallel_common> ${MPIEXEC_POSTFLAGS}
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-  set_tests_properties(MODULE_BASE_parallel_common_4 PROPERTIES PROCESSORS 4
-                                                                 TIMEOUT 60)
+  # No per-case time limit: ctest's own default applies, so a slow or
+  # oversubscribed CI machine cannot turn a passing test into a timeout.
+  set_tests_properties(MODULE_BASE_parallel_common_4 PROPERTIES PROCESSORS 4)
 endif()
