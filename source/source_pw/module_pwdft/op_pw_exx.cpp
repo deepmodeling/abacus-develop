@@ -265,7 +265,7 @@ void OperatorEXXPW<T, Device>::set_source(std::unique_ptr<ModulePW::PW_Basis_K> 
     psi = source_psi;
     // Cache the Gygi-Baldereschi auxiliary correction on the frozen source mesh, rather than
     // the independent target path. Limits keeps this correction at zero.
-    const auto screened = coulomb_param.find(Conv_Coulomb_Pot_K::Coulomb_Type::Erfc);
+    const std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string, std::string>>>::iterator screened = coulomb_param.find(Conv_Coulomb_Pot_K::Coulomb_Type::Erfc);
     if (screened != coulomb_param.end())
     {
         for (std::size_t i = 0; i < screened->second.size(); ++i)

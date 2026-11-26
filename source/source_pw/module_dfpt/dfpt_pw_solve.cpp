@@ -361,9 +361,9 @@ double DFPT_PW::Impl::solve_displacement(int q_idx, int iat, int idir)
             if (vsc_broyden)
             {
                 // Broyden on the real-space potential: push, cal_coef, mix
-                auto screen = std::function<void(std::complex<double>*)>();
+                std::function<void (std::complex<double>*)> screen = std::function<void(std::complex<double>*)>();
                 const double beta = mix_beta_;
-                auto mix_cb =
+                std::function<void (std::complex<double>*, const std::complex<double>*, const std::complex<double>*)> mix_cb =
                     std::function<void(std::complex<double>*, const std::complex<double>*, const std::complex<double>*)>(
                         [nrxx, beta](std::complex<double>* out,
                                      const std::complex<double>* in,

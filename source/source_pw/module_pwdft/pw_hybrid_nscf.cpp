@@ -183,7 +183,7 @@ void validate_hybrid_nscf(const Input_para& inp, const General_Exx_Info& info)
         return;
     }
     bool has_fock = false;
-    const auto fock = info.coulomb_param.find(Conv_Coulomb_Pot_K::Coulomb_Type::Fock);
+    const std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string, std::string>>>::const_iterator fock = info.coulomb_param.find(Conv_Coulomb_Pot_K::Coulomb_Type::Fock);
     if (fock != info.coulomb_param.end())
     {
         // An explicit zero coefficient (`exx_fock_alpha 0`) retains a Fock entry but is

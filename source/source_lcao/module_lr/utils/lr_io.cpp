@@ -799,7 +799,7 @@ TLRI<Tdata> read_Ws(const TLRI<TVs>& Vs, const std::vector<TC>& Rlist)
                                      + " do not match the auxiliary basis size");
         }
 
-        const auto R_iter = std::find(Rlist.begin(), Rlist.end(), R);
+        const std::vector<std::array<int, 3>>::const_iterator R_iter = std::find(Rlist.begin(), Rlist.end(), R);
         if(R_iter == Rlist.end())
         {
             throw std::runtime_error("R coordinates in " + filename + " are not in Rlist");

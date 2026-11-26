@@ -163,7 +163,7 @@ namespace Conv_Coulomb_Pot_K
             case Conv_Coulomb_Pot_K::Coulomb_Type::Fock: {
                 for (const std::map<std::string, std::string>& param: param_list.second)
                 {
-                    const auto cut_mode = param.find("rpa_cut_coulomb");
+                    const std::map<std::string, std::string>::const_iterator cut_mode = param.find("rpa_cut_coulomb");
                     if (cut_mode != param.end() && cut_mode->second == "log_erfc")
                     {
                         const double cut_radius = std::stod(param.at("Rcut"));

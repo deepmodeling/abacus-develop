@@ -39,7 +39,7 @@ CoulombParam build_center2_cut_coulomb_param(const CoulombParam& coulomb_param,
         }
         for (std::map<std::string, std::string>& param: param_list.second)
         {
-            const auto cut_radius_policy = param.find("rpa_cut_radius");
+            const std::map<std::string, std::string>::iterator cut_radius_policy = param.find("rpa_cut_radius");
             if (cut_radius_policy != param.end() && cut_radius_policy->second == "inscribed")
             {
                 const std::array<std::array<double, 3>, 3> cut_bvk_lattice = {{
@@ -58,7 +58,7 @@ CoulombParam build_center2_cut_coulomb_param(const CoulombParam& coulomb_param,
                 param["Rcut"] = ModuleBase::GlobalFunc::TO_STRING(fallback_rcut);
                 used_fallback_rcut = true;
             }
-            const auto cut_mode = param.find("rpa_cut_coulomb");
+            const std::map<std::string, std::string>::iterator cut_mode = param.find("rpa_cut_coulomb");
             if (cut_mode != param.end())
             {
                 std::cout << "RPA cut Coulomb: mode=" << cut_mode->second

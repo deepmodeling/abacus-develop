@@ -2365,9 +2365,9 @@ TEST_F(InputTest, Item_test2)
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
     { // independent smoothing and radius switches
-        const auto cut_mode_item = find_label("rpa_cut_coulomb", readinput.input_lists);
-        const auto cut_radius_item = find_label("rpa_cut_radius", readinput.input_lists);
-        const auto cut_width_item = find_label("rpa_cut_width", readinput.input_lists);
+        const std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator cut_mode_item = find_label("rpa_cut_coulomb", readinput.input_lists);
+        const std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator cut_radius_item = find_label("rpa_cut_radius", readinput.input_lists);
+        const std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator cut_width_item = find_label("rpa_cut_width", readinput.input_lists);
         ASSERT_NE(cut_mode_item, readinput.input_lists.end());
         ASSERT_NE(cut_radius_item, readinput.input_lists.end());
         ASSERT_NE(cut_width_item, readinput.input_lists.end());
@@ -3074,7 +3074,7 @@ TEST_F(InputTest, OutStru)
 TEST_F(InputTest, LRExternalKernelSupportsSpectraOnly)
 {
     ModuleIO::ReadInput readinput(0);
-    const auto it = find_label("lr_init_xc_kernel", readinput.input_lists);
+    const std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("lr_init_xc_kernel", readinput.input_lists);
     for (const char* const& solver : {"lr", "ks-lr"})
     {
         for (const char* const& mode : {"file", "from_charge_file"})
@@ -3103,7 +3103,7 @@ TEST_F(InputTest, LRExternalKernelSupportsSpectraOnly)
 TEST_F(InputTest, LRFixedFieldRejectsForcesAndRelaxation)
 {
     ModuleIO::ReadInput readinput(0);
-    const auto it = find_label("efield_flag", readinput.input_lists);
+    const std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("efield_flag", readinput.input_lists);
     for (const char* const& solver : {"lr", "ks-lr"})
     {
         Parameter param;

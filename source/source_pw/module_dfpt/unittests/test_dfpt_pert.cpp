@@ -344,8 +344,8 @@ TEST_F(DFPTPertSerialTest, DVnlDtauMatchesOperatorFiniteDifference)
         std::vector<std::complex<double>> fd(npwkq, std::complex<double>(0.0, 0.0));
         for (int side = 0; side < 2; ++side)
         {
-            const auto& vin = side == 0 ? vkb_in_p : vkb_in_m;
-            const auto& vout = side == 0 ? vkb_out_p : vkb_out_m;
+            const std::vector<std::vector<std::complex<double>>>& vin = side == 0 ? vkb_in_p : vkb_in_m;
+            const std::vector<std::vector<std::complex<double>>>& vout = side == 0 ? vkb_out_p : vkb_out_m;
             std::vector<std::complex<double>> becp(nh, std::complex<double>(0.0, 0.0));
             std::vector<std::complex<double>> dc(nh, std::complex<double>(0.0, 0.0));
             for (int nu = 0; nu < nh; ++nu)

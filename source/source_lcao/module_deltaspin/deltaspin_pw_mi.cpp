@@ -420,7 +420,7 @@ void update_psi_charge_pw_gpu(ScState& state,
 
     psi::Psi<std::complex<double>, base_device::DEVICE_GPU>* psi_t = static_cast<psi::Psi<std::complex<double>, base_device::DEVICE_GPU>*>(psi);
     hamilt::Hamilt<std::complex<double>, base_device::DEVICE_GPU>* hamilt_t = static_cast<hamilt::Hamilt<std::complex<double>, base_device::DEVICE_GPU>*>(p_hamilt);
-    auto* onsite_p = projectors::OnsiteProjector<double, base_device::DEVICE_GPU>::get_instance();
+    projectors::OnsiteProjector<double, base_device::DEVICE_GPU>* onsite_p = projectors::OnsiteProjector<double, base_device::DEVICE_GPU>::get_instance();
 
     int nbands = psi_t->get_nbands();
     int npol = psi_t->get_npol();

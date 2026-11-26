@@ -374,7 +374,7 @@ TEST_F(DFPTPhonSerialTest, NlccDirectTermsFillSemantics)
 
     phon_.accumulate_electron(0, 1, 0, psi, wg, data_, table[3]);
 
-    const auto& m = phon_.dynmat_accum();
+    const ModuleBase::ComplexMatrix& m = phon_.dynmat_accum();
     // row (1, dir 0) = 3*1+0 = 3; column (atom 0, dir j) = j (coreless)
     // X_3j = sum_r table[3](r) * conj(drhoc(atom0, dir_j)(r)) = 0
     //   (atom 0 has no nlcc: drhoc = empty -> the kernel term's x_ab arm

@@ -163,7 +163,7 @@ bool DFPT_PW_Data::get_converged(int q_idx, int irrep) const
 {
     ModuleBase::TITLE("DFPT_PW_Data", "get_converged");
     ModuleBase::timer::start("DFPT_PW_Data", "get_converged");
-    const auto it = converged_.find(std::make_pair(q_idx, irrep));
+    const std::map<std::pair<int, int>, bool>::const_iterator it = converged_.find(std::make_pair(q_idx, irrep));
     ModuleBase::timer::end("DFPT_PW_Data", "get_converged");
     return it != converged_.end() ? it->second : false;
 }
@@ -180,7 +180,7 @@ std::vector<double> DFPT_PW_Data::get_residuals(int q_idx, int irrep) const
 {
     ModuleBase::TITLE("DFPT_PW_Data", "get_residuals");
     ModuleBase::timer::start("DFPT_PW_Data", "get_residuals");
-    const auto it = residuals_.find(std::make_pair(q_idx, irrep));
+    const std::map<std::pair<int, int>, std::vector<double>>::const_iterator it = residuals_.find(std::make_pair(q_idx, irrep));
     ModuleBase::timer::end("DFPT_PW_Data", "get_residuals");
     return it != residuals_.end() ? it->second : std::vector<double>();
 }
@@ -197,7 +197,7 @@ int DFPT_PW_Data::get_current_iter(int q_idx, int irrep) const
 {
     ModuleBase::TITLE("DFPT_PW_Data", "get_current_iter");
     ModuleBase::timer::start("DFPT_PW_Data", "get_current_iter");
-    const auto it = current_iter_.find(std::make_pair(q_idx, irrep));
+    const std::map<std::pair<int, int>, int>::const_iterator it = current_iter_.find(std::make_pair(q_idx, irrep));
     ModuleBase::timer::end("DFPT_PW_Data", "get_current_iter");
     return it != current_iter_.end() ? it->second : 0;
 }

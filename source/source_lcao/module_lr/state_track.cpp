@@ -171,7 +171,7 @@ int follow_subspace(const RootInputs<T>& inputs, const T* amplitudes,
     {
         log << " " << root;
     }
-    const auto largest_reference = std::max_element(reference_size.begin(), reference_size.end());
+    const std::vector<double>::iterator largest_reference = std::max_element(reference_size.begin(), reference_size.end());
     const int reference_root = std::distance(reference_size.begin(), largest_reference);
     log << "; target " << target << "; reference overlap " << reference_size[target] << "; best reference root "
         << reference_root << " (" << *largest_reference << ")" << std::endl;

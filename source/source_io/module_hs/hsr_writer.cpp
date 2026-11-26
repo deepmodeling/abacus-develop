@@ -240,7 +240,7 @@ void ModuleIO::write_hcontainer_csr_binary(const std::string& fname,
     write_native_value(ofs, nR);
 
     const double sparse_threshold = 1e-10;
-    for (const auto& R_coordinate: R_coordinates)
+    for (const std::tuple<int, int, int>& R_coordinate: R_coordinates)
     {
         const int rx = std::get<0>(R_coordinate);
         const int ry = std::get<1>(R_coordinate);
