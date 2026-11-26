@@ -23,8 +23,8 @@ void DomainDecomposition::accumulate_ghost_forces(MDCell& cell)
 
     std::vector<LocalAtom>& owned_atoms = cell.owned_atoms_;
     std::vector<LocalAtom>& ghost_atoms = cell.ghost_atoms_;
-    std::map<std::pair<int, std::int64_t>, std::size_t> owned_lookup;
-    for (std::size_t iat = 0; iat < owned_atoms.size(); ++iat)
+    std::map<std::pair<int, std::int64_t>, int> owned_lookup;
+    for (int iat = 0; iat < static_cast<int>(owned_atoms.size()); ++iat)
     {
         const LocalAtom& atom = owned_atoms[iat];
         owned_lookup[std::make_pair(atom.type, atom.type_index)] = iat;
@@ -47,12 +47,12 @@ void DomainDecomposition::accumulate_ghost_forces(MDCell& cell)
     peer_ranks.erase(std::unique(peer_ranks.begin(), peer_ranks.end()), peer_ranks.end());
 
     std::vector<std::vector<ForceRecord> > send_buffers(peer_ranks.size());
-    for (std::size_t iat = 0; iat < ghost_atoms.size(); ++iat)
+    for (int iat = 0; iat < static_cast<int>(ghost_atoms.size()); ++iat)
     {
         LocalAtom& atom = ghost_atoms[iat];
         if (atom.owner_rank == rank_)
         {
-            const std::map<std::pair<int, std::int64_t>, std::size_t>::const_iterator found
+            const std::map<std::pair<int, std::int64_t>, int>::const_iterator found
                 = owned_lookup.find(std::make_pair(atom.type, atom.type_index));
             if (found == owned_lookup.end())
             {
@@ -80,7 +80,7 @@ void DomainDecomposition::accumulate_ghost_forces(MDCell& cell)
         atom.force.set(0.0, 0.0, 0.0);
     }
 
-    for (std::size_t ipeer = 0; ipeer < peer_ranks.size(); ++ipeer)
+    for (int ipeer = 0; ipeer < static_cast<int>(peer_ranks.size()); ++ipeer)
     {
         const std::vector<ForceRecord>& send_records = send_buffers[ipeer];
         const std::size_t bytes = send_records.size() * sizeof(ForceRecord);
@@ -98,15 +98,14 @@ void DomainDecomposition::accumulate_ghost_forces(MDCell& cell)
             throw std::runtime_error("Invalid ghost force message size.");
         }
 
-        std::vector<ForceRecord> recv_records(
-            static_cast<std::size_t>(recv_bytes / static_cast<int>(sizeof(ForceRecord))));
+        std::vector<ForceRecord> recv_records(recv_bytes / static_cast<int>(sizeof(ForceRecord)));
         exchange_bytes_(send_records.data(), send_bytes, recv_records.data(), recv_bytes,
                         peer_rank, peer_rank, tag_ghost_forces);
 
-        for (std::size_t irecord = 0; irecord < recv_records.size(); ++irecord)
+        for (int irecord = 0; irecord < static_cast<int>(recv_records.size()); ++irecord)
         {
             const ForceRecord& record = recv_records[irecord];
-            const std::map<std::pair<int, std::int64_t>, std::size_t>::const_iterator found
+            const std::map<std::pair<int, std::int64_t>, int>::const_iterator found
                 = owned_lookup.find(std::make_pair(record.type, record.type_index));
             if (found == owned_lookup.end())
             {

@@ -33,7 +33,7 @@ void DomainDecomposition::migrate_owned_atoms(MDCell& cell)
     do
     {
         std::array<std::vector<PackedAtom>, direction_count> send_atoms;
-        for (std::size_t i = 0; i < pending_atoms.size(); ++i)
+        for (int i = 0; i < static_cast<int>(pending_atoms.size()); ++i)
         {
             LocalAtom atom = std::move(pending_atoms[i]);
             atom.frac = wrapped_frac_from_cart(atom.cart);
@@ -88,7 +88,7 @@ void DomainDecomposition::migrate_owned_atoms(MDCell& cell)
 
         for (int idir = 0; idir < direction_count; ++idir)
         {
-            for (std::size_t i = 0; i < recv_atoms[idir].size(); ++i)
+            for (int i = 0; i < static_cast<int>(recv_atoms[idir].size()); ++i)
             {
                 pending_atoms.push_back(unpack_owned_atom(recv_atoms[idir][i]));
             }

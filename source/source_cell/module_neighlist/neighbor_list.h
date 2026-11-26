@@ -12,10 +12,10 @@ public:
     NeighborList() = default;
     ~NeighborList() = default;
 
-    void initialize(std::size_t ncentral_atoms, std::size_t pgsize)
+    void initialize(int ncentral_atoms, int pgsize)
     {
-        ncentral_atoms_ = ModuleNeighList::checked_int_size(ncentral_atoms, "NeighborList central atom count");
-        allocator_.initialize(ModuleNeighList::checked_int_size(pgsize, "NeighborList page size"));
+        ncentral_atoms_ = ncentral_atoms;
+        allocator_.initialize(pgsize);
         numneigh_.assign(ncentral_atoms, 0);
         firstneigh_.assign(ncentral_atoms, nullptr);
     }
@@ -37,7 +37,7 @@ public:
 
     void set_neighbors(int i, const std::vector<int>& neighbors)
     {
-        numneigh_[i] = ModuleNeighList::checked_int_size(neighbors.size(), "NeighborList neighbor count");
+        numneigh_[i] = static_cast<int>(neighbors.size());
         firstneigh_[i] = allocator_.allocate(numneigh_[i]);
         for (int j = 0; j < numneigh_[i]; ++j)
         {

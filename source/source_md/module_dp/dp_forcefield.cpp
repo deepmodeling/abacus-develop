@@ -269,7 +269,7 @@ void DP::compute_mdcell_(MDCell &mdcell, double &energy, ModuleBase::matrix &str
 
         GhostExchangePlan &ghost_plan = mdcell.get_ghost_exchange_plan();
         const bool use_mapping = ghost_plan.nprocs == 1;
-        if (!ghost_plan.is_valid(static_cast<std::size_t>(natom)))
+        if (!ghost_plan.is_valid(natom))
         {
             ModuleBase::WARNING_QUIT("ESolver_DP", "Invalid MDCell ghost exchange plan.");
         }

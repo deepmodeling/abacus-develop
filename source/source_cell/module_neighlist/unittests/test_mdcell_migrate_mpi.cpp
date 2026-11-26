@@ -146,14 +146,14 @@ TEST(MdCellMigrateMpiTest, GhostForcesReturnToOwners)
     decomp.migrate_owned_atoms(mdcell);
 
     long long local_copies[2] = {0, 0};
-    for (std::size_t iat = 0; iat < mdcell.ghost_atoms().size(); ++iat)
+    for (int iat = 0; iat < mdcell.ghost_atoms().size(); ++iat)
     {
         ++local_copies[mdcell.ghost_atoms()[iat].owner_rank];
     }
     long long global_copies[2] = {0, 0};
     MPI_Allreduce(local_copies, global_copies, 2, MPI_LONG_LONG, MPI_SUM, MPI_COMM_WORLD);
 
-    for (std::size_t iat = 0; iat < mdcell.ghost_atoms().size(); ++iat)
+    for (int iat = 0; iat < mdcell.ghost_atoms().size(); ++iat)
     {
         LocalAtom& ghost = mdcell.ghost_atoms()[iat];
         const double value = static_cast<double>(ghost.owner_rank + 1);
@@ -210,7 +210,7 @@ TEST(MdCellMigrateMpiTest, SkinUpdatesFixedGhostLayoutBeforeRebuild)
     decomp.prepare_neighbors(mdcell);
 
     ASSERT_EQ(mdcell.owned_atoms().size(), 1);
-    for (std::size_t i = 0; i < mdcell.ghost_atoms().size(); ++i)
+    for (int i = 0; i < mdcell.ghost_atoms().size(); ++i)
     {
         const LocalAtom& ghost = mdcell.ghost_atoms()[i];
         const double expected_frac = ghost.owner_rank == 0 ? 0.25 : 0.65;

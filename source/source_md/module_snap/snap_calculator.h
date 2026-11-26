@@ -30,30 +30,30 @@ class Calculator
   public:
     explicit Calculator(const ModelData &model);
 
-    EnergyResult compute(const std::vector<Neighbor> &neighbors, std::size_t central_element) const;
+    EnergyResult compute(const std::vector<Neighbor> &neighbors, int central_element) const;
 
-    ForceResult compute_with_analytic_force(const std::vector<Neighbor> &neighbors, std::size_t central_element) const;
+    ForceResult compute_with_analytic_force(const std::vector<Neighbor> &neighbors, int central_element) const;
 
     ForceResult compute_with_finite_difference_force(
-        const std::vector<Neighbor> &neighbors, std::size_t central_element, double displacement) const;
+        const std::vector<Neighbor> &neighbors, int central_element, double displacement) const;
 
   private:
-    EnergyResult compute_from_u(const std::vector<std::complex<double>> &u, std::size_t central_element) const;
+    EnergyResult compute_from_u(const std::vector<std::complex<double>> &u, int central_element) const;
 
     ModelData model_;
     DescriptorEvaluator descriptor_evaluator_;
-    std::size_t descriptor_size_;
+    int descriptor_size_;
     std::vector<std::vector<double>> self_spectra_;
 };
 
 class CellAccumulator
 {
   public:
-    explicit CellAccumulator(std::size_t atom_count);
+    explicit CellAccumulator(int atom_count);
 
     void add(
-        std::size_t center_index,
-        const std::vector<std::size_t> &neighbor_indices,
+        int center_index,
+        const std::vector<int> &neighbor_indices,
         const std::vector<Neighbor> &neighbors,
         const ForceResult &result);
 

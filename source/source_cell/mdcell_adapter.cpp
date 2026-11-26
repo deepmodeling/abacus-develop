@@ -81,7 +81,8 @@ void initialize_from_unitcell(MDCell& mdcell,
 
 void sync_geometry_from_unitcell(MDCell& mdcell, const UnitCell& ucell)
 {
-    if (mdcell.nat() != ucell.nat || mdcell.type_atom_counts().size() != static_cast<std::size_t>(ucell.ntype))
+    if (ucell.ntype < 0 || mdcell.nat() != ucell.nat ||
+        static_cast<int>(mdcell.type_atom_counts().size()) != ucell.ntype)
     {
         throw std::runtime_error("UnitCell and MDCell atom counts differ.");
     }
@@ -107,7 +108,7 @@ void sync_geometry_from_unitcell(MDCell& mdcell, const UnitCell& ucell)
     }
 
     std::vector<LocalAtom>& atoms = mdcell.owned_atoms();
-    for (std::size_t i = 0; i < atoms.size(); ++i)
+    for (int i = 0; i < static_cast<int>(atoms.size()); ++i)
     {
         LocalAtom& atom = atoms[i];
         if (atom.type < 0 || atom.type >= ucell.ntype || atom.type_index < 0
@@ -134,13 +135,13 @@ void collect_full_forces(MDCell& mdcell,
 {
     decomp.accumulate_ghost_forces(mdcell);
     if (mdcell.nat() != ucell.nat || ucell.nat < 0 || ucell.ntype < 0
-        || mdcell.type_atom_counts().size() != static_cast<std::size_t>(ucell.ntype)
+        || static_cast<int>(mdcell.type_atom_counts().size()) != ucell.ntype
         || ucell.nat > std::numeric_limits<int>::max() / 3)
     {
         throw std::runtime_error("Invalid UnitCell atom count for force collection.");
     }
 
-    std::vector<int> offsets(static_cast<std::size_t>(ucell.ntype + 1), 0);
+    std::vector<int> offsets(ucell.ntype + 1, 0);
     for (int it = 0; it < ucell.ntype; ++it)
     {
         offsets[it + 1] = offsets[it] + ucell.atoms[it].na;
@@ -155,10 +156,10 @@ void collect_full_forces(MDCell& mdcell,
     }
 
     const int component_count = 3 * ucell.nat;
-    std::vector<double> values(static_cast<std::size_t>(component_count), 0.0);
-    std::vector<int> owners(static_cast<std::size_t>(ucell.nat), 0);
+    std::vector<double> values(component_count, 0.0);
+    std::vector<int> owners(ucell.nat, 0);
     const std::vector<LocalAtom>& atoms = mdcell.owned_atoms();
-    for (std::size_t i = 0; i < atoms.size(); ++i)
+    for (int i = 0; i < static_cast<int>(atoms.size()); ++i)
     {
         const LocalAtom& atom = atoms[i];
         if (atom.type < 0 || atom.type >= ucell.ntype || atom.type_index < 0

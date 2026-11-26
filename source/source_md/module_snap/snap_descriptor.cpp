@@ -20,11 +20,11 @@ DescriptorEvaluator::DescriptorEvaluator(const ModelParameters &parameters)
         throw std::invalid_argument(error);
     }
 
-    u_block_.resize(static_cast<std::size_t>(parameters_.twojmax + 1), 0);
+    u_block_.resize(static_cast<int>(parameters_.twojmax + 1), 0);
     for (int j = 0; j <= parameters_.twojmax; ++j)
     {
         u_block_[j] = u_size_;
-        u_size_ += static_cast<std::size_t>((j + 1) * (j + 1));
+        u_size_ += static_cast<int>((j + 1) * (j + 1));
     }
     init_root_factors();
 
@@ -50,7 +50,7 @@ DescriptorEvaluator::DescriptorEvaluator(const ModelParameters &parameters)
 void DescriptorEvaluator::init_root_factors()
 {
     const int dimension = parameters_.twojmax + 1;
-    root_factors_.assign(static_cast<std::size_t>(dimension * dimension), 0.0);
+    root_factors_.assign(static_cast<int>(dimension * dimension), 0.0);
     for (int p = 1; p <= parameters_.twojmax; ++p)
     {
         for (int q = 1; q <= parameters_.twojmax; ++q)
@@ -60,9 +60,9 @@ void DescriptorEvaluator::init_root_factors()
     }
 }
 
-std::size_t DescriptorEvaluator::u_index(const int j, const int ma, const int mb) const
+int DescriptorEvaluator::u_index(const int j, const int ma, const int mb) const
 {
-    return u_block_[j] + static_cast<std::size_t>(mb * (j + 1) + ma);
+    return u_block_[j] + static_cast<int>(mb * (j + 1) + ma);
 }
 
 DescriptorEvaluator::SwitchValue DescriptorEvaluator::switching(
@@ -138,8 +138,8 @@ std::vector<std::complex<double>> DescriptorEvaluator::compute_u(const Neighbor 
             result[u_index(j, 0, mb)] = std::complex<double>(0.0, 0.0);
             for (int ma = 0; ma < j; ++ma)
             {
-                const std::size_t current = u_index(j, ma, mb);
-                const std::size_t previous = u_index(j - 1, ma, mb);
+                const int current = u_index(j, ma, mb);
+                const int previous = u_index(j - 1, ma, mb);
                 const double first_root = root_factors_[(j - ma) * dimension + (j - mb)];
                 const double second_root = root_factors_[(ma + 1) * dimension + (j - mb)];
                 result[current] += first_root * std::complex<double>(ar, -ai) * result[previous];
@@ -151,8 +151,8 @@ std::vector<std::complex<double>> DescriptorEvaluator::compute_u(const Neighbor 
         {
             for (int ma = 0; ma <= j; ++ma)
             {
-                const std::size_t left = u_index(j, ma, mb);
-                const std::size_t right = u_index(j, j - ma, j - mb);
+                const int left = u_index(j, ma, mb);
+                const int right = u_index(j, j - ma, j - mb);
                 const double sign = ((ma - mb) % 2 == 0) ? 1.0 : -1.0;
                 result[right] = sign * std::conj(result[left]);
             }
@@ -162,16 +162,20 @@ std::vector<std::complex<double>> DescriptorEvaluator::compute_u(const Neighbor 
 }
 
 std::vector<std::complex<double>> DescriptorEvaluator::accumulate_u(
-    const std::vector<Neighbor> &neighbors, const std::size_t central_element) const
+    const std::vector<Neighbor> &neighbors, const int central_element) const
 {
-    const std::size_t channels = channel_count();
-    const std::size_t self_channel = parameters_.chem_flag ? central_element : 0;
+    if (central_element < 0 || central_element >= static_cast<int>(parameters_.elements.size()))
+    {
+        throw std::out_of_range("SNAP central element index is outside the model element map.");
+    }
+    const int channels = channel_count();
+    const int self_channel = parameters_.chem_flag ? central_element : 0;
     if (self_channel >= channels)
     {
         throw std::out_of_range("SNAP central element is outside the descriptor channels.");
     }
     std::vector<std::complex<double>> result(channels * u_size_, std::complex<double>(0.0, 0.0));
-    for (std::size_t channel = 0; channel < channels; ++channel)
+    for (int channel = 0; channel < channels; ++channel)
     {
         if (channel != self_channel && !parameters_.wselfall_flag)
         {
@@ -186,13 +190,13 @@ std::vector<std::complex<double>> DescriptorEvaluator::accumulate_u(
         }
     }
 
-    for (std::size_t index = 0; index < neighbors.size(); ++index)
+    for (int index = 0; index < neighbors.size(); ++index)
     {
         const Neighbor &neighbor = neighbors[index];
-        const std::size_t channel = parameters_.chem_flag ? neighbor.element_index : 0;
-        if (channel >= channels)
+        const int channel = parameters_.chem_flag ? neighbor.element_index : 0;
+        if (channel < 0 || channel >= channel_count())
         {
-            throw std::out_of_range("SNAP neighbor element is outside the descriptor channels.");
+            throw std::out_of_range("SNAP neighbor element index is outside the model element map.");
         }
         const double distance = std::sqrt(neighbor.x * neighbor.x + neighbor.y * neighbor.y + neighbor.z * neighbor.z);
         const double cutoff_radius = neighbor.cutoff_radius > 0.0 ? neighbor.cutoff_radius : parameters_.rcut;
@@ -202,8 +206,8 @@ std::vector<std::complex<double>> DescriptorEvaluator::accumulate_u(
             continue;
         }
         const std::vector<std::complex<double>> one_neighbor = compute_u(neighbor);
-        const std::size_t offset = channel * u_size_;
-        for (std::size_t i = 0; i < one_neighbor.size(); ++i)
+        const int offset = channel * u_size_;
+        for (int i = 0; i < one_neighbor.size(); ++i)
         {
             result[offset + i] += scale * one_neighbor[i];
         }
@@ -213,21 +217,21 @@ std::vector<std::complex<double>> DescriptorEvaluator::accumulate_u(
 
 std::vector<double> DescriptorEvaluator::compute_bispectrum(const std::vector<std::complex<double>> &u) const
 {
-    const std::size_t channels = channel_count();
+    const int channels = channel_count();
     if (u.size() != channels * u_size_)
     {
         throw std::invalid_argument("SNAP u array has an unexpected size.");
     }
-    const std::size_t bispectrum_size = bispectrum_indices_.size();
+    const int bispectrum_size = bispectrum_indices_.size();
     std::vector<double> result(channels * channels * channels * bispectrum_size, 0.0);
     const auto compute_one = [this, &u](
-                                 const std::size_t first_channel, const std::size_t second_channel,
-                                 const std::size_t third_channel, const std::size_t bispectrum_index)
+                                 const int first_channel, const int second_channel,
+                                 const int third_channel, const int bispectrum_index)
     {
         const BispectrumIndex &index = bispectrum_indices_[bispectrum_index];
-        const std::size_t first_offset = first_channel * u_size_;
-        const std::size_t second_offset = second_channel * u_size_;
-        const std::size_t third_offset = third_channel * u_size_;
+        const int first_offset = first_channel * u_size_;
+        const int second_offset = second_channel * u_size_;
+        const int third_offset = third_channel * u_size_;
         const auto compute_z = [this, &u, &index, first_offset, second_offset](const int ma, const int mb)
         {
             std::complex<double> z(0.0, 0.0);
@@ -281,14 +285,14 @@ std::vector<double> DescriptorEvaluator::compute_bispectrum(const std::vector<st
         }
         return 2.0 * value.real() / (parameters_.bnorm_flag ? index.j + 1.0 : 1.0);
     };
-    for (std::size_t first_channel = 0; first_channel < channels; ++first_channel)
+    for (int first_channel = 0; first_channel < channels; ++first_channel)
     {
-        for (std::size_t second_channel = 0; second_channel < channels; ++second_channel)
+        for (int second_channel = 0; second_channel < channels; ++second_channel)
         {
-            for (std::size_t third_channel = 0; third_channel < channels; ++third_channel)
+            for (int third_channel = 0; third_channel < channels; ++third_channel)
             {
-                const std::size_t triple = (first_channel * channels + second_channel) * channels + third_channel;
-                for (std::size_t ib = 0; ib < bispectrum_size; ++ib)
+                const int triple = (first_channel * channels + second_channel) * channels + third_channel;
+                for (int ib = 0; ib < bispectrum_size; ++ib)
                 {
                     result[triple * bispectrum_size + ib] =
                         compute_one(first_channel, second_channel, third_channel, ib);
@@ -302,21 +306,21 @@ std::vector<double> DescriptorEvaluator::compute_bispectrum(const std::vector<st
 std::vector<double> DescriptorEvaluator::compute_bispectrum_derivative(
     const std::vector<std::complex<double>> &u, const std::vector<std::complex<double>> &du) const
 {
-    const std::size_t channels = channel_count();
+    const int channels = channel_count();
     if (u.size() != channels * u_size_ || du.size() != channels * u_size_)
     {
         throw std::invalid_argument("SNAP u derivative array has an unexpected size.");
     }
-    const std::size_t bispectrum_size = bispectrum_indices_.size();
+    const int bispectrum_size = bispectrum_indices_.size();
     std::vector<double> result(channels * channels * channels * bispectrum_size, 0.0);
     const auto compute_one = [this, &u, &du](
-                                 const std::size_t first_channel, const std::size_t second_channel,
-                                 const std::size_t third_channel, const std::size_t bispectrum_index)
+                                 const int first_channel, const int second_channel,
+                                 const int third_channel, const int bispectrum_index)
     {
         const BispectrumIndex &index = bispectrum_indices_[bispectrum_index];
-        const std::size_t first_offset = first_channel * u_size_;
-        const std::size_t second_offset = second_channel * u_size_;
-        const std::size_t third_offset = third_channel * u_size_;
+        const int first_offset = first_channel * u_size_;
+        const int second_offset = second_channel * u_size_;
+        const int third_offset = third_channel * u_size_;
         const auto compute_z = [this, &u, &du, &index, first_offset, second_offset](
                                    const int ma, const int mb, std::complex<double> &z, std::complex<double> &dz)
         {
@@ -389,14 +393,14 @@ std::vector<double> DescriptorEvaluator::compute_bispectrum_derivative(
         }
         return 2.0 * derivative.real() / (parameters_.bnorm_flag ? index.j + 1.0 : 1.0);
     };
-    for (std::size_t first_channel = 0; first_channel < channels; ++first_channel)
+    for (int first_channel = 0; first_channel < channels; ++first_channel)
     {
-        for (std::size_t second_channel = 0; second_channel < channels; ++second_channel)
+        for (int second_channel = 0; second_channel < channels; ++second_channel)
         {
-            for (std::size_t third_channel = 0; third_channel < channels; ++third_channel)
+            for (int third_channel = 0; third_channel < channels; ++third_channel)
             {
-                const std::size_t triple = (first_channel * channels + second_channel) * channels + third_channel;
-                for (std::size_t ib = 0; ib < bispectrum_size; ++ib)
+                const int triple = (first_channel * channels + second_channel) * channels + third_channel;
+                for (int ib = 0; ib < bispectrum_size; ++ib)
                 {
                     result[triple * bispectrum_size + ib] =
                         compute_one(first_channel, second_channel, third_channel, ib);

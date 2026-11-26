@@ -1,8 +1,6 @@
 #ifndef GHOST_EXCHANGE_PLAN_H
 #define GHOST_EXCHANGE_PLAN_H
 
-#include <cstddef>
-#include <limits>
 #include <vector>
 
 struct GhostExchangePlanView
@@ -35,15 +33,16 @@ struct GhostExchangePlan
 
     GhostExchangePlanView make_view();
 
-    bool is_valid(const std::size_t natom) const
+    bool is_valid(const int natom) const
     {
-        const std::size_t nswap = sendnum.size();
-        const bool communication_sizes_match = recvnum.size() == nswap && firstrecv.size() == nswap
-                                                && send_atom_indices.size() == nswap
-                                                && sendproc.size() == nswap && recvproc.size() == nswap;
-        const bool nswap_fits_int = nswap <= static_cast<std::size_t>(std::numeric_limits<int>::max());
-        const bool mapping_matches_atoms = nprocs != 1 || mapping.size() == natom;
-        return communication_sizes_match && nswap_fits_int && mapping_matches_atoms;
+        const int nswap = static_cast<int>(sendnum.size());
+        const bool communication_sizes_match = static_cast<int>(recvnum.size()) == nswap &&
+                                               static_cast<int>(firstrecv.size()) == nswap &&
+                                               static_cast<int>(send_atom_indices.size()) == nswap &&
+                                               static_cast<int>(sendproc.size()) == nswap &&
+                                               static_cast<int>(recvproc.size()) == nswap;
+        const bool mapping_matches_atoms = nprocs != 1 || static_cast<int>(mapping.size()) == natom;
+        return communication_sizes_match && mapping_matches_atoms;
     }
 };
 

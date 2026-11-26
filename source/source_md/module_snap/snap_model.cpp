@@ -1,6 +1,7 @@
 #include "snap_model.h"
 #include <algorithm>
 #include <cmath>
+#include <cstddef>
 #include <fstream>
 #include <sstream>
 
@@ -46,13 +47,13 @@ bool validate_inner(const ModuleMD::SNAP::ModelParameters &parameters, std::stri
     {
         return true;
     }
-    const std::size_t count = parameters.elements.size();
+    const int count = parameters.elements.size();
     if (parameters.sinner.size() != count || parameters.dinner.size() != count)
     {
         error = "SNAP switchinnerflag requires sinner and dinner values for every element.";
         return false;
     }
-    for (std::size_t i = 0; i < count; ++i)
+    for (int i = 0; i < count; ++i)
     {
         if (!std::isfinite(parameters.sinner[i]) || !std::isfinite(parameters.dinner[i]) || parameters.dinner[i] <= 0.0)
         {
@@ -80,9 +81,9 @@ bool validate_cutoff(const ModuleMD::SNAP::ModelParameters &parameters, std::str
 
 bool validate_pair_cutoffs(const ModuleMD::SNAP::ModelParameters &parameters, std::string &error)
 {
-    for (std::size_t i = 0; i < parameters.element_radii.size(); ++i)
+    for (int i = 0; i < parameters.element_radii.size(); ++i)
     {
-        for (std::size_t j = i; j < parameters.element_radii.size(); ++j)
+        for (int j = i; j < parameters.element_radii.size(); ++j)
         {
             const double pair_cutoff = (parameters.element_radii[i] + parameters.element_radii[j]) * parameters.rcutfac;
             if (!std::isfinite(pair_cutoff) || parameters.rmin >= pair_cutoff)
@@ -142,7 +143,7 @@ bool ModelParameters::valid(std::string &error) const
     {
         return false;
     }
-    for (std::size_t i = 0; i < element_weights.size(); ++i)
+    for (int i = 0; i < element_weights.size(); ++i)
     {
         if (!std::isfinite(element_weights[i]) || !std::isfinite(element_radii[i]) || element_radii[i] <= 0.0)
         {
@@ -227,8 +228,8 @@ bool ModelData::load(
             error = "Unexpected extra value in SNAP element line: " + element;
             return false;
         }
-        std::size_t element_index = parameters.elements.size();
-        for (std::size_t i = 0; i < parameters.elements.size(); ++i)
+        int element_index = parameters.elements.size();
+        for (int i = 0; i < parameters.elements.size(); ++i)
         {
             if (parameters.elements[i] == element)
             {
@@ -236,7 +237,7 @@ bool ModelData::load(
                 break;
             }
         }
-        std::vector<double> values(static_cast<std::size_t>(coefficient_count), 0.0);
+        std::vector<double> values(static_cast<int>(coefficient_count), 0.0);
         for (int coefficient = 0; coefficient < coefficient_count; ++coefficient)
         {
             if (!next_data_line(coeff_stream, line))
@@ -274,7 +275,7 @@ bool ModelData::load(
         error = "Unexpected data after the SNAP coefficient blocks.";
         return false;
     }
-    for (std::size_t i = 0; i < found.size(); ++i)
+    for (int i = 0; i < found.size(); ++i)
     {
         if (!found[i])
         {
@@ -400,7 +401,7 @@ bool ModelData::load(
         {
             std::vector<double> &values = keyword == "sinner" ? parameters.sinner : parameters.dinner;
             values.resize(parameters.elements.size());
-            for (std::size_t i = 0; i < values.size(); ++i)
+            for (int i = 0; i < values.size(); ++i)
             {
                 if (!read_parameter_value(words, values[i], keyword, error))
                 {
@@ -444,7 +445,7 @@ bool ModelData::load(
         return false;
     }
     double maximum_cutoff = 0.0;
-    for (std::size_t i = 0; i < parameters.element_radii.size(); ++i)
+    for (int i = 0; i < parameters.element_radii.size(); ++i)
     {
         maximum_cutoff = std::max(maximum_cutoff, 2.0 * parameters.element_radii[i] * parameters.rcutfac);
     }

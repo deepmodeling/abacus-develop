@@ -126,7 +126,8 @@ private:
      *
      * @param ucell Unit cell providing atom positions.
      */
-    void set_member_variables(const UnitCell& ucell, int glayerX_minus, int glayerX, int glayerY_minus, int glayerY, int glayerZ_minus, int glayerZ);
+    void set_member_variables(const UnitCell& ucell, int glayerX_minus, int glayerX, int glayerY_minus, int glayerY,
+                              int glayerZ_minus, int glayerZ, int& atom_id);
 
     // ========== Data members ==========
 

@@ -82,7 +82,7 @@ bool GPU_NeighborList::build_device(int nall,
                                         std::string& error)
 {
     ModuleBase::timer::start("GPU_NeighborList", "build_device");
-    if (nall <= 0 || position.size() != static_cast<std::size_t>(3 * nall))
+    if (nall <= 0 || static_cast<int>(position.size()) != 3 * nall)
     {
         error = "invalid GPU device neighbor-list input";
         ModuleBase::timer::end("GPU_NeighborList", "build_device");
@@ -132,7 +132,7 @@ bool GPU_NeighborList::filter_device(int nall,
                                          std::string& error)
 {
     ModuleBase::timer::start("GPU_NeighborList", "filter_device");
-    if (nall <= 0 || position.size() != static_cast<std::size_t>(3 * nall)
+    if (nall <= 0 || static_cast<int>(position.size()) != 3 * nall
         || candidate_device_nall_ != nall
         || candidate_device_count_ == nullptr
         || (candidate_max_neighbors > 0 && candidate_device_indices_ == nullptr))
@@ -197,9 +197,8 @@ bool GPU_NeighborList::upload(int nall,
 {
     ModuleBase::timer::start("GPU_NeighborList", "upload");
     if (nall <= 0 || max_neighbors < 0
-        || neighbor_count.size() != static_cast<std::size_t>(nall)
-        || neighbor_indices.size() != static_cast<std::size_t>(nall)
-                                             * static_cast<std::size_t>(max_neighbors))
+        || static_cast<int>(neighbor_count.size()) != nall
+        || static_cast<int>(neighbor_indices.size()) != nall * max_neighbors)
     {
         error = "invalid GPU neighbor-list upload input";
         ModuleBase::timer::end("GPU_NeighborList", "upload");
@@ -262,14 +261,14 @@ bool GPU_NeighborList::build(int nall,
 {
     ModuleBase::timer::start("GPU_NeighborList", "build");
     if (nall <= 0 || cutoff <= 0.0
-        || position.size() != static_cast<std::size_t>(3 * nall))
+        || static_cast<int>(position.size()) != 3 * nall)
     {
         error = "invalid GPU neighbor-list input";
         ModuleBase::timer::end("GPU_NeighborList", "build");
         return false;
     }
 
-    neighbor_count.assign(static_cast<std::size_t>(nall), 0);
+    neighbor_count.assign(nall, 0);
     neighbor_indices.clear();
     max_neighbors = 0;
     char message[512] = {0};
@@ -288,9 +287,7 @@ bool GPU_NeighborList::build(int nall,
         return false;
     }
 
-    neighbor_indices.assign(static_cast<std::size_t>(nall)
-                                * static_cast<std::size_t>(max_neighbors),
-                            0);
+    neighbor_indices.assign(nall * max_neighbors, 0);
     if (max_neighbors > 0)
     {
         const int fill_status = gpu_build_neighbor_list(nall,
@@ -325,18 +322,17 @@ bool GPU_NeighborList::filter(int nall,
 {
     ModuleBase::timer::start("GPU_NeighborList", "filter");
     if (nall <= 0 || cutoff <= 0.0
-        || position.size() != static_cast<std::size_t>(3 * nall)
-        || candidate_count.size() != static_cast<std::size_t>(nall)
+        || static_cast<int>(position.size()) != 3 * nall
+        || static_cast<int>(candidate_count.size()) != nall
         || candidate_max_neighbors < 0
-        || candidate_indices.size() != static_cast<std::size_t>(nall)
-                                         * static_cast<std::size_t>(candidate_max_neighbors))
+        || static_cast<int>(candidate_indices.size()) != nall * candidate_max_neighbors)
     {
         error = "invalid GPU neighbor-list filter input";
         ModuleBase::timer::end("GPU_NeighborList", "filter");
         return false;
     }
 
-    neighbor_count.assign(static_cast<std::size_t>(nall), 0);
+    neighbor_count.assign(nall, 0);
     neighbor_indices.assign(candidate_indices.size(), 0);
     max_neighbors = 0;
     char message[512] = {0};
@@ -357,8 +353,7 @@ bool GPU_NeighborList::filter(int nall,
         ModuleBase::timer::end("GPU_NeighborList", "filter");
         return false;
     }
-    neighbor_indices.resize(static_cast<std::size_t>(nall)
-                            * static_cast<std::size_t>(max_neighbors));
+    neighbor_indices.resize(nall * max_neighbors);
     ModuleBase::timer::end("GPU_NeighborList", "filter");
     return true;
 }

@@ -128,7 +128,7 @@ StruMetadata parse_stru_metadata(std::ifstream& ifs)
         }
         if (line == "NUMERICAL_ORBITAL")
         {
-            for (std::size_t it = 0; it < metadata.stru_meta.species.size(); ++it)
+            for (int it = 0; it < static_cast<int>(metadata.stru_meta.species.size()); ++it)
             {
                 metadata.stru_meta.species[it].orbital_file = next_data_line(ifs, "NUMERICAL_ORBITAL body");
             }
@@ -223,7 +223,7 @@ std::vector<LocalAtom> read_owned_atoms(std::ifstream& ifs,
 
     std::vector<LocalAtom> owned_atoms;
     nat = 0;
-    for (std::size_t it = 0; it < metadata.labels.size(); ++it)
+    for (int it = 0; it < static_cast<int>(metadata.labels.size()); ++it)
     {
         const std::string label = next_data_line(ifs, "atom label");
         if (label != metadata.labels[it])

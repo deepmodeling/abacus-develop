@@ -132,7 +132,7 @@ const ClebschGordanTable::Entry *ClebschGordanTable::find(
     const int m) const
 {
     const std::tuple<int, int, int, int, int, int> key(j1, m1, j2, m2, j, m);
-    const std::map<std::tuple<int, int, int, int, int, int>, std::size_t>::const_iterator found =
+    const std::map<std::tuple<int, int, int, int, int, int>, int>::const_iterator found =
         entry_indices_.find(key);
     return found == entry_indices_.end() ? nullptr : &entries_[found->second];
 }

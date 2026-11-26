@@ -53,11 +53,11 @@ ModuleMD::SNAP::Neighbor make_neighbor(
     result.weight = parameters.element_weights[neighbor.atom_type];
     result.cutoff_radius = (parameters.element_radii[center.atom_type] + parameters.element_radii[neighbor.atom_type]) *
                            parameters.rcutfac;
-    result.element_index = static_cast<std::size_t>(neighbor.atom_type);
+    result.element_index = neighbor.atom_type;
     if (parameters.switchinner_flag)
     {
-        const std::size_t center_type = static_cast<std::size_t>(center.atom_type);
-        const std::size_t neighbor_type = static_cast<std::size_t>(neighbor.atom_type);
+        const int center_type = center.atom_type;
+        const int neighbor_type = neighbor.atom_type;
         result.sinner = 0.5 * (parameters.sinner[center_type] + parameters.sinner[neighbor_type]);
         result.dinner = 0.5 * (parameters.dinner[center_type] + parameters.dinner[neighbor_type]);
     }
@@ -146,29 +146,29 @@ try
         const std::vector<NeighborAtom> &all_atoms = mdcell.neighbor_search().get_all_atoms();
         const NeighborList &list = mdcell.neighbor_search().get_neighbor_list();
         const int nowned = static_cast<int>(owned_atoms.size());
-        ModuleMD::SNAP::CellAccumulator contribution(all_atoms.size());
+        ModuleMD::SNAP::CellAccumulator contribution(static_cast<int>(all_atoms.size()));
         for (int i = 0; i < nowned; ++i)
         {
             const NeighborAtom center(
                 owned_atoms[i].cart.x, owned_atoms[i].cart.y, owned_atoms[i].cart.z, owned_atoms[i].type, i, i);
             std::vector<ModuleMD::SNAP::Neighbor> neighbors;
-            std::vector<std::size_t> neighbor_indices;
+            std::vector<int> neighbor_indices;
             for (int k = 0; k < list.get_numneigh(i); ++k)
             {
                 const int neighbor_index = list.get_firstneigh(i)[k];
                 const NeighborAtom &neighbor = all_atoms[neighbor_index];
                 if (neighbor.atom_type < 0 ||
-                    static_cast<std::size_t>(neighbor.atom_type) >= model_.parameters.elements.size())
+                    neighbor.atom_type >= static_cast<int>(model_.parameters.elements.size()))
                 {
                     fail("MDCell atom type is outside the SNAP element map.", rank_);
                 }
                 neighbors.push_back(make_neighbor(center, neighbor, mdcell.lat0(), model_.parameters));
-                neighbor_indices.push_back(static_cast<std::size_t>(neighbor_index));
+                neighbor_indices.push_back(neighbor_index);
             }
-            const std::size_t center_element = static_cast<std::size_t>(center.atom_type);
+            const int center_element = center.atom_type;
             const ModuleMD::SNAP::ForceResult result =
                 calculator_->compute_with_analytic_force(neighbors, center_element);
-            const std::size_t center_index = static_cast<std::size_t>(i);
+            const int center_index = i;
             contribution.add(center_index, neighbor_indices, neighbors, result);
         }
         energy = contribution.energy() / ModuleBase::Ry_to_eV;
@@ -177,12 +177,12 @@ try
         {
             for (int column = 0; column < 3; ++column)
             {
-                const std::size_t index = static_cast<std::size_t>(3 * row + column);
-                stress(row, column) = contribution.virial()[index] * virial_scale;
+                stress(row, column) = contribution.virial()[3 * row + column] * virial_scale;
             }
         }
         const double force_scale = 1.0 / (ModuleBase::Ry_to_eV * ModuleBase::ANGSTROM_AU);
-        for (std::size_t i = 0; i < mdcell.ghost_atoms().size(); ++i)
+        const int ghost_count = static_cast<int>(mdcell.ghost_atoms().size());
+        for (int i = 0; i < ghost_count; ++i)
         {
             const std::array<double, 3> &value = contribution.forces()[nowned + i];
             const double fx = value[0] * force_scale;
@@ -217,9 +217,9 @@ try
     const std::vector<NeighborAtom> &all = search.get_all_atoms();
     force.create(ucell.nat, 3);
     force.zero_out();
-    const std::size_t atom_count = static_cast<std::size_t>(ucell.nat);
+    const int atom_count = ucell.nat;
     ModuleMD::SNAP::CellAccumulator contribution(atom_count);
-    std::vector<int> offsets(static_cast<std::size_t>(ucell.ntype + 1), 0);
+    std::vector<int> offsets(ucell.ntype + 1, 0);
     for (int it = 0; it < ucell.ntype; ++it)
     {
         offsets[it + 1] = offsets[it] + ucell.atoms[it].na;
@@ -228,20 +228,18 @@ try
     {
         const NeighborAtom &center = inside[local_i];
         std::vector<ModuleMD::SNAP::Neighbor> neighbors;
-        std::vector<std::size_t> atom_indices;
+        std::vector<int> atom_indices;
         for (int k = 0; k < list.get_numneigh(local_i); ++k)
         {
             const NeighborAtom &neighbor = all[list.get_firstneigh(local_i)[k]];
             neighbors.push_back(make_neighbor(center, neighbor, ucell.lat0, model_.parameters));
             const int atom_index = offsets[neighbor.atom_type] + neighbor.atom_index;
-            const std::size_t index = static_cast<std::size_t>(atom_index);
-            atom_indices.push_back(index);
+            atom_indices.push_back(atom_index);
         }
-        const std::size_t center_element = static_cast<std::size_t>(center.atom_type);
+        const int center_element = center.atom_type;
         const ModuleMD::SNAP::ForceResult result = calculator_->compute_with_analytic_force(neighbors, center_element);
         const int center_index = offsets[center.atom_type] + center.atom_index;
-        const std::size_t index = static_cast<std::size_t>(center_index);
-        contribution.add(index, atom_indices, neighbors, result);
+        contribution.add(center_index, atom_indices, neighbors, result);
     }
     energy = contribution.energy() / ModuleBase::Ry_to_eV;
     const double virial_scale = 1.0 / (ModuleBase::Ry_to_eV * ucell.omega);
@@ -249,8 +247,7 @@ try
     {
         for (int column = 0; column < 3; ++column)
         {
-            const std::size_t index = static_cast<std::size_t>(3 * row + column);
-            stress(row, column) = contribution.virial()[index] * virial_scale;
+            stress(row, column) = contribution.virial()[3 * row + column] * virial_scale;
         }
     }
     const double force_scale = 1.0 / (ModuleBase::Ry_to_eV * ModuleBase::ANGSTROM_AU);
@@ -258,9 +255,7 @@ try
     {
         for (int direction = 0; direction < 3; ++direction)
         {
-            const std::size_t index = static_cast<std::size_t>(atom_index);
-            const std::size_t component = static_cast<std::size_t>(direction);
-            force(atom_index, direction) = contribution.forces()[index][component] * force_scale;
+            force(atom_index, direction) = contribution.forces()[atom_index][direction] * force_scale;
         }
     }
 }

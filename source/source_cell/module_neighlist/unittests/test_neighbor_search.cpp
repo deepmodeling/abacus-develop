@@ -24,12 +24,12 @@ void initialize_test_ucell(UnitCell& ucell,
     ucell.ntype = ntype;
     ucell.nat = 0;
     ucell.atoms = new Atom[ntype];
-    std::size_t iat = 0;
+    int iat = 0;
     for (int it = 0; it < ntype; ++it)
     {
         ucell.atoms[it].type = it;
         ucell.atoms[it].na = na[it];
-        ucell.atoms[it].tau.resize(static_cast<std::size_t>(ucell.atoms[it].na));
+        ucell.atoms[it].tau.resize(ucell.atoms[it].na);
         for (int ia = 0; ia < ucell.atoms[it].na; ++ia)
         {
             ucell.atoms[it].tau[ia] = tau[iat++];
@@ -116,9 +116,9 @@ TEST(NeighborSearchTest, SerialInitOwnsCentralAtomsAndBuildsImages)
     EXPECT_EQ(ns.get_all_atoms().size(), 54U);
 
     const std::vector<NeighborAtom>& all_atoms = ns.get_all_atoms();
-    for (std::size_t i = 0; i < all_atoms.size(); ++i)
+    for (int i = 0; i < all_atoms.size(); ++i)
     {
         EXPECT_EQ(all_atoms[i].atom_id,
-                  ModuleNeighList::checked_local_atom_index(i, "test atom id"));
+                  static_cast<ModuleNeighList::LocalAtomIndex>(i));
     }
 }

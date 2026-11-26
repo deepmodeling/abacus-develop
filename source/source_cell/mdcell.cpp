@@ -172,7 +172,7 @@ void MDCell::set_lattice_geometry(const ModuleBase::Matrix3& latvec, double lat0
 
 void MDCell::refresh_cart_from_frac()
 {
-    for (std::size_t i = 0; i < owned_atoms_.size(); ++i)
+    for (int i = 0; i < static_cast<int>(owned_atoms_.size()); ++i)
     {
         owned_atoms_[i].frac.x = wrap_fractional_(owned_atoms_[i].frac.x);
         owned_atoms_[i].frac.y = wrap_fractional_(owned_atoms_[i].frac.y);
@@ -213,7 +213,7 @@ void MDCell::sync_backing_unitcell(const bool positions_updated)
         std::vector<int> mbl(coordinate_count, 0);
         std::vector<int> owner(nat_, 0);
 
-        for (std::size_t i = 0; i < owned_atoms_.size(); ++i)
+        for (int i = 0; i < static_cast<int>(owned_atoms_.size()); ++i)
         {
             const LocalAtom& atom = owned_atoms_[i];
             const int iat = type_offset[atom.type] + atom.type_index;
@@ -270,7 +270,7 @@ void MDCell::sync_backing_unitcell(const bool positions_updated)
     }
 #endif
 
-    for (std::size_t i = 0; i < owned_atoms_.size(); ++i)
+    for (int i = 0; i < static_cast<int>(owned_atoms_.size()); ++i)
     {
         const LocalAtom& atom = owned_atoms_[i];
         backing_unitcell_->atoms[atom.type].tau[atom.type_index] = atom.cart;
@@ -311,7 +311,7 @@ double MDCell::wrap_fractional_(double value)
 
 void MDCell::clear_forces_(std::vector<LocalAtom>& atoms)
 {
-    for (std::size_t i = 0; i < atoms.size(); ++i)
+    for (int i = 0; i < static_cast<int>(atoms.size()); ++i)
     {
         atoms[i].force.set(0.0, 0.0, 0.0);
     }

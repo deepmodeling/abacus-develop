@@ -137,8 +137,8 @@ UWithDerivative DescriptorEvaluator::compute_u_with_derivative(const Neighbor &n
             raw[u_index(j, 0, mb)] = std::complex<Dual>(Dual(0.0), Dual(0.0));
             for (int ma = 0; ma < j; ++ma)
             {
-                const std::size_t current = u_index(j, ma, mb);
-                const std::size_t previous = u_index(j - 1, ma, mb);
+                const int current = u_index(j, ma, mb);
+                const int previous = u_index(j - 1, ma, mb);
                 const double first_root = root_factors_[(j - ma) * dimension + (j - mb)];
                 const double second_root = root_factors_[(ma + 1) * dimension + (j - mb)];
                 raw[current] += Dual(first_root) * std::complex<Dual>(ar, -ai) * raw[previous];
@@ -149,14 +149,14 @@ UWithDerivative DescriptorEvaluator::compute_u_with_derivative(const Neighbor &n
         {
             for (int ma = 0; ma <= j; ++ma)
             {
-                const std::size_t left = u_index(j, ma, mb);
-                const std::size_t right = u_index(j, j - ma, j - mb);
+                const int left = u_index(j, ma, mb);
+                const int right = u_index(j, j - ma, j - mb);
                 const double sign = ((ma - mb) % 2 == 0) ? 1.0 : -1.0;
                 raw[right] = Dual(sign) * std::conj(raw[left]);
             }
         }
     }
-    for (std::size_t i = 0; i < raw.size(); ++i)
+    for (int i = 0; i < raw.size(); ++i)
     {
         const std::complex<Dual> value = scale * raw[i];
         result.derivatives[i] = std::complex<double>(value.real().derivative, value.imag().derivative);

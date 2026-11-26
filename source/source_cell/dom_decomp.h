@@ -81,7 +81,7 @@ private:
         std::vector<int> send_atom_indices;
         std::vector<std::array<double, 3>> previous_fracs;
         std::vector<std::array<int, 3>> dynamic_image_shifts;
-        std::size_t ghost_begin;
+        int ghost_begin;
         int ghost_count;
     };
 

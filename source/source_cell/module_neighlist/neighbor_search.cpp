@@ -48,19 +48,16 @@ void NeighborSearch::init_from_mdcell_(const MDCell& cell, double sr)
 
     search_radius_ = sr / cell.lat0();
 
-    const std::size_t total_atoms = ModuleNeighList::checked_size_sum(cell.owned_atoms().size(),
-                                                                       cell.ghost_atoms().size(),
-                                                                       "NeighborSearch distributed atom count");
-    if (total_atoms > static_cast<std::size_t>(std::numeric_limits<ModuleNeighList::LocalAtomIndex>::max()))
-    {
-        throw std::overflow_error("NeighborSearch distributed atom count exceeds local atom index range.");
-    }
+    const int owned_count = cell.nowned_atoms();
+    const int ghost_count = cell.nghost();
+    const int total_atoms = owned_count + ghost_count;
 
     all_atoms_.reserve(total_atoms);
-    inside_atoms_.reserve(cell.owned_atoms().size());
-    ghost_atoms_.reserve(cell.ghost_atoms().size());
+    inside_atoms_.reserve(owned_count);
+    ghost_atoms_.reserve(ghost_count);
 
-    for (size_t iat = 0; iat < cell.owned_atoms().size(); ++iat)
+    int atom_id = 0;
+    for (int iat = 0; iat < owned_count; ++iat)
     {
         const LocalAtom& local = cell.owned_atoms()[iat];
         NeighborAtom atom(local.cart.x,
@@ -68,14 +65,14 @@ void NeighborSearch::init_from_mdcell_(const MDCell& cell, double sr)
                           local.cart.z,
                           local.type,
                           local.type_index,
-                          ModuleNeighList::checked_local_atom_index(all_atoms_.size(),
-                                                                    "NeighborSearch owned atom id"),
+                          atom_id,
                           local.owner_rank);
         all_atoms_.push_back(atom);
         inside_atoms_.push_back(atom);
+        ++atom_id;
     }
 
-    for (size_t iat = 0; iat < cell.ghost_atoms().size(); ++iat)
+    for (int iat = 0; iat < ghost_count; ++iat)
     {
         const LocalAtom& local = cell.ghost_atoms()[iat];
         NeighborAtom atom(local.cart.x,
@@ -83,19 +80,18 @@ void NeighborSearch::init_from_mdcell_(const MDCell& cell, double sr)
                           local.cart.z,
                           local.type,
                           local.type_index,
-                          ModuleNeighList::checked_local_atom_index(all_atoms_.size(),
-                                                                    "NeighborSearch ghost atom id"),
+                          atom_id,
                           local.owner_rank);
         all_atoms_.push_back(atom);
         ghost_atoms_.push_back(atom);
+        ++atom_id;
     }
 
-    const std::size_t requested_page_size = ModuleNeighList::checked_size_product(all_atoms_.size(),
-                                                                                  neighbor_reserve_factor,
-                                                                                  "NeighborSearch page size");
-    const std::size_t page_size = std::max<std::size_t>(1, requested_page_size);
-    neighbor_list_.initialize(inside_atoms_.size(), page_size);
-    candidate_neighbor_list_.initialize(inside_atoms_.size(), page_size);
+    const long long requested_page_size = static_cast<long long>(total_atoms) * neighbor_reserve_factor;
+    const int page_size = static_cast<int>(std::min<long long>(std::numeric_limits<int>::max(),
+                                                               std::max(1LL, requested_page_size)));
+    neighbor_list_.initialize(owned_count, page_size);
+    candidate_neighbor_list_.initialize(owned_count, page_size);
 }
 
 void NeighborSearch::init_from_unitcell_(const UnitCell& ucell, double sr)
@@ -108,23 +104,22 @@ void NeighborSearch::init_from_unitcell_(const UnitCell& ucell, double sr)
     all_atoms_.clear();
     bin_manager_.clear();
 
+    int atom_id = 0;
     for (int i = 0; i < ucell.ntype; i++)
     {
         for (int j = 0; j < ucell.atoms[i].na; j++)
         {
-            const ModuleNeighList::LocalAtomIndex atom_count
-                = ModuleNeighList::checked_local_atom_index(all_atoms_.size(),
-                                                            "NeighborSearch atom id");
             NeighborAtom atom(
                 ucell.atoms[i].tau[j].x,
                 ucell.atoms[i].tau[j].y,
                 ucell.atoms[i].tau[j].z,
                 i,
                 j,
-                atom_count
+                atom_id
             );
             inside_atoms_.push_back(atom);
             all_atoms_.push_back(atom);
+            ++atom_id;
         }
     }
 
@@ -137,12 +132,12 @@ void NeighborSearch::init_from_unitcell_(const UnitCell& ucell, double sr)
     int glayerZ_minus ;
 
     check_expand_condition(ucell, glayerX_minus, glayerX, glayerY_minus, glayerY, glayerZ_minus, glayerZ);
-    set_member_variables(ucell, glayerX_minus, glayerX, glayerY_minus, glayerY, glayerZ_minus, glayerZ);
-    const std::size_t page_size = ModuleNeighList::checked_size_product(all_atoms_.size(),
-                                                                        neighbor_reserve_factor,
-                                                                        "NeighborSearch page size");
-    neighbor_list_.initialize(inside_atoms_.size(), page_size);
-    candidate_neighbor_list_.initialize(inside_atoms_.size(), page_size);
+    set_member_variables(ucell, glayerX_minus, glayerX, glayerY_minus, glayerY, glayerZ_minus, glayerZ, atom_id);
+    const long long requested_page_size = static_cast<long long>(atom_id) * neighbor_reserve_factor;
+    const int page_size = static_cast<int>(std::min<long long>(std::numeric_limits<int>::max(),
+                                                               std::max(1LL, requested_page_size)));
+    neighbor_list_.initialize(ucell.nat, page_size);
+    candidate_neighbor_list_.initialize(ucell.nat, page_size);
 }
 
 void NeighborSearch::init(BaseCell& cell, double sr)
@@ -169,12 +164,15 @@ void NeighborSearch::build_neighbors()
 
 void NeighborSearch::refresh_mdcell(const MDCell& cell, double cutoff)
 {
-    const std::size_t expected = cell.owned_atoms().size() + cell.ghost_atoms().size();
-    if (all_atoms_.size() != expected || inside_atoms_.size() != cell.owned_atoms().size())
+    const int owned_count = cell.nowned_atoms();
+    const int ghost_count = cell.nghost();
+    const int expected = owned_count + ghost_count;
+    if (static_cast<int>(all_atoms_.size()) != expected ||
+        static_cast<int>(inside_atoms_.size()) != owned_count)
     {
         throw std::runtime_error("MDCell neighbor layout changed without rebuilding the candidate list.");
     }
-    for (std::size_t i = 0; i < cell.owned_atoms().size(); ++i)
+    for (int i = 0; i < owned_count; ++i)
     {
         const LocalAtom& atom = cell.owned_atoms()[i];
         all_atoms_[i].position_x = atom.cart.x;
@@ -184,8 +182,8 @@ void NeighborSearch::refresh_mdcell(const MDCell& cell, double cutoff)
         inside_atoms_[i].position_y = atom.cart.y;
         inside_atoms_[i].position_z = atom.cart.z;
     }
-    const std::size_t offset = cell.owned_atoms().size();
-    for (std::size_t i = 0; i < cell.ghost_atoms().size(); ++i)
+    const int offset = owned_count;
+    for (int i = 0; i < ghost_count; ++i)
     {
         const LocalAtom& atom = cell.ghost_atoms()[i];
         all_atoms_[offset + i].position_x = atom.cart.x;
@@ -259,7 +257,8 @@ void NeighborSearch::check_expand_condition(const UnitCell& ucell, int& glayerX_
     glayerZ_minus = extend_d33;
 }
 
-void NeighborSearch::set_member_variables(const UnitCell& ucell, int glayerX_minus, int glayerX, int glayerY_minus, int glayerY, int glayerZ_minus, int glayerZ)
+void NeighborSearch::set_member_variables(const UnitCell& ucell, int glayerX_minus, int glayerX, int glayerY_minus,
+                                          int glayerY, int glayerZ_minus, int glayerZ, int& atom_id)
 {
     ModuleBase::Vector3<double> vec1(ucell.latvec.e11, ucell.latvec.e12, ucell.latvec.e13);
     ModuleBase::Vector3<double> vec2(ucell.latvec.e21, ucell.latvec.e22, ucell.latvec.e23);
@@ -283,12 +282,10 @@ void NeighborSearch::set_member_variables(const UnitCell& ucell, int glayerX_min
                         double atom_y = ucell.atoms[i].tau[j].y + vec1[1] * ix + vec2[1] * iy + vec3[1] * iz;
                         double atom_z = ucell.atoms[i].tau[j].z + vec1[2] * ix + vec2[2] * iy + vec3[2] * iz;
 
-                        const ModuleNeighList::LocalAtomIndex atom_count
-                            = ModuleNeighList::checked_local_atom_index(all_atoms_.size(),
-                                                                        "NeighborSearch atom id");
-                        NeighborAtom atom(atom_x, atom_y, atom_z, i, j, atom_count);
+                        NeighborAtom atom(atom_x, atom_y, atom_z, i, j, atom_id);
                         ghost_atoms_.push_back(atom);
                         all_atoms_.push_back(atom);
+                        ++atom_id;
                     }
                 }
             }

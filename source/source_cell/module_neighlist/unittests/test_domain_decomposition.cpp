@@ -84,7 +84,7 @@ TEST_F(DomainDecompositionTest, GhostExchangePlanMatchesGhostLayout)
 {
     decomp.prepare_neighbors(cell);
     GhostExchangePlan& plan = cell.get_ghost_exchange_plan();
-    const std::size_t exchange_count = plan.sendnum.size();
+    const int exchange_count = plan.sendnum.size();
     ASSERT_EQ(plan.recvnum.size(), exchange_count);
     ASSERT_EQ(plan.firstrecv.size(), exchange_count);
     ASSERT_EQ(plan.send_atom_indices.size(), exchange_count);
@@ -93,7 +93,7 @@ TEST_F(DomainDecompositionTest, GhostExchangePlanMatchesGhostLayout)
     GhostExchangePlanView view = plan.make_view();
     EXPECT_EQ(view.nswap, static_cast<int>(exchange_count));
     ASSERT_EQ(view.sendlist_storage.size(), exchange_count);
-    for (std::size_t iswap = 0; iswap < exchange_count; ++iswap)
+    for (int iswap = 0; iswap < exchange_count; ++iswap)
     {
         if (plan.send_atom_indices[iswap].empty())
         {
@@ -108,11 +108,11 @@ TEST_F(DomainDecompositionTest, GhostExchangePlanMatchesGhostLayout)
     if (domain.size() == 1)
     {
         ASSERT_EQ(plan.mapping.size(), cell.owned_atoms().size() + cell.ghost_atoms().size());
-        for (std::size_t iat = 0; iat < cell.owned_atoms().size(); ++iat)
+        for (int iat = 0; iat < cell.owned_atoms().size(); ++iat)
         {
             EXPECT_EQ(plan.mapping[iat], static_cast<int>(iat));
         }
-        for (std::size_t iat = 0; iat < cell.ghost_atoms().size(); ++iat)
+        for (int iat = 0; iat < cell.ghost_atoms().size(); ++iat)
         {
             const int owner = plan.mapping[cell.owned_atoms().size() + iat];
             ASSERT_GE(owner, 0);
@@ -126,9 +126,9 @@ TEST_F(DomainDecompositionTest, GhostExchangePlanMatchesGhostLayout)
         EXPECT_TRUE(plan.mapping.empty());
     }
 
-    std::size_t ghost_offset = cell.owned_atoms().size();
-    std::size_t ghost_count = 0;
-    for (std::size_t iswap = 0; iswap < exchange_count; ++iswap)
+    int ghost_offset = cell.owned_atoms().size();
+    int ghost_count = 0;
+    for (int iswap = 0; iswap < exchange_count; ++iswap)
     {
         EXPECT_EQ(plan.sendnum[iswap], static_cast<int>(plan.send_atom_indices[iswap].size()));
         EXPECT_EQ(plan.firstrecv[iswap], static_cast<int>(ghost_offset));
@@ -142,20 +142,20 @@ TEST_F(DomainDecompositionTest, GhostExchangePlanMatchesGhostLayout)
             EXPECT_GE(atom_index, 0);
             EXPECT_LT(atom_index, static_cast<int>(cell.owned_atoms().size()));
         }
-        ghost_offset += static_cast<std::size_t>(plan.recvnum[iswap]);
-        ghost_count += static_cast<std::size_t>(plan.recvnum[iswap]);
+        ghost_offset += static_cast<int>(plan.recvnum[iswap]);
+        ghost_count += static_cast<int>(plan.recvnum[iswap]);
     }
     EXPECT_EQ(ghost_count, cell.ghost_atoms().size());
 
     if (domain.size() == 1)
     {
-        for (std::size_t iswap = 0; iswap < exchange_count; ++iswap)
+        for (int iswap = 0; iswap < exchange_count; ++iswap)
         {
-            for (std::size_t iatom = 0; iatom < plan.send_atom_indices[iswap].size(); ++iatom)
+            for (int iatom = 0; iatom < plan.send_atom_indices[iswap].size(); ++iatom)
             {
                 const int owned_index = plan.send_atom_indices[iswap][iatom];
                 ASSERT_GE(plan.firstrecv[iswap], static_cast<int>(cell.owned_atoms().size()));
-                const std::size_t ghost_index = static_cast<std::size_t>(plan.firstrecv[iswap]
+                const int ghost_index = static_cast<int>(plan.firstrecv[iswap]
                                                                            - cell.owned_atoms().size())
                                                  + iatom;
                 ASSERT_LT(ghost_index, cell.ghost_atoms().size());
@@ -184,7 +184,7 @@ TEST_F(DomainDecompositionTest, GhostExchangePlanMatchesGhostLayout)
         EXPECT_EQ(rebuilt_plan.mapping.size(), cell.owned_atoms().size() + cell.ghost_atoms().size());
     }
     ASSERT_EQ(cell.ghost_atoms().size(), first_identity.size());
-    for (std::size_t i = 0; i < first_identity.size(); ++i)
+    for (int i = 0; i < first_identity.size(); ++i)
     {
         EXPECT_EQ(cell.ghost_atoms()[i].type_index, first_identity[i]);
     }
@@ -224,7 +224,7 @@ TEST_F(DomainDecompositionTest, ReusesLayoutAndRefreshesGhostCoordinates)
 {
     decomp.prepare_neighbors(cell);
     const NeighborSearch* search = &cell.neighbor_search();
-    const std::size_t ghosts = cell.ghost_atoms().size();
+    const int ghosts = cell.ghost_atoms().size();
     for (LocalAtom& atom : cell.owned_atoms())
     {
         atom.frac.x += 0.01;
@@ -333,7 +333,7 @@ TEST_F(DomainDecompositionTest, CrossingHaloEdgePreservesCachedGhostSlots)
     decomp.prepare_neighbors(cell);
     EXPECT_EQ(&cell.neighbor_search(), search);
     ASSERT_EQ(cell.ghost_atoms().size(), ghosts.size());
-    for (std::size_t i = 0; i < ghosts.size(); ++i)
+    for (int i = 0; i < ghosts.size(); ++i)
     {
         const LocalAtom& updated = cell.ghost_atoms()[i];
         EXPECT_EQ(updated.type_index, ghosts[i].type_index);
@@ -495,7 +495,7 @@ TEST_F(DomainDecompositionTest, SkewCellMultipleImagesMatchBruteForce)
                                 static_cast<int>(std::lround(shift.y)),
                                 static_cast<int>(std::lround(shift.z))}});
             }
-            EXPECT_EQ(actual.size(), static_cast<std::size_t>(list.get_numneigh(i)));
+            EXPECT_EQ(actual.size(), static_cast<int>(list.get_numneigh(i)));
             EXPECT_EQ(actual, expected);
         }
     }

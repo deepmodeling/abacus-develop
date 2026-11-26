@@ -40,15 +40,14 @@ int BinManager::get_nbinz() const {
 }
 
 int BinManager::get_total_bins() const {
-    return ModuleNeighList::checked_int_size(bins_.size(), "BinManager total bin count");
+    return static_cast<int>(bins_.size());
 }
 
 int BinManager::get_bin_atom_count(int bin_index) const {
-    if (bin_index < 0 || static_cast<std::size_t>(bin_index) >= bins_.size()) {
+    if (bin_index < 0 || bin_index >= get_total_bins()) {
         return 0;
     }
-    return ModuleNeighList::checked_int_size(bins_[bin_index].get_atom_indices().size(),
-                                             "Bin atom count");
+    return static_cast<int>(bins_[bin_index].get_atom_indices().size());
 }
 
 // ========== BinManager main methods ==========
@@ -112,13 +111,12 @@ void BinManager::init_bins(
     nbiny_ = std::max(1, nbiny_);
     nbinz_ = std::max(1, nbinz_);
 
-    const std::size_t nbins_xy = ModuleNeighList::checked_size_product(static_cast<std::size_t>(nbinx_),
-                                                                        static_cast<std::size_t>(nbiny_),
-                                                                        "BinManager bin count");
-    const std::size_t nbins_size = ModuleNeighList::checked_size_product(nbins_xy,
-                                                                         static_cast<std::size_t>(nbinz_),
-                                                                         "BinManager bin count");
-    const int nbins = ModuleNeighList::checked_int_size(nbins_size, "BinManager bin count");
+    const long long nbins_wide = static_cast<long long>(nbinx_) * nbiny_ * nbinz_;
+    if (nbins_wide > std::numeric_limits<int>::max())
+    {
+        throw std::overflow_error("BinManager bin count exceeds int range.");
+    }
+    const int nbins = static_cast<int>(nbins_wide);
 
     bins_.clear();
     bins_.resize(nbins);
@@ -142,12 +140,7 @@ void BinManager::do_binning(
     const std::vector<NeighborAtom>& atoms
 )
 {
-    if (atoms.size() > static_cast<std::size_t>(std::numeric_limits<ModuleNeighList::LocalAtomIndex>::max()))
-    {
-        throw std::overflow_error("BinManager binned atom count exceeds local atom index range.");
-    }
-
-    for (std::size_t iatom = 0; iatom < atoms.size(); ++iatom)
+    for (int iatom = 0; iatom < static_cast<int>(atoms.size()); ++iatom)
     {
         const NeighborAtom& atom = atoms[iatom];
         int ix = std::min(
@@ -167,8 +160,7 @@ void BinManager::do_binning(
 
         int idx = bin_index(ix, iy, iz);
 
-        const ModuleNeighList::LocalAtomIndex atom_index = static_cast<ModuleNeighList::LocalAtomIndex>(iatom);
-        bins_[idx].add_atom_index(atom_index);
+        bins_[idx].add_atom_index(iatom);
     }
 }
 
@@ -182,7 +174,7 @@ void BinManager::build_atom_neighbors(
     const std::vector<NeighborAtom>& binned_atoms
 )
 {
-    assert(atoms.size() == static_cast<size_t>(neighbor_list.get_ncentral_atoms()));
+    assert(static_cast<int>(atoms.size()) == neighbor_list.get_ncentral_atoms());
 
     double sradius2 = sradius_ * sradius_;
 
@@ -250,7 +242,7 @@ void BinManager::build_atom_neighbors(
             }
         }
 
-        const int n = ModuleNeighList::checked_int_size(neigh_tmp.size(), "BinManager neighbor count");
+        const int n = static_cast<int>(neigh_tmp.size());
 
         int* ptr = neighbor_list.allocator_.allocate(n);
 

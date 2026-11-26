@@ -108,7 +108,7 @@ TEST(MDCellReaderTest, ReadOwnedAtomsFromSTRUWithoutUnitCell)
     EXPECT_EQ(global_count, 4);
 
     std::set<std::pair<int, int> > local_ids;
-    for (std::size_t iat = 0; iat < mdcell.owned_atoms().size(); ++iat)
+    for (int iat = 0; iat < mdcell.owned_atoms().size(); ++iat)
     {
         const LocalAtom& atom = mdcell.owned_atoms()[iat];
         EXPECT_EQ(decomp.owner_rank_from_frac(atom.frac), comm_domain.rank());
@@ -122,7 +122,7 @@ TEST(MDCellReaderTest, ReadOwnedAtomsFromSTRUWithoutUnitCell)
 
     bool saw_v01 = false;
     bool saw_v04 = false;
-    for (std::size_t iat = 0; iat < mdcell.owned_atoms().size(); ++iat)
+    for (int iat = 0; iat < mdcell.owned_atoms().size(); ++iat)
     {
         const LocalAtom& atom = mdcell.owned_atoms()[iat];
         if (atom.type == 0 && atom.type_index == 0)
@@ -359,7 +359,7 @@ TEST(MDCellReaderTest, RestartStruPreservesAtomRecordsAcrossRanks)
     double local_velocities[4] = {0.0, 0.0, 0.0, 0.0};
     int local_mbl_x[4] = {0, 0, 0, 0};
     int local_owners[4] = {0, 0, 0, 0};
-    for (std::size_t iat = 0; iat < round_trip.owned_atoms().size(); ++iat)
+    for (int iat = 0; iat < round_trip.owned_atoms().size(); ++iat)
     {
         const LocalAtom& atom = round_trip.owned_atoms()[iat];
         const int index = atom.type == 0 ? static_cast<int>(atom.cart.x)

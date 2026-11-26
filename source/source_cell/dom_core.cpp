@@ -89,7 +89,7 @@ void DomainDecomposition::prepare_neighbors(MDCell& cell)
     bool local_periodic_crossing = false;
     if (!rebuild)
     {
-        for (std::size_t i = 0; i < cell.owned_atoms_.size(); ++i)
+        for (int i = 0; i < static_cast<int>(cell.owned_atoms_.size()); ++i)
         {
             ModuleBase::Vector3<double> delta = cell.owned_atoms_[i].frac - cell.neighbor_reference_frac_[i];
             if (std::nearbyint(delta.x) != 0.0 || std::nearbyint(delta.y) != 0.0
@@ -115,7 +115,7 @@ void DomainDecomposition::prepare_neighbors(MDCell& cell)
         cell.neighbor_search_->build_neighbors();
         cell.neighbor_search_->refresh_mdcell(cell, cell.cutoff_);
         cell.neighbor_reference_frac_.resize(cell.owned_atoms_.size());
-        for (std::size_t i = 0; i < cell.owned_atoms_.size(); ++i)
+        for (int i = 0; i < static_cast<int>(cell.owned_atoms_.size()); ++i)
         {
             cell.neighbor_reference_frac_[i] = cell.owned_atoms_[i].frac;
         }
@@ -282,7 +282,7 @@ void DomainDecomposition::exchange_migration_(
         {
             throw std::runtime_error("Invalid DomainDecomposition migration receive count.");
         }
-        recv_atoms[idir].resize(static_cast<std::size_t>(recv_counts[idir] / static_cast<int>(sizeof(PackedAtom))));
+        recv_atoms[idir].resize(recv_counts[idir] / static_cast<int>(sizeof(PackedAtom)));
     }
 
     for (int idir = 0; idir < direction_count; ++idir)
@@ -358,7 +358,7 @@ std::vector<LocalAtom> DomainDecomposition::split_owned_atoms_from_ucell(const U
 {
     std::vector<LocalAtom> owned_atoms;
     owned_atoms.clear();
-    owned_atoms.reserve(static_cast<size_t>(ucell.nat / std::max(1, size_) + 1));
+    owned_atoms.reserve(ucell.nat / std::max(1, size_) + 1);
 
     for (int it = 0; it < ucell.ntype; ++it)
     {

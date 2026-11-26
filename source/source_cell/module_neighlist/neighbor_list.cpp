@@ -8,7 +8,7 @@ std::vector<int> NeighborList::get_neighbors_sorted_by_distance(const int centra
 {
     const int neighbor_count = get_numneigh(central_atom);
     std::vector<std::pair<double, int> > distance_neighbors;
-    distance_neighbors.reserve(static_cast<std::size_t>(neighbor_count));
+    distance_neighbors.reserve(neighbor_count);
     for (int ineighbor = 0; ineighbor < neighbor_count; ++ineighbor)
     {
         const int neighbor_atom = get_firstneigh(central_atom)[ineighbor];
@@ -22,7 +22,7 @@ std::vector<int> NeighborList::get_neighbors_sorted_by_distance(const int centra
     std::sort(distance_neighbors.begin(), distance_neighbors.end());
 
     std::vector<int> sorted_neighbors;
-    sorted_neighbors.reserve(static_cast<std::size_t>(neighbor_count));
+    sorted_neighbors.reserve(neighbor_count);
     for (const std::pair<double, int>& distance_neighbor : distance_neighbors)
     {
         sorted_neighbors.push_back(distance_neighbor.second);

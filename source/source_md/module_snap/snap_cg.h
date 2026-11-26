@@ -66,7 +66,7 @@ class ClebschGordanTable
 
     int max_j_;
     std::vector<Entry> entries_;
-    std::map<std::tuple<int, int, int, int, int, int>, std::size_t> entry_indices_;
+    std::map<std::tuple<int, int, int, int, int, int>, int> entry_indices_;
 };
 
 } // namespace SNAP

@@ -28,7 +28,7 @@ GhostExchangePlanView GhostExchangePlan::make_view()
     view.recvproc = recvproc.empty() ? NULL : recvproc.data();
     view.mapping = mapping.empty() ? NULL : mapping.data();
     view.sendlist_storage.resize(send_atom_indices.size());
-    for (std::size_t iswap = 0; iswap < send_atom_indices.size(); ++iswap)
+    for (int iswap = 0; iswap < static_cast<int>(send_atom_indices.size()); ++iswap)
     {
         if (!send_atom_indices[iswap].empty())
         {
@@ -53,13 +53,14 @@ void DomainDecomposition::exchange_ghost_atoms(MDCell& cell)
     ghost_slots_.clear();
     build_ghost_exchange_slots(ghost_slots_);
     std::vector<GhostExchangeSlot>& slots = ghost_slots_;
+    int ghost_begin = 0;
 
     const int nlayer[3] = {neighbor_layer(0), neighbor_layer(1), neighbor_layer(2)};
     const int span_y = 2 * nlayer[1] + 1;
     const int span_z = 2 * nlayer[2] + 1;
     const int lookup_size = (2 * nlayer[0] + 1) * span_y * span_z;
-    std::vector<int> slot_lookup(static_cast<std::size_t>(lookup_size), -1);
-    for (std::size_t islot = 0; islot < slots.size(); ++islot)
+    std::vector<int> slot_lookup(lookup_size, -1);
+    for (int islot = 0; islot < static_cast<int>(slots.size()); ++islot)
     {
         const std::array<int, 3>& offset = slots[islot].offset;
         const int index = (offset[0] + nlayer[0]) * span_y * span_z
@@ -104,7 +105,7 @@ void DomainDecomposition::exchange_ghost_atoms(MDCell& cell)
     std::vector<int> x_offsets;
     std::vector<int> y_offsets;
     std::vector<int> z_offsets;
-    for (size_t iat = 0; iat < owned_atoms.size(); ++iat)
+    for (int iat = 0; iat < static_cast<int>(owned_atoms.size()); ++iat)
     {
         const LocalAtom& atom = owned_atoms[iat];
         collect_offsets(atom, 0, x_offsets);
@@ -134,7 +135,7 @@ void DomainDecomposition::exchange_ghost_atoms(MDCell& cell)
         }
     }
 
-    for (std::size_t islot = 0; islot < slots.size(); ++islot)
+    for (int islot = 0; islot < static_cast<int>(slots.size()); ++islot)
     {
         GhostExchangeSlot& slot = slots[islot];
         const std::vector<PackedAtom>& send_atoms = send_buffers[islot];
@@ -148,12 +149,7 @@ void DomainDecomposition::exchange_ghost_atoms(MDCell& cell)
             slot.previous_fracs.push_back({{atom.frac.x, atom.frac.y, atom.frac.z}});
             slot.dynamic_image_shifts.push_back(slot.image_shift);
         }
-        slot.ghost_begin = ghost_atoms.size();
-
-        if (send_atoms.size() > static_cast<std::size_t>(std::numeric_limits<int>::max()))
-        {
-            throw std::overflow_error("DomainDecomposition ghost send count exceeds int range.");
-        }
+        slot.ghost_begin = ghost_begin;
 
         int send_count = static_cast<int>(send_atoms.size());
         int recv_count = 0;
@@ -164,25 +160,18 @@ void DomainDecomposition::exchange_ghost_atoms(MDCell& cell)
             throw std::runtime_error("Invalid ghost receive count.");
         }
 
-        std::vector<PackedAtom> recv_atoms(static_cast<size_t>(recv_count));
+        std::vector<PackedAtom> recv_atoms(recv_count);
         const std::size_t send_bytes_size = send_atoms.size() * sizeof(PackedAtom);
         const std::size_t recv_bytes_size = recv_atoms.size() * sizeof(PackedAtom);
-        if (send_bytes_size > static_cast<std::size_t>(std::numeric_limits<int>::max()) ||
-            recv_bytes_size > static_cast<std::size_t>(std::numeric_limits<int>::max()))
-        {
-            throw std::overflow_error("DomainDecomposition ghost message exceeds MPI int byte count range.");
-        }
-        const int send_bytes = static_cast<int>(send_bytes_size);
-        const int recv_bytes = static_cast<int>(recv_bytes_size);
-
-        exchange_bytes_(send_atoms.data(), send_bytes, recv_atoms.data(), recv_bytes,
+        exchange_bytes_(send_atoms.data(), send_bytes_size, recv_atoms.data(), recv_bytes_size,
                         slot.send_rank, slot.recv_rank, tag_ghost_atoms);
 
-        for (size_t i = 0; i < recv_atoms.size(); ++i)
+        for (int i = 0; i < static_cast<int>(recv_atoms.size()); ++i)
         {
             ghost_atoms.push_back(unpack_ghost_atom(recv_atoms[i]));
         }
         slot.ghost_count = recv_count;
+        ghost_begin += recv_count;
     }
     ghost_layout_valid_ = true;
     cell.set_ghost_exchange_plan_(build_ghost_exchange_plan(cell));
@@ -208,14 +197,6 @@ GhostExchangePlan DomainDecomposition::build_ghost_exchange_plan(const MDCell& c
 
     for (const GhostExchangeSlot& slot : ghost_slots_)
     {
-        if (slot.send_atom_indices.size() > static_cast<std::size_t>(std::numeric_limits<int>::max()))
-        {
-            throw std::overflow_error("Ghost send list exceeds int range.");
-        }
-        if (slot.ghost_begin > static_cast<std::size_t>(std::numeric_limits<int>::max()))
-        {
-            throw std::overflow_error("Ghost receive offset exceeds int range.");
-        }
         if (slot.ghost_count < 0)
         {
             throw std::runtime_error("Invalid ghost receive count.");
@@ -223,12 +204,8 @@ GhostExchangePlan DomainDecomposition::build_ghost_exchange_plan(const MDCell& c
 
         plan.sendnum.push_back(static_cast<int>(slot.send_atom_indices.size()));
         plan.recvnum.push_back(slot.ghost_count);
-        const std::size_t firstrecv = cell.owned_atoms_.size() + slot.ghost_begin;
-        if (firstrecv > static_cast<std::size_t>(std::numeric_limits<int>::max()))
-        {
-            throw std::overflow_error("Ghost receive index exceeds int range.");
-        }
-        plan.firstrecv.push_back(static_cast<int>(firstrecv));
+        const int firstrecv = cell.nowned_atoms() + slot.ghost_begin;
+        plan.firstrecv.push_back(firstrecv);
         plan.send_atom_indices.push_back(slot.send_atom_indices);
         plan.sendproc.push_back(slot.send_rank);
         plan.recvproc.push_back(slot.recv_rank);
@@ -236,16 +213,18 @@ GhostExchangePlan DomainDecomposition::build_ghost_exchange_plan(const MDCell& c
 
     if (plan.nprocs == 1)
     {
-        const std::size_t natom = cell.owned_atoms_.size() + cell.ghost_atoms_.size();
+        const int nowned = cell.nowned_atoms();
+        const int nghost = cell.nghost();
+        const int natom = nowned + nghost;
         plan.mapping.resize(natom, 0);
         std::map<std::pair<int, std::int64_t>, int> owned_lookup;
-        for (std::size_t iat = 0; iat < cell.owned_atoms_.size(); ++iat)
+        for (int iat = 0; iat < nowned; ++iat)
         {
             const LocalAtom& atom = cell.owned_atoms_[iat];
-            owned_lookup[std::make_pair(atom.type, atom.type_index)] = static_cast<int>(iat);
-            plan.mapping[iat] = static_cast<int>(iat);
+            owned_lookup[std::make_pair(atom.type, atom.type_index)] = iat;
+            plan.mapping[iat] = iat;
         }
-        for (std::size_t iat = 0; iat < cell.ghost_atoms_.size(); ++iat)
+        for (int iat = 0; iat < nghost; ++iat)
         {
             const LocalAtom& atom = cell.ghost_atoms_[iat];
             const std::map<std::pair<int, std::int64_t>, int>::const_iterator owner
@@ -254,7 +233,7 @@ GhostExchangePlan DomainDecomposition::build_ghost_exchange_plan(const MDCell& c
             {
                 throw std::runtime_error("Cannot match a single-rank ghost atom to an owned atom.");
             }
-            plan.mapping[cell.owned_atoms_.size() + iat] = owner->second;
+            plan.mapping[nowned + iat] = owner->second;
         }
     }
 
@@ -272,13 +251,14 @@ void DomainDecomposition::update_ghost_atom_positions(MDCell& cell)
 
     const std::vector<LocalAtom>& owned_atoms = cell.owned_atoms_;
     std::vector<LocalAtom>& ghost_atoms = cell.ghost_atoms_;
-    for (std::size_t islot = 0; islot < ghost_slots_.size(); ++islot)
+    for (int islot = 0; islot < static_cast<int>(ghost_slots_.size()); ++islot)
     {
         GhostExchangeSlot& slot = ghost_slots_[islot];
         // Keep wrapped fractional coordinates for metadata and send the
         // dynamically selected image coordinates in the same message.
-        std::vector<double> send_frac(6 * slot.send_atom_indices.size(), 0.0);
-        for (std::size_t i = 0; i < slot.send_atom_indices.size(); ++i)
+        const int send_count = static_cast<int>(slot.send_atom_indices.size());
+        std::vector<double> send_frac(6 * send_count, 0.0);
+        for (int i = 0; i < send_count; ++i)
         {
             const LocalAtom& atom = owned_atoms[slot.send_atom_indices[i]];
             const std::array<int, 3> image_shift = image_shift_for_update(
@@ -288,22 +268,22 @@ void DomainDecomposition::update_ghost_atom_positions(MDCell& cell)
             send_frac[3 * i] = atom.frac.x;
             send_frac[3 * i + 1] = atom.frac.y;
             send_frac[3 * i + 2] = atom.frac.z;
-            send_frac[3 * slot.send_atom_indices.size() + 3 * i] = atom.frac.x + image_shift[0];
-            send_frac[3 * slot.send_atom_indices.size() + 3 * i + 1] = atom.frac.y + image_shift[1];
-            send_frac[3 * slot.send_atom_indices.size() + 3 * i + 2] = atom.frac.z + image_shift[2];
+            send_frac[3 * send_count + 3 * i] = atom.frac.x + image_shift[0];
+            send_frac[3 * send_count + 3 * i + 1] = atom.frac.y + image_shift[1];
+            send_frac[3 * send_count + 3 * i + 2] = atom.frac.z + image_shift[2];
         }
-        std::vector<double> recv_frac(6 * static_cast<std::size_t>(slot.ghost_count), 0.0);
+        std::vector<double> recv_frac(6 * slot.ghost_count, 0.0);
         exchange_bytes_(send_frac.data(), send_frac.size() * sizeof(double),
                         recv_frac.data(), recv_frac.size() * sizeof(double),
                         slot.send_rank, slot.recv_rank, tag_ghost_positions);
         for (int i = 0; i < slot.ghost_count; ++i)
         {
-            LocalAtom& ghost = ghost_atoms[slot.ghost_begin + static_cast<std::size_t>(i)];
+            LocalAtom& ghost = ghost_atoms[slot.ghost_begin + i];
             ghost.frac.set(recv_frac[3 * i], recv_frac[3 * i + 1], recv_frac[3 * i + 2]);
             const ModuleBase::Vector3<double> image_frac(
-                recv_frac[3 * static_cast<std::size_t>(slot.ghost_count) + 3 * i],
-                recv_frac[3 * static_cast<std::size_t>(slot.ghost_count) + 3 * i + 1],
-                recv_frac[3 * static_cast<std::size_t>(slot.ghost_count) + 3 * i + 2]);
+                recv_frac[3 * slot.ghost_count + 3 * i],
+                recv_frac[3 * slot.ghost_count + 3 * i + 1],
+                recv_frac[3 * slot.ghost_count + 3 * i + 2]);
             ghost.cart = image_frac * latvec_;
             ghost.force.set(0.0, 0.0, 0.0);
         }
@@ -366,10 +346,7 @@ void DomainDecomposition::build_ghost_exchange_slots(std::vector<GhostExchangeSl
     const int nlayer_y = neighbor_layer(1);
     const int nlayer_z = neighbor_layer(2);
 
-    slots.reserve(static_cast<std::size_t>((2 * nlayer_x + 1)
-                                           * (2 * nlayer_y + 1)
-                                           * (2 * nlayer_z + 1)
-                                           - 1));
+    slots.reserve((2 * nlayer_x + 1) * (2 * nlayer_y + 1) * (2 * nlayer_z + 1) - 1);
     for (int dx = -nlayer_x; dx <= nlayer_x; ++dx)
     {
         for (int dy = -nlayer_y; dy <= nlayer_y; ++dy)
