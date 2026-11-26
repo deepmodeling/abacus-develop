@@ -10,10 +10,14 @@ namespace LR
 {
 template <typename T>
 std::vector<ModuleBase::matrix> evaluate_open_shell_force(
-    const GradientInputs<T>& inputs, LR_Force<T>& lr_force,
-    const module_dm::DensityMatrix<T, double>& dm_gs,
-    const ct::Tensor& Xz, const ct::Tensor& Z,
-    const std::vector<double>& omega, const int label_begin)
+    const GradientInputs<T> &inputs,
+    LR_Force<T> &lr_force,
+    const module_dm::DensityMatrix<T, double> &dm_gs,
+    const ct::Tensor &Xz,
+    const ct::Tensor &Z,
+    const std::vector<double> &omega,
+    const int label_begin,
+    const bool emit_state_forces)
 {
     ModuleBase::timer::start("LR", "evaluate_open_shell_force");
     const int nst = static_cast<int>(omega.size());
@@ -175,13 +179,31 @@ std::vector<ModuleBase::matrix> evaluate_open_shell_force(
 #endif
         forces[istate - ist_begin] = force_hxc_dmtrans + force_hamiltgs_relaxed_diff + force_overlap_edm;
     }
-    print_lr_force(forces, std::cout, ist_begin);
-    print_lr_force(forces, inputs.ofs, ist_begin);
+    if (emit_state_forces)
+    {
+        print_lr_force(forces, std::cout, ist_begin);
+        print_lr_force(forces, inputs.ofs, ist_begin);
+    }
     ModuleBase::timer::end("LR", "evaluate_open_shell_force");
     return forces;
 }
 
-
-template std::vector<ModuleBase::matrix> evaluate_open_shell_force<double>(const GradientInputs<double>&, LR_Force<double>&, const module_dm::DensityMatrix<double, double>&, const ct::Tensor&, const ct::Tensor&, const std::vector<double>&, int);
-template std::vector<ModuleBase::matrix> evaluate_open_shell_force<std::complex<double>>(const GradientInputs<std::complex<double>>&, LR_Force<std::complex<double>>&, const module_dm::DensityMatrix<std::complex<double>, double>&, const ct::Tensor&, const ct::Tensor&, const std::vector<double>&, int);
+template std::vector<ModuleBase::matrix> evaluate_open_shell_force<double>(
+    const GradientInputs<double> &,
+    LR_Force<double> &,
+    const module_dm::DensityMatrix<double, double> &,
+    const ct::Tensor &,
+    const ct::Tensor &,
+    const std::vector<double> &,
+    int,
+    bool);
+template std::vector<ModuleBase::matrix> evaluate_open_shell_force<std::complex<double>>(
+    const GradientInputs<std::complex<double>> &,
+    LR_Force<std::complex<double>> &,
+    const module_dm::DensityMatrix<std::complex<double>, double> &,
+    const ct::Tensor &,
+    const ct::Tensor &,
+    const std::vector<double> &,
+    int,
+    bool);
 }

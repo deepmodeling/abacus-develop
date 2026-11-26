@@ -1,18 +1,53 @@
 #include "lr_force.h"
 #include "cal_hs_grad.h"
+#include "nacv_tools.h"
 #include "pulay_hc.h"
 #include "source_lcao/pulay_fs.h"   // only for gint terms
 #include "source_hamilt/module_gint/gint_interface.h"
 #include "source_lcao/module_lr/utils/lr_util.h"
 #include "source_hamilt/module_xc/xc_functional.h"
+#include <utility>
 // #include "source_lcao/module_lr/utils/lr_util_hcontainer.h"
 namespace LR
 {
     template<typename TK>
+    void LR_Force<TK>::prepare_force_batch(const module_dm::DensityMatrix<TK, double>& ground_density)
+    {
+        const NacvTimerScope timer("LR_Force", "prepare_force_batch");
+        if (geometry_)
+        {
+            return;
+        }
+        std::unique_ptr<ForceGeometry> geometry(new ForceGeometry);
+        geometry->overlap = cal_hs_grad('S', ucell_, pv_, gd_, two_center_bundle_);
+        geometry->kinetic = cal_hs_grad('T', ucell_, pv_, gd_, two_center_bundle_);
+        geometry->local = local_potential();
+        geometry->ground = dm_to_hxc_potential(ground_density);
+        geometry_ = std::move(geometry);
+    }
+
+    template<typename TK>
+    const std::vector<hamilt::HContainer<double>>& LR_Force<TK>::batch_overlap_derivatives() const
+    {
+        return geometry_->overlap;
+    }
+
+    template<typename TK>
     ModuleBase::matrix LR_Force<TK>::cal_force_overlap_edm(const module_dm::DensityMatrix<TK, double>& edm)
     {
         // const double* dS[3] = { dSloc_x,  dSloc_y,  dSloc_z };
-        std::vector<hamilt::HContainer<double>>  dS = cal_hs_grad('S', this->ucell_, this->pv_, this->gd_, this->two_center_bundle_);
+        const ForceGeometry* geometry = geometry_.get();
+        std::vector<hamilt::HContainer<double>> local_derivatives;
+        if (geometry == nullptr)
+        {
+            local_derivatives = cal_hs_grad(
+                'S',
+                this->ucell_,
+                this->pv_,
+                this->gd_,
+                this->two_center_bundle_);
+        }
+        const std::vector<hamilt::HContainer<double>> &dS = geometry == nullptr ? local_derivatives : geometry->overlap;
         // test: output dS
         // std::cout << "dS in 3 directions:\n";
         // for (int i = 0;i < 3;++i) { LR_Util::print_HR(dS.at(i), this->ucell_.nat, "dS" + std::to_string(i)); }
@@ -87,6 +122,7 @@ namespace LR
         const bool reproduce_gs,
         const PotHxcLR* pot_hxc_gs)
     {
+        const ForceGeometry* geometry = geometry_.get();
         const bool with_ewald = reproduce_gs;
         // Two independent spin channels in `relax_diff_dm` <=> open-shell (spin-unrestricted) LR.
         // The closed-shell singlet/triplet algorithm always builds a single-channel LR density
@@ -113,9 +149,21 @@ namespace LR
         // 3.1. local pp (Pulay)
         ModuleBase::matrix fvl_dphi(this->ucell_.nat, 3);
         ModuleBase::matrix stress_tmp;  // no use now, only for passing into interfaces
-        std::unique_ptr<elecstate::Potential> pot_loc = this->local_potential();
-        PulayForceStress::cal_pulay_fs(relax_diff_dm.get_dmr_vec().size()/*nspin*/, fvl_dphi, stress_tmp,
-            relax_diff_dm, this->ucell_, pot_loc.get(), true, false);
+        std::unique_ptr<elecstate::Potential> owned_local;
+        if (geometry == nullptr)
+        {
+            owned_local = this->local_potential();
+        }
+        const elecstate::Potential *pot_loc = geometry == nullptr ? owned_local.get() : geometry->local.get();
+        PulayForceStress::cal_pulay_fs(
+            relax_diff_dm.get_dmr_vec().size() /*nspin*/,
+            fvl_dphi,
+            stress_tmp,
+            relax_diff_dm,
+            this->ucell_,
+            pot_loc,
+            true,
+            false);
         // the grid-based `cal_pulay_fs` only sums this rank's share of the real-space grid;
         // core ABACUS always reduces right after it (see force_stress_lcao.cpp).
         Parallel_Reduce::reduce_pool(fvl_dphi.c, fvl_dphi.nr * fvl_dphi.nc);
@@ -130,11 +178,23 @@ namespace LR
         ModuleBase::matrix fhxc_dphi(this->ucell_.nat, 3);
         // pot_hxc here is the *ground-state* v_Hxc, which is not equal to the
         // GS-functional linear-response potential `pot_hxc_gs`=f_Hxc[rho^gs] * rho1 with rho1=rho_gs
-        std::unique_ptr<elecstate::Potential> pot_hxc = this->dm_to_hxc_potential(dm_gs);
+        std::unique_ptr<elecstate::Potential> owned_ground;
+        if (geometry == nullptr)
+        {
+            owned_ground = this->dm_to_hxc_potential(dm_gs);
+        }
+        const elecstate::Potential *pot_hxc = geometry == nullptr ? owned_ground.get() : geometry->ground.get();
         // `cal_pulay_fs` calculates 1*Pulay-term.
         // For ground-state DFT, Pulay term = Hellmann-Feynman term, F = 1/2(Pulay + H-F) = Pulay, so directly call it once gives correct result.
-        PulayForceStress::cal_pulay_fs(relax_diff_dm.get_dmr_vec().size()/*nspin*/, fhxc_dphi, stress_tmp,
-            relax_diff_dm, this->ucell_, pot_hxc.get(), true, false);
+        PulayForceStress::cal_pulay_fs(
+            relax_diff_dm.get_dmr_vec().size() /*nspin*/,
+            fhxc_dphi,
+            stress_tmp,
+            relax_diff_dm,
+            this->ucell_,
+            pot_hxc,
+            true,
+            false);
         Parallel_Reduce::reduce_pool(fhxc_dphi.c, fhxc_dphi.nr * fhxc_dphi.nc);   // see `fvl_dphi` above
         if (reproduce_gs)
         {
@@ -207,7 +267,17 @@ namespace LR
         Parallel_Reduce::reduce_pool(fhxc_dvhxc.c, fhxc_dvhxc.nr * fhxc_dvhxc.nc);
 
         // 4. kinetic (Pulay)
-        std::vector<hamilt::HContainer<double>> dT = cal_hs_grad('T', this->ucell_, this->pv_, this->gd_, this->two_center_bundle_);
+        std::vector<hamilt::HContainer<double>> local_kinetic;
+        if (geometry == nullptr)
+        {
+            local_kinetic = cal_hs_grad(
+                'T',
+                this->ucell_,
+                this->pv_,
+                this->gd_,
+                this->two_center_bundle_);
+        }
+        const std::vector<hamilt::HContainer<double>> &dT = geometry == nullptr ? local_kinetic : geometry->kinetic;
         ModuleBase::matrix ft_dphi = PulayForceStress::cal_pulay_fs(relax_diff_dm, this->ucell_, dT);
 
         if (this->test_force_)

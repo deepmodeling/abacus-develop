@@ -62,6 +62,21 @@ inline double gs_dm_channel_factor(const int& nspin)
         {
         }
 
+        /**
+         * @brief Prepare geometry-fixed force terms once for repeated contractions.
+         * @param[in] ground_density Converged reference density in the force convention.
+         * @pre All ranks enter collectively. This force object and its reference density
+         * belong to one fixed geometry for the entire batch.
+         */
+        void prepare_force_batch(const module_dm::DensityMatrix<TK, double>& ground_density);
+
+        /**
+         * @brief Read the batch overlap derivatives for the moving-AO connection.
+         * @return Borrowed Cartesian derivative blocks in the force object's parallel AO layout.
+         * @pre The fixed-geometry batch has been prepared.
+         */
+        const std::vector<hamilt::HContainer<double>>& batch_overlap_derivatives() const;
+
         /// 1. $Tr[H_{GS}^x * (T+D^Z)]$, where GS=groud state and $(T+D^Z)$ is the relaxed difference density matrix
         ModuleBase::matrix cal_force_hamilt_gs_dm_relaxed_diff(const module_dm::DensityMatrix<TK, double>& relaxed_diff_dm,
             const module_dm::DensityMatrix<TK, double>& dm_gs, const bool reproduce_gs = false,
@@ -109,15 +124,15 @@ inline double gs_dm_channel_factor(const int& nspin)
             const elecstate::Potential& pot_gs);
 
     protected:
-        const UnitCell& ucell_;
-        const std::vector<ModuleBase::Vector3<double>>& kvec_d_;
-        const Parallel_Orbitals& pv_;
-        const ModulePW::PW_Basis& rhodpw_;
-        const ModulePW::PW_Basis& rhopw_;
-        const pseudopot_cell_vl& locpp_;
-        const Structure_Factor& sf_;
-        const Grid_Driver& gd_;
-        const TwoCenterBundle& two_center_bundle_;
+      const UnitCell &ucell_;
+      const std::vector<ModuleBase::Vector3<double>> &kvec_d_;
+      const Parallel_Orbitals &pv_;
+      const ModulePW::PW_Basis &rhodpw_;
+      const ModulePW::PW_Basis &rhopw_;
+      const pseudopot_cell_vl &locpp_;
+      const Structure_Factor &sf_;
+      const Grid_Driver &gd_;
+      const TwoCenterBundle &two_center_bundle_;
 #ifdef __EXX
         std::weak_ptr<Exx_LRI<TK>> exx_lri_;
         const double alpha_;
@@ -137,6 +152,17 @@ inline double gs_dm_channel_factor(const int& nspin)
         void dm_to_charge(const module_dm::DensityMatrix<TK, double>& dm, Charge& chr_out);
         std::unique_ptr<elecstate::Potential> dm_to_hxc_potential(const module_dm::DensityMatrix<TK, double>& dm);
         std::unique_ptr<elecstate::Potential> local_potential();
+
+    private:
+        /// Fixed Cartesian AO derivatives and potentials owned for one reference batch.
+        struct ForceGeometry
+        {
+            std::vector<hamilt::HContainer<double>> overlap;
+            std::vector<hamilt::HContainer<double>> kinetic;
+            std::unique_ptr<elecstate::Potential> local;
+            std::unique_ptr<elecstate::Potential> ground;
+        };
+        std::unique_ptr<ForceGeometry> geometry_;
     };
 }
 

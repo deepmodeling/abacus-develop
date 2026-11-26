@@ -23,6 +23,38 @@
 PROPS_TOOLS_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 
 COMPARE_SCRIPT="$PROPS_TOOLS_DIR/CompareFile.py"
+
+# Manifest fields: file, first-field marker, columns, reference, tolerance, abs flag.
+# No physical interpretation or reference generation belongs in this comparator.
+run_record_file_props() {
+  local actual marker columns reference tolerance absolute
+  local failed=0
+  while read -r actual marker columns reference tolerance absolute; do
+    [[ -z "$actual" || "$actual" == \#* ]] && continue
+    if [ ! -f "$actual" ] || [ ! -s "$reference" ]; then
+      echo "Missing record input or reference: $actual $reference" >&2
+      failed=1
+      continue
+    fi
+    local selected
+    selected=$(mktemp)
+    awk -v marker="$marker" -v columns="$columns" '
+      BEGIN {count=split(columns, fields, ",")}
+      $1==marker {for (i=1; i<=count; ++i) printf "%s%s", $(fields[i]), (i==count ? "\n" : " ")}
+    ' "$actual" >"$selected"
+    local actual_rows reference_rows
+    actual_rows=$(wc -l <"$selected")
+    reference_rows=$(wc -l <"$reference")
+    if [ "$actual_rows" -ne "$reference_rows" ] ||
+       grep -Eiwq 'nan|[+-]?inf(inity)?' "$selected" "$reference" ||
+       ! python3 "$COMPARE_SCRIPT" "$selected" "$reference" -tol "$tolerance" -abs "$absolute"; then
+      failed=1
+    fi
+    rm -f "$selected"
+  done <records.compare
+  echo "CompareOutputRecords_pass $failed" >>"$props_result_file"
+}
+
 COMPARE_AMN_SCRIPT="$PROPS_TOOLS_DIR/compare_amn.py"
 COMPARE_MMN_SCRIPT="$PROPS_TOOLS_DIR/compare_mmn.py"
 CUBE_TOOL="$PROPS_TOOLS_DIR/cube_tool.py"

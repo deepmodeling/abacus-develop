@@ -12,6 +12,7 @@ add_library(
   ../module_parameter/read_inp_ofdft.cpp
   ../module_parameter/read_input_item_sdft.cpp
   ../module_parameter/read_inp_tddft.cpp
+  ../module_parameter/nacv_input.cpp
   ../module_parameter/read_inp_bse.cpp
   ../module_parameter/read_inp_dfpt.cpp
   ../module_parameter/read_inp_deepks.cpp
@@ -47,11 +48,11 @@ addtest(
   TARGET MODULE_IO_read_item_serial
   LIBS parameter base device io_input_serial
   SOURCES ../unittests/test_read_input_item.cpp test_read_inp_sccs.cpp
+          ../unittests/test_nacv_input.cpp
           ../module_parameter/unittests/test_read_inp_estruc.cpp)
 
-addtest(
-  TARGET MODULE_IO_lobpcg_input
-  LIBS parameter base device io_input_serial)
+addtest(TARGET MODULE_IO_lobpcg_input LIBS parameter base device
+                                           io_input_serial)
 
 addtest(
   TARGET MODULE_IO_input_domain_reader

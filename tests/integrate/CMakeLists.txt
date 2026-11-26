@@ -17,6 +17,11 @@ endif()
 find_program(LR_FORCE_TEST_PYTHON python3)
 if(LR_FORCE_TEST_PYTHON)
   add_test(
+    NAME record_file_comparator
+    COMMAND
+      ${LR_FORCE_TEST_PYTHON} -m unittest discover -s
+      ${CMAKE_CURRENT_SOURCE_DIR}/validation_tools -p test_record_files.py)
+  add_test(
     NAME lr_force_collector
     COMMAND
       ${LR_FORCE_TEST_PYTHON} -m unittest discover -s

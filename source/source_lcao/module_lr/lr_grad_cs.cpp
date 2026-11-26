@@ -10,10 +10,15 @@ namespace LR
 {
 template <typename T>
 std::vector<ModuleBase::matrix> evaluate_closed_shell_force(
-    const GradientInputs<T>& inputs, LR_Force<T>& lr_force,
-    const module_dm::DensityMatrix<T, double>& dm_gs,
-    const ct::Tensor& Xz, const ct::Tensor& Z,
-    const std::vector<double>& omega, const int label_begin, const int ispin)
+    const GradientInputs<T> &inputs,
+    LR_Force<T> &lr_force,
+    const module_dm::DensityMatrix<T, double> &dm_gs,
+    const ct::Tensor &Xz,
+    const ct::Tensor &Z,
+    const std::vector<double> &omega,
+    const int label_begin,
+    const int ispin,
+    const bool emit_state_forces)
 {
     ModuleBase::timer::start("LR", "evaluate_closed_shell_force");
     // for each block, calculate dm_trans, dm_relaxed_diff, edm and force
@@ -35,7 +40,10 @@ std::vector<ModuleBase::matrix> evaluate_closed_shell_force(
     const auto& c = LR_Util::get_psi_spin(inputs.psi_ks, 0, inputs.nk);   // wavefunction coefficients of ground state
 
     // calculate the force (the partial gradient of Lagrangian)
-    inputs.ofs << "Start to calculate excited-state force of " << inputs.spin_types[ispin] << std::endl;
+    if (emit_state_forces)
+    {
+        inputs.ofs << "Start to calculate excited-state force of " << inputs.spin_types[ispin] << std::endl;
+    }
     // ground state dm for currrent spin (only for test the correctness of the force)
     // module_dm::DensityMatrix<T, T> dm_gs(inputs.pmat, 1, inputs.kv.kvec_d, inputs.nk);
 
@@ -245,13 +253,33 @@ std::vector<ModuleBase::matrix> evaluate_closed_shell_force(
         forces[istate - ist_begin] = force_hxc_dmtrans + force_hamiltgs_relaxed_diff + force_overlap_edm;
     }
     // total force
-    print_lr_force(forces, std::cout, ist_begin);
-    print_lr_force(forces, inputs.ofs, ist_begin);
+    if (emit_state_forces)
+    {
+        print_lr_force(forces, std::cout, ist_begin);
+        print_lr_force(forces, inputs.ofs, ist_begin);
+    }
     ModuleBase::timer::end("LR", "evaluate_closed_shell_force");
     return forces;
 }
 
-
-template std::vector<ModuleBase::matrix> evaluate_closed_shell_force<double>(const GradientInputs<double>&, LR_Force<double>&, const module_dm::DensityMatrix<double, double>&, const ct::Tensor&, const ct::Tensor&, const std::vector<double>&, int, int);
-template std::vector<ModuleBase::matrix> evaluate_closed_shell_force<std::complex<double>>(const GradientInputs<std::complex<double>>&, LR_Force<std::complex<double>>&, const module_dm::DensityMatrix<std::complex<double>, double>&, const ct::Tensor&, const ct::Tensor&, const std::vector<double>&, int, int);
+template std::vector<ModuleBase::matrix> evaluate_closed_shell_force<double>(
+    const GradientInputs<double> &,
+    LR_Force<double> &,
+    const module_dm::DensityMatrix<double, double> &,
+    const ct::Tensor &,
+    const ct::Tensor &,
+    const std::vector<double> &,
+    int,
+    int,
+    bool);
+template std::vector<ModuleBase::matrix> evaluate_closed_shell_force<std::complex<double>>(
+    const GradientInputs<std::complex<double>> &,
+    LR_Force<std::complex<double>> &,
+    const module_dm::DensityMatrix<std::complex<double>, double> &,
+    const ct::Tensor &,
+    const ct::Tensor &,
+    const std::vector<double> &,
+    int,
+    int,
+    bool);
 }

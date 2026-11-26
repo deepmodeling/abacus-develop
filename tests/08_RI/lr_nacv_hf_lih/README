@@ -1,0 +1,30 @@
+Production analytic NAC regression: LiH / HF, R = 1.5 Angstrom, 10 Angstrom box.
+
+This Autotest case executes the complete nacv.cpp path for S0-S1 and S1-S4,
+including orbital response, force polarization, moving-AO and ETF terms.
+nacv_overlap_fd.ref contains independent overlap finite differences, not values
+copied from the analytic program. Both atoms and all Cartesian components are
+covered. The included material files fix the complete 12-orbital reference.
+
+Reference generation used centered displacements of 0.00025 and 0.000125 bohr.
+Raw NAC = [<Phi_A(R)|Phi_B(R+h)> - <Phi_A(R)|Phi_B(R-h)>] / (2h).
+The moving-AO term was differentiated from cross-geometry AO overlaps and
+independent determinant tangents. ETF = raw_FD - AO_FD; no analytic AO term
+was used to construct the expected values. overlap_fd_provenance.json records
+both steps, the converged component values, model, original program identity
+and original retained raw-frame directory. That external archive is provenance;
+the fixed-file Autotest itself requires only the checked-in fixture.
+
+Electronic eigenvectors have arbitrary signs. The generic file comparator uses
+absolute component values for these nondegenerate roots; it never rescales or
+fits a coupling. This detects component magnitude, spin-factor and polarization
+regressions, but does not validate a common electronic gauge between runs.
+The absolute tolerance is 1e-5 bohr^-1, stricter than the original reference
+screen 1e-5 + 0.001*abs(FD). It is not a new FD calculation on every CI run.
+
+Reproduce from tests/08_RI, with a LibRI-enabled CPU binary:
+  OMP_NUM_THREADS=1 bash ../integrate/Autotest.sh -a /absolute/path/to/abacus -n 4 -r '^lr_nacv_hf_lih$'
+
+records.compare specifies only the input file, record marker, selected columns,
+reference file and numeric comparison settings. The validation-tools layer
+contains no NAC definitions or other physical calculations.

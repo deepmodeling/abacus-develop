@@ -1,5 +1,5 @@
 if(ENABLE_MPI)
-  set(test_zeqlin_solv_main ../../../source_base/test/mpi_test_main.cpp)
+  set(lr_mpi_test_main ../../../source_base/test/mpi_test_main.cpp)
 endif()
 if(ENABLE_LIBXC)
   addtest(
@@ -9,6 +9,16 @@ if(ENABLE_LIBXC)
             ../potentials/pot_hxc_lrtd.cpp
             ../kernel_pots.cpp
             ../potentials/pot_grad_xc.cpp
+            ../potentials/xc_kernel.cpp
+            ../potentials/xc_kxc.cpp
+            ../utils/lr_util.cpp
+            ../../../source_hamilt/module_xc/xc_functional.cpp
+            ../../../source_hamilt/module_xc/libxc_setup.cpp)
+
+  addtest(
+    TARGET MODULE_LR_xc_kernel
+    LIBS base parameter device container psi Libxc::xc
+    SOURCES test_xc_kernel.cpp
             ../potentials/xc_kernel.cpp
             ../potentials/xc_kxc.cpp
             ../utils/lr_util.cpp
@@ -41,7 +51,7 @@ if(ENABLE_MPI)
          device
          psi
          MPI::MPI_CXX
-    SOURCES test_zeqlin_solv.cpp ${test_zeqlin_solv_main} ../zeq_cg.cpp
+    SOURCES test_zeqlin_solv.cpp ${lr_mpi_test_main} ../zeq_cg.cpp
             ../zeqlin_solv.cpp ../utils/lr_util.cpp)
   add_test(
     NAME MODULE_LR_zeqlin_failure_mpi
@@ -163,7 +173,28 @@ if(ENABLE_MPI)
                "OMP_NUM_THREADS=1;MKL_NUM_THREADS=1;OPENBLAS_NUM_THREADS=1")
 endif()
 
-AddTest(
-  TARGET MODULE_LR_spectrum_weights
-  SOURCES test_spectrum_weights.cpp
-)
+addtest(TARGET MODULE_LR_spectrum_weights SOURCES test_spectrum_weights.cpp)
+
+addtest(
+  TARGET MODULE_LR_nacv_tools
+  LIBS base parameter device container psi
+  SOURCES test_nacv_tools.cpp test_nacv_solver.cpp ../nacv_tools.cpp
+          ../nacv_solver.cpp ../utils/lr_util.cpp ${lr_mpi_test_main})
+# Exercise the state writer with assertions disabled even in Debug test builds.
+set_property(
+  SOURCE ../nacv_tools.cpp
+  APPEND
+  PROPERTY COMPILE_DEFINITIONS NDEBUG)
+
+if(ENABLE_MPI)
+  add_test(
+    NAME MODULE_LR_nacv_tools_mpi2
+    COMMAND
+      ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2 ${MPIEXEC_PREFLAGS}
+      $<TARGET_FILE:MODULE_LR_nacv_tools> ${MPIEXEC_POSTFLAGS}
+      --gtest_filter=ZeqCgPrecision.*:NacvFactorization.*:NacvIoMpi.*)
+  set_tests_properties(MODULE_LR_nacv_tools_mpi2 PROPERTIES PROCESSORS 2)
+  # Both invocations of NacvIoMpi use the same scratch filenames.
+  set_tests_properties(MODULE_LR_nacv_tools MODULE_LR_nacv_tools_mpi2
+                       PROPERTIES RESOURCE_LOCK nacv_tools_scratch)
+endif()
