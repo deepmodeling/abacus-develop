@@ -106,11 +106,11 @@ case "$with_libri" in
 esac
 if [ "$with_libri" != "__DONTUSE__" ]; then
   if [ "$with_libri" != "__SYSTEM__" ]; then
-    cat <<EOF >"${BUILDDIR}/setup_libri"
+    cat << EOF > "${BUILDDIR}/setup_libri"
 prepend_path CPATH "${pkg_install_dir}/include"
 EOF
   fi
-  cat <<EOF >>"${BUILDDIR}/setup_libri"
+  cat << EOF >> "${BUILDDIR}/setup_libri"
 export LIBRI_ROOT="${pkg_install_dir}"
 EOF
   filter_setup "${BUILDDIR}/setup_libri" $SETUPFILE

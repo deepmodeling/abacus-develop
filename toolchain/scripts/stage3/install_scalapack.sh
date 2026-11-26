@@ -60,7 +60,7 @@ case "${with_scalapack}" in
       tar -xzf ${scalapack_pkg}
 
       mkdir -p "scalapack-${scalapack_ver}/build"
-      pushd "scalapack-${scalapack_ver}/build" >/dev/null
+      pushd "scalapack-${scalapack_ver}/build" > /dev/null
 
       cflags=""
       fflags=""
@@ -78,11 +78,11 @@ case "${with_scalapack}" in
         -DCMAKE_BUILD_TYPE=Release .. \
         -DBUILD_TESTING=NO \
         -DSCALAPACK_BUILD_TESTS=NO \
-        >configure.log 2>&1 || tail -n ${LOG_LINES} configure.log
-      make -j $(get_nprocs) >make.log 2>&1 || tail -n ${LOG_LINES} make.log
-      make install >>make.log 2>&1 || tail -n ${LOG_LINES} make.log
+        > configure.log 2>&1 || tail -n ${LOG_LINES} configure.log
+      make -j $(get_nprocs) > make.log 2>&1 || tail -n ${LOG_LINES} make.log
+      make install >> make.log 2>&1 || tail -n ${LOG_LINES} make.log
 
-      popd >/dev/null
+      popd > /dev/null
       write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage3/$(basename ${SCRIPT_NAME})"
     fi
     SCALAPACK_LDFLAGS="-L'${pkg_install_dir}/lib' -Wl,-rpath,'${pkg_install_dir}/lib'"
@@ -108,7 +108,7 @@ esac
 if [ "$with_scalapack" != "__DONTUSE__" ]; then
   SCALAPACK_LIBS="-lscalapack"
   if [ "$with_scalapack" != "__SYSTEM__" ]; then
-    cat <<EOF >"${BUILDDIR}/setup_scalapack"
+    cat << EOF > "${BUILDDIR}/setup_scalapack"
 prepend_path LD_LIBRARY_PATH "${pkg_install_dir}/lib"
 prepend_path LD_RUN_PATH "${pkg_install_dir}/lib"
 prepend_path LIBRARY_PATH "${pkg_install_dir}/lib"
@@ -116,7 +116,7 @@ prepend_path PKG_CONFIG_PATH "${pkg_install_dir}/lib/pkgconfig"
 prepend_path CMAKE_PREFIX_PATH "${pkg_install_dir}"
 EOF
   fi
-  cat <<EOF >>"${BUILDDIR}/setup_scalapack"
+  cat << EOF >> "${BUILDDIR}/setup_scalapack"
 export SCALAPACK_ROOT="${pkg_install_dir}"
 export SCALAPACK_LDFLAGS="${SCALAPACK_LDFLAGS}"
 export SCALAPACK_LIBS="${SCALAPACK_LIBS}"
@@ -131,7 +131,7 @@ cd "${ROOTDIR}"
 # ----------------------------------------------------------------------
 # Suppress reporting of known leaks
 # ----------------------------------------------------------------------
-cat <<EOF >>${INSTALLDIR}/lsan.supp
+cat << EOF >> ${INSTALLDIR}/lsan.supp
 # leaks related to SCALAPACK
 leak:pdpotrf_
 EOF
