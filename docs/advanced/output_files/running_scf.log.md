@@ -17,6 +17,7 @@
     - [Scf results](#scf-results)
   - [Results summary](#results-summary)
     - [TOTAL-FORCE](#total-force)
+    - [Net force vector and total drift](#net-force-vector-and-total-drift)
     - [TOTAL-STRESS](#total-stress)
     - [FINAL\_ETOT\_IS](#final_etot_is)
     - [TIME STATISTICS](#time-statistics)
@@ -1184,6 +1185,17 @@ correction force for each atom along direction 3 is -3.50742e-14
                       Al16         0.0000026880        -0.0000015552        -0.0000026880 
 ------------------------------------------------------------------------------------------
 // The table listing the total forces on each atom, indicating whether the system is close to a force minimum (stable configuration).
+```
+
+### Net force vector and total drift
+```
+                Net force vector (eV/Ang) = [ -5.5795e-02, -9.6007e-02, 6.5738e-02 ]
+                     Total drift (ev/Ang) = 1.2615e-01
+// The sum of the forces of all atoms and the magnitude (L2 norm) of that vector.
+// They are printed after TOTAL-FORCE whenever forces are evaluated. The value is
+// measured after the symmetry symmetrization and before the uniform net-force
+// shift, so it reflects the force drift present in the calculation; for a
+// converged calculation it should be close to zero.
 ```
 
 ### TOTAL-STRESS
