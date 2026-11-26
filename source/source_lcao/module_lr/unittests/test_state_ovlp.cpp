@@ -19,9 +19,9 @@ TEST(RootOverlap, IncludesPairsAbsentFromBothSameGeometryLists)
     // exceed 1, but old second/new first are only 0.9 apart.
     const ModuleBase::Matrix3 lattice(10, 0, 0, 0, 10, 0, 0, 0, 10);
     const ModuleBase::Vector3<double> displacement(-0.9, 0, 0);
-    const auto images = LR::cross_image_indices(displacement, lattice, 1.0);
+    const std::vector<ModuleBase::Vector3<int>> images = LR::cross_image_indices(displacement, lattice, 1.0);
     ASSERT_EQ(images.size(), 1u);
-    const auto shifted = displacement + images[0] * lattice;
+    const ModuleBase::Vector3<double> shifted = displacement + images[0] * lattice;
     EXPECT_NEAR(shifted.x, -0.9, 1e-14);
 }
 
@@ -31,12 +31,12 @@ TEST(RootOverlap, IncludesImagesAfterLargeTranslationsInSkewCell)
     const ModuleBase::Vector3<int> translation(4, -3, 2);
     const ModuleBase::Vector3<double> residual(0.2, 0.1, 0.3);
     const ModuleBase::Vector3<double> displacement = translation * lattice + residual;
-    const auto images = LR::cross_image_indices(displacement, lattice, 1.6);
+    const std::vector<ModuleBase::Vector3<int>> images = LR::cross_image_indices(displacement, lattice, 1.6);
     std::vector<double> actual;
     std::vector<double> expected;
-    for (const auto& image : images)
+    for (const ModuleBase::Vector3<int>& image : images)
     {
-        const auto shifted = displacement + image * lattice;
+        const ModuleBase::Vector3<double> shifted = displacement + image * lattice;
         const double distance = shifted.norm();
         actual.push_back(distance);
     }
@@ -47,7 +47,7 @@ TEST(RootOverlap, IncludesImagesAfterLargeTranslationsInSkewCell)
             for (int z = -8; z <= 8; ++z)
             {
                 const ModuleBase::Vector3<int> image(x, y, z);
-                const auto shifted = displacement + image * lattice;
+                const ModuleBase::Vector3<double> shifted = displacement + image * lattice;
                 if (shifted.norm() < 1.6)
                 {
                     expected.push_back(shifted.norm());
@@ -68,12 +68,12 @@ TEST(RootOverlap, RetainsIntegerTranslationsForFourierPhases)
 {
     const ModuleBase::Matrix3 lattice(2, 0, 0, 0, 3, 0, 0, 0, 4);
     const ModuleBase::Vector3<double> displacement(2.2, 0.0, 0.0);
-    const auto indices = LR::cross_image_indices(displacement, lattice, 0.5);
+    const std::vector<ModuleBase::Vector3<int>> indices = LR::cross_image_indices(displacement, lattice, 0.5);
     ASSERT_EQ(indices.size(), 1u);
     EXPECT_EQ(indices[0].x, -1);
     EXPECT_EQ(indices[0].y, 0);
     EXPECT_EQ(indices[0].z, 0);
-    const auto shifted = displacement + indices[0] * lattice;
+    const ModuleBase::Vector3<double> shifted = displacement + indices[0] * lattice;
     EXPECT_NEAR(shifted.x, 0.2, 1e-14);
 }
 
@@ -82,7 +82,7 @@ TEST(RootOverlap, RemovesOrbitalSignGaugeFromRootSelection)
     const double a = 1.0 / std::sqrt(2.0);
     const std::vector<double> previous{a, a};
     const std::vector<double> overlap{1, 0, 0, 0, 1, 0, 0, 0, -1};
-    const auto projected = project(previous, overlap, 1, 2);
+    const std::vector<double> projected = project(previous, overlap, 1, 2);
     EXPECT_DOUBLE_EQ(projected[0], a);
     EXPECT_DOUBLE_EQ(projected[1], -a);
     const double physical_root = projected[0] * a - projected[1] * a;
@@ -101,7 +101,7 @@ TEST(RootOverlap, PreservesComplexConjugationAndBothOrbitalRotations)
                                 C(1), C(0), C(0), C(0),
                                 C(0), C(0), C(a), C(0, a),
                                 C(0), C(0), C(0, a), C(a)};
-    const auto projected = project(previous, overlap, 2, 2);
+    const std::vector<std::complex<double>> projected = project(previous, overlap, 2, 2);
     EXPECT_EQ(projected[0], C(0));
     EXPECT_EQ(projected[1], C(0));
     EXPECT_EQ(projected[2], C(0, a));
@@ -112,7 +112,7 @@ TEST(RootOverlap, RetainsProjectionLossInsteadOfRenormalizing)
 {
     const std::vector<double> previous{1};
     const std::vector<double> overlap{0.5, 0.7, -0.3, 0.8};
-    const auto projected = project(previous, overlap, 1, 1);
+    const std::vector<double> projected = project(previous, overlap, 1, 1);
     EXPECT_DOUBLE_EQ(projected[0], 0.4);
 }
 
@@ -121,7 +121,7 @@ TEST(RootOverlap, UsesOrderedNonsymmetricAOOverlap)
 {
     const std::vector<double> coefficients{1, 0, 0, 1};
     const std::vector<double> ao{1, 0.2, -0.4, 0.9};
-    const auto mo = transform_for_test(coefficients, ao, coefficients, 2, 2, 0, 2, 1);
+    const std::vector<double> mo = transform_for_test(coefficients, ao, coefficients, 2, 2, 0, 2, 1);
     EXPECT_EQ(mo, ao);
 }
 
@@ -131,7 +131,7 @@ TEST(RootOverlap, MOTransformConjugatesOldOrbitals)
     const std::vector<C> old{C(0, 1), C(0), C(0), C(1)};
     const std::vector<C> current{C(1), C(0), C(0), C(0, 1)};
     const std::vector<double> ao{1, 0.2, -0.4, 0.9};
-    const auto mo = transform_for_test(old, ao, current, 2, 2, 0, 2, 1);
+    const std::vector<std::complex<double>> mo = transform_for_test(old, ao, current, 2, 2, 0, 2, 1);
     EXPECT_EQ(mo[0], C(0, -1));
     EXPECT_EQ(mo[1], C(0.2));
     EXPECT_EQ(mo[2], C(-0.4));
@@ -221,7 +221,7 @@ TEST(RootOverlap, CrossGeometryAOOverlapIsOrderedAndNonsymmetric)
     TwoCenterIntegrator integrator;
     const std::vector<ModuleBase::Vector3<double>> old_positions{{0.0, 0.0, 0.0}, {1.1, 0.0, 0.0}};
     const std::vector<double> cutoff{0.5};
-    const auto actual = LR::cross_ao_overlap(cell, old_positions, cutoff, integrator, distribution);
+    const std::vector<double> actual = LR::cross_ao_overlap(cell, old_positions, cutoff, integrator, distribution);
     // Existing integral mock returns one: old second/new first is inside the cutoff,
     // whereas old first/new second is outside. Output is column-major.
     const std::vector<double> expected{1.0, 1.0, 0.0, 1.0};

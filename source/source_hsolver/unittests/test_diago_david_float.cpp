@@ -43,7 +43,7 @@ void lapackEigen(
     float *rwork = new float[3 * npw - 2];
     int info = 0;
 
-    auto tmp = hm;
+    std::vector<std::complex<float>> tmp = hm;
 
     clock_t start, end;
     start = clock();

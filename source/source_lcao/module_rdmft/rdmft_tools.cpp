@@ -196,7 +196,7 @@ void Veff_rdmft<TK, TR>::initialize_HR(const UnitCell* ucell_in, const Grid_Driv
 
     for (int iat1 = 0; iat1 < ucell_in->nat; iat1++)
     {
-        auto tau1 = ucell_in->get_tau(iat1);
+        ModuleBase::Vector3<double> tau1 = ucell_in->get_tau(iat1);
         int T1 = 0;
         int I1 = 0;
         ucell_in->iat2iait(iat1, &I1, &T1);

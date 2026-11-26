@@ -41,7 +41,7 @@ void ESolver_GetS::before_all_runners(BaseCell &basecell, const Input_para &inp)
     const int npol = PARAM.globalv.npol;
     const bool two_fermi = PARAM.globalv.two_fermi;
     // nlocal is calculated inside read_pseudo() via CalAtomsInfo::cal_atoms_info()
-    auto atoms_info = unitcell::read_pseudo(
+    AtomsInfoResult atoms_info = unitcell::read_pseudo(
         GlobalV::ofs_running, ucell, this->inp_->pseudo_dir, global_out_dir, this->inp_->out_element_info,
         this->inp_->dft_functional, this->inp_->lspinorb, this->inp_->pseudo_rcut, this->inp_->soc_lambda,
         this->inp_->nspin, npol, this->inp_->basis_type, this->inp_->esolver_type, this->inp_->init_wfc,
@@ -129,7 +129,7 @@ void ESolver_GetS::runner(BaseCell &basecell, const int istep)
             this->p_hamilt = new hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>(
                 ucell, gd, &this->pv, *basis_index_, this->pv.para_2d(), this->kv, *(two_center_bundle_.overlap_orb),
                 orb_.cutoffs());
-            auto *hamilt_ptr = static_cast<hamilt::Hamilt<std::complex<double>> *>(this->p_hamilt);
+            hamilt::Hamilt<std::complex<double>>* hamilt_ptr = static_cast<hamilt::Hamilt<std::complex<double>> *>(this->p_hamilt);
             auto *ops_ptr =
                 dynamic_cast<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>> *>(hamilt_ptr->ops);
             ops_ptr->contributeHR();
@@ -139,8 +139,8 @@ void ESolver_GetS::runner(BaseCell &basecell, const int istep)
             this->p_hamilt = new hamilt::HamiltLCAO<std::complex<double>, double>(
                 ucell, gd, &this->pv, *basis_index_, this->pv.para_2d(), this->kv, *(two_center_bundle_.overlap_orb),
                 orb_.cutoffs());
-            auto *hamilt_ptr = static_cast<hamilt::Hamilt<std::complex<double>> *>(this->p_hamilt);
-            auto *ops_ptr = dynamic_cast<hamilt::OperatorLCAO<std::complex<double>, double> *>(hamilt_ptr->ops);
+            hamilt::Hamilt<std::complex<double>>* hamilt_ptr = static_cast<hamilt::Hamilt<std::complex<double>> *>(this->p_hamilt);
+            hamilt::OperatorLCAO<std::complex<double>, double>* ops_ptr = dynamic_cast<hamilt::OperatorLCAO<std::complex<double>, double> *>(hamilt_ptr->ops);
             ops_ptr->contributeHR();
         }
     }
@@ -150,7 +150,7 @@ void ESolver_GetS::runner(BaseCell &basecell, const int istep)
     // Mode-2 MAT/ subdirectory is created lazily at write time.
     ModuleBase::ensure_directory(global_matrix_dir);
 
-    auto *hamilt_ptr = static_cast<hamilt::Hamilt<std::complex<double>> *>(this->p_hamilt);
+    hamilt::Hamilt<std::complex<double>>* hamilt_ptr = static_cast<hamilt::Hamilt<std::complex<double>> *>(this->p_hamilt);
     const bool binary = false;
     const double sparse_threshold = 1e-10;
     const int precision = 16;

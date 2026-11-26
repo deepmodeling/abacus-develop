@@ -5,7 +5,7 @@ namespace Parallel
 
 void ParaCollection::add(std::unique_ptr<ParaWorld> world)
 {
-    for (const auto& existing : worlds_)
+    for (const std::unique_ptr<Parallel::ParaWorld>& existing : worlds_)
     {
         if (existing->tag() == world->tag())
         {
@@ -17,7 +17,7 @@ void ParaCollection::add(std::unique_ptr<ParaWorld> world)
 
 const ParaWorld& ParaCollection::find(const std::string& tag) const
 {
-    for (const auto& world : worlds_)
+    for (const std::unique_ptr<Parallel::ParaWorld>& world : worlds_)
     {
         if (world->tag() == tag)
         {

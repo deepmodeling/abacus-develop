@@ -51,13 +51,13 @@ void ModuleIO::init_from_adj(const UnitCell& ucell,
     ModuleBase::TITLE("ModuleIOTD_mixing_pot", "init_from_adj");
     ModuleBase::timer::start("ModuleIO", "init_from_adj");
 
-    auto orb_cutoff_ = orb.cutoffs();
+    std::vector<double> orb_cutoff_ = orb.cutoffs();
     adjs_all.clear();
     adjs_all.reserve(ucell.nat);
 
     for (int iat1 = 0; iat1 < ucell.nat; iat1++)
     {
-        auto tau1 = ucell.get_tau(iat1);
+        ModuleBase::Vector3<double> tau1 = ucell.get_tau(iat1);
         int T1, I1;
         ucell.iat2iait(iat1, &I1, &T1);
         AdjacentAtomInfo adjs;
@@ -122,7 +122,7 @@ void ModuleIO::set_rR_from_hR(const UnitCell& ucell,
 
     for (int iat1 = 0; iat1 < ucell.nat; iat1++)
     {
-        auto tau1 = ucell.get_tau(iat1);
+        ModuleBase::Vector3<double> tau1 = ucell.get_tau(iat1);
         int T1, I1;
         ucell.iat2iait(iat1, &I1, &T1);
         AdjacentAtomInfo& adjs = adjs_all[iat1];
@@ -145,8 +145,8 @@ void ModuleIO::set_rR_from_hR(const UnitCell& ucell,
             const int* iw2n2 = atom2.iw2n.data();
             const int* iw2m2 = atom2.iw2m.data();
 
-            auto row_indexes = pv->get_indexes_row(iat1);
-            auto col_indexes = pv->get_indexes_col(iat2);
+            std::vector<int> row_indexes = pv->get_indexes_row(iat1);
+            std::vector<int> col_indexes = pv->get_indexes_col(iat2);
 
             const ModuleBase::Vector3<double>& tau1 = ucell.get_tau(iat1);
             const ModuleBase::Vector3<double> tau2 = tau1 + dtau;

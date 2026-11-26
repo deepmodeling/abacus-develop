@@ -37,8 +37,8 @@ __global__ void do_cast_memory(
 {
     unsigned int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if(idx >= size) {return;}
-    auto* _out = reinterpret_cast<thrust::complex<T_out>*>(out);
-    const auto* _in = reinterpret_cast<const thrust::complex<T_in>*>(in);
+    thrust::complex<T_out>* _out = reinterpret_cast<thrust::complex<T_out>*>(out);
+    const thrust::complex<T_in>* _in = reinterpret_cast<const thrust::complex<T_in>*>(in);
     _out[idx] = static_cast<thrust::complex<T_out>>(_in[idx]);
 }
 
@@ -138,7 +138,7 @@ struct cast_memory<T_out, T_in, container::DEVICE_CPU, container::DEVICE_GPU> {
         const T_in* arr_in,
         const size_t& size)
     {
-        auto * arr = (T_in*) malloc(sizeof(T_in) * size);
+        T_in* arr = (T_in*) malloc(sizeof(T_in) * size);
         CHECK_CUDA(cudaMemcpy(arr, arr_in, sizeof(T_in) * size, cudaMemcpyDeviceToHost));
         for (int ii = 0; ii < size; ii++) {
             arr_out[ii] = static_cast<T_out>(arr[ii]);
