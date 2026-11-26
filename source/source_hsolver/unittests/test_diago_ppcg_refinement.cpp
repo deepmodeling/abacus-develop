@@ -12,7 +12,7 @@ class DiagoPPCGRefinementTest : public ::testing::Test
     void check_refinement(
         const bool generalized,
         const bool exact,
-        const bool invalid_direction,
+        const int invalid_application,
         const double requested_threshold,
         const int band_hint)
     {
@@ -39,12 +39,11 @@ class DiagoPPCGRefinementTest : public ::testing::Test
         const double contamination = exact ? 0.0 : 0.1;
         vectors[leading_dimension + 1] = std::sqrt(1.0 - contamination * contamination) / std::sqrt(overlap[1]);
         vectors[leading_dimension + 2] = T(0, contamination / std::sqrt(overlap[2]));
-        bool fail_next_h = false;
+        int applications_until_failure = 0;
         const auto hop = [&](const T *input, T *output, int ld, int count)
         {
-            if (fail_next_h)
+            if (applications_until_failure > 0 && --applications_until_failure == 0)
             {
-                fail_next_h = false;
                 const double invalid = std::numeric_limits<double>::quiet_NaN();
                 std::fill(output, output + ld * count, T(invalid));
                 return;
@@ -65,10 +64,10 @@ class DiagoPPCGRefinementTest : public ::testing::Test
         const std::vector<double> original_values = values;
         const double original_residual = solver.max_residual();
         const std::vector<int> columns = {0, 1};
-        fail_next_h = invalid_direction;
+        applications_until_failure = invalid_application;
         const bool accepted =
             solver.refine_stalled_residual(op, vectors.data(), values.data(), thresholds, columns, band_hint);
-        const bool expected_acceptance = !exact && !invalid_direction;
+        const bool expected_acceptance = !exact && invalid_application == 0;
         EXPECT_EQ(accepted, expected_acceptance);
         if (!expected_acceptance)
         {
@@ -116,17 +115,24 @@ class DiagoPPCGRefinementTest : public ::testing::Test
     }
 };
 
-TEST_F(DiagoPPCGRefinementTest, PreservesStandardGeometry) { check_refinement(false, false, false, 1e-14, -1); }
+TEST_F(DiagoPPCGRefinementTest, PreservesStandardGeometry) { check_refinement(false, false, 0, 1e-14, -1); }
 
-TEST_F(DiagoPPCGRefinementTest, PreservesGeneralizedGeometry) { check_refinement(true, false, false, 1e-14, -1); }
+TEST_F(DiagoPPCGRefinementTest, PreservesGeneralizedGeometry) { check_refinement(true, false, 0, 1e-14, -1); }
 
-TEST_F(DiagoPPCGRefinementTest, LeavesConvergedPairsUntouched) { check_refinement(true, true, false, 1e-14, -1); }
+TEST_F(DiagoPPCGRefinementTest, LeavesConvergedPairsUntouched) { check_refinement(true, true, 0, 1e-14, -1); }
 
-TEST_F(DiagoPPCGRefinementTest, RejectsNonfiniteDirection) { check_refinement(true, false, true, 1e-14, -1); }
+TEST_F(DiagoPPCGRefinementTest, RejectsNonfiniteDirection) { check_refinement(true, false, 1, 1e-14, -1); }
+
+TEST_F(DiagoPPCGRefinementTest, RestoresAfterNonfiniteCandidate) { check_refinement(true, false, 2, 1e-14, -1); }
+
+TEST_F(DiagoPPCGRefinementTest, RestoresAfterNonfiniteNormalizedCandidate)
+{
+    check_refinement(true, false, 3, 1e-14, -1);
+}
 
 TEST_F(DiagoPPCGRefinementTest, RefinesConvergedNeighborWithoutLosingOrthogonality)
 {
-    check_refinement(true, false, false, 0.5, 1);
+    check_refinement(true, false, 0, 0.5, 1);
 }
 
 } // namespace hsolver

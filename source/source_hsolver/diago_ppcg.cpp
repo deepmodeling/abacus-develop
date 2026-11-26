@@ -1961,6 +1961,8 @@ double DiagoPPCG<T, Device>::diag(
                                                       // the first block update.
     Real best_res = std::numeric_limits<Real>::max(); // best residual seen
     int no_improve = 0;                               // iterations since the residual last decreased
+    int final_refinement_band = -1;
+    int next_final_refinement_band = 0;
 
     while (!active_cols.empty() && iter <= maxiter_)
     {
@@ -2005,14 +2007,30 @@ double DiagoPPCG<T, Device>::diag(
         // set as well as the stagnation delay within the existing budget.
         const int refinement_budget = ncol + refinement_stagnation;
         const bool final_refinement_window = maxiter_ - iter < refinement_budget;
+        const bool refinement_available = !final_refinement_window || final_refinement_band < ncol;
         if (!startup_correction && last_rr_succeeded && near_precision && max_residual_ <= refinement_threshold &&
-            (no_improve >= refinement_stagnation || final_refinement_window))
+            refinement_available && (no_improve >= refinement_stagnation || final_refinement_window))
         {
             // Cycle through the retained states: errors in an already locked
             // neighbor can limit the attainable residual of the remaining pair.
-            const int refinement_band = final_refinement_window ? -1 : iter % ncol;
+            const int refinement_band = final_refinement_window ? final_refinement_band : iter % ncol;
             const bool accepted =
                 refine_stalled_residual(op, psi_in, eigenvalue_in, ethr_band, all_cols, refinement_band);
+            if (final_refinement_window)
+            {
+                // A rejected worst-pair step cannot improve if retried with
+                // identical inputs. Visit its retained neighbors, then allow
+                // a block sweep if the entire cycle fails to make progress.
+                if (accepted)
+                {
+                    final_refinement_band = -1;
+                }
+                else
+                {
+                    final_refinement_band = next_final_refinement_band;
+                    ++next_final_refinement_band;
+                }
+            }
             if (!accepted && refinement_band == 0)
             {
                 no_improve = 0;
@@ -2027,6 +2045,8 @@ double DiagoPPCG<T, Device>::diag(
             ++iter;
             continue;
         }
+        final_refinement_band = -1;
+        next_final_refinement_band = 0;
         local_overlap_min = std::numeric_limits<Real>::quiet_NaN();
         local_overlap_max = std::numeric_limits<Real>::quiet_NaN();
         local_overlap_condition = std::numeric_limits<Real>::quiet_NaN();

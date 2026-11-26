@@ -153,9 +153,13 @@ Its trace entered the near-converged range at iteration 195, leaving too few
 steps for the five-iteration stagnation trigger. The follow-up starts the final
 refinement window using the retained-band count plus the stagnation allowance,
 because each attempt corrects only one band. It prioritizes the worst unconverged
-pair within the unchanged total budget. Startup correction for the lowest roots
-remains mandatory. Short-budget regressions check prompt refinement and a fresh
-final residual; they fail with the previous triggers. CUDA CI now rejects residual warnings in
+pair within the unchanged total budget. If that correction is rejected, other
+retained states are visited instead of retrying identical inputs. A failed full
+cycle returns to the normal block iteration. Startup correction for the lowest
+roots remains mandatory. Short-budget regressions check prompt refinement and a fresh
+final residual; they fail with the previous triggers. Additional tests verify
+rollback after nonfinite candidate and normalized-candidate H applications.
+CUDA CI now rejects residual warnings in
 combined output from all MPI ranks and preserves that output as an artifact.
 
 The six original CPU fixtures and six original RTX 3090 CUDA fixtures passed
@@ -169,10 +173,10 @@ force and stress checks passed against the existing independent reference.
 These local results do not by themselves reproduce or certify the older L20
 residual rebound described above; the updated branch requires fresh CI evidence.
 
-The CPU suite passed 61 tests in MPI and non-MPI builds. Seven new tests cover
+The CPU suite passed 63 tests in MPI and non-MPI builds. Nine new tests cover
 standard/generalized correction geometry, refinement of a converged neighbor,
-preservation of converged pairs, rejection of nonfinite directions, and exact
-float/double cancellation remainders. The CUDA target passed eight cases,
+preservation of converged pairs, rejection of nonfinite directions and candidates,
+restoration after rejected updates, and exact float/double cancellation remainders. The CUDA target passed eight cases,
 including the two cancellation checks. Both residual kernels now use fused
 multiply-add: separate product rounding could otherwise turn a nonzero residual
 into zero. The MPI regression driver also passed its multi-rank configurations. The correction uses the existing device workspaces,
