@@ -31,8 +31,11 @@ void Relax_Driver::relax_driver(
     if (inp.socket_driver)
     {
         Socket_Driver socket_driver;
-        socket_driver.socket_driver(p_esolver, ucell, inp, ofs_running);
-        p_esolver->after_all_runners(ucell);
+        const bool ran_frame = socket_driver.socket_driver(p_esolver, ucell, PARAM, inp, PARAM.globalv, ofs_running);
+        if (ran_frame)
+        {
+            p_esolver->after_all_runners(ucell);
+        }
         ModuleBase::timer::end("Relax_Driver", "relax_driver");
         return;
     }

@@ -1,9 +1,11 @@
 #include "elecstate_tools.h"
 
 #include "occupy.h"
+
 #include "source_base/module_parallel/para_band_output.h"
 #include "source_base/module_parallel/para_bridge.h"
 #include "source_base/parallel_reduce.h"
+#include <cmath>
 
 #include <vector>
 

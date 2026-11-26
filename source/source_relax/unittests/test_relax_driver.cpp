@@ -108,12 +108,24 @@ void write_stru(
 }
 } // namespace relax_stru_io
 
-void Socket_Driver::socket_driver(
-    ModuleESolver::ESolver *,
-    UnitCell &,
+namespace
+{
+int socket_frame_count = 0;
+}
+
+bool Socket_Driver::socket_driver(
+    ModuleESolver::ESolver *solver,
+    UnitCell &cell,
+    Parameter &,
     const Input_para &,
+    const System_para &,
     std::ofstream &)
 {
+    for (int step = 0; step < socket_frame_count; ++step)
+    {
+        solver->runner(cell, step);
+    }
+    return socket_frame_count > 0;
 }
 
 namespace
@@ -173,7 +185,11 @@ class DriverTestESolver : public ModuleESolver::ESolver
 class RelaxDriverTest : public ::testing::Test
 {
   protected:
-    void SetUp() override { log_file_ = testing::TempDir() + "running.log"; }
+    void SetUp() override
+    {
+        log_file_ = testing::TempDir() + "running.log";
+        socket_frame_count = 0;
+    }
 
     static void make_cell(UnitCell &ucell)
     {
@@ -462,3 +478,32 @@ TEST_F(RelaxDriverTest, ExitStopsBeforeSimultaneousRelaxStep)
 }
 
 } // namespace
+
+TEST_F(RelaxDriverTest, SocketWithoutCompletedFrameSkipsFinalization)
+{
+    Input_para inp;
+    inp.socket_driver = true;
+    UnitCell cell;
+    make_cell(cell);
+    DriverTestESolver solver(0.0);
+    std::ofstream output(log_file_);
+    Relax_Driver driver;
+    driver.relax_driver(&solver, cell, inp, output);
+    EXPECT_EQ(solver.runner_count, 0);
+    EXPECT_EQ(solver.after_all_count, 0);
+}
+
+TEST_F(RelaxDriverTest, SocketCompletedFramesFinalizeOnce)
+{
+    Input_para inp;
+    inp.socket_driver = true;
+    socket_frame_count = 2;
+    UnitCell cell;
+    make_cell(cell);
+    DriverTestESolver solver(0.0);
+    std::ofstream output(log_file_);
+    Relax_Driver driver;
+    driver.relax_driver(&solver, cell, inp, output);
+    EXPECT_EQ(solver.runner_count, 2);
+    EXPECT_EQ(solver.after_all_count, 1);
+}

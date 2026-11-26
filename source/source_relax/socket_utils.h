@@ -2,6 +2,7 @@
 #define ABACUS_SOURCE_RELAX_SOCKET_UTILS_H
 
 #include "source_base/matrix.h"
+#include "source_relax/socket_constant_potential.h"
 #include "source_relax/socket_frame.h"
 
 #include <cstdint>
@@ -35,6 +36,8 @@ struct ComputedFrame
     bool forces_present = false;
     bool stress_present = false;
     bool scf_converged = true;
+    bool electronic_present = false;
+    SocketCP::Observables electronic;
     double energy_hartree = 0.0;
     std::vector<double> forces_hartree_per_bohr;
     SocketFrame::Matrix9 virial_wire_hartree = {{0.0}};
@@ -57,7 +60,8 @@ std::vector<double> ipi_cell_bohr_from_unitcell(const UnitCell &ucell);
 double max_wrapped_direct_delta_from_unitcell(const UnitCell &ucell, const std::vector<double> &positions_bohr);
 double max_abs_delta(const std::vector<double> &a, const std::vector<double> &b);
 double unchanged_cell_tolerance(const SocketFrame::Matrix9 &cell);
-void set_positions_from_ipi_bohr(UnitCell &ucell, const std::vector<double> &positions_bohr);
+void set_positions_from_ipi_bohr(
+    UnitCell &ucell, const std::vector<double> &positions_bohr, bool minimum_image_displacement);
 std::vector<double> flatten_forces_hartree_per_bohr(const ModuleBase::matrix &force, int nat);
 SocketFrame::Matrix9 matrix9_from_stress(const ModuleBase::matrix &stress);
 std::vector<double> vector_from_matrix9(const SocketFrame::Matrix9 &values);

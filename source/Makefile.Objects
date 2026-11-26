@@ -282,6 +282,8 @@ OBJS_DEEPKS=lcao_deepks.o\
 
 
 OBJS_ELECSTAT=elecstate.o\
+    electronic_control.o\
+    electronic_occupations.o\
     init_scf.o\
     param_update.o\
     estate_e_terms.o\
@@ -309,6 +311,7 @@ OBJS_ELECSTAT=elecstate.o\
     efield.o\
     gatefield.o\
     potential_new.o\
+    elpot.o\
     potential_types.o\
     pot_surchem.o\
     pot_sep.o\
@@ -644,8 +647,10 @@ OBJS_RELAXATION=relax_data.o\
     socket_frame.o\
     socket_frame_utils.o\
     socket_driver.o\
+    socket_ks.o\
     socket_utils.o\
     socket_handlers.o\
+    socket_constant_potential.o\
     cg_base.o\
     bfgs_basic.o\
     relax_driver.o\

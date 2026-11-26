@@ -9,6 +9,7 @@
 #include "source_base/module_device/device.h"
 #include "source_hamilt/module_xc/general_exx_info.h"
 #include "source_io/module_parameter/parameter.h"
+#include "source_relax/socket_driver.h"
 #ifdef __LCAO
 #include "esolver_dm2rho.h"
 #include "esolver_double_xc.h"
@@ -158,6 +159,8 @@ ESolver *init_esolver(const Input_para &inp)
     // determine type of esolver based on INPUT information
     const std::string esolver_type = determine_type(inp);
     const bool gamma_only = inp.gamma_only;
+    const bool socket_ks =
+        inp.socket_driver && inp.device == "cpu" && inp.precision == "double" && (inp.nspin == 1 || inp.nspin == 2);
 #ifdef __LCAO
     const LRRuntime lr_runtime{GlobalV::ofs_running, GlobalV::ofs_warning, GlobalV::MY_RANK};
 #endif
@@ -184,6 +187,10 @@ ESolver *init_esolver(const Input_para &inp)
         }
         else
         {
+            if (socket_ks)
+            {
+                return SocketCP::create_pw_socket_solver();
+            }
             return new ESolver_KS_PW<std::complex<double>, base_device::DEVICE_CPU>();
         }
     }
@@ -298,10 +305,18 @@ ESolver *init_esolver(const Input_para &inp)
         {
             if (gamma_only)
             {
+                if (socket_ks)
+                {
+                    return SocketCP::create_lcao_socket_solver(true);
+                }
                 return new ESolver_KS_LCAO<double, double>();
             }
             else if (inp.nspin < 4)
             {
+                if (socket_ks)
+                {
+                    return SocketCP::create_lcao_socket_solver(false);
+                }
                 return new ESolver_KS_LCAO<std::complex<double>, double>();
             }
             else

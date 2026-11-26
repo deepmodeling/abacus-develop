@@ -11,6 +11,10 @@ addtest(TARGET MODULE_RELAX_socket_frame_test
         SOURCES test_socket_frame.cpp ../socket_frame.cpp
                 ../socket_frame_utils.cpp)
 
+addtest(TARGET MODULE_RELAX_socket_constant_potential_test
+        SOURCES test_socket_constant_potential.cpp
+                ../socket_constant_potential.cpp)
+
 set(socket_json_sources)
 if(ENABLE_JSON)
   list(APPEND socket_json_sources ../../source_io/module_json/abacusjson.cpp
@@ -25,6 +29,7 @@ addtest(
           ../socket_driver.cpp
           ../socket_utils.cpp
           ../socket_handlers.cpp
+          ../socket_constant_potential.cpp
           ../socket_frame_utils.cpp
           ../socket_frame.cpp
           ../socket_ipi.cpp
@@ -91,7 +96,8 @@ addtest(
   TARGET MODULE_RELAX_lat_change_method_test
   LIBS parameter base device
   SOURCES test_lat_change_method.cpp ../lat_change_method.cpp
-          ../lattice_change_basic.cpp ../relax_data.cpp test_mock_remake_cell.cpp)
+          ../lattice_change_basic.cpp ../relax_data.cpp
+          test_mock_remake_cell.cpp)
 
 addtest(
   TARGET MODULE_RELAX_lattice_change_basic_test

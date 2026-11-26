@@ -22,7 +22,12 @@ struct Exx_Helper : public Exx_HelperBase
 
     void init(const UnitCell& ucell, const Input_para& inp, const ModuleBase::matrix& wg, const General_Exx_Info& exx_info) override;
 
-    void before_scf(void* p_hamilt, void* psi, const Input_para& inp, const General_Exx_Info& exx_info) override;
+    void begin_electronic_step(bool active) override;
+    void before_scf(
+        void *p_hamilt,
+        void *psi,
+        const Input_para &inp,
+        const General_Exx_Info &exx_info) override;
 
     bool iter_finish(void* p_elec, Charge* p_charge, void* psi,
                      UnitCell& ucell, const Input_para& inp,
@@ -36,11 +41,12 @@ struct Exx_Helper : public Exx_HelperBase
     void set_op() override
     {
         op_exx->first_iter = first_iter;
-        set_psi(psi);
+        // A warm start constructs ACE in set_psi and reads the current occupations.
         op_exx->set_wg(wg);
+        set_psi(psi);
     }
 
-    bool exx_after_converge(int iter, bool ene_conv) override;
+    bool exx_after_converge(int iter, bool ene_conv, const Input_para &inp) override;
 
     double cal_exx_energy(void* psi_) override;
 
@@ -53,6 +59,6 @@ struct Exx_Helper : public Exx_HelperBase
     psi::Psi<T, Device> *psi = nullptr;
     const ModuleBase::matrix *wg = nullptr;
     int exx_iter = 0;
-
+    bool strict_electronic_step = false;
 };
 #endif // EXX_HELPER_H

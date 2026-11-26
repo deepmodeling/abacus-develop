@@ -26,6 +26,36 @@ addtest(
 
 if(ENABLE_MPI)
 
+  addtest(
+    TARGET MODULE_ESTATE_electronic_occupations_test
+    LIBS base device MPI::MPI_CXX
+    KEEP_FEATURE_DEFINITIONS __MPI
+    SOURCES test_electronic_occupations.cpp ../electronic_occupations.cpp)
+  set_tests_properties(MODULE_ESTATE_electronic_occupations_test
+                       PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=1")
+  add_test(
+    NAME MODULE_ESTATE_electronic_occupations_mpi4_test
+    COMMAND
+      ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 4 ${MPIEXEC_PREFLAGS}
+      $<TARGET_FILE:MODULE_ESTATE_electronic_occupations_test>
+      ${MPIEXEC_POSTFLAGS})
+  set_tests_properties(MODULE_ESTATE_electronic_occupations_mpi4_test
+                       PROPERTIES PROCESSORS 4 ENVIRONMENT "OMP_NUM_THREADS=1")
+
+  addtest(
+    TARGET MODULE_ESTATE_elpot_test
+    LIBS parameter base device planewave MPI::MPI_CXX
+    KEEP_FEATURE_DEFINITIONS __MPI
+    SOURCES test_elpot.cpp ../module_pot/elpot.cpp)
+  set_tests_properties(MODULE_ESTATE_elpot_test PROPERTIES ENVIRONMENT
+                                                           "OMP_NUM_THREADS=1")
+  add_test(
+    NAME MODULE_ESTATE_elpot_mpi4_test
+    COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 4 ${MPIEXEC_PREFLAGS}
+            $<TARGET_FILE:MODULE_ESTATE_elpot_test> ${MPIEXEC_POSTFLAGS})
+  set_tests_properties(MODULE_ESTATE_elpot_mpi4_test
+                       PROPERTIES PROCESSORS 4 ENVIRONMENT "OMP_NUM_THREADS=1")
+
   set(pcc_test_sources
       ../module_pot/sccs_output.cpp
       ../module_pot/pot_pcc.cpp
@@ -86,6 +116,9 @@ if(ENABLE_MPI)
     SOURCES test_elecstate.cpp
             ../elecstate.cpp
             ../elecstate_tools.cpp
+            ../electronic_control.cpp
+            ../param_update.cpp
+            ../electronic_occupations.cpp
             ../occupy.cpp
             ../../source_psi/psi.cpp
             ../../source_base/module_fft/fft_bundle.cpp

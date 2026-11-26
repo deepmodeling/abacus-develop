@@ -8,6 +8,8 @@ class UnitCell;
 struct Input_para;
 struct General_Exx_Info;
 
+void validate_electronic_step_exx(int functional_type, bool cal_exx);
+
 class Exx_HelperBase
 {
   public:
@@ -16,7 +18,12 @@ class Exx_HelperBase
 
     virtual void init(const UnitCell& ucell, const Input_para& inp, const ModuleBase::matrix& wg, const General_Exx_Info& exx_info) = 0;
 
-    virtual void before_scf(void* p_hamilt, void* psi, const Input_para& inp, const General_Exx_Info& exx_info) = 0;
+    virtual void begin_electronic_step(bool active) = 0;
+    virtual void before_scf(
+        void *p_hamilt,
+        void *psi,
+        const Input_para &inp,
+        const General_Exx_Info &exx_info) = 0;
 
     virtual bool iter_finish(void* p_elec, Charge* p_charge, void* psi,
                              UnitCell& ucell, const Input_para& inp,
@@ -35,7 +42,7 @@ class Exx_HelperBase
     ///       value (false = not converged, rerun SCF) and the caller
     ///       (ESolver_KS_PW) sets ESolver_KS::scf_rerun_ to trigger the
     ///       restart at iter=1 in ESolver_KS::runner.
-    virtual bool exx_after_converge(int iter, bool ene_conv) = 0;
+    virtual bool exx_after_converge(int iter, bool ene_conv, const Input_para &inp) = 0;
 
     virtual double cal_exx_energy(void* psi) = 0;
 

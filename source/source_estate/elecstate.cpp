@@ -12,18 +12,17 @@ const double* ElecState::getRho(int spin) const
     return &(this->charge->rho[spin][0]);
 }
 
+void ElecState::init_nelec_spin() { this->init_nelec_spin(PARAM.inp.nspin, PARAM.inp.nelec, PARAM.inp.nupdown); }
 
-
-void ElecState::init_nelec_spin()
+void ElecState::init_nelec_spin(int nspin, double nelect, double nupdown)
 {
-    this->nelec_spin.resize(PARAM.inp.nspin);
-    if (PARAM.inp.nspin == 2)
+    this->nelec_spin.resize(nspin);
+    if (nspin == 2)
     {
-        this->nelec_spin[0] = (PARAM.inp.nelec + PARAM.inp.nupdown) / 2.0;
-        this->nelec_spin[1] = (PARAM.inp.nelec - PARAM.inp.nupdown) / 2.0;
+        this->nelec_spin[0] = (nelect + nupdown) / 2.0;
+        this->nelec_spin[1] = (nelect - nupdown) / 2.0;
     }
 }
-
 
 void ElecState::init_ks(Charge* chr_in, // pointer for class Charge
                         const K_Vectors* klist_in,
