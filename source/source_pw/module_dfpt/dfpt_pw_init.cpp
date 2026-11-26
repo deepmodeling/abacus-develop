@@ -247,8 +247,60 @@ void DFPT_PW::Impl::build_occ_kq(int q_idx)
                                        ///< enough that the near-Gamma plane waves (which dominate the
                                        ///< valence top) are not suppressed in the expansion directions
     const double tpiba2 = ucell_->tpiba2;
+    // Gamma q: H(k+q) = H_GS(k) identically, so the k+q occupied states
+    // ARE the ground-state states -- the diagonalization would only add
+    // its own eigensolver noise (and a cross-toolchain variance at that).
+    // QE treats the Gamma q the same way (run_nscf's lgamma_iq branch
+    // skips the nscf re-diagonalization). Take the occupied states from
+    // the ground-state wavefunctions directly; q != 0 keeps the nscf path.
+    const bool q_is_gamma = (q_cart.norm2() < 1.0e-12);
+    const ModuleBase::Matrix3 ginv = pw_wfc_->G.Inverse();
     for (int ik = 0; ik < nk; ++ik)
     {
+        if (q_is_gamma)
+        {
+            hamilt_->set_context(q_cart, ik);
+            hamilt_->set_shift(0.0);
+            const DFPT_KQ_Basis& kq = hamilt_->basis();
+            const int npwk = kq.get_npwk();
+            // ground-state per-k index by the reciprocal-basis integer
+            // triple (pw_wfc_ stores a per-k ball layout: read it through
+            // getgcar)
+            std::map<std::vector<int>, int> jgl_of_n;
+            for (int jgl = 0; jgl < pw_wfc_->npwk[ik]; ++jgl)
+            {
+                const ModuleBase::Vector3<double> gf = pw_wfc_->getgcar(ik, jgl) * ginv;
+                const std::vector<int> key = {static_cast<int>(std::round(gf.x)),
+                                              static_cast<int>(std::round(gf.y)),
+                                              static_cast<int>(std::round(gf.z))};
+                jgl_of_n[key] = jgl;
+            }
+            occ_kq_[ik].clear();
+            eig_kq_[ik].clear();
+            for (int m = 0; m < gs_psi_.get_nbands(); ++m)
+            {
+                if (!dfpt_band_occupied(wg_, ik, m))
+                {
+                    continue;
+                }
+                std::vector<std::complex<double>> state(npwk, std::complex<double>(0.0, 0.0));
+                for (int igl = 0; igl < npwk; ++igl)
+                {
+                    const ModuleBase::Vector3<double> gf = kq.get_gcar(igl) * ginv;
+                    const std::vector<int> key = {static_cast<int>(std::round(gf.x)),
+                                                  static_cast<int>(std::round(gf.y)),
+                                                  static_cast<int>(std::round(gf.z))};
+                    const auto it = jgl_of_n.find(key);
+                    if (it != jgl_of_n.end())
+                    {
+                        state[igl] = gs_psi_(ik, m, it->second);
+                    }
+                }
+                occ_kq_[ik].push_back(std::move(state));
+                eig_kq_[ik].push_back(eig_(ik, m));
+            }
+            continue;
+        }
         hamilt_->set_context(q_cart, ik);
         hamilt_->set_shift(0.0);
         const DFPT_KQ_Basis& kq = hamilt_->basis();
