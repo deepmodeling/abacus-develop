@@ -92,10 +92,6 @@ addtest(
           ../../../source_cell/qlist.cpp
           ../../../source_cell/reciprocal_grid.cpp
           ../../../source_psi/psi.cpp
-          # Shared Ewald neighbor-shell generator (ion_ion real-space sum);
-          # raw sources because hamilt_general is an MPI-ABI object library
-          ../../../source_hamilt/module_ewald/h_ewald_pw.cpp
-          ../../../source_hamilt/module_ewald/dnrm2.cpp
           # Shared ctor/dtor stubs for the cell/spepot/Plus_U link closures
           # (see test_dfpt_mocks.cpp).
           test_dfpt_mocks.cpp
