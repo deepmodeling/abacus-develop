@@ -618,6 +618,12 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(
 
     // 3) for DeltaSpin, calculate atomic magnetic moments
     cal_mi_lcao_wrapper<TK>(iter, *this->inp_);
+    if (this->inp_->sc_mag_switch)
+    {
+        spinconstrain::SpinConstrain<TK>& sc = spinconstrain::SpinConstrain<TK>::getScInstance();
+        const double escon = sc.cal_escon();
+        this->pelec->set_spin_constrain_energy(escon);
+    }
 
     // call iter_finish() of ESolver_KS, where the band gap is calculated,
     // eig and occ are printed, magnetization is calculated,

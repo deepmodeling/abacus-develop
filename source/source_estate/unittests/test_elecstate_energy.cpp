@@ -167,6 +167,30 @@ TEST_F(ElecStateEnergyTest, CalConverged)
     EXPECT_DOUBLE_EQ(elecstate->f_en.descf, 0.0);
 }
 
+TEST_F(ElecStateEnergyTest, ConstraintEnergyIsSuppliedAndReplaced)
+{
+    elecstate->f_en.deband_harris = 0.1;
+    elecstate->f_en.deband = 0.1;
+    elecstate->set_spin_constrain_energy(-0.2);
+    elecstate->cal_energies(1, imp_sol, sc_mag_switch, dft_plus_u, assume_isolated);
+    elecstate->cal_energies(2, imp_sol, sc_mag_switch, dft_plus_u, assume_isolated);
+    EXPECT_DOUBLE_EQ(elecstate->f_en.etot_harris, 0.5);
+    EXPECT_DOUBLE_EQ(elecstate->f_en.etot, 0.5);
+
+    // The next magnetic state replaces the contribution rather than accumulating it.
+    elecstate->set_spin_constrain_energy(-0.4);
+    elecstate->cal_energies(2, imp_sol, sc_mag_switch, dft_plus_u, assume_isolated);
+    EXPECT_DOUBLE_EQ(elecstate->f_en.escon, -0.4);
+    EXPECT_DOUBLE_EQ(elecstate->f_en.etot, 0.3);
+
+    sc_mag_switch = false;
+    elecstate->cal_energies(1, imp_sol, sc_mag_switch, dft_plus_u, assume_isolated);
+    elecstate->cal_energies(2, imp_sol, sc_mag_switch, dft_plus_u, assume_isolated);
+    EXPECT_DOUBLE_EQ(elecstate->f_en.escon, 0.0);
+    EXPECT_DOUBLE_EQ(elecstate->f_en.etot_harris, 0.7);
+    EXPECT_DOUBLE_EQ(elecstate->f_en.etot, 0.7);
+}
+
 TEST_F(ElecStateEnergyTest, CalBandgapTrivial)
 {
     elecstate->cal_bandgap();
