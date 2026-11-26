@@ -157,7 +157,8 @@ void ReadInput::item_relax()
         item.annotation = "wolfe condition 2 for bfgs";
         item.category = "Geometry relaxation";
         item.type = "Real";
-        item.description = "Controls the Wolfe condition for the Broyden–Fletcher–Goldfarb–Shanno (BFGS) algorithm used in geometry relaxation. This parameter sets the curvature condition (c2 in Wolfe conditions). For more information, see Phys. Chem. Chem. Phys., 2000, 2, 2177.";
+        item.description = "Curvature constant c2 in the strong Wolfe condition for ionic inverse BFGS. For more "
+                           "information, see Phys. Chem. Chem. Phys., 2000, 2, 2177.";
         item.default_value = "0.5";
         item.unit = "";
         item.set_availability("relax_method in [bfgs, bfgs_trad, cg_bfgs]");
@@ -166,11 +167,13 @@ void ReadInput::item_relax()
     }
     {
         Input_Item item("relax_bfgs_rmax");
+        item.domain.add_requirement("calculation in [relax, cell-relax] and relax_method==bfgs", "relax_bfgs_rmax>0");
         item.annotation = "maximal trust radius, unit: Bohr";
         item.category = "Geometry relaxation";
         item.type = "Real";
-        item.description = "Maximum allowed total displacement of all atoms during geometry optimization. The sum of atomic displacements can increase during optimization steps but cannot exceed this value.";
-        item.default_value = "0.8";
+        item.description = "Upper bound on the ionic step. In inverse BFGS this bounds the Euclidean norm of the full "
+                           "displacement in Bohr.";
+        item.default_value = "0.2";
         item.unit = "Bohr";
         item.set_availability("relax_method in [bfgs, bfgs_trad, cg_bfgs]");
         read_sync_double(input.relax_bfgs_rmax);
@@ -181,22 +184,26 @@ void ReadInput::item_relax()
         item.annotation = "minimal trust radius, unit: Bohr";
         item.category = "Geometry relaxation";
         item.type = "Real";
-        item.description = "Minimum allowed total displacement of all atoms. When the total atomic displacement falls below this value and force convergence is not achieved, the calculation will terminate. Note: This parameter is not used in the default BFGS algorithm (relax_method = bfgs).";
+        item.description = "Restart the ionic inverse Hessian when a rejected step requires a retry radius below this "
+                           "threshold. Accepted Newton steps may be shorter.";
         item.default_value = "1e-5";
         item.unit = "Bohr";
-        item.set_availability("relax_method==bfgs_trad");
+        item.set_availability("relax_method==bfgs");
         read_sync_double(input.relax_bfgs_rmin);
         this->add_item(item);
     }
     {
         Input_Item item("relax_bfgs_init");
+        item.domain.add_requirement("calculation in [relax, cell-relax] and relax_method==bfgs", "relax_bfgs_init>0");
         item.annotation = "initial trust radius, unit: Bohr";
         item.category = "Geometry relaxation";
         item.type = "Real";
-        item.description = "Initial total displacement of all atoms in the first BFGS step. This sets the scale for the initial movement.";
+        item.description =
+            "Initial upper bound on the ionic inverse-BFGS step in Bohr, capped by relax_bfgs_rmax. The "
+            "steepest-descent and traditional CG methods use this parameter as their initial step scale.";
         item.default_value = "0.5";
         item.unit = "Bohr";
-        item.set_availability("relax_method in [bfgs, bfgs_trad, cg_bfgs]");
+        item.set_availability("relax_method in [bfgs, cg_trad, cg_bfgs, sd]");
         read_sync_double(input.relax_bfgs_init);
         this->add_item(item);
     }
