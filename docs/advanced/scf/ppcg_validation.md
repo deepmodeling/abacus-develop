@@ -143,16 +143,20 @@ reduces errors in already converged neighbors that can constrain the remaining
 pair. The correction is projected against the retained states and the
 candidate is S-normalized. It is accepted only if a fresh H/S application
 confirms a smaller residual, without a resolved energy increase or reordering.
-A rejected candidate is restored. Each attempt consumes an iteration from the
-existing budget; the convergence criterion and final fresh-residual check are
-unchanged. The `residual_refinement` trace stage records these attempts.
+A rejected candidate is restored. Within the final refinement window, one outer
+iteration performs a bounded sweep: the worst pair first, then at most one visit
+to each retained band, stopping early if all pairs converge. Each attempted
+single-band correction contributes `1 / nbands` to the reported average iteration
+count. An unsuccessful sweep returns to block iteration. The outer iteration
+limit, convergence criterion and final fresh-residual check are unchanged.
+The `residual_refinement` trace stage records these sweeps.
 
 The subsequent L20/CUDA 12.9 CI run at `c865d82e6` passed all reference
 checks but retained one Fe warning: `1.43748e-14` at SCF step 23, k-point 1.
 Its trace entered the near-converged range at iteration 195, leaving too few
 steps for the five-iteration stagnation trigger. The follow-up starts the final
 refinement window using the retained-band count plus the stagnation allowance,
-because each attempt corrects only one band. It prioritizes the worst unconverged
+to allow refinement before the budget expires. It prioritizes the worst unconverged
 pair within the unchanged total budget. If that correction is rejected, other
 retained states are visited instead of retrying identical inputs. A failed full
 cycle returns to the normal block iteration. Startup correction for the lowest
@@ -172,9 +176,15 @@ without reordering. The focused test failed before this change and passes after
 it. The L20 run at `8b50e767c` still had the same Fe failure. After a rejected
 worst-pair correction, retrying that pair between successful neighbor updates
 spent two iterations per neighbor and could not finish the retained-state sweep.
-The fallback now completes one uninterrupted neighbor sweep within the reserved
-budget. The total iteration limit and residual thresholds are unchanged; this
-scheduling correction requires fresh L20 evidence.
+The uninterrupted neighbor sweep at `cd6465d08` reduced the number of failed
+bands from ten to one, but still left a residual of `1.90363e-14`: visiting all
+23 retained bands consumed the remaining outer iterations. The updated sweep
+visits the retained set within one outer iteration, leaving time to resume block
+work. This can perform more single-band corrections per outer iteration than
+the previous implementation; every attempt is included in the average iteration
+count. A two-band standard/generalized regression requires both near-converged
+pairs to satisfy an independent residual check within one block sweep. It fails
+before this change and passes afterward. Fresh L20 evidence is still required.
 
 The six original CPU fixtures and six original RTX 3090 CUDA fixtures passed
 **72/72 reference checks** with **zero PPCG nonconvergence warnings across both
@@ -187,7 +197,7 @@ force and stress checks passed against the existing independent reference.
 These local results do not by themselves reproduce or certify the older L20
 residual rebound described above; the updated branch requires fresh CI evidence.
 
-The CPU suite passed 64 tests in MPI and non-MPI builds. Ten new tests cover
+The CPU suite passed 65 tests in MPI and non-MPI builds. The added tests cover
 standard/generalized correction geometry, refinement of a converged neighbor,
 preservation of converged pairs, rejection of nonfinite directions and candidates,
 restoration after rejected updates, eigenvalue-only roundoff on exact standard/generalized states, and exact float/double cancellation remainders. The CUDA target passed eight cases,

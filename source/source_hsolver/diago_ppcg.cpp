@@ -2000,8 +2000,6 @@ double DiagoPPCG<T, Device>::diag(
                                                       // the first block update.
     Real best_res = std::numeric_limits<Real>::max(); // best residual seen
     int no_improve = 0;                               // iterations since the residual last decreased
-    int final_refinement_band = -1;
-    int next_final_refinement_band = 0;
 
     while (!active_cols.empty() && iter <= maxiter_)
     {
@@ -2036,56 +2034,52 @@ double DiagoPPCG<T, Device>::diag(
         // At stagnation within a few stopping tolerances, another global
         // Ritz rotation can perturb already accurate vectors. Try a single
         // normalized residual correction before resuming the block iteration.
-        // Do not wait past the remaining budget: reserve the last few steps
-        // for the worst residual rather than allowing another Ritz rotation
-        // to perturb near-converged states before refinement can run.
+        // Reserve a final window for refinement before another Ritz rotation
+        // can perturb near-converged states.
         const bool startup_correction = iter == 1 && needs_startup_global_correction;
         const Real refinement_threshold = Real(4) * diag_thr_;
         const int refinement_stagnation = 5;
-        // One correction updates one band. Leave room for a full retained
-        // set as well as the stagnation delay within the existing budget.
+        // Leave room for refinement and subsequent block iterations within
+        // the existing budget, even when stagnation is detected late.
         const int refinement_budget = ncol + refinement_stagnation;
         const bool final_refinement_window = maxiter_ - iter < refinement_budget;
-        const bool refinement_available = !final_refinement_window || final_refinement_band < ncol;
         if (!startup_correction && last_rr_succeeded && near_precision && max_residual_ <= refinement_threshold &&
-            refinement_available && (no_improve >= refinement_stagnation || final_refinement_window))
+            (no_improve >= refinement_stagnation || final_refinement_window))
         {
             // Cycle through the retained states: errors in an already locked
             // neighbor can limit the attainable residual of the remaining pair.
-            const int refinement_band = final_refinement_window ? final_refinement_band : iter % ncol;
-            const bool accepted =
-                refine_stalled_residual(op, psi_in, eigenvalue_in, ethr_band, all_cols, refinement_band);
+            const int refinement_band = final_refinement_window ? -1 : iter % ncol;
+            bool accepted = refine_stalled_residual(op, psi_in, eigenvalue_in, ethr_band, all_cols, refinement_band);
+            int refinement_attempts = 1;
+            lock_epairs(w_, ethr_band, active_cols);
             if (final_refinement_window)
             {
-                // After the worst-pair step fails, finish one neighbor sweep.
-                // Retrying that pair after each neighbor would spend two
-                // iterations per band and exhaust the reserved sweep budget.
-                if (accepted && refinement_band < 0)
+                // Like a block update, one outer sweep can visit every retained
+                // band. Spending an outer iteration on each neighbor can use
+                // the entire remaining budget without returning to block work.
+                for (int band = 0; band < ncol && !active_cols.empty(); ++band)
                 {
-                    final_refinement_band = -1;
-                }
-                else
-                {
-                    final_refinement_band = next_final_refinement_band;
-                    ++next_final_refinement_band;
+                    const bool improved = refine_stalled_residual(op, psi_in, eigenvalue_in, ethr_band, all_cols, band);
+                    accepted = accepted || improved;
+                    ++refinement_attempts;
+                    lock_epairs(w_, ethr_band, active_cols);
                 }
             }
-            if (!accepted && refinement_band == 0)
-            {
-                no_improve = 0;
-            }
-            lock_epairs(w_, ethr_band, active_cols);
             record_residual(iter, "residual_refinement");
             set_zero<T, Device>(p_);
             set_zero<T, Device>(sp_);
             set_zero<T, Device>(hp_);
             use_p = false;
-            avg_iter += 1.0 / double(ncol);
-            ++iter;
-            continue;
+            avg_iter += double(refinement_attempts) / double(ncol);
+            if (accepted || active_cols.empty())
+            {
+                ++iter;
+                continue;
+            }
+            // An unsuccessful sweep must return to block iteration rather
+            // than retrying identical corrections until the budget expires.
+            no_improve = 0;
         }
-        final_refinement_band = -1;
-        next_final_refinement_band = 0;
         local_overlap_min = std::numeric_limits<Real>::quiet_NaN();
         local_overlap_max = std::numeric_limits<Real>::quiet_NaN();
         local_overlap_condition = std::numeric_limits<Real>::quiet_NaN();

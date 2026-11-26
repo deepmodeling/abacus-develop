@@ -158,6 +158,70 @@ TEST(DiagoPPCGReliableUpdateTest, RefreshesBeforeUsingNearPrecisionResidual)
     }
 }
 
+TEST(DiagoPPCGReliableUpdateTest, RefinesAllRetainedPairsWithinOneBlockSweep)
+{
+    const int dimension = 4;
+    const int bands = 2;
+    const double overlap_scales[] = {1.0, 2.0};
+    for (const double overlap : overlap_scales)
+    {
+        SCOPED_TRACE(overlap);
+        const double scale = 1.0 / std::sqrt(overlap);
+        std::vector<T> psi(dimension * bands, T(0));
+        psi[0] = scale;
+        psi[2] = 1.0e-14 * scale;
+        psi[dimension + 1] = scale;
+        psi[dimension + 3] = 1.0e-14 * scale;
+        const std::vector<Real> prec(dimension, 1.0);
+        const std::vector<double> thresholds(bands, 1.0e-14);
+        std::vector<Real> eigenvalues(bands, 0.0);
+        const auto h_op = [overlap](const T *in, T *out, int ld, int ncol)
+        {
+            for (int band = 0; band < ncol; ++band)
+            {
+                for (int row = 0; row < dimension; ++row)
+                {
+                    out[row + band * ld] = overlap * double(row + 1) * in[row + band * ld];
+                }
+            }
+        };
+        const auto s_op = [overlap](const T *in, T *out, int ld, int ncol)
+        {
+            for (int entry = 0; entry < ld * ncol; ++entry)
+            {
+                out[entry] = overlap * in[entry];
+            }
+        };
+        hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(1.0e-14, 1, bands, 1);
+        ppcg_test::diagonalize(
+            solver, h_op, s_op, dimension, bands, dimension, psi.data(), eigenvalues.data(), thresholds, prec.data());
+        EXPECT_TRUE(solver.converged());
+        EXPECT_FALSE(solver.iteration_limit_reached());
+        for (int band = 0; band < bands; ++band)
+        {
+            double residual_squared = 0.0;
+            for (int row = 0; row < dimension; ++row)
+            {
+                const T residual = overlap * (double(row + 1) - eigenvalues[band]) * psi[row + band * dimension];
+                residual_squared += std::norm(residual);
+            }
+            const double residual = std::sqrt(residual_squared);
+            EXPECT_LT(residual, thresholds[band]);
+            EXPECT_NEAR(eigenvalues[band], double(band + 1), 1.0e-14);
+            for (int other = 0; other < bands; ++other)
+            {
+                T product(0);
+                for (int row = 0; row < dimension; ++row)
+                {
+                    product += std::conj(psi[row + band * dimension]) * overlap * psi[row + other * dimension];
+                }
+                const T expected = band == other ? T(1) : T(0);
+                EXPECT_LT(std::abs(product - expected), 1.0e-14);
+            }
+        }
+    }
+}
+
 TEST(DiagoPPCGPeriodicRitzTest, HonorsIntervalAndChecksFinalRitzResidual)
 {
     const int dimension = 48;
