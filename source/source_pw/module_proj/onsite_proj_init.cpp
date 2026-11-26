@@ -174,6 +174,29 @@ void projectors::OnsiteProjector<T, Device>::init(const std::string& orbital_dir
 
         this->initialed = true;
     }
+    else if (ucell_in->cell_parameter_updated)
+    {
+        // The radial table contains 1/sqrt(omega). Rebuild it for the new cell,
+        // retaining the radial orbitals and any previously extended momentum range.
+        std::vector<int> nproj(this->ntype);
+        for (int it = 0; it < this->ntype; ++it)
+        {
+            nproj[it] = this->it2iproj[it].size();
+        }
+        const int capacity = std::max(nq, this->tab.getBound3());
+        RadialProjection::build_sbt_tab(
+            nproj, rgrid, projs, lproj, capacity, dq, ucell_in->omega, psi.get_npol(), tab, nhtol);
+
+        // Force/stress tools cache plane-wave dimensions, geometry and wavefunction
+        // pointers. Recreate them along with their projector buffer after a cell change.
+        delete this->fs_tools;
+        this->npwx_ = pw_basis.npwk_max;
+        this->size_vproj = this->tot_nproj * this->npwx_;
+        resmem_complex_op()(this->tab_atomic_, this->size_vproj, "OnsiteP::tab_atomic_");
+        this->isk_ = kv.isk.data();
+        this->fs_tools = new hamilt::Onsite_Proj_tools<T, Device>(
+            nproj, lproj, tab, nhtol, this->tab_atomic_, ucell_in, &psi, &kv, &pw_basis, &sf, wg, ekb);
+    }
 }
 
 template<typename T, typename Device>
