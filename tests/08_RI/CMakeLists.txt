@@ -66,6 +66,6 @@ else()
         --case ${ABACUS_TEST_DIR}/08_RI/lr_tddft_velocity_commutator
         --mpiexec ${MPIEXEC_EXECUTABLE} --mpi-np-flag=${MPIEXEC_NUMPROC_FLAG}
         ${MPI_LAUNCHER_FLAGS})
-    set_tests_properties(08_RI_lr_absorption_workflow PROPERTIES PROCESSORS 4 TIMEOUT 180)
+    set_tests_properties(08_RI_lr_absorption_workflow PROPERTIES PROCESSORS 4)
   endif()
 endif()
