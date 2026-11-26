@@ -112,7 +112,7 @@ void DiagoCG<T, Device>::diag_once(const ct::Tensor& prec_in,
     auto lagrange
         = std::move(ct::Tensor(ct::DataTypeToEnum<T>::value, ct::DeviceTypeToEnum<ct_Device>::value, {this->n_band_}));
 
-    auto prec = prec_in;
+    ct::Tensor prec = prec_in;
     if (prec.NumElements() == 0)
     {
         prec = ct::Tensor(ct::DataTypeToEnum<Real>::value, ct::DeviceTypeToEnum<ct_Device>::value, {this->n_basis_});
@@ -620,11 +620,11 @@ double DiagoCG<T, Device>::diag(const HSOperator<T, Device>& op,
     REQUIRES_OK(static_cast<int>(ethr_band.size()) >= nband,
                 "DiagoCG::diag: ethr_band size must be >= nband");
 
-    auto psi = ct::TensorMap(psi_in,
+    ct::TensorMap psi = ct::TensorMap(psi_in,
                              ct::DataTypeToEnum<T>::value,
                              ct::DeviceTypeToEnum<ct_Device>::value,
                              ct::TensorShape({nband, ld_psi}));
-    auto eigen = ct::TensorMap(eigenvalue_in,
+    ct::TensorMap eigen = ct::TensorMap(eigenvalue_in,
                                ct::DataTypeToEnum<Real>::value,
                                ct::DeviceTypeToEnum<ct::DEVICE_CPU>::value,
                                ct::TensorShape({nband}));

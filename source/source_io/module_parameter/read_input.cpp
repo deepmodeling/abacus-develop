@@ -221,13 +221,13 @@ ReadInput::ReadInput(const int& rank)
         std::map<std::string, AvailabilityValueKind> parameter_types;
         std::map<std::string, AvailabilityExpr> expressions;
         std::map<std::string, AvailabilityValueKind> bound_types;
-        for (const auto& entry : this->input_lists)
+        for (const std::pair<std::string, Input_Item>& entry : this->input_lists)
         {
             parameter_types[entry.first] = availability_value_kind(entry.second.type);
             expressions[entry.first] = entry.second.get_availability_expr();
             if (entry.second.domain.bound()) { bound_types[entry.first] = entry.second.domain.kind(); }
         }
-        for (const auto& entry : this->input_lists)
+        for (const std::pair<std::string, Input_Item>& entry : this->input_lists)
         {
             entry.second.domain.validate_schema(entry.first, bound_types);
             validate_availability_expr(entry.first,
@@ -285,7 +285,7 @@ void ReadInput::read_parameters(Parameter& param, const std::string& filename_in
     // It must be after the set_globalv, because some parameters need to be checked according to param.sys
     if (this->rank == 0)
     {
-        for (auto& input_item: this->input_lists)
+        for (std::pair<std::string, ModuleIO::Input_Item>& input_item: this->input_lists)
         {
             Input_Item* checkvalue_item = &(input_item.second);
             if (checkvalue_item->check_value != nullptr)
@@ -480,7 +480,7 @@ std::string ReadInput::prepare_input(Parameter& param)
     // Validate original tokens before any reader or default hook can discard
     // an invalid value. In particular, std::stoi alone accepts numeric prefixes.
     std::string errors;
-    for (const auto* item : this->readvalue_items)
+    for (const Input_Item* item : this->readvalue_items)
     {
         errors += item->domain.validate_explicit(item->label, item->str_values);
     }
@@ -519,7 +519,7 @@ std::string ReadInput::prepare_input(Parameter& param)
     }
 
     // 1) read the value of the parameters
-    for (auto& readvalue_item: this->readvalue_items)
+    for (ModuleIO::Input_Item*& readvalue_item: this->readvalue_items)
     {
         readvalue_item->read_value(*readvalue_item, param);
     }
@@ -534,14 +534,14 @@ std::string ReadInput::prepare_input(Parameter& param)
 #endif
 
     InputValues supplied_values;
-    for (const auto* item : this->readvalue_items)
+    for (const Input_Item* item : this->readvalue_items)
     {
         if (item->domain.bound()) { supplied_values[item->label] = item->domain.value(param); }
     }
 
     // 2) reset this value when some conditions are met
     //    e.g. if (calulation_type == "nscf") then set "init_chg" to "file".
-    for (auto& input_item: this->input_lists)
+    for (std::pair<std::string, ModuleIO::Input_Item>& input_item: this->input_lists)
     {
         Input_Item* resetvalue_item = &(input_item.second);
         if (resetvalue_item->reset_value != nullptr) 
@@ -592,7 +592,7 @@ std::string ReadInput::prepare_input(Parameter& param)
 
     // Snapshot typed effective values once for shared domain and dependency checks.
     InputValues values;
-    for (const auto& entry : this->input_lists)
+    for (const std::pair<std::string, Input_Item>& entry : this->input_lists)
     {
         if (entry.second.domain.bound()) { values[entry.first] = entry.second.domain.value(param); }
     }
@@ -600,20 +600,23 @@ std::string ReadInput::prepare_input(Parameter& param)
     // Evaluate requirements with explicit values taking precedence over defaults,
     // so a reset cannot hide a conflicting user request.
     InputValues requested_values = values;
-    for (const auto& supplied : supplied_values) { requested_values[supplied.first] = supplied.second; }
-    for (const auto& entry : this->input_lists)
+    for (const InputValues::value_type& supplied : supplied_values)
+    {
+        requested_values[supplied.first] = supplied.second;
+    }
+    for (const std::pair<std::string, Input_Item>& entry : this->input_lists)
     {
         errors += entry.second.domain.validate_requirements(entry.first, requested_values);
     }
     if (!errors.empty()) { return errors; }
 
     // Check effective values, including defaults, through the same domains.
-    for (const auto& entry : this->input_lists)
+    for (const std::pair<std::string, Input_Item>& entry : this->input_lists)
     {
         errors += entry.second.domain.validate_resolved(entry.first, values);
     }
     if (!errors.empty()) { return errors; }
-    for (const auto& entry : this->input_lists)
+    for (const std::pair<std::string, Input_Item>& entry : this->input_lists)
     {
         errors += entry.second.domain.validate_requirements(entry.first, values);
     }
@@ -803,7 +806,7 @@ void ReadInput::write_txt_input(const Parameter& param, const std::string& filen
     ofs << std::setiosflags(std::ios::left);
 
     ofs << "#Parameters (1.System)" << std::endl;
-    for (auto& item: this->input_lists)
+    for (std::pair<std::string, ModuleIO::Input_Item>& item: this->input_lists)
     {
         Input_Item* p_item = &(item.second);
         // Do not serialize an inactive internal marker as a public INPUT value.

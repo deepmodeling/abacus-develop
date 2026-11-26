@@ -446,7 +446,7 @@ void cal_stress_mgga_op<T, Device>::operator()(
     const T * gradwfc,
     Real * crosstaus)
 {
-    auto gradwfc_ = reinterpret_cast<const thrust::complex<Real>*>(gradwfc);
+    const thrust::complex<Real>* gradwfc_ = reinterpret_cast<const thrust::complex<Real>*>(gradwfc);
     const int block = (nrxx + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
     cal_stress_mgga<Real><<<block, THREADS_PER_BLOCK>>>(
         spin, nrxx, w1, gradwfc_, crosstaus);

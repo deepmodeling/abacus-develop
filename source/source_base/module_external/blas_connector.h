@@ -82,6 +82,13 @@ void zgerc_(const int *m, const int *n,
 
 // Level 3 BLAS
 
+void ctrmm_(const char* side, const char* uplo, const char* trans, const char* diag,
+            const int* m, const int* n, const std::complex<float>* alpha,
+            const std::complex<float>* a, const int* lda, std::complex<float>* b, const int* ldb);
+void ztrmm_(const char* side, const char* uplo, const char* trans, const char* diag,
+            const int* m, const int* n, const std::complex<double>* alpha,
+            const std::complex<double>* a, const int* lda, std::complex<double>* b, const int* ldb);
+
 void sgemm_(const char *transa, const char *transb,
             const int *m, const int *n, const int *k,
             const float *alpha,

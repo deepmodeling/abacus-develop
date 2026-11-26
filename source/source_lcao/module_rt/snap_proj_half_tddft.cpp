@@ -224,7 +224,7 @@ void snap_projector_half_tddft(const LCAO_Orbitals& orb,
         }
     }
 
-    for (auto& x: nlm)
+    for (std::vector<std::complex<double>>& x: nlm)
     {
         x.assign(natomwfc, 0.0);
     }
@@ -236,7 +236,7 @@ void snap_projector_half_tddft(const LCAO_Orbitals& orb,
     }
 
     // The LCAO orbital is sampled at r + R0 - R1 around the projector center.
-    const auto& phi_ln = orb.Phi[T1].PhiLN(L1, N1);
+    const Numerical_Orbital_Lm& phi_ln = orb.Phi[T1].PhiLN(L1, N1);
     const int mesh_r1 = phi_ln.getNr();
     const double* psi_1 = phi_ln.getPsi();
     const double* radial_1 = phi_ln.getRadial();
@@ -389,9 +389,9 @@ void snap_projector_half_tddft(const LCAO_Orbitals& orb,
         index_offset += num_m0;
     }
 
-    for (auto& dim: nlm)
+    for (std::vector<std::complex<double>>& dim: nlm)
     {
-        for (auto& x: dim)
+        for (std::complex<double>& x: dim)
         {
             x = std::conj(x);
         }

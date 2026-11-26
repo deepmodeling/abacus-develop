@@ -35,7 +35,7 @@ RootBasis<T> capture_basis(const RootInputs<T>& inputs)
 
     for (int atom = 0; atom < inputs.cell.nat; ++atom)
     {
-        const auto position = inputs.cell.get_tau(atom);
+        const ModuleBase::Vector3<double> position = inputs.cell.get_tau(atom);
         basis.positions.push_back(position);
     }
     // Snapshot only this rank's column-major coefficient block; no AO-by-band gather.

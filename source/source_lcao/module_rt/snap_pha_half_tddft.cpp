@@ -44,7 +44,7 @@ void snap_phialpha_half_tddft(const LCAO_Orbitals& orb,
         const int nchi_L = orb.Alpha[0].getNchi(L);
         for (int N = 0; N < nchi_L; ++N)
         {
-            const auto& alpha_ln = orb.Alpha[0].PhiLN(L, N);
+            const Numerical_Orbital_Lm& alpha_ln = orb.Alpha[0].PhiLN(L, N);
             ProjectorChannel channel;
             channel.l = L;
             channel.mesh = alpha_ln.getNr();

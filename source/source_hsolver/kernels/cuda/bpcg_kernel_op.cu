@@ -349,7 +349,7 @@ __global__ void normalize_kernel(
 
     // Calculate the sum for normalization
     for (int i = tid; i < dim; i += thread_per_block) {
-        auto val = psi_iter[(nbase + m) * dim + i];
+        thrust::complex<Real> val = psi_iter[(nbase + m) * dim + i];
         local_sum += (val * thrust::conj(val)).real();
     }
 
@@ -402,12 +402,12 @@ void line_minimize_with_block_op<T, base_device::DEVICE_GPU>::operator()(T* grad
                                                                          const int& n_basis_max,
                                                                          const int& n_band)
 {
-    auto A = reinterpret_cast<thrust::complex<Real>*>(grad_out);
-    auto B = reinterpret_cast<thrust::complex<Real>*>(hgrad_out);
-    auto C = reinterpret_cast<thrust::complex<Real>*>(sgrad_out);
-    auto D = reinterpret_cast<thrust::complex<Real>*>(psi_out);
-    auto E = reinterpret_cast<thrust::complex<Real>*>(hpsi_out);
-    auto F = reinterpret_cast<thrust::complex<Real>*>(spsi_out);
+    thrust::complex<Real>* A = reinterpret_cast<thrust::complex<Real>*>(grad_out);
+    thrust::complex<Real>* B = reinterpret_cast<thrust::complex<Real>*>(hgrad_out);
+    thrust::complex<Real>* C = reinterpret_cast<thrust::complex<Real>*>(sgrad_out);
+    thrust::complex<Real>* D = reinterpret_cast<thrust::complex<Real>*>(psi_out);
+    thrust::complex<Real>* E = reinterpret_cast<thrust::complex<Real>*>(hpsi_out);
+    thrust::complex<Real>* F = reinterpret_cast<thrust::complex<Real>*>(spsi_out);
 
     line_minimize_with_block<Real><<<n_band, thread_per_block>>>(
             A, B, C, D, E, F,
@@ -429,11 +429,11 @@ void calc_grad_with_block_op<T, base_device::DEVICE_GPU>::operator()(const Real*
                                                                      const int& n_basis_max,
                                                                      const int& n_band)
 {
-    auto A = reinterpret_cast<thrust::complex<Real>*>(psi_out);
-    auto B = reinterpret_cast<thrust::complex<Real>*>(hpsi_out);
-    auto C = reinterpret_cast<thrust::complex<Real>*>(spsi_out);
-    auto D = reinterpret_cast<thrust::complex<Real>*>(grad_out);
-    auto E = reinterpret_cast<thrust::complex<Real>*>(grad_old_out);
+    thrust::complex<Real>* A = reinterpret_cast<thrust::complex<Real>*>(psi_out);
+    thrust::complex<Real>* B = reinterpret_cast<thrust::complex<Real>*>(hpsi_out);
+    thrust::complex<Real>* C = reinterpret_cast<thrust::complex<Real>*>(spsi_out);
+    thrust::complex<Real>* D = reinterpret_cast<thrust::complex<Real>*>(grad_out);
+    thrust::complex<Real>* E = reinterpret_cast<thrust::complex<Real>*>(grad_old_out);
 
     calc_grad_with_block<Real><<<n_band, thread_per_block>>>(
             prec_in, err_out, beta_out,
@@ -456,8 +456,8 @@ void apply_eigenvalues_op<T, base_device::DEVICE_GPU>::operator()(const int& nba
 
     dim3 grid(notconv, blocks_per_grid_y);
 
-    auto vec_complex = reinterpret_cast<const thrust::complex<Real>*>(vectors);
-    auto res_complex = reinterpret_cast<thrust::complex<Real>*>(result);
+    const thrust::complex<Real>* vec_complex = reinterpret_cast<const thrust::complex<Real>*>(vectors);
+    thrust::complex<Real>* res_complex = reinterpret_cast<thrust::complex<Real>*>(result);
 
     apply_eigenvalues_kernel<Real><<<grid, threads_per_block>>>(
         vec_complex, res_complex, eigenvalues, nbase, nbase_x, notconv);
@@ -478,7 +478,7 @@ void precondition_op<T, base_device::DEVICE_GPU>::operator()(const int& dim,
 
     dim3 grid(notconv, blocks_per_grid_y);
 
-    auto psi_complex = reinterpret_cast<thrust::complex<Real>*>(psi_iter);
+    thrust::complex<Real>* psi_complex = reinterpret_cast<thrust::complex<Real>*>(psi_iter);
 
     precondition_kernel<Real><<<grid, threads_per_block>>>(
         psi_complex, precondition, eigenvalues, dim, nbase, notconv);
@@ -493,7 +493,7 @@ void normalize_op<T, base_device::DEVICE_GPU>::operator()(const int& dim,
                                                         const int& notconv,
                                                         Real* psi_norm)
 {
-    auto psi_complex = reinterpret_cast<thrust::complex<Real>*>(psi_iter);
+    thrust::complex<Real>* psi_complex = reinterpret_cast<thrust::complex<Real>*>(psi_iter);
     int sharedMemSize = (thread_per_block / WARP_SIZE) * sizeof(Real);
 
     normalize_kernel<Real><<<notconv, thread_per_block, sharedMemSize, 0>>>(

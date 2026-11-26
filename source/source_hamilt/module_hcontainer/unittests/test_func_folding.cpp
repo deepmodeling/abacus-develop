@@ -245,7 +245,7 @@ TEST(CrossOverlapFolding, PreservesOrderedPairsAndAllImages)
     overlap.insert_pair(forward_plus);
     overlap.insert_pair(reverse);
     overlap.allocate(nullptr, true);
-    auto *forward = overlap.find_pair(0, 1);
+    hamilt::AtomPair<double>* forward = overlap.find_pair(0, 1);
     forward->get_HR_values(-1, 0, 0).get_pointer()[0] = 2.0;
     forward->get_HR_values(0, 0, 0).get_pointer()[0] = 3.0;
     forward->get_HR_values(1, 0, 0).get_pointer()[0] = 5.0;

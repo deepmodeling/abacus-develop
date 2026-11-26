@@ -30,11 +30,11 @@ std::vector<std::vector<int>> collect_abfs_l_nchi(
 {
     std::vector<std::vector<int>> abfs_l_nchi;
     abfs_l_nchi.reserve(abfs.size());
-    for (const auto& abfs_type: abfs)
+    for (const std::vector<std::vector<Numerical_Orbital_Lm>>& abfs_type: abfs)
     {
         std::vector<int> shell_counts;
         shell_counts.reserve(abfs_type.size());
-        for (const auto& abfs_l: abfs_type)
+        for (const std::vector<Numerical_Orbital_Lm>& abfs_l: abfs_type)
         {
             shell_counts.push_back(static_cast<int>(abfs_l.size()));
         }
@@ -49,7 +49,7 @@ std::vector<std::vector<int>> collect_wfc_l_nchi(const UnitCell& ucell)
     wfc_l_nchi.reserve(static_cast<std::size_t>(ucell.ntype));
     for (int itype = 0; itype < ucell.ntype; ++itype)
     {
-        const auto& atom = ucell.atoms[itype];
+        const Atom& atom = ucell.atoms[itype];
         if (atom.nwl < 0 || atom.l_nchi.size() < static_cast<std::size_t>(atom.nwl + 1))
         {
             throw std::runtime_error("LibRPA v1 basis output found inconsistent AO shell counts.");

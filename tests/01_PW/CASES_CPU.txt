@@ -25,6 +25,8 @@ scf_out_chg_tau
 022_PW_CG
 023_PW_DA
 024_PW_DS
+scf_lobpcg
+scf_lobpcg_sca
 025_PW_DS_sca
 026_PW_KPAR
 027_PW_PINT_RKS
