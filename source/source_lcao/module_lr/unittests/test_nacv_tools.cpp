@@ -647,7 +647,7 @@ TEST(NacvSurfaces, ChecksTheResolvedRootCountRatherThanTheInputDefault)
 
 TEST(NacvIoMpi, ReportsEveryCompletedRankFileToTheWriterLog)
 {
-    const auto domain = ModuleBase::world_comm_domain();
+    const ModuleBase::CommunicationDomain domain = ModuleBase::world_comm_domain();
     const int rank = domain.rank();
     const int processes = domain.size();
     const std::string directory = ::testing::TempDir();
@@ -761,7 +761,7 @@ TEST_F(NacvIoTest, RejectsAnOpenFailureWithoutReportingSuccess)
 #ifndef _WIN32
 TEST(NacvIoMpi, ReportsOneRankWriteFailureOnEveryRank)
 {
-    const auto domain = ModuleBase::world_comm_domain();
+    const ModuleBase::CommunicationDomain domain = ModuleBase::world_comm_domain();
     const int processes = domain.size();
     if (processes < 2)
     {

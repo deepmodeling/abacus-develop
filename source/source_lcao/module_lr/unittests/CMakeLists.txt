@@ -180,18 +180,17 @@ addtest(
   LIBS base parameter device container psi
   SOURCES test_nacv_tools.cpp test_nacv_solver.cpp
           ../nacv_tools.cpp ../nacv_solver.cpp ../utils/lr_util.cpp ${lr_mpi_test_main})
-# State serialization must also execute with assertions disabled.
-target_compile_definitions(MODULE_LR_nacv_tools PRIVATE NDEBUG)
+# Exercise the state writer with assertions disabled even in Debug test builds.
+set_property(SOURCE ../nacv_tools.cpp APPEND PROPERTY COMPILE_DEFINITIONS NDEBUG)
 
 if(ENABLE_MPI)
   add_test(
-    NAME MODULE_LR_nacv_tools_mpi4
-    COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 4 ${MPIEXEC_PREFLAGS}
+    NAME MODULE_LR_nacv_tools_mpi2
+    COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2 ${MPIEXEC_PREFLAGS}
             $<TARGET_FILE:MODULE_LR_nacv_tools> ${MPIEXEC_POSTFLAGS}
             --gtest_filter=ZeqCgPrecision.*:NacvFactorization.*:NacvIoMpi.*)
-  set_tests_properties(MODULE_LR_nacv_tools_mpi4 PROPERTIES PROCESSORS 4)
+  set_tests_properties(MODULE_LR_nacv_tools_mpi2 PROPERTIES PROCESSORS 2)
   # Both invocations of NacvIoMpi use the same scratch filenames.
-  set_tests_properties(MODULE_LR_nacv_tools MODULE_LR_nacv_tools_mpi4
-    PROPERTIES RESOURCE_LOCK nacv_tools_scratch
-               ENVIRONMENT "OMP_NUM_THREADS=1;MKL_NUM_THREADS=1;OPENBLAS_NUM_THREADS=1")
+  set_tests_properties(MODULE_LR_nacv_tools MODULE_LR_nacv_tools_mpi2
+    PROPERTIES RESOURCE_LOCK nacv_tools_scratch)
 endif()

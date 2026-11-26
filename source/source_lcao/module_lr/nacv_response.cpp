@@ -10,6 +10,7 @@
 #include "zeq_solver.h"
 #include <algorithm>
 #include <cstddef>
+#include <functional>
 #include <stdexcept>
 #include <utility>
 #include <vector>
@@ -44,7 +45,7 @@ struct NacvResponse::Impl
     void prepare_left()
     {
         const NacvTimerScope timer("NacvResponse", "prepare_left");
-        const auto &g = inputs;
+        const GradientInputs<double> &g = inputs;
         if (open_shell)
         {
             if (open_left)
@@ -83,7 +84,7 @@ struct NacvResponse::Impl
             {
                 return;
             }
-            const auto &spin = g.spin_types[channel];
+            const std::string &spin = g.spin_types[channel];
             closed_left.reset(new Z_vector_L<double>(
                 g.xc_kernel,
                 g.nspin,
@@ -114,8 +115,8 @@ struct NacvResponse::Impl
     void prepare_right()
     {
         const NacvTimerScope timer("NacvResponse", "prepare_right");
-        const auto &g = inputs;
-        const auto &spin = g.spin_types[channel];
+        const GradientInputs<double> &g = inputs;
+        const std::string &spin = g.spin_types[channel];
         const std::weak_ptr<PotHxcLR> potential = g.pot[channel];
         if (open_shell)
         {
@@ -191,13 +192,13 @@ struct NacvResponse::Impl
         const int dimension = zvec_global_dim(left, spin_count);
         if (solver == "lapack")
         {
-            auto matrix = left.matrix();
+            std::vector<double> matrix = left.matrix();
             factorization.reset(new NacvFactorization(std::move(matrix), dimension));
         }
 #ifdef __MPI
         else
         {
-            const auto &px = inputs.px[0];
+            const Parallel_Blkcyclic &px = inputs.px[0];
             const int process_rows = px.nrproc();
             const int process_columns = px.ncproc();
             const int process_dimension = std::max(process_rows, process_columns);
@@ -210,7 +211,7 @@ struct NacvResponse::Impl
                 dimension,
                 dimension,
                 px.ictxt());
-            auto matrix = zvec_hessian_2d<double>(
+            std::vector<double> matrix = zvec_hessian_2d<double>(
                 left,
                 spin_count,
                 inputs.nloc,
@@ -237,7 +238,7 @@ struct NacvResponse::Impl
         const int ld = inputs.nloc;
         if (solver == "cg")
         {
-            const auto apply = [&left, ld, count](const double *in, double *out)
+            std::function<void(const double *, double *)> apply = [&left, ld, count](const double *in, double *out)
             {
                 left.hPsi(
                     in,
@@ -250,7 +251,7 @@ struct NacvResponse::Impl
                 rhs,
                 ld,
                 count,
-                apply,
+                std::move(apply),
                 inputs.test_force,
                 controls.tolerance,
                 controls.max_iterations);

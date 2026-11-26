@@ -47,7 +47,7 @@ namespace LR
                 this->gd_,
                 this->two_center_bundle_);
         }
-        const auto &dS = geometry == nullptr ? local_derivatives : geometry->overlap;
+        const std::vector<hamilt::HContainer<double>> &dS = geometry == nullptr ? local_derivatives : geometry->overlap;
         // test: output dS
         // std::cout << "dS in 3 directions:\n";
         // for (int i = 0;i < 3;++i) { LR_Util::print_HR(dS.at(i), this->ucell_.nat, "dS" + std::to_string(i)); }
@@ -277,7 +277,7 @@ namespace LR
                 this->gd_,
                 this->two_center_bundle_);
         }
-        const auto &dT = geometry == nullptr ? local_kinetic : geometry->kinetic;
+        const std::vector<hamilt::HContainer<double>> &dT = geometry == nullptr ? local_kinetic : geometry->kinetic;
         ModuleBase::matrix ft_dphi = PulayForceStress::cal_pulay_fs(relax_diff_dm, this->ucell_, dT);
 
         if (this->test_force_)

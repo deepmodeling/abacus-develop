@@ -162,7 +162,7 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force_Xz(
         inputs.exx_lri, inputs.hybrid_alpha
 #endif
     );
-    const auto forces = LR::evaluate_closed_shell_force(
+    const std::vector<ModuleBase::matrix> forces = LR::evaluate_closed_shell_force(
         inputs, force_terms, dm_gs, Xz, Z, omega, label_begin, ispin, true);
     ModuleBase::timer::end("ESolver_LR", "cal_force_Xz");
     return forces;
@@ -360,7 +360,7 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force_open
         inputs.exx_lri, inputs.hybrid_alpha
 #endif
     );
-    const auto forces = LR::evaluate_open_shell_force(
+    const std::vector<ModuleBase::matrix> forces = LR::evaluate_open_shell_force(
         inputs, force_terms, dm_gs, Xz, Z, omega, label_begin, true);
     ModuleBase::timer::end("ESolver_LR", "cal_force_openshell_Xz");
     return forces;

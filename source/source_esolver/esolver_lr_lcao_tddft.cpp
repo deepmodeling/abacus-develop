@@ -16,6 +16,7 @@
 #include "source_lcao/module_lr/utils/spectrum_weights.h"
 #include "source_lcao/module_lr/zeq_solver.h"
 #include <algorithm>
+#include <functional>
 #include <iomanip>
 
 using namespace LR;
@@ -105,9 +106,10 @@ void ModuleESolver::ESolver_LR<T, TR>::runner(BaseCell &basecell, const int iste
     }
     else if (this->inp_->lr_solver != "spectrum")
     {
-        auto write_states = [this, &efile_out, &vfile_out, &nac_request, &step_suffix](
-                                const std::string &label, const Real<T> *e, const T *v, const int &dim, const int &nst,
-                                const int &prec = 8) -> void
+        constexpr int state_output_precision = 8;
+        const std::function<void(const std::string &, const Real<T> *, const T *, int, int, int)> write_states
+            = [this, &efile_out, &vfile_out, &nac_request, &step_suffix](
+                  const std::string &label, const Real<T> *e, const T *v, int dim, int nst, int prec)
         {
             if (!nac_request.pairs.empty())
             {
@@ -153,7 +155,7 @@ void ModuleESolver::ESolver_LR<T, TR>::runner(BaseCell &basecell, const int iste
                 this->spin_types[0], this->my_rank_, this->ofs_running_);
             if (this->inp_->out_wfc_lr)
             {
-                write_states("openshell", energies, amplitudes, nloc_per_state, nstates);
+                write_states("openshell", energies, amplitudes, nloc_per_state, nstates, state_output_precision);
             }
         }
         else
@@ -188,7 +190,7 @@ void ModuleESolver::ESolver_LR<T, TR>::runner(BaseCell &basecell, const int iste
                     spin_types[is], this->my_rank_, this->ofs_running_);
                 if (this->inp_->out_wfc_lr)
                 {
-                    write_states(spin_types[is], energies, amplitudes, nloc_per_state, nstates);
+                    write_states(spin_types[is], energies, amplitudes, nloc_per_state, nstates, state_output_precision);
                 }
             }
         }
@@ -269,7 +271,7 @@ void ModuleESolver::ESolver_LR<T, TR>::runner(BaseCell &basecell, const int iste
     if (!nac_request.pairs.empty())
     {
         const LR::GradientInputs<T> gradient = this->gradient_inputs_();
-        const auto ground_density = this->cal_dm_gs();
+        const module_dm::DensityMatrix<T, double> ground_density = this->cal_dm_gs();
         const LR::NacvInputs<T> nac_inputs{gradient,
             this->X,
             this->paraX_,

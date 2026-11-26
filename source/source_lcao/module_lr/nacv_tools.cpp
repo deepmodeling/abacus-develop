@@ -349,7 +349,7 @@ void write_nac_states(
     {
         failure = error.what();
     }
-    const auto domain = ModuleBase::world_comm_domain();
+    const ModuleBase::CommunicationDomain domain = ModuleBase::world_comm_domain();
     const int local_failure = !failure.empty();
     if (domain.max(local_failure) != 0)
     {

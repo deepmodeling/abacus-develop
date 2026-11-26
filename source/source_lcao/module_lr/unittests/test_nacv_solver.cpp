@@ -5,6 +5,7 @@
 #include "source_lcao/module_lr/utils/lr_util.h"
 #include <algorithm>
 #include <cmath>
+#include <functional>
 #include <gtest/gtest.h>
 #include <limits>
 #include <stdexcept>
@@ -284,7 +285,7 @@ TEST(ZeqCgPrecision, ReusesTheSuccessfulTrueResidualCertification)
     }
     double solution[] = {9.0};
     int applications = 0;
-    const auto diagonal = [&applications](const double *input, double *output)
+    const std::function<void(const double *, double *)> diagonal = [&applications](const double *input, double *output)
     {
         ++applications;
         output[0] = 2.0 * input[0];
@@ -307,7 +308,7 @@ TEST(ZeqCgPrecision, ZeroRhsIsCertifiedExactlyOnce)
     double rhs[] = {0.0};
     double solution[] = {9.0};
     int applications = 0;
-    const auto diagonal = [&applications](const double *input, double *output)
+    const std::function<void(const double *, double *)> diagonal = [&applications](const double *input, double *output)
     {
         ++applications;
         output[0] = 2.0 * input[0];
@@ -352,7 +353,7 @@ TEST(ZeqCgPrecision, CoupledMultipleRightHandSidesMatchKnownSolutions)
     const std::vector<double> original_rhs = rhs;
     const std::size_t rhs_size = rhs.size();
     std::vector<double> solution(rhs_size, 7.0);
-    const auto hessian = [local_size, states](const double *input, double *output)
+    const std::function<void(const double *, double *)> hessian = [local_size, states](const double *input, double *output)
     {
         if (local_size == 0)
         {
@@ -482,7 +483,7 @@ void check_distributed_reuse(bool cholesky, int dimension)
         1,
         dimension,
         dimension);
-    auto local = distribute(matrix, layout);
+    std::vector<double> local = distribute(matrix, layout);
     LR::NacvFactorization factors(local, layout, cholesky);
     for (const int count : {1, 3, 1})
     {
@@ -511,7 +512,7 @@ void check_distributed_reuse(bool cholesky, int dimension)
                 }
             }
         }
-        auto solution = distribute(rhs, rhs_layout);
+        std::vector<double> solution = distribute(rhs, rhs_layout);
         factors.solve(solution, rhs_layout);
         std::vector<double> full(rhs_size, 0.0);
         LR_Util::gather_2d_to_full(
@@ -547,7 +548,7 @@ TEST(NacvFactorization, DistributedFailuresAreReportedOnAllRanks)
         0.0,
         0.0,
         0.0};
-    auto local = distribute(matrix, layout);
+    std::vector<double> local = distribute(matrix, layout);
     EXPECT_THROW(LR::NacvFactorization factors(local, layout, false), std::runtime_error);
     matrix[3] = -1.0;
     local = distribute(matrix, layout);

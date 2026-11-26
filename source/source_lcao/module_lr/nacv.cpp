@@ -245,7 +245,7 @@ NacvResult evaluate_aux_tda_nac(
         }
         pair_force = (forces[0] - forces[1]) * 0.5;
     }
-    const auto &overlap_derivatives = force_terms.batch_overlap_derivatives();
+    const std::vector<hamilt::HContainer<double>> &overlap_derivatives = force_terms.batch_overlap_derivatives();
     result.ao_connection = antisymmetric_ao_connection(inputs, density, overlap_derivatives);
     assemble_nacv_result(result, pair_force, gap_resolution_ry);
     return result;
@@ -330,7 +330,7 @@ template <> void run_nac_requests<double>(const NacvInputs<double> &data, int io
 {
     const NacWorkflowTimer timer;
     validate_nac_data(data);
-    const auto &request = data.request;
+    const NacvRequest &request = data.request;
     const int channel = request.spin_name == "triplet" ? 1 : 0;
     const ForceSettings settings{data.gradient.nspin,
         data.gradient.test_force,
@@ -454,7 +454,7 @@ std::vector<double> nac_eigenpair_residuals(
  */
 ct::Tensor pad_nac_state(const NacvInputs<double> &data, int channel, int state)
 {
-    const auto &inputs = data.gradient;
+    const GradientInputs<double> &inputs = data.gradient;
     return pad_amplitudes<double>(
         data.amplitudes,
         data.open_shell,
@@ -512,7 +512,7 @@ NacvResult evaluate_nac_pair(
         bra_residual,
         residuals.at(ket_index));
     const LR::GradientInputs<double> &inputs = data.gradient;
-    const auto &ground_density = data.ground_density;
+    const module_dm::DensityMatrix<double, double> &ground_density = data.ground_density;
     LR::NacvResult result = LR::evaluate_aux_tda_nac(
         inputs,
         force_terms,
@@ -542,8 +542,8 @@ NacvResult evaluate_nac_pair(
  */
 void validate_nac_data(const NacvInputs<double> &data)
 {
-    const auto &inputs = data.gradient;
-    const auto &request = data.request;
+    const GradientInputs<double> &inputs = data.gradient;
+    const NacvRequest &request = data.request;
     const int channel = request.spin_name == "triplet" ? 1 : 0;
     validate_nac_surfaces(request.pairs, data.energies.nc);
     if (data.open_shell)

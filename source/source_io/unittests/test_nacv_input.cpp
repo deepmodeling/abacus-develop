@@ -3,13 +3,14 @@
 #include <gtest/gtest.h>
 #include <stdexcept>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace
 {
 ModuleIO::Input_Item nac_input_item(const ModuleIO::ReadInput &reader, const std::string &name)
 {
-    for (const auto &item : reader.get_input_lists())
+    for (const std::pair<std::string, ModuleIO::Input_Item> &item : reader.get_input_lists())
     {
         if (item.first == name)
         {
@@ -226,7 +227,7 @@ TEST(LrNacInput, RejectsInvalidPairLists)
             "1",
             "0",
             "1"}};
-    for (const auto &values : invalid)
+    for (const std::vector<std::string> &values : invalid)
     {
         read_nac_item(
             reader,
@@ -244,7 +245,7 @@ TEST(LrNacInput, RejectsUnsupportedElectronicModels)
     const std::vector<std::pair<std::string, std::string>> invalid = {{"esolver_type", "ksdft"}, {"basis_type", "pw"},
         {"gamma_only", "false"}, {"cal_force", "false"}, {"kpar", "2"}, {"lr_unrestricted", "true"}, {"nspin", "4"},
         {"lr_solver", "spectrum"}, {"calculation", "cell-relax"}, {"lr_nac_spin", "mixed"}};
-    for (const auto &setting : invalid)
+    for (const std::pair<std::string, std::string> &setting : invalid)
     {
         Parameter parameter;
         prepare_nac_input(reader, parameter);
