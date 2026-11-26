@@ -150,7 +150,7 @@ void Ions_Move_BFGS2::PrepareStep(
     int info = 0;
     std::vector<double> H_flat;
 
-    for (const auto &row : H)
+    for (const std::vector<double>& row : H)
     {
         H_flat.insert(H_flat.end(), row.begin(), row.end());
     }

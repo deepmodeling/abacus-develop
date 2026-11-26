@@ -37,7 +37,7 @@ CoulombParam build_center2_cut_coulomb_param(const CoulombParam& coulomb_param,
         {
             continue;
         }
-        for (auto& param: param_list.second)
+        for (std::map<std::string, std::string>& param: param_list.second)
         {
             const auto cut_radius_policy = param.find("rpa_cut_radius");
             if (cut_radius_policy != param.end() && cut_radius_policy->second == "inscribed")

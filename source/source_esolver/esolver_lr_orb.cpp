@@ -62,7 +62,7 @@ void ModuleESolver::ESolver_LR<T, TR>::setup_eigenvectors_X()
     this->nloc_per_state = nk * (openshell ? paraX_[0].size() + paraX_[1].size() : paraX_[0].size());
 
     this->X.resize(openshell ? 1 : nspin, LR_Util::newTensor<T>({nstates, nloc_per_state}));
-    for (auto &x : X)
+    for (container::Tensor& x : X)
     {
         x.zero();
     }

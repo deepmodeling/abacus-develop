@@ -20,7 +20,7 @@ void init_dftu_lcao(int dft_plus_u,
         return;
     }
 
-    auto* dftu_ptr = static_cast<Plus_U_Base*>(dftu);
+    Plus_U_Base* dftu_ptr = static_cast<Plus_U_Base*>(dftu);
 
     /// Calculate U and J if Yukawa potential is used
     if (dftu_ptr->use_yukawa())
@@ -54,8 +54,8 @@ void finish_dftu_lcao(const bool conv_esolver,
         return;
     }
 
-    auto* dftu_ptr = static_cast<Plus_U_Base*>(dftu);
-    auto* hamilt_lcao_ptr = static_cast<hamilt::HamiltLCAO<TK, double>*>(hamilt_lcao);
+    Plus_U_Base* dftu_ptr = static_cast<Plus_U_Base*>(dftu);
+    hamilt::HamiltLCAO<TK, double>* hamilt_lcao_ptr = static_cast<hamilt::HamiltLCAO<TK, double>*>(hamilt_lcao);
 
     /// old DFT+U method calculates energy correction in esolver,
     /// new DFT+U method calculates energy in Hamiltonian

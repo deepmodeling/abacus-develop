@@ -36,7 +36,7 @@ TEST_F(DftuPwTest, EnergyWeightsAllNspin)
 {
     struct Case { int nspin; double expected_weight; double expected_diag; };
     Case cases[] = {{1, 1.0, 0.5}, {2, 0.5, 0.5}, {4, 0.25, 1.0}};
-    for (const auto& c : cases) {
+    for (const Case& c : cases) {
         double weight_eu = 1;
         switch (c.nspin) {
             case 1: weight_eu = 1.0; break;
@@ -404,7 +404,7 @@ class PWIndexSetupTest : public ::testing::Test
     {
         int ip0 = 0, pot_onsite_begin = 0, npol = 1;
         ip_iat.resize(0); ip_m.resize(0); pot_onsite_begin_iat.resize(atoms.size());
-        for (const auto& atom : atoms)
+        for (const PWIndexSetupTest::AtomInfo& atom : atoms)
         {
             ip_iat.resize(ip_iat.size() + atom.nh);
             ip_m.resize(ip_m.size() + atom.nh);

@@ -92,7 +92,7 @@ std::vector<ModuleBase::matrix> evaluate_closed_shell_force(
         // std::cout << "dm_relaxed_k Z(k) before symmetrization, istate " + std::to_string(istate) << std::endl;
         // LR_Util::print_value(dm_relaxed_k[0].data<T>(), inputs.pmat.get_col_size(), inputs.pmat.get_row_size());
 #ifdef __MPI
-        for (auto& d: dm_relaxed_k)
+        for (const container::Tensor& d: dm_relaxed_k)
         {
             LR_Util::matsym(d.data<T>(), inputs.nbasis, inputs.pmat.para_2d());
         } // symmetrize

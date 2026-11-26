@@ -336,7 +336,7 @@ void ESolver_KS_PW_TDDFT<T, Device>::prepare_init_hamilt(const UnitCell &ucell)
 
         elecstate::Potential &potential = *this->pelec->pot;
         const Real *veff = potential.template get_veff_smooth_data<Real>();
-        auto *hamiltonian = static_cast<hamilt::HamiltPW<T, Device> *>(this->p_hamilt);
+        hamilt::HamiltPW<T, Device>* hamiltonian = static_cast<hamilt::HamiltPW<T, Device> *>(this->p_hamilt);
         // A file can supply nonzero A(0), which must enter H before the initial wavefunctions are prepared.
         hamiltonian->bind_td_state(veff, this->td_field_manager_->A_right_ha());
     }

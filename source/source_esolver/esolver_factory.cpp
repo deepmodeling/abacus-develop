@@ -129,7 +129,7 @@ std::string determine_type(const Input_para &inp)
     std::ostream &running_log = GlobalV::ofs_running;
     running_log << "\n #ENERGY SOLVER# " << esolver_type << std::endl;
 
-    auto device_info = inp.device;
+    std::string device_info = inp.device;
 
     for (char &c : device_info)
     {

@@ -722,7 +722,7 @@ TEST_F(InputParaTest, ExternalLRKernelRejectsForces)
 {
     ModuleIO::ReadInput readinput(0);
     std::map<std::string, ModuleIO::Input_Item> lists;
-    for (const auto& entry: readinput.get_input_lists())
+    for (const std::pair<std::string, ModuleIO::Input_Item>& entry: readinput.get_input_lists())
     {
         lists.emplace(entry.first, entry.second);
     }
@@ -755,20 +755,20 @@ TEST_F(InputParaTest, RemovedElpaZSolverIsRejected)
 {
     ModuleIO::ReadInput readinput(0);
     std::map<std::string, ModuleIO::Input_Item> lists;
-    for (const auto& entry: readinput.get_input_lists())
+    for (const std::pair<std::string, ModuleIO::Input_Item>& entry: readinput.get_input_lists())
     {
         lists.emplace(entry.first, entry.second);
     }
     ModuleIO::Input_Item item = lists.at("lr_grad_solver");
     Parameter param;
-    for (const auto& solver : {"cg", "lapack"})
+    for (const char* const& solver : {"cg", "lapack"})
     {
         item.str_values = {solver};
         item.read_value(item, param);
         item.check_value(item, param);
     }
 #ifdef __MPI
-    for (const auto& solver : {"scalapack", "scalapack_chol"})
+    for (const char* const& solver : {"scalapack", "scalapack_chol"})
     {
         item.str_values = {solver};
         item.read_value(item, param);
@@ -820,13 +820,13 @@ TEST_F(InputParaTest, OpticalGaugeCanDisableSpectrum)
 {
     ModuleIO::ReadInput readinput(0);
     std::map<std::string, ModuleIO::Input_Item> lists;
-    for (const auto& entry : readinput.get_input_lists())
+    for (const std::pair<std::string, ModuleIO::Input_Item>& entry : readinput.get_input_lists())
     {
         lists.emplace(entry.first, entry.second);
     }
     ModuleIO::Input_Item item = lists.at("abs_gauge");
     Parameter param;
-    for (const auto& gauge : {"velocity", "length", "none"})
+    for (const char* const& gauge : {"velocity", "length", "none"})
     {
         item.str_values = {gauge};
         item.read_value(item, param);

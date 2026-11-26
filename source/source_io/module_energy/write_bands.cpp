@@ -146,7 +146,7 @@ void ModuleIO::nscf_bands(const int& is,
     {
         if (ik > 0)
         {
-            auto delta = kvec_c_global[ik] - kvec_c_global[ik - 1];
+            ModuleBase::Vector3<double> delta = kvec_c_global[ik] - kvec_c_global[ik - 1];
             klength[ik] = klength[ik - 1];
             klength[ik] += (kv.kl_segids[ik] == kv.kl_segids[ik - 1]) ? delta.norm() : 0.0;
         }

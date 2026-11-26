@@ -19,7 +19,7 @@ void accumulate_occ_one_k(const void* psi_in,
                           const std::vector<int>& l_channel,
                           OccupationMatrix& occmat)
 {
-    auto* onsite_p = projectors::OnsiteProjector<double, Device>::get_instance();
+    projectors::OnsiteProjector<double, Device>* onsite_p = projectors::OnsiteProjector<double, Device>::get_instance();
     const psi::Psi<std::complex<double>, Device>* psi_p =
         (const psi::Psi<std::complex<double>, Device>*)psi_in;
     const int nbands = psi_p->get_nbands();

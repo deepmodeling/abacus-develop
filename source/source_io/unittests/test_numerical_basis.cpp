@@ -91,8 +91,8 @@ TEST_F(NumericalBasisTest, cal_overlap_Sq)
     // <jy|jy> and <jy|-\nabla^2|jy>
     const double S_thr = 1e-5;
     const double T_thr = 1e-3;
-    const auto S = cal_overlap_Sq('S', lmax, nbes, rcut, tau_cart, latvec, index);
-    const auto T = cal_overlap_Sq('T', lmax, nbes, rcut, tau_cart, latvec, index);
+    const ModuleBase::ComplexArray S = cal_overlap_Sq('S', lmax, nbes, rcut, tau_cart, latvec, index);
+    const ModuleBase::ComplexArray T = cal_overlap_Sq('T', lmax, nbes, rcut, tau_cart, latvec, index);
     int t1, a1, l1, m1, t2, a2, l2, m2; // values will be updated in the loop
     for (int i = 0; i < nao; ++i)
     {
@@ -160,7 +160,7 @@ TEST_F(NumericalBasisTest, cal_overlap_Sq)
     tau_cart[0][0].x -= 0.5;
     tau_cart[0][1].x -= 0.5;
     tau_cart[0][2].x -= 0.5;
-    const auto S_wrap = cal_overlap_Sq('S', lmax, nbes, rcut, tau_cart, latvec, index);
+    const ModuleBase::ComplexArray S_wrap = cal_overlap_Sq('S', lmax, nbes, rcut, tau_cart, latvec, index);
 
     for (int i = 0; i < nao; ++i)
     {
@@ -185,19 +185,19 @@ TEST_F(NumericalBasisTest, neighbor_vec)
     const ModuleBase::Matrix3 latvec(3.0, 0.0, 0.0, 0.0, 4.0, 0.0, 0.0, 0.0, 5.0);
 
     const double r1 = 2.0;
-    auto d1 = neighbor_vec(d0, latvec, r1);
+    std::vector<ModuleBase::Vector3<double>> d1 = neighbor_vec(d0, latvec, r1);
     EXPECT_EQ(d1.size(), 1);
     EXPECT_EQ(d1[0], ModuleBase::Vector3<double>(-0.5, 0.0, 0.0));
 
     const double r2 = 3.6;
-    auto d2 = neighbor_vec(d0, latvec, r2);
+    std::vector<ModuleBase::Vector3<double>> d2 = neighbor_vec(d0, latvec, r2);
     EXPECT_EQ(d2.size(), 3);
     EXPECT_EQ(d2[0], ModuleBase::Vector3<double>(-3.5, 0.0, 0.0));
     EXPECT_EQ(d2[1], ModuleBase::Vector3<double>(-0.5, 0.0, 0.0));
     EXPECT_EQ(d2[2], ModuleBase::Vector3<double>(2.5, 0.0, 0.0));
 
     const double r3 = 4.1;
-    auto d3 = neighbor_vec(d0, latvec, r3);
+    std::vector<ModuleBase::Vector3<double>> d3 = neighbor_vec(d0, latvec, r3);
     EXPECT_EQ(d3.size(), 5);
     EXPECT_EQ(d3[0], ModuleBase::Vector3<double>(-3.5, 0.0, 0.0));
     EXPECT_EQ(d3[1], ModuleBase::Vector3<double>(-0.5, -4.0, 0.0));

@@ -178,7 +178,7 @@ void exx_fftw_plan_create_d(void** plan, const int nx, const int ny, const int n
     const int n[3] = {nx, ny, nz};
     const int nxyz = nx * ny * nz;
     fftw_complex* tmp = reinterpret_cast<fftw_complex*>(fftw_malloc(sizeof(fftw_complex) * nxyz * batch));
-    auto* p = new ExxFftwPlanD;
+    ExxFftwPlanD* p = new ExxFftwPlanD;
     const unsigned flag = FFTW_ESTIMATE | FFTW_UNALIGNED;
     p->fwd = fftw_plan_many_dft(3, n, batch, tmp, nullptr, 1, nxyz, tmp, nullptr, 1, nxyz, FFTW_FORWARD, flag);
     p->bac = fftw_plan_many_dft(3, n, batch, tmp, nullptr, 1, nxyz, tmp, nullptr, 1, nxyz, FFTW_BACKWARD, flag);
@@ -188,7 +188,7 @@ void exx_fftw_plan_create_d(void** plan, const int nx, const int ny, const int n
 
 void exx_fftw_exec_d(void* plan, std::complex<double>* data, const bool forward)
 {
-    auto* p = reinterpret_cast<ExxFftwPlanD*>(plan);
+    ExxFftwPlanD* p = reinterpret_cast<ExxFftwPlanD*>(plan);
     fftw_execute_dft(forward ? p->fwd : p->bac,
                      reinterpret_cast<fftw_complex*>(data),
                      reinterpret_cast<fftw_complex*>(data));
@@ -198,7 +198,7 @@ void exx_fftw_plan_destroy_d(void** plan)
 {
     if (*plan != nullptr)
     {
-        auto* p = reinterpret_cast<ExxFftwPlanD*>(*plan);
+        ExxFftwPlanD* p = reinterpret_cast<ExxFftwPlanD*>(*plan);
         fftw_destroy_plan(p->fwd);
         fftw_destroy_plan(p->bac);
         delete p;

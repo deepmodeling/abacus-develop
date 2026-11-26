@@ -722,15 +722,15 @@ __global__ void force_loc_kernel(
     FPTYPE force_y = 0.0;
     FPTYPE force_z = 0.0;
     
-    const auto tau_x = tau_d[iat * 3 + 0];
-    const auto tau_y = tau_d[iat * 3 + 1];
-    const auto tau_z = tau_d[iat * 3 + 2];
+    const FPTYPE tau_x = tau_d[iat * 3 + 0];
+    const FPTYPE tau_y = tau_d[iat * 3 + 1];
+    const FPTYPE tau_z = tau_d[iat * 3 + 2];
 
     // Process all plane waves in chunks of blockDim.x
     for (int ig = tid; ig < npw; ig += blockDim.x) {
-        const auto gcar_x = gcar_d[ig * 3 + 0];
-        const auto gcar_y = gcar_d[ig * 3 + 1];
-        const auto gcar_z = gcar_d[ig * 3 + 2];
+        const FPTYPE gcar_x = gcar_d[ig * 3 + 0];
+        const FPTYPE gcar_y = gcar_d[ig * 3 + 1];
+        const FPTYPE gcar_z = gcar_d[ig * 3 + 2];
 
         // Calculate phase factor
         const FPTYPE phase = ModuleBase::TWO_PI * (gcar_x * tau_x +
@@ -743,7 +743,7 @@ __global__ void force_loc_kernel(
         const FPTYPE vloc_val = vloc_d[it * vloc_nc + ig2gg_d[ig]];
         
         // Calculate factor
-        const auto aux_val = aux_d[ig];
+        const thrust::complex<FPTYPE> aux_val = aux_d[ig];
         const FPTYPE factor = vloc_val * (cosp * aux_val.imag() + sinp * aux_val.real());
         
         // Multiply by gcar components
@@ -814,16 +814,16 @@ __global__ void force_ew_kernel(
     FPTYPE force_y = 0.0;
     FPTYPE force_z = 0.0;
 
-    const auto tau_x = tau_d[iat * 3 + 0];
-    const auto tau_y = tau_d[iat * 3 + 1];
-    const auto tau_z = tau_d[iat * 3 + 2];
+    const FPTYPE tau_x = tau_d[iat * 3 + 0];
+    const FPTYPE tau_y = tau_d[iat * 3 + 1];
+    const FPTYPE tau_z = tau_d[iat * 3 + 2];
 
     for (int ig = tid; ig < npw; ig += blockDim.x) {
         if(ig == ig_gge0)
         { continue; }
-        const auto gcar_x = gcar_d[ig * 3 + 0];
-        const auto gcar_y = gcar_d[ig * 3 + 1];
-        const auto gcar_z = gcar_d[ig * 3 + 2];
+        const FPTYPE gcar_x = gcar_d[ig * 3 + 0];
+        const FPTYPE gcar_y = gcar_d[ig * 3 + 1];
+        const FPTYPE gcar_z = gcar_d[ig * 3 + 2];
 
         // Calculate phase factor
         const FPTYPE phase = ModuleBase::TWO_PI * (gcar_x * tau_x +
