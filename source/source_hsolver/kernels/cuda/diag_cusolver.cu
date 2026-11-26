@@ -10,6 +10,7 @@
 
 #ifdef ABACUS_DM_DIRECT_PILOT
 #include <chrono>
+#include <sstream>
 #endif
 
 namespace
@@ -335,6 +336,40 @@ void Diag_Cusolver_gvd::solve_full(
 #ifdef ABACUS_DM_DIRECT_PILOT
 namespace
 {
+void density_error(std::string& error, const char* stage, const char* detail, const int code,
+                   const int rows, const int bands, const std::size_t bytes)
+{
+    // Cleanup must not replace the original cause of a failed operation.
+    if (!error.empty()) return;
+    std::ostringstream message;
+    message << "Direct GPU density matrix failed during " << stage << ": " << detail
+            << " (code=" << code << ", n=" << rows << ", bands=" << bands;
+    if (bytes != 0) message << ", requested_bytes=" << bytes;
+    message << "). Rerun with ABACUS_DM_DIRECT_PILOT=cpu to construct the density matrix on CPU; "
+            << "cuSOLVER diagonalization will still use the GPU.";
+    error = message.str();
+}
+
+bool density_cuda_status(const cudaError_t status, const char* stage, const int rows,
+                         const int bands, const std::size_t bytes, std::string& error)
+{
+    if (status == cudaSuccess) return true;
+    const char* detail = cudaGetErrorString(status);
+    const int code = static_cast<int>(status);
+    density_error(error, stage, detail, code, rows, bands, bytes);
+    return false;
+}
+
+bool density_blas_status(const cublasStatus_t status, const char* stage, const int rows,
+                         const int bands, std::string& error)
+{
+    if (status == CUBLAS_STATUS_SUCCESS) return true;
+    const char* detail = _cublasGetErrorString(status);
+    const int code = static_cast<int>(status);
+    density_error(error, stage, detail, code, rows, bands, 0);
+    return false;
+}
+
 __global__ void weight_retained_columns(const int rows, const int columns,
                                          const double* eigenvectors,
                                          const double* weights, double* weighted)
@@ -349,12 +384,15 @@ __global__ void weight_retained_columns(const int rows, const int columns,
 }
 }
 
-bool Diag_Cusolver_gvd::density_from_retained(int bands, const double* weights, double* density)
+bool Diag_Cusolver_gvd::density_from_retained(int bands, const double* weights, double* density, std::string& error)
 {
     const std::chrono::steady_clock::time_point started = std::chrono::steady_clock::now();
+    error.clear();
     if (eigenvectors_ == nullptr || weighted_vectors_ == nullptr || bands <= 0 || bands > bands_
         || weights == nullptr || density == nullptr)
     {
+        density_error(error, "validate retained eigenvectors", "invalid eigenvector state or DM arguments",
+                      -1, rows_, bands, 0);
         return false;
     }
     const std::size_t matrix_bytes = sizeof(double) * static_cast<std::size_t>(rows_) * rows_;
@@ -366,14 +404,28 @@ bool Diag_Cusolver_gvd::density_from_retained(int bands, const double* weights, 
     int density_calls = 0;
     std::size_t transferred_weights = 0;
     std::size_t transferred_density = 0;
-    bool success = cudaMalloc(&device_density, matrix_bytes) == cudaSuccess;
-    if (success) success = cudaMalloc(&device_weights, weight_bytes) == cudaSuccess;
-    if (success) success = cublasCreate(&handle) == CUBLAS_STATUS_SUCCESS;
-    if (success) success = cublasSetMathMode(handle, CUBLAS_DEFAULT_MATH) == CUBLAS_STATUS_SUCCESS;
+    cudaError_t cuda_status = cudaMalloc(&device_density, matrix_bytes);
+    bool success = density_cuda_status(cuda_status, "allocate density matrix (cudaMalloc)", rows_, bands, matrix_bytes, error);
+    if (success)
+    {
+        cuda_status = cudaMalloc(&device_weights, weight_bytes);
+        success = density_cuda_status(cuda_status, "allocate occupations (cudaMalloc)", rows_, bands, weight_bytes, error);
+    }
+    if (success)
+    {
+        const cublasStatus_t status = cublasCreate(&handle);
+        success = density_blas_status(status, "create cuBLAS handle", rows_, bands, error);
+    }
+    if (success)
+    {
+        const cublasStatus_t status = cublasSetMathMode(handle, CUBLAS_DEFAULT_MATH);
+        success = density_blas_status(status, "set cuBLAS math mode", rows_, bands, error);
+    }
     if (success)
     {
         ++weight_calls;
-        success = cudaMemcpy(device_weights, weights, weight_bytes, cudaMemcpyHostToDevice) == cudaSuccess;
+        cuda_status = cudaMemcpy(device_weights, weights, weight_bytes, cudaMemcpyHostToDevice);
+        success = density_cuda_status(cuda_status, "upload occupations", rows_, bands, weight_bytes, error);
         if (success) transferred_weights = weight_bytes;
     }
     if (success)
@@ -383,25 +435,48 @@ bool Diag_Cusolver_gvd::density_from_retained(int bands, const double* weights, 
         const int blocks = static_cast<int>(block_count);
         // weighted_vectors_'s Cholesky factor is dead after diagonalization; reuse its storage.
         weight_retained_columns<<<blocks, 256>>>(rows_, bands, eigenvectors_, device_weights, weighted_vectors_);
-        success = cudaGetLastError() == cudaSuccess;
+        cuda_status = cudaGetLastError();
+        success = density_cuda_status(cuda_status, "weight retained eigenvectors", rows_, bands, 0, error);
     }
     if (success)
     {
         const double alpha = 1.0;
         const double beta = 0.0;
-        success = cublasDgemm(handle, CUBLAS_OP_N, CUBLAS_OP_T, rows_, rows_, bands,
-                              &alpha, weighted_vectors_, rows_, eigenvectors_, rows_, &beta, device_density, rows_) == CUBLAS_STATUS_SUCCESS;
+        const cublasStatus_t status = cublasDgemm(handle, CUBLAS_OP_N, CUBLAS_OP_T, rows_, rows_, bands,
+                                                 &alpha, weighted_vectors_, rows_, eigenvectors_, rows_,
+                                                 &beta, device_density, rows_);
+        success = density_blas_status(status, "form density matrix (cublasDgemm)", rows_, bands, error);
     }
     if (success)
     {
         ++density_calls;
-        success = cudaMemcpy(density, device_density, matrix_bytes, cudaMemcpyDeviceToHost) == cudaSuccess;
+        cuda_status = cudaMemcpy(density, device_density, matrix_bytes, cudaMemcpyDeviceToHost);
+        success = density_cuda_status(cuda_status, "download density matrix", rows_, bands, matrix_bytes, error);
         if (success) transferred_density = matrix_bytes;
     }
-    if (success) success = cudaDeviceSynchronize() == cudaSuccess;
-    if (device_density != nullptr) success = (cudaFree(device_density) == cudaSuccess) && success;
-    if (device_weights != nullptr) success = (cudaFree(device_weights) == cudaSuccess) && success;
-    if (handle != nullptr) success = (cublasDestroy(handle) == CUBLAS_STATUS_SUCCESS) && success;
+    if (success)
+    {
+        cuda_status = cudaDeviceSynchronize();
+        success = density_cuda_status(cuda_status, "synchronize density matrix", rows_, bands, 0, error);
+    }
+    if (device_density != nullptr)
+    {
+        cuda_status = cudaFree(device_density);
+        const bool released = density_cuda_status(cuda_status, "release density matrix", rows_, bands, matrix_bytes, error);
+        success = released && success;
+    }
+    if (device_weights != nullptr)
+    {
+        cuda_status = cudaFree(device_weights);
+        const bool released = density_cuda_status(cuda_status, "release occupations", rows_, bands, weight_bytes, error);
+        success = released && success;
+    }
+    if (handle != nullptr)
+    {
+        const cublasStatus_t status = cublasDestroy(handle);
+        const bool released = density_blas_status(status, "destroy cuBLAS handle", rows_, bands, error);
+        success = released && success;
+    }
     const std::chrono::steady_clock::time_point finished = std::chrono::steady_clock::now();
     const std::chrono::steady_clock::duration duration = finished - started;
     const double seconds = std::chrono::duration<double>(duration).count();

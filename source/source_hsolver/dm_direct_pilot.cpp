@@ -3,14 +3,17 @@
 #include "source_base/module_device/device.h"
 #include "source_base/module_external/blacs_connector.h"
 #include "source_base/module_external/scalapack_connector.h"
+#include "source_base/module_parallel/para_mpi_func.h"
 #include "source_base/tool_quit.h"
 #include "source_estate/elecstate_tools.h"
 #include "source_estate/module_dm/dm_from_psi.h"
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include <memory>
+#include <string>
 #include <vector>
 
 namespace hsolver
@@ -140,27 +143,26 @@ bool direct_gamma(HSMatrix<double>& hs, psi::Psi<double>& wave, elecstate::ElecS
     const std::chrono::steady_clock::time_point dm_start = std::chrono::steady_clock::now();
     host_dm.resize(root_matrix_size);
     int success = 1;
+    std::string error;
     if (root)
     {
         const double* weights = &state->wg(0, 0);
-        success = solver->density_from_retained(bands, weights, host_dm.data());
+        success = solver->density_from_retained(bands, weights, host_dm.data(), error);
     }
     if (root) Cigebs2d(context, &scope, &topology, 1, 1, &success, 1);
     else Cigebr2d(context, &scope, &topology, 1, 1, &success, 1, 0, 0);
+    if (!success)
+    {
+        const MPI_Comm comm = layout.comm();
+        const Parallel::ParaWorld world = Parallel::ParaWorld::make_mpi("direct_dm", comm);
+        Parallel::bcast_string(error, world, 0);
+        ModuleBase::WARNING_QUIT("direct_gamma", error, EXIT_FAILURE);
+    }
     const double device_dm_seconds = direct_elapsed(dm_start);
     const std::chrono::steady_clock::time_point scatter_start = std::chrono::steady_clock::now();
     double* dm_pointer = density.get_dmk_ptr(0);
-    if (success)
-    {
-        Cpdgemr2d(n, n, host_dm.data(), 1, 1, full_desc,
-                  dm_pointer, 1, 1, distributed_desc, context);
-    }
-    else
-    {
-        // Host psi remains valid even when the optional DM allocation fails.
-        module_dm::dm_from_psi(orbitals, state->wg, wave, density);
-        if (root) std::printf("DM_DIRECT_FALLBACK reason=device_dm_failure\n");
-    }
+    Cpdgemr2d(n, n, host_dm.data(), 1, 1, full_desc,
+              dm_pointer, 1, 1, distributed_desc, context);
     direct_sync(context);
     const double scatter_seconds = direct_elapsed(scatter_start);
     if (root)
@@ -171,7 +173,7 @@ bool direct_gamma(HSMatrix<double>& hs, psi::Psi<double>& wave, elecstate::ElecS
                     mode, n, bands, gather_seconds, diagonal_seconds, psi_seconds, occupation_seconds,
                     device_dm_seconds, scatter_seconds, hs_bytes, wave_bytes, success, matrix_bytes);
     }
-    if (verify && success)
+    if (verify)
     {
         if (root)
         {

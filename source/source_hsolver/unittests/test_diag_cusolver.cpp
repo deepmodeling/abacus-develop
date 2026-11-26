@@ -2,6 +2,7 @@
 #include "gtest/gtest.h"
 #include <algorithm>
 #include <cmath>
+#include <string>
 #include <vector>
 
 namespace
@@ -10,6 +11,7 @@ void check_retained_density(const bool subset)
 {
     const int sizes[3] = {11, 67, 11};
     Diag_Cusolver_gvd retained;
+    std::string error;
     for (int size_index = 0; size_index < 3; ++size_index)
     {
         const int n = sizes[size_index];
@@ -55,8 +57,9 @@ void check_retained_density(const bool subset)
         weights[2] = 0.125;
         // The direct DM must not depend on the host eigenvector materialization.
         std::fill(host_wave.begin(), host_wave.end(), 0.0);
-        const bool ready = retained.density_from_retained(bands, weights.data(), density.data());
+        const bool ready = retained.density_from_retained(bands, weights.data(), density.data(), error);
         ASSERT_TRUE(ready);
+        EXPECT_TRUE(error.empty());
         for (int col = 0; col < n; ++col)
         {
             for (int row = 0; row < n; ++row)
@@ -68,8 +71,9 @@ void check_retained_density(const bool subset)
                 EXPECT_NEAR(density[index], reference, 2.0e-12);
             }
         }
-        const bool invalid = retained.density_from_retained(0, weights.data(), density.data());
+        const bool invalid = retained.density_from_retained(0, weights.data(), density.data(), error);
         EXPECT_FALSE(invalid);
+        EXPECT_NE(error.find("validate retained eigenvectors"), std::string::npos);
     }
 }
 }
@@ -94,15 +98,17 @@ TEST(CusolverRetainedDm, ComplexSolveInvalidatesRealEigenvectors)
     double density[4] = {};
     const double weights[2] = {2.0, 0.125};
     Diag_Cusolver_gvd solver;
-    const bool empty = solver.density_from_retained(n, weights, density);
+    std::string error;
+    const bool empty = solver.density_from_retained(n, weights, density, error);
     EXPECT_FALSE(empty);
     solver.solve_full(n, n, h, s, values, wave);
-    const bool real = solver.density_from_retained(n, weights, density);
+    const bool real = solver.density_from_retained(n, weights, density, error);
     ASSERT_TRUE(real);
+    EXPECT_TRUE(error.empty());
     const std::complex<double> complex_h[4] = {1.0, 0.0, 0.0, 2.0};
     const std::complex<double> complex_s[4] = {1.0, 0.0, 0.0, 1.0};
     std::complex<double> complex_wave[4] = {};
     solver.solve_full(n, n, complex_h, complex_s, values, complex_wave);
-    const bool stale = solver.density_from_retained(n, weights, density);
+    const bool stale = solver.density_from_retained(n, weights, density, error);
     EXPECT_FALSE(stale);
 }

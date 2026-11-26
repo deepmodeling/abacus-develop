@@ -2,6 +2,7 @@
 #define DIAG_CUSOLVER_CUH
 
 #include <complex>
+#include <string>
 
 #include <cusolverDn.h>
 
@@ -44,7 +45,8 @@ class Diag_Cusolver_gvd
 
 #ifdef ABACUS_DM_DIRECT_PILOT
     // Construct DM from the last successful real full or subset solve.
-    bool density_from_retained(int bands, const double* weights, double* density);
+    // On failure, report the failing stage; the caller must terminate the solve.
+    bool density_from_retained(int bands, const double* weights, double* density, std::string& error);
 #endif
 
   private:
