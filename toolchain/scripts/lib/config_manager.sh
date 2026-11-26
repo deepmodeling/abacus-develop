@@ -180,7 +180,7 @@ config_load_from_file() {
     elif [[ -n "$line" ]]; then
       echo "Warning: Invalid configuration syntax in config file line $line_num: $line"
     fi
-  done <"$config_file"
+  done < "$config_file"
 
   CONFIG_FILE_LOADED=true
   echo "Configuration loaded successfully from: $config_file"
@@ -283,9 +283,9 @@ config_set_defaults() {
 
   # Set default parallel jobs (NEW: Fix for parallel jobs parameter)
   if [[ -z "${NPROCS_OVERWRITE}" ]]; then
-    if command -v nproc >/dev/null 2>&1; then
+    if command -v nproc > /dev/null 2>&1; then
       CONFIG_CACHE["NPROCS_OVERWRITE"]="$(nproc --all)"
-    elif command -v sysctl >/dev/null 2>&1; then
+    elif command -v sysctl > /dev/null 2>&1; then
       CONFIG_CACHE["NPROCS_OVERWRITE"]="$(sysctl -n hw.ncpu)"
     else
       CONFIG_CACHE["NPROCS_OVERWRITE"]="1"
@@ -313,10 +313,10 @@ config_set_defaults() {
 
   # For MPI, we try to detect system MPI variant (following original script logic)
   # Only detect if MPI_MODE is not already set (to avoid duplicate detection)
-  if [[ -z "${CONFIG_CACHE[MPI_MODE]}" ]] && command -v mpiexec >/dev/null 2>&1; then
+  if [[ -z "${CONFIG_CACHE[MPI_MODE]}" ]] && command -v mpiexec > /dev/null 2>&1; then
     # check if we are dealing with openmpi, mpich or intelmpi
     if mpiexec --version 2>&1 | grep -s -q "HYDRA"; then
-      if command -v ui_info &>/dev/null; then
+      if command -v ui_info &> /dev/null; then
         ui_info "🔍 Detected system MPI: MPICH"
       else
         echo "MPI is detected and it appears to be MPICH"
@@ -324,7 +324,7 @@ config_set_defaults() {
       CONFIG_CACHE["MPI_MODE"]="mpich"
       CONFIG_CACHE["with_mpich"]="__SYSTEM__"
     elif mpiexec --version 2>&1 | grep -s -q "OpenRTE"; then
-      if command -v ui_info &>/dev/null; then
+      if command -v ui_info &> /dev/null; then
         ui_info "🔍 Detected system MPI: OpenMPI"
       else
         echo "MPI is detected and it appears to be OpenMPI"
@@ -332,7 +332,7 @@ config_set_defaults() {
       CONFIG_CACHE["MPI_MODE"]="openmpi"
       CONFIG_CACHE["with_openmpi"]="__SYSTEM__"
     elif mpiexec --version 2>&1 | grep -s -q "Intel"; then
-      if command -v ui_info &>/dev/null; then
+      if command -v ui_info &> /dev/null; then
         ui_info "🔍 Detected system MPI: Intel MPI"
       else
         echo "MPI is detected and it appears to be Intel MPI"
@@ -344,7 +344,7 @@ config_set_defaults() {
       CONFIG_CACHE["with_intelmpi"]="__SYSTEM__"
       CONFIG_CACHE["MPI_MODE"]="intelmpi"
     else # default to mpich
-      if command -v ui_info &>/dev/null; then
+      if command -v ui_info &> /dev/null; then
         ui_info "🔍 MPI detected, defaulting to MPICH configuration"
       else
         echo "MPI is detected and defaults to MPICH"
@@ -353,7 +353,7 @@ config_set_defaults() {
       CONFIG_CACHE["with_mpich"]="__SYSTEM__"
     fi
   else
-    if command -v report_warning &>/dev/null; then
+    if command -v report_warning &> /dev/null; then
       report_warning ${LINENO} "No MPI installation detected (ignore this message in Cray Linux Environment or when MPI installation was requested)."
     else
       echo "Warning: No MPI installation detected (ignore this message in Cray Linux Environment or when MPI installation was requested)."
@@ -1167,7 +1167,7 @@ config_init() {
   config_set_defaults
 
   # Initialize version helper to ensure VERSION_STRATEGY defaults are set
-  if command -v version_helper_init >/dev/null 2>&1; then
+  if command -v version_helper_init > /dev/null 2>&1; then
     version_helper_init
   fi
 
@@ -1205,7 +1205,7 @@ config_apply_modes() {
   # Apply MPI mode settings (with output for user feedback)
   local mpi_mode="${CONFIG_CACHE[MPI_MODE]}"
   if [[ -n "$mpi_mode" ]]; then
-    if command -v ui_info &>/dev/null; then
+    if command -v ui_info &> /dev/null; then
       ui_info "⚙️ Configuring MPI mode: $mpi_mode"
     else
       echo "Applying MPI mode: $mpi_mode"
@@ -1238,7 +1238,7 @@ config_apply_modes() {
   # Apply math mode settings (with output for user feedback)
   local math_mode="${CONFIG_CACHE[MATH_MODE]}"
   if [[ -n "$math_mode" ]]; then
-    if command -v ui_info &>/dev/null; then
+    if command -v ui_info &> /dev/null; then
       ui_info "🧮 Configuring Math mode: $math_mode"
     else
       echo "Applying Math mode: $math_mode"

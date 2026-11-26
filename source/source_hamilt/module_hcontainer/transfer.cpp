@@ -63,7 +63,7 @@ void HTransPara<T>::cal_orb_indexes(int irank, std::vector<int> *orb_indexes)
         if (*data++ > 0)
         {
             // indexes of row for this atom
-            auto row_indexes = this->paraV->get_indexes_row(atom);
+            std::vector<int> row_indexes = this->paraV->get_indexes_row(atom);
             for (int k = 0; k < row_indexes.size(); k++)
             {
                 *data++ = row_indexes[k];
@@ -74,7 +74,7 @@ void HTransPara<T>::cal_orb_indexes(int irank, std::vector<int> *orb_indexes)
         if (*data++ > 0)
         {
             // indexes of col for this atom
-            auto col_indexes = this->paraV->get_indexes_col(atom);
+            std::vector<int> col_indexes = this->paraV->get_indexes_col(atom);
             for (int k = 0; k < col_indexes.size(); k++)
             {
                 *data++ = col_indexes[k];

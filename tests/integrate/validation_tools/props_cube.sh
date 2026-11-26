@@ -92,7 +92,7 @@ run_cube_props() {
         variance_wfc_r=$(sed -n "13,$"p OUT.autotest/wfc_realspace/wfc_realspace_0_$band |
           awk -v all=$allgrid 'BEGIN {sumall=0} {for(i=1;i<=NF;i++) {sumall+=($i-1)*($i-1)}}\
 						END {printf"%.5f",(sumall/all)}')
-        echo "variance_wfc_r_0_$band $variance_wfc_r" >>$props_result_file
+        echo "variance_wfc_r_0_$band $variance_wfc_r" >> $props_result_file
       else
         echo "Can't find file OUT.autotest/wfc_realspace/wfc_realspace_0_$band"
         exit 1
@@ -123,7 +123,7 @@ run_cube_props() {
       echo "Can't find file $full_path"
       exit 1
     fi
-    python3 "$PROPS_TOOLS_DIR/collect_wfc_props.py" "$full_path" >>"$props_result_file" || exit 1
+    python3 "$PROPS_TOOLS_DIR/collect_wfc_props.py" "$full_path" >> "$props_result_file" || exit 1
   fi
 
   #--------------------------------------------
@@ -162,7 +162,7 @@ run_cube_props() {
         printf "\n"
       }
       else {print $0}
-    }' OUT.autotest/"$input_file".txt >OUT.autotest/"$wfc_name"_mod.txt
+    }' OUT.autotest/"$input_file".txt > OUT.autotest/"$wfc_name"_mod.txt
       if [ $? -ne 0 ]; then
         echo "Error: failed to preprocess OUT.autotest/$input_file.txt"
         wfc_prep_ok=0
@@ -186,8 +186,8 @@ run_cube_props() {
     # downstream comparison.
     if [ "$wfc_prep_ok" -ne 1 ]; then
       wfc_pass=1
-    elif ! sed '/^[[:space:]]*#/d' "$wfc_cal" >"$wfc_cal_nohdr" ||
-      ! sed '/^[[:space:]]*#/d' "$wfc_ref" >"$wfc_ref_nohdr"; then
+    elif ! sed '/^[[:space:]]*#/d' "$wfc_cal" > "$wfc_cal_nohdr" ||
+      ! sed '/^[[:space:]]*#/d' "$wfc_ref" > "$wfc_ref_nohdr"; then
       echo "Error: failed to strip comment lines from $wfc_cal or $wfc_ref"
       wfc_pass=1
     else
@@ -231,11 +231,11 @@ run_cube_tail_props() {
     pchg_cube=${pchg_ref%.ref}
     pchg_key=$(sanitize_result_key "${pchg_cube}_compare")
     if [ ! -f "OUT.autotest/$pchg_cube" ]; then
-      echo "$pchg_key 1" >>"$props_result_file"
+      echo "$pchg_key 1" >> "$props_result_file"
       continue
     fi
     python3 "$COMPARE_SCRIPT" "$pchg_ref" "OUT.autotest/$pchg_cube" -tol "$pchg_tol"
-    echo "$pchg_key $?" >>"$props_result_file"
+    echo "$pchg_key $?" >> "$props_result_file"
   done
   shopt -u nullglob
 
@@ -269,7 +269,7 @@ run_cube_tail_props() {
           continue
         fi
         total_chg=$(python3 "$CUBE_TOOL" integrate "OUT.autotest/$cube")
-        echo "$cube $total_chg" >>$props_result_file
+        echo "$cube $total_chg" >> $props_result_file
       done
     fi
 
@@ -299,8 +299,8 @@ run_cube_tail_props() {
 
         if fingerprint=$(python3 "$CUBE_TOOL" fingerprint-wfc "${fingerprint_args[@]}"); then
           while read -r metric value; do
-            echo "${result_prefix}_${metric} $value" >>"$props_result_file"
-          done <<<"$fingerprint"
+            echo "${result_prefix}_${metric} $value" >> "$props_result_file"
+          done <<< "$fingerprint"
         else
           echo "Error: Failed to generate wavefunction fingerprint for $state_prefix"
           exit 1

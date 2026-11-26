@@ -145,7 +145,7 @@ TEST_F(HeaderBehaviorTest, CalForceStressTrue)
     inp.cal_stress = true;
 
     const std::string header = relax_stru_io::build_stru_header(0, etot, stress, inp, false, true);
-    const auto lines = split_lines(header);
+    const std::vector<std::string> lines = split_lines(header);
 
     ASSERT_EQ(lines.size(), 7u);
     EXPECT_THAT(lines[0], testing::HasSubstr("# ABACUS version:"));
@@ -164,7 +164,7 @@ TEST_F(HeaderBehaviorTest, CalStressFalse)
     inp.cal_stress = false;
 
     const std::string header = relax_stru_io::build_stru_header(0, etot, stress, inp, false, true);
-    const auto lines = split_lines(header);
+    const std::vector<std::string> lines = split_lines(header);
 
     ASSERT_EQ(lines.size(), 7u);
     // Stress lines are pure N/A, no inline reason comment
@@ -179,7 +179,7 @@ TEST_F(HeaderBehaviorTest, CalForceFalse)
     inp.cal_stress = true;
 
     const std::string header = relax_stru_io::build_stru_header(0, etot, stress, inp, false, true);
-    const auto lines = split_lines(header);
+    const std::vector<std::string> lines = split_lines(header);
 
     ASSERT_EQ(lines.size(), 7u);
     EXPECT_THAT(header, testing::Not(testing::HasSubstr("N/A")));
@@ -194,7 +194,7 @@ TEST_F(HeaderBehaviorTest, CalForceStressBothFalse)
     inp.cal_stress = false;
 
     const std::string header = relax_stru_io::build_stru_header(0, etot, stress, inp, false, true);
-    const auto lines = split_lines(header);
+    const std::vector<std::string> lines = split_lines(header);
 
     ASSERT_EQ(lines.size(), 7u);
     EXPECT_EQ(count_substr(header, "# Stress (kbar): N/A N/A N/A"), 3);
@@ -208,7 +208,7 @@ TEST_F(HeaderBehaviorTest, FinalStep)
     inp.cal_stress = true;
 
     const std::string header = relax_stru_io::build_stru_header(4, etot, stress, inp, true, true);
-    const auto lines = split_lines(header);
+    const std::vector<std::string> lines = split_lines(header);
 
     ASSERT_EQ(lines.size(), 7u);
     EXPECT_THAT(lines[2], testing::HasSubstr("# Ionic_Step 5 (FINAL), Energy:"));
@@ -220,7 +220,7 @@ TEST_F(HeaderBehaviorTest, GeometryNotEvaluated)
     inp.cal_stress = true;
 
     const std::string header = relax_stru_io::build_stru_header(4, etot, stress, inp, true, false);
-    const auto lines = split_lines(header);
+    const std::vector<std::string> lines = split_lines(header);
 
     ASSERT_EQ(lines.size(), 7u);
     EXPECT_THAT(lines[2], testing::HasSubstr("Energy: N/A"));

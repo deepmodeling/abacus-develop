@@ -39,7 +39,7 @@ void lapackEigen(
     bool outtime = false)
 {
     int info = 0;
-    auto tmp = hm;
+    std::vector<double> tmp = hm;
     clock_t start, end;
     start = clock();
     char tmp_c1 = 'V', tmp_c2 = 'U';

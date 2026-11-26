@@ -210,7 +210,7 @@ void Input_Conv::Convert()
     }
 
     // Local aliases: keep this PR's global-state reference budget non-increasing.
-    const auto& inp = PARAM.inp;
+    const Input_para& inp = PARAM.inp;
     const bool cal_exx = local_exx_info.info_global.cal_exx;
 
     if (cal_exx && inp.basis_type == "pw")

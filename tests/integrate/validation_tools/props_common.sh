@@ -71,7 +71,7 @@ record_compare_status() {
         ;;
     esac
   fi
-  echo "$result_key $compare_status" >>"$result_file"
+  echo "$result_key $compare_status" >> "$result_file"
 }
 
 run_and_record_status() {
@@ -132,7 +132,7 @@ props_init() {
   # the command will ignore lines starting with #
   calculation=$(grep calculation INPUT | grep -v '^#' | awk '{print $2}' | sed s/[[:space:]]//g)
 
-  running_path=$(ls OUT.autotest/running_${calculation}*.log 2>/dev/null | head -1)
+  running_path=$(ls OUT.autotest/running_${calculation}*.log 2> /dev/null | head -1)
   if [ -z "$running_path" ]; then
     echo "Error: No running log file found for calculation=$calculation in OUT.autotest/"
     exit 1
@@ -182,6 +182,7 @@ props_init() {
   has_mat_t=$(get_input_key_value "out_mat_t" "INPUT")
   has_mat_syns=$(get_input_key_value "cal_syns" "INPUT")
   has_mat_dh=$(get_input_key_value "out_mat_dh" "INPUT")
+  has_mat_l=$(get_input_key_value "out_mat_l" "INPUT")
   has_scan=$(get_input_key_value "dft_functional" "INPUT")
   out_chg=$(get_input_key_value "out_chg" "INPUT")
   has_ldos=$(get_input_key_value "out_ldos" "INPUT")
@@ -210,5 +211,5 @@ props_init() {
 props_finalize() {
   props_result_file=$1
   ttot=$(grep $word_total_time $running_path | awk '{print $3}')
-  echo "totaltimeref $ttot" >>$props_result_file
+  echo "totaltimeref $ttot" >> $props_result_file
 }

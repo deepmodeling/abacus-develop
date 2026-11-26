@@ -64,12 +64,12 @@ void Stress_Func<FPTYPE, Device>::stress_mgga(const UnitCell& ucell,
                                      {wfc_basis->nks, 3})
                            .to_device<ct_Device>();
 
-    auto gradwfc = ct::Tensor(
+    ct::Tensor gradwfc = ct::Tensor(
         ct::DataTypeToEnum<std::complex<FPTYPE>>::value,
         ct::DeviceTypeToEnum<ct_Device>::value,
         {nrxx * 3});
 
-    auto crosstaus = ct::Tensor(
+    ct::Tensor crosstaus = ct::Tensor(
         ct::DataTypeToEnum<FPTYPE>::value,
         ct::DeviceTypeToEnum<ct_Device>::value,
         {PARAM.inp.nspin, nrxx * 6});

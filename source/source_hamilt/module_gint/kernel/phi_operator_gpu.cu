@@ -52,13 +52,13 @@ template <typename Real>
 void PhiOperatorGpu<Real>::set_bgrid_batch(std::shared_ptr<BatchBigGrid> bgrid_batch)
 {
     bgrid_batch_ = bgrid_batch;
-    auto atoms_num_info_h = atoms_num_info_.get_host_ptr();
-    auto bgrid_phi_len_h = bgrid_phi_len_.get_host_ptr();
-    auto bgrid_phi_start_h = bgrid_phi_start_.get_host_ptr();
-    auto atoms_iat_h = atoms_iat_.get_host_ptr();
-    auto atom_rcoords_h = atoms_bgrids_rcoords_.get_host_ptr();
-    auto atom_phi_start_h = atom_phi_start_.get_host_ptr();
-    auto batch_mgrid_lidx_h = batch_mgrid_lidx_.get_host_ptr();
+    int2* atoms_num_info_h = atoms_num_info_.get_host_ptr();
+    int* bgrid_phi_len_h = bgrid_phi_len_.get_host_ptr();
+    int* bgrid_phi_start_h = bgrid_phi_start_.get_host_ptr();
+    int* atoms_iat_h = atoms_iat_.get_host_ptr();
+    double3* atom_rcoords_h = atoms_bgrids_rcoords_.get_host_ptr();
+    int* atom_phi_start_h = atom_phi_start_.get_host_ptr();
+    int* batch_mgrid_lidx_h = batch_mgrid_lidx_.get_host_ptr();
     int i = 0;
     int j = 0;
     int atoms_accum = 0;
@@ -66,7 +66,7 @@ void PhiOperatorGpu<Real>::set_bgrid_batch(std::shared_ptr<BatchBigGrid> bgrid_b
     int phi_start = 0;
     std::vector<int> mgrid_lidx;
     CHECK_CUDA(cudaEventSynchronize(event_));
-    for (const auto &bgrid : bgrid_batch->get_bgrids())
+    for (const std::shared_ptr<BigGrid>& bgrid : bgrid_batch->get_bgrids())
     {
         atoms_num_info_h[i] = make_int2(bgrid->get_atoms_num(), atoms_accum);
         atoms_accum += bgrid->get_atoms_num();
@@ -74,7 +74,7 @@ void PhiOperatorGpu<Real>::set_bgrid_batch(std::shared_ptr<BatchBigGrid> bgrid_b
         bgrid->set_mgrids_local_idx(mgrid_lidx);
         std::copy(mgrid_lidx.begin(), mgrid_lidx.end(), batch_mgrid_lidx_h + i * mgrids_num_);
         int phi_len_bgrid = 0;
-        for (const auto &atom : bgrid->get_atoms())
+        for (const GintAtom* const& atom : bgrid->get_atoms())
         {
             atoms_iat_h[j] = atom->get_iat();
             Vec3d rcoord = bgrid->get_bgrid_atom_rcoord(atom);
@@ -105,17 +105,17 @@ void PhiOperatorGpu<Real>::set_bgrid_batch(std::shared_ptr<BatchBigGrid> bgrid_b
     pair_cache_.clear();
     for (int i = 0; i < bgrid_batch->get_batch_size(); ++i)
     {
-        const auto &bgrid = bgrid_batch->get_bgrids()[i];
+        const std::shared_ptr<BigGrid>& bgrid = bgrid_batch->get_bgrids()[i];
         const int pre_atoms = atoms_num_info_h[i].y;
         const int atoms_num = bgrid->get_atoms_num();
         const int phi_len_mgrid = bgrid->get_phi_len();
-        const auto &atoms = bgrid->get_atoms();
+        const std::vector<const GintAtom*>& atoms = bgrid->get_atoms();
         for (int ia_1 = 0; ia_1 < atoms_num; ++ia_1)
         {
-            const auto &atom_1 = atoms[ia_1];
+            const GintAtom* const& atom_1 = atoms[ia_1];
             for (int ia_2 = 0; ia_2 < atoms_num; ++ia_2)
             {
-                const auto &atom_2 = atoms[ia_2];
+                const GintAtom* const& atom_2 = atoms[ia_2];
                 PairInfo p;
                 p.phi_1_offset = atom_phi_start_h[pre_atoms + ia_1];
                 p.phi_2_offset = atom_phi_start_h[pre_atoms + ia_2];
@@ -259,13 +259,13 @@ void PhiOperatorGpu<Real>::phi_mul_phi(
     //           scattered -- the wrapper fills them on-device from the
     //           scalar bucket shape.)
 
-    auto &counts = bucket_counts_;
+    std::vector<int>& counts = bucket_counts_;
     std::fill(counts.begin(), counts.end(), 0);
 
     // Pass 1: filter + HContainer lookup + per-shape count.
     for (size_t i = 0; i < pair_cache_.size(); ++i)
     {
-        const auto &p = pair_cache_[i];
+        const PairInfo& p = pair_cache_[i];
         if (p.iat_1 > p.iat_2)
         {
             pair_scratch_offset_[i] = -1;
@@ -281,9 +281,9 @@ void PhiOperatorGpu<Real>::phi_mul_phi(
     }
 
     // Prefix sum over dense keys -> compact bucket list.
-    auto &buckets = buckets_;
+    std::vector<GemmShapeBucket>& buckets = buckets_;
     buckets.clear();
-    auto &key_to_base = bucket_base_;
+    std::vector<int>& key_to_base = bucket_base_;
     std::fill(key_to_base.begin(), key_to_base.end(), 0);
     int ap_num = 0;
     for (int k = 0; k < nw_stride_ * nw_stride_; ++k)
@@ -297,17 +297,17 @@ void PhiOperatorGpu<Real>::phi_mul_phi(
         ap_num += counts[k];
     }
 
-    auto *h_A = gemm_A_.get_host_ptr();
-    auto *h_B = gemm_B_.get_host_ptr();
-    auto *h_C = gemm_C_.get_host_ptr();
-    auto *h_lda = gemm_lda_.get_host_ptr();
-    auto *h_ldb = gemm_ldb_.get_host_ptr();
-    auto *h_ldc = gemm_ldc_.get_host_ptr();
+    const Real** h_A = gemm_A_.get_host_ptr();
+    const Real** h_B = gemm_B_.get_host_ptr();
+    double** h_C = gemm_C_.get_host_ptr();
+    int* h_lda = gemm_lda_.get_host_ptr();
+    int* h_ldb = gemm_ldb_.get_host_ptr();
+    int* h_ldc = gemm_ldc_.get_host_ptr();
 
     CHECK_CUDA(cudaEventSynchronize(event_));
 
     // Pass 2: scatter into the flat host arrays at per-bucket cursors.
-    auto &cursor = bucket_cursor_;
+    std::vector<int>& cursor = bucket_cursor_;
     std::fill(cursor.begin(), cursor.end(), 0);
     for (size_t i = 0; i < pair_cache_.size(); ++i)
     {
@@ -316,7 +316,7 @@ void PhiOperatorGpu<Real>::phi_mul_phi(
         {
             continue;
         }
-        const auto &p = pair_cache_[i];
+        const PairInfo& p = pair_cache_[i];
         const int key = p.nw1 * nw_stride_ + p.nw2;
         const int pos = key_to_base[key] + cursor[key]++;
         h_A[pos] = phi_d + p.phi_1_offset;
@@ -335,7 +335,7 @@ void PhiOperatorGpu<Real>::phi_mul_phi(
     gemm_ldc_.copy_host_to_device_async(ap_num);
     CHECK_CUDA(cudaEventRecord(event_, stream_));
 
-    for (const auto &b : buckets)
+    for (const GemmShapeBucket& b : buckets)
     {
         const int nw1 = b.key / nw_stride_;
         const int nw2 = b.key % nw_stride_;
@@ -362,13 +362,13 @@ void PhiOperatorGpu<Real>::phi_mul_dm(
     // identical across every pair in the batch. is_symm selects the
     // upper-triangle (ia_1 <= ia_2) subset and fills per-pair alpha.
 
-    auto &counts = bucket_counts_;
+    std::vector<int>& counts = bucket_counts_;
     std::fill(counts.begin(), counts.end(), 0);
 
     // Pass 1: filter + HContainer lookup + per-shape count.
     for (size_t i = 0; i < pair_cache_.size(); ++i)
     {
-        const auto &p = pair_cache_[i];
+        const PairInfo& p = pair_cache_[i];
         if (is_symm && !p.ia_le)
         {
             pair_scratch_offset_[i] = -1;
@@ -384,9 +384,9 @@ void PhiOperatorGpu<Real>::phi_mul_dm(
     }
 
     // Prefix sum over dense keys -> compact bucket list.
-    auto &buckets = buckets_;
+    std::vector<GemmShapeBucket>& buckets = buckets_;
     buckets.clear();
-    auto &key_to_base = bucket_base_;
+    std::vector<int>& key_to_base = bucket_base_;
     std::fill(key_to_base.begin(), key_to_base.end(), 0);
     int ap_num = 0;
     for (int k = 0; k < nw_stride_ * nw_stride_; ++k)
@@ -400,18 +400,18 @@ void PhiOperatorGpu<Real>::phi_mul_dm(
         ap_num += counts[k];
     }
 
-    auto *h_A = gemm_A_.get_host_ptr();
-    auto *h_B = gemm_B_.get_host_ptr();
-    auto *h_C = gemm_C_.get_host_ptr();
-    auto *h_lda = gemm_lda_.get_host_ptr();
-    auto *h_ldb = gemm_ldb_.get_host_ptr();
-    auto *h_ldc = gemm_ldc_.get_host_ptr();
-    auto *h_alpha = gemm_alpha_.get_host_ptr();
+    const Real** h_A = gemm_A_.get_host_ptr();
+    const Real** h_B = gemm_B_.get_host_ptr();
+    double** h_C = gemm_C_.get_host_ptr();
+    int* h_lda = gemm_lda_.get_host_ptr();
+    int* h_ldb = gemm_ldb_.get_host_ptr();
+    int* h_ldc = gemm_ldc_.get_host_ptr();
+    Real* h_alpha = gemm_alpha_.get_host_ptr();
 
     CHECK_CUDA(cudaEventSynchronize(event_));
 
     // Pass 2: scatter.
-    auto &cursor = bucket_cursor_;
+    std::vector<int>& cursor = bucket_cursor_;
     std::fill(cursor.begin(), cursor.end(), 0);
     for (size_t i = 0; i < pair_cache_.size(); ++i)
     {
@@ -420,7 +420,7 @@ void PhiOperatorGpu<Real>::phi_mul_dm(
         {
             continue;
         }
-        const auto &p = pair_cache_[i];
+        const PairInfo& p = pair_cache_[i];
         const int key = p.nw1 * nw_stride_ + p.nw2;
         const int pos = key_to_base[key] + cursor[key]++;
         h_A[pos] = phi_d + p.phi_1_offset;
@@ -448,11 +448,11 @@ void PhiOperatorGpu<Real>::phi_mul_dm(
     }
     CHECK_CUDA(cudaEventRecord(event_, stream_));
 
-    for (const auto &b : buckets)
+    for (const GemmShapeBucket& b : buckets)
     {
         const int nw1 = b.key / nw_stride_;
         const int nw2 = b.key % nw_stride_;
-        auto alpha_ptr = is_symm ? (gemm_alpha_.get_device_ptr() + b.off) : nullptr;
+        Real* alpha_ptr = is_symm ? (gemm_alpha_.get_device_ptr() + b.off) : nullptr;
         gemm_nn_vbatch<Real>(
             mgrids_num_, nw2, nw1, gemm_A_.get_device_ptr() + b.off, gemm_lda_.get_device_ptr() + b.off,
             gemm_B_.get_device_ptr() + b.off, gemm_ldb_.get_device_ptr() + b.off, gemm_C_.get_device_ptr() + b.off,

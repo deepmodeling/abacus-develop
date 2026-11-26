@@ -12,7 +12,7 @@ void setup_nonlocal_info(LCAO_Orbitals& orb, UnitCell& ucell,
 {
     if (input.vnl_in_h)
     {
-        auto* lcao_nl = new LCAONonlocalInfo();
+        LCAONonlocalInfo* lcao_nl = new LCAONonlocalInfo();
         lcao_nl->setupNonlocal(ucell.ntype, ucell.atoms, running_log, orb,
                                input.basis_type, input.out_element_info,
                                input.lspinorb, input.nspin, rank);
@@ -24,7 +24,7 @@ void setup_2center_table(TwoCenterBundle& two_center_bundle, UnitCell& ucell, co
 {
     if (input.vnl_in_h)
     {
-        auto& lcao_nl = dynamic_cast<LCAONonlocalInfo&>(*ucell.infoNL);
+        LCAONonlocalInfo& lcao_nl = dynamic_cast<LCAONonlocalInfo&>(*ucell.infoNL);
         two_center_bundle.build_beta(ucell.ntype, lcao_nl.get_nonlocal().get_Beta_data());
     }
     // NOTE: tabulate() must be called AFTER build_beta(), otherwise the

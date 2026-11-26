@@ -88,7 +88,7 @@ process_npy() {
     fi
   done
 
-  echo "$output_name $total" >>$6
+  echo "$output_name $total" >> $6
 }
 
 # Process a group of label outputs
@@ -151,10 +151,10 @@ run_deepks_props() {
   #---------------------------------------------------------------------------
   if ! test -z "$deepks_scf" && [ $deepks_scf == 1 ]; then
     # Process descriptor data
-    sed '/n_des/d' OUT.autotest/deepks_desc.dat >des_tmp.txt
+    sed '/n_des/d' OUT.autotest/deepks_desc.dat > des_tmp.txt
     total_des=$(sum_file des_tmp.txt 5)
     rm des_tmp.txt
-    echo "deepks_desc $total_des" >>$props_result_file
+    echo "deepks_desc $total_des" >> $props_result_file
 
     process_npy "single" "abs" "dm_eig" "" "deepks_dm_eig" "$props_result_file"
   fi

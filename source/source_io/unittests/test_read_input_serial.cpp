@@ -526,7 +526,7 @@ TEST_F(InputTest, OutAppFlagParsing)
            {"off", 0},
            {".false.", 0},
            {"F", 0}};
-    for (const auto& spelling : spellings)
+    for (const std::pair<std::string, int>& spelling : spellings)
     {
         Parameter param;
         read_parameters("app_flag_bool_INPUT", "basis_type lcao\nout_app_flag " + spelling.first + "\n", param);

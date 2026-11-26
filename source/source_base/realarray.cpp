@@ -5,6 +5,7 @@
 #include "realarray.h"
 
 #include <cstdlib>
+#include <new>
 
 namespace ModuleBase
 {
@@ -27,7 +28,7 @@ realArray::realArray(const int d1,const int d2,const int d3)
 
     size = bound1 * bound2 * bound3 ;	//* sizeof(float);
 
-    auto handler_old = std::set_new_handler(realArrayAlloc);
+    std::new_handler handler_old = std::set_new_handler(realArrayAlloc);
     ptr = new double[size];
     std::set_new_handler(handler_old);
     zero_out();
@@ -46,7 +47,7 @@ realArray::realArray(const int d1,const int d2,const int d3,const int d4)
 
     size = bound1 * bound2 * bound3 * bound4 ;	//* sizeof(float);
 
-    auto handler_old = std::set_new_handler(realArrayAlloc);
+    std::new_handler handler_old = std::set_new_handler(realArrayAlloc);
     ptr = new double[size];
     std::set_new_handler(handler_old);
     zero_out();

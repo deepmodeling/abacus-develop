@@ -81,7 +81,7 @@ int ScState::get_npol() const
 int ScState::get_nw() const
 {
     int nw = 0;
-    for (const auto& pair : this->orbitalCounts)
+    for (const std::pair<const int, int>& pair : this->orbitalCounts)
     {
         nw += pair.second;
     }
@@ -249,7 +249,7 @@ void ScState::set_sc_lambda()
     for (auto& itype_data: this->ScData)
     {
         int itype = itype_data.first;
-        for (auto& element_data: itype_data.second)
+        for (spinconstrain::ScAtomData& element_data: itype_data.second)
         {
             int index = element_data.index;
             int iat = this->get_iat(itype, index);
@@ -284,7 +284,7 @@ void ScState::set_target_mag()
     for (auto& itype_data: this->ScData)
     {
         int itype = itype_data.first;
-        for (auto& element_data: itype_data.second)
+        for (spinconstrain::ScAtomData& element_data: itype_data.second)
         {
             int index = element_data.index;
             int iat = this->get_iat(itype, index);
@@ -344,7 +344,7 @@ void ScState::set_constrain()
     for (auto& itype_data: this->ScData)
     {
         int itype = itype_data.first;
-        for (auto& element_data: itype_data.second)
+        for (spinconstrain::ScAtomData& element_data: itype_data.second)
         {
             int index = element_data.index;
             int iat = this->get_iat(itype, index);

@@ -10,13 +10,13 @@ case_dir="${test_root}/tests/01_PW/test_case"
 mkdir -p "${case_dir}/OUT.autotest"
 ln -s "${integrate_dir}" "${test_root}/tests/integrate"
 
-cat >"${case_dir}/INPUT" <<'EOF'
+cat > "${case_dir}/INPUT" << 'EOF'
 INPUT_PARAMETERS
 calculation get_s
 out_band 1
 EOF
 
-cat >"${case_dir}/OUT.autotest/running_get_s.log" <<'EOF'
+cat > "${case_dir}/OUT.autotest/running_get_s.log" << 'EOF'
 Driver atomic_world 0.01
 EOF
 
@@ -46,13 +46,13 @@ fi
 npz_case_dir="${test_root}/tests/01_PW/npz_case"
 mkdir -p "${npz_case_dir}/OUT.autotest"
 
-cat >"${npz_case_dir}/INPUT" <<'EOF'
+cat > "${npz_case_dir}/INPUT" << 'EOF'
 INPUT_PARAMETERS
 calculation get_s
 out_hsr_npz 1
 EOF
 
-cat >"${npz_case_dir}/OUT.autotest/running_get_s.log" <<'EOF'
+cat > "${npz_case_dir}/OUT.autotest/running_get_s.log" << 'EOF'
 Driver atomic_world 0.01
 EOF
 
@@ -83,14 +83,14 @@ fi
 hsk_case_dir="${test_root}/tests/01_PW/hsk_case"
 mkdir -p "${hsk_case_dir}/OUT.autotest"
 
-cat >"${hsk_case_dir}/INPUT" <<'EOF'
+cat > "${hsk_case_dir}/INPUT" << 'EOF'
 INPUT_PARAMETERS
 calculation get_s
 out_hsk 2
 gamma_only 1
 EOF
 
-cat >"${hsk_case_dir}/OUT.autotest/running_get_s.log" <<'EOF'
+cat > "${hsk_case_dir}/OUT.autotest/running_get_s.log" << 'EOF'
 Driver atomic_world 0.01
 EOF
 
@@ -118,24 +118,69 @@ if [ -e "${hsk_case_dir}/result.ref" ]; then
   exit 1
 fi
 
+# Preserve upstream's optional angular momentum matrices while refusing failed
+# comparisons in generated references for each component independently.
+angular_case_dir="${test_root}/tests/01_PW/angular_case"
+mkdir -p "${angular_case_dir}/OUT.autotest"
+printf 'INPUT_PARAMETERS\ncalculation get_s\nout_mat_l 1\n' > "${angular_case_dir}/INPUT"
+printf 'Driver atomic_world 0.01\n' > "${angular_case_dir}/OUT.autotest/running_get_s.log"
+touch "${angular_case_dir}/sr_nao.csr.ref" "${angular_case_dir}/OUT.autotest/sr_nao.csr"
+for axis in x y z; do
+  printf 'value 1\n' > "${angular_case_dir}/l${axis}_nao.csr.ref"
+  printf 'value 1\n' > "${angular_case_dir}/OUT.autotest/l${axis}_nao.csr"
+done
+(
+  cd "${angular_case_dir}"
+  bash -e ../../integrate/validation_tools/catch_properties.sh result.ref
+)
+for axis in x y z; do
+  grep -qx "CompareL${axis}_pass 0" "${angular_case_dir}/result.ref"
+done
+for axis in x y z; do
+  for failure in different missing; do
+    if [ "${failure}" = different ]; then
+      printf 'value 2\n' > "${angular_case_dir}/OUT.autotest/l${axis}_nao.csr"
+    else
+      rm "${angular_case_dir}/OUT.autotest/l${axis}_nao.csr"
+    fi
+    (
+      cd "${angular_case_dir}"
+      bash -e ../../integrate/validation_tools/catch_properties.sh result.out
+    )
+    grep -qx "CompareL${axis}_pass 1" "${angular_case_dir}/result.out"
+    if (
+      cd "${angular_case_dir}"
+      bash -e ../../integrate/validation_tools/catch_properties.sh result.ref
+    ); then
+      echo "catch_properties.sh accepted ${failure} angular momentum output in result.ref" >&2
+      exit 1
+    fi
+    if [ -e "${angular_case_dir}/result.ref" ]; then
+      echo "catch_properties.sh left a partial angular momentum result.ref" >&2
+      exit 1
+    fi
+  done
+  printf 'value 1\n' > "${angular_case_dir}/OUT.autotest/l${axis}_nao.csr"
+done
+
 # Keep upstream's renamed VXC files while retaining failure propagation in
 # both Gamma-only and multi-k collectors. No legacy vxc_out.* files exist.
 for gamma in 0 1; do
   vxc_case_dir="${test_root}/tests/01_PW/vxc_case_${gamma}"
   mkdir -p "${vxc_case_dir}/OUT.autotest"
   printf 'INPUT_PARAMETERS\ncalculation get_s\nout_mat_xc 1\ngamma_only %s\n' \
-    "${gamma}" >"${vxc_case_dir}/INPUT"
-  printf 'Driver atomic_world 0.01\n' >"${vxc_case_dir}/OUT.autotest/running_get_s.log"
+    "${gamma}" > "${vxc_case_dir}/INPUT"
+  printf 'Driver atomic_world 0.01\n' > "${vxc_case_dir}/OUT.autotest/running_get_s.log"
   touch "${vxc_case_dir}/sr_nao.csr.ref" "${vxc_case_dir}/OUT.autotest/sr_nao.csr"
   if [ "${gamma}" -eq 1 ]; then
     vxc_name=vxcmo_nao.txt
   else
     vxc_name=vxcmok2_nao.txt
   fi
-  printf 'value 1\n' >"${vxc_case_dir}/${vxc_name}.ref"
-  printf 'value 1\n' >"${vxc_case_dir}/OUT.autotest/${vxc_name}"
-  printf 'value 1\n' >"${vxc_case_dir}/eband_vxc.ref"
-  printf 'value 1\n' >"${vxc_case_dir}/OUT.autotest/eband_vxc.txt"
+  printf 'value 1\n' > "${vxc_case_dir}/${vxc_name}.ref"
+  printf 'value 1\n' > "${vxc_case_dir}/OUT.autotest/${vxc_name}"
+  printf 'value 1\n' > "${vxc_case_dir}/eband_vxc.ref"
+  printf 'value 1\n' > "${vxc_case_dir}/OUT.autotest/eband_vxc.txt"
   (
     cd "${vxc_case_dir}"
     bash -e ../../integrate/validation_tools/catch_properties.sh result.ref
@@ -145,7 +190,7 @@ for gamma in 0 1; do
 
   for failure in different missing; do
     if [ "${failure}" = different ]; then
-      printf 'value 2\n' >"${vxc_case_dir}/OUT.autotest/eband_vxc.txt"
+      printf 'value 2\n' > "${vxc_case_dir}/OUT.autotest/eband_vxc.txt"
     else
       rm "${vxc_case_dir}/OUT.autotest/eband_vxc.txt"
     fi
@@ -173,14 +218,14 @@ done
 # output files; all three statuses must still reject invalid references.
 wannier_case_dir="${test_root}/tests/01_PW/wannier_case"
 mkdir -p "${wannier_case_dir}/OUT.autotest"
-printf 'INPUT_PARAMETERS\ncalculation get_s\ntowannier90 1\n' >"${wannier_case_dir}/INPUT"
-printf 'Driver atomic_world 0.01\n' >"${wannier_case_dir}/OUT.autotest/running_get_s.log"
+printf 'INPUT_PARAMETERS\ncalculation get_s\ntowannier90 1\n' > "${wannier_case_dir}/INPUT"
+printf 'Driver atomic_world 0.01\n' > "${wannier_case_dir}/OUT.autotest/running_get_s.log"
 touch "${wannier_case_dir}/sr_nao.csr.ref" "${wannier_case_dir}/OUT.autotest/sr_nao.csr"
-printf '2 1 1\n1 1 1 1 0\n2 1 1 0 0\n' >"${wannier_case_dir}/diamond.amn"
-printf 'Created on test date\n2 1 1\n1 1 1 0 0\n2 1 1 0 1\n' >"${wannier_case_dir}/OUT.autotest/diamond.amn"
-printf '1 1 1\n1 1 0 0 0\n1 0\n' >"${wannier_case_dir}/diamond.mmn"
-printf 'Created on test date\n1 1 1\n1 1 0 0 0\n0 1\n' >"${wannier_case_dir}/OUT.autotest/diamond.mmn"
-printf '1 1 0.5\n' >"${wannier_case_dir}/diamond.eig"
+printf '2 1 1\n1 1 1 1 0\n2 1 1 0 0\n' > "${wannier_case_dir}/diamond.amn"
+printf 'Created on test date\n2 1 1\n1 1 1 0 0\n2 1 1 0 1\n' > "${wannier_case_dir}/OUT.autotest/diamond.amn"
+printf '1 1 1\n1 1 0 0 0\n1 0\n' > "${wannier_case_dir}/diamond.mmn"
+printf 'Created on test date\n1 1 1\n1 1 0 0 0\n0 1\n' > "${wannier_case_dir}/OUT.autotest/diamond.mmn"
+printf '1 1 0.5\n' > "${wannier_case_dir}/diamond.eig"
 cp "${wannier_case_dir}/diamond.eig" "${wannier_case_dir}/OUT.autotest/diamond.eig"
 (
   cd "${wannier_case_dir}"
@@ -197,7 +242,7 @@ for extension in amn mmn eig; do
   cp "${output_file}" "${test_root}/valid.${extension}"
   for failure in malformed missing; do
     if [ "${failure}" = malformed ]; then
-      printf 'invalid Wannier output\n' >"${output_file}"
+      printf 'invalid Wannier output\n' > "${output_file}"
     else
       rm "${output_file}"
     fi
@@ -223,13 +268,13 @@ done
 for lr_mode in force tracking; do
   lr_case_dir="${test_root}/tests/01_PW/lr_${lr_mode}"
   mkdir -p "${lr_case_dir}/OUT.autotest"
-  printf 'INPUT_PARAMETERS\ncalculation get_s\nesolver_type lr\ncal_force 1\n' >"${lr_case_dir}/INPUT"
-  printf 'Driver atomic_world 0.01\n' >"${lr_case_dir}/OUT.autotest/running_get_s.log"
+  printf 'INPUT_PARAMETERS\ncalculation get_s\nesolver_type lr\ncal_force 1\n' > "${lr_case_dir}/INPUT"
+  printf 'Driver atomic_world 0.01\n' > "${lr_case_dir}/OUT.autotest/running_get_s.log"
   touch "${lr_case_dir}/sr_nao.csr.ref" "${lr_case_dir}/OUT.autotest/sr_nao.csr"
   if [ "${lr_mode}" = force ]; then
     lr_property=CompareLRForce_pass
-    printf 'singlet 0 0 1 -2 3\n' >"${lr_case_dir}/lr_force.ref"
-    cat >>"${lr_case_dir}/OUT.autotest/running_get_s.log" <<'EOF'
+    printf 'singlet 0 0 1 -2 3\n' > "${lr_case_dir}/lr_force.ref"
+    cat >> "${lr_case_dir}/OUT.autotest/running_get_s.log" << 'EOF'
 Start to calculate excited-state force of singlet
 Forces (-gradients) of each excited state: (eV/Angstrom)
  state atom x y z
@@ -238,9 +283,9 @@ DONE
 EOF
   else
     lr_property=CompareStateTracking_pass
-    printf 'out_band 1\n' >>"${lr_case_dir}/INPUT"
-    printf '{"steps": 1}\n' >"${lr_case_dir}/state_tracking.ref"
-    cat >>"${lr_case_dir}/OUT.autotest/running_get_s.log" <<'EOF'
+    printf 'out_band 1\n' >> "${lr_case_dir}/INPUT"
+    printf '{"steps": 1}\n' > "${lr_case_dir}/state_tracking.ref"
+    cat >> "${lr_case_dir}/OUT.autotest/running_get_s.log" << 'EOF'
 EXCITED-STATE RELAX step 0: E_gs = -10 eV, Omega = 1 eV, E_exc = -9 eV | |F_gs|max = 0.1, |F_Omega|max = 0.2 eV/Angstrom
 EOF
   fi
@@ -250,9 +295,9 @@ EOF
   )
   grep -qx "${lr_property} 0" "${lr_case_dir}/result.ref"
   if [ "${lr_mode}" = tracking ]; then
-    test "$(wc -l <"${lr_case_dir}/result.ref")" -eq 1
+    test "$(wc -l < "${lr_case_dir}/result.ref")" -eq 1
   fi
-  printf 'Driver atomic_world 0.01\n' >"${lr_case_dir}/OUT.autotest/running_get_s.log"
+  printf 'Driver atomic_world 0.01\n' > "${lr_case_dir}/OUT.autotest/running_get_s.log"
   (
     cd "${lr_case_dir}"
     bash -e ../../integrate/validation_tools/catch_properties.sh result.out
@@ -271,23 +316,23 @@ done
 deepks_case_dir="${test_root}/tests/01_PW/deepks_case"
 mkdir -p "${deepks_case_dir}/OUT.autotest"
 
-cat >"${deepks_case_dir}/INPUT" <<'EOF'
+cat > "${deepks_case_dir}/INPUT" << 'EOF'
 INPUT_PARAMETERS
 calculation get_s
 deepks_out_labels 1
 deepks_v_delta -1
 EOF
 
-cat >"${deepks_case_dir}/OUT.autotest/running_get_s.log" <<'EOF'
+cat > "${deepks_case_dir}/OUT.autotest/running_get_s.log" << 'EOF'
 Driver atomic_world 0.01
 EOF
 
 touch "${deepks_case_dir}/sr_nao.csr.ref"
 touch "${deepks_case_dir}/OUT.autotest/sr_nao.csr"
-printf 'value 1\n' >"${deepks_case_dir}/deepks_hrtot.csr.ref"
-printf 'value 2\n' >"${deepks_case_dir}/OUT.autotest/deepks_hrtot.csr"
-printf 'value 1\n' >"${deepks_case_dir}/deepks_hrdelta.csr.ref"
-printf 'value 1\n' >"${deepks_case_dir}/OUT.autotest/deepks_hrdelta.csr"
+printf 'value 1\n' > "${deepks_case_dir}/deepks_hrtot.csr.ref"
+printf 'value 2\n' > "${deepks_case_dir}/OUT.autotest/deepks_hrtot.csr"
+printf 'value 1\n' > "${deepks_case_dir}/deepks_hrdelta.csr.ref"
+printf 'value 1\n' > "${deepks_case_dir}/OUT.autotest/deepks_hrdelta.csr"
 
 (
   cd "${deepks_case_dir}"
@@ -313,13 +358,13 @@ fi
 deepks_missing_case_dir="${test_root}/tests/01_PW/deepks_missing_case"
 mkdir -p "${deepks_missing_case_dir}/OUT.autotest"
 
-cat >"${deepks_missing_case_dir}/INPUT" <<'EOF'
+cat > "${deepks_missing_case_dir}/INPUT" << 'EOF'
 INPUT_PARAMETERS
 calculation get_s
 deepks_scf 1
 EOF
 
-cat >"${deepks_missing_case_dir}/OUT.autotest/running_get_s.log" <<'EOF'
+cat > "${deepks_missing_case_dir}/OUT.autotest/running_get_s.log" << 'EOF'
 Driver atomic_world 0.01
 EOF
 
@@ -349,18 +394,18 @@ fi
 ml_case_dir="${test_root}/tests/01_PW/ml_case"
 mkdir -p "${ml_case_dir}/OUT.autotest/MLKEDF_Descriptors"
 
-cat >"${ml_case_dir}/INPUT" <<'EOF'
+cat > "${ml_case_dir}/INPUT" << 'EOF'
 INPUT_PARAMETERS
 calculation get_s
 EOF
 
-cat >"${ml_case_dir}/OUT.autotest/running_get_s.log" <<'EOF'
+cat > "${ml_case_dir}/OUT.autotest/running_get_s.log" << 'EOF'
 Driver atomic_world 0.01
 EOF
 
 touch "${ml_case_dir}/sr_nao.csr.ref"
 touch "${ml_case_dir}/OUT.autotest/sr_nao.csr"
-printf 'not a NumPy file\n' >"${ml_case_dir}/OUT.autotest/MLKEDF_Descriptors/broken.npy"
+printf 'not a NumPy file\n' > "${ml_case_dir}/OUT.autotest/MLKEDF_Descriptors/broken.npy"
 
 if (
   cd "${ml_case_dir}"
@@ -375,7 +420,7 @@ if [ -e "${ml_case_dir}/result.ref" ]; then
   exit 1
 fi
 
-cat >"${test_root}/fake_abacus" <<'EOF'
+cat > "${test_root}/fake_abacus" << 'EOF'
 #!/usr/bin/env bash
 mkdir -p OUT.autotest
 cat > OUT.autotest/running_get_s.log <<'INNER_EOF'
@@ -392,7 +437,7 @@ EOF
 chmod +x "${test_root}/fake_abacus"
 
 mkdir -p "${test_root}/fake_bin"
-cat >"${test_root}/fake_bin/mpirun" <<'EOF'
+cat > "${test_root}/fake_bin/mpirun" << 'EOF'
 #!/usr/bin/env bash
 if [ "$1" = "-np" ]; then
     shift 2
@@ -408,14 +453,14 @@ chmod +x "${test_root}/fake_bin/mpirun"
 for run_check_mode in normal debug; do
   run_check_case_dir="${test_root}/tests/01_PW/run_check_${run_check_mode}"
   mkdir -p "${run_check_case_dir}/OUT.autotest/MLKEDF_Descriptors"
-  printf 'not a NumPy file\n' >"${run_check_case_dir}/OUT.autotest/MLKEDF_Descriptors/broken.npy"
-  cat >"${run_check_case_dir}/INPUT" <<'EOF'
+  printf 'not a NumPy file\n' > "${run_check_case_dir}/OUT.autotest/MLKEDF_Descriptors/broken.npy"
+  cat > "${run_check_case_dir}/INPUT" << 'EOF'
 INPUT_PARAMETERS
 calculation get_s
 EOF
-  printf 'Driver atomic_world 0.01\n' >"${run_check_case_dir}/OUT.autotest/running_get_s.log"
+  printf 'Driver atomic_world 0.01\n' > "${run_check_case_dir}/OUT.autotest/running_get_s.log"
   touch "${run_check_case_dir}/sr_nao.csr.ref" "${run_check_case_dir}/OUT.autotest/sr_nao.csr"
-  printf 'CompareS_pass 0\n' >"${run_check_case_dir}/result.ref"
+  printf 'CompareS_pass 0\n' > "${run_check_case_dir}/result.ref"
 
   if [ "${run_check_mode}" = debug ]; then
     cp "${integrate_dir}/validation_tools/run_check.sh" "${run_check_case_dir}/run_check.sh"
@@ -431,7 +476,7 @@ EOF
     PATH="${test_root}/fake_bin:${PATH}" \
       ABACUS_EXE="${test_root}/fake_abacus" \
       "${run_check_command[@]}"
-  ) >"${run_check_log}" 2>&1; then
+  ) > "${run_check_log}" 2>&1; then
     cat "${run_check_log}" >&2
     echo "run_check.sh ${run_check_mode} path reported success after collector failure" >&2
     exit 1
@@ -445,7 +490,7 @@ if (
   PATH="${test_root}/fake_bin:${PATH}" \
     ABACUS_EXE="${test_root}/fake_abacus" \
     bash ../../integrate/validation_tools/run_check.sh generate
-) >"${run_check_log}" 2>&1; then
+) > "${run_check_log}" 2>&1; then
   cat "${run_check_log}" >&2
   echo "run_check.sh reported success after reference generation failed" >&2
   exit 1
@@ -456,13 +501,13 @@ if [ -e "${deepks_missing_case_dir}/result.ref" ]; then
   exit 1
 fi
 
-echo test_case >"${test_root}/tests/01_PW/CASES.txt"
+echo test_case > "${test_root}/tests/01_PW/CASES.txt"
 autotest_log="${test_root}/autotest.log"
 if (
   cd "${test_root}/tests/01_PW"
   OMP_NUM_THREADS=1 bash ../integrate/Autotest.sh \
     -a "${test_root}/fake_abacus" -n 0 -o 1 -j 1 -f CASES.txt -g
-) >"${autotest_log}" 2>&1; then
+) > "${autotest_log}" 2>&1; then
   cat "${autotest_log}" >&2
   echo "Autotest.sh reported success after reference generation failed" >&2
   exit 1
@@ -474,12 +519,12 @@ if [ -e "${case_dir}/result.ref" ]; then
 fi
 
 # Temporary reference failures must preserve the previous accepted result.
-printf 'previous reference\n' >"${case_dir}/result.ref"
+printf 'previous reference\n' > "${case_dir}/result.ref"
 if (
   cd "${test_root}/tests/01_PW"
   OMP_NUM_THREADS=1 bash ../integrate/Autotest.sh \
     -a "${test_root}/fake_abacus" -n 0 -o 1 -j 1 -f CASES.txt -g
-) >"${autotest_log}" 2>&1; then
+) > "${autotest_log}" 2>&1; then
   echo "Autotest.sh accepted a failed comparison in result.ref.new" >&2
   exit 1
 fi
@@ -489,7 +534,7 @@ if (
   cd "${case_dir}"
   PATH="${test_root}/fake_bin:${PATH}" ABACUS_EXE="${test_root}/fake_abacus" \
     bash ../../integrate/validation_tools/run_check.sh generate
-) >"${run_check_log}" 2>&1; then
+) > "${run_check_log}" 2>&1; then
   echo "run_check.sh accepted a failed comparison in result.ref.new" >&2
   exit 1
 fi
@@ -497,13 +542,13 @@ grep -qx 'previous reference' "${case_dir}/result.ref"
 test ! -e "${case_dir}/result.ref.new"
 
 # Successful generation must replace the old reference through the same path.
-printf 'value 1\n' >"${case_dir}/band.txt.ref"
-printf '# ABACUS version: test\nvalue 1\n' >"${case_dir}/OUT.autotest/band.txt"
+printf 'value 1\n' > "${case_dir}/band.txt.ref"
+printf '# ABACUS version: test\nvalue 1\n' > "${case_dir}/OUT.autotest/band.txt"
 (
   cd "${test_root}/tests/01_PW"
   OMP_NUM_THREADS=1 bash ../integrate/Autotest.sh \
     -a "${test_root}/fake_abacus" -n 0 -o 1 -j 1 -f CASES.txt -g
-) >"${autotest_log}" 2>&1
+) > "${autotest_log}" 2>&1
 grep -qx 'CompareBand_pass 0' "${case_dir}/result.ref"
 test ! -e "${case_dir}/result.ref.new"
 
@@ -511,9 +556,9 @@ test ! -e "${case_dir}/result.ref.new"
 # its flags, the OFML single-rank exception, and commented case-list entries.
 launcher_case_dir="${test_root}/tests/01_PW/launcher_case"
 mkdir -p "${launcher_case_dir}"
-printf 'INPUT_PARAMETERS\ncalculation get_s\nout_band 1\n' >"${launcher_case_dir}/INPUT"
-printf '\n  # absent_case\nlauncher_case\n' >"${test_root}/tests/01_PW/LAUNCHER_CASES.txt"
-cat >"${test_root}/fake_bin/custom_mpi" <<'EOF'
+printf 'INPUT_PARAMETERS\ncalculation get_s\nout_band 1\n' > "${launcher_case_dir}/INPUT"
+printf '\n  # absent_case\nlauncher_case\n' > "${test_root}/tests/01_PW/LAUNCHER_CASES.txt"
+cat > "${test_root}/fake_bin/custom_mpi" << 'EOF'
 #!/usr/bin/env bash
 set -eu
 [ "$#" -eq 6 ]
@@ -528,7 +573,7 @@ EOF
 chmod +x "${test_root}/fake_bin/custom_mpi"
 for expected_ranks in 4 1; do
   if [ "${expected_ranks}" -eq 1 ]; then
-    printf 'of_ml_gene_data 1\n' >>"${launcher_case_dir}/INPUT"
+    printf 'of_ml_gene_data 1\n' >> "${launcher_case_dir}/INPUT"
   fi
   launcher_log="${test_root}/launcher-${expected_ranks}.log"
   (
@@ -541,7 +586,7 @@ for expected_ranks in 4 1; do
       ABACUS_MPIEXEC_POSTFLAGS=--test-post \
       OMP_NUM_THREADS=1 bash ../integrate/Autotest.sh \
       -a "${test_root}/fake_abacus" -n 4 -o 1 -j 1 -f LAUNCHER_CASES.txt -p
-  ) >"${launcher_log}" 2>&1
+  ) > "${launcher_log}" 2>&1
   test -f "${test_root}/launcher-${expected_ranks}.used"
   grep -q 'Property collectors skipped' "${launcher_log}"
   if [ -e "${launcher_case_dir}/result.out" ] || [ -e "${launcher_case_dir}/result.ref" ]; then
@@ -555,21 +600,21 @@ done
 for collector in current position; do
   merged_case="${test_root}/tests/01_PW/merged_${collector}"
   mkdir -p "${merged_case}/OUT.autotest"
-  printf 'INPUT_PARAMETERS\ncalculation get_s\n' >"${merged_case}/INPUT"
-  printf 'Driver atomic_world 0.01\n' >"${merged_case}/OUT.autotest/running_get_s.log"
+  printf 'INPUT_PARAMETERS\ncalculation get_s\n' > "${merged_case}/INPUT"
+  printf 'Driver atomic_world 0.01\n' > "${merged_case}/OUT.autotest/running_get_s.log"
   touch "${merged_case}/sr_nao.csr.ref" "${merged_case}/OUT.autotest/sr_nao.csr"
   if [ "${collector}" = current ]; then
-    printf 'out_current 2\n' >>"${merged_case}/INPUT"
-    printf 'current_threshold 1e-4\n' >"${merged_case}/threshold"
-    printf '0 1\n' >"${merged_case}/current_tot.txt.ref"
-    printf '0 1.00001\n' >"${merged_case}/OUT.autotest/current_tot_comm.txt"
+    printf 'out_current 2\n' >> "${merged_case}/INPUT"
+    printf 'current_threshold 1e-4\n' > "${merged_case}/threshold"
+    printf '0 1\n' > "${merged_case}/current_tot.txt.ref"
+    printf '0 1.00001\n' > "${merged_case}/OUT.autotest/current_tot_comm.txt"
     merged_key=CompareCurrent_pass
     broken_file=current_tot_comm.txt
   else
-    printf 'out_mat_r 1\n' >>"${merged_case}/INPUT"
+    printf 'out_mat_r 1\n' >> "${merged_case}/INPUT"
     for axis in x y z; do
-      printf '0 1\n' >"${merged_case}/rr${axis}_nao.csr.ref"
-      printf '0 1\n' >"${merged_case}/OUT.autotest/rr${axis}_nao.csr"
+      printf '0 1\n' > "${merged_case}/rr${axis}_nao.csr.ref"
+      printf '0 1\n' > "${merged_case}/OUT.autotest/rr${axis}_nao.csr"
     done
     merged_key=ComparerR_pass
     broken_file=rrx_nao.csr
@@ -579,7 +624,7 @@ for collector in current position; do
     bash -e ../../integrate/validation_tools/catch_properties.sh result.ref.new
   )
   grep -qx "${merged_key} 0" "${merged_case}/result.ref.new"
-  printf '1 2\n' >>"${merged_case}/OUT.autotest/${broken_file}"
+  printf '1 2\n' >> "${merged_case}/OUT.autotest/${broken_file}"
   (
     cd "${merged_case}"
     bash -e ../../integrate/validation_tools/catch_properties.sh result.out

@@ -89,10 +89,10 @@ std::vector<double> cross_ao_overlap(const UnitCell& cell,
                 continue;
             }
             const int type_j = cell.iat2it[j];
-            const auto displacement = (cell.get_tau(j) - old_positions[i]) * cell.lat0;
+            const ModuleBase::Vector3<double> displacement = (cell.get_tau(j) - old_positions[i]) * cell.lat0;
             const double radius = cutoff[type_i] + cutoff[type_j];
-            const auto indices = cross_image_indices(displacement, lattice, radius);
-            for (const auto& index : indices)
+            const std::vector<ModuleBase::Vector3<int>> indices = cross_image_indices(displacement, lattice, radius);
+            for (const ModuleBase::Vector3<int>& index : indices)
             {
                 const hamilt::AtomPair<double> pair(i, j, index, &pmat);
                 overlap_r.insert_pair(pair);
@@ -102,16 +102,16 @@ std::vector<double> cross_ao_overlap(const UnitCell& cell,
     overlap_r.allocate(nullptr, true);
     for (int pair_index = 0; pair_index < overlap_r.size_atom_pairs(); ++pair_index)
     {
-        auto& pair = overlap_r.get_atom_pair(pair_index);
+        hamilt::AtomPair<double>& pair = overlap_r.get_atom_pair(pair_index);
         const int i = pair.get_atom_i();
         const int j = pair.get_atom_j();
-        const auto displacement = (cell.get_tau(j) - old_positions[i]) * cell.lat0;
+        const ModuleBase::Vector3<double> displacement = (cell.get_tau(j) - old_positions[i]) * cell.lat0;
         const std::vector<int> row_offsets = pmat.get_indexes_row(i);
         const std::vector<int> col_offsets = pmat.get_indexes_col(j);
         for (int ir = 0; ir < pair.get_R_size(); ++ir)
         {
-            const auto index = pair.get_R_index(ir);
-            const auto shifted = displacement + index * lattice;
+            const ModuleBase::Vector3<int> index = pair.get_R_index(ir);
+            const ModuleBase::Vector3<double> shifted = displacement + index * lattice;
             double* const values = pair.get_pointer(ir);
             hamilt::cal_overlap_block(cell,
                                       integrator,
