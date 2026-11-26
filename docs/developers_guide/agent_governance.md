@@ -232,7 +232,7 @@ Keep Autotest-compatible checks in cases. Drivers must:
 - Use `find_program` plus `if()` for optional interpreters; never `REQUIRED`.
 - For MPI, forward `MPIEXEC_NUMPROC_FLAG`, `MPIEXEC_PREFLAGS` and
   `MPIEXEC_POSTFLAGS`; set CTest `PROCESSORS` to the launched rank count.
-- Set `OMP_NUM_THREADS=1`, use temporary scratch space and a CTest `TIMEOUT`.
+- Set `OMP_NUM_THREADS=1` and use temporary scratch space.
 
 ## CLI Verification
 
