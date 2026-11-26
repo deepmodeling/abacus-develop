@@ -77,7 +77,7 @@ namespace LR
 #ifdef __MPI
                 dmk[is] = cal_dm_trans_pblas(X_full + off_x[is], pX_[is], psi_spin_[is], pc_,
                     naos_, nocc_[is], nvirt_[is], pmat_.para_2d());
-                for (auto& t: dmk[is])
+                for (container::Tensor& t: dmk[is])
                 {
                     LR_Util::matsym(t.template data<T>(), naos_, pmat_.para_2d());
                 }
@@ -112,7 +112,7 @@ namespace LR
                 this->hR_->set_zero();
                 ModuleGint::cal_gint_vl(v2.c, this->hR_.get());
                 std::vector<ct::Tensor> v_2d(nk_, LR_Util::newTensor<T>({ pmat_.para_2d().ncloc(), pmat_.para_2d().nrloc() }));
-                for (auto& v: v_2d)
+                for (container::Tensor& v: v_2d)
                 {
                     v.zero();
                 }

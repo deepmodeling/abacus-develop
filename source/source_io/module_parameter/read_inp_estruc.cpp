@@ -38,9 +38,9 @@ void ReadInput::item_elec_stru()
     {
         Input_Item item("ks_solver");
         item.domain.set_choices(
-            {"cg", "dav", "bpcg", "dav_subspace", "ppcg", "genelpa", "elpa", "lapack", "scalapack_gvx", "cusolver",
-                "cusolvermp", "pexsi"});
-        item.domain.add_requirement("basis_type==pw", "ks_solver in [cg, dav, bpcg, dav_subspace, ppcg]");
+            {"cg", "dav", "bpcg", "dav_subspace", "ppcg", "lobpcg", "genelpa", "elpa", "lapack", "scalapack_gvx",
+                "cusolver", "cusolvermp", "pexsi"});
+        item.domain.add_requirement("basis_type==pw", "ks_solver in [cg, dav, bpcg, dav_subspace, ppcg, lobpcg]");
         item.domain.add_requirement("basis_type==lcao", "ks_solver in [genelpa, elpa, lapack, scalapack_gvx, cusolver, cusolvermp, pexsi]");
         item.domain.add_requirement("ks_solver==ppcg", "esolver_type!=sdft");
         item.domain.add_requirement("ks_solver==ppcg", "calculation!=nscf");
@@ -48,7 +48,8 @@ void ReadInput::item_elec_stru()
         item.domain.add_requirement("ks_solver==ppcg", "device==cpu");
 #endif
         item.domain.add_requirement("ks_solver==genelpa", "device==cpu");
-        item.annotation = "cg; dav; bpcg; dav_subspace; ppcg; lapack; genelpa; elpa; scalapack_gvx; cusolver";
+        item.annotation = "cg; dav; dav_subspace; bpcg; ppcg; lobpcg; lapack; genelpa; elpa; scalapack_gvx; cusolver; "
+                          "cusolvermp; pexsi";
         item.category = "Electronic structure";
         item.type = "String";
         item.description =
@@ -61,6 +62,7 @@ For plane-wave basis,
 * dav_subspace: The Davidson algorithm without orthogonalization operation, this method is the most recommended for efficiency. `pw_diag_ndim` can be set to 2 for this method.
 * ppcg: The projection preconditioned conjugate-gradient method. It supports CPU and CUDA plane-wave calculations. On CUDA, wavefunction-sized blocks and their operations remain on the device; only projected matrices and convergence scalars are transferred to the host. Other GPU backends are not supported. It is not supported for calculation=nscf or esolver_type=sdft, including mixed stochastic-deterministic calculations.
 * bpcg: The BPCG method, which is a block-parallel Conjugate Gradient (CG) method, typically exhibits higher acceleration in a GPU environment. The BPCG method is currently under testing and is not recommended for use.
+* lobpcg: The locally optimal block preconditioned conjugate gradient method for CPU and GPU.
 
 For numerical atomic orbitals basis,
 
@@ -1028,7 +1030,8 @@ Use case: When experimental or high-level theoretical results suggest that the S
         item.category = "Plane wave related variables";
         item.type = "Real";
         item.description =
-            "Only used when you use ks_solver = cg/dav/dav_subspace/bpcg/ppcg. It indicates the threshold for the "
+            "Only used when you use ks_solver = cg/dav/dav_subspace/bpcg/ppcg/lobpcg. It indicates the threshold for "
+            "the "
             "first electronic iteration, from the second iteration the pw_diag_thr will be updated automatically. The "
             "stopping criterion is solver-dependent: CG and Davidson methods compare eigenvalue changes against the "
             "threshold, whereas PPCG requires the norm of H psi - epsilon S psi to be at most max(ethr_band, ethr, "
@@ -1055,7 +1058,7 @@ Use case: When experimental or high-level theoretical results suggest that the S
         item.annotation = "smooth ethr for iter methods";
         item.category = "Plane wave related variables";
         item.type = "Boolean";
-        item.description = "If TRUE, the smooth threshold strategy, which applies a larger threshold (10e-5) for the empty states, will be implemented in the diagonalization methods. (This strategy should not affect total energy, forces, and other ground-state properties, but computational efficiency will be improved.) If FALSE, the smooth threshold strategy will not be applied.";
+        item.description = "If TRUE, relax diagonalization thresholds for nearly empty bands to reduce work in ground-state SCF. If FALSE, use the same threshold for all bands.";
         item.default_value = "false";
         item.unit = "";
         read_sync_bool(input.diago_smooth_ethr);
@@ -1081,12 +1084,14 @@ Use case: When experimental or high-level theoretical results suggest that the S
         item.type = "Integer";
         item.description =
             "Sets the maximum number of iterations for the selected iterative PW diagonalization method. It is used by "
-            "CG, Davidson, Davidson-subspace, and PPCG; the value is a solver-specific iteration limit and does not "
+            "CG, Davidson, Davidson-subspace, LOBPCG, and PPCG; the value is a solver-specific iteration limit and "
+            "does not "
             "define a common number of operator applications or a convergence tolerance. Increasing it does not "
             "guarantee convergence. BPCG currently does not use this parameter.";
         item.default_value = "50";
+        item.domain.set_rule("value>0");
         item.unit = "";
-        item.set_availability("basis_type==pw and ks_solver in [cg, dav, dav_subspace, bpcg, ppcg]");
+        item.set_availability("basis_type==pw and ks_solver in [cg, dav, dav_subspace, bpcg, ppcg, lobpcg]");
         read_sync_int(input.pw_diag_nmax);
         this->add_item(item);
     }
@@ -1120,6 +1125,19 @@ Use case: When experimental or high-level theoretical results suggest that the S
         item.default_value = "1";
         item.set_availability("basis_type==pw and ks_solver==ppcg");
         read_sync_int(input.ppcg_rr_step);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("lobpcg_locking");
+        item.domain.set_choices({"hard", "soft"});
+        item.annotation = "locking policy for LOBPCG";
+        item.category = "Plane wave related variables";
+        item.type = "String";
+        item.description = R"(The default hard keeps converged bands fixed to reduce computation. With soft, these bands continue to be refined, which can help when closely spaced bands converge slowly, with more work per iteration.)";
+        item.default_value = "hard";
+        item.unit = "";
+        item.set_availability("basis_type==pw and ks_solver==lobpcg");
+        read_sync_string(input.lobpcg_locking);
         this->add_item(item);
     }
     {
@@ -1337,7 +1355,7 @@ Use case: When experimental or high-level theoretical results suggest that the S
             }
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            for(auto rcut: para.input.bessel_nao_rcuts)
+            for(double rcut: para.input.bessel_nao_rcuts)
             {
                 if (rcut < 0)
                 {

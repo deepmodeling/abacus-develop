@@ -66,7 +66,7 @@ void cal_mi_pw(ScState& state,
     state.zero_Mi();
     if (PARAM.inp.device == "cpu")
     {
-        auto* onsite_p = projectors::OnsiteProjector<double, base_device::DEVICE_CPU>::get_instance();
+        projectors::OnsiteProjector<double, base_device::DEVICE_CPU>* onsite_p = projectors::OnsiteProjector<double, base_device::DEVICE_CPU>::get_instance();
         // Loop over k-points to calculate Mi of sum_{k,i,l,m}<Psi_{k,i}|alpha_{l,m}><alpha_{l,m}|Psi_{k,i}>
         std::complex<double>* psi_pointer = nullptr;
         psi::Psi<std::complex<double>, base_device::DEVICE_CPU>* psi_t = static_cast<psi::Psi<std::complex<double>, base_device::DEVICE_CPU>*>(psi);
@@ -302,7 +302,7 @@ void update_psi_charge_pw_cpu(ScState& state,
 
     psi::Psi<std::complex<double>>* psi_t = static_cast<psi::Psi<std::complex<double>>*>(psi);
     hamilt::Hamilt<std::complex<double>, base_device::DEVICE_CPU>* hamilt_t = static_cast<hamilt::Hamilt<std::complex<double>, base_device::DEVICE_CPU>*>(p_hamilt);
-    auto* onsite_p = projectors::OnsiteProjector<double, base_device::DEVICE_CPU>::get_instance();
+    projectors::OnsiteProjector<double, base_device::DEVICE_CPU>* onsite_p = projectors::OnsiteProjector<double, base_device::DEVICE_CPU>::get_instance();
 
     int nbands = psi_t->get_nbands();
     int npol = psi_t->get_npol();
@@ -359,7 +359,7 @@ void update_psi_charge_pw_cpu(ScState& state,
     {
         // Full PW diagonalization: subspace rotation provides a good initial guess,
         // then HSolverPW iteratively refines psi in the full plane-wave space and calls psiToRho.
-        const auto &solver_input = PARAM.inp;
+        const Input_para& solver_input = PARAM.inp;
         hsolver::HSolverPW<std::complex<double>, base_device::DEVICE_CPU> hsolver_pw_obj(
             pw_wfc, solver_input.calculation, solver_input.basis_type, solver_input.ks_solver, PARAM.globalv.use_uspp,
             solver_input.nspin, hsolver::DiagoIterAssist<std::complex<double>>::SCF_ITER,
@@ -367,7 +367,7 @@ void update_psi_charge_pw_cpu(ScState& state,
             hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_THR,
             hsolver::DiagoIterAssist<std::complex<double>>::need_subspace, solver_input.nbands,
             solver_input.diago_smooth_ethr, solver_input.pw_diag_ndim, solver_input.ppcg_rr_step,
-            solver_input.diag_subspace, solver_input.nb2d, solver_input.use_k_continuity);
+            solver_input.lobpcg_locking, solver_input.diag_subspace, solver_input.nb2d, solver_input.use_k_continuity);
 
         hamilt::HamiltHSOperator<std::complex<double>, base_device::DEVICE_CPU> op(hamilt_t, pw_wfc);
         hsolver_pw_obj.solve(op,
@@ -464,7 +464,7 @@ void update_psi_charge_pw_gpu(ScState& state,
     // STAGE 2: Full-space update (GPU)
     if (pw_solve)
     {
-        const auto &solver_input = PARAM.inp;
+        const Input_para& solver_input = PARAM.inp;
         hsolver::HSolverPW<std::complex<double>, base_device::DEVICE_GPU> hsolver_pw_obj(
             pw_wfc, solver_input.calculation, solver_input.basis_type, solver_input.ks_solver, PARAM.globalv.use_uspp,
             solver_input.nspin, hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_GPU>::SCF_ITER,
@@ -472,7 +472,7 @@ void update_psi_charge_pw_gpu(ScState& state,
             hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_GPU>::PW_DIAG_THR,
             hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_GPU>::need_subspace, solver_input.nbands,
             solver_input.diago_smooth_ethr, solver_input.pw_diag_ndim, solver_input.ppcg_rr_step,
-            solver_input.diag_subspace, solver_input.nb2d, solver_input.use_k_continuity);
+            solver_input.lobpcg_locking, solver_input.diag_subspace, solver_input.nb2d, solver_input.use_k_continuity);
 
         hamilt::HamiltHSOperator<std::complex<double>, base_device::DEVICE_GPU> op(hamilt_t, pw_wfc);
         hsolver_pw_obj.solve(op,

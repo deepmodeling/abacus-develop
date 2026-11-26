@@ -308,7 +308,7 @@ When false (default), both the direction and magnitude of the magnetic moment ar
             }
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            for (auto screen_coeff: para.input.qo_screening_coeff)
+            for (double screen_coeff: para.input.qo_screening_coeff)
             {
                 if (screen_coeff < 0)
                 {

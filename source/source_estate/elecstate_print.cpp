@@ -48,8 +48,8 @@ void print_scf_iterinfo(const std::string& ks_solver,
                         const double& ds_rms)
 {
     std::map<std::string, std::string> iter_header_dict = {{"cg", "CG"}, {"lapack", "LA"}, {"genelpa", "GE"},
-        {"elpa", "EL"}, {"dav", "DA"}, {"dav_subspace", "DS"}, {"scalapack_gvx", "GV"}, {"cusolver", "CU"},
-        {"bpcg", "BP"}, {"ppcg", "PP"}, {"pexsi", "PE"}, {"cusolvermp", "CM"},
+        {"elpa", "EL"}, {"dav", "DA"}, {"dav_subspace", "DS"}, {"lobpcg", "LB"}, {"scalapack_gvx", "GV"},
+        {"cusolver", "CU"}, {"bpcg", "BP"}, {"ppcg", "PP"}, {"pexsi", "PE"}, {"cusolvermp", "CM"},
         {"sdft", "CT"}}; // CT = Chebyshev Trace, for pure SDFT (nbands=0) where no H diagonalization is performed
     // ITER column
     std::vector<std::string> th_fmt = {" %-" + std::to_string(witer) + "s"}; // table header: th: ITER

@@ -27,7 +27,7 @@ void Forces<FPTYPE, Device>::cal_force_onsite(ModuleBase::matrix& force_onsite,
     resmem_var_op()(force, ucell_in.nat * 3);
     base_device::memory::set_memory_op<FPTYPE, Device>()(force, 0.0, ucell_in.nat * 3);
 
-    auto* onsite_p = projectors::OnsiteProjector<FPTYPE, Device>::get_instance();
+    projectors::OnsiteProjector<FPTYPE, Device>* onsite_p = projectors::OnsiteProjector<FPTYPE, Device>::get_instance();
 
     const int nks = wfc_basis->nks;
     for (int ik = 0; ik < nks; ik++)

@@ -361,8 +361,8 @@ void ParameterHelp::build_registry() {
     // Build registry from Input_Item objects
     const auto& input_lists = reader.get_input_lists();
 
-    for (const auto& pair : input_lists) {
-        const auto& item = pair.second;
+    for (const std::pair<std::string, ModuleIO::Input_Item>& pair : input_lists) {
+        const ModuleIO::Input_Item& item = pair.second;
         ParameterMetadata meta;
         meta.name = item.label;
         meta.category = item.category;
@@ -395,7 +395,7 @@ bool ParameterHelp::show_parameter_help(const std::string& key, std::ostream& os
         return false;
     }
 
-    const auto& meta = it->second;
+    const ModuleIO::ParameterMetadata& meta = it->second;
 
     // Display formatted help information
     os << "\n";
@@ -505,8 +505,8 @@ void ParameterHelp::generate_yaml(std::ostream& os) {
     os << "# Do not edit manually.\n";
     os << "parameters:\n";
 
-    for (const auto& pair : input_lists) {
-        const auto& item = pair.second;
+    for (const std::pair<std::string, ModuleIO::Input_Item>& pair : input_lists) {
+        const ModuleIO::Input_Item& item = pair.second;
 
         // Skip items without a category (undocumented internal items)
         if (item.category.empty()) {
@@ -642,7 +642,7 @@ std::vector<std::string> ParameterHelp::find_similar_parameters(const std::strin
 
     // Calculate distance for each parameter using pre-computed lowercase names
     for (const auto& pair : registry_) {
-        const auto& meta = pair.second;
+        const ModuleIO::ParameterMetadata& meta = pair.second;
         const std::string& name_lower = meta.name_lowercase;
 
         int effective_distance;

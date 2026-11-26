@@ -75,7 +75,7 @@ py::array_t<double> PyChargeAccessor::get_rho() const
     // Create numpy array with shape (nspin, nrxx)
     std::vector<ssize_t> shape = {static_cast<ssize_t>(nspin_), static_cast<ssize_t>(nrxx_)};
 
-    auto result = py::array_t<double>(shape);
+    py::array_t<double> result = py::array_t<double>(shape);
     auto buf = result.request();
     double* ptr = static_cast<double*>(buf.ptr);
 
@@ -114,7 +114,7 @@ py::array_t<std::complex<double>> PyChargeAccessor::get_rhog() const
     // Create numpy array with shape (nspin, ngmc)
     std::vector<ssize_t> shape = {static_cast<ssize_t>(nspin_), static_cast<ssize_t>(ngmc_)};
 
-    auto result = py::array_t<std::complex<double>>(shape);
+    py::array_t<std::complex<double>> result = py::array_t<std::complex<double>>(shape);
     auto buf = result.request();
     std::complex<double>* ptr = static_cast<std::complex<double>*>(buf.ptr);
 
@@ -140,7 +140,7 @@ py::array_t<double> PyChargeAccessor::get_rho_core() const
     // Create numpy array with shape (nrxx,)
     std::vector<ssize_t> shape = {static_cast<ssize_t>(nrxx_)};
 
-    auto result = py::array_t<double>(shape);
+    py::array_t<double> result = py::array_t<double>(shape);
     auto buf = result.request();
     double* ptr = static_cast<double*>(buf.ptr);
 

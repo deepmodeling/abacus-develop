@@ -214,7 +214,7 @@ static std::vector<T> compute_stride(const std::vector<T>& shape) {
     std::vector<T> strides(ndims);
     T stride = 1;
 
-    auto it = shape.end(); // Start from the last element
+    typename std::vector<T>::const_iterator it = shape.end(); // Start from the last element
     for (int ii = ndims - 1; ii >= 0; ii--) {
         it--;
         strides[ii] = stride;
@@ -226,8 +226,8 @@ static std::vector<T> compute_stride(const std::vector<T>& shape) {
 template<typename T, typename Device>
 void add<T, Device>::operator()(const int& num_element, const T& alpha, const T* x, const T& beta, const T* y, T* z) {
     using Type = typename GetTypeThrust<T>::type;
-    auto alpha_ = *reinterpret_cast<const Type*>(&alpha);
-    auto beta_ = *reinterpret_cast<const Type*>(&beta);
+    Type alpha_ = *reinterpret_cast<const Type*>(&alpha);
+    Type beta_ = *reinterpret_cast<const Type*>(&beta);
     const int block = (num_element + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
     do_add_kernel<Type><<<block, THREADS_PER_BLOCK>>> (
         num_element, alpha_, reinterpret_cast<const Type*>(x),
@@ -239,7 +239,7 @@ void add<T, Device>::operator()(const int& num_element, const T& alpha, const T*
 template<typename T, typename Device>
 void mul<T, Device>::operator()(const int& num_element, const T& alpha, const T* x, T* y) {
     using Type = typename GetTypeThrust<T>::type;
-    auto alpha_ = *reinterpret_cast<const Type*>(&alpha);
+    Type alpha_ = *reinterpret_cast<const Type*>(&alpha);
     const int block = (num_element + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
     do_mul_kernel<Type><<<block, THREADS_PER_BLOCK>>> (
         num_element, alpha_,
@@ -251,7 +251,7 @@ void mul<T, Device>::operator()(const int& num_element, const T& alpha, const T*
 template<typename T, typename Device>
 void mul<T, Device>::operator()(const int& num_element, const T& alpha, const T* x, const T* y, T* z) {
     using Type = typename GetTypeThrust<T>::type;
-    auto alpha_ = *reinterpret_cast<const Type*>(&alpha);
+    Type alpha_ = *reinterpret_cast<const Type*>(&alpha);
     const int block = (num_element + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
     do_mul_kernel<Type><<<block, THREADS_PER_BLOCK>>> (
         num_element, alpha_,
@@ -263,7 +263,7 @@ void mul<T, Device>::operator()(const int& num_element, const T& alpha, const T*
 template<typename T, typename Device>
 void div<T, Device>::operator()(const int& num_element, const T& alpha, const T* x, const T* y, T* z) {
     using Type = typename GetTypeThrust<T>::type;
-    auto alpha_ = *reinterpret_cast<const Type*>(&alpha);
+    Type alpha_ = *reinterpret_cast<const Type*>(&alpha);
     const int block = (num_element + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
     do_div_kernel<Type><<<block, THREADS_PER_BLOCK>>> (
         num_element, alpha_, reinterpret_cast<const Type*>(x), reinterpret_cast<const Type*>(y), reinterpret_cast<Type*>(z));
@@ -274,8 +274,8 @@ void div<T, Device>::operator()(const int& num_element, const T& alpha, const T*
 template<typename T, typename Device>
 void fma<T, Device>::operator()(const int& num_element, const T& alpha, const T* x, const T* y, const T& beta, const T* z, T* out) {
     using Type = typename GetTypeThrust<T>::type;
-    auto alpha_ = *reinterpret_cast<const Type*>(&alpha);
-    auto beta_ = *reinterpret_cast<const Type*>(&beta);
+    Type alpha_ = *reinterpret_cast<const Type*>(&alpha);
+    Type beta_ = *reinterpret_cast<const Type*>(&beta);
     const int block = (num_element + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
     do_fma_kernel<Type><<<block, THREADS_PER_BLOCK>>> (
         num_element, alpha_, reinterpret_cast<const Type*>(x), reinterpret_cast<const Type*>(y),
@@ -297,8 +297,8 @@ void transpose<T, Device, Conjugate>::operator()(
     REQUIRES_OK(p_shape.size() == q_shape.size(),
                 "transpose: p and q must have the same number of dimensions");
     const int ndim = static_cast<int>(p_shape.size());
-    auto in_strides = compute_stride(p_shape);
-    auto out_strides = compute_stride(q_shape);
+    std::vector<int64_t> in_strides = compute_stride(p_shape);
+    std::vector<int64_t> out_strides = compute_stride(q_shape);
 
     int num_elements = 1;
     for (int ii = 0; ii < ndim; ++ii) {
@@ -341,8 +341,8 @@ void stride<T, Device>::operator()(
     REQUIRES_OK(p_shape.size() == q_shape.size(),
                 "transpose: p and q must have the same number of dimensions");
     const int ndim = static_cast<int>(p_shape.size());
-    auto in_strides = compute_stride(p_shape);
-    auto out_strides = compute_stride(q_shape);
+    std::vector<int64_t> in_strides = compute_stride(p_shape);
+    std::vector<int64_t> out_strides = compute_stride(q_shape);
 
     int num_elements = 1;
     for (int ii = 0; ii < ndim; ++ii) {
@@ -385,8 +385,8 @@ void inflate<T, Device>::operator()(
     REQUIRES_OK(p_shape.size() == q_shape.size(),
                 "transpose: p and q must have the same number of dimensions");
     const int ndim = static_cast<int>(p_shape.size());
-    auto in_strides = compute_stride(p_shape);
-    auto out_strides = compute_stride(q_shape);
+    std::vector<int64_t> in_strides = compute_stride(p_shape);
+    std::vector<int64_t> out_strides = compute_stride(q_shape);
 
     int num_elements = 1;
     for (int ii = 0; ii < ndim; ++ii) {

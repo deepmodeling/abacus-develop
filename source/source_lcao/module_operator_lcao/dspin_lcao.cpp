@@ -60,7 +60,7 @@ inline void cal_coeff_lambda(const std::vector<double>& current_lambda, std::vec
 inline void cal_coeff_lambda(const std::vector<double>& current_lambda, std::vector<std::complex<double>>& coefficients)
 {
     const ModuleBase::Vector3<double> lambda(current_lambda[0], current_lambda[1], current_lambda[2]);
-    const auto spinor = spinconstrain::pauli_vector_to_spinor(lambda);
+    const std::array<std::complex<double>, 4> spinor = spinconstrain::pauli_vector_to_spinor(lambda);
     for (int is = 0; is < 4; ++is)
     {
         coefficients[is] = spinor[is];
@@ -253,7 +253,7 @@ void hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::cal_pre_HR()
             continue;
         }
         
-        auto tau0 = ucell->get_tau(iat);
+        ModuleBase::Vector3<double> tau0 = ucell->get_tau(iat);
         int T0, I0;
         this->ucell->iat2iait(iat, &I0, &T0);
 
@@ -322,8 +322,8 @@ void hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::cal_pre_HR()
             const Atom* atom1 = &ucell->atoms[T1];
             const ModuleBase::Vector3<double>& tau1 = adjs.adjacent_tau[ad];
 
-            auto all_indexes = paraV->get_indexes_row(iat1);
-            auto col_indexes = paraV->get_indexes_col(iat1);
+            std::vector<int> all_indexes = paraV->get_indexes_row(iat1);
+            std::vector<int> col_indexes = paraV->get_indexes_col(iat1);
             // insert col_indexes into all_indexes to get universal set with no repeat elements
             all_indexes.insert(all_indexes.end(), col_indexes.begin(), col_indexes.end());
             std::sort(all_indexes.begin(), all_indexes.end());
@@ -426,8 +426,8 @@ void hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::cal_HR_IJR(const int& iat1
     // ---------------------------------------------
     // calculate the Nonlocal matrix for each pair of orbitals
     // ---------------------------------------------
-    auto row_indexes = this->paraV->get_indexes_row(iat1);
-    auto col_indexes = this->paraV->get_indexes_col(iat2);
+    std::vector<int> row_indexes = this->paraV->get_indexes_row(iat1);
+    std::vector<int> col_indexes = this->paraV->get_indexes_col(iat2);
     // step_trace = 0 for NSPIN=1,2; ={0, 1, local_col, local_col+1} for NSPIN=4
     std::vector<int> step_trace(npol*npol, 0);
     for (int is = 0; is < npol; is++)

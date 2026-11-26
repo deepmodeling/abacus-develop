@@ -322,6 +322,19 @@ void reduce_data(std::complex<double>* object, const int& n, const MPI_Comm& com
 {
     MPI_Allreduce(MPI_IN_PLACE, object, n * 2, MPI_DOUBLE, MPI_SUM, comm);
 }
+void reduce_data_to_root(std::complex<double>* object, const int n, const MPI_Comm& comm, const int root)
+{
+    int rank = 0;
+    MPI_Comm_rank(comm, &rank);
+    if (rank == root)
+    {
+        MPI_Reduce(MPI_IN_PLACE, object, n, MPI_DOUBLE_COMPLEX, MPI_SUM, root, comm);
+    }
+    else
+    {
+        MPI_Reduce(object, nullptr, n, MPI_DOUBLE_COMPLEX, MPI_SUM, root, comm);
+    }
+}
 void reduce_data(std::complex<float>* object, const int& n, const MPI_Comm& comm)
 {
     MPI_Allreduce(MPI_IN_PLACE, object, n * 2, MPI_FLOAT, MPI_SUM, comm);

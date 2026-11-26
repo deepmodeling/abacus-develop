@@ -7,6 +7,10 @@ list(
   diago_dav_subspace.cpp
   diago_bpcg.cpp
   diago_ppcg.cpp
+  diago_lobpcg.cpp
+  lobpcg_subspace.cpp
+  lobpcg_recovery.cpp
+  dense_eigensolver.cpp
   para_lin_tf.cpp
   hsolver_pw.cpp
   hsolver_lcaopw.cpp

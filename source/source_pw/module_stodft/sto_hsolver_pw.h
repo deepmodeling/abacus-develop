@@ -28,6 +28,7 @@ class StoHSolverPW : public hsolver::HSolverPW<T, Device>
         const int nbands_in,
         const bool diago_smooth_ethr_in,
         const int pw_diag_ndim_in,
+        const std::string &lobpcg_locking_in,
         const int diag_subspace_in,
         const int nb2d_in,
         const bool ks_run_in,
@@ -36,7 +37,7 @@ class StoHSolverPW : public hsolver::HSolverPW<T, Device>
         : hsolver::HSolverPW<T, Device>(
               wfc_basis_in, calculation_type_in, basis_type_in, method_in, use_uspp_in, nspin_in, scf_iter_in,
               diag_iter_max_in, diag_thr_in, need_subspace_in, nbands_in, diago_smooth_ethr_in, pw_diag_ndim_in, 1,
-              diag_subspace_in, nb2d_in),
+              lobpcg_locking_in, diag_subspace_in, nb2d_in),
           ks_run(ks_run_in), all_ks_run(all_ks_run_in), bndpar(bndpar_in)
     {
         stoiter.init(pkv, wfc_basis_in, stowf, stoche, p_hamilt_sto);

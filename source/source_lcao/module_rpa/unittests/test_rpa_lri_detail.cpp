@@ -39,7 +39,7 @@ using RpaLriDetail::write_lri_coef_v1;
 
 TEST(RpaLriDetail, BzSamplingConvertsCartesianVectorsToInverseBohr)
 {
-    const auto cartesian
+    const ModuleBase::Vector3<double> cartesian
         = RpaLriDetail::librpa_cartesian_kvec(ModuleBase::Vector3<double>(0.25, -0.5, 0.0), 2.0);
     const double scale = ModuleBase::TWO_PI / 2.0;
     EXPECT_DOUBLE_EQ(cartesian.x, 0.25 * scale);

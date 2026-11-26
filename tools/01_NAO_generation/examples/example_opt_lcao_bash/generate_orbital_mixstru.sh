@@ -54,7 +54,7 @@ if [ -z "$EXE_mpi" ]; then
   cpu_num=8
   hostfpath="myhosts"
   #hostfpath="/home/nic/wszhang/eclipse_project/mesia_dft/delta_test/delta_dft/cifs2deltaDFT/myhosts"
-  grep slots $hostfpath >/dev/null
+  grep slots $hostfpath > /dev/null
   if [ $? = 0 ]; then # has "slots" in file: $hostfpath
     cpu_num=$(cat $hostfpath | cut -d "=" -f 2-3 | awk '{sum += $1};END {print sum}')
   else
@@ -379,7 +379,7 @@ for name in $targets; do
 
         if [ "${ListSTRU[iSTRU]}" == "dimer" ]; then
           na=2
-          cat >$name.stru <<EOF
+          cat > $name.stru << EOF
 ATOMIC_SPECIES
 $element $mass $pseudofile
 LATTICE_CONSTANT
@@ -399,7 +399,7 @@ EOF
 
         elif [ "${ListSTRU[iSTRU]}" == "trimer" ]; then
           na=3
-          cat >$name.stru <<EOF
+          cat > $name.stru << EOF
 ATOMIC_SPECIES
 $element $mass $pseudofile
 LATTICE_CONSTANT
@@ -420,7 +420,7 @@ EOF
 
         elif [ "${ListSTRU[iSTRU]}" == "tetramer" ]; then
           na=4
-          cat >$name.stru <<EOF
+          cat > $name.stru << EOF
 ATOMIC_SPECIES
 $element $mass $pseudofile
 LATTICE_CONSTANT
@@ -444,7 +444,7 @@ EOF
         echo " na=$na"
 
         # (1.4.2.2) get KPOINTS
-        cat >KPOINTS <<EOF
+        cat > KPOINTS << EOF
 K_POINTS
 0
 Gamma
@@ -452,14 +452,14 @@ Gamma
 EOF
 
         # (1.4.2.3) get INPUTw
-        cat >INPUTw <<EOF
+        cat > INPUTw << EOF
 WANNIER_PARAMETERS
 rcut 10
 out_spillage 2
 EOF
 
         # (1.4.2.4) get INPUTs
-        cat >INPUTs <<EOF
+        cat > INPUTs << EOF
 INPUT_ORBITAL_INFORMATION
 <SPHERICAL_BESSEL>
 1           // smooth or not
@@ -471,7 +471,7 @@ $rcut       // cutoff of wavefunctions(a.u.)
 EOF
 
         # (1.4.2.5) get INPUT
-        cat >INPUT <<EOF
+        cat > INPUT << EOF
 INPUT_PARAMETERS
 suffix              $element-$rcut-$BL
 latname             $element-$rcut-$BL
@@ -620,7 +620,7 @@ EOF
       fi
 
       ### (1.4.3.2) prepare for the INPUT file
-      cat >INPUT <<EOF
+      cat > INPUT << EOF
 <PW_QS>
 1                       // if or not calculate the spillage. 1/0
 $isrestart                       // restart or not. 1/0
@@ -632,13 +632,13 @@ EOF
       count_files=1
       while [ $count_files -le ${BL_number[iSTRU]} ]; do
         BL=$(echo "${info[iSTRU]}" | awk '{print $'$count_files'}')
-        cat >>INPUT <<EOF
+        cat >> INPUT << EOF
 ../$element-$rcut-$BL.$lat0.dat
 EOF
         let count_files++
       done
 
-      cat >>INPUT <<EOF
+      cat >> INPUT << EOF
 </PW_QS>
 
 <PARALLEL>
@@ -686,7 +686,7 @@ ${ref_bands[iSTRU]}          // int, the ed band index(<provied bands).
 
 EOF
 
-      cat >>INPUT <<EOF
+      cat >> INPUT << EOF
 <OPTIMIZE>
 ${LevelEnd[iSTRU]}             // Number of levels.
 label / na / skip / lmax / each L /
@@ -699,16 +699,16 @@ EOF
           leveltype="skip"
         fi
         #echo "leveltype=$leveltype"
-        cat >>INPUT <<EOF
+        cat >> INPUT << EOF
 $id $na $leveltype ${L[i]}
 EOF
       done
 
-      cat >>INPUT <<EOF
+      cat >> INPUT << EOF
 </OPTIMIZE>
 EOF
 
-      cat >>INPUT <<EOF
+      cat >> INPUT << EOF
 <PLOT>
 0.01    //dr(a.u.) of uniform mesh. Attention!!dr will affect kinetic energy minmized largely.
 -6      //xmin

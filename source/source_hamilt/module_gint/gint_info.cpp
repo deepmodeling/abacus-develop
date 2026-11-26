@@ -94,7 +94,7 @@ void GintInfo::init_atoms_(int ntype, const Atom *atoms, const Numerical_Orbital
     // TODO: USE OPENMP TO PARALLELIZE THIS LOOP
     for (int i = 0; i < ntype; i++)
     {
-        const auto &atom = atoms[i];
+        const Atom& atom = atoms[i];
         orbs_[i] = Phi[i];
         const auto *orb = &orbs_[i];
 
@@ -268,7 +268,7 @@ void GintInfo::init_ijr_info_(const UnitCell &ucell, Grid_Driver &gd)
                         if (distance < rcut - 1.0e-15)
                         {
                             // calculate R index
-                            auto &R_index = gd.getBox(ad);
+                            const ModuleBase::Vector3<int>& R_index = gd.getBox(ad);
                             // insert this atom-pair into this->hr_gint
                             hamilt::AtomPair<double> tmp_atom_pair(
                                 iat1, iat2, R_index.x, R_index.y, R_index.z, orb_index.data(), orb_index.data(),

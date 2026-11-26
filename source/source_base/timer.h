@@ -39,6 +39,28 @@ class timer
     static void start(const std::string &class_name_in, const std::string &name_in);
     static void end(const std::string &class_name_in, const std::string &name_in);
 
+    /** Function-wide timing, including early returns and exceptional exits.
+     * The borrowed names must outlive the scope. No device synchronization.
+     */
+    class Scope
+    {
+      public:
+        Scope(const char* owner, const char* function) : owner_(owner), function_(function)
+        {
+            timer::start(owner_, function_);
+        }
+        ~Scope()
+        {
+            timer::end(owner_, function_);
+        }
+        Scope(const Scope&) = delete;
+        Scope& operator=(const Scope&) = delete;
+
+      private:
+        const char* owner_;
+        const char* function_;
+    };
+
     /**
      * @brief Start total time calculation
      *

@@ -44,7 +44,7 @@ void lapackEigen(
     double *rwork = new double[3 * npw - 2];
     int info = 0;
 
-    auto tmp = hm;
+    std::vector<std::complex<double>> tmp = hm;
 
     clock_t start, end;
     start = clock();

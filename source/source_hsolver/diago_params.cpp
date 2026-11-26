@@ -16,10 +16,7 @@ void setup_diago_params_pw(const int istep,
     DiagoIterAssist<T, Device>::SCF_ITER = iter;
     DiagoIterAssist<T, Device>::PW_DIAG_THR = ethr;
 
-    if (inp.calculation != "nscf")
-    {
-        DiagoIterAssist<T, Device>::PW_DIAG_NMAX = inp.pw_diag_nmax;
-    }
+    DiagoIterAssist<T, Device>::PW_DIAG_NMAX = inp.pw_diag_nmax;
 }
 
 template <typename T, typename Device>

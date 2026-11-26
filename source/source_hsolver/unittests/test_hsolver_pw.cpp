@@ -13,13 +13,17 @@
 #ifdef __MPI
 #include "source_basis/module_pw/test/test_tool.h"
 #endif
+#include "source_base/parallel_global.h"
+#include "source_hsolver/diago_lobpcg.h"
 
 #include <algorithm>
 #include <cmath>
 #include <complex>
+#include <cstdlib>
 
 /// H = S = identity: the simplest operator the solvers can be handed
-template <typename T> class IdentityHSOperator : public hsolver::HSOperator<T, base_device::DEVICE_CPU>
+template <typename T>
+class IdentityHSOperator : public hsolver::HSOperator<T, base_device::DEVICE_CPU>
 {
   public:
     void update_k(const int ik) override {}
@@ -230,6 +234,7 @@ class TestHSolverPW : public ::testing::Test
 
     void SetUp() override
     {
+        ::testing::FLAGS_gtest_death_test_style = "threadsafe";
         saved_diag_iter_max = DiagoAssist::PW_DIAG_NMAX;
         saved_diag_thr = DiagoAssist::PW_DIAG_THR;
         saved_scf_iter = DiagoAssist::SCF_ITER;
@@ -281,7 +286,7 @@ class TestHSolverPW : public ::testing::Test
         hsolver::setup_diago_params_pw<std::complex<double>, base_device::DEVICE_CPU>(0, 1, 1.0e-12, inp);
         hsolver::HSolverPW<std::complex<double>, base_device::DEVICE_CPU> hs(
             &pwbk, calculation, "pw", "ppcg", false, 1, DiagoAssist::SCF_ITER, DiagoAssist::PW_DIAG_NMAX,
-            DiagoAssist::PW_DIAG_THR, DiagoAssist::need_subspace, 2, false, 1, 1, 0, 0);
+            DiagoAssist::PW_DIAG_THR, DiagoAssist::need_subspace, 2, false, 1, 1, "hard", 0, 0);
         if (calculation != "nscf")
         {
             EXPECT_EQ(hs.diag_iter_max, iteration_budget);
@@ -308,23 +313,22 @@ class TestHSolverPW : public ::testing::Test
         return eigenvalues;
     }
 
+    void run_ppcg_nscf_case(const bool exact_vectors, const int iteration_budget)
+    {
+        std::streambuf *error_buffer = std::cerr.rdbuf();
+        std::cout.rdbuf(error_buffer);
+        std::ostringstream log;
+        run_ppcg_dispatch("nscf", exact_vectors, iteration_budget, log);
+    }
+
     ModulePW::PW_Basis_K pwbk;
-    hsolver::HSolverPW<std::complex<float>, base_device::DEVICE_CPU> hs_f =
-        hsolver::HSolverPW<std::complex<float>, base_device::DEVICE_CPU>(
-            &pwbk, "scf", "pw", "cg", false, 1,
-            hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::SCF_ITER,
-            hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::PW_DIAG_NMAX,
-            hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::PW_DIAG_THR,
-            hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::need_subspace, 0, false, 4, 1, 0,
-            0);
-    hsolver::HSolverPW<std::complex<double>, base_device::DEVICE_CPU> hs_d =
-        hsolver::HSolverPW<std::complex<double>, base_device::DEVICE_CPU>(
-            &pwbk, "scf", "pw", "cg", false, 1,
-            hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::SCF_ITER,
-            hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::PW_DIAG_NMAX,
-            hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::PW_DIAG_THR,
-            hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::need_subspace, 0, false, 4, 1, 0,
-            0);
+    using Assist = hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>;
+    hsolver::HSolverPW<std::complex<float>, base_device::DEVICE_CPU> hs_f{&pwbk, "scf", "pw", "cg", false, 1,
+        Assist::SCF_ITER, Assist::PW_DIAG_NMAX, Assist::PW_DIAG_THR, Assist::need_subspace, 0, false, 4, 1, "hard", 0,
+        0};
+    hsolver::HSolverPW<std::complex<double>, base_device::DEVICE_CPU> hs_d{&pwbk, "scf", "pw", "cg", false, 1,
+        Assist::SCF_ITER, Assist::PW_DIAG_NMAX, Assist::PW_DIAG_THR, Assist::need_subspace, 0, false, 4, 1, "hard", 0,
+        0};
 
     IdentityHSOperator<std::complex<double>> hamilt_test_d;
     IdentityHSOperator<std::complex<float>> hamilt_test_f;
@@ -339,6 +343,60 @@ class TestHSolverPW : public ::testing::Test
     std::vector<float> ekb_f;
 
     std::ofstream temp_ofs;
+
+    void run_lobpcg_entry(const int dim, const int block, const int backend)
+    {
+        std::cout.rdbuf(std::cerr.rdbuf());
+        const hsolver::diag_comm_info comm(MPI_COMM_SELF, 0, 1);
+        const hsolver::LobpcgBasisLayout layout = {dim, 1};
+        std::vector<double> prec(dim, 1);
+        std::vector<double> values(4);
+        std::vector<std::complex<double>> x(dim * 4, 0);
+        for (int i = 0; i < 4; ++i) { x[i + i * dim] = 1; }
+        hsolver::dense::ParallelDenseEigensolver parallel;
+        hsolver::dense::GpuDenseEigensolver gpu;
+        hsolver::DiagoLOBPCG<std::complex<double>> solver(
+            prec.data(), 4, dim, block, layout, comm, backend, 0, false,
+            hsolver::LobpcgLocking::Hard, parallel, gpu);
+        solver.diag(hamilt_test_d, x.data(), dim, values.data(), 1e-8, 50, {});
+    }
+
+    void run_lobpcg_case(const std::string& calculation, const bool dependent)
+    {
+        std::cout.rdbuf(std::cerr.rdbuf());
+#ifdef __MPI
+        POOL_WORLD = MPI_COMM_SELF;
+#endif
+        using C = std::complex<double>;
+        class DiagonalOperator : public IdentityHSOperator<C>
+        {
+          public:
+            void hpsi(const C* x, C* hx, const int ld, const int count) const override
+            {
+                for (int j = 0; j < count; ++j)
+                {
+                    for (int i = 0; i < ld; ++i) { hx[i + j * ld] = double(i + 1) * x[i + j * ld]; }
+                }
+            }
+        } diagonal;
+        psi::Psi<C> ps;
+        ps.resize(1, 4, 40);
+        for (int j = 0; j < 4; ++j)
+        {
+            for (int i = 0; i < 40; ++i)
+            {
+                ps.get_pointer()[i + j * 40] = dependent ? C(.3, .1) : C(std::sin(.17 * (i + 1) * (j + 2)), .1);
+            }
+        }
+        std::vector<double> prec(40, 1);
+        std::vector<double> eig(4);
+        const hsolver::HSOperator<C> &op = dependent ? hamilt_test_d : diagonal;
+        hsolver::HSolverPW<C> solver(
+            &pwbk, calculation, "pw", "lobpcg", false, 1, 1, 1, 1e-12, false, 4, false, 4, 1, "hard", 0, 0);
+        std::ostringstream log;
+        hamiltSolvePsiK(solver, op, ps, prec, eig.data(), 1, log);
+        std::exit(0);
+    }
 
   private:
     int saved_diag_iter_max = 0;
@@ -621,11 +679,7 @@ TEST_F(TestHSolverPW, PPCGScfDispatchReportsExhaustedBudget)
 
 TEST_F(TestHSolverPW, PPCGNscfDispatchIsRejected)
 {
-    std::ostringstream log;
-    testing::internal::CaptureStdout();
-    EXPECT_EXIT(run_ppcg_dispatch("nscf", false, 0, log), ::testing::ExitedWithCode(1), "");
-    const std::string output = testing::internal::GetCapturedStdout();
-    EXPECT_NE(output.find("PPCG is not supported for NSCF"), std::string::npos);
+    EXPECT_EXIT(run_ppcg_nscf_case(false, 0), ::testing::ExitedWithCode(1), "PPCG is not supported for NSCF");
 }
 
 TEST_F(TestHSolverPW, PPCGConvergedDispatchHasNoWarning)
@@ -640,41 +694,64 @@ TEST_F(TestHSolverPW, PPCGConvergedDispatchHasNoWarning)
 TEST_F(TestHSolverPW, PPCGNscfDispatchRejectsEvenExactEigenvectors)
 {
     DiagoAssist::PW_DIAG_NMAX = 30;
-    std::ostringstream log;
-    testing::internal::CaptureStdout();
-    EXPECT_EXIT(run_ppcg_dispatch("nscf", true, 77, log), ::testing::ExitedWithCode(1), "");
-    const std::string output = testing::internal::GetCapturedStdout();
-    EXPECT_NE(output.find("PPCG is not supported for NSCF"), std::string::npos);
+    EXPECT_EXIT(run_ppcg_nscf_case(true, 77), ::testing::ExitedWithCode(1), "PPCG is not supported for NSCF");
 }
 
-TEST_F(TestHSolverPW, DiagoParamsPreservesNscfSolverBudgets)
+TEST_F(TestHSolverPW, LobpcgBlockMustContainRequestedBands)
 {
-    Input_para inp;
-    inp.calculation = "nscf";
-    inp.pw_diag_nmax = 77;
-    for (const std::string solver : {"cg", "dav", "dav_subspace", "bpcg", "ppcg"})
+    EXPECT_EXIT(run_lobpcg_entry(40, 3, 0), testing::ExitedWithCode(1),
+                "LOBPCG block must contain all requested bands");
+}
+
+TEST_F(TestHSolverPW, LobpcgNeedsFullRankSearchSpace)
+{
+    EXPECT_EXIT(run_lobpcg_entry(8, 4, 0), testing::ExitedWithCode(1),
+                "The requested bands cannot form a full-rank LOBPCG space");
+}
+
+TEST_F(TestHSolverPW, LobpcgRejectsUnsupportedBackend)
+{
+    EXPECT_EXIT(run_lobpcg_entry(40, 4, 1), testing::ExitedWithCode(1),
+                "LOBPCG supports diag_subspace=0 or 2");
+}
+
+// Exercise the actual caller: NSCF budget exhaustion and a failed initial GV.
+TEST_F(TestHSolverPW, LobpcgNscfBudgetReportsError)
+{
+    EXPECT_EXIT(run_lobpcg_case("nscf", false), ::testing::ExitedWithCode(1),
+                "LOBPCG iteration budget exhausted in NSCF");
+}
+
+TEST_F(TestHSolverPW, LobpcgBudgetContinuesOuterLoops)
+{
+    for (const char* calculation : {"scf", "relax", "cell-relax", "md"})
     {
-        SCOPED_TRACE(solver);
-        inp.ks_solver = solver;
-        DiagoAssist::PW_DIAG_NMAX = 30;
-        hsolver::setup_diago_params_pw<std::complex<double>, base_device::DEVICE_CPU>(0, 1, 1.0e-12, inp);
-        EXPECT_EQ(DiagoAssist::PW_DIAG_NMAX, 30);
+        EXPECT_EXIT(run_lobpcg_case(calculation, false), ::testing::ExitedWithCode(0), ".*");
     }
 }
 
-TEST_F(TestHSolverPW, DiagoParamsSetsScfSolverBudgets)
+TEST_F(TestHSolverPW, LobpcgNumericalFailureReportsBackendInfo)
 {
-    Input_para inp;
-    inp.calculation = "scf";
-    inp.pw_diag_nmax = 77;
-    for (const std::string solver : {"cg", "dav", "dav_subspace", "bpcg", "ppcg"})
+    EXPECT_EXIT(run_lobpcg_case("scf", true), ::testing::ExitedWithCode(1), "Serial HEGVX failed, info=");
+}
+
+TEST_F(TestHSolverPW, PwUsesInputIterationBudget)
+{
+    Input_para input;
+    input.pw_diag_nmax = 37;
+    const int previous = Assist::PW_DIAG_NMAX;
+    for (const char* calculation : {"scf", "nscf", "relax", "cell-relax", "md"})
     {
-        SCOPED_TRACE(solver);
-        inp.ks_solver = solver;
-        DiagoAssist::PW_DIAG_NMAX = 30;
-        hsolver::setup_diago_params_pw<std::complex<double>, base_device::DEVICE_CPU>(0, 1, 1.0e-12, inp);
-        EXPECT_EQ(DiagoAssist::PW_DIAG_NMAX, 77);
+        input.calculation = calculation;
+        for (const char *method : {"cg", "dav", "dav_subspace", "bpcg", "ppcg", "lobpcg"})
+        {
+            input.ks_solver = method;
+            Assist::PW_DIAG_NMAX = 30;
+            hsolver::setup_diago_params_pw<std::complex<double>, base_device::DEVICE_CPU>(0, 1, 1e-8, input);
+            EXPECT_EQ(Assist::PW_DIAG_NMAX, 37) << calculation << ": " << method;
+        }
     }
+    Assist::PW_DIAG_NMAX = previous;
 }
 
 int main(int argc, char **argv)

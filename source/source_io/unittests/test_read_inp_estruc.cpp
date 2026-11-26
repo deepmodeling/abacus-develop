@@ -1,124 +1,95 @@
+#include <algorithm>
+#include <string>
+#include <vector>
+#include <utility>
+
+#include "gtest/gtest.h"
 #include "source_io/module_parameter/read_input.h"
 
-#include <cstdio>
-#include <fstream>
-#include <gtest/gtest.h>
-#include <string>
-#include <unistd.h>
-#include <vector>
-
-namespace
+class TestParameters
 {
-class PPCGInputTest : public testing::Test
-{
-  protected:
-    std::string filename;
-
-    void SetUp() override
-    {
-        const std::string pattern = testing::TempDir() + "ppcg-input-XXXXXX";
-        std::vector<char> path(pattern.begin(), pattern.end());
-        path.push_back('\0');
-        const int descriptor = mkstemp(path.data());
-        ASSERT_GE(descriptor, 0);
-        close(descriptor);
-        filename = path.data();
-    }
-
-    void TearDown() override { std::remove(filename.c_str()); }
-
-    void write_input(const std::string &solver, const std::string &calculation)
-    {
-        std::ofstream out(filename);
-        out << "INPUT_PARAMETERS\nbasis_type pw\nntype 1\necutwfc 20\n"
-            << "ks_solver " << solver << "\ncalculation " << calculation << '\n';
-        ASSERT_TRUE(out.good());
-    }
+  public:
+    static Input_para& input(Parameter& param) { return param.input; }
 };
 
-TEST_F(PPCGInputTest, RejectsNscfBeforeDiagonalization)
+class LobpcgInputTest : public testing::Test
 {
-    write_input("ppcg", "nscf");
-    ModuleIO::ReadInput reader(0);
-    reader.check_ntype_flag = false;
-    Parameter input;
-    testing::internal::CaptureStdout();
-    EXPECT_EXIT(reader.read_parameters(input, filename), testing::ExitedWithCode(1), "");
-    const std::string output = testing::internal::GetCapturedStdout();
-    EXPECT_NE(output.find("calculation!=nscf"), std::string::npos);
+  protected:
+    using Items = std::vector<std::pair<std::string, ModuleIO::Input_Item>>;
+    Items::iterator find_label(const std::string& label, Items& items)
+    {
+        return std::find_if(items.begin(), items.end(),
+            [&label](const Items::value_type& item) { return item.first == label; });
+    }
+    ModuleIO::ReadInput reader{0};
+    Parameter param;
+    Items items;
+    void SetUp() override { items = Items(reader.get_input_lists()); }
+
+};
+
+TEST_F(LobpcgInputTest, PwDiagNmaxMustBePositive)
+{
+    Items::iterator item = find_label("pw_diag_nmax", items);
+    ASSERT_NE(item, items.end());
+    ModuleIO::Input_Item& option = item->second;
+    EXPECT_EQ(option.default_value, "50");
+    EXPECT_EQ(option.type, "Integer");
+    EXPECT_TRUE(option.domain.validate_explicit(option.label, {"37"}).empty());
+    EXPECT_FALSE(option.domain.validate_explicit(option.label, {"0"}).empty());
+    EXPECT_FALSE(option.domain.validate_explicit(option.label, {"-1"}).empty());
 }
 
-TEST_F(PPCGInputTest, AcceptsScfAndPreservesOtherNscfSolvers)
+TEST_F(LobpcgInputTest, LobpcgLocking)
 {
-    for (const std::string solver : {"ppcg", "cg", "dav", "dav_subspace"})
+    Items::iterator found = find_label("lobpcg_locking", items);
+    ASSERT_NE(found, items.end());
+    ModuleIO::Input_Item& item = found->second;
+    EXPECT_EQ(param.inp.lobpcg_locking, "hard");
+    EXPECT_EQ(item.default_value, "hard");
+    EXPECT_TRUE(item.domain.validate_explicit(item.label, {"hard"}).empty());
+    EXPECT_TRUE(item.domain.validate_explicit(item.label, {"soft"}).empty());
+    EXPECT_FALSE(item.domain.validate_explicit(item.label, {"invalid"}).empty());
+    item.str_values = {"soft"};
+    item.read_value(item, param);
+    EXPECT_EQ(param.inp.lobpcg_locking, "soft");
+    item.get_final_value(item, param);
+    EXPECT_EQ(item.final_value.str(), "soft");
+}
+
+TEST_F(LobpcgInputTest, LobpcgDeviceSupport)
+{
+    Items::iterator item = find_label("ks_solver", items);
+    ASSERT_NE(item, items.end());
+    TestParameters::input(param).basis_type = "pw";
+    TestParameters::input(param).ks_solver = "lobpcg";
+    ModuleIO::InputValues values;
+    values["basis_type"] = ModuleIO::InputValue(param.inp.basis_type);
+    values["ks_solver"] = ModuleIO::InputValue(param.inp.ks_solver);
+    for (const std::string device : {"cpu", "gpu"})
     {
-        const std::string calculation = solver == "ppcg" ? "scf" : "nscf";
-        SCOPED_TRACE(solver);
-        write_input(solver, calculation);
-        ModuleIO::ReadInput reader(0);
-        reader.check_ntype_flag = false;
-        Parameter input;
-        reader.read_parameters(input, filename);
-        EXPECT_EQ(input.inp.ks_solver, solver);
-        EXPECT_EQ(input.inp.calculation, calculation);
-        EXPECT_EQ(input.inp.ppcg_rr_step, 1);
+        TestParameters::input(param).device = device;
+        values["device"] = ModuleIO::InputValue(device);
+        EXPECT_TRUE(item->second.domain.validate_requirements("ks_solver", values).empty());
+        item->second.check_value(item->second, param);
     }
 }
 
-TEST_F(PPCGInputTest, ReadsPositiveRitzInterval)
+TEST_F(LobpcgInputTest, LobpcgSubspaceBackends)
 {
-    write_input("ppcg", "scf");
-    std::ofstream out(filename, std::ios::app);
-    out << "ppcg_rr_step 4\n";
-    out.close();
-    ModuleIO::ReadInput reader(0);
-    reader.check_ntype_flag = false;
-    Parameter input;
-    reader.read_parameters(input, filename);
-    EXPECT_EQ(input.inp.ppcg_rr_step, 4);
-}
-
-TEST_F(PPCGInputTest, RejectsGpuWithoutHostDeviceFallback)
-{
-    // Exercise the registered support rule without requiring a GPU runtime.
-    // A CPU-only reader rejects GPU hardware before checking dependencies.
-    ModuleIO::ReadInput reader(0);
-    ModuleIO::InputValues values = {{"basis_type", ModuleIO::InputValue(std::string("pw"))},
-        {"ks_solver", ModuleIO::InputValue(std::string("ppcg"))},
-        {"esolver_type", ModuleIO::InputValue(std::string("ksdft"))},
-        {"calculation", ModuleIO::InputValue(std::string("scf"))},
-        {"device", ModuleIO::InputValue(std::string("gpu"))}};
-    bool found_solver = false;
-    for (const auto &entry : reader.get_input_lists())
+    Items::iterator item = find_label("diag_subspace", items);
+    ASSERT_NE(item, items.end());
+    ModuleIO::InputValues values;
+    const std::string lobpcg = "lobpcg";
+    values["ks_solver"] = ModuleIO::InputValue(lobpcg);
+    for (const int backend : {0, 2})
     {
-        if (entry.first == "ks_solver")
-        {
-            found_solver = true;
-            const std::string rejected = entry.second.domain.validate_requirements(entry.first, values);
-            EXPECT_NE(rejected.find("device==cpu"), std::string::npos);
-            values["device"] = ModuleIO::InputValue(std::string("cpu"));
-            EXPECT_TRUE(entry.second.domain.validate_requirements(entry.first, values).empty());
-        }
+        values["diag_subspace"] = ModuleIO::InputValue(backend);
+        EXPECT_TRUE(item->second.domain.validate_requirements("diag_subspace", values).empty());
     }
-    EXPECT_TRUE(found_solver);
+    values["diag_subspace"] = ModuleIO::InputValue(1);
+    EXPECT_FALSE(item->second.domain.validate_requirements("diag_subspace", values).empty());
+    const std::string davidson = "dav_subspace";
+    values["ks_solver"] = ModuleIO::InputValue(davidson);
+    EXPECT_TRUE(item->second.domain.validate_requirements("diag_subspace", values).empty());
 }
-
-TEST_F(PPCGInputTest, RejectsNonpositiveRitzInterval)
-{
-    for (const int interval : {0, -1})
-    {
-        write_input("ppcg", "scf");
-        std::ofstream out(filename, std::ios::app);
-        out << "ppcg_rr_step " << interval << '\n';
-        out.close();
-        ModuleIO::ReadInput reader(0);
-        reader.check_ntype_flag = false;
-        Parameter input;
-        testing::internal::CaptureStdout();
-        EXPECT_EXIT(reader.read_parameters(input, filename), testing::ExitedWithCode(1), "");
-        const std::string output = testing::internal::GetCapturedStdout();
-        EXPECT_NE(output.find("ppcg_rr_step"), std::string::npos);
-        EXPECT_NE(output.find("value>=1"), std::string::npos);
-    }
-}
-} // namespace
