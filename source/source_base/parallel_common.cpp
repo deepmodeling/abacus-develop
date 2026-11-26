@@ -126,8 +126,9 @@ void bcast_int(int* object, const int n, const MPI_Comm mpi_comm, const int root
 #ifdef __MPI
     MPI_Bcast(object, n, MPI_INT, root, mpi_comm);
 #else
-    // A serial run has one rank, which is always the root, so the payload is
-    // already in place everywhere. The other arguments are unused.
+    // A serial run has a single rank, so whatever payload the caller passed is
+    // already the one every rank should end up with. A `root` other than 0 can
+    // only be a caller bug; there is no peer to receive from, so nothing to do.
     (void)object;
     (void)n;
     (void)mpi_comm;
