@@ -6,11 +6,11 @@
 
 #include "source_base/timer_wrapper.h"
 
-
 namespace OFDFT
 {
 
-void print_info(const int iter,
+void print_info(
+    const int iter,
     ModuleBase::TimePoint &iter_time,
     const double &energy_current,
     const double &energy_last,
@@ -22,5 +22,3 @@ void print_info(const int iter,
 }
 
 #endif
-
-

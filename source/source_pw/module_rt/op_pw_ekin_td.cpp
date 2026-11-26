@@ -12,7 +12,7 @@ namespace hamilt
 {
 
 template <typename T, typename Device>
-TDEkineticPW<T, Device>::TDEkineticPW(const ModulePW::PW_Basis_K* wfc_basis_in) : wfc_basis(wfc_basis_in)
+TDEkineticPW<T, Device>::TDEkineticPW(const ModulePW::PW_Basis_K *wfc_basis_in) : wfc_basis(wfc_basis_in)
 {
     this->classname = "TDEkineticPW";
     this->cal_type = calculation_type::pw_ekinetic_td;
@@ -28,10 +28,12 @@ void TDEkineticPW<T, Device>::init(const int ik)
     this->ik = ik;
     const int npw = this->wfc_basis->npwk[ik];
     using CtDevice = typename ct::PsiToContainer<Device>::type;
-    if (this->factor_.NumElements() < std::max(1, npw) || this->factor_.data_type() != ct::DataTypeToEnum<Real>::value
-        || this->factor_.device_type() != ct::DeviceTypeToEnum<CtDevice>::value)
+    if (this->factor_.NumElements() < std::max(1, npw) ||
+        this->factor_.data_type() != ct::DataTypeToEnum<Real>::value ||
+        this->factor_.device_type() != ct::DeviceTypeToEnum<CtDevice>::value)
     {
-        this->factor_ = ct::Tensor(ct::DataTypeToEnum<Real>::value, ct::DeviceTypeToEnum<CtDevice>::value, {std::max(1, npw)});
+        this->factor_ =
+            ct::Tensor(ct::DataTypeToEnum<Real>::value, ct::DeviceTypeToEnum<CtDevice>::value, {std::max(1, npw)});
     }
     std::vector<Real> factor(npw);
     for (int ig = 0; ig < npw; ++ig)
@@ -41,9 +43,8 @@ void TDEkineticPW<T, Device>::init(const int ik)
     }
     if (npw > 0)
     {
-        base_device::memory::synchronize_memory_op<Real, Device, base_device::DEVICE_CPU>()(this->factor_.template data<Real>(),
-                                                                                            factor.data(),
-                                                                                            npw);
+        base_device::memory::synchronize_memory_op<Real, Device, base_device::DEVICE_CPU>()(
+            this->factor_.template data<Real>(), factor.data(), npw);
     }
     if (this->next_op != nullptr)
     {
@@ -53,27 +54,22 @@ void TDEkineticPW<T, Device>::init(const int ik)
 }
 
 template <typename T, typename Device>
-void TDEkineticPW<T, Device>::act(const int nbands,
-                                  const int nbasis,
-                                  const int npol,
-                                  const T* tmpsi_in,
-                                  T* tmhpsi,
-                                  const int ngk_ik,
-                                  const bool is_first_node) const
+void TDEkineticPW<T, Device>::act(
+    const int nbands,
+    const int nbasis,
+    const int npol,
+    const T *tmpsi_in,
+    T *tmhpsi,
+    const int ngk_ik,
+    const bool is_first_node) const
 {
     ModuleBase::timer::start("TDEkineticPW", "act");
     // Reuse the CPU/CUDA/HIP diagonal kinetic kernel for 2*A*p + A^2.
     if (nbands > 0)
     {
-        ekinetic_pw_op<Real, Device>()(this->ctx,
-                                       nbands,
-                                       ngk_ik,
-                                       nbasis / npol,
-                                       is_first_node,
-                                       Real(1),
-                                       this->factor_.template data<Real>(),
-                                       tmhpsi,
-                                       tmpsi_in);
+        ekinetic_pw_op<Real, Device>()(
+            this->ctx, nbands, ngk_ik, nbasis / npol, is_first_node, Real(1), this->factor_.template data<Real>(),
+            tmhpsi, tmpsi_in);
     }
     ModuleBase::timer::end("TDEkineticPW", "act");
 }

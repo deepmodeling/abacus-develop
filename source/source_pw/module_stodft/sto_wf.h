@@ -16,29 +16,29 @@ class Stochastic_WF
 
     ~Stochastic_WF();
 
-    void init(K_Vectors* p_kv, const int npwx_in);
+    void init(K_Vectors *p_kv, const int npwx_in);
 
     // origin stochastic wavefunctions in CPU
-    psi::Psi<T, base_device::DEVICE_CPU>* chi0_cpu = nullptr;
+    psi::Psi<T, base_device::DEVICE_CPU> *chi0_cpu = nullptr;
     // origin stochastic wavefunctions in GPU or CPU
-    psi::Psi<T, Device>* chi0 = nullptr;
+    psi::Psi<T, Device> *chi0 = nullptr;
     // stochastic wavefunctions after in reciprocal space orthogonalized with KS wavefunctions
-    psi::Psi<T, Device>* chiortho = nullptr;
+    psi::Psi<T, Device> *chiortho = nullptr;
     // sqrt(f(H))|chi>
-    psi::Psi<T, Device>* shchi = nullptr;
+    psi::Psi<T, Device> *shchi = nullptr;
     int nchi = 0;         ///< Total number of stochatic obitals
-    int* nchip = nullptr; ///< The number of stochatic orbitals in current process of each k point.
+    int *nchip = nullptr; ///< The number of stochatic orbitals in current process of each k point.
     int nchip_max = 0;    ///< Max number of stochastic orbitals among all k points.
     int nks = 0;          ///< number of k-points
     int npwx = 0;         ///< max ngk[ik] in all processors
     int nbands_diag = 0;  ///< number of bands obtained from diagonalization
     int nbands_total = 0; ///< number of bands in total, nbands_total=nchi+nbands_diag;
-    std::vector<int> ngk;   ///< ngk in klist
+    std::vector<int> ngk; ///< ngk in klist
   public:
     // Tn(H)|chi>
-    psi::Psi<T, Device>* chiallorder = nullptr;
+    psi::Psi<T, Device> *chiallorder = nullptr;
     // allocate chiallorder
-    void allocate_chiallorder(const int& norder);
+    void allocate_chiallorder(const int &norder);
     // chiallorder cost too much memories and should be cleaned after scf.
     void clean_chiallorder();
 
@@ -47,10 +47,11 @@ class Stochastic_WF
     void init_sto_orbitals(const int seed_in);
     // init stochastic orbitals from a large Ecut
     // It can test the convergence of SDFT with respect to Ecut
-    void init_sto_orbitals_Ecut(const int seed_in,
-                                const K_Vectors& kv,
-                                const ModulePW::PW_Basis_K& wfcpw,
-                                const int max_ecut);
+    void init_sto_orbitals_Ecut(
+        const int seed_in,
+        const K_Vectors &kv,
+        const ModulePW::PW_Basis_K &wfcpw,
+        const int max_ecut);
     // allocate chi0
     void allocate_chi0();
     // update stochastic orbitals

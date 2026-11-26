@@ -9,10 +9,11 @@ namespace hamilt
 {
 
 template <typename T, typename Device>
-TDNonlocalPW<T, Device>::TDNonlocalPW(const int* isk_in,
-                                      const pseudopot_cell_vnl* ppcell_in,
-                                      const UnitCell* ucell_in,
-                                      const ModulePW::PW_Basis_K* wfc_basis)
+TDNonlocalPW<T, Device>::TDNonlocalPW(
+    const int *isk_in,
+    const pseudopot_cell_vnl *ppcell_in,
+    const UnitCell *ucell_in,
+    const ModulePW::PW_Basis_K *wfc_basis)
 {
     if (isk_in == nullptr || ppcell_in == nullptr || ucell_in == nullptr || wfc_basis == nullptr)
     {
@@ -45,7 +46,8 @@ void TDNonlocalPW<T, Device>::init(const int ik_in)
         // Allocate the time-dependent projector cache on first use.
         if (this->vkb_td == nullptr)
         {
-            const std::int64_t projector_elements = static_cast<std::int64_t>(this->ppcell->nkb) * this->wfcpw->npwk_max;
+            const std::int64_t projector_elements =
+                static_cast<std::int64_t>(this->ppcell->nkb) * this->wfcpw->npwk_max;
             resmem_complex_op()(this->vkb_td, projector_elements, "TDNL::vkb_td");
         }
 
@@ -64,26 +66,18 @@ void TDNonlocalPW<T, Device>::init(const int ik_in)
 }
 
 template <typename T, typename Device>
-void TDNonlocalPW<T, Device>::act(const int nbands,
-                                  const int nbasis,
-                                  const int npol,
-                                  const T* tmpsi_in,
-                                  T* tmhpsi,
-                                  const int ngk_ik,
-                                  const bool is_first_node) const
+void TDNonlocalPW<T, Device>::act(
+    const int nbands,
+    const int nbasis,
+    const int npol,
+    const T *tmpsi_in,
+    T *tmhpsi,
+    const int ngk_ik,
+    const bool is_first_node) const
 {
-    this->workspace_.apply(*this->ucell,
-                           *this->ppcell,
-                           *this->wfcpw,
-                           this->isk[this->ik],
-                           nbands,
-                           nbasis,
-                           npol,
-                           ngk_ik,
-                           is_first_node,
-                           this->vkb_td,
-                           tmpsi_in,
-                           tmhpsi);
+    this->workspace_.apply(
+        *this->ucell, *this->ppcell, *this->wfcpw, this->isk[this->ik], nbands, nbasis, npol, ngk_ik, is_first_node,
+        this->vkb_td, tmpsi_in, tmhpsi);
 }
 
 // Explicit CPU template instantiations.

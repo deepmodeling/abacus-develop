@@ -20,8 +20,12 @@ hamilt::HamiltPW<T, Device>::HamiltPW(
 {
 }
 
-template <typename T, typename Device> hamilt::HamiltPW<T, Device>::~HamiltPW() {};
-template <typename T, typename Device> void hamilt::HamiltPW<T, Device>::updateHk(int) {}
+template <typename T, typename Device>
+hamilt::HamiltPW<T, Device>::~HamiltPW() {};
+template <typename T, typename Device>
+void hamilt::HamiltPW<T, Device>::updateHk(int)
+{
+}
 template <typename T, typename Device>
 void hamilt::HamiltPW<T, Device>::sPsi(
     T const *,
@@ -42,15 +46,7 @@ StoHamiltPW<T, Device>::StoHamiltPW(
     const int &npol,
     Real *emin_in,
     Real *emax_in)
-    : hamilt::HamiltPW<T, Device>(
-          pot_in,
-          wfc_basis,
-          p_kv,
-          nlpp,
-          nullptr,
-          ucell,
-          nullptr),
-      ngk(p_kv->ngk)
+    : hamilt::HamiltPW<T, Device>(pot_in, wfc_basis, p_kv, nlpp, nullptr, ucell, nullptr), ngk(p_kv->ngk)
 {
 }
 
@@ -108,18 +104,8 @@ TEST_F(TestStoTool, parallel_distribution)
 
 TEST_F(TestStoTool, convert_psi)
 {
-    psi::Psi<std::complex<double>> psi_in(
-        1,
-        1,
-        10,
-        10,
-        true);
-    psi::Psi<std::complex<float>> psi_out(
-        1,
-        1,
-        10,
-        10,
-        true);
+    psi::Psi<std::complex<double>> psi_in(1, 1, 10, 10, true);
+    psi::Psi<std::complex<float>> psi_out(1, 1, 10, 10, true);
     for (int i = 0; i < 10; ++i)
     {
         psi_in.get_pointer()[i] = std::complex<double>(i, i);
@@ -133,34 +119,13 @@ TEST_F(TestStoTool, convert_psi)
 
 TEST_F(TestStoTool, gatherchi)
 {
-    psi::Psi<std::complex<float>> chi(
-        1,
-        1,
-        10,
-        10,
-        true);
-    psi::Psi<std::complex<float>> chi_all(
-        1,
-        1,
-        10,
-        10,
-        true);
+    psi::Psi<std::complex<float>> chi(1, 1, 10, 10, true);
+    psi::Psi<std::complex<float>> chi_all(1, 1, 10, 10, true);
     int npwx = 10;
-    int nrecv_sto[4] = {1,
-        2,
-        3,
-        4};
-    int displs_sto[4] = {0,
-        1,
-        3,
-        6};
+    int nrecv_sto[4] = {1, 2, 3, 4};
+    int displs_sto[4] = {0, 1, 3, 6};
     int perbands_sto = 1;
-    psi::Psi<std::complex<float>> *p_chi = gatherchi_op<float, base_device::DEVICE_CPU>()(
-        chi,
-        chi_all,
-        npwx,
-        nrecv_sto,
-        displs_sto,
-        perbands_sto);
+    psi::Psi<std::complex<float>> *p_chi =
+        gatherchi_op<float, base_device::DEVICE_CPU>()(chi, chi_all, npwx, nrecv_sto, displs_sto, perbands_sto);
     EXPECT_EQ(p_chi, &chi);
 }

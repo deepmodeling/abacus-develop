@@ -15,28 +15,35 @@ class ETRSPropPW final : public PWProp<T, Device>
     ct::Tensor half_psi_;
     const int npol_;
     const std::vector<int> global_k_;
-    std::ostream& log_;
+    std::ostream &log_;
     bool half_ready_ = false;
     unsigned long long left_gen_ = 0;
-    void report(const hsolver::ExpResult& result, int ik, int elec_step, int scf_iter, bool log_detail) const;
+    void report(
+        const hsolver::ExpResult &result,
+        int ik,
+        int elec_step,
+        int scf_iter,
+        bool log_detail) const;
 
   public:
-    ETRSPropPW(const hsolver::ExpControls& exp_ctrl,
-               int npol,
-               const std::vector<int>& global_k,
-               const hsolver::diag_comm_info& comm,
-               std::ostream& log);
+    ETRSPropPW(
+        const hsolver::ExpControls &exp_ctrl,
+        int npol,
+        const std::vector<int> &global_k,
+        const hsolver::diag_comm_info &comm,
+        std::ostream &log);
     void begin_trial() override;
     void discard_trial() override;
     void invalidate_basis() override;
-    void evolve(TDHamiltPW<T, Device>& hamilt,
-                const TDHistoryPW<T, Device>& history,
-                elecstate::Potential& potential,
-                const elecstate::TDFieldManager& field,
-                psi::Psi<T, Device>* current,
-                int elec_step,
-                int scf_iter,
-                bool log_detail) override;
+    void evolve(
+        TDHamiltPW<T, Device> &hamilt,
+        const TDHistoryPW<T, Device> &history,
+        elecstate::Potential &potential,
+        const elecstate::TDFieldManager &field,
+        psi::Psi<T, Device> *current,
+        int elec_step,
+        int scf_iter,
+        bool log_detail) override;
 };
 } // namespace pw
 #endif

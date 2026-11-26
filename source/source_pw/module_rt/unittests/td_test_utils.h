@@ -11,17 +11,17 @@
 class TestParameters
 {
   private:
-    Parameter& target_;
+    Parameter &target_;
     Input_para input_;
     System_para system_;
 
   public:
-    explicit TestParameters(Parameter& target);
+    explicit TestParameters(Parameter &target);
     ~TestParameters() noexcept;
-    TestParameters(const TestParameters&) = delete;
-    TestParameters& operator=(const TestParameters&) = delete;
-    TestParameters(TestParameters&&) = delete;
-    TestParameters& operator=(TestParameters&&) = delete;
+    TestParameters(const TestParameters &) = delete;
+    TestParameters &operator=(const TestParameters &) = delete;
+    TestParameters(TestParameters &&) = delete;
+    TestParameters &operator=(TestParameters &&) = delete;
 };
 
 namespace td_test
@@ -47,13 +47,13 @@ class Observables : public testing::Test
     Observables();
     void SetUp() override;
     void TearDown() override;
-    Vector projectors(const ModuleBase::Vector3<double>& a);
-    Vector nonlocal(const Vector& beta, const Vector& x, int atom) const;
-    Vector hamiltonian(const ModuleBase::Vector3<double>& a, const Vector& x);
+    Vector projectors(const ModuleBase::Vector3<double> &a);
+    Vector nonlocal(const Vector &beta, const Vector &x, int atom) const;
+    Vector hamiltonian(const ModuleBase::Vector3<double> &a, const Vector &x);
 };
 
 /** @brief Apply a Pauli matrix to a packed two-component vector. */
-Vector pauli(const Vector& x, int axis);
-Complex inner(const Vector& x, const Vector& y);
+Vector pauli(const Vector &x, int axis);
+Complex inner(const Vector &x, const Vector &y);
 } // namespace td_test
 #endif

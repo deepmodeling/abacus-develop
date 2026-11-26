@@ -3,11 +3,11 @@
 
 #include <vector>
 
+#include "source_base/module_device/memory_op.h"
 #include "source_cell/klist.h"
+#include "source_psi/psi.h"
 #include "source_pw/module_stodft/sto_hamilt_pw.h"
 #include "source_pw/module_stodft/sto_wf.h"
-#include "source_base/module_device/memory_op.h"
-#include "source_psi/psi.h"
 
 /**
  * @brief Check if Emin and Emax are converged
@@ -20,14 +20,16 @@
 template <typename FPTYPE, typename Device>
 struct check_che_op
 {
-    using syncmem_complex_h2d_op = base_device::memory::synchronize_memory_op<std::complex<FPTYPE>, Device, base_device::DEVICE_CPU>;
-    void operator()(const int& nche_in,
-                    const double& try_emin,
-                    const double& try_emax,
-                    const int& nbands_sto,
-                    K_Vectors* p_kv,
-                    Stochastic_WF<std::complex<FPTYPE>, Device>* p_stowf,
-                    StoHamiltPW<std::complex<FPTYPE>, Device>* p_hamilt_sto);
+    using syncmem_complex_h2d_op =
+        base_device::memory::synchronize_memory_op<std::complex<FPTYPE>, Device, base_device::DEVICE_CPU>;
+    void operator()(
+        const int &nche_in,
+        const double &try_emin,
+        const double &try_emax,
+        const int &nbands_sto,
+        K_Vectors *p_kv,
+        Stochastic_WF<std::complex<FPTYPE>, Device> *p_stowf,
+        StoHamiltPW<std::complex<FPTYPE>, Device> *p_hamilt_sto);
 };
 
 /**
@@ -39,7 +41,7 @@ struct check_che_op
  */
 struct parallel_distribution
 {
-    parallel_distribution(const int& num_all, const int& np, const int myrank)
+    parallel_distribution(const int &num_all, const int &np, const int myrank)
     {
         int num_per_ = num_all / np;
         int st_per = num_per_ * myrank;
@@ -67,7 +69,11 @@ struct parallel_distribution
  */
 struct info_gatherv
 {
-    info_gatherv(const int& ngroup_per, const int& np, const int& num_in_group, MPI_Comm comm_world)
+    info_gatherv(
+        const int &ngroup_per,
+        const int &np,
+        const int &num_in_group,
+        MPI_Comm comm_world)
         : nrecv(np), displs(np)
     {
         MPI_Allgather(&ngroup_per, 1, MPI_INT, nrecv.data(), 1, MPI_INT, comm_world);
@@ -96,10 +102,10 @@ struct info_gatherv
 template <typename FPTYPE_IN, typename FPTYPE_OUT, typename Device>
 struct convert_psi_op
 {
-    using castmem_complex_op
-        = base_device::memory::cast_memory_op<std::complex<FPTYPE_OUT>, std::complex<FPTYPE_IN>, Device, Device>;
-    void operator()(const psi::Psi<std::complex<FPTYPE_IN>, Device>& psi_in,
-                    psi::Psi<std::complex<FPTYPE_OUT>, Device>& psi_out)
+    using castmem_complex_op =
+        base_device::memory::cast_memory_op<std::complex<FPTYPE_OUT>, std::complex<FPTYPE_IN>, Device, Device>;
+    void operator()(
+        const psi::Psi<std::complex<FPTYPE_IN>, Device> &psi_in, psi::Psi<std::complex<FPTYPE_OUT>, Device> &psi_out)
     {
         psi_in.fix_k(0);
         psi_out.fix_k(0);
@@ -122,12 +128,13 @@ struct convert_psi_op
 template <typename FPTYPE, typename Device>
 struct gatherchi_op
 {
-    psi::Psi<std::complex<FPTYPE>, Device>* operator()(psi::Psi<std::complex<FPTYPE>, Device>& chi,
-                                                       psi::Psi<std::complex<FPTYPE>, Device>& chi_all,
-                                                       const int& npwx,
-                                                       int* nrecv_sto,
-                                                       int* displs_sto,
-                                                       const int perbands_sto);
+    psi::Psi<std::complex<FPTYPE>, Device> *operator()(
+        psi::Psi<std::complex<FPTYPE>, Device> &chi,
+        psi::Psi<std::complex<FPTYPE>, Device> &chi_all,
+        const int &npwx,
+        int *nrecv_sto,
+        int *displs_sto,
+        const int perbands_sto);
 };
 
 #endif

@@ -5,13 +5,14 @@
 
 namespace pw
 {
-TDConserv cal_td_conserv(double local_npsi,
-                         const Charge& charge,
-                         double omega,
-                         int pool_rank,
-                         double orth_before,
-                         double orth_after,
-                         bool full_gram)
+TDConserv cal_td_conserv(
+    double local_npsi,
+    const Charge &charge,
+    double omega,
+    int pool_rank,
+    double orth_before,
+    double orth_after,
+    bool full_gram)
 {
     ModuleBase::timer::start("pw", "cal_td_conserv");
     TDConserv result;

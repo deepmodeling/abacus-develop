@@ -12,7 +12,8 @@ double Occupy::gaussian_parameter = 0.125;
 
 namespace
 {
-template <typename Real> void expect_relative(Real actual, long double expected)
+template <typename Real>
+void expect_relative(Real actual, long double expected)
 {
     const long double magnitude = std::abs(expected);
     const long double tolerance = 32 * std::numeric_limits<Real>::epsilon() * magnitude;
@@ -28,7 +29,8 @@ long double fermi_reference(long double x)
     return boltzmann / (1 + boltzmann);
 }
 
-template <typename Real> class StoFuncTest : public testing::Test
+template <typename Real>
+class StoFuncTest : public testing::Test
 {
   protected:
     Sto_Func<Real> function;
@@ -78,16 +80,8 @@ TYPED_TEST(StoFuncTest, ConstructorUsesSmearingAndInitializesControls)
 
 TYPED_TEST(StoFuncTest, FermiValuesAndRootsMatchIndependentReference)
 {
-    const TypeParam scaled[] = {-1,
-        -0.5,
-        0,
-        0.5,
-        1};
-    const TypeParam energies[] = {-3,
-        -1,
-        1,
-        3,
-        5};
+    const TypeParam scaled[] = {-1, -0.5, 0, 0.5, 1};
+    const TypeParam energies[] = {-3, -1, 1, 3, 5};
     for (int i = 0; i < 5; ++i)
     {
         SCOPED_TRACE(i);
@@ -181,16 +175,8 @@ TYPED_TEST(StoFuncTest, RootCutoffsKeepTheirBoundariesOnOppositeTails)
 
 TYPED_TEST(StoFuncTest, EntropyMatchesHyperbolicReferenceAndHasCorrectSign)
 {
-    const TypeParam scaled[] = {-1,
-        -0.5,
-        0,
-        0.5,
-        1};
-    const TypeParam energies[] = {-3,
-        -1,
-        1,
-        3,
-        5};
+    const TypeParam scaled[] = {-1, -0.5, 0, 0.5, 1};
+    const TypeParam energies[] = {-3, -1, 1, 3, 5};
     for (int i = 0; i < 5; ++i)
     {
         SCOPED_TRACE(i);
@@ -256,16 +242,8 @@ TYPED_TEST(StoFuncTest, EntropyTailGuardsAvoidLogOfZero)
 
 TYPED_TEST(StoFuncTest, TrigonometricFunctionsUseMappedEnergyAndTime)
 {
-    const TypeParam scaled[] = {-1,
-        -0.5,
-        0,
-        0.5,
-        1};
-    const TypeParam energies[] = {-3,
-        -1,
-        1,
-        3,
-        5};
+    const TypeParam scaled[] = {-1, -0.5, 0, 0.5, 1};
+    const TypeParam energies[] = {-3, -1, 1, 3, 5};
     this->function.t = 0.25;
     for (int i = 0; i < 5; ++i)
     {
@@ -296,11 +274,7 @@ TYPED_TEST(StoFuncTest, GaussiansMatchNormalDistributionAndWidthScaling)
     const long double two_pi = 2 * pi;
     const long double normalization = std::sqrt(two_pi);
     const TypeParam widths[] = {0.5, 2};
-    const TypeParam offsets[] = {-2,
-        -1,
-        0,
-        1,
-        2};
+    const TypeParam offsets[] = {-2, -1, 0, 1, 2};
     for (const TypeParam width : widths)
     {
         SCOPED_TRACE(width);
@@ -369,10 +343,7 @@ TYPED_TEST(StoFuncTest, RootGaussianHasItsOwnWiderTailCutoff)
     const long double pi = std::acos(-1.0L);
     const long double two_pi = 2 * pi;
     const long double normalization = std::sqrt(two_pi);
-    const TypeParam inside[] = {-16,
-        -14,
-        14,
-        16};
+    const TypeParam inside[] = {-16, -14, 14, 16};
     for (const TypeParam energy : inside)
     {
         SCOPED_TRACE(energy);

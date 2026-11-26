@@ -1,7 +1,7 @@
 #include "source_base/parallel_global.h"
+#include "source_hsolver/module_linalg/unittests/linear_test_utils.h"
 #include "source_pw/module_rt/cn_solver_pw.h"
 #include "source_pw/module_rt/td_orbital_ops.h"
-#include "source_hsolver/module_linalg/unittests/linear_test_utils.h"
 
 #include <algorithm>
 #include <cmath>
@@ -23,21 +23,22 @@ class DenseHamiltonian final : public hsolver::HSOperator<T>
     std::vector<int> dimensions;
     bool spinor = false;
 
-    explicit DenseHamiltonian(const std::vector<int>& sizes) : dimensions(sizes)
+    explicit DenseHamiltonian(const std::vector<int> &sizes) : dimensions(sizes)
     {
-        for (const int n: sizes)
+        for (const int n : sizes)
         {
             matrices.push_back(linear_test::hermitian<T>(n));
         }
     }
-    void update_k(const int ik) override
-    {
-        current_k_ = ik;
-    }
-    void hpsi(const T* x, T* y, const int ld, const int nvec) const override
+    void update_k(const int ik) override { current_k_ = ik; }
+    void hpsi(
+        const T *x,
+        T *y,
+        const int ld,
+        const int nvec) const override
     {
         const int n = dimensions.at(current_k_);
-        const std::vector<T>& h = matrices.at(current_k_);
+        const std::vector<T> &h = matrices.at(current_k_);
         for (int band = 0; band < nvec; ++band)
         {
             std::fill_n(y + band * ld, ld, T(0));
@@ -52,7 +53,11 @@ class DenseHamiltonian final : public hsolver::HSOperator<T>
             }
         }
     }
-    void spsi(const T* x, T* y, const int ld, const int nvec) const override
+    void spsi(
+        const T *x,
+        T *y,
+        const int ld,
+        const int nvec) const override
     {
         FAIL() << "PW CN propagation must not request an overlap operator";
     }
@@ -61,7 +66,7 @@ class DenseHamiltonian final : public hsolver::HSOperator<T>
     int current_k_ = -1;
 };
 
-void initialize_basis(const std::vector<int>& sizes, ModulePW::PW_Basis_K* basis)
+void initialize_basis(const std::vector<int> &sizes, ModulePW::PW_Basis_K *basis)
 {
     basis->nks = sizes.size();
     basis->npwk_max = *std::max_element(sizes.begin(), sizes.end());
@@ -88,7 +93,12 @@ void initialize_basis(const std::vector<int>& sizes, ModulePW::PW_Basis_K* basis
 }
 
 template <typename T>
-std::vector<linear_test::Complex> dense_cn(const std::vector<T>& h, const std::vector<T>& previous, int n, int bands, double dt)
+std::vector<linear_test::Complex> dense_cn(
+    const std::vector<T> &h,
+    const std::vector<T> &previous,
+    int n,
+    int bands,
+    double dt)
 {
     std::vector<T> lhs(n * n);
     std::vector<T> rhs_matrix(n * n);
@@ -106,7 +116,11 @@ std::vector<linear_test::Complex> dense_cn(const std::vector<T>& h, const std::v
 }
 
 template <typename T>
-void check_dense_step(const DenseHamiltonian<T>& op, const psi::Psi<T>& previous, const psi::Psi<T>& current, const double dt)
+void check_dense_step(
+    const DenseHamiltonian<T> &op,
+    const psi::Psi<T> &previous,
+    const psi::Psi<T> &current,
+    const double dt)
 {
     const double tolerance = std::is_same<T, std::complex<float>>::value ? 1e-4 : 1e-10;
     const int bands = current.get_nbands();
@@ -241,7 +255,8 @@ TYPED_TEST(PWTDDFTTest, SpinorCNMatchesDenseSolve)
                     overlap += std::conj(Wide(current(other, row))) * Wide(current(band, row));
                     for (int j = 0; j < n; ++j)
                     {
-                        expectation += std::conj(reference[other * n + i]) * Wide(op.matrices[ik][j * n + i]) * reference[band * n + j];
+                        expectation += std::conj(reference[other * n + i]) * Wide(op.matrices[ik][j * n + i]) *
+                                       reference[band * n + j];
                     }
                 }
                 const Wide identity = band == other ? Wide(1) : Wide(0);
@@ -310,9 +325,9 @@ TYPED_TEST(PWTDDFTTest, DenseCNCorrectorsAndConservation)
 #else
     const hsolver::diag_comm_info comm(0, 1);
 #endif
-    for (const std::string method: {"bicgstab", "cgs", "gmres", "bicgstab_cn", "cgs_cn"})
+    for (const std::string method : {"bicgstab", "cgs", "gmres", "bicgstab_cn", "cgs_cn"})
     {
-        for (const std::string precond: {"none", "kinetic", "kinetic_recycle", "kinetic_subspace"})
+        for (const std::string precond : {"none", "kinetic", "kinetic_recycle", "kinetic_subspace"})
         {
             const bool recycle = precond == "kinetic_recycle";
             const bool cn_variant = method == "bicgstab_cn" || method == "cgs_cn";
@@ -477,7 +492,7 @@ TYPED_TEST(PWTDDFTTest, UnequalOccupationsAndDiagnosticsPreservePropagation)
     occupations(0, 1) = 0.4;
     occupations(0, 2) = 0.0;
     std::vector<T> without_stat;
-    for (const bool out_stat: {false, true})
+    for (const bool out_stat : {false, true})
     {
         std::ostringstream log;
         hsolver::CNControls cn_ctrl;
@@ -535,14 +550,14 @@ TYPED_TEST(PWTDDFTTest, UnequalOccupationsAndDiagnosticsPreservePropagation)
             }
             const double expected_electrons = out_stat ? 1.4 : 0.0;
             EXPECT_NEAR(orbitals.wave_electrons(occupations), expected_electrons, tolerance);
-            const T* data = current.get_pointer();
+            const T *data = current.get_pointer();
             if (!out_stat)
             {
                 without_stat.insert(without_stat.end(), data, data + ld * bands);
             }
             else
             {
-                const T* baseline = without_stat.data() + (step - 1) * ld * bands;
+                const T *baseline = without_stat.data() + (step - 1) * ld * bands;
                 EXPECT_EQ(std::memcmp(data, baseline, ld * bands * sizeof(T)), 0);
             }
             previous = current;
@@ -552,7 +567,7 @@ TYPED_TEST(PWTDDFTTest, UnequalOccupationsAndDiagnosticsPreservePropagation)
 
 } // namespace
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
     int nproc = 1;
     int nthread = 1;

@@ -1,10 +1,14 @@
 #include "sto_che.h"
-#include "source_base/module_device/device.h"
 #include "source_base/kernels/math_kernel_op.h"
 #include "source_base/module_container/ATen/kernels/blas.h"
+#include "source_base/module_device/device.h"
 
 template <typename REAL, typename Device>
-void StoChe<REAL, Device>::init(const int& nche, const int& method, const REAL& emax_sto, const REAL& emin_sto)
+void StoChe<REAL, Device>::init(
+    const int &nche,
+    const int &method,
+    const REAL &emax_sto,
+    const REAL &emin_sto)
 {
     // release old resources first (safe for default-constructed state too)
     this->p_che.reset();
@@ -16,14 +20,14 @@ void StoChe<REAL, Device>::init(const int& nche, const int& method, const REAL& 
     this->p_che.reset(new ModuleBase::Chebyshev<REAL, Device>(nche));
     if (method == 1)
     {
-        REAL* spolyv_ptr = nullptr;
+        REAL *spolyv_ptr = nullptr;
         resmem_var_op()(spolyv_ptr, nche);
         this->spolyv.reset(spolyv_ptr);
         this->spolyv_cpu.resize(nche);
     }
     else
     {
-        REAL* spolyv_ptr = nullptr;
+        REAL *spolyv_ptr = nullptr;
         resmem_var_op()(spolyv_ptr, nche * nche);
         this->spolyv.reset(spolyv_ptr);
     }

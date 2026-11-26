@@ -19,7 +19,7 @@ void KEDF_TF::set_para(int nx, double dV, double tf_weight)
  * @param prho charge density
  * @return the energy of TF KEDF
  */
-double KEDF_TF::get_energy(const double* const* prho)
+double KEDF_TF::get_energy(const double *const *prho)
 {
     double energy = 0.; // in Ry
     if (PARAM.inp.nspin == 1)
@@ -55,7 +55,7 @@ double KEDF_TF::get_energy(const double* const* prho)
  * @param ir the index of real space grid
  * @return the energy density of TF KEDF
  */
-double KEDF_TF::get_energy_density(const double* const* prho, int is, int ir)
+double KEDF_TF::get_energy_density(const double *const *prho, int is, int ir)
 {
     double energyDen = 0.; // in Ry
     energyDen = this->c_tf_ * std::pow(prho[is][ir], 5. / 3.) * this->tf_weight_;
@@ -65,11 +65,11 @@ double KEDF_TF::get_energy_density(const double* const* prho, int is, int ir)
 /**
  * @brief Get the kinetic energy of TF KEDF, and add it onto rtau_tf
  * \f[ \tau_{TF} = c_{TF} * \prho^{5/3} \f]
- * 
+ *
  * @param prho charge density
  * @param rtau_tf rtau_tf => rtau_tf + tau_tf
  */
-void KEDF_TF::tau_tf(const double* const* prho, double* rtau_tf)
+void KEDF_TF::tau_tf(const double *const *prho, double *rtau_tf)
 {
     if (PARAM.inp.nspin == 1)
     {
@@ -98,7 +98,7 @@ void KEDF_TF::tau_tf(const double* const* prho, double* rtau_tf)
  * @param prho charge density
  * @param rpotential rpotential => rpotential + V_{TF}
  */
-void KEDF_TF::tf_potential(const double* const* prho, ModuleBase::matrix& rpotential)
+void KEDF_TF::tf_potential(const double *const *prho, ModuleBase::matrix &rpotential)
 {
     ModuleBase::TITLE("KEDF_TF", "tf_potential");
     ModuleBase::timer::start("KEDF_TF", "tf_potential");

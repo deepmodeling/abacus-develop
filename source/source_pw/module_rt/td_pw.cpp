@@ -9,7 +9,11 @@
 
 namespace pw
 {
-void check_td_input(const Input_para& input, const UnitCell& cell, int xc_type, bool cal_exx)
+void check_td_input(
+    const Input_para &input,
+    const UnitCell &cell,
+    int xc_type,
+    bool cal_exx)
 {
     if (input.out_current != 0 && input.out_current != 1)
     {
@@ -21,12 +25,14 @@ void check_td_input(const Input_para& input, const UnitCell& cell, int xc_type, 
     }
     if (unitcell::if_atoms_can_move(cell.atoms, cell.ntype))
     {
-        ModuleBase::WARNING_QUIT("ESolver_KS_PW_TDDFT",
-                                 "PW RT-TDDFT requires fixed ions; set every atom's movement flags to 0 0 0 in STRU.");
+        ModuleBase::WARNING_QUIT(
+            "ESolver_KS_PW_TDDFT",
+            "PW RT-TDDFT requires fixed ions; set every atom's movement flags to 0 0 0 in STRU.");
     }
     if (input.mdp.md_type == "npt" || input.mdp.md_type == "msst")
     {
-        ModuleBase::WARNING_QUIT("ESolver_KS_PW_TDDFT", "PW RT-TDDFT requires a fixed cell; NPT and MSST are not supported.");
+        ModuleBase::WARNING_QUIT(
+            "ESolver_KS_PW_TDDFT", "PW RT-TDDFT requires a fixed cell; NPT and MSST are not supported.");
     }
     if (input.dft_plus_u != 0)
     {
@@ -34,7 +40,8 @@ void check_td_input(const Input_para& input, const UnitCell& cell, int xc_type, 
     }
     if (input.sc_mag_switch)
     {
-        ModuleBase::WARNING_QUIT("ESolver_KS_PW_TDDFT", "PW RT-TDDFT does not support spin constraints; set sc_mag_switch=false.");
+        ModuleBase::WARNING_QUIT(
+            "ESolver_KS_PW_TDDFT", "PW RT-TDDFT does not support spin constraints; set sc_mag_switch=false.");
     }
     if (xc_type == 3 || xc_type == 5)
     {
@@ -42,11 +49,14 @@ void check_td_input(const Input_para& input, const UnitCell& cell, int xc_type, 
     }
     if (cal_exx)
     {
-        ModuleBase::WARNING_QUIT("ESolver_KS_PW_TDDFT", "PW RT-TDDFT does not support exact exchange (EXX); use a non-hybrid functional.");
+        ModuleBase::WARNING_QUIT(
+            "ESolver_KS_PW_TDDFT", "PW RT-TDDFT does not support exact exchange (EXX); use a non-hybrid functional.");
     }
-    if ((input.nspin != 1 && input.nspin != 2 && input.nspin != 4) || input.bndpar != 1 || (input.td_stype != 0 && input.td_stype != 1))
+    if ((input.nspin != 1 && input.nspin != 2 && input.nspin != 4) || input.bndpar != 1 ||
+        (input.td_stype != 0 && input.td_stype != 1))
     {
-        ModuleBase::WARNING_QUIT("ESolver_KS_PW_TDDFT", "PW RT-TDDFT requires nspin=1, 2 or 4, bndpar=1 and td_stype=0 or 1.");
+        ModuleBase::WARNING_QUIT(
+            "ESolver_KS_PW_TDDFT", "PW RT-TDDFT requires nspin=1, 2 or 4, bndpar=1 and td_stype=0 or 1.");
     }
     if (input.nspin == 4 && !input.noncolin)
     {
@@ -62,7 +72,7 @@ void check_td_input(const Input_para& input, const UnitCell& cell, int xc_type, 
     }
 }
 
-double td_momentum_bound(const ModulePW::PW_Basis_K& basis, const double tpiba)
+double td_momentum_bound(const ModulePW::PW_Basis_K &basis, const double tpiba)
 {
     ModuleBase::timer::start("pw", "td_momentum_bound");
     double bound = 0.0;
@@ -78,11 +88,12 @@ double td_momentum_bound(const ModulePW::PW_Basis_K& basis, const double tpiba)
     return bound;
 }
 
-void ensure_td_vnl(const UnitCell& cell,
-                   const double unshifted_bound,
-                   const ModuleBase::Vector3<double>& A_right_ha,
-                   const ModuleBase::Vector3<double>& A_prop_ha,
-                   pseudopot_cell_vnl* projectors)
+void ensure_td_vnl(
+    const UnitCell &cell,
+    const double unshifted_bound,
+    const ModuleBase::Vector3<double> &A_right_ha,
+    const ModuleBase::Vector3<double> &A_prop_ha,
+    pseudopot_cell_vnl *projectors)
 {
     ModuleBase::timer::start("pw", "ensure_td_vnl");
     const double field_bound = std::max(A_right_ha.norm(), A_prop_ha.norm());

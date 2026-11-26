@@ -1,21 +1,21 @@
 #ifndef KEDF_MANAGER_H
 #define KEDF_MANAGER_H
 
-#include "source_basis/module_pw/pw_basis.h"
+#include "kedf_extwt.h"
 #include "kedf_lkt.h"
+#include "kedf_ml.h"
 #include "kedf_tf.h"
 #include "kedf_vw.h"
 #include "kedf_wt.h"
-#include "kedf_extwt.h"
 #include "kedf_xwm.h"
-#include "kedf_ml.h"
+#include "source_basis/module_pw/pw_basis.h"
 
 struct Input_para;
 
 class KEDF_Manager
 {
   public:
-    KEDF_Manager(){}
+    KEDF_Manager() {}
 
     ~KEDF_Manager()
     {
@@ -31,69 +31,74 @@ class KEDF_Manager
     }
 
     void init(
-        const Input_para& inp,
-        ModulePW::PW_Basis* pw_rho,
+        const Input_para &inp,
+        ModulePW::PW_Basis *pw_rho,
         const double dV,
-        const double nelec
-    );
+        const double nelec);
 
     void get_potential(
-        const double* const* prho,
-        const double* const* pphi,
-        ModulePW::PW_Basis* pw_rho,
-        ModuleBase::matrix& rpot
-    );
+        const double *const *prho,
+        const double *const *pphi,
+        ModulePW::PW_Basis *pw_rho,
+        ModuleBase::matrix &rpot);
 
     double get_energy() const;
 
     void get_energy_density(
-        const double* const* prho,
-        const double* const* pphi,
-        ModulePW::PW_Basis* pw_rho,
-        double** rtau
-    );
+        const double *const *prho,
+        const double *const *pphi,
+        ModulePW::PW_Basis *pw_rho,
+        double **rtau);
 
     void get_stress(
         const double omega,
-        const double* const* prho,
-        const double* const* pphi,
-        ModulePW::PW_Basis* pw_rho,
-        ModuleBase::matrix& kinetic_stress_
-    );
-
-    void record_energy(
-        std::vector<std::string> &titles,
-        std::vector<double> &energies_Ry
-    );
-
-    void generate_ml_target(
-        const double * const *prho,
+        const double *const *prho,
+        const double *const *pphi,
         ModulePW::PW_Basis *pw_rho,
-        const double *veff
-    );
+        ModuleBase::matrix &kinetic_stress_);
 
-private:
-    void init_tf(const Input_para& inp, ModulePW::PW_Basis* pw_rho, double dV);
-    void init_vw(const Input_para& inp, double dV);
-    void init_wt(const Input_para& inp, ModulePW::PW_Basis* pw_rho, double dV, double nelec);
-    void init_extwt(const Input_para& inp, ModulePW::PW_Basis* pw_rho, double dV, double nelec);
-    void init_xwm(const Input_para& inp, ModulePW::PW_Basis* pw_rho, double dV, double nelec);
-    void init_lkt(const Input_para& inp, double dV);
+    void record_energy(std::vector<std::string> &titles, std::vector<double> &energies_Ry);
+
+    void generate_ml_target(const double *const *prho, ModulePW::PW_Basis *pw_rho, const double *veff);
+
+  private:
+    void init_tf(const Input_para &inp, ModulePW::PW_Basis *pw_rho, double dV);
+    void init_vw(const Input_para &inp, double dV);
+    void init_wt(
+        const Input_para &inp,
+        ModulePW::PW_Basis *pw_rho,
+        double dV,
+        double nelec);
+    void init_extwt(
+        const Input_para &inp,
+        ModulePW::PW_Basis *pw_rho,
+        double dV,
+        double nelec);
+    void init_xwm(
+        const Input_para &inp,
+        ModulePW::PW_Basis *pw_rho,
+        double dV,
+        double nelec);
+    void init_lkt(const Input_para &inp, double dV);
 #ifdef __MLALGO
-    void init_ml(const Input_para& inp, ModulePW::PW_Basis* pw_rho, double dV, double nelec);
+    void init_ml(
+        const Input_para &inp,
+        ModulePW::PW_Basis *pw_rho,
+        double dV,
+        double nelec);
 #endif
 
-    KEDF_LKT* lkt_ = nullptr; // Luo-Karasiev-Trickey KEDF
-    KEDF_TF* tf_ = nullptr;   // Thomas-Fermi KEDF
-    KEDF_vW* vw_ = nullptr;   // von Weizsäcker KEDF
-    KEDF_WT* wt_ = nullptr;   // Wang-Teter KEDF
-    KEDF_ExtWT* extwt_ = nullptr; // Extended Wang-Teter KEDF
-    KEDF_XWM* xwm_ = nullptr; // Xu-Wang-Ma KEDF
+    KEDF_LKT *lkt_ = nullptr;     // Luo-Karasiev-Trickey KEDF
+    KEDF_TF *tf_ = nullptr;       // Thomas-Fermi KEDF
+    KEDF_vW *vw_ = nullptr;       // von Weizsäcker KEDF
+    KEDF_WT *wt_ = nullptr;       // Wang-Teter KEDF
+    KEDF_ExtWT *extwt_ = nullptr; // Extended Wang-Teter KEDF
+    KEDF_XWM *xwm_ = nullptr;     // Xu-Wang-Ma KEDF
 #ifdef __MLALGO
-    KEDF_ML* ml_ = nullptr;   // Machine Learning KEDF
+    KEDF_ML *ml_ = nullptr; // Machine Learning KEDF
 #endif
 
-    std::string of_kinetic_ = "wt";  // Kinetic energy functional, such as TF, VW, WT
-}; 
+    std::string of_kinetic_ = "wt"; // Kinetic energy functional, such as TF, VW, WT
+};
 
 #endif // KEDF_MANAGER_H

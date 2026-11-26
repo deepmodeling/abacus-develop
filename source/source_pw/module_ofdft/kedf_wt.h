@@ -1,8 +1,8 @@
 #ifndef KEDF_WT_H
 #define KEDF_WT_H
 #include <cmath>
-#include <cstdio>
 #include <complex>
+#include <cstdio>
 #include <vector>
 
 #include "source_base/global_function.h"
@@ -22,10 +22,7 @@
 class KEDF_WT
 {
   public:
-    KEDF_WT()
-    {
-        this->stress.create(3, 3);
-    }
+    KEDF_WT() { this->stress.create(3, 3); }
     ~KEDF_WT()
     {
 #ifdef __CUDA
@@ -33,32 +30,41 @@ class KEDF_WT
 #endif
     }
 
-    void set_para(double dV,
-                  double alpha,
-                  double beta,
-                  double nelec,
-                  double tf_weight,
-                  double vw_weight,
-                  double of_wt_rho0,
-                  bool of_hold_rho0,
-                  bool read_kernel,
-                  std::string kernel_file,
-                  ModulePW::PW_Basis* pw_rho);
+    void set_para(
+        double dV,
+        double alpha,
+        double beta,
+        double nelec,
+        double tf_weight,
+        double vw_weight,
+        double of_wt_rho0,
+        bool of_hold_rho0,
+        bool read_kernel,
+        std::string kernel_file,
+        ModulePW::PW_Basis *pw_rho);
 
-    double get_energy(const double* const* prho, ModulePW::PW_Basis* pw_rho);
-    double get_energy_density(const double* const* prho, int is, int ir, ModulePW::PW_Basis* pw_rho);
-    void tau_wt(const double* const* prho, ModulePW::PW_Basis* pw_rho, double* rtau_wt);
-    void wt_potential(const double* const* prho, ModulePW::PW_Basis* pw_rho, ModuleBase::matrix& rpotential);
-    void get_stress(const double* const* prho, ModulePW::PW_Basis* pw_rho, double vw_weight);
+    double get_energy(const double *const *prho, ModulePW::PW_Basis *pw_rho);
+    double get_energy_density(
+        const double *const *prho,
+        int is,
+        int ir,
+        ModulePW::PW_Basis *pw_rho);
+    void tau_wt(const double *const *prho, ModulePW::PW_Basis *pw_rho, double *rtau_wt);
+    void wt_potential(const double *const *prho, ModulePW::PW_Basis *pw_rho, ModuleBase::matrix &rpotential);
+    void get_stress(const double *const *prho, ModulePW::PW_Basis *pw_rho, double vw_weight);
     double wt_energy = 0.;
     ModuleBase::matrix stress;
 
   private:
     double wt_kernel(double eta, double tf_weight, double vw_weight);
     double diff_linhard(double eta, double vw_weight);
-    void multi_kernel(const double* const* prho, double** rkernel_rho, double exponent, ModulePW::PW_Basis* pw_rho);
-    void read_kernel(std::string file_name, ModulePW::PW_Basis* pw_rho);
-    void fill_kernel(double tf_weight, double vw_weight, ModulePW::PW_Basis* pw_rho);
+    void multi_kernel(
+        const double *const *prho,
+        double **rkernel_rho,
+        double exponent,
+        ModulePW::PW_Basis *pw_rho);
+    void read_kernel(std::string file_name, ModulePW::PW_Basis *pw_rho);
+    void fill_kernel(double tf_weight, double vw_weight, ModulePW::PW_Basis *pw_rho);
 
     double dV_ = 0.;
     double rho0_ = 0.; // average rho
@@ -68,23 +74,27 @@ class KEDF_WT
     double alpha_ = 5. / 6.;
     double beta_ = 5. / 6.;
     // double weightWT = 1.;
-    const double c_tf_
-        = 3.0 / 10.0 * std::pow(3 * std::pow(M_PI, 2.0), 2.0 / 3.0)
-          * 2; // 10/3*(3*pi^2)^{2/3}, multiply by 2 to convert unit from Hartree to Ry, finally in Ry*Bohr^(-2)
+    const double c_tf_ =
+        3.0 / 10.0 * std::pow(3 * std::pow(M_PI, 2.0), 2.0 / 3.0) *
+        2; // 10/3*(3*pi^2)^{2/3}, multiply by 2 to convert unit from Hartree to Ry, finally in Ry*Bohr^(-2)
     double wt_coef_ = 0.; // coefficient of WT kernel
     std::vector<double> kernel_;
 
 #ifdef __CUDA
-    void multi_kernel_gpu(const double* const* prho, double** rkernel_rho, int nspin,
-                          double exponent, ModulePW::PW_Basis* pw_rho);
+    void multi_kernel_gpu(
+        const double *const *prho,
+        double **rkernel_rho,
+        int nspin,
+        double exponent,
+        ModulePW::PW_Basis *pw_rho);
     void free_gpu_buffers();
 
     // Persistent GPU buffers (lazily allocated once, reused across SCF iterations)
-    double* d_rho_ = nullptr;                  // real-space input    (nrxx doubles)
-    cufftHandle cufft_plan_fwd_ = 0;             // cuFFT forward plan
-    cufftHandle cufft_plan_bwd_ = 0;             // cuFFT backward plan
-    double* d_result_ = nullptr;               // real-space output   (nrxx doubles)
-    double* d_kernel_ = nullptr;               // WT kernel on device (npw doubles)
+    double *d_rho_ = nullptr;        // real-space input    (nrxx doubles)
+    cufftHandle cufft_plan_fwd_ = 0; // cuFFT forward plan
+    cufftHandle cufft_plan_bwd_ = 0; // cuFFT backward plan
+    double *d_result_ = nullptr;     // real-space output   (nrxx doubles)
+    double *d_kernel_ = nullptr;     // WT kernel on device (npw doubles)
 
     bool gpu_allocated_ = false;
 #endif

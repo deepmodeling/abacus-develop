@@ -16,28 +16,29 @@
 #include "source_hamilt/module_xc/xc_functional.h"
 
 template <typename FPTYPE, typename Device>
-void Sto_Forces<FPTYPE, Device>::cal_stoforce(const int nspin,
-                                              const bool domag,
-                                              const bool domag_z,
-                                              const int gga_grad,
-                                              ModuleBase::matrix& force,
-                                              const elecstate::ElecState& elec,
-                                              ModulePW::PW_Basis* rho_basis,
-                                              ModuleSymmetry::Symmetry* p_symm,
-                                              const Structure_Factor* p_sf,
-                                              K_Vectors* pkv,
-                                              ModulePW::PW_Basis_K* wfc_basis,
-                                              const pseudopot_cell_vl& locpp,
-                                              const pseudopot_cell_vnl& nlpp,
-                                              UnitCell& ucell,
-                                              const psi::Psi<std::complex<FPTYPE>, Device>& psi,
-                                              const Stochastic_WF<std::complex<FPTYPE>, Device>& stowf)
+void Sto_Forces<FPTYPE, Device>::cal_stoforce(
+    const int nspin,
+    const bool domag,
+    const bool domag_z,
+    const int gga_grad,
+    ModuleBase::matrix &force,
+    const elecstate::ElecState &elec,
+    ModulePW::PW_Basis *rho_basis,
+    ModuleSymmetry::Symmetry *p_symm,
+    const Structure_Factor *p_sf,
+    K_Vectors *pkv,
+    ModulePW::PW_Basis_K *wfc_basis,
+    const pseudopot_cell_vl &locpp,
+    const pseudopot_cell_vnl &nlpp,
+    UnitCell &ucell,
+    const psi::Psi<std::complex<FPTYPE>, Device> &psi,
+    const Stochastic_WF<std::complex<FPTYPE>, Device> &stowf)
 {
     ModuleBase::timer::start("Sto_Forces", "cal_force");
     ModuleBase::TITLE("Sto_Forces", "init");
     this->device = base_device::get_device_type(this->ctx);
-    const ModuleBase::matrix& wg = elec.wg;
-    const Charge* chr = elec.charge;
+    const ModuleBase::matrix &wg = elec.wg;
+    const Charge *chr = elec.charge;
     force.create(this->nat, 3);
 
     ModuleBase::matrix forcelc(this->nat, 3);
@@ -46,10 +47,9 @@ void Sto_Forces<FPTYPE, Device>::cal_stoforce(const int nspin,
     ModuleBase::matrix forcenl(this->nat, 3);
     ModuleBase::matrix forcescc(this->nat, 3);
     this->cal_force_loc(ucell, forcelc, rho_basis, locpp.vloc, chr);
-    this->cal_force_ew(ucell,forceion, rho_basis, p_sf);
+    this->cal_force_ew(ucell, forceion, rho_basis, p_sf);
     this->cal_sto_force_nl(forcenl, wg, pkv, wfc_basis, p_sf, nlpp, ucell, psi, stowf);
-    this->cal_force_cc(forcecc, rho_basis, chr, locpp.numeric, ucell,
-        nspin, domag, domag_z, gga_grad);
+    this->cal_force_cc(forcecc, rho_basis, chr, locpp.numeric, ucell, nspin, domag, domag_z, gga_grad);
     this->cal_force_scc(forcescc, rho_basis, elec.vnew, elec.vnew_exist, locpp.numeric, ucell);
 
     // impose total force = 0
@@ -76,8 +76,8 @@ void Sto_Forces<FPTYPE, Device>::cal_stoforce(const int nspin,
         {
             for (int ia = 0; ia < ucell.atoms[it].na; ia++)
             {
-                force(iat, ipol) = forcelc(iat, ipol) + forceion(iat, ipol) + forcenl(iat, ipol) + forcecc(iat, ipol)
-                                   + forcescc(iat, ipol);
+                force(iat, ipol) = forcelc(iat, ipol) + forceion(iat, ipol) + forcenl(iat, ipol) + forcecc(iat, ipol) +
+                                   forcescc(iat, ipol);
 
                 if (PARAM.inp.efield_flag)
                 {
@@ -99,21 +99,9 @@ void Sto_Forces<FPTYPE, Device>::cal_stoforce(const int nspin,
         double d1 = 0.0, d2 = 0.0, d3 = 0.0;
         for (int iat = 0; iat < ucell.nat; iat++)
         {
-            ModuleBase::Mathzone::Cartesian_to_Direct(force(iat, 0),
-                                                      force(iat, 1),
-                                                      force(iat, 2),
-                                                      ucell.a1.x,
-                                                      ucell.a1.y,
-                                                      ucell.a1.z,
-                                                      ucell.a2.x,
-                                                      ucell.a2.y,
-                                                      ucell.a2.z,
-                                                      ucell.a3.x,
-                                                      ucell.a3.y,
-                                                      ucell.a3.z,
-                                                      d1,
-                                                      d2,
-                                                      d3);
+            ModuleBase::Mathzone::Cartesian_to_Direct(
+                force(iat, 0), force(iat, 1), force(iat, 2), ucell.a1.x, ucell.a1.y, ucell.a1.z, ucell.a2.x, ucell.a2.y,
+                ucell.a2.z, ucell.a3.x, ucell.a3.y, ucell.a3.z, d1, d2, d3);
 
             force(iat, 0) = d1;
             force(iat, 1) = d2;
@@ -122,21 +110,9 @@ void Sto_Forces<FPTYPE, Device>::cal_stoforce(const int nspin,
         p_symm->symmetrize_vec3_nat(force.c);
         for (int iat = 0; iat < ucell.nat; iat++)
         {
-            ModuleBase::Mathzone::Direct_to_Cartesian(force(iat, 0),
-                                                      force(iat, 1),
-                                                      force(iat, 2),
-                                                      ucell.a1.x,
-                                                      ucell.a1.y,
-                                                      ucell.a1.z,
-                                                      ucell.a2.x,
-                                                      ucell.a2.y,
-                                                      ucell.a2.z,
-                                                      ucell.a3.x,
-                                                      ucell.a3.y,
-                                                      ucell.a3.z,
-                                                      d1,
-                                                      d2,
-                                                      d3);
+            ModuleBase::Mathzone::Direct_to_Cartesian(
+                force(iat, 0), force(iat, 1), force(iat, 2), ucell.a1.x, ucell.a1.y, ucell.a1.z, ucell.a2.x, ucell.a2.y,
+                ucell.a2.z, ucell.a3.x, ucell.a3.y, ucell.a3.z, d1, d2, d3);
             force(iat, 0) = d1;
             force(iat, 1) = d2;
             force(iat, 2) = d3;
@@ -174,11 +150,7 @@ void Sto_Forces<FPTYPE, Device>::cal_stoforce(const int nspin,
         }
         if (PARAM.inp.gate_flag)
         {
-            ModuleIO::print_force(GlobalV::ofs_running,
-                                  ucell,
-                                  "GATEFIELD   FORCE (eV/Angstrom)",
-                                  force_gate,
-                                  false);
+            ModuleIO::print_force(GlobalV::ofs_running, ucell, "GATEFIELD   FORCE (eV/Angstrom)", force_gate, false);
         }
     }
     ModuleIO::print_force(GlobalV::ofs_running, ucell, "TOTAL-FORCE (eV/Angstrom)", force, false);
@@ -189,15 +161,15 @@ void Sto_Forces<FPTYPE, Device>::cal_stoforce(const int nspin,
 
 template <typename FPTYPE, typename Device>
 void Sto_Forces<FPTYPE, Device>::cal_sto_force_nl(
-    ModuleBase::matrix& forcenl,
-    const ModuleBase::matrix& wg,
-    K_Vectors* p_kv,
-    ModulePW::PW_Basis_K* wfc_basis,
-    const Structure_Factor* p_sf,
-    const pseudopot_cell_vnl& nlpp,
-    const UnitCell& ucell,
-    const psi::Psi<std::complex<FPTYPE>, Device>& psi_in,
-    const Stochastic_WF<std::complex<FPTYPE>, Device>& stowf)
+    ModuleBase::matrix &forcenl,
+    const ModuleBase::matrix &wg,
+    K_Vectors *p_kv,
+    ModulePW::PW_Basis_K *wfc_basis,
+    const Structure_Factor *p_sf,
+    const pseudopot_cell_vnl &nlpp,
+    const UnitCell &ucell,
+    const psi::Psi<std::complex<FPTYPE>, Device> &psi_in,
+    const Stochastic_WF<std::complex<FPTYPE>, Device> &stowf)
 {
     ModuleBase::TITLE("Sto_Forces", "cal_force_nl");
     const int nkb = nlpp.nkb;
@@ -208,7 +180,7 @@ void Sto_Forces<FPTYPE, Device>::cal_sto_force_nl(
 
     ModuleBase::timer::start("Sto_Forces", "cal_force_nl");
 
-    const int* nchip = stowf.nchip;
+    const int *nchip = stowf.nchip;
     const int npwx = wfc_basis->npwk_max;
     int nksbands = psi_in.get_nbands();
     if (!PARAM.globalv.ks_run)
@@ -216,13 +188,12 @@ void Sto_Forces<FPTYPE, Device>::cal_sto_force_nl(
         nksbands = 0;
     }
 
-   // allocate memory for the force
-    FPTYPE* force = nullptr;
+    // allocate memory for the force
+    FPTYPE *force = nullptr;
     resmem_var_op()(force, ucell.nat * 3);
     base_device::memory::set_memory_op<FPTYPE, Device>()(force, 0.0, ucell.nat * 3);
 
     hamilt::FS_Nonlocal_tools<FPTYPE, Device> nl_tools(&nlpp, &ucell, p_kv, wfc_basis, p_sf, wg, nullptr);
-
 
     for (int ik = 0; ik < wfc_basis->nks; ik++)
     {
@@ -256,7 +227,6 @@ void Sto_Forces<FPTYPE, Device>::cal_sto_force_nl(
     // sum up forcenl from all processors
     Parallel_Reduce::reduce_all(forcenl.c, forcenl.nr * forcenl.nc);
 
-    
     ModuleBase::timer::end("Sto_Forces", "cal_force_nl");
     return;
 }

@@ -3,8 +3,8 @@
 #include "source_base/math_chebyshev.h"
 #include "source_estate/elecstate_pw.h"
 #include "source_hamilt/hamilt.h"
-#include "source_pw/module_stodft/sto_hamilt_pw.h"
 #include "source_psi/psi.h"
+#include "source_pw/module_stodft/sto_hamilt_pw.h"
 #include "sto_che.h"
 #include "sto_func.h"
 #include "sto_wf.h"
@@ -22,6 +22,7 @@ class Stochastic_Iter
 {
   private:
     using Real = typename GetTypeReal<T>::type;
+
   public:
     // constructor and deconstructor
     Stochastic_Iter();
@@ -38,11 +39,12 @@ class Stochastic_Iter
      * @param p_hamilt_sto hamiltonian for sDFT
      *
      */
-    void init(K_Vectors* pkv_in,
-              ModulePW::PW_Basis_K* wfc_basis,
-              Stochastic_WF<T, Device>& stowf,
-              StoChe<Real, Device>& stoche,
-              StoHamiltPW<T, Device>* p_hamilt_sto);
+    void init(
+        K_Vectors *pkv_in,
+        ModulePW::PW_Basis_K *wfc_basis,
+        Stochastic_WF<T, Device> &stowf,
+        StoChe<Real, Device> &stoche,
+        StoHamiltPW<T, Device> *p_hamilt_sto);
 
     /**
      * @brief sum demet and eband energies for each k point and each band
@@ -52,10 +54,11 @@ class Stochastic_Iter
      * @param pHamilt hamiltonian
      * @param wfc_basis wfc pw basis
      */
-    void sum_stoeband(Stochastic_WF<T, Device>& stowf,
-                     elecstate::ElecStatePW<T, Device>* pes,
-                     hamilt::Hamilt<T, Device>* pHamilt,
-                     ModulePW::PW_Basis_K* wfc_basis);
+    void sum_stoeband(
+        Stochastic_WF<T, Device> &stowf,
+        elecstate::ElecStatePW<T, Device> *pes,
+        hamilt::Hamilt<T, Device> *pHamilt,
+        ModulePW::PW_Basis_K *wfc_basis);
 
     /**
      * @brief calculate the density
@@ -65,10 +68,11 @@ class Stochastic_Iter
      * @param pes elecstate
      * @param wfc_basis wfc pw basis
      */
-    void cal_storho(const UnitCell& ucell,
-                    Stochastic_WF<T, Device>& stowf,
-                    elecstate::ElecStatePW<T, Device>* pes,
-                    ModulePW::PW_Basis_K* wfc_basis);
+    void cal_storho(
+        const UnitCell &ucell,
+        Stochastic_WF<T, Device> &stowf,
+        elecstate::ElecStatePW<T, Device> *pes,
+        ModulePW::PW_Basis_K *wfc_basis);
 
     /**
      * @brief calculate total number of electrons
@@ -76,7 +80,7 @@ class Stochastic_Iter
      * @param pes elecstate
      * @return double
      */
-    double calne(elecstate::ElecState* pes);
+    double calne(elecstate::ElecState *pes);
 
     /**
      * @brief solve ne(mu) = ne_target and get chemical potential mu
@@ -84,7 +88,7 @@ class Stochastic_Iter
      * @param iter scf iteration index
      * @param pes elecstate
      */
-    void itermu(const int iter, elecstate::ElecState* pes);
+    void itermu(const int iter, elecstate::ElecState *pes);
 
     /**
      * @brief orthogonalize stochastic wave functions with KS wave functions
@@ -93,7 +97,7 @@ class Stochastic_Iter
      * @param psi KS wave functions
      * @param stowf stochastic wave functions
      */
-    void orthog(const int& ik, psi::Psi<T, Device>& psi, Stochastic_WF<T, Device>& stowf);
+    void orthog(const int &ik, psi::Psi<T, Device> &psi, Stochastic_WF<T, Device> &stowf);
 
     /**
      * @brief check emax and emin
@@ -103,7 +107,11 @@ class Stochastic_Iter
      * @param iter scf iteration index
      * @param stowf stochastic wave functions
      */
-    void checkemm(const int& ik, const int istep, const int iter, Stochastic_WF<T, Device>& stowf);
+    void checkemm(
+        const int &ik,
+        const int istep,
+        const int iter,
+        Stochastic_WF<T, Device> &stowf);
 
     /**
      * @brief check precision of Chebyshev expansion
@@ -114,44 +122,51 @@ class Stochastic_Iter
      */
     void check_precision(const double ref, const double thr, const std::string info);
 
-    ModuleBase::Chebyshev<double, Device>* p_che = nullptr;
+    ModuleBase::Chebyshev<double, Device> *p_che = nullptr;
 
     Sto_Func<double> stofunc;
-    StoHamiltPW<T, Device>* p_hamilt_sto = nullptr;
+    StoHamiltPW<T, Device> *p_hamilt_sto = nullptr;
 
     double mu0 = 0.0; // chemical potential; unit in Ry
     bool change = false;
-    double targetne=0.0;
-    Real* spolyv = nullptr;     //[Device] coefficients of Chebyshev expansion
-    Real* spolyv_cpu = nullptr; //[CPU] coefficients of Chebyshev expansion
+    double targetne = 0.0;
+    Real *spolyv = nullptr;     //[Device] coefficients of Chebyshev expansion
+    Real *spolyv_cpu = nullptr; //[CPU] coefficients of Chebyshev expansion
 
   public:
-    int* nchip = nullptr;
+    int *nchip = nullptr;
     bool check = false;
-    double th_ne=0.0;
-    double KS_ne=0.0;
+    double th_ne = 0.0;
+    double KS_ne = 0.0;
 
   public:
     int method; // different methods 1: slow, less memory  2: fast, more memory
     // cal shchi = \sqrt{f(\hat{H})}|\chi>
-    void calHsqrtchi(Stochastic_WF<T, Device>& stowf);
+    void calHsqrtchi(Stochastic_WF<T, Device> &stowf);
     // cal Pn = \sum_\chi <\chi|Tn(\hat{h})|\chi>
-    void calPn(const int& ik, Stochastic_WF<T, Device>& stowf);
+    void calPn(const int &ik, Stochastic_WF<T, Device> &stowf);
     // cal Tnchi = \sum_n C_n*T_n(\hat{h})|\chi>
-    void calTnchi_ik(const int& ik, Stochastic_WF<T, Device>& stowf);
+    void calTnchi_ik(const int &ik, Stochastic_WF<T, Device> &stowf);
 
   private:
-    K_Vectors* pkv=nullptr;
+    K_Vectors *pkv = nullptr;
     /**
      * @brief return cpu dot result
      * @param x [Device]
      * @param y [Device]
      * @param result [CPU] dot result
      */
-    void dot(const int& n, const Real* x, const int& incx, const Real* y, const int& incy,  Real& result);
+    void dot(
+        const int &n,
+        const Real *x,
+        const int &incx,
+        const Real *y,
+        const int &incy,
+        Real &result);
+
   private:
-    const Device* ctx = {};
-    const base_device::DEVICE_CPU* cpu_ctx = {};
+    const Device *ctx = {};
+    const base_device::DEVICE_CPU *cpu_ctx = {};
     using ct_Device = typename container::PsiToContainer<Device>::type;
 #ifdef __DSP
     using setmem_var_op = base_device::memory::set_memory_op_mt<Real, Device>;

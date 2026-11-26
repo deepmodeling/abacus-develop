@@ -4,7 +4,7 @@
 
 class TestKEDFTF : public ::testing::Test
 {
-protected:
+  protected:
     KEDF_TF kedf;
 };
 
@@ -12,7 +12,7 @@ TEST_F(TestKEDFTF, IntegratesNonuniformDensity)
 {
     // For rho = {0, 1, 8}, integral(rho^(5/3)) = (0 + 1 + 32) * dV.
     const double density[] = {0.0, 1.0, 8.0};
-    const double* rho[] = {density};
+    const double *rho[] = {density};
     kedf.set_para(3, 0.25, 1.0);
 
     const double energy = kedf.get_energy(rho);
@@ -25,7 +25,7 @@ TEST_F(TestKEDFTF, IntegratesNonuniformDensity)
 TEST_F(TestKEDFTF, ZeroDensityHasZeroEnergy)
 {
     const double density[] = {0.0, 0.0};
-    const double* rho[] = {density};
+    const double *rho[] = {density};
     kedf.set_para(2, 0.5, 1.0);
 
     EXPECT_DOUBLE_EQ(kedf.get_energy(rho), 0.0);
@@ -36,7 +36,7 @@ TEST_F(TestKEDFTF, EnergyDensityUsesWeightAndSelectedSpin)
 {
     const double spin_up[] = {1.0, 8.0};
     const double spin_down[] = {8.0, 1.0};
-    const double* rho[] = {spin_up, spin_down};
+    const double *rho[] = {spin_up, spin_down};
     const double coefficient = 5.742468000376382;
     kedf.set_para(2, 0.25, 0.5);
 
@@ -50,7 +50,7 @@ TEST_F(TestKEDFTF, EnergyDensityUsesWeightAndSelectedSpin)
 TEST_F(TestKEDFTF, StressIsIsotropicAndScalesWithVolume)
 {
     const double density[] = {1.0};
-    const double* rho[] = {density};
+    const double *rho[] = {density};
     kedf.set_para(1, 0.5, 1.0);
     const double energy = kedf.get_energy(rho);
     kedf.get_stress(2.0);
@@ -81,7 +81,7 @@ TEST_F(TestKEDFTF, StressIsIsotropicAndScalesWithVolume)
 TEST_F(TestKEDFTF, WeightedEnergyMatchesPointwiseIntegralAndStress)
 {
     const double density[] = {1.0, 8.0};
-    const double* rho[] = {density};
+    const double *rho[] = {density};
     const double coefficient = 5.742468000376382;
     const double dV = 0.25;
     const double volume = 2.0 * dV;
@@ -117,7 +117,7 @@ TEST_F(TestKEDFTF, WeightedPotentialMatchesConservedDensityDerivative)
 {
     const double density[] = {1.0, 8.0};
     const double direction[] = {1.0, -1.0};
-    const double* rho[] = {density};
+    const double *rho[] = {density};
     const double dV = 0.25;
     const double weights[] = {0.0, 0.4, 1.0, 1.1};
     const double steps[] = {1e-3, 1e-4};
@@ -138,8 +138,8 @@ TEST_F(TestKEDFTF, WeightedPotentialMatchesConservedDensityDerivative)
                 plus_density[ir] = density[ir] + step * direction[ir];
                 minus_density[ir] = density[ir] - step * direction[ir];
             }
-            const double* plus_rho[] = {plus_density};
-            const double* minus_rho[] = {minus_density};
+            const double *plus_rho[] = {plus_density};
+            const double *minus_rho[] = {minus_density};
             const double plus_energy = kedf.get_energy(plus_rho);
             const double minus_energy = kedf.get_energy(minus_rho);
             const double derivative = (plus_energy - minus_energy) / (2.0 * step);

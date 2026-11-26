@@ -11,18 +11,26 @@ class TDHamiltPW final : public hsolver::HSOperator<T, Device>
 {
   private:
     using Real = typename T::value_type;
-    hamilt::HamiltPW<T, Device>& hamilt_;
+    hamilt::HamiltPW<T, Device> &hamilt_;
     hamilt::HamiltHSOperator<T, Device> op_;
-    const Real* veff_ = nullptr;
+    const Real *veff_ = nullptr;
     ModuleBase::Vector3<double> vecpot_ha_;
 
   public:
-    TDHamiltPW(hamilt::HamiltPW<T, Device>& hamilt, const ModulePW::PW_Basis_K& basis);
+    TDHamiltPW(hamilt::HamiltPW<T, Device> &hamilt, const ModulePW::PW_Basis_K &basis);
     /** @brief Select a potential sample whose storage outlives its applications. */
-    void bind(const Real* veff, const ModuleBase::Vector3<double>& vecpot_ha);
+    void bind(const Real *veff, const ModuleBase::Vector3<double> &vecpot_ha);
     void update_k(int ik) override;
-    void hpsi(const T* x, T* hx, int ld, int bands) const override;
-    void spsi(const T* x, T* sx, int ld, int bands) const override;
+    void hpsi(
+        const T *x,
+        T *hx,
+        int ld,
+        int bands) const override;
+    void spsi(
+        const T *x,
+        T *sx,
+        int ld,
+        int bands) const override;
 };
 } // namespace pw
 #endif

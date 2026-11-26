@@ -14,13 +14,14 @@
  * @param vw_weight
  * @param pw_rho pw_basis
  */
-void KEDF_XWM::set_para(double dV,
-                double rho_ref,
-                double kappa,
-                double nelec,
-                double tf_weight,
-                double vw_weight,
-                ModulePW::PW_Basis* pw_rho)
+void KEDF_XWM::set_para(
+    double dV,
+    double rho_ref,
+    double kappa,
+    double nelec,
+    double tf_weight,
+    double vw_weight,
+    ModulePW::PW_Basis *pw_rho)
 {
     this->dV_ = dV;
     this->kappa_ = kappa;
@@ -46,7 +47,7 @@ void KEDF_XWM::set_para(double dV,
     double temp2 = 1. / (this->kappa_ + 11. / 6.);
     this->c_0 = 0.5 * temp1 * temp1;
     this->c_1 = temp1 * temp2;
-    this->c_2 = - temp1 * temp1 * this->rho_ref_;
+    this->c_2 = -temp1 * temp1 * this->rho_ref_;
 
     this->kernel1_.resize(pw_rho->npw, 0.);
     this->kernel2_.resize(pw_rho->npw, 0.);
@@ -56,22 +57,22 @@ void KEDF_XWM::set_para(double dV,
 
 /**
  * @brief Get the energy of XWM KEDF
- * 
+ *
  * @param prho charge density
  * @param pw_rho pw basis
  * @param nspin number of spin channels
  * @return the energy of XWM KEDF
  */
-double KEDF_XWM::get_energy(const double* const* prho, ModulePW::PW_Basis* pw_rho, int nspin)
+double KEDF_XWM::get_energy(const double *const *prho, ModulePW::PW_Basis *pw_rho, int nspin)
 {
-    double** w1Rho5_6 = new double*[nspin];
+    double **w1Rho5_6 = new double *[nspin];
     for (int is = 0; is < nspin; ++is)
     {
         w1Rho5_6[is] = new double[pw_rho->nrxx];
     }
     this->multi_kernel(prho, this->kernel1_.data(), w1Rho5_6, this->kappa_5_6, pw_rho, nspin);
 
-    double** w2Rho5_6 = new double*[nspin];
+    double **w2Rho5_6 = new double *[nspin];
     for (int is = 0; is < nspin; ++is)
     {
         w2Rho5_6[is] = new double[pw_rho->nrxx];
@@ -83,8 +84,8 @@ double KEDF_XWM::get_energy(const double* const* prho, ModulePW::PW_Basis* pw_rh
     {
         for (int ir = 0; ir < pw_rho->nrxx; ++ir)
         {
-            energy += std::pow(prho[0][ir], this->kappa_5_6) * w1Rho5_6[0][ir]
-                    + std::pow(prho[0][ir], this->kappa_11_6) * w2Rho5_6[0][ir];
+            energy += std::pow(prho[0][ir], this->kappa_5_6) * w1Rho5_6[0][ir] +
+                      std::pow(prho[0][ir], this->kappa_11_6) * w2Rho5_6[0][ir];
         }
         energy += this->dV_;
     }
@@ -108,7 +109,7 @@ double KEDF_XWM::get_energy(const double* const* prho, ModulePW::PW_Basis* pw_rh
 
 /**
  * @brief Get the energy density of XWM KEDF
- * 
+ *
  * @param prho charge density
  * @param is spin index
  * @param ir grid index
@@ -116,25 +117,30 @@ double KEDF_XWM::get_energy(const double* const* prho, ModulePW::PW_Basis* pw_rh
  * @param nspin number of spin channels
  * @return the energy density of XWM KEDF
  */
-double KEDF_XWM::get_energy_density(const double* const* prho, int is, int ir, ModulePW::PW_Basis* pw_rho, int nspin)
+double KEDF_XWM::get_energy_density(
+    const double *const *prho,
+    int is,
+    int ir,
+    ModulePW::PW_Basis *pw_rho,
+    int nspin)
 {
-    double** w1Rho5_6 = new double*[nspin];
+    double **w1Rho5_6 = new double *[nspin];
     for (int is = 0; is < nspin; ++is)
     {
         w1Rho5_6[is] = new double[pw_rho->nrxx];
     }
     this->multi_kernel(prho, this->kernel1_.data(), w1Rho5_6, this->kappa_5_6, pw_rho, nspin);
 
-    double** w2Rho5_6 = new double*[nspin];
+    double **w2Rho5_6 = new double *[nspin];
     for (int is = 0; is < nspin; ++is)
     {
         w2Rho5_6[is] = new double[pw_rho->nrxx];
     }
     this->multi_kernel(prho, this->kernel2_.data(), w2Rho5_6, this->kappa_5_6, pw_rho, nspin);
 
-    double result = std::pow(prho[is][ir], this->kappa_5_6) * w1Rho5_6[is][ir]
-                  + std::pow(prho[is][ir], this->kappa_11_6) * w2Rho5_6[is][ir];
-    
+    double result = std::pow(prho[is][ir], this->kappa_5_6) * w1Rho5_6[is][ir] +
+                    std::pow(prho[is][ir], this->kappa_11_6) * w2Rho5_6[is][ir];
+
     result *= this->dV_;
 
     for (int is = 0; is < nspin; ++is)
@@ -150,22 +156,26 @@ double KEDF_XWM::get_energy_density(const double* const* prho, int is, int ir, M
 
 /**
  * @brief Get the kinetic energy of XWM KEDF, and add it onto rtau_xwm
- * 
+ *
  * @param prho charge density
  * @param pw_rho pw basis
  * @param rtau_xwm rtau_xwm => rtau_xwm + tau_xwm
  * @param nspin number of spin channels
  */
-void KEDF_XWM::tau_xwm(const double* const* prho, ModulePW::PW_Basis* pw_rho, double* rtau_xwm, int nspin)
+void KEDF_XWM::tau_xwm(
+    const double *const *prho,
+    ModulePW::PW_Basis *pw_rho,
+    double *rtau_xwm,
+    int nspin)
 {
-    double** w1Rho5_6 = new double*[nspin];
+    double **w1Rho5_6 = new double *[nspin];
     for (int is = 0; is < nspin; ++is)
     {
         w1Rho5_6[is] = new double[pw_rho->nrxx];
     }
     this->multi_kernel(prho, this->kernel1_.data(), w1Rho5_6, this->kappa_5_6, pw_rho, nspin);
 
-    double** w2Rho5_6 = new double*[nspin];
+    double **w2Rho5_6 = new double *[nspin];
     for (int is = 0; is < nspin; ++is)
     {
         w2Rho5_6[is] = new double[pw_rho->nrxx];
@@ -176,8 +186,8 @@ void KEDF_XWM::tau_xwm(const double* const* prho, ModulePW::PW_Basis* pw_rho, do
     {
         for (int ir = 0; ir < pw_rho->nrxx; ++ir)
         {
-            rtau_xwm[ir] += std::pow(prho[0][ir], this->kappa_5_6) * w1Rho5_6[0][ir]
-                          + std::pow(prho[0][ir], this->kappa_11_6) * w2Rho5_6[0][ir];
+            rtau_xwm[ir] += std::pow(prho[0][ir], this->kappa_5_6) * w1Rho5_6[0][ir] +
+                            std::pow(prho[0][ir], this->kappa_11_6) * w2Rho5_6[0][ir];
         }
     }
     else if (nspin == 2)
@@ -197,31 +207,35 @@ void KEDF_XWM::tau_xwm(const double* const* prho, ModulePW::PW_Basis* pw_rho, do
 /**
  * @brief Get the potential of XWM KEDF, and add it into rpotential,
  * and the XWM energy is stored in this->xwm_energy
- * 
+ *
  * @param prho charge density
  * @param pw_rho pw basis
  * @param rpotential rpotential => rpotential + V_{XWM}
  * @param nspin number of spin channels
  */
-void KEDF_XWM::xwm_potential(const double* const* prho, ModulePW::PW_Basis* pw_rho, ModuleBase::matrix& rpotential, int nspin)
+void KEDF_XWM::xwm_potential(
+    const double *const *prho,
+    ModulePW::PW_Basis *pw_rho,
+    ModuleBase::matrix &rpotential,
+    int nspin)
 {
     ModuleBase::TITLE("KEDF_XWM", "xwm_potential");
     ModuleBase::timer::start("KEDF_XWM", "xwm_potential");
-    double** w1Rho5_6 = new double*[nspin];
+    double **w1Rho5_6 = new double *[nspin];
     for (int is = 0; is < nspin; ++is)
     {
         w1Rho5_6[is] = new double[pw_rho->nrxx];
     }
     this->multi_kernel(prho, this->kernel1_.data(), w1Rho5_6, this->kappa_5_6, pw_rho, nspin);
 
-    double** w2Rho11_6 = new double*[nspin];
+    double **w2Rho11_6 = new double *[nspin];
     for (int is = 0; is < nspin; ++is)
     {
         w2Rho11_6[is] = new double[pw_rho->nrxx];
     }
     this->multi_kernel(prho, this->kernel2_.data(), w2Rho11_6, this->kappa_11_6, pw_rho, nspin);
 
-    double** w2Rho5_6 = new double*[nspin];
+    double **w2Rho5_6 = new double *[nspin];
     for (int is = 0; is < nspin; ++is)
     {
         w2Rho5_6[is] = new double[pw_rho->nrxx];
@@ -237,9 +251,9 @@ void KEDF_XWM::xwm_potential(const double* const* prho, ModulePW::PW_Basis* pw_r
             double rho5_6 = std::pow(prho[is][ir], this->kappa_5_6);
             double rho11_6 = std::pow(prho[is][ir], this->kappa_11_6);
 
-            rpotential(is, ir) += 2. * this->kappa_5_6 * rho1_6 * w1Rho5_6[is][ir]
-                                + this->kappa_5_6 * rho1_6 * w2Rho11_6[is][ir]
-                                + this->kappa_11_6 * rho5_6 * w2Rho5_6[is][ir];
+            rpotential(is, ir) += 2. * this->kappa_5_6 * rho1_6 * w1Rho5_6[is][ir] +
+                                  this->kappa_5_6 * rho1_6 * w2Rho11_6[is][ir] +
+                                  this->kappa_11_6 * rho5_6 * w2Rho5_6[is][ir];
 
             energy += rho5_6 * w1Rho5_6[is][ir] + rho11_6 * w2Rho5_6[is][ir]; // FOR SPIN 1 !!!
         }
@@ -262,12 +276,12 @@ void KEDF_XWM::xwm_potential(const double* const* prho, ModulePW::PW_Basis* pw_r
 
 /**
  * @brief Get the stress of XWM KEDF, and store it into this->stress
- * 
+ *
  * @param prho charge density
  * @param pw_rho pw basis
  * @param vw_weight the weight of vW KEDF
  */
-void KEDF_XWM::get_stress(const double* const* prho, ModulePW::PW_Basis* pw_rho, double vw_weight)
+void KEDF_XWM::get_stress(const double *const *prho, ModulePW::PW_Basis *pw_rho, double vw_weight)
 {
     ModuleBase::WARNING_QUIT("KEDF_XWM", "XWM stress is not implemented yet!");
 }
@@ -282,9 +296,15 @@ void KEDF_XWM::get_stress(const double* const* prho, ModulePW::PW_Basis* pw_rho,
  * @param [in] pw_rho pw_basis
  * @param [in] nspin number of spin channels
  */
-void KEDF_XWM::multi_kernel(const double* const* prho, const double* kernel, double** rkernel_rho, double exponent, ModulePW::PW_Basis* pw_rho, int nspin)
+void KEDF_XWM::multi_kernel(
+    const double *const *prho,
+    const double *kernel,
+    double **rkernel_rho,
+    double exponent,
+    ModulePW::PW_Basis *pw_rho,
+    int nspin)
 {
-    std::complex<double>** recipkernelRho = new std::complex<double>*[nspin];
+    std::complex<double> **recipkernelRho = new std::complex<double> *[nspin];
     for (int is = 0; is < nspin; ++is)
     {
         recipkernelRho[is] = new std::complex<double>[pw_rho->npw];
@@ -314,10 +334,10 @@ void KEDF_XWM::multi_kernel(const double* const* prho, const double* kernel, dou
  * @param vw_weight
  * @param pw_rho pw_basis
  */
-void KEDF_XWM::fill_kernel(double tf_weight, double vw_weight, ModulePW::PW_Basis* pw_rho)
+void KEDF_XWM::fill_kernel(double tf_weight, double vw_weight, ModulePW::PW_Basis *pw_rho)
 {
     double eta = 0.;
-    double coef = - 1./6. / this->rho_ref_;
+    double coef = -1. / 6. / this->rho_ref_;
     for (int ig = 0; ig < pw_rho->npw; ++ig)
     {
         eta = sqrt(pw_rho->gg[ig]) * pw_rho->tpiba / this->tkf_;
@@ -347,26 +367,42 @@ void KEDF_XWM::fill_kernel(double tf_weight, double vw_weight, ModulePW::PW_Basi
         {
             double eta2 = eta * eta;
             double invEta2 = 1. / eta2;
-            lindhard = 3. * (1. - vw_weight) * eta2
-                            -tf_weight-0.6
-                            + invEta2 * (-0.13714285714285712
-                            + invEta2 * (-6.39999999999999875E-2
-                            + invEta2 * (-3.77825602968460128E-2
-                            + invEta2 * (-2.51824061652633074E-2
-                            + invEta2 * (-1.80879839616166146E-2
-                            + invEta2 * (-1.36715733124818332E-2
-                            + invEta2 * (-1.07236045520990083E-2
-                            + invEta2 * (-8.65192783339199453E-3
-                            + invEta2 * (-7.1372762502456763E-3
-                            + invEta2 * (-5.9945117538835746E-3
-                            + invEta2 * (-5.10997527675418131E-3
-                            + invEta2 * (-4.41060829979912465E-3
-                            + invEta2 * (-3.84763737842981233E-3
-                            + invEta2 * (-3.38745061493813488E-3
-                            + invEta2 * (-3.00624946457977689E-3)))))))))))))));
-            diff_lindhard = ((eta2 + 1.) * 0.25 / eta2 * std::log(std::abs((1. + eta) / (1. - eta))) - 0.5 / eta)
-                            / std::pow((0.5 + 0.25 * (1. - eta2) * std::log((1. + eta) / std::abs(1. - eta)) / eta), 2)
-                            - 6. * eta * vw_weight;
+            lindhard =
+                3. * (1. - vw_weight) * eta2 - tf_weight - 0.6 +
+                invEta2 *
+                    (-0.13714285714285712 +
+                        invEta2 *
+                            (-6.39999999999999875E-2 +
+                                invEta2 *
+                                    (-3.77825602968460128E-2 +
+                                        invEta2 *
+                                            (-2.51824061652633074E-2 +
+                                                invEta2 *
+                                                    (-1.80879839616166146E-2 +
+                                                        invEta2 *
+                                                            (-1.36715733124818332E-2 +
+                                                                invEta2 *
+                                                                    (-1.07236045520990083E-2 +
+                                                                        invEta2 *
+                                                                            (-8.65192783339199453E-3 +
+                                                                                invEta2 *
+                                                                                    (-7.1372762502456763E-3 +
+                                                                                        invEta2 *
+                                                                                            (-5.9945117538835746E-3 +
+                                                                                                invEta2 *
+                                                                                                    (-5.10997527675418131E-3 +
+                                                                                                        invEta2 *
+                                                                                                            (-4.41060829979912465E-3 +
+                                                                                                                invEta2 *
+                                                                                                                    (-3.84763737842981233E-3 +
+                                                                                                                        invEta2 *
+                                                                                                                            (-3.38745061493813488E-3 +
+                                                                                                                                invEta2 *
+                                                                                                                                    (-3.00624946457977689E-3)))))))))))))));
+            diff_lindhard =
+                ((eta2 + 1.) * 0.25 / eta2 * std::log(std::abs((1. + eta) / (1. - eta))) - 0.5 / eta) /
+                    std::pow((0.5 + 0.25 * (1. - eta2) * std::log((1. + eta) / std::abs(1. - eta)) / eta), 2) -
+                6. * eta * vw_weight;
         }
         else
         {

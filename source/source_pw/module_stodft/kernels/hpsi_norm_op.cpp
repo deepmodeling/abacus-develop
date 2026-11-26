@@ -6,14 +6,15 @@ namespace hamilt
 template <typename FPTYPE>
 struct hpsi_norm_op<FPTYPE, base_device::DEVICE_CPU>
 {
-    void operator()(const base_device::DEVICE_CPU* dev,
-                    const int& nbands,
-                    const int& npwk_max,
-                    const int& npwk,
-                    const FPTYPE& Ebar,
-                    const FPTYPE& DeltaE,
-                    std::complex<FPTYPE>* hpsi_norm,
-                    const std::complex<FPTYPE>* psi_in)
+    void operator()(
+        const base_device::DEVICE_CPU *dev,
+        const int &nbands,
+        const int &npwk_max,
+        const int &npwk,
+        const FPTYPE &Ebar,
+        const FPTYPE &DeltaE,
+        std::complex<FPTYPE> *hpsi_norm,
+        const std::complex<FPTYPE> *psi_in)
     {
 #ifdef _OPENMP
 #pragma omp parallel for

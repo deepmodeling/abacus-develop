@@ -39,13 +39,14 @@ class DFPT_NSCF
      * @param eig output eigenvalues ascending [nwant]
      * @return 0 converged, >0 iterations used without full convergence
      */
-    static int lowest_eigpairs(const DFPT_Stern::LinearOperator& hop,
-                               const std::vector<double>& precond,
-                               int nwant,
-                               int max_iter,
-                               double eig_tol,
-                               std::vector<std::vector<std::complex<double>>>& psi,
-                               std::vector<double>& eig);
+    static int lowest_eigpairs(
+        const DFPT_Stern::LinearOperator &hop,
+        const std::vector<double> &precond,
+        int nwant,
+        int max_iter,
+        double eig_tol,
+        std::vector<std::vector<std::complex<double>>> &psi,
+        std::vector<double> &eig);
 };
 
 } // namespace ModuleDFPT

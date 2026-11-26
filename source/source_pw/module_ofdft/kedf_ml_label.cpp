@@ -5,7 +5,7 @@
 
 /**
  * @brief Initialize the data for ML KEDF, and generate the mapping between descriptor and kernel
- * 
+ *
  * @param nkernel number of kernels
  * @param of_ml_gamma whether to use gamma descriptor
  * @param of_ml_p whether to use p descriptor
@@ -40,8 +40,7 @@ void KEDF_ML::init_data(
     const std::vector<int> &of_ml_tanh_qnl,
     const std::vector<int> &of_ml_tanhp_nl,
     const std::vector<int> &of_ml_tanhq_nl,
-    std::ostream& ofs_running
-)
+    std::ostream &ofs_running)
 {
     ModuleBase::TITLE("KEDF_ML", "init_data");
     ModuleBase::timer::start("KEDF_ML", "init_data");
@@ -54,7 +53,7 @@ void KEDF_ML::init_data(
         this->descriptor_type.push_back("gamma");
         this->kernel_index.push_back(-1);
         ninput++;
-    } 
+    }
     if (of_ml_p)
     {
         this->descriptor_type.push_back("p");
@@ -149,21 +148,9 @@ void KEDF_ML::init_data(
         }
     }
 
-    this->descriptor2kernel = {{"gamma", {}},
-                               {"p", {}},
-                               {"q", {}},
-                               {"tanhp", {}},
-                               {"tanhq", {}},
-                               {"gammanl", {}},
-                               {"pnl", {}},
-                               {"qnl", {}},
-                               {"xi", {}},
-                               {"tanhxi", {}},
-                               {"tanhxi_nl", {}},
-                               {"tanh_pnl", {}},
-                               {"tanh_qnl", {}},
-                               {"tanhp_nl", {}},
-                               {"tanhq_nl", {}}};
+    this->descriptor2kernel = {{"gamma", {}}, {"p", {}}, {"q", {}}, {"tanhp", {}}, {"tanhq", {}}, {"gammanl", {}},
+        {"pnl", {}}, {"qnl", {}}, {"xi", {}}, {"tanhxi", {}}, {"tanhxi_nl", {}}, {"tanh_pnl", {}}, {"tanh_qnl", {}},
+        {"tanhp_nl", {}}, {"tanhq_nl", {}}};
     this->descriptor2index = this->descriptor2kernel;
 
     for (int i = 0; i < ninput; ++i)
@@ -186,13 +173,13 @@ void KEDF_ML::init_data(
     ofs_running << "  ---------------------------------------------------------\n";
     ofs_running << "  descriptor2index (input vector positions):\n";
 
-    for (const std::pair<const std::string, std::vector<int>>& pair : this->descriptor2index)
+    for (const std::pair<const std::string, std::vector<int>> &pair : this->descriptor2index)
     {
         ofs_running << "    " << std::setw(15) << std::left << pair.first << " : [";
-        for (size_t i = 0; i < pair.second.size(); ++i) 
+        for (size_t i = 0; i < pair.second.size(); ++i)
         {
             ofs_running << pair.second[i];
-            if (i < pair.second.size() - 1) 
+            if (i < pair.second.size() - 1)
             {
                 ofs_running << ", ";
             }
@@ -203,13 +190,13 @@ void KEDF_ML::init_data(
     ofs_running << "  ---------------------------------------------------------\n";
     ofs_running << "  descriptor2kernel (kernel indices):\n";
 
-    for (const std::pair<const std::string, std::vector<int>>& pair : this->descriptor2kernel)
+    for (const std::pair<const std::string, std::vector<int>> &pair : this->descriptor2kernel)
     {
         ofs_running << "    " << std::setw(15) << std::left << pair.first << " : [";
-        for (size_t i = 0; i < pair.second.size(); ++i) 
+        for (size_t i = 0; i < pair.second.size(); ++i)
         {
             ofs_running << pair.second[i];
-            if (i < pair.second.size() - 1) 
+            if (i < pair.second.size() - 1)
             {
                 ofs_running << ", ";
             }
@@ -242,28 +229,16 @@ void KEDF_ML::init_data(
     bool gene_tanhp_nl_tot = false;
     bool gene_tanhq_nl_tot = false;
 
-    this->gene_data_label = {{"gamma", {}},
-                               {"p", {}},
-                               {"q", {}},
-                               {"tanhp", {}},
-                               {"tanhq", {}},
-                               {"gammanl", {}},
-                               {"pnl", {}},
-                               {"qnl", {}},
-                               {"xi", {}},
-                               {"tanhxi", {}},
-                               {"tanhxi_nl", {}},
-                               {"tanh_pnl", {}},
-                               {"tanh_qnl", {}},
-                               {"tanhp_nl", {}},
-                               {"tanhq_nl", {}}};
+    this->gene_data_label = {{"gamma", {}}, {"p", {}}, {"q", {}}, {"tanhp", {}}, {"tanhq", {}}, {"gammanl", {}},
+        {"pnl", {}}, {"qnl", {}}, {"xi", {}}, {"tanhxi", {}}, {"tanhxi_nl", {}}, {"tanh_pnl", {}}, {"tanh_qnl", {}},
+        {"tanhp_nl", {}}, {"tanhq_nl", {}}};
 
     for (std::string descriptor : {"gamma", "p", "q", "tanhp", "tanhq"})
     {
         this->gene_data_label[descriptor].push_back(0);
     }
-    for (std::string descriptor : {"gammanl", "pnl", "qnl", "xi", "tanhxi", "tanhxi_nl",
-                                    "tanh_pnl", "tanh_qnl", "tanhp_nl", "tanhq_nl"})
+    for (std::string descriptor :
+        {"gammanl", "pnl", "qnl", "xi", "tanhxi", "tanhxi_nl", "tanh_pnl", "tanh_qnl", "tanhp_nl", "tanhq_nl"})
     {
         for (int ik = 0; ik < nkernel; ++ik)
         {
@@ -292,7 +267,7 @@ void KEDF_ML::init_data(
         gene_tanh_qnl_tot = gene_tanh_qnl_tot || this->gene_data_label["tanh_qnl"][ik];
         gene_tanhp_nl_tot = gene_tanhp_nl_tot || this->gene_data_label["tanhp_nl"][ik];
         gene_tanhq_nl_tot = gene_tanhq_nl_tot || this->gene_data_label["tanhq_nl"][ik];
-        
+
         // std::cout << "gene_gammanl    " << this->gene_data_label["gammanl"][ik] << std::endl;
         // std::cout << "gene_pnl    " << this->gene_data_label["pnl"][ik] << std::endl;
         // std::cout << "gene_qnl    " << this->gene_data_label["qnl"][ik] << std::endl;
@@ -310,14 +285,13 @@ void KEDF_ML::init_data(
     this->gene_data_label["p"][0] = of_ml_p || this->gene_data_label["tanhp"][0] || gene_pnl_tot;
     this->gene_data_label["q"][0] = of_ml_q || this->gene_data_label["tanhq"][0] || gene_qnl_tot;
 
-
     if (this->gene_data_label["gamma"][0])
     {
         this->gamma = std::vector<double>(this->nx, 0.);
     }
     if (this->gene_data_label["p"][0])
     {
-        this->nablaRho = std::vector<std::vector<double> >(3, std::vector<double>(this->nx, 0.));
+        this->nablaRho = std::vector<std::vector<double>>(3, std::vector<double>(this->nx, 0.));
         this->p = std::vector<double>(this->nx, 0.);
     }
     if (this->gene_data_label["q"][0])

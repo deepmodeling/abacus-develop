@@ -19,11 +19,11 @@ void KEDF_LKT::set_para(double dV, double lkt_a)
  * @param pw_rho pw basis
  * @return the energy of LKT KEDF
  */
-double KEDF_LKT::get_energy(const double* const* prho, ModulePW::PW_Basis* pw_rho)
+double KEDF_LKT::get_energy(const double *const *prho, ModulePW::PW_Basis *pw_rho)
 {
     double energy = 0.;                    // in Ry
-    double* as = new double[pw_rho->nrxx]; // a*s
-    double** nabla_rho = new double*[3];
+    double *as = new double[pw_rho->nrxx]; // a*s
+    double **nabla_rho = new double *[3];
     for (int i = 0; i < 3; ++i)
     {
         nabla_rho[i] = new double[pw_rho->nrxx];
@@ -47,9 +47,10 @@ double KEDF_LKT::get_energy(const double* const* prho, ModulePW::PW_Basis* pw_rh
     Parallel_Reduce::reduce_all(this->lkt_energy);
 
     delete[] as;
-    for (int i = 0; i < 3; ++i) {
+    for (int i = 0; i < 3; ++i)
+    {
         delete[] nabla_rho[i];
-}
+    }
     delete[] nabla_rho;
 
     return this->lkt_energy;
@@ -65,11 +66,15 @@ double KEDF_LKT::get_energy(const double* const* prho, ModulePW::PW_Basis* pw_rh
  * @param pw_rho pw basis
  * @return the energy density of LKT KEDF
  */
-double KEDF_LKT::get_energy_density(const double* const* prho, int is, int ir, ModulePW::PW_Basis* pw_rho)
+double KEDF_LKT::get_energy_density(
+    const double *const *prho,
+    int is,
+    int ir,
+    ModulePW::PW_Basis *pw_rho)
 {
     double energy_den = 0.;                // in Ry
-    double* as = new double[pw_rho->nrxx]; // a*s
-    double** nabla_rho = new double*[3];
+    double *as = new double[pw_rho->nrxx]; // a*s
+    double **nabla_rho = new double *[3];
     for (int i = 0; i < 3; ++i)
     {
         nabla_rho[i] = new double[pw_rho->nrxx];
@@ -80,18 +85,19 @@ double KEDF_LKT::get_energy_density(const double* const* prho, int is, int ir, M
     energy_den = this->c_tf_ * std::pow(prho[is][ir], 5. / 3.) / std::cosh(as[ir]);
 
     delete[] as;
-    for (int i = 0; i < 3; ++i) {
+    for (int i = 0; i < 3; ++i)
+    {
         delete[] nabla_rho[i];
-}
+    }
     delete[] nabla_rho;
 
     return energy_den;
 }
 
-void KEDF_LKT::tau_lkt(const double* const* prho, ModulePW::PW_Basis* pw_rho, double* rtau_lkt)
+void KEDF_LKT::tau_lkt(const double *const *prho, ModulePW::PW_Basis *pw_rho, double *rtau_lkt)
 {
-    double* as = new double[pw_rho->nrxx]; // a*s
-    double** nabla_rho = new double*[3];
+    double *as = new double[pw_rho->nrxx]; // a*s
+    double **nabla_rho = new double *[3];
     for (int i = 0; i < 3; ++i)
     {
         nabla_rho[i] = new double[pw_rho->nrxx];
@@ -114,9 +120,10 @@ void KEDF_LKT::tau_lkt(const double* const* prho, ModulePW::PW_Basis* pw_rho, do
     }
 
     delete[] as;
-    for (int i = 0; i < 3; ++i) {
+    for (int i = 0; i < 3; ++i)
+    {
         delete[] nabla_rho[i];
-}
+    }
     delete[] nabla_rho;
 }
 
@@ -130,18 +137,18 @@ void KEDF_LKT::tau_lkt(const double* const* prho, ModulePW::PW_Basis* pw_rho, do
  * @param pw_rho pw basis
  * @param rpotential rpotential => rpotential + V_{LKT}
  */
-void KEDF_LKT::lkt_potential(const double* const* prho, ModulePW::PW_Basis* pw_rho, ModuleBase::matrix& rpotential)
+void KEDF_LKT::lkt_potential(const double *const *prho, ModulePW::PW_Basis *pw_rho, ModuleBase::matrix &rpotential)
 {
     ModuleBase::TITLE("KEDF_LKT", "lkt_potential");
     ModuleBase::timer::start("KEDF_LKT", "lkt_potential");
     this->lkt_energy = 0.;
-    double* as = new double[pw_rho->nrxx]; // a*s
-    double** nabla_rho = new double*[3];
+    double *as = new double[pw_rho->nrxx]; // a*s
+    double **nabla_rho = new double *[3];
     for (int i = 0; i < 3; ++i)
     {
         nabla_rho[i] = new double[pw_rho->nrxx];
     }
-    double* nabla_term = new double[pw_rho->nrxx];
+    double *nabla_term = new double[pw_rho->nrxx];
 
     if (PARAM.inp.nspin == 1)
     {
@@ -155,8 +162,8 @@ void KEDF_LKT::lkt_potential(const double* const* prho, ModulePW::PW_Basis* pw_r
 
             this->lkt_energy += std::pow(prho[0][ir], 5. / 3.) / coshas;
             // add the first term
-            rpotential(0, ir) += 5.0 / 3.0 * this->c_tf_ * std::pow(prho[0][ir], 2. / 3.) / coshas
-                                 * (1. + 4.0 / 5.0 * as[ir] * tanhas);
+            rpotential(0, ir) +=
+                5.0 / 3.0 * this->c_tf_ * std::pow(prho[0][ir], 2. / 3.) / coshas * (1. + 4.0 / 5.0 * as[ir] * tanhas);
             // get the nabla_term
             for (int i = 0; i < 3; ++i)
             {
@@ -166,8 +173,8 @@ void KEDF_LKT::lkt_potential(const double* const* prho, ModulePW::PW_Basis* pw_r
                 }
                 else
                 {
-                    nabla_rho[i][ir] = nabla_rho[i][ir] * tanhas / coshas / as[ir] / prho[0][ir] * this->c_tf_
-                                       * std::pow(this->s_coef_ * this->lkt_a_, 2);
+                    nabla_rho[i][ir] = nabla_rho[i][ir] * tanhas / coshas / as[ir] / prho[0][ir] * this->c_tf_ *
+                                       std::pow(this->s_coef_ * this->lkt_a_, 2);
                 }
             }
         }
@@ -188,9 +195,10 @@ void KEDF_LKT::lkt_potential(const double* const* prho, ModulePW::PW_Basis* pw_r
     }
 
     delete[] as;
-    for (int i = 0; i < 3; ++i) {
+    for (int i = 0; i < 3; ++i)
+    {
         delete[] nabla_rho[i];
-}
+    }
     delete[] nabla_rho;
     delete[] nabla_term;
 
@@ -203,15 +211,15 @@ void KEDF_LKT::lkt_potential(const double* const* prho, ModulePW::PW_Basis* pw_r
  * @param prho charge density
  * @param pw_rho pw basis
  */
-void KEDF_LKT::get_stress(const double* const* prho, ModulePW::PW_Basis* pw_rho)
+void KEDF_LKT::get_stress(const double *const *prho, ModulePW::PW_Basis *pw_rho)
 {
-    double* as = new double[pw_rho->nrxx]; // a*s
-    double** nabla_rho = new double*[3];
+    double *as = new double[pw_rho->nrxx]; // a*s
+    double **nabla_rho = new double *[3];
     for (int i = 0; i < 3; ++i)
     {
         nabla_rho[i] = new double[pw_rho->nrxx];
     }
-    double* nabla_term = new double[pw_rho->nrxx];
+    double *nabla_term = new double[pw_rho->nrxx];
 
     if (PARAM.inp.nspin == 1)
     {
@@ -235,8 +243,8 @@ void KEDF_LKT::get_stress(const double* const* prho, ModulePW::PW_Basis* pw_rho)
                     double coef = std::tanh(as[ir]) / std::cosh(as[ir]);
                     if (as[ir] != 0.)
                     {
-                        integral_term += -nabla_rho[alpha][ir] * nabla_rho[beta][ir] / as[ir] / prho[0][ir]
-                                         * std::pow(this->s_coef_ * this->lkt_a_, 2) * coef;
+                        integral_term += -nabla_rho[alpha][ir] * nabla_rho[beta][ir] / as[ir] / prho[0][ir] *
+                                         std::pow(this->s_coef_ * this->lkt_a_, 2) * coef;
                     }
                     if (alpha == beta)
                     {
@@ -263,9 +271,10 @@ void KEDF_LKT::get_stress(const double* const* prho, ModulePW::PW_Basis* pw_rho)
     }
 
     delete[] as;
-    for (int i = 0; i < 3; ++i) {
+    for (int i = 0; i < 3; ++i)
+    {
         delete[] nabla_rho[i];
-}
+    }
     delete[] nabla_rho;
     delete[] nabla_term;
 }
@@ -277,10 +286,10 @@ void KEDF_LKT::get_stress(const double* const* prho, ModulePW::PW_Basis* pw_rho)
  * @param [in] pw_rho pw basis
  * @param [out] routput
  */
-void KEDF_LKT::nabla(const double* pinput, ModulePW::PW_Basis* pw_rho, double** routput)
+void KEDF_LKT::nabla(const double *pinput, ModulePW::PW_Basis *pw_rho, double **routput)
 {
-    std::complex<double>* recip_data = new std::complex<double>[pw_rho->npw];
-    std::complex<double>* recip_nabla = new std::complex<double>[pw_rho->npw];
+    std::complex<double> *recip_data = new std::complex<double>[pw_rho->npw];
+    std::complex<double> *recip_nabla = new std::complex<double>[pw_rho->npw];
     pw_rho->real2recip(pinput, recip_data);
 
     std::complex<double> img{0.0, 1.0};
@@ -304,9 +313,9 @@ void KEDF_LKT::nabla(const double* pinput, ModulePW::PW_Basis* pw_rho, double** 
  * @param [in] pw_rho pw basis
  * @param [out] routput
  */
-void KEDF_LKT::divergence(const double* const* pinput, ModulePW::PW_Basis* pw_rho, double* routput)
+void KEDF_LKT::divergence(const double *const *pinput, ModulePW::PW_Basis *pw_rho, double *routput)
 {
-    std::complex<double>* recip_container = new std::complex<double>[pw_rho->npw];
+    std::complex<double> *recip_container = new std::complex<double>[pw_rho->npw];
     std::complex<double> img{0.0, 1.0};
     ModuleBase::GlobalFunc::ZEROS(routput, pw_rho->nrxx);
     for (int i = 0; i < 3; ++i)
@@ -330,12 +339,16 @@ void KEDF_LKT::divergence(const double* const* pinput, ModulePW::PW_Basis* pw_rh
  * @param [in] nrxx the number of real space grid
  * @param [out] as lkt_a * s
  */
-void KEDF_LKT::get_as(const double* prho, const double* const* pnabla_rho, const int nrxx, double* as)
+void KEDF_LKT::get_as(
+    const double *prho,
+    const double *const *pnabla_rho,
+    const int nrxx,
+    double *as)
 {
     for (int ir = 0; ir < nrxx; ++ir)
     {
-        as[ir] = std::sqrt(std::pow(pnabla_rho[0][ir], 2) + std::pow(pnabla_rho[1][ir], 2)
-                           + std::pow(pnabla_rho[2][ir], 2))
-                 / std::pow(prho[ir], 4.0 / 3.0) * this->s_coef_ * this->lkt_a_;
+        as[ir] = std::sqrt(
+                     std::pow(pnabla_rho[0][ir], 2) + std::pow(pnabla_rho[1][ir], 2) + std::pow(pnabla_rho[2][ir], 2)) /
+                 std::pow(prho[ir], 4.0 / 3.0) * this->s_coef_ * this->lkt_a_;
     }
 }

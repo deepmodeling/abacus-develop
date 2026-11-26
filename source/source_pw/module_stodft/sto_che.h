@@ -1,7 +1,7 @@
 #ifndef STO_CHE_H
 #define STO_CHE_H
-#include "source_base/math_chebyshev.h"
 #include "source_base/kernels/math_kernel_op.h"
+#include "source_base/math_chebyshev.h"
 #include "source_base/module_container/ATen/kernels/blas.h"
 
 #include <memory>
@@ -23,7 +23,7 @@ class StoChe
     /// @brief deleter for device-side spolyv buffer
     struct delmem_var_deleter
     {
-        void operator()(REAL* p) const
+        void operator()(REAL *p) const
         {
             if (p)
             {
@@ -36,18 +36,22 @@ class StoChe
     StoChe() = default;
     ~StoChe() = default;
 
-    StoChe(const StoChe&) = delete;
-    StoChe& operator=(const StoChe&) = delete;
-    StoChe(StoChe&&) noexcept = default;
-    StoChe& operator=(StoChe&&) noexcept = default;
+    StoChe(const StoChe &) = delete;
+    StoChe &operator=(const StoChe &) = delete;
+    StoChe(StoChe &&) noexcept = default;
+    StoChe &operator=(StoChe &&) noexcept = default;
 
     /// @brief (Re)allocate Chebyshev expansion buffers. Safe to call multiple times.
-    void init(const int& nche, const int& method, const REAL& emax_sto, const REAL& emin_sto);
+    void init(
+        const int &nche,
+        const int &method,
+        const REAL &emax_sto,
+        const REAL &emin_sto);
 
-    int nche = 0;                                      ///< order of Chebyshev expansion
-    std::unique_ptr<REAL, delmem_var_deleter> spolyv;  ///< [Device] coefficients of Chebyshev expansion
-    std::vector<REAL> spolyv_cpu;                       ///< [CPU] coefficients of Chebyshev expansion (method==1 only)
-    int method_sto = 0;                                 ///< method for the stochastic calculation
+    int nche = 0;                                     ///< order of Chebyshev expansion
+    std::unique_ptr<REAL, delmem_var_deleter> spolyv; ///< [Device] coefficients of Chebyshev expansion
+    std::vector<REAL> spolyv_cpu;                     ///< [CPU] coefficients of Chebyshev expansion (method==1 only)
+    int method_sto = 0;                               ///< method for the stochastic calculation
 
     /// Chebyshev expansion. Stores the plan of FFTW and should be initialized at the beginning of the calculation
     std::unique_ptr<ModuleBase::Chebyshev<REAL, Device>> p_che;
@@ -56,7 +60,7 @@ class StoChe
     REAL emin_sto = 0.0; ///< minimum energy for normalization
 
   private:
-    Device* ctx = {};
+    Device *ctx = {};
 };
 
 /**
@@ -68,25 +72,23 @@ class StoChe
  * @return REAL
  */
 template <typename REAL, typename Device>
-REAL vTMv(const REAL* v, const REAL* M, const int n)
+REAL vTMv(const REAL *v, const REAL *M, const int n)
 {
-    Device* ctx = {};
-    base_device::DEVICE_CPU* cpu_ctx = {};
+    Device *ctx = {};
+    base_device::DEVICE_CPU *cpu_ctx = {};
     using ct_Device = typename container::PsiToContainer<Device>::type;
     const char normal = 'N';
     const REAL one = 1;
     const int inc = 1;
     const REAL zero = 0;
-    REAL* y = nullptr;
+    REAL *y = nullptr;
     base_device::memory::resize_memory_op<REAL, Device>()(y, n);
     ModuleBase::gemv_op<REAL, Device>()(normal, n, n, &one, M, n, v, inc, &zero, y, inc);
     REAL result = 0;
-    REAL* dot_device = nullptr;
+    REAL *dot_device = nullptr;
     base_device::memory::resize_memory_op<REAL, Device>()(dot_device, 1);
     container::kernels::blas_dot<REAL, ct_Device>()(n, y, 1, v, 1, dot_device);
-    base_device::memory::synchronize_memory_op<REAL, base_device::DEVICE_CPU, Device>()(&result,
-                                                                                        dot_device,
-                                                                                        1);
+    base_device::memory::synchronize_memory_op<REAL, base_device::DEVICE_CPU, Device>()(&result, dot_device, 1);
     base_device::memory::delete_memory_op<REAL, Device>()(y);
     base_device::memory::delete_memory_op<REAL, Device>()(dot_device);
     return result;

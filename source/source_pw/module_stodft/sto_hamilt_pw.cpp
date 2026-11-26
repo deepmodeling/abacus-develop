@@ -1,16 +1,17 @@
 #include "sto_hamilt_pw.h"
-#include "source_base/timer.h"
 #include "kernels/hpsi_norm_op.h"
+#include "source_base/timer.h"
 
 template <typename T, typename Device>
-StoHamiltPW<T, Device>::StoHamiltPW(elecstate::Potential* pot_in,
-                                    ModulePW::PW_Basis_K* wfc_basis,
-                                    K_Vectors* p_kv,
-                                    pseudopot_cell_vnl* nlpp,
-                                    const UnitCell* ucell,
-                                    const int& npol,
-                                    Real* emin_in,
-                                    Real* emax_in)
+StoHamiltPW<T, Device>::StoHamiltPW(
+    elecstate::Potential *pot_in,
+    ModulePW::PW_Basis_K *wfc_basis,
+    K_Vectors *p_kv,
+    pseudopot_cell_vnl *nlpp,
+    const UnitCell *ucell,
+    const int &npol,
+    Real *emin_in,
+    Real *emax_in)
     : hamilt::HamiltPW<T, Device>(pot_in, wfc_basis, p_kv, nlpp, nullptr, ucell, nullptr), ngk(p_kv->ngk)
 {
     this->classname = "StoHamiltPW";
@@ -21,19 +22,18 @@ StoHamiltPW<T, Device>::StoHamiltPW(elecstate::Potential* pot_in,
 }
 
 template <typename T, typename Device>
-void StoHamiltPW<T, Device>::hPsi(const T* psi_in, T* hpsi, const int& nbands)
+void StoHamiltPW<T, Device>::hPsi(const T *psi_in, T *hpsi, const int &nbands)
 {
-    auto call_act = [&, this](const hamilt::Operator<T, Device>* op, const bool& is_first_node) -> void {
-        op->act(nbands, this->npwk_max, this->npol, psi_in, hpsi, this->ngk[op->get_ik()],  is_first_node);
-    };
+    auto call_act = [&, this](const hamilt::Operator<T, Device> *op, const bool &is_first_node) -> void
+    { op->act(nbands, this->npwk_max, this->npol, psi_in, hpsi, this->ngk[op->get_ik()], is_first_node); };
 
     ModuleBase::timer::start("StoHamiltPW", "hPsi");
     call_act(this->ops, true); // first node
-    hamilt::Operator<T, Device>* node((hamilt::Operator<T, Device>*)this->ops->next_op);
+    hamilt::Operator<T, Device> *node((hamilt::Operator<T, Device> *)this->ops->next_op);
     while (node != nullptr)
     {
         call_act(node, false); // other nodes
-        node = (hamilt::Operator<T, Device>*)(node->next_op);
+        node = (hamilt::Operator<T, Device> *)(node->next_op);
     }
     ModuleBase::timer::end("StoHamiltPW", "hPsi");
 
@@ -41,7 +41,7 @@ void StoHamiltPW<T, Device>::hPsi(const T* psi_in, T* hpsi, const int& nbands)
 }
 
 template <typename T, typename Device>
-void StoHamiltPW<T, Device>::hPsi_norm(const T* psi_in, T* hpsi_norm, const int& nbands)
+void StoHamiltPW<T, Device>::hPsi_norm(const T *psi_in, T *hpsi_norm, const int &nbands)
 {
     ModuleBase::timer::start("StoHamiltPW", "hPsi_norm");
 

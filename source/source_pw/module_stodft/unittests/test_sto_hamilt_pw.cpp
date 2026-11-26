@@ -21,8 +21,15 @@ hamilt::HamiltPW<T, Device>::HamiltPW(
 {
 }
 
-template <typename T, typename Device> hamilt::HamiltPW<T, Device>::~HamiltPW() { delete this->ops; };
-template <typename T, typename Device> void hamilt::HamiltPW<T, Device>::updateHk(int) {}
+template <typename T, typename Device>
+hamilt::HamiltPW<T, Device>::~HamiltPW()
+{
+    delete this->ops;
+};
+template <typename T, typename Device>
+void hamilt::HamiltPW<T, Device>::updateHk(int)
+{
+}
 template <typename T, typename Device>
 void hamilt::HamiltPW<T, Device>::sPsi(
     T const *,
@@ -45,7 +52,8 @@ template class hamilt::HamiltPW<std::complex<float>, base_device::DEVICE_GPU>;
  *  - void hPsi_norm(const T* psi_in, T* hpsi, const int& nbands)
  ***********************************************/
 
-template <typename T, typename Device> class TestOp : public hamilt::Operator<T, Device>
+template <typename T, typename Device>
+class TestOp : public hamilt::Operator<T, Device>
 {
   public:
     virtual void act(
@@ -83,14 +91,7 @@ class TestHamiltSto : public ::testing::Test
         std::vector<int> ngk = {2};
         p_kv->ngk = ngk;
         hamilt_sto = new StoHamiltPW<std::complex<double>, base_device::DEVICE_CPU>(
-            pot,
-            wfc_basis,
-            p_kv,
-            nullptr,
-            nullptr,
-            npol,
-            &emin,
-            &emax);
+            pot, wfc_basis, p_kv, nullptr, nullptr, npol, &emin, &emax);
         hamilt_sto->ops = new TestOp<std::complex<double>, base_device::DEVICE_CPU>();
     }
 

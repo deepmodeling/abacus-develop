@@ -12,13 +12,14 @@
 #include <vector>
 
 template <typename FPTYPE, typename Device>
-void check_che_op<FPTYPE, Device>::operator()(const int& nche_in,
-                                              const double& try_emin,
-                                              const double& try_emax,
-                                              const int& nbands_sto,
-                                              K_Vectors* p_kv,
-                                              Stochastic_WF<std::complex<FPTYPE>, Device>* p_stowf,
-                                              StoHamiltPW<std::complex<FPTYPE>, Device>* p_hamilt_sto)
+void check_che_op<FPTYPE, Device>::operator()(
+    const int &nche_in,
+    const double &try_emin,
+    const double &try_emax,
+    const int &nbands_sto,
+    K_Vectors *p_kv,
+    Stochastic_WF<std::complex<FPTYPE>, Device> *p_stowf,
+    StoHamiltPW<std::complex<FPTYPE>, Device> *p_hamilt_sto)
 {
     //------------------------------
     //      Convergence test
@@ -46,7 +47,7 @@ void check_che_op<FPTYPE, Device>::operator()(const int& nche_in,
     {
         p_hamilt_sto->updateHk(ik);
         const int npw = p_kv->ngk[ik];
-        std::complex<FPTYPE>* pchi = nullptr;
+        std::complex<FPTYPE> *pchi = nullptr;
         psi::Psi<std::complex<FPTYPE>, Device> randchi_d;
         if (nbands_sto == 0) // For case: PARAM.inp.nbands_sto = "all"
         {
@@ -57,7 +58,7 @@ void check_che_op<FPTYPE, Device>::operator()(const int& nche_in,
         {
             if (nbands_sto == 0)
             {
-                std::vector<std::complex<FPTYPE>> randchi(npw);   
+                std::vector<std::complex<FPTYPE>> randchi(npw);
                 for (int ig = 0; ig < npw; ++ig)
                 {
                     FPTYPE rr = std::rand() / FPTYPE(RAND_MAX);
@@ -78,18 +79,11 @@ void check_che_op<FPTYPE, Device>::operator()(const int& nche_in,
             while (true)
             {
                 bool converge;
-                auto hchi_norm = std::bind(&StoHamiltPW<std::complex<FPTYPE>, Device>::hPsi_norm,
-                                           p_hamilt_sto,
-                                           std::placeholders::_1,
-                                           std::placeholders::_2,
-                                           std::placeholders::_3);
-                converge = chetest.checkconverge(hchi_norm,
-                                                 pchi,
-                                                 npw,
-                                                 p_stowf->npwx,
-                                                 *p_hamilt_sto->emax,
-                                                 *p_hamilt_sto->emin,
-                                                 2.0);
+                auto hchi_norm = std::bind(
+                    &StoHamiltPW<std::complex<FPTYPE>, Device>::hPsi_norm, p_hamilt_sto, std::placeholders::_1,
+                    std::placeholders::_2, std::placeholders::_3);
+                converge = chetest.checkconverge(
+                    hchi_norm, pchi, npw, p_stowf->npwx, *p_hamilt_sto->emax, *p_hamilt_sto->emin, 2.0);
 
                 if (!converge)
                 {
@@ -116,27 +110,23 @@ void check_che_op<FPTYPE, Device>::operator()(const int& nche_in,
 }
 
 template <typename FPTYPE, typename Device>
-psi::Psi<std::complex<FPTYPE>, Device>* gatherchi_op<FPTYPE, Device>::operator()(
-    psi::Psi<std::complex<FPTYPE>, Device>& chi,
-    psi::Psi<std::complex<FPTYPE>, Device>& chi_all,
-    const int& npwx,
-    int* nrecv_sto,
-    int* displs_sto,
+psi::Psi<std::complex<FPTYPE>, Device> *gatherchi_op<FPTYPE, Device>::operator()(
+    psi::Psi<std::complex<FPTYPE>, Device> &chi,
+    psi::Psi<std::complex<FPTYPE>, Device> &chi_all,
+    const int &npwx,
+    int *nrecv_sto,
+    int *displs_sto,
     const int perbands_sto)
 {
-    psi::Psi<std::complex<FPTYPE>, Device>* p_chi;
+    psi::Psi<std::complex<FPTYPE>, Device> *p_chi;
     p_chi = &chi;
 #ifdef __MPI
     if (PARAM.inp.bndpar > 1)
     {
         p_chi = &chi_all;
         ModuleBase::timer::start("sKG", "bands_gather");
-        Parallel_Common::gatherv_dev<std::complex<FPTYPE>, Device>(chi.get_pointer(),
-                                                                   perbands_sto * npwx,
-                                                                   chi_all.get_pointer(),
-                                                                   nrecv_sto,
-                                                                   displs_sto,
-                                                                   BP_WORLD);
+        Parallel_Common::gatherv_dev<std::complex<FPTYPE>, Device>(
+            chi.get_pointer(), perbands_sto * npwx, chi_all.get_pointer(), nrecv_sto, displs_sto, BP_WORLD);
         ModuleBase::timer::end("sKG", "bands_gather");
     }
 #endif

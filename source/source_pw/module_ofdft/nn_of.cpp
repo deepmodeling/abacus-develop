@@ -1,6 +1,13 @@
 #include "nn_of.h"
 
-NN_OFImpl::NN_OFImpl(int nrxx, int nrxx_vali, int ninpt, int nnode, int nlayer, torch::Device device, std::ostream& ofs_running)
+NN_OFImpl::NN_OFImpl(
+    int nrxx,
+    int nrxx_vali,
+    int ninpt,
+    int nnode,
+    int nlayer,
+    torch::Device device,
+    std::ostream &ofs_running)
 {
     this->nrxx = nrxx;
     this->nrxx_vali = nrxx_vali;
@@ -13,7 +20,10 @@ NN_OFImpl::NN_OFImpl(int nrxx, int nrxx_vali, int ninpt, int nnode, int nlayer, 
 
     this->inputs = torch::zeros({this->nrxx, this->ninpt}).to(device);
     this->F = torch::zeros({this->nrxx, 1}).to(device);
-    if (nrxx_vali > 0) this->input_vali = torch::zeros({nrxx_vali, this->ninpt}).to(device);
+    if (nrxx_vali > 0)
+    {
+        this->input_vali = torch::zeros({nrxx_vali, this->ninpt}).to(device);
+    }
 
     fc1 = register_module("fc1", torch::nn::Linear(ninpt, nnode));
     fc2 = register_module("fc2", torch::nn::Linear(nnode, nnode));
@@ -22,7 +32,6 @@ NN_OFImpl::NN_OFImpl(int nrxx, int nrxx_vali, int ninpt, int nnode, int nlayer, 
 
     this->to(device);
 }
-
 
 torch::Tensor NN_OFImpl::forward(torch::Tensor inpt)
 {
