@@ -82,6 +82,10 @@ addtest(
           ../dfpt_phon_ewald.cpp
           ../dfpt_phon_elec.cpp
           ../dfpt_nscf.cpp
+          # Shared Ewald neighbor-shell generator (ion_ion real-space sum);
+          # raw sources because hamilt_general is an MPI-ABI object library
+          ../../../source_hamilt/module_ewald/h_ewald_pw.cpp
+          ../../../source_hamilt/module_ewald/dnrm2.cpp
           ../dfpt_rho.cpp
           ../dfpt_rho_mix.cpp
           ../../../source_estate/module_charge/chg_tools.cpp
@@ -230,6 +234,10 @@ if(ENABLE_MPI)
             ../dfpt_phon_asr.cpp
             ../dfpt_phon_ewald.cpp
             ../dfpt_phon_elec.cpp
+            # Shared Ewald neighbor-shell generator (ion_ion real-space sum);
+            # raw sources because hamilt_general is an MPI-ABI object library
+            ../../../source_hamilt/module_ewald/h_ewald_pw.cpp
+            ../../../source_hamilt/module_ewald/dnrm2.cpp
             ../dfpt_q0.cpp
             ../dfpt_q0_pos.cpp
             ../dfpt_metal.cpp

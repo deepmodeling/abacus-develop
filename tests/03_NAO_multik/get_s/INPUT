@@ -9,3 +9,4 @@ scf_thr           1e-6
 basis_type        lcao
 calculation       get_s
 out_mat_ds        1
+out_mat_l         1
