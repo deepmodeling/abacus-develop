@@ -55,9 +55,8 @@ target_link_libraries(${MODULE_NAME} PUBLIC base cell psi elecstate
 
 if(BUILD_TESTING)
   if(ENABLE_MPI)
-    add_subdirectory(test)
-    # serial (__MPI-off) tests for the FFT-driving kernels; must be built
-    # inside ENABLE_MPI so the shared prebuilt test libs stay available
-    add_subdirectory(test_serial)
+    # All targets (serial and MPI) live in unittests/; the serial ones are
+    # built inside ENABLE_MPI so the shared prebuilt test libs stay available
+    add_subdirectory(unittests)
   endif()
 endif()
