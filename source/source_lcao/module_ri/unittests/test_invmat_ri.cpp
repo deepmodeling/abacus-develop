@@ -58,13 +58,13 @@ void check_derivative(const double cutoff, const T phase)
 TEST(SpectralInverse, RealRetainedDiscardedRotation) { check_derivative<double>(0.1, 1.0); }
 TEST(SpectralInverse, ComplexRetainedDiscardedRotation)
 {
-    const auto phase = std::polar(1.0, 0.7);
+    const std::complex<double> phase = std::polar(1.0, 0.7);
     check_derivative<std::complex<double>>(0.1, phase);
 }
 TEST(SpectralInverse, RealFullInverse) { check_derivative<double>(0.0, 1.0); }
 TEST(SpectralInverse, ComplexFullInverse)
 {
-    const auto phase = std::polar(1.0, 0.7);
+    const std::complex<double> phase = std::polar(1.0, 0.7);
     check_derivative<std::complex<double>>(0.0, phase);
 }
 
@@ -212,7 +212,7 @@ TEST(SpectralInverse, RealUnequalBlocksWithMovingThreeCenter)
 }
 TEST(SpectralInverse, ComplexUnequalBlocksWithMovingThreeCenter)
 {
-    const auto phase = std::polar(1.0, 0.7);
+    const std::complex<double> phase = std::polar(1.0, 0.7);
     check_coefficients<std::complex<double>>(0.3, phase);
 }
 TEST(SpectralInverse, RealUnequalBlocksWithoutTruncation)
@@ -221,7 +221,7 @@ TEST(SpectralInverse, RealUnequalBlocksWithoutTruncation)
 }
 TEST(SpectralInverse, ComplexUnequalBlocksWithoutTruncation)
 {
-    const auto phase = std::polar(1.0, 0.7);
+    const std::complex<double> phase = std::polar(1.0, 0.7);
     check_coefficients<std::complex<double>>(0.0, phase);
 }
 

@@ -143,6 +143,16 @@ namespace container {
 // Usage example:	BlasConnector::functionname(parameter list).
 namespace BlasConnector {
 
+// Column-major triangular solve; B is overwritten by the solution.
+static inline
+void trsm(const char side, const char uplo, const char transa, const char diag,
+          const int m, const int n, const std::complex<double> alpha,
+          const std::complex<double>* a, const int lda,
+          std::complex<double>* b, const int ldb)
+{
+    ztrsm_(&side, &uplo, &transa, &diag, &m, &n, &alpha, a, &lda, b, &ldb);
+}
+
 // Column-major rank-one update; preserve the supplied vector strides and leading dimension.
 static inline
 void ger(const int m, const int n, const double alpha,

@@ -93,7 +93,7 @@ TEST(RpaLriSymmetry, UsesPhysicalLatticeConstantForBothUnits)
 
 TEST(RpaLriSymmetry, ConvertsCartesianKPointWithPhysicalScale)
 {
-    const auto cartesian = RpaLriDetail::librpa_cartesian_kvec(ModuleBase::Vector3<double>(1.0, -2.0, 0.5), 2.0);
+    const ModuleBase::Vector3<double> cartesian = RpaLriDetail::librpa_cartesian_kvec(ModuleBase::Vector3<double>(1.0, -2.0, 0.5), 2.0);
     EXPECT_DOUBLE_EQ(cartesian.x, ModuleBase::PI);
     EXPECT_DOUBLE_EQ(cartesian.y, -2.0 * ModuleBase::PI);
     EXPECT_DOUBLE_EQ(cartesian.z, 0.5 * ModuleBase::PI);

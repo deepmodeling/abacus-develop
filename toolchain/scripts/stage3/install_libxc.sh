@@ -72,9 +72,9 @@ case "$with_libxc" in
         -DENABLE_FORTRAN=ON \
         -DENABLE_PYTHON=OFF \
         -DBUILD_TESTING=OFF .. \
-        >configure.log 2>&1 || tail -n ${LOG_LINES} configure.log
-      make -j $(get_nprocs) >make.log 2>&1 || tail -n ${LOG_LINES} make.log
-      make install >install.log 2>&1 || tail -n ${LOG_LINES} install.log
+        > configure.log 2>&1 || tail -n ${LOG_LINES} configure.log
+      make -j $(get_nprocs) > make.log 2>&1 || tail -n ${LOG_LINES} make.log
+      make install > install.log 2>&1 || tail -n ${LOG_LINES} install.log
       cd ../..
       write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage3/$(basename ${SCRIPT_NAME})"
     fi
@@ -106,7 +106,7 @@ esac
 if [ "$with_libxc" != "__DONTUSE__" ]; then
   LIBXC_LIBS="-lxcf03 -lxc"
   if [ "$with_libxc" != "__SYSTEM__" ]; then
-    cat <<EOF >"${BUILDDIR}/setup_libxc"
+    cat << EOF > "${BUILDDIR}/setup_libxc"
 prepend_path LD_LIBRARY_PATH "${pkg_install_dir}/lib"
 prepend_path LD_RUN_PATH "${pkg_install_dir}/lib"
 prepend_path LIBRARY_PATH "${pkg_install_dir}/lib"
@@ -115,7 +115,7 @@ prepend_path PKG_CONFIG_PATH "${pkg_install_dir}/lib/pkgconfig"
 prepend_path CMAKE_PREFIX_PATH "${pkg_install_dir}"
 EOF
   fi
-  cat <<EOF >>"${BUILDDIR}/setup_libxc"
+  cat << EOF >> "${BUILDDIR}/setup_libxc"
 export LIBXC_CFLAGS="${LIBXC_CFLAGS}"
 export LIBXC_LDFLAGS="${LIBXC_LDFLAGS}"
 export LIBXC_LIBS="${LIBXC_LIBS}"

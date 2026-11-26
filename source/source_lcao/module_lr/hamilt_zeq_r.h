@@ -128,7 +128,7 @@ namespace LR
                     const auto psi_ks_is = LR_Util::get_psi_spin(psi_ks, is, this->nk);
 #ifdef __MPI
                     std::vector<ct::Tensor> dm_trans_2d = cal_dm_trans_pblas(X, this->pX[is], psi_ks_is, pc, naos, nocc[is], nvirt[is], pmat.para_2d());
-                    for (auto& t: dm_trans_2d)
+                    for (container::Tensor& t: dm_trans_2d)
                     {
                         LR_Util::mattrans(t.data<T>(), naos, pmat.para_2d());
                     }
@@ -157,7 +157,7 @@ namespace LR
                     const auto psi_ks_is = LR_Util::get_psi_spin(psi_ks, is, this->nk);
 #ifdef __MPI
                     std::vector<ct::Tensor> dm_diff_2d = cal_dm_diff_pblas(X, this->pX[is], psi_ks_is, pc, naos, nocc[is], nvirt[is], pmat.para_2d());
-                    for (auto& t: dm_diff_2d)
+                    for (container::Tensor& t: dm_diff_2d)
                         LR_Util::matsym(t.data<T>(), naos, pmat.para_2d());
 #else
                     std::vector<ct::Tensor> dm_diff_2d = cal_dm_diff_blas(X, psi_ks_is, naos, nocc[is], nvirt[is]);

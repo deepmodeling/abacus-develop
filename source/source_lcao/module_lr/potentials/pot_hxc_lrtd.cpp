@@ -85,7 +85,7 @@ namespace LR
             break;
         default: return;   // S2_updown indexes single components, nothing to pre-contract
         }
-        auto& fxc = *this->xc_kernel_components_;
+        const LR::KernelXC& fxc = *this->xc_kernel_components_;
         if (this->v2rho2_comb_.empty() && !fxc.v2rho2.empty())
         {
             this->v2rho2_comb_.resize(nrxx);
@@ -196,8 +196,8 @@ namespace LR
     // check per access, which also blocks vectorization) on every kernel component.
     void PotHxcLR::set_integral_func(const SpinType& s, const XCType& xc)
     {
-        auto& funcs = this->kernel_to_potential_;
-        auto& fxc = *this->xc_kernel_components_;
+        std::map<SpinType, Tfunc>& funcs = this->kernel_to_potential_;
+        const LR::KernelXC& fxc = *this->xc_kernel_components_;
         if (xc == XCType::LDA) {
             switch (s)
             {

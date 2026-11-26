@@ -78,7 +78,7 @@ void BinManager::init_bins(
 
     auto update_bounds = [&](const std::vector<NeighborAtom>& atoms)
     {
-        for (const auto& atom : atoms)
+        for (const NeighborAtom& atom : atoms)
         {
             x_min_ = std::min(x_min_, atom.position_x);
             x_max_ = std::max(x_max_, atom.position_x);
@@ -267,7 +267,7 @@ void BinManager::build_atom_neighbors(
 
 void BinManager::clear()
 {
-    for (auto& bin : bins_)
+    for (Bin& bin : bins_)
     {
         bin.clear_atoms();
     }

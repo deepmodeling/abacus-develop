@@ -286,30 +286,30 @@ class TestStoHSolverPW : public ::testing::Test
     K_Vectors kv;
     StoChe<double> stoche;
     StoHamiltPW<std::complex<double>> *p_hamilt_sto = nullptr;
-    StoHSolverPW<std::complex<double>, base_device::DEVICE_CPU> hs_d =
-        StoHSolverPW<std::complex<double>, base_device::DEVICE_CPU>(
-            &kv,
-            &pwbk,
-            stowf,
-            stoche,
-            p_hamilt_sto,
-            "scf",
-            "pw",
-            "cg",
-            false,
-            1,
-            hsolver::DiagoIterAssist<std::complex<double>>::SCF_ITER,
-            hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_NMAX,
-            hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_THR,
-            hsolver::DiagoIterAssist<std::complex<double>>::need_subspace,
-            0,
-            false,
-            4,
-            0,
-            0,
-            false,
-            true,
-            1);
+    StoHSolverPW<std::complex<double>, base_device::DEVICE_CPU> hs_d{
+        &kv,
+        &pwbk,
+        stowf,
+        stoche,
+        p_hamilt_sto,
+        "scf",
+        "pw",
+        "cg",
+        false,
+        1,
+        hsolver::DiagoIterAssist<std::complex<double>>::SCF_ITER,
+        hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_NMAX,
+        hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_THR,
+        hsolver::DiagoIterAssist<std::complex<double>>::need_subspace,
+        0,
+        false,
+        4,
+        "hard",
+        0,
+        0,
+        false,
+        true,
+        1};
 
     hamilt::Hamilt<std::complex<double>> hamilt_test_d;
 

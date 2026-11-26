@@ -276,7 +276,7 @@ bool init_exx_info(Exx_Info &exx_info, const Input_para &inp)
                 {
                     continue;
                 }
-                for (auto &cut_parameter : cut_family.second)
+                for (std::map<std::string, std::string>& cut_parameter : cut_family.second)
                 {
                     cut_parameter["rpa_cut_coulomb"] = inp.rpa_cut_coulomb;
                     cut_parameter["rpa_cut_radius"] = inp.rpa_cut_radius;

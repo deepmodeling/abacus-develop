@@ -25,7 +25,7 @@ namespace RI_Util
         std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>> coulomb_param_updated = coulomb_param;
         for(auto &param_list : coulomb_param_updated)
         {
-            for(auto &param : param_list.second)
+            for(std::map<std::string, std::string>& param : param_list.second)
             {
                 if(param.at("singularity_correction") == "spencer")
                 {
@@ -67,7 +67,7 @@ namespace RI_Util
             {
                 case Conv_Coulomb_Pot_K::Coulomb_Type::Fock:
                 {
-                    for(auto &param : param_list.second)
+                    for(const std::map<std::string, std::string>& param : param_list.second)
                     {
                         if(param.at("singularity_correction") == "spencer" || param.at("singularity_correction") == "limits"
                             || param.at("singularity_correction") == "revised_spencer")

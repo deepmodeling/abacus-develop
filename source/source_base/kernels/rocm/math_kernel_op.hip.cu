@@ -224,6 +224,51 @@ void gemv_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(const ch
     hipblasErrcheck(hipblasZgemv(cublas_handle, cutrans, m, n, (hipblasDoubleComplex*)alpha, (hipblasDoubleComplex*)A, lda, (hipblasDoubleComplex*)X, incx, (hipblasDoubleComplex*)beta, (hipblasDoubleComplex*)Y, incy));
 }
 
+
+template <>
+void trmm_op<std::complex<float>, base_device::DEVICE_GPU>::operator()(
+    const char& side, const char& uplo, const char& trans, const char& diag,
+    const int& m, const int& n, const std::complex<float>* alpha,
+    const std::complex<float>* a, const int& lda, std::complex<float>* b, const int& ldb)
+{
+    if (m == 0 || n == 0)
+    {
+        return;
+    }
+    const hipblasSideMode_t gpu_side = side == 'L' ? HIPBLAS_SIDE_LEFT : HIPBLAS_SIDE_RIGHT;
+    const hipblasFillMode_t gpu_uplo = uplo == 'U' ? HIPBLAS_FILL_MODE_UPPER : HIPBLAS_FILL_MODE_LOWER;
+    const hipblasOperation_t gpu_trans = judge_trans_op(true, trans, "trmm_op");
+    const hipblasDiagType_t gpu_diag = diag == 'U' ? HIPBLAS_DIAG_UNIT : HIPBLAS_DIAG_NON_UNIT;
+    const hipblasComplex* gpu_alpha = reinterpret_cast<const hipblasComplex*>(alpha);
+    const hipblasComplex* gpu_a = reinterpret_cast<const hipblasComplex*>(a);
+    hipblasComplex* gpu_b = reinterpret_cast<hipblasComplex*>(b);
+    // TRMM permits identical input/output B with the same leading dimension.
+    hipblasErrcheck(hipblasCtrmm(cublas_handle, gpu_side, gpu_uplo, gpu_trans, gpu_diag,
+                            m, n, gpu_alpha, gpu_a, lda, gpu_b, ldb, gpu_b, ldb));
+}
+
+template <>
+void trmm_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(
+    const char& side, const char& uplo, const char& trans, const char& diag,
+    const int& m, const int& n, const std::complex<double>* alpha,
+    const std::complex<double>* a, const int& lda, std::complex<double>* b, const int& ldb)
+{
+    if (m == 0 || n == 0)
+    {
+        return;
+    }
+    const hipblasSideMode_t gpu_side = side == 'L' ? HIPBLAS_SIDE_LEFT : HIPBLAS_SIDE_RIGHT;
+    const hipblasFillMode_t gpu_uplo = uplo == 'U' ? HIPBLAS_FILL_MODE_UPPER : HIPBLAS_FILL_MODE_LOWER;
+    const hipblasOperation_t gpu_trans = judge_trans_op(true, trans, "trmm_op");
+    const hipblasDiagType_t gpu_diag = diag == 'U' ? HIPBLAS_DIAG_UNIT : HIPBLAS_DIAG_NON_UNIT;
+    const hipblasDoubleComplex* gpu_alpha = reinterpret_cast<const hipblasDoubleComplex*>(alpha);
+    const hipblasDoubleComplex* gpu_a = reinterpret_cast<const hipblasDoubleComplex*>(a);
+    hipblasDoubleComplex* gpu_b = reinterpret_cast<hipblasDoubleComplex*>(b);
+    // TRMM permits identical input/output B with the same leading dimension.
+    hipblasErrcheck(hipblasZtrmm(cublas_handle, gpu_side, gpu_uplo, gpu_trans, gpu_diag,
+                            m, n, gpu_alpha, gpu_a, lda, gpu_b, ldb, gpu_b, ldb));
+}
+
 template <>
 void gemm_op<float, base_device::DEVICE_GPU>::operator()(const char& transa,
                                                          const char& transb,

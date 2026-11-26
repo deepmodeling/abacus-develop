@@ -368,6 +368,22 @@ void hegvx(const int itype, const char jobz, const char range, const char uplo, 
 }
 
 
+// Return the computed eigenpair count through m.
+static inline
+void hegvx(const int itype, const char jobz, const char range, const char uplo, const int n,
+            std::complex<double>* a, const int lda, std::complex<double>* b, const int ldb,
+            const double vl, const double vu, const int il, const int iu, const double abstol,
+            int* m, double* w, std::complex<double>* z, const int ldz,
+            std::complex<double>* work, const int lwork, double* rwork, int* iwork, int* ifail, int& info)
+{
+    zhegvx_(&itype, &jobz, &range, &uplo, &n,
+            a, &lda, b, &ldb,
+            &vl, &vu, &il, &iu,
+            &abstol, m, w, z, &ldz,
+            work, &lwork, rwork, iwork, ifail, &info);
+}
+
+
 // Column-major general eigenproblems; preserve the supplied workspace/query policy.
 static inline
 void geev(const char jobvl, const char jobvr, const int n, double* a, const int lda,

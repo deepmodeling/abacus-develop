@@ -97,6 +97,10 @@ TEST_F(InputDomainReaderTest, RejectsMalformedAndOutOfDomainExplicitValues)
     const std::string output = reject_input("gga_grad 3\n");
     EXPECT_NE(output.find("Expected one Integer from {0, 1, 2}"), std::string::npos);
     EXPECT_NE(output.find("input-main.html#gga-grad"), std::string::npos);
+
+    const std::string exx_output = reject_input("device_exx ddla\n", "lcao");
+    EXPECT_NE(exx_output.find("Invalid INPUT parameter 'device_exx': supplied 'ddla'."), std::string::npos);
+    EXPECT_NE(exx_output.find("Expected one String from {cpu, gpu}."), std::string::npos);
 }
 
 TEST_F(InputDomainReaderTest, ReportsIndependentErrorsTogether)
