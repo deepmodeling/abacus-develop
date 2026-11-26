@@ -9,6 +9,56 @@ namespace hsolver
 class DiagoPPCGRefinementTest : public ::testing::Test
 {
   protected:
+    void check_eigenvalue_only_refinement(const double overlap)
+    {
+        using ppcg_test::T;
+        const int dimension = 2;
+        const double exact_value = 16.0;
+        const double inverse_norm = 1.0 / std::sqrt(overlap);
+        std::vector<T> vectors = {T(inverse_norm), T(0)};
+        std::vector<double> values(1, 0.0);
+        const std::vector<double> thresholds(1, 1e-14);
+        const std::vector<double> preconditioner(dimension, 1.0);
+        const auto hop = [overlap](const T *input, T *output, int ld, int count)
+        {
+            for (int band = 0; band < count; ++band)
+            {
+                output[band * ld] = 16.0 * overlap * input[band * ld];
+                output[band * ld + 1] = 32.0 * overlap * input[band * ld + 1];
+            }
+        };
+        const auto sop = [overlap](const T *input, T *output, int ld, int count)
+        {
+            for (int entry = 0; entry < ld * count; ++entry)
+            {
+                output[entry] = overlap * input[entry];
+            }
+        };
+        const ppcg_test::CallbackHSOperator<T> op(hop, sop);
+        DiagoPPCG<T, base_device::DEVICE_CPU> solver(1e-14, 0, 1, 1);
+        ppcg_test::diagonalize(
+            solver, hop, sop, dimension, 1, dimension, vectors.data(), values.data(), thresholds,
+            preconditioner.data());
+        values[0] = exact_value;
+        const double infinity = std::numeric_limits<double>::infinity();
+        for (int step = 0; step < 4; ++step)
+        {
+            values[0] = std::nextafter(values[0], infinity);
+        }
+        solver.compute_eigenpair_residual(values.data());
+        const std::vector<T> original = vectors;
+        const double original_residual = std::abs((exact_value - values[0]) * overlap * vectors[0]);
+        ASSERT_GT(original_residual, thresholds[0]);
+        const std::vector<int> columns(1, 0);
+        const bool accepted =
+            solver.refine_stalled_residual(op, vectors.data(), values.data(), thresholds, columns, -1);
+        EXPECT_TRUE(accepted);
+        EXPECT_EQ(vectors, original);
+        EXPECT_DOUBLE_EQ(values[0], exact_value);
+        const double residual = std::abs((exact_value - values[0]) * overlap * vectors[0]);
+        EXPECT_LT(residual, thresholds[0]);
+    }
+
     void check_refinement(
         const bool generalized,
         const bool exact,
@@ -114,6 +164,12 @@ class DiagoPPCGRefinementTest : public ::testing::Test
         }
     }
 };
+
+TEST_F(DiagoPPCGRefinementTest, CorrectsEigenvalueRoundoffWithoutMovingExactStates)
+{
+    check_eigenvalue_only_refinement(1.0);
+    check_eigenvalue_only_refinement(2.0);
+}
 
 TEST_F(DiagoPPCGRefinementTest, PreservesStandardGeometry) { check_refinement(false, false, 0, 1e-14, -1); }
 

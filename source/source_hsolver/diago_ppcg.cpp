@@ -1564,6 +1564,45 @@ bool DiagoPPCG<T, Device>::refine_stalled_residual(
     Workspace original;
     copy_cols(psi_in, selected_cols, original);
     const Real original_value = eigenvalue_in[selected];
+    const Real margin = Real(16) * std::numeric_limits<Real>::epsilon() * std::max(Real(1), std::abs(original_value));
+    const auto refine_value = [&]()
+    {
+        // An exact state can retain a few ulps of eigenvalue error. Its residual
+        // is parallel to Sx, so projecting a vector correction would remove it.
+        const int value_moment_count = 2 * ncol;
+        std::vector<double> value_moments(value_moment_count, 0.0);
+        double *value_overlap_norms = value_moments.data() + ncol;
+        PPCGVectorOps<T, Device>::column_products(n_dim_, ld_psi_, ncol, w_.data(), spsi_.data(), value_moments.data());
+        PPCGVectorOps<T, Device>::column_products(
+            n_dim_, ld_psi_, ncol, spsi_.data(), spsi_.data(), value_overlap_norms);
+        reduce_pool_values(value_moments.data(), value_moment_count);
+        const double value_overlap_norm = value_overlap_norms[selected];
+        if (value_overlap_norm > 0.0 && std::isfinite(value_overlap_norm))
+        {
+            const Real correction = Real(value_moments[selected] / value_overlap_norm);
+            const Real candidate_value = original_value + correction;
+            const bool above_previous = selected == 0 || candidate_value >= eigenvalue_in[selected - 1] - margin;
+            const bool below_next = selected + 1 == ncol || candidate_value <= eigenvalue_in[selected + 1] + margin;
+            if (std::isfinite(correction) && std::abs(correction) <= margin && candidate_value != original_value &&
+                above_previous && below_next)
+            {
+                eigenvalue_in[selected] = candidate_value;
+                compute_eigenpair_residual(eigenvalue_in);
+                std::vector<double> value_residual_norms(ncol, 0.0);
+                PPCGVectorOps<T, Device>::column_products(
+                    n_dim_, ld_psi_, ncol, w_.data(), w_.data(), value_residual_norms.data());
+                reduce_pool_values(value_residual_norms.data(), ncol);
+                if (std::isfinite(value_residual_norms[selected]) &&
+                    value_residual_norms[selected] < old_norms[selected])
+                {
+                    return true;
+                }
+                eigenvalue_in[selected] = original_value;
+                compute_eigenpair_residual(eigenvalue_in);
+            }
+        }
+        return false;
+    };
     Workspace direction(sz, T(0));
     copy_values<T, Device>(w_.data(), sz, direction.data());
     divide_by_preconditioner(all_cols, device_prec_.data(), direction);
@@ -1594,19 +1633,19 @@ bool DiagoPPCG<T, Device>::refine_stalled_residual(
     const double rs = residual_overlaps[selected];
     if (!(ss > 0.0) || !std::isfinite(ss))
     {
-        return false;
+        return refine_value();
     }
     // Eliminate the eigenvalue correction from
     // min ||r + step * (H - lambda S) d - delta_lambda * Sx||^2.
     const double denominator = response_norms[selected] - vs * vs / ss;
     if (!(denominator > 0.0) || !std::isfinite(denominator))
     {
-        return false;
+        return refine_value();
     }
     steps[selected] = -(moments[selected] - rs * vs / ss) / denominator;
     if (!std::isfinite(steps[selected]))
     {
-        return false;
+        return refine_value();
     }
     auto device_steps = upload_values<double, Device>(steps.data(), ncol);
     PPCGVectorOps<T, Device>::scale_columns(
@@ -1655,7 +1694,6 @@ bool DiagoPPCG<T, Device>::refine_stalled_residual(
     std::vector<double> new_norms(ncol, 0);
     PPCGVectorOps<T, Device>::column_products(n_dim_, ld_psi_, ncol, w_.data(), w_.data(), new_norms.data());
     reduce_pool_values(new_norms.data(), ncol);
-    const Real margin = Real(16) * std::numeric_limits<Real>::epsilon() * std::max(Real(1), std::abs(original_value));
     bool ordered = true;
     if (selected > 0)
     {
@@ -1676,6 +1714,7 @@ bool DiagoPPCG<T, Device>::refine_stalled_residual(
         apply_h(op, psi_in, hpsi_.data(), ncol);
         apply_s(op, psi_in, spsi_.data(), ncol);
         compute_eigenpair_residual(eigenvalue_in);
+        return refine_value();
     }
     return accepted;
 }

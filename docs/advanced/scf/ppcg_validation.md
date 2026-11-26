@@ -162,6 +162,15 @@ rollback after nonfinite candidate and normalized-candidate H applications.
 CUDA CI now rejects residual warnings in
 combined output from all MPI ranks and preserves that output as an artifact.
 
+L20 runs through `7481a34d1` still reported one strict Fe failure (last residual
+`1.90363e-14` versus `1e-14`). A focused test subsequently reproduced a separate
+edge case: an exact state with a few ulps of eigenvalue error has a residual
+parallel to Sx, which disappears from the projected vector correction. Refinement
+now falls back to an eigenvalue-only correction when the vector update fails,
+bounded by the existing roundoff margin. It leaves the state unchanged and accepts only a smaller actual residual
+without reordering. The focused test failed before this change and passes after
+it; the effect on L20 requires a fresh CI run.
+
 The six original CPU fixtures and six original RTX 3090 CUDA fixtures passed
 **72/72 reference checks** with **zero PPCG nonconvergence warnings across both
 MPI ranks**, including Fe and HCl on both backends. Their inputs, references and tolerances were
@@ -173,16 +182,17 @@ force and stress checks passed against the existing independent reference.
 These local results do not by themselves reproduce or certify the older L20
 residual rebound described above; the updated branch requires fresh CI evidence.
 
-The CPU suite passed 63 tests in MPI and non-MPI builds. Nine new tests cover
+The CPU suite passed 64 tests in MPI and non-MPI builds. Ten new tests cover
 standard/generalized correction geometry, refinement of a converged neighbor,
 preservation of converged pairs, rejection of nonfinite directions and candidates,
-restoration after rejected updates, and exact float/double cancellation remainders. The CUDA target passed eight cases,
+restoration after rejected updates, eigenvalue-only roundoff on exact standard/generalized states, and exact float/double cancellation remainders. The CUDA target passed eight cases,
 including the two cancellation checks. Both residual kernels now use fused
 multiply-add: separate product rounding could otherwise turn a nonzero residual
 into zero. The MPI regression driver also passed its multi-rank configurations. The correction uses the existing device workspaces,
 vector kernels and H/S interface; no extended-precision solver or host
 wavefunction bridge was added. Local logs and executable hashes are retained in
-`/mnt/data/Cheerly/ppcg-fe-stability-20261126/`.
+`/mnt/data/Cheerly/ppcg-fe-stability-20261126/` and
+`/mnt/data/Cheerly/ppcg-fe-ci-followup-20261126/`.
 
 ### Transfer audit and reproduction
 
