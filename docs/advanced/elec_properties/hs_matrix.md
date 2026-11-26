@@ -163,6 +163,8 @@ We also offer the option of only calculating the overlap matrix without running 
 
 A file named `sr_nao.csr` will be generated in `OUT.${suffix}`, which contains the overlap matrix.
 
+When [out_mat_l](../input_files/input-main.md#out_mat_l) is enabled, the expectation values of the angular momentum operators are written in the same run as `lx_nao.csr`, `ly_nao.csr` and `lz_nao.csr` in `OUT.${suffix}`. Like the overlap matrix, these matrices are built from the orbital tables and require no SCF cycle; because the NAO basis functions are real, only the imaginary part of each matrix element is stored. This combination is not available for `nspin = 4`, and [out_app_flag](../input_files/input-main.md#out_app_flag) controls whether the L files carry an ionic-step suffix (`lxg${step}_nao.csr` etc.) and whether they are overwritten or appended.
+
 > When `nspin` is set to 1 or 2, the dimension of the overlap matrix is nlocal $\times$ nlocal, where nlocal is the total number of numerical atomic orbitals. 
 These numerical atomic orbitals are ordered from outer to inner loop as atom, angular quantum number $l$, zeta (multiple radial orbitals corresponding to each $l$), and magnetic quantum number $m$. 
 When `nspin` is set to 4, the dimension of the overlap matrix is (2 $\times$ nlocal) $\times$ (2 $\times$ nlocal). In this case, the numerical atomic orbitals are ordered from outer to inner loop as atom, angular quantum number $l$, zeta (multiple radial orbitals corresponding to each $l$), magnetic quantum number $m$, and npol (index of spin, ranges from 0 to 1).
@@ -174,6 +176,6 @@ We provide [examples](https://github.com/deepmodeling/abacus-develop/tree/develo
 - `03_out_hsk_gamma`: writing H(k) and S(k) for a gamma-only calculation
 - `04_out_hsk_multik`: writing H(k) and S(k) for a multi-k calculation
 - `01_out_hsr_multik` and `02_out_hsr_multik`: writing H(R) and S(R) for a multi-k calculation
-- `05_gets`: running `calculation = get_s` to obtain the overlap matrix
+- `05_gets`: running `calculation = get_s` to obtain the overlap matrix; enabling `out_mat_l` in the same run also writes the angular momentum matrices
 
 Reference output files are provided in each directory.

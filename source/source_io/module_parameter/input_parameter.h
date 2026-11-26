@@ -99,6 +99,7 @@ struct Input_para
     double pw_diag_thr = 0.01;      ///< used in cg method
     bool diago_smooth_ethr = false; ///< smooth ethr for iter methods
     int pw_diag_ndim = 4;           ///< dimension of workspace for Davidson diagonalization
+    std::string lobpcg_locking = "hard"; ///< hard freezes converged vectors; soft keeps them in RR
     int diago_cg_prec = 1;          ///< mohan add 2012-03-31
     int diag_subspace = 0;          // 0: Lapack, 1: elpa, 2: scalapack
     bool use_k_continuity = false;  ///< whether to use k-point continuity for initializing wave functions

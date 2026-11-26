@@ -10,6 +10,7 @@ ecutwfc           10
 scf_thr           1e-9
 scf_nmax          100
 pw_diag_thr       1e-10
+pw_diag_nmax      30
 pw_seed           1
 
 #Parameters (3.Basis)

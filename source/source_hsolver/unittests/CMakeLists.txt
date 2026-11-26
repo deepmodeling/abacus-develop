@@ -28,7 +28,44 @@ if(ENABLE_MPI)
                        PROPERTIES PROCESSORS 2 TIMEOUT 120)
 endif()
 
+set(LOBPCG_TEST_SOURCES
+    ../diago_lobpcg.cpp ../lobpcg_subspace.cpp ../lobpcg_recovery.cpp
+    ../dense_eigensolver.cpp ../module_linalg/linear_algebra.cpp
+    ../../source_basis/module_pw/test/test_tool.cpp)
+addtest(
+  TARGET MODULE_HSOLVER_lobpcg
+  LIBS parameter base psi device container
+  SOURCES test_diago_lobpcg.cpp test_dense_eigensolver.cpp
+          ${LOBPCG_TEST_SOURCES})
+set_tests_properties(MODULE_HSOLVER_lobpcg PROPERTIES TIMEOUT 180)
+if(ENABLE_MPI)
+  add_test(
+    NAME MODULE_HSOLVER_lobpcg_mpi2
+    COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2 ${MPIEXEC_PREFLAGS}
+            $<TARGET_FILE:MODULE_HSOLVER_lobpcg> ${MPIEXEC_POSTFLAGS})
+  set_tests_properties(MODULE_HSOLVER_lobpcg_mpi2 PROPERTIES PROCESSORS 2
+                                                             TIMEOUT 180)
+endif()
+
 if(USE_CUDA OR USE_ROCM)
+  addtest(
+    TARGET MODULE_HSOLVER_lobpcg_gpu
+    KEEP_FEATURE_DEFINITIONS __CUDA __ROCM
+    LIBS parameter base psi device container
+    SOURCES test_diago_lobpcg.cpp ${LOBPCG_TEST_SOURCES}
+            test_dense_eigensolver.cpp
+            ../module_linalg/unittests/test_linear_algebra.cpp)
+  set_tests_properties(MODULE_HSOLVER_lobpcg_gpu PROPERTIES SKIP_RETURN_CODE 77)
+  if(ENABLE_MPI)
+    add_test(
+      NAME MODULE_HSOLVER_lobpcg_gpu_mpi2
+      COMMAND
+        ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2 ${MPIEXEC_PREFLAGS}
+        $<TARGET_FILE:MODULE_HSOLVER_lobpcg_gpu> ${MPIEXEC_POSTFLAGS})
+    set_tests_properties(
+      MODULE_HSOLVER_lobpcg_gpu_mpi2 PROPERTIES PROCESSORS 2 TIMEOUT 180
+                                                SKIP_RETURN_CODE 77)
+  endif()
   addtest(
     TARGET MODULE_HSOLVER_dav_subspace_gpu
     LIBS ${DAV_SUBSPACE_TEST_LIBS}
@@ -102,6 +139,12 @@ if(ENABLE_MPI)
             ../hsolver_lcaopw.cpp
             ../diago_bpcg.cpp
             ../diago_dav_subspace.cpp
+            ../diago_lobpcg.cpp
+            ../lobpcg_subspace.cpp
+            ../lobpcg_recovery.cpp
+            ../dense_eigensolver.cpp
+            ../diago_params.cpp
+            ../module_linalg/linear_algebra.cpp
             ../diag_const_nums.cpp
             ../diago_iter_assist.cpp
             ../para_lin_tf.cpp

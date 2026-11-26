@@ -167,6 +167,16 @@ class DFPT_Phon
     /// validate it directly (no internal state is touched).
     void ion_ion(const ModuleBase::Vector3<double>& q_frac, ModuleBase::ComplexMatrix& dyn);
 
+    /// Test hook: pin the Ewald screening alpha for the next ion_ion call
+    /// (non-positive restores the internal search). Production paths never
+    /// touch it; the serial analytic tests use it to verify the
+    /// alpha-independence of the force constants and the determinism of
+    /// repeated calls.
+    void set_ewald_alpha_override(double alpha)
+    {
+        ewald_alpha_override_ = alpha;
+    }
+
     /// read-only view of the accumulated electronic dynamical-matrix rows
     /// (see dynmat_accum_); consumed by the serial analytic tests.
     const ModuleBase::ComplexMatrix& dynmat_accum() const
@@ -183,6 +193,7 @@ class DFPT_Phon
     const std::vector<std::vector<std::complex<double>>>* dvxc_core_ = nullptr;
 
     double ewald_alpha_ = 0.0;
+    double ewald_alpha_override_ = 0.0; ///< test hook: >0 pins the screening alpha for one ion_ion call
     double ewald_rcut_ = 0.0;
 
     /// same-atom anharmonic term <psi | d2_ab V_ext | psi> accumulated into
@@ -221,6 +232,11 @@ class DFPT_Phon
     ModuleBase::ComplexMatrix dynmat_accum_;
     int accum_q_ = -1;
 };
+
+/// Ewald screening-alpha search (multiplicative shrinkage with a tail
+/// bound; exposed for the serial analytic tests, see
+/// EwaldAlphaSearchLowCutoffContinuesBelowDecade)
+double ewald_alpha_search(double charge, double ggecut, double tpiba2);
 
 } // namespace ModuleDFPT
 
