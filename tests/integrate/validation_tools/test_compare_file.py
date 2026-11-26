@@ -59,6 +59,25 @@ class CompareFileTest(unittest.TestCase):
 
         self.assertEqual(result.returncode, 1)
 
+    def test_trailing_blanks_after_provenance_normalization_are_ignored(self):
+        reference = "value 1.0\n"
+        for output in (
+            "value 1.0\n\n# Written at test time\n",
+            "value 1.0\n  # ABACUS version: test\n\n# Written at test time\n",
+        ):
+            for first, second in ((reference, output), (output, reference)):
+                with self.subTest(first=first, second=second):
+                    result = self.run_compare(first, second)
+                    self.assertEqual(result.returncode, 0, result.stdout)
+
+    def test_provenance_normalization_preserves_interior_blanks(self):
+        reference = "first 1.0\nsecond 2.0\n"
+        output = "first 1.0\n\n# Written at test time\nsecond 2.0\n"
+        for first, second in ((reference, output), (output, reference)):
+            with self.subTest(first=first, second=second):
+                result = self.run_compare(first, second)
+                self.assertEqual(result.returncode, 1, result.stdout)
+
     def test_final_newline_is_not_significant(self):
         result = self.run_compare("value 1.0\n", "value 1.0")
 

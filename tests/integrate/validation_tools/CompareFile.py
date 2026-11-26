@@ -115,6 +115,10 @@ def normalize_lines(lines):
         if stripped is None:
             continue
         normalized.append(canonical_step(stripped))
+    # Remove trailing blanks after provenance comments have been discarded.
+    # Interior blank lines still identify missing or shifted data rows.
+    while normalized and not normalized[-1].strip():
+        normalized.pop()
     return normalized
 
 def ReadFile(file1,lines):
@@ -124,11 +128,6 @@ def ReadFile(file1,lines):
     try:
         with open(file1) as f1:
             for line in f1.readlines(): lines.append(line)
-        # A final blank line carries no numerical information and varies among
-        # otherwise equivalent output writers. Keep interior blank lines so a
-        # missing or shifted data row is still detected below.
-        while lines and not lines[-1].strip():
-            lines.pop()
     except OSError:
         print("Error: can not find file %s" % file1)
         sys.exit(1)
