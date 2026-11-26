@@ -322,8 +322,11 @@ void Parallel_Reduce::gatherv_int_all(const MPI_Comm mpi_comm,
                                       const int* receive_displacements)
 {
     (void)mpi_comm;
-    (void)receive_counts;
-    (void)receive_displacements;
+    // One rank: the whole gather is this rank's own contribution, which sits at
+    // displacement 0. Assert the shape rather than silently ignoring a caller
+    // that asks for something else.
+    assert(receive_counts != nullptr && receive_counts[0] == send_count);
+    assert(receive_displacements != nullptr && receive_displacements[0] == 0);
     assert(send_count == 0 || (send_buffer != nullptr && receive_buffer != nullptr));
     for (int i = 0; i < send_count; ++i)
     {
