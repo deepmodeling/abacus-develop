@@ -27,7 +27,7 @@ bool direct_supported(const int context, const int kpoints, const DirectConfig& 
     Cigsum2d(context, &scope, &topology, 1, 1, &unsupported_rank, 1, -1, -1);
     return config.method == "cusolver" && config.kpar == 1
                    && config.nspin == 1 && kpoints == 1 && !config.skip_charge
-                   && unsupported_rank == 0 && config.world_size > 1;
+                   && unsupported_rank == 0;
 }
 }
 
@@ -59,7 +59,7 @@ void direct_gamma(HSMatrix<double>& hs, psi::Psi<double>& wave, elecstate::ElecS
     {
         ModuleBase::WARNING_QUIT("direct_gamma",
                                 "device_dm gpu requires real Gamma FP64 LCAO with ks_solver cusolver, "
-                                "nspin 1, kpar 1, charge updates, multiple MPI ranks on one node and "
+                                "nspin 1, kpar 1, charge updates, MPI ranks on one node and "
                                 "one visible GPU per rank; select device_dm cpu in INPUT otherwise");
     }
     const int n = layout.nrglb();

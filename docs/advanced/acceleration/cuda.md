@@ -68,9 +68,13 @@ kpar        1
 device_dm   gpu
 ```
 
-Run multiple MPI ranks on one node with one visible GPU per rank. GPU DM
+Run one or more MPI ranks on one node with one visible GPU per rank. GPU DM
 supports Kohn-Sham SCF, relaxation and MD charge updates. Other configurations
 are rejected when GPU DM is explicitly selected.
+
+To combine GPU DM with GPU EXX and Libxc, use one MPI rank and one GPU with
+`device_exx gpu` and `device_xc gpu`. The build must also enable the corresponding
+LibRI and Libxc CUDA backends.
 
 A CUDA or cuBLAS error during GPU DM stops the run with a nonzero exit status.
 The diagnostic identifies the failing operation, matrix and band counts, and

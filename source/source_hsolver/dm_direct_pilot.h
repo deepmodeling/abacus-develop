@@ -21,7 +21,6 @@ struct DirectConfig
     const int nspin;
     const bool skip_charge;
     const int world_rank;
-    const int world_size;
     const int bands;
 };
 

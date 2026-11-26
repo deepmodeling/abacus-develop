@@ -307,7 +307,7 @@ The other way is only available when compiling with LIBXC, and it allows for sup
 * gpu: retain real FP64 cuSOLVER eigenvectors and construct DM with cuBLAS after occupations are available.
 GPU DM requires a CUDA/MPI/LCAO build, ks_solver=cusolver, gamma_only=1,
 nspin=1, kpar=1, precision=double and a Kohn-Sham calculation that updates charge.
-Use multiple MPI ranks on one node with one visible GPU per rank. An unsupported
+Use one or more MPI ranks on one node with one visible GPU per rank. An unsupported
 configuration or a device-DM error stops the run; use device_dm=cpu to choose CPU DM.
 CPU DM still uses the selected eigensolver and does not reduce its GPU memory needs.
 The partial/full eigensolver selection and the host eigenvector copy are unchanged.)";
