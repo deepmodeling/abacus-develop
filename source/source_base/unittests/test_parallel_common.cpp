@@ -47,16 +47,22 @@ int main(int argc, char** argv)
     require(Parallel_Common::my_rank(sub) == sub_rank, "my_rank disagrees with MPI_Comm_rank");
     require(Parallel_Common::nproc(sub) == sub_size, "nproc disagrees with MPI_Comm_size");
 
+    // Payloads are derived from the colour, so the two sub-communicators carry
+    // different values. An implementation that broadcast on the wrong
+    // communicator (MPI_COMM_WORLD, say) would then deliver the other group's
+    // value and fail here instead of passing by coincidence.
+    const int group_offset = colour * 1000;
+
     // A root other than zero, which is the case the RI and RPA stages need.
     const int root = sub_size - 1;
-    const int scalar_from_root = 41;
+    const int scalar_from_root = group_offset + 41;
     const int scalar_count = 1;
     int scalar = sub_rank == root ? scalar_from_root : 0;
     Parallel_Common::bcast_int(&scalar, scalar_count, sub, root);
-    require(scalar == 41, "bcast_int did not reach every rank from a non-zero root");
+    require(scalar == group_offset + 41, "bcast_int did not reach every rank from a non-zero root");
 
     // Rule 14: name the payload and the element count before the call.
-    const double root_value = 7.5;
+    const double root_value = group_offset + 7.5;
     const double other_value = -1.0;
     const double initial_value = sub_rank == root ? root_value : other_value;
     const int value_count = 3;
@@ -64,7 +70,7 @@ int main(int argc, char** argv)
     Parallel_Common::bcast_double(values.data(), value_count, sub, root);
     for (const double value : values)
     {
-        require(value == 7.5, "bcast_double did not reach every rank from a non-zero root");
+        require(value == group_offset + 7.5, "bcast_double did not reach every rank from a non-zero root");
     }
 
     // Allgatherv must accept an all-empty receive buffer. Every rank sends
@@ -78,7 +84,7 @@ int main(int argc, char** argv)
     require(empty_receive.empty(), "all-empty gatherv produced data");
 
     // And it must still gather when there is something to receive.
-    const int send_value = 100 + sub_rank;
+    const int send_value = group_offset + 100 + sub_rank;
     std::vector<int> receive(static_cast<std::size_t>(sub_size), 0);
     std::vector<int> counts(static_cast<std::size_t>(sub_size), 1);
     std::vector<int> displacements(static_cast<std::size_t>(sub_size), 0);
@@ -90,12 +96,12 @@ int main(int argc, char** argv)
                                      counts.data(), displacements.data());
     for (int irank = 0; irank < sub_size; ++irank)
     {
-        require(receive[irank] == 100 + irank, "gatherv_int_all lost a rank's value");
+        require(receive[irank] == group_offset + 100 + irank, "gatherv_int_all lost a rank's value");
     }
 
     // Uneven gather counts: rank 0 receives nothing, the others receive one.
     const bool sends_one = sub_rank > 0;
-    const int uneven_send = sends_one ? 200 + sub_rank : 0;
+    const int uneven_send = sends_one ? group_offset + 200 + sub_rank : 0;
     const int uneven_send_count = sends_one ? 1 : 0;
     std::vector<int> uneven_counts(static_cast<std::size_t>(sub_size), 0);
     std::vector<int> uneven_displacements(static_cast<std::size_t>(sub_size), 0);
@@ -107,39 +113,102 @@ int main(int argc, char** argv)
         running_offset += uneven_counts[static_cast<std::size_t>(irank)];
     }
     std::vector<int> uneven_receive(static_cast<std::size_t>(running_offset), -1);
-    Parallel_Reduce::gatherv_int_all(sub, sends_one ? &uneven_send : nullptr,
-                                     uneven_send_count, uneven_receive.data(),
-                                     uneven_counts.data(), uneven_displacements.data());
+    // Rule 14: the conditional pointer is named before the call.
+    const int* uneven_send_buffer = sends_one ? &uneven_send : nullptr;
+    Parallel_Reduce::gatherv_int_all(sub, uneven_send_buffer, uneven_send_count,
+                                     uneven_receive.data(), uneven_counts.data(),
+                                     uneven_displacements.data());
     for (int irank = 1; irank < sub_size; ++irank)
     {
-        require(uneven_receive[static_cast<std::size_t>(irank - 1)] == 200 + irank,
+        require(uneven_receive[static_cast<std::size_t>(irank - 1)] == group_offset + 200 + irank,
                 "uneven gatherv misplaced a rank's value");
     }
 
     // gather_int_all on the same sub-communicator.
-    int one_per_rank = 300 + sub_rank;
+    int one_per_rank = group_offset + 300 + sub_rank;
     std::vector<int> gathered(static_cast<std::size_t>(sub_size), 0);
     Parallel_Reduce::gather_int_all(sub, one_per_rank, gathered.data());
     for (int irank = 0; irank < sub_size; ++irank)
     {
-        require(gathered[static_cast<std::size_t>(irank)] == 300 + irank,
+        require(gathered[static_cast<std::size_t>(irank)] == group_offset + 300 + irank,
                 "gather_int_all lost a rank's value");
     }
 
-    // reduce_max_with_rank: the rank supplying the maximum comes back with it. On a
-    // tie MPI may report any contributing rank, so only check the value there.
-    const double local_value = (sub_rank == 0 || sub_rank == 1) ? 9.5 : 1.0;
-    const int local_rank = sub_rank;
+    // reduce_max_with_rank: the rank supplying the maximum comes back with it.
+    // The maximum sits on rank 1 of every group, and its value carries the
+    // colour, so a reduction that leaked onto the world communicator would
+    // return the other group's number.
+    const double max_value = group_offset + 9.5;
+    const double plain_value = 1.0;
+    const double local_value = sub_rank == 1 ? max_value : plain_value;
     double best_value = local_value;
-    int best_rank = local_rank;
+    int best_rank = sub_rank;
     Parallel_Reduce::reduce_max_with_rank(sub, best_value, best_rank);
-    require(best_value == 9.5, "reduce_max_with_rank lost the maximum value");
-    const bool tied = sub_size > 1;
-    if (tied)
+    require(best_value == max_value, "reduce_max_with_rank lost the maximum value");
+    require(best_rank == 1, "reduce_max_with_rank reported a rank that did not hold the maximum");
+
+    // The remaining communicator-aware reductions, with per-group inputs so
+    // the assertions also show which communicator the result came from.
+    int sum_scalar = group_offset + sub_rank;
+    Parallel_Reduce::reduce_all(sub, sum_scalar);
+    const int expected_sum = sub_size * group_offset + sub_size * (sub_size - 1) / 2;
+    require(sum_scalar == expected_sum, "reduce_all(int) summed the wrong communicator");
+
+    const int array_count = 3;
+    std::vector<double> array_values(static_cast<std::size_t>(array_count), 0.0);
+    for (int i = 0; i < array_count; ++i)
     {
-        require(best_rank == 0 || best_rank == 1,
-                "reduce_max_with_rank reported a rank that did not hold the maximum");
+        array_values[static_cast<std::size_t>(i)] = group_offset + sub_rank + i;
     }
+    Parallel_Reduce::reduce_all(sub, array_values.data(), array_count);
+    for (int i = 0; i < array_count; ++i)
+    {
+        const double expected = sub_size * group_offset + sub_size * (sub_size - 1) / 2 + sub_size * i;
+        require(array_values[static_cast<std::size_t>(i)] == expected,
+                "reduce_all(double*, int) summed the wrong communicator");
+    }
+
+    int max_of_int = group_offset + 10 * sub_rank;
+    Parallel_Reduce::reduce_max(sub, max_of_int);
+    require(max_of_int == group_offset + 10 * (sub_size - 1),
+            "reduce_max(int) returned the wrong maximum");
+
+    int min_of_int = group_offset + 10 * sub_rank;
+    Parallel_Reduce::reduce_min(sub, min_of_int);
+    require(min_of_int == group_offset, "reduce_min(int) returned the wrong minimum");
+
+    // unsigned long long has its own instantiations; check them too.
+    unsigned long long wide_scalar = static_cast<unsigned long long>(group_offset + sub_rank);
+    Parallel_Reduce::reduce_all(sub, wide_scalar);
+    const unsigned long long expected_wide
+        = static_cast<unsigned long long>(sub_size * group_offset + sub_size * (sub_size - 1) / 2);
+    require(wide_scalar == expected_wide, "reduce_all(unsigned long long) summed the wrong communicator");
+
+    std::vector<unsigned long long> wide_array(static_cast<std::size_t>(array_count), 0);
+    for (int i = 0; i < array_count; ++i)
+    {
+        wide_array[static_cast<std::size_t>(i)]
+            = static_cast<unsigned long long>(group_offset + sub_rank + i);
+    }
+    Parallel_Reduce::reduce_all(sub, wide_array.data(), array_count);
+    for (int i = 0; i < array_count; ++i)
+    {
+        const unsigned long long expected
+            = static_cast<unsigned long long>(sub_size * group_offset + sub_size * (sub_size - 1) / 2
+                                              + sub_size * i);
+        require(wide_array[static_cast<std::size_t>(i)] == expected,
+                "reduce_all(unsigned long long*, int) summed the wrong communicator");
+    }
+
+    unsigned long long wide_max = static_cast<unsigned long long>(group_offset + 10 * sub_rank);
+    Parallel_Reduce::reduce_max(sub, wide_max);
+    require(wide_max == static_cast<unsigned long long>(group_offset + 10 * (sub_size - 1)),
+            "reduce_max(unsigned long long) returned the wrong maximum");
+
+    unsigned long long wide_min = static_cast<unsigned long long>(group_offset + 10 * sub_rank);
+    Parallel_Reduce::reduce_min(sub, wide_min);
+    require(wide_min == static_cast<unsigned long long>(group_offset),
+            "reduce_min(unsigned long long) returned the wrong minimum");
 
     // The interface must also exist in a serial build. The header keeps its
     // declarations unconditional, so this call compiles whether or not __MPI

@@ -128,10 +128,21 @@ template void Parallel_Reduce::reduce_min_pool<double>(const int&, double&);
 template void Parallel_Reduce::reduce_max_pool<double>(const int&, double&);
 
 #ifdef __MPI
-template <typename T>
-void Parallel_Reduce::reduce_all(const MPI_Comm mpi_comm, T& object)
+// The scalar bodies are generated from one macro-free list so the three
+// overloads stay identical apart from the reduction operator.
+void Parallel_Reduce::reduce_all(const MPI_Comm mpi_comm, int& object)
 {
-    MPI_Allreduce(MPI_IN_PLACE, &object, 1, MPI_Type<T>::value, MPI_SUM, mpi_comm);
+    MPI_Allreduce(MPI_IN_PLACE, &object, 1, MPI_Type<int>::value, MPI_SUM, mpi_comm);
+}
+
+void Parallel_Reduce::reduce_all(const MPI_Comm mpi_comm, double& object)
+{
+    MPI_Allreduce(MPI_IN_PLACE, &object, 1, MPI_Type<double>::value, MPI_SUM, mpi_comm);
+}
+
+void Parallel_Reduce::reduce_all(const MPI_Comm mpi_comm, unsigned long long& object)
+{
+    MPI_Allreduce(MPI_IN_PLACE, &object, 1, MPI_Type<unsigned long long>::value, MPI_SUM, mpi_comm);
 }
 
 template <typename T>
@@ -140,16 +151,34 @@ void Parallel_Reduce::reduce_all(const MPI_Comm mpi_comm, T* object, const int n
     MPI_Allreduce(MPI_IN_PLACE, object, n, MPI_Type<T>::value, MPI_SUM, mpi_comm);
 }
 
-template <typename T>
-void Parallel_Reduce::reduce_max(const MPI_Comm mpi_comm, T& object)
+void Parallel_Reduce::reduce_max(const MPI_Comm mpi_comm, int& object)
 {
-    MPI_Allreduce(MPI_IN_PLACE, &object, 1, MPI_Type<T>::value, MPI_MAX, mpi_comm);
+    MPI_Allreduce(MPI_IN_PLACE, &object, 1, MPI_Type<int>::value, MPI_MAX, mpi_comm);
 }
 
-template <typename T>
-void Parallel_Reduce::reduce_min(const MPI_Comm mpi_comm, T& object)
+void Parallel_Reduce::reduce_max(const MPI_Comm mpi_comm, double& object)
 {
-    MPI_Allreduce(MPI_IN_PLACE, &object, 1, MPI_Type<T>::value, MPI_MIN, mpi_comm);
+    MPI_Allreduce(MPI_IN_PLACE, &object, 1, MPI_Type<double>::value, MPI_MAX, mpi_comm);
+}
+
+void Parallel_Reduce::reduce_max(const MPI_Comm mpi_comm, unsigned long long& object)
+{
+    MPI_Allreduce(MPI_IN_PLACE, &object, 1, MPI_Type<unsigned long long>::value, MPI_MAX, mpi_comm);
+}
+
+void Parallel_Reduce::reduce_min(const MPI_Comm mpi_comm, int& object)
+{
+    MPI_Allreduce(MPI_IN_PLACE, &object, 1, MPI_Type<int>::value, MPI_MIN, mpi_comm);
+}
+
+void Parallel_Reduce::reduce_min(const MPI_Comm mpi_comm, double& object)
+{
+    MPI_Allreduce(MPI_IN_PLACE, &object, 1, MPI_Type<double>::value, MPI_MIN, mpi_comm);
+}
+
+void Parallel_Reduce::reduce_min(const MPI_Comm mpi_comm, unsigned long long& object)
+{
+    MPI_Allreduce(MPI_IN_PLACE, &object, 1, MPI_Type<unsigned long long>::value, MPI_MIN, mpi_comm);
 }
 
 void Parallel_Reduce::reduce_max_with_rank(const MPI_Comm mpi_comm, double& value, int& rank)
@@ -209,8 +238,19 @@ void Parallel_Reduce::gatherv_int_all(const MPI_Comm mpi_comm,
 // Serial counterparts: one rank owns all the data, so a "reduce" over a
 // communicator is the identity and a gather writes exactly one entry. They
 // exist so the declarations stay usable instead of being compiled away.
-template <typename T>
-void Parallel_Reduce::reduce_all(const MPI_Comm mpi_comm, T& object)
+void Parallel_Reduce::reduce_all(const MPI_Comm mpi_comm, int& object)
+{
+    (void)mpi_comm;
+    (void)object;
+}
+
+void Parallel_Reduce::reduce_all(const MPI_Comm mpi_comm, double& object)
+{
+    (void)mpi_comm;
+    (void)object;
+}
+
+void Parallel_Reduce::reduce_all(const MPI_Comm mpi_comm, unsigned long long& object)
 {
     (void)mpi_comm;
     (void)object;
@@ -224,15 +264,37 @@ void Parallel_Reduce::reduce_all(const MPI_Comm mpi_comm, T* object, const int n
     (void)n;
 }
 
-template <typename T>
-void Parallel_Reduce::reduce_max(const MPI_Comm mpi_comm, T& object)
+void Parallel_Reduce::reduce_max(const MPI_Comm mpi_comm, int& object)
 {
     (void)mpi_comm;
     (void)object;
 }
 
-template <typename T>
-void Parallel_Reduce::reduce_min(const MPI_Comm mpi_comm, T& object)
+void Parallel_Reduce::reduce_max(const MPI_Comm mpi_comm, double& object)
+{
+    (void)mpi_comm;
+    (void)object;
+}
+
+void Parallel_Reduce::reduce_max(const MPI_Comm mpi_comm, unsigned long long& object)
+{
+    (void)mpi_comm;
+    (void)object;
+}
+
+void Parallel_Reduce::reduce_min(const MPI_Comm mpi_comm, int& object)
+{
+    (void)mpi_comm;
+    (void)object;
+}
+
+void Parallel_Reduce::reduce_min(const MPI_Comm mpi_comm, double& object)
+{
+    (void)mpi_comm;
+    (void)object;
+}
+
+void Parallel_Reduce::reduce_min(const MPI_Comm mpi_comm, unsigned long long& object)
 {
     (void)mpi_comm;
     (void)object;
@@ -272,21 +334,10 @@ void Parallel_Reduce::gatherv_int_all(const MPI_Comm mpi_comm,
 
 // The instantiations apply to whichever implementation the branch above
 // compiled, so they sit outside the conditional.
-template void Parallel_Reduce::reduce_all<int>(const MPI_Comm, int&);
-template void Parallel_Reduce::reduce_all<double>(const MPI_Comm, double&);
-template void Parallel_Reduce::reduce_all<unsigned long long>(const MPI_Comm, unsigned long long&);
-
 template void Parallel_Reduce::reduce_all<int>(const MPI_Comm, int*, const int);
 template void Parallel_Reduce::reduce_all<double>(const MPI_Comm, double*, const int);
 template void Parallel_Reduce::reduce_all<unsigned long long>(const MPI_Comm, unsigned long long*, const int);
 
-template void Parallel_Reduce::reduce_max<int>(const MPI_Comm, int&);
-template void Parallel_Reduce::reduce_max<double>(const MPI_Comm, double&);
-template void Parallel_Reduce::reduce_max<unsigned long long>(const MPI_Comm, unsigned long long&);
-
-template void Parallel_Reduce::reduce_min<int>(const MPI_Comm, int&);
-template void Parallel_Reduce::reduce_min<double>(const MPI_Comm, double&);
-template void Parallel_Reduce::reduce_min<unsigned long long>(const MPI_Comm, unsigned long long&);
 
 
 void Parallel_Reduce::reduce_double_grid(double* object, const int n)

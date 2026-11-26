@@ -104,14 +104,24 @@ void gather_int_all(int& v, int* all);
 /// These declarations are visible in serial builds too: the implementations
 /// guard their bodies instead of the whole function, so a caller does not have
 /// to reproduce the #ifdef at every use site.
-template <typename T>
-void reduce_all(const MPI_Comm mpi_comm, T& object);
+/// The scalar overloads are plain functions rather than templates: with
+/// OpenMPI, `MPI_Comm` is a pointer, so a template `reduce_all(const MPI_Comm,
+/// T&)` is ambiguous against the pre-existing `reduce_all(T*, const int)` for
+/// an `int` payload. The set of supported scalar types is closed and matches
+/// the instantiations in the translation unit, so naming them explicitly costs
+/// nothing and keeps every call unambiguous.
+void reduce_all(const MPI_Comm mpi_comm, int& object);
+void reduce_all(const MPI_Comm mpi_comm, double& object);
+void reduce_all(const MPI_Comm mpi_comm, unsigned long long& object);
 template <typename T>
 void reduce_all(const MPI_Comm mpi_comm, T* object, const int n);
-template <typename T>
-void reduce_max(const MPI_Comm mpi_comm, T& object);
-template <typename T>
-void reduce_min(const MPI_Comm mpi_comm, T& object);
+/// Same reasoning as reduce_all: the supported scalar set is closed.
+void reduce_max(const MPI_Comm mpi_comm, int& object);
+void reduce_max(const MPI_Comm mpi_comm, double& object);
+void reduce_max(const MPI_Comm mpi_comm, unsigned long long& object);
+void reduce_min(const MPI_Comm mpi_comm, int& object);
+void reduce_min(const MPI_Comm mpi_comm, double& object);
+void reduce_min(const MPI_Comm mpi_comm, unsigned long long& object);
 /// @brief Largest value together with the rank that supplied it (MPI_MAXLOC).
 /// "loc" is MPI's contraction of "location"; the name is spelled out here so a
 /// reader who does not know MPI_MAXLOC can still tell what the call does.
