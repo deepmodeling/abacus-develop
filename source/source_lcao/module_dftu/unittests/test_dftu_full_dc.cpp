@@ -42,7 +42,7 @@ double spin_sum_energy(const std::vector<Complex>& density, const double u, cons
 
 TEST(DftuFullDc, AnalyticComplexShell)
 {
-    const auto n = example();
+    const std::vector<Complex> n = example();
     std::vector<Complex> v;
     double fll_correction = 0.0;
     const double fll = evaluate_full_dc(n, 2, 2.0, 1.0, v, fll_correction);
@@ -65,7 +65,7 @@ TEST(DftuFullDc, AnalyticComplexShell)
 
 TEST(DftuFullDc, EnergyLedgerUsesTraceContraction)
 {
-    const auto n = example();
+    const std::vector<Complex> n = example();
     for (double alpha : {0.0, 0.2, 0.5, 1.0})
     {
         std::vector<Complex> v;
@@ -121,7 +121,7 @@ TEST(DftuFullDc, UniformOccupationHasZeroAmf)
 
 TEST(DftuFullDc, EndpointsAndContinuityWithoutBranches)
 {
-    const auto n = example();
+    const std::vector<Complex> n = example();
     std::vector<Complex> vf;
     std::vector<Complex> va;
     double ef_correction = 0.0;
@@ -144,7 +144,7 @@ TEST(DftuFullDc, EndpointsAndContinuityWithoutBranches)
 
 TEST(DftuFullDc, FiniteDifferencesIncludingImaginaryOffDiagonal)
 {
-    const auto n = example();
+    const std::vector<Complex> n = example();
     const std::vector<std::vector<Complex>> directions = {
         {1.0, 0.0, 0.0, 0.0}, {0.0, 1.0, 1.0, 0.0},
         {0.0, Complex(0.0, 1.0), Complex(0.0, -1.0), 0.0}};
@@ -154,10 +154,10 @@ TEST(DftuFullDc, FiniteDifferencesIncludingImaginaryOffDiagonal)
         std::vector<Complex> v;
         double band_correction = 0.0;
         evaluate_full_dc(n, 2, 2.0, alpha, v, band_correction);
-        for (const auto& d : directions)
+        for (const std::vector<Complex>& d : directions)
         {
-            auto plus = n;
-            auto minus = n;
+            std::vector<Complex> plus = n;
+            std::vector<Complex> minus = n;
             for (int i = 0; i < 4; ++i)
             {
                 plus[i] += step * d[i];
@@ -175,9 +175,9 @@ TEST(DftuFullDc, FiniteDifferencesIncludingImaginaryOffDiagonal)
 
 TEST(DftuFullDc, OrbitalPhaseCovariance)
 {
-    const auto n = example();
+    const std::vector<Complex> n = example();
     const Complex phase = std::polar(1.0, 0.73);
-    auto rotated = n;
+    std::vector<Complex> rotated = n;
     rotated[1] *= phase;
     rotated[2] *= std::conj(phase);
     for (double alpha : {0.0, 0.5, 1.0})
@@ -197,8 +197,8 @@ TEST(DftuFullDc, OrbitalPhaseCovariance)
 TEST(DftuFullDc, NonmagneticSpinSumHasAnalyticEnergyAndUndoubledPotential)
 {
     const std::vector<Complex> spin_sum = {1.6, Complex(0.2, 0.4), Complex(0.2, -0.4), 0.6};
-    auto per_spin = spin_sum;
-    for (auto& value : per_spin)
+    std::vector<Complex> per_spin = spin_sum;
+    for (Complex& value : per_spin)
     {
         value *= 0.5;
     }
@@ -225,8 +225,8 @@ TEST(DftuFullDc, SpinSumChainRuleAgainstIndependentFunctional)
     const std::vector<std::vector<Complex>> directions = {
         {1.0, 0.0, 0.0, 0.0}, {0.0, 1.0, 1.0, 0.0},
         {0.0, Complex(0.0, 1.0), Complex(0.0, -1.0), 0.0}};
-    auto per_spin = spin_sum;
-    for (auto& value : per_spin)
+    std::vector<Complex> per_spin = spin_sum;
+    for (Complex& value : per_spin)
     {
         value *= 0.5;
     }
@@ -237,10 +237,10 @@ TEST(DftuFullDc, SpinSumChainRuleAgainstIndependentFunctional)
         std::vector<Complex> v;
         double band_correction = 0.0;
         evaluate_full_dc(per_spin, 2, 2.0, alpha, v, band_correction);
-        for (const auto& direction : directions)
+        for (const std::vector<Complex>& direction : directions)
         {
-            auto plus = spin_sum;
-            auto minus = spin_sum;
+            std::vector<Complex> plus = spin_sum;
+            std::vector<Complex> minus = spin_sum;
             for (int i = 0; i < 4; ++i)
             {
                 plus[i] += step * direction[i];
@@ -257,7 +257,7 @@ TEST(DftuFullDc, SpinSumChainRuleAgainstIndependentFunctional)
 
 TEST(DftuFullDc, PolarizedShellsUseSeparateSpinAverages)
 {
-    const auto up = example();
+    const std::vector<Complex> up = example();
     const std::vector<Complex> down = {0.2, Complex(0.03, -0.04), Complex(0.03, 0.04), 0.1};
     for (double alpha : {0.0, 0.35, 1.0})
     {
@@ -280,16 +280,16 @@ TEST(DftuFullDc, PolarizedShellsUseSeparateSpinAverages)
 
 TEST(DftuFullDc, ZeroUAndNoPersistentState)
 {
-    const auto n = example();
+    const std::vector<Complex> n = example();
     std::vector<Complex> v;
     double original_correction = 0.0;
     const double original = evaluate_full_dc(n, 2, 2.0, 0.5, v, original_correction);
-    const auto original_v = v;
+    const std::vector<Complex> original_v = v;
     double zero_correction = 0.0;
     const double zero = evaluate_full_dc(n, 2, 0.0, 0.5, v, zero_correction);
     EXPECT_DOUBLE_EQ(zero, 0.0);
     EXPECT_DOUBLE_EQ(zero_correction, 0.0);
-    for (auto value : v)
+    for (Complex value : v)
     {
         EXPECT_DOUBLE_EQ(std::abs(value), 0.0);
     }
@@ -302,7 +302,7 @@ TEST(DftuFullDc, ZeroUAndNoPersistentState)
 
 TEST(DftuFullDc, InvalidInputsDoNotOverwriteOutputs)
 {
-    auto n = example();
+    std::vector<Complex> n = example();
     std::vector<Complex> v = {42.0};
     double band_correction = 17.0;
     EXPECT_THROW(evaluate_full_dc(n, 0, 2.0, 0.5, v, band_correction), std::invalid_argument);

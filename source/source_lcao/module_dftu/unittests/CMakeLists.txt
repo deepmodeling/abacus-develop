@@ -131,7 +131,7 @@ if(ENABLE_MPI)
               --gtest_filter=DFTUTest.FullDcConjugateKDensityAndHamiltonian
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
     set_tests_properties(MODULE_DFTU_op_conjugate_k_mpi4
-      PROPERTIES PROCESSORS 4 TIMEOUT 120 ENVIRONMENT "OMP_NUM_THREADS=1")
+      PROPERTIES PROCESSORS 4 ENVIRONMENT "OMP_NUM_THREADS=1")
 
     addtest(
       TARGET MODULE_DFTU_ijr
