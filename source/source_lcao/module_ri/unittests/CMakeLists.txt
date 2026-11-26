@@ -5,6 +5,15 @@ addtest(TARGET MODULE_RI_smooth_cut_coulomb SOURCES test_smooth_cut_coulomb.cpp
                                                     ../smooth_cut_coulomb.cpp)
 if(ENABLE_LCAO)
   addtest(
+    TARGET MODULE_RI_lri_cv
+    LIBS base parameter device LibRI::LibRI ${math_libs}
+    SOURCES test_lri_cv.cpp ../lri_cv.cpp
+            ../../../source_basis/module_ao/orb_atomic_lm.cpp)
+  # This ownership test uses the CV lifecycle, not integral assembly.
+  target_compile_options(MODULE_RI_lri_cv PRIVATE -ffunction-sections
+                                                 -fdata-sections)
+  target_link_options(MODULE_RI_lri_cv PRIVATE -Wl,--gc-sections)
+  addtest(
     TARGET MODULE_RI_exx_workspace
     LIBS base parameter device LibRI::LibRI ${math_libs}
     SOURCES test_exx_workspace.cpp ../exx_workspace.cpp ../lri_cv.cpp
