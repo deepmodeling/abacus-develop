@@ -70,15 +70,12 @@ device_dm   gpu
 
 Run multiple MPI ranks on one node with one visible GPU per rank. GPU DM
 supports Kohn-Sham SCF, relaxation and MD charge updates. Other configurations
-are rejected when GPU DM is explicitly selected. Set `dm_verify true` to
-compare every distributed DM block with CPU construction from the same
-eigenvectors and occupations, and check Tr(DS). Verification adds CPU work;
-keep the default `dm_verify false` for performance measurements.
+are rejected when GPU DM is explicitly selected.
 
 A CUDA or cuBLAS error during GPU DM stops the run with a nonzero exit status.
 The diagnostic identifies the failing operation, matrix and band counts, and
 applicable allocation/transfer byte count. To choose CPU DM, set `device_dm cpu`
-and `dm_verify false` in INPUT and rerun. The selected eigensolver still performs diagonalization;
+in INPUT and rerun. The selected eigensolver still performs diagonalization;
 this change does not reduce cuSOLVER's own GPU memory requirements.
 
 Both DM devices use the same full/partial eigensolver selection described

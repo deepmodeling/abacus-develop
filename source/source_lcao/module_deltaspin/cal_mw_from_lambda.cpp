@@ -135,7 +135,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
         // signature and would be stale in NPT anyway (see Charge::renormalize_rho).
         hamilt::HamiltHSMatrix<std::complex<double>> hs(hamilt_t);
         hsolver_t.solve(hs, psi_t[0], this->pelec, *this->dm_, *this->pelec->charge, this->state_.nspin_, this->pelec->charge->rhopw->omega, true,
-                        input.device_dm, input.dm_verify);
+                        input.device_dm);
         // Note: although update_lambda() modifies lambda in-place above,
         // solve() unconditionally recomputes DM and DMR (via dm_from_psi +
         // cal_dmr) from the psi obtained by diagonalizing with the new

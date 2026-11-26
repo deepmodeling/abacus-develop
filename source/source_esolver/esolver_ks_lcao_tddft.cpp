@@ -430,7 +430,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::hamilt2rho_single(
                 static_cast<hamilt::Hamilt<std::complex<double>> *>(this->p_hamilt));
             hsolver_lcao_obj.solve(
                 hs, this->psi[0], this->pelec, *this->dmat.dm, this->chr, this->inp_->nspin, ucell.omega, skip_charge,
-                this->inp_->device_dm, this->inp_->dm_verify);
+                this->inp_->device_dm);
             if (this->inp_->td_stype == 2)
             {
                 // Taoni add 2026-10-11

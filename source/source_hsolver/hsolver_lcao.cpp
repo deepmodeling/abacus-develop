@@ -52,8 +52,7 @@ void HSolverLCAO<TK>::solve(HSMatrix<TK>& hs,
                                    const int nspin,
                                    const double omega,
                                    const bool skip_charge,
-                                   const std::string& device_dm,
-                                   const bool dm_verify)
+                                   const std::string& device_dm)
 {
     ModuleBase::TITLE("HSolverLCAO", "solve");
     ModuleBase::timer::start("HSolverLCAO", "solve");
@@ -64,7 +63,7 @@ void HSolverLCAO<TK>::solve(HSMatrix<TK>& hs,
         {
 #if defined(__CUDA) && defined(__MPI)
             const DirectConfig config = {this->method, this->kpar_lcao, nspin, skip_charge,
-                                         this->world_rank, this->world_nproc, this->nbands, dm_verify};
+                                         this->world_rank, this->world_nproc, this->nbands};
             direct_gamma(hs, psi, pes, dm, this->ParaV, config);
 #else
             ModuleBase::WARNING_QUIT("HSolverLCAO::solve", "device_dm gpu requires CUDA and MPI support");

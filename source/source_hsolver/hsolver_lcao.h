@@ -38,8 +38,7 @@ class HSolverLCAO
 			   const int nspin,
                const double omega, // current cell volume (ucell.omega), NOT rhopw->omega
 			   const bool skip_charge,
-               const std::string& device_dm,
-               const bool dm_verify);
+               const std::string& device_dm);
 
   private:
     void hamiltSolvePsiK(ModuleBase::MatrixBlock<TK>& hk,

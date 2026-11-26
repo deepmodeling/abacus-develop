@@ -329,7 +329,7 @@ void density_error(std::string& error, const char* stage, const char* detail, co
     message << "Direct GPU density matrix failed during " << stage << ": " << detail
             << " (code=" << code << ", n=" << rows << ", bands=" << bands;
     if (bytes != 0) message << ", requested_bytes=" << bytes;
-    message << "). Rerun with device_dm cpu in INPUT and dm_verify false to construct the density matrix on CPU; "
+    message << "). Rerun with device_dm cpu in INPUT to construct the density matrix on CPU; "
             << "cuSOLVER diagonalization will still use the GPU.";
     error = message.str();
 }

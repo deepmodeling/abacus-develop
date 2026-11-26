@@ -90,7 +90,6 @@ protected:
             EXPECT_NE(error.find("code=2"), std::string::npos) << error;
         }
         EXPECT_NE(error.find("device_dm cpu in INPUT"), std::string::npos) << error;
-        EXPECT_NE(error.find("dm_verify false"), std::string::npos) << error;
     }
 
     std::unique_ptr<Diag_Cusolver_gvd> solver;

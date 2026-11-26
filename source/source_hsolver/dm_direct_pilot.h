@@ -23,7 +23,6 @@ struct DirectConfig
     const int world_rank;
     const int world_size;
     const int bands;
-    const bool verify;
 };
 
 void direct_sync(int context);

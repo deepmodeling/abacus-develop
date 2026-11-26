@@ -6,9 +6,7 @@
 #include "source_base/module_parallel/para_mpi_func.h"
 #include "source_base/tool_quit.h"
 #include "source_estate/elecstate_tools.h"
-#include "source_estate/module_dm/dm_from_psi.h"
 #include <algorithm>
-#include <cmath>
 #include <cstdio>
 #include <cstdlib>
 #include <memory>
@@ -53,8 +51,6 @@ void direct_gamma(HSMatrix<double>& hs, psi::Psi<double>& wave, elecstate::ElecS
                   const DirectConfig& config)
 {
     const int bands = config.bands;
-    const bool verify = config.verify;
-    const char* mode = verify ? "verify" : "direct";
     const Parallel_Blkcyclic& layout = orbitals->para_2d();
     const int context = layout.ictxt();
     const int kpoints = wave.get_nk();
@@ -64,7 +60,7 @@ void direct_gamma(HSMatrix<double>& hs, psi::Psi<double>& wave, elecstate::ElecS
         ModuleBase::WARNING_QUIT("direct_gamma",
                                 "device_dm gpu requires real Gamma FP64 LCAO with ks_solver cusolver, "
                                 "nspin 1, kpar 1, charge updates, multiple MPI ranks on one node and "
-                                "one visible GPU per rank; select device_dm cpu and dm_verify false in INPUT otherwise");
+                                "one visible GPU per rank; select device_dm cpu in INPUT otherwise");
     }
     const int n = layout.nrglb();
     const bool root = layout.irproc() == 0 && layout.icproc() == 0;
@@ -168,57 +164,11 @@ void direct_gamma(HSMatrix<double>& hs, psi::Psi<double>& wave, elecstate::ElecS
     const double scatter_seconds = direct_elapsed(scatter_start);
     if (root)
     {
-    std::printf("DM_DIRECT_PHASE mode=%s n=%d bands=%d gather_hs=%.9e diagonal=%.9e psi_redistribute=%.9e "
+    std::printf("DM_DIRECT_PHASE mode=direct n=%d bands=%d gather_hs=%.9e diagonal=%.9e psi_redistribute=%.9e "
                     "occupations=%.9e device_dm=%.9e dm_redistribute=%.9e hs_redistributions=2 hs_logical_bytes=%zu "
                     "psi_redistributions=1 psi_logical_bytes=%zu dm_redistributions=%d dm_logical_bytes=%zu\n",
-                    mode, n, bands, gather_seconds, diagonal_seconds, psi_seconds, occupation_seconds,
+                    n, bands, gather_seconds, diagonal_seconds, psi_seconds, occupation_seconds,
                     device_dm_seconds, scatter_seconds, hs_bytes, wave_bytes, success, matrix_bytes);
-    }
-    if (verify)
-    {
-        if (root)
-        {
-            double trace = 0.0;
-            double electrons = 0.0;
-            for (int band = 0; band < bands; ++band) electrons += state->wg(0, band);
-            for (int col = 0; col < n; ++col)
-            {
-                for (int row = 0; row <= col; ++row)
-                {
-                    const std::size_t index = static_cast<std::size_t>(col) * n + row;
-                    const double multiplicity = row == col ? 1.0 : 2.0;
-                    trace += multiplicity * host_dm[index] * s[index];
-                }
-            }
-            const double trace_difference = trace - electrons;
-            const double error = std::abs(trace_difference);
-            std::printf("DM_DIRECT_TRACE trace_ds=%.17e electrons=%.17e abs_error=%.17e\n", trace, electrons, error);
-            if (!std::isfinite(trace) || error > 1.0e-7)
-                ModuleBase::WARNING_QUIT("direct_gamma", "Tr(DS) failed the 1e-7 electron tolerance");
-        }
-        const std::size_t count = layout.size();
-        const double* dm_begin = dm_pointer;
-        const double* dm_end = dm_begin + count;
-        std::vector<double> gpu(dm_begin, dm_end);
-        module_dm::dm_from_psi(orbitals, state->wg, wave, density);
-        double max_error = 0.0;
-        double error2 = 0.0;
-        double reference2 = 0.0;
-        for (std::size_t index = 0; index < count; ++index)
-        {
-            const double error = gpu[index] - dm_pointer[index];
-            const double absolute = std::abs(error);
-            max_error = std::max(max_error, absolute);
-            error2 += error * error;
-            reference2 += dm_pointer[index] * dm_pointer[index];
-            if (!std::isfinite(error) || absolute > 1.0e-10)
-                ModuleBase::WARNING_QUIT("direct_gamma", "GPU DM failed the 1e-10 element tolerance");
-        }
-        const int row = layout.irproc();
-        const int col = layout.icproc();
-        std::printf("DM_DIRECT_VERIFY row=%d col=%d count=%zu max_abs=%.17e error2=%.17e reference2=%.17e\n",
-                    row, col, count, max_error, error2, reference2);
-        std::copy(gpu.begin(), gpu.end(), dm_pointer);
     }
     return;
 }

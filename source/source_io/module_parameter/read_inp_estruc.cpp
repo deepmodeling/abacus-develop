@@ -317,21 +317,6 @@ The partial/full eigensolver selection and the host eigenvector copy are unchang
         this->add_item(item);
     }
     {
-        Input_Item item("dm_verify");
-        item.domain.add_requirement("dm_verify==true", "device_dm==gpu");
-        item.annotation = "verify GPU density matrices against CPU construction";
-        item.category = "Electronic structure";
-        item.type = "Boolean";
-        item.description = "Compare every distributed GPU DM block with CPU DM from the same eigenvectors "
-                           "and occupations, and check Tr(DS) against the electron count. Abort when the "
-                           "maximum element error exceeds 1e-10 or the electron-count error exceeds 1e-7. "
-                           "This diagnostic performs additional CPU work and is not for performance measurements.";
-        item.default_value = "False";
-        item.set_availability("basis_type==lcao and device_dm==gpu");
-        read_sync_bool(input.dm_verify);
-        this->add_item(item);
-    }
-    {
         Input_Item item("device_xc");
         item.domain.set_choices({"cpu", "gpu"});
         item.domain.add_requirement("device_xc==gpu", "device==gpu");

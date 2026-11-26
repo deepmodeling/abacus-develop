@@ -69,7 +69,6 @@ foreach(
         invalid_dependency
         unsupported_libxc_cuda
         invalid_device_dm
-        invalid_dm_verify
         unsupported_device_dm
         out_dmk_zero_precision
         out_hsk_zero_precision

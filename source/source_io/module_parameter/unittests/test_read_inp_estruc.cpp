@@ -101,27 +101,3 @@ TEST(DmDeviceInput, RejectsIncompatibleExplicitGpuRequests)
     }
     FAIL() << "device_dm is missing from the INPUT schema";
 }
-
-TEST(DmVerifyInput, ExplicitVerificationRequiresGpuDm)
-{
-    ModuleIO::ReadInput schema(0);
-    for (const std::pair<std::string, ModuleIO::Input_Item>& entry : schema.get_input_lists())
-    {
-        if (entry.first != "dm_verify") continue;
-        ModuleIO::Input_Item item = entry.second;
-        Parameter input;
-        EXPECT_FALSE(input.inp.dm_verify);
-        EXPECT_EQ(item.default_value, "False");
-        item.str_values = {"true"};
-        item.read_value(item, input);
-        EXPECT_TRUE(input.inp.dm_verify);
-        EXPECT_FALSE(item.domain.validate_explicit(item.label, {"maybe"}).empty());
-        ModuleIO::InputValues values = {{"device_dm", ModuleIO::InputValue(std::string("cpu"))},
-                                        {"dm_verify", ModuleIO::InputValue(true)}};
-        EXPECT_FALSE(item.domain.validate_requirements(item.label, values).empty());
-        values["device_dm"] = ModuleIO::InputValue(std::string("gpu"));
-        EXPECT_TRUE(item.domain.validate_requirements(item.label, values).empty());
-        return;
-    }
-    FAIL() << "dm_verify is missing from the INPUT schema";
-}

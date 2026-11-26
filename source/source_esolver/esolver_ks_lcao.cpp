@@ -529,7 +529,7 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2rho_single(
         hamilt::HamiltHSMatrix<TK> hs(static_cast<hamilt::Hamilt<TK> *>(this->p_hamilt));
         hsolver_lcao_obj.solve(
             hs, this->psi[0], this->pelec, *this->dmat.dm, this->chr, this->inp_->nspin, ucell.omega, skip_charge,
-            this->inp_->device_dm, this->inp_->dm_verify);
+            this->inp_->device_dm);
     }
     else
     {
