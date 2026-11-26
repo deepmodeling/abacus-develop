@@ -114,7 +114,7 @@ report_warning_enhanced() {
 recommend_offline_installation() {
   __filename=$1
   __url=$2
-  cat <<EOF
+  cat << EOF
 ========================== NOTICE =========================
 You can use OFFLINE installation method manually
 By download $__filename from $__url, 
@@ -232,9 +232,9 @@ reverse() (
 get_nprocs() {
   if [ -n "${NPROCS_OVERWRITE}" ]; then
     echo ${NPROCS_OVERWRITE} | sed 's/^0*//'
-  elif $(command -v nproc >/dev/null 2>&1); then
+  elif $(command -v nproc > /dev/null 2>&1); then
     echo $(nproc)
-  elif $(command -v sysctl >/dev/null 2>&1); then
+  elif $(command -v sysctl > /dev/null 2>&1); then
     echo $(sysctl -n hw.ncpu)
   else
     echo 1
@@ -449,7 +449,7 @@ check_system_requirements() {
 
   # Check required commands
   for cmd in "${required_commands[@]}"; do
-    if ! command -v "$cmd" >/dev/null 2>&1; then
+    if ! command -v "$cmd" > /dev/null 2>&1; then
       report_error_enhanced 1 "Required command not found: $cmd"
       return 1
     fi
@@ -467,7 +467,7 @@ resolve_string() {
   shift
   local __flags=$@
 
-  echo $("${SCRIPTDIR}/parse_if.py" $__flags <<<"${__to_resolve}")
+  echo $("${SCRIPTDIR}/parse_if.py" $__flags <<< "${__to_resolve}")
 }
 
 # Enhanced string processing with validation
@@ -487,7 +487,7 @@ resolve_string_safe() {
   fi
 
   local result
-  result=$("${SCRIPTDIR}/parse_if.py" "${__flags[@]}" <<<"${__to_resolve}" 2>/dev/null)
+  result=$("${SCRIPTDIR}/parse_if.py" "${__flags[@]}" <<< "${__to_resolve}" 2> /dev/null)
   local exit_code=$?
 
   if [[ $exit_code -ne 0 ]]; then
@@ -511,7 +511,7 @@ check_command() {
   elif [ $# -gt 1 ]; then
     local __package=${2}
   fi
-  if $(command -v ${__command} >/dev/null 2>&1); then
+  if $(command -v ${__command} > /dev/null 2>&1); then
     echo "path to ${__command} is $(realpath $(command -v ${__command}))"
   else
     report_error "Cannot find ${__command}, please check if the package ${__package} is installed or in system search path"
@@ -525,7 +525,7 @@ check_command_version() {
   local min_version="$2"
   local package_name="${3:-$command_name}"
 
-  if ! command -v "$command_name" >/dev/null 2>&1; then
+  if ! command -v "$command_name" > /dev/null 2>&1; then
     report_error_enhanced 1 "Command not found: $command_name" "Package: $package_name"
     return 1
   fi
@@ -549,7 +549,7 @@ check_commands_batch() {
   local failed_commands=()
 
   for cmd in "${commands[@]}"; do
-    if ! command -v "$cmd" >/dev/null 2>&1; then
+    if ! command -v "$cmd" > /dev/null 2>&1; then
       failed_commands+=("$cmd")
     else
       echo "✓ Found: $cmd at $(command -v "$cmd")"
@@ -584,7 +584,7 @@ check_install() {
   elif [ $# -gt 1 ]; then
     local __package=${2}
   fi
-  if $(command -v ${__command} >/dev/null 2>&1); then
+  if $(command -v ${__command} > /dev/null 2>&1); then
     echo "$(basename ${__command}) is installed as $(command -v ${__command})"
   else
     report_error "cannot find ${__command}, please check if the package ${__package} has been installed correctly"
@@ -637,7 +637,7 @@ check_lib() {
 check_gfortran_module() {
   local __module_name=$1
   local __FC=${FC:-gfortran}
-  cat <<EOF | $__FC -c -o /dev/null -xf95 -ffree-form - >/dev/null 2>&1
+  cat << EOF | $__FC -c -o /dev/null -xf95 -ffree-form - > /dev/null 2>&1
 PROGRAM check_gfortran_module
 USE ${__module_name}
 IMPLICIT NONE
@@ -653,7 +653,7 @@ check_gfortran_flag() {
   local __FC=${FC:-gfortran}
   # no need to do a full compilation, just -E -cpp would do for
   # checking flags
-  cat <<EOF | $__FC -E -cpp $__flag -xf95 -ffree-form - >/dev/null 2>&1
+  cat << EOF | $__FC -E -cpp $__flag -xf95 -ffree-form - > /dev/null 2>&1
 PROGRAM test_code
   IMPLICIT NONE
   PRINT *, "PASS"
@@ -668,7 +668,7 @@ check_gcc_flag() {
   local __CC=${CC:-gcc}
   # no need to do a full compilation, just -E -cpp would do for
   # checking flags
-  cat <<EOF | $__CC -E -cpp $__flag -xc - >/dev/null 2>&1
+  cat << EOF | $__CC -E -cpp $__flag -xc - > /dev/null 2>&1
 #include <stdio.h>
 int main() {
   printf("PASS\n");
@@ -683,7 +683,7 @@ check_gxx_flag() {
   local __CXX=${CXX:-g++}
   # no need to do a full compilation, just -E -cpp would do for
   # checking flags
-  cat <<EOF | $__CXX -E -cpp $__flag -xc - >/dev/null 2>&1
+  cat << EOF | $__CXX -E -cpp $__flag -xc - > /dev/null 2>&1
 #include <stdio.h>
 int main() {
   printf("PASS\n");
@@ -869,7 +869,7 @@ checksum() {
   local __shasum_command='sha256sum'
   # check if we have sha256sum command, Mac OS X does not have
   # sha256sum, but has an equivalent with shasum -a 256
-  command -v "$__shasum_command" >/dev/null 2>&1 ||
+  command -v "$__shasum_command" > /dev/null 2>&1 ||
     __shasum_command="shasum -a 256"
   echo "$__sha256  $__filename" | ${__shasum_command} --check
 }
@@ -889,15 +889,15 @@ verify_file_integrity() {
   case "$hash_type" in
     sha256)
       hash_command="sha256sum"
-      command -v "$hash_command" >/dev/null 2>&1 || hash_command="shasum -a 256"
+      command -v "$hash_command" > /dev/null 2>&1 || hash_command="shasum -a 256"
       ;;
     sha1)
       hash_command="sha1sum"
-      command -v "$hash_command" >/dev/null 2>&1 || hash_command="shasum -a 1"
+      command -v "$hash_command" > /dev/null 2>&1 || hash_command="shasum -a 1"
       ;;
     md5)
       hash_command="md5sum"
-      command -v "$hash_command" >/dev/null 2>&1 || hash_command="md5"
+      command -v "$hash_command" > /dev/null 2>&1 || hash_command="md5"
       ;;
     *)
       report_error_enhanced 1 "Unsupported hash type" "$hash_type"
@@ -1014,10 +1014,10 @@ verify_checksums() {
 
   # check if we have sha256sum command, Mac OS X does not have
   # sha256sum, but has an equivalent with shasum -a 256
-  command -v "$__shasum_command" >/dev/null 2>&1 ||
+  command -v "$__shasum_command" > /dev/null 2>&1 ||
     __shasum_command="shasum -a 256"
 
-  ${__shasum_command} --check "${__checksum_file}" >/dev/null 2>&1
+  ${__shasum_command} --check "${__checksum_file}" > /dev/null 2>&1
 }
 
 # write a checksum file $1 containing checksums for each given file $2, $3, ... (plus the $VERSION_FILE)
@@ -1028,10 +1028,10 @@ write_checksums() {
 
   # check if we have sha256sum command, Mac OS X does not have
   # sha256sum, but has an equivalent with shasum -a 256
-  command -v "$__shasum_command" >/dev/null 2>&1 ||
+  command -v "$__shasum_command" > /dev/null 2>&1 ||
     __shasum_command="shasum -a 256"
 
-  ${__shasum_command} "${VERSION_FILE}" "$@" >"${__checksum_file}"
+  ${__shasum_command} "${VERSION_FILE}" "$@" > "${__checksum_file}"
 }
 
 # generate a filtered toolchain.env
@@ -1055,7 +1055,7 @@ write_toolchain_env() {
     unset DBUS_SESSION_BUS_ADDRESS
 
     export -p
-  ) >"${__installdir}/toolchain.env"
+  ) > "${__installdir}/toolchain.env"
 }
 
 # Write a setup file without containing flags unnecessay for building and running ABACUS
@@ -1070,6 +1070,6 @@ filter_setup() {
   fi
 
   local filename=$(basename "$source_file")
-  echo "# ==================== Setup for ${filename#*_} ==================== #" >>"$target_file"
-  sed '/if[[:space:]]/,/^[[:space:]]*fi$/d' "$source_file" | grep -v -E '# For|# Other|with_|FLAGS|LIBS|INCLUDES' >>"$target_file"
+  echo "# ==================== Setup for ${filename#*_} ==================== #" >> "$target_file"
+  sed '/if[[:space:]]/,/^[[:space:]]*fi$/d' "$source_file" | grep -v -E '# For|# Other|with_|FLAGS|LIBS|INCLUDES' >> "$target_file"
 }

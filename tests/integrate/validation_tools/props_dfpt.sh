@@ -44,7 +44,7 @@ run_dfpt_props() {
       natom += $2 + 0
     }
     END{print natom+0}
-  ' "$dfpt_log" 2>/dev/null)
+  ' "$dfpt_log" 2> /dev/null)
   local expected_total=$((natom * 3))
   # emit one "key value" line per frequency; awk rewrites the block header
   # into the key prefix and drops everything else. Mode 0 must open every
@@ -113,7 +113,7 @@ run_dfpt_props() {
   if [ -f "$ref_file" ] && grep -q "^dfpt_freq_" "$ref_file"; then
     local missing
     missing=$(comm -23 <(grep -o "^dfpt_[a-z]*_q[0-9]*_m[0-9]*" "$ref_file" | sort -u) \
-                      <(grep -o "^dfpt_[a-z]*_q[0-9]*_m[0-9]*" "$props_result_file" | sort -u))
+      <(grep -o "^dfpt_[a-z]*_q[0-9]*_m[0-9]*" "$props_result_file" | sort -u))
     if [ -n "$missing" ]; then
       echo "ERROR: run_dfpt_props: collected spectrum is incomplete; missing keys (present in result.ref): $missing" >&2
       return 1
