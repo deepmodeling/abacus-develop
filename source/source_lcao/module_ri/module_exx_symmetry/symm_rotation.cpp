@@ -25,7 +25,7 @@ namespace ModuleSymmetry
     {
         this->reduce_Cs_ = true;
         this->abfs_l_nchi_ = abfs_l_nchi;
-        for (auto& abfs_T : abfs_l_nchi) { this->abfs_Lmax_ = std::max(this->abfs_Lmax_, static_cast<int>(abfs_T.size()) - 1); }
+        for (const std::vector<int>& abfs_T : abfs_l_nchi) { this->abfs_Lmax_ = std::max(this->abfs_Lmax_, static_cast<int>(abfs_T.size()) - 1); }
     }
 
     /// Cached (isym, l) lookup into rotmat_Slm_tensor_: rebuilt only when rotmat_Slm_version_

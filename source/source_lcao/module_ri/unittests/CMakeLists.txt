@@ -4,9 +4,14 @@ abacus_disable_feature_definitions(__ROCM)
 addtest(TARGET MODULE_RI_smooth_cut_coulomb SOURCES test_smooth_cut_coulomb.cpp
                                                     ../smooth_cut_coulomb.cpp)
 if(ENABLE_LCAO)
+  # CMake 4.3 rejects imported targets that are linked directly to an
+  # executable here, so forward the LibRI usage requirements through a local
+  # interface target instead.
+  add_library(module_ri_libri_usage INTERFACE)
+  target_link_libraries(module_ri_libri_usage INTERFACE LibRI::LibRI)
   addtest(
     TARGET MODULE_RI_exx_workspace
-    LIBS base parameter device LibRI::LibRI ${math_libs}
+    LIBS base parameter device module_ri_libri_usage ${math_libs}
     SOURCES test_exx_workspace.cpp ../exx_workspace.cpp ../lri_cv.cpp
             ../../../source_basis/module_ao/orb_atomic_lm.cpp)
   # Link the compiled LRI lifecycle while keeping unrelated integral assembly out

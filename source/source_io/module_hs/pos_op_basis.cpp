@@ -57,7 +57,7 @@ void PosOpBasis::build_orbs(const UnitCell& ucell, const LCAO_Orbitals& orb, boo
             orbs[T][L].resize(orb.Phi[T].getNchi(L));
             for (int N = 0; N < orb.Phi[T].getNchi(L); ++N)
             {
-                const auto& orb_origin = orb.Phi[T].PhiLN(L, N);
+                const Numerical_Orbital_Lm& orb_origin = orb.Phi[T].PhiLN(L, N);
                 orbs[T][L][N].set_orbital_info(orb_origin.getLabel(),
                                                orb_origin.getType(),
                                                orb_origin.getL(),

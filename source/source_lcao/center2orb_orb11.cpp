@@ -162,14 +162,14 @@ void Center2_Orb::Orb11::init_radial_table(const std::vector<Orb11 *> &orbitals,
             groups[grid].push_back(orbital);
         }
     }
-    for (const auto &group : groups)
+    for (const std::pair<const Grid, std::vector<Orb11 *>> &group : groups)
     {
         const int l = std::get<0>(group.first);
         const int kmesh = std::get<1>(group.first);
         const int rmesh = std::get<2>(group.first);
         const double dk = std::get<3>(group.first);
-        const auto &tasks = group.second;
-        const auto &bessel = tasks.front()->psb_->get_jlx();
+        const std::vector<Orb11 *> &tasks = group.second;
+        const std::vector<std::vector<std::vector<double>>> &bessel = tasks.front()->psb_->get_jlx();
         const double *kpoint = tasks.front()->nA.getKpoint();
         // Bound all three device buffers together: at most 160 MiB, released
         // before returning to the SCF/LibRI contraction stages.
@@ -301,8 +301,8 @@ void Center2_Orb::Orb11::init_radial_table(const std::vector<Orb11 *> &orbitals,
 #endif
                 for (int it = 0; it < count; ++it)
                 {
-                    auto &values = tasks[start + it]->Table_r.at(l);
-                    auto &derivatives = tasks[start + it]->Table_dr.at(l);
+                    std::vector<double> &values = tasks[start + it]->Table_r.at(l);
+                    std::vector<double> &derivatives = tasks[start + it]->Table_dr.at(l);
                     for (int ir = 0; ir < rows; ++ir)
                     {
                         values[radial_start + ir] = output[it * columns + 2 * ir];

@@ -88,7 +88,7 @@ process_npy() {
     fi
   done
 
-  echo "$output_name $total" >>$6
+  echo "$output_name $total" >> $6
 }
 
 # Process a group of label outputs
@@ -151,10 +151,10 @@ run_deepks_props() {
   #---------------------------------------------------------------------------
   if ! test -z "$deepks_scf" && [ $deepks_scf == 1 ]; then
     # Process descriptor data
-    sed '/n_des/d' OUT.autotest/deepks_desc.dat >des_tmp.txt
+    sed '/n_des/d' OUT.autotest/deepks_desc.dat > des_tmp.txt
     total_des=$(sum_file des_tmp.txt 5)
     rm des_tmp.txt
-    echo "deepks_desc $total_des" >>$props_result_file
+    echo "deepks_desc $total_des" >> $props_result_file
 
     process_npy "single" "abs" "dm_eig" "" "deepks_dm_eig" "$props_result_file"
   fi
@@ -182,10 +182,10 @@ run_deepks_props() {
     if ! test -z "$deepks_v_delta" && [ $deepks_v_delta -lt 0 ]; then
       hr_pass=0
       python3 $COMPARE_SCRIPT "deepks_hrtot.csr.ref" "OUT.autotest/deepks_hrtot.csr" 8 || hr_pass=$?
-      echo "deepks_hr_label_pass $hr_pass" >>$props_result_file
+      echo "deepks_hr_label_pass $hr_pass" >> $props_result_file
       hrdelta_pass=0
       python3 $COMPARE_SCRIPT "deepks_hrdelta.csr.ref" "OUT.autotest/deepks_hrdelta.csr" 8 || hrdelta_pass=$?
-      echo "deepks_vdelta_r_pass $hrdelta_pass" >>$props_result_file
+      echo "deepks_vdelta_r_pass $hrdelta_pass" >> $props_result_file
       # For deepks_v_delta = -1
       if [ $deepks_v_delta -eq -1 ]; then
         process_npy "single" "abs" "vdrpre" "" "deepks_vdrp" "$props_result_file"

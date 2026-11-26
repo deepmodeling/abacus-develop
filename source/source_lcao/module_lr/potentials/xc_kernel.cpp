@@ -179,7 +179,7 @@ void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const doubl
     const bool need_kxc = (this->gxc_spin_ != GxcSpin::NoGxc);
     try
     {
-        for (const auto& functional: funcs)
+        for (const xc_func_type& functional: funcs)
         {
             require_xc_kxc(functional, need_kxc);
         }

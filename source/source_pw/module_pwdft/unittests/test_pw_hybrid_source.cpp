@@ -31,7 +31,7 @@ std::vector<pw::ExxSourceHeader> source_headers(int nspin)
 
 std::string eig_occ(int nspin)
 {
-    const auto headers = source_headers(nspin);
+    const std::vector<pw::ExxSourceHeader> headers = source_headers(nspin);
     std::ostringstream out;
     out << "# ABACUS version: test\n# Written at 2026-01-01 00:00:00\n# Ionic_Step 1\n"
         << " Electronic state energy (eV) and occupations\n Spin number " << nspin << '\n';
@@ -51,7 +51,7 @@ TEST(PWHybridSource, ReadsExistingWeightedOccupationsForBothSpins)
 {
     for (int nspin = 1; nspin <= 2; ++nspin)
     {
-        const auto headers = source_headers(nspin);
+        const std::vector<pw::ExxSourceHeader> headers = source_headers(nspin);
         std::istringstream in(eig_occ(nspin));
         ModuleBase::matrix weights;
         pw::read_exx_source_occupations(in, headers, nspin, weights);
@@ -63,7 +63,7 @@ TEST(PWHybridSource, ReadsExistingWeightedOccupationsForBothSpins)
 
 TEST(PWHybridSource, RejectsInvalidExistingOccupationFiles)
 {
-    const auto headers = source_headers(1);
+    const std::vector<pw::ExxSourceHeader> headers = source_headers(1);
     ModuleBase::matrix weights;
     const std::string saved = eig_occ(1);
     std::istringstream truncated(saved.substr(0, saved.size() - 6));
@@ -72,7 +72,7 @@ TEST(PWHybridSource, RejectsInvalidExistingOccupationFiles)
     EXPECT_THROW(pw::read_exx_source_occupations(trailing, headers, 1, weights), std::runtime_error);
     std::istringstream wrong_spin(saved);
     EXPECT_THROW(pw::read_exx_source_occupations(wrong_spin, headers, 2, weights), std::runtime_error);
-    auto changed = headers;
+    std::vector<pw::ExxSourceHeader> changed = headers;
     changed[1].kvec_c[0] += 0.1;
     std::istringstream wrong_coordinates(saved);
     EXPECT_THROW(pw::read_exx_source_occupations(wrong_coordinates, changed, 1, weights), std::runtime_error);
@@ -95,7 +95,7 @@ TEST(PWHybridSource, RejectsInvalidExistingOccupationFiles)
 
 TEST(PWHybridSource, RejectsDifferentMeshesInSpinChannels)
 {
-    auto headers = source_headers(2);
+    std::vector<pw::ExxSourceHeader> headers = source_headers(2);
     headers[2].kvec_c[0] = 0.2;
     std::string saved = eig_occ(2);
     const std::string original = "spin=2 k-point=1/2 Cartesian=0";
@@ -138,7 +138,7 @@ TEST(PWHybridSource, ReadsExistingBinaryWavefunctionHeader)
     std::string saved = out.str();
     saved.resize(160 + 8 + 12 * npw + nbands * (8 + 16 * npw), '\0');
     std::istringstream in(saved, std::ios::binary);
-    const auto header = pw::read_exx_source_header(in);
+    const pw::ExxSourceHeader header = pw::read_exx_source_header(in);
     EXPECT_EQ(header.nbands, 3);
     EXPECT_DOUBLE_EQ(header.kvec_c[0], coordinate);
     EXPECT_DOUBLE_EQ(header.weight, weight);

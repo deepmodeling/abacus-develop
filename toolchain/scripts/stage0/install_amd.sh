@@ -78,14 +78,14 @@ if [ "${with_amd}" != "__DONTUSE__" ]; then
   else
     [ $(realpath $(command -v gfortran) | grep -e aocc-compiler) ] || echo "Check the GNU Fortran compiler path"
   fi
-  cat <<EOF >"${BUILDDIR}/setup_amd"
+  cat << EOF > "${BUILDDIR}/setup_amd"
 export CC="${CC}"
 export CXX="${CXX}"
 export FC="${FC}"
 export F90="${F90}"
 export F77="${F77}"
 EOF
-  cat <<EOF >>"${BUILDDIR}/setup_amd"
+  cat << EOF >> "${BUILDDIR}/setup_amd"
 export AMD_CFLAGS="${AMD_CFLAGS}"
 export AMD_LDFLAGS="${AMD_LDFLAGS}"
 export AMD_LIBS="${AMD_LIBS}"

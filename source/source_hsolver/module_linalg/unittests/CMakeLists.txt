@@ -21,7 +21,8 @@ addtest(
   TARGET MODULE_HSOLVER_linalg
   LIBS parameter base device container
   SOURCES test_hsolver_linear.cpp test_cn_subspace.cpp test_linear_low_rank.cpp
-          test_orthonormal.cpp test_exp_action.cpp ${LINALG_TEST_SOURCES})
+          test_orthonormal.cpp test_exp_action.cpp test_linear_algebra.cpp
+          ${LINALG_TEST_SOURCES})
 if(ENABLE_MPI)
   add_test(
     NAME MODULE_HSOLVER_linalg_parallel

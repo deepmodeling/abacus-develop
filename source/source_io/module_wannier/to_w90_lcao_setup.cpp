@@ -97,7 +97,7 @@ void toW90_LCAO::count_delta_k(const UnitCell& ucell, const K_Vectors& kv)
     delta_k_all.resize(delta_k_all_tmp.size());
 
     int index = 0;
-    for (auto& delta_k: delta_k_all_tmp)
+    for (const Coordinate_3D& delta_k: delta_k_all_tmp)
     {
         delta_k_all_index[delta_k] = index;
         delta_k_all[index] = delta_k;
@@ -128,8 +128,8 @@ void toW90_LCAO::unkdotkb(const UnitCell& ucell,
     int delta_k_index = delta_k_all_index[temp_dk];
 
     hamilt::HContainer<std::complex<double>>* tmp_FR_container = FR[delta_k_index].get_FR_pointer();
-    auto row_indexes = ParaV->get_indexes_row();
-    auto col_indexes = ParaV->get_indexes_col();
+    std::vector<int> row_indexes = ParaV->get_indexes_row();
+    std::vector<int> col_indexes = ParaV->get_indexes_col();
 
     for (int iap = 0; iap < tmp_FR_container->size_atom_pairs(); ++iap)
     {
@@ -141,7 +141,7 @@ void toW90_LCAO::unkdotkb(const UnitCell& ucell,
         int col_size = ParaV->get_ncol_atom(atom_j);
         for (int iR = 0; iR < tmp_FR_container->get_atom_pair(iap).get_R_size(); ++iR)
         {
-            auto& matrix = tmp_FR_container->get_atom_pair(iap).get_HR_values(iR);
+            hamilt::BaseMatrix<std::complex<double>>& matrix = tmp_FR_container->get_atom_pair(iap).get_HR_values(iR);
             const ModuleBase::Vector3<int> r_index = tmp_FR_container->get_atom_pair(iap).get_R_index(iR);
             ModuleBase::Vector3<double> dR
                 = ModuleBase::Vector3<double>(r_index.x, r_index.y, r_index.z) * ucell.latvec;
@@ -267,7 +267,7 @@ void toW90_LCAO::produce_basis_orb()
             orbs[T][L].resize(orb_.Phi[T].getNchi(L));
             for (int N = 0; N < orb_.Phi[T].getNchi(L); ++N)
             {
-                const auto& orb_origin = orb_.Phi[T].PhiLN(L, N);
+                const Numerical_Orbital_Lm& orb_origin = orb_.Phi[T].PhiLN(L, N);
                 orbs[T][L][N].set_orbital_info(orb_origin.getLabel(),
                                                orb_origin.getType(),
                                                orb_origin.getL(),
@@ -301,7 +301,7 @@ void toW90_LCAO::produce_trial_in_lcao()
         r[ir] = ir * dr;
     }
 
-    const auto& orb_origin = orb_.Phi[orb_r_ntype].PhiLN(0, 0);
+    const Numerical_Orbital_Lm& orb_origin = orb_.Phi[orb_r_ntype].PhiLN(0, 0);
 
     std::vector<double> psi(mesh_r);
     std::vector<double> psir(mesh_r);

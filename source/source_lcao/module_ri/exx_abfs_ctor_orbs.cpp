@@ -23,7 +23,7 @@ std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> Exx_Abfs::Construct_
             orbs[T][L].resize( orbs_in.Phi[T].getNchi(L) );
             for (int N = 0; N < orbs_in.Phi[T].getNchi(L); ++N)
             {
-                const auto &orb_origin = orbs_in.Phi[T].PhiLN(L,N);
+                const Numerical_Orbital_Lm& orb_origin = orbs_in.Phi[T].PhiLN(L,N);
                 orbs[T][L][N].set_orbital_info(
                     orb_origin.getLabel(),
                     orb_origin.getType(),
@@ -355,17 +355,17 @@ std::vector<std::vector<std::vector<std::vector<double>>>> Exx_Abfs::Construct_O
     const std::vector<double> &r_radial )
 {
     std::vector<std::vector<std::vector<std::vector<double>>>> psis( psirs.size() );
-    for( auto T=0; T!=psirs.size(); ++T )
+    for( int T=0; T!=psirs.size(); ++T )
     {
         psis[T].resize( psirs[T].size() );
-        for( auto L=0; L!=psirs[T].size(); ++L )
+        for( int L=0; L!=psirs[T].size(); ++L )
         {
             psis[T][L].resize( psirs[T][L].size() );
-            for( auto N=0; N!=psirs[T][L].size(); ++N )
+            for( int N=0; N!=psirs[T][L].size(); ++N )
             {
                 psis[T][L][N].resize( psirs[T][L][N].size() );
                 psis[T][L][N][0] = 0;
-                for( auto ir=1; ir!=psirs[T][L][N].size(); ++ir )
+                for( int ir=1; ir!=psirs[T][L][N].size(); ++ir )
                 {
                     psis[T][L][N][ir] = psirs[T][L][N][ir] / r_radial[ir];
                 }

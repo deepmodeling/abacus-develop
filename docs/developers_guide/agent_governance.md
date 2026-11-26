@@ -59,6 +59,7 @@ focused cleanup.
 - Keep default and general-purpose C++ changes compatible with the repository
   C++11 baseline. Backend-specific or dependency-constrained paths may use the
   higher standard already selected by existing CMake configuration.
+- Prefer explicit types over `auto` in C++ declarations.
 - Use LF line endings for text files. `.bat` and `.cmd` are the CRLF exception.
 - Place `ModuleBase::timer::start`/`end` at the beginning and end of a function,
   not around isolated statements inside the function body. Use the enclosing
@@ -74,6 +75,15 @@ focused cleanup.
   `test_gpu/`, ...) accept no new files, and a test source modified there must
   be migrated into `unittests/`; deleting files, and editing a legacy
   `CMakeLists.txt`, header, or data file, stays allowed.
+- Follow `docs/developers_guide/cmake_guidelines.md` for CMake edits: format
+  changed CMake files with `cmake-format`; do not reintroduce removed legacy
+  symbols (`${math_libs}`, `USE_LIBXC`, `ENABLE_RAPIDJSON`, `ENABLE_LIBCOMM`)
+  or `remove_definitions()`; keep package discovery (`find_package`,
+  `find_library`) and directory-scoped compile/include/link commands out of
+  `source/`; stage unit-test files with `abacus_copy_test_files()` instead of
+  `install()` or `file(COPY ...)`; and keep `cmake/CollectBuildInfoVars.cmake`
+  and `source/CMakeLists.txt` synchronized when adding options or external
+  dependencies.
 
 AI agents have additional workflow obligations:
 
@@ -101,6 +111,11 @@ decisions.
 | Member variable workflow switch | Key flow state hidden as mutable member state | AI review + human confirmation | AI + human review | high | human confirmation | semantic review | Static matching is unreliable |
 | Timer placement | `timer::start`/`end` wrap a whole function body | AI review | AI + human review | low | warn | semantic review | Mechanical matching is unreliable for scopes; label should name the enclosing function |
 | Module path and build linkage | New source path and `CMakeLists.txt` linkage | phase-one mechanical | CI | medium | block | new source files and build-script diff | Deterministic path/build check only |
+| CMake formatting | Changed CMake files pass `cmake-format` | phase-one mechanical | hook + CI | medium | block | PR-changed `CMakeLists.txt` and `*.cmake` files | Enforced via the diff-scoped `cmake-format` job in `.github/workflows/precommit.yml` |
+| CMake deprecated patterns | No new `${math_libs}`, `USE_LIBXC`, `ENABLE_RAPIDJSON`, `ENABLE_LIBCOMM`, or `remove_definitions()` | phase-one mechanical | hook + CI | high | block | added non-comment lines in main-build CMake files | Excludes standalone `python/pyabacus/`; use `abacus::linalg_libs`, `__LIBXC`, `ENABLE_JSON`, `ENABLE_LIBRI`, and `abacus_disable_feature_definitions()` |
+| CMake directory-scoped commands under `source/` | No new `add_definitions`, `add_compile_definitions`, `add_compile_options`, `include_directories`, `link_directories`, `link_libraries`, `find_package`, or `find_library` under `source/` | phase-one mechanical | hook + CI | high | block | added non-comment lines in `source/` CMake files | Use target-scoped `target_*()` commands, `cmake/CompilerConfiguration.cmake`, `source/CMakeLists.txt` `_abacus_feature_definitions`, and `cmake/modules/Find*.cmake` |
+| CMake test file preparation | Unit-test CMake files use `abacus_copy_test_files()`, not `install()` or `file(COPY ...)` | phase-one mechanical | hook + CI | medium | block | added non-comment lines in unit-test CMake files under `source/` | Configure-time staging keeps tests runnable without `make install` |
+| CMake option and dependency sync | New root `option`/`cmake_dependent_option` or `cmake/modules/` module updates `cmake/CollectBuildInfoVars.cmake` | phase-one mechanical warning + AI review | hook + CI + AI review | medium | warn | root `CMakeLists.txt` diff and new `cmake/modules/*.cmake` files | Reviewers also check `_abacus_feature_definitions` (`__XXX`) and `abacus_add_target_compile_requirements()` in `source/CMakeLists.txt` |
 | Unit test directory layout | New unit tests go in a flat `unittests/`; legacy test directories accept no new files | phase-one mechanical | hook + CI | high | block | added, renamed, copied, and modified paths under `source/` | Added files in legacy test directories block; modified `.c`/`.cc`/`.cpp`/`.cxx`/`.cu` there block; code files in `unittests/` subdirectories block; deletions never block |
 | Unit test file naming | Sources in `unittests/` start with `test_` | phase-one mechanical + AI review | hook + CI + AI review | medium | block | added, renamed, copied, and modified sources directly in `unittests/` | Headers are exempt; reviewers confirm the rest of the name matches the file under test |
 | Module semantic ownership | Best module/submodule placement | AI review + human confirmation | AI + human review | medium | human confirmation | semantic review | Final call belongs to maintainers |
@@ -168,11 +183,17 @@ the repository:
 
 - CMake/CTest builds and test selection used by `.github/workflows/test.yml`,
   such as `ctest --test-dir build -V -R MODULE_MD` for MD-focused changes.
+  Reuse the module's CMake targets and test registration helpers. Keep
+  case-specific setup in the test case when the framework supports it.
 - Development containers and CI images based on `Dockerfile.gnu`,
   `Dockerfile.intel`, `Dockerfile.cuda`, and
   `ghcr.io/deepmodeling/abacus-*`.
 - Dependency and compiler setup under `toolchain/`, including the GNU, Intel,
   and CUDA variants already covered by workflow checks.
+
+When a change needs new code from an external library such as LibRI or LibRPA,
+use a tagged release that contains it. Test against that release and identify
+the tag in the PR.
 
 Do not add a new container recipe, toolchain path, or agent-specific skill for
 calculation tasks as part of governance-only work. If a future PR needs one, it
@@ -198,6 +219,9 @@ Use Autotest cases with `INPUT`, `STRU`, `KPT` (when needed) and `result.ref`,
 listed in `CASES_*.txt` and run by `Autotest.sh` through the suite's CTest entry.
 Autotest helpers are unaffected.
 
+Store references with the case, outside generated `OUT.*` directories. Prefer
+plain text for simple references such as `a.txt.ref`.
+
 Standalone `add_test()` drivers that launch ABACUS require a check Autotest
 cannot express (e.g., nonzero exits or per-rank stderr) and a PR rationale.
 Keep Autotest-compatible checks in cases. Drivers must:
@@ -208,7 +232,7 @@ Keep Autotest-compatible checks in cases. Drivers must:
 - Use `find_program` plus `if()` for optional interpreters; never `REQUIRED`.
 - For MPI, forward `MPIEXEC_NUMPROC_FLAG`, `MPIEXEC_PREFLAGS` and
   `MPIEXEC_POSTFLAGS`; set CTest `PROCESSORS` to the launched rank count.
-- Set `OMP_NUM_THREADS=1`, use temporary scratch space and a CTest `TIMEOUT`.
+- Set `OMP_NUM_THREADS=1` and use temporary scratch space.
 
 ## CLI Verification
 
@@ -262,6 +286,14 @@ setup workflows and should be added only through a later governance change.
 
 ## INPUT Parameter Changes
 
+Reuse an existing INPUT option or a common default when possible. Explain in
+the PR why a new option is needed. Follow the naming of related options and
+aim for names of 15 characters or fewer with at most two underscores.
+
+For scalar INPUT parameters with a fixed set of choices, use
+[`item.domain.set_choices(...)`](input_validation.md) so validation errors list
+the allowed values in a consistent format.
+
 Changes to parameter metadata, default values, type, availability, description,
 or parsing behavior should update the corresponding C++ `Input_Item`
 registrations. The generated YAML and Markdown documentation are build artifacts
@@ -284,6 +316,10 @@ Before requesting review, check that the PR description matches the diff:
   have either been fixed or have a rationale in the PR body.
 - Exceptions include reason, scope, risk, why the normal rule cannot be followed
   now, a follow-up cleanup plan, and the requested approver.
+
+Reply to each review comment in its thread, including bot feedback. Link to the
+fix or explain why the existing behavior is appropriate. Resolve the thread
+once the discussion is settled.
 
 ## Exception Template
 

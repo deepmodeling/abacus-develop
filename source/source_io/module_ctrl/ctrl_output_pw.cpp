@@ -282,7 +282,7 @@ void ModuleIO::ctrl_scf_pw(const int istep,
     if (inp.onsite_radius > 0 && !spinor_rt)
     {
         stp.update_psi_d();
-        auto* onsite_p = projectors::OnsiteProjector<double, Device>::get_instance();
+        projectors::OnsiteProjector<double, Device>* onsite_p = projectors::OnsiteProjector<double, Device>::get_instance();
         onsite_p->cal_occupations(stp.template get_psi_d<T, Device>(),
                                   pelec->wg,
                                   inp.nspin);
