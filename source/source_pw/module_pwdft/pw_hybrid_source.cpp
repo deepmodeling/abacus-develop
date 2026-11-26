@@ -347,7 +347,7 @@ std::string pw::resolve_source_file(const std::vector<std::string>& directories,
         throw std::runtime_error("EXX source fixed name does not end with the expected suffix");
     }
 
-    for (const auto& directory : directories)
+    for (const std::string& directory : directories)
     {
         if (directory.empty())
         {

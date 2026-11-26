@@ -4,8 +4,8 @@ This file is the entry point for AI agents, automated review tools, and human
 contributors who want the short operational version of the ABACUS development
 rules. Read the complete governance documents before making or reviewing changes:
 
-- `docs/developers_guide/agent_governance.md`
-- `docs/developers_guide/cmake_guidelines.md`
+- [ABACUS Agent Governance](docs/developers_guide/agent_governance.md)
+- [CMake Build Guidelines](docs/developers_guide/cmake_guidelines.md)
 
 ## Required Baseline
 

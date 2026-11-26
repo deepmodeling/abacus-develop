@@ -224,11 +224,11 @@ std::vector<std::pair<int, int>> HydrogenRadials::unzip_strategy(const int nmax,
             std::vector<int> nmax_ls;
             std::vector<int> nmax_minus1_ls;
             int real_nmax = 0;
-            for(auto nl_pair : nl_pairs)
+            for(std::pair<int, int> nl_pair : nl_pairs)
             {
                 if(nl_pair.first > real_nmax) real_nmax = nl_pair.first;
             }
-            for(auto it = nl_pairs.begin(); it != nl_pairs.end();)
+            for(std::vector<std::pair<int, int>>::iterator it = nl_pairs.begin(); it != nl_pairs.end();)
             {
                 if(it->first == real_nmax) nmax_ls.push_back(it->second);
                 else if(it->first == real_nmax - 1) nmax_minus1_ls.push_back(it->second);
@@ -239,7 +239,7 @@ std::vector<std::pair<int, int>> HydrogenRadials::unzip_strategy(const int nmax,
                 }
                 ++it;
             }
-            for(auto it = nl_pairs.begin(); it != nl_pairs.end();)
+            for(std::vector<std::pair<int, int>>::iterator it = nl_pairs.begin(); it != nl_pairs.end();)
             {
                 if(it->first == real_nmax - 1)
                 {
@@ -298,7 +298,7 @@ HydrogenRadials::generate_orb(const double charge,
 
     std::vector<std::pair<int, int>> nl_pairs = unzip_strategy(nmax, strategy);
     double rmax = 0.0;
-    for(auto nl_pair : nl_pairs)
+    for(std::pair<int, int> nl_pair : nl_pairs)
     {
         int n = nl_pair.first;
         int l = nl_pair.second;
@@ -354,12 +354,12 @@ HydrogenRadials::mapping_nl_lzeta(const int nmax,
     // initialize nzetas by all zeros
     // get lmax
     int lmax = 0;
-    for(auto nl_pair: nl_pairs)
+    for(std::pair<int, int> nl_pair: nl_pairs)
     {
         lmax = lmax>nl_pair.second?lmax:nl_pair.second;
     }
     std::vector<int> nzetas(lmax + 1, 0);
-    for(auto nl_pair : nl_pairs)
+    for(std::pair<int, int> nl_pair : nl_pairs)
     {
         int n = nl_pair.first;
         int l = nl_pair.second;

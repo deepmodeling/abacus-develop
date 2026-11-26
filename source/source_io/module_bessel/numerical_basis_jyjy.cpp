@@ -73,7 +73,7 @@ ModuleBase::ComplexArray cal_overlap_Sq(const char type, const int lmax, const i
         {
             std::tie(t2, a2, l2, m2) = *it2;
             std::vector<Vec3> dR_all = neighbor_vec(R[t2][a2] - R[t1][a1], latvec, 2 * rcut);
-            for (auto& dR: dR_all)
+            for (ModuleBase::Vector3<double>& dR: dR_all)
             {
                 for (int zeta1 = 0; zeta1 < nbes; ++zeta1)
                 {

@@ -121,11 +121,11 @@ TEST(ParseCommandLineTest, CheckInputWithCustomPathInEitherOrder)
         {"--check-input"},
         {"--check-input", "-in", "sub/INPUT"},
         {"--input", "sub/INPUT", "--check-input"}};
-    for (auto tokens : cases)
+    for (std::vector<std::string> tokens : cases)
     {
         std::vector<char*> storage;
         const int argc = make_argv(tokens, storage);
-        const auto args = ModuleIO::parse_command_line(argc, storage.data());
+        const ModuleIO::CommandLineArgs args = ModuleIO::parse_command_line(argc, storage.data());
         EXPECT_EQ(args.input_file, argc == 2 ? "INPUT" : "sub/INPUT");
         EXPECT_TRUE(args.vars.empty());
     }
@@ -144,7 +144,7 @@ TEST(ParseCommandLineTest, ValuesMayStartWithDash)
     std::vector<std::string> tokens = {"-p", "a", "-1", "--parameter", "b", "--check-input"};
     std::vector<char*> storage;
     const int argc = make_argv(tokens, storage);
-    const auto args = ModuleIO::parse_command_line(argc, storage.data());
+    const ModuleIO::CommandLineArgs args = ModuleIO::parse_command_line(argc, storage.data());
     EXPECT_EQ(args.vars.at("a"), "-1");
     EXPECT_EQ(args.vars.at("b"), "--check-input");
 }
@@ -152,7 +152,7 @@ TEST(ParseCommandLineTest, ValuesMayStartWithDash)
 TEST(ParseCommandLineTest, MissingOrEmptyInputThrows)
 {
     const std::vector<std::vector<std::string>> cases = {{"-in"}, {"--input"}, {"-in", ""}};
-    for (auto tokens : cases)
+    for (std::vector<std::string> tokens : cases)
     {
         std::vector<char*> storage;
         const int argc = make_argv(tokens, storage);

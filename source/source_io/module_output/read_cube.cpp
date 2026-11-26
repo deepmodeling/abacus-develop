@@ -175,7 +175,7 @@ bool ModuleIO::read_cube(const std::string& file,
     }
 
     comment.resize(2);
-    for (auto& c : comment) 
+    for (std::string& c : comment)
     { 
         std::getline(ifs, c); 
     }
@@ -187,7 +187,7 @@ bool ModuleIO::read_cube(const std::string& file,
     }
 
     origin.resize(3);
-    for (auto& cp : origin)
+    for (double& cp : origin)
     {
         ifs >> cp;
     }

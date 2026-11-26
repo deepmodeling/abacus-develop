@@ -26,7 +26,7 @@ std::string parse_xcname(const std::string &xc_input, const std::vector<std::str
     }
     std::vector<std::string> xc_psp_uniq = xc_psp;
     std::sort(xc_psp_uniq.begin(), xc_psp_uniq.end());
-    auto last = std::unique(xc_psp_uniq.begin(), xc_psp_uniq.end());
+    std::vector<std::string>::iterator last = std::unique(xc_psp_uniq.begin(), xc_psp_uniq.end());
     xc_psp_uniq.erase(last, xc_psp_uniq.end());
 
     if (xc_psp_uniq.size() > 1)

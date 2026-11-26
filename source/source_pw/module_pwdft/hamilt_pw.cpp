@@ -33,8 +33,8 @@ HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in,
     this->qq_nt = this->ppcell->template get_qq_nt_data<Real>();
     this->qq_so = this->ppcell->template get_qq_so_data<Real>();
     this->vkb = this->ppcell->template get_vkb_data<Real>();
-    const auto tpiba2 = static_cast<Real>(ucell->tpiba2);
-    const auto tpiba = static_cast<Real>(ucell->tpiba);
+    const Real tpiba2 = static_cast<Real>(ucell->tpiba2);
+    const Real tpiba = static_cast<Real>(ucell->tpiba);
     const int* isk = pkv->isk.data();
     const Real* gk2 = wfc_basis->get_gk2_data<Real>();
     const bool is_tddft = PARAM.inp.esolver_type == "tddft";
@@ -184,7 +184,7 @@ HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in,
     }
     if (exx_info && exx_info->cal_exx)
     {
-        auto exx = new OperatorEXXPW<T, Device>(isk,
+        OperatorEXXPW<T, Device>* exx = new OperatorEXXPW<T, Device>(isk,
                                                 wfc_basis,
                                                 pot_in->get_rho_basis(),
                                                 pkv,

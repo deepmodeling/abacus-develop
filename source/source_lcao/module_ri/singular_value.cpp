@@ -157,7 +157,7 @@ double fq_massidda(const double& tpiba,
     const bool exclude_Gamma = true;
     const ModuleBase::Vector3<double> tau(0, 0, 0);
 
-    auto lattice_sum = gaussian_abfs.get_lattice_sum(tpiba, ik, qexpo, lambda, exclude_Gamma, lmax, tau);
+    std::vector<std::complex<double>> lattice_sum = gaussian_abfs.get_lattice_sum(tpiba, ik, qexpo, lambda, exclude_Gamma, lmax, tau);
     assert(lattice_sum[0].imag() < 1e-10);
     double fq = lattice_sum[0].real() * std::sqrt(ModuleBase::FOUR_PI);
 

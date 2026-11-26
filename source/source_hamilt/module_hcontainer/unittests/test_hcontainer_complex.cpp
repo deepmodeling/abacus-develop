@@ -511,7 +511,7 @@ TEST_F(HContainerTest, atompair_funcs)
         std::complex<double> *ptr1 = hr_array.data();
         for (int iap = 0; iap < HR.size_atom_pairs(); ++iap)
         {
-            auto tmp = HR.get_atom_pair(iap);
+            hamilt::AtomPair<std::complex<double>> tmp = HR.get_atom_pair(iap);
             // Find the R_index that matches the current R
             int r_index = -1;
             for (int j = 0; j < tmp.get_R_size(); ++j)

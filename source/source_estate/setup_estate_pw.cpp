@@ -153,7 +153,7 @@ void teardown_estate_pw_impl(elecstate::ElecState*& pelec, VSep*& vsep_cell)
 
     if (pelec != nullptr)
     {
-        auto* pw_elec = dynamic_cast<elecstate::ElecStatePW<T, Device>*>(pelec);
+        elecstate::ElecStatePW<T, Device>* pw_elec = dynamic_cast<elecstate::ElecStatePW<T, Device>*>(pelec);
         if (pw_elec)
         {
             delete pw_elec;

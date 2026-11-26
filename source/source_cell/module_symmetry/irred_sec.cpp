@@ -141,7 +141,7 @@ namespace ModuleSymmetry
         std::cout << "irreducible sector: " << std::endl;
         for (auto& irap_irR : this->irreducible_sector_)
         {
-            for (auto& irR : irap_irR.second) {std::cout << "atompair (" << irap_irR.first.first << ", " << irap_irR.first.second << "), R = (" << irR[0] << ", " << irR[1] << ", " << irR[2] << ") \n";}
+            for (const std::array<int, 3>& irR : irap_irR.second) {std::cout << "atompair (" << irap_irR.first.first << ", " << irap_irR.first.second << "), R = (" << irR[0] << ", " << irR[1] << ", " << irR[2] << ") \n";}
             std::cout << std::endl;
         }
     }
@@ -153,7 +153,7 @@ namespace ModuleSymmetry
             ofs.open(output_dir + "irreducible_sector.txt");
             for (auto& irap_irR : this->irreducible_sector_)
             {
-                for (auto& irR : irap_irR.second){ofs << "atompair (" << irap_irR.first.first << ", " << irap_irR.first.second << "), R = (" << irR[0] << ", " << irR[1] << ", " << irR[2] << ") \n";}
+                for (const std::array<int, 3>& irR : irap_irR.second){ofs << "atompair (" << irap_irR.first.first << ", " << irap_irR.first.second << "), R = (" << irR[0] << ", " << irR[1] << ", " << irR[2] << ") \n";}
             }
             ofs.close();
         }
@@ -176,7 +176,7 @@ namespace ModuleSymmetry
         std::map<Tap, std::set<TC, len_less_func>> apR_all;
         for (int iat1 = 0;iat1 < nat; iat1++)
             for (int iat2 = 0; iat2 < nat; iat2++)
-                for (auto& R : Rs)
+                for (const std::array<int, 3>& R : Rs)
                     apR_all[{iat1, iat2}].insert(R);
 
         // get invmap over the operation set actually used by the sector search.
