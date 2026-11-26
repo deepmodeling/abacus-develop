@@ -5,7 +5,7 @@
 // against a direct (unscreened) lattice Hessian sum at a generic
 // incommensurate q where the dipole sum is oscillation-screened.
 
-#include "../test_serial/dfpt_test_tool.h"
+#include "dfpt_test_tool.h"
 #include "source_basis/module_pw/pw_basis.h"
 #include "source_basis/module_pw/pw_basis_k.h"
 #include "source_cell/qlist.h"
