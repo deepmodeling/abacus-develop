@@ -232,3 +232,9 @@ On 2026-11-25, a formatting-only cleanup applied the repository's configured too
 The repository-wide pre-commit job is advisory (`continue-on-error: true`). Its raw clang-format, cmake-format and shfmt hooks failed even though GitHub displayed a successful job. The log included formatting changes in 2,475 files outside this PR and unsupported JSON-language configuration errors. A green job result therefore does not certify repository-wide formatting; the focused checks above describe this PR's validation. Existing files were formatted only in the modified regions to avoid an unrelated repository-wide rewrite.
 
 A subsequent raw CI formatter audit of `71e6ab31a` changed no newly added PR file. Repository-wide formatter failures remained in existing files; the non-blocking workflow status is still not a full formatting pass.
+
+A subsequent independent `cmake-format` CI job checks only PR-touched CMake
+files and is blocking. Its three reported files were formatted with the
+configured tool; all six PR-touched CMake files now pass the local check. CMake
+regeneration and the PPCG INPUT CTest also passed. This focused fix does not
+change the numerical implementation or expand into repository-wide cleanup.
