@@ -156,20 +156,20 @@ void ESolver_GetS::runner(BaseCell &basecell, const int istep)
     const double sparse_threshold = 1e-10;
     const int precision = 16;
     ModuleIO::output_SR(
-        ucell, pv, gd, hamilt_ptr, binary, sparse_threshold, precision, global_matrix_dir, PARAM.inp.calculation,
-        PARAM.inp.out_app_flag, PARAM.inp.nspin, istep, GlobalV::ofs_running);
+        ucell, pv, gd, hamilt_ptr, binary, sparse_threshold, precision, global_matrix_dir, this->inp_->calculation,
+        this->inp_->out_app_flag, this->inp_->nspin, istep, GlobalV::ofs_running);
 
     if (this->inp_->out_mat_r[0])
     {
         Position_op r_matrix;
-        const bool cal_force = PARAM.inp.cal_force;
+        const bool cal_force = this->inp_->cal_force;
         const int nlocal = PARAM.globalv.nlocal;
         r_matrix.init(ucell, pv.para_2d(), orb_, cal_force, nlocal);
         r_matrix.out_rR(
             ucell, gd,
             -1, // get_s has no ionic step; use -1 for no step suffix
-            this->inp_->out_mat_r[1], PARAM.globalv.global_out_dir, global_matrix_dir, PARAM.inp.calculation,
-            PARAM.inp.out_app_flag, nlocal, PARAM.globalv.npol, GlobalV::ofs_running);
+            this->inp_->out_mat_r[1], PARAM.globalv.global_out_dir, global_matrix_dir, this->inp_->calculation,
+            this->inp_->out_app_flag, nlocal, PARAM.globalv.npol, GlobalV::ofs_running);
     }
 
     if (this->inp_->out_mat_ds[0])
@@ -181,9 +181,9 @@ void ESolver_GetS::runner(BaseCell &basecell, const int istep)
         mat_R_options.precision = this->inp_->out_mat_ds[1];
         mat_R_options.global_out_dir = PARAM.globalv.global_out_dir;
         mat_R_options.global_matrix_dir = global_matrix_dir;
-        mat_R_options.calculation = PARAM.inp.calculation;
-        mat_R_options.out_app_flag = PARAM.inp.out_app_flag;
-        mat_R_options.nspin = PARAM.inp.nspin;
+        mat_R_options.calculation = this->inp_->calculation;
+        mat_R_options.out_app_flag = this->inp_->out_app_flag;
+        mat_R_options.nspin = this->inp_->nspin;
         //! Print out sparse matrix
         ModuleIO::output_dSR(
             istep, ucell, this->pv, HS_Arrays,
