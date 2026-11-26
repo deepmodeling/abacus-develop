@@ -67,7 +67,8 @@ The governance checker (`tools/03_code_analysis/agent_governance_check.py`)
     (`__JSON`, backed by `nlohmann_json`).
   - `ENABLE_LIBCOMM` — removed; LibComm is discovered with `ENABLE_LIBRI`.
   - `remove_definitions(...)` — ineffective against target-scoped compile
-    definitions; use `abacus_disable_feature_definitions(...)`.
+    definitions; if a legacy test target genuinely must drop a feature macro,
+    use `abacus_disable_feature_definitions(...)` (discouraged for new tests).
 - **Directory-scoped and package-discovery commands under `source/`**:
   - `add_definitions()`, `add_compile_definitions()`, `add_compile_options()`,
     `include_directories()`, `link_directories()`, `link_libraries()` — use
@@ -155,8 +156,6 @@ Per `AGENTS.md` rule 11, unit tests under `source/` live in a flat `unittests/`
 directory with source files named `test_<file_under_test>.cpp`:
 
 ```cmake
-abacus_disable_feature_definitions(__MPI __CUDA __ROCM)
-
 abacus_copy_test_files(support)
 
 AddTest(
@@ -174,10 +173,15 @@ Guidelines for unit-test `CMakeLists.txt` files:
   `../foo.cpp` or `../../bar.cpp` directly in `SOURCES`; direct cross-directory
   source lists break downstream tests whenever production files are split or
   moved.
-- Use `abacus_disable_feature_definitions(...)` to strip macros for serial or
-  CPU-only test directories, and pass `KEEP_FEATURE_DEFINITIONS __MPI` on an
-  individual `AddTest(...)` call when one target in that directory needs a
-  macro kept.
+- Avoid `abacus_disable_feature_definitions(...)` in new unit tests
+  (**discouraged**). It only strips macros from targets defined in that test
+  directory; linked production `OBJECT` libraries keep their original MPI/GPU
+  compile definitions, so reusing them still requires compatible feature
+  assumptions and initialization. Any test that genuinely needs those features
+  disabled must link or compile objects built with matching settings. In legacy
+  directories that still call `abacus_disable_feature_definitions(...)`, an
+  individual `AddTest(...)` call may pass `KEEP_FEATURE_DEFINITIONS __MPI` to
+  opt back in.
 - For tests that require MPI, guard `add_subdirectory(unittests)` or the
   specific `AddTest()` target with `if(ENABLE_MPI)` so serial builds
   (`-DENABLE_MPI=OFF -DBUILD_TESTING=ON`) stay green.
