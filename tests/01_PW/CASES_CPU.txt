@@ -123,7 +123,6 @@ scf_brav_bco_smear_mv
 813_PW_LT_bacm
 814_PW_LT_triclinic
 relax_dftu_spin2
-relax_cell_dftu_spin2
 relax_dftu_spin4
 scf_deltaspin2
 scf_deltaspin4

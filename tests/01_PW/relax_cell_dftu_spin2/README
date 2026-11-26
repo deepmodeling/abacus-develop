@@ -1,5 +1,0 @@
-PW DFT+U variable-cell regression (two AFM Fe atoms, fixed occupations).
-The second and third ionic steps must rebuild onsite projectors at the
-current volume and plane-wave dimensions. The final energy, force and
-stress reference detects reuse of the initial-cell projection tables.
-The cutoff is chosen for regression speed, not physical convergence.
