@@ -119,7 +119,7 @@ jobs:
           OMP_NUM_THREADS: '1'
           OPENBLAS_NUM_THREADS: '1'
         run: |
-          ctest --test-dir build -V --timeout 180 -R '^MODULE_HSOLVER_ppcg_gpu$'
+          ctest --test-dir build -V -R '^MODULE_HSOLVER_ppcg_gpu$'
 
       - name: Test 11_PW_GPU
         env:

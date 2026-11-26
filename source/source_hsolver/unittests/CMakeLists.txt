@@ -218,8 +218,7 @@ if(USE_CUDA)
     SOURCES test_diago_ppcg_gpu.cpp test_ppcg_kernel_op.cpp ../diago_ppcg.cpp
             ../../source_basis/module_pw/test/test_tool.cpp
     KEEP_FEATURE_DEFINITIONS __CUDA)
-  set_tests_properties(MODULE_HSOLVER_ppcg_gpu PROPERTIES LABELS "GPU" TIMEOUT
-                                                          180)
+  set_tests_properties(MODULE_HSOLVER_ppcg_gpu PROPERTIES LABELS "GPU")
 endif()
 
 addtest(
