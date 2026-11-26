@@ -240,7 +240,7 @@ void init_vel(
             read_vel(unit, velocities.data());
             double kinetic = 0.0;
             const double current = current_temp(kinetic, unit.nat, frozen_freedom, masses.data(), velocities.data());
-            if (!restart && temperature >= 0.0 && current <= 0.0)
+            if (!restart && temperature > 0.0 && current <= 0.0)
             {
                 ModuleBase::WARNING_QUIT(
                     "MD_func::init_vel",

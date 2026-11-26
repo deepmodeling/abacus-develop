@@ -633,6 +633,55 @@ TEST_F(MD_func_test, init_vel_rejects_zero_stru_velocities_without_backing_unitc
         "");
 }
 
+TEST_F(MD_func_test, init_vel_allows_zero_stru_velocities_at_zero_temperature_with_backing_unitcell)
+{
+    for (int it = 0; it < ucell.ntype; ++it)
+    {
+        for (int ia = 0; ia < ucell.atoms[it].na; ++ia)
+        {
+            ucell.atoms[it].vel[ia].set(0.0, 0.0, 0.0);
+        }
+    }
+    MDCell mdcell;
+    DomainDecomposition decomp;
+    initialize_mdcell_from_ucell(mdcell, ucell, decomp);
+    double temperature = 0.0;
+    std::int64_t frozen_freedom = 0;
+    MD_func::init_vel(mdcell, true, false, temperature, frozen_freedom);
+    for (const LocalAtom &atom : mdcell.owned_atoms())
+    {
+        for (int k = 0; k < 3; ++k)
+        {
+            EXPECT_DOUBLE_EQ(atom.vel[k], 0.0);
+        }
+    }
+}
+
+TEST_F(MD_func_test, init_vel_clears_nonzero_stru_velocities_at_zero_temperature_with_backing_unitcell)
+{
+    const ModuleBase::Vector3<double> initial_velocity(0.1, -0.2, 0.3);
+    for (int it = 0; it < ucell.ntype; ++it)
+    {
+        for (int ia = 0; ia < ucell.atoms[it].na; ++ia)
+        {
+            ucell.atoms[it].vel[ia] = initial_velocity;
+        }
+    }
+    MDCell mdcell;
+    DomainDecomposition decomp;
+    initialize_mdcell_from_ucell(mdcell, ucell, decomp);
+    double temperature = 0.0;
+    std::int64_t frozen_freedom = 0;
+    MD_func::init_vel(mdcell, true, false, temperature, frozen_freedom);
+    for (const LocalAtom &atom : mdcell.owned_atoms())
+    {
+        for (int k = 0; k < 3; ++k)
+        {
+            EXPECT_DOUBLE_EQ(atom.vel[k], 0.0);
+        }
+    }
+}
+
 TEST_F(MD_func_test, init_vel_restart_allows_zero_stru_velocities)
 {
     for (int it = 0; it < ucell.ntype; ++it)
