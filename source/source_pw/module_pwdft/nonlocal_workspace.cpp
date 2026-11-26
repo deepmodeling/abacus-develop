@@ -31,7 +31,7 @@ using Zero = base_device::memory::set_memory_op<T, Device>;
 template <typename T, typename Device>
 using Gemm = ModuleBase::gemm_op<T, Device>;
 #endif
-}
+} // namespace
 
 template <typename T, typename Device>
 NonlocalWorkspace<T, Device>::~NonlocalWorkspace()
@@ -41,8 +41,14 @@ NonlocalWorkspace<T, Device>::~NonlocalWorkspace()
 }
 
 template <typename T, typename Device>
-void NonlocalWorkspace<T, Device>::project(const T* vkb, const T* psi, const int npw,
-                                         const int ldv, const int ldp, const int nkb, const int bands)
+void NonlocalWorkspace<T, Device>::project(
+    const T *vkb,
+    const T *psi,
+    const int npw,
+    const int ldv,
+    const int ldp,
+    const int nkb,
+    const int bands)
 {
     const T one(1, 0);
     const T zero(0, 0);
@@ -63,8 +69,12 @@ void NonlocalWorkspace<T, Device>::project(const T* vkb, const T* psi, const int
 }
 
 template <typename T, typename Device>
-void NonlocalWorkspace<T, Device>::contract(const UnitCell& cell, const pseudopot_cell_vnl& pp,
-                                          const int spin, const int npol, const int bands)
+void NonlocalWorkspace<T, Device>::contract(
+    const UnitCell &cell,
+    const pseudopot_cell_vnl &pp,
+    const int spin,
+    const int npol,
+    const int bands)
 {
     using Real = typename GetTypeReal<T>::type;
     const size_t count = static_cast<size_t>(pp.nkb) * bands;
@@ -76,22 +86,28 @@ void NonlocalWorkspace<T, Device>::contract(const UnitCell& cell, const pseudopo
         const int nproj = cell.atoms[type].ncpp.nh;
         if (npol == 1)
         {
-            nonlocal_pw_op<Real, Device>()(nullptr, cell.atoms[type].na, bands, nproj, sum, atom,
-                spin, pp.nkb, pp.deeq.getBound2(), pp.deeq.getBound3(), pp.deeq.getBound4(),
-                pp.template get_deeq_data<Real>(), ps_, becp_);
+            nonlocal_pw_op<Real, Device>()(
+                nullptr, cell.atoms[type].na, bands, nproj, sum, atom, spin, pp.nkb, pp.deeq.getBound2(),
+                pp.deeq.getBound3(), pp.deeq.getBound4(), pp.template get_deeq_data<Real>(), ps_, becp_);
         }
         else
         {
-            nonlocal_pw_op<Real, Device>()(nullptr, cell.atoms[type].na, bands, nproj, sum, atom,
-                pp.nkb, pp.deeq_nc.getBound2(), pp.deeq_nc.getBound3(), pp.deeq_nc.getBound4(),
-                pp.template get_deeq_nc_data<Real>(), ps_, becp_);
+            nonlocal_pw_op<Real, Device>()(
+                nullptr, cell.atoms[type].na, bands, nproj, sum, atom, pp.nkb, pp.deeq_nc.getBound2(),
+                pp.deeq_nc.getBound3(), pp.deeq_nc.getBound4(), pp.template get_deeq_nc_data<Real>(), ps_, becp_);
         }
     }
 }
 
 template <typename T, typename Device>
-void NonlocalWorkspace<T, Device>::back_project(const T* vkb, T* hpsi, const int npw,
-                                              const int ldv, const int ldp, const int nkb, const int bands)
+void NonlocalWorkspace<T, Device>::back_project(
+    const T *vkb,
+    T *hpsi,
+    const int npw,
+    const int ldv,
+    const int ldp,
+    const int nkb,
+    const int bands)
 {
     const T one(1, 0);
     if (bands == 1)
@@ -105,10 +121,19 @@ void NonlocalWorkspace<T, Device>::back_project(const T* vkb, T* hpsi, const int
 }
 
 template <typename T, typename Device>
-void NonlocalWorkspace<T, Device>::apply(const UnitCell& cell, const pseudopot_cell_vnl& pp,
-                                       const ModulePW::PW_Basis_K& basis, const int spin,
-                                       const int bands, const int nbasis, const int npol, const int npw,
-                                       const bool is_first_node, const T* vkb, const T* psi, T* hpsi)
+void NonlocalWorkspace<T, Device>::apply(
+    const UnitCell &cell,
+    const pseudopot_cell_vnl &pp,
+    const ModulePW::PW_Basis_K &basis,
+    const int spin,
+    const int bands,
+    const int nbasis,
+    const int npol,
+    const int npw,
+    const bool is_first_node,
+    const T *vkb,
+    const T *psi,
+    T *hpsi)
 {
     ModuleBase::timer::start("NonlocalWorkspace", "apply");
     if (is_first_node)
@@ -125,12 +150,18 @@ void NonlocalWorkspace<T, Device>::apply(const UnitCell& cell, const pseudopot_c
     ModuleBase::timer::end("NonlocalWorkspace", "apply");
 }
 
-
 template <typename T, typename Device>
-void NonlocalWorkspace<T, Device>::project_contract(const UnitCell& cell, const pseudopot_cell_vnl& pp,
-                                                   const ModulePW::PW_Basis_K& basis, int spin,
-                                                   int bands, int nbasis, int npol, int npw,
-                                                   const T* vkb, const T* psi)
+void NonlocalWorkspace<T, Device>::project_contract(
+    const UnitCell &cell,
+    const pseudopot_cell_vnl &pp,
+    const ModulePW::PW_Basis_K &basis,
+    int spin,
+    int bands,
+    int nbasis,
+    int npol,
+    int npw,
+    const T *vkb,
+    const T *psi)
 {
     if (pp.nkb > 0 && bands > 0)
     {
@@ -155,7 +186,7 @@ void NonlocalWorkspace<T, Device>::project_contract(const UnitCell& cell, const 
             {
                 const size_t remaining = count - offset;
                 const int chunk_size = static_cast<int>(std::min(max_chunk, remaining));
-                T* chunk = becp_ + offset;
+                T *chunk = becp_ + offset;
                 Parallel_Common::reduce_dev<T, Device>(chunk, chunk_size, basis.pool_world);
                 offset += chunk_size;
             }

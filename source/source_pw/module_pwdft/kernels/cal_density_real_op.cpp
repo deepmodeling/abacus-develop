@@ -5,7 +5,12 @@ namespace hamilt
 template <typename T>
 struct cal_density_real_op<T, base_device::DEVICE_CPU>
 {
-    void operator()(const T *in1, const T *in2, T *out, double omega, int nrxx)
+    void operator()(
+        const T *in1,
+        const T *in2,
+        T *out,
+        double omega,
+        int nrxx)
     {
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static)
@@ -17,9 +22,8 @@ struct cal_density_real_op<T, base_device::DEVICE_CPU>
             out[ir] = in1[ir] * std::conj(in2[ir]) / static_cast<T>(omega); // Phase e^(i(q-k)r)
         }
     }
-
 };
 
 template struct cal_density_real_op<std::complex<float>, base_device::DEVICE_CPU>;
 template struct cal_density_real_op<std::complex<double>, base_device::DEVICE_CPU>;
-}
+} // namespace hamilt

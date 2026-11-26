@@ -1,8 +1,8 @@
-#include "source_pw/module_pwdft/op_pw_meta.h"
 #include "source_hamilt/module_xc/xc_functional.h"
+#include "source_pw/module_pwdft/op_pw_meta.h"
 
-#include <gtest/gtest.h>
 #include <complex>
+#include <gtest/gtest.h>
 #include <vector>
 
 int XC_Functional::func_type = 1;

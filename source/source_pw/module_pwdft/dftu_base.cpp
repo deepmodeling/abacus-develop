@@ -1,12 +1,12 @@
 #include "source_pw/module_pwdft/dftu_base.h"
 
-#include "source_cell/unitcell.h"
-#include "source_pw/module_pwdft/dftu_base_io.h"
 #include "source_base/global_function.h"
 #include "source_base/memory_recorder.h"
 #include "source_base/parallel_global.h"
 #include "source_base/timer.h"
+#include "source_cell/unitcell.h"
 #include "source_io/module_parameter/parameter.h"
+#include "source_pw/module_pwdft/dftu_base_io.h"
 
 #include <cstring>
 #include <fstream>
@@ -18,32 +18,28 @@
 // mohan refactored 2025-11-08
 // All members are now non-static; default values are in the header.
 
+Plus_U_Base::Plus_U_Base() {}
 
-Plus_U_Base::Plus_U_Base()
-{}
-
-
-Plus_U_Base::~Plus_U_Base()
-{}
-
+Plus_U_Base::~Plus_U_Base() {}
 
 // init_base: base-only initialization shared by PW and LCAO paths.
 // LCAO callers validate the paraV square-matrix invariant before calling.
-void Plus_U_Base::init_base(UnitCell& cell,
-                             const int npol,
-                             const int nspin,
-                             const std::vector<int>& l_channel,
-                             const bool yukawa_potential,
-                             const double yukawa_lambda,
-                             const std::string& global_readin_dir,
-                             const std::string& global_out_dir,
-                             const std::string& init_chg,
-                             const std::string& device,
-                             const std::vector<double>& hubbard_u,
-                             const double uramping,
-                             const int init_occ_mat,
-                             const int mixing_dftu,
-                             const DFTU_BASE::OccmatSocLayout& soc_layout)
+void Plus_U_Base::init_base(
+    UnitCell &cell,
+    const int npol,
+    const int nspin,
+    const std::vector<int> &l_channel,
+    const bool yukawa_potential,
+    const double yukawa_lambda,
+    const std::string &global_readin_dir,
+    const std::string &global_out_dir,
+    const std::string &init_chg,
+    const std::string &device,
+    const std::vector<double> &hubbard_u,
+    const double uramping,
+    const int init_occ_mat,
+    const int mixing_dftu,
+    const DFTU_BASE::OccmatSocLayout &soc_layout)
 {
     ModuleBase::TITLE("Plus_U_Base", "init_base");
 
@@ -58,9 +54,7 @@ void Plus_U_Base::init_base(UnitCell& cell,
     this->u_current = hubbard_u;
     if (uramping > 0.01)
     {
-        std::fill(this->u_current.begin(),
-                  this->u_current.end(),
-                  0.0);
+        std::fill(this->u_current.begin(), this->u_current.end(), 0.0);
     }
     this->device = device;
 
@@ -87,7 +81,7 @@ void Plus_U_Base::init_base(UnitCell& cell,
             const int tlp1_npol = (target_l * 2 + 1) * npol;
             const int tlp1 = 2 * target_l + 1;
             const int elem_size = tlp1 * tlp1;
-            if(nspin == 4)
+            if (nspin == 4)
             {
                 this->uterm_mat_index[iat] = pot_index;
                 pot_index += tlp1_npol * tlp1_npol;
@@ -113,7 +107,10 @@ void Plus_U_Base::init_base(UnitCell& cell,
         }
     }
 
-    if (nspin == 2) pot_index *= 2;
+    if (nspin == 2)
+    {
+        pot_index *= 2;
+    }
 
     this->uterm_mat.resize(pot_index, 0.0);
 
@@ -121,8 +118,7 @@ void Plus_U_Base::init_base(UnitCell& cell,
     if (mixing_dftu != 0)
     {
         this->occ_mixer_.reset(new OccMatMixer());
-        this->occ_mixer_->init(&cell, &this->l_channel,
-                               &this->uterm_mat_index, nspin, pot_index);
+        this->occ_mixer_->init(&cell, &this->l_channel, &this->uterm_mat_index, nspin, pot_index);
     }
 
     if (yukawa_potential)
@@ -135,18 +131,15 @@ void Plus_U_Base::init_base(UnitCell& cell,
         // Try the user-prepared dm_onsite_ini.txt first, then fall back to
         // the compact occupation-matrix snapshot written by a previous
         // run (occ_mat.txt). Legacy dm_onsite.txt input is not supported.
-        const std::vector<std::string> candidates = {"dm_onsite_ini.txt",
-                                                      "occ_mat.txt"};
+        const std::vector<std::string> candidates = {"dm_onsite_ini.txt", "occ_mat.txt"};
         const std::string readin_fn = DFTU_BASE::find_first_existing_file(global_readin_dir, candidates);
         if (readin_fn.empty())
         {
-            ModuleBase::WARNING_QUIT("Plus_U_Base::init_base",
-                                     "init_occ_mat is set but no occupation-matrix file found in "
-                                     + global_readin_dir
-                                     + ". Tried: dm_onsite_ini.txt, occ_mat.txt");
+            ModuleBase::WARNING_QUIT(
+                "Plus_U_Base::init_base", "init_occ_mat is set but no occupation-matrix file found in " +
+                                              global_readin_dir + ". Tried: dm_onsite_ini.txt, occ_mat.txt");
         }
-        DFTU_BASE::read_occup_m(cell, this->occmat_, this->l_channel,
-                                readin_fn, nspin, npol, soc_layout);
+        DFTU_BASE::read_occup_m(cell, this->occmat_, this->l_channel, readin_fn, nspin, npol, soc_layout);
 #ifdef __MPI
         DFTU_BASE::local_occup_bcast(cell, this->occmat_, this->l_channel);
 #endif
@@ -168,15 +161,14 @@ void Plus_U_Base::init_base(UnitCell& cell,
             const std::string readin_fn = DFTU_BASE::find_first_existing_file(global_readin_dir, candidates);
             if (readin_fn.empty())
             {
-                ModuleBase::WARNING_QUIT("Plus_U_Base::init_base",
-                                         "init_chg is set to file but no occupation-matrix file "
-                                         "found in "
-                                         + global_readin_dir
-                                         + ". Tried: occ_mat.txt. Please do an scf "
-                                           "calculation first.");
+                ModuleBase::WARNING_QUIT(
+                    "Plus_U_Base::init_base", "init_chg is set to file but no occupation-matrix file "
+                                              "found in " +
+                                                  global_readin_dir +
+                                                  ". Tried: occ_mat.txt. Please do an scf "
+                                                  "calculation first.");
             }
-            DFTU_BASE::read_occup_m(cell, this->occmat_, this->l_channel,
-                                    readin_fn, nspin, npol, soc_layout);
+            DFTU_BASE::read_occup_m(cell, this->occmat_, this->l_channel, readin_fn, nspin, npol, soc_layout);
 #ifdef __MPI
             DFTU_BASE::local_occup_bcast(cell, this->occmat_, this->l_channel);
 #endif
@@ -190,7 +182,6 @@ void Plus_U_Base::init_base(UnitCell& cell,
 
     ModuleBase::Memory::record("Plus_U_Base::occ_mat", sizeof(double) * num_locale);
 }
-
 
 void Plus_U_Base::uramping_update()
 {
@@ -218,7 +209,6 @@ void Plus_U_Base::uramping_update()
     }
 }
 
-
 bool Plus_U_Base::u_converged()
 {
     // Yukawa calculates U directly every iteration, always considered converged
@@ -235,7 +225,6 @@ bool Plus_U_Base::u_converged()
     }
     return true;
 }
-
 
 // cal_occ_pw() is implemented as free function DFTU_BASE::cal_occ_pw
 // in source_pw/module_pwdft/dftu_pw.cpp.

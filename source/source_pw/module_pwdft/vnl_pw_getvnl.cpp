@@ -19,11 +19,12 @@
  * each same-atom projector outer product.
  */
 template <typename FPTYPE, typename Device>
-void pseudopot_cell_vnl::getvnl(Device* ctx,
-                                const UnitCell& ucell,
-                                const int& ik,
-                                const ModuleBase::Vector3<double>& vector_potential,
-                                std::complex<FPTYPE>* vkb_in) const
+void pseudopot_cell_vnl::getvnl(
+    Device *ctx,
+    const UnitCell &ucell,
+    const int &ik,
+    const ModuleBase::Vector3<double> &vector_potential,
+    std::complex<FPTYPE> *vkb_in) const
 {
     ModuleBase::timer::start("pp_cell_vnl", "getvnl");
 
@@ -34,7 +35,8 @@ void pseudopot_cell_vnl::getvnl(Device* ctx,
     using resmem_var_op = base_device::memory::resize_memory_op<FPTYPE, Device>;
     using delmem_var_op = base_device::memory::delete_memory_op<FPTYPE, Device>;
     using castmem_var_h2d_op = base_device::memory::cast_memory_op<FPTYPE, double, Device, base_device::DEVICE_CPU>;
-    using castmem_var_h2h_op = base_device::memory::cast_memory_op<FPTYPE, double, base_device::DEVICE_CPU, base_device::DEVICE_CPU>;
+    using castmem_var_h2h_op =
+        base_device::memory::cast_memory_op<FPTYPE, double, base_device::DEVICE_CPU, base_device::DEVICE_CPU>;
     using resmem_complex_op = base_device::memory::resize_memory_op<std::complex<FPTYPE>, Device>;
     using delmem_complex_op = base_device::memory::delete_memory_op<std::complex<FPTYPE>, Device>;
 
@@ -47,9 +49,9 @@ void pseudopot_cell_vnl::getvnl(Device* ctx,
     const int ylm_count = (this->lmaxkb + 1) * (this->lmaxkb + 1);
     const int npw = this->wfcpw->npwk[ik];
 
-    int* atom_nh = nullptr;
-    int* atom_na = nullptr;
-    int* atom_nb = nullptr;
+    int *atom_nh = nullptr;
+    int *atom_na = nullptr;
+    int *atom_nb = nullptr;
     std::vector<int> host_atom_nh(ucell.ntype);
     std::vector<int> host_atom_na(ucell.ntype);
     std::vector<int> host_atom_nb(ucell.ntype);
@@ -60,13 +62,13 @@ void pseudopot_cell_vnl::getvnl(Device* ctx,
         host_atom_na[it] = ucell.atoms[it].na;
     }
 
-    FPTYPE* vkb_radial = nullptr;
-    FPTYPE* shifted_gk_data = nullptr;
-    FPTYPE* ylm = nullptr;
-    FPTYPE* tab_ptr = this->get_tab_data<FPTYPE>();
-    FPTYPE* indv_ptr = this->get_indv_data<FPTYPE>();
-    FPTYPE* nhtol_ptr = this->get_nhtol_data<FPTYPE>();
-    FPTYPE* nhtolm_ptr = this->get_nhtolm_data<FPTYPE>();
+    FPTYPE *vkb_radial = nullptr;
+    FPTYPE *shifted_gk_data = nullptr;
+    FPTYPE *ylm = nullptr;
+    FPTYPE *tab_ptr = this->get_tab_data<FPTYPE>();
+    FPTYPE *indv_ptr = this->get_indv_data<FPTYPE>();
+    FPTYPE *nhtol_ptr = this->get_nhtol_data<FPTYPE>();
+    FPTYPE *nhtolm_ptr = this->get_nhtolm_data<FPTYPE>();
     const std::int64_t ylm_elements = static_cast<std::int64_t>(ylm_count) * npw;
     const std::int64_t radial_elements = static_cast<std::int64_t>(this->nhm) * npw;
     const std::int64_t momentum_elements = static_cast<std::int64_t>(npw) * 3;
@@ -106,7 +108,7 @@ void pseudopot_cell_vnl::getvnl(Device* ctx,
         syncmem_int_op()(atom_na, host_atom_na.data(), ucell.ntype);
 
         resmem_var_op()(shifted_gk_data, momentum_elements);
-        castmem_var_h2d_op()(shifted_gk_data, reinterpret_cast<double*>(shifted_gk.data()), momentum_elements);
+        castmem_var_h2d_op()(shifted_gk_data, reinterpret_cast<double *>(shifted_gk.data()), momentum_elements);
     }
     else
     {
@@ -116,43 +118,26 @@ void pseudopot_cell_vnl::getvnl(Device* ctx,
         if (std::is_same<FPTYPE, float>::value)
         {
             resmem_var_op()(shifted_gk_data, momentum_elements);
-            castmem_var_h2h_op()(shifted_gk_data, reinterpret_cast<double*>(shifted_gk.data()), momentum_elements);
+            castmem_var_h2h_op()(shifted_gk_data, reinterpret_cast<double *>(shifted_gk.data()), momentum_elements);
         }
         else
         {
-            shifted_gk_data = reinterpret_cast<FPTYPE*>(shifted_gk.data());
+            shifted_gk_data = reinterpret_cast<FPTYPE *>(shifted_gk.data());
         }
     }
 
     ModuleBase::YlmReal::Ylm_Real(ctx, ylm_count, npw, shifted_gk_data, ylm);
 
-    std::complex<FPTYPE>* structure_factor = nullptr;
+    std::complex<FPTYPE> *structure_factor = nullptr;
     const std::int64_t structure_elements = static_cast<std::int64_t>(ucell.nat) * npw;
     resmem_complex_op()(structure_factor, structure_elements);
     this->psf->get_sk(ctx, ik, this->wfcpw, structure_factor);
 
-    cal_vnl_op()(ctx,
-                 ucell.ntype,
-                 npw,
-                 this->wfcpw->npwk_max,
-                 this->nhm,
-                 this->tab.getBound2(),
-                 this->tab.getBound3(),
-                 atom_na,
-                 atom_nb,
-                 atom_nh,
-                 static_cast<FPTYPE>(this->table_dq_),
-                 static_cast<FPTYPE>(ucell.tpiba),
-                 static_cast<std::complex<FPTYPE>>(ModuleBase::NEG_IMAG_UNIT),
-                 shifted_gk_data,
-                 ylm,
-                 indv_ptr,
-                 nhtol_ptr,
-                 nhtolm_ptr,
-                 tab_ptr,
-                 vkb_radial,
-                 structure_factor,
-                 vkb_in);
+    cal_vnl_op()(
+        ctx, ucell.ntype, npw, this->wfcpw->npwk_max, this->nhm, this->tab.getBound2(), this->tab.getBound3(), atom_na,
+        atom_nb, atom_nh, static_cast<FPTYPE>(this->table_dq_), static_cast<FPTYPE>(ucell.tpiba),
+        static_cast<std::complex<FPTYPE>>(ModuleBase::NEG_IMAG_UNIT), shifted_gk_data, ylm, indv_ptr, nhtol_ptr,
+        nhtolm_ptr, tab_ptr, vkb_radial, structure_factor, vkb_in);
 
     delmem_var_op()(ylm);
     delmem_var_op()(vkb_radial);
@@ -172,25 +157,29 @@ void pseudopot_cell_vnl::getvnl(Device* ctx,
 }
 
 // Explicit instantiations for CPU/GPU and float/double precision.
-template void pseudopot_cell_vnl::getvnl<float, base_device::DEVICE_CPU>(base_device::DEVICE_CPU*,
-                                                                         const UnitCell&,
-                                                                         const int&,
-                                                                         const ModuleBase::Vector3<double>&,
-                                                                         std::complex<float>*) const;
-template void pseudopot_cell_vnl::getvnl<double, base_device::DEVICE_CPU>(base_device::DEVICE_CPU*,
-                                                                          const UnitCell&,
-                                                                          const int&,
-                                                                          const ModuleBase::Vector3<double>&,
-                                                                          std::complex<double>*) const;
+template void pseudopot_cell_vnl::getvnl<float, base_device::DEVICE_CPU>(
+    base_device::DEVICE_CPU *,
+    const UnitCell &,
+    const int &,
+    const ModuleBase::Vector3<double> &,
+    std::complex<float> *) const;
+template void pseudopot_cell_vnl::getvnl<double, base_device::DEVICE_CPU>(
+    base_device::DEVICE_CPU *,
+    const UnitCell &,
+    const int &,
+    const ModuleBase::Vector3<double> &,
+    std::complex<double> *) const;
 #if defined(__CUDA) || defined(__ROCM)
-template void pseudopot_cell_vnl::getvnl<float, base_device::DEVICE_GPU>(base_device::DEVICE_GPU*,
-                                                                         const UnitCell&,
-                                                                         const int&,
-                                                                         const ModuleBase::Vector3<double>&,
-                                                                         std::complex<float>*) const;
-template void pseudopot_cell_vnl::getvnl<double, base_device::DEVICE_GPU>(base_device::DEVICE_GPU*,
-                                                                          const UnitCell&,
-                                                                          const int&,
-                                                                          const ModuleBase::Vector3<double>&,
-                                                                          std::complex<double>*) const;
+template void pseudopot_cell_vnl::getvnl<float, base_device::DEVICE_GPU>(
+    base_device::DEVICE_GPU *,
+    const UnitCell &,
+    const int &,
+    const ModuleBase::Vector3<double> &,
+    std::complex<float> *) const;
+template void pseudopot_cell_vnl::getvnl<double, base_device::DEVICE_GPU>(
+    base_device::DEVICE_GPU *,
+    const UnitCell &,
+    const int &,
+    const ModuleBase::Vector3<double> &,
+    std::complex<double> *) const;
 #endif
