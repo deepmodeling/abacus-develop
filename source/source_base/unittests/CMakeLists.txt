@@ -11,3 +11,9 @@ AddTest(
   LIBS parameter base device
   SOURCES test_filename.cpp
 )
+
+AddTest(
+  TARGET MODULE_BASE_net_force
+  LIBS parameter base device
+  SOURCES test_mathzone.cpp
+)
