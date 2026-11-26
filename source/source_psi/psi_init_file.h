@@ -21,30 +21,29 @@ class psi_init_file : public psi_base<T>
     int nkstot_ = 0;
 
   public:
-    psi_init_file()
-    {
-        this->method_ = "file";
-    };
+    psi_init_file() { this->method_ = "file"; };
     ~psi_init_file() {};
 
-    virtual void initialize(const Structure_Factor* sf,         //< structure factor
-                            const ModulePW::PW_Basis_K* pw_wfc, //< planewave basis
-                            const UnitCell* p_ucell,            //< unit cell
-                            const std::vector<int>& ik2iktot,   //< ik2iktot: local->global k-point mapping
-                            const int& random_seed,             //< random seed
-                            const int& rank,                    //< MPI rank
-                            const int& npol,                    //< npol
-                            const int& nbands) override;        //< nbands
+    virtual void initialize(
+        const Structure_Factor *sf,         //< structure factor
+        const ModulePW::PW_Basis_K *pw_wfc, //< planewave basis
+        const UnitCell *p_ucell,            //< unit cell
+        const std::vector<int> &ik2iktot,   //< ik2iktot: local->global k-point mapping
+        const int &random_seed,             //< random seed
+        const int &rank,                    //< MPI rank
+        const int &npol,                    //< npol
+        const int &nbands) override;        //< nbands
 
     /// @brief calculate and output planewave wavefunction
     /// @param ik kpoint index
     /// @return initialized planewave wavefunction (psi::Psi<std::complex<double>>*)
-    virtual void init_psig(T* psig, const int& ik) override;
+    virtual void init_psig(T *psig, const int &ik) override;
 
-    void prepare_params(const int& nspin,
-                        const std::string& global_read_in_dir,
-                        const int& rank_in_pool,
-                        const int& nproc_in_pool,
-                        const int& nkstot);
+    void prepare_params(
+        const int &nspin,
+        const std::string &global_read_in_dir,
+        const int &rank_in_pool,
+        const int &nproc_in_pool,
+        const int &nkstot);
 };
 #endif

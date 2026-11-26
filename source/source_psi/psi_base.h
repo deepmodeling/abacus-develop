@@ -59,38 +59,27 @@ class psi_base
     psi_base() {};
     virtual ~psi_base() {};
     /// @brief initialize the psi_base with external data and methods
-    virtual void initialize(const Structure_Factor* sf,         //< structure factor
-                            const ModulePW::PW_Basis_K* pw_wfc, //< planewave basis
-                            const UnitCell* p_ucell,            //< unit cell
-                            const std::vector<int>& ik2iktot,   //< ik2iktot: local->global k-point mapping
-                            const int& random_seed,             //< random seed
-                            const int& rank,                    //< rank
-                            const int& npol,                    //< npol
-                            const int& nbands);                 //< nbands
+    virtual void initialize(
+        const Structure_Factor *sf,         //< structure factor
+        const ModulePW::PW_Basis_K *pw_wfc, //< planewave basis
+        const UnitCell *p_ucell,            //< unit cell
+        const std::vector<int> &ik2iktot,   //< ik2iktot: local->global k-point mapping
+        const int &random_seed,             //< random seed
+        const int &rank,                    //< rank
+        const int &npol,                    //< npol
+        const int &nbands);                 //< nbands
 
     /// @brief CENTRAL FUNCTION: calculate the interpolate table if needed
-    virtual void tabulate()
-    {
-        return;
-    };
+    virtual void tabulate() { return; };
 
     /// @brief CENTRAL FUNCTION: init psi in pw basis
-    virtual void init_psig(T* psig, const int& ik) = 0;
+    virtual void init_psig(T *psig, const int &ik) = 0;
 
     // ======================== Tool functions ========================
     // getter and setter
-    std::string method() const
-    {
-        return this->method_;
-    }
-    int nbands_start() const
-    {
-        return this->nbands_start_;
-    }
-    int nbands_complem() const
-    {
-        return this->nbands_complem_;
-    }
+    std::string method() const { return this->method_; }
+    int nbands_start() const { return this->nbands_start_; }
+    int nbands_complem() const { return this->nbands_complem_; }
 
     template <typename U>
     typename std::enable_if<std::is_same<U, float>::value, U>::type cast_to_T(const std::complex<double> in)
@@ -118,21 +107,23 @@ class psi_base
   protected:
 #ifdef __MPI // MPI additional implementation
     /// @brief mapping from (ix, iy) to is
-    void stick_to_pool(Real* stick,      //< stick
-                       const int& ir,    //< ir
-                       Real* out) const; //< out
+    void stick_to_pool(
+        Real *stick,      //< stick
+        const int &ir,    //< ir
+        Real *out) const; //< out
 #endif
-    void random_t(T* psi,              ///< [out] psi
-                  const int iw_start,  ///< iw_start, starting band index
-                  const int iw_end,    ///< iw_end, ending band index
-                  const int ik,        ///< ik, kpoint index
-                  const int mode = 1); ///< mode, 0 for rr*exp(i*arg), 1 for rr/(1+gk2)*exp(i*arg)
+    void random_t(
+        T *psi,              ///< [out] psi
+        const int iw_start,  ///< iw_start, starting band index
+        const int iw_end,    ///< iw_end, ending band index
+        const int ik,        ///< ik, kpoint index
+        const int mode = 1); ///< mode, 0 for rr*exp(i*arg), 1 for rr/(1+gk2)*exp(i*arg)
 
-    const Structure_Factor* sf_ = nullptr; ///< Structure_Factor
+    const Structure_Factor *sf_ = nullptr; ///< Structure_Factor
 
-    const ModulePW::PW_Basis_K* pw_wfc_ = nullptr; ///< use |k+G>, |G>, getgpluskcar and so on in PW_Basis_K
+    const ModulePW::PW_Basis_K *pw_wfc_ = nullptr; ///< use |k+G>, |G>, getgpluskcar and so on in PW_Basis_K
 
-    const UnitCell* p_ucell_ = nullptr; ///< UnitCell
+    const UnitCell *p_ucell_ = nullptr; ///< UnitCell
 
     std::vector<int> ik2iktot_; ///< local->global k-point mapping
 

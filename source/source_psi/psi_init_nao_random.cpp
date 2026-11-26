@@ -3,7 +3,7 @@
 #include "source_basis/module_pw/pw_basis_k.h"
 
 template <typename T>
-void psi_init_nao_random<T>::init_psig(T* psig, const int& ik)
+void psi_init_nao_random<T>::init_psig(T *psig, const int &ik)
 {
     double rm = this->mixing_coef_;
     psi_init_nao<T>::init_psig(psig, ik);

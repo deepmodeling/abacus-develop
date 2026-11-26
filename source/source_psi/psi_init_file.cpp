@@ -12,14 +12,15 @@
 #include <vector>
 
 template <typename T>
-void psi_init_file<T>::initialize(const Structure_Factor* sf,
-                                  const ModulePW::PW_Basis_K* pw_wfc,
-                                  const UnitCell* p_ucell,
-                                  const std::vector<int>& ik2iktot,
-                                  const int& random_seed,
-                                  const int& rank,
-                                  const int& npol,
-                                  const int& nbands)
+void psi_init_file<T>::initialize(
+    const Structure_Factor *sf,
+    const ModulePW::PW_Basis_K *pw_wfc,
+    const UnitCell *p_ucell,
+    const std::vector<int> &ik2iktot,
+    const int &random_seed,
+    const int &rank,
+    const int &npol,
+    const int &nbands)
 {
     psi_base<T>::initialize(sf, pw_wfc, p_ucell, ik2iktot, random_seed, rank, npol, nbands);
     this->nbands_start_ = nbands;
@@ -27,11 +28,12 @@ void psi_init_file<T>::initialize(const Structure_Factor* sf,
 }
 
 template <typename T>
-void psi_init_file<T>::prepare_params(const int& nspin,
-                                      const std::string& global_readin_dir,
-                                      const int& rank_in_pool,
-                                      const int& nproc_in_pool,
-                                      const int& nkstot)
+void psi_init_file<T>::prepare_params(
+    const int &nspin,
+    const std::string &global_readin_dir,
+    const int &rank_in_pool,
+    const int &nproc_in_pool,
+    const int &nkstot)
 {
     this->nspin_ = nspin;
     this->global_readin_dir_ = global_readin_dir;
@@ -41,7 +43,7 @@ void psi_init_file<T>::prepare_params(const int& nspin,
 }
 
 template <typename T>
-void psi_init_file<T>::init_psig(T* psig, const int& ik)
+void psi_init_file<T>::init_psig(T *psig, const int &ik)
 {
     ModuleBase::timer::start("psi_init_file", "init_psig");
     const int npol = this->npol_;
@@ -56,28 +58,13 @@ void psi_init_file<T>::init_psig(T* psig, const int& ik)
     const bool gamma_only = false;
     const int istep = -1;
 
-    std::string fn = ModuleIO::filename_output(this->global_readin_dir_,
-                                               "wf",
-                                               "pw",
-                                               ik,
-                                               this->ik2iktot_,
-                                               this->nspin_,
-                                               nkstot,
-                                               out_type,
-                                               out_app_flag,
-                                               gamma_only,
-                                               istep);
+    std::string fn = ModuleIO::filename_output(
+        this->global_readin_dir_, "wf", "pw", ik, this->ik2iktot_, this->nspin_, nkstot, out_type, out_app_flag,
+        gamma_only, istep);
 
-    ModuleIO::read_wfc_pw(fn,
-                          this->pw_wfc_,
-                          this->rank_in_pool_,
-                          this->nproc_in_pool_,
-                          this->nbands_start_,
-                          this->npol_,
-                          ik,
-                          ik_tot,
-                          nkstot,
-                          wfcatom);
+    ModuleIO::read_wfc_pw(
+        fn, this->pw_wfc_, this->rank_in_pool_, this->nproc_in_pool_, this->nbands_start_, this->npol_, ik, ik_tot,
+        nkstot, wfcatom);
 
     assert(this->nbands_start_ <= wfcatom.nr);
     for (int ib = 0; ib < this->nbands_start_; ib++)

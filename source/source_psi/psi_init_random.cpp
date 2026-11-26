@@ -5,14 +5,15 @@
 #include <vector>
 
 template <typename T>
-void psi_init_random<T>::initialize(const Structure_Factor* sf,
-                                    const ModulePW::PW_Basis_K* pw_wfc,
-                                    const UnitCell* p_ucell,
-                                    const std::vector<int>& ik2iktot,
-                                    const int& random_seed,
-                                    const int& rank,
-                                    const int& npol,
-                                    const int& nbands)
+void psi_init_random<T>::initialize(
+    const Structure_Factor *sf,
+    const ModulePW::PW_Basis_K *pw_wfc,
+    const UnitCell *p_ucell,
+    const std::vector<int> &ik2iktot,
+    const int &random_seed,
+    const int &rank,
+    const int &npol,
+    const int &nbands)
 {
     psi_base<T>::initialize(sf, pw_wfc, p_ucell, ik2iktot, random_seed, rank, npol, nbands);
     this->ixy2is_.clear();
@@ -23,7 +24,7 @@ void psi_init_random<T>::initialize(const Structure_Factor* sf,
 }
 
 template <typename T>
-void psi_init_random<T>::init_psig(T* psig, const int& ik)
+void psi_init_random<T>::init_psig(T *psig, const int &ik)
 {
     this->random_t(psig, 0, this->nbands_start_, ik);
 }

@@ -234,10 +234,7 @@ TEST_F(MD_func_test, init_vel_rejects_zero_stru_velocities_with_backing_unitcell
     initialize_mdcell_from_ucell(mdcell, ucell, decomp);
     double temperature = 300.0 / ModuleBase::Hartree_to_K;
     std::int64_t frozen_freedom = 0;
-    EXPECT_EXIT(
-        MD_func::init_vel(mdcell, true, false, temperature, frozen_freedom),
-        ::testing::ExitedWithCode(1),
-        "");
+    EXPECT_EXIT(MD_func::init_vel(mdcell, true, false, temperature, frozen_freedom), ::testing::ExitedWithCode(1), "");
 }
 
 TEST_F(MD_func_test, init_vel_rejects_zero_stru_velocities_without_backing_unitcell)
@@ -249,10 +246,7 @@ TEST_F(MD_func_test, init_vel_rejects_zero_stru_velocities_without_backing_unitc
     }
     double temperature = 300.0 / ModuleBase::Hartree_to_K;
     std::int64_t frozen_freedom = 0;
-    EXPECT_EXIT(
-        MD_func::init_vel(mdcell, true, false, temperature, frozen_freedom),
-        ::testing::ExitedWithCode(1),
-        "");
+    EXPECT_EXIT(MD_func::init_vel(mdcell, true, false, temperature, frozen_freedom), ::testing::ExitedWithCode(1), "");
 }
 
 TEST_F(MD_func_test, init_vel_allows_zero_stru_velocities_at_zero_temperature_with_backing_unitcell)

@@ -6,36 +6,26 @@
 #include "source_cell/unitcell.h"
 #include "source_io/module_parameter/parameter.h"
 
-Setup_Psi_pw::Setup_Psi_pw()
-{
-}
+Setup_Psi_pw::Setup_Psi_pw() {}
 
-Setup_Psi_pw::~Setup_Psi_pw()
-{
-}
+Setup_Psi_pw::~Setup_Psi_pw() {}
 
 template <typename T, typename Device>
-void Setup_Psi_pw::before_runner_impl(const UnitCell& ucell,
-                                      const K_Vectors& kv,
-                                      const Structure_Factor& sf,
-                                      const ModulePW::PW_Basis_K& pw_wfc,
-                                      const int& lmaxkb,
-                                      const Input_para& inp)
+void Setup_Psi_pw::before_runner_impl(
+    const UnitCell &ucell,
+    const K_Vectors &kv,
+    const Structure_Factor &sf,
+    const ModulePW::PW_Basis_K &pw_wfc,
+    const int &lmaxkb,
+    const Input_para &inp)
 {
-    this->p_psi_init = new psi::PSIPrepare<T, Device>(inp.init_wfc,
-                                                      inp.ks_solver,
-                                                      inp.basis_type,
-                                                      GlobalV::MY_RANK,
-                                                      ucell,
-                                                      sf,
-                                                      kv.ik2iktot,
-                                                      kv.get_nkstot(),
-                                                      lmaxkb,
-                                                      pw_wfc);
+    this->p_psi_init = new psi::PSIPrepare<T, Device>(
+        inp.init_wfc, inp.ks_solver, inp.basis_type, GlobalV::MY_RANK, ucell, sf, kv.ik2iktot, kv.get_nkstot(), lmaxkb,
+        pw_wfc);
 
     allocate_psi(this->psi_cpu, kv.get_nks(), kv.ngk, PARAM.globalv.nbands_l, pw_wfc.npwk_max);
 
-    psi::PSIPrepare<T, Device>* p_psi_init = static_cast<psi::PSIPrepare<T, Device>*>(this->p_psi_init);
+    psi::PSIPrepare<T, Device> *p_psi_init = static_cast<psi::PSIPrepare<T, Device> *>(this->p_psi_init);
     // before_runner_impl is invoked only once before the ion dynamics starts,
     // so istep == 0 here ensures any one-time informational warnings are
     // printed from this initial setup call.
@@ -69,20 +59,21 @@ void Setup_Psi_pw::before_runner_impl(const UnitCell& ucell,
 
     if (inp.device == "gpu" || inp.precision == "single")
     {
-        this->psi_t = static_cast<void*>(new psi::Psi<T, Device>(this->psi_cpu[0]));
+        this->psi_t = static_cast<void *>(new psi::Psi<T, Device>(this->psi_cpu[0]));
     }
     else
     {
-        this->psi_t = static_cast<void*>(reinterpret_cast<psi::Psi<T, Device>*>(this->psi_cpu));
+        this->psi_t = static_cast<void *>(reinterpret_cast<psi::Psi<T, Device> *>(this->psi_cpu));
     }
 }
 
-void Setup_Psi_pw::before_runner(const UnitCell& ucell,
-                                 const K_Vectors& kv,
-                                 const Structure_Factor& sf,
-                                 const ModulePW::PW_Basis_K& pw_wfc,
-                                 const int& lmaxkb,
-                                 const Input_para& inp)
+void Setup_Psi_pw::before_runner(
+    const UnitCell &ucell,
+    const K_Vectors &kv,
+    const Structure_Factor &sf,
+    const ModulePW::PW_Basis_K &pw_wfc,
+    const int &lmaxkb,
+    const Input_para &inp)
 {
     const bool is_gpu = (inp.device == "gpu");
     const bool is_single = (inp.precision == "single");
@@ -118,29 +109,30 @@ void Setup_Psi_pw::update_psi_d_impl()
 {
     if (this->precision_type_ == PrecisionType::ComplexFloat)
     {
-        const psi::Psi<T, Device>* native = this->get_psi_t<T, Device>();
-        psi::Psi<std::complex<double>, Device>* mirror = this->get_psi_d<T, Device>();
+        const psi::Psi<T, Device> *native = this->get_psi_t<T, Device>();
+        psi::Psi<std::complex<double>, Device> *mirror = this->get_psi_d<T, Device>();
         if (mirror == nullptr)
         {
             this->psi_d = new psi::Psi<std::complex<double>, Device>(*native);
         }
-        else if (mirror->get_nk() != native->get_nk() || mirror->get_nbands() != native->get_nbands()
-                 || mirror->get_nbasis() != native->get_nbasis() || mirror->get_ngk_pointer() != native->get_ngk_pointer())
+        else if (mirror->get_nk() != native->get_nk() || mirror->get_nbands() != native->get_nbands() ||
+                 mirror->get_nbasis() != native->get_nbasis() || mirror->get_ngk_pointer() != native->get_ngk_pointer())
         {
             // Preserve the object address borrowed by onsite projectors even when storage changes.
             *mirror = psi::Psi<std::complex<double>, Device>(*native);
         }
         else
         {
-            const T* source = native->get_pointer() - native->get_psi_bias();
-            std::complex<double>* destination = mirror->get_pointer() - mirror->get_psi_bias();
-            base_device::memory::cast_memory_op<std::complex<double>, T, Device, Device>()(destination, source, native->size());
+            const T *source = native->get_pointer() - native->get_psi_bias();
+            std::complex<double> *destination = mirror->get_pointer() - mirror->get_psi_bias();
+            base_device::memory::cast_memory_op<std::complex<double>, T, Device, Device>()(
+                destination, source, native->size());
             mirror->fix_k(native->get_current_k());
         }
     }
     else
     {
-        this->psi_d = static_cast<void*>(reinterpret_cast<psi::Psi<std::complex<double>, Device>*>(this->psi_t));
+        this->psi_d = static_cast<void *>(reinterpret_cast<psi::Psi<std::complex<double>, Device> *>(this->psi_t));
     }
 }
 
@@ -173,17 +165,17 @@ void Setup_Psi_pw::update_psi_d()
 }
 
 template <typename T, typename Device>
-void Setup_Psi_pw::init_impl(hamilt::Hamilt<T, Device>* p_hamilt)
+void Setup_Psi_pw::init_impl(hamilt::Hamilt<T, Device> *p_hamilt)
 {
     if (!this->already_initpsi)
     {
-        psi::PSIPrepare<T, Device>* p_psi_init = static_cast<psi::PSIPrepare<T, Device>*>(this->p_psi_init);
+        psi::PSIPrepare<T, Device> *p_psi_init = static_cast<psi::PSIPrepare<T, Device> *>(this->p_psi_init);
         p_psi_init->initialize_psi(this->psi_cpu, this->get_psi_t<T, Device>(), p_hamilt, GlobalV::ofs_running);
         this->already_initpsi = true;
     }
 }
 
-void Setup_Psi_pw::init(hamilt::HamiltBase* p_hamilt)
+void Setup_Psi_pw::init(hamilt::HamiltBase *p_hamilt)
 {
     if (this->already_initpsi)
     {
@@ -196,12 +188,12 @@ void Setup_Psi_pw::init(hamilt::HamiltBase* p_hamilt)
         if (this->precision_type_ == PrecisionType::ComplexFloat)
         {
             init_impl<std::complex<float>, base_device::DEVICE_GPU>(
-                static_cast<hamilt::Hamilt<std::complex<float>, base_device::DEVICE_GPU>*>(p_hamilt));
+                static_cast<hamilt::Hamilt<std::complex<float>, base_device::DEVICE_GPU> *>(p_hamilt));
         }
         else
         {
             init_impl<std::complex<double>, base_device::DEVICE_GPU>(
-                static_cast<hamilt::Hamilt<std::complex<double>, base_device::DEVICE_GPU>*>(p_hamilt));
+                static_cast<hamilt::Hamilt<std::complex<double>, base_device::DEVICE_GPU> *>(p_hamilt));
         }
     }
     else
@@ -210,12 +202,12 @@ void Setup_Psi_pw::init(hamilt::HamiltBase* p_hamilt)
         if (this->precision_type_ == PrecisionType::ComplexFloat)
         {
             init_impl<std::complex<float>, base_device::DEVICE_CPU>(
-                static_cast<hamilt::Hamilt<std::complex<float>, base_device::DEVICE_CPU>*>(p_hamilt));
+                static_cast<hamilt::Hamilt<std::complex<float>, base_device::DEVICE_CPU> *>(p_hamilt));
         }
         else
         {
             init_impl<std::complex<double>, base_device::DEVICE_CPU>(
-                static_cast<hamilt::Hamilt<std::complex<double>, base_device::DEVICE_CPU>*>(p_hamilt));
+                static_cast<hamilt::Hamilt<std::complex<double>, base_device::DEVICE_CPU> *>(p_hamilt));
         }
     }
 }
@@ -224,10 +216,10 @@ void Setup_Psi_pw::init(hamilt::HamiltBase* p_hamilt)
 template <typename T, typename Device>
 void Setup_Psi_pw::copy_d2h_impl()
 {
-    psi::Psi<T, Device>* psi_t = this->get_psi_t<T, Device>();
-    this->castmem_d2h_impl<T, Device>(this->psi_cpu[0].get_pointer() - this->psi_cpu[0].get_psi_bias(),
-                                      psi_t->get_pointer() - psi_t->get_psi_bias(),
-                                      this->psi_cpu[0].size());
+    psi::Psi<T, Device> *psi_t = this->get_psi_t<T, Device>();
+    this->castmem_d2h_impl<T, Device>(
+        this->psi_cpu[0].get_pointer() - this->psi_cpu[0].get_psi_bias(), psi_t->get_pointer() - psi_t->get_psi_bias(),
+        this->psi_cpu[0].size());
 }
 
 void Setup_Psi_pw::copy_d2h()
@@ -262,15 +254,17 @@ void Setup_Psi_pw::sync_cpu()
 }
 
 template <typename T, typename Device>
-void Setup_Psi_pw::castmem_d2h_impl(std::complex<double>* dst, const std::complex<double>* src, const std::size_t size)
+void Setup_Psi_pw::castmem_d2h_impl(std::complex<double> *dst, const std::complex<double> *src, const std::size_t size)
 {
-    base_device::memory::cast_memory_op<std::complex<double>, std::complex<double>, base_device::DEVICE_CPU, Device>()(dst, src, size);
+    base_device::memory::cast_memory_op<std::complex<double>, std::complex<double>, base_device::DEVICE_CPU, Device>()(
+        dst, src, size);
 }
 
 template <typename T, typename Device>
-void Setup_Psi_pw::castmem_d2h_impl(std::complex<double>* dst, const std::complex<float>* src, const std::size_t size)
+void Setup_Psi_pw::castmem_d2h_impl(std::complex<double> *dst, const std::complex<float> *src, const std::size_t size)
 {
-    base_device::memory::cast_memory_op<std::complex<double>, std::complex<float>, base_device::DEVICE_CPU, Device>()(dst, src, size);
+    base_device::memory::cast_memory_op<std::complex<double>, std::complex<float>, base_device::DEVICE_CPU, Device>()(
+        dst, src, size);
 }
 
 template <typename T, typename Device>
@@ -320,25 +314,27 @@ void Setup_Psi_pw::clean()
 template class psi::PSIPrepare<std::complex<float>, base_device::DEVICE_CPU>;
 template class psi::PSIPrepare<std::complex<double>, base_device::DEVICE_CPU>;
 
-template void Setup_Psi_pw::before_runner_impl<std::complex<float>, base_device::DEVICE_CPU>(const UnitCell&,
-                                                                                             const K_Vectors&,
-                                                                                             const Structure_Factor&,
-                                                                                             const ModulePW::PW_Basis_K&,
-                                                                                             const int&,
-                                                                                             const Input_para&);
+template void Setup_Psi_pw::before_runner_impl<std::complex<float>, base_device::DEVICE_CPU>(
+    const UnitCell &,
+    const K_Vectors &,
+    const Structure_Factor &,
+    const ModulePW::PW_Basis_K &,
+    const int &,
+    const Input_para &);
 
-template void Setup_Psi_pw::before_runner_impl<std::complex<double>, base_device::DEVICE_CPU>(const UnitCell&,
-                                                                                              const K_Vectors&,
-                                                                                              const Structure_Factor&,
-                                                                                              const ModulePW::PW_Basis_K&,
-                                                                                              const int&,
-                                                                                              const Input_para&);
+template void Setup_Psi_pw::before_runner_impl<std::complex<double>, base_device::DEVICE_CPU>(
+    const UnitCell &,
+    const K_Vectors &,
+    const Structure_Factor &,
+    const ModulePW::PW_Basis_K &,
+    const int &,
+    const Input_para &);
 
 template void Setup_Psi_pw::init_impl<std::complex<float>, base_device::DEVICE_CPU>(
-    hamilt::Hamilt<std::complex<float>, base_device::DEVICE_CPU>*);
+    hamilt::Hamilt<std::complex<float>, base_device::DEVICE_CPU> *);
 
 template void Setup_Psi_pw::init_impl<std::complex<double>, base_device::DEVICE_CPU>(
-    hamilt::Hamilt<std::complex<double>, base_device::DEVICE_CPU>*);
+    hamilt::Hamilt<std::complex<double>, base_device::DEVICE_CPU> *);
 
 template void Setup_Psi_pw::update_psi_d_impl<std::complex<float>, base_device::DEVICE_CPU>();
 
@@ -348,45 +344,43 @@ template void Setup_Psi_pw::clean_impl<std::complex<float>, base_device::DEVICE_
 
 template void Setup_Psi_pw::clean_impl<std::complex<double>, base_device::DEVICE_CPU>();
 
-template void Setup_Psi_pw::castmem_d2h_impl<std::complex<float>, base_device::DEVICE_CPU>(std::complex<double>*,
-                                                                                           const std::complex<float>*,
-                                                                                           const std::size_t);
+template void Setup_Psi_pw::castmem_d2h_impl<std::complex<float>, base_device::DEVICE_CPU>(
+    std::complex<double> *, const std::complex<float> *, const std::size_t);
 
-template void Setup_Psi_pw::castmem_d2h_impl<std::complex<float>, base_device::DEVICE_CPU>(std::complex<double>*,
-                                                                                           const std::complex<double>*,
-                                                                                           const std::size_t);
+template void Setup_Psi_pw::castmem_d2h_impl<std::complex<float>, base_device::DEVICE_CPU>(
+    std::complex<double> *, const std::complex<double> *, const std::size_t);
 
-template void Setup_Psi_pw::castmem_d2h_impl<std::complex<double>, base_device::DEVICE_CPU>(std::complex<double>*,
-                                                                                            const std::complex<float>*,
-                                                                                            const std::size_t);
+template void Setup_Psi_pw::castmem_d2h_impl<std::complex<double>, base_device::DEVICE_CPU>(
+    std::complex<double> *, const std::complex<float> *, const std::size_t);
 
-template void Setup_Psi_pw::castmem_d2h_impl<std::complex<double>, base_device::DEVICE_CPU>(std::complex<double>*,
-                                                                                            const std::complex<double>*,
-                                                                                            const std::size_t);
+template void Setup_Psi_pw::castmem_d2h_impl<std::complex<double>, base_device::DEVICE_CPU>(
+    std::complex<double> *, const std::complex<double> *, const std::size_t);
 
 #if ((defined __CUDA) || (defined __ROCM))
 template class psi::PSIPrepare<std::complex<float>, base_device::DEVICE_GPU>;
 template class psi::PSIPrepare<std::complex<double>, base_device::DEVICE_GPU>;
 
-template void Setup_Psi_pw::before_runner_impl<std::complex<float>, base_device::DEVICE_GPU>(const UnitCell&,
-                                                                                             const K_Vectors&,
-                                                                                             const Structure_Factor&,
-                                                                                             const ModulePW::PW_Basis_K&,
-                                                                                             const int&,
-                                                                                             const Input_para&);
+template void Setup_Psi_pw::before_runner_impl<std::complex<float>, base_device::DEVICE_GPU>(
+    const UnitCell &,
+    const K_Vectors &,
+    const Structure_Factor &,
+    const ModulePW::PW_Basis_K &,
+    const int &,
+    const Input_para &);
 
-template void Setup_Psi_pw::before_runner_impl<std::complex<double>, base_device::DEVICE_GPU>(const UnitCell&,
-                                                                                              const K_Vectors&,
-                                                                                              const Structure_Factor&,
-                                                                                              const ModulePW::PW_Basis_K&,
-                                                                                              const int&,
-                                                                                              const Input_para&);
+template void Setup_Psi_pw::before_runner_impl<std::complex<double>, base_device::DEVICE_GPU>(
+    const UnitCell &,
+    const K_Vectors &,
+    const Structure_Factor &,
+    const ModulePW::PW_Basis_K &,
+    const int &,
+    const Input_para &);
 
 template void Setup_Psi_pw::init_impl<std::complex<float>, base_device::DEVICE_GPU>(
-    hamilt::Hamilt<std::complex<float>, base_device::DEVICE_GPU>*);
+    hamilt::Hamilt<std::complex<float>, base_device::DEVICE_GPU> *);
 
 template void Setup_Psi_pw::init_impl<std::complex<double>, base_device::DEVICE_GPU>(
-    hamilt::Hamilt<std::complex<double>, base_device::DEVICE_GPU>*);
+    hamilt::Hamilt<std::complex<double>, base_device::DEVICE_GPU> *);
 
 template void Setup_Psi_pw::update_psi_d_impl<std::complex<float>, base_device::DEVICE_GPU>();
 
@@ -400,19 +394,15 @@ template void Setup_Psi_pw::clean_impl<std::complex<float>, base_device::DEVICE_
 
 template void Setup_Psi_pw::clean_impl<std::complex<double>, base_device::DEVICE_GPU>();
 
-template void Setup_Psi_pw::castmem_d2h_impl<std::complex<float>, base_device::DEVICE_GPU>(std::complex<double>*,
-                                                                                           const std::complex<float>*,
-                                                                                           const std::size_t);
+template void Setup_Psi_pw::castmem_d2h_impl<std::complex<float>, base_device::DEVICE_GPU>(
+    std::complex<double> *, const std::complex<float> *, const std::size_t);
 
-template void Setup_Psi_pw::castmem_d2h_impl<std::complex<float>, base_device::DEVICE_GPU>(std::complex<double>*,
-                                                                                           const std::complex<double>*,
-                                                                                           const std::size_t);
+template void Setup_Psi_pw::castmem_d2h_impl<std::complex<float>, base_device::DEVICE_GPU>(
+    std::complex<double> *, const std::complex<double> *, const std::size_t);
 
-template void Setup_Psi_pw::castmem_d2h_impl<std::complex<double>, base_device::DEVICE_GPU>(std::complex<double>*,
-                                                                                            const std::complex<float>*,
-                                                                                            const std::size_t);
+template void Setup_Psi_pw::castmem_d2h_impl<std::complex<double>, base_device::DEVICE_GPU>(
+    std::complex<double> *, const std::complex<float> *, const std::size_t);
 
-template void Setup_Psi_pw::castmem_d2h_impl<std::complex<double>, base_device::DEVICE_GPU>(std::complex<double>*,
-                                                                                            const std::complex<double>*,
-                                                                                            const std::size_t);
+template void Setup_Psi_pw::castmem_d2h_impl<std::complex<double>, base_device::DEVICE_GPU>(
+    std::complex<double> *, const std::complex<double> *, const std::size_t);
 #endif

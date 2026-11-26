@@ -42,13 +42,14 @@ void psi_init_atomic<T>::allocate_ps_table()
 }
 
 template <typename T>
-void psi_init_atomic<T>::prepare_params(const int& nqx,
-                                        const double& dq,
-                                        const int& nspin,
-                                        const bool& domag,
-                                        const bool& domag_z,
-                                        const bool& pseudo_mesh,
-                                        const int& lmaxkb)
+void psi_init_atomic<T>::prepare_params(
+    const int &nqx,
+    const double &dq,
+    const int &nspin,
+    const bool &domag,
+    const bool &domag_z,
+    const bool &pseudo_mesh,
+    const int &lmaxkb)
 {
     this->nqx_ = nqx;
     this->dq_ = dq;
@@ -61,21 +62,22 @@ void psi_init_atomic<T>::prepare_params(const int& nqx,
 }
 
 template <typename T>
-void psi_init_atomic<T>::initialize(const Structure_Factor* sf,
-                                    const ModulePW::PW_Basis_K* pw_wfc,
-                                    const UnitCell* p_ucell,
-                                    const std::vector<int>& ik2iktot,
-                                    const int& random_seed,
-                                    const int& rank,
-                                    const int& npol,
-                                    const int& nbands)
+void psi_init_atomic<T>::initialize(
+    const Structure_Factor *sf,
+    const ModulePW::PW_Basis_K *pw_wfc,
+    const UnitCell *p_ucell,
+    const std::vector<int> &ik2iktot,
+    const int &random_seed,
+    const int &rank,
+    const int &npol,
+    const int &nbands)
 {
     ModuleBase::timer::start("psi_init_atomic", "initialize");
 
     if (!this->params_prepared_)
     {
-        ModuleBase::WARNING_QUIT("psi_init_atomic<T>::initialize",
-                                 "prepare_params() must be called before initialize()");
+        ModuleBase::WARNING_QUIT(
+            "psi_init_atomic<T>::initialize", "prepare_params() must be called before initialize()");
     }
 
     psi_base<T>::initialize(sf, pw_wfc, p_ucell, ik2iktot, random_seed, rank, npol, nbands);
@@ -121,7 +123,7 @@ void psi_init_atomic<T>::tabulate()
 
     for (int it = 0; it < this->p_ucell_->ntype; it++)
     {
-        Atom* atom = &this->p_ucell_->atoms[it];
+        Atom *atom = &this->p_ucell_->atoms[it];
 
         GlobalV::ofs_running << "\n number of pseudo atomic orbitals for " << atom->label << " is " << atom->ncpp.nchi
                              << std::endl;
@@ -189,10 +191,8 @@ void psi_init_atomic<T>::tabulate()
                         {
                             norm_beta[ik] = atom->ncpp.betar(ib, ik) * atom->ncpp.chi(ic, ik);
                         }
-                        ModuleBase::Integral::Simpson_Integral(kkbeta,
-                                                               norm_beta.data(),
-                                                               atom->ncpp.rab.data(),
-                                                               work[ib]);
+                        ModuleBase::Integral::Simpson_Integral(
+                            kkbeta, norm_beta.data(), atom->ncpp.rab.data(), work[ib]);
                     }
                     else
                     {
@@ -263,7 +263,7 @@ std::complex<double> phase_factor(double arg, int mode)
 }
 
 template <typename T>
-void psi_init_atomic<T>::init_psig(T* psig, const int& ik)
+void psi_init_atomic<T>::init_psig(T *psig, const int &ik)
 {
     ModuleBase::timer::start("psi_init_atomic", "init_psig");
 
@@ -294,7 +294,7 @@ void psi_init_atomic<T>::init_psig(T* psig, const int& ik)
             // I think it is always a BAD idea to new one pointer in a function, then return it
             // it indicates the ownership of the pointer and behind memory is transferred to the caller
             // then one must manually delete it, makes new-delete not symmetric
-            std::complex<double>* sk = this->sf_->get_sk(ik, it, ia, this->pw_wfc_);
+            std::complex<double> *sk = this->sf_->get_sk(ik, it, ia, this->pw_wfc_);
             for (int ipswfc = 0; ipswfc < this->p_ucell_->atoms[it].ncpp.nchi; ipswfc++)
             {
                 /* FOR EVERY PSWFC OF ATOM */
@@ -306,13 +306,9 @@ void psi_init_atomic<T>::init_psig(T* psig, const int& ik)
 
                     for (int ig = 0; ig < npw; ig++)
                     {
-                        ovlp_pswfcjlg[ig]
-                            = ModuleBase::PolyInt::Polynomial_Interpolation(this->ovlp_pswfcjlq_,
-                                                                            it,
-                                                                            ipswfc,
-                                                                            this->nqx_,
-                                                                            this->dq_,
-                                                                            gk[ig].norm() * this->p_ucell_->tpiba);
+                        ovlp_pswfcjlg[ig] = ModuleBase::PolyInt::Polynomial_Interpolation(
+                            this->ovlp_pswfcjlq_, it, ipswfc, this->nqx_, this->dq_,
+                            gk[ig].norm() * this->p_ucell_->tpiba);
                     }
                     /* NSPIN == 4 */
                     if (this->nspin_ == 4)
@@ -337,9 +333,9 @@ void psi_init_atomic<T>::init_psig(T* psig, const int& ik)
                                             if (fabs(cg_coeffs[is]) > 1e-8)
                                             {
                                                 /* GET COMPLEX SPHERICAL HARMONIC FUNCTION */
-                                                const int ind
-                                                    = this->lmaxkb_
-                                                      + soc.sph_ind(l, j, m, is); // ind can be l+m, l+m+1, l+m-1
+                                                const int ind =
+                                                    this->lmaxkb_ +
+                                                    soc.sph_ind(l, j, m, is); // ind can be l+m, l+m+1, l+m-1
                                                 std::fill(aux.begin(), aux.end(), std::complex<double>(0.0, 0.0));
                                                 for (int n1 = 0; n1 < 2 * l + 1; n1++)
                                                 {
@@ -355,17 +351,18 @@ void psi_init_atomic<T>::init_psig(T* psig, const int& ik)
                                                 }
                                                 for (int ig = 0; ig < npw; ig++)
                                                 {
-                                                    psig[(2 * index + is) * npwk_max + ig]
-                                                        = this->template cast_to_T<T>(lphase * cg_coeffs[is] * sk[ig]
-                                                                                      * aux[ig] * ovlp_pswfcjlg[ig]);
+                                                    psig[(2 * index + is) * npwk_max + ig] =
+                                                        this->template cast_to_T<T>(
+                                                            lphase * cg_coeffs[is] * sk[ig] * aux[ig] *
+                                                            ovlp_pswfcjlg[ig]);
                                                 }
                                             }
                                             else
                                             {
                                                 for (int ig = 0; ig < npw; ig++)
                                                 {
-                                                    psig[(2 * index + is) * npwk_max + ig]
-                                                        = this->template cast_to_T<T>(std::complex<double>(0.0, 0.0));
+                                                    psig[(2 * index + is) * npwk_max + ig] =
+                                                        this->template cast_to_T<T>(std::complex<double>(0.0, 0.0));
                                                 }
                                             }
                                         }
@@ -396,8 +393,8 @@ void psi_init_atomic<T>::init_psig(T* psig, const int& ik)
                                     /* L != 0, scan pswfcs that have the same L and satisfy J(pswfc) = L - 0.5 */
                                     for (int jpsiwfc = 0; jpsiwfc < this->p_ucell_->atoms[it].ncpp.nchi; jpsiwfc++)
                                     {
-                                        if ((this->p_ucell_->atoms[it].ncpp.lchi[jpsiwfc] == l)
-                                            && (fabs(this->p_ucell_->atoms[it].ncpp.jchi[jpsiwfc] - l + 0.5) < 1e-4))
+                                        if ((this->p_ucell_->atoms[it].ncpp.lchi[jpsiwfc] == l) &&
+                                            (fabs(this->p_ucell_->atoms[it].ncpp.jchi[jpsiwfc] - l + 0.5) < 1e-4))
                                         {
                                             ipswfc_noncolin_soc = jpsiwfc;
                                             break;
@@ -407,14 +404,9 @@ void psi_init_atomic<T>::init_psig(T* psig, const int& ik)
                                     {
                                         /* average <pswfc_a|jl(q)> and <pswfc_b(j=l-1/2)|jl(q)>, a and b seem not
                                          * necessarily to be equal */
-                                        chiaux[ig] = l
-                                                     * ModuleBase::PolyInt::Polynomial_Interpolation(
-                                                         this->ovlp_pswfcjlq_,
-                                                         it,
-                                                         ipswfc_noncolin_soc,
-                                                         this->nqx_,
-                                                         this->dq_,
-                                                         gk[ig].norm() * this->p_ucell_->tpiba);
+                                        chiaux[ig] = l * ModuleBase::PolyInt::Polynomial_Interpolation(
+                                                             this->ovlp_pswfcjlq_, it, ipswfc_noncolin_soc, this->nqx_,
+                                                             this->dq_, gk[ig].norm() * this->p_ucell_->tpiba);
                                         chiaux[ig] += ovlp_pswfcjlg[ig] * (l + 1.0);
                                         chiaux[ig] *= 1 / (2.0 * l + 1.0);
                                     }
@@ -446,17 +438,17 @@ void psi_init_atomic<T>::init_psig(T* psig, const int& ik)
                                         fdw = phase_factor(0.5 * alpha, -1) * aux[ig];
                                         // build the orthogonal wfc
                                         // first rotation with angle (alpha + ModuleBase::PI) around (OX)
-                                        psig[index * 2 * npwk_max + ig]
-                                            = this->template cast_to_T<T>(phase_factor(0.5 * gamma, 0) * fup);
-                                        psig[(index * 2 + 1) * npwk_max + ig]
-                                            = this->template cast_to_T<T>(phase_factor(-0.5 * gamma, 0) * fdw);
+                                        psig[index * 2 * npwk_max + ig] =
+                                            this->template cast_to_T<T>(phase_factor(0.5 * gamma, 0) * fup);
+                                        psig[(index * 2 + 1) * npwk_max + ig] =
+                                            this->template cast_to_T<T>(phase_factor(-0.5 * gamma, 0) * fdw);
                                         // second rotation with angle gamma around(OZ)
                                         fup = phase_factor(0.5 * (alpha + ModuleBase::PI), 1) * aux[ig];
                                         fdw = phase_factor(0.5 * (alpha + ModuleBase::PI), -1) * aux[ig];
-                                        psig[(index + 2 * l + 1) * 2 * npwk_max + ig]
-                                            = this->template cast_to_T<T>(phase_factor(0.5 * gamma, 0) * fup);
-                                        psig[((index + 2 * l + 1) * 2 + 1) * npwk_max + ig]
-                                            = this->template cast_to_T<T>(phase_factor(-0.5 * gamma, 0) * fdw);
+                                        psig[(index + 2 * l + 1) * 2 * npwk_max + ig] =
+                                            this->template cast_to_T<T>(phase_factor(0.5 * gamma, 0) * fup);
+                                        psig[((index + 2 * l + 1) * 2 + 1) * npwk_max + ig] =
+                                            this->template cast_to_T<T>(phase_factor(-0.5 * gamma, 0) * fdw);
                                     }
                                     index++;
                                 }
@@ -516,8 +508,8 @@ void psi_init_atomic<T>::init_psig(T* psig, const int& ik)
                             const int lm = l * l + m;
                             for (int ig = 0; ig < npw; ig++)
                             {
-                                psig[index * npwk_max + ig]
-                                    = this->template cast_to_T<T>(lphase * sk[ig] * ylm(lm, ig) * ovlp_pswfcjlg[ig]);
+                                psig[index * npwk_max + ig] =
+                                    this->template cast_to_T<T>(lphase * sk[ig] * ylm(lm, ig) * ovlp_pswfcjlg[ig]);
                             }
                             index++;
                         }

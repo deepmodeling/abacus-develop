@@ -24,10 +24,7 @@ class psi_init_atomic : public psi_base<T>
     bool params_prepared_ = false;
 
   public:
-    psi_init_atomic()
-    {
-        this->method_ = "atomic";
-    }
+    psi_init_atomic() { this->method_ = "atomic"; }
     ~psi_init_atomic() {};
 
     /**
@@ -46,24 +43,26 @@ class psi_init_atomic : public psi_base<T>
      *
      * @see initialize()
      */
-    void prepare_params(const int& nqx,
-                        const double& dq,
-                        const int& nspin,
-                        const bool& domag,
-                        const bool& domag_z,
-                        const bool& pseudo_mesh,
-                        const int& lmaxkb);
+    void prepare_params(
+        const int &nqx,
+        const double &dq,
+        const int &nspin,
+        const bool &domag,
+        const bool &domag_z,
+        const bool &pseudo_mesh,
+        const int &lmaxkb);
 
-    virtual void initialize(const Structure_Factor* sf,         //< structure factor
-                            const ModulePW::PW_Basis_K* pw_wfc, //< planewave basis
-                            const UnitCell* p_ucell,            //< unit cell
-                            const std::vector<int>& ik2iktot,   //< ik2iktot: local->global k-point mapping
-                            const int& random_seed,             //< random seed
-                            const int& rank,                    //< MPI rank
-                            const int& npol,                    //< npol
-                            const int& nbands) override;        //< nbands
+    virtual void initialize(
+        const Structure_Factor *sf,         //< structure factor
+        const ModulePW::PW_Basis_K *pw_wfc, //< planewave basis
+        const UnitCell *p_ucell,            //< unit cell
+        const std::vector<int> &ik2iktot,   //< ik2iktot: local->global k-point mapping
+        const int &random_seed,             //< random seed
+        const int &rank,                    //< MPI rank
+        const int &npol,                    //< npol
+        const int &nbands) override;        //< nbands
     virtual void tabulate() override;
-    virtual void init_psig(T* psig, const int& ik) override;
+    virtual void init_psig(T *psig, const int &ik) override;
 
   protected:
     // allocate memory for overlap table

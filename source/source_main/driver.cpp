@@ -18,15 +18,11 @@
 #include "source_base/module_external/blas_connector.h"
 #endif
 
-Driver::Driver()
-{
-}
+Driver::Driver() {}
 
-Driver::~Driver()
-{
-}
+Driver::~Driver() {}
 
-void Driver::init(const ModuleIO::CommandLineArgs& cli)
+void Driver::init(const ModuleIO::CommandLineArgs &cli)
 {
     // 1) Let's start by printing a title.
     ModuleBase::TITLE("Driver", "ABACUS_begins");
@@ -52,19 +48,19 @@ void Driver::init(const ModuleIO::CommandLineArgs& cli)
     ModuleBase::Global_File::close_all_log(GlobalV::MY_RANK, PARAM.inp.out_alllog, PARAM.inp.calculation);
 }
 
-void Driver::print_start_info(const std::string& input_card)
+void Driver::print_start_info(const std::string &input_card)
 {
     ModuleBase::TITLE("Driver", "print_start_info");
 #ifdef VERSION
-    const char* version = VERSION;
+    const char *version = VERSION;
 #else
-    const char* version = "unknown";
+    const char *version = "unknown";
 #endif
 #ifdef COMMIT_INFO
 #include "commit.h"
-    const char* commit = COMMIT;
+    const char *commit = COMMIT;
 #else
-    const char* commit = "unknown";
+    const char *commit = "unknown";
 #endif
     time_t time_now = time(nullptr);
 
@@ -111,7 +107,7 @@ void Driver::print_start_info(const std::string& input_card)
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "global_in_card", input_card);
 }
 
-void Driver::reading(const ModuleIO::CommandLineArgs& cli)
+void Driver::reading(const ModuleIO::CommandLineArgs &cli)
 {
     ModuleBase::TITLE("Driver", "reading");
     ModuleBase::timer::start("Driver", "reading");
@@ -157,17 +153,10 @@ void Driver::reading(const ModuleIO::CommandLineArgs& cli)
     Input_Conv::Convert();
 
     // (4) define the 'DIAGONALIZATION' world in MPI
-    Parallel_Global::split_diag_world(PARAM.inp.diago_proc,
-                                      GlobalV::NPROC,
-                                      GlobalV::MY_RANK,
-                                      GlobalV::DRANK,
-                                      GlobalV::DSIZE,
-                                      GlobalV::DCOLOR);
-    Parallel_Global::split_grid_world(PARAM.inp.diago_proc,
-                                      GlobalV::NPROC,
-                                      GlobalV::MY_RANK,
-                                      GlobalV::GRANK,
-                                      GlobalV::GSIZE);
+    Parallel_Global::split_diag_world(
+        PARAM.inp.diago_proc, GlobalV::NPROC, GlobalV::MY_RANK, GlobalV::DRANK, GlobalV::DSIZE, GlobalV::DCOLOR);
+    Parallel_Global::split_grid_world(
+        PARAM.inp.diago_proc, GlobalV::NPROC, GlobalV::MY_RANK, GlobalV::GRANK, GlobalV::GSIZE);
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "DRANK", GlobalV::DRANK + 1);
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "DSIZE", GlobalV::DSIZE);
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "DCOLOR", GlobalV::DCOLOR + 1);
@@ -177,21 +166,15 @@ void Driver::reading(const ModuleIO::CommandLineArgs& cli)
 #ifdef __MPI
     // (5)  divide the GlobalV::NPROC processors into GlobalV::KPAR for k-points
     // parallelization.
-    Parallel_Global::init_pools(GlobalV::NPROC,
-                                GlobalV::MY_RANK,
-                                PARAM.inp.bndpar,
-                                GlobalV::KPAR,
-                                GlobalV::NPROC_IN_BNDGROUP,
-                                GlobalV::RANK_IN_BPGROUP,
-                                GlobalV::MY_BNDGROUP,
-                                GlobalV::NPROC_IN_POOL,
-                                GlobalV::RANK_IN_POOL,
-                                GlobalV::MY_POOL);
+    Parallel_Global::init_pools(
+        GlobalV::NPROC, GlobalV::MY_RANK, PARAM.inp.bndpar, GlobalV::KPAR, GlobalV::NPROC_IN_BNDGROUP,
+        GlobalV::RANK_IN_BPGROUP, GlobalV::MY_BNDGROUP, GlobalV::NPROC_IN_POOL, GlobalV::RANK_IN_POOL,
+        GlobalV::MY_POOL);
 #endif
     ModuleBase::timer::end("Driver", "reading");
 }
 
-void Driver::atomic_world(const ModuleIO::CommandLineArgs& cli)
+void Driver::atomic_world(const ModuleIO::CommandLineArgs &cli)
 {
     ModuleBase::TITLE("Driver", "atomic_world");
     ModuleBase::timer::start("Driver", "atomic_world");
