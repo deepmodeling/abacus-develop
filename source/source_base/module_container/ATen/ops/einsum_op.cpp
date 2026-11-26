@@ -231,7 +231,7 @@ static inline bool all_of(
     const std::vector<T>& vec, 
     const std::function<bool(T)>& predicate) 
 {
-    for (const int& element : vec) {
+    for (const T& element : vec) {
         if (!predicate(element)) {
             return false;
         }
