@@ -117,6 +117,7 @@ namespace projectors
                                        const double* wg_ik) const;
 
         private:
+        friend class OnsiteProjectorInitTest;
         void overlap_impl(int columns, const std::complex<double>* psi, int stride,
                           const ModuleBase::Vector3<double>& vector_potential);
 
