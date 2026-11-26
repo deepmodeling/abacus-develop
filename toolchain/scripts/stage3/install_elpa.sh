@@ -94,18 +94,18 @@ case "$with_elpa" in
       config_flags="--disable-avx-kernels --disable-avx2-kernels --disable-avx512-kernels --disable-sse-kernels --disable-sse-assembly-kernels"
       if [ "${TARGET_CPU}" = "native" ]; then
         if [ -f /proc/cpuinfo ] && [ "${SYSTEM_ARCH}" = "x86_64" ]; then
-          has_AVX=$(grep '\bavx\b' /proc/cpuinfo 1>/dev/null && echo 'yes' || echo 'no')
+          has_AVX=$(grep '\bavx\b' /proc/cpuinfo 1> /dev/null && echo 'yes' || echo 'no')
           [ "${has_AVX}" = "yes" ] && AVX_flag="-mavx" || AVX_flag=""
-          has_AVX2=$(grep '\bavx2\b' /proc/cpuinfo 1>/dev/null && echo 'yes' || echo 'no')
+          has_AVX2=$(grep '\bavx2\b' /proc/cpuinfo 1> /dev/null && echo 'yes' || echo 'no')
           [ "${has_AVX2}" = "yes" ] && AVX_flag="-mavx2"
-          has_AVX512=$(grep '\bavx512f\b' /proc/cpuinfo 1>/dev/null && echo 'yes' || echo 'no')
+          has_AVX512=$(grep '\bavx512f\b' /proc/cpuinfo 1> /dev/null && echo 'yes' || echo 'no')
           [ "${has_AVX512}" = "yes" ] && AVX512_flags="-mavx512f"
-          FMA_flag=$(grep '\bfma\b' /proc/cpuinfo 1>/dev/null && echo '-mfma' || echo '-mno-fma')
-          SSE4_flag=$(grep '\bsse4_1\b' /proc/cpuinfo 1>/dev/null && echo '-msse4' || echo '-mno-sse4')
-          grep '\bavx512dq\b' /proc/cpuinfo 1>/dev/null && AVX512_flags+=" -mavx512dq"
-          grep '\bavx512cd\b' /proc/cpuinfo 1>/dev/null && AVX512_flags+=" -mavx512cd"
-          grep '\bavx512bw\b' /proc/cpuinfo 1>/dev/null && AVX512_flags+=" -mavx512bw"
-          grep '\bavx512vl\b' /proc/cpuinfo 1>/dev/null && AVX512_flags+=" -mavx512vl"
+          FMA_flag=$(grep '\bfma\b' /proc/cpuinfo 1> /dev/null && echo '-mfma' || echo '-mno-fma')
+          SSE4_flag=$(grep '\bsse4_1\b' /proc/cpuinfo 1> /dev/null && echo '-msse4' || echo '-mno-sse4')
+          grep '\bavx512dq\b' /proc/cpuinfo 1> /dev/null && AVX512_flags+=" -mavx512dq"
+          grep '\bavx512cd\b' /proc/cpuinfo 1> /dev/null && AVX512_flags+=" -mavx512cd"
+          grep '\bavx512bw\b' /proc/cpuinfo 1> /dev/null && AVX512_flags+=" -mavx512bw"
+          grep '\bavx512vl\b' /proc/cpuinfo 1> /dev/null && AVX512_flags+=" -mavx512vl"
           config_flags="--enable-avx-kernels=${has_AVX} --enable-avx2-kernels=${has_AVX2} --enable-avx512-kernels=${has_AVX512}"
         fi
       fi
@@ -113,8 +113,8 @@ case "$with_elpa" in
       # GCC 15.2 miscompiles ELPA's double-complex AVX/AVX2 BLOCK2
       # kernels when tree SLP vectorization is enabled.
       elpa_c_workaround_flags=""
-      cc_version="$("${MPICC}" -dumpfullversion -dumpversion 2>/dev/null || true)"
-      cc_banner="$("${MPICC}" --version 2>/dev/null | head -n 1 || true)"
+      cc_version="$("${MPICC}" -dumpfullversion -dumpversion 2> /dev/null || true)"
+      cc_banner="$("${MPICC}" --version 2> /dev/null | head -n 1 || true)"
       if [[ "${cc_banner}" == *gcc* || "${cc_banner}" == *GCC* ]] &&
         [[ "${cc_version}" =~ ^15\.2(\.|$) ]]; then
         elpa_c_workaround_flags="-fno-tree-slp-vectorize"
@@ -157,7 +157,7 @@ case "$with_elpa" in
             LIBS="${SCALAPACK_LIBS} $(resolve_string "${MATH_LIBS}" "MPI") ${MPI_LIBS}" \
             SCALAPACK_LDFLAGS="${SCALAPACK_LDFLAGS}" \
             SCALAPACK_FCFLAGS="${SCALAPACK_CFLAGS}" \
-            >configure.log 2>&1 || tail -n ${LOG_LINES} configure.log
+            > configure.log 2>&1 || tail -n ${LOG_LINES} configure.log
           # remove unsupported compile option in libtool
           sed -i ./libtool \
             -e 's/\\$wl-soname //g' \
@@ -188,10 +188,10 @@ case "$with_elpa" in
             LIBS="${SCALAPACK_LIBS} $(resolve_string "${MATH_LIBS}" "MPI")" \
             SCALAPACK_LDFLAGS="${SCALAPACK_LDFLAGS}" \
             SCALAPACK_FCFLAGS="${SCALAPACK_CFLAGS}" \
-            >configure.log 2>&1 || tail -n ${LOG_LINES} configure.log
+            > configure.log 2>&1 || tail -n ${LOG_LINES} configure.log
         fi
-        make -j $(get_nprocs) >make.log 2>&1 || tail -n ${LOG_LINES} make.log
-        make install >install.log 2>&1 || tail -n ${LOG_LINES} install.log
+        make -j $(get_nprocs) > make.log 2>&1 || tail -n ${LOG_LINES} make.log
+        make install > install.log 2>&1 || tail -n ${LOG_LINES} install.log
         cd ..
         # link elpa
         link=${pkg_install_dir}/${TARGET}/include/elpa
@@ -249,11 +249,11 @@ case "$with_elpa" in
 esac
 if [ "$with_elpa" != "__DONTUSE__" ]; then
   ELPA_LIBS="-lelpa${elpa_dir_openmp}"
-  cat <<EOF >"${BUILDDIR}/setup_elpa"
+  cat << EOF > "${BUILDDIR}/setup_elpa"
 prepend_path CPATH "$elpa_include"
 EOF
   if [ "$with_elpa" != "__SYSTEM__" ]; then
-    cat <<EOF >>"${BUILDDIR}/setup_elpa"
+    cat << EOF >> "${BUILDDIR}/setup_elpa"
 prepend_path PATH "${pkg_install_dir}/cpu/bin"
 prepend_path LD_LIBRARY_PATH "${pkg_install_dir}/cpu/lib"
 prepend_path LD_RUN_PATH "${pkg_install_dir}/cpu/lib"
@@ -262,7 +262,7 @@ prepend_path PKG_CONFIG_PATH "${pkg_install_dir}/cpu/lib/pkgconfig"
 prepend_path CMAKE_PREFIX_PATH "${pkg_install_dir}/cpu"
 EOF
     if [ -d ${pkg_install_dir}/nvidia ]; then
-      cat <<EOF >>"${BUILDDIR}/setup_elpa"
+      cat << EOF >> "${BUILDDIR}/setup_elpa"
 prepend_path PATH "${pkg_install_dir}/nvidia/bin"
 prepend_path LD_LIBRARY_PATH "${pkg_install_dir}/nvidia/lib"
 prepend_path LD_RUN_PATH "${pkg_install_dir}/nvidia/lib"
@@ -272,7 +272,7 @@ prepend_path CMAKE_PREFIX_PATH "${pkg_install_dir}/nvidia"
 EOF
     fi
   fi
-  cat <<EOF >>"${BUILDDIR}/setup_elpa"
+  cat << EOF >> "${BUILDDIR}/setup_elpa"
 export ELPA_ROOT="${pkg_install_dir}"
 export ELPA_CFLAGS="${ELPA_CFLAGS}"
 export ELPA_LDFLAGS="${ELPA_LDFLAGS}"
