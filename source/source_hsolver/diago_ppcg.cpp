@@ -1995,14 +1995,19 @@ double DiagoPPCG<T, Device>::diag(
         // At stagnation within a few stopping tolerances, another global
         // Ritz rotation can perturb already accurate vectors. Try a single
         // normalized residual correction before resuming the block iteration.
+        // Do not wait past the remaining budget: reserve the last few steps
+        // for the worst residual rather than allowing another Ritz rotation
+        // to perturb near-converged states before refinement can run.
+        const bool startup_correction = iter == 1 && needs_startup_global_correction;
         const Real refinement_threshold = Real(4) * diag_thr_;
         const int refinement_stagnation = 5;
-        if (last_rr_succeeded && near_precision && max_residual_ <= refinement_threshold &&
-            no_improve >= refinement_stagnation)
+        const bool final_refinement_window = maxiter_ - iter < refinement_stagnation;
+        if (!startup_correction && last_rr_succeeded && near_precision && max_residual_ <= refinement_threshold &&
+            (no_improve >= refinement_stagnation || final_refinement_window))
         {
             // Cycle through the retained states: errors in an already locked
             // neighbor can limit the attainable residual of the remaining pair.
-            const int refinement_band = iter % ncol;
+            const int refinement_band = final_refinement_window ? -1 : iter % ncol;
             const bool accepted =
                 refine_stalled_residual(op, psi_in, eigenvalue_in, ethr_band, all_cols, refinement_band);
             if (!accepted && refinement_band == 0)
@@ -2066,7 +2071,6 @@ double DiagoPPCG<T, Device>::diag(
         // retain the requested lowest roots.  All current Ritz vectors remain
         // available, while a converged prefix contributes no correction
         // vectors and stays outside the active iteration count.
-        const bool startup_correction = iter == 1 && needs_startup_global_correction;
         if (startup_correction)
         {
             const int local_dim = ncol + nact;

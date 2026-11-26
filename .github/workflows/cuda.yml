@@ -125,8 +125,13 @@ jobs:
         env:
           ABACUS_PPCG_RESIDUAL_TRACE: ppcg_residual.csv
         run: |
+          set -euo pipefail
           cd tests/11_PW_GPU
-          bash ../integrate/Autotest.sh -n 2 -j "$GPU_TEST_JOBS" -f CASES_GPU.txt
+          bash ../integrate/Autotest.sh -n 2 -j "$GPU_TEST_JOBS" -f CASES_GPU.txt 2>&1 | tee ppcg_autotest.log
+          if grep -q 'PPCG did not converge' ppcg_autotest.log; then
+            echo "::error::PPCG eigenpairs failed their requested residual thresholds."
+            exit 1
+          fi
 
       - name: Preserve PPCG convergence diagnostics
         if: always()
@@ -134,6 +139,8 @@ jobs:
         with:
           name: ppcg-cuda-convergence
           path: |
+            tests/11_PW_GPU/ppcg_autotest.log
+            tests/11_PW_GPU/scf_ppcg_*/log.txt
             tests/11_PW_GPU/scf_ppcg_*/ppcg_residual.csv
             tests/11_PW_GPU/scf_ppcg_*/OUT.autotest/running_scf.log
           if-no-files-found: warn

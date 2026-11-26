@@ -108,7 +108,7 @@ TEST(DiagoPPCGReliableUpdateTest, RefreshesBeforeUsingNearPrecisionResidual)
     const int dimension = 2;
     const std::vector<Real> prec(dimension, 1.0);
     const std::vector<double> thresholds(1, 1.0e-14);
-    const double perturbations[] = {1.0e-5, 1.0e-10};
+    const double perturbations[] = {1.0e-5, 1.0e-10, 1.0e-14};
     for (const double perturbation : perturbations)
     {
         SCOPED_TRACE(perturbation);
@@ -136,9 +136,17 @@ TEST(DiagoPPCGReliableUpdateTest, RefreshesBeforeUsingNearPrecisionResidual)
         const double residual = std::sqrt(std::norm(residual0) + std::norm(residual1));
         EXPECT_LT(residual, 1.0e-14);
         // Initial X, W, tentative-convergence validation, and final validation.
-        // Only the near-precision solve adds a reliable X/P refresh before W.
-        const int expected_calls = perturbation < 1.0e-8 ? 6 : 4;
+        // The near-precision solve adds a reliable X/P refresh before W.
+        // Within four stopping tolerances, refinement must run even with only
+        // one iteration available: X/P refresh, direction, candidate and
+        // normalized candidate applications, followed by final certification.
+        int expected_calls = perturbation < 1.0e-8 ? 6 : 4;
+        if (perturbation == 1.0e-14)
+        {
+            expected_calls = 7;
+        }
         EXPECT_EQ(h_calls, expected_calls);
+        EXPECT_FALSE(solver.iteration_limit_reached());
     }
 }
 
