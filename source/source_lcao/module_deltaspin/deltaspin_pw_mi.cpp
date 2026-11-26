@@ -89,7 +89,7 @@ void cal_mi_pw(ScState& state,
 #if ((defined __CUDA) || (defined __ROCM))
     else
     {
-        auto* onsite_p = projectors::OnsiteProjector<double, base_device::DEVICE_GPU>::get_instance();
+        projectors::OnsiteProjector<double, base_device::DEVICE_GPU>* onsite_p = projectors::OnsiteProjector<double, base_device::DEVICE_GPU>::get_instance();
         std::complex<double>* psi_pointer = nullptr;
         psi::Psi<std::complex<double>, base_device::DEVICE_GPU>* psi_t = static_cast<psi::Psi<std::complex<double>, base_device::DEVICE_GPU>*>(psi);
         const int nbands = psi_t->get_nbands();
