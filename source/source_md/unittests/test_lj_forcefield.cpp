@@ -133,7 +133,7 @@ TEST_F(LJ_pot_test, stress)
 
 TEST_F(LJ_pot_test, RcutSearchRadius)
 {
-    ModuleMD::LJ *p_esolver = new ModuleMD::LJ(output_dir, running_log);
+    ModuleMD::LJ_Forcefield *p_esolver = new ModuleMD::LJ_Forcefield(output_dir, running_log);
     ucell.ntype = 2;
     std::vector<double> rcut = {3.0};
     p_esolver->rcut_search_radius_for_testing(ucell.ntype, rcut);
@@ -158,7 +158,7 @@ TEST_F(LJ_pot_test, RcutSearchRadius)
 
 TEST_F(LJ_pot_test, SetC6C12)
 {
-    ModuleMD::LJ *p_esolver = new ModuleMD::LJ(output_dir, running_log);
+    ModuleMD::LJ_Forcefield *p_esolver = new ModuleMD::LJ_Forcefield(output_dir, running_log);
     ucell.ntype = 2;
 
     // no rule
@@ -232,7 +232,7 @@ TEST_F(LJ_pot_test, SetC6C12)
 
 TEST_F(LJ_pot_test, CalEnShift)
 {
-    ModuleMD::LJ *p_esolver = new ModuleMD::LJ(output_dir, running_log);
+    ModuleMD::LJ_Forcefield *p_esolver = new ModuleMD::LJ_Forcefield(output_dir, running_log);
     ucell.ntype = 2;
 
     std::vector<double> rcut = {3.0};
@@ -280,7 +280,7 @@ TEST(LJPotential, UnitCellEnergyForceAndStress)
     Setcell::parameters(input);
     const std::string output_dir = testing::TempDir();
     std::ofstream running_log;
-    std::unique_ptr<ModuleMD::ForceField> potential(new ModuleMD::LJ(output_dir, running_log));
+    std::unique_ptr<ModuleMD::ForceField> potential(new ModuleMD::LJ_Forcefield(output_dir, running_log));
     ModuleESolver::esolver_forcefields solver(std::move(potential), running_log);
     solver.before_all_runners(cell, input);
     solver.runner(cell, 0);
@@ -303,7 +303,7 @@ TEST(LJPotential, MDCellWritesOwnedForces)
     Setcell::parameters(input);
     const std::string output_dir = testing::TempDir();
     std::ofstream running_log;
-    std::unique_ptr<ModuleMD::ForceField> potential(new ModuleMD::LJ(output_dir, running_log));
+    std::unique_ptr<ModuleMD::ForceField> potential(new ModuleMD::LJ_Forcefield(output_dir, running_log));
     ModuleESolver::esolver_forcefields solver(std::move(potential), running_log);
     solver.before_all_runners(cell, input);
     DomainDecomposition decomp;
@@ -352,7 +352,7 @@ TEST(LJPotential, SplitCommunicatorReducesWithinCell)
 
     std::ofstream running_log;
     const std::string output_dir = testing::TempDir();
-    ModuleMD::LJ potential(output_dir, running_log);
+    ModuleMD::LJ_Forcefield potential(output_dir, running_log);
     potential.initialize(cell, input);
     DomainDecomposition decomposition;
     decomposition.init(domain, cell.latvec(), cell.lat0(), 0.0, 0.0);

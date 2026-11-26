@@ -37,14 +37,15 @@
 
 using namespace ModuleMD;
 
-NEPPotential::NEPPotential(const std::string &pot_file, const std::string &output_dir, std::ofstream &running_log)
+NEP_Forcefield::NEP_Forcefield(
+    const std::string &pot_file, const std::string &output_dir, std::ofstream &running_log)
     : nep_file(pot_file), output_dir_(output_dir), running_log_(running_log)
 {
 }
 
-NEPPotential::~NEPPotential() = default;
+NEP_Forcefield::~NEP_Forcefield() = default;
 
-void NEPPotential::initialize(BaseCell &basecell, const Input_para &inp)
+void NEP_Forcefield::initialize(BaseCell &basecell, const Input_para &inp)
 {
 #ifdef __NEP
     nep.reset(new ::NEP(nep_file));
@@ -100,7 +101,7 @@ void NEPPotential::initialize(BaseCell &basecell, const Input_para &inp)
 #endif
 }
 
-void NEPPotential::compute(
+void NEP_Forcefield::compute(
     BaseCell &basecell,
     double &energy,
     ModuleBase::matrix &force_matrix,
@@ -119,8 +120,8 @@ void NEPPotential::compute(
         {
             ModuleBase::WARNING_QUIT("ESolver", "MDCell neighbors must be prepared by the caller before runner().");
         }
-        const int nowned_atoms = mdcell.owned_atoms().size();
-        const int nghost = mdcell.ghost_atoms().size();
+        const int nowned_atoms = mdcell.nowned_atoms();
+        const int nghost = mdcell.nghost();
         const int natom = nowned_atoms + nghost;
         if (natom == 0)
         {
@@ -129,15 +130,15 @@ void NEPPotential::compute(
 
         const std::vector<LocalAtom> &owned_atoms = mdcell.owned_atoms();
         const std::vector<LocalAtom> &ghost_atoms = mdcell.ghost_atoms();
-        std::vector<int> local_type(static_cast<std::size_t>(natom), 0);
-        std::vector<std::array<double, 3>> position(static_cast<std::size_t>(natom));
-        std::vector<std::array<double, 3>> force(static_cast<std::size_t>(natom));
-        std::vector<double *> position_ptrs(static_cast<std::size_t>(natom), NULL);
-        std::vector<double *> force_ptrs(static_cast<std::size_t>(natom), NULL);
+        std::vector<int> local_type(natom, 0);
+        std::vector<std::array<double, 3>> position(natom);
+        std::vector<std::array<double, 3>> force(natom);
+        std::vector<double *> position_ptrs(natom, NULL);
+        std::vector<double *> force_ptrs(natom, NULL);
         for (int iat = 0; iat < natom; ++iat)
         {
             const LocalAtom &atom = iat < nowned_atoms ? owned_atoms[iat] : ghost_atoms[iat - nowned_atoms];
-            if (atom.type < 0 || static_cast<std::size_t>(atom.type) >= md_type_to_nep_type_.size())
+            if (atom.type < 0 || atom.type >= static_cast<int>(md_type_to_nep_type_.size()))
             {
                 ModuleBase::WARNING_QUIT("ESolver_NEP", "MDCell atom type is outside the NEP type map.");
             }
@@ -151,9 +152,9 @@ void NEPPotential::compute(
         }
 
         const NeighborList &neighbor_list = mdcell.neighbor_search().get_neighbor_list();
-        std::vector<int> ilist(static_cast<std::size_t>(nowned_atoms), 0);
-        std::vector<int> numneigh(static_cast<std::size_t>(natom), 0);
-        std::vector<int *> firstneigh(static_cast<std::size_t>(natom), NULL);
+        std::vector<int> ilist(nowned_atoms, 0);
+        std::vector<int> numneigh(natom, 0);
+        std::vector<int *> firstneigh(natom, NULL);
         for (int iat = 0; iat < nowned_atoms; ++iat)
         {
             ilist[iat] = iat;
@@ -291,9 +292,9 @@ void NEPPotential::compute(
 }
 
 #ifdef __NEP
-void NEPPotential::type_map(const UnitCell &ucell)
+void NEP_Forcefield::type_map(const UnitCell &ucell)
 {
-    std::vector<std::string> type_labels(static_cast<std::size_t>(ucell.ntype));
+    std::vector<std::string> type_labels(ucell.ntype);
     for (int it = 0; it < ucell.ntype; ++it)
     {
         type_labels[it] = ucell.atoms[it].label;
@@ -311,7 +312,7 @@ void NEPPotential::type_map(const UnitCell &ucell)
     assert(ucell.nat == iat);
 }
 
-void NEPPotential::initialize_type_map_(const std::vector<std::string> &type_labels)
+void NEP_Forcefield::initialize_type_map_(const std::vector<std::string> &type_labels)
 {
     // parse the element list from NEP model file
     std::unordered_map<std::string, int> label;
@@ -339,7 +340,7 @@ void NEPPotential::initialize_type_map_(const std::vector<std::string> &type_lab
 
     // parse the atype based on the element list
     md_type_to_nep_type_.resize(type_labels.size());
-    for (std::size_t it = 0; it < type_labels.size(); ++it)
+    for (int it = 0; it < static_cast<int>(type_labels.size()); ++it)
     {
         const std::unordered_map<std::string, int>::const_iterator found = label.find(type_labels[it]);
         if (found == label.end())

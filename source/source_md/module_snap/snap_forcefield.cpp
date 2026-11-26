@@ -65,7 +65,7 @@ ModuleMD::SNAP::Neighbor make_neighbor(
 }
 } // namespace
 
-SnapPotential::SnapPotential(
+SNAP_Forcefield::SNAP_Forcefield(
     const std::string &coefficient_file,
     const std::string &parameter_file,
     std::ofstream &running_log,
@@ -74,7 +74,7 @@ SnapPotential::SnapPotential(
 {
 }
 
-void SnapPotential::initialize(const std::vector<std::string> &labels)
+void SNAP_Forcefield::initialize(const std::vector<std::string> &labels)
 {
     std::string error;
     if (!model_.load(coefficient_file_, parameter_file_, labels, error))
@@ -101,7 +101,7 @@ void SnapPotential::initialize(const std::vector<std::string> &labels)
     }
 }
 
-void SnapPotential::initialize(BaseCell &cell, const Input_para &inp)
+void SNAP_Forcefield::initialize(BaseCell &cell, const Input_para &inp)
 {
     static_cast<void>(inp);
     if (cell.kind() == BaseCell::Kind::mdcell)
@@ -121,7 +121,7 @@ void SnapPotential::initialize(BaseCell &cell, const Input_para &inp)
     initialize(labels);
 }
 
-void SnapPotential::compute(
+void SNAP_Forcefield::compute(
     BaseCell &cell,
     double &energy,
     ModuleBase::matrix &force,
@@ -140,7 +140,7 @@ try
         MDCell &mdcell = static_cast<MDCell &>(cell);
         if (!mdcell.has_neighbor_search())
         {
-            fail("MDCell neighbors must be prepared before SnapPotential::runner().", rank_);
+            fail("MDCell neighbors must be prepared before SNAP_Forcefield::compute().", rank_);
         }
         std::vector<LocalAtom> &owned_atoms = mdcell.owned_atoms();
         const std::vector<NeighborAtom> &all_atoms = mdcell.neighbor_search().get_all_atoms();

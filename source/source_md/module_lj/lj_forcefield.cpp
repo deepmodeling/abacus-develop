@@ -18,18 +18,19 @@
 
 namespace ModuleMD
 {
-LJ::LJ(const std::string &output_dir, std::ofstream &running_log) : output_dir_(output_dir), running_log_(running_log)
+LJ_Forcefield::LJ_Forcefield(const std::string &output_dir, std::ofstream &running_log)
+    : output_dir_(output_dir), running_log_(running_log)
 {
 }
 
-void LJ::initialize(BaseCell &cell, const Input_para &inp)
+void LJ_Forcefield::initialize(BaseCell &cell, const Input_para &inp)
 {
 
     if (cell.kind() == BaseCell::Kind::mdcell)
     {
         MDCell &mdcell = static_cast<MDCell &>(cell);
         double cutoff = 0.0;
-        for (std::size_t i = 0; i < inp.mdp.lj_rcut.size(); ++i)
+        for (int i = 0; i < static_cast<int>(inp.mdp.lj_rcut.size()); ++i)
         {
             cutoff = std::max(cutoff, inp.mdp.lj_rcut[i] * ModuleBase::ANGSTROM_AU);
         }
@@ -62,7 +63,7 @@ void LJ::initialize(BaseCell &cell, const Input_para &inp)
     cal_en_shift(ucell.ntype, inp.mdp.lj_eshift);
 }
 
-void LJ::compute(
+void LJ_Forcefield::compute(
     BaseCell &cell,
     double &energy,
     ModuleBase::matrix &force,
@@ -140,7 +141,7 @@ void LJ::compute(
     }
 
     std::vector<LocalAtom> &owned_atoms = mdcell.owned_atoms();
-    for (std::size_t i = 0; i < owned_atoms.size(); ++i)
+    for (int i = 0; i < static_cast<int>(owned_atoms.size()); ++i)
     {
         owned_atoms[i].force.set(0.0, 0.0, 0.0);
     }
@@ -199,7 +200,7 @@ void LJ::compute(
     }
 }
 
-double LJ::LJ_energy(const double &d, const int &i, const int &j) const
+double LJ_Forcefield::LJ_energy(const double &d, const int &i, const int &j) const
 {
     assert(d > 1e-6); // avoid atom overlap
     const double r2 = d * d;
@@ -208,7 +209,8 @@ double LJ::LJ_energy(const double &d, const int &i, const int &j) const
     return lj_c12(i, j) / (r6 * r6) - lj_c6(i, j) / r6;
 }
 
-ModuleBase::Vector3<double> LJ::LJ_force(const ModuleBase::Vector3<double> &dr, const int &i, const int &j) const
+ModuleBase::Vector3<double> LJ_Forcefield::LJ_force(
+    const ModuleBase::Vector3<double> &dr, const int &i, const int &j) const
 {
     const double d = dr.norm();
     assert(d > 1e-6); // avoid atom overlap
@@ -220,7 +222,7 @@ ModuleBase::Vector3<double> LJ::LJ_force(const ModuleBase::Vector3<double> &dr, 
     return dr * coff;
 }
 
-void LJ::rcut_search_radius(const int &ntype, const std::vector<double> &rcut)
+void LJ_Forcefield::rcut_search_radius(const int &ntype, const std::vector<double> &rcut)
 {
     lj_rcut.create(ntype, ntype);
     double rcut_max = 0.0;
@@ -255,7 +257,7 @@ void LJ::rcut_search_radius(const int &ntype, const std::vector<double> &rcut)
     search_radius = rcut_max + 0.01;
 }
 
-void LJ::set_c6_c12(
+void LJ_Forcefield::set_c6_c12(
     const int &ntype,
     const int &rule,
     const std::vector<double> &epsilon,
@@ -332,7 +334,7 @@ void LJ::set_c6_c12(
     }
 }
 
-void LJ::cal_en_shift(const int &ntype, const bool &is_shift)
+void LJ_Forcefield::cal_en_shift(const int &ntype, const bool &is_shift)
 {
     en_shift.create(ntype, ntype);
 

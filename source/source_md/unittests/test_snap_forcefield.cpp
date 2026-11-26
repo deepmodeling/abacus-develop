@@ -11,7 +11,7 @@
 #include <fstream>
 #include <string>
 
-TEST(SnapPotential, UnitCellAndMDCellAgree)
+TEST(SNAP_Forcefield, UnitCellAndMDCellAgree)
 {
     const std::string coefficient_file = testing::TempDir() + "snap_potential_coeff.txt";
     const std::string parameter_file = testing::TempDir() + "snap_potential_param.txt";
@@ -39,7 +39,7 @@ TEST(SnapPotential, UnitCellAndMDCellAgree)
     Input_para input;
     Setcell::parameters(input);
     std::ofstream running_log;
-    ModuleMD::SnapPotential unit_potential(coefficient_file, parameter_file, running_log, 0);
+    ModuleMD::SNAP_Forcefield unit_potential(coefficient_file, parameter_file, running_log, 0);
     unit_potential.initialize(unitcell, input);
     double unit_energy = 0.0;
     ModuleBase::matrix unit_force;
@@ -47,7 +47,7 @@ TEST(SnapPotential, UnitCellAndMDCellAgree)
     unit_potential.compute(unitcell, unit_energy, unit_force, unit_stress);
 
     MDCell mdcell = Setcell::setup_mdcell(unitcell);
-    ModuleMD::SnapPotential md_potential(coefficient_file, parameter_file, running_log, 0);
+    ModuleMD::SNAP_Forcefield md_potential(coefficient_file, parameter_file, running_log, 0);
     md_potential.initialize(mdcell, input);
     DomainDecomposition decomp;
     decomp.init(ModuleBase::world_comm_domain(), mdcell.latvec(), mdcell.lat0(), 0.0, 0.0);

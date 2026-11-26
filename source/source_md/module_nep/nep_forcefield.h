@@ -13,11 +13,11 @@ class UnitCell;
 
 namespace ModuleMD
 {
-class NEPPotential : public ForceField
+class NEP_Forcefield : public ForceField
 {
   public:
-    NEPPotential(const std::string &pot_file, const std::string &output_dir, std::ofstream &running_log);
-    ~NEPPotential() override;
+    NEP_Forcefield(const std::string &pot_file, const std::string &output_dir, std::ofstream &running_log);
+    ~NEP_Forcefield() override;
 
     void initialize(BaseCell &cell, const Input_para &inp) override;
     void compute(

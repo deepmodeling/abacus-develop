@@ -49,12 +49,12 @@
 
 using namespace ModuleMD;
 
-DP::DP(const std::string &pot_file, const std::string &output_dir, std::ofstream &running_log)
+DP_Forcefield::DP_Forcefield(const std::string &pot_file, const std::string &output_dir, std::ofstream &running_log)
     : dp_file(pot_file), output_dir_(output_dir), running_log_(running_log)
 {
 }
 
-DP::~DP() = default;
+DP_Forcefield::~DP_Forcefield() = default;
 
 #ifdef __DPMD
 #ifdef __DPMDC
@@ -64,7 +64,7 @@ using DPInputNlist = deepmd::InputNlist;
 #endif
 #endif
 
-void DP::initialize(BaseCell &basecell, const Input_para &inp)
+void DP_Forcefield::initialize(BaseCell &basecell, const Input_para &inp)
 {
     const ModuleBase::CommunicationDomain world_domain = ModuleBase::world_comm_domain();
 #ifdef __DPMD
@@ -175,7 +175,7 @@ void DP::initialize(BaseCell &basecell, const Input_para &inp)
 #endif
 }
 
-void DP::compute(
+void DP_Forcefield::compute(
     BaseCell &basecell,
     double &energy,
     ModuleBase::matrix &force_matrix,
@@ -212,10 +212,10 @@ void DP::compute(
 }
 
 #ifdef __DPMD
-void DP::compute_mdcell_(MDCell &mdcell, double &energy, ModuleBase::matrix &stress)
+void DP_Forcefield::compute_mdcell_(MDCell &mdcell, double &energy, ModuleBase::matrix &stress)
 {
-    const int nowned_atoms = mdcell.owned_atoms().size();
-    const int nghost = mdcell.ghost_atoms().size();
+    const int nowned_atoms = mdcell.nowned_atoms();
+    const int nghost = mdcell.nghost();
     const int natom = nowned_atoms + nghost;
     std::vector<double> cell(9, 0.0);
     cell[0] = mdcell.latvec().e11 * mdcell.lat0() * ModuleBase::BOHR_TO_A;
@@ -230,15 +230,15 @@ void DP::compute_mdcell_(MDCell &mdcell, double &energy, ModuleBase::matrix &str
 
     const std::vector<LocalAtom> &owned_atoms = mdcell.owned_atoms();
     const std::vector<LocalAtom> &ghost_atoms = mdcell.ghost_atoms();
-    std::vector<double> coord(static_cast<std::size_t>(3 * natom), 0.0);
-    std::vector<int> local_atype(static_cast<std::size_t>(natom), 0);
+    std::vector<double> coord(3 * natom, 0.0);
+    std::vector<int> local_atype(natom, 0);
     for (int iat = 0; iat < natom; ++iat)
     {
         const LocalAtom &atom = iat < nowned_atoms ? owned_atoms[iat] : ghost_atoms[iat - nowned_atoms];
         coord[3 * iat] = atom.cart.x * mdcell.lat0() * ModuleBase::BOHR_TO_A;
         coord[3 * iat + 1] = atom.cart.y * mdcell.lat0() * ModuleBase::BOHR_TO_A;
         coord[3 * iat + 2] = atom.cart.z * mdcell.lat0() * ModuleBase::BOHR_TO_A;
-        if (atom.type < 0 || static_cast<std::size_t>(atom.type) >= md_type_to_dp_type_.size())
+        if (atom.type < 0 || atom.type >= static_cast<int>(md_type_to_dp_type_.size()))
         {
             ModuleBase::WARNING_QUIT("ESolver_DP", "MDCell atom type is outside the DeePMD type map.");
         }
@@ -255,10 +255,10 @@ void DP::compute_mdcell_(MDCell &mdcell, double &energy, ModuleBase::matrix &str
     if (natom > 0)
     {
         const NeighborList &neighbor_list = mdcell.neighbor_search().get_neighbor_list();
-        std::vector<int> ilist(static_cast<std::size_t>(nowned_atoms), 0);
-        std::vector<int> numneigh(static_cast<std::size_t>(nowned_atoms), 0);
-        std::vector<int *> firstneigh(static_cast<std::size_t>(nowned_atoms), NULL);
-        std::vector<std::vector<int>> sorted_neighbors(static_cast<std::size_t>(nowned_atoms));
+        std::vector<int> ilist(nowned_atoms, 0);
+        std::vector<int> numneigh(nowned_atoms, 0);
+        std::vector<int *> firstneigh(nowned_atoms, NULL);
+        std::vector<std::vector<int>> sorted_neighbors(nowned_atoms);
         for (int iat = 0; iat < nowned_atoms; ++iat)
         {
             ilist[iat] = iat;
@@ -303,7 +303,7 @@ void DP::compute_mdcell_(MDCell &mdcell, double &energy, ModuleBase::matrix &str
 #endif
         dp->compute(local_energy, force, virial, coord, local_atype, cell, nghost, nlist, 0, fparam, local_aparam);
     }
-    if (force.size() != static_cast<std::size_t>(3 * natom))
+    if (static_cast<int>(force.size()) != 3 * natom)
     {
         ModuleBase::WARNING_QUIT("ESolver_DP", "DeePMD returned an invalid force array for MDCell.");
     }
@@ -356,7 +356,7 @@ void DP::compute_mdcell_(MDCell &mdcell, double &energy, ModuleBase::matrix &str
     }
 }
 
-void DP::initialize_type_map_(const std::vector<std::string> &type_labels)
+void DP_Forcefield::initialize_type_map_(const std::vector<std::string> &type_labels)
 {
     std::string type = "";
     dp->get_type_map(type);
@@ -387,7 +387,7 @@ void DP::initialize_type_map_(const std::vector<std::string> &type_labels)
     std::cout << "\n -----------------------------------------------------------------" << std::endl;
 
     md_type_to_dp_type_.resize(type_labels.size());
-    for (std::size_t it = 0; it < type_labels.size(); ++it)
+    for (int it = 0; it < static_cast<int>(type_labels.size()); ++it)
     {
         const std::unordered_map<std::string, int>::const_iterator found = label.find(type_labels[it]);
         if (found == label.end())

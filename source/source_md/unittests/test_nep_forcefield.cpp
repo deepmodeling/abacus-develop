@@ -9,7 +9,7 @@
 #include <fstream>
 #include <string>
 
-TEST(NEPPotential, UnitCellCalculationOrMissingBackend)
+TEST(NEP_Forcefield, UnitCellCalculationOrMissingBackend)
 {
     const std::string model_file = "nep_hfo2.txt";
 
@@ -20,7 +20,7 @@ TEST(NEPPotential, UnitCellCalculationOrMissingBackend)
     Setcell::parameters(input);
     const std::string output_dir = testing::TempDir();
     std::ofstream running_log;
-    ModuleMD::NEPPotential potential(model_file, output_dir, running_log);
+    ModuleMD::NEP_Forcefield potential(model_file, output_dir, running_log);
     potential.initialize(cell, input);
 
     double energy = 0.0;
@@ -38,7 +38,7 @@ TEST(NEPPotential, UnitCellCalculationOrMissingBackend)
     }
 
     MDCell mdcell = Setcell::setup_mdcell(cell);
-    ModuleMD::NEPPotential md_potential(model_file, output_dir, running_log);
+    ModuleMD::NEP_Forcefield md_potential(model_file, output_dir, running_log);
     md_potential.initialize(mdcell, input);
     DomainDecomposition decomp;
     decomp.init(ModuleBase::world_comm_domain(), mdcell.latvec(), mdcell.lat0(), 0.0, 0.0);

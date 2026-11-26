@@ -12,10 +12,10 @@
 namespace ModuleMD
 {
 
-class SnapPotential : public ForceField
+class SNAP_Forcefield : public ForceField
 {
   public:
-    SnapPotential(
+    SNAP_Forcefield(
         const std::string &coefficient_file,
         const std::string &parameter_file,
         std::ofstream &running_log,

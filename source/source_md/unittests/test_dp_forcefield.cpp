@@ -23,7 +23,7 @@ TEST(DPPotential, UnitCellCalculationOrMissingBackend)
     Setcell::parameters(input);
     const std::string output_dir = testing::TempDir();
     std::ofstream running_log;
-    ModuleMD::DP potential(model_file, output_dir, running_log);
+    ModuleMD::DP_Forcefield potential(model_file, output_dir, running_log);
     potential.initialize(cell, input);
 
     double energy = 0.0;

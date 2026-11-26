@@ -12,10 +12,10 @@
 namespace ModuleMD
 {
 
-class LJ : public ForceField
+class LJ_Forcefield : public ForceField
 {
   public:
-    LJ(const std::string &output_dir, std::ofstream &running_log);
+    LJ_Forcefield(const std::string &output_dir, std::ofstream &running_log);
 
     void initialize(BaseCell &cell, const Input_para &inp) override;
     void compute(

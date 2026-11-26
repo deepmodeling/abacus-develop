@@ -31,11 +31,11 @@ class DomainDecomposition;
 
 namespace ModuleMD
 {
-class DP : public ForceField
+class DP_Forcefield : public ForceField
 {
   public:
-    DP(const std::string &pot_file, const std::string &output_dir, std::ofstream &running_log);
-    ~DP() override;
+    DP_Forcefield(const std::string &pot_file, const std::string &output_dir, std::ofstream &running_log);
+    ~DP_Forcefield() override;
 
     void initialize(BaseCell &cell, const Input_para &inp) override;
     void compute(
