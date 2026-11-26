@@ -15,7 +15,6 @@
 #include "source_psi/psi.h"
 
 #include <algorithm>
-#include <limits>
 #include <ostream>
 #include <sstream>
 #include <vector>
@@ -354,12 +353,6 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(const HSOperator<T, Device>& op,
     {
         const int dim = psi.get_current_ngk();
         const int nband = psi.get_nbands();
-        const int largest_block = std::numeric_limits<int>::max() / 3;
-        if (this->lobpcg_extra_bands > largest_block - nband)
-        {
-            ModuleBase::WARNING_QUIT("HSolverPW::hamiltSolvePsiK", "Invalid lobpcg_extra_bands: block dimension is out of range.");
-        }
-        const int nmax = nband + this->lobpcg_extra_bands;
         const int ld_psi = psi.get_nbasis();
         const double tolerance = this->diag_thr;
         const std::vector<double> uniform_thresholds;
@@ -367,7 +360,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(const HSOperator<T, Device>& op,
         const int npol = psi.get_npol();
         const LobpcgBasisLayout layout = {cur_nbasis, npol};
         const LobpcgLocking locking = this->lobpcg_locking == "soft" ? LobpcgLocking::Soft : LobpcgLocking::Hard;
-        DiagoLOBPCG<T, Device> lobpcg(pre_condition.data(), nband, dim, nmax, layout, comm_info,
+        DiagoLOBPCG<T, Device> lobpcg(pre_condition.data(), nband, dim, nband, layout, comm_info,
                                       this->diag_subspace, this->nb2d, this->use_uspp, locking, this->rr_solver,
                                       this->gpu_rr_solver);
         const bool converged = lobpcg.diag(op, psi.get_pointer(), ld_psi, eigenvalue, tolerance,

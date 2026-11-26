@@ -1083,19 +1083,6 @@ Use case: When experimental or high-level theoretical results suggest that the S
         this->add_item(item);
     }
     {
-        Input_Item item("lobpcg_extra_bands");
-        item.domain.set_rule("value>=0");
-        item.annotation = "number of extra internal LOBPCG vectors";
-        item.category = "Plane wave related variables";
-        item.type = "Integer";
-        item.description = R"(Number of extra bands used internally in addition to nbands. A small positive value can help when closely spaced or degenerate bands near the highest requested band converge slowly. Larger values require more memory and computation.)";
-        item.default_value = "0";
-        item.unit = "";
-        item.set_availability("basis_type==pw and ks_solver==lobpcg");
-        read_sync_int(input.lobpcg_extra_bands);
-        this->add_item(item);
-    }
-    {
         Input_Item item("lobpcg_locking");
         item.domain.set_choices({"hard", "soft"});
         item.annotation = "locking policy for LOBPCG";

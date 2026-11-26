@@ -220,10 +220,10 @@ class TestHSolverPW : public ::testing::Test
     using Assist = hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>;
     hsolver::HSolverPW<std::complex<float>, base_device::DEVICE_CPU> hs_f{
         &pwbk, "scf", "pw", "cg", false, 1, Assist::SCF_ITER, Assist::PW_DIAG_NMAX,
-        Assist::PW_DIAG_THR, Assist::need_subspace, 0, false, 4, 0, "hard", 0, 0};
+        Assist::PW_DIAG_THR, Assist::need_subspace, 0, false, 4, "hard", 0, 0};
     hsolver::HSolverPW<std::complex<double>, base_device::DEVICE_CPU> hs_d{
         &pwbk, "scf", "pw", "cg", false, 1, Assist::SCF_ITER, Assist::PW_DIAG_NMAX,
-        Assist::PW_DIAG_THR, Assist::need_subspace, 0, false, 4, 0, "hard", 0, 0};
+        Assist::PW_DIAG_THR, Assist::need_subspace, 0, false, 4, "hard", 0, 0};
 
     IdentityHSOperator<std::complex<double>> hamilt_test_d;
     IdentityHSOperator<std::complex<float>> hamilt_test_f;
@@ -295,7 +295,7 @@ class TestHSolverPW : public ::testing::Test
         std::vector<double> eig(4);
         const hsolver::HSOperator<C>& op = dependent ? hamilt_test_d : diagonal;
         hsolver::HSolverPW<C> solver(&pwbk, calculation, "pw", "lobpcg", false,
-                                    1, 1, 1, 1e-12, false, 4, false, 4, 0, "hard", 0, 0);
+                                    1, 1, 1, 1e-12, false, 4, false, 4, "hard", 0, 0);
         hamiltSolvePsiK(solver, op, ps, prec, eig.data(), 1);
         std::exit(0);
     }

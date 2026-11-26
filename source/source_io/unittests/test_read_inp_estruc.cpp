@@ -28,23 +28,6 @@ class LobpcgInputTest : public testing::Test
 
 };
 
-TEST_F(LobpcgInputTest, LobpcgExtraBands)
-{
-    Items::iterator found = find_label("lobpcg_extra_bands", items);
-    ASSERT_NE(found, items.end());
-    ModuleIO::Input_Item& item = found->second;
-    EXPECT_EQ(param.inp.lobpcg_extra_bands, 0);
-    EXPECT_EQ(item.default_value, "0");
-    EXPECT_TRUE(item.domain.validate_explicit(item.label, {"0"}).empty());
-    EXPECT_TRUE(item.domain.validate_explicit(item.label, {"5"}).empty());
-    EXPECT_FALSE(item.domain.validate_explicit(item.label, {"-1"}).empty());
-    item.str_values = {"5"};
-    item.read_value(item, param);
-    EXPECT_EQ(param.inp.lobpcg_extra_bands, 5);
-    item.get_final_value(item, param);
-    EXPECT_EQ(item.final_value.str(), "5");
-}
-
 TEST_F(LobpcgInputTest, PwDiagNmaxMustBePositive)
 {
     Items::iterator item = find_label("pw_diag_nmax", items);

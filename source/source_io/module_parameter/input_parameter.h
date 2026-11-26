@@ -98,7 +98,6 @@ struct Input_para
     double pw_diag_thr = 0.01;      ///< used in cg method
     bool diago_smooth_ethr = false; ///< smooth ethr for iter methods
     int pw_diag_ndim = 4;           ///< dimension of workspace for Davidson diagonalization
-    int lobpcg_extra_bands = 0;     ///< internal LOBPCG columns beyond the requested bands
     std::string lobpcg_locking = "hard"; ///< hard freezes converged vectors; soft keeps them in RR
     int diago_cg_prec = 1;          ///< mohan add 2012-03-31
     int diag_subspace = 0;          // 0: Lapack, 1: elpa, 2: scalapack
