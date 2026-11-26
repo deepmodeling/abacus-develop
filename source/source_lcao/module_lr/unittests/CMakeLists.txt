@@ -150,10 +150,7 @@ if(ENABLE_MPI)
                "OMP_NUM_THREADS=1;MKL_NUM_THREADS=1;OPENBLAS_NUM_THREADS=1")
 endif()
 
-AddTest(
-  TARGET MODULE_LR_spectrum_weights
-  SOURCES test_spectrum_weights.cpp
-)
+addtest(TARGET MODULE_LR_spectrum_weights SOURCES test_spectrum_weights.cpp)
 
 if(ENABLE_LIBXC)
   addtest(
@@ -191,18 +188,21 @@ if(ENABLE_LIBXC)
             ../../../source_hamilt/module_xc/libxc_setup.cpp)
 
   if(ENABLE_MPI)
-    foreach(target MODULE_LR_pot_hxc_lrtd MODULE_LR_xc_kernel MODULE_LR_pot_grad_xc)
-      target_sources(${target} PRIVATE ../../../source_base/test/mpi_test_main.cpp)
+    foreach(target MODULE_LR_pot_hxc_lrtd MODULE_LR_xc_kernel
+                   MODULE_LR_pot_grad_xc)
+      target_sources(${target}
+                     PRIVATE ../../../source_base/test/mpi_test_main.cpp)
     endforeach()
-    add_test(NAME MODULE_LR_xc_kernel_parallel
-      COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 4 ${MPIEXEC_PREFLAGS}
+    add_test(
+      NAME MODULE_LR_xc_kernel_parallel
+      COMMAND
+        ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 4 ${MPIEXEC_PREFLAGS}
         $<TARGET_FILE:MODULE_LR_xc_kernel> ${MPIEXEC_POSTFLAGS}
-        --gtest_filter=KernelXCTest.HseGroundResponseFallback*:KernelXCTest.HseGroundResponseRetry*)
+        --gtest_filter=KernelXCTest.HseGroundResponseFallback*:KernelXCTest.HseGroundResponseRetry*
+    )
     set_tests_properties(MODULE_LR_xc_kernel_parallel PROPERTIES PROCESSORS 4)
   endif()
 endif()
 
-AddTest(
-  TARGET MODULE_LR_window_response
-  SOURCES test_window_response_math.cpp ../window_response_math.cpp
-)
+addtest(TARGET MODULE_LR_window_response SOURCES test_window_response_math.cpp
+                                                 ../window_response_math.cpp)
