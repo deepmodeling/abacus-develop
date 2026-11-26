@@ -339,7 +339,7 @@ public:
         const size_t ncols = data_.shape()[1];
         // if not all titles are empty, then with_title boolean will be true
         bool with_title = false;
-        for (auto& title: titles_) {
+        for (std::string& title: titles_) {
             if (!title.empty()) {
                 with_title = true;
                 break;

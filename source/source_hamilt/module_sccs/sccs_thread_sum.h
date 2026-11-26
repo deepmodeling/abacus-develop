@@ -18,7 +18,7 @@ namespace ModuleSccs
 // sums on every run, and one thread gives the serial loop. The sqrt-CG
 // iteration count depends on the last bits of its inner products.
 template <std::size_t Count, typename Accumulate>
-std::array<double, Count> thread_sums(std::size_t size, const Accumulate& accumulate)
+std::array<double, Count> thread_sums(std::size_t size, const Accumulate &accumulate)
 {
 #ifdef _OPENMP
     const int thread_count = omp_get_max_threads();

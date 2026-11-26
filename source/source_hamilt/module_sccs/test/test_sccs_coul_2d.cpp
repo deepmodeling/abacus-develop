@@ -1,24 +1,21 @@
-#include "sccs_test.h"
-#include "../sccs_coul_2d.h"
 #include "../sccs_cav_deriv.h"
+#include "../sccs_coul_2d.h"
 #include "../sccs_functional.h"
 #include "../sccs_parameters.h"
 #include "../sccs_response.h"
+#include "sccs_test.h"
 
 #include "source_base/parallel_reduce.h"
 #include "source_basis/module_pw/pw_grid_geometry.h"
 #include "source_cell/cell_geometry.h"
 
-
 class SccsPcc2dCoulombTest : public SccsTest::PwTest
 {
-protected:
+  protected:
     void SetUp() override
     {
         // Oblique periodic plane, with a perpendicular open vector along x.
-        const ModuleBase::Matrix3 lattice(0.0, 1.0, 0.0,
-                                          0.0, 0.2, 1.0,
-                                          1.5, 0.0, 0.0);
+        const ModuleBase::Matrix3 lattice(0.0, 1.0, 0.0, 0.0, 0.2, 1.0, 1.5, 0.0, 0.0);
         set_up_basis(lattice);
         unitcell::SlabCell cell;
         ASSERT_TRUE(unitcell::make_slab_cell(lattice, length, 2, 1e-10, cell));
@@ -26,14 +23,14 @@ protected:
         normal = cell.normal;
         parameters = elecstate::make_pcc_2d_parameters(cell);
         ModulePW::grid_positions(basis, lattice, length, positions);
-        for (ModuleBase::Vector3<double>& position : positions)
+        for (ModuleBase::Vector3<double> &position : positions)
         {
             const double coordinate = unitcell::relative_coordinate(position, cell);
             position = normal * coordinate;
         }
     }
 
-    double integrate_product(const std::vector<double>& left, const std::vector<double>& right) const
+    double integrate_product(const std::vector<double> &left, const std::vector<double> &right) const
     {
         double value = 0.0;
         for (int ir = 0; ir < basis.nrxx; ++ir)
@@ -95,7 +92,7 @@ TEST_F(SccsPcc2dCoulombTest, ChargedPlanarModeMatchesAnalyticGauge)
         EXPECT_NEAR(potential[ir], expected, 1e-12);
     }
     std::vector<double> direction = cosine_mode(0);
-    for (double& value : direction)
+    for (double &value : direction)
     {
         value = SccsTest::probe_mean + SccsTest::probe_amplitude * value;
     }
@@ -109,7 +106,7 @@ TEST_F(SccsPcc2dCoulombTest, ChargedPlanarModeMatchesAnalyticGauge)
 TEST_F(SccsPcc2dCoulombTest, UniformDielectricRetainsChargedGaugeAndReactionEnergy)
 {
     std::vector<double> charge = cosine_mode(0);
-    for (double& value : charge)
+    for (double &value : charge)
     {
         value = SccsTest::charge_mean + SccsTest::charge_amplitude * value;
     }
@@ -126,12 +123,11 @@ TEST_F(SccsPcc2dCoulombTest, UniformDielectricRetainsChargedGaugeAndReactionEner
         ModuleSccs::SccsConfig config = ModuleSccs::preset_config(ModuleSccs::Preset::Vacuum);
         config.cavity.epsilon_bulk = epsilon;
         ModuleSccs::SccsResponse response;
-        ModuleSccs::solve_response(density, charge, config.cavity, SccsTest::no_probe, solver, cold,
-                                   basis, tpiba, coulomb, response);
+        ModuleSccs::solve_response(
+            density, charge, config.cavity, SccsTest::no_probe, solver, cold, basis, tpiba, coulomb, response);
         EXPECT_EQ(response.polarization.iterations, 1);
         ModuleSccs::FunctionalResult result;
-        ModuleSccs::eval_functional(charge, response, config, SccsTest::no_probe, basis, tpiba,
-                                    coulomb, result);
+        ModuleSccs::eval_functional(charge, response, config, SccsTest::no_probe, basis, tpiba, coulomb, result);
         for (int ir = 0; ir < basis.nrxx; ++ir)
         {
             const double expected_potential = vacuum[ir] / epsilon;
@@ -139,7 +135,7 @@ TEST_F(SccsPcc2dCoulombTest, UniformDielectricRetainsChargedGaugeAndReactionEner
             EXPECT_NEAR(response.polarization.potential[ir], expected_potential, 1e-13);
             EXPECT_NEAR(result.reaction_potential[ir], expected_reaction, 1e-13);
             const double expected_electron_potential = -expected_reaction;
-        EXPECT_NEAR(result.electron_potential[ir], expected_electron_potential, 1e-13);
+            EXPECT_NEAR(result.electron_potential[ir], expected_electron_potential, 1e-13);
         }
         const double expected_energy = 0.5 * (1.0 / epsilon - 1.0) * integrate_product(charge, vacuum);
         EXPECT_NEAR(result.reaction_energy, expected_energy, 1e-13);
@@ -169,14 +165,14 @@ TEST_F(SccsPcc2dCoulombTest, NonuniformResponseSatisfiesFixedPointAndWarmStart)
     ModuleSccs::Pcc2dCoulombOperator coulomb(basis, tpiba, positions, normal, parameters);
     const std::vector<double> cold;
     ModuleSccs::SccsResponse response;
-    ModuleSccs::solve_response(density, charge, cavity, SccsTest::no_probe, solver, cold,
-                               basis, tpiba, coulomb, response);
+    ModuleSccs::solve_response(
+        density, charge, cavity, SccsTest::no_probe, solver, cold, basis, tpiba, coulomb, response);
     const bool open_boundary = true;
     ModuleSccs::SccsResponse derivatives;
     ModuleSccs::CavityDerivatives cavity_derivatives;
-    const std::vector<double>& coefficient = cavity_derivatives.coefficient;
-    ModuleSccs::make_cav_derivs(density, cavity, SccsTest::no_probe, basis, tpiba, open_boundary,
-                                derivatives, cavity_derivatives);
+    const std::vector<double> &coefficient = cavity_derivatives.coefficient;
+    ModuleSccs::make_cav_derivs(
+        density, cavity, SccsTest::no_probe, basis, tpiba, open_boundary, derivatives, cavity_derivatives);
     std::vector<double> source(basis.nrxx);
     for (int ir = 0; ir < basis.nrxx; ++ir)
     {
@@ -191,8 +187,9 @@ TEST_F(SccsPcc2dCoulombTest, NonuniformResponseSatisfiesFixedPointAndWarmStart)
         EXPECT_NEAR(response.polarization.potential[ir], expected, 1e-10);
     }
     ModuleSccs::SccsResponse restarted;
-    ModuleSccs::solve_response(density, charge, cavity, SccsTest::no_probe, solver, response.restart_potential,
-                               basis, tpiba, coulomb, restarted);
+    ModuleSccs::solve_response(
+        density, charge, cavity, SccsTest::no_probe, solver, response.restart_potential, basis, tpiba, coulomb,
+        restarted);
     EXPECT_TRUE(restarted.polarization.warm_started);
     EXPECT_LT(restarted.polarization.iterations, response.polarization.iterations);
     for (int ir = 0; ir < basis.nrxx; ++ir)

@@ -1,6 +1,6 @@
+#include "source_hamilt/module_hcontainer/hcontainer.h"
 #include "tmp_mocks.h"
 #include "gtest/gtest.h"
-#include "source_hamilt/module_hcontainer/hcontainer.h"
 
 // Tests for add_value_intersection and add_value_union.
 // HContainer is built via Parallel_Orbitals (serial):
@@ -24,57 +24,68 @@ class AddValueTest : public ::testing::Test
     }
 
     // Insert all 2*2 pairs at R=(0,0,0) and allocate memory (zero-initialized).
-    void insert_all_pairs(hamilt::HContainer<double>* hc)
+    void insert_all_pairs(hamilt::HContainer<double> *hc)
     {
         for (int i = 0; i < 2; i++)
+        {
             for (int j = 0; j < 2; j++)
             {
                 hamilt::AtomPair<double> ap(i, j, 0, 0, 0, &paraV);
                 hc->insert_pair(ap);
             }
+        }
         hc->allocate(nullptr, true);
     }
 
     // Build an HContainer with only R=(0,0,0), writing the given values into each pair.
     // fill: { {i, j, values}, ... }  where values.size() == nw(i) * nw(j)
-    hamilt::HContainer<double>* make_hc(
-        const std::vector<std::tuple<int, int, std::vector<double>>>& fill)
+    hamilt::HContainer<double> *make_hc(const std::vector<std::tuple<int, int, std::vector<double>>> &fill)
     {
-        auto* hc = new hamilt::HContainer<double>(&paraV);
+        hamilt::HContainer<double>* hc = new hamilt::HContainer<double>(&paraV);
         insert_all_pairs(hc);
-        for (auto& item : fill)
+        for (auto &item : fill)
         {
             int i = std::get<0>(item);
             int j = std::get<1>(item);
-            const std::vector<double>& vals = std::get<2>(item);
-            double* ptr = hc->find_matrix(i, j, 0, 0, 0)->get_pointer();
+            const std::vector<double> &vals = std::get<2>(item);
+            double *ptr = hc->find_matrix(i, j, 0, 0, 0)->get_pointer();
             for (int k = 0; k < (int)vals.size(); k++)
+            {
                 ptr[k] = vals[k];
+            }
         }
         return hc;
     }
 
     // Build an HContainer that also has R=(rx,ry,rz) for pair (i,j), with values written.
     // Used only for multi-R tests; calls allocate a second time to include the extra R.
-    hamilt::HContainer<double>* make_hc_multiR(
-        int i, int j, int rx, int ry, int rz,
-        const std::vector<double>& vals_000,
-        const std::vector<double>& vals_R)
+    hamilt::HContainer<double> *make_hc_multiR(
+        int i,
+        int j,
+        int rx,
+        int ry,
+        int rz,
+        const std::vector<double> &vals_000,
+        const std::vector<double> &vals_R)
     {
-        auto* hc = new hamilt::HContainer<double>(&paraV);
+        hamilt::HContainer<double>* hc = new hamilt::HContainer<double>(&paraV);
         insert_all_pairs(hc);
         // Register extra R vector
         hc->get_atom_pair(i, j).get_HR_values(rx, ry, rz);
         // Reallocate so the extra R is included in the wrapper
         hc->allocate(nullptr, true);
         // Write R=(0,0,0) values
-        double* p0 = hc->find_matrix(i, j, 0, 0, 0)->get_pointer();
+        double *p0 = hc->find_matrix(i, j, 0, 0, 0)->get_pointer();
         for (int k = 0; k < (int)vals_000.size(); k++)
+        {
             p0[k] = vals_000[k];
+        }
         // Write extra-R values
-        double* pR = hc->find_matrix(i, j, rx, ry, rz)->get_pointer();
+        double *pR = hc->find_matrix(i, j, rx, ry, rz)->get_pointer();
         for (int k = 0; k < (int)vals_R.size(); k++)
+        {
             pR[k] = vals_R[k];
+        }
         return hc;
     }
 };
@@ -87,23 +98,25 @@ class AddValueTest : public ::testing::Test
 TEST_F(AddValueTest, intersection_same_sparsity)
 {
     // pair(0,1): 2×3=6 elements; pair(1,0): 3×2=6 elements
-    auto* dst = make_hc({
-        {0, 1, {1, 2, 3, 4, 5, 6}},
-        {1, 0, {7, 8, 9, 10, 11, 12}},
-    });
-    auto* src = make_hc({
-        {0, 1, {10, 20, 30, 40, 50, 60}},
-        {1, 0, {70, 80, 90, 100, 110, 120}},
-    });
+    hamilt::HContainer<double>* dst = make_hc(
+        {
+            {0, 1, {1, 2, 3, 4, 5, 6}},
+            {1, 0, {7, 8, 9, 10, 11, 12}},
+        });
+    hamilt::HContainer<double>* src = make_hc(
+        {
+            {0, 1, {10, 20, 30, 40, 50, 60}},
+            {1, 0, {70, 80, 90, 100, 110, 120}},
+        });
 
     dst->add_value_intersection(*src, 1.0);
 
-    double* p01 = dst->find_matrix(0, 1, 0, 0, 0)->get_pointer();
+    double *p01 = dst->find_matrix(0, 1, 0, 0, 0)->get_pointer();
     EXPECT_DOUBLE_EQ(p01[0], 11.0);
     EXPECT_DOUBLE_EQ(p01[1], 22.0);
     EXPECT_DOUBLE_EQ(p01[5], 66.0);
 
-    double* p10 = dst->find_matrix(1, 0, 0, 0, 0)->get_pointer();
+    double *p10 = dst->find_matrix(1, 0, 0, 0, 0)->get_pointer();
     EXPECT_DOUBLE_EQ(p10[0], 77.0);
     EXPECT_DOUBLE_EQ(p10[5], 132.0);
 
@@ -114,13 +127,13 @@ TEST_F(AddValueTest, intersection_same_sparsity)
 // 2. factor parameter: this += 2.0 * other
 TEST_F(AddValueTest, intersection_factor)
 {
-    auto* dst = make_hc({{0, 1, {1, 0, 0, 0, 0, 0}}});
-    auto* src = make_hc({{0, 1, {3, 0, 0, 0, 0, 0}}});
+    hamilt::HContainer<double>* dst = make_hc({{0, 1, {1, 0, 0, 0, 0, 0}}});
+    hamilt::HContainer<double>* src = make_hc({{0, 1, {3, 0, 0, 0, 0, 0}}});
 
     dst->add_value_intersection(*src, 2.0);
 
-    double* ptr = dst->find_matrix(0, 1, 0, 0, 0)->get_pointer();
-    EXPECT_DOUBLE_EQ(ptr[0], 7.0);    // 1 + 2*3 = 7
+    double *ptr = dst->find_matrix(0, 1, 0, 0, 0)->get_pointer();
+    EXPECT_DOUBLE_EQ(ptr[0], 7.0); // 1 + 2*3 = 7
     EXPECT_DOUBLE_EQ(ptr[1], 0.0);
 
     delete dst;
@@ -130,12 +143,12 @@ TEST_F(AddValueTest, intersection_factor)
 // 3. Negative factor: this += -1.0 * other
 TEST_F(AddValueTest, intersection_negative_factor)
 {
-    auto* dst = make_hc({{0, 1, {10, 20, 30, 40, 50, 60}}});
-    auto* src = make_hc({{0, 1, {1, 2, 3, 4, 5, 6}}});
+    hamilt::HContainer<double>* dst = make_hc({{0, 1, {10, 20, 30, 40, 50, 60}}});
+    hamilt::HContainer<double>* src = make_hc({{0, 1, {1, 2, 3, 4, 5, 6}}});
 
     dst->add_value_intersection(*src, -1.0);
 
-    double* ptr = dst->find_matrix(0, 1, 0, 0, 0)->get_pointer();
+    double *ptr = dst->find_matrix(0, 1, 0, 0, 0)->get_pointer();
     EXPECT_DOUBLE_EQ(ptr[0], 9.0);
     EXPECT_DOUBLE_EQ(ptr[1], 18.0);
     EXPECT_DOUBLE_EQ(ptr[5], 54.0);
@@ -149,23 +162,24 @@ TEST_F(AddValueTest, intersection_negative_factor)
 TEST_F(AddValueTest, intersection_partial_overlap)
 {
     // dst only fills (0,1); (1,0) stays 0 (zero-allocated by make_hc)
-    auto* dst = make_hc({{0, 1, {1, 2, 3, 4, 5, 6}}});
+    hamilt::HContainer<double>* dst = make_hc({{0, 1, {1, 2, 3, 4, 5, 6}}});
     // src fills both (0,1) and (1,0)
-    auto* src = make_hc({
-        {0, 1, {10, 20, 30, 40, 50, 60}},
-        {1, 0, {99, 99, 99, 99, 99, 99}},
-    });
+    hamilt::HContainer<double>* src = make_hc(
+        {
+            {0, 1, {10, 20, 30, 40, 50, 60}},
+            {1, 0, {99, 99, 99, 99, 99, 99}},
+        });
 
     dst->add_value_intersection(*src, 1.0);
 
     // (0,1) should be correctly accumulated
-    double* p01 = dst->find_matrix(0, 1, 0, 0, 0)->get_pointer();
+    double *p01 = dst->find_matrix(0, 1, 0, 0, 0)->get_pointer();
     EXPECT_DOUBLE_EQ(p01[0], 11.0);
     EXPECT_DOUBLE_EQ(p01[5], 66.0);
 
     // (1,0) exists in dst (zero-initialized); intersection iterates this's pairs,
     // so it finds (1,0) in dst and adds src's (1,0) values: 0+99=99
-    double* p10 = dst->find_matrix(1, 0, 0, 0, 0)->get_pointer();
+    double *p10 = dst->find_matrix(1, 0, 0, 0, 0)->get_pointer();
     EXPECT_DOUBLE_EQ(p10[0], 99.0);
 
     delete dst;
@@ -176,11 +190,9 @@ TEST_F(AddValueTest, intersection_partial_overlap)
 TEST_F(AddValueTest, intersection_multi_R)
 {
     // dst: (0,1) has R=(0,0,0) and R=(1,0,0)
-    auto* dst = make_hc_multiR(0, 1, 1, 0, 0,
-                                {1, 0, 0, 0, 0, 0},
-                                {2, 0, 0, 0, 0, 0});
+    hamilt::HContainer<double>* dst = make_hc_multiR(0, 1, 1, 0, 0, {1, 0, 0, 0, 0, 0}, {2, 0, 0, 0, 0, 0});
     // src: (0,1) has only R=(0,0,0)
-    auto* src = make_hc({{0, 1, {10, 0, 0, 0, 0, 0}}});
+    hamilt::HContainer<double>* src = make_hc({{0, 1, {10, 0, 0, 0, 0, 0}}});
 
     dst->add_value_intersection(*src, 1.0);
 
@@ -201,12 +213,12 @@ TEST_F(AddValueTest, intersection_multi_R)
 //    (old code produced all zeros here; correct after bug fix)
 TEST_F(AddValueTest, union_basic_sum)
 {
-    auto* dst = make_hc({{0, 1, {1, 2, 3, 4, 5, 6}}});
-    auto* src = make_hc({{0, 1, {10, 20, 30, 40, 50, 60}}});
+    hamilt::HContainer<double>* dst = make_hc({{0, 1, {1, 2, 3, 4, 5, 6}}});
+    hamilt::HContainer<double>* src = make_hc({{0, 1, {10, 20, 30, 40, 50, 60}}});
 
     dst->add_value_union(*src, 1.0);
 
-    double* ptr = dst->find_matrix(0, 1, 0, 0, 0)->get_pointer();
+    double *ptr = dst->find_matrix(0, 1, 0, 0, 0)->get_pointer();
     EXPECT_DOUBLE_EQ(ptr[0], 11.0);
     EXPECT_DOUBLE_EQ(ptr[1], 22.0);
     EXPECT_DOUBLE_EQ(ptr[5], 66.0);
@@ -219,19 +231,19 @@ TEST_F(AddValueTest, union_basic_sum)
 //    (old add_value_union zeroed out other; this test specifically checks the fix)
 TEST_F(AddValueTest, union_does_not_corrupt_other)
 {
-    auto* dst = make_hc({});  // all pairs default to 0
-    auto* src = make_hc({{0, 1, {1, 2, 3, 4, 5, 6}}});
+    hamilt::HContainer<double>* dst = make_hc({}); // all pairs default to 0
+    hamilt::HContainer<double>* src = make_hc({{0, 1, {1, 2, 3, 4, 5, 6}}});
 
     dst->add_value_union(*src, 1.0);
 
     // src data must be fully preserved
-    double* src_ptr = src->find_matrix(0, 1, 0, 0, 0)->get_pointer();
+    double *src_ptr = src->find_matrix(0, 1, 0, 0, 0)->get_pointer();
     EXPECT_DOUBLE_EQ(src_ptr[0], 1.0);
     EXPECT_DOUBLE_EQ(src_ptr[1], 2.0);
     EXPECT_DOUBLE_EQ(src_ptr[5], 6.0);
 
     // dst should be correctly accumulated
-    double* dst_ptr = dst->find_matrix(0, 1, 0, 0, 0)->get_pointer();
+    double *dst_ptr = dst->find_matrix(0, 1, 0, 0, 0)->get_pointer();
     EXPECT_DOUBLE_EQ(dst_ptr[0], 1.0);
     EXPECT_DOUBLE_EQ(dst_ptr[5], 6.0);
 
@@ -242,13 +254,13 @@ TEST_F(AddValueTest, union_does_not_corrupt_other)
 // 8. factor parameter: this += 2.0 * other
 TEST_F(AddValueTest, union_factor)
 {
-    auto* dst = make_hc({{0, 1, {1, 0, 0, 0, 0, 0}}});
-    auto* src = make_hc({{0, 1, {3, 0, 0, 0, 0, 0}}});
+    hamilt::HContainer<double>* dst = make_hc({{0, 1, {1, 0, 0, 0, 0, 0}}});
+    hamilt::HContainer<double>* src = make_hc({{0, 1, {3, 0, 0, 0, 0, 0}}});
 
     dst->add_value_union(*src, 2.0);
 
-    double* ptr = dst->find_matrix(0, 1, 0, 0, 0)->get_pointer();
-    EXPECT_DOUBLE_EQ(ptr[0], 7.0);   // 1 + 2*3 = 7
+    double *ptr = dst->find_matrix(0, 1, 0, 0, 0)->get_pointer();
+    EXPECT_DOUBLE_EQ(ptr[0], 7.0); // 1 + 2*3 = 7
 
     delete dst;
     delete src;
@@ -258,17 +270,17 @@ TEST_F(AddValueTest, union_factor)
 //    also verifies that each term's data is not corrupted after each call
 TEST_F(AddValueTest, union_accumulate_three_terms)
 {
-    auto* sum = make_hc({});
+    hamilt::HContainer<double>* sum = make_hc({});
 
-    auto* t1 = make_hc({{0, 1, {1, 0, 0, 0, 0, 0}}});
-    auto* t2 = make_hc({{0, 1, {0, 2, 0, 0, 0, 0}}});
-    auto* t3 = make_hc({{0, 1, {0, 0, 3, 0, 0, 0}}});
+    hamilt::HContainer<double>* t1 = make_hc({{0, 1, {1, 0, 0, 0, 0, 0}}});
+    hamilt::HContainer<double>* t2 = make_hc({{0, 1, {0, 2, 0, 0, 0, 0}}});
+    hamilt::HContainer<double>* t3 = make_hc({{0, 1, {0, 0, 3, 0, 0, 0}}});
 
     sum->add_value_union(*t1, 1.0);
     sum->add_value_union(*t2, 1.0);
     sum->add_value_union(*t3, 1.0);
 
-    double* ptr = sum->find_matrix(0, 1, 0, 0, 0)->get_pointer();
+    double *ptr = sum->find_matrix(0, 1, 0, 0, 0)->get_pointer();
     EXPECT_DOUBLE_EQ(ptr[0], 1.0);
     EXPECT_DOUBLE_EQ(ptr[1], 2.0);
     EXPECT_DOUBLE_EQ(ptr[2], 3.0);
@@ -288,11 +300,9 @@ TEST_F(AddValueTest, union_accumulate_three_terms)
 TEST_F(AddValueTest, union_new_R_from_other)
 {
     // dst: (0,1) has only R=(0,0,0), value 1
-    auto* dst = make_hc({{0, 1, {1, 0, 0, 0, 0, 0}}});
+    hamilt::HContainer<double>* dst = make_hc({{0, 1, {1, 0, 0, 0, 0, 0}}});
     // src: (0,1) has R=(0,0,0) and R=(1,0,0)
-    auto* src = make_hc_multiR(0, 1, 1, 0, 0,
-                                {10, 0, 0, 0, 0, 0},
-                                {99, 0, 0, 0, 0, 0});
+    hamilt::HContainer<double>* src = make_hc_multiR(0, 1, 1, 0, 0, {10, 0, 0, 0, 0, 0}, {99, 0, 0, 0, 0, 0});
 
     dst->add_value_union(*src, 1.0);
 
@@ -300,7 +310,7 @@ TEST_F(AddValueTest, union_new_R_from_other)
     EXPECT_DOUBLE_EQ(dst->find_matrix(0, 1, 0, 0, 0)->get_pointer()[0], 11.0);
 
     // R=(1,0,0): newly inserted and assigned (0 + 99 = 99)
-    double* pR = dst->find_matrix(0, 1, 1, 0, 0)->get_pointer();
+    double *pR = dst->find_matrix(0, 1, 1, 0, 0)->get_pointer();
     EXPECT_NE(pR, nullptr);
     EXPECT_DOUBLE_EQ(pR[0], 99.0);
 
@@ -315,10 +325,10 @@ TEST_F(AddValueTest, union_new_R_from_other)
 // 11. Multiple unions followed by intersection: verifies the two operations compose correctly
 TEST_F(AddValueTest, union_then_intersection)
 {
-    auto* acc = make_hc({});
-    auto* t1  = make_hc({{0, 1, {3, 0, 0, 0, 0, 0}}});
-    auto* t2  = make_hc({{0, 1, {0, 5, 0, 0, 0, 0}}});
-    auto* ref = make_hc({{0, 1, {2, 2, 0, 0, 0, 0}}});
+    hamilt::HContainer<double>* acc = make_hc({});
+    hamilt::HContainer<double>* t1 = make_hc({{0, 1, {3, 0, 0, 0, 0, 0}}});
+    hamilt::HContainer<double>* t2 = make_hc({{0, 1, {0, 5, 0, 0, 0, 0}}});
+    hamilt::HContainer<double>* ref = make_hc({{0, 1, {2, 2, 0, 0, 0, 0}}});
 
     acc->add_value_union(*t1, 1.0);
     acc->add_value_union(*t2, 1.0);
@@ -326,9 +336,9 @@ TEST_F(AddValueTest, union_then_intersection)
     // acc = {3, 5, 0, ...}; subtract ref={2,2,...} via intersection
     acc->add_value_intersection(*ref, -1.0);
 
-    double* ptr = acc->find_matrix(0, 1, 0, 0, 0)->get_pointer();
-    EXPECT_DOUBLE_EQ(ptr[0], 1.0);   // 3 - 2
-    EXPECT_DOUBLE_EQ(ptr[1], 3.0);   // 5 - 2
+    double *ptr = acc->find_matrix(0, 1, 0, 0, 0)->get_pointer();
+    EXPECT_DOUBLE_EQ(ptr[0], 1.0); // 3 - 2
+    EXPECT_DOUBLE_EQ(ptr[1], 3.0); // 5 - 2
 
     delete acc;
     delete t1;
@@ -336,7 +346,7 @@ TEST_F(AddValueTest, union_then_intersection)
     delete ref;
 }
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();

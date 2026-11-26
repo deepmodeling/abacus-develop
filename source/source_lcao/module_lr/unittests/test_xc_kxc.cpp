@@ -1,5 +1,5 @@
 #include "../potentials/xc_kxc.h"
-#include <xc.h>
+#include "source_hamilt/module_xc/libxc_host.h"
 #include <xc_funcs.h>
 #include <gtest/gtest.h>
 #include <stdexcept>
@@ -72,7 +72,7 @@ TEST(XcKxc, InternalAuxiliaryIsNotAnIndependentMixedContribution)
 TEST(XcKxc, RuntimeLdaFlagsDetermineAvailability)
 {
     xc_func_type functional = {};
-    ASSERT_EQ(xc_func_init(&functional, XC_LDA_X, XC_UNPOLARIZED), 0);
+    ASSERT_EQ(XC_Functional_Libxc::init_func_host(&functional, XC_LDA_X, XC_UNPOLARIZED), 0);
     const xc_func_info_type* info = xc_func_get_info(&functional);
     const int flags = xc_func_info_get_flags(info);
     if ((flags & XC_FLAGS_HAVE_KXC) != 0)

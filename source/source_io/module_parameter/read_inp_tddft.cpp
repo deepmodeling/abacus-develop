@@ -1124,14 +1124,14 @@ void ReadInput::item_lr_tddft()
         item.unit = "";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             size_t count = item.get_size();
-            auto& ifxc = para.input.lr_init_xc_kernel;
+            std::vector<std::string>& ifxc = para.input.lr_init_xc_kernel;
             for (int i = 0; i < count; i++) { ifxc.push_back(item.str_values[i]); }
             };
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.lr_init_xc_kernel.empty()) { para.input.lr_init_xc_kernel.push_back("default"); }
             };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            const auto& input = para.input;
+            const Input_para& input = para.input;
             const bool lr = input.esolver_type == "lr" || input.esolver_type == "ks-lr";
             const bool forces = input.cal_force || input.calculation == "relax";
             const bool external_kernel = !input.lr_init_xc_kernel.empty()

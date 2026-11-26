@@ -1,3 +1,4 @@
+#include <cstdlib>
 #include <fstream>
 #include <sstream>
 #include <string>
@@ -95,7 +96,7 @@ TEST_F(WritePdosTextTest, BasicOutput)
     }
 
     ModuleIO::write_pdos_text(*ucell, &pdos, nspin, nlocal, npoints,
-                              emin, dos_edelta_ev, out_dir, istep, 0, log);
+                              emin, dos_edelta_ev, out_dir, istep, 0, 6, log);
 
     const std::string str = read_file("./pdoss1.txt");
 
@@ -130,7 +131,7 @@ TEST_F(WritePdosTextTest, Mode0FixedNameWithStep)
     pdos.zero_out();
 
     ModuleIO::write_pdos_text(*ucell, &pdos, nspin, nlocal, npoints,
-                              emin, dos_edelta_ev, "./", 2, 0, log);
+                              emin, dos_edelta_ev, "./", 2, 0, 6, log);
 
     const std::string str = read_file("./pdoss1.txt");
     EXPECT_THAT(str, testing::HasSubstr("# Ionic_Step 3"));
@@ -166,7 +167,7 @@ TEST_F(WritePdosTextTest, SpinPolarized)
     }
 
     ModuleIO::write_pdos_text(*ucell, pdos_arr, nspin, nlocal, npoints,
-                              emin, dos_edelta_ev, "./", -1, 0, log);
+                              emin, dos_edelta_ev, "./", -1, 0, 6, log);
 
     const std::string s1 = read_file("./pdoss1.txt");
     const std::string s2 = read_file("./pdoss2.txt");
@@ -179,6 +180,39 @@ TEST_F(WritePdosTextTest, SpinPolarized)
     remove("./pdoss2.txt");
     log.close();
     remove("test_write_pdos_text.log");
+}
+
+TEST_F(WritePdosTextTest, NpySumsZetasAndSpinorsBeforeThreshold)
+{
+    Atom& atom = ucell->atoms[0];
+    atom.nwl = 1;
+    atom.nw = 7;
+    atom.l_nchi = {1, 2};
+    atom.iw2l = {0, 1, 1, 1, 1, 1, 1};
+    atom.iw2m = {0, 0, 1, 2, 0, 1, 2};
+    ucell->set_iat2iwt_for_test({0}, 2);
+    std::vector<ModuleBase::matrix> pdos(1);
+    const int nrows = 2 * atom.nw;
+    pdos[0].create(nrows, 3, true);
+    for (int iw = 0; iw < nrows; ++iw)
+    {
+        pdos[0](iw, 0) = iw + 1;
+        pdos[0](iw, 1) = 0.3e-6;
+        pdos[0](iw, 2) = 0.1e-6;
+    }
+    const char* fixture_path = std::getenv("ABACUS_TEST_PDOS_NPY");
+    const std::string path = fixture_path ? fixture_path : testing::TempDir() + "abacus_pdos_spinor.npy";
+    ModuleIO::write_pdos_npy(*ucell, pdos, 4, -1.0, 0.5, path);
+    std::ifstream file(path, std::ios::binary);
+    // The last p channel combines both zetas and both spinor components.
+    double spectrum[3];
+    file.seekg(-static_cast<std::streamoff>(sizeof(spectrum)), std::ios::end);
+    ASSERT_TRUE(file.read(reinterpret_cast<char*>(spectrum), sizeof(spectrum)));
+    EXPECT_DOUBLE_EQ(spectrum[0], 42.0);
+    EXPECT_DOUBLE_EQ(spectrum[1], 1.2e-6);
+    EXPECT_DOUBLE_EQ(spectrum[2], 0.0);
+    file.close();
+    if (!fixture_path) { std::remove(path.c_str()); }
 }
 
 // ---------------------------------------------------------------------------
@@ -200,10 +234,10 @@ TEST_F(WritePdosTextTest, Mode1FixedNameAppend)
 
     // First call: istep=0, mode 1 -> fixed name pdoss1.txt.
     ModuleIO::write_pdos_text(*ucell, &pdos, nspin, nlocal, npoints,
-                              emin, dos_edelta_ev, "./", /*istep=*/0, out_app_flag, log);
+                              emin, dos_edelta_ev, "./", /*istep=*/0, out_app_flag, 6, log);
     // Second call: istep=1, mode 1 -> append to same file.
     ModuleIO::write_pdos_text(*ucell, &pdos, nspin, nlocal, npoints,
-                              emin, dos_edelta_ev, "./", /*istep=*/1, out_app_flag, log);
+                              emin, dos_edelta_ev, "./", /*istep=*/1, out_app_flag, 6, log);
 
     const std::string str = read_file("./pdoss1.txt");
     // Two Ionic_Step headers present -> two appended records.
@@ -235,7 +269,7 @@ TEST_F(WritePdosTextTest, Mode2PerStepFile)
     pdos.zero_out();
 
     ModuleIO::write_pdos_text(*ucell, &pdos, nspin, nlocal, npoints,
-                              emin, dos_edelta_ev, "./", 3, out_app_flag, log);
+                              emin, dos_edelta_ev, "./", 3, out_app_flag, 6, log);
 
     const std::string str = read_file("./pdoss1g4.txt");
     EXPECT_THAT(str, testing::HasSubstr("# Ionic_Step 4"));

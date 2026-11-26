@@ -22,13 +22,12 @@ BUILD_DIR=build_abacus_gcc_aocl
 rm -rf "${BUILD_DIR}"
 
 PREFIX="${ABACUS_DIR}"
-LAPACK="${AOCLhome}/lib"
 SCALAPACK="${AOCLhome}/lib"
 FFTW3="${AOCLhome}"
 LIBRI="${LIBRI_ROOT}"
 LIBCOMM="${LIBCOMM_ROOT}"
-USE_CUDA=OFF # set ON to enable gpu-abacus
-# NEP_DIR="${INSTALL_DIR}/NEP_CPU-main"
+USE_CUDA=OFF   # set ON to enable gpu-abacus
+ENABLE_NEP=OFF # set ON to enable NEP
 # LIBTORCH="${INSTALL_DIR}/libtorch-2.1.2/share/cmake/Torch"
 # LIBNPY="${INSTALL_DIR}/libnpy-1.0.1/include"
 # DEEPMD="${HOME}/apps/anaconda3/envs/deepmd"
@@ -62,7 +61,6 @@ cmake_args=(
   -DCMAKE_INSTALL_PREFIX="${PREFIX}"
   -DCMAKE_CXX_COMPILER=g++
   -DMPI_CXX_COMPILER=mpicxx
-  -DLAPACK_DIR="${LAPACK}"
   -DSCALAPACK_DIR="${SCALAPACK}"
   -DFFTW3_DIR="${FFTW3}"
   -DENABLE_LCAO=ON
@@ -74,7 +72,7 @@ cmake_args=(
   -DLIBRI_DIR="${LIBRI}"
   -DLIBCOMM_DIR="${LIBCOMM}"
   -DUSE_CUDA="${USE_CUDA}"
-  # -DNEP_DIR="${NEP_DIR}"
+  -DENABLE_NEP="${ENABLE_NEP}"
   # -DTorch_DIR="${LIBTORCH}"
   # -DDeePMD_DIR="${DEEPMD}"
   # -DENABLE_MLALGO=1
@@ -88,14 +86,14 @@ cmake "${cmake_args[@]}"
 cmake --build "${BUILD_DIR}" --target install -j "${NUM_JOBS}"
 
 # generate abacus_env.sh
-cat <<EOF >"${TOOL}/abacus_env.sh"
+cat << EOF > "${TOOL}/abacus_env.sh"
 #!/bin/bash
 source "${INSTALL_DIR}/setup"
 export PATH="${PREFIX}/bin":\${PATH}
 EOF
 
 # generate information
-cat <<EOF
+cat << EOF
 ========================== usage =========================
 Done!
 To use the installed ABACUS version

@@ -241,7 +241,7 @@ void ModuleIO::write_eig_file(const ModuleBase::matrix &ekb,
     if (GlobalV::MY_RANK == 0)
     {
         std::ofstream ofs_eig0;
-        const auto& inp = PARAM.inp;
+        const Input_para& inp = PARAM.inp;
         // A restart of an MD run keeps the records of the previous run in
         // mode 1; every other first-step write truncates the fixed file.
         const bool restart_append = (inp.calculation == "md" && inp.mdp.md_restart);

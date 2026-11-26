@@ -1,37 +1,36 @@
 #ifndef ABACUS_SOURCE_HAMILT_MODULE_GINT_GINT_TAU_H
 #define ABACUS_SOURCE_HAMILT_MODULE_GINT_GINT_TAU_H
 
-#include <memory>
-#include <vector>
-#include "source_hamilt/module_hcontainer/hcontainer.h"
 #include "gint.h"
 #include "gint_info.h"
+#include "source_hamilt/module_hcontainer/hcontainer.h"
+#include <memory>
+#include <vector>
 
 namespace ModuleGint
 {
-    
+
 class Gint_tau : public Gint
 {
-    public:
-    Gint_tau(
-        const std::vector<HContainer<double>*>& dm_vec,
-        const int nspin,
-        double** tau)
-        : dm_vec_(dm_vec), nspin_(nspin), kin_(tau) {}
-    
+  public:
+    Gint_tau(const std::vector<HContainer<double> *> &dm_vec, const int nspin, double **tau)
+        : dm_vec_(dm_vec), nspin_(nspin), kin_(tau)
+    {
+    }
+
     void cal_gint();
-    
-    private:
+
+  private:
     void init_dm_gint_();
 
     void cal_tau_();
 
     // input
-    const std::vector<HContainer<double>*> dm_vec_;
+    const std::vector<HContainer<double> *> dm_vec_;
     const int nspin_;
 
     // output
-    double ** kin_ = nullptr;
+    double **kin_ = nullptr;
 
     // Intermediate variables
     std::vector<HContainer<double>> dm_gint_vec_;

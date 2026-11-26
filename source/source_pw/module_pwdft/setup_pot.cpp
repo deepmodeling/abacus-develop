@@ -72,7 +72,7 @@ void pw::setup_pot(const int istep,
     // The RT observer owns endpoint projection setup, including spinor precision conversion.
     if (inp.onsite_radius > 0 && !spinor_rt)
     {
-        auto* onsite_p = projectors::OnsiteProjector<double, Device>::get_instance();
+        projectors::OnsiteProjector<double, Device>* onsite_p = projectors::OnsiteProjector<double, Device>::get_instance();
         onsite_p->init(inp.orbital_dir,
                 &ucell,
                 *onsite_psi,

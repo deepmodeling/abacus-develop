@@ -92,7 +92,8 @@ void validate_condition(
     const AvailabilityCondition& condition,
     const std::map<std::string, AvailabilityValueKind>& parameter_types)
 {
-    const auto parameter = parameter_types.find(condition.param);
+    const std::map<std::string, AvailabilityValueKind>::const_iterator parameter
+        = parameter_types.find(condition.param);
     if (parameter == parameter_types.end())
     {
         fail(owner, "unknown parameter '" + condition.param + "'");
@@ -310,7 +311,7 @@ void validate_node_self_contained(
         {
             fail(owner, "references itself");
         }
-        const auto it = expressions.find(referenced);
+        const std::map<std::string, AvailabilityExpr>::const_iterator it = expressions.find(referenced);
         if (it != expressions.end())
         {
             if (!conjunction_implies(it->second, enclosing_conjunction))

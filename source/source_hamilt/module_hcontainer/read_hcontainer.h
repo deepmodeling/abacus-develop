@@ -1,8 +1,8 @@
 #ifndef READ_HCONTAINER_H
 #define READ_HCONTAINER_H
 
-#include "source_hamilt/module_hcontainer/hcontainer.h"
 #include "source_cell/unitcell.h"
+#include "source_hamilt/module_hcontainer/hcontainer.h"
 
 namespace hamilt
 {
@@ -15,12 +15,11 @@ class Read_HContainer
 {
   public:
     Read_HContainer(
-        hamilt::HContainer<T>* hcontainer, 
-        const std::string& filename,
+        hamilt::HContainer<T> *hcontainer,
+        const std::string &filename,
         const int nlocal,
-        const UnitCell* ucell,
-        int rank
-    );
+        const UnitCell *ucell,
+        int rank);
     // read the matrices of all R vectors to the read stream
     void read();
 
@@ -37,10 +36,10 @@ class Read_HContainer
     void read_single_R(int rx, int ry, int rz);
 
   private:
-    hamilt::HContainer<T>* _hcontainer;
+    hamilt::HContainer<T> *_hcontainer;
     std::string _filename;
     int _nlocal;
-    const UnitCell* _ucell = nullptr;
+    const UnitCell *_ucell = nullptr;
     int _rank = 0;
 };
 

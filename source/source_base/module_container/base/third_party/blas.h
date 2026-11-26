@@ -1,6 +1,8 @@
 #ifndef BASE_THIRD_PARTY_BLAS_H_
 #define BASE_THIRD_PARTY_BLAS_H_
 
+#include <cstdint>
+
 #include <complex>
 
 #if defined(__CUDA)
@@ -140,6 +142,16 @@ namespace container {
 // The entire function in this class are static and inline function.
 // Usage example:	BlasConnector::functionname(parameter list).
 namespace BlasConnector {
+
+// Column-major triangular solve; B is overwritten by the solution.
+static inline
+void trsm(const char side, const char uplo, const char transa, const char diag,
+          const int m, const int n, const std::complex<double> alpha,
+          const std::complex<double>* a, const int lda,
+          std::complex<double>* b, const int ldb)
+{
+    ztrsm_(&side, &uplo, &transa, &diag, &m, &n, &alpha, a, &lda, b, &ldb);
+}
 
 // Column-major rank-one update; preserve the supplied vector strides and leading dimension.
 static inline
@@ -335,8 +347,8 @@ void gemv_batched(const char& trans, const int& m, const int& n,
 template <typename T>
 static inline
 void gemv_batched_strided(const char& transa, const int& m, const int& n,
-          const T& alpha, const T* A, const int& lda, const int& stride_a, const T* x, const int& incx, const int& stride_x,
-          const T& beta, T* y, const int& incy, const int& stride_y, const int& batch_size)
+          const T& alpha, const T* A, const int& lda, const int64_t& stride_a, const T* x, const int& incx, const int64_t& stride_x,
+          const T& beta, T* y, const int& incy, const int64_t& stride_y, const int& batch_size)
 {
     for (int ii = 0; ii < batch_size; ii++) {
         // Call the single GEMV for each pair of matrix A[ii] and vector x[ii]

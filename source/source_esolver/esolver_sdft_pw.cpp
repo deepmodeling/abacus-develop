@@ -157,7 +157,8 @@ void ESolver_SDFT_PW<T, Device>::hamilt2rho_single(
         this->inp_->basis_type, this->inp_->ks_solver, PARAM.globalv.use_uspp, this->inp_->nspin,
         hsolver::DiagoIterAssist<T, Device>::SCF_ITER, hsolver::DiagoIterAssist<T, Device>::PW_DIAG_NMAX,
         hsolver::DiagoIterAssist<T, Device>::PW_DIAG_THR, hsolver::DiagoIterAssist<T, Device>::need_subspace,
-        this->inp_->nbands, this->inp_->diago_smooth_ethr, this->inp_->pw_diag_ndim, this->inp_->diag_subspace,
+        this->inp_->nbands, this->inp_->diago_smooth_ethr, this->inp_->pw_diag_ndim,
+        this->inp_->lobpcg_locking, this->inp_->diag_subspace,
         this->inp_->nb2d, PARAM.globalv.ks_run, PARAM.globalv.all_ks_run, this->inp_->bndpar);
 
     sto_hsolver_pw_obj.solve(
@@ -237,7 +238,7 @@ void ESolver_SDFT_PW<T, Device>::after_all_runners(BaseCell &basecell)
     }
 
     // 3) write down DOS
-    if (this->inp_->out_dos)
+    if (this->inp_->out_dos[0] != 0)
     {
         if (!std::is_same<T, std::complex<double>>::value || !std::is_same<Device, base_device::DEVICE_CPU>::value)
         {
