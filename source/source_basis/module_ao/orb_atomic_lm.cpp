@@ -527,7 +527,7 @@ void Numerical_Orbital_Lm::cal_kradial_sbpool(void)
     }
 
     ModuleBase::Sph_Bessel_Recursive::D2* pSB = nullptr;
-    for( auto & sb : ModuleBase::Sph_Bessel_Recursive_Pool::D2::sb_pool )
+    for( ModuleBase::Sph_Bessel_Recursive::D2& sb : ModuleBase::Sph_Bessel_Recursive_Pool::D2::sb_pool )
     {
         if( this->dk * dr == sb.get_dx() )
         {
@@ -596,7 +596,7 @@ void Numerical_Orbital_Lm::cal_rradial_sbpool(void)
     }
 
     ModuleBase::Sph_Bessel_Recursive::D2* pSB = nullptr;
-    for( auto & sb : ModuleBase::Sph_Bessel_Recursive_Pool::D2::sb_pool )
+    for( ModuleBase::Sph_Bessel_Recursive::D2& sb : ModuleBase::Sph_Bessel_Recursive_Pool::D2::sb_pool )
     {
         if( dr * dk == sb.get_dx() )
         {

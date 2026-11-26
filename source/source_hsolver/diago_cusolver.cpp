@@ -1,14 +1,11 @@
 #include "diago_cusolver.h"
 
-#include "source_base/module_external/blas_connector.h"
-#include "source_base/module_external/blacs_connector.h"
-#include "source_base/module_external/scalapack_connector.h"
 #include "source_base/tool_title.h"
 #include "source_base/timer.h"
 
-#include <memory>
-#include <type_traits>
-#include <vector>
+#include <cstddef>
+#include <cstdio>
+#include <cstdlib>
 
 using complex = std::complex<double>;
 
@@ -29,7 +26,42 @@ DiagoCusolver<T>::~DiagoCusolver()
 {
 }
 
-// Diagonalization function
+namespace
+{
+void solve(
+    Diag_Cusolver_gvd &solver,
+    const int n,
+    const int nbands,
+    const double *h,
+    const double *s,
+    double *w,
+    double *v)
+{
+    if (Diag_Cusolver_gvd::use_subset(n, nbands))
+    {
+        if (solver.solve_subset(n, nbands, h, s, w, v))
+        {
+            return;
+        }
+        std::fprintf(
+            stderr, "cuSOLVER Dsygvdx could not return %d eigenpairs (n=%d); retrying with Dsygvd\n", nbands, n);
+    }
+    solver.solve_full(n, nbands, h, s, w, v);
+}
+
+void solve(
+    Diag_Cusolver_gvd &solver,
+    const int n,
+    const int nbands,
+    const complex *h,
+    const complex *s,
+    double *w,
+    complex *v)
+{
+    solver.solve_full(n, nbands, h, s, w, v);
+}
+} // namespace
+
 template <typename T>
 void DiagoCusolver<T>::diag(
     ModuleBase::MatrixBlock<T>& h_mat,
@@ -37,16 +69,23 @@ void DiagoCusolver<T>::diag(
     psi::Psi<T>& psi,
     Real* eigenvalue_in)
 {
-    ModuleBase::TITLE("DiagoCusolver", "diag");
     ModuleBase::timer::start("DiagoCusolver", "cusolver");
-    // Allocate memory for eigenvalues
-    std::vector<double> eigen(this->nlocal, 0.0);
-    std::vector<T> eigenvectors(h_mat.row * h_mat.col);
-    this->dc.Dngvd(h_mat.row, h_mat.col, h_mat.p, s_mat.p, eigen.data(), eigenvectors.data());
-    const int size = psi.get_nbands() * psi.get_nbasis();
-    BlasConnector::copy(size, eigenvectors.data(), 1, psi.get_pointer(), 1);
-    const int inc = 1;
-    BlasConnector::copy(this->nbands, eigen.data(), inc, eigenvalue_in, inc);
+    ModuleBase::TITLE("DiagoCusolver", "diag");
+
+    const auto dimension = static_cast<std::size_t>(this->nlocal);
+    if (this->nlocal <= 0 || this->nbands <= 0 || this->nbands > this->nlocal || h_mat.row != dimension ||
+        h_mat.col != dimension || s_mat.row != dimension || s_mat.col != dimension ||
+        psi.get_nbasis() != this->nlocal || psi.get_nbands() < this->nbands || !psi.get_k_first() ||
+        psi.get_current_b() != 0 || !h_mat.p || !s_mat.p || !eigenvalue_in || !psi.get_pointer())
+    {
+        std::fprintf(
+            stderr, "cuSOLVER invalid H/S or wavefunction layout (n=%d, nbands=%d)\n", this->nlocal, this->nbands);
+        std::exit(EXIT_FAILURE);
+    }
+
+    T *eigenvectors = psi.get_pointer();
+    solve(this->dc, this->nlocal, this->nbands, h_mat.p, s_mat.p, eigenvalue_in, eigenvectors);
+
     ModuleBase::timer::end("DiagoCusolver", "cusolver");
 }
 

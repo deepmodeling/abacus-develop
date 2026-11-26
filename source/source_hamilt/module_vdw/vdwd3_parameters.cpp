@@ -106,7 +106,7 @@ std::string canonicalize_libxc_pair(const std::string &input)
         {"pbe:oppbe", "pbeop"},
         {"b88:opb88", "bop"},
     };
-    const auto found = special.find(exchange + ":" + correlation);
+    const std::map<std::string, std::string>::const_iterator found = special.find(exchange + ":" + correlation);
     return found == special.end() ? std::string() : found->second;
 }
 

@@ -14,10 +14,6 @@ reviewing that directory, and note that it refines the root baseline without
 overriding it. Review the pull request diff before general style feedback, and
 separate blocking diff-scoped issues from historical or advisory observations.
 
-Prefer explicit types; avoid `auto` in new or modified C++ code. Preserve
-`const`, reference, and pointer qualifiers when spelling out a deduced type.
-Treat this as an advisory style rule, as defined in the governance matrix.
-
 Use the ABACUS review finding format for actionable findings:
 
 ```markdown

@@ -65,7 +65,7 @@ void FR_overlap<T>::initialize_FR(const Grid_Driver* GridD, const Parallel_Orbit
     ModuleBase::timer::start("FR_overlap", "initialize_FR");
     for (int iat1 = 0; iat1 < ucell->nat; iat1++)
     {
-        auto tau1 = ucell->get_tau(iat1);
+        ModuleBase::Vector3<double> tau1 = ucell->get_tau(iat1);
         int T1, I1;
         ucell->iat2iait(iat1, &I1, &T1);
         AdjacentAtomInfo adjs;
@@ -167,8 +167,8 @@ void FR_overlap<T>::cal_FR_IJR(const int& iat1,
     // ---------------------------------------------
     // calculate the overlap matrix for each pair of orbitals
     // ---------------------------------------------
-    auto row_indexes = paraV->get_indexes_row(iat1);
-    auto col_indexes = paraV->get_indexes_col(iat2);
+    std::vector<int> row_indexes = paraV->get_indexes_row(iat1);
+    std::vector<int> col_indexes = paraV->get_indexes_col(iat2);
 
     std::set<std::pair<int, int>> LN_pair1;
     std::set<std::pair<int, int>> LN_pair2;

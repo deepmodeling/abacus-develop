@@ -1295,7 +1295,7 @@ Use case: When experimental or high-level theoretical results suggest that the S
             }
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            for(auto rcut: para.input.bessel_nao_rcuts)
+            for(double rcut: para.input.bessel_nao_rcuts)
             {
                 if (rcut < 0)
                 {

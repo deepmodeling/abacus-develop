@@ -35,9 +35,6 @@ Apply these instructions when reviewing or changing ABACUS code:
   and the `test_` prefix; confirm in review that the rest of the name matches
   the file under test.
 - Keep default C++ changes compatible with the repository C++11 baseline.
-- Prefer explicit types; avoid `auto` in new or modified C++ code. Preserve
-  `const`, reference, and pointer qualifiers when spelling out a deduced type.
-  Flag deviations as advisory style warnings, not automatic CI blockers.
 - Ask for focused tests or explicit test rationale for feature changes, bug
   fixes, INPUT behavior changes, heterogeneous kernels, and core-module
   refactors.

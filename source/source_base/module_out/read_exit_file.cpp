@@ -14,7 +14,7 @@ namespace ModuleIO
 int read_exit_file(const int& my_rank, const std::string& filename, std::ofstream& ofs_running)
 {
     auto str2bool = [](std::string str) {
-        for (auto& i: str)
+        for (char& i: str)
         {
             i = tolower(i);
         }

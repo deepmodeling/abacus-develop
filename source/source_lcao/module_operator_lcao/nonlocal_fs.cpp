@@ -235,8 +235,8 @@ inline void Nonlocal<OperatorLCAO<std::complex<double>, std::complex<double>>>::
     // ---------------------------------------------
     // calculate the Nonlocal matrix for each pair of orbitals
     // ---------------------------------------------
-    auto row_indexes = paraV->get_indexes_row(iat1);
-    auto col_indexes = paraV->get_indexes_col(iat2);
+    std::vector<int> row_indexes = paraV->get_indexes_row(iat1);
+    std::vector<int> col_indexes = paraV->get_indexes_col(iat2);
     // step_trace = 0 for NSPIN=2; ={0, 1, local_col, local_col+1} for NSPIN=4
     std::vector<int> step_trace;
     OperatorForceStress::setup_step_trace(npol, col_indexes.size(), step_trace);
@@ -302,8 +302,8 @@ inline void Nonlocal<OperatorLCAO<std::complex<double>, std::complex<double>>>::
     // ---------------------------------------------
     // calculate the Nonlocal matrix for each pair of orbitals
     // ---------------------------------------------
-    auto row_indexes = paraV->get_indexes_row(iat1);
-    auto col_indexes = paraV->get_indexes_col(iat2);
+    std::vector<int> row_indexes = paraV->get_indexes_row(iat1);
+    std::vector<int> col_indexes = paraV->get_indexes_col(iat2);
     // step_trace = 0 for NSPIN=2; ={0, 1, local_col, local_col+1} for NSPIN=4
     std::vector<int> step_trace;
     OperatorForceStress::setup_step_trace(npol, col_indexes.size(), step_trace);
@@ -364,8 +364,8 @@ void Nonlocal<OperatorLCAO<TK, TR>>::cal_force_IJR(const int& iat1,
     // ---------------------------------------------
     // calculate the Nonlocal matrix for each pair of orbitals
     // ---------------------------------------------
-    auto row_indexes = paraV->get_indexes_row(iat1);
-    auto col_indexes = paraV->get_indexes_col(iat2);
+    std::vector<int> row_indexes = paraV->get_indexes_row(iat1);
+    std::vector<int> col_indexes = paraV->get_indexes_col(iat2);
     // calculate the local matrix
     const double* tmp_d = nullptr;
     const double* dm_pointer = dmR_pointer->get_pointer();
@@ -415,8 +415,8 @@ void Nonlocal<OperatorLCAO<TK, TR>>::cal_stress_IJR(const int& iat1,
     // ---------------------------------------------
     // calculate the Nonlocal matrix for each pair of orbitals
     // ---------------------------------------------
-    auto row_indexes = paraV->get_indexes_row(iat1);
-    auto col_indexes = paraV->get_indexes_col(iat2);
+    std::vector<int> row_indexes = paraV->get_indexes_row(iat1);
+    std::vector<int> col_indexes = paraV->get_indexes_col(iat2);
     // calculate the local matrix
     const double* tmp_d = nullptr;
     const double* dm_pointer = dmR_pointer->get_pointer();

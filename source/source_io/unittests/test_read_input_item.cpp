@@ -41,7 +41,7 @@ class InputTest : public testing::Test
     {
         ModuleIO::ReadInput schema(-1);
         ModuleIO::InputValues values;
-        for (const auto& entry : schema.get_input_lists())
+        for (const std::pair<std::string, ModuleIO::Input_Item>& entry : schema.get_input_lists())
         {
             if (entry.second.domain.bound()) { values[entry.first] = entry.second.domain.value(param); }
         }
@@ -113,7 +113,8 @@ TEST_F(InputTest, PwOnsiteRequiresDoublePrecision)
 TEST_F(InputTest, InvalidExplicitDomainDoesNotReachReadOrResetHooks)
 {
     ModuleIO::ReadInput reader(0);
-    auto item = find_label("nspin", reader.input_lists);
+    std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator item
+        = find_label("nspin", reader.input_lists);
     ASSERT_NE(item, reader.input_lists.end());
     item->second.str_values = {"3"};
     bool reset_called = false;
@@ -1741,7 +1742,7 @@ TEST_F(InputTest, HkComponentAliases)
         {"out_mat_h_vxc", "out_mat_vxck"},
         {"out_mat_h_exx", "out_mat_exxk"},
     };
-    for (const auto& pair : aliases)
+    for (const std::pair<std::string, std::string>& pair : aliases)
     {
         SCOPED_TRACE(pair.first);
         ModuleIO::ReadInput readinput(0);
@@ -1751,7 +1752,7 @@ TEST_F(InputTest, HkComponentAliases)
         legacy->second.str_values = {"1", "6"};
         legacy->second.read_value(legacy->second, param);
         readinput.normalize_hs_output_options(param);
-        const auto& canon = TestParameters::input(param);
+        const Input_para& canon = TestParameters::input(param);
         const std::vector<int>* value = nullptr;
         if (pair.second == "out_mat_vnlk") { value = &canon.out_mat_vnlk; }
         else if (pair.second == "out_mat_vlk") { value = &canon.out_mat_vlk; }
@@ -2720,7 +2721,8 @@ TEST_F(InputTest, Item_test2)
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
     { // diag_subspace
-        auto it = find_label("diag_subspace", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it
+            = find_label("diag_subspace", readinput.input_lists);
         EXPECT_EQ(it->second.get_availability(), "basis_type==pw and ks_solver==dav_subspace");
     }
     { // md_nstep
@@ -3073,12 +3075,12 @@ TEST_F(InputTest, LRExternalKernelSupportsSpectraOnly)
 {
     ModuleIO::ReadInput readinput(0);
     const auto it = find_label("lr_init_xc_kernel", readinput.input_lists);
-    for (const auto& solver : {"lr", "ks-lr"})
+    for (const char* const& solver : {"lr", "ks-lr"})
     {
-        for (const auto& mode : {"file", "from_charge_file"})
+        for (const char* const& mode : {"file", "from_charge_file"})
         {
             Parameter param;
-            auto& input = TestParameters::input(param);
+            Input_para& input = TestParameters::input(param);
             input.esolver_type = solver;
             input.lr_init_xc_kernel = {mode, "external.cube"};
             input.calculation = "scf";
@@ -3102,10 +3104,10 @@ TEST_F(InputTest, LRFixedFieldRejectsForcesAndRelaxation)
 {
     ModuleIO::ReadInput readinput(0);
     const auto it = find_label("efield_flag", readinput.input_lists);
-    for (const auto& solver : {"lr", "ks-lr"})
+    for (const char* const& solver : {"lr", "ks-lr"})
     {
         Parameter param;
-        auto& input = TestParameters::input(param);
+        Input_para& input = TestParameters::input(param);
         input.esolver_type = solver;
         input.efield_flag = true;
         input.calculation = "scf";
