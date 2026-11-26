@@ -6,6 +6,20 @@ abacus_copy_test_files(support)
 
 if(ENABLE_MPI)
   addtest(
+    TARGET MODULE_ESTATE_edm_tddft
+    KEEP_FEATURE_DEFINITIONS __MPI
+    LIBS parameter base container device
+    SOURCES test_edm_tddft.cpp ../edm_tddft.cpp ../edm_tddft_lapack.cpp
+            ../../../source_base/test/mpi_test_main.cpp)
+  add_test(
+    NAME MODULE_ESTATE_edm_tddft_np4
+    COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 4 ${MPIEXEC_PREFLAGS}
+            $<TARGET_FILE:MODULE_ESTATE_edm_tddft> ${MPIEXEC_POSTFLAGS})
+  set_tests_properties(MODULE_ESTATE_edm_tddft MODULE_ESTATE_edm_tddft_np4
+                       PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=1")
+  set_tests_properties(MODULE_ESTATE_edm_tddft_np4 PROPERTIES PROCESSORS 4)
+
+  addtest(
     TARGET MODULE_ESTATE_dm_constructor_test
     LIBS parameter base device symmetry
     SOURCES test_dm_constructor.cpp

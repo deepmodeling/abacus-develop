@@ -346,10 +346,10 @@ void ElecState::cal_energies(const int type,
         this->f_en.esol_cav = 0.0;
     }
 
-    //! spin constrained energy
-    if (sc_mag_switch)
+    // The solver supplies the constraint energy before energy convergence and mixing.
+    if (!sc_mag_switch)
     {
-        this->f_en.escon = get_spin_constrain_energy();
+        this->f_en.escon = 0.0;
     }
 
     // energy from DFT+U

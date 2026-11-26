@@ -171,9 +171,10 @@ class ElecState
     double get_solvent_model_Ael();
     double get_solvent_model_Acav();
 
-    virtual double get_spin_constrain_energy()
+    /// Constraint energy (Ry), supplied after updating the atomic magnetic moments.
+    void set_spin_constrain_energy(const double energy)
     {
-        return 0.0;
+        this->f_en.escon = energy;
     }
 
     double get_dftu_energy();
