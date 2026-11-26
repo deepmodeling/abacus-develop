@@ -18,68 +18,30 @@
 #include "source_cell/atom_spec.h"
 #include "source_cell/magnetism.h"
 #include "source_cell/pseudo.h"
+#include "source_cell/stru_fac.h"
 #include "source_cell/unitcell.h"
 #include "source_estate/module_charge/chg_mix.h"
 #include "source_pw/module_pwdft/dftu_base.h"
-#include "source_cell/stru_fac.h"
 
-pseudo::pseudo()
-{
-}
-pseudo::~pseudo()
-{
-}
-Atom::Atom()
-{
-}
-Atom::~Atom()
-{
-}
-Atom_pseudo::Atom_pseudo()
-{
-}
-Atom_pseudo::~Atom_pseudo()
-{
-}
-SepPot::SepPot()
-{
-}
-SepPot::~SepPot()
-{
-}
-Sep_Cell::Sep_Cell() noexcept
-{
-}
-Sep_Cell::~Sep_Cell() noexcept
-{
-}
-UnitCell::UnitCell()
-{
-}
-UnitCell::~UnitCell()
-{
-}
-Magnetism::Magnetism()
-{
-}
-Magnetism::~Magnetism()
-{
-}
+pseudo::pseudo() {}
+pseudo::~pseudo() {}
+Atom::Atom() {}
+Atom::~Atom() {}
+Atom_pseudo::Atom_pseudo() {}
+Atom_pseudo::~Atom_pseudo() {}
+SepPot::SepPot() {}
+SepPot::~SepPot() {}
+Sep_Cell::Sep_Cell() noexcept {}
+Sep_Cell::~Sep_Cell() noexcept {}
+UnitCell::UnitCell() {}
+UnitCell::~UnitCell() {}
+Magnetism::Magnetism() {}
+Magnetism::~Magnetism() {}
 
-Structure_Factor::Structure_Factor()
-{
-}
-Structure_Factor::~Structure_Factor()
-{
-}
+Structure_Factor::Structure_Factor() {}
+Structure_Factor::~Structure_Factor() {}
 
-Charge_Mixing::~Charge_Mixing()
-{
-}
+Charge_Mixing::~Charge_Mixing() {}
 
-Plus_U_Base::Plus_U_Base()
-{
-}
-Plus_U_Base::~Plus_U_Base()
-{
-}
+Plus_U_Base::Plus_U_Base() {}
+Plus_U_Base::~Plus_U_Base() {}

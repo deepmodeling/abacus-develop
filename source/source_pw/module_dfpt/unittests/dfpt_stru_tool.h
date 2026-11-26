@@ -33,7 +33,7 @@ struct stru_
     std::string point_group;    // Schoenflies symbol
     std::string point_group_hm; // Hermann-Mauguin notation
     std::string space_group;
-    std::vector<double> cell;   // a1 | a2 | a3 (cartesian, row-major)
+    std::vector<double> cell; // a1 | a2 | a3 (cartesian, row-major)
     std::vector<atomtype_> all_type;
 };
 
@@ -45,7 +45,7 @@ stru_ cubic_carbon_stru();
 /// latvec / G / GT, per-type tau / taud (cartesian -> direct through
 /// Mathzone), and the iat2it / iat2ia running-index tables real cells
 /// always carry. The caller owns the UnitCell (and its atoms array).
-void construct_ucell(UnitCell& ucell, const stru_& stru);
+void construct_ucell(UnitCell &ucell, const stru_ &stru);
 
 } // namespace dfpt_test
 
