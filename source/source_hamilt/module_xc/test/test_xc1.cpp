@@ -1,10 +1,10 @@
-#include "gtest/gtest.h"
-#include "xctest.h"
 #include "../xc_functional.h"
+#include "xctest.h"
+#include "gtest/gtest.h"
 
 /************************************************
-*  unit test of set_xc_type
-***********************************************/
+ *  unit test of set_xc_type
+ ***********************************************/
 
 // For more information of the functions, check the comment of xc_functional.h
 // the functionals are not tested because they all use libxc
@@ -12,58 +12,49 @@
 
 namespace ModuleBase
 {
-    void WARNING_QUIT(const std::string &file,const std::string &description) {exit(1);}
-    void TITLE(const std::string &class_function_name,bool disable){};
-    void TITLE(const std::string &class_name,const std::string &function_name,bool disable){};
-}
+void WARNING_QUIT(const std::string &file, const std::string &description) { exit(1); }
+void TITLE(const std::string &class_function_name, bool disable) {};
+void TITLE(const std::string &class_name, const std::string &function_name, bool disable) {};
+} // namespace ModuleBase
 
 class XCTest_HSE : public XCTest
 {
-    protected:
-        std::vector<double> e_lda, v_lda;
-        std::vector<double> e_gga, v1_gga, v2_gga;
+  protected:
+    std::vector<double> e_lda, v_lda;
+    std::vector<double> e_gga, v1_gga, v2_gga;
 
-        void SetUp()
-        {
-            XC_Functional::set_xc_type("HSE");
-            XC_Functional::set_hybrid_alpha(0.5);
-        }
+    void SetUp()
+    {
+        XC_Functional::set_xc_type("HSE");
+        XC_Functional::set_hybrid_alpha(0.5);
+    }
 };
 
-TEST_F(XCTest_HSE, set_xc_type)
-{
-    EXPECT_EQ(XC_Functional::get_func_type(),4);
-}
+TEST_F(XCTest_HSE, set_xc_type) { EXPECT_EQ(XC_Functional::get_func_type(), 4); }
 
 class XCTest_SCAN0 : public XCTest
 {
-    protected:
-        void SetUp()
-        {
-            XC_Functional::set_xc_type("SCAN0");
-            XC_Functional::set_hybrid_alpha(0.5);
-        }
+  protected:
+    void SetUp()
+    {
+        XC_Functional::set_xc_type("SCAN0");
+        XC_Functional::set_hybrid_alpha(0.5);
+    }
 };
 
 TEST_F(XCTest_SCAN0, set_xc_type)
 {
-    EXPECT_EQ(XC_Functional::get_func_type(),5);
+    EXPECT_EQ(XC_Functional::get_func_type(), 5);
     EXPECT_TRUE(XC_Functional::get_ked_flag());
 }
 
 class XCTest_KSDT : public XCTest
 {
-    protected:
-        void SetUp()
-        {
-            XC_Functional::set_xc_type("XC_LDA_XC_KSDT");
-        }
+  protected:
+    void SetUp() { XC_Functional::set_xc_type("XC_LDA_XC_KSDT"); }
 };
 
-TEST_F(XCTest_KSDT, set_xc_type)
-{
-    EXPECT_EQ(XC_Functional::get_func_type(),1);
-}
+TEST_F(XCTest_KSDT, set_xc_type) { EXPECT_EQ(XC_Functional::get_func_type(), 1); }
 
 TEST_F(XCTest_KSDT, runtime_parameters)
 {
@@ -73,7 +64,7 @@ TEST_F(XCTest_KSDT, runtime_parameters)
     parameters.xc_corr_ext = {130.0, 0.5};
     XC_Functional::set_runtime_parameters(parameters);
 
-    const XCFunctionalParameters& stored = XC_Functional::get_runtime_parameters();
+    const XCFunctionalParameters &stored = XC_Functional::get_runtime_parameters();
     EXPECT_DOUBLE_EQ(stored.xc_temperature, 0.25);
     EXPECT_EQ(stored.xc_exch_ext, parameters.xc_exch_ext);
     EXPECT_EQ(stored.xc_corr_ext, parameters.xc_corr_ext);
@@ -81,72 +72,48 @@ TEST_F(XCTest_KSDT, runtime_parameters)
 
 class XCTest_KT2 : public XCTest
 {
-    protected:
-        void SetUp()
-        {
-            XC_Functional::set_xc_type("GGA_XC_KT2");
-        }
+  protected:
+    void SetUp() { XC_Functional::set_xc_type("GGA_XC_KT2"); }
 };
 
-TEST_F(XCTest_KT2, set_xc_type)
-{
-    EXPECT_EQ(XC_Functional::get_func_type(),2);
-}
+TEST_F(XCTest_KT2, set_xc_type) { EXPECT_EQ(XC_Functional::get_func_type(), 2); }
 
 class XCTest_R2SCAN : public XCTest
 {
-    protected:
-        void SetUp()
-        {
-            XC_Functional::set_xc_type("MGGA_X_R2SCAN+MGGA_C_R2SCAN");
-        }
+  protected:
+    void SetUp() { XC_Functional::set_xc_type("MGGA_X_R2SCAN+MGGA_C_R2SCAN"); }
 };
 
 TEST_F(XCTest_R2SCAN, set_xc_type)
 {
-    EXPECT_EQ(XC_Functional::get_func_type(),3);
+    EXPECT_EQ(XC_Functional::get_func_type(), 3);
     EXPECT_TRUE(XC_Functional::get_ked_flag());
 }
 
 class XCTest_LB07 : public XCTest
 {
-    protected:
-        void SetUp()
-        {
-            XC_Functional::set_xc_type("HYB_GGA_XC_LB07");
-        }
+  protected:
+    void SetUp() { XC_Functional::set_xc_type("HYB_GGA_XC_LB07"); }
 };
 
-TEST_F(XCTest_LB07, set_xc_type)
-{
-    EXPECT_EQ(XC_Functional::get_func_type(),4);
-}
+TEST_F(XCTest_LB07, set_xc_type) { EXPECT_EQ(XC_Functional::get_func_type(), 4); }
 
 class XCTest_BMK : public XCTest
 {
-    protected:
-        void SetUp()
-        {
-            XC_Functional::set_xc_type("HYB_MGGA_X_BMK");
-        }
+  protected:
+    void SetUp() { XC_Functional::set_xc_type("HYB_MGGA_X_BMK"); }
 };
 
 TEST_F(XCTest_BMK, set_xc_type)
 {
-    EXPECT_EQ(XC_Functional::get_func_type(),5);
+    EXPECT_EQ(XC_Functional::get_func_type(), 5);
     EXPECT_TRUE(XC_Functional::get_ked_flag());
 }
 
 class XCTest_HF : public XCTest
 {
-    protected:
-        void SetUp()
-        {
-            XC_Functional::set_xc_type("HF");
-        }
+  protected:
+    void SetUp() { XC_Functional::set_xc_type("HF"); }
 };
 
-TEST_F(XCTest_HF, set_xc_type)
-{
-    EXPECT_EQ(XC_Functional::get_func_type(),4);
-}
+TEST_F(XCTest_HF, set_xc_type) { EXPECT_EQ(XC_Functional::get_func_type(), 4); }

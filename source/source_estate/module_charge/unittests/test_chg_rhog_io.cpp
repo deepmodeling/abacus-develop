@@ -130,7 +130,7 @@ class ReadRhogTest : public ::testing::Test
 
         size = 3 * npw_file;
         ofs.write(reinterpret_cast<const char*>(&size), sizeof(int));
-        for (const auto& m : miller)
+        for (const std::array<int, 3>& m : miller)
         {
             ofs.write(reinterpret_cast<const char*>(m.data()), 3 * sizeof(int));
         }

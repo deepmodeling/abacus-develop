@@ -7,7 +7,7 @@ namespace
 {
 class SccsCavityTest : public ::testing::Test
 {
-protected:
+  protected:
     ModuleSccs::CavityParameters parameters;
 
     void SetUp() override

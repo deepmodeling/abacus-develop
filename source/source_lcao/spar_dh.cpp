@@ -29,7 +29,7 @@ void distribute_pvdpR_sparse(const int cspin,
     std::vector<int> nonzero_num(total_R_num);
     std::vector<int> minus_nonzero_num(total_R_num);
     int count = 0;
-    for (const auto& R_coor: hs_arrays.all_R_coor)
+    for (const Abfs::Vector3_Order<int>& R_coor: hs_arrays.all_R_coor)
     {
         auto iter = pvdpR_sparse.find(R_coor);
         if (iter != pvdpR_sparse.end())
@@ -40,7 +40,7 @@ void distribute_pvdpR_sparse(const int cspin,
             }
         }
 
-        auto minus_R_coor = -1 * R_coor;
+        ModuleBase::Vector3<int> minus_R_coor = -1 * R_coor;
 
         iter = pvdpR_sparse.find(minus_R_coor);
         if (iter != pvdpR_sparse.end())
@@ -60,11 +60,11 @@ void distribute_pvdpR_sparse(const int cspin,
     count = 0;
 
     const std::vector<int>& trace_lo = ModuleGint::Gint::get_gint_info().get_trace_lo();
-    for (const auto& R_coor: hs_arrays.all_R_coor)
+    for (const Abfs::Vector3_Order<int>& R_coor: hs_arrays.all_R_coor)
     {
         if (nonzero_num[count] != 0 || minus_nonzero_num[count] != 0)
         {
-            auto minus_R_coor = -1 * R_coor;
+            ModuleBase::Vector3<int> minus_R_coor = -1 * R_coor;
 
             for (int row = 0; row < nlocal; ++row)
             {
@@ -175,7 +175,7 @@ void cal_dvlocal_R_sparse(const hamilt::HContainer<double>& pvdpRx,
 
     for (int iap = 0; iap < pvdpRx.size_atom_pairs(); iap++)
     {
-        const auto& ap = pvdpRx.get_atom_pair(iap);
+        const hamilt::AtomPair<double>& ap = pvdpRx.get_atom_pair(iap);
         const int iat1 = ap.get_atom_i();
         const int iat2 = ap.get_atom_j();
         const int it1 = ucell.iat2it[iat1];

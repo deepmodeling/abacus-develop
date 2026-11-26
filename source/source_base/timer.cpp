@@ -55,8 +55,8 @@ double timer::cpu_time()
 // only first call can let t0 = 0,clock begin
 // when enter this function second time , t0 > 0
 //----------------------------------------------------------
-    static auto t1 = std::chrono::system_clock::now();
-    const auto t2 = std::chrono::system_clock::now();
+    static std::chrono::system_clock::time_point t1 = std::chrono::system_clock::now();
+    const std::chrono::system_clock::time_point t2 = std::chrono::system_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1);
     return double(duration.count()) * std::chrono::microseconds::period::num / std::chrono::microseconds::period::den;
 }

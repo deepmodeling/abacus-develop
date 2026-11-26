@@ -1,9 +1,9 @@
 #include "sccs_functional.h"
 #include "sccs_parameters.h"
+#include "sccs_pw_coulomb.h"
 #include "sccs_response.h"
 #include "sccs_sa.h"
 #include "sccs_thread_sum.h"
-#include "sccs_pw_coulomb.h"
 
 #include "source_base/parallel_reduce.h"
 #include "source_basis/module_pw/pw_basis.h"
@@ -19,12 +19,13 @@ namespace
 {
 // Spectral surface int(|grad s|_r - r), r = surface_regularization, and
 // dE/ds = pressure - gamma div(grad s/|grad s|_r).
-void spec_surface(const SccsResponse& response,
-                  const SccsConfig& config,
-                  const ModulePW::PW_Basis& basis,
-                  double tpiba,
-                  double& surface,
-                  std::vector<double>& boundary_potential)
+void spec_surface(
+    const SccsResponse &response,
+    const SccsConfig &config,
+    const ModulePW::PW_Basis &basis,
+    double tpiba,
+    double &surface,
+    std::vector<double> &boundary_potential)
 {
     const std::size_t size = response.solute.size();
     const double dv = basis.omega / basis.nxyz;
@@ -33,7 +34,8 @@ void spec_surface(const SccsResponse& response,
     std::vector<ModuleBase::Vector3<double>> unit_gradient(size);
     XC_Functional::grad_rho(solute_g.data(), unit_gradient.data(), &basis, tpiba);
     const double eta = config.surface_regularization;
-    const auto add_point = [&](std::size_t i, std::array<double, 1>& sum) {
+    const auto add_point = [&](std::size_t i, std::array<double, 1> &sum)
+    {
         const double norm_squared = unit_gradient[i] * unit_gradient[i] + eta * eta;
         const double norm = std::sqrt(norm_squared);
         sum[0] += (norm - eta) * dv;
@@ -58,21 +60,23 @@ void spec_surface(const SccsResponse& response,
 // within a grid spacing, so every boundary condition uses it. density_potential
 // is the exact derivative of the discrete surface and volume energies (see
 // sa_nonelec), bounded where the gradient vanishes.
-void filled_nonelec(const SccsResponse& response,
-                    const SccsConfig& config,
-                    const std::vector<double>& probe_kernel,
-                    const ModulePW::PW_Basis& basis,
-                    double tpiba,
-                    double& surface,
-                    std::vector<double>& density_potential)
+void filled_nonelec(
+    const SccsResponse &response,
+    const SccsConfig &config,
+    const std::vector<double> &probe_kernel,
+    const ModulePW::PW_Basis &basis,
+    double tpiba,
+    double &surface,
+    std::vector<double> &density_potential)
 {
     const double eta = config.surface_regularization;
     SolventAwareNonelectrostatic filled = sa_nonelec(
         response.solvent_aware, response.dsolute_drho, probe_kernel, basis, tpiba, eta, config.surface_tension,
         config.pressure);
     const double dv = basis.omega / basis.nxyz;
-    const std::vector<ModuleBase::Vector3<double>>& gradient = filled.gradient;
-    const auto add_point = [&](std::size_t i, std::array<double, 1>& sum) {
+    const std::vector<ModuleBase::Vector3<double>> &gradient = filled.gradient;
+    const auto add_point = [&](std::size_t i, std::array<double, 1> &sum)
+    {
         const double norm_squared = gradient[i].norm2() + eta * eta;
         const double norm = std::sqrt(norm_squared);
         sum[0] += (norm - eta) * dv;
@@ -83,26 +87,28 @@ void filled_nonelec(const SccsResponse& response,
 }
 } // namespace
 
-void eval_functional(const std::vector<double>& charge,
-                      const SccsResponse& response,
-                      const SccsConfig& config,
-                      const ModulePW::PW_Basis& basis,
-                      double tpiba,
-                      FunctionalResult& result)
+void eval_functional(
+    const std::vector<double> &charge,
+    const SccsResponse &response,
+    const SccsConfig &config,
+    const ModulePW::PW_Basis &basis,
+    double tpiba,
+    FunctionalResult &result)
 {
     PeriodicCoulombOperator coulomb(basis, tpiba);
     const std::vector<double> no_probe;
     eval_functional(charge, response, config, no_probe, basis, tpiba, coulomb, result);
 }
 
-void eval_functional(const std::vector<double>& charge,
-                      const SccsResponse& response,
-                      const SccsConfig& config,
-                      const std::vector<double>& probe_kernel,
-                      const ModulePW::PW_Basis& basis,
-                      double tpiba,
-                      CoulombOperator& coulomb,
-                      FunctionalResult& result)
+void eval_functional(
+    const std::vector<double> &charge,
+    const SccsResponse &response,
+    const SccsConfig &config,
+    const std::vector<double> &probe_kernel,
+    const ModulePW::PW_Basis &basis,
+    double tpiba,
+    CoulombOperator &coulomb,
+    FunctionalResult &result)
 {
     const std::size_t size = charge.size();
     const double dv = basis.omega / basis.nxyz;
@@ -118,7 +124,8 @@ void eval_functional(const std::vector<double>& charge,
     {
         candidate.cavity_potential = response.cavity_potential;
     }
-    const auto add_point = [&](std::size_t i, std::array<double, 2>& sums) {
+    const auto add_point = [&](std::size_t i, std::array<double, 2> &sums)
+    {
         const double reaction = response.polarization.potential[i] - vacuum[i];
         candidate.reaction_potential[i] = reaction;
         candidate.electron_potential[i] = -reaction + response.cavity_potential[i];

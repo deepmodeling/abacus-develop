@@ -189,7 +189,7 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell &ucell, const int istep)
     {
         const Input_para &inp = *this->inp_;
         const std::string &readin_dir = PARAM.globalv.global_readin_dir;
-        auto *helper = static_cast<Exx_Helper<T, Device> *>(this->exx_helper);
+        Exx_Helper<T, Device>* helper = static_cast<Exx_Helper<T, Device> *>(this->exx_helper);
         pw::prepare_exx_nscf<T, Device>(inp, ucell, this->pw_wfc, *helper->op_exx, readin_dir);
     }
 
@@ -379,7 +379,7 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell &ucell, const int istep, const
     // Calculate kinetic energy density tau for ELF if needed
     if (this->inp_->out_elf[0] > 0)
     {
-        auto *elec_pw = static_cast<elecstate::ElecStatePW<T, Device> *>(this->pelec);
+        elecstate::ElecStatePW<T, Device>* elec_pw = static_cast<elecstate::ElecStatePW<T, Device> *>(this->pelec);
         auto &psi = *this->stp.template get_psi_t<T, Device>();
         elec_pw->cal_tau(psi);
     }

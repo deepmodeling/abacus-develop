@@ -70,6 +70,8 @@ Gamma
 
 Run the program, and you will see a file named doss1.txt in the output directory (with `out_app_flag = 2` the name carries a one-based `g{step}` index, e.g., `doss1g1.txt`). The columns are: energy(eV), dos (number of states in each energy bin), dos_int (integrated DOS), dos_smear(1/eV) (Gaussian-smeared DOS), dos_smear_int (integrated smeared DOS). Plot the file with graphing software, and you'll get the DOS.
 
+The optional second integer of `out_dos` sets the number of decimal places of the numeric columns in `doss{s}.txt` and `pdoss{s}.txt` (default 6); for example, `out_dos 1 4` writes four decimals.
+
 The `dos` column is a raw per-bin histogram, while `dos_smear` is the physically meaningful density of states in 1/eV. The `abacus-plot` tool plots `dos_smear` by default; set `"smearing": false` in its config.json to plot the raw histogram instead, or apply your own smearing to the raw column with `abacus_plot.utils.gaussian_smearing`. For nspin=2, two files (doss1*/doss2*) are written, one per spin channel; the tool pairs them automatically whether you pass either file, a directory, or a list of both files. For nspin=4, a single spinor-summed file is written.
 
 ```
@@ -97,3 +99,35 @@ The PDOS file uses a plain-text format. Each row corresponds to one energy point
 The `# Ionic_Step` line is only present for geometry-optimization (istep) output. Within each angular momentum `l`, the `2l+1` columns follow the magnetic-quantum-number order `m = 0, +1, -1, +2, -2, ...`.
 
 For nspin=2, two files are written (pdoss1* and pdoss2*), one per spin channel. For nspin=4, the two spinor components are summed into a single file. The unit of PDOS is also `(number of states)/(eV * unitcell)`.
+
+### NumPy output
+
+For a single-point LCAO KSDFT SCF or NSCF calculation, set `out_dos 2`
+to write both total and projected DOS as NumPy arrays. Use `out_dos 1`
+for text output or `out_dos 0` (the default) to disable DOS output.
+Older releases used `out_dos 2` to request text PDOS.
+
+Total DOS is in `dos.npy`, with one record per energy point. The shared
+`energy_eV` field has shape `(npoints,)`. The four spectrum fields,
+`dos`, `dos_int`, `dos_smear` and `dos_smear_int`, each have shape
+`(npoints, 2)` for `nspin=2` (spin up, then spin down) or `(npoints, 1)`
+for `nspin=1` or `4`. All five fields use binary64 and the same units as
+the text columns. Projected DOS is in `pdos.npy`.
+With `out_app_flag 2`, these files are in the `DOS/` output subdirectory.
+For plotting, set `tdosfile` or `pdosfile` in the `abacus-plot` config.
+Use an explicit file path when the directory contains both formats.
+
+```python
+import numpy as np
+
+total = np.load("dos.npy", mmap_mode="r")
+dos_per_eV = total["dos_smear"]
+rows = np.load("pdos.npy", mmap_mode="r")
+spectrum = rows["pdos"][0]  # (spin channel, energy point), in 1/eV
+energy_eV = rows["energy_min_eV"][0] + np.arange(spectrum.shape[1]) * rows["energy_step_eV"][0]
+```
+
+Each PDOS row identifies one channel by `atom_index` (one-based), `species`, `l`
+and signed `m`. `nspin` is the input spin mode. Modes 1 and 4 store one
+spectrum per row, and mode 2 stores spin-up and spin-down. The array uses
+binary64 and the same zeta sums and zero threshold as text.

@@ -34,8 +34,8 @@ __global__ void cast_memory(std::complex<FPTYPE_out>* out, const std::complex<FP
     {
         return;
     }
-    auto* _out = reinterpret_cast<thrust::complex<FPTYPE_out>*>(out);
-    const auto* _in = reinterpret_cast<const thrust::complex<FPTYPE_in>*>(in);
+    thrust::complex<FPTYPE_out>* _out = reinterpret_cast<thrust::complex<FPTYPE_out>*>(out);
+    const thrust::complex<FPTYPE_in>* _in = reinterpret_cast<const thrust::complex<FPTYPE_in>*>(in);
     _out[idx] = static_cast<thrust::complex<FPTYPE_out>>(_in[idx]);
 }
 
@@ -47,7 +47,7 @@ __global__ void cast_memory(std::complex<FPTYPE_out>* out, const FPTYPE_in* in, 
     {
         return;
     }
-    auto* _out = reinterpret_cast<thrust::complex<FPTYPE_out>*>(out);
+    thrust::complex<FPTYPE_out>* _out = reinterpret_cast<thrust::complex<FPTYPE_out>*>(out);
     _out[idx] = static_cast<thrust::complex<FPTYPE_out>>(in[idx]);
 }
 
@@ -215,7 +215,7 @@ struct cast_memory_op<FPTYPE_out, FPTYPE_in, base_device::DEVICE_CPU, base_devic
                                                                                                   size);
             return;
         }
-        auto * arr = (FPTYPE_in*) malloc(sizeof(FPTYPE_in) * size);
+        FPTYPE_in* arr = (FPTYPE_in*) malloc(sizeof(FPTYPE_in) * size);
         CHECK_CUDA(cudaMemcpy(arr, arr_in, sizeof(FPTYPE_in) * size, cudaMemcpyDeviceToHost));
         for (int ii = 0; ii < size; ii++) {
             arr_out[ii] = static_cast<FPTYPE_out>(arr[ii]);

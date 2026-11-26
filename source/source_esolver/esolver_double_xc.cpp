@@ -348,8 +348,8 @@ void ESolver_DoubleXC<TK, TR>::iter_finish(
 
             // copy dm
             int nks = this->kv.get_nks();
-            auto _pes_lcao_base = dynamic_cast<elecstate::ElecStateLCAO<TK> *>(this->pelec_base);
-            auto _pes_lcao = dynamic_cast<elecstate::ElecStateLCAO<TK> *>(this->pelec);
+            elecstate::ElecStateLCAO<TK>* _pes_lcao_base = dynamic_cast<elecstate::ElecStateLCAO<TK> *>(this->pelec_base);
+            elecstate::ElecStateLCAO<TK>* _pes_lcao = dynamic_cast<elecstate::ElecStateLCAO<TK> *>(this->pelec);
             for (int ik = 0; ik < nks; ik++)
             {
                 // mohan update 2025-11-03

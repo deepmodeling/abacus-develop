@@ -1,8 +1,8 @@
 #include "read_hcontainer.h"
 
-#include "source_base/module_out/sparse_matrix.h"
-#include "source_base/module_out/csr_reader.h"
 #include "hcontainer_funcs.h"
+#include "source_base/module_out/csr_reader.h"
+#include "source_base/module_out/sparse_matrix.h"
 #include "transfer.h"
 
 #include <fstream>
@@ -15,11 +15,12 @@ namespace hamilt
  * @attention ifs should be open outside of this interface
  */
 template <typename T>
-Read_HContainer<T>::Read_HContainer(hamilt::HContainer<T>* hcontainer,
-                                        const std::string& filename,
-                                        const int nlocal,
-                                        const UnitCell* ucell,
-                                        const int rank)
+Read_HContainer<T>::Read_HContainer(
+    hamilt::HContainer<T> *hcontainer,
+    const std::string &filename,
+    const int nlocal,
+    const UnitCell *ucell,
+    const int rank)
     : _hcontainer(hcontainer), _filename(filename), _nlocal(nlocal), _ucell(ucell), _rank(rank)
 {
 }
@@ -51,70 +52,69 @@ void Read_HContainer<T>::read()
     hamilt::HContainer<T> hcontainer_serial(&pv_serial);
 
 #ifdef __MPI
-    if(this->_rank == 0)
+    if (this->_rank == 0)
     {
 #endif
-    ModuleIO::csrFileReader<T> csr(this->_filename);
-    int step = csr.getStep();
-    int matrix_dimension = csr.getMatrixDimension();
-    int r_number = csr.getNumberOfR();
+        ModuleIO::csrFileReader<T> csr(this->_filename);
+        int step = csr.getStep();
+        int matrix_dimension = csr.getMatrixDimension();
+        int r_number = csr.getNumberOfR();
 
-    //construct serial hcontainer firstly
-    // prepare atom index mapping from csr row/col to atom index
-    for (int i = 0; i < r_number; i++)
-    {
-        std::vector<int> RCoord = csr.getRCoordinate(i);
-        ModuleIO::SparseMatrix<T> sparse_matrix = csr.getMatrix(i);
-        for (const auto& element: sparse_matrix.getElements())
+        // construct serial hcontainer firstly
+        //  prepare atom index mapping from csr row/col to atom index
+        for (int i = 0; i < r_number; i++)
         {
-            int row = element.first.first;
-            int col = element.first.second;
-            T value = element.second;
+            std::vector<int> RCoord = csr.getRCoordinate(i);
+            ModuleIO::SparseMatrix<T> sparse_matrix = csr.getMatrix(i);
+            for (const auto &element : sparse_matrix.getElements())
+            {
+                int row = element.first.first;
+                int col = element.first.second;
+                T value = element.second;
 
-            //insert into hcontainer
-            int atom_i = atom_index_row[row];
-            int atom_j = atom_index_col[col];
-            auto* ij_pair = hcontainer_serial.find_pair(atom_i, atom_j);
-            if(ij_pair == nullptr)
-            {
-                //insert new pair
-                hamilt::AtomPair<T> new_pair(atom_i, atom_j, RCoord[0], RCoord[1], RCoord[2], &pv_serial);
-                hcontainer_serial.insert_pair(new_pair);
-            }
-            else
-            {
-                if(ij_pair->find_R(RCoord[0], RCoord[1], RCoord[2]) == -1)
+                // insert into hcontainer
+                int atom_i = atom_index_row[row];
+                int atom_j = atom_index_col[col];
+                auto *ij_pair = hcontainer_serial.find_pair(atom_i, atom_j);
+                if (ij_pair == nullptr)
                 {
-                    //insert new R
+                    // insert new pair
                     hamilt::AtomPair<T> new_pair(atom_i, atom_j, RCoord[0], RCoord[1], RCoord[2], &pv_serial);
                     hcontainer_serial.insert_pair(new_pair);
                 }
+                else
+                {
+                    if (ij_pair->find_R(RCoord[0], RCoord[1], RCoord[2]) == -1)
+                    {
+                        // insert new R
+                        hamilt::AtomPair<T> new_pair(atom_i, atom_j, RCoord[0], RCoord[1], RCoord[2], &pv_serial);
+                        hcontainer_serial.insert_pair(new_pair);
+                    }
+                }
             }
         }
-    }
-    hcontainer_serial.allocate(nullptr, true);
-    // second loop, add values into hcontainer
-    for (int i = 0; i < r_number; i++)
-    {
-        std::vector<int> RCoord = csr.getRCoordinate(i);
-        ModuleIO::SparseMatrix<T> sparse_matrix = csr.getMatrix(i);
-        for (const auto& element: sparse_matrix.getElements())
+        hcontainer_serial.allocate(nullptr, true);
+        // second loop, add values into hcontainer
+        for (int i = 0; i < r_number; i++)
         {
-            int row = element.first.first;
-            int col = element.first.second;
-            T value = element.second;
+            std::vector<int> RCoord = csr.getRCoordinate(i);
+            ModuleIO::SparseMatrix<T> sparse_matrix = csr.getMatrix(i);
+            for (const auto &element : sparse_matrix.getElements())
+            {
+                int row = element.first.first;
+                int col = element.first.second;
+                T value = element.second;
 
-            //insert into hcontainer
-            int atom_i = atom_index_row[row];
-            int atom_j = atom_index_col[col];
-            auto* matrix = hcontainer_serial.find_matrix(atom_i, atom_j, RCoord[0], RCoord[1], RCoord[2]);
-            matrix->add_element(row - pv_serial.atom_begin_row[atom_i],
-                                col - pv_serial.atom_begin_col[atom_j],
-                                value);
+                // insert into hcontainer
+                int atom_i = atom_index_row[row];
+                int atom_j = atom_index_col[col];
+                auto *matrix = hcontainer_serial.find_matrix(atom_i, atom_j, RCoord[0], RCoord[1], RCoord[2]);
+                matrix->add_element(
+                    row - pv_serial.atom_begin_row[atom_i], col - pv_serial.atom_begin_col[atom_j], value);
+            }
         }
-    }
 #ifdef __MPI
-}
+    }
     // thirdly, distribute hcontainer_serial to parallel hcontainer
     // send <IJR>s from serial_rank to all ranks
     int my_rank, size;
@@ -134,13 +134,7 @@ void Read_HContainer<T>::read()
         long tmp_size = 0;
         MPI_Recv(&tmp_size, 1, MPI_LONG, 0, kHctTagSize, MPI_COMM_WORLD, &status);
         tmp_ijrs.resize(tmp_size);
-        MPI_Recv(tmp_ijrs.data(),
-                    tmp_ijrs.size(),
-                    MPI_INT,
-                    0,
-                    kHctTagIndex,
-                    MPI_COMM_WORLD,
-                    &status);
+        MPI_Recv(tmp_ijrs.data(), tmp_ijrs.size(), MPI_INT, 0, kHctTagIndex, MPI_COMM_WORLD, &status);
         this->_hcontainer->insert_ijrs(&tmp_ijrs);
         this->_hcontainer->allocate();
     }
@@ -161,7 +155,6 @@ void Read_HContainer<T>::read()
     this->_hcontainer->allocate();
     this->_hcontainer->add(hcontainer_serial);
 #endif
-
 }
 
 template class Read_HContainer<double>;

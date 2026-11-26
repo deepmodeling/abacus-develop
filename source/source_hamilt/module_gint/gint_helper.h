@@ -1,10 +1,9 @@
 #ifndef ABACUS_SOURCE_HAMILT_MODULE_GINT_GINT_HELPER_H
 #define ABACUS_SOURCE_HAMILT_MODULE_GINT_GINT_HELPER_H
 
-
-#include <memory>
-#include <cmath>
 #include "gint_type.h"
+#include <cmath>
+#include <memory>
 
 namespace ModuleGint
 {
@@ -14,14 +13,22 @@ enum class GintPrecision
     fp32
 };
 
-inline int index3Dto1D(const int id_x, const int id_y, const int id_z,
-                        const int dim_x, const int dim_y, const int dim_z)
+inline int index3Dto1D(
+    const int id_x,
+    const int id_y,
+    const int id_z,
+    const int dim_x,
+    const int dim_y,
+    const int dim_z)
 {
     return id_z + id_y * dim_z + id_x * dim_y * dim_z;
 }
 
-inline Vec3i index1Dto3D(const int index_1d,
-                            const int dim_x, const int dim_y, const int dim_z)
+inline Vec3i index1Dto3D(
+    const int index_1d,
+    const int dim_x,
+    const int dim_y,
+    const int dim_z)
 {
     int id_x = index_1d / (dim_y * dim_z);
     int id_y = (index_1d - id_x * dim_y * dim_z) / dim_z;
@@ -60,11 +67,8 @@ inline int floor_div(const int a, const int b)
     return a / b - (a % b != 0 && (a ^ b) < 0);
 }
 
-inline int ceil_div(const int a, const int b)
-{
-    return a / b + (a % b != 0 && (a ^ b) > 0); 
-}
+inline int ceil_div(const int a, const int b) { return a / b + (a % b != 0 && (a ^ b) > 0); }
 
-}
+} // namespace ModuleGint
 
 #endif // ABACUS_SOURCE_HAMILT_MODULE_GINT_GINT_HELPER_H

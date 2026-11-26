@@ -286,7 +286,7 @@ void LCAO_domain::init_chg_hr(
 {
     ModuleBase::TITLE("LCAO_domain", "init_chg_hr");
 
-    auto* hamilt_lcao = dynamic_cast<hamilt::HamiltLCAO<TK, TR>*>(p_hamilt);
+    hamilt::HamiltLCAO<TK, TR>* hamilt_lcao = dynamic_cast<hamilt::HamiltLCAO<TK, TR>*>(p_hamilt);
     if (!hamilt_lcao)
     {
         ModuleBase::WARNING_QUIT("LCAO_domain::init_chg_hr", "p_hamilt is not HamiltLCAO");

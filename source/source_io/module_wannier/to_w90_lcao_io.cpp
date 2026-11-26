@@ -129,7 +129,7 @@ void toW90_LCAO::write_spn(const psi::Psi<TK>& psi, const hamilt::HContainer<TR>
                            const std::string& out_dir, std::ostream& log) const
 {
     using ModuleBase::ComplexMatrix;
-    const auto& layout = ParaV->para_2d();
+    const Parallel_Blkcyclic& layout = ParaV->para_2d();
     const bool writer = layout.irproc() == 0 && layout.icproc() == 0;
     const std::string path = out_dir + wannier_file_name + ".spn";
     std::ofstream file;
@@ -187,7 +187,7 @@ void toW90_LCAO::write_spn(const psi::Psi<TK>& psi, const hamilt::HContainer<TR>
                 const int orbital = layout.irglb(row);
                 const int opposite_spin_index = orbital ^ 1;
                 const double sign = orbital % 2 == 0 ? 1.0 : -1.0;
-                const auto flipped = std::conj(coeff(ib, opposite_spin_index));
+                const std::complex<double> flipped = std::conj(coeff(ib, opposite_spin_index));
                 bra(spin_x_row, row) = flipped;
                 bra(spin_y_row, row) = std::complex<double>(0, sign) * flipped;
                 bra(spin_z_row, row) = sign * std::conj(coeff(ib, orbital));
@@ -204,7 +204,7 @@ void toW90_LCAO::write_spn(const psi::Psi<TK>& psi, const hamilt::HContainer<TR>
                     for (int axis = 0; axis < num_spin_components; ++axis)
                     {
                         const int spin_row = num_spin_components * n + axis;
-                        const auto value = spin(spin_row, m);
+                        const std::complex<double> value = spin(spin_row, m);
                         file << value.real() << ' ' << value.imag() << '\n';
                     }
                 }

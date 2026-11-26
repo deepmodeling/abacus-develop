@@ -359,7 +359,7 @@ void HSolverPW<T, Device>::update_precondition(std::vector<Real>& h_diag,
 {
     h_diag.assign(h_diag.size(), 1.0);
     int precondition_type = 2;
-    const auto tpiba2 = static_cast<Real>(this->wfc_basis->tpiba2);
+    const Real tpiba2 = static_cast<Real>(this->wfc_basis->tpiba2);
 
     //===========================================
     // Conjugate-Gradient diagonalization

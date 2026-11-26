@@ -56,7 +56,7 @@ void Velocity_op<TR>::initialize_vcomm_r(const Grid_Driver* GridD)
     this->adjs_vcommr.reserve(this->ucell->nat);
     for (int iat0 = 0; iat0 < ucell->nat; iat0++)
     {
-        auto tau0 = ucell->get_tau(iat0);
+        ModuleBase::Vector3<double> tau0 = ucell->get_tau(iat0);
         int T0 = 0, I0 = 0;
         ucell->iat2iait(iat0, &I0, &T0);
         AdjacentAtomInfo adjs;
@@ -131,7 +131,7 @@ void Velocity_op<TR>::initialize_grad_term(const Grid_Driver* GridD)
     this->adjs_grad.reserve(this->ucell->nat);
     for (int iat1 = 0; iat1 < ucell->nat; iat1++)
     {
-        auto tau1 = ucell->get_tau(iat1);
+        ModuleBase::Vector3<double> tau1 = ucell->get_tau(iat1);
         int T1 = 0, I1 = 0;
         ucell->iat2iait(iat1, &I1, &T1);
         AdjacentAtomInfo adjs;
@@ -207,7 +207,7 @@ void Velocity_op<TR>::calculate_vcomm_r()
     // 1. calculate <psi|beta> for each pair of atoms
     for (int iat0 = 0; iat0 < this->ucell->nat; iat0++)
     {
-        auto tau0 = ucell->get_tau(iat0);
+        ModuleBase::Vector3<double> tau0 = ucell->get_tau(iat0);
         int T0 = 0, I0 = 0;
         ucell->iat2iait(iat0, &I0, &T0);
         AdjacentAtomInfo& adjs = this->adjs_vcommr[iat0];

@@ -31,8 +31,8 @@ case "$with_nep" in
     dirname="NEP_CPU-${nep_ver}"
     pkg_install_dir="${INSTALLDIR}/${dirname}"
     install_lock_file="${pkg_install_dir}/install_successful"
-    filename="nep-${nep_ver}.tar.gz"
-    url="https://codeload.github.com/brucefan1983/NEP_CPU/tar.gz/${nep_ver}"
+    filename="NEP_CPU-${nep_ver}.tar.gz"
+    url="https://github.com/brucefan1983/NEP_CPU/archive/v${nep_ver}/NEP_CPU-${nep_ver}.tar.gz"
 
     if verify_checksums "${install_lock_file}"; then
       echo "$dirname is already installed, skipping it."
@@ -47,51 +47,13 @@ case "$with_nep" in
       [ -d $dirname ] && rm -rf $dirname
       tar -xzf $filename
       cd $dirname
-
-      cat <<EOF >Makefile
-CXX ?= g++
-
-# Compiler flags
-CXXFLAGS = -O2 -fPIC -std=c++11
-
-# Include directories
-INCLUDES = -I./src
-
-# Source files
-SRCS = ./src/nep.cpp ./src/ewald_nep.cpp ./src/neighbor_nep.cpp
-
-# Object files
-OBJS = \$(SRCS:.cpp=.o)
-
-# Target shared library
-TARGET = libnep.so
-
-# Default target
-all: \$(TARGET)
-
-# Rule to build the shared library
-\$(TARGET): \$(OBJS)
-	\$(CXX) -shared \$(OBJS) -o \$(TARGET)
-
-# Rule to compile source files into object files
-%.o: %.cpp
-	\$(CXX) \$(CXXFLAGS) \$(INCLUDES) -c \$< -o \$@
-
-# Clean up build files
-clean:
-	rm -f \$(OBJS) \$(TARGET)
-
-# Install target
-install:
-	mkdir -p \$(PREFIX)/lib
-	mkdir -p \$(PREFIX)/include
-	cp \$(TARGET) \$(PREFIX)/lib/
-	cp src/*.h \$(PREFIX)/include/
-EOF
-
-      make >make.log 2>&1 || tail -n ${LOG_LINES} make.log
-      make PREFIX="${pkg_install_dir}" install >install.log 2>&1 || tail -n ${LOG_LINES} install.log
-
+      cmake -Bbuild \
+        -DCMAKE_INSTALL_PREFIX="${pkg_install_dir}" \
+        -DCMAKE_INSTALL_LIBDIR="lib" \
+        -DCMAKE_BUILD_TYPE="Release" \
+        -DNEP_CPU_OPENMP=ON \
+        > cmake.log 2>&1 || tail -n ${LOG_LINES} cmake.log
+      cmake --build build -t install -j "$(get_nprocs)" > build.log 2>&1 || tail -n ${LOG_LINES} build.log
       cd ..
       write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage4/$(basename ${SCRIPT_NAME})"
     fi
@@ -101,9 +63,9 @@ EOF
 
   __SYSTEM__)
     echo "==================== Finding NEP_CPU from system paths ===================="
-    check_lib -lnep "nep"
+    check_lib -lnep_cpu "nep"
     add_include_from_paths NEP_CFLAGS "nep.h" $INCLUDE_PATHS
-    add_lib_from_paths NEP_LDFLAGS "libnep.*" $LIB_PATHS
+    add_lib_from_paths NEP_LDFLAGS "libnep_cpu.*" $LIB_PATHS
     ;;
   __DONTUSE__) ;;
   *)
@@ -123,7 +85,6 @@ if [ "$with_nep" != "__DONTUSE__" ]; then
 prepend_path LD_LIBRARY_PATH "${pkg_install_dir}/lib"
 prepend_path LD_RUN_PATH "${pkg_install_dir}/lib"
 prepend_path LIBRARY_PATH "${pkg_install_dir}/lib"
-prepend_path CPATH "${pkg_install_dir}/include"
 prepend_path CMAKE_PREFIX_PATH "${pkg_install_dir}"
 EOF
   fi
