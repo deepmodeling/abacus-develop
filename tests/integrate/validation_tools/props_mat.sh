@@ -76,6 +76,24 @@ run_mat_props() {
     scal=OUT.autotest/sr_nao.csr
     python3 $COMPARE_SCRIPT $sref $scal 8
     echo "CompareS_pass $?" >>$props_result_file
+
+    # Angular momentum matrices are optional in get_s. They are built from the
+    # orbital tables, so a case that enables out_mat_l must write all three
+    # components next to the overlap matrix.
+    if ! test -z "$has_mat_l" && [ "${has_mat_l%% *}" == "1" ]; then
+      lxref=lx_nao.csr.ref
+      lxcal=OUT.autotest/lx_nao.csr
+      lyref=ly_nao.csr.ref
+      lycal=OUT.autotest/ly_nao.csr
+      lzref=lz_nao.csr.ref
+      lzcal=OUT.autotest/lz_nao.csr
+      python3 $COMPARE_SCRIPT $lxref $lxcal 8
+      echo "CompareLx_pass $?" >>$props_result_file
+      python3 $COMPARE_SCRIPT $lyref $lycal 8
+      echo "CompareLy_pass $?" >>$props_result_file
+      python3 $COMPARE_SCRIPT $lzref $lzcal 8
+      echo "CompareLz_pass $?" >>$props_result_file
+    fi
   fi
 
   #-------------------------------
