@@ -1,12 +1,15 @@
 #include "esolver_sdft_pw.h"
 
 #include "source_base/global_variable.h"
+#include "source_base/fs_compat.h"
+#include "source_base/module_device/memory_op.h"
 #include "source_base/memory_recorder.h"
 #include "source_base/parallel_comm.h"
 #include "source_estate/module_charge/chg_symm.h"
 #include "source_hsolver/diago_iter_assist.h"
 #include "source_hsolver/diago_params.h"
 #include "source_io/module_parameter/parameter.h"
+#include "source_io/module_wf/write_wfc_pw.h"
 #include "source_pw/module_stodft/sto_dos.h"
 #include "source_pw/module_stodft/sto_elecond.h"
 #include "source_pw/module_stodft/sto_forces.h"
@@ -128,6 +131,114 @@ void ESolver_SDFT_PW<T, Device>::after_scf(UnitCell &ucell, const int istep, con
 
     // 1) call after_scf() of ESolver_KS_PW
     ESolver_KS_PW<T, Device>::after_scf(ucell, istep, conv_esolver);
+
+    // 2) dump the SDFT/MDFT wavefunctions through the same writer that the
+    //    KSDFT path uses (ModuleIO::write_wfc_pw), so the file layout, the
+    //    binary mode and the collective pattern are shared. `out_wfc_pw` is
+    //    reused as the switch; nothing is written for other values.
+    //
+    //    Every band group enters the writer even when it owns no orbital,
+    //    because the writer synchronises the whole world: returning early for
+    //    an empty group would leave the other groups waiting in MPI_Barrier.
+    if (istep != 0 || this->inp_->basis_type != "pw"
+        || (this->inp_->out_wfc_pw != 1 && this->inp_->out_wfc_pw != 2))
+    {
+        ModuleBase::timer::end("ESolver_SDFT_PW", "after_scf");
+        return;
+    }
+
+    ModuleBase::TITLE("ESolver_SDFT_PW", "after_scf_dump_wfc");
+
+    // On device builds the master copy of the deterministic orbitals lives on
+    // the device; bring the host copy up to date before reading it, exactly as
+    // the KSDFT output path does (ModuleIO::ctrl_iter_pw).
+    this->stp.sync_cpu();
+    const std::string psi_dir = PARAM.globalv.global_psi_dir;
+    ModuleBase::ensure_directory(psi_dir);
+
+    // The number of stochastic orbitals can differ between k points when
+    // `nbands_sto all` is used; dump only the rows that every k point owns, so
+    // that the header and the coefficients agree and no uncomputed padding row
+    // is written.
+    int nsto = 0;
+    if (this->stowf.nchip_max > 0 && this->stowf.nchip != nullptr)
+    {
+        nsto = this->stowf.nchip[0];
+        for (int ik = 1; ik < this->kv.get_nks(); ++ik)
+        {
+            nsto = std::min(nsto, this->stowf.nchip[ik]);
+        }
+    }
+
+    // At most four orbitals of each set are dumped: enough to inspect the
+    // orbitals in real space without writing hundreds of files per run.
+    const int max_dump = 4;
+    const int nband_ks = std::min(this->stp.psi_cpu->get_nbands(), max_dump);
+    const int nband_sto = std::min(nsto, max_dump);
+    const int nband_filtered = std::min(nsto, max_dump);
+    const int nband_chiortho = std::min(this->stp.psi_cpu->get_nbands(), 2);
+
+    auto dump = [&](const std::string& tag, const psi::Psi<std::complex<double>>& psi, const int nbands_out) {
+        ModuleIO::write_wfc_pw(-1, // -1 keeps the ionic step out of the file name
+                               -1, // same for the electronic step
+                               -1, // a single-point dump always truncates
+                               this->inp_->kpar,
+                               GlobalV::MY_POOL,
+                               0, // my_rank: unused by the writer
+                               nbands_out,
+                               this->inp_->nspin,
+                               PARAM.globalv.npol,
+                               this->pw_wfc->poolrank,
+                               this->pw_wfc->poolnproc,
+                               this->inp_->out_wfc_pw,
+                               0, // out_app_flag: one frame, no append
+                               this->inp_->ecutwfc,
+                               psi_dir,
+                               psi,
+                               this->kv,
+                               this->pw_wfc,
+                               GlobalV::ofs_running,
+                               tag);
+    };
+
+    // With band parallelism every band group owns a different subset of the
+    // orbitals, so the files of the groups must not share a name.
+    std::string bg = "";
+    if (this->inp_->bndpar > 1)
+    {
+        bg = "_bg" + std::to_string(GlobalV::MY_BNDGROUP);
+    }
+
+    if (this->inp_->nbands > 0 && this->stp.psi_cpu != nullptr)
+    {
+        dump(bg + "_ks", *this->stp.psi_cpu, nband_ks);
+    }
+    if (this->inp_->nbands_sto > 0 && this->stowf.chi0_cpu != nullptr)
+    {
+        dump(bg + "_sto", *this->stowf.chi0_cpu, nband_sto);
+    }
+    // The filtered and the KS-orthogonalized stochastic orbitals live on the
+    // wavefunction device (and may use a single-precision type), while the
+    // writer works on host double-precision data.  Copying through
+    // cast_memory_op handles device -> host and float -> double in one step, so
+    // all four dump sets are available on CPU and GPU builds alike.
+    auto dump_on_host = [&](const std::string& tag, const psi::Psi<T, Device>& src, const int nbands_out) {
+        psi::Psi<std::complex<double>> host(
+            this->kv.get_nks(), src.get_nbands(), this->pw_wfc->npwk_max, this->kv.ngk, true);
+        base_device::memory::cast_memory_op<std::complex<double>, T, base_device::DEVICE_CPU, Device>()(
+            host.get_pointer() - host.get_psi_bias(),
+            src.get_pointer() - src.get_psi_bias(),
+            host.size());
+        dump(tag, host, nbands_out);
+    };
+    if (this->stowf.shchi != nullptr)
+    {
+        dump_on_host(bg + "_shchi", *this->stowf.shchi, nband_filtered);
+    }
+    if (this->inp_->nbands > 0 && this->stowf.chiortho != nullptr)
+    {
+        dump_on_host(bg + "_chiortho", *this->stowf.chiortho, nband_chiortho);
+    }
 
     ModuleBase::timer::end("ESolver_SDFT_PW", "after_scf");
 }

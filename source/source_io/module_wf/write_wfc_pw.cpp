@@ -31,7 +31,8 @@ void ModuleIO::write_wfc_pw(
         const psi::Psi<std::complex<double>>& psi,
         const K_Vectors& kv,
         const ModulePW::PW_Basis_K* wfcpw,
-        std::ofstream &ofs_running)
+        std::ofstream &ofs_running,
+        const std::string& property_tag)
 {
     ModuleBase::TITLE("ModuleIO", "write_wfc_pw");
 
@@ -58,7 +59,7 @@ void ModuleIO::write_wfc_pw(
         {
             std::string fn = filename_output(global_out_dir,"wf","pw",
                     ik_local,kv.ik2iktot,nspin,nkstot,
-                    out_wfc_pw,out_app_flag,gamma_only,istep,iter);
+                    out_wfc_pw,out_app_flag,gamma_only,istep,iter,property_tag);
 
             ModuleIO::write_notice(ofs_running, "G-space wave functions", fn);
 

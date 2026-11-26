@@ -316,7 +316,15 @@ The optional second integer controls the output precision. If not provided, the 
         item.annotation = "output wave functions";
         item.category = "Output information";
         item.type = "Integer";
-        item.description = R"(Controls whether plane-wave Kohn-Sham wavefunction coefficients are written to `OUT.${suffix}/`.
+        item.description = R"(Controls whether plane-wave wavefunction coefficients are written to `OUT.${suffix}/`.
+For `esolver_type=ksdft` the Kohn-Sham coefficients are written. For `esolver_type=sdft` this
+parameter switches on the same writer for the SDFT/MDFT orbitals, once, at the first ionic step:
+at most four deterministic (Kohn-Sham) orbitals (`wf_ks...`), at most four raw stochastic
+orbitals (`wf_sto...`), at most four occupation-filtered stochastic orbitals (`wf_shchi...`, the
+ones that enter the charge density without a separate diagonalization) and at most two stochastic
+orbitals orthogonalized against the Kohn-Sham subspace (`wf_chiortho...`). The two last sets are
+only written when the wavefunction device is the CPU, and with `bndpar > 1` every band group
+writes its own `bg<i>` files (a band group without orbitals writes a header-only file).
 
 Available values are:
 * `0`: Do not write wavefunction coefficients.
@@ -332,7 +340,7 @@ With `init_wfc file binary`, ABACUS reads only unindexed binary `wf*_pw.dat` fil
 [NOTE] In the 3.10-LTS version, the binary files are named `WAVEFUNC1.dat`, `WAVEFUNC2.dat`, etc.)";
         item.default_value = "0";
         item.unit = "";
-        item.set_availability("basis_type==pw and esolver_type==ksdft");
+        item.set_availability("basis_type==pw and (esolver_type==ksdft or esolver_type==sdft)");
         read_sync_int(input.out_wfc_pw);
         this->add_item(item);
     }

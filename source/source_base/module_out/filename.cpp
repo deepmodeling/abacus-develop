@@ -17,7 +17,8 @@ std::string filename_output(
             const int out_app_flag,
             const bool gamma_only,
             const int istep,
-            const int iter)
+            const int iter,
+            const std::string &tag)
 {
     // output filename = "{global_out_dir}/property{s}{spin index}
     // {k(optional)}{k-point index}{g(optional)}{geometry index1}{_basis(nao|pw)} 
@@ -126,7 +127,7 @@ std::string filename_output(
     }
 
     std::string fn_out
-        = directory + property + kpoint_block + spin_block
+        = directory + property + tag + kpoint_block + spin_block
           + istep_block + iter_block + "_" + basis + suffix_block;
 
     return fn_out;
