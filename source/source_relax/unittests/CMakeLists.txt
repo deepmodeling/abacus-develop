@@ -96,7 +96,8 @@ addtest(
   TARGET MODULE_RELAX_lat_change_method_test
   LIBS parameter base device
   SOURCES test_lat_change_method.cpp ../lat_change_method.cpp
-          ../lattice_change_basic.cpp ../relax_data.cpp test_mock_remake_cell.cpp)
+          ../lattice_change_basic.cpp ../relax_data.cpp
+          test_mock_remake_cell.cpp)
 
 addtest(
   TARGET MODULE_RELAX_lattice_change_basic_test
