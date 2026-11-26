@@ -318,17 +318,19 @@ void LCAO_domain::init_chg_hr(
     p_hamilt->refresh(false);
 
     // Step 3: Diagonalize to get wavefunctions and charge density
+    const Input_para& input = PARAM.inp;
+    const bool use_gpu = input.device == "gpu";
     hsolver::HSolverLCAO<TK> hsolver_lcao_obj(pv,
                                               ks_solver,
                                               PARAM.globalv.kpar_lcao,
                                               PARAM.globalv.nlocal,
-                                              PARAM.inp.nbands,
-                                              PARAM.inp.nelec,
-                                              PARAM.inp.device == "gpu",
+                                              input.nbands,
+                                              input.nelec,
+                                              use_gpu,
                                               GlobalV::NPROC,
                                               GlobalV::MY_RANK);
     hamilt::HamiltHSMatrix<TK> hs(p_hamilt);
-    hsolver_lcao_obj.solve(hs, psi, pelec, dm, chr, nspin, ucell.omega, 0);
+    hsolver_lcao_obj.solve(hs, psi, pelec, dm, chr, nspin, ucell.omega, false, input.device_dm, input.dm_verify);
 }
 
 

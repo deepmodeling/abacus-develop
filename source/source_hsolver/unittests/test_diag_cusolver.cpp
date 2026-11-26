@@ -36,15 +36,15 @@ void check_retained_density(const bool subset)
         std::vector<double> density(elements);
         std::vector<double> weights(bands);
         Diag_Cusolver_gvd legacy;
-        legacy.solve_full(n, n, h.data(), s.data(), legacy_values.data(), legacy_wave.data());
+        legacy.solve_full(n, n, h.data(), s.data(), legacy_values.data(), legacy_wave.data(), false);
         if (subset)
         {
-            const bool solved = retained.solve_subset(n, bands, h.data(), s.data(), retained_values.data(), host_wave.data());
+            const bool solved = retained.solve_subset(n, bands, h.data(), s.data(), retained_values.data(), host_wave.data(), true);
             ASSERT_TRUE(solved);
         }
         else
         {
-            retained.solve_full(n, bands, h.data(), s.data(), retained_values.data(), host_wave.data());
+            retained.solve_full(n, bands, h.data(), s.data(), retained_values.data(), host_wave.data(), true);
         }
         for (int band = 0; band < bands; ++band)
         {
@@ -101,7 +101,7 @@ TEST(CusolverRetainedDm, ComplexSolveInvalidatesRealEigenvectors)
     std::string error;
     const bool empty = solver.density_from_retained(n, weights, density, error);
     EXPECT_FALSE(empty);
-    solver.solve_full(n, n, h, s, values, wave);
+    solver.solve_full(n, n, h, s, values, wave, true);
     const bool real = solver.density_from_retained(n, weights, density, error);
     ASSERT_TRUE(real);
     EXPECT_TRUE(error.empty());
@@ -111,4 +111,25 @@ TEST(CusolverRetainedDm, ComplexSolveInvalidatesRealEigenvectors)
     solver.solve_full(n, n, complex_h, complex_s, values, complex_wave);
     const bool stale = solver.density_from_retained(n, weights, density, error);
     EXPECT_FALSE(stale);
+}
+
+TEST(CusolverRetainedDm, HostOnlySolveReleasesRetainedEigenvectors)
+{
+    const int n = 2;
+    const double h[4] = {1.0, 0.0, 0.0, 2.0};
+    const double s[4] = {1.0, 0.0, 0.0, 1.0};
+    const double weights[2] = {2.0, 0.125};
+    double values[2] = {};
+    double wave[4] = {};
+    double density[4] = {};
+    std::string error;
+    Diag_Cusolver_gvd solver;
+    solver.solve_full(n, n, h, s, values, wave, true);
+    ASSERT_TRUE(solver.density_from_retained(n, weights, density, error));
+    solver.solve_full(n, n, h, s, values, wave, false);
+    EXPECT_FALSE(solver.density_from_retained(n, weights, density, error));
+    ASSERT_TRUE(solver.solve_subset(n, 1, h, s, values, wave, true));
+    ASSERT_TRUE(solver.density_from_retained(1, weights, density, error));
+    ASSERT_TRUE(solver.solve_subset(n, 1, h, s, values, wave, false));
+    EXPECT_FALSE(solver.density_from_retained(1, weights, density, error));
 }

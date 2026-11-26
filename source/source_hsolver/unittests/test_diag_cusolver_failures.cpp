@@ -62,7 +62,7 @@ protected:
         const double s[4] = {1.0, 0.0, 0.0, 1.0};
         double eigenvalues[2] = {};
         double wave[4] = {};
-        solver->solve_full(2, 2, h, s, eigenvalues, wave);
+        solver->solve_full(2, 2, h, s, eigenvalues, wave, true);
     }
 
     void TearDown() override
@@ -89,7 +89,8 @@ protected:
         {
             EXPECT_NE(error.find("code=2"), std::string::npos) << error;
         }
-        EXPECT_NE(error.find("ABACUS_DM_DIRECT_PILOT=cpu"), std::string::npos) << error;
+        EXPECT_NE(error.find("device_dm cpu in INPUT"), std::string::npos) << error;
+        EXPECT_NE(error.find("dm_verify false"), std::string::npos) << error;
     }
 
     std::unique_ptr<Diag_Cusolver_gvd> solver;

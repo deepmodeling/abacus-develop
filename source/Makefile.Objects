@@ -555,6 +555,12 @@ OBJS_HSOLVER_LCAO=hsolver_lcao.o\
       utils.o\
       parallel_k2d.o\
 
+ifeq ($(GPU), CUDA)
+ifeq ($(MPI), ON)
+OBJS_HSOLVER_LCAO += dm_direct_pilot.o
+endif
+endif
+
 OBJS_HSOLVER_PEXSI=diago_pexsi.o\
       pexsi_solver.o\
       simple_pexsi.o\

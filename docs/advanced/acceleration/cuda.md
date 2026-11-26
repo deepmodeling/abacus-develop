@@ -51,28 +51,41 @@ In `INPUT` file we need to set the input parameter [device](../input_files/input
 ## Examples
 We provides [examples](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/34_gpu) of gpu calculations.
 
-## Experimental Gamma density matrix on GPU
+## Gamma density matrix on GPU
 
-The private `ABACUS_DM_DIRECT_PILOT` CMake option defaults to `OFF` and requires
-CUDA, MPI and LCAO. An enabled build can retain real cuSOLVER eigenvectors until
-occupations are available and form the FP64 density matrix with cuBLAS.
-Select this explicitly at run time with `ABACUS_DM_DIRECT_PILOT=direct`, or use
-`verify` to compare each distributed DM block against the CPU construction.
-The trial supports one node with one visible GPU per rank, multiple MPI ranks,
-`ks_solver cusolver`, `gamma_only 1`, `nspin 1`, `kpar 1`, and charge updates.
-Unsupported configurations use the existing solver/CPU-DM path.
+Use `device_dm` in INPUT to select where the real FP64 LCAO density matrix is
+constructed. The default is `cpu`, including when `device gpu` is selected.
+A CUDA/MPI/LCAO build includes GPU DM without a separate CMake option or
+runtime environment variable. For example:
 
-Once device DM construction starts, a CUDA or cuBLAS failure stops the run with
-a nonzero exit status. The diagnostic identifies the failing stage, matrix and
-band counts, and the requested byte count for allocations and transfers. It
-does not continue with CPU DM after a device failure. To choose CPU DM explicitly,
-rerun with `ABACUS_DM_DIRECT_PILOT=cpu`; cuSOLVER diagonalization still uses the
-GPU. This choice does not reduce the eigensolver's own GPU memory requirements.
+```text
+basis_type  lcao
+device      gpu
+ks_solver   cusolver
+gamma_only  1
+nspin       1
+kpar        1
+device_dm   gpu
+```
 
-Both modes use the same full/partial eigensolver selection described below.
-The partial solve requests indices 1 through `nbands` with `cusolverDnDsygvdx`;
-it still needs dense N-by-N device buffers. Host eigenvectors remain available
-in both modes, and the device DM is downloaded for the existing CPU consumers.
+Run multiple MPI ranks on one node with one visible GPU per rank. GPU DM
+supports Kohn-Sham SCF, relaxation and MD charge updates. Other configurations
+are rejected when GPU DM is explicitly selected. Set `dm_verify true` to
+compare every distributed DM block with CPU construction from the same
+eigenvectors and occupations, and check Tr(DS). Verification adds CPU work;
+keep the default `dm_verify false` for performance measurements.
+
+A CUDA or cuBLAS error during GPU DM stops the run with a nonzero exit status.
+The diagnostic identifies the failing operation, matrix and band counts, and
+applicable allocation/transfer byte count. To choose CPU DM, set `device_dm cpu`
+and `dm_verify false` in INPUT and rerun. The selected eigensolver still performs diagonalization;
+this change does not reduce cuSOLVER's own GPU memory requirements.
+
+Both DM devices use the same full/partial eigensolver selection described
+below. The partial solve requests indices 1 through `nbands` with
+`cusolverDnDsygvdx`; it still needs dense N-by-N device buffers. GPU DM retains
+device eigenvectors until occupations and DM are ready. Host eigenvectors
+remain available, and the device DM is downloaded for existing CPU consumers.
 
 ## Known limitations
 PW basis:

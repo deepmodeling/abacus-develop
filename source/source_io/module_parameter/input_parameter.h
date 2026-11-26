@@ -87,6 +87,8 @@ struct Input_para
     double nelec_delta = 0.0;          ///< change in the number of total electrons
     double nupdown = 0.0;
     std::string dft_functional = "default"; ///< input DFT functional.
+    std::string device_dm = "cpu"; ///< Device for Gamma LCAO density-matrix construction.
+    bool dm_verify = false; ///< Compare GPU DM with CPU DM from the same eigenvectors.
     std::string device_xc = "cpu"; ///< Device for Libxc LDA/GGA potential evaluation.
     int gga_grad = 0; ///< Noncollinear GGA: 0 original, 1 local axis, 2 regularized mapped-density LCA.
     double xc_temperature = 0.0;            ///< only relevant if finite temperature functional is used

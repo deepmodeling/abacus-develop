@@ -35,9 +35,8 @@
 #include "source_estate/module_dm/density_matrix.h"
 #include "source_hsolver/parallel_k2d.h"
 
-#ifdef ABACUS_DM_DIRECT_PILOT
+#if defined(__CUDA) && defined(__MPI)
 #include "dm_direct_pilot.h"
-#include <cstdlib>
 #endif
 
 namespace hsolver
@@ -52,81 +51,75 @@ void HSolverLCAO<TK>::solve(HSMatrix<TK>& hs,
 								   Charge &chr,
                                    const int nspin,
                                    const double omega,
-                                   const bool skip_charge)
+                                   const bool skip_charge,
+                                   const std::string& device_dm,
+                                   const bool dm_verify)
 {
     ModuleBase::TITLE("HSolverLCAO", "solve");
     ModuleBase::timer::start("HSolverLCAO", "solve");
 
     if (this->method != "pexsi")
     {
-#ifdef ABACUS_DM_DIRECT_PILOT
-        const char* trial_mode = std::getenv("ABACUS_DM_DIRECT_PILOT");
-        const Parallel_Blkcyclic& trial_layout = this->ParaV->para_2d();
-        const int trial_context = trial_layout.ictxt();
-        const bool trial_root = trial_layout.irproc() == 0 && trial_layout.icproc() == 0;
-        direct_sync(trial_context);
-        const std::chrono::steady_clock::time_point combined_start = std::chrono::steady_clock::now();
-        const DirectConfig trial_config = {this->method, this->kpar_lcao, nspin, skip_charge,
-                                           this->world_rank, this->world_nproc, this->nbands, trial_mode};
-        const bool direct_done = direct_gamma(hs, psi, pes, dm, this->ParaV, trial_config);
-        if (!direct_done)
+        if (device_dm == "gpu")
         {
-            direct_report_fallback(trial_root, trial_mode);
+#if defined(__CUDA) && defined(__MPI)
+            const DirectConfig config = {this->method, this->kpar_lcao, nspin, skip_charge,
+                                         this->world_rank, this->world_nproc, this->nbands, dm_verify};
+            direct_gamma(hs, psi, pes, dm, this->ParaV, config);
+#else
+            ModuleBase::WARNING_QUIT("HSolverLCAO::solve", "device_dm gpu requires CUDA and MPI support");
 #endif
-    #ifdef __MPI
-    #ifdef __CUDA
-        if (this->method == "cusolver" && this->world_nproc > 1)
-        {
-            this->parakSolve_cusolver(hs, psi, pes);
-        }else 
-    #endif
-        if (this->kpar_lcao > 1
-            && (this->method == "genelpa" || this->method == "elpa" || this->method == "scalapack_gvx" || this->method == "lapack"))
-        {
-            this->parakSolve(hs, psi, pes, this->kpar_lcao, nspin);
-        } else
-    #endif
-        if (this->kpar_lcao == 1)
-        {
-            /// Loop over k points for solve Hamiltonian to eigenpairs(eigenvalues and eigenvectors).
-            for (int ik = 0; ik < psi.get_nk(); ++ik)
-            {
-                /// H(k) and S(k) are all the eigensolvers need from the Hamiltonian
-                ModuleBase::MatrixBlock<TK> hk, sk;
-                hs.hs_at_k(ik, hk, sk);
-
-                /// find psi pointer for each k point
-                psi.fix_k(ik);
-
-                /// solve eigenvector and eigenvalue for H(k)
-                this->hamiltSolvePsiK(hk, sk, psi, &(pes->ekb(ik, 0)));
-            }
         }
         else
         {
-            ModuleBase::WARNING_QUIT("HSolverLCAO::solve",
-                                     "This method and KPAR setting is not supported for lcao basis in ABACUS!");
-        }
-
-        elecstate::calculate_weights(pes->ekb,
-                                     pes->wg,
-                                     pes->klist,
-                                     pes->eferm,
-                                     pes->f_en,
-                                     pes->nelec_spin,
-                                     this->nbands,
-                                     pes->skip_weights);
-
-        elecstate::calEBand(pes->ekb, pes->wg, pes->f_en);
-#ifdef ABACUS_DM_DIRECT_PILOT
-        const std::chrono::steady_clock::time_point cpu_dm_start = std::chrono::steady_clock::now();
+#ifdef __MPI
+#ifdef __CUDA
+            if (this->method == "cusolver" && this->world_nproc > 1)
+            {
+                this->parakSolve_cusolver(hs, psi, pes);
+            } else
 #endif
-        module_dm::dm_from_psi(this->ParaV, pes->wg, psi, dm);
-#ifdef ABACUS_DM_DIRECT_PILOT
-        direct_report_cpu(trial_root, trial_context, cpu_dm_start);
-        }
-        direct_report_combined(trial_root, trial_context, trial_mode, direct_done, combined_start);
+            if (this->kpar_lcao > 1
+                && (this->method == "genelpa" || this->method == "elpa" || this->method == "scalapack_gvx" || this->method == "lapack"))
+            {
+                this->parakSolve(hs, psi, pes, this->kpar_lcao, nspin);
+            } else
 #endif
+            if (this->kpar_lcao == 1)
+            {
+                /// Loop over k points for solve Hamiltonian to eigenpairs(eigenvalues and eigenvectors).
+                for (int ik = 0; ik < psi.get_nk(); ++ik)
+                {
+                    /// H(k) and S(k) are all the eigensolvers need from the Hamiltonian
+                    ModuleBase::MatrixBlock<TK> hk;
+                    ModuleBase::MatrixBlock<TK> sk;
+                    hs.hs_at_k(ik, hk, sk);
+
+                    /// find psi pointer for each k point
+                    psi.fix_k(ik);
+
+                    /// solve eigenvector and eigenvalue for H(k)
+                    this->hamiltSolvePsiK(hk, sk, psi, &(pes->ekb(ik, 0)));
+                }
+            }
+            else
+            {
+                ModuleBase::WARNING_QUIT("HSolverLCAO::solve",
+                                         "This method and KPAR setting is not supported for lcao basis in ABACUS!");
+            }
+
+            elecstate::calculate_weights(pes->ekb,
+                                         pes->wg,
+                                         pes->klist,
+                                         pes->eferm,
+                                         pes->f_en,
+                                         pes->nelec_spin,
+                                         this->nbands,
+                                         pes->skip_weights);
+
+            elecstate::calEBand(pes->ekb, pes->wg, pes->f_en);
+            module_dm::dm_from_psi(this->ParaV, pes->wg, psi, dm);
+        }
         dm.cal_dmr(-1);
 
         if (!skip_charge)
@@ -426,10 +419,6 @@ void HSolverLCAO<T>::parakSolve_cusolver(HSMatrix<T>& hs,
     // In each iteration, we process total_active_ranks k-points.
     for(int ik_start = 0; ik_start < nks; ik_start += total_active_ranks)
     {
-#ifdef ABACUS_DM_DIRECT_PILOT
-        const bool timing_root = world_rank == 0;
-        const std::chrono::steady_clock::time_point gather_start = std::chrono::steady_clock::now();
-#endif
         int kpt_assigned = -1; // the k-point assigned to the current MPI process in this iteration
         // Compute and gather the hk and sk matrices distributed across different processes in parallel,
         // preparing for subsequent transfer to the GPU for computation.
@@ -455,10 +444,6 @@ void HSolverLCAO<T>::parakSolve_cusolver(HSMatrix<T>& hs,
                 desc_tmp[DESCRIPTOR_BLACS_CONTEXT_INDEX] = -1;
             }
 
-#ifdef ABACUS_DM_DIRECT_PILOT
-            direct_sync(mat_para_global.ictxt());
-            const std::chrono::steady_clock::time_point redistribution_start = std::chrono::steady_clock::now();
-#endif
             Cpxgemr2d(nrow, ncol, hk_2D.p, 1, 1,
                       const_cast<int*>(mat_para_global.desc()),
                       hk_local_ptr, 1, 1, desc_tmp,
@@ -467,19 +452,9 @@ void HSolverLCAO<T>::parakSolve_cusolver(HSMatrix<T>& hs,
                       const_cast<int*>(mat_para_global.desc()),
                       sk_local_ptr, 1, 1, desc_tmp,
                       mat_para_global.ictxt());
-#ifdef ABACUS_DM_DIRECT_PILOT
-            direct_sync(mat_para_global.ictxt());
-            direct_report_redistribution(timing_root, redistribution_start);
-#endif
         }
 
         // diagonalize the Hamiltonian matrix using cusolver
-#ifdef ABACUS_DM_DIRECT_PILOT
-        direct_sync(mat_para_global.ictxt());
-        const double gather_seconds = direct_elapsed(gather_start);
-        const std::chrono::steady_clock::time_point diagonal_start = std::chrono::steady_clock::now();
-        direct_report_diagonal_start(timing_root, diagonal_start);
-#endif
         psi::Psi<T> psi_local{};
         if(kpt_assigned != -1)
         {
@@ -495,11 +470,6 @@ void HSolverLCAO<T>::parakSolve_cusolver(HSMatrix<T>& hs,
         }
 
         // transfer the eigenvectors and eigenvalues to all processes
-#ifdef ABACUS_DM_DIRECT_PILOT
-        direct_sync(mat_para_global.ictxt());
-        const double diagonal_seconds = direct_elapsed(diagonal_start);
-        const std::chrono::steady_clock::time_point scatter_start = std::chrono::steady_clock::now();
-#endif
         for(int ik = ik_start; ik < ik_start + total_active_ranks && ik < nks; ik++)
         {
             int root = active_ranks[ik % total_active_ranks];
@@ -530,12 +500,6 @@ void HSolverLCAO<T>::parakSolve_cusolver(HSMatrix<T>& hs,
                       const_cast<int*>(psi_para_global.desc()),
                       psi_para_global.ictxt());
         }
-#ifdef ABACUS_DM_DIRECT_PILOT
-        direct_sync(mat_para_global.ictxt());
-        const double psi_seconds = direct_elapsed(scatter_start);
-        const std::size_t scalar_bytes = sizeof(T);
-        direct_report_phase(world_rank, nrow, nbands, scalar_bytes, gather_seconds, diagonal_seconds, psi_seconds);
-#endif
     }
 
     MPI_Comm_free(&self_comm);

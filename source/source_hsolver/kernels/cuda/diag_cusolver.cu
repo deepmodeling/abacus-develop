@@ -8,10 +8,8 @@
 
 #include <cuda_runtime.h>
 
-#ifdef ABACUS_DM_DIRECT_PILOT
 #include <chrono>
 #include <sstream>
-#endif
 
 namespace
 {
@@ -119,7 +117,6 @@ struct DeviceBuffers
         CHECK_CUDA(cudaMemcpy(v, h, eigenvector_bytes, cudaMemcpyDeviceToHost));
     }
 };
-#ifdef ABACUS_DM_DIRECT_PILOT
 void report_solver_memory(const int n, const std::size_t workspace_bytes)
 {
     std::size_t available = 0;
@@ -144,30 +141,25 @@ void report_real_solver(const char* algorithm, const int n, const int bands,
                 "info_d2h_calls=1 info_d2h_bytes=4 info=0\n",
                 algorithm, n, bands, seconds, hs_bytes, vector_bytes, eigenvalue_bytes);
 }
-#endif
 } // namespace
 
 Diag_Cusolver_gvd::Diag_Cusolver_gvd() { CHECK_CUSOLVER(cusolverDnCreate(&handle_)); }
 
 Diag_Cusolver_gvd::~Diag_Cusolver_gvd()
 {
-#ifdef ABACUS_DM_DIRECT_PILOT
     release_eigenvectors();
-#endif
     CHECK_CUSOLVER(cusolverDnDestroy(handle_));
 }
 
-#ifdef ABACUS_DM_DIRECT_PILOT
 void Diag_Cusolver_gvd::release_eigenvectors()
 {
-    CHECK_CUDA(cudaFree(eigenvectors_));
-    CHECK_CUDA(cudaFree(weighted_vectors_));
+    if (eigenvectors_ != nullptr) CHECK_CUDA(cudaFree(eigenvectors_));
+    if (weighted_vectors_ != nullptr) CHECK_CUDA(cudaFree(weighted_vectors_));
     eigenvectors_ = nullptr;
     weighted_vectors_ = nullptr;
     rows_ = 0;
     bands_ = 0;
 }
-#endif
 
 bool Diag_Cusolver_gvd::use_subset(const int n, const int nbands)
 {
@@ -181,12 +173,11 @@ bool Diag_Cusolver_gvd::solve_subset(
     const double *h,
     const double *s,
     double *w,
-    double *v)
+    double *v,
+    const bool retain_vectors)
 {
-#ifdef ABACUS_DM_DIRECT_PILOT
     release_eigenvectors();
     const std::chrono::steady_clock::time_point started = std::chrono::steady_clock::now();
-#endif
     if (nbands <= 0 || nbands > n)
     {
         solver_error("Dsygvdx", n, nbands, "invalid eigenpair count", nbands);
@@ -213,9 +204,7 @@ bool Diag_Cusolver_gvd::solve_subset(
         return false;
     }
     CHECK_CUDA(alloc_status);
-#ifdef ABACUS_DM_DIRECT_PILOT
-    report_solver_memory(n, work_bytes);
-#endif
+    if (retain_vectors) report_solver_memory(n, work_bytes);
 
     status = cusolverDnDsygvdx(
         handle_, problem_type, job, CUSOLVER_EIG_RANGE_I, triangle, n, device.h, n, device.s, n, unused_bound,
@@ -236,15 +225,16 @@ bool Diag_Cusolver_gvd::solve_subset(
         return false;
     }
     device.download(n, nbands, w, v);
-#ifdef ABACUS_DM_DIRECT_PILOT
-    eigenvectors_ = device.h;
-    weighted_vectors_ = device.s;
-    rows_ = n;
-    bands_ = nbands;
-    device.h = nullptr;
-    device.s = nullptr;
-    report_real_solver("Dsygvdx", n, nbands, started);
-#endif
+    if (retain_vectors)
+    {
+        eigenvectors_ = device.h;
+        weighted_vectors_ = device.s;
+        rows_ = n;
+        bands_ = nbands;
+        device.h = nullptr;
+        device.s = nullptr;
+        report_real_solver("Dsygvdx", n, nbands, started);
+    }
     return true;
 }
 #else
@@ -254,11 +244,10 @@ bool Diag_Cusolver_gvd::solve_subset(
     const double *,
     const double *,
     double *,
-    double *)
+    double *,
+    bool)
 {
-#ifdef ABACUS_DM_DIRECT_PILOT
     release_eigenvectors();
-#endif
     return false;
 }
 #endif
@@ -269,12 +258,11 @@ void Diag_Cusolver_gvd::solve_full(
     const double *h,
     const double *s,
     double *w,
-    double *v)
+    double *v,
+    const bool retain_vectors)
 {
-#ifdef ABACUS_DM_DIRECT_PILOT
     release_eigenvectors();
     const std::chrono::steady_clock::time_point started = std::chrono::steady_clock::now();
-#endif
     DeviceBuffers<double> device;
     device.upload(n, h, s);
     int lwork = 0;
@@ -283,9 +271,7 @@ void Diag_Cusolver_gvd::solve_full(
     check_status(status, "Dsygvd workspace query", n, nbands);
     const std::size_t work_bytes = sizeof(double) * static_cast<std::size_t>(lwork);
     CHECK_CUDA(cudaMalloc(&device.work, work_bytes));
-#ifdef ABACUS_DM_DIRECT_PILOT
-    report_solver_memory(n, work_bytes);
-#endif
+    if (retain_vectors) report_solver_memory(n, work_bytes);
     status = cusolverDnDsygvd(
         handle_, problem_type, job, triangle, n, device.h, n, device.s, n, device.eigenvalues, device.work, lwork,
         device.info);
@@ -293,15 +279,16 @@ void Diag_Cusolver_gvd::solve_full(
     const int info = device.read_info();
     check_info(info, "Dsygvd", n, nbands);
     device.download(n, nbands, w, v);
-#ifdef ABACUS_DM_DIRECT_PILOT
-    eigenvectors_ = device.h;
-    weighted_vectors_ = device.s;
-    rows_ = n;
-    bands_ = nbands;
-    device.h = nullptr;
-    device.s = nullptr;
-    report_real_solver("Dsygvd", n, nbands, started);
-#endif
+    if (retain_vectors)
+    {
+        eigenvectors_ = device.h;
+        weighted_vectors_ = device.s;
+        rows_ = n;
+        bands_ = nbands;
+        device.h = nullptr;
+        device.s = nullptr;
+        report_real_solver("Dsygvd", n, nbands, started);
+    }
 }
 
 void Diag_Cusolver_gvd::solve_full(
@@ -312,9 +299,7 @@ void Diag_Cusolver_gvd::solve_full(
     double *w,
     std::complex<double> *v)
 {
-#ifdef ABACUS_DM_DIRECT_PILOT
     release_eigenvectors();
-#endif
     static_assert(sizeof(std::complex<double>) == sizeof(cuDoubleComplex), "Unexpected complex representation");
     DeviceBuffers<cuDoubleComplex> device;
     device.upload(n, h, s);
@@ -333,7 +318,6 @@ void Diag_Cusolver_gvd::solve_full(
     device.download(n, nbands, w, v);
 }
 
-#ifdef ABACUS_DM_DIRECT_PILOT
 namespace
 {
 void density_error(std::string& error, const char* stage, const char* detail, const int code,
@@ -345,7 +329,7 @@ void density_error(std::string& error, const char* stage, const char* detail, co
     message << "Direct GPU density matrix failed during " << stage << ": " << detail
             << " (code=" << code << ", n=" << rows << ", bands=" << bands;
     if (bytes != 0) message << ", requested_bytes=" << bytes;
-    message << "). Rerun with ABACUS_DM_DIRECT_PILOT=cpu to construct the density matrix on CPU; "
+    message << "). Rerun with device_dm cpu in INPUT and dm_verify false to construct the density matrix on CPU; "
             << "cuSOLVER diagonalization will still use the GPU.";
     error = message.str();
 }
@@ -485,4 +469,3 @@ bool Diag_Cusolver_gvd::density_from_retained(int bands, const double* weights, 
                 rows_, bands, seconds, success, weight_calls, transferred_weights, density_calls, transferred_density);
     return success;
 }
-#endif

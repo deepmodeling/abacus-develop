@@ -13,7 +13,7 @@
 
 namespace hsolver
 {
-// Immutable per-call selection, restricted to the private trial build.
+// Immutable selection passed explicitly from the INPUT-configured solve.
 struct DirectConfig
 {
     const std::string& method;
@@ -23,25 +23,19 @@ struct DirectConfig
     const int world_rank;
     const int world_size;
     const int bands;
-    const char* mode;
+    const bool verify;
 };
 
 void direct_sync(int context);
 double direct_elapsed(const std::chrono::steady_clock::time_point& started);
-bool direct_gamma(HSMatrix<double>& hs, psi::Psi<double>& wave, elecstate::ElecState* state,
+void direct_gamma(HSMatrix<double>& hs, psi::Psi<double>& wave, elecstate::ElecState* state,
                   module_dm::DensityMatrix<double, double>& density,
                   const Parallel_Orbitals* orbitals, const DirectConfig& config);
-bool direct_gamma(HSMatrix<std::complex<double>>& hs, psi::Psi<std::complex<double>>& wave,
+void direct_gamma(HSMatrix<std::complex<double>>& hs, psi::Psi<std::complex<double>>& wave,
                   elecstate::ElecState* state, module_dm::DensityMatrix<std::complex<double>, double>& density,
                   const Parallel_Orbitals* orbitals, const DirectConfig& config);
-void direct_report_fallback(bool root, const char* mode);
-void direct_report_cpu(bool root, int context, const std::chrono::steady_clock::time_point& started);
 void direct_report_diagonal_start(bool root, const std::chrono::steady_clock::time_point& started);
 void direct_report_redistribution(bool root, const std::chrono::steady_clock::time_point& started);
-void direct_report_combined(bool root, int context, const char* mode, bool direct,
-                            const std::chrono::steady_clock::time_point& started);
-void direct_report_phase(int rank, int rows, int bands, std::size_t scalar_bytes,
-                          double gather_seconds, double diagonal_seconds, double psi_seconds);
 }
 
 #endif

@@ -20,13 +20,15 @@ class Diag_Cusolver_gvd
     static bool use_subset(int n, int nbands);
 
     // Return false on a recoverable subset failure without updating W or V.
+    // retain_vectors keeps the device eigenvectors alive for subsequent GPU DM.
     bool solve_subset(
         int n,
         int nbands,
         const double *h,
         const double *s,
         double *w,
-        double *v);
+        double *v,
+        bool retain_vectors);
     // Solve the full spectrum and return the first nbands eigenpairs.
     void solve_full(
         int n,
@@ -34,7 +36,8 @@ class Diag_Cusolver_gvd
         const double *h,
         const double *s,
         double *w,
-        double *v);
+        double *v,
+        bool retain_vectors);
     void solve_full(
         int n,
         int nbands,
@@ -43,20 +46,16 @@ class Diag_Cusolver_gvd
         double *w,
         std::complex<double> *v);
 
-#ifdef ABACUS_DM_DIRECT_PILOT
     // Construct DM from the last successful real full or subset solve.
     // On failure, report the failing stage; the caller must terminate the solve.
     bool density_from_retained(int bands, const double* weights, double* density, std::string& error);
-#endif
 
   private:
-#ifdef ABACUS_DM_DIRECT_PILOT
     void release_eigenvectors();
     double* eigenvectors_ = nullptr;
     double* weighted_vectors_ = nullptr;
     int rows_ = 0;
     int bands_ = 0;
-#endif
     cusolverDnHandle_t handle_ = nullptr;
 };
 

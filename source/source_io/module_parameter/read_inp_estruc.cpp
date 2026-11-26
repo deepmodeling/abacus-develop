@@ -293,6 +293,45 @@ The other way is only available when compiling with LIBXC, and it allows for sup
         this->add_item(item);
     }
     {
+        Input_Item item("device_dm");
+        item.domain.set_choices({"cpu", "gpu"});
+        item.domain.add_requirement("device_dm==gpu",
+                                    "device==gpu and basis_type==lcao and ks_solver==cusolver "
+                                    "and gamma_only==true and nspin==1 and kpar==1 and precision==double "
+                                    "and esolver_type==ksdft and calculation in [scf, relax, cell-relax, md]");
+        item.annotation = "device for Gamma LCAO density-matrix construction";
+        item.category = "Electronic structure";
+        item.type = "String";
+        item.description = R"(Selects the device used to construct the LCAO density matrix.
+* cpu: construct DM on the CPU, including when device=gpu.
+* gpu: retain real FP64 cuSOLVER eigenvectors and construct DM with cuBLAS after occupations are available.
+GPU DM requires a CUDA/MPI/LCAO build, ks_solver=cusolver, gamma_only=1,
+nspin=1, kpar=1, precision=double and a Kohn-Sham calculation that updates charge.
+Use multiple MPI ranks on one node with one visible GPU per rank. An unsupported
+configuration or a device-DM error stops the run; use device_dm=cpu to choose CPU DM.
+CPU DM still uses the selected eigensolver and does not reduce its GPU memory needs.
+The partial/full eigensolver selection and the host eigenvector copy are unchanged.)";
+        item.default_value = "cpu";
+        item.set_availability("basis_type==lcao");
+        read_sync_string(input.device_dm);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("dm_verify");
+        item.domain.add_requirement("dm_verify==true", "device_dm==gpu");
+        item.annotation = "verify GPU density matrices against CPU construction";
+        item.category = "Electronic structure";
+        item.type = "Boolean";
+        item.description = "Compare every distributed GPU DM block with CPU DM from the same eigenvectors "
+                           "and occupations, and check Tr(DS) against the electron count. Abort when the "
+                           "maximum element error exceeds 1e-10 or the electron-count error exceeds 1e-7. "
+                           "This diagnostic performs additional CPU work and is not for performance measurements.";
+        item.default_value = "False";
+        item.set_availability("basis_type==lcao and device_dm==gpu");
+        read_sync_bool(input.dm_verify);
+        this->add_item(item);
+    }
+    {
         Input_Item item("device_xc");
         item.domain.set_choices({"cpu", "gpu"});
         item.domain.add_requirement("device_xc==gpu", "device==gpu");

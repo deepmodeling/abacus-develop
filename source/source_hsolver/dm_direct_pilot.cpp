@@ -11,7 +11,6 @@
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
-#include <cstring>
 #include <memory>
 #include <string>
 #include <vector>
@@ -49,22 +48,24 @@ double direct_elapsed(const std::chrono::steady_clock::time_point& started)
     return std::chrono::duration<double>(duration).count();
 }
 
-bool direct_gamma(HSMatrix<double>& hs, psi::Psi<double>& wave, elecstate::ElecState* state,
+void direct_gamma(HSMatrix<double>& hs, psi::Psi<double>& wave, elecstate::ElecState* state,
                   module_dm::DensityMatrix<double, double>& density, const Parallel_Orbitals* orbitals,
                   const DirectConfig& config)
 {
     const int bands = config.bands;
-    const char* mode = config.mode;
+    const bool verify = config.verify;
+    const char* mode = verify ? "verify" : "direct";
     const Parallel_Blkcyclic& layout = orbitals->para_2d();
     const int context = layout.ictxt();
     const int kpoints = wave.get_nk();
     const bool supported = direct_supported(context, kpoints, config);
-    if (!supported || mode == nullptr || std::strcmp(mode, "cpu") == 0)
+    if (!supported)
     {
-        return false;
+        ModuleBase::WARNING_QUIT("direct_gamma",
+                                "device_dm gpu requires real Gamma FP64 LCAO with ks_solver cusolver, "
+                                "nspin 1, kpar 1, charge updates, multiple MPI ranks on one node and "
+                                "one visible GPU per rank; select device_dm cpu and dm_verify false in INPUT otherwise");
     }
-    const bool verify = std::strcmp(mode, "verify") == 0;
-    if (!verify && std::strcmp(mode, "direct") != 0) return false;
     const int n = layout.nrglb();
     const bool root = layout.irproc() == 0 && layout.icproc() == 0;
     const std::size_t matrix_size = static_cast<std::size_t>(n) * n;
@@ -112,11 +113,11 @@ bool direct_gamma(HSMatrix<double>& hs, psi::Psi<double>& wave, elecstate::ElecS
         const bool subset = Diag_Cusolver_gvd::use_subset(n, bands);
         if (subset)
         {
-            solved = solver->solve_subset(n, bands, h.data(), s.data(), eigenvalues.data(), host_wave.data());
+            solved = solver->solve_subset(n, bands, h.data(), s.data(), eigenvalues.data(), host_wave.data(), true);
         }
         if (!solved)
         {
-            solver->solve_full(n, bands, h.data(), s.data(), eigenvalues.data(), host_wave.data());
+            solver->solve_full(n, bands, h.data(), s.data(), eigenvalues.data(), host_wave.data(), true);
         }
     }
     direct_sync(context);
@@ -219,41 +220,15 @@ bool direct_gamma(HSMatrix<double>& hs, psi::Psi<double>& wave, elecstate::ElecS
                     row, col, count, max_error, error2, reference2);
         std::copy(gpu.begin(), gpu.end(), dm_pointer);
     }
-    return true;
+    return;
 }
 
-bool direct_gamma(HSMatrix<std::complex<double>>&, psi::Psi<std::complex<double>>&,
+void direct_gamma(HSMatrix<std::complex<double>>&, psi::Psi<std::complex<double>>&,
                   elecstate::ElecState*, module_dm::DensityMatrix<std::complex<double>, double>&,
                   const Parallel_Orbitals*, const DirectConfig&)
 {
-    return false;
-}
-
-void direct_report_fallback(const bool root, const char* mode)
-{
-    if (root && mode != nullptr && std::strcmp(mode, "cpu") != 0)
-        std::printf("DM_DIRECT_FALLBACK reason=unsupported_scope\n");
-}
-
-void direct_report_cpu(const bool root, const int context,
-                        const std::chrono::steady_clock::time_point& started)
-{
-    direct_sync(context);
-    const double seconds = direct_elapsed(started);
-    if (root) std::printf("DM_DIRECT_CPU_DM seconds=%.9e\n", seconds);
-}
-
-void direct_report_combined(const bool root, const int context, const char* mode, const bool direct,
-                             const std::chrono::steady_clock::time_point& started)
-{
-    direct_sync(context);
-    const std::chrono::steady_clock::time_point finished = std::chrono::steady_clock::now();
-    const std::chrono::steady_clock::duration duration = finished - started;
-    const std::chrono::steady_clock::duration epoch = finished.time_since_epoch();
-    const double seconds = std::chrono::duration<double>(duration).count();
-    const long long finish_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(epoch).count();
-    if (root && mode != nullptr)
-        std::printf("DM_DIRECT_COMBINED mode=%s direct=%d seconds=%.9e finish_ns=%lld\n", mode, direct, seconds, finish_ns);
+    ModuleBase::WARNING_QUIT("direct_gamma", "device_dm gpu requires real Gamma FP64 eigenvectors");
+    return;
 }
 
 void direct_report_diagonal_start(const bool root, const std::chrono::steady_clock::time_point& started)
@@ -269,16 +244,4 @@ void direct_report_redistribution(const bool root, const std::chrono::steady_clo
     if (root) std::printf("DM_DIRECT_REDISTRIBUTION kind=hs seconds=%.9e\n", seconds);
 }
 
-void direct_report_phase(const int rank, const int rows, const int bands, const std::size_t scalar_bytes,
-                           const double gather_seconds, const double diagonal_seconds, const double psi_seconds)
-{
-    if (rank != 0) return;
-    const std::size_t matrix_bytes = scalar_bytes * static_cast<std::size_t>(rows) * rows;
-    const std::size_t wave_bytes = scalar_bytes * static_cast<std::size_t>(rows) * bands;
-    const std::size_t hs_bytes = 2 * matrix_bytes;
-    std::printf("DM_DIRECT_PHASE mode=cpu n=%d bands=%d gather_hs=%.9e diagonal=%.9e psi_redistribute=%.9e "
-                "hs_redistributions=2 hs_logical_bytes=%zu psi_redistributions=1 psi_logical_bytes=%zu "
-                "dm_redistributions=0 dm_logical_bytes=0\n",
-                rows, bands, gather_seconds, diagonal_seconds, psi_seconds, hs_bytes, wave_bytes);
-}
 }

@@ -474,11 +474,11 @@ TEST(CusolverSubset, LowestEigenpairsRespectUpperTriangleAndOutputBounds)
         std::vector<double> vector(vector_size + 1, sentinel);
         if (nbands < n)
         {
-            ASSERT_TRUE(solver.solve_subset(n, nbands, h.data(), s.data(), value.data(), vector.data()));
+            ASSERT_TRUE(solver.solve_subset(n, nbands, h.data(), s.data(), value.data(), vector.data(), false));
         }
         else
         {
-            solver.solve_full(n, nbands, h.data(), s.data(), value.data(), vector.data());
+            solver.solve_full(n, nbands, h.data(), s.data(), value.data(), vector.data(), false);
         }
         EXPECT_EQ(h, input_h);
         EXPECT_EQ(s, input_s);

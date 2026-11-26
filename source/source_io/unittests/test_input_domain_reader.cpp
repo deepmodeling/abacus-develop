@@ -372,3 +372,22 @@ TEST(InputDomainHelp, ExportsTheRuntimeRules)
 }
 
 } // namespace
+
+TEST_F(InputDomainReaderTest, DensityDeviceDefaultsAndBuildRejection)
+{
+    write_input("");
+    ModuleIO::ReadInput reader(0);
+    reader.check_ntype_flag = false;
+    Parameter input;
+    reader.read_parameters(input, filename);
+    EXPECT_EQ(input.inp.device_dm, "cpu");
+    EXPECT_FALSE(input.inp.dm_verify);
+    const std::string invalid_device = reject_input("device_dm direct\n");
+    EXPECT_NE(invalid_device.find("Expected one String from {cpu, gpu}"), std::string::npos);
+    const std::string invalid_verify = reject_input("device_dm cpu\ndm_verify true\n");
+    EXPECT_NE(invalid_verify.find("Requires device_dm==gpu"), std::string::npos);
+    // This target deliberately uses the serial, non-CUDA INPUT reader.
+    const std::string unsupported = reject_input("device gpu\ndevice_dm gpu\n", "lcao");
+    EXPECT_NE(unsupported.find("device_dm gpu requires ABACUS built with CUDA, MPI and LCAO support"),
+              std::string::npos);
+}

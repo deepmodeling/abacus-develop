@@ -68,11 +68,17 @@ foreach(
         invalid_value
         invalid_dependency
         unsupported_libxc_cuda
+        invalid_device_dm
+        invalid_dm_verify
+        unsupported_device_dm
         out_dmk_zero_precision
         out_hsk_zero_precision
         out_mat_tk_zero_precision
         valid)
   if(input_case STREQUAL "unsupported_libxc_cuda" AND ENABLE_LIBXC_CUDA)
+    continue()
+  endif()
+  if(input_case STREQUAL "unsupported_device_dm" AND USE_CUDA AND ENABLE_LCAO)
     continue()
   endif()
   add_test(

@@ -56,15 +56,8 @@ endif()
 
 add_library(hsolver OBJECT ${objects})
 
-option(ABACUS_DM_DIRECT_PILOT "Private cuSOLVER to Gamma FP64 DM trial" OFF)
-if(ABACUS_DM_DIRECT_PILOT)
-  if(NOT USE_CUDA OR NOT ENABLE_MPI OR NOT ENABLE_LCAO)
-    message(FATAL_ERROR "ABACUS_DM_DIRECT_PILOT requires CUDA, MPI and LCAO")
-  endif()
-  target_compile_definitions(hsolver PRIVATE ABACUS_DM_DIRECT_PILOT)
-  # Private CMake trial only; legacy Makefile/pyabacus do not enable this switch.
+if(USE_CUDA AND ENABLE_MPI AND ENABLE_LCAO)
   target_sources(hsolver PRIVATE dm_direct_pilot.cpp)
-  target_compile_definitions(diag_cusolver PRIVATE ABACUS_DM_DIRECT_PILOT)
 endif()
 
 if(ENABLE_COVERAGE)
