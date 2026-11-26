@@ -51,9 +51,8 @@ addtest(
           ../unittests/test_nacv_input.cpp
           ../module_parameter/unittests/test_read_inp_estruc.cpp)
 
-addtest(
-  TARGET MODULE_IO_lobpcg_input
-  LIBS parameter base device io_input_serial)
+addtest(TARGET MODULE_IO_lobpcg_input LIBS parameter base device
+                                           io_input_serial)
 
 addtest(
   TARGET MODULE_IO_input_domain_reader
