@@ -16,25 +16,26 @@ namespace ModuleMD
 class NEPPotential : public ForceField
 {
   public:
-    NEPPotential(const std::string& pot_file, const std::string& output_dir, std::ofstream& running_log);
+    NEPPotential(const std::string &pot_file, const std::string &output_dir, std::ofstream &running_log);
     ~NEPPotential() override;
 
-    void initialize(BaseCell& cell, const Input_para& inp) override;
-    void compute(BaseCell& cell,
-                 double& energy,
-                 ModuleBase::matrix& force,
-                 ModuleBase::matrix& stress) override;
+    void initialize(BaseCell &cell, const Input_para &inp) override;
+    void compute(
+        BaseCell &cell,
+        double &energy,
+        ModuleBase::matrix &force,
+        ModuleBase::matrix &stress) override;
 
   private:
-    void type_map(const UnitCell& cell);
-    void initialize_type_map_(const std::vector<std::string>& type_labels);
+    void type_map(const UnitCell &cell);
+    void initialize_type_map_(const std::vector<std::string> &type_labels);
 
 #ifdef __NEP
     std::unique_ptr<::NEP> nep;
 #endif
     std::string nep_file;
     std::string output_dir_;
-    std::ofstream& running_log_;
+    std::ofstream &running_log_;
     std::vector<int> atype;
     std::vector<int> md_type_to_nep_type_;
     std::vector<double> _e;

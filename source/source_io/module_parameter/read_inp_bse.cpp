@@ -30,7 +30,7 @@ void ReadInput::item_bse()
         item.default_value = "singlet triplet";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             size_t count = item.get_size();
-            auto& ist = para.input.bse_spin_types;
+            std::vector<std::string>& ist = para.input.bse_spin_types;
             ist.clear();
             for (int i = 0; i < count; i++) { ist.push_back(item.str_values[i]); }
             };

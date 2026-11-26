@@ -19,11 +19,12 @@ namespace ModuleSccs
 namespace
 {
 // Gradient and Laplacian of the field with coefficients values_g.
-void spec_derivs(const std::vector<std::complex<double>>& values_g,
-                 const ModulePW::PW_Basis& basis,
-                 double tpiba,
-                 std::vector<ModuleBase::Vector3<double>>& gradient,
-                 std::vector<double>& laplacian)
+void spec_derivs(
+    const std::vector<std::complex<double>> &values_g,
+    const ModulePW::PW_Basis &basis,
+    double tpiba,
+    std::vector<ModuleBase::Vector3<double>> &gradient,
+    std::vector<double> &laplacian)
 {
     gradient.resize(basis.nrxx);
     laplacian.resize(basis.nrxx);
@@ -32,12 +33,13 @@ void spec_derivs(const std::vector<std::complex<double>>& values_g,
 }
 
 // Gradient and Laplacian on the FFT grid, multiplied by filter unless it is empty.
-void fft_derivatives(const std::vector<double>& values,
-                     const std::vector<double>& filter,
-                     const ModulePW::PW_Basis& basis,
-                     double tpiba,
-                     std::vector<ModuleBase::Vector3<double>>& gradient,
-                     std::vector<double>& laplacian)
+void fft_derivatives(
+    const std::vector<double> &values,
+    const std::vector<double> &filter,
+    const ModulePW::PW_Basis &basis,
+    double tpiba,
+    std::vector<ModuleBase::Vector3<double>> &gradient,
+    std::vector<double> &laplacian)
 {
     std::vector<std::complex<double>> values_g(basis.npw);
     basis.real2recip(values.data(), values_g.data());
@@ -56,15 +58,16 @@ void fft_derivatives(const std::vector<double>& values,
 
 // FFT derivatives of the local s and of the probe solute fraction c = p * s from
 // one transform of s: the probe is diagonal in G, so p * grad s = grad c.
-void fft_fill_derivs(const std::vector<double>& probe_kernel,
-                     const ModulePW::PW_Basis& basis,
-                     double tpiba,
-                     const SccsResponse& response,
-                     std::vector<ModuleBase::Vector3<double>>& gradient,
-                     std::vector<double>& laplacian)
+void fft_fill_derivs(
+    const std::vector<double> &probe_kernel,
+    const ModulePW::PW_Basis &basis,
+    double tpiba,
+    const SccsResponse &response,
+    std::vector<ModuleBase::Vector3<double>> &gradient,
+    std::vector<double> &laplacian)
 {
     std::vector<std::complex<double>> local_g(basis.npw);
-    const FilledCavity& filled = response.solvent_aware;
+    const FilledCavity &filled = response.solvent_aware;
     basis.real2recip(filled.local.data(), local_g.data());
     spec_derivs(local_g, basis, tpiba, gradient, laplacian);
 #ifdef _OPENMP
@@ -77,17 +80,17 @@ void fft_fill_derivs(const std::vector<double>& probe_kernel,
     std::vector<ModuleBase::Vector3<double>> fraction_gradient;
     std::vector<double> fraction_laplacian;
     spec_derivs(local_g, basis, tpiba, fraction_gradient, fraction_laplacian);
-    sa_chain_derivs(filled.local, filled.filling, fraction_gradient, fraction_laplacian, gradient,
-                    laplacian);
+    sa_chain_derivs(filled.local, filled.filling, fraction_gradient, fraction_laplacian, gradient, laplacian);
 }
 
 // Environ eps_of_boundary: eps = exp(L (1 - s)), L = ln(eps_bulk), and
 // the sqrt-CG coefficient eps (lapl ln eps / 2 + |grad ln eps|^2 / 4) / (4 pi).
-void eps_of_boundary(const CavityParameters& cavity,
-                     const std::vector<ModuleBase::Vector3<double>>& gradient,
-                     const std::vector<double>& laplacian,
-                     SccsResponse& response,
-                     std::vector<double>& coefficient)
+void eps_of_boundary(
+    const CavityParameters &cavity,
+    const std::vector<ModuleBase::Vector3<double>> &gradient,
+    const std::vector<double> &laplacian,
+    SccsResponse &response,
+    std::vector<double> &coefficient)
 {
     const std::size_t size = response.solute.size();
     const double log_bulk = std::log(cavity.epsilon_bulk);
@@ -99,12 +102,12 @@ void eps_of_boundary(const CavityParameters& cavity,
     {
         const double log_epsilon = log_bulk * (1.0 - response.solute[i]);
         response.epsilon[i] = std::exp(log_epsilon);
-        const ModuleBase::Vector3<double>& local_gradient = gradient[i];
+        const ModuleBase::Vector3<double> &local_gradient = gradient[i];
         const double gradient_square = local_gradient * local_gradient;
         response.grad_log_epsilon[i] = local_gradient * (-log_bulk);
         const double lap_log = -log_bulk * laplacian[i];
-        coefficient[i] = response.epsilon[i] * (0.5 * lap_log + 0.25 * log_bulk * log_bulk * gradient_square)
-                         / ModuleBase::FOUR_PI;
+        coefficient[i] =
+            response.epsilon[i] * (0.5 * lap_log + 0.25 * log_bulk * log_bulk * gradient_square) / ModuleBase::FOUR_PI;
     }
 }
 
@@ -112,26 +115,26 @@ void eps_of_boundary(const CavityParameters& cavity,
 // the filled s_sa. The chain grad n, grad c = p * s' grad n and s'' serve the
 // chain surface with every boundary condition; density_g is the transform of
 // the cavity density.
-void fill_cavity(const std::vector<double>& density,
-                 const CavityParameters& cavity,
-                 const std::vector<double>& probe_kernel,
-                 const ModulePW::PW_Basis& basis,
-                 double tpiba,
-                 SccsResponse& response,
-                 std::vector<std::complex<double>>& density_g)
+void fill_cavity(
+    const std::vector<double> &density,
+    const CavityParameters &cavity,
+    const std::vector<double> &probe_kernel,
+    const ModulePW::PW_Basis &basis,
+    double tpiba,
+    SccsResponse &response,
+    std::vector<std::complex<double>> &density_g)
 {
     const std::size_t size = density.size();
-    FilledCavity& filled = response.solvent_aware;
+    FilledCavity &filled = response.solvent_aware;
     filled.active = true;
     // Move s out and s_sa in without copies; filling.boundary is left empty.
     filled.local.swap(response.solute);
     filled.filling = sa_boundary(filled.local, probe_kernel, cavity.solvent_aware, basis);
     response.solute.swap(filled.filling.boundary);
-    const std::vector<double>& boundary = response.solute;
-    const std::vector<double>& local = filled.local;
-    const auto add_filling = [&boundary, &local](std::size_t i, std::array<double, 1>& sum) {
-        sum[0] += boundary[i] - local[i];
-    };
+    const std::vector<double> &boundary = response.solute;
+    const std::vector<double> &local = filled.local;
+    const auto add_filling = [&boundary, &local](std::size_t i, std::array<double, 1> &sum)
+    { sum[0] += boundary[i] - local[i]; };
     double filled_volume = thread_sums<1>(size, add_filling)[0];
     Parallel_Reduce::reduce_pool(filled_volume);
     filled.volume = filled_volume * basis.omega / basis.nxyz;
@@ -153,14 +156,15 @@ void fill_cavity(const std::vector<double>& density,
 
 // Environ deriv_method 'chain': grad s = s' grad n and
 // lapl s = s' lapl n + s'' |grad n|^2 from the FFT derivatives of n.
-void chain_derivs(const std::vector<std::complex<double>>& density_g,
-                  const std::vector<ModuleBase::Vector3<double>>& density_gradient,
-                  const std::vector<double>& dsolute_drho,
-                  const std::vector<double>& d2solute_drho2,
-                  const ModulePW::PW_Basis& basis,
-                  double tpiba,
-                  std::vector<ModuleBase::Vector3<double>>& gradient,
-                  std::vector<double>& laplacian)
+void chain_derivs(
+    const std::vector<std::complex<double>> &density_g,
+    const std::vector<ModuleBase::Vector3<double>> &density_gradient,
+    const std::vector<double> &dsolute_drho,
+    const std::vector<double> &d2solute_drho2,
+    const ModulePW::PW_Basis &basis,
+    double tpiba,
+    std::vector<ModuleBase::Vector3<double>> &gradient,
+    std::vector<double> &laplacian)
 {
     const std::size_t size = density_gradient.size();
     std::vector<double> density_laplacian(size);
@@ -180,14 +184,15 @@ void chain_derivs(const std::vector<std::complex<double>>& density_g,
 }
 } // namespace
 
-void make_cav_derivs(const std::vector<double>& density,
-                     const CavityParameters& cavity,
-                     const std::vector<double>& probe_kernel,
-                     const ModulePW::PW_Basis& basis,
-                     double tpiba,
-                     bool open_boundary,
-                     SccsResponse& response,
-                     CavityDerivatives& derivatives)
+void make_cav_derivs(
+    const std::vector<double> &density,
+    const CavityParameters &cavity,
+    const std::vector<double> &probe_kernel,
+    const ModulePW::PW_Basis &basis,
+    double tpiba,
+    bool open_boundary,
+    SccsResponse &response,
+    CavityDerivatives &derivatives)
 {
     derivatives.filter = switch_filter(cavity, basis);
     const bool lowpass = uses_lowpass(cavity);
@@ -196,11 +201,11 @@ void make_cav_derivs(const std::vector<double>& density,
     const std::size_t kernel_size = basis.npw;
     if (filled && probe_kernel.size() != kernel_size)
     {
-        ModuleBase::WARNING_QUIT("ModuleSccs::make_cav_derivs",
-                                 "solvent-aware SCCS needs the probe kernel on the local G vectors");
+        ModuleBase::WARNING_QUIT(
+            "ModuleSccs::make_cav_derivs", "solvent-aware SCCS needs the probe kernel on the local G vectors");
     }
     derivatives.gradient.clear();
-    std::vector<double>& coefficient = derivatives.coefficient;
+    std::vector<double> &coefficient = derivatives.coefficient;
     const std::size_t size = density.size();
     response.solute.resize(size);
     response.dsolute_drho.resize(size);
@@ -263,20 +268,20 @@ void make_cav_derivs(const std::vector<double>& density,
         plain_gradient.resize(size);
         XC_Functional::grad_rho(density_g.data(), plain_gradient.data(), &basis, tpiba);
     }
-    const FilledCavity& filling = response.solvent_aware;
-    const std::vector<ModuleBase::Vector3<double>>& density_gradient
-        = filled ? filling.density_gradient : plain_gradient;
-    const std::vector<double>& second_derivative = filled ? filling.d2solute_drho2 : d2solute_drho2;
+    const FilledCavity &filling = response.solvent_aware;
+    const std::vector<ModuleBase::Vector3<double>> &density_gradient =
+        filled ? filling.density_gradient : plain_gradient;
+    const std::vector<double> &second_derivative = filled ? filling.d2solute_drho2 : d2solute_drho2;
     std::vector<ModuleBase::Vector3<double>> gradient;
     std::vector<double> laplacian;
-    chain_derivs(density_g, density_gradient, response.dsolute_drho, second_derivative, basis, tpiba, gradient,
-                 laplacian);
+    chain_derivs(
+        density_g, density_gradient, response.dsolute_drho, second_derivative, basis, tpiba, gradient, laplacian);
     if (filled)
     {
         // Environ deriv_method 'chain' through the filling.
         const std::vector<double> fraction_laplacian = convolve_probe(probe_kernel, basis, laplacian);
-        sa_chain_derivs(filling.local, filling.filling, filling.fraction_gradient,
-                        fraction_laplacian, gradient, laplacian);
+        sa_chain_derivs(
+            filling.local, filling.filling, filling.fraction_gradient, fraction_laplacian, gradient, laplacian);
     }
     eps_of_boundary(cavity, gradient, laplacian, response, coefficient);
 }

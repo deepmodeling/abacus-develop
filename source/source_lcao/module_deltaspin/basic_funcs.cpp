@@ -7,7 +7,7 @@
 double maxval_abs_2d(const std::vector<ModuleBase::Vector3<double>>& array)
 {
     double max = 0;
-    for (const auto& value: array)
+    for (const ModuleBase::Vector3<double>& value: array)
     {
             max = std::max(max, std::abs(value.x));
             max = std::max(max, std::abs(value.y));
@@ -91,7 +91,7 @@ void subtract_2d(const std::vector<ModuleBase::Vector3<double>>& array_1,
 
 void fill_scalar_2d(double scalar, std::vector<ModuleBase::Vector3<double>>& result)
 {
-    for (auto& row: result)
+    for (ModuleBase::Vector3<double>& row: result)
     {
         row.x = scalar;
         row.y = scalar;
@@ -139,7 +139,7 @@ void print_2d(const std::string info, const std::vector<ModuleBase::Vector3<doub
 {
     ofs << info << std::endl;
     int iat = 0;
-    for (const auto &row : array)
+    for (const ModuleBase::Vector3<double>& row : array)
     {
         iat += 1;
         if (nspin == 2)

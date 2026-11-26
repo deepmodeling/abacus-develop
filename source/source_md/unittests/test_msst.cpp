@@ -1,9 +1,9 @@
+#include "lj_test_solver.h"
 #include "source_cell/dom_decomp.h"
+#include "source_md/msst.h"
+#include "source_md/unittests/setcell.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "source_md/unittests/setcell.h"
-#include "lj_test_solver.h"
-#include "source_md/msst.h"
 #define doublethreshold 1e-12
 
 /************************************************
@@ -34,12 +34,12 @@
 class MSST_test : public testing::Test
 {
   protected:
-    MD_base* mdrun;
+    MD_base *mdrun;
     UnitCell ucell;
     MDCell mdcell;
     DomainDecomposition decomp;
     Input_para inp;
-    ModuleESolver::ESolver* p_esolver;
+    ModuleESolver::ESolver *p_esolver;
     /// the md writers take the directory explicitly, so the test owns it
     const std::string out_dir = "./";
     const std::string readin_dir = "./";
@@ -210,7 +210,7 @@ TEST_F(MSST_test, restart)
     mdrun->restart(readin_dir);
     remove("Restart_md.txt");
 
-    MSST* msst = dynamic_cast<MSST*>(mdrun);
+    MSST *msst = dynamic_cast<MSST *>(mdrun);
     EXPECT_EQ(mdrun->step_rst_, 3);
     EXPECT_EQ(msst->get_omega()[inp.mdp.msst_direction], -0.00977662);
     EXPECT_EQ(msst->get_e0(), -0.00768262);
@@ -230,13 +230,15 @@ TEST_F(MSST_test, print_md)
     getline(ifs, output_str);
     EXPECT_THAT(output_str, testing::HasSubstr(" ELECTRONIC      PART OF STRESS: 0.24609992 kbar"));
     getline(ifs, output_str);
-    EXPECT_THAT(output_str,
-                testing::HasSubstr(
-                    " IONIC (KINETIC) PART OF STRESS: 0.8301538 kbar")); // result different from other MD methods
+    EXPECT_THAT(
+        output_str,
+        testing::HasSubstr(
+            " IONIC (KINETIC) PART OF STRESS: 0.8301538 kbar")); // result different from other MD methods
     getline(ifs, output_str);
-    EXPECT_THAT(output_str,
-                testing::HasSubstr(
-                    " MD PRESSURE (ELECTRONS+IONS)  : 1.0762537 kbar")); // result different from other MD methods
+    EXPECT_THAT(
+        output_str,
+        testing::HasSubstr(
+            " MD PRESSURE (ELECTRONS+IONS)  : 1.0762537 kbar")); // result different from other MD methods
     getline(ifs, output_str);
     getline(ifs, output_str);
     EXPECT_THAT(

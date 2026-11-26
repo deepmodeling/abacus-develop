@@ -203,7 +203,8 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.inp.out_sol[0], 0);
     EXPECT_EQ(param.inp.out_sol[1], 6);
     EXPECT_EQ(param.inp.out_wfc_pw, 0);
-    EXPECT_EQ(param.inp.out_dos, 0);
+    EXPECT_EQ(param.inp.out_dos[0], 0);
+    EXPECT_EQ(param.inp.out_dos[1], 6);
     EXPECT_EQ(param.inp.out_ldos[0], 1);
     EXPECT_EQ(param.inp.out_ldos[1], 3);
     EXPECT_EQ(param.inp.out_band[0], 0);
@@ -217,7 +218,8 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.inp.out_hsk[1], 8);
     EXPECT_EQ(param.inp.out_hsr[0], 0);
     EXPECT_EQ(param.inp.out_hsr[1], 8);
-    EXPECT_FALSE(param.inp.out_mat_xc);
+    EXPECT_EQ(param.inp.out_mat_xc[0], 0);
+    EXPECT_EQ(param.inp.out_mat_xc[1], 8);
     EXPECT_EQ(param.inp.out_mat_xc2[0], 0);
     EXPECT_EQ(param.inp.out_mat_xc2[1], 8);
     EXPECT_FALSE(param.inp.out_eband);
@@ -720,7 +722,7 @@ TEST_F(InputParaTest, ExternalLRKernelRejectsForces)
 {
     ModuleIO::ReadInput readinput(0);
     std::map<std::string, ModuleIO::Input_Item> lists;
-    for (const auto& entry: readinput.get_input_lists())
+    for (const std::pair<std::string, ModuleIO::Input_Item>& entry: readinput.get_input_lists())
     {
         lists.emplace(entry.first, entry.second);
     }
@@ -753,20 +755,20 @@ TEST_F(InputParaTest, RemovedElpaZSolverIsRejected)
 {
     ModuleIO::ReadInput readinput(0);
     std::map<std::string, ModuleIO::Input_Item> lists;
-    for (const auto& entry: readinput.get_input_lists())
+    for (const std::pair<std::string, ModuleIO::Input_Item>& entry: readinput.get_input_lists())
     {
         lists.emplace(entry.first, entry.second);
     }
     ModuleIO::Input_Item item = lists.at("lr_grad_solver");
     Parameter param;
-    for (const auto& solver : {"cg", "lapack"})
+    for (const char* const& solver : {"cg", "lapack"})
     {
         item.str_values = {solver};
         item.read_value(item, param);
         item.check_value(item, param);
     }
 #ifdef __MPI
-    for (const auto& solver : {"scalapack", "scalapack_chol"})
+    for (const char* const& solver : {"scalapack", "scalapack_chol"})
     {
         item.str_values = {solver};
         item.read_value(item, param);
@@ -778,18 +780,53 @@ TEST_F(InputParaTest, RemovedElpaZSolverIsRejected)
     EXPECT_EXIT(item.check_value(item, param), testing::ExitedWithCode(1), "");
 }
 
+TEST_F(InputParaTest, OutDosNpy)
+{
+    ModuleIO::ReadInput reader(0);
+    const std::vector<std::pair<std::string, ModuleIO::Input_Item>>& entries = reader.get_input_lists();
+    std::map<std::string, ModuleIO::Input_Item> items(entries.begin(), entries.end());
+    Parameter param;
+    std::function<void(const std::string&, const std::string&)> set = [&](const std::string& key,
+                                                                         const std::string& value) {
+        ModuleIO::Input_Item& item = items.at(key);
+        item.str_values = {value};
+        item.read_value(item, param);
+    };
+    const ModuleIO::Input_Item& output = items.at("out_dos");
+    EXPECT_EQ(param.inp.out_dos[0], 0);
+
+    set("basis_type", "lcao");
+    set("out_dos", "2");
+    ASSERT_EQ(param.inp.out_dos[0], 2);
+    for (const char* calculation : {"scf", "nscf"})
+    {
+        set("calculation", calculation);
+        output.check_value(output, param);
+    }
+    set("calculation", "md");
+    EXPECT_EXIT(output.check_value(output, param), testing::ExitedWithCode(1), "");
+    set("calculation", "scf");
+    set("esolver_type", "lr");
+    EXPECT_EXIT(output.check_value(output, param), testing::ExitedWithCode(1), "");
+    set("esolver_type", "ksdft");
+    set("basis_type", "pw");
+    EXPECT_EXIT(output.check_value(output, param), testing::ExitedWithCode(1), "");
+    set("out_dos", "1");
+    output.check_value(output, param);
+}
+
 
 TEST_F(InputParaTest, OpticalGaugeCanDisableSpectrum)
 {
     ModuleIO::ReadInput readinput(0);
     std::map<std::string, ModuleIO::Input_Item> lists;
-    for (const auto& entry : readinput.get_input_lists())
+    for (const std::pair<std::string, ModuleIO::Input_Item>& entry : readinput.get_input_lists())
     {
         lists.emplace(entry.first, entry.second);
     }
     ModuleIO::Input_Item item = lists.at("abs_gauge");
     Parameter param;
-    for (const auto& gauge : {"velocity", "length", "none"})
+    for (const char* const& gauge : {"velocity", "length", "none"})
     {
         item.str_values = {gauge};
         item.read_value(item, param);

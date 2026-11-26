@@ -477,7 +477,7 @@ Note: It is a system-dependent empirical parameter. An improper choice might lea
             {
                 ModuleBase::WARNING_QUIT("ReadInput", " the number of lj_rcut should be 1 or ntype(ntype+1)/2 ");
             }
-            for (auto rcut: para.input.mdp.lj_rcut)
+            for (double rcut: para.input.mdp.lj_rcut)
             {
                 if (rcut <= 0)
                 {

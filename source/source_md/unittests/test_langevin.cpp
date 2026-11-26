@@ -1,9 +1,9 @@
+#include "lj_test_solver.h"
 #include "source_cell/dom_decomp.h"
+#include "source_md/langevin.h"
+#include "source_md/unittests/setcell.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "source_md/unittests/setcell.h"
-#include "lj_test_solver.h"
-#include "source_md/langevin.h"
 #define doublethreshold 1e-12
 
 /************************************************
@@ -34,12 +34,12 @@
 class Langevin_test : public testing::Test
 {
   protected:
-    MD_base* mdrun;
+    MD_base *mdrun;
     UnitCell ucell;
     MDCell mdcell;
     DomainDecomposition decomp;
     Input_para inp;
-    ModuleESolver::ESolver* p_esolver;
+    ModuleESolver::ESolver *p_esolver;
     /// the md writers take the directory explicitly, so the test owns it
     const std::string out_dir = "./";
     const std::string readin_dir = "./";

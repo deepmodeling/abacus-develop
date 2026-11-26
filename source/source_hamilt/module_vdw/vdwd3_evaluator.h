@@ -10,12 +10,13 @@ namespace vdw
 namespace d3
 {
 
-bool evaluate(const Structure& structure,
-              const Parameters& parameters,
-              const Cutoffs& cutoffs,
-              bool derivatives,
-              Result& result,
-              std::string& error);
+bool evaluate(
+    const Structure &structure,
+    const Parameters &parameters,
+    const Cutoffs &cutoffs,
+    bool derivatives,
+    Result &result,
+    std::string &error);
 
 } // namespace d3
 } // namespace vdw

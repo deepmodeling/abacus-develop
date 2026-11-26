@@ -42,7 +42,7 @@ TEST_F(ParseArgsTest, VersionFlags) {
 
     std::vector<std::string> version_args = {"--version", "-v", "-V"};
 
-    for (const auto& arg : version_args) {
+    for (const std::string& arg : version_args) {
         char arg0[] = "test";
         std::vector<char*> argv = {arg0, const_cast<char*>(arg.c_str())};
         int argc = argv.size();
@@ -63,7 +63,7 @@ TEST_F(ParseArgsTest, VersionFlags) {
 TEST_F(ParseArgsTest, InfoFlags) {
     std::vector<std::string> info_args = {"--info", "-i", "-I"};
 
-    for (const auto& arg : info_args) {
+    for (const std::string& arg : info_args) {
         char arg0[] = "test";
         std::vector<char*> argv = {arg0, const_cast<char*>(arg.c_str())};
         int argc = argv.size();
@@ -291,16 +291,16 @@ TEST_F(ParseArgsTest, CombinedRunControlAndCheckInput)
     const std::vector<std::vector<std::string>> cases = {
         {"abacus", "--check-input", "-in", "sub/INPUT", "-p", "a", "-1"},
         {"abacus", "--input", "sub/INPUT", "--parameter", "a", "-1", "--check-input"}};
-    for (const auto& tokens : cases)
+    for (const std::vector<std::string>& tokens : cases)
     {
         ModuleIO::ReadInput::check_mode = false;
         std::vector<char*> argv;
-        for (const auto& token : tokens)
+        for (const std::string& token : tokens)
         {
             argv.push_back(const_cast<char*>(token.c_str()));
         }
         ModuleIO::parse_args(argv.size(), argv.data());
-        const auto args = ModuleIO::parse_command_line(argv.size(), argv.data());
+        const ModuleIO::CommandLineArgs args = ModuleIO::parse_command_line(argv.size(), argv.data());
         EXPECT_TRUE(ModuleIO::ReadInput::check_mode);
         EXPECT_EQ(args.input_file, "sub/INPUT");
         EXPECT_EQ(args.vars.at("a"), "-1");
@@ -312,7 +312,7 @@ TEST_F(ParseArgsTest, FlagLookingVariableValueIsConsumed)
     char* argv[] = {const_cast<char*>("abacus"), const_cast<char*>("-p"),
                     const_cast<char*>("a"), const_cast<char*>("--check-input")};
     ModuleIO::parse_args(4, argv);
-    const auto args = ModuleIO::parse_command_line(4, argv);
+    const ModuleIO::CommandLineArgs args = ModuleIO::parse_command_line(4, argv);
     EXPECT_FALSE(ModuleIO::ReadInput::check_mode);
     EXPECT_EQ(args.vars.at("a"), "--check-input");
 }

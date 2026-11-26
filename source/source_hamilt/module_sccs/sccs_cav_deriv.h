@@ -28,14 +28,15 @@ struct CavityDerivatives
 // sa_probe_kernel on the local G vectors), periodic cells carry the chain through the
 // filling; open boundaries differentiate s_sa on the filtered grid with lowpass
 // and otherwise apply the analytic filling to the FFT derivatives of the local s.
-void make_cav_derivs(const std::vector<double>& density,
-                     const CavityParameters& cavity,
-                     const std::vector<double>& probe_kernel,
-                     const ModulePW::PW_Basis& basis,
-                     double tpiba,
-                     bool open_boundary,
-                     SccsResponse& response,
-                     CavityDerivatives& derivatives);
+void make_cav_derivs(
+    const std::vector<double> &density,
+    const CavityParameters &cavity,
+    const std::vector<double> &probe_kernel,
+    const ModulePW::PW_Basis &basis,
+    double tpiba,
+    bool open_boundary,
+    SccsResponse &response,
+    CavityDerivatives &derivatives);
 } // namespace ModuleSccs
 
 #endif

@@ -58,11 +58,11 @@ std::vector<LibRpaSpinSymmetryOperation> make_librpa_spin_symmetry_operations(
 
     std::vector<LibRpaSpinSymmetryOperation> operations;
     operations.reserve(unitary_rotations.size() + antiunitary_rotations.size());
-    for (const auto& rotation : unitary_rotations)
+    for (const ModuleBase::Matrix3& rotation : unitary_rotations)
     {
         operations.push_back(spin_operation(rotation, 0));
     }
-    for (const auto& rotation : antiunitary_rotations)
+    for (const ModuleBase::Matrix3& rotation : antiunitary_rotations)
     {
         operations.push_back(spin_operation(rotation, 1));
     }
@@ -89,11 +89,11 @@ void write_librpa_symmetry_rows(std::ostream& output,
     };
 
     output << unitary.size() + antiunitary.size() << " row\n";
-    for (const auto& operation : unitary)
+    for (const RpaLriDetail::LibRpaSymmetryOperation& operation : unitary)
     {
         write_operation(operation);
     }
-    for (const auto& operation : antiunitary)
+    for (const RpaLriDetail::LibRpaSymmetryOperation& operation : antiunitary)
     {
         write_operation(operation);
     }
@@ -105,7 +105,7 @@ void write_librpa_spin_symmetry(std::ostream& output,
                                 const std::vector<LibRpaSpinSymmetryOperation>& operations)
 {
     output << "spin_symmetry " << grey_group << ' ' << spin_source << '\n';
-    for (const auto& operation : operations)
+    for (const RpaLriDetail::LibRpaSpinSymmetryOperation& operation : operations)
     {
         output << operation.antiunitary;
         if (spin_source == 1)

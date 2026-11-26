@@ -1,7 +1,7 @@
-#include "tmp_mocks.h"
-#include "gtest/gtest.h"
 #include "source_hamilt/module_hcontainer/hcontainer.h"
 #include "source_hamilt/module_hcontainer/hcontainer_funcs.h"
+#include "tmp_mocks.h"
+#include "gtest/gtest.h"
 
 /**
  * Unit test of HContainer
@@ -45,7 +45,7 @@ class HContainerTest : public ::testing::Test
     }
 
     UnitCell ucell;
-    hamilt::HContainer<double>* HR;
+    hamilt::HContainer<double> *HR;
 };
 
 // using TEST_F to test HContainer::insert_pair
@@ -99,7 +99,7 @@ TEST_F(HContainerTest, insert_pair)
     EXPECT_EQ(HR->get_atom_pair(1, 0).get_row_size(), 2);
     EXPECT_EQ(HR->get_atom_pair(1, 0).get_col_size(), 2);
     // check if data is correct
-    double* data_ptr = HR->get_atom_pair(1, 0).get_HR_values(rx, ry, rz).get_pointer();
+    double *data_ptr = HR->get_atom_pair(1, 0).get_HR_values(rx, ry, rz).get_pointer();
     EXPECT_EQ(data_ptr[0], 1);
     EXPECT_EQ(data_ptr[1], 2);
     EXPECT_EQ(data_ptr[2], 3);
@@ -132,7 +132,7 @@ TEST(HContainerSparseTest, InsertPairsOutOfOrder)
     EXPECT_GT(memory, sizeof(container));
     for (int atom_j = 0; atom_j < 3; ++atom_j)
     {
-        const hamilt::AtomPair<double>* pair = container.find_pair(0, atom_j);
+        const hamilt::AtomPair<double> *pair = container.find_pair(0, atom_j);
         ASSERT_NE(pair, nullptr);
         EXPECT_EQ(pair->get_atom_i(), 0);
         EXPECT_EQ(pair->get_atom_j(), atom_j);
@@ -141,7 +141,7 @@ TEST(HContainerSparseTest, InsertPairsOutOfOrder)
         {
             EXPECT_EQ(pair->find_R(0, 0, rz), rz);
             const double expected = 10.0 * atom_j + rz;
-            const hamilt::BaseMatrix<double>* matrix = container.find_matrix(0, atom_j, 0, 0, rz);
+            const hamilt::BaseMatrix<double> *matrix = container.find_matrix(0, atom_j, 0, 0, rz);
             ASSERT_NE(matrix, nullptr);
             EXPECT_DOUBLE_EQ(matrix->get_value(0, 0), expected);
         }
@@ -159,21 +159,21 @@ TEST_F(HContainerTest, find_pair)
     EXPECT_EQ(HR->get_atom_pair(0).get_row_size(), 2);
     EXPECT_EQ(HR->get_atom_pair(0).get_col_size(), 2);
     // find atom_ij in HR
-    hamilt::AtomPair<double>* atom_ij_ptr = HR->find_pair(0, 1);
+    hamilt::AtomPair<double> *atom_ij_ptr = HR->find_pair(0, 1);
     // check if atom_ij is found
     EXPECT_EQ(atom_ij_ptr->get_atom_i(), 0);
     EXPECT_EQ(atom_ij_ptr->get_atom_j(), 1);
     EXPECT_EQ(atom_ij_ptr->get_row_size(), 2);
     EXPECT_EQ(atom_ij_ptr->get_col_size(), 2);
     // find atom_kl in HR
-    hamilt::AtomPair<double>* atom_kl_ptr = HR->find_pair(1, 0);
+    hamilt::AtomPair<double> *atom_kl_ptr = HR->find_pair(1, 0);
     // check if atom_kl is found
     EXPECT_EQ(atom_kl_ptr->get_atom_i(), 1);
     EXPECT_EQ(atom_kl_ptr->get_atom_j(), 0);
     EXPECT_EQ(atom_kl_ptr->get_row_size(), 2);
     EXPECT_EQ(atom_kl_ptr->get_col_size(), 2);
     // find atom_ij not in HR
-    hamilt::AtomPair<double>* atom_ij_ptr2 = HR->find_pair(0, 3);
+    hamilt::AtomPair<double> *atom_ij_ptr2 = HR->find_pair(0, 3);
     // check if atom_ij is found
     EXPECT_EQ(atom_ij_ptr2, nullptr);
 }
@@ -188,28 +188,28 @@ TEST_F(HContainerTest, get_atom_pair)
     EXPECT_EQ(HR->get_atom_pair(0).get_row_size(), 2);
     EXPECT_EQ(HR->get_atom_pair(0).get_col_size(), 2);
     // get atom_ij in HR
-    hamilt::AtomPair<double>& atom_ij_ref = HR->get_atom_pair(0, 1);
+    hamilt::AtomPair<double> &atom_ij_ref = HR->get_atom_pair(0, 1);
     // check if atom_ij is found
     EXPECT_EQ(atom_ij_ref.get_atom_i(), 0);
     EXPECT_EQ(atom_ij_ref.get_atom_j(), 1);
     EXPECT_EQ(atom_ij_ref.get_row_size(), 2);
     EXPECT_EQ(atom_ij_ref.get_col_size(), 2);
     // get atom_kl in HR
-    hamilt::AtomPair<double>& atom_kl_ref = HR->get_atom_pair(1, 0);
+    hamilt::AtomPair<double> &atom_kl_ref = HR->get_atom_pair(1, 0);
     // check if atom_kl is found
     EXPECT_EQ(atom_kl_ref.get_atom_i(), 1);
     EXPECT_EQ(atom_kl_ref.get_atom_j(), 0);
     EXPECT_EQ(atom_kl_ref.get_row_size(), 2);
     EXPECT_EQ(atom_kl_ref.get_col_size(), 2);
     // get atom_ij in HR with index
-    hamilt::AtomPair<double>& atom_ij_ref2 = HR->get_atom_pair(0);
+    hamilt::AtomPair<double> &atom_ij_ref2 = HR->get_atom_pair(0);
     // check if atom_ij is found
     EXPECT_EQ(atom_ij_ref2.get_atom_i(), 0);
     EXPECT_EQ(atom_ij_ref2.get_atom_j(), 0);
     EXPECT_EQ(atom_ij_ref2.get_row_size(), 2);
     EXPECT_EQ(atom_ij_ref2.get_col_size(), 2);
     // get atom_kl in HR with index
-    hamilt::AtomPair<double>& atom_kl_ref2 = HR->get_atom_pair(8);
+    hamilt::AtomPair<double> &atom_kl_ref2 = HR->get_atom_pair(8);
     // check if atom_kl is found
     EXPECT_EQ(atom_kl_ref2.get_atom_i(), 2);
     EXPECT_EQ(atom_kl_ref2.get_atom_j(), 2);
@@ -259,7 +259,7 @@ TEST_F(HContainerTest, fix_gamma)
     hamilt::AtomPair<double> atom_ij(0, 1);
     atom_ij.set_size(2, 2);
     const int rx_offset = 1, ry_offset = 0, rz_offset = 0;
-    hamilt::BaseMatrix<double>& tmp = atom_ij.get_HR_values(rx_offset, ry_offset, rz_offset);
+    hamilt::BaseMatrix<double> &tmp = atom_ij.get_HR_values(rx_offset, ry_offset, rz_offset);
     double tmp_array[4] = {1, 2, 3, 4};
     tmp.add_array(tmp_array);
     // insert atom_ij into HR
@@ -326,7 +326,7 @@ TEST_F(HContainerTest, size_atom_pairs)
     hamilt::AtomPair<double> atom_ij(0, 1);
     atom_ij.set_size(2, 2);
     const int rx_another = 1, ry_another = 0, rz_another = 0;
-    hamilt::BaseMatrix<double>& tmp = atom_ij.get_HR_values(rx_another, ry_another, rz_another);
+    hamilt::BaseMatrix<double> &tmp = atom_ij.get_HR_values(rx_another, ry_another, rz_another);
     double tmp_array[4] = {1, 2, 3, 4};
     tmp.add_array(tmp_array);
     // insert atom_ij into HR
@@ -356,7 +356,7 @@ TEST_F(HContainerTest, size_atom_pairs)
     EXPECT_EQ(HR->get_atom_pair(0).get_R_index(r_index_fix).z, rz_another);
     EXPECT_EQ(HR->get_atom_pair(0).get_R_index(5), ModuleBase::Vector3<int>(-1, -1, -1));
     // check if data is correct
-    double* data_ptr = HR->get_atom_pair(0).get_pointer(r_index_fix);
+    double *data_ptr = HR->get_atom_pair(0).get_pointer(r_index_fix);
     EXPECT_EQ(data_ptr[0], 1);
     EXPECT_EQ(data_ptr[1], 2);
     EXPECT_EQ(data_ptr[2], 3);
@@ -385,7 +385,7 @@ TEST_F(HContainerTest, data)
     hamilt::AtomPair<double> atom_ij(atom_i, atom_j);
     atom_ij.set_size(2, 2);
     const int rx_center = 0, ry_center = 0, rz_center = 0;
-    hamilt::BaseMatrix<double>& tmp = atom_ij.get_HR_values(rx_center, ry_center, rz_center);
+    hamilt::BaseMatrix<double> &tmp = atom_ij.get_HR_values(rx_center, ry_center, rz_center);
     double tmp_array[4] = {1, 2, 3, 4};
     tmp.add_array(tmp_array);
     EXPECT_EQ(HR->size_atom_pairs(), 9);
@@ -398,7 +398,7 @@ TEST_F(HContainerTest, data)
     EXPECT_EQ(HR->get_atom_pair(atom_i, atom_j).get_row_size(), 2);
     EXPECT_EQ(HR->get_atom_pair(atom_i, atom_j).get_col_size(), 2);
     // get data pointer
-    double* data_ptr = HR->data(atom_i, atom_j);
+    double *data_ptr = HR->data(atom_i, atom_j);
     // check if data pointer is correct
     EXPECT_EQ(data_ptr, HR->get_atom_pair(atom_i, atom_j).get_pointer(0));
     EXPECT_EQ(data_ptr, HR->get_atom_pair(atom_i, atom_j).get_pointer(0));
@@ -437,8 +437,7 @@ TEST_F(HContainerTest, basematrix_funcs)
     EXPECT_EQ(BM_copy.get_value(0, 1), 2);
     EXPECT_EQ(BM_copy.get_value(1, 0), 3);
     EXPECT_EQ(BM_copy.get_value(1, 1), 4);
-    
-} 
+}
 
 // using TEST_F to test functions in AtomPair
 // 1. constructor
@@ -457,10 +456,10 @@ TEST_F(HContainerTest, atompair_funcs)
     Parallel_Orbitals PO;
     PO.atom_begin_row.resize(3); // natom = 2, size should be natom + 1
     PO.atom_begin_col.resize(3);
-    for(int i=0;i<3;i++)
+    for (int i = 0; i < 3; i++)
     {
-        PO.atom_begin_row[i] = i*2; // nw = 2, value should be i*nw
-        PO.atom_begin_col[i] = i*2;
+        PO.atom_begin_row[i] = i * 2; // nw = 2, value should be i*nw
+        PO.atom_begin_col[i] = i * 2;
     }
     PO.para_2d().set_serial(4, 4);
     const int natom = 2;
@@ -468,11 +467,12 @@ TEST_F(HContainerTest, atompair_funcs)
     hamilt::AtomPair<double> atom_ij(0, 0, &PO, nullptr);
     hamilt::AtomPair<double> atom_ij2(0, 1, rx_shift, ry_shift, rz_shift, &PO, nullptr);
     hamilt::AtomPair<double> atom_ij3(1, 0, PO.atom_begin_row.data(), PO.atom_begin_col.data(), natom, nullptr);
-    hamilt::AtomPair<double> atom_ij33(1, 1, rx_shift, ry_shift, rz_shift, PO.atom_begin_row.data(), PO.atom_begin_col.data(), natom, nullptr);
-    EXPECT_EQ(atom_ij<atom_ij2, true);
-    EXPECT_EQ(atom_ij2<atom_ij, false);
-    EXPECT_EQ(atom_ij3<atom_ij2, false);
-    EXPECT_EQ(atom_ij2<atom_ij3, true);
+    hamilt::AtomPair<double> atom_ij33(
+        1, 1, rx_shift, ry_shift, rz_shift, PO.atom_begin_row.data(), PO.atom_begin_col.data(), natom, nullptr);
+    EXPECT_EQ(atom_ij < atom_ij2, true);
+    EXPECT_EQ(atom_ij2 < atom_ij, false);
+    EXPECT_EQ(atom_ij3 < atom_ij2, false);
+    EXPECT_EQ(atom_ij2 < atom_ij3, true);
     atom_ij3 = atom_ij;
     atom_ij33 = hamilt::AtomPair<double>(atom_ij2);
     EXPECT_EQ(atom_ij.identify(atom_ij3), true);
@@ -480,68 +480,58 @@ TEST_F(HContainerTest, atompair_funcs)
     EXPECT_EQ(atom_ij2.identify(atom_ij33.get_atom_i(), atom_ij33.get_atom_j()), true);
     EXPECT_EQ(atom_ij2.identify(atom_ij3.get_atom_i(), atom_ij3.get_atom_j()), false);
     // 5. add_to_matrix
-    double hk_data[16] = {1, 2, 3, 4,
-                          5, 6, 7, 8,
-                          9, 10, 11, 12,
-                          13, 14, 15, 16};
-    std::complex<double> hk_data2[16] = {1, 2, 3, 4,
-                                         5, 6, 7, 8,
-                                         9, 10, 11, 12,
-                                         13, 14, 15, 16};
+    double hk_data[16] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
+    std::complex<double> hk_data2[16] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     // colomn major case
-    double hk_data1[16] = { 1, 5, 9, 13,
-                            2, 6, 10, 14,
-                            3, 7, 11, 15,
-                            4, 8, 12, 16};
-        // colomn major case
-    std::complex<double> hk_data3[16] = {1, 5, 9, 13,
-                                         2, 6, 10, 14,
-                                         3, 7, 11, 15,
-                                         4, 8, 12, 16};
+    double hk_data1[16] = {1, 5, 9, 13, 2, 6, 10, 14, 3, 7, 11, 15, 4, 8, 12, 16};
+    // colomn major case
+    std::complex<double> hk_data3[16] = {1, 5, 9, 13, 2, 6, 10, 14, 3, 7, 11, 15, 4, 8, 12, 16};
     const int matrix_size = 2;
     const int rx_center = 0, ry_center = 0, rz_center = 0;
     hamilt::HContainer<double> HR(natom);
-    for(int atom_i = 0; atom_i < natom; ++atom_i)
+    for (int atom_i = 0; atom_i < natom; ++atom_i)
     {
-        for(int atom_j = 0; atom_j < natom; ++atom_j)
+        for (int atom_j = 0; atom_j < natom; ++atom_j)
         {
-            hamilt::AtomPair<double> tmp(atom_i, atom_j, rx_center, ry_center, rz_center, PO.atom_begin_row.data(), PO.atom_begin_col.data(), natom, nullptr);
+            hamilt::AtomPair<double> tmp(
+                atom_i, atom_j, rx_center, ry_center, rz_center, PO.atom_begin_row.data(), PO.atom_begin_col.data(),
+                natom, nullptr);
             tmp.allocate(nullptr, false);
-            double* tmp_data = tmp.get_HR_values(rx_center, ry_center, rz_center).get_pointer();
-            for(int i = 0; i < 4; ++i)
+            double *tmp_data = tmp.get_HR_values(rx_center, ry_center, rz_center).get_pointer();
+            for (int i = 0; i < 4; ++i)
             {
                 tmp_data[i] = atom_i * 2 + atom_j * 4 + i + 1;
             }
             HR.insert_pair(tmp);
         }
     }
-    for(int ir=0;ir<HR.size_R_loop();++ir)
+    for (int ir = 0; ir < HR.size_R_loop(); ++ir)
     {
         int rx, ry, rz;
         HR.loop_R(ir, rx, ry, rz);
         HR.fix_R(rx, ry, rz);
-        for(int iap = 0;iap<HR.size_atom_pairs();++iap)
+        for (int iap = 0; iap < HR.size_atom_pairs(); ++iap)
         {
-            hamilt::AtomPair<double>& tmp = HR.get_atom_pair(iap);
-			// Find the R_index that matches the current R
-			int r_index = -1;
-			for(int j = 0; j < tmp.get_R_size(); ++j)
-			{
-				if(tmp.get_R_index(j) == ModuleBase::Vector3<int>(rx, ry, rz))
-				{
-					r_index = j;
-					break;
-				}
-			}
-			if(r_index >= 0)
-			{
-				// row major case - use thread-safe version with explicit R_index
-				tmp.add_to_matrix(r_index, &hk_data[0], 4, 1.0, 0);
-				tmp.add_to_matrix(r_index, &hk_data2[0], 4, std::complex<double>(1.0, 0.5), 0);
-				// colomn major case
-				tmp.add_to_matrix(r_index, &hk_data1[0], 4, 1.0, 1);
-				tmp.add_to_matrix(r_index, &hk_data3[0], 4, std::complex<double>(1.0, 0.5), 1);
-			}
+            hamilt::AtomPair<double> &tmp = HR.get_atom_pair(iap);
+            // Find the R_index that matches the current R
+            int r_index = -1;
+            for (int j = 0; j < tmp.get_R_size(); ++j)
+            {
+                if (tmp.get_R_index(j) == ModuleBase::Vector3<int>(rx, ry, rz))
+                {
+                    r_index = j;
+                    break;
+                }
+            }
+            if (r_index >= 0)
+            {
+                // row major case - use thread-safe version with explicit R_index
+                tmp.add_to_matrix(r_index, &hk_data[0], 4, 1.0, 0);
+                tmp.add_to_matrix(r_index, &hk_data2[0], 4, std::complex<double>(1.0, 0.5), 0);
+                // colomn major case
+                tmp.add_to_matrix(r_index, &hk_data1[0], 4, 1.0, 1);
+                tmp.add_to_matrix(r_index, &hk_data3[0], 4, std::complex<double>(1.0, 0.5), 1);
+            }
             /* output for show the result
             std::cout<<"iap = "<<iap<<std::endl;
             std::cout<<"hk_data = ";
@@ -563,50 +553,49 @@ TEST_F(HContainerTest, atompair_funcs)
     }
     HR.unfix_R();
     // check hk_data and hk_data2 are correct
-    double hk_data_correct[16] = {2, 4, 8, 10,
-                                  8, 10, 14, 16,
-                                  12, 14, 18, 20,
-                                  18, 20, 24, 26};
-    std::complex<double> hk_data2_correct[16] = {std::complex<double>(2,0.5), std::complex<double>(4,1), std::complex<double>(8,2.5), std::complex<double>(10,3),
-                                                 std::complex<double>(8,1.5), std::complex<double>(10,2), std::complex<double>(14,3.5), std::complex<double>(16,4),
-                                                 std::complex<double>(12,1.5), std::complex<double>(14,2), std::complex<double>(18,3.5), std::complex<double>(20,4),
-                                                 std::complex<double>(18,2.5), std::complex<double>(20,3), std::complex<double>(24,4.5), std::complex<double>(26,5)};
-    for(int i=0;i<4;++i)
+    double hk_data_correct[16] = {2, 4, 8, 10, 8, 10, 14, 16, 12, 14, 18, 20, 18, 20, 24, 26};
+    std::complex<double> hk_data2_correct[16] = {std::complex<double>(2, 0.5), std::complex<double>(4, 1),
+        std::complex<double>(8, 2.5), std::complex<double>(10, 3), std::complex<double>(8, 1.5),
+        std::complex<double>(10, 2), std::complex<double>(14, 3.5), std::complex<double>(16, 4),
+        std::complex<double>(12, 1.5), std::complex<double>(14, 2), std::complex<double>(18, 3.5),
+        std::complex<double>(20, 4), std::complex<double>(18, 2.5), std::complex<double>(20, 3),
+        std::complex<double>(24, 4.5), std::complex<double>(26, 5)};
+    for (int i = 0; i < 4; ++i)
     {
-        for(int j=0;j<4;++j)
+        for (int j = 0; j < 4; ++j)
         {
             // row major case
-            EXPECT_EQ(hk_data[i*4+j], hk_data_correct[i*4+j]);
-            EXPECT_EQ(hk_data2[i*4+j], hk_data2_correct[i*4+j]);
+            EXPECT_EQ(hk_data[i * 4 + j], hk_data_correct[i * 4 + j]);
+            EXPECT_EQ(hk_data2[i * 4 + j], hk_data2_correct[i * 4 + j]);
             // colomn major case
-            EXPECT_EQ(hk_data1[j*4+i], hk_data_correct[i*4+j]);
-            EXPECT_EQ(hk_data3[j*4+i], hk_data2_correct[i*4+j]);
+            EXPECT_EQ(hk_data1[j * 4 + i], hk_data_correct[i * 4 + j]);
+            EXPECT_EQ(hk_data3[j * 4 + i], hk_data2_correct[i * 4 + j]);
         }
     }
     // 6. add_to_array
     std::vector<std::complex<double>> hr_array(16, 0.0);
     std::vector<double> hr_array2(16, 0.0);
-    for(int ir=0;ir<HR.size_R_loop();++ir)
+    for (int ir = 0; ir < HR.size_R_loop(); ++ir)
     {
         int rx, ry, rz;
         HR.loop_R(ir, rx, ry, rz);
         HR.fix_R(rx, ry, rz);
-        std::complex<double>* ptr1 = hr_array.data();
-        double* ptr2 = hr_array2.data();
-        for(int iap = 0;iap<HR.size_atom_pairs();++iap)
+        std::complex<double> *ptr1 = hr_array.data();
+        double *ptr2 = hr_array2.data();
+        for (int iap = 0; iap < HR.size_atom_pairs(); ++iap)
         {
-            hamilt::AtomPair<double>& tmp = HR.get_atom_pair(iap);
+            hamilt::AtomPair<double> &tmp = HR.get_atom_pair(iap);
             // Find the R_index that matches the current R
             int r_index = -1;
-            for(int j = 0; j < tmp.get_R_size(); ++j)
+            for (int j = 0; j < tmp.get_R_size(); ++j)
             {
-                if(tmp.get_R_index(j) == ModuleBase::Vector3<int>(rx, ry, rz))
+                if (tmp.get_R_index(j) == ModuleBase::Vector3<int>(rx, ry, rz))
                 {
                     r_index = j;
                     break;
                 }
             }
-            if(r_index >= 0)
+            if (r_index >= 0)
             {
                 // Use thread-safe version with explicit R_index
                 tmp.add_to_array(r_index, ptr1, std::complex<double>(1.0, 0.0));
@@ -620,20 +609,16 @@ TEST_F(HContainerTest, atompair_funcs)
     // check hr_array and hr_array2 are correct
     std::complex<double> correct1 = 0.0;
     double correct2 = 0.0;
-    double correct_array[16] = {
-        1, 2, 3, 4, 
-        5, 6, 7, 8, 
-        3, 4, 5, 6, 
-        7, 8, 9, 10};
+    double correct_array[16] = {1, 2, 3, 4, 5, 6, 7, 8, 3, 4, 5, 6, 7, 8, 9, 10};
     double test_array[16] = {1, 2, 5, 6, 3, 4, 7, 8, 3, 4, 7, 8, 5, 6, 9, 10};
-    for(int i=0;i<4;++i)
+    for (int i = 0; i < 4; ++i)
     {
-        for(int j=0;j<4;++j)
+        for (int j = 0; j < 4; ++j)
         {
-            correct1 = std::complex<double>(correct_array[i*4+j], 0.0);
-            correct2 = correct_array[i*4+j];
-            EXPECT_EQ(hr_array[i*4+j], correct1);
-            EXPECT_EQ(hr_array2[i*4+j], correct2);
+            correct1 = std::complex<double>(correct_array[i * 4 + j], 0.0);
+            correct2 = correct_array[i * 4 + j];
+            EXPECT_EQ(hr_array[i * 4 + j], correct1);
+            EXPECT_EQ(hr_array2[i * 4 + j], correct2);
         }
     }
     // construct AtomPair from existed matrix
@@ -644,7 +629,8 @@ TEST_F(HContainerTest, atompair_funcs)
     EXPECT_EQ(atom_ij4.get_value(r_index_center, 0), test_array[0]);
     hamilt::AtomPair<double> atom_ij5(0, 1, rx_shift, ry_shift, rz_shift, &PO, &test_array[4]);
     hamilt::AtomPair<double> atom_ij6(1, 0, PO.atom_begin_row.data(), PO.atom_begin_col.data(), natom, &test_array[8]);
-    hamilt::AtomPair<double> atom_ij7(1, 1, rx_shift, ry_shift, rz_shift, PO.atom_begin_row.data(), PO.atom_begin_col.data(), natom, &test_array[12]);
+    hamilt::AtomPair<double> atom_ij7(
+        1, 1, rx_shift, ry_shift, rz_shift, PO.atom_begin_row.data(), PO.atom_begin_col.data(), natom, &test_array[12]);
     // get_matrix_value will use irloc and icloc in Parallel_Orbitals
     // so we need to set them
     std::ofstream ofs("test_hcontainer.log");
@@ -652,16 +638,17 @@ TEST_F(HContainerTest, atompair_funcs)
     // joint 4 2*2 BaseMatrix to whole 4*4 matrix
     // lambda function for check data
     // Note: these AtomPairs only contain R=(0,0,0), so r_index is always 0
-    auto checkdata = [&](hamilt::AtomPair<double>& ap_in, const int r_index = 0) {
+    auto checkdata = [&](hamilt::AtomPair<double> &ap_in, const int r_index = 0)
+    {
         auto data_ij4 = ap_in.get_matrix_values(r_index);
-        int* tmp_index = std::get<0>(data_ij4).data();
-        double* tmp_data = std::get<1>(data_ij4);
+        int *tmp_index = std::get<0>(data_ij4).data();
+        double *tmp_data = std::get<1>(data_ij4);
         double sum_error = 0.0;
-        for(int irow = tmp_index[0]; irow < tmp_index[0] + tmp_index[1]; ++irow)
+        for (int irow = tmp_index[0]; irow < tmp_index[0] + tmp_index[1]; ++irow)
         {
-            for(int icol = tmp_index[2]; icol < tmp_index[2] + tmp_index[3]; ++icol)
+            for (int icol = tmp_index[2]; icol < tmp_index[2] + tmp_index[3]; ++icol)
             {
-                sum_error += std::abs(*tmp_data++ - correct_array[irow*4+icol]);
+                sum_error += std::abs(*tmp_data++ - correct_array[irow * 4 + icol]);
             }
         }
         return sum_error;
@@ -718,7 +705,8 @@ TEST_F(HContainerTest, wrapper_mode)
     EXPECT_EQ(HR_wrapper.get_atom_pair(1).get_value(r_index_center, 1, 0), 6.0);
     EXPECT_EQ(HR_wrapper.get_atom_pair(1).get_value(r_index_center, 1, 1), 7.0);
     hamilt::AtomPair<double> atom_ij(HR->get_atom_pair(0), hr_data.data());
-    hamilt::BaseMatrix<double> matrix_test = hamilt::BaseMatrix<double>(atom_ij.get_row_size(), atom_ij.get_col_size(), hr_data.data());
+    hamilt::BaseMatrix<double> matrix_test =
+        hamilt::BaseMatrix<double>(atom_ij.get_row_size(), atom_ij.get_col_size(), hr_data.data());
     EXPECT_EQ(atom_ij.get_value(r_index_center, 1, 1), 3.0);
     EXPECT_EQ(matrix_test.get_value(1, 1), 3.0);
     HR->allocate(hr_data.data(), false);
@@ -743,7 +731,7 @@ void check_spin_storage_growth(const T factor, const int first_spin)
     hr.insert_pair(first);
     hr.insert_pair(last);
     std::vector<T> storage = {factor * 10.0, factor * 11.0, factor * 20.0, factor * 21.0};
-    T* active = storage.data() + first_spin * 2;
+    T *active = storage.data() + first_spin * 2;
     hr.allocate(active, false);
 
     for (int pass = 0; pass < 2; ++pass)
@@ -762,7 +750,7 @@ void check_spin_storage_growth(const T factor, const int first_spin)
         hr.insert_pair(added);
         hr.allocate(nullptr, true);
         hr.add_value_intersection(saved);
-        T* new_block = hr.find_matrix(0, 0, image, 0, 0)->get_pointer();
+        T *new_block = hr.find_matrix(0, 0, image, 0, 0)->get_pointer();
         new_block[0] = factor * (30.0 + pass);
 
         hamilt::resize_spin_storage(hr, old_layout, storage, spin);
@@ -802,7 +790,7 @@ TEST(HContainerSpinStorage, ComplexGrowthAndSpinSwitches)
     check_spin_storage_growth(factor, 1);
 }
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
 #ifdef __MPI
     MPI_Init(&argc, &argv);

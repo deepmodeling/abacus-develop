@@ -66,8 +66,8 @@ void ModuleIO::save_dH_sparse(const int& istep,
     lat_r_options.calculation = calculation;
     lat_r_options.out_app_flag = out_app_flag;
 
-    auto& all_R_coor_ptr = HS_Arrays.all_R_coor;
-    auto& output_R_coor_ptr = HS_Arrays.output_R_coor;
+    std::set<Abfs::Vector3_Order<int>>& all_R_coor_ptr = HS_Arrays.all_R_coor;
+    std::set<Abfs::Vector3_Order<int>>& output_R_coor_ptr = HS_Arrays.output_R_coor;
 
     // The three Cartesian derivative components (x, y, z) share identical
     // file handling; only the label and the sparse matrices differ.
@@ -114,7 +114,7 @@ void ModuleIO::save_dH_sparse(const int& istep,
     const std::string matrix_name = (fileflag == "s") ? "dS/dR" : "dH/dR";
     const std::string matrix_label = (fileflag == "s") ? "dS" : "dH";
 
-    for (auto& comp: comps)
+    for (Component& comp: comps)
     {
         if (nspin != 4)
         {
@@ -130,7 +130,7 @@ void ModuleIO::save_dH_sparse(const int& istep,
     }
 
     const auto has_output_R = [&](const int index) {
-        for (const auto& comp: comps)
+        for (const Component& comp: comps)
         {
             for (int ispin = 0; ispin < spin_loop; ++ispin)
             {
@@ -156,7 +156,7 @@ void ModuleIO::save_dH_sparse(const int& istep,
     // before "_nao".
     const bool include_step = (istep >= 0) && (out_app_flag == 2);
 
-    for (auto& comp: comps)
+    for (Component& comp: comps)
     {
         for (int ispin = 0; ispin < spin_loop; ++ispin)
         {
@@ -184,7 +184,7 @@ void ModuleIO::save_dH_sparse(const int& istep,
         // later steps append one complete record each. Single-point runs pass
         // istep <= 0 and therefore always start a fresh file.
         const bool open_in_append = detail::append_ionic_step(out_app_flag, istep);
-        for (auto& comp: comps)
+        for (Component& comp: comps)
         {
             for (int ispin = 0; ispin < spin_loop; ++ispin)
             {
@@ -243,7 +243,7 @@ void ModuleIO::save_dH_sparse(const int& istep,
     output_R_coor_ptr.clear();
 
     int count = 0;
-    for (auto& R_coor: all_R_coor_ptr) {
+    for (const Abfs::Vector3_Order<int>& R_coor: all_R_coor_ptr) {
         int dRx = R_coor.x;
         int dRy = R_coor.y;
         int dRz = R_coor.z;
@@ -257,7 +257,7 @@ void ModuleIO::save_dH_sparse(const int& istep,
         output_R_coor_ptr.insert(R_coor);
 
         if (GlobalV::DRANK == 0) {
-            for (auto& comp: comps)
+            for (Component& comp: comps)
             {
                 for (int ispin = 0; ispin < spin_loop; ++ispin) {
                     ModuleIO::detail::write_R_record(comp.ofs[ispin],
@@ -272,7 +272,7 @@ void ModuleIO::save_dH_sparse(const int& istep,
         }
 
         for (int ispin = 0; ispin < spin_loop; ++ispin) {
-            for (auto& comp: comps)
+            for (Component& comp: comps)
             {
                 const long long nnz = comp.nonzero_num[ispin][count];
                 if (binary)
@@ -328,7 +328,7 @@ void ModuleIO::save_dH_sparse(const int& istep,
     }
 
     if (GlobalV::DRANK == 0) {
-        for (auto& comp: comps)
+        for (Component& comp: comps)
         {
             for (int ispin = 0; ispin < spin_loop; ++ispin) {
                 comp.ofs[ispin].close();

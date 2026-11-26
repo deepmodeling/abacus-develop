@@ -94,7 +94,7 @@ std::vector<std::vector<std::vector<double>>> convert_orbital_matrix(
     {
         int num = 0;
         AorbMulP[is].resize(nat);
-        for (const auto& sc_elem: state.get_atomCounts())
+        for (const std::pair<const int, int>& sc_elem: state.get_atomCounts())
         {
             int it = sc_elem.first;
             int nat_it = sc_elem.second;
@@ -122,7 +122,7 @@ void calculate_mw_from_orbitals(const std::vector<std::vector<std::vector<double
 
     state.zero_Mi();
 
-    for (const auto& sc_elem: state.get_atomCounts())
+    for (const std::pair<const int, int>& sc_elem: state.get_atomCounts())
     {
         int it = sc_elem.first;
         int nat_it = sc_elem.second;
@@ -132,7 +132,7 @@ void calculate_mw_from_orbitals(const std::vector<std::vector<std::vector<double
             int iat = state.get_iat(it, ia);
             double atom_mag = 0.0;
             std::vector<double> total_charge_soc(state.nspin_, 0.0);
-            for (const auto& lnchi: state.get_lnchiCounts().at(it))
+            for (const std::pair<const int, int>& lnchi: state.get_lnchiCounts().at(it))
             {
                 std::vector<double> sum_l(state.nspin_, 0.0);
                 int L = lnchi.first;

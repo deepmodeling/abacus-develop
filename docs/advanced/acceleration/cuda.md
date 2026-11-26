@@ -58,4 +58,5 @@ PW basis:
 
 LCAO basis:
 - Unless there is a specific reason, avoid using multiple GPUs, as it can be slower than using a single GPU. This is because the generalized eigenvalue solution of the LCAO basis set will incur additional communication overhead when calculated on multiple cards. When the memory limit of a GPU card makes it insufficient to complete the task, it is recommended to use multiple cards for calculation.
+- With `ks_solver cusolver` and CUDA 10.1 or later, real Γ-point calculations with at least 4096 basis functions use a partial eigensolve when the requested band count is at most one quarter of the basis size. The solver requests the lowest eigenpairs and can retry with the full eigensolver if the partial solve fails recoverably.
 - When using elpa on GPUs, some ELPA internal logs will be output.

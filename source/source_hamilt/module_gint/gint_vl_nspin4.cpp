@@ -1,9 +1,9 @@
+#include "gint_vl_nspin4.h"
+#include "gint_common.h"
+#include "gint_helper.h"
+#include "phi_operator.h"
 #include "source_base/global_function.h"
 #include "source_hamilt/module_hcontainer/hcontainer.h"
-#include "gint_common.h"
-#include "gint_vl_nspin4.h"
-#include "phi_operator.h"
-#include "gint_helper.h"
 
 namespace ModuleGint
 {
@@ -20,7 +20,7 @@ void Gint_vl_nspin4::cal_gint()
 void Gint_vl_nspin4::init_hr_gint_()
 {
     hr_gint_part_.resize(nspin_);
-    for(int i = 0; i < nspin_; i++)
+    for (int i = 0; i < nspin_; i++)
     {
         hr_gint_part_[i] = gint_info_->get_hr<double>();
     }
@@ -36,8 +36,8 @@ void Gint_vl_nspin4::cal_hr_gint_()
 #pragma omp for schedule(dynamic)
         for (int i = 0; i < gint_info_->get_bgrids_num(); i++)
         {
-            const auto& biggrid = gint_info_->get_biggrids()[i];
-            if(biggrid->get_atoms().size() == 0)
+            const auto &biggrid = gint_info_->get_biggrids()[i];
+            if (biggrid->get_atoms().size() == 0)
             {
                 continue;
             }
@@ -46,7 +46,7 @@ void Gint_vl_nspin4::cal_hr_gint_()
             phi.resize(phi_len);
             phi_vldr3.resize(phi_len);
             phi_op.set_phi(phi.data());
-            for(int is = 0; is < nspin_; is++)
+            for (int is = 0; is < nspin_; is++)
             {
                 phi_op.phi_mul_vldr3(vr_eff_[is], dr3_, phi.data(), phi_vldr3.data());
                 phi_op.phi_mul_phi(phi.data(), phi_vldr3.data(), hr_gint_part_[is], PhiOperator::TriPart::Upper);

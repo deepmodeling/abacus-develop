@@ -237,7 +237,7 @@ double NeighborSearch::cross_product_norm(double a1, double a2, double a3,
 
 void NeighborSearch::check_expand_condition(const UnitCell& ucell, int& glayerX_minus, int& glayerX, int& glayerY_minus, int& glayerY, int& glayerZ_minus, int& glayerZ)
 {
-    const auto& lat = ucell.latvec;
+    const ModuleBase::Matrix3& lat = ucell.latvec;
     const double omega = ucell.omega;
     const double lat0 = ucell.lat0;
     const double lat0_cubed = lat0 * lat0 * lat0;

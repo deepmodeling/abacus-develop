@@ -125,7 +125,7 @@ void write_orb_energy(const K_Vectors& kv,
     {
         for (int is = 0; is < nspin0; ++is)
         {
-            for (auto e : e_orb[is * nk + ik])
+            for (double e : e_orb[is * nk + ik])
             { // Hartree and eV
                 ofs << e / 2. << "\t" << e * ModuleBase::Ry_to_eV << "\n";
             }

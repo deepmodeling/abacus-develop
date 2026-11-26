@@ -66,7 +66,7 @@ namespace ModuleSymmetry
         for (int istar = 0;istar < kv.kstars.size();++istar)
         {
             ofs << "Star " << istar + 1 << " of IBZ k-point " << vec3_fmt(kv.kstars[istar].at(0)) << ":\n";
-            for (const auto& isym_kvd : kv.kstars[istar])
+            for (const std::pair<const int, ModuleBase::Vector3<double>>& isym_kvd : kv.kstars[istar])
             {
                 const int& isym = isym_kvd.first;
                 const bool trs_conj = isym >= ucell.symm.nrotk;

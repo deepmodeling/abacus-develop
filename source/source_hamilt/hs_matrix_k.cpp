@@ -2,6 +2,6 @@
 
 namespace hamilt
 {
-    template class HS_Matrix_K<double>;
-    template class HS_Matrix_K<std::complex<double>>;
-}
+template class HS_Matrix_K<double>;
+template class HS_Matrix_K<std::complex<double>>;
+} // namespace hamilt

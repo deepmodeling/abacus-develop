@@ -9,11 +9,8 @@ namespace SNAP
 
 namespace
 {
-int half_sum(const int left, const int right)
-{
-    return (left + right) / 2;
-}
-}
+int half_sum(const int left, const int right) { return (left + right) / 2; }
+} // namespace
 
 ClebschGordanTable::ClebschGordanTable(const int twojmax)
 {
@@ -60,12 +57,13 @@ double ClebschGordanTable::factorial(const int value)
     return std::tgamma(static_cast<double>(value) + 1.0);
 }
 
-bool ClebschGordanTable::allowed(const int j1,
-                                 const int m1,
-                                 const int j2,
-                                 const int m2,
-                                 const int j,
-                                 const int m)
+bool ClebschGordanTable::allowed(
+    const int j1,
+    const int m1,
+    const int j2,
+    const int m2,
+    const int j,
+    const int m)
 {
     if (j1 < 0 || j2 < 0 || j < 0 || m1 < -j1 || m1 > j1 || m2 < -j2 || m2 > j2 || m < -j || m > j)
     {
@@ -82,12 +80,13 @@ bool ClebschGordanTable::allowed(const int j1,
     return m == m1 + m2;
 }
 
-double ClebschGordanTable::coefficient_uncached(const int j1,
-                                                const int m1,
-                                                const int j2,
-                                                const int m2,
-                                                const int j,
-                                                const int m)
+double ClebschGordanTable::coefficient_uncached(
+    const int j1,
+    const int m1,
+    const int j2,
+    const int m2,
+    const int j,
+    const int m)
 {
     if (!allowed(j1, m1, j2, m2, j, m))
     {
@@ -95,17 +94,15 @@ double ClebschGordanTable::coefficient_uncached(const int j1,
     }
 
     const double delta = std::sqrt(
-        factorial((j1 + j2 - j) / 2) * factorial((j1 - j2 + j) / 2)
-        * factorial((-j1 + j2 + j) / 2) / factorial((j1 + j2 + j) / 2 + 1));
+        factorial((j1 + j2 - j) / 2) * factorial((j1 - j2 + j) / 2) * factorial((-j1 + j2 + j) / 2) /
+        factorial((j1 + j2 + j) / 2 + 1));
     const double prefactor = std::sqrt(
-        (j + 1.0) * factorial(half_sum(j1, m1)) * factorial(half_sum(j1, -m1))
-        * factorial(half_sum(j2, m2)) * factorial(half_sum(j2, -m2))
-        * factorial(half_sum(j, m)) * factorial(half_sum(j, -m)));
+        (j + 1.0) * factorial(half_sum(j1, m1)) * factorial(half_sum(j1, -m1)) * factorial(half_sum(j2, m2)) *
+        factorial(half_sum(j2, -m2)) * factorial(half_sum(j, m)) * factorial(half_sum(j, -m)));
 
     double sum = 0.0;
     const int zmin = std::max(0, std::max(-(j - j2 + m1) / 2, -(j - j1 - m2) / 2));
-    const int zmax = std::min((j1 + j2 - j) / 2,
-                              std::min((j1 - m1) / 2, (j2 + m2) / 2));
+    const int zmax = std::min((j1 + j2 - j) / 2, std::min((j1 - m1) / 2, (j2 + m2) / 2));
     for (int z = zmin; z <= zmax; ++z)
     {
         const int a = z;
@@ -118,34 +115,37 @@ double ClebschGordanTable::coefficient_uncached(const int j1,
         {
             continue;
         }
-        const double denominator = factorial(a) * factorial(b) * factorial(c) * factorial(d) * factorial(e) * factorial(f);
+        const double denominator =
+            factorial(a) * factorial(b) * factorial(c) * factorial(d) * factorial(e) * factorial(f);
         sum += (z % 2 == 0 ? 1.0 : -1.0) / denominator;
     }
 
     return delta * prefactor * sum;
 }
 
-const ClebschGordanTable::Entry* ClebschGordanTable::find(const int j1,
-                                                          const int m1,
-                                                          const int j2,
-                                                          const int m2,
-                                                          const int j,
-                                                          const int m) const
+const ClebschGordanTable::Entry *ClebschGordanTable::find(
+    const int j1,
+    const int m1,
+    const int j2,
+    const int m2,
+    const int j,
+    const int m) const
 {
     const std::tuple<int, int, int, int, int, int> key(j1, m1, j2, m2, j, m);
-    const std::map<std::tuple<int, int, int, int, int, int>, std::size_t>::const_iterator found
-        = entry_indices_.find(key);
+    const std::map<std::tuple<int, int, int, int, int, int>, std::size_t>::const_iterator found =
+        entry_indices_.find(key);
     return found == entry_indices_.end() ? nullptr : &entries_[found->second];
 }
 
-double ClebschGordanTable::coefficient(const int j1,
-                                       const int m1,
-                                       const int j2,
-                                       const int m2,
-                                       const int j,
-                                       const int m) const
+double ClebschGordanTable::coefficient(
+    const int j1,
+    const int m1,
+    const int j2,
+    const int m2,
+    const int j,
+    const int m) const
 {
-    const Entry* entry = find(j1, m1, j2, m2, j, m);
+    const Entry *entry = find(j1, m1, j2, m2, j, m);
     return entry == nullptr ? 0.0 : entry->value;
 }
 

@@ -38,7 +38,7 @@ TEST_F(ParameterHelpTest, Initialization) {
 
 // Test: Get metadata for known parameter
 TEST_F(ParameterHelpTest, GetMetadataKnownParameter) {
-    auto meta = ModuleIO::ParameterHelp::get_metadata("ecutwfc");
+    ModuleIO::ParameterMetadata meta = ModuleIO::ParameterHelp::get_metadata("ecutwfc");
     ASSERT_FALSE(meta.name.empty());
     EXPECT_EQ(meta.name, "ecutwfc");
     EXPECT_EQ(meta.type, "Real");
@@ -49,7 +49,7 @@ TEST_F(ParameterHelpTest, GetMetadataKnownParameter) {
 
 // Test: Get metadata for unknown parameter
 TEST_F(ParameterHelpTest, GetMetadataUnknownParameter) {
-    auto meta = ModuleIO::ParameterHelp::get_metadata("nonexistent_parameter_xyz");
+    ModuleIO::ParameterMetadata meta = ModuleIO::ParameterHelp::get_metadata("nonexistent_parameter_xyz");
     EXPECT_TRUE(meta.name.empty());
 }
 
@@ -79,14 +79,14 @@ TEST_F(ParameterHelpTest, ShowParameterHelpUnknown) {
 
 // Test: Search for parameters (exact match)
 TEST_F(ParameterHelpTest, SearchParametersExact) {
-    auto results = ModuleIO::ParameterHelp::search_parameters("ecutwfc");
+    std::vector<std::string> results = ModuleIO::ParameterHelp::search_parameters("ecutwfc");
     ASSERT_EQ(results.size(), 1);
     EXPECT_EQ(results[0], "ecutwfc");
 }
 
 // Test: Search for parameters (partial match)
 TEST_F(ParameterHelpTest, SearchParametersPartial) {
-    auto results = ModuleIO::ParameterHelp::search_parameters("ecut");
+    std::vector<std::string> results = ModuleIO::ParameterHelp::search_parameters("ecut");
     EXPECT_GT(results.size(), 1); // Should find multiple matches like ecutwfc, ecutrho, etc.
 
     // Check that results are sorted
@@ -97,9 +97,9 @@ TEST_F(ParameterHelpTest, SearchParametersPartial) {
 
 // Test: Search for parameters (case insensitive)
 TEST_F(ParameterHelpTest, SearchParametersCaseInsensitive) {
-    auto results_lower = ModuleIO::ParameterHelp::search_parameters("ecutwfc");
-    auto results_upper = ModuleIO::ParameterHelp::search_parameters("ECUTWFC");
-    auto results_mixed = ModuleIO::ParameterHelp::search_parameters("EcUtWfC");
+    std::vector<std::string> results_lower = ModuleIO::ParameterHelp::search_parameters("ecutwfc");
+    std::vector<std::string> results_upper = ModuleIO::ParameterHelp::search_parameters("ECUTWFC");
+    std::vector<std::string> results_mixed = ModuleIO::ParameterHelp::search_parameters("EcUtWfC");
 
     EXPECT_EQ(results_lower.size(), results_upper.size());
     EXPECT_EQ(results_lower.size(), results_mixed.size());
@@ -109,7 +109,7 @@ TEST_F(ParameterHelpTest, SearchParametersCaseInsensitive) {
 
 // Test: Search for parameters (no matches)
 TEST_F(ParameterHelpTest, SearchParametersNoMatch) {
-    auto results = ModuleIO::ParameterHelp::search_parameters("xyzabc123notfound");
+    std::vector<std::string> results = ModuleIO::ParameterHelp::search_parameters("xyzabc123notfound");
     EXPECT_EQ(results.size(), 0);
 }
 
@@ -138,8 +138,8 @@ TEST_F(ParameterHelpTest, CommonParametersExist) {
         "scf_thr", "pseudo_dir", "nspin", "nbands"
     };
 
-    for (const auto& param : common_params) {
-        auto meta = ModuleIO::ParameterHelp::get_metadata(param);
+    for (const std::string& param : common_params) {
+        ModuleIO::ParameterMetadata meta = ModuleIO::ParameterHelp::get_metadata(param);
         EXPECT_FALSE(meta.name.empty()) << "Parameter " << param << " should exist";
         if (!meta.name.empty()) {
             EXPECT_EQ(meta.name, param);
@@ -149,7 +149,7 @@ TEST_F(ParameterHelpTest, CommonParametersExist) {
 
 // Test: Verify metadata fields are populated
 TEST_F(ParameterHelpTest, MetadataFieldsPopulated) {
-    auto meta = ModuleIO::ParameterHelp::get_metadata("symmetry_prec");
+    ModuleIO::ParameterMetadata meta = ModuleIO::ParameterHelp::get_metadata("symmetry_prec");
     ASSERT_FALSE(meta.name.empty());
 
     EXPECT_FALSE(meta.name.empty());
@@ -165,9 +165,9 @@ TEST_F(ParameterHelpTest, MetadataFieldsPopulated) {
 // Test: Case-insensitive parameter lookup
 TEST_F(ParameterHelpTest, CaseInsensitiveLookup) {
     // Test with different capitalizations
-    auto meta_lower = ModuleIO::ParameterHelp::get_metadata("ecutwfc");
-    auto meta_upper = ModuleIO::ParameterHelp::get_metadata("ECUTWFC");
-    auto meta_mixed = ModuleIO::ParameterHelp::get_metadata("EcUtWfC");
+    ModuleIO::ParameterMetadata meta_lower = ModuleIO::ParameterHelp::get_metadata("ecutwfc");
+    ModuleIO::ParameterMetadata meta_upper = ModuleIO::ParameterHelp::get_metadata("ECUTWFC");
+    ModuleIO::ParameterMetadata meta_mixed = ModuleIO::ParameterHelp::get_metadata("EcUtWfC");
 
     ASSERT_FALSE(meta_lower.name.empty());
     ASSERT_FALSE(meta_upper.name.empty());
@@ -181,7 +181,7 @@ TEST_F(ParameterHelpTest, CaseInsensitiveLookup) {
 // Test: Fuzzy matching - single character typo
 TEST_F(ParameterHelpTest, FuzzyMatchingSingleCharTypo) {
     // Missing 'c' at the end
-    auto results = ModuleIO::ParameterHelp::find_similar_parameters("ecutwf", 5, 3);
+    std::vector<std::string> results = ModuleIO::ParameterHelp::find_similar_parameters("ecutwf", 5, 3);
     EXPECT_GT(results.size(), 0);
     EXPECT_EQ(results[0], "ecutwfc"); // Should be the closest match
 }
@@ -189,18 +189,18 @@ TEST_F(ParameterHelpTest, FuzzyMatchingSingleCharTypo) {
 // Test: Fuzzy matching - extra character
 TEST_F(ParameterHelpTest, FuzzyMatchingExtraChar) {
     // Extra 's' at the end
-    auto results = ModuleIO::ParameterHelp::find_similar_parameters("exx_hybrid_steps", 5, 3);
+    std::vector<std::string> results = ModuleIO::ParameterHelp::find_similar_parameters("exx_hybrid_steps", 5, 3);
     ASSERT_GT(results.size(), 0);
     EXPECT_EQ(results[0], "exx_hybrid_step");
 }
 
 // Test: Fuzzy matching - swapped characters
 TEST_F(ParameterHelpTest, FuzzyMatchingSwappedChars) {
-    auto results = ModuleIO::ParameterHelp::find_similar_parameters("scf_htr", 5, 3);
+    std::vector<std::string> results = ModuleIO::ParameterHelp::find_similar_parameters("scf_htr", 5, 3);
     EXPECT_GT(results.size(), 0);
     // scf_thr should be in the results
     bool found = false;
-    for (const auto& r : results) {
+    for (const std::string& r : results) {
         if (r == "scf_thr") {
             found = true;
             break;
@@ -211,9 +211,9 @@ TEST_F(ParameterHelpTest, FuzzyMatchingSwappedChars) {
 
 // Test: Fuzzy matching - case insensitive
 TEST_F(ParameterHelpTest, FuzzyMatchingCaseInsensitive) {
-    auto results_lower = ModuleIO::ParameterHelp::find_similar_parameters("ecutwf", 5, 3);
-    auto results_upper = ModuleIO::ParameterHelp::find_similar_parameters("ECUTWF", 5, 3);
-    auto results_mixed = ModuleIO::ParameterHelp::find_similar_parameters("EcUtWf", 5, 3);
+    std::vector<std::string> results_lower = ModuleIO::ParameterHelp::find_similar_parameters("ecutwf", 5, 3);
+    std::vector<std::string> results_upper = ModuleIO::ParameterHelp::find_similar_parameters("ECUTWF", 5, 3);
+    std::vector<std::string> results_mixed = ModuleIO::ParameterHelp::find_similar_parameters("EcUtWf", 5, 3);
 
     EXPECT_EQ(results_lower.size(), results_upper.size());
     EXPECT_EQ(results_lower.size(), results_mixed.size());
@@ -223,7 +223,7 @@ TEST_F(ParameterHelpTest, FuzzyMatchingCaseInsensitive) {
 
 // Test: Fuzzy matching - multiple suggestions
 TEST_F(ParameterHelpTest, FuzzyMatchingMultipleSuggestions) {
-    auto results = ModuleIO::ParameterHelp::find_similar_parameters("relax_met", 5, 3);
+    std::vector<std::string> results = ModuleIO::ParameterHelp::find_similar_parameters("relax_met", 5, 3);
     EXPECT_GT(results.size(), 1); // Should find multiple matches
     // Results should be sorted by distance (closest first)
     // "relax_met" to "relax_method": distance 3 (insert h, o, d)
@@ -232,25 +232,25 @@ TEST_F(ParameterHelpTest, FuzzyMatchingMultipleSuggestions) {
 
 // Test: Fuzzy matching - no close matches
 TEST_F(ParameterHelpTest, FuzzyMatchingNoCloseMatches) {
-    auto results = ModuleIO::ParameterHelp::find_similar_parameters("completely_wrong_parameter_xyz", 5, 3);
+    std::vector<std::string> results = ModuleIO::ParameterHelp::find_similar_parameters("completely_wrong_parameter_xyz", 5, 3);
     EXPECT_EQ(results.size(), 0); // Should find nothing within distance 3
 }
 
 // Test: Fuzzy matching - max suggestions limit
 TEST_F(ParameterHelpTest, FuzzyMatchingMaxSuggestions) {
     // Use a parameter that has many similar matches
-    auto results = ModuleIO::ParameterHelp::find_similar_parameters("md", 3, 2);
+    std::vector<std::string> results = ModuleIO::ParameterHelp::find_similar_parameters("md", 3, 2);
     EXPECT_LE(results.size(), 3); // Should not exceed max_suggestions
 }
 
 // Test: Fuzzy matching - max distance limit
 TEST_F(ParameterHelpTest, FuzzyMatchingMaxDistance) {
     // With max_distance=1, should only find very close matches
-    auto results = ModuleIO::ParameterHelp::find_similar_parameters("ecutwf", 5, 1);
+    std::vector<std::string> results = ModuleIO::ParameterHelp::find_similar_parameters("ecutwf", 5, 1);
     EXPECT_GT(results.size(), 0);
 
     // With max_distance=0, should find nothing (exact match excluded)
-    auto results_zero = ModuleIO::ParameterHelp::find_similar_parameters("ecutwfc", 5, 0);
+    std::vector<std::string> results_zero = ModuleIO::ParameterHelp::find_similar_parameters("ecutwfc", 5, 0);
     EXPECT_EQ(results_zero.size(), 0);
 }
 
@@ -337,7 +337,7 @@ TEST_F(ParameterHelpTest, SymmetryListFormatting) {
 
 // Test: Description content is preserved (not truncated)
 TEST_F(ParameterHelpTest, DescriptionContentPreserved) {
-    auto meta = ModuleIO::ParameterHelp::get_metadata("calculation");
+    ModuleIO::ParameterMetadata meta = ModuleIO::ParameterHelp::get_metadata("calculation");
     ASSERT_FALSE(meta.name.empty());
 
     // The calculation parameter should mention scf, relax, md, etc.

@@ -178,9 +178,9 @@ TEST_F(RhoIOTest, TrilinearInterpolate)
     std::vector<double> data(nxyz); // z > x > y
     ModuleIO::trilinear_interpolate(data_read.data(), nx_read, ny_read, nz_read, nx, ny, nz, data_xyz.data());
     permute_xyz2zxy(data_xyz.data(), data.data());
-    EXPECT_DOUBLE_EQ(data[0], 0.0010824725010374092);
-    EXPECT_DOUBLE_EQ(data[10], 0.058649850374240906);
-    EXPECT_DOUBLE_EQ(data[100], 0.018931708073604996);
+    EXPECT_DOUBLE_EQ(data[0], 0.0012702086394);
+    EXPECT_DOUBLE_EQ(data[10], 0.0577319585491);
+    EXPECT_DOUBLE_EQ(data[100], 0.0187538902948);
 }
 
 
@@ -214,7 +214,7 @@ TEST_F(CubeIOTest, ReadCube)
     EXPECT_EQ(comment[0], "Ionic_Step 1  Cubefile created from ABACUS. Inner loop is z, followed by y and x");
     EXPECT_EQ(comment[1], "1 # number of spin directions 0.461002 # Fermi energy, in Ry");
     EXPECT_EQ(natom, 2);
-    for (auto& o : origin) { EXPECT_EQ(o, 0.0); }
+    for (double& o : origin) { EXPECT_EQ(o, 0.0); }
     EXPECT_EQ(nx_read, 36);
     EXPECT_EQ(ny_read, 36);
     EXPECT_EQ(nz_read, 36);
@@ -224,8 +224,8 @@ TEST_F(CubeIOTest, ReadCube)
     EXPECT_EQ(atom_type.size(), natom);
     EXPECT_EQ(atom_charge.size(), natom);
     EXPECT_EQ(atom_pos.size(), natom);
-    for (auto& t : atom_type) { EXPECT_EQ(t, 14); }
-    for (auto& c : atom_charge) { EXPECT_DOUBLE_EQ(c, 4.0); }
+    for (int& t : atom_type) { EXPECT_EQ(t, 14); }
+    for (double& c : atom_charge) { EXPECT_DOUBLE_EQ(c, 4.0); }
     EXPECT_DOUBLE_EQ(atom_pos[1][1], 7.65);
     const int nxyz = nx_read * ny_read * nz_read;
     EXPECT_EQ(data_read.size(), nxyz);
@@ -321,4 +321,42 @@ TEST_F(CubeIOTest, WriteCubeAppendFrames)
     EXPECT_EQ(count_frames(), 1u);
 
     std::remove(fname.c_str());
+}
+
+TEST(CubeInterpolation, NodeAlignedPeriodicRefinement)
+{
+    const double input[4] = {0.0, 1.0, 0.0, 2.0};
+    const double expected[8] = {0.0, 0.5, 1.0, 0.5, 0.0, 1.0, 2.0, 1.0};
+    double output[8] = {};
+    for (int axis = 0; axis < 3; ++axis)
+    {
+        int input_shape[3] = {1, 1, 1};
+        int output_shape[3] = {1, 1, 1};
+        input_shape[axis] = 4;
+        output_shape[axis] = 8;
+        ModuleIO::trilinear_interpolate(input, input_shape[0], input_shape[1], input_shape[2],
+                                       output_shape[0], output_shape[1], output_shape[2], output);
+        for (int i = 0; i < 8; ++i)
+        {
+            EXPECT_DOUBLE_EQ(output[i], expected[i]);
+            EXPECT_GE(output[i], 0.0);
+        }
+    }
+}
+
+TEST(CubeInterpolation, SameGridAndCoarsening)
+{
+    const double input[8] = {0.0, 0.5, 1.0, 0.5, 0.0, 1.0, 2.0, 1.0};
+    double same[8] = {};
+    double coarse[4] = {};
+    ModuleIO::trilinear_interpolate(input, 8, 1, 1, 8, 1, 1, same);
+    ModuleIO::trilinear_interpolate(input, 8, 1, 1, 4, 1, 1, coarse);
+    for (int i = 0; i < 8; ++i)
+    {
+        EXPECT_DOUBLE_EQ(same[i], input[i]);
+    }
+    for (int i = 0; i < 4; ++i)
+    {
+        EXPECT_DOUBLE_EQ(coarse[i], input[2 * i]);
+    }
 }

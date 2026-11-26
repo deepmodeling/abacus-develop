@@ -1,8 +1,8 @@
 #ifndef EXX_INFO_OPT_ABFS_H
 #define EXX_INFO_OPT_ABFS_H
 
-#include <vector>
 #include <string>
+#include <vector>
 
 struct Exx_Info_Opt_ABFs
 {
