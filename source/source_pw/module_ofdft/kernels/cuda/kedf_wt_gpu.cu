@@ -138,8 +138,8 @@ void KEDF_WT::multi_kernel_gpu(
     const int blocks_g = std::min((npw  + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK,  1024);
 
     // d_result_ is double* but aliased as cuFFT complex buffer.
-    auto* d_fft = reinterpret_cast<double2*>(d_result_);
-    auto* d_filtered = reinterpret_cast<double2*>(d_rho_);
+    double2* d_fft = reinterpret_cast<double2*>(d_result_);
+    double2* d_filtered = reinterpret_cast<double2*>(d_rho_);
 
     for (int is = 0; is < nspin; ++is) {
         // Step 1: Copy input density H→D

@@ -78,7 +78,7 @@ double SphericalBessel(int l, double x) {
 /// @return function value on realspace grid
 std::vector<double> CalculateSphericalBessel(int l, double q, const std::vector<double>& r) {
     std::vector<double> bessel;
-    for (const auto& radius : r) {
+    for (const double& radius : r) {
         double x = q * radius;
         double besselValue = SphericalBessel(l, x);
         bessel.push_back(besselValue);
@@ -139,7 +139,7 @@ std::vector<double> GetSphericalBesselZeros(int order, int number) {
 std::vector<double> GetqList(int order, int number, double rcut) {
     std::vector<double> qList;
     std::vector<double> zerosList = GetSphericalBesselZeros(order, number);
-    for (const auto& zero : zerosList) {
+    for (const double& zero : zerosList) {
         qList.push_back(zero / rcut);
     }
     return qList;

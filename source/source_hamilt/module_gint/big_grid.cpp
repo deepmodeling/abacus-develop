@@ -13,7 +13,7 @@ void BigGrid::add_atom(const GintAtom *atom) { atoms_.push_back(atom); }
 int BigGrid::get_phi_len() const
 {
     int len = 0;
-    for (const auto &atom : atoms_)
+    for (const ModuleGint::GintAtom* const& atom : atoms_)
     {
         len += atom->get_nw();
     }
@@ -51,7 +51,7 @@ void BigGrid::set_mgrids_coord(std::vector<Vec3d> &coord) const
 
 void BigGrid::set_mgrids_local_idx(std::vector<int> &mgrids_idx) const
 {
-    auto index_3d = localcell_info_->bgrid_idx_1Dto3D(idx_);
+    Vec3i index_3d = localcell_info_->bgrid_idx_1Dto3D(idx_);
     Vec3i startidx(
         index_3d.x * biggrid_info_->get_nmx(), index_3d.y * biggrid_info_->get_nmy(),
         index_3d.z * biggrid_info_->get_nmz());
@@ -100,7 +100,7 @@ bool BigGrid::is_atom_on_bgrid(const GintAtom *atom) const
 {
     std::vector<Vec3d> coords;
     this->set_atom_relative_coords(atom, coords);
-    for (const auto &dist : coords)
+    for (const ModuleBase::Vector3<double>& dist : coords)
     {
         if (dist.norm() <= atom->get_rcut())
         {

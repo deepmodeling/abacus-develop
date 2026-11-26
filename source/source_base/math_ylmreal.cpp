@@ -467,7 +467,7 @@ void YlmReal::Ylm_Real
             for (int i=0;i<ng;i++)
             {
                 p(0,1,i) = cost[i];
-                auto x1 = 1.0 - cost[i] * cost[i];
+                double x1 = 1.0 - cost[i] * cost[i];
                 x1 = std::max(0.0, x1);
                 p(1,1,i) = -sqrt(x1);
             }
@@ -495,7 +495,7 @@ void YlmReal::Ylm_Real
             for (int i=0;i<ng;i++)
             {
                 p(l1, l, i) = cost[i] * l3 * p(l1, l1, i);
-                auto x2 = 1.0 - cost[i] * cost[i];
+                double x2 = 1.0 - cost[i] * cost[i];
                 x2 = std::max(0.0, x2);
                 p(l, l, i) = Semi_Fact(l3) * pow(x2, static_cast<double>(l) / 2.0) ;//mohan modify 2007-10-13
                 if (l%2 == 1)

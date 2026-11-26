@@ -12,6 +12,7 @@ read_file_dir     ./
 ecutwfc           20
 scf_thr           1e-8
 scf_nmax          100
+pw_diag_nmax      30
 
 init_chg          file
 out_band          1
