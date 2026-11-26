@@ -29,7 +29,7 @@ class InputTest : public testing::Test
         const std::string& label,
         std::vector<std::pair<std::string, ModuleIO::Input_Item>>& bcastfuncs)
     {
-        auto it = std::find_if(
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = std::find_if(
             bcastfuncs.begin(),
             bcastfuncs.end(),
             [&label](const std::pair<std::string, ModuleIO::Input_Item>& item) { return item.first == label; });

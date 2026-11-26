@@ -69,7 +69,7 @@ void TD_info::update_field()
     // update hybrid gauge phase
     if (field_manager_.gauge() == 2)
     {
-        for (const auto& phase_pair: phase_hybrid)
+        for (const std::pair<const ModuleBase::Vector3<int>, std::complex<double>>& phase_pair: phase_hybrid)
         {
             const ModuleBase::Vector3<int>& r_index = phase_pair.first;
             ModuleBase::Vector3<double> dR = double(r_index.x) * a1 + double(r_index.y) * a2 + double(r_index.z) * a3;
@@ -189,7 +189,7 @@ void TD_info::calculate_grad_overlap(const UnitCell& ucell,
         for (int iR = 0; iR < tmp.get_R_size(); ++iR)
         {
             const ModuleBase::Vector3<int> R_index = tmp.get_R_index(iR);
-            auto dtau = ucell.cal_dtau(iat1, iat2, R_index);
+            ModuleBase::Vector3<double> dtau = ucell.cal_dtau(iat1, iat2, R_index);
 
             double* p_data[3] = {nullptr, nullptr, nullptr};
             for (int i = 0; i < 3; i++)

@@ -99,7 +99,7 @@ void warn_source_configuration(const Input_para& inp, const std::string& readin_
         {"exx_erfc_alpha", inp.exx_erfc_alpha},
         {"exx_erfc_omega", inp.exx_erfc_omega},
         {"exx_fock_alpha", inp.exx_fock_alpha}};
-    for (const auto& term : terms)
+    for (const std::pair<std::string, std::vector<std::string>>& term : terms)
     {
         std::ostringstream value;
         for (const std::string& number : term.second)
@@ -279,7 +279,7 @@ void prepare_exx_nscf(const Input_para& inp,
     {
         const std::string first_filename = resolve_wfc(0, first_index, spin_mult);
         std::ifstream first(first_filename.c_str(), std::ios::binary);
-        const auto header = read_exx_source_header(first);
+        const ExxSourceHeader header = read_exx_source_header(first);
         const int nks = header.nks;
         if (nks % spin_mult != 0)
         {
@@ -305,13 +305,13 @@ void prepare_exx_nscf(const Input_para& inp,
         {
             const std::string filename = resolve_wfc(iq, source_points->ik2iktot, nks);
             std::ifstream in(filename, std::ios::binary);
-            const auto metadata = read_exx_source_header(in);
+            const ExxSourceHeader metadata = read_exx_source_header(in);
             if (metadata.ecutwfc != inp.ecutwfc)
             {
                 throw std::runtime_error("EXX source wavefunction cutoff differs from the current basis");
             }
             headers.push_back(metadata);
-            auto& q = source_points->kvec_c[iq];
+            ModuleBase::Vector3<double>& q = source_points->kvec_c[iq];
             q.x = metadata.kvec_c[0];
             q.y = metadata.kvec_c[1];
             q.z = metadata.kvec_c[2];

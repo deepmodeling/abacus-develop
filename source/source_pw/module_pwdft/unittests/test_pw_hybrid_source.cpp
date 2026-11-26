@@ -18,7 +18,7 @@ std::vector<pw::ExxSourceHeader> source_headers(int nspin)
     std::vector<pw::ExxSourceHeader> headers(nks);
     for (int iq = 0; iq < nks; ++iq)
     {
-        auto& header = headers[iq];
+        pw::ExxSourceHeader& header = headers[iq];
         header.ik = iq + 1;
         header.nks = nks;
         header.npw = 100;
@@ -37,7 +37,7 @@ std::string eig_occ(int nspin)
         << " Electronic state energy (eV) and occupations\n Spin number " << nspin << '\n';
     for (int iq = 0; iq < headers.size(); ++iq)
     {
-        const auto& header = headers[iq];
+        const pw::ExxSourceHeader& header = headers[iq];
         out << " spin=" << iq / 2 + 1 << " k-point=" << iq % 2 + 1
             << "/2 Cartesian=" << std::setprecision(8) << header.kvec_c[0]
             << " 0 0 (100 plane wave)\n";

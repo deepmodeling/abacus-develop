@@ -300,7 +300,7 @@ void LCAO_domain::init_chg_hr(
         LCAO_domain::init_hr_from_file<TR>(hrfile_up, hamilt_lcao->getHR(), ucell, pv);
 
         // switch hR data pointer to spin-down half, then read hrs2
-        auto& hRS2 = hamilt_lcao->getHRS2();
+        std::vector<TR>& hRS2 = hamilt_lcao->getHRS2();
         hamilt_lcao->getHR()->allocate(hRS2.data() + hRS2.size() / 2, 0);
         const std::string hrfile_down = readin_dir + "/hrs2_nao.csr";
         LCAO_domain::init_hr_from_file<TR>(hrfile_down, hamilt_lcao->getHR(), ucell, pv);

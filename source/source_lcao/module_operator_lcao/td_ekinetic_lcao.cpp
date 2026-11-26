@@ -81,7 +81,7 @@ void TDEkinetic<OperatorLCAO<TK, TR>>::calculate_HR()
 #endif
     for (int iat1 = 0; iat1 < this->ucell->nat; iat1++)
     {
-        auto tau1 = ucell->get_tau(iat1);
+        ModuleBase::Vector3<double> tau1 = ucell->get_tau(iat1);
         int T1, I1;
         ucell->iat2iait(iat1, &I1, &T1);
         AdjacentAtomInfo& adjs = this->adjs_all[iat1];

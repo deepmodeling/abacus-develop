@@ -242,7 +242,7 @@ void HSolverLCAO<T>::parakSolve(HSMatrix<T>& hs,
         /// global index of k point
         int ik_global = ik + k2d.get_pKpoints()->startk_pool[k2d.get_my_pool()];
         const int pool_local_rows = k2d.get_p2D_pool()->nrloc();
-        auto psi_pool = psi::Psi<T>(1, ncol_bands_pool, pool_local_rows, pool_local_rows, true);
+        psi::Psi<T> psi_pool = psi::Psi<T>(1, ncol_bands_pool, pool_local_rows, pool_local_rows, true);
         ModuleBase::Memory::record("HSolverLCAO::psi_pool", nrow * ncol_bands_pool * sizeof(T));
         if (ik_global < psi.get_nk() && ik < k2d.get_pKpoints()->nks_pool[k2d.get_my_pool()])
         {

@@ -492,7 +492,7 @@ void write_dump_rows(
     {
         ModuleBase::WARNING_QUIT("MD_func::dump_info", "missing MD_dump atoms.");
     }
-    for (const auto &row : rows)
+    for (const std::pair<const std::int64_t, std::string>& row : rows)
     {
         output << row.second << "\n";
     }

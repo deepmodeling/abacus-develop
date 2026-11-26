@@ -26,11 +26,11 @@ struct veff_pw_op<FPTYPE, base_device::DEVICE_CPU>
 #pragma omp parallel for
 #endif
         for (int ir = 0; ir < size; ir++) {
-            auto sup = out[ir] * (in[0][ir] + in[3][ir])
+            std::complex<FPTYPE> sup = out[ir] * (in[0][ir] + in[3][ir])
                 + out1[ir]
                         * (in[1][ir]
                         - std::complex<FPTYPE>(0.0, 1.0) * in[2][ir]);
-            auto sdown = out1[ir] * (in[0][ir] - in[3][ir])
+            std::complex<FPTYPE> sdown = out1[ir] * (in[0][ir] - in[3][ir])
                     + out[ir]
                         * (in[1][ir]
                             + std::complex<FPTYPE>(0.0, 1.0) * in[2][ir]);

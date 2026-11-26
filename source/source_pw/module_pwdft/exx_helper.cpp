@@ -99,7 +99,7 @@ bool Exx_Helper<T, Device>::iter_finish(void* p_elec, Charge* p_charge, void* ps
                     this->set_psi(psi);
                 }
 
-                auto duration = std::chrono::high_resolution_clock::now() - start;
+                std::chrono::high_resolution_clock::duration duration = std::chrono::high_resolution_clock::now() - start;
                 std::cout << " Setting Psi for EXX PW Inner Loop took "
                           << std::chrono::duration_cast<std::chrono::milliseconds>(duration).count() / 1000.0 << "s"
                           << std::endl;

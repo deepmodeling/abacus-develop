@@ -131,7 +131,7 @@ void ESolver_GetS::runner(BaseCell &basecell, const int istep)
                 ucell, gd, &this->pv, *basis_index_, this->pv.para_2d(), this->kv, *(two_center_bundle_.overlap_orb),
                 orb_.cutoffs());
             hamilt::Hamilt<std::complex<double>>* hamilt_ptr = static_cast<hamilt::Hamilt<std::complex<double>> *>(this->p_hamilt);
-            auto *ops_ptr =
+            hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>* ops_ptr =
                 dynamic_cast<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>> *>(hamilt_ptr->ops);
             ops_ptr->contributeHR();
         }

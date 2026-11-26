@@ -270,7 +270,7 @@ bool init_exx_info(Exx_Info &exx_info, const Input_para &inp)
                     "Non-default rpa_cut_coulomb/rpa_cut_radius requires a Fock Coulomb component; "
                     "Erfc-only configurations such as default HSE are unsupported.");
             }
-            for (auto &cut_family : exx_info.info_ri.coulomb_param)
+            for (std::pair<const Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string, std::string>>>& cut_family : exx_info.info_ri.coulomb_param)
             {
                 if (cut_family.first != Conv_Coulomb_Pot_K::Coulomb_Type::Fock)
                 {

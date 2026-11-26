@@ -40,7 +40,7 @@ template <typename T>
 T sum_2d(const std::vector<ModuleBase::Vector3<T>>& array)
 {
     ModuleBase::Vector3<T> sum;
-    for (const auto& element: array)
+    for (const ModuleBase::Vector3<T>& element: array)
     {
             sum += element;
     }

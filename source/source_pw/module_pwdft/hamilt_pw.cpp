@@ -382,7 +382,7 @@ void HamiltPW<T, Device>::sPsi(const T* psi_in, // psi
 template <typename T, typename Device>
 void HamiltPW<T, Device>::set_exx_helper(Exx_Helper<T, Device>& exx_helper)
 {
-    auto op = this->ops;
+    Operator<T, Device>* op = this->ops;
     while (op != nullptr)
     {
         if (op->get_cal_type() == calculation_type::pw_exx)

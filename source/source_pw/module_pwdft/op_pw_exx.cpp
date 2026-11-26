@@ -107,8 +107,8 @@ OperatorEXXPW<T, Device>::OperatorEXXPW(const int* isk_in,
     rhopw_dev->setuptransform();
     rhopw_dev->collect_local_pw();
 
-    auto param_fock = this->coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Fock];
-    for (auto param: param_fock)
+    std::vector<std::map<std::string, std::string>> param_fock = this->coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Fock];
+    for (std::map<std::string, std::string> param: param_fock)
     {
         fock_div.push_back(exx_divergence(Conv_Coulomb_Pot_K::Coulomb_Type::Fock,
                                           0.0,
@@ -119,8 +119,8 @@ OperatorEXXPW<T, Device>::OperatorEXXPW(const int* isk_in,
                                           gamma_extrapolation,
                                           ucell->omega));
     }
-    auto param_erfc = this->coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Erfc];
-    for (auto param: param_erfc)
+    std::vector<std::map<std::string, std::string>> param_erfc = this->coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Erfc];
+    for (std::map<std::string, std::string> param: param_erfc)
     {
         double correction = 0.0;
         if (param.at("singularity_correction") == "gygi")
@@ -183,7 +183,7 @@ OperatorEXXPW<T, Device>::~OperatorEXXPW()
     delmem_complex_op()(h_psi_ace);
     delmem_complex_op()(psi_h_psi_ace);
     delmem_complex_op()(L_ace);
-    for (auto &Xi_ace: Xi_ace_k)
+    for (T*& Xi_ace: Xi_ace_k)
     {
         delmem_complex_op()(Xi_ace);
     }
@@ -270,7 +270,7 @@ void OperatorEXXPW<T, Device>::set_source(std::unique_ptr<ModulePW::PW_Basis_K> 
     {
         for (std::size_t i = 0; i < screened->second.size(); ++i)
         {
-            const auto& param = screened->second[i];
+            const std::map<std::string, std::string>& param = screened->second[i];
             erfc_div[i] = 0.0;
             if (param.at("singularity_correction") == "gygi")
             {
@@ -308,7 +308,7 @@ void OperatorEXXPW<T, Device>::act_op(const int nbands,
     setmem_complex_op()(psi_nk_real, 0, wfcpw->nrxx);
     setmem_complex_op()(psi_mq_real, 0, wfcpw->nrxx);
 
-    auto q_points = get_q_points(this->ik);
+    std::vector<int> q_points = get_q_points(this->ik);
     int nk_fac = nspin_ == 2 ? 2 : 1;
     int nk = source_basis_->nks / nk_fac;
     const Real nqs = q_points.size();

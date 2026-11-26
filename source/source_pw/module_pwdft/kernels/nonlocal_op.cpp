@@ -83,8 +83,8 @@ struct nonlocal_pw_op<FPTYPE, base_device::DEVICE_CPU>
                         const std::int64_t becpind = static_cast<std::int64_t>(jj) * nkb + projector_offset + xx;
                         const std::int64_t spin_stride = static_cast<std::int64_t>(deeq_x) * deeq_y * deeq_z;
                         const std::int64_t deeq_index = ((static_cast<std::int64_t>(iat) + ii) * deeq_y + kk) * deeq_z + xx;
-                        auto& becp1 = becp[becpind];
-                        auto& becp2 = becp[becpind + nkb];
+                        const std::complex<FPTYPE>& becp1 = becp[becpind];
+                        const std::complex<FPTYPE>& becp2 = becp[becpind + nkb];
                         ps[psind] += deeq_nc[deeq_index] * becp1 + deeq_nc[spin_stride + deeq_index] * becp2;
                         ps[psind + 1] += deeq_nc[2 * spin_stride + deeq_index] * becp1 + deeq_nc[3 * spin_stride + deeq_index] * becp2;
                     } // end jj

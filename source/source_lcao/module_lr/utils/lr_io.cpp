@@ -633,7 +633,7 @@ TLRI<TVs> read_coulomb_mat_general_k(const std::string& in_dir, const TLRI<TCs>&
                 if (ifs.peek() == EOF) { break; }
                 int ik = ik_readin - 1;
                 if (Vq_tmp[ik].empty()) { Vq_tmp[ik].resize(nabf * nabf, 0.0); }
-                auto& Vq_tmp_k = Vq_tmp.at(ik);
+                std::vector<std::complex<double>>& Vq_tmp_k = Vq_tmp.at(ik);
                 for (int i = istart - 1;i < iend;++i)
                 {
                     for (int j = jstart - 1;j < jend;++j)
