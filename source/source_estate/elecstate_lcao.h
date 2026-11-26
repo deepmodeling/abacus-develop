@@ -29,8 +29,6 @@ class ElecStateLCAO : public ElecState
     static int out_wfc_lcao;
     static bool need_psi_grid;
 
-    double get_spin_constrain_energy() override;
-
     // use for pexsi
 
     /**
