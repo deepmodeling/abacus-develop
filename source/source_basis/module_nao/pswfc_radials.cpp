@@ -77,7 +77,7 @@ std::string PswfcRadials::steal_from_quotes(std::string word)
 {
     // first make sure there are even number of quotes in this word
     int num_quote = 0;
-    for (auto letter: word)
+    for (char letter: word)
     {
         if (letter == '\"')
             num_quote += 1;
@@ -105,7 +105,7 @@ std::string PswfcRadials::steal_from_quotes(std::ifstream& ifs, std::string word
     {
         std::string line;
         ifs >> line;
-        for (auto letter: line)
+        for (char letter: line)
         {
             if (letter == '\"')
                 num_quote += 1;
@@ -126,7 +126,7 @@ std::string PswfcRadials::read_keyword_value(std::ifstream& ifs, std::string wor
 {
     // count the number of quotes, only 1 or 2 cases are considered for pseudopotential reading
     int num_quote = 0;
-    for (auto letter: word)
+    for (char letter: word)
     {
         if (letter == '\"')
             num_quote += 1;

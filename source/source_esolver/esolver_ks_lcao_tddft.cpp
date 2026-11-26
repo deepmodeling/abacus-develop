@@ -170,7 +170,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::runner(BaseCell &basecell, const int ist
     if (use_td_moving_gauge && this->td_mg_ == nullptr)
     {
         this->td_mg_.reset(new module_rt::TD_MovingGauge());
-        auto *hamilt_lcao = dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, TR> *>(this->p_hamilt);
+        hamilt::HamiltLCAO<std::complex<double>, TR>* hamilt_lcao = dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, TR> *>(this->p_hamilt);
         const hamilt::HContainer<TR> *sR_template = hamilt_lcao->getSR();
         this->td_mg_->init_DR(
             sR_template, &ucell, *(this->basis_index_), this->pv.para_2d(), this->two_center_bundle_.overlap_orb.get());
@@ -386,7 +386,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::hamilt2rho_single(
     // Update the moving spatial gauge
     if (use_td_moving_gauge)
     {
-        auto *hamilt_lcao = dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, TR> *>(this->p_hamilt);
+        hamilt::HamiltLCAO<std::complex<double>, TR>* hamilt_lcao = dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, TR> *>(this->p_hamilt);
         const hamilt::HContainer<TR> *sR_template = hamilt_lcao->getSR();
         this->td_mg_->update_DR(
             sR_template, &ucell, *(this->basis_index_), this->pv.para_2d(), this->two_center_bundle_.overlap_orb.get());
@@ -652,7 +652,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::after_scf(UnitCell &ucell, const int ist
     const bool replay_restart = this->inp_->mdp.md_restart && !restart_done;
     if (!replay_restart)
     {
-        auto *hamilt_lcao = dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, TR> *>(this->p_hamilt);
+        hamilt::HamiltLCAO<std::complex<double>, TR>* hamilt_lcao = dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, TR> *>(this->p_hamilt);
         ModuleIO::ctrl_output_td<TR>(
             ucell, this->chr.rho_save, this->chr.rhopw, istep, this->psi, this->pelec, this->kv,
             this->two_center_bundle_.overlap_orb.get(), &this->pv, this->orb_, this->velocity_mat, this->gd,

@@ -160,7 +160,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
                 psi::Psi<std::complex<double>>* psi_t = static_cast<psi::Psi<std::complex<double>>*>(this->psi);
                 hamilt::Hamilt<std::complex<double>, base_device::DEVICE_CPU>* hamilt_t = static_cast<hamilt::Hamilt<std::complex<double>, base_device::DEVICE_CPU>*>(this->p_hamilt);
                 hamilt::HamiltHSOperator<std::complex<double>, base_device::DEVICE_CPU> op(hamilt_t, this->pw_wfc_);
-                auto* onsite_p = projectors::OnsiteProjector<double, base_device::DEVICE_CPU>::get_instance();
+                projectors::OnsiteProjector<double, base_device::DEVICE_CPU>* onsite_p = projectors::OnsiteProjector<double, base_device::DEVICE_CPU>::get_instance();
                 nbands = psi_t->get_nbands();
                 npol = psi_t->get_npol();
                 nkb = onsite_p->get_tot_nproj();

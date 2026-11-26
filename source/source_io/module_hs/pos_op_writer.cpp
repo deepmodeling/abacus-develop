@@ -96,7 +96,7 @@ void PosOpWriter::out_lat_r(const UnitCell& ucell,
         }
     }
 
-    for (auto& R_coor: all_R_coor)
+    for (const Abfs::Vector3_Order<int>& R_coor: all_R_coor)
     {
         std::map<size_t, std::map<size_t, double>> psi_r_psi_sparse[3];
 

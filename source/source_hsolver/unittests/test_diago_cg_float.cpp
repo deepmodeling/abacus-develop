@@ -99,7 +99,7 @@ class DiagoCGPrepare
     {
         // calculate eigenvalues by LAPACK;
         float *e_lapack = new float[npw];
-        auto ev = DIAGOTEST::hmatrix_f;
+        std::vector<std::complex<float>> ev = DIAGOTEST::hmatrix_f;
 
         if (mypnum == 0)
         {

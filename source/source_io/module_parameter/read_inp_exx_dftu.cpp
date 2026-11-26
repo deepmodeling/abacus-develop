@@ -567,7 +567,7 @@ Use the same scheme for consistent SCF and NSCF bands. A source configuration mi
                 if (scheme == "limits")
                 {
                     bool has_fock = false;
-                    for (const auto& alpha : para.input.exx_fock_alpha)
+                    for (const std::string& alpha : para.input.exx_fock_alpha)
                     {
                         has_fock = has_fock || std::stod(alpha) != 0.0;
                     }
@@ -726,7 +726,7 @@ void ReadInput::item_dftu()
         read_sync_int(input.dft_plus_u);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             bool all_minus1 = true;
-            for (auto& val: para.input.l_channel)
+            for (int& val: para.input.l_channel)
             {
                 if (val != -1)
                 {
@@ -805,7 +805,7 @@ void ReadInput::item_dftu()
                                          "orbital_corr should have the same "
                                          "number of elements as ntype");
             }
-            for (auto& val: para.input.l_channel)
+            for (const int& val: para.input.l_channel)
             {
                 if (val < -1 || val > 3)
                 {
@@ -845,7 +845,7 @@ void ReadInput::item_dftu()
                                          "hubbard_u should have the same "
                                          "number of elements as ntype");
             }
-            for (auto& value: para.sys.hubbard_u)
+            for (const double& value: para.sys.hubbard_u)
             {
                 if (value < -1.0e-3)
                 {
@@ -907,7 +907,7 @@ void ReadInput::item_dftu()
         };
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             bool all_minus1 = true;
-            for (auto& val: para.input.l_channel)
+            for (int& val: para.input.l_channel)
             {
                 if (val != -1)
                 {

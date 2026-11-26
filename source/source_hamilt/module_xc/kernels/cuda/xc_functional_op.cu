@@ -59,8 +59,8 @@ void xc_functional_grad_wfc_op<T, Device>::operator()(
     const T *rhog,
     T *porter)
 {
-    auto porter_ = reinterpret_cast<thrust::complex<Real> *>(porter);
-    auto rhog_ = reinterpret_cast<const thrust::complex<Real> *>(rhog);
+    thrust::complex<Real>* porter_ = reinterpret_cast<thrust::complex<Real> *>(porter);
+    const thrust::complex<Real>* rhog_ = reinterpret_cast<const thrust::complex<Real> *>(rhog);
     const int block = (npw + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
     xc_functional_grad_wfc<Real><<<block, THREADS_PER_BLOCK>>>(ik, pol, npw, npwx, tpiba, gcar, kvec_c, rhog_, porter_);
 
@@ -74,8 +74,8 @@ void xc_functional_grad_wfc_op<T, Device>::operator()(
     const T *porter,
     T *grad)
 {
-    auto grad_ = reinterpret_cast<thrust::complex<Real> *>(grad);
-    auto porter_ = reinterpret_cast<const thrust::complex<Real> *>(porter);
+    thrust::complex<Real>* grad_ = reinterpret_cast<thrust::complex<Real> *>(grad);
+    const thrust::complex<Real>* porter_ = reinterpret_cast<const thrust::complex<Real> *>(porter);
     const int block = (nrxx + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
     xc_functional_grad_wfc<<<block, THREADS_PER_BLOCK>>>(ipol, nrxx, porter_, grad_);
 

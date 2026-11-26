@@ -23,8 +23,8 @@ void Exx_Opt_Orb::generate_matrix(
 
     auto judge_orbs_empty = [](const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &orbs) -> bool
     {
-        for(const auto &orb_t : orbs) {
-            for(const auto &orb_tl : orb_t) {
+        for(const std::vector<std::vector<Numerical_Orbital_Lm>>& orb_t : orbs) {
+            for(const std::vector<Numerical_Orbital_Lm>& orb_tl : orb_t) {
                 if(orb_tl.size()>0) {
                     return false;
         }}}

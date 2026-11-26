@@ -72,14 +72,14 @@ namespace LR
     {
         ModuleBase::TITLE("PotGradXCLR", "cal_v_eff");
         ModuleBase::timer::start("PotGradXCLR", "cal_v_eff");
-        const auto& kxc = this->xc_kernel_components_;
+        const KernelXC& kxc = this->xc_kernel_components_;
 
         if (kxc.openshell)
         {
             throw std::domain_error("open shell (S2_updown) unfinished in "
                 + std::string(__FILE__) + " line " + std::to_string(__LINE__));
         }
-        const auto& g = kxc.gxc(this->triplet_);
+        const LR::KernelXC::GxcCoef& g = kxc.gxc(this->triplet_);
 
         // Branch on THIS kernel's own GGA-ness, not the ground state's: in a cross-functional
         // run (e.g. TDLDA@PBE) `XC_Functional::get_func_type()` reflects `dft_functional` (PBE,
@@ -179,7 +179,7 @@ namespace LR
         ModuleBase::TITLE("PotGradXCLR", "cal_v_eff_openshell");
         ModuleBase::timer::start("PotGradXCLR", "cal_v_eff_openshell");
         using namespace LR::libxc_idx;
-        const auto& kxc = this->xc_kernel_components_;
+        const KernelXC& kxc = this->xc_kernel_components_;
         assert(tau == 0 || tau == 1);
         const std::vector<double>& v2rs = kxc.v2rhosigma;
         const std::vector<double>& v2s2 = kxc.v2sigma2;
