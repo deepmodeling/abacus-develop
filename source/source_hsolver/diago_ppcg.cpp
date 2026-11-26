@@ -2057,10 +2057,10 @@ double DiagoPPCG<T, Device>::diag(
                 refine_stalled_residual(op, psi_in, eigenvalue_in, ethr_band, all_cols, refinement_band);
             if (final_refinement_window)
             {
-                // A rejected worst-pair step cannot improve if retried with
-                // identical inputs. Visit its retained neighbors, then allow
-                // a block sweep if the entire cycle fails to make progress.
-                if (accepted)
+                // After the worst-pair step fails, finish one neighbor sweep.
+                // Retrying that pair after each neighbor would spend two
+                // iterations per band and exhaust the reserved sweep budget.
+                if (accepted && refinement_band < 0)
                 {
                     final_refinement_band = -1;
                 }

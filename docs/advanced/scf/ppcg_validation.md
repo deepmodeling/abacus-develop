@@ -169,7 +169,12 @@ parallel to Sx, which disappears from the projected vector correction. Refinemen
 now falls back to an eigenvalue-only correction when the vector update fails,
 bounded by the existing roundoff margin. It leaves the state unchanged and accepts only a smaller actual residual
 without reordering. The focused test failed before this change and passes after
-it; the effect on L20 requires a fresh CI run.
+it. The L20 run at `8b50e767c` still had the same Fe failure. After a rejected
+worst-pair correction, retrying that pair between successful neighbor updates
+spent two iterations per neighbor and could not finish the retained-state sweep.
+The fallback now completes one uninterrupted neighbor sweep within the reserved
+budget. The total iteration limit and residual thresholds are unchanged; this
+scheduling correction requires fresh L20 evidence.
 
 The six original CPU fixtures and six original RTX 3090 CUDA fixtures passed
 **72/72 reference checks** with **zero PPCG nonconvergence warnings across both

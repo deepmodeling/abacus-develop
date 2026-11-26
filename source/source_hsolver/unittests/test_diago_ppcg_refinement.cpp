@@ -1,6 +1,7 @@
 #include "diago_ppcg_test_support.h"
 
 #include <algorithm>
+#include <cmath>
 #include <limits>
 
 namespace hsolver
@@ -47,7 +48,8 @@ class DiagoPPCGRefinementTest : public ::testing::Test
         }
         solver.compute_eigenpair_residual(values.data());
         const std::vector<T> original = vectors;
-        const double original_residual = std::abs((exact_value - values[0]) * overlap * vectors[0]);
+        const T original_residual_value = (exact_value - values[0]) * overlap * vectors[0];
+        const double original_residual = std::abs(original_residual_value);
         ASSERT_GT(original_residual, thresholds[0]);
         const std::vector<int> columns(1, 0);
         const bool accepted =
@@ -55,7 +57,8 @@ class DiagoPPCGRefinementTest : public ::testing::Test
         EXPECT_TRUE(accepted);
         EXPECT_EQ(vectors, original);
         EXPECT_DOUBLE_EQ(values[0], exact_value);
-        const double residual = std::abs((exact_value - values[0]) * overlap * vectors[0]);
+        const T residual_value = (exact_value - values[0]) * overlap * vectors[0];
+        const double residual = std::abs(residual_value);
         EXPECT_LT(residual, thresholds[0]);
     }
 
