@@ -858,14 +858,14 @@ void Sto_EleCond<FPTYPE, Device>::sKG(const int& smear_type,
 
         //------------------------  t loop  --------------------------
         std::cout << "ik=" << ik << ": ";
-        auto start = std::chrono::high_resolution_clock::now();
+        std::chrono::high_resolution_clock::time_point start = std::chrono::high_resolution_clock::now();
         const int print_step = ceil(20.0 / nbatch) * nbatch;
         for (int it = 1; it < nt; ++it)
         {
             // evaluate time cost
             if (it - 1 == print_step)
             {
-                auto end = std::chrono::high_resolution_clock::now();
+                std::chrono::high_resolution_clock::time_point end = std::chrono::high_resolution_clock::now();
                 std::chrono::duration<double> duration = end - start;
                 double timeTaken = duration.count();
                 std::cout << "(Time left " << timeTaken * (double(nt - 1) / print_step * (nk - ik) - 1) << " s) "

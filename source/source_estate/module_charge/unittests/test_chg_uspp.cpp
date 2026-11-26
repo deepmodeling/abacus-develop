@@ -48,7 +48,7 @@ TEST_F(ChgUsppTest, SplitDgridNormalNspin1)
     const int nspin = 1;
     const int npw_smooth = 3;
     const int npw_dense = 5;
-    auto data_d = make_dense(nspin, npw_dense);
+    std::vector<std::complex<double>> data_d = make_dense(nspin, npw_dense);
 
     std::vector<std::complex<double>> data_s(nspin * npw_smooth);
     std::vector<std::complex<double>> data_hf(nspin * (npw_dense - npw_smooth));
@@ -72,7 +72,7 @@ TEST_F(ChgUsppTest, SplitDgridNormalNspin2)
     const int nspin = 2;
     const int npw_smooth = 2;
     const int npw_dense = 4;
-    auto data_d = make_dense(nspin, npw_dense);
+    std::vector<std::complex<double>> data_d = make_dense(nspin, npw_dense);
 
     std::vector<std::complex<double>> data_s(nspin * npw_smooth);
     std::vector<std::complex<double>> data_hf(nspin * (npw_dense - npw_smooth));
@@ -100,7 +100,7 @@ TEST_F(ChgUsppTest, SplitDgridSmoothIsZero)
     const int nspin = 1;
     const int npw_smooth = 0;
     const int npw_dense = 3;
-    auto data_d = make_dense(nspin, npw_dense);
+    std::vector<std::complex<double>> data_d = make_dense(nspin, npw_dense);
 
     std::vector<std::complex<double>> data_s(0);
     std::vector<std::complex<double>> data_hf(nspin * npw_dense);
@@ -120,7 +120,7 @@ TEST_F(ChgUsppTest, SplitDgridDenseEqualsSmooth)
     const int nspin = 2;
     const int npw_smooth = 3;
     const int npw_dense = 3;
-    auto data_d = make_dense(nspin, npw_dense);
+    std::vector<std::complex<double>> data_d = make_dense(nspin, npw_dense);
 
     std::vector<std::complex<double>> data_s(nspin * npw_smooth);
     std::vector<std::complex<double>> data_hf(0);
@@ -139,7 +139,7 @@ TEST_F(ChgUsppTest, MergeDgridRoundTripNspin1)
     const int nspin = 1;
     const int npw_smooth = 3;
     const int npw_dense = 5;
-    auto data_d = make_dense(nspin, npw_dense);
+    std::vector<std::complex<double>> data_d = make_dense(nspin, npw_dense);
 
     std::vector<std::complex<double>> data_s(nspin * npw_smooth);
     std::vector<std::complex<double>> data_hf(nspin * (npw_dense - npw_smooth));
@@ -159,7 +159,7 @@ TEST_F(ChgUsppTest, MergeDgridRoundTripNspin2)
     const int nspin = 2;
     const int npw_smooth = 2;
     const int npw_dense = 5;
-    auto data_d = make_dense(nspin, npw_dense);
+    std::vector<std::complex<double>> data_d = make_dense(nspin, npw_dense);
 
     std::vector<std::complex<double>> data_s(nspin * npw_smooth);
     std::vector<std::complex<double>> data_hf(nspin * (npw_dense - npw_smooth));
@@ -190,7 +190,7 @@ TEST_F(ChgUsppTest, SplitDgridBadNspinAborts)
     const int nspin = 0;
     const int npw_smooth = 2;
     const int npw_dense = 4;
-    auto data_d = make_dense(1, npw_dense);
+    std::vector<std::complex<double>> data_d = make_dense(1, npw_dense);
     std::vector<std::complex<double>> data_s(npw_smooth);
     std::vector<std::complex<double>> data_hf(npw_dense - npw_smooth);
     EXPECT_DEATH(module_charge::split_dgrid(data_d.data(), data_s, data_hf, nspin, npw_smooth, npw_dense),
@@ -203,7 +203,7 @@ TEST_F(ChgUsppTest, SplitDgridBadNpwAborts)
     // npw_dense < npw_smooth is invalid
     const int npw_smooth = 5;
     const int npw_dense = 3;
-    auto data_d = make_dense(nspin, npw_dense);
+    std::vector<std::complex<double>> data_d = make_dense(nspin, npw_dense);
     std::vector<std::complex<double>> data_s(nspin * npw_smooth);
     std::vector<std::complex<double>> data_hf(nspin * (npw_smooth - npw_dense));
     EXPECT_DEATH(module_charge::split_dgrid(data_d.data(), data_s, data_hf, nspin, npw_smooth, npw_dense),
@@ -215,7 +215,7 @@ TEST_F(ChgUsppTest, SplitDgridSizeMismatchAborts)
     const int nspin = 1;
     const int npw_smooth = 2;
     const int npw_dense = 4;
-    auto data_d = make_dense(nspin, npw_dense);
+    std::vector<std::complex<double>> data_d = make_dense(nspin, npw_dense);
     // data_s is too small
     std::vector<std::complex<double>> data_s(1);
     std::vector<std::complex<double>> data_hf(npw_dense - npw_smooth);

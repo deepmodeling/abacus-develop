@@ -66,7 +66,7 @@ void cal_mi_pw(ScState& state,
     state.zero_Mi();
     if (PARAM.inp.device == "cpu")
     {
-        auto* onsite_p = projectors::OnsiteProjector<double, base_device::DEVICE_CPU>::get_instance();
+        projectors::OnsiteProjector<double, base_device::DEVICE_CPU>* onsite_p = projectors::OnsiteProjector<double, base_device::DEVICE_CPU>::get_instance();
         // Loop over k-points to calculate Mi of sum_{k,i,l,m}<Psi_{k,i}|alpha_{l,m}><alpha_{l,m}|Psi_{k,i}>
         std::complex<double>* psi_pointer = nullptr;
         psi::Psi<std::complex<double>, base_device::DEVICE_CPU>* psi_t = static_cast<psi::Psi<std::complex<double>, base_device::DEVICE_CPU>*>(psi);
@@ -302,7 +302,7 @@ void update_psi_charge_pw_cpu(ScState& state,
 
     psi::Psi<std::complex<double>>* psi_t = static_cast<psi::Psi<std::complex<double>>*>(psi);
     hamilt::Hamilt<std::complex<double>, base_device::DEVICE_CPU>* hamilt_t = static_cast<hamilt::Hamilt<std::complex<double>, base_device::DEVICE_CPU>*>(p_hamilt);
-    auto* onsite_p = projectors::OnsiteProjector<double, base_device::DEVICE_CPU>::get_instance();
+    projectors::OnsiteProjector<double, base_device::DEVICE_CPU>* onsite_p = projectors::OnsiteProjector<double, base_device::DEVICE_CPU>::get_instance();
 
     int nbands = psi_t->get_nbands();
     int npol = psi_t->get_npol();

@@ -57,7 +57,7 @@ void populate_atom_pairs(hamilt::HContainer<TR>* container,
 
     for (int iat1 = 0; iat1 < ucell->nat; iat1++)
     {
-        const auto tau1 = ucell->get_tau(iat1);
+        const ModuleBase::Vector3<double> tau1 = ucell->get_tau(iat1);
         int T1 = 0;
         int I1 = 0;
         ucell->iat2iait(iat1, &I1, &T1);

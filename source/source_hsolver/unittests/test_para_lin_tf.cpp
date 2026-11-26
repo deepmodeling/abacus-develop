@@ -14,15 +14,15 @@ void random_data(
     double &alpha,
     double &beta)
 {
-    for (auto &val : A_global)
+    for (double& val : A_global)
     {
         val = std::rand() / (RAND_MAX + 1.0);
     }
-    for (auto &val : B_global)
+    for (double& val : B_global)
     {
         val = std::rand() / (RAND_MAX + 1.0);
     }
-    for (auto &val : U_global)
+    for (double& val : U_global)
     {
         val = std::rand() / (RAND_MAX + 1.0);
     }
@@ -36,15 +36,15 @@ void random_data(
     std::complex<double> &alpha,
     std::complex<double> &beta)
 {
-    for (auto &val : A_global)
+    for (std::complex<double>& val : A_global)
     {
         val = std::complex<double>(std::rand() / (RAND_MAX + 1.0), std::rand() / (RAND_MAX + 1.0));
     }
-    for (auto &val : B_global)
+    for (std::complex<double>& val : B_global)
     {
         val = std::complex<double>(std::rand() / (RAND_MAX + 1.0), std::rand() / (RAND_MAX + 1.0));
     }
-    for (auto &val : U_global)
+    for (std::complex<double>& val : U_global)
     {
         val = std::complex<double>(std::rand() / (RAND_MAX + 1.0), std::rand() / (RAND_MAX + 1.0));
     }

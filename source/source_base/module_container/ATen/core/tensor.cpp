@@ -105,7 +105,7 @@ void Tensor::reshape(TensorShape shape) {
     int64_t num = 1;
     int auto_shape = 0, dim_count = -1, dim_idx = -1;
 
-    for (auto dim : shape.dims()) {
+    for (int64_t dim : shape.dims()) {
         dim_count++;
         if (dim < 1 && dim != -1) {
             throw std::invalid_argument("Invalid shape, dim of tensor must >= 1 or equal to -1(auto shape).");
@@ -321,7 +321,7 @@ Tensor Tensor::operator[](const int& index) const {
         // If the output shape is empty, we need to add a dimension of size 1
         output_shape.add_dim(1);
     }
-    auto data_ = reinterpret_cast<char*>(this->data()) + index * shape_.strides()[0] * SizeOfType(this->data_type_);
+    char* data_ = reinterpret_cast<char*>(this->data()) + index * shape_.strides()[0] * SizeOfType(this->data_type_);
     
     return TensorMap(data_, this->data_type_, this->device_, output_shape);
 }
@@ -336,7 +336,7 @@ std::ostream& operator<<(std::ostream& os, const Tensor& tensor) {
     const TensorShape& shape = tensor.shape();
 
     // Copy the data from device to host for output
-    auto * data_ = tensor.data();
+    void* data_ = tensor.data();
 #if __CUDA || __ROCM
     if (device_type != DeviceType::CpuDevice) {
         data_ = malloc(num_elements * Tensor::SizeOfType(data_type));
@@ -361,32 +361,32 @@ std::ostream& operator<<(std::ostream& os, const Tensor& tensor) {
     os << ", buffer=\narray(";
     switch (data_type) {
         case DataType::DT_FLOAT: {
-            const auto* data = static_cast<const float*>(data_);
+            const float* data = static_cast<const float*>(data_);
             _internal_output(os, data, shape, num_elements);
             break;
         }
         case DataType::DT_DOUBLE: {
-            const auto* data = static_cast<const double*>(data_);
+            const double* data = static_cast<const double*>(data_);
             _internal_output(os, data, shape, num_elements);
             break;
         }
         case DataType::DT_INT: {
-            const auto* data = static_cast<const int*>(data_);
+            const int* data = static_cast<const int*>(data_);
             _internal_output(os, data, shape, num_elements);
             break;
         }
         case DataType::DT_INT64: {
-            const auto* data = static_cast<const int64_t*>(data_);
+            const int64_t* data = static_cast<const int64_t*>(data_);
             _internal_output(os, data, shape, num_elements);
             break;
         }
         case DataType::DT_COMPLEX: {
-            const auto* data = static_cast<const std::complex<float>*>(data_);
+            const std::complex<float>* data = static_cast<const std::complex<float>*>(data_);
             _internal_output(os, data, shape, num_elements);
             break;
         }
         case DataType::DT_COMPLEX_DOUBLE: {
-            const auto* data = static_cast<const std::complex<double>*>(data_);
+            const std::complex<double>* data = static_cast<const std::complex<double>*>(data_);
             _internal_output(os, data, shape, num_elements);
             break;
         }

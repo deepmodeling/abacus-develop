@@ -58,7 +58,7 @@ std::vector<ModuleBase::matrix> evaluate_open_shell_force(
                 inputs.nbasis, inputs.nocc[is], nvirt_g[is], inputs.pmat.para_2d());
             std::vector<ct::Tensor> dmz_k = cal_dm_trans_pblas(Z_istate + off_x[is], paraX_g[is], c_spin[is],
                 inputs.pc, inputs.nbasis, inputs.nocc[is], nvirt_g[is], inputs.pmat.para_2d());
-            for (auto& d: dmz_k)
+            for (container::Tensor& d: dmz_k)
             {
                 LR_Util::matsym(d.template data<T>(), inputs.nbasis, inputs.pmat.para_2d());
             }

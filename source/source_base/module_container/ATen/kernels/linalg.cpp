@@ -19,7 +19,7 @@ static std::vector<T> ComputeStride(const std::vector<T>& shape) {
     std::vector<T> strides(ndims);
     T stride = 1;
 
-    auto it = shape.end(); // Start from the last element
+    typename std::vector<T>::const_iterator it = shape.end(); // Start from the last element
     for (int ii = ndims - 1; ii >= 0; ii--) {
         it--;
         strides[ii] = stride;
@@ -89,8 +89,8 @@ void transpose<T, Device, Conjugate>::operator()(
     REQUIRES_OK(p_shape.size() == q_shape.size(),
         "transpose: p and q must have the same number of dimensions");
     const int ndim = static_cast<int>(p_shape.size());
-    auto in_strides = ComputeStride(p_shape);
-    auto out_strides = ComputeStride(q_shape);
+    std::vector<int64_t> in_strides = ComputeStride(p_shape);
+    std::vector<int64_t> out_strides = ComputeStride(q_shape);
 
     int64_t num_elements = 1;
     for (int ii = 0; ii < ndim; ++ii) {
@@ -135,8 +135,8 @@ void stride<T, Device>::operator()(
     REQUIRES_OK(p_shape.size() == q_shape.size() ,
                 "stride: p and q must match the number of dimensions");
     const int ndim = static_cast<int>(p_shape.size());
-    auto in_strides = ComputeStride(p_shape);
-    auto out_strides = ComputeStride(q_shape);
+    std::vector<int64_t> in_strides = ComputeStride(p_shape);
+    std::vector<int64_t> out_strides = ComputeStride(q_shape);
 
     int64_t num_elements = 1;
     for (int ii = 0; ii < ndim; ++ii) {
@@ -176,8 +176,8 @@ void inflate<T, Device>::operator()(
     REQUIRES_OK(p_shape.size() == q_shape.size(),
                 "transpose: p and q must have the same number of dimensions");
     const int ndim = static_cast<int>(p_shape.size());
-    auto in_strides = ComputeStride(p_shape);
-    auto out_strides = ComputeStride(q_shape);
+    std::vector<int64_t> in_strides = ComputeStride(p_shape);
+    std::vector<int64_t> out_strides = ComputeStride(q_shape);
 
     int64_t num_elements = 1;
     for (int ii = 0; ii < ndim; ++ii) {

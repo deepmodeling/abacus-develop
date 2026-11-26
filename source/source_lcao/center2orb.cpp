@@ -37,7 +37,7 @@ void Center2_Orb::init_Table_Spherical_Bessel(const int Lmax_used,
 {
     ModuleBase::TITLE("Center2_Orb", "init_Table_Spherical_Bessel");
 
-    for (auto& sb: ModuleBase::Sph_Bessel_Recursive_Pool::D2::sb_pool)
+    for (ModuleBase::Sph_Bessel_Recursive::D2& sb: ModuleBase::Sph_Bessel_Recursive_Pool::D2::sb_pool)
     {
         if (dr * dk == sb.get_dx())
         {

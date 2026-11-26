@@ -27,7 +27,7 @@ namespace
 void validate_source_grid(const std::string& filename, const ModulePW::PW_Basis_K& basis, int iq)
 {
     std::ifstream in(filename, std::ios::binary);
-    const auto header = read_exx_source_header(in);
+    const ExxSourceHeader header = read_exx_source_header(in);
     in.seekg(160);
     int record = 0;
     in.read(reinterpret_cast<char*>(&record), sizeof(record));
@@ -50,7 +50,7 @@ void validate_source_grid(const std::string& filename, const ModulePW::PW_Basis_
             }
             direct_g[axis] = miller[axis] <= grid[axis] / 2 ? miller[axis] : miller[axis] - grid[axis];
         }
-        const auto gk = direct_g * basis.G + basis.kvec_c[iq];
+        const ModuleBase::Vector3<double> gk = direct_g * basis.G + basis.kvec_c[iq];
         const long long index = (static_cast<long long>(miller[0]) * basis.ny + miller[1]) * basis.nz + miller[2];
         if (gk.norm2() > basis.gk_ecut * (1.0 + 1e-10) || !indices.insert(index).second)
         {
@@ -102,7 +102,7 @@ void warn_source_configuration(const Input_para& inp, const std::string& readin_
     for (const auto& term : terms)
     {
         std::ostringstream value;
-        for (const auto& number : term.second)
+        for (const std::string& number : term.second)
         {
             // Zero-valued Fock coefficients are equivalent to omitting the term.
             if (term.first == "exx_fock_alpha" && std::stod(number) == 0.0)
@@ -131,7 +131,7 @@ void warn_source_configuration(const Input_para& inp, const std::string& readin_
             std::getline(record, saved[key]);
         }
     }
-    for (const auto& item : expected)
+    for (const std::pair<const std::string, std::string>& item : expected)
     {
         if (!saved.count(item.first))
         {
@@ -188,7 +188,7 @@ void validate_hybrid_nscf(const Input_para& inp, const General_Exx_Info& info)
     {
         // An explicit zero coefficient (`exx_fock_alpha 0`) retains a Fock entry but is
         // equivalent to omitting the term; only a nonzero coefficient is unscreened exchange.
-        for (const auto& term : fock->second)
+        for (const std::map<std::string, std::string>& term : fock->second)
         {
             if (std::stod(term.at("alpha")) != 0.0)
             {
