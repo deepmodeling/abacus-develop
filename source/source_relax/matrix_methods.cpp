@@ -6,7 +6,7 @@ std::vector<double> ReshapeMToV(std::vector<ModuleBase::Vector3<double>> &matrix
     int size = matrix.size();
     std::vector<double> result;
     result.reserve(3 * size);
-    for (const auto &v : matrix)
+    for (const ModuleBase::Vector3<double>& v : matrix)
     {
         result.push_back(v.x);
         result.push_back(v.y);

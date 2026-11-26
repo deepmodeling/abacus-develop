@@ -59,7 +59,7 @@ void Vdwd2Parameters::C6_input(const std::string &file, const std::string &unit)
         }
         ifs.close();
     }
-    for (auto &c6 : C6_)
+    for (std::map<std::string, double>::value_type &c6 : C6_)
     {
         if (unit == "Jnm6/mol")
         {
@@ -96,7 +96,7 @@ void Vdwd2Parameters::R0_input(const std::string &file, const std::string &unit)
         }
         ifs.close();
     }
-    for (auto &r0 : R0_)
+    for (std::map<std::string, double>::value_type &r0 : R0_)
     {
         if (unit == "A")
         {

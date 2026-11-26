@@ -66,7 +66,7 @@ void ESolver_FP::before_all_runners(BaseCell &basecell, const Input_para &inp)
     const std::string global_out_dir = PARAM.globalv.global_out_dir;
     const int npol = PARAM.globalv.npol;
     const bool two_fermi = PARAM.globalv.two_fermi;
-    auto atoms_info = unitcell::read_pseudo(
+    AtomsInfoResult atoms_info = unitcell::read_pseudo(
         GlobalV::ofs_running, ucell, this->inp_->pseudo_dir, global_out_dir, this->inp_->out_element_info,
         this->inp_->dft_functional, this->inp_->lspinorb, this->inp_->pseudo_rcut, this->inp_->soc_lambda,
         this->inp_->nspin, npol, this->inp_->basis_type, this->inp_->esolver_type, this->inp_->init_wfc,
@@ -214,7 +214,7 @@ void ESolver_FP::before_scf(UnitCell &ucell, const int istep)
 
     //! Evaluate the vdW correction once for this ionic configuration.
     this->vdw_result_.reset();
-    auto vdw_solver = vdw::make_vdw(ucell, *this->inp_, &(GlobalV::ofs_running));
+    std::unique_ptr<vdw::Vdw> vdw_solver = vdw::make_vdw(ucell, *this->inp_, &(GlobalV::ofs_running));
     if (vdw_solver != nullptr)
     {
         const vdw::VdwRequest request(this->inp_->cal_force, this->inp_->cal_stress);

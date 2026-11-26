@@ -71,7 +71,7 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(const Grid_
     this->adjs_all.reserve(this->ucell->nat);
     for (int iat0 = 0; iat0 < ucell->nat; iat0++)
     {
-        auto tau0 = ucell->get_tau(iat0);
+        ModuleBase::Vector3<double> tau0 = ucell->get_tau(iat0);
         int T0, I0;
         ucell->iat2iait(iat0, &I0, &T0);
         AdjacentAtomInfo adjs;
@@ -159,7 +159,7 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
 
     for (int iat0 = 0; iat0 < this->ucell->nat; iat0++)
     {
-        const auto tau0 = ucell->get_tau(iat0);
+        const ModuleBase::Vector3<double> tau0 = ucell->get_tau(iat0);
         int T0, I0;
         ucell->iat2iait(iat0, &I0, &T0);
         const AdjacentAtomInfo& adjs = this->adjs_all[iat0];

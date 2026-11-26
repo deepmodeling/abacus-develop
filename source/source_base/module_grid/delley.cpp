@@ -328,7 +328,7 @@ const std::vector<Fill_t> fill = {
 const DelleyTable* _find_delley(int& lmax) {
     // NOTE: this function assumes elements in "delley_table" are
     // arranged such that their members "lmax_" are in ascending order.
-    auto tab = std::find_if(delley_table.begin(), delley_table.end(),
+    std::vector<DelleyTable>::const_iterator tab = std::find_if(delley_table.begin(), delley_table.end(),
             [lmax](const DelleyTable& t) { return t.lmax_ >= lmax; });
     return tab == delley_table.end() ? nullptr : (lmax = tab->lmax_, &(*tab));
 }
@@ -350,13 +350,13 @@ void _delley(const DelleyTable* tab, double* grid, double* weight) {
 
 
 int Grid::Angular::ngrid_delley(int& lmax) {
-    auto tab = _find_delley(lmax);
+    const DelleyTable* tab = _find_delley(lmax);
     return tab ? tab->ngrid_ : -1;
 }
 
 
 int Grid::Angular::delley(int& lmax, double* grid, double* weight) {
-    auto tab = _find_delley(lmax);
+    const DelleyTable* tab = _find_delley(lmax);
     return tab ? _delley(tab, grid, weight), 0 : -1;
 }
 
@@ -366,7 +366,7 @@ int Grid::Angular::delley(
     std::vector<double>& grid,
     std::vector<double>& weight
 ) {
-    auto tab = _find_delley(lmax);
+    const DelleyTable* tab = _find_delley(lmax);
     if (!tab) {
         return -1;
     }

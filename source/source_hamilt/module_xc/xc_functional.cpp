@@ -358,7 +358,7 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
     {
         std::vector<xc_func_type> check_funcs = XC_Functional_Libxc::init_func(func_id, XC_UNPOLARIZED, 0.0, 0.0);
         need_laplacian = false;
-        for (auto &f : check_funcs)
+        for (xc_func_type& f : check_funcs)
         {
             if (f.info->flags & XC_FLAGS_NEEDS_LAPLACIAN)
             {
@@ -421,7 +421,7 @@ std::string XC_Functional::output_info()
         double hse_omega = 0.0;
         std::vector<xc_func_type> funcs =
             XC_Functional_Libxc::init_func(func_id, XC_UNPOLARIZED, hybrid_alpha, hse_omega);
-        for (const auto &func : funcs)
+        for (const xc_func_type& func : funcs)
         {
             const xc_func_info_type *info = xc_func_get_info(&func);
             ss << " XC: " << xc_func_info_get_name(info) << std::endl;
@@ -440,7 +440,7 @@ std::string XC_Functional::output_info()
     else
     {
         std::string s = " XC:\t";
-        for (const auto &id : func_id)
+        for (const int& id : func_id)
         {
             s += std::string(xc_functional_get_name(id)) + "\t";
         }
@@ -448,7 +448,7 @@ std::string XC_Functional::output_info()
     }
 #else
     std::string s = " XC:\t";
-    for (const auto &id : func_id)
+    for (const int& id : func_id)
     {
         s += std::to_string(id) + "\t";
     }

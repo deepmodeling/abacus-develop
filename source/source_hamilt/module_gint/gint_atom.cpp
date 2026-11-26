@@ -28,7 +28,7 @@ GintAtom::GintAtom(
         {
             int l = atom_->iw2l[iw];
             int n = atom_->iw2n[iw];
-            const auto &phi_ln = orb_->PhiLN(l, n);
+            const Numerical_Orbital_Lm& phi_ln = orb_->PhiLN(l, n);
             p_psi_uniform_[iw] = phi_ln.psi_uniform.data();
             p_dpsi_uniform_[iw] = phi_ln.dpsi_uniform.data();
             p_ddpsi_uniform_[iw] = phi_ln.ddpsi_uniform.data();

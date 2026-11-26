@@ -48,7 +48,7 @@ void Exx_Helper<T, Device>::before_scf(void* p_hamilt, void* psi, const Input_pa
     }
 
     /// Set EXX helper to Hamiltonian
-    auto hamilt_pw = reinterpret_cast<hamilt::HamiltPW<T, Device>*>(p_hamilt);
+    hamilt::HamiltPW<T, Device>* hamilt_pw = reinterpret_cast<hamilt::HamiltPW<T, Device>*>(p_hamilt);
     hamilt_pw->set_exx_helper(*this);
 
     /// Set psi for EXX calculation
@@ -76,7 +76,7 @@ bool Exx_Helper<T, Device>::iter_finish(void* p_elec, Charge* p_charge, void* ps
     {
         if (conv_esolver)
         {
-            auto start = std::chrono::high_resolution_clock::now();
+            std::chrono::high_resolution_clock::time_point start = std::chrono::high_resolution_clock::now();
 
             this->set_firstiter(false);
             this->op_exx->first_iter = false;
@@ -169,7 +169,7 @@ bool Exx_Helper<T, Device>::exx_after_converge(int iter, bool ene_conv)
 template <typename T, typename Device>
 void Exx_Helper<T, Device>::set_psi(void* psi_)
 {
-    auto* psi = static_cast<psi::Psi<T, Device>*>(psi_);
+    psi::Psi<T, Device>* psi = static_cast<psi::Psi<T, Device>*>(psi_);
     if (psi == nullptr)
         return;
     this->psi = psi;

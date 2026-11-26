@@ -20,7 +20,7 @@ class ReadInput
      */
     void clear()
     {
-        for (auto& item: input_lists)
+        for (std::pair<std::string, ModuleIO::Input_Item>& item: input_lists)
         {
             item.second.final_value.str("");
             item.second.str_values.clear();
