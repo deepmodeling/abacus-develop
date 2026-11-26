@@ -9,6 +9,7 @@
 #include <complex>
 #include <map>
 #include <memory>
+#include <utility>
 #include <valarray>
 
 namespace
@@ -38,7 +39,8 @@ void check_cache_handoff()
             RI::Tensor<T> dc({1, 1, 1});
             RI::Tensor<T> dv({1, 1});
             RI::Tensor<T> unused({2, 2});
-            c.ptr()[0] = T(0.5 * generation);
+            const double coefficient = 0.5 * generation;
+            c.ptr()[0] = T(coefficient);
             v.ptr()[0] = T(0.75);
             dc.ptr()[0] = T(0.125);
             dv.ptr()[0] = T(0.25);
@@ -92,7 +94,8 @@ void check_cache_handoff()
         engine.cal_Hs();
         engine.cal_force();
         engine.cal_stress();
-        const double energy_error = std::abs(engine.energy - energy_before);
+        const T energy_difference = engine.energy - energy_before;
+        const double energy_error = std::abs(energy_difference);
         const double energy_tolerance = 1e-12 * (1.0 + std::abs(energy_before));
         EXPECT_LE(energy_error, energy_tolerance);
         EXPECT_EQ(engine.force, force_before);
