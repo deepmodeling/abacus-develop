@@ -27,7 +27,7 @@ SpillageStep::~SpillageStep()
     delete[] wayd;
 }
 
-void SpillageStep::set_info(const int& ntype_in)
+void SpillageStep::set_info(const int &ntype_in)
 {
     this->ntype = ntype_in;
     cout << "\n Element type = " << ntype;
@@ -160,7 +160,9 @@ void SpillageStep::set_nwfc()
                             {
                                 this->wayd[iw2].ic = ic;
                                 if (test == 2)
+                                {
                                     cout << "\n iw2=" << iw2 << " ic=" << ic;
+                                }
                                 ++iw2;
                             } // end m
                         }
@@ -180,7 +182,9 @@ void SpillageStep::set_nwfc()
                 {
                     this->wayd[iw2].ic = this->wayd[j].ic;
                     if (test == 2)
+                    {
                         cout << "\n iw2=" << iw2 << " ic=" << wayd[iw2].ic;
+                    }
                     iw2++;
                 }
             }
@@ -258,7 +262,9 @@ void SpillageStep::set_iw00(void)
 void SpillageStep::set_nchi()
 {
     if (test == 1)
+    {
         TITLE("SpillageStep", "set_nchi");
+    }
     assert(ntype > 0);
     //=========================
     // (1) generate nchi
@@ -298,21 +304,37 @@ void SpillageStep::set_nchi()
                 wayc[ichi].L = l;
                 wayc[ichi].N = j + info[i].nbase[l];
                 if (l == 0)
+                {
                     wayc[ichi].spd = 's';
+                }
                 else if (l == 1)
+                {
                     wayc[ichi].spd = 'p';
+                }
                 else if (l == 2)
+                {
                     wayc[ichi].spd = 'd';
+                }
                 else if (l == 3)
+                {
                     wayc[ichi].spd = 'f';
+                }
                 else if (l == 4)
+                {
                     wayc[ichi].spd = 'g';
+                }
                 else if (l == 5)
+                {
                     wayc[ichi].spd = 'h'; // right?
+                }
                 else if (l == 6)
+                {
                     wayc[ichi].spd = 'i'; // right?
+                }
                 else
+                {
                     wayc[ichi].spd = 'x'; // !!!
+                }
                 ichi++;
 
                 if (test == 2)
@@ -328,10 +350,12 @@ void SpillageStep::set_nchi()
 }
 
 // be called in Multizeta::init(), before each step Metropolis begins.
-void SpillageStep::allocate_data(const int& istep)
+void SpillageStep::allocate_data(const int &istep)
 {
     if (test == 1)
+    {
         TITLE("SpillageStep", "allocate_data");
+    }
     assert(nwfc > 0);
 
     delete[] this->data;
@@ -346,13 +370,9 @@ void SpillageStep::allocate_data(const int& istep)
         // nks, weight, nbands, ne
         // but nwfc and nwfc2 are different
         //==================================
-        data[is].init(NKS,
-                      input.QS_data[is].weight,
-                      NBANDS,
-                      NE,
-                      this->nwfc,
-                      this->nwfc2,
-                      NWFCALL // all read in wave functions number
+        data[is].init(
+            NKS, input.QS_data[is].weight, NBANDS, NE, this->nwfc, this->nwfc2,
+            NWFCALL // all read in wave functions number
         );
 
         if (istep == 0)
@@ -419,10 +439,12 @@ void SpillageStep::allocate_data(const int& istep)
     return;
 }
 
-void SpillageStep::init_QS_matrix(const int& istr)
+void SpillageStep::init_QS_matrix(const int &istr)
 {
     if (test == 1)
+    {
         TITLE("SpillageStep", "init_QS_matrix");
+    }
 
     if (USEPW)
     {
@@ -511,9 +533,9 @@ void SpillageStep::init_QS_matrix(const int& istr)
                             // case 1
                             if (!wayd[iw].average && !wayd[iw2].average)
                             {
-                                this->data[istr].Soverlap[ik](iw, iw2)
-                                    += input.Coef.C4(T1, L1, N1, ie) * input.Coef.C4(T2, L2, N2, ie2)
-                                       * input.QS_data[istr].Sq1q2[ik](iw001, iw002, ie, ie2);
+                                this->data[istr].Soverlap[ik](iw, iw2) +=
+                                    input.Coef.C4(T1, L1, N1, ie) * input.Coef.C4(T2, L2, N2, ie2) *
+                                    input.QS_data[istr].Sq1q2[ik](iw001, iw002, ie, ie2);
                             }
                             // case 2
                             else
@@ -549,8 +571,8 @@ void SpillageStep::init_QS_matrix(const int& istr)
                                     }
                                     avalue /= (2 * L1 + 1);
                                 }
-                                this->data[istr].Soverlap[ik](iw, iw2)
-                                    += input.Coef.C4(T1, L1, N1, ie) * input.Coef.C4(T2, L2, N2, ie2) * avalue;
+                                this->data[istr].Soverlap[ik](iw, iw2) +=
+                                    input.Coef.C4(T1, L1, N1, ie) * input.Coef.C4(T2, L2, N2, ie2) * avalue;
                                 //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
                             }
                         } // ie2
@@ -598,14 +620,15 @@ void SpillageStep::init_QS_matrix(const int& istr)
 
 // (1) Calculate The Spillage Value
 // (2) For each Coefficient(type,l,n,ie) changed orbital.
-double SpillageStep::get_spillage(const int& istr, // index of structure
-                                  const int& ic,   // index of orbitals: (type,l,n)
-                                  const int& ie    // index of eigenvalue of Jlq
+double SpillageStep::get_spillage(
+    const int &istr, // index of structure
+    const int &ic,   // index of orbitals: (type,l,n)
+    const int &ie    // index of eigenvalue of Jlq
 )
 {
     double spillage; // not need to initialized.
     double fill = 0.0;
-    Step_Data* Stru = &this->data[istr];
+    Step_Data *Stru = &this->data[istr];
 
     // mohan add 2010-05-02
     // (1) this part is to control the number of
@@ -696,7 +719,9 @@ double SpillageStep::get_spillage(const int& istr, // index of structure
 // may error when openmp? unchecked		// Peize Lin note 2016-01-18
 #ifdef _OPENMP
                 if (0 == omp_get_thread_num())
+                {
                     cout << "src_spillage/SpillageStep.cpp line1103 openmp " << endl;
+                }
                 exit(0);
 #endif
 
@@ -767,19 +792,19 @@ double SpillageStep::get_spillage(const int& istr, // index of structure
                     // Mk += (conj(Qtrial[ik](iw, ib)) * sinv(iw, iw2) * Qtrial[ik](iw2, ib)).real();
                     if (iw <= iw2)
                     {
-                        Stru->Mkb_used(ik, ib)
-                            += (conj(Stru->Qtrial[ik](iw, ib))
-                                * Stru->inverse_S[ik].get_inverse()(iw, iw2) // Peize Lin update 2015-12-05
+                        Stru->Mkb_used(ik, ib) +=
+                            (conj(Stru->Qtrial[ik](iw, ib)) *
+                                Stru->inverse_S[ik].get_inverse()(iw, iw2) // Peize Lin update 2015-12-05
                                 * Stru->Qtrial[ik](iw2, ib))
-                                   .real();
+                                .real();
                     }
                     else
                     {
-                        Stru->Mkb_used(ik, ib)
-                            += (conj(Stru->Qtrial[ik](iw, ib))
-                                * conj(Stru->inverse_S[ik].get_inverse()(iw2, iw)) // Peize Lin update 2015-12-05
+                        Stru->Mkb_used(ik, ib) +=
+                            (conj(Stru->Qtrial[ik](iw, ib)) *
+                                conj(Stru->inverse_S[ik].get_inverse()(iw2, iw)) // Peize Lin update 2015-12-05
                                 * Stru->Qtrial[ik](iw2, ib))
-                                   .real();
+                                .real();
                     }
                 }
             }
@@ -834,12 +859,20 @@ double SpillageStep::get_spillage(const int& istr, // index of structure
             cout_matrix(Stru->Strial[ik]);
             cout_matrix(Stru->inverse_S[ik].get_inverse());
             for (size_t i = 0; i < Stru->Strial[ik].nr; ++i)
+            {
                 for (size_t j = 0; j < i; ++j)
+                {
                     Stru->Strial[ik](i, j) = conj(Stru->Strial[ik](j, i));
+                }
+            }
             ComplexMatrix inverse_tmp(Stru->inverse_S[ik].get_inverse());
             for (size_t i = 0; i < inverse_tmp.nr; ++i)
+            {
                 for (size_t j = 0; j < i; ++j)
+                {
                     inverse_tmp(i, j) = conj(inverse_tmp(j, i));
+                }
+            }
             cout_matrix(Stru->Strial[ik] * inverse_tmp);
         }
 
@@ -872,12 +905,13 @@ double SpillageStep::get_spillage(const int& istr, // index of structure
     return spillage;
 }
 
-void SpillageStep::newQ(const int& istr,
-                        const int& ic,
-                        const int& ie,
-                        const int& ik,
-                        const double& c4_now,
-                        const double& c4_old)
+void SpillageStep::newQ(
+    const int &istr,
+    const int &ic,
+    const int &ie,
+    const int &ik,
+    const double &c4_now,
+    const double &c4_old)
 {
     //	TITLE("SpillageStep","newQ");
     const double delta = c4_now - c4_old;
@@ -916,12 +950,13 @@ void SpillageStep::newQ(const int& istr,
     return;
 }
 
-void SpillageStep::newS(const int& istr,
-                        const int& ic,
-                        const int& ie,
-                        const int& ik,
-                        const double& c4_now,
-                        const double& c4_old)
+void SpillageStep::newS(
+    const int &istr,
+    const int &ic,
+    const int &ie,
+    const int &ik,
+    const double &c4_now,
+    const double &c4_old)
 {
     //	TITLE("SpillageStep","newS");
     // example c = c2, ie2 = ie
@@ -992,9 +1027,9 @@ void SpillageStep::newS(const int& istr,
                         // case 1
                         if (!wayd[iw].average && !wayd[iw2].average)
                         {
-                            this->data[istr].Strial[ik](iw, iw2) += (c4_now * input.Coef.C4(T1, L1, N1, ie1)
-                                                                     - c4_old * input.Coef.C4_old(T1, L1, N1, ie1))
-                                                                    * input.QS_data[istr].Sq1q2[ik](jw, kw, ie1, ie);
+                            this->data[istr].Strial[ik](iw, iw2) += (c4_now * input.Coef.C4(T1, L1, N1, ie1) -
+                                                                        c4_old * input.Coef.C4_old(T1, L1, N1, ie1)) *
+                                                                    input.QS_data[istr].Sq1q2[ik](jw, kw, ie1, ie);
                         }
                         else // case 2
                         {
@@ -1030,9 +1065,9 @@ void SpillageStep::newS(const int& istr,
                                 }
                                 avalue /= ((2 * L1 + 1) * (2 * L2 + 1));
                             }
-                            this->data[istr].Strial[ik](iw, iw2) += (c4_now * input.Coef.C4(T1, L1, N1, ie1)
-                                                                     - c4_old * input.Coef.C4_old(T1, L1, N1, ie1))
-                                                                    * avalue;
+                            this->data[istr].Strial[ik](iw, iw2) += (c4_now * input.Coef.C4(T1, L1, N1, ie1) -
+                                                                        c4_old * input.Coef.C4_old(T1, L1, N1, ie1)) *
+                                                                    avalue;
                         }
                         // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
                     }
@@ -1052,9 +1087,9 @@ void SpillageStep::newS(const int& istr,
                         // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
                         if (!wayd[iw].average && !wayd[iw2].average)
                         {
-                            this->data[istr].Strial[ik](iw, iw2) += (c4_now * input.Coef.C4(T2, L2, N2, ie2)
-                                                                     - c4_old * input.Coef.C4_old(T2, L2, N2, ie2))
-                                                                    * input.QS_data[istr].Sq1q2[ik](jw, kw, ie, ie2);
+                            this->data[istr].Strial[ik](iw, iw2) += (c4_now * input.Coef.C4(T2, L2, N2, ie2) -
+                                                                        c4_old * input.Coef.C4_old(T2, L2, N2, ie2)) *
+                                                                    input.QS_data[istr].Sq1q2[ik](jw, kw, ie, ie2);
                         }
                         else // case 2
                         {
@@ -1090,9 +1125,9 @@ void SpillageStep::newS(const int& istr,
                                 }
                                 avalue /= ((2 * L1 + 1) * (2 * L2 + 1));
                             }
-                            this->data[istr].Strial[ik](iw, iw2) += (c4_now * input.Coef.C4(T2, L2, N2, ie2)
-                                                                     - c4_old * input.Coef.C4_old(T2, L2, N2, ie2))
-                                                                    * avalue;
+                            this->data[istr].Strial[ik](iw, iw2) += (c4_now * input.Coef.C4(T2, L2, N2, ie2) -
+                                                                        c4_old * input.Coef.C4_old(T2, L2, N2, ie2)) *
+                                                                    avalue;
                         }
                         // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
                     }
@@ -1105,7 +1140,7 @@ void SpillageStep::newS(const int& istr,
     return;
 }
 
-void SpillageStep::updateQS(const int& istr)
+void SpillageStep::updateQS(const int &istr)
 {
     //    if(test==1)TITLE("SpillageStep","updateQS");
     for (int ik = 0; ik < data[istr].nks; ik++)

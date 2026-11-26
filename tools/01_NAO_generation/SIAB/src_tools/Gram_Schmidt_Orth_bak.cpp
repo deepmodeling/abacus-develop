@@ -5,7 +5,9 @@
 void Gram_Schmidt_Orth::init()
 {
     if (this->finish_init)
+    {
         return;
+    }
     if (nullptr == this->r_2)
     {
         this->r_2 = new double[variable_num];
@@ -30,7 +32,7 @@ Gram_Schmidt_Orth::~Gram_Schmidt_Orth()
     delete[] r_2;
 }
 
-double** Gram_Schmidt_Orth::orth()
+double **Gram_Schmidt_Orth::orth()
 {
     init();
 
@@ -44,7 +46,7 @@ double** Gram_Schmidt_Orth::orth()
         for (size_t if2(0); if2 < if1; ++if2)
         {
             // (hn,ei)
-            double* mul_func = new double[this->variable_num];
+            double *mul_func = new double[this->variable_num];
             Mathzone::Pointwise_Product(this->variable_num, this->func[if1], this->func[if2], mul_func);
             const double in_product = cal_norm(mul_func);
             delete[] mul_func;
@@ -55,7 +57,7 @@ double** Gram_Schmidt_Orth::orth()
         }
 
         // ||gn||
-        double* func_2 = new double[this->variable_num];
+        double *func_2 = new double[this->variable_num];
         Mathzone::Pointwise_Product(this->variable_num, this->func[if1], this->func[if1], func_2);
         const double norm = sqrt(cal_norm(func_2));
         delete[] func_2;
@@ -67,7 +69,7 @@ double** Gram_Schmidt_Orth::orth()
     return func;
 }
 
-double Gram_Schmidt_Orth::cal_norm(double* func_in)
+double Gram_Schmidt_Orth::cal_norm(double *func_in)
 {
     double norm(0.0);
     switch (coordinate)
@@ -76,7 +78,7 @@ double Gram_Schmidt_Orth::cal_norm(double* func_in)
         Mathzone::Simpson_Integral(this->variable_num, func_in, this->rab, norm);
         break;
     case 1:
-        double* tmp_func = new double[this->variable_num];
+        double *tmp_func = new double[this->variable_num];
         Mathzone::Pointwise_Product(this->variable_num, func_in, this->r_2, tmp_func);
         Mathzone::Simpson_Integral(this->variable_num, tmp_func, this->rab, norm);
         delete[] tmp_func;

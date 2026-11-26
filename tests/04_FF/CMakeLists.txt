@@ -19,9 +19,10 @@ find_program(ABACUS_CADENCE_PYTHON python3)
 if(ABACUS_CADENCE_PYTHON AND NOT ENABLE_ASAN)
   add_test(
     NAME 04_FF_md_output_cadence
-    COMMAND ${ABACUS_CADENCE_PYTHON}
-            ${ABACUS_TEST_DIR}/integrate/validation_tools/check_md_output_cadence.py
-            ${ABACUS_BIN_PATH} ${ABACUS_TEST_DIR}/04_FF/21_LJ_cadence)
-  set_tests_properties(04_FF_md_output_cadence PROPERTIES TIMEOUT 300
-                                                      ENVIRONMENT "OMP_NUM_THREADS=1")
+    COMMAND
+      ${ABACUS_CADENCE_PYTHON}
+      ${ABACUS_TEST_DIR}/integrate/validation_tools/check_md_output_cadence.py
+      ${ABACUS_BIN_PATH} ${ABACUS_TEST_DIR}/04_FF/21_LJ_cadence)
+  set_tests_properties(04_FF_md_output_cadence
+                       PROPERTIES TIMEOUT 300 ENVIRONMENT "OMP_NUM_THREADS=1")
 endif()
