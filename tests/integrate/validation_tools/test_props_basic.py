@@ -74,6 +74,25 @@ class ForceCollectionTest(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("totalstressref 45.000000", output)
 
+    def test_md_virial_matches_legacy_stress_matrix(self):
+        rows = (
+            "120.2864521128 3.4986227089 -4.0502591177\n"
+            "3.4986227089 120.3390863152 2.3951443025\n"
+            "-4.0502591177 2.3951443025 120.3180820327\n"
+        )
+        md_log = " MD STEP: 6\n VIRIAL (kbar):\n" + rows
+        md_result, md_output = self.run_collector(
+            "md", 2, stru="# MD step 6\n", log_stress=md_log,
+            has_force=0, has_stress=1)
+        legacy_log = "#TOTAL-STRESS (kbar)#\n---\nStress_x Stress_y Stress_z\n---\n" + rows
+        legacy_result, legacy_output = self.run_collector(
+            "scf", 2, log_stress=legacy_log, has_force=0, has_stress=1)
+        self.assertEqual(md_result.returncode, 0, md_result.stderr)
+        self.assertEqual(legacy_result.returncode, 0, legacy_result.stderr)
+        md_stress = next(line for line in md_output.splitlines() if line.startswith("totalstressref "))
+        legacy_stress = next(line for line in legacy_output.splitlines() if line.startswith("totalstressref "))
+        self.assertEqual(md_stress, legacy_stress)
+
     def test_final_stru_requires_all_force_rows(self):
         good = (
             "ATOMIC_POSITIONS\nCartesian_angstrom\n\nH\n0.0\n2\n"

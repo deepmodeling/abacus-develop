@@ -171,9 +171,12 @@ run_basic_props() {
           split(value[1], first)
           split(value[2], second)
           split(value[3], third)
-          print first[1] + p1, first[2], first[3]
-          print second[1], second[2] + p2, second[3]
-          print third[1], third[2], third[3] + p3
+          # Keep the precision of the former TOTAL-STRESS table. awk print
+          # defaults to six significant digits, enough to change the summed
+          # stress by more than the existing test tolerance.
+          printf "%.10f %.10f %.10f\n", first[1] + p1, first[2], first[3]
+          printf "%.10f %.10f %.10f\n", second[1], second[2] + p2, second[3]
+          printf "%.10f %.10f %.10f\n", third[1], third[2], third[3] + p3
         }
       ' "$running_path" >stress.txt; then
         echo "[ERROR] Failed to extract the MD virial from $running_path" >&2
