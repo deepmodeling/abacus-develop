@@ -8,6 +8,7 @@
 #include "source_cell/read_pp_ucell.h"
 #include "source_estate/elecstate_lcao.h"
 #include "source_estate/param_update.h"
+#include "source_io/module_hs/angmom_op_mat.h"
 #include "source_io/module_hs/hsr_legacy.h"
 #include "source_io/module_hs/pos_op_mat.h"
 #include "source_io/module_output/print_info.h"
@@ -189,6 +190,36 @@ void ESolver_GetS::runner(BaseCell &basecell, const int istep)
             gd, // mohan add 2024-04-06
             two_center_bundle_, orb_, mat_R_options, PARAM.globalv.gamma_only_local, PARAM.globalv.npol,
             PARAM.globalv.nlocal, GlobalV::ofs_running);
+    }
+
+    //! The angular momentum matrices <phi_i|Lx/Ly/Lz|phi_j> are built from the
+    //! orbital tables only and do not depend on the SCF result, so out_mat_l is
+    //! also honored in the get_s workflow.
+    if (this->inp_->out_mat_l[0])
+    {
+        const int my_rank = GlobalV::MY_RANK;
+        const double l_search_radius = orb_.get_rcutmax_Phi();
+        const int l_precision = this->inp_->out_mat_l[1];
+        const int l_out_app_flag = this->inp_->out_app_flag;
+        ModuleIO::Angmom_op angmom_calculator(this->inp_->orbital_dir,
+                                              ucell,
+                                              l_search_radius,
+                                              this->inp_->test_deconstructor,
+                                              this->inp_->test_grid,
+                                              this->inp_->test_atom_input,
+                                              PARAM.globalv.search_pbc,
+                                              this->inp_->out_level,
+                                              PARAM.globalv.gamma_only_local,
+                                              &GlobalV::ofs_running,
+                                              my_rank);
+        angmom_calculator.calculate(this->inp_->suffix,
+                                    global_matrix_dir,
+                                    ucell,
+                                    this->pv,
+                                    l_precision,
+                                    my_rank,
+                                    istep,
+                                    l_out_app_flag);
     }
 
     ModuleBase::timer::end("ESolver_GetS", "runner");
