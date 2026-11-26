@@ -163,11 +163,6 @@ if(ENABLE_MPI)
                "OMP_NUM_THREADS=1;MKL_NUM_THREADS=1;OPENBLAS_NUM_THREADS=1")
 endif()
 
-AddTest(
-  TARGET MODULE_LR_spectrum_weights
-  SOURCES test_spectrum_weights.cpp
-)
+addtest(TARGET MODULE_LR_spectrum_weights SOURCES test_spectrum_weights.cpp)
 
-AddTest(
-  TARGET MODULE_LR_util_print
-  SOURCES test_lr_util_print.cpp)
+addtest(TARGET MODULE_LR_util_print SOURCES test_lr_util_print.cpp)
