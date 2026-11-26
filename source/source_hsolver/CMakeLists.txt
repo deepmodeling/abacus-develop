@@ -16,7 +16,8 @@ list(
   diago_params.cpp)
 
 if(ENABLE_LCAO)
-  list(APPEND objects hsolver_lcao.cpp diag_lcao.cpp diag_sk_cut.cpp diago_lapack.cpp)
+  list(APPEND objects hsolver_lcao.cpp diag_lcao.cpp diag_sk_cut.cpp
+       diago_lapack.cpp)
   if(ENABLE_MPI)
     list(APPEND objects diago_scalapack.cpp parallel_k2d.cpp)
   endif()
@@ -27,9 +28,7 @@ if(ENABLE_LCAO)
   # DSP build without C_PACK: provide the zhegvx_ fallback for
   # cpack_zhegvx_driver (used by diago_lapack.cpp under __DSP).
   if(USE_DSP AND NOT MT_CPACK_DIR)
-    list(APPEND objects
-        cpack_zhegvx_fallback.cpp
-    )
+    list(APPEND objects cpack_zhegvx_fallback.cpp)
   endif()
 
   if(USE_CUDA)
