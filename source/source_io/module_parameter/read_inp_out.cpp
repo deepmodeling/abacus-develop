@@ -87,6 +87,8 @@ void ReadInput::item_output()
         Only out_app_flag = 2 inserts a one-based geometry-step index before `_ini` (e.g., `chgg1_ini.cube`, `chgs1g1_ini.cube`); with out_app_flag = 0 the fixed file is truncated and overwritten at every write, and with out_app_flag = 1 each written step appends one cube frame.
     - -1: Disable the charge density auto-back-up file `{suffix}-CHARGE-DENSITY.restart`, useful for large systems.
 
+The auto-back-up restart file is never written when `calculation = nscf`: a non-self-consistent run must not overwrite the density converged by the preceding SCF calculation, so repeated nscf runs keep reusing the same input density. This is independent of the first integer above; `out_chg` still controls the cube output in an nscf run.
+
 The second integer controls the precision of the charge density output. If not given, `3` is used as default. For restarting from this file and other high-precision calculations, `10` is recommended.
 
 In molecular dynamics simulations, the output frequency is controlled by out_freq_ion.
