@@ -1,7 +1,7 @@
 import re
 import shutil
 import unittest
-from io import TextIOWrapper
+from io import TextIOBase
 from pathlib import Path
 from typing import Dict, List, Tuple, Optional, Any
 
@@ -13,6 +13,7 @@ from ase.calculators.singlepoint import (
 )
 from ase.units import Ry, eV, GPa, bar
 from ase.stress import full_3x3_to_voigt_6_stress
+from abacuslite.io.generalio import _energy_without_entropy_metadata, _running_log_geometry
 # from ase.utils import reader
 
 __all__ = ['read_kpoints_from_running_log', 
@@ -736,7 +737,7 @@ def read_iter_header_from_running_log(src: str | Path | List[str]) \
     raw = [l.strip() for l in raw]
     raw = [l for l in raw if l] # remove empty lines
 
-    HEADER_PAT = r'(LCAO|PW)\s+ALGORITHM\s+-+\s+ION=\s+([0-9]+)\s+ELEC=\s+([0-9]+)'
+    HEADER_PAT = r'(LCAO|PW)\s+ALGORITHM\s+-+\s+ION=\s*([0-9]+)\s+ELEC=\s*([0-9]+)'
     res = [re.findall(HEADER_PAT, l) for l in raw]
 
     return [(int(pack[0][1]), int(pack[0][2])) for pack in res if pack]
@@ -796,6 +797,20 @@ def is_invalid_arr(arr) -> bool:
             return True
     return False
 
+def _read_log_source(fileobj):
+    """Read a path or caller-owned text stream and locate companion output files."""
+    if isinstance(fileobj, (str, Path)):
+        log_path = Path(fileobj)
+        with log_path.open() as stream:
+            return log_path, stream.readlines()
+    if not isinstance(fileobj, TextIOBase):
+        raise TypeError('Expected a log path or an open text stream')
+    name = getattr(fileobj, 'name', None)
+    if not isinstance(name, (str, Path)) or not str(name) or str(name).startswith('<'):
+        raise ValueError('A log stream needs a filesystem name to locate companion files')
+    return Path(name), fileobj.readlines()
+
+
 # @reader
 def read_abacus_out(fileobj, 
                     index=slice(None), 
@@ -810,15 +825,15 @@ def read_abacus_out(fileobj,
     -> read_results()
     -> read_abacus_out() *here*
 
-    To use this function as a standalone one, the fileobj should be
-    the return of the open() function, which is a TextIOWrapper object:
+    A running-log path or an open text stream may be supplied:
     >>> with open(fn) as fileobj:
     ...     read_abacus_out(fileobj)
 
     Parameters
     ----------
-    fileobj : str | Path | TextIOWrapper
-        The file object to read.
+    fileobj : str | Path | text stream
+        Running-log path or open text stream with a filesystem name.
+        Streams remain owned by the caller and are not closed here.
     index : slice
         The index of the frames to read.
     results_required : bool
@@ -831,20 +846,34 @@ def read_abacus_out(fileobj,
     Returns
     -------
     atoms : Atoms | List[Atoms]
-        The atoms object, whose calculator is the `SinglePointDFTCalculator`.
+        Standard ASE geometry: Cartesian positions and cell in Angstrom, with
+        the periodic ABACUS simulation box. The attached calculator is a
+        `SinglePointDFTCalculator`.
     '''
-    if isinstance(fileobj, (str, Path)):
-        with open(fileobj) as f:
-            abacus_lines = f.readlines()
-    else: # from the `with open(fn) as fileobj:` context
-        assert isinstance(fileobj, TextIOWrapper)
-        abacus_lines = fileobj.readlines()
-    
+    log_path, abacus_lines = _read_log_source(fileobj)
+
     # read the esolver type
     eslvtyp = read_esolver_type_from_running_log(abacus_lines)
     
-    # read the structure, with the cell, elem, etc. (nframe)
-    trajectory = read_traj_from_running_log(abacus_lines)
+    # Prefer MD_dump when present: current LTS running_md.log normally contains
+    # only the initial structure, but older complete MD logs stand alone.
+    md_calculation = log_path.name == 'running_md.log'
+    dump_path = log_path.parent / 'MD_dump' if md_calculation else None
+    geometry_from_dump = md_calculation and dump_path.exists()
+    if geometry_from_dump:
+        if not dump_path.is_file():
+            raise ValueError(f'Invalid MD_dump: expected a file at {dump_path}')
+        try:
+            trajectory = read_traj_from_md_dump(dump_path)
+        except (AssertionError, IndexError, ValueError, ZeroDivisionError) as exc:
+            raise ValueError(f'Invalid or truncated MD_dump: {dump_path}: {exc}') from exc
+        log_structures = read_traj_from_running_log(abacus_lines)
+        if log_structures:
+            symbols = log_structures[0]['elem']
+            if any(frame['elem'] != symbols for frame in trajectory):
+                raise ValueError(f'MD_dump frame atom count/order disagrees with {log_path}')
+    else:
+        trajectory = read_traj_from_running_log(abacus_lines)
     # read the eigenvalues (nframe, nk, nbnd)
     elecstate = read_band_from_running_log(abacus_lines)
     # read the atomic forces (nframe, nat, 3)
@@ -871,6 +900,12 @@ def read_abacus_out(fileobj,
     magmom = read_magmom_from_running_log(abacus_lines)
 
     # roughly check the integrity of data from their length consistency
+    if md_calculation and (len(trajectory) != len(energies)
+                      or len(trajectory) != len(elecstate)):
+        source = 'MD_dump' if geometry_from_dump else 'running_md.log without MD_dump'
+        raise ValueError(f'{source} geometry frame count {len(trajectory)} != '
+                         f'energy/electronic frame counts '
+                         f'{len(energies)}/{len(elecstate)} in {log_path}')
     assert len(trajectory) == len(energies), \
         f'Inconsistent length: {len(trajectory)} != {len(energies)}'
     assert len(trajectory) == len(elecstate), \
@@ -892,9 +927,16 @@ def read_abacus_out(fileobj,
         trajectory, elecstate, magmom, forces, stress, energies):
         # for each frame, a structure can be defined
         ind = ind or list(range(len(frame['elem'])))
+        if md_calculation and geometry_from_dump:
+            # MD_dump lattice vectors use alat; positions are already Angstrom.
+            cell = frame['cell'] * frame['alat_in_angstrom']
+            positions = frame['coords']
+        else:
+            positions, cell = _running_log_geometry(frame)
         atoms = Atoms(symbols=np.array(frame['elem'])[ind].tolist(), 
-                      positions=frame['coords'][ind], 
-                      cell=frame['cell'],
+                      positions=positions[ind],
+                      cell=cell,
+                      pbc=True,  # ABACUS uses a periodic simulation cell for every run.
                       magmoms=mag[ind])
         
         # from result, a calculator can be assembled
@@ -902,10 +944,11 @@ def read_abacus_out(fileobj,
         # in this case, we set them to None
         frs  = None if is_invalid_arr(frs)  else frs[ind]
         strs = None if is_invalid_arr(strs) else full_3x3_to_voigt_6_stress(strs)
+        atoms.info.update(_energy_without_entropy_metadata(ener))
         calc = SinglePointDFTCalculator(atoms=atoms, energy=ener['E_KohnSham'],
                                         free_energy=ener['E_KohnSham'],
                                         forces=frs, stress=strs,
-                                        magmoms=mag[ind], efermi=ener['E_Fermi'],
+                                        magmoms=mag[ind], efermi=ener.get('E_Fermi'),
                                         ibzkpts=kvecd, dipole=None)
         # import the eigenvalues and occupations kpoint-by-kpoint
         calc.kpts = []
@@ -1027,6 +1070,8 @@ class TestLegacyIO(unittest.TestCase):
                                 [1.0, 0.0, 0.0],
                                 [2.0, 0.0, 0.0]]),
             'cell': np.eye(3),
+            'coordinate': 'Cartesian',
+            'alat_in_angstrom': 1.0,
         }
         elecstate = [{
             'k': np.zeros((1, 1, 3)),
@@ -1245,11 +1290,10 @@ class TestLegacyIO(unittest.TestCase):
         self.assertEqual(header[2], (2,1))
         fn = self.testfiles / 'pw-symm0-nspin4-gamma-md_'
         header = read_iter_header_from_running_log(fn)
-        self.assertEqual(header[0], (1,1))
-        self.assertEqual(header[1], (1,2))
-        self.assertEqual(header[2], (1,3))
-        self.assertEqual(header[3], (3,2))
-        self.assertEqual(header[4], (3,3))
+        # Include the compact ION=2/ELEC=1 and ION=3/ELEC=1 headers too.
+        self.assertEqual(
+            header, [(1, 1), (1, 2), (1, 3), (2, 1), (3, 1), (3, 2), (3, 3)]
+        )
 
     def test_find_final_info_with_iter_header(self):
         info = [1, 2, 3, 4, 5, 6]

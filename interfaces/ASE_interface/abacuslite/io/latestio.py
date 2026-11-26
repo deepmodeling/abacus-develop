@@ -17,6 +17,7 @@ from ase.stress import full_3x3_to_voigt_6_stress
 # some output formats are not updated,
 # for these cases, we import from the legacyio module
 from abacuslite.io.legacyio import (
+    _read_log_source,
     read_kpoints_from_running_log,
     read_energies_from_running_log,
     read_traj_from_md_dump,
@@ -24,6 +25,7 @@ from abacuslite.io.legacyio import (
     is_invalid_arr,
     find_final_info_with_iter_header
 )
+from abacuslite.io.generalio import _energy_without_entropy_metadata, _running_log_geometry
 
 
 def find_eig_occ_files(directory: Path,
@@ -224,8 +226,8 @@ def read_band_from_eig_occ(src: str | Path | List[str]) \
     k = k.reshape((nframe, nspin, nk, 3))
 
     ekbpat  = r'\d+\s+'
-    ekbpat += r'(-?\d+(\.\d+)?(e[+-]\d+)?)\s+'
-    ekbpat += r'(\d+(\.\d+)?(e[+-]\d+)?)'
+    ekbpat += r'(-?\d+(\.\d+)?([eE][+-]?\d+)?)\s+'
+    ekbpat += r'(-?\d+(\.\d+)?([eE][+-]?\d+)?)'
     iekb = [i for i, l in enumerate(raw) if re.match(ekbpat, l)]
     assert len(iekb) > 0, f'No band energy found'
     assert len(iekb) % (nspin*nk) == 0
@@ -524,21 +526,18 @@ def read_abacus_out(fileobj,
     -> read_results()
     -> read_abacus_out() *here*
 
-    To use this function as a standalone one, the fileobj should be
-    the return of the open() function, which is a TextIOWrapper object:
-    >>> with open(fn) as fileobj:
-    ...     read_abacus_out(fileobj)
+    Supply a path or a named text stream so companion files can be located:
+    >>> read_abacus_out(Path("OUT.ABACUS/running_scf.log"), index=-1)
 
     Parameters
     ----------
-    fileobj : str | Path | TextIOWrapper
-        The file object to read.
-    index : slice
+    fileobj : str | Path | text stream
+        Running-log path or open text stream with a filesystem name.
+        Streams remain owned by the caller and are not closed here.
+    index : int or slice
         The index of the frames to read.
     results_required : bool
-        Whether the results are required. If True, the results will be
-        returned. If False, the results will not be returned. This parameter
-        is not used.
+        Retained for compatibility; currently has no effect.
     sort_atoms_with: Optional[List[int]]
         The sort order of the atoms. If not None, the atoms will be sorted
         according to the order in the list.
@@ -546,16 +545,12 @@ def read_abacus_out(fileobj,
     Returns
     -------
     atoms : Atoms | List[Atoms]
-        The atoms object, whose calculator is the `SinglePointDFTCalculator`.
+        Standard ASE geometry: Cartesian positions and cell in Angstrom, with
+        the periodic ABACUS simulation box. The attached calculator is a
+        `SinglePointDFTCalculator`.
     '''
-    assert isinstance(fileobj, Path)
-    # it is required that the running log file is passed as the Path object
-    # so that the band structure file ``eig_occ.txt`` can be located as the
-    # one in the same folder, otherwise the reading of elecstate will be
-    # invalid and cause the failure
-    with open(fileobj) as f:
-        abacus_lines = f.readlines()
-    
+    log_path, abacus_lines = _read_log_source(fileobj)
+
     # read the esolver type
     eslvtyp = read_esolver_type_from_running_log(abacus_lines)
     # FIXME: implement read_ksdft_esolver_out instead of read_abacus_out to
@@ -564,12 +559,12 @@ def read_abacus_out(fileobj,
     # read the structure, with the cell, elem, etc. (nframe)
     # if it is MD run, the trajectories will be in the file MD_dump, instead
     # of the running log
-    trajectory = read_traj_from_running_log(abacus_lines) \
-        if fileobj.name != 'running_md.log' else \
-        read_traj_from_md_dump(fileobj.parent / 'MD_dump')
+    md_calculation = log_path.name == 'running_md.log'
+    trajectory = read_traj_from_md_dump(log_path.parent / 'MD_dump') \
+        if md_calculation else read_traj_from_running_log(abacus_lines)
 
     # read the eigenvalues (nframe, nk, nbnd) written by the current run
-    eig_files = find_eig_occ_files(fileobj.parent, abacus_lines)
+    eig_files = find_eig_occ_files(log_path.parent, abacus_lines)
     elecstate = read_band_from_eig_occ_files(eig_files)
 
     # Associate eigenvalue frames with ionic steps.  The running log carries
@@ -634,24 +629,32 @@ def read_abacus_out(fileobj,
         trajectory, elecstate, magmom, forces, stress, energies):
         # for each frame, a structure can be defined
         ind = ind or list(range(len(frame['elem'])))
+        if md_calculation:
+            # MD_dump lattice vectors use alat; positions are already Angstrom.
+            cell = frame['cell'] * frame['alat_in_angstrom']
+            positions = frame['coords']
+        else:
+            positions, cell = _running_log_geometry(frame)
         atoms = Atoms(symbols=np.array(frame['elem'])[ind].tolist(), 
-                      positions=frame['coords'][ind], 
-                      cell=frame['cell'],
+                      positions=positions[ind],
+                      cell=cell,
+                      pbc=True,  # ABACUS uses a periodic simulation cell for every run.
                       magmoms=mag[ind])
         # from result, a calculator can be assembled
         # however, sometimes the force and stress is not calculated
         # in this case, we set them to None
         frs  = None if is_invalid_arr(frs)  else frs[ind]
         strs = None if is_invalid_arr(strs) else full_3x3_to_voigt_6_stress(strs)
+        atoms.info.update(_energy_without_entropy_metadata(ener))
         calc = SinglePointDFTCalculator(atoms=atoms, energy=ener['E_KohnSham'],
                                         free_energy=ener['E_KohnSham'],
                                         forces=frs, stress=strs,
-                                        magmoms=mag[ind], efermi=ener['E_Fermi'],
+                                        magmoms=mag[ind], efermi=ener.get('E_Fermi'),
                                         ibzkpts=kvecd, dipole=None)
-        # import the eigenvalues and occupations kpoint-by-kpoint; a step
-        # without a written eigenvalue frame keeps an empty k-point list
-        calc.kpts = []
+        # Leave kpts as None when no spectrum was written. ASE interprets
+        # an empty list as zero spin channels rather than missing data.
         if estat is not None:
+            calc.kpts = []
             for ispn, (ekb, occ) in enumerate(zip(estat['e'], estat['occ'])): # loop over the spin
                 calc.kpts += [SinglePointKPoint(weight=wk[ik],
                                                 s=ispn,
@@ -682,6 +685,8 @@ class TestLatestIO(unittest.TestCase):
                                 [1.0, 0.0, 0.0],
                                 [2.0, 0.0, 0.0]]),
             'cell': np.eye(3),
+            'coordinate': 'Cartesian',
+            'alat_in_angstrom': 1.0,
         }
         elecstate = [{
             'k': np.zeros((1, 1, 3)),
@@ -954,10 +959,9 @@ class TestLatestIO(unittest.TestCase):
             self.assertTrue(np.allclose(s, -0.1 * GPa * ref))
 
     def test_read_abacus_out_string(self):
-        fn = self.testfiles / 'pw-symm0-nspin4-gamma-md'
-        # the case that does not give the instance of Path
-        with self.assertRaises(AssertionError):
-            read_abacus_out(str(fn))
+        fn = self.testfiles / 'lcao-symm1-nspin1-multik-scf'
+        atoms = read_abacus_out(str(fn), index=-1)
+        self.assertAlmostEqual(atoms.get_potential_energy(), -1935.8941500616)
 
     def test_read_pw_symm0_nspin4_gamma_md(self):
         # make files ready
