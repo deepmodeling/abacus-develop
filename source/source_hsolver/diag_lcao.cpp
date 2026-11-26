@@ -63,6 +63,9 @@ void diag_lcao(ModuleBase::MatrixBlock<T>& h,
     else
 #endif
 #ifdef __ELPA
+    // ELPA updates its factorization flag in place. For a scratch overlap,
+    // start at zero and keep the update local so it cannot mark the caller's
+    // overlap as factored or make a later scratch solve reuse a stale factor.
     if (method == "genelpa")
     {
         int workspace_factor = 0;

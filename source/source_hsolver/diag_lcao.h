@@ -30,7 +30,11 @@ struct LcaoDiagOptions
     int bands;
     bool use_gpu;
     const Parallel_Blkcyclic* pool; // Non-null for a temporary k-point pool.
-    bool reuse_overlap_factor; // Reuse the ELPA factor stored in the caller's S buffer.
+    // True uses the backend's persistent ELPA factorization state for the
+    // caller's S buffer. The caller resets that state when S is rebuilt.
+    // False starts a fresh factorization of a scratch S and keeps its state
+    // local to this solve, as needed by the Löwdin overlap cutoff.
+    bool reuse_overlap_factor;
 };
 
 /** Solve H C = S C e using the configured LCAO backend and its optional k-point pool. */
