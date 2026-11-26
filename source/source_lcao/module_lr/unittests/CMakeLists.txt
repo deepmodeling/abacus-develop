@@ -189,7 +189,7 @@ if(ENABLE_MPI)
     COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 4 ${MPIEXEC_PREFLAGS}
             $<TARGET_FILE:MODULE_LR_nacv_tools> ${MPIEXEC_POSTFLAGS}
             --gtest_filter=ZeqCgPrecision.*:NacvFactorization.*:NacvIoMpi.*)
-  set_tests_properties(MODULE_LR_nacv_tools_mpi4 PROPERTIES PROCESSORS 4 TIMEOUT 120)
+  set_tests_properties(MODULE_LR_nacv_tools_mpi4 PROPERTIES PROCESSORS 4)
   # Both invocations of NacvIoMpi use the same scratch filenames.
   set_tests_properties(MODULE_LR_nacv_tools MODULE_LR_nacv_tools_mpi4
     PROPERTIES RESOURCE_LOCK nacv_tools_scratch

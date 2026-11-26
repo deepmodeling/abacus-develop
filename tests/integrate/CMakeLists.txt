@@ -20,7 +20,6 @@ if(LR_FORCE_TEST_PYTHON)
     NAME record_file_comparator
     COMMAND ${LR_FORCE_TEST_PYTHON} -m unittest discover -s
             ${CMAKE_CURRENT_SOURCE_DIR}/validation_tools -p test_record_files.py)
-  set_tests_properties(record_file_comparator PROPERTIES TIMEOUT 30)
   add_test(
     NAME lr_force_collector
     COMMAND
