@@ -32,7 +32,11 @@ ComplexArray::ComplexArray(const int d1, const int d2, const int d3)
     ++arrayCount;
 }
 
-ComplexArray::ComplexArray(const int d1, const int d2, const int d3, const int d4)
+ComplexArray::ComplexArray(
+    const int d1,
+    const int d2,
+    const int d3,
+    const int d4)
 {
     dim = 4;
     bound1 = (d1 <= 0) ? 1 : d1;
@@ -55,10 +59,7 @@ ComplexArray::ComplexArray(const int d1, const int d2, const int d3, const int d
 // Destructor for class ComplexArray
 //
 //********************************
-ComplexArray::~ComplexArray()
-{
-    freemem();
-}
+ComplexArray::~ComplexArray() { freemem(); }
 
 void ComplexArray::freemem()
 {
@@ -66,7 +67,11 @@ void ComplexArray::freemem()
     ptr = NULL;
 }
 
-void ComplexArray::create(const int d1, const int d2, const int d3, const int d4)
+void ComplexArray::create(
+    const int d1,
+    const int d2,
+    const int d3,
+    const int d4)
 {
     size = d1 * d2 * d3 * d4;
     assert(size > 0);
@@ -100,17 +105,21 @@ void ComplexArray::create(const int d1, const int d2, const int d3)
     assert(ptr != 0);
 }
 
-const ComplexArray& ComplexArray::operator=(const ComplexArray& right)
+const ComplexArray &ComplexArray::operator=(const ComplexArray &right)
 {
     for (int i = 0; i < size; i++)
+    {
         ptr[i] = right.ptr[i];
+    }
     return *this; // enables x = y = z;
 }
 
-const ComplexArray& ComplexArray::operator=(const std::complex<double>& right)
+const ComplexArray &ComplexArray::operator=(const std::complex<double> &right)
 {
     for (int i = 0; i < size; i++)
+    {
         ptr[i] = right;
+    }
     return *this; // enables x = y = z;
 }
 
@@ -120,7 +129,7 @@ const ComplexArray& ComplexArray::operator=(const std::complex<double>& right)
 // const reference return create an cvakue
 //
 //********************************************************
-const std::complex<double>& ComplexArray::operator()(const int ind1, const int ind2, const int ind3) const
+const std::complex<double> &ComplexArray::operator()(const int ind1, const int ind2, const int ind3) const
 {
     const int ind = (ind1 * bound2 + ind2) * bound3 + ind3;
     return ptr[ind];
@@ -132,10 +141,11 @@ const std::complex<double>& ComplexArray::operator()(const int ind1, const int i
 // const reference return creates an cvakue
 //
 //********************************************************
-const std::complex<double>& ComplexArray::operator()(const int ind1,
-                                                     const int ind2,
-                                                     const int ind3,
-                                                     const int ind4) const
+const std::complex<double> &ComplexArray::operator()(
+    const int ind1,
+    const int ind2,
+    const int ind3,
+    const int ind4) const
 {
     const int ind = ((ind1 * bound2 + ind2) * bound3 + ind3) * bound4 + ind4;
     return ptr[ind];
@@ -147,7 +157,7 @@ const std::complex<double>& ComplexArray::operator()(const int ind1,
 // const reference return creates an lvakue
 //
 //********************************************************
-complex<double>& ComplexArray::operator()(const int ind1, const int ind2, const int ind3)
+complex<double> &ComplexArray::operator()(const int ind1, const int ind2, const int ind3)
 {
     const int ind = (ind1 * bound2 + ind2) * bound3 + ind3;
     return ptr[ind]; // reference return
@@ -159,7 +169,11 @@ complex<double>& ComplexArray::operator()(const int ind1, const int ind2, const 
 // const reference return creates an lvakue
 //
 //********************************************************
-complex<double>& ComplexArray::operator()(const int ind1, const int ind2, const int ind3, const int ind4)
+complex<double> &ComplexArray::operator()(
+    const int ind1,
+    const int ind2,
+    const int ind3,
+    const int ind4)
 {
     const int ind = ((ind1 * bound2 + ind2) * bound3 + ind3) * bound4 + ind4;
     return ptr[ind]; // reference return
@@ -173,8 +187,12 @@ complex<double>& ComplexArray::operator()(const int ind1, const int ind2, const 
 void ComplexArray::zero_out(void)
 {
     if (size <= 0)
+    {
         return;
+    }
     for (int i = 0; i < size; i++)
+    {
         ptr[i] = 0;
+    }
     return;
 }

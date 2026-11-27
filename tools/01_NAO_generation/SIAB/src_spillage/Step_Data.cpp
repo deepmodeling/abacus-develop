@@ -29,16 +29,19 @@ Step_Data::~Step_Data()
     delete[] Mk;
 }
 
-void Step_Data::init(const int& nks_in,
-                     const double* weight_in,
-                     const int& nbands_in,
-                     const int& ne_in,
-                     const int& nwfc_in,
-                     const int& nwfc2_in,
-                     const int& nwfc_all_in)
+void Step_Data::init(
+    const int &nks_in,
+    const double *weight_in,
+    const int &nbands_in,
+    const int &ne_in,
+    const int &nwfc_in,
+    const int &nwfc2_in,
+    const int &nwfc_all_in)
 {
     if (test == 1)
+    {
         TITLE("Step_Data", "init");
+    }
     this->nks = nks_in;
     assert(nks > 0);
 
@@ -87,7 +90,9 @@ void Step_Data::allocate()
 void Step_Data::initQS(void)
 {
     if (test == 1)
+    {
         TITLE("Step_Data", "initQS");
+    }
     assert(nks > 0);
     assert(nbands > 0);
     assert(nwfc > 0); // nwfc is for <J|Bloch>, <J|J>
