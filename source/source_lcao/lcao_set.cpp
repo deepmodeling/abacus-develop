@@ -1,7 +1,6 @@
 #include "source_lcao/lcao_set.h"
 #include "source_base/global_function.h"
 #include "source_base/parallel_common.h"
-#include "source_base/parallel_global.h" // use Parallel_Global::mpi_number
 #include "source_io/module_dm/write_dmk.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_psi/setup_psi.h" // use Setup_Psi
@@ -25,24 +24,17 @@ void LCAO_domain::set_psi_occ_dm_chg(
         Charge &chr, // charge density 
         const Input_para &inp) // input parameters
 {
-    // Estimate the dense LCAO matrix memory and fail fast before the first
-    // big allocation (Psi).  See issue #8342.  Cross-layer values are read
-    // here and passed explicitly so check_lcao_dense_memory itself touches no
-    // process-global state.
+    // Estimate the total dense LCAO matrix memory and print it on rank 0
+    // before the first big allocation (Psi).  See issue #8342.  Cross-layer
+    // values are read here and passed explicitly so check_lcao_dense_memory
+    // itself touches no process-global state.
     const bool gamma_only = PARAM.globalv.gamma_only_local;
     const int my_rank = GlobalV::MY_RANK;
-#ifdef __MPI
-    const int ranks_per_node = Parallel_Global::mpi_number;
-#else
-    // Serial build: parallel_global.cpp defines mpi_number only under __MPI,
-    // and a single process always shares its node with itself.
-    const int ranks_per_node = 1;
-#endif
     // ofstream& (not ostream&): ModuleBase::GlobalFunc::DONE takes std::ofstream&,
     // and ofstream& still binds to check_lcao_dense_memory's std::ostream& parameter.
     std::ofstream& log = GlobalV::ofs_running;
     LCAO_domain::check_lcao_dense_memory<TK>(
-        pv, kv, inp, gamma_only, my_rank, ranks_per_node, log);
+        pv, kv, inp, gamma_only, my_rank, log);
 
     //! 1) init electronic wave function psi
     Setup_Psi<TK>::allocate_psi(psi, kv, pv, inp);
