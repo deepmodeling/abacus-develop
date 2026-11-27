@@ -61,6 +61,8 @@ def ReadParam():
     return file1,file2,epsilon,useAbsoluteVal,compareAbsoluteDiff
 
 def is_two_data_diff(data1,data2,epsilon,compareAbsoluteDiff):
+    if not math.isfinite(data1) or not math.isfinite(data2):
+        return True
     if compareAbsoluteDiff:
         if abs(data1-data2) > epsilon: return True
     else:
@@ -113,6 +115,10 @@ def normalize_lines(lines):
         if stripped is None:
             continue
         normalized.append(canonical_step(stripped))
+    # Remove trailing blanks after provenance comments have been discarded.
+    # Interior blank lines still identify missing or shifted data rows.
+    while normalized and not normalized[-1].strip():
+        normalized.pop()
     return normalized
 
 def ReadFile(file1,lines):
@@ -148,6 +154,16 @@ def IsComplex(x):
         return False
     return [realp,imagp]
 
+def HasNonFiniteNumber(line):
+    for token in line.split():
+        complex_value = IsComplex(token)
+        if complex_value:
+            if not math.isfinite(complex_value[0]) or not math.isfinite(complex_value[1]):
+                return True
+        elif IsFloat(token) and not math.isfinite(float(token)):
+            return True
+    return False
+
 def ExitError(iline,line1,line2,jnumber=-1):
     if jnumber < 0:
         print('Compare Error: line %d\n %s:%s %s:%s'%(iline+1,file1,line1,file2,line2))
@@ -166,7 +182,9 @@ if __name__ == "__main__":
     lines2 = normalize_lines(lines2)
    
     for i in range(min(len(lines1),len(lines2))):
-        if lines1[i].strip() == lines2[i].strip():continue
+        if lines1[i].strip() == lines2[i].strip():
+            if HasNonFiniteNumber(lines1[i]): ExitError(i,lines1[i],lines2[i])
+            continue
         elif '' in [lines1[i].strip(),lines2[i].strip()]: ExitError(i,lines1[i],lines2[i])
         elif len(lines1[i].split()) != len(lines2[i].split()): ExitError(i,lines1[i],lines2[i])
         else:
@@ -192,3 +210,9 @@ if __name__ == "__main__":
                         if is_two_data_diff(float(sline1[j]), float(sline2[j]), epsilon, compareAbsoluteDiff):
                             ExitError(i,sline1[j],sline2[j],j)
                 elif sline1[j] != sline2[j]: ExitError(i,sline1[j],sline2[j],j)
+
+    if len(lines1) != len(lines2):
+        i = min(len(lines1),len(lines2))
+        line1 = lines1[i] if i < len(lines1) else '<missing>'
+        line2 = lines2[i] if i < len(lines2) else '<missing>'
+        ExitError(i,line1,line2)

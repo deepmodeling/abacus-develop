@@ -553,10 +553,11 @@ if [ -z $g ]; then
     exit 1
   fi
 else
-  if [ "$fatal" -gt 0 ] || [ "$failed" -gt 0 ]; then
-    echo -e "\e[0;31m[ERROR     ]\e[0m Reference generation failed for $fatal cases."
-    printf "%b" "$fatal_case_list"
+  if [ "$fatal" -eq 0 ] && [ "$failed" -eq 0 ]; then
+    echo "Generate test cases complete."
+  else
+    echo -e "\e[0;31m[ERROR     ]\e[0m Reference generation failed for $(($fatal + $failed)) case(s)."
+    printf "%b" "$fatal_case_list$failed_case_list"
     exit 1
   fi
-  echo "Generate test cases complete."
 fi
