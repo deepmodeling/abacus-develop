@@ -20,3 +20,18 @@ addtest(
   TARGET MODULE_BASE_net_force
   LIBS parameter base device
   SOURCES test_mathzone.cpp)
+
+addtest(
+  TARGET MODULE_BASE_matrix_overflow
+  LIBS parameter base device
+  SOURCES test_matrix.cpp)
+
+addtest(
+  TARGET MODULE_BASE_complexmatrix_overflow
+  LIBS parameter base device
+  SOURCES test_complexmatrix.cpp)
+
+addtest(
+  TARGET MODULE_BASE_memory_budget
+  LIBS parameter base device
+  SOURCES test_memory_budget.cpp)

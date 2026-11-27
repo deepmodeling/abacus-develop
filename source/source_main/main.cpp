@@ -17,6 +17,8 @@
 #include <ctime>
 #include <exception>
 #include <iostream>
+#include <new>
+#include <stdexcept>
 
 namespace
 {
@@ -100,7 +102,42 @@ int main(int argc, char** argv)
     main program for doing electronic structure calculations.
     */
     Driver DD;
-    DD.init(cli);
+    // Catch allocation failures from the large LCAO dense matrices (issue
+    // #8342) so the run exits with a clear message instead of an uncaught
+    // exception or an MPI abort.  Driver stays in this scope so its destructor
+    // still runs after finalize_mpi, preserving the original cleanup order.
+    try
+    {
+        DD.init(cli);
+    }
+    catch (const std::bad_alloc& e)
+    {
+        std::cerr << " ABACUS: out of memory: " << e.what() << std::endl;
+#ifdef __MPI
+        // The allocation failure may be rank-local (e.g. a root-only gathered
+        // buffer), so peers can be blocked inside a collective.  finalize_mpi
+        // runs collective cleanup and would hang; abort the whole job instead.
+        Parallel_Global::abort_mpi(1);
+#endif
+        return 1;
+    }
+    catch (const std::length_error& e)
+    {
+        std::cerr << " ABACUS: allocation length error (likely a too-large dense"
+                     " matrix): " << e.what() << std::endl;
+#ifdef __MPI
+        Parallel_Global::abort_mpi(1);
+#endif
+        return 1;
+    }
+    catch (const std::exception& e)
+    {
+        std::cerr << " ABACUS: fatal error: " << e.what() << std::endl;
+#ifdef __MPI
+        Parallel_Global::abort_mpi(1);
+#endif
+        return 1;
+    }
 
     /*
     After running mpi version of abacus, release the mpi resources.

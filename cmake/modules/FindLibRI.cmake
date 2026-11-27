@@ -34,6 +34,30 @@ if(LibRI_FOUND AND NOT TARGET LibRI::LibRI)
   find_package(LibComm REQUIRED)
   find_package(cereal REQUIRED CONFIG)
 
+  # A distribution-packaged cereal may resolve its install prefix to "/", so
+  # the imported target advertises the non-existent include directory
+  # "/include".  CMake rejects such a path once the target is linked directly
+  # (as LibRI::LibRI does), so repair it with the headers found on disk.
+  if(TARGET cereal::cereal)
+    get_target_property(_cereal_include_dirs cereal::cereal
+                        INTERFACE_INCLUDE_DIRECTORIES)
+    set(_cereal_include_dirs_valid TRUE)
+    foreach(_cereal_include_dir IN LISTS _cereal_include_dirs)
+      if(NOT IS_DIRECTORY "${_cereal_include_dir}")
+        set(_cereal_include_dirs_valid FALSE)
+      endif()
+    endforeach()
+    if(NOT _cereal_include_dirs_valid)
+      find_path(LIBRI_CEREAL_INCLUDE_DIR cereal/version.hpp)
+      if(NOT LIBRI_CEREAL_INCLUDE_DIR)
+        message(FATAL_ERROR "cereal headers were not found")
+      endif()
+      set_target_properties(
+        cereal::cereal
+        PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "${LIBRI_CEREAL_INCLUDE_DIR}")
+    endif()
+  endif()
+
   add_library(LibRI::LibRI INTERFACE IMPORTED)
   set_target_properties(
     LibRI::LibRI

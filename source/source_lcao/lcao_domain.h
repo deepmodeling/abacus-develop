@@ -1,6 +1,8 @@
 #ifndef LCAO_DOMAIN_H
 #define LCAO_DOMAIN_H
 
+#include <cstddef>
+
 #include "source_base/global_function.h"
 #include "source_base/vector3.h"
 #include "source_basis/module_nao/two_center_bundle.h"
@@ -128,7 +130,7 @@ struct NL_elem
     const int iw1_all;
     const int iw2_all;
     const int t0;
-    const int nnr;
+    const std::size_t nnr;
 };
 
 /**
@@ -136,8 +138,8 @@ struct NL_elem
  */
 void single_overlap(const ST_env& env,
                     const ST_elem& e,
-                    int& nnr,       // output value
-                    int& total_nnr, // output value
+                    std::size_t& nnr,       // output value
+                    std::size_t& total_nnr, // output value
                     double* olm,    // output value
                     double* HSloc); // output value
 
@@ -147,8 +149,8 @@ void single_overlap(const ST_env& env,
 void single_deriv(const ST_env& env,
                   const ST_elem& e,
                   ForceStressArrays& fsr,
-                  int& nnr,       // output value
-                  int& total_nnr, // output value
+                  std::size_t& nnr,       // output value
+                  std::size_t& total_nnr, // output value
                   double* olm);   // output value
 
 /**

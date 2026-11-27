@@ -53,7 +53,7 @@ void cal_dmr_full(
         if (ik_in >= 0)
         {
             // single k-point
-            const TK* const dmk_col = dm.dmk[ik_in].data() + block.col0 * ld_hk + block.row0;
+            const TK* const dmk_col = dm.dmk[ik_in].data() + dmk_index(block.col0, block.row0, ld_hk);
             transpose_dmk_block(dmk_col, ld_hk, block, dmk_row.data());
             for (int iR = 0; iR < R_size; ++iR)
             {
@@ -70,7 +70,7 @@ void cal_dmr_full(
             // all k-points
             for (int ik = 0; ik < dm._nk; ++ik)
             {
-                const TK* const dmk_col = dm.dmk[ik].data() + block.col0 * ld_hk + block.row0;
+                const TK* const dmk_col = dm.dmk[ik].data() + dmk_index(block.col0, block.row0, ld_hk);
                 transpose_dmk_block(dmk_col, ld_hk, block, dmk_row.data());
                 for (int iR = 0; iR < R_size; ++iR)
                 {

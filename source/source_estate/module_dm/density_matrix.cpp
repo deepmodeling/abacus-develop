@@ -1,5 +1,7 @@
 #include "density_matrix.h"
 
+#include <cstddef>
+
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/libm/libm.h"
 #include "source_base/memory_recorder.h"
@@ -46,11 +48,14 @@ DensityMatrix<TK, TR>::DensityMatrix(const Parallel_Orbitals* paraV_in,
     ModuleBase::TITLE("DensityMatrix", "resize_DMK");
     const int nks = _nk * this->spin_mult;
     this->dmk.resize(nks);
+    // Keep the local element count in size_t: nrloc*ncloc is about 2.55e9
+    // for NLOCAL = 377884 on 56 ranks, which is above INT_MAX (issue #8342).
+    const std::size_t local_size = dmk_element_count(this->pv);
     for (int ik = 0; ik < nks; ik++)
     {
-        this->dmk[ik].resize(this->pv->para_2d().nrloc() * this->pv->para_2d().ncloc());
+        this->dmk[ik].resize(local_size);
     }
-    ModuleBase::Memory::record("DensityMatrix::DMK", this->dmk.size() * this->dmk[0].size() * sizeof(TK));
+    ModuleBase::Memory::record("DensityMatrix::DMK", this->dmk.size() * local_size * sizeof(TK));
 }
 
 template <typename TK, typename TR>
@@ -60,11 +65,13 @@ DensityMatrix<TK, TR>::DensityMatrix(const Parallel_Orbitals* paraV_in, const in
 {
     ModuleBase::TITLE("DensityMatrix", "resize_gamma");
     this->dmk.resize(this->spin_mult);
+    // Same size_t reason as the multi-k constructor above.
+    const std::size_t local_size = dmk_element_count(this->pv);
     for (int ik = 0; ik < this->spin_mult; ik++)
     {
-        this->dmk[ik].resize(this->pv->para_2d().nrloc() * this->pv->para_2d().ncloc());
+        this->dmk[ik].resize(local_size);
     }
-    ModuleBase::Memory::record("DensityMatrix::DMK", this->dmk.size() * this->dmk[0].size() * sizeof(TK));
+    ModuleBase::Memory::record("DensityMatrix::DMK", this->dmk.size() * local_size * sizeof(TK));
 }
 
 
@@ -91,10 +98,10 @@ void DensityMatrix<TK, TR>::switch_dmr(const int mode)
             // switch to total magnetization density matrix, dmr_up + dmr_down
             if(this->dmr_tmp.empty())
             {
-                const size_t size = this->dmr[0]->get_nnr();
+                const std::size_t size = this->dmr[0]->get_nnr();
                 this->dmr_tmp.resize(size);
                 this->dmr_origin.resize(size);
-                for (int i = 0; i < size; ++i)
+                for (std::size_t i = 0; i < size; ++i)
                 {
                     this->dmr_origin[i] = this->dmr[0]->get_wrapper()[i];
                     this->dmr_tmp[i] = this->dmr_origin[i] + this->dmr[1]->get_wrapper()[i];
@@ -103,8 +110,8 @@ void DensityMatrix<TK, TR>::switch_dmr(const int mode)
             }
             else
             {
-                const size_t size = this->dmr[0]->get_nnr();
-                for (int i = 0; i < size; ++i)
+                const std::size_t size = this->dmr[0]->get_nnr();
+                for (std::size_t i = 0; i < size; ++i)
                 {
                     this->dmr_tmp[i] = this->dmr_origin[i] + this->dmr[1]->get_wrapper()[i];
                 }
@@ -114,10 +121,10 @@ void DensityMatrix<TK, TR>::switch_dmr(const int mode)
             // switch to magnetization density matrix, dmr_up - dmr_down
             if(this->dmr_tmp.empty())
             {
-                const size_t size = this->dmr[0]->get_nnr();
+                const std::size_t size = this->dmr[0]->get_nnr();
                 this->dmr_tmp.resize(size);
                 this->dmr_origin.resize(size);
-                for (int i = 0; i < size; ++i)
+                for (std::size_t i = 0; i < size; ++i)
                 {
                     this->dmr_origin[i] = this->dmr[0]->get_wrapper()[i];
                     this->dmr_tmp[i] = this->dmr_origin[i] - this->dmr[1]->get_wrapper()[i];
@@ -126,8 +133,8 @@ void DensityMatrix<TK, TR>::switch_dmr(const int mode)
             }
             else
             {
-                const size_t size = this->dmr[0]->get_nnr();
-                for (int i = 0; i < size; ++i)
+                const std::size_t size = this->dmr[0]->get_nnr();
+                for (std::size_t i = 0; i < size; ++i)
                 {
                     this->dmr_tmp[i] = this->dmr_origin[i] - this->dmr[1]->get_wrapper()[i];
                 }

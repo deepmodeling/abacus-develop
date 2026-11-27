@@ -1,6 +1,7 @@
 #ifndef _PARALLEL_ORBITALS_H_
 #define _PARALLEL_ORBITALS_H_
 #include "source_base/parallel_blkcyc.h"
+#include <cstddef>
 #include <fstream>
 #include <vector>
 
@@ -51,10 +52,11 @@ public:
     ///-------------------------------------
     /// number of elements(basis-pairs) in this processon
     /// on all adjacent atoms-pairs(2D division)
-    ///-------------------------------------
-    int nnr=1;
-    std::vector<int> nlocdim;
-    std::vector<int> nlocstart;
+    /// nnr can exceed INT_MAX for large LCAO bases (issue #8342), so keep it
+    /// and the per-atom offsets in size_t.
+    std::size_t nnr=1;
+    std::vector<std::size_t> nlocdim;
+    std::vector<std::size_t> nlocstart;
     
 #ifdef __MPI
     int desc_wfc[9]; //for wfc, nlocal*nbands

@@ -5,6 +5,7 @@
 #include "pulay_fs.h"
 #include "source_base/timer.h"
 #include "source_io/module_parameter/parameter.h"
+#include <cstddef>
 #ifdef _OPENMP
 #include <omp.h>
 #endif
@@ -34,16 +35,16 @@ namespace PulayForceStress
         ModuleBase::timer::start("Force_LCAO", "cal_pulay_fs_center2");
 
         const int nspin_DMR = (PARAM.inp.nspin == 2) ? 2 : 1;
-        int total_irr = 0;
+        std::size_t total_irr = 0;
 #ifdef _OPENMP
 #pragma omp parallel
         {
             int num_threads = omp_get_num_threads();
             ModuleBase::matrix local_s(3, 3);
-            int local_total_irr = 0;
+            std::size_t local_total_irr = 0;
 #else
             ModuleBase::matrix& local_s = s;
-            int& local_total_irr = total_irr;
+            std::size_t& local_total_irr = total_irr;
 #endif
 
 #ifdef _OPENMP
@@ -63,7 +64,7 @@ namespace PulayForceStress
                 double f_tmp[3] = { 0.0, 0.0, 0.0 };
                 if (num_threads > 1) { f_iat = f_tmp; }
 #endif
-                int irr = pv.nlocstart[iat];
+                std::size_t irr = pv.nlocstart[iat];
                 const int start1 = ucell.itiaiw2iwt(T1, I1, 0);
                 for (int cb = 0; cb < ra->na_each[iat]; ++cb)
                 {

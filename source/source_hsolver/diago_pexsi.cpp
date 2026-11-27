@@ -1,5 +1,6 @@
 #include <mpi.h>
 #include <complex>
+#include <cstddef>
 #include <memory>
 #ifdef __PEXSI
 #include "diago_pexsi.h"
@@ -37,10 +38,14 @@ DiagoPexsi<T>::DiagoPexsi(const Parallel_Orbitals* ParaV_in,
 
     this->DM.resize(this->nspin_dm);
     this->EDM.resize(this->nspin_dm);
+    // nrloc*ncloc is about 2.55e9 for NLOCAL=377884 on 56 ranks; keep the
+    // allocation count in size_t (issue #8342).
+    const std::size_t local_size = static_cast<std::size_t>(ParaV->para_2d().nrloc())
+                                 * static_cast<std::size_t>(ParaV->para_2d().ncloc());
     for (int i = 0; i < this->nspin_dm; i++)
     {
-        this->DM[i] = new T[ParaV->para_2d().nrloc() * ParaV->para_2d().ncloc()];
-        this->EDM[i] = new T[ParaV->para_2d().nrloc() * ParaV->para_2d().ncloc()];
+        this->DM[i] = new T[local_size];
+        this->EDM[i] = new T[local_size];
     }
 
 }

@@ -2,6 +2,8 @@
 #include "source_lcao/lcao_domain.h"
 #include "source_io/module_parameter/parameter.h"
 
+#include <cstddef>
+
 namespace LCAO_domain
 {
 
@@ -11,7 +13,7 @@ namespace LCAO_domain
 static void set_deriv_s(ForceStressArrays& fsr,
                         const int nspin,
                         const int is,
-                        const int nnr,
+                        const std::size_t nnr,
                         const double* olm,
                         const ModuleBase::Vector3<double>& dtau,
                         const bool cal_stress)
@@ -74,7 +76,7 @@ static void set_deriv_s(ForceStressArrays& fsr,
 static void set_deriv_t(ForceStressArrays& fsr,
                         const int nspin,
                         const int is,
-                        const int nnr,
+                        const std::size_t nnr,
                         const double* olm,
                         const ModuleBase::Vector3<double>& dtau,
                         const bool cal_stress)
@@ -154,8 +156,8 @@ static void set_deriv_t(ForceStressArrays& fsr,
 void single_deriv(const ST_env& env,
                   const ST_elem& e,
                   ForceStressArrays& fsr,
-                  int& nnr,
-                  int& total_nnr,
+                  std::size_t& nnr,
+                  std::size_t& total_nnr,
                   double* olm // output value
 )
 {
@@ -232,8 +234,8 @@ void single_deriv(const ST_env& env,
 
 void single_overlap(const ST_env& env,
                     const ST_elem& e,
-                    int& nnr,       // output value
-                    int& total_nnr, // output value
+                    std::size_t& nnr,       // output value
+                    std::size_t& total_nnr, // output value
                     double* olm,    // output value
                     double* HSloc   // output value
 )
@@ -364,7 +366,7 @@ void build_ST_new(ForceStressArrays& fsr,
     // read-only environment shared by every element of this build
     const ST_env env{orb, two_center_bundle, pv, ucell, nspin, npol, cal_stress, gamma_only_local};
 
-    int total_nnr = 0;
+    std::size_t total_nnr = 0;
 #ifdef _OPENMP
 #pragma omp parallel reduction(+ : total_nnr)
     {
@@ -392,7 +394,7 @@ void build_ST_new(ForceStressArrays& fsr,
             AdjacentAtomInfo adjs;
             GridD->Find_atom(ucell, tau1, t1, i1, &adjs);
             // Record_adj.for_2d() may not called in some case
-            int nnr = 0;
+            std::size_t nnr = 0;
             if (!pv.nlocstart.empty())
             {
                 nnr = pv.nlocstart[iat1];

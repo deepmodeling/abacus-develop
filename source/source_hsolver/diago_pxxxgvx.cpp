@@ -4,6 +4,7 @@
 #include "source_base/module_external/scalapack_connector.h"
 
 #include <complex>
+#include <cstddef>
 #include <cstring>
 #include <iostream>
 #include <vector>
@@ -483,10 +484,15 @@ void pxxxgvx_diag(const int* const desc,
     int degeneracy_max = 12; // only used for complex<float> and std::complex<double>
     while (true)
     {
-        std::vector<T> h_tmp(ncol * nrow, 0);
-        std::vector<T> s_tmp(ncol * nrow, 0);
-        memcpy(h_tmp.data(), h_mat, sizeof(T) * ncol * nrow);
-        memcpy(s_tmp.data(), s_mat, sizeof(T) * ncol * nrow);
+        // The local block can exceed INT_MAX elements (issue #8342); keep the
+        // element count and the byte count in size_t before allocating/copying.
+        const std::size_t local_size = static_cast<std::size_t>(ncol)
+                                     * static_cast<std::size_t>(nrow);
+        const std::size_t local_bytes = sizeof(T) * local_size;
+        std::vector<T> h_tmp(local_size, 0);
+        std::vector<T> s_tmp(local_size, 0);
+        memcpy(h_tmp.data(), h_mat, local_bytes);
+        memcpy(s_tmp.data(), s_mat, local_bytes);
 
         int ndim_global = desc[2];
         const char jobz = 'V';

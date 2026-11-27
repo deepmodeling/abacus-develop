@@ -33,6 +33,7 @@ add_library(
     mathzone_add1.cpp
     matrix.cpp
     matrix3.cpp
+    memory_budget.cpp
     memory_recorder.cpp
     mymath.cpp
     opt_cg.cpp

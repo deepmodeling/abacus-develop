@@ -180,6 +180,7 @@ OBJS_BASE=assoc_laguerre.o\
     mathzone_add1.o\
     matrix.o\
     matrix3.o\
+    memory_budget.o\
     memory_recorder.o\
     mymath.o\
     para_gemm.o\
@@ -921,6 +922,7 @@ OBJS_LCAO=evolve_elec.o\
       lcao_allocate.o\
       lcao_set_mat2d.o\
       lcao_init_basis.o\
+      lcao_memory_check.o\
       setup_exx.o\
       setup_deepks.o\
       allocate_dm.o\

@@ -22,7 +22,7 @@ void DensityMatrix<TK, TR>::set_dmk_ptr(const int ik, TK* DMK_in)
 #ifdef __DEBUG
     assert(ik < this->_nk * this->spin_mult);
 #endif
-    this->dmk[ik].assign(DMK_in, DMK_in + this->pv->para_2d().nrloc() * this->pv->para_2d().ncloc());
+    this->dmk[ik].assign(DMK_in, DMK_in + dmk_element_count(this->pv));
 }
 
 // set dmk element
@@ -34,7 +34,7 @@ void DensityMatrix<TK, TR>::set_dmk(const int ispin, const int ik, const int i, 
     assert(ik >= 0 && ik < this->_nk);
 #endif
     // consider transpose col=>row
-    this->dmk[ik + this->_nk * (ispin - 1)][i * this->pv->para_2d().nrloc() + j] = value;
+    this->dmk[ik + this->_nk * (ispin - 1)][dmk_index(i, j, this->pv->para_2d().nrloc())] = value;
 }
 
 // set dmk element
@@ -53,7 +53,8 @@ void DensityMatrix<TK, TR>::save_dmr()
     ModuleBase::TITLE("DensityMatrix", "save_dmr");
     ModuleBase::timer::start("DensityMatrix", "save_dmr");
 
-    const int nnr = this->dmr[0]->get_nnr();
+    // nnr is a global matrix-element count, so it must not be narrowed to int.
+    const std::size_t nnr = this->dmr[0]->get_nnr();
     // allocate if dmr_save is empty
     if (dmr_save.size() == 0)
     {

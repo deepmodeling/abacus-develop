@@ -7,6 +7,7 @@
 #include "source_hamilt/module_gint/gint_dvlocal.h"
 
 #include <cmath>
+#include <cstddef>
 #include <map>
 #include <vector>
 
@@ -243,7 +244,7 @@ void sparse_format::cal_dS(const UnitCell& ucell,
 ModuleBase::TITLE("sparse_format", "cal_dS");
 
 sparse_format::set_R_range(HS_Arrays.all_R_coor, grid);
-const int nnr = gamma_only_local ? pv.para_2d().size() : pv.nnr;
+const std::size_t nnr = gamma_only_local ? pv.para_2d().size() : pv.nnr;
 
 ForceStressArrays fsr_dh;
 fsr_dh.DHloc_fixedR_x.resize(nnr, 0.0);
@@ -284,7 +285,7 @@ void sparse_format::cal_dH(const UnitCell& ucell,
 
     sparse_format::set_R_range(HS_Arrays.all_R_coor, grid);
 
-    const int nnr = gamma_only_local ? pv.para_2d().size() : pv.nnr;
+    const std::size_t nnr = gamma_only_local ? pv.para_2d().size() : pv.nnr;
 
     ForceStressArrays fsr_dh;
 

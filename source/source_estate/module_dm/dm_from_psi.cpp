@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <complex>
+#include <cstddef>
 #include <vector>
 
 #include "source_base/module_external/blas_connector.h"
@@ -86,7 +87,10 @@ void fill_weighted_wfc(const Parallel_Orbitals* ParaV,
 #endif
     for (int ib_local = 0; ib_local < nbands_local; ++ib_local)
     {
-        const int offset = ib_local * nbasis_local;
+        // nbands_local*nbasis_local is about 2.8e10 for the issue #8342 case,
+        // so the row offset must not be computed in int.
+        const std::size_t offset = static_cast<std::size_t>(ib_local)
+                                 * static_cast<std::size_t>(nbasis_local);
         const double factor_ib = factor[ib_local];
         for (int iw = 0; iw < nbasis_local; ++iw)
         {

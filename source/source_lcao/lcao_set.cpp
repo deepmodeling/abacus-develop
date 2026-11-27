@@ -8,6 +8,7 @@
 #include "source_estate/elecstate_tools.h" // use fixed_weights
 #include "source_hamilt/module_hcontainer/read_hcontainer.h"
 #include "source_lcao/rho_tau_lcao.h" // use dm2rho
+#include "source_lcao/lcao_memory_check.h" // use check_lcao_dense_memory
 #include "source_lcao/hamilt_lcao.h" // use HamiltLCAO for init_chg_hr
 #include "source_hamilt/hamilt_hs_adapter.h"
 #include "source_hsolver/hsolver_lcao.h" // use HSolverLCAO for init_chg_hr
@@ -23,6 +24,17 @@ void LCAO_domain::set_psi_occ_dm_chg(
         Charge &chr, // charge density 
         const Input_para &inp) // input parameters
 {
+    // Estimate the total dense LCAO matrix memory and print it on rank 0
+    // before the first big allocation (Psi).  See issue #8342.  Cross-layer
+    // values are read here and passed explicitly so check_lcao_dense_memory
+    // itself touches no process-global state.
+    const bool gamma_only = PARAM.globalv.gamma_only_local;
+    const int my_rank = GlobalV::MY_RANK;
+    // ofstream& (not ostream&): ModuleBase::GlobalFunc::DONE takes std::ofstream&,
+    // and ofstream& still binds to check_lcao_dense_memory's std::ostream& parameter.
+    std::ofstream& log = GlobalV::ofs_running;
+    LCAO_domain::check_lcao_dense_memory<TK>(
+        pv, kv, inp, gamma_only, my_rank, log);
 
     //! 1) init electronic wave function psi
     Setup_Psi<TK>::allocate_psi(psi, kv, pv, inp);
@@ -48,7 +60,7 @@ void LCAO_domain::set_psi_occ_dm_chg(
     //! 4) init DMK, but DMR is constructed in before_scf()
     LCAO_domain::allocate_dm(dmat, &kv, &pv, inp.nspin);
 
-    ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "CHARGE");
+    ModuleBase::GlobalFunc::DONE(log, "CHARGE");
 
     return;
 }

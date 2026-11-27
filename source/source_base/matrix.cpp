@@ -6,7 +6,6 @@
 #include <cassert>
 #include <cstring>
 #include <cmath>
-#include <cstdlib>
 #include <limits>
 #include <new>
 
@@ -27,23 +26,16 @@
 namespace ModuleBase
 {
 
-void matrixAlloc()
-{
-    std::cerr << "Allocation error for Matrix" << std::endl;
-    std::exit(EXIT_FAILURE);
-}
-
 /*create a matrix with nrows*ncols size */
 matrix::matrix( const int nrows, const int ncols, const bool flag_zero )
     :nr(nrows),
      nc(ncols),
      c(nullptr)
 {
-    if( nr && nc )
+    const std::size_t size = matrix_size(nr, nc);
+    if( size )
     {
-        std::new_handler handler_old = std::set_new_handler(matrixAlloc);
-        c = new double[nr*nc];
-        std::set_new_handler(handler_old);
+        c = new double[size];
         if(flag_zero)	this->zero_out();
     }
 }
@@ -53,12 +45,11 @@ matrix::matrix( const matrix &m_in )
      nc(m_in.nc),
      c(nullptr)
 {
-    if( nr && nc )
+    const std::size_t size = matrix_size(nr, nc);
+    if( size )
     {
-        std::new_handler handler_old = std::set_new_handler(matrixAlloc);
-        c = new double[nr*nc];
-        std::set_new_handler(handler_old);
-        memcpy( c, m_in.c, nr*nc*sizeof(double) );
+        c = new double[size];
+        memcpy( c, m_in.c, size*sizeof(double) );
     }
 }
 
@@ -78,9 +69,10 @@ matrix& matrix::operator=( const matrix & m_in )
     this->create( m_in.nr, m_in.nc, false );
     // `create` leaves `c` null for an empty matrix, and memcpy's arguments are declared
     // non-null even for a zero count -- so assigning an empty matrix is undefined behaviour.
-    if( nr && nc )
+    const std::size_t size = matrix_size(nr, nc);
+    if( size )
     {
-        memcpy( c, m_in.c, nr*nc*sizeof(double) );
+        memcpy( c, m_in.c, size*sizeof(double) );
     }
     return *this;
 }
@@ -130,45 +122,37 @@ matrix::~matrix()
 // Peize Lin change 2018-07-29
 void matrix::create( const int nrow, const int ncol, const bool flag_zero )
 {
-    if( nrow && ncol )
-    {
-        if(c)
-        {
-            const int size=nrow*ncol;
-            if( size!=nr*nc )
-            {
-                delete[] c;
-                std::new_handler handler_old = std::set_new_handler(matrixAlloc);
-                c = new double[size];
-                std::set_new_handler(handler_old);
-            }
-        }
-        else
-        {
-            std::new_handler handler_old = std::set_new_handler(matrixAlloc);
-            c = new double[nrow * ncol];
-            std::set_new_handler(handler_old);
-        }			
-            
-        nr = nrow;
-        nc = ncol;
-        if(flag_zero)	zero_out();				// Peize Lin change 2018-03-12
-    }
-    else
+    const std::size_t new_size = matrix_size(nrow, ncol);
+    if( new_size == 0 )
     {
         if(c)	delete[] c;
         c = nullptr;
         nr = nrow;
         nc = ncol;
+        return;
     }
+
+    const std::size_t old_size = ( c != nullptr ) ? matrix_size(nr, nc) : 0;
+    if( c == nullptr || new_size != old_size )
+    {
+        // Allocate before releasing the old buffer so a bad_alloc leaves the
+        // matrix unchanged and the caller can still report the failure.
+        double* new_data = new double[new_size];
+        delete[] c;
+        c = new_data;
+    }
+
+    nr = nrow;
+    nc = ncol;
+    if(flag_zero)	zero_out();				// Peize Lin change 2018-03-12
 }
 
 /* Unary minus*/
 matrix operator-(const matrix& m1)
 {
     matrix tm(m1);
-    const int size = m1.nr * m1.nc;
-    for (int i = 0; i < size; i++)
+    const std::size_t size = matrix_size(m1.nr, m1.nc);
+    for (std::size_t i = 0; i < size; i++)
         tm.c[i] = -tm.c[i];
     return tm;
 }
@@ -180,8 +164,8 @@ matrix operator+(const matrix &m1, const matrix &m2)
     assert(m1.nc == m2.nc);
 
     matrix tm(m1);
-    const int size = m1.nr*m1.nc;
-    for (int i = 0; i < size; i++) 
+    const std::size_t size = matrix_size(m1.nr, m1.nc);
+    for (std::size_t i = 0; i < size; i++)
     {
         tm.c[i] += m2.c[i];
     }
@@ -195,8 +179,8 @@ matrix operator-(const matrix &m1, const matrix &m2)
     assert(m1.nc == m2.nc);
 
     matrix tm(m1);
-    const int size = m1.nr*m1.nc;
-    for(int i = 0; i < size; i++) 
+    const std::size_t size = matrix_size(m1.nr, m1.nc);
+    for(std::size_t i = 0; i < size; i++)
     {
         tm.c[i] -= m2.c[i];
     }
@@ -245,8 +229,8 @@ matrix operator*(const matrix &m1, const matrix &m2)
 matrix operator*(const double &s, const matrix &m)
 {
     matrix sm(m);
-    const int size=m.nr*m.nc;
-    for (int i = 0; i < size; i++) 
+    const std::size_t size = matrix_size(m.nr, m.nc);
+    for (std::size_t i = 0; i < size; i++)
     {
         sm.c[i] *= s;
     }
@@ -257,8 +241,8 @@ matrix operator*(const double &s, const matrix &m)
 matrix operator*(const matrix &m,const double &s)
 {
     matrix sm(m);
-    const int size=m.nr*m.nc;
-    for (int i = 0; i < size; i++)
+    const std::size_t size = matrix_size(m.nr, m.nc);
+    for (std::size_t i = 0; i < size; i++)
     {
         sm.c[i] *= s;
     }
@@ -268,23 +252,23 @@ matrix operator*(const matrix &m,const double &s)
 /* Scale a matrix in place */
 void matrix::operator*=(const double &s)
 {
-    const int size=nc*nr;
-    for (int i = 0; i < size; i++) 
+    const std::size_t size = matrix_size(nr, nc);
+    for (std::size_t i = 0; i < size; i++)
         c[i] *= s;
 }
 
 /* Accumulate to a matrix in place */
 void matrix::operator+=(const matrix & m)
 {
-    if(nc*nr==0)
+    if(nr == 0 || nc == 0)
     {
         return;
     }
     assert( nr==m.nr );
     assert( nc==m.nc );
-    const int size=nc*nr;
+    const std::size_t size = matrix_size(nr, nc);
     const double * const c_in = m.c;
-    for( int i = 0; i < size; ++i ) 
+    for( std::size_t i = 0; i < size; ++i )
     {
         c[i] += c_in[i];
     }
@@ -294,15 +278,15 @@ void matrix::operator+=(const matrix & m)
 /* decumulate to a matrix in place */
 void matrix::operator-=(const matrix & m)
 {
-    if(nc*nr==0)
+    if(nr == 0 || nc == 0)
     {
         return;
     }
     assert( nr==m.nr );
     assert( nc==m.nc );
-    const int size=nc*nr;
+    const std::size_t size = matrix_size(nr, nc);
     const double * const c_in = m.c;
-    for( int i = 0; i < size; ++i ) 
+    for( std::size_t i = 0; i < size; ++i )
     {
         c[i] -= c_in[i];
     }
@@ -311,24 +295,24 @@ void matrix::operator-=(const matrix & m)
 /* zero out the matrix */
 void matrix::zero_out(void)
 {
-    const int size = nr*nc;
+    const std::size_t size = matrix_size(nr, nc);
     if(size == 0)
     {
         return;
     }
-    for(int i = 0; i < size; i++)
+    for(std::size_t i = 0; i < size; i++)
         c[i] = 0.0;
 }
 
 /* fill out the matrix with a constant double*/
 void matrix::fill_out(const double x)
 {
-    const int size = nr*nc;
+    const std::size_t size = matrix_size(nr, nc);
     if(size == 0)
     {
         return;
     }
-    for(int i = 0; i < size; i++)
+    for(std::size_t i = 0; i < size; i++)
         c[i] = x;
 }
 
@@ -344,10 +328,10 @@ matrix transpose(const matrix &m)
 double matrix::trace_on(void) const
 {
     assert(nr == nc);
-    int inch = nc + 1;
-    int size = nr * nc;
+    const std::size_t size = matrix_size(nr, nc);
+    const std::size_t inch = static_cast<std::size_t>(nc) + 1;
     double tr = 0.0;
-    for (int i = 0; i < size; i += inch)
+    for (std::size_t i = 0; i < size; i += inch)
     {
         tr += c[i];
     }
@@ -357,7 +341,9 @@ double matrix::trace_on(void) const
 // Peize Lin add 2017-05-27
 void matrix::reshape( const int nr_new, const int nc_new, const bool flag_zero )
 {
-    assert( nr*nc == nr_new*nc_new );
+    const std::size_t old_size = matrix_size(nr, nc);
+    const std::size_t new_size = matrix_size(nr_new, nc_new);
+    assert( old_size == new_size );
     nr=nr_new;
     nc=nc_new;
 
@@ -380,10 +366,10 @@ double mdot(const matrix &A, const matrix &B)
 {
     assert (A.nr == B.nr);
     assert (A.nc == B.nc);
-    const int size = A.nr * A.nc;
+    const std::size_t size = matrix_size(A.nr, A.nc);
 
     double sum = 0.0;
-    for (int i = 0; i < size; ++i)
+    for (std::size_t i = 0; i < size; ++i)
         sum += A.c[i] * B.c[i];
     return sum;
 }
@@ -429,8 +415,8 @@ std::ostream & matrix::print( std::ostream & os, const double threshold ) const
 double matrix::max() const
 {
     double value = std::numeric_limits<double>::min();
-    const int size = nr * nc;
-    for( int i=0; i<size; ++i )
+    const std::size_t size = matrix_size(nr, nc);
+    for( std::size_t i=0; i<size; ++i )
         value = std::max( value, c[i] );
     return value;
 }
@@ -439,8 +425,8 @@ double matrix::max() const
 double matrix::min() const
 {
     double value = std::numeric_limits<double>::max();
-    const int size = nr * nc;
-    for( int i=0; i<size; ++i )
+    const std::size_t size = matrix_size(nr, nc);
+    for( std::size_t i=0; i<size; ++i )
     {
         value = std::min( value, c[i] );
     }
@@ -451,8 +437,8 @@ double matrix::min() const
 double matrix::absmax() const
 {
     double value = 0;
-    const int size = nr * nc;
-    for( int i=0; i<size; ++i )
+    const std::size_t size = matrix_size(nr, nc);
+    for( std::size_t i=0; i<size; ++i )
     {
         value = std::max( value, std::abs(c[i]) );
     }
@@ -462,15 +448,51 @@ double matrix::absmax() const
 double matrix::norm() const
 {
 // mohan add 2021-04-25, no tests.
+    const std::size_t size = matrix_size(nr, nc);
 #ifdef  __NORMAL
-    double nn = 0.0;
-    for(int i=0; i<nr*nc; ++i)
+    // Scale the sum of squares so extreme magnitudes neither overflow
+    // (1e200 * 1e200) nor underflow (1e-200 * 1e-200) to a wrong result.
+    double scale = 0.0;
+    double ssq = 1.0;
+    for(std::size_t i=0; i<size; ++i)
     {
-        nn += c[i]*c[i];
-    }	
-    return sqrt(nn);
+        const double ax = std::abs(c[i]);
+        if (ax == 0.0)
+        {
+            continue;
+        }
+        if (scale < ax)
+        {
+            const double ratio = scale / ax;
+            ssq = 1.0 + ssq * ratio * ratio;
+            scale = ax;
+        }
+        else
+        {
+            const double ratio = ax / scale;
+            ssq += ratio * ratio;
+        }
+    }
+    if (scale == 0.0)
+    {
+        return 0.0;
+    }
+    return scale * std::sqrt(ssq);
 #else
-    return BlasConnector::nrm2(nr*nc,c,1);
+    // BLAS takes an int length.  Chunk the vector so a matrix with more than
+    // INT_MAX elements is never passed as a negative or wrapped length, and
+    // combine the chunk norms with hypot() instead of squaring them.
+    double nn = 0.0;
+    const std::size_t chunk_limit = static_cast<std::size_t>(1) << 30;
+    for (std::size_t offset = 0; offset < size; offset += chunk_limit)
+    {
+        const std::size_t remaining = size - offset;
+        const std::size_t chunk_size = remaining > chunk_limit ? chunk_limit : remaining;
+        const int chunk = static_cast<int>(chunk_size);
+        const double partial = BlasConnector::nrm2(chunk, c + offset, 1);
+        nn = std::hypot(nn, partial);
+    }
+    return nn;
 #endif
 }
 

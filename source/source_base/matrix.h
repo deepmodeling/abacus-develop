@@ -6,10 +6,50 @@
 #include <ostream>
 #include<cassert>
 
+#include <cstddef>
 #include <fstream> // test
+#include <limits>
+#include <stdexcept>
 
 namespace ModuleBase
 {
+
+/**
+ * @brief Return nrows * ncols as size_t.
+ *
+ * LCAO matrices can exceed INT_MAX elements: for NLOCAL = 377884 the product
+ * nrows * ncols is about 1.4e11, while INT_MAX is only 2.1e9 (issue #8342).
+ * Computing the product in int overflows and turns a large allocation into a
+ * negative element count, so every matrix size goes through this helper.
+ */
+inline std::size_t matrix_size(const int nrows, const int ncols)
+{
+    if (nrows < 0 || ncols < 0)
+    {
+        throw std::length_error("ModuleBase::matrix: negative matrix dimension");
+    }
+
+    const std::size_t rows = static_cast<std::size_t>(nrows);
+    const std::size_t cols = static_cast<std::size_t>(ncols);
+    if (cols != 0 && rows > std::numeric_limits<std::size_t>::max() / cols)
+    {
+        throw std::length_error("ModuleBase::matrix: element count overflows size_t");
+    }
+    return rows * cols;
+}
+
+/**
+ * @brief Return the row-major index of (ir, ic) as size_t.
+ *
+ * The caller must guarantee that ir/ic are non-negative and in range.  The
+ * multiplication is done in size_t because ir * ncols overflows int for large
+ * LCAO basis sets even when the total element count still fits in int.
+ */
+inline std::size_t matrix_index(const int ir, const int ic, const int ncols)
+{
+    return static_cast<std::size_t>(ir) * static_cast<std::size_t>(ncols)
+         + static_cast<std::size_t>(ic);
+}
 
 class matrix
 {
@@ -34,13 +74,13 @@ public:
     double &operator()(const int ir,const int ic)
     {
         assert(ir>=0);	assert(ir<nr);	assert(ic>=0);	assert(ic<nc);
-        return c[ir*nc+ic];
+        return c[matrix_index(ir, ic, nc)];
     }
 
     const double &operator()(const int ir,const int ic) const
     {
         assert(ir>=0);	assert(ir<nr);	assert(ic>=0);	assert(ic<nc);
-        return c[ir*nc+ic];
+        return c[matrix_index(ir, ic, nc)];
     }
 
 //	inline double &operator()(int i,int j) const

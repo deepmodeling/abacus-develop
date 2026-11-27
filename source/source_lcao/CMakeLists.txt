@@ -55,6 +55,7 @@ if(ENABLE_LCAO)
     lcao_allocate.cpp
     lcao_set_mat2d.cpp
     lcao_init_basis.cpp
+    lcao_memory_check.cpp
     setup_nonlocal.cpp
     setup_exx.cpp
     setup_deepks.cpp

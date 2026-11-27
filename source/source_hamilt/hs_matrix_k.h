@@ -4,6 +4,7 @@
 #include "source_basis/module_ao/parallel_orbitals.h"
 
 #include <complex>
+#include <cstddef>
 #include <vector>
 namespace hamilt
 {
@@ -14,6 +15,8 @@ class HS_Matrix_K
   public:
     HS_Matrix_K(const Parallel_Orbitals *paraV, bool no_s = false)
     {
+        // size() is size_t; nrloc*ncloc can exceed INT_MAX for large
+        // LCAO bases (issue #8342).
         hk.resize(paraV->para_2d().size());
         if (!no_s)
         {
@@ -26,7 +29,7 @@ class HS_Matrix_K
 
     TK *get_sk() { return sk.data(); }
 
-    int get_size() { return hk.size(); }
+    std::size_t get_size() const { return hk.size(); }
 
     void set_zero_hk() { hk.assign(hk.size(), 0); }
 

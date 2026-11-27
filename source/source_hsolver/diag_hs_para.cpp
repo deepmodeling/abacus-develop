@@ -9,6 +9,7 @@
 #include "source_hsolver/module_genelpa/elpa_solver.h"
 #endif
 
+#include <cstddef>
 #include <iostream>
 
 namespace hsolver
@@ -116,9 +117,13 @@ void diago_hs_para(T* h,
     }
 
     para2d_local.init(lda, lda, max_nb, comm, false);
-    std::vector<T> h_local(para2d_local.ncloc() * para2d_local.nrloc());
-    std::vector<T> s_local(para2d_local.ncloc() * para2d_local.nrloc());
-    std::vector<T> wfc_2d(para2d_local.ncloc() * para2d_local.nrloc());
+    // The local block can exceed INT_MAX elements (issue #8342); keep the
+    // count in size_t so the vectors are not undersized by an int overflow.
+    const std::size_t local_size = static_cast<std::size_t>(para2d_local.ncloc())
+                                 * static_cast<std::size_t>(para2d_local.nrloc());
+    std::vector<T> h_local(local_size);
+    std::vector<T> s_local(local_size);
+    std::vector<T> wfc_2d(local_size);
 
     // distribute h and s to 2D
     // Cpxgemr2d is a legacy BLACS boundary that requires non-const descriptors.
