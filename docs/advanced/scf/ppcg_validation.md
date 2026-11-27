@@ -1,8 +1,61 @@
 # PPCG validation
 
-The CPU timing study below uses the explicitly identified historical revision. Native CUDA implementation checks are recorded separately at the end of this report.
+The current accuracy comparison uses CG as the reference solver. The older CPU timing study and native CUDA implementation checks below are explicitly dated and do not certify the remaining strict L20 Fe residual failure.
 
-## CPU configuration
+## Current CG accuracy comparison (2026-11-27)
+
+Following the review caution about BPCG on Fe, accuracy claims use CG rather than
+BPCG. The source tree is the upstream merge `3414f9717` (production code was built
+and tested before the merge commit was recorded). The Release CPU executable
+SHA-256 is `d5ce7723dafc9fd6e3e685856eb802d0a744bb32d8e3411c056217fd7fc20a44`.
+
+The six systems listed below use the fixtures named in the CPU configuration
+section. Within each pair, CG and PPCG have identical geometry, pseudopotentials,
+cutoffs, k meshes, smearing, mixing, `pw_seed=1`, `scf_thr_type=1`,
+`scf_thr=1e-10`, initial `pw_diag_thr=1e-10`, `scf_nmax=200`, and
+`pw_diag_nmax=200`. Runs use two MPI ranks and one OpenMP/BLAS thread. All twelve
+calculations converged. These are finite-SCF differences, not exact error bounds;
+equal input thresholds do not imply identical eigensolver stopping criteria.
+
+| System | Energy difference (eV) | Max force difference (eV/Å) | Max stress difference (kbar) |
+|---|---:|---:|---:|
+| GaAs (NCPP) | 1.319e-10 | 5.300e-04 | 4.074e-03 |
+| Si (NCPP) | 9.456e-10 | 0.000e+00 | 5.141e-03 |
+| Al (NCPP) | 1.894e-10 | 0.000e+00 | 4.786e-02 |
+| Fe (USPP) | 1.218e-09 | 0.000e+00 | 2.870e-02 |
+| NaCl (USPP) | 1.473e-08 | 1.260e-04 | 3.397e-02 |
+| HCl (mixed NCPP/USPP) | 1.920e-10 | 2.868e-06 | 4.551e-02 |
+
+The three USPP-containing pairs were repeated with only `scf_thr=1e-12` changed.
+All six calculations converged:
+
+| System | Energy difference (eV) | Max force difference (eV/Å) | Max stress difference (kbar) |
+|---|---:|---:|---:|
+| Fe (USPP) | 2.833e-10 | 0.000e+00 | 9.328e-03 |
+| NaCl (USPP) | 4.875e-10 | 2.868e-06 | 4.629e-03 |
+| HCl (mixed NCPP/USPP) | 1.648e-12 | 4.960e-08 | 1.073e-03 |
+
+These new runs validate accuracy only; they ran while unrelated compilation was
+active and are not used for performance claims. The controlled timing study below
+remains historical and shows no PPCG speed advantage on these small systems.
+
+A separate CG probe at the unchanged strict fixture settings (`scf_thr=1e-16`,
+default initial `pw_diag_thr`, both iteration limits 200) failed on Fe, NaCl and
+HCl with `schmit_orth: psi_norm <= 0.0`, before producing final converged results.
+Those probes are excluded. Thus the valid CG comparisons above do not certify
+PPCG eigenpair convergence at `1e-14` residual or validate strict `1e-16` SCF
+snapshots to that accuracy. No fixture threshold, reference or iteration limit
+was changed to obtain these comparison results.
+
+To reproduce the two comparison batches, copy each listed fixture, resolve
+`pseudo_dir`, apply the common settings above and run the MPI command in
+**Reproduction and checks**, once with `ks_solver cg` and once with
+`ks_solver ppcg`. Repeat the three USPP-containing cases at `scf_thr=1e-12`.
+Raw inputs, logs, output hashes and JSON results are retained under
+`/mnt/data/Cheerly/ppcg-review-followup-20261127/cg-validation/` and
+`/mnt/data/Cheerly/ppcg-review-followup-20261127/cg-reference-probe/`.
+
+## Historical CPU configuration (2026-11-24)
 
 Validated on 2026-11-24 with GNU 13.3 Release, OpenMPI, OpenMP, OpenBLAS, and an Intel Xeon Gold 6242. LCAO and CUDA were disabled. Production sources are from `dd385365908b088333030b4623d72e3533b521a6`; the accompanying test-data/documentation additions do not change the executable.
 
@@ -55,17 +108,22 @@ Runs were sequential: one warm-up followed by three measured runs for every case
 
 PPCG wall-time ranges for GaAs, Si, Al, Fe, NaCl, and HCl were respectively 5.329–5.681, 2.572–2.672, 2.170–2.171, 1.718–1.770, 1.418–1.469, 1.868–1.920 seconds. PPCG is slower than CG on these small systems. No general speedup, large-system scaling, or GPU performance claim is made.
 
-## Independent USPP regression references
+## Provenance of the strict USPP regression snapshots
 
-Autotest cases `821_PW_PPCG_USPP_Fe`, `822_PW_PPCG_USPP_NaCl`, and `823_PW_PPCG_USPP_HCl` retain the structures/pseudopotentials/k meshes of cases 003, 008, and 009. Their SCF threshold is tightened to `1e-16`, with `scf_nmax=200` and `pw_diag_nmax=200`; the initial PPCG diagonalization threshold and RR interval retain their defaults. Their reference files were generated independently using BPCG with these same numerical settings. Existing fixtures and their references are unchanged. Autotest tolerances are not relaxed.
+Autotest cases `821_PW_PPCG_USPP_Fe`, `822_PW_PPCG_USPP_NaCl`, and
+`823_PW_PPCG_USPP_HCl` retain the structures/pseudopotentials/k meshes of cases
+003, 008, and 009. Their existing reference files were originally generated with
+BPCG at `scf_thr=1e-16`, `scf_nmax=200`, and `pw_diag_nmax=200`.
+The corresponding CUDA fixtures share those snapshots.
 
-| System | PPCG–BPCG energy (eV) | Max force difference (eV/Å) | Max stress difference (kbar) |
-|---|---:|---:|---:|
-| Fe (USPP) | 2.274e-12 | 0.000e+00 | 1.164e-04 |
-| NaCl (USPP) | 0.000e+00 | 3.839e-07 | 1.921e-04 |
-| HCl (mixed NCPP/USPP) | 2.842e-13 | 3.300e-09 | 9.088e-05 |
-
-At this deliberately tight SCF setting, Fe and HCl retain some iteration-budget warnings: residuals can stagnate near the numerical floor of `1e-14` (maximum warning residual in the two-rank calibration `2.11e-14`). SCF continues under the documented status policy. The warnings are not suppressed or relabeled as certified eigenpair convergence; the independent observable checks pass. A separate `scf_thr=1e-14`, `pw_diag_thr=1e-12` CG probe exited with `psi_norm <= 0` on four systems and was not used as a reference. Changing the PW SCF metric to type 2 caused HCl SCF stagnation across solvers; the reported comparison keeps the standard PW type-1 metric.
+These files remain historical regression snapshots, **not an accuracy benchmark**.
+The previous PPCG–BPCG comparison table has been removed in response to the
+[review caution about BPCG on Fe](https://github.com/deepmodeling/abacus-develop/pull/8264#issuecomment-7192089274).
+Accuracy comparisons use the converged CG runs above. The failed strict CG probes
+cannot justify replacing the snapshots, so the reference values, strict fixture
+settings and acceptance tolerances remain unchanged. Passing these observable
+regressions does not certify individual eigenpair residuals; CUDA CI checks the
+residual warnings separately.
 
 ## Reproduction and checks
 
@@ -184,7 +242,7 @@ work. This can perform more single-band corrections per outer iteration than
 the previous implementation; every attempt is included in the average iteration
 count. A two-band standard/generalized regression requires both near-converged
 pairs to satisfy an independent residual check within one block sweep. It fails
-before this change and passes afterward. Fresh L20 evidence is still required.
+before this change and passes afterward. The subsequent L20 run at `c527d243e` still failed on one Fe band at SCF 23, k-point 1: `1.08395e-14` against `1e-14`. All observable checks passed, but the residual gate correctly failed. This numerical issue remains open.
 
 The six original CPU fixtures and six original RTX 3090 CUDA fixtures passed
 **72/72 reference checks** with **zero PPCG nonconvergence warnings across both
