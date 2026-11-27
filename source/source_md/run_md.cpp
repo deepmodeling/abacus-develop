@@ -102,7 +102,7 @@ void md_line(
         }
     };
 
-    const int output_freq = param_in.inp.out_freq_ion;
+    const int output_freq = param_in.inp.out_freq_stru;
     const int restart_freq = param_in.mdp.md_restartfreq;
     const std::string stru_out_dir = param_in.globalv.global_stru_dir;
     const std::string restart_stru = param_in.globalv.global_out_dir + "STRU_restart";
