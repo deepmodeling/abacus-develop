@@ -101,9 +101,14 @@ void Output_HContainer<T>::write(int rx_in, int ry_in, int rz_in)
 template <typename T>
 void Output_HContainer<T>::write_single_R(int rx, int ry, int rz)
 {
-    if (this->_hcontainer->get_paraV() == nullptr)
+    // The atom-pair traversal below only needs the atom-pair matrices and the
+    // global basis size, both of which are available for the flattened
+    // BasisFlattenedIndexing layout as well. Reject only when neither layout
+    // provides a valid global basis.
+    if (this->_hcontainer->get_paraV() == nullptr && this->_hcontainer->get_basis_index() == nullptr)
     {
-        ModuleBase::WARNING_QUIT("Output_HContainer::write_single_R", "paraV is nullptr! Unable to write the matrix.");
+        ModuleBase::WARNING_QUIT("Output_HContainer::write_single_R",
+                                 "neither paraV nor basis_index is set! Unable to write the matrix.");
     }
     this->_hcontainer->fix_R(rx, ry, rz);
 
@@ -112,6 +117,13 @@ void Output_HContainer<T>::write_single_R(int rx, int ry, int rz)
     assert(_hcontainer->get_nbasis() > 0);
 
     sparse_matrix.setSparseThreshold(this->_sparse_threshold);
+
+    // For the flattened layout the atom-pair window is given in local
+    // block-cyclic coordinates; translate each local index to its global
+    // position through the distribution map. For the paraV/serial layout the
+    // window is already in global coordinates.
+    const bool flattened = (this->_hcontainer->get_basis_index() != nullptr);
+    const Parallel_Blkcyclic *dist = flattened ? this->_hcontainer->get_matrix_dist() : nullptr;
 
     for (int iap = 0; iap < this->_hcontainer->size_atom_pairs(); ++iap)
     {
@@ -124,13 +136,18 @@ void Output_HContainer<T>::write_single_R(int rx, int ry, int rz)
         auto tmp_matrix_info = atom_pair.get_matrix_values(r_index);
         int *tmp_index = std::get<0>(tmp_matrix_info).data();
         T *tmp_data = std::get<1>(tmp_matrix_info);
-        for (int irow = tmp_index[0]; irow < tmp_index[0] + tmp_index[1]; ++irow)
+        const int row_begin = tmp_index[0];
+        const int row_size = tmp_index[1];
+        const int col_begin = tmp_index[2];
+        const int col_size = tmp_index[3];
+        for (int irow = 0; irow < row_size; ++irow)
         {
-            for (int icol = tmp_index[2]; icol < tmp_index[2] + tmp_index[3]; ++icol)
+            const int g_row = flattened ? dist->irglb(row_begin + irow) : (row_begin + irow);
+            for (int icol = 0; icol < col_size; ++icol)
             {
-                sparse_matrix.insert(irow, icol, *tmp_data);
+                const int g_col = flattened ? dist->icglb(col_begin + icol) : (col_begin + icol);
+                sparse_matrix.insert(g_row, g_col, *tmp_data);
                 tmp_data++;
-                // to do: consider 2D block-cyclic distribution
             }
         }
     }

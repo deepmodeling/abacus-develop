@@ -2,6 +2,7 @@ add_subdirectory(module_rt)
 add_subdirectory(module_deepks)
 add_subdirectory(module_dftu)
 add_subdirectory(module_deltaspin)
+add_subdirectory(module_momentum_op)
 
 if(ENABLE_LCAO AND ENABLE_LIBRI)
   add_subdirectory(module_bse)

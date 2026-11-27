@@ -7,7 +7,7 @@
 #include "source_lcao/module_operator_lcao/operator_lcao.h"
 #include "source_hamilt/module_hcontainer/hcontainer.h"
 #include <vector>
-#include "source_io/module_hs/pos_op_mat.h"
+#include "source_lcao/module_momentum_op/pos_op_mat.h"
 
 namespace hamilt
 {

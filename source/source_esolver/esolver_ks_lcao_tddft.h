@@ -5,7 +5,7 @@
 #include "source_base/module_container/ATen/core/tensor.h" // ct::Tensor
 #include "source_lcao/module_rt/td_info.h"
 #include "source_lcao/module_rt/td_moving_gauge.h"
-#include "source_lcao/module_rt/velocity_op.h"
+#include "source_lcao/module_momentum_op/velocity_op.h"
 
 #include <memory>
 

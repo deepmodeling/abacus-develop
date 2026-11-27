@@ -1468,6 +1468,27 @@ For binary output, each file uses the same basename as text output with a .dat s
         this->add_item(item);
     }
     {
+        Input_Item item("out_mat_p");
+        item.annotation = "output the momentum operator matrices in the local basis";
+        item.category = "Output information";
+        item.type = R"(Boolean \[Integer\](optional))";
+        item.description = "Whether to print the momentum operator matrices px, py and pz in the basis of the localized atomic orbitals, including the nonlocal pseudopotential commutator term i[V_nl, r]. The three components are written as sparse matrices into prx_nao.csr, pry_nao.csr and prz_nao.csr (or prxg{step+1}_nao.csr etc. when out_app_flag = 2), using the same self-describing header and CSR layout as the H(R)/S(R) output. Because the NAO basis functions are real, every matrix element is purely imaginary: the files store the complex element with its real part identically zero. This output is not supported for nspin = 4; an INPUT file that enables out_mat_p with nspin = 4 is rejected during parameter parsing. The second integer controls the precision of the output.";
+        item.default_value = "False 8";
+        item.unit = "";
+        item.set_availability("basis_type==lcao");
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            const size_t count = item.get_size();
+            if (count < 1) ModuleBase::WARNING_QUIT("ReadInput", "out_mat_p needs at least 1 value");
+            para.input.out_mat_p[0] = assume_as_boolean(item.str_values[0]);
+            para.input.out_mat_p[1] = 8;
+            if (count >= 2) try { para.input.out_mat_p[1] = std::stoi(item.str_values[1]); }
+            catch (const std::invalid_argument&) { /* do nothing */ }
+            catch (const std::out_of_range&) {/* do nothing */}
+        };
+        sync_intvec(input.out_mat_p, 2, 0);
+        this->add_item(item);
+    }
+    {
         Input_Item item("out_xc_r");
         item.annotation = "if >=0, output the derivatives of exchange correlation in realspace, second parameter controls the precision";
         item.category = "Output information";

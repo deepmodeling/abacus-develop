@@ -11,7 +11,7 @@
 #include "source_lcao/module_lr/ao_to_mo_transformer/ao_to_mo.h"
 #include "source_lcao/module_lr/utils/lr_util.h"
 #include "source_lcao/module_lr/utils/lr_util_print.h"
-#include "source_lcao/module_rt/velocity_op.h"
+#include "source_lcao/module_momentum_op/velocity_op.h"
 #include "source_psi/psi.h"
 
 namespace LR_Util

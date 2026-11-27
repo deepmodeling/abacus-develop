@@ -571,6 +571,11 @@ std::string ReadInput::prepare_input(Parameter& param)
         errors += "Invalid INPUT parameter 'out_mat_l': nspin = 4 is not supported because only the scalar "
                   "(npol = 1) angular-momentum block can be written; set out_mat_l to 0.\n";
     }
+    if (param.input.nspin == 4 && param.input.out_mat_p[0] != 0)
+    {
+        errors += "Invalid INPUT parameter 'out_mat_p': nspin = 4 is not supported because the momentum matrix "
+                  "is written as a scalar (npol = 1) block; set out_mat_p to 0.\n";
+    }
 
     // The dense text body writer asserts a positive precision. These checks run
     // on rank 0 inside prepare_input and the accumulated errors are broadcast

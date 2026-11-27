@@ -13,7 +13,6 @@ if(ENABLE_LCAO)
     propagator_etrs.cpp
     upsi.cpp
     td_info.cpp
-    velocity_op.cpp
     radial_interpolation.cpp
     snap_proj_half_tddft.cpp
     snap_psb_half_tddft.cpp

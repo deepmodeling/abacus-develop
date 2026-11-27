@@ -486,6 +486,7 @@ struct Input_para
     std::vector<int> out_mat_hs = {0, 8};     ///< legacy alias for text H(k) and S(k) output
     std::vector<int> out_mat_tk = {0, 8};     ///< output T(k) matrix in local basis.
     std::vector<int> out_mat_l = {0, 8};      ///< output L matrix in local basis.
+    std::vector<int> out_mat_p = {0, 8};      ///< output momentum matrix in local basis.
     std::vector<int> out_mat_hs2 = {0, 8};    ///< legacy alias for text H(R) and S(R) output
     std::vector<int> out_mat_h_t = {0, 8};    ///< legacy alias for out_mat_tk (kinetic T(k) matrix)
     std::vector<int> out_mat_vnlk = {0, 8};   ///< output nonlocal pseudopotential Vnl(k) matrix

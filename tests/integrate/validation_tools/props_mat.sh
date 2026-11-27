@@ -76,6 +76,24 @@ run_mat_props() {
     scal=OUT.autotest/sr_nao.csr
     python3 $COMPARE_SCRIPT $sref $scal 8
     echo "CompareS_pass $?" >>$props_result_file
+
+    # Momentum operator matrices are optional in get_s. They are built from the
+    # orbital tables and pseudopotential projectors, so a case that enables
+    # out_mat_p must write all three components next to the overlap matrix.
+    if ! test -z "$has_mat_p" && [ "${has_mat_p%% *}" == "1" ]; then
+      pxref=prx_nao.csr.ref
+      pxcal=OUT.autotest/prx_nao.csr
+      pyref=pry_nao.csr.ref
+      pycal=OUT.autotest/pry_nao.csr
+      pzref=prz_nao.csr.ref
+      pzcal=OUT.autotest/prz_nao.csr
+      python3 $COMPARE_SCRIPT $pxref $pxcal 8
+      echo "ComparePx_pass $?" >>$props_result_file
+      python3 $COMPARE_SCRIPT $pyref $pycal 8
+      echo "ComparePy_pass $?" >>$props_result_file
+      python3 $COMPARE_SCRIPT $pzref $pzcal 8
+      echo "ComparePz_pass $?" >>$props_result_file
+    fi
   fi
 
   #-------------------------------

@@ -120,7 +120,7 @@ AddTest(
     TARGET MODULE_IO_pos_op_csr_test
     LIBS parameter base device hcontainer
     SOURCES test_pos_op_csr.cpp
-            ../pos_op_csr.cpp
+            ../../../source_lcao/module_momentum_op/pos_op_csr.cpp
             ../lat_r_csr.cpp
             ../../../source_cell/ucell_io.cpp
             ../../../source_basis/module_ao/parallel_orbitals.cpp
