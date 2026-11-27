@@ -34,11 +34,11 @@ TEST(RestartExxCsr, CalculateRITensorSparseDropsBelowThresholdEntries)
     std::map<int, std::map<ModuleIO::TAC, RI::Tensor<double>>> Hexxs;
     Hexxs[0][ModuleIO::TAC{0, ModuleIO::TC{0, 0, 0}}] = matrix;
 
-    const auto sparse = ModuleIO::calculate_RI_Tensor_sparse(1e-10, Hexxs, ucell);
+    const std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> sparse = ModuleIO::calculate_RI_Tensor_sparse(1e-10, Hexxs, ucell);
 
     const Abfs::Vector3_Order<int> r_vector(0, 0, 0);
     ASSERT_EQ(sparse.count(r_vector), 1);
-    const auto& block = sparse.at(r_vector);
+    const std::map<std::size_t, std::map<std::size_t, double>>& block = sparse.at(r_vector);
     ASSERT_EQ(block.count(0), 1);
     EXPECT_EQ(block.at(0).count(0), 1);
     EXPECT_EQ(block.at(0).at(0), 1.0);

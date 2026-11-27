@@ -39,7 +39,7 @@ void SparseMatrix<T>::printToCSR(std::ostream& ofs, int precision)
     // print the CSR values
     ofs << " # CSR values";
     size_t count1 = 0;
-    for (const auto &element : elements)
+    for (const std::pair<const std::pair<int, int>, T>& element : elements)
     {
     if(count1%6==0) ofs << '\n';
     count1++;
@@ -49,7 +49,7 @@ void SparseMatrix<T>::printToCSR(std::ostream& ofs, int precision)
     // print the CSR column indices
     ofs << " # CSR column indices";
     size_t count2 = 0;
-    for (const auto &element : elements)
+    for (const std::pair<const std::pair<int, int>, T>& element : elements)
     {
     if(count2%16==0) ofs << '\n';
     count2++;
@@ -129,7 +129,7 @@ T SparseMatrix<T>::operator()(int row, int col) const
     {
         ModuleBase::WARNING_QUIT("SparseMatrix::operator()", "row or col index out of range");
     }
-    auto it = elements.find(std::make_pair(row, col));
+    typename std::map<std::pair<int, int>, T>::const_iterator it = elements.find(std::make_pair(row, col));
     if (it != elements.end())
     {
         return it->second;

@@ -365,18 +365,19 @@ double DFPT_PW::Impl::solve_displacement(int q_idx, int iat, int idir)
             if (vsc_broyden)
             {
                 // Broyden on the real-space potential: push, cal_coef, mix
-                auto screen = std::function<void(std::complex<double> *)>();
+                std::function<void(std::complex<double> *)> screen = std::function<void(std::complex<double> *)>();
                 const double beta = mix_beta_;
-                auto mix_cb = std::function<void(
-                    std::complex<double> *, const std::complex<double> *, const std::complex<double> *)>(
-                    [nrxx, beta](
-                        std::complex<double> *out, const std::complex<double> *in, const std::complex<double> *F)
-                    {
-                        for (int i = 0; i < nrxx; ++i)
+                std::function<void(std::complex<double> *, const std::complex<double> *, const std::complex<double> *)>
+                    mix_cb = std::function<void(
+                        std::complex<double> *, const std::complex<double> *, const std::complex<double> *)>(
+                        [nrxx, beta](
+                            std::complex<double> *out, const std::complex<double> *in, const std::complex<double> *F)
                         {
-                            out[i] = in[i] + beta * F[i];
-                        }
-                    });
+                            for (int i = 0; i < nrxx; ++i)
+                            {
+                                out[i] = in[i] + beta * F[i];
+                            }
+                        });
                 vsc_broyden_->push_data(*vsc_broyden_mdata_, v_sc_in_r.data(), v_sc_out_r.data(), screen, mix_cb, true);
                 vsc_broyden_->cal_coef(
                     *vsc_broyden_mdata_, std::function<double(std::complex<double> *, std::complex<double> *)>(

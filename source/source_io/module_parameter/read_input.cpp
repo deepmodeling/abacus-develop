@@ -274,7 +274,7 @@ void ReadInput::read_parameters(Parameter& param, const std::string& filename_in
 
     // 3. broadcast input parameters
     // It must be after the check_ntype, because some parameters need to be filled due to ntype
-    for (auto& bcastfunc: this->bcastfuncs)
+    for (std::function<void (Parameter&)>& bcastfunc: this->bcastfuncs)
     {
         bcastfunc(param);
     }
@@ -433,7 +433,7 @@ std::string ReadInput::read_txt_input(Parameter& param, const std::string& filen
         std::string word; // temporary variable to store the keyword read-in
         if (!(ascii_stream >> word)) { break; }
         word = FmtCore::lower(word); // the lowercase of the keyword
-        auto it = std::find_if(input_lists.begin(), input_lists.end(),
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = std::find_if(input_lists.begin(), input_lists.end(),
             [&word](const std::pair<std::string, Input_Item>& item) { return item.first == word; });
         if (it != this->input_lists.end()) // find the keyword
         {
@@ -497,7 +497,7 @@ std::string ReadInput::prepare_input(Parameter& param)
     // out_dos and out_mat_xc take one or two tokens. Their vector domains skip the
     // whole-token validation of the scalar readers, so check that every supplied
     // token is a complete value before any read hook runs.
-    for (const auto* item : this->readvalue_items)
+    for (const ModuleIO::Input_Item* item : this->readvalue_items)
     {
         const bool starts_with_boolean = item->label == "out_mat_xc";
         if (!starts_with_boolean && item->label != "out_dos")
@@ -630,7 +630,7 @@ void ReadInput::normalize_occ_mat_options(Parameter& param)
     // init_occ_mat is the current name of the former omc parameter; keep
     // accepting omc so that INPUT files written by older versions still work.
     const auto item_is_read = [this](const std::string& label) {
-        const auto item = std::find_if(
+        const std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator item = std::find_if(
             this->input_lists.begin(),
             this->input_lists.end(),
             [&label](const std::pair<std::string, Input_Item>& entry) { return entry.first == label; });
@@ -655,7 +655,7 @@ void ReadInput::normalize_occ_mat_options(Parameter& param)
 void ReadInput::normalize_hs_output_options(Parameter& param)
 {
     const auto item_is_read = [this](const std::string& label) {
-        const auto item = std::find_if(
+        const std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator item = std::find_if(
             this->input_lists.begin(),
             this->input_lists.end(),
             [&label](const std::pair<std::string, Input_Item>& entry) { return entry.first == label; });
@@ -741,7 +741,7 @@ void ReadInput::normalize_hs_output_options(Parameter& param)
 void ReadInput::normalize_out_eband_alias(Parameter& param)
 {
     const auto item_is_read = [this](const std::string& label) {
-        const auto item = std::find_if(
+        const std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator item = std::find_if(
             this->input_lists.begin(),
             this->input_lists.end(),
             [&label](const std::pair<std::string, Input_Item>& entry) { return entry.first == label; });
@@ -769,7 +769,7 @@ void ReadInput::normalize_out_eband_alias(Parameter& param)
 void ReadInput::normalize_td_output_frequency(Parameter& param)
 {
     const auto item_is_read = [this](const std::string& label) {
-        const auto item = std::find_if(
+        const std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator item = std::find_if(
             this->input_lists.begin(),
             this->input_lists.end(),
             [&label](const std::pair<std::string, Input_Item>& entry) { return entry.first == label; });

@@ -10,9 +10,9 @@
 
 namespace
 {
-constexpr auto problem_type = CUSOLVER_EIG_TYPE_1;
-constexpr auto job = CUSOLVER_EIG_MODE_VECTOR;
-constexpr auto triangle = CUBLAS_FILL_MODE_UPPER;
+constexpr cusolverEigType_t problem_type = CUSOLVER_EIG_TYPE_1;
+constexpr cusolverEigMode_t job = CUSOLVER_EIG_MODE_VECTOR;
+constexpr cublasFillMode_t triangle = CUBLAS_FILL_MODE_UPPER;
 
 void solver_error(
     const char *mode,
@@ -144,7 +144,7 @@ bool Diag_Cusolver_gvd::solve_subset(
     const double unused_bound = 0.0;
     int found = 0;
     int lwork = 0;
-    auto status = cusolverDnDsygvdx_bufferSize(
+    cusolverStatus_t status = cusolverDnDsygvdx_bufferSize(
         handle_, problem_type, job, CUSOLVER_EIG_RANGE_I, triangle, n, device.h, n, device.s, n, unused_bound,
         unused_bound, first, nbands, &found, device.eigenvalues, &lwork);
     if (subset_unsupported(status) || status == CUSOLVER_STATUS_ALLOC_FAILED)
@@ -153,7 +153,7 @@ bool Diag_Cusolver_gvd::solve_subset(
     }
     check_status(status, "Dsygvdx workspace query", n, nbands);
     const std::size_t work_bytes = sizeof(double) * static_cast<std::size_t>(lwork);
-    const auto alloc_status = cudaMalloc(&device.work, work_bytes);
+    const cudaError_t alloc_status = cudaMalloc(&device.work, work_bytes);
     if (alloc_status == cudaErrorMemoryAllocation)
     {
         cudaGetLastError();
@@ -206,7 +206,7 @@ void Diag_Cusolver_gvd::solve_full(
     DeviceBuffers<double> device;
     device.upload(n, h, s);
     int lwork = 0;
-    auto status = cusolverDnDsygvd_bufferSize(
+    cusolverStatus_t status = cusolverDnDsygvd_bufferSize(
         handle_, problem_type, job, triangle, n, device.h, n, device.s, n, device.eigenvalues, &lwork);
     check_status(status, "Dsygvd workspace query", n, nbands);
     const std::size_t work_bytes = sizeof(double) * static_cast<std::size_t>(lwork);
@@ -232,7 +232,7 @@ void Diag_Cusolver_gvd::solve_full(
     DeviceBuffers<cuDoubleComplex> device;
     device.upload(n, h, s);
     int lwork = 0;
-    auto status = cusolverDnZhegvd_bufferSize(
+    cusolverStatus_t status = cusolverDnZhegvd_bufferSize(
         handle_, problem_type, job, triangle, n, device.h, n, device.s, n, device.eigenvalues, &lwork);
     check_status(status, "Zhegvd workspace query", n, nbands);
     const std::size_t work_bytes = sizeof(cuDoubleComplex) * static_cast<std::size_t>(lwork);

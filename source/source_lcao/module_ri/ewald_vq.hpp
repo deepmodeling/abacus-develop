@@ -146,7 +146,7 @@ double Ewald_Vq<Tdata>::get_singular_chi(const UnitCell& ucell, const std::vecto
     ModuleBase::timer::start("Ewald_Vq", "get_singular_chi");
 
     double chi = 0.0;
-    for(const auto &param : param_list)
+    for(const std::map<std::string, std::string>& param : param_list)
     {
         if(param.at("singularity_correction") == "carrier")
         {

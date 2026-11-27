@@ -208,7 +208,7 @@ void snap_psibeta_atom_batch_gpu(
             }
 
             const std::tuple<int, int, int> radial_key(T1, L1, N1);
-            auto radial_mapping = orbital_radial_mappings.find(radial_key);
+            std::map<std::tuple<int, int, int>, OrbitalRadialMapping>::iterator radial_mapping = orbital_radial_mappings.find(radial_key);
             if (radial_mapping == orbital_radial_mappings.end())
             {
                 const Numerical_Orbital_Lm& phi_ln = orb.Phi[T1].PhiLN(L1, N1);

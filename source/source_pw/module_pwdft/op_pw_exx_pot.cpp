@@ -96,12 +96,13 @@ void get_exx_potential(
     std::vector<Real> pot_cpu(npw, 0);
 
     // calculate Fock pot
-    auto it_fock = coulomb_param_in.find(Conv_Coulomb_Pot_K::Coulomb_Type::Fock);
+    std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string, std::string>>>::const_iterator
+        it_fock = coulomb_param_in.find(Conv_Coulomb_Pot_K::Coulomb_Type::Fock);
     if (it_fock != coulomb_param_in.end())
     {
         for (int i = 0; i < it_fock->second.size(); i++)
         {
-            auto param = it_fock->second[i];
+            std::map<std::string, std::string> param = it_fock->second[i];
             double exx_div = OperatorEXXPW<std::complex<Real>, Device>::fock_div[i];
             double alpha = std::stod(param["alpha"]);
             const ModuleBase::Vector3<double> k_c = wfcpw->kvec_c[ik];
@@ -160,12 +161,13 @@ void get_exx_potential(
     }
 
     // calculate erfc pot
-    auto it_erfc = coulomb_param_in.find(Conv_Coulomb_Pot_K::Coulomb_Type::Erfc);
+    std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string, std::string>>>::const_iterator
+        it_erfc = coulomb_param_in.find(Conv_Coulomb_Pot_K::Coulomb_Type::Erfc);
     if (it_erfc != coulomb_param_in.end())
     {
         for (int i = 0; i < it_erfc->second.size(); i++)
         {
-            auto param = it_erfc->second[i];
+            std::map<std::string, std::string> param = it_erfc->second[i];
             double erfc_omega = std::stod(param["omega"]);
             double erfc_omega2 = erfc_omega * erfc_omega;
             double alpha = std::stod(param["alpha"]);
@@ -283,10 +285,11 @@ void get_exx_stress_potential(
     std::vector<Real> pot_cpu(npw, 0);
 
     // calculate Fock pot
-    auto it_fock = coulomb_param_in.find(Conv_Coulomb_Pot_K::Coulomb_Type::Fock);
+    std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string, std::string>>>::const_iterator
+        it_fock = coulomb_param_in.find(Conv_Coulomb_Pot_K::Coulomb_Type::Fock);
     if (it_fock != coulomb_param_in.end())
     {
-        for (auto param : it_fock->second)
+        for (std::map<std::string, std::string> param : it_fock->second)
         {
             // double exx_div = exx_divergence(Conv_Coulomb_Pot_K::Coulomb_Type::Fock,
             //                                 0.0,
@@ -349,10 +352,11 @@ void get_exx_stress_potential(
     }
 
     // calculate erfc pot
-    auto it_erfc = coulomb_param_in.find(Conv_Coulomb_Pot_K::Coulomb_Type::Erfc);
+    std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string, std::string>>>::const_iterator
+        it_erfc = coulomb_param_in.find(Conv_Coulomb_Pot_K::Coulomb_Type::Erfc);
     if (it_erfc != coulomb_param_in.end())
     {
-        for (auto param : it_erfc->second)
+        for (std::map<std::string, std::string> param : it_erfc->second)
         {
             double erfc_omega = std::stod(param["omega"]);
             double erfc_omega2 = erfc_omega * erfc_omega;

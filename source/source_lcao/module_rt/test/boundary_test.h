@@ -94,7 +94,7 @@ class BoundaryTest : public testing::TestWithParam<bool>
 
     Complex phase_for(int atom, int k, const Vector &field) const
     {
-        const auto &shift = types[0].boundary_shift[atom];
+        const ModuleBase::Vector3<int>& shift = types[0].boundary_shift[atom];
         const Vector direct(shift.x, shift.y, shift.z);
         const Vector cartesian = direct * cell.latvec * cell.lat0;
         const double angle = -ModuleBase::TWO_PI * (points[k] * direct) - field * cartesian;

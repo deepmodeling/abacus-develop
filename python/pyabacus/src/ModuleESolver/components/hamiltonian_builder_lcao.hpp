@@ -63,7 +63,7 @@ class HamiltonianBuilderLCAO : public IHamiltonianBuilder<TK, TR>
         // 4. Invalidate H(k) cache
 
         using namespace pyabacus::utils;
-        auto buf = rho.request();
+        pybind11::buffer_info buf = rho.request();
 
         if (buf.ndim != 2)
         {

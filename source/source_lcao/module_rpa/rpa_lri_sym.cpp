@@ -28,7 +28,7 @@ bool preserves_mesh(const ModuleBase::Matrix3& kg, const K_Vectors& kv, const Un
     }
     // Check the actual mesh offset as well as its spacing.
     const ModuleBase::Vector3<double> origin = kv.kvec_c_full.at(0) * cell.G.Inverse();
-    const auto delta = origin * kg - origin;
+    const ModuleBase::Vector3<double> delta = origin * kg - origin;
     const double shifts[3] = {delta.x * kv.nmp[0], delta.y * kv.nmp[1], delta.z * kv.nmp[2]};
     for (const double shift : shifts)
     {

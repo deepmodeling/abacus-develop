@@ -33,7 +33,7 @@ std::string true_file_type(const std::string& file_type)
     static const std::unordered_map<std::string, std::string> file_type_map
         = {{"etot", "energy"}, {"ftot", "force"}, {"stot", "stress"}, {"otot", "orbital"}, {"htot", "hamiltonian"}};
 
-    auto it = file_type_map.find(file_type);
+    std::unordered_map<std::string, std::string>::const_iterator it = file_type_map.find(file_type);
     return it != file_type_map.end() ? it->second : file_type;
 }
 

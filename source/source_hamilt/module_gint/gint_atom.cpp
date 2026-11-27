@@ -56,7 +56,7 @@ void GintAtom::set_phi(const std::vector<Vec3d> &coords, const int stride, T *ph
     // store the spherical harmonics
     // it's outside the loop to reduce the vector allocation overhead
     std::vector<double> ylma;
-    const auto *blocks = radial_blocks_.data();
+    ModuleGint::GintAtom::RadialBlock const* blocks = radial_blocks_.data();
     const int num_blocks = radial_blocks_.size();
 
     for (int im = 0; im < num_mgrids; im++)
@@ -96,7 +96,7 @@ void GintAtom::set_phi(const std::vector<Vec3d> &coords, const int stride, T *ph
             T *phi_row = phi + im * stride;
             for (int ib = 0; ib < num_blocks; ++ib)
             {
-                const auto &block = blocks[ib];
+                const ModuleGint::GintAtom::RadialBlock& block = blocks[ib];
                 const double *psi_uniform = block.psi_uniform;
                 const double *dpsi_uniform = block.dpsi_uniform;
                 const double psi =
@@ -177,8 +177,8 @@ void GintAtom::set_phi_dphi(
                 // function from interpolation method.
                 if (atom_->iw2_new[iw])
                 {
-                    auto psi_uniform = p_psi_uniform_[iw];
-                    auto dpsi_uniform = p_dpsi_uniform_[iw];
+                    const double* psi_uniform = p_psi_uniform_[iw];
+                    const double* dpsi_uniform = p_dpsi_uniform_[iw];
                     // use Polynomia Interpolation method to get the
                     // wave functions
 

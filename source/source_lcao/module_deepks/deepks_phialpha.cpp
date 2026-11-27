@@ -129,8 +129,8 @@ void DeePKS_domain::build_phialpha(const bool& cal_deri,
             // Get all indexes of atomic basis on the neighbour atom in this core
             // Notice that atom pair (a,b) and (b,a) are different when the former is changed to projected orbitals
             // So we need both row and col indexes for complete calculation
-            auto all_indexes = pv->get_indexes_row(ibt);
-            auto col_indexes = pv->get_indexes_col(ibt);
+            std::vector<int> all_indexes = pv->get_indexes_row(ibt);
+            std::vector<int> col_indexes = pv->get_indexes_col(ibt);
             all_indexes.insert(all_indexes.end(), col_indexes.begin(), col_indexes.end());
             std::sort(all_indexes.begin(), all_indexes.end());
             all_indexes.erase(std::unique(all_indexes.begin(), all_indexes.end()), all_indexes.end()); // for unique

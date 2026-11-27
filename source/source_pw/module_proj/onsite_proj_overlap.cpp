@@ -69,7 +69,7 @@ void projectors::OnsiteProjector<T, Device>::cal_occupations(
     Parallel_Reduce::reduce_double_allpool(npool, GlobalV::NPROC_IN_POOL, (double *)(&(occs[0])), occs.size() * 2);
     // occ has been reduced and calculate mag
     // Print orbital charge analysis
-    auto atom_labels = unitcell::get_atomLabels(this->ucell->atoms, this->ucell->ntype);
+    std::vector<std::string> atom_labels = unitcell::get_atomLabels(this->ucell->atoms, this->ucell->ntype);
     print::print_orb_chg(this->ucell, occs, this->iat_nh, atom_labels);
 
     // print charge
