@@ -381,6 +381,7 @@ Also controled by out_freq_ion and out_app_flag.
  * With out_app_flag = 1: the same fixed-name files are reused; the first written step truncates them and later steps append one record per step (prefixed with a `# Ionic_Step N` header, one-based).
  * With out_app_flag = 2: per-step files are named `doss{s}g{geom}.txt` and `pdoss{s}g{geom}.txt` where `{geom}` is the one-based geometry index (e.g. `doss1g3.txt` for the third ionic step).
  * nspin=1 or 4: one spin channel (`s1`). nspin=2: two channels (`s1`, `s2`). PW and LCAO use the same naming.
+ * SDFT (`esolver_type = sdft`): the stochastic DOS is written once at the end of the calculation as `dos_sdft.txt`, or `dos_sdftg{geom}.txt` when `out_app_flag = 2`, in the same DOS directory. It is a single combined channel and is not written per ionic step.
 * 2: write total DOS (`dos.npy`) and projected DOS (`pdos.npy`) as NumPy arrays for a single-point LCAO KSDFT SCF or NSCF calculation. Both spin channels for nspin=2 share the same files.
     NumPy output preserves double-precision (`float64`) spectral values.
     For large PDOS datasets, NumPy output can also reduce write time and file size.
@@ -1637,6 +1638,7 @@ The circle order of the charge density on real space grids is: x is the outer lo
 * 1: Reuse fixed filenames across steps: text outputs append new records, cube outputs accumulate one frame per written step
   In mode 1 the first output step of a fresh (non-restart) run truncates the fixed-name file so a rerun does not keep stale records from a previous run; later steps and restarted runs keep appending.
 * 2: Write to subdirectory (STRUC/ for structure files, PSI/, CHG/, POT/, ELF/, DOS/, DIP/, MAT/, BANDS/), output data files carry a g{step} suffix (structures use STRU{istep})
+RT-TDDFT time-series outputs (`current_tot.txt`, `current_s[spin]k[kpoint].txt`, `efield_total.txt`, `efield_[index].txt`, `vector_pot.txt`, and the spin-current/magnetization files) are exempt from these modes: they keep a fixed filename in OUT.{suffix}/ and append one record per completed electronic step, independently of out_freq_ion.
 For MD periodic ABACUS STRU frames, modes 0 and 1 both use STRU (overwritten or appended respectively), while mode 2 writes numbered files under STRUC/. With out_stru=2, MD writes CIF geometry instead: modes 0 and 1 overwrite STRU.cif and mode 2 writes numbered STRU{istep}.cif files. MD also writes STRU_FINAL or STRU_FINAL.cif when out_stru is positive, and a separate STRU_restart checkpoint according to md_restartfreq; see out_stru.
 The legacy Boolean spellings (true/false, yes/no, on/off, t/f, y/n, and the dotted forms) are still accepted: true maps to mode 1 and preserves the old append behavior; false maps to mode 0, which now overwrites a fixed file instead of the old g{step} per-step files, so use mode 2 to reproduce that old behavior.
 For more information, refer to the documentation of out_mat_r, out_hsr, out_mat_t, out_mat_dh, out_hsk, out_wfc_lcao, out_chg, out_pot, out_elf, out_dos, out_dipole, out_stru.)";
@@ -1770,7 +1772,7 @@ $$
 
 Here $\tilde{\psi}$ is the pseudo-wavefunction, $\beta_i^I$ are the atomic projectors, and $Q_{ij}^I$ are the augmentation functions. Each separate-k output has a cell integral equal to the spin degeneracy. The merged output uses k-point weights including spin degeneracy, and its integral equals their sum for the corresponding spin channel.
 
-[NOTE] Enabling symmetry may produce unintended partial charge densities because of reduced k-point weights and real-space symmetry operations. If the desired symmetry treatment is uncertain, set `symmetry = -1`. Use the same symmetry setting as in the SCF calculation.)";
+[NOTE] Enabling symmetry may produce unintended partial charge densities because of reduced k-point weights and real-space symmetry operations. If the desired symmetry treatment is uncertain, set `symmetry = -1`. Use the same symmetry setting as in the SCF calculation. In PW calculations each write follows `out_freq_ion` (in RT-TDDFT the counter is the completed electronic step). `out_app_flag=0` overwrites the fixed filename, `1` appends one complete cube frame per written step, and `2` adds a `g[step]` suffix, for example `pchgi1s1k1g2.cube`.)";
         item.default_value = "none";
         item.unit = "";
         item.set_availability("basis_type==pw or (basis_type==lcao and calculation==get_pchg)");
@@ -1799,7 +1801,7 @@ Here $\tilde{\psi}$ is the pseudo-wavefunction, $\beta_i^I$ are the atomic proje
         item.annotation = "specify the bands to be calculated for the norm of wavefunctions";
         item.category = "Output information";
         item.type = "String";
-        item.description = R"(Selects electronic states for real-space wavefunction-modulus output using the selection syntax of `out_pchg`. Each output contains single-particle wavefunction amplitudes. In PW calculations, norm-conserving pseudo-wavefunctions satisfy $\Braket{\psi_{n\boldsymbol{k}} | \psi_{n\boldsymbol{k}}}=1$, while USPP pseudo-wavefunctions satisfy $\Braket{\tilde{\psi}_{n\boldsymbol{k}} | \hat{S} | \tilde{\psi}_{n\boldsymbol{k}}}=1$, where $\hat{S}=1+\sum_{Iij}q_{ij}^I\Ket{\beta_i^I}\Bra{\beta_j^I}$ is the USPP overlap operator, $q_{ij}^I=\int Q_{ij}^I(\boldsymbol{r})\,\mathrm{d}\boldsymbol{r}$, and $\beta_i^I$ are the atomic projectors. For `nspin=1`, `s1` contains the wavefunction modulus. For `nspin=2`, `s1` and `s2` contain the spin-up and spin-down wavefunction moduli, respectively. For `nspin=4`, `s1` contains the total spinor modulus. Files are named `wfi[state]s[spin]k[kpoint].cube`.)";
+        item.description = R"(Selects electronic states for real-space wavefunction-modulus output using the selection syntax of `out_pchg`. Each output contains single-particle wavefunction amplitudes. In PW calculations, norm-conserving pseudo-wavefunctions satisfy $\Braket{\psi_{n\boldsymbol{k}} | \psi_{n\boldsymbol{k}}}=1$, while USPP pseudo-wavefunctions satisfy $\Braket{\tilde{\psi}_{n\boldsymbol{k}} | \hat{S} | \tilde{\psi}_{n\boldsymbol{k}}}=1$, where $\hat{S}=1+\sum_{Iij}q_{ij}^I\Ket{\beta_i^I}\Bra{\beta_j^I}$ is the USPP overlap operator, $q_{ij}^I=\int Q_{ij}^I(\boldsymbol{r})\,\mathrm{d}\boldsymbol{r}$, and $\beta_i^I$ are the atomic projectors. For `nspin=1`, `s1` contains the wavefunction modulus. For `nspin=2`, `s1` and `s2` contain the spin-up and spin-down wavefunction moduli, respectively. For `nspin=4`, `s1` contains the total spinor modulus. Files are named `wfi[state]s[spin]k[kpoint].cube`. In PW calculations each write follows `out_freq_ion` (in RT-TDDFT the counter is the completed electronic step). `out_app_flag=0` overwrites the fixed filename, `1` appends one complete cube frame per written step, and `2` adds a `g[step]` suffix, for example `wfi1s1k1g2.cube`.)";
         item.default_value = "none";
         item.unit = "";
         item.set_availability("basis_type==pw or (basis_type==lcao and calculation==get_wf)");
@@ -1829,7 +1831,7 @@ Here $\tilde{\psi}$ is the pseudo-wavefunction, $\beta_i^I$ are the atomic proje
         item.annotation = "specify the bands to be calculated for the real and imaginary parts of wavefunctions";
         item.category = "Output information";
         item.type = "String";
-        item.description = R"(Selects electronic states for real-space wavefunction real- and imaginary-part output using the selection syntax of `out_pchg`. Each output contains single-particle wavefunction amplitudes. In PW calculations, norm-conserving pseudo-wavefunctions satisfy $\Braket{\psi_{n\boldsymbol{k}} | \psi_{n\boldsymbol{k}}}=1$, while USPP pseudo-wavefunctions satisfy $\Braket{\tilde{\psi}_{n\boldsymbol{k}} | \hat{S} | \tilde{\psi}_{n\boldsymbol{k}}}=1$, where $\hat{S}=1+\sum_{Iij}q_{ij}^I\Ket{\beta_i^I}\Bra{\beta_j^I}$ is the USPP overlap operator, $q_{ij}^I=\int Q_{ij}^I(\boldsymbol{r})\,\mathrm{d}\boldsymbol{r}$, and $\beta_i^I$ are the atomic projectors. For `nspin=1`, `s1` contains the wavefunction. For `nspin=2`, `s1` and `s2` contain the spin-up and spin-down wavefunctions, respectively. For `nspin=4`, `s1` and `s2` contain the upper and lower spinor components, respectively. Files are named `wfi[state]s[spin]k[kpoint][re/im].cube`.)";
+        item.description = R"(Selects electronic states for real-space wavefunction real- and imaginary-part output using the selection syntax of `out_pchg`. Each output contains single-particle wavefunction amplitudes. In PW calculations, norm-conserving pseudo-wavefunctions satisfy $\Braket{\psi_{n\boldsymbol{k}} | \psi_{n\boldsymbol{k}}}=1$, while USPP pseudo-wavefunctions satisfy $\Braket{\tilde{\psi}_{n\boldsymbol{k}} | \hat{S} | \tilde{\psi}_{n\boldsymbol{k}}}=1$, where $\hat{S}=1+\sum_{Iij}q_{ij}^I\Ket{\beta_i^I}\Bra{\beta_j^I}$ is the USPP overlap operator, $q_{ij}^I=\int Q_{ij}^I(\boldsymbol{r})\,\mathrm{d}\boldsymbol{r}$, and $\beta_i^I$ are the atomic projectors. For `nspin=1`, `s1` contains the wavefunction. For `nspin=2`, `s1` and `s2` contain the spin-up and spin-down wavefunctions, respectively. For `nspin=4`, `s1` and `s2` contain the upper and lower spinor components, respectively. Files are named `wfi[state]s[spin]k[kpoint][re/im].cube`. In PW calculations each write follows `out_freq_ion` (in RT-TDDFT the counter is the completed electronic step). `out_app_flag=0` overwrites the fixed filename, `1` appends one complete cube frame per written step, and `2` adds a `g[step]` suffix, for example `wfi1s1k1reg2.cube`.)";
         item.default_value = "none";
         item.unit = "";
         item.set_availability("basis_type==pw or (basis_type==lcao and calculation==get_wf)");
@@ -1939,6 +1941,8 @@ where the integral is over the simulation cell and $\rho$ is the electron number
 
 Each row contains the step index followed by $P_x$, $P_y$, and $P_z$. The running log additionally reports the ionic and combined dipoles.
 
+In RT-TDDFT, this is a time series: one record is appended per completed electronic step to a fixed filename (`OUT.{suffix}/dipole_s[spin].txt`, or `OUT.{suffix}/DIP/` when `out_app_flag=2`), independently of `out_freq_ion` and without a `g[step]` suffix. In other calculations the dipole follows `out_freq_ion` and `out_app_flag`: `0` overwrites the fixed filename, `1` appends one record per written step, and `2` writes `dipole_s[spin]g[step].txt`.
+
 * `True`: Enable dipole output.
 * `False`: Disable dipole output.)";
         item.default_value = "False";
@@ -1961,7 +1965,7 @@ where $\Omega$ is the cell volume, $f_{n\boldsymbol{k}}$ includes occupations an
 * `1`: Available for PW and LCAO. Evaluate the velocity from momentum and nonlocal pseudopotential contributions, including coupling to the vector potential in the velocity gauge. Other nonlocal terms, such as exact exchange, are not included. Write the total current to `OUT.{suffix}/current_tot.txt`.
 * `2`: Available only for LCAO. Construct the velocity matrix from the full Hamiltonian in the nonorthogonal atomic-orbital basis: $\widetilde{v}_{\alpha}=\partial_{k_{\alpha}}H+\mathrm{i}HS^{-1}\mathcal{R}_{\alpha}-\mathrm{i}\mathcal{R}_{\alpha}S^{-1}H-HS^{-1}\partial_{k_{\alpha}}S$, where $H$, $S$, and $\mathcal{R}_{\alpha}$ are the Hamiltonian, overlap, and position matrices in k space. This automatically includes nonlocal contributions present in the Hamiltonian, including exact exchange. Write the total current to `OUT.{suffix}/current_tot_comm.txt`.
 
-Each row contains the step index followed by $J_x$, $J_y$, and $J_z$.)";
+Each row contains the step index followed by $J_x$, $J_y$, and $J_z$. These files are RT-TDDFT time series: one record is appended per completed electronic step to a fixed filename in `OUT.{suffix}/`, independently of `out_freq_ion`. They are not affected by `out_app_flag` (no per-step `g` suffix and no subdirectory is created).)";
         item.default_value = "0";
         item.unit = "";
         item.set_availability("basis_type in [pw, lcao] and esolver_type==tddft");
@@ -1975,7 +1979,9 @@ Each row contains the step index followed by $J_x$, $J_y$, and $J_z$.)";
         item.type = "Boolean";
         item.description = R"(Controls whether RT-TDDFT current density is also resolved by spin and k-point. PW supports `out_current=1`; LCAO supports `out_current=1` or `2`. The total-current file is always written when current output is enabled.
 * `True`: In addition to the total, `out_current=1` writes `OUT.{suffix}/current_s[spin]k[kpoint].txt`; `out_current=2` writes `OUT.{suffix}/current_s[spin]k[kpoint]_comm.txt`. These weighted contributions sum to the total current.
-* `False`: Output only `current_tot.txt` for `out_current=1` or `current_tot_comm.txt` for `out_current=2`.)";
+* `False`: Output only `current_tot.txt` for `out_current=1` or `current_tot_comm.txt` for `out_current=2`.
+
+These per-spin/k-point files are part of the same RT-TDDFT time series: fixed names, one record appended per completed electronic step, independent of `out_freq_ion` and `out_app_flag`.)";
         item.default_value = "False";
         item.unit = "";
         item.set_availability("basis_type in [pw, lcao] and esolver_type==tddft and out_current>0");
@@ -1987,7 +1993,7 @@ Each row contains the step index followed by $J_x$, $J_y$, and $J_z$.)";
         item.annotation = "output electric fields";
         item.category = "Real-Time TDDFT (Common)";
         item.type = "Boolean";
-        item.description = R"(Controls time-dependent electric-field output in `OUT.{suffix}/`. `efield_total.txt` contains time in fs followed by the total-field components $E_x$, $E_y$, and $E_z$ in V/Angstrom. Each configured analytic field is additionally written to `efield_[index].txt`, containing time in fs and the field value in V/Angstrom. The index follows the occurrence order in `td_ttype` and `td_vext_dire`; fields assigned to the same direction remain in separate files. Output is written on active electronic steps. Fresh calculations overwrite the output; runs with `md_restart=True` append to it.
+        item.description = R"(Controls time-dependent electric-field output in `OUT.{suffix}/`. `efield_total.txt` contains time in fs followed by the total-field components $E_x$, $E_y$, and $E_z$ in V/Angstrom. Each configured analytic field is additionally written to `efield_[index].txt`, containing time in fs and the field value in V/Angstrom. The index follows the occurrence order in `td_ttype` and `td_vext_dire`; fields assigned to the same direction remain in separate files. Output is written on active electronic steps. Fresh calculations overwrite the output; runs with `md_restart=True` append to it. These files are a fixed-name time series and are not affected by `out_freq_ion` or `out_app_flag` (no `g` suffix and no subdirectory).
 * `True`: Output electric-field values.
 * `False`: Do not output electric-field values.)";
         item.default_value = "False";
@@ -2001,7 +2007,7 @@ Each row contains the step index followed by $J_x$, $J_y$, and $J_z$.)";
         item.annotation = "output endpoint vector potentials";
         item.category = "Real-Time TDDFT (Common)";
         item.type = "Boolean";
-        item.description = R"(Controls vector-potential output to `OUT.{suffix}/vector_pot.txt`. Each row contains the step index followed by $A_x$, $A_y$, and $A_z$ in Hartree atomic units. The file can be used as input for `init_vecpot` with the same `td_dt`. Fresh calculations overwrite the output; runs with `md_restart=True` append to it.
+        item.description = R"(Controls vector-potential output to `OUT.{suffix}/vector_pot.txt`. Each row contains the step index followed by $A_x$, $A_y$, and $A_z$ in Hartree atomic units. The file can be used as input for `init_vecpot` with the same `td_dt`. Fresh calculations overwrite the output; runs with `md_restart=True` append to it. This file is a fixed-name time series and is not affected by `out_freq_ion` or `out_app_flag` (no `g` suffix and no subdirectory).
 * `True`: Output the vector potential.
 * `False`: Do not output the vector potential.)";
         item.default_value = "False";

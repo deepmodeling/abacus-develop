@@ -129,6 +129,33 @@ All output file naming conventions can be found in the online documentation (wit
 | `elftotg{#}.cube` | ELF, total, geometry step {#}, out_app_flag=2 (nspin=1/4) |
 | `elfs{#}g{#}.cube` | ELF, spin {#}, geometry step {#}, out_app_flag=2 (nspin=2) |
 | `elftotg{#}.cube` | ELF, total, geometry step {#}, out_app_flag=2 (nspin=2) |
+| Partial charge (out_pchg, PW) | |
+| `pchgi{state}s{component}.cube` | k-summed partial charge (modes 0/1) |
+| `pchgi{state}s{component}k{kpoint}.cube` | per-k partial charge (`if_separate_k=True`) |
+| `pchgi{state}s{component}[k{kpoint}]g{step}.cube` | `out_app_flag=2` adds the one-based step suffix |
+| Real-space wavefunction (out_wfc_norm / out_wfc_re_im, PW) | |
+| `wfi{state}s{component}k{kpoint}.cube` | wavefunction norm |
+| `wfi{state}s{component}k{kpoint}re.cube`, `...im.cube` | wavefunction real / imaginary part |
+| `wfi{state}s{component}k{kpoint}[re\|im]g{step}.cube` | `out_app_flag=2` adds the one-based step suffix |
+| Dipole (out_dipole) | |
+| `dipole_s{spin}.txt` | fixed name; mode 0 truncates, mode 1 appends one record per written step |
+| `dipole_s{spin}g{step}.txt` | non-RT-TDDFT calculations with `out_app_flag=2` |
+| `DIP/dipole_s{spin}.txt` | RT-TDDFT time series; `DIP/` is also used with `out_app_flag=2` |
+| SDFT DOS / conductivity (esolver_type=sdft) | |
+| `dos_sdft.txt` | final stochastic DOS (modes 0/1) |
+| `dos_sdftg{step}.txt` | final stochastic DOS with `out_app_flag=2` |
+| `Chebycoef.txt` | Chebyshev coefficient error report, written once at the end |
+
+`out_pchg`, `out_wfc_norm` and `out_wfc_re_im` are per-step snapshot outputs in
+PW calculations: a positive `out_freq_ion` selects the ionic steps (electronic
+steps in RT-TDDFT), mode 0 truncates the fixed cube file, mode 1 appends one
+complete cube frame per written step, and mode 2 adds the `g{step}` suffix.
+
+RT-TDDFT time-series files (`current_tot.txt`, `current_s{spin}k{kpoint}.txt`,
+`efield_total.txt`, `efield_{index}.txt`, `vector_pot.txt`, and the
+spin-current/magnetization files) keep fixed filenames in `OUT.{suffix}/` and
+append one record per completed electronic step. They are exempt from
+`out_freq_ion` and `out_app_flag`.
 
 **Band structure files (`out_band`):** each ionic step of `band.txt`,
 `bands1.txt` and `bands2.txt` is preceded by a provenance comment block, so the
