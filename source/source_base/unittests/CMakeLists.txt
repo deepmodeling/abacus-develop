@@ -6,11 +6,10 @@ addtest(
   LIBS parameter base device
   SOURCES test_csr_file_reader.cpp test_csr_reader.cpp)
 
-AddTest(
+addtest(
   TARGET MODULE_BASE_filename
   LIBS parameter base device
-  SOURCES test_filename.cpp
-)
+  SOURCES test_filename.cpp)
 
 # alltoallv_data is an MPI wrapper, so this target keeps __MPI.
 addtest(
