@@ -22,6 +22,9 @@ namespace LR
         /// $\tau$ is the output index, but BOTH channels of the transition density enter the
         /// same expression, so `rho1` must carry `rho1[0]` and `rho1[1]` together.
         ///     $v^{(2)}_\tau = A_\tau - \nabla\cdot\boldsymbol{E}_\tau$
+        /// For stabilized LR coefficients this differentiates the actual LR quadratic form:
+        /// only implicit sigma dependencies carry the preparation Jacobian; explicit gradient
+        /// factors and local terms remain active. Both transition channels have nrxx entries.
         void cal_v_eff_openshell(const double* const* const rho1, const UnitCell& ucell,
             ModuleBase::matrix& v_eff, const int tau) const;
         /// kernel components from PotHxcLR

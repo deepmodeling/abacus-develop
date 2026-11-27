@@ -7,6 +7,10 @@ import re
 import sys
 
 CHANNEL = re.compile(r'Start to calculate excited-state force of (singlet|triplet|updown)\b')
+FORCE_TABLE_HEADERS = (
+    'Forces (-gradients) of each excited state:',
+    'Excitation-energy force contributions (-dOmega/dR) of each state:',
+)
 ROW = re.compile(r'^\s*(?:(\d+)\s+)?(\d+)\s+force\s+(\S+)\s+(\S+)\s+(\S+)\s*$')
 
 
@@ -31,7 +35,7 @@ def read_forces(log):
             channel = match.group(1)
             active = False
             continue
-        if 'Forces (-gradients) of each excited state:' in line:
+        if any(header in line for header in FORCE_TABLE_HEADERS):
             if channel is None:
                 raise ValueError('LR force table has no spin channel')
             active = True

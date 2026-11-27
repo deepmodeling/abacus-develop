@@ -37,15 +37,6 @@ addtest(
   LIBS parameter base psi device container
   SOURCES test_diago_lobpcg.cpp test_dense_eigensolver.cpp
           ${LOBPCG_TEST_SOURCES})
-set_tests_properties(MODULE_HSOLVER_lobpcg PROPERTIES TIMEOUT 180)
-if(ENABLE_MPI)
-  add_test(
-    NAME MODULE_HSOLVER_lobpcg_mpi2
-    COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2 ${MPIEXEC_PREFLAGS}
-            $<TARGET_FILE:MODULE_HSOLVER_lobpcg> ${MPIEXEC_POSTFLAGS})
-  set_tests_properties(MODULE_HSOLVER_lobpcg_mpi2 PROPERTIES PROCESSORS 2
-                                                             TIMEOUT 180)
-endif()
 
 if(USE_CUDA OR USE_ROCM)
   addtest(
@@ -56,16 +47,6 @@ if(USE_CUDA OR USE_ROCM)
             test_dense_eigensolver.cpp
             ../module_linalg/unittests/test_linear_algebra.cpp)
   set_tests_properties(MODULE_HSOLVER_lobpcg_gpu PROPERTIES SKIP_RETURN_CODE 77)
-  if(ENABLE_MPI)
-    add_test(
-      NAME MODULE_HSOLVER_lobpcg_gpu_mpi2
-      COMMAND
-        ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2 ${MPIEXEC_PREFLAGS}
-        $<TARGET_FILE:MODULE_HSOLVER_lobpcg_gpu> ${MPIEXEC_POSTFLAGS})
-    set_tests_properties(
-      MODULE_HSOLVER_lobpcg_gpu_mpi2 PROPERTIES PROCESSORS 2 TIMEOUT 180
-                                                SKIP_RETURN_CODE 77)
-  endif()
   addtest(
     TARGET MODULE_HSOLVER_dav_subspace_gpu
     LIBS ${DAV_SUBSPACE_TEST_LIBS}

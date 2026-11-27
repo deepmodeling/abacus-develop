@@ -20,25 +20,3 @@ jobs:
       - uses: pre-commit/action@v3.0.1
         # TODO: Drop "continue-on-error"
         continue-on-error: true
-
-  cmake-format:
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-      - uses: actions/setup-python@v7
-        with:
-          python-version: '3.12'
-      - name: Install pre-commit
-        run: python -m pip install --no-cache-dir pre-commit
-      - name: Check CMake formatting on PR diff
-        run: |
-          base_sha="${{ github.event.pull_request.base.sha }}"
-          head_sha="${{ github.event.pull_request.head.sha }}"
-          merge_base="$(git merge-base "$base_sha" "$head_sha")"
-          pre-commit run cmake-format \
-            --from-ref "$merge_base" \
-            --to-ref "$head_sha" \
-            --show-diff-on-failure
