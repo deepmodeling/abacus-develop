@@ -352,7 +352,12 @@ run_case() {
     TIMEFORMAT='[----------] Time elapsed: %R seconds'
     #parallel test
     time {
-      if [ "$np" -le 0 ] 2> /dev/null; then
+      # Opted-in density checks must see only this run's LR cubes. Preserve
+      # other output and restart files, including the ground-state charge.
+      if [ -f lr_density.ref ] && ! rm -f -- OUT.autotest/LR_e-h_density_*.cube; then
+        echo "Error: cannot clear previous LR density cubes" >log.txt
+        false
+      elif [ "$np" -le 0 ] 2> /dev/null; then
         # serial build: run the binary directly, no MPI launcher.
         # This lets a serial ABACUS (ENABLE_MPI=OFF, e.g. the native
         # Windows build) reuse this harness unchanged.

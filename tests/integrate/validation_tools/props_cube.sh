@@ -56,7 +56,11 @@ run_cube_props() {
   #---------------------------------------
   #echo $out_chg
   if ! test -z "$out_chg" && [ $out_chg -ge 1 ]; then
-    record_compare_result "$props_result_file" "chg.cube_pass" "chg.cube.ref" "OUT.autotest/chg.cube" 6
+    # A channel-density regression can opt into lr_density.ref instead of
+    # storing a separate ground-state cube. Still check both if both exist.
+    if [ "$is_lr" != 1 ] || [ ! -f lr_density.ref ] || [ -f chg.cube.ref ]; then
+      record_compare_result "$props_result_file" "chg.cube_pass" "chg.cube.ref" "OUT.autotest/chg.cube" 6
+    fi
   fi
 
   #---------------------------------------

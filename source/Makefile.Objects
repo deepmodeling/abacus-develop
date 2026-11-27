@@ -1210,6 +1210,8 @@ OBJS_LR_GRAD=lr_force.o\
     grad_jt.o\
     gradient_output.o\
     lr_grad_cs.o\
+    window_response.o\
+    window_response_math.o\
     lr_grad_os.o\
     exx_proj.o\
     cvcx_serial.o\
