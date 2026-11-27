@@ -25,3 +25,11 @@ TEST(FrameAppend, RejectsInvalidArguments)
     EXPECT_THROW(ModuleIO::frame_appends(3, 1), std::invalid_argument);
     EXPECT_THROW(ModuleIO::frame_appends(1, -1), std::invalid_argument);
 }
+
+TEST(FrameAppend, StructureFilenamesFollowTheThreeOutputModes)
+{
+    EXPECT_EQ(ModuleIO::stru_frame_filename("OUT/", 0, 0), "OUT/STRU");
+    EXPECT_EQ(ModuleIO::stru_frame_filename("OUT/", 1, 3), "OUT/STRU");
+    EXPECT_EQ(ModuleIO::stru_frame_filename("OUT/STRUC/", 2, 3), "OUT/STRUC/STRU4");
+    EXPECT_THROW(ModuleIO::stru_frame_filename("OUT/", 3, 0), std::invalid_argument);
+}

@@ -406,8 +406,7 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_NEAR(param.inp.mdp.lj_sigma[0], 3.405, 1e-7);
     EXPECT_EQ(param.inp.mdp.md_damp, 1);
     EXPECT_EQ(param.inp.mdp.md_dt, 1);
-    EXPECT_EQ(param.inp.mdp.md_dumpfreq, 1);
-    EXPECT_EQ(param.inp.mdp.md_thermo_freq, 1);
+    EXPECT_EQ(param.inp.mdp.out_thermo_freq, 1);
     EXPECT_EQ(param.inp.mdp.md_nraise, 1);
     EXPECT_EQ(param.inp.cal_syns[0], 0);
     EXPECT_EQ(param.inp.cal_syns[1], 8);
@@ -446,9 +445,6 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_DOUBLE_EQ(param.inp.mdp.dp_fparam[1], 1.1);
     EXPECT_DOUBLE_EQ(param.inp.mdp.dp_aparam[0], 1.0);
     EXPECT_DOUBLE_EQ(param.inp.mdp.dp_aparam[1], 1.2);
-    EXPECT_FALSE(param.inp.mdp.dump_force);
-    EXPECT_FALSE(param.inp.mdp.dump_vel);
-    EXPECT_FALSE(param.inp.mdp.dump_virial);
     EXPECT_EQ(param.inp.sc_mag_switch, 0);
     EXPECT_TRUE(param.inp.decay_grad_switch);
     EXPECT_DOUBLE_EQ(param.inp.sc_thr, 1e-4);
