@@ -88,6 +88,12 @@ below. The partial solve requests indices 1 through `nbands` with
 device eigenvectors until occupations and DM are ready. Host eigenvectors
 remain available, and the device DM is downloaded for existing CPU consumers.
 
+Compare CPU and GPU DM using the same eigensolver and MPI/thread layout.
+Faster DM construction may provide little overall speedup when EXX dominates
+the calculation. Host buffers and matrix redistribution still add overhead,
+including with one MPI rank. GPU EXX has separate memory requirements;
+selecting `device_dm cpu` does not resolve an allocation failure in GPU EXX.
+
 ## Known limitations
 PW basis:
 - Only k point parallelization is supported, so the input keyword `kpar` will be set to match the number of MPI tasks automatically.
