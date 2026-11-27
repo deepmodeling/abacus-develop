@@ -6,11 +6,10 @@ addtest(
   LIBS parameter base device
   SOURCES test_csr_file_reader.cpp test_csr_reader.cpp)
 
-AddTest(
+addtest(
   TARGET MODULE_BASE_filename
   LIBS parameter base device
-  SOURCES test_filename.cpp
-)
+  SOURCES test_filename.cpp)
 
 # The sub-communicator helpers need real collectives, so this target keeps
 # __MPI even though the directory disables it for the others. It is built
