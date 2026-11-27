@@ -14,12 +14,12 @@ class Integral
     ~Integral();
 
     /**
-     * @brief simpson integral.
+     * @brief Simpson integration with a radial Jacobian.
      * 
-     * @param mesh [in] number of grid points (should be odd)
+     * @param mesh [in] positive odd number of grid points; mesh=1 returns zero
      * @param func [in] function to be integrated
-     * @param rab [in] a list of interval
-     * @param asum [out] the final integral value
+     * @param rab [in] rab[i]=(dr/di)*Delta_i at each grid point. The index spacing Delta_i is 1.
+     * @param asum [out] approximation to \int_{r[0]}^{r[mesh-1]} f(r) dr
      * @author Peize Lin
      * @date 2017-10-02
      */
@@ -32,12 +32,12 @@ class Integral
     );
 
     /**
-     * @brief simpson integral. 
+     * @brief Simpson integration on a uniform grid.
      * 
-     * @param mesh [in] number of grid points (should be odd)
+     * @param mesh [in] positive odd number of grid points; mesh=1 returns zero
      * @param func [in] function to be integrated
      * @param dr [in] interval
-     * @param asum [out] the final integral value
+     * @param asum [out] approximation to \int_{r[0]}^{r[mesh-1]} f(r) dr
      * @author Peize Lin
      * @date 2017-10-02
      */
@@ -50,13 +50,13 @@ class Integral
     );
 
     /**
-     * @brief simpson integral. 
-     *  
-     * 
-     * @param mesh [in] number of grid points 
+     * @brief Cumulative integration from the first grid point.
+     *
+     * @param mesh [in] number of grid points, mesh >= 1 (odd or even)
      * @param func [in] function to be integrated
-     * @param rab [in] a list of interval
-     * @param asum [out] a list of integral value. asum[i] = integral from 0 to i. The max index of asum is an even (mesh-1 or mesh).
+     * @param rab [in] rab[i]=(dr/di)*Delta_i at each grid point. The index spacing Delta_i is 1.
+     * @param asum [out] asum[i] \approx \int_{r[0]}^{r[i]} f(r) dr; asum[0]=0.
+     * Odd-index endpoints append one trapezoid to the preceding Simpson prefix.
      * @author Peize Lin
      * @date 2016-02-14
      */
@@ -69,12 +69,12 @@ class Integral
     );
 
     /**
-     * @brief simpson integral. 
-     * 
-     * @param mesh [in] number of grid points 
+     * @brief Tail integrals computed as total minus prefix.
+     *
+     * @param mesh [in] number of grid points, mesh >= 1 (odd or even)
      * @param func [in] function to be integrated 
-     * @param rab [in] r(i) * dr(i)/di * di or (b-a)/2n 
-     * @param asum [out] a list of integral value. sum[i] = integral from i to mesh-1. 
+     * @param rab [in] rab[i]=(dr/di)*Delta_i at each grid point. The index spacing Delta_i is 1.
+     * @param asum [out] asum[i] \approx \int_{r[i]}^{r[mesh-1]} f(r) dr; no infinite-tail correction.
      * @author Peize Lin
      * @date 2016-02-14
      */
@@ -101,13 +101,13 @@ class Integral
     // Grid points and weights used to generate Gauss_Legendre integrals. Returns x in [-1, 1], the integration area is -1, 1.
     // https://en.wikipedia.org/wiki/Gauss%E2%80%93Legendre_quadrature
     // \int_{-1}^{1} f(x) dx \approx \sum_{i = 1}^{n} w_{i} f(x_{i})
-    // n is the number of sample points used,
+    // n is the positive number of sample points used.
     // w_{i} are quadrature weights
     // x_{i} are the roots of the n-th Legendre polynomial.
     static void Gauss_Legendre_grid_and_weight(const int n, double *x, double *weights);
 
-    // Grid points and weights used to generate Gauss_Legendre integrals. Returns x in [xmin, xmax], the integration area is at xmin, xmax.
-    // \int_{-1}^{1} f(x) dx \approx \sum_{i = 1}^{n} w_{i} f(x_{i})
+    // Gauss-Legendre nodes between xmin and xmax, with oriented integration weights.
+    // \int_{xmin}^{xmax} f(x) dx \approx \sum_{i = 1}^{n} w_{i} f(x_{i})
     // xl = (xmax - xmin) / 2
     // xmean = (xmax + xmin) / 2
     // \int_{xmin}^{xmax} f(x) dx = xl \int_{-1}^{1} f(xl * t + xmean) dt

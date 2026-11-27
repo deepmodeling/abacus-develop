@@ -11,3 +11,9 @@ AddTest(
   LIBS parameter base device
   SOURCES test_filename.cpp
 )
+
+AddTest(
+  TARGET MODULE_BASE_integral
+  LIBS parameter
+  SOURCES test_math_integral.cpp ../math_integral.cpp
+)
