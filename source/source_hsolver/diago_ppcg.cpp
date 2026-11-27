@@ -2037,14 +2037,33 @@ double DiagoPPCG<T, Device>::diag(
         // Reserve a final window for refinement before another Ritz rotation
         // can perturb near-converged states.
         const bool startup_correction = iter == 1 && needs_startup_global_correction;
-        const Real refinement_threshold = Real(4) * diag_thr_;
         const int refinement_stagnation = 5;
         // Leave room for refinement and subsequent block iterations within
         // the existing budget, even when stagnation is detected late.
         const int refinement_budget = ncol + refinement_stagnation;
         const bool final_refinement_window = maxiter_ - iter < refinement_budget;
-        if (!startup_correction && last_rr_succeeded && near_precision && max_residual_ <= refinement_threshold &&
+        bool near_band_thresholds = false;
+        if (!startup_correction && last_rr_succeeded && near_precision &&
             (no_improve >= refinement_stagnation || final_refinement_window))
+        {
+            // Use the same per-band thresholds as locking. An already acceptable
+            // empty band must not prevent refinement of a tightly converged band.
+            std::vector<double> residual_norms(ncol, 0.0);
+            PPCGVectorOps<T, Device>::column_products(
+                n_dim_, ld_psi_, ncol, w_.data(), w_.data(), residual_norms.data());
+            reduce_pool_values(residual_norms.data(), ncol);
+            near_band_thresholds = true;
+            for (int band = 0; band < ncol; ++band)
+            {
+                const double threshold = 4.0 * std::max(double(diag_thr_), ethr_band[band]);
+                if (!std::isfinite(residual_norms[band]) || residual_norms[band] > threshold * threshold)
+                {
+                    near_band_thresholds = false;
+                    break;
+                }
+            }
+        }
+        if (near_band_thresholds)
         {
             // Cycle through the retained states: errors in an already locked
             // neighbor can limit the attainable residual of the remaining pair.

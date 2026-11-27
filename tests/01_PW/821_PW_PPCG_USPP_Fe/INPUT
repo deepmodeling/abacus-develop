@@ -10,7 +10,7 @@ pseudo_dir        ../../PP_ORB
 #Parameters (2.Iteration)
 ecutwfc           8
 ecutrho           35
-scf_thr 1e-16
+scf_thr 1e-12
 scf_nmax 200
 
 #Parameters (3.Basis)
@@ -38,3 +38,5 @@ pw_seed           1
 ks_solver ppcg
 
 pw_diag_nmax 200
+
+diago_smooth_ethr 1
