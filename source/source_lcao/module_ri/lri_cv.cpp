@@ -33,6 +33,15 @@ LRI_CV<Tdata>::~LRI_CV()
     pthread_rwlock_destroy(&rwlock_dCw);
 }
 
+template<typename Tdata>
+void LRI_CV<Tdata>::clear_cache()
+{
+    this->Vws.clear();
+    this->Cws.clear();
+    this->dVws.clear();
+    this->dCws.clear();
+}
+
 template <typename Tdata>
 void LRI_CV<Tdata>::set_orbitals(
     const UnitCell &ucell,
