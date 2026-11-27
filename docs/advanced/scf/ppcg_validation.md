@@ -55,6 +55,26 @@ Raw inputs, logs, output hashes and JSON results are retained under
 `/mnt/data/Cheerly/ppcg-review-followup-20261127/cg-validation/` and
 `/mnt/data/Cheerly/ppcg-review-followup-20261127/cg-reference-probe/`.
 
+The post-merge builds and focused checks passed with:
+
+```bash
+cmake --build build-review-20261124 -j8 --target abacus_pw_para \
+  MODULE_HSOLVER_ppcg MODULE_HSOLVER_pw MODULE_HSOLVER_lobpcg \
+  MODULE_IO_ppcg_input MODULE_IO_read_item_serial
+cmake --build build-ppcg-ci-repro-20261125 -j8 --target abacus_pw_gpu \
+  MODULE_HSOLVER_ppcg_gpu MODULE_HSOLVER_lobpcg_gpu
+OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 \
+  ctest --test-dir build-review-20261124 --output-on-failure \
+  -R '^MODULE_HSOLVER_(ppcg|pw|lobpcg)$|^MODULE_IO_(ppcg_input|read_item_serial)$'
+OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 \
+  ctest --test-dir build-ppcg-ci-repro-20261125 --output-on-failure \
+  -R '^MODULE_HSOLVER_(ppcg_gpu|lobpcg_gpu)$'
+```
+
+The twelve unchanged native CPU/CUDA fixtures also passed 72 reference checks
+without residual warnings locally, using the Autotest command below with the
+respective CPU or CUDA executable. This does not supersede the failed L20 result.
+
 ## Historical CPU configuration (2026-11-24)
 
 Validated on 2026-11-24 with GNU 13.3 Release, OpenMPI, OpenMP, OpenBLAS, and an Intel Xeon Gold 6242. LCAO and CUDA were disabled. Production sources are from `dd385365908b088333030b4623d72e3533b521a6`; the accompanying test-data/documentation additions do not change the executable.
