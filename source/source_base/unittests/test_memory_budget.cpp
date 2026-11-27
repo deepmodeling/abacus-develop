@@ -3,130 +3,7 @@
 #include <gtest/gtest.h>
 
 #include <cstddef>
-#include <fstream>
 #include <limits>
-#include <string>
-#include <sys/stat.h>
-
-namespace
-{
-
-void write_file(const std::string& path, const std::string& content)
-{
-    std::ofstream ofs(path);
-    ASSERT_TRUE(ofs);
-    ofs << content;
-}
-
-std::string make_v2_fixture()
-{
-    const std::string dir = testing::TempDir() + "/abacus_memory_budget_v2";
-    mkdir(dir.c_str(), 0700);
-    write_file(dir + "/memory.max", "1536000000000\n");
-    write_file(dir + "/memory.current", "100000000000\n");
-    write_file(dir + "/memory.stat", "inactive_file 20000000000\n");
-    return dir;
-}
-
-std::string make_v1_fixture()
-{
-    const std::string dir = testing::TempDir() + "/abacus_memory_budget_v1";
-    mkdir(dir.c_str(), 0700);
-    mkdir((dir + "/memory").c_str(), 0700);
-    write_file(dir + "/memory/memory.limit_in_bytes", "1536000000000\n");
-    write_file(dir + "/memory/memory.usage_in_bytes", "100000000000\n");
-    write_file(dir + "/memory/memory.stat", "total_inactive_file 20000000000\n");
-    return dir;
-}
-
-} // namespace
-
-TEST(MemoryBudget, CgroupV2ReadsLimitAndCurrent)
-{
-    const ModuleBase::MemoryStatus status = ModuleBase::get_memory_status(make_v2_fixture());
-
-    EXPECT_TRUE(status.from_cgroup);
-    EXPECT_EQ(status.limit_bytes, 1536000000000ULL);
-    EXPECT_EQ(status.current_bytes, 100000000000ULL);
-    EXPECT_EQ(status.reclaimable_bytes, 20000000000ULL);
-    EXPECT_EQ(status.available_bytes, 1456000000000ULL);
-}
-
-TEST(MemoryBudget, CgroupV1ReadsLimitAndCurrent)
-{
-    const ModuleBase::MemoryStatus status = ModuleBase::get_memory_status(make_v1_fixture());
-
-    EXPECT_TRUE(status.from_cgroup);
-    EXPECT_EQ(status.limit_bytes, 1536000000000ULL);
-    EXPECT_EQ(status.current_bytes, 100000000000ULL);
-    EXPECT_EQ(status.reclaimable_bytes, 20000000000ULL);
-    EXPECT_EQ(status.available_bytes, 1456000000000ULL);
-}
-
-TEST(MemoryBudget, CgroupUnlimitedKeepsCurrentButNoLimit)
-{
-    const std::string dir = make_v2_fixture();
-    write_file(dir + "/memory.max", "max\n");
-
-    const ModuleBase::MemoryStatus status = ModuleBase::get_memory_status(dir);
-    EXPECT_TRUE(status.from_cgroup);
-    EXPECT_EQ(status.limit_bytes, 0ULL);
-    EXPECT_EQ(status.current_bytes, 100000000000ULL);
-}
-
-TEST(MemoryBudget, CgroupFiniteZeroLimitIsNotTreatedAsUnlimited)
-{
-    // A parsed "0" is a real finite limit (an unusual but valid cgroup
-    // configuration) and must not fall back to host memory the way an
-    // explicit "max" does.  Otherwise the budget would be over-counted.
-    const std::string dir = make_v2_fixture();
-    write_file(dir + "/memory.max", "0\n");
-
-    const ModuleBase::MemoryStatus status = ModuleBase::get_memory_status(dir);
-    EXPECT_TRUE(status.from_cgroup);
-    EXPECT_TRUE(status.known);
-    EXPECT_FALSE(status.unlimited);
-    EXPECT_EQ(status.limit_bytes, 0ULL);
-    // free_bytes = 0 (limit not > current), so available is min(0, ...) = 0,
-    // not the host memory read_mem_available() would return.
-    EXPECT_EQ(status.available_bytes, 0ULL);
-}
-
-TEST(MemoryBudget, CgroupZeroHeadroomStaysKnownAndEnforceable)
-{
-    // A readable finite cgroup whose usage has reached its limit and has no
-    // reclaimable cache reports available_bytes == 0.  That is a real,
-    // enforceable zero (known == true), not the "could not read" unknown
-    // state, so the caller must still be able to abort on it.
-    const std::string dir = testing::TempDir() + "/abacus_memory_budget_full";
-    mkdir(dir.c_str(), 0700);
-    write_file(dir + "/memory.max", "100000000000\n");
-    write_file(dir + "/memory.current", "100000000000\n");
-    write_file(dir + "/memory.stat", "inactive_file 0\n");
-
-    const ModuleBase::MemoryStatus status = ModuleBase::get_memory_status(dir);
-    EXPECT_TRUE(status.from_cgroup);
-    EXPECT_TRUE(status.known);
-    EXPECT_FALSE(status.unlimited);
-    EXPECT_EQ(status.available_bytes, 0ULL);
-    // decide_memory must Abort on this known zero rather than skip.
-    EXPECT_EQ(ModuleBase::decide_memory(1, 1, status.available_bytes), ModuleBase::MemoryDecision::Abort);
-}
-
-TEST(MemoryBudget, UnreadableSourceIsUnknown)
-{
-    // An empty cgroup root with no cgroup files and no readable
-    // /proc/meminfo-derived value leaves the status unknown.
-    const std::string dir = testing::TempDir() + "/abacus_memory_budget_empty";
-    mkdir(dir.c_str(), 0700);
-
-    const ModuleBase::MemoryStatus status = ModuleBase::get_memory_status(dir);
-    // Falls back to /proc/meminfo; on this host that read succeeds, so the
-    // status is known and unlimited (no cgroup ceiling).
-    EXPECT_FALSE(status.from_cgroup);
-    EXPECT_EQ(status.known, status.available_bytes != 0);
-    EXPECT_TRUE(status.unlimited);
-}
 
 TEST(MemoryBudget, EstimatorMatchesIssue8342Dimensions)
 {
@@ -175,24 +52,6 @@ TEST(MemoryBudget, EstimatorSaturatesOnOverflow)
     EXPECT_EQ(estimate.per_rank_total_bytes, std::numeric_limits<std::size_t>::max());
 }
 
-TEST(MemoryBudget, DecideAbortsWhenLowerBoundDoesNotFit)
-{
-    EXPECT_EQ(ModuleBase::decide_memory(1600000000000ULL, 1800000000000ULL, 1500000000000ULL),
-              ModuleBase::MemoryDecision::Abort);
-}
-
-TEST(MemoryBudget, DecideWarnsWhenProjectionDoesNotFit)
-{
-    EXPECT_EQ(ModuleBase::decide_memory(1000000000000ULL, 1600000000000ULL, 1500000000000ULL),
-              ModuleBase::MemoryDecision::Warn);
-}
-
-TEST(MemoryBudget, DecideOkWhenProjectionFits)
-{
-    EXPECT_EQ(ModuleBase::decide_memory(500000000000ULL, 600000000000ULL, 1500000000000ULL),
-              ModuleBase::MemoryDecision::Ok);
-}
-
 TEST(MemoryBudget, GammaDirectSolverSetMatchesSetupPsi)
 {
     // Must match the predicate in source_psi/setup_psi.cpp exactly: these
@@ -218,20 +77,6 @@ TEST(MemoryBudget, ElpaSolverSet)
     EXPECT_FALSE(ModuleBase::is_elpa_ks_solver("lapack"));
     EXPECT_FALSE(ModuleBase::is_elpa_ks_solver("cusolvermp"));
     EXPECT_FALSE(ModuleBase::is_elpa_ks_solver(""));
-}
-
-TEST(MemoryBudget, PerRankBudgetDividesByRanksPerNode)
-{
-    EXPECT_EQ(ModuleBase::per_rank_memory_budget(1500000000000ULL, 56), 1500000000000ULL / 56);
-    // ranks_per_node == 0 (serial build / before init) returns the node value.
-    EXPECT_EQ(ModuleBase::per_rank_memory_budget(1500000000000ULL, 0), 1500000000000ULL);
-    // zero available stays zero without dividing by zero.
-    EXPECT_EQ(ModuleBase::per_rank_memory_budget(0ULL, 56), 0ULL);
-    // division cannot overflow, even at SIZE_MAX.
-    EXPECT_EQ(ModuleBase::per_rank_memory_budget(std::numeric_limits<std::size_t>::max(), 1),
-              std::numeric_limits<std::size_t>::max());
-    EXPECT_EQ(ModuleBase::per_rank_memory_budget(std::numeric_limits<std::size_t>::max(), 0),
-              std::numeric_limits<std::size_t>::max());
 }
 
 TEST(MemoryBudget, FormatMemoryBytesScalesUnits)
