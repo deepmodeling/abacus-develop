@@ -1,8 +1,8 @@
 #include "dfpt_nscf.h"
 
-#include "source_base/module_external/lapack_connector.h"
 #include "source_base/complexmatrix.h"
 #include "source_base/global_function.h"
+#include "source_base/module_external/lapack_connector.h"
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
 
@@ -20,11 +20,12 @@ namespace
 {
 
 // column-major hermitian product V^dagger W -> m x m
-void hermitian_project(const std::vector<std::vector<std::complex<double>>>& v,
-                       const std::vector<std::vector<std::complex<double>>>& w,
-                       int n,
-                       int m,
-                       ModuleBase::ComplexMatrix& out)
+void hermitian_project(
+    const std::vector<std::vector<std::complex<double>>> &v,
+    const std::vector<std::vector<std::complex<double>>> &w,
+    int n,
+    int m,
+    ModuleBase::ComplexMatrix &out)
 {
     out.zero_out();
     for (int j = 0; j < m; ++j)
@@ -32,8 +33,8 @@ void hermitian_project(const std::vector<std::vector<std::complex<double>>>& v,
         for (int i = 0; i < m; ++i)
         {
             std::complex<double> acc(0.0, 0.0);
-            const std::vector<std::complex<double>>& vi = v[i];
-            const std::vector<std::complex<double>>& wj = w[j];
+            const std::vector<std::complex<double>> &vi = v[i];
+            const std::vector<std::complex<double>> &wj = w[j];
             for (int l = 0; l < n; ++l)
             {
                 acc += std::conj(vi[l]) * wj[l];
@@ -47,17 +48,18 @@ void hermitian_project(const std::vector<std::vector<std::complex<double>>>& v,
 // The two LapackConnector::zheev transposes cancel: the round-trip leaves
 // the C++ matrix holding the eigenvector entries un-conjugated, so S is
 // consumed exactly as returned.
-void combine(const std::vector<std::vector<std::complex<double>>>& v,
-             const ModuleBase::ComplexMatrix& s,
-             int n,
-             int m_in,
-             int m_out,
-             std::vector<std::vector<std::complex<double>>>& out)
+void combine(
+    const std::vector<std::vector<std::complex<double>>> &v,
+    const ModuleBase::ComplexMatrix &s,
+    int n,
+    int m_in,
+    int m_out,
+    std::vector<std::vector<std::complex<double>>> &out)
 {
     out.assign(m_out, std::vector<std::complex<double>>(n, std::complex<double>(0.0, 0.0)));
     for (int j = 0; j < m_out; ++j)
     {
-        std::vector<std::complex<double>>& oj = out[j];
+        std::vector<std::complex<double>> &oj = out[j];
         for (int k = 0; k < m_in; ++k)
         {
             const std::complex<double> sk = s(k, j);
@@ -65,7 +67,7 @@ void combine(const std::vector<std::vector<std::complex<double>>>& v,
             {
                 continue;
             }
-            const std::vector<std::complex<double>>& vk = v[k];
+            const std::vector<std::complex<double>> &vk = v[k];
             for (int l = 0; l < n; ++l)
             {
                 oj[l] += sk * vk[l];
@@ -77,11 +79,12 @@ void combine(const std::vector<std::vector<std::complex<double>>>& v,
 // in-place modified Gram-Schmidt orthonormalization of the head columns of
 // vecs against the orthonormal basis; returns false when a column is
 // linearly dependent (norm below the floor) after two passes
-bool orthogonalize(std::vector<std::vector<std::complex<double>>>& vecs,
-                   int head,
-                   int against_from,
-                   int against_to,
-                   int n)
+bool orthogonalize(
+    std::vector<std::vector<std::complex<double>>> &vecs,
+    int head,
+    int against_from,
+    int against_to,
+    int n)
 {
     const double dep_floor = 1.0e-8; ///< empirical parameter: Gram-Schmidt dependence floor
     for (int pass = 0; pass < 2; ++pass)
@@ -89,7 +92,7 @@ bool orthogonalize(std::vector<std::vector<std::complex<double>>>& vecs,
         for (int k = against_from; k < against_to; ++k)
         {
             std::complex<double> dot(0.0, 0.0);
-            const std::vector<std::complex<double>>& vk = vecs[k];
+            const std::vector<std::complex<double>> &vk = vecs[k];
             for (int l = 0; l < n; ++l)
             {
                 dot += std::conj(vk[l]) * vecs[head][l];
@@ -120,13 +123,14 @@ bool orthogonalize(std::vector<std::vector<std::complex<double>>>& vecs,
 
 } // namespace
 
-int DFPT_NSCF::lowest_eigpairs(const DFPT_Stern::LinearOperator& hop,
-                               const std::vector<double>& precond,
-                               int nwant,
-                               int max_iter,
-                               double eig_tol,
-                               std::vector<std::vector<std::complex<double>>>& psi,
-                               std::vector<double>& eig)
+int DFPT_NSCF::lowest_eigpairs(
+    const DFPT_Stern::LinearOperator &hop,
+    const std::vector<double> &precond,
+    int nwant,
+    int max_iter,
+    double eig_tol,
+    std::vector<std::vector<std::complex<double>>> &psi,
+    std::vector<double> &eig)
 {
     ModuleBase::TITLE("DFPT_NSCF", "lowest_eigpairs");
     ModuleBase::timer::start("DFPT_NSCF", "lowest_eigpairs");
@@ -205,8 +209,8 @@ int DFPT_NSCF::lowest_eigpairs(const DFPT_Stern::LinearOperator& hop,
         std::vector<std::complex<double>> work(2 * m + 10);
         std::vector<double> rwork(3 * m + 10);
         int info = 0;
-        LapackConnector::zheev('V', 'U', m, mat, m, theta.data(), work.data(), static_cast<int>(work.size()),
-                               rwork.data(), &info);
+        LapackConnector::zheev(
+            'V', 'U', m, mat, m, theta.data(), work.data(), static_cast<int>(work.size()), rwork.data(), &info);
         if (info != 0)
         {
             ModuleBase::timer::end("DFPT_NSCF", "lowest_eigpairs");
@@ -248,7 +252,7 @@ int DFPT_NSCF::lowest_eigpairs(const DFPT_Stern::LinearOperator& hop,
             for (int k = 0; k < m; ++k)
             {
                 const std::complex<double> sk = mat(k, j);
-                const std::vector<std::complex<double>>& wk = wspace[k];
+                const std::vector<std::complex<double>> &wk = wspace[k];
                 for (int l = 0; l < n; ++l)
                 {
                     res[j][l] += sk * wk[l];
@@ -393,8 +397,8 @@ int DFPT_NSCF::lowest_eigpairs(const DFPT_Stern::LinearOperator& hop,
         std::vector<std::complex<double>> work(2 * m + 10);
         std::vector<double> rwork(3 * m + 10);
         int info = 0;
-        LapackConnector::zheev('V', 'U', m, mat, m, theta.data(), work.data(), static_cast<int>(work.size()),
-                               rwork.data(), &info);
+        LapackConnector::zheev(
+            'V', 'U', m, mat, m, theta.data(), work.data(), static_cast<int>(work.size()), rwork.data(), &info);
         if (info != 0)
         {
             ModuleBase::timer::end("DFPT_NSCF", "lowest_eigpairs");

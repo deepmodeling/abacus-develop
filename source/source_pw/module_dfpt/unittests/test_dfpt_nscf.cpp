@@ -7,13 +7,13 @@
 #include "../dfpt_nscf.h"
 #include "../dfpt_stern.h"
 
-#include "source_base/module_external/lapack_connector.h"
 #include "source_base/complexmatrix.h"
+#include "source_base/module_external/lapack_connector.h"
 
-#include <gtest/gtest.h>
 #include <algorithm>
 #include <cmath>
 #include <complex>
+#include <gtest/gtest.h>
 #include <random>
 #include <vector>
 
@@ -25,7 +25,7 @@ namespace
 // and an exact diag would degenerate the Davidson expansion (the
 // residual direction maps back into the span); tests use a scaled copy
 // to mirror that
-std::vector<double> approx_precond(const std::vector<double>& d)
+std::vector<double> approx_precond(const std::vector<double> &d)
 {
     std::vector<double> p(d.size());
     for (size_t i = 0; i < d.size(); ++i)
@@ -40,24 +40,16 @@ std::vector<double> approx_precond(const std::vector<double>& d)
 class DiagonalOperator : public ModuleDFPT::DFPT_Stern::LinearOperator
 {
   public:
-    DiagonalOperator(const std::vector<double>& d) : d_(d)
-    {
-    }
-    int dimension() const override
-    {
-        return static_cast<int>(d_.size());
-    }
-    void apply(const std::complex<double>* x, std::complex<double>* y) const override
+    DiagonalOperator(const std::vector<double> &d) : d_(d) {}
+    int dimension() const override { return static_cast<int>(d_.size()); }
+    void apply(const std::complex<double> *x, std::complex<double> *y) const override
     {
         for (size_t i = 0; i < d_.size(); ++i)
         {
             y[i] = d_[i] * x[i];
         }
     }
-    const std::vector<double>& diag() const
-    {
-        return d_;
-    }
+    const std::vector<double> &diag() const { return d_; }
 
   private:
     std::vector<double> d_;

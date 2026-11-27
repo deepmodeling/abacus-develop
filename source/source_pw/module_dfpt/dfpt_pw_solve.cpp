@@ -222,9 +222,8 @@ void debug_iter_snapshot(
     std::cout << "DBG iter=" << iter << " |drho_in_g|=" << std::sqrt(dh) << " |v_sc_r|=" << std::sqrt(dv) << std::endl;
 }
 
-void debug_h_consistency(DFPT_HamiltShift& h,
-                         const std::vector<std::vector<std::complex<double>>>& occ_k,
-                         const std::vector<double>& eig)
+void debug_h_consistency(
+    DFPT_HamiltShift &h, const std::vector<std::vector<std::complex<double>>> &occ_k, const std::vector<double> &eig)
 {
     std::cout << "DBG occ_kq nstates=" << occ_k.size() << std::endl;
     for (size_t m = 0; m < occ_k.size(); ++m)

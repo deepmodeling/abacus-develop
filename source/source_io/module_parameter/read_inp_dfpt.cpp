@@ -1,6 +1,6 @@
-#include "source_base/tool_quit.h"
 #include "read_input.h"
 #include "read_input_tool.h"
+#include "source_base/tool_quit.h"
 
 #include <algorithm>
 
@@ -21,7 +21,8 @@ void ReadInput::item_dfpt()
                            "4x4x4 KPT mesh admits dfpt_qmesh values of 1, 2, 3, or 4 along "
                            "each direction. This parameter is ignored when dfpt_qfile is set.";
         item.default_value = "1 1 1";
-        item.read_value = [](const Input_Item& item, Parameter& para) {
+        item.read_value = [](const Input_Item &item, Parameter &para)
+        {
             size_t count = item.get_size();
             if (count == 1)
             {
@@ -39,7 +40,8 @@ void ReadInput::item_dfpt()
             }
         };
         sync_intvec(input.dfpt_qmesh, 3, 1);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
+        item.check_value = [](const Input_Item &item, const Parameter &para)
+        {
             for (int i = 0; i < 3; i++)
             {
                 if (para.input.dfpt_qmesh[i] < 1)
@@ -67,7 +69,8 @@ void ReadInput::item_dfpt()
                            "regardless of dfpt_out_dyn); arbitrary orderings are allowed "
                            "when dfpt_compute_q0 is false.";
         item.default_value = "\"\"";
-        item.read_value = [](const Input_Item& item, Parameter& para) {
+        item.read_value = [](const Input_Item &item, Parameter &para)
+        {
             if (item.get_size() == 0)
             {
                 para.input.dfpt_qfile = "";
@@ -110,7 +113,8 @@ void ReadInput::item_dfpt()
                            "effective charges.";
         item.default_value = "false";
         read_sync_bool(input.dfpt_loto);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
+        item.check_value = [](const Input_Item &item, const Parameter &para)
+        {
             if (para.input.dfpt_loto && !para.input.dfpt_compute_q0)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "dfpt_loto requires dfpt_compute_q0 to be true.");
@@ -154,7 +158,8 @@ void ReadInput::item_dfpt()
                            "is always the density residual.";
         item.default_value = "1.0e-8";
         read_sync_double(input.dfpt_conv_thr);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
+        item.check_value = [](const Input_Item &item, const Parameter &para)
+        {
             if (para.input.dfpt_conv_thr <= 0.0)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "dfpt_conv_thr must be > 0.");
@@ -238,7 +243,8 @@ void ReadInput::item_dfpt()
                            "weakly screened systems but may diverge.";
         item.default_value = "0.4";
         read_sync_double(input.dfpt_mix_beta);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
+        item.check_value = [](const Input_Item &item, const Parameter &para)
+        {
             if (para.input.dfpt_mix_beta <= 0.0 || para.input.dfpt_mix_beta > 1.0)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "dfpt_mix_beta must be in (0, 1].");
@@ -263,7 +269,8 @@ void ReadInput::item_dfpt()
                            "symmetry-equivalent atoms equivalent). no: leave the matrix as "
                            "computed.";
         item.default_value = "no";
-        item.read_value = [](const Input_Item& item, Parameter& para) {
+        item.read_value = [](const Input_Item &item, Parameter &para)
+        {
             if (item.get_size() == 0)
             {
                 para.input.dfpt_asr = "no";
@@ -274,7 +281,8 @@ void ReadInput::item_dfpt()
             }
         };
         sync_string(input.dfpt_asr);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
+        item.check_value = [](const Input_Item &item, const Parameter &para)
+        {
             if (para.input.dfpt_asr != "no" && para.input.dfpt_asr != "simple" && para.input.dfpt_asr != "crystal")
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "dfpt_asr must be no, simple or crystal.");
@@ -284,7 +292,8 @@ void ReadInput::item_dfpt()
     }
     {
         Input_Item item("dfpt_mix_type");
-        item.annotation = "mixing scheme of the DFPT response SCF: rho_plain, rho_kerker, rho_broyden, v_sc_plain or v_sc_broyden";
+        item.annotation =
+            "mixing scheme of the DFPT response SCF: rho_plain, rho_kerker, rho_broyden, v_sc_plain or v_sc_broyden";
         item.category = category;
         item.type = "String";
         item.description = "Set the mixing scheme of the DFPT response SCF. rho_plain: the "
@@ -300,16 +309,16 @@ void ReadInput::item_dfpt()
                            "v_sc_broyden is the default (the metric the Broyden least "
                            "squares works in is K-weighted, which stabilizes the "
                            "Coulomb-stiff shells that destabilize plain density mixing).";
-         item.default_value = "v_sc_broyden";
-         item.domain.set_choices({"rho_plain", "rho_kerker", "rho_broyden", "v_sc_plain", "v_sc_broyden"});
-         // Contract: the line may be omitted (default_value v_sc_broyden
-         // applies) or supply exactly one of the five choices. An
-         // explicitly empty or unknown value is rejected by the scalar
-         // choices domain before read_value runs; the previous
-         // get_size()==0 fallback silently mapped an empty value onto
-         // v_sc_broyden and is intentionally dropped.
-         read_sync_string(input.dfpt_mix_type);
-         this->add_item(item);
+        item.default_value = "v_sc_broyden";
+        item.domain.set_choices({"rho_plain", "rho_kerker", "rho_broyden", "v_sc_plain", "v_sc_broyden"});
+        // Contract: the line may be omitted (default_value v_sc_broyden
+        // applies) or supply exactly one of the five choices. An
+        // explicitly empty or unknown value is rejected by the scalar
+        // choices domain before read_value runs; the previous
+        // get_size()==0 fallback silently mapped an empty value onto
+        // v_sc_broyden and is intentionally dropped.
+        read_sync_string(input.dfpt_mix_type);
+        this->add_item(item);
     }
     {
         Input_Item item("dfpt_kerker_a2");
@@ -320,10 +329,10 @@ void ReadInput::item_dfpt()
                            "by dfpt_mix_type = rho_kerker. The screen f_g = |G+q|^2 / "
                            "(|G+q|^2 + a^2) freezes the stiff long-wavelength shells; "
                            "larger a^2 damps more shells. Ignored by the other schemes.";
-         item.default_value = "1.0";
-         item.domain.set_rule("value>0");
-         read_sync_double(input.dfpt_kerker_a2);
-         this->add_item(item);
+        item.default_value = "1.0";
+        item.domain.set_rule("value>0");
+        read_sync_double(input.dfpt_kerker_a2);
+        this->add_item(item);
     }
     {
         Input_Item item("dfpt_broyden_ndim");
@@ -338,10 +347,10 @@ void ReadInput::item_dfpt()
                            "and the density mixer of the electric-field "
                            "(LO-TO) loop. More history generally accelerates "
                            "convergence at the cost of memory.";
-         item.default_value = "8";
-         item.domain.set_rule("value>=1");
-         read_sync_int(input.dfpt_broyden_ndim);
-         this->add_item(item);
+        item.default_value = "8";
+        item.domain.set_rule("value>=1");
+        read_sync_int(input.dfpt_broyden_ndim);
+        this->add_item(item);
     }
 }
 } // namespace ModuleIO

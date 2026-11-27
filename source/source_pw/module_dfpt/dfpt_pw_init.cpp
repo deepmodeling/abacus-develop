@@ -208,7 +208,6 @@ void DFPT_PW::init(const DFPT_PW_InitContext &ctx)
     ModuleBase::timer::end("DFPT_PW", "init");
 }
 
-
 int DFPT_PW::Impl::occupied_band_count(int ik) const
 {
     // insulator: the occupied-band count is k-independent; the metallic
@@ -222,7 +221,6 @@ int DFPT_PW::Impl::occupied_band_count(int ik) const
         {
 
             nocc = m + 1;
-
         }
     }
     return nocc;
@@ -245,13 +243,13 @@ void DFPT_PW::Impl::build_occ_kq(int q_idx)
     // block-Davidson runs on DFPT_HamiltShift with the shift zeroed; the
     // per-band Sternheimer shift keeps using the ground-state eigenvalue
     // eig_(ik, ib) of the coupled k band, so eig_ stays the source there.
-    const int lin_max = 200;           ///< empirical parameter: Davidson outer iterations per k+q ball
-    const double eig_tol = 1.0e-5;     ///< empirical parameter: residual norm target (Ry); occ_kq_ feeds the
-                                       ///< P_c projector only, whose leakage at this level stays far below
-                                       ///< the response convergence threshold
-    const double precond_floor = 0.1;  ///< empirical parameter: kinetic-preconditioner floor (1/lat0^2); small
-                                       ///< enough that the near-Gamma plane waves (which dominate the
-                                       ///< valence top) are not suppressed in the expansion directions
+    const int lin_max = 200;          ///< empirical parameter: Davidson outer iterations per k+q ball
+    const double eig_tol = 1.0e-5;    ///< empirical parameter: residual norm target (Ry); occ_kq_ feeds the
+                                      ///< P_c projector only, whose leakage at this level stays far below
+                                      ///< the response convergence threshold
+    const double precond_floor = 0.1; ///< empirical parameter: kinetic-preconditioner floor (1/lat0^2); small
+                                      ///< enough that the near-Gamma plane waves (which dominate the
+                                      ///< valence top) are not suppressed in the expansion directions
     const double tpiba2 = ucell_->tpiba2;
     // Gamma q: H(k+q) = H_GS(k) identically, so the k+q occupied states
     // ARE the ground-state states -- the diagonalization would only add
@@ -267,7 +265,7 @@ void DFPT_PW::Impl::build_occ_kq(int q_idx)
         {
             hamilt_->set_context(q_cart, ik);
             hamilt_->set_shift(0.0);
-            const DFPT_KQ_Basis& kq = hamilt_->basis();
+            const DFPT_KQ_Basis &kq = hamilt_->basis();
             const int npwk = kq.get_npwk();
             // ground-state per-k index by the reciprocal-basis integer
             // triple (pw_wfc_ stores a per-k ball layout: read it through
@@ -276,9 +274,8 @@ void DFPT_PW::Impl::build_occ_kq(int q_idx)
             for (int jgl = 0; jgl < pw_wfc_->npwk[ik]; ++jgl)
             {
                 const ModuleBase::Vector3<double> gf = pw_wfc_->getgcar(ik, jgl) * ginv;
-                const std::vector<int> key = {static_cast<int>(std::round(gf.x)),
-                                              static_cast<int>(std::round(gf.y)),
-                                              static_cast<int>(std::round(gf.z))};
+                const std::vector<int> key = {static_cast<int>(std::round(gf.x)), static_cast<int>(std::round(gf.y)),
+                    static_cast<int>(std::round(gf.z))};
                 jgl_of_n[key] = jgl;
             }
             occ_kq_[ik].clear();
@@ -294,8 +291,7 @@ void DFPT_PW::Impl::build_occ_kq(int q_idx)
                 {
                     const ModuleBase::Vector3<double> gf = kq.get_gcar(igl) * ginv;
                     const std::vector<int> key = {static_cast<int>(std::round(gf.x)),
-                                                  static_cast<int>(std::round(gf.y)),
-                                                  static_cast<int>(std::round(gf.z))};
+                        static_cast<int>(std::round(gf.y)), static_cast<int>(std::round(gf.z))};
                     const std::map<std::vector<int>, int>::const_iterator it = jgl_of_n.find(key);
                     if (it != jgl_of_n.end())
                     {
@@ -309,7 +305,7 @@ void DFPT_PW::Impl::build_occ_kq(int q_idx)
         }
         hamilt_->set_context(q_cart, ik);
         hamilt_->set_shift(0.0);
-        const DFPT_KQ_Basis& kq = hamilt_->basis();
+        const DFPT_KQ_Basis &kq = hamilt_->basis();
         const int npwk = kq.get_npwk();
         std::vector<double> precond(npwk);
         for (int igl = 0; igl < npwk; ++igl)

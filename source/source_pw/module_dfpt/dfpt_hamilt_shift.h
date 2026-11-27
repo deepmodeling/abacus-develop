@@ -61,12 +61,9 @@ class DFPT_HamiltShift : public DFPT_Stern::LinearOperator
 
     /// the k+q basis cached by the last set_context (the nscf path
     /// reads it for the kinetic preconditioner)
-    const DFPT_KQ_Basis& basis() const
-    {
-        return kq_;
-    }
+    const DFPT_KQ_Basis &basis() const { return kq_; }
 
-    void apply(const std::complex<double>* x, std::complex<double>* y) const override;
+    void apply(const std::complex<double> *x, std::complex<double> *y) const override;
 
     /// debug: <x|T + Vnl|x> without the veff convolution (design-phase
     /// validation diagnostics)

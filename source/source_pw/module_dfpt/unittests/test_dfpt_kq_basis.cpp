@@ -149,11 +149,12 @@ class DFPTKQBasisTest : public testing::Test
     // arrays are allocated once for the whole mesh; each call fills only
     // its own k slot, so BuildBase must call this once per k AFTER nst/
     // npw of the layout exist and npwk_max is known (two-pass below)
-    void FillSticksK(ModulePW::PW_Basis_K& pw,
-                     int ik_fill,
-                     const ModuleBase::Vector3<double>& kvec,
-                     double ggecut,
-                     int npwk_max)
+    void FillSticksK(
+        ModulePW::PW_Basis_K &pw,
+        int ik_fill,
+        const ModuleBase::Vector3<double> &kvec,
+        double ggecut,
+        int npwk_max)
     {
         std::vector<int> isz_list;
         std::vector<ModuleBase::Vector3<double>> gcar_list;
@@ -506,8 +507,9 @@ TEST_F(DFPTKQBasisTest, GammaQOnMultiKMeshFollowsGroundStateOrder)
     // returns the same set in a different order silently corrupts the
     // dielectric and Born tensors through dfpt_compute_q0.
     ResetBasis();
-    BuildBase({ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
-               ModuleBase::Vector3<double>(0.0, 0.5 * ModuleBase::TWO_PI / lat0_, 0.5 * ModuleBase::TWO_PI / lat0_)});
+    BuildBase(
+        {ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
+            ModuleBase::Vector3<double>(0.0, 0.5 * ModuleBase::TWO_PI / lat0_, 0.5 * ModuleBase::TWO_PI / lat0_)});
 
     for (int ik = 0; ik < 2; ++ik)
     {
