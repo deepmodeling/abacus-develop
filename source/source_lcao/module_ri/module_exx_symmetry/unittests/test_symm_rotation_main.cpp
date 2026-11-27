@@ -1,8 +1,11 @@
 #include "mpi.h"
 #include "../symm_rotation.h"
 #include "source_cell/unitcell.h"
+#include "symm_test_mpi_main.h"
 #include  "gtest/gtest.h"
-#define DOUBLETHRESHOLD 1e-8
+#include <cmath>
+// Rule 20: use a typed constant rather than a macro.
+constexpr double double_threshold = 1e-8;
 
 /*
 
@@ -69,9 +72,9 @@ protected:
 // }
 TEST_F(SymmetryRotationTest, Wignerd)
 {
-    EXPECT_NEAR(symrot.wigner_d(0, 1, 0, 0), 1, DOUBLETHRESHOLD);
-    EXPECT_NEAR(symrot.wigner_d(0, 1, 1, 1), 1, DOUBLETHRESHOLD);
-    EXPECT_NEAR(symrot.wigner_d(0, 1, -1, -1), 1, DOUBLETHRESHOLD);
+    EXPECT_NEAR(symrot.wigner_d(0, 1, 0, 0), 1, double_threshold);
+    EXPECT_NEAR(symrot.wigner_d(0, 1, 1, 1), 1, double_threshold);
+    EXPECT_NEAR(symrot.wigner_d(0, 1, -1, -1), 1, double_threshold);
 }
 TEST_F(SymmetryRotationTest, WignerD)
 {
@@ -82,12 +85,12 @@ TEST_F(SymmetryRotationTest, WignerD)
         {
             int i = m1 + l, j = m2 + l;
             wignerD_p_C41(i, j) = symrot.wigner_D(ModuleBase::Vector3<double>(0, 0, ModuleBase::PI / 2), 1, m1, m2, false);
-            EXPECT_NEAR(wignerD_p_C41(i, j).real(), wigerD_p_C41_ref[i * 3 + j].real(), DOUBLETHRESHOLD);
-            EXPECT_NEAR(wignerD_p_C41(i, j).imag(), wigerD_p_C41_ref[i * 3 + j].imag(), DOUBLETHRESHOLD);
+            EXPECT_NEAR(wignerD_p_C41(i, j).real(), wigerD_p_C41_ref[i * 3 + j].real(), double_threshold);
+            EXPECT_NEAR(wignerD_p_C41(i, j).imag(), wigerD_p_C41_ref[i * 3 + j].imag(), double_threshold);
             // alpha and gamma are the same when beta = 0
             wignerD_p_C41(i, j) = symrot.wigner_D(ModuleBase::Vector3<double>(ModuleBase::PI / 2, 0, 0), 1, m1, m2, false);
-            EXPECT_NEAR(wignerD_p_C41(i, j).real(), wigerD_p_C41_ref[i * 3 + j].real(), DOUBLETHRESHOLD);
-            EXPECT_NEAR(wignerD_p_C41(i, j).imag(), wigerD_p_C41_ref[i * 3 + j].imag(), DOUBLETHRESHOLD);
+            EXPECT_NEAR(wignerD_p_C41(i, j).real(), wigerD_p_C41_ref[i * 3 + j].real(), double_threshold);
+            EXPECT_NEAR(wignerD_p_C41(i, j).imag(), wigerD_p_C41_ref[i * 3 + j].imag(), double_threshold);
         }
     // outmat(wignerD_p_C41, 3, "wignerD_p_C41_cal");
 
@@ -96,8 +99,8 @@ TEST_F(SymmetryRotationTest, WignerD)
 TEST_F(SymmetryRotationTest, EulerAngle)
 {
     ModuleBase::Vector3<double> euler_angle = symrot.get_euler_angle(C41);
-    EXPECT_NEAR(euler_angle.x + euler_angle.z, ModuleBase::PI / 2, DOUBLETHRESHOLD);
-    EXPECT_NEAR(euler_angle.y, 0, DOUBLETHRESHOLD);
+    EXPECT_NEAR(euler_angle.x + euler_angle.z, ModuleBase::PI / 2, double_threshold);
+    EXPECT_NEAR(euler_angle.y, 0, double_threshold);
 }
 
 TEST_F(SymmetryRotationTest, OvlpYS)
@@ -109,8 +112,8 @@ TEST_F(SymmetryRotationTest, OvlpYS)
         {
             int i = m1 + l, j = m2 + l;
             c_mm_p(i, j) = symrot.ovlp_Ylm_Slm(l, m1, m2);
-            EXPECT_NEAR(c_mm_p(i, j).real(), cmm_p_C41_ref[i * 3 + j].real(), DOUBLETHRESHOLD);
-            EXPECT_NEAR(c_mm_p(i, j).imag(), cmm_p_C41_ref[i * 3 + j].imag(), DOUBLETHRESHOLD);
+            EXPECT_NEAR(c_mm_p(i, j).real(), cmm_p_C41_ref[i * 3 + j].real(), double_threshold);
+            EXPECT_NEAR(c_mm_p(i, j).imag(), cmm_p_C41_ref[i * 3 + j].imag(), double_threshold);
         }
 }
 
@@ -123,9 +126,28 @@ TEST_F(SymmetryRotationTest, RotMat)
         for (int m2 = -l;m2 <= l;++m2)
         {
             int i = m1 + l, j = m2 + l;
-            EXPECT_NEAR(rotmat(i, j).real(), c_dagger_D_c_C41_ref[i * 3 + j].real(), DOUBLETHRESHOLD);
-            EXPECT_NEAR(rotmat(i, j).imag(), c_dagger_D_c_C41_ref[i * 3 + j].imag(), DOUBLETHRESHOLD);
+            EXPECT_NEAR(rotmat(i, j).real(), c_dagger_D_c_C41_ref[i * 3 + j].real(), double_threshold);
+            EXPECT_NEAR(rotmat(i, j).imag(), c_dagger_D_c_C41_ref[i * 3 + j].imag(), double_threshold);
         }
+}
+
+TEST_F(SymmetryRotationTest, RotMatHighLIdentityFinite)
+{
+    ModuleBase::Matrix3 identity(1, 0, 0, 0, 1, 0, 0, 0, 1);
+    symrot.cal_rotmat_Slm(&identity, 8, -1);
+    ModuleBase::ComplexMatrix& rotmat = symrot.get_rotmat_Slm()[0][8];
+    const int dim = 2 * 8 + 1;
+    for (int i = 0; i < dim; ++i)
+    {
+        for (int j = 0; j < dim; ++j)
+        {
+            EXPECT_TRUE(std::isfinite(rotmat(i, j).real()));
+            EXPECT_TRUE(std::isfinite(rotmat(i, j).imag()));
+            const double target = (i == j) ? 1.0 : 0.0;
+            EXPECT_NEAR(rotmat(i, j).real(), target, 1e-8);
+            EXPECT_NEAR(rotmat(i, j).imag(), 0.0, 1e-8);
+        }
+    }
 }
 
 TEST_F(SymmetryRotationTest, GetReturnLattice)
@@ -135,15 +157,15 @@ TEST_F(SymmetryRotationTest, GetReturnLattice)
     ModuleBase::Vector3<double> gtransd(0, 0, 0);
     ModuleBase::Matrix3 gmatd(-1, 1, 0, -1, 0, 0, 0, 0, -1);
     ModuleBase::Vector3<double> return_lattice = symrot.get_return_lattice(ModuleSymmetry::Symmetry(), gmatd, gtransd, posd_a1, posd_a2);
-    EXPECT_NEAR(return_lattice.x, -1, DOUBLETHRESHOLD);
-    EXPECT_NEAR(return_lattice.y, 0, DOUBLETHRESHOLD);
+    EXPECT_NEAR(return_lattice.x, -1, double_threshold);
+    EXPECT_NEAR(return_lattice.y, 0, double_threshold);
     // The target keeps z=-0.2 rather than wrapping it to 0.8: no z shift is needed.
-    EXPECT_NEAR(return_lattice.z, 0, DOUBLETHRESHOLD);
+    EXPECT_NEAR(return_lattice.z, 0, double_threshold);
     const auto rotated_position = posd_a1 * gmatd + gtransd;
     const auto restored_position = rotated_position - return_lattice;
-    EXPECT_NEAR(restored_position.x, posd_a2.x, DOUBLETHRESHOLD);
-    EXPECT_NEAR(restored_position.y, posd_a2.y, DOUBLETHRESHOLD);
-    EXPECT_NEAR(restored_position.z, posd_a2.z, DOUBLETHRESHOLD);
+    EXPECT_NEAR(restored_position.x, posd_a2.x, double_threshold);
+    EXPECT_NEAR(restored_position.y, posd_a2.y, double_threshold);
+    EXPECT_NEAR(restored_position.z, posd_a2.z, double_threshold);
 }
 
 TEST_F(SymmetryRotationTest, SetBlockToMat2d)
@@ -161,8 +183,8 @@ TEST_F(SymmetryRotationTest, SetBlockToMat2d)
             int local_index = pv.icloc(j) * pv.nrloc() + pv.irloc(i);
             if (pv.in_this_processor(i, j))
             {
-                EXPECT_NEAR(obj_mat[local_index].real(), block(j - 3, i - 2).real(), DOUBLETHRESHOLD);
-                EXPECT_NEAR(obj_mat[local_index].imag(), block(j - 3, i - 2).imag(), DOUBLETHRESHOLD);
+                EXPECT_NEAR(obj_mat[local_index].real(), block(j - 3, i - 2).real(), double_threshold);
+                EXPECT_NEAR(obj_mat[local_index].imag(), block(j - 3, i - 2).imag(), double_threshold);
             }
         }
 }
@@ -190,8 +212,8 @@ TEST_F(SymmetryRotationTest, SetSigmaY2d)
                 if (gi % 2 == 0 && gj % 2 == 1) { expect = std::complex<double>(0.0, -1.0); }
                 else if (gi % 2 == 1 && gj % 2 == 0) { expect = std::complex<double>(0.0, 1.0); }
             }
-            EXPECT_NEAR(sy[idx].real(), expect.real(), DOUBLETHRESHOLD);
-            EXPECT_NEAR(sy[idx].imag(), expect.imag(), DOUBLETHRESHOLD);
+            EXPECT_NEAR(sy[idx].real(), expect.real(), double_threshold);
+            EXPECT_NEAR(sy[idx].imag(), expect.imag(), double_threshold);
         }
 }
 
@@ -237,17 +259,13 @@ TEST_F(SymmetryRotationTest, TrsSpinRotate)
                             s += SY[a][p] * B[p][q] * SY[q][b];
                     s *= scale;
                     const int idx = pv2.icloc(2 * jo + b) * pv2.nrloc() + pv2.irloc(2 * io + a);
-                    EXPECT_NEAR(out[idx].real(), s.real(), DOUBLETHRESHOLD);
-                    EXPECT_NEAR(out[idx].imag(), s.imag(), DOUBLETHRESHOLD);
+                    EXPECT_NEAR(out[idx].real(), s.real(), double_threshold);
+                    EXPECT_NEAR(out[idx].imag(), s.imag(), double_threshold);
                 }
         }
 }
 
 int main(int argc, char** argv)
 {
-    MPI_Init(&argc, &argv);
-    testing::InitGoogleTest(&argc, argv);
-    int result = RUN_ALL_TESTS();
-    MPI_Finalize();
-    return result;
+    return ModuleSymmetryTest::run_all_tests(argc, argv);
 }

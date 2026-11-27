@@ -1,0 +1,26 @@
+abacus_disable_feature_definitions(__MLALGO)
+abacus_disable_feature_definitions(__CUDA)
+abacus_disable_feature_definitions(__ROCM)
+addtest(
+  TARGET MODULE_RI_EXX_SYMMETRY_rotation
+  LIBS base device symmetry neighbor parameter
+  SOURCES test_symm_rotation_main.cpp
+          test_symm_rotation.cpp
+          ../symm_rotation.cpp
+          ../symm_rot_out.cpp
+          ../../../../source_basis/module_ao/parallel_orbitals.cpp
+          ../../../../source_cell/parallel_kpoints.cpp)
+addtest(
+  TARGET MODULE_RI_EXX_SYMMETRY_abf_rotation
+  LIBS base device symmetry neighbor parameter
+  SOURCES test_symm_rotation_r_abf.cpp ../symm_rotation.cpp
+          ../../../../source_basis/module_ao/parallel_orbitals.cpp)
+addtest(
+  TARGET MODULE_RI_EXX_SYMMETRY_nspin4_restore
+  LIBS base device symmetry neighbor parameter
+  SOURCES test_symm_rotation_r_nspin4.cpp ../symm_rotation.cpp
+          ../../../../source_basis/module_ao/parallel_orbitals.cpp)
+addtest(
+  TARGET MODULE_RI_EXX_SYMMETRY_symrot_writer
+  LIBS base device symmetry neighbor parameter
+  SOURCES test_symm_rotation_r_out.cpp ../symm_rot_out.cpp)

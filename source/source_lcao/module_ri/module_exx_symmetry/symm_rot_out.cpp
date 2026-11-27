@@ -50,7 +50,79 @@ namespace ModuleSymmetry
                 }
             }
             }
+        // Magnetic nspin=4 runs also carry antiunitary elements Theta*g. Their
+        // spatial parts are what a spinor exchange needs, and the general
+        // symmetry block above holds only the unitary ones. Append them as a
+        // labelled trailer so existing readers of the unitary block keep
+        // working. The trailer is written only when there is something in it,
+        // which keeps every non-magnetic export byte for byte unchanged.
+        if (symm.magnetic_nspin4 && symm.nrotk_anti > 0)
+        {
+            ofs << "Antiunitary operations: " << symm.nrotk_anti << "\n";
+            for (int isym = 0; isym < symm.nrotk_anti; ++isym)
+            {
+                ofs << isym << "\n" << mat3_fmt(symm.gmatrix_anti[isym]) << "\n"
+                    << vec3_fmt(symm.gtrans_anti[isym]) << "\n";
+            }
+        }
         ofs.close();
+    }
+
+    // Spatial operations of a non-collinear (nspin=4) cell.
+    //
+    // The general writer above needs the orbital rotation matrices T, which
+    // only exist after the collinear EXX symmetry setup runs; that setup is
+    // skipped for nspin=4, so no symrot_R.txt was written for SOC at all. A
+    // spinor exchange needs only the spatial parts, so emit those alone and
+    // mark the file by writing zero orbital rows.
+    void print_symrot_info_R_spatial(const Symmetry& symm,
+                                     const int lmax_ao,
+                                     const int lmax_abfs,
+                                     const std::string& out_dir,
+                                     std::ostream& running_log)
+    {
+        ModuleBase::TITLE("ModuleSymmetry", "print_symrot_info_R_spatial");
+        const std::string filename = out_dir + "symrot_R.txt";
+        std::ofstream ofs(filename);
+        if (!ofs.good())
+        {
+            // A silently missing symmetry export would leave postSCF without
+            // the data its LibRPA preprocessing consumes, so fail loudly.
+            throw std::runtime_error("Failed to open " + filename);
+        }
+        ofs << "Number of irreducible sector: 1\n";
+        ofs << "Lmax of AOs: " << lmax_ao << "\n";
+        ofs << "Lmax of ABFs: " << lmax_abfs << "\n";
+        ofs << "Format:\n"
+            << "The index of the symmetry operation\n"
+            << "The rotation matrix of this symmetry operation (3*3)\n"
+            << "(The translation vector of this symmetry operation)\n"
+            << "Orbital rotation matrix (T) of each angular momentum with size ((2l + 1) * (2l + 1))\n"
+            << "Spatial-only export: no orbital rotation matrices are written.\n\n";
+        for (int isym = 0; isym < symm.nrotk; ++isym)
+        {
+            ofs << isym << "\n" << mat3_fmt(symm.gmatrix[isym]) << "\n"
+                << vec3_fmt(symm.gtrans[isym]) << "\n";
+        }
+        // The spatial-only variant exists for nspin=4, so the trailer appears
+        // whenever the cell carries antiunitary elements; the unitary block
+        // keeps its historic bytes when it does not.
+        if (symm.magnetic_nspin4 && symm.nrotk_anti > 0)
+        {
+            ofs << "Antiunitary operations: " << symm.nrotk_anti << "\n";
+            for (int isym = 0; isym < symm.nrotk_anti; ++isym)
+            {
+                ofs << isym << "\n" << mat3_fmt(symm.gmatrix_anti[isym]) << "\n"
+                    << vec3_fmt(symm.gtrans_anti[isym]) << "\n";
+            }
+        }
+        ofs.close();
+        if (!ofs.good())
+        {
+            throw std::runtime_error("Failed to write " + filename);
+        }
+        // Rule 16: a created file is announced in the running log.
+        running_log << "Wrote spatial symmetry operations to " << filename << std::endl;
     }
 
     void print_symrot_info_k(const Symmetry_rotation& symrot, const K_Vectors& kv, const UnitCell& ucell)
