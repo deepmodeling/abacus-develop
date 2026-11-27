@@ -6,12 +6,17 @@
 #include "hsolver_pw_sup.h"
 #include "hsolver_supplementary_mock.h"
 #include "source_hsolver/diag_comm_info.h"
+#include "source_base/parallel_global.h"
 #include "source_hsolver/hs_operator.h"
 #include "source_hsolver/hsolver_lcaopw.h"
 #include "source_hsolver/hsolver_pw.h"
+#include "source_hsolver/diago_params.h"
+#include "source_hsolver/diago_lobpcg.h"
 
 #include <algorithm>
 #include <complex>
+#include <cmath>
+#include <cstdlib>
 
 /// H = S = identity: the simplest operator the solvers can be handed
 template <typename T> class IdentityHSOperator : public hsolver::HSOperator<T, base_device::DEVICE_CPU>
@@ -184,6 +189,13 @@ template void diago_hs_para<std::complex<float>>(
 class TestHSolverPW : public ::testing::Test
 {
   public:
+    void SetUp() override
+    {
+        // WARNING_QUIT is exercised after OpenMP/runtime state has been initialized
+        // by earlier tests; re-exec death tests avoid inheriting those threads.
+        ::testing::FLAGS_gtest_death_test_style = "threadsafe";
+    }
+
     // HSolverPW declares this fixture a friend, but a TEST_F body lives in a
     // class derived from it and friendship is not inherited, so the call into
     // the protected hamiltSolvePsiK() is routed through here.
@@ -205,40 +217,13 @@ class TestHSolverPW : public ::testing::Test
     }
 
     ModulePW::PW_Basis_K pwbk;
-    hsolver::HSolverPW<std::complex<float>, base_device::DEVICE_CPU> hs_f =
-        hsolver::HSolverPW<std::complex<float>, base_device::DEVICE_CPU>(
-            &pwbk,
-            "scf",
-            "pw",
-            "cg",
-            false,
-            1,
-            hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::SCF_ITER,
-            hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::PW_DIAG_NMAX,
-            hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::PW_DIAG_THR,
-            hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::need_subspace,
-            0,
-            false,
-            4,
-            0,
-            0);
-    hsolver::HSolverPW<std::complex<double>, base_device::DEVICE_CPU> hs_d =
-        hsolver::HSolverPW<std::complex<double>, base_device::DEVICE_CPU>(
-            &pwbk,
-            "scf",
-            "pw",
-            "cg",
-            false,
-            1,
-            hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::SCF_ITER,
-            hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::PW_DIAG_NMAX,
-            hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::PW_DIAG_THR,
-            hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::need_subspace,
-            0,
-            false,
-            4,
-            0,
-            0);
+    using Assist = hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>;
+    hsolver::HSolverPW<std::complex<float>, base_device::DEVICE_CPU> hs_f{
+        &pwbk, "scf", "pw", "cg", false, 1, Assist::SCF_ITER, Assist::PW_DIAG_NMAX,
+        Assist::PW_DIAG_THR, Assist::need_subspace, 0, false, 4, "hard", 0, 0};
+    hsolver::HSolverPW<std::complex<double>, base_device::DEVICE_CPU> hs_d{
+        &pwbk, "scf", "pw", "cg", false, 1, Assist::SCF_ITER, Assist::PW_DIAG_NMAX,
+        Assist::PW_DIAG_THR, Assist::need_subspace, 0, false, 4, "hard", 0, 0};
 
     IdentityHSOperator<std::complex<double>> hamilt_test_d;
     IdentityHSOperator<std::complex<float>> hamilt_test_f;
@@ -253,6 +238,68 @@ class TestHSolverPW : public ::testing::Test
     std::vector<float> ekb_f;
 
     std::ofstream temp_ofs;
+
+    void run_lobpcg_entry(const int dim, const int block, const int backend)
+    {
+        std::cout.rdbuf(std::cerr.rdbuf());
+        int size = 1;
+        int threads = 1;
+        int rank = 0;
+        Parallel_Global::read_pal_param(0, nullptr, size, threads, rank);
+        const hsolver::diag_comm_info comm(MPI_COMM_SELF, 0, 1);
+        const hsolver::LobpcgBasisLayout layout = {dim, 1};
+        std::vector<double> prec(dim, 1);
+        std::vector<double> values(4);
+        std::vector<std::complex<double>> x(dim * 4, 0);
+        for (int i = 0; i < 4; ++i) { x[i + i * dim] = 1; }
+        hsolver::dense::ParallelDenseEigensolver parallel;
+        hsolver::dense::GpuDenseEigensolver gpu;
+        hsolver::DiagoLOBPCG<std::complex<double>> solver(
+            prec.data(), 4, dim, block, layout, comm, backend, 0, false,
+            hsolver::LobpcgLocking::Hard, parallel, gpu);
+        solver.diag(hamilt_test_d, x.data(), dim, values.data(), 1e-8, 50, {});
+    }
+
+    void run_lobpcg_case(const std::string& calculation, const bool dependent)
+    {
+        std::cout.rdbuf(std::cerr.rdbuf());
+#ifdef __MPI
+        int size = 1;
+        int threads = 1;
+        int rank = 0;
+        Parallel_Global::read_pal_param(0, nullptr, size, threads, rank);
+        POOL_WORLD = MPI_COMM_SELF;
+#endif
+        using C = std::complex<double>;
+        class DiagonalOperator : public IdentityHSOperator<C>
+        {
+          public:
+            void hpsi(const C* x, C* hx, const int ld, const int count) const override
+            {
+                for (int j = 0; j < count; ++j)
+                {
+                    for (int i = 0; i < ld; ++i) { hx[i + j * ld] = double(i + 1) * x[i + j * ld]; }
+                }
+            }
+        } diagonal;
+        psi::Psi<C> ps;
+        ps.resize(1, 4, 40);
+        for (int j = 0; j < 4; ++j)
+        {
+            for (int i = 0; i < 40; ++i)
+            {
+                ps.get_pointer()[i + j * 40] = dependent ? C(.3, .1) : C(std::sin(.17 * (i + 1) * (j + 2)), .1);
+            }
+        }
+        std::vector<double> prec(40, 1);
+        std::vector<double> eig(4);
+        const hsolver::HSOperator<C>& op = dependent ? hamilt_test_d : diagonal;
+        hsolver::HSolverPW<C> solver(&pwbk, calculation, "pw", "lobpcg", false,
+                                    1, 1, 1, 1e-12, false, 4, false, 4, "hard", 0, 0);
+        hamiltSolvePsiK(solver, op, ps, prec, eig.data(), 1);
+        std::exit(0);
+    }
+
 };
 
 // TEST_F(TestHSolverPW, solve) {
@@ -512,4 +559,61 @@ TEST_F(TestHSolverPW, NpwxLessThanNbandsDeath)
             eigenvalues.data(),
             1),
         ::testing::ExitedWithCode(1), ".*");
+}
+
+TEST_F(TestHSolverPW, LobpcgBlockMustContainRequestedBands)
+{
+    EXPECT_EXIT(run_lobpcg_entry(40, 3, 0), testing::ExitedWithCode(1),
+                "LOBPCG block must contain all requested bands");
+}
+
+TEST_F(TestHSolverPW, LobpcgNeedsFullRankSearchSpace)
+{
+    EXPECT_EXIT(run_lobpcg_entry(8, 4, 0), testing::ExitedWithCode(1),
+                "The requested bands cannot form a full-rank LOBPCG space");
+}
+
+TEST_F(TestHSolverPW, LobpcgRejectsUnsupportedBackend)
+{
+    EXPECT_EXIT(run_lobpcg_entry(40, 4, 1), testing::ExitedWithCode(1),
+                "LOBPCG supports diag_subspace=0 or 2");
+}
+
+// Exercise the actual caller: NSCF budget exhaustion and a failed initial GV.
+TEST_F(TestHSolverPW, LobpcgNscfBudgetReportsError)
+{
+    EXPECT_EXIT(run_lobpcg_case("nscf", false), ::testing::ExitedWithCode(1),
+                "LOBPCG iteration budget exhausted in NSCF");
+}
+
+TEST_F(TestHSolverPW, LobpcgBudgetContinuesOuterLoops)
+{
+    for (const char* calculation : {"scf", "relax", "cell-relax", "md"})
+    {
+        EXPECT_EXIT(run_lobpcg_case(calculation, false), ::testing::ExitedWithCode(0), ".*");
+    }
+}
+
+TEST_F(TestHSolverPW, LobpcgNumericalFailureReportsBackendInfo)
+{
+    EXPECT_EXIT(run_lobpcg_case("scf", true), ::testing::ExitedWithCode(1), "Serial HEGVX failed, info=");
+}
+
+TEST_F(TestHSolverPW, PwUsesInputIterationBudget)
+{
+    Input_para input;
+    input.pw_diag_nmax = 37;
+    const int previous = Assist::PW_DIAG_NMAX;
+    for (const char* calculation : {"scf", "nscf", "relax", "cell-relax", "md"})
+    {
+        input.calculation = calculation;
+        for (const char* method : {"cg", "dav", "dav_subspace", "bpcg", "lobpcg"})
+        {
+            input.ks_solver = method;
+            Assist::PW_DIAG_NMAX = 30;
+            hsolver::setup_diago_params_pw<std::complex<double>, base_device::DEVICE_CPU>(0, 1, 1e-8, input);
+            EXPECT_EQ(Assist::PW_DIAG_NMAX, 37) << calculation << ": " << method;
+        }
+    }
+    Assist::PW_DIAG_NMAX = previous;
 }

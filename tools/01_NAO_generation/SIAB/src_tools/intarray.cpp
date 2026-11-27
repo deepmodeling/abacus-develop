@@ -40,7 +40,11 @@ IntArray::IntArray(const int d1, const int d2, const int d3)
     ++arrayCount;
 }
 
-IntArray::IntArray(const int d1, const int d2, const int d3, const int d4)
+IntArray::IntArray(
+    const int d1,
+    const int d2,
+    const int d3,
+    const int d4)
 {
     dim = 4;
     bound1 = (d1 <= 0) ? 1 : d1;
@@ -55,7 +59,12 @@ IntArray::IntArray(const int d1, const int d2, const int d3, const int d4)
     ++arrayCount;
 }
 
-IntArray::IntArray(const int d1, const int d2, const int d3, const int d4, const int d5)
+IntArray::IntArray(
+    const int d1,
+    const int d2,
+    const int d3,
+    const int d4,
+    const int d5)
 {
     dim = 5;
     bound1 = (d1 <= 0) ? 1 : d1;
@@ -71,7 +80,13 @@ IntArray::IntArray(const int d1, const int d2, const int d3, const int d4, const
     ++arrayCount;
 }
 
-IntArray::IntArray(const int d1, const int d2, const int d3, const int d4, const int d5, const int d6)
+IntArray::IntArray(
+    const int d1,
+    const int d2,
+    const int d3,
+    const int d4,
+    const int d5,
+    const int d6)
 {
     dim = 6;
     bound1 = (d1 <= 0) ? 1 : d1;
@@ -91,10 +106,7 @@ IntArray::IntArray(const int d1, const int d2, const int d3, const int d4, const
 //********************************
 // Destructor for class IntArray
 //********************************
-IntArray::~IntArray()
-{
-    freemem();
-}
+IntArray::~IntArray() { freemem(); }
 
 void IntArray::freemem()
 {
@@ -102,7 +114,13 @@ void IntArray::freemem()
     ptr = NULL;
 }
 
-void IntArray::create(const int d1, const int d2, const int d3, const int d4, const int d5, const int d6)
+void IntArray::create(
+    const int d1,
+    const int d2,
+    const int d3,
+    const int d4,
+    const int d5,
+    const int d6)
 {
     size = d1 * d2 * d3 * d4 * d5 * d6;
     assert(size > 0);
@@ -119,7 +137,12 @@ void IntArray::create(const int d1, const int d2, const int d3, const int d4, co
     zero_out();
 }
 
-void IntArray::create(const int d1, const int d2, const int d3, const int d4, const int d5)
+void IntArray::create(
+    const int d1,
+    const int d2,
+    const int d3,
+    const int d4,
+    const int d5)
 {
     size = d1 * d2 * d3 * d4 * d5;
     assert(size > 0);
@@ -135,7 +158,11 @@ void IntArray::create(const int d1, const int d2, const int d3, const int d4, co
     zero_out();
 }
 
-void IntArray::create(const int d1, const int d2, const int d3, const int d4)
+void IntArray::create(
+    const int d1,
+    const int d2,
+    const int d3,
+    const int d4)
 {
     size = d1 * d2 * d3 * d4;
     assert(size > 0);
@@ -179,17 +206,21 @@ void IntArray::create(const int d1, const int d2)
     zero_out();
 }
 
-const IntArray& IntArray::operator=(const IntArray& right)
+const IntArray &IntArray::operator=(const IntArray &right)
 {
     for (int i = 0; i < size; i++)
+    {
         ptr[i] = right.ptr[i];
+    }
     return *this; // enables x = y = z;
 }
 
-const IntArray& IntArray::operator=(const int& value)
+const IntArray &IntArray::operator=(const int &value)
 {
     for (int i = 0; i < size; i++)
+    {
         ptr[i] = value;
+    }
     return *this; // enables x = y = z;
 }
 
@@ -197,32 +228,39 @@ const IntArray& IntArray::operator=(const int& value)
 // overloaded subscript operator for const Int Array
 // const reference return create an cvakue
 //********************************************************
-const int& IntArray::operator()(const int ind1, const int ind2) const
-{
-    return ptr[ind1 * bound2 + ind2];
-}
+const int &IntArray::operator()(const int ind1, const int ind2) const { return ptr[ind1 * bound2 + ind2]; }
 
-const int& IntArray::operator()(const int ind1, const int ind2, const int ind3) const
+const int &IntArray::operator()(const int ind1, const int ind2, const int ind3) const
 {
     return ptr[(ind1 * bound2 + ind2) * bound3 + ind3];
 }
 
-const int& IntArray::operator()(const int ind1, const int ind2, const int ind3, const int ind4) const
+const int &IntArray::operator()(
+    const int ind1,
+    const int ind2,
+    const int ind3,
+    const int ind4) const
 {
     return ptr[((ind1 * bound2 + ind2) * bound3 + ind3) * bound4 + ind4];
 }
 
-const int& IntArray::operator()(const int ind1, const int ind2, const int ind3, const int ind4, const int ind5) const
+const int &IntArray::operator()(
+    const int ind1,
+    const int ind2,
+    const int ind3,
+    const int ind4,
+    const int ind5) const
 {
     return ptr[(((ind1 * bound2 + ind2) * bound3 + ind3) * bound4 + ind4) * bound5 + ind5];
 }
 
-const int& IntArray::operator()(const int ind1,
-                                const int ind2,
-                                const int ind3,
-                                const int ind4,
-                                const int ind5,
-                                const int ind6) const
+const int &IntArray::operator()(
+    const int ind1,
+    const int ind2,
+    const int ind3,
+    const int ind4,
+    const int ind5,
+    const int ind6) const
 {
     return ptr[((((ind1 * bound2 + ind2) * bound3 + ind3) * bound4 + ind4) * bound5 + ind5) * bound6 + ind6];
 }
@@ -231,32 +269,39 @@ const int& IntArray::operator()(const int ind1,
 // overloaded subscript operator for non-const Int Array
 // const reference return creates an lvakue
 //********************************************************
-int& IntArray::operator()(const int ind1, const int ind2)
-{
-    return ptr[ind1 * bound2 + ind2];
-}
+int &IntArray::operator()(const int ind1, const int ind2) { return ptr[ind1 * bound2 + ind2]; }
 
-int& IntArray::operator()(const int ind1, const int ind2, const int ind3)
+int &IntArray::operator()(const int ind1, const int ind2, const int ind3)
 {
     return ptr[(ind1 * bound2 + ind2) * bound3 + ind3];
 }
 
-int& IntArray::operator()(const int ind1, const int ind2, const int ind3, const int ind4)
+int &IntArray::operator()(
+    const int ind1,
+    const int ind2,
+    const int ind3,
+    const int ind4)
 {
     return ptr[((ind1 * bound2 + ind2) * bound3 + ind3) * bound4 + ind4];
 }
 
-int& IntArray::operator()(const int ind1, const int ind2, const int ind3, const int ind4, const int ind5)
+int &IntArray::operator()(
+    const int ind1,
+    const int ind2,
+    const int ind3,
+    const int ind4,
+    const int ind5)
 {
     return ptr[(((ind1 * bound2 + ind2) * bound3 + ind3) * bound4 + ind4) * bound5 + ind5];
 }
 
-int& IntArray::operator()(const int ind1,
-                          const int ind2,
-                          const int ind3,
-                          const int ind4,
-                          const int ind5,
-                          const int ind6)
+int &IntArray::operator()(
+    const int ind1,
+    const int ind2,
+    const int ind3,
+    const int ind4,
+    const int ind5,
+    const int ind6)
 {
     return ptr[((((ind1 * bound2 + ind2) * bound3 + ind3) * bound4 + ind4) * bound5 + ind5) * bound6 + ind6];
 }
@@ -267,8 +312,12 @@ int& IntArray::operator()(const int ind1,
 void IntArray::zero_out(void)
 {
     if (size <= 0)
+    {
         return;
+    }
     for (int i = 0; i < size; i++)
+    {
         ptr[i] = 0;
+    }
     return;
 }

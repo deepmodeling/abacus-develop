@@ -25,25 +25,28 @@ class YukawaScreening
 
     /// allocate Fk / U_Yukawa / J_Yukawa according to the cell and record the
     /// user-provided screening length (yukawa_lambda_cfg > 0 means fixed).
-    void init(const UnitCell& cell,
-              const std::vector<int>& l_channel,
-              double yukawa_lambda_cfg);
+    void init(const UnitCell &cell, const std::vector<int> &l_channel, double yukawa_lambda_cfg);
 
     /// determine lambda: use the fixed config value when positive, otherwise
     /// estimate from the charge density (Thomas-Fermi-like) and rescale by 1.6.
-    void cal_lambda(double** rho, int nrxx, int nspin);
+    void cal_lambda(double **rho, int nrxx, int nspin);
 
     /// compute Slater integrals Fk for the correlated orbital of atom type T.
-    void cal_slater_Fk(const UnitCell& ucell, int L, int T, const LCAO_Orbitals* orb);
+    void cal_slater_Fk(
+        const UnitCell &ucell,
+        int L,
+        int T,
+        const LCAO_Orbitals *orb);
 
     /// drive cal_lambda + cal_slater_Fk over all correlated orbitals and derive
     /// U_Yukawa / J_Yukawa. Returns via get_U/get_J; u_current of the owning
     /// DFT+U object is updated by the caller.
-    void cal_slater_UJ(const UnitCell& ucell,
-                       double** rho,
-                       int nrxx,
-                       int nspin,
-                       const LCAO_Orbitals* orb);
+    void cal_slater_UJ(
+        const UnitCell &ucell,
+        double **rho,
+        int nrxx,
+        int nspin,
+        const LCAO_Orbitals *orb);
 
     double get_lambda() const { return lambda_; }
     /// U/J of the correlated orbital (first radial channel) of atom type it

@@ -24,7 +24,11 @@ double sphere_cut(double r, double r_out, double r_power)
     return std::pow(1 - std::pow(r / r_out, r_power), 3);
 }
 
-double shell_cut(double r, double r_in, double r_out, double r_power)
+double shell_cut(
+    double r,
+    double r_in,
+    double r_out,
+    double r_power)
 {
     if (r_in <= 0)
     {
@@ -46,7 +50,7 @@ VSep::VSep() = default;
 
 VSep::~VSep() = default;
 
-void VSep::init_vsep(const ModulePW::PW_Basis& rho_basis, const Sep_Cell& sep_cell)
+void VSep::init_vsep(const ModulePW::PW_Basis &rho_basis, const Sep_Cell &sep_cell)
 {
     ModuleBase::TITLE("VSep", "init_vsep");
     ModuleBase::timer::start("VSep", "init_vsep");
@@ -63,7 +67,7 @@ void VSep::init_vsep(const ModulePW::PW_Basis& rho_basis, const Sep_Cell& sep_ce
         {
             continue;
         }
-        const SepPot* sep_pot = &sep_cell.get_seps()[it];
+        const SepPot *sep_pot = &sep_cell.get_seps()[it];
         // Simpson integral requires that the grid points be odd, if it is even, subtract one.
         int mesh = sep_pot->mesh;
         if ((mesh & 1) == 0)
@@ -71,8 +75,8 @@ void VSep::init_vsep(const ModulePW::PW_Basis& rho_basis, const Sep_Cell& sep_ce
             mesh--;
         }
 
-        const double* r = sep_pot->r.data();
-        const double* rv = sep_pot->rv.data();
+        const double *r = sep_pot->r.data();
+        const double *rv = sep_pot->rv.data();
         std::vector<double> shell_rv(sep_pot->mesh);
         std::vector<double> rab(sep_pot->mesh);
         std::vector<double> aux(sep_pot->mesh);
@@ -84,8 +88,8 @@ void VSep::init_vsep(const ModulePW::PW_Basis& rho_basis, const Sep_Cell& sep_ce
 
         for (int ir = 0; ir < sep_pot->mesh; ++ir)
         {
-            shell_rv[ir]
-                = shell_cut(r[ir], sep_pot->r_in, sep_pot->r_out, sep_pot->r_power) * rv[ir] * sep_pot->enhence_a;
+            shell_rv[ir] =
+                shell_cut(r[ir], sep_pot->r_in, sep_pot->r_out, sep_pot->r_power) * rv[ir] * sep_pot->enhence_a;
             rab[ir] = (r[ir] + a_val) * b_val;
         }
 
@@ -118,9 +122,8 @@ void VSep::init_vsep(const ModulePW::PW_Basis& rho_basis, const Sep_Cell& sep_ce
     ModuleBase::timer::end("VSep", "init_vsep");
 }
 
-void VSep::generate_vsep_r(const ModulePW::PW_Basis& rho_basis,
-                           const ModuleBase::ComplexMatrix& sf_in,
-                           const Sep_Cell& sep_cell)
+void VSep::generate_vsep_r(
+    const ModulePW::PW_Basis &rho_basis, const ModuleBase::ComplexMatrix &sf_in, const Sep_Cell &sep_cell)
 {
     ModuleBase::TITLE("VSep", "generate_vsep_r");
     ModuleBase::timer::start("VSep", "generate_vsep_r");

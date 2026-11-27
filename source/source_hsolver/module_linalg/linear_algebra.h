@@ -42,6 +42,11 @@ class LinearSmallLU
 /** @brief Rank-revealing coefficients for a small Gram matrix, with a norm cutoff. */
 std::vector<std::complex<double>> linear_gram_basis(const std::vector<std::complex<double>>& gram, int n, double cutoff, int* rank);
 
+/** Complete a column-major host Hermitian matrix from its upper triangle.
+ * The uncomputed lower triangle is overwritten before any numerical use.
+ */
+void linear_complete_hermitian_upper(int n, std::complex<double>* matrix);
+
 /** @brief Collective block algebra; only small coefficients cross the device boundary. */
 template <typename T, typename Device>
 class LinearAlgebra
@@ -56,11 +61,17 @@ class LinearAlgebra
     ct::Tensor native_products_;
 
     void reduce(std::vector<Wide>* values) const;
+    void reduce(Wide* values, const int64_t count) const;
+    void cross_local_into(int ld, int dim, int nx, int ny, const T* x, const T* y, Wide* result);
+    void gram_local_into(int ld, int dim, int bands, const T* input, Wide* result);
 
   public:
     explicit LinearAlgebra(const diag_comm_info& comm) : comm_(comm)
     {
     }
+
+    /** Owned reusable storage only; excludes returned vectors and borrowed views. */
+    std::size_t storage_bytes(ct::DeviceType device) const;
 
     /** @brief Projection products and reductions in wavefunction precision; return double coefficients. */
     std::vector<Wide> projection_cross(int ld, int dim, int nx, int ny, const T* x, const T* y);
@@ -70,15 +81,32 @@ class LinearAlgebra
 
     /** @brief Products between corresponding bands and several Arnoldi blocks. */
     std::vector<Wide> dots(int ld, int dim, int bands, int count, int stride, const T* basis, const T* x);
+    ct::Tensor dots_tensor(int ld, int dim, int bands, int count, int stride, const T* basis, const T* x);
 
     /** @brief Global X-adjoint times Y, with double accumulation for both precisions. */
     std::vector<Wide> cross(int ld, int dim, int nx, int ny, const T* x, const T* y);
+    /** Host Tensor result; uses direct output storage for block projections. */
+    ct::Tensor cross_tensor(int ld, int dim, int nx, int ny, const T* x, const T* y);
+    ct::Tensor cross_root_tensor(int ld, int dim, int nx, int ny, const T* x, const T* y);
 
     /** @brief Global X-adjoint times X, reusing one FP64 conversion of the valid rows. */
     std::vector<Wide> gram(int ld, int dim, int bands, const T* input);
+    ct::Tensor gram_tensor(int ld, int dim, int bands, const T* input);
+    ct::Tensor gram_root_tensor(int ld, int dim, int bands, const T* input);
 
     /** @brief Y = X*C + beta*Y, using a small host coefficient matrix. */
     void expand(int ld, int dim, int nx, int ny, const T* x, const std::vector<Wide>& c, T* y, T beta);
+
+    /** @brief Convert/upload host coefficients once for several block rotations.
+     * The borrowed Device pointer is invalidated by the next prepare_coefficients()
+     * or nonempty expand() on this object. expand_prepared() does not invalidate it.
+     */
+    const T* prepare_coefficients(const Wide* coefficients, const int64_t count);
+
+    /** @brief Y = X*C + beta*Y with already prepared Device coefficients (ld C = nx).
+     * X and Y must not overlap; C must contain at least nx*ny elements.
+     */
+    void expand_prepared(int ld, int dim, int nx, int ny, const T* x, const T* c, T* y, T beta);
 };
 } // namespace hsolver
 #endif

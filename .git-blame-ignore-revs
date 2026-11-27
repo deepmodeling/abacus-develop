@@ -1,0 +1,43 @@
+# .git-blame-ignore-revs
+# Precommit (bash): Enable space-redirects in shfmt (#8276)
+50328faa45e142dfe3701c2fd2d444a543f61951
+# Precommit: Format source_hamilt (Part II) (#8366)
+c3afe87a7b5f99de62e51d77efde3834028cc8d8
+# Precommit: Format source_hamilt (Part I) (#8365)
+a5197f8b2475384c9da9eeb4b8e430764a6ec195
+# Precommit: Format source_esolver (#8363)
+c46ae1ede78f266441255a81b20cb176b8c5f6e2
+# Precommit: Format source_md (#8362)
+60af5074cd2cb5cf99e4d21d2292f1b6250485bb
+# Precommit: Format source_relax (#8336)
+eba09c937c734f3f4da52cbdbb9c55504846921a
+# Precommit: Format other bash scripts (Part III) (#8267)
+a013ef0d9fe0ab227c957ccbfa8c303c11a73018
+# Precommit: Format other bash scripts (Part II) (#8266)
+314a81454041dd91d4ad7c5ee61a55a4bcbc837c
+# Precommit: Format other bash scripts (Part I) (#8265)
+f4697451bfa88072b25367336fe8db1a3f1972ae
+# Precommit: Format toolchain scripts (#8213)
+597deb7bffdd38c0758ac3f95da918f3f3aa1e69
+# Precommit: Format CMake files (Part II) (#8187)
+43242cb5943839422be97c045179ebd3ef1e94dd
+# Precommit: Format source_hsolver (Part III) (#8249)
+d726afc2d8805eabd9bc29ec653b1b7ea9234e77
+# Precommit: Prettify source_main and source_psi (#8191)
+75debc23d977ec932870bd4ed8f1178a3e628251
+# Precommit: Prettify CMake files (Part III) (#8188)
+3ab6d32e7f45e626e98fdcf0121c3d6aa3e6b2ba
+# Precommit: Prettify CMake files (Part I) (#8181)
+260d4493db98e2b3efaa791cff26e2c16583b430
+# Precommit: Prettify tools directory (Part III) (#8180)
+7c942b3967ed5d6a3eab8ce941b0950e289b3162
+# Precommit: Prettify tools directory (Part II) (#8179)
+ff543aa8980a3915923225ecc55fc7a475ec2b23
+# Precommit: Prettify tools directory (Part I) (#8178)
+8ff4453e5160d15d8171cef05156fc19552e8342
+# Precommit: Prettify python directory (#8177)
+2327585ea2cd4ee3f36bfc9a622bda06fd53c0e9
+# Precommit: Prettify source_relax (#8174)
+7be5df9759e8b76db724297492044ef644833f28
+# Precommit: Prettify module_vdw (#8152)
+8ccc76c2d9c452a76372b7ef2ba7ee33077888c9

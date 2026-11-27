@@ -42,7 +42,7 @@ void toQO::initialize(const std::string& out_dir,
         init_info += "qo_basis: " + qo_basis_ + "\n";
         init_info += "qo_thr: " + std::to_string(qo_thr_) + "\n";
         init_info += "qo_strategies: ";
-        for (auto s: strategies_) {
+        for (std::string s: strategies_) {
             init_info += s + " ";
 }
         init_info += "\n";
@@ -352,7 +352,7 @@ void toQO::calculate_ovlpk(int ik)
     // and calculate the two-center integrals in k-space.
     if (ik == iks_[0])
     {
-        for (auto iR: iRs_)
+        for (int iR: iRs_)
         {
             calculate_ovlpR(iR);
             write_ovlp<double>(out_dir_, ovlpR_, nchi_, nphi_, true, iR);
@@ -386,7 +386,7 @@ void toQO::calculate_ovlpk(int ik)
 
 void toQO::calculate()
 {
-    for (auto ik: iks_)
+    for (int ik: iks_)
     {
 #ifdef __MPI
         // we must enforce the process to be highly synchronized and as much as possible near the REAL

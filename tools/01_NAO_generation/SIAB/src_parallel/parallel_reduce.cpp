@@ -3,7 +3,7 @@
 #include "../src_spillage/tools.h"
 #include "parallel_global.h"
 
-void Parallel_Reduce::reduce_int_all(int& object)
+void Parallel_Reduce::reduce_int_all(int &object)
 {
 #ifdef __MPI
     MPI_Allreduce(MPI_IN_PLACE, &object, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
@@ -11,7 +11,7 @@ void Parallel_Reduce::reduce_int_all(int& object)
     return;
 }
 
-void Parallel_Reduce::reduce_int_pool(int& object)
+void Parallel_Reduce::reduce_int_pool(int &object)
 {
 #ifdef __MPI
     MPI_Allreduce(MPI_IN_PLACE, &object, 1, MPI_INT, MPI_SUM, POOL_WORLD);
@@ -19,7 +19,7 @@ void Parallel_Reduce::reduce_int_pool(int& object)
     return;
 }
 
-void Parallel_Reduce::reduce_double_all(double& object)
+void Parallel_Reduce::reduce_double_all(double &object)
 {
 #ifdef __MPI
     MPI_Allreduce(MPI_IN_PLACE, &object, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
@@ -27,7 +27,7 @@ void Parallel_Reduce::reduce_double_all(double& object)
     return;
 }
 
-void Parallel_Reduce::reduce_double_all(double* object, const int n)
+void Parallel_Reduce::reduce_double_all(double *object, const int n)
 {
 #ifdef __MPI
     MPI_Allreduce(MPI_IN_PLACE, object, n, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
@@ -35,7 +35,7 @@ void Parallel_Reduce::reduce_double_all(double* object, const int n)
     return;
 }
 
-void Parallel_Reduce::reduce_double_pool(double& object)
+void Parallel_Reduce::reduce_double_pool(double &object)
 {
 #ifdef __MPI
     MPI_Allreduce(MPI_IN_PLACE, &object, 1, MPI_DOUBLE, MPI_SUM, POOL_WORLD);
@@ -43,7 +43,7 @@ void Parallel_Reduce::reduce_double_pool(double& object)
     return;
 }
 
-void Parallel_Reduce::reduce_double_pool(double* object, const int n)
+void Parallel_Reduce::reduce_double_pool(double *object, const int n)
 {
 #ifdef __MPI
     MPI_Allreduce(MPI_IN_PLACE, object, n, MPI_DOUBLE, MPI_SUM, POOL_WORLD);
@@ -53,17 +53,19 @@ void Parallel_Reduce::reduce_double_pool(double* object, const int n)
 
 // (1) the value in same in each pool.
 // (2) we need to reduce the value from different pool.
-void Parallel_Reduce::reduce_double_allpool(double& object)
+void Parallel_Reduce::reduce_double_allpool(double &object)
 {
     if (KPAR == 1)
+    {
         return;
+    }
 #ifdef __MPI
     double swap = object / NPROC_IN_POOL;
     MPI_Allreduce(&swap, &object, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 #endif
 }
 
-void Parallel_Reduce::reduce_complex_double_all(complex<double>& object)
+void Parallel_Reduce::reduce_complex_double_all(complex<double> &object)
 {
 #ifdef __MPI
     MPI_Allreduce(MPI_IN_PLACE, &object, 1, MPI_DOUBLE_COMPLEX, MPI_SUM, MPI_COMM_WORLD);
@@ -71,7 +73,7 @@ void Parallel_Reduce::reduce_complex_double_all(complex<double>& object)
     return;
 }
 
-void Parallel_Reduce::reduce_complex_double_pool(complex<double>& object)
+void Parallel_Reduce::reduce_complex_double_pool(complex<double> &object)
 {
 #ifdef __MPI
     MPI_Allreduce(MPI_IN_PLACE, &object, 1, MPI_DOUBLE_COMPLEX, MPI_SUM, POOL_WORLD);
@@ -79,7 +81,7 @@ void Parallel_Reduce::reduce_complex_double_pool(complex<double>& object)
     return;
 }
 
-void Parallel_Reduce::reduce_complex_double_pool(complex<double>* object, const int n)
+void Parallel_Reduce::reduce_complex_double_pool(complex<double> *object, const int n)
 {
 #ifdef __MPI
     MPI_Allreduce(MPI_IN_PLACE, object, n, MPI_DOUBLE_COMPLEX, MPI_SUM, POOL_WORLD);
@@ -87,10 +89,10 @@ void Parallel_Reduce::reduce_complex_double_pool(complex<double>* object, const 
     return;
 }
 
-void Parallel_Reduce::gather_min_int_all(int& v)
+void Parallel_Reduce::gather_min_int_all(int &v)
 {
 #ifdef __MPI
-    int* all = new int[NPROC];
+    int *all = new int[NPROC];
     MPI_Allgather(&v, 1, MPI_INT, all, 1, MPI_INT, MPI_COMM_WORLD);
     for (int i = 0; i < NPROC; i++)
     {
@@ -103,10 +105,10 @@ void Parallel_Reduce::gather_min_int_all(int& v)
 #endif
 }
 
-void Parallel_Reduce::gather_max_double_all(double& v)
+void Parallel_Reduce::gather_max_double_all(double &v)
 {
 #ifdef __MPI
-    double* value = new double[NPROC];
+    double *value = new double[NPROC];
     ZEROS(value, NPROC);
     MPI_Allgather(&v, 1, MPI_DOUBLE, value, 1, MPI_DOUBLE, MPI_COMM_WORLD);
     for (int i = 0; i < NPROC; i++)
@@ -120,12 +122,14 @@ void Parallel_Reduce::gather_max_double_all(double& v)
 #endif
 }
 
-void Parallel_Reduce::gather_max_double_pool(double& v)
+void Parallel_Reduce::gather_max_double_pool(double &v)
 {
 #ifdef __MPI
     if (NPROC_IN_POOL == 1)
+    {
         return;
-    double* value = new double[NPROC_IN_POOL];
+    }
+    double *value = new double[NPROC_IN_POOL];
     ZEROS(value, NPROC_IN_POOL);
     MPI_Allgather(&v, 1, MPI_DOUBLE, value, 1, MPI_DOUBLE, POOL_WORLD);
     for (int i = 0; i < NPROC_IN_POOL; i++)
@@ -139,12 +143,14 @@ void Parallel_Reduce::gather_max_double_pool(double& v)
 #endif
 }
 
-void Parallel_Reduce::gather_min_double_pool(double& v)
+void Parallel_Reduce::gather_min_double_pool(double &v)
 {
 #ifdef __MPI
     if (NPROC_IN_POOL == 1)
+    {
         return;
-    double* value = new double[NPROC_IN_POOL];
+    }
+    double *value = new double[NPROC_IN_POOL];
     ZEROS(value, NPROC_IN_POOL);
     MPI_Allgather(&v, 1, MPI_DOUBLE, value, 1, MPI_DOUBLE, POOL_WORLD);
     for (int i = 0; i < NPROC_IN_POOL; i++)
@@ -158,10 +164,10 @@ void Parallel_Reduce::gather_min_double_pool(double& v)
 #endif
 }
 
-void Parallel_Reduce::gather_min_double_all(double& v)
+void Parallel_Reduce::gather_min_double_all(double &v)
 {
 #ifdef __MPI
-    double* value = new double[NPROC];
+    double *value = new double[NPROC];
     ZEROS(value, NPROC);
     MPI_Allgather(&v, 1, MPI_DOUBLE, value, 1, MPI_DOUBLE, MPI_COMM_WORLD);
     for (int i = 0; i < NPROC; i++)
@@ -175,10 +181,10 @@ void Parallel_Reduce::gather_min_double_all(double& v)
 #endif
 }
 
-bool Parallel_Reduce::check_if_equal(double& v)
+bool Parallel_Reduce::check_if_equal(double &v)
 {
 #ifdef __MPI
-    double* all = new double[NPROC];
+    double *all = new double[NPROC];
     MPI_Allgather(&v, 1, MPI_DOUBLE, all, 1, MPI_DOUBLE, MPI_COMM_WORLD);
     for (int i = 0; i < NPROC; i++)
     {

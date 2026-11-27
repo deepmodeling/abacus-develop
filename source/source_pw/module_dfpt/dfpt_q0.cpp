@@ -15,7 +15,7 @@ namespace
 
 /// element accessor for ModuleBase::Matrix3 (row i, column j); the public
 /// interface only exposes the named e11..e33 members
-inline double me(const ModuleBase::Matrix3& m, int i, int j)
+inline double me(const ModuleBase::Matrix3 &m, int i, int j)
 {
     switch (3 * i + j)
     {
@@ -48,13 +48,13 @@ inline bool folded_equal(double a, double b, double tol)
 }
 
 /// true if kp differs from every already-folded star member
-bool is_new_member(const std::vector<ModuleBase::Vector3<double>>& kfolds, const ModuleBase::Vector3<double>& kp)
+bool is_new_member(const std::vector<ModuleBase::Vector3<double>> &kfolds, const ModuleBase::Vector3<double> &kp)
 {
     const double kfold_tol = 1.0e-5; ///< empirical parameter: folded fractional-coordinate match tolerance
     for (size_t im = 0; im < kfolds.size(); ++im)
     {
-        if (folded_equal(kp.x, kfolds[im].x, kfold_tol) && folded_equal(kp.y, kfolds[im].y, kfold_tol)
-            && folded_equal(kp.z, kfolds[im].z, kfold_tol))
+        if (folded_equal(kp.x, kfolds[im].x, kfold_tol) && folded_equal(kp.y, kfolds[im].y, kfold_tol) &&
+            folded_equal(kp.z, kfolds[im].z, kfold_tol))
         {
             return false;
         }
@@ -66,7 +66,11 @@ bool is_new_member(const std::vector<ModuleBase::Vector3<double>>& kfolds, const
 /// (direct-space gmatrix/gtrans pair; species map onto themselves).
 /// Returns false when some atom has no same-species image, i.e. the
 /// operation set is inconsistent with the structure.
-bool make_atom_map(const UnitCell& ucell, const ModuleSymmetry::Symmetry& symm, int j, std::vector<int>& atom_map)
+bool make_atom_map(
+    const UnitCell &ucell,
+    const ModuleSymmetry::Symmetry &symm,
+    int j,
+    std::vector<int> &atom_map)
 {
     const int nat = ucell.nat;
     const double tau_match_tol = 1.0e-4; ///< empirical parameter: direct-space atom-image match tolerance
@@ -86,9 +90,9 @@ bool make_atom_map(const UnitCell& ucell, const ModuleSymmetry::Symmetry& symm, 
                 continue; // a species maps onto itself
             }
             const int ja = ucell.iat2ia[jat];
-            const ModuleBase::Vector3<double>& tq = ucell.atoms[it].taud[ja];
-            if (folded_equal(tp.x, tq.x, tau_match_tol) && folded_equal(tp.y, tq.y, tau_match_tol)
-                && folded_equal(tp.z, tq.z, tau_match_tol))
+            const ModuleBase::Vector3<double> &tq = ucell.atoms[it].taud[ja];
+            if (folded_equal(tp.x, tq.x, tau_match_tol) && folded_equal(tp.y, tq.y, tau_match_tol) &&
+                folded_equal(tp.z, tq.z, tau_match_tol))
             {
                 atom_map[iat] = jat;
                 break;
@@ -107,11 +111,12 @@ typedef std::vector<std::vector<std::vector<std::complex<double>>>> KMeshCoeffs;
 
 /// wg-weighted partial chi_k[ik](a, b) = sum_occ Re<Y^a|dpsi^E,b> at
 /// every stored k (QE dielec.f90: eps -= 4*(4pi/Omega)*wk*Re<dvpsi|dpsi>)
-void accumulate_chi_eps(const ModuleBase::matrix& wg,
-                        const std::vector<KMeshCoeffs>& yr,
-                        const std::vector<KMeshCoeffs>& de,
-                        int nk,
-                        std::vector<ModuleBase::matrix>& chi_k)
+void accumulate_chi_eps(
+    const ModuleBase::matrix &wg,
+    const std::vector<KMeshCoeffs> &yr,
+    const std::vector<KMeshCoeffs> &de,
+    int nk,
+    std::vector<ModuleBase::matrix> &chi_k)
 {
     const int nbands = wg.nc;
     for (int ik = 0; ik < nk; ++ik)
@@ -148,9 +153,9 @@ void accumulate_chi_eps(const ModuleBase::matrix& wg,
 }
 
 /// star average of the partial tensors: eps += (1/n_star) R chi(k) R^T
-void star_average_eps(const std::vector<std::vector<DFPT_Q0::StarMember>>& stars,
-                      const std::vector<ModuleBase::matrix>& chi_k,
-                      ModuleBase::matrix& eps)
+void star_average_eps(
+    const std::vector<std::vector<DFPT_Q0::StarMember>> &stars, const std::vector<ModuleBase::matrix> &chi_k,
+    ModuleBase::matrix &eps)
 {
     const int nk = static_cast<int>(stars.size());
     for (int ik = 0; ik < nk; ++ik)
@@ -173,12 +178,13 @@ void star_average_eps(const std::vector<std::vector<DFPT_Q0::StarMember>>& stars
 
 /// wg-weighted partial chi_k[ik](a, idir) of one atom displacement
 /// direction, paired with the position legs Y^a of the q = 0 mesh
-void accumulate_disp_chi(const ModuleBase::matrix& wg,
-                         const std::vector<KMeshCoeffs>& yr,
-                         const KMeshCoeffs& disp,
-                         int idir,
-                         int nbasis,
-                         std::vector<ModuleBase::matrix>& chi_k)
+void accumulate_disp_chi(
+    const ModuleBase::matrix &wg,
+    const std::vector<KMeshCoeffs> &yr,
+    const KMeshCoeffs &disp,
+    int idir,
+    int nbasis,
+    std::vector<ModuleBase::matrix> &chi_k)
 {
     const int nk = static_cast<int>(disp.size());
     const int nbands = wg.nc;
@@ -215,10 +221,11 @@ void accumulate_disp_chi(const ModuleBase::matrix& wg,
 
 /// star-credit the atom-resolved partials: the partial at member Rk is
 /// R chi(k) R^T and is credited to the image atom R(iat)
-void credit_star_born(const std::vector<std::vector<DFPT_Q0::StarMember>>& stars,
-                      const std::vector<ModuleBase::matrix>& chi_k,
-                      int iat,
-                      std::vector<ModuleBase::matrix>& zacc)
+void credit_star_born(
+    const std::vector<std::vector<DFPT_Q0::StarMember>> &stars,
+    const std::vector<ModuleBase::matrix> &chi_k,
+    int iat,
+    std::vector<ModuleBase::matrix> &zacc)
 {
     const int nk = static_cast<int>(stars.size());
     for (int ik = 0; ik < nk; ++ik)
@@ -226,7 +233,7 @@ void credit_star_born(const std::vector<std::vector<DFPT_Q0::StarMember>>& stars
         const double inv_nstar = 1.0 / static_cast<double>(stars[ik].size());
         for (size_t im = 0; im < stars[ik].size(); ++im)
         {
-            const DFPT_Q0::StarMember& mem = stars[ik][im];
+            const DFPT_Q0::StarMember &mem = stars[ik][im];
             const int jat = (mem.atom_map.empty()) ? iat : mem.atom_map[iat];
             double rot[9];
             DFPT_Q0::rotate_tensor(mem.cart, chi_k[ik], rot);
@@ -242,7 +249,7 @@ void credit_star_born(const std::vector<std::vector<DFPT_Q0::StarMember>>& stars
 }
 
 /// assemble Z*_iat = -2 Zacc + Z_ion on the diagonal and stash per atom
-void set_born_charges(const UnitCell& ucell, const std::vector<ModuleBase::matrix>& zacc, DFPT_PW_Data& data)
+void set_born_charges(const UnitCell &ucell, const std::vector<ModuleBase::matrix> &zacc, DFPT_PW_Data &data)
 {
     const int nat = ucell.nat;
     for (int iat = 0; iat < nat; ++iat)
@@ -268,7 +275,11 @@ void set_born_charges(const UnitCell& ucell, const std::vector<ModuleBase::matri
 
 } // namespace
 
-void DFPT_Q0::init(UnitCell& ucell, ModulePW::PW_Basis* pw_rho, ModulePW::PW_Basis_K* pw_wfc, DFPT_Pert* pert)
+void DFPT_Q0::init(
+    UnitCell &ucell,
+    ModulePW::PW_Basis *pw_rho,
+    ModulePW::PW_Basis_K *pw_wfc,
+    DFPT_Pert *pert)
 {
     ModuleBase::TITLE("DFPT_Q0", "init");
     ModuleBase::timer::start("DFPT_Q0", "init");
@@ -291,7 +302,7 @@ void DFPT_Q0::build_stars(int nk)
         ModuleBase::timer::end("DFPT_Q0", "build_stars");
         return;
     }
-    const ModuleSymmetry::Symmetry& symm = ucell_->symm;
+    const ModuleSymmetry::Symmetry &symm = ucell_->symm;
     if (symm.nrotk <= 0)
     {
         // no point-group analysis (symmetry off / unreduced mesh): the
@@ -329,15 +340,8 @@ void DFPT_Q0::build_stars(int nk)
             // product is the row-convention operator; rotate_tensor applies
             // the column form chi' = R chi R^T, so store the transpose
             const ModuleBase::Matrix3 krow = ucell_->G.Inverse() * symm.kgmatrix[j] * ucell_->G;
-            mem.cart = ModuleBase::Matrix3(krow.e11,
-                                           krow.e21,
-                                           krow.e31,
-                                           krow.e12,
-                                           krow.e22,
-                                           krow.e32,
-                                           krow.e13,
-                                           krow.e23,
-                                           krow.e33);
+            mem.cart = ModuleBase::Matrix3(
+                krow.e11, krow.e21, krow.e31, krow.e12, krow.e22, krow.e32, krow.e13, krow.e23, krow.e33);
             if (!make_atom_map(*ucell_, symm, j, mem.atom_map))
             {
                 // inconsistent operation set: fall back to identity-only
@@ -352,7 +356,7 @@ void DFPT_Q0::build_stars(int nk)
     ModuleBase::timer::end("DFPT_Q0", "build_stars");
 }
 
-void DFPT_Q0::rotate_tensor(const ModuleBase::Matrix3& r, const ModuleBase::matrix& chi, double (&chi_rot)[9])
+void DFPT_Q0::rotate_tensor(const ModuleBase::Matrix3 &r, const ModuleBase::matrix &chi, double (&chi_rot)[9])
 {
     ModuleBase::TITLE("DFPT_Q0", "rotate_tensor");
     ModuleBase::timer::start("DFPT_Q0", "rotate_tensor");
@@ -374,7 +378,7 @@ void DFPT_Q0::rotate_tensor(const ModuleBase::Matrix3& r, const ModuleBase::matr
     ModuleBase::timer::end("DFPT_Q0", "rotate_tensor");
 }
 
-void DFPT_Q0::compute_eps(const ModuleBase::matrix& wg, DFPT_PW_Data& data)
+void DFPT_Q0::compute_eps(const ModuleBase::matrix &wg, DFPT_PW_Data &data)
 {
     ModuleBase::TITLE("DFPT_Q0", "compute_eps");
     ModuleBase::timer::start("DFPT_Q0", "compute_eps");
@@ -426,10 +430,11 @@ void DFPT_Q0::compute_eps(const ModuleBase::matrix& wg, DFPT_PW_Data& data)
     ModuleBase::timer::end("DFPT_Q0", "compute_eps");
 }
 
-void DFPT_Q0::compute_born(const psi::Psi<std::complex<double>>& psi,
-                           const ModuleBase::matrix& wg,
-                           const ModuleBase::matrix& eig,
-                           DFPT_PW_Data& data)
+void DFPT_Q0::compute_born(
+    const psi::Psi<std::complex<double>> &psi,
+    const ModuleBase::matrix &wg,
+    const ModuleBase::matrix &eig,
+    DFPT_PW_Data &data)
 {
     ModuleBase::TITLE("DFPT_Q0", "compute_born");
     ModuleBase::timer::start("DFPT_Q0", "compute_born");
@@ -483,7 +488,7 @@ void DFPT_Q0::compute_born(const psi::Psi<std::complex<double>>& psi,
     ModuleBase::timer::end("DFPT_Q0", "compute_born");
 }
 
-void DFPT_Q0::compute_q0_response(DFPT_PW_Data& data)
+void DFPT_Q0::compute_q0_response(DFPT_PW_Data &data)
 {
     ModuleBase::TITLE("DFPT_Q0", "compute_q0_response");
     ModuleBase::timer::start("DFPT_Q0", "compute_q0_response");

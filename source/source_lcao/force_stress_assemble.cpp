@@ -245,6 +245,7 @@ void assemble_print_force(const UnitCell& ucell,
                           ModuleBase::matrix& fcs)
 {
     const int nat = ucell.nat;
+    const auto& input = PARAM.inp;
     //---------------------------------
     // sum all parts of force!
     //---------------------------------
@@ -257,7 +258,7 @@ void assemble_print_force(const UnitCell& ucell,
         }
     }
 
-    if (PARAM.inp.gate_flag || PARAM.inp.efield_flag)
+    if (input.gate_flag || input.efield_flag)
     {
         GlobalV::ofs_running << "Atomic forces are not shifted if gate_flag or efield_flag == true!" << std::endl;
     }
@@ -283,19 +284,22 @@ void assemble_print_force(const UnitCell& ucell,
         }
         net_force[i] = sum;
     }
-    if (!(PARAM.inp.gate_flag || PARAM.inp.efield_flag))
+    if (!(input.gate_flag || input.efield_flag))
     {
         ModuleBase::remove_net_force(nat, fcs);
     }
 
     // compute forces using the DeePKS model
-    DeePKS_domain::write_forces(fcs, parts.fvnl_dalpha, dpks_out_type, PARAM.inp);
+    DeePKS_domain::write_forces(fcs, parts.fvnl_dalpha, dpks_out_type, input);
 
+    if (input.calculation == "md")
+    {
+        return;
+    }
     if (istestf)
     {
         print_force_parts(ucell, vdw_result, parts);
     }
-
     GlobalV::ofs_running << std::setiosflags(std::ios::left);
 
     // this->printforce_total(ry, istestf, fcs);
@@ -318,6 +322,7 @@ void assemble_print_stress(const UnitCell& ucell,
                            const LCAOStressParts& sparts,
                            ModuleBase::matrix& scs)
 {
+    const auto& input = PARAM.inp;
     for (int i = 0; i < 3; i++)
     {
         for (int j = 0; j < 3; j++)
@@ -336,7 +341,7 @@ void assemble_print_stress(const UnitCell& ucell,
     bool ry = false;
 
     // test stress each terms if needed
-    if (istests)
+    if (istests && input.calculation != "md")
     {
         // test
         ModuleBase::matrix svlocal;
@@ -352,7 +357,7 @@ void assemble_print_stress(const UnitCell& ucell,
             }
         }
 
-        const bool screen = PARAM.inp.test_stress;
+        const bool screen = input.test_stress;
 
         GlobalV::ofs_running << "\n PARTS OF STRESS: " << std::endl;
         GlobalV::ofs_running << std::setiosflags(std::ios::showpos);
@@ -388,11 +393,14 @@ void assemble_print_stress(const UnitCell& ucell,
         ModuleIO::print_stress("TOTAL    STRESS", scs, screen, ry, GlobalV::ofs_running);
     } // end of test
 
-    GlobalV::ofs_running << std::setiosflags(std::ios::left);
+    if (input.calculation != "md")
+    {
+        GlobalV::ofs_running << std::setiosflags(std::ios::left);
 
-    // print total stress
-    bool screen_normal = true;
-    ModuleIO::print_stress("TOTAL-STRESS", scs, screen_normal, ry, GlobalV::ofs_running);
+        // print total stress
+        bool screen_normal = true;
+        ModuleIO::print_stress("TOTAL-STRESS", scs, screen_normal, ry, GlobalV::ofs_running);
+    }
 
     double unit_transform = 0.0;
     unit_transform = ModuleBase::RYDBERG_SI / pow(ModuleBase::BOHR_RADIUS_SI, 3) * 1.0e-8;

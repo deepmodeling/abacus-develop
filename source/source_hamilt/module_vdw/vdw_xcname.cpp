@@ -11,14 +11,14 @@ namespace
 
 std::string trim_ascii(const std::string &value)
 {
-    const auto first = std::find_if_not(
+    const std::string::const_iterator first = std::find_if_not(
         value.begin(), value.end(), [](unsigned char character) { return std::isspace(character) != 0; });
     if (first == value.end())
     {
         return std::string();
     }
 
-    const auto last = std::find_if_not(
+    const std::string::const_iterator last = std::find_if_not(
         value.rbegin(), value.rend(),
         [](unsigned char character)
         {

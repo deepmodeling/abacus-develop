@@ -42,22 +42,22 @@ class SpillageStep
     SpillageStep();
     ~SpillageStep();
 
-    Type_Information* info; // dimension : type
-    Step_Data* data;
-    Way2c4* wayc;
-    Way2Data* wayd;
+    Type_Information *info; // dimension : type
+    Step_Data *data;
+    Way2c4 *wayc;
+    Way2Data *wayd;
 
-    void set_info(const int& ntype_in);
+    void set_info(const int &ntype_in);
     void set_nwfc(void);
     void set_iw00(void);
     void set_nchi(void);
 
     // allocate data for current level.
-    void allocate_data(const int& istep);
+    void allocate_data(const int &istep);
 
-    void init_QS_matrix(const int& is);
-    double get_spillage(const int& is, const int& ic, const int& ie);
-    void updateQS(const int& is);
+    void init_QS_matrix(const int &is);
+    double get_spillage(const int &is, const int &ic, const int &ie);
+    void updateQS(const int &is);
 
     int ntype;
     int nchi; // total radial wave functions(T,L,N);
@@ -66,8 +66,20 @@ class SpillageStep
     int ilevel;
 
   private:
-    void newQ(const int& is, const int& ic, const int& ie, const int& ik, const double& c4_now, const double& c4_old);
-    void newS(const int& is, const int& ic, const int& ie, const int& ik, const double& c4_now, const double& c4_old);
+    void newQ(
+        const int &is,
+        const int &ic,
+        const int &ie,
+        const int &ik,
+        const double &c4_now,
+        const double &c4_old);
+    void newS(
+        const int &is,
+        const int &ic,
+        const int &ie,
+        const int &ik,
+        const double &c4_now,
+        const double &c4_old);
 
     int test;
     int nwfc;

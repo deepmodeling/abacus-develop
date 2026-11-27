@@ -106,7 +106,7 @@ double Center2_Orb::Orb22::cal_overlap(const ModuleBase::Vector3<double>& RA,
 
     double overlap = 0.0;
 
-    for (const auto& orb21: this->orb21s)
+    for (const std::pair<const int, Center2_Orb::Orb21>& orb21: this->orb21s)
     {
         const int LB = orb21.first;
 
@@ -138,7 +138,7 @@ ModuleBase::Vector3<double> Center2_Orb::Orb22::cal_grad_overlap(const ModuleBas
 
     ModuleBase::Vector3<double> grad_overlap(0.0, 0.0, 0.0);
 
-    for (const auto& orb21: this->orb21s)
+    for (const std::pair<const int, Center2_Orb::Orb21>& orb21: this->orb21s)
     {
         const int LB = orb21.first;
 

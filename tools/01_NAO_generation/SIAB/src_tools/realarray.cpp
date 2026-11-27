@@ -29,12 +29,18 @@ realArray::realArray(const int d1, const int d2, const int d3)
     ptr = new double[size]();
     assert(ptr != 0);
     for (int i = 0; i < size; i++)
+    {
         ptr[i] = 0.0;
+    }
 
     ++arrayCount;
 }
 
-realArray::realArray(const int d1, const int d2, const int d3, const int d4)
+realArray::realArray(
+    const int d1,
+    const int d2,
+    const int d3,
+    const int d4)
 {
     dim = 4;
     bound1 = (d1 <= 0) ? 1 : d1;
@@ -49,7 +55,9 @@ realArray::realArray(const int d1, const int d2, const int d3, const int d4)
     ptr = new double[size]();
     assert(ptr != 0);
     for (int i = 0; i < size; i++)
+    {
         ptr[i] = 0.0;
+    }
 
     ++arrayCount;
 }
@@ -59,10 +67,7 @@ realArray::realArray(const int d1, const int d2, const int d3, const int d4)
 // Destructor for class realArray
 //
 //********************************
-realArray::~realArray()
-{
-    freemem();
-}
+realArray::~realArray() { freemem(); }
 
 void realArray::freemem()
 {
@@ -70,7 +75,11 @@ void realArray::freemem()
     ptr = NULL;
 }
 
-void realArray::create(const int d1, const int d2, const int d3, const int d4)
+void realArray::create(
+    const int d1,
+    const int d2,
+    const int d3,
+    const int d4)
 {
     size = d1 * d2 * d3 * d4;
     assert(size > 0);
@@ -86,7 +95,9 @@ void realArray::create(const int d1, const int d2, const int d3, const int d4)
     ptr = new double[size]();
     assert(ptr != 0);
     for (int i = 0; i < size; i++)
+    {
         ptr[i] = 0.0;
+    }
 }
 
 void realArray::create(const int d1, const int d2, const int d3)
@@ -105,20 +116,26 @@ void realArray::create(const int d1, const int d2, const int d3)
     ptr = new double[size]();
     assert(ptr != 0);
     for (int i = 0; i < size; i++)
+    {
         ptr[i] = 0.0;
+    }
 }
 
-const realArray& realArray::operator=(const realArray& right)
+const realArray &realArray::operator=(const realArray &right)
 {
     for (int i = 0; i < size; i++)
+    {
         ptr[i] = right.ptr[i];
+    }
     return *this; // enables x = y = z;
 }
 
-const realArray& realArray::operator=(const double& right)
+const realArray &realArray::operator=(const double &right)
 {
     for (int i = 0; i < size; i++)
+    {
         ptr[i] = right;
+    }
     return *this; // enables x = y = z;
 }
 
@@ -128,7 +145,7 @@ const realArray& realArray::operator=(const double& right)
 // const reference return create an cvakue
 //
 //********************************************************
-const double& realArray::operator()(const int ind1, const int ind2, const int ind3) const
+const double &realArray::operator()(const int ind1, const int ind2, const int ind3) const
 {
     const int ind = (ind1 * bound2 + ind2) * bound3 + ind3;
     return ptr[ind];
@@ -140,7 +157,11 @@ const double& realArray::operator()(const int ind1, const int ind2, const int in
 // const reference return creates an cvakue
 //
 //********************************************************
-const double& realArray::operator()(const int ind1, const int ind2, const int ind3, const int ind4) const
+const double &realArray::operator()(
+    const int ind1,
+    const int ind2,
+    const int ind3,
+    const int ind4) const
 {
     const int ind = ((ind1 * bound2 + ind2) * bound3 + ind3) * bound4 + ind4;
     return ptr[ind];
@@ -152,7 +173,7 @@ const double& realArray::operator()(const int ind1, const int ind2, const int in
 // const reference return creates an lvakue
 //
 //********************************************************
-double& realArray::operator()(const int ind1, const int ind2, const int ind3)
+double &realArray::operator()(const int ind1, const int ind2, const int ind3)
 {
     const int ind = (ind1 * bound2 + ind2) * bound3 + ind3;
     return ptr[ind]; // reference return
@@ -164,7 +185,11 @@ double& realArray::operator()(const int ind1, const int ind2, const int ind3)
 // const reference return creates an lvakue
 //
 //********************************************************
-double& realArray::operator()(const int ind1, const int ind2, const int ind3, const int ind4)
+double &realArray::operator()(
+    const int ind1,
+    const int ind2,
+    const int ind3,
+    const int ind4)
 {
     const int ind = ((ind1 * bound2 + ind2) * bound3 + ind3) * bound4 + ind4;
     return ptr[ind]; // reference return
@@ -178,8 +203,12 @@ double& realArray::operator()(const int ind1, const int ind2, const int ind3, co
 void realArray::zero_out(void)
 {
     if (size <= 0)
+    {
         return;
+    }
     for (int i = 0; i < size; i++)
+    {
         ptr[i] = 0;
+    }
     return;
 }

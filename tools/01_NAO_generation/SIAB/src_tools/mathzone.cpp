@@ -2,15 +2,17 @@
 
 double Mathzone::PI = 3.14159265;
 
-Mathzone::Mathzone()
-{
-}
+Mathzone::Mathzone() {}
 
-Mathzone::~Mathzone()
-{
-}
+Mathzone::~Mathzone() {}
 
-double Mathzone::BESSJY(double x, double xnu, double* rj, double* ry, double* rjp, double* ryp)
+double Mathzone::BESSJY(
+    double x,
+    double xnu,
+    double *rj,
+    double *ry,
+    double *rjp,
+    double *ryp)
 {
     const int XMIN = 2;
     const double FPMIN = 1.0e-30;
@@ -37,7 +39,9 @@ double Mathzone::BESSJY(double x, double xnu, double* rj, double* ry, double* rj
     isign = 1;
     h = xnu * xi;
     if (h < FPMIN)
+    {
         h = FPMIN;
+    }
 
     b = xi2 * xnu;
 
@@ -51,12 +55,16 @@ double Mathzone::BESSJY(double x, double xnu, double* rj, double* ry, double* rj
         d = b - d;
 
         if (fabs(d) < FPMIN)
+        {
             d = FPMIN;
+        }
 
         c = b - 1.0 / c;
 
         if (fabs(c) < FPMIN)
+        {
             c = FPMIN;
+        }
 
         d = 1.0 / d;
 
@@ -65,14 +73,20 @@ double Mathzone::BESSJY(double x, double xnu, double* rj, double* ry, double* rj
         h = del * h;
 
         if (d < 0.0)
+        {
             isign = -isign;
+        }
 
         if (fabs(del - 1.0) < EPS)
+        {
             break;
+        }
     }
 
     if (i > MAXIT)
+    {
         cout << "x too large in bessjy; try asymptotic expansion" << endl;
+    }
 
     rjl = isign * FPMIN;
 
@@ -93,7 +107,9 @@ double Mathzone::BESSJY(double x, double xnu, double* rj, double* ry, double* rj
     }
 
     if (rjl == 0.0)
+    {
         rjl = EPS;
+    }
 
     f = rjpl / rjl;
 
@@ -131,11 +147,15 @@ double Mathzone::BESSJY(double x, double xnu, double* rj, double* ry, double* rj
             sum1 += del1;
 
             if (fabs(del) < (1.0 + fabs(sum)) * EPS)
+            {
                 break;
+            }
         }
 
         if (i > MAXIT)
+        {
             cout << "bessy series failed to converge";
+        }
 
         rymu = -sum;
 
@@ -173,7 +193,9 @@ double Mathzone::BESSJY(double x, double xnu, double* rj, double* ry, double* rj
             di = a * di + bi;
 
             if (fabs(dr) + fabs(di) < FPMIN)
+            {
                 dr = FPMIN;
+            }
 
             fact = a / (cr * cr + ci * ci);
 
@@ -182,7 +204,9 @@ double Mathzone::BESSJY(double x, double xnu, double* rj, double* ry, double* rj
             ci = bi - ci * fact;
 
             if (fabs(cr) + fabs(ci) < FPMIN)
+            {
                 cr = FPMIN;
+            }
 
             den = dr * dr + di * di;
 
@@ -201,20 +225,28 @@ double Mathzone::BESSJY(double x, double xnu, double* rj, double* ry, double* rj
             p = temp;
 
             if (fabs(dlr - 1.0) + fabs(dli) < EPS)
+            {
                 break;
+            }
         }
 
         if (i > MAXIT)
+        {
             cout << "cf2 failed in bessjy";
+        }
 
         gam = (p - f) / q;
 
         rjmu = sqrt(w / ((p - f) * gam + q));
 
         if (rjl >= 0)
+        {
             rjmu = fabs(rjmu);
+        }
         else
+        {
             rjmu = -fabs(rjmu);
+        }
 
         rymu = rjmu * gam;
 
@@ -243,31 +275,29 @@ double Mathzone::BESSJY(double x, double xnu, double* rj, double* ry, double* rj
 int Mathzone::IMAX(int a, int b)
 {
     if (a > b)
+    {
         return a;
+    }
     else
+    {
         return b;
+    }
 }
 
-void Mathzone::BESCHB(double x, double* gam1, double* gam2, double* gampl, double* gammi)
+void Mathzone::BESCHB(
+    double x,
+    double *gam1,
+    double *gam2,
+    double *gampl,
+    double *gammi)
 {
     const int NUSE1 = 7;
     const int NUSE2 = 8;
     double xx;
-    static double c1[] = {-1.142022680371168e0,
-                          6.5165112670737e-3,
-                          3.087090173086e-4,
-                          -3.4706269649e-6,
-                          6.9437664e-9,
-                          3.67795e-11,
-                          -1.356e-13};
-    static double c2[] = {1.843740587300905e0,
-                          -7.68528408447867e-2,
-                          1.2719271366546e-3,
-                          -4.9717367042e-6,
-                          -3.31261198e-8,
-                          2.423096e-10,
-                          -1.702e-13,
-                          -1.49e-15};
+    static double c1[] = {-1.142022680371168e0, 6.5165112670737e-3, 3.087090173086e-4, -3.4706269649e-6, 6.9437664e-9,
+        3.67795e-11, -1.356e-13};
+    static double c2[] = {1.843740587300905e0, -7.68528408447867e-2, 1.2719271366546e-3, -4.9717367042e-6,
+        -3.31261198e-8, 2.423096e-10, -1.702e-13, -1.49e-15};
     xx = 8.0 * x * x - 1.0; // Multiply x by 2 to make range be .1 to 1,and then apply transformation for evaluating
                             // even     Chebyshev series.
     *gam1 = CHEBEV(-1.0, 1.0, c1, NUSE1, xx);
@@ -276,13 +306,20 @@ void Mathzone::BESCHB(double x, double* gam1, double* gam2, double* gampl, doubl
     *gammi = *gam2 + x * (*gam1);
 }
 
-double Mathzone::CHEBEV(double a, double b, double c[], int m, double x)
+double Mathzone::CHEBEV(
+    double a,
+    double b,
+    double c[],
+    int m,
+    double x)
 {
     double d = 0.0, dd = 0.0, sv, y, y2;
     int j;
 
     if ((x - a) * (x - b) > 0.0)
+    {
         cout << "x not in range in routine chebev" << endl;
+    }
 
     y2 = 2.0 * (y = (2.0 * x - a - b) / (b - a));
 
@@ -296,14 +333,18 @@ double Mathzone::CHEBEV(double a, double b, double c[], int m, double x)
     return y * d - dd + 0.5 * c[0];
 }
 
-double Mathzone::Spherical_Bessel_7(const int n, const double& x)
+double Mathzone::Spherical_Bessel_7(const int n, const double &x)
 {
     if (x == 0)
     {
         if (n != 0)
+        {
             return 0;
+        }
         if (n == 0)
+        {
             return 1;
+        }
     }
     double order, rj, rjp, ry, ryp;
 
@@ -325,18 +366,19 @@ double Mathzone::Spherical_Bessel_7(const int n, const double& x)
     return factor * rj;
 }
 
-void Mathzone::Spherical_Bessel_Roots(const int& num,
-                                      const int& l,
-                                      const double& epsilon,
-                                      double* eigenvalue,
-                                      const double& rcut)
+void Mathzone::Spherical_Bessel_Roots(
+    const int &num,
+    const int &l,
+    const double &epsilon,
+    double *eigenvalue,
+    const double &rcut)
 {
     //	TITLE("Mathzone","Spherical_Bessel_Roots");
     //	if(num<=0) WARNING_QUIT("Mathzone::Spherical_Bessel_Roots","num<=0");
 
-    const double max
-        = 2 * PI + (num + (l + 0.5) / 2 + 0.75) * PI / 2
-          + sqrt((num + (l + 0.5) / 2 + 0.75) * (num + (l + 0.5) / 2 + 0.75) * PI * PI / 4 - (l + 0.5) * (l + 0.5) / 2);
+    const double max =
+        2 * PI + (num + (l + 0.5) / 2 + 0.75) * PI / 2 +
+        sqrt((num + (l + 0.5) / 2 + 0.75) * (num + (l + 0.5) / 2 + 0.75) * PI * PI / 4 - (l + 0.5) * (l + 0.5) / 2);
 
     // magic number !!
     // only need to > 1
@@ -349,7 +391,7 @@ void Mathzone::Spherical_Bessel_Roots(const int& num,
 
     //	cout<<"\n delta = "<<delta;
 
-    double* r = new double[msh];
+    double *r = new double[msh];
     for (int i = 0; i < msh; i++)
     {
         r[i] = i * delta;
@@ -357,7 +399,7 @@ void Mathzone::Spherical_Bessel_Roots(const int& num,
     //	cout<<"\n rmax(r) = "<<r[msh-1];
     //	cout<<"\n Enumber = "<<num;
 
-    double* jl = new double[msh];
+    double *jl = new double[msh];
     Mathzone::Spherical_Bessel(msh, r, 1, l, jl);
 
     int n = 0;
@@ -372,8 +414,8 @@ void Mathzone::Spherical_Bessel_Roots(const int& num,
             double acc = abs(y_2 - y_1);
             while (acc > epsilon)
             {
-                double* rad = new double[100];
-                double* jl_new = new double[100];
+                double *rad = new double[100];
+                double *jl_new = new double[100];
 
                 // if not enough accurate, divide again.
                 const double new_delta = (x_2 - x_1) / 99.0;
@@ -387,7 +429,9 @@ void Mathzone::Spherical_Bessel_Roots(const int& num,
                 for (; j < 100; j++)
                 {
                     if (jl_new[j] * jl_new[j + 1] < 0)
+                    {
                         break;
+                    }
                 }
 
                 x_1 = rad[j];
@@ -413,11 +457,12 @@ void Mathzone::Spherical_Bessel_Roots(const int& num,
 }
 
 // from sph_bes.f90
-void Mathzone::Spherical_Bessel(const int& msh,  // number of grid points
-                                const double* r, // radial grid
-                                const double& q, //
-                                const int& l,    // angular momentum
-                                double* jl       // jl(1:msh) = j_l(q*r(i)),spherical bessel function
+void Mathzone::Spherical_Bessel(
+    const int &msh,  // number of grid points
+    const double *r, // radial grid
+    const double &q, //
+    const int &l,    // angular momentum
+    double *jl       // jl(1:msh) = j_l(q*r(i)),spherical bessel function
 )
 {
     //	timer::tick("Mathzone","Spherical_Bessel");
@@ -518,8 +563,8 @@ void Mathzone::Spherical_Bessel(const int& msh,  // number of grid points
             for (ir = ir0; ir < msh; ir++)
             {
                 x1 = q * r[ir];
-                jl[ir] = (sin(x1) * (15.0 / x1 - 6.0 * x1) + cos(x1) * (x1 * x1 - 15.0))
-                         / pow(x1, 3); // mohan modify 2007-10-13
+                jl[ir] = (sin(x1) * (15.0 / x1 - 6.0 * x1) + cos(x1) * (x1 * x1 - 15.0)) /
+                         pow(x1, 3); // mohan modify 2007-10-13
             }
         }
         else if (l == 4)
@@ -531,8 +576,8 @@ void Mathzone::Spherical_Bessel(const int& msh,  // number of grid points
                 const double x3 = x1 * x2;
                 const double x4 = x1 * x3;
                 const double x5 = x1 * x4;
-                jl[ir] = (sin(x1) * (105.0 - 45.0 * x2 + x4) + cos(x1) * (10.0 * x3 - 105.0 * x1))
-                         / x5; // mohan modify 2007-10-13
+                jl[ir] = (sin(x1) * (105.0 - 45.0 * x2 + x4) + cos(x1) * (10.0 * x3 - 105.0 * x1)) /
+                         x5; // mohan modify 2007-10-13
             }
         }
         else if (l == 5)
@@ -549,9 +594,9 @@ void Mathzone::Spherical_Bessel(const int& msh,  // number of grid points
                 {
                     double cx1 = cos(x1);
                     double sx1 = sin(x1);
-                    jl[ir] = (-cx1 - (945.0 * cx1) / pow(x1, 4) + (105.0 * cx1) / (x1 * x1) + (945.0 * sx1) / pow(x1, 5)
-                              - (420.0 * sx1) / pow(x1, 3) + (15.0 * sx1) / x1)
-                             / x1;
+                    jl[ir] = (-cx1 - (945.0 * cx1) / pow(x1, 4) + (105.0 * cx1) / (x1 * x1) +
+                                 (945.0 * sx1) / pow(x1, 5) - (420.0 * sx1) / pow(x1, 3) + (15.0 * sx1) / x1) /
+                             x1;
                 }
             }
         }
@@ -569,9 +614,10 @@ void Mathzone::Spherical_Bessel(const int& msh,  // number of grid points
                 {
                     double cx1 = cos(x1);
                     double sx1 = sin(x1);
-                    jl[ir] = ((-10395.0 * cx1) / pow(x1, 5) + (1260.0 * cx1) / pow(x1, 3) - (21.0 * cx1) / x1 - sx1
-                              + (10395.0 * sx1) / pow(x1, 6) - (4725.0 * sx1) / pow(x1, 4) + (210.0 * sx1) / (x1 * x1))
-                             / x1;
+                    jl[ir] =
+                        ((-10395.0 * cx1) / pow(x1, 5) + (1260.0 * cx1) / pow(x1, 3) - (21.0 * cx1) / x1 - sx1 +
+                            (10395.0 * sx1) / pow(x1, 6) - (4725.0 * sx1) / pow(x1, 4) + (210.0 * sx1) / (x1 * x1)) /
+                        x1;
                 }
             }
         } // mohan modify 2007-11-20 reduce cos , sin , q*r[ir] times;
@@ -585,7 +631,11 @@ void Mathzone::Spherical_Bessel(const int& msh,  // number of grid points
     return;
 }
 
-void Mathzone::Pointwise_Product(const size_t mesh, const double* func1, const double* func2, double* mul_func)
+void Mathzone::Pointwise_Product(
+    const size_t mesh,
+    const double *func1,
+    const double *func2,
+    double *mul_func)
 {
     for (size_t i(0); i < mesh; ++i)
     {
@@ -594,7 +644,11 @@ void Mathzone::Pointwise_Product(const size_t mesh, const double* func1, const d
     return;
 }
 
-void Mathzone::Simpson_Integral(const int mesh, const double* func, const double* rab, double& asum)
+void Mathzone::Simpson_Integral(
+    const int mesh,
+    const double *func,
+    const double *rab,
+    double &asum)
 {
     /*     simpson's rule integration. On input:
     !      mesh = mhe number of grid points (should be odd)
@@ -630,7 +684,7 @@ void Mathzone::Simpson_Integral(const int mesh, const double* func, const double
     return;
 } // end subroutine simpson
 
-double Mathzone::Boltzmann_dist(const double& value, const double& t)
+double Mathzone::Boltzmann_dist(const double &value, const double &t)
 {
     static const double small = 1.0e-20;
     assert(t > small);

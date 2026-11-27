@@ -1,13 +1,13 @@
 #include "fs_nonlocal_tools.h"
 
+#include "nonlocal_maths.h"
 #include "source_base/math_polyint.h"
 #include "source_base/math_ylmreal.h"
 #include "source_base/parallel_device.h"
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
-#include "source_pw/module_pwdft/kernels/force_op.h"
 #include "source_io/module_parameter/parameter.h"
-#include "nonlocal_maths.h"
+#include "source_pw/module_pwdft/kernels/force_op.h"
 
 #include "source_base/parallel_comm.h" // different MPI worlds (POOL_WORLD)
 
@@ -15,13 +15,14 @@ namespace hamilt
 {
 
 template <typename FPTYPE, typename Device>
-FS_Nonlocal_tools<FPTYPE, Device>::FS_Nonlocal_tools(const pseudopot_cell_vnl* nlpp_in,
-                                                     const UnitCell* ucell_in,
-                                                     const K_Vectors* kv_in,
-                                                     const ModulePW::PW_Basis_K* wfc_basis_in,
-                                                     const Structure_Factor* sf_in,
-                                                     const ModuleBase::matrix& wg,
-                                                     const ModuleBase::matrix* p_ekb)
+FS_Nonlocal_tools<FPTYPE, Device>::FS_Nonlocal_tools(
+    const pseudopot_cell_vnl *nlpp_in,
+    const UnitCell *ucell_in,
+    const K_Vectors *kv_in,
+    const ModulePW::PW_Basis_K *wfc_basis_in,
+    const Structure_Factor *sf_in,
+    const ModuleBase::matrix &wg,
+    const ModuleBase::matrix *p_ekb)
     : nlpp_(nlpp_in), ucell_(ucell_in), kv_(kv_in), wfc_basis_(wfc_basis_in), sf_(sf_in)
 {
     // get the device context
@@ -47,7 +48,7 @@ FS_Nonlocal_tools<FPTYPE, Device>::~FS_Nonlocal_tools()
 }
 
 template <typename FPTYPE, typename Device>
-void FS_Nonlocal_tools<FPTYPE, Device>::allocate_memory(const ModuleBase::matrix& wg, const ModuleBase::matrix* p_ekb)
+void FS_Nonlocal_tools<FPTYPE, Device>::allocate_memory(const ModuleBase::matrix &wg, const ModuleBase::matrix *p_ekb)
 {
     // allocate memory
 

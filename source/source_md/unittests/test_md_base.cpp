@@ -10,7 +10,10 @@
 #include <gtest/gtest.h>
 
 #include <array>
+#include <cstdio>
 #include <fstream>
+#include <iterator>
+#include <string>
 #include <vector>
 
 namespace
@@ -153,6 +156,32 @@ class MdBoundaryTest : public testing::Test
         }
     }
 };
+
+TEST_F(MdBoundaryTest, PrintMdStepWithoutStress)
+{
+    const int rank = domain.rank();
+    MD_base integrator(parameters, false, true, rank, cell);
+    integrator.step_ = 2;
+    integrator.step_rst_ = 3;
+    const std::string filename = testing::TempDir() + "md_step_without_stress.log";
+    std::ofstream output;
+    if (rank == 0)
+    {
+        output.open(filename.c_str());
+        EXPECT_TRUE(output.is_open());
+    }
+    integrator.print_md(output, false);
+    if (rank == 0)
+    {
+        output.close();
+        std::ifstream input(filename.c_str());
+        const std::string log((std::istreambuf_iterator<char>(input)), std::istreambuf_iterator<char>());
+        EXPECT_NE(log.find("MD STEP: 6"), std::string::npos);
+        EXPECT_NE(log.find("Energy (Ry)"), std::string::npos);
+        EXPECT_EQ(log.find("VIRIAL (kbar)"), std::string::npos);
+        std::remove(filename.c_str());
+    }
+}
 
 TEST_F(MdBoundaryTest, MatchesLegacyWrappingThroughMigrationAndRepeatedSync)
 {

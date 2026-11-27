@@ -130,6 +130,23 @@ TEST_F(InputTest, InvalidExplicitDomainDoesNotReachReadOrResetHooks)
     EXPECT_FALSE(reset_called);
 }
 
+TEST_F(InputTest, MdThermoFrequencyUsesOnlyOutName)
+{
+    ModuleIO::ReadInput reader(0);
+    EXPECT_NE(find_label("out_thermo_freq", reader.input_lists), reader.input_lists.end());
+    EXPECT_EQ(find_label("md_thermo_freq", reader.input_lists), reader.input_lists.end());
+
+    const std::string filename = testing::TempDir() + "abacus_md_thermo_frequency_INPUT";
+    {
+        std::ofstream input(filename.c_str());
+        input << "INPUT_PARAMETERS\nmd_thermo_freq 2\n";
+    }
+    Parameter param;
+    const std::string error = reader.read_txt_input(param, filename);
+    EXPECT_THAT(error, testing::HasSubstr("Unknown INPUT parameter 'md_thermo_freq'"));
+    std::remove(filename.c_str());
+}
+
 TEST_F(InputTest, OutDosAndOutMatXcRejectMalformedTokens)
 {
     // Both options are read as integer vectors, whose domain skips the
@@ -1742,7 +1759,7 @@ TEST_F(InputTest, HkComponentAliases)
         {"out_mat_h_vxc", "out_mat_vxck"},
         {"out_mat_h_exx", "out_mat_exxk"},
     };
-    for (const auto& pair : aliases)
+    for (const std::pair<std::string, std::string>& pair : aliases)
     {
         SCOPED_TRACE(pair.first);
         ModuleIO::ReadInput readinput(0);
@@ -1752,7 +1769,7 @@ TEST_F(InputTest, HkComponentAliases)
         legacy->second.str_values = {"1", "6"};
         legacy->second.read_value(legacy->second, param);
         readinput.normalize_hs_output_options(param);
-        const auto& canon = TestParameters::input(param);
+        const Input_para& canon = TestParameters::input(param);
         const std::vector<int>* value = nullptr;
         if (pair.second == "out_mat_vnlk") { value = &canon.out_mat_vnlk; }
         else if (pair.second == "out_mat_vlk") { value = &canon.out_mat_vlk; }
@@ -2723,7 +2740,7 @@ TEST_F(InputTest, Item_test2)
     { // diag_subspace
         std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it
             = find_label("diag_subspace", readinput.input_lists);
-        EXPECT_EQ(it->second.get_availability(), "basis_type==pw and ks_solver==dav_subspace");
+        EXPECT_EQ(it->second.get_availability(), "basis_type==pw and (ks_solver==dav_subspace or ks_solver==lobpcg)");
     }
     { // md_nstep
         auto it = find_label("md_nstep", readinput.input_lists);
@@ -2731,12 +2748,12 @@ TEST_F(InputTest, Item_test2)
         it->second.reset_value(it->second, param);
         EXPECT_EQ(TestParameters::input(param).mdp.md_nstep, 50);
     }
-    { // md_thermo_freq
+    { // out_thermo_freq
         std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it
-            = find_label("md_thermo_freq", readinput.input_lists);
+            = find_label("out_thermo_freq", readinput.input_lists);
         it->second.str_values = {"100"};
         it->second.read_value(it->second, param);
-        EXPECT_EQ(TestParameters::input(param).mdp.md_thermo_freq, 100);
+        EXPECT_EQ(TestParameters::input(param).mdp.out_thermo_freq, 100);
     }
     { // md_prec_level
         auto it = find_label("md_prec_level", readinput.input_lists);
@@ -3075,12 +3092,12 @@ TEST_F(InputTest, LRExternalKernelSupportsSpectraOnly)
 {
     ModuleIO::ReadInput readinput(0);
     const auto it = find_label("lr_init_xc_kernel", readinput.input_lists);
-    for (const auto& solver : {"lr", "ks-lr"})
+    for (const char* const& solver : {"lr", "ks-lr"})
     {
-        for (const auto& mode : {"file", "from_charge_file"})
+        for (const char* const& mode : {"file", "from_charge_file"})
         {
             Parameter param;
-            auto& input = TestParameters::input(param);
+            Input_para& input = TestParameters::input(param);
             input.esolver_type = solver;
             input.lr_init_xc_kernel = {mode, "external.cube"};
             input.calculation = "scf";
@@ -3104,10 +3121,10 @@ TEST_F(InputTest, LRFixedFieldRejectsForcesAndRelaxation)
 {
     ModuleIO::ReadInput readinput(0);
     const auto it = find_label("efield_flag", readinput.input_lists);
-    for (const auto& solver : {"lr", "ks-lr"})
+    for (const char* const& solver : {"lr", "ks-lr"})
     {
         Parameter param;
-        auto& input = TestParameters::input(param);
+        Input_para& input = TestParameters::input(param);
         input.esolver_type = solver;
         input.efield_flag = true;
         input.calculation = "scf";
@@ -3183,10 +3200,7 @@ TEST_F(InputTest, OutMatComponentPrecision)
     }
 }
 
-// MD writes ABACUS STRU frames only and the restart logic reads them back, so
-// CIF output (out_stru = 2) must be rejected instead of silently emitting
-// STRU content under the CIF setting.
-TEST_F(InputTest, OutStruCifRejectedForMd)
+TEST_F(InputTest, OutStruCifAcceptedForMd)
 {
     ModuleIO::ReadInput readinput(0);
     readinput.check_ntype_flag = false;
@@ -3194,8 +3208,7 @@ TEST_F(InputTest, OutStruCifRejectedForMd)
     TestParameters::input(param).calculation = "md";
     TestParameters::input(param).out_stru = 2;
     const std::string error = readinput.prepare_input(param);
-    EXPECT_THAT(error, testing::HasSubstr("out_stru"));
-    EXPECT_THAT(error, testing::HasSubstr("not supported for calculation = md"));
+    EXPECT_TRUE(error.empty()) << error;
 }
 
 TEST_F(InputTest, DfptMixTypeDomainContract)

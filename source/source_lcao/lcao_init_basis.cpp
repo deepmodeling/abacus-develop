@@ -55,7 +55,7 @@ void init_basis_lcao(Parallel_Orbitals& pv,
 
     if (PARAM.inp.vnl_in_h)
     {
-        auto* lcao_nl = new LCAONonlocalInfo();
+        LCAONonlocalInfo* lcao_nl = new LCAONonlocalInfo();
         lcao_nl->setupNonlocal(ucell.ntype, ucell.atoms, GlobalV::ofs_running, orb,
                                PARAM.inp.basis_type, PARAM.inp.out_element_info,
                                PARAM.inp.lspinorb, PARAM.inp.nspin, GlobalV::MY_RANK);

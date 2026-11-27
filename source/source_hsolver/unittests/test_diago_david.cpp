@@ -76,7 +76,7 @@ TYPED_TEST_SUITE(DavidsonOwnershipTest, ScalarTypes);
 TYPED_TEST(DavidsonOwnershipTest, PhysicalEmptyAndUnevenBlocks)
 {
     using T = TypeParam;
-    const auto domain = ModuleBase::world_comm_domain();
+    const ModuleBase::CommunicationDomain domain = ModuleBase::world_comm_domain();
     const int rank = domain.rank();
     const int processes = domain.size();
     const int dimension = 12;
@@ -222,7 +222,7 @@ TYPED_TEST(DavidsonOwnershipTest, PhysicalEmptyAndUnevenBlocks)
 TYPED_TEST(DavidsonOwnershipTest, ExactAndApproximateWarmStart)
 {
     using T = TypeParam;
-    const auto domain = ModuleBase::world_comm_domain();
+    const ModuleBase::CommunicationDomain domain = ModuleBase::world_comm_domain();
     const int rank = domain.rank();
     const int processes = domain.size();
     const int bands = 2;

@@ -13,11 +13,11 @@ bool timer::disabled = false;
 int timer::n_clock = 100;
 int timer::n_now = 0;
 int timer::start_flag = -1;
-double* timer::cpu_second;
-double* timer::cpu_start;
-string* timer::name;
-string* timer::class_name;
-int* timer::calls;
+double *timer::cpu_second;
+double *timer::cpu_start;
+string *timer::name;
+string *timer::class_name;
+int *timer::calls;
 bool timer::delete_flag = false;
 
 timer::timer() {};
@@ -79,12 +79,16 @@ double timer::cpu_time(void)
     t1 = clock() - t0;
 
     if (t1 < 0)
+    {
         return 0; // mohan add, abandon the cross point time 2^32 ~ -2^32 .
+    }
     else
+    {
         return (double)t1 / CLOCKS_PER_SEC;
+    }
 }
 
-void timer::tick(const string& tagc, const string& tag)
+void timer::tick(const string &tagc, const string &tag)
 {
     //----------------------------------------------------------
     // EXPLAIN : if timer is disabled , return
@@ -162,7 +166,7 @@ void timer::disable(void)
     return;
 }
 
-double timer::print(const string& tag)
+double timer::print(const string &tag)
 {
     int index = 0;
     for (int i = 0; i < n_now; i++)
@@ -195,9 +199,11 @@ void timer::print_all()
     // if want to print > 1s , set small = 10^6
 
     cout << "\n--------- CLASS NAME--------------- NAME ----- TIME(sec) -- CALLS ----- AVG ----- PER%";
-    bool* print_flag = new bool[n_clock];
+    bool *print_flag = new bool[n_clock];
     for (int i = 0; i < n_clock; i++)
+    {
         print_flag[i] = false;
+    }
 
     for (int i = 0; i < n_clock; i++)
     {

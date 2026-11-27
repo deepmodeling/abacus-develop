@@ -34,7 +34,8 @@ md_dt                  0.6
 md_tfirst              600
 md_tlast               600
 md_thermostat          nhc
-md_dumpfreq            100
+out_freq_ion           100
+out_app_flag           1
 md_restartfreq         100
 
 #Parameters (8.PLUMED)

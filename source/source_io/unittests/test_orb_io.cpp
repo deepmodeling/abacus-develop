@@ -52,7 +52,7 @@ TEST_F(OrbIOTest, ReadAbacusOrb)
     EXPECT_EQ(nzeta[2], 2);
     EXPECT_EQ(nzeta[3], 1);
     EXPECT_EQ(radials.size(), 9); // 4 + 2 + 2 + 1
-    for(auto& radial: radials)
+    for(std::vector<double>& radial: radials)
     {
         EXPECT_EQ(radial.size(), 1001);
     }

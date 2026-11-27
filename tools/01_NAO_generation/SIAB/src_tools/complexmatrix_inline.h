@@ -51,19 +51,18 @@ inline void ComplexMatrix::init(const int nrows, const int ncols)
 } // mohan the principle:as simple as possible:modify inline 2007-10-13
 
 // Copy constructor
-inline ComplexMatrix::ComplexMatrix(const ComplexMatrix& m1)
+inline ComplexMatrix::ComplexMatrix(const ComplexMatrix &m1)
 {
     this->init(m1.nr, m1.nc);
     ++mCount;
     for (int i = 0; i < this->size; i++)
+    {
         c[i] = m1.c[i];
+    }
 }
 
 // deconstructor
-inline ComplexMatrix::~ComplexMatrix()
-{
-    this->freemem();
-}
+inline ComplexMatrix::~ComplexMatrix() { this->freemem(); }
 
 // Free up memory for ComplexMatrix
 inline void ComplexMatrix::freemem(void)
@@ -103,7 +102,7 @@ inline void ComplexMatrix::set_as_identity_matrix()
 }
 
 // Adding matrices, as a friend
-inline ComplexMatrix operator+(const ComplexMatrix& m1, const ComplexMatrix& m2)
+inline ComplexMatrix operator+(const ComplexMatrix &m1, const ComplexMatrix &m2)
 {
     ComplexMatrix tm(m1);
     tm += m2;
@@ -111,7 +110,7 @@ inline ComplexMatrix operator+(const ComplexMatrix& m1, const ComplexMatrix& m2)
 }
 
 // Subtracting matrices, as a friend
-inline ComplexMatrix operator-(const ComplexMatrix& m1, const ComplexMatrix& m2)
+inline ComplexMatrix operator-(const ComplexMatrix &m1, const ComplexMatrix &m2)
 {
     ComplexMatrix tm(m1);
     tm -= m2;
@@ -120,7 +119,7 @@ inline ComplexMatrix operator-(const ComplexMatrix& m1, const ComplexMatrix& m2)
 
 // Multiplying matrices, as a friend
 // mprod = m1 * m2
-inline ComplexMatrix operator*(const ComplexMatrix& m1, const ComplexMatrix& m2)
+inline ComplexMatrix operator*(const ComplexMatrix &m1, const ComplexMatrix &m2)
 {
     assert(m1.nc == m2.nr);
     ComplexMatrix mprod(m1.nr, m2.nc);
@@ -149,11 +148,12 @@ inline ComplexMatrix operator*(const ComplexMatrix& m1, const ComplexMatrix& m2)
 // m1^T=m1('T') or m1^H=m1('H')
 // mprod=m1*m2('L'eft) or mprod=m2*m1('R'ight)
 // m1 stored in 'U'pper or 'L'ower
-inline ComplexMatrix multiply_special(const char Symmetry,
-                                      const char Side,
-                                      const char Uplo,
-                                      const ComplexMatrix& m1,
-                                      const ComplexMatrix& m2)
+inline ComplexMatrix multiply_special(
+    const char Symmetry,
+    const char Side,
+    const char Uplo,
+    const ComplexMatrix &m1,
+    const ComplexMatrix &m2)
 {
     assert(m1.nr == m1.nc);
     assert(m1.nc == m2.nr);
@@ -174,54 +174,66 @@ inline ComplexMatrix multiply_special(const char Symmetry,
 }
 
 // Scale a ComplexMatrix
-inline ComplexMatrix operator*(const std::complex<double>& c, const ComplexMatrix& m)
+inline ComplexMatrix operator*(const std::complex<double> &c, const ComplexMatrix &m)
 {
     ComplexMatrix sm(m);
     for (int i = 0; i < m.size; i++)
+    {
         sm.c[i] *= c;
+    }
     return sm;
 }
 
 // ComplexMatrix scalar
-inline ComplexMatrix operator*(const ComplexMatrix& m, const std::complex<double>& c)
+inline ComplexMatrix operator*(const ComplexMatrix &m, const std::complex<double> &c)
 {
     ComplexMatrix sm(m);
     for (int i = 0; i < m.size; i++)
+    {
         sm.c[i] *= c;
+    }
     return sm;
 }
 
-inline ComplexMatrix operator*(const double& r, const ComplexMatrix& m)
+inline ComplexMatrix operator*(const double &r, const ComplexMatrix &m)
 {
     ComplexMatrix sm(m);
     for (int i = 0; i < m.size; i++)
+    {
         sm.c[i] *= r;
+    }
     return sm;
 }
 
-inline ComplexMatrix operator*(const ComplexMatrix& m, const double& r)
+inline ComplexMatrix operator*(const ComplexMatrix &m, const double &r)
 {
     ComplexMatrix sm(m);
     for (int i = 0; i < m.size; i++)
+    {
         sm.c[i] *= r;
+    }
     return sm;
 }
 
-inline ComplexMatrix& ComplexMatrix::add(const ComplexMatrix& m1, const ComplexMatrix& m2)
+inline ComplexMatrix &ComplexMatrix::add(const ComplexMatrix &m1, const ComplexMatrix &m2)
 {
     for (int i = 0; i < size; ++i)
+    {
         this->c[i] = m1.c[i] + m2.c[i];
+    }
     return *this;
 }
 
-inline ComplexMatrix& ComplexMatrix::minus(const ComplexMatrix& m1, const ComplexMatrix& m2)
+inline ComplexMatrix &ComplexMatrix::minus(const ComplexMatrix &m1, const ComplexMatrix &m2)
 {
     for (int i = 0; i < size; ++i)
+    {
         this->c[i] = m1.c[i] - m2.c[i];
+    }
     return *this;
 }
 
-inline ComplexMatrix& ComplexMatrix::multiply(const ComplexMatrix& m1, const ComplexMatrix& m2)
+inline ComplexMatrix &ComplexMatrix::multiply(const ComplexMatrix &m1, const ComplexMatrix &m2)
 {
     LapackConnector::zgemm('N', 'N', m1.nr, m2.nc, m1.nc, 1.0, m1.c, m1.nc, m2.c, m2.nc, 0.0, this->c, this->nc);
     return *this;
@@ -231,11 +243,12 @@ inline ComplexMatrix& ComplexMatrix::multiply(const ComplexMatrix& m1, const Com
 // m1^T=m1('T') or m1^H=m1('H')
 // mprod=m1*m2('L'eft) or mprod=m2*m1('R'ight)
 // m1 stored in 'U'pper or 'L'ower
-inline ComplexMatrix& ComplexMatrix::multiply_special(const char Symmetry,
-                                                      const char Side,
-                                                      const char Uplo,
-                                                      const ComplexMatrix& m1,
-                                                      const ComplexMatrix& m2)
+inline ComplexMatrix &ComplexMatrix::multiply_special(
+    const char Symmetry,
+    const char Side,
+    const char Uplo,
+    const ComplexMatrix &m1,
+    const ComplexMatrix &m2)
 {
     if ('T' == Symmetry)
     {
@@ -252,7 +265,7 @@ inline ComplexMatrix& ComplexMatrix::multiply_special(const char Symmetry,
     return *this;
 }
 
-inline ComplexMatrix& ComplexMatrix::operator=(const ComplexMatrix& m)
+inline ComplexMatrix &ComplexMatrix::operator=(const ComplexMatrix &m)
 {
     if (m.nr != this->nr || m.nc != this->nc)
     {
@@ -272,41 +285,49 @@ inline ComplexMatrix& ComplexMatrix::operator=(const ComplexMatrix& m)
     return *this;
 }
 
-inline ComplexMatrix& ComplexMatrix::operator*=(const std::complex<double>& s)
+inline ComplexMatrix &ComplexMatrix::operator*=(const std::complex<double> &s)
 {
     for (int i = 0; i < this->size; i++)
+    {
         c[i] *= s;
+    }
     return *this;
 }
 
 // Accumulate to a ComplexMatrix in place
-inline ComplexMatrix& ComplexMatrix::operator+=(const ComplexMatrix& m)
+inline ComplexMatrix &ComplexMatrix::operator+=(const ComplexMatrix &m)
 {
     for (int i = 0; i < size; i++)
+    {
         this->c[i] += m.c[i];
+    }
     return *this;
 }
 
 // decumulate to a ComplexMatrix in place
-inline ComplexMatrix& ComplexMatrix::operator-=(const ComplexMatrix& m)
+inline ComplexMatrix &ComplexMatrix::operator-=(const ComplexMatrix &m)
 {
     for (int i = 0; i < size; i++)
+    {
         this->c[i] -= m.c[i];
+    }
     return *this;
 }
 
 // Returns trace of ComplexMatrix
-inline std::complex<double> trace(const ComplexMatrix& m)
+inline std::complex<double> trace(const ComplexMatrix &m)
 {
     complex<double> tr = complex<double>(0, 0);
     assert(m.nr == m.nc);
     for (int i = 0; i < m.nr; i++)
+    {
         tr += m(i, i);
+    }
     return tr;
 }
 
 // Do mout += s*min
-inline void scale_accumulate(const std::complex<double>& s, const ComplexMatrix& min, ComplexMatrix& mout)
+inline void scale_accumulate(const std::complex<double> &s, const ComplexMatrix &min, ComplexMatrix &mout)
 {
     assert(min.nr == mout.nr);
     assert(min.nc == mout.nc);
@@ -318,7 +339,11 @@ inline void scale_accumulate(const std::complex<double>& s, const ComplexMatrix&
 }
 
 // Do mout[i] += s*min[i]
-inline void scale_accumulate(const int& nmat, const std::complex<double>& s, ComplexMatrix** min, ComplexMatrix** mout)
+inline void scale_accumulate(
+    const int &nmat,
+    const std::complex<double> &s,
+    ComplexMatrix **min,
+    ComplexMatrix **mout)
 {
     assert(nmat >= 0);
     for (int i = 0; i < nmat; i++)
@@ -329,11 +354,12 @@ inline void scale_accumulate(const int& nmat, const std::complex<double>& s, Com
 }
 
 // Do mout = s1*m1 + s2*m2
-inline void scaled_sum(const std::complex<double>& s1,
-                       const ComplexMatrix& m1,
-                       const std::complex<double>& s2,
-                       const ComplexMatrix& m2,
-                       ComplexMatrix& mout)
+inline void scaled_sum(
+    const std::complex<double> &s1,
+    const ComplexMatrix &m1,
+    const std::complex<double> &s2,
+    const ComplexMatrix &m2,
+    ComplexMatrix &mout)
 {
     assert(m1.nr == m2.nr);
     assert(m1.nr == mout.nr);
@@ -348,12 +374,13 @@ inline void scaled_sum(const std::complex<double>& s1,
 }
 
 // Does mout[i] = s1*m1[i] + s2*m2[i]
-inline void scaled_sum(const int& nmat,
-                       const std::complex<double>& s1,
-                       ComplexMatrix** m1,
-                       const std::complex<double>& s2,
-                       ComplexMatrix** m2,
-                       ComplexMatrix** mout)
+inline void scaled_sum(
+    const int &nmat,
+    const std::complex<double> &s1,
+    ComplexMatrix **m1,
+    const std::complex<double> &s2,
+    ComplexMatrix **m2,
+    ComplexMatrix **mout)
 {
     assert(nmat > 0);
     for (int i = 0; i < nmat; i++)
@@ -363,7 +390,7 @@ inline void scaled_sum(const int& nmat,
     return;
 }
 
-inline double abs2_row(const ComplexMatrix& m, const int ir)
+inline double abs2_row(const ComplexMatrix &m, const int ir)
 {
     double r = 0.0;
     complex<double> z;
@@ -375,7 +402,7 @@ inline double abs2_row(const ComplexMatrix& m, const int ir)
     return r;
 }
 
-inline double abs2_column(const ComplexMatrix& m, const int ic)
+inline double abs2_column(const ComplexMatrix &m, const int ic)
 {
     double r = 0.0;
     complex<double> z;
@@ -388,7 +415,7 @@ inline double abs2_column(const ComplexMatrix& m, const int ic)
 }
 
 // returns absolute square magnitude of sum of all ComplexMatrix elements
-inline double abs2(const ComplexMatrix& m)
+inline double abs2(const ComplexMatrix &m)
 {
     double r = 0.0;
     complex<double> z;
@@ -402,7 +429,7 @@ inline double abs2(const ComplexMatrix& m)
 }
 
 // Same for an array of matrices
-inline double abs2(const int nmat, ComplexMatrix** m)
+inline double abs2(const int nmat, ComplexMatrix **m)
 {
     double r = 0.0;
     for (int i = 0; i < nmat; i++)
@@ -412,7 +439,7 @@ inline double abs2(const int nmat, ComplexMatrix** m)
     return r;
 }
 
-inline double abs2_triangle_matrix(const char Uplo, ComplexMatrix& m)
+inline double abs2_triangle_matrix(const char Uplo, ComplexMatrix &m)
 {
     double r(0.0);
     complex<double> z;
@@ -445,7 +472,7 @@ inline double abs2_triangle_matrix(const char Uplo, ComplexMatrix& m)
     }
 }
 
-inline ComplexMatrix transpose(const ComplexMatrix& m, const bool& conjugate)
+inline ComplexMatrix transpose(const ComplexMatrix &m, const bool &conjugate)
 {
     ComplexMatrix tm(m.nc, m.nr);
     if (conjugate)
