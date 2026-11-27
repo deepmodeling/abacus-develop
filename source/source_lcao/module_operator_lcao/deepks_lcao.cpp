@@ -58,7 +58,7 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(const Grid_Driv
     ModuleBase::TITLE("DeePKS", "initialize_HR");
     ModuleBase::timer::start("DeePKS", "initialize_HR");
 
-    auto* paraV = this->hR->get_paraV(); // get parallel orbitals from HR
+    const Parallel_Orbitals* paraV = this->hR->get_paraV(); // get parallel orbitals from HR
     // TODO: if paraV is nullptr, AtomPair can not use paraV for constructor, I will repair it in the future.
 
     this->V_delta_R = new HContainer<TR>(paraV);
@@ -73,7 +73,7 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(const Grid_Driv
 
     for (int iat0 = 0; iat0 < ucell->nat; iat0++)
     {
-        auto tau0 = ucell->get_tau(iat0);
+        ModuleBase::Vector3<double> tau0 = ucell->get_tau(iat0);
         int T0 = 0;
         int I0 = 0;
         ucell->iat2iait(iat0, &I0, &T0);
@@ -263,7 +263,7 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::calculate_HR(double** gedm_us
     #pragma omp parallel for schedule(dynamic)
     for (int iat0 = 0; iat0 < this->ucell->nat; iat0++)
     {
-        auto tau0 = ucell->get_tau(iat0);
+        ModuleBase::Vector3<double> tau0 = ucell->get_tau(iat0);
         int T0 = 0;
         int I0 = 0;
         ucell->iat2iait(iat0, &I0, &T0);
@@ -325,7 +325,7 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::calculate_HR(double** gedm_us
             const int I1 = adjs.natom[ad1];
             const int iat1 = ucell->itia2iat(T1, I1);
             ModuleBase::Vector3<int>& R_index1 = adjs.box[ad1];
-            auto row_indexes = paraV->get_indexes_row(iat1);
+            std::vector<int> row_indexes = paraV->get_indexes_row(iat1);
             const int row_size = row_indexes.size();
             if (row_size == 0)
             {
@@ -364,7 +364,7 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::calculate_HR(double** gedm_us
                 {
                     continue;
                 }
-                auto col_indexes = paraV->get_indexes_col(iat2);
+                std::vector<int> col_indexes = paraV->get_indexes_col(iat2);
                 const int col_size = col_indexes.size();
 
                 if (col_size == 0)

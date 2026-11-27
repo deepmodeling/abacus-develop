@@ -90,7 +90,7 @@ void SpinConstrain<TK>::reset_dspin_operator()
     }
     if (this->state_.get_nspin() == 4)
     {
-        auto* dspin = dynamic_cast<hamilt::DeltaSpin<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>*>(this->p_operator);
+        hamilt::DeltaSpin<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>* dspin = dynamic_cast<hamilt::DeltaSpin<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>*>(this->p_operator);
         if (dspin)
         {
             dspin->reset_initialized();
@@ -98,7 +98,7 @@ void SpinConstrain<TK>::reset_dspin_operator()
     }
     else if (this->state_.get_nspin() == 2)
     {
-        auto* dspin = dynamic_cast<hamilt::DeltaSpin<hamilt::OperatorLCAO<std::complex<double>, double>>*>(this->p_operator);
+        hamilt::DeltaSpin<hamilt::OperatorLCAO<std::complex<double>, double>>* dspin = dynamic_cast<hamilt::DeltaSpin<hamilt::OperatorLCAO<std::complex<double>, double>>*>(this->p_operator);
         if (dspin)
         {
             dspin->reset_initialized();

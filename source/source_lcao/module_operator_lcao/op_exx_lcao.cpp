@@ -60,7 +60,7 @@ void reallocate_hcontainer(const std::vector<std::map<int, std::map<TAC, RI::Ten
                            HContainer<TR>* hR,
                            const RI::Cell_Nearest<int, int, 3, double, 3>* const cell_nearest)
 {
-    auto* pv = hR->get_paraV();
+    const Parallel_Orbitals* pv = hR->get_paraV();
     bool need_allocate = false;
     for (auto& Htmp1: Hexxs[0])
     {
@@ -96,8 +96,8 @@ void reallocate_hcontainer(const int nat,
                            const std::array<int, 3>& Rs_period,
                            const RI::Cell_Nearest<int, int, 3, double, 3>* const cell_nearest)
 {
-    auto* pv = hR->get_paraV();
-    auto Rs = RI_Util::get_Born_von_Karmen_cells(Rs_period);
+    const Parallel_Orbitals* pv = hR->get_paraV();
+    std::vector<std::array<int, 3>> Rs = RI_Util::get_Born_von_Karmen_cells(Rs_period);
     bool need_allocate = false;
     for (int iat0 = 0; iat0 < nat; ++iat0)
     {
@@ -107,7 +107,7 @@ void reallocate_hcontainer(const int nat,
             // but adj_list is not enought for EXX, which is more nonlocal than Nonlocal
             if (pv->get_nrow_atom(iat0) > 0 && pv->get_ncol_atom(iat1) > 0)
             {
-                for (auto& cell: Rs)
+                for (std::array<int, 3>& cell: Rs)
                 {
                     const Abfs::Vector3_Order<int>& R = RI_Util::array3_to_Vector3(
                         (cell_nearest ? cell_nearest->get_cell_nearest_discrete(iat0, iat1, cell) : cell));
@@ -249,12 +249,12 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
             XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
             if (exx_info_ptr->info_ri.real_number)
             {
-                const auto& Ds = RI_2D_Comm::dm_container_to_Ds<double, double>(dmR_vec, ucell, *pv, PARAM.inp.nspin);
+                const std::vector<std::map<int, std::map<RI_2D_Comm::TAC, RI::Tensor<double>>>>& Ds = RI_2D_Comm::dm_container_to_Ds<double, double>(dmR_vec, ucell, *pv, PARAM.inp.nspin);
                 this->exd->cal_exx_elec(Ds, ucell, *pv);
             }
             else
             {
-                const auto& Ds = RI_2D_Comm::dm_container_to_Ds<double, std::complex<double>>(dmR_vec,
+                const std::vector<std::map<int, std::map<RI_2D_Comm::TAC, RI::Tensor<std::complex<double>>>>>& Ds = RI_2D_Comm::dm_container_to_Ds<double, std::complex<double>>(dmR_vec,
                                                                                               ucell,
                                                                                               *pv,
                                                                                               PARAM.inp.nspin);

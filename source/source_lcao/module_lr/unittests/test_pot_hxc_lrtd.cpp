@@ -105,9 +105,9 @@ protected:
 
 TEST_F(PotHxcLRTest, RebindLdaAfterPbeKeepsMetadataAndSharesCoefficients)
 {
-    const auto lda = build("lda", 2);
+    const std::shared_ptr<const LR::KernelXC> lda = build("lda", 2);
     LR::PotHxcLR original(lda, basis, cell, 1, 2, LR::PotHxcLR::S2_triplet);
-    const auto pbe = build("pbe", 2);
+    const std::shared_ptr<const LR::KernelXC> pbe = build("pbe", 2);
     ASSERT_EQ(XC_Functional::get_func_type(), LR::PotHxcLR::GGA);
     LR::PotHxcLR rebound(lda, basis, cell, 1, 2, LR::PotHxcLR::S2_triplet);
     EXPECT_EQ(lda->functional_type(), LR::PotHxcLR::LDA);
@@ -124,9 +124,9 @@ TEST_F(PotHxcLRTest, RebindLdaAfterPbeKeepsMetadataAndSharesCoefficients)
 
 TEST_F(PotHxcLRTest, RebindPbeAfterLdaKeepsGradientPath)
 {
-    const auto pbe = build("pbe", 2);
+    const std::shared_ptr<const LR::KernelXC> pbe = build("pbe", 2);
     LR::PotHxcLR original(pbe, basis, cell, 1, 2, LR::PotHxcLR::S2_triplet);
-    const auto lda = build("lda", 2);
+    const std::shared_ptr<const LR::KernelXC> lda = build("lda", 2);
     LR::PotHxcLR rebound(pbe, basis, cell, 1, 2, LR::PotHxcLR::S2_triplet);
     ModuleBase::matrix first(1, 1);
     ModuleBase::matrix second(1, 1);
@@ -140,15 +140,15 @@ TEST_F(PotHxcLRTest, RebindPbeAfterLdaKeepsGradientPath)
 TEST_F(PotHxcLRTest, NonlocalAndFileKernelsKeepTheirOwnSpinMetadata)
 {
     XC_Functional::set_xc_type("pbe");
-    for (const auto& name : {"rpa", "hf"})
+    for (const char* const& name : {"rpa", "hf"})
     {
-        const auto kernel = build(name, 2);
+        const std::shared_ptr<const LR::KernelXC> kernel = build(name, 2);
         EXPECT_EQ(kernel->nspin(), 2);
         EXPECT_EQ(kernel->functional_type(), LR::PotHxcLR::None);
         EXPECT_EQ(kernel->name(), name);
     }
     init = {"file", "uu", "ud", "dd"};
-    const auto file = build("lda", 2);
+    const std::shared_ptr<const LR::KernelXC> file = build("lda", 2);
     EXPECT_EQ(file->nspin(), 2);
     EXPECT_EQ(file->functional_type(), LR::PotHxcLR::LDA);
     EXPECT_EQ(file->v2rho2.size(), 3);
@@ -160,7 +160,7 @@ TEST_F(PotHxcLRTest, RejectMissingOrMismatchedKernel)
 {
     std::shared_ptr<const LR::KernelXC> missing;
     EXPECT_THROW(LR::PotHxcLR(missing, basis, cell, 1, 2, LR::PotHxcLR::S2_triplet), std::invalid_argument);
-    const auto kernel = build("lda", 1);
+    const std::shared_ptr<const LR::KernelXC> kernel = build("lda", 1);
     EXPECT_EQ(kernel->nspin(), 1);
     EXPECT_THROW(LR::PotHxcLR(kernel, basis, cell, 1, 2, LR::PotHxcLR::S2_triplet), std::invalid_argument);
 }
@@ -173,14 +173,14 @@ TEST_F(PotHxcLRTest, PotentialFactorySharesSameFunctionalAcrossSpinViews)
     input.lr_init_xc_kernel = init;
     for (const int nspin : {1, 2})
     {
-        const auto prepared = LR::prepare_lr_potentials(input, input.dft_functional,
+        const LR::KernelPotentials prepared = LR::prepare_lr_potentials(input, input.dft_functional,
             basis, cell, charge, grid, nspin, false);
         ASSERT_EQ(prepared.pot.size(), nspin);
-        for (const auto& potential : prepared.pot)
+        for (const std::shared_ptr<LR::PotHxcLR>& potential : prepared.pot)
         {
             EXPECT_EQ(&potential->xc_kernel_components(), prepared.kernel.get());
         }
-        const auto gs = LR::prepare_gs_potential(input, input.dft_functional,
+        const std::shared_ptr<LR::PotHxcLR> gs = LR::prepare_gs_potential(input, input.dft_functional,
             basis, cell, charge, grid, nspin, false, prepared);
         EXPECT_EQ(&gs->xc_kernel_components(), prepared.kernel.get());
     }
@@ -193,9 +193,9 @@ TEST_F(PotHxcLRTest, PotentialFactorySeparatesMixedFunctionals)
     input.dft_functional = "pbe";
     input.lr_init_xc_kernel = init;
     const std::string lr_functional = "lda";
-    const auto prepared = LR::prepare_lr_potentials(input, lr_functional,
+    const LR::KernelPotentials prepared = LR::prepare_lr_potentials(input, lr_functional,
         basis, cell, charge, grid, 2, false);
-    const auto gs = LR::prepare_gs_potential(input, lr_functional,
+    const std::shared_ptr<LR::PotHxcLR> gs = LR::prepare_gs_potential(input, lr_functional,
         basis, cell, charge, grid, 2, false, prepared);
     EXPECT_NE(&gs->xc_kernel_components(), prepared.kernel.get());
     EXPECT_EQ(gs->xc_kernel_components().name(), "pbe");
@@ -208,19 +208,19 @@ TEST_F(PotHxcLRTest, PotentialFactoryRetainsOpenShellKernelSharing)
     input.cal_force = true;
     input.dft_functional = "lda";
     input.lr_init_xc_kernel = init;
-    const auto prepared = LR::prepare_lr_potentials(input, input.dft_functional,
+    const LR::KernelPotentials prepared = LR::prepare_lr_potentials(input, input.dft_functional,
         basis, cell, charge, grid, 2, true);
     ASSERT_EQ(prepared.pot.size(), 2);
     EXPECT_EQ(&prepared.pot[0]->xc_kernel_components(), &prepared.pot[1]->xc_kernel_components());
-    const auto gs = LR::prepare_gs_potential(input, input.dft_functional,
+    const std::shared_ptr<LR::PotHxcLR> gs = LR::prepare_gs_potential(input, input.dft_functional,
         basis, cell, charge, grid, 2, true, prepared);
     EXPECT_EQ(&gs->xc_kernel_components(), prepared.kernel.get());
 }
 
 TEST_F(PotHxcLRTest, GradientPotentialUsesExplicitKernelSpin)
 {
-    const auto polarized = build("lda", 2);
-    const auto unpolarized = build("lda", 1);
+    const std::shared_ptr<const LR::KernelXC> polarized = build("lda", 2);
+    const std::shared_ptr<const LR::KernelXC> unpolarized = build("lda", 1);
     LR::PotGradXCLR gradient(*polarized, basis, cell, 1, 2, false);
     EXPECT_EQ(gradient.nspin, 2);
     LR::PotGradXCLR single(*unpolarized, basis, cell, 1, 1, false);
@@ -231,7 +231,7 @@ TEST_F(PotHxcLRTest, GradientPotentialUsesExplicitKernelSpin)
 TEST_F(PotHxcLRTest, ScopedGsTypeRestoresLrSelection)
 {
     const XC_Functional::ScopedType baseline("pbe");
-    const auto ids = XC_Functional::get_func_id();
+    const std::vector<int> ids = XC_Functional::get_func_id();
     const int type = XC_Functional::get_func_type();
     const std::string description = XC_Functional::output_info();
     {
@@ -248,7 +248,7 @@ TEST_F(PotHxcLRTest, ScopedGsTypeRestoresLrSelection)
 TEST_F(PotHxcLRTest, ScopedGsTypeRestoresOnException)
 {
     const XC_Functional::ScopedType baseline("pbe");
-    const auto ids = XC_Functional::get_func_id();
+    const std::vector<int> ids = XC_Functional::get_func_id();
     XC_Functional::set_hybrid_alpha(0.37);
     XC_Functional::set_hse_omega(0.19);
     XCFunctionalParameters parameters;
@@ -276,7 +276,7 @@ TEST_F(PotHxcLRTest, ScopedGsTypeRestoresOnException)
     EXPECT_FALSE(XC_Functional::get_need_laplacian());
     EXPECT_DOUBLE_EQ(XC_Functional::get_hybrid_alpha(), 0.37);
     EXPECT_DOUBLE_EQ(XC_Functional::get_hse_omega(), 0.19);
-    const auto& restored = XC_Functional::get_runtime_parameters();
+    const XCFunctionalParameters& restored = XC_Functional::get_runtime_parameters();
     EXPECT_DOUBLE_EQ(restored.xc_temperature, parameters.xc_temperature);
     EXPECT_EQ(restored.exx_fock_alpha, parameters.exx_fock_alpha);
     EXPECT_EQ(restored.exx_erfc_alpha, parameters.exx_erfc_alpha);
@@ -287,7 +287,7 @@ TEST_F(PotHxcLRTest, ScopedGsTypeRestoresOnException)
 TEST_F(PotHxcLRTest, ScopedGsTypesNestWithoutLosingEmptyHfSelection)
 {
     const XC_Functional::ScopedType baseline("pbe");
-    const auto ids = XC_Functional::get_func_id();
+    const std::vector<int> ids = XC_Functional::get_func_id();
     {
         const XC_Functional::ScopedType gs("hf");
         {
@@ -305,7 +305,7 @@ TEST_F(PotHxcLRTest, ScopedGsTypesNestWithoutLosingEmptyHfSelection)
 TEST_F(PotHxcLRTest, ScopedGsTypeRestoresLibxcBackend)
 {
     const XC_Functional::ScopedType baseline("XC_LDA_X+XC_LDA_C_PZ");
-    const auto ids = XC_Functional::get_func_id();
+    const std::vector<int> ids = XC_Functional::get_func_id();
     const std::string description = XC_Functional::output_info();
     ASSERT_NE(description.find("Libxc"), std::string::npos);
     {

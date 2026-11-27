@@ -53,7 +53,7 @@ void Stress_Func<FPTYPE, Device>::stress_onsite(
     // Get onsite projector instance
     projectors::OnsiteProjector<FPTYPE, Device> *onsite_projector =
         projectors::OnsiteProjector<FPTYPE, Device>::get_instance();
-    auto *fs_tools = onsite_projector->get_fs_tools();
+    hamilt::Onsite_Proj_tools<FPTYPE, Device> *fs_tools = onsite_projector->get_fs_tools();
 
     const int nks = wfc_basis->nks;
 

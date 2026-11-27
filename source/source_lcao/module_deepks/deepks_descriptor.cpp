@@ -26,7 +26,7 @@ void DeePKS_domain::cal_descriptor_equiv(const int nat,
     assert(deepks_param.des_per_atom > 0);
     for (int iat = 0; iat < nat; iat++)
     {
-        auto tmp = torch::zeros(deepks_param.des_per_atom, torch::kFloat64);
+        at::Tensor tmp = torch::zeros(deepks_param.des_per_atom, torch::kFloat64);
         std::memcpy(tmp.data_ptr(), pdm[iat].data_ptr<double>(), sizeof(double) * tmp.numel());
         descriptor.push_back(tmp);
     }
@@ -102,7 +102,7 @@ void DeePKS_domain::check_descriptor(const DeePKS_Param& deepks_param,
                 {
                     int nm = 2 * deepks_param.inl2l[inl] + 1;
                     const int ind = iat * deepks_param.inlmax / ucell.nat + inl;
-                    auto accessor = descriptor[ind].accessor<double, 1>();
+                    at::TensorAccessor<double, 1> accessor = descriptor[ind].accessor<double, 1>();
                     for (int im = 0; im < nm; im++)
                     {
                         ofs << accessor[im] << " ";
@@ -124,7 +124,7 @@ void DeePKS_domain::check_descriptor(const DeePKS_Param& deepks_param,
             const int it = ucell.iat2it[iat];
             ofs << ucell.atoms[it].label << " atom_index " << iat + 1 << " n_descriptor " << deepks_param.des_per_atom
                 << std::endl;
-            auto accessor = descriptor[iat].accessor<double, 1>();
+            at::TensorAccessor<double, 1> accessor = descriptor[iat].accessor<double, 1>();
             for (int i = 0; i < deepks_param.des_per_atom; i++)
             {
                 ofs << accessor[i] << " ";

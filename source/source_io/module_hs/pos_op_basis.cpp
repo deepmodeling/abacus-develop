@@ -270,13 +270,13 @@ void PosOpBasis::build(const UnitCell& ucell, const LCAO_Orbitals& orb, bool cal
     {
         for (auto& co2: co1.second)
         {
-            for (auto& co3: co2.second)
+            for (std::pair<const std::size_t, std::map<std::size_t, std::map<std::size_t, std::map<std::size_t, Center2_Orb::Orb11>>>>& co3: co2.second)
             {
-                for (auto& co4: co3.second)
+                for (std::pair<const std::size_t, std::map<std::size_t, std::map<std::size_t, Center2_Orb::Orb11>>>& co4: co3.second)
                 {
-                    for (auto& co5: co4.second)
+                    for (std::pair<const std::size_t, std::map<std::size_t, Center2_Orb::Orb11>>& co5: co4.second)
                     {
-                        for (auto& co6: co5.second)
+                        for (std::pair<const std::size_t, Center2_Orb::Orb11>& co6: co5.second)
                         {
                             co6.second.init_radial_table();
                         }
@@ -290,13 +290,13 @@ void PosOpBasis::build(const UnitCell& ucell, const LCAO_Orbitals& orb, bool cal
     {
         for (auto& co2: co1.second)
         {
-            for (auto& co3: co2.second)
+            for (std::pair<const std::size_t, std::map<std::size_t, std::map<std::size_t, std::map<std::size_t, Center2_Orb::Orb21>>>>& co3: co2.second)
             {
-                for (auto& co4: co3.second)
+                for (std::pair<const std::size_t, std::map<std::size_t, std::map<std::size_t, Center2_Orb::Orb21>>>& co4: co3.second)
                 {
-                    for (auto& co5: co4.second)
+                    for (std::pair<const std::size_t, std::map<std::size_t, Center2_Orb::Orb21>>& co5: co4.second)
                     {
-                        for (auto& co6: co5.second)
+                        for (std::pair<const std::size_t, Center2_Orb::Orb21>& co6: co5.second)
                         {
                             co6.second.init_radial_table();
                         }
@@ -361,13 +361,13 @@ void PosOpBasis::build_nonlocal(const UnitCell& ucell, const LCAO_Orbitals& orb,
 
     for (auto& co1: center2_orb11_nonlocal)
     {
-        for (auto& co2: co1.second)
+        for (std::pair<const std::size_t, std::map<std::size_t, std::map<std::size_t, std::map<std::size_t, Center2_Orb::Orb11>>>>& co2: co1.second)
         {
-            for (auto& co3: co2.second)
+            for (std::pair<const std::size_t, std::map<std::size_t, std::map<std::size_t, Center2_Orb::Orb11>>>& co3: co2.second)
             {
-                for (auto& co4: co3.second)
+                for (std::pair<const std::size_t, std::map<std::size_t, Center2_Orb::Orb11>>& co4: co3.second)
                 {
-                    for (auto& co5: co4.second)
+                    for (std::pair<const std::size_t, Center2_Orb::Orb11>& co5: co4.second)
                     {
                         co5.second.init_radial_table();
                     }
@@ -378,13 +378,13 @@ void PosOpBasis::build_nonlocal(const UnitCell& ucell, const LCAO_Orbitals& orb,
 
     for (auto& co1: center2_orb21_r_nonlocal)
     {
-        for (auto& co2: co1.second)
+        for (std::pair<const std::size_t, std::map<std::size_t, std::map<std::size_t, std::map<std::size_t, Center2_Orb::Orb21>>>>& co2: co1.second)
         {
-            for (auto& co3: co2.second)
+            for (std::pair<const std::size_t, std::map<std::size_t, std::map<std::size_t, Center2_Orb::Orb21>>>& co3: co2.second)
             {
-                for (auto& co4: co3.second)
+                for (std::pair<const std::size_t, std::map<std::size_t, Center2_Orb::Orb21>>& co4: co3.second)
                 {
-                    for (auto& co5: co4.second)
+                    for (std::pair<const std::size_t, Center2_Orb::Orb21>& co5: co4.second)
                     {
                         co5.second.init_radial_table();
                     }

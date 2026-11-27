@@ -131,13 +131,13 @@ void Matrix_Orbs21::init_radial_table(const bool use_gpu)
             {
                 for (auto& coD: coC.second)
                 {
-                    for (auto& coE: coD.second)
+                    for (std::pair<const int, std::map<std::size_t, std::map<int, std::map<std::size_t, Center2_Orb::Orb21>>>>& coE: coD.second)
                     {
-                        for (auto& coF: coE.second)
+                        for (std::pair<const std::size_t, std::map<int, std::map<std::size_t, Center2_Orb::Orb21>>>& coF: coE.second)
                         {
-                            for (auto& coG: coF.second)
+                            for (std::pair<const int, std::map<std::size_t, Center2_Orb::Orb21>>& coG: coF.second)
                             {
-                                for (auto& coH: coG.second)
+                                for (std::pair<const std::size_t, Center2_Orb::Orb21>& coH: coG.second)
                                 {
                                     orbitals.push_back(&coH.second);
                                 }
@@ -157,8 +157,8 @@ void Matrix_Orbs21::init_radial_table(const std::map<size_t, std::map<size_t, st
     ModuleBase::TITLE("Matrix_Orbs21", "init_radial_table_Rs");
     ModuleBase::timer::start("Matrix_Orbs21", "init_radial_table");
     const double lat0 = *this->lat0;
-    for (const auto& RsA: Rs) {
-        for (const auto& RsB: RsA.second)
+    for (const std::pair<const std::size_t, std::map<std::size_t, std::set<double>>>& RsA: Rs) {
+        for (const std::pair<const std::size_t, std::set<double>>& RsB: RsA.second)
         {
             if (auto* const center2_orb21_sAB = static_cast<std::map<
                     int,
@@ -182,13 +182,13 @@ void Matrix_Orbs21::init_radial_table(const std::map<size_t, std::map<size_t, st
                 {
                     for (auto& coD: coC.second)
                     {
-                        for (auto& coE: coD.second)
+                        for (std::pair<const int, std::map<std::size_t, std::map<int, std::map<std::size_t, Center2_Orb::Orb21>>>>& coE: coD.second)
                         {
-                            for (auto& coF: coE.second)
+                            for (std::pair<const std::size_t, std::map<int, std::map<std::size_t, Center2_Orb::Orb21>>>& coF: coE.second)
                             {
-                                for (auto& coG: coF.second)
+                                for (std::pair<const int, std::map<std::size_t, Center2_Orb::Orb21>>& coG: coF.second)
                                 {
-                                    for (auto& coH: coG.second)
+                                    for (std::pair<const std::size_t, Center2_Orb::Orb21>& coH: coG.second)
                                     {
                                         orbitals.push_back(&coH.second);
                                     }

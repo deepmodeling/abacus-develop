@@ -35,7 +35,7 @@ try
     data.full_cartesian.resize(p_kv->kvec_c_full.size());
     for (std::size_t ik = 0; ik < p_kv->kvec_c_full.size(); ++ik)
     {
-        const auto kcart = RpaLriDetail::librpa_cartesian_kvec(p_kv->kvec_c_full[ik], ucell.lat0);
+        const ModuleBase::Vector3<double> kcart = RpaLriDetail::librpa_cartesian_kvec(p_kv->kvec_c_full[ik], ucell.lat0);
         data.full_cartesian[ik] = {{kcart.x, kcart.y, kcart.z}};
     }
     data.full_map = p_kv->ibz_index;

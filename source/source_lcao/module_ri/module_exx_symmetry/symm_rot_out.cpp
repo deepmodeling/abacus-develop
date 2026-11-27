@@ -37,7 +37,7 @@ namespace ModuleSymmetry
             {
                 const int nm = 2 * l + 1;
                 // ofs << "l = " << l << ", nm = " << nm << "\n";
-                const auto& T_block = symrot.rotmat_Slm[isym][l];
+                const ModuleBase::ComplexMatrix& T_block = symrot.rotmat_Slm[isym][l];
                 for (int m1 = 0;m1 < nm;++m1)
                 {
                     for (int m2 = 0;m2 < nm;++m2)
@@ -88,7 +88,7 @@ namespace ModuleSymmetry
                     for (int l = 0;l < lmax + 1;++l)
                     {
                         const int nm = 2 * l + 1;
-                        const auto& m_block = symrot.rotmat_Slm[isym_space][l];
+                        const ModuleBase::ComplexMatrix& m_block = symrot.rotmat_Slm[isym_space][l];
                         for (int m1 = 0;m1 < nm;++m1)
                         {
                             // const int m1_start = m2 * nm;

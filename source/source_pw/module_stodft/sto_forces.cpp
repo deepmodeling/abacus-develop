@@ -70,7 +70,6 @@ void Sto_Forces<FPTYPE, Device>::cal_stoforce(const int nspin,
     int iat = 0;
     for (int ipol = 0; ipol < 3; ipol++)
     {
-        double sum = 0.0;
         iat = 0;
 
         for (int it = 0; it < ucell.ntype; it++)
@@ -90,25 +89,9 @@ void Sto_Forces<FPTYPE, Device>::cal_stoforce(const int nspin,
                     force(iat, ipol) = force(iat, ipol) + force_gate(iat, ipol);
                 }
 
-                sum += force(iat, ipol);
-
                 iat++;
             }
         }
-
-        if (!(PARAM.inp.gate_flag || PARAM.inp.efield_flag))
-        {
-            double compen = sum / ucell.nat;
-            for (int iat = 0; iat < ucell.nat; ++iat)
-            {
-                force(iat, ipol) = force(iat, ipol) - compen;
-            }
-        }
-    }
-
-    if (PARAM.inp.gate_flag || PARAM.inp.efield_flag)
-    {
-        GlobalV::ofs_running << "Atomic forces are not shifted if gate_flag or efield_flag == true!" << std::endl;
     }
 
     if (ModuleSymmetry::Symmetry::symm_flag == 1)
@@ -160,6 +143,19 @@ void Sto_Forces<FPTYPE, Device>::cal_stoforce(const int nspin,
         }
     }
 
+    // The net force should be evaluated after the symmetrization, before the
+    // uniform shift (same convention as the LCAO/PW force assemblies).
+    const ModuleBase::Vector3<double> net_force = ModuleBase::net_force_vector(ucell.nat, force);
+
+    if (PARAM.inp.gate_flag || PARAM.inp.efield_flag)
+    {
+        GlobalV::ofs_running << "Atomic forces are not shifted if gate_flag or efield_flag == true!" << std::endl;
+    }
+    else
+    {
+        ModuleBase::remove_net_force(ucell.nat, force);
+    }
+
     GlobalV::ofs_running << setiosflags(std::ios::fixed) << std::setprecision(6) << std::endl;
 
     // output force in unit eV/Angstrom
@@ -186,6 +182,7 @@ void Sto_Forces<FPTYPE, Device>::cal_stoforce(const int nspin,
         }
     }
     ModuleIO::print_force(GlobalV::ofs_running, ucell, "TOTAL-FORCE (eV/Angstrom)", force, false);
+    ModuleIO::print_net_force(GlobalV::ofs_running, net_force);
     ModuleBase::timer::end("Sto_Forces", "cal_force");
     return;
 }

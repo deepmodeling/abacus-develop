@@ -80,7 +80,7 @@ TEST(SocMagnetizationRoundtrip, ExtractRecoversPhysicalMagnetization)
     const int col_size = 2;
     const int step_trace[4] = {0, 1, col_size, col_size + 1};
 
-    for (const auto& mhat : dirs)
+    for (const double (&mhat)[3] : dirs)
     {
         cd c[2];
         spinor_from_direction(mhat, c);
@@ -117,7 +117,7 @@ TEST(SocMagnetizationRoundtrip, ComplexSpecializationRecoversPhysicalMagnetizati
     const int col_size = 2;
     const int step_trace[4] = {0, 1, col_size, col_size + 1};
 
-    for (const auto& mhat : dirs)
+    for (const double (&mhat)[3] : dirs)
     {
         cd c[2];
         spinor_from_direction(mhat, c);

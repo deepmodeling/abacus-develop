@@ -224,7 +224,7 @@ void Setup_Psi_pw::init(hamilt::HamiltBase* p_hamilt)
 template <typename T, typename Device>
 void Setup_Psi_pw::copy_d2h_impl()
 {
-    auto* psi_t = this->get_psi_t<T, Device>();
+    psi::Psi<T, Device>* psi_t = this->get_psi_t<T, Device>();
     this->castmem_d2h_impl<T, Device>(this->psi_cpu[0].get_pointer() - this->psi_cpu[0].get_psi_bias(),
                                       psi_t->get_pointer() - psi_t->get_psi_bias(),
                                       this->psi_cpu[0].size());

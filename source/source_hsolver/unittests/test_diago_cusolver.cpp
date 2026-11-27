@@ -447,7 +447,7 @@ TEST(CusolverSubset, LowestEigenpairsRespectUpperTriangleAndOutputBounds)
     std::vector<double> s(n * n, 0.0);
     for (int i = 0; i < n; ++i)
     {
-        const auto diagonal = i + i * n;
+        const int diagonal = i + i * n;
         s[diagonal] = 1.0 + 0.25 * i;
         const double lambda = i < 2 ? 0.5 : 1.0 + i;
         h[diagonal] = lambda * s[diagonal];
@@ -462,8 +462,8 @@ TEST(CusolverSubset, LowestEigenpairsRespectUpperTriangleAndOutputBounds)
     std::vector<double> reference(n);
     LCAO_DIAGO_TEST::lapack_diago(h.data(), s.data(), reference.data(), n);
     ASSERT_NEAR(reference[0], reference[1], tolerance);
-    const auto input_h = h;
-    const auto input_s = s;
+    const std::vector<double> input_h = h;
+    const std::vector<double> input_s = s;
 
     Diag_Cusolver_gvd solver;
     for (const int nbands : {1, 4, 6})

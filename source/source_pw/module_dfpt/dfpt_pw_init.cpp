@@ -278,7 +278,7 @@ void DFPT_PW::Impl::copy_occ_state_ball(
             // plane wave when G' + k_d(ikq) == G + k_d(ik) + q, i.e. G' = G - dn.
             const std::vector<int> key = {static_cast<int>(std::round(gf.x)) - dn.x,
                 static_cast<int>(std::round(gf.y)) - dn.y, static_cast<int>(std::round(gf.z)) - dn.z};
-            const auto it = jgl_of_n.find(key);
+            const std::map<std::vector<int>, int>::iterator it = jgl_of_n.find(key);
             if (it != jgl_of_n.end())
             {
                 state[igl] = gs_psi_(ikq, m, it->second);

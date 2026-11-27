@@ -118,8 +118,8 @@ void OnsiteProj<OperatorPW<T, Device>>::cal_ps_delta_spin(const int npol, const 
 
     spinconstrain::SpinConstrain<std::complex<double>> &sc =
         spinconstrain::SpinConstrain<std::complex<double>>::getScInstance();
-    auto &constrain = sc.get_constrain();
-    auto &lambda = sc.get_sc_lambda();
+    const std::vector<ModuleBase::Vector3<int>> &constrain = sc.get_constrain();
+    const std::vector<ModuleBase::Vector3<double>> &lambda = sc.get_sc_lambda();
 
     // T *ps = new T[tnp * m];
     // ModuleBase::GlobalFunc::ZEROS(ps, m * tnp);

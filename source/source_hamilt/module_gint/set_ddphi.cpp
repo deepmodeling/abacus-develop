@@ -85,8 +85,8 @@ void GintAtom::set_ddphi(
             {
                 if (atom_->iw2_new[iw])
                 {
-                    auto psi_uniform = p_psi_uniform_[iw];
-                    auto dpsi_uniform = p_dpsi_uniform_[iw];
+                    const double* psi_uniform = p_psi_uniform_[iw];
+                    const double* dpsi_uniform = p_dpsi_uniform_[iw];
                     // use Polynomia Interpolation method to get the
                     // wave functions
                     tmp = x12 * (psi_uniform[ip] * x3 + psi_uniform[ip + 3] * x0) +

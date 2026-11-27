@@ -58,7 +58,7 @@ GintGpuVars::GintGpuVars(
             atom_iw2_new_h[i * nwmax + j] = atomx->iw2_new[j];
             atom_iw2_ylm_h[i * nwmax + j] = atomx->iw2_ylm[j];
             atom_iw2_l_h[i * nwmax + j] = atomx->iw2l[j];
-            const auto psi_ptr = &Phi[i].PhiLN(atomx->iw2l[j], atomx->iw2n[j]);
+            const Numerical_Orbital_Lm* const psi_ptr = &Phi[i].PhiLN(atomx->iw2l[j], atomx->iw2n[j]);
             const int psi_size = psi_ptr->psi_uniform.size();
             int idx = i * nwmax * nr_max + j * nr_max;
             for (int k = 0; k < psi_size; k++)

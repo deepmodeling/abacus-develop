@@ -543,7 +543,7 @@ Use the same scheme for consistent SCF and NSCF bands. A source configuration mi
             }
             if (para.input.basis_type == "pw" && para.input.exx_singularity_correction == "limits")
             {
-                const auto gamma_item = std::find_if(this->input_lists.begin(), this->input_lists.end(),
+                const std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator gamma_item = std::find_if(this->input_lists.begin(), this->input_lists.end(),
                     [](const std::pair<std::string, Input_Item>& entry) {
                         return entry.first == "exx_gamma_extra";
                     });

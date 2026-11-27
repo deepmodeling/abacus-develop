@@ -200,6 +200,16 @@ void Forces<FPTYPE, Device>::cal_force(
         }
     }
 
+    if (ModuleSymmetry::Symmetry::symm_flag == 1)
+    {
+        ModuleSymmetry::symmetrize_force_cartesian(p_symm, this->nat, ucell.a1, ucell.a2, ucell.a3, force);
+    }
+
+    // The net force should be evaluated after the symmetrization, before the
+    // uniform shift, so that the reported drift is the one actually present in
+    // the assembled forces (same convention as the LCAO force assembly).
+    const ModuleBase::Vector3<double> net_force = ModuleBase::net_force_vector(this->nat, force);
+
     if (PARAM.inp.gate_flag || PARAM.inp.efield_flag)
     {
         GlobalV::ofs_running << "Atomic forces are not shifted if gate_flag or efield_flag == true!" << std::endl;
@@ -207,11 +217,6 @@ void Forces<FPTYPE, Device>::cal_force(
     else
     {
         ModuleBase::remove_net_force(this->nat, force);
-    }
-
-    if (ModuleSymmetry::Symmetry::symm_flag == 1)
-    {
-        ModuleSymmetry::symmetrize_force_cartesian(p_symm, this->nat, ucell.a1, ucell.a2, ucell.a3, force);
     }
 
     GlobalV::ofs_running << std::setiosflags(std::ios::fixed) << std::setprecision(6) << std::endl;
@@ -276,6 +281,7 @@ void Forces<FPTYPE, Device>::cal_force(
         }
     }
     ModuleIO::print_force(GlobalV::ofs_running, ucell, "TOTAL-FORCE (eV/Angstrom)", force, false);
+    ModuleIO::print_net_force(GlobalV::ofs_running, net_force);
     ModuleBase::timer::end("Forces", "cal_force");
     return;
 }
