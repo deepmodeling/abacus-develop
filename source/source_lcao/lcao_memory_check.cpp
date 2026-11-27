@@ -85,7 +85,11 @@ void check_lcao_dense_memory(const Parallel_Orbitals& pv,
         est.per_rank_total_bytes, est.per_rank_total_bytes, budget);
 
     const bool is_rank0 = (my_rank == 0);
-    const bool memory_unknown = (status.available_bytes == 0);
+    // Only an unreadable source (neither cgroup nor /proc/meminfo) makes the
+    // budget unknown.  A readable cgroup that computes to zero available --
+    // usage at its limit with no reclaimable cache -- is a real, enforceable
+    // zero and must still drive the Abort decision below.
+    const bool memory_unknown = !status.known;
 
     // Node-level total is informational only (the decision compares per-rank
     // vs per-rank budget); guard the multiplication against overflow.

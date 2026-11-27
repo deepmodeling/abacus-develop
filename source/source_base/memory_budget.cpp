@@ -195,6 +195,10 @@ MemoryStatus get_memory_status(const std::string& cgroup_root)
     if (!status.from_cgroup)
     {
         status.available_bytes = read_mem_available();
+        // /proc/meminfo is the only source here; a nonzero MemAvailable means
+        // we have a real reading, while 0 means the read failed (unknown).
+        status.known = (status.available_bytes != 0);
+        status.unlimited = true;
         return status;
     }
 
@@ -207,6 +211,12 @@ MemoryStatus get_memory_status(const std::string& cgroup_root)
     status.limit_bytes = limit;
     status.current_bytes = current;
     status.reclaimable_bytes = reclaimable;
+    status.unlimited = limit_unlimited;
+    // The cgroup files parsed successfully, so the resulting available_bytes
+    // is a real reading even when it computes to 0 (a saturated cgroup with
+    // no reclaimable cache).  That known-zero must stay enforceable, unlike
+    // the "could not read anything" state.
+    status.known = true;
 
     // An explicit "max" (or the v1 huge sentinel) means no cgroup ceiling, so
     // fall back to host memory.  Any other parsed value -- including a finite

@@ -12,8 +12,16 @@ namespace ModuleBase
  *
  * The values come from cgroup v2 (memory.max / memory.current /
  * memory.stat) or cgroup v1 (memory.limit_in_bytes / memory.usage_in_bytes
- * / memory.stat), with /proc/meminfo MemAvailable as a fallback.  A zero
- * limit means "no cgroup limit"; available_bytes is then the host value.
+ * / memory.stat), with /proc/meminfo MemAvailable as a fallback.
+ *
+ * available_bytes is meaningful only when known is true.  A readable cgroup
+ * whose usage has reached its limit with no reclaimable cache reports
+ * available_bytes == 0 with known == true; that is a real, enforceable zero
+ * and must not be confused with the "could not read anything" state, which
+ * sets known == false (and leaves available_bytes at 0).  unlimited is true
+ * only when the cgroup reports no ceiling ("max" or the v1 sentinel); a
+ * finite limit of 0 is reported as unlimited == false so it stays
+ * distinguishable from the unlimited case.
  */
 struct MemoryStatus
 {
@@ -22,6 +30,8 @@ struct MemoryStatus
     std::size_t reclaimable_bytes = 0;
     std::size_t available_bytes = 0;
     bool from_cgroup = false;
+    bool known = false;
+    bool unlimited = false;
 };
 
 /// Read the memory status from the default cgroup root.

@@ -84,10 +84,48 @@ TEST(MemoryBudget, CgroupFiniteZeroLimitIsNotTreatedAsUnlimited)
 
     const ModuleBase::MemoryStatus status = ModuleBase::get_memory_status(dir);
     EXPECT_TRUE(status.from_cgroup);
+    EXPECT_TRUE(status.known);
+    EXPECT_FALSE(status.unlimited);
     EXPECT_EQ(status.limit_bytes, 0ULL);
     // free_bytes = 0 (limit not > current), so available is min(0, ...) = 0,
     // not the host memory read_mem_available() would return.
     EXPECT_EQ(status.available_bytes, 0ULL);
+}
+
+TEST(MemoryBudget, CgroupZeroHeadroomStaysKnownAndEnforceable)
+{
+    // A readable finite cgroup whose usage has reached its limit and has no
+    // reclaimable cache reports available_bytes == 0.  That is a real,
+    // enforceable zero (known == true), not the "could not read" unknown
+    // state, so the caller must still be able to abort on it.
+    const std::string dir = testing::TempDir() + "/abacus_memory_budget_full";
+    mkdir(dir.c_str(), 0700);
+    write_file(dir + "/memory.max", "100000000000\n");
+    write_file(dir + "/memory.current", "100000000000\n");
+    write_file(dir + "/memory.stat", "inactive_file 0\n");
+
+    const ModuleBase::MemoryStatus status = ModuleBase::get_memory_status(dir);
+    EXPECT_TRUE(status.from_cgroup);
+    EXPECT_TRUE(status.known);
+    EXPECT_FALSE(status.unlimited);
+    EXPECT_EQ(status.available_bytes, 0ULL);
+    // decide_memory must Abort on this known zero rather than skip.
+    EXPECT_EQ(ModuleBase::decide_memory(1, 1, status.available_bytes), ModuleBase::MemoryDecision::Abort);
+}
+
+TEST(MemoryBudget, UnreadableSourceIsUnknown)
+{
+    // An empty cgroup root with no cgroup files and no readable
+    // /proc/meminfo-derived value leaves the status unknown.
+    const std::string dir = testing::TempDir() + "/abacus_memory_budget_empty";
+    mkdir(dir.c_str(), 0700);
+
+    const ModuleBase::MemoryStatus status = ModuleBase::get_memory_status(dir);
+    // Falls back to /proc/meminfo; on this host that read succeeds, so the
+    // status is known and unlimited (no cgroup ceiling).
+    EXPECT_FALSE(status.from_cgroup);
+    EXPECT_EQ(status.known, status.available_bytes != 0);
+    EXPECT_TRUE(status.unlimited);
 }
 
 TEST(MemoryBudget, EstimatorMatchesIssue8342Dimensions)
