@@ -524,7 +524,7 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2rho_single(
     {
         hsolver::HSolverLCAO<TK> hsolver_lcao_obj(
             &(this->pv), this->inp_->ks_solver, PARAM.globalv.kpar_lcao, PARAM.globalv.nlocal, this->inp_->nbands,
-            this->inp_->nelec, this->inp_->device == "gpu", GlobalV::NPROC, GlobalV::MY_RANK);
+            this->inp_->nelec, this->inp_->device == "gpu", GlobalV::NPROC, GlobalV::MY_RANK, this->inp_->lcao_sk_cut);
         // the eigensolvers only ever ask the Hamiltonian for H(k) and S(k)
         hamilt::HamiltHSMatrix<TK> hs(static_cast<hamilt::Hamilt<TK> *>(this->p_hamilt));
         hsolver_lcao_obj.solve(
