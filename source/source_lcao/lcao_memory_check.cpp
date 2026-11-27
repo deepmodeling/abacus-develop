@@ -48,11 +48,13 @@ void check_lcao_dense_memory(const Parallel_Orbitals& pv,
 
     const std::size_t nrloc_s = static_cast<std::size_t>(nrloc);
     const std::size_t ncloc_s = static_cast<std::size_t>(ncloc);
-    // inp.nbands is the same value Setup_Psi::allocate_psi uses to size Psi
-    // (source_psi/setup_psi.cpp), so the estimate stays consistent with the
-    // real allocation.  It has already been AUTO-set by cal_nelec_nband before
-    // before_all_runners runs.
-    const int nbands = inp.nbands;
+    // Match the column count Setup_Psi::allocate_psi uses to size Psi
+    // (source_psi/setup_psi.cpp).  Under MPI it takes pv.ncol_bands -- the
+    // local band block, which differs from the global inp.nbands -- so using
+    // inp.nbands here would mis-estimate the Psi allocation.  Gamma-only
+    // direct solvers instead keep a full ncloc-wide block, a case handled by
+    // the gamma_direct branch of estimate_lcao_dense.
+    const int nbands = pv.ncol_bands;
     const std::size_t nbands_s = static_cast<std::size_t>(nbands);
     const std::size_t nks_s = static_cast<std::size_t>(kv.get_nks());
     const bool gamma_direct = gamma_only && ModuleBase::is_gamma_direct_ks_solver(inp.ks_solver);
@@ -65,9 +67,16 @@ void check_lcao_dense_memory(const Parallel_Orbitals& pv,
     const ModuleBase::MemoryStatus status = ModuleBase::get_memory_status();
 
     // ranks_per_node is injected by the caller (Parallel_Global::mpi_number);
-    // guard against a non-positive value (serial build reports 0).
+    // guard against a non-positive value (serial build reports 1).
     const std::size_t ranks_per_node_sz = ranks_per_node > 0 ? static_cast<std::size_t>(ranks_per_node) : 1;
-    const std::size_t budget = ModuleBase::per_rank_memory_budget(status.available_bytes, ranks_per_node_sz);
+    // A /proc/meminfo reading is host-wide and shared by every rank on the
+    // node, so divide it by ranks_per_node.  A cgroup limit, however, may
+    // already be the rank's own domain (e.g. one container per rank); dividing
+    // it again would under-count by the rank count and spuriously abort, so
+    // use the cgroup value directly as the per-rank budget.
+    const std::size_t budget = status.from_cgroup
+                                   ? status.available_bytes
+                                   : ModuleBase::per_rank_memory_budget(status.available_bytes, ranks_per_node_sz);
 
     // The projection (Warn branch) is a future refinement; pass the lower
     // bound as both arguments so decide_memory returns Abort as soon as the
@@ -95,7 +104,7 @@ void check_lcao_dense_memory(const Parallel_Orbitals& pv,
         std::ostringstream oss;
         oss << "\n ABACUS: LCAO dense-matrix memory estimate (lower bound)\n";
         oss << "   NLOCAL=" << pv.get_wfc_global_nbasis()
-            << "  NBANDS=" << nbands
+            << "  ncol_bands(local)=" << nbands
             << "  nspin=" << inp.nspin
             << "  nks=" << kv.get_nks()
             << "  gamma_only=" << (gamma_only ? "true" : "false")
@@ -111,8 +120,14 @@ void check_lcao_dense_memory(const Parallel_Orbitals& pv,
         }
         oss << "\n";
         oss << "     = " << ModuleBase::format_memory_bytes(est.per_rank_total_bytes)
-            << " per rank   (ranks/node=" << ranks_per_node_sz
-            << ", node total ~ " << ModuleBase::format_memory_bytes(node_total_bytes) << ")\n";
+            << " per rank";
+        if (!status.from_cgroup)
+        {
+            // Host memory is shared by the node, so report the node-level total.
+            oss << "   (ranks/node=" << ranks_per_node_sz
+                << ", node total ~ " << ModuleBase::format_memory_bytes(node_total_bytes) << ")";
+        }
+        oss << "\n";
         if (memory_unknown)
         {
             oss << "   available: unknown (could not read cgroup or /proc/meminfo)\n";

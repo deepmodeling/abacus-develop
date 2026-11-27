@@ -74,6 +74,22 @@ TEST(MemoryBudget, CgroupUnlimitedKeepsCurrentButNoLimit)
     EXPECT_EQ(status.current_bytes, 100000000000ULL);
 }
 
+TEST(MemoryBudget, CgroupFiniteZeroLimitIsNotTreatedAsUnlimited)
+{
+    // A parsed "0" is a real finite limit (an unusual but valid cgroup
+    // configuration) and must not fall back to host memory the way an
+    // explicit "max" does.  Otherwise the budget would be over-counted.
+    const std::string dir = make_v2_fixture();
+    write_file(dir + "/memory.max", "0\n");
+
+    const ModuleBase::MemoryStatus status = ModuleBase::get_memory_status(dir);
+    EXPECT_TRUE(status.from_cgroup);
+    EXPECT_EQ(status.limit_bytes, 0ULL);
+    // free_bytes = 0 (limit not > current), so available is min(0, ...) = 0,
+    // not the host memory read_mem_available() would return.
+    EXPECT_EQ(status.available_bytes, 0ULL);
+}
+
 TEST(MemoryBudget, EstimatorMatchesIssue8342Dimensions)
 {
     // NLOCAL ~ 377884 split over 56 ranks gives a local block of ~2.55e9

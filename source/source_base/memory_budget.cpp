@@ -35,9 +35,11 @@ std::size_t saturating_add(const std::size_t a, const std::size_t b)
     return a + b;
 }
 
-// Returns true when the file was readable.  "max" means no cgroup limit and
-// is returned as value 0.
-bool read_size_file(const std::string& path, std::size_t& value)
+// Returns true when the file was readable and parses to a usable limit.
+// "max" means no cgroup limit; it is reported as value 0 with
+// unlimited set to true so callers can distinguish it from a valid
+// finite limit of 0 bytes (a real, if unusual, cgroup configuration).
+bool read_size_file(const std::string& path, std::size_t& value, bool& unlimited)
 {
     std::ifstream ifs(path);
     if (!ifs)
@@ -52,6 +54,7 @@ bool read_size_file(const std::string& path, std::size_t& value)
     if (token == "max")
     {
         value = 0;
+        unlimited = true;
         return true;
     }
     try
@@ -60,6 +63,7 @@ bool read_size_file(const std::string& path, std::size_t& value)
         value = parsed > static_cast<unsigned long long>(std::numeric_limits<std::size_t>::max())
                     ? std::numeric_limits<std::size_t>::max()
                     : static_cast<std::size_t>(parsed);
+        unlimited = false;
         return true;
     }
     catch (...)
@@ -172,16 +176,18 @@ MemoryStatus get_memory_status(const std::string& cgroup_root)
     std::size_t limit = 0;
     std::size_t current = 0;
     std::size_t reclaimable = 0;
+    bool limit_unlimited = false;
 
-    if (read_size_file(dir + "/memory.max", limit))
+    bool dummy_unlimited = false;
+    if (read_size_file(dir + "/memory.max", limit, limit_unlimited))
     {
-        read_size_file(dir + "/memory.current", current);
+        read_size_file(dir + "/memory.current", current, dummy_unlimited);
         reclaimable = read_inactive_file(dir + "/memory.stat");
         status.from_cgroup = true;
     }
-    else if (read_size_file(dir + "/memory/memory.limit_in_bytes", limit))
+    else if (read_size_file(dir + "/memory/memory.limit_in_bytes", limit, limit_unlimited))
     {
-        read_size_file(dir + "/memory/memory.usage_in_bytes", current);
+        read_size_file(dir + "/memory/memory.usage_in_bytes", current, dummy_unlimited);
         reclaimable = read_inactive_file(dir + "/memory/memory.stat");
         status.from_cgroup = true;
     }
@@ -195,14 +201,17 @@ MemoryStatus get_memory_status(const std::string& cgroup_root)
     // cgroup v1 reports a huge value instead of "max" for an unlimited cgroup.
     if (limit > (std::size_t(1) << 62))
     {
-        limit = 0;
+        limit_unlimited = true;
     }
 
     status.limit_bytes = limit;
     status.current_bytes = current;
     status.reclaimable_bytes = reclaimable;
 
-    if (limit == 0)
+    // An explicit "max" (or the v1 huge sentinel) means no cgroup ceiling, so
+    // fall back to host memory.  Any other parsed value -- including a finite
+    // 0 -- is a real limit the caller must respect.
+    if (limit_unlimited)
     {
         status.available_bytes = read_mem_available();
     }
