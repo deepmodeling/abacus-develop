@@ -9,6 +9,7 @@
 #include "source_base/timer.h"
 #include "source_cell/dom_decomp.h"
 #include "source_cell/mdcell.h"
+#include "source_cell/mdcell_cif_io.h"
 #include "source_io/module_parameter/parameter.h"
 #ifdef __JSON
 #include "source_io/module_json/output_info.h"
@@ -17,11 +18,13 @@
 #include "nhchain.h"
 #include "source_cell/print_cell.h"
 #include "source_cell/update_cell.h"
+#include "source_io/module_output/frame_append.h"
 #include "source_io/module_output/print_info.h"
 #include "source_md/module_plumed/plumed_interface.h"
 #include "verlet.h"
 
 #include <sys/stat.h>
+#include <unistd.h>
 #include <vector>
 #ifdef __MPI
 #include <mpi.h>
@@ -99,61 +102,34 @@ void md_line(
         }
     };
 
-    // An unset out_freq_ion uses the restart cadence for regular output.
-    const int eff_output_freq =
-        (param_in.inp.out_freq_ion > 0) ? param_in.inp.out_freq_ion : param_in.mdp.md_restartfreq;
-
+    const int output_freq = param_in.inp.out_freq_ion;
     const int restart_freq = param_in.mdp.md_restartfreq;
+    const std::string stru_out_dir = param_in.globalv.global_stru_dir;
+    const std::string restart_stru = param_in.globalv.global_out_dir + "STRU_restart";
 
-    // Preserve numbered frames if a legacy STRU/ directory occupies the fixed-name path.
-    const bool append_stru_allowed = (param_in.inp.out_app_flag == 1);
-    bool has_legacy_stru_dir = false;
-    std::string stru_out_dir = PARAM.globalv.global_stru_dir;
-    if (append_stru_allowed)
+    auto log_written_file = [&](const std::string &filename)
     {
-        struct stat stru_path;
-        if (stat((stru_out_dir + "STRU").c_str(), &stru_path) == 0 && S_ISDIR(stru_path.st_mode))
+        if (my_rank != 0)
         {
-            has_legacy_stru_dir = true;
-            stru_out_dir += "STRU/";
+            return;
         }
-    }
+        const std::string full_path = ModuleBase::absolute_path_for_log(filename);
+        GlobalV::ofs_running << "Write file: " << full_path << '\n';
+    };
 
-    /// Write one STRU frame for `current_step`. Cadence frames and the final
-    /// frame share the same naming/append rules, so both call sites use this
-    /// lambda. `current_step == 0` marks the first frame of a fresh run, which
-    /// truncates the fixed-name file instead of appending to it.
-    auto write_stru_frame = [&](const int current_step)
+    auto write_stru_frame = [&](const int current_step, const std::string &filename, const bool append,
+                                const bool include_force)
     {
         if (mdcell.has_backing_unitcell())
         {
             const bool positions_updated = false;
             mdcell.sync_backing_unitcell(positions_updated);
         }
-        // Mode-2 STRUC/ subdirectory is created lazily at write time.
-        ModuleBase::ensure_directory(stru_out_dir);
         const int stru_step = current_step + 1;
-        // File-name selection and append/truncate are two independent
-        // decisions. The file name is fixed to "STRU" whenever mode 1
-        // accumulation is allowed (and no legacy STRU/ directory is in
-        // the way); modes 0/2 keep the numbered STRU{stru_step} files.
-        // Whether to append depends on whether this is the very first
-        // step of a fresh (non-restart) run: a fresh first frame
-        // truncates the fixed-name file so it does not keep frames
-        // from a previous run, while later steps and restarted runs
-        // append one frame each, introduced by a one-based
-        // "# MD step N" comment line.
-        const bool use_fixed_name = append_stru_allowed && !has_legacy_stru_dir;
-        const bool is_first_step_of_fresh_run = (current_step == 0);
-        const bool append_stru = use_fixed_name && !is_first_step_of_fresh_run;
-        const std::string frame_comment = use_fixed_name ? "# MD step " + std::to_string(stru_step) + "\n\n" : "";
-        std::stringstream file;
-        file << stru_out_dir << "STRU";
-        if (!use_fixed_name)
-        {
-            file << stru_step;
-        }
-        mdcell::print_stru_file(mdcell, mdcell.stru_meta(), file.str(), frame_comment, append_stru);
+        const std::string frame_comment = "# MD step " + std::to_string(stru_step) + "\n\n";
+        mdcell::print_stru_file(mdcell, mdcell.stru_meta(), filename, frame_comment,
+                                append, include_force);
+        log_written_file(filename);
     };
 
     /// md cycle, mohan update 2026-01-04, change '<=' to '<'
@@ -169,7 +145,7 @@ void md_line(
         {
             mdcell.backing_unitcell().last_ion_step = is_final_step;
         }
-        bool print_thermo = param_in.mdp.md_thermo_freq > 0 && md_step % param_in.mdp.md_thermo_freq == 0;
+        bool print_thermo = param_in.mdp.out_thermo_freq > 0 && md_step % param_in.mdp.out_thermo_freq == 0;
 #ifdef __JSON
         // Start the UnitCell-backed JSON record before the solver writes SCF data.
         if (mdcell.has_backing_unitcell())
@@ -184,7 +160,7 @@ void md_line(
 
             // setup() may change step_rst_ when resuming a run.
             const int restart_step = mdrun->step_ + mdrun->step_rst_;
-            print_thermo = param_in.mdp.md_thermo_freq > 0 && restart_step % param_in.mdp.md_thermo_freq == 0;
+            print_thermo = param_in.mdp.out_thermo_freq > 0 && restart_step % param_in.mdp.out_thermo_freq == 0;
 
             if (param_in.mdp.plumed)
             {
@@ -244,43 +220,78 @@ void md_line(
         {
             mdrun->print_md(GlobalV::ofs_running, param_in.inp.cal_stress);
         }
-        if (param_in.mdp.md_dumpfreq > 0 && (mdrun->step_ + mdrun->step_rst_) % param_in.mdp.md_dumpfreq == 0)
-        {
-            MD_func::dump_info(
-                mdrun->step_ + mdrun->step_rst_, PARAM.globalv.global_out_dir, mdcell, mdp, cal_stress, mdrun->virial);
-        }
-
         const int current_step = mdrun->step_ + mdrun->step_rst_;
-        const bool do_output_step = eff_output_freq > 0 && current_step % eff_output_freq == 0;
-        const bool do_restart_step = restart_freq > 0 && current_step % restart_freq == 0;
-        const bool write_any_frame = (do_output_step && param_in.inp.out_stru > 0) || do_restart_step;
+        const bool ordinary_output_enabled = param_in.inp.out_stru > 0;
+        const bool do_output_step = is_structure_output_step(current_step, output_freq, ordinary_output_enabled);
+        const bool do_restart_step = is_cadence_step(current_step, restart_freq);
 
-        // Every restart step needs a matching STRU frame, even when out_stru=0.
-        // A step on both cadences writes only one frame.
-        if (write_any_frame)
+        if (do_output_step)
         {
-            write_stru_frame(current_step);
+            ModuleBase::ensure_directory(stru_out_dir);
+            std::string periodic_dir = stru_out_dir;
+            if (param_in.inp.out_stru == 1 && param_in.inp.out_app_flag != 2)
+            {
+                // Older MD runs used OUT.<suffix>/STRU/ as a directory.
+                // Keep that directory and write the fixed-name frame inside it.
+                struct stat stru_path;
+                const std::string legacy_path = stru_out_dir + "STRU";
+                if (stat(legacy_path.c_str(), &stru_path) == 0 && S_ISDIR(stru_path.st_mode))
+                {
+                    periodic_dir = legacy_path + "/";
+                }
+            }
+            const std::string filename = ModuleIO::stru_frame_filename(
+                periodic_dir, param_in.inp.out_app_flag, current_step);
+            if (param_in.inp.out_stru == 2)
+            {
+                const int cif_step = current_step + 1;
+                const std::string frame_comment = "# MD step " + std::to_string(cif_step);
+                const std::string cif_filename = filename + ".cif";
+                mdcell::print_cif_file(mdcell, cif_filename, frame_comment);
+                log_written_file(cif_filename);
+            }
+            else
+            {
+                const bool append = ModuleIO::frame_appends(param_in.inp.out_app_flag, current_step);
+                const bool include_force = true;
+                write_stru_frame(current_step, filename, append, include_force);
+            }
         }
         last_processed_step = current_step;
 
         if (do_restart_step)
         {
-            mdrun->write_restart(PARAM.globalv.global_out_dir);
+            const bool append = false;
+            const bool include_force = false;
+            write_stru_frame(current_step, restart_stru, append, include_force);
+            mdrun->write_restart(param_in.globalv.global_out_dir);
+            const std::string restart_metadata = param_in.globalv.global_out_dir + "Restart_md.txt";
+            log_written_file(restart_metadata);
         }
 
         mdrun->step_++;
     }
 
-    /// Supplementary final frame. When the last step is off both the output
-    /// and the restart cadences the loop above never writes its STRU, so write
-    /// it here to guarantee the final geometry is persisted. Steps already
-    /// covered by a cadence are not written twice. out_stru=0 keeps the
-    /// existing contract of silencing regular per-step geometry output, so the
-    /// final frame is skipped as well.
-    if (last_processed_step >= 0 && param_in.inp.out_stru > 0 &&
-        !is_frame_write_step(last_processed_step, param_in.inp.out_freq_ion, restart_freq, true))
+    // Final geometry is a separate output and is written even when the last
+    // step was also selected for periodic output.
+    if (last_processed_step >= 0 && param_in.inp.out_stru > 0)
     {
-        write_stru_frame(last_processed_step);
+        ModuleBase::ensure_directory(stru_out_dir);
+        const std::string filename = stru_out_dir + "STRU_FINAL";
+        if (param_in.inp.out_stru == 2)
+        {
+            const int cif_step = last_processed_step + 1;
+            const std::string frame_comment = "# MD step " + std::to_string(cif_step);
+            const std::string cif_filename = filename + ".cif";
+            mdcell::print_cif_file(mdcell, cif_filename, frame_comment);
+            log_written_file(cif_filename);
+        }
+        else
+        {
+            const bool append = false;
+            const bool include_force = true;
+            write_stru_frame(last_processed_step, filename, append, include_force);
+        }
     }
 
     /// flush the COLVAR and other PLUMED output files

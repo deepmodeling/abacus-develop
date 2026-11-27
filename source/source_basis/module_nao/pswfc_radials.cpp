@@ -77,7 +77,7 @@ std::string PswfcRadials::steal_from_quotes(std::string word)
 {
     // first make sure there are even number of quotes in this word
     int num_quote = 0;
-    for (auto letter: word)
+    for (char letter: word)
     {
         if (letter == '\"')
             num_quote += 1;
@@ -105,7 +105,7 @@ std::string PswfcRadials::steal_from_quotes(std::ifstream& ifs, std::string word
     {
         std::string line;
         ifs >> line;
-        for (auto letter: line)
+        for (char letter: line)
         {
             if (letter == '\"')
                 num_quote += 1;
@@ -126,7 +126,7 @@ std::string PswfcRadials::read_keyword_value(std::ifstream& ifs, std::string wor
 {
     // count the number of quotes, only 1 or 2 cases are considered for pseudopotential reading
     int num_quote = 0;
-    for (auto letter: word)
+    for (char letter: word)
     {
         if (letter == '\"')
             num_quote += 1;
@@ -203,7 +203,7 @@ std::vector<double> PswfcRadials::pswfc_prepossess(std::map<std::pair<int, int>,
                                                    const double conv_thr)
 {
     double nmax = 0.0;
-    for (auto it = lzeta_rvalues.begin(); it != lzeta_rvalues.end(); it++)
+    for (std::map<std::pair<int, int>, std::vector<double>>::iterator it = lzeta_rvalues.begin(); it != lzeta_rvalues.end(); it++)
     {
         int l = it->first.first;
         int iz = it->first.second;
@@ -225,7 +225,7 @@ std::vector<double> PswfcRadials::pswfc_prepossess(std::map<std::pair<int, int>,
         rgrid[ir] = ir * 0.01;
     }
     // zero padding on rvalue
-    for (auto it = lzeta_rvalues.begin(); it != lzeta_rvalues.end(); it++)
+    for (std::map<std::pair<int, int>, std::vector<double>>::iterator it = lzeta_rvalues.begin(); it != lzeta_rvalues.end(); it++)
     {
         int l = it->first.first;
         int iz = it->first.second;
@@ -335,7 +335,7 @@ void PswfcRadials::read_upf_pswfc(std::ifstream& ifs,
         // next seperate the result into keys and values by the following way:
         // 1. because key is std::pair, therefore seperate into two std::vectors
         // 2. for each key, value is a std::vector, therefore loop over to get the value
-        for (auto it = result.begin(); it != result.end(); it++)
+        for (std::map<std::pair<int, int>, std::vector<double>>::iterator it = result.begin(); it != result.end(); it++)
         {
             int l = it->first.first;
             int iz = it->first.second;

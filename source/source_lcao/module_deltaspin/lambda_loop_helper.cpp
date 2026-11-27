@@ -258,18 +258,18 @@ bool check_gradient_decay(const SpinConstrain<TK>& sc,
     subtract_2d(new_spin, spin, spin_change);
     subtract_2d(delta_lambda, dnu_last_step, nu_change);
 
-    const auto& constrain = sc.get_constrain();
+    const std::vector<ModuleBase::Vector3<int>>& constrain = sc.get_constrain();
     // Mask unconstrained components
     where_fill_scalar_2d(constrain, 0, zero, spin_change);
     where_fill_scalar_2d(constrain, 0, one, nu_change);
 
-    const auto& atom_counts = sc.get_atomCounts();
-    const auto& decay_grad = sc.get_decay_grad();
+    const std::map<int, int>& atom_counts = sc.get_atomCounts();
+    const std::vector<double>& decay_grad = sc.get_decay_grad();
     const int nspin = sc.get_nspin();
 
     // Extract diagonal gradient and find max per atom type
     int iat_offset = 0;
-    for (const auto& sc_elem: atom_counts)
+    for (const std::pair<const int, int>& sc_elem: atom_counts)
     {
         int it = sc_elem.first;
         int nat_it = sc_elem.second;
@@ -351,10 +351,10 @@ void print_Mi(const SpinConstrain<TK>& sc, std::ostream& ofs_running)
     sc.check_atomCounts();
     const int nat = sc.get_nat();
     const int nspin = sc.get_nspin();
-    const auto& Mi = sc.get_mi();
-    const auto& atomLabel = sc.get_atomLabels();
+    const std::vector<ModuleBase::Vector3<double>>& Mi = sc.get_mi();
+    const std::vector<std::string>& atomLabel = sc.get_atomLabels();
     std::vector<std::string> atom_labels_iat(nat);
-    for (const auto& it : sc.get_atomCounts())
+    for (const std::pair<const int, int>& it : sc.get_atomCounts())
     {
         for (int ia = 0; ia < it.second; ++ia)
         {
@@ -412,10 +412,10 @@ void print_Mag_Force(const SpinConstrain<TK>& sc, std::ostream& ofs_running)
     sc.check_atomCounts();
     const int nat = sc.get_nat();
     const int nspin = sc.get_nspin();
-    const auto& lambda = sc.get_sc_lambda();
-    const auto& atomLabel = sc.get_atomLabels();
+    const std::vector<ModuleBase::Vector3<double>>& lambda = sc.get_sc_lambda();
+    const std::vector<std::string>& atomLabel = sc.get_atomLabels();
     std::vector<std::string> atom_labels_iat(nat);
-    for (const auto& it : sc.get_atomCounts())
+    for (const std::pair<const int, int>& it : sc.get_atomCounts())
     {
         for (int ia = 0; ia < it.second; ++ia)
         {

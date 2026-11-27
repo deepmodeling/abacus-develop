@@ -9,12 +9,8 @@
 #include "tools.h"
 
 int Calculate_C4::test = 0;
-Calculate_C4::Calculate_C4()
-{
-}
-Calculate_C4::~Calculate_C4()
-{
-}
+Calculate_C4::Calculate_C4() {}
+Calculate_C4::~Calculate_C4() {}
 
 //===================================================================
 // FUNCTION : Find_Eigenvalues
@@ -26,13 +22,14 @@ Calculate_C4::~Calculate_C4()
 // P.S: (2) The rcut is important for cacluating eigenvalues
 // because it makes jl( rcut * eigenvalue ) = 0.00
 //====================================================================
-void Calculate_C4::Find_Eigenvalues(const int& Enumber,
-                                    matrix& en,
-                                    const int& lmax,
-                                    const double& rcut,
-                                    const double& tolerence)
+void Calculate_C4::Find_Eigenvalues(
+    const int &Enumber,
+    matrix &en,
+    const int &lmax,
+    const double &rcut,
+    const double &tolerence)
 {
-    double* e = new double[Enumber];
+    double *e = new double[Enumber];
     for (int l = 0; l < lmax + 1; l++)
     {
         //		cout << "\n L=" << l;
@@ -61,24 +58,27 @@ void Calculate_C4::Find_Eigenvalues(const int& Enumber,
 // 'rcut' and 'dr'
 // P.S: (4)
 //===================================================================
-void Calculate_C4::Test_Orthogonal(const double& rcut,
-                                   const double& dr,
-                                   const int& L,
-                                   const matrix& en,
-                                   const int& Enumber,
-                                   const int& test_ei)
+void Calculate_C4::Test_Orthogonal(
+    const double &rcut,
+    const double &dr,
+    const int &L,
+    const matrix &en,
+    const int &Enumber,
+    const int &test_ei)
 {
     int mesh = static_cast<int>(rcut / dr) + 1;
     if (mesh % 2 == 0)
+    {
         mesh++;
+    }
     cout << "\n\n Mesh for test = " << mesh << " L = " << L;
 
-    double* r = new double[mesh];
-    double* rab = new double[mesh];
-    double* e = new double[Enumber];
-    double* jle = new double[mesh];
-    double* jtest = new double[mesh];
-    double* function = new double[mesh];
+    double *r = new double[mesh];
+    double *rab = new double[mesh];
+    double *e = new double[Enumber];
+    double *jle = new double[mesh];
+    double *jtest = new double[mesh];
+    double *function = new double[mesh];
 
     for (int i = 0; i < Enumber; i++)
     {
@@ -133,7 +133,12 @@ void Calculate_C4::Test_Orthogonal(const double& rcut,
 // (5) ues int_{0}^{Rc} J1(q1*r)*Jl(q1*r)*r*r dr ==> norm
 // (6) C4 = C4_firstly / norm
 //===================================================================
-void Calculate_C4::key_solver(const string& name, const int& L, const matrix& en, const int& Enumber, double* C4)
+void Calculate_C4::key_solver(
+    const string &name,
+    const int &L,
+    const matrix &en,
+    const int &Enumber,
+    double *C4)
 {
     ifstream ifs(name.c_str());
     if (!ifs)
@@ -152,13 +157,13 @@ void Calculate_C4::key_solver(const string& name, const int& L, const matrix& en
     assert(mesh > 0);
     cout << "\t mesh = " << mesh;
 
-    double* r = new double[mesh];
-    double* psi = new double[mesh];
-    double* rab = new double[mesh];
-    double* e = new double[Enumber];
-    double* jle = new double[mesh];
-    double* function = new double[mesh];
-    double* function2 = new double[mesh];
+    double *r = new double[mesh];
+    double *psi = new double[mesh];
+    double *rab = new double[mesh];
+    double *e = new double[Enumber];
+    double *jle = new double[mesh];
+    double *function = new double[mesh];
+    double *function2 = new double[mesh];
 
     for (int i = 0; i < Enumber; i++)
     {
@@ -204,15 +209,16 @@ void Calculate_C4::key_solver(const string& name, const int& L, const matrix& en
     return;
 }
 
-void Calculate_C4::norm_ic(realArray& C4,
-                           realArray& accept_rate,
-                           const int& ntype,
-                           const int& lmax,
-                           const int& nmax,
-                           const int& enumber,
-                           const double& tolerence,
-                           const double& rcut,
-                           const double& dr)
+void Calculate_C4::norm_ic(
+    realArray &C4,
+    realArray &accept_rate,
+    const int &ntype,
+    const int &lmax,
+    const int &nmax,
+    const int &enumber,
+    const double &tolerence,
+    const double &rcut,
+    const double &dr)
 {
     //	TITLE("Calculate_C4","norm_ic");
     assert(lmax < 5);
@@ -222,7 +228,9 @@ void Calculate_C4::norm_ic(realArray& C4,
     // init mesh
     int mesh = static_cast<int>(rcut / dr) + 1; // mohan update 2009-10-10
     if (mesh % 2 == 0)
+    {
         mesh++;
+    }
 
     if (test == 1)
     {
@@ -233,23 +241,23 @@ void Calculate_C4::norm_ic(realArray& C4,
     }
 
     // init radial mesh
-    double* r = new double[mesh];
+    double *r = new double[mesh];
     for (int i = 0; i < mesh; i++)
     {
         r[i] = i * dr;
     }
 
     // init relta r, used in simpson integral
-    double* rab = new double[mesh];
+    double *rab = new double[mesh];
     for (int i = 0; i < mesh; i++)
     {
         rab[i] = dr;
     }
 
-    double* e = new double[enumber];
-    double* psi = new double[mesh];
-    double* function = new double[mesh];
-    double* jle = new double[mesh];
+    double *e = new double[enumber];
+    double *psi = new double[mesh];
+    double *function = new double[mesh];
+    double *jle = new double[mesh];
 
     for (int it = 0; it < ntype; it++)
     {
@@ -281,7 +289,9 @@ void Calculate_C4::norm_ic(realArray& C4,
                 Mathzone::Simpson_Integral(mesh, function, rab, norm);
 
                 if (test == 2)
+                {
                     cout << "it=" << it << " L=" << l << " N=" << n << " norm = " << norm << endl;
+                }
                 norm = sqrt(norm);
                 assert(norm > 1.0e-5);
                 for (int ie = 0; ie < enumber; ie++)
@@ -300,7 +310,7 @@ void Calculate_C4::norm_ic(realArray& C4,
     return;
 }
 
-void Calculate_C4::plot(ifstream& ifs)
+void Calculate_C4::plot(ifstream &ifs)
 {
     TITLE("Calculate_C4", "plot");
     int nfiles;
@@ -317,11 +327,11 @@ void Calculate_C4::plot(ifstream& ifs)
     double rcut;
     int enumber = 0;
     double tolerence;
-    double* c4;
-    double* r;
-    double* e;
-    double* psi;
-    double* jle;
+    double *c4;
+    double *r;
+    double *e;
+    double *psi;
+    double *jle;
     for (int i = 0; i < nfiles; i++)
     {
         string filenames;
@@ -370,7 +380,9 @@ void Calculate_C4::plot(ifstream& ifs)
         // init mesh
         int mesh = static_cast<int>(rcut / dr) + 1;
         if (mesh % 2 == 0)
+        {
             mesh++;
+        }
         cout << "\n mesh = " << mesh;
 
         // init r
@@ -412,8 +424,8 @@ void Calculate_C4::plot(ifstream& ifs)
 
         // unit
         double norm;
-        double* function = new double[mesh];
-        double* rab = new double[mesh];
+        double *function = new double[mesh];
+        double *rab = new double[mesh];
         for (int ir = 0; ir < mesh; ir++)
         {
             rab[ir] = dr;
@@ -447,7 +459,7 @@ void Calculate_C4::plot(ifstream& ifs)
     return;
 }
 
-void Calculate_C4::Test(ifstream& ifs, const double& ecut, const double& tolerence)
+void Calculate_C4::Test(ifstream &ifs, const double &ecut, const double &tolerence)
 {
     TITLE("Calculate_C4", "Test");
     double rcut; // rcut for input orbitals
@@ -494,7 +506,12 @@ void Calculate_C4::Test(ifstream& ifs, const double& ecut, const double& toleren
     return;
 }
 
-void Calculate_C4::init(ifstream& ifs, const double& ecut, const double& rcut, const double& tolerence, const int& lmax)
+void Calculate_C4::init(
+    ifstream &ifs,
+    const double &ecut,
+    const double &rcut,
+    const double &tolerence,
+    const int &lmax)
 {
     cout << "\n\n ==> get_C4 Program Start." << endl;
 
@@ -504,8 +521,8 @@ void Calculate_C4::init(ifstream& ifs, const double& ecut, const double& rcut, c
     cout << "\n lmax      = " << lmax;
 
     int nw;       // number of orbitals(files) to calculate C4.
-    string* name; // file name, containing psi(r)*r, rab, radial
-    int* L;       // angular momentum for each file( each orbital);
+    string *name; // file name, containing psi(r)*r, rab, radial
+    int *L;       // angular momentum for each file( each orbital);
 
     READ_VALUE(ifs, nw);
     assert(nw > 0);
@@ -537,7 +554,7 @@ void Calculate_C4::init(ifstream& ifs, const double& ecut, const double& rcut, c
 
     for (int i = 0; i < nw; i++)
     {
-        double* C4 = new double[Enumber];
+        double *C4 = new double[Enumber];
         //===========================================
         // CALL FUNCTION : Calculate
         // calculate C4.

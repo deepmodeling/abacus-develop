@@ -39,7 +39,7 @@ void Gint_drho::cal_drho_(const std::vector<HContainer<double>> &dm_gint_vec) co
 #pragma omp for schedule(dynamic)
         for (int i = 0; i < gint_info_->get_bgrids_num(); i++)
         {
-            const auto &biggrid = gint_info_->get_biggrids()[i];
+            const std::shared_ptr<BigGrid>& biggrid = gint_info_->get_biggrids()[i];
             if (biggrid->get_atoms().empty())
             {
                 continue;

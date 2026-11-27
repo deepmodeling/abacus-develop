@@ -21,7 +21,7 @@ void Symmetry::analyze_magnetic_group(const Atom* atoms,
         for (int ia = 0; ia < atoms[it].na; ++ia)
         {
             bool find = false;
-            for (auto& mt : mag_type_atoms)
+            for (std::set<int>& mt : mag_type_atoms)
             {
                 const int mag_iat = *mt.begin();
                 const int mag_it = iat2it[mag_iat];
@@ -58,7 +58,7 @@ void Symmetry::analyze_magnetic_group(const Atom* atoms,
             mag_itmin_type = mag_it;
             mag_itmin_start = mag_istart[mag_it];
         }
-        for (auto& mag_iat : mag_type_atoms.at(mag_it))
+        for (const int& mag_iat : mag_type_atoms.at(mag_it))
         {
             // this->newpos have been ordered by original structure(ntype, na), it cannot be directly used here.
             // we need to reset the calculate again the coordinate of the new structure.

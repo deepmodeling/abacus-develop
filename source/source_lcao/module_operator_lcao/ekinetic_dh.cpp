@@ -19,7 +19,7 @@ void EKinetic<OperatorLCAO<TK, TR>>::cal_dH(std::array<std::vector<hamilt::HCont
     // Pass 1: build the same atom-pair structure in each per-atom-I container
     for (int iat1 = 0; iat1 < nat; iat1++)
     {
-        auto tau1 = this->ucell->get_tau(iat1);
+        ModuleBase::Vector3<double> tau1 = this->ucell->get_tau(iat1);
         int T1 = 0, I1 = 0;
         this->ucell->iat2iait(iat1, &I1, &T1);
 
@@ -64,7 +64,7 @@ void EKinetic<OperatorLCAO<TK, TR>>::cal_dH(std::array<std::vector<hamilt::HCont
 #pragma omp for schedule(dynamic)
         for (int iat1 = 0; iat1 < nat; iat1++)
         {
-            auto tau1 = this->ucell->get_tau(iat1);
+            ModuleBase::Vector3<double> tau1 = this->ucell->get_tau(iat1);
             int T1 = 0, I1 = 0;
             this->ucell->iat2iait(iat1, &I1, &T1);
             const Atom& atom1 = this->ucell->atoms[T1];
@@ -107,8 +107,8 @@ void EKinetic<OperatorLCAO<TK, TR>>::cal_dH(std::array<std::vector<hamilt::HCont
 
                 const Atom& atom2 = this->ucell->atoms[T2];
 
-                auto row_indexes = paraV->get_indexes_row(iat1);
-                auto col_indexes = paraV->get_indexes_col(iat2);
+                std::vector<int> row_indexes = paraV->get_indexes_row(iat1);
+                std::vector<int> col_indexes = paraV->get_indexes_col(iat2);
 
                 if (row_indexes.size() == 0 || col_indexes.size() == 0)
                 {

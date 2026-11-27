@@ -61,7 +61,7 @@ void toW90_PW::gen_radial_function_in_q(std::vector<ModuleBase::matrix> &radial_
             psir[ir] = psi[ir] * r[ir];
         }
 
-        auto &tmp_radial = radial_in_q[wannier_index];
+        ModuleBase::matrix& tmp_radial = radial_in_q[wannier_index];
         if (L[wannier_index] >= 0)
         {
             tmp_radial.create(1, nqx_);
@@ -113,7 +113,7 @@ void toW90_PW::produce_trial_in_pw(
 
     // Keep it consistent with the definition of spherical harmonic functions in Wannier90 
     std::vector<int> need_inv = {2, 3, 5, 6, 14, 15};
-    for (auto index : need_inv)
+    for (int index : need_inv)
     {
         for (int ig = 0; ig < npw; ig++)
         {

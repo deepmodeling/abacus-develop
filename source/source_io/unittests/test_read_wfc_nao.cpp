@@ -665,7 +665,7 @@ TEST_F(ReadWfcNaoTest, CompleteSpinPopulations)
             EXPECT_DOUBLE_EQ(populations[1], 1.0);
             if (my_rank == 0)
             {
-                for (const auto& file: files)
+                for (const std::string& file: files)
                 {
                     std::remove(file.c_str());
                 }
@@ -710,7 +710,7 @@ TEST_F(ReadWfcNaoTest, CompleteGlobalKPointPopulations)
         2, false, false, my_rank, populations));
     if (my_rank == 0)
     {
-        for (const auto& file: files)
+        for (const std::string& file: files)
         {
             std::remove(file.c_str());
         }

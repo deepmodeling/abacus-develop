@@ -96,7 +96,7 @@ namespace LR
                 pcx.desc());
 
             //AX_istate=[cX^T]^T[c^TV]^T (nvirt major)
-            const auto accumulation_beta_10 = add_on ? one : zero;
+            const double accumulation_beta_10 = add_on ? one : zero;
             ScalapackConnector::gemm(trans,
                 trans,
                 nvirt,
@@ -210,7 +210,7 @@ namespace LR
                 pcx.desc());
 
             //AX_istate=[cX^T]^T[c^TV]^T (nvirt major)
-            const auto accumulation_beta_7 = add_on ? one : zero;
+            const std::complex<double> accumulation_beta_7 = add_on ? one : zero;
             ScalapackConnector::gemm(trans,
                 trans,
                 nvirt,
@@ -324,7 +324,7 @@ namespace LR
                 pcx.desc());
 
             //AX_istate=[VC]^T[X^TC^T]^T (nvirt major)
-            const auto accumulation_beta_4 = add_on ? one : zero;
+            const double accumulation_beta_4 = add_on ? one : zero;
             ScalapackConnector::gemm(trans,
                 trans,
                 nvirt,
@@ -438,7 +438,7 @@ namespace LR
                 pcx.desc());
 
             //AX_istate=[VC]^T[X^TC^T]^T (nvirt major)
-            const auto accumulation_beta_1 = add_on ? one : zero;
+            const std::complex<double> accumulation_beta_1 = add_on ? one : zero;
             ScalapackConnector::gemm(trans,
                 trans,
                 nvirt,

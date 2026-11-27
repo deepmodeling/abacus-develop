@@ -71,11 +71,11 @@ public:
     {
         return this->exx_lri;
     }
-    auto& get_info() const
+    const Exx_Info_RI& get_info() const
     {
         return this->info;
     }
-    auto& get_mpi_comm() const
+    const MPI_Comm& get_mpi_comm() const
     {
         return this->mpi_comm;
     }

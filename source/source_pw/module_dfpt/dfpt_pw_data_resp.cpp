@@ -21,7 +21,6 @@
 namespace ModuleDFPT
 {
 
-
 bool DFPT_PW_Data::u_active() const
 {
     ModuleBase::TITLE("DFPT_PW_Data", "u_active");
@@ -33,7 +32,7 @@ bool DFPT_PW_Data::u_active() const
     return with_u() && dftu_->is_occmat_ready();
 }
 
-void DFPT_PW_Data::set_docc(int q_idx, const std::vector<std::complex<double>>& occ)
+void DFPT_PW_Data::set_docc(int q_idx, const std::vector<std::complex<double>> &occ)
 {
     ModuleBase::TITLE("DFPT_PW_Data", "set_docc");
     ModuleBase::timer::start("DFPT_PW_Data", "set_docc");
@@ -50,7 +49,7 @@ void DFPT_PW_Data::set_docc(int q_idx, const std::vector<std::complex<double>>& 
     ModuleBase::timer::end("DFPT_PW_Data", "set_docc");
 }
 
-void DFPT_PW_Data::set_vsc_r(int atom_idx, int dir, const std::vector<std::complex<double>>& v)
+void DFPT_PW_Data::set_vsc_r(int atom_idx, int dir, const std::vector<std::complex<double>> &v)
 {
     ModuleBase::TITLE("DFPT_PW_Data", "set_vsc_r");
     ModuleBase::timer::start("DFPT_PW_Data", "set_vsc_r");
@@ -87,7 +86,7 @@ std::vector<std::complex<double>> DFPT_PW_Data::get_vsc_r(int atom_idx, int dir)
     return std::vector<std::complex<double>>();
 }
 
-void DFPT_PW_Data::set_drho_disp(int atom_idx, int dir, const std::vector<std::complex<double>>& rho)
+void DFPT_PW_Data::set_drho_disp(int atom_idx, int dir, const std::vector<std::complex<double>> &rho)
 {
     ModuleBase::TITLE("DFPT_PW_Data", "set_drho_disp");
     ModuleBase::timer::start("DFPT_PW_Data", "set_drho_disp");
@@ -124,9 +123,8 @@ std::vector<std::complex<double>> DFPT_PW_Data::get_drho_disp(int atom_idx, int 
     return std::vector<std::complex<double>>();
 }
 
-void DFPT_PW_Data::set_dpsi_disp(int atom_idx,
-                                 int dir,
-                                 const std::vector<std::vector<std::vector<std::complex<double>>>>& d)
+void DFPT_PW_Data::set_dpsi_disp(
+    int atom_idx, int dir, const std::vector<std::vector<std::vector<std::complex<double>>>> &d)
 {
     ModuleBase::TITLE("DFPT_PW_Data", "set_dpsi_disp");
     ModuleBase::timer::start("DFPT_PW_Data", "set_dpsi_disp");
@@ -163,7 +161,7 @@ std::vector<std::vector<std::vector<std::complex<double>>>> DFPT_PW_Data::get_dp
     return std::vector<std::vector<std::vector<std::complex<double>>>>();
 }
 
-void DFPT_PW_Data::set_pos_resp(int dir, const std::vector<std::vector<std::vector<std::complex<double>>>>& y)
+void DFPT_PW_Data::set_pos_resp(int dir, const std::vector<std::vector<std::vector<std::complex<double>>>> &y)
 {
     ModuleBase::TITLE("DFPT_PW_Data", "set_pos_resp");
     ModuleBase::timer::start("DFPT_PW_Data", "set_pos_resp");
@@ -193,7 +191,7 @@ std::vector<std::vector<std::vector<std::complex<double>>>> DFPT_PW_Data::get_po
     return pos_resp_[dir];
 }
 
-void DFPT_PW_Data::set_dpsi_efield(int dir, const std::vector<std::vector<std::vector<std::complex<double>>>>& d)
+void DFPT_PW_Data::set_dpsi_efield(int dir, const std::vector<std::vector<std::vector<std::complex<double>>>> &d)
 {
     ModuleBase::TITLE("DFPT_PW_Data", "set_dpsi_efield");
     ModuleBase::timer::start("DFPT_PW_Data", "set_dpsi_efield");
@@ -236,7 +234,7 @@ std::vector<std::complex<double>> DFPT_PW_Data::get_docc(int q_idx) const
     return std::vector<std::complex<double>>();
 }
 
-void DFPT_PW_Data::set_drho_r(int q_idx, int spin, const std::vector<double>& rho)
+void DFPT_PW_Data::set_drho_r(int q_idx, int spin, const std::vector<double> &rho)
 {
     ModuleBase::TITLE("DFPT_PW_Data", "set_drho_r");
     ModuleBase::timer::start("DFPT_PW_Data", "set_drho_r");
@@ -261,8 +259,8 @@ std::vector<double> DFPT_PW_Data::get_drho_r(int q_idx, int spin) const
 {
     ModuleBase::TITLE("DFPT_PW_Data", "get_drho_r");
     ModuleBase::timer::start("DFPT_PW_Data", "get_drho_r");
-    if (q_idx >= 0 && spin >= 0 && q_idx < static_cast<int>(drho_r_.size())
-        && spin < static_cast<int>(drho_r_[q_idx].size()))
+    if (q_idx >= 0 && spin >= 0 && q_idx < static_cast<int>(drho_r_.size()) &&
+        spin < static_cast<int>(drho_r_[q_idx].size()))
     {
         ModuleBase::timer::end("DFPT_PW_Data", "get_drho_r");
         return drho_r_[q_idx][spin];
@@ -271,7 +269,7 @@ std::vector<double> DFPT_PW_Data::get_drho_r(int q_idx, int spin) const
     return std::vector<double>();
 }
 
-void DFPT_PW_Data::set_drho_g(int q_idx, int spin, const std::vector<std::complex<double>>& rho)
+void DFPT_PW_Data::set_drho_g(int q_idx, int spin, const std::vector<std::complex<double>> &rho)
 {
     ModuleBase::TITLE("DFPT_PW_Data", "set_drho_g");
     ModuleBase::timer::start("DFPT_PW_Data", "set_drho_g");
@@ -296,8 +294,8 @@ std::vector<std::complex<double>> DFPT_PW_Data::get_drho_g(int q_idx, int spin) 
 {
     ModuleBase::TITLE("DFPT_PW_Data", "get_drho_g");
     ModuleBase::timer::start("DFPT_PW_Data", "get_drho_g");
-    if (q_idx >= 0 && spin >= 0 && q_idx < static_cast<int>(drho_g_.size())
-        && spin < static_cast<int>(drho_g_[q_idx].size()))
+    if (q_idx >= 0 && spin >= 0 && q_idx < static_cast<int>(drho_g_.size()) &&
+        spin < static_cast<int>(drho_g_[q_idx].size()))
     {
         ModuleBase::timer::end("DFPT_PW_Data", "get_drho_g");
         return drho_g_[q_idx][spin];
@@ -306,7 +304,7 @@ std::vector<std::complex<double>> DFPT_PW_Data::get_drho_g(int q_idx, int spin) 
     return std::vector<std::complex<double>>();
 }
 
-void DFPT_PW_Data::set_dv_r(int q_idx, int spin, const std::vector<double>& v)
+void DFPT_PW_Data::set_dv_r(int q_idx, int spin, const std::vector<double> &v)
 {
     ModuleBase::TITLE("DFPT_PW_Data", "set_dv_r");
     ModuleBase::timer::start("DFPT_PW_Data", "set_dv_r");
@@ -331,8 +329,8 @@ std::vector<double> DFPT_PW_Data::get_dv_r(int q_idx, int spin) const
 {
     ModuleBase::TITLE("DFPT_PW_Data", "get_dv_r");
     ModuleBase::timer::start("DFPT_PW_Data", "get_dv_r");
-    if (q_idx >= 0 && spin >= 0 && q_idx < static_cast<int>(dv_r_.size())
-        && spin < static_cast<int>(dv_r_[q_idx].size()))
+    if (q_idx >= 0 && spin >= 0 && q_idx < static_cast<int>(dv_r_.size()) &&
+        spin < static_cast<int>(dv_r_[q_idx].size()))
     {
         ModuleBase::timer::end("DFPT_PW_Data", "get_dv_r");
         return dv_r_[q_idx][spin];
@@ -341,7 +339,7 @@ std::vector<double> DFPT_PW_Data::get_dv_r(int q_idx, int spin) const
     return std::vector<double>();
 }
 
-void DFPT_PW_Data::set_dv_recip_c(int q_idx, int spin, const std::vector<std::complex<double>>& v)
+void DFPT_PW_Data::set_dv_recip_c(int q_idx, int spin, const std::vector<std::complex<double>> &v)
 {
     ModuleBase::TITLE("DFPT_PW_Data", "set_dv_recip_c");
     ModuleBase::timer::start("DFPT_PW_Data", "set_dv_recip_c");
@@ -366,8 +364,8 @@ std::vector<std::complex<double>> DFPT_PW_Data::get_dv_recip_c(int q_idx, int sp
 {
     ModuleBase::TITLE("DFPT_PW_Data", "get_dv_recip_c");
     ModuleBase::timer::start("DFPT_PW_Data", "get_dv_recip_c");
-    if (q_idx >= 0 && spin >= 0 && q_idx < static_cast<int>(dv_recip_c_.size())
-        && spin < static_cast<int>(dv_recip_c_[q_idx].size()))
+    if (q_idx >= 0 && spin >= 0 && q_idx < static_cast<int>(dv_recip_c_.size()) &&
+        spin < static_cast<int>(dv_recip_c_[q_idx].size()))
     {
         ModuleBase::timer::end("DFPT_PW_Data", "get_dv_recip_c");
         return dv_recip_c_[q_idx][spin];
@@ -376,7 +374,7 @@ std::vector<std::complex<double>> DFPT_PW_Data::get_dv_recip_c(int q_idx, int sp
     return std::vector<std::complex<double>>();
 }
 
-void DFPT_PW_Data::set_dv_rc(int q_idx, int spin, const std::vector<std::complex<double>>& v)
+void DFPT_PW_Data::set_dv_rc(int q_idx, int spin, const std::vector<std::complex<double>> &v)
 {
     ModuleBase::TITLE("DFPT_PW_Data", "set_dv_rc");
     ModuleBase::timer::start("DFPT_PW_Data", "set_dv_rc");
@@ -401,8 +399,8 @@ std::vector<std::complex<double>> DFPT_PW_Data::get_dv_rc(int q_idx, int spin) c
 {
     ModuleBase::TITLE("DFPT_PW_Data", "get_dv_rc");
     ModuleBase::timer::start("DFPT_PW_Data", "get_dv_rc");
-    if (q_idx >= 0 && spin >= 0 && q_idx < static_cast<int>(dv_rc_.size())
-        && spin < static_cast<int>(dv_rc_[q_idx].size()))
+    if (q_idx >= 0 && spin >= 0 && q_idx < static_cast<int>(dv_rc_.size()) &&
+        spin < static_cast<int>(dv_rc_[q_idx].size()))
     {
         ModuleBase::timer::end("DFPT_PW_Data", "get_dv_rc");
         return dv_rc_[q_idx][spin];
@@ -410,6 +408,5 @@ std::vector<std::complex<double>> DFPT_PW_Data::get_dv_rc(int q_idx, int spin) c
     ModuleBase::timer::end("DFPT_PW_Data", "get_dv_rc");
     return std::vector<std::complex<double>>();
 }
-
 
 } // namespace ModuleDFPT

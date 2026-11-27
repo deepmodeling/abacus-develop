@@ -7,18 +7,14 @@
 namespace ModuleDFPT
 {
 
-DFPT_Stern::DFPT_Stern()
-{
-}
+DFPT_Stern::DFPT_Stern() {}
 
-DFPT_Stern::~DFPT_Stern()
-{
-}
+DFPT_Stern::~DFPT_Stern() {}
 
 namespace
 {
 
-double real_vdot(const std::vector<std::complex<double>>& a, const std::vector<std::complex<double>>& b)
+double real_vdot(const std::vector<std::complex<double>> &a, const std::vector<std::complex<double>> &b)
 {
     ModuleBase::TITLE("DFPT_Stern", "real_vdot");
     ModuleBase::timer::start("DFPT_Stern", "real_vdot");
@@ -35,9 +31,9 @@ double real_vdot(const std::vector<std::complex<double>>& a, const std::vector<s
 
 } // namespace
 
-void DFPT_Stern::apply_pv(const std::vector<std::vector<std::complex<double>>>& occ_kq,
-                          const std::vector<std::complex<double>>& x,
-                          std::vector<std::complex<double>>& px) const
+void DFPT_Stern::apply_pv(
+    const std::vector<std::vector<std::complex<double>>> &occ_kq, const std::vector<std::complex<double>> &x,
+    std::vector<std::complex<double>> &px) const
 {
     ModuleBase::TITLE("DFPT_Stern", "apply_pv");
     ModuleBase::timer::start("DFPT_Stern", "apply_pv");
@@ -50,7 +46,7 @@ void DFPT_Stern::apply_pv(const std::vector<std::vector<std::complex<double>>>& 
     {
         for (size_t m = 0; m < occ_kq.size(); ++m)
         {
-            const std::vector<std::complex<double>>& u = occ_kq[m];
+            const std::vector<std::complex<double>> &u = occ_kq[m];
             std::complex<double> c(0.0, 0.0);
             for (size_t i = 0; i < u.size(); ++i)
             {
@@ -65,13 +61,14 @@ void DFPT_Stern::apply_pv(const std::vector<std::vector<std::complex<double>>>& 
     ModuleBase::timer::end("DFPT_Stern", "apply_pv");
 }
 
-int DFPT_Stern::solve(const LinearOperator& aop,
-                      const std::vector<std::vector<std::complex<double>>>& occ_kq,
-                      const std::vector<std::complex<double>>& b,
-                      int max_iter,
-                      double conv_thr,
-                      std::vector<std::complex<double>>& dpsi,
-                      double& residual) const
+int DFPT_Stern::solve(
+    const LinearOperator &aop,
+    const std::vector<std::vector<std::complex<double>>> &occ_kq,
+    const std::vector<std::complex<double>> &b,
+    int max_iter,
+    double conv_thr,
+    std::vector<std::complex<double>> &dpsi,
+    double &residual) const
 {
     ModuleBase::TITLE("DFPT_Stern", "solve");
     ModuleBase::timer::start("DFPT_Stern", "solve");

@@ -58,7 +58,7 @@ std::vector<ModuleBase::matrix> evaluate_open_shell_force(
                 inputs.nbasis, inputs.nocc[is], nvirt_g[is], inputs.pmat.para_2d());
             std::vector<ct::Tensor> dmz_k = cal_dm_trans_pblas(Z_istate + off_x[is], paraX_g[is], c_spin[is],
                 inputs.pc, inputs.nbasis, inputs.nocc[is], nvirt_g[is], inputs.pmat.para_2d());
-            for (auto& d: dmz_k)
+            for (container::Tensor& d: dmz_k)
             {
                 LR_Util::matsym(d.template data<T>(), inputs.nbasis, inputs.pmat.para_2d());
             }
@@ -77,10 +77,10 @@ std::vector<ModuleBase::matrix> evaluate_open_shell_force(
         // 2. $D^X$. Complex and UN-symmetrized first (the EXX kernel needs the full
         //    non-symmetric $D^X$), then the real symmetrized copy for the grid Hxc force --
         //    `build_dm_from_dmk_spin` symmetrizes IN PLACE, hence the ordering.
-        auto dm_trans = LR_Util::build_dm_from_dmk_spin<T, T>(dmx_k,
+        module_dm::DensityMatrix<T, T> dm_trans = LR_Util::build_dm_from_dmk_spin<T, T>(dmx_k,
             inputs.pmat, inputs.nk, inputs.kv.kvec_d, inputs.ucell, inputs.gd, inputs.orb_cutoff);
         LR_Util::transpose_DMR(dm_trans, inputs.pmat);
-        auto dm_trans_real = LR_Util::build_dm_from_dmk_spin<T, double>(dmx_k,
+        module_dm::DensityMatrix<T, double> dm_trans_real = LR_Util::build_dm_from_dmk_spin<T, double>(dmx_k,
             inputs.pmat, inputs.nk, inputs.kv.kvec_d, inputs.ucell, inputs.gd, inputs.orb_cutoff,
             /*symmetrize=*/true);
         LR_Util::transpose_DMR(dm_trans_real, inputs.pmat);

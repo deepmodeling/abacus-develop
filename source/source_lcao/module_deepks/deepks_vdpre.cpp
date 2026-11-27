@@ -46,7 +46,7 @@ void DeePKS_domain::cal_v_delta_precalc(const int nlocal,
     torch::Tensor v_delta_pdm = torch::zeros(
         {nks, nlocal, nlocal, deepks_param.inlmax, (2 * deepks_param.lmaxd + 1), (2 * deepks_param.lmaxd + 1)},
         torch::dtype(dtype));
-    auto accessor = v_delta_pdm.accessor<TK_tensor, 6>();
+    at::TensorAccessor<TK_tensor, 6> accessor = v_delta_pdm.accessor<TK_tensor, 6>();
 
     DeePKS_domain::iterate_ad2(
         ucell,
@@ -191,7 +191,7 @@ void DeePKS_domain::prepare_phialpha(const int nlocal,
     int nlmax = deepks_param.inlmax / nat;
     int mmax = 2 * deepks_param.lmaxd + 1;
     phialpha_out = torch::zeros({nat, nlmax, nks, nlocal, mmax}, dtype);
-    auto accessor = phialpha_out.accessor<TK_tensor, 5>();
+    at::TensorAccessor<TK_tensor, 5> accessor = phialpha_out.accessor<TK_tensor, 5>();
 
     DeePKS_domain::iterate_ad1(
         ucell,

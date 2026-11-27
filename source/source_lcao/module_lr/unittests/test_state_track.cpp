@@ -39,13 +39,13 @@ TEST(StateTrack, ClosedShellTripletIgnoresDownSpinVirtualRotation)
     std::vector<Parallel_Blkcyclic> px(2);
 #ifdef __MPI
     pmat.para_2d().set(3, 3, 1, pc.ictxt());
-    for (auto& block: px)
+    for (Parallel_Blkcyclic& block: px)
     {
         block.set(2, 1, 1, pc.ictxt());
     }
 #else
     pmat.para_2d().set_serial(3, 3);
-    for (auto& block: px)
+    for (Parallel_Blkcyclic& block: px)
     {
         block.set_serial(2, 1);
     }

@@ -43,7 +43,7 @@ Potential::~Potential()
 {
     if (this->components.size() > 0)
     {
-        for (auto comp: this->components)
+        for (elecstate::PotBase* comp: this->components)
         {
             delete comp;
         }
@@ -77,7 +77,7 @@ void Potential::pot_register(const std::vector<std::string>& components_list, co
     // delete old components first.
     if (this->components.size() > 0)
     {
-        for (auto comp: this->components)
+        for (elecstate::PotBase* comp: this->components)
         {
             delete comp;
         }
@@ -88,7 +88,7 @@ void Potential::pot_register(const std::vector<std::string>& components_list, co
     //---------------------------
     // mapping for register
     //---------------------------
-    for (auto comp: components_list)
+    for (std::string comp: components_list)
     {
         PotBase* tmp = this->get_pot_type(comp, input, resume);
         this->components.push_back(tmp);

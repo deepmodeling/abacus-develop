@@ -1,14 +1,14 @@
-#include "source_pw/module_pwdft/stress_func.h"
 #include "source_base/constants.h"
 #include "source_base/parallel_global.h"
 #include "source_base/parallel_reduce.h"
 #include "source_basis/module_pw/pw_basis_sup.h"
 #include "source_hamilt/module_ewald/h_ewald_pw.h"
 #include "source_io/module_parameter/parameter.h"
+#include "source_pw/module_pwdft/stress_func.h"
 
 #include <algorithm>
-#include <gtest/gtest.h>
 #include <cmath>
+#include <gtest/gtest.h>
 #include <limits>
 #include <vector>
 
@@ -22,7 +22,7 @@ class TestParameters
   public:
     static void gamma_only(const bool enabled)
     {
-        Parameter& parameters = PARAM;
+        Parameter &parameters = PARAM;
         parameters.sys.gamma_only_pw = enabled;
     }
 };
@@ -32,12 +32,9 @@ namespace
 int process_count = 1;
 int process_rank = 0;
 
-double to_kbar()
-{
-    return ModuleBase::RYDBERG_SI / std::pow(ModuleBase::BOHR_RADIUS_SI, 3) * 1.0e-8;
-}
+double to_kbar() { return ModuleBase::RYDBERG_SI / std::pow(ModuleBase::BOHR_RADIUS_SI, 3) * 1.0e-8; }
 
-double choose_alpha(const UnitCell& cell, const ModulePW::PW_Basis& basis)
+double choose_alpha(const UnitCell &cell, const ModulePW::PW_Basis &basis)
 {
     double charge = 0.0;
     for (int it = 0; it < cell.ntype; ++it)
@@ -60,9 +57,8 @@ double choose_alpha(const UnitCell& cell, const ModulePW::PW_Basis& basis)
 
 // Independent serial reference: the former per-atom reciprocal formula and
 // the real-space pair virial, before any crystal symmetry is applied.
-ModuleBase::matrix reference_stress(const UnitCell& cell,
-                                    const ModulePW::PW_Basis& basis,
-                                    const double reciprocal_weight)
+ModuleBase::matrix reference_stress(
+    const UnitCell &cell, const ModulePW::PW_Basis &basis, const double reciprocal_weight)
 {
     ModuleBase::matrix sigma(3, 3);
     const double alpha = choose_alpha(cell, basis);
@@ -74,8 +70,7 @@ ModuleBase::matrix reference_stress(const UnitCell& cell,
     if (basis.ig_gge0 >= 0)
     {
         const double charge_density = charge / cell.omega;
-        const double background = ModuleBase::TWO_PI * ModuleBase::e2 / (4 * alpha)
-                                  * std::pow(charge_density, 2);
+        const double background = ModuleBase::TWO_PI * ModuleBase::e2 / (4 * alpha) * std::pow(charge_density, 2);
         for (int i = 0; i < 3; ++i)
         {
             sigma(i, i) -= background;
@@ -90,7 +85,7 @@ ModuleBase::matrix reference_stress(const UnitCell& cell,
         std::complex<double> q(0.0, 0.0);
         for (int it = 0; it < cell.ntype; ++it)
         {
-            for (const auto& tau : cell.atoms[it].tau)
+            for (const ModuleBase::Vector3<double> &tau : cell.atoms[it].tau)
             {
                 const double phase = ModuleBase::TWO_PI * (basis.gcar[ig] * tau);
                 const double real = std::cos(phase);
@@ -103,15 +98,14 @@ ModuleBase::matrix reference_stress(const UnitCell& cell,
         const double exponent = -a;
         const double damping = std::exp(exponent);
         const std::complex<double> charge_density = q / cell.omega;
-        const double energy_density = reciprocal_weight * ModuleBase::TWO_PI * ModuleBase::e2
-                                      * damping / g2 * std::norm(charge_density);
+        const double energy_density =
+            reciprocal_weight * ModuleBase::TWO_PI * ModuleBase::e2 * damping / g2 * std::norm(charge_density);
         for (int i = 0; i < 3; ++i)
         {
             for (int j = 0; j < 3; ++j)
             {
-                sigma(i, j) += energy_density
-                               * ((i == j ? 1.0 : 0.0)
-                                  - 2 * cell.tpiba2 * basis.gcar[ig][i] * basis.gcar[ig][j] / g2 * (a + 1));
+                sigma(i, j) += energy_density * ((i == j ? 1.0 : 0.0) - 2 * cell.tpiba2 * basis.gcar[ig][i] *
+                                                                            basis.gcar[ig][j] / g2 * (a + 1));
             }
         }
     }
@@ -131,20 +125,21 @@ ModuleBase::matrix reference_stress(const UnitCell& cell,
             {
                 const int it = cell.iat2it[a];
                 const int jt = cell.iat2it[b];
-                const auto displacement = cell.atoms[it].tau[cell.iat2ia[a]] - cell.atoms[jt].tau[cell.iat2ia[b]];
+                const ModuleBase::Vector3<double> displacement =
+                    cell.atoms[it].tau[cell.iat2ia[a]] - cell.atoms[jt].tau[cell.iat2ia[b]];
                 int count = 0;
-                H_Ewald_pw::rgen(displacement, rmax, order.data(), cell.latvec, cell.G,
-                                 images.data(), distance2.data(), mxr, count, 0);
+                H_Ewald_pw::rgen(
+                    displacement, rmax, order.data(), cell.latvec, cell.G, images.data(), distance2.data(), mxr, count,
+                    0);
                 for (int n = 0; n < count; ++n)
                 {
                     const double r = std::sqrt(distance2[n]) * cell.lat0;
                     const double erfc_argument = sqrt_alpha * r;
                     const double exponent = -alpha * r * r;
-                    const double coefficient = ModuleBase::e2 / (2 * cell.omega)
-                                               * cell.atoms[it].ncpp.zv * cell.atoms[jt].ncpp.zv
-                                               * (std::erfc(erfc_argument)
-                                                  + r * real_prefactor * std::exp(exponent))
-                                               / (r * r * r) * cell.lat0 * cell.lat0;
+                    const double coefficient = ModuleBase::e2 / (2 * cell.omega) * cell.atoms[it].ncpp.zv *
+                                               cell.atoms[jt].ncpp.zv *
+                                               (std::erfc(erfc_argument) + r * real_prefactor * std::exp(exponent)) /
+                                               (r * r * r) * cell.lat0 * cell.lat0;
                     for (int i = 0; i < 3; ++i)
                     {
                         for (int j = 0; j < 3; ++j)
@@ -160,7 +155,7 @@ ModuleBase::matrix reference_stress(const UnitCell& cell,
     return sigma;
 }
 
-void expect_tensor(const ModuleBase::matrix& actual, const ModuleBase::matrix& expected, const double tolerance)
+void expect_tensor(const ModuleBase::matrix &actual, const ModuleBase::matrix &expected, const double tolerance)
 {
     for (int i = 0; i < 3; ++i)
     {
@@ -174,10 +169,11 @@ void expect_tensor(const ModuleBase::matrix& actual, const ModuleBase::matrix& e
     }
 }
 
-ModuleBase::Matrix3 strained_lattice(const ModuleBase::Matrix3& lattice,
-                                      const int i,
-                                      const int j,
-                                      const double step)
+ModuleBase::Matrix3 strained_lattice(
+    const ModuleBase::Matrix3 &lattice,
+    const int i,
+    const int j,
+    const double step)
 {
     double strain[3][3] = {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}};
     const double increment = i == j ? step : step / 2;
@@ -186,9 +182,9 @@ ModuleBase::Matrix3 strained_lattice(const ModuleBase::Matrix3& lattice,
     {
         strain[j][i] += increment;
     }
-    const ModuleBase::Matrix3 deformation(strain[0][0], strain[0][1], strain[0][2],
-                                          strain[1][0], strain[1][1], strain[1][2],
-                                          strain[2][0], strain[2][1], strain[2][2]);
+    const ModuleBase::Matrix3 deformation(
+        strain[0][0], strain[0][1], strain[0][2], strain[1][0], strain[1][1], strain[1][2], strain[2][0], strain[2][1],
+        strain[2][2]);
     const ModuleBase::Matrix3 transpose = deformation.Transpose();
     return lattice * transpose;
 }
@@ -238,7 +234,7 @@ class StressEwaTest : public testing::Test
 
     void update_positions()
     {
-        for (auto& atom : atoms)
+        for (Atom &atom : atoms)
         {
             atom.tau.resize(atom.na);
             for (int i = 0; i < atom.na; ++i)
@@ -248,7 +244,7 @@ class StressEwaTest : public testing::Test
         }
     }
 
-    void update_geometry(const ModuleBase::Matrix3& lattice)
+    void update_geometry(const ModuleBase::Matrix3 &lattice)
     {
         cell.latvec = lattice;
         cell.GT = lattice.Inverse();
@@ -275,8 +271,8 @@ class StressEwaTest : public testing::Test
 
 TEST_F(StressEwaTest, DirectSumChargesNormalizationAndFullTensor)
 {
-    const auto expected = reference_stress(cell, basis, 1.0);
-    const auto actual = calculate(false);
+    const ModuleBase::matrix expected = reference_stress(cell, basis, 1.0);
+    const ModuleBase::matrix actual = calculate(false);
     expect_tensor(actual, expected, 1.0e-8);
     const double shear_kbar = expected(0, 1) * to_kbar();
     EXPECT_GT(std::abs(shear_kbar), 1.0e-3);
@@ -285,7 +281,7 @@ TEST_F(StressEwaTest, DirectSumChargesNormalizationAndFullTensor)
         for (int it = 0; it < cell.ntype; ++it)
         {
             std::complex<double> negative_g(0, 0);
-            for (const auto& tau : atoms[it].tau)
+            for (const ModuleBase::Vector3<double> &tau : atoms[it].tau)
             {
                 const double phase = ModuleBase::TWO_PI * (basis.gcar[ig] * tau);
                 const double real = std::cos(phase);
@@ -309,7 +305,7 @@ TEST_F(StressEwaTest, DirectSumChargesNormalizationAndFullTensor)
     {
         sf.strucFac(0, basis.ig_gge0) = std::numeric_limits<double>::quiet_NaN();
     }
-    const auto skipped_zero = calculate(false);
+    const ModuleBase::matrix skipped_zero = calculate(false);
     expect_tensor(skipped_zero, actual, 1.0e-8);
     for (int ig = 0; ig < basis.npw; ++ig)
     {
@@ -318,7 +314,7 @@ TEST_F(StressEwaTest, DirectSumChargesNormalizationAndFullTensor)
             sf.strucFac(it, ig) *= 1.2;
         }
     }
-    const auto scaled = calculate(false);
+    const ModuleBase::matrix scaled = calculate(false);
     const double change = scaled(0, 0) - actual(0, 0);
     EXPECT_GT(std::abs(change) * to_kbar(), 1.0);
 }
@@ -366,7 +362,7 @@ TEST_F(StressEwaTest, DenseStructureFactorUsesMatchingSmoothPrefix)
         expect_tensor(actual, expected, 1.0e-8);
         if (order == 0)
         {
-            const auto direct = reference_stress(cell, basis, 1.0);
+            const ModuleBase::matrix direct = reference_stress(cell, basis, 1.0);
             expect_tensor(actual, direct, 1.0e-8);
         }
     }
@@ -374,12 +370,12 @@ TEST_F(StressEwaTest, DenseStructureFactorUsesMatchingSmoothPrefix)
 
 TEST_F(StressEwaTest, GammaWeightOnlyAppliesToPW)
 {
-    const auto full = calculate(false);
+    const ModuleBase::matrix full = calculate(false);
     TestParameters::gamma_only(true);
-    const auto lcao_gamma = calculate(false);
+    const ModuleBase::matrix lcao_gamma = calculate(false);
     expect_tensor(lcao_gamma, full, 1.0e-8);
-    const auto pw_gamma = calculate(true);
-    const auto pw_reference = reference_stress(cell, basis, 2.0);
+    const ModuleBase::matrix pw_gamma = calculate(true);
+    const ModuleBase::matrix pw_reference = reference_stress(cell, basis, 2.0);
     expect_tensor(pw_gamma, pw_reference, 1.0e-8);
 
     // Keep one representative of every +/-G pair, including G=0 once.
@@ -388,7 +384,7 @@ TEST_F(StressEwaTest, GammaWeightOnlyAppliesToPW)
     int zero = -1;
     for (int ig = 0; ig < basis.npw; ++ig)
     {
-        const auto n = basis.gdirect[ig];
+        const ModuleBase::Vector3<double> n = basis.gdirect[ig];
         const bool positive = n.x > 0 || (n.x == 0 && n.y > 0) || (n.x == 0 && n.y == 0 && n.z >= 0);
         if (positive)
         {
@@ -406,25 +402,25 @@ TEST_F(StressEwaTest, GammaWeightOnlyAppliesToPW)
     basis.ig_gge0 = zero;
     sf.setup(&cell, grid, &basis, false);
     TestParameters::gamma_only(true);
-    const auto half_space = calculate(true);
+    const ModuleBase::matrix half_space = calculate(true);
     expect_tensor(half_space, full, 1.0e-8);
 }
 
 TEST_F(StressEwaTest, PeriodicTranslationReorderingAndStructureFactorRefresh)
 {
-    const auto original = calculate(false);
+    const ModuleBase::matrix original = calculate(false);
     atoms[0].taud[0].x += 1.0;
     std::reverse(atoms[0].taud.begin(), atoms[0].taud.end());
     update_positions();
     sf.setup(&cell, grid, &basis, false);
-    const auto translated = calculate(false);
+    const ModuleBase::matrix translated = calculate(false);
     expect_tensor(translated, original, 1.0e-8);
     atoms[1].taud[0].y += 0.037;
     const ModuleBase::Matrix3 updated_lattice(1.02, 0.16, 0.04, 0.08, 1.1, 0.17, 0.03, 0.07, 0.95);
     update_geometry(updated_lattice);
     sf.setup(&cell, grid, &basis, false);
-    const auto actual = calculate(false);
-    const auto expected = reference_stress(cell, basis, 1.0);
+    const ModuleBase::matrix actual = calculate(false);
+    const ModuleBase::matrix expected = reference_stress(cell, basis, 1.0);
     expect_tensor(actual, expected, 1.0e-8);
 }
 
@@ -434,8 +430,8 @@ TEST_F(StressEwaTest, SingleSpecies)
     cell.nat = 2;
     cell.set_iat2itia();
     sf.setup(&cell, grid, &basis, false);
-    const auto actual = calculate(false);
-    const auto expected = reference_stress(cell, basis, 1.0);
+    const ModuleBase::matrix actual = calculate(false);
+    const ModuleBase::matrix expected = reference_stress(cell, basis, 1.0);
     expect_tensor(actual, expected, 1.0e-8);
 }
 
@@ -454,8 +450,8 @@ TEST_F(StressEwaTest, GZeroAndRealSpaceBelongToTheirOwningProcess)
             basis.gg[0] = 0;
         }
         sf.setup(&cell, grid, &basis, false);
-        const auto actual = calculate(false);
-        const auto expected = reference_stress(cell, basis, 1.0);
+        const ModuleBase::matrix actual = calculate(false);
+        const ModuleBase::matrix expected = reference_stress(cell, basis, 1.0);
         expect_tensor(actual, expected, 1.0e-8);
         if (owner == 0)
         {
@@ -474,12 +470,12 @@ TEST_F(StressEwaTest, Bspline20AndFractionalGridTranslation)
     for (int shift = 0; shift < 2; ++shift)
     {
         sf.setup(&cell, grid, &basis, false);
-        const auto actual = calculate(false);
-        const auto expected = reference_stress(cell, basis, 1.0);
+        const ModuleBase::matrix actual = calculate(false);
+        const ModuleBase::matrix expected = reference_stress(cell, basis, 1.0);
         expect_tensor(actual, expected, 1.0e-4);
-        for (auto& atom : atoms)
+        for (Atom &atom : atoms)
         {
-            for (auto& s : atom.taud)
+            for (ModuleBase::Vector3<double> &s : atom.taud)
             {
                 s += ModuleBase::Vector3<double>(0.173 / 36, 0.319 / 36, 0.271 / 36);
             }
@@ -490,12 +486,12 @@ TEST_F(StressEwaTest, Bspline20AndFractionalGridTranslation)
 
 TEST_F(StressEwaTest, EnergyStrainDerivativeInSixDirections)
 {
-    const auto lattice = cell.latvec;
+    const ModuleBase::Matrix3 lattice = cell.latvec;
     for (const int order : {0, 20})
     {
         sf.set(&basis, order);
         sf.setup(&cell, grid, &basis, false);
-        const auto analytic = calculate(false);
+        const ModuleBase::matrix analytic = calculate(false);
         const double volume = cell.omega;
         for (int i = 0; i < 3; ++i)
         {
@@ -547,7 +543,7 @@ TEST_F(StressEwaTest, Bspline10CoarseGridEnergyStrainDerivative)
     ASSERT_EQ(basis.npwtot, 1791);
     sf.set(&basis, 10);
     sf.setup(&cell, grid, &basis, false);
-    const auto analytic = calculate(false);
+    const ModuleBase::matrix analytic = calculate(false);
     const double volume = cell.omega;
     for (int i = 0; i < 3; ++i)
     {
@@ -576,10 +572,10 @@ TEST_F(StressEwaTest, Bspline10CoarseGridEnergyStrainDerivative)
 
 TEST_F(StressEwaTest, RebuiltCellBasisAndSplineEnergyStrainDerivative)
 {
-    const auto lattice = cell.latvec;
+    const ModuleBase::Matrix3 lattice = cell.latvec;
     sf.set(&basis, 20);
     sf.setup(&cell, grid, &basis, false);
-    const auto analytic = calculate(false);
+    const ModuleBase::matrix analytic = calculate(false);
     const double volume = cell.omega;
     const double h = 1.0e-4;
     for (int i = 0; i < 3; ++i)
@@ -608,7 +604,7 @@ TEST_F(StressEwaTest, RebuiltCellBasisAndSplineEnergyStrainDerivative)
 }
 } // namespace
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
     int threads = 1;
     Parallel_Global::read_pal_param(argc, argv, process_count, threads, process_rank);
@@ -618,8 +614,8 @@ int main(int argc, char** argv)
     int pool_size = 1;
     int pool_rank = 0;
     int pool = 0;
-    Parallel_Global::init_pools(process_count, process_rank, 1, 1,
-                               bnd_size, bnd_rank, bnd_group, pool_size, pool_rank, pool);
+    Parallel_Global::init_pools(
+        process_count, process_rank, 1, 1, bnd_size, bnd_rank, bnd_group, pool_size, pool_rank, pool);
     GRID_WORLD = MPI_COMM_NULL;
     DIAG_WORLD = MPI_COMM_NULL;
     testing::InitGoogleTest(&argc, argv);

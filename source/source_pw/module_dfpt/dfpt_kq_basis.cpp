@@ -11,18 +11,15 @@
 namespace ModuleDFPT
 {
 
-DFPT_KQ_Basis::DFPT_KQ_Basis()
-{
-}
+DFPT_KQ_Basis::DFPT_KQ_Basis() {}
 
-DFPT_KQ_Basis::~DFPT_KQ_Basis()
-{
-}
+DFPT_KQ_Basis::~DFPT_KQ_Basis() {}
 
-void DFPT_KQ_Basis::init(const ModulePW::PW_Basis_K* pw_wfc,
-                         const ModulePW::PW_Basis* pw_rho,
-                         const ModuleBase::Vector3<double>& q_cart,
-                         int ik)
+void DFPT_KQ_Basis::init(
+    const ModulePW::PW_Basis_K *pw_wfc,
+    const ModulePW::PW_Basis *pw_rho,
+    const ModuleBase::Vector3<double> &q_cart,
+    int ik)
 {
     ModuleBase::TITLE("DFPT_KQ_Basis", "init");
     ModuleBase::timer::start("DFPT_KQ_Basis", "init");
@@ -43,17 +40,17 @@ void DFPT_KQ_Basis::init(const ModulePW::PW_Basis_K* pw_wfc,
     // basis must be a full complex basis (see class documentation).
     if (pw_wfc_->gamma_only)
     {
-        ModuleBase::WARNING_QUIT("DFPT_KQ_Basis",
-                                 "DFPT requires a complex (gamma_only=false) wavefunction basis for k+q. "
-                                 "Please disable gamma_only for the wavefunction basis used by DFPT.");
+        ModuleBase::WARNING_QUIT(
+            "DFPT_KQ_Basis", "DFPT requires a complex (gamma_only=false) wavefunction basis for k+q. "
+                             "Please disable gamma_only for the wavefunction basis used by DFPT.");
     }
 
     // the two bases exchange G vectors through the shared FFT cell position
     if (pw_wfc_->nx != pw_rho->nx || pw_wfc_->ny != pw_rho->ny || pw_wfc_->nz != pw_rho->nz)
     {
-        ModuleBase::WARNING_QUIT("DFPT_KQ_Basis",
-                                 "DFPT requires the wavefunction and charge FFT grids to share "
-                                 "their dimensions.");
+        ModuleBase::WARNING_QUIT(
+            "DFPT_KQ_Basis", "DFPT requires the wavefunction and charge FFT grids to share "
+                             "their dimensions.");
     }
 
     const ModuleBase::Vector3<double> k_c = pw_wfc_->kvec_c[ik];
@@ -74,11 +71,9 @@ void DFPT_KQ_Basis::init(const ModulePW::PW_Basis_K* pw_wfc,
     }
 
     std::set<int> taken;
-    auto try_push = [&](const int ix_in,
-                        const int iy_in,
-                        const int iz_in,
-                        const ModuleBase::Matrix3& gbase,
-                        const int ig_rho_hint) {
+    auto try_push =
+        [&](const int ix_in, const int iy_in, const int iz_in, const ModuleBase::Matrix3 &gbase, const int ig_rho_hint)
+    {
         int ix = ix_in;
         int iy = iy_in;
         int iz = iz_in;

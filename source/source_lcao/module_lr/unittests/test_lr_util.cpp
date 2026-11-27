@@ -73,8 +73,8 @@ TEST_F(LRDMTest, LRDotRCountsEachImageOnce)
     double expected = 0.0;
     for (int r = -1; r <= 1; ++r)
     {
-        auto& a = h1.find_pair(0, 1)->get_HR_values(r, 0, 0);
-        auto& b = h2.find_pair(0, 1)->get_HR_values(r, 0, 0);
+        hamilt::BaseMatrix<double>& a = h1.find_pair(0, 1)->get_HR_values(r, 0, 0);
+        hamilt::BaseMatrix<double>& b = h2.find_pair(0, 1)->get_HR_values(r, 0, 0);
         const int size = a.get_row_size() * a.get_col_size();
         for (int i = 0; i < size; ++i)
         {
@@ -105,7 +105,7 @@ TEST_F(LRDMTest, LRTransposePreservesAtomIndices)
     hr.allocate(nullptr, true);
     hr.fix_gamma();
     dm.init_dmr(hr);
-    auto& dk = dm.get_dmk_vec()[0];
+    std::vector<double>& dk = dm.get_dmk_vec()[0];
     for (int j = 0; j < paraV->para_2d().ncloc(); ++j)
     {
         for (int i = 0; i < paraV->para_2d().nrloc(); ++i)
@@ -121,8 +121,8 @@ TEST_F(LRDMTest, LRTransposePreservesAtomIndices)
     {
         for (int ip = 0; ip < dm.get_dmr_ptr(1)->size_atom_pairs(); ++ip)
         {
-            const auto& pair = dm.get_dmr_ptr(1)->get_atom_pair(ip);
-            const auto* values = pair.get_HR_values(0).get_pointer();
+            const hamilt::AtomPair<double>& pair = dm.get_dmr_ptr(1)->get_atom_pair(ip);
+            double const* values = pair.get_HR_values(0).get_pointer();
             for (int i = 0; i < pair.get_row_size(); ++i)
             {
                 for (int j = 0; j < pair.get_col_size(); ++j)
@@ -170,7 +170,7 @@ TEST_F(LRDMTest, LRExxAdapterIncludesBothSpinChannels)
     hamilt::HContainer<double> hr(paraV);
     hr.allocate(nullptr, true);
     dm.init_dmr(hr);
-    auto& dmk = dm.get_dmk_vec();
+    std::vector<std::vector<double>>& dmk = dm.get_dmk_vec();
     ASSERT_EQ(dmk.size(), 4U);
     for (std::size_t ik = 0; ik < dmk.size(); ++ik)
     {
@@ -209,7 +209,7 @@ TEST_F(LRDMTest, SparseWriterKeepsSpinFilesAndDisjointRankKeys)
     {
         if (rank < active_ranks)
         {
-            auto& block = dm.get_dmr_vec()[spin]->find_pair(0, 0)->get_HR_values(image, 0, 0);
+            hamilt::BaseMatrix<double>& block = dm.get_dmr_vec()[spin]->find_pair(0, 0)->get_HR_values(image, 0, 0);
             const int count = block.get_row_size() * block.get_col_size();
             const double value = (spin + 1) * image;
             std::fill(block.get_pointer(), block.get_pointer() + count, value);

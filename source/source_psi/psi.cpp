@@ -195,7 +195,7 @@ Psi<T, Device>::Psi(const Psi<T_in, Device_in>& psi_in)
     // This could help to reduce the peak memory usage of device.
     if (std::is_same<Device, base_device::DEVICE_GPU>::value && std::is_same<Device_in, base_device::DEVICE_CPU>::value)
     {
-        auto* arr = (T*)malloc(sizeof(T) * psi_in.size());
+        T* arr = (T*)malloc(sizeof(T) * psi_in.size());
         // cast the memory from T_in to T in CPU
         base_device::memory::cast_memory_op<T, T_in, Device_in, Device_in>()(arr,
                                                                              psi_in.get_pointer()

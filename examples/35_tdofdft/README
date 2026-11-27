@@ -24,7 +24,7 @@ computational cost of KS-DFT becomes prohibitive.
   2. Copy `chg.cube` from `01_gs/OUT.autotest/` to `02_td/`
   3. Run `02_td/` for the time-dependent proton dynamics
   4. Use `get_kinetic.py` from `tools/02_postprocessing/tdofdft-tools/` to extract the
-     proton kinetic energy curve from `OUT.autotest/MD_dump`
+     proton kinetic energy curve from the appended `OUT.autotest/STRU` trajectory
 
 ## Input Files
 

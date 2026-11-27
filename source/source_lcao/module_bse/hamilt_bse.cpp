@@ -111,7 +111,7 @@ HamiltBSE<T>::HamiltBSE(const int& nspin,
     
     if (!this->bse_mem_save)
     {
-        for (const auto& st : this->spin_types) {
+        for (const std::string& st : this->spin_types) {
             if (st == "singlet" || st == "triplet") {
                 // Hartree term V (exchange electron and hole)
                 if (st == "singlet"){
@@ -478,7 +478,7 @@ void HamiltBSE<T>::cal_V_by_grid(bool is_A)
 {
     // 1. initialize HContainer VR
     const int is = 0; //spin index, NOTE: only support 1 spin now
-    const auto psi_is = LR_Util::get_psi_spin(psi_ks, is, nk);
+    const psi::Psi<T> psi_is = LR_Util::get_psi_spin(psi_ks, is, nk);
     std::unique_ptr<hamilt::HContainer<T>> VR = std::unique_ptr<hamilt::HContainer<T>>(new hamilt::HContainer<T>(&this->pmat));
     LR_Util::initialize_HR<T, T>(*VR, this->ucell, this->gd, this->orb_cutoff);
 #ifdef __MPI
@@ -517,7 +517,7 @@ void HamiltBSE<T>::cal_V_by_grid(bool is_A)
                 // 5. V(R)→V(k) 
                 std::vector<ct::Tensor> v_k_2d(
                     nk, LR_Util::newTensor<T>({pmat.para_2d().ncloc(), pmat.para_2d().nrloc()}));
-                for (auto& v : v_k_2d) v.zero();
+                for (container::Tensor& v : v_k_2d) v.zero();
                 int nrow = this->pmat.para_2d().nrloc();
                 for (int ik1 = 0;ik1 < nk;++ik1) {
                     folding_HR(*VR, v_k_2d[ik1].data<T>(), this->kv.kvec_d[ik1], nrow, 1);

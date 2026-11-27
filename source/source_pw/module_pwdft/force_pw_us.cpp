@@ -2,13 +2,13 @@
 #include <cstddef>
 
 #include "force_pw.h"
-#include "source_base/parallel_reduce.h"
-#include "source_pw/module_pwdft/vnl_pw.h"
 #include "source_base/libm/libm.h"
-#include "source_io/module_parameter/parameter.h"
 #include "source_base/math_ylmreal.h"
+#include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 #include "source_estate/elecstate_pw.h"
+#include "source_io/module_parameter/parameter.h"
+#include "source_pw/module_pwdft/vnl_pw.h"
 
 // This routine computes the contribution to atomic forces due
 // to the dependence of the Q function on the atomic position.
@@ -19,11 +19,12 @@
 //    w_i\langle \beta_m|\psi_i\rangle \]
 // On output: the contribution is added to \(\text{forcenl}\).
 template <typename FPTYPE, typename Device>
-void Forces<FPTYPE, Device>::cal_force_us(ModuleBase::matrix& forcenl,
-                                          const ModulePW::PW_Basis* const rho_basis,
-                                          const pseudopot_cell_vnl& nlpp,
-                                          const elecstate::ElecState& elec,
-                                          const UnitCell& ucell)
+void Forces<FPTYPE, Device>::cal_force_us(
+    ModuleBase::matrix &forcenl,
+    const ModulePW::PW_Basis *const rho_basis,
+    const pseudopot_cell_vnl &nlpp,
+    const elecstate::ElecState &elec,
+    const UnitCell &ucell)
 {
     ModuleBase::TITLE("Forces", "cal_force_us");
     ModuleBase::timer::start("Forces", "cal_force_us");
@@ -33,11 +34,11 @@ void Forces<FPTYPE, Device>::cal_force_us(ModuleBase::matrix& forcenl,
     const std::complex<double> fac = ModuleBase::NEG_IMAG_UNIT * ucell.tpiba;
     const std::complex<double> ci_tpi = ModuleBase::IMAG_UNIT * ModuleBase::TWO_PI;
     ModuleBase::matrix veff = elec.pot->get_eff_v();
-    const std::vector<double>* becsum_vector = elecstate::get_becsum<Device>(elec);
+    const std::vector<double> *becsum_vector = elecstate::get_becsum<Device>(elec);
     assert(becsum_vector != nullptr);
     const std::size_t becsum_size = static_cast<std::size_t>(veff.nr) * static_cast<std::size_t>(ucell.nat) * nh_tot;
     assert(becsum_vector->size() == becsum_size);
-    const double* becsum = becsum_vector->data();
+    const double *becsum = becsum_vector->data();
 
     ModuleBase::matrix forceq(ucell.nat, 3);
 
@@ -51,7 +52,7 @@ void Forces<FPTYPE, Device>::cal_force_us(ModuleBase::matrix& forcenl,
     ModuleBase::matrix ylmk0(nlpp.lmaxq * nlpp.lmaxq, npw);
     ModuleBase::YlmReal::Ylm_Real(nlpp.lmaxq * nlpp.lmaxq, npw, rho_basis->gcar, ylmk0);
 
-    double* qnorm = new double[npw];
+    double *qnorm = new double[npw];
     for (int ig = 0; ig < npw; ig++)
     {
         qnorm[ig] = rho_basis->gcar[ig].norm() * ucell.tpiba;
@@ -59,7 +60,7 @@ void Forces<FPTYPE, Device>::cal_force_us(ModuleBase::matrix& forcenl,
 
     for (int it = 0; it < ucell.ntype; it++)
     {
-        Atom* atom = &ucell.atoms[it];
+        Atom *atom = &ucell.atoms[it];
         if (atom->ncpp.tvanp)
         {
             // nij = max number of (ih,jh) pairs per atom type nt
@@ -78,7 +79,7 @@ void Forces<FPTYPE, Device>::cal_force_us(ModuleBase::matrix& forcenl,
                     ijh++;
                 }
             }
-            double* qgm_data = reinterpret_cast<double*>(qgm.c);
+            double *qgm_data = reinterpret_cast<double *>(qgm.c);
 
             ModuleBase::ComplexArray aux1(3, atom->na, npw);
             ModuleBase::realArray ddeeq(PARAM.inp.nspin, 3, atom->na, nij);
@@ -97,7 +98,7 @@ void Forces<FPTYPE, Device>::cal_force_us(ModuleBase::matrix& forcenl,
                         }
                     }
                 }
-                double* aux1_data = reinterpret_cast<double*>(aux1.ptr);
+                double *aux1_data = reinterpret_cast<double *>(aux1.ptr);
 
                 // ddeeq = dot product of aux1 with the Q functions
                 // No need for special treatment of the G=0 term (is zero)
@@ -107,19 +108,9 @@ void Forces<FPTYPE, Device>::cal_force_us(ModuleBase::matrix& forcenl,
                 const double zero = 0;
                 for (int ipol = 0; ipol < 3; ipol++)
                 {
-                    BlasConnector::gemm(transb,
-                           transa,
-                           atom->na,
-                           nij,
-                           dim,
-                           ucell.omega,
-                           &aux1_data[ipol * dim * atom->na],
-                           dim,
-                           qgm_data,
-                           dim,
-                           zero,
-                           &ddeeq(is, ipol, 0, 0),
-                           nij);
+                    BlasConnector::gemm(
+                        transb, transa, atom->na, nij, dim, ucell.omega, &aux1_data[ipol * dim * atom->na], dim,
+                        qgm_data, dim, zero, &ddeeq(is, ipol, 0, 0), nij);
                 }
             }
 

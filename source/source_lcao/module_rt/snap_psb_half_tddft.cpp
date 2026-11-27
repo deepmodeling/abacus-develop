@@ -40,7 +40,7 @@ void snap_psibeta_half_tddft(const LCAO_Orbitals& orb,
     // UPF nonlocal beta projectors already follow the r * beta_l(r) convention.
     for (int ip = 0; ip < infoNL_.get_nproj(T0); ++ip)
     {
-        const auto& proj = infoNL_.get_Beta(T0).Proj[ip];
+        const Numerical_Nonlocal_Lm& proj = infoNL_.get_Beta(T0).Proj[ip];
         ProjectorChannel channel;
         channel.l = proj.getL();
         channel.mesh = proj.getNr();

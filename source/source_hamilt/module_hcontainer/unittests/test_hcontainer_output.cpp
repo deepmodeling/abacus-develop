@@ -179,19 +179,19 @@ TYPED_TEST(OutputHContainerPreservationTest, RepeatedWritesPreserveAllRBlocksAnd
     std::vector<TypeParam> first = {TypeParam(1), TypeParam(2), TypeParam(3), TypeParam(4)};
     std::vector<TypeParam> second = {TypeParam(5), TypeParam(6), TypeParam(7), TypeParam(8)};
     std::vector<TypeParam> empty(4, TypeParam(1e-12));
-    const auto first_before = first;
-    const auto second_before = second;
-    const auto empty_before = empty;
+    const std::vector<TypeParam> first_before = first;
+    const std::vector<TypeParam> second_before = second;
+    const std::vector<TypeParam> empty_before = empty;
     hamilt::HContainer<TypeParam> matrix(&para);
     matrix.insert_pair(hamilt::AtomPair<TypeParam>(0, 0, 1, 0, 0, &para, first.data()));
     matrix.insert_pair(hamilt::AtomPair<TypeParam>(0, 0, -1, 0, 0, &para, second.data()));
     matrix.insert_pair(hamilt::AtomPair<TypeParam>(1, 1, 0, 0, 0, &para, empty.data()));
-    auto *pair = matrix.find_pair(0, 0);
+    hamilt::AtomPair<TypeParam>* pair = matrix.find_pair(0, 0);
     ASSERT_NE(pair, nullptr);
-    const auto first_r = pair->get_R_index(0);
-    const auto second_r = pair->get_R_index(1);
-    const auto *first_pointer = pair->get_pointer(0);
-    const auto *second_pointer = pair->get_pointer(1);
+    const ModuleBase::Vector3<int> first_r = pair->get_R_index(0);
+    const ModuleBase::Vector3<int> second_r = pair->get_R_index(1);
+    const TypeParam* first_pointer = pair->get_pointer(0);
+    const TypeParam* second_pointer = pair->get_pointer(1);
 
     std::ostringstream once;
     hamilt::Output_HContainer<TypeParam> writer(&matrix, once, 1e-10, 8);

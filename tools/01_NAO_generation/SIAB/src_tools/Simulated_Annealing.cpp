@@ -46,11 +46,12 @@ void Simulated_Annealing::cal_each_step(size_t itemperature, size_t istep)
     return;
 }
 
-void Simulated_Annealing::judge_accept_reject(double& new_function,
-                                              size_t itemperature,
-                                              size_t istep,
-                                              bool& accept_flag,
-                                              bool& reject_flag)
+void Simulated_Annealing::judge_accept_reject(
+    double &new_function,
+    size_t itemperature,
+    size_t istep,
+    bool &accept_flag,
+    bool &reject_flag)
 {
     if (must_accept_before(new_function, itemperature, istep))
     {
@@ -114,11 +115,12 @@ void Simulated_Annealing::judge_accept_reject(double& new_function,
     }
 }
 
-void Simulated_Annealing::process_accept_reject(double& new_function,
-                                                size_t itemperature,
-                                                size_t istep,
-                                                bool& accept_flag,
-                                                bool& reject_flag)
+void Simulated_Annealing::process_accept_reject(
+    double &new_function,
+    size_t itemperature,
+    size_t istep,
+    bool &accept_flag,
+    bool &reject_flag)
 {
     // accept and reject may conflict without checking before
     if (accept_flag)

@@ -3,13 +3,9 @@
 #include "../src_spillage/Inverse_Matrix_S.h"
 #include "complexmatrix_inline.h"
 
-Inverse_Matrix::Inverse_Matrix()
-{
-}
-Inverse_Matrix::~Inverse_Matrix()
-{
-}
-void Inverse_Matrix::init(const int& dim_in)
+Inverse_Matrix::Inverse_Matrix() {}
+Inverse_Matrix::~Inverse_Matrix() {}
+void Inverse_Matrix::init(const int &dim_in)
 {
     this->dim = dim_in;
     this->e = new double[dim];
@@ -22,7 +18,7 @@ void Inverse_Matrix::init(const int& dim_in)
     return;
 }
 
-void Inverse_Matrix::using_zheev(const ComplexMatrix& Sin, ComplexMatrix& Sout)
+void Inverse_Matrix::using_zheev(const ComplexMatrix &Sin, ComplexMatrix &Sout)
 {
     timer::tick("Inverse", "using_zheev");
     this->A = Sin;
@@ -43,7 +39,7 @@ void Inverse_Matrix::using_zheev(const ComplexMatrix& Sin, ComplexMatrix& Sout)
     return;
 }
 
-void Inverse_Matrix::using_zpotrf(const ComplexMatrix& Sin)
+void Inverse_Matrix::using_zpotrf(const ComplexMatrix &Sin)
 {
     //  timer::tick("Inverse","using_zpotrf");
 

@@ -27,14 +27,9 @@
  *   vnl_pw_deeq.cpp, vnl_pw_alpha.cpp, vnl_pw_grad.cpp
  */
 
-pseudopot_cell_vnl::pseudopot_cell_vnl()
-{
-    this->use_gpu_ = (PARAM.inp.device == "gpu");
-}
+pseudopot_cell_vnl::pseudopot_cell_vnl() { this->use_gpu_ = (PARAM.inp.device == "gpu"); }
 
-pseudopot_cell_vnl::~pseudopot_cell_vnl()
-{
-}
+pseudopot_cell_vnl::~pseudopot_cell_vnl() {}
 
 void pseudopot_cell_vnl::release_memory()
 {
@@ -90,10 +85,11 @@ void pseudopot_cell_vnl::release_memory()
 // setup lmaxkb, nhm, nkb, lmaxq
 // allocate vkb, PARAM.globalv.nqx, tab, tab_at
 //-----------------------------------
-void pseudopot_cell_vnl::init(const UnitCell& ucell,
-                              Structure_Factor* psf_in,
-                              const ModulePW::PW_Basis_K* wfc_basis,
-                              const bool allocate_vkb)
+void pseudopot_cell_vnl::init(
+    const UnitCell &ucell,
+    Structure_Factor *psf_in,
+    const ModulePW::PW_Basis_K *wfc_basis,
+    const bool allocate_vkb)
 {
     const int ntype = ucell.ntype;
     ModuleBase::TITLE("pseudopot_cell_vnl", "init");
@@ -293,9 +289,8 @@ void pseudopot_cell_vnl::init(const UnitCell& ucell,
             resmem_ch_op()(c_vkb, projector_elements);
         }
 #ifdef __DSP
-        base_device::memory::resize_memory_op_mt<std::complex<double>, base_device::DEVICE_CPU>()(this->z_vkb,
-                                                                                                  this->vkb.size,
-                                                                                                  "VNL::z_vkb");
+        base_device::memory::resize_memory_op_mt<std::complex<double>, base_device::DEVICE_CPU>()(
+            this->z_vkb, this->vkb.size, "VNL::z_vkb");
         // memcpy(this->z_vkb,this->vkb.c,this->vkb.size*16);
 #else
         this->z_vkb = this->vkb.c;
@@ -308,14 +303,11 @@ void pseudopot_cell_vnl::init(const UnitCell& ucell,
     return;
 }
 
-void pseudopot_cell_vnl::print_vnl(std::ofstream& ofs)
-{
-    output::printr3_d(ofs, " tab : ", tab);
-}
+void pseudopot_cell_vnl::print_vnl(std::ofstream &ofs) { output::printr3_d(ofs, " tab : ", tab); }
 
 // ----------------------------------------------------------------------
 // scale the non-local pseudopotential tables
-void pseudopot_cell_vnl::rescale_vnl(const double& omega_in)
+void pseudopot_cell_vnl::rescale_vnl(const double &omega_in)
 {
     const bool gradient_current = this->gradient_version_ == this->table_version_;
     ++this->table_version_;
@@ -359,100 +351,100 @@ void pseudopot_cell_vnl::rescale_vnl(const double& omega_in)
 }
 
 template <>
-float* pseudopot_cell_vnl::get_nhtol_data() const
+float *pseudopot_cell_vnl::get_nhtol_data() const
 {
     return this->s_nhtol;
 }
 template <>
-double* pseudopot_cell_vnl::get_nhtol_data() const
+double *pseudopot_cell_vnl::get_nhtol_data() const
 {
     return this->d_nhtol;
 }
 
 template <>
-float* pseudopot_cell_vnl::get_nhtolm_data() const
+float *pseudopot_cell_vnl::get_nhtolm_data() const
 {
     return this->s_nhtolm;
 }
 template <>
-double* pseudopot_cell_vnl::get_nhtolm_data() const
+double *pseudopot_cell_vnl::get_nhtolm_data() const
 {
     return this->d_nhtolm;
 }
 
 template <>
-float* pseudopot_cell_vnl::get_indv_data() const
+float *pseudopot_cell_vnl::get_indv_data() const
 {
     return this->s_indv;
 }
 template <>
-double* pseudopot_cell_vnl::get_indv_data() const
+double *pseudopot_cell_vnl::get_indv_data() const
 {
     return this->d_indv;
 }
 
 template <>
-float* pseudopot_cell_vnl::get_tab_data() const
+float *pseudopot_cell_vnl::get_tab_data() const
 {
     return this->s_tab;
 }
 template <>
-double* pseudopot_cell_vnl::get_tab_data() const
+double *pseudopot_cell_vnl::get_tab_data() const
 {
     return this->d_tab;
 }
 
 template <>
-float* pseudopot_cell_vnl::get_deeq_data() const
+float *pseudopot_cell_vnl::get_deeq_data() const
 {
     return this->s_deeq;
 }
 template <>
-double* pseudopot_cell_vnl::get_deeq_data() const
+double *pseudopot_cell_vnl::get_deeq_data() const
 {
     return this->d_deeq;
 }
 
 template <>
-float* pseudopot_cell_vnl::get_qq_nt_data() const
+float *pseudopot_cell_vnl::get_qq_nt_data() const
 {
     return this->s_qq_nt;
 }
 template <>
-double* pseudopot_cell_vnl::get_qq_nt_data() const
+double *pseudopot_cell_vnl::get_qq_nt_data() const
 {
     return this->d_qq_nt;
 }
 
 template <>
-std::complex<float>* pseudopot_cell_vnl::get_vkb_data() const
+std::complex<float> *pseudopot_cell_vnl::get_vkb_data() const
 {
     return this->c_vkb;
 }
 template <>
-std::complex<double>* pseudopot_cell_vnl::get_vkb_data() const
+std::complex<double> *pseudopot_cell_vnl::get_vkb_data() const
 {
     return this->z_vkb;
 }
 
 template <>
-std::complex<float>* pseudopot_cell_vnl::get_deeq_nc_data() const
+std::complex<float> *pseudopot_cell_vnl::get_deeq_nc_data() const
 {
     return this->c_deeq_nc;
 }
 template <>
-std::complex<double>* pseudopot_cell_vnl::get_deeq_nc_data() const
+std::complex<double> *pseudopot_cell_vnl::get_deeq_nc_data() const
 {
     return this->z_deeq_nc;
 }
 
 template <>
-std::complex<float>* pseudopot_cell_vnl::get_qq_so_data() const
+std::complex<float> *pseudopot_cell_vnl::get_qq_so_data() const
 {
     return this->c_qq_so;
 }
 template <>
-std::complex<double>* pseudopot_cell_vnl::get_qq_so_data() const
+std::complex<double> *pseudopot_cell_vnl::get_qq_so_data() const
 {
     return this->z_qq_so;
 }

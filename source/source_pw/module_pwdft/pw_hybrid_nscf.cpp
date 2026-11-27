@@ -1,19 +1,19 @@
 #include "pw_hybrid_nscf.h"
 #include "pw_hybrid_source.h"
-#include "source_io/module_wf/read_wfc_pw.h"
 #include "source_base/module_out/filename.h"
-#include "source_hamilt/module_xc/general_exx_info.h"
-#include "source_pw/module_pwdft/op_pw_exx.h"
-#include "source_cell/unitcell.h"
-#include "source_io/module_parameter/input_parameter.h"
 #include "source_base/parallel_device.h"
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"
+#include "source_cell/unitcell.h"
+#include "source_hamilt/module_xc/general_exx_info.h"
+#include "source_io/module_parameter/input_parameter.h"
+#include "source_io/module_wf/read_wfc_pw.h"
+#include "source_pw/module_pwdft/op_pw_exx.h"
 
 #include <algorithm>
 #include <cctype>
-#include <fstream>
 #include <cmath>
+#include <fstream>
 #include <map>
 #include <set>
 #include <sstream>
@@ -24,13 +24,13 @@ namespace pw
 namespace
 {
 // Check the stored Miller mapping before delegating coefficient loading to the unchanged IO reader.
-void validate_source_grid(const std::string& filename, const ModulePW::PW_Basis_K& basis, int iq)
+void validate_source_grid(const std::string &filename, const ModulePW::PW_Basis_K &basis, int iq)
 {
     std::ifstream in(filename, std::ios::binary);
-    const auto header = read_exx_source_header(in);
+    const ExxSourceHeader header = read_exx_source_header(in);
     in.seekg(160);
     int record = 0;
-    in.read(reinterpret_cast<char*>(&record), sizeof(record));
+    in.read(reinterpret_cast<char *>(&record), sizeof(record));
     if (record != 12LL * header.npw)
     {
         throw std::runtime_error("Invalid EXX source Miller record");
@@ -43,14 +43,14 @@ void validate_source_grid(const std::string& filename, const ModulePW::PW_Basis_
         ModuleBase::Vector3<double> direct_g;
         for (int axis = 0; axis < 3; ++axis)
         {
-            in.read(reinterpret_cast<char*>(&miller[axis]), sizeof(int));
+            in.read(reinterpret_cast<char *>(&miller[axis]), sizeof(int));
             if (!in || miller[axis] < 0 || miller[axis] >= grid[axis])
             {
                 throw std::runtime_error("EXX source Miller index is incompatible with FFT grid");
             }
             direct_g[axis] = miller[axis] <= grid[axis] / 2 ? miller[axis] : miller[axis] - grid[axis];
         }
-        const auto gk = direct_g * basis.G + basis.kvec_c[iq];
+        const ModuleBase::Vector3<double> gk = direct_g * basis.G + basis.kvec_c[iq];
         const long long index = (static_cast<long long>(miller[0]) * basis.ny + miller[1]) * basis.nz + miller[2];
         if (gk.norm2() > basis.gk_ecut * (1.0 + 1e-10) || !indices.insert(index).second)
         {
@@ -59,7 +59,7 @@ void validate_source_grid(const std::string& filename, const ModulePW::PW_Basis_
     }
 }
 
-bool source_parameter_matches(const std::string& key, std::string source_value, std::string target_value)
+bool source_parameter_matches(const std::string &key, std::string source_value, std::string target_value)
 {
     if (key == "dft_functional")
     {
@@ -86,23 +86,21 @@ bool source_parameter_matches(const std::string& key, std::string source_value, 
     }
     // INPUT.info may print doubles with the standard six significant digits.
     const double scale = std::max(std::abs(source_number), std::abs(target_number));
-    return std::isfinite(source_number) && std::isfinite(target_number)
-           && std::abs(source_number - target_number) <= 5e-6 * scale;
+    return std::isfinite(source_number) && std::isfinite(target_number) &&
+           std::abs(source_number - target_number) <= 5e-6 * scale;
 }
 
-void warn_source_configuration(const Input_para& inp, const std::string& readin_dir)
+void warn_source_configuration(const Input_para &inp, const std::string &readin_dir)
 {
     std::map<std::string, std::string> expected;
     expected["dft_functional"] = inp.dft_functional;
     expected["exx_singularity_correction"] = inp.exx_singularity_correction;
-    const std::vector<std::pair<std::string, std::vector<std::string>>> terms = {
-        {"exx_erfc_alpha", inp.exx_erfc_alpha},
-        {"exx_erfc_omega", inp.exx_erfc_omega},
-        {"exx_fock_alpha", inp.exx_fock_alpha}};
-    for (const auto& term : terms)
+    const std::vector<std::pair<std::string, std::vector<std::string>>> terms = {{"exx_erfc_alpha", inp.exx_erfc_alpha},
+        {"exx_erfc_omega", inp.exx_erfc_omega}, {"exx_fock_alpha", inp.exx_fock_alpha}};
+    for (const std::pair<std::string, std::vector<std::string>> &term : terms)
     {
         std::ostringstream value;
-        for (const auto& number : term.second)
+        for (const std::string &number : term.second)
         {
             // Zero-valued Fock coefficients are equivalent to omitting the term.
             if (term.first == "exx_fock_alpha" && std::stod(number) == 0.0)
@@ -131,11 +129,13 @@ void warn_source_configuration(const Input_para& inp, const std::string& readin_
             std::getline(record, saved[key]);
         }
     }
-    for (const auto& item : expected)
+    for (const std::pair<const std::string, std::string> &item : expected)
     {
         if (!saved.count(item.first))
         {
-            ModuleBase::WARNING("PW_Hybrid_NSCF", "EXX source configuration is incomplete or unavailable in INPUT.info; "
+            ModuleBase::WARNING(
+                "PW_Hybrid_NSCF",
+                "EXX source configuration is incomplete or unavailable in INPUT.info; "
                 "continuing with existing wavefunctions and eig_occ.txt. Verify the source SCF settings.");
             return;
         }
@@ -167,28 +167,29 @@ void warn_source_configuration(const Input_para& inp, const std::string& readin_
         }
         if (mismatch)
         {
-            const std::string message = "EXX source configuration differs for " + item.first
-                + "; continuing with the frozen SCF source and current NSCF exchange settings. "
-                  "Use matching settings for consistent SCF/NSCF bands.";
+            const std::string message = "EXX source configuration differs for " + item.first +
+                                        "; continuing with the frozen SCF source and current NSCF exchange settings. "
+                                        "Use matching settings for consistent SCF/NSCF bands.";
             ModuleBase::WARNING("PW_Hybrid_NSCF", message);
         }
     }
 }
-}
+} // namespace
 
-void validate_hybrid_nscf(const Input_para& inp, const General_Exx_Info& info)
+void validate_hybrid_nscf(const Input_para &inp, const General_Exx_Info &info)
 {
     if (inp.calculation != "nscf" || !info.cal_exx)
     {
         return;
     }
     bool has_fock = false;
-    const auto fock = info.coulomb_param.find(Conv_Coulomb_Pot_K::Coulomb_Type::Fock);
+    const std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string, std::string>>>::const_iterator
+        fock = info.coulomb_param.find(Conv_Coulomb_Pot_K::Coulomb_Type::Fock);
     if (fock != info.coulomb_param.end())
     {
         // An explicit zero coefficient (`exx_fock_alpha 0`) retains a Fock entry but is
         // equivalent to omitting the term; only a nonzero coefficient is unscreened exchange.
-        for (const auto& term : fock->second)
+        for (const std::map<std::string, std::string> &term : fock->second)
         {
             if (std::stod(term.at("alpha")) != 0.0)
             {
@@ -206,7 +207,8 @@ void validate_hybrid_nscf(const Input_para& inp, const General_Exx_Info& info)
     const bool compatible_targets = inp.symmetry != "1" && inp.init_wfc != "file" && !inp.cal_force && !inp.cal_stress;
     if (!compatible_execution || !compatible_exchange || !compatible_targets)
     {
-        ModuleBase::WARNING_QUIT("PW_Hybrid_NSCF",
+        ModuleBase::WARNING_QUIT(
+            "PW_Hybrid_NSCF",
             "Hybrid NSCF currently requires CPU or CUDA GPU, kpar=bndpar=1, nspin=1/2, symmetry=-1/0, "
             "exxace=false, exx_gamma_extra=false, screened exchange, "
             "cal_force=cal_stress=false and fresh target wavefunctions");
@@ -214,11 +216,12 @@ void validate_hybrid_nscf(const Input_para& inp, const General_Exx_Info& info)
 }
 
 template <typename T, typename Device>
-void prepare_exx_nscf(const Input_para& inp,
-                      const UnitCell& ucell,
-                      const ModulePW::PW_Basis_K* pw_wfc,
-                      hamilt::OperatorEXXPW<T, Device>& op_exx,
-                      const std::string& readin_dir)
+void prepare_exx_nscf(
+    const Input_para &inp,
+    const UnitCell &ucell,
+    const ModulePW::PW_Basis_K *pw_wfc,
+    hamilt::OperatorEXXPW<T, Device> &op_exx,
+    const std::string &readin_dir)
 {
     ModuleBase::timer::start("PW_Hybrid_NSCF", "prepare_exx_nscf");
     std::unique_ptr<K_Vectors> source_points(new K_Vectors);
@@ -239,30 +242,28 @@ void prepare_exx_nscf(const Input_para& inp,
     // A step-less fixed name (mode 0/1) is reported as -1.
     int snapshot_ionic = -2;
     int snapshot_electronic = -2;
-    const auto check_snapshot = [&](const std::string& label,
-                                    const int ionic_step,
-                                    const int electronic_step,
-                                    const bool check_electronic)
+    const auto check_snapshot =
+        [&](const std::string &label, const int ionic_step, const int electronic_step, const bool check_electronic)
     {
-        if (ionic_step != snapshot_ionic
-            || (check_electronic && snapshot_electronic >= 0 && electronic_step != snapshot_electronic))
+        if (ionic_step != snapshot_ionic ||
+            (check_electronic && snapshot_electronic >= 0 && electronic_step != snapshot_electronic))
         {
-            throw std::runtime_error(label + " belongs to a different SCF snapshot "
-                + "(g" + std::to_string(ionic_step)
-                + (electronic_step >= 0 ? "e" + std::to_string(electronic_step) : std::string())
-                + ") than the wavefunction snapshot (g" + std::to_string(snapshot_ionic)
-                + (snapshot_electronic >= 0 ? "e" + std::to_string(snapshot_electronic) : std::string())
-                + "); rerun the SCF source so all EXX source files share one snapshot");
+            throw std::runtime_error(
+                label + " belongs to a different SCF snapshot " + "(g" + std::to_string(ionic_step) +
+                (electronic_step >= 0 ? "e" + std::to_string(electronic_step) : std::string()) +
+                ") than the wavefunction snapshot (g" + std::to_string(snapshot_ionic) +
+                (snapshot_electronic >= 0 ? "e" + std::to_string(snapshot_electronic) : std::string()) +
+                "); rerun the SCF source so all EXX source files share one snapshot");
         }
     };
-    const auto resolve_wfc = [&](const int iq, const std::vector<int>& ik2iktot, const int nkstot)
+    const auto resolve_wfc = [&](const int iq, const std::vector<int> &ik2iktot, const int nkstot)
     {
-        const std::string fixed_name = ModuleIO::filename_output("", "wf", "pw", iq,
-            ik2iktot, inp.nspin, nkstot, 2, false, false, -1);
+        const std::string fixed_name =
+            ModuleIO::filename_output("", "wf", "pw", iq, ik2iktot, inp.nspin, nkstot, 2, false, false, -1);
         int ionic_step = -1;
         int electronic_step = -1;
-        const std::string path = resolve_source_file(wfc_directories, fixed_name, "_pw.dat", true,
-                                                     &ionic_step, &electronic_step);
+        const std::string path =
+            resolve_source_file(wfc_directories, fixed_name, "_pw.dat", true, &ionic_step, &electronic_step);
         if (snapshot_ionic == -2)
         {
             snapshot_ionic = ionic_step;
@@ -279,7 +280,7 @@ void prepare_exx_nscf(const Input_para& inp,
     {
         const std::string first_filename = resolve_wfc(0, first_index, spin_mult);
         std::ifstream first(first_filename.c_str(), std::ios::binary);
-        const auto header = read_exx_source_header(first);
+        const ExxSourceHeader header = read_exx_source_header(first);
         const int nks = header.nks;
         if (nks % spin_mult != 0)
         {
@@ -305,13 +306,13 @@ void prepare_exx_nscf(const Input_para& inp,
         {
             const std::string filename = resolve_wfc(iq, source_points->ik2iktot, nks);
             std::ifstream in(filename, std::ios::binary);
-            const auto metadata = read_exx_source_header(in);
+            const ExxSourceHeader metadata = read_exx_source_header(in);
             if (metadata.ecutwfc != inp.ecutwfc)
             {
                 throw std::runtime_error("EXX source wavefunction cutoff differs from the current basis");
             }
             headers.push_back(metadata);
-            auto& q = source_points->kvec_c[iq];
+            ModuleBase::Vector3<double> &q = source_points->kvec_c[iq];
             q.x = metadata.kvec_c[0];
             q.y = metadata.kvec_c[1];
             q.z = metadata.kvec_c[2];
@@ -322,28 +323,25 @@ void prepare_exx_nscf(const Input_para& inp,
         int occ_ionic_step = -1;
         int occ_electronic_step = -1;
         const std::string occupations_filename = resolve_source_file(
-            eig_occ_directories, "eig_occ.txt", ".txt", false,
-            &occ_ionic_step, &occ_electronic_step);
+            eig_occ_directories, "eig_occ.txt", ".txt", false, &occ_ionic_step, &occ_electronic_step);
         // eig_occ.txt carries no electronic-iteration suffix, so only its ionic
         // step can be verified against the wavefunction snapshot.
         check_snapshot("EXX source eig_occ.txt", occ_ionic_step, occ_electronic_step, false);
         std::ifstream occupations(occupations_filename.c_str());
         read_exx_source_occupations(occupations, headers, inp.nspin, source_weights);
     }
-    catch (const std::exception& error)
+    catch (const std::exception &error)
     {
         ModuleBase::WARNING_QUIT("PW_Hybrid_NSCF", error.what());
     }
     const int nqs = source_points->get_nks();
     int nq = source_points->get_nkstot_nospin();
     source_points->para_k.kinfo(nq, 1, 0, pw_wfc->poolrank, pw_wfc->poolnproc, inp.nspin);
-    std::unique_ptr<ModulePW::PW_Basis_K> source_basis(
-        new ModulePW::PW_Basis_K(inp.device, inp.precision));
+    std::unique_ptr<ModulePW::PW_Basis_K> source_basis(new ModulePW::PW_Basis_K(inp.device, inp.precision));
 #ifdef __MPI
     source_basis->initmpi(pw_wfc->poolnproc, pw_wfc->poolrank, pw_wfc->pool_world);
 #endif
-    source_basis->initgrids(ucell.lat0, ucell.latvec,
-                               pw_wfc->nx, pw_wfc->ny, pw_wfc->nz);
+    source_basis->initgrids(ucell.lat0, ucell.latvec, pw_wfc->nx, pw_wfc->ny, pw_wfc->nz);
     source_basis->initparameters(false, inp.ecutwfc, nqs, source_points->kvec_d.data());
     // Preserve the exact stored Cartesian coordinates expected by the existing reader.
     for (int iq = 0; iq < nqs; ++iq)
@@ -368,13 +366,13 @@ void prepare_exx_nscf(const Input_para& inp,
         {
             validate_source_grid(wfc_filename, *source_basis, iq);
         }
-        catch (const std::exception& error)
+        catch (const std::exception &error)
         {
             ModuleBase::WARNING_QUIT("PW_Hybrid_NSCF", error.what());
         }
         ModuleBase::ComplexMatrix wfc(nbands, nbasis);
-        ModuleIO::read_wfc_pw(wfc_filename, source_basis.get(), pw_wfc->poolrank,
-                             pw_wfc->poolnproc, nbands, 1, iq, iq, nqs, wfc);
+        ModuleIO::read_wfc_pw(
+            wfc_filename, source_basis.get(), pw_wfc->poolrank, pw_wfc->poolnproc, nbands, 1, iq, iq, nqs, wfc);
         source_psi->fix_k(iq);
         std::vector<T> coefficients(nbands * nbasis);
         for (int ib = 0; ib < nbands; ++ib)
@@ -387,24 +385,34 @@ void prepare_exx_nscf(const Input_para& inp,
         base_device::memory::synchronize_memory_op<T, Device, base_device::DEVICE_CPU>()(
             source_psi->get_pointer(), coefficients.data(), coefficients.size());
     }
-    op_exx.set_source(std::move(source_basis), std::move(source_points),
-        *source_psi, std::move(source_weights));
+    op_exx.set_source(std::move(source_basis), std::move(source_points), *source_psi, std::move(source_weights));
     ModuleBase::timer::end("PW_Hybrid_NSCF", "prepare_exx_nscf");
 }
 
-
 template void prepare_exx_nscf<std::complex<float>, base_device::DEVICE_CPU>(
-    const Input_para&, const UnitCell&, const ModulePW::PW_Basis_K*,
-    hamilt::OperatorEXXPW<std::complex<float>, base_device::DEVICE_CPU>&, const std::string&);
+    const Input_para &,
+    const UnitCell &,
+    const ModulePW::PW_Basis_K *,
+    hamilt::OperatorEXXPW<std::complex<float>, base_device::DEVICE_CPU> &,
+    const std::string &);
 template void prepare_exx_nscf<std::complex<double>, base_device::DEVICE_CPU>(
-    const Input_para&, const UnitCell&, const ModulePW::PW_Basis_K*,
-    hamilt::OperatorEXXPW<std::complex<double>, base_device::DEVICE_CPU>&, const std::string&);
+    const Input_para &,
+    const UnitCell &,
+    const ModulePW::PW_Basis_K *,
+    hamilt::OperatorEXXPW<std::complex<double>, base_device::DEVICE_CPU> &,
+    const std::string &);
 #if defined(__CUDA) || defined(__ROCM)
 template void prepare_exx_nscf<std::complex<float>, base_device::DEVICE_GPU>(
-    const Input_para&, const UnitCell&, const ModulePW::PW_Basis_K*,
-    hamilt::OperatorEXXPW<std::complex<float>, base_device::DEVICE_GPU>&, const std::string&);
+    const Input_para &,
+    const UnitCell &,
+    const ModulePW::PW_Basis_K *,
+    hamilt::OperatorEXXPW<std::complex<float>, base_device::DEVICE_GPU> &,
+    const std::string &);
 template void prepare_exx_nscf<std::complex<double>, base_device::DEVICE_GPU>(
-    const Input_para&, const UnitCell&, const ModulePW::PW_Basis_K*,
-    hamilt::OperatorEXXPW<std::complex<double>, base_device::DEVICE_GPU>&, const std::string&);
+    const Input_para &,
+    const UnitCell &,
+    const ModulePW::PW_Basis_K *,
+    hamilt::OperatorEXXPW<std::complex<double>, base_device::DEVICE_GPU> &,
+    const std::string &);
 #endif
 } // namespace pw

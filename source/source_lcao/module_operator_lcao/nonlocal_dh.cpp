@@ -21,7 +21,7 @@ void Nonlocal<OperatorLCAO<TK, TR>>::cal_dH(std::array<std::vector<hamilt::HCont
 
     for (int iat0 = 0; iat0 < nat; iat0++)
     {
-        auto tau0 = this->ucell->get_tau(iat0);
+        ModuleBase::Vector3<double> tau0 = this->ucell->get_tau(iat0);
         int I0 = 0, T0 = 0;
         this->ucell->iat2iait(iat0, &I0, &T0);
 
@@ -96,7 +96,7 @@ void Nonlocal<OperatorLCAO<TK, TR>>::cal_dH(std::array<std::vector<hamilt::HCont
 #pragma omp for schedule(dynamic)
         for (int iat0 = 0; iat0 < nat; iat0++)
         {
-            auto tau0 = this->ucell->get_tau(iat0);
+            ModuleBase::Vector3<double> tau0 = this->ucell->get_tau(iat0);
             int I0 = 0, T0 = 0;
             this->ucell->iat2iait(iat0, &I0, &T0);
 
@@ -132,8 +132,8 @@ void Nonlocal<OperatorLCAO<TK, TR>>::cal_dH(std::array<std::vector<hamilt::HCont
                 const ModuleBase::Vector3<double>& tau1 = adjs.adjacent_tau[ad];
                 const Atom* atom1 = &this->ucell->atoms[T1];
 
-                auto all_indexes = paraV->get_indexes_row(iat1);
-                auto col_indexes = paraV->get_indexes_col(iat1);
+                std::vector<int> all_indexes = paraV->get_indexes_row(iat1);
+                std::vector<int> col_indexes = paraV->get_indexes_col(iat1);
                 all_indexes.insert(all_indexes.end(), col_indexes.begin(), col_indexes.end());
                 std::sort(all_indexes.begin(), all_indexes.end());
                 all_indexes.erase(std::unique(all_indexes.begin(), all_indexes.end()), all_indexes.end());
@@ -213,8 +213,8 @@ void Nonlocal<OperatorLCAO<TK, TR>>::cal_dH(std::array<std::vector<hamilt::HCont
                     auto& nlm1_all = nlm_iat0[ad1];
                     auto& nlm2_all = nlm_iat0[ad2];
 
-                    auto row_indexes = paraV->get_indexes_row(iat1);
-                    auto col_indexes = paraV->get_indexes_col(iat2);
+                    std::vector<int> row_indexes = paraV->get_indexes_row(iat1);
+                    std::vector<int> col_indexes = paraV->get_indexes_col(iat2);
 
                     for (size_t iw1l = 0; iw1l < row_indexes.size(); iw1l++)
                     {

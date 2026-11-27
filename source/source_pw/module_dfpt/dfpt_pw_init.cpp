@@ -24,7 +24,7 @@
 namespace ModuleDFPT
 {
 
-void DFPT_PW::Impl::check_metallic_occ(const ModuleBase::matrix& wg) const
+void DFPT_PW::Impl::check_metallic_occ(const ModuleBase::matrix &wg) const
 {
     // Metallic-sampling guard: the Sternheimer/projector flow treats every
     // band as either fully occupied or empty and carries no d(mu)/dtau
@@ -57,7 +57,7 @@ void DFPT_PW::Impl::check_metallic_occ(const ModuleBase::matrix& wg) const
     }
 }
 
-void DFPT_PW::Impl::setup_q_list(UnitCell& ucell)
+void DFPT_PW::Impl::setup_q_list(UnitCell &ucell)
 {
     if (!qfile_.empty())
     {
@@ -81,13 +81,14 @@ void DFPT_PW::Impl::setup_q_list(UnitCell& ucell)
     validate_q_ordering(qlist_, data_.get_compute_q0());
 }
 
-void DFPT_PW::Impl::init_submodules(const DFPT_PW_InitContext& ctx,
-                                    int nk,
-                                    int nbands,
-                                    int npw_max,
-                                    int nrxx,
-                                    int nspin,
-                                    int nat)
+void DFPT_PW::Impl::init_submodules(
+    const DFPT_PW_InitContext &ctx,
+    int nk,
+    int nbands,
+    int npw_max,
+    int nrxx,
+    int nspin,
+    int nat)
 {
     // plain-mixing coefficient: the response Jacobian has strongly
     // negative eigenvalues concentrated on the smallest-G shells (the
@@ -133,7 +134,7 @@ void DFPT_PW::Impl::init_submodules(const DFPT_PW_InitContext& ctx,
     data_.init(&qlist_, nk, nbands, npw_max, nrxx, nspin, nat, ctx.dftu);
 }
 
-void DFPT_PW::init(const DFPT_PW_InitContext& ctx)
+void DFPT_PW::init(const DFPT_PW_InitContext &ctx)
 {
     ModuleBase::TITLE("DFPT_PW", "init");
     ModuleBase::timer::start("DFPT_PW", "init");
@@ -141,11 +142,11 @@ void DFPT_PW::init(const DFPT_PW_InitContext& ctx)
     // mode: the empty Psi / matrix objects still carry the queryable nk /
     // nbands / nrxx shape fields consumed by the init helpers; ucell is
     // always a non-null per the public wrapper (it takes a reference).
-    UnitCell* const ucell = ctx.ucell;
-    const psi::Psi<std::complex<double>>* const psi = ctx.psi;
-    ModulePW::PW_Basis* const pw_rho = ctx.pw_rho;
-    ModulePW::PW_Basis_K* const pw_wfc = ctx.pw_wfc;
-    Structure_Factor* const sf = ctx.sf;
+    UnitCell *const ucell = ctx.ucell;
+    const psi::Psi<std::complex<double>> *const psi = ctx.psi;
+    ModulePW::PW_Basis *const pw_rho = ctx.pw_rho;
+    ModulePW::PW_Basis_K *const pw_wfc = ctx.pw_wfc;
+    Structure_Factor *const sf = ctx.sf;
 
     pimpl_->ucell_ = ucell;
     pimpl_->gs_psi_ = *psi;
@@ -177,10 +178,10 @@ void DFPT_PW::init(const DFPT_PW_InitContext& ctx)
     // (same fail-loud pattern as the metallic-sampling guard above).
     if (ctx.dftu != nullptr)
     {
-        ModuleBase::WARNING_QUIT("DFPT_PW::init",
-                                 "DFT+U with DFPT is not supported yet: the "
-                                 "first-order U response is not implemented "
-                                 "(U0 reservation); rerun with dft_plus_u 0.");
+        ModuleBase::WARNING_QUIT(
+            "DFPT_PW::init", "DFT+U with DFPT is not supported yet: the "
+                             "first-order U response is not implemented "
+                             "(U0 reservation); rerun with dft_plus_u 0.");
     }
 
     pimpl_->setup_q_list(*ucell);
@@ -205,10 +206,11 @@ void DFPT_PW::init(const DFPT_PW_InitContext& ctx)
     ModuleBase::timer::end("DFPT_PW", "init");
 }
 
-int DFPT_PW::Impl::match_commensurate_kq(int ik,
-                                         const ModuleBase::Vector3<double>& q_frac,
-                                         double tol,
-                                         ModuleBase::Vector3<int>& dn_out) const
+int DFPT_PW::Impl::match_commensurate_kq(
+    int ik,
+    const ModuleBase::Vector3<double> &q_frac,
+    double tol,
+    ModuleBase::Vector3<int> &dn_out) const
 {
     // k+q folded into [0,1) direct coordinates must be a ground-state k
     // point (DFPT q meshes are commensurate with the k mesh)
@@ -216,12 +218,12 @@ int DFPT_PW::Impl::match_commensurate_kq(int ik,
     const int nk = pw_wfc_->nks;
     for (int j = 0; j < nk; ++j)
     {
-        const ModuleBase::Vector3<double>& kj = pw_wfc_->kvec_d[j];
+        const ModuleBase::Vector3<double> &kj = pw_wfc_->kvec_d[j];
         const double rx = std::round(kj.x - target.x);
         const double ry = std::round(kj.y - target.y);
         const double rz = std::round(kj.z - target.z);
-        if (std::abs(kj.x - target.x - rx) < tol && std::abs(kj.y - target.y - ry) < tol
-            && std::abs(kj.z - target.z - rz) < tol)
+        if (std::abs(kj.x - target.x - rx) < tol && std::abs(kj.y - target.y - ry) < tol &&
+            std::abs(kj.z - target.z - rz) < tol)
         {
             dn_out.x = static_cast<int>(rx);
             dn_out.y = static_cast<int>(ry);
@@ -233,18 +235,19 @@ int DFPT_PW::Impl::match_commensurate_kq(int ik,
     oss << "k+q is not a point of the ground-state k list: the DFPT "
            "q mesh must be commensurate with the k mesh (and inside "
            "the first Brillouin zone). ik="
-        << ik << " k_d=(" << pw_wfc_->kvec_d[ik].x << "," << pw_wfc_->kvec_d[ik].y << ","
-        << pw_wfc_->kvec_d[ik].z << ") q_d=(" << q_frac.x << "," << q_frac.y << "," << q_frac.z << ") k+q=("
-        << target.x << "," << target.y << "," << target.z << ") nk=" << nk;
+        << ik << " k_d=(" << pw_wfc_->kvec_d[ik].x << "," << pw_wfc_->kvec_d[ik].y << "," << pw_wfc_->kvec_d[ik].z
+        << ") q_d=(" << q_frac.x << "," << q_frac.y << "," << q_frac.z << ") k+q=(" << target.x << "," << target.y
+        << "," << target.z << ") nk=" << nk;
     ModuleBase::WARNING_QUIT("DFPT_PW::build_occ_kq", oss.str());
 }
 
-void DFPT_PW::Impl::copy_occ_state_ball(int ik,
-                                        int ikq,
-                                        const ModuleBase::Vector3<int>& dn,
-                                        const DFPT_KQ_Basis& kq,
-                                        const ModuleBase::Matrix3& ginv,
-                                        std::vector<std::vector<std::complex<double>>>& occ_ik) const
+void DFPT_PW::Impl::copy_occ_state_ball(
+    int ik,
+    int ikq,
+    const ModuleBase::Vector3<int> &dn,
+    const DFPT_KQ_Basis &kq,
+    const ModuleBase::Matrix3 &ginv,
+    std::vector<std::vector<std::complex<double>>> &occ_ik) const
 {
     // reciprocal-basis integer triple -> per-k index of the ikq ball
     // (pw_wfc_ is a PW_Basis_K whose gcar holds a per-k ball layout,
@@ -253,9 +256,8 @@ void DFPT_PW::Impl::copy_occ_state_ball(int ik,
     for (int jgl = 0; jgl < pw_wfc_->npwk[ikq]; ++jgl)
     {
         const ModuleBase::Vector3<double> gf = pw_wfc_->getgcar(ikq, jgl) * ginv;
-        const std::vector<int> key = {static_cast<int>(std::round(gf.x)),
-                                      static_cast<int>(std::round(gf.y)),
-                                      static_cast<int>(std::round(gf.z))};
+        const std::vector<int> key = {
+            static_cast<int>(std::round(gf.x)), static_cast<int>(std::round(gf.y)), static_cast<int>(std::round(gf.z))};
         jgl_of_n[key] = jgl;
     }
 
@@ -275,9 +277,8 @@ void DFPT_PW::Impl::copy_occ_state_ball(int ik,
             // A k+q-ball vector G and an ikq-ball vector G' describe the same
             // plane wave when G' + k_d(ikq) == G + k_d(ik) + q, i.e. G' = G - dn.
             const std::vector<int> key = {static_cast<int>(std::round(gf.x)) - dn.x,
-                                          static_cast<int>(std::round(gf.y)) - dn.y,
-                                          static_cast<int>(std::round(gf.z)) - dn.z};
-            const auto it = jgl_of_n.find(key);
+                static_cast<int>(std::round(gf.y)) - dn.y, static_cast<int>(std::round(gf.z)) - dn.z};
+            const std::map<std::vector<int>, int>::iterator it = jgl_of_n.find(key);
             if (it != jgl_of_n.end())
             {
                 state[igl] = gs_psi_(ikq, m, it->second);

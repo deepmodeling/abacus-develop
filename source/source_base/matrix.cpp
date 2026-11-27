@@ -7,6 +7,7 @@
 #include <cstring>
 #include <cmath>
 #include <limits>
+#include <new>
 
 #include "matrix.h"
 

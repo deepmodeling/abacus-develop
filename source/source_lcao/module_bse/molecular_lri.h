@@ -116,7 +116,7 @@ public:
         ofs << name << ": size = " << vec.size() << std::endl;
         ofs << std::fixed << std::setprecision(4);
         int count = 0;
-        for (auto v : vec)
+        for (int v : vec)
         {
             Tk k = kindex_map[v];
             ofs << "(" << std::setw(6) << k[0] <<", "<< std::setw(6) << k[1] <<", "<< std::setw(6) << k[2] <<") ";
@@ -130,7 +130,7 @@ public:
     {
         ofs << name << ": ";
         int count = 0;
-        for (auto& v : vec)
+        for (const int& v : vec)
         {
             ofs << v << " ";
             count++;
