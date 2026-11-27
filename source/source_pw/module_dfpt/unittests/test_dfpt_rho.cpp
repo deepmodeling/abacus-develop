@@ -7,17 +7,16 @@
 #include "gtest/gtest.h"
 
 #include "dfpt_test_tool.h"
+#include "source_base/constants.h"
+#include "source_base/matrix.h"
 #include "source_basis/module_pw/pw_basis.h"
 #include "source_basis/module_pw/pw_basis_k.h"
 #include "source_cell/qlist.h"
 #include "source_cell/unitcell.h"
-#include "source_pw/module_dfpt/dfpt_pw_data.h"
-#include "source_base/constants.h"
-#include "source_base/matrix.h"
 #include "source_psi/psi.h"
 #include "source_pw/module_dfpt/dfpt_kq_basis.h"
+#include "source_pw/module_dfpt/dfpt_pw_data.h"
 #include "source_pw/module_dfpt/dfpt_rho.h"
-
 
 namespace
 {
@@ -32,10 +31,7 @@ double test_rand()
     return ((g_seed >> 8) & 0xffffff) / 16777216.0 * 2.0 - 1.0;
 }
 
-std::complex<double> crand()
-{
-    return std::complex<double>(test_rand(), test_rand());
-}
+std::complex<double> crand() { return std::complex<double>(test_rand(), test_rand()); }
 
 } // namespace
 
@@ -72,14 +68,14 @@ class DFPTRhoSerialTest : public ::testing::Test
     }
 
     // (re)initialize the bases and the plain rho mixer for a given (k, q)
-    void SetupRho(const ModuleBase::Vector3<double>& k_d, const ModuleBase::Vector3<double>& q_d)
+    void SetupRho(const ModuleBase::Vector3<double> &k_d, const ModuleBase::Vector3<double> &q_d)
     {
         dfpt_test::setup_bases(pw_rho_, pw_wfc_, qlist_, data_, ucell_, k_d, q_d, nbands_, q_cart_);
         rho_.init({1, pw_rho_.nrxx, &pw_rho_, &pw_wfc_, ucell_.G, std::string("rho_plain"), 0.4, 0.0});
     }
 
-    void FillRandomStates(psi::Psi<std::complex<double>>& psi,
-                          std::vector<std::vector<std::vector<std::complex<double>>>>& dpsi)
+    void FillRandomStates(
+        psi::Psi<std::complex<double>> &psi, std::vector<std::vector<std::vector<std::complex<double>>>> &dpsi)
     {
         psi::Psi<std::complex<double>> p(1, nbands_, pw_wfc_.npwk_max, pw_wfc_.npwk[0], true);
         ModuleDFPT::DFPT_KQ_Basis kq;
@@ -101,7 +97,6 @@ class DFPTRhoSerialTest : public ::testing::Test
         psi = p;
     }
 };
-
 
 TEST_F(DFPTRhoSerialTest, ComputeDrhoMatchesBruteForceGSpace)
 {
@@ -153,9 +148,9 @@ TEST_F(DFPTRhoSerialTest, ComputeDrhoMatchesBruteForceGSpace)
             const ModuleBase::Vector3<double> gq = kq.get_gcar(jgl);
             for (size_t j = 0; j < glist.size(); ++j)
             {
-                if (std::abs(glist[j].x - (gq.x - delta.x)) < 1.0e-6
-                    && std::abs(glist[j].y - (gq.y - delta.y)) < 1.0e-6
-                    && std::abs(glist[j].z - (gq.z - delta.z)) < 1.0e-6)
+                if (std::abs(glist[j].x - (gq.x - delta.x)) < 1.0e-6 &&
+                    std::abs(glist[j].y - (gq.y - delta.y)) < 1.0e-6 &&
+                    std::abs(glist[j].z - (gq.z - delta.z)) < 1.0e-6)
                 {
                     aref += std::conj(clist[j]) * dvec[jgl];
                     break;
@@ -301,7 +296,8 @@ TEST_F(DFPTRhoSerialTest, ChargeConservationAtGamma)
 TEST_F(DFPTRhoSerialTest, VHartreeQClosedFormAndZeroMode)
 {
     // single-G amplitude: dv_ha_g[ig] = e2 4 pi / (tpiba2 |G+q|^2) drho_g[ig]
-    const int ig_star = [this]() {
+    const int ig_star = [this]()
+    {
         for (int ig = 0; ig < pw_rho_.npw; ++ig)
         {
             if ((pw_rho_.gcar[ig] + q_cart_) * (pw_rho_.gcar[ig] + q_cart_) > 1.0e-4)
@@ -319,8 +315,8 @@ TEST_F(DFPTRhoSerialTest, VHartreeQClosedFormAndZeroMode)
     rho_.v_hartree_q(q_cart_, drho_g, dv);
     ASSERT_EQ(dv.size(), static_cast<size_t>(pw_rho_.npw));
     const ModuleBase::Vector3<double> w = pw_rho_.gcar[ig_star] + q_cart_;
-    const std::complex<double> expect
-        = ModuleBase::e2 * ModuleBase::FOUR_PI / (pw_rho_.tpiba2 * (w * w)) * drho_g[ig_star];
+    const std::complex<double> expect =
+        ModuleBase::e2 * ModuleBase::FOUR_PI / (pw_rho_.tpiba2 * (w * w)) * drho_g[ig_star];
     for (int ig = 0; ig < pw_rho_.npw; ++ig)
     {
         if (ig == ig_star)
@@ -380,9 +376,9 @@ TEST_F(DFPTRhoSerialTest, DrhocLocalizesAtTheAtomNotItsMirror)
     // tau is stored in lat0-cartesian units (fixture convention: cell edge
     // a_ in lat0 units); the true fractional position divides by a_
     const double inv_a = 1.0 / dfpt_test::cubic_edge;
-    const ModuleBase::Vector3<double> tau_frac(ucell_.atoms[it].tau[ucell_.iat2ia[iat]].x * inv_a,
-                                               ucell_.atoms[it].tau[ucell_.iat2ia[iat]].y * inv_a,
-                                               ucell_.atoms[it].tau[ucell_.iat2ia[iat]].z * inv_a);
+    const ModuleBase::Vector3<double> tau_frac(
+        ucell_.atoms[it].tau[ucell_.iat2ia[iat]].x * inv_a, ucell_.atoms[it].tau[ucell_.iat2ia[iat]].y * inv_a,
+        ucell_.atoms[it].tau[ucell_.iat2ia[iat]].z * inv_a);
     // mirror position folded back into the cell
     ModuleBase::Vector3<double> mirror_frac(1.0 - tau_frac.x, 1.0 - tau_frac.y, 1.0 - tau_frac.z);
 
@@ -438,11 +434,14 @@ TEST_F(DFPTRhoSerialTest, DrhocLocalizesAtTheAtomNotItsMirror)
         ASSERT_GT(wsum, 0.0);
         const ModuleBase::Vector3<double> com(cx / wsum, cy / wsum, cz / wsum);
         // minimum-image distance: wrap each component into [-0.5, 0.5)
-        auto mindist2 = [](const ModuleBase::Vector3<double>& a,
-                           const ModuleBase::Vector3<double>& b) {
-            double dx = a.x - b.x; dx -= std::round(dx);
-            double dy = a.y - b.y; dy -= std::round(dy);
-            double dz = a.z - b.z; dz -= std::round(dz);
+        auto mindist2 = [](const ModuleBase::Vector3<double> &a, const ModuleBase::Vector3<double> &b)
+        {
+            double dx = a.x - b.x;
+            dx -= std::round(dx);
+            double dy = a.y - b.y;
+            dy -= std::round(dy);
+            double dz = a.z - b.z;
+            dz -= std::round(dz);
             return dx * dx + dy * dy + dz * dz;
         };
         const double dist_atom = mindist2(com, tau_frac);
@@ -498,11 +497,14 @@ TEST_F(DFPTRhoSerialTest, DrhocLocalizesAtTheAtomNotItsMirror)
     ASSERT_GT(wsum, 0.0);
     const ModuleBase::Vector3<double> com2(cx / wsum, cy / wsum, cz / wsum);
     // same minimum-image comparison as above
-    auto mindist2 = [](const ModuleBase::Vector3<double>& a,
-                       const ModuleBase::Vector3<double>& b) {
-        double dx = a.x - b.x; dx -= std::round(dx);
-        double dy = a.y - b.y; dy -= std::round(dy);
-        double dz = a.z - b.z; dz -= std::round(dz);
+    auto mindist2 = [](const ModuleBase::Vector3<double> &a, const ModuleBase::Vector3<double> &b)
+    {
+        double dx = a.x - b.x;
+        dx -= std::round(dx);
+        double dy = a.y - b.y;
+        dy -= std::round(dy);
+        double dz = a.z - b.z;
+        dz -= std::round(dz);
         return dx * dx + dy * dy + dz * dz;
     };
     const double d2a = mindist2(com2, tau_frac);

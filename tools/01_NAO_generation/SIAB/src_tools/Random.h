@@ -9,7 +9,7 @@ class Random
     Random();
     ~Random();
 
-    static void between0and1(double* v, const int& num)
+    static void between0and1(double *v, const int &num)
     {
         assert(v != NULL);
         assert(num > 1);
@@ -19,29 +19,24 @@ class Random
         }
     }
 
-    static double betweenMinus2and2(void)
-    {
-        return 2.0 * betweenMinus1and1();
-    }
+    static double betweenMinus2and2(void) { return 2.0 * betweenMinus1and1(); }
 
     static double betweenMinus1and1(void)
     {
         int a = std::rand() % 2;
         if (a == 0)
+        {
             return between0and1();
+        }
         else if (a == 1)
+        {
             return betweenMinus1and0();
+        }
     }
 
-    static double between0and1(void)
-    {
-        return static_cast<double>(std::rand()) / RAND_MAX;
-    }
+    static double between0and1(void) { return static_cast<double>(std::rand()) / RAND_MAX; }
 
-    static double betweenMinus1and0(void)
-    {
-        return -static_cast<double>(std::rand()) / RAND_MAX;
-    }
+    static double betweenMinus1and0(void) { return -static_cast<double>(std::rand()) / RAND_MAX; }
 };
 
 #endif

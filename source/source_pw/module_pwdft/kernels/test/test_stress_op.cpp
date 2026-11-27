@@ -1,7 +1,7 @@
 #include "source_pw/module_pwdft/kernels/stress_op.h"
 
-#include <gtest/gtest.h>
 #include <complex>
+#include <gtest/gtest.h>
 #include <vector>
 
 namespace
@@ -80,17 +80,16 @@ struct DeltaSpinStressFixture
             {
                 const int index = row + proj;
                 const int iat = atom_of(proj);
-                const std::complex<double> up = std::complex<double>(b[index])
-                    + displacement * std::complex<double>(db[index]);
+                const std::complex<double> up =
+                    std::complex<double>(b[index]) + displacement * std::complex<double>(db[index]);
                 double value = sign * lambda[iat * 3 + 2] * std::norm(up);
                 if (npol == 2)
                 {
-                    const std::complex<double> down = std::complex<double>(b[index + nkb])
-                        + displacement * std::complex<double>(db[index + nkb]);
+                    const std::complex<double> down =
+                        std::complex<double>(b[index + nkb]) + displacement * std::complex<double>(db[index + nkb]);
                     const std::complex<double> cross = std::conj(up) * down;
-                    value = lambda[iat * 3] * 2 * cross.real()
-                        + lambda[iat * 3 + 1] * 2 * cross.imag()
-                        + lambda[iat * 3 + 2] * (std::norm(up) - std::norm(down));
+                    value = lambda[iat * 3] * 2 * cross.real() + lambda[iat * 3 + 1] * 2 * cross.imag() +
+                            lambda[iat * 3 + 2] * (std::norm(up) - std::norm(down));
                 }
                 result += weight * value;
             }
@@ -98,7 +97,11 @@ struct DeltaSpinStressFixture
         return result;
     }
 
-    void check(const std::vector<Real>& stress, const int npol, const int axis, const double tolerance) const
+    void check(
+        const std::vector<Real> &stress,
+        const int npol,
+        const int axis,
+        const double tolerance) const
     {
         const double h = 1e-4;
         const double ep = energy(npol, h);
@@ -108,11 +111,11 @@ struct DeltaSpinStressFixture
         EXPECT_NEAR(stress[0] - Real(0.125), expected, tolerance) << "npol=" << npol << " axis=" << axis;
     }
 
-    void cpu(const int npol, std::vector<Real>& stress) const
+    void cpu(const int npol, std::vector<Real> &stress) const
     {
         hamilt::cal_stress_nl_op<Real, base_device::DEVICE_CPU>()(
-            nullptr, nkb, occupied, 2, wg_nc, ik, npol, nh, na,
-            weights.data(), lambda.data(), isk, b.data(), db.data(), stress.data());
+            nullptr, nkb, occupied, 2, wg_nc, ik, npol, nh, na, weights.data(), lambda.data(), isk, b.data(), db.data(),
+            stress.data());
     }
 };
 
@@ -137,8 +140,5 @@ void check_cpu(const double tolerance)
     }
 }
 
-TEST(DeltaSpinStress, CpuDoubleEnergyDerivative)
-{
-    check_cpu<double>(1e-10);
-}
+TEST(DeltaSpinStress, CpuDoubleEnergyDerivative) { check_cpu<double>(1e-10); }
 } // namespace

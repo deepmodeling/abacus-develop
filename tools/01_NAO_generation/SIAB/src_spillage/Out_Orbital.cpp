@@ -3,13 +3,9 @@
 #include "../src_parallel/parallel_reduce.h"
 #include "tools.h"
 
-Out_Orbital::Out_Orbital()
-{
-}
+Out_Orbital::Out_Orbital() {}
 
-Out_Orbital::~Out_Orbital()
-{
-}
+Out_Orbital::~Out_Orbital() {}
 
 void Out_Orbital::write(void)
 {
@@ -36,7 +32,7 @@ void Out_Orbital::write(void)
     return;
 }
 
-void Out_Orbital::version_information(ofstream& ofs)
+void Out_Orbital::version_information(ofstream &ofs)
 {
     ofs << "\n <VERSION>";
     ofs << "\n AUTHOR : Mohan Chen";
@@ -50,7 +46,7 @@ void Out_Orbital::version_information(ofstream& ofs)
     ofs << "\n</VERSION>";
 }
 
-void Out_Orbital::INPUTs_information(ofstream& ofs)
+void Out_Orbital::INPUTs_information(ofstream &ofs)
 {
     ofs << "\n\n<INPUTS>";
     ofs << "\n" << setw(20) << ECUT << " Energy cutoff(Hartree.).";
@@ -72,7 +68,7 @@ void Out_Orbital::INPUTs_information(ofstream& ofs)
     ofs << "\n</INPUTS>";
 }
 
-void Out_Orbital::spillage_information(ofstream& ofs, const int& ilevel)
+void Out_Orbital::spillage_information(ofstream &ofs, const int &ilevel)
 {
     ofs << "\n\n<Spillage>";
     ofs << "\n" << setw(20) << STRNUM << " kinds of structures.";
@@ -106,7 +102,7 @@ void Out_Orbital::spillage_information(ofstream& ofs, const int& ilevel)
     return;
 }
 
-void Out_Orbital::metropolis_information(ofstream& ofs)
+void Out_Orbital::metropolis_information(ofstream &ofs)
 {
     ofs << "\n\n<Metropolis>";
     ofs << "\n" << setw(20) << mz.metro.get_spi_ini_temp() << " Start temperature (Kelvin) for spillage minimization.";
@@ -122,7 +118,7 @@ void Out_Orbital::metropolis_information(ofstream& ofs)
     ofs << "\n</Metropolis>";
 }
 
-void Out_Orbital::c4_information(ofstream& ofs)
+void Out_Orbital::c4_information(ofstream &ofs)
 {
     ofs << "\n\n<Coefficient>";
     ofs << "\n" << setw(20) << NCHIUSED << " Total number of radial orbitals.";
@@ -140,7 +136,9 @@ void Out_Orbital::c4_information(ofstream& ofs)
                 for (int ie = 0; ie < mz.Level[0].ne; ie++)
                 {
                     if (ie % 4 == 0)
+                    {
                         ofs << endl;
+                    }
                     // mohan modify 2009-09-25
                     //					ofs << setw(20) << input.Coef.C4_accumulate(it, L, N, ie);
                     ofs << setw(25) << setiosflags(ios::showpoint) << setiosflags(ios::scientific) << setprecision(15)
@@ -153,7 +151,7 @@ void Out_Orbital::c4_information(ofstream& ofs)
     return;
 }
 
-void Out_Orbital::mkb_information(ofstream& ofs)
+void Out_Orbital::mkb_information(ofstream &ofs)
 {
     ofs_running << "\n mkb_information." << endl;
     if (MY_RANK == 0)
@@ -163,7 +161,7 @@ void Out_Orbital::mkb_information(ofstream& ofs)
     }
 
     double sum0 = 0.0;
-    double* sum1 = new double[NBANDS];
+    double *sum1 = new double[NBANDS];
     ZEROS(sum1, NBANDS);
 
     int bands_start;
@@ -211,8 +209,8 @@ void Out_Orbital::mkb_information(ofstream& ofs)
 
                 for (int ik = 0; ik < mz.Level[il].data[is].nks; ik++)
                 {
-                    mm += mz.Level[il].data[is].Mkb(ik, ib) * mz.Level[il].data[is].weight[ik] / (double)bands_number
-                          / (double)STRNUM;
+                    mm += mz.Level[il].data[is].Mkb(ik, ib) * mz.Level[il].data[is].weight[ik] / (double)bands_number /
+                          (double)STRNUM;
                 }
 #ifdef __MPI
                 Parallel_Reduce::reduce_double_allpool(mm);

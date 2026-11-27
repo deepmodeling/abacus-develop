@@ -55,7 +55,7 @@ class InputTest : public testing::Test
         const std::string& label,
         std::vector<std::pair<std::string, ModuleIO::Input_Item>>& input_lists)
     {
-        auto it = std::find_if(
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = std::find_if(
             input_lists.begin(),
             input_lists.end(),
             [&label](const std::pair<std::string, ModuleIO::Input_Item>& item) { return item.first == label; });
@@ -130,6 +130,23 @@ TEST_F(InputTest, InvalidExplicitDomainDoesNotReachReadOrResetHooks)
     EXPECT_FALSE(reset_called);
 }
 
+TEST_F(InputTest, MdThermoFrequencyUsesOnlyOutName)
+{
+    ModuleIO::ReadInput reader(0);
+    EXPECT_NE(find_label("out_thermo_freq", reader.input_lists), reader.input_lists.end());
+    EXPECT_EQ(find_label("md_thermo_freq", reader.input_lists), reader.input_lists.end());
+
+    const std::string filename = testing::TempDir() + "abacus_md_thermo_frequency_INPUT";
+    {
+        std::ofstream input(filename.c_str());
+        input << "INPUT_PARAMETERS\nmd_thermo_freq 2\n";
+    }
+    Parameter param;
+    const std::string error = reader.read_txt_input(param, filename);
+    EXPECT_THAT(error, testing::HasSubstr("Unknown INPUT parameter 'md_thermo_freq'"));
+    std::remove(filename.c_str());
+}
+
 TEST_F(InputTest, OutDosAndOutMatXcRejectMalformedTokens)
 {
     // Both options are read as integer vectors, whose domain skips the
@@ -138,7 +155,7 @@ TEST_F(InputTest, OutDosAndOutMatXcRejectMalformedTokens)
     auto prepare = [&](const std::string& label, const std::vector<std::string>& tokens) {
         ModuleIO::ReadInput reader(0);
         Parameter param;
-        auto item = find_label(label, reader.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator item = find_label(label, reader.input_lists);
         if (item == reader.input_lists.end())
         {
             return std::string("missing label ") + label;
@@ -187,7 +204,7 @@ TEST_F(InputTest, RelaxMethod)
     ModuleIO::ReadInput readinput(0);
     readinput.check_ntype_flag = false;
     Parameter param;
-    auto it = find_label("relax_method", readinput.input_lists);
+    std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("relax_method", readinput.input_lists);
 
     EXPECT_EQ(TestParameters::input(param).relax_method, "cg");
     EXPECT_EQ(it->second.type, "String");
@@ -235,7 +252,7 @@ TEST_F(InputTest, PccSelectionAndUnsupportedCombinations)
     input.esolver_type = "ksdft";
     input.basis_type = "pw";
     input.calculation = "scf";
-    auto it = find_label("assume_isolated", readinput.input_lists);
+    std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("assume_isolated", readinput.input_lists);
     ASSERT_NE(it, readinput.input_lists.end());
     it->second.str_values = {"pcc_0d"};
     it->second.read_value(it->second, param);
@@ -270,7 +287,7 @@ TEST_F(InputTest, PccSelectionAndUnsupportedCombinations)
     input = valid;
     input.assume_isolated = "pcc_2d";
     check_item(it->second, param);
-    auto axis = find_label("pcc_2d_axis", readinput.input_lists);
+    std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator axis = find_label("pcc_2d_axis", readinput.input_lists);
     ASSERT_NE(axis, readinput.input_lists.end());
     for (int value = 0; value < 3; ++value)
     {
@@ -360,7 +377,7 @@ TEST_F(InputTest, Item_test)
     std::string output = "";
 
     { // calculation
-        auto it = find_label("calculation", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("calculation", readinput.input_lists);
         TestParameters::input(param).calculation = "get_pchg";
         TestParameters::input(param).basis_type = "pw";
         testing::internal::CaptureStdout();
@@ -389,7 +406,7 @@ TEST_F(InputTest, Item_test)
     }
 
     { // socket_driver
-        auto it = find_label("socket_driver", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("socket_driver", readinput.input_lists);
         TestParameters::input(param).socket_driver = true;
         TestParameters::input(param).calculation = "nscf";
         testing::internal::CaptureStdout();
@@ -404,7 +421,7 @@ TEST_F(InputTest, Item_test)
     }
 
     { // esolver_type
-        auto it = find_label("esolver_type", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("esolver_type", readinput.input_lists);
         TestParameters::input(param).esolver_type = "none";
         testing::internal::CaptureStdout();
         EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
@@ -426,14 +443,14 @@ TEST_F(InputTest, Item_test)
         EXPECT_THAT(output, testing::HasSubstr("esolver_type=lr requires calculation=nscf"));
     }
     { // nspin
-        auto it = find_label("nspin", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("nspin", readinput.input_lists);
         TestParameters::input(param).noncolin = false;
         TestParameters::input(param).nspin = 3;
         output = it->second.domain.validate_resolved(it->first, {{it->first, it->second.domain.value(param)}});
         EXPECT_THAT(output, testing::HasSubstr("Expected one Integer from {1, 2, 4}"));
     }
     { // smearing_method
-        auto it = find_label("smearing_method", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("smearing_method", readinput.input_lists);
         TestParameters::input(param).smearing_method = "fix";
         testing::internal::CaptureStdout();
         EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
@@ -441,7 +458,7 @@ TEST_F(InputTest, Item_test)
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
     { // kspacing
-        auto it = find_label("kspacing", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("kspacing", readinput.input_lists);
         it->second.str_values = {"1"};
         it->second.read_value(it->second, param);
         EXPECT_EQ(TestParameters::input(param).kspacing[0], 1);
@@ -466,7 +483,7 @@ TEST_F(InputTest, Item_test)
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
     { // nbands
-        auto it = find_label("nbands", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("nbands", readinput.input_lists);
         TestParameters::input(param).nbands = -1;
         testing::internal::CaptureStdout();
         EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
@@ -474,7 +491,7 @@ TEST_F(InputTest, Item_test)
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
     { // symmetry
-        auto it = find_label("symmetry", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("symmetry", readinput.input_lists);
         TestParameters::input(param).symmetry = "default";
         TestParameters::input(param).gamma_only = true;
         it->second.reset_value(it->second, param);
@@ -505,7 +522,7 @@ TEST_F(InputTest, Item_test)
         EXPECT_EQ(TestParameters::input(param).symmetry, "-1");
     }
     { // nelec
-        auto it = find_label("nelec", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("nelec", readinput.input_lists);
         TestParameters::input(param).nelec = -1;
         testing::internal::CaptureStdout();
         EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
@@ -520,13 +537,13 @@ TEST_F(InputTest, Item_test)
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
     { // bndpar
-        auto it = find_label("bndpar", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("bndpar", readinput.input_lists);
         TestParameters::input(param).esolver_type = "sdft";
         TestParameters::input(param).bndpar = 1;
         EXPECT_NO_THROW(check_item(it->second, param));
     }
     { // dft_plus_dmft
-        auto it = find_label("dft_plus_dmft", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("dft_plus_dmft", readinput.input_lists);
         TestParameters::input(param).basis_type = "pw";
         TestParameters::input(param).dft_plus_dmft = true;
         testing::internal::CaptureStdout();
@@ -535,7 +552,7 @@ TEST_F(InputTest, Item_test)
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
     { // mem_saver
-        auto it = find_label("mem_saver", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("mem_saver", readinput.input_lists);
         TestParameters::input(param).mem_saver = 1;
         it->second.str_values = {"1"};
         TestParameters::input(param).calculation = "scf";
@@ -546,7 +563,7 @@ TEST_F(InputTest, Item_test)
         EXPECT_EQ(TestParameters::input(param).mem_saver, 1);
     }
     { // gint_precision
-        auto it = find_label("gint_precision", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("gint_precision", readinput.input_lists);
         TestParameters::input(param).gint_precision = "invalid";
         testing::internal::CaptureStdout();
         EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
@@ -562,14 +579,14 @@ TEST_F(InputTest, Item_test)
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
     { // diag_proc
-        auto it = find_label("diago_proc", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("diago_proc", readinput.input_lists);
         TestParameters::input(param).diago_proc = 0;
         GlobalV::NPROC = 1;
         it->second.reset_value(it->second, param);
         EXPECT_EQ(TestParameters::input(param).diago_proc, 1);
     }
     { // cal_force
-        auto it = find_label("cal_force", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("cal_force", readinput.input_lists);
         TestParameters::input(param).calculation = "cell-relax";
         TestParameters::input(param).cal_force = false;
         TestParameters::input(param).socket_driver = false;
@@ -589,7 +606,7 @@ TEST_F(InputTest, Item_test)
         TestParameters::input(param).socket_driver = false;
     }
     { // ecutrho
-        auto it = find_label("ecutrho", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("ecutrho", readinput.input_lists);
         TestParameters::input(param).ecutwfc = 1;
         TestParameters::input(param).ecutrho = 0;
         it->second.reset_value(it->second, param);
@@ -608,7 +625,7 @@ TEST_F(InputTest, Item_test)
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
     { // pw_diag_thr
-        auto it = find_label("pw_diag_thr", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("pw_diag_thr", readinput.input_lists);
         TestParameters::input(param).pw_diag_thr = 1.0e-2;
         TestParameters::input(param).calculation = "get_s";
         TestParameters::input(param).basis_type = "pw";
@@ -616,7 +633,7 @@ TEST_F(InputTest, Item_test)
         EXPECT_EQ(TestParameters::input(param).pw_diag_thr, 1.0e-5);
     }
     { // nb2d
-        auto it = find_label("nb2d", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("nb2d", readinput.input_lists);
         TestParameters::input(param).nb2d = -1;
         testing::internal::CaptureStdout();
         EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
@@ -624,7 +641,7 @@ TEST_F(InputTest, Item_test)
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
     { // scf_thr
-        auto it = find_label("scf_thr", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("scf_thr", readinput.input_lists);
         TestParameters::input(param).scf_thr = -1;
         TestParameters::input(param).basis_type = "lcao";
         it->second.reset_value(it->second, param);
@@ -643,7 +660,7 @@ TEST_F(InputTest, Item_test)
         EXPECT_EQ(TestParameters::input(param).scf_thr, 1.0e-9);
     }
     { // scf_thr_type
-        auto it = find_label("scf_thr_type", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("scf_thr_type", readinput.input_lists);
         TestParameters::input(param).scf_thr_type = -1;
         TestParameters::input(param).basis_type = "lcao";
         it->second.reset_value(it->second, param);
@@ -655,7 +672,7 @@ TEST_F(InputTest, Item_test)
         EXPECT_EQ(TestParameters::input(param).scf_thr_type, 1);
     }
     { // init_wfc
-        auto it = find_label("init_wfc", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("init_wfc", readinput.input_lists);
         ASSERT_NE(it, readinput.input_lists.end());
         EXPECT_EQ(it->second.type, "Vector of string");
         EXPECT_EQ(TestParameters::input(param).init_wfc, "atomic");
@@ -757,7 +774,7 @@ TEST_F(InputTest, Item_test)
         TestParameters::input(param).calculation = "get_wf";
     }
     { // init_chg
-        auto it = find_label("init_chg", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("init_chg", readinput.input_lists);
         TestParameters::input(param).init_chg = "get_pchg";
         TestParameters::input(param).init_chg = "";
         it->second.reset_value(it->second, param);
@@ -775,7 +792,7 @@ TEST_F(InputTest, Item_test)
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
     { // chg_extrap
-        auto it = find_label("chg_extrap", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("chg_extrap", readinput.input_lists);
         TestParameters::input(param).chg_extrap = "default";
         TestParameters::input(param).calculation = "md";
         it->second.reset_value(it->second, param);
@@ -804,14 +821,14 @@ TEST_F(InputTest, Item_test)
         EXPECT_EQ(TestParameters::input(param).chg_extrap, "atomic");
     }
     { // out_chg
-        auto it = find_label("out_chg", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("out_chg", readinput.input_lists);
         TestParameters::input(param).calculation = "get_wf";
         TestParameters::input(param).out_chg = {0};
         it->second.reset_value(it->second, param);
         EXPECT_EQ(TestParameters::input(param).out_chg[0], 1);
     }
     { // out_pot
-        auto it = find_label("out_pot", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("out_pot", readinput.input_lists);
         TestParameters::input(param).calculation = "scf";
         it->second.str_values = {"1"};
         it->second.read_value(it->second, param);
@@ -824,7 +841,7 @@ TEST_F(InputTest, Item_test)
         EXPECT_EQ(TestParameters::input(param).out_pot[1], 2);
     }
     { // out_sol
-        auto it = find_label("out_sol", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("out_sol", readinput.input_lists);
         it->second.str_values = {"1"};
         it->second.read_value(it->second, param);
         EXPECT_EQ(TestParameters::input(param).out_sol[0], 1);
@@ -876,7 +893,7 @@ TEST_F(InputTest, Item_test)
         TestParameters::input(param).imp_sol = 0;
     }
     { // out_dos
-        auto it = find_label("out_dos", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("out_dos", readinput.input_lists);
         it->second.str_values = {"1"};
         it->second.read_value(it->second, param);
         EXPECT_EQ(TestParameters::input(param).out_dos[0], 1);
@@ -907,7 +924,7 @@ TEST_F(InputTest, Item_test)
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
     { // out_ldos
-        auto it = find_label("out_ldos", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("out_ldos", readinput.input_lists);
         it->second.str_values = {"1"};
         it->second.read_value(it->second, param);
         EXPECT_EQ(TestParameters::input(param).out_ldos[0], 1);
@@ -931,7 +948,7 @@ TEST_F(InputTest, Item_test)
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
     { // stm_bias
-        auto it = find_label("stm_bias", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("stm_bias", readinput.input_lists);
         it->second.str_values = {"2"};
         it->second.read_value(it->second, param);
         EXPECT_EQ(TestParameters::input(param).stm_bias[0], 2);
@@ -963,7 +980,7 @@ TEST_F(InputTest, Item_test)
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
     { // ldos_line
-        auto it = find_label("ldos_line", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("ldos_line", readinput.input_lists);
         it->second.str_values = {"1", "2", "3", "4", "5", "6"};
         it->second.read_value(it->second, param);
         for (int i = 0; i < 6; ++i)
@@ -993,7 +1010,7 @@ TEST_F(InputTest, Item_test)
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
     { // out_band
-        auto it = find_label("out_band", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("out_band", readinput.input_lists);
         it->second.str_values = {"1"};
         it->second.read_value(it->second, param);
         EXPECT_EQ(TestParameters::input(param).out_band[0], 1);
@@ -1016,7 +1033,7 @@ TEST_F(InputTest, Item_test)
         EXPECT_EQ(TestParameters::input(param).out_band[0], 0);
     }
     { // out_proj_band
-        auto it = find_label("out_proj_band", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("out_proj_band", readinput.input_lists);
         TestParameters::input(param).calculation = "get_wf";
         TestParameters::input(param).out_proj_band = true;
         it->second.reset_value(it->second, param);
@@ -1030,7 +1047,7 @@ TEST_F(InputTest, Item_test)
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
     { // read_file_dir
-        auto it = find_label("read_file_dir", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("read_file_dir", readinput.input_lists);
         TestParameters::input(param).read_file_dir = "auto";
         TestParameters::input(param).suffix = "test";
         it->second.reset_value(it->second, param);
@@ -1041,7 +1058,7 @@ TEST_F(InputTest, Item_test)
         EXPECT_EQ(TestParameters::input(param).read_file_dir, "test/");
     }
     { // nx
-        auto it = find_label("nx", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("nx", readinput.input_lists);
         TestParameters::input(param).nx = 1;
         TestParameters::input(param).ny = 0;
         testing::internal::CaptureStdout();
@@ -1050,7 +1067,7 @@ TEST_F(InputTest, Item_test)
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
     { // ny
-        auto it = find_label("ny", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("ny", readinput.input_lists);
         TestParameters::input(param).ny = 1;
         TestParameters::input(param).nz = 0;
         testing::internal::CaptureStdout();
@@ -1059,7 +1076,7 @@ TEST_F(InputTest, Item_test)
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
     { // nz
-        auto it = find_label("nz", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("nz", readinput.input_lists);
         TestParameters::input(param).nz = 1;
         TestParameters::input(param).nx = 0;
         testing::internal::CaptureStdout();
@@ -1068,7 +1085,7 @@ TEST_F(InputTest, Item_test)
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
     { // ndx
-        auto it = find_label("ndx", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("ndx", readinput.input_lists);
         TestParameters::sys(param).double_grid = false;
         TestParameters::input(param).ndx = 2;
         TestParameters::input(param).nx = 1;
@@ -1091,7 +1108,7 @@ TEST_F(InputTest, Item_test)
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
     { // ndy
-        auto it = find_label("ndy", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("ndy", readinput.input_lists);
         TestParameters::sys(param).double_grid = false;
         TestParameters::input(param).ndy = 2;
         TestParameters::input(param).ny = 1;
@@ -1114,7 +1131,7 @@ TEST_F(InputTest, Item_test)
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
     { // ndz
-        auto it = find_label("ndz", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("ndz", readinput.input_lists);
         TestParameters::sys(param).double_grid = false;
         TestParameters::input(param).ndz = 2;
         TestParameters::input(param).nz = 1;
@@ -1137,14 +1154,14 @@ TEST_F(InputTest, Item_test)
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
     { // cell_factor
-        auto it = find_label("cell_factor", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("cell_factor", readinput.input_lists);
         TestParameters::input(param).calculation = "cell-relax";
         TestParameters::input(param).cell_factor = 1.0;
         it->second.reset_value(it->second, param);
         EXPECT_EQ(TestParameters::input(param).cell_factor, 2.0);
     }
     { // ks_sovler
-        auto it = find_label("ks_solver", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("ks_solver", readinput.input_lists);
         TestParameters::input(param).ks_solver = "default";
         TestParameters::input(param).basis_type = "pw";
         it->second.reset_value(it->second, param);
@@ -1215,7 +1232,7 @@ TEST_F(InputTest, Item_test)
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
     { // relax_nmax
-        auto it = find_label("relax_nmax", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("relax_nmax", readinput.input_lists);
         TestParameters::input(param).calculation = "scf";
         TestParameters::input(param).relax_nmax = 5;
         it->second.reset_value(it->second, param);
@@ -1235,7 +1252,7 @@ TEST_F(InputTest, Item_test)
         EXPECT_EQ(TestParameters::input(param).relax_nmax, 50);
     }
     { // out_stru
-        auto it = find_label("out_stru", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("out_stru", readinput.input_lists);
         TestParameters::input(param).calculation = "get_wf";
         TestParameters::input(param).out_stru = 1;
         // The item is not user-read in this test; the reset rule applies.
@@ -1244,7 +1261,7 @@ TEST_F(InputTest, Item_test)
         EXPECT_EQ(TestParameters::input(param).out_stru, 0);
     }
     { // cal_stress
-        auto it = find_label("cal_stress", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("cal_stress", readinput.input_lists);
         TestParameters::input(param).calculation = "md";
         TestParameters::input(param).cal_stress = false;
         TestParameters::input(param).esolver_type = "lj";
@@ -1252,7 +1269,7 @@ TEST_F(InputTest, Item_test)
         EXPECT_EQ(TestParameters::input(param).cal_stress, true);
     }
     { // fixed_axes
-        auto it = find_label("fixed_axes", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("fixed_axes", readinput.input_lists);
         TestParameters::input(param).fixed_axes = "shape";
         TestParameters::input(param).relax_method = "cg_trad";
         testing::internal::CaptureStdout();
@@ -1268,7 +1285,7 @@ TEST_F(InputTest, Item_test)
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
     { // fixed_ibrav
-        auto it = find_label("fixed_ibrav", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("fixed_ibrav", readinput.input_lists);
         TestParameters::input(param).fixed_ibrav = true;
         TestParameters::input(param).relax_method = "cg_trad";
         testing::internal::CaptureStdout();
@@ -1284,7 +1301,7 @@ TEST_F(InputTest, Item_test)
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
     { // fixed_atoms
-        auto it = find_label("fixed_atoms", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("fixed_atoms", readinput.input_lists);
         TestParameters::input(param).fixed_atoms = true;
         TestParameters::input(param).calculation = "relax";
         testing::internal::CaptureStdout();
@@ -1293,7 +1310,7 @@ TEST_F(InputTest, Item_test)
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
     { // force_thr
-        auto it = find_label("force_thr", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("force_thr", readinput.input_lists);
         TestParameters::input(param).force_thr = -1;
         TestParameters::input(param).force_thr_ev = -1;
         it->second.reset_value(it->second, param);
@@ -1312,7 +1329,7 @@ TEST_F(InputTest, Item_test)
         EXPECT_EQ(TestParameters::input(param).force_thr_ev, 1.0e-3 * 13.6058 / 0.529177);
     }
     { // out_level
-        auto it = find_label("out_level", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("out_level", readinput.input_lists);
         TestParameters::input(param).out_level = "0";
         TestParameters::input(param).calculation = "md";
         TestParameters::sys(param).out_md_control = false;
@@ -1320,7 +1337,7 @@ TEST_F(InputTest, Item_test)
         EXPECT_EQ(TestParameters::input(param).out_level, "m");
     }
     { // out_dmk
-        auto it = find_label("out_dmk", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("out_dmk", readinput.input_lists);
         it->second.str_values = {"1"};
         it->second.read_value(it->second, param);
         EXPECT_EQ(TestParameters::input(param).out_dmk[0], 1);
@@ -1332,7 +1349,7 @@ TEST_F(InputTest, Item_test)
         EXPECT_EQ(TestParameters::input(param).out_dmk[1], 2);
     }
     { // out_dmr
-        auto it = find_label("out_dmr", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("out_dmr", readinput.input_lists);
         it->second.str_values = {"1"};
         it->second.read_value(it->second, param);
         EXPECT_EQ(TestParameters::input(param).out_dmr[0], 1);
@@ -1344,7 +1361,7 @@ TEST_F(InputTest, Item_test)
         EXPECT_EQ(TestParameters::input(param).out_dmr[1], 2);
     }
     { // method_sto
-        auto it = find_label("method_sto", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("method_sto", readinput.input_lists);
         TestParameters::input(param).method_sto = 0;
         testing::internal::CaptureStdout();
         EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
@@ -1352,7 +1369,7 @@ TEST_F(InputTest, Item_test)
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
     { // nbands_sto
-        auto it = find_label("nbands_sto", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("nbands_sto", readinput.input_lists);
         TestParameters::input(param).esolver_type = "sdft";
 
         it->second.str_values = {"all"};
@@ -1405,7 +1422,7 @@ TEST_F(InputTest, Item_test)
         EXPECT_EQ(it->second.final_value.str(), "256");
     }
     { // basis_type
-        auto it = find_label("basis_type", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("basis_type", readinput.input_lists);
         TestParameters::input(param).basis_type = "lcao_in_pw";
         TestParameters::input(param).towannier90 = true;
         it->second.reset_value(it->second, param);
@@ -1418,7 +1435,7 @@ TEST_F(InputTest, Item_test)
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
     { // gamma_only
-        auto it = find_label("gamma_only", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("gamma_only", readinput.input_lists);
         TestParameters::input(param).basis_type = "pw";
         TestParameters::input(param).gamma_only = true;
         std::string filename = TestParameters::input(param).kpoint_file;
@@ -1440,7 +1457,7 @@ TEST_F(InputTest, Item_test)
 
     }
     { // out_mat_r
-        auto it = find_label("out_mat_r", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("out_mat_r", readinput.input_lists);
         TestParameters::input(param).out_hsr[0] = 1;
         TestParameters::sys(param).gamma_only_local = true;
         check_item(it->second, param);
@@ -1458,7 +1475,7 @@ TEST_F(InputTest, Item_test)
         TestParameters::sys(param).gamma_only_local = false;
     }
     { // lcao_ecut
-        auto it = find_label("lcao_ecut", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("lcao_ecut", readinput.input_lists);
         TestParameters::input(param).lcao_ecut = 0;
         TestParameters::input(param).ecutwfc = 1;
         TestParameters::input(param).basis_type = "lcao";
@@ -1466,7 +1483,7 @@ TEST_F(InputTest, Item_test)
         EXPECT_EQ(TestParameters::input(param).lcao_ecut, 1);
     }
     { // out_mat_hs
-        auto it = find_label("out_mat_hs", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("out_mat_hs", readinput.input_lists);
         it->second.str_values = {"1"};
         it->second.read_value(it->second, param);
         EXPECT_EQ(TestParameters::input(param).out_mat_hs[0], 1);
@@ -1479,7 +1496,7 @@ TEST_F(InputTest, Item_test)
 
     }
     { // out_hsk
-        auto it = find_label("out_hsk", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("out_hsk", readinput.input_lists);
         it->second.str_values = {"1", "12"};
         it->second.read_value(it->second, param);
         EXPECT_EQ(TestParameters::input(param).out_hsk[0], 1);
@@ -1498,7 +1515,7 @@ TEST_F(InputTest, Item_test)
         EXPECT_THAT(output, testing::HasSubstr("NPZ output is not implemented"));
     }
     { // out_hsr
-        auto it = find_label("out_hsr", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("out_hsr", readinput.input_lists);
         it->second.str_values = {"1", "10"};
         it->second.read_value(it->second, param);
         EXPECT_EQ(TestParameters::input(param).out_hsr[0], 1);
@@ -1528,19 +1545,19 @@ TEST_F(InputTest, Item_test)
 #endif
     }
     { // out_hr_npz
-        auto it = find_label("out_hr_npz", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("out_hr_npz", readinput.input_lists);
         it->second.str_values = {"1"};
         it->second.read_value(it->second, param);
         EXPECT_EQ(TestParameters::input(param).out_hr_npz, true);
     }
     { // out_hsr_npz
-        auto it = find_label("out_hsr_npz", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("out_hsr_npz", readinput.input_lists);
         it->second.str_values = {"1"};
         it->second.read_value(it->second, param);
         EXPECT_EQ(TestParameters::input(param).out_hsr_npz, true);
     }
     { // out_dm_npz
-        auto it = find_label("out_dm_npz", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("out_dm_npz", readinput.input_lists);
         it->second.str_values = {"1"};
         it->second.read_value(it->second, param);
         EXPECT_EQ(TestParameters::input(param).out_dm_npz, true);
@@ -1552,7 +1569,7 @@ TEST_F(InputTest, OutEbandLegacyAlias)
     {
         ModuleIO::ReadInput readinput(0);
         Parameter param;
-        auto legacy = find_label("out_eband_terms", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator legacy = find_label("out_eband_terms", readinput.input_lists);
         legacy->second.str_values = {"1"};
         legacy->second.read_value(legacy->second, param);
 
@@ -1562,8 +1579,8 @@ TEST_F(InputTest, OutEbandLegacyAlias)
     {
         ModuleIO::ReadInput readinput(0);
         Parameter param;
-        auto primary = find_label("out_eband", readinput.input_lists);
-        auto legacy = find_label("out_eband_terms", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator primary = find_label("out_eband", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator legacy = find_label("out_eband_terms", readinput.input_lists);
         primary->second.str_values = {"0"};
         legacy->second.str_values = {"1"};
         primary->second.read_value(primary->second, param);
@@ -1581,7 +1598,7 @@ TEST_F(InputTest, TdOutputFrequencyLegacyAlias)
         ModuleIO::ReadInput readinput(0);
         Parameter param;
         TestParameters::input(param).esolver_type = "tddft";
-        auto legacy = find_label("out_freq_td", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator legacy = find_label("out_freq_td", readinput.input_lists);
         legacy->second.str_values = {"5"};
         legacy->second.read_value(legacy->second, param);
 
@@ -1593,8 +1610,8 @@ TEST_F(InputTest, TdOutputFrequencyLegacyAlias)
         ModuleIO::ReadInput readinput(0);
         Parameter param;
         TestParameters::input(param).esolver_type = "tddft";
-        auto primary = find_label("out_freq_ion", readinput.input_lists);
-        auto legacy = find_label("out_freq_td", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator primary = find_label("out_freq_ion", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator legacy = find_label("out_freq_td", readinput.input_lists);
         primary->second.str_values = {"2"};
         legacy->second.str_values = {"5"};
         primary->second.read_value(primary->second, param);
@@ -1608,7 +1625,7 @@ TEST_F(InputTest, TdOutputFrequencyLegacyAlias)
         ModuleIO::ReadInput readinput(0);
         Parameter param;
         TestParameters::input(param).esolver_type = "ksdft";
-        auto legacy = find_label("out_freq_td", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator legacy = find_label("out_freq_td", readinput.input_lists);
         legacy->second.str_values = {"5"};
         legacy->second.read_value(legacy->second, param);
 
@@ -1622,8 +1639,8 @@ TEST_F(InputTest, HsOutputAliases)
     {
         ModuleIO::ReadInput readinput(0);
         Parameter param;
-        auto legacy = find_label("out_mat_hs", readinput.input_lists);
-        auto primary = find_label("out_hsk", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator legacy = find_label("out_mat_hs", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator primary = find_label("out_hsk", readinput.input_lists);
         legacy->second.str_values = {"1", "5"};
         primary->second.str_values = {"0"};
         legacy->second.read_value(legacy->second, param);
@@ -1636,8 +1653,8 @@ TEST_F(InputTest, HsOutputAliases)
     {
         ModuleIO::ReadInput readinput(0);
         Parameter param;
-        auto legacy = find_label("out_mat_hs", readinput.input_lists);
-        auto primary = find_label("out_hsk", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator legacy = find_label("out_mat_hs", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator primary = find_label("out_hsk", readinput.input_lists);
         legacy->second.str_values = {"1", "5"};
         primary->second.str_values = {"0"};
         primary->second.read_value(primary->second, param);
@@ -1650,8 +1667,8 @@ TEST_F(InputTest, HsOutputAliases)
     {
         ModuleIO::ReadInput readinput(0);
         Parameter param;
-        auto legacy_text = find_label("out_mat_hs2", readinput.input_lists);
-        auto legacy_npz = find_label("out_hsr_npz", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator legacy_text = find_label("out_mat_hs2", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator legacy_npz = find_label("out_hsr_npz", readinput.input_lists);
         legacy_text->second.str_values = {"1", "5"};
         legacy_npz->second.str_values = {"1"};
         legacy_text->second.read_value(legacy_text->second, param);
@@ -1666,9 +1683,9 @@ TEST_F(InputTest, HsOutputAliases)
     {
         ModuleIO::ReadInput readinput(0);
         Parameter param;
-        auto legacy_text = find_label("out_mat_hs2", readinput.input_lists);
-        auto legacy_npz = find_label("out_hsr_npz", readinput.input_lists);
-        auto primary = find_label("out_hsr", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator legacy_text = find_label("out_mat_hs2", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator legacy_npz = find_label("out_hsr_npz", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator primary = find_label("out_hsr", readinput.input_lists);
         legacy_text->second.str_values = {"1", "5"};
         legacy_npz->second.str_values = {"1"};
         primary->second.str_values = {"1", "12"};
@@ -1685,7 +1702,7 @@ TEST_F(InputTest, HsOutputAliases)
     {
         ModuleIO::ReadInput readinput(0);
         Parameter param;
-        auto legacy_npz = find_label("out_hsr_npz", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator legacy_npz = find_label("out_hsr_npz", readinput.input_lists);
         legacy_npz->second.str_values = {"1"};
         legacy_npz->second.read_value(legacy_npz->second, param);
         readinput.normalize_hs_output_options(param);
@@ -1695,7 +1712,7 @@ TEST_F(InputTest, HsOutputAliases)
     {
         ModuleIO::ReadInput readinput(0);
         Parameter param;
-        auto primary = find_label("out_hsk", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator primary = find_label("out_hsk", readinput.input_lists);
         primary->second.str_values = {"0"};
         primary->second.read_value(primary->second, param);
         TestParameters::input(param).qo_switch = true;
@@ -1713,7 +1730,7 @@ TEST_F(InputTest, HkComponentAliases)
     {
         ModuleIO::ReadInput readinput(0);
         Parameter param;
-        auto legacy = find_label("out_mat_h_t", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator legacy = find_label("out_mat_h_t", readinput.input_lists);
         legacy->second.str_values = {"1", "5"};
         legacy->second.read_value(legacy->second, param);
         readinput.normalize_hs_output_options(param);
@@ -1724,8 +1741,8 @@ TEST_F(InputTest, HkComponentAliases)
     {
         ModuleIO::ReadInput readinput(0);
         Parameter param;
-        auto legacy = find_label("out_mat_h_t", readinput.input_lists);
-        auto primary = find_label("out_mat_tk", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator legacy = find_label("out_mat_h_t", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator primary = find_label("out_mat_tk", readinput.input_lists);
         legacy->second.str_values = {"1", "5"};
         primary->second.str_values = {"1", "3"};
         legacy->second.read_value(legacy->second, param);
@@ -1747,8 +1764,8 @@ TEST_F(InputTest, HkComponentAliases)
         SCOPED_TRACE(pair.first);
         ModuleIO::ReadInput readinput(0);
         Parameter param;
-        auto legacy = find_label(pair.first, readinput.input_lists);
-        auto primary = find_label(pair.second, readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator legacy = find_label(pair.first, readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator primary = find_label(pair.second, readinput.input_lists);
         legacy->second.str_values = {"1", "6"};
         legacy->second.read_value(legacy->second, param);
         readinput.normalize_hs_output_options(param);
@@ -1827,7 +1844,7 @@ TEST_F(InputTest, Item_test2)
 
     std::string output = "";
     { // out_mat_dh
-        auto it = find_label("out_mat_dh", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("out_mat_dh", readinput.input_lists);
         TestParameters::input(param).out_mat_dh[0] = 1;
         TestParameters::input(param).nspin = 4;
         testing::internal::CaptureStdout();
@@ -1836,7 +1853,7 @@ TEST_F(InputTest, Item_test2)
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
     { // dm_to_rho
-        auto it = find_label("dm_to_rho", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("dm_to_rho", readinput.input_lists);
         TestParameters::input(param).dm_to_rho = true;
         GlobalV::NPROC = 2;
         testing::internal::CaptureStdout();
@@ -1862,7 +1879,7 @@ TEST_F(InputTest, Item_test2)
 #endif
     }
     { // out_wfc_lcao
-        auto it = find_label("out_wfc_lcao", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("out_wfc_lcao", readinput.input_lists);
         TestParameters::input(param).out_wfc_lcao = false;
         TestParameters::input(param).qo_switch = true;
         it->second.reset_value(it->second, param);
@@ -1882,7 +1899,7 @@ TEST_F(InputTest, Item_test2)
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
     { // bx
-        auto it = find_label("bx", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("bx", readinput.input_lists);
         TestParameters::input(param).bx = 11;
         testing::internal::CaptureStdout();
         EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
@@ -1897,7 +1914,7 @@ TEST_F(InputTest, Item_test2)
         EXPECT_EQ(TestParameters::input(param).bz, 1);
     }
     { // by
-        auto it = find_label("by", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("by", readinput.input_lists);
         TestParameters::input(param).by = 11;
         testing::internal::CaptureStdout();
         EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
@@ -1905,7 +1922,7 @@ TEST_F(InputTest, Item_test2)
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
     { // bz
-        auto it = find_label("bz", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("bz", readinput.input_lists);
         TestParameters::input(param).bz = 11;
         testing::internal::CaptureStdout();
         EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
@@ -1913,7 +1930,7 @@ TEST_F(InputTest, Item_test2)
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
     { // mixing_beta
-        auto it = find_label("mixing_beta", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("mixing_beta", readinput.input_lists);
         TestParameters::input(param).mixing_beta_mag = 0.2;
         TestParameters::input(param).mixing_gg0_mag = 0.7;
         TestParameters::input(param).mixing_beta = -1;
@@ -1936,7 +1953,7 @@ TEST_F(InputTest, Item_test2)
         EXPECT_DOUBLE_EQ(TestParameters::input(param).mixing_gg0_mag, 0.7);
     }
     { // mixing_beta_mag
-        auto it = find_label("mixing_beta_mag", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("mixing_beta_mag", readinput.input_lists);
         TestParameters::input(param).mixing_beta = 0.3;
         TestParameters::input(param).mixing_beta_mag = -1;
         TestParameters::input(param).nspin = 2;
@@ -1950,7 +1967,7 @@ TEST_F(InputTest, Item_test2)
         EXPECT_EQ(TestParameters::input(param).mixing_beta_mag, 1.6);
     }
     { // dip_cor_flag
-        auto it = find_label("dip_cor_flag", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("dip_cor_flag", readinput.input_lists);
         TestParameters::input(param).dip_cor_flag = true;
         TestParameters::input(param).efield_flag = false;
         testing::internal::CaptureStdout();
@@ -1959,7 +1976,7 @@ TEST_F(InputTest, Item_test2)
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
     { // efield_dir
-        auto it = find_label("efield_dir", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("efield_dir", readinput.input_lists);
         TestParameters::input(param).gate_flag = true;
         TestParameters::input(param).efield_flag = true;
         TestParameters::input(param).dip_cor_flag = false;
@@ -1969,7 +1986,7 @@ TEST_F(InputTest, Item_test2)
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
     { // vdw_s6
-        auto it = find_label("vdw_s6", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("vdw_s6", readinput.input_lists);
         TestParameters::input(param).vdw_s6 = "default";
         TestParameters::input(param).vdw_method = "d2";
         it->second.reset_value(it->second, param);
@@ -1983,7 +2000,7 @@ TEST_F(InputTest, Item_test2)
         EXPECT_EQ(TestParameters::input(param).vdw_s6, "default");
     }
     { // vdw_s8
-        auto it = find_label("vdw_s8", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("vdw_s8", readinput.input_lists);
         TestParameters::input(param).vdw_s8 = "default";
         TestParameters::input(param).vdw_method = "d3_0";
         it->second.reset_value(it->second, param);
@@ -1997,7 +2014,7 @@ TEST_F(InputTest, Item_test2)
         EXPECT_EQ(TestParameters::input(param).vdw_s8, "default");
     }
     { // vdw_a1
-        auto it = find_label("vdw_a1", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("vdw_a1", readinput.input_lists);
         TestParameters::input(param).vdw_a1 = "default";
         TestParameters::input(param).vdw_method = "d3_0";
         it->second.reset_value(it->second, param);
@@ -2011,7 +2028,7 @@ TEST_F(InputTest, Item_test2)
         EXPECT_EQ(TestParameters::input(param).vdw_a1, "default");
     }
     { // vdw_a2
-        auto it = find_label("vdw_a2", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("vdw_a2", readinput.input_lists);
         TestParameters::input(param).vdw_a2 = "default";
         TestParameters::input(param).vdw_method = "d3_0";
         it->second.reset_value(it->second, param);
@@ -2025,7 +2042,7 @@ TEST_F(InputTest, Item_test2)
         EXPECT_EQ(TestParameters::input(param).vdw_a2, "default");
     }
     { // vdw_c6_unit
-        auto it = find_label("vdw_c6_unit", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("vdw_c6_unit", readinput.input_lists);
         TestParameters::input(param).vdw_C6_unit = "test";
         testing::internal::CaptureStdout();
         EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
@@ -2033,7 +2050,7 @@ TEST_F(InputTest, Item_test2)
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
     { // vdw_r0_unit
-        auto it = find_label("vdw_r0_unit", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("vdw_r0_unit", readinput.input_lists);
         TestParameters::input(param).vdw_R0_unit = "test";
         testing::internal::CaptureStdout();
         EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
@@ -2041,7 +2058,7 @@ TEST_F(InputTest, Item_test2)
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
     { // vdw_cutoff_type
-        auto it = find_label("vdw_cutoff_type", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("vdw_cutoff_type", readinput.input_lists);
         TestParameters::input(param).vdw_cutoff_type = "test";
         testing::internal::CaptureStdout();
         EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
@@ -2049,7 +2066,7 @@ TEST_F(InputTest, Item_test2)
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
     { // vdw_cutoff_radius
-        auto it = find_label("vdw_cutoff_radius", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("vdw_cutoff_radius", readinput.input_lists);
         TestParameters::input(param).vdw_cutoff_radius = "default";
         TestParameters::input(param).vdw_method = "d2";
         it->second.reset_value(it->second, param);
@@ -2078,7 +2095,7 @@ TEST_F(InputTest, Item_test2)
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
     { // vdw_radius_unit
-        auto it = find_label("vdw_radius_unit", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("vdw_radius_unit", readinput.input_lists);
         TestParameters::input(param).vdw_radius_unit = "test";
         testing::internal::CaptureStdout();
         EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
@@ -2086,7 +2103,7 @@ TEST_F(InputTest, Item_test2)
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
     { // vdw_cutoff_width2
-        auto it = find_label("vdw_cutoff_width2", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("vdw_cutoff_width2", readinput.input_lists);
         TestParameters::input(param).vdw_cutoff_width2 = -1.0;
         testing::internal::CaptureStdout();
         EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
@@ -2094,7 +2111,7 @@ TEST_F(InputTest, Item_test2)
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
     { // vdw_cutoff_width3
-        auto it = find_label("vdw_cutoff_width3", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("vdw_cutoff_width3", readinput.input_lists);
         TestParameters::input(param).vdw_cutoff_width3 = -1.0;
         testing::internal::CaptureStdout();
         EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
@@ -2102,7 +2119,7 @@ TEST_F(InputTest, Item_test2)
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
     { // vdw_cn_thr
-        auto it = find_label("vdw_cn_thr", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("vdw_cn_thr", readinput.input_lists);
         TestParameters::input(param).vdw_cn_thr = -1;
         testing::internal::CaptureStdout();
         EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
@@ -2110,7 +2127,7 @@ TEST_F(InputTest, Item_test2)
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
     { // vdw_cn_thr_unit
-        auto it = find_label("vdw_cn_thr_unit", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("vdw_cn_thr_unit", readinput.input_lists);
         TestParameters::input(param).vdw_cn_thr_unit = "test";
         testing::internal::CaptureStdout();
         EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
@@ -2118,7 +2135,7 @@ TEST_F(InputTest, Item_test2)
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
     { // vdw_cutoff_period
-        auto it = find_label("vdw_cutoff_period", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("vdw_cutoff_period", readinput.input_lists);
         it->second.str_values = {"1", "1", "1"};
         it->second.read_value(it->second, param);
         EXPECT_EQ(TestParameters::input(param).vdw_cutoff_period[0], 1);
@@ -2138,7 +2155,7 @@ TEST_F(InputTest, Item_test2)
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
     { // exx_fock_alpha
-        auto it = find_label("exx_fock_alpha", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("exx_fock_alpha", readinput.input_lists);
         TestParameters::input(param).exx_fock_alpha[0] = "default";
         TestParameters::input(param).dft_functional = "HF";
         it->second.reset_value(it->second, param);
@@ -2160,7 +2177,7 @@ TEST_F(InputTest, Item_test2)
         EXPECT_EQ(TestParameters::input(param).exx_fock_alpha[0], "0.2");
     }
     { // exx_erfc_alpha
-        auto it = find_label("exx_erfc_alpha", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("exx_erfc_alpha", readinput.input_lists);
         TestParameters::input(param).exx_erfc_alpha[0] = "default";
         TestParameters::input(param).dft_functional = "HSE";
         it->second.reset_value(it->second, param);
@@ -2187,7 +2204,7 @@ TEST_F(InputTest, Item_test2)
         EXPECT_EQ(TestParameters::input(param).exx_erfc_alpha[0], "0.8");
     }
     { // exx_erfc_omega
-        auto it = find_label("exx_erfc_omega", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("exx_erfc_omega", readinput.input_lists);
         TestParameters::input(param).exx_erfc_omega[0] = "default";
         TestParameters::input(param).dft_functional = "lc_pbe";
         it->second.reset_value(it->second, param);
@@ -2219,7 +2236,7 @@ TEST_F(InputTest, Item_test2)
         EXPECT_EQ(TestParameters::input(param).exx_erfc_omega[0], "0.11");
     }
     { // exx_hybrid_step
-        auto it = find_label("exx_hybrid_step", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("exx_hybrid_step", readinput.input_lists);
         TestParameters::input(param).exx_hybrid_step = -1;
         testing::internal::CaptureStdout();
         EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
@@ -2227,7 +2244,7 @@ TEST_F(InputTest, Item_test2)
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
     { // exx_real_number
-        auto it = find_label("exx_real_number", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("exx_real_number", readinput.input_lists);
         TestParameters::input(param).exx_real_number = "default";
         TestParameters::input(param).gamma_only = true;
         it->second.reset_value(it->second, param);
@@ -2239,7 +2256,7 @@ TEST_F(InputTest, Item_test2)
         EXPECT_EQ(TestParameters::input(param).exx_real_number, "0");
     }
     { // exx_singluarity_correction
-        auto it = find_label("exx_singularity_correction", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("exx_singularity_correction", readinput.input_lists);
         TestParameters::input(param).basis_type = "lcao";
         TestParameters::input(param).exx_singularity_correction = "default";
         TestParameters::input(param).dft_functional = "HF";
@@ -2269,7 +2286,7 @@ TEST_F(InputTest, Item_test2)
         EXPECT_EQ(TestParameters::input(param).exx_singularity_correction, "limits");
         EXPECT_FALSE(TestParameters::input(param).exx_gamma_extra);
 
-        auto gamma = find_label("exx_gamma_extra", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator gamma = find_label("exx_gamma_extra", readinput.input_lists);
         gamma->second.str_values = {"true"};
         TestParameters::input(param).exx_gamma_extra = true;
         it->second.reset_value(it->second, param);
@@ -2278,7 +2295,7 @@ TEST_F(InputTest, Item_test2)
         TestParameters::input(param).exx_gamma_extra = false;
     }
     { // exx_ccp_rmesh_times
-        auto it = find_label("exx_ccp_rmesh_times", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("exx_ccp_rmesh_times", readinput.input_lists);
         TestParameters::input(param).exx_ccp_rmesh_times = "default";
         TestParameters::input(param).dft_functional = "HF";
         it->second.reset_value(it->second, param);
@@ -2311,7 +2328,7 @@ TEST_F(InputTest, Item_test2)
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
     { // exx_opt_orb_ecut
-        auto it = find_label("exx_opt_orb_ecut", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("exx_opt_orb_ecut", readinput.input_lists);
         TestParameters::input(param).exx_opt_orb_ecut = -1;
         testing::internal::CaptureStdout();
         EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
@@ -2319,7 +2336,7 @@ TEST_F(InputTest, Item_test2)
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
     { // exx_opt_orb_tolerence
-        auto it = find_label("exx_opt_orb_tolerence", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("exx_opt_orb_tolerence", readinput.input_lists);
         TestParameters::input(param).exx_opt_orb_tolerence = -1;
         testing::internal::CaptureStdout();
         EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
@@ -2327,14 +2344,14 @@ TEST_F(InputTest, Item_test2)
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
     { // exx_symmetry_realspace
-        auto it = find_label("exx_symmetry_realspace", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("exx_symmetry_realspace", readinput.input_lists);
         TestParameters::input(param).exx_symmetry_realspace = true;
         TestParameters::input(param).symmetry="0";
         it->second.reset_value(it->second, param);
         EXPECT_EQ(TestParameters::input(param).exx_symmetry_realspace, false);
     }
     { // rpa_ccp_rmesh_times
-        auto it = find_label("rpa_ccp_rmesh_times", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("rpa_ccp_rmesh_times", readinput.input_lists);
         TestParameters::input(param).rpa_ccp_rmesh_times = 0;
         testing::internal::CaptureStdout();
         EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
@@ -2342,7 +2359,7 @@ TEST_F(InputTest, Item_test2)
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
     { // out_librpa_ver
-        auto it = find_label("out_librpa_ver", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("out_librpa_ver", readinput.input_lists);
         ASSERT_NE(it, readinput.input_lists.end());
         EXPECT_EQ(TestParameters::input(param).out_librpa_ver, 0);
 
@@ -2365,9 +2382,9 @@ TEST_F(InputTest, Item_test2)
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
     { // independent smoothing and radius switches
-        const auto cut_mode_item = find_label("rpa_cut_coulomb", readinput.input_lists);
-        const auto cut_radius_item = find_label("rpa_cut_radius", readinput.input_lists);
-        const auto cut_width_item = find_label("rpa_cut_width", readinput.input_lists);
+        const std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator cut_mode_item = find_label("rpa_cut_coulomb", readinput.input_lists);
+        const std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator cut_radius_item = find_label("rpa_cut_radius", readinput.input_lists);
+        const std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator cut_width_item = find_label("rpa_cut_width", readinput.input_lists);
         ASSERT_NE(cut_mode_item, readinput.input_lists.end());
         ASSERT_NE(cut_radius_item, readinput.input_lists.end());
         ASSERT_NE(cut_width_item, readinput.input_lists.end());
@@ -2389,7 +2406,7 @@ TEST_F(InputTest, Item_test2)
         TestParameters::input(param).rpa_cut_width = 1.091868692359;
     }
     { // berry_phase
-        auto it = find_label("berry_phase", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("berry_phase", readinput.input_lists);
         TestParameters::input(param).berry_phase = true;
         TestParameters::input(param).basis_type = "pw";
         TestParameters::input(param).calculation = "nscf";
@@ -2414,7 +2431,7 @@ TEST_F(InputTest, Item_test2)
         output = testing::internal::GetCapturedStdout();
     }
     { // towannier90
-        auto it = find_label("towannier90", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("towannier90", readinput.input_lists);
         TestParameters::input(param).towannier90 = true;
         TestParameters::input(param).calculation = "nscf";
         TestParameters::input(param).nspin = 2;
@@ -2432,7 +2449,7 @@ TEST_F(InputTest, Item_test2)
         EXPECT_THAT(output, testing::HasSubstr("towannier90"));
     }
     { // wannier_method
-        auto it = find_label("wannier_method", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("wannier_method", readinput.input_lists);
         TestParameters::input(param).towannier90 = true;
         TestParameters::input(param).basis_type = "lcao_in_pw";
         TestParameters::input(param).wannier_method = 0;
@@ -2440,28 +2457,28 @@ TEST_F(InputTest, Item_test2)
         EXPECT_EQ(TestParameters::input(param).wannier_method, 1);
     }
     { // of_hold_rho0
-        auto it = find_label("of_hold_rho0", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("of_hold_rho0", readinput.input_lists);
         TestParameters::input(param).of_wt_rho0 = 1;
         TestParameters::input(param).of_hold_rho0 = false;
         it->second.reset_value(it->second, param);
         EXPECT_EQ(TestParameters::input(param).of_hold_rho0, true);
     }
     { // of_full_pw_dim
-        auto it = find_label("of_full_pw_dim", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("of_full_pw_dim", readinput.input_lists);
         TestParameters::input(param).of_full_pw = false;
         TestParameters::input(param).of_full_pw_dim = 1;
         it->second.reset_value(it->second, param);
         EXPECT_EQ(TestParameters::input(param).of_full_pw_dim, 0);
     }
     { // of_read_kernel
-        auto it = find_label("of_read_kernel", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("of_read_kernel", readinput.input_lists);
         TestParameters::input(param).of_read_kernel = true;
         TestParameters::input(param).of_kinetic = "none";
         it->second.reset_value(it->second, param);
         EXPECT_EQ(TestParameters::input(param).of_read_kernel, false);
     }
     { // of_ml_gene_data
-        auto it = find_label("of_ml_gene_data", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("of_ml_gene_data", readinput.input_lists);
 
         TestParameters::input(param).of_ml_gene_data = true;
         TestParameters::input(param).esolver_type = "ofdft";
@@ -2491,28 +2508,28 @@ TEST_F(InputTest, Item_test2)
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
     { // dft_plus_u
-        auto it = find_label("dft_plus_u", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("dft_plus_u", readinput.input_lists);
         TestParameters::input(param).dft_plus_u = 1;
         TestParameters::input(param).l_channel = {-1, -1};
         it->second.reset_value(it->second, param);
         EXPECT_EQ(TestParameters::input(param).dft_plus_u, 0);
     }
     { // uramping
-        auto it = find_label("uramping", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("uramping", readinput.input_lists);
         TestParameters::sys(param).uramping = 1;
         TestParameters::input(param).l_channel = {-1, -1};
         it->second.reset_value(it->second, param);
         EXPECT_EQ(TestParameters::sys(param).uramping, 0);
     }
     { // onsite_radius
-        auto it = find_label("onsite_radius", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("onsite_radius", readinput.input_lists);
         TestParameters::input(param).onsite_radius = 0.0;
         TestParameters::input(param).dft_plus_u = 1;
         it->second.reset_value(it->second, param);
         EXPECT_EQ(TestParameters::input(param).onsite_radius, 3.0);
     }
     { // hubbard_u
-        auto it = find_label("hubbard_u", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("hubbard_u", readinput.input_lists);
         TestParameters::input(param).ntype = 2;
         it->second.str_values = {"1.0", "2.0"};
         TestParameters::sys(param).hubbard_u = {1.0, 2.0};
@@ -2531,7 +2548,7 @@ TEST_F(InputTest, Item_test2)
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
     { // orbital_corr
-        auto it = find_label("orbital_corr", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("orbital_corr", readinput.input_lists);
         TestParameters::input(param).ntype = 2;
         it->second.str_values = {"1", "2"};
         TestParameters::input(param).l_channel = {1, 2};
@@ -2550,7 +2567,7 @@ TEST_F(InputTest, Item_test2)
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
     { // bessel_nao_ecut
-        auto it = find_label("bessel_nao_ecut", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("bessel_nao_ecut", readinput.input_lists);
         TestParameters::input(param).bessel_nao_ecut = "default";
         TestParameters::input(param).ecutwfc = 1.0;
         it->second.reset_value(it->second, param);
@@ -2563,7 +2580,7 @@ TEST_F(InputTest, Item_test2)
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
     { // bessel_nao_rcut
-        auto it = find_label("bessel_nao_rcut", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("bessel_nao_rcut", readinput.input_lists);
         TestParameters::input(param).bessel_nao_rcuts = {-1};
         testing::internal::CaptureStdout();
         EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
@@ -2571,7 +2588,7 @@ TEST_F(InputTest, Item_test2)
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
     { // bessel_descriptor_ecut
-        auto it = find_label("bessel_descriptor_ecut", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("bessel_descriptor_ecut", readinput.input_lists);
         TestParameters::input(param).bessel_descriptor_ecut = "default";
         TestParameters::input(param).ecutwfc = 1.0;
         it->second.reset_value(it->second, param);
@@ -2584,7 +2601,7 @@ TEST_F(InputTest, Item_test2)
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
     { // bessel_descriptor_rcut
-        auto it = find_label("bessel_descriptor_rcut", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("bessel_descriptor_rcut", readinput.input_lists);
         TestParameters::input(param).bessel_descriptor_rcut = -1;
         testing::internal::CaptureStdout();
         EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
@@ -2592,13 +2609,13 @@ TEST_F(InputTest, Item_test2)
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
     { // sc_mag_switch
-        auto it = find_label("sc_mag_switch", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("sc_mag_switch", readinput.input_lists);
         TestParameters::input(param).sc_mag_switch = true;
         // Since sc_mag_switch check is disabled, just call the function without expecting exit
         check_item(it->second, param);
     }
     { // sc_thr
-        auto it = find_label("sc_thr", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("sc_thr", readinput.input_lists);
         TestParameters::input(param).sc_thr = -1;
         testing::internal::CaptureStdout();
         EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
@@ -2606,7 +2623,7 @@ TEST_F(InputTest, Item_test2)
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
     { // nsc
-        auto it = find_label("nsc", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("nsc", readinput.input_lists);
         TestParameters::input(param).nsc = 0;
         testing::internal::CaptureStdout();
         EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
@@ -2614,7 +2631,7 @@ TEST_F(InputTest, Item_test2)
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
     { // nsc_min
-        auto it = find_label("nsc_min", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("nsc_min", readinput.input_lists);
         TestParameters::input(param).nsc_min = 0;
         testing::internal::CaptureStdout();
         EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
@@ -2622,7 +2639,7 @@ TEST_F(InputTest, Item_test2)
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
     { // alpha_trial
-        auto it = find_label("alpha_trial", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("alpha_trial", readinput.input_lists);
         TestParameters::input(param).alpha_trial = -1;
         testing::internal::CaptureStdout();
         EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
@@ -2630,7 +2647,7 @@ TEST_F(InputTest, Item_test2)
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
     { // sccut
-        auto it = find_label("sccut", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("sccut", readinput.input_lists);
         TestParameters::input(param).sccut = -1;
         testing::internal::CaptureStdout();
         EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
@@ -2638,7 +2655,7 @@ TEST_F(InputTest, Item_test2)
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
     { // sc_scf_thr
-        auto it = find_label("sc_scf_thr", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("sc_scf_thr", readinput.input_lists);
         TestParameters::input(param).sc_scf_thr = -1e-3;
         testing::internal::CaptureStdout();
         EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
@@ -2646,12 +2663,12 @@ TEST_F(InputTest, Item_test2)
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
     { // qo_thr
-        auto it = find_label("qo_thr", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("qo_thr", readinput.input_lists);
         TestParameters::input(param).qo_thr = 1e-5;
         check_item(it->second, param);
     }
     { // qo_strategy
-        auto it = find_label("qo_strategy", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("qo_strategy", readinput.input_lists);
         TestParameters::input(param).ntype = 2;
 
         TestParameters::input(param).qo_basis = "hydrogen";
@@ -2683,7 +2700,7 @@ TEST_F(InputTest, Item_test2)
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
     { // qo_screening_coeff
-        auto it = find_label("qo_screening_coeff", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("qo_screening_coeff", readinput.input_lists);
         TestParameters::input(param).ntype = 2;
 
         it->second.str_values = {"0.2"};
@@ -2723,23 +2740,23 @@ TEST_F(InputTest, Item_test2)
     { // diag_subspace
         std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it
             = find_label("diag_subspace", readinput.input_lists);
-        EXPECT_EQ(it->second.get_availability(), "basis_type==pw and ks_solver==dav_subspace");
+        EXPECT_EQ(it->second.get_availability(), "basis_type==pw and (ks_solver==dav_subspace or ks_solver==lobpcg)");
     }
     { // md_nstep
-        auto it = find_label("md_nstep", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("md_nstep", readinput.input_lists);
         TestParameters::input(param).mdp.md_nstep = 0;
         it->second.reset_value(it->second, param);
         EXPECT_EQ(TestParameters::input(param).mdp.md_nstep, 50);
     }
-    { // md_thermo_freq
+    { // out_thermo_freq
         std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it
-            = find_label("md_thermo_freq", readinput.input_lists);
+            = find_label("out_thermo_freq", readinput.input_lists);
         it->second.str_values = {"100"};
         it->second.read_value(it->second, param);
-        EXPECT_EQ(TestParameters::input(param).mdp.md_thermo_freq, 100);
+        EXPECT_EQ(TestParameters::input(param).mdp.out_thermo_freq, 100);
     }
     { // md_prec_level
-        auto it = find_label("md_prec_level", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("md_prec_level", readinput.input_lists);
         TestParameters::input(param).mdp.md_prec_level = 1;
         TestParameters::input(param).calculation = "vc-relax";
         it->second.reset_value(it->second, param);
@@ -2752,7 +2769,7 @@ TEST_F(InputTest, Item_test2)
         EXPECT_EQ(TestParameters::input(param).mdp.md_prec_level, 0);
     }
     { // md_tfreq
-        auto it = find_label("md_tfreq", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("md_tfreq", readinput.input_lists);
         TestParameters::input(param).mdp.md_tfreq = 0;
         TestParameters::input(param).calculation = "md";
         TestParameters::input(param).mdp.md_dt = 1.0;
@@ -2760,7 +2777,7 @@ TEST_F(InputTest, Item_test2)
         EXPECT_EQ(TestParameters::input(param).mdp.md_tfreq, 1.0 / 40 / 1.0);
     }
     { // md_pfreq
-        auto it = find_label("md_pfreq", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("md_pfreq", readinput.input_lists);
         TestParameters::input(param).mdp.md_pfreq = 0;
         TestParameters::input(param).calculation = "md";
         TestParameters::input(param).mdp.md_dt = 1.0;
@@ -2768,7 +2785,7 @@ TEST_F(InputTest, Item_test2)
         EXPECT_EQ(TestParameters::input(param).mdp.md_pfreq, 1.0 / 400 / 1.0);
     }
     { // lj_rule
-        auto it = find_label("lj_rule", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("lj_rule", readinput.input_lists);
         TestParameters::input(param).esolver_type = "lj";
         TestParameters::input(param).mdp.lj_rule = 3;
         testing::internal::CaptureStdout();
@@ -2777,7 +2794,7 @@ TEST_F(InputTest, Item_test2)
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
     { // lj_rcut
-        auto it = find_label("lj_rcut", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("lj_rcut", readinput.input_lists);
         TestParameters::input(param).ntype = 2;
         TestParameters::input(param).esolver_type = "lj";
         it->second.str_values = {"1.0", "2.0"};
@@ -2795,7 +2812,7 @@ TEST_F(InputTest, Item_test2)
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
     { // lj_epsilon
-        auto it = find_label("lj_epsilon", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("lj_epsilon", readinput.input_lists);
         TestParameters::input(param).ntype = 2;
         TestParameters::input(param).esolver_type = "lj";
         TestParameters::input(param).mdp.lj_epsilon = {1.0};
@@ -2806,7 +2823,7 @@ TEST_F(InputTest, Item_test2)
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
     { // lj_sigma
-        auto it = find_label("lj_sigma", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("lj_sigma", readinput.input_lists);
         TestParameters::input(param).ntype = 2;
         TestParameters::input(param).esolver_type = "lj";
         TestParameters::input(param).mdp.lj_sigma = {1.0};
@@ -2819,7 +2836,7 @@ TEST_F(InputTest, Item_test2)
     // nocc no longer has a reset_value here: it's resolved from ground-state spin populations
     // after SCF (see esolver_lr_lcao_tddft.cpp), not at INPUT-parse time.
     { // lr_grad_solver
-        auto it = find_label("lr_grad_solver", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("lr_grad_solver", readinput.input_lists);
         for (const std::string solver : { "cg", "lapack" })
         {
             TestParameters::input(param).lr_grad_solver = solver;
@@ -2858,7 +2875,7 @@ TEST_F(InputTest, Item_test_out_mat_vec)
     Parameter param;
 
     { // out_mat_dh
-        auto it = find_label("out_mat_dh", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("out_mat_dh", readinput.input_lists);
         it->second.str_values = {"1"};
         it->second.read_value(it->second, param);
         EXPECT_EQ(TestParameters::input(param).out_mat_dh[0], 1);
@@ -2870,7 +2887,7 @@ TEST_F(InputTest, Item_test_out_mat_vec)
         EXPECT_EQ(TestParameters::input(param).out_mat_dh[1], 12);
     }
     { // out_mat_ds
-        auto it = find_label("out_mat_ds", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("out_mat_ds", readinput.input_lists);
         it->second.str_values = {"1"};
         it->second.read_value(it->second, param);
         EXPECT_EQ(TestParameters::input(param).out_mat_ds[0], 1);
@@ -2882,7 +2899,7 @@ TEST_F(InputTest, Item_test_out_mat_vec)
         EXPECT_EQ(TestParameters::input(param).out_mat_ds[1], 10);
     }
     { // out_mat_t
-        auto it = find_label("out_mat_t", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("out_mat_t", readinput.input_lists);
         it->second.str_values = {"1"};
         it->second.read_value(it->second, param);
         EXPECT_EQ(TestParameters::input(param).out_mat_t[0], 1);
@@ -2894,7 +2911,7 @@ TEST_F(InputTest, Item_test_out_mat_vec)
         EXPECT_EQ(TestParameters::input(param).out_mat_t[1], 15);
     }
     { // out_mat_r
-        auto it = find_label("out_mat_r", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("out_mat_r", readinput.input_lists);
         it->second.str_values = {"1"};
         it->second.read_value(it->second, param);
         EXPECT_EQ(TestParameters::input(param).out_mat_r[0], 1);
@@ -2906,7 +2923,7 @@ TEST_F(InputTest, Item_test_out_mat_vec)
         EXPECT_EQ(TestParameters::input(param).out_mat_r[1], 6);
     }
     { // out_mat_xc
-        auto it = find_label("out_mat_xc", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("out_mat_xc", readinput.input_lists);
         it->second.str_values = {"1"};
         it->second.read_value(it->second, param);
         EXPECT_EQ(TestParameters::input(param).out_mat_xc[0], 1);
@@ -2918,7 +2935,7 @@ TEST_F(InputTest, Item_test_out_mat_vec)
         EXPECT_EQ(TestParameters::input(param).out_mat_xc[1], 10);
     }
     { // out_mat_xc2
-        auto it = find_label("out_mat_xc2", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("out_mat_xc2", readinput.input_lists);
         it->second.str_values = {"1"};
         it->second.read_value(it->second, param);
         EXPECT_EQ(TestParameters::input(param).out_mat_xc2[0], 1);
@@ -2936,7 +2953,7 @@ TEST_F(InputTest, OutStru)
     ModuleIO::ReadInput readinput(0);
     readinput.check_ntype_flag = false;
     Parameter param;
-    auto it = find_label("out_stru", readinput.input_lists);
+    std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("out_stru", readinput.input_lists);
     ASSERT_NE(it, readinput.input_lists.end());
 
     // --- Valid numeric values ---
@@ -3074,7 +3091,7 @@ TEST_F(InputTest, OutStru)
 TEST_F(InputTest, LRExternalKernelSupportsSpectraOnly)
 {
     ModuleIO::ReadInput readinput(0);
-    const auto it = find_label("lr_init_xc_kernel", readinput.input_lists);
+    const std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("lr_init_xc_kernel", readinput.input_lists);
     for (const char* const& solver : {"lr", "ks-lr"})
     {
         for (const char* const& mode : {"file", "from_charge_file"})
@@ -3103,7 +3120,7 @@ TEST_F(InputTest, LRExternalKernelSupportsSpectraOnly)
 TEST_F(InputTest, LRFixedFieldRejectsForcesAndRelaxation)
 {
     ModuleIO::ReadInput readinput(0);
-    const auto it = find_label("efield_flag", readinput.input_lists);
+    const std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("efield_flag", readinput.input_lists);
     for (const char* const& solver : {"lr", "ks-lr"})
     {
         Parameter param;
@@ -3132,7 +3149,7 @@ TEST_F(InputTest, PerAtomSccsCavityWidthsDisableSpatialSymmetry)
 {
     ModuleIO::ReadInput readinput(0);
     Parameter param;
-    auto it = find_label("symmetry", readinput.input_lists);
+    std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("symmetry", readinput.input_lists);
     ASSERT_NE(it, readinput.input_lists.end());
     Input_para& input = TestParameters::input(param);
     input.imp_sol = 2;
@@ -3161,7 +3178,7 @@ TEST_F(InputTest, OutMatComponentPrecision)
     {
         ModuleIO::ReadInput readinput(0);
         Parameter param;
-        auto it = find_label("out_mat_vnlk", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("out_mat_vnlk", readinput.input_lists);
         ASSERT_NE(it, readinput.input_lists.end());
         it->second.str_values = {"1", "5"};
         it->second.read_value(it->second, param);
@@ -3173,7 +3190,7 @@ TEST_F(InputTest, OutMatComponentPrecision)
         // copy the whole value vector, not only the enable flag.
         ModuleIO::ReadInput readinput(0);
         Parameter param;
-        auto legacy = find_label("out_mat_h_vnl", readinput.input_lists);
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator legacy = find_label("out_mat_h_vnl", readinput.input_lists);
         ASSERT_NE(legacy, readinput.input_lists.end());
         legacy->second.str_values = {"1", "4"};
         legacy->second.read_value(legacy->second, param);
@@ -3183,10 +3200,7 @@ TEST_F(InputTest, OutMatComponentPrecision)
     }
 }
 
-// MD writes ABACUS STRU frames only and the restart logic reads them back, so
-// CIF output (out_stru = 2) must be rejected instead of silently emitting
-// STRU content under the CIF setting.
-TEST_F(InputTest, OutStruCifRejectedForMd)
+TEST_F(InputTest, OutStruCifAcceptedForMd)
 {
     ModuleIO::ReadInput readinput(0);
     readinput.check_ntype_flag = false;
@@ -3194,8 +3208,7 @@ TEST_F(InputTest, OutStruCifRejectedForMd)
     TestParameters::input(param).calculation = "md";
     TestParameters::input(param).out_stru = 2;
     const std::string error = readinput.prepare_input(param);
-    EXPECT_THAT(error, testing::HasSubstr("out_stru"));
-    EXPECT_THAT(error, testing::HasSubstr("not supported for calculation = md"));
+    EXPECT_TRUE(error.empty()) << error;
 }
 
 TEST_F(InputTest, DfptMixTypeDomainContract)
@@ -3203,7 +3216,7 @@ TEST_F(InputTest, DfptMixTypeDomainContract)
     ModuleIO::ReadInput readinput(0);
     readinput.check_ntype_flag = false;
     Parameter param;
-    auto it = find_label("dfpt_mix_type", readinput.input_lists);
+    std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("dfpt_mix_type", readinput.input_lists);
     ASSERT_NE(it, readinput.input_lists.end());
     Input_para& input = TestParameters::input(param);
 
@@ -3246,7 +3259,7 @@ TEST_F(InputTest, DfptKerkerA2RuleBoundaries)
     ModuleIO::ReadInput readinput(0);
     readinput.check_ntype_flag = false;
     Parameter param;
-    auto it = find_label("dfpt_kerker_a2", readinput.input_lists);
+    std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("dfpt_kerker_a2", readinput.input_lists);
     ASSERT_NE(it, readinput.input_lists.end());
     Input_para& input = TestParameters::input(param);
 
@@ -3289,7 +3302,7 @@ TEST_F(InputTest, DfptBroydenNdimRuleBoundaries)
     ModuleIO::ReadInput readinput(0);
     readinput.check_ntype_flag = false;
     Parameter param;
-    auto it = find_label("dfpt_broyden_ndim", readinput.input_lists);
+    std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("dfpt_broyden_ndim", readinput.input_lists);
     ASSERT_NE(it, readinput.input_lists.end());
     Input_para& input = TestParameters::input(param);
 

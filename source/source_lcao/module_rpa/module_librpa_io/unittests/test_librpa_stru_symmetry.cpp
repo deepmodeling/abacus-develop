@@ -64,7 +64,7 @@ TEST(RpaLriSymmetry, WritesSpinRowsWithAntiunitaryFlag)
     const std::vector<ModuleBase::Matrix3> unitary = {ModuleBase::Matrix3()};
     const std::vector<ModuleBase::Matrix3> antiunitary = {
         ModuleBase::Matrix3(0.0, 1.0, 0.0, -1.0, 0.0, 0.0, 0.0, 0.0, 1.0)};
-    const auto operations
+    const std::vector<RpaLriDetail::LibRpaSpinSymmetryOperation> operations
         = RpaLriDetail::make_librpa_spin_symmetry_operations(ModuleBase::Matrix3(), unitary, antiunitary);
 
     ASSERT_EQ(operations.size(), 2u);
@@ -82,7 +82,7 @@ TEST(RpaLriSymmetry, WritesSpinRowsWithAntiunitaryFlag)
 
 TEST(RpaLriSymmetry, UsesPhysicalLatticeConstantForBothUnits)
 {
-    const auto scales = RpaLriDetail::librpa_stru_unit_scales(5.3);
+    const RpaLriDetail::LibRpaStruUnitScales scales = RpaLriDetail::librpa_stru_unit_scales(5.3);
     EXPECT_DOUBLE_EQ(scales.real_space_bohr, 5.3);
     EXPECT_DOUBLE_EQ(scales.reciprocal_space_bohr_inv, ModuleBase::TWO_PI / 5.3);
     EXPECT_NEAR(scales.real_space_bohr * scales.reciprocal_space_bohr_inv,
@@ -107,7 +107,7 @@ TEST(RpaLriSymmetry, ConvertsNonorthogonalLatticeRotationBeforeSpinMapping)
     const ModuleBase::Matrix3 latvec(1.0, 0.0, 0.0, half, height, 0.0, 0.0, 0.0, 1.0);
     // This fractional operation is a 60-degree rotation of the triangular lattice.
     const ModuleBase::Matrix3 fractional_rotation(0.0, 1.0, 0.0, -1.0, 1.0, 0.0, 0.0, 0.0, 1.0);
-    const auto operations = RpaLriDetail::make_librpa_spin_symmetry_operations(
+    const std::vector<RpaLriDetail::LibRpaSpinSymmetryOperation> operations = RpaLriDetail::make_librpa_spin_symmetry_operations(
         latvec, std::vector<ModuleBase::Matrix3>{fractional_rotation}, {});
 
     ASSERT_EQ(operations.size(), 1u);
@@ -122,7 +122,7 @@ TEST(RpaLriSymmetry, ConvertsNonorthogonalLatticeRotationBeforeSpinMapping)
     EXPECT_NEAR(operations[0].spin_u[7], half, 1e-12);
 
     const ModuleBase::Matrix3 cartesian = latvec.Inverse() * fractional_rotation * latvec;
-    const auto expected = ModuleSymmetry::SpinRotation::so3_to_su2(cartesian);
+    const std::array<std::complex<double>, 4> expected = ModuleSymmetry::SpinRotation::so3_to_su2(cartesian);
     for (int i = 0; i != 4; ++i)
     {
         EXPECT_NEAR(operations[0].spin_u[static_cast<std::size_t>(2 * i)], expected[i].real(), 1e-12);

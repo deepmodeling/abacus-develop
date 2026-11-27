@@ -247,7 +247,7 @@ void SphbesRadials::build_radset(const bool normalize)
 
     delete[] nzeta_;
     nzeta_ = new int[lmax_ + 1](); // zero initialized
-    for (auto const& p: coeff_)
+    for (const std::pair<const std::pair<int, int>, std::vector<double>>& p: coeff_)
     {
         nzeta_[p.first.first]++;
     }
@@ -260,7 +260,7 @@ void SphbesRadials::build_radset(const bool normalize)
 
     nchi_ = coeff_.size();
     chi_ = new NumericalRadial[nchi_];
-    for (auto const& p: coeff_) // p has the form of ( (l, izeta), coeff_q )
+    for (const std::pair<const std::pair<int, int>, std::vector<double>>& p: coeff_) // p has the form of ( (l, izeta), coeff_q )
     {
         int l = p.first.first;
         int izeta = p.first.second;

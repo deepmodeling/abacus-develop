@@ -183,7 +183,7 @@ class XC_Functional
     /// subtracts its short-range components
     static double get_weight(const int id)
     {
-        const auto it = scaling_factor_xc.find(id);
+        const std::map<int, double>::iterator it = scaling_factor_xc.find(id);
         return it != scaling_factor_xc.end() ? it->second : 1.0;
     }
 

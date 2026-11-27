@@ -23,7 +23,7 @@ using OccMatData = std::vector<std::vector<std::vector<ModuleBase::matrix>>>;
 /// @param istep ionic-step index, starting from 0
 /// @param cfg frequency configuration
 /// @return true when out_freq_ion > 0 and istep is an output ionic step
-bool is_ion_step_output_step(int istep, const OccmatOutputCfg& cfg);
+bool is_ion_step_output_step(int istep, const OccmatOutputCfg &cfg);
 
 /// Tell whether the current electronic step is recorded inside the numbered file.
 ///
@@ -31,23 +31,20 @@ bool is_ion_step_output_step(int istep, const OccmatOutputCfg& cfg);
 /// @param conv_esolver whether the electronic SCF is converged at this step
 /// @param cfg frequency configuration
 /// @return true when iter % out_freq_elec == 0, iter == scf_nmax, or converged
-bool is_elec_snapshot_trigger(int iter,
-                              bool conv_esolver,
-                              const OccmatOutputCfg& cfg);
+bool is_elec_snapshot_trigger(int iter, bool conv_esolver, const OccmatOutputCfg &cfg);
 
 /// Build the name of the per-ionic-step occupation-matrix file.
 ///
 /// @param out_dir output directory (including the trailing separator)
 /// @param istep ionic-step index, starting from 0
 /// @return occ_matg{istep+1}.txt
-std::string gen_ion_step_occ_mat_filename(const std::string& out_dir, int istep);
+std::string gen_ion_step_occ_mat_filename(const std::string &out_dir, int istep);
 
 /// Return the full path of the first candidate file that exists in @p dir.
 /// Returns an empty string if none of the candidates exist.
 /// Only the calling process probes the filesystem; callers must arrange
 /// MPI broadcast of the result if other ranks need it.
-std::string find_first_existing_file(const std::string& dir,
-                                     const std::vector<std::string>& candidates);
+std::string find_first_existing_file(const std::string &dir, const std::vector<std::string> &candidates);
 
 /// Append one electronic-step section to the per-ionic-step file.
 ///
@@ -68,14 +65,15 @@ std::string find_first_existing_file(const std::string& dir,
 ///        false records an "N/A" placeholder instead of the matrix body
 /// @param cfg frequency configuration
 /// @param soc_layout storage layout of the nspin == 4 occupation matrix
-void append_ion_step_snapshot(const Plus_U_Base& dftu,
-                              const UnitCell& ucell,
-                              const std::string& global_out_dir,
-                              const OccmatStepInfo& step,
-                              bool conv_esolver,
-                              bool occmat_ready,
-                              const OccmatOutputCfg& cfg,
-                              const OccmatSocLayout& soc_layout);
+void append_ion_step_snapshot(
+    const Plus_U_Base &dftu,
+    const UnitCell &ucell,
+    const std::string &global_out_dir,
+    const OccmatStepInfo &step,
+    bool conv_esolver,
+    bool occmat_ready,
+    const OccmatOutputCfg &cfg,
+    const OccmatSocLayout &soc_layout);
 
 /// Read the local occupation number matrix from file (rank 0 only).
 ///
@@ -88,20 +86,19 @@ void append_ion_step_snapshot(const Plus_U_Base& dftu,
 ///        must reconstruct them from the (n_uu, Re(n_ud), Im(n_ud), n_dd)
 ///        blocks written to the file; LCAO dft_plus_u=1 also uses Pauli
 ///        blocks, while dft_plus_u=2 stores a real 2m x 2m spin-basis matrix.
-void read_occup_m(const UnitCell& ucell,
-                  OccupationMatrix& occ,
-                  const std::vector<int>& l_channel,
-                  const std::string& fn,
-                  int nspin,
-                  int npol,
-                  const OccmatSocLayout& soc_layout);
+void read_occup_m(
+    const UnitCell &ucell,
+    OccupationMatrix &occ,
+    const std::vector<int> &l_channel,
+    const std::string &fn,
+    int nspin,
+    int npol,
+    const OccmatSocLayout &soc_layout);
 
 /// Broadcast the local occupation number matrices from rank 0 to all ranks.
 ///
 /// Implemented in dftu_base_io.cpp (only available in MPI builds).
-void local_occup_bcast(const UnitCell& ucell,
-                       OccupationMatrix& occ,
-                       const std::vector<int>& l_channel);
+void local_occup_bcast(const UnitCell &ucell, OccupationMatrix &occ, const std::vector<int> &l_channel);
 
 /// Create (or truncate) the per-ionic-step file occ_matg{istep+1}.txt and
 /// write its header (rank 0 only).
@@ -109,10 +106,11 @@ void local_occup_bcast(const UnitCell& ucell,
 /// At iter == 1 of an enabled output ionic step, truncates the file and writes
 /// its provenance header. Other calls are no-ops. Truncating here guarantees
 /// that a rerun can not append snapshots from a previous calculation.
-void prepare_ion_step_output(const std::string& global_out_dir,
-                             int istep,
-                             int iter,
-                             const OccmatOutputCfg& cfg);
+void prepare_ion_step_output(
+    const std::string &global_out_dir,
+    int istep,
+    int iter,
+    const OccmatOutputCfg &cfg);
 
 /// Overwrite occ_mat.txt with the occupation matrix of the current
 /// electronic step (rank 0 only).
@@ -130,12 +128,13 @@ void prepare_ion_step_output(const std::string& global_out_dir,
 /// @param step electronic-step metadata and convergence values
 /// @param cfg output configuration; only cfg.out_occ_mat is consulted here
 /// @param soc_layout storage layout of the nspin == 4 occupation matrix
-void write_latest_occmat(const Plus_U_Base& dftu,
-                         const UnitCell& ucell,
-                         const std::string& global_out_dir,
-                         const OccmatStepInfo& step,
-                         const OccmatOutputCfg& cfg,
-                         const OccmatSocLayout& soc_layout);
+void write_latest_occmat(
+    const Plus_U_Base &dftu,
+    const UnitCell &ucell,
+    const std::string &global_out_dir,
+    const OccmatStepInfo &step,
+    const OccmatOutputCfg &cfg,
+    const OccmatSocLayout &soc_layout);
 
 /// Write local occupation matrices to the given stream.
 ///
@@ -144,16 +143,18 @@ void write_latest_occmat(const Plus_U_Base& dftu,
 /// soc_layout tells how the nspin == 4 storage is arranged (PW and LCAO
 /// dft_plus_u=1 Pauli blocks, or LCAO dft_plus_u=2 real spin-basis matrix).
 /// Caller is responsible for opening/closing the stream.
-void write_occup_m(const Plus_U_Base& dftu,
-                   const UnitCell& ucell,
-                   std::ostream& ofs,
-                   const OccmatSocLayout& soc_layout);
+void write_occup_m(
+    const Plus_U_Base &dftu,
+    const UnitCell &ucell,
+    std::ostream &ofs,
+    const OccmatSocLayout &soc_layout);
 
 /// Append sorted occupation eigenvalues as restart-safe comment lines.
-void write_occup_eigenvalues(const Plus_U_Base& dftu,
-                             const UnitCell& ucell,
-                             std::ostream& ofs,
-                             const OccmatSocLayout& soc_layout);
+void write_occup_eigenvalues(
+    const Plus_U_Base &dftu,
+    const UnitCell &ucell,
+    std::ostream &ofs,
+    const OccmatSocLayout &soc_layout);
 
 } // namespace DFTU_BASE
 

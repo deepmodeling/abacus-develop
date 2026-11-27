@@ -9,8 +9,8 @@
 #include "dfpt_pert.h"
 #include "dfpt_pw_data.h"
 #include "dfpt_rho.h"
-#include "source_estate/module_charge/chg_tools.h"
 #include "source_base/parallel_reduce.h"
+#include "source_estate/module_charge/chg_tools.h"
 
 #include <algorithm>
 #include <cmath>
@@ -32,11 +32,16 @@ using DpsiDisp = std::vector<std::vector<std::vector<std::complex<double>>>>;
 /// stash the converged dpsi of one displacement: prefer the per-displacement
 /// store of the two-pass flow; fall back to the working slots for the legacy
 /// interleaved call order
-DpsiDisp stash_dpsi(DFPT_PW_Data& data, int q_idx, int atom_idx, int dir, int nk, int nbands)
+DpsiDisp stash_dpsi(
+    DFPT_PW_Data &data,
+    int q_idx,
+    int atom_idx,
+    int dir,
+    int nk,
+    int nbands)
 {
     DpsiDisp dpsib = data.get_dpsi_disp(atom_idx, dir);
-    if (dpsib.empty() || static_cast<int>(dpsib.size()) < nk
-        || (nk > 0 && static_cast<int>(dpsib[0].size()) < nbands))
+    if (dpsib.empty() || static_cast<int>(dpsib.size()) < nk || (nk > 0 && static_cast<int>(dpsib[0].size()) < nbands))
     {
         dpsib.assign(nk, std::vector<std::vector<std::complex<double>>>(nbands));
         for (int ik = 0; ik < nk; ++ik)
@@ -52,7 +57,12 @@ DpsiDisp stash_dpsi(DFPT_PW_Data& data, int q_idx, int atom_idx, int dir, int nk
 
 /// restore the stashed converged dpsi after the accumulation touched the
 /// working slots (apply_dv reuses the slot of every k/band)
-void restore_dpsi(DFPT_PW_Data& data, int q_idx, int nk, int nbands, const DpsiDisp& dpsib)
+void restore_dpsi(
+    DFPT_PW_Data &data,
+    int q_idx,
+    int nk,
+    int nbands,
+    const DpsiDisp &dpsib)
 {
     for (int ik = 0; ik < nk; ++ik)
     {
@@ -68,12 +78,13 @@ void restore_dpsi(DFPT_PW_Data& data, int q_idx, int nk, int nbands, const DpsiD
 
 /// bare-potential cross sum X_ba = sum_kn wg <dpsi^b | dV^a_ext | psi>;
 /// dV^a_ext must have been built (build_dv) before this call
-std::complex<double> cross_sum(DFPT_Pert& pert,
-                               DFPT_PW_Data& data,
-                               int q_idx,
-                               const DpsiDisp& dpsib,
-                               const psi::Psi<std::complex<double>>& psi,
-                               const ModuleBase::matrix& wg)
+std::complex<double> cross_sum(
+    DFPT_Pert &pert,
+    DFPT_PW_Data &data,
+    int q_idx,
+    const DpsiDisp &dpsib,
+    const psi::Psi<std::complex<double>> &psi,
+    const ModuleBase::matrix &wg)
 {
     const int nk = psi.get_nk();
     const int nbands = psi.get_nbands();
@@ -88,7 +99,7 @@ std::complex<double> cross_sum(DFPT_Pert& pert,
                 continue;
             }
             const std::vector<std::complex<double>> rhs = data.get_dpsi(q_idx, ik, ib);
-            const std::vector<std::complex<double>>& sol = dpsib[ik][ib];
+            const std::vector<std::complex<double>> &sol = dpsib[ik][ib];
             if (rhs.size() != sol.size() || sol.empty())
             {
                 continue;
@@ -107,13 +118,14 @@ std::complex<double> cross_sum(DFPT_Pert& pert,
 /// scatter the band-ib q-carrier chi from the k+q_eff G-shell onto the rho
 /// grid and transform to real space; a carrier of the wrong shape (chi not
 /// stored for this k/band) leaves x_r zero, matching apply_d2vnl
-void scatter_chi_to_r(const ModulePW::PW_Basis& pw_rho,
-                      const std::vector<std::vector<std::complex<double>>>& chi,
-                      int nbands,
-                      int ib,
-                      int npwk_kq,
-                      const DFPT_KQ_Basis& kq,
-                      std::vector<std::complex<double>>& x_r)
+void scatter_chi_to_r(
+    const ModulePW::PW_Basis &pw_rho,
+    const std::vector<std::vector<std::complex<double>>> &chi,
+    int nbands,
+    int ib,
+    int npwk_kq,
+    const DFPT_KQ_Basis &kq,
+    std::vector<std::complex<double>> &x_r)
 {
     std::vector<std::complex<double>> x_recip(pw_rho.npw, std::complex<double>(0.0, 0.0));
     if (static_cast<int>(chi.size()) == nbands && static_cast<int>(chi[ib].size()) == npwk_kq)
@@ -136,13 +148,14 @@ void scatter_chi_to_r(const ModulePW::PW_Basis& pw_rho,
 
 } // namespace
 
-void DFPT_Phon::accumulate_electron(int q_idx,
-                                     int atom_idx,
-                                     int dir,
-                                     const psi::Psi<std::complex<double>>& psi,
-                                     const ModuleBase::matrix& wg,
-                                     DFPT_PW_Data& data,
-                                     const std::vector<std::complex<double>>& dvxc_r)
+void DFPT_Phon::accumulate_electron(
+    int q_idx,
+    int atom_idx,
+    int dir,
+    const psi::Psi<std::complex<double>> &psi,
+    const ModuleBase::matrix &wg,
+    DFPT_PW_Data &data,
+    const std::vector<std::complex<double>> &dvxc_r)
 {
     ModuleBase::TITLE("DFPT_Phon", "accumulate_electron");
     ModuleBase::timer::start("DFPT_Phon", "accumulate_electron");
@@ -177,8 +190,8 @@ void DFPT_Phon::accumulate_electron(int q_idx,
             // external perturbation appears here
             pert_->build_dv(q_idx, iat, idir, data);
             const std::complex<double> cross = cross_sum(*pert_, data, q_idx, dpsib, psi, wg);
-            const double mass_norm
-                = std::sqrt(ucell_->atoms[ucell_->iat2it[atom_idx]].mass * ucell_->atoms[ucell_->iat2it[iat]].mass);
+            const double mass_norm =
+                std::sqrt(ucell_->atoms[ucell_->iat2it[atom_idx]].mass * ucell_->atoms[ucell_->iat2it[iat]].mass);
             dynmat_accum_(rowb, cola) += cross / mass_norm;
             dynmat_accum_(cola, rowb) += std::conj(cross) / mass_norm;
 
@@ -204,11 +217,12 @@ void DFPT_Phon::accumulate_electron(int q_idx,
     ModuleBase::timer::end("DFPT_Phon", "accumulate_electron");
 }
 
-void DFPT_Phon::accum_nlcc_kernel(int atom_idx,
-                                   int dir,
-                                   int q_idx,
-                                   DFPT_PW_Data& data,
-                                   const std::vector<std::complex<double>>& dvxc_r)
+void DFPT_Phon::accum_nlcc_kernel(
+    int atom_idx,
+    int dir,
+    int q_idx,
+    DFPT_PW_Data &data,
+    const std::vector<std::complex<double>> &dvxc_r)
 {
     ModuleBase::TITLE("DFPT_Phon", "accum_nlcc_kernel");
     ModuleBase::timer::start("DFPT_Phon", "accum_nlcc_kernel");
@@ -298,10 +312,10 @@ void DFPT_Phon::accum_nlcc_kernel(int atom_idx,
             // core response; same conjugation swap
             std::complex<double> x_ba(0.0, 0.0);
             const int cola = 3 * iat2 + idir2;
-            if (row_has_core && have_table && cola < static_cast<int>(dvxc_core_->size())
-                && static_cast<int>((*dvxc_core_)[cola].size()) == nrxx)
+            if (row_has_core && have_table && cola < static_cast<int>(dvxc_core_->size()) &&
+                static_cast<int>((*dvxc_core_)[cola].size()) == nrxx)
             {
-                const std::vector<std::complex<double>>& dvxc_b = (*dvxc_core_)[cola];
+                const std::vector<std::complex<double>> &dvxc_b = (*dvxc_core_)[cola];
                 for (int ir = 0; ir < nrxx; ++ir)
                 {
                     x_ba += std::conj(dvxc_b[ir]) * drhoc_a_r[ir];
@@ -331,8 +345,8 @@ void DFPT_Phon::accum_nlcc_diag(int atom_idx, int q_idx)
     ModuleBase::timer::start("DFPT_Phon", "accum_nlcc_diag");
     const int npw = pw_rho_ ? pw_rho_->npw : 0;
     const int nrxx = pw_rho_ ? pw_rho_->nrxx : 0;
-    if (ucell_ == nullptr || pw_rho_ == nullptr || vxc_r_ == nullptr
-        || static_cast<int>(vxc_r_->size()) != nrxx || npw == 0 || accum_q_ != q_idx)
+    if (ucell_ == nullptr || pw_rho_ == nullptr || vxc_r_ == nullptr || static_cast<int>(vxc_r_->size()) != nrxx ||
+        npw == 0 || accum_q_ != q_idx)
     {
         ModuleBase::timer::end("DFPT_Phon", "accum_nlcc_diag");
         return;
@@ -350,10 +364,9 @@ void DFPT_Phon::accum_nlcc_diag(int atom_idx, int q_idx)
     // (a real field: W(-G) = conj(W(G))), so the contraction runs through
     // the same recip2real machinery as every other real-space field and
     // never touches the half-space G-sum convention directly.
-    const pseudo& p = ucell_->atoms[it].ncpp;
+    const pseudo &p = ucell_->atoms[it].ncpp;
     const int mesh = p.msh;
-    const ModuleBase::Vector3<double> tau_cart
-        = ucell_->atoms[it].tau[ucell_->iat2ia[atom_idx]] * ucell_->lat0;
+    const ModuleBase::Vector3<double> tau_cart = ucell_->atoms[it].tau[ucell_->iat2ia[atom_idx]] * ucell_->lat0;
     std::vector<std::complex<double>> w_g(npw);
     // one radial scratch reused across the six tensor-component G passes
     std::vector<double> scratch(mesh);
@@ -367,7 +380,7 @@ void DFPT_Phon::accum_nlcc_diag(int atom_idx, int q_idx)
             std::fill(w_g.begin(), w_g.end(), std::complex<double>(0.0, 0.0));
             for (int ig = 0; ig < npw; ++ig)
             {
-                const ModuleBase::Vector3<double>& gv = pw_rho_->gcar[ig];
+                const ModuleBase::Vector3<double> &gv = pw_rho_->gcar[ig];
                 const double g2 = gv * gv;
                 // the G = 0 shell contributes nothing (G_i G_j factor)
                 if (g2 < 1.0e-12)
@@ -413,13 +426,14 @@ void DFPT_Phon::accum_nlcc_diag(int atom_idx, int q_idx)
     ModuleBase::timer::end("DFPT_Phon", "accum_nlcc_diag");
 }
 
-void DFPT_Phon::accum_d2_same_atom(int atom_idx,
-                                   int dir,
-                                   int iat,
-                                   int idir,
-                                   int rowb,
-                                   const psi::Psi<std::complex<double>>& psi,
-                                   const ModuleBase::matrix& wg)
+void DFPT_Phon::accum_d2_same_atom(
+    int atom_idx,
+    int dir,
+    int iat,
+    int idir,
+    int rowb,
+    const psi::Psi<std::complex<double>> &psi,
+    const ModuleBase::matrix &wg)
 {
     const int cola = 3 * iat + idir;
     if (cola < rowb)

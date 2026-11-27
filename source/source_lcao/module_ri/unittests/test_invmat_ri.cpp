@@ -27,22 +27,22 @@ void check_derivative(const double cutoff, const T phase)
     RI::Tensor<T> generator({3, 3});
     generator(0, 2) = -phase;
     generator(2, 0) = RI::Global_Func::get_conj(phase);
-    const auto v = metric(angle);
-    const auto dv = generator * v - v * generator;
+    const RI::Tensor<T> v = metric(angle);
+    const RI::Tensor<T> dv = generator * v - v * generator;
     const std::array<RI::Tensor<T>, 3> directions = {dv, RI::Tensor<T>({3, 3}), RI::Tensor<T>({3, 3})};
     Inverse_Matrix<T> inverse;
     inverse.input(v);
-    const auto derivatives = inverse.cal_inverse_with_derivatives(directions, cutoff);
+    const std::array<RI::Tensor<T>, 3> derivatives = inverse.cal_inverse_with_derivatives(directions, cutoff);
     Inverse_Matrix<T> plus;
-    const auto displaced_plus = metric(angle + step);
+    const RI::Tensor<T> displaced_plus = metric(angle + step);
     plus.input(displaced_plus);
     plus.cal_inverse(Inverse_Matrix<T>::Method::syev, cutoff);
     Inverse_Matrix<T> minus;
-    const auto displaced_minus = metric(angle - step);
+    const RI::Tensor<T> displaced_minus = metric(angle - step);
     minus.input(displaced_minus);
     minus.cal_inverse(Inverse_Matrix<T>::Method::syev, cutoff);
-    const auto fd = (plus.output() - minus.output()) * T(0.5 / step);
-    const auto response = inverse.output() * v;
+    const RI::Tensor<T> fd = (plus.output() - minus.output()) * T(0.5 / step);
+    const RI::Tensor<T> response = inverse.output() * v;
     for (std::size_t i = 0; i < 9; ++i)
     {
         EXPECT_NEAR(std::abs(derivatives[0].ptr()[i] - fd.ptr()[i]), 0, 2e-6);
@@ -119,7 +119,7 @@ std::vector<RI::Tensor<T>> three_center(const std::array<double, 3>& x, const T 
     }
     for (std::size_t axis = 0; axis < 3; ++axis)
     {
-        const auto derivative = three_center_derivative(axis, phase);
+        const std::vector<RI::Tensor<T>> derivative = three_center_derivative(axis, phase);
         for (std::size_t block = 0; block < 2; ++block)
         {
             a[block] += derivative[block] * T(x[axis]);
@@ -133,8 +133,8 @@ void check_coefficients(const double cutoff, const T phase)
 {
     const double step = 1e-5;
     const std::array<double, 3> x = {0.13, -0.11, 0.07};
-    const auto metric = two_center_metric(x, phase);
-    const auto a = three_center(x, phase);
+    const LRI_CV_Tools::RIBlockMatrix<T> metric = two_center_metric(x, phase);
+    const std::vector<RI::Tensor<T>> a = three_center(x, phase);
     const std::array<double, 3> first_slope = {0.11, -0.07, 0.04};
     const std::array<double, 3> second_slope = {-0.06, 0.05, 0.09};
     std::array<RI::Tensor<T>, 3> derivative01;
@@ -146,8 +146,8 @@ void check_coefficients(const double cutoff, const T phase)
         derivative01[axis](1, 0) = phase * second_slope[axis];
         derivative10[axis] = derivative01[axis].conjugate().transpose();
     }
-    const auto inverse = LRI_CV_Tools::cal_I_dI(metric, derivative01, derivative10, cutoff);
-    const auto reference_inverse = LRI_CV_Tools::cal_I(metric, Inverse_Matrix<T>::Method::syev, cutoff);
+    const std::pair<LRI_CV_Tools::RIBlockMatrix<T>, std::array<LRI_CV_Tools::RIBlockMatrix<T>, 3>> inverse = LRI_CV_Tools::cal_I_dI(metric, derivative01, derivative10, cutoff);
+    const LRI_CV_Tools::RIBlockMatrix<T> reference_inverse = LRI_CV_Tools::cal_I(metric, Inverse_Matrix<T>::Method::syev, cutoff);
     for (std::size_t row = 0; row < 2; ++row)
     {
         for (std::size_t col = 0; col < 2; ++col)
@@ -163,25 +163,25 @@ void check_coefficients(const double cutoff, const T phase)
     }
     for (std::size_t axis = 0; axis < 3; ++axis)
     {
-        auto plus_x = x;
-        auto minus_x = x;
+        std::array<double, 3> plus_x = x;
+        std::array<double, 3> minus_x = x;
         plus_x[axis] += step;
         minus_x[axis] -= step;
-        const auto plus_metric = two_center_metric(plus_x, phase);
-        const auto minus_metric = two_center_metric(minus_x, phase);
-        const auto plus_a = three_center(plus_x, phase);
-        const auto minus_a = three_center(minus_x, phase);
-        const auto plus_inverse = LRI_CV_Tools::cal_I(plus_metric, Inverse_Matrix<T>::Method::syev, cutoff);
-        const auto minus_inverse = LRI_CV_Tools::cal_I(minus_metric, Inverse_Matrix<T>::Method::syev, cutoff);
-        const auto plus_c = LRI_CV_Tools::mul2(plus_inverse, plus_a);
-        const auto minus_c = LRI_CV_Tools::mul2(minus_inverse, minus_a);
-        const auto da = three_center_derivative(axis, phase);
-        const auto first_term = LRI_CV_Tools::mul2(inverse.first, da);
-        const auto second_term = LRI_CV_Tools::mul2(inverse.second[axis], a);
+        const LRI_CV_Tools::RIBlockMatrix<T> plus_metric = two_center_metric(plus_x, phase);
+        const LRI_CV_Tools::RIBlockMatrix<T> minus_metric = two_center_metric(minus_x, phase);
+        const std::vector<RI::Tensor<T>> plus_a = three_center(plus_x, phase);
+        const std::vector<RI::Tensor<T>> minus_a = three_center(minus_x, phase);
+        const LRI_CV_Tools::RIBlockMatrix<T> plus_inverse = LRI_CV_Tools::cal_I(plus_metric, Inverse_Matrix<T>::Method::syev, cutoff);
+        const LRI_CV_Tools::RIBlockMatrix<T> minus_inverse = LRI_CV_Tools::cal_I(minus_metric, Inverse_Matrix<T>::Method::syev, cutoff);
+        const std::vector<RI::Tensor<T>> plus_c = LRI_CV_Tools::mul2(plus_inverse, plus_a);
+        const std::vector<RI::Tensor<T>> minus_c = LRI_CV_Tools::mul2(minus_inverse, minus_a);
+        const std::vector<RI::Tensor<T>> da = three_center_derivative(axis, phase);
+        const std::vector<RI::Tensor<T>> first_term = LRI_CV_Tools::mul2(inverse.first, da);
+        const std::vector<RI::Tensor<T>> second_term = LRI_CV_Tools::mul2(inverse.second[axis], a);
         for (std::size_t block = 0; block < 2; ++block)
         {
-            const auto analytic = first_term[block] + second_term[block];
-            const auto fd = (plus_c[block] - minus_c[block]) * T(0.5 / step);
+            const RI::Tensor<T> analytic = first_term[block] + second_term[block];
+            const RI::Tensor<T> fd = (plus_c[block] - minus_c[block]) * T(0.5 / step);
             for (std::size_t i = 0; i < analytic.get_shape_all(); ++i)
             {
                 EXPECT_NEAR(std::abs(analytic.ptr()[i] - fd.ptr()[i]), 0, 2e-8);
@@ -191,7 +191,7 @@ void check_coefficients(const double cutoff, const T phase)
         {
             for (std::size_t col = 0; col < 2; ++col)
             {
-                const auto fd = (plus_inverse[row][col] - minus_inverse[row][col]) * T(0.5 / step);
+                const RI::Tensor<T> fd = (plus_inverse[row][col] - minus_inverse[row][col]) * T(0.5 / step);
                 for (std::size_t i = 0; i < fd.get_shape_all(); ++i)
                 {
                     EXPECT_NEAR(std::abs(inverse.second[axis][row][col].ptr()[i] - fd.ptr()[i]), 0, 2e-8);

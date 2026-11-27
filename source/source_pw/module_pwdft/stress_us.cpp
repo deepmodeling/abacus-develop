@@ -2,22 +2,23 @@
 #include <cstddef>
 
 #include "source_base/libm/libm.h"
-#include "source_base/parallel_reduce.h"
-#include "source_io/module_parameter/parameter.h"
 #include "source_base/math_polyint.h"
 #include "source_base/math_ylmreal.h"
+#include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 #include "source_estate/elecstate_pw.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_pw/module_pwdft/nonlocal_maths.h"
 #include "stress_pw.h"
 
 // computes the part of the crystal stress which is due
 // to the dependence of the Q function on the atomic position in PW base
 template <typename FPTYPE, typename Device>
-void Stress_PW<FPTYPE, Device>::stress_us(ModuleBase::matrix& sigma,
-                                          ModulePW::PW_Basis* rho_basis,
-                                          const pseudopot_cell_vnl& nlpp,
-                                          const UnitCell& ucell)
+void Stress_PW<FPTYPE, Device>::stress_us(
+    ModuleBase::matrix &sigma,
+    ModulePW::PW_Basis *rho_basis,
+    const pseudopot_cell_vnl &nlpp,
+    const UnitCell &ucell)
 {
     ModuleBase::TITLE("Stress", "stress_us");
     ModuleBase::timer::start("Stress", "stress_us");
@@ -27,11 +28,11 @@ void Stress_PW<FPTYPE, Device>::stress_us(ModuleBase::matrix& sigma,
     const std::complex<double> fac = ModuleBase::NEG_IMAG_UNIT * ucell.tpiba;
     const std::complex<double> ci_tpi = ModuleBase::IMAG_UNIT * ModuleBase::TWO_PI;
     ModuleBase::matrix veff = this->pelec->pot->get_eff_v();
-    const std::vector<double>* becsum_vector = elecstate::get_becsum<Device>(*this->pelec);
+    const std::vector<double> *becsum_vector = elecstate::get_becsum<Device>(*this->pelec);
     assert(becsum_vector != nullptr);
     const std::size_t becsum_size = static_cast<std::size_t>(veff.nr) * static_cast<std::size_t>(ucell.nat) * nh_tot;
     assert(becsum_vector->size() == becsum_size);
-    const double* becsum = becsum_vector->data();
+    const double *becsum = becsum_vector->data();
 
     ModuleBase::matrix stressus(3, 3);
 
@@ -47,7 +48,7 @@ void Stress_PW<FPTYPE, Device>::stress_us(ModuleBase::matrix& sigma,
 
     // double* qnorm = new double[npw];
     std::vector<double> qnorm_vec(npw);
-    double* qnorm = qnorm_vec.data();
+    double *qnorm = qnorm_vec.data();
     for (int ig = 0; ig < npw; ig++)
     {
         qnorm[ig] = rho_basis->gcar[ig].norm() * ucell.tpiba;
@@ -59,15 +60,11 @@ void Stress_PW<FPTYPE, Device>::stress_us(ModuleBase::matrix& sigma,
     ModuleBase::matrix dylmk0(nlpp.lmaxq * nlpp.lmaxq, npw);
     for (int ipol = 0; ipol < 3; ipol++)
     {
-        double* gcar_ptr = reinterpret_cast<double*>(rho_basis->gcar);
-        hamilt::Nonlocal_maths<FPTYPE, Device>::dylmr2(nlpp.lmaxq * nlpp.lmaxq,
-                                                       npw,
-                                                       gcar_ptr,
-                                                       dylmk0.c,
-                                                       ipol);
+        double *gcar_ptr = reinterpret_cast<double *>(rho_basis->gcar);
+        hamilt::Nonlocal_maths<FPTYPE, Device>::dylmr2(nlpp.lmaxq * nlpp.lmaxq, npw, gcar_ptr, dylmk0.c, ipol);
         for (int it = 0; it < ucell.ntype; it++)
         {
-            Atom* atom = &ucell.atoms[it];
+            Atom *atom = &ucell.atoms[it];
             if (atom->ncpp.tvanp)
             {
                 // nij = max number of (ih,jh) pairs per atom type nt
@@ -83,22 +80,13 @@ void Stress_PW<FPTYPE, Device>::stress_us(ModuleBase::matrix& sigma,
                 {
                     for (int jh = ih; jh < atom->ncpp.nh; jh++)
                     {
-                        this->dqvan2(nlpp,
-                                     ih,
-                                     jh,
-                                     it,
-                                     ipol,
-                                     npw,
-                                     rho_basis->gcar,
-                                     qnorm,
-                                     ucell.tpiba,
-                                     ylmk0,
-                                     dylmk0,
-                                     &qgm(ijh, 0));
+                        this->dqvan2(
+                            nlpp, ih, jh, it, ipol, npw, rho_basis->gcar, qnorm, ucell.tpiba, ylmk0, dylmk0,
+                            &qgm(ijh, 0));
                         ijh++;
                     }
                 }
-                double* qgm_data = reinterpret_cast<double*>(qgm.c);
+                double *qgm_data = reinterpret_cast<double *>(qgm.c);
 
                 for (int ia = 0; ia < atom->na; ia++)
                 {
@@ -112,26 +100,16 @@ void Stress_PW<FPTYPE, Device>::stress_us(ModuleBase::matrix& sigma,
                     }
 
                     ModuleBase::ComplexMatrix aux2(PARAM.inp.nspin, npw);
-                    double* aux2_data = reinterpret_cast<double*>(aux2.c);
+                    double *aux2_data = reinterpret_cast<double *>(aux2.c);
 
                     const char transa = 'N';
                     const char transb = 'N';
                     const int dim = 2 * npw;
                     const double one = 1;
                     const double zero = 0;
-                    BlasConnector::gemm(transb,
-                           transa,
-                           PARAM.inp.nspin,
-                           dim,
-                           nij,
-                           one,
-                           tbecsum.c,
-                           nij,
-                           qgm_data,
-                           dim,
-                           zero,
-                           aux2_data,
-                           dim);
+                    BlasConnector::gemm(
+                        transb, transa, PARAM.inp.nspin, dim, nij, one, tbecsum.c, nij, qgm_data, dim, zero, aux2_data,
+                        dim);
 
                     for (int is = 0; is < PARAM.inp.nspin; is++)
                     {
@@ -142,7 +120,7 @@ void Stress_PW<FPTYPE, Device>::stress_us(ModuleBase::matrix& sigma,
                     }
 
                     ModuleBase::ComplexMatrix aux1(3, npw);
-                    double* aux1_data = reinterpret_cast<double*>(aux1.c);
+                    double *aux1_data = reinterpret_cast<double *>(aux1.c);
                     for (int ig = 0; ig < npw; ig++)
                     {
                         double arg = rho_basis->gcar[ig] * atom->tau[ia];
@@ -156,19 +134,9 @@ void Stress_PW<FPTYPE, Device>::stress_us(ModuleBase::matrix& sigma,
                     ModuleBase::matrix fac(PARAM.inp.nspin, 3);
                     const char transc = 'T';
                     const int three = 3;
-                    BlasConnector::gemm_cm(transc,
-                           transb,
-                           three,
-                           PARAM.inp.nspin,
-                           dim,
-                           one,
-                           aux1_data,
-                           dim,
-                           aux2_data,
-                           dim,
-                           zero,
-                           fac.c,
-                           three);
+                    BlasConnector::gemm_cm(
+                        transc, transb, three, PARAM.inp.nspin, dim, one, aux1_data, dim, aux2_data, dim, zero, fac.c,
+                        three);
 
                     for (int is = 0; is < PARAM.inp.nspin; is++)
                     {
@@ -197,20 +165,21 @@ void Stress_PW<FPTYPE, Device>::stress_us(ModuleBase::matrix& sigma,
 }
 
 template <typename FPTYPE, typename Device>
-void Stress_Func<FPTYPE, Device>::dqvan2(const pseudopot_cell_vnl& nlpp,
-                                         const int ih,
-                                         const int jh,
-                                         const int itype,
-                                         const int ipol,
-                                         const int ng,
-                                         const ModuleBase::Vector3<FPTYPE>* g,
-                                         const FPTYPE* qnorm,
-                                         const FPTYPE& tpiba,
-                                         const ModuleBase::matrix& ylmk0,
-                                         const ModuleBase::matrix& dylmk0,
-                                         std::complex<FPTYPE>* dqg)
+void Stress_Func<FPTYPE, Device>::dqvan2(
+    const pseudopot_cell_vnl &nlpp,
+    const int ih,
+    const int jh,
+    const int itype,
+    const int ipol,
+    const int ng,
+    const ModuleBase::Vector3<FPTYPE> *g,
+    const FPTYPE *qnorm,
+    const FPTYPE &tpiba,
+    const ModuleBase::matrix &ylmk0,
+    const ModuleBase::matrix &dylmk0,
+    std::complex<FPTYPE> *dqg)
 {
-    if (PARAM.inp.test_pp) 
+    if (PARAM.inp.test_pp)
     {
         ModuleBase::TITLE("Stress", "dqvan2");
     }
@@ -281,13 +250,8 @@ void Stress_Func<FPTYPE, Device>::dqvan2(const pseudopot_cell_vnl& nlpp,
         {
             if (std::abs(qnorm[ig] - qm1) > 1e-6)
             {
-                work = ModuleBase::PolyInt::Polynomial_Interpolation(nlpp.qrad,
-                                                                     itype,
-                                                                     l,
-                                                                     ijv,
-                                                                     PARAM.globalv.nqxq,
-                                                                     PARAM.globalv.dq,
-                                                                     qnorm[ig]);
+                work = ModuleBase::PolyInt::Polynomial_Interpolation(
+                    nlpp.qrad, itype, l, ijv, PARAM.globalv.nqxq, PARAM.globalv.dq, qnorm[ig]);
                 work1 = this->Polynomial_Interpolation_nl(nlpp.qrad, itype, l, ijv, PARAM.globalv.dq, qnorm[ig]);
                 qm1 = qnorm[ig];
             }

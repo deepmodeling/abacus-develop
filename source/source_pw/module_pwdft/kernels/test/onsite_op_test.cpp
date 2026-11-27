@@ -1,11 +1,11 @@
 #include "gtest/gtest.h"
 #include <cmath>
 #include <complex>
-#include <vector>
 #include <cstring>
+#include <vector>
 
-#include "source_pw/module_pwdft/kernels/onsite_op.h"
 #include "source_base/module_device/types.h"
+#include "source_pw/module_pwdft/kernels/onsite_op.h"
 
 /***********************************************************************
  * Unit tests for onsite_ps_op kernel (CPU implementation).
@@ -40,8 +40,7 @@ TEST_F(OnsitePsDeltaSpinNpol1Test, SingleBandSingleProj)
     std::vector<complexd> becp = {complexd(1.0, 0.5)};
     std::vector<complexd> ps = {0.0};
 
-    kernel(nullptr, npm, npol, ip_iat.data(), tnp,
-           lambda_array.data(), ps.data(), becp.data());
+    kernel(nullptr, npm, npol, ip_iat.data(), tnp, lambda_array.data(), ps.data(), becp.data());
 
     // ps[0] += 2.0 * (complexd(1.0, 0.5)) = complexd(2.0, 1.0)
     EXPECT_NEAR(ps[0].real(), 2.0, 1e-15);
@@ -56,13 +55,12 @@ TEST_F(OnsitePsDeltaSpinNpol1Test, MultiBandMultiProj)
     std::vector<complexd> lambda_array = {3.0, 4.0}; // lambda for atom 0 and 1
     // becp[ib * tnp + ip]: band 0 has proj 0,1; band 1 has proj 0,1
     std::vector<complexd> becp = {
-        complexd(1.0, 0.0), complexd(0.5, 0.0),  // band 0: proj 0, 1
-        0.0 + complexd(0.0, 1.0), 0.0 + complexd(0.0, 2.0)   // band 1: proj 0, 1
+        complexd(1.0, 0.0), complexd(0.5, 0.0),            // band 0: proj 0, 1
+        0.0 + complexd(0.0, 1.0), 0.0 + complexd(0.0, 2.0) // band 1: proj 0, 1
     };
     std::vector<complexd> ps = {0.0, 0.0, 0.0, 0.0}; // tnp * npm = 4
 
-    kernel(nullptr, npm, npol, ip_iat.data(), tnp,
-           lambda_array.data(), ps.data(), becp.data());
+    kernel(nullptr, npm, npol, ip_iat.data(), tnp, lambda_array.data(), ps.data(), becp.data());
 
     // ps[ip * npm + ib] += lambda[iat] * becp[ib * tnp + ip]
     // ib=0,ip=0: ps[0] += 3.0 * 1.0 = 3.0
@@ -85,8 +83,7 @@ TEST_F(OnsitePsDeltaSpinNpol1Test, AccumulatesOnExistingPs)
     std::vector<complexd> becp = {1.0};
     std::vector<complexd> ps = {5.0}; // pre-existing value
 
-    kernel(nullptr, npm, npol, ip_iat.data(), tnp,
-           lambda_array.data(), ps.data(), becp.data());
+    kernel(nullptr, npm, npol, ip_iat.data(), tnp, lambda_array.data(), ps.data(), becp.data());
 
     // ps[0] = 5.0 + 2.0 * 1.0 = 7.0
     EXPECT_NEAR(ps[0].real(), 7.0, 1e-15);
@@ -117,18 +114,15 @@ TEST_F(OnsitePsDeltaSpinNpol2Test, SingleBandSingleProj)
     std::vector<int> ip_iat = {0};
     // lambda coefficients for atom 0: Pauli matrix elements
     // [lambda_z, lambda_x+iy, lambda_x-iy, -lambda_z]
-    std::vector<complexd> lambda_array = {
-        3.0, complexd(1.0, 2.0), complexd(1.0, -2.0), -3.0
-    };
+    std::vector<complexd> lambda_array = {3.0, complexd(1.0, 2.0), complexd(1.0, -2.0), -3.0};
     // becp: 2 rows (spin up/down) x 1 proj
     std::vector<complexd> becp = {
-        1.0 + complexd(0.0, 0.0),  // spin up
-        complexd(0.0, 1.0)   // spin down
+        1.0 + complexd(0.0, 0.0), // spin up
+        complexd(0.0, 1.0)        // spin down
     };
     std::vector<complexd> ps = {0.0, 0.0};
 
-    kernel(nullptr, npm, npol, ip_iat.data(), tnp,
-           lambda_array.data(), ps.data(), becp.data());
+    kernel(nullptr, npm, npol, ip_iat.data(), tnp, lambda_array.data(), ps.data(), becp.data());
 
     // ps[0] += lambda[0] * becp[0] + lambda[2] * becp[1]
     //       = 3.0 * 1.0 + (1-complexd(0.0, 2.0)) * complexd(0.0, 1.0)
@@ -149,13 +143,12 @@ TEST_F(OnsitePsDeltaSpinNpol2Test, MultiBand)
     std::vector<int> ip_iat = {0};
     std::vector<complexd> lambda_array = {2.0, 0.0, 0.0, -2.0};
     std::vector<complexd> becp = {
-        1.0, 0.0,    // band 0: up, down
-        0.0, 1.0     // band 1: up, down
+        1.0, 0.0, // band 0: up, down
+        0.0, 1.0  // band 1: up, down
     };
     std::vector<complexd> ps = {0.0, 0.0, 0.0, 0.0};
 
-    kernel(nullptr, npm, npol, ip_iat.data(), tnp,
-           lambda_array.data(), ps.data(), becp.data());
+    kernel(nullptr, npm, npol, ip_iat.data(), tnp, lambda_array.data(), ps.data(), becp.data());
 
     // Band 0 (ib=0, ib2=0):
     //   ps[0] += 2.0*1.0 + 0.0*0.0 = 2.0
@@ -193,23 +186,23 @@ TEST_F(OnsitePsDftuNpol1Test, SingleBandSingleAtom_DOrbital)
     // 1 band, 1 atom with d-orbital (5 projectors), all correlated
     const int npm = 1, npol = 1, tnp = 5;
 
-    std::vector<int> orb_l_iat = {2}; // d-orbital (l=2)
-    std::vector<int> ip_iat = {0, 0, 0, 0, 0}; // all belong to atom 0
-    std::vector<int> ip_m = {0, 1, 2, 3, 4}; // m indices
+    std::vector<int> orb_l_iat = {2};            // d-orbital (l=2)
+    std::vector<int> ip_iat = {0, 0, 0, 0, 0};   // all belong to atom 0
+    std::vector<int> ip_m = {0, 1, 2, 3, 4};     // m indices
     std::vector<int> pot_onsite_begin_iat = {0}; // pot_onsite starts at index 0
 
     // pot_onsite matrix for d-orbital (5x5), row-major
     std::vector<complexd> pot_onsite(25, 0.0);
-    pot_onsite[0] = 1.0; // pot_onsite[0,0]
-    pot_onsite[6] = 2.0; // pot_onsite[1,1]
+    pot_onsite[0] = 1.0;  // pot_onsite[0,0]
+    pot_onsite[6] = 2.0;  // pot_onsite[1,1]
     pot_onsite[12] = 3.0; // pot_onsite[2,2]
 
     std::vector<complexd> becp = {1.0, 0.5, 0.3, 0.2, 0.1}; // 5 projectors
-    std::vector<complexd> ps(5, 0.0); // tnp * npm = 5
+    std::vector<complexd> ps(5, 0.0);                       // tnp * npm = 5
 
-    kernel(nullptr, npm, npol,
-           orb_l_iat.data(), ip_iat.data(), ip_m.data(), pot_onsite_begin_iat.data(),
-           tnp, pot_onsite.data(), ps.data(), becp.data());
+    kernel(
+        nullptr, npm, npol, orb_l_iat.data(), ip_iat.data(), ip_m.data(), pot_onsite_begin_iat.data(), tnp,
+        pot_onsite.data(), ps.data(), becp.data());
 
     // For ip=0 (m1=0): ip2 ranges from 0 to 5
     //   ps[0] += pot_onsite[0,0]*becp[0] + pot_onsite[0,1]*becp[1] + ...
@@ -243,9 +236,9 @@ TEST_F(OnsitePsDftuNpol1Test, OffDiagonalPotOnsite)
     std::vector<complexd> becp = {1.0, 2.0, 3.0};
     std::vector<complexd> ps(3, 0.0);
 
-    kernel(nullptr, npm, npol,
-           orb_l_iat.data(), ip_iat.data(), ip_m.data(), pot_onsite_begin_iat.data(),
-           tnp, pot_onsite.data(), ps.data(), becp.data());
+    kernel(
+        nullptr, npm, npol, orb_l_iat.data(), ip_iat.data(), ip_m.data(), pot_onsite_begin_iat.data(), tnp,
+        pot_onsite.data(), ps.data(), becp.data());
 
     // ip=0 (m1=0): ip2 from 0 to 3
     //   ps[0] += pot_onsite[0,0]*becp[0] + pot_onsite[0,1]*becp[1] + pot_onsite[0,2]*becp[2]
@@ -272,9 +265,9 @@ TEST_F(OnsitePsDftuNpol1Test, NonCorrelatedProjector_MMinus1)
     std::vector<complexd> becp = {1.0, 1.0, 1.0, 1.0};
     std::vector<complexd> ps(4, 0.0);
 
-    kernel(nullptr, npm, npol,
-           orb_l_iat.data(), ip_iat.data(), ip_m.data(), pot_onsite_begin_iat.data(),
-           tnp, pot_onsite.data(), ps.data(), becp.data());
+    kernel(
+        nullptr, npm, npol, orb_l_iat.data(), ip_iat.data(), ip_m.data(), pot_onsite_begin_iat.data(), tnp,
+        pot_onsite.data(), ps.data(), becp.data());
 
     // ip=0: m1=-1, skipped
     // ip=1,2,3: should have contributions
@@ -298,14 +291,14 @@ TEST_F(OnsitePsDftuNpol1Test, MultiBand_DOrbital)
 
     // Band 0: becp[0..4], Band 1: becp[5..9]
     std::vector<complexd> becp = {
-        1.0, 0.0, 0.0, 0.0, 0.0,  // band 0
-        0.0, 1.0, 0.0, 0.0, 0.0   // band 1
+        1.0, 0.0, 0.0, 0.0, 0.0, // band 0
+        0.0, 1.0, 0.0, 0.0, 0.0  // band 1
     };
     std::vector<complexd> ps(10, 0.0); // tnp * npm = 10
 
-    kernel(nullptr, npm, npol,
-           orb_l_iat.data(), ip_iat.data(), ip_m.data(), pot_onsite_begin_iat.data(),
-           tnp, pot_onsite.data(), ps.data(), becp.data());
+    kernel(
+        nullptr, npm, npol, orb_l_iat.data(), ip_iat.data(), ip_m.data(), pot_onsite_begin_iat.data(), tnp,
+        pot_onsite.data(), ps.data(), becp.data());
 
     // Band 0: ps[0] += pot_onsite[0,0] * becp[0] = 2.0 * 1.0 = 2.0
     // Band 1: ps[5] += pot_onsite[0,0] * becp[5] = 2.0 * 0.0 = 0.0
@@ -354,14 +347,14 @@ TEST_F(OnsitePsDftuNpol2Test, SingleBandSingleAtom_Porbital)
 
     // becp: 2 rows (spin up/down) x 3 projectors
     std::vector<complexd> becp = {
-        1.0, 0.0, 0.0,  // spin up
-        0.0, 1.0, 0.0   // spin down
+        1.0, 0.0, 0.0, // spin up
+        0.0, 1.0, 0.0  // spin down
     };
     std::vector<complexd> ps = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0}; // tnp * npm = 6
 
-    kernel(nullptr, npm, npol,
-           orb_l_iat.data(), ip_iat.data(), ip_m.data(), pot_onsite_begin_iat.data(),
-           tnp, pot_onsite.data(), ps.data(), becp.data());
+    kernel(
+        nullptr, npm, npol, orb_l_iat.data(), ip_iat.data(), ip_m.data(), pot_onsite_begin_iat.data(), tnp,
+        pot_onsite.data(), ps.data(), becp.data());
 
     // For ip=0 (m1=0): ip2 from 0 to 3
     //   ps[0] += pot_onsite[0]*becp[0] + pot_onsite[18]*becp[3] = 2.0*1.0 + 0*0.0 = 2.0
@@ -385,16 +378,16 @@ TEST_F(OnsitePsDftuNpol2Test, MultiBand)
     // becp: 2 spin x 3 proj x 2 bands = 12 elements
     // Layout: [band0_up, band0_dn, band1_up, band1_dn]
     std::vector<complexd> becp = {
-        1.0, 0.5, 0.3,  // band 0: up
-        0.0, 1.0, 0.2,  // band 0: down
-        0.2, 0.0, 0.0,  // band 1: up
-        0.0, 0.3, 0.0   // band 1: down
+        1.0, 0.5, 0.3, // band 0: up
+        0.0, 1.0, 0.2, // band 0: down
+        0.2, 0.0, 0.0, // band 1: up
+        0.0, 0.3, 0.0  // band 1: down
     };
     std::vector<complexd> ps(12, 0.0);
 
-    kernel(nullptr, npm, npol,
-           orb_l_iat.data(), ip_iat.data(), ip_m.data(), pot_onsite_begin_iat.data(),
-           tnp, pot_onsite.data(), ps.data(), becp.data());
+    kernel(
+        nullptr, npm, npol, orb_l_iat.data(), ip_iat.data(), ip_m.data(), pot_onsite_begin_iat.data(), tnp,
+        pot_onsite.data(), ps.data(), becp.data());
 
     // Band pair 0 (ib=0, ib2=0):
     //   ps[0] += pot_onsite[0]*becp[0] + pot_onsite[18]*becp[3] = 2.0*1.0 + 0 = 2.0
@@ -426,8 +419,7 @@ TEST_F(OnsitePsEdgeCasesTest, EmptyBecp_NpmZero)
     std::vector<complexd> ps;
 
     // Should not crash with npm=0
-    EXPECT_NO_THROW(kernel(nullptr, npm, npol, ip_iat.data(), tnp,
-                           lambda_array.data(), ps.data(), becp.data()));
+    EXPECT_NO_THROW(kernel(nullptr, npm, npol, ip_iat.data(), tnp, lambda_array.data(), ps.data(), becp.data()));
 }
 
 TEST_F(OnsitePsEdgeCasesTest, ZeroLambda)
@@ -439,8 +431,7 @@ TEST_F(OnsitePsEdgeCasesTest, ZeroLambda)
     std::vector<complexd> becp = {1.0, 2.0, 3.0, 4.0};
     std::vector<complexd> ps = {10.0, 20.0, 30.0, 40.0};
 
-    kernel(nullptr, npm, npol, ip_iat.data(), tnp,
-           lambda_array.data(), ps.data(), becp.data());
+    kernel(nullptr, npm, npol, ip_iat.data(), tnp, lambda_array.data(), ps.data(), becp.data());
 
     // Zero lambda should not change ps (0 += 0)
     EXPECT_NEAR(ps[0].real(), 10.0, 1e-15);
@@ -461,9 +452,9 @@ TEST_F(OnsitePsEdgeCasesTest, Complexpot_onsite)
     std::vector<complexd> becp = {complexd(0.5, 0.5), 1.0};
     std::vector<complexd> ps = {0.0, 0.0};
 
-    kernel(nullptr, npm, npol,
-           orb_l_iat.data(), ip_iat.data(), ip_m.data(), pot_onsite_begin_iat.data(),
-           tnp, pot_onsite.data(), ps.data(), becp.data());
+    kernel(
+        nullptr, npm, npol, orb_l_iat.data(), ip_iat.data(), ip_m.data(), pot_onsite_begin_iat.data(), tnp,
+        pot_onsite.data(), ps.data(), becp.data());
 
     // ps[0] += (1+complexd(0.0, 2.0)) * (0.5+0.5i) = 0.5+0.5i + complexd(0.0, 1.0)-1 = -0.5+1.5i
     EXPECT_NEAR(ps[0].real(), -0.5, 1e-15);

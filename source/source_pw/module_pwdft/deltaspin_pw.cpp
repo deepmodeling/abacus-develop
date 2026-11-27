@@ -1,15 +1,16 @@
 #include "source_pw/module_pwdft/deltaspin_pw.h"
-#include "source_lcao/module_deltaspin/spin_constrain.h"
 #include "source_estate/module_charge/chg_mix.h"
 #include "source_io/module_parameter/parameter.h"
+#include "source_lcao/module_deltaspin/spin_constrain.h"
 
 namespace pw
 {
 
-bool run_deltaspin_lambda_loop(const int iter,
-                               const double drho,
-                               const Input_para& inp,
-                               std::ostream& ofs_running)
+bool run_deltaspin_lambda_loop(
+    const int iter,
+    const double drho,
+    const Input_para &inp,
+    std::ostream &ofs_running)
 {
     /// Return false if DeltaSpin is not enabled
     if (!inp.sc_mag_switch)
@@ -18,8 +19,8 @@ bool run_deltaspin_lambda_loop(const int iter,
     }
 
     /// Get the singleton instance of SpinConstrain
-    spinconstrain::SpinConstrain<std::complex<double>>& sc
-        = spinconstrain::SpinConstrain<std::complex<double>>::getScInstance();
+    spinconstrain::SpinConstrain<std::complex<double>> &sc =
+        spinconstrain::SpinConstrain<std::complex<double>>::getScInstance();
 
     /// Case 0: linear_scan strategy - sweep lambda values for energy landscape mapping
     /// This is a diagnostic/debugging mode that does NOT optimize lambda,
@@ -51,10 +52,11 @@ bool run_deltaspin_lambda_loop(const int iter,
     return false;
 }
 
-void check_deltaspin_oscillation(const int iter,
-                                 const double drho,
-                                 Charge_Mixing* p_chgmix,
-                                 const Input_para& inp)
+void check_deltaspin_oscillation(
+    const int iter,
+    const double drho,
+    Charge_Mixing *p_chgmix,
+    const Input_para &inp)
 {
     /// Return if DeltaSpin is not enabled
     if (!inp.sc_mag_switch)
@@ -63,8 +65,8 @@ void check_deltaspin_oscillation(const int iter,
     }
 
     /// Get the singleton instance of SpinConstrain
-    spinconstrain::SpinConstrain<std::complex<double>>& sc
-        = spinconstrain::SpinConstrain<std::complex<double>>::getScInstance();
+    spinconstrain::SpinConstrain<std::complex<double>> &sc =
+        spinconstrain::SpinConstrain<std::complex<double>>::getScInstance();
 
     /// Check if higher magnetization precision is needed
     if (!sc.higher_mag_prec)
@@ -80,4 +82,4 @@ void check_deltaspin_oscillation(const int iter,
     }
 }
 
-}
+} // namespace pw

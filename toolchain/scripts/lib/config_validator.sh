@@ -203,12 +203,12 @@ validate_system_requirements() {
 
   # Only check for system cmake if using system cmake
   if [[ "${CONFIG_CACHE[with_cmake]}" == "__SYSTEM__" ]]; then
-    if ! command -v "cmake" &>/dev/null; then
+    if ! command -v "cmake" &> /dev/null; then
       missing_tools+=("cmake")
     else
       # Check cmake version if it exists
       local cmake_min_version="3.16"
-      local cmake_version=$(cmake --version 2>/dev/null | head -n 1 | awk '{print $3}')
+      local cmake_version=$(cmake --version 2> /dev/null | head -n 1 | awk '{print $3}')
 
       if [[ -z "$cmake_version" ]]; then
         add_validation_error "Failed to determine CMake version"
@@ -267,7 +267,7 @@ validate_system_requirements() {
   fi
 
   for tool in "${required_tools[@]}"; do
-    if ! command -v "$tool" &>/dev/null; then
+    if ! command -v "$tool" &> /dev/null; then
       missing_tools+=("$tool")
     fi
   done
@@ -305,7 +305,7 @@ validate_system_requirements() {
   local missing_dev=()
 
   for pkg in "${dev_packages[@]}"; do
-    if ! command -v "$pkg" &>/dev/null && ! dpkg -l | grep -q "$pkg" 2>/dev/null; then
+    if ! command -v "$pkg" &> /dev/null && ! dpkg -l | grep -q "$pkg" 2> /dev/null; then
       missing_dev+=("$pkg")
     fi
   done
@@ -320,11 +320,11 @@ validate_system_requirements() {
     local gcc_min_version=5
 
     # Check if GCC tools are available
-    if ! command -v gcc &>/dev/null || ! command -v g++ &>/dev/null || ! command -v gfortran &>/dev/null; then
+    if ! command -v gcc &> /dev/null || ! command -v g++ &> /dev/null || ! command -v gfortran &> /dev/null; then
       local missing_tools=()
-      ! command -v gcc &>/dev/null && missing_tools+=("gcc")
-      ! command -v g++ &>/dev/null && missing_tools+=("g++")
-      ! command -v gfortran &>/dev/null && missing_tools+=("gfortran")
+      ! command -v gcc &> /dev/null && missing_tools+=("gcc")
+      ! command -v g++ &> /dev/null && missing_tools+=("g++")
+      ! command -v gfortran &> /dev/null && missing_tools+=("gfortran")
 
       add_validation_error_group "gcc_incomplete" \
         "System GCC toolchain incomplete. Missing: ${missing_tools[*]}" \
@@ -337,9 +337,9 @@ validate_system_requirements() {
     fi
 
     # Get versions of GCC components
-    local gcc_version=$(gcc --version 2>/dev/null | head -n 1 | awk '{print $NF}')
-    local gxx_version=$(g++ --version 2>/dev/null | head -n 1 | awk '{print $NF}')
-    local gfc_version=$(gfortran --version 2>/dev/null | head -n 1 | awk '{print $NF}')
+    local gcc_version=$(gcc --version 2> /dev/null | head -n 1 | awk '{print $NF}')
+    local gxx_version=$(g++ --version 2> /dev/null | head -n 1 | awk '{print $NF}')
+    local gfc_version=$(gfortran --version 2> /dev/null | head -n 1 | awk '{print $NF}')
 
     # Check if version extraction was successful
     if [[ -z "$gcc_version" || -z "$gxx_version" || -z "$gfc_version" ]]; then
@@ -406,8 +406,8 @@ validate_system_requirements() {
     fi
 
     local cuda_major=""
-    if command -v nvidia-smi &>/dev/null; then
-      local nvidia_banner=$(nvidia-smi 2>/dev/null | head -n 3 | tr '\n' ' ')
+    if command -v nvidia-smi &> /dev/null; then
+      local nvidia_banner=$(nvidia-smi 2> /dev/null | head -n 3 | tr '\n' ' ')
       local cuda_version=$(echo "$nvidia_banner" | sed -n 's/.*CUDA Version:[[:space:]]*\([0-9.]*\).*/\1/p')
       cuda_major=$(echo "$cuda_version" | awk -F. '{print $1}')
     fi

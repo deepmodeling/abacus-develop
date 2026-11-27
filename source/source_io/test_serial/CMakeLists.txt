@@ -50,6 +50,10 @@ addtest(
           ../module_parameter/unittests/test_read_inp_estruc.cpp)
 
 addtest(
+  TARGET MODULE_IO_lobpcg_input
+  LIBS parameter base device io_input_serial)
+
+addtest(
   TARGET MODULE_IO_input_domain_reader
   LIBS parameter base device io_input_serial
   SOURCES ../unittests/test_input_domain_reader.cpp ../input_help.cpp)

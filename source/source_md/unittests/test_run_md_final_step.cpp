@@ -29,22 +29,18 @@ TEST(RunMdFinalStepTest, IdentifiesTheFinalIonicStep)
 }
 
 /**
- * @brief The supplementary final frame must not duplicate a frame that the
- * MD loop already wrote on the output or restart cadence.
+ * @brief Ordinary structure cadence must be independent of restart output.
  */
-TEST(RunMdFinalStepTest, SupplementaryFinalFrameSkipsStepsAlreadyOnCadence)
+TEST(RunMdFinalStepTest, StructureOutputRequiresItsOwnPositiveCadence)
 {
-    // Final step off the output cadence: the loop skips it, a frame is needed.
-    EXPECT_FALSE(Run_MD::is_frame_write_step(3, 2, 0, true));
-    // Final step on the output cadence: already written by the loop.
-    EXPECT_TRUE(Run_MD::is_frame_write_step(4, 2, 0, true));
-    // Final step on the restart cadence: already written by the loop.
-    EXPECT_TRUE(Run_MD::is_frame_write_step(4, 2, 4, true));
-    // md_nstep=1: step 0 is final and is inherently a cadence step.
-    EXPECT_TRUE(Run_MD::is_last_step(0, 1));
-    EXPECT_TRUE(Run_MD::is_frame_write_step(0, 2, 0, true));
-    // Both frequencies disabled: the loop writes nothing, a final frame is needed.
-    EXPECT_FALSE(Run_MD::is_frame_write_step(0, 0, 0, true));
+    EXPECT_FALSE(Run_MD::is_structure_output_step(0, 0, true));
+    EXPECT_FALSE(Run_MD::is_structure_output_step(0, 3, false));
+    EXPECT_TRUE(Run_MD::is_structure_output_step(0, 3, true));
+    EXPECT_FALSE(Run_MD::is_structure_output_step(2, 3, true));
+    EXPECT_TRUE(Run_MD::is_structure_output_step(3, 3, true));
+    EXPECT_TRUE(Run_MD::is_cadence_step(0, 5));
+    EXPECT_FALSE(Run_MD::is_cadence_step(0, 0));
+    EXPECT_FALSE(Run_MD::is_cadence_step(3, 5));
 }
 
 } // namespace

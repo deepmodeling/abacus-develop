@@ -81,14 +81,14 @@ esac
 if [ "$with_nep" != "__DONTUSE__" ]; then
   NEP_LIBS="-lnep"
   if [ "$with_nep" != "__SYSTEM__" ]; then
-    cat <<EOF >"${BUILDDIR}/setup_nep"
+    cat << EOF > "${BUILDDIR}/setup_nep"
 prepend_path LD_LIBRARY_PATH "${pkg_install_dir}/lib"
 prepend_path LD_RUN_PATH "${pkg_install_dir}/lib"
 prepend_path LIBRARY_PATH "${pkg_install_dir}/lib"
 prepend_path CMAKE_PREFIX_PATH "${pkg_install_dir}"
 EOF
   fi
-  cat <<EOF >>"${BUILDDIR}/setup_nep"
+  cat << EOF >> "${BUILDDIR}/setup_nep"
 export NEP_ROOT="${pkg_install_dir}"
 EOF
   filter_setup "${BUILDDIR}/setup_nep" $SETUPFILE

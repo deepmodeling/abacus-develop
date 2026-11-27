@@ -425,7 +425,8 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::hamilt2rho_single(
             const bool skip_charge = false;
             hsolver::HSolverLCAO<std::complex<double>> hsolver_lcao_obj(
                 &this->pv, this->inp_->ks_solver, PARAM.globalv.kpar_lcao, PARAM.globalv.nlocal, this->inp_->nbands,
-                this->inp_->nelec, this->inp_->device == "gpu", GlobalV::NPROC, GlobalV::MY_RANK);
+                this->inp_->nelec, this->inp_->device == "gpu", GlobalV::NPROC, GlobalV::MY_RANK,
+                this->inp_->lcao_sk_cut);
             hamilt::HamiltHSMatrix<std::complex<double>> hs(
                 static_cast<hamilt::Hamilt<std::complex<double>> *>(this->p_hamilt));
             hsolver_lcao_obj.solve(
@@ -503,15 +504,26 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::iter_finish(
     if (accept_state && last_endpoint && istep >= (this->inp_->init_wfc == "file" ? 0 : 1) && this->inp_->td_edm == 0 &&
         this->inp_->td_stype != 2)
     {
-        if (use_tensor && use_lapack)
+        hamilt::Hamilt<std::complex<double>>* hamilt
+            = static_cast<hamilt::Hamilt<std::complex<double>>*>(this->p_hamilt);
+        const Parallel_Blkcyclic& layout = this->pv.para_2d();
+        this->dmat.dm->edmk.resize(this->kv.get_nks());
+        for (int ik = 0; ik < this->kv.get_nks(); ++ik)
         {
-            module_dm::edm_tddft_lapack<Device>(
-                this->pv, this->dmat, this->kv, static_cast<hamilt::Hamilt<std::complex<double>> *>(this->p_hamilt));
-        }
-        else
-        {
-            module_dm::edm_tddft(
-                this->pv, this->dmat, this->kv, static_cast<hamilt::Hamilt<std::complex<double>> *>(this->p_hamilt));
+            hamilt->updateHk(ik);
+            ModuleBase::MatrixBlock<std::complex<double>> h_mat;
+            ModuleBase::MatrixBlock<std::complex<double>> s_mat;
+            hamilt->matrix(h_mat, s_mat);
+            std::complex<double>* dmk = this->dmat.dm->get_dmk_ptr(ik);
+            ModuleBase::ComplexMatrix& edmk = this->dmat.dm->edmk[ik];
+            if (use_tensor && use_lapack)
+            {
+                module_dm::edm_tddft_lapack<Device>(layout, h_mat, s_mat, dmk, edmk);
+            }
+            else
+            {
+                module_dm::edm_tddft(layout, h_mat, s_mat, dmk, edmk);
+            }
         }
     }
 }

@@ -13,7 +13,7 @@ class Read_INPUT
     Read_INPUT();
     ~Read_INPUT();
 
-    ReadData* QS_data;
+    ReadData *QS_data;
     Coefficients Coef;
     SpillageValue SV;
 
@@ -30,7 +30,7 @@ class Read_INPUT
     void read_test(void);
     void read_plot_c4(void);
     //	void read_cal_c4(void);
-    void read_start_c4(const int& step);
+    void read_start_c4(const int &step);
 
   private:
     int test;
@@ -41,7 +41,7 @@ class Read_INPUT
     void read_WFC(void);
     void read_WFC_2(void);
 
-    string* qsfile;
+    string *qsfile;
 };
 
 #endif

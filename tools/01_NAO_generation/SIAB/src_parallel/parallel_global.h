@@ -16,10 +16,14 @@ extern MPI_Comm POOL_WORLD;
 
 namespace Parallel_Global
 {
-void read_pal_param(int argc, char** argv);
+void read_pal_param(int argc, char **argv);
 
 #ifdef __MPI
-void myProd(complex<double>* in, std::complex<double>* inout, int* len, MPI_Datatype* dptr);
+void myProd(
+    complex<double> *in,
+    std::complex<double> *inout,
+    int *len,
+    MPI_Datatype *dptr);
 #endif
 } // namespace Parallel_Global
 

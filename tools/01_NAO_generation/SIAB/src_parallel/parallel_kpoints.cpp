@@ -122,7 +122,7 @@ void Parallel_Kpoints::divide_pools(void)
 }
 
 // the kpoints here are reduced after symmetry applied.
-void Parallel_Kpoints::kinfo(int& nkstot)
+void Parallel_Kpoints::kinfo(int &nkstot)
 {
 #ifdef __MPI
     Parallel_Common::bcast_int(nkstot);
@@ -133,7 +133,7 @@ void Parallel_Kpoints::kinfo(int& nkstot)
     return;
 }
 
-void Parallel_Kpoints::get_whichpool(const int& nkstot)
+void Parallel_Kpoints::get_whichpool(const int &nkstot)
 {
     delete[] whichpool;
     this->whichpool = new int[nkstot];
@@ -152,7 +152,7 @@ void Parallel_Kpoints::get_whichpool(const int& nkstot)
     return;
 }
 
-void Parallel_Kpoints::get_nks_pool(const int& nkstot)
+void Parallel_Kpoints::get_nks_pool(const int &nkstot)
 {
     delete[] nks_pool;
     this->nks_pool = new int[KPAR];
@@ -177,7 +177,7 @@ void Parallel_Kpoints::get_nks_pool(const int& nkstot)
     return;
 }
 
-void Parallel_Kpoints::get_startk_pool(const int& nkstot)
+void Parallel_Kpoints::get_startk_pool(const int &nkstot)
 {
     delete[] startk_pool;
     startk_pool = new int[KPAR];
@@ -192,11 +192,11 @@ void Parallel_Kpoints::get_startk_pool(const int& nkstot)
     return;
 }
 
-void Parallel_Kpoints::pool_collection(double& value, const double* wk, const int& ik)
+void Parallel_Kpoints::pool_collection(double &value, const double *wk, const int &ik)
 {
 #ifdef __MPI
     const int ik_now = ik - this->startk_pool[MY_POOL];
-    MPI_Status* ierror;
+    MPI_Status *ierror;
     if (this->whichpool[ik] == MY_POOL)
     {
         if (MY_POOL > 0 && RANK_IN_POOL == 0)
@@ -224,7 +224,7 @@ void Parallel_Kpoints::pool_collection(double& value, const double* wk, const in
     return;
 }
 
-void Parallel_Kpoints::pool_collection(double* value, const realArray& overlap, const int& ik)
+void Parallel_Kpoints::pool_collection(double *value, const realArray &overlap, const int &ik)
 {
     const int dim2 = overlap.getBound2();
     const int dim3 = overlap.getBound3();
@@ -234,9 +234,9 @@ void Parallel_Kpoints::pool_collection(double* value, const realArray& overlap, 
 #ifdef __MPI
     const int ik_now = ik - this->startk_pool[MY_POOL];
     const int begin = ik_now * dim2 * dim3 * dim4;
-    double* pointer = &overlap.ptr[begin];
+    double *pointer = &overlap.ptr[begin];
 
-    MPI_Status* ierror;
+    MPI_Status *ierror;
     if (this->whichpool[ik] == MY_POOL)
     {
         if (MY_POOL > 0 && RANK_IN_POOL == 0)
@@ -273,7 +273,7 @@ void Parallel_Kpoints::pool_collection(double* value, const realArray& overlap, 
 #else
     // data transfer ends.
     const int begin = ik * dim2 * dim3 * dim4;
-    double* pointer = &overlap.ptr[begin];
+    double *pointer = &overlap.ptr[begin];
     for (int i = 0; i < dim; i++)
     {
         value[i] = *pointer;

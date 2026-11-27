@@ -28,8 +28,8 @@
 #include "source_hamilt/module_ewald/h_ewald_pw.h"
 
 #include <cmath>
-#include <iomanip>
 #include <complex>
+#include <iomanip>
 #include <vector>
 
 #include "source_base/timer.h"
@@ -45,7 +45,11 @@ namespace
 /// mirror QE d2ionq.f90: the second derivative of erfc(sqrt(a) r)/r splits
 /// into a traceless part d2f (contracted with r_i r_j) and an isotropic
 /// part df (contracted with delta_ij)
-void ewald_radial(double ar, double rr, double& d2f, double& df)
+void ewald_radial(
+    double ar,
+    double rr,
+    double &d2f,
+    double &df)
 {
     const double er = ModuleBase::truncated_erfc(ar);
     const double ex = std::exp(-ar * ar);
@@ -79,13 +83,13 @@ double ewald_alpha_search(double charge, double ggecut, double tpiba2)
         {
             ModuleBase::WARNING_QUIT("DFPT_Phon::ion_ion", "Can't find optimal Ewald alpha.");
         }
-        upperbound = 2.0 * charge * charge * std::sqrt(2.0 * alpha / ModuleBase::TWO_PI)
-                     * ModuleBase::truncated_erfc(std::sqrt(ggecut * tpiba2 / 4.0 / alpha));
+        upperbound = 2.0 * charge * charge * std::sqrt(2.0 * alpha / ModuleBase::TWO_PI) *
+                     ModuleBase::truncated_erfc(std::sqrt(ggecut * tpiba2 / 4.0 / alpha));
     } while (upperbound > ewald_tail_tol);
     return alpha;
 }
 
-void DFPT_Phon::ion_ion(const ModuleBase::Vector3<double>& q_frac, ModuleBase::ComplexMatrix& dyn)
+void DFPT_Phon::ion_ion(const ModuleBase::Vector3<double> &q_frac, ModuleBase::ComplexMatrix &dyn)
 {
     ModuleBase::TITLE("DFPT_Phon", "ion_ion");
     ModuleBase::timer::start("DFPT_Phon", "ion_ion");
@@ -132,7 +136,7 @@ void DFPT_Phon::ion_ion(const ModuleBase::Vector3<double>& q_frac, ModuleBase::C
     const double g2_floor = 1.0e-12; ///< empirical parameter: |G|^2 zero-shell guard (1/lat0^2)
     for (int ig = 0; ig < pw_rho_->npw; ++ig)
     {
-        const ModuleBase::Vector3<double>& gcart = pw_rho_->gcar[ig];
+        const ModuleBase::Vector3<double> &gcart = pw_rho_->gcar[ig];
         const ModuleBase::Vector3<double> w = gcart + q_cart;
         const double w2 = w * w;
         const double g2 = gcart * gcart;
@@ -140,15 +144,15 @@ void DFPT_Phon::ion_ion(const ModuleBase::Vector3<double>& q_frac, ModuleBase::C
         if (w2 > w2_floor)
         {
             const double w2_bohr = w2 * ucell_->tpiba2;
-            facq = -ModuleBase::e2 * ModuleBase::FOUR_PI / ucell_->omega
-                   * std::exp(-w2_bohr / (4.0 * ewald_alpha_)) / w2;
+            facq =
+                -ModuleBase::e2 * ModuleBase::FOUR_PI / ucell_->omega * std::exp(-w2_bohr / (4.0 * ewald_alpha_)) / w2;
         }
         double fac = 0.0;
         if (g2 > g2_floor)
         {
             const double g2_bohr = g2 * ucell_->tpiba2;
-            fac = -ModuleBase::e2 * ModuleBase::FOUR_PI / ucell_->omega
-                  * std::exp(-g2_bohr / (4.0 * ewald_alpha_)) / g2;
+            fac =
+                -ModuleBase::e2 * ModuleBase::FOUR_PI / ucell_->omega * std::exp(-g2_bohr / (4.0 * ewald_alpha_)) / g2;
         }
         for (int na = 0; na < nat; ++na)
         {
@@ -156,14 +160,14 @@ void DFPT_Phon::ion_ion(const ModuleBase::Vector3<double>& q_frac, ModuleBase::C
             const int iia = ucell_->iat2ia[na];
             const double za = ucell_->atoms[ita].ncpp.zv;
             const double ma = ucell_->atoms[ita].mass;
-            const ModuleBase::Vector3<double>& ta = ucell_->atoms[ita].tau[iia];
+            const ModuleBase::Vector3<double> &ta = ucell_->atoms[ita].tau[iia];
             for (int nb = 0; nb < nat; ++nb)
             {
                 const int itb = ucell_->iat2it[nb];
                 const int iib = ucell_->iat2ia[nb];
                 const double zb = ucell_->atoms[itb].ncpp.zv;
                 const double mb = ucell_->atoms[itb].mass;
-                const ModuleBase::Vector3<double>& tb = ucell_->atoms[itb].tau[iib];
+                const ModuleBase::Vector3<double> &tb = ucell_->atoms[itb].tau[iib];
                 // dy1: all pairs, mass-scaled pair coefficient 1/sqrt(Ma Mb)
                 if (facq != 0.0)
                 {
@@ -213,26 +217,25 @@ void DFPT_Phon::ion_ion(const ModuleBase::Vector3<double>& q_frac, ModuleBase::C
         std::vector<double> r2(mxr);
         std::vector<int> irr(mxr);
         int nrm = 0;
-        const ModuleBase::Matrix3& G = ucell_->G;
+        const ModuleBase::Matrix3 &G = ucell_->G;
         for (int na = 0; na < nat; ++na)
         {
             const int ita = ucell_->iat2it[na];
             const int iia = ucell_->iat2ia[na];
             const double za = ucell_->atoms[ita].ncpp.zv;
             const double ma = ucell_->atoms[ita].mass;
-            const ModuleBase::Vector3<double>& ta = ucell_->atoms[ita].tau[iia];
+            const ModuleBase::Vector3<double> &ta = ucell_->atoms[ita].tau[iia];
             for (int nb = 0; nb < nat; ++nb)
             {
                 const int itb = ucell_->iat2it[nb];
                 const int iib = ucell_->iat2ia[nb];
                 const double zb = ucell_->atoms[itb].ncpp.zv;
                 const double mb = ucell_->atoms[itb].mass;
-                const ModuleBase::Vector3<double>& tb = ucell_->atoms[itb].tau[iib];
+                const ModuleBase::Vector3<double> &tb = ucell_->atoms[itb].tau[iib];
                 const ModuleBase::Vector3<double> dtau = ta - tb;
                 const double pref_pair = ModuleBase::e2 * za * zb / std::sqrt(ma * mb);
                 const double pref_diag = ModuleBase::e2 * za * zb / ma;
-                H_Ewald_pw::rgen(dtau, rmax_lat0, irr.data(), ucell_->latvec, G,
-                                 r.data(), r2.data(), mxr, nrm, 0);
+                H_Ewald_pw::rgen(dtau, rmax_lat0, irr.data(), ucell_->latvec, G, r.data(), r2.data(), mxr, nrm, 0);
                 for (int nr = 0; nr < nrm; ++nr)
                 {
                     const double rr = std::sqrt(r2[nr]) * ucell_->lat0;

@@ -57,7 +57,7 @@ double timer::cpu_time()
 //----------------------------------------------------------
     static std::chrono::system_clock::time_point t1 = std::chrono::system_clock::now();
     const std::chrono::system_clock::time_point t2 = std::chrono::system_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1);
+    std::chrono::microseconds duration = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1);
     return double(duration.count()) * std::chrono::microseconds::period::num / std::chrono::microseconds::period::den;
 }
 
@@ -212,7 +212,7 @@ void timer::write_to_json(std::string file_name)
     ofs << "{\n";
     ofs << indent << "\"total\": " << timer_pool[""]["total"].cpu_second << ",\n";
     ofs << indent << "\"sub\": [\n";
-    for(auto &timer_pool_A : timer_pool)
+    for(std::pair<const std::string, std::map<std::string, ModuleBase::timer::Timer_One>>& timer_pool_A : timer_pool)
     {
         order_a ++;
         // if calss_name == "", it means total time, so we skip it
@@ -225,7 +225,7 @@ void timer::write_to_json(std::string file_name)
         ofs << indent << indent << "{\n";
         ofs << indent << indent << indent << "\"class_name\": \"" << class_name << "\",\n";
         ofs << indent << indent << indent << "\"sub\": [\n";
-        for(auto &timer_pool_B : timer_pool_A.second)
+        for(std::pair<const std::string, ModuleBase::timer::Timer_One>& timer_pool_B : timer_pool_A.second)
         {
             order_b ++;
             const std::string name = timer_pool_B.first;
@@ -270,10 +270,10 @@ void timer::print_all(std::ofstream &ofs, const bool check_end)
     // if want to print > 1s , set small = 10^6
 
     std::vector<std::pair<std::pair<std::string,std::string>,Timer_One>> timer_pool_order;
-    for(auto &timer_pool_A : timer_pool)
+    for(std::pair<const std::string, std::map<std::string, ModuleBase::timer::Timer_One>>& timer_pool_A : timer_pool)
     {
         const std::string class_name = timer_pool_A.first;
-        for(auto &timer_pool_B : timer_pool_A.second)
+        for(std::pair<const std::string, ModuleBase::timer::Timer_One>& timer_pool_B : timer_pool_A.second)
         {
             const std::string name = timer_pool_B.first;
             const Timer_One &timer_one = timer_pool_B.second;
@@ -294,7 +294,7 @@ void timer::print_all(std::ofstream &ofs, const bool check_end)
     std::vector<int> calls;
     std::vector<double> avgs;
     std::vector<double> pers;
-    for(auto &timer_pool_order_A : timer_pool_order)
+    for(std::pair<std::pair<std::string, std::string>, ModuleBase::timer::Timer_One>& timer_pool_order_A : timer_pool_order)
     {
         const std::string &class_name = timer_pool_order_A.first.first;
         const std::string &name = timer_pool_order_A.first.second;

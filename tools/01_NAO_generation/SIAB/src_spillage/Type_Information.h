@@ -12,7 +12,7 @@ class Type_Information
 
     int na; // number of atoms of this type.
 
-    string* fa; // mohan add 2009-07-12
+    string *fa; // mohan add 2009-07-12
     // f: full orbtial used.
     // a: average orbital used.
 
@@ -23,9 +23,9 @@ class Type_Information
 
     int lmax; // lmax used.
 
-    int* n; // number of radial function for each L.
+    int *n; // number of radial function for each L.
 
-    int* nbase; // number of radial function of each L, sum up all the steps information before!
+    int *nbase; // number of radial function of each L, sum up all the steps information before!
 
     int nmax;
 

@@ -228,6 +228,8 @@ TEST_F(MSST_test, print_md)
     std::ifstream ifs("running_msst.log");
     std::string output_str;
     getline(ifs, output_str);
+    EXPECT_THAT(output_str, testing::HasSubstr(" MD STEP: 1"));
+    getline(ifs, output_str);
     EXPECT_THAT(output_str, testing::HasSubstr(" ELECTRONIC      PART OF STRESS: 0.24609992 kbar"));
     getline(ifs, output_str);
     EXPECT_THAT(
@@ -239,8 +241,13 @@ TEST_F(MSST_test, print_md)
         output_str,
         testing::HasSubstr(
             " MD PRESSURE (ELECTRONS+IONS)  : 1.0762537 kbar")); // result different from other MD methods
-    getline(ifs, output_str);
-    getline(ifs, output_str);
+    std::string stress_block;
+    while (getline(ifs, output_str) && output_str.find(" ---") == std::string::npos)
+    {
+        stress_block += output_str + "\n";
+    }
+    EXPECT_THAT(stress_block, testing::HasSubstr(" VIRIAL (kbar):"));
+    EXPECT_THAT(stress_block, testing::HasSubstr(" MD TOTAL STRESS (kbar):"));
     EXPECT_THAT(
         output_str,
         testing::HasSubstr(

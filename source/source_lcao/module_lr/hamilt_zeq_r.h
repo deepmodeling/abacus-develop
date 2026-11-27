@@ -97,9 +97,9 @@ namespace LR
             // combination. `PotGradXCLR` picks it via the `triplet` flag.
             if (LR_Util::has_local_xc(xc_kernel))
             {
-                const auto lr_potential = pot.lock();
-                const auto& kernel = lr_potential->xc_kernel_components();
-                const auto& rho_basis = lr_potential->get_rho_basis();
+                const std::shared_ptr<LR::PotHxcLR> lr_potential = pot.lock();
+                const LR::KernelXC& kernel = lr_potential->xc_kernel_components();
+                const ModulePW::PW_Basis& rho_basis = lr_potential->get_rho_basis();
                 const bool triplet = spin_type == "triplet";
                 this->pot_grad = std::make_shared<PotGradXCLR>(kernel, rho_basis, ucell,
                     lr_potential->nrxx, nspin, triplet);
@@ -125,7 +125,7 @@ namespace LR
             // transposing the density matrix on the way in restores it.
             this->cal_dm_trans = [this, &psi_ks, &pc, naos, &nocc, &nvirt, &pmat](const int& is, const T* X)->void
                 {
-                    const auto psi_ks_is = LR_Util::get_psi_spin(psi_ks, is, this->nk);
+                    const psi::Psi<T> psi_ks_is = LR_Util::get_psi_spin(psi_ks, is, this->nk);
 #ifdef __MPI
                     std::vector<ct::Tensor> dm_trans_2d = cal_dm_trans_pblas(X, this->pX[is], psi_ks_is, pc, naos, nocc[is], nvirt[is], pmat.para_2d());
                     for (container::Tensor& t: dm_trans_2d)
@@ -154,7 +154,7 @@ namespace LR
 
             this->cal_dm_diff = [this, &psi_ks, &pc, naos, &nocc, &nvirt, &pmat](const int& is, const T* const X)->void
                 {
-                    const auto psi_ks_is = LR_Util::get_psi_spin(psi_ks, is, this->nk);
+                    const psi::Psi<T> psi_ks_is = LR_Util::get_psi_spin(psi_ks, is, this->nk);
 #ifdef __MPI
                     std::vector<ct::Tensor> dm_diff_2d = cal_dm_diff_pblas(X, this->pX[is], psi_ks_is, pc, naos, nocc[is], nvirt[is], pmat.para_2d());
                     for (container::Tensor& t: dm_diff_2d)
@@ -328,7 +328,7 @@ namespace LR
         /// the CC_vo operators read the difference density matrix $T$ (symmetrized).
         void set_dm(const int is, const T* const X) override
         {
-            const auto psi_ks_is = LR_Util::get_psi_spin(this->psi_ks_, is, this->nk);
+            const psi::Psi<T> psi_ks_is = LR_Util::get_psi_spin(this->psi_ks_, is, this->nk);
 #ifdef __MPI
             this->dmx_buf_ = cal_dm_trans_pblas(X, this->pX[is], psi_ks_is, this->pc_,
                 this->naos_, this->nocc[is], this->nvirt[is], this->pmat_.para_2d());

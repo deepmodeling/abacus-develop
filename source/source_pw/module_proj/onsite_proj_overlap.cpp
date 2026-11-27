@@ -1,16 +1,16 @@
-#include <vector>
 #include <complex>
+#include <vector>
 
-#include "source_pw/module_proj/onsite_proj.h"
-#include "source_pw/module_proj/onsite_proj_print.h"
-#include "source_cell/cell_tools.h"
 #include "source_base/kernels/math_kernel_op.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
+#include "source_cell/cell_tools.h"
 #include "source_estate/occ_comput.h"
 #include "source_io/module_parameter/parameter.h"
+#include "source_pw/module_proj/onsite_proj.h"
+#include "source_pw/module_proj/onsite_proj_print.h"
 
-template<typename T, typename Device>
+template <typename T, typename Device>
 void projectors::OnsiteProjector<T, Device>::tabulate_atomic(const int ik, const char grad)
 {
     ModuleBase::timer::start("OnsiteProj", "tabulate_atomic");
@@ -22,11 +22,9 @@ void projectors::OnsiteProjector<T, Device>::tabulate_atomic(const int ik, const
     ModuleBase::timer::end("OnsiteProj", "tabulate_atomic");
 }
 
-template<typename T, typename Device>
+template <typename T, typename Device>
 void projectors::OnsiteProjector<T, Device>::overlap_proj_psi(
-                    const int npm,
-                    const std::complex<double>* ppsi,
-                    const int ld_psi)
+    const int npm, const std::complex<double> *ppsi, const int ld_psi)
 {
     ModuleBase::timer::start("OnsiteProj", "overlap");
     const int stride = ld_psi > 0 ? ld_psi : npwx_;
@@ -35,11 +33,9 @@ void projectors::OnsiteProjector<T, Device>::overlap_proj_psi(
     ModuleBase::timer::end("OnsiteProj", "overlap");
 }
 
-template<typename T, typename Device>
+template <typename T, typename Device>
 void projectors::OnsiteProjector<T, Device>::cal_occupations(
-        const psi::Psi<std::complex<T>, Device>* psi_in,
-        const ModuleBase::matrix& wg_in,
-        const int nspin_in)
+    const psi::Psi<std::complex<T>, Device> *psi_in, const ModuleBase::matrix &wg_in, const int nspin_in)
 {
     ModuleBase::timer::start("OnsiteProj", "cal_occupation");
     this->tabulate_atomic(0);
@@ -48,10 +44,10 @@ void projectors::OnsiteProjector<T, Device>::cal_occupations(
     // loop over k-points to calculate Mi of \sum_{k,i,l,m}<Psi_{k,i}|alpha_{l,m}><alpha_{l,m}|Psi_{k,i}>
     const int nbands = psi_in->get_nbands();
     const int npol = psi_in->get_npol();
-    for(int ik = 0; ik < psi_in->get_nk(); ik++)
+    for (int ik = 0; ik < psi_in->get_nk(); ik++)
     {
         psi_in->fix_k(ik);
-        if(ik != 0)
+        if (ik != 0)
         {
             this->tabulate_atomic(ik);
         }
@@ -61,28 +57,19 @@ void projectors::OnsiteProjector<T, Device>::cal_occupations(
         // k-points, selected by isk. nspin=1 (npol=1): no spin polarization,
         // the occupancy is split evenly so the printed magnetization is zero.
         // nspin=4 (npol=2): both spinor components are interleaved per band.
-        const std::complex<double>* proj_p = this->get_h_becp();
-        const double* wg_ik = &wg_in(ik, 0);
+        const std::complex<double> *proj_p = this->get_h_becp();
+        const double *wg_ik = &wg_in(ik, 0);
         const int isk = (nspin_in == 2 && this->isk_ != nullptr) ? this->isk_[ik] : 0;
         const int nat = static_cast<int>(this->iat_nh.size());
         elecstate::occ_from_proj(
-            proj_p,
-            wg_ik,
-            nbands,
-            npol,
-            this->tot_nproj,
-            nspin_in,
-            isk,
-            this->iat_nh.data(),
-            nat,
-            occs.data());
+            proj_p, wg_ik, nbands, npol, this->tot_nproj, nspin_in, isk, this->iat_nh.data(), nat, occs.data());
     }
     // reduce mag from all k-pools
     const int npool = GlobalV::KPAR * PARAM.inp.bndpar;
-    Parallel_Reduce::reduce_double_allpool(npool, GlobalV::NPROC_IN_POOL, (double*)(&(occs[0])), occs.size()*2);
+    Parallel_Reduce::reduce_double_allpool(npool, GlobalV::NPROC_IN_POOL, (double *)(&(occs[0])), occs.size() * 2);
     // occ has been reduced and calculate mag
     // Print orbital charge analysis
-    auto atom_labels = unitcell::get_atomLabels(this->ucell->atoms, this->ucell->ntype);
+    std::vector<std::string> atom_labels = unitcell::get_atomLabels(this->ucell->atoms, this->ucell->ntype);
     print::print_orb_chg(this->ucell, occs, this->iat_nh, atom_labels);
 
     // print charge
@@ -99,18 +86,23 @@ void projectors::OnsiteProjector<T, Device>::invalidate_proj()
 }
 
 template <typename T, typename Device>
-void projectors::OnsiteProjector<T, Device>::overlap_td(int ik, int columns,
-                                                      const std::complex<double>* psi, int stride,
-                                                      const ModuleBase::Vector3<double>& vector_potential)
+void projectors::OnsiteProjector<T, Device>::overlap_td(
+    int ik,
+    int columns,
+    const std::complex<double> *psi,
+    int stride,
+    const ModuleBase::Vector3<double> &vector_potential)
 {
     tabulate_atomic(ik);
     overlap_impl(columns, psi, stride, vector_potential);
 }
 
 template <typename T, typename Device>
-void projectors::OnsiteProjector<T, Device>::overlap_impl(int columns,
-                                                        const std::complex<double>* psi, int stride,
-                                                        const ModuleBase::Vector3<double>& vector_potential)
+void projectors::OnsiteProjector<T, Device>::overlap_impl(
+    int columns,
+    const std::complex<double> *psi,
+    int stride,
+    const ModuleBase::Vector3<double> &vector_potential)
 {
     const int count = columns * tot_nproj;
     if (count > size_becp || becp == nullptr)
@@ -132,36 +124,32 @@ void projectors::OnsiteProjector<T, Device>::overlap_impl(int columns,
 
 template void projectors::OnsiteProjector<double, base_device::DEVICE_CPU>::invalidate_proj();
 template void projectors::OnsiteProjector<double, base_device::DEVICE_CPU>::overlap_td(
-    int, int, const std::complex<double>*, int, const ModuleBase::Vector3<double>&);
-template
-void projectors::OnsiteProjector<double, base_device::DEVICE_CPU>::tabulate_atomic(
-    const int, const char);
+    int,
+    int,
+    const std::complex<double> *,
+    int,
+    const ModuleBase::Vector3<double> &);
+template void projectors::OnsiteProjector<double, base_device::DEVICE_CPU>::tabulate_atomic(const int, const char);
 
-template
-void projectors::OnsiteProjector<double, base_device::DEVICE_CPU>::overlap_proj_psi(
-    const int, const std::complex<double>*, const int);
+template void projectors::OnsiteProjector<double, base_device::DEVICE_CPU>::overlap_proj_psi(
+    const int, const std::complex<double> *, const int);
 
-template
-void projectors::OnsiteProjector<double, base_device::DEVICE_CPU>::cal_occupations(
-    const psi::Psi<std::complex<double>, base_device::DEVICE_CPU>*,
-    const ModuleBase::matrix&,
-    const int);
+template void projectors::OnsiteProjector<double, base_device::DEVICE_CPU>::cal_occupations(
+    const psi::Psi<std::complex<double>, base_device::DEVICE_CPU> *, const ModuleBase::matrix &, const int);
 
 #if ((defined __CUDA) || (defined __ROCM))
 template void projectors::OnsiteProjector<double, base_device::DEVICE_GPU>::invalidate_proj();
 template void projectors::OnsiteProjector<double, base_device::DEVICE_GPU>::overlap_td(
-    int, int, const std::complex<double>*, int, const ModuleBase::Vector3<double>&);
-template
-void projectors::OnsiteProjector<double, base_device::DEVICE_GPU>::tabulate_atomic(
-    const int, const char);
+    int,
+    int,
+    const std::complex<double> *,
+    int,
+    const ModuleBase::Vector3<double> &);
+template void projectors::OnsiteProjector<double, base_device::DEVICE_GPU>::tabulate_atomic(const int, const char);
 
-template
-void projectors::OnsiteProjector<double, base_device::DEVICE_GPU>::overlap_proj_psi(
-    const int, const std::complex<double>*, const int);
+template void projectors::OnsiteProjector<double, base_device::DEVICE_GPU>::overlap_proj_psi(
+    const int, const std::complex<double> *, const int);
 
-template
-void projectors::OnsiteProjector<double, base_device::DEVICE_GPU>::cal_occupations(
-    const psi::Psi<std::complex<double>, base_device::DEVICE_GPU>*,
-    const ModuleBase::matrix&,
-    const int);
+template void projectors::OnsiteProjector<double, base_device::DEVICE_GPU>::cal_occupations(
+    const psi::Psi<std::complex<double>, base_device::DEVICE_GPU> *, const ModuleBase::matrix &, const int);
 #endif

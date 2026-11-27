@@ -9,15 +9,16 @@
 #endif
 
 template <typename FPTYPE, typename Device>
-void Forces<FPTYPE, Device>::cal_force_nl(ModuleBase::matrix& forcenl,
-                                          const ModuleBase::matrix& wg,
-                                          const ModuleBase::matrix& ekb,
-                                          const K_Vectors* p_kv,
-                                          const ModulePW::PW_Basis_K* wfc_basis,
-                                          const Structure_Factor* p_sf,
-                                          const pseudopot_cell_vnl& nlpp,
-                                          const UnitCell& ucell_in,
-                                          const psi::Psi <std::complex<FPTYPE>, Device>* psi_in)
+void Forces<FPTYPE, Device>::cal_force_nl(
+    ModuleBase::matrix &forcenl,
+    const ModuleBase::matrix &wg,
+    const ModuleBase::matrix &ekb,
+    const K_Vectors *p_kv,
+    const ModulePW::PW_Basis_K *wfc_basis,
+    const Structure_Factor *p_sf,
+    const pseudopot_cell_vnl &nlpp,
+    const UnitCell &ucell_in,
+    const psi::Psi<std::complex<FPTYPE>, Device> *psi_in)
 {
     ModuleBase::TITLE("Forces", "cal_force_nl");
     if (nlpp.nkb == 0 || psi_in == nullptr || wfc_basis == nullptr)
@@ -27,7 +28,7 @@ void Forces<FPTYPE, Device>::cal_force_nl(ModuleBase::matrix& forcenl,
     ModuleBase::timer::start("Forces", "cal_force_nl");
 
     // allocate memory for the force
-    FPTYPE* force = nullptr;
+    FPTYPE *force = nullptr;
     resmem_var_op()(force, ucell_in.nat * 3);
     base_device::memory::set_memory_op<FPTYPE, Device>()(force, 0.0, ucell_in.nat * 3);
 
@@ -50,13 +51,13 @@ void Forces<FPTYPE, Device>::cal_force_nl(ModuleBase::matrix& forcenl,
         const int npm = nbands_occ;
         nl_tools.cal_vkb(ik, max_nbands);
         // calculate becp = <psi|beta> for all beta functions
-        nl_tools.cal_becp(ik, npm, &psi_in[0](ik,0,0));
+        nl_tools.cal_becp(ik, npm, &psi_in[0](ik, 0, 0));
         nl_tools.reduce_pool_becp(max_nbands);
         for (int ipol = 0; ipol < 3; ipol++)
         {
             nl_tools.cal_vkb_deri_f(ik, max_nbands, ipol);
             // calculate dbecp = <psi|\nabla beta> for all beta functions
-            nl_tools.cal_dbecp_f(ik, max_nbands, npm, ipol, &psi_in[0](ik,0,0));
+            nl_tools.cal_dbecp_f(ik, max_nbands, npm, ipol, &psi_in[0](ik, 0, 0));
             nl_tools.revert_vkb(ik, ipol);
         }
         // calculate the force_i = \sum_{n,k}f_{nk}\sum_I \sum_{lm,l'm'}D_{l,l'}^{I} becp * dbecp_i

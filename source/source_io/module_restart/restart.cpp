@@ -43,7 +43,7 @@ bool Restart::write_file2(const std::string& file_name, const void* const ptr, c
             return false;
         }
     }
-    auto error = write(file, ptr, size);
+    ssize_t error = write(file, ptr, size);
     if (-1 == error) {
         if (error_quit) {
             throw std::runtime_error("can't write restart save file. \nerrno=" + ModuleBase::GlobalFunc::TO_STRING(errno) + ".\n" + std::string(__FILE__) + " line " + std::to_string(__LINE__));
@@ -70,7 +70,7 @@ bool Restart::read_file2(const std::string& file_name, void* const ptr, const si
             return false;
         }
     }
-    auto error = read(file, ptr, size);
+    ssize_t error = read(file, ptr, size);
     if (-1 == error) {
         if (error_quit) {
             throw std::runtime_error("can't read restart load file. \nerrno=" + ModuleBase::GlobalFunc::TO_STRING(errno) + ".\n" + std::string(__FILE__) + " line " + std::to_string(__LINE__));

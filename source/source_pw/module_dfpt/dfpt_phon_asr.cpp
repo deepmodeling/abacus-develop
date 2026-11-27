@@ -23,14 +23,14 @@
 namespace ModuleDFPT
 {
 
-void DFPT_Phon::audit_asr(const std::string& label, int q_idx, const DFPT_PW_Data& data) const
+void DFPT_Phon::audit_asr(const std::string &label, int q_idx, const DFPT_PW_Data &data) const
 {
     ModuleBase::TITLE("DFPT_Phon", "audit_asr");
     ModuleBase::timer::start("DFPT_Phon", "audit_asr");
     const double gamma_tol = 1.0e-8; ///< empirical parameter: fractional-q Gamma tolerance
     const ModuleBase::Vector3<double> q_frac = data.get_qvec(q_idx);
-    const bool at_gamma = std::abs(q_frac.x) <= gamma_tol && std::abs(q_frac.y) <= gamma_tol
-                          && std::abs(q_frac.z) <= gamma_tol;
+    const bool at_gamma =
+        std::abs(q_frac.x) <= gamma_tol && std::abs(q_frac.y) <= gamma_tol && std::abs(q_frac.z) <= gamma_tol;
     const int nat = ucell_->nat;
     const int nat3 = 3 * nat;
     const ModuleBase::ComplexMatrix dyn = data.get_dynmat(q_idx);
@@ -95,14 +95,14 @@ void DFPT_Phon::audit_asr(const std::string& label, int q_idx, const DFPT_PW_Dat
     ModuleBase::timer::end("DFPT_Phon", "audit_asr");
 }
 
-void DFPT_Phon::apply_asr(const std::string& asr_type, int q_idx, DFPT_PW_Data& data)
+void DFPT_Phon::apply_asr(const std::string &asr_type, int q_idx, DFPT_PW_Data &data)
 {
     ModuleBase::TITLE("DFPT_Phon", "apply_asr");
     ModuleBase::timer::start("DFPT_Phon", "apply_asr");
     const double gamma_tol = 1.0e-8; ///< empirical parameter: fractional-q Gamma tolerance
     const ModuleBase::Vector3<double> q_frac = data.get_qvec(q_idx);
-    const bool at_gamma = std::abs(q_frac.x) <= gamma_tol && std::abs(q_frac.y) <= gamma_tol
-                          && std::abs(q_frac.z) <= gamma_tol;
+    const bool at_gamma =
+        std::abs(q_frac.x) <= gamma_tol && std::abs(q_frac.y) <= gamma_tol && std::abs(q_frac.z) <= gamma_tol;
     const int nat = ucell_->nat;
     const int nat3 = 3 * nat;
     ModuleBase::ComplexMatrix dyn = data.get_dynmat(q_idx);
@@ -129,7 +129,8 @@ void DFPT_Phon::apply_asr(const std::string& asr_type, int q_idx, DFPT_PW_Data& 
     // per-DIRECTION physical residual R(a,alpha,i) = sum_b sqrt(m_b)
     // D(3a+alpha, 3b+i): summing over atoms at a fixed translation
     // direction i so opposite x/y residuals cannot cancel
-    const auto physical_residual_norm = [&](int ia) {
+    const auto physical_residual_norm = [&](int ia)
+    {
         double s2 = 0.0;
         for (int da = 0; da < 3; ++da)
         {
@@ -164,7 +165,8 @@ void DFPT_Phon::apply_asr(const std::string& asr_type, int q_idx, DFPT_PW_Data& 
     // legacy flavor), then the projection restores Hermiticity and removes
     // whatever onsite-only correction could not absorb (cross-Cartesian
     // antisymmetric residuals have no exact Hermitian onsite-only fix)
-    const auto apply_crystal_projection = [&]() {
+    const auto apply_crystal_projection = [&]()
+    {
         std::vector<std::complex<double>> s(3 * nat3, std::complex<double>(0.0, 0.0));
         std::vector<std::complex<double>> t(3 * nat3, std::complex<double>(0.0, 0.0));
         ModuleBase::ComplexMatrix u(3, 3, true);

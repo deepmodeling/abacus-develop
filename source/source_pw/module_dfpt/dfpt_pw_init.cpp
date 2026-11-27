@@ -26,7 +26,7 @@
 namespace ModuleDFPT
 {
 
-void DFPT_PW::Impl::check_metallic_occ(const ModuleBase::matrix& wg) const
+void DFPT_PW::Impl::check_metallic_occ(const ModuleBase::matrix &wg) const
 {
     // Metallic-sampling guard: the Sternheimer/projector flow treats every
     // band as either fully occupied or empty and carries no d(mu)/dtau
@@ -59,7 +59,7 @@ void DFPT_PW::Impl::check_metallic_occ(const ModuleBase::matrix& wg) const
     }
 }
 
-void DFPT_PW::Impl::setup_q_list(UnitCell& ucell)
+void DFPT_PW::Impl::setup_q_list(UnitCell &ucell)
 {
     if (!qfile_.empty())
     {
@@ -83,13 +83,14 @@ void DFPT_PW::Impl::setup_q_list(UnitCell& ucell)
     validate_q_ordering(qlist_, data_.get_compute_q0());
 }
 
-void DFPT_PW::Impl::init_submodules(const DFPT_PW_InitContext& ctx,
-                                    int nk,
-                                    int nbands,
-                                    int npw_max,
-                                    int nrxx,
-                                    int nspin,
-                                    int nat)
+void DFPT_PW::Impl::init_submodules(
+    const DFPT_PW_InitContext &ctx,
+    int nk,
+    int nbands,
+    int npw_max,
+    int nrxx,
+    int nspin,
+    int nat)
 {
     // plain-mixing coefficient: the response Jacobian has strongly
     // negative eigenvalues concentrated on the smallest-G shells (the
@@ -135,7 +136,7 @@ void DFPT_PW::Impl::init_submodules(const DFPT_PW_InitContext& ctx,
     data_.init(&qlist_, nk, nbands, npw_max, nrxx, nspin, nat, ctx.dftu);
 }
 
-void DFPT_PW::init(const DFPT_PW_InitContext& ctx)
+void DFPT_PW::init(const DFPT_PW_InitContext &ctx)
 {
     ModuleBase::TITLE("DFPT_PW", "init");
     ModuleBase::timer::start("DFPT_PW", "init");
@@ -143,11 +144,11 @@ void DFPT_PW::init(const DFPT_PW_InitContext& ctx)
     // mode: the empty Psi / matrix objects still carry the queryable nk /
     // nbands / nrxx shape fields consumed by the init helpers; ucell is
     // always a non-null per the public wrapper (it takes a reference).
-    UnitCell* const ucell = ctx.ucell;
-    const psi::Psi<std::complex<double>>* const psi = ctx.psi;
-    ModulePW::PW_Basis* const pw_rho = ctx.pw_rho;
-    ModulePW::PW_Basis_K* const pw_wfc = ctx.pw_wfc;
-    Structure_Factor* const sf = ctx.sf;
+    UnitCell *const ucell = ctx.ucell;
+    const psi::Psi<std::complex<double>> *const psi = ctx.psi;
+    ModulePW::PW_Basis *const pw_rho = ctx.pw_rho;
+    ModulePW::PW_Basis_K *const pw_wfc = ctx.pw_wfc;
+    Structure_Factor *const sf = ctx.sf;
 
     pimpl_->ucell_ = ucell;
     pimpl_->gs_psi_ = *psi;
@@ -179,10 +180,10 @@ void DFPT_PW::init(const DFPT_PW_InitContext& ctx)
     // (same fail-loud pattern as the metallic-sampling guard above).
     if (ctx.dftu != nullptr)
     {
-        ModuleBase::WARNING_QUIT("DFPT_PW::init",
-                                 "DFT+U with DFPT is not supported yet: the "
-                                 "first-order U response is not implemented "
-                                 "(U0 reservation); rerun with dft_plus_u 0.");
+        ModuleBase::WARNING_QUIT(
+            "DFPT_PW::init", "DFT+U with DFPT is not supported yet: the "
+                             "first-order U response is not implemented "
+                             "(U0 reservation); rerun with dft_plus_u 0.");
     }
 
     pimpl_->setup_q_list(*ucell);
@@ -207,17 +208,21 @@ void DFPT_PW::init(const DFPT_PW_InitContext& ctx)
     ModuleBase::timer::end("DFPT_PW", "init");
 }
 
+
 int DFPT_PW::Impl::occupied_band_count(int ik) const
 {
     // insulator: the occupied-band count is k-independent; the metallic
     // guard in init() has already rejected a cut Fermi surface
     int nocc = 0;
     const int nbands = wg_.nc;
+
     for (int m = 0; m < nbands; ++m)
     {
         if (dfpt_band_occupied(wg_, ik, m))
         {
+
             nocc = m + 1;
+
         }
     }
     return nocc;
