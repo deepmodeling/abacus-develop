@@ -96,9 +96,9 @@ void bcast_bool(bool& object)
 #endif
 }
 
-#ifdef __MPI
 void bcast_bool(bool& object, const MPI_Comm& comm)
 {
+#ifdef __MPI
     int swap = object;
     int my_rank;
     MPI_Comm_rank(comm, &my_rank);
@@ -107,8 +107,12 @@ void bcast_bool(bool& object, const MPI_Comm& comm)
     {
         object = static_cast<bool>(swap);
     }
-}
+#else
+    // One rank, which is the root: the value is already correct.
+    (void)object;
+    (void)comm;
 #endif
+}
 
 void bcast_char(char* object, const int n)
 {
@@ -117,7 +121,68 @@ void bcast_char(char* object, const int n)
 #endif
 }
 
+void bcast_int(int* object, const int n, const MPI_Comm mpi_comm, const int root)
+{
 #ifdef __MPI
+    MPI_Bcast(object, n, MPI_INT, root, mpi_comm);
+#else
+    // A serial run has a single rank, so whatever payload the caller passed is
+    // already the one every rank should end up with. A `root` other than 0 can
+    // only be a caller bug; there is no peer to receive from, so nothing to do.
+    (void)object;
+    (void)n;
+    (void)mpi_comm;
+    (void)root;
+#endif
+}
+
+void bcast_double(double* object, const int n, const MPI_Comm mpi_comm, const int root)
+{
+#ifdef __MPI
+    MPI_Bcast(object, n, MPI_DOUBLE, root, mpi_comm);
+#else
+    (void)object;
+    (void)n;
+    (void)mpi_comm;
+    (void)root;
+#endif
+}
+
+int my_rank(const MPI_Comm mpi_comm)
+{
+#ifdef __MPI
+    int rank = 0;
+    MPI_Comm_rank(mpi_comm, &rank);
+    return rank;
+#else
+    (void)mpi_comm;
+    return 0;
+#endif
+}
+
+int nproc(const MPI_Comm mpi_comm)
+{
+#ifdef __MPI
+    int size = 1;
+    MPI_Comm_size(mpi_comm, &size);
+    return size;
+#else
+    (void)mpi_comm;
+    return 1;
+#endif
+}
+
+void barrier(const MPI_Comm mpi_comm)
+{
+#ifdef __MPI
+    MPI_Barrier(mpi_comm);
+#else
+    (void)mpi_comm;
+#endif
+}
+
+#ifdef __MPI
+// bcast single on an explicit communicator, from the communicator's rank 0
 void bcast_mpi_offset(MPI_Offset& object, const MPI_Comm& comm)
 {
     MPI_Bcast(&object, 1, MPI_OFFSET, 0, comm);

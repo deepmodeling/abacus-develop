@@ -11,6 +11,7 @@ const MPI_Datatype Parallel_Reduce::MPI_Type<float>::value = MPI_FLOAT;
 const MPI_Datatype Parallel_Reduce::MPI_Type<std::complex<double>>::value = MPI_DOUBLE_COMPLEX;
 const MPI_Datatype Parallel_Reduce::MPI_Type<std::complex<float>>::value = MPI_C_FLOAT_COMPLEX;
 const MPI_Datatype Parallel_Reduce::MPI_Type<long long>::value = MPI_LONG_LONG;
+const MPI_Datatype Parallel_Reduce::MPI_Type<unsigned long long>::value = MPI_UNSIGNED_LONG_LONG;
 #endif
 
 template <typename T>
@@ -125,6 +126,223 @@ template void Parallel_Reduce::reduce_max<double>(double&);
 
 template void Parallel_Reduce::reduce_min_pool<double>(const int&, double&);
 template void Parallel_Reduce::reduce_max_pool<double>(const int&, double&);
+
+#ifdef __MPI
+// The scalar bodies are spelled out one per type rather than templated: see the
+// comment in the header for why. They are otherwise identical apart from the
+// reduction operator and the MPI type.
+void Parallel_Reduce::reduce_all(const MPI_Comm mpi_comm, int& object)
+{
+    MPI_Allreduce(MPI_IN_PLACE, &object, 1, MPI_Type<int>::value, MPI_SUM, mpi_comm);
+}
+
+void Parallel_Reduce::reduce_all(const MPI_Comm mpi_comm, double& object)
+{
+    MPI_Allreduce(MPI_IN_PLACE, &object, 1, MPI_Type<double>::value, MPI_SUM, mpi_comm);
+}
+
+void Parallel_Reduce::reduce_all(const MPI_Comm mpi_comm, unsigned long long& object)
+{
+    MPI_Allreduce(MPI_IN_PLACE, &object, 1, MPI_Type<unsigned long long>::value, MPI_SUM, mpi_comm);
+}
+
+template <typename T>
+void Parallel_Reduce::reduce_all(const MPI_Comm mpi_comm, T* object, const int n)
+{
+    MPI_Allreduce(MPI_IN_PLACE, object, n, MPI_Type<T>::value, MPI_SUM, mpi_comm);
+}
+
+void Parallel_Reduce::reduce_max(const MPI_Comm mpi_comm, int& object)
+{
+    MPI_Allreduce(MPI_IN_PLACE, &object, 1, MPI_Type<int>::value, MPI_MAX, mpi_comm);
+}
+
+void Parallel_Reduce::reduce_max(const MPI_Comm mpi_comm, double& object)
+{
+    MPI_Allreduce(MPI_IN_PLACE, &object, 1, MPI_Type<double>::value, MPI_MAX, mpi_comm);
+}
+
+void Parallel_Reduce::reduce_max(const MPI_Comm mpi_comm, unsigned long long& object)
+{
+    MPI_Allreduce(MPI_IN_PLACE, &object, 1, MPI_Type<unsigned long long>::value, MPI_MAX, mpi_comm);
+}
+
+void Parallel_Reduce::reduce_min(const MPI_Comm mpi_comm, int& object)
+{
+    MPI_Allreduce(MPI_IN_PLACE, &object, 1, MPI_Type<int>::value, MPI_MIN, mpi_comm);
+}
+
+void Parallel_Reduce::reduce_min(const MPI_Comm mpi_comm, double& object)
+{
+    MPI_Allreduce(MPI_IN_PLACE, &object, 1, MPI_Type<double>::value, MPI_MIN, mpi_comm);
+}
+
+void Parallel_Reduce::reduce_min(const MPI_Comm mpi_comm, unsigned long long& object)
+{
+    MPI_Allreduce(MPI_IN_PLACE, &object, 1, MPI_Type<unsigned long long>::value, MPI_MIN, mpi_comm);
+}
+
+void Parallel_Reduce::reduce_max_with_rank(const MPI_Comm mpi_comm, double& value, int& rank)
+{
+    // MPI_MAXLOC pairs a value with its source rank; name the pair after what
+    // it holds rather than after the MPI operation code.
+    struct ValueAndSourceRank
+    {
+        double value;
+        int rank;
+    };
+    ValueAndSourceRank local{value, rank};
+    ValueAndSourceRank global{};
+    MPI_Allreduce(&local, &global, 1, MPI_DOUBLE_INT, MPI_MAXLOC, mpi_comm);
+    value = global.value;
+    rank = global.rank;
+}
+
+void Parallel_Reduce::gather_int_all(const MPI_Comm mpi_comm, int& v, int* all)
+{
+    assert(all != nullptr);
+    MPI_Allgather(&v, 1, MPI_INT, all, 1, MPI_INT, mpi_comm);
+}
+
+void Parallel_Reduce::gatherv_int_all(const MPI_Comm mpi_comm,
+                                      const int* send_buffer,
+                                      const int send_count,
+                                      int* receive_buffer,
+                                      const int* receive_counts,
+                                      const int* receive_displacements)
+{
+    // MPI_Allgatherv tolerates a null receive buffer when every receive count
+    // is zero (an empty std::vector's data() is null in that case), so only
+    // demand one when there is something to receive. Every rank still enters
+    // the collective regardless of its own receive counts.
+    //
+    // The test is "any count is positive" rather than a sum: two ranks may
+    // legitimately pass counts like {INT_MAX, 1}, whose sum overflows a signed
+    // int even though the receive buffer is valid.
+    int nranks = 0;
+    MPI_Comm_size(mpi_comm, &nranks);
+    bool has_received_data = false;
+    for (int irank = 0; irank < nranks; ++irank)
+    {
+        if (receive_counts[irank] > 0)
+        {
+            has_received_data = true;
+            break;
+        }
+    }
+    assert(!has_received_data || receive_buffer != nullptr);
+    MPI_Allgatherv(send_buffer, send_count, MPI_INT, receive_buffer, receive_counts, receive_displacements,
+                   MPI_INT, mpi_comm);
+}
+
+#else
+// Serial counterparts: one rank owns all the data, so a "reduce" over a
+// communicator is the identity and a gather writes exactly one entry. They
+// exist so the declarations stay usable instead of being compiled away.
+void Parallel_Reduce::reduce_all(const MPI_Comm mpi_comm, int& object)
+{
+    (void)mpi_comm;
+    (void)object;
+}
+
+void Parallel_Reduce::reduce_all(const MPI_Comm mpi_comm, double& object)
+{
+    (void)mpi_comm;
+    (void)object;
+}
+
+void Parallel_Reduce::reduce_all(const MPI_Comm mpi_comm, unsigned long long& object)
+{
+    (void)mpi_comm;
+    (void)object;
+}
+
+template <typename T>
+void Parallel_Reduce::reduce_all(const MPI_Comm mpi_comm, T* object, const int n)
+{
+    (void)mpi_comm;
+    (void)object;
+    (void)n;
+}
+
+void Parallel_Reduce::reduce_max(const MPI_Comm mpi_comm, int& object)
+{
+    (void)mpi_comm;
+    (void)object;
+}
+
+void Parallel_Reduce::reduce_max(const MPI_Comm mpi_comm, double& object)
+{
+    (void)mpi_comm;
+    (void)object;
+}
+
+void Parallel_Reduce::reduce_max(const MPI_Comm mpi_comm, unsigned long long& object)
+{
+    (void)mpi_comm;
+    (void)object;
+}
+
+void Parallel_Reduce::reduce_min(const MPI_Comm mpi_comm, int& object)
+{
+    (void)mpi_comm;
+    (void)object;
+}
+
+void Parallel_Reduce::reduce_min(const MPI_Comm mpi_comm, double& object)
+{
+    (void)mpi_comm;
+    (void)object;
+}
+
+void Parallel_Reduce::reduce_min(const MPI_Comm mpi_comm, unsigned long long& object)
+{
+    (void)mpi_comm;
+    (void)object;
+}
+
+void Parallel_Reduce::reduce_max_with_rank(const MPI_Comm mpi_comm, double& value, int& rank)
+{
+    (void)mpi_comm;
+    (void)value;
+    rank = 0;
+}
+
+void Parallel_Reduce::gather_int_all(const MPI_Comm mpi_comm, int& v, int* all)
+{
+    (void)mpi_comm;
+    assert(all != nullptr);
+    all[0] = v;
+}
+
+void Parallel_Reduce::gatherv_int_all(const MPI_Comm mpi_comm,
+                                      const int* send_buffer,
+                                      const int send_count,
+                                      int* receive_buffer,
+                                      const int* receive_counts,
+                                      const int* receive_displacements)
+{
+    (void)mpi_comm;
+    // One rank: the whole gather is this rank's own contribution, which sits at
+    // displacement 0. Assert the shape rather than silently ignoring a caller
+    // that asks for something else.
+    assert(receive_counts != nullptr && receive_counts[0] == send_count);
+    assert(receive_displacements != nullptr && receive_displacements[0] == 0);
+    assert(send_count == 0 || (send_buffer != nullptr && receive_buffer != nullptr));
+    for (int i = 0; i < send_count; ++i)
+    {
+        receive_buffer[i] = send_buffer[i];
+    }
+}
+#endif
+
+// The instantiations apply to whichever implementation the branch above
+// compiled, so they sit outside the conditional.
+template void Parallel_Reduce::reduce_all<int>(const MPI_Comm, int*, const int);
+template void Parallel_Reduce::reduce_all<double>(const MPI_Comm, double*, const int);
+template void Parallel_Reduce::reduce_all<unsigned long long>(const MPI_Comm, unsigned long long*, const int);
+
+
 
 void Parallel_Reduce::reduce_double_grid(double* object, const int n)
 {

@@ -34,9 +34,35 @@ void bcast_double(double& object);
 void bcast_int(int& object);
 void bcast_bool(bool& object);
 
-#ifdef __MPI
-//(3) bcast single on an explicit communicator, from the communicator's rank 0
+#ifndef __MPI
+/// Serial builds have no communicator type, but the interfaces below name one.
+/// Declare a stand-in so those interfaces stay visible to callers in both
+/// builds instead of vanishing with the macro; a serial implementation simply
+/// ignores the argument. It is scoped to this namespace so that a translation
+/// unit which pulls in a real `mpi.h` for some other reason cannot clash.
+struct SerialCommunicator
+{
+};
+using MPI_Comm = SerialCommunicator;
+#endif
+
+//(3) communicator- and root-aware counterparts for the sub-communicator
+//    stages (RI/RPA) that run outside MPI_COMM_WORLD and outside root 0
+void bcast_int(int* object, const int n, const MPI_Comm mpi_comm, const int root);
+void bcast_double(double* object, const int n, const MPI_Comm mpi_comm, const int root);
+/// @brief Rank of the caller on an arbitrary communicator.
+int my_rank(const MPI_Comm mpi_comm);
+/// @brief Number of ranks on an arbitrary communicator.
+int nproc(const MPI_Comm mpi_comm);
+/// @brief Barrier on an arbitrary communicator.
+void barrier(const MPI_Comm mpi_comm);
+
+//(4) bcast single on an explicit communicator, from the communicator's rank 0
 void bcast_bool(bool& object, const MPI_Comm& comm);
+
+#ifdef __MPI
+// MPI_Offset has no serial equivalent — it is an MPI-defined integer type — so
+// this one overload is the only interface here that stays MPI-only.
 void bcast_mpi_offset(MPI_Offset& object, const MPI_Comm& comm);
 #endif
 
