@@ -143,6 +143,55 @@ class DFPTKQBasisTest : public testing::Test
         }
     }
 
+    // per-k plane-wave data (npwk/gcar/gk2/igl2isz_k) in the production
+    // PW_Basis_K layout: the DFPT Gamma special case reads exactly these
+    // arrays, so the fixture must fill them for every k of the mesh. The
+    // arrays are allocated once for the whole mesh; each call fills only
+    // its own k slot, so BuildBase must call this once per k AFTER nst/
+    // npw of the layout exist and npwk_max is known (two-pass below)
+    void FillSticksK(
+        ModulePW::PW_Basis_K &pw,
+        int ik_fill,
+        const ModuleBase::Vector3<double> &kvec,
+        double ggecut,
+        int npwk_max)
+    {
+        std::vector<int> isz_list;
+        std::vector<ModuleBase::Vector3<double>> gcar_list;
+        std::vector<double> gk2_list;
+        for (int is = 0; is < pw.nst; ++is)
+        {
+            const int ixy = pw.is2fftixy[is];
+            const int ix = ixy / pw.fftny;
+            const int iy = ixy % pw.fftny;
+            const int wix = WrapIndex(ix, pw.nx);
+            const int wiy = WrapIndex(iy, pw.ny);
+            for (int iz0 = 0; iz0 < pw.nz; ++iz0)
+            {
+                // the stick members in ig2isz order (z ascending); recover
+                // the member index by matching isz = is*nz + iz0
+                const int isz = is * pw.nz + iz0;
+                const int wiz = WrapIndex(iz0, pw.nz);
+                ModuleBase::Vector3<double> f(wix, wiy, wiz);
+                const ModuleBase::Vector3<double> g = f * G_;
+                const ModuleBase::Vector3<double> gk = g + kvec;
+                if (gk * gk <= ggecut)
+                {
+                    isz_list.push_back(isz);
+                    gcar_list.push_back(g);
+                    gk2_list.push_back(gk * gk);
+                }
+            }
+        }
+        pw.npwk[ik_fill] = static_cast<int>(isz_list.size());
+        for (int i = 0; i < pw.npwk[ik_fill]; ++i)
+        {
+            pw.gcar[ik_fill * npwk_max + i] = gcar_list[i];
+            pw.gk2[ik_fill * npwk_max + i] = gk2_list[i];
+            pw.igl2isz_k[ik_fill * npwk_max + i] = isz_list[i];
+        }
+    }
+
     // shared field setup for a cubic complex basis. The wavefunction grid
     // uses the production radius (sqrt(gk_ecut) + max|k_mesh|)^2; the
     // charge grid uses the production 4*ecutwfc (= 4*gk_ecut ball, no
@@ -185,6 +234,45 @@ class DFPTKQBasisTest : public testing::Test
             pw_.kvec_c[i] = kvec_c[i];
         }
         FillSticks(pw_, ggecut_);
+        // two-pass per-k fill: first pass determines npwk_max, second pass
+        // allocates the arrays once and fills each k slot
+        {
+            int npwk_max = 0;
+            for (size_t i = 0; i < kvec_c.size(); ++i)
+            {
+                int cnt = 0;
+                for (int is = 0; is < pw_.nst; ++is)
+                {
+                    const int ixy = pw_.is2fftixy[is];
+                    const int ix = ixy / pw_.fftny;
+                    const int iy = ixy % pw_.fftny;
+                    const int wix = WrapIndex(ix, pw_.nx);
+                    const int wiy = WrapIndex(iy, pw_.ny);
+                    for (int iz0 = 0; iz0 < pw_.nz; ++iz0)
+                    {
+                        const int wiz = WrapIndex(iz0, pw_.nz);
+                        ModuleBase::Vector3<double> f(wix, wiy, wiz);
+                        const ModuleBase::Vector3<double> g = f * G_;
+                        const ModuleBase::Vector3<double> gk = g + kvec_c[i];
+                        if (gk * gk <= gk_ecut_)
+                        {
+                            ++cnt;
+                        }
+                    }
+                }
+                npwk_max = std::max(npwk_max, cnt);
+            }
+            const int nks = pw_.nks;
+            pw_.npwk = new int[nks];
+            pw_.npwk_max = npwk_max;
+            pw_.gcar = new ModuleBase::Vector3<double>[npwk_max * nks];
+            pw_.gk2 = new double[npwk_max * nks];
+            pw_.igl2isz_k = new int[npwk_max * nks];
+            for (int i = 0; i < nks; ++i)
+            {
+                FillSticksK(pw_, i, kvec_c[i], gk_ecut_, npwk_max);
+            }
+        }
 
         prho_.nx = nx_;
         prho_.ny = ny_;
@@ -407,6 +495,66 @@ TEST_F(DFPTKQBasisTest, InvalidOrMismatchedBaseIsRejected)
     ModuleDFPT::DFPT_KQ_Basis kq3;
     EXPECT_EXIT(
         kq3.init(&pw_, &prho_, ModuleBase::Vector3<double>(0.0, 0.0, 0.0), 0), ::testing::ExitedWithCode(1), "");
+}
+
+TEST_F(DFPTKQBasisTest, GammaQOnMultiKMeshFollowsGroundStateOrder)
+{
+    // order lock for the q = 0 legs: on a multi-k production mesh, the
+    // Gamma ball of EVERY k must be enumerated in that k's ground-state
+    // pw order (stick layout), because the position/field response builds
+    // its right-hand side in that order and passes it to the operator and
+    // to the occupied-state projectors without remapping. A basis that
+    // returns the same set in a different order silently corrupts the
+    // dielectric and Born tensors through dfpt_compute_q0.
+    ResetBasis();
+    BuildBase(
+        {ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
+            ModuleBase::Vector3<double>(0.0, 0.5 * ModuleBase::TWO_PI / lat0_, 0.5 * ModuleBase::TWO_PI / lat0_)});
+
+    for (int ik = 0; ik < 2; ++ik)
+    {
+        ModuleDFPT::DFPT_KQ_Basis kq;
+        kq.init(&pw_, &prho_, ModuleBase::Vector3<double>(0.0, 0.0, 0.0), ik);
+        ASSERT_TRUE(kq.is_valid());
+        // each k's Gamma ball is that k's ground-state ball, enumerated in
+        // the stick layout order (ig2isz traversal with the |g+k|^2
+        // membership filter), so the order matches what dfpt_pw_q0.cpp
+        // reads
+        const int npwk_expected = pw_.npwk[ik];
+        EXPECT_EQ(kq.get_npwk(), npwk_expected);
+        const int hw_x = static_cast<int>(pw_.nx / 2) + 1;
+        const int hw_y = static_cast<int>(pw_.ny / 2) + 1;
+        const int hw_z = static_cast<int>(pw_.nz / 2) + 1;
+        int igl_out = 0;
+        for (int igl = 0; igl < pw_.npw; ++igl)
+        {
+            const int isz = pw_.ig2isz[igl];
+            const int iz = isz % pw_.nz;
+            const int is = isz / pw_.nz;
+            const int ixy = pw_.is2fftixy[is];
+            const int ix = ixy / pw_.fftny;
+            const int iy = ixy % pw_.fftny;
+            const int wx = (ix >= hw_x) ? ix - pw_.nx : ix;
+            const int wy = (iy >= hw_y) ? iy - pw_.ny : iy;
+            const int wz = (iz >= hw_z) ? iz - pw_.nz : iz;
+            const ModuleBase::Vector3<double> gfrac(wx, wy, wz);
+            const ModuleBase::Vector3<double> gcart = gfrac * G_;
+            const ModuleBase::Vector3<double> gplusk = gcart + pw_.kvec_c[ik];
+            if (gplusk * gplusk > pw_.gk_ecut)
+            {
+                continue;
+            }
+            ASSERT_LT(igl_out, kq.get_npwk());
+            // sel is the k+q ball in cartesian coordinates with the
+            // gplusk convention (compare against g + k, not g alone)
+            const ModuleBase::Vector3<double> sel = kq.get_gpluskq(igl_out);
+            EXPECT_DOUBLE_EQ(sel.x, gplusk.x);
+            EXPECT_DOUBLE_EQ(sel.y, gplusk.y);
+            EXPECT_DOUBLE_EQ(sel.z, gplusk.z);
+            ++igl_out;
+        }
+        EXPECT_EQ(igl_out, npwk_expected);
+    }
 }
 
 } // namespace

@@ -48,8 +48,9 @@ class DFPT_PW::Impl
     ~Impl();
 
     /// occupied-state projector set at k+q for every k of this q
-    /// (commensurate q: kvec_d[ik] + q must be a k point of the
-    /// ground-state list mod lattice)
+    /// (nscf path: the k+q states come from a block-Davidson
+    /// diagonalization of the full H(k+q) on the k+q ball, QE run_nscf
+    /// alignment)
     void build_occ_kq(int q_idx);
 
     /// one self-consistent Sternheimer cycle for the displacement
@@ -89,18 +90,7 @@ class DFPT_PW::Impl
         int nat);
 
     // ----- build_occ_kq helpers (dfpt_pw_init.cpp) -----
-    int match_commensurate_kq(
-        int ik,
-        const ModuleBase::Vector3<double> &q_frac,
-        double tol,
-        ModuleBase::Vector3<int> &dn_out) const;
-    void copy_occ_state_ball(
-        int ik,
-        int ikq,
-        const ModuleBase::Vector3<int> &dn,
-        const DFPT_KQ_Basis &kq,
-        const ModuleBase::Matrix3 &ginv,
-        std::vector<std::vector<std::complex<double>>> &occ_ik) const;
+    int occupied_band_count(int ik) const;
 
     // ----- run() dispatch helpers (dfpt_pw_run.cpp) -----
     void run_q0_pre(int q_idx);
@@ -189,12 +179,16 @@ class DFPT_PW::Impl
     const Plus_U_Base *dftu_ = nullptr;
 
     ///< occupied states at k+q on the k+q G list, [ik][occ m][igl];
-    ///< rebuilt per q (they depend on q and k only)
+    ///< rebuilt per q (they depend on q and k only); produced by the nscf
+    ///< diagonalization (DFPT_NSCF on the full H(k+q)), aligned with QE
     std::vector<std::vector<std::vector<std::complex<double>>>> occ_kq_;
+    ///< nscf eigenvalues at k+q, [ik][occ m] (Ry), ascending; diagnostic
+    ///< companion of occ_kq_ (the Sternheimer shift keeps using the GS
+    ///< eigenvalue of the coupled k band)
+    std::vector<std::vector<double>> eig_kq_;
     ///< remembers the (q_idx, ik) the shifted operator was last cached at
     int last_q_ = -1;
     int last_ik_ = -1;
-    std::vector<int> ikq_of_k_;
 
     int nqx_ = 1, nqy_ = 1, nqz_ = 1;
     std::string qfile_;

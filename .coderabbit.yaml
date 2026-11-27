@@ -33,15 +33,6 @@ reviews:
       instructions: |
         Check that documentation changes match the implementation and do not
         weaken the rule grading matrix without an explicit rationale.
-    - path: "{CMakeLists.txt,cmake/**,source/**/CMakeLists.txt,source/**/*.cmake,tests/**/CMakeLists.txt}"
-      instructions: |
-        Apply `docs/developers_guide/cmake_guidelines.md` and `AGENTS.md` rule 24.
-        Check that root `CMakeLists.txt` only declares options and discovers
-        packages, `cmake/modules/` exports IMPORTED targets, `source/CMakeLists.txt`
-        centralizes `__XXX` feature definitions and link order, and new options or
-        external dependencies stay synchronized with `cmake/CollectBuildInfoVars.cmake`
-        and `abacus_add_target_compile_requirements()`. Prefer linking module
-        OBJECT targets over recompiling `../` sources directly in unit tests.
     - path: ".github/**"
       instructions: |
         Check workflow, PR-template, CodeRabbit, and Copilot instruction
@@ -61,6 +52,5 @@ knowledge_base:
       - "AGENTS.md"
       - "**/AGENTS.md"
       - "docs/developers_guide/agent_governance.md"
-      - "docs/developers_guide/cmake_guidelines.md"
       - ".github/copilot-instructions.md"
       - ".github/instructions/*.instructions.md"
