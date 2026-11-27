@@ -37,6 +37,23 @@ double cal_drho(Charge* chr,
                 const double omega,
                 const double tpiba);
 
+// Read-only collinear raw-output minus input channel residuals. L1 on the
+// rho grid, normalized by omega/(nxyz*nelec), with pool reduction.
+void cal_spin_channel_residuals(const Charge& chr,
+                                const double nelec,
+                                const ModulePW::PW_Basis& rhopw,
+                                const double omega,
+                                double& charge_residual,
+                                double& magnetic_residual);
+
+// Dimensionless L2 channels: omega/nelec * sqrt(sum_grid(delta_rho^2)/nxyz).
+void cal_spin_channel_residuals_l2(const Charge& chr,
+                                   const double nelec,
+                                   const ModulePW::PW_Basis& rhopw,
+                                   const double omega,
+                                   double& charge_residual,
+                                   double& magnetic_residual);
+
 /**
  * @brief Kinetic-energy-density residual between chr->kin_r and chr->kin_r_save.
  *

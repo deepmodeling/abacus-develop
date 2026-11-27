@@ -5,6 +5,7 @@
 #include "source_lcao/module_operator_lcao/operator_lcao.h"
 #include "source_hamilt/module_hcontainer/hcontainer.h"
 #include "source_lcao/module_dftu/dftu_nao_adj.h"
+#include "source_estate/scf_diagnostics.h"
 #include "source_cell/module_symmetry/symm_rotation_k.h" // ModuleSymmetry::Symmetry_rotation_k (value member); LibRI-free
 
 #include <vector>
@@ -70,6 +71,10 @@ class DFTU_onsite<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
     /// unsymmetrized DMR (previous behavior).
     void set_kv(const K_Vectors* kv_in) { this->kv_ = kv_in; }
 
+    // Observes the raw solved DMR without modifying Plus_U, DMR, or mixing.
+    void write_scf_diagnostics(const ScfDiagnostics::ScfDiagnosticStep& step,
+                               std::ostream& running_log) const;
+
   private:
     bool should_restore_symmetric_dmr() const;
 
@@ -97,6 +102,9 @@ class DFTU_onsite<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
 
     /// @brief the number of spin components, 1 for no-spin, 2 for collinear spin case and 4 for non-collinear spin case
     int nspin = 0;
+
+    // Last matrices actually passed to cal_pot_onsite, copied for diagnostics.
+    std::vector<ScfDiagnostics::ScfOccupationBlock> diagnostic_inputs_;
 
     /// @brief adjacent-atom lists for all Hubbard atoms; structure snapshot
     /// computed once in the constructor (operator is rebuilt every ionic step)

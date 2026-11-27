@@ -1,4 +1,6 @@
 #include "esolver_ks_pw.h"
+#include "source_estate/module_charge/chg_drho.h"
+#include "source_pw/module_pwdft/dftu_pw.h"
 #include "source_pw/module_pwdft/pw_hybrid_nscf.h"
 
 #include "source_estate/elecstate_pw.h"
@@ -294,6 +296,8 @@ void ESolver_KS_PW<T, Device>::iter_finish(
     int &iter,
     bool &conv_esolver)
 {
+    std::ofstream& running_log = GlobalV::ofs_running;
+    const System_para& system = PARAM.globalv;
     // Related to EXX
     bool cal_exx = general_exx_info_.cal_exx;
     double hybrid_alpha = general_exx_info_.hybrid_alpha;
@@ -314,12 +318,69 @@ void ESolver_KS_PW<T, Device>::iter_finish(
         const double escon = sc.cal_escon();
         this->pelec->set_spin_constrain_energy(escon);
     }
+    const bool observe_scf = ScfDiagnostics::scf_diagnostics_enabled() && this->inp_->dft_plus_u == 1;
+    double charge_residual = 0.0;
+    double magnetic_residual = 0.0;
+    double charge_l2 = 0.0;
+    double magnetic_l2 = 0.0;
+    if (observe_scf)
+    {
+        if (this->inp_->nspin != 2 || this->inp_->mixing_dftu != 0 || this->inp_->precision != "double")
+        {
+            ModuleBase::WARNING_QUIT("SCF diagnostics", "PW observer requires nspin=2, precision=double, mixing_dftu=0");
+        }
+        module_charge::cal_spin_channel_residuals(
+            this->chr, this->inp_->nelec, *this->chr.rhopw, ucell.omega, charge_residual, magnetic_residual);
+        module_charge::cal_spin_channel_residuals_l2(
+            this->chr, this->inp_->nelec, *this->chr.rhopw, ucell.omega, charge_l2, magnetic_l2);
+    }
     ESolver_KS::iter_finish(ucell, istep, iter, conv_esolver);
+    if (observe_scf)
+    {
+        ScfDiagnostics::ScfDiagnosticStep diagnostic_step;
+        diagnostic_step.output_dir = system.global_out_dir;
+        diagnostic_step.basis_type = "pw";
+        diagnostic_step.scf_thr_type = this->inp_->scf_thr_type;
+        diagnostic_step.has_l2_channels = true;
+        diagnostic_step.charge_residual_l2 = charge_l2;
+        diagnostic_step.magnetic_residual_l2 = magnetic_l2;
+        diagnostic_step.rank = GlobalV::MY_RANK;
+        diagnostic_step.ionic_step = istep + 1;
+        diagnostic_step.iteration = iter;
+        diagnostic_step.threshold = this->scf_thr;
+        diagnostic_step.drho = this->drho;
+        diagnostic_step.charge_residual = charge_residual;
+        diagnostic_step.magnetic_residual = magnetic_residual;
+        const ModuleBase::TimePoint observer_time = ModuleBase::get_time();
+        diagnostic_step.wall_seconds = ModuleBase::get_duration(this->iter_time, observer_time);
+        diagnostic_step.restart_count = this->p_chgmix->mixing_restart_count;
+        diagnostic_step.restart_scheduled_step = this->p_chgmix->mixing_restart_step;
+        diagnostic_step.restart_executed = this->inp_->mixing_restart > 0.0
+            && iter == this->p_chgmix->mixing_restart_step && this->p_chgmix->mixing_restart_count > 0;
+        diagnostic_step.converged = conv_esolver;
+        diagnostic_step.gap_eV = this->pelec->bandgap * ModuleBase::Ry_to_eV;
+        diagnostic_step.total_magnetism = ucell.magnet.tot_mag;
+        diagnostic_step.absolute_magnetism = ucell.magnet.abs_mag;
+        diagnostic_step.total_energy_eV = this->pelec->f_en.etot * ModuleBase::Ry_to_eV;
+        diagnostic_step.source_band_correction_eV = this->dftu_->get_energy() * ModuleBase::Ry_to_eV;
+        diagnostic_step.mixing_type = this->inp_->mixing_mode;
+        diagnostic_step.beta = this->p_chgmix->get_mixing_beta();
+        diagnostic_step.beta_mag = this->inp_->mixing_beta_mag;
+        diagnostic_step.mixing_dftu = this->inp_->mixing_dftu;
+        diagnostic_step.mixing_dmr = this->inp_->mixing_dmr;
+        diagnostic_step.mixing_restart = this->inp_->mixing_restart;
+        const bool input_ready = iter > 1 || istep > 0 || this->dftu_->is_occmat_ready();
+        const auto blocks = DFTU_BASE::observe_occ_pw<Device>(
+            this->stp.template get_psi_t<T, Device>(), this->pelec->wg, ucell, this->kv.isk.data(),
+            this->inp_->kpar, *this->dftu_, input_ready);
+        ScfDiagnostics::write_scf_diagnostics(diagnostic_step, blocks, running_log);
+    }
+
 
     // D in USPP needs vloc, thus needs update when veff updated
     // calculate the effective coefficient matrix for non-local
     // pp projectors, liuyu 2023-10-24
-    if (PARAM.globalv.use_uspp)
+    if (system.use_uspp)
     {
         ModuleBase::matrix veff = this->pelec->pot->get_eff_v();
         this->ppcell.cal_effective_D(veff, this->pw_rhod, ucell);
@@ -354,7 +415,7 @@ void ESolver_KS_PW<T, Device>::iter_finish(
     const DFTU_BASE::OccmatStepInfo occmat_step{istep, iter, this->scf_thr, this->drho};
     // Read globalv values once into locals so the repeated DFT+U call sites
     // below do not each re-enter the global dependency surface.
-    const std::string &global_out_dir = PARAM.globalv.global_out_dir;
+    const std::string &global_out_dir = system.global_out_dir;
     const bool occmat_ready = (iter > 1 || istep > 0 || this->dftu_->is_occmat_ready());
     if (occmat_ready)
     {
@@ -374,7 +435,7 @@ void ESolver_KS_PW<T, Device>::iter_finish(
     if (!this->defer_iter_output(istep))
     {
         ModuleIO::ctrl_iter_pw(
-            istep, iter, conv_esolver, this->stp, this->kv, this->pw_wfc, *this->inp_, false, GlobalV::ofs_running);
+            istep, iter, conv_esolver, this->stp, this->kv, this->pw_wfc, *this->inp_, false, running_log);
     }
 }
 

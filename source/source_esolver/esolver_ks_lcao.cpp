@@ -10,6 +10,7 @@
 #include "source_estate/elecstate_lcao.h"
 #include "source_estate/elecstate_tools.h"
 #include "source_estate/module_charge/chg_dmr.h"
+#include "source_estate/module_charge/chg_drho.h"
 #include "source_estate/module_charge/chg_symm.h"
 #include "source_hamilt/hamilt_hs_adapter.h"
 #include "source_hamilt/hs_matrix_k.h"
@@ -21,6 +22,7 @@
 #include "source_lcao/module_deltaspin/deltaspin_lcao.h"
 #include "source_lcao/module_deltaspin/spin_constrain.h"
 #include "source_lcao/setup_dftu_lcao.h"
+#include "source_lcao/module_dftu/dftu_nao_op.h"
 #include "source_pw/module_pwdft/dftu_base.h"    // Plus_U_Base (PW and LCAO share it)
 #include "source_pw/module_pwdft/dftu_base_io.h" // append_ion_step_snapshot
 #ifdef __EXX
@@ -382,6 +384,7 @@ template <typename TK, typename TR>
 void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell &ucell, const int istep, const int iter)
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "iter_init");
+    std::ostream& running_log = GlobalV::ofs_running;
 
     // call iter_init() of ESolver_KS
     ESolver_KS::iter_init(ucell, istep, iter);
@@ -397,13 +400,13 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell &ucell, const int istep, const 
         this->gint_info_->set_exec_precision(this->gint_precision_controller_.current_precision());
         if (this->inp_->gint_precision == "mix")
         {
-            GlobalV::ofs_running << "\n >> Gint mixed-precision mode: starting SCF with fp32"
+            running_log << "\n >> Gint mixed-precision mode: starting SCF with fp32"
                                  << " (will switch to fp64 when drho is small enough)" << std::endl;
             std::cout << " >> NOTICE: Gint grid-integration starts with fp32 (mixed-precision mode)" << std::endl;
         }
         else if (this->inp_->gint_precision == "single")
         {
-            GlobalV::ofs_running << "\n >> Gint single-precision mode: using fp32 throughout SCF" << std::endl;
+            running_log << "\n >> Gint single-precision mode: using fp32 throughout SCF" << std::endl;
             std::cout << " >> NOTICE: Gint grid-integration uses fp32 throughout SCF (single-precision mode)"
                       << std::endl;
         }
@@ -583,6 +586,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(
     bool &conv_esolver)
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "iter_finish");
+    std::ostream& running_log = GlobalV::ofs_running;
 
     auto *hamilt_lcao = dynamic_cast<hamilt::HamiltLCAO<TK, TR> *>(this->p_hamilt);
 
@@ -625,12 +629,67 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(
         this->pelec->set_spin_constrain_energy(escon);
     }
 
+    const bool observe_scf = ScfDiagnostics::scf_diagnostics_enabled() && this->inp_->dft_plus_u == 1;
+    double charge_residual = 0.0;
+    double magnetic_residual = 0.0;
+    if (observe_scf)
+    {
+        if (this->inp_->nspin != 2 || this->inp_->scf_thr_type != 2)
+        {
+            ModuleBase::WARNING_QUIT("SCF diagnostics", "Density channels require nspin=2 and scf_thr_type=2");
+        }
+        module_charge::cal_spin_channel_residuals(
+            this->chr, this->inp_->nelec, *this->chr.rhopw, ucell.omega, charge_residual, magnetic_residual);
+    }
+
     // call iter_finish() of ESolver_KS, where the band gap is calculated,
     // eig and occ are printed, magnetization is calculated,
     // charge mixing is performed, potential is updated,
     // Harris-Foulkes and Kohn-Sham energies are computed, and meta-GGA terms,
     // JSON output and density restart files are handled
     ESolver_KS::iter_finish(ucell, istep, iter, conv_esolver);
+
+    if (observe_scf)
+    {
+        ScfDiagnostics::ScfDiagnosticStep diagnostic_step;
+        diagnostic_step.output_dir = global_out_dir;
+        diagnostic_step.rank = GlobalV::MY_RANK;
+        diagnostic_step.ionic_step = istep + 1;
+        diagnostic_step.iteration = iter;
+        diagnostic_step.threshold = this->scf_thr;
+        diagnostic_step.drho = this->drho;
+        diagnostic_step.charge_residual = charge_residual;
+        diagnostic_step.magnetic_residual = magnetic_residual;
+        const ModuleBase::TimePoint observer_time = ModuleBase::get_time();
+        diagnostic_step.wall_seconds = ModuleBase::get_duration(this->iter_time, observer_time);
+        diagnostic_step.restart_count = this->p_chgmix->mixing_restart_count;
+        diagnostic_step.restart_scheduled_step = this->p_chgmix->mixing_restart_step;
+        diagnostic_step.restart_executed = this->inp_->mixing_restart > 0.0
+            && iter == this->p_chgmix->mixing_restart_step && this->p_chgmix->mixing_restart_count > 0;
+        diagnostic_step.converged = conv_esolver;
+        diagnostic_step.gap_eV = this->pelec->bandgap * ModuleBase::Ry_to_eV;
+        diagnostic_step.total_magnetism = ucell.magnet.tot_mag;
+        diagnostic_step.absolute_magnetism = ucell.magnet.abs_mag;
+        diagnostic_step.total_energy_eV = this->pelec->f_en.etot * ModuleBase::Ry_to_eV;
+        diagnostic_step.source_band_correction_eV = this->dftu_->get_energy() * ModuleBase::Ry_to_eV;
+        diagnostic_step.mixing_type = this->inp_->mixing_mode;
+        diagnostic_step.beta = this->p_chgmix->get_mixing_beta();
+        diagnostic_step.beta_mag = this->inp_->mixing_beta_mag;
+        diagnostic_step.mixing_dftu = this->inp_->mixing_dftu;
+        diagnostic_step.mixing_dmr = this->inp_->mixing_dmr;
+        diagnostic_step.mixing_restart = this->inp_->mixing_restart;
+        for (hamilt::Operator<TK>* op = hamilt_lcao->getOperator(); op != nullptr; op = op->next_op)
+        {
+            // The onsite Hubbard operator has its own lcao_dftu main-chain
+            // calculation type; no other operator shares this node type.
+            typedef hamilt::DFTU_onsite<hamilt::OperatorLCAO<TK, TR>> OnsiteOperator;
+            OnsiteOperator* onsite = dynamic_cast<OnsiteOperator*>(op);
+            if (onsite != nullptr)
+            {
+                onsite->write_scf_diagnostics(diagnostic_step, running_log);
+            }
+        }
+    }
 
     // overwrite occ_mat.txt with the latest occupation matrix and the
     // actual charge-density residual; ESolver_KS::iter_finish() above has
@@ -649,7 +708,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(
     this->gint_info_->set_exec_precision(this->gint_precision_controller_.current_precision());
     if (precision_switched)
     {
-        GlobalV::ofs_running << "\n >> Gint precision switched: fp32 -> fp64 (drho = " << this->drho << ")"
+        running_log << "\n >> Gint precision switched: fp32 -> fp64 (drho = " << this->drho << ")"
                              << std::endl;
         std::cout << " >> NOTICE: Gint grid-integration precision switched from fp32 to fp64" << std::endl;
     }

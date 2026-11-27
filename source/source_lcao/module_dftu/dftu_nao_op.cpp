@@ -1,6 +1,7 @@
 #include "dftu_nao_op.h"
 
 #include "source_base/timer.h"
+#include "source_base/constants.h"
 #include "source_base/tool_title.h"
 #include "source_basis/module_nao/two_center_integrator.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
@@ -14,6 +15,7 @@
 
 #include <array>
 #include <cassert>
+#include <stdexcept>
 
 #include "dftu_nao_adj.h"
 #include "dftu_nao_fs_r.h"
@@ -184,6 +186,16 @@ void hamilt::DFTU_onsite<hamilt::OperatorLCAO<TK, TR>>::contribute_hubbard_atoms
         }
 
         const double u_value = this->dftu->get_u_current(T0);
+        if (ScfDiagnostics::scf_diagnostics_enabled())
+        {
+            ScfDiagnostics::ScfOccupationBlock snapshot;
+            snapshot.atom = iat0 + 1;
+            snapshot.spin = this->current_spin;
+            snapshot.l = target_L;
+            snapshot.u_eV = u_value * ModuleBase::Ry_to_eV;
+            snapshot.input = occ;
+            this->diagnostic_inputs_.push_back(snapshot);
+        }
         std::vector<double> pot_onsite_tmp(occ.size());
         double u_energy = this->dftu->get_energy();
         DFTU_LCAO::cal_pot_onsite(occ, tlp1, u_value, pot_onsite_tmp.data(), u_energy);
@@ -267,6 +279,10 @@ template <typename TK, typename TR>
 void hamilt::DFTU_onsite<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
 {
     ModuleBase::TITLE("DFTU_onsite", "contributeHR");
+    if (ScfDiagnostics::scf_diagnostics_enabled() && this->current_spin == 0)
+    {
+        this->diagnostic_inputs_.clear();
+    }
     // Early exit: DMR not available (first SCF iteration before the first
     // diagonalization) AND occ_mat not yet initialized
     const bool dmr_null = (this->dm_ == nullptr || !this->dm_->is_dmr_ready());
@@ -301,6 +317,55 @@ void hamilt::DFTU_onsite<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
 
     this->finish_spin_step();
     ModuleBase::timer::end("DFTU_onsite", "contributeHR");
+}
+
+template <typename TK, typename TR>
+void hamilt::DFTU_onsite<hamilt::OperatorLCAO<TK, TR>>::write_scf_diagnostics(
+    const ScfDiagnostics::ScfDiagnosticStep& step,
+    std::ostream& running_log) const
+{
+    // Honest scope restriction: no spinor packing or symmetry restoration is
+    // silently interpreted as a real collinear 5x5 matrix.
+    if (this->nspin != 2 || ModuleSymmetry::Symmetry::symm_flag == 1
+        || step.mixing_dftu != 0 || step.mixing_dmr)
+    {
+        throw std::runtime_error("SCF diagnostics require nspin=2, symmetry=0, mixing_dftu=0, mixing_dmr=0");
+    }
+    const Parallel_Orbitals* pv = this->hR->get_atom_pair(0).get_paraV();
+    std::vector<ScfDiagnostics::ScfOccupationBlock> blocks;
+    int atom_index = 0;
+    for (int iat = 0; iat < this->ucell->nat; ++iat)
+    {
+        const int type = this->ucell->iat2it[iat];
+        if (!this->dftu->has_l_channel(type))
+        {
+            continue;
+        }
+        const int l = this->dftu->get_l_channel(type);
+        const int dim = 2 * l + 1;
+        const AdjacentAtomInfo& adjs = this->adjs_all[atom_index++];
+        for (int spin = 0; spin < 2; ++spin)
+        {
+            ScfDiagnostics::ScfOccupationBlock block;
+            block.atom = iat + 1;
+            block.spin = spin;
+            block.l = l;
+            block.u_eV = this->dftu->get_u_current(type) * ModuleBase::Ry_to_eV;
+            block.raw_output.assign(dim * dim, 0.0);
+            for (const ScfDiagnostics::ScfOccupationBlock& input : this->diagnostic_inputs_)
+            {
+                if (input.atom == block.atom && input.spin == spin)
+                {
+                    block.input = input.input;
+                }
+            }
+            const hamilt::HContainer<double>* dmr = this->dm_->get_dmr_ptr(spin + 1);
+            DFTU_LCAO::project_occ_from_dmr(*this->ucell, iat, this->nspin, adjs, *pv,
+                                           this->nlm_tot, *dmr, block.raw_output);
+            blocks.push_back(block);
+        }
+    }
+    ScfDiagnostics::write_scf_diagnostics(step, blocks, running_log);
 }
 
 template class hamilt::DFTU_onsite<hamilt::OperatorLCAO<double, double>>;

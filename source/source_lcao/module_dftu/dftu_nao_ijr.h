@@ -309,11 +309,8 @@ void accumulate_hr_for_iat0(const UnitCell& ucell,
  * @param dmR_current   [in] real-space density matrix of the active spin
  * @param occ           [out] flattened occupation matrix; overwritten
  */
-inline void compute_occ_from_dmr(const UnitCell& ucell,
-                                 Plus_U_Base& dftu,
+inline void project_occ_from_dmr(const UnitCell& ucell,
                                  const int iat0,
-                                 const int target_L,
-                                 const int current_spin,
                                  const int nspin,
                                  const AdjacentAtomInfo& adjs,
                                  const Parallel_Orbitals& pv,
@@ -340,6 +337,23 @@ inline void compute_occ_from_dmr(const UnitCell& ucell,
     {
         for (double& v : occ) { v *= 0.5; }
     }
+}
+
+// The original state-writing wrapper keeps the contraction and reduction order
+// unchanged. The observer calls the pure projection above on a fresh buffer.
+inline void compute_occ_from_dmr(const UnitCell& ucell,
+                                 Plus_U_Base& dftu,
+                                 const int iat0,
+                                 const int target_L,
+                                 const int current_spin,
+                                 const int nspin,
+                                 const AdjacentAtomInfo& adjs,
+                                 const Parallel_Orbitals& pv,
+                                 const NlmTot& nlm_tot,
+                                 const hamilt::HContainer<double>& dmR_current,
+                                 std::vector<double>& occ)
+{
+    project_occ_from_dmr(ucell, iat0, nspin, adjs, pv, nlm_tot, dmR_current, occ);
     dftu.occmat().set_flat(iat0, target_L, current_spin, occ);
 }
 
