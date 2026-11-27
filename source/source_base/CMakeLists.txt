@@ -32,6 +32,13 @@ add_library(
     math_chebyshev.cpp
     mathzone_add1.cpp
     matrix.cpp
+    matrix2d.cpp
+    matrix2d_collective.cpp
+    matrix2d_lapack.cpp
+    matrix2d_linalg.cpp
+    matrix2d_mpi.cpp
+    matrix2d_reduction.cpp
+    matrix2d_scalapack.cpp
     matrix3.cpp
     memory_recorder.cpp
     mymath.cpp
@@ -125,7 +132,6 @@ if(BUILD_TESTING)
         $<TARGET_FILE:MODULE_BASE_parallel_blkcyc>
         ${MPIEXEC_POSTFLAGS}
     )
-    add_subdirectory(unittests)
     add_subdirectory(test)
     target_sources(MODULE_BASE_timer PRIVATE unittests/test_timer.cpp)
     add_subdirectory(test_parallel)
@@ -138,4 +144,5 @@ if(BUILD_TESTING)
       add_subdirectory(libm/test)
     endif()
   endif()
+  add_subdirectory(unittests)
 endif()
